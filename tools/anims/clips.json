@@ -30,5 +30,15 @@
  "BoxIdle": "Box_Idle.fbx",
  "SitDisbelief": "Sitting_Disbelief.fbx",
  "SitTalk": "Sitting_Talking.fbx",
- "SitIdle": "Sitting_Idle.fbx"
+ "SitIdle": "Sitting_Idle.fbx",
+ "Block": "Body_Block.fbx",
+ "Punch": "Punching.fbx",
+ "Defeated": "Defeated.fbx",
+ "Sword1": "Sword_Fight_One.fbx",
+ "Sword2": "Sword_Fight_One_1.fbx",
+ "SlashIn": "Stable_Sword_Inward_Slash.fbx",
+ "SlashOut": "Stable_Sword_Outward_Slash.fbx",
+ "Sheathe": "Sheathing_Sword.fbx",
+ "Draw": "Withdrawing_Sword.fbx",
+ "Laugh": "Laughing.fbx"
 }

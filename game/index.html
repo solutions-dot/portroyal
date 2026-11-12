@@ -41,7 +41,7 @@ button{font:inherit;color:inherit}
 #title h1 span{font-family:"IM Fell English",Georgia,serif;font-style:italic;font-size:.5em;display:block;margin-top:.25em;color:var(--paper)}
 #title p{margin:0;max-width:30rem}
 .dev{background:none;border:0;color:var(--paper);font-family:var(--text);font-size:.95rem;opacity:.85;cursor:pointer;padding:.4em .2em;min-height:44px;letter-spacing:.02em}.dev b{color:var(--brass);font-weight:700}.dev:hover{opacity:1;text-decoration:underline;text-underline-offset:4px}
-#credits{position:fixed;inset:0;background:rgba(16,34,43,.78);display:grid;place-items:center;padding:16px;z-index:40}#credits[hidden]{display:none}#credits .book{max-height:88vh;overflow:auto}#credits h3{font-family:var(--display);margin:1.1em 0 .3em;font-size:1.15rem}#credits p,#credits li{margin:.25em 0;line-height:1.45}#credits ul{padding-left:1.1em;margin:.2em 0}.crbig{font-size:1.25rem;margin:.4em 0 .2em}
+#credits{position:fixed;inset:0;background:rgba(16,34,43,.78);display:grid;place-items:center;padding:16px;z-index:40}#credits[hidden]{display:none}#credits .book{max-height:88vh;overflow:auto}#credits .crbody{padding:1.4rem clamp(1.2rem,4vw,2.6rem) 1.8rem;max-width:40rem;margin:0 auto}#credits .crbig{text-align:center}#credits .crbig{font-size:1.4rem}#credits h3{font-family:var(--display);margin:1.4em 0 .5em;font-size:1.15rem;text-align:center;border-top:1px solid rgba(40,30,20,.25);padding-top:1em}#credits ul{padding-left:1.2em}#credits p,#credits li{margin:.25em 0;line-height:1.45}#credits ul{padding-left:1.1em;margin:.2em 0}.crbig{font-size:1.25rem;margin:.4em 0 .2em}
 .loading{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:.4rem}
 .track{flex:1 1 9rem;height:6px;background:var(--ink-2);border-radius:3px;overflow:hidden;min-width:8rem}
 #bar{height:100%;width:0;background:var(--brass);transition:width .2s}
@@ -85,12 +85,13 @@ button{font:inherit;color:inherit}
 #jpage details p{font-size:.98rem}
 .book .book-focus:focus-visible,#jclose:focus-visible,.tab:focus-visible,#jpage summary:focus-visible{outline-color:var(--paper-ink)}
 #fade{position:fixed;inset:0;z-index:50;background:#120d09;opacity:0;transition:opacity .7s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f3e6cc;text-align:center;pointer-events:none}#fade.on{opacity:1;pointer-events:auto}#fade[hidden]{display:none}#fadeT{font-family:'IM Fell English SC',serif;font-size:clamp(34px,7vw,64px);opacity:0;transform:translateY(8px);transition:opacity .8s ease,transform .8s ease}#fadeS{font-family:'Atkinson Hyperlegible',sans-serif;font-size:clamp(15px,2.6vw,20px);margin-top:10px;opacity:0;color:#d9c39b;transition:opacity .8s ease .25s}#fade.txt #fadeT{opacity:1;transform:none}#fade.txt #fadeS{opacity:.9}
+body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) brightness(1.02)}body.flash::after{content:'';position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 140px 30px rgba(60,40,20,.55)}
 #vig{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 40%,#5a4a36 0%,#2a2118 70%)}
 #card{position:absolute;inset:0;background:rgba(16,34,43,.9);display:grid;place-items:center;padding:16px}
 .cardin{width:min(34rem,100%);display:flex;flex-direction:column;gap:.9rem}
 .cardin h2{font-family:var(--display);font-weight:400;font-size:clamp(2rem,7vw,3.2rem);line-height:1;margin:0;color:var(--brass);text-wrap:balance}
 #cbody p{margin:0 0 .7rem;font-size:1.1rem;max-width:60ch}
-#cbtns{display:flex;flex-direction:column;gap:.5rem;align-items:flex-start}
+#cbtns{display:flex;flex-direction:row;flex-wrap:wrap;gap:.6rem;align-items:center}#cbtns .btn{flex:0 1 auto}
 .book footer{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;padding:.8rem 1.2rem;border-top:2px solid var(--paper-ink);font-family:var(--display);letter-spacing:.05em}
 .chap{display:flex;gap:.5rem;flex-wrap:wrap}
 .book footer .btn{background:var(--paper-ink);color:var(--paper);font-family:var(--text);letter-spacing:0}
@@ -165,8 +166,7 @@ button{font:inherit;color:inherit}
 <section id="credits" role="dialog" aria-labelledby="crtitle" hidden>
   <div class="book">
     <header><h2 id="crtitle">Credits</h2><button id="crclose">Close</button></header>
-    <p class="crbig">Created by <b>Kellz 5.0</b></p>
-    <p>Story, design and development for M2 Creative Studios. Built with the help of Claude by Anthropic.</p>
+    <div class="crbody"><p class="crbig">Created by <b>Kellz 5.0</b></p>
     <h3>Where the history comes from</h3>
     <ul>
       <li>The tombstone of Lewis Galdy, St Peter’s Church, Port Royal (1739)</li>
@@ -179,14 +179,7 @@ button{font:inherit;color:inherit}
       <li>The National Museum of Jamaica and the Jamaica National Heritage Trust</li>
     </ul>
     <p>Abba, Kofi, Sam and the camp survivors are made up. Lewis Galdy, Symon Benning and Emmanuel Heath were real people, but their words in this game are made up.</p>
-    <h3>Made with</h3>
-    <ul>
-      <li>three.js, for drawing the 3D world</li>
-      <li>Blender, MakeHuman (MPFB) and Mixamo, for the people and their movements</li>
-      <li>glTF Transform and meshoptimizer, to make the files small</li>
-      <li>Fonts: IM Fell English by Igino Marini, and Atkinson Hyperlegible by the Braille Institute</li>
-      <li>All sounds are made in your browser as you play</li>
-    </ul>
+    </div>
   </div>
 </section>
 <section id="chapters" role="dialog" aria-labelledby="chtitle" hidden>

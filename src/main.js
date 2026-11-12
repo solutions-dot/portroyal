@@ -142,7 +142,7 @@ const NPCS = [
   { id: 'sailor', label: 'Talk to the sailor', who: 'Sam', x: 34.5, z: 0.55, y: 0.06, ry: Math.PI / 2, talk: [
     { who: 'Sam', anim: 'Point', text: 'Fine sloop, isn\u2019t she? Built of Jamaica cedar. Fast enough to catch anything on the sea.' },
     { who: 'You', text: 'Are you a pirate?' },
-    { who: 'Sam', text: 'Hush! Years ago the governor gave us papers to attack Spanish ships. That made us privateers, not pirates.' },
+    { who: 'Sam', text: 'Hush! Years ago, when Captain Morgan led us, the governor gave us papers to attack Spanish ships. That made us privateers, not pirates.' },
     { who: 'Sam', text: 'Now the law has changed. Attack a ship without papers and they hang you at Gallows Point.', unlock: 'privateer' }],
     again: [{ who: 'Sam', text: 'We sail with the tide. Keep your purse close in the taverns.' }] },
   { id: 'benning', label: 'Talk to the pewterer', who: 'Symon Benning', x: 8.6, z: 4.0, ry: Math.PI, talk: [
@@ -152,13 +152,14 @@ const NPCS = [
     { who: 'Symon Benning', text: 'Look underneath for our mark: a pineapple, with an S and a B. Ships bring the metal. We do the rest.', unlock: 'benning' }],
     again: [{ who: 'Symon Benning', text: 'Come back when you need plates. Good pewter lasts a lifetime.' }] },
 ];
-const HEATH = { x: -9.65, z: 1.75, ry: Math.PI / 2 }, SURV = [[-2.6, -1.3, -0.6, 'sailor'], [-13.4, -1.6, 0.4, 'benning'], [-7.2, 3.9, Math.PI + 0.3, 'kofi']];
+const HEATH = { x: -9.65, z: 1.75, ry: Math.PI / 2 }, SURV = [[-2.6, -1.3, -0.6, 'sailor'], [-13.4, -1.6, 0.4, 'benning'], [-7.2, 3.9, Math.PI + 0.3, 'kofi']], EXTRA = [[-0.6, -0.4, -1.8, 'benning', 'Sad1', [0.62, 0.6, 0.58]], [-4.3, 3.7, 2.8, 'kofi', 'Sad2', [0.9, 0.85, 0.8]], [-14.4, 3.6, 2.2, 'sailor', 'Sad2', [0.7, 0.7, 0.66]], [-15.2, 1.4, 1.4, 'kofi', 'Sad1', [0.75, 0.72, 0.7]]];
 const SAM_AFTER = [
   { who: 'Sam', text: 'Mr Galdy! You\u2019re alive. I saw the ground take you.' },
   { who: 'Sam', text: 'The sea came up over the wharf. A big ship, the Swan, was washed right over the tops of the houses. I saw it with my own eyes.' },
-  { who: 'Sam', text: 'Our sloop broke her ropes and was gone. I have nothing now but these clothes.', unlock: 'swan' }];
+  { who: 'Sam', text: 'Our sloop broke her ropes and was gone. I have nothing now but these clothes.', unlock: 'swan' },
+  { who: 'Sam', text: 'And they say the Palisadoes graveyard went under the sea. Even Captain Morgan\u2019s grave. The sea has him at last.' }];
 const KOFI_AFTER = [
-  { who: 'Kofi', text: 'My leg is bad. A wall came down by the wharf.' },
+  { who: 'Kofi', text: 'A wall came down by the wharf. I got out. Many did not.' },
   { who: 'Kofi', text: 'Many of us were working there when the sea came in. Nobody will write down their names.' },
   { who: 'Kofi', text: 'So I say them. Every night, I say them.' }];
 const BENNING_AFTER = [
@@ -478,8 +479,8 @@ function sharedTex(key, color) { if (!texCache[key] && imgs[key]) { const t = ne
 function prep(root) { root.traverse((o) => { if (o.isMesh && TEXMAP[o.material.name]) { const n = o.material.name; if (!matCache[n]) { const m = o.material, [c, nm] = TEXMAP[n]; m.map = sharedTex(c, true); m.color.set(0xffffff); if (nm) m.normalMap = sharedTex(nm, false); m.needsUpdate = true; matCache[n] = m; } o.material = matCache[n]; } }); return prep0(root); }
 function prep0(root) { root.traverse((o) => { if (o.isMesh) { const m = o.material; if (m.map) m.map.anisotropy = maxAniso; if (m.name === 'LeadedGlass') { m.emissive = new THREE.Color(0x4a6470); m.emissiveMap = m.map; m.roughness = 0.2; } if (o.isSkinnedMesh) o.frustumCulled = false; } }); return root; }
 let mixer = null, idle = null, runA = null, peopleClip = null; const survivors = {}; let galdy = null, third = false, gWalk = false; const people = {}, mixers = [];
-const CL = {};   /* Mixamo clips from anims.glb, shared by everyone (same skeleton) */
-const HIPS_Y = /^(Sit|Injured|StumbleBack|JogStumble|Terrified)/;
+const CL = {}; const TICKS = [], EXTRA_IN = [];   /* Mixamo clips from anims.glb, shared by everyone (same skeleton) */
+const HIPS_Y = /^(Sit|Injured|StumbleBack|JogStumble|Terrified|Pray|Sad)/;
 function clipFor(name, keepHips) { const src = CL[name]; if (!src) return null; const c = src.clone(); keepHips = keepHips || HIPS_Y.test(name);
   c.tracks = c.tracks.filter((t) => { if (t.name.endsWith('.scale')) return false; if (!t.name.endsWith('.position')) return true; if (!keepHips || !/Hips/.test(t.name)) return false;
     const v = t.values, x0 = v[0], z0 = v[2]; for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } return true; });   /* running stays in place; the game moves her */
@@ -492,6 +493,8 @@ function animate(m, name, mixerIn, baseAct) { const clip = (name && clipFor(name
     rest() { this.play(null); },
     tick(dt) { if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } } };
   m.userData.anim = ctl; return ctl; }
+const grounded = [];
+function groundFeet(m) { const t = m.userData.toes || (m.userData.toes = ['Left', 'Right'].map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean)); if (!t.length) return; m.updateMatrixWorld(true); let low = 1e9; for (const b of t) low = Math.min(low, b.getWorldPosition(_dp).y); m.position.y += ((m.userData.ground || 0) + 0.035 - low); }
 const TALKS = ['Talk1', 'Talk2', 'Talk3']; let talkN = 0, speaker = null;
 function speakerModel(who) { if (who === 'Abba') return abba; if (who === 'Kofi') return state.place === 'after' ? survivors.kofi : people.kofi; if (who === 'Emmanuel Heath') return people.heath;
   if (who === 'Sam') return state.place === 'after' ? survivors.sailor : people.sailor; if (who === 'Symon Benning') return state.place === 'after' ? survivors.benning : people.benning; return null; }
@@ -561,20 +564,23 @@ canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel
 
 let propC = null;
 function buildPropC() { propC = []; const b = new THREE.Box3(); for (const p of streetProps) { if (!p.visible && !p.isGroup && !p.isMesh) continue; b.setFromObject(p); if (b.isEmpty()) continue; const w = b.max.x - b.min.x, d = b.max.z - b.min.z, h = b.max.y - b.min.y; if (b.min.y > 1.2 || h < 0.25 || w > 4 || d > 4 || w * d < 0.05) continue; propC.push([b.min.x, b.min.z, b.max.x, b.max.z]); } }
+function camBounds(x, z) { const p = state.place; if (p === 'in') return [Math.max(IN.x0 + 0.25, Math.min(IN.x1 - 0.3, x)), Math.max(-1.75, Math.min(IN.z1 - 0.25, z))]; if (p === 'ware') return [Math.max(WX0 + 0.3, Math.min(WX1 - 0.3, x)), Math.max(-1.65, Math.min(4.65, z))];
+  if (p === 'out' && !Q.ruin && x > X0 - 1 && x < X1 + 0.3) return [x, Math.max(-(S - 0.25), Math.min(S - 0.25, z))]; return [x, z]; }
 function groundYAt(x, z) { if (x > SHORE - 2.5 && Math.abs(z) < 1.75) return 0.06; if (x > X0 && x < X1 && Math.abs(z) > S - 1.7 && Math.abs(z) < S + 0.1) return 0.12; return 0; }
 function groundY(x, z) { if (state.place !== 'out' || Q.ruin) return 0; if (x > SHORE - 2.5 && Math.abs(z) < 1.75) return 0.06; if (x > X0 && x < X1 && Math.abs(z) > S - 1.7 && Math.abs(z) < S + 0.1) return 0.12; return 0; }
 function clampPos(nx, nz) {
   if (state.place === 'ware') { nx = Math.max(WX0 + 0.5, Math.min(WX1 - 0.6, nx)); nz = Math.max(-1.4, Math.min(4.4, nz)); for (const [tx, tz, r] of [[-258.6, 2.9, 1.5], [-252.5, 1.2, 1.0]]) { const dx = nx - tx, dz = nz - tz, d = Math.hypot(dx, dz); if (d < r && d > 0) { nx = tx + dx / d * r; nz = tz + dz / d * r; } } return [nx, nz]; }
-  if (state.place === 'after') { nx = Math.max(X0 + 0.6, Math.min(0.4, nx)); nz = Math.max(-3.4, Math.min(3.4, nz));
+  if (state.place === 'after') { nx = Math.max(X0 + 0.6, Math.min(0.4, nx)); nz = Math.max(-3.9, Math.min(3.9, nz));
     for (const t of CAMP_TENTS) [nx, nz] = pushOut(nx, nz, t[0], t[1], t[2] / 2 + 0.35, t[4] / 2 + 0.35, t[5]);
-    for (const [cx, cz, r] of [[FX, FZ, 0.75], [ABBA.x, ABBA.z, 0.65], [HEATH.x, HEATH.z, 0.65], ...SURV.map((p) => [p[0], p[1], 0.6])]) { const dx = nx - cx, dz = nz - cz, d = Math.hypot(dx, dz); if (d < r && d > 0) { nx = cx + dx / d * r; nz = cz + dz / d * r; } } return [nx, nz]; }
+    for (const [cx, cz, r] of [[FX, FZ, 0.75], [ABBA.x, ABBA.z, 0.65], [HEATH.x, HEATH.z, 0.65], ...SURV.map((p) => [p[0], p[1], 0.6]), ...EXTRA.map((p) => [p[0], p[1], 0.6])]) { const dx = nx - cx, dz = nz - cz, d = Math.hypot(dx, dz); if (d < r && d > 0) { nx = cx + dx / d * r; nz = cz + dz / d * r; } } return [nx, nz]; }
   if (state.place === 'yard') { nx = Math.max(YX + 0.8, Math.min(YX + 13, nx)); nz = Math.max(YZ - 13, Math.min(YZ + 4.5, nz)); const dx = nx - (YX + 6), dz = nz - (YZ - 2), d = Math.hypot(dx, dz); if (d < 1.7 && d > 0) { nx = YX + 6 + dx / d * 1.7; nz = YZ - 2 + dz / d * 1.7; } return [nx, nz]; }
   if (state.place === 'sea') return [Math.max(SHORE + 4, Math.min(SHORE + 75, nx)), Math.max(9, Math.min(75, nz))];
   if (state.place === 'in') {
     nx = Math.max(IN.x0 + 0.45, Math.min(IN.x1 - 0.95, nx)); nz = Math.max(-1.5, Math.min(IN.z1 - 0.45, nz));
-    for (const [tx, tz, r] of [[-198.2, 1.3, 1.25], [-201.6, 1.0, 1.25], [-195.9, 2.3, 0.75]]) { const dx = nx - tx, dz = nz - tz, d = Math.hypot(dx, dz); if (d < r && d > 0) { nx = tx + dx / d * r; nz = tz + dz / d * r; } }
+    for (const [tx, tz, r] of [[-198.2, 1.3, 1.25], [-201.6, 1.0, 1.25], [-195.9, 2.3, 0.75], ...EXTRA_IN]) { const dx = nx - tx, dz = nz - tz, d = Math.hypot(dx, dz); if (d < r && d > 0) { nx = tx + dx / d * r; nz = tz + dz / d * r; } }
     return [nx, nz];
   }
+  if (FORT.ready && !FB.on && (nz < -8.6 || state.z < -8.6) && nx > 4 && nx < SHORE - 0.3) return fortClamp(nx, nz);
   nx = Math.max(X0 - 0.2, Math.min(SHORE + 23, nx)); if (!townReady && nx < X1 + 2.5) { nx = X1 + 2.5; if (!holdToast) { holdToast = true; toast('The town is still loading.'); setTimeout(() => { holdToast = false; }, 4000); } }
   nx = Math.min(SHORE + 21.5, nx); if (nx > SHORE - 1.5) { if (state.x <= SHORE - 1.5 && Math.abs(nz) > 1.4) nx = SHORE - 1.5; else nz = Math.max(-1.4, Math.min(1.4, nz)); }
   else if (nx > X1 + 0.3) nz = Math.max(-9, Math.min(9, nz));
@@ -596,16 +602,18 @@ function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTim
 $('goal').onclick = () => showGoal(true);
 function foundCount() { return FINDS.filter((f) => state.unlocked.includes(f.id)).length; }
 function setGoal() {
-  if (Q.on || state.place === 'ware') return;          // chapters set their own goals
+  if (Q.on || state.place === 'ware' || FB.on) return;          // chapters set their own goals
   let g;
   if (!state.unlocked.includes('harbour')) g = 'Walk down the pier and into the town.';
   else if (!state.talked) g = 'Find the woman in the white head wrap. She keeps the tavern with the turtle sign.';
   else if (state.place === 'out' && !state.ate) g = 'Go into The Turtle. The door is right beside Abba.';
   else if (!state.ate) g = 'Abba is behind the counter. Ask her for some stew.';
   else if (foundCount() < FINDS.length) g = 'Look around the tavern. Things found: ' + foundCount() + ' of ' + FINDS.length + '.';
+  else if (!state.unlocked.includes('morgan')) g = 'Old Ned, sitting at the table by the window, has a story about Captain Morgan.';
+  else if (!state.unlocked.includes('forts')) g = 'Walk out to Fort Charles. Follow the beach past the last houses, away from the pier.';
   else g = 'You have finished the first part. Open your journal for the next part of the story.';
   if (g !== goalText) { goalText = g; showGoal(); }
-  if (state.ate && foundCount() === FINDS.length && !state.done) { state.done = true; setTimeout(() => toast('Well done! Your journal now has ' + state.unlocked.length + ' pages.'), 3800); }
+  if (state.ate && foundCount() === FINDS.length && state.unlocked.includes('forts') && !state.done) { state.done = true; setTimeout(() => toast('Well done! Your journal now has ' + state.unlocked.length + ' pages.'), 3800); }
 }
 let convo = TALK, convoEnd = null;
 function showStep() {
@@ -635,7 +643,7 @@ const ACTIONS = [
   { label: 'Talk to Symon Benning', r: 2.4, where: () => state.place === 'after' && survivors.benning && [SURV[1][0], SURV[1][1]], go: () => startConvo(BENNING_AFTER) },
   { label: 'Talk to the minister', r: 2.6, where: () => state.place === 'after' && people.heath && people.heath.parent && [HEATH.x, HEATH.z], go: () => startConvo(state.unlocked.includes('heath') ? [{ who: 'Emmanuel Heath', text: 'God keep you, Mr Galdy.' }] : HEATH_TALK) },
   { label: 'Reach for the boat', r: 3.6, where: () => state.place === 'sea' && Q.boat && [Q.boat.position.x, Q.boat.position.z], go: () => finishQuake(false) },
-  { label: 'Talk to her', r: 3.4, where: () => townReady && !Q.on && state.place === 'out' && [ABBA.x, ABBA.z], go: () => startConvo(state.talked ? AFTER : TALK, () => { state.talked = true; if (ring) ring.visible = false; }) },
+  { label: 'Talk to her', r: 3.4, where: () => townReady && !Q.on && !FB.on && state.place === 'out' && [ABBA.x, ABBA.z], go: () => startConvo(state.talked ? AFTER : TALK, () => { state.talked = true; if (ring) ring.visible = false; }) },
   { label: 'Go into the tavern', r: 2.0, where: () => tavernReady && !Q.on && state.place === 'out' && state.talked && [-6.18, -4.5], go: () => { setPlace('in'); state.x = -203; state.z = 2.3; state.yaw = 0; state.pitch = 0; setGoal(); } },
   { label: 'Go back to the street', r: 1.3, where: () => state.place === 'in' && [-203, 3.3], go: () => { setPlace('out'); state.x = -6.18; state.z = -3.4; state.yaw = Math.PI; state.pitch = 0; setGoal(); } },
   { label: 'Talk to Abba', r: 2.3, where: () => state.place === 'in' && [-201, -1.9], go: () => startConvo(state.ate ? AFTER : STEW, () => { if (!state.ate) { state.ate = true; stew.visible = true; } }) },
@@ -681,6 +689,7 @@ function chapterFade(name, fn) { return function (...a) { if (fading) return; if
 function goArrive() { hideCard(); if (Q.on) { resetWorld(); Q.on = false; } setPlace('out'); state.x = 43; state.z = 0; state.yaw = Math.PI / 2; state.pitch = 0; goalText = ''; setGoal(); cue('begin'); }
 const CHAPTERS = [
   { year: '1690', name: 'Arrival', go: () => goArrive(), done: () => state.ate },
+  { year: '1670', name: 'Ned\u2019s story: Morgan\u2019s men', go: () => fbIntro(), done: () => state.unlocked.includes('morgan') },
   { year: '1691', name: 'The warehouse', go: () => wareIntro(), done: () => !!state.ch.ware },
   { year: '7 June 1692', name: 'The earthquake', go: () => quakeIntro(), done: () => state.unlocked.includes('tomb') },
   { year: '1692', name: 'The days after', go: () => beginAfter(), done: () => !!state.ch.after },
@@ -846,9 +855,16 @@ function buildAfter() { if (afterG) return; afterG = new THREE.Group(); scene.ad
   for (const [x, z, l, ry, rz] of [[-4.3, -2.9, 3.0, 0.15, 0.18], [-3.6, 0.2, 2.6, -1.25, 0.12], [-9.6, 2.8, 3.0, 0.05, 0.3], [-10.8, -2.9, 2.4, -0.05, 0.1]]) { const b = mk(new THREE.BoxGeometry(l, 0.2, 0.2), tim, x, 0.35, z); b.rotation.set(0, ry, rz); }
   const fl = mk(new THREE.PlaneGeometry(160, 160), seaMat, 81.2, 0.07, 0); fl.rotation.x = -Math.PI / 2; const wet = mk(new THREE.PlaneGeometry(3, 14), new THREE.MeshBasicMaterial({ color: 0x5f4e38, transparent: true, opacity: 0.4 }), -0.2, 0.012, 0); wet.rotation.x = -Math.PI / 2;
   placeHeath();
-  for (const [x, z, ry, id] of SURV) { if (!people[id]) continue; const keep = people[id].userData.anim; delete people[id].userData.anim; const m = skClone(people[id]); people[id].userData.anim = keep; m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(0.78, 0.74, 0.68); } }); m.visible = true; m.position.set(x, 0, z); m.rotation.y = ry; afterG.add(m); animate(m, id === 'sailor' ? 'Sad1' : id === 'kofi' ? 'Injured' : (CL.SitDisbelief ? 'SitDisbelief' : 'Sad2')); survivors[id] = m; if (id === 'benning' && CL.SitDisbelief) { m.userData.sits = true; const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 0.45), new THREE.MeshStandardMaterial({ map: plankTex([132, 100, 70], 3, 1, 2), roughness: 0.9 })); seat.position.set(x - Math.sin(ry) * 0.18, 0.21, z - Math.cos(ry) * 0.18); seat.rotation.y = ry; afterG.add(seat); } }
+  /* where whole houses sank out of sight, only stubs of wall, a chimney top and beams are left above the sand */
+  for (const o of townObjs) { if (o.sink < 12) continue; const p = o.m.position, side = p.z < 0 ? -1 : 1, rnd = (k) => Math.abs(Math.sin(p.x * 7.1 + k * 3.7));
+    for (let i = 0; i < 3; i++) { const w = 1.2 + rnd(i) * 2.2, h = 0.35 + rnd(i + 4) * 0.9, wall = mk(new THREE.BoxGeometry(w, h, 0.36), bm, p.x - 2.2 + i * 2.1 + rnd(i + 9), h / 2 - 0.15, p.z - side * (1.2 + rnd(i + 2) * 3)); wall.rotation.set(rnd(i + 5) * 0.12, rnd(i + 6) * 0.5 - 0.25, (rnd(i + 7) - 0.5) * 0.2); }
+    for (let i = 0; i < 2; i++) { const b = mk(new THREE.BoxGeometry(2.4 + rnd(i + 11), 0.18, 0.18), tim, p.x - 1 + i * 2.2, 0.25, p.z - side * (2 + rnd(i + 12) * 2)); b.rotation.set(0, rnd(i + 13) * 2, 0.15 + rnd(i + 14) * 0.25); }
+    const pile = mk(new THREE.ConeGeometry(1.1 + rnd(20) * 0.6, 0.5, 9), bm, p.x + 1.5, 0.15, p.z - side * 1.8); pile.rotation.y = rnd(21) * 3; }
+  for (const [x, z, ry, id, clip, tint] of EXTRA) { if (!people[id]) continue; const keep = people[id].userData.anim; delete people[id].userData.anim; const m = skClone(people[id]); people[id].userData.anim = keep;
+    m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); m.position.set(x, 0, z); m.rotation.y = ry; m.visible = true; afterG.add(m); animate(m, clip); grounded.push(m); }
+  for (const [x, z, ry, id] of SURV) { if (!people[id]) continue; const keep = people[id].userData.anim; delete people[id].userData.anim; const m = skClone(people[id]); people[id].userData.anim = keep; m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(0.78, 0.74, 0.68); } }); m.visible = true; m.position.set(x, 0, z); m.rotation.y = ry; afterG.add(m); animate(m, id === 'sailor' ? 'Sad2' : id === 'kofi' ? 'Sad1' : (CL.SitDisbelief ? 'SitDisbelief' : 'Sad2')); survivors[id] = m; grounded.push(m); if (id === 'benning' && CL.SitDisbelief) { m.userData.sits = true; const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 0.45), new THREE.MeshStandardMaterial({ map: plankTex([132, 100, 70], 3, 1, 2), roughness: 0.9 })); seat.position.set(x - Math.sin(ry) * 0.18, 0.21, z - Math.cos(ry) * 0.18); seat.rotation.y = ry; afterG.add(seat); } }
   cur = scene; }
-function placeHeath() { const m = people.heath; if (!m || !afterG || m.parent) return; m.position.set(HEATH.x, 0, HEATH.z); m.rotation.y = HEATH.ry; afterG.add(m); animate(m, 'Pray'); }
+function placeHeath() { const m = people.heath; if (!m || !afterG || m.parent) return; grounded.push(m); m.position.set(HEATH.x, 0, HEATH.z); m.rotation.y = HEATH.ry; afterG.add(m); animate(m, 'Pray'); m.userData.ground = 0; }
 function afterDone() { return state.unlocked.includes('tentp') && state.unlocked.includes('kingston'); }
 function afterGoal() { goalText = !Q.aTalk ? 'Find Abba in the camp.' : afterDone() ? 'Go back to Abba.' : 'Look around: the big tent, and the edge of the water.'; showGoal(); }
 function beginAfter() { cue('sad'); hideCard(); buildAfter(); buildSeaProps(); if (state.place !== 'out') setPlace('out'); resetWorld(); Q.on = true; Q.phase = 'after'; Q.ruin = true; sinkTown(0, 1); afterG.visible = true;
@@ -985,7 +1001,7 @@ function frame(now) {
   if (Q.on) { quakeTick(dt, now / 1000); debrisTick(dt); } const sh = Q.shake * (reduceMotion ? 0.15 : 1), tt = now / 1000;
   if (galdy) { const show = third && state.started && state.place !== 'sea' && !(Q.on && (Q.phase === 'swallow')); galdy.visible = show; if (show) { galdy.position.set(state.x, groundY(state.x, state.z), state.z); galdy.rotation.y = state.yaw + Math.PI;
       const moving = stepDist > 0 && performance.now() - lastStep < 250, ac = galdy.userData.anim; if (ac && moving !== gWalk) { gWalk = moving; if (moving) ac.play(CL.Walk ? 'Walk' : null); else ac.rest(); } if (ac && gWalk && ac.cur !== ac.base) ac.cur.timeScale = Math.max(0.6, Math.min(1.6, moveSpeed / 1.5)); } }
-  camera.position.set(state.x + Math.sin(tt * 31) * 0.06 * sh, eyeY + camLift + (reduceMotion ? 0 : Math.sin(bob) * 0.035) + Math.sin(tt * 37) * 0.05 * sh, state.z + Math.sin(tt * 27) * 0.05 * sh); camera.rotation.set(state.pitch + Math.sin(tt * 29) * 0.015 * sh, state.yaw, Math.sin(tt * 23) * 0.03 * sh); if (galdy && galdy.visible) { const back = state.place === 'out' ? 2.6 : 1.9; camera.position.x += Math.sin(state.yaw) * back; camera.position.z += Math.cos(state.yaw) * back; camera.position.y += 0.35; camera.rotation.x -= 0.12; }
+  camera.position.set(state.x + Math.sin(tt * 31) * 0.06 * sh, eyeY + camLift + (reduceMotion ? 0 : Math.sin(bob) * 0.035) + Math.sin(tt * 37) * 0.05 * sh, state.z + Math.sin(tt * 27) * 0.05 * sh); camera.rotation.set(state.pitch + Math.sin(tt * 29) * 0.015 * sh, state.yaw, Math.sin(tt * 23) * 0.03 * sh); if (galdy && galdy.visible) { const back = state.place === 'out' ? 2.6 : 1.9, wx = camera.position.x + Math.sin(state.yaw) * back, wz = camera.position.z + Math.cos(state.yaw) * back, sx = state.x, sz = state.z; const [cx2, cz2] = camBounds(wx, wz); camera.position.x = cx2; camera.position.z = cz2; state.x = sx; state.z = sz; camera.position.y += 0.35; camera.rotation.x -= 0.12; }
   for (const [b, q] of animQ) b.quaternion.copy(q);            // put back the animation's own pose before adding ours
   if (seaN && state.place !== 'in' && state.place !== 'ware') { const t = now / 1000; seaN.offset.x = t * 0.02; seaN.offset.y = t * 0.013;
     const p = waves.geometry.attributes.position, b = waves.userData.base; if (!PHONE || (frameN & 1) === 0) for (let i = 0; i < p.count; i++) { const x = b[i * 3], z = b[i * 3 + 2]; p.setY(i, Math.sin(x * 0.42 + t * 1.3) * 0.07 + Math.sin(z * 0.31 + t * 0.9) * 0.06 + Math.sin((x + z) * 0.9 + t * 2.1) * 0.025); } p.needsUpdate = true; if ((frameN++ & (PHONE ? 7 : 3)) === 0) waves.geometry.computeVertexNormals();
@@ -993,6 +1009,8 @@ function frame(now) {
     for (const f of flagsM) { for (let i = 0; i < f.p.count; i++) { const d = f.uv.getX(i); /* 0 at the staff, 1 at the free end, so the hoist edge never leaves the pole */ f.p.setZ(i, f.base[i * 3 + 2] + (Math.sin(d * 5.5 - t * 5.2) * 0.2 + Math.sin(d * 11 - t * 8.3) * 0.05) * d); f.p.setY(i, f.base[i * 3 + 1] + Math.sin(d * 4 - t * 3.1) * 0.05 * d); } f.p.needsUpdate = true; } }
   audioTick(now / 1000); if (state.started && now - lastSave > 5000) { lastSave = now; saveGame(); }
   if (mixer) mixer.update(dt); for (const mx of mixers) { const r = mx.getRoot(); let v = r.visible, o = r.parent; while (v && o) { v = o.visible; o = o.parent; } if (v) mx.update(dt); } for (const m of [abba, ...Object.values(people), ...Object.values(survivors)]) if (m && m.userData.anim) m.userData.anim.tick(dt);
+  for (const m of grounded) if (m.visible && m.parent && m.parent.visible) groundFeet(m);
+  for (const f of TICKS) f(dt);
   if (built && people.kofi && people.kofi.visible && CL.Carry) kofiTick(dt);
   if (built) for (const n of NPCS) { const m = people[n.id]; if (!m || !m.visible || n.walking) continue; const dx = state.x - n.x, dz = state.z - n.z; let w = n.ry; if (Math.hypot(dx, dz) < 4.5) { let d = Math.atan2(dx, dz) - n.ry; d = Math.atan2(Math.sin(d), Math.cos(d)); w = n.ry + d; } let e = w - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * 3); const ac = m.userData.anim; if (ac && CL.TurnL && Math.abs(e) > 0.75 && ac.cur === ac.base && speaker !== m) ac.play(e > 0 ? 'TurnL' : 'TurnR', true);   /* face whoever comes to talk */ }
   if (built && abba) {                       // extra life on top of the idle: breathing, a slow sway, and her head following you
@@ -1012,7 +1030,7 @@ function frame(now) {
     const dx = state.x - ABBA.x, dz = state.z - ABBA.z, d = Math.hypot(dx, dz);
     const want = state.place === 'sea' ? Math.atan2(dx, dz) : d < 9 ? Math.max(-1.1, Math.min(1.1, Math.atan2(dx, dz))) : (state.place === 'in' ? 0 : 0.25); if (!Q.abbaRun) { const ea = want - abba.rotation.y; abba.rotation.y += ea * Math.min(1, dt * 3); const ac = abba.userData.anim; if (ac && CL.TurnLW && Math.abs(ea) > 0.8 && ac.cur === ac.base && abba.visible && !Q.on) ac.play(ea > 0 ? 'TurnLW' : 'TurnRW', true); }
     if (ring && ring.visible) { const s = 1 + (reduceMotion ? 0 : Math.sin(now / 420) * 0.08); ring.scale.set(s, s, s); }
-    if (state.started) { current = null; let best = 1e9; if (!busy) for (const a of ACTIONS) { const w = a.where(); if (!w) continue; const dd = Math.hypot(state.x - w[0], state.z - w[1]); if (dd < a.r && dd < best) { best = dd; current = a; } }
+    if (state.started) { current = null; let best = 1e9; if (!busy) for (const a of ACTIONS) { if (!!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const dd = Math.hypot(state.x - w[0], state.z - w[1]); if (dd < a.r && dd < best) { best = dd; current = a; } }
       $('talk').hidden = !current; if (current && $('talk').textContent !== current.label) $('talk').textContent = current.label;
       if (!state.unlocked.includes('harbour') && state.x < SHORE - 2) { unlock('harbour'); setGoal(); } }
     if (state.place === 'in' && fire && !reduceMotion) { const f = 0.85 + Math.sin(now / 90) * 0.08 + Math.sin(now / 37) * 0.07; fire.scale.set(1, f, 1); fireLight.intensity = 16 * f; for (let i = 0; i < flames.length; i++) { const k = 1.75 + Math.sin(now / 70 + i * 2.1) * 0.25; flames[i].scale.y = flames[i].geometry.type === 'SphereGeometry' ? k : 0.9 + (k - 1.75); } }
@@ -1037,8 +1055,9 @@ async function loadAll() {
   for (const n of NPCS) { const m = prep(window.__got[n.id].scene); m.position.set(n.x, n.y || groundYAt(n.x, n.z), n.z); m.rotation.y = n.ry; scene.add(m); people[n.id] = m; animate(m); }
   buildTown(); if (ring) ring.visible = !state.talked; window.__got = null; townReady = true; built = true;
   // stage 3: the tavern is built in a spare moment, before you can reach its door
-  setTimeout(() => { buildTavern(); for (const f of FINDS) if (state.unlocked.includes(f.id)) finds[f.id].visible = false; if (state.ate) stew.visible = true; tavernReady = true; $('tchap').hidden = false; model('heath').then((g) => { people.heath = prep(g.scene); placeHeath(); }).catch(() => {}); model('galdy').then((g) => { galdy = prep(g.scene); galdy.visible = false; scene.add(galdy); animate(galdy, 'Idle'); $('view').hidden = false; }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
-  if (q.has('shot')) { $('start').click(); if (q.get('shot') === 'talk') { state.x = -3.6; state.z = -1.4; state.yaw = 0.62; state.pitch = -0.02; setTimeout(() => $('talk').click(), 300); } if (q.get('shot') === 'abbarun') { beginQuake(); setPhase('main'); Q.t = 1.6; state.x = 5; state.z = -0.5; state.yaw = Math.PI / 2 - 0.3; } if (q.get('shot') === 'quake1') { beginQuake(); setPhase('main'); Q.t = 6.5; state.x = 6; state.yaw = Math.PI / 2 + 0.3; } if (q.get('shot') === 'quake2') { beginQuake(); toSea(); state.yaw += 0.0; } if (q.get('shot') === 'quake3') { beginQuake(); toSea(); state.x = SHORE + 14; state.z = 20; state.yaw = Math.PI / 2 + 0.35; state.pitch = 0.1; } if (q.get('shot') === 'after') { beginAfter(); state.x = -2; state.z = -1; state.yaw = Math.PI / 2 - 0.1; } if (q.get('shot') === 'after2') { beginAfter(); state.x = -12; state.z = -1; state.yaw = -Math.PI / 2 - 0.15; } if (q.get('shot') === 'yard') { toYard(); } if (q.get('shot') === 'yard2') { toYard(); state.x = YX + 6; state.z = YZ - 0.2; state.yaw = 0; state.pitch = -1.1; } if (q.get('shot') === 'church') { toYard(); state.x = YX + 9; state.z = YZ + 9; state.yaw = Math.atan2(-(YX - 4 - state.x), -(YZ - 6 - state.z)); state.pitch = 0.18; } if (q.get('shot') === 'ware') { beginWare(); } if (q.get('shot') === 'door') { beginWare(); state.x = -253; state.z = 0.6; state.yaw = -Math.PI / 2; state.pitch = 0; } if (q.get('shot') === 'ware2') { beginWare(); state.x = -256.6; state.z = 0.2; state.yaw = 0.62 + Math.PI * 0; state.yaw = Math.atan2(-(-258.6 - state.x), -(2.9 - state.z)); state.pitch = -0.25; } if (q.get('shot') === 'chapters') { openChapters(); } if (q.get('shot') === 'third') { state.x = 12; state.z = 0.3; state.yaw = Math.PI / 2; setTimeout(() => toggleView(), 4500); } if (q.get('shot') === 'kofi2') { state.x = 33; state.z = -0.6; state.yaw = Math.PI / 2 + 0.2; } if (q.get('shot') === 'npc1') { state.x = 23.6; state.z = 0.6; state.yaw = Math.atan2(-(21.7 - 23.6), -(2.35 - 0.6)); } if (q.get('shot') === 'npc2') { state.x = 37.2; state.z = 0.2; state.yaw = Math.PI / 2 - 0.25; } if (q.get('shot') === 'npc3') { state.x = 8.6; state.z = 0.9; state.yaw = Math.PI; state.pitch = 0.05; } if (q.get('shot') === 'camp3') { beginAfter(); state.x = -4.2; state.z = 3.4; state.yaw = Math.PI / 2 - 0.2; } if (q.get('shot') === 'npc4') { beginAfter(); state.x = -7.4; state.z = 3.2; state.yaw = Math.atan2(-(-9.65 + 7.4), -(1.75 - 3.2)); } if (q.get('shot') === 'street') { state.x = 17; state.z = 0.4; } if (q.get('shot') === 'ships') { state.x = SHORE + 1; state.z = 0.9; state.yaw = -Math.PI / 2 + 0.25; state.pitch = 0.22; } if (q.get('shot') === 'beach') { state.x = SHORE - 6; state.z = 1; state.yaw = -Math.PI / 2 - 0.9; state.pitch = -0.05; } if (q.get('shot') === 'beach2') { state.x = SHORE - 7; state.z = -2; state.yaw = -Math.PI / 2 + 0.8; state.pitch = 0.05; } if (q.get('shot') === 'in' || q.get('shot') === 'stew') { state.talked = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = 2.6; state.yaw = 0.25; state.pitch = -0.12; setGoal(); if (q.get('shot') === 'stew') { state.x = -200.6; state.z = -0.6; state.yaw = 0.1; setTimeout(() => { $('talk').click(); state.step = 1; advance(); }, 400); } } } }, 300);
+  setTimeout(() => { buildTavern(); for (const f of FINDS) if (state.unlocked.includes(f.id)) finds[f.id].visible = false; if (state.ate) stew.visible = true; tavernReady = true; $('tchap').hidden = false; model('heath').then((g) => { people.heath = prep(g.scene); placeHeath(); }).catch(() => {}); for (const n of ['ned', 'buc1', 'buc2', 'morgan', 'gunner']) model(n).then((g) => { people[n] = prep(g.scene); pirateReady(n); }).catch(() => {});
+    model('galdy').then((g) => { galdy = prep(g.scene); galdy.scale.multiplyScalar(0.94); galdy.visible = false; scene.add(galdy); animate(galdy, 'Idle'); $('view').hidden = false; }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
+  if (q.has('shot')) { $('start').click(); if (q.get('shot') === 'talk') { state.x = -3.6; state.z = -1.4; state.yaw = 0.62; state.pitch = -0.02; setTimeout(() => $('talk').click(), 300); } if (q.get('shot') === 'abbarun') { beginQuake(); setPhase('main'); Q.t = 1.6; state.x = 5; state.z = -0.5; state.yaw = Math.PI / 2 - 0.3; } if (q.get('shot') === 'quake1') { beginQuake(); setPhase('main'); Q.t = 6.5; state.x = 6; state.yaw = Math.PI / 2 + 0.3; } if (q.get('shot') === 'quake2') { beginQuake(); toSea(); state.yaw += 0.0; } if (q.get('shot') === 'quake3') { beginQuake(); toSea(); state.x = SHORE + 14; state.z = 20; state.yaw = Math.PI / 2 + 0.35; state.pitch = 0.1; } if (q.get('shot') === 'after') { beginAfter(); state.x = -2; state.z = -1; state.yaw = Math.PI / 2 - 0.1; } if (q.get('shot') === 'after2') { beginAfter(); state.x = -12; state.z = -1; state.yaw = -Math.PI / 2 - 0.15; } if (q.get('shot') === 'yard') { toYard(); } if (q.get('shot') === 'yard2') { toYard(); state.x = YX + 6; state.z = YZ - 0.2; state.yaw = 0; state.pitch = -1.1; } if (q.get('shot') === 'church') { toYard(); state.x = YX + 9; state.z = YZ + 9; state.yaw = Math.atan2(-(YX - 4 - state.x), -(YZ - 6 - state.z)); state.pitch = 0.18; } if (q.get('shot') === 'ware') { beginWare(); } if (q.get('shot') === 'door') { beginWare(); state.x = -253; state.z = 0.6; state.yaw = -Math.PI / 2; state.pitch = 0; } if (q.get('shot') === 'ware2') { beginWare(); state.x = -256.6; state.z = 0.2; state.yaw = 0.62 + Math.PI * 0; state.yaw = Math.atan2(-(-258.6 - state.x), -(2.9 - state.z)); state.pitch = -0.25; } if (q.get('shot') === 'chapters') { openChapters(); } if (q.get('shot') === 'third') { state.x = 12; state.z = 0.3; state.yaw = Math.PI / 2; setTimeout(() => toggleView(), 4500); } if (q.get('shot') === 'kofi2') { state.x = 33; state.z = -0.6; state.yaw = Math.PI / 2 + 0.2; } if (q.get('shot') === 'npc1') { state.x = 23.6; state.z = 0.6; state.yaw = Math.atan2(-(21.7 - 23.6), -(2.35 - 0.6)); } if (q.get('shot') === 'npc2') { state.x = 37.2; state.z = 0.2; state.yaw = Math.PI / 2 - 0.25; } if (q.get('shot') === 'npc3') { state.x = 8.6; state.z = 0.9; state.yaw = Math.PI; state.pitch = 0.05; } if (q.get('shot') === 'tav') { state.talked = state.ate = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.0; state.z = -2.2; state.yaw = Math.atan2(-2.7, -2.2); state.pitch = -0.05; } if (q.get('shot') === 'tav2') { state.talked = state.ate = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = -0.6; state.yaw = Math.atan2(2.0, -2.5); state.pitch = -0.08; } if (q.get('shot') === 'fort') { state.x = 21.2; state.z = -14; state.yaw = 0.2; state.pitch = 0.08; } if (q.get('shot') === 'fort2') { setTimeout(() => { state.x = 13; state.z = -24; state.yaw = Math.PI * 0.75 + 0.2; }, 5000); } if (q.get('shot') === 'fb') { setTimeout(() => fbStart(), 4500); setTimeout(() => { state.x = SHORE - 0.5; state.z = 0.4; state.yaw = Math.PI / 2 + 0.25; }, 6000); } if (q.get('shot') === 'camp4') { beginAfter(); state.x = -3; state.z = -3.2; state.yaw = Math.PI - 0.6; state.pitch = 0.05; } if (q.get('shot') === 'credits') { $('credits').hidden = false; } if (q.get('shot') === 'resetc') { setTimeout(() => $('reset').click(), 4000); } if (q.get('shot') === 'camp3') { beginAfter(); state.x = -4.2; state.z = 3.4; state.yaw = Math.PI / 2 - 0.2; } if (q.get('shot') === 'npc4') { beginAfter(); state.x = -7.4; state.z = 3.2; state.yaw = Math.atan2(-(-9.65 + 7.4), -(1.75 - 3.2)); } if (q.get('shot') === 'street') { state.x = 17; state.z = 0.4; } if (q.get('shot') === 'ships') { state.x = SHORE + 1; state.z = 0.9; state.yaw = -Math.PI / 2 + 0.25; state.pitch = 0.22; } if (q.get('shot') === 'beach') { state.x = SHORE - 6; state.z = 1; state.yaw = -Math.PI / 2 - 0.9; state.pitch = -0.05; } if (q.get('shot') === 'beach2') { state.x = SHORE - 7; state.z = -2; state.yaw = -Math.PI / 2 + 0.8; state.pitch = 0.05; } if (q.get('shot') === 'in' || q.get('shot') === 'stew') { state.talked = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = 2.6; state.yaw = 0.25; state.pitch = -0.12; setGoal(); if (q.get('shot') === 'stew') { state.x = -200.6; state.z = -0.6; state.yaw = 0.1; setTimeout(() => { $('talk').click(); state.step = 1; advance(); }, 400); } } } }, 300);
 }
 function start(saved) { if (!(saved && saved.started)) applySave(loadGame()); loadAll().catch(() => {}); if (saved && saved.started) { Object.assign(state, saved); if (state.place !== 'out' || state.x > SHORE + 24 || state.x < X0 - 1 || Math.abs(state.z) > 9.5) { state.place = 'out'; state.x = 17; state.z = 0.4; state.yaw = Math.PI / 2; state.pitch = 0; } $('start').addEventListener('click', () => { if (state.unlocked.length) { $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; } }, { once: true }); } requestAnimationFrame(frame); }
 window.claude?.hot?.snapshot?.(() => (state.place === 'out' && !Q.on ? { ...state, step: 0 } : { ...state, step: 0, place: 'out', x: 17, z: 0.4, yaw: Math.PI / 2, pitch: 0 }));
@@ -1055,6 +1074,156 @@ function toggleView() { if (!galdy) return; third = !third; $('view').setAttribu
 $('view').onclick = toggleView; addEventListener('keydown', (e) => { if ((e.key === 'v' || e.key === 'V') && !e.repeat && document.activeElement?.tagName !== 'INPUT') toggleView(); });
 
 /* reset: this chapter again, or the whole story */
-function chapterNow() { if (state.place === 'ware') return 1; if (Q.on && Q.phase === 'yard') return 4; if (Q.on && (Q.phase === 'after' || state.place === 'after')) return 3; if (Q.on) return 2; return 0; }
+function chapterNow() { if (FB.on) return 1; if (state.place === 'ware') return 2; if (Q.on && Q.phase === 'yard') return 5; if (Q.on && (Q.phase === 'after' || state.place === 'after')) return 4; if (Q.on) return 3; return 0; }
 $('reset').onclick = () => { if (fading) return; closeJournal(); const i = chapterNow(), c = CHAPTERS[i];
   card('Reset', ['Go back to the start of this chapter, or begin the whole story again.'], [{ t: 'Restart \u201c' + c.name + '\u201d', go: () => { hideCard(); if (i === 0) { state.x = 43; state.z = 0; } c.go(); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This erases everything you have found, including your journal pages.'], [{ t: 'Yes, start again', go: () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } location.reload(); } }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }]); };
+
+/* ================= Pirates, Henry Morgan, Fort Charles ================= */
+const FB = { on: false }, FORT = { ready: false };
+JOURNAL.push(
+  { id: 'morgan', title: 'Captain Henry Morgan',
+    simple: ['Henry Morgan was the most famous privateer of Port Royal. He came from Wales and arrived in Jamaica as a young man, around 1658.', 'The governor of Jamaica gave him papers to attack Spanish ships and towns. His men chose him as their admiral.'],
+    deeper: ['He raided Portobelo in 1668 and Maracaibo in 1669. In January 1671 his men took the city of Panama, and it burned.', 'England and Spain had just made peace, so Morgan was arrested and sent to England in 1672. Instead of being punished, he was made a knight in 1674.', 'He came back in 1675 as Lieutenant Governor of Jamaica, and the law he served now hanged pirates. Ned is a made-up character, but Morgan was real.'] },
+  { id: 'funeral', title: 'Morgan’s grave',
+    simple: ['Henry Morgan died in Port Royal on 25 August 1688.', 'He was buried in the Palisadoes cemetery, and the ships in the harbour fired a 22-gun salute.'],
+    deeper: ['Four years later, the 1692 earthquake carried that cemetery into the sea. His grave has never been found.', 'Many stories say Morgan hid treasure in Port Royal. None of them have ever been proved.'] },
+  { id: 'forts', title: 'The forts of Port Royal',
+    simple: ['Six forts with cannons guarded Port Royal: Fort Charles, Fort James, Fort Carlisle, Fort Rupert, Fort Morgan and Fort Walker.', 'Any enemy ship had to sail past their guns to reach the harbour.'],
+    deeper: ['Fort Charles was the first, begun in 1655. It is the only one that survived the 1692 earthquake, and you can still visit it today.', 'Forts James, Carlisle and Rupert sank into the sea in the earthquake.', 'Fort Charles in this game is simpler than the real one, and placed to fit the game.'] });
+
+/* ---------- characters ---------- */
+const TAV = { ned: [-201.6, 1.95, Math.PI], b1: [-199.0, -0.7, Math.PI / 2], b2: [-198.0, -0.7, -Math.PI / 2] };
+const FORTP = { gunner: [14.6, -25.6, Math.PI / 2] };
+function cutlass(m) { const h = m.getObjectByName('mixamorigRightHand'); if (!h || m.userData.sword) return; const g = new THREE.Group(), steel = new THREE.MeshStandardMaterial({ color: 0xc9ccd0, metalness: 0.85, roughness: 0.3 }), brass = new THREE.MeshStandardMaterial({ color: 0xb8893c, metalness: 0.7, roughness: 0.4 });
+  const bl = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.68, 0.008), steel); bl.position.y = 0.42; bl.rotation.z = 0.06; g.add(bl); const gd = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.008, 6, 12, Math.PI), brass); gd.position.y = 0.06; g.add(gd); const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.12, 8), new THREE.MeshStandardMaterial({ color: 0x3a2618, roughness: 0.8 })); gp.position.y = 0.0; g.add(gp);
+  g.position.set(0, 0.07, 0.02); g.rotation.set(Math.PI / 2, 0, 0); const ws = h.getWorldScale(new THREE.Vector3()).x || 1; g.scale.setScalar(1 / ws); h.add(g); m.userData.sword = g; }
+function pirateReady(n) { buildFort(); const m = people[n]; if (!m) return;
+  if (n === 'ned' && indoor) { const [x, z, ry] = TAV.ned; m.position.set(x, 0, z); m.rotation.y = ry; m.userData.sits = true; indoor.add(m); animate(m, CL.SitIdle ? 'SitIdle' : null); grounded.push(m); EXTRA_IN.push([x, z, 0.5]); }
+  if (n === 'buc1' || n === 'buc2') { const [x, z, ry] = n === 'buc1' ? TAV.b1 : TAV.b2; m.position.set(x, 0, z); m.rotation.y = ry; indoor.add(m); animate(m); EXTRA_IN.push([x, z, 0.55]); }
+  if (n === 'gunner') { buildFort(); const [x, z, ry] = FORTP.gunner; m.position.set(x, 0, z); m.rotation.y = ry; FORT.g.add(m); animate(m); }
+  if (n === 'morgan') { m.visible = false; scene.add(m); animate(m); } }
+
+/* ---------- the tavern: a rowdy pair of old buccaneers, and Ned with his stories ---------- */
+const TV = { t: 0, n: 0 };
+const BRAWL = [[0, 'Talk1', 'Laugh'], [3.6, 'Punch', 'Block'], [5.1, 'Block', 'Punch'], [6.6, 'Laugh', 'Defeated'], [12.5, 'Talk2', 'Talk3'], [16, null, null]];
+TICKS.push((dt) => { const a = people.buc1, b = people.buc2; if (!a || !b || state.place !== 'in' || !a.userData.anim) return; if (speaker === a || speaker === b) return;
+  const pt = TV.t; TV.t += dt; for (const [at, c1, c2] of BRAWL) if (pt < at && TV.t >= at) { const once = (c) => c && !/Talk|Laugh/.test(c);
+      if (c1) a.userData.anim.play(c1, once(c1), 3.5); else a.userData.anim.rest(); if (c2) b.userData.anim.play(c2, once(c2), 3.5); else b.userData.anim.rest();
+      if (c1 === 'Punch' && TV.n++ % 2 === 0 && Math.hypot(state.x + 199, state.z) < 6) setTimeout(() => toast('Abba: “Not in my tavern, boys! Take it outside!”'), 700); }
+  if (TV.t > 22) TV.t = 0; });
+const BUCS = [
+  { who: 'Will', text: 'Ha! Mind your feet, friend. Jack here thinks he can beat me at anything.' },
+  { who: 'Jack', text: 'I can! I sailed with Captain Morgan himself. I carried his flag at Portobelo!' },
+  { who: 'Will', text: 'And I carried your hat home when you lost it. Go on, ask old Ned. He was really there.' }];
+const NED = [
+  { who: 'Ned', text: 'Sit down, lad. You look like you want a story. I sailed with Henry Morgan, back when I was young.' },
+  { who: 'Ned', text: 'Morgan came out from Wales with nothing. By 1668 he was our admiral. Portobelo, Maracaibo, then Panama, the richest city in the Spanish lands.' },
+  { who: 'You', text: 'Was he a pirate?' },
+  { who: 'Ned', text: 'He had papers from the governor, so the law called him a privateer. The Spanish called him worse.', choices: [{ t: 'Tell me the story', ok: true }, { t: 'Maybe another time', ok: true }] },
+  { who: 'Ned', text: 'Close your eyes. It is August 1670. I am fifteen, a ship’s boy, and the harbour is full of Morgan’s ships...' }];
+const NED_AGAIN = [
+  { who: 'Ned', text: 'Morgan was knighted by the King, and came back to be Lieutenant Governor. Then he hanged pirates! Ha.' },
+  { who: 'Ned', text: 'He died two years ago. The ships fired 22 guns over his grave out on the Palisadoes. I was there.', unlock: 'funeral' },
+  { who: 'Ned', text: 'The forts fired too. Go and see Fort Charles, past the last houses. Those guns keep us all safe.' }];
+ACTIONS.push(
+  { label: 'Talk to the sailors', r: 2.2, where: () => state.place === 'in' && people.buc1 && people.buc1.parent && [-198.5, -0.7], go: () => startConvo(BUCS) },
+  { label: 'Talk to old Ned', r: 2.4, where: () => state.place === 'in' && people.ned && people.ned.parent && [TAV.ned[0], TAV.ned[1]], go: () => {
+      if (state.unlocked.includes('morgan')) { startConvo(NED_AGAIN, setGoal); return; }
+      let chose = 'yes'; const c = NED.map((st) => st.choices ? { ...st, choices: [{ t: 'Tell me the story', ok: true }, { t: 'Maybe another time', ok: true }] } : st);
+      startConvo(c.slice(0, 4), () => card('Ned’s story', ['Ned is going to tell you about the summer Morgan’s fleet got ready for Panama.', 'In his story, you are young Ned.'], [{ t: 'Hear the story', go: () => { hideCard(); fbStart(); } }, { t: 'Another time', go: hideCard }])); } });
+speakerModel = ((orig) => (who) => who === 'Ned' ? people.ned : who === 'Will' ? people.buc1 : who === 'Jack' ? people.buc2 : who === 'Henry Morgan' ? people.morgan : who === 'The gunner' ? people.gunner : orig(who))(speakerModel);
+
+/* ---------- Fort Charles ---------- */
+const FW = { x0: 5, x1: 19, z0: -32, z1: -22, gate: [14, 16] };
+function buildFort() { if (FORT.ready) return; const g = new THREE.Group(); scene.add(g); FORT.g = g; const prev = cur; cur = g;
+  const stone = new THREE.MeshStandardMaterial({ map: noiseTex([176, 160, 132], 30, 4), roughness: 0.95 }), dark = new THREE.MeshStandardMaterial({ color: 0x1d1d1f, roughness: 0.5, metalness: 0.6 }), wood = new THREE.MeshStandardMaterial({ map: plankTex([110, 84, 58], 3, 1, 2), roughness: 0.9 });
+  const wallH = 3.2, th = 1.1, { x0, x1, z0, z1, gate } = FW;
+  const wall = (ax, az, bx, bz, ports) => { const len = Math.hypot(bx - ax, bz - az), ang = Math.atan2(bz - az, bx - ax), cx = (ax + bx) / 2, cz = (az + bz) / 2;
+    const base = mk(new THREE.BoxGeometry(len, wallH - 0.9, th), stone, cx, (wallH - 0.9) / 2, cz); base.rotation.y = -ang;
+    const n = Math.max(2, Math.round(len / 1.6)); for (let i = 0; i < n; i++) { if (ports && i % 2 === 1) continue; const t = (i + 0.5) / n, mx = ax + (bx - ax) * t, mz = az + (bz - az) * t; const mer = mk(new THREE.BoxGeometry(len / n * 0.92, 0.9, th), stone, mx, wallH - 0.45, mz); mer.rotation.y = -ang; } };
+  wall(x0, z1, gate[0], z1); wall(gate[1], z1, x1, z1); wall(x1, z1, x1, z0, true); wall(x1, z0, x0, z0, true); wall(x0, z0, x0, z1);
+  for (const [x, z] of [[x0, z0], [x1, z0], [x0, z1], [x1, z1]]) { mk(new THREE.BoxGeometry(2.4, wallH + 0.6, 2.4), stone, x, (wallH + 0.6) / 2, z); }
+  for (const x of gate) mk(new THREE.BoxGeometry(0.6, wallH + 0.8, 1.3), stone, x, (wallH + 0.8) / 2, z1); const lin = mk(new THREE.BoxGeometry(2.6, 0.5, 1.3), stone, (gate[0] + gate[1]) / 2, wallH + 0.55, z1);
+  const ground = mk(new THREE.PlaneGeometry(x1 - x0, z1 - z0 + 0.2), new THREE.MeshStandardMaterial({ map: noiseTex([168, 152, 124], 26, 8), roughness: 1 }), (x0 + x1) / 2, 0.01, (z0 + z1) / 2); ground.rotation.x = -Math.PI / 2;
+  const rampart = mk(new THREE.BoxGeometry(2.6, 1.0, z1 - z0 - 1), stone, x1 - 1.85, 0.5, (z0 + z1) / 2);   /* a raised gun platform along the sea wall */
+  const step = mk(new THREE.BoxGeometry(1.2, 0.5, 1.6), stone, x1 - 3.65, 0.25, z1 - 2.2);
+  FORT.guns = [];
+  const gun = (x, z, ry, y) => { const c = new THREE.Group(); c.position.set(x, y, z); c.rotation.y = ry; g.add(c);
+    const car = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.34, 1.3), wood); car.position.y = 0.32; c.add(car); for (const sx of [-0.36, 0.36]) for (const sz of [-0.42, 0.42]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 12), wood); w.rotation.z = Math.PI / 2; w.position.set(sx, 0.2, sz); c.add(w); }
+    const br = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.2, 1.9, 14), dark); br.rotation.x = Math.PI / 2; br.position.set(0, 0.62, 0.35); c.add(br); const mz = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.035, 6, 14), dark); mz.position.set(0, 0.62, 1.3); c.add(mz);
+    FORT.guns.push(c); return c; };
+  for (let i = 0; i < 4; i++) gun(x1 - 1.5, z0 + 1.6 + i * 2.2, Math.PI / 2, 1.0);
+  for (let i = 0; i < 3; i++) gun(x0 + 2.2 + i * 3.2, z0 + 1.4, Math.PI, 0);
+  for (const [x, z] of [[x1 - 3.3, z0 + 1.0], [x0 + 1.4, z1 - 1.4]]) for (let i = 0; i < 6; i++) { const b = mk(new THREE.SphereGeometry(0.11, 10, 8), dark, x + (i % 3) * 0.23 + (i > 2 ? 0.11 : 0), 0.11 + (i > 2 ? 0.18 : 0), z + (i > 2 ? 0.1 : 0)); }
+  const ph = mk(new THREE.BoxGeometry(3.4, 2.4, 2.6), stone, x0 + 3, 1.2, z1 - 3.2); const roof = mk(new THREE.ConeGeometry(2.6, 1.1, 4), new THREE.MeshStandardMaterial({ map: noiseTex([110, 70, 54], 30, 4), roughness: 0.9 }), x0 + 3, 2.95, z1 - 3.2); roof.rotation.y = Math.PI / 4; roof.scale.set(1.0, 1, 0.78);
+  mk(new THREE.BoxGeometry(0.9, 1.6, 0.06), wood, x0 + 3, 0.8, z1 - 1.88);
+  for (const [x, z] of [[x0 + 6, z1 - 1.2], [x0 + 6.8, z1 - 1.1], [x0 + 6.4, z1 - 1.8]]) mk(new THREE.CylinderGeometry(0.3, 0.3, 0.8, 12), wood, x, 0.4, z);
+  const pole = mk(new THREE.CylinderGeometry(0.06, 0.08, 9, 8), wood, x0 + 8.5, 4.5, (z0 + z1) / 2); const flag = cv(96, 64, (c) => { c.fillStyle = '#f2f0ea'; c.fillRect(0, 0, 96, 64); c.fillStyle = '#c8202a'; c.fillRect(40, 0, 16, 64); c.fillRect(0, 24, 96, 16); });
+  const fl = mk(new THREE.PlaneGeometry(1.8, 1.2, 12, 4), new THREE.MeshStandardMaterial({ map: flag, side: THREE.DoubleSide, roughness: 0.9 }), x0 + 9.4, 8.3, (z0 + z1) / 2); FORT.flag = { p: fl.geometry.attributes.position, base: fl.geometry.attributes.position.array.slice() };
+  const sign = cv(256, 64, (c) => { c.fillStyle = '#4a3a2a'; c.fillRect(0, 0, 256, 64); c.fillStyle = '#efe4c8'; c.font = '600 30px Georgia, serif'; c.textAlign = 'center'; c.fillText('FORT CHARLES', 128, 42); }); mk(new THREE.PlaneGeometry(2.4, 0.6), new THREE.MeshStandardMaterial({ map: sign, roughness: 0.9 }), (gate[0] + gate[1]) / 2, wallH + 0.55, z1 + 0.66);
+  const path = mk(new THREE.PlaneGeometry(3.2, 13.5), new THREE.MeshStandardMaterial({ map: noiseTex([190, 170, 134], 26, 6), roughness: 1, transparent: true, opacity: 0.75 }), 20.4, 0.012, -15.2); path.rotation.x = -Math.PI / 2;
+  cur = prev; FORT.ready = true; }
+function inRect(x, z, a, b, c, d) { return x >= a && x <= b && z >= c && z <= d; }
+function fortOk(x, z) { const { x0, x1, z0, z1, gate } = FW;
+  if (inRect(x, z, x0 + 0.8, x1 - 3.3, z0 + 0.8, z1 - 0.8)) return !inRect(x, z, x0 + 1.0, x0 + 5.0, z1 - 4.8, z1 - 1.6);        /* courtyard, minus the powder house */
+  if (inRect(x, z, gate[0] + 0.3, gate[1] - 0.3, z1 - 1.0, z1 + 0.8)) return true;                                             /* the gate */
+  if (inRect(x, z, 12, SHORE - 0.6, z1 + 0.75, -8.6)) return true;                                                              /* sand between the houses and the fort */
+  if (inRect(x, z, x1 + 1.5, SHORE - 0.6, z0 - 1, z1 + 0.8)) return true;                                                       /* round the sea side */
+  return false; }
+function fortClamp(nx, nz) { if (nz > -8.6 && state.z > -8.6) return [nx, nz]; if (fortOk(nx, nz)) return [nx, nz]; if (fortOk(nx, state.z)) return [nx, state.z]; if (fortOk(state.x, nz)) return [state.x, nz]; if (nz > -8.6 && nx > X1 + 0.3) return [nx, nz]; return [state.x, state.z]; }
+const _gy = groundY; groundY = (x, z) => (state.place === 'out' && !FB.on && FORT.ready && inRect(x, z, FW.x1 - 3.15, FW.x1 - 0.5, FW.z0 + 0.5, FW.z1 - 0.5)) ? 1.0 : _gy(x, z);
+function boom(x, z) { audioInit(); if (AU.ctx && AU.on) { const c = AU.ctx, t0 = c.currentTime, src = c.createBufferSource(), lp = c.createBiquadFilter(), g = out(0), o = c.createOscillator(), og = c.createGain(); src.buffer = AU.step || AU.crack; src.loop = true; src.playbackRate.value = 0.3; lp.type = 'lowpass'; lp.frequency.setValueAtTime(900, t0); lp.frequency.exponentialRampToValueAtTime(120, t0 + 1.4); g.gain.setValueAtTime(0.9, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.8); src.connect(lp); lp.connect(g); src.start(t0); src.stop(t0 + 1.9);
+    o.frequency.setValueAtTime(70, t0); o.frequency.exponentialRampToValueAtTime(28, t0 + 0.8); og.gain.setValueAtTime(0.7, t0); og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9); o.connect(og); og.connect(g); o.start(t0); o.stop(t0 + 1); }
+  debrisInit(); for (let i = 0; i < 5; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: dustTex, color: 0xe8e2d6, transparent: true, opacity: 0, depthWrite: false })); sp.position.set(x + 0.6 + i * 0.5, 1.7 + Math.random() * 0.4, z + (Math.random() - 0.5) * 0.6); sp.userData = { age: -i * 0.08, life: 3 + Math.random() }; scene.add(sp); dustP.push(sp); }
+  Q.shake = Math.max(Q.shake, 0.25); setTimeout(() => { if (!Q.on) Q.shake = 0; }, 350); }
+TICKS.push((dt) => { if (!FORT.ready || state.place !== 'out') return; const t = performance.now() / 1000, f = FORT.flag; for (let i = 0; i < f.p.count; i++) { const d = (f.base[i * 3] + 0.9) / 1.8; f.p.setZ(i, f.base[i * 3 + 2] + Math.sin(d * 5 - t * 5) * 0.15 * d); } f.p.needsUpdate = true; if (!Q.on) for (const sp of dustP) { const u = sp.userData; if (!u.fort) continue; } });
+TICKS.push((dt) => { if (Q.on || !dustP.length || debP.length) return; for (let i = dustP.length - 1; i >= 0; i--) { const sp = dustP[i], u = sp.userData; u.age += dt; if (u.age < 0) continue; const k = u.age / u.life; sp.scale.setScalar(1 + k * 5); sp.position.y += dt * 0.4; sp.material.opacity = Math.min(0.7, u.age * 2) * (1 - k); if (k >= 1) { scene.remove(sp); sp.material.dispose(); dustP.splice(i, 1); } } });
+const GUNNER = [
+  { who: 'The gunner', text: 'Welcome to Fort Charles! It was the first fort built here. There are five more around the town.' },
+  { who: 'The gunner', text: 'Fort James, Fort Carlisle, Fort Rupert, Fort Morgan and Fort Walker. Any enemy ship has to sail past all our guns.' },
+  { who: 'You', text: 'Have the guns ever been fired?' },
+  { who: 'The gunner', text: 'For practice, and for honour. When Sir Henry Morgan was buried, the ships fired 22 guns for him. Want to hear one?', unlock: 'forts' }];
+ACTIONS.push(
+  { label: 'Talk to the gunner', r: 2.4, where: () => FORT.ready && !Q.on && state.place === 'out' && people.gunner && [FORTP.gunner[0], FORTP.gunner[1]], go: () => startConvo(state.unlocked.includes('forts') ? [{ who: 'The gunner', text: 'Stand back from the wall, and cover your ears!' }] : GUNNER, () => { setGoal(); fireSalute(); }) });
+function fireSalute() { if (!FORT.guns) return; const guns = FORT.guns.slice(0, 4); guns.forEach((c, i) => setTimeout(() => { if (state.place !== 'out' || FB.on) return; const p = new THREE.Vector3(0, 0.62, 1.4); c.localToWorld(p); boom(p.x, p.z); const br = c.children.find((o) => o.geometry && o.geometry.type === 'CylinderGeometry' && o.position.z > 0.3); if (br) { br.position.z = 0.1; setTimeout(() => { br.position.z = 0.35; }, 500); } }, 600 + i * 900)); }
+TICKS.push(() => { if (FORT.g) FORT.g.visible = state.place === 'out' && !(Q.on && Q.phase === 'yard'); });
+
+/* ---------- Ned's story: Port Royal, August 1670 ---------- */
+const FBP = { morgan: [SHORE + 9.5, -0.55, -Math.PI / 2], d1: [SHORE - 4.2, 2.6, Math.PI / 2], d2: [SHORE - 2.6, 2.6, -Math.PI / 2], c1: [SHORE + 3, 0.7, Math.PI / 2], watch: [[SHORE - 3.4, 4.2, Math.PI, 'Laugh'], [SHORE - 5.6, 1.2, Math.PI * 0.7, 'Talk2'], [SHORE + 14, 0.8, -Math.PI / 2, 'Wave']] };
+const FBG = { group: null, cast: [] };
+JOURNAL.push({ id: 'panama', title: 'The raid on Panama',
+  simple: ['In August 1670 Morgan gathered a fleet of ships and more than a thousand men.', 'In January 1671 they crossed the land to Panama on foot and took the city. It burned.'],
+  deeper: ['Morgan’s men were paid with a share of what they captured. Most got far less than they hoped.', 'The young Ned in this story is made up. The raid was real.'] });
+function fbIntro() { if (!townReady || !tavernReady || !people.morgan) { toast('The town is still loading.'); return; } closeJournal(); card('1670', ['This is old Ned’s story, from twenty years before.', 'In it, you are young Ned, a ship’s boy in Port Royal, the summer Morgan’s fleet got ready for Panama.'], [{ t: 'Begin', go: () => { hideCard(); fbStart(); } }, { t: 'Not now', go: hideCard }]); }
+function clone(id, tint) { const keep = people[id].userData.anim, sw = people[id].userData.sword; delete people[id].userData.anim; delete people[id].userData.sword; const m = skClone(people[id]); people[id].userData.anim = keep; if (sw) people[id].userData.sword = sw; if (tint) m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); return m; }
+function fbBuild() { if (FBG.group) return; const g = new THREE.Group(); g.visible = false; scene.add(g); FBG.group = g;
+  const put = (m, [x, z, ry], clip) => { m.position.set(x, groundYAt(x, z), z); m.rotation.y = ry; m.visible = true; g.add(m); animate(m, clip); FBG.cast.push(m); return m; };
+  const d1 = put(clone('buc1'), FBP.d1, 'Sword1'), d2 = put(clone('buc2'), FBP.d2, 'Sword2'); cutlass(d1); cutlass(d2); FBG.d = [d1, d2];
+  put(clone('kofi', [0.9, 0.85, 0.8]), FBP.c1, 'Carry'); FBG.carrier = FBG.cast[FBG.cast.length - 1];
+  for (const [x, z, ry, clip] of FBP.watch) put(clone(ry > 2 ? 'sailor' : 'buc2', [0.85, 0.8, 0.78]), [x, z, ry], clip);
+  const mo = people.morgan; mo.position.set(FBP.morgan[0], 0.06, FBP.morgan[1]); mo.rotation.y = FBP.morgan[2]; g.add(mo); mo.visible = true; cutlass(mo);
+  FBG.box = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.32, 0.34), new THREE.MeshStandardMaterial({ map: plankTex([150, 118, 80], 3, 1, 2), roughness: 0.9 })); g.add(FBG.box); }
+const FB_TALK = [
+  { who: 'Henry Morgan', text: 'You, boy! Are you the new ship’s boy? Good. Keep out from under the men’s feet.' },
+  { who: 'Henry Morgan', text: 'I am Admiral Henry Morgan. The Governor of Jamaica has given me papers to fight the Spanish. That makes us privateers, not pirates.' },
+  { who: 'You', text: 'Where are we going, Admiral?' },
+  { who: 'Henry Morgan', text: 'Somewhere rich. Every man gets a share of what we take, and nothing if we take nothing. So we practise until we are the best.', anim: 'Point' },
+  { who: 'Henry Morgan', text: 'Now run along and watch the men at their sword drill. Then go and help load the ships.', unlock: 'morgan' }];
+function fbStart() { fbBuild(); FB.on = true; FB.step = 0; FB.wasThird = third; third = false; setPlace('out'); npcShow(false); abba.visible = false; ABBA.x = 9999; if (KP.box) KP.box.visible = false; if (galdy) galdy.visible = false;
+  state.x = SHORE + 15; state.z = 0; state.yaw = Math.PI / 2; state.pitch = 0; FBG.group.visible = true; document.body.classList.add('flash');
+  goalText = 'Find Admiral Morgan on the pier. He wears a red coat.'; showGoal(); toast('Port Royal, August 1670'); }
+function fbEnd() { card('What happened next', ['The fleet sailed. In January 1671 Morgan’s men took Panama, and the city burned.', 'England had just made peace with Spain, so Morgan was arrested and sent to England. Instead of being punished, he was made a knight. He came back to rule Jamaica, and hanged pirates.', 'He died in 1688. Four years later, the earthquake took his grave into the sea.'], [{ t: 'Back to the tavern', go: fbLeave }]); }
+function fbLeave() { hideCard(); FB.on = false; document.body.classList.remove('flash'); FBG.group.visible = false; people.morgan.visible = false; npcShow(true); third = !!FB.wasThird; unlock('panama'); state.ch.ned = true; saveGame();
+  setPlace('in'); state.x = -200.4; state.z = 2.4; state.yaw = Math.PI - 0.4; state.pitch = 0; setGoal(); toast('Ned: “And that is how it was. Now, who is buying?”'); }
+ACTIONS.push(
+  { fb: true, label: 'Talk to Admiral Morgan', r: 2.6, where: () => FB.on && [FBP.morgan[0], FBP.morgan[1]], go: () => startConvo(FB.step ? [{ who: 'Henry Morgan', text: 'Still here? Go and watch the sword drill, then help with the loading.' }] : FB_TALK, () => { FB.step = Math.max(FB.step, 1); goalText = 'Watch the sword drill on the beach, by the boats.'; showGoal(); }) },
+  { fb: true, label: 'Watch the sword drill', r: 3.4, where: () => FB.on && FB.step >= 1 && [(FBP.d1[0] + FBP.d2[0]) / 2, FBP.d1[1]], go: () => { const [a, b] = FBG.d; startConvo([{ who: 'Tom', text: 'Watch close, boy! Feet apart, sword up. Block high, then low!' }, { who: 'Dick', text: 'And when you lose, you say so, like a gentleman. Yield?' }, { who: 'Tom', text: 'I yield! Ha! Again tomorrow.' }], () => { a.userData.anim.play('Defeated', true); b.userData.anim.play('Laugh', true, 3); setTimeout(() => { a.userData.anim.play('Sword1'); b.userData.anim.play('Sword2'); }, 7000); FB.step = Math.max(FB.step, 2); goalText = 'Help load the ships: talk to the man carrying crates.'; showGoal(); }); } },
+  { fb: true, label: 'Help load the ships', r: 2.6, where: () => FB.on && FB.step >= 2 && FBG.carrier && [FBG.carrier.position.x, FBG.carrier.position.z], go: () => startConvo([{ who: 'Sailor', text: 'Biscuit, water, powder, shot. Enough for months at sea. Hand me that crate, boy.' }, { who: 'Sailor', text: 'Ha! Good lad. That is the last of it. We sail with the morning tide.' }], fbEnd) });
+speakerModel = ((orig) => (who) => who === 'Tom' ? FBG.d && FBG.d[0] : who === 'Dick' ? FBG.d && FBG.d[1] : who === 'Sailor' ? FBG.carrier : orig(who))(speakerModel);
+TICKS.push((dt) => { if (!FB.on || !FBG.carrier) return; const m = FBG.carrier, t = performance.now() / 1000, k = (Math.sin(t * 0.25) + 1) / 2, x = SHORE + 1 + k * 9, dir = Math.cos(t * 0.25) > 0 ? Math.PI / 2 : -Math.PI / 2;
+  if (speaker === m) return; m.position.set(x, groundYAt(x, 0.7), 0.7); m.rotation.y = dir; const hl = m.getObjectByName('mixamorigLeftHand'), hr = m.getObjectByName('mixamorigRightHand'); if (hl && hr) { FBG.box.position.copy(hl.getWorldPosition(_dp)).add(hr.getWorldPosition(_ds)).multiplyScalar(0.5); FBG.box.rotation.y = dir; } });
+TICKS.push(() => { if (!FB.on) return; const m = people.morgan; if (!m) return; const dx = state.x - m.position.x, dz = state.z - m.position.z; if (Math.hypot(dx, dz) < 5) m.rotation.y += (Math.atan2(dx, dz) - m.rotation.y) * 0.08; });
+const _clampFB = clampPos; clampPos = (nx, nz) => { if (FB.on && state.place === 'out') { nx = Math.max(SHORE - 9, Math.min(SHORE + 21.5, nx)); if (nx > SHORE - 1.5) nz = Math.max(-1.4, Math.min(1.4, nz)); else nz = Math.max(-5, Math.min(6, nz)); for (const m of [people.morgan, ...FBG.cast]) { if (!m || m === FBG.carrier) continue; const dx = nx - m.position.x, dz = nz - m.position.z, d = Math.hypot(dx, dz); if (d < 0.75 && d > 0) { nx = m.position.x + dx / d * 0.75; nz = m.position.z + dz / d * 0.75; } } return [nx, nz]; } return _clampFB(nx, nz); };
+
+FADE_TITLES.fbStart = ['August 1670', 'Ned\u2019s story']; FADE_TITLES.fbLeave = ['1690', 'Back in The Turtle'];
+fbStart = chapterFade('fbStart', fbStart); fbLeave = chapterFade('fbLeave', fbLeave);
