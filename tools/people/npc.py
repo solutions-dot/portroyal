@@ -91,7 +91,7 @@ if G.get('shoes'):
 WA=Vector((0,-0.115*s,HEAD+0.15*s)); WN=Vector((0,-0.20,-0.18)).normalized()
 def hair_off(c):
     d=-((c-WA).dot(WN)); return 0.002+(0.006+0.004*G.get('hairvol',0)+0.0015*noise.noise(c*120))*min(1.0,max(0.0,d/0.012))**0.7
-parts.append(('hair',piece('Hair','body',lambda c:c.z>HEAD+0.02 and not (c.y<-0.06 and c.z<HEAD+0.12*s) and not (abs(c.x)>0.064*s and c.z<HEAD+0.09*s and c.y<0.035),hair_off,'Hair',cuts=[(WA,WN,None),((0,0.02,HEAD+0.035),Vector((0,0.3,-1)).normalized(),lambda c:c.y>-0.02)],sub=True)))
+if G.get('hat')!='cap': parts.append(('hair',piece('Hair','body',lambda c:c.z>HEAD+0.02 and not (c.y<-0.06 and c.z<HEAD+0.12*s) and not (abs(c.x)>0.064*s and c.z<HEAD+0.09*s and c.y<0.035),hair_off,'Hair',cuts=[(WA,WN,None),((0,0.02,HEAD+0.035),Vector((0,0.3,-1)).normalized(),lambda c:c.y>-0.02)],sub=True)))
 clothes=[o for k,o in parts]
 for o in clothes:
     md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}
@@ -131,8 +131,19 @@ if G.get('hat')=='felt':
 if G.get('hat')=='cap':
     bm=bmesh.new(); bmesh.ops.create_uvsphere(bm,u_segments=20,v_segments=10,radius=1.0)
     bmesh.ops.delete(bm,geom=[v for v in bm.verts if v.co.z<-0.15],context='VERTS')
-    for v in bm.verts: v.co=Vector((v.co.x*0.106*s,v.co.y*0.118*s,v.co.z*0.085*s))+HC+Vector((0,0.004,-0.075*s))
+    for v in bm.verts:   # a Monmouth cap: a soft knitted dome that hugs the skull
+        z=v.co.z; v.co=Vector((v.co.x*0.112*s,v.co.y*0.124*s,z*0.104*s))+HC+Vector((0,0.006,-0.088*s))
+    bmesh.ops.create_cone(bm,cap_ends=False,segments=20,radius1=0.114*s,radius2=0.114*s,depth=0.026*s,matrix=Matrix.Translation(HC+Vector((0,0.006,-0.096*s)))@Matrix.Scale(1.09,4,Vector((0,1,0))))   # rolled brim
     rigid('Cap',bm,'Hat','Head')
+if G.get('scarf'):          # a neckerchief knotted at the throat, hides the shirt's neck edge
+    z=NECK-0.012*s; bm=bmesh.new(); n=24; ring=[]; C=Vector((0,J('Neck').y,z))
+    for i in range(n):
+        a=i/n*2*math.pi; d=Vector((math.sin(a),-math.cos(a),0)); hit=tree.ray_cast(Vector((0,J('Neck').y,z))+d*0.3,-d)[0]
+        r=min(((hit-C).length if hit else 0.06),0.068); p=C+d*(r+0.02); ring.append(p)
+    lo=[bm.verts.new(p+Vector((0,0,-0.03*s))+(p-C)*0.35) for p in ring]; hi=[bm.verts.new(p+Vector((0,0,0.02*s))) for p in ring]
+    for i in range(n): j=(i+1)%n; bm.faces.new((lo[i],lo[j],hi[j],hi[i]))
+    f=ring[0]; k=[bm.verts.new(f+Vector((dx,-0.02,dz))) for dx,dz in ((-0.018,-0.02),(0.018,-0.02),(0.01,-0.07),(-0.012,-0.066))]; bm.faces.new(k)
+    rigid('Scarf',bm,'Scarf','Spine2')
 if G.get('bands'):
     z=NECK-0.03*s; hit=tree.ray_cast(Vector((0,-1,z)),Vector((0,1,0)))[0]; y=(hit.y if hit else -0.06)-0.026
     bm=bmesh.new()
