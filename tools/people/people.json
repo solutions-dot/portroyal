@@ -1,0 +1,14 @@
+[
+ {"name":"kofi","body":{"gender":1.0,"age":0.42,"muscle":0.68,"weight":0.45,"height":0.55,"proportions":0.6,"african":1.0,"caucasian":0.0,"asian":0.0},
+  "garments":{"sleeve":0.42,"breeches":true,"breechkind":"plain"},
+  "colors":{"Skin":[96,62,44],"Shirt":[178,166,140],"Breeches":[146,134,108],"Hair":[22,18,16]}},
+ {"name":"sailor","body":{"gender":1.0,"age":0.38,"muscle":0.58,"weight":0.4,"height":0.5,"proportions":0.55,"african":0.15,"caucasian":0.85,"asian":0.0},
+  "garments":{"sleeve":0.86,"breeches":true,"breechkind":"slops","hat":"cap","hairvol":0.5},
+  "colors":{"Skin":[190,140,108],"Shirt":[118,132,146],"Breeches":[206,200,184],"Hair":[58,40,28],"Hat":[150,40,36]}},
+ {"name":"benning","body":{"gender":1.0,"age":0.78,"muscle":0.4,"weight":0.62,"height":0.45,"proportions":0.5,"african":0.0,"caucasian":1.0,"asian":0.0},
+  "garments":{"sleeve":0.86,"coat":true,"coatsleeves":false,"breeches":true,"shoes":true,"stockings":true,"apron":true},
+  "colors":{"Skin":[214,168,140],"Shirt":[226,220,204],"Coat":[112,82,52],"Breeches":[72,60,50],"Stockings":[150,146,138],"Shoes":[34,26,22],"Apron":[104,66,40],"Hair":[150,146,140]}},
+ {"name":"heath","body":{"gender":1.0,"age":0.62,"muscle":0.35,"weight":0.5,"height":0.5,"proportions":0.5,"african":0.0,"caucasian":1.0,"asian":0.0},
+  "garments":{"sleeve":0.86,"coat":true,"coatsleeve":0.8,"coathem":0.02,"breeches":true,"shoes":true,"stockings":true,"hat":"felt","bands":true},
+  "colors":{"Skin":[220,176,150],"Shirt":[226,220,204],"Coat":[28,28,30],"Breeches":[30,30,32],"Stockings":[40,40,42],"Shoes":[22,20,20],"Hat":[24,24,26],"Bands":[236,234,226],"Hair":[96,82,70]}}
+]
