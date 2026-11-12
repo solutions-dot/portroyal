@@ -40,5 +40,13 @@
  "SlashOut": "Stable_Sword_Outward_Slash.fbx",
  "Sheathe": "Sheathing_Sword.fbx",
  "Draw": "Withdrawing_Sword.fbx",
- "Laugh": "Laughing.fbx"
+ "Laugh": "Laughing.fbx",
+ "SitDrink": "Sitting_Drinking.fbx",
+ "Drink": "Drinking.fbx",
+ "Salute": "Salute.fbx",
+ "Cry": "Crying.fbx",
+ "Tread": "Treading_Water.fbx",
+ "PickUp": "Picking_Up.fbx",
+ "Clap": "Clapping.fbx",
+ "Cheer": "Cheering.fbx"
 }
