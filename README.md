@@ -21,6 +21,7 @@ Progress saves in the browser. Teachers can open all chapters from the Chapters 
 ```
 npm install
 npm run build     # bundles src/main.js into game/app.js
+npm run build:dev # same, plus test views (?shot=...) and the autoplayer (?auto=<chapter>, add &one for one chapter)
 npm run serve     # http://localhost:8765
 ```
 
