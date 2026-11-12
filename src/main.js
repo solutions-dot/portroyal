@@ -101,18 +101,6 @@ const JOURNAL = [
     deeper: ['Until 1698, one company, the Royal African Company, was the only English company allowed to bring enslaved people from Africa.',
              'We do not know the year Lewis Galdy began to buy and sell people. We know that he did. The letter in this game is made up, to show the choice in front of him.',
              'Abba\u2019s mother is made up too. Thousands of real mothers were sold in Port Royal.'] },
-];
-const COINS = [
-  { who: 'You', text: 'A ship\u2019s cook wants a sack of cocoa. The price is 20 reales.' },
-  { who: 'You', text: 'He gives me 3 pieces of eight. Each one is worth 8 reales. How many reales do I give back?',
-    choices: [{ t: '2 reales' }, { t: '4 reales', ok: true }, { t: '6 reales' }], hint: 'Not quite. Three eights are 24. Take away 20.' },
-  { who: 'You', text: 'Four reales. But first I weigh his coins. One is too light. Someone has shaved its edge.', unlock: 'scales' },
-];
-const WARE1 = [
-  { who: 'Abba', text: 'Good day, Lewis. I need a cask of wine for The Turtle.' },
-  { who: 'You', text: 'Take the one by the door. You can pay me on Friday.' },
-  { who: 'Abba', text: 'There is a letter on your desk. The captain of the slave ship left it. I know what it asks.' },
-  { who: 'Abba', text: 'My mother was sold on that wharf, Lewis. Read it. Then decide what kind of merchant you are.', unlock: 'market' },
   { id: 'kofi', title: 'Kofi\u2019s name',
     simple: ['Many enslaved people in Jamaica were taken from West Africa. Kofi is an Akan name from West Africa. It is given to a boy born on a Friday.', 'Owners often gave enslaved people new names. Many people kept their own names among themselves.'],
     deeper: ['Enslaved Africans did much of the hardest work in Port Royal: loading ships, carrying goods, building and rowing.', 'Kofi is a character we made up. About 2,500 enslaved people lived in Port Royal, and most of their names were never written down.'] },
@@ -126,6 +114,21 @@ const WARE1 = [
     simple: ['Emmanuel Heath was a real person. He was the minister of St Paul\u2019s Church in Port Royal.', 'He lived through the earthquake and wrote letters about it. Much of what we know about that day comes from him.'],
     deeper: ['He wrote from a ship called the Granada, out in the harbour. He went ashore to pray with the hurt and dying, and to christen children.', 'Like many people then, he believed the earthquake was God\u2019s punishment. Today, scientists explain it with loose, wet sand turning to liquid.', 'His words in this game are made up, but they follow what he wrote.'] },
 ];
+const COINS = [
+  { who: 'You', text: 'A ship\u2019s cook wants a sack of cocoa. The price is 20 reales.' },
+  { who: 'You', text: 'He gives me 3 pieces of eight. Each one is worth 8 reales. How many reales do I give back?',
+    choices: [{ t: '2 reales' }, { t: '4 reales', ok: true }, { t: '6 reales' }], hint: 'Not quite. Three eights are 24. Take away 20.' },
+  { who: 'You', text: 'Four reales. But first I weigh his coins. One is too light. Someone has shaved its edge.', unlock: 'scales' },
+];
+const WARE1 = [
+  { who: 'Abba', text: 'Good day, Lewis. I need a cask of wine for The Turtle.' },
+  { who: 'You', text: 'Take the one by the door. You can pay me on Friday.' },
+  { who: 'Abba', text: 'There is a letter on your desk. The captain of the slave ship left it. I know what it asks.' },
+  { who: 'Abba', text: 'My mother was sold on that wharf, Lewis. Read it. Then decide what kind of merchant you are.', unlock: 'market' },
+  { who: 'You', text: 'Abba, wait. I have not said yes to anything.' },
+  { who: 'Abba', text: 'I know. That is why I came to tell you. I will send a boy for the wine.' },
+  { who: 'Abba', text: 'Good day, Lewis.' },
+];
 const NPCS = [
   { id: 'kofi', label: 'Talk to the dockworker', who: 'Kofi', x: 21.7, z: 2.35, ry: Math.PI + 0.5, talk: [
     { who: 'Kofi', text: 'Mind the casks. They are heavy, and the captain wants them on board by noon.' },
@@ -133,7 +136,7 @@ const NPCS = [
     { who: 'Kofi', text: 'No. I am enslaved. A merchant in this town says he owns me. I work, and I am not paid.' },
     { who: 'Kofi', text: 'My mother named me Kofi, because I was born on a Friday. Here they call me something else. I keep my own name.', unlock: 'kofi' }],
     again: [{ who: 'Kofi', text: 'I have work to do. Go well.' }] },
-  { id: 'sailor', label: 'Talk to the sailor', who: 'Sam', x: 34.5, z: 0.55, ry: Math.PI / 2, talk: [
+  { id: 'sailor', label: 'Talk to the sailor', who: 'Sam', x: 34.5, z: 0.55, y: 0.06, ry: Math.PI / 2, talk: [
     { who: 'Sam', text: 'Fine sloop, isn\u2019t she? Built of Jamaica cedar. Fast enough to catch anything on the sea.' },
     { who: 'You', text: 'Are you a pirate?' },
     { who: 'Sam', text: 'Hush! Years ago the governor gave us papers to attack Spanish ships. That made us privateers, not pirates.' },
@@ -212,7 +215,7 @@ let sky = null;
 { const g = new THREE.SphereGeometry(2500, 24, 12); const c = []; const top = new THREE.Color(0x3f86c9), col = new THREE.Color();
   for (let i = 0; i < g.attributes.position.count; i++) { const t = Math.max(0, g.attributes.position.getY(i) / 2500); col.copy(HAZE).lerp(top, Math.pow(t, 0.55)); c.push(col.r, col.g, col.b); }
   g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
-  sky = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false })); scene.add(sky); }
+  sky = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false })); sky.userData.far = true; scene.add(sky); }
 
 function noiseTex(base, spread, rep) {
   const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); const d = x.createImageData(128, 128);
@@ -230,7 +233,7 @@ const S = 5.2, X0 = -17.9, X1 = 17.9, SHORE = 23; const seaMat = new THREE.MeshS
     for (let i = 0; i <= n; i++) { const a = -Math.PI + 2 * Math.PI * i / n, da = Math.abs(Math.atan2(Math.sin(a - 1.45), Math.cos(a - 1.45))), fade = Math.max(0, Math.min(1, (da - 0.95) / 0.7)), hh = fade * h * (0.45 + 0.3 * Math.sin(i * 0.21 + seed) + 0.18 * Math.sin(i * 0.63 + seed * 3) + 0.07 * Math.sin(i * 1.7)); pos.push(Math.cos(a) * r, -2, Math.sin(a) * r, Math.cos(a) * r, Math.max(0, hh) - 1, Math.sin(a) * r); }
     const idx = []; for (let i = 0; i < n; i++) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
-    scene.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: colr, side: THREE.DoubleSide, fog: false })));
+    const hill = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: colr, side: THREE.DoubleSide, fog: false })); hill.userData.far = true; scene.add(hill);
   }
 }
 
@@ -431,7 +434,7 @@ function buildTavern() {
 }
 function setPlace(p) {
   state.place = p; const inside = p !== 'out', home = p === 'in' ? indoor : p === 'ware' ? wareG : scene;
-  for (const c of scene.children) { if (c.isLight) continue; if (c === indoor) c.visible = p === 'in'; else if (c === wareG) c.visible = p === 'ware'; else if (c === afterG || c === yardG) c.visible = false; else c.visible = !inside; }
+  for (const c of scene.children) { if (c.isLight) continue; if (c === indoor) c.visible = p === 'in'; else if (c === wareG) c.visible = p === 'ware'; else if (c === afterG || c === yardG) c.visible = false; else c.visible = !inside || (p === 'ware' && c.userData.far === true); }
   home.add(abba); abba.visible = p !== 'ware';
   hemi.intensity = inside ? 0.5 : 2.3; sun.intensity = inside ? 1.5 : 2.6; if (p === 'in') sun.position.set(0.3, 0.75, 1); else if (p === 'ware') sun.position.set(1, 0.7, 0.2); else sun.position.set(-0.35, 1, 0.75);
   fireLight.intensity = p === 'in' ? 16 : 0; lamp.intensity = p === 'in' ? 9 : 0; if (wLamp) wLamp.intensity = p === 'ware' ? 14 : 0;
@@ -568,7 +571,8 @@ $('next').onclick = advance;
 const ACTIONS = [
   ...['sugar', 'cocoa', 'logwood'].map((id, i) => ({ label: ['Look at the casks', 'Look at the sacks', 'Look at the red wood'][i], r: 2.6, where: () => state.place === 'ware' && !state.unlocked.includes(id) && WGOODS[id], go: () => { unlock(id); wareMark[id].visible = false; wareGoal(); } })),
   { label: 'Sit at the desk', r: 2.4, where: () => state.place === 'ware' && wareSeen() && !W.coins && [-258.6, 2.9], go: () => startConvo(COINS, () => { W.coins = true; abba.visible = true; ABBA.x = -250.2; ABBA.z = 0.4; abba.position.set(ABBA.x, 0, ABBA.z); toast('Abba has come in.'); wareGoal(); }) },
-  { label: 'Talk to Abba', r: 3.0, where: () => state.place === 'ware' && W.coins && !W.talked && [ABBA.x, ABBA.z], go: () => startConvo(WARE1, () => { W.talked = true; wareGoal(); }) },
+  { label: 'Talk to Abba', r: 3.0, where: () => state.place === 'ware' && W.coins && !W.talked && [ABBA.x, ABBA.z], go: () => startConvo(WARE1, () => { W.talked = true; abba.visible = false; ABBA.x = 9999; toast('Abba goes out to the wharf.'); wareGoal(); }) },
+  { label: 'Go out to the wharf', r: 1.8, where: () => state.place === 'ware' && [WX1 - 0.7, 0.8], go: () => card('Leave the warehouse?', ['Lewis can come back to 1691 any time from the Chapters menu.'], [{ t: 'Back to the town', go: leaveWare }, { t: 'Stay', go: hideCard }]) },
   { label: 'Read the letter', r: 2.4, where: () => state.place === 'ware' && W.talked && [-258.6, 2.9], go: readLetter },
   { label: 'Talk to Abba', r: 3.2, where: () => state.place === 'after' && [ABBA.x, ABBA.z], go: () => { if (afterDone() && Q.aTalk) startConvo(AFTER2, stayOrGo); else startConvo(AFTER1, () => { Q.aTalk = true; afterGoal(); }); } },
   { label: 'Look at the big tent', r: 3.6, where: () => state.place === 'after' && !state.unlocked.includes('tentp') && [-12.5, 0.8], go: () => { unlock('tentp'); afterGoal(); } },
@@ -614,9 +618,15 @@ function applySave(d) { if (!d || !Array.isArray(d.unlocked)) return; state.unlo
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.started) saveGame(); });
 
 /* ---------- chapters ---------- */
+const FADE_TITLES = { goArrive: ['1690', 'Port Royal, Jamaica'], leaveWare: ['1690', 'Back in the town'], beginWare: ['1691', 'Lewis Galdy\u2019s warehouse'], beginQuake: ['7 June 1692', 'A hot, still morning'], beginAfter: ['Three days later', 'The camp on the beach'], toYard: ['Many years later', 'Green Bay, across the harbour'], leaveQuake: ['1690', 'Before the earthquake'] };
+let fading = false;
+function chapterFade(name, fn) { return function (...a) { if (fading) return; if (new URLSearchParams(location.search).has('shot')) return fn.apply(this, a);
+  fading = true; const f = $('fade'), [t, sub] = FADE_TITLES[name]; $('fadeT').textContent = t; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
+  f.hidden = false; requestAnimationFrame(() => { f.classList.add('on'); }); setTimeout(() => { fn.apply(this, a); f.classList.add('txt'); }, 750);
+  setTimeout(() => { f.classList.remove('txt'); }, 2500); setTimeout(() => { f.classList.remove('on'); }, 2900); setTimeout(() => { f.hidden = true; fading = false; }, 3800); }; }
 function goArrive() { hideCard(); if (Q.on) { resetWorld(); Q.on = false; } setPlace('out'); state.x = 43; state.z = 0; state.yaw = Math.PI / 2; state.pitch = 0; goalText = ''; setGoal(); cue('begin'); }
 const CHAPTERS = [
-  { year: '1690', name: 'Arrival', go: goArrive, done: () => state.ate },
+  { year: '1690', name: 'Arrival', go: () => goArrive(), done: () => state.ate },
   { year: '1691', name: 'The warehouse', go: () => wareIntro(), done: () => !!state.ch.ware },
   { year: '7 June 1692', name: 'The earthquake', go: () => quakeIntro(), done: () => state.unlocked.includes('tomb') },
   { year: '1692', name: 'The days after', go: () => beginAfter(), done: () => !!state.ch.after },
@@ -749,7 +759,7 @@ function buildAfter() { if (afterG) return; afterG = new THREE.Group(); scene.ad
   for (const [x, z, l, ry, rz] of [[-4.3, -2.9, 3.0, 0.15, 0.18], [-3.6, 0.2, 2.6, -1.25, 0.12], [-9.6, 2.8, 3.0, 0.05, 0.3], [-10.8, -2.9, 2.4, -0.05, 0.1]]) { const b = mk(new THREE.BoxGeometry(l, 0.2, 0.2), tim, x, 0.35, z); b.rotation.set(0, ry, rz); }
   const fl = mk(new THREE.PlaneGeometry(160, 160), seaMat, 81.2, 0.07, 0); fl.rotation.x = -Math.PI / 2; const wet = mk(new THREE.PlaneGeometry(3, 14), new THREE.MeshBasicMaterial({ color: 0x5f4e38, transparent: true, opacity: 0.4 }), -0.2, 0.012, 0); wet.rotation.x = -Math.PI / 2;
   placeHeath();
-  for (const [x, z, ry, id] of SURV) { if (!people[id]) continue; const m = skClone(people[id]); m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(0.78, 0.74, 0.68); } }); m.position.set(x, 0, z); m.rotation.y = ry; afterG.add(m); animate(m); }
+  for (const [x, z, ry, id] of SURV) { if (!people[id]) continue; const m = skClone(people[id]); m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(0.78, 0.74, 0.68); } }); m.visible = true; m.position.set(x, 0, z); m.rotation.y = ry; afterG.add(m); animate(m); }
   cur = scene; }
 function placeHeath() { const m = people.heath; if (!m || !afterG || m.parent) return; m.position.set(HEATH.x, 0, HEATH.z); m.rotation.y = HEATH.ry; afterG.add(m); animate(m); }
 function afterDone() { return state.unlocked.includes('tentp') && state.unlocked.includes('kingston'); }
@@ -800,17 +810,12 @@ function buildWare() { if (wareG) return; wareG = new THREE.Group(); wareG.visib
   // the doorway: hinged doors swung inward, a strip of wharf outside, and the harbour beyond
   for (const s2 of [-1, 1]) { const hinge = new THREE.Group(); hinge.position.set(WX1 - 0.05, 0, 0.8 + s2 * 1.7); hinge.rotation.y = s2 * 1.48; wareG.add(hinge); B(0.07, 3.0, 1.7, oak, 0, 1.5, -s2 * 0.85, hinge); for (const y of [0.5, 2.5]) B(0.02, 0.06, 1.2, iron, -0.045, y, -s2 * 0.75, hinge); }
   for (const z of [-0.95, 2.55]) B(0.2, 3.0, 0.15, dark, WX1 - 0.05, 1.5, z); B(0.25, 0.25, 3.8, dark, WX1 - 0.05, 3.1, 0.8);
-  const out = mk(new THREE.PlaneGeometry(4, 6), new THREE.MeshBasicMaterial({ map: plankTex([150, 132, 106], 6, 4, 2) }), WX1 + 2, 0.005, 0.8); out.rotation.x = -Math.PI / 2;
-  const view = cv(768, 512, (x, w, h) => { let g = x.createLinearGradient(0, 0, 0, h * 0.55); g.addColorStop(0, '#7fb3dc'); g.addColorStop(1, '#d9e7ee'); x.fillStyle = g; x.fillRect(0, 0, w, h);
-    x.fillStyle = '#9db7b2'; x.beginPath(); x.moveTo(0, h * 0.5); for (let i = 0; i <= 24; i++) x.lineTo(i * w / 24, h * (0.42 + 0.06 * Math.sin(i * 0.9) + 0.03 * Math.sin(i * 2.3))); x.lineTo(w, h * 0.56); x.lineTo(0, h * 0.56); x.fill();
-    g = x.createLinearGradient(0, h * 0.55, 0, h); g.addColorStop(0, '#2c94a4'); g.addColorStop(1, '#1d6f7e'); x.fillStyle = g; x.fillRect(0, h * 0.55, w, h * 0.45);
-    x.strokeStyle = 'rgba(255,255,255,0.25)'; x.lineWidth = 2; for (let i = 0; i < 40; i++) { const yy = h * 0.58 + Math.random() * h * 0.38, xx = Math.random() * w; x.beginPath(); x.moveTo(xx, yy); x.lineTo(xx + 20 + Math.random() * 30, yy); x.stroke(); }
-    x.fillStyle = '#4b3423'; x.beginPath(); x.moveTo(w * 0.2, h * 0.6); x.lineTo(w * 0.82, h * 0.6); x.quadraticCurveTo(w * 0.86, h * 0.66, w * 0.78, h * 0.73); x.lineTo(w * 0.27, h * 0.73); x.quadraticCurveTo(w * 0.19, h * 0.68, w * 0.2, h * 0.6); x.fill();
-    x.fillStyle = '#c99a4a'; x.fillRect(w * 0.2, h * 0.6, w * 0.62, h * 0.018); x.fillStyle = '#1e1712'; x.fillRect(w * 0.24, h * 0.66, w * 0.54, h * 0.012);
-    x.strokeStyle = '#3b2a1c'; x.lineWidth = 6; for (const mx of [0.35, 0.52, 0.68]) { x.beginPath(); x.moveTo(w * mx, h * 0.6); x.lineTo(w * mx, h * 0.08); x.stroke(); } x.lineWidth = 4; for (const [mx, yy, ww] of [[0.35, 0.3, 0.14], [0.52, 0.22, 0.17], [0.52, 0.4, 0.2], [0.68, 0.32, 0.14]]) { x.beginPath(); x.moveTo(w * (mx - ww / 2), h * yy); x.lineTo(w * (mx + ww / 2), h * yy); x.stroke(); }
-    x.strokeStyle = 'rgba(40,30,20,0.6)'; x.lineWidth = 1; for (const mx of [0.35, 0.52, 0.68]) for (const d of [-0.07, 0.07]) { x.beginPath(); x.moveTo(w * mx, h * 0.12); x.lineTo(w * (mx + d), h * 0.6); x.stroke(); }
-    x.fillStyle = '#8a6c4c'; x.fillRect(0, h * 0.8, w, h * 0.2); x.fillStyle = '#5c4632'; for (let i = 0; i < 9; i++) x.fillRect(i * w / 8, h * 0.8, 8, h * 0.2); x.fillStyle = '#6b513a'; x.fillRect(0, h * 0.8, w, 6); });
-  view.wrapS = view.wrapT = THREE.ClampToEdgeWrapping; mk(new THREE.PlaneGeometry(9, 6), new THREE.MeshBasicMaterial({ map: view, fog: false }), WX1 + 4, 2.4, 0.8).rotation.y = -Math.PI / 2;
+  const ext = new THREE.Group(); wareG.add(ext); { const deck = std(plankTex([150, 132, 106], 6, 4, 2)), tim = std(plankTex([84, 66, 48], 3, 1, 2)), Bx = (w, h, d, m, x, y, z) => mk(new THREE.BoxGeometry(w, h, d), m, x, y, z, ext);
+    Bx(7, 0.1, 30, deck, WX1 + 3.5, -0.05, 0.8); Bx(0.25, 0.3, 30, tim, WX1 + 7, -0.15, 0.8);                      /* the wharf: deck and its edge beam */
+    for (let z = -13; z <= 15; z += 2.4) { mk(new THREE.CylinderGeometry(0.16, 0.18, 2.2, 9), tim, WX1 + 7.05, -0.9, z, ext); if (Math.abs(z - 0.8) > 2 && Math.round(z) % 2 === 0) mk(new THREE.CylinderGeometry(0.13, 0.15, 0.55, 9), tim, WX1 + 6.6, 0.27, z, ext); }
+    for (const [x, z] of [[WX1 + 2.2, -3.4], [WX1 + 2.9, -2.6], [WX1 + 1.9, 5.2]]) mk(new THREE.CylinderGeometry(0.34, 0.34, 0.85, 14), tim, x, 0.42, z, ext);
+    const lagoon = mk(new THREE.PlaneGeometry(400, 400), seaMat, WX1 + 207, -0.45, 0.8, ext); lagoon.rotation.x = -Math.PI / 2;
+    if (shipsM.sloop) { const sl = shipsM.sloop.clone(); sl.position.set(WX1 + 17, -0.35, 1.5); sl.rotation.y = Math.PI / 2; sl.visible = true; sl.traverse((o) => { if (o.isMesh && o.material && o.material.isMeshStandardMaterial) { o.material = o.material.clone(); o.material.emissive.set(0xffffff); o.material.emissiveMap = o.material.map; o.material.emissiveIntensity = 0.55; } }); ext.add(sl); } }   /* daylight outside: the inside lamps don't reach it */
   const pool = mk(new THREE.PlaneGeometry(4.5, 3.2), new THREE.MeshBasicMaterial({ color: 0xfff2cf, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false }), WX1 - 2.6, 0.012, 0.8); pool.rotation.x = -Math.PI / 2;
   mk(new THREE.PlaneGeometry(1.4, 0.9), new THREE.MeshBasicMaterial({ color: 0xdfe9e2 }), cx - 2, 2.9, 4.99).rotation.y = Math.PI; for (const dx of [-0.35, 0, 0.35]) B(0.04, 0.9, 0.04, iron, cx - 2 + dx, 2.9, 4.96);
   // sugar hogsheads
@@ -871,7 +876,7 @@ function frame(now) {
     for (const f of flagsM) { for (let i = 0; i < f.p.count; i++) { const d = f.uv.getX(i); /* 0 at the staff, 1 at the free end, so the hoist edge never leaves the pole */ f.p.setZ(i, f.base[i * 3 + 2] + (Math.sin(d * 5.5 - t * 5.2) * 0.2 + Math.sin(d * 11 - t * 8.3) * 0.05) * d); f.p.setY(i, f.base[i * 3 + 1] + Math.sin(d * 4 - t * 3.1) * 0.05 * d); } f.p.needsUpdate = true; } }
   audioTick(now / 1000); if (state.started && now - lastSave > 5000) { lastSave = now; saveGame(); }
   if (mixer) mixer.update(dt); for (const mx of mixers) mx.update(dt);
-  if (built) for (const n of NPCS) { const m = people[n.id]; if (!m || !m.visible) continue; const dx = state.x - n.x, dz = state.z - n.z; let w = n.ry; if (Math.hypot(dx, dz) < 6) { let d = Math.atan2(dx, dz) - n.ry; d = Math.atan2(Math.sin(d), Math.cos(d)); w = n.ry + Math.max(-1.3, Math.min(1.3, d)); } m.rotation.y += (w - m.rotation.y) * Math.min(1, dt * 2.5); }
+  if (built) for (const n of NPCS) { const m = people[n.id]; if (!m || !m.visible) continue; const dx = state.x - n.x, dz = state.z - n.z; let w = n.ry; if (Math.hypot(dx, dz) < 4.5) { let d = Math.atan2(dx, dz) - n.ry; d = Math.atan2(Math.sin(d), Math.cos(d)); w = n.ry + d; } let e = w - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * 3);   /* face whoever comes to talk */ }
   if (built && abba) {                       // extra life on top of the idle: breathing, a slow sway, and her head following you
     const t = now / 1000, sp = abba.getObjectByName('mixamorigSpine'), s2 = abba.getObjectByName('mixamorigSpine2'), hd = abba.getObjectByName('mixamorigHead'), nk = abba.getObjectByName('mixamorigNeck');
     for (const b of [sp, s2, nk, hd]) if (b) { if (!animQ.has(b)) animQ.set(b, new THREE.Quaternion()); animQ.get(b).copy(b.quaternion); }
@@ -909,7 +914,7 @@ async function loadAll() {
   for (const k of Object.keys(WID)) models[k] = prep(window.__got[k].scene);
   const g = window.__got.abba; abba = prep(g.scene); if (g.animations.length) { mixer = new THREE.AnimationMixer(abba); idle = mixer.clipAction(g.animations[0]); idle.play();
     peopleClip = g.animations[0].clone(); peopleClip.tracks = peopleClip.tracks.filter((t) => t.name.endsWith('.quaternion')); }   // other bodies keep their own proportions
-  for (const n of NPCS) { const m = prep(window.__got[n.id].scene); m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; scene.add(m); people[n.id] = m; animate(m); }
+  for (const n of NPCS) { const m = prep(window.__got[n.id].scene); m.position.set(n.x, n.y || 0, n.z); m.rotation.y = n.ry; scene.add(m); people[n.id] = m; animate(m); }
   buildTown(); if (ring) ring.visible = !state.talked; window.__got = null; townReady = true; built = true;
   // stage 3: the tavern is built in a spare moment, before you can reach its door
   setTimeout(() => { buildTavern(); for (const f of FINDS) if (state.unlocked.includes(f.id)) finds[f.id].visible = false; if (state.ate) stew.visible = true; tavernReady = true; $('tchap').hidden = false; model('heath').then((g) => { people.heath = prep(g.scene); placeHeath(); }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
@@ -918,3 +923,6 @@ async function loadAll() {
 function start(saved) { if (!(saved && saved.started)) applySave(loadGame()); loadAll().catch(() => {}); if (saved && saved.started) { Object.assign(state, saved); if (state.place !== 'out' || state.x > SHORE + 24 || state.x < X0 - 1 || Math.abs(state.z) > 9.5) { state.place = 'out'; state.x = 17; state.z = 0.4; state.yaw = Math.PI / 2; state.pitch = 0; } $('start').addEventListener('click', () => { if (state.unlocked.length) { $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; } }, { once: true }); } requestAnimationFrame(frame); }
 window.claude?.hot?.snapshot?.(() => (state.place === 'out' && !Q.on ? { ...state, step: 0 } : { ...state, step: 0, place: 'out', x: 17, z: 0.4, yaw: Math.PI / 2, pitch: 0 }));
 if (window.claude?.hot?.ready) window.claude.hot.ready(start); else start(window.claude?.hot?.data ?? {});
+
+/* every chapter change goes through a short fade with the date */
+goArrive = chapterFade('goArrive', goArrive); leaveWare = chapterFade('leaveWare', leaveWare); beginWare = chapterFade('beginWare', beginWare); beginQuake = chapterFade('beginQuake', beginQuake); beginAfter = chapterFade('beginAfter', beginAfter); toYard = chapterFade('toYard', toYard); leaveQuake = chapterFade('leaveQuake', leaveQuake);

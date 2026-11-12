@@ -82,6 +82,7 @@ button{font:inherit;color:inherit}
 #jpage summary{font-weight:700;cursor:pointer;line-height:1.72rem;margin-bottom:1.72rem}
 #jpage details p{font-size:.98rem}
 .book .book-focus:focus-visible,#jclose:focus-visible,.tab:focus-visible,#jpage summary:focus-visible{outline-color:var(--paper-ink)}
+#fade{position:fixed;inset:0;z-index:50;background:#120d09;opacity:0;transition:opacity .7s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f3e6cc;text-align:center;pointer-events:none}#fade.on{opacity:1;pointer-events:auto}#fade[hidden]{display:none}#fadeT{font-family:'IM Fell English SC',serif;font-size:clamp(34px,7vw,64px);opacity:0;transform:translateY(8px);transition:opacity .8s ease,transform .8s ease}#fadeS{font-family:'Atkinson Hyperlegible',sans-serif;font-size:clamp(15px,2.6vw,20px);margin-top:10px;opacity:0;color:#d9c39b;transition:opacity .8s ease .25s}#fade.txt #fadeT{opacity:1;transform:none}#fade.txt #fadeS{opacity:.9}
 #vig{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 40%,#5a4a36 0%,#2a2118 70%)}
 #card{position:absolute;inset:0;background:rgba(16,34,43,.9);display:grid;place-items:center;padding:16px}
 .cardin{width:min(34rem,100%);display:flex;flex-direction:column;gap:.9rem}
@@ -132,6 +133,7 @@ button{font:inherit;color:inherit}
 </section>
 
 <div id="vig" aria-hidden="true"></div>
+<div id="fade" hidden><div id="fadeT"></div><div id="fadeS"></div></div>
 <div id="hud" hidden>
   <button id="goal" aria-expanded="true"></button>
   <div id="topr"><button id="snd" aria-pressed="true" aria-label="Sound on. Tap to turn off."><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><g id="sndon"><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></g><g id="sndoff"><path d="M17 9l5 6M22 9l-5 6"/></g></svg></button><button id="jbtn" aria-haspopup="dialog">Journal <span id="jcount" hidden>0</span></button></div>
