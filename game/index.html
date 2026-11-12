@@ -40,6 +40,8 @@ button{font:inherit;color:inherit}
 #title h1{font-family:var(--display);font-weight:400;font-size:clamp(2.6rem,9vw,5rem);line-height:.95;margin:0;text-wrap:balance}
 #title h1 span{font-family:"IM Fell English",Georgia,serif;font-style:italic;font-size:.5em;display:block;margin-top:.25em;color:var(--paper)}
 #title p{margin:0;max-width:30rem}
+.dev{background:none;border:0;color:var(--paper);font-family:var(--text);font-size:.95rem;opacity:.85;cursor:pointer;padding:.4em .2em;min-height:44px;letter-spacing:.02em}.dev b{color:var(--brass);font-weight:700}.dev:hover{opacity:1;text-decoration:underline;text-underline-offset:4px}
+#credits{position:fixed;inset:0;background:rgba(16,34,43,.78);display:grid;place-items:center;padding:16px;z-index:40}#credits[hidden]{display:none}#credits .book{max-height:88vh;overflow:auto}#credits h3{font-family:var(--display);margin:1.1em 0 .3em;font-size:1.15rem}#credits p,#credits li{margin:.25em 0;line-height:1.45}#credits ul{padding-left:1.1em;margin:.2em 0}.crbig{font-size:1.25rem;margin:.4em 0 .2em}
 .loading{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:.4rem}
 .track{flex:1 1 9rem;height:6px;background:var(--ink-2);border-radius:3px;overflow:hidden;min-width:8rem}
 #bar{height:100%;width:0;background:var(--brass);transition:width .2s}
@@ -94,6 +96,8 @@ button{font:inherit;color:inherit}
 .book footer .btn{background:var(--paper-ink);color:var(--paper);font-family:var(--text);letter-spacing:0}
 #topr{position:absolute;right:16px;top:16px;display:flex;gap:8px}
 #topr #jbtn{position:static}
+#reset{background:rgba(16,34,43,.86);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}
+#view{background:rgba(16,34,43,.86);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}#view[hidden]{display:none}#view[aria-pressed=true]{color:var(--brass)}
 #snd{background:rgba(16,34,43,.86);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}
 #savenote{font-size:.85rem;opacity:.8}
 #chapters{position:fixed;inset:0;background:rgba(16,34,43,.78);display:grid;place-items:center;padding:16px}
@@ -125,6 +129,7 @@ button{font:inherit;color:inherit}
     <div class="loading">
       <button id="start" class="btn" disabled>Building the town</button>
       <button id="tchap" class="btn ghost" hidden>Chapters</button>
+      <button id="dev" class="dev" title="Credits">Created by <b>Kellz 5.0</b></button>
       <div class="track" aria-hidden="true"><div id="bar"></div></div>
       <p id="loadnote">Loading houses and people.</p>
     </div>
@@ -136,7 +141,7 @@ button{font:inherit;color:inherit}
 <div id="fade" hidden><div id="fadeT"></div><div id="fadeS"></div></div>
 <div id="hud" hidden>
   <button id="goal" aria-expanded="true"></button>
-  <div id="topr"><button id="snd" aria-pressed="true" aria-label="Sound on. Tap to turn off."><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><g id="sndon"><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></g><g id="sndoff"><path d="M17 9l5 6M22 9l-5 6"/></g></svg></button><button id="jbtn" aria-haspopup="dialog">Journal <span id="jcount" hidden>0</span></button></div>
+  <div id="topr"><button id="view" aria-pressed="false" aria-label="See Lewis Galdy. Tap to switch the view." title="Switch view (V)" hidden><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="6" r="3"/><path d="M7 21v-6a5 5 0 0 1 10 0v6"/></svg></button><button id="reset" aria-label="Reset" title="Reset"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button><button id="snd" aria-pressed="true" aria-label="Sound on. Tap to turn off."><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><g id="sndon"><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></g><g id="sndoff"><path d="M17 9l5 6M22 9l-5 6"/></g></svg></button><button id="jbtn" aria-haspopup="dialog">Journal <span id="jcount" hidden>0</span></button></div>
   <p id="toast" role="status" hidden></p>
   <button id="talk" class="btn" hidden>Talk to her</button>
   <p id="hint"></p>
@@ -157,12 +162,39 @@ button{font:inherit;color:inherit}
     </div>
   </div>
 </div>
+<section id="credits" role="dialog" aria-labelledby="crtitle" hidden>
+  <div class="book">
+    <header><h2 id="crtitle">Credits</h2><button id="crclose">Close</button></header>
+    <p class="crbig">Created by <b>Kellz 5.0</b></p>
+    <p>Story, design and development for M2 Creative Studios. Built with the help of Claude by Anthropic.</p>
+    <h3>Where the history comes from</h3>
+    <ul>
+      <li>The tombstone of Lewis Galdy, St Peter’s Church, Port Royal (1739)</li>
+      <li>Letters of the Rev. Emmanuel Heath, and a London news sheet, both from 1692</li>
+      <li>The Port Royal Project of the Institute of Nautical Archaeology and Texas A&amp;M University, led by Donny L. Hamilton</li>
+      <li>Shirley Gotelipe-Miller, <i>Pewter and Pewterers from Port Royal, Jamaica</i> (1990)</li>
+      <li>Michael Pawson and David Buisseret, <i>Port Royal, Jamaica</i></li>
+      <li>Nuala Zahedieh, on the merchants of Port Royal</li>
+      <li>Reconstruction paintings of the town, used as a guide for the houses</li>
+      <li>The National Museum of Jamaica and the Jamaica National Heritage Trust</li>
+    </ul>
+    <p>Abba, Kofi, Sam and the camp survivors are made up. Lewis Galdy, Symon Benning and Emmanuel Heath were real people, but their words in this game are made up.</p>
+    <h3>Made with</h3>
+    <ul>
+      <li>three.js, for drawing the 3D world</li>
+      <li>Blender, MakeHuman (MPFB) and Mixamo, for the people and their movements</li>
+      <li>glTF Transform and meshoptimizer, to make the files small</li>
+      <li>Fonts: IM Fell English by Igino Marini, and Atkinson Hyperlegible by the Braille Institute</li>
+      <li>All sounds are made in your browser as you play</li>
+    </ul>
+  </div>
+</section>
 <section id="chapters" role="dialog" aria-labelledby="chtitle" hidden>
   <div class="book">
     <header><h2 id="chtitle">Chapters</h2><button id="chclose">Close</button></header>
     <p class="chnote">Each chapter opens when you finish the one before it.</p>
     <ol id="chlist" class="chlist"></ol>
-    <footer class="chfoot"><button id="chteach" class="btn ghost">For teachers: open all chapters</button><button id="chreset" class="btn ghost">Start again</button></footer>
+    <footer class="chfoot"><button id="chteach" class="btn ghost">For teachers: open all chapters</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
   </div>
 </section>
 <script src="app.js"></script>

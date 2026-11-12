@@ -205,3 +205,8 @@ bpy.context.view_layer.update()
 print('TRIS',sum(len(p.vertices)-2 for o in bpy.data.objects if o.type=='MESH' for p in o.data.polygons))
 bpy.ops.wm.save_as_mainfile(filepath='/tmp/npc/'+P['name']+'.blend')
 bpy.ops.export_scene.gltf(filepath=OUT+P['name']+'.glb',export_image_format='JPEG',export_apply=False,export_vertex_color='NAME',export_vertex_color_name='Col',export_skins=True,export_animations=False,export_rest_position_armature=False)
+# a copy for Mixamo: rest pose, with skin, so the user can pick animations for it
+if P.get('fbx'):
+    rig.data.pose_position='REST'; bpy.context.view_layer.update()
+    bpy.ops.export_scene.fbx(filepath='/home/claude/port-royal-assets/'+P['name']+'_for_mixamo.fbx',object_types={'ARMATURE','MESH'},add_leaf_bones=False,path_mode='COPY',embed_textures=True,colors_type='SRGB',mesh_smooth_type='FACE',bake_anim=False)
+    rig.data.pose_position='POSE'
