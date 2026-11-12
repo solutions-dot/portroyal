@@ -1,0 +1,11 @@
+{
+  "name": "port-royal-1690",
+  "private": true,
+  "description": "Educational 3D game: the story of Lewis Galdy and Port Royal, Jamaica, 1690 to 1692",
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --minify --format=iife --target=es2020 --outfile=game/app.js",
+    "serve": "python3 -m http.server 8765 --directory game"
+  },
+  "dependencies": { "three": "0.187.0" },
+  "devDependencies": { "esbuild": "^0.28.2", "@gltf-transform/core": "^4.5.1", "@gltf-transform/functions": "^4.5.1", "@gltf-transform/extensions": "^4.5.1" }
+}

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Port Royal 1690</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* One world, one theme: a harbour at midday seen through a merchant's ledger.
+     Layout: full-screen 3D stage; quiet ink panels float over it; the journal is the one paper surface. */
+  --ink:#10222b;          /* deep harbour water, used for panels */
+  --ink-2:#1b3642;
+  --paper:#efe7d3;        /* ledger page */
+  --paper-ink:#23211c;
+  --brass:#d9a441;        /* the only accent: things you can press */
+  --brass-ink:#2a1f08;
+  --rule:#c9bd9f;
+  --display:"IM Fell English SC","IM Fell English",Georgia,"Times New Roman",serif;
+  --text:"Atkinson Hyperlegible",Verdana,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);font-family:var(--text);font-size:18px;line-height:1.5;overflow:hidden}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none;cursor:grab}
+#stage:active{cursor:grabbing}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+.btn{background:var(--brass);color:var(--brass-ink);border:0;border-radius:6px;padding:.7em 1.3em;font-weight:700;font-size:1rem;cursor:pointer;min-height:48px}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:transparent;color:var(--paper);border:2px solid var(--brass);text-align:left}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+/* title card */
+#title{position:fixed;inset:0;display:flex;align-items:flex-end;padding:clamp(16px,4vw,48px);background:linear-gradient(180deg,rgba(16,34,43,0) 30%,rgba(16,34,43,.93) 72%)}
+#title .card{max-width:34rem;display:flex;flex-direction:column;gap:.7rem}
+#title .place{font-family:var(--display);letter-spacing:.14em;font-size:.95rem;color:var(--brass);margin:0}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(2.6rem,9vw,5rem);line-height:.95;margin:0;text-wrap:balance}
+#title h1 span{font-family:"IM Fell English",Georgia,serif;font-style:italic;font-size:.5em;display:block;margin-top:.25em;color:var(--paper)}
+#title p{margin:0;max-width:30rem}
+.loading{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:.4rem}
+.track{flex:1 1 9rem;height:6px;background:var(--ink-2);border-radius:3px;overflow:hidden;min-width:8rem}
+#bar{height:100%;width:0;background:var(--brass);transition:width .2s}
+#loadnote{font-size:.85rem;opacity:.8;flex-basis:100%;margin:0}
+
+/* in-game */
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud>*{pointer-events:auto}
+#goal{position:absolute;left:16px;top:16px;max-width:min(24rem,calc(100% - 170px));background:rgba(16,34,43,.86);padding:.55em .85em;border:0;border-left:4px solid var(--brass);border-radius:0 6px 6px 0;font-size:.95rem;margin:0;text-align:left;cursor:pointer;min-height:48px;line-height:1.35}
+#goal:not(.folded){top:76px;max-width:min(26rem,calc(100% - 32px))}
+#goal.folded{font-family:var(--display);letter-spacing:.06em;font-size:1.05rem;padding:.55em .9em}
+#jbtn{position:absolute;right:16px;top:16px;background:var(--paper);color:var(--paper-ink);border:0;border-radius:6px;padding:.55em .9em;font-family:var(--display);font-size:1.1rem;letter-spacing:.06em;cursor:pointer;min-height:48px;display:flex;gap:.5em;align-items:center}
+#jcount{background:var(--brass);color:var(--brass-ink);font-family:var(--text);font-weight:700;font-size:.8rem;border-radius:999px;min-width:1.6em;height:1.6em;display:inline-grid;place-items:center}
+#hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(16,34,43,.7);padding:.3em .8em;border-radius:6px;font-size:.85rem;margin:0;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+#talk{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);box-shadow:0 6px 22px rgba(0,0,0,.45);font-size:1.1rem}
+#toast{position:absolute;left:50%;top:auto;bottom:128px;transform:translateX(-50%);background:var(--paper);color:var(--paper-ink);padding:.5em 1em;border-radius:6px;font-weight:700;font-size:.9rem;max-width:calc(100% - 32px);text-align:center;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(239,231,211,.55);background:rgba(16,34,43,.3);pointer-events:none}
+#nub{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;background:var(--brass);transform:translate(-50%,-50%)}
+
+#dialogue{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(40rem,calc(100% - 32px));background:rgba(16,34,43,.95);border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.7rem}
+#who{font-family:var(--display);font-size:1.25rem;letter-spacing:.08em;color:var(--brass);margin:0}
+#line{margin:0;font-size:1.1rem;max-width:65ch}
+#choices{display:flex;flex-direction:column;gap:.5rem}
+#next{align-self:flex-end}
+
+/* the journal: the one paper surface */
+#journal{position:absolute;inset:0;background:rgba(16,34,43,.72);display:grid;place-items:center;padding:16px}
+.book{background:var(--paper);color:var(--paper-ink);width:min(46rem,100%);max-height:100%;overflow:auto;border-radius:4px;box-shadow:0 20px 60px rgba(0,0,0,.55);display:flex;flex-direction:column}
+.book header{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.9rem 1.2rem;border-bottom:2px solid var(--paper-ink)}
+.book h2{font-family:var(--display);font-weight:400;font-size:1.7rem;margin:0;letter-spacing:.05em}
+#jclose{background:var(--paper-ink);color:var(--paper);border:0;border-radius:6px;padding:.5em 1em;font-weight:700;cursor:pointer;min-height:44px}
+#jtabs{display:flex;flex-wrap:wrap;gap:.4rem;padding:.8rem 1.2rem 0}
+.tab{background:transparent;border:1.5px solid var(--paper-ink);border-radius:999px;padding:.3em .9em;font-size:.9rem;cursor:pointer;color:var(--paper-ink);min-height:40px}
+.tab.on{background:var(--paper-ink);color:var(--paper)}
+.tab:disabled{border-style:dashed;opacity:.5;cursor:default}
+#jpage{padding:1rem 1.2rem 1.4rem;background-image:repeating-linear-gradient(180deg,transparent 0 1.72rem,var(--rule) 1.72rem calc(1.72rem + 1px));line-height:1.72rem}
+#jpage h3{font-family:"IM Fell English",Georgia,serif;font-style:italic;font-weight:400;font-size:1.75rem;line-height:3.44rem;margin:0;text-wrap:balance}
+#jpage p{margin:0 0 1.72rem;max-width:62ch;font-size:1.05rem}
+#jpage details{border-left:4px solid var(--brass);padding-left:.9rem}
+#jpage summary{font-weight:700;cursor:pointer;line-height:1.72rem;margin-bottom:1.72rem}
+#jpage details p{font-size:.98rem}
+.book .book-focus:focus-visible,#jclose:focus-visible,.tab:focus-visible,#jpage summary:focus-visible{outline-color:var(--paper-ink)}
+#vig{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 40%,#5a4a36 0%,#2a2118 70%)}
+#card{position:absolute;inset:0;background:rgba(16,34,43,.9);display:grid;place-items:center;padding:16px}
+.cardin{width:min(34rem,100%);display:flex;flex-direction:column;gap:.9rem}
+.cardin h2{font-family:var(--display);font-weight:400;font-size:clamp(2rem,7vw,3.2rem);line-height:1;margin:0;color:var(--brass);text-wrap:balance}
+#cbody p{margin:0 0 .7rem;font-size:1.1rem;max-width:60ch}
+#cbtns{display:flex;flex-direction:column;gap:.5rem;align-items:flex-start}
+.book footer{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;padding:.8rem 1.2rem;border-top:2px solid var(--paper-ink);font-family:var(--display);letter-spacing:.05em}
+.chap{display:flex;gap:.5rem;flex-wrap:wrap}
+.book footer .btn{background:var(--paper-ink);color:var(--paper);font-family:var(--text);letter-spacing:0}
+#topr{position:absolute;right:16px;top:16px;display:flex;gap:8px}
+#topr #jbtn{position:static}
+#snd{background:rgba(16,34,43,.86);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}
+#savenote{font-size:.85rem;opacity:.8}
+#chapters{position:fixed;inset:0;background:rgba(16,34,43,.78);display:grid;place-items:center;padding:16px}
+.chnote{margin:.9rem 1.2rem 0;color:var(--paper-ink);font-size:.95rem}
+.chlist{list-style:none;margin:0;padding:.9rem 1.2rem;display:flex;flex-direction:column;gap:.5rem}
+.chbtn{width:100%;display:grid;grid-template-columns:8rem 1fr auto;align-items:center;gap:.8rem;text-align:left;background:transparent;border:1.5px solid var(--paper-ink);border-radius:6px;padding:.6rem .85rem;cursor:pointer;color:var(--paper-ink);min-height:52px}
+.chbtn:hover:not(:disabled){background:rgba(35,33,28,.07)}
+.chbtn .yr{font-family:var(--display);letter-spacing:.05em}
+.chbtn .nm{font-weight:700}
+.chbtn .st{font-size:.85rem}
+.chbtn.done .st::before{content:"\2713\00a0"}
+.chbtn:disabled{border-style:dashed;opacity:.55;cursor:default}
+.chfoot{flex-wrap:wrap}
+.chfoot .btn.ghost{color:var(--paper-ink);border-color:var(--paper-ink);background:transparent;font-family:var(--text);letter-spacing:0;font-size:.9rem;min-height:44px}
+.book footer.chfoot .btn{background:transparent;color:var(--paper-ink)}
+@media (max-width:520px){.chbtn{grid-template-columns:1fr auto}.chbtn .yr{grid-column:1}.chbtn .nm{grid-column:1}.chbtn .st{grid-row:1 / span 2;grid-column:2}}
+@media (max-width:520px){html,body{font-size:17px}#goal{font-size:.85rem}#hint{white-space:normal;text-align:center}}
+@media (prefers-reduced-motion:reduce){#bar{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="stage" tabindex="0" aria-label="A street in Port Royal, Jamaica, in 1690"></canvas>
+
+<section id="title">
+  <div class="card">
+    <p class="place">Jamaica &middot; Kingston Harbour</p>
+    <h1>Port Royal, 1690 <span>The story of Lewis Galdy</span></h1>
+    <p>You are Lewis Galdy. Your ship from France has just tied up at the busiest town in the Caribbean. Walk down the pier and meet the people who live here.</p>
+    <div class="loading">
+      <button id="start" class="btn" disabled>Building the town</button>
+      <button id="tchap" class="btn ghost" hidden>Chapters</button>
+      <div class="track" aria-hidden="true"><div id="bar"></div></div>
+      <p id="loadnote">Loading houses and people.</p>
+    </div>
+    <p id="savenote" hidden>Your progress is saved on this device.</p>
+  </div>
+</section>
+
+<div id="vig" aria-hidden="true"></div>
+<div id="hud" hidden>
+  <button id="goal" aria-expanded="true"></button>
+  <div id="topr"><button id="snd" aria-pressed="true" aria-label="Sound on. Tap to turn off."><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><g id="sndon"><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></g><g id="sndoff"><path d="M17 9l5 6M22 9l-5 6"/></g></svg></button><button id="jbtn" aria-haspopup="dialog">Journal <span id="jcount" hidden>0</span></button></div>
+  <p id="toast" role="status" hidden></p>
+  <button id="talk" class="btn" hidden>Talk to her</button>
+  <p id="hint"></p>
+  <div id="stick" hidden><div id="nub"></div></div>
+  <div id="dialogue" role="dialog" aria-labelledby="who" hidden>
+    <p id="who"></p>
+    <p id="line" aria-live="polite"></p>
+    <div id="choices"></div>
+    <button id="next" class="btn">Next</button>
+  </div>
+  <div id="card" role="dialog" aria-labelledby="ctitle" hidden><div class="cardin"><h2 id="ctitle"></h2><div id="cbody"></div><div id="cbtns"></div></div></div>
+  <div id="journal" role="dialog" aria-labelledby="jtitle" hidden>
+    <div class="book">
+      <header><h2 id="jtitle">Journal</h2><button id="jclose">Close</button></header>
+      <div id="jtabs"></div>
+      <div id="jpage"></div>
+      <footer><span>More of the story</span><button id="jchap" class="btn">Chapters</button></footer>
+    </div>
+  </div>
+</div>
+<section id="chapters" role="dialog" aria-labelledby="chtitle" hidden>
+  <div class="book">
+    <header><h2 id="chtitle">Chapters</h2><button id="chclose">Close</button></header>
+    <p class="chnote">Each chapter opens when you finish the one before it.</p>
+    <ol id="chlist" class="chlist"></ol>
+    <footer class="chfoot"><button id="chteach" class="btn ghost">For teachers: open all chapters</button><button id="chreset" class="btn ghost">Start again</button></footer>
+  </div>
+</section>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+[{"name":"h1","W":6.0,"D":8.0,"floors":3,"wall":"brick","roof":"shingle","seed":1},
+ {"name":"h2","W":5.0,"D":9.0,"floors":3,"wall":"brick","roof":"tile","gable":true,"pitch":50,"seed":2},
+ {"name":"h3","W":7.2,"D":7.0,"floors":2,"FH":2.8,"wall":"timber","roof":"tile","pitch":47,"seed":3},
+ {"name":"h4","W":6.6,"D":7.5,"floors":2,"wall":"brick","roof":"tile","pitch":45,"seed":4},
+ {"name":"h5","W":5.4,"D":8.0,"floors":3,"FH":2.7,"wall":"timber","roof":"shingle","gable":true,"pitch":52,"seed":5},
+ {"name":"h6","W":5.6,"D":9.0,"floors":4,"FH":2.8,"wall":"brick","roof":"tile","gable":true,"pitch":50,"seed":6}]
