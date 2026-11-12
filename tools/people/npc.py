@@ -43,7 +43,7 @@ def side_arm(c):     # 0..1 position along the arm from shoulder to wrist, or No
     return t
 def armcut(t,sx):    # plane across the arm at fraction t, keeping the shoulder side
     a=Vector((SH.x*sx,SH.y,SH.z)); b=Vector((HA.x*sx,HA.y,HA.z)); d=(b-a).normalized(); return (a+(b-a)*t, d)
-def piece(name,group,keep,offset,mat,cuts=(),shape=None,sub=False):
+def piece(name,group,keep,offset,mat,cuts=(),shape=None,sub=False,post=None):
     o=h.copy(); o.data=h.data.copy(); o.name=name; bpy.context.scene.collection.objects.link(o)
     bm=bmesh.new(); bm.from_mesh(o.data); dl=bm.verts.layers.deform.verify(); gi=GI[group]
     bmesh.ops.delete(bm,geom=[f for f in bm.faces if not (all(v[dl].get(gi,0)>0 for v in f.verts) and keep(cz(f)))],context='FACES')
@@ -58,21 +58,55 @@ def piece(name,group,keep,offset,mat,cuts=(),shape=None,sub=False):
         for v in bm.verts: shape(v)
         bm.normal_update()
     for v in bm.verts: v.co+=v.normal*(offset(v.co) if callable(offset) else offset)
+    if post: post(bm)
     bmesh.ops.triangulate(bm,faces=[f for f in bm.faces if len(f.verts)>4]); bmesh.ops.dissolve_degenerate(bm,edges=bm.edges[:],dist=0.0008); bmesh.ops.recalc_face_normals(bm,faces=bm.faces[:])
     bm.to_mesh(o.data); bm.free(); o.data.materials.clear(); o.data.materials.append(colmat(mat)); return o
+CHEST_TOP=NECK-0.10*s
+def drape_front(bm):
+    # a man's linen shirt or wool coat lies flat across the chest and falls straight down from it:
+    # (1) flatten the two pectoral mounds toward the breastbone line, (2) never let cloth tuck back in under them
+    rows={}
+    for v in bm.verts:
+        if v.co.y<0 and abs(v.co.x)<SX*0.85 and HIP<v.co.z<CHEST_TOP+0.04: rows.setdefault(round(v.co.z/0.012),[]).append(v)
+    for k,vs in rows.items():
+        mid=[v for v in vs if abs(v.co.x)<0.03]
+        if not mid: continue
+        ym=sum(v.co.y for v in mid)/len(mid)
+        for v in vs:
+            w=max(0.0,1-abs(v.co.x)/(SX*0.85))**0.7
+            if v.co.y<ym: v.co.y=v.co.y+(ym-v.co.y)*0.7*w
+    cols={}
+    for v in bm.verts:
+        if v.co.y<0 and abs(v.co.x)<SX*0.8 and HIP-0.02<v.co.z<CHEST_TOP+0.02: cols.setdefault(round(v.co.x/0.02),[]).append(v)
+    for k,vs in cols.items():
+        vs.sort(key=lambda v:-v.co.z); lo=0.0
+        for v in vs:
+            lo=min(lo,v.co.y)
+            if v.co.y>lo:
+                k=max(0.0,min(1.0,(v.co.z-(HIP+0.04))/0.10))   # full hang over the belly, gathered back in at the waistband
+                hang=lo+(v.co.y-lo)*0.15; v.co.y=v.co.y+(hang-v.co.y)*k*k
+    bm.normal_update()
+def trim_seat(bm):
+    # keep breeches from ballooning out behind: cap how far the seat sticks out past the small of the back
+    ys=[v.co.y for v in bm.verts if v.co.y>0 and abs(v.co.z-(HIP+0.1))<0.02]
+    if not ys: return
+    cap=max(ys)+0.012
+    for v in bm.verts:
+        if v.co.y>cap: v.co.y=cap+(v.co.y-cap)*0.3
+    bm.normal_update()
 G=P['garments']; parts=[]
 def arm_ok(c,upto):
     t=side_arm(c); return t is None or t<=upto+0.06
 sleeve=G.get('sleeve',0.86)
 cuts_sleeve=lambda t:[(armcut(t,1)[0],armcut(t,1)[1],lambda c:c.x>SX*0.8),(armcut(t,-1)[0],armcut(t,-1)[1],lambda c:c.x<-SX*0.8)]
 # shirt
-parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>HIP-0.02 and arm_ok(c,sleeve),lambda c:0.012 if abs(c.x)>SX*0.8 else 0.008,'Shirt',
-   cuts=[((0,0,NECK+0.005),(0,0,1),None),((0,-0.1,NECK-0.035*s),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+cuts_sleeve(sleeve))))
+parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>HIP-0.02 and arm_ok(c,sleeve),lambda c:0.012 if abs(c.x)>SX*0.8 else 0.008,'Shirt',post=(None if G.get('coat') else drape_front),
+   cuts=[((0,0,NECK+0.005-(0.062*s if G.get('coat') else 0)),(0,0,1),None),((0,-0.1,NECK-0.035*s-(0.06*s if G.get('coat') else 0)),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar
 if G.get('coat'):
-    cs=G.get('coatsleeve',0.82); collar=NECK-0.05*s
+    cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
     sl=G.get('coatsleeves',True)
-    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Coat',
-       cuts=[((0,0,collar),(0,0,1),None),((0,-0.1,collar-0.03),Vector((0,-0.6,0.8)),lambda c:c.y<0)]+(cuts_sleeve(cs) if sl else [((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)]))
+    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Coat',post=drape_front,
+       cuts=[((0,0,collar),(0,0,1),None),((0,-0.1,collar-0.045*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)]+(cuts_sleeve(cs) if sl else [((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)]))
     parts.append(('coat',coat))
     hem=G.get('coathem')
     if hem:
@@ -84,14 +118,20 @@ if G.get('coat'):
 if G.get('breeches'):
     bk=G.get('breechkind','plain'); low=KNEE-0.05*s
     wide=(lambda c:0.012+0.045*max(0,min(1,(HIP-c.z)/(HIP-low)))**1.2) if bk=='slops' else 0.013
-    parts.append(('breeches',piece('Breeches','helper-tights',lambda c:low-0.03<c.z<HIP+0.13 and side_arm(c) is None,wide,'Breeches',cuts=[((0,0,low),(0,0,-1),None),((0,0,HIP+0.12),(0,0,1),None)])))
+    parts.append(('breeches',piece('Breeches','helper-tights',lambda c:low-0.03<c.z<HIP+0.13 and side_arm(c) is None,wide,'Breeches',post=trim_seat,cuts=[((0,0,low),(0,0,-1),None),((0,0,HIP+0.12),(0,0,1),None)])))
 if G.get('shoes'):
     parts.append(('shoes',piece('Shoes','helper-tights',lambda c:c.z<ANK+0.09,0.006,'Shoes',cuts=[((0,0,ANK+0.045),(0,0,1),None)])))
 # short hair: a close cap over the scalp, edged like a hairline
 WA=Vector((0,-0.115*s,HEAD+0.15*s)); WN=Vector((0,-0.20,-0.18)).normalized()
 def hair_off(c):
-    d=-((c-WA).dot(WN)); return 0.002+(0.006+0.004*G.get('hairvol',0)+0.0015*noise.noise(c*120))*min(1.0,max(0.0,d/0.012))**0.7
+    d=-((c-WA).dot(WN)); return 0.002+(0.006+0.004*(min(G.get('hairvol',0),0.25) if G.get('hat')=='felt' else G.get('hairvol',0))+0.0015*noise.noise(c*120))*min(1.0,max(0.0,d/0.012))**0.7
 if G.get('hat')!='cap': parts.append(('hair',piece('Hair','body',lambda c:c.z>HEAD+0.02 and not (c.y<-0.06 and c.z<HEAD+0.12*s) and not (abs(c.x)>0.064*s and c.z<HEAD+0.09*s and c.y<0.035),hair_off,'Hair',cuts=[(WA,WN,None),((0,0.02,HEAD+0.035),Vector((0,0.3,-1)).normalized(),lambda c:c.y>-0.02)],sub=True)))
+# a knitted cap and a neckerchief made from the body's own surface, so they fit and move with it
+if G.get('hat')=='cap':
+    Jy=J('Head').y
+    parts.append(('cap',piece('Cap','body',lambda c:c.z>HEAD+0.02,0.013,'Hat',cuts=[((0,Jy,HEAD+0.088*s),Vector((0,-0.075,-0.2)).normalized(),None)],sub=True)))
+if G.get('scarf'):
+    parts.append(('scarf',piece('Scarf','body',lambda c:NECK-0.045*s<c.z<NECK+0.03*s and abs(c.x)<0.085,lambda c:0.018+0.02*max(0.0,min(1.0,(NECK-c.z)/(0.045*s))),'Scarf')))
 clothes=[o for k,o in parts]
 for o in clothes:
     md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}
@@ -121,34 +161,56 @@ def top_of_head():
     return best
 TOP=top_of_head(); HC=Vector((0,J('Head').y+0.005,TOP))
 if G.get('hat')=='felt':
-    bm=bmesh.new(); bmesh.ops.create_cone(bm,cap_ends=True,segments=28,radius1=0.19*s,radius2=0.18*s,depth=0.012,matrix=Matrix.Translation(HC+Vector((0,0,-0.075*s))))
-    bmesh.ops.create_cone(bm,cap_ends=True,segments=24,radius1=0.098*s,radius2=0.088*s,depth=0.13*s,matrix=Matrix.Translation(HC+Vector((0,0,-0.01*s))))
-    bmesh.ops.create_cone(bm,cap_ends=False,segments=24,radius1=0.1*s,radius2=0.1*s,depth=0.022,matrix=Matrix.Translation(HC+Vector((0,0,-0.055*s))))
+    # fit the crown to this head: measure the skull's outline at brow height so the hat sits down over it
+    BZ=TOP-0.085*s; xs=[];ys=[]
+    for v in h.data.vertices:
+        if abs(v.co.z-(BZ+0.012*s))<0.012*s: xs.append(v.co.x); ys.append(v.co.y)
+    cx=(max(xs)+min(xs))/2; cy=(max(ys)+min(ys))/2; rx=(max(xs)-min(xs))/2+0.008; ry=(max(ys)-min(ys))/2+0.008
+    C0=Vector((cx,cy,BZ)); bm=bmesh.new()
+    # brim: wide disc at brow level
+    g=bmesh.ops.create_cone(bm,cap_ends=True,segments=32,radius1=1,radius2=1,depth=0.01,matrix=Matrix.Translation(C0))
+    for v in g['verts']: d=v.co-C0; v.co.x=cx+d.x*(rx+0.085*s); v.co.y=cy+d.y*(ry+0.075*s)
+    # crown: elliptical, from just under the brim up past the top of the head, tapering slightly
+    H=(TOP-BZ)+0.06*s
+    g=bmesh.ops.create_cone(bm,cap_ends=True,segments=28,radius1=1,radius2=0.9,depth=H,matrix=Matrix.Translation(C0+Vector((0,0,H/2-0.004))))
+    for v in g['verts']: d=v.co-C0; v.co.x=cx+d.x*rx; v.co.y=cy+d.y*ry
+    # hat band
+    g=bmesh.ops.create_cone(bm,cap_ends=False,segments=28,radius1=1,radius2=0.985,depth=0.022*s,matrix=Matrix.Translation(C0+Vector((0,0,0.016*s))))
+    for v in g['verts']: d=v.co-C0; v.co.x=cx+d.x*(rx+0.002); v.co.y=cy+d.y*(ry+0.002)
     for v in bm.verts:
-        r=math.hypot(v.co.x,v.co.y-HC.y)
-        if r>0.12*s: v.co.z+=0.03*((r-0.12*s)/(0.07*s))**2*(0.6+0.4*math.sin(math.atan2(v.co.y-HC.y,v.co.x)*2+1.2))   # brim turned up a little, unevenly
+        d=v.co-C0; r=math.hypot(d.x/(rx+0.085*s),d.y/(ry+0.075*s))
+        if r>0.62 and abs(d.z)<0.01: v.co.z+=0.028*((r-0.62)/0.38)**2*(0.6+0.4*math.sin(math.atan2(d.y,d.x)*2+1.2))   # brim turned up a little, unevenly
     rigid('Hat',bm,'Hat','Head')
-if G.get('hat')=='cap':
-    bm=bmesh.new(); bmesh.ops.create_uvsphere(bm,u_segments=20,v_segments=10,radius=1.0)
-    bmesh.ops.delete(bm,geom=[v for v in bm.verts if v.co.z<-0.15],context='VERTS')
-    for v in bm.verts:   # a Monmouth cap: a soft knitted dome that hugs the skull
-        z=v.co.z; v.co=Vector((v.co.x*0.112*s,v.co.y*0.124*s,z*0.104*s))+HC+Vector((0,0.006,-0.088*s))
-    bmesh.ops.create_cone(bm,cap_ends=False,segments=20,radius1=0.114*s,radius2=0.114*s,depth=0.026*s,matrix=Matrix.Translation(HC+Vector((0,0.006,-0.096*s)))@Matrix.Scale(1.09,4,Vector((0,1,0))))   # rolled brim
-    rigid('Cap',bm,'Hat','Head')
-if G.get('scarf'):          # a neckerchief knotted at the throat, hides the shirt's neck edge
-    z=NECK-0.012*s; bm=bmesh.new(); n=24; ring=[]; C=Vector((0,J('Neck').y,z))
-    for i in range(n):
-        a=i/n*2*math.pi; d=Vector((math.sin(a),-math.cos(a),0)); hit=tree.ray_cast(Vector((0,J('Neck').y,z))+d*0.3,-d)[0]
-        r=min(((hit-C).length if hit else 0.06),0.068); p=C+d*(r+0.02); ring.append(p)
-    lo=[bm.verts.new(p+Vector((0,0,-0.03*s))+(p-C)*0.35) for p in ring]; hi=[bm.verts.new(p+Vector((0,0,0.02*s))) for p in ring]
-    for i in range(n): j=(i+1)%n; bm.faces.new((lo[i],lo[j],hi[j],hi[i]))
-    f=ring[0]; k=[bm.verts.new(f+Vector((dx,-0.02,dz))) for dx,dz in ((-0.018,-0.02),(0.018,-0.02),(0.01,-0.07),(-0.012,-0.066))]; bm.faces.new(k)
-    rigid('Scarf',bm,'Scarf','Spine2')
+if G.get('scarf'):          # the knot at the throat
+    z=NECK-0.05*s; hit=tree.ray_cast(Vector((0,-1,z)),Vector((0,1,0)))[0]; y=(hit.y if hit else -0.07)-0.03; bm=bmesh.new()
+    k=[bm.verts.new((dx,y,z+dz)) for dx,dz in ((-0.02,0.0),(0.02,0.0),(0.012,-0.06),(-0.014,-0.056))]; bm.faces.new(k)
+    rigid('Knot',bm,'Scarf','Spine2')
 if G.get('bands'):
-    z=NECK-0.03*s; hit=tree.ray_cast(Vector((0,-1,z)),Vector((0,1,0)))[0]; y=(hit.y if hit else -0.06)-0.026
-    bm=bmesh.new()
+    # a 1690 cravat: a soft linen neckcloth wound round the throat, tied in front, its two ends falling over the chest
+    def front(z):
+        hit=tree.ray_cast(Vector((0,-1,z)),Vector((0,1,0)))[0]; return hit.y if hit else -0.08
+    def radius(z,a):
+        o=Vector((0,J('Neck').y,z)); d=Vector((math.sin(a),-math.cos(a),0)); hit=tree.ray_cast(o+d*0.3,-d)[0]
+        return (hit-o).length if hit else 0.06
+    bm=bmesh.new(); seg=20; rings=[]
+    for zz in (NECK-0.04*s,NECK-0.018*s,NECK+0.006*s):        # the wrap round the neck
+        ring=[]
+        for k in range(seg):
+            a=2*math.pi*k/seg; r=radius(zz,a)+0.008; ring.append(bm.verts.new((math.sin(a)*r,J('Neck').y-math.cos(a)*r,zz)))
+        rings.append(ring)
+    for r0,r1 in zip(rings,rings[1:]):
+        for k in range(seg): bm.faces.new((r0[k],r0[(k+1)%seg],r1[(k+1)%seg],r1[k]))
+    zk=NECK-0.05*s; yk=front(zk)-0.03        # the knot
+    knot=bmesh.ops.create_uvsphere(bm,u_segments=10,v_segments=6,radius=0.016,matrix=Matrix.Translation((0,yk,zk)))
+    for v in knot['verts']: v.co.x=v.co.x*1.7; v.co.y=yk+(v.co.y-yk)*0.6; v.co.z=zk+(v.co.z-zk)*0.85
+    # the two hanging ends, following the chest, slightly splayed and widening to a lace edge
     for sx in (-1,1):
-        vs=[bm.verts.new((sx*0.004+sx*dx,y-0.002*abs(dz),z+dz)) for dx,dz in ((0,0),(0.028,0),(0.03,-0.085),(0.002,-0.085))]; bm.faces.new(vs if sx>0 else vs[::-1])
+        n=7; L=0.16*s; row=[]
+        for t in range(n+1):
+            f=t/n; z=zk-0.01-L*f; w=0.024+0.02*f; cx=sx*(0.008+0.012*f); y=front(z)-0.03-0.006*math.sin(f*3.1)
+            row.append((bm.verts.new((cx-w*0.5,y,z)),bm.verts.new((cx+w*0.5,y,z))))
+        for (a0,a1),(b0,b1) in zip(row,row[1:]):
+            q=(a0,a1,b1,b0); bm.faces.new(q if sx>0 else q[::-1])
     rigid('Bands',bm,'Bands','Spine2')
 if G.get('apron'):
     bm=bmesh.new(); nu,nv=10,16; rows=[]; ZA,ZE=HIP+0.1,KNEE+0.02

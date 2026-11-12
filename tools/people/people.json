@@ -58,8 +58,7 @@
    "breeches": true,
    "breechkind": "slops",
    "hat": "cap",
-   "hairvol": 0.5,
-   "scarf": true
+   "hairvol": 0.5
   },
   "colors": {
    "Skin": [
