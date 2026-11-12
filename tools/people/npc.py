@@ -70,27 +70,28 @@ parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>HIP-0.02 and ar
    cuts=[((0,0,NECK+0.005),(0,0,1),None),((0,-0.1,NECK-0.035*s),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+cuts_sleeve(sleeve))))
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.05*s
-    coat=piece('Coat','helper-tights',lambda c:c.z>HIP-0.02 and arm_ok(c,cs if G.get('coatsleeves',True) else 0.04),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Coat',
-       cuts=[((0,0,collar),(0,0,1),None),((0,-0.1,collar-0.03),Vector((0,-0.6,0.8)),lambda c:c.y<0)]+(cuts_sleeve(cs) if G.get('coatsleeves',True) else cuts_sleeve(0.02)))
+    sl=G.get('coatsleeves',True)
+    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Coat',
+       cuts=[((0,0,collar),(0,0,1),None),((0,-0.1,collar-0.03),Vector((0,-0.6,0.8)),lambda c:c.y<0)]+(cuts_sleeve(cs) if sl else [((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)]))
     parts.append(('coat',coat))
     hem=G.get('coathem')
     if hem:
         ZT=HIP+0.06; ZB=KNEE+hem
         def flare(v):
-            t=max(0,(ZT-v.co.z)/(ZT-ZB)); f=1+0.35*t*t+0.08*t; v.co.x*=f; v.co.y=(v.co.y+0.02)*f*(1+0.15*t*(v.co.y>0))-0.02
+            t=max(0,(ZT-v.co.z)/(ZT-ZB)); f=1+0.16*t*t+0.05*t; v.co.x*=f; v.co.y=(v.co.y+0.02)*f*(1+0.15*t*(v.co.y>0))-0.02
         sk=piece('CoatSkirt','helper-skirt',lambda c:ZB<c.z<ZT+0.02,0.03,'Coat',cuts=[((0,0,ZB),(0,0,-1),None)],shape=flare)
         parts.append(('coatskirt',sk))
 if G.get('breeches'):
     bk=G.get('breechkind','plain'); low=KNEE-0.05*s
     wide=(lambda c:0.012+0.045*max(0,min(1,(HIP-c.z)/(HIP-low)))**1.2) if bk=='slops' else 0.013
-    parts.append(('breeches',piece('Breeches','helper-tights',lambda c:low-0.03<c.z<HIP+0.13 and abs(c.x)<SX*0.95,wide,'Breeches',cuts=[((0,0,low),(0,0,-1),None),((0,0,HIP+0.12),(0,0,1),None)])))
+    parts.append(('breeches',piece('Breeches','helper-tights',lambda c:low-0.03<c.z<HIP+0.13 and side_arm(c) is None,wide,'Breeches',cuts=[((0,0,low),(0,0,-1),None),((0,0,HIP+0.12),(0,0,1),None)])))
 if G.get('shoes'):
     parts.append(('shoes',piece('Shoes','helper-tights',lambda c:c.z<ANK+0.09,0.006,'Shoes',cuts=[((0,0,ANK+0.045),(0,0,1),None)])))
 # short hair: a close cap over the scalp, edged like a hairline
 WA=Vector((0,-0.115*s,HEAD+0.15*s)); WN=Vector((0,-0.20,-0.18)).normalized()
 def hair_off(c):
     d=-((c-WA).dot(WN)); return 0.002+(0.006+0.004*G.get('hairvol',0)+0.0015*noise.noise(c*120))*min(1.0,max(0.0,d/0.012))**0.7
-parts.append(('hair',piece('Hair','body',lambda c:c.z>HEAD+0.02 and not (c.y<-0.06 and c.z<HEAD+0.12*s),hair_off,'Hair',cuts=[(WA,WN,None),((0,0.02,HEAD+0.035),Vector((0,0.3,-1)).normalized(),lambda c:c.y>-0.02)],sub=True)))
+parts.append(('hair',piece('Hair','body',lambda c:c.z>HEAD+0.02 and not (c.y<-0.06 and c.z<HEAD+0.12*s) and not (abs(c.x)>0.064*s and c.z<HEAD+0.09*s and c.y<0.035),hair_off,'Hair',cuts=[(WA,WN,None),((0,0.02,HEAD+0.035),Vector((0,0.3,-1)).normalized(),lambda c:c.y>-0.02)],sub=True)))
 clothes=[o for k,o in parts]
 for o in clothes:
     md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}
