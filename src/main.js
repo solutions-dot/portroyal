@@ -1030,7 +1030,7 @@ function frame(now) {
     const want = state.place === 'sea' ? Math.atan2(dx, dz) : d < 9 ? Math.max(-1.1, Math.min(1.1, Math.atan2(dx, dz))) : (state.place === 'in' ? 0 : 0.25); if (!Q.abbaRun) { const ea = want - abba.rotation.y; abba.rotation.y += ea * Math.min(1, dt * 3); const ac = abba.userData.anim; if (ac && CL.TurnLW && Math.abs(ea) > 0.8 && ac.cur === ac.base && abba.visible && !Q.on) ac.play(ea > 0 ? 'TurnLW' : 'TurnRW', true); }
     if (ring && ring.visible) { const s = 1 + (reduceMotion ? 0 : Math.sin(now / 420) * 0.08); ring.scale.set(s, s, s); }
     if (state.started) { current = null; let best = 1e9; if (!busy) for (const a of ACTIONS) { if (!!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const dd = Math.hypot(state.x - w[0], state.z - w[1]); if (dd < a.r && dd < best) { best = dd; current = a; } }
-      $('talk').hidden = !current; if (current && $('talk').textContent !== current.label) $('talk').textContent = current.label;
+      $('talk').hidden = !current; if (current && $('talk').dataset.label !== current.label) setActionButton(current);
       if (!state.unlocked.includes('harbour') && state.x < SHORE - 2) { unlock('harbour'); setGoal(); } }
     if (state.place === 'in' && fire && !reduceMotion) { const f = 0.85 + Math.sin(now / 90) * 0.08 + Math.sin(now / 37) * 0.07; fire.scale.set(1, f, 1); fireLight.intensity = 16 * f; for (let i = 0; i < flames.length; i++) { const k = 1.75 + Math.sin(now / 70 + i * 2.1) * 0.25; flames[i].scale.y = flames[i].geometry.type === 'SphereGeometry' ? k : 0.9 + (k - 1.75); } }
   }
@@ -1412,3 +1412,22 @@ GUNNER.splice(0, GUNNER.length,
   { who: 'The gunner', text: 'For practice, and for honour. When Sir Henry Morgan was buried, the ships fired 22 guns for him. Climb the ramp and watch the sea side!', unlock: 'forts' });
 { const j = JOURNAL.find((p) => p.id === 'forts'); if (j) j.deeper = ['Fort Charles was the first, begun in 1655 around a round stone tower. In 1687 a visitor, John Taylor, described it with eight sides, 38 guns and a mortar, and the old tower used to store gunpowder. That is the fort in this game.', 'It was the only fort that survived the 1692 earthquake. Forts James, Carlisle and Rupert sank into the sea.', 'Over the next hundred years it was rebuilt in red brick, into the fort you can visit in Port Royal today.']; }
 const _fire = fireSalute; fireSalute = () => { if (!FORT.guns) return; const sea = FORT.guns.filter((c) => c.position.x > FC.C[0] + 4 && c.position.y > 1).slice(0, 5); sea.forEach((c, i) => setTimeout(() => { if (state.place !== 'out' || FB.on) return; const p = new THREE.Vector3(0, 0.62, 1.5); c.localToWorld(p); boom(p.x, p.z); }, 700 + i * 950)); };
+
+/* ---------- a glowing speech mark over anyone you can talk to; the button becomes a round "talk" icon ---------- */
+const BUBBLE = cv(128, 128, (c) => { const g = c.createRadialGradient(64, 60, 10, 64, 60, 62); g.addColorStop(0, 'rgba(255,214,120,0.55)'); g.addColorStop(1, 'rgba(255,214,120,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128);
+  c.fillStyle = '#f3c25a'; c.strokeStyle = '#3a2a12'; c.lineWidth = 5; c.beginPath(); c.ellipse(64, 54, 36, 27, 0, 0, Math.PI * 2); c.fill(); c.stroke(); c.beginPath(); c.moveTo(48, 76); c.lineTo(42, 98); c.lineTo(64, 79); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#3a2a12'; for (const x of [48, 64, 80]) { c.beginPath(); c.arc(x, 54, 5, 0, Math.PI * 2); c.fill(); } });
+const MARKS = []; let markN = 0;
+function markSprite() { if (markN < MARKS.length) return MARKS[markN++]; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); sp.renderOrder = 5; scene.add(sp); MARKS.push(sp); markN++; return sp; }
+const isTalk = (a) => /^Talk to /.test(a.label);
+const markY = (a) => /old Ned|surgeon/.test(a.label) ? 1.7 : 2.15;
+TICKS.push(() => { markN = 0; const now = performance.now() / 1000;
+  if (state.started && !busy && $('card').hidden) for (const a of ACTIONS) { if (!isTalk(a) || !!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const d = Math.hypot(state.x - w[0], state.z - w[1]); if (d > 16) continue;
+    const sp = markSprite(), near = a === current, home = state.place === 'in' ? indoor : state.place === 'ware' ? wareG : state.place === 'after' ? afterG : state.place === 'yard' ? yardG : scene;
+    if (sp.parent !== home && home) home.add(sp);
+    const base = state.place === 'sea' ? seaLevel + 1.6 : (state.place === 'out' ? groundYAt(w[0], w[1]) : 0) + markY(a);
+    sp.position.set(w[0], base + Math.sin(now * 2.4 + w[0]) * 0.06, w[1]); const k = near ? 0.5 + Math.sin(now * 6) * 0.04 : 0.34; sp.scale.set(k, k, k); sp.material.opacity = near ? 1 : Math.max(0.35, 1 - d / 16); sp.visible = true; }
+  for (let i = markN; i < MARKS.length; i++) MARKS[i].visible = false; });
+const TALK_SVG = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12c0 4-4 7-9 7-1.2 0-2.4-.2-3.4-.5L3 20l1.5-4.2C3.6 14.7 3 13.4 3 12c0-4 4-7 9-7s9 3 9 7z"/><circle cx="8" cy="12" r=".6" fill="currentColor"/><circle cx="12" cy="12" r=".6" fill="currentColor"/><circle cx="16" cy="12" r=".6" fill="currentColor"/></svg>';
+function setActionButton(a) { const b = $('talk'); b.dataset.label = a.label; if (isTalk(a)) { b.classList.add('icon'); b.innerHTML = TALK_SVG + '<span class="who">' + a.label.replace(/^Talk to (the )?/, '') + '</span>'; b.setAttribute('aria-label', a.label); }
+  else { b.classList.remove('icon'); b.textContent = a.label; b.removeAttribute('aria-label'); } }
