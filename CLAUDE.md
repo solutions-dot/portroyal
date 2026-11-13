@@ -30,7 +30,7 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 
 1. **No em dashes** in any writing: code comments, dialogue, docs, commit messages, replies.
 2. **Plain words for ages 6+.** Dialogue lines are short, about 12 words or fewer, one idea each. Goals are one short sentence. Harder detail goes in the journal's "Dig deeper" section.
-3. **Historically accurate.** Check facts against sources before writing them. Made-up characters are fine, but say so in their journal page ("X in this game is made up"). Never invent quotes for real people or make up historical claims. When the game shows something real, such as a tombstone inscription, use the real wording.
+3. **Historically accurate.** Check facts against sources before writing them. Fictional characters are fine, but say so in their journal page ("X in this game is fictional"). Never invent quotes for real people or make up historical claims. When the game shows something real, such as a tombstone inscription, use the real wording.
 4. **Difficult history is told honestly and gently**: slavery, violence, disaster. Fights happen in the background, nobody falls down dead, and nothing is graphic.
 5. **Everything must work on phones**: touch joystick, drag to look, tap people to talk. Check with the phone layout.
 6. **Check your work before calling it done**: build, take screenshots of what you changed, and run the autoplayer (see `docs/TESTING.md`).

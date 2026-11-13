@@ -41,26 +41,26 @@ The world is metres; y is up; `yaw = 0` looks toward -z. `state.place` says wher
 
 ## Characters
 
-Made-up characters say so on their journal page (owner rule 3).
+Fictional characters say so on their journal page (owner rule 3).
 
-| Who | Real or made up | Where | Model |
+| Who | Real or fictional | Where | Model |
 |---|---|---|---|
 | Lewis Galdy (you) | real | everywhere | `galdy` (third-person view with V); walks with the shared `Walk` clip, paced to his speed |
-| Abba, tavern keeper | made up (stands for the free Black people of Port Royal) | by the tavern door (-5.2, 0.9) | `abba` |
-| Old Ned, retired buccaneer | made up | tavern table, sitting | `ned` |
-| Kofi, enslaved dockworker | made up | carries crates from the stack at (19.4, 3.1) to the pier | `kofi` |
+| Abba, tavern keeper | fictional (stands for the free Black people of Port Royal) | by the tavern door (-5.2, 0.9) | `abba` |
+| Old Ned, retired buccaneer | fictional | tavern table, sitting | `ned` |
+| Kofi, enslaved dockworker | fictional | carries crates from the stack at (19.4, 3.1) to the pier | `kofi` |
 | Symon Benning, pewterer | real family of pewterers | main street | `benning` |
-| Sam, sailor | made up | main street | `sailor` |
+| Sam, sailor | fictional | main street | `sailor` |
 | The Reverend Emmanuel Heath | real (rector of St Paul's) | camp, and the earthquake day | `heath` |
-| The gunner | made up | Fort Charles | `gunner` |
-| A soldier of the garrison | made up, no dialogue | walks the main street into the tavern, comes out, walks to Fort Charles and back | `soldier` (buff coat, half-pike) |
+| The gunner | fictional | Fort Charles | `gunner` |
+| A soldier of the garrison | fictional, no dialogue | walks the main street into the tavern, comes out, walks to Fort Charles and back | `soldier` (buff coat, half-pike) |
 | Henry Morgan | real | flashback, on the pier | `morgan` |
-| Quartermaster, buccaneers | made up | flashback beach | `buc1`, `buc2` |
+| Quartermaster, buccaneers | fictional | flashback beach | `buc1`, `buc2` |
 | Alexandre Exquemelin, surgeon | real (wrote *The Buccaneers of America*) | flashback | |
-| Grace, market seller | made up | fruit stall (9.6, 16.1), stays put, gestures now and then; asks a sum quiz | Abba's body recoloured, basket on her head |
-| Peter, turtler | made up | turtle crawl, harbour corner | `turtler` |
-| Daniel Mendes, merchant | made up | Jews Street, strolls by the synagogue | `mendes` (blue coat) |
-| Constable Hart | made up | strolls the new street | `constable` |
+| Grace, market seller | fictional | fruit stall (9.6, 16.1), stays put, gestures now and then; asks a sum quiz | Abba's body recoloured, basket on her head |
+| Peter, turtler | fictional | turtle crawl, harbour corner | `turtler` |
+| Daniel Mendes, merchant | fictional | Jews Street, strolls by the synagogue | `mendes` (blue coat) |
+| Constable Hart | fictional | strolls the new street | `constable` |
 
 People who stroll use `STROLL` (paths per id); they stop and face you within 3.6 m. The soldier uses `SOLDIER` (one path, walked both ways, hidden while inside the tavern or fort).
 

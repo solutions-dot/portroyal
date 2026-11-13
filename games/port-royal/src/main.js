@@ -28,7 +28,7 @@ const JOURNAL = [
              'Not everyone was free. Many African people here were enslaved: forced to work, unpaid, and not allowed to leave.',
              'Abba is a free woman. That was rare.'],
     deeper: ['About 2,500 of the people in the town were enslaved Africans. Part of Port Royal’s wealth came from buying and selling human beings. This game will not hide that.',
-             'Abba is a character we made up. She stands for the free Black and mixed-race people who really lived in Jamaica at this time. Church records list a free Black couple, Peter Moore and Black Betty, who married in 1677.'] },
+             'Abba is a fictional character. She stands for the free Black and mixed-race people who really lived in Jamaica at this time. Church records list a free Black couple, Peter Moore and Black Betty, who married in 1677.'] },
   { id: 'harbour', title: 'The busy harbour',
     simple: ['Port Royal had one of the busiest harbours in the Americas. In the year 1688, 213 ships came here.',
              'Ships left Jamaica full of sugar, rum, cotton, ginger and wood.'],
@@ -37,7 +37,7 @@ const JOURNAL = [
   { id: 'change', title: 'Making change',
     simple: ['A piece of eight was worth eight reales. Abba\u2019s stew cost two reales, so you got six back.',
              'Sometimes people cut a coin into smaller pieces to make change. The pieces were called bits.'],
-    deeper: ['The prices in this game are made up. Nobody wrote down what a bowl of stew cost in a Port Royal tavern in 1690.'] },
+    deeper: ['The prices in this game are fictional. Nobody wrote down what a bowl of stew cost in a Port Royal tavern in 1690.'] },
   { id: 'bottle', title: 'Onion bottles',
     simple: ['This round bottle is called an onion bottle, because of its shape. It held wine or other drinks.',
              'Divers found a huge number of bottles like this under the sea at Port Royal.'],
@@ -74,7 +74,7 @@ const JOURNAL = [
              'In this game, Abba is in the boat. We made that part up. Nobody wrote down who was in the boat that saved him.'] },
   { id: 'after', title: 'The days after',
     simple: ['The earthquake lasted about three minutes. The hard days came after.', 'There was little food and no clean water. Many people got sick, and thousands more died.'],
-    deeper: ['At night, thieves robbed the broken houses. The town\u2019s minister wrote about them in a letter.', 'The camp in this game is made up. The hunger, the sickness and the thieves were real.'] },
+    deeper: ['At night, thieves robbed the broken houses. The town\u2019s minister wrote about them in a letter.', 'The camp in this game is fictional. The hunger, the sickness and the thieves were real.'] },
   { id: 'tentp', title: 'Church in a tent',
     simple: ['The great church fell down in the earthquake.', 'So the minister held church in a tent.'],
     deeper: ['A news sheet printed in London in 1692 shows him preaching in a tent, with ruined houses all around.'] },
@@ -103,23 +103,23 @@ const JOURNAL = [
   { id: 'market', title: 'The slave market',
     simple: ['Ships brought enslaved African people to Port Royal to be sold.', 'Families were split up on the wharf. The law allowed it. It was still wrong.'],
     deeper: ['Until 1698, one company, the Royal African Company, was the only English company allowed to bring enslaved people from Africa.',
-             'We do not know the year Lewis Galdy began to buy and sell people. We know that he did. The letter in this game is made up, to show the choice in front of him.',
-             'Abba\u2019s mother is made up too. Thousands of real mothers were sold in Port Royal.'] },
+             'We do not know the year Lewis Galdy began to buy and sell people. We know that he did. The letter in this game is fictional, to show the choice in front of him.',
+             'Abba\u2019s mother is fictional too. Thousands of real mothers were sold in Port Royal.'] },
   { id: 'swan', title: 'The ship over the houses',
     simple: ['When the earthquake struck, the sea rushed over the wharf.', 'A ship called the Swan was by the shore. The water carried it right over the sunken houses.'],
-    deeper: ['People in the water climbed onto the Swan and were saved.', 'Sam is a character we made up, but people who were there wrote about the Swan.'] },
+    deeper: ['People in the water climbed onto the Swan and were saved.', 'Sam is a fictional character, but people who were there wrote about the Swan.'] },
   { id: 'kofi', title: 'Kofi\u2019s name',
     simple: ['Many enslaved people in Jamaica came from West Africa. Kofi is a West African name for a boy born on a Friday.', 'Owners often gave enslaved people new names. Many kept their own names among themselves.'],
-    deeper: ['Enslaved Africans did much of the hardest work in Port Royal: loading ships, carrying goods, building and rowing.', 'Kofi is a character we made up. About 2,500 enslaved people lived in Port Royal, and most of their names were never written down.'] },
+    deeper: ['Enslaved Africans did much of the hardest work in Port Royal: loading ships, carrying goods, building and rowing.', 'Kofi is a fictional character. About 2,500 enslaved people lived in Port Royal, and most of their names were never written down.'] },
   { id: 'privateer', title: 'Pirates and privateers',
     simple: ['A privateer had papers from the government to attack enemy ships. A pirate had no papers.', 'In the 1660s, English leaders let privateers from Port Royal raid Spanish ships and towns.'],
-    deeper: ['The most famous was Henry Morgan. He later became Lieutenant Governor of Jamaica.', 'By the 1680s the government had turned against the raiders. Pirates caught by the law were hanged at Gallows Point, just outside the town.', 'Sam is a character we made up.'] },
+    deeper: ['The most famous was Henry Morgan. He later became Lieutenant Governor of Jamaica.', 'By the 1680s the government had turned against the raiders. Pirates caught by the law were hanged at Gallows Point, just outside the town.', 'Sam is a fictional character.'] },
   { id: 'benning', title: 'The Bennings, pewterers',
     simple: ['Simon Benning was a real pewterer. He made plates, spoons and cups from pewter.', 'He died in 1687. His son Symon kept the shop going until the earthquake.'],
-    deeper: ['Their mark was a pineapple with the letters S and B. Pewter with this mark has been found under the sea at Port Royal.', 'Marks like these help archaeologists work out who made the things they find.', 'The words of Symon Benning in this game are made up.'] },
+    deeper: ['Their mark was a pineapple with the letters S and B. Pewter with this mark has been found under the sea at Port Royal.', 'Marks like these help archaeologists work out who made the things they find.', 'The words of Symon Benning in this game are fictional.'] },
   { id: 'heath', title: 'The Reverend Emmanuel Heath',
     simple: ['Emmanuel Heath was a real person. He was the minister of St Paul\u2019s Church in Port Royal.', 'He lived through the earthquake and wrote letters about it. We know a lot about that day because of him.'],
-    deeper: ['He wrote from a ship called the Granada, out in the harbour. He went ashore to pray with the hurt and dying, and to christen children.', 'Like many people then, he believed the earthquake was God\u2019s punishment. Today, scientists explain it with loose, wet sand turning to liquid.', 'His words in this game are made up, but they follow what he wrote.'] },
+    deeper: ['He wrote from a ship called the Granada, out in the harbour. He went ashore to pray with the hurt and dying, and to christen children.', 'Like many people then, he believed the earthquake was God\u2019s punishment. Today, scientists explain it with loose, wet sand turning to liquid.', 'His words in this game are fictional, but they follow what he wrote.'] },
 ];
 const COINS = [
   { who: 'You', text: 'A cook wants a sack of cocoa. It costs 20 reales.' },
@@ -1173,19 +1173,19 @@ function start(saved) { try { if (sessionStorage.getItem('pr-fresh')) { sessionS
 JOURNAL.push(
   { id: 'markets', title: 'The markets',
     simple: ['Port Royal had three markets every day.', 'One sold herbs, fruit and birds. One sold meat and turtle. One sold fish by the wharf.', 'A watermelon cost one real.'],
-    deeper: ['John Taylor visited in 1687 and 1688 and wrote down what he saw.', 'He said the fish market was on the wharf near the Wherry Bridge, and one real bought enough fish for four men.', 'Carrots and turnips were very dear. Sweet potatoes were cheap: ten or twelve pounds for one real.', 'Grace in this game is made up.'] },
+    deeper: ['John Taylor visited in 1687 and 1688 and wrote down what he saw.', 'He said the fish market was on the wharf near the Wherry Bridge, and one real bought enough fish for four men.', 'Carrots and turnips were very dear. Sweet potatoes were cheap: ten or twelve pounds for one real.', 'Grace in this game is fictional.'] },
   { id: 'turtles', title: 'Turtles and crawls',
     simple: ['Green turtle was one of the town’s main foods.', 'Turtlers caught them near the Cayman Islands.', 'They kept them alive in pens in the sea, called crawls.'],
-    deeper: ['Ships stopping at Port Royal bought turtles to eat on long voyages.', 'Archaeologists have found turtle bones with knife marks in the sunken town.', 'So many turtles were caught that their numbers fell badly. Today green turtles are protected.', 'Peter in this game is made up.'] },
+    deeper: ['Ships stopping at Port Royal bought turtles to eat on long voyages.', 'Archaeologists have found turtle bones with knife marks in the sunken town.', 'So many turtles were caught that their numbers fell badly. Today green turtles are protected.', 'Peter in this game is fictional.'] },
   { id: 'jewsstreet', title: 'Jews Street',
     simple: ['Many Jewish families lived in Port Royal.', 'Their families had come from Portugal and Spain, by way of Amsterdam and France.', 'Their street was called Jews Street. It had a synagogue.'],
-    deeper: ['A deed from 1677 shows land bought on New Street, also called Jew Street, for a synagogue.', 'In 1672 English merchants complained to the governor that Jewish traders were taking their trade.', 'From 1690, Jews in Jamaica had to pay an extra tax.', 'A letter written on the day of the earthquake says the synagogue fell beside the writer as he turned into Jews Street to get home.', 'Jamaica’s Jewish community still lives on today, in Kingston. Daniel Mendes in this game is made up.'] },
+    deeper: ['A deed from 1677 shows land bought on New Street, also called Jew Street, for a synagogue.', 'In 1672 English merchants complained to the governor that Jewish traders were taking their trade.', 'From 1690, Jews in Jamaica had to pay an extra tax.', 'A letter written on the day of the earthquake says the synagogue fell beside the writer as he turned into Jews Street to get home.', 'Jamaica’s Jewish community still lives on today, in Kingston. Daniel Mendes in this game is fictional.'] },
   { id: 'freepeople', title: 'Free Black people',
     simple: ['Most Black people in Jamaica were enslaved.', 'But some were free.', 'Some were freed by their owners, often in a will.'],
     deeper: ['Church records from the 1670s show free Black people marrying and having their children baptised.', 'Some wills promised an enslaved person freedom after a number of years of work.', 'The Maroons escaped slavery and lived free in the mountains.', 'Free Black people still faced unfair laws, and these got harsher in the 1700s.'] },
   { id: 'law', title: 'Keeping the peace',
     simple: ['A constable kept the peace in the town.', 'Rule-breakers sat in the stocks, near the market bell.', 'There were two prisons: the Marshalsea for men and the Bridewell for women.'],
-    deeper: ['These details come from John Taylor’s description of Port Royal in 1688.', 'Later, many captured pirates were tried and hanged at Gallows Point, near the town.', 'Constable Hart in this game is made up.'] });
+    deeper: ['These details come from John Taylor’s description of Port Royal in 1688.', 'Later, many captured pirates were tried and hanged at Gallows Point, near the town.', 'Constable Hart in this game is fictional.'] });
 
 const NS = { z: 18.6, zmin: 13.6, zmax: 23.2, x0: -7.5, ready: false, g: null, col: [] };
 const NS_TALK = {
@@ -1435,7 +1435,7 @@ const FB = { on: false }, FORT = { ready: false };
 JOURNAL.push(
   { id: 'morgan', title: 'Captain Henry Morgan',
     simple: ['Henry Morgan was the most famous privateer of Port Royal. He came from Wales.', 'The governor gave him papers to attack Spanish ships and towns. His men chose him to lead them.'],
-    deeper: ['He raided Portobelo in 1668 and Maracaibo in 1669. In January 1671 his men took the city of Panama, and it burned.', 'England and Spain had just made peace, so Morgan was arrested and sent to England in 1672. Instead of being punished, he was made a knight in 1674.', 'He came back in 1675 as Lieutenant Governor of Jamaica, and the law he served now hanged pirates. Ned is a made-up character, but Morgan was real.'] },
+    deeper: ['He raided Portobelo in 1668 and Maracaibo in 1669. In January 1671 his men took the city of Panama, and it burned.', 'England and Spain had just made peace, so Morgan was arrested and sent to England in 1672. Instead of being punished, he was made a knight in 1674.', 'He came back in 1675 as Lieutenant Governor of Jamaica, and the law he served now hanged pirates. Ned is a fictional character, but Morgan was real.'] },
   { id: 'funeral', title: 'Morgan’s grave',
     simple: ['Henry Morgan died in Port Royal on 25 August 1688.', 'He was buried near the town. The ships fired 22 guns for him.'],
     deeper: ['Four years later, the 1692 earthquake carried that cemetery into the sea. His grave has never been found.', 'Many stories say Morgan hid treasure in Port Royal. None of them have ever been proved.'] },
@@ -1553,7 +1553,7 @@ const FBP = { morgan: [SHORE + 9.5, -0.55, -Math.PI / 2], d1: [SHORE - 4.2, 2.6,
 const FBG = { group: null, cast: [] };
 JOURNAL.push({ id: 'panama', title: 'The raid on Panama',
   simple: ['In 1670 Morgan gathered many ships and over a thousand men.', 'In 1671 they walked across the land to Panama and took the city. It burned.'],
-  deeper: ['Morgan’s men were paid with a share of what they captured. Most got far less than they hoped.', 'The young Ned in this story is made up. The raid was real.'] });
+  deeper: ['Morgan’s men were paid with a share of what they captured. Most got far less than they hoped.', 'The young Ned in this story is fictional. The raid was real.'] });
 function fbIntro() { if (!townReady || !tavernReady || !people.morgan) { toast('The town is still loading.'); return; } closeJournal(); card('1670', ['This is old Ned’s story, from 20 years ago.', 'In it, you are young Ned, a ship’s boy.'], [{ t: 'Begin', go: () => { hideCard(); fbStart(); } }, { t: 'Not now', go: hideCard }]); }
 function clone(id, tint) { const keep = people[id].userData.anim, sw = people[id].userData.sword; delete people[id].userData.anim; delete people[id].userData.sword; const m = skClone(people[id]); people[id].userData.anim = keep; if (sw) people[id].userData.sword = sw; if (tint) m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); return m; }
 function fbBuild() { if (FBG.group) return; const g = new THREE.Group(); g.visible = false; scene.add(g); FBG.group = g;

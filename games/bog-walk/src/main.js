@@ -1,5 +1,5 @@
 /* games/bog-walk/src/main.js: Bog Walk 1904: The Tube. First build: the inside of the Tube and the night the water came (see docs/games/bog-walk.md).
-   You play someone who is made up. The first slice is one place and one night: scrape rust off the pipe wall with the gang, then the water comes and you
+   You play someone who is fictional. The first slice is one place and one night: scrape rust off the pipe wall with the gang, then the water comes and you
    follow the voices to the manhole. No one can fail and no one is shown in the water. All the spoken lines here are placeholders written for this game. */
 import * as THREE from 'three';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, crackle, AU } from '../../../engine/audio.js';
