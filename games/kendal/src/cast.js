@@ -74,3 +74,12 @@ export function villagers(n, seed, area, { anims = ['Idle', 'Talk1', 'Sad1', 'Id
 /* a person you can talk to, and a background figure: both are a look plus a place to stand */
 export const person = (id, look, who, x, z, ry = 0, o = {}) => ({ id, who, label: 'Talk to ' + who, x, z, ry, anim: 'Idle', ...LOOKS[look], ...o });
 export const extra = (look, x, z, ry = 0, anim = 'Idle', o = {}) => ({ ...LOOKS[look], x, z, ry, anim, ...o });
+
+/* give some of a crowd somewhere to walk: each chosen person gets two or three spots near where they stand (inside `area`) and strolls between them.
+   The game's people-walk code (npcTick in main.js) does the rest. seed keeps it repeatable. */
+export function walkers(list, seed, area, frac = 0.5, reach = 7) {
+  const r = rng(seed); for (const e of list) { if (r() > frac || /^Sit/.test(e.anim || '')) continue; const pts = [[e.x, e.z]]; const k = 1 + ((r() * 2) | 0);
+    for (let i = 0; i < k; i++) pts.push([Math.max(area[0], Math.min(area[2], e.x + (r() - 0.5) * 2 * reach)), Math.max(area[1], Math.min(area[3], e.z + (r() - 0.5) * 2 * reach * 0.6))]);
+    e.path = pts; e.anim = 'Idle'; e.walker = true; }
+  return list;
+}
