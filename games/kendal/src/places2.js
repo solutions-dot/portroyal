@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv, grain } from './gfx.js';
 import { rails, railsCurve, woodCoach, dieselLoco, platform, TM } from './trains.js';
-import { palm, tree, banana, bush, flowers, boardHouse, hillRing, scatter, crate, hamper, suitcase, sack, bucket, bench, pole, lampPost, torch, lantern, signBoard, standpipe, truck, PM } from './props.js';
+import { palm, tree, banana, bush, flowers, boardHouse, hillRing, scatter, crate, hamper, suitcase, sack, bucket, bench, seatRock, pole, lampPost, torch, lantern, signBoard, standpipe, truck, PM } from './props.js';
 import { ENV, stationBase, groundPlane, makeRig, TRACK_Y } from './common.js';
 import { person, extra, crowd57, villagers, walkers, LOOKS } from './cast.js';
 import { roadStrip } from './places1.js';
@@ -26,7 +26,7 @@ export function buildKingston57() {
   const door = new THREE.MeshBasicMaterial({ color: 0x2a2018 }), arch = new THREE.MeshBasicMaterial({ color: 0x5a4a3a });
   for (let x = -42; x <= 42; x += 7) { box(2.2, 3.1, 0.2, door, x, 1.55, 14.0, g); const a = cyl(1.1, 1.1, 0.2, door, x, 3.1, 14.0, g, 14); a.rotation.x = PI / 2; a.scale.set(1, 1, 1); box(2.4, 0.18, 0.3, arch, x, 3.1, 13.95, g); box(1.6, 1.1, 0.12, new THREE.MeshBasicMaterial({ color: 0x24323a }), x + 3.5, 5.3, 14.0, g); }
   const sg = signBoard('KINGSTON', 9, 1.3, { bg: '#244a3a', fg: '#f4ecd0', font: '700 112px Georgia, serif' }); sg.position.set(0, 6.4, 13.9); g.add(sg);
-  const ck = mesh(new THREE.CircleGeometry(0.7, 24), new THREE.MeshBasicMaterial({ map: T.clock() }), 14, 5.8, 13.85, g);
+  const ck = mesh(new THREE.CircleGeometry(0.7, 24), new THREE.MeshBasicMaterial({ map: T.clock(), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 14, 5.8, 13.8, g);
   for (let x = -30; x <= 40; x += 14) { const lp = lampPost(3.4, false); lp.position.set(x, 0, 10.4); g.add(lp); }
   for (const [x, z] of [[-14, 10.5], [26, 10.5]]) { const b = bench(2.4); b.position.set(x, 0, z); b.rotation.y = PI; g.add(b); }
   /* the train: twelve wooden coaches and two diesel engines, facing west (toward the front, far away in the haze) */
@@ -61,18 +61,19 @@ export function buildCoach() {
   for (const s of [-1, 1]) { box(0.1, 2.5, W, wallM, s * L / 2, 1.25, 0, g); box(0.06, 2.0, 0.9, solid(0x3a2418, 0.9), s * (L / 2 - 0.06), 1.0, 0, g); }
   const arc = new THREE.CylinderGeometry(W / 2 + 0.05, W / 2 + 0.05, L, 20, 1, true, 0, PI); arc.rotateZ(PI / 2); const ceiling = new THREE.Mesh(arc, ceil); ceiling.scale.set(1, 0.32, 1); ceiling.position.y = 2.45; g.add(ceiling);
   const rows = [], seatSlots = [];
-  for (let i = 0; i < 7; i++) { const x = -4.2 + i * 1.42; rows.push(x); for (const s of [-1, 1]) { box(0.5, 0.07, 0.95, seatM, x, 0.45, s * 0.78, g); box(0.06, 0.6, 0.95, seatM, x + 0.27, 0.8, s * 0.78, g); box(0.08, 0.42, 0.9, dark, x, 0.22, s * 0.78, g); seatSlots.push([x, s * 0.78, s]); } }
+  const SEAT = 0.4;   /* the top of a bench seat; people sit on it with the hip joint 12 cm above (see SIT_HIPS in main.js) */
+  for (let i = 0; i < 7; i++) { const x = -4.2 + i * 1.42; rows.push(x); for (const s of [-1, 1]) { box(0.5, 0.07, 0.95, seatM, x, SEAT - 0.035, s * 0.78, g); box(0.06, 0.72, 0.95, seatM, x + 0.27, SEAT + 0.35, s * 0.78, g); box(0.08, SEAT - 0.07, 0.9, dark, x, (SEAT - 0.07) / 2, s * 0.78, g); seatSlots.push([x, s * 0.78, s]); } }
   walls.push([-5.2, -1.3, 5.2, -0.3], [-5.2, 0.3, 5.2, 1.3]);   /* the benches; you walk in the aisle between them */
   for (const x of [-3.2, 0, 3.2]) { cyl(0.16, 0.16, 0.06, new THREE.MeshBasicMaterial({ color: 0xffe3a6 }), x, 2.62, 0, g, 12); }
   const lamp = new THREE.PointLight(0xffd9a0, 9, 14, 1.3); lamp.position.set(0, 2.3, 0); g.add(lamp);
   for (const [x, z, k] of [[-4.6, 0.0, 0], [4.7, -0.1, 1], [-4.4, -0.1, 2], [4.5, 0.15, 0], [-1.5, 0.1, 1]]) { const o = k === 0 ? hamper() : k === 1 ? suitcase() : sack(); o.position.set(x, 0, z); o.rotation.y = x; g.add(o); }
   /* the passengers: Gran, Lloyd and the mother have their seats; the rest are made up from the crowd generator, sitting */
-  people.push(person('gran5', 'gran', 'Gran', rows[4], -1.05, -PI / 2, { anim: 'SitIdle', h: 1.35 }));
-  people.push(person('lloyd5', 'lloyd', 'Lloyd', rows[4], -0.62, -PI / 2, { anim: 'SitTalk', h: 1.05 }));
-  people.push(person('mother', 'mother', 'The mother', rows[2], 0.62, -PI / 2, { anim: 'SitIdle', h: 1.35 }));
+  people.push(person('gran5', 'gran', 'Gran', rows[4], -0.96, -PI / 2, { anim: 'SitIdle', h: 1.35, seat: SEAT }));
+  people.push(person('lloyd5', 'lloyd', 'Lloyd', rows[4], -0.42, -PI / 2, { anim: 'SitTalk', h: 1.05, seat: SEAT }));
+  people.push(person('mother', 'mother', 'The mother', rows[2], 0.5, -PI / 2, { anim: 'SitIdle', h: 1.35, seat: SEAT }));
   const taken = (x, s, k) => (x === rows[4] && s < 0) || (x === rows[2] && s > 0 && k === 0) || ((x === rows[3] || x === rows[5]) && s > 0 && k === 1);
   const crowd = crowd57(30, 33, [0, 0, 1, 1], { anims: ['SitIdle'], kids: 0.18 }); let ci = 0;
-  for (const x of rows) for (const s of [-1, 1]) for (const k of [0, 1]) { if (taken(x, s, k) || (Math.round(x * 10) + k + (s > 0 ? 1 : 0)) % 4 === 0) continue; const e = crowd[ci++]; Object.assign(e, { x, z: s * (k ? 1.0 : 0.5), ry: -PI / 2, anim: ['SitIdle', 'SitTalk'][(ci * 7) % 2], seated: true, props: undefined }); extras.push(e); }
+  for (const x of rows) for (const s of [-1, 1]) for (const k of [0, 1]) { if (taken(x, s, k) || (Math.round(x * 10) + k + (s > 0 ? 1 : 0)) % 4 === 0) continue; const e = crowd[ci++]; Object.assign(e, { x, z: s * (k ? 0.93 : 0.5), ry: -PI / 2, anim: ['SitIdle', 'SitTalk'][(ci * 7) % 2], seated: true, seat: SEAT, props: undefined }); extras.push(e); }
   return { id: 'coach', group: g, walls, bounds: { x0: -4.8, x1: 4.8, z0: -0.28, z1: 0.28 }, start: { x: 4.3, z: 0, yaw: PI / 2 }, people, extras, env: ENV.day, rig, lamp, ride: true, wheels: [],
     spots: { seat: [rows[4], -0.25], windows: [[-2.5, 0.2, 1], [2.9, -0.2, -1]] }, tick: () => {} };
 }
@@ -132,7 +133,10 @@ export function buildCrash() {
   people.push(person('dawn', 'dawn', 'Dawn', 9.5, 10, PI, { h: 1.05, anim: 'Sad1' }));
   people.push(person('louise', 'louise', 'Sister Louise', -6.6, 13.6, PI, { h: 1.7, props: [['RightHand', 'lantern']] }));
   const sit = [[-2.6, 8.8], [-4.8, 9.8], [-1.2, 10.2], [-6.0, 7.6]];
-  for (const [i, [x, z]] of sit.entries()) extras.push({ ...crowd57(1, 50 + i, [0, 0, 1, 1], { anims: ['SitDisbelief'] })[0], x, z, ry: PI * 0.4 + i, anim: ['SitDisbelief', 'Sad2'][i % 2], blanket: true });
+  for (const [i, [x, z]] of sit.entries()) {   /* survivors rest on flat-topped rocks by the fire (the sitting poses are chair-high, so a rock is about 0.46 m) */
+    const ry = PI * 0.4 + i, top = 0.34 + (i % 3) * 0.04, rk = seatRock(top, 0.36, i + 1); rk.position.set(x, 0, z); g.add(rk); walls.push([x - 0.45, z - 0.45, x + 0.45, z + 0.45]);
+    extras.push({ ...crowd57(1, 50 + i, [0, 0, 1, 1], { anims: ['SitDisbelief'] })[0], x, z, ry, anim: ['SitDisbelief', 'Sad2'][i % 2], blanket: true, seat: top });
+  }
   extras.push(...villagers(16, 61, [-14, 1, 22, 13], { faceZ: PI }).filter(free(walls)));
   extras.push(...villagers(6, 73, [-12, 14, 4, 20], { faceZ: PI }).map((e) => ({ ...e, anim: 'Talk1' })));
   extras.push(...villagers(4, 83, [-30, -3.5, -12, -1.5], { faceZ: 0, lamp: 1 }));

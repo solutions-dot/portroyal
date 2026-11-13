@@ -82,8 +82,8 @@ export function buildRide45() {
   const loco = steamLoco('early'); loco.position.set(-10.8, 0, 0); g.add(loco);
   const t2 = carriage1845('third', 6.4, 2.4, 'sides'); t2.position.set(7.2, 0, 0); g.add(t2);
   const wheels = [...loco.userData.wheels, ...car.userData.wheels, ...t2.userData.wheels];
-  people.push(person('boyRide', 'boy45', 'The boy', 1.6, 0.9, PI, { h: 1.2, anim: 'SitTalk', ground: 0.17 }));
-  extras.push(extra('lady45', 0.5, 0.9, PI, 'SitIdle', { ground: 0.17 }), extra('worker45', -1.2, -0.9, 0, 'SitTalk', { ground: 0.17 }), extra('woman45', 0.5, -0.9, 0, 'SitIdle', { ground: 0.17 }));
+  people.push(person('boyRide', 'boy45', 'The boy', 1.6, 0.9, PI, { h: 1.2, anim: 'SitTalk', ground: 0.17, seat: 0.48 }));
+  extras.push(extra('lady45', 0.5, 0.9, PI, 'SitIdle', { ground: 0.17, seat: 0.48 }), extra('worker45', -1.2, -0.9, 0, 'SitTalk', { ground: 0.17, seat: 0.48 }), extra('woman45', 0.5, -0.9, 0, 'SitIdle', { ground: 0.17, seat: 0.48 }));
   return { id: 'ride45', group: g, walls, bounds: { x0: -2.5, x1: 2.5, z0: -0.5, z1: 0.5 }, start: { x: 0.2, z: 0, yaw: PI / 2 }, people, extras, env: ENV.day, rig, wheels, loco, ride: true,
     smokers: [{ obj: loco.userData.chimney, rate: 8, v: 0.5 }], spots: { water: [-1.8, 0] }, tick: () => {} };
 }
@@ -96,12 +96,12 @@ export function buildHill() {
   const hut = shed(9, 4.5, 2.9, [176, 140, 96]); hut.position.set(2, 0, 11.5); hut.rotation.y = PI; g.add(hut); walls.push([-2.6, 9, 6.6, 14]);
   const sg = signBoard('HILL STATION', 3.2, 0.55, { bg: '#2a3a52', fg: '#f3e6b8', font: '700 46px Georgia, serif' }); sg.position.set(2, 3.1, 9.1); g.add(sg);
   const wt = waterTower(); wt.position.set(34, TRACK_Y, 4); g.add(wt); wt.position.y = 0; walls.push([32, 2, 36, 6]);
-  scatter(g, (i) => banana(i), 40, [-34, 18, 44, 60], [[-6, 16, 10, 22]], 5); scatter(g, (i) => tree(5 + (i % 3), i), 16, [-30, 24, 40, 70], [], 8); scatter(g, (i) => bush(i, 1.4), 24, [-34, 15, 44, 40], [[-6, 15, 10, 22]], 3);
+  scatter(g, (i) => banana(i, i % 4 === 0), 40, [-34, 18, 44, 60], [[-6, 16, 10, 22]], 5); scatter(g, (i) => tree(5 + (i % 3), i), 16, [-30, 24, 40, 70], [], 8); scatter(g, (i) => bush(i, 1.4), 24, [-34, 15, 44, 40], [[-6, 15, 10, 22]], 3);
   /* two goods wagons waiting on the track, and the pile of banana bunches the farmer has cut */
   const w1 = wagon(), w2 = wagon(); w1.position.set(-20, 0, -3); w2.position.set(-12.8, 0, -3); g.add(w1, w2); walls.push([-24, -4.6, -9, -1.2]);
   const pile = grp(g, -14, 0, 5.6); pile.userData.noBatch = true; const mat = box(3.2, 0.06, 2.2, solid(0x8a7a3a, 1), 0, 0.03, 0, pile); const bunches = [];
-  for (let i = 0; i < 8; i++) { const b = bananaBunch(1.1); b.position.set(-1.2 + (i % 4) * 0.8, 0.07, -0.5 + Math.floor(i / 4) * 0.9); b.rotation.set(0, i * 1.3, PI / 2 * 0.9); pile.add(b); bunches.push(b); }
-  const inWagon = []; for (let i = 0; i < 4; i++) { const b = bananaBunch(1.1); b.position.set(-14.6 + (i % 2) * 0.8, 0.5, -3.3 + Math.floor(i / 2) * 0.7); b.rotation.set(0, i, PI / 2); b.visible = false; b.userData.noBatch = true; g.add(b); inWagon.push(b); }
+  for (let i = 0; i < 8; i++) { const b = bananaBunch(1.1); b.position.set(-1.2 + (i % 4) * 0.8, 0.3, -0.5 + Math.floor(i / 4) * 0.9); b.rotation.set(0, i * 1.3, PI / 2); pile.add(b); bunches.push(b); }
+  const inWagon = []; for (let i = 0; i < 4; i++) { const b = bananaBunch(1.1); b.position.set(-14.6 + (i % 2) * 0.8, 0.44, -3.3 + Math.floor(i / 2) * 0.7); b.rotation.set(0, i, PI / 2); b.visible = false; b.userData.noBatch = true; g.add(b); inWagon.push(b); }
   for (const [x, z] of [[-3, 6.8], [8, 9], [20, 7]]) { const c = crate(0.8); c.position.set(x, 0, z); g.add(c); } for (let i = 0; i < 3; i++) { const b = barrel(); b.position.set(14 + i * 0.7, 0, 8.4); g.add(b); }
   const bp = bench(2.2); bp.position.set(-1, 0, 9.3); bp.rotation.y = PI; g.add(bp);
   /* the train that climbs in: a steam engine, its tender, a carriage and a wagon. It starts far to the east and runs west to the platform. */
