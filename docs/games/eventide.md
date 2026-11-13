@@ -2,7 +2,7 @@
 
 Status: **story plot, agreed by the owner on 13 Nov 2026.** No code, models or menu card exist yet, and the facts still need the second research pass. Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/games/garvey.md` first. Garvey is the closest model: its panels, journal, chapters, saving and helper arrow are the ones to copy, and two of its activities are reused below.
 
-Owner decisions (13 Nov 2026): **the hero is a fictional child who is grown in chapter 7**; **two of the four women get out, and they are Miss Pearl and Miss Maude**; **the night chapter can be a little more detailed, but never graphic**. The owner also agreed the storyline as a whole, which includes the other recommendations at the end of this file.
+Owner decisions (13 Nov 2026): **the hero is a fictional child who is grown in chapter 7**; **two of the four women get out, and they are Miss Hyacinth and Miss Maude**; **the night chapter can be a little more detailed, but never graphic**. The owner also agreed the storyline as a whole, which includes the other recommendations at the end of this file.
 
 Working title: **Eventide 1980**. Code would live in `games/eventide/` (copied from `games/_template/`, then the Garvey panels).
 
@@ -37,7 +37,7 @@ This is the hardest history in the family of games: it is recent, relatives are 
 3. **The player is never in danger** and the rope stops the player near the fire (the same kind of clamp as `clampPos`).
 4. **No choice in the night chapter.** Nothing you do changes what happened, and a line says so: "They could not get in, child. It was too fast." (Real fact: firefighters could not enter and the building fell about four minutes after they arrived.) This stops a child feeling it was their fault.
 5. **Numbers only in the Journal, said plainly:** "More than 140 women died. Sources give different numbers, from 144 to 157." About 58 of the women in the ward got out. No counting of bodies on the main path.
-6. **The cause is never settled.** The game says: "Nobody has proved what started the fire. People still disagree." No party, person or group is named as the cause on the main path. "Dig deeper" gives what was said at the time, fairly: on 20 May 1980 the Prime Minister told Parliament the cause was unknown and arson could not be ruled out, the opposition leader said he believed it was an accident, and early reports from the security forces pointed to arson (AP, 21 May 1980). Later accounts add that phone lines were said to be cut and that the fire chief thought an electrical fault possible. Then the 1981 inquest.
+6. **The cause is never settled.** The game says: "Nobody has proved what started the fire. People still disagree." No party, person or group is named as the cause on the main path. "Dig deeper" gives what was said at the time, fairly: on 20 May 1980 the Prime Minister told reporters that first reports from the security forces pointed to arsonists, then told Parliament the fire was "of unknown origin up to the present time" and "the possibility of arson cannot be ruled out". The opposition leader told Parliament, "We only hope it was of an accidental nature." (AP, 21 May 1980.) Later accounts add that phone lines were said to be cut and that the fire chief thought an electrical fault possible. Then the 1981 inquest.
 7. **Left out completely:** the smell, any account of what people inside went through, anything about bodies, burns or injuries, and any claim that doors or windows were locked (no source read says so).
 8. **Staff are not blamed.** The Home had about 180 staff for about 700 residents (JNHT), and the Journal can say plainly that it was crowded and old.
 9. **Real officials appear only as distant figures at the burial, with no fictional speech.** News comes through a fictional radio voice that only says documented facts ("Monday is a day of national mourning").
@@ -58,11 +58,11 @@ Seven chapters, in the Garvey pattern: one place, one or two hands-on activities
 | # | Where and when | Walk and do | Remembered choice |
 |---|---|---|---|
 | 1 | **Slipe Pen Road**, a Saturday in early May 1980 | Ride the No. 43 bus with Gran. Walk past the shops and the cemetery wall to the gate of the Home. Meet the gatekeeper, then Miss Iris, a blind woman on the Myers Ward veranda. Give her your gift and read her a letter aloud. Journal: "Eventide Home" (opened 1 July 1870, paid for by the city). | What you bring Miss Iris: mangoes, radio batteries, or a song. She mentions it later. |
-| 2 | **Inside Myers Ward**, the same afternoon | A long wooden hall of iron beds close together, because it holds more women than it was built for. Meet Miss Pearl (sold yam at the market), Miss Maude (taught children to read) and one more. Help each woman put her things back where she likes them (a photo, a Bible, a comb, a radio). Each item opens a "life" journal page. | Whose story you sit with longest. If she got out, you visit her first in chapter 6. If she did not, you speak of her first at the monument in chapter 7. |
+| 2 | **Inside Myers Ward**, the same afternoon | A long wooden hall of iron beds close together, because it holds more women than it was built for. Meet Miss Hyacinth (sold yam at the market), Miss Maude (taught children to read) and one more. Help each woman put her things back where she likes them (a photo, a Bible, a comb, a radio). Each item opens a "life" journal page. | Whose story you sit with longest. If she got out, you visit her first in chapter 6. If she did not, you speak of her first at the monument in chapter 7. |
 | 3 | **Goodnight**, Monday 19 May, dusk | A quiet evening on the veranda. A hymn. A fictional radio voice talks about the election campaign and the grown-ups look worried. The nurse on duty says "We have more ladies than beds." Say goodnight to each woman. Nothing sad happens, and the player is never warned. | Your words at goodnight ("I will come Saturday"). They come back at the monument in chapter 7. |
-| 4 | **The night**, Tuesday 20 May, about 1 a.m. | Woken by sirens and an orange light on the ceiling. Run with Gran to the corner and stop at the police rope. From there you see the old wooden ward burning: flames in the windows and along the roof, sparks, thick smoke, the engines from Kingston and St Andrew, firefighters with hoses and ladders, and a crowd of neighbours. A firefighter asks you to hold the gate while the children from the nearby building are led out to the road. The roof and walls fall, seen from far off, and the crowd goes quiet. Hand blankets to the children and to the women who got out. You find Miss Pearl and Miss Maude sitting wrapped in blankets and ask after Miss Iris and the others. A nurse says, "We are checking every name." Dawn: smoke over the road, the No. 43 bus waved through by a police officer. | None. The card before it offers "Skip to the morning". |
+| 4 | **The night**, Tuesday 20 May, about 1 a.m. | Woken by sirens and an orange light on the ceiling. Run with Gran to the corner and stop at the police rope. From there you see the old wooden ward burning: flames in the windows and along the roof, sparks, thick smoke, the engines from Kingston and St Andrew, firefighters with hoses and ladders, and a crowd of neighbours. A firefighter asks you to hold the gate while the children from the nearby building are led out to the road. The roof and walls fall, seen from far off, and the crowd goes quiet. Hand blankets to the children and to the women who got out. You find Miss Hyacinth and Miss Maude sitting wrapped in blankets and ask after Miss Iris and the others. A nurse says, "We are checking every name." Dawn: smoke over the road, the No. 43 bus waved through by a police officer. | None. The card before it offers "Skip to the morning". |
 | 5 | **A day of mourning**, Monday 26 May, National Heroes Park | Thousands in the park. Walk with Gran to the grave. Hear three mourners (a retired nurse, a neighbour, a man whose aunt lived at the Home). See the Home's staff walking to the grave and an old lady being comforted. Learn that Miss Iris and the fourth woman did not get out. A nurse from the Home says it plainly and gently. | How you take part: lay a flower, sing, or stand quietly. People later remember it. |
-| 6 | **After**, 1980 to about 1985, the new Golden Age Home | Visit Miss Pearl and Miss Maude, who got out. Hear what changed: a committee, a new home, an inquest in May 1981 that found no one criminally responsible. **Fact, opinion or rumour:** Miss Maude, the teacher, marks your six cards (reuse Garvey chapter 7), then choose a fair question to ask about the cause. | The fair question you ask about the cause. |
+| 6 | **After**, 1980 to about 1985, the new Golden Age Home | Visit Miss Hyacinth and Miss Maude, who got out. Hear what changed: a committee, a new home, an inquest in May 1981 that found no one criminally responsible. **Fact, opinion or rumour:** Miss Maude, the teacher, marks your six cards (reuse Garvey chapter 7), then choose a fair question to ask about the cause. | The fair question you ask about the cause. |
 | 7 | **The monument**, National Heroes Park, 20 May today, the National Day of Remembrance | You are grown. People are laying flowers at the real monument, a white concrete triangle with a black plaque. A young listener asks who the women were. Put six events on the timeline board (reuse Garvey chapter 8): 1870, 1980, the burial, 1981, the new home, the memorial day. Lay a flower for each of the two women who did not get out, read the plaque's real words, and tell the listener who they were. The shrine of Marcus Garvey is in the same park. Journal gets a "Your journey" page. | The final answer: what a country owes the people who cannot look after themselves. |
 
 Optional extra, only if wanted later: a short **1870 flashback** for the Home's opening, like Port Royal's Ned story. Every scene would be fictional and labelled, so it is not needed for the main arc.
@@ -77,7 +77,7 @@ Big events stay as they happened. Your choices change what you learn, what peopl
 |---|---|
 | The hero (child, then grown) | Fictional |
 | Gran | Fictional |
-| Miss Iris, Miss Pearl, Miss Maude and one more woman | Fictional. They stand for the real women. The journal says so. Miss Pearl and Miss Maude get out. Miss Iris and the fourth woman do not. |
+| Miss Iris, Miss Hyacinth, Miss Maude and one more woman | Fictional. They stand for the real women. The journal says so. Miss Hyacinth and Miss Maude get out. Miss Iris and the fourth woman do not. |
 | The gatekeeper, the nurse on duty, a firefighter, a police officer, the radio voice, three mourners, the young listener, the children from the nearby building | Fictional |
 | Governor General Florizel Glasspole, Prime Minister Michael Manley, Edward Seaga | Real. Seen only as distant figures at the burial (chapter 5), no speech. |
 | Allen Ridgeway, Kingston's fire chief | Real. Named only in "Dig deeper". |
@@ -91,7 +91,7 @@ Each line is checked against at least one source below. "Sources differ" lines a
 - **By 1980:** about 700 residents and about 180 staff. Three buildings. Newspapers had reported poor conditions for years. (JNHT; Gleaner 2020.)
 - **Tuesday 20 May 1980, about 1 a.m.:** fire in the Myers Ward, an old two-storey wooden building with 204 to 211 women in it against a legal limit of 180. Kingston and St Andrew crews arrive quickly but cannot enter. The building falls about four minutes after they arrive. They carry disabled children out of a nearby building and stop the fire spreading to the rest of the Home.
 - **That morning:** smoke over Slipe Pen Road. A Gleaner reader remembers a police officer waving the No. 43 bus on.
-- **The next day's reports (AP, 21 May 1980):** police say 205 women were in the building: 144 killed, 9 missing, 52 rescued. The Prime Minister tells Parliament the cause is unknown and arson cannot be ruled out. The opposition leader says he believes it was an accident.
+- **The next day's reports (AP, 21 May 1980):** police say 205 women were in the building: 144 killed, 9 missing, 52 rescued. The Prime Minister tells Parliament the cause is unknown and arson cannot be ruled out. The opposition leader says, "We only hope it was of an accidental nature." Five of the women who got out were burned.
 - **Monday 26 May 1980:** a day of national mourning. About 145 of the dead are buried in 26 wooden coffins in one grave at National Heroes Park. Thousands attend. A memorial service is held at Holy Trinity Cathedral on North Street. The Governor General and the Prime Minister read the lessons, the opposition leader reads the Gospel, and the grave is sealed with concrete and steel slabs. (Gleaner, 2023 photo flashback.)
 - **August 1980:** RJR, the radio station, is given an award for running the Eventide Home Rebuilding Fund. (National Library of Jamaica photograph record.)
 - **30 October 1980:** the general election. The JLP (Edward Seaga) wins 51 of 60 seats from the PNP (Michael Manley). The campaign was very violent. Sources say hundreds died. About six months after the fire, gunmen attack the Home again and two people are hurt (JNHT).
@@ -123,7 +123,7 @@ The first pass (13 Nov 2026) used secondary sources only. The second pass, the s
 |---|---|---|
 | How many died | 144 recovered plus 2 who died in hospital plus 7 missing and presumed dead (Observer, Gleaner 2024); 145 buried (Gleaner, 27 May 1980); 146 (JNHT); 153 (Gleaner headline); 157 (a New York Times headline, via Wikipedia); 144 killed and 9 missing (AP, 21 May 1980); 147 (an August 1980 photograph caption at the National Library) | "More than 140 women died. Sources give different numbers." |
 | How many were in the ward and how many got out | 211, with 58 escaping (JNHT, Observer); 204 (Wikipedia, Our Today); 205 in the building with 52 rescued (AP, 21 May 1980). The NYT reportedly said only 33 of 204 had been found alive hours later. | "About 58 got out" with the doubt in "Dig deeper" |
-| What started the fire | At the time (AP, 21 May 1980): the Prime Minister said the cause was unknown and arson could not be ruled out; the opposition leader said he believed it was accidental; early security-force reports pointed to arson. Later accounts: Prime Minister: arson possible, phone lines said to be cut. Fire chief: electrical fault possible, no proof of arson. Police noted reports of four men running from the building. A UK Home Office scientist wrote that a deliberate start could not be ruled out. The 1981 jury found no one criminally responsible. In 2025 the Observer wrote that the two main parties had accused each other. The Minister said in 2026 that the origin is still "unknown". | "Nobody has proved it." No name or party. |
+| What started the fire | At the time (AP, 21 May 1980): the Prime Minister passed on first security-force reports pointing to arsonists, then told Parliament the cause was unknown and arson could not be ruled out; the opposition leader said, "We only hope it was of an accidental nature." Later accounts: Prime Minister: arson possible, phone lines said to be cut. Fire chief: electrical fault possible, no proof of arson. Police noted reports of four men running from the building. A UK Home Office scientist wrote that a deliberate start could not be ruled out. The 1981 jury found no one criminally responsible. In 2025 the Observer wrote that the two main parties had accused each other. The Minister said in 2026 that the origin is still "unknown". | "Nobody has proved it." No name or party. |
 | When the survivors moved | 1984 (Gleaner 2020) or 1985 (Local Government Jamaica) | "About five years later" |
 | Whether the reforms worked | JNHT: the committee's ideas were not carried out and Eventide closed in the mid 1980s. Local Government Jamaica: a new home was built to avoid another fire. The Gleaner later reported poor treatment at the new home. | Say there was a new home and that people said more was needed |
 | The memorial day | Settled in the second pass. Cabinet approved it in 2025, and the first National Day of Remembrance was held on 20 May 2026 (JIS, 23 May 2026; Local Government Jamaica, 27 May 2026). The proclamation text was not found. | Chapter 7 is set on 20 May |
@@ -142,16 +142,16 @@ The first pass (13 Nov 2026) used secondary sources only. The second pass, the s
 
 | Finding | Source | How the game uses it |
 |---|---|---|
-| Police said 205 women were in the "Myers Building": 144 killed, 9 missing, 52 rescued. The fire started "shortly after 1 a.m." | AP, Marc D. Charney, in the *Daily Reflector*, 21 May 1980, p. 10 (East Carolina University digital collection). Read as scanned text, which is garbled in places; check the page image. | Journal numbers |
-| The Prime Minister told Parliament the origin was unknown and arson "could not be ruled out". The opposition leader, Edward Seaga, said he believed it was accidental. Early security-force reports pointed to arson. | AP, 21 May 1980 | Rule 6 rewritten |
-| Joyce Aikman, a resident who got out: "A few of us run out, some creep, and a blind woman, she blind but she active, she run out too." | AP, 21 May 1980 (scanned text) | Decision 10 |
+| Police said 205 women were in the building: 144 killed, 9 missing, 52 rescued. The fire "started shortly after 1 a.m. Tuesday and rapidly engulfed the wooden, two-story Myers Building for aged women in the fenced-in Eventide Home for the poor." | AP, Marc D. Charney, in the *Daily Reflector*, 21 May 1980, p. 10 (East Carolina University digital collection). Checked against the page image. | Journal numbers; a fence around the Home |
+| Earlier that day the Prime Minister told reporters that first reports from the security forces "indicate strongly that this may have been the work of arsonists", and appealed for calm. He then told Parliament the fire was "of unknown origin up to the present time" and "the possibility of arson cannot be ruled out". The opposition leader, Edward Seaga, told Parliament, "We only hope it was of an accidental nature." | AP, 21 May 1980, checked against the page image | Rule 6 |
+| Joyce Aikman, "a resident who survived", said she yelled out to warn others, then "I run back and pack up my parcel ... A few of us run out, some creep, and a blind woman, she blind but she active, she run out too." | AP, 21 May 1980, checked word for word against the page image | Chapter 4's "Dig deeper" (decision 10) |
 | Vida Wedderburn, an assistant in the ward, is also quoted. | AP, 21 May 1980 | Not used. Her words are too graphic for the game. |
 | The burial: the Governor General and the Prime Minister read the lessons, Seaga read the Gospel, Archbishop Samuel Carter presided at the memorial service, and the grave was sealed with concrete and steel slabs. Two women who died after the fire are named. | Gleaner photo flashback, 25 May 2023 | Chapter 5's scene. The names are not used. |
 | RJR ran an "Eventide Home Rebuilding Fund" and won an award for it. The caption says 147 died. | National Library of Jamaica, item 12021, August 1980 | Chapter 5's radio voice can mention the fund |
 | An "Edna Manley Ward play area" was opened at the Home in July 1975, so children lived there. | National Library of Jamaica, item 9554 | Background for the children's building in chapter 4 |
 | "The staff at the time numbered 180 and was led by Mr. David E. Dunkley, Master of the Home." | JNHT | Confirmed, one source |
 | George Pinto, a man who lived at the Home, woke when "somebody shouted out 'fire!'" and saw the walls fall. He said the men's and children's wards were partly concrete. | Jamaica Observer, 22 May 2011 | Chapter 4: woken by shouting and sirens; the other buildings are partly concrete |
-| Sistren's *QPH* (1981): Queenie, Pearlie and Hopie lived together at Eventide. Pearlie was based on a real Kingston woman. | Search results citing the Gleaner (2004) and a Springer chapter; a 1981 Carifesta programme. Read the Gleaner piece before quoting. | Decision 9 (our Miss Pearl) |
+| Sistren's *QPH* (1981): Queenie, Pearlie and Hopie lived together at Eventide. Pearlie was based on a real Kingston woman. | Search results citing the Gleaner (2004) and a Springer chapter; a 1981 Carifesta programme. Read the Gleaner piece before quoting. | Decision 9 (our Miss Hyacinth) |
 | **The monument:** a tall white concrete triangle on a low tiled base, in a round red-brick paved circle with shrubs and trees. A black triangular plaque near the top has a small emblem and the words "DEDICATED TO THE VICTIMS OF THE EVENTIDE HOME FIRE / MAY THEIR SOULS REST IN PEACE". Low white stepped concrete slabs stand behind it. | Read from a photograph by Garfield Robinson, Jamaica Observer, 30 May 2025 (reference only, never a texture) | Chapter 7 shows the real shape and wording |
 | The first National Day of Remembrance, 20 May 2026: flowers at the monument and a fire brigade guard of honour of forty women. The Minister said the origin is still "unknown". | JIS, 23 May 2026; Local Government Jamaica, 27 May 2026 | Chapter 7 is set on that day |
 | The JIS article of 23 May 2026 gives the year as 1986 and says three wards burned. | JIS | Errors: not used for facts |
@@ -166,7 +166,6 @@ The first pass (13 Nov 2026) used secondary sources only. The second pass, the s
 - **Photographs of the Myers Ward and the Home.** None are public. The National Library's Daily News Collection may hold some (permission needed).
 - **The Gleaner's "Picture This: Eventide Home disaster" video.** YouTube blocked this tool.
 - **The 1981 inquest report** and the British scientist's report. Known only from the Gleaner (2020).
-- **The East Carolina University page image** of the AP story, to check the scanned quotes word for word.
 
 ## Sample lines (placeholder wording, for tone only)
 
@@ -174,7 +173,7 @@ All lines are 12 words or fewer. They still need a reading-level pass and a fact
 
 - Gran: "Hold the mangoes in both hands. They are for Miss Iris."
 - Miss Iris: "I cannot see you, child. But I know your footsteps."
-- Miss Pearl: "Thirty years I sold yam in the market. My feet remember."
+- Miss Hyacinth: "Thirty years I sold yam in the market. My feet remember."
 - Miss Maude: "I taught half this street to read. Ask me a sum!"
 - The nurse on duty: "We have more ladies than beds. We do our best."
 - Miss Iris at goodnight: "Come Saturday. Bring me batteries for my radio."
@@ -191,8 +190,18 @@ A sample journal page:
 ```js
 { id: 'footnote', title: 'A footnote',
   simple: ['A footnote is a small note at the bottom of a page.', 'Some events get only a line like that.', 'In this game, each woman gets a face.'],
-  deeper: ['Miss Iris, Miss Pearl and Miss Maude are fictional. They stand for the real women of Eventide.',
+  deeper: ['Miss Iris, Miss Hyacinth and Miss Maude are fictional. They stand for the real women of Eventide.',
            '"These elderly women, they must have done so much to build this country." Jean Lowrie-Chin, Gleaner, 20 May 2020.'] }
+```
+
+A second sample, for chapter 4's "History / Story" page, with a survivor's real words (decision 10):
+
+```js
+{ id: 'night', title: 'The night of the fire',
+  simple: ['The fire began just after 1 in the morning.', 'The old wooden ward burned very fast.', 'Some women got out. More than 140 did not.'],
+  deeper: ['Joyce Aikman lived in the ward and got out. She told a reporter:',
+           '"A few of us run out, some creep, and a blind woman, she blind but she active, she run out too." (Associated Press, 21 May 1980)',
+           'Nobody has proved what started the fire.'] }
 ```
 
 ## What the engine gives and what is new
@@ -203,7 +212,7 @@ A sample journal page:
 
 **New to build:**
 
-- **Slipe Pen Road, 1980:** a shopfront row, a cemetery wall, JOS bus stop and bus (route 43), power poles, zinc roofs, a gate.
+- **Slipe Pen Road, 1980:** a shopfront row, a cemetery wall, JOS bus stop and bus (route 43), power poles, zinc roofs, and a gate in the fence around the Home (AP in 1980 calls it "fenced-in").
 - **Myers Ward:** a two-storey wooden building with verandas, and a long ward inside. There are no photographs yet, so it is built from descriptions and the journal says it is an impression.
 - **The Eventide monument** (chapter 7): the shape and wording are in "Second research pass".
 - **The fire sequence:** flames in the windows and roof, flicker, smoke, sparks, the roof and walls falling at a distance, sirens, a rope clamp, a fire engine, firefighters and a police officer in 1980 uniform, blankets, and women and children sitting by the road. Nothing inside the ward. All sound is synthesised in `engine/audio.js` (no audio files).
@@ -216,18 +225,18 @@ A sample journal page:
 
 ## Decisions for the owner (my recommendation first)
 
-Decided by the owner on 13 Nov 2026: items 1 to 3, and the storyline as a whole, which covers items 4 to 8. Item 7 is still a working title. Items 9 and 10 are new from the second research pass and still open.
+Decided by the owner on 13 Nov 2026: items 1 to 3, and the storyline as a whole, which covers items 4 to 8. Item 7 is still a working title. Items 9 and 10 came from the second research pass and were decided the same day.
 
 1. **The hero: a fictional child, then grown in chapter 7 (decided).** (Alternatives that were not chosen: a fictional young nurse's aide, which invites blame questions; a school child on the No. 43 bus, who can only watch.)
-2. **How many of the four women get out: two (decided).** The survivors carry chapter 6, and the Journal still gives the real numbers, so the page is honest even if the cast is kinder. Miss Pearl and Miss Maude get out, Miss Iris and the fourth woman do not (confirmed). Miss Maude, a teacher, can run chapter 6's sorting activity.
+2. **How many of the four women get out: two (decided).** The survivors carry chapter 6, and the Journal still gives the real numbers, so the page is honest even if the cast is kinder. Miss Hyacinth and Miss Maude get out, Miss Iris and the fourth woman do not (confirmed). Miss Maude, a teacher, can run chapter 6's sorting activity.
 3. **The night: a little more detailed, but not graphic (decided).** The burning ward can be seen from behind the rope, including the fall of the roof and walls at a distance. Never the inside, never anyone hurt. See "How the fire is told".
 4. **A "Skip to the morning" card** before chapter 4.
 5. **Politics:** no party named on the main path. The two official views and the inquest go in "Dig deeper".
 6. **Fact, opinion or rumour** as chapter 6's activity, which teaches how to read uncertain history.
 7. **Title:** "Eventide 1980" (working).
 8. **Memorial day:** settled by research. Chapter 7 is set on 20 May, the National Day of Remembrance, first held in 2026.
-9. **New, open: rename Miss Pearl.** Sistren's well-known play *QPH* (1981) has a "Pearlie" who lived at Eventide and was based on a real woman. A different name (for example Miss Hyacinth) stops readers taking our fictional woman for her. Recommended.
-10. **New, open: a survivor's real words.** Use Joyce Aikman's 1980 words in "Dig deeper", with her name, once the scanned page is checked. Recommended.
+9. **Rename Miss Pearl (decided).** Sistren's well-known play *QPH* (1981) has a "Pearlie" who lived at Eventide and was based on a real woman, so our market woman is now **Miss Hyacinth**.
+10. **A survivor's real words (decided).** Joyce Aikman's 1980 words go in chapter 4's "Dig deeper", with her name. They were checked word for word against the page image (see the second sample journal page).
 
 ## Build order
 
