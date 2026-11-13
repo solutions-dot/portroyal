@@ -12,7 +12,7 @@ The whole collection (the menu and every game) is one static website, built by `
 
 ```
 dist/index.html               the menu (home page)
-dist/menu/index.html          the same menu, so the games' "All games" link (../../../menu/) works everywhere
+dist/menu/index.html          the same menu, so the games' "Main Menu" button (../../../menu/) works everywhere
 dist/games/<game>/site/...    each game: index.html, app.js, models/*.js
 ```
 

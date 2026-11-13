@@ -25,9 +25,9 @@ python3 -m http.server 8765                # then open http://localhost:8765/gam
 
 Players who know Port Royal should find everything where they expect it. The page (`games/garvey/site/index.html`) is built from Port Royal's, so the styles match.
 
-- **Title screen**: Start (or Continue), Chapters, All games, Created by Kellz 5.0, and "Your progress is saved on this device".
+- **Title screen**: Start (or Continue), Chapters, Main Menu, Created by Kellz 5.0, and "Your progress is saved on this device".
 - **In the game**: reset, sound and Journal (with a count) at the top right; a Goal tab that folds after a few seconds; a controls hint; a glowing speech mark over each person and a bubble on the nearest; a resting joystick on phones.
-- **Journal**: a paper book with tabs and "Dig deeper". Its footer has **All games** and **Chapters**.
+- **Journal**: a paper book with tabs and "Dig deeper". Its footer has **Main Menu** and **Chapters**.
 - **Chapters**: all eight chapters are listed and playable. Each opens when the one before it is done. The panel also has Credits and "Start again".
 - **Next chapter**: when a chapter's last goal is reached, a card appears with "Next chapter" and "Stay here" (`CHAPTER_END` and `nextCard` in `main.js`), so players do not have to open Chapters. The last chapter shows its own end card.
 - **Seating in the meeting hall.** The three neighbours walk down the aisle and the gap between the rows, then sit on the benches facing the platform (the bench backs are on the door side). Seated people stay seated while you talk to them (`sitDown`, `SitIdle`, `SitTalk`).
@@ -37,8 +37,8 @@ Players who know Port Royal should find everything where they expect it. The pag
 - **Loading.** The animation file is cut down to the 7 clips the game plays (`games/garvey/anim-clips.json`; add a name there before using a new clip, or the clip will be missing). Each place's people load the first time you enter it. A few seconds after you arrive somewhere, `prefetchNext` quietly fetches the next chapter's people (`PLACE_ORDER`), so the next place opens quickly. The two shop people are loaded the same way (`ensureShop`): a saved game past chapter 1 (stage 10 or more) starts straight in its own place and never downloads them, unless the player replays chapter 1 from the Journal, which loads them first (with a "Loading the print shop" note). A new player still loads them at start, in parallel with the animations.
 - **Speech marks and bubbles** sit just above each person's head or hat. The height is measured from the loaded model (`headTop`), so tall hats and short people both look right.
 - **Menu card**: a poster like Port Royal's, from `menu/garvey.jpg`. To remake it, build with `--dev`, serve the repo and render `games/garvey/site/index.html?shot=poster` at 1280 by 720 with the HUD hidden (the view hides marks and freezes the pose).
-- **Reset**: a card with "Restart this chapter", "Start the whole story again" (asks twice) and **All games**.
-- **All games** is therefore reachable from the title, the Journal and the Reset card. It only shows where the real menu exists (the website), as in Port Royal.
+- **Reset**: a card with "Restart this chapter", "Start the whole story again" (asks twice) and **Main Menu**.
+- **Main Menu** (a button, like Chapters; it used to be an "All games" link) is therefore reachable from the title, the Journal and the Reset card. It only shows where the real menu exists (the website), as in Port Royal.
 - **Saving**: the Journal, the goal and who you have talked to are kept in the browser (`garvey-save-v1`).
 - **Keys**: Escape closes any panel; E or Enter uses the nearest thing.
 

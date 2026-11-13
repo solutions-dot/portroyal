@@ -75,7 +75,7 @@ People who stroll use `STROLL` (paths per id); they stop and face you within 3.6
 - **Next chapter card**: when a part of the story finishes, `nextChapterCard(i)` offers "Next chapter" or "Stay here" on screen (the same idea as Garvey). It is called a few seconds after the Arrival goals are done, and when the flashback ends. It waits while a panel, dialogue or card is open and gives up after about 8 s, so it never takes over something the player is reading. A card that is waiting is dropped if the player has since gone to a chapter (`navGen`, which `playChapter` bumps), so it never interrupts the warehouse or another chapter. The `?shot=nextcard` test view shows it; `?shot=navcard` jumps to the warehouse before the card is due and writes the card titles seen to the page title (add `&stay=1` for the control run, where the card should appear).
 - **Controls**: `MV` (easing, wall sliding), Shift to hurry, `padRead` (gamepad), touch joystick (left), drag to look (right), tap-to-walk is mouse only.
 - **Solid things**: everything added to the scene after `nStreet` in the harbour section becomes solid (`streetProps`, `buildPropC`). People are solid through the list near the end of `clampPos` (Abba, `NPCS`, `NS_PEOPLE`, the soldier).
-- **Menu link**: `MENU` checks whether `../../../menu/` exists; if it does, "All games" shows on the title screen, in the Journal and in the restart panel.
+- **Menu link**: `MENU` checks whether `../../../menu/` exists; if it does, the "Main Menu" button shows on the title screen, in the Journal and in the restart panel.
 - **Per-frame hooks**: `TICKS.push((dt) => ...)`.
 - **Sounds**: `engine/audio.js`; `footstep()` picks the floor kind.
 - **Earthquake**: `Q` (phases calm, tremor, sink, sea).

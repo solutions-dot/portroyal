@@ -13,7 +13,7 @@ The template runs straight away. You get:
 - first-person movement with keys, touch and drag-to-look;
 - one character (`site/models/sailor.js`, a stand-in) using the shared animations, who turns to face you and talks (E, the Talk button, or tap him);
 - a dialogue box: "You" lines get their own colour, and the ×, Escape or a tap outside ends the talk;
-- a goal line, a Sound button, and an "All games" link back to the menu (`../../../menu/`);
+- a goal line, a Sound button, and a "Main Menu" button back to the menu (`../../../menu/`);
 - footstep and interface sounds.
 
 The template has no journal, chapters, saving or helper arrow yet. Port Royal has all of them in `games/port-royal/src/main.js`; copy or move them into `engine/` when the new game needs them (section 2).

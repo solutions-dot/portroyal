@@ -355,7 +355,7 @@ function openCredits() { if (state.started) { closeJournal(); busy = true; keys.
 function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = panelsOpen(); }
 $('dev').onclick = openCredits; $('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;
 $('reset').onclick = () => { if (fading || RIDE.on && stage === 53) return; closeJournal(); const i = chapterOf(stage);
-  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + CHAPTERS[i].name + '”', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'All games', go: toMenu }] : [])]); };
+  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + CHAPTERS[i].name + '”', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : [])]); };
 
 /* ---------- waiting for things, and moving things over time ---------- */
 const waitFor = (fn) => new Promise((res) => { const ep = EP, iv = setInterval(() => { if (EP !== ep) { clearInterval(iv); res(false); } else if (fn()) { clearInterval(iv); res(true); } }, 100); });
@@ -525,7 +525,7 @@ ON[70] = () => { setTimeout(() => SFX.churchBell(2), 1200 * TS); };
 async function leaveFlower() {
   const P = P_(), ep = EP; frozen = true; const f = flowers(7); f.position.set(P.spots.wall[0] + 1.0, 0, P.spots.wall[1] + 1.0); P.group.add(f); say('You leave a flower. For a moment, everything is quiet.', 4200); SFX.churchBell(2); await wait(4800); if (ep !== EP) return; frozen = false; setStage(73);
 }
-ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => card('The end', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'All games', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); };
+ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => card('The end', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); };
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
