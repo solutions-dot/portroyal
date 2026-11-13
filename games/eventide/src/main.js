@@ -130,8 +130,9 @@ $('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 
 /* ---------- dev views (dev builds only): the cast under the game's light ---------- */
 let fixedCam = null;
 const VIEWS = {   /* place, x, z, yaw, pitch, light */
-  road1: ['slipe', -26, 4.6, -0.55, 0.05], road2: ['slipe', -6, 3.0, 0.15, 0.12], gate1: ['slipe', 0, -5.5, 0, 0.1], ward1: ['slipe', -9, -10, -0.35, 0.16],
-  ward2: ['slipe', 14, -9, 0.75, 0.12], veranda1: ['slipe', 0.6, -19.2, -1.5, 0.02], wardnight: ['slipe', -8, 3.5, -0.2, 0.12, 'night'], kids1: ['slipe', 20, -10.5, -0.7, 0.05],
+  road1: ['slipe', -26, 4.6, -0.6, 0.05], gate1: ['slipe', 0.3, -1.5, 0, 0.14], avenue1: ['slipe', 0, -12, 0, 0.06], ward1: ['slipe', -1.5, -32, -1.25, 0.12],
+  ward2: ['slipe', -2, -52, -2.3, 0.1], veranda1: ['slipe', 7.2, -48, 0, 0.02], men1: ['slipe', 1.5, -16, 1.75, 0.14], kids1: ['slipe', 1.5, -40, 1.9, 0.08],
+  back1: ['slipe', 0, -60, Math.PI, 0.05], wardnight: ['slipe', 0.3, -1.5, 0, 0.14, 'night'],
   mon1: ['monument', 0, 7.5, 0, 0.12], mon2: ['monument', 0.0, 2.3, 0, 0.32], mon3: ['monument', 4.5, 3.5, 0.8, 0.15],
 };
 function devView(v) {

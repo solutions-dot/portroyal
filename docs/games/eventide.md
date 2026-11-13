@@ -15,13 +15,16 @@ Building has started on the branch only. Nothing is pushed, because other chats 
 - **Places** are built in code in `games/eventide/src/places.js`, with helpers copied from Kendal into `gfx.js`.
   - Slipe Pen Road: the road, the bus stop, three shops, power poles, the chain-link fence and gate, the gatehouse, the Myers Ward and the children's building. The ward is two storeys of weatherboard with a two-storey veranda, louvred windows and a hip roof of zinc. Its size and colours are an impression.
   - The monument: from the 2025 photograph, with the plaque's real words.
+- **Photographs from the owner (13 Nov 2026, reference only, never textures; sources still to record):** the entrance (whitewashed wall, two tall pillars, an iron arch reading EVENTIDE HOME with a hanging lamp, iron gates, a long dusty avenue of tall trees); a two-storey building with a plastered, arched lower storey, a gabled porch and outside stairs (used for the men's ward); a burnt one-storey building with a front overhang on square pillars (used for the children's ward); "Myers Ward after fire" (a field of zinc sheets and timber, with block buildings and a two-storey building with a small pyramid roof behind it: for chapter 4's dawn); and "Mass grave at National Heroes Park" (a concrete-lined trench with planks, a crowd behind a rail: for chapter 5). Which building each photo shows is our assumption.
+- **The compound now:** the photo entrance, a 57 m avenue with whitewashed tree trunks and benches, the Myers Ward facing the avenue (Miss Iris on its veranda), the men's and children's wards (the Home was a three-building facility), a kitchen, water tank, standpipe and the meal van (JNHT), clotheslines, flame trees in bloom, palms, bougainvillea, grass and flowers, and hills round about.
+- **Open:** the owner says there seems to be more than one monument. The 2025 photograph shows low white stepped slabs behind the triangle; what they are is not known yet.
 - **Checks:** `?test=audit` reports 0 issues in both places. `?test=held` and `?test=layout` are still to wire before the first PR.
 
 ```bash
 MAKEHUMAN=~/mh/makehuman NPC_OUT=build/people/ ~/venv/bin/python3 tools/eventide/people.py "$(cat tools/eventide/people/iris1980.json)"
 node tools/optimize_models.mjs --dir build/people --chars iris1980     # then pack into games/eventide/site/models/ as in docs/PIPELINE.md
 node tools/build.mjs eventide --dev
-# views: ?shot=cast, castnight, castclose, castnightclose, road1, road2, gate1, ward1, ward2, veranda1, wardnight, kids1, mon1, mon2, mon3; ?test=audit
+# views: ?shot=cast, castnight, castclose, castnightclose, road1, gate1, avenue1, ward1, ward2, veranda1, men1, kids1, back1, wardnight, mon1, mon2, mon3; ?test=audit
 ```
 
 Next: the other women and Gran, the nurse, a firefighter and a police officer in 1980 uniform, the inside of the ward, Miss Iris seated on the veranda (a chair, checked by the seat audit), and the night scene with the burning ward seen from the rope.
