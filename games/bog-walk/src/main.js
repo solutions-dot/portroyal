@@ -253,7 +253,7 @@ function tick(dt) {
   const liftT = N.cine ? N.liftNeed : 0; if (Math.abs(N.lift - liftT) > 0.002) { N.lift += (liftT - N.lift) * Math.min(1, dt * 3); hand.setLift(N.lift); }
   { const csT = N.cine ? 1 : 0; if (Math.abs(hand.cs - csT) > 0.002) hand.setCine(hand.cs + (csT - hand.cs) * Math.min(1, dt * 3)); }   /* the torch shrinks a little while the bars are in */
   camera.position.set(S.x + Math.sin(ft * 43) * shake, S.eye + bob + Math.sin(ft * 57 + 1) * shake * 0.7, S.z); camera.rotation.set(S.pitch + N.glance, S.yaw, Math.sin(ft * 31) * shake * 1.6, 'YXZ');
-  const near = !locked() && !!nearPatch(); $('act').hidden = !near;
+  const near = !locked() && !!nearPatch(); if (N.phase !== 'shot') $('act').hidden = !near;   /* test views and checks set the Scrape button themselves */
 }
 function render() { renderer.render(scene, camera); }
 function frame(t) { if (!manual) requestAnimationFrame(frame); const dt = Math.max(0, Math.min(0.05, (t - last) / 1000)); last = t; tick(dt);   /* never negative: the first frame can be stamped a little before `last` */ render(); document.body.dataset.frames = ++frames; }
