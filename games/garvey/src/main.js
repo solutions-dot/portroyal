@@ -333,13 +333,14 @@ $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
 /* ---------- saving: kept in this browser only ---------- */
 const story = {};   /* what the player chose: the printers' strike, who to invite... later lines read it. Saved with the rest. */
 const SAVE_KEY = 'garvey-save-v1'; let hasSave = false, erasing = false;   /* erasing: the reload that follows "Start again" must not save the old progress back */
-function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ unlocked, stage, best, story, talked: [...SHOP_PEOPLE, ...HALL_PEOPLE].filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
+function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 2, unlocked, stage, best, story, talked: [...SHOP_PEOPLE, ...HALL_PEOPLE].filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
 function loadGame() { try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; } }
 function applySave(d) {
   if (!d || !Array.isArray(d.unlocked)) return;
   for (const id of d.unlocked) if (JOURNAL.some((p) => p.id === id) && !unlocked.includes(id)) unlocked.push(id);
   if (d.story && typeof d.story === 'object') Object.assign(story, d.story);
-  stage = Number.isInteger(d.stage) && d.stage in GOALS ? d.stage : 0; best = Number.isInteger(d.best) ? Math.max(d.best, stage) : stage; for (const p of [...SHOP_PEOPLE, ...HALL_PEOPLE]) p.talked = Array.isArray(d.talked) && d.talked.includes(p.id);
+  stage = Number.isInteger(d.stage) && d.stage in GOALS ? d.stage : 0; best = Number.isInteger(d.best) ? Math.max(d.best, stage) : stage; const waiting = TALK_TARGETS[stage] || [];   /* talk flags only count inside the stage they were saved in; saves from before version 2 used other stage numbers, so their flags are dropped */
+  for (const p of [...SHOP_PEOPLE, ...HALL_PEOPLE]) p.talked = d.v === 2 && Array.isArray(d.talked) && d.talked.includes(p.id) && waiting.includes(p.id);
   hasSave = unlocked.length > 1 || stage > 0 || best > 0;
 }
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.started) saveGame(); });
@@ -399,7 +400,7 @@ function activate(t) { if (t.go) t.go(); else startTalk(t); }
 function startTalk(n) {
   busy = true; talkWith = n; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true;
   talkFull = wantsTalk(n);
-  if (talkFull) lines = typeof n.lines === 'function' ? n.lines() : n.lines; else { const later = typeof n.later === 'function' ? n.later() : n.later; lines = [{ who: n.who, text: later[n.heard++ % later.length] }]; }
+  if (talkFull) lines = [...(typeof n.lines === 'function' ? n.lines() : n.lines)]; else { const later = typeof n.later === 'function' ? n.later() : n.later; lines = [{ who: n.who, text: later[n.heard++ % later.length] }]; }
   showLine();
 }
 function showLine() {
@@ -654,7 +655,14 @@ function devViews() {
     const talkTo = async (n) => { state.x = n.x + 1.1; state.z = n.z + 0.5; update(0.016); startTalk(n); let c = 0; while (!$('dialogue').hidden && c < 40) { const ch = $('choices').firstChild; if (ch) ch.click(); else $('next').click(); c++; await sleep(40); } return c; };
     const typeIt = () => { for (const ch of typeWord) { const t = $('tcase').querySelector('[data-l="' + ch + '"]'); if (t) t.click(); } $('tpress').click(); $('tdone').click(); };
     (async () => {
-      if (q.get('auto') === '1') {
+      if (q.get('auto') === '3') {   /* old saves, and replaying a choice (run with a version 1 save already in localStorage) */
+        L('loaded: stage=' + stage + ' best=' + best + ' printerTalked=' + byId('printer').talked + ' printerWantsTalk=' + wantsTalk(byId('printer')) + ' ch2open=' + (CHAPTERS[0].done())); $('start').click();
+        const pr = byId('printer'); const counts = [];
+        for (const pick of [0, 2, 1]) { stage = 2; for (const n of SHOP_PEOPLE) n.talked = false; state.x = pr.x + 1.1; state.z = pr.z + 0.5; update(0.016); startTalk(pr); let c = 0, after = -1; while (!$('dialogue').hidden && c < 40) { const ch = $('choices').children; if (ch.length) { ch[pick].click(); after = lines.length; } else $('next').click(); c++; await sleep(30); } counts.push(after + ':' + story.strike); }
+        L('lines after the choice for three tries (choice 0, 2, 1) = ' + counts.join(' '));
+        stage = 2; for (const n of SHOP_PEOPLE) n.talked = false; L('strike lines=' + await talkTo(pr) + ' stage=' + stage + ' ch2open=' + CHAPTERS[0].done());
+        L(stage === 3 && counts.every((c) => c.split(':')[0] === counts[0].split(':')[0]) && CHAPTERS[0].done() ? 'ALLDONE' : 'STALL'); L('DONE');
+      } else if (q.get('auto') === '1') {
         L('title: allgames=' + (!$('allgames').hidden) + ' chapters=' + (!$('tchap').hidden)); $('start').click(); L('started=' + state.started + ' place=' + place + ' goal="' + $('goal').textContent + '"');
         L('printer lines=' + await talkTo(SHOP_PEOPLE[0])); L('customer lines=' + await talkTo(SHOP_PEOPLE[1])); L('stage=' + stage);
         state.x = -1.9; state.z = -1.7; update(0.016); L('near=' + (near && near.label)); near.go(); typeIt(); L('typed, stage=' + stage + ' goal="' + $('goal').textContent + '"');
