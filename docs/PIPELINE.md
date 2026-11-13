@@ -41,6 +41,7 @@ JSON fields:
   | `hairvol` | 0 to 1 |
 
 - `colors`: RGB for Skin, Shirt, Coat, Breeches, Stockings, Shoes, Hat, Hair, Apron, Bands. Every garment you use needs its colour, or the script stops with a KeyError.
+  - **Skin (owner rule 9).** Use a `Skin` colour inside the Marcus Garvey range, about `[134, 90, 64]` to `[156, 108, 80]`, never darker; vary it a little between people. The script writes colours so they come out darker in the game than the numbers suggest, and Blender's preview darkens them further. So each game also lightens the skin material when it loads a person: Kendal multiplies it by `SKIN_LIGHT = 1.55` (`makeBody` in `games/kendal/src/main.js`), and Marcus Garvey uses brighter daylight. Check faces in a game screenshot in the darkest light the person appears in (night, indoors, firelight). If a face is too dark, raise its `Skin` and rebuild, or use `tools/retint_skin.mjs` on a packed model.
 
 Built in for realism:
 - Shirts and coats drape flat from the chest.
@@ -91,3 +92,32 @@ for n in mendes turtler; do printf '(window.__models=window.__models||{})["%s"]=
 ```
 
 Only the `.js` files are loaded by the game. Keep each character at roughly 300 to 400 KB packed.
+
+## 5. The newer clothes builder: `tools/garvey/era.py` (Garvey, Kendal, children)
+
+`era.py` builds every body for Marcus Garvey and Kendal 1957 (recipes in `tools/garvey/people/`, `tools/kendal/people/`, `tools/people/kids/`). Set up Blender, MPFB and MakeHuman as in `tools/garvey/README.md`.
+
+```bash
+MAKEHUMAN=~/mh/makehuman NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/era.py "$(cat tools/kendal/people/woman57.json)"
+node tools/people/pack.mjs --out games/kendal/site/models --lo woman57     # trims, compresses, writes woman57.js and woman57_lo.js
+```
+
+What it makes (keys in `garments` unless noted):
+
+| Key | What it does |
+|---|---|
+| `trousers`, `shorts`, `legwidth` | Trouser legs hang as tubes from the thigh, with a crease. `shorts` stops above the knee. |
+| `sleeve`, `jacket`, `waistcoat`, `vwaist` | Sleeves hang loose with a cuff. A jacket gets lapels, buttons and a skirt past the hips. |
+| `collar`: `"turn"`, `"stand"`, `"open"` | A collar built round the neck with a yoke under it, so no skin shows between collar and shirt when the body moves. `true` picks by `era` (top-level year). |
+| `tie`, `buttons`, `belt` | A tie with a knot, a button band, a belt with a buckle (`belt: "always"` keeps it under a waistcoat). |
+| `skirt`, `hem`, `flare`, `pleats` | `hem` 0 is the ankle, 1 the knee. Soft folds deepen toward the hem. |
+| `shoes`, `lowshoes`, `socks` | Shoes with a thin sole joined to the upper. With a skirt the shoe is low cut. `socks` is how far up the shin. |
+| `hat` | One kind, or a list `[[kind, materialName], ...]` so a game can show one and hide the rest. Kinds: `felt`, `flat`, `trilby`, `straw`, `bowler`, `top`, `church`, `pillbox`, `peaked`, `wrap`. |
+| `hair`: `"puffs"`, `"plaits"`, `"afro"`; `bun`, `hairvol`, `recede`, `temples`, `bays`, `fade` | Hair grows from the body's own scalp line and fades into the skin at the edge, so hairlines are smooth. `bays` are receding temples, `fade` cuts the sides short. |
+| `moustache`, `moustachewidth`, `moustachedroop`, `brows`, `browwide` | A soft moustache that feathers out at its edges; heavier eyebrows. |
+| top-level `targets` | MakeHuman face and body targets by name (for a likeness), `lr-` for both sides. |
+| top-level `upscale` | For a child: the body is built at a child's shape, then enlarged so animations fit. The game shrinks it back with `scale`. |
+
+Marcus Garvey's face (`garvey1914.json`, `garvey1916.json`) was shaped against a photograph the owner supplied. Check any change to it against that photograph.
+
+`tools/people/pack.mjs` never simplifies small pieces (collar, tie, belt, hat, sole) and never moves the edge of a cloth, so hems and necklines stay clean. Aim for under 32,000 triangles and about 350 to 480 KB per full body.
