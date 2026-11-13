@@ -1,8 +1,8 @@
 # Eventide 1980: the game plan (story draft)
 
-Status: **story plot only, for the owner to sign off.** No code, models or menu card exist yet. Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/games/garvey.md` first. Garvey is the closest model: its panels, journal, chapters, saving and helper arrow are the ones to copy, and two of its activities are reused below.
+Status: **story plot, agreed by the owner on 13 Nov 2026.** No code, models or menu card exist yet, and the facts still need the second research pass. Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/games/garvey.md` first. Garvey is the closest model: its panels, journal, chapters, saving and helper arrow are the ones to copy, and two of its activities are reused below.
 
-Owner decisions so far (13 Nov 2026): **two of the four women get out**, and **the night chapter can be a little more detailed, but never graphic**. The other decisions at the end are still open.
+Owner decisions (13 Nov 2026): **the hero is a fictional child who is grown in chapter 7**; **two of the four women get out, and they are Miss Pearl and Miss Maude**; **the night chapter can be a little more detailed, but never graphic**. The owner also agreed the storyline as a whole, which includes the other recommendations at the end of this file.
 
 Working title: **Eventide 1980**. Code would live in `games/eventide/` (copied from `games/_template/`, then the Garvey panels).
 
@@ -77,7 +77,7 @@ Big events stay as they happened. Your choices change what you learn, what peopl
 |---|---|
 | The hero (child, then grown) | Fictional |
 | Gran | Fictional |
-| Miss Iris, Miss Pearl, Miss Maude and one more woman | Fictional. They stand for the real women. The journal says so. Miss Pearl and Miss Maude get out. Miss Iris and the fourth woman do not (my proposal for which two). |
+| Miss Iris, Miss Pearl, Miss Maude and one more woman | Fictional. They stand for the real women. The journal says so. Miss Pearl and Miss Maude get out. Miss Iris and the fourth woman do not. |
 | The gatekeeper, the nurse on duty, a firefighter, a police officer, the radio voice, three mourners, the young listener, the children from the nearby building | Fictional |
 | Governor General Florizel Glasspole, Prime Minister Michael Manley, Edward Seaga | Real. Seen only as distant figures at the burial (chapter 5), no speech. |
 | Allen Ridgeway, Kingston's fire chief | Real. Named only in "Dig deeper". |
@@ -184,10 +184,10 @@ A sample journal page:
 
 ## Decisions for the owner (my recommendation first)
 
-Decided by the owner on 13 Nov 2026: items 2 and 3. Items 1 and 4 to 8 are still open, and the plot above assumes my recommendation for each.
+Decided by the owner on 13 Nov 2026: items 1 to 3, and the storyline as a whole, which covers items 4 to 8. Item 7 (the title) is still a working title, and item 8 is a research task, not a story choice.
 
-1. **The hero:** a fictional child, then grown in chapter 7. (Alternatives: a fictional young nurse's aide, which invites blame questions; a school child on the No. 43 bus, who can only watch.)
-2. **How many of the four women get out: two (decided).** The survivors carry chapter 6, and the Journal still gives the real numbers, so the page is honest even if the cast is kinder. Which two is my proposal, not yet confirmed: Miss Pearl and Miss Maude get out, Miss Iris and the fourth woman do not. Miss Maude, a teacher, can run chapter 6's sorting activity.
+1. **The hero: a fictional child, then grown in chapter 7 (decided).** (Alternatives that were not chosen: a fictional young nurse's aide, which invites blame questions; a school child on the No. 43 bus, who can only watch.)
+2. **How many of the four women get out: two (decided).** The survivors carry chapter 6, and the Journal still gives the real numbers, so the page is honest even if the cast is kinder. Miss Pearl and Miss Maude get out, Miss Iris and the fourth woman do not (confirmed). Miss Maude, a teacher, can run chapter 6's sorting activity.
 3. **The night: a little more detailed, but not graphic (decided).** The burning ward can be seen from behind the rope, including the fall of the roof and walls at a distance. Never the inside, never anyone hurt. See "How the fire is told".
 4. **A "Skip to the morning" card** before chapter 4.
 5. **Politics:** no party named on the main path. The two official views and the inquest go in "Dig deeper".
@@ -197,7 +197,7 @@ Decided by the owner on 13 Nov 2026: items 2 and 3. Items 1 and 4 to 8 are still
 
 ## Build order
 
-1. Owner signs off this plot (and decisions above).
+1. Done: the owner agreed this plot on 13 Nov 2026.
 2. Research pass two (the sources under "To read next"). Update the tables.
 3. Spike: build an elderly woman and a child character and check them under the game's lights.
 4. Chapters 1 to 3, the warm part. Start here so players care before the night.
