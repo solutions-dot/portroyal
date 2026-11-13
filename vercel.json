@@ -9,7 +9,7 @@
     { "source": "/kendal", "destination": "/games/kendal/site/", "permanent": false }
   ],
   "headers": [
-    { "source": "/games/(.*)/site/models/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] },
+    { "source": "/games/(.*)/site/models/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
     { "source": "/games/(.*)/site/app.js", "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }] }
   ]
 }

@@ -26,6 +26,32 @@
   h1 .jam{display:flex;align-items:center;gap:.3em;font-weight:inherit}
   .flag{height:.62em;width:auto;flex:none;border-radius:.07em;box-shadow:0 0 0 1px rgba(255,247,232,.25)}   /* the flag of Jamaica, as drawn in the markup: gold saltire, green top and bottom, black sides */
   .credit{margin:0;font-size:.95rem;color:rgba(255,247,232,.7);white-space:nowrap}
+  .side{display:flex;flex-direction:column;align-items:flex-end;gap:.5rem}
+  .links{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.5rem}
+  .links a,.links button{display:inline-flex;align-items:center;min-height:44px;padding:0 1.1rem;border-radius:999px;border:2px solid rgba(255,247,232,.45);background:transparent;color:var(--paper);font:inherit;font-weight:600;font-size:.95rem;text-decoration:none;cursor:pointer}
+  .links a:hover,.links button:hover,.links a:focus-visible,.links button:focus-visible{background:var(--paper);color:var(--deep);border-color:var(--paper)}
+  .links .get{border-color:var(--mango);color:var(--mango)}
+  .links .get:hover,.links .get:focus-visible{background:var(--mango);color:var(--deep);border-color:var(--mango)}
+  /* the sign-up panel */
+  #subpanel{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:1rem;background:rgba(4,27,42,.8)}
+  #subpanel[hidden]{display:none}
+  .sub-box{position:relative;width:min(34rem,100%);max-height:100%;overflow:auto;background:var(--harbour);border:2px solid rgba(255,182,39,.6);border-radius:22px;padding:1.4rem 1.4rem 1.2rem}
+  .sub-box h2{margin:0 2.2rem .5rem 0;font-weight:800;font-size:1.5rem;line-height:1.1;letter-spacing:-.02em;color:var(--mango)}
+  .sub-box p{margin:.3rem 0;line-height:1.5}
+  .sub-close{position:absolute;top:.5rem;right:.5rem;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:var(--paper);font-size:1.8rem;line-height:1;cursor:pointer}
+  form.subscribe{display:grid;gap:.8rem;margin-top:.8rem}
+  form.subscribe label{display:grid;gap:.3rem;font-weight:600}
+  form.subscribe input[type=email]{min-height:48px;border-radius:12px;border:2px solid rgba(255,247,232,.4);background:var(--paper);color:var(--deep);padding:0 .9rem;font:inherit}
+  form.subscribe input:disabled{opacity:.55}
+  form.subscribe .check{display:flex;gap:.6rem;align-items:flex-start;font-weight:400}
+  form.subscribe .check input{width:22px;height:22px;margin-top:.15rem;flex:none}
+  form.subscribe button[type=submit]{min-height:52px;border:0;border-radius:999px;background:var(--mango);color:var(--deep);font:inherit;font-weight:800;padding:0 1.6rem;cursor:pointer;justify-self:start}
+  form.subscribe button[type=submit]:disabled{opacity:.5;cursor:not-allowed}
+  form.subscribe .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .sub-msg{min-height:1.6em;font-weight:600;color:rgba(255,247,232,.85)}
+  .sub-msg[data-ok="1"]{color:var(--sea)}
+  .sub-small{font-size:.9rem;color:rgba(255,247,232,.8)}
+  .sub-box a{color:var(--mango)}
   .credit b{color:var(--paper);font-weight:600}
 
   .games{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:clamp(.7rem,1.6vw,1.2rem);min-height:0}
@@ -69,6 +95,7 @@
     .play{justify-self:start}
     .game{border-radius:22px}
     header{align-items:flex-start;flex-direction:column;gap:.35rem}
+    .side{align-items:flex-start;gap:.4rem}.links{justify-content:flex-start}.links a,.links button{min-height:40px;padding:0 .9rem;font-size:.9rem}
   }
   @media (max-width:760px){.game.garvey,.game.kendal{background-size:cover;background-position:50% 30%}.game.garvey::after,.game.kendal::after{background:linear-gradient(to top,rgba(4,27,42,.95) 0%,rgba(4,27,42,.7) 30%,rgba(4,27,42,0) 56%)}.game.garvey .text,.game.kendal .text{grid-template-columns:1fr auto;align-items:end}.game.garvey .text p,.game.kendal .text p{display:none}.game.garvey .play,.game.kendal .play{justify-self:end}}
   @media (max-height:600px){.game p{display:none}}
@@ -80,7 +107,13 @@
 <main>
   <header>
     <h1><b class="jam">Jamaican<svg class="flag" viewBox="0 0 60 30" role="img" aria-label="Flag of Jamaica"><clipPath id="fl"><rect width="60" height="30"/></clipPath><g clip-path="url(#fl)"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></g></svg></b><span>History Games</span></h1>
-    <p class="credit">Created by <b>Kellz 5.0</b></p>
+    <div class="side">
+      <p class="credit">Created by <b>Kellz 5.0</b></p>
+      <nav class="links" aria-label="More">
+        <a href="about.html">About this platform</a>
+        <button type="button" id="subopen" class="get">Get updates</button>
+      </nav>
+    </div>
   </header>
   <section class="games" aria-label="Games">
     <a class="game" data-game="port-royal" href="games/port-royal/site/">
@@ -117,6 +150,22 @@
     </a>
   </section>
 </main>
+<div id="subpanel" role="dialog" aria-modal="true" aria-labelledby="subtitle" hidden>
+  <div class="sub-box">
+    <button type="button" class="sub-close" aria-label="Close">&times;</button>
+    <h2 id="subtitle">Subscribe for updates on new history games</h2>
+    <p>Get a short email when a new game or chapter is ready. For parents, carers, teachers and other adults.</p>
+    <form class="subscribe">
+      <label>Your email address <input type="email" required autocomplete="email" placeholder="name@example.com"></label>
+      <label class="check"><input type="checkbox" required> <span>I am a parent, carer, teacher or other adult.</span></label>
+      <div class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+      <button type="submit">Subscribe</button>
+      <p class="sub-msg" role="status"></p>
+    </form>
+    <p class="sub-small">We use your email only to send these updates. <a href="about.html#privacy">Read how we handle privacy</a>.</p>
+  </div>
+</div>
+<script src="site.js"></script>
 <script>
   /* On the live site this page is the home page. In the repo it sits in menu/, one folder down, so the game links need "../". */
   if (/\/menu\/?(index\.html)?$/.test(location.pathname)) for (const a of document.querySelectorAll('a[data-game]')) a.href = '../games/' + a.dataset.game + '/site/';

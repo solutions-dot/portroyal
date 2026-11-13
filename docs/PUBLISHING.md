@@ -19,7 +19,7 @@ dist/games/<game>/site/...    each game: index.html, app.js, models/*.js
 `vercel.json` tells Vercel what to do, so there is nothing to set by hand:
 - install: `npm install`; build: `npm run dist`; output folder: `dist`;
 - `/port-royal` redirects to the game;
-- models are cached for a week; `app.js` is always checked for a newer copy.
+- models are cached for a year (`immutable`), which is safe because the game asks for each one as `models/<name>.js?v=<fingerprint>`: a changed model has a new address. `app.js` is always checked for a newer copy, so a new build is picked up at once.
 
 To set it up once:
 1. In Vercel, "Add New Project" and import the GitHub repo `solutions-dot/portroyal`.
@@ -34,6 +34,12 @@ npm run serve:dist      # http://localhost:8766/
 ```
 
 `dist/` is not committed (it is in `.gitignore`). The build needs only Node 18 or newer; Blender and Python are only for making new characters and animations, never for deploying.
+
+### The menu's other pages
+
+- `menu/about.html` is the "About this platform" page for teachers, students and parents. When a game is added or its sources change, update its section there ("The games and their sources", and the real and made-up people).
+- `menu/site.js` holds two switches, both empty until the owner chooses them. `SUBSCRIBE_URL` is where the "Get updates" form sends the email (any service that accepts a plain form post: Buttondown, Mailchimp, Formspree, a Google Form; `SUBSCRIBE_FIELD` names its email box). While it is empty the form says sign-ups are not open yet and sends nothing. `CONTACT_EMAIL` shows a "tell us about a mistake" line on the About page; while empty the line is hidden.
+- The sign-up form is for adults only (a tick box says so), keeps no data on the site, and has a hidden box that catches spam robots.
 
 ## Publishing a game to its artifact
 

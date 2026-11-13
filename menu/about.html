@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>About this platform | Jamaican History Games</title>
+<meta name="description" content="How the Jamaican History Games are made, where the history comes from, and which people and places are made up. A guide for students, teachers and parents.">
+<meta name="theme-color" content="#06283D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{--harbour:#06283D;--deep:#041B2A;--sea:#1FB5A3;--mango:#FFB627;--hibiscus:#E8505B;--paper:#FFF7E8;--font:"Inter",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--harbour);color:var(--paper);font-family:var(--font);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased;padding:0 0 env(safe-area-inset-bottom)}
+  .wrap{max-width:46rem;margin:0 auto;padding:max(1.2rem,env(safe-area-inset-top)) clamp(1rem,4vw,1.6rem) 4rem}
+  a{color:var(--mango)}
+  a:hover{color:var(--paper)}
+  a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--mango);outline-offset:3px;border-radius:4px}
+  .back{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-decoration:none}
+  h1{margin:.6rem 0 .4rem;font-weight:800;font-size:clamp(2rem,6vw,3rem);line-height:1;letter-spacing:-.03em}
+  h1 small{display:block;font-size:.5em;color:var(--sea);letter-spacing:-.01em;margin-bottom:.4rem}
+  .flag{height:.6em;width:auto;vertical-align:-.02em;margin-left:.15em;border-radius:.08em;box-shadow:0 0 0 1px rgba(255,247,232,.25)}
+  .lede{font-size:1.2rem;color:rgba(255,247,232,.92);max-width:38rem}
+  nav.jump{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.4rem 0 2rem}
+  nav.jump a{display:inline-flex;align-items:center;min-height:44px;padding:0 1rem;border-radius:999px;background:rgba(255,247,232,.1);color:var(--paper);text-decoration:none;font-weight:600;font-size:.95rem}
+  nav.jump a:hover{background:var(--mango);color:var(--deep)}
+  section{margin:2.6rem 0;scroll-margin-top:1rem}
+  h2{margin:0 0 .6rem;font-weight:800;font-size:1.7rem;line-height:1.1;letter-spacing:-.02em;color:var(--mango)}
+  h3{margin:1.6rem 0 .4rem;font-weight:800;font-size:1.15rem;color:var(--paper)}
+  p,li{max-width:40rem}
+  ul,ol{padding-left:1.3rem}
+  li{margin:.35rem 0}
+  .card{background:rgba(255,247,232,.07);border-radius:18px;padding:1rem 1.2rem;margin:1rem 0}
+  .card h3{margin-top:.2rem}
+  .tag{display:inline-block;font-size:.8rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:.15rem .6rem;border-radius:999px;margin-right:.4rem;vertical-align:.1em}
+  .real{background:var(--sea);color:var(--deep)}
+  .rebuilt{background:var(--mango);color:var(--deep)}
+  .invented{background:var(--hibiscus);color:var(--paper)}
+  table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.98rem}
+  th,td{text-align:left;vertical-align:top;padding:.6rem .7rem;border-bottom:1px solid rgba(255,247,232,.18)}
+  th{color:var(--sea);font-weight:800}
+  .scroll{overflow-x:auto}
+  details{background:rgba(255,247,232,.07);border-radius:14px;padding:.2rem 1rem;margin:.7rem 0}
+  summary{cursor:pointer;font-weight:800;min-height:44px;display:flex;align-items:center}
+  details[open] summary{margin-bottom:.2rem}
+  .note{border-left:4px solid var(--mango);padding:.2rem 0 .2rem 1rem;margin:1rem 0;color:rgba(255,247,232,.95)}
+  /* the sign-up form */
+  .sub-card{background:var(--deep);border:2px solid rgba(255,182,39,.55);border-radius:20px;padding:1.2rem 1.3rem}
+  .sub-card h2{margin-top:0}
+  form.subscribe{display:grid;gap:.8rem;margin-top:.8rem}
+  form.subscribe label{display:grid;gap:.3rem;font-weight:600}
+  form.subscribe input[type=email]{min-height:48px;border-radius:12px;border:2px solid rgba(255,247,232,.4);background:var(--paper);color:var(--deep);padding:0 .9rem;font:inherit}
+  form.subscribe input:disabled{opacity:.55}
+  form.subscribe .check{display:flex;gap:.6rem;align-items:flex-start;font-weight:400}
+  form.subscribe .check input{width:22px;height:22px;margin-top:.15rem;flex:none}
+  form.subscribe button[type=submit]{min-height:52px;border:0;border-radius:999px;background:var(--mango);color:var(--deep);font:inherit;font-weight:800;padding:0 1.6rem;cursor:pointer;justify-self:start}
+  form.subscribe button[type=submit]:disabled{opacity:.5;cursor:not-allowed}
+  form.subscribe .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .sub-msg{margin:0;min-height:1.6em;font-weight:600;color:rgba(255,247,232,.85)}
+  .sub-msg[data-ok="1"]{color:var(--sea)}
+  .small{font-size:.92rem;color:rgba(255,247,232,.8)}
+  footer{margin-top:3rem;padding-top:1.2rem;border-top:1px solid rgba(255,247,232,.2);font-size:.95rem;color:rgba(255,247,232,.8)}
+  @media (max-width:560px){th,td{padding:.5rem .4rem}}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="./">&larr; All games</a>
+  <h1><small>Jamaican History Games <svg class="flag" viewBox="0 0 60 30" role="img" aria-label="Flag of Jamaica"><clipPath id="fl"><rect width="60" height="30"/></clipPath><g clip-path="url(#fl)"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></g></svg></small>About this platform</h1>
+  <p class="lede">These are free 3D story games about Jamaica's past, for ages 6 and up. You walk through a place, talk to people, do small hands-on jobs and keep a journal. This page is for students, teachers and parents. It explains where the history comes from, how we fill the gaps, and which people and places are made up.</p>
+
+  <nav class="jump" aria-label="On this page">
+    <a href="#students">For students</a>
+    <a href="#teachers">For teachers</a>
+    <a href="#sources">Where the history comes from</a>
+    <a href="#people">Real and made-up people</a>
+    <a href="#gaps">When sources are missing</a>
+    <a href="#games">The games and their sources</a>
+    <a href="#privacy">Privacy and access</a>
+    <a href="#updates">Get updates</a>
+  </nav>
+
+  <section id="students">
+    <h2>For students</h2>
+    <ul>
+      <li><b>Move:</b> on a computer, use the arrow keys or W A S D, and drag the mouse to look around. On a phone or tablet, use the round pad on the left and drag the screen to look.</li>
+      <li><b>Talk:</b> people with a glowing mark above their heads have something to say. Walk close, then tap the speech bubble.</li>
+      <li><b>Goal:</b> the tab at the top left tells you what to do next. If you wait a little, a gold arrow shows the way.</li>
+      <li><b>Journal:</b> every person you meet and thing you find adds a page. Each page has a short part and a part called <b>Dig deeper</b> with harder facts. Pages tell you when someone is made up.</li>
+      <li><b>Chapters:</b> you can replay any chapter you have reached. Your progress is saved on this device.</li>
+      <li><b>Your choices:</b> some choices are about what you think. They change what people say to you. They never change what really happened.</li>
+    </ul>
+  </section>
+
+  <section id="teachers">
+    <h2>For teachers and educators</h2>
+    <h3>What to expect</h3>
+    <ul>
+      <li><b>Age and reading level.</b> Aimed at ages 6 and up. Spoken lines are short, about 12 words or fewer, with one idea each. Harder detail sits in the journal's "Dig deeper" part, which suits older students and adults.</li>
+      <li><b>Short visits.</b> Each chapter is one place with a small number of tasks, so a chapter can be used on its own.</li>
+      <li><b>Where to start.</b> Open the Chapters menu. In Port Royal, a button for teachers opens every chapter at once. In Marcus Garvey, chapters open in order, and any finished chapter can be replayed.</li>
+      <li><b>Text only.</b> There is no voice acting, so the games work in a quiet classroom. Sound effects can be turned off.</li>
+      <li><b>Devices.</b> Any recent browser on a phone, tablet or computer. You need a connection to load a game the first time.</li>
+      <li><b>No accounts.</b> Students do not sign in. Progress stays in each browser. On a shared computer, use "Start again" in Chapters to clear it.</li>
+    </ul>
+
+    <h3>Hard topics</h3>
+    <p>The games tell difficult history honestly and gently. Fights happen in the background, nobody falls down dead, and nothing is graphic. You may want to read ahead:</p>
+    <ul>
+      <li><b>Port Royal 1690:</b> slavery (including a letter from a slave-ship captain), pirates and privateers, and the great earthquake of 1692, in which many people died.</li>
+      <li><b>Marcus Garvey:</b> the struggle for Black people's rights, colonial rule, a lost workers' strike, a banned newspaper, a trial, prison and deportation.</li>
+    </ul>
+
+    <h3>Questions to talk about</h3>
+    <details><summary>Port Royal 1690</summary>
+      <ul>
+        <li>What was for sale in Port Royal, and who was not free?</li>
+        <li>Why do historians trust a tombstone? What can it tell us, and what can it not?</li>
+        <li>Which parts of the game are made up? How can you tell?</li>
+        <li>Lewis Galdy stayed after the earthquake. Why might other people have left?</li>
+      </ul>
+    </details>
+    <details><summary>Marcus Garvey</summary>
+      <ul>
+        <li>Why did a newspaper matter so much in 1918? Why would some governments ban one?</li>
+        <li>How do you tell a fact from a rumour? What questions can you ask?</li>
+        <li>People still disagree about Garvey's trial. Why can good sources disagree?</li>
+        <li>Has the dream come true? What does your answer depend on?</li>
+      </ul>
+    </details>
+    <details><summary>Any game: a research task</summary>
+      <ul>
+        <li>Pick one "Dig deeper" page. Find the same fact in a library book or an archive. Do they agree?</li>
+        <li>Find a line in a game that is marked "made up". Write what a real source might say instead.</li>
+        <li>Choose one place in a game. Look for a photograph or painting of the real place. What is different?</li>
+      </ul>
+    </details>
+  </section>
+
+  <section id="sources">
+    <h2>Where the history comes from</h2>
+    <p>Every game follows the same rules:</p>
+    <ol>
+      <li><b>Facts are checked against sources before they are written.</b> Each game lists its sources (see "The games and their sources" below, and the Credits inside each game).</li>
+      <li><b>Real things use their real words.</b> The tombstone in Port Royal shows the real 1739 inscription. The Declaration line in the Garvey game is quoted exactly.</li>
+      <li><b>When sources disagree, we say so.</b> You will see "about", "most sources say", or "sources differ".</li>
+      <li><b>When we cannot confirm something, we leave it out.</b> We would rather say less than make something up and call it history.</li>
+      <li><b>Journal pages say how sure we are.</b> Some say "we still need to check this".</li>
+    </ol>
+
+    <h3>Three kinds of content</h3>
+    <div class="card"><h3><span class="tag real">Real</span>What happened</h3><p>Events, dates, places, objects and the facts in the journal. These come from sources.</p></div>
+    <div class="card"><h3><span class="tag rebuilt">Rebuilt</span>What it looked like</h3><p>Buildings, rooms, clothes and tools are rebuilt from descriptions, paintings, photographs and general knowledge of the time. They are good guesses, not copies of real places. Where we know a detail is a guess, the journal says so.</p></div>
+    <div class="card"><h3><span class="tag invented">Made up</span>Who you meet and what they say</h3><p>People, their words, small tasks and choices are invented, so that history can be played. They are never presented as real.</p></div>
+  </section>
+
+  <section id="people">
+    <h2>Real people and made-up people</h2>
+    <p>Real people appear in the games, but <b>their words in the games are made up</b>. We never invent famous quotes. If a real person's words are used, they are quoted exactly and marked.</p>
+    <p>Made-up people let you see ordinary life, such as a printer, a sailor or a market seller. Every one of them is named as made up on their journal page.</p>
+    <div class="card"><h3>Port Royal 1690</h3>
+      <p><span class="tag real">Real</span> Lewis Galdy, Henry Morgan, Symon Benning, the Rev. Emmanuel Heath.</p>
+      <p><span class="tag invented">Made up</span> Abba, Kofi, Sam, old Ned, Constable Hart, Grace, Peter, Mendes and the survivors in the camp. The prices and the letter in the warehouse are made up too.</p></div>
+    <div class="card"><h3>Marcus Garvey</h3>
+      <p><span class="tag real">Real</span> Marcus Garvey, Amy Ashwood, Amy Jacques Garvey.</p>
+      <p><span class="tag invented">Made up</span> You, and all the other people you meet: the printers and customer, the neighbours, the people on the street, the pressman, the sailor, the share clerk, the engineer, the friend, the nurse, the traveller, the messenger, the steward, the park guide and the student.</p></div>
+  </section>
+
+  <section id="gaps">
+    <h2>When sources are missing</h2>
+    <p>Sometimes the records are thin, or they disagree. This is what we do:</p>
+    <ul>
+      <li><b>We show the gap.</b> For example, the Garvey game says the printers' strike was "about 1908", because sources give 1907 or 1908.</li>
+      <li><b>We avoid numbers we cannot confirm.</b> Crowd sizes at the 1920 convention vary a lot between sources, so the game gives none.</li>
+      <li><b>We do not show what we cannot know.</b> The sources do not say how copies of the <i>Negro World</i> were hidden from ship officers, so the game does not show it. The shrine's plaque in the game shows only his name and dates, because the real inscription was not found.</li>
+      <li><b>We invent only what is needed, and label it.</b> A made-up sailor shows how the paper really travelled. His voyage is made up and his journal page says so.</li>
+      <li><b>Your choices do not rewrite history.</b> The games tell you so. For example, Garvey buys the old ship whichever advice you give, as really happened.</li>
+    </ul>
+    <p class="note">These games are built from published sources. They are a starting point, not a textbook. We encourage students to compare them with books, museums and archives.</p>
+  </section>
+
+  <section id="games">
+    <h2>The games and their sources</h2>
+
+    <h3>Port Royal 1690: the story of Lewis Galdy</h3>
+    <p>Six chapters: a day in 1690, a flashback to Morgan's men, a warehouse in 1691, the earthquake of 7 June 1692, the camp of survivors, and Galdy's tombstone. Lewis Galdy was a real man from France who was swallowed by the earthquake, thrown back into the sea and rescued.</p>
+    <details><summary>Sources used</summary>
+      <ul>
+        <li>The tombstone of Lewis Galdy, St Peter's Church, Port Royal (1739)</li>
+        <li>Letters of the Rev. Emmanuel Heath, and a London news sheet, both from 1692</li>
+        <li>The Port Royal Project of the Institute of Nautical Archaeology and Texas A&amp;M University, led by Donny L. Hamilton</li>
+        <li>Shirley Gotelipe-Miller, <i>Pewter and Pewterers from Port Royal, Jamaica</i> (1990)</li>
+        <li>Michael Pawson and David Buisseret, <i>Port Royal, Jamaica</i></li>
+        <li>Nuala Zahedieh, on the merchants of Port Royal</li>
+        <li>Reconstruction paintings of the town, used as a guide for the houses</li>
+        <li>The National Museum of Jamaica and the Jamaica National Heritage Trust</li>
+      </ul>
+    </details>
+
+    <h3>Marcus Garvey</h3>
+    <p>Eight chapters, from a Kingston print shop about 1908 to National Heroes Park today: the first followers in 1914, a Harlem street corner in 1916, the <i>Negro World</i> in 1918, the Black Star Line in 1919, the 1920 convention, Amy Jacques Garvey's desk in 1925, and the question of what came after. The hero is made up. Marcus Garvey and the two Amys were real.</p>
+    <details><summary>Sources used</summary>
+      <ul>
+        <li>PBS American Experience, <i>Marcus Garvey</i> (timeline and the story of the UNIA)</li>
+        <li>The Jamaica Information Service, on Marcus Garvey and the 100th anniversary of the UNIA</li>
+        <li>The Jamaica Gleaner, <i>The Marcus Garvey Story</i> and later articles</li>
+        <li>The US National Archives, on the life of Marcus Garvey</li>
+        <li>Rhoda Reddock, <i>The first Mrs Garvey</i> (Feminist Africa), on Amy Ashwood</li>
+        <li>Library of Congress photographs of printing offices and of Kingston, as a guide for the scenes</li>
+        <li>The Jamaica National Heritage Trust, on the Garvey monument in National Heroes Park</li>
+        <li>The Bill of Rights Institute, for the wording of item 39 of the 1920 Declaration</li>
+      </ul>
+    </details>
+    <p class="note"><b>How well checked is it?</b> The Garvey game was built from reliable secondary sources: encyclopedias, news articles, museum and heritage pages. We have <b>not yet checked it against the Marcus Garvey and UNIA Papers</b> (the large archive of his papers). Journal pages mark facts that rest on one source. Treat dates as "most sources say" until that check is done.</p>
+  </section>
+
+  <section id="privacy">
+    <h2>Privacy and access</h2>
+    <ul>
+      <li><b>No accounts, no ads.</b> Students never sign in.</li>
+      <li><b>Progress stays on the device.</b> Journal pages, choices and chapters are saved in the browser on that device. They are not sent anywhere.</li>
+      <li><b>No trackers of our own.</b> The games do not collect personal information. Pages load their fonts from Google Fonts, and the site is hosted on Vercel, so those services can see ordinary web requests.</li>
+      <li><b>Ways to play.</b> Touch, mouse and keyboard all work. Everything spoken is also written on screen. Sound can be turned off.</li>
+      <li><b>The email sign-up is for adults only.</b> Children should ask a parent, carer or teacher.</li>
+    </ul>
+  </section>
+
+  <section id="updates">
+    <div class="sub-card">
+      <h2>Subscribe for updates on new history games</h2>
+      <p>Get a short email when a new game or chapter is ready. For parents, carers, teachers and other adults. No spam, and you can stop any time.</p>
+      <form class="subscribe">
+        <label>Your email address <input type="email" required autocomplete="email" placeholder="name@example.com"></label>
+        <label class="check"><input type="checkbox" required> <span>I am a parent, carer, teacher or other adult.</span></label>
+        <div class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+        <button type="submit">Subscribe</button>
+        <p class="sub-msg" role="status"></p>
+      </form>
+      <p class="small">We use your email only to send these updates.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>Created by Kellz 5.0.</b></p>
+    <p data-contact>Found a mistake, or a better source? We want to know: <a class="contact" href="#">send us a note</a>.</p>
+    <p>This page describes the games as they are today, and is updated when they change.</p>
+  </footer>
+</div>
+<script src="site.js"></script>
+</body>
+</html>

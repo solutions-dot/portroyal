@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
-import { model, onLoadFail } from '../../../engine/loader.js';
+import { model, prefetch, onLoadFail } from '../../../engine/loader.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -25,12 +25,16 @@ function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h
 addEventListener('resize', resize); resize();
 
 /* ---------- textures drawn in code (no image files) ---------- */
+/* Every texture is drawn in its own small coordinates (w by h) but on a bigger canvas, so walls, wood, signs and paper stay sharp up close.
+   TEXQ is how many times bigger: 2 on a computer, 1.5 on a phone or tablet, 1 on a device that says it has little memory. */
+const TEXQ = (() => { const mobile = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent), mem = navigator.deviceMemory || 4; return mem <= 2 ? 1 : mobile ? 1.5 : 2; })();
+let TEXMS = 0;   /* milliseconds spent drawing textures (shown by the dev load test) */
 function cv(w, h, draw, repeat) {
-  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t0 = performance.now(); const c = document.createElement('canvas'); c.width = Math.round(w * TEXQ); c.height = Math.round(h * TEXQ); const g2 = c.getContext('2d'); g2.scale(c.width / w, c.height / h); draw(g2, w, h);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = maxAniso;
-  if (repeat) t.repeat.set(repeat[0], repeat[1]); return t;
+  if (repeat) t.repeat.set(repeat[0], repeat[1]); TEXMS += performance.now() - t0; return t;
 }
-function grain(x, w, h, amt) { const d = x.getImageData(0, 0, w, h); for (let i = 0; i < d.data.length; i += 4) { const n = (Math.random() - 0.5) * amt; d.data[i] += n; d.data[i + 1] += n; d.data[i + 2] += n * 0.8; } x.putImageData(d, 0, 0); }
+function grain(x, w, h, amt) { const d = x.getImageData(0, 0, x.canvas.width, x.canvas.height); for (let i = 0; i < d.data.length; i += 4) { const n = (Math.random() - 0.5) * amt; d.data[i] += n; d.data[i + 1] += n; d.data[i + 2] += n * 0.8; } x.putImageData(d, 0, 0); }
 function plankTex(rgb, planks, repeat) {   /* boards that run up and down the picture */
   return cv(256, 256, (x, w, h) => { const pw = w / planks;
     for (let p = 0; p < planks; p++) { const v = (Math.random() - 0.5) * 24; x.fillStyle = `rgb(${rgb[0] + v | 0},${rgb[1] + v | 0},${rgb[2] + v * 0.8 | 0})`; x.fillRect(p * pw, 0, pw, h);
@@ -64,12 +68,22 @@ function streetTex() { return cv(512, 256, (x, w, h) => { const g = x.createLine
 function louverTex() { return cv(128, 256, (x, w, h) => { x.fillStyle = '#4f6b4c'; x.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 12) { x.fillStyle = '#6c8967'; x.fillRect(4, y, w - 8, 8); x.fillStyle = 'rgba(0,0,0,0.45)'; x.fillRect(4, y + 8, w - 8, 3); } x.strokeStyle = '#2f4430'; x.lineWidth = 5; x.strokeRect(2, 2, w - 4, h - 4); }); }
 function patchTex() { return cv(128, 256, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(255,240,200,0.9)'); g.addColorStop(1, 'rgba(255,240,200,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(w / 2 - 2, 0, 4, h); x.fillRect(0, h * 0.34, w, 4); }); }
 
+/* Textures that are asked for again and again are drawn once and shared (the GPU keeps one copy). */
+const memo = (fn, key) => { const m = new Map(); return (...a) => { const k = key ? key(...a) : 0; if (!m.has(k)) m.set(k, fn(...a)); return m.get(k); }; };
+caseTex = memo(caseTex); stoneTex = memo(stoneTex); formeTex = memo(formeTex); sheetTex = memo(sheetTex, (word) => word); windowViewTex = memo(windowViewTex); streetTex = memo(streetTex); louverTex = memo(louverTex); patchTex = memo(patchTex);
+
 /* ---------- materials and little builders ---------- */
 const std = (map, rough = 0.9, extra) => new THREE.MeshStandardMaterial({ map, roughness: rough, ...(extra || {}) });
 const solid = (color, rough = 0.85, metal = 0) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal });
 const room = new THREE.Group(); scene.add(room);
 function mesh(geo, m, x, y, z, parent) { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); (parent || room).add(o); return o; }
-const box = (w, h, d, m, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), m, x, y, z, parent);
+const BOXGEO = new Map();
+function boxGeo(w, h, d, textured) {   /* a textured box gets its UVs scaled by its size, so grain, bricks and stone keep one size on every face instead of stretching across a bench or a wall */
+  const key = w + ',' + h + ',' + d + (textured ? 't' : ''); let g = BOXGEO.get(key); if (g) return g;
+  g = new THREE.BoxGeometry(w, h, d);
+  if (textured) { const uv = g.attributes.uv, T = 1.2, dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]]; for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const i = f * 4 + v; uv.setXY(i, uv.getX(i) * dims[f][0] / T, uv.getY(i) * dims[f][1] / T); } }
+  BOXGEO.set(key, g); return g; }
+const box = (w, h, d, m, x, y, z, parent) => mesh(boxGeo(w, h, d, !!m.map), m, x, y, z, parent);
 const cyl = (r0, r1, h, m, x, y, z, parent, seg = 18) => mesh(new THREE.CylinderGeometry(r0, r1, h, seg), m, x, y, z, parent);
 
 /* ---------- the room: 9 m wide, 7 m deep, high ceiling for the heat ---------- */
@@ -250,13 +264,16 @@ function tapPerson(cx, cy) {
   return null;
 }
 const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); };
+const sitClip = (talking) => (talking && CL.SitTalk ? 'SitTalk' : CL.SitIdle ? 'SitIdle' : null);
+function sitDown(n) { n.seated = true; n.walking = false; n.m.userData.anim.play(sitClip(false)); }
 function npcTick(n, dt) {
   const m = n.m; if (!m) return; if (POSTER) { m.rotation.y = n.ry; return; }   /* the menu poster: everyone keeps the pose they were given */
   const ac = m.userData.anim, d = Math.hypot(state.x - n.x, state.z - n.z), isNear = (d < 3.2 && !DEV_NOSTOP) || talkWith === n;
   if (n.delay > 0) { n.delay -= dt; if (n.delay <= 0) { n.hidden = false; m.visible = place === 'hall'; n.walking = true; ac.play('Walk'); } return; }
   if (n.dest && talkWith !== n) { const dx = n.dest[0] - n.x, dz = n.dest[1] - n.z, dist = Math.hypot(dx, dz), sp = 1.25 * dt; faceTo(m, Math.atan2(dx, dz), dt);
-    if (dist <= sp) { n.x = n.dest[0]; n.z = n.dest[1]; n.dest = null; n.walking = false; n.ry = Math.PI; ac.play(null); } else { n.x += dx / dist * sp; n.z += dz / dist * sp; } m.position.set(n.x, 0, n.z); return; }
+    if (dist <= sp) { n.x = n.dest[0]; n.z = n.dest[1]; if (n.legs && n.legs.length) { n.dest = n.legs.shift(); } else { n.dest = null; n.walking = false; n.ry = Math.PI; if (n.seat) sitDown(n); else ac.play(null); } } else { n.x += dx / dist * sp; n.z += dz / dist * sp; } m.position.set(n.x, 0, n.z); return; }
   const toPlayer = Math.atan2(state.x - n.x, state.z - n.z);
+  if (n.seated) { faceTo(m, talkWith === n ? toPlayer : n.ry, dt, 3); return; }
   if (!n.path) { if (isNear) faceTo(m, toPlayer, dt); else faceTo(m, n.ry, dt, 2); return; }   /* the printer stays at his stand, and turns to look at you */
   if (isNear || n.wait > 0) {   /* stop, and look at the player if they are close */
     if (n.walking) { n.walking = false; ac.play(null); }
@@ -412,7 +429,7 @@ function resetChapter() {   /* the print shop again: people go home, the goal st
 const CHAPTER_END = { 3: 0, 14: 1, 23: 2, 34: 3, 44: 4, 54: 5, 64: 6 };   /* the last stage of each chapter but the final one, and which chapter it ends */
 function nextCard(i, s, tries = 0) {   /* when a chapter is finished, offer the next one on screen, so nobody has to dig through Chapters */
   if (stage !== s) return;   /* the player has moved on or restarted */
-  if ((panelsOpen() || fading) && tries < 10) { setTimeout(() => nextCard(i, s, tries + 1), 800); return; }
+  if (panelsOpen() || fading) { if (tries < 10) setTimeout(() => nextCard(i, s, tries + 1), 800); return; }   /* never take over a panel the player is reading: if it stays open, drop the prompt (Chapters still works) */
   const nx = CHAPTERS[i + 1]; if (!nx || !nx.ready) return; uiSound('goal');
   card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); nx.go(); } }, { t: 'Stay here', go: hideCard }]);
 }
@@ -458,7 +475,7 @@ function showLine() {
   const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock); $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(s, c); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
-  const ac = talkWith && talkWith.m && talkWith.m.userData.anim; if (ac) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
+  const ac = talkWith && talkWith.m && talkWith.m.userData.anim; if (ac) { if (talkWith.seated) ac.play(sitClip(!me)); else if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
 }
 function choose(s, c) {   /* a choice: remember it, add the lines that answer it, and go on */
   uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || []));
@@ -466,7 +483,7 @@ function choose(s, c) {   /* a choice: remember it, add the lines that answer it
 }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  const n = talkWith; talkWith = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.m) n.m.userData.anim.play(null);
+  const n = talkWith; talkWith = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.m) n.m.userData.anim.play(n.seated ? sitClip(false) : null);
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); }
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
@@ -499,16 +516,16 @@ const TALK_SVG = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" st
 const TB = { el: null, v: new THREE.Vector3() };
 function addMark(n) { n.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); n.mark.renderOrder = 5; n.mark.visible = false; scene.add(n.mark); }
 for (const n of SHOP_PEOPLE) addMark(n);
-const headTop = (n) => ((n.m && n.m.userData.ground) || 0) + (n.h || 1.8) - 0.03;   /* the height of the top of someone's head or hat, standing on whatever they stand on */
+const headTop = (n) => ((n.m && n.m.userData.ground) || 0) + (n.h || 1.8) * (n.seated ? 0.74 : 1) - 0.03;   /* the height of the top of someone's head or hat, standing on whatever they stand on */
 const POSTER = __DEV__ && /[?&]shot=poster/.test(location.search);   /* the menu poster is rendered from this view with no marks or bubbles */
 function bubbleTick(now) {
   const show = state.started && !busy && $('card').hidden && !POSTER;
   for (const n of PEOPLE) { const m = n.mark; if (!m) continue; if (!show || !n.m || !n.m.visible) { m.visible = false; continue; } const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, headTop(n) + 0.17 + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n; }
+    m.position.set(n.x, headTop(n) + 0.3 + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n; }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !busy) activate(near); }); }
   const on = show && near && !near.go; TB.el.hidden = !on; if (!on) return;
-  TB.v.set(near.x, headTop(near) + 0.08, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
-  const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
+  TB.v.set(near.x, headTop(near) + 0.2, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
+  const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = Math.max(r.top + (1 - TB.v.y) / 2 * r.height, r.top + 196) + 'px';   /* never up under the Goal tab and the buttons, even when the head is above the top of the screen */
   if (TB.el.dataset.label !== near.label) { TB.el.dataset.label = near.label; TB.el.innerHTML = TALK_SVG + '<span class="who">' + near.who + '</span>'; TB.el.setAttribute('aria-label', near.label); }
 }
 
@@ -573,7 +590,7 @@ function buildHall() {
     mesh(new THREE.PlaneGeometry(w, h), viewM, 0, y, 0.012, gg); for (const dx of [-w / 2, w / 2]) box(0.09, h + 0.12, 0.12, beam, dx, y, 0.05, gg); for (const dy of [sill - 0.03, sill + h + 0.03]) box(w + 0.2, 0.09, 0.12, beam, 0, dy, 0.05, gg); box(0.05, h, 0.06, beam, 0, y, 0.04, gg); box(w, 0.04, 0.06, beam, 0, y + h * 0.1, 0.04, gg);
     for (const dx of [-(w / 2 + w / 4 + 0.05), w / 2 + w / 4 + 0.05]) mesh(new THREE.PlaneGeometry(w / 2, h), louverM, dx, y, 0.02, gg); }
   for (const bx of [-2.6, 2.6]) for (const bz of [-1.2, 0.2, 1.4]) {   /* benches either side of the middle aisle */
-    box(3.0, 0.08, 0.42, wood, bx, 0.46, bz, g); box(3.0, 0.5, 0.05, wood, bx, 0.78, bz - 0.22, g); for (const dx of [-1.35, 1.35]) box(0.06, 0.46, 0.4, woodDark, bx + dx, 0.23, bz, g); HALL_WALLS.push([bx - 1.6, bz - 0.35, bx + 1.6, bz + 0.3]); }
+    box(3.0, 0.08, 0.42, wood, bx, 0.46, bz, g); box(3.0, 0.5, 0.05, wood, bx, 0.78, bz + 0.22, g);   /* the backrest is behind the sitter, who faces the platform */ for (const dx of [-1.35, 1.35]) box(0.06, 0.46, 0.4, woodDark, bx + dx, 0.23, bz, g); HALL_WALLS.push([bx - 1.6, bz - 0.35, bx + 1.6, bz + 0.3]); }
   box(8.4, 0.25, 1.7, wood, 0, 0.125, HALL.z0 + 0.85, g); HALL_WALLS.push([-4.3, HALL.z0, 4.3, HALL.z0 + 1.75]);   /* the platform at the back, with a table and a lamp */
   box(2.2, 0.85, 0.8, woodDark, 0, 0.25 + 0.425, HALL.z0 + 0.7, g); box(2.4, 0.06, 0.95, wood, 0, 0.25 + 0.88, HALL.z0 + 0.7, g);
   cyl(0.07, 0.1, 0.22, brass, -0.6, 0.25 + 1.04, HALL.z0 + 0.7, g); cyl(0.09, 0.09, 0.2, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.7, transparent: true, opacity: 0.8 }), -0.6, 0.25 + 1.25, HALL.z0 + 0.7, g);
@@ -600,14 +617,14 @@ const HALL_PEOPLE = [
       : [{ who: 'Marcus Garvey', text: 'Welcome. I have just come home from London.', unlock: 'garvey-home' }, { who: 'You', text: 'What will you do now?' }, { who: 'Marcus Garvey', text: 'Start an association, so people can help each other.' }, { who: 'Marcus Garvey', text: 'We will help people in need. We will build pride.' },
         { who: 'Marcus Garvey', text: 'What one word should our poster say?', choices: [word('LEARN'), word('WORK'), word('UNITY')] }],
     later: () => ({ 10: ['Please talk to Amy Ashwood too.'], 11: ['Please print the poster on the press.'], 12: ['Please welcome our guests.'], 14: ['Thank you for helping us begin.'] })[stage] || ['One moment, please.'] },
-  { id: 'elder', model: 'nb_elder', who: 'Older man', label: 'Talk to the older man', x: -0.6, z: 6.5, ry: Math.PI, base: 'Idle', seat: [-1.0, -0.2], lines: () => neighbourLines('elder'), later: () => ['I am glad I came.', 'Will Mr Garvey speak soon?'] },
-  { id: 'seller', model: 'nb_seller', who: 'Market seller', label: 'Talk to the market seller', x: 0.6, z: 6.5, ry: Math.PI, base: 'Idle', seat: [1.0, -0.2], lines: () => neighbourLines('seller'), later: () => ['I closed my stall early to come.', 'What a good idea.'] },
-  { id: 'youth', model: 'nb_youth', who: 'Young man', label: 'Talk to the young man', x: 0, z: 7.2, ry: Math.PI, base: 'Idle', seat: [-1.0, 1.2], lines: () => neighbourLines('youth'), later: () => ['I told my friends too.', 'Can I help next time?'] },
+  { id: 'elder', model: 'nb_elder', who: 'Older man', label: 'Talk to the older man', x: -0.6, z: 6.5, ry: Math.PI, base: 'Idle', seat: [-1.9, 0.2], route: [[0, 3.4], [0, -0.5], [-1.9, -0.5]], lines: () => neighbourLines('elder'), later: () => ['I am glad I came.', 'Will Mr Garvey speak soon?'] },
+  { id: 'seller', model: 'nb_seller', who: 'Market seller', label: 'Talk to the market seller', x: 0.6, z: 6.5, ry: Math.PI, base: 'Idle', seat: [1.9, 0.2], route: [[0, 3.4], [0, -0.5], [1.9, -0.5]], lines: () => neighbourLines('seller'), later: () => ['I closed my stall early to come.', 'What a good idea.'] },
+  { id: 'youth', model: 'nb_youth', who: 'Young man', label: 'Talk to the young man', x: 0, z: 7.2, ry: Math.PI, base: 'Idle', seat: [-1.9, 1.4], route: [[0, 3.4], [0, 0.83], [-1.9, 0.83]], lines: () => neighbourLines('youth'), later: () => ['I told my friends too.', 'Can I help next time?'] },
 ];
 for (const n of HALL_PEOPLE) initPerson(n);
 for (const n of HALL_PEOPLE.slice(2)) n.hidden = true;   /* the neighbours arrive when the poster is printed */
 function startArrivals() {
-  HALL_PEOPLE.slice(2).forEach((n, i) => { if (!n.m) return; n.hidden = true; n.m.visible = false; n.x = (i - 1) * 0.6; n.z = 5.2; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.dest = n.seat.slice(); n.delay = 1.2 + i * 1.8; });
+  HALL_PEOPLE.slice(2).forEach((n, i) => { if (!n.m) return; n.hidden = true; n.m.visible = false; n.x = (i - 1) * 0.6; n.z = 5.2; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.legs = [...n.route.map((q) => q.slice()), n.seat.slice()]; n.dest = n.legs.shift(); n.seated = false; n.delay = 1.2 + i * 1.8; });   /* walk the aisle and the gap between the rows, then sit */
 }
 function loadPerson(n) {
   if (n.loading) return n.loading;
@@ -632,6 +649,7 @@ function facadeTex(v) {   /* a brick front: rows of tall windows with stone lint
     x.fillStyle = '#d9cbb0'; x.fillRect(0, 0, w, 26); x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, 26, w, 4); x.fillStyle = '#c9bb9f'; x.fillRect(0, h - 70, w, 6);
     grain(x, w, h, 14); });
 }
+facadeTex = memo(facadeTex, (v) => (v % 5) + '/' + (v % 2));   /* the same ten fronts are shared by every street, room window and backdrop */
 function buildStreet() {
   if (streetBuilt) return; streetBuilt = true; const g = streetG;
   const road = std(cv(256, 256, (x, w, h) => { x.fillStyle = '#5a5650'; x.fillRect(0, 0, w, h); for (let i = 0; i < 600; i++) { x.fillStyle = `rgba(${40 + Math.random() * 60 | 0},${40 + Math.random() * 60 | 0},${40 + Math.random() * 56 | 0},0.5)`; x.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 5, 2 + Math.random() * 3); } x.fillStyle = 'rgba(30,26,22,0.35)'; x.fillRect(w * 0.3, 0, 6, h); x.fillRect(w * 0.7, 0, 6, h); }, [10, 3]), 1);
@@ -644,20 +662,21 @@ function buildStreet() {
     for (let k = 0; k < 3; k++) box(1.3, 0.2, 0.42, solid(0x9a9486, 0.9), x - 0.5, 0.1 + k * 0.2, sz * (7.35 - 0.2 - k * 0.4 + 1.2), g);
     box(0.95, 2.1, 0.12, solid(0x2a1d16, 0.8), x - 0.5, 1.9, sz * 7.5, g); box(1.1, 0.14, 0.18, solid(0xcfc2a8, 0.9), x - 0.5, 3.0, sz * 7.47, g); }
   for (const lx of [-9, -3, 3, 9]) for (const sz of [-1, 1]) { cyl(0.05, 0.07, 3.6, solid(0x202428, 0.6), lx, 1.8, sz * 4.7, g, 8); const lamp = cyl(0.22, 0.16, 0.34, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffd48a, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }), lx, 3.7, sz * 4.7, g, 8); lamp.name = 'lamp'; }
-  box(0.9, 0.5, 0.6, wood, 0, 0.25, 0.5, g);   /* the soapbox */
+  box(1.3, 0.5, 1.0, wood, 0, 0.25, 0.5, g); box(1.38, 0.05, 1.08, woodDark, 0, 0.525, 0.5, g); STREET_WALLS.push([-0.75, -0.05, 0.75, 1.05]);   /* the speaker's box: big enough to stand on with both feet well inside the edge, with a darker lid and a wall so nobody walks through it */
+  for (const [bx, bz] of [[-0.6, -0.02], [0.6, -0.02], [-0.6, 1.02], [0.6, 1.02]]) box(0.08, 0.5, 0.08, woodDark, bx, 0.25, bz, g);
   for (const [x, z] of [[-10, 5.7], [8, -5.7], [-5, -5.9]]) { box(0.7, 0.5, 0.7, wood, x, 0.4, z, g); }
   mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: cv(64, 128, (x, w, h) => { const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#9ec8e6'); gr.addColorStop(0.7, '#e9eee4'); gr.addColorStop(1, '#d9d3c0'); x.fillStyle = gr; x.fillRect(0, 0, w, h); }) }), 0, 20, -34, g);
   mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ color: 0xc9d8de }), 0, 20, 34, g).rotation.y = Math.PI;
 }
 
-const STREET_SPOTS = { worker: [-2.3, 1.7], woman: [2.4, 2.0], critic: [0.6, 3.2], garvey3: [0, 0.5] };
+const STREET_SPOTS = { worker: [-2.3, 1.7], woman: [2.4, 2.0], critic: [0.6, 3.2], garvey3: [0, 0.4] };
 const faceToward = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
 const wordsIs = (w) => story.words === w;
 const THEME = { work: 'Friends, everyone deserves fair work and fair pay.', learn: 'Friends, every child deserves a good school.', pride: 'Friends, we can be proud of who we are.' };
 const theme = (id, t) => ({ t, set: { words: id }, then: [{ who: 'Marcus Garvey', text: THEME[id] }, { who: 'Marcus Garvey', text: 'Let us help each other, and build something together.' }, { who: 'Woman', text: ({ work: 'Yes! Fair work is what I hope for.', learn: 'Yes! My son must go to school.', pride: 'Yes! I do feel proud.' })[id] }] });
 const answer = (id, t, reply) => ({ t, set: { answer: id }, then: [{ who: 'Older man', text: reply }] });
 const STREET_PEOPLE = [
-  { id: 'garvey3', model: 'garvey1916', who: 'Marcus Garvey', label: 'Talk to Marcus Garvey', x: 0, z: 0.5, ry: 0, base: 'Idle', ground: 0.5,
+  { id: 'garvey3', model: 'garvey1916', who: 'Marcus Garvey', label: 'Talk to Marcus Garvey', x: 0, z: 0.4, ry: 0, base: 'Idle', ground: 0.55,
     lines: () => [{ who: 'Marcus Garvey', text: 'Welcome, friend. I have only just arrived in New York.', unlock: 'garvey-arrives' }, { who: 'You', text: 'People here have told me what they need.' }, { who: 'Marcus Garvey', text: 'Then I will listen to you. What should I speak about?', choices: [theme('work', 'Fair work'), theme('learn', 'Good schools'), theme('pride', 'Pride in who we are')] }],
     later: () => stage >= 22 ? ['Thank you for helping me find my words.'] : ['I will speak when everyone is ready.'] },
   { id: 'worker', model: 'hl_worker', who: 'Worker', label: 'Talk to the worker', x: STREET_SPOTS.worker[0], z: STREET_SPOTS.worker[1], ry: faceToward(-2.3, 1.7, 0, 0.5), base: 'Idle',
@@ -687,6 +706,7 @@ const pressLamp = new THREE.PointLight(0xffd29a, 9, 13, 2); pressLamp.position.s
 let pressBuilt = false, wallPage = null; const bundles = [];
 const HEADLINES = { pride: 'Be Proud of Who You Are', learn: 'Read, Learn and Grow', unity: 'Stand Together' };   /* made up, and the journal says so */
 function brickTex() { return cv(256, 256, (x, w, h) => { x.fillStyle = '#3c2a22'; x.fillRect(0, 0, w, h); const bh = 16, bw = 42; for (let r = 0; r * bh < h; r++) for (let c = -1; c * bw < w; c++) { const v = 0.82 + Math.random() * 0.3; x.fillStyle = `rgb(${128 * v | 0},${74 * v | 0},${58 * v | 0})`; x.fillRect(c * bw + (r % 2) * bw / 2 + 1, r * bh + 1, bw - 2, bh - 2); } grain(x, w, h, 10); }); }
+brickTex = memo(brickTex);
 function frontPageTex(head) {   /* the finished front page, as a picture for the wall */
   return cv(256, 340, (x, w, h) => { x.fillStyle = '#efe7d2'; x.fillRect(0, 0, w, h); x.fillStyle = '#1d1a16'; x.textAlign = 'center'; x.font = '700 27px Georgia, serif'; x.fillText('THE NEGRO WORLD', w / 2, 40); x.fillRect(14, 50, w - 28, 3); x.fillRect(14, 56, w - 28, 1);
     x.font = '700 20px Georgia, serif'; const rows = []; let cur = ''; for (const wd of head.split(' ')) { if ((cur + ' ' + wd).trim().length > 16) { rows.push(cur); cur = wd; } else cur = (cur + ' ' + wd).trim(); } rows.push(cur); rows.forEach((r, i) => x.fillText(r, w / 2, 86 + i * 24));
@@ -808,7 +828,7 @@ function buildDock() {
   mesh(new THREE.PlaneGeometry(2.8, 0.7), new THREE.MeshBasicMaterial({ map: signTex([['YARMOUTH', 60]], 512, 128) }), -4.2, 1.3, 6.69, g).rotation.y = Math.PI;
   /* the share table, with a sign */
   box(2.3, 0.9, 0.9, woodDark, -4.5, 0.45, -0.9, g); box(2.4, 0.06, 1.0, wood, -4.5, 0.93, -0.9, g); box(0.34, 0.02, 0.45, paper, -5.1, 0.97, -0.9, g); box(0.34, 0.02, 0.45, paper, -4.7, 0.97, -0.85, g); cyl(0.05, 0.07, 0.2, brass, -3.8, 1.05, -0.9, g, 10);
-  mesh(new THREE.PlaneGeometry(2.6, 0.82), new THREE.MeshBasicMaterial({ map: signTex([['BLACK STAR LINE', 52], ['SHARES FIVE DOLLARS EACH', 30]], 512, 160) }), -4.5, 2.5, -1.6, g); box(0.07, 2.4, 0.07, beam, -5.75, 1.2, -1.6, g); box(0.07, 2.4, 0.07, beam, -3.25, 1.2, -1.6, g); DOCK_WALLS.push([-5.75, -1.5, -3.2, -0.4]);
+  mesh(new THREE.PlaneGeometry(2.6, 0.82), new THREE.MeshBasicMaterial({ map: signTex([['BLACK STAR LINE', 52], ['SHARES FIVE DOLLARS EACH', 30]], 512, 160) }), -4.5, 2.5, -2.4, g); box(0.07, 2.4, 0.07, beam, -5.75, 1.2, -2.4, g); box(0.07, 2.4, 0.07, beam, -3.25, 1.2, -2.4, g); DOCK_WALLS.push([-5.75, -2.3, -3.2, -0.4]);   /* the sign stands well behind the clerk, who stands behind the table */
   /* crates, barrels and rope */
   const crate = (x, z, s2, y2 = 0) => { box(s2, s2, s2, wood, x, s2 / 2 + y2, z, g).rotation.y = x * 0.7; DOCK_WALLS.push([x - s2 * 0.75, z - s2 * 0.75, x + s2 * 0.75, z + s2 * 0.75]); };
   crate(6.2, -2.4, 0.9); crate(7.1, -2.2, 0.8); crate(6.5, -2.3, 0.7, 0.9); crate(-8, 1.2, 0.9); crate(-8.2, 2.2, 0.8);
@@ -816,7 +836,7 @@ function buildDock() {
   mesh(new THREE.TorusGeometry(0.4, 0.1, 8, 20), solid(0x8c7a52, 1), 0.8, 0.12, 3.5, g).rotation.x = Math.PI / 2;
   for (const lx of [-7, 0, 7]) { cyl(0.05, 0.07, 3.6, solid(0x202428, 0.6), lx, 1.8, -3.9, g, 8); cyl(0.22, 0.16, 0.34, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffd48a, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }), lx, 3.7, -3.9, g, 8); }
 }
-const DOCK_SPOTS = { garvey5: [1.4, -0.4], clerk: [-4.5, -1.5], engineer: [5.0, 2.0], friend: [-1.6, 1.4] };
+const DOCK_SPOTS = { garvey5: [1.4, -0.4], clerk: [-4.5, -1.8], engineer: [5.0, 2.0], friend: [-1.6, 1.4] };
 let inspected = 0;
 const INSPECT = { hull: ['Hull', 'The paint looks fresh. Under it, the plates are rusty.'], engine: ['Engine', 'The engineer says it runs, but it is very old and will need many repairs.'], deck: ['Deck', 'The planks are worn, and some of the rails are loose.'] };
 let inspectDone = null, inspectSeen = {};
@@ -915,7 +935,7 @@ const LIB_PEOPLE = [
   { id: 'nurse', model: 'nurse1920', who: 'Nurse', label: 'Talk to the nurse', x: -3.6, z: 3.6, ry: faceToward(-3.6, 3.6, 0, 0), base: 'Idle',
     lines: () => [{ who: 'Nurse', text: 'I am a Black Cross Nurse. We help with health and first aid.', unlock: 'nurses' }, { who: 'You', text: 'That basket looks heavy.' }, { who: 'Nurse', text: 'It is full of bandages.' }, { who: 'Nurse', text: 'I must take it to the first aid room.' }],
     later: () => thanks('nurse', 'The steward came to me soon after. All is well.')() || ['I must take this basket to the first aid room.'] },
-  { id: 'delegate', model: 'delegate1920', who: 'Traveller', label: 'Talk to the traveller', x: 3.0, z: 3.2, ry: faceToward(3.0, 3.2, 0, 0), base: 'Idle',
+  { id: 'delegate', model: 'delegate1920', who: 'Traveller', label: 'Talk to the traveller', x: 3.0, z: 3.5, ry: faceToward(3.0, 3.5, 0, 0), base: 'Idle',
     lines: () => [{ who: 'Traveller', text: 'I came by ship from far away. The trip took many days.' }, { who: 'You', text: 'You must be tired.' }, { who: 'Traveller', text: 'I am. I need a seat before the meeting.' }],
     later: () => thanks('delegate', 'The steward found me a seat soon after. Thank you.')() || ['My legs are tired from the journey.'] },
   { id: 'messenger', model: 'nb_youth', who: 'Messenger', label: 'Talk to the messenger', x: 0.2, z: 4.4, ry: faceToward(0.2, 4.4, 0, 0), base: 'Idle',
@@ -1105,6 +1125,103 @@ function resetChapter8() {   /* the park again: your last answer is cleared, the
   enterPlace('park'); setStage(70); showPlace();
 }
 
+/* ---------- small details that make each place feel lived in ---------- */
+const POTM = solid(0xa65a3a, 0.9), TRUNKM = solid(0x5b4330, 0.95), CANOPY = new THREE.MeshStandardMaterial({ color: 0x4f8f3f, roughness: 0.9, flatShading: true }), CANOPY2 = new THREE.MeshStandardMaterial({ color: 0x3c7a36, roughness: 0.9, flatShading: true });
+const LEAFA = new THREE.MeshStandardMaterial({ color: 0x3f7d3a, roughness: 0.8, side: THREE.DoubleSide }), LEAFB = new THREE.MeshStandardMaterial({ color: 0x4d9142, roughness: 0.8, side: THREE.DoubleSide });
+const LEAFG = new THREE.PlaneGeometry(0.2, 0.95).translate(0, 0.475, 0), BLOB = new THREE.IcosahedronGeometry(1, 1);
+const TIN = solid(0x8d9095, 0.45, 0.55), CLOTH = solid(0xe6dcc0, 0.95), GLOWM = new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.7, transparent: true, opacity: 0.85 });
+const clockTex = memo(() => cv(128, 128, (x) => { x.fillStyle = '#ece4cf'; x.beginPath(); x.arc(64, 64, 60, 0, 7); x.fill(); x.strokeStyle = '#2b2118'; x.lineWidth = 5; x.stroke(); x.lineWidth = 3; for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; x.beginPath(); x.moveTo(64 + Math.sin(a) * 50, 64 - Math.cos(a) * 50); x.lineTo(64 + Math.sin(a) * 57, 64 - Math.cos(a) * 57); x.stroke(); } x.lineWidth = 5; x.beginPath(); x.moveTo(64, 64); x.lineTo(64 - Math.sin(1.05) * 32, 64 - Math.cos(1.05) * 32); x.stroke(); x.lineWidth = 3; x.beginPath(); x.moveTo(64, 64); x.lineTo(64 + Math.sin(2.1) * 46, 64 - Math.cos(2.1) * 46); x.stroke(); x.fillStyle = '#2b2118'; x.beginPath(); x.arc(64, 64, 4, 0, 7); x.fill(); }));
+const stripeTex = memo((a, b) => cv(64, 64, (x, w, h) => { for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? b : a; x.fillRect(i * 8, 0, 8, h); } grain(x, w, h, 10); }), (a, b) => a + b);
+const rugTex = memo(() => cv(128, 96, (x, w, h) => { x.fillStyle = '#7a2e2a'; x.fillRect(0, 0, w, h); x.strokeStyle = '#d6b45c'; x.lineWidth = 3; x.strokeRect(6, 6, w - 12, h - 12); x.strokeStyle = '#2f3f5c'; x.lineWidth = 6; x.strokeRect(14, 14, w - 28, h - 28); x.fillStyle = '#d6b45c'; for (let i = 0; i < 5; i++) { x.beginPath(); x.moveTo(24 + i * 20, h / 2); x.lineTo(34 + i * 20, h / 2 - 9); x.lineTo(44 + i * 20, h / 2); x.lineTo(34 + i * 20, h / 2 + 9); x.fill(); } grain(x, w, h, 14); }));
+const flagJamTex = memo(() => cv(150, 90, (x, w, h) => { x.fillStyle = '#009b3a'; x.fillRect(0, 0, w, h); x.fillStyle = '#000'; x.beginPath(); x.moveTo(0, 0); x.lineTo(w / 2, h / 2); x.lineTo(0, h); x.fill(); x.beginPath(); x.moveTo(w, 0); x.lineTo(w / 2, h / 2); x.lineTo(w, h); x.fill(); x.strokeStyle = '#fed100'; x.lineWidth = 14; x.beginPath(); x.moveTo(0, 0); x.lineTo(w, h); x.moveTo(0, h); x.lineTo(w, 0); x.stroke(); }));
+const hillTex = memo(() => cv(256, 64, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#6f93a0'); g.addColorStop(1, '#4f7a6e'); x.fillStyle = g; x.fillRect(0, 0, w, h); }));
+function dPlant(g, x, z, sc = 1, y = 0) {   /* a potted palm or fern */
+  cyl(0.2 * sc, 0.14 * sc, 0.3 * sc, POTM, x, y + 0.15 * sc, z, g, 12);
+  for (let i = 0; i < 10; i++) { const l = mesh(LEAFG, i % 2 ? LEAFA : LEAFB, x, y + 0.3 * sc, z, g); l.scale.set(sc, sc * (0.75 + (i % 3) * 0.22), sc); l.rotation.order = 'YXZ'; l.rotation.y = i * 0.63; l.rotation.x = -(0.3 + (i % 3) * 0.22); }
+}
+function dTree(g, x, z, h = 3.2, r = 1.1) {   /* a street or park tree: a trunk and a few lumpy clumps of leaves */
+  cyl(0.09 * r, 0.15 * r, h, TRUNKM, x, h / 2, z, g, 8);
+  for (const [dx, dy, dz, k, m] of [[0, 0.2, 0, 1, 0], [0.7, -0.25, 0.25, 0.72, 1], [-0.6, -0.15, -0.35, 0.8, 1], [0.15, 0.62, -0.45, 0.65, 0], [-0.3, 0.5, 0.5, 0.6, 1]]) { const s = mesh(BLOB, m ? CANOPY2 : CANOPY, x + dx * r, h + dy * r, z + dz * r, g); s.scale.set(r * k, r * k * 0.8, r * k); }
+}
+function dBarrel(g, x, y, z, sc = 1, mat = woodDark) { cyl(0.27 * sc, 0.27 * sc, 0.78 * sc, mat, x, y + 0.39 * sc, z, g, 14); for (const dy of [0.2, 0.58]) cyl(0.285 * sc, 0.285 * sc, 0.035 * sc, iron, x, y + dy * sc, z, g, 14); }
+function dCrate(g, x, y, z, s = 0.6, ry = 0) { const b = box(s, s, s, wood, x, y + s / 2, z, g); b.rotation.y = ry; box(s + 0.02, 0.05, s + 0.02, woodDark, x, y + s * 0.2, z, g).rotation.y = ry; box(s + 0.02, 0.05, s + 0.02, woodDark, x, y + s * 0.8, z, g).rotation.y = ry; }
+function dClock(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k); mesh(new THREE.CircleGeometry(0.21, 28), new THREE.MeshStandardMaterial({ map: clockTex(), roughness: 0.5 }), 0, 0, 0.045, k); mesh(new THREE.TorusGeometry(0.215, 0.025, 8, 28), brass, 0, 0, 0.04, k); cyl(0.23, 0.23, 0.05, woodDark, 0, 0, 0.02, k, 20).rotation.x = Math.PI / 2; }
+function dPegs(g, x, y, z, ry, n = 4) {   /* a coat board with pegs, and two hats hung on it */
+  const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k); box(0.2 + n * 0.22, 0.12, 0.03, woodDark, 0, 0, 0.015, k);
+  for (let i = 0; i < n; i++) { const px = (i - (n - 1) / 2) * 0.22; cyl(0.012, 0.012, 0.08, brass, px, 0, 0.07, k, 6).rotation.x = Math.PI / 2; if (i === 0 || i === n - 2) { const hc = i === 0 ? 0x2c2a2a : 0x6b5a45; cyl(0.12, 0.12, 0.012, solid(hc, 0.9), px, -0.12, 0.1, k, 16).rotation.x = Math.PI / 2; cyl(0.075, 0.085, 0.09, solid(hc, 0.9), px, -0.12, 0.14, k, 14).rotation.x = Math.PI / 2; } } }
+function dStove(g, x, z, h) { box(0.7, 0.06, 0.7, iron, x, 0.03, z, g); cyl(0.27, 0.3, 0.8, solid(0x25262a, 0.6, 0.2), x, 0.46, z, g, 16); cyl(0.2, 0.27, 0.12, solid(0x25262a, 0.6, 0.2), x, 0.92, z, g, 16); cyl(0.055, 0.055, h - 1.0, solid(0x2a2b2f, 0.6, 0.2), x, 1.0 + (h - 1.0) / 2, z, g, 10); box(0.18, 0.2, 0.02, solid(0x3a1a12, 0.5), x, 0.5, z + 0.3, g); }
+function dWallLamp(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k); box(0.05, 0.22, 0.04, iron, 0, 0, 0.02, k); box(0.04, 0.04, 0.2, iron, 0, -0.05, 0.1, k); cyl(0.07, 0.06, 0.2, GLOWM, 0, 0.02, 0.2, k, 10); cyl(0.09, 0.05, 0.04, brass, 0, 0.14, 0.2, k, 10); }
+function dHydrant(g, x, z) { cyl(0.11, 0.13, 0.6, solid(0xb02a24, 0.6), x, 0.3, z, g, 10); mesh(new THREE.SphereGeometry(0.115, 10, 6, 0, 7, 0, Math.PI / 2), solid(0xb02a24, 0.6), x, 0.6, z, g); for (const sx of [-1, 1]) cyl(0.05, 0.05, 0.12, solid(0xd2d0c8, 0.4, 0.4), x + sx * 0.14, 0.38, z, g, 8).rotation.z = Math.PI / 2; }
+function dBin(g, x, z) { cyl(0.2, 0.17, 0.5, TIN, x, 0.25, z, g, 12); cyl(0.215, 0.215, 0.03, TIN, x, 0.52, z, g, 12); cyl(0.03, 0.03, 0.04, iron, x, 0.56, z, g, 6); }
+function dGull(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k); const w = solid(0xf2f1ea, 0.8); const body = mesh(BLOB, w, 0, 0.1, 0, k); body.scale.set(0.09, 0.08, 0.15); mesh(BLOB, w, 0, 0.2, 0.12, k).scale.set(0.05, 0.05, 0.05); const beak = cyl(0.01, 0.025, 0.06, solid(0xe0a830, 0.6), 0, 0.2, 0.19, k, 6); beak.rotation.x = Math.PI / 2; const wing = box(0.16, 0.02, 0.18, solid(0x9aa0a6, 0.8), 0, 0.15, -0.02, k); wing.rotation.z = 0.0; }
+function dShip(g, x, z, len, ry = 0, funnel = true) { const k = new THREE.Group(); k.position.set(x, 0, z); k.rotation.y = ry; g.add(k); const hull = solid(0x2a2d33, 0.8); box(len, 1.8, len * 0.25, hull, 0, 0.1, 0, k); box(len * 0.98, 0.15, len * 0.25 + 0.02, solid(0x7a2e24, 0.8), 0, -0.7, 0, k); box(len * 0.5, 1.1, len * 0.2, solid(0xdcd6c4, 0.8), -len * 0.05, 1.5, 0, k); if (funnel) cyl(len * 0.045, len * 0.05, 1.6, solid(0x16181b, 0.7), -len * 0.1, 2.5, 0, k, 12); cyl(0.05, 0.07, len * 0.4, woodDark, len * 0.22, 2.5, 0, k, 6); }
+
+/* the print shop (built when the page loads) */
+{ const g = room;
+  dClock(g, -2.65, 2.55, Z0 + 0.03, 0); dPegs(g, -2.7, 1.75, Z1 - 0.04, Math.PI);
+  dPlant(g, -3.7, 3.0, 1.1); WALLS.push([-4.0, 2.7, -3.4, 3.3]);
+  dBarrel(g, 4.05, 0, 1.15, 1, woodDark); WALLS.push([3.75, 0.85, 4.35, 1.45]);
+  cyl(0.012, 0.012, 1.5, wood, 4.38, 0.75, 3.1, g, 6).rotation.z = 0.06; box(0.3, 0.2, 0.04, solid(0xb59a5a, 0.95), 4.3, 0.1, 3.1, g);   /* a broom */
+  for (let i = 0; i < 3; i++) cyl(0.07, 0.07, 0.1 + i * 0.0, solid(0x1a1a1d, 0.4, 0.3), 4.1 - i * 0.12, 0.05, -1.5, g, 10);   /* tins of ink */
+  box(0.32, 0.03, 0.22, solid(0xe6dcc2, 0.95), -3.4, 1.02, -2.95, g);   /* a proof left on a type stand */ }
+
+/* the other places are decorated when they are first built */
+{ const b = buildHall; buildHall = () => { const first = !hallBuilt; b(); if (!first) return; const g = hallG;
+    dClock(g, -3.3, 2.95, HALL.z0 + 0.03, 0);
+    dPlant(g, -3.9, -3.5, 1.3, 0.25); dPlant(g, 3.9, -3.5, 1.3, 0.25); dPegs(g, -3.2, 1.75, HALL.z1 - 0.04, Math.PI, 5);
+    for (const z of [-1.0, 1.3]) dWallLamp(g, HALL.x0 + 0.02, 2.4, z, Math.PI / 2); dWallLamp(g, HALL.x1 - 0.02, 2.4, 1.3, -Math.PI / 2);
+    box(0.5, 0.5, 0.5, woodDark, -4.15, 0.25, 3.2, g); cyl(0.2, 0.2, 0.55, TIN, -4.15, 0.78, 3.2, g, 14); cyl(0.02, 0.02, 0.1, brass, -3.93, 0.62, 3.2, g, 6).rotation.z = Math.PI / 2; HALL_WALLS.push([-4.5, 2.9, -3.8, 3.5]);   /* a water cooler by the door */
+    for (const [x, z] of [[-1.0, 3.3], [1.0, 3.3]]) cyl(0.03, 0.03, 0.9, brass, x, 0.45, z, g, 6);   /* brass posts either side of the door */
+  }; }
+{ const b = buildStreet; buildStreet = () => { const first = !streetBuilt; b(); if (!first) return; const g = streetG;
+    for (let i = -4; i <= 4; i++) for (const sz of [-1, 1]) if (i !== 0) dTree(g, i * 6 + sz * 1.5, sz * 5.1, 3.0 + ((i + 9) % 3) * 0.35, 1.0);   /* trees along the kerb */
+    dHydrant(g, -12, 4.7); dHydrant(g, 15, -4.7); dBin(g, -15.6, 6.9); dBin(g, -2.8, -6.9); dBin(g, 10.2, 6.9);
+    { const m = box(0.5, 1.2, 0.5, solid(0x2c3e66, 0.5, 0.2), -6, 0.6, 5.2, g); box(0.56, 0.1, 0.56, solid(0x2c3e66, 0.5, 0.2), -6, 1.25, 5.2, g); box(0.3, 0.05, 0.02, solid(0xe6dcc2, 0.9), -6, 0.95, 4.93, g); }   /* a post box */
+    { const st = stripeTex('#b8453d', '#efe3c5'); for (let i = 0; i < 13; i++) for (const sz of [-1, 1]) if ((i + (sz > 0 ? 1 : 0)) % 3 === 0) { const a = box(1.7, 0.04, 1.0, std(st, 0.9), -27 + i * 4.5 - 0.5, 3.45, sz * 7.0, g); a.rotation.x = -sz * 0.28; } }   /* striped awnings over some doors */
+    { const c = new THREE.Group(); c.position.set(7.5, 0, -5.7); c.rotation.y = 0.2; g.add(c); box(1.7, 0.1, 0.9, wood, 0, 0.62, 0, c); for (const sz of [-1, 1]) mesh(new THREE.TorusGeometry(0.32, 0.04, 8, 20), iron, 0, 0.34, sz * 0.5, c); dBarrel(c, -0.4, 0.67, 0, 0.8); dBarrel(c, 0.2, 0.67, 0.1, 0.8); dCrate(c, 0.6, 0.67, -0.1, 0.4); for (const sz of [-1, 1]) box(1.1, 0.05, 0.05, wood, 1.2, 0.58, sz * 0.35, c); }   /* a handcart with barrels */
+    { const n = new THREE.Group(); n.position.set(-9.5, 0, 5.8); g.add(n); box(1.1, 1.0, 0.7, woodDark, 0, 0.5, 0, n); const roof = box(1.3, 0.06, 0.95, std(stripeTex('#2f5f7a', '#efe3c5'), 0.9), 0, 1.65, 0, n); roof.rotation.x = 0.12; for (const [dx, dz] of [[-0.55, -0.3], [0.55, -0.3], [-0.55, 0.3], [0.55, 0.3]]) box(0.05, 0.65, 0.05, wood, dx, 1.32, dz, n); for (let i = 0; i < 4; i++) { const p = mesh(new THREE.PlaneGeometry(0.28, 0.38), std(sheetTex('NEWS'), 1), -0.4 + i * 0.27, 1.12, 0.36, n); p.rotation.x = -0.25; } }   /* a news stand */
+    for (const sx of [-1, 1]) { const e = box(14, 14, 3, solid(0x6a4034, 1), sx * 32.5, 7, 0, g); mesh(new THREE.PlaneGeometry(14, 14), std(facadeTex(sx > 0 ? 2 : 3), 0.95), sx * 30.98, 7, 0, g).rotation.y = -sx * Math.PI / 2; }   /* a cross street closes each end */
+  }; }
+{ const b = buildPress; buildPress = () => { const first = !pressBuilt; b(); if (!first) return; const g = pressG;
+    dStove(g, -4.2, 2.9, PRESS.h); PRESS_WALLS.push([-4.6, 2.5, -3.8, 3.3]);
+    dBarrel(g, 4.2, 0, -3.3, 1, solid(0x1d1e22, 0.5, 0.2)); dBarrel(g, 3.35, 0, -3.45, 1, solid(0x1d1e22, 0.5, 0.2)); PRESS_WALLS.push([3.0, -3.8, 4.6, -3.0]);   /* drums of ink */
+    for (const [ry, rz] of [[0.24, 0.6], [0.24, 1.06], [0.62, 0.83]]) cyl(0.22, 0.22, 0.8, solid(0xe2d8bd, 0.95), 4.2, ry, rz, g, 18).rotation.z = Math.PI / 2; PRESS_WALLS.push([3.7, 0.3, 4.7, 1.4]);   /* reels of newsprint */
+    dClock(g, 0.6, 3.3, PRESS.z0 + 0.03, 0); dPegs(g, PRESS.x1 - 0.04, 1.75, 2.7, -Math.PI / 2, 3);
+    cyl(0.17, 0.17, 0.05, wood, -2.9, 0.58, 0.6, g, 14); for (const [dx, dz] of [[-0.1, -0.1], [0.1, -0.1], [-0.1, 0.1], [0.1, 0.1]]) cyl(0.015, 0.02, 0.56, woodDark, -2.9 + dx, 0.28, 0.6 + dz, g, 6); PRESS_WALLS.push([-3.1, 0.4, -2.7, 0.8]);   /* a stool */
+    dPlant(g, 4.2, 3.0, 0.9); dWallLamp(g, PRESS.x0 + 0.02, 2.4, 2.5, Math.PI / 2); dWallLamp(g, PRESS.x1 - 0.02, 2.4, -0.3, -Math.PI / 2);
+  }; }
+{ const b = buildDock; buildDock = () => { const first = !dockBuilt; b(); if (!first) return; const g = dockG;
+    for (const i of [2, 6, 10]) dGull(g, -9.6 + i * 1.5, 0.0, 4.4, 0.6 + i * 0.4);   /* gulls on the posts */
+    { const k = new THREE.Group(); k.position.set(8.4, 0, -3.0); g.add(k); box(0.34, 3.6, 0.34, iron, 0, 1.8, 0, k); const jib = box(0.16, 3.4, 0.16, iron, 1.0, 3.9, 0, k); jib.rotation.z = -1.05; box(1.4, 0.5, 1.2, solid(0x35383e, 0.7, 0.2), 0, 0.25, 0, k); cyl(0.01, 0.01, 2.2, solid(0x222222), 2.45, 3.6, 0, k, 4); box(0.18, 0.2, 0.18, iron, 2.45, 2.4, 0, k); DOCK_WALLS.push([7.6, -3.7, 9.2, -2.3]); }   /* a small crane */
+    for (let i = 0; i < 6; i++) { const s = box(0.55, 0.22, 0.34, solid(0xc9b48a, 0.95), -6.8 + (i % 3) * 0.58, 0.11 + Math.floor(i / 3) * 0.22, -3.05, g); s.rotation.y = (i % 2) * 0.1; } DOCK_WALLS.push([-7.1, -3.4, -5.0, -2.7]);   /* sacks */
+    dBarrel(g, -2.2, 0, -3.2, 1); dBarrel(g, -1.6, 0, -3.35, 1); dBarrel(g, -1.9, 0.78, -3.25, 1); DOCK_WALLS.push([-2.6, -3.7, -1.2, -2.8]);
+    for (const x of [-7, 0, 7]) { const l = mesh(BLOB, GLOWM, x, 3.7, -3.9, g); l.scale.set(0.12, 0.12, 0.12); }
+    dShip(g, -26, 34, 18, 0.15); dShip(g, 30, 26, 11, -0.2, false); dShip(g, 8, 52, 24, 0.05);
+    for (let i = 0; i < 16; i++) { const h = 7 + ((i * 37) % 17); box(7, h, 6, solid(0x7f8a92, 1), -60 + i * 8, h / 2 - 0.7, 78, g); }   /* a far shore of low buildings, in the haze */
+  }; }
+{ const b = buildLiberty; buildLiberty = () => { const first = !libBuilt; b(); if (!first) return; const g = libG;
+    dPlant(g, -5.5, -4.5, 1.6, 0.4); dPlant(g, 5.7, -4.5, 1.6, 0.4);
+    { const p = new THREE.Group(); p.position.set(-6.55, 0, 4.0); g.add(p); box(0.6, 1.25, 1.5, woodDark, 0, 0.62, 0, p); box(0.45, 0.05, 1.45, wood, 0.28, 0.9, 0, p); box(0.04, 0.05, 1.3, solid(0xf0ebd9, 0.5), 0.5, 0.94, 0, p); for (let i = 0; i < 8; i++) box(0.03, 0.03, 0.06, solid(0x15110d, 0.5), 0.52, 0.97, -0.55 + i * 0.16, p); cyl(0.17, 0.17, 0.05, wood, 0.9, 0.5, 0, p, 14); cyl(0.02, 0.02, 0.48, woodDark, 0.9, 0.25, 0, p, 6); LIB_WALLS.push([-7.0, 3.2, -6.2, 4.8]); }   /* a piano against the wall */
+    for (const side of [-1, 1]) for (const z of [-3.2, 0, 3.0]) for (const dz of [-0.92, 0.92]) box(0.06, 2.3, 0.42, CLOTH, side * (LIB.x1 - 0.06), 2.55, z + dz, g);   /* curtains either side of every window */
+    dClock(g, 0, 4.5, LIB.z1 - 0.03, Math.PI); dPegs(g, -3.4, 1.8, LIB.z1 - 0.04, Math.PI, 6);
+    for (const side of [-1, 1]) for (const z of [-1.6, 1.5]) dWallLamp(g, side * (LIB.x1 - 0.02), 3.1, z, side > 0 ? -Math.PI / 2 : Math.PI / 2);
+  }; }
+{ const b = buildOffice; buildOffice = () => { const first = !offBuilt; b(); if (!first) return; const g = offG;
+    mesh(new THREE.PlaneGeometry(2.8, 2.0), std(rugTex(), 1), -0.5, 0.012, -0.8, g).rotation.x = -Math.PI / 2;
+    { const f = new THREE.Group(); f.position.set(3.5, 0, -2.8); g.add(f); box(0.6, 1.3, 0.55, solid(0x4a4f56, 0.6, 0.3), 0, 0.65, 0, f); for (const y of [0.25, 0.65, 1.05]) { box(0.5, 0.3, 0.02, solid(0x585e66, 0.6, 0.3), 0, y, 0.285, f); box(0.14, 0.03, 0.03, brass, 0, y, 0.31, f); } cyl(0.02, 0.02, 0.1, brass, 0, 1.37, 0, f, 6); mesh(new THREE.SphereGeometry(0.15, 16, 12), solid(0x4a6fa0, 0.5), 0, 1.55, 0, f); mesh(new THREE.TorusGeometry(0.17, 0.012, 6, 24), brass, 0, 1.55, 0, f).rotation.x = Math.PI / 2 - 0.4; OFF_WALLS.push([3.15, -3.15, 3.9, -2.5]); }   /* a filing cabinet with a globe on it */
+    { const h = new THREE.Group(); h.position.set(-3.0, 0, 2.8); g.add(h); cyl(0.03, 0.03, 1.7, woodDark, 0, 0.85, 0, h, 8); cyl(0.2, 0.22, 0.05, woodDark, 0, 0.03, 0, h, 12); for (let i = 0; i < 4; i++) { const a = box(0.22, 0.03, 0.03, woodDark, Math.cos(i * 1.57) * 0.1, 1.68, Math.sin(i * 1.57) * 0.1, h); a.rotation.y = -i * 1.57; } cyl(0.11, 0.11, 0.012, solid(0x2c2a2a, 0.9), 0, 1.75, 0, h, 14); cyl(0.07, 0.08, 0.08, solid(0x2c2a2a, 0.9), 0, 1.8, 0, h, 12); OFF_WALLS.push([-3.3, 2.5, -2.7, 3.1]); }   /* a hat stand */
+    dClock(g, 0, 2.7, OFF.z0 + 0.03, 0); dPlant(g, -3.2, -2.9, 1.2); OFF_WALLS.push([-3.5, -3.2, -2.9, -2.6]);
+    cyl(0.1, 0.12, 0.04, iron, -0.15, 0.86, -1.65, g, 12); cyl(0.012, 0.012, 0.22, iron, -0.15, 0.97, -1.65, g, 6); cyl(0.035, 0.035, 0.03, iron, -0.15, 1.1, -1.65, g, 8); box(0.05, 0.1, 0.05, iron, -0.05, 0.99, -1.65, g);   /* a telephone */
+    cyl(0.14, 0.11, 0.3, TIN, -1.7, 0.15, -2.3, g, 12); dWallLamp(g, OFF.x0 + 0.02, 2.4, 2.3, Math.PI / 2);
+  }; }
+{ const b = buildPark; buildPark = () => { const first = !parkBuilt; b(); if (!first) return; const g = parkG;
+    for (const [x, z, h, r] of [[-10.5, -5.5, 4.6, 1.9], [10.5, -6, 5.0, 2.1], [-12.5, 1.5, 4.2, 1.7], [12.5, 3, 4.4, 1.8], [-14.5, -8, 5.2, 2.2], [15, -9, 4.8, 2.0], [-7, -9, 5.4, 2.1], [7, -10, 5.0, 2.0]]) dTree(g, x, z, h, r);
+    for (const [x, z, s] of [[-2.7, -1.6, 0.7], [2.7, -1.6, 0.7], [-7.6, -0.5, 0.8], [7.4, -0.3, 0.8], [-8.3, 4.6, 0.6], [8.3, 4.8, 0.6]]) { const bsh = mesh(BLOB, CANOPY2, x, s * 0.55, z, g); bsh.scale.set(s, s * 0.7, s); for (let k = 0; k < 4; k++) { const f = mesh(BLOB, solid(k % 2 ? 0xd9453a : 0xf0b53a, 0.7), x + Math.cos(k * 1.7) * s * 0.75, s * (0.55 + (k % 2) * 0.2), z + Math.sin(k * 1.7) * s * 0.75, g); f.scale.set(0.09, 0.09, 0.09); } }
+    { const p = new THREE.Group(); p.position.set(5.6, 0, -3.9); g.add(p); cyl(0.04, 0.05, 5.6, solid(0xcfd3d6, 0.4, 0.5), 0, 2.8, 0, p, 8); mesh(BLOB, brass, 0, 5.68, 0, p).scale.set(0.07, 0.07, 0.07); const fl = mesh(new THREE.PlaneGeometry(1.5, 0.9), new THREE.MeshStandardMaterial({ map: flagJamTex(), roughness: 0.9, side: THREE.DoubleSide }), 0.78, 5.1, 0, p); PARK_WALLS.push([5.4, -4.1, 5.8, -3.7]); }   /* the flag of Jamaica, as it is today */
+    for (const [x, z, h, r, c] of [[-60, -52, 22, 36, 0x5a7f78], [-18, -58, 17, 30, 0x4f7a6e], [24, -54, 24, 38, 0x5a7f78], [62, -56, 16, 30, 0x4f7a6e]]) mesh(new THREE.ConeGeometry(r, h, 10), solid(c, 1), x, h / 2 - 0.5, z, g).scale.set(1.5, 1, 1);   /* the hills behind the town */
+    for (const lx of [-6, 6]) { cyl(0.05, 0.07, 3.4, solid(0x202428, 0.6), lx, 1.7, 4.4, g, 8); mesh(BLOB, GLOWM, lx, 3.55, 4.4, g).scale.set(0.2, 0.2, 0.2); }
+  }; }
+
 /* ---------- places ---------- */
 const PLACES = {
   shop: { group: room, lamp: lampLight, walls: WALLS, bounds: BOUNDS, people: SHOP_PEOPLE, actions: SHOP_ACTIONS, start: START, caption: 'Kingston, about 1908' },
@@ -1115,11 +1232,15 @@ const PLACES = {
   liberty: { group: libG, lamp: libLamp, walls: LIB_WALLS, bounds: LIB_BOUNDS, people: LIB_PEOPLE, actions: LIB_ACTIONS, start: { x: 0, z: 4.5, yaw: 0 }, caption: 'Liberty Hall, Harlem, August 1920' },
   dock: { group: dockG, lamp: new THREE.Object3D(), walls: DOCK_WALLS, bounds: DOCK_BOUNDS, people: DOCK_PEOPLE, actions: DOCK_ACTIONS, start: { x: 0, z: -2.6, yaw: Math.PI }, caption: 'New York, 1919', sky: 0x9fc6dc },
   press: { group: pressG, lamp: pressLamp, walls: PRESS_WALLS, bounds: PRESS_BOUNDS, people: PRESS_PEOPLE, actions: PRESS_ACTIONS, start: { x: 0, z: 3.1, yaw: 0 }, caption: 'Harlem, New York, 1918' } };
-let place = 'shop', placeT = 0;
+let place = 'shop', placeT = 0, pfT = 0;
+const PLACE_ORDER = ['shop', 'hall', 'street', 'press', 'dock', 'liberty', 'office', 'park'];   /* the chapters in order */
+function prefetchNext(name) {   /* a few seconds after arriving, quietly fetch the people of the next chapter's place, so the move there is quick */
+  clearTimeout(pfT); const nx = PLACES[PLACE_ORDER[PLACE_ORDER.indexOf(name) + 1]]; if (!nx) return;
+  pfT = setTimeout(() => prefetch([...new Set(nx.people.map((n) => n.model))]), 4000); }
 function enterPlace(name, keepPos) {
-  place = name; const P = PLACES[name];
+  place = name; const P = PLACES[name]; prefetchNext(name);
   for (const k of Object.keys(PLACES)) { const Q = PLACES[k]; Q.group.visible = k === name; Q.lamp.visible = k === name; for (const n of Q.people) { if (n.mark) n.mark.visible = false; if (n.m) n.m.visible = k === name && !n.hidden; } }
-  if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.dest) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; }
+  if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.dest) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; if (n.seat) sitDown(n); }
   if (name === 'press') arrangePress();
   if (name === 'liberty') showBanner();   /* a saved game that was past the Declaration shows the finished banner */
   curWalls = P.walls; curBounds = P.bounds; PEOPLE = P.people; ACTIONS = P.actions; near = null;
@@ -1130,7 +1251,7 @@ function enterPlace(name, keepPos) {
 function showPlace() { const el = $('place'); el.textContent = PLACES[place].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(placeT); placeT = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetChapter2() {   /* the hall again: the poster comes down, the neighbours go home, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); delete story.poster; delete story.printed; showPoster(); stage = 10;
-  for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.legs = null; n.seated = false; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
   enterPlace('hall'); setStage(10); showPlace();
 }
 
@@ -1213,9 +1334,13 @@ function devViews() {
   if (shot === 'sortdone') inOff(61, -0.5, -0.5, 0, 0).then(() => { openSort(); $('sobtns').querySelector('[data-a="rumour"]').click(); $('sobtns').querySelector('[data-a="fact"]').click(); });
   if (shot === 'letter') { story.advice = 'cheer'; inOff(63, 3.0, 0.0, -1.3, 0).then(() => { openLetter(); $('lebtns').children[0].click(); }); }
   if (shot === 'offchat') inOff(62, 0.9, 0.2, 0.15, 0.05).then(() => startTalk(byId('amyj')));
+  if (shot === 'soapbox1') inStreet(21, 0, 2.3, 0, -0.38);   /* Garvey on the soapbox, from the front, from the side and from behind (close, looking down at his feet) */
+  if (shot === 'soapbox2') inStreet(21, 2.2, 0.5, Math.PI / 2, -0.38);
+  for (const k of [1, 2, 3]) if (shot === 'soapboxT' + k) inStreet(21, 0, 2.6, 0, -0.3).then(() => { const t = setInterval(() => { if (CL['Talk' + k]) { byId('garvey3').m.userData.anim.play('Talk' + k); clearInterval(t); } }, 100); });
+  if (shot === 'soapbox3') inStreet(21, 0, -1.3, Math.PI, -0.38);
   if (shot === 'poster') inStreet(21, -3.7, 0.5, -Math.PI / 2, 0.0).then(() => {   /* looking down the street at Garvey on the soapbox, speaking, with his listeners seen from behind */
     const put = (id, x, z, tx, tz) => { const n = byId(id); n.x = x; n.z = z; n.ry = faceToward(x, z, tx, tz); n.m.position.set(x, 0, z); n.m.rotation.y = n.ry; n.m.visible = true; };
-    put('garvey3', 0, 0.5, -3.7, 0.5); put('worker', -1.3, 1.5, 0, 0.5); put('woman', -1.1, -0.6, 0, 0.5); byId('critic').m.visible = false;
+    put('garvey3', 0, 0.45, -3.7, 0.5); put('worker', -1.3, 1.5, 0, 0.5); put('woman', -1.1, -0.6, 0, 0.5); byId('critic').m.visible = false;
     const t = setInterval(() => { if (CL.Talk2) { byId('garvey3').m.userData.anim.play('Talk2'); clearInterval(t); } }, 200); });
   if (shot === 'nextcard') inStreet(23, -1.2, 2.3, 0.4, 0.05).then(() => nextCard(2, 23));
   const inLib = (st, x, z, yaw, pitch) => ensureLiberty().then(() => { stage = st; best = Math.max(best, st); enterPlace('liberty'); go(x, z, yaw, pitch); });
@@ -1246,7 +1371,26 @@ function devViews() {
   if (shot === 'hall2') inHall(11, 1.2, 0.6, -1.0, -0.08, 'WORK');
   if (shot === 'hall3') inHall(13, 0, 1.4, 0, 0.04, 'UNITY');
   if (shot === 'hall4') inHall(12, -3.2, 2.6, 0.75, 0, 'LEARN');
+  if (shot === 'hallseat') inHall(13, 0.4, 2.4, Math.PI / 2 - 0.35, 0.0, 'LEARN');   /* the neighbours sitting on the benches, seen from the aisle */
+  if (shot === 'hallwalk') inHall(11, 0.5, 3.7, 0.5, 0.0, 'LEARN').then(() => { story.printed = true; setStage(12); for (let i = 0; i < 60 * Number(q.get('t') || 6); i++) update(1 / 60); });   /* the neighbours part-way through arriving: ?shot=hallwalk&t=6 */
+  if (shot === 'hallamy') inHall(12, -1.0, 3.3, 0.55, 0.35, 'LEARN');   /* close to Amy, looking up: her bubble must stay clear of the Goal tab */
+  if (shot === 'hallseat2') inHall(13, 0.3, 0.9, -Math.PI / 2 + 0.25, 0.0, 'LEARN');
+  if (shot === 'hallseat3') inHall(13, 0.0, 3.6, 0.0, 0.05, 'LEARN');
   if (shot === 'hallchat') inHall(10, -0.8, -1.2, 0, 0.04).then(() => startTalk(byId('garvey')));
+  if (q.get('test') === 'overlap') {   /* is anyone standing or walking inside furniture? Checks every place's people against its walls (furniture rectangles) */
+    (async () => {
+      const tm = []; for (const [nm, f] of [['hall', ensureHall], ['street', ensureStreet], ['press', ensurePress], ['dock', ensureDock], ['liberty', ensureLiberty], ['office', ensureOffice], ['park', ensurePark]]) { const t0 = performance.now(); await f(); tm.push(nm + ' ' + Math.round(performance.now() - t0) + 'ms'); }
+      console.log('LOAD ' + tm.join(', ') + ' | drawing=' + Math.round(TEXMS) + 'ms textures=' + renderer.info.memory.textures + ' geometries=' + renderer.info.memory.geometries);
+      const out = [], R = 0.28, hit = (W, x, z) => W.find(([x0, z0, x1, z1]) => x > x0 - R && x < x1 + R && z > z0 - R && z < z1 + R);
+      for (const [name, P] of Object.entries(PLACES)) for (const n of P.people) {
+        const pts = [['start', n.hx !== undefined ? n.hx : n.x, n.hz !== undefined ? n.hz : n.z]];
+        if (n.path) { n.path.forEach((c, i) => { pts.push(['path' + i, c[0], c[1]]); const d = n.path[(i + 1) % n.path.length]; for (let k = 1; k < 8; k++) pts.push(['path' + i + '>' + ((i + 1) % n.path.length) + ' ' + k + '/8', c[0] + (d[0] - c[0]) * k / 8, c[1] + (d[1] - c[1]) * k / 8]); }); }
+        if (n.seat) pts.push(['seat', n.seat[0], n.seat[1]]);
+        if (n.legs || n.route) { let prev = [n.x, n.z]; for (const c of [...(n.route || []), n.seat].filter(Boolean)) { for (let k = 1; k <= 8; k++) pts.push(['route ' + k + '/8', prev[0] + (c[0] - prev[0]) * k / 8, prev[1] + (c[1] - prev[1]) * k / 8]); prev = c; } }
+        for (const [what, x, z] of pts) { const w = hit(P.walls, x, z); if (w) out.push(name + ':' + n.id + ' ' + what + ' (' + x.toFixed(2) + ',' + z.toFixed(2) + ') in [' + w.map((v) => v.toFixed(2)).join(',') + ']'); }
+      }
+      document.title = 'OVERLAP ' + (out.length ? out.join(' | ') : 'none');
+    })(); }
   if (q.get('test') === 'walk') {   /* step the world by hand and watch the customer walk her route */
     const c = SHOP_PEOPLE[1]; go(4.0, -1.2, 0, 0); const trail = []; let dist = 0, px = c.x, pz = c.z, minx = 9, maxx = -9, minz = 9, maxz = -9, walked = 0;
     for (let i = 0; i < 60 * 40; i++) { update(1 / 60); if (c.walking) walked++; dist += Math.hypot(c.x - px, c.z - pz); px = c.x; pz = c.z; minx = Math.min(minx, c.x); maxx = Math.max(maxx, c.x); minz = Math.min(minz, c.z); maxz = Math.max(maxz, c.z); if (i % 300 === 0) trail.push(c.x.toFixed(1) + ',' + c.z.toFixed(1)); }
