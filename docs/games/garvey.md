@@ -31,6 +31,7 @@ Players who know Port Royal should find everything where they expect it. The pag
 - **Chapters**: all eight chapters are listed and playable. Each opens when the one before it is done. The panel also has Credits and "Start again".
 - **Next chapter**: when a chapter's last goal is reached, a card appears with "Next chapter" and "Stay here" (`CHAPTER_END` and `nextCard` in `main.js`), so players do not have to open Chapters. The last chapter shows its own end card.
 - **Seating in the meeting hall.** The three neighbours walk down the aisle and the gap between the rows, then sit on the benches facing the platform (the bench backs are on the door side). Seated people stay seated while you talk to them (`sitDown`, `SitIdle`, `SitTalk`).
+- **The helper arrow** points straight at the goal. That is safe here because every place is one open room or street with no dividing walls. If a place gets an inner wall, route the arrow around it as Port Royal's `nudgeStep` does.
 - **Speech marks and bubbles** sit just above each person's head or hat. The height is measured from the loaded model (`headTop`), so tall hats and short people both look right.
 - **Menu card**: a poster like Port Royal's, from `menu/garvey.jpg`. To remake it, build with `--dev`, serve the repo and render `games/garvey/site/index.html?shot=poster` at 1280 by 720 with the HUD hidden (the view hides marks and freezes the pose).
 - **Reset**: a card with "Restart this chapter", "Start the whole story again" (asks twice) and **All games**.

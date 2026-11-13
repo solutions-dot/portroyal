@@ -84,6 +84,10 @@ People who stroll use `STROLL` (paths per id); they stop and face you within 3.6
 
 Open `games/port-royal/site/index.html?shot=<name>`. Useful ones: `ns1` to `ns9` (new street), `nsst1`, `nsst2` (stalls), `nsmen` (Mendes), `nsback` (harbour corner), `sold1`, `sold2` (the soldier), `nudge`, `nudge2` (helper arrow), `meline` (a "You" line), `leave` (ending a talk early), `thumb` (a clean picture for the menu card), `walkcheck`, `pad`, `move`, `fbquit`. The autoplayer: `?auto=0&one` plays chapter 0 and logs to the page title. See `docs/TESTING.md`.
 
+## The helper arrow
+
+If you stand still or stall, the Goal tab opens and a gold arrow points at the next thing to do (`nudgeTarget`, `NUDGE_MAP`). Outside, the main street and the new street are walled off from each other by houses and both open only onto the harbour strip at the east end, so `nudgeStep` first points the arrow along the way out ("This way") and only says "Here!" when there is a clear way to the goal. Dev check: `window.__nudgeTest(playerX, playerZ, goalX, goalZ)` returns `[x, z, isGoal]`. If you add a place with walls inside it, give it a rule in `nudgeStep`.
+
 ## History sources used
 
 - John Taylor's description of Port Royal, written after his visits in 1687 and 1688: the markets, prices (a watermelon one real), turtles and crawls, the town's streets.
