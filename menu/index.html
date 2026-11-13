@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   /* The game menu. One screen, no scrolling. Colours from the island: harbour blue, sea glass, mango, hibiscus.
-     To add a game: copy the Port Royal <a class="game"> block, or turn the "soon" panel into a game when it is ready. */
+     To add a game: copy a game <a class="game"> block, add its picture (menu/<game>.jpg), and give it its own class for the colours. */
   :root{
     --harbour:#06283D; --deep:#041B2A; --sea:#1FB5A3; --mango:#FFB627; --hibiscus:#E8505B; --paper:#FFF7E8;
     --font:"Inter",system-ui,sans-serif;
@@ -23,6 +23,8 @@
   header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem}
   h1{margin:0;font-weight:800;font-size:clamp(1.7rem,4.2vw,3.2rem);line-height:.95;letter-spacing:-.03em}
   h1 span{display:block;color:var(--sea)}
+  h1 .jam{display:flex;align-items:center;gap:.3em;font-weight:inherit}
+  .flag{height:.62em;width:auto;flex:none;border-radius:.07em;box-shadow:0 0 0 1px rgba(255,247,232,.25)}   /* the flag of Jamaica, as drawn in the markup: gold saltire, green top and bottom, black sides */
   .credit{margin:0;font-size:.95rem;color:rgba(255,247,232,.7);white-space:nowrap}
   .credit b{color:var(--paper);font-weight:600}
 
@@ -41,41 +43,35 @@
   .game:focus-visible{outline:4px solid var(--mango);outline-offset:4px}
   @keyframes call{0%{box-shadow:0 0 0 0 rgba(255,182,39,.6)}100%{box-shadow:0 0 0 18px rgba(255,182,39,0)}}
 
-  /* Marcus Garvey: a solid mango block, its own big type. Not a card copy of the poster. */
-  .soon{min-height:0;border-radius:28px;background:var(--mango);color:var(--deep);padding:clamp(1rem,2.4vw,1.8rem);display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative}
-  .soon .when{margin:0;align-self:flex-start;background:var(--deep);color:var(--mango);font-weight:600;font-size:.95rem;padding:.35rem .8rem;border-radius:999px}
-  .soon h2{margin:0;font-weight:800;font-size:clamp(2.2rem,4.6vw,4.4rem);line-height:.86;letter-spacing:-.045em}
-  .soon p{margin:.6rem 0 0;font-size:clamp(.95rem,1.15vw,1.05rem);line-height:1.4;max-width:28ch}
-  .soon::before{content:"";position:absolute;width:62%;aspect-ratio:1;right:-18%;top:-14%;border-radius:50%;background:var(--hibiscus);opacity:.9}
-  .soon > *{position:relative}
-  a.soon{text-decoration:none;cursor:pointer}
-  a.soon:focus-visible{outline:4px solid var(--deep);outline-offset:4px}
-  .soon .try{align-self:flex-start;display:inline-flex;align-items:center;min-height:48px;padding:0 1.3rem;border-radius:999px;background:var(--deep);color:var(--mango);font-weight:800;font-size:1rem}
-  a.soon:hover .try,a.soon:focus-visible .try{background:var(--paper);color:var(--deep)}
+  /* Marcus Garvey: a poster too, its scene is a Harlem street corner with a speaker on a soapbox. The year is in the hibiscus colour so the two posters read as a pair. */
+  .game.garvey{background:#141c20 url(garvey.jpg) 42% 0/auto 76% no-repeat}   /* the picture sits at the top so the speaker stays clear of the title; the dark gradient below carries the words */
+  .game.garvey::after{background:linear-gradient(to top,rgba(4,27,42,.97) 0%,rgba(4,27,42,.93) 34%,rgba(4,27,42,.45) 50%,rgba(4,27,42,0) 66%)}
+  .game.garvey .year{color:#ff8a93}
+  .game.garvey h2{font-size:clamp(2.2rem,4.6vw,4.4rem)}
+  .game.garvey .play{background:var(--hibiscus);color:var(--paper)}
+  .game.garvey:hover .play,.game.garvey:focus-visible .play{background:var(--paper);color:var(--deep)}
+  .game.garvey .tag{position:absolute;top:clamp(.8rem,1.6vw,1.2rem);left:clamp(.8rem,1.6vw,1.2rem);margin:0;background:var(--hibiscus);color:var(--paper);font-weight:800;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;padding:.35rem .8rem;border-radius:999px}
 
   /* Phones: the poster on top, Garvey as a band below. Still one screen. */
   @media (max-width:760px){
-    .games{grid-template-columns:1fr;grid-template-rows:1fr auto}
-    .game h2{font-size:clamp(2.6rem,13vw,4.2rem)}
+    .games{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
+    .game h2,.game.garvey h2{font-size:clamp(2rem,10.5vw,3.4rem)}
+    .game .year{font-size:.95rem}
     .game .text{grid-template-columns:1fr}
     .play{justify-self:start}
-    .soon{flex-direction:row;align-items:center;gap:1rem;border-radius:22px;padding:1rem 1.1rem}
-    .soon h2{font-size:clamp(1.7rem,8vw,2.4rem)}
-    .soon p:not(.when),.soon .try{display:none}
-    .soon::before{display:none}
-    .soon .when{order:2;margin-left:auto;align-self:center;white-space:nowrap}
-    .soon > div{min-width:0}
     .game{border-radius:22px}
     header{align-items:flex-start;flex-direction:column;gap:.35rem}
   }
+  @media (max-width:760px){.game.garvey{background-size:auto 100%;background-position:50% 0}.game.garvey::after{background:linear-gradient(to top,rgba(4,27,42,.95) 0%,rgba(4,27,42,.7) 30%,rgba(4,27,42,0) 56%)}.game.garvey .text{grid-template-columns:1fr auto;align-items:end}.game.garvey .text p{display:none}.game.garvey .play{justify-self:end}}
   @media (max-height:600px){.game p{display:none}}
+  @media (max-width:760px) and (max-height:700px){.game .text{padding:.8rem 1rem}.play{min-height:44px;padding:0 1.2rem;font-size:1rem}}
   @media (prefers-reduced-motion:reduce){.play{animation:none}}
 </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>Jamaican <span>History Games</span></h1>
+    <h1><b class="jam">Jamaican<svg class="flag" viewBox="0 0 60 30" role="img" aria-label="Flag of Jamaica"><clipPath id="fl"><rect width="60" height="30"/></clipPath><g clip-path="url(#fl)"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></g></svg></b><span>History Games</span></h1>
     <p class="credit">Created by <b>Kellz 5.0</b></p>
   </header>
   <section class="games" aria-label="Games">
@@ -89,13 +85,16 @@
         <span class="play">Play</span>
       </div>
     </a>
-    <a class="soon" data-game="garvey" href="games/garvey/site/">
-      <p class="when">New</p>
-      <div>
-        <h2>Marcus Garvey</h2>
-        <p>Follow Marcus Garvey from St Ann's Bay, Jamaica, to the wider world.</p>
+    <a class="game garvey" data-game="garvey" href="games/garvey/site/">
+      <p class="tag">New</p>
+      <div class="text">
+        <div>
+          <span class="year">1908 to today</span>
+          <h2>Marcus Garvey</h2>
+          <p>Start as a young printer in Kingston, follow a movement to Harlem, and ask if its dream came true.</p>
+        </div>
+        <span class="play">Play</span>
       </div>
-      <span class="try">Play</span>
     </a>
   </section>
 </main>
