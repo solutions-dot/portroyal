@@ -38,10 +38,20 @@ Players who know Port Royal should find everything where they expect it. The pag
 
 `stage` (saved) says where you are; `best` is the furthest you have ever got, so chapters stay open when you replay one. Chapter 1: 0 talk to the printer and the customer, 1 set the type, 2 the strike, 3 done. Chapter 2: 10 meet Amy and Garvey, 11 print the poster, 12 welcome the neighbours, 13 listen to Garvey, 14 done. Chapter 3: 20 listen to the worker, the woman and the older man, 21 talk to Garvey (choose his words), 22 answer the older man's question, 23 done. Chapter 4: 30 talk to the pressman and Garvey (choose the headline), 31 lay out the front page, 32 talk to the sailor (choose how the bundles travel), 33 weeks later: talk to the sailor and the pressman, 34 done. Chapter 5: 40 meet Garvey, the share clerk and the engineer, 41 look the old ship over, 42 talk to Garvey (advise: buy now or save), 43 talk to your friend (advise her), 44 done. Chapter 6: 50 welcome the nurse, the traveller and the messenger, 51 talk to the steward (choose who he helps first), 52 read the Declaration and colour the banner, 53 talk to Garvey, 54 done. Chapter 7: 60 talk to Amy Jacques Garvey, 61 sort the news cards (fact or rumour), 62 talk to Amy (choose the fair question), 63 read your friend's letter and write back, 64 done. Chapter 8: 70 talk to the park guide and the student, 71 put the later events in order at the timeline board, 72 talk to the student (the big question), 73 answer at the shrine in your own words, 74 done (the end card and the "Your journey" journal page, which lists every choice you made). A person gives their full conversation only when `TALK_TARGETS[stage]` names them; otherwise they say a short later line. `story` records choices (`strike`, `poster`) and is saved too. Each place (`PLACES`: the print shop, the hall) has its own walls, bounds, people and things to do. Chapter 2's characters load only when it starts.
 
-To add a chapter: add its row to `CHAPTERS` in `games/garvey/src/main.js` (set `ready`, `go` and `done`), add its goals to `GOALS`, and its journal pages to `JOURNAL`. Port Royal's `NUDGE` helper arrow and third-person view are not copied yet.
+To add a chapter: add its row to `CHAPTERS` in `games/garvey/src/main.js` (set `ready`, `go` and `done`), add its goals to `GOALS`, `TALK_TARGETS` and `NEXT_AFTER_TALK`, its journal pages to `JOURNAL`, a place to `PLACES`, and a test to `devViews()`. Port Royal's `NUDGE` helper arrow is copied; its third-person view is not.
 
-Next: the strike scene and the "speak up now, wait, or ask the others first" choice (chapter 1), copying the helper arrow, then chapter 2 (Kingston, 1914). Known gaps: the waistcoat has no V opening; the street seen through the door is only a flat picture; dialogue is placeholder; the Kingston details need checking against photographs of Kingston (the reference photos used so far are of US printing offices).
+### What is left (polish list)
 
+All eight chapters are built, so what remains is quality work, roughly in this order:
+
+1. **Read every line aloud** for the 6+ reading level (a script already flags lines over 12 words; the journal's "Dig deeper" text can be longer). All dialogue is placeholder wording written for this game.
+2. **Check facts against primary sources.** Every date and claim comes from secondary sources (see the research tables). Check the Marcus Garvey and UNIA Papers, then remove the "we still need to check" notes from the journal pages.
+3. **Check places against photographs.** The Kingston shops and hall are built from US printing-office photographs and general knowledge. Harlem, Liberty Hall, the dock and the shrine are also general pictures, not copies of real places.
+4. **Characters.** The waistcoat has no V opening, an apron does not fit over a skirt, shirt and apron edges are ragged at close range, there are no women's hats, and there is no UNIA uniform or Black Cross Nurses' dress. All faces are built from the same body, so they look alike.
+5. **Sound.** Every place plays the same room hum and press thump. Each place needs its own beds (street, harbour, hall crowd, park birds).
+6. **Third-person view** (V key) and a teen body for the hero.
+7. **Window views.** Most rooms show the same leafy yard through the windows.
+8. **Menu and phone checks** after any change: run all the autoplayers and look at one phone screenshot per chapter.
 
 ## Decisions (agreed with the owner)
 
@@ -177,9 +187,9 @@ In chapter 3 the words Garvey and the others speak are made up and credited as s
 
 ### To research before use
 
-- The People's Political Party (1929), the move to London (1935), National Hero (1964), the inscription at his shrine in National Heroes Park.
-- Contested points for "Dig deeper": the "Garvey Must Go" campaign (PBS has a page), the Black Star Line's failures, the fairness of the trial and the modern calls for exoneration, any meeting with a Klan leader, the Liberia plan. Tell each fairly and simply. Never graphic.
-- A reported posthumous pardon in January 2025. Confirm from an official source or leave it out.
+- Checked from secondary sources only (see each chapter's note above): the People's Political Party (1929, one source), the move to London (1935, one source), the 1964 return and the 1969 National Hero title, and the January 2025 pardon (several news reports). Check them in the Papers.
+- Not found: the inscription on the shrine in National Heroes Park. The game's plaque shows only his name and dates.
+- Contested points still to tell in "Dig deeper", fairly and simply, never graphic: the "Garvey Must Go" campaign (PBS has a page), any meeting with a Klan leader, and the Liberia plan. The trial and the Black Star Line's failures are covered briefly in chapters 5 and 7.
 
 ## Cast
 
@@ -190,8 +200,8 @@ In chapter 3 the words Garvey and the others speak are made up and credited as s
 | Amy Jacques Garvey | Real |
 | Joshua Cockburn, first captain of the Black Star Line | Real |
 | The hero | Made up |
-| Printers, the foreman, neighbours, Harlem listeners, the heckler, sailors and stewards, a friend who invested, nurses, a clerk | Made up. Each journal page says so. |
-| The modern child in chapter 8 | Made up |
+| Printers, the foreman, neighbours, Harlem listeners, the older man, a pressman, a sailor, a share clerk, an engineer, a friend who invested, a nurse, a traveller, a messenger, a steward, a park guide, a student | Made up. Each journal page says so. |
+| You | Made up. The hero stays a first-person "you"; the plan for a visible teen body is still open. |
 
 ## Assets the game needs
 
@@ -204,14 +214,14 @@ In chapter 3 the words Garvey and the others speak are made up and credited as s
 
 ## Build order
 
-1. Spike: install `bpy`, MPFB and MakeHuman here and make two test characters (a 1907 printer, a woman in a 1914 dress). If it fails, ask the owner to run the character step on their own machine.
-2. Chapters 1 and 2 (Kingston) as the first slice: women, the press, a hall, period clothes.
-3. Chapters 3 and 4 (Harlem), then 5, 6, 7, 8.
-4. Move shared systems into `engine/` only after the Port Royal work has merged (below).
+1. Spike: install `bpy`, MPFB and MakeHuman and make test characters. Done (see `tools/garvey/README.md`).
+2. Chapters 1 and 2 (Kingston). Done.
+3. Chapters 3 to 8. Done.
+4. Polish (the list above), then consider moving shared systems into `engine/` (the panels, the stage machine and the save code are repeated per game).
 
 ## Working alongside the Port Royal chat
 
-Two chats work on this repo. To keep merges clean:
+The Garvey and Port Royal work used to run in two chats. Port Royal's chat is closed, so the rules below are now mostly habit, but they still keep the history tidy:
 
 - Garvey work stays in `games/garvey/**`, `docs/games/garvey.md` and new tool files. Do not edit `games/port-royal/**`.
 - Do not run `node tools/build.mjs port-royal` in a Garvey checkout. It rewrites Port Royal's tracked `app.js`.
