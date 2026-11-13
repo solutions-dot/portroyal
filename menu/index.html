@@ -48,6 +48,10 @@
   .soon p{margin:.6rem 0 0;font-size:clamp(.95rem,1.15vw,1.05rem);line-height:1.4;max-width:28ch}
   .soon::before{content:"";position:absolute;width:62%;aspect-ratio:1;right:-18%;top:-14%;border-radius:50%;background:var(--hibiscus);opacity:.9}
   .soon > *{position:relative}
+  a.soon{text-decoration:none;cursor:pointer}
+  a.soon:focus-visible{outline:4px solid var(--deep);outline-offset:4px}
+  .soon .try{align-self:flex-start;display:inline-flex;align-items:center;min-height:48px;padding:0 1.3rem;border-radius:999px;background:var(--deep);color:var(--mango);font-weight:800;font-size:1rem}
+  a.soon:hover .try,a.soon:focus-visible .try{background:var(--paper);color:var(--deep)}
 
   /* Phones: the poster on top, Garvey as a band below. Still one screen. */
   @media (max-width:760px){
@@ -57,7 +61,7 @@
     .play{justify-self:start}
     .soon{flex-direction:row;align-items:center;gap:1rem;border-radius:22px;padding:1rem 1.1rem}
     .soon h2{font-size:clamp(1.7rem,8vw,2.4rem)}
-    .soon p:not(.when){display:none}
+    .soon p:not(.when),.soon .try{display:none}
     .soon::before{display:none}
     .soon .when{order:2;margin-left:auto;align-self:center;white-space:nowrap}
     .soon > div{min-width:0}
@@ -85,13 +89,14 @@
         <span class="play">Play</span>
       </div>
     </a>
-    <div class="soon">
-      <p class="when">Coming soon</p>
+    <a class="soon" data-game="garvey" href="games/garvey/site/">
+      <p class="when">Early demo</p>
       <div>
         <h2>Marcus Garvey</h2>
         <p>Follow Marcus Garvey from St Ann's Bay, Jamaica, to the wider world.</p>
       </div>
-    </div>
+      <span class="try">Try the demo</span>
+    </a>
   </section>
 </main>
 <script>
