@@ -12,3 +12,7 @@ games/_template/site/models/anims.js
 # Garvey: built files are made by tools/build.mjs (and by the Vercel build), so they are not tracked
 games/garvey/site/app.js
 games/garvey/site/models/anims.js
+
+# Kendal: built files are made by tools/build.mjs (and by the Vercel build), so they are not tracked
+games/kendal/site/app.js
+games/kendal/site/models/anims.js
