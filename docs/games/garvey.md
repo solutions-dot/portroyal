@@ -2,7 +2,7 @@
 
 Agreed design for the second game. Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the story, the systems and the research rules. Port Royal's guide is `docs/games/port-royal.md`.
 
-Status: early demo, in progress. It is playable from the game menu ("Early demo" card). Code is in `games/garvey/`.
+Status: chapters 1 and 2 are playable as first slices, from the game menu ("Early demo" card). Code is in `games/garvey/`.
 
 ## Where things are now
 
@@ -16,8 +16,8 @@ Test it:
 ```bash
 node tools/build.mjs garvey --dev          # dev build: test views and the scripted playthrough
 python3 -m http.server 8765                # then open http://localhost:8765/games/garvey/site/
-# ?shot=shop1 ... shop7, talk, type, typedone, journal, chapters, reset, credits and bubble are views; ?test=walk steps the customer's route;
-# ?auto=1 plays the scene through, opens every menu and checks the way out.
+# ?shot=shop1 ... shop7, talk, strike, type, typedone, journal, chapters, reset, credits, bubble, nudge, hall1 ... hall4 and hallchat are views;
+# ?test=walk steps the customer's route; ?auto=1 plays chapter 1 and opens every menu; ?auto=2 plays chapter 2.
 # The result of ?test=walk and ?auto=1 is written to the page title.
 ```
 
@@ -33,6 +33,10 @@ Players who know Port Royal should find everything where they expect it. The pag
 - **All games** is therefore reachable from the title, the Journal and the Reset card. It only shows where the real menu exists (the website), as in Port Royal.
 - **Saving**: the Journal, the goal and who you have talked to are kept in the browser (`garvey-save-v1`).
 - **Keys**: Escape closes any panel; E or Enter uses the nearest thing.
+
+### The story is a number
+
+`stage` (saved) says where you are; `best` is the furthest you have ever got, so chapters stay open when you replay one. Chapter 1: 0 talk to the printer and the customer, 1 set the type, 2 the strike, 3 done. Chapter 2: 10 meet Amy and Garvey, 11 print the poster, 12 welcome the neighbours, 13 listen to Garvey, 14 done. A person gives their full conversation only when `TALK_TARGETS[stage]` names them; otherwise they say a short later line. `story` records choices (`strike`, `poster`) and is saved too. Each place (`PLACES`: the print shop, the hall) has its own walls, bounds, people and things to do. Chapter 2's characters load only when it starts.
 
 To add a chapter: add its row to `CHAPTERS` in `games/garvey/src/main.js` (set `ready`, `go` and `done`), add its goals to `GOALS`, and its journal pages to `JOURNAL`. Port Royal's `NUDGE` helper arrow and third-person view are not copied yet.
 
@@ -70,8 +74,8 @@ Branches rejoin at the end of each chapter, so every chapter has one `done()` te
 
 | # | Where and when | Walk and do | Remembered choice |
 |---|---|---|---|
-| 1 | Kingston print shop, about 1907 | Set type (find the letters), meet the printers, the printers' strike | Speak up now, wait, or ask the others first |
-| 2 | Kingston, 1914 | Invite 3 neighbours by talking to them, print the poster, meet Amy Ashwood | Who you invite first stands in the hall |
+| 1 | Kingston print shop, about 1908 | Meet the printer and a customer, set type (the letters are mirror images), then hear about the printers' strike and choose what you would do | Speak up now, wait and listen, or ask the others (built) |
+| 2 | A meeting hall in Kingston, July 1914 | Meet Amy Ashwood and Marcus Garvey, choose the poster word (Learn, Work or Unity), print it, welcome three neighbours who arrive, hear Garvey's speech (built) | The poster word: the neighbours' lines change |
 | 3 | Harlem street, 1916 | Listen to 3 people, then choose real words to share, answer a heckler | Which listener you answer |
 | 4 | Harlem press room, 1918 to 1919 | Build the front page, plan the sailors' delivery route, the ban | Send every copy, split the shipment, or hold it |
 | 5 | Harlem docks, 1919 | Compare two ship plans, spend coins, fix a supply problem | What you tell a friend who put in their savings |
@@ -119,12 +123,36 @@ Port Royal's conversation, journal, chapter and save systems are copied into `ga
 | Costa Rica (timekeeper for the United Fruit Company, wrote in *La Nación*), then Panama (*La Prensa*) | Dates between 1909 and 1911, sources differ |
 | London 1912 to 1914, Birkbeck College, the *African Times and Orient Review* (Duse Mohamed Ali) | Confirmed. Some sources say 1911. |
 
+### Second research pass (13 Nov 2026): secondary sources only
+
+The Marcus Garvey and UNIA Papers (UCLA) and Robert Hill's volumes could not be reached, so none of this is checked against the primary chronology. Treat dates as "most sources say".
+
+| Fact | Status |
+|---|---|
+| Apprenticed in St Ann's Bay to his godfather Alfred Burrowes, a printer, about 1900; left school at 14 | Confirmed (JIS, PBS, Gleaner) |
+| Moved to Kingston in 1905 or 1906 | Sources differ |
+| Worked at the printing division of P.A. Benjamin Manufacturing Co.: compositor, then foreman | Confirmed. "First Afro-Jamaican foreman" is one source only: not used. |
+| Printers' Union (founded 1906 or 1907); Garvey was vice-president of its compositors' section | Confirmed |
+| The strike: late 1908 (Robert Hill's chronology, via Wikipedia) or 1907 (the Gleaner, older encyclopedias) | Disputed, leaning late 1908. The game says "about 1908". |
+| Why they struck: "better working conditions" (Gleaner). Wages or hours were not found. | One source. The game says only "better working conditions". |
+| How it ended: broken after some weeks, the union ended, Garvey was sacked and private firms would not hire him | Confirmed. He worked "briefly" at the government printery (the name "Government Printing Office" is Gleaner only; the timing is disputed). |
+| Sailed from Southampton on 17 June 1914; reached Jamaica in July (7, 14 or 15 July, sources differ) | The game says "July 1914" |
+| The UNIA was founded on 20 July 1914 in Kingston | Confirmed (PBS, JIS, Hill). Where it met, and the "1 August, Emancipation Day" launch, are disputed: the game names no hall. |
+| Amy Ashwood: "one of the first members and an early secretary"; the co-founder claim is doubted by some (Tony Martin) | Used as written |
+| Early aims: a fraternal, charitable, non-political club for race pride and uplift, plus a trade school like Tuskegee. The exact 1914 wording was not found. | The game says "help people in need, build pride, open a trade school" |
+| Motto "One God! One Aim! One Destiny!" | Confirmed. Not used yet. |
+| Wrote to Booker T. Washington in Sept 1914; Washington died in Nov 1915; Garvey sailed for the US on 6 March 1916 | Confirmed (PBS timeline) |
+| Electric trams in Kingston from 31 March 1899 (to 1948); gas street lamps from 1877 | Confirmed. Not shown yet. |
+| The Kingston earthquake of 14 January 1907 (about 3:30 pm): 800 to 1,000 dead, fires, most buildings south of the Parade destroyed | Confirmed. Wikipedia's "85% destroyed" misreads the eyewitness account: not used. |
+| Equipment of a Jamaican print shop, and of P.A. Benjamin's printing department | Not found. The shop is built from general knowledge of 1900s job printing and from US printing-office photographs. |
+
+Photographs to use as a guide (public domain): Library of Congress, Kingston street scenes with trolleys about 1900 (`loc.gov/pictures/item/2003678373/`, `2003678372/`); Wikimedia Commons, "Kingston, Jamaica in the 20th century" and "1907 Kingston earthquake". The National Library of Jamaica has more (permission needed).
+
 ### To research before use
 
-- UNIA founding date (August 1914; some sources say July).
-- Garvey's arrival in the US (1916) and the start of the *Negro World* (1918).
+- The Negro World's start (1918) and Garvey's arrival in the US (6 March 1916 per PBS: confirm).
 - The People's Political Party (1929), the move to London (1935), National Hero (1964), the inscription at his shrine in National Heroes Park.
-- Contested points for "Dig deeper": the "Garvey Must Go" campaign (PBS American Experience has a page), the Black Star Line's failures, the fairness of the trial and the modern calls for exoneration, any meeting with a Klan leader, the Liberia plan. Tell each fairly and simply. Never graphic.
+- Contested points for "Dig deeper": the "Garvey Must Go" campaign (PBS has a page), the Black Star Line's failures, the fairness of the trial and the modern calls for exoneration, any meeting with a Klan leader, the Liberia plan. Tell each fairly and simply. Never graphic.
 - A reported posthumous pardon in January 2025. Confirm from an official source or leave it out.
 
 ## Cast
