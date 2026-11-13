@@ -7,9 +7,9 @@ CLAUDE.md                 start here (rules + index)
 engine/                   shared runtime code, imported by every game
   anim.js                 clip library, per-character animation controller, seamless loops, feet on the ground
   audio.js                all sound, synthesised with Web Audio (no audio files)
-  loader.js               loads models packed as base64 .js files
+  loader.js               loads models packed as base64 .js files (versioned URLs, background prefetch)
 shared/
-  models/anims.js         the shared animation library (50 Mixamo clips on one skeleton), copied into each game at build
+  models/anims.js         the shared animation library (39 Mixamo clips on one skeleton), copied into each game at build
   anim-sources/*.fbx      the original Mixamo downloads the library is made from
   rig/char.blend          the reference rig every character uses (Abba's), plus eye.png
 games/
@@ -28,8 +28,8 @@ build/                    scratch output from tools (git-ignored)
 
 `node tools/build.mjs <game> [--dev]` does two things:
 
-1. It copies `shared/models/*.js` into `games/<game>/site/models/`, so every game ships the same animation library.
-2. It bundles `games/<game>/src/main.js` with esbuild into `games/<game>/site/app.js`. That includes three.js and any engine modules the game imports.
+1. It copies `shared/models/*.js` into `games/<game>/site/models/`, so every game ships the same animation library. If `games/<game>/anim-clips.json` exists (a list of clip names), that game's copy is cut down to just those clips (`tools/anim_subset.mjs`, the clips are untouched). Garvey plays 7 of the 39, which takes its animation file from about 317 KB to 99 KB gzipped.
+2. It bundles `games/<game>/src/main.js` with esbuild into `games/<game>/site/app.js`. That includes three.js and any engine modules the game imports, and a fingerprint for every model file so models are asked for as `models/<name>.js?v=<fingerprint>` (see `docs/ENGINE.md`).
 
 - `--dev` defines `__DEV__ = true`, which keeps the test views (`?shot=...`) and the autoplayer (`?auto=N`).
 - The public build defines it as false, so esbuild strips all that code out.

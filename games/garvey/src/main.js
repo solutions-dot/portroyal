@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
-import { model, onLoadFail } from '../../../engine/loader.js';
+import { model, prefetch, onLoadFail } from '../../../engine/loader.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -1232,9 +1232,13 @@ const PLACES = {
   liberty: { group: libG, lamp: libLamp, walls: LIB_WALLS, bounds: LIB_BOUNDS, people: LIB_PEOPLE, actions: LIB_ACTIONS, start: { x: 0, z: 4.5, yaw: 0 }, caption: 'Liberty Hall, Harlem, August 1920' },
   dock: { group: dockG, lamp: new THREE.Object3D(), walls: DOCK_WALLS, bounds: DOCK_BOUNDS, people: DOCK_PEOPLE, actions: DOCK_ACTIONS, start: { x: 0, z: -2.6, yaw: Math.PI }, caption: 'New York, 1919', sky: 0x9fc6dc },
   press: { group: pressG, lamp: pressLamp, walls: PRESS_WALLS, bounds: PRESS_BOUNDS, people: PRESS_PEOPLE, actions: PRESS_ACTIONS, start: { x: 0, z: 3.1, yaw: 0 }, caption: 'Harlem, New York, 1918' } };
-let place = 'shop', placeT = 0;
+let place = 'shop', placeT = 0, pfT = 0;
+const PLACE_ORDER = ['shop', 'hall', 'street', 'press', 'dock', 'liberty', 'office', 'park'];   /* the chapters in order */
+function prefetchNext(name) {   /* a few seconds after arriving, quietly fetch the people of the next chapter's place, so the move there is quick */
+  clearTimeout(pfT); const nx = PLACES[PLACE_ORDER[PLACE_ORDER.indexOf(name) + 1]]; if (!nx) return;
+  pfT = setTimeout(() => prefetch([...new Set(nx.people.map((n) => n.model))]), 4000); }
 function enterPlace(name, keepPos) {
-  place = name; const P = PLACES[name];
+  place = name; const P = PLACES[name]; prefetchNext(name);
   for (const k of Object.keys(PLACES)) { const Q = PLACES[k]; Q.group.visible = k === name; Q.lamp.visible = k === name; for (const n of Q.people) { if (n.mark) n.mark.visible = false; if (n.m) n.m.visible = k === name && !n.hidden; } }
   if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.dest) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; if (n.seat) sitDown(n); }
   if (name === 'press') arrangePress();

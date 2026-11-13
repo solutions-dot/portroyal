@@ -19,7 +19,7 @@ dist/games/<game>/site/...    each game: index.html, app.js, models/*.js
 `vercel.json` tells Vercel what to do, so there is nothing to set by hand:
 - install: `npm install`; build: `npm run dist`; output folder: `dist`;
 - `/port-royal` redirects to the game;
-- models are cached for a week; `app.js` is always checked for a newer copy.
+- models are cached for a year (`immutable`), which is safe because the game asks for each one as `models/<name>.js?v=<fingerprint>`: a changed model has a new address. `app.js` is always checked for a newer copy, so a new build is picked up at once.
 
 To set it up once:
 1. In Vercel, "Add New Project" and import the GitHub repo `solutions-dot/portroyal`.
