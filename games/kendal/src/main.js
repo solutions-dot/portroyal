@@ -98,6 +98,7 @@ function makeBody(s) {
   if (!/^Sit/.test(s.anim || '')) { const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.05; b.renderOrder = 1; m.add(b); }
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl;
   m.userData.held = []; ctl.mx.update(0);   /* pose the body once, so the grips below are measured on the real hand */
+  if (/^Sit/.test(s.anim || '')) m.userData.noGround = true;   /* a seated body is placed on its seat, so the per-frame foot grounding must leave it alone */
   if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
       m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
       if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat (its top is s.seat): the hip joint rides 12 cm above it, whatever the body's size */
@@ -592,7 +593,7 @@ function update(dt, now) {
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
   for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); }
-  if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible) groundFeet(m);
+  if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
   if (P.tick) P.tick(dt, (now || 0) / 1000); rideTick(dt, (now || 0) / 1000); smokeTick(dt);
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
   if (cur === 'road' && stage === 12 && state.x > 24) setStage(13);
@@ -614,7 +615,8 @@ const NORENDER = __DEV__ && /[?&]auto=/.test(location.search);   /* the scripted
 requestAnimationFrame(frame);
 
 /* ---------- the place audit (dev builds): the checks live in engine/audit.js. Run ?test=audit and expect 0 issues in every place. ---------- */
-const auditPlace = (P) => { const r = auditPlaceBase(P); for (const n of P.npcs) if (/^Sit/.test(n.anim || '') && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); for (const l of auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, SEATLOG)) r.inside.push(l); } return r; };
+const auditPlace = (P) => { const r = auditPlaceBase(P); for (const n of P.npcs) if (/^Sit/.test(n.anim || '') && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); if (!n.m.userData.noGround) groundFeet(n.m);   /* the same step the game runs every other frame */
+       for (const l of auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, SEATLOG)) r.inside.push(l); } return r; };
 const SEATLOG = [];   /* ?test=audit&seats=1 also prints how high each seated person's hips are above the seat */
 const auditPlaceBase = (P) => auditPlaceE({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start,
   actions: P.actions, people: P.people.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });

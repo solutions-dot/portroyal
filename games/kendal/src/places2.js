@@ -135,7 +135,7 @@ export function buildCrash() {
   const sit = [[-2.6, 8.8], [-4.8, 9.8], [-1.2, 10.2], [-6.0, 7.6]];
   for (const [i, [x, z]] of sit.entries()) {   /* survivors rest on flat-topped rocks by the fire (the sitting poses are chair-high, so a rock is about 0.46 m) */
     const ry = PI * 0.4 + i, top = 0.34 + (i % 3) * 0.04, rk = seatRock(top, 0.36, i + 1); rk.position.set(x, 0, z); g.add(rk); walls.push([x - 0.45, z - 0.45, x + 0.45, z + 0.45]);
-    extras.push({ ...crowd57(1, 50 + i, [0, 0, 1, 1], { anims: ['SitDisbelief'] })[0], x, z, ry, anim: ['SitDisbelief', 'Sad2'][i % 2], blanket: true, seat: top });
+    extras.push({ ...crowd57(1, 50 + i, [0, 0, 1, 1], { anims: ['SitDisbelief'] })[0], x, z, ry, anim: ['SitDisbelief', 'SitIdle'][i % 2], blanket: true, seat: top });
   }
   extras.push(...villagers(16, 61, [-14, 1, 22, 13], { faceZ: PI }).filter(free(walls)));
   extras.push(...villagers(6, 73, [-12, 14, 4, 20], { faceZ: PI }).map((e) => ({ ...e, anim: 'Talk1' })));
