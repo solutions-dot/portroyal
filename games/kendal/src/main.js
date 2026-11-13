@@ -7,6 +7,7 @@ import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, gullCry, chirp } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
+import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
 import { G, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
 import { ENV, mixEnv, makeRig, TRACK_Y } from './common.js';
 import { makeSmoke, spin } from './trains.js';
@@ -15,7 +16,9 @@ import { buildRoad, buildStation45, buildRide45, buildHill } from './places1.js'
 import { buildKingston57, buildCoach, buildBeach, buildCrash, buildMemorial } from './places2.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL } from './content.js';
 import * as SFX from './sfx.js';
+import { HATS, LOOKS } from './cast.js';
 import { DECOR } from './decor.js';
+import * as TRN from './trains.js'; import * as PRP from './props.js';   /* whole modules, for the dev model viewer only */
 import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
 
@@ -85,14 +88,17 @@ function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePro
 const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb08a48); return h; }, hamper: () => hamper(), lantern: () => lantern(), bucket: () => bucket() };
 /* how each thing is carried (see hold() in props.js): handleY is the height of its handle, out is how far the hand's item sits from the body. After changing these run ?test=held. */
 const SIT_HIPS = 0.12;   /* metres from the seat to the hip joint of a seated person at full size (the audit checks it) */
-let GRIP = { hamper: { handleY: 0.52, scale: 0.5, out: 0.2 }, suitcase: { handleY: 0.5, scale: 0.8, out: 0.17, yaw: Math.PI / 2 }, lantern: { handleY: 0.31, scale: 0.85, out: 0.14 }, bucket: { handleY: 0.34, scale: 0.9, out: 0.15 }, basket: { dy: 0.12, scale: 0.8 } };
+/* scale: the item's size. lift: how far (radians) the arm is held out from the body, so the item clears the hip, thigh and skirt. The handle height comes from each prop (userData.handleY). */
+let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.46 }, suitcase: { handleY: 0.5, scale: 0.8, lift: 0.22, yaw: Math.PI / 2 }, lantern: { handleY: 0.32, scale: 0.85, lift: 0.26 }, bucket: { handleY: 0.49, scale: 0.9, lift: 0.34 }, basket: { dy: 0.12, scale: 0.8 } };
 const SKIN_LIGHT = 1.55;   /* the bodies' skin is built dark, so we lighten it a little (as in Marcus Garvey) so faces read in every light */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
+  const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat); if (/^man_(work|shirt|elder|suit)$/.test(s.base) && !(s.hide || []).includes('Waistcoat')) offHats.push('Belt', 'Buckle');   /* a waistcoat covers the belt */   /* a body carries several hats; show the one this person wears (s.hat), or none */
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const mat = o.material, nm = mat.name || '';
-    if ((s.hide && s.hide.includes(nm)) || (s.hat === false && nm === 'Hat')) { o.visible = false; return; }
-    o.material = mat.clone(); const t = s.tint && s.tint[nm]; if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
-    else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); });
+    if ((s.hide && s.hide.includes(nm)) || offHats.some((h) => nm === h || nm === h + 'Band')) { o.visible = false; return; }
+    o.material = mat.clone(); const t = nm === 'Hair' ? undefined : s.tint && s.tint[nm];   /* hair keeps its own painted colours: they fade into the skin at the hairline */
+    if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
+    else if (nm === 'Skin' || nm === 'Hair') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); });
   m.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
   m.scale.setScalar(s.scale || 1); m.position.set(s.x, s.ground || 0, s.z); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
   if (!/^Sit/.test(s.anim || '')) { const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.05; b.renderOrder = 1; m.add(b); }
@@ -102,8 +108,10 @@ function makeBody(s) {
   if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
       m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
       if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat (its top is s.seat): the hip joint rides 12 cm above it, whatever the body's size */
-  for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); hold(m, bone, o, GRIP[prop]); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) s._flame = o.userData.flame; }
-  if (s.lamp) { const o = lantern(); hold(m, 'RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
+  const carry = (bone, o, G) => { if (/Hand$/.test(bone)) grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY || G.handleY, scale: G.scale, yaw: G.yaw || 0, lift: G.lift }); else hold(m, bone, o, G); };   /* in a hand: a real grip (engine/grip.js); on the head: balanced there */
+  for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); carry(bone, o, GRIP[prop]); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) s._flame = o.userData.flame; }
+  if (s.lamp) { const o = lantern(); carry('RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
+  if (!/^Sit/.test(s.anim || '')) spreadArms(m, /^(woman|girl|guide)/.test(s.base) ? 0.15 : s.base === 'man_suit' ? 0.11 : 0.05);   /* arms hang clear of skirts and jackets (engine/grip.js) */
   return m;
 }
 const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBasicMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.6, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
@@ -592,7 +600,7 @@ function update(dt, now) {
   for (const n of P.npcs) npcTick(n, dt);
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
-  for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); }
+  for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
   if (P.tick) P.tick(dt, (now || 0) / 1000); rideTick(dt, (now || 0) / 1000); smokeTick(dt);
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
@@ -609,8 +617,10 @@ function frame(t) {
   if (FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.035; }
   sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110); birds.tick(t / 1000, !!(P_() && envNow.stars < 0.3 && !P_().ride && P_().id !== 'crash'), camera.position.x, camera.position.z);
   sky.dome.position.copy(camera.position); sky.stars.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380);
+  if (__DEV__ && MV) { MV(); return; }
   if (!NORENDER) renderer.render(scene, camera);
 }
+let MV = null;   /* dev only: the model viewer (?shot=model) draws the picture itself */
 const NORENDER = __DEV__ && /[?&]auto=/.test(location.search);   /* the scripted playthrough does not need pictures, and software drawing is slow */
 requestAnimationFrame(frame);
 
@@ -637,6 +647,27 @@ function devViews() {
     crash4: ['crash', 61, 8, 4.4, 0.9, 0.04], crash1: ['crash', 60, 17, 5.8, 1.7, 0], crash2: ['crash', 60, 8, 6, 2.2, 0.05], crash3: ['crash', 61, -4, 9, 3.14, 0.02], crash5: ['crash', 66, 9, 5, 0.75, 0.0],
     mem1: ['memorial', 70, 0, 4.6, 0, 0.02], mem2: ['memorial', 71, 4, -4, 0.0, 0.1],
   };
+  /* ?shot=model&m=diesel : one code-built model on plain ground, drawn from four sides at once. &a= turns it, &d= is the camera distance, &h= the camera height, &t= the height it looks at.
+     Vehicles stand on a piece of track. m can be: diesel, coach, early, late, first, third, sides, wagon, mule, mule3 (loaded), cart, truck, bench, props (the small things in a row), loads. */
+  if (shot === 'model') go('beach', 43, 0, 0, 0, 0).then(async (P) => {
+    const pids = (q.get('ids') || '').split(',').filter(Boolean), plo = q.has('lo'); if (pids.length) await Promise.all(pids.map((id) => loadBase(LOOKS[id].base + (plo ? '_lo' : ''))));   /* ?shot=model&m=people&ids=gran,lloyd[&lo][&hold=suitcase][&anim=Walk] lines people up for a close look */
+    P.group.visible = false; $('hud').hidden = true; const m = q.get('m') || 'diesel', num = (k, d) => (q.has(k) ? +q.get(k) : d), root = new THREE.Group(); scene.add(root);
+    const MODELS = { diesel: [() => TRN.dieselLoco(), 1, 17, 3.2, 1.2], coach: [() => TRN.woodCoach(7), 1, 15, 3, 1.2], early: [() => TRN.steamLoco('early'), 1, 11, 2.4, 0.6], late: [() => TRN.steamLoco('late'), 1, 12, 2.6, 0.8], first: [() => TRN.carriage1845('first'), 1, 8, 2.4, 0.6], third: [() => TRN.carriage1845('third'), 1, 8, 2.4, 0.6], sides: [() => TRN.carriage1845('third', 6.4, 2.4, 'sides'), 1, 9, 2.4, 0.6], wagon: [() => TRN.wagon(), 1, 9, 2.4, 0.4],
+      mule: [() => PRP.mule(), 0, 3.6, 1.5, 0.95], mule3: [() => { const mu = PRP.mule(), L = [PRP.yamBasket(), PRP.provisionSack(), PRP.bananaLoad()]; L.forEach((o, i) => { mu.add(o); o.position.set(...mu.userData.slots[i]); o.rotation.set(0, i * 1.4, 0); o.scale.setScalar(i === 2 ? 0.9 : 0.8); }); mu.userData.dip = 1; return mu; }, 0, 3.6, 1.5, 0.95],
+      cart: [() => PRP.cart(), 0, 5.5, 1.8, 0.7], truck: [() => PRP.truck(), 0, 7.5, 2.2, 1.0], bench: [() => PRP.bench(2.2), 0, 3.4, 1.3, 0.45],
+      people: [() => { const g = new THREE.Group(); pids.forEach((id, i) => { const b = makeBody({ ...LOOKS[id], bodyId: LOOKS[id].base + (plo ? '_lo' : ''), x: (i - (pids.length - 1) / 2) * 0.75, z: 0, ry: 0, anim: q.get('anim') || 'Idle', props: q.get('hold') ? [['RightHand', q.get('hold')]] : undefined }); b.userData.anim.mx.update(+(q.get('at') || 0.4)); gripTick(b); g.add(b); }); return g; }, 0, 3.2, 1.3, 1.0],
+      props: [() => { const g = new THREE.Group(); [PRP.suitcase(), PRP.hamper(), PRP.bucket(), PRP.lantern(), PRP.sack(), PRP.crate(), PRP.barrel()].forEach((o, i) => { o.position.x = (i - 3) * 0.85; g.add(o); }); return g; }, 0, 3.6, 1.0, 0.3],
+      loads: [() => { const g = new THREE.Group(); [PRP.yamBasket(), PRP.provisionSack(), PRP.bananaLoad(), PRP.torch(), PRP.standpipe(), PRP.board()].forEach((o, i) => { o.position.x = (i - 2.5) * 1.0; g.add(o); }); return g; }, 0, 4.2, 1.1, 0.4] };
+    const [make, rail, d0, h0, t0] = MODELS[m] || MODELS.diesel, obj = make(); root.add(obj); const gy = rail ? -1.69 : 0;
+    if (rail) { const tr = TRN.rails(30); tr.position.y = gy; root.add(tr); }
+    const gr = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x9a9c8c, roughness: 1 })); gr.rotation.x = -PI / 2; gr.position.y = gy - 0.005; gr.receiveShadow = true; root.add(gr);
+    root.traverse((o) => { if (o.isMesh && o !== gr) o.castShadow = o.receiveShadow = true; });
+    const a0 = num('a', 0.5), d = num('d', d0), h = num('h', h0), ty = num('t', t0), one = q.has('one'), tick = obj.userData.tick; let n = 0;
+    MV = () => { if (tick) tick(performance.now() / 1000); const W = renderer.domElement.width, Hh = renderer.domElement.height, angs = one ? [a0] : [a0, a0 + 1.35, a0 + PI, a0 + PI + 1.1]; renderer.setScissorTest(true);
+      angs.forEach((a, i) => { const w = one ? W : W / 2, hh = one ? Hh : Hh / 2, x = one ? 0 : (i % 2) * w, y = one ? 0 : (1 - (i >> 1)) * hh; renderer.setViewport(x / renderer.getPixelRatio(), y / renderer.getPixelRatio(), w / renderer.getPixelRatio(), hh / renderer.getPixelRatio()); renderer.setScissor(x / renderer.getPixelRatio(), y / renderer.getPixelRatio(), w / renderer.getPixelRatio(), hh / renderer.getPixelRatio());
+        camera.aspect = w / hh; camera.fov = 40; camera.updateProjectionMatrix(); camera.position.set(-Math.cos(a) * d, gy + h, Math.sin(a) * d); camera.lookAt(0, gy + ty + (rail ? 1.69 : 0) * 0.6, 0); sun.target.position.set(0, 0, 0); sun.position.copy(sunDir).multiplyScalar(110); sun.target.updateMatrixWorld(); renderer.render(scene, camera); });
+      if (++n === 3) { let tris = 0, calls = 0; obj.traverse((o) => { if (o.isMesh) { calls += Array.isArray(o.material) ? o.material.length : 1; const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1); } }); document.title = 'MODEL ' + m + ' meshes=' + calls + ' tris=' + Math.round(tris); } };
+  });
   if (shot === 'talk1') go('road', 10, -27, 4.2, -0.7, 0).then((P) => { startTalk(byId('dudley')); });
   if (shot === 'talk2') go('crash', 62, 9, 8, PI, 0).then((P) => { story.lamp = true; updateLamp(); startTalk(byId('dawn')); });
   if (shot === 'card1') go('coach', 52, 2, 0, -PI / 2, 0).then(() => { crashIntro(); });
@@ -684,7 +715,7 @@ function devViews() {
   }
   if (q.get('test') === 'held') {
     if (q.get('hs')) for (const k of ['hamper', 'suitcase', 'bucket']) { GRIP[k] = { ...GRIP[k], scale: +q.get('hs') * (k === 'suitcase' ? 1.4 : 1), out: +q.get('ho') }; } if (q.get('ls')) GRIP.lantern = { ...GRIP.lantern, scale: +q.get('ls'), out: +q.get('lo') };   /* ?test=held : every carried thing, in every place: at the hand, upright, clear of the body */
-    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { n.m.userData.anim.mx.update(0.1); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) out.push(id + ': ' + l); } }
+    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { n.m.userData.anim.mx.update(0.1); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) out.push(id + ': ' + l); } }
       out.unshift('held items: ' + (out.length) + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + out.length; })();
   }
   if (q.get('test') === 'audit') {   /* ?test=audit&p=road,hill : floating objects, people inside solids, unreachable spots */

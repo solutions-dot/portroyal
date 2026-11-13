@@ -3,7 +3,7 @@
 Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the story, the systems, the research and what is left to polish.
 
 - Code: `games/kendal/src/` (split into modules, see "Code map"). Page and styles: `games/kendal/site/index.html`.
-- Models: `games/kendal/site/models/*.js` (13 character bodies and their light copies). The animation library is copied in by the build and trimmed to the 17 clips this game plays (`games/kendal/anim-clips.json`, about 445 KB instead of 979 KB). If you play a new clip, add its name there, or the build's copy will not have it.
+- Models: `games/kendal/site/models/*.js` (13 character bodies made for this game and their light copies; recipes in `tools/kendal/people/`, see "Characters" below). The animation library is copied in by the build and trimmed to the 17 clips this game plays (`games/kendal/anim-clips.json`, about 445 KB instead of 979 KB). If you play a new clip, add its name there, or the build's copy will not have it.
 - Build: `node tools/build.mjs kendal --dev` (test views and the autoplayer) or without `--dev` (public).
 - Status: all seven chapters are playable. It is new, so expect polish work (see "What is left").
 
@@ -54,7 +54,9 @@ Same dramatic idea as the Port Royal earthquake: an opt-in card first ("It is lo
 - Places are built when needed. `buildPlace` makes geometry only (the title screen uses Kingston station this way). `ensurePlace` also loads the people. After the first chapter starts, `backgroundLoad` loads the rest quietly.
 - Rides (chapter 2, 4 and 5): the vehicle stays still and the scenery scrolls past (`makeRig` in `common.js`, `RIDE` in `main.js`).
 - Timed scenes use `run([[ms, fn], ...])`, `tween`, `cut` and `waitFor`. They stop themselves when the chapter changes (`EP`, the "epoch").
-- Characters are 13 bodies shared with Marcus Garvey. A person is a body plus a colour per garment (`Shirt`, `Skirt`, `Breeches`, `Hat`, `Hair`, `Shoes`, `Waistcoat`, `Jacket`, `Tie`, `Collar`, `Apron`) and garments can be hidden. People you talk to use the full body. Background figures use a light copy (`<name>_lo.js`, about a fifth of the triangles), made by `node tools/kendal/make_lo.mjs <names>`.
+- Characters: 13 bodies (`man_work`, `man_suit`, `man_shirt`, `man_elder`, `man_apron`, `woman_long`, `woman57`, `woman_elder`, `boy`, `girl`, `girl_small`, `guide2020`, `student2020`). A person is a body plus a colour per garment and a choice of hat (`cast.js`: `LOOKS`, `HATS`). Children are real child bodies, stored enlarged and shrunk by `scale` (`KID` in `cast.js`), never small adults. People you talk to use the full body. Background figures use a light copy (`<name>_lo.js`, about 5,500 triangles). Rebuild with `tools/garvey/era.py` and `node tools/people/pack.mjs --out games/kendal/site/models --lo <names>` (see `docs/PIPELINE.md`).
+- Carrying: a thing in a hand uses `grip()` from `engine/grip.js` (the fingers close round the handle, the arm lifts clear of the body). `spreadArms()` keeps empty hands out of skirts and jackets. `GRIP` in `main.js` sets each item's size and lift. After changing these run `?test=held`.
+- Dev model viewer: `?shot=model&m=diesel` (also `coach`, `early`, `late`, `mule`, `mule3`, `cart`, `truck`, `props`...), and `?shot=model&m=people&ids=gran,lloyd&one&a=1.57&d=1.9&h=1.5&t=1.45` lines people up for a close look (`&lo` for light copies, `&hold=suitcase` to test a grip).
 - Speed budget for the web: shared materials plus `batchStatic` merge each place's still scenery into a few meshes; grass and flowers are instanced; background figures are light and are hidden beyond 75 m. Real shadows are on for computers and off on phones, which get soft blob shadows under people instead. Measure with `?shot=k2&stats`.
 
 ## Coordinates
@@ -122,13 +124,13 @@ None of this was checked against the Jamaica Railway Corporation's own records, 
 
 Real people in the game: none speak. The Governor stands silently in 1845. Father, survivors and named victims never appear. Words on the plaque and storyboard are our own, and the journal says so.
 
-Look and feel are guesses: the colours of coaches and engines, the 1950s clothes, the platform, the 1845 carriages. No photographs were found or used.
+Look and feel: the 1957 diesel follows a National Library of Jamaica photograph of one of the railway's English Electric hood engines (two four-wheel trucks). We do not know which engines pulled the train that night. Every colour, the whole shape of the wooden coaches, the 1845 engine and carriages, the truck and the 1950s clothes are still guesses; the code comments say so.
 
 ## What is left (polish list)
 
 1. **Check facts in primary sources** (the Commission of Enquiry report, the 1957 Daily Gleaner, the railway's records) and remove the "one source" notes.
 2. **Read every line aloud** for the 6+ level. All dialogue is new wording.
-3. **Characters.** There are only 13 bodies, so faces repeat. Women's dresses are the long skirts of 1914. Children are scaled adults. A newer toolchain could make 1950s dresses, a railway guard's uniform and real children (see `docs/PIPELINE.md` and `tools/garvey/README.md`; the Blender tools could not be installed in the build session).
+3. **Characters.** Rebuilt in November 2026: 1950s frocks and church hats, suits and trilbies, a guard's uniform and cap, real children. Still to do: faces repeat (13 bodies); the light crowd copies show a few specks of shirt through a waistcoat at very close range; the 1957 clothes are general pictures, not copied from photographs.
 4. **Places against photographs.** Kingston station, the coaches (colours, markings) and the 1845 engine are general pictures.
 5. **Sound.** A real mento recording and a recorded steam whistle would beat our synthesised ones.
 6. **Memory on phones.** The first load fetches about 3 MB of characters; later chapters load in the background. Consider splitting `anims.js`.
