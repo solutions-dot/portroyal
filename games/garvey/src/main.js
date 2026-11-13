@@ -169,6 +169,7 @@ const START = { x: -0.5, z: 2.9, yaw: 0 };
 const EYE = 1.55, isTouch = matchMedia('(pointer: coarse)').matches;
 const keys = new Set(); let busy = false, fading = false;   /* busy: a talk, the journal or another panel is open, so do not move */
 let talkWith = null, near = null;
+const panelsOpen = () => ['dialogue', 'typeset', 'journal', 'chapters', 'credits', 'card'].some((id) => !$(id).hidden);   /* closing one panel must not unpause the world while another is open */
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && state.started) e.preventDefault();
@@ -278,7 +279,7 @@ function renderJournal(sel) {
   for (const t of p.deeper) { const e = document.createElement('p'); e.textContent = t; d.appendChild(e); } page.appendChild(d);
 }
 function openJournal(sel) { if (busy) return; busy = true; keys.clear(); renderJournal(typeof sel === 'string' ? sel : undefined); $('journal').hidden = false; $('jclose').focus(); }
-function closeJournal() { if ($('journal').hidden) return; $('journal').hidden = true; busy = false; }
+function closeJournal() { if ($('journal').hidden) return; $('journal').hidden = true; busy = panelsOpen(); }
 $('jbtn').onclick = () => openJournal(); $('jclose').onclick = closeJournal;
 
 /* ---------- goal, hint, sound button (as in Port Royal) ---------- */
@@ -315,7 +316,7 @@ function card(title, paras, btns) {
   const bb = $('cbtns'); bb.replaceChildren(); btns.forEach((x, i) => { const el = document.createElement('button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; el.onclick = x.go; bb.appendChild(el); });
   $('card').hidden = false; busy = true; keys.clear(); const f = bb.querySelector('button'); if (f) f.focus();
 }
-function hideCard() { $('card').hidden = true; busy = false; }
+function hideCard() { $('card').hidden = true; busy = panelsOpen(); }
 const QUICK = __DEV__ && /[?&](shot|auto|test)=/.test(location.search);   /* test views skip the fade */
 function chapterFade(title, sub, fn) {
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
@@ -343,13 +344,13 @@ function renderChapters() {
   $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = '';
 }
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
-function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = !$('card').hidden; if (state.started) canvas.focus(); }
+function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = panelsOpen(); if (state.started) canvas.focus(); }
 function playChapter(c) { $('chapters').hidden = true; busy = false; if (!state.started) startGame(); c.go(); }
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
 function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } location.reload(); }
 $('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
 function openCredits() { if (state.started) { closeJournal(); busy = true; keys.clear(); } $('credits').hidden = false; $('crclose').focus(); }
-function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = !$('card').hidden || !$('chapters').hidden; }
+function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = panelsOpen(); }
 $('dev').onclick = openCredits; $('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;
 /* the reset button: this chapter again, the whole story again, or back to all games */
 $('reset').onclick = () => { if (fading) return; closeJournal();
@@ -371,7 +372,7 @@ function showLine() {
 }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  const n = talkWith; busy = false; talkWith = null; $('dialogue').hidden = true; if (n && n.m) n.m.userData.anim.play(null);
+  const n = talkWith; talkWith = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.m) n.m.userData.anim.play(null);
   if (finished && n && !n.talked) { n.talked = true; if (PEOPLE.every((p) => p.talked)) { stage = 1; setGoal(); } saveGame(); }
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
@@ -394,7 +395,7 @@ function tapTile(b, L) {
   else { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('tmsg').textContent = 'Not that one. Look at the word again.'; }
 }
 $('tpress').onclick = () => { pressThump(); $('tprint').textContent = WORD; $('tprint').hidden = false; $('tcase').hidden = true; $('tpress').hidden = true; $('tdone').hidden = false; $('tmsg').textContent = 'Printed! The words come out the right way round.'; };
-function closeType(done) { if ($('typeset').hidden) return; $('typeset').hidden = true; busy = false; if (done) finishType(); }
+function closeType(done) { if ($('typeset').hidden) return; $('typeset').hidden = true; busy = panelsOpen(); if (done) finishType(); }
 $('tclose').onclick = () => closeType(false); $('tdone').onclick = () => closeType(true);
 function finishType() { stage = 2; unlock('press'); saveGame(); setGoal(); uiSound('goal'); }
 
@@ -412,6 +413,30 @@ function bubbleTick(now) {
   TB.v.set(near.x, 2.0, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
   if (TB.el.dataset.label !== near.label) { TB.el.dataset.label = near.label; TB.el.innerHTML = TALK_SVG + '<span class="who">' + near.who + '</span>'; TB.el.setAttribute('aria-label', near.label); }
+}
+
+/* ---------- the helper arrow (as in Port Royal): stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
+const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
+function nudgeTarget() {   /* where the next thing to do is, as [x, z]; add a case for every new goal */
+  if (stage === 0) { let best = null, bd = 1e9; for (const n of PEOPLE) if (!n.talked && n.m) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; best = [n.x, n.z]; } } return best; }
+  const a = ACTIONS.find((x) => x.on()); return a ? [a.x, a.z] : null;
+}
+function nudgeTick(now) {
+  const el = $('nudge'); if (!el) return;
+  const quiet = state.started && !busy && $('dialogue').hidden && $('card').hidden && goalText && !fading;
+  if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
+  if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
+  if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30000); NUDGE.still = now; }   /* time spent reading does not count */
+  const tgt = quiet ? nudgeTarget() : null;
+  if (!NUDGE.on && quiet && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
+  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }   /* there: the Talk bubble or button takes over */
+  if (!NUDGE.on || !tgt) { el.hidden = true; return; }
+  el.hidden = false;
+  const W = innerWidth, H = innerHeight, dx = tgt[0] - state.x, dz = tgt[1] - state.z, rel = Math.atan2(-dx, -dz) - state.yaw, a = Math.atan2(Math.sin(rel), Math.cos(rel));   /* a: 0 straight ahead, plus to the left */
+  _nv.set(tgt[0], 2.1, tgt[1]).project(camera); const lab = el.querySelector('span');
+  if (Math.abs(a) < 0.55 && _nv.z < 1) {   /* in front: a bouncing arrow points down at it */
+    el.style.left = Math.max(60, Math.min(W - 60, (_nv.x + 1) / 2 * W)) + 'px'; el.style.top = Math.max(110, Math.min(H * 0.62, (1 - _nv.y) / 2 * H)) + 'px'; el.className = 'down'; const sy = (1 - _nv.y) / 2 * H; lab.textContent = sy > H * 0.75 ? 'Look down' : sy < 90 ? 'Look up' : 'Here!'; }
+  else { const left = a > 0; el.style.left = (left ? 58 : W - 58) + 'px'; el.style.top = (H * 0.45) + 'px'; el.className = left ? 'left' : 'right'; lab.textContent = 'This way'; }   /* to the side or behind: a big arrow at the edge says which way to turn */
 }
 
 /* ---------- sound: a room hum, the street outside, and now and then the press ---------- */
@@ -453,7 +478,7 @@ function update(dt, now) {
   const talkBtn = $('talk'); talkBtn.hidden = !(near && near.go); if (near && near.go) talkBtn.textContent = near.label;   /* people get the bubble; things to do get this button */
   for (const mx of mixers) mx.update(dt); for (const n of PEOPLE) if (n.m && n.m.userData.anim) n.m.userData.anim.tick(dt);
   for (const m of grounded) groundFeet(m);
-  if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); }
+  if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }
 let last = performance.now(), stepT = 0;
 function frame(t) {
@@ -478,6 +503,7 @@ function devViews() {
   if (shot === 'reset') { go(-0.5, 2.9, 0, 0); setTimeout(() => $('reset').click(), 600); }
   if (shot === 'credits') { go(-0.5, 2.9, 0, 0); openCredits(); }
   if (shot === 'bubble') { go(-2.3, -0.8, 0.25, 0.08); }
+  if (shot === 'nudge') { go(-0.5, 2.9, Math.PI / 2, 0); NUDGE.still = performance.now() - 20000; }
   if (q.has('test') && q.get('test') === 'walk') {   /* step the world by hand and watch the customer walk her route */
     const c = PEOPLE[1]; go(4.0, -1.2, 0, 0); const trail = []; let dist = 0, px = c.x, pz = c.z, minx = 9, maxx = -9, minz = 9, maxz = -9, walked = 0;
     for (let i = 0; i < 60 * 40; i++) { update(1 / 60); if (c.walking) walked++; dist += Math.hypot(c.x - px, c.z - pz); px = c.x; pz = c.z; minx = Math.min(minx, c.x); maxx = Math.max(maxx, c.x); minz = Math.min(minz, c.z); maxz = Math.max(maxz, c.z); if (i % 300 === 0) trail.push(c.x.toFixed(1) + ',' + c.z.toFixed(1)); }
@@ -492,7 +518,9 @@ function devViews() {
         $('tpress').click(); $('tdone').click(); L('stage=' + stage + ' pages=' + unlocked.join(','));
         $('jbtn').click(); L('journal open=' + !$('journal').hidden + ' tabs=' + $('jtabs').children.length + ' jcount=' + $('jcount').textContent + ' allgames=' + (!$('jhome').hidden)); $('jchap').click();
         L('chapters open=' + !$('chapters').hidden + ' items=' + $('chlist').children.length + ' playable=' + $('chlist').querySelectorAll('button:not(:disabled)').length); $('chclose').click();
+        { const t = performance.now(); NUDGE.still = t - 20000; nudgeTick(t); L('helper arrow shown=' + (!$('nudge').hidden) + ' label=' + $('nudge').querySelector('span').textContent); NUDGE.on = false; $('nudge').hidden = true; }
         $('reset').click(); L('reset card="' + $('ctitle').textContent + '" buttons=' + [...$('cbtns').children].map((b) => b.textContent).join('/')); $('cbtns').children[0].click();
+        L('reset while talking: ' + (() => { startTalk(PEOPLE[0]); $('reset').click(); hideCard(); const ok = busy && !$('dialogue').hidden; endTalk(false); return ok ? 'still paused' : 'UNPAUSED'; })());
         L('after restart: stage=' + stage + ' pages=' + unlocked.length + ' talked=' + PEOPLE.filter((p) => p.talked).length + ' busy=' + busy);
         L(stage === 0 && unlocked.length === 3 && !busy ? 'ALLDONE' : 'STALL'); L('DONE'); }, 300); return; }
       state.x = n.x + 1.1; state.z = n.z + 0.4; update(0.016); L('near=' + (near && near.id)); startTalk(n); let c = 0; const iv = setInterval(() => { if ($('dialogue').hidden) { clearInterval(iv); L(n.id + ' talked=' + n.talked + ' lines=' + c); k++; setTimeout(next, 100); } else { c++; $('next').click(); } }, 80); };
