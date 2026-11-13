@@ -139,6 +139,11 @@ if G.get('waistcoat'):
     wcol=NECK-0.02*s
     parts.append(('waistcoat',piece('Waistcoat','helper-tights',lambda c:c.z>HIP+0.03 and abs(c.x)<SX*0.9,lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Waistcoat',post=lambda bm:(drape_front(bm),smooth_edge(bm)),
         cuts=[((0,0,wcol),(0,0,1),None),((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0),((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)])))
+if G.get('jacket'):   # a plain suit jacket: waist-length hem, sleeves to the wrist, a V opening over the waistcoat
+    jcol=NECK-0.012*s; jcs=G.get('jacketsleeve',0.9)
+    vz=jcol-0.20*s   # the V opening: two angled cuts, one each side of the middle, so only a narrow wedge is removed and the shoulders stay covered
+    parts.append(('jacket',piece('Jacket','helper-tights',lambda c:c.z>HIP-0.12 and arm_ok(c,jcs),lambda c:0.022 if abs(c.x)>SX*0.8 else 0.017,'Jacket',post=lambda bm:(drape_front(bm),smooth_edge(bm)),
+        cuts=[((0,0,jcol),(0,0,1),None),((0,0,vz),Vector((-1.5,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,vz),Vector((1.5,0,1)).normalized(),lambda c:c.y<0 and c.x<0)]+cuts_sleeve(jcs))))
 if G.get('skirt'):
     ZT=HIP+0.08; ZB=ANK+0.07
     def flare2(v):
@@ -293,7 +298,7 @@ if G.get('apron'):
 bh.free()
 # body: remove what the clothes fully hide, so nothing pokes through
 bm=bmesh.new(); bm.from_mesh(h.data); dl=bm.verts.layers.deform.verify(); gi=GI['body']
-cov_arm=max(sleeve, G.get('coatsleeve',0) if G.get('coat') and G.get('coatsleeves',True) else 0)
+cov_arm=max(sleeve, G.get('coatsleeve',0) if G.get('coat') and G.get('coatsleeves',True) else 0, G.get('jacketsleeve',0.9) if G.get('jacket') else 0)
 def hidden(c):
     if HIP+0.05<c.z<NECK-0.07*s and abs(c.x)<SX*0.8: return True
     t=side_arm(c)
