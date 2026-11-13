@@ -6,7 +6,7 @@ Status: early demo, in progress. It is playable from the game menu ("Early demo"
 
 ## Where things are now
 
-- **Demo scene** (`games/garvey/src/main.js`): a Kingston print shop, about 1907. A made-up printer stands at his type stand and a made-up customer walks through the shop. Both talk (placeholder lines). It is the first slice of chapter 1.
+- **Demo scene** (`games/garvey/src/main.js`): a Kingston print shop, about 1907. A made-up printer stands at his type stand and a made-up customer walks through the shop. Both talk (placeholder lines). After you talk to both, you set the type for a notice at the type stand (letters are mirror images, as on real type), press it, and three journal pages open. It is the first slice of chapter 1.
 - **Characters** (`tools/garvey/`): `era.py` makes 1900s clothes (see its README for setup). Two test characters exist: `printer1907` and `woman1914`.
 - **Menu**: the Garvey block links to the game.
 - **One pull request**: all Garvey work goes into one PR that stays open, so there is a single merge to `main` when the owner is ready.
@@ -16,11 +16,27 @@ Test it:
 ```bash
 node tools/build.mjs garvey --dev          # dev build: test views and the scripted playthrough
 python3 -m http.server 8765                # then open http://localhost:8765/games/garvey/site/
-# ?shot=shop1 ... shop7 and ?shot=talk are camera views; ?test=walk steps the customer's route; ?auto=1 plays the scene through.
+# ?shot=shop1 ... shop7, talk, type, typedone, journal, chapters, reset, credits and bubble are views; ?test=walk steps the customer's route;
+# ?auto=1 plays the scene through, opens every menu and checks the way out.
 # The result of ?test=walk and ?auto=1 is written to the page title.
 ```
 
-Next: the type-setting activity and the strike choice (chapter 1), a journal, the Port Royal systems copied in, then chapter 2 (Kingston, 1914). Known gaps: the waistcoat has no V opening; the street seen through the door is only a flat picture; dialogue is placeholder; no journal, saving or helper arrow yet; the Kingston details need checking against photographs of Kingston (the reference photos used so far are of US printing offices).
+### Navigation and menus: the same as Port Royal
+
+Players who know Port Royal should find everything where they expect it. The page (`games/garvey/site/index.html`) is built from Port Royal's, so the styles match.
+
+- **Title screen**: Start (or Continue), Chapters, All games, Created by Kellz 5.0, and "Your progress is saved on this device".
+- **In the game**: reset, sound and Journal (with a count) at the top right; a Goal tab that folds after a few seconds; a controls hint; a glowing speech mark over each person and a bubble on the nearest; a resting joystick on phones.
+- **Journal**: a paper book with tabs and "Dig deeper". Its footer has **All games** and **Chapters**.
+- **Chapters**: all eight planned chapters are listed. Only the first is built; the rest say "Coming soon". The panel also has Credits and "Start again".
+- **Reset**: a card with "Restart this chapter", "Start the whole story again" (asks twice) and **All games**.
+- **All games** is therefore reachable from the title, the Journal and the Reset card. It only shows where the real menu exists (the website), as in Port Royal.
+- **Saving**: the Journal, the goal and who you have talked to are kept in the browser (`garvey-save-v1`).
+- **Keys**: Escape closes any panel; E or Enter uses the nearest thing.
+
+To add a chapter: add its row to `CHAPTERS` in `games/garvey/src/main.js` (set `ready`, `go` and `done`), add its goals to `GOALS`, and its journal pages to `JOURNAL`. Port Royal's `NUDGE` helper arrow and third-person view are not copied yet.
+
+Next: the strike scene and the "speak up now, wait, or ask the others first" choice (chapter 1), copying the helper arrow, then chapter 2 (Kingston, 1914). Known gaps: the waistcoat has no V opening; the street seen through the door is only a flat picture; dialogue is placeholder; the Kingston details need checking against photographs of Kingston (the reference photos used so far are of US printing offices).
 
 
 ## Decisions (agreed with the owner)

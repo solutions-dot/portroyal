@@ -4,7 +4,7 @@
    The two people and their lines are placeholders for testing the pipeline. Both are made up. */
 import * as THREE from 'three';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { soundPref, setSound, audioInit, stepSound, uiSound, AU, setG, tone, noiseHit } from '../../../engine/audio.js';
+import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 
 const $ = (id) => document.getElementById(id);
@@ -12,7 +12,7 @@ soundPref('garvey-sound');
 onLoadFail((name) => { $('loadnote').textContent = 'Could not load ' + name + '. Please reload the page.'; });
 
 /* ---------- renderer, camera, light ---------- */
-const canvas = $('c');
+const canvas = $('stage');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
@@ -163,12 +163,19 @@ for (const [x, z, n] of [[1.9, -3.0, 3], [-4.1, -0.9, 2], [-4.1, 0.1, 3]]) { for
 { cyl(0.17, 0.17, 0.05, wood, 1.2, 0.62, 2.3, room, 14); for (const [dx, dz] of [[-0.1, -0.1], [0.1, -0.1], [-0.1, 0.1], [0.1, 0.1]]) cyl(0.015, 0.02, 0.6, woodDark, 1.2 + dx, 0.3, 2.3 + dz, room, 6); }
 const BOUNDS = { x0: X0 + 0.4, x1: X1 - 0.4, z0: Z0 + 0.4, z1: Z1 - 0.45 };
 
-/* ---------- player state and movement ---------- */
+/* ---------- state, movement and controls (the same controls as Port Royal) ---------- */
 const state = { x: -0.5, z: 2.9, yaw: 0, pitch: 0, started: false };   /* yaw 0 looks toward -z, into the shop */
-const EYE = 1.55;
-const keys = new Set(); let busy = false;   /* busy: a talk is open, so do not move */
+const START = { x: -0.5, z: 2.9, yaw: 0 };
+const EYE = 1.55, isTouch = matchMedia('(pointer: coarse)').matches;
+const keys = new Set(); let busy = false, fading = false;   /* busy: a talk, the journal or another panel is open, so do not move */
 let talkWith = null, near = null;
-addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k); if (k === 'escape') leaveTalk(); if ((k === 'e' || k === 'enter') && !busy && near) startTalk(near); });
+addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && state.started) e.preventDefault();
+  keys.add(k); if (!state.started) return;
+  if (k === 'escape') { if (!$('dialogue').hidden) { leaveTalk(); return; } closeJournal(); closeChapters(); closeCredits(); closeType(false); if (!$('card').hidden) hideCard(); }
+  if ((k === 'e' || k === 'enter') && !busy && near) activate(near);
+});
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 function clampPos(x, z) {   /* keep inside the room, out of furniture (slide along it) and out of people */
   x = Math.max(BOUNDS.x0, Math.min(BOUNDS.x1, x)); z = Math.max(BOUNDS.z0, Math.min(BOUNDS.z1, z));
@@ -178,7 +185,7 @@ function clampPos(x, z) {   /* keep inside the room, out of furniture (slide alo
 }
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0, moved: 0 };
 canvas.addEventListener('pointerdown', (e) => {
-  if (busy) { leaveTalk(); return; }   /* tapping the world while talking ends the talk */
+  if (busy) return;
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }
   else { look.id = e.pointerId; look.x = e.clientX; look.y = e.clientY; look.moved = 0; }
   canvas.setPointerCapture(e.pointerId);
@@ -192,18 +199,24 @@ const endPointer = (e) => {
   if (e.pointerId === look.id) { if (look.moved < 8) { const p = tapPerson(e.clientX, e.clientY); if (p) startTalk(p); } look.id = null; }   /* a tap (not a drag) on a person starts a talk */
 };
 canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
+function stickUI() {   /* a resting outline at the bottom left on phones; it follows your thumb while you walk */
+  const el = $('stick'); if (!isTouch || !state.started || busy) { el.hidden = true; return; }
+  el.hidden = false; const rest = stick.id === null; el.classList.toggle('rest', rest);
+  el.style.left = (rest ? 84 : stick.x0) + 'px'; el.style.top = (rest ? innerHeight - 150 : stick.y0) + 'px'; $('nub').style.transform = `translate(calc(-50% + ${stick.dx * 30}px), calc(-50% + ${stick.dy * 30}px))`;
+}
 
 /* ---------- the two people (both made up; placeholders for testing) ---------- */
 const PEOPLE = [
-  { id: 'printer', model: 'printer1907', who: 'Printer', label: 'the printer', x: -2.65, z: -2.2, ry: Math.PI, base: 'Idle',
+  { id: 'printer', model: 'printer1907', who: 'Printer', label: 'Talk to the printer', x: -2.65, z: -2.2, ry: Math.PI, base: 'Idle',
     lines: [
-      { who: 'Printer', text: 'Mind the type. Every letter is made of lead.' },
+      { who: 'Printer', text: 'Mind the type. Every letter is made of metal.' },
       { who: 'You', text: 'Why are the words all backwards?' },
       { who: 'Printer', text: 'We set type back to front. The press turns it round.' },
       { who: 'You', text: 'So one page can reach many people?' },
-      { who: 'Printer', text: 'Yes. That is the power of print.' }],
+      { who: 'Printer', text: 'Yes. That is the power of print.' },
+      { who: 'Printer', text: 'Marcus Garvey learned this trade, too.', unlock: 'garvey-printer' }],
     later: ['Mind the type!', 'I have work to do. Come back soon.'] },
-  { id: 'customer', model: 'woman1914', who: 'Customer', label: 'the customer', x: 1.3, z: 1.6, ry: Math.PI, base: 'Idle',
+  { id: 'customer', model: 'woman1914', who: 'Customer', label: 'Talk to the customer', x: 1.3, z: 1.6, ry: Math.PI, base: 'Idle',
     path: [[1.3, 1.6], [2.2, 1.55], [1.0, 0.6], [-1.9, 0.7], [-0.5, 1.9]],
     lines: [
       { who: 'Customer', text: 'Good morning! Are my printed notices ready?' },
@@ -211,7 +224,7 @@ const PEOPLE = [
       { who: 'Customer', text: 'I will wait. I like to watch the press.' }],
     later: ['I will wait here, thank you.', 'What a busy shop!'] },
 ];
-for (const n of PEOPLE) { n.m = null; n.walking = false; n.wait = 1.5 + Math.random() * 2; n.i = 0; n.heard = 0; n.talked = false; }
+for (const n of PEOPLE) { n.m = null; n.walking = false; n.wait = 1.5 + Math.random() * 2; n.i = 0; n.heard = 0; n.talked = false; n.hx = n.x; n.hz = n.z; }
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function tapPerson(cx, cy) {
   ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
@@ -234,41 +247,194 @@ function npcTick(n, dt) {
   m.position.set(n.x, 0, n.z);
 }
 
+/* ---------- the menu link: shown only where the real game menu exists (the website), as in Port Royal ---------- */
+const MENU = { ok: false, url: '../../../menu/' };
+{ const links = ['allgames', 'jhome'].map((id) => document.getElementById(id)).filter(Boolean); for (const a of links) a.hidden = true;
+  fetch(MENU.url, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then((t) => { if (/History Games/.test(t)) { MENU.ok = true; for (const a of links) a.hidden = false; } }).catch(() => {}); }
+function toMenu() { saveGame(); location.href = MENU.url; }
+
+/* ---------- the journal ---------- */
+const JOURNAL = [
+  { id: 'you', title: 'You in this game', simple: ['You are made up.', 'You are a young helper in a print shop in Kingston, Jamaica.', 'The printer and the customer are made up too.'],
+    deeper: ['The big events in this game really happened. Made-up people help us tell them.', 'Your choices will change what you see and who you meet. They will not change what really happened.'] },
+  { id: 'garvey-printer', title: 'Marcus Garvey, printer', simple: ['Marcus Garvey was born in St Ann\'s Bay, Jamaica, in 1887.', 'He learned the printing trade as a young man.', 'Later he worked as a printer in Kingston.'],
+    deeper: ['He became a foreman, a leader of the workers, at a Kingston printing firm.', 'He took part in a printers\' strike there. Sources give the year as 1907 or 1908.', 'Some sources say he could not get work at other firms afterwards, and later worked at the Government Printing Office.', 'We will check these dates against the Marcus Garvey and UNIA Papers.'] },
+  { id: 'press', title: 'How a press works', simple: ['Printers set type: small metal letters.', 'Each metal letter is a mirror image.', 'The press inks the letters and presses paper onto them.', 'The words print the right way round.'],
+    deeper: ['A page of type locked in an iron frame is called a forme.', 'Printers locked up formes on a flat table called an imposing stone.', 'Some small presses were worked with a foot treadle.'] },
+];
+const unlocked = []; let toastTimer = 0;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600); }
+function showCount() { $('jcount').textContent = unlocked.length; $('jcount').hidden = !unlocked.length; }
+function unlock(id, quiet) { if (unlocked.includes(id)) return; unlocked.push(id); showCount(); saveGame(); if (!quiet) { uiSound('page'); toast('Journal: ' + JOURNAL.find((p) => p.id === id).title); } }
+function renderJournal(sel) {
+  const tabs = $('jtabs'); tabs.replaceChildren(); const open = sel || unlocked[unlocked.length - 1];
+  JOURNAL.filter((p) => unlocked.includes(p.id)).forEach((p) => { const b = document.createElement('button'); b.className = 'tab' + (p.id === open ? ' on' : ''); b.textContent = p.title; b.onclick = () => renderJournal(p.id); tabs.appendChild(b); });
+  const left = JOURNAL.length - unlocked.length; if (left > 0) { const m = document.createElement('button'); m.className = 'tab'; m.disabled = true; m.textContent = left + ' more to find'; tabs.appendChild(m); }
+  const page = $('jpage'); page.replaceChildren(); const p = JOURNAL.find((q) => q.id === open);
+  if (!p) { const e = document.createElement('p'); e.textContent = 'Your journal is empty. Talk to people in the shop to fill it.'; page.appendChild(e); return; }
+  const h = document.createElement('h3'); h.textContent = p.title; page.appendChild(h);
+  for (const t of p.simple) { const e = document.createElement('p'); e.textContent = t; page.appendChild(e); }
+  const d = document.createElement('details'); const s = document.createElement('summary'); s.textContent = 'Dig deeper'; d.appendChild(s);
+  for (const t of p.deeper) { const e = document.createElement('p'); e.textContent = t; d.appendChild(e); } page.appendChild(d);
+}
+function openJournal(sel) { if (busy) return; busy = true; keys.clear(); renderJournal(typeof sel === 'string' ? sel : undefined); $('journal').hidden = false; $('jclose').focus(); }
+function closeJournal() { if ($('journal').hidden) return; $('journal').hidden = true; busy = false; }
+$('jbtn').onclick = () => openJournal(); $('jclose').onclick = closeJournal;
+
+/* ---------- goal, hint, sound button (as in Port Royal) ---------- */
+let stage = 0;   /* 0: talk to both people, 1: set the type, 2: finished */
+const GOALS = ['Talk to the printer and the customer.', 'Set the type for a notice. Go to the type stand.', 'Well done! This test scene is finished. More is coming soon.'];
+let goalText = '', goalTimer = 0, hintTimer = 0;
+function showGoal(withControls) {
+  const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer);
+  goalTimer = setTimeout(() => { el.textContent = 'Goal'; el.classList.add('folded'); el.setAttribute('aria-expanded', 'false'); }, 6500);
+  if (withControls) showHint();
+}
+function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
+function setGoal() { goalText = GOALS[stage]; showGoal(true); }
+$('goal').onclick = () => showGoal(true);
+function showSound() { const b = $('snd'); b.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); b.setAttribute('aria-label', AU.on ? 'Sound on. Tap to turn off.' : 'Sound off. Tap to turn on.'); $('sndon').style.display = AU.on ? '' : 'none'; $('sndoff').style.display = AU.on ? 'none' : ''; }
+$('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
+
+/* ---------- saving: kept in this browser only ---------- */
+const SAVE_KEY = 'garvey-save-v1'; let hasSave = false, erasing = false;   /* erasing: the reload that follows "Start again" must not save the old progress back */
+function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ unlocked, stage, talked: PEOPLE.filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
+function loadGame() { try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; } }
+function applySave(d) {
+  if (!d || !Array.isArray(d.unlocked)) return;
+  for (const id of d.unlocked) if (JOURNAL.some((p) => p.id === id) && !unlocked.includes(id)) unlocked.push(id);
+  stage = [0, 1, 2].includes(d.stage) ? d.stage : 0; for (const p of PEOPLE) p.talked = Array.isArray(d.talked) && d.talked.includes(p.id);
+  hasSave = unlocked.length > 1 || stage > 0 || PEOPLE.some((p) => p.talked);
+}
+applySave(loadGame());
+addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.started) saveGame(); });
+
+/* ---------- cards (small prompts) and chapter titles ---------- */
+function card(title, paras, btns) {
+  $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const t of paras) { const p = document.createElement('p'); p.textContent = t; b.appendChild(p); }
+  const bb = $('cbtns'); bb.replaceChildren(); btns.forEach((x, i) => { const el = document.createElement('button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; el.onclick = x.go; bb.appendChild(el); });
+  $('card').hidden = false; busy = true; keys.clear(); const f = bb.querySelector('button'); if (f) f.focus();
+}
+function hideCard() { $('card').hidden = true; busy = false; }
+const QUICK = __DEV__ && /[?&](shot|auto|test)=/.test(location.search);   /* test views skip the fade */
+function chapterFade(title, sub, fn) {
+  if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
+  f.hidden = false; requestAnimationFrame(() => { f.classList.add('on'); }); setTimeout(() => { fn(); f.classList.add('txt'); }, 750);
+  setTimeout(() => { f.classList.remove('txt'); }, 2500); setTimeout(() => { f.classList.remove('on'); }, 2900); setTimeout(() => { f.hidden = true; fading = false; }, 3800);
+}
+function resetChapter() {   /* the print shop again: people go home, the goal starts over, the journal is kept */
+  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); state.x = START.x; state.z = START.z; state.yaw = START.yaw; state.pitch = 0; stage = 0;
+  for (const n of PEOPLE) { n.talked = false; n.heard = 0; n.i = 0; n.walking = false; n.wait = 1.5; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  saveGame(); setGoal();
+}
+
+/* ---------- chapters (only the first is built so far) ---------- */
+const CHAPTERS = [
+  { year: 'About 1907', name: 'The print shop', ready: true, go: () => chapterFade('About 1907', 'A print shop in Kingston', resetChapter), done: () => stage === 2 },
+  { year: '1914', name: 'The first followers' }, { year: '1916', name: 'The streets of Harlem' }, { year: '1918 to 1919', name: 'The power of the press' },
+  { year: '1919', name: 'The Black Star Line' }, { year: 'August 1920', name: 'A movement becomes a nation' }, { year: '1922 to 1927', name: 'The price of a dream' }, { year: '1927 to today', name: 'The dream lives on' },
+];
+function renderChapters() {
+  const ul = $('chlist'); ul.replaceChildren();
+  CHAPTERS.forEach((c, i) => { const open = !!c.ready && (i === 0 || CHAPTERS[i - 1].done()), dn = c.done ? c.done() : false, li = document.createElement('li'), b = document.createElement('button');
+    b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !modelsReady;
+    for (const [cls, txt] of [['yr', c.year], ['nm', c.name], ['st', !c.ready ? 'Coming soon' : !modelsReady ? 'Loading' : dn ? 'Done' : 'Play']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
+    b.onclick = () => playChapter(c); li.appendChild(b); ul.appendChild(li); });
+  $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = '';
+}
+function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
+function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = !$('card').hidden; if (state.started) canvas.focus(); }
+function playChapter(c) { $('chapters').hidden = true; busy = false; if (!state.started) startGame(); c.go(); }
+$('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
+function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } location.reload(); }
+$('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
+function openCredits() { if (state.started) { closeJournal(); busy = true; keys.clear(); } $('credits').hidden = false; $('crclose').focus(); }
+function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = !$('card').hidden || !$('chapters').hidden; }
+$('dev').onclick = openCredits; $('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;
+/* the reset button: this chapter again, the whole story again, or back to all games */
+$('reset').onclick = () => { if (fading) return; closeJournal();
+  card('Reset', ['Start this chapter again, or start the whole story again.'], [
+    { t: 'Restart “The print shop”', go: () => { hideCard(); CHAPTERS[0].go(); } },
+    { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) },
+    { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'All games', go: toMenu }] : [])]); };
+
 /* ---------- talking: one line at a time; "You" lines get their own colour; the x, Escape or a tap outside ends it ---------- */
 let step = 0, lines = [], talkN = 0; const TALKS = ['Talk1', 'Talk2', 'Talk3'];
+function activate(t) { if (t.go) t.go(); else startTalk(t); }
 function startTalk(n) {
-  busy = true; talkWith = n; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true;
+  busy = true; talkWith = n; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true;
   lines = n.talked ? [{ who: n.who, text: n.later[n.heard++ % n.later.length] }] : n.lines; showLine();
 }
 function showLine() {
-  const s = lines[step], me = s.who === 'You'; $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me); $('next').focus();
+  const s = lines[step], me = s.who === 'You'; if (s.unlock) unlock(s.unlock); $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me); $('next').focus();
   const ac = talkWith && talkWith.m && talkWith.m.userData.anim; if (ac) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
 }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
   const n = talkWith; busy = false; talkWith = null; $('dialogue').hidden = true; if (n && n.m) n.m.userData.anim.play(null);
-  if (finished && n && !n.talked) { n.talked = true; if (PEOPLE.every((p) => p.talked)) { setGoal('Well done! This test scene is finished. More is coming soon.'); uiSound('goal'); } }
+  if (finished && n && !n.talked) { n.talked = true; if (PEOPLE.every((p) => p.talked)) { stage = 1; setGoal(); } saveGame(); }
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
-$('next').onclick = nextLine; $('dclose').onclick = leaveTalk; $('talk').onclick = () => { if (near && !busy) startTalk(near); };
-function setGoal(t) { $('goal').textContent = t; }
+$('next').onclick = nextLine; $('dclose').onclick = leaveTalk; $('talk').onclick = () => { if (near && !busy) activate(near); };
+
+/* ---------- things to do: the type-setting activity (like Port Royal's ACTIONS, shown as a button when you stand at it) ---------- */
+const ACTIONS = [{ id: 'type', label: 'Set some type', x: -1.9, z: -2.3, r: 0.95, on: () => stage === 1, go: () => openType() }];
+const WORD = 'NOTICE'; let typed = '';   /* real type is a mirror image of what prints, so the letters here are backwards too */
+function openType() {
+  if (busy) return; busy = true; keys.clear(); typed = ''; $('typeset').hidden = false; $('tword').textContent = WORD; $('tprint').hidden = true; $('tpress').hidden = true; $('tdone').hidden = true;
+  $('tcase').hidden = false; $('tstick').innerHTML = ''; for (let i = 0; i < WORD.length; i++) { const sl = document.createElement('span'); sl.className = 'slot'; $('tstick').appendChild(sl); }
+  const letters = WORD.split('').concat('ARSLDM'.split('')); for (let i = letters.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [letters[i], letters[j]] = [letters[j], letters[i]]; }
+  $('tcase').innerHTML = ''; for (const L of letters) { const b = document.createElement('button'); b.className = 'tile'; b.dataset.l = L; b.setAttribute('aria-label', 'Letter ' + L); b.innerHTML = '<span class="mir">' + L + '</span>'; b.onclick = () => tapTile(b, L); $('tcase').appendChild(b); }
+  $('tmsg').textContent = 'Tap the letters in order. They are backwards, like real type.';
+}
+function tapTile(b, L) {
+  if (typed.length >= WORD.length || b.disabled) return;
+  if (L === WORD[typed.length]) { b.disabled = true; $('tstick').children[typed.length].innerHTML = '<span class="mir">' + L + '</span>'; typed += L; uiSound('tap');
+    if (typed.length === WORD.length) { $('tmsg').textContent = 'The type is set. Now press!'; $('tpress').hidden = false; $('tpress').focus(); } else $('tmsg').textContent = 'Good. Next letter: ' + WORD[typed.length] + '.'; }
+  else { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('tmsg').textContent = 'Not that one. Look at the word again.'; }
+}
+$('tpress').onclick = () => { pressThump(); $('tprint').textContent = WORD; $('tprint').hidden = false; $('tcase').hidden = true; $('tpress').hidden = true; $('tdone').hidden = false; $('tmsg').textContent = 'Printed! The words come out the right way round.'; };
+function closeType(done) { if ($('typeset').hidden) return; $('typeset').hidden = true; busy = false; if (done) finishType(); }
+$('tclose').onclick = () => closeType(false); $('tdone').onclick = () => closeType(true);
+function finishType() { stage = 2; unlock('press'); saveGame(); setGoal(); uiSound('goal'); }
+
+/* ---------- a glowing speech mark over each person, a bubble on the nearest, and the Talk button for things to do ---------- */
+const BUBBLE = cv(128, 128, (c) => { const g = c.createRadialGradient(64, 64, 8, 64, 64, 62); g.addColorStop(0, 'rgba(255,190,70,0.9)'); g.addColorStop(0.35, 'rgba(255,180,60,0.45)'); g.addColorStop(1, 'rgba(255,170,50,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128); c.fillStyle = '#f6c45c'; c.strokeStyle = 'rgba(70,45,10,0.85)'; c.lineWidth = 3; c.beginPath(); c.arc(64, 64, 15, 0, Math.PI * 2); c.fill(); c.stroke(); c.fillStyle = '#fff3d0'; c.beginPath(); c.arc(59, 59, 5, 0, Math.PI * 2); c.fill(); });
+const TALK_SVG = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12c0 4-4 7-9 7-1.2 0-2.4-.2-3.4-.5L3 20l1.5-4.2C3.6 14.7 3 13.4 3 12c0-4 4-7 9-7s9 3 9 7z"/><circle cx="8" cy="12" r=".6" fill="currentColor"/><circle cx="12" cy="12" r=".6" fill="currentColor"/><circle cx="16" cy="12" r=".6" fill="currentColor"/></svg>';
+const TB = { el: null, v: new THREE.Vector3() };
+for (const n of PEOPLE) { n.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); n.mark.renderOrder = 5; n.mark.visible = false; scene.add(n.mark); }
+function bubbleTick(now) {
+  const show = state.started && !busy && $('card').hidden;
+  for (const n of PEOPLE) { const m = n.mark; if (!show || !n.m) { m.visible = false; continue; } const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
+    m.position.set(n.x, 2.15 + Math.sin(now * 2.4 + n.x) * 0.06, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n; }
+  if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !busy) activate(near); }); }
+  const on = show && near && !near.go; TB.el.hidden = !on; if (!on) return;
+  TB.v.set(near.x, 2.0, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
+  const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
+  if (TB.el.dataset.label !== near.label) { TB.el.dataset.label = near.label; TB.el.innerHTML = TALK_SVG + '<span class="who">' + near.who + '</span>'; TB.el.setAttribute('aria-label', near.label); }
+}
 
 /* ---------- sound: a room hum, the street outside, and now and then the press ---------- */
 let auNext = 0, thumpAt = 7;
-function pressThump() { if (!AU.on) return; for (let i = 0; i < 3; i++) { noiseHit(220, 1.2, 0.16, 0.1, 0.5, i * 0.55); tone(90, 55, 0.2, 'triangle', 0.04, 0.5, i * 0.55); } }
+function pressThump() { if (!AU.ctx || !AU.on) return; for (let i = 0; i < 3; i++) { noiseHit(220, 1.2, 0.16, 0.1, 0.5, i * 0.55); tone(90, 55, 0.2, 'triangle', 0.04, 0.5, i * 0.55); } }
 function audioTick(t) { if (!AU.ctx || !state.started || t < auNext) return; auNext = t + 0.1; setG(AU.ch.room, 0.28); setG(AU.ch.crowd, 0.04); if (t > thumpAt) { thumpAt = t + 6 + Math.random() * 6; pressThump(); } }
 
 /* ---------- loading and starting ---------- */
-Promise.all([model('anims'), ...PEOPLE.map((n) => model(n.model))]).then(([anims, ...gl]) => {
-  loadClips(anims);
-  PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; });
-    m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = 0; scene.add(m); animate(m, n.base); grounded.push(m); n.m = m; });
-  $('start').disabled = false; $('start').textContent = 'Start'; $('loadnote').textContent = '';
-  if (__DEV__) devViews();
-});
-function begin() { audioInit(); $('title').hidden = true; $('hud').hidden = false; state.started = true; setGoal('Talk to the printer and the customer.'); $('place').hidden = false; $('place').style.opacity = 1; setTimeout(() => { $('place').style.opacity = 0; }, 4500); canvas.focus(); }
-$('start').onclick = begin;
-$('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 'Sound on' : 'Sound off'; };
+let modelsReady = false;
+{ let done = 0; const total = 1 + PEOPLE.length, tick = (x) => { done++; $('bar').style.width = (done / total * 100) + '%'; return x; };
+  Promise.all([model('anims').then(tick), ...PEOPLE.map((n) => model(n.model).then(tick))]).then(([anims, ...gl]) => {
+    loadClips(anims);
+    PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; });
+      m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = 0; scene.add(m); animate(m, n.base); grounded.push(m); n.m = m; });
+    modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave;
+    if (__DEV__) devViews();
+  }); }
+function startGame() {
+  audioInit(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); setGoal();
+  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. E to use.'; showHint();
+  $('place').hidden = false; $('place').style.opacity = 1; setTimeout(() => { $('place').style.opacity = 0; }, 4500); canvas.focus();
+}
+$('start').onclick = () => { startGame(); cue('begin'); };
 
 /* ---------- the frame loop ---------- */
 function update(dt, now) {
@@ -282,11 +448,12 @@ function update(dt, now) {
       stepT -= dt * sp; if (stepT <= 0) { stepT = 1.3; stepSound('wood'); } }
   }
   for (const n of PEOPLE) npcTick(n, dt);
-  near = null; if (state.started && !busy) { let best = 2.6; for (const n of PEOPLE) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && d < best) { best = d; near = n; } } }
-  $('talk').hidden = !near; if (near) $('talk').textContent = 'Talk to ' + near.label;
+  near = null; if (state.started && !busy) { let best = 2.6; for (const n of PEOPLE) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && d < best) { best = d; near = n; } }
+    for (const a of ACTIONS) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }   /* standing at a thing to do beats a person nearby */
+  const talkBtn = $('talk'); talkBtn.hidden = !(near && near.go); if (near && near.go) talkBtn.textContent = near.label;   /* people get the bubble; things to do get this button */
   for (const mx of mixers) mx.update(dt); for (const n of PEOPLE) if (n.m && n.m.userData.anim) n.m.userData.anim.tick(dt);
   for (const m of grounded) groundFeet(m);
-  if (now !== undefined) audioTick(now / 1000);
+  if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); }
 }
 let last = performance.now(), stepT = 0;
 function frame(t) {
@@ -300,19 +467,34 @@ requestAnimationFrame(frame);
 /* ---------- test views and a scripted playthrough: dev builds only (node tools/build.mjs garvey --dev) ---------- */
 function devViews() {
   const q = new URLSearchParams(location.search); const shot = q.get('shot');
-  const go = (x, z, yaw, pitch) => { $('title').hidden = true; $('hud').hidden = false; state.started = true; state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch || 0; setGoal('Talk to the printer and the customer.'); };
+  const go = (x, z, yaw, pitch) => { $('title').hidden = true; $('hud').hidden = false; state.started = true; state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch || 0; unlock('you', true); showCount(); setGoal(); };
   const VIEWS = { shop1: [-0.5, 2.9, 0, 0], shop2: [0.6, 0.4, -0.75, -0.08], shop3: [-2.0, -0.2, 0.3, 0.05], shop4: [-0.5, 0.6, Math.PI, -0.02], shop5: [0.9, 1.8, 0.35, -0.1], shop6: [3.9, 3.0, 0.6, 0], shop7: [-3.7, 1.8, 0.7, 0.1] };
   if (shot && VIEWS[shot]) go(...VIEWS[shot]);
   if (shot === 'talk') { go(-2.0, -0.3, 0.3, 0.05); startTalk(PEOPLE[0]); }
+  if (shot === 'type') { go(-1.9, -1.7, 0, -0.1); stage = 1; openType(); for (const ch of WORD.slice(0, 3)) $('tcase').querySelector('[data-l="' + ch + '"]').click(); }
+  if (shot === 'typedone') { go(-1.9, -1.7, 0, -0.1); stage = 1; openType(); for (const ch of WORD) $('tcase').querySelector('[data-l="' + ch + '"]').click(); $('tpress').click(); }
+  if (shot === 'journal') { go(-1.9, -1.7, 0, -0.1); unlock('garvey-printer', true); unlock('press', true); openJournal('garvey-printer'); }
+  if (shot === 'chapters') { go(-0.5, 2.9, 0, 0); openChapters(); }
+  if (shot === 'reset') { go(-0.5, 2.9, 0, 0); setTimeout(() => $('reset').click(), 600); }
+  if (shot === 'credits') { go(-0.5, 2.9, 0, 0); openCredits(); }
+  if (shot === 'bubble') { go(-2.3, -0.8, 0.25, 0.08); }
   if (q.has('test') && q.get('test') === 'walk') {   /* step the world by hand and watch the customer walk her route */
     const c = PEOPLE[1]; go(4.0, -1.2, 0, 0); const trail = []; let dist = 0, px = c.x, pz = c.z, minx = 9, maxx = -9, minz = 9, maxz = -9, walked = 0;
     for (let i = 0; i < 60 * 40; i++) { update(1 / 60); if (c.walking) walked++; dist += Math.hypot(c.x - px, c.z - pz); px = c.x; pz = c.z; minx = Math.min(minx, c.x); maxx = Math.max(maxx, c.x); minz = Math.min(minz, c.z); maxz = Math.max(maxz, c.z); if (i % 300 === 0) trail.push(c.x.toFixed(1) + ',' + c.z.toFixed(1)); }
     document.title = 'WALK dist=' + dist.toFixed(1) + ' walkingFrames=' + walked + ' x=' + minx.toFixed(1) + '..' + maxx.toFixed(1) + ' z=' + minz.toFixed(1) + '..' + maxz.toFixed(1) + ' leg=' + c.i + ' trail=' + trail.join(' '); }
-  if (q.has('auto')) {   /* the autoplayer: start, talk to everyone by clicking Next, check the goal, report problems */
+  if (q.has('auto')) {   /* the autoplayer: start, talk to everyone, set the type, open each menu, check the way out, report problems */
     const log = []; const L = (m) => { log.push(m); document.title = log.join(' | '); };
     addEventListener('error', (e) => L('ERROR ' + e.message));
-    L('place=shop'); $('start').click(); L('started=' + state.started + ' goal="' + $('goal').textContent + '"');
-    let k = 0; const next = () => { const n = PEOPLE[k]; if (!n) { setTimeout(() => { L('GOAL "' + $('goal').textContent + '"'); L(PEOPLE.every((p) => p.talked) ? 'ALLTALKED' : 'STALL'); L('DONE'); }, 300); return; }
+    L('place=shop title: allgames=' + (!$('allgames').hidden) + ' chapters=' + (!$('tchap').hidden) + ' savenote=' + (!$('savenote').hidden)); $('start').click(); L('started=' + state.started + ' goal="' + $('goal').textContent + '"');
+    let k = 0; const next = () => { const n = PEOPLE[k]; if (!n) { setTimeout(() => { L('stage=' + stage + ' goal="' + $('goal').textContent + '"');
+        state.x = -1.9; state.z = -1.7; update(0.016); L('near=' + (near && near.label)); if (near && near.go) near.go();
+        for (const ch of WORD) { const t = $('tcase').querySelector('[data-l="' + ch + '"]'); if (t) t.click(); } L('typed=' + typed);
+        $('tpress').click(); $('tdone').click(); L('stage=' + stage + ' pages=' + unlocked.join(','));
+        $('jbtn').click(); L('journal open=' + !$('journal').hidden + ' tabs=' + $('jtabs').children.length + ' jcount=' + $('jcount').textContent + ' allgames=' + (!$('jhome').hidden)); $('jchap').click();
+        L('chapters open=' + !$('chapters').hidden + ' items=' + $('chlist').children.length + ' playable=' + $('chlist').querySelectorAll('button:not(:disabled)').length); $('chclose').click();
+        $('reset').click(); L('reset card="' + $('ctitle').textContent + '" buttons=' + [...$('cbtns').children].map((b) => b.textContent).join('/')); $('cbtns').children[0].click();
+        L('after restart: stage=' + stage + ' pages=' + unlocked.length + ' talked=' + PEOPLE.filter((p) => p.talked).length + ' busy=' + busy);
+        L(stage === 0 && unlocked.length === 3 && !busy ? 'ALLDONE' : 'STALL'); L('DONE'); }, 300); return; }
       state.x = n.x + 1.1; state.z = n.z + 0.4; update(0.016); L('near=' + (near && near.id)); startTalk(n); let c = 0; const iv = setInterval(() => { if ($('dialogue').hidden) { clearInterval(iv); L(n.id + ' talked=' + n.talked + ' lines=' + c); k++; setTimeout(next, 100); } else { c++; $('next').click(); } }, 80); };
     setTimeout(next, 200); }
 }
