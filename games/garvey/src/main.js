@@ -434,7 +434,7 @@ function nextCard(i, s, tries = 0) {   /* when a chapter is finished, offer the 
   card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); nx.go(); } }, { t: 'Stay here', go: hideCard }]);
 }
 const CHAPTERS = [
-  { year: 'About 1908', name: 'The print shop', ready: true, go: () => chapterFade('About 1908', 'A print shop in Kingston', resetChapter), done: () => best >= 3 },
+  { year: 'About 1908', name: 'The print shop', ready: true, go: () => { if (!SHOP_PEOPLE.every((n) => n.m)) toast('Loading the print shop'); ensureShop().then(() => chapterFade('About 1908', 'A print shop in Kingston', resetChapter)); }, done: () => best >= 3 },
   { year: 'July 1914', name: 'The first followers', ready: true, go: () => { toast('Loading the hall'); ensureHall().then(() => chapterFade('1914', 'A meeting hall in Kingston', resetChapter2)); }, done: () => best >= 14 }, { year: '1916', name: 'The streets of Harlem', ready: true, go: () => { toast('Loading Harlem'); ensureStreet().then(() => chapterFade('1916', 'Harlem, New York', resetChapter3)); }, done: () => best >= 23 }, { year: '1918 to 1919', name: 'The power of the press', ready: true, go: () => { toast('Loading the press room'); ensurePress().then(() => chapterFade('1918', 'The press room, Harlem', resetChapter4)); }, done: () => best >= 34 },
   { year: '1919', name: 'The Black Star Line', ready: true, go: () => { toast('Loading the dock'); ensureDock().then(() => chapterFade('1919', 'A dock in New York', resetChapter5)); }, done: () => best >= 44 }, { year: 'August 1920', name: 'The great convention', ready: true, go: () => { toast('Loading Liberty Hall'); ensureLiberty().then(() => chapterFade('August 1920', 'Liberty Hall, Harlem', resetChapter6)); }, done: () => best >= 54 }, { year: '1922 to 1927', name: 'The price of a dream', ready: true, go: () => { toast('Loading the office'); ensureOffice().then(() => chapterFade('1925', 'Amy Jacques Garvey\'s desk, Harlem', resetChapter7)); }, done: () => best >= 64 }, { year: '1927 to today', name: 'The question that remains', ready: true, go: () => { toast('Loading the park'); ensurePark().then(() => chapterFade('Today', 'National Heroes Park, Kingston', resetChapter8)); }, done: () => best >= 74 },
 ];
@@ -631,6 +631,9 @@ function loadPerson(n) {
   n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); grounded.push(m); n.m = m; m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); n.h = Math.max(1.3, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
   return n.loading;
 }
+let shopLoading = null;
+function ensureShop() {   /* the two shop people load on demand: a player who resumes at a later chapter never downloads them unless the print shop chapter is replayed */
+  if (!shopLoading) shopLoading = Promise.all(SHOP_PEOPLE.map((n) => (n.m ? Promise.resolve() : loadPerson(n)))); return shopLoading; }
 let hallLoading = null;
 function ensureHall() { if (!hallLoading) { buildHall(); hallLoading = Promise.all(HALL_PEOPLE.map(loadPerson)); } return hallLoading; }
 
@@ -1258,10 +1261,11 @@ function resetChapter2() {   /* the hall again: the poster comes down, the neigh
 /* ---------- loading and starting ---------- */
 applySave(loadGame());
 let modelsReady = false;
-{ let done = 0; const total = 1 + PEOPLE.length, tick = (x) => { done++; $('bar').style.width = (done / total * 100) + '%'; return x; };
-  Promise.all([model('anims').then(tick), ...PEOPLE.map((n) => model(n.model).then(tick))]).then(([anims, ...gl]) => {
+{ const needShop = stage < 10;   /* a saved game past chapter 1 starts in a later place, so the shop people are not downloaded (ensureShop loads them if chapter 1 is replayed) */
+  let done = 0; const total = 1 + (needShop ? SHOP_PEOPLE.length : 0), tick = (x) => { done++; $('bar').style.width = (done / total * 100) + '%'; return x; };
+  Promise.all([model('anims').then(tick), ...(needShop ? SHOP_PEOPLE.map((n) => model(n.model).then(tick)) : [])]).then(([anims, ...gl]) => {
     loadClips(anims);
-    PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; });
+    if (needShop) SHOP_PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; });
       m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = 0; scene.add(m); animate(m, n.base); grounded.push(m); n.m = m; });
     (stage >= 70 ? ensurePark() : stage >= 60 ? ensureOffice() : stage >= 50 ? ensureLiberty() : stage >= 40 ? ensureDock() : stage >= 30 ? ensurePress() : stage >= 20 ? ensureStreet() : stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 70 ? 'park' : stage >= 60 ? 'office' : stage >= 50 ? 'liberty' : stage >= 40 ? 'dock' : stage >= 30 ? 'press' : stage >= 20 ? 'street' : stage >= 10 ? 'hall' : 'shop'); showPoster(); if (__DEV__) devViews(); });
     modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave;
