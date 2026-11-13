@@ -1,8 +1,8 @@
 # Bog Walk 1904: the story plan
 
-Status: **story agreed with the owner (13 Nov 2026). Nothing is built yet.** Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/CONTENT.md` first. This file is the story, the facts we can and cannot use, and the decisions. When building starts, it becomes the game guide, like `docs/games/garvey.md`.
+Status: **story agreed with the owner (13 Nov 2026). The first slice is built** (see "Where things are now"); the rest of the story is not. Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/CONTENT.md` first. This file is the game guide: the story, the facts we can and cannot use, the decisions, the build rules and the code map.
 
-Title: **Bog Walk 1904: The Tube**. The game folder will be `games/bog-walk/`, started from `games/_template/`.
+Title: **Bog Walk 1904: The Tube**. The game is in `games/bog-walk/`, started from `games/_template/`.
 
 ## Decisions (agreed with the owner)
 
@@ -15,6 +15,70 @@ Title: **Bog Walk 1904: The Tube**. The game folder will be `games/bog-walk/`, s
 | The title | **Bog Walk 1904: The Tube.** |
 
 Still open: the made-up characters' final names (Zeke, Rudy and Zeke's daughter are working names), and how the menu card picture looks.
+
+## Build rules from the owner (13 Nov 2026)
+
+These are being developed across the games and are not in `CLAUDE.md` yet. Follow them here, and move them to the shared docs when the owner writes them up.
+
+1. **Nothing overlaps or passes through anything solid.** No character is placed in, or walks through, a solid object, and no two characters overlap. Solid things (tools, benches, walls, people) block walking, for the player and for anyone who walks. In this game the buckets and shovels are circles in `T.solids` (`tube.js`) and `clampPos` slides the player round them. Dev builds check that no tool overlaps another or sits under the manhole (`__bw.propOverlaps()`, and the autoplayer runs it).
+2. **Things held in a hand are held properly.** The grip is at the hand, the object is not floating, does not pass through the body or face, and never covers the body or the middle of the view. In first person the torch is in a real fist: a palm behind the stick, **exactly four fingers** (each goes across the front of the stick and curls back round its left side, and they differ a little in length), **one thumb** (shorter and fatter than a finger, laid diagonally across the front of the first two fingers, with a thumbnail so nobody counts it as a fifth finger), and a sleeve leaving through the bottom of the screen. Count the digits in a close-up after any change to the hand (`?shot=fist` brings it close); an earlier version had the thumb in its own row and looked like six fingers. The fist sits at a fixed low spot, fully in view, and the torch is pivoted and scaled about it (`hand.place`), so it leans away, stays small, and is never cut off or in the way on any screen shape.
+3. **Detailed graphics for the important sections** (the Tube, the manhole, the water, the yard at dawn, the ruins). Look at a screenshot of each at close range and from far away before calling it done.
+4. **No overlapping text or other elements on screen, at any size.** The words and buttons are one flex column (top bar, subtitle, open space, bottom bar), so they cannot overlap by construction, and the subtitle sits under the top bar so the bottom corners stay free for the hand and the buttons. Dev builds check it (`__bw.hudOverlaps()` lists every visible pair of words and buttons that overlap, anything off the screen, and anywhere the hand, tested by rays through the real picture, overlaps a word or button, runs off the sides or top, or covers the middle of the view). The buttons sit at the right edge on wide screens and at the left on narrow ones. Check it at a desktop size, a portrait phone, a landscape phone, a small phone and a tablet (the check was run at 1280x720, 390x844, 844x390, 320x568, 768x1024, 667x375 and 360x640).
+
+## Where things are now
+
+Status: the **first slice is built**: an opening, the inside of the Tube and the night the water came (chapters 2 and 3 of the plan below, with placeholder voices), staged cinematically. Nothing else exists yet: no title-screen chapters menu, journal, saving, people, station yard, flashback or ending scenes.
+
+Code is in `games/bog-walk/`:
+
+| File | What it holds |
+|---|---|
+| `src/main.js` | renderer, the HUD, controls (keys, touch stick, drag to look, tap the rust), the night's phases (`work`, `trickle`, `rise`, `dark`, `out`, `end`), sound mixing, the dev test views and the autoplayer |
+| `src/tube.js` | `buildTube`: the pipe wall (a grid we make so the manhole is a real hole), sand, rivets and flanges (instanced, in 10 m chunks), tools, rust patches, hung torches, the manhole, the rising water; and `makeHand`: the torch and fist in first person |
+| `src/gfx.js` | every texture, drawn in code with a seeded random generator |
+| `src/sfx.js` | the pipe's sounds on top of `engine/audio.js`: a short echo, drips, scraping, voices heard from far off, a torch hissing out, a clank, the water beds |
+| `site/index.html` | the page and its styles (one flex column of words and buttons, so nothing overlaps) |
+| `anim-clips.json` | the 14 shared animation clips this game will use (the build trims `anims.js` to them) |
+
+Measurements that matter (all in `tube.js`): the pipe is 2.44 m across (`R = 1.22`), the sand floor is at `SAND = 0.5`, so the roof is 1.94 m above the floor and your eyes are at 1.45 m. The pipe runs from `ZMIN = -62` to `ZMAX = 14` and the manhole is at `ZM = 7.75`. Anything hung on the wall must stay under the roof (2.44 m up): a first version hung the torches too high and they were hidden behind the wall.
+
+Test it:
+
+```bash
+node tools/build.mjs bog-walk --dev          # dev build: test views and the autoplayer
+python3 -m http.server 8765                  # then open http://localhost:8765/games/bog-walk/site/
+# ?shot=view1 (the start), cap (an opening title card; &line=2), end (the end card; &skipped=1), fist (the hand brought close), patch (&p=0 to 5, &half=n or &clean=0,1 to show scraping), up, manhole, torch (&t=0 to 5), back (&z=-18),
+#   water (&wl=0.55&z=-12&yaw=3.14), dark (&wl=0.9&torch=0&vig=0.85), hud (the worst-case words and buttons) are views;
+#   add &x= &z= &yaw= &pitch= &wl= &torch= &vig= &sky= to place the camera and the water by hand, and &quick to run every timed part at 15% length.
+# ?auto=1 plays the whole night, ?auto=2 presses Skip at the first sign of water, ?auto=3 plays the opening cards by their own timers first. The result is in the page title and in #autolog.
+# In the console: __bw.hudOverlaps() and __bw.propOverlaps() list anything that overlaps (both should print []), and
+#   __bw.audit() runs the engine's place audit (engine/audit.js: floating objects, people inside solids, spots that cannot be reached) and should report nothing.
+#   The autoplayer runs all three and fails if any reports a problem. The engine's auditHeld needs a Mixamo body, so it does not apply to the first-person hand (hudOverlaps tests that by rays).
+```
+
+### The cinematic moments (owner rule: the major events must feel cinematic)
+
+Each major event is staged, not just switched on. The helpers are `bars`, `hideHud`, `caption` and `captionOff` in `main.js`, the camera's acting is in `tick`, and the sounds are in `sfx.js`.
+
+| Moment | What the player sees and hears |
+|---|---|
+| **The opening** (`startIntro`) | Black, with the letterbox bars in. Two title cards fade in and out: "Bog Walk, Jamaica / June 1904", then "The last tram has gone. / The water in the pipe is shut off." Then a slow fade up into the Tube as the bars slide away and the words appear. Any key or tap skips it ("Tap or press a key to skip"). It plays once per visit; "Play the night again" goes straight to the work. |
+| **The first water** (`startTrickle`) | A held breath: almost every sound drops away for about 2.6 s, your view slowly dips to the water at your feet and comes back, and a low drone starts under everything. |
+| **The rush** (`startRise`) | A deep boom heard far off. From then on the camera has a low rumble that grows with the water, the roar grows, the drone climbs. |
+| **The torches go out** (`startDark`) | The black bars slide in (the words move inside them and the hand rises to stay clear), the view narrows a little, and the torches on the walls go out one by one, the far ones first, each with a hiss; yours goes last. A soft heartbeat starts and speeds up a little. The edges of the screen darken. Only the pale light from the manhole is left. |
+| **The climb** (`startOut`) | The words fade away and the bars stay. You glide to the manhole and up into its neck, looking up. The air swells, the sky turns from night blue to dawn, the view widens, the rumble dies, and the picture fades to white. |
+| **The end** (`showEnd`) | The bars go, and a card says you are out. |
+
+No cinematic element may break the no-overlap rule. The bars are in the same flex layout as the words (the whole `#hud` is inset by the height of a bar), the captions only show while the words are hidden, and the hand is lifted clear of the bottom bar. The overlap check runs with the bars in (`&cine=1`). Test views: `?shot=cap` (an opening card, `&line=2` for the second), `&cine=1` on any view (bars in), `?auto=3` (plays the opening cards on their own timers, then the night).
+
+### Known issues and notes
+
+- **Credit link.** "Created by **Kellz 5.0**" is a link to `https://www.instagram.com/kellzilla_5.0` (opens in a new tab, `rel="noopener noreferrer"`), on the title screen and on the end card. The other places that show the credit are not linked yet: `menu/index.html`, `menu/about.html`, and the credits panels in `games/port-royal`, `games/garvey` and `games/kendal` (their `#dev` button and `.crbig` line). Link them in one small commit when the owner says so.
+
+- **Engine bug (not fixed here, because `engine/` is shared and other chats are editing games):** `stepSound('water')` in `engine/audio.js` sets `src.buffer` twice (line 23 sets it for every kind, then the `'water'` branch sets it again). Browsers allow the buffer to be set only once, so the second set throws `InvalidStateError` and breaks whatever calls it, the first time anyone steps in water with sound on. Muted runs and headless runs never reach it. The fix: delete `src.buffer = AU.step || AU.crack;` from the `'water'` branch, and add `|| k === 'water'` to the condition on line 23, so water gets the softer `AU.step` source it was meant to have. Bog Walk uses its own `waterStep` in `src/sfx.js` instead. Check whether Port Royal's swim and Kendal's beach call the engine's version.
+- **Test sound in a browser that allows it.** The autoplayer is silent in headless Chrome unless it is started with `--autoplay-policy=no-user-gesture-required`; run it that way once after any sound change, because errors in sound code only show when the sound really plays.
+- **It is already on the public site.** `tools/dist.mjs` builds every folder in `games/` that does not start with `_`, so this game is served at `/games/bog-walk/site/` after the next deploy, although the menu does not link to it yet. Add the menu card (see `docs/NEW_GAME.md`, step 1) only when the owner says it is ready.
+- **Looking straight up the manhole** (`?shot=up`) is the roughest view: the neck and the ring seam beside it are lit very close and a little faceted. The end of the night will glide you up through it, so polish it when the station yard is built.
 
 ## The event in one paragraph
 
