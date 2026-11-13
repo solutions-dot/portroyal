@@ -40,7 +40,7 @@ Players who know Port Royal should find everything where they expect it. The pag
 - **Reset**: a card with "Restart this chapter", "Start the whole story again" (asks twice) and **Main Menu**.
 - **Main Menu** (a button, like Chapters; it used to be an "All games" link) is therefore reachable from the title, the Journal and the Reset card. It only shows where the real menu exists (the website), as in Port Royal.
 - **Saving**: the Journal, the goal and who you have talked to are kept in the browser (`garvey-save-v1`).
-- **Keys**: Escape closes any panel; E or Enter uses the nearest thing.
+- **Keys**: Escape closes any panel; Space, Enter or E uses the nearest thing.
 
 ### The story is a number
 

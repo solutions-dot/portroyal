@@ -74,3 +74,5 @@ gh api repos/solutions-dot/portroyal/pulls -f title="..." -f head=my-change -f b
 - Merge with `gh api -X PUT repos/solutions-dot/portroyal/pulls/<n>/merge -f merge_method=merge`, only when the owner asks.
 
 Large binaries in the repo: `shared/anim-sources/*.fbx` (about 38 MB), the source `.glb` files in `games/*/assets/`, and the packed models in `games/*/site/models/`.
+
+Eventide is currently an unfinished local prototype. The public distribution deliberately excludes it; build it directly with `node tools/build.mjs eventide --dev` for development. Add it to the released distribution only after its story, title and required checks are complete.

@@ -104,7 +104,8 @@ export function makeHand(camera) {
   inner.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.renderOrder = 10; } });
 
   const FIST = new THREE.Vector3(0, yMid, 0.004);   /* the middle of the fist: the hand is turned and scaled about this point */
-  const H = { root, inner, stickA, stickB, flame, light, lift: 0, baseY: -0.25, tune: null, s: 1, cs: 0,
+  const H = { root, inner, stickA, stickB, flame, light, lift: 0, panelOpen: false, baseX: 0, baseY: -0.25, tune: null, s: 1, cs: 0,
+    setPanelOpen(on) { H.panelOpen = on; root.position.x = H.baseX - (on ? 0.22 : 0); },
     setLift(u) { H.lift = u; root.position.y = H.baseY + u; },
     setCine(c) { H.cs = c; const s = H.s * (1 - 0.14 * c); inner.scale.setScalar(s); inner.position.copy(FIST).multiplyScalar(-s).applyEuler(inner.rotation); },   /* the black bars push the words down, so the torch shrinks a little about the fist to keep its flame clear of them */   /* lift (in camera units): the black bars are in, so the whole hand rises just enough to keep the fist clear of the bottom bar */
     lowestFistPx(cam, screenH) {   /* the lowest point of the fingers, thumb and palm on the screen, in pixels from the top */
@@ -113,9 +114,9 @@ export function makeHand(camera) {
         for (const x of [bb.min.x, bb.max.x]) for (const y2 of [bb.min.y, bb.max.y]) for (const z of [bb.min.z, bb.max.z]) { v.set(x, y2, z).applyMatrix4(o.matrixWorld).project(cam); low = Math.max(low, (-v.y * 0.5 + 0.5) * screenH); } });
       return low; },
     place(aspect, fov, ph, pw) {   /* the fist sits at a fixed low spot, fully in view; the torch is turned and scaled about it, so a small or narrow screen shrinks the torch, not the grip */
-      const depth = 0.55, halfW = Math.tan(fov * Math.PI / 360) * aspect * depth, wide = aspect >= 1.2, s = 0.94 * Math.min(1, Math.max(0.55, Math.min(ph / 640, pw / 560)));   /* words keep their pixel size, so a short or narrow screen gets a smaller torch to leave them room */
+      const depth = 0.55, halfW = Math.tan(fov * Math.PI / 360) * aspect * depth, wide = aspect >= 1.2, s = 0.94 * Math.min(1, Math.max(0.35, Math.min(ph / 640, pw / 560)));   /* words keep their pixel size, so a short or narrow screen gets a smaller torch to leave them room */
       const tn = H.tune || {};
-      root.position.set(wide ? Math.min(0.34, halfW * 0.7) : halfW * (tn.x ?? 0.36), H.baseY + H.lift, -depth); root.rotation.set(0, tn.ry ?? (wide ? 0.34 : 0.2), 0);   /* on a tall phone the hand turns a little less, so the forearm leaves through the bottom edge, not the side */
+      root.position.set(wide ? Math.min(0.34, halfW * 0.7) : halfW * (tn.x ?? 0.36), H.baseY + H.lift, -depth); H.baseX = root.position.x; H.setPanelOpen(H.panelOpen); root.rotation.set(0, tn.ry ?? (wide ? 0.34 : 0.2), 0);   /* on a tall phone the hand turns a little less, so the forearm leaves through the bottom edge, not the side */
       inner.rotation.set(tn.rx ?? -0.2, 0, tn.rz ?? (wide ? -0.15 : -0.07)); H.s = s * (tn.sm ?? 1); H.setCine(H.cs); },
     update(time, k) {
       rag.emissiveIntensity = 0.1 + 0.9 * Math.min(1, k); const f = k * (0.86 + 0.1 * Math.sin(time * 9.1) + 0.06 * Math.sin(time * 21)), f2 = k * (0.9 + 0.1 * Math.sin(time * 13.3 + 1));

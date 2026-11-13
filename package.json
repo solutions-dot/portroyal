@@ -8,7 +8,8 @@
     "serve": "python3 -m http.server 8765",
     "build:all": "node tools/dist.mjs",
     "dist": "node tools/dist.mjs",
-    "serve:dist": "cd dist && python3 -m http.server 8766"
+    "serve:dist": "cd dist && python3 -m http.server 8766",
+    "test": "node tools/test.mjs"
   },
   "dependencies": {
     "three": "0.187.0"

@@ -11,10 +11,29 @@ function turnWorld(bone, axis, angle) {   /* turn a bone about an axis given in 
   const pq = wq(bone.parent), r = new THREE.Quaternion().setFromAxisAngle(axis, angle);
   bone.quaternion.premultiply(pq.clone().invert().multiply(r).multiply(pq)); bone.updateMatrixWorld(true);
 }
-export function grip(model, side, obj, { handleY = 0.4, scale = 1, yaw = 0, lift = 0.2, curl = 1 } = {}) {
+function bindQuaternion(model, bone) {
+  let result = null;
+  model.traverse((o) => {
+    if (result || !o.isSkinnedMesh) return;
+    const s = o.skeleton, i = s.bones.indexOf(bone), pi = s.bones.indexOf(bone.parent);
+    if (i < 0 || pi < 0) return;
+    const local = s.boneInverses[pi].clone().multiply(s.boneInverses[i].clone().invert());
+    const p = new THREE.Vector3(), q = new THREE.Quaternion(), scale = new THREE.Vector3();
+    local.decompose(p, q, scale); result = q;
+  });
+  return result;
+}
+export function grip(model, side, obj, { handleY = 0.4, scale = 1, yaw = 0, lift = 0.2, curl = 1, straighten = 0 } = {}) {
   const B = (n) => model.getObjectByName('mixamorig' + side + n), hand = B('Hand'), arm = B('Arm'); if (!hand) return null;
   model.updateMatrixWorld(true);
   const idx = B('HandIndex1'), mid = B('HandMiddle1'), pky = B('HandPinky1'), th = B('HandThumb2') || B('HandThumb1'), g = { side, hand, arm, lift: 0, fingers: [], wrap: null, armQ: new THREE.Quaternion(10, 0, 0, 0) };
+  // A heavy case hangs below the hand. Idle's bent elbow can pull it into the
+  // upper arm; keep some of the straight bind pose while retaining its motion.
+  g.elbow = B('ForeArm'); g.straighten = straighten;
+  g.elbowRest = straighten && g.elbow ? bindQuaternion(model, g.elbow) : null;
+  if (g.elbowRest) g.elbow.quaternion.slerp(g.elbowRest, straighten);
+  g.elbowQ = g.elbow ? g.elbow.quaternion.clone() : null;
+  model.updateMatrixWorld(true);
   if (idx && mid && pky) {
     const M = wp(mid), f = M.clone().sub(wp(hand)).normalize(), w = wp(idx).sub(wp(pky)).normalize(), n = new THREE.Vector3().crossVectors(w, f).normalize();
     if (th && n.dot(wp(th).sub(M)) < 0) n.negate();   /* n points out of the palm */
@@ -46,6 +65,9 @@ const _f = new THREE.Vector3();
 export function gripTick(model) {
   const gs = model.userData.grips; if (!gs) return; const mq = wq(model);
   for (const g of gs) {
+    if (g.elbowRest && !g.elbow.quaternion.equals(g.elbowQ)) {
+      g.elbow.quaternion.slerp(g.elbowRest, g.straighten); g.elbowQ.copy(g.elbow.quaternion);
+    }
     if (g.lift && g.arm && !g.arm.quaternion.equals(g.armQ)) { _f.set(0, 0, 1).applyQuaternion(mq).normalize(); g.arm.parent.updateWorldMatrix(true, false); turnWorld(g.arm, _f, g.lift); g.armQ.copy(g.arm.quaternion); }   /* only once per animation step */
     for (const f of g.fingers) f.b.quaternion.copy(f.q);
     if (g.wrap) { g.hand.updateWorldMatrix(true, false); g.wrap.quaternion.copy(wq(g.hand)).invert().multiply(mq); }

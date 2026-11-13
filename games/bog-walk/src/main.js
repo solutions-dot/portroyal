@@ -1,3 +1,4 @@
+import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/bog-walk/src/main.js: Bog Walk 1904: The Tube. The script is docs/games/bog-walk.md, "The build script (agreed with the owner, 13 Nov 2026)".
    Six chapters: the station on Sunday evening (0), Zeke's story of the first electric tram in 1899 (1), inside the Tube (2), the water (3),
    the morning after (4) and the ruins today (5). You play someone fictional, always in first person. No one can fail and no one is shown in the water.
@@ -116,9 +117,9 @@ function scrape(p) { if (!p) return; T.startClean(p); scrapeSound(); }
 function act() { if (locked()) return; if (MODE === 'tube') scrape(nearPatch()); else if (near) activate(near); }
 $('act').onclick = act;
 addEventListener('keydown', (e) => {
-  if (N.intro) { skipIntro(); return; } const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && S.started) e.preventDefault(); keys.add(k);
+  if (N.intro) { skipIntro(); return; } const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && S.started) e.preventDefault(); keys.add(k);
   if (k === 'escape') { if (!$('dialogue').hidden) { leaveTalk(); return; } closeJournal(); closeChapters(); closeCredits(); closePuzzle(false); }
-  if ((k === 'e' || k === 'enter') && !e.repeat && $('holdbox').hidden) act();
+  useInteractionKey(e, () => { if (!$('dialogue').hidden && !$('next').hidden) { $('next').click(); return; } if (!locked() && $('holdbox').hidden && (MODE === 'tube' ? nearPatch() : near)) { act(); return; } return false; });
 });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 
@@ -453,7 +454,7 @@ $('pzx').onclick = () => closePuzzle(false); $('pzdone').onclick = () => closePu
 /* ---------- goals and the helper ---------- */
 let stage = 0, best = 0;
 function refreshGoal(quiet) { if (cur === 'tube') return; const g = GOALS[stage]; setGoal(g ? g(ctr) : '', quiet); }
-function showHint() { $('hint').textContent = TOUCH ? (MODE === 'tube' ? 'Left thumb to walk. Drag to look. Tap the rust.' : 'Left thumb to walk. Drag to look. Tap a person to talk.') : (MODE === 'tube' ? 'WASD to walk. Drag to look. E to scrape.' : 'WASD to walk. Drag to look. E to talk or use.'); N.hintT = 0; }
+function showHint() { $('hint').textContent = TOUCH ? (MODE === 'tube' ? 'Left thumb to walk. Drag to look. Tap the rust.' : 'Left thumb to walk. Drag to look. Tap a person to talk.') : (MODE === 'tube' ? 'WASD to walk. Drag to look. E to scrape.' : 'WASD to walk. Drag to look. Space or Enter to talk or use.'); N.hintT = 0; }
 /* the helper: stand still or stall for a while and the goal opens again, and the "This way" pill points to what to do next */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false };
 function nudgeTarget() {
@@ -625,6 +626,7 @@ function clampTube(x, z) {   /* stay in the lane and out of the buckets and shov
   return [x, z];
 }
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look2 = { id: null, x: 0, y: 0, moved: 0 }, ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+releaseOnBlur(keys, [stick, look2], () => { HOLD.on = false; });
 function tapPatch(cx, cy) {   /* a tap (not a drag) on a rust patch scrapes it, if it is near enough */
   if (N.phase !== 'work') return;
   ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
@@ -703,9 +705,9 @@ function worldTick(dt, ft) {
   if ((frames & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
   if (P.tick) P.tick(dt, ft); smoke.tick(dt); holdTick(dt);
 }
-function tick(dt) {
+function tick(dt, clockDt = dt) {
   time += dt; const ft = (__DEV__ && N.phase === 'shot') ? 3.3 : time;
-  for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
+  for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](clockDt)) TICKS.splice(i, 1);
   const sp = (S.started && N.phase !== 'shot') ? moveTick(dt) : 0; walkPh += sp * dt * 3;
   if (MODE === 'tube') {
     if (S.started && N.phase !== 'shot' && N.phase !== 'world') nightTick(dt);
@@ -730,8 +732,11 @@ function tick(dt) {
   if (MODE === 'tube') { const nearP = !locked() && !!nearPatch(); if (N.phase !== 'shot') { if ($('act').hidden === nearP) $('act').hidden = !nearP; if (nearP && $('act').textContent !== 'Scrape') $('act').textContent = 'Scrape'; } }   /* test views and checks set the Scrape button themselves */
   else { sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110); for (const o of [sky.dome, sky.stars, sky.clouds]) o.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380); bubbleTick(time); }
 }
-function render() { renderer.render(scene, camera); }
-function frame(t) { if (!manual) requestAnimationFrame(frame); const dt = Math.max(0, Math.min(0.05, (t - last) / 1000)); last = t; tick(dt); render(); document.body.dataset.frames = ++frames; }
+function render() { hand.setPanelOpen(!$('pick').hidden); renderer.render(scene, camera); }
+function frame(t) { if (!manual) requestAnimationFrame(frame); const elapsed = Math.max(0, (t - last) / 1000), dt = Math.min(0.05, elapsed); last = t;
+  // Keep walking and water simulation bounded, but do not stretch chapter fades
+  // on slower phones. Bound long pauses too, so returning to a tab stays gentle.
+  tick(dt, Math.min(0.25, elapsed)); render(); document.body.dataset.frames = ++frames; }
 requestAnimationFrame(frame);
 if (__DEV__) window.__dbg = { S, N, PL, get cur() { return cur; }, get stage() { return stage; } };
 

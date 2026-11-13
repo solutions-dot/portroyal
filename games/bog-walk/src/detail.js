@@ -49,9 +49,9 @@ export function flameTree(h = 7, seed = 1) {   /* poinciana: a wide umbrella of 
   return g;
 }
 export function mangoTree(h = 6.5, seed = 1) {   /* a dark, dense tree with a few orange mangoes */
-  const r = rng(seed), g = grp(); cyl(0.3, 0.45, h * 0.5, solid(0x5a4630, 1), 0, h * 0.25, 0, g, 8); const cols = [0x1f5a2c, 0x2a6a32, 0x1a4e28, 0x316e36];
-  for (let i = 0; i < 7; i++) { const s = h * (0.2 + r() * 0.15); const b = mesh(new THREE.IcosahedronGeometry(s, 1), flat(cols[(r() * cols.length) | 0]), (r() - 0.5) * h * 0.6, h * 0.58 + r() * h * 0.3, (r() - 0.5) * h * 0.6, g); b.scale.y = 0.85; }
-  for (let i = 0; i < 9; i++) mesh(new THREE.SphereGeometry(0.1, 6, 5), flat(0xe8962a), (r() - 0.5) * h * 0.7, h * 0.5 + r() * h * 0.2, (r() - 0.5) * h * 0.7, g);
+  const r = rng(seed), g = grp(); cyl(0.3, 0.45, h * 0.5, solid(0x5a4630, 1), 0, h * 0.25, 0, g, 8); const cols = [0x1f5a2c, 0x2a6a32, 0x1a4e28, 0x316e36], crowns = [];
+  for (let i = 0; i < 7; i++) { const s = h * (0.2 + r() * 0.15); const b = mesh(new THREE.IcosahedronGeometry(s, 1), flat(cols[(r() * cols.length) | 0]), (r() - 0.5) * h * 0.6, h * 0.58 + r() * h * 0.3, (r() - 0.5) * h * 0.6, g); b.scale.y = 0.85; crowns.push(b); }
+  for (let i = 0; i < 9; i++) { const crown = crowns[i % crowns.length], radius = crown.geometry.parameters.radius; mesh(new THREE.SphereGeometry(0.1, 6, 5), flat(0xe8962a), crown.position.x + (r() - 0.5) * radius, crown.position.y - radius * 0.55, crown.position.z + (r() - 0.5) * radius, g); }
   return g;
 }
 export function bamboo(seed = 1) { const r = rng(seed), g = grp(), m = solid(0x8aa84a, 0.8), nm = solid(0x5a7a30, 0.9); for (let i = 0; i < 12; i++) { const hh = 6 + r() * 5, a = r() * 6.28, d = r() * 0.7, c = cyl(0.045, 0.06, hh, m, Math.cos(a) * d, hh / 2, Math.sin(a) * d, g, 5); c.rotation.set((r() - 0.5) * 0.28, 0, (r() - 0.5) * 0.28); for (let k = 1; k < 6; k++) { const n = cyl(0.065, 0.065, 0.05, nm, 0, -hh / 2 + k * hh / 6, 0, c, 5); } const lf = mesh(new THREE.SphereGeometry(0.5, 6, 4), flat(0x5a9a34), 0, hh / 2, 0, c); lf.scale.set(1, 1.6, 1); } return g; }
