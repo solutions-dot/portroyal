@@ -1823,15 +1823,21 @@ const BUBBLE = cv(128, 128, (c) => { const g = c.createRadialGradient(64, 64, 8,
 const MARKS = []; let markN = 0;
 function markSprite() { if (markN < MARKS.length) return MARKS[markN++]; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); sp.renderOrder = 5; scene.add(sp); MARKS.push(sp); markN++; return sp; }
 const isTalk = (a) => /^Talk to /.test(a.label);
-const markY = (a) => /old Ned|surgeon/.test(a.label) ? 1.7 : 2.15;
+const markY = (a, w) => {   /* how high above their feet the speech mark floats: just over the head or hat, measured from the person's own model */
+  const fall = /old Ned|surgeon/.test(a.label) ? 1.7 : 2.15; if (!w) return fall;
+  const cands = [abba, ...Object.values(people), ...Object.values(survivors), FBG.qm, FBG.exq, FBG.carrier, ...(FBG.d || [])]; let best = null, bd = 1.6; const p = new THREE.Vector3();
+  for (const m of cands) { if (!m || !m.parent || !m.visible) continue; m.getWorldPosition(p); const d = Math.hypot(p.x - w[0], p.z - w[1]); if (d < bd) { bd = d; best = m; } }
+  if (!best) return fall; const now = performance.now(), u = best.userData;
+  if (!u.hgt || now - (u.hgtT || 0) > 1500) { best.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(best), h = bb.max.y - bb.min.y; u.hgt = Math.max(1.0, Math.min(2.3, h)); u.hgtT = now; }
+  return u.hgt + 0.14; };
 const TB = { el: null, world: new THREE.Vector3(), a: null };
 TICKS.push(() => { markN = 0; TB.a = null; const now = performance.now() / 1000;
   if (state.started && !busy && $('card').hidden) for (const a of ACTIONS) { if (!isTalk(a) || !!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const d = Math.hypot(state.x - w[0], state.z - w[1]); if (d > 16) continue;
     const sp = markSprite(), near = a === current, home = state.place === 'in' ? indoor : state.place === 'ware' ? wareG : state.place === 'after' ? afterG : state.place === 'yard' ? yardG : scene;
     if (sp.parent !== home && home) home.add(sp);
-    const base = state.place === 'sea' ? seaLevel + 1.6 : (state.place === 'out' ? groundYAt(w[0], w[1]) : 0) + markY(a);
+    const base = state.place === 'sea' ? seaLevel + 1.6 : (state.place === 'out' ? groundYAt(w[0], w[1]) : 0) + markY(a, w);
     sp.position.set(w[0], base + Math.sin(now * 2.4 + w[0]) * 0.06, w[1]); const k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + w[0]) * 0.1); sp.scale.set(k, k, k); sp.material.opacity = Math.max(0.6, 1 - d / 20); sp.visible = !near;
-    if (near) { TB.world.set(w[0], base - 0.2, w[1]); if (home !== scene) TB.world.applyMatrix4(home.matrixWorld); TB.a = a; } }
+    if (near) { TB.world.set(w[0], base - 0.09, w[1]); if (home !== scene) TB.world.applyMatrix4(home.matrixWorld); TB.a = a; } }
   for (let i = markN; i < MARKS.length; i++) MARKS[i].visible = false;
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (TB.a && !busy) TB.a.go(); }); }
   const show = TB.a && TB.a === current && !busy; TB.el.hidden = !show; if (!show) return;
