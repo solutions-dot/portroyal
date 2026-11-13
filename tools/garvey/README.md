@@ -1,6 +1,6 @@
 # Garvey-era characters (about 1900 to 1930)
 
-Spike status: working, needs polish. `era.py` is a copy of `tools/people/npc.py` with extra garments, kept separate so the Port Royal chat's `npc.py` is untouched. Fold it back into `npc.py` after the Port Royal work has merged.
+Status: working. Used for every Garvey character so far: the printer and customer (chapter 1) and Garvey, Amy Ashwood and three neighbours (chapter 2), in `people/`. `era.py` is a copy of `tools/people/npc.py` with extra garments. Port Royal's `npc.py` has changed since (the neckcloth and coat-skirt fixes); folding the two together is a tidy-up for later.
 
 ## Set up on a fresh Linux machine
 
@@ -38,15 +38,15 @@ The bpy module has no Draco or meshopt, so the first `.glb` is large (about 1.5 
 | `woman` | The blouse follows the figure instead of a man's shirt drape |
 | `highneck` | A high-necked blouse |
 | `skirt` | A long skirt that hangs from both legs (colour key `Skirt`) |
+| `jacket` | A suit jacket with a V opening, waist-length, sleeves to the wrist (colour key `Jacket`; `jacketsleeve` sets how far down the arm) |
 | `bun` | Hair gathered into a bun |
 
 Women use the body macros `gender: 0.0`, `cupsize` and `firmness`, as in `tools/blender/abba.py`.
 
 ## Known issues (to fix before use in a game)
 
-- The waistcoat's top and armhole edges are ragged.
-- The flat cap looks like a flared pillbox. It needs a rounded, slouchy crown.
-- The collar looks like a small flap.
-- Not yet tried in a game with the walk and talk clips.
-- Still to make: a suit jacket, women's hats, the UNIA uniform, the nurses' dress, and a teen body for the young hero.
+- The waistcoat is a plain panel with no V opening (the jacket has one).
+- A very young or very short body (age below about 0.3) leaves skin strips down the trouser legs; use proportions like `printer1907.json`.
+- A woman's apron does not fit over a skirt (it is cast onto the body, not the skirt).
+- Still to make: women's hats, the UNIA uniform (from chapter 6), the Black Cross Nurses' dress, and a teen body for the young hero.
 - The preview makes deep skin tones look very dark. Check them under the game's own lighting.

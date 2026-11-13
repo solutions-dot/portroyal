@@ -116,7 +116,7 @@ def arm_ok(c,upto):
 sleeve=G.get('sleeve',0.86)
 cuts_sleeve=lambda t:[(armcut(t,1)[0],armcut(t,1)[1],lambda c:c.x>SX*0.8),(armcut(t,-1)[0],armcut(t,-1)[1],lambda c:c.x<-SX*0.8)]
 # shirt
-parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>(HIP+0.07 if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve),lambda c:0.012 if abs(c.x)>SX*0.8 else 0.008,'Shirt',post=(None if (G.get('coat') or G.get('woman')) else drape_front),
+parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>(HIP+0.07 if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve),lambda c:0.012 if abs(c.x)>SX*0.8 else 0.008,'Shirt',post=(smooth_edge if G.get('woman') else (None if G.get('coat') else drape_front)),
    cuts=[((0,0,NECK+0.005-(0.062*s if G.get('coat') else 0)),(0,0,1),None),((0,-0.1,NECK-(0.004 if G.get('highneck') else 0.035)*s-(0.06*s if G.get('coat') else 0)),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
@@ -198,17 +198,18 @@ if G.get('hat')=='felt':
     cx=(max(xs)+min(xs))/2; cy=(max(ys)+min(ys))/2; rx=(max(xs)-min(xs))/2+0.008; ry=(max(ys)-min(ys))/2+0.008
     C0=Vector((cx,cy,BZ)); bm=bmesh.new()
     # brim: wide disc at brow level
+    BR=G.get('brim',1.0)   # 1 is the wide 1690 brim; about 0.4 gives a short brim
     g=bmesh.ops.create_cone(bm,cap_ends=True,segments=32,radius1=1,radius2=1,depth=0.01,matrix=Matrix.Translation(C0))
-    for v in g['verts']: d=v.co-C0; v.co.x=cx+d.x*(rx+0.085*s); v.co.y=cy+d.y*(ry+0.075*s)
+    for v in g['verts']: d=v.co-C0; v.co.x=cx+d.x*(rx+0.085*s*BR); v.co.y=cy+d.y*(ry+0.075*s*BR)
     # crown: elliptical, from just under the brim up past the top of the head, tapering slightly
-    H=(TOP-BZ)+0.06*s
+    H=(TOP-BZ)+0.06*s*(0.35+0.65*min(BR,1.0))   # a short-brimmed hat also has a lower crown
     g=bmesh.ops.create_cone(bm,cap_ends=True,segments=28,radius1=1,radius2=0.9,depth=H,matrix=Matrix.Translation(C0+Vector((0,0,H/2-0.004))))
     for v in g['verts']: d=v.co-C0; v.co.x=cx+d.x*rx; v.co.y=cy+d.y*ry
     # hat band
     g=bmesh.ops.create_cone(bm,cap_ends=False,segments=28,radius1=1,radius2=0.985,depth=0.022*s,matrix=Matrix.Translation(C0+Vector((0,0,0.016*s))))
     for v in g['verts']: d=v.co-C0; v.co.x=cx+d.x*(rx+0.002); v.co.y=cy+d.y*(ry+0.002)
     for v in bm.verts:
-        d=v.co-C0; r=math.hypot(d.x/(rx+0.085*s),d.y/(ry+0.075*s))
+        d=v.co-C0; r=math.hypot(d.x/(rx+0.085*s*BR),d.y/(ry+0.075*s*BR))
         if r>0.62 and abs(d.z)<0.01: v.co.z+=0.028*((r-0.62)/0.38)**2*(0.6+0.4*math.sin(math.atan2(d.y,d.x)*2+1.2))   # brim turned up a little, unevenly
     rigid('Hat',bm,'Hat','Head')
 if G.get('hat')=='flat':

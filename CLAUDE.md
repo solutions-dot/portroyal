@@ -3,7 +3,7 @@
 This repository holds a family of educational 3D history games for the web, built on one shared engine.
 
 - **Port Royal 1690** (`games/port-royal/`) is finished and live. It follows Lewis Galdy through Port Royal, Jamaica, from 1690 to the 1692 earthquake.
-- **Marcus Garvey** is the next game, still to be started (see `docs/NEW_GAME.md`).
+- **Marcus Garvey** (`games/garvey/`) is in progress: chapters 1 and 2 are playable (a Kingston print shop about 1908, and a meeting hall in July 1914). Read `docs/games/garvey.md` first.
 - New games start from `games/_template/`.
 
 Audience: **children aged 6 and up, plus adults**. Every choice follows from that.
@@ -18,7 +18,8 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 | Writing dialogue, goals, journal pages, chapters | `docs/CONTENT.md` |
 | Checking your work | `docs/TESTING.md` |
 | Publishing the game or pushing code | `docs/PUBLISHING.md` |
-| Starting a new game (for example Marcus Garvey) | `docs/NEW_GAME.md` |
+| Starting a new game | `docs/NEW_GAME.md` |
+| Working on Marcus Garvey | `docs/games/garvey.md` |
 | Working on Port Royal | `docs/games/port-royal.md` |
 
 ## Rules the owner has set (follow them every time)
