@@ -1,0 +1,294 @@
+/* games/bog-walk/src/main.js: Bog Walk 1904: The Tube. First build: the inside of the Tube and the night the water came (see docs/games/bog-walk.md).
+   You play someone who is made up. The first slice is one place and one night: scrape rust off the pipe wall with the gang, then the water comes and you
+   follow the voices to the manhole. No one can fail and no one is shown in the water. All the spoken lines here are placeholders written for this game. */
+import * as THREE from 'three';
+import { soundPref, setSound, audioInit, stepSound, uiSound, cue, crackle, AU } from '../../../engine/audio.js';
+import { setAniso } from './gfx.js';
+import { buildTube, makeHand, R, SAND, ZMIN, ZMAX, ZM, halfChord } from './tube.js';
+import { initTubeSound, setBeds, hushTube, drip, scrapeSound, voice, hiss, clank, waterStep } from './sfx.js';
+
+const $ = (id) => document.getElementById(id);
+const q = new URLSearchParams(location.search);
+const QUICK = __DEV__ && q.has('quick'), TS = QUICK ? 0.15 : 1;   /* in a quick test every timed part runs at 15% of its length */
+const D = (s) => s * TS;
+const TOUCH = matchMedia('(pointer: coarse)').matches, MOBILE = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent);
+const ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+soundPref('bogwalk-sound');
+
+/* ---------- renderer, camera ---------- */
+const canvas = $('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.3;
+setAniso(renderer.capabilities.getMaxAnisotropy());
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0806); scene.fog = new THREE.Fog(0x0a0806, 3, 36);
+const camera = new THREE.PerspectiveCamera(68, 1, 0.08, 120); scene.add(camera);
+
+/* ---------- the Tube, and the torch in your hand ---------- */
+const T = buildTube(scene);
+const hand = makeHand(camera);
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); hand.place(camera.aspect, camera.fov, h, w); }
+addEventListener('resize', resize); resize();
+
+/* ---------- where you are, and the night ---------- */
+const S = { started: false, x: 0.12, z: ZM - 1.5, yaw: 0, pitch: 0, eye: SAND + 1.45 };   /* yaw 0 looks down the pipe, toward -z */
+const N = { phase: 'title', t: 0, q: [], wl: 0, torch: 1, vig: 0, sky: 0, scraped: 0, allDone: false, doneT: 0, dripT: 2, clankT: 7, voiceT: 5, crackT: 3, mixT: 0, hintT: 0, skipped: false, fast: false, out: null };
+const LANE = 0.62;   /* how far from the middle of the pipe you can stand: the wall curves in, and your torch needs room */
+const keys = new Set();
+function locked() { return !$('card').hidden || !S.started || ['title', 'out', 'end'].includes(N.phase); }
+
+/* ---------- words on the screen ---------- */
+let goalText = '', subTimer = 0;
+function setGoal(t, quiet) { goalText = t; $('goal').textContent = t; if (!quiet) uiSound('goal'); }
+function setClock(t) { $('clock').hidden = !t; $('clock').textContent = t || ''; }
+function say(who, text, ms = 4200) {   /* a line spoken in the pipe, shown as a subtitle; the speaker is heard, not seen */
+  const el = $('sub'); el.textContent = who ? who + ': ' + text : text; el.classList.remove('dim'); clearTimeout(subTimer); subTimer = setTimeout(() => el.classList.add('dim'), ms * (QUICK ? 0.4 : 1)); voice(Math.random() * 1.2 - 0.6, who !== 'Mr Douparrouzel');
+}
+function fadeTo(color, op, ms) { const f = $('fade'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; f.style.opacity = op; }
+function showCard(title, text, ok, onOk, no, onNo) {
+  $('ctitle').textContent = title; $('ctext').textContent = text; $('cok').textContent = ok; $('cno').hidden = !no; if (no) $('cno').textContent = no;
+  $('cok').onclick = () => { $('card').hidden = true; onOk && onOk(); }; $('cno').onclick = () => { $('card').hidden = true; onNo && onNo(); }; $('card').hidden = false; $('cok').focus();
+}
+$('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 'Sound on' : 'Sound off'; };
+
+/* ---------- things to do: scrape the rust ---------- */
+const fwd = new THREE.Vector3(), tmp = new THREE.Vector3();
+function nearPatch() {   /* the closest unscraped patch that is within reach and in front of you */
+  if (N.phase !== 'work' || T.patches.some((p) => p.clean > 0 && p.clean < 1)) return null;
+  const e = new THREE.Vector3(S.x, S.eye, S.z); fwd.set(-Math.sin(S.yaw) * Math.cos(S.pitch), Math.sin(S.pitch), -Math.cos(S.yaw) * Math.cos(S.pitch));
+  let best = null, bd = 1e9; for (const p of T.patches) { if (p.clean > 0) continue; tmp.copy(p.pos).sub(e); const d = tmp.length(); if (d < 2.3 && d < bd && tmp.normalize().dot(fwd) > 0.45) { best = p; bd = d; } } return best;
+}
+function scrape(p) { if (!p) return; T.startClean(p); scrapeSound(); }
+function act() { if (!locked()) scrape(nearPatch()); }
+$('act').onclick = act;
+addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k); if ((k === 'e' || k === 'enter') && !e.repeat) act(); });
+addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
+
+/* ---------- the night, one phase at a time ---------- */
+function setPhase(p) { N.phase = p; N.t = 0; N.q = []; }
+function at(list) { N.q = list.map(([t, f]) => [D(t), f]).sort((a, b) => a[0] - b[0]); }
+const scrapeGoal = () => 'Scrape the rust off the pipe: ' + N.scraped + ' of ' + T.patches.length + '.';
+
+function resetNight() {
+  N.wl = 0; N.torch = 1; N.vig = 0; N.sky = 0; N.scraped = 0; N.allDone = false; N.doneT = 0; N.skipped = false; N.fast = false; N.out = null; N.hintT = 0;
+  for (const p of T.patches) T.setPatchClean(p, 0);
+  T.water.set(0); T.manhole.setSky(0); $('vig').style.opacity = 0; fadeTo('#000', 0, 0); $('skip').hidden = true; $('act').hidden = true; $('sub').classList.add('dim');
+  S.x = 0.12; S.z = ZM - 1.5; S.yaw = 0; S.pitch = 0; S.eye = SAND + 1.45; keys.clear();
+}
+function startWork() {
+  resetNight(); setPhase('work'); setClock('1 a.m.'); setGoal(scrapeGoal(), true);
+  say('Mr Douparrouzel', 'Scrape the plates clean. Take your time.', 5200);   /* placeholder wording */
+  at([[7, () => setGoal('Walk down the pipe. Look for the rust patches.', true)]]);
+}
+function startTrickle() {
+  setPhase('trickle'); $('skip').hidden = false; setGoal('Look at the floor. Something is not right.');
+  at([[1, () => say('Rudy', 'My boots are wet.')],
+      [6, () => say('Mr Douparrouzel', 'A little water is coming. It is not from the dam.', 5200)],   /* the line he told the Gleaner he said (to check in the 1904 report) */
+      [11.5, () => say('Old Zeke', 'It will pass. It always passes.')]]);
+}
+function startRise() {
+  setPhase('rise'); setClock('4 a.m.'); setGoal('Go to the manhole. Follow the voices.');
+  say('Mr Douparrouzel', 'Out, all of you! Go to the manhole!');
+  at([[6, () => say('Rudy', 'This way! Hurry!')], [15, () => say('Old Zeke', 'Keep to the wall. Go on.')]]);
+}
+function startDark() {
+  setPhase('dark'); hiss(); setGoal('Go on. Head for the light.'); say('Old Zeke', 'Go on, lad. Keep going.');
+  at([[7, () => say('Rudy', 'I can see the light! This way!')], [14, () => say('', 'Keep your hand on the wall.', 3800)]]);
+}
+function startOut(skipped) {
+  N.skipped = !!skipped; N.fast = !!skipped; setPhase('out'); $('skip').hidden = true; $('act').hidden = true; setGoal(skipped ? 'You are out.' : 'A hand reaches down. You are out.', true);
+  N.out = { x0: S.x, z0: S.z, e0: S.eye, p0: S.pitch, y0: S.yaw }; if (!skipped) cue('end');
+  at(skipped ? [[0.2, () => fadeTo('#000', 1, 700)], [1.2, showEnd]] : [[2.3, () => fadeTo('#fff', 1, 1200)], [3.8, showEnd]]);
+}
+function showEnd() {
+  setPhase('end'); setClock('');
+  showCard('You are out', N.skipped ? 'You skipped the dark part of the night. In the story, you get out of the Tube and the sky is going grey.' : 'The air is cool. The sky is going grey. Many men are still in the pipe.',
+    'Play the night again', () => startWork(), null);
+  $('ctext').textContent += ' The rest of the story is still being made.';
+}
+function skipNight() { if (['trickle', 'rise', 'dark'].includes(N.phase)) startOut(true); }
+$('skip').onclick = skipNight;
+
+function nightTick(dt) {
+  N.t += dt; while (N.q.length && N.t >= N.q[0][0]) N.q.shift()[1]();
+  const ph = N.phase;
+  if (ph === 'work') {
+    for (const p of T.patches) if (p.clean >= 1 && !p.counted) {
+      p.counted = true; N.scraped++; setGoal(scrapeGoal(), true); uiSound('tap');
+      if (N.scraped === 3) { setClock('2 a.m.'); say('Old Zeke', 'Sand and rust. The same every Sunday night.'); }
+      if (N.scraped === T.patches.length) { setClock('3 a.m.'); setGoal('Good work. Rest a moment.', true); N.allDone = true; N.doneT = 0; }
+    }
+    if (N.allDone) { N.doneT += dt; if (N.doneT > D(4)) startTrickle(); }
+    N.wl += ((N.scraped >= 3 ? 0.014 : 0) - N.wl) * Math.min(1, dt * 0.7);
+  } else if (ph === 'trickle') { N.wl = 0.014 + 0.126 * ease(N.t / D(15)); if (N.t > D(15)) startRise(); }
+  else if (ph === 'rise') { N.wl = 0.14 + 0.62 * ease(N.t / D(38)); if (N.t > D(26) || (N.t > D(12) && S.z > ZM - 9)) startDark(); }
+  else if (ph === 'dark') {
+    N.wl = 0.76 + 0.3 * ease(N.t / D(26)); N.torch = Math.max(0, 1 - N.t / D(3.5)); N.vig = Math.min(0.8, N.t / D(5) * 0.8);
+    if (Math.abs(S.z - ZM) < 1.5 || N.t > D(24)) startOut(false);
+  } else if (ph === 'out') {
+    const o = N.out, T1 = N.fast ? 1.0 : 2.6, k = ease(N.t / D(T1)), g = ease(N.t / D(T1 * 0.4));
+    S.x = o.x0 + (0 - o.x0) * g; S.z = o.z0 + (ZM - o.z0) * g; S.eye = o.e0 + (2 * R + 0.1 - o.e0) * k; S.pitch = o.p0 + (1.0 - o.p0) * k;   /* rise into the neck of the manhole and look up at the sky; stop under the sky so the world outside is never seen */ N.sky = k; N.vig = Math.max(0, N.vig * (1 - k)); N.torch = 0;
+    N.wl = Math.min(1.1, N.wl + dt * 0.02);
+  }
+  T.water.set(N.wl); T.manhole.setSky(N.sky); $('vig').style.opacity = N.vig;
+  /* small sounds, so the pipe is never silent */
+  if (['work', 'trickle', 'rise'].includes(ph)) { N.dripT -= dt; if (N.dripT <= 0) { drip(); N.dripT = ph === 'work' ? 1.4 + Math.random() * 3 : 0.5 + Math.random() * 1.1; } }
+  if (ph === 'work') { N.clankT -= dt; if (N.clankT <= 0) { clank(); N.clankT = 9 + Math.random() * 11; } N.voiceT -= dt; if (N.voiceT <= 0) { voice(Math.random() * 1.6 - 0.8, true); N.voiceT = 5 + Math.random() * 6; } }
+  if (N.torch > 0.2) { N.crackT -= dt; if (N.crackT <= 0) { crackle(); N.crackT = 3 + Math.random() * 5; } }
+  N.hintT += dt; if (N.hintT > 16 && $('hint').textContent) $('hint').textContent = '';
+  N.mixT -= dt; if (N.mixT <= 0) { N.mixT = 0.1; mix(); }
+}
+function mix() {   /* the beds, by phase: a rumble and moving air always; a trickle, then a roar that grows with the water */
+  const wl = N.wl, ph = N.phase; let rumble = 0.1, air = 0.035, stream = 0, roar = 0, rush = 0;
+  if (ph === 'work') stream = wl > 0.01 ? 0.03 : 0;
+  else if (ph === 'trickle') stream = 0.03 + 0.06 * Math.min(1, wl / 0.14);
+  else if (ph === 'rise' || ph === 'dark') { const k = Math.min(1, Math.max(0, (wl - 0.1) / 0.9)); stream = 0.1; roar = 0.06 + 0.5 * k; rush = 0.03 + 0.22 * k; rumble = 0.14; }
+  else if (ph === 'out') { const f = 1 - ease(N.t / D(N.fast ? 1 : 3)); stream = 0.1 * f; roar = 0.5 * f; rush = 0.2 * f; rumble = 0.14 * f; air = 0.035 * f; }
+  else if (ph === 'end' || ph === 'title') { rumble = air = 0; }
+  setBeds({ rumble, air, stream, roar, rush }, 0.5);
+}
+
+/* ---------- movement: keys, touch (left half is a stick, right half looks) and mouse drag to look ---------- */
+const solids = T.solids;
+function clampPos(x, z) {   /* stay in the lane and out of the buckets and shovels (circles in T.solids), sliding round them */
+  for (let pass = 0; pass < 2; pass++) {
+    x = Math.max(-LANE, Math.min(LANE, x)); z = Math.max(ZMIN + 3, Math.min(ZMAX - 1.6, z));
+    for (const s of solids) { if (!(s.r > 0)) continue; const dx = x - s.x, dz = z - s.z, d = Math.hypot(dx, dz), m = s.r + 0.3; if (d < m) { if (d < 1e-4) x = s.x + m; else { x = s.x + dx / d * m; z = s.z + dz / d * m; } } }
+  }
+  return [x, z];
+}
+const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0, moved: 0 }, ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function tapPatch(cx, cy) {   /* a tap (not a drag) on a rust patch scrapes it, if it is near enough */
+  if (N.phase !== 'work') return;
+  ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(T.patches.filter((p) => p.clean === 0).map((p) => p.rust), false)[0]; if (!hit) return;
+  const p = T.patches.find((pp) => pp.rust === hit.object); if (p && p.pos.distanceTo(new THREE.Vector3(S.x, S.eye, S.z)) < 2.6) scrape(p);
+}
+canvas.addEventListener('pointerdown', (e) => {
+  if (locked()) return;
+  if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; const s = $('stick'); s.hidden = false; s.style.left = e.clientX + 'px'; s.style.top = e.clientY + 'px'; s.firstElementChild.style.transform = ''; }
+  else { look.id = e.pointerId; look.x = e.clientX; look.y = e.clientY; look.moved = 0; }
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (e.pointerId === stick.id) { stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x0) / 50)); stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y0) / 50)); $('stick').firstElementChild.style.transform = `translate(${stick.dx * 26}px,${stick.dy * 26}px)`; }
+  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); S.yaw -= dx * 0.005; S.pitch = Math.max(-1.2, Math.min(1.3, S.pitch - dy * 0.004)); }
+});
+const endPointer = (e) => { if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; $('stick').hidden = true; } if (e.pointerId === look.id) { if (look.moved < 8) tapPatch(e.clientX, e.clientY); look.id = null; } };
+canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
+
+let stepT = 0, walkPh = 0, time = 0;
+function moveTick(dt) {
+  if (locked()) return 0;
+  if (keys.has('arrowleft')) S.yaw += 1.8 * dt; if (keys.has('arrowright')) S.yaw -= 1.8 * dt;
+  let f = stick.id !== null ? -stick.dy : 0, r = stick.id !== null ? stick.dx : 0;
+  if (keys.has('w') || keys.has('arrowup')) f += 1; if (keys.has('s') || keys.has('arrowdown')) f -= 1; if (keys.has('d')) r += 1; if (keys.has('a')) r -= 1;
+  const len = Math.hypot(f, r); if (len < 0.05) return 0;
+  const busyScraping = T.patches.some((p) => p.clean > 0 && p.clean < 1); if (busyScraping) return 0;   /* you stand still while you scrape */
+  const deep = Math.min(1, N.wl / 1.1), sp = (keys.has('shift') ? 3.2 : 2.1) * Math.min(1, len) * (1 - 0.5 * deep), fx = -Math.sin(S.yaw), fz = -Math.cos(S.yaw), n = Math.max(1, len);
+  [S.x, S.z] = clampPos(S.x + (fx * f - fz * r) / n * sp * dt, S.z + (fz * f + fx * r) / n * sp * dt);
+  stepT -= dt * sp; if (stepT <= 0) { stepT = 1.25; if (N.wl > 0.05) waterStep(N.wl); else stepSound('sand'); }
+  return sp;
+}
+
+/* ---------- starting ---------- */
+function begin() {
+  audioInit(); initTubeSound(); $('title').hidden = true; $('hud').hidden = false; S.started = true; $('hint').textContent = TOUCH ? 'Left thumb to walk. Drag to look. Tap the rust.' : 'WASD to walk. Drag to look. E to scrape.'; startWork(); canvas.focus();
+}
+$('start').disabled = false; $('start').textContent = 'Start'; $('start').onclick = begin;
+
+/* ---------- the frame loop ---------- */
+let last = performance.now(), manual = false, frames = 0;
+function tick(dt) {
+  time += dt; const ft = (__DEV__ && N.phase === 'shot') ? 3.3 : time;
+  if (S.started && N.phase !== 'shot') { const sp = moveTick(dt); walkPh += sp * dt * 3; nightTick(dt); }
+  if (N.phase === 'shot') { T.water.set(N.wl); }
+  const bob = Math.sin(walkPh * 2.4) * 0.012;
+  T.update(dt, ft, S.z, N.torch); hand.update(ft, N.torch); T.hemi.intensity = 0.85 + 0.55 * (1 - N.torch);   /* once the torches are out your eyes get used to the dark a little */
+  camera.position.set(S.x, S.eye + bob, S.z); camera.rotation.set(S.pitch, S.yaw, 0, 'YXZ');
+  const near = !locked() && !!nearPatch(); $('act').hidden = !near;
+}
+function render() { renderer.render(scene, camera); }
+function frame(t) { if (!manual) requestAnimationFrame(frame); const dt = Math.min(0.05, (t - last) / 1000); last = t; tick(dt); render(); document.body.dataset.frames = ++frames; }
+requestAnimationFrame(frame);
+
+/* ---------- test views and a scripted playthrough: dev builds only (node tools/build.mjs bog-walk --dev) ---------- */
+if (__DEV__) {
+  const errs = []; addEventListener('error', (e) => { errs.push(e.message + ' @' + e.lineno); document.body.dataset.err = errs.join(' | '); });
+  const lookAt = (x, y, z) => { const dx = x - S.x, dz = z - S.z, dy = y - S.eye; S.yaw = Math.atan2(-dx, -dz); S.pitch = Math.atan2(dy, Math.hypot(dx, dz)); };
+  function handRects() {   /* the screen box of each part of the hand. The hand rides on the camera, so each part is boxed from its own shape in the camera's frame: where you look makes no difference. */
+    camera.updateMatrixWorld(true); const v = new THREE.Vector3(), c = new THREE.Vector3(), out = [], th = Math.tan(camera.fov * Math.PI / 360);
+    hand.root.traverse((o) => { if (!(o.isMesh || o.isSprite) || !o.visible) return; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      if (o.isSprite) {   /* a flame always faces you: a rectangle of its own size round its middle, without the empty margin of its picture */
+        const sx = v.setFromMatrixColumn(o.matrixWorld, 0).length(), sy = v.setFromMatrixColumn(o.matrixWorld, 1).length(); c.setFromMatrixPosition(o.matrixWorld).applyMatrix4(camera.matrixWorldInverse); const d = -c.z; if (d <= 0) return;
+        const cx = (c.x / (d * th * camera.aspect) * 0.5 + 0.5) * innerWidth, cy = (-c.y / (d * th) * 0.5 + 0.5) * innerHeight, hw = sx / 2 / (d * th * camera.aspect) * innerWidth / 2, hh = sy / 2 / (d * th) * innerHeight / 2;
+        x0 = cx - hw * 0.76; x1 = cx + hw * 0.76; y0 = cy - hh * 0.68; y1 = cy + hh; }
+      else { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox;
+        for (const x of [bb.min.x, bb.max.x]) for (const y of [bb.min.y, bb.max.y]) for (const z of [bb.min.z, bb.max.z]) { v.set(x, y, z).applyMatrix4(o.matrixWorld).project(camera); const sx = (v.x * 0.5 + 0.5) * innerWidth, sy = (-v.y * 0.5 + 0.5) * innerHeight; x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy); } }
+      out.push({ name: o.name || o.type, left: x0, right: x1, top: y0, bottom: y1 }); });
+    return out;
+  }
+  function hudOverlaps() {   /* every pair of visible words and buttons that overlap, and any that run off the screen */
+    const ids = ['goal', 'clock', 'sound', 'skip', 'hint', 'act', 'sub', 'dialogue'], out = [], vis = [];
+    for (const id of ids) { const e = $(id); if (!e) continue; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || e.closest('[hidden]') || (id === 'sub' && e.classList.contains('dim')) || (!e.textContent.trim() && e.tagName === 'P')) continue; const r = e.getBoundingClientRect(); if (r.width < 1 || r.height < 1) continue; vis.push([id, r]); }
+    for (const [id, r] of vis) if (r.left < -0.5 || r.top < -0.5 || r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5) out.push(id + ' off screen');
+    /* the torch, fist and sleeve in your hand, tested by the picture they really draw: rays are shot through the screen and must not hit the hand inside any word or
+       button, along the sides or top of the screen (the sleeve leaves through the bottom on purpose), or round the middle of the view. The flame is a rectangle of its own. */
+    { const parts = []; hand.root.traverse((o) => { if (o.isMesh && o.visible) parts.push(o); }); const flame = handRects().find((r) => r.name === 'flame'), ray = new THREE.Raycaster(), nd = new THREE.Vector2();
+      const hit = (sx, sy) => { if (flame && sx >= flame.left && sx <= flame.right && sy >= flame.top && sy <= flame.bottom) return 'flame'; nd.set(sx / innerWidth * 2 - 1, -(sy / innerHeight) * 2 + 1); ray.setFromCamera(nd, camera); const h = ray.intersectObjects(parts, false)[0]; return h ? (h.object.name || 'part') : null; };
+      for (const [id, r] of vis) { let found = null; for (let i = 0; i <= 8 && !found; i++) for (let j = 0; j <= 5 && !found; j++) found = hit(r.left + (r.right - r.left) * i / 8, r.top + (r.bottom - r.top) * j / 5); if (found) out.push('hand overlaps ' + id + ' (' + found + ')'); }
+      let off = false; for (let k = 0; k <= 40 && !off; k++) { const f = k / 40; if (hit(2, f * innerHeight * 0.92) || hit(innerWidth - 3, f * innerHeight * 0.92) || hit(f * innerWidth, 2)) off = true; }
+      if (off) out.push('hand runs off the side or top');
+      const c = Math.min(innerWidth, innerHeight) * 0.07; let mid = false; for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) if (hit(innerWidth / 2 + i * c, innerHeight / 2 + j * c)) mid = true;
+      if (mid) out.push('hand covers the middle of the view'); }
+    for (let i = 0; i < vis.length; i++) for (let j = i + 1; j < vis.length; j++) { const a = vis[i][1], b = vis[j][1]; if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) out.push(vis[i][0] + ' overlaps ' + vis[j][0]); }
+    return out;
+  }
+  function propOverlaps() {   /* tools that overlap each other, or sit on the manhole */
+    const out = [], s = T.solids.filter((x) => x.r > 0); for (let i = 0; i < s.length; i++) for (let j = i + 1; j < s.length; j++) if (Math.hypot(s[i].x - s[j].x, s[i].z - s[j].z) < s[i].r + s[j].r) out.push(s[i].what + ' overlaps ' + s[j].what);
+    for (const p of s) if (Math.hypot(p.x, p.z - ZM) < p.r + 0.6) out.push(p.what + ' is under the manhole');
+    for (const d of T.drifts) { for (const p of s) if (Math.abs(p.z - d.z) < d.l / 2 + p.r && Math.abs(p.x - d.x) < d.w / 2 + p.r) out.push(p.what + ' sits in a sand drift'); if (Math.abs(d.z - ZM) < d.l / 2 + 0.6) out.push('a sand drift is under the manhole'); }
+    return out;
+  }
+  window.__bw = { S, N, T, hand, tick, render, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), hudOverlaps, handRects, propOverlaps, begin, skipNight, setGoal, say };
+  const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
+  const shot = q.get('shot');
+  if (shot) {
+    begin(); setPhase('shot'); $('hint').textContent = q.has('nohint') ? '' : $('hint').textContent;
+    const wl = num('wl', 0), cl = (q.get('clean') || '').split(',').filter(Boolean).map(Number);
+    S.x = num('x', 0.12); S.z = num('z', ZM - 1.5); S.yaw = num('yaw', 0); S.pitch = num('pitch', 0); N.wl = wl; N.torch = num('torch', 1); N.vig = num('vig', 0); N.sky = num('sky', 0); $('vig').style.opacity = N.vig; T.manhole.setSky(N.sky);
+    cl.forEach((i) => T.setPatchClean(T.patches[i], 1)); if (q.has('half')) T.setPatchClean(T.patches[+q.get('half')], 0.5);
+    if (shot === 'patch') { const p = T.patches[+(q.get('p') || 0)]; S.z = p.z + 1.6; S.x = -Math.sign(p.pos.x) * 0.1; lookAt(p.pos.x, p.pos.y, p.pos.z); }
+    if (shot === 'fist') { hand.root.position.set(0.02, 0.36 + num('fy', 0), -0.3 + num('fz', 0)); hand.root.rotation.set(0, num('fry', -0.1), 0); S.pitch = 0; S.yaw = 0; }   /* the hand brought close, to inspect the grip */
+    if (shot === 'up') { S.x = 0; S.z = ZM - 0.12; S.pitch = 1.5; }
+    if (shot === 'manhole') { S.x = 0; S.z = ZM - 3.4; lookAt(0, 2 * R, ZM); }
+    if (shot === 'torch') { const tt = T.torches[+(q.get('t') || 0)]; S.x = 0; S.z = tt.pos.z + 2.8; lookAt(tt.pos.x, tt.pos.y, tt.pos.z); }
+    if (shot === 'back') { S.z = num('z', -20); S.yaw = Math.PI; S.pitch = 0.05; }
+    if (shot === 'hud') {   /* the busiest screen: a long goal, the clock, two lines of speech, and one button (add &act=1 for Scrape; Scrape and Skip never show together) */
+      setGoal('Scrape the rust off the pipe: 3 of 6. This is a long goal to test wrapping on a small screen.', true); setClock('4 a.m.'); $('skip').hidden = q.has('act'); $('act').hidden = !q.has('act'); say('Mr Douparrouzel', 'Out, all of you! Go to the manhole! This is a long line to test two rows.', 60000); }
+    setTimeout(() => { document.body.dataset.shot = shot; document.body.dataset.overlaps = hudOverlaps().join('; ') || 'none'; }, 400);
+  }
+  if (q.get('auto')) {   /* ?auto=1 plays the whole night; ?auto=2 skips the dark part. The result is written to the page title and to #autolog. */
+    manual = true; const mode = q.get('auto'), pre = document.body.appendChild(document.createElement('pre')); pre.id = 'autolog'; pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#000;color:#9f9;font-size:11px;max-height:100%;overflow:auto;margin:0';
+    const log = (m) => { pre.textContent += m + '\n'; };
+    setTimeout(() => {
+      begin(); const dt = 1 / 30; let simT = 0, lastPh = '', ok = true; const seen = [];
+      const step = (n) => { for (let i = 0; i < n; i++) { tick(dt); simT += dt; if (N.phase !== lastPh) { lastPh = N.phase; seen.push(lastPh); log(simT.toFixed(1) + 's phase=' + lastPh + ' goal="' + goalText + '" z=' + S.z.toFixed(1) + ' wl=' + N.wl.toFixed(2)); } } };
+      step(2);
+      for (const p of T.patches) { S.z = p.z + 1.5; S.x = -Math.sign(p.pos.x) * 0.1; lookAt(p.pos.x, p.pos.y, p.pos.z); tick(dt); const np = nearPatch(); if (np !== p) { ok = false; log('FAIL: no scrape action at patch ' + p.i); } act(); step(60); }
+      log('scraped ' + N.scraped + ' of ' + T.patches.length); if (N.scraped !== T.patches.length) ok = false;
+      let guard = 0; while (N.phase === 'work' && guard++ < 400) step(1); if (N.phase === 'work') { ok = false; log('FAIL: never left work'); }
+      let skipped = false; guard = 0;
+      while (N.phase !== 'end' && guard++ < 30 * 400) {
+        if (mode === '2' && N.phase === 'trickle' && !skipped) { skipped = true; log('pressing Skip'); skipNight(); }
+        if (['rise', 'dark'].includes(N.phase)) { S.yaw = Math.PI; S.pitch = 0; keys.add('w'); } else keys.delete('w');
+        step(1); if (!isFinite(camera.position.x + camera.position.y + camera.position.z)) { ok = false; log('FAIL: camera is NaN'); break; }
+      }
+      keys.delete('w'); if (N.phase !== 'end') { ok = false; log('FAIL: did not reach the end (phase ' + N.phase + ')'); }
+      if ($('card').hidden) { ok = false; log('FAIL: no end card'); }
+      const po = propOverlaps(); if (po.length) { ok = false; log('FAIL props: ' + po.join('; ')); } const ho = hudOverlaps(); if (ho.length) { ok = false; log('FAIL hud: ' + ho.join('; ')); }
+      if (errs.length) { ok = false; log('FAIL errors: ' + errs.join(' | ')); }
+      log('phases: ' + seen.join(' > ')); document.title = (ok ? 'AUTO OK ' : 'AUTO FAIL ') + seen.join('>'); render();
+    }, 300);
+  }
+}

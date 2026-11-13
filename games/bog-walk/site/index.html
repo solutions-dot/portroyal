@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Bog Walk 1904: The Tube</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  /* The same look as Port Royal and Marcus Garvey: dark teal panels, one brass accent for things you can press, big touch targets (48px). */
+  :root{--ink:#10222b;--paper:#f2e8d0;--brass:#d9a441;--brass-ink:#2a1f08;--display:"IM Fell English SC","IM Fell English",Georgia,serif;--body:"Atkinson Hyperlegible",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#0b0907;color:var(--paper);font-family:var(--body);font-size:18px;touch-action:none;-webkit-user-select:none;user-select:none}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+  [hidden]{display:none!important}
+  .btn{font:700 1rem var(--body);background:var(--brass);color:var(--brass-ink);border:0;border-radius:6px;padding:.75rem 1.3rem;min-height:48px;cursor:pointer}
+  .btn:disabled{opacity:.6;cursor:default}
+  .btn.ghost{background:rgba(16,34,43,.85);color:var(--paper);border:2px solid var(--brass)}
+  #title{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;gap:.8rem;padding:2rem max(1.5rem,6vw);background:linear-gradient(90deg,rgba(11,9,7,.96),rgba(11,9,7,.55));z-index:5;overflow:auto}
+  #title h1{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(2.2rem,8vw,4rem);margin:0;line-height:1.05}
+  #title h1 small{display:block;font-family:var(--display);font-size:.5em;color:var(--brass);letter-spacing:.04em;margin-top:.25em}
+  #title p{max-width:30rem;margin:0}
+  #title .row{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+  #title a{color:inherit}
+  #title .small{font-size:.85rem;opacity:.8}
+
+  /* The on-screen words and buttons are laid out as one column of rows (top bar, subtitle, a middle row with the buttons down the right edge, bottom bar), so no two of them can ever overlap,
+     whatever the screen size. Nothing here is positioned on its own. The subtitle sits under the top bar and the buttons sit at the right edge, and the hint sits at the bottom left,
+     so the bottom right stays free for the torch and fist in your hand. */
+  #hud{position:fixed;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;gap:8px;
+       padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+  #hud button,#goal{pointer-events:auto}
+  #top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  #goal{flex:0 1 26rem;min-width:0;background:rgba(16,34,43,.88);padding:.55em .85em;border-left:4px solid var(--brass);border-radius:0 6px 6px 0;margin:0;font-size:1rem}
+  #topright{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:0 0 auto}
+  #clock{font-family:var(--body);font-weight:700;font-size:1rem;background:rgba(16,34,43,.78);padding:.2em .7em;border-radius:6px;letter-spacing:.05em;white-space:nowrap}
+  #mid{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:10px;padding-top:4px}
+  #sub{margin:0 auto;width:min(36rem,100%);min-height:2.8em;flex:0 0 auto;text-align:center;font-size:1.1rem;line-height:1.35;text-shadow:0 1px 3px #000,0 0 8px #000;transition:opacity .8s ease}
+  #sub.dim{opacity:0}
+  #bottom{display:flex;align-items:flex-end;justify-content:flex-start}
+  #hint{text-align:left;font-size:.78rem;opacity:.72;margin:0;text-shadow:0 1px 3px #000}
+  #skip{font-size:.9rem;min-height:44px;padding:.55rem 1rem}
+  #act{min-width:7.5rem}
+  @media (max-width:520px){#hint{display:none}#mid{align-items:flex-start}}   /* on a narrow phone the torch is in the middle of the right half, so the buttons go to the left */
+  body.talk #bottom,body.talk #sub{visibility:hidden}
+  #stick{position:fixed;width:96px;height:96px;margin:-48px 0 0 -48px;border:2px solid rgba(242,232,208,.45);border-radius:50%;pointer-events:none;z-index:2}
+  #stick i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(217,164,65,.55)}
+  #dialogue{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:3;width:min(40rem,calc(100% - 32px));background:rgba(16,34,43,.95);border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.7rem}
+  #who{font-family:var(--display);color:var(--brass);margin:0;font-size:1.2rem;padding-right:40px}
+  #line{margin:0;font-size:1.1rem}
+  #next{align-self:flex-end}
+  #dclose{position:absolute;top:6px;right:8px;width:44px;height:44px;border:0;background:none;color:inherit;font-size:1.9rem;cursor:pointer;opacity:.75;border-radius:50%}
+  #dialogue.me{background:rgba(242,232,208,.97);border-top-color:#2f6f8f}
+  #dialogue.me #who{color:#2f6f8f}#dialogue.me #line,#dialogue.me #dclose{color:#1c2a30}
+  /* the dark closing in during the night: a vignette (under the words), and a fade to black or white (over everything) */
+  #vig{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:1;background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,0) 8%,rgba(0,0,0,.55) 34%,rgba(0,0,0,.97) 70%)}
+  #fade{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:4;background:#000;transition:opacity .9s ease}
+  #card{position:fixed;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;background:rgba(11,9,7,.84);padding:1rem;overflow:auto}
+  #card .box{max-width:30rem;background:rgba(16,34,43,.97);border-top:4px solid var(--brass);border-radius:6px;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.8rem}
+  #card h2{font-family:"IM Fell English",Georgia,serif;font-weight:400;margin:0;font-size:1.6rem}
+  #card p{margin:0}
+  #card .row{display:flex;gap:.8rem;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0" aria-label="The game world"></canvas>
+<div id="vig"></div>
+<div id="fade"></div>
+<div id="stick" hidden><i></i></div>
+<section id="title">
+  <h1>Bog Walk 1904<small>The Tube</small></h1>
+  <p>On a Sunday night in June 1904, a gang of workers goes into a huge iron pipe to clean it. This is their story.</p>
+  <div class="row">
+    <button id="start" class="btn" disabled>Loading</button>
+    <a href="../../../menu/">All games</a>
+  </div>
+  <p class="small">Walk with the arrow keys or WASD, or the left side of the screen on a phone. Drag to look. One part of this game may be a little scary, and you can skip it.</p>
+  <p id="loadnote" class="small"></p>
+</section>
+<div id="hud" hidden>
+  <div id="top">
+    <p id="goal"></p>
+    <div id="topright">
+      <button id="sound" class="btn ghost">Sound on</button>
+      <div id="clock" hidden></div>
+    </div>
+  </div>
+  <p id="sub" class="dim"></p>
+  <div id="mid">
+    <button id="act" class="btn" hidden>Scrape</button>
+    <button id="skip" class="btn ghost" hidden>Skip this part</button>
+  </div>
+  <div id="bottom"><p id="hint"></p></div>
+</div>
+<div id="dialogue" role="dialog" aria-labelledby="who" hidden>
+  <button id="dclose" aria-label="Stop talking">&times;</button>
+  <p id="who"></p>
+  <p id="line" aria-live="polite"></p>
+  <button id="next" class="btn">Next</button>
+</div>
+<div id="card" hidden>
+  <div class="box" role="dialog" aria-labelledby="ctitle">
+    <h2 id="ctitle"></h2>
+    <p id="ctext"></p>
+    <div class="row"><button id="cok" class="btn"></button><button id="cno" class="btn ghost" hidden></button></div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

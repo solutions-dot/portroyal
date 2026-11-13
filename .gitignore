@@ -16,3 +16,7 @@ games/garvey/site/models/anims.js
 # Kendal: built files are made by tools/build.mjs (and by the Vercel build), so they are not tracked
 games/kendal/site/app.js
 games/kendal/site/models/anims.js
+
+# Bog Walk: built files are made by tools/build.mjs (and by the Vercel build), so they are not tracked
+games/bog-walk/site/app.js
+games/bog-walk/site/models/anims.js
