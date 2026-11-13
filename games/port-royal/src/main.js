@@ -797,21 +797,40 @@ function nudgeTarget() {
   return best;
 }
 const _nv = new THREE.Vector3();
+/* The arrow must not point through a wall. Outside, the main street and the new street are walled off from each other by houses; both open only onto the harbour strip at the east end.
+   So if you and your goal are in different streets, the arrow first points along the way out (to the mouth of your street), and only then at the goal. Returns [x, z, isFinal]. */
+function nudgeStep(tgt) {
+  if (state.place !== 'out' || Q.on || Q.ruin || FB.on) return [tgt[0], tgt[1], true];
+  const mouth = X1 + 1.4, newMid = NS.ready ? (NS.zmin + NS.zmax) / 2 : 18;
+  const reg = (x, z) => x >= X1 + 0.3 ? 'east' : Math.abs(z) < S ? 'main' : (NS.ready && z > NS.zmin - 1) ? 'new' : 'east';
+  const P = reg(state.x, state.z), T = reg(tgt[0], tgt[1]);
+  const inNewZ = state.z > NS.zmin - 0.5 && state.z < NS.zmax + 0.5;
+  let w = null;
+  if (P === T) w = null;
+  else if (P === 'new') w = [mouth, newMid];   /* out along the new street to the harbour */
+  else if (P === 'main') w = state.x < X1 - 1 || Math.abs(tgt[1]) > 3 ? [mouth, 0] : null;   /* out along the main street to the harbour */
+  else if (T === 'main') w = Math.abs(state.z) < 2.5 ? null : [mouth, 0];   /* from the harbour into the main street */
+  else if (T === 'new') w = inNewZ ? null : [mouth, newMid];   /* from the harbour into the new street */
+  if (w && Math.hypot(state.x - w[0], state.z - w[1]) < 2.2) w = null;   /* already at the corner: head on */
+  return w ? [w[0], w[1], false] : [tgt[0], tgt[1], true];
+}
+if (__DEV__) window.__nudgeTest = (px, pz, tx, tz) => { const ox = state.x, oz = state.z; state.x = px; state.z = pz; const r = nudgeStep([tx, tz]); state.x = ox; state.z = oz; return r; };   /* dev only: where would the arrow point from here? */
 TICKS.push((dt) => {
   const el = $('nudge'), now = performance.now(); if (!el) return;
   const quiet = state.started && !busy && $('dialogue').hidden && $('card').hidden && goalText && !/^Run!|sand is pulling/.test(goalText);
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   const moved = Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz); if (moved > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
   if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30000); NUDGE.still = now; }   /* time spent reading does not count */
-  const tgt = quiet ? nudgeTarget() : null;
+  let tgt = quiet ? nudgeTarget() : null;
   if (!NUDGE.on && quiet && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
   if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }   /* there: the talk button takes over */
   if (!NUDGE.on || !tgt) { el.hidden = true; return; }
   el.hidden = false;
+  const st = nudgeStep(tgt), fin = st[2]; tgt = st;   /* point at the next step on the way, which is the goal itself when there is a clear way to it */
   const W = innerWidth, H = innerHeight, dx = tgt[0] - state.x, dz = tgt[1] - state.z, rel = Math.atan2(-dx, -dz) - state.yaw, a = Math.atan2(Math.sin(rel), Math.cos(rel));   /* a: 0 straight ahead, plus to the left */
   _nv.set(tgt[0], 2.2, tgt[1]).project(camera); const lab = el.querySelector('span');
   if (Math.abs(a) < 0.55 && _nv.z < 1) {   /* in front: a bouncing arrow points down at it (kept on screen even when you look up or down) */
-    el.style.left = Math.max(60, Math.min(W - 60, (_nv.x + 1) / 2 * W)) + 'px'; el.style.top = Math.max(110, Math.min(H * 0.62, (1 - _nv.y) / 2 * H)) + 'px'; el.className = 'down'; const sy = (1 - _nv.y) / 2 * H; lab.textContent = sy > H * 0.75 ? 'Look down' : sy < 90 ? 'Look up' : 'Here!'; }
+    el.style.left = Math.max(60, Math.min(W - 60, (_nv.x + 1) / 2 * W)) + 'px'; el.style.top = Math.max(110, Math.min(H * 0.62, (1 - _nv.y) / 2 * H)) + 'px'; el.className = 'down'; const sy = (1 - _nv.y) / 2 * H; lab.textContent = sy > H * 0.75 ? 'Look down' : sy < 90 ? 'Look up' : fin ? 'Here!' : 'This way'; }
   else { const left = a > 0; el.style.left = (left ? 58 : W - 58) + 'px'; el.style.top = (H * 0.45) + 'px'; el.className = left ? 'left' : 'right'; lab.textContent = 'This way'; }   /* to the side or behind: a big arrow at the edge says which way to turn */
 });
 TICKS.push((dt) => { if (!GULLS.length) { if (state.started) gullsInit(); return; } const show = state.place === 'out' && !Q.ruin && !(Q.on && Q.phase !== 'calm'); const t = performance.now() / 1000;
@@ -1823,15 +1842,22 @@ const BUBBLE = cv(128, 128, (c) => { const g = c.createRadialGradient(64, 64, 8,
 const MARKS = []; let markN = 0;
 function markSprite() { if (markN < MARKS.length) return MARKS[markN++]; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); sp.renderOrder = 5; scene.add(sp); MARKS.push(sp); markN++; return sp; }
 const isTalk = (a) => /^Talk to /.test(a.label);
-const markY = (a) => /old Ned|surgeon/.test(a.label) ? 1.7 : 2.15;
+const markY = (a, w) => {   /* how high above their feet the speech mark floats: just over the head or hat, measured from the person's own model */
+  const fall = /old Ned|surgeon/.test(a.label) ? 1.7 : 2.15; if (!w) return fall;
+  const cands = [abba, ...Object.values(people), ...Object.values(survivors), FBG.qm, FBG.exq, FBG.carrier, ...(FBG.d || [])]; let best = null, bd = 1.6; const p = new THREE.Vector3();
+  for (const m of cands) { if (!m || !m.parent || !m.visible) continue; m.getWorldPosition(p); const d = Math.hypot(p.x - w[0], p.z - w[1]); if (d < bd) { bd = d; best = m; } }
+  if (!best) return fall; const now = performance.now(), u = best.userData;
+  if (!u.hgt || now - (u.hgtT || 0) > 1500) { best.updateMatrixWorld(true); best.traverse((o) => { if (o.isSkinnedMesh) { o.skeleton.update(); o.computeBoundingBox(); } });   /* a skinned mesh keeps its first bounding box, so refresh it from the pose it is in now */
+    const bb = new THREE.Box3().setFromObject(best), h = bb.max.y - bb.min.y; u.hgt = Math.max(1.0, Math.min(2.3, h)); u.hgtT = now; }
+  return u.hgt + 0.14; };
 const TB = { el: null, world: new THREE.Vector3(), a: null };
 TICKS.push(() => { markN = 0; TB.a = null; const now = performance.now() / 1000;
   if (state.started && !busy && $('card').hidden) for (const a of ACTIONS) { if (!isTalk(a) || !!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const d = Math.hypot(state.x - w[0], state.z - w[1]); if (d > 16) continue;
     const sp = markSprite(), near = a === current, home = state.place === 'in' ? indoor : state.place === 'ware' ? wareG : state.place === 'after' ? afterG : state.place === 'yard' ? yardG : scene;
     if (sp.parent !== home && home) home.add(sp);
-    const base = state.place === 'sea' ? seaLevel + 1.6 : (state.place === 'out' ? groundYAt(w[0], w[1]) : 0) + markY(a);
+    const base = state.place === 'sea' ? seaLevel + 1.6 : (state.place === 'out' ? groundYAt(w[0], w[1]) : 0) + markY(a, w);
     sp.position.set(w[0], base + Math.sin(now * 2.4 + w[0]) * 0.06, w[1]); const k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + w[0]) * 0.1); sp.scale.set(k, k, k); sp.material.opacity = Math.max(0.6, 1 - d / 20); sp.visible = !near;
-    if (near) { TB.world.set(w[0], base - 0.2, w[1]); if (home !== scene) TB.world.applyMatrix4(home.matrixWorld); TB.a = a; } }
+    if (near) { TB.world.set(w[0], base - 0.09, w[1]); if (home !== scene) TB.world.applyMatrix4(home.matrixWorld); TB.a = a; } }
   for (let i = markN; i < MARKS.length; i++) MARKS[i].visible = false;
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (TB.a && !busy) TB.a.go(); }); }
   const show = TB.a && TB.a === current && !busy; TB.el.hidden = !show; if (!show) return;

@@ -35,6 +35,12 @@ npm run serve:dist      # http://localhost:8766/
 
 `dist/` is not committed (it is in `.gitignore`). The build needs only Node 18 or newer; Blender and Python are only for making new characters and animations, never for deploying.
 
+### The menu's other pages
+
+- `menu/about.html` is the "About this platform" page for teachers, students and parents. When a game is added or its sources change, update its section there ("The games and their sources", and the real and made-up people).
+- `menu/site.js` holds two switches, both empty until the owner chooses them. `SUBSCRIBE_URL` is where the "Get updates" form sends the email (any service that accepts a plain form post: Buttondown, Mailchimp, Formspree, a Google Form; `SUBSCRIBE_FIELD` names its email box). While it is empty the form says sign-ups are not open yet and sends nothing. `CONTACT_EMAIL` shows a "tell us about a mistake" line on the About page; while empty the line is hidden.
+- The sign-up form is for adults only (a tick box says so), keeps no data on the site, and has a hidden box that catches spam robots.
+
 ## Publishing a game to its artifact
 
 1. Build the public version: `node tools/build.mjs port-royal` (no `--dev`).
