@@ -4,7 +4,7 @@
    The two people and their lines are placeholders for testing the pipeline. Both are made up. */
 import * as THREE from 'three';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit } from '../../../engine/audio.js';
+import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 
 const $ = (id) => document.getElementById(id);
@@ -526,10 +526,17 @@ function nudgeTick(now) {
   else { const left = a > 0; el.style.left = (left ? 58 : W - 58) + 'px'; el.style.top = (H * 0.45) + 'px'; el.className = left ? 'left' : 'right'; lab.textContent = 'This way'; }   /* to the side or behind: a big arrow at the edge says which way to turn */
 }
 
-/* ---------- sound: a room hum, the street outside, and now and then the press ---------- */
+/* ---------- sound: each place has its own mix of the engine's beds, and now and then one small sound ---------- */
 let auNext = 0, thumpAt = 7;
 function pressThump() { if (!AU.ctx || !AU.on) return; for (let i = 0; i < 3; i++) { noiseHit(220, 1.2, 0.16, 0.1, 0.5, i * 0.55); tone(90, 55, 0.2, 'triangle', 0.04, 0.5, i * 0.55); } }
-function audioTick(t) { if (!AU.ctx || !state.started || t < auNext) return; auNext = t + 0.1; setG(AU.ch.room, 0.28); setG(AU.ch.crowd, 0.04); if (t > thumpAt) { thumpAt = t + 6 + Math.random() * 6; pressThump(); } }
+const SOUNDSCAPE = {   /* bed levels (room hum, crowd murmur, wind, sea, surf) and the small sound heard every few seconds */
+  shop: { room: 0.28, crowd: 0.04, once: pressThump }, hall: { room: 0.22, crowd: 0.05 }, street: { crowd: 0.1, wind: 0.05 }, press: { room: 0.26, crowd: 0.03, once: pressThump },
+  dock: { sea: 0.2, surf: 0.05, wind: 0.07, crowd: 0.04, once: () => (Math.random() < 0.5 ? gullCry() : shipCreak()) }, liberty: { room: 0.22, crowd: 0.12 }, office: { room: 0.18, crowd: 0.02 }, park: { wind: 0.05, crowd: 0.03, once: chirp } };
+function audioTick(t) {
+  if (!AU.ctx || !state.started || t < auNext) return; auNext = t + 0.1; const S = SOUNDSCAPE[place] || SOUNDSCAPE.shop;
+  for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], S[k] || 0);
+  if (t > thumpAt) { thumpAt = t + 6 + Math.random() * 6; if (S.once && AU.on) S.once(); }
+}
 
 
 /* ---------- chapter 2: a meeting hall in Kingston, July 1914 ---------- */
