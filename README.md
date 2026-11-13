@@ -65,11 +65,11 @@ docs/              the guides listed above
 
 Progress saves in the browser. Teachers can open all chapters from the Chapters menu.
 
-## What is history and what is invented
+## What is history and what is fictional
 
 **From the record:** Galdy's birth in Montpellier in 1659, his flight as a Huguenot, being swallowed and thrown into the sea in 1692, his rescue by boat, his trade in wine, cocoa and enslaved people as an agent of the Asiento, his seats in the Assembly, his work on St Peter's Church (1726), his death in 1739 and the tomb's move in 1953. Also the brick houses of up to four storeys, the brick floors, pewter, clay pipes and bottles found by archaeologists, the watch stopped at 11:43, liquefaction of the sand, and the minister preaching in a tent.
 
-**Invented:** Abba and her tavern The Turtle, old Ned, Kofi, Sam, the gunner, the soldier, the market street's people (Grace, Peter, Daniel Mendes, Constable Hart), the customer and prices in the warehouse, the captain's letter, who was in the boat that saved Galdy, the camp layout, and all dialogue. The journal says so on each relevant page.
+**Fictional:** Abba and her tavern The Turtle, old Ned, Kofi, Sam, the gunner, the soldier, the market street's people (Grace, Peter, Daniel Mendes, Constable Hart), the customer and prices in the warehouse, the captain's letter, who was in the boat that saved Galdy, the camp layout, and all dialogue. The journal says so on each relevant page.
 
 ## Sources
 

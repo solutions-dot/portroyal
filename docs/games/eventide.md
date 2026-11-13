@@ -6,11 +6,11 @@ Working title: **Eventide 1980**. Code would live in `games/eventide/` (copied f
 
 ## The idea in one paragraph
 
-A made-up child lives near Slipe Pen Road in Kingston and visits friends in the Eventide Home, a government home for poor old women, in May 1980. The child gets to know four women in the old wooden Myers Ward, hears their lives, and says goodnight to them on a Monday evening. In the early hours of Tuesday 20 May the ward burns. The child watches from behind the police rope and helps a neighbour's gate, then goes with Gran to the day of national mourning, when the women are laid in one grave at National Heroes Park. Later chapters ask what is known and what is only rumour, and the last chapter is at the monument today, where the grown-up hero tells a young listener who the women were.
+A fictional child lives near Slipe Pen Road in Kingston and visits friends in the Eventide Home, a government home for poor old women, in May 1980. The child gets to know four women in the old wooden Myers Ward, hears their lives, and says goodnight to them on a Monday evening. In the early hours of Tuesday 20 May the ward burns. The child watches from behind the police rope and helps a neighbour's gate, then goes with Gran to the day of national mourning, when the women are laid in one grave at National Heroes Park. Later chapters ask what is known and what is only rumour, and the last chapter is at the monument today, where the grown-up hero tells a young listener who the women were.
 
 ## The footnote
 
-Port Royal is about one earthquake and the people in it. Eventide is a fire that history books give a few lines, and those lines sit inside a bigger story: the violent 1980 election year. The game's job is to turn that line back into people. It does this the way Port Royal did, with a real event, real places and made-up neighbours who say they are made up. The one thing it cannot copy from Port Royal is a real person at the centre. No source found so far names a survivor, a rescuer or one of the women (see "Not found"), so the hero is made up, as in Garvey.
+Port Royal is about one earthquake and the people in it. Eventide is a fire that history books give a few lines, and those lines sit inside a bigger story: the violent 1980 election year. The game's job is to turn that line back into people. It does this the way Port Royal did, with a real event, real places and fictional neighbours who say they are fictional. The one thing it cannot copy from Port Royal is a real person at the centre. No source found so far names a survivor, a rescuer or one of the women (see "Not found"), so the hero is fictional, as in Garvey.
 
 Dramatic question: **who gets remembered, and who looks after people who cannot look after themselves?**
 
@@ -28,16 +28,16 @@ This is the hardest history in the family of games: it is recent, relatives are 
 6. **The cause is never settled.** The game says: "Nobody has proved what started the fire. People still disagree." No party, person or group is named as the cause on the main path. "Dig deeper" gives the two reported views, fairly: the Prime Minister's (arson, with phone lines said to be cut) and the fire chief's (an electrical fault was possible, no proof of arson), and the 1981 inquest.
 7. **Left out completely:** the smell, what was heard, anything about bodies, and any claim that doors or windows were locked (no source read says so).
 8. **Staff are not blamed.** The Home had about 180 staff for about 700 residents (JNHT), and the Journal can say plainly that it was crowded and old.
-9. **Real officials appear only as distant figures at the burial, with no invented speech.** News comes through a made-up radio voice that only says documented facts ("Monday is a day of national mourning").
+9. **Real officials appear only as distant figures at the burial, with no fictional speech.** News comes through a fictional radio voice that only says documented facts ("Monday is a day of national mourning").
 10. **A "This chapter is sad" card** before chapter 4, with "Continue" and "Skip to the morning". The game is for ages 6 and up.
 11. **A review step before it goes public:** have a Jamaican heritage or elder-care person read the finished game. Families of the women are alive.
 
 ## The hero
 
-- Made up, first person "you", no name (as in Garvey). About 11 in 1980.
-- Lives on a lane off Slipe Pen Road with **Gran** (made up), who visits her friend in the Home on Saturdays.
+- Fictional, first person "you", no name (as in Garvey). About 11 in 1980.
+- Lives on a lane off Slipe Pen Road with **Gran** (fictional), who visits her friend in the Home on Saturdays.
 - In chapter 7 you are the same person grown up (about 57 in 2026) at the monument with a young listener, as chapter 8 of Garvey jumps to the present.
-- The journal says: the hero, Gran, and the four women are made up and stand for the real women of Eventide.
+- The journal says: the hero, Gran, and the four women are fictional and stand for the real women of Eventide.
 
 ## Chapters
 
@@ -47,26 +47,26 @@ Seven chapters, in the Garvey pattern: one place, one or two hands-on activities
 |---|---|---|---|
 | 1 | **Slipe Pen Road**, a Saturday in early May 1980 | Ride the No. 43 bus with Gran. Walk past the shops and the cemetery wall to the gate of the Home. Meet the gatekeeper, then Miss Iris, a blind woman on the Myers Ward veranda. Give her your gift and read her a letter aloud. Journal: "Eventide Home" (opened 1 July 1870, paid for by the city). | What you bring Miss Iris: mangoes, radio batteries, or a song. She mentions it later. |
 | 2 | **Inside Myers Ward**, the same afternoon | A long wooden hall of iron beds close together, because it holds more women than it was built for. Meet Miss Pearl (sold yam at the market), Miss Maude (taught children to read) and one more. Help each woman put her things back where she likes them (a photo, a Bible, a comb, a radio). Each item opens a "life" journal page. | Whose story you sit with longest. Her name is on your token in chapter 7. |
-| 3 | **Goodnight**, Monday 19 May, dusk | A quiet evening on the veranda. A hymn. A made-up radio voice talks about the election campaign and the grown-ups look worried. The nurse on duty says "We have more ladies than beds." Say goodnight to each woman. Nothing sad happens, and the player is never warned. | Your promise at goodnight ("I will come Saturday"). It comes back in chapter 5. |
+| 3 | **Goodnight**, Monday 19 May, dusk | A quiet evening on the veranda. A hymn. A fictional radio voice talks about the election campaign and the grown-ups look worried. The nurse on duty says "We have more ladies than beds." Say goodnight to each woman. Nothing sad happens, and the player is never warned. | Your promise at goodnight ("I will come Saturday"). It comes back in chapter 5. |
 | 4 | **The night**, Tuesday 20 May, about 1 a.m. | Woken by sirens. Go to the corner with Gran and stop at the police rope. The glow, the engines from Kingston and St Andrew, the crowd. A firefighter asks you to hold the gate while the children from the nearby building are led out to the road. Wrap a child in a blanket. The ward falls. Quiet. Dawn: smoke over the road, the No. 43 bus waved through by a police officer. | None. The card before it offers "Skip to the morning". |
 | 5 | **A day of mourning**, Monday 26 May, National Heroes Park | Thousands in the park. Walk with Gran to the grave. Hear three mourners (a retired nurse, a neighbour, a man whose aunt lived at the Home). See the Home's staff walking to the grave and an old lady being comforted. Learn which of your four women got out and which did not (see decisions). | How you take part: lay a flower, sing, or stand quietly. People later remember it. |
 | 6 | **After**, 1980 to about 1985, the new Golden Age Home | Visit the women who got out. Hear what changed: a committee, a new home, an inquest in May 1981 that found no one criminally responsible. **Fact, opinion or rumour:** sort six cards (reuse Garvey chapter 7), then choose a fair question to ask about the cause. | The fair question you ask about the cause. |
 | 7 | **The monument**, National Heroes Park, today | You are grown. A young listener asks who the women were. Put six events on the timeline board (reuse Garvey chapter 8): 1870, 1980, the burial, 1981, the new home, the memorial day. Hold your token at the monument and tell the listener who you knew. The shrine of Marcus Garvey is in the same park. Journal gets a "Your journey" page. | The final answer: what a country owes the people who cannot look after themselves. |
 
-Optional extra, only if wanted later: a short **1870 flashback** for the Home's opening, like Port Royal's Ned story. Every scene would be made up and labelled, so it is not needed for the main arc.
+Optional extra, only if wanted later: a short **1870 flashback** for the Home's opening, like Port Royal's Ned story. Every scene would be fictional and labelled, so it is not needed for the main arc.
 
 ### Rule of truth
 
-Big events stay as they happened. Your choices change what you learn, what people say to you later, and whose name is on your token. Nobody can be saved. Every chapter ends with a "History / Story" journal page that says what really happened and what was made up.
+Big events stay as they happened. Your choices change what you learn, what people say to you later, and whose name is on your token. Nobody can be saved. Every chapter ends with a "History / Story" journal page that says what really happened and what was fictional.
 
 ## Cast
 
-| Who | Real or made up |
+| Who | Real or fictional |
 |---|---|
-| The hero (child, then grown) | Made up |
-| Gran | Made up |
-| Miss Iris, Miss Pearl, Miss Maude and one more woman | Made up. They stand for the real women. The journal says so. |
-| The gatekeeper, the nurse on duty, a firefighter, a police officer, the radio voice, three mourners, the young listener, the children from the nearby building | Made up |
+| The hero (child, then grown) | Fictional |
+| Gran | Fictional |
+| Miss Iris, Miss Pearl, Miss Maude and one more woman | Fictional. They stand for the real women. The journal says so. |
+| The gatekeeper, the nurse on duty, a firefighter, a police officer, the radio voice, three mourners, the young listener, the children from the nearby building | Fictional |
 | Governor General Florizel Glasspole, Prime Minister Michael Manley, Edward Seaga | Real. Seen only as distant figures at the burial (chapter 5), no speech. |
 | Allen Ridgeway, Kingston's fire chief | Real. Named only in "Dig deeper". |
 | The real residents who died or survived | Never named. No source read names them. |
@@ -118,7 +118,7 @@ Everything below comes from secondary sources read on 13 Nov 2026. **The New Yor
 - The name of any woman who died or survived, and of any staff member (a "Master David E. Dunkley" is mentioned in one JNHT summary and still has to be checked).
 - What the ward looked like inside, daily routines, why each woman was admitted.
 - The inscription or exact design of the Eventide monument. One source says each token on it stands for a life lost (Observer, 2020). Look at photographs and the Heritage Trust before the game shows it.
-- The time the fire was reported, and what neighbours did that night. Chapter 4's gate-holding scene is made up, built on the real fact that firefighters carried disabled children out. The journal says so.
+- The time the fire was reported, and what neighbours did that night. Chapter 4's gate-holding scene is fictional, built on the real fact that firefighters carried disabled children out. The journal says so.
 - Whether the Home had fire alarms, locks or a night watch.
 
 ### To read next
@@ -146,7 +146,7 @@ A sample journal page:
 ```js
 { id: 'footnote', title: 'A footnote',
   simple: ['A footnote is a small note at the bottom of a page.', 'Some events get only a line like that.', 'In this game, each woman gets a face.'],
-  deeper: ['Miss Iris, Miss Pearl and Miss Maude are made up. They stand for the real women of Eventide.',
+  deeper: ['Miss Iris, Miss Pearl and Miss Maude are fictional. They stand for the real women of Eventide.',
            '"These elderly women, they must have done so much to build this country." Jean Lowrie-Chin, Gleaner, 20 May 2020.'] }
 ```
 
@@ -170,7 +170,7 @@ A sample journal page:
 
 ## Decisions for the owner (my recommendation first)
 
-1. **The hero:** a made-up child, then grown in chapter 7. (Alternatives: a made-up young nurse's aide, which invites blame questions; a school child on the No. 43 bus, who can only watch.)
+1. **The hero:** a fictional child, then grown in chapter 7. (Alternatives: a fictional young nurse's aide, which invites blame questions; a school child on the No. 43 bus, who can only watch.)
 2. **How many of the four women get out:** two, so the survivors can carry chapter 6. The Journal still gives the real numbers, so the page is honest even if the cast is kinder.
 3. **The night:** glow, smoke and sound only, seen from behind the rope. No building collapse shown close, no one inside.
 4. **A "Skip to the morning" card** before chapter 4.
