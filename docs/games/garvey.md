@@ -16,8 +16,8 @@ Test it:
 ```bash
 node tools/build.mjs garvey --dev          # dev build: test views and the scripted playthrough
 python3 -m http.server 8765                # then open http://localhost:8765/games/garvey/site/
-# ?shot=shop1 ... shop7, talk, strike, type, typedone, journal, chapters, reset, credits, bubble, nudge, hall1 ... hall4 and hallchat are views;
-# ?test=walk steps the customer's route; ?auto=1 plays chapter 1 and opens every menu; ?auto=2 plays chapter 2.
+# ?shot=shop1 ... shop7, talk, strike, type, typedone, journal, chapters, reset, credits, bubble, nudge, hall1 ... hall4, hallchat, street1, street2 and streetchat are views;
+# ?test=walk steps the customer's route; ?auto=1 plays chapter 1 and opens every menu; ?auto=2 plays chapter 2; ?auto=3 checks old saves and replayed choices; ?auto=4 plays chapter 3.
 # The result of ?test=walk and ?auto=1 is written to the page title.
 ```
 
@@ -36,7 +36,7 @@ Players who know Port Royal should find everything where they expect it. The pag
 
 ### The story is a number
 
-`stage` (saved) says where you are; `best` is the furthest you have ever got, so chapters stay open when you replay one. Chapter 1: 0 talk to the printer and the customer, 1 set the type, 2 the strike, 3 done. Chapter 2: 10 meet Amy and Garvey, 11 print the poster, 12 welcome the neighbours, 13 listen to Garvey, 14 done. A person gives their full conversation only when `TALK_TARGETS[stage]` names them; otherwise they say a short later line. `story` records choices (`strike`, `poster`) and is saved too. Each place (`PLACES`: the print shop, the hall) has its own walls, bounds, people and things to do. Chapter 2's characters load only when it starts.
+`stage` (saved) says where you are; `best` is the furthest you have ever got, so chapters stay open when you replay one. Chapter 1: 0 talk to the printer and the customer, 1 set the type, 2 the strike, 3 done. Chapter 2: 10 meet Amy and Garvey, 11 print the poster, 12 welcome the neighbours, 13 listen to Garvey, 14 done. Chapter 3: 20 listen to the worker, the woman and the older man, 21 talk to Garvey (choose his words), 22 answer the older man's question, 23 done. A person gives their full conversation only when `TALK_TARGETS[stage]` names them; otherwise they say a short later line. `story` records choices (`strike`, `poster`) and is saved too. Each place (`PLACES`: the print shop, the hall) has its own walls, bounds, people and things to do. Chapter 2's characters load only when it starts.
 
 To add a chapter: add its row to `CHAPTERS` in `games/garvey/src/main.js` (set `ready`, `go` and `done`), add its goals to `GOALS`, and its journal pages to `JOURNAL`. Port Royal's `NUDGE` helper arrow and third-person view are not copied yet.
 
@@ -76,7 +76,7 @@ Branches rejoin at the end of each chapter, so every chapter has one `done()` te
 |---|---|---|---|
 | 1 | Kingston print shop, about 1908 | Meet the printer and a customer, set type (the letters are mirror images), then hear about the printers' strike and choose what you would do | Speak up now, wait and listen, or ask the others (built) |
 | 2 | A meeting hall in Kingston, July 1914 | Meet Amy Ashwood and Marcus Garvey, choose the poster word (Learn, Work or Unity), print it, welcome three neighbours who arrive, hear Garvey's speech (built) | The poster word: the neighbours' lines change |
-| 3 | Harlem street, 1916 | Listen to 3 people, then choose real words to share, answer a heckler | Which listener you answer |
+| 3 | Harlem street, 1916 | Listen to a worker, a woman from Jamaica and an older man, help Garvey choose what to speak about (Fair work, Good schools, or Pride), then answer the older man's question about trust (built) | The theme of the speech, and how you answer the older man |
 | 4 | Harlem press room, 1918 to 1919 | Build the front page, plan the sailors' delivery route, the ban | Send every copy, split the shipment, or hold it |
 | 5 | Harlem docks, 1919 | Compare two ship plans, spend coins, fix a supply problem | What you tell a friend who put in their savings |
 | 6 | Harlem, August 1920 | Parade preparation, welcome visitors, read the flag article of the Declaration | Who you help first |
@@ -111,11 +111,11 @@ Port Royal's conversation, journal, chapter and save systems are copied into `ga
 | Born 17 August 1887, died 10 June 1940 | Matches the US National Archives page title |
 | The *Negro World* was banned in several territories and carried by Black seamen | Confirmed by several sources |
 | Peak circulation | Sources vary; about 200,000 is the common figure. Say "many thousands" unless the Papers say more. |
-| Flag adopted 13 August 1920 (Article 39 of the Declaration), at the Madison Square Garden convention | Confirmed. Attendance given as 20,000 to 25,000, so avoid a number. |
+| The Declaration of the Rights of the Negro Peoples of the World, dated 13 August 1920, has 54 articles. Article 39 *named* red, black and green as the colours of the Black race (it does not describe a flag being raised). | Corrected in the third pass. The convention ran 1 to 31 August 1920. Its sessions were at Liberty Hall; one mass meeting at Madison Square Garden is given as about 25,000 people (sources vary, so avoid a number). |
 | Convicted of mail fraud in June 1923, five years | Confirmed. The exact day differs (18 or 21 June), so say "June 1923". |
 | Sentence commuted 18 November 1927, then deported | Confirmed. The deportation day is still to check. |
 | Mail fraud case was about advertising stock in a ship the line did not yet own (the *Orion*) | One source. Check before use. |
-| Black Star Line ships *Yarmouth*, *Shadyside*, *Kanawha* were old and in poor condition; Garvey and three others were indicted in 1922 | Confirmed. The share price ($5) is not confirmed: do not use it. |
+| Black Star Line ships *Yarmouth*, *Shadyside*, *Kanawha* were old and in poor condition; Garvey and three others were indicted in 1922 | Confirmed. The $5 share price is in the third pass below. |
 | Joshua Cockburn was the line's first captain | Confirmed |
 | Amy Ashwood worked with Garvey in the first UNIA years; some historians doubt "co-founder" | Say "helped build" on the main path, the debate in "Dig deeper" |
 | Amy Jacques Garvey: associate editor of the *Negro World* 1924 to 1927, the page "Our Women and What They Think", *Philosophy and Opinions* (1923, 1925) | Confirmed |
@@ -148,9 +148,25 @@ The Marcus Garvey and UNIA Papers (UCLA) and Robert Hill's volumes could not be 
 
 Photographs to use as a guide (public domain): Library of Congress, Kingston street scenes with trolleys about 1900 (`loc.gov/pictures/item/2003678373/`, `2003678372/`); Wikimedia Commons, "Kingston, Jamaica in the 20th century" and "1907 Kingston earthquake". The National Library of Jamaica has more (permission needed).
 
+### Third research pass (13 Nov 2026): secondary sources only
+
+Same caveat as the second pass: the Papers could not be reached.
+
+| Fact | Status |
+|---|---|
+| Garvey left Jamaica on 6 March 1916 on the SS *Tallac* and reached New York on 23 or 24 March | Sources differ on the day |
+| He worked as a printer in New York | Confirmed (several) |
+| First street speech at 135th Street and Lenox Avenue | One source. The game says "is said to have". |
+| Some middle-class Black New Yorkers disliked street speakers | Used as the older man's view; one source |
+| Black Harlem grew from about 28,690 (1910) to about 83,597 (1920) | One source. The game rounds to about 29,000 and about 84,000 and says it is still to check. |
+| The New York UNIA branch began in 1917 (first members 13 or 17); Liberty Hall opened in 1919 | Sources differ on the first members |
+| *Negro World*: first issue 17 August 1918, weekly, five cents, English at first; banned in places such as Trinidad, British Guiana and St Vincent; carried by seamen and others | Secondary sources. How copies were hidden (stewards, clothing) was not found: do not invent it. |
+| Black Star Line: incorporated June 1919; $5 shares; 96,285 sold by August 1920; *Yarmouth*, *Shady Side* and *Kanawha* were old and overpriced | Secondary sources. This replaces the second-pass note that the $5 price was unconfirmed, but still say "about" for counts. |
+
+In chapter 3 the words Garvey and the others speak are made up and credited as such in the journal. The street itself (brownstones, lamps) is a general picture of Harlem, not a copy of one real corner.
+
 ### To research before use
 
-- The Negro World's start (1918) and Garvey's arrival in the US (6 March 1916 per PBS: confirm).
 - The People's Political Party (1929), the move to London (1935), National Hero (1964), the inscription at his shrine in National Heroes Park.
 - Contested points for "Dig deeper": the "Garvey Must Go" campaign (PBS has a page), the Black Star Line's failures, the fairness of the trial and the modern calls for exoneration, any meeting with a Klan leader, the Liberia plan. Tell each fairly and simply. Never graphic.
 - A reported posthumous pardon in January 2025. Confirm from an official source or leave it out.

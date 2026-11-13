@@ -18,7 +18,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2118);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 100);
-scene.add(new THREE.HemisphereLight(0xfff4e0, 0x7a6048, 1.25));
+const hemi = new THREE.HemisphereLight(0xfff4e0, 0x7a6048, 1.25); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff0d0, 1.7); sun.position.set(6, 7, 5); scene.add(sun);
 const lampLight = new THREE.PointLight(0xffcf8a, 7, 9, 2); lampLight.position.set(0.2, 2.9, -0.3); scene.add(lampLight);
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -241,7 +241,8 @@ const SHOP_PEOPLE = [
 function initPerson(n) { n.m = null; n.walking = false; n.wait = 1.5 + Math.random() * 2; n.i = 0; n.heard = 0; n.talked = false; n.hx = n.x; n.hz = n.z; n.dest = null; n.delay = 0; n.hidden = false; }
 for (const n of SHOP_PEOPLE) initPerson(n);
 let PEOPLE = SHOP_PEOPLE;   /* the people in the place you are in */
-const byId = (id) => [...SHOP_PEOPLE, ...HALL_PEOPLE].find((n) => n.id === id);
+const allPeople = () => [...SHOP_PEOPLE, ...HALL_PEOPLE, ...STREET_PEOPLE];
+const byId = (id) => allPeople().find((n) => n.id === id);
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function tapPerson(cx, cy) {
   ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
@@ -287,6 +288,12 @@ const JOURNAL = [
     deeper: ['In Costa Rica he worked for a fruit company and wrote about the hard conditions of the workers.', 'In London he studied, and worked for a newspaper called the African Times and Orient Review.', 'Sources give different years for his travels in Central America, between 1909 and 1911.'] },
   { id: 'amy', title: 'Amy Ashwood', simple: ['Amy Ashwood was one of the first members of the UNIA.', 'She worked with Marcus Garvey in the early years.', 'She later led its women\'s division.'],
     deeper: ['She was an early secretary of the UNIA.', 'Some writers call her a co-founder. The historian Tony Martin thought that was too strong. Records show she was an organiser and a secretary.', 'We still need to check this against the Marcus Garvey and UNIA Papers.'] },
+  { id: 'harlem', title: 'Harlem in 1916', simple: ['Harlem is a part of New York City.', 'Many Black families came to Harlem from the southern United States and from Caribbean islands such as Jamaica.', 'Street corners were places where people gave speeches and listened.', 'The worker, the woman and the older man in this game are made up.'],
+    deeper: ['Harlem\'s Black population grew from about 29,000 in 1910 to about 84,000 in 1920. This comes from one source, which we still need to check.', 'Many kinds of speakers used the corners, including socialists such as A. Philip Randolph. Some middle-class Black New Yorkers did not like street speaking.', 'The words spoken at the corner in this game are made up, including the words of Marcus Garvey. They are not his real words.'] },
+  { id: 'garvey-arrives', title: 'Garvey arrives in New York', simple: ['Marcus Garvey sailed from Jamaica in March 1916.', 'He reached New York later that month.', 'He gave speeches in Harlem and began to find friends there.'],
+    deeper: ['His ship was the SS Tallac. Sources give the day he arrived as 23 or 24 March.', 'He worked as a printer after he arrived.', 'Garvey is said to have first spoken at the corner of 135th Street and Lenox Avenue. This comes from one source.'] },
+  { id: 'unia-ny', title: 'The UNIA in New York', simple: ['In 1917 Garvey started a New York branch of the UNIA.', 'It grew quickly in Harlem.'],
+    deeper: ['Sources give the first members as 13 or 17.', 'Liberty Hall in Harlem, a large meeting hall, opened in 1919.'] },
   { id: 'unia', title: 'The UNIA begins', simple: ['UNIA stands for Universal Negro Improvement Association.', 'It was founded in Kingston, Jamaica, in July 1914.', 'It wanted to help people in need, build pride, and open a trade school.'],
     deeper: ['Many sources give the first meeting as 20 July 1914. Others point to 1 August, Emancipation Day. Where it met is also uncertain.', 'In 1914 Garvey wrote to Booker T. Washington about a trade school like Tuskegee. Washington died in 1915.', 'Garvey sailed for the United States in March 1916.'] },
 ];
@@ -312,11 +319,12 @@ $('jbtn').onclick = () => openJournal(); $('jclose').onclick = closeJournal;
 /* ---------- goal, hint, sound button (as in Port Royal) ---------- */
 let stage = 0, best = 0;   /* the story is a number. Chapter 1: 0 talk, 1 set the type, 2 (reserved), 3 done. Chapter 2: 10 meet, 11 print the poster, 12 welcome the neighbours, 13 listen, 14 done. best: the furthest stage ever reached */
 const GOALS = { 0: 'Talk to the printer and the customer.', 1: 'Set the type for a notice. Go to the type stand.', 2: 'Talk to the printer. He has news.', 3: 'Well done! The print shop chapter is finished. Open Chapters for the next one.',
+  20: 'Listen to the three people at the corner.', 21: 'Talk to Marcus Garvey.', 22: 'The older man has a question. Talk to him.', 23: 'Well done! Chapter 3 is finished. More is coming soon.',
   10: 'Talk to Amy Ashwood and Marcus Garvey.', 11: 'Print the poster at the press table.', 12: 'Welcome the three neighbours as they arrive.', 13: 'Listen to Marcus Garvey.', 14: 'Well done! Chapter 2 is finished. More is coming soon.' };
-const TALK_TARGETS = { 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
-const NEXT_AFTER_TALK = { 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
+const TALK_TARGETS = { 20: ['worker', 'woman', 'critic'], 21: ['garvey3'], 22: ['critic'], 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
+const NEXT_AFTER_TALK = { 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
 const wantsTalk = (n) => !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
-function setStage(s) { stage = s; best = Math.max(best, s); for (const n of [...SHOP_PEOPLE, ...HALL_PEOPLE]) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); }
+function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); }
 function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); }
 let goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) {
@@ -333,14 +341,14 @@ $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
 /* ---------- saving: kept in this browser only ---------- */
 const story = {};   /* what the player chose: the printers' strike, who to invite... later lines read it. Saved with the rest. */
 const SAVE_KEY = 'garvey-save-v1'; let hasSave = false, erasing = false;   /* erasing: the reload that follows "Start again" must not save the old progress back */
-function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 2, unlocked, stage, best, story, talked: [...SHOP_PEOPLE, ...HALL_PEOPLE].filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
+function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 2, unlocked, stage, best, story, talked: allPeople().filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
 function loadGame() { try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; } }
 function applySave(d) {
   if (!d || !Array.isArray(d.unlocked)) return;
   for (const id of d.unlocked) if (JOURNAL.some((p) => p.id === id) && !unlocked.includes(id)) unlocked.push(id);
   if (d.story && typeof d.story === 'object') Object.assign(story, d.story);
   stage = Number.isInteger(d.stage) && d.stage in GOALS ? d.stage : 0; best = Number.isInteger(d.best) ? Math.max(d.best, stage) : stage; const waiting = TALK_TARGETS[stage] || [];   /* talk flags only count inside the stage they were saved in; saves from before version 2 used other stage numbers, so their flags are dropped */
-  for (const p of [...SHOP_PEOPLE, ...HALL_PEOPLE]) p.talked = d.v === 2 && Array.isArray(d.talked) && d.talked.includes(p.id) && waiting.includes(p.id);
+  for (const p of allPeople()) p.talked = d.v === 2 && Array.isArray(d.talked) && d.talked.includes(p.id) && waiting.includes(p.id);
   hasSave = unlocked.length > 1 || stage > 0 || best > 0;
 }
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.started) saveGame(); });
@@ -367,7 +375,7 @@ function resetChapter() {   /* the print shop again: people go home, the goal st
 /* ---------- chapters (only the first is built so far) ---------- */
 const CHAPTERS = [
   { year: 'About 1908', name: 'The print shop', ready: true, go: () => chapterFade('About 1908', 'A print shop in Kingston', resetChapter), done: () => best >= 3 },
-  { year: 'July 1914', name: 'The first followers', ready: true, go: () => { toast('Loading the hall'); ensureHall().then(() => chapterFade('1914', 'A meeting hall in Kingston', resetChapter2)); }, done: () => best >= 14 }, { year: '1916', name: 'The streets of Harlem' }, { year: '1918 to 1919', name: 'The power of the press' },
+  { year: 'July 1914', name: 'The first followers', ready: true, go: () => { toast('Loading the hall'); ensureHall().then(() => chapterFade('1914', 'A meeting hall in Kingston', resetChapter2)); }, done: () => best >= 14 }, { year: '1916', name: 'The streets of Harlem', ready: true, go: () => { toast('Loading Harlem'); ensureStreet().then(() => chapterFade('1916', 'Harlem, New York', resetChapter3)); }, done: () => best >= 23 }, { year: '1918 to 1919', name: 'The power of the press' },
   { year: '1919', name: 'The Black Star Line' }, { year: 'August 1920', name: 'A movement becomes a nation' }, { year: '1922 to 1927', name: 'The price of a dream' }, { year: '1927 to today', name: 'The dream lives on' },
 ];
 function renderChapters() {
@@ -390,7 +398,7 @@ $('dev').onclick = openCredits; $('chcred').onclick = () => { closeChapters(); o
 /* the reset button: this chapter again, the whole story again, or back to all games */
 $('reset').onclick = () => { if (fading) return; closeJournal();
   card('Reset', ['Start this chapter again, or start the whole story again.'], [
-    { t: 'Restart “' + CHAPTERS[stage >= 10 ? 1 : 0].name + '”', go: () => { hideCard(); CHAPTERS[stage >= 10 ? 1 : 0].go(); } },
+    { t: 'Restart “' + CHAPTERS[stage >= 20 ? 2 : stage >= 10 ? 1 : 0].name + '”', go: () => { hideCard(); CHAPTERS[stage >= 20 ? 2 : stage >= 10 ? 1 : 0].go(); } },
     { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) },
     { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'All games', go: toMenu }] : [])]); };
 
@@ -557,16 +565,82 @@ function loadPerson(n) {
 let hallLoading = null;
 function ensureHall() { if (!hallLoading) { buildHall(); hallLoading = Promise.all(HALL_PEOPLE.map(loadPerson)); } return hallLoading; }
 
+
+/* ---------- chapter 3: a Harlem street, 1916 ---------- */
+const streetG = new THREE.Group(); streetG.visible = false; scene.add(streetG);
+const STREET_WALLS = [], STREET_BOUNDS = { x0: -12, x1: 12, z0: -4.3, z1: 4.3 };
+let streetBuilt = false;
+function facadeTex(v) {   /* a brick front: rows of tall windows with stone lintels and a cornice; v picks the colour and the number of windows */
+  return cv(256, 512, (x, w, h) => {
+    const base = [[150, 78, 56], [138, 92, 70], [120, 70, 58], [160, 102, 74], [110, 84, 76]][v % 5]; x.fillStyle = `rgb(${base[0]},${base[1]},${base[2]})`; x.fillRect(0, 0, w, h);
+    for (let r = 0; r < 64; r++) { x.fillStyle = 'rgba(40,24,18,0.16)'; x.fillRect(0, r * 8, w, 1); for (let c = (r % 2) * 16; c < w; c += 32) x.fillRect(c, r * 8, 1, 8); }
+    x.fillStyle = 'rgba(30,20,14,0.12)'; for (let i = 0; i < 30; i++) { x.beginPath(); x.ellipse(Math.random() * w, Math.random() * h, 12 + Math.random() * 40, 8 + Math.random() * 30, 0, 0, 7); x.fill(); }
+    const cols = v % 2 ? 2 : 3, gap = w / cols;
+    for (let r = 0; r < 4; r++) for (let c = 0; c < cols; c++) { const wx = c * gap + gap / 2 - 18, wy = 70 + r * 100 + (r === 3 ? 20 : 0); x.fillStyle = '#d9cbb0'; x.fillRect(wx - 5, wy - 8, 46, 8); x.fillStyle = '#1c2630'; x.fillRect(wx, wy, 36, 62); x.fillStyle = 'rgba(180,200,215,0.35)'; x.fillRect(wx + 2, wy + 2, 14, 28); x.fillStyle = '#e8ddc6'; x.fillRect(wx, wy + 30, 36, 3); x.fillRect(wx + 17, wy, 2, 62); }
+    x.fillStyle = '#d9cbb0'; x.fillRect(0, 0, w, 26); x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, 26, w, 4); x.fillStyle = '#c9bb9f'; x.fillRect(0, h - 70, w, 6);
+    grain(x, w, h, 14); });
+}
+function buildStreet() {
+  if (streetBuilt) return; streetBuilt = true; const g = streetG;
+  const road = std(cv(256, 256, (x, w, h) => { x.fillStyle = '#5a5650'; x.fillRect(0, 0, w, h); for (let i = 0; i < 600; i++) { x.fillStyle = `rgba(${40 + Math.random() * 60 | 0},${40 + Math.random() * 60 | 0},${40 + Math.random() * 56 | 0},0.5)`; x.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 5, 2 + Math.random() * 3); } x.fillStyle = 'rgba(30,26,22,0.35)'; x.fillRect(w * 0.3, 0, 6, h); x.fillRect(w * 0.7, 0, 6, h); }, [10, 3]), 1);
+  mesh(new THREE.PlaneGeometry(60, 9), road, 0, 0, 0, g).rotation.x = -Math.PI / 2;
+  const walk = std(cv(128, 128, (x, w, h) => { x.fillStyle = '#b6b0a2'; x.fillRect(0, 0, w, h); x.strokeStyle = 'rgba(60,56,50,0.5)'; x.lineWidth = 2; x.strokeRect(0, 0, w, h); x.beginPath(); x.moveTo(w / 2, 0); x.lineTo(w / 2, h); x.stroke(); grain(x, w, h, 12); }, [30, 2]), 1);
+  for (const sz of [-1, 1]) { box(60, 0.15, 3.2, walk, 0, 0.075, sz * 6.1, g); box(60, 0.18, 0.25, solid(0x8a8678, 0.9), 0, 0.09, sz * 4.5, g); }
+  for (let i = 0; i < 13; i++) for (const sz of [-1, 1]) {   /* a row of tall brick houses on each side, each with a stoop and a door */
+    const x = -27 + i * 4.5, z = sz * 10.6, v = i + (sz > 0 ? 2 : 0), f = mesh(new THREE.PlaneGeometry(4.5, 11), std(facadeTex(v), 0.95), x, 5.5, sz * 7.62, g); f.rotation.y = sz > 0 ? Math.PI : 0;
+    box(4.5, 11, 6, solid([0x6a4034, 0x5c4034, 0x70483a][v % 3], 1), x, 5.5, z, g); box(4.7, 0.5, 0.7, solid(0xcfc2a8, 0.9), x, 11.1, sz * 7.35, g);
+    for (let k = 0; k < 3; k++) box(1.3, 0.2, 0.42, solid(0x9a9486, 0.9), x - 0.5, 0.1 + k * 0.2, sz * (7.35 - 0.2 - k * 0.4 + 1.2), g);
+    box(0.95, 2.1, 0.12, solid(0x2a1d16, 0.8), x - 0.5, 1.9, sz * 7.5, g); box(1.1, 0.14, 0.18, solid(0xcfc2a8, 0.9), x - 0.5, 3.0, sz * 7.47, g); }
+  for (const lx of [-9, -3, 3, 9]) for (const sz of [-1, 1]) { cyl(0.05, 0.07, 3.6, solid(0x202428, 0.6), lx, 1.8, sz * 4.7, g, 8); const lamp = cyl(0.22, 0.16, 0.34, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffd48a, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }), lx, 3.7, sz * 4.7, g, 8); lamp.name = 'lamp'; }
+  box(0.9, 0.5, 0.6, wood, 0, 0.25, 0.5, g);   /* the soapbox */
+  for (const [x, z] of [[-10, 5.7], [8, -5.7], [-5, -5.9]]) { box(0.7, 0.5, 0.7, wood, x, 0.4, z, g); }
+  mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: cv(64, 128, (x, w, h) => { const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#9ec8e6'); gr.addColorStop(0.7, '#e9eee4'); gr.addColorStop(1, '#d9d3c0'); x.fillStyle = gr; x.fillRect(0, 0, w, h); }) }), 0, 20, -34, g);
+  mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ color: 0xc9d8de }), 0, 20, 34, g).rotation.y = Math.PI;
+}
+
+const STREET_SPOTS = { worker: [-2.3, 1.7], woman: [2.4, 2.0], critic: [0.6, 3.2], garvey3: [0, 0.5] };
+const faceToward = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
+const wordsIs = (w) => story.words === w;
+const THEME = { work: 'Friends, everyone deserves fair work and fair pay.', learn: 'Friends, every child deserves a good school.', pride: 'Friends, we can be proud of who we are.' };
+const theme = (id, t) => ({ t, set: { words: id }, then: [{ who: 'Marcus Garvey', text: THEME[id] }, { who: 'Marcus Garvey', text: 'Let us help each other, and build something together.' }, { who: 'Woman', text: ({ work: 'Yes! Fair work is what I hope for.', learn: 'Yes! My son must go to school.', pride: 'Yes! I do feel proud.' })[id] }] });
+const answer = (id, t, reply) => ({ t, set: { answer: id }, then: [{ who: 'Older man', text: reply }] });
+const STREET_PEOPLE = [
+  { id: 'garvey3', model: 'garvey1916', who: 'Marcus Garvey', label: 'Talk to Marcus Garvey', x: 0, z: 0.5, ry: 0, base: 'Idle', ground: 0.5,
+    lines: () => [{ who: 'Marcus Garvey', text: 'Welcome, friend. I have only just arrived in New York.', unlock: 'garvey-arrives' }, { who: 'You', text: 'People here have told me what they need.' }, { who: 'Marcus Garvey', text: 'Then I will listen to you. What should I speak about?', choices: [theme('work', 'Fair work'), theme('learn', 'Good schools'), theme('pride', 'Pride in who we are')] }],
+    later: () => stage >= 22 ? ['Thank you for helping me find my words.'] : ['I will speak when everyone is ready.'] },
+  { id: 'worker', model: 'hl_worker', who: 'Worker', label: 'Talk to the worker', x: STREET_SPOTS.worker[0], z: STREET_SPOTS.worker[1], ry: faceToward(-2.3, 1.7, 0, 0.5), base: 'Idle',
+    lines: () => [{ who: 'Worker', text: 'I work long hours. The pay is small.', unlock: 'harlem' }, { who: 'You', text: 'What do you hope for?' }, { who: 'Worker', text: 'Fair pay, and a fair chance for my children.' }],
+    later: () => ['Fair pay. That is all I ask.', 'I am listening.'] },
+  { id: 'woman', model: 'hl_woman', who: 'Woman', label: 'Talk to the woman', x: STREET_SPOTS.woman[0], z: STREET_SPOTS.woman[1], ry: faceToward(2.4, 2.0, 0, 0.5), base: 'Idle',
+    lines: () => [{ who: 'Woman', text: 'I came from Jamaica, hoping for a better life.' }, { who: 'You', text: 'Is it better here?' }, { who: 'Woman', text: 'Some days. I miss home. I want my son to learn.' }],
+    later: () => stage >= 22 ? ['That was a good speech.'] : ['I miss the sea at home.', 'I hope my son will go to school.'] },
+  { id: 'critic', model: 'hl_critic', who: 'Older man', label: 'Talk to the older man', x: STREET_SPOTS.critic[0], z: STREET_SPOTS.critic[1], ry: faceToward(0.6, 3.2, 0, 0.5), base: 'Idle',
+    lines: () => stage === 22 ? [{ who: 'Older man', text: 'Fine words. But you are new here.' }, { who: 'Older man', text: 'Why should we trust him?', choices: [answer('listen', 'Listen, then decide for yourself', 'Fair. I will listen, and then decide.'), answer('watch', 'Watch what he does', 'Good. What a man does matters most.'), answer('ask', 'Ask him your questions', 'Then I will. I have many!')] }, { who: 'Older man', text: 'Not everyone will agree with him. That is fair.', unlock: 'unia-ny' }]
+      : [{ who: 'Older man', text: 'Another street speaker? I have heard many.' }, { who: 'You', text: 'Do you disagree with them?' }, { who: 'Older man', text: 'I want proof, not only words.' }],
+    later: () => stage >= 23 ? ['I will keep my eyes open.'] : ['Words are easy.', 'We shall see.'] },
+];
+for (const n of STREET_PEOPLE) initPerson(n);
+let streetLoading = null;
+function ensureStreet() { if (!streetLoading) { buildStreet(); streetLoading = Promise.all(STREET_PEOPLE.map(loadPerson)); } return streetLoading; }
+function resetChapter3() {   /* the street corner again: the journal and your choices are kept */
+  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 20; delete story.words; delete story.answer;
+  for (const n of STREET_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  enterPlace('street'); setStage(20); showPlace();
+}
+
 /* ---------- places ---------- */
 const PLACES = {
   shop: { group: room, lamp: lampLight, walls: WALLS, bounds: BOUNDS, people: SHOP_PEOPLE, actions: SHOP_ACTIONS, start: START, caption: 'Kingston, about 1908' },
-  hall: { group: hallG, lamp: hallLamp, walls: HALL_WALLS, bounds: HALL_BOUNDS, people: HALL_PEOPLE, actions: HALL_ACTIONS, start: { x: 0, z: 3.1, yaw: 0 }, caption: 'Kingston, July 1914' } };
+  hall: { group: hallG, lamp: hallLamp, walls: HALL_WALLS, bounds: HALL_BOUNDS, people: HALL_PEOPLE, actions: HALL_ACTIONS, start: { x: 0, z: 3.1, yaw: 0 }, caption: 'Kingston, July 1914' },
+  street: { group: streetG, lamp: new THREE.Object3D(), walls: STREET_WALLS, bounds: STREET_BOUNDS, people: STREET_PEOPLE, actions: [], start: { x: -7, z: 2.6, yaw: -1.25 }, caption: 'Harlem, New York, 1916', sky: 0x9ec8e6 } };
 let place = 'shop', placeT = 0;
 function enterPlace(name, keepPos) {
   place = name; const P = PLACES[name];
   for (const k of Object.keys(PLACES)) { const Q = PLACES[k]; Q.group.visible = k === name; Q.lamp.visible = k === name; for (const n of Q.people) { if (n.mark) n.mark.visible = false; if (n.m) n.m.visible = k === name && !n.hidden; } }
   if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.dest) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; }
   curWalls = P.walls; curBounds = P.bounds; PEOPLE = P.people; ACTIONS = P.actions; near = null;
+  scene.background = new THREE.Color(P.sky || 0x2a2118); scene.fog = P.sky ? new THREE.Fog(0xcbd9de, 28, 90) : null;   /* outdoor places have sky and haze; rooms do not */
+  hemi.intensity = P.sky ? 2.3 : 1.25; sun.intensity = P.sky ? 2.2 : 1.7; sun.position.set(P.sky ? -5 : 6, P.sky ? 9 : 7, P.sky ? 4 : 5);   /* daylight outside is brighter, so dark skin still shows */
   if (!keepPos) { state.x = P.start.x; state.z = P.start.z; state.yaw = P.start.yaw; state.pitch = 0; }
 }
 function showPlace() { const el = $('place'); el.textContent = PLACES[place].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(placeT); placeT = setTimeout(() => { el.style.opacity = 0; }, 4500); }
@@ -584,9 +658,8 @@ let modelsReady = false;
     loadClips(anims);
     PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; });
       m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = 0; scene.add(m); animate(m, n.base); grounded.push(m); n.m = m; });
-    (stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 10 ? 'hall' : 'shop'); showPoster(); });
+    (stage >= 20 ? ensureStreet() : stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 20 ? 'street' : stage >= 10 ? 'hall' : 'shop'); showPoster(); if (__DEV__) devViews(); });
     modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave;
-    if (__DEV__) devViews();
   }); }
 function startGame() {
   audioInit(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); setGoal();
@@ -640,6 +713,10 @@ function devViews() {
   if (shot === 'credits') { go(-0.5, 2.9, 0, 0); openCredits(); }
   if (shot === 'bubble') { go(-2.3, -0.8, 0.25, 0.08); }
   if (shot === 'nudge') { go(-0.5, 2.9, Math.PI / 2, 0); NUDGE.still = performance.now() - 20000; }
+  const inStreet = (st, x, z, yaw, pitch) => ensureStreet().then(() => { stage = st; best = Math.max(best, st); enterPlace('street'); go(x, z, yaw, pitch); });
+  if (shot === 'street1') inStreet(20, -7, 2.6, -1.25, 0.02);
+  if (shot === 'street2') inStreet(21, 4.5, 1.2, 1.35, 0.03);
+  if (shot === 'streetchat') inStreet(21, 0.3, 2.9, 0.1, 0.05).then(() => startTalk(byId('garvey3')));
   if (shot === 'hall1') inHall(10, 0, 3.1, 0, 0);
   if (shot === 'hall2') inHall(11, 1.2, 0.6, -1.0, -0.08, 'WORK');
   if (shot === 'hall3') inHall(13, 0, 1.4, 0, 0.04, 'UNITY');
@@ -672,6 +749,12 @@ function devViews() {
         $('reset').click(); L('reset card="' + $('ctitle').textContent + '" buttons=' + [...$('cbtns').children].map((b) => b.textContent).join('/')); $('cbtns').children[0].click(); await sleep(50);
         L('after restart: stage=' + stage + ' pages=' + unlocked.length + ' choice kept=' + story.strike + ' busy=' + busy);
         L(stage === 0 && unlocked.length === 4 && story.strike === 'speak' && !busy ? 'ALLDONE' : 'STALL'); L('DONE');
+      } else if (q.get('auto') === '4') {
+        $('start').click(); best = 14; stage = 14; CHAPTERS[2].go(); for (let i = 0; i < 300 && place !== 'street'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '" people=' + PEOPLE.map((n) => n.id).join(','));
+        for (const id of ['worker', 'woman', 'critic']) L(id + ' lines=' + await talkTo(byId(id))); L('stage=' + stage);
+        L('garvey lines=' + await talkTo(byId('garvey3')) + ' words=' + story.words + ' stage=' + stage);
+        L('critic lines=' + await talkTo(byId('critic')) + ' answer=' + story.answer + ' stage=' + stage + ' goal="' + $('goal').textContent + '" pages=' + unlocked.join(','));
+        L(stage === 23 && story.words === 'work' && story.answer === 'listen' && place === 'street' && CHAPTERS[2].done() ? 'ALLDONE' : 'STALL'); L('DONE');
       } else {
         $('start').click(); best = 3; stage = 3; CHAPTERS[1].go(); for (let i = 0; i < 200 && place !== 'hall'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '"');
         L('amy lines=' + await talkTo(byId('amy'))); L('garvey lines=' + await talkTo(byId('garvey')) + ' poster=' + story.poster + ' stage=' + stage);
