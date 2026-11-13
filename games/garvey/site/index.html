@@ -157,7 +157,9 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 .pc{border:0;border-radius:5px;background:#8e8f8a;color:#17130f;cursor:pointer;box-shadow:0 3px 0 #55564f;font:700 1rem Georgia,serif;padding:.55rem .8rem;min-height:48px}
 .pc.sel{outline:3px solid var(--brass);outline-offset:2px}
 .pc:disabled{opacity:.25;cursor:default;box-shadow:none}
-#pgmsg,#inmsg,#dcmsg{margin:0;min-height:2.6em}
+#pgmsg,#inmsg,#dcmsg,#somsg,#lemsg{margin:0;min-height:2.6em}
+#soprog{margin:0}#socard,#letext{font-size:1.1rem;line-height:1.4;padding:.8rem 1rem;letter-spacing:0}#socard{min-height:5.5em;display:flex;align-items:center;justify-content:center}#letext{font-weight:400;text-align:left}
+#sobtns,#lebtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}#lebtns .pc{flex:1 1 100%;text-align:left}#sobtns .pc{min-width:7rem}
 #dcquote{font-size:1.1rem;line-height:1.3;padding:.6rem .9rem;letter-spacing:.02em;margin:0}
 #dcbanner{display:flex;flex-direction:column;flex:none;height:66px;border-radius:4px;overflow:hidden;border:2px solid #efe7d2}#dcbanner span{flex:1;background:#efe7d2;opacity:.25}
 #dccolors{display:flex;gap:8px;justify-content:center}
@@ -234,6 +236,24 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
     <div id="dccolors"><button class="pc" data-c="black">Black</button><button class="pc" data-c="green">Green</button><button class="pc" data-c="red">Red</button></div>
     <p id="dcmsg" aria-live="polite"></p>
     <div class="tbtns"><button id="dcdone" class="btn" hidden>Done</button></div>
+  </div>
+  <div id="sortp" class="panel" role="dialog" aria-labelledby="sotitle" hidden>
+    <button id="sox" class="x" aria-label="Stop sorting">&times;</button>
+    <h2 id="sotitle">Fact or rumour?</h2>
+    <p id="soprog"></p>
+    <div id="socard" class="paper"></div>
+    <div id="sobtns"><button class="pc" data-a="fact">Fact</button><button class="pc" data-a="rumour">Rumour</button></div>
+    <p id="somsg" aria-live="polite"></p>
+    <div class="tbtns"><button id="sonext" class="btn" hidden>Next card</button><button id="sodone" class="btn" hidden>Done</button></div>
+  </div>
+  <div id="letp" class="panel" role="dialog" aria-labelledby="letitle" hidden>
+    <button id="lex" class="x" aria-label="Stop reading the letter">&times;</button>
+    <h2 id="letitle">A letter from a friend</h2>
+    <div id="letext" class="paper"></div>
+    <p>How will you write back?</p>
+    <div id="lebtns"></div>
+    <p id="lemsg" aria-live="polite"></p>
+    <div class="tbtns"><button id="ledone" class="btn" hidden>Done</button></div>
   </div>
   <div id="dialogue" role="dialog" aria-labelledby="who" hidden>
     <button id="dclose" aria-label="Stop talking">&times;</button>
