@@ -303,6 +303,8 @@ if (__DEV__) {
     if (shot === 'fist') { hand.root.position.set(0.02, 0.36 + num('fy', 0), -0.3 + num('fz', 0)); hand.root.rotation.set(0, num('fry', -0.1), 0); S.pitch = 0; S.yaw = 0; }   /* the hand brought close, to inspect the grip */
     if (q.has('cine')) { document.body.classList.add('notrans'); bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); }   /* the black bars in, as in the dark and the climb */
     if (shot === 'cap') { document.body.classList.add('notrans'); hideHud(true); bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); fadeTo('#000', 1, 0); $('fade').style.transition = 'none'; $('cap').style.transition = 'none'; q.get('line') === '2' ? caption('The last tram has gone.', 'The water in the pipe is shut off.') : caption('Bog Walk, Jamaica', 'June 1904'); }   /* an opening title card */
+    if (shot === 'poster') {   /* a clean picture for the menu card: no words, the manhole's beam at the end of the pipe, a sheen of water, your torch lit. Render at 1280x720. */
+      hideHud(true); document.body.classList.add('notrans'); if (!q.has('z')) S.z = -2; if (!q.has('yaw')) S.yaw = Math.PI; if (!q.has('pitch')) S.pitch = 0.03; if (!q.has('wl')) N.wl = 0.2; if (!q.has('vig')) { N.vig = 0.22; $('vig').style.opacity = N.vig; } }
     if (shot === 'end') { N.skipped = q.has('skipped'); showEnd(); }   /* the end card, with the credit */
     if (shot === 'up') { S.x = 0; S.z = ZM - 0.12; S.pitch = 1.5; }
     if (shot === 'manhole') { S.x = 0; S.z = ZM - 3.4; lookAt(0, 2 * R, ZM); }

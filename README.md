@@ -7,6 +7,7 @@ Educational 3D history games for the web, for children aged 6 and up and for adu
 | **Port Royal, 1690**: the story of Lewis Galdy, from his arrival to the 1692 earthquake and after | `games/port-royal/` | finished and live |
 | **Marcus Garvey** | all eight chapters playable (Kingston 1908, Kingston 1914, Harlem 1916, a press room 1918, a dock 1919, Liberty Hall 1920, Amy Jacques Garvey's desk 1925, and Kingston today) | new, still being polished (see `docs/games/garvey.md`) |
 | **Kendal 1957: The Excursion Train**: Jamaica's railway from the slow road before it (about 1844) to the Kendal train crash of 1 September 1957 and how it is remembered | `games/kendal/` | all seven chapters playable, new (see `docs/games/kendal.md`) |
+| **Bog Walk 1904: The Tube**: a night gang cleans the huge iron pipe that feeds Kingston's tram power station, and the water comes | `games/bog-walk/` | first slice playable (an opening, the work, the water, the climb out); the rest of the story is planned in `docs/games/bog-walk.md` |
 
 The home page (`menu/index.html`) lists the games.
 
