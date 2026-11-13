@@ -28,7 +28,7 @@ This is the hardest history in the family of games: it is recent, relatives are 
 6. **The cause is never settled.** The game says: "Nobody has proved what started the fire. People still disagree." No party, person or group is named as the cause on the main path. "Dig deeper" gives the two reported views, fairly: the Prime Minister's (arson, with phone lines said to be cut) and the fire chief's (an electrical fault was possible, no proof of arson), and the 1981 inquest.
 7. **Left out completely:** the smell, what was heard, anything about bodies, and any claim that doors or windows were locked (no source read says so).
 8. **Staff are not blamed.** The Home had about 180 staff for about 700 residents (JNHT), and the Journal can say plainly that it was crowded and old.
-9. **Real officials appear only as distant figures at the burial, with no invented speech.** News comes through a fictional radio voice that only says documented facts ("Monday is a day of national mourning").
+9. **Real officials appear only as distant figures at the burial, with no fictional speech.** News comes through a fictional radio voice that only says documented facts ("Monday is a day of national mourning").
 10. **A "This chapter is sad" card** before chapter 4, with "Continue" and "Skip to the morning". The game is for ages 6 and up.
 11. **A review step before it goes public:** have a Jamaican heritage or elder-care person read the finished game. Families of the women are alive.
 
