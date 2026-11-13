@@ -250,13 +250,16 @@ function tapPerson(cx, cy) {
   return null;
 }
 const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); };
+const sitClip = (talking) => (talking && CL.SitTalk ? 'SitTalk' : CL.SitIdle ? 'SitIdle' : null);
+function sitDown(n) { n.seated = true; n.walking = false; n.m.userData.anim.play(sitClip(false)); }
 function npcTick(n, dt) {
   const m = n.m; if (!m) return; if (POSTER) { m.rotation.y = n.ry; return; }   /* the menu poster: everyone keeps the pose they were given */
   const ac = m.userData.anim, d = Math.hypot(state.x - n.x, state.z - n.z), isNear = (d < 3.2 && !DEV_NOSTOP) || talkWith === n;
   if (n.delay > 0) { n.delay -= dt; if (n.delay <= 0) { n.hidden = false; m.visible = place === 'hall'; n.walking = true; ac.play('Walk'); } return; }
   if (n.dest && talkWith !== n) { const dx = n.dest[0] - n.x, dz = n.dest[1] - n.z, dist = Math.hypot(dx, dz), sp = 1.25 * dt; faceTo(m, Math.atan2(dx, dz), dt);
-    if (dist <= sp) { n.x = n.dest[0]; n.z = n.dest[1]; n.dest = null; n.walking = false; n.ry = Math.PI; ac.play(null); } else { n.x += dx / dist * sp; n.z += dz / dist * sp; } m.position.set(n.x, 0, n.z); return; }
+    if (dist <= sp) { n.x = n.dest[0]; n.z = n.dest[1]; if (n.legs && n.legs.length) { n.dest = n.legs.shift(); } else { n.dest = null; n.walking = false; n.ry = Math.PI; if (n.seat) sitDown(n); else ac.play(null); } } else { n.x += dx / dist * sp; n.z += dz / dist * sp; } m.position.set(n.x, 0, n.z); return; }
   const toPlayer = Math.atan2(state.x - n.x, state.z - n.z);
+  if (n.seated) { faceTo(m, talkWith === n ? toPlayer : n.ry, dt, 3); return; }
   if (!n.path) { if (isNear) faceTo(m, toPlayer, dt); else faceTo(m, n.ry, dt, 2); return; }   /* the printer stays at his stand, and turns to look at you */
   if (isNear || n.wait > 0) {   /* stop, and look at the player if they are close */
     if (n.walking) { n.walking = false; ac.play(null); }
@@ -458,7 +461,7 @@ function showLine() {
   const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock); $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(s, c); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
-  const ac = talkWith && talkWith.m && talkWith.m.userData.anim; if (ac) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
+  const ac = talkWith && talkWith.m && talkWith.m.userData.anim; if (ac) { if (talkWith.seated) ac.play(sitClip(!me)); else if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
 }
 function choose(s, c) {   /* a choice: remember it, add the lines that answer it, and go on */
   uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || []));
@@ -466,7 +469,7 @@ function choose(s, c) {   /* a choice: remember it, add the lines that answer it
 }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  const n = talkWith; talkWith = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.m) n.m.userData.anim.play(null);
+  const n = talkWith; talkWith = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.m) n.m.userData.anim.play(n.seated ? sitClip(false) : null);
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); }
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
@@ -499,7 +502,7 @@ const TALK_SVG = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" st
 const TB = { el: null, v: new THREE.Vector3() };
 function addMark(n) { n.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); n.mark.renderOrder = 5; n.mark.visible = false; scene.add(n.mark); }
 for (const n of SHOP_PEOPLE) addMark(n);
-const headTop = (n) => ((n.m && n.m.userData.ground) || 0) + (n.h || 1.8) - 0.03;   /* the height of the top of someone's head or hat, standing on whatever they stand on */
+const headTop = (n) => ((n.m && n.m.userData.ground) || 0) + (n.h || 1.8) * (n.seated ? 0.74 : 1) - 0.03;   /* the height of the top of someone's head or hat, standing on whatever they stand on */
 const POSTER = __DEV__ && /[?&]shot=poster/.test(location.search);   /* the menu poster is rendered from this view with no marks or bubbles */
 function bubbleTick(now) {
   const show = state.started && !busy && $('card').hidden && !POSTER;
@@ -508,7 +511,7 @@ function bubbleTick(now) {
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !busy) activate(near); }); }
   const on = show && near && !near.go; TB.el.hidden = !on; if (!on) return;
   TB.v.set(near.x, headTop(near) + 0.08, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
-  const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
+  const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = Math.max(r.top + (1 - TB.v.y) / 2 * r.height, r.top + 196) + 'px';   /* never up under the Goal tab and the buttons, even when the head is above the top of the screen */
   if (TB.el.dataset.label !== near.label) { TB.el.dataset.label = near.label; TB.el.innerHTML = TALK_SVG + '<span class="who">' + near.who + '</span>'; TB.el.setAttribute('aria-label', near.label); }
 }
 
@@ -573,7 +576,7 @@ function buildHall() {
     mesh(new THREE.PlaneGeometry(w, h), viewM, 0, y, 0.012, gg); for (const dx of [-w / 2, w / 2]) box(0.09, h + 0.12, 0.12, beam, dx, y, 0.05, gg); for (const dy of [sill - 0.03, sill + h + 0.03]) box(w + 0.2, 0.09, 0.12, beam, 0, dy, 0.05, gg); box(0.05, h, 0.06, beam, 0, y, 0.04, gg); box(w, 0.04, 0.06, beam, 0, y + h * 0.1, 0.04, gg);
     for (const dx of [-(w / 2 + w / 4 + 0.05), w / 2 + w / 4 + 0.05]) mesh(new THREE.PlaneGeometry(w / 2, h), louverM, dx, y, 0.02, gg); }
   for (const bx of [-2.6, 2.6]) for (const bz of [-1.2, 0.2, 1.4]) {   /* benches either side of the middle aisle */
-    box(3.0, 0.08, 0.42, wood, bx, 0.46, bz, g); box(3.0, 0.5, 0.05, wood, bx, 0.78, bz - 0.22, g); for (const dx of [-1.35, 1.35]) box(0.06, 0.46, 0.4, woodDark, bx + dx, 0.23, bz, g); HALL_WALLS.push([bx - 1.6, bz - 0.35, bx + 1.6, bz + 0.3]); }
+    box(3.0, 0.08, 0.42, wood, bx, 0.46, bz, g); box(3.0, 0.5, 0.05, wood, bx, 0.78, bz + 0.22, g);   /* the backrest is behind the sitter, who faces the platform */ for (const dx of [-1.35, 1.35]) box(0.06, 0.46, 0.4, woodDark, bx + dx, 0.23, bz, g); HALL_WALLS.push([bx - 1.6, bz - 0.35, bx + 1.6, bz + 0.3]); }
   box(8.4, 0.25, 1.7, wood, 0, 0.125, HALL.z0 + 0.85, g); HALL_WALLS.push([-4.3, HALL.z0, 4.3, HALL.z0 + 1.75]);   /* the platform at the back, with a table and a lamp */
   box(2.2, 0.85, 0.8, woodDark, 0, 0.25 + 0.425, HALL.z0 + 0.7, g); box(2.4, 0.06, 0.95, wood, 0, 0.25 + 0.88, HALL.z0 + 0.7, g);
   cyl(0.07, 0.1, 0.22, brass, -0.6, 0.25 + 1.04, HALL.z0 + 0.7, g); cyl(0.09, 0.09, 0.2, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.7, transparent: true, opacity: 0.8 }), -0.6, 0.25 + 1.25, HALL.z0 + 0.7, g);
@@ -600,14 +603,14 @@ const HALL_PEOPLE = [
       : [{ who: 'Marcus Garvey', text: 'Welcome. I have just come home from London.', unlock: 'garvey-home' }, { who: 'You', text: 'What will you do now?' }, { who: 'Marcus Garvey', text: 'Start an association, so people can help each other.' }, { who: 'Marcus Garvey', text: 'We will help people in need. We will build pride.' },
         { who: 'Marcus Garvey', text: 'What one word should our poster say?', choices: [word('LEARN'), word('WORK'), word('UNITY')] }],
     later: () => ({ 10: ['Please talk to Amy Ashwood too.'], 11: ['Please print the poster on the press.'], 12: ['Please welcome our guests.'], 14: ['Thank you for helping us begin.'] })[stage] || ['One moment, please.'] },
-  { id: 'elder', model: 'nb_elder', who: 'Older man', label: 'Talk to the older man', x: -0.6, z: 6.5, ry: Math.PI, base: 'Idle', seat: [-1.0, -0.2], lines: () => neighbourLines('elder'), later: () => ['I am glad I came.', 'Will Mr Garvey speak soon?'] },
-  { id: 'seller', model: 'nb_seller', who: 'Market seller', label: 'Talk to the market seller', x: 0.6, z: 6.5, ry: Math.PI, base: 'Idle', seat: [1.0, -0.2], lines: () => neighbourLines('seller'), later: () => ['I closed my stall early to come.', 'What a good idea.'] },
-  { id: 'youth', model: 'nb_youth', who: 'Young man', label: 'Talk to the young man', x: 0, z: 7.2, ry: Math.PI, base: 'Idle', seat: [-1.0, 1.2], lines: () => neighbourLines('youth'), later: () => ['I told my friends too.', 'Can I help next time?'] },
+  { id: 'elder', model: 'nb_elder', who: 'Older man', label: 'Talk to the older man', x: -0.6, z: 6.5, ry: Math.PI, base: 'Idle', seat: [-1.9, 0.2], route: [[0, 3.4], [0, -0.5], [-1.9, -0.5]], lines: () => neighbourLines('elder'), later: () => ['I am glad I came.', 'Will Mr Garvey speak soon?'] },
+  { id: 'seller', model: 'nb_seller', who: 'Market seller', label: 'Talk to the market seller', x: 0.6, z: 6.5, ry: Math.PI, base: 'Idle', seat: [1.9, 0.2], route: [[0, 3.4], [0, -0.5], [1.9, -0.5]], lines: () => neighbourLines('seller'), later: () => ['I closed my stall early to come.', 'What a good idea.'] },
+  { id: 'youth', model: 'nb_youth', who: 'Young man', label: 'Talk to the young man', x: 0, z: 7.2, ry: Math.PI, base: 'Idle', seat: [-1.9, 1.4], route: [[0, 3.4], [0, 0.83], [-1.9, 0.83]], lines: () => neighbourLines('youth'), later: () => ['I told my friends too.', 'Can I help next time?'] },
 ];
 for (const n of HALL_PEOPLE) initPerson(n);
 for (const n of HALL_PEOPLE.slice(2)) n.hidden = true;   /* the neighbours arrive when the poster is printed */
 function startArrivals() {
-  HALL_PEOPLE.slice(2).forEach((n, i) => { if (!n.m) return; n.hidden = true; n.m.visible = false; n.x = (i - 1) * 0.6; n.z = 5.2; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.dest = n.seat.slice(); n.delay = 1.2 + i * 1.8; });
+  HALL_PEOPLE.slice(2).forEach((n, i) => { if (!n.m) return; n.hidden = true; n.m.visible = false; n.x = (i - 1) * 0.6; n.z = 5.2; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.legs = [...n.route.map((q) => q.slice()), n.seat.slice()]; n.dest = n.legs.shift(); n.seated = false; n.delay = 1.2 + i * 1.8; });   /* walk the aisle and the gap between the rows, then sit */
 }
 function loadPerson(n) {
   if (n.loading) return n.loading;
@@ -1119,7 +1122,7 @@ let place = 'shop', placeT = 0;
 function enterPlace(name, keepPos) {
   place = name; const P = PLACES[name];
   for (const k of Object.keys(PLACES)) { const Q = PLACES[k]; Q.group.visible = k === name; Q.lamp.visible = k === name; for (const n of Q.people) { if (n.mark) n.mark.visible = false; if (n.m) n.m.visible = k === name && !n.hidden; } }
-  if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.dest) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; }
+  if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.dest) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; if (n.seat) sitDown(n); }
   if (name === 'press') arrangePress();
   if (name === 'liberty') showBanner();   /* a saved game that was past the Declaration shows the finished banner */
   curWalls = P.walls; curBounds = P.bounds; PEOPLE = P.people; ACTIONS = P.actions; near = null;
@@ -1130,7 +1133,7 @@ function enterPlace(name, keepPos) {
 function showPlace() { const el = $('place'); el.textContent = PLACES[place].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(placeT); placeT = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetChapter2() {   /* the hall again: the poster comes down, the neighbours go home, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); delete story.poster; delete story.printed; showPoster(); stage = 10;
-  for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.legs = null; n.seated = false; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
   enterPlace('hall'); setStage(10); showPlace();
 }
 
@@ -1246,6 +1249,11 @@ function devViews() {
   if (shot === 'hall2') inHall(11, 1.2, 0.6, -1.0, -0.08, 'WORK');
   if (shot === 'hall3') inHall(13, 0, 1.4, 0, 0.04, 'UNITY');
   if (shot === 'hall4') inHall(12, -3.2, 2.6, 0.75, 0, 'LEARN');
+  if (shot === 'hallseat') inHall(13, 0.4, 2.4, Math.PI / 2 - 0.35, 0.0, 'LEARN');   /* the neighbours sitting on the benches, seen from the aisle */
+  if (shot === 'hallwalk') inHall(11, 0.5, 3.7, 0.5, 0.0, 'LEARN').then(() => { story.printed = true; setStage(12); for (let i = 0; i < 60 * Number(q.get('t') || 6); i++) update(1 / 60); });   /* the neighbours part-way through arriving: ?shot=hallwalk&t=6 */
+  if (shot === 'hallamy') inHall(12, -1.0, 3.3, 0.55, 0.35, 'LEARN');   /* close to Amy, looking up: her bubble must stay clear of the Goal tab */
+  if (shot === 'hallseat2') inHall(13, 0.3, 0.9, -Math.PI / 2 + 0.25, 0.0, 'LEARN');
+  if (shot === 'hallseat3') inHall(13, 0.0, 3.6, 0.0, 0.05, 'LEARN');
   if (shot === 'hallchat') inHall(10, -0.8, -1.2, 0, 0.04).then(() => startTalk(byId('garvey')));
   if (q.get('test') === 'walk') {   /* step the world by hand and watch the customer walk her route */
     const c = SHOP_PEOPLE[1]; go(4.0, -1.2, 0, 0); const trail = []; let dist = 0, px = c.x, pz = c.z, minx = 9, maxx = -9, minz = 9, maxz = -9, walked = 0;
