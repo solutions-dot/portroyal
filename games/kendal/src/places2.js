@@ -163,7 +163,7 @@ export function buildMemorial() {
   const b1 = bench(2.2); b1.position.set(14, 0, -3); b1.rotation.y = PI * 0.9; g.add(b1); walls.push([12.8, -3.9, 15.2, -2.1]);
   people.push(person('joy', 'joy', 'Miss Joy', 0, -4.2, 0.1, { h: 1.7 }));
   people.push(person('andre', 'andre', 'Andre', 7.5, -4.6, -0.3, { h: 1.55 }));
-  const kidc = [0xe4883a, 0x2f8a6a, 0xd9506a, 0x4a7ad9, 0xe8c040, 0x9a5ad9]; for (let i = 0; i < 6; i++) extras.push({ base: 'nb_youth', tint: { Shirt: kidc[i], Breeches: [0x2a3a5a, 0x3a3a3a][i % 2], Shoes: 0xf0ece0, Hair: 0x1c1816 }, hide: ['Hat'], scale: 0.7 + (i % 3) * 0.06, x: 2 + i * 1.1, z: -2.4 + (i % 2) * 0.8, ry: PI * 0.1, anim: ['Idle', 'Talk1', 'Idle', 'Laugh'][i % 4], skin: 0.9 + (i % 4) * 0.1 });
+  const kidc = [0xe4883a, 0x2f8a6a, 0xd9506a, 0x4a7ad9, 0xe8c040, 0x9a5ad9]; for (let i = 0; i < 6; i++) extras.push({ ...(i % 2 ? { base: 'girl', tint: { Shirt: kidc[i], Skirt: kidc[i], Belt: 0x2a3a5a, Ribbon: 0xf0ece0, Shoes: 0xf0ece0 } } : { base: 'boy', hat: false, tint: { Shirt: kidc[i], Breeches: [0x2a3a5a, 0x3a3a3a][(i >> 1) % 2], Shoes: 0xf0ece0 } }), scale: 0.72 + (i % 3) * 0.05, x: 2 + i * 1.1, z: -2.4 + (i % 2) * 0.8, ry: PI * 0.1, anim: ['Idle', 'Talk1', 'Idle', 'Laugh'][i % 4], skin: 0.9 + (i % 4) * 0.1 });
   return { id: 'memorial', group: g, walls, bounds: { x0: -26, x1: 26, z0: -8, z1: 6 }, start: { x: 0, z: 4.6, yaw: 0 }, people, extras, env: ENV.day, flowerSpot: [4, -8.0],
     spots: { board: [-8, -2.8], wall: [4, -8.2], flower: [9.5, -7.6] }, tick: () => {} };
 }
