@@ -169,7 +169,7 @@ const START = { x: -0.5, z: 2.9, yaw: 0 };
 const EYE = 1.55, isTouch = matchMedia('(pointer: coarse)').matches;
 const keys = new Set(); let busy = false, fading = false;   /* busy: a talk, the journal or another panel is open, so do not move */
 let talkWith = null, near = null, DEV_NOSTOP = false, curWalls = WALLS, curBounds = BOUNDS;   /* DEV_NOSTOP: test views only, so a walker keeps walking while the camera is close */
-const panelsOpen = () => ['dialogue', 'typeset', 'pagebuild', 'inspect', 'decl', 'sortp', 'letp', 'journal', 'chapters', 'credits', 'card'].some((id) => !$(id).hidden);   /* closing one panel must not unpause the world while another is open */
+const panelsOpen = () => ['dialogue', 'typeset', 'pagebuild', 'inspect', 'decl', 'sortp', 'letp', 'timep', 'ansp', 'journal', 'chapters', 'credits', 'card'].some((id) => !$(id).hidden);   /* closing one panel must not unpause the world while another is open */
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && state.started) e.preventDefault();
@@ -241,7 +241,7 @@ const SHOP_PEOPLE = [
 function initPerson(n) { n.m = null; n.walking = false; n.wait = 1.5 + Math.random() * 2; n.i = 0; n.heard = 0; n.talked = false; n.hx = n.x; n.hz = n.z; n.dest = null; n.delay = 0; n.hidden = false; }
 for (const n of SHOP_PEOPLE) initPerson(n);
 let PEOPLE = SHOP_PEOPLE;   /* the people in the place you are in */
-const allPeople = () => [...SHOP_PEOPLE, ...HALL_PEOPLE, ...STREET_PEOPLE, ...PRESS_PEOPLE, ...DOCK_PEOPLE, ...LIB_PEOPLE, ...OFF_PEOPLE];
+const allPeople = () => [...SHOP_PEOPLE, ...HALL_PEOPLE, ...STREET_PEOPLE, ...PRESS_PEOPLE, ...DOCK_PEOPLE, ...LIB_PEOPLE, ...OFF_PEOPLE, ...PARK_PEOPLE];
 const byId = (id) => allPeople().find((n) => n.id === id);
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function tapPerson(cx, cy) {
@@ -316,6 +316,13 @@ const JOURNAL = [
     deeper: ['He was convicted in June 1923 and sentenced to five years. The exact day differs between sources.', 'His sentence was shortened in November 1927, and then he was deported.', 'People still disagree about how fair the trial was. Many of his supporters say it was not fair. Others say the Black Star Line was run badly. This game tells it as simply as it can.'] },
   { id: 'rumour', title: 'Fact or rumour?', simple: ['A fact is something we can check.', 'A rumour is something people say, but nobody has shown that it is true.', 'Before you share news, ask: who said it, and how do they know?'],
     deeper: ['Good editors check a story before they print it.', 'We still need to ask the same questions today.'] },
+  { id: 'later', title: 'His later life', simple: ['In 1927 Marcus Garvey was sent back to Jamaica.', 'He lived for a time in Kingston, then in London.', 'He died in London in 1940.'],
+    deeper: ['He reached Kingston in December 1927. In 1929 he started a political party in Jamaica, the People\'s Political Party. This comes from one source.', 'He moved to London in 1935. This also comes from one source.', 'His remains were brought home to Jamaica in 1964 and placed in a shrine at National Heroes Park in Kingston. Sources give the day as 10 or 15 November.', 'In 1969 he was named a National Hero of Jamaica.'] },
+  { id: 'shrine', title: 'The shrine in Kingston', simple: ['Marcus Garvey\'s shrine is in National Heroes Park in Kingston.', 'It has a bronze bust of him.'],
+    deeper: ['The monument was designed in 1964. The bust is by the sculptor T. Alvin Marriott. It was placed in the park in 1956 and later moved into the monument.', 'In this game the shrine is only an outline, drawn from descriptions. The plaque gives just his name and dates, because we have not found the exact words on the real one.', 'The student and the guide in this game are made up.'] },
+  { id: 'pardon', title: 'The pardon', simple: ['In January 2025 the US President, Joe Biden, gave Marcus Garvey a pardon after his death.', 'His family and many supporters had asked for this for years.'],
+    deeper: ['Some of them also want the US Congress to exonerate him, which would clear his name completely.', 'People still disagree about how fair his trial was. This game does not decide it for you.'] },
+  { id: 'journey', title: 'Your journey', simple: ['You finished the story.'], deeper: ['Your choices did not change what really happened. They show how you took part in it.'] },
   { id: 'unia', title: 'The UNIA begins', simple: ['UNIA stands for Universal Negro Improvement Association.', 'It was founded in Kingston, Jamaica, in July 1914.', 'It wanted to help people in need, build pride, and open a trade school.'],
     deeper: ['Many sources give the first meeting as 20 July 1914. Others point to 1 August, Emancipation Day. Where it met is also uncertain.', 'In 1914 Garvey wrote to Booker T. Washington about a trade school like Tuskegee. Washington died in 1915.', 'Garvey sailed for the United States in March 1916.'] },
 ];
@@ -341,14 +348,15 @@ $('jbtn').onclick = () => openJournal(); $('jclose').onclick = closeJournal;
 /* ---------- goal, hint, sound button (as in Port Royal) ---------- */
 let stage = 0, best = 0;   /* the story is a number. Chapter 1: 0 talk, 1 set the type, 2 (reserved), 3 done. Chapter 2: 10 meet, 11 print the poster, 12 welcome the neighbours, 13 listen, 14 done. best: the furthest stage ever reached */
 const GOALS = { 0: 'Talk to the printer and the customer.', 1: 'Set the type for a notice. Go to the type stand.', 2: 'Talk to the printer. He has news.', 3: 'Well done! The print shop chapter is finished. Open Chapters for the next one.',
+  70: 'Meet the park guide and the student at the shrine.', 71: 'Put the events of his later life in order at the board.', 72: 'The student has a big question. Talk to the student.', 73: 'Answer the question at the shrine, in your own words.', 74: 'You have finished the story. Thank you for playing! Your journey is in the Journal.',
   60: 'Talk to Amy Jacques Garvey at her desk.', 61: 'Sort the news cards on the desk: fact or rumour?', 62: 'Talk to Amy about the rumour.', 63: 'A friend has written. Read the letter and write back.', 64: 'Well done! Chapter 7 is finished. More is coming soon.',
   50: 'Welcome the three visitors in Liberty Hall.', 51: 'Three people need help. Talk to the steward.', 52: 'Read the Declaration on the table.', 53: 'Talk to Marcus Garvey on the platform.', 54: 'Well done! Chapter 6 is finished. More is coming soon.',
   40: 'Meet Marcus Garvey, the share clerk and the engineer.', 41: 'Look the old ship over, at the edge of the dock.', 42: 'Talk to Marcus Garvey about the ship.', 43: 'Your friend wants to buy shares. Talk to her.', 44: 'Well done! Chapter 5 is finished. More is coming soon.',
   30: 'Talk to the pressman and Marcus Garvey.', 31: 'Lay out the front page on the stone table.', 32: 'Talk to the sailor by the door.', 33: 'The sailor is back. Talk to him and the pressman.', 34: 'Well done! Chapter 4 is finished. More is coming soon.',
   20: 'Listen to the three people at the corner.', 21: 'Talk to Marcus Garvey.', 22: 'The older man has a question. Talk to him.', 23: 'Well done! Chapter 3 is finished. More is coming soon.',
   10: 'Talk to Amy Ashwood and Marcus Garvey.', 11: 'Print the poster at the press table.', 12: 'Welcome the three neighbours as they arrive.', 13: 'Listen to Marcus Garvey.', 14: 'Well done! Chapter 2 is finished. More is coming soon.' };
-const TALK_TARGETS = { 60: ['amyj'], 62: ['amyj'], 50: ['nurse', 'delegate', 'messenger'], 51: ['steward'], 53: ['garvey6'], 40: ['garvey5', 'clerk', 'engineer'], 42: ['garvey5'], 43: ['friend'], 30: ['pressman', 'garvey4'], 32: ['sailor'], 33: ['sailor', 'pressman'], 20: ['worker', 'woman', 'critic'], 21: ['garvey3'], 22: ['critic'], 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
-const NEXT_AFTER_TALK = { 60: 61, 62: 63, 50: 51, 51: 52, 53: 54, 40: 41, 42: 43, 43: 44, 30: 31, 32: 33, 33: 34, 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
+const TALK_TARGETS = { 70: ['guide', 'student'], 72: ['student'], 60: ['amyj'], 62: ['amyj'], 50: ['nurse', 'delegate', 'messenger'], 51: ['steward'], 53: ['garvey6'], 40: ['garvey5', 'clerk', 'engineer'], 42: ['garvey5'], 43: ['friend'], 30: ['pressman', 'garvey4'], 32: ['sailor'], 33: ['sailor', 'pressman'], 20: ['worker', 'woman', 'critic'], 21: ['garvey3'], 22: ['critic'], 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
+const NEXT_AFTER_TALK = { 70: 71, 72: 73, 60: 61, 62: 63, 50: 51, 51: 52, 53: 54, 40: 41, 42: 43, 43: 44, 30: 31, 32: 33, 33: 34, 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
 const wantsTalk = (n) => !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
 function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); }
 function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); }
@@ -375,7 +383,7 @@ function applySave(d) {
   if (d.story && typeof d.story === 'object') Object.assign(story, d.story);
   stage = Number.isInteger(d.stage) && d.stage in GOALS ? d.stage : 0; best = Number.isInteger(d.best) ? Math.max(d.best, stage) : stage; const waiting = TALK_TARGETS[stage] || [];   /* talk flags only count inside the stage they were saved in; saves from before version 2 used other stage numbers, so their flags are dropped */
   for (const p of allPeople()) p.talked = d.v === 2 && Array.isArray(d.talked) && d.talked.includes(p.id) && waiting.includes(p.id);
-  hasSave = unlocked.length > 1 || stage > 0 || best > 0;
+  refreshJourney(); hasSave = unlocked.length > 1 || stage > 0 || best > 0;
 }
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.started) saveGame(); });
 
@@ -402,7 +410,7 @@ function resetChapter() {   /* the print shop again: people go home, the goal st
 const CHAPTERS = [
   { year: 'About 1908', name: 'The print shop', ready: true, go: () => chapterFade('About 1908', 'A print shop in Kingston', resetChapter), done: () => best >= 3 },
   { year: 'July 1914', name: 'The first followers', ready: true, go: () => { toast('Loading the hall'); ensureHall().then(() => chapterFade('1914', 'A meeting hall in Kingston', resetChapter2)); }, done: () => best >= 14 }, { year: '1916', name: 'The streets of Harlem', ready: true, go: () => { toast('Loading Harlem'); ensureStreet().then(() => chapterFade('1916', 'Harlem, New York', resetChapter3)); }, done: () => best >= 23 }, { year: '1918 to 1919', name: 'The power of the press', ready: true, go: () => { toast('Loading the press room'); ensurePress().then(() => chapterFade('1918', 'The press room, Harlem', resetChapter4)); }, done: () => best >= 34 },
-  { year: '1919', name: 'The Black Star Line', ready: true, go: () => { toast('Loading the dock'); ensureDock().then(() => chapterFade('1919', 'A dock in New York', resetChapter5)); }, done: () => best >= 44 }, { year: 'August 1920', name: 'The great convention', ready: true, go: () => { toast('Loading Liberty Hall'); ensureLiberty().then(() => chapterFade('August 1920', 'Liberty Hall, Harlem', resetChapter6)); }, done: () => best >= 54 }, { year: '1922 to 1927', name: 'The price of a dream', ready: true, go: () => { toast('Loading the office'); ensureOffice().then(() => chapterFade('1925', 'Amy Jacques Garvey\'s desk, Harlem', resetChapter7)); }, done: () => best >= 64 }, { year: '1927 to today', name: 'The dream lives on' },
+  { year: '1919', name: 'The Black Star Line', ready: true, go: () => { toast('Loading the dock'); ensureDock().then(() => chapterFade('1919', 'A dock in New York', resetChapter5)); }, done: () => best >= 44 }, { year: 'August 1920', name: 'The great convention', ready: true, go: () => { toast('Loading Liberty Hall'); ensureLiberty().then(() => chapterFade('August 1920', 'Liberty Hall, Harlem', resetChapter6)); }, done: () => best >= 54 }, { year: '1922 to 1927', name: 'The price of a dream', ready: true, go: () => { toast('Loading the office'); ensureOffice().then(() => chapterFade('1925', 'Amy Jacques Garvey\'s desk, Harlem', resetChapter7)); }, done: () => best >= 64 }, { year: '1927 to today', name: 'The question that remains', ready: true, go: () => { toast('Loading the park'); ensurePark().then(() => chapterFade('Today', 'National Heroes Park, Kingston', resetChapter8)); }, done: () => best >= 74 },
 ];
 function renderChapters() {
   const ul = $('chlist'); ul.replaceChildren();
@@ -424,7 +432,7 @@ $('dev').onclick = openCredits; $('chcred').onclick = () => { closeChapters(); o
 /* the reset button: this chapter again, the whole story again, or back to all games */
 $('reset').onclick = () => { if (fading) return; closeJournal();
   card('Reset', ['Start this chapter again, or start the whole story again.'], [
-    { t: 'Restart “' + CHAPTERS[stage >= 60 ? 6 : stage >= 50 ? 5 : stage >= 40 ? 4 : stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].name + '”', go: () => { hideCard(); CHAPTERS[stage >= 60 ? 6 : stage >= 50 ? 5 : stage >= 40 ? 4 : stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].go(); } },
+    { t: 'Restart “' + CHAPTERS[stage >= 70 ? 7 : stage >= 60 ? 6 : stage >= 50 ? 5 : stage >= 40 ? 4 : stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].name + '”', go: () => { hideCard(); CHAPTERS[stage >= 70 ? 7 : stage >= 60 ? 6 : stage >= 50 ? 5 : stage >= 40 ? 4 : stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].go(); } },
     { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) },
     { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'All games', go: toMenu }] : [])]); };
 
@@ -473,7 +481,7 @@ function tapTile(b, L) {
   else { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('tmsg').textContent = 'Not that one. Look at the word again.'; }
 }
 $('tpress').onclick = () => { pressThump(); $('tprint').textContent = typeWord; $('tprint').hidden = false; $('tcase').hidden = true; $('tpress').hidden = true; $('tdone').hidden = false; $('tmsg').textContent = 'Printed! The words come out the right way round.'; };
-function closeType(done) { closePage(false); closeInspect(false); closeDecl(false); closeSort(false); closeLetter(false); if ($('typeset').hidden) return; $('typeset').hidden = true; busy = panelsOpen(); if (done && typeDone) { const f = typeDone; typeDone = null; f(); } }
+function closeType(done) { closePage(false); closeInspect(false); closeDecl(false); closeSort(false); closeLetter(false); closeTime(false); closeAnswer(false); if ($('typeset').hidden) return; $('typeset').hidden = true; busy = panelsOpen(); if (done && typeDone) { const f = typeDone; typeDone = null; f(); } }
 $('tclose').onclick = () => closeType(false); $('tdone').onclick = () => closeType(true);
 
 /* ---------- a glowing speech mark over each person, a bubble on the nearest, and the Talk button for things to do ---------- */
@@ -988,11 +996,103 @@ function resetChapter7() {   /* Amy's desk again: your choices here are cleared,
   enterPlace('office'); setStage(60); showPlace();
 }
 
+/* ---------- chapter 8: National Heroes Park, Kingston, today ---------- */
+const parkG = new THREE.Group(); parkG.visible = false; scene.add(parkG);
+const PARK_WALLS = [], PARK_BOUNDS = { x0: -9, x1: 9, z0: -1.2, z1: 6 };
+let parkBuilt = false;
+function buildPark() {
+  if (parkBuilt) return; parkBuilt = true; const g = parkG;
+  mesh(new THREE.PlaneGeometry(80, 60), std(cv(128, 128, (x, w, h) => { x.fillStyle = '#4f8a45'; x.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { x.fillStyle = `rgba(${40 + Math.random() * 40 | 0},${110 + Math.random() * 60 | 0},${30 + Math.random() * 40 | 0},0.5)`; x.fillRect(Math.random() * w, Math.random() * h, 2, 5 + Math.random() * 4); } }, [20, 15]), 1), 0, 0, 0, g).rotation.x = -Math.PI / 2;
+  const walk = std(cv(128, 128, (x, w, h) => { x.fillStyle = '#c8bda2'; x.fillRect(0, 0, w, h); grain(x, w, h, 14); }, [1, 1]), 1);
+  mesh(new THREE.PlaneGeometry(24, 2.4), walk, 0, 0.01, 3.2, g).rotation.x = -Math.PI / 2; mesh(new THREE.PlaneGeometry(2.4, 6.5), walk, 0, 0.011, -0.3, g).rotation.x = -Math.PI / 2;
+  mesh(new THREE.PlaneGeometry(9, 6), std(cv(128, 128, (x, w, h) => { x.fillStyle = '#b9ae94'; x.fillRect(0, 0, w, h); grain(x, w, h, 12); }, [1, 1]), 1), 0, 0.012, -3.4, g).rotation.x = -Math.PI / 2;   /* the paved circle round the shrine */
+  /* the shrine: a black star on the ground, an angled stone wall behind, and a bronze bust on a plinth (drawn from descriptions) */
+  const star = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 0.75 : 1.7; (i ? star.lineTo : star.moveTo).call(star, Math.cos(a) * r, Math.sin(a) * r); } star.closePath();
+  const starG = new THREE.ExtrudeGeometry(star, { depth: 0.12, bevelEnabled: false }); starG.rotateX(-Math.PI / 2); mesh(starG, solid(0x15161a, 0.5), 0, 0.012, -2.6, g);
+  const stone = solid(0xcfc6b0, 0.9); for (const sx of [-1, 1]) { const w = box(2.3, 2.4, 0.3, stone, sx * 1.05, 1.2, -4.5, g); w.rotation.y = -sx * 0.3; }
+  box(0.8, 0.9, 0.8, stone, 0, 0.45, -3.7, g); const bronze = solid(0x8a6a38, 0.45, 0.5); mesh(new THREE.SphereGeometry(0.23, 16, 12), bronze, 0, 1.25, -3.7, g); const sh = mesh(new THREE.SphereGeometry(0.34, 14, 10), bronze, 0, 0.98, -3.7, g); sh.scale.set(1.2, 0.55, 0.7);
+  mesh(new THREE.PlaneGeometry(0.6, 0.3), new THREE.MeshBasicMaterial({ map: signTex([['MARCUS MOSIAH GARVEY', 26], ['1887 to 1940', 24]], 512, 160) }), 0, 0.5, -3.29, g); PARK_WALLS.push([-1.6, -5.4, 1.6, -2.6]);
+  /* palm trees, benches, a low fence and the town beyond */
+  const leaf = new THREE.MeshStandardMaterial({ color: 0x3f7d3a, roughness: 0.8, side: THREE.DoubleSide });
+  const palm = (x, z, hgt) => { const t = cyl(0.11, 0.17, hgt, solid(0x7a6246, 0.9), x, hgt / 2, z, g, 8); for (let i = 0; i < 7; i++) { const l = mesh(new THREE.PlaneGeometry(2.0, 0.4), leaf, x + Math.cos(i * 0.9) * 0.9, hgt + 0.1, z + Math.sin(i * 0.9) * 0.9, g); l.rotation.set(-0.5, -i * 0.9, 0.25); } PARK_WALLS.push([x - 0.3, z - 0.3, x + 0.3, z + 0.3]); };
+  [[-7, -2.6, 5.2], [7.2, -2.4, 4.6], [-6.6, 1.0, 4.2], [6.8, 1.2, 5.0], [-3.8, -4.8, 4.8], [3.8, -5.0, 5.4]].forEach(([x, z, h]) => palm(x, z, h));
+  for (const [bx, bz] of [[-4, 4.6], [4, 4.6]]) { box(1.6, 0.08, 0.5, wood, bx, 0.45, bz, g); box(1.6, 0.5, 0.06, wood, bx, 0.75, bz + 0.22, g); for (const dx of [-0.7, 0.7]) box(0.08, 0.45, 0.45, woodDark, bx + dx, 0.22, bz, g); PARK_WALLS.push([bx - 0.9, bz - 0.35, bx + 0.9, bz + 0.35]); }
+  for (let i = 0; i < 26; i++) { box(0.06, 0.8, 0.06, solid(0x2c2f34, 0.6), -12 + i, 0.4, 7.2, g); } box(26, 0.05, 0.05, solid(0x2c2f34, 0.6), 0, 0.7, 7.2, g);
+  for (const [px, pz, ry, w] of [[0, -11, 0, 30], [-12, -2, Math.PI / 2, 22], [12, -2, -Math.PI / 2, 22]]) mesh(new THREE.PlaneGeometry(w, 6), new THREE.MeshBasicMaterial({ map: streetTex() }), px, 2.6, pz, g).rotation.y = ry;
+  for (const [fx, fz, c] of [[-1.7, -1.6, 0xd9453a], [1.7, -1.6, 0xe9b83a], [-2.1, -1.2, 0xe9b83a], [2.1, -1.2, 0xd9453a]]) for (let k = 0; k < 5; k++) mesh(new THREE.SphereGeometry(0.07, 8, 6), solid(c, 0.7), fx + (k % 3 - 1) * 0.16, 0.1, fz + (k % 2) * 0.14, g);
+  /* the timeline board */
+  box(0.1, 1.6, 0.1, woodDark, -6.1, 0.8, 0.0, g); box(0.1, 1.6, 0.1, woodDark, -3.9, 0.8, 0.0, g); box(2.4, 1.2, 0.08, wood, -5.0, 1.6, 0.0, g);
+  mesh(new THREE.PlaneGeometry(2.2, 1.0), new THREE.MeshBasicMaterial({ map: signTex([['TIMELINE', 40], ['1927 to 1969', 28]], 512, 220) }), -5.0, 1.6, 0.05, g); PARK_WALLS.push([-6.3, -0.3, -3.7, 0.3]);
+}
+/* the timeline: tap the events in the order they happened */
+const EVENTS = [['Marcus Garvey comes home to Jamaica', '1927'], ['He starts a political party in Jamaica', '1929'], ['He moves to London', '1935'], ['He dies in London', '1940'], ['His remains come home to Jamaica', '1964'], ['He is named a National Hero', '1969']];
+let timeDone = null, timeI = 0;
+function openTime(done) {
+  if (busy) return; busy = true; keys.clear(); timeDone = done; timeI = 0; unlock('later'); $('timep').hidden = false; $('tmdone').hidden = true; $('tmmsg').textContent = 'Which happened first? Tap the events in order.'; $('tmlist').replaceChildren();
+  const tray = $('tmtray'); tray.replaceChildren(); EVENTS.map((e, i) => [e, i]).sort(() => Math.random() - 0.5).forEach(([e, i]) => { const b = document.createElement('button'); b.className = 'pc'; b.dataset.i = i; b.textContent = e[0]; b.onclick = () => pickEvent(b); tray.appendChild(b); });
+}
+function pickEvent(b) {
+  if (+b.dataset.i !== timeI) { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('tmmsg').textContent = 'Not that one yet. What did the guide say came first?'; return; }
+  uiSound('tap'); const li = document.createElement('li'); li.textContent = EVENTS[timeI][1] + ': ' + EVENTS[timeI][0]; $('tmlist').appendChild(li); b.disabled = true; b.style.display = 'none'; timeI++;
+  if (timeI >= EVENTS.length) { $('tmmsg').textContent = 'The timeline is in order.'; $('tmdone').hidden = false; $('tmdone').focus({ preventScroll: true }); } else $('tmmsg').textContent = 'Good. What came next?';
+}
+function closeTime(done) { if ($('timep').hidden) return; $('timep').hidden = true; busy = panelsOpen(); if (done && timeDone) { const f = timeDone; timeDone = null; f(); } }
+$('tmx').onclick = () => closeTime(false); $('tmdone').onclick = () => closeTime(true);
+/* the last question, answered in your own words: pick how it starts and why */
+const OPEN = ['In some ways, yes.', 'Not yet.', 'It is still being built.'], WHY = ['I think of how proud many people are today.', 'I think of children who still need good schools and fair work.', 'I think of people working together to make it true.'];
+let ansDone = null, ansA = -1, ansB = -1;
+function ansText() { return (ansA >= 0 ? OPEN[ansA] : '...') + ' ' + (ansB >= 0 ? WHY[ansB] : '...'); }
+function openAnswer(done) {
+  if (busy) return; busy = true; keys.clear(); ansDone = done; ansA = ansB = -1; $('ansp').hidden = false; $('andone').hidden = true;
+  const fill = (id, arr, set) => { const box = $(id); box.replaceChildren(); arr.forEach((t, i) => { const b = document.createElement('button'); b.className = 'pc'; b.textContent = t; b.onclick = () => { set(i); uiSound('tap'); for (const x of box.children) x.classList.toggle('sel', x === b); $('antext').textContent = ansText(); if (ansA >= 0 && ansB >= 0) { $('andone').hidden = false; $('andone').focus({ preventScroll: true }); } }; box.appendChild(b); }); };
+  fill('anopen', OPEN, (i) => { ansA = i; }); fill('anwhy', WHY, (i) => { ansB = i; }); $('antext').textContent = ansText();
+}
+function closeAnswer(done) { if ($('ansp').hidden) return; $('ansp').hidden = true; busy = panelsOpen(); if (done && ansDone) { const f = ansDone; ansDone = null; f(); } }
+$('anx').onclick = () => closeAnswer(false); $('andone').onclick = () => closeAnswer(true);
+/* what you chose along the way, written plainly for the Journal */
+function refreshJourney() {
+  const pg = JOURNAL.find((q) => q.id === 'journey'); if (!pg) return; const L2 = [], pick = (k, m) => m[story[k]] && L2.push(m[story[k]]);
+  pick('strike', { speak: 'In the print shop you chose to speak up at the union meeting.', wait: 'In the print shop you chose to wait and listen first.', ask: 'In the print shop you chose to ask the others what they thought.' });
+  if (story.poster) L2.push('In Kingston you chose the poster word ' + story.poster + '.');
+  pick('words', { work: 'In Harlem you helped Garvey speak about fair work.', learn: 'In Harlem you helped Garvey speak about good schools.', pride: 'In Harlem you helped Garvey speak about pride in who we are.' });
+  pick('answer', { listen: 'You told the older man to listen and then decide.', watch: 'You told the older man to watch what Garvey does.', ask: 'You told the older man to ask his own questions.' });
+  if (HEADLINES[story.headline]) L2.push('You chose the headline "' + HEADLINES[story.headline] + '".');
+  pick('delivery', { all: 'You sent every bundle of the paper with the sailor.', split: 'You shared the bundles out among the sailor\'s friends.', hold: 'You sent only a few bundles.' });
+  pick('plan', { now: 'You advised Garvey to buy the old ship now. He bought it, as really happened.', wait: 'You advised Garvey to save for a better ship. He bought the old one, as really happened.' });
+  pick('advice', { truth: 'You told your friend the ship was old.', cheer: 'You told your friend it would surely succeed.', wait: 'You told your friend to wait and see.' });
+  pick('helped', { nurse: 'At the convention you asked the steward to help the nurse first.', delegate: 'At the convention you asked the steward to help the tired traveller first.', messenger: 'At the convention you asked the steward to help the messenger first.' });
+  pick('question', { who: 'With Amy you asked who said a rumour and how they knew.', check: 'With Amy you asked to check a rumour with the office first.', print: 'With Amy you wanted to print a rumour quickly, then agreed to check first.' });
+  pick('reassure', { honest: 'You wrote to your friend honestly.', cheer: 'You told your friend that all would be well.', ask: 'You told your friend to ask the UNIA office for the facts.' });
+  if (story.final) L2.push('Asked if the dream has come true, you said: "' + story.final + '"');
+  pg.simple = L2.length ? L2 : ['You finished the story.'];
+}
+const PARK_ACTIONS = [{ id: 'timeline', label: 'Read the timeline board', x: -5.0, z: 1.4, r: 1.4, on: () => stage === 71, go: () => openTime(() => { setStage(72); uiSound('goal'); }) },
+  { id: 'answer', label: 'Answer at the shrine', x: 0, z: -0.3, r: 1.7, on: () => stage === 73, go: () => openAnswer(() => { story.final = ansText(); unlock('shrine'); unlock('pardon'); refreshJourney(); unlock('journey'); setStage(74); uiSound('goal'); endCard(); }) }];
+function endCard() { card('The end', ['Thank you for walking through this story. Your journey, with all your choices, is in the Journal.', 'Marcus Garvey, Amy Ashwood and Amy Jacques Garvey were real people. Their words here are made up. Check the facts in the Journal against books and archives, and ask your own questions.'], [{ t: 'Read my journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Keep exploring', go: hideCard }]); }
+const PARK_PEOPLE = [
+  { id: 'guide', model: 'guide2020', who: 'Guide', label: 'Talk to the guide', x: -1.8, z: 2.2, ry: faceToward(-1.8, 2.2, 0, -3), base: 'Idle',
+    lines: () => [{ who: 'Guide', text: 'Welcome to National Heroes Park in Kingston.' }, { who: 'Guide', text: 'This shrine is for Marcus Garvey.', unlock: 'shrine' }, { who: 'Guide', text: 'In 1927 he came home to Jamaica.', unlock: 'later' }, { who: 'Guide', text: 'In 1929 he started a political party here.' }, { who: 'Guide', text: 'In 1935 he moved to London. He died there in 1940.' }, { who: 'Guide', text: 'In 1964 his remains came home, to this shrine.' }, { who: 'Guide', text: 'In 1969 he was named a National Hero.' }],
+    later: () => ({ 71: ['Try the timeline board on the left. I will help if you forget.'], 73: ['Take your time. There is no wrong answer.'] })[stage] || ['I like it here. It is quiet and green.'] },
+  { id: 'student', model: 'student2020', who: 'Student', label: 'Talk to the student', x: 1.8, z: 2.4, ry: faceToward(1.8, 2.4, 0, -3), base: 'Idle',
+    lines: () => stage === 72 ? [{ who: 'Student', text: 'You know a lot about Marcus Garvey now.' }, { who: 'Student', text: 'People say he dreamed of pride, learning and working together.' }, { who: 'Student', text: 'Has his dream come true?' }, { who: 'You', text: 'That is a big question.' }, { who: 'Student', text: 'Please answer it at the shrine, in your own words.' }]
+      : [{ who: 'Student', text: 'Hi! We learned about Marcus Garvey at school.' }, { who: 'Student', text: 'I came here to think about it.' }, { who: 'Student', text: 'The guide knows the whole story.' }],
+    later: () => stage >= 74 ? ['Thank you. I will think about your answer.'] : ({ 71: ['I have a big question for you soon.'], 73: ['I am listening.'] })[stage] || ['It is a good place to think.'] },
+];
+for (const n of PARK_PEOPLE) initPerson(n);
+let parkLoading = null;
+function ensurePark() { if (!parkLoading) { buildPark(); parkLoading = Promise.all(PARK_PEOPLE.map(loadPerson)); } return parkLoading; }
+function resetChapter8() {   /* the park again: your last answer is cleared, the journal is kept */
+  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 70; delete story.final;
+  for (const n of PARK_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  enterPlace('park'); setStage(70); showPlace();
+}
+
 /* ---------- places ---------- */
 const PLACES = {
   shop: { group: room, lamp: lampLight, walls: WALLS, bounds: BOUNDS, people: SHOP_PEOPLE, actions: SHOP_ACTIONS, start: START, caption: 'Kingston, about 1908' },
   hall: { group: hallG, lamp: hallLamp, walls: HALL_WALLS, bounds: HALL_BOUNDS, people: HALL_PEOPLE, actions: HALL_ACTIONS, start: { x: 0, z: 3.1, yaw: 0 }, caption: 'Kingston, July 1914' },
   street: { group: streetG, lamp: new THREE.Object3D(), walls: STREET_WALLS, bounds: STREET_BOUNDS, people: STREET_PEOPLE, actions: [], start: { x: -7, z: 2.6, yaw: -1.25 }, caption: 'Harlem, New York, 1916', sky: 0x9ec8e6 },
+  park: { group: parkG, lamp: new THREE.Object3D(), walls: PARK_WALLS, bounds: PARK_BOUNDS, people: PARK_PEOPLE, actions: PARK_ACTIONS, start: { x: 0, z: 5.2, yaw: 0 }, caption: 'National Heroes Park, Kingston, today', sky: 0x9fd0ea },
   office: { group: offG, lamp: offLamp, walls: OFF_WALLS, bounds: OFF_BOUNDS, people: OFF_PEOPLE, actions: OFF_ACTIONS, start: { x: 0, z: 2.5, yaw: 0 }, caption: 'Harlem, New York, 1925' },
   liberty: { group: libG, lamp: libLamp, walls: LIB_WALLS, bounds: LIB_BOUNDS, people: LIB_PEOPLE, actions: LIB_ACTIONS, start: { x: 0, z: 4.5, yaw: 0 }, caption: 'Liberty Hall, Harlem, August 1920' },
   dock: { group: dockG, lamp: new THREE.Object3D(), walls: DOCK_WALLS, bounds: DOCK_BOUNDS, people: DOCK_PEOPLE, actions: DOCK_ACTIONS, start: { x: 0, z: -2.6, yaw: Math.PI }, caption: 'New York, 1919', sky: 0x9fc6dc },
@@ -1024,7 +1124,7 @@ let modelsReady = false;
     loadClips(anims);
     PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; });
       m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = 0; scene.add(m); animate(m, n.base); grounded.push(m); n.m = m; });
-    (stage >= 60 ? ensureOffice() : stage >= 50 ? ensureLiberty() : stage >= 40 ? ensureDock() : stage >= 30 ? ensurePress() : stage >= 20 ? ensureStreet() : stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 60 ? 'office' : stage >= 50 ? 'liberty' : stage >= 40 ? 'dock' : stage >= 30 ? 'press' : stage >= 20 ? 'street' : stage >= 10 ? 'hall' : 'shop'); showPoster(); if (__DEV__) devViews(); });
+    (stage >= 70 ? ensurePark() : stage >= 60 ? ensureOffice() : stage >= 50 ? ensureLiberty() : stage >= 40 ? ensureDock() : stage >= 30 ? ensurePress() : stage >= 20 ? ensureStreet() : stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 70 ? 'park' : stage >= 60 ? 'office' : stage >= 50 ? 'liberty' : stage >= 40 ? 'dock' : stage >= 30 ? 'press' : stage >= 20 ? 'street' : stage >= 10 ? 'hall' : 'shop'); showPoster(); if (__DEV__) devViews(); });
     modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave;
   }); }
 function startGame() {
@@ -1080,6 +1180,14 @@ function devViews() {
   if (shot === 'bubble') { go(-2.3, -0.8, 0.25, 0.08); }
   if (shot === 'nudge') { go(-0.5, 2.9, Math.PI / 2, 0); NUDGE.still = performance.now() - 20000; }
   const inStreet = (st, x, z, yaw, pitch) => ensureStreet().then(() => { stage = st; best = Math.max(best, st); enterPlace('street'); go(x, z, yaw, pitch); });
+  const inPark = (st, x, z, yaw, pitch) => ensurePark().then(() => { stage = st; best = Math.max(best, st); enterPlace('park'); go(x, z, yaw, pitch); });
+  if (shot === 'park1') inPark(70, 0, 5.2, 0, 0.05);
+  if (shot === 'park2') inPark(71, 0.6, 1.4, 0.0, 0.1);
+  if (shot === 'time') inPark(71, -5.0, 1.4, 0, 0).then(() => openTime());
+  if (shot === 'timedone') inPark(71, -5.0, 1.4, 0, 0).then(() => { openTime(); for (let i = 0; i < EVENTS.length; i++) $('tmtray').querySelector('[data-i="' + i + '"]').click(); });
+  if (shot === 'answer') inPark(73, 0, -0.3, 0, 0).then(() => { openAnswer(); $('anopen').children[2].click(); $('anwhy').children[2].click(); });
+  if (shot === 'journey') { Object.assign(story, { strike: 'wait', poster: 'UNITY', words: 'learn', answer: 'listen', headline: 'learn', delivery: 'split', plan: 'wait', advice: 'truth', helped: 'delegate', question: 'who', reassure: 'ask', final: 'It is still being built. I think of people working together to make it true.' }); inPark(74, 0, 5.2, 0, 0.05).then(() => { refreshJourney(); unlock('journey', true); openJournal('journey'); }); }
+  if (shot === 'parkchat') inPark(72, 0.5, 4.0, 0.2, 0.05).then(() => startTalk(byId('student')));
   const inOff = (st, x, z, yaw, pitch) => ensureOffice().then(() => { stage = st; best = Math.max(best, st); enterPlace('office'); go(x, z, yaw, pitch); });
   if (shot === 'off1') inOff(60, 0, 2.5, 0, 0.03);
   if (shot === 'off2') inOff(61, 0.5, 0.2, 0.6, -0.12);
@@ -1184,6 +1292,14 @@ function devViews() {
         const act2 = ACTIONS.find((a) => a.on()); L('action=' + (act2 && act2.label)); act2.go(); L('letter="' + $('letext').textContent + '"'); $('lebtns').children[0].click(); L('reply="' + $('lemsg').textContent + '" done shown=' + !$('ledone').hidden); $('ledone').click();
         L('stage=' + stage + ' reassure=' + story.reassure + ' goal="' + $('goal').textContent + '" pages=' + unlocked.join(','));
         L(stage === 64 && story.question === 'who' && story.reassure === 'honest' && place === 'office' && CHAPTERS[6].done() && unlocked.includes('amyj') && unlocked.includes('trial') && unlocked.includes('rumour') ? 'ALLDONE' : 'STALL'); L('DONE');
+      } else if (q.get('auto') === '9') {
+        $('start').click(); best = 64; stage = 64; Object.assign(story, { strike: 'speak', poster: 'LEARN', words: 'work', answer: 'listen', headline: 'pride', delivery: 'all', plan: 'now', advice: 'truth', helped: 'nurse', question: 'who', reassure: 'honest' }); CHAPTERS[7].go(); for (let i = 0; i < 300 && place !== 'park'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '" people=' + PEOPLE.map((n) => n.id).join(','));
+        for (const id of ['guide', 'student']) L(id + ' lines=' + await talkTo(byId(id))); L('stage=' + stage);
+        const act = ACTIONS.find((a) => a.on()); L('action=' + (act && act.label)); act.go(); $('tmtray').querySelector('[data-i="3"]').click(); L('wrong msg="' + $('tmmsg').textContent + '" list=' + $('tmlist').children.length);
+        for (let i = 0; i < EVENTS.length; i++) $('tmtray').querySelector('[data-i="' + i + '"]').click(); L('list=' + $('tmlist').children.length + ' done shown=' + !$('tmdone').hidden + ' first="' + $('tmlist').firstChild.textContent + '"'); $('tmdone').click(); L('stage=' + stage + ' busy=' + busy);
+        L('student lines=' + await talkTo(byId('student')) + ' stage=' + stage); const act2 = ACTIONS.find((a) => a.on()); L('action=' + (act2 && act2.label)); act2.go(); L('text before="' + $('antext').textContent + '" done shown=' + !$('andone').hidden); $('anopen').children[1].click(); L('after one: done shown=' + !$('andone').hidden); $('anwhy').children[0].click(); L('text="' + $('antext').textContent + '" done shown=' + !$('andone').hidden); $('andone').click();
+        L('stage=' + stage + ' final="' + story.final + '" card shown=' + !$('card').hidden + ' goal="' + $('goal').textContent + '"'); $('cbtns').firstChild.click(); L('journal open=' + !$('journal').hidden + ' title="' + document.querySelector('#jpage h3').textContent + '" lines=' + document.querySelectorAll('#jpage p').length + ' first="' + document.querySelector('#jpage p').textContent + '"');
+        L(stage === 74 && story.final === 'Not yet. I think of how proud many people are today.' && CHAPTERS[7].done() && unlocked.includes('journey') && unlocked.includes('later') && place === 'park' ? 'ALLDONE' : 'STALL'); L('DONE');
       } else {
         $('start').click(); best = 3; stage = 3; CHAPTERS[1].go(); for (let i = 0; i < 200 && place !== 'hall'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '"');
         L('amy lines=' + await talkTo(byId('amy'))); L('garvey lines=' + await talkTo(byId('garvey')) + ' poster=' + story.poster + ' stage=' + stage);
