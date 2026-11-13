@@ -6,6 +6,26 @@ Owner decisions (13 Nov 2026): **the hero is a fictional child who is grown in c
 
 Working title: **Eventide 1980**. Code would live in `games/eventide/` (copied from `games/_template/`, then the Garvey panels).
 
+## Build status (local work, 13 Nov 2026)
+
+Building has started on the branch only. Nothing is pushed, because other chats are changing other games at the same time.
+
+- **Characters** come from `tools/eventide/people.py`, a copy of `tools/garvey/era.py` so the shared tools stay untouched. It adds a head tie (`headtie`), a dress hem from ankle to knee (`hem`), a cardigan, glasses, children's knee shorts (`breechkind: "shorts"`) and short white socks. Clothes around the waist now scale with the body, so real children's bodies work: no more scaled-down adults. Built so far: Miss Iris (`iris1980`), a girl and a boy of about 10 (`girl1980`, `boy1980`), each 290 to 360 KB packed.
+- **Skin** follows owner rule 9: build colours in the Marcus Garvey range, lightened in the game (`SKIN_LIGHT = 1.55`). At night a soft warm light at the camera keeps the face of anyone you talk to visible.
+- **Places** are built in code in `games/eventide/src/places.js`, with helpers copied from Kendal into `gfx.js`.
+  - Slipe Pen Road: the road, the bus stop, three shops, power poles, the chain-link fence and gate, the gatehouse, the Myers Ward and the children's building. The ward is two storeys of weatherboard with a two-storey veranda, louvred windows and a hip roof of zinc. Its size and colours are an impression.
+  - The monument: from the 2025 photograph, with the plaque's real words.
+- **Checks:** `?test=audit` reports 0 issues in both places. `?test=held` and `?test=layout` are still to wire before the first PR.
+
+```bash
+MAKEHUMAN=~/mh/makehuman NPC_OUT=build/people/ ~/venv/bin/python3 tools/eventide/people.py "$(cat tools/eventide/people/iris1980.json)"
+node tools/optimize_models.mjs --dir build/people --chars iris1980     # then pack into games/eventide/site/models/ as in docs/PIPELINE.md
+node tools/build.mjs eventide --dev
+# views: ?shot=cast, castnight, castclose, castnightclose, road1, road2, gate1, ward1, ward2, veranda1, wardnight, kids1, mon1, mon2, mon3; ?test=audit
+```
+
+Next: the other women and Gran, the nurse, a firefighter and a police officer in 1980 uniform, the inside of the ward, Miss Iris seated on the veranda (a chair, checked by the seat audit), and the night scene with the burning ward seen from the rope.
+
 ## The idea in one paragraph
 
 A fictional child lives near Slipe Pen Road in Kingston and visits friends in the Eventide Home, a government home for poor old women, in May 1980. The child gets to know four women in the old wooden Myers Ward, hears their lives, and says goodnight to them on a Monday evening. In the early hours of Tuesday 20 May the ward burns. The child watches from behind the police rope, holds a gate while the children from the next building are led out, and finds two of the four women wrapped in blankets by the road. The other two did not get out. The child then goes with Gran to the day of national mourning, when the women who died are laid in one grave at National Heroes Park. Later chapters ask what is known and what is only rumour, and the last chapter is at the monument today, where the grown-up hero tells a young listener who the women were.
