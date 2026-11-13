@@ -5,6 +5,7 @@ This repository holds a family of educational 3D history games for the web, buil
 - **Port Royal 1690** (`games/port-royal/`) is finished and live. It follows Lewis Galdy through Port Royal, Jamaica, from 1690 to the 1692 earthquake.
 - **Marcus Garvey** (`games/garvey/`) has all eight chapters playable, from a Kingston print shop about 1908 to National Heroes Park today. It is new, so expect polish work. Read `docs/games/garvey.md` first.
 - **Kendal 1957** (`games/kendal/`) tells the story of Jamaica's railway and the Kendal train crash of 1957 in seven chapters. It is new, so expect polish work. Read `docs/games/kendal.md` first.
+- **Bog Walk 1904: The Tube** (`games/bog-walk/`) tells the story of the night in June 1904 when water came into the huge pipe that fed Kingston's tram power station. Only the first slice is playable (an opening, the work, the water, the climb out); the rest is planned. Read `docs/games/bog-walk.md` first.
 - New games start from `games/_template/`.
 
 Audience: **children aged 6 and up, plus adults**. Every choice follows from that.
@@ -23,6 +24,7 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 | Working on Marcus Garvey | `docs/games/garvey.md` |
 | Working on Port Royal | `docs/games/port-royal.md` |
 | Working on Kendal 1957 | `docs/games/kendal.md` |
+| Working on Bog Walk 1904 | `docs/games/bog-walk.md` |
 
 ## Rules the owner has set (follow them every time)
 
