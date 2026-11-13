@@ -222,9 +222,15 @@ export function makeHand(camera) {
   inner.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.renderOrder = 10; } });
   const light = new THREE.PointLight(0xffa860, 4, 18, 1.2); light.position.set(0.028, -0.1, 0.1); inner.add(light);
   const FIST = new THREE.Vector3(0.012, -0.44, 0.01);   /* the middle of the fist, in the hand's own space */
-  const H = { root, flame, light, place(aspect, fov, ph, pw) {   /* the fist sits at a fixed low spot, fully in view; the torch is pivoted and scaled about it, so a small or narrow screen shrinks the torch, not the grip */
+  const H = { root, flame, light, lift: 0, baseY: -0.27, setLift(u) { H.lift = u; root.position.y = H.baseY + u; },   /* lift (in camera units): the black bars are in, so the whole hand rises just enough to keep the fist clear of the bottom bar */
+    lowestFistPx(camera, screenH) {   /* the lowest point of the palm, fingers and thumb on the screen, in pixels from the top, from their shapes in the camera's frame */
+      camera.updateMatrixWorld(true); const v = new THREE.Vector3(); let low = 0;
+      inner.traverse((o) => { if (!o.isMesh || !['finger', 'fingertip', 'palm', 'thumb'].includes(o.name)) return; if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox;
+        for (const x of [bb.min.x, bb.max.x]) for (const y of [bb.min.y, bb.max.y]) for (const z of [bb.min.z, bb.max.z]) { v.set(x, y, z).applyMatrix4(o.matrixWorld).project(camera); low = Math.max(low, (-v.y * 0.5 + 0.5) * screenH); } });
+      return low; },
+    place(aspect, fov, ph, pw) {   /* the fist sits at a fixed low spot, fully in view; the torch is pivoted and scaled about it, so a small or narrow screen shrinks the torch, not the grip */
     const depth = 0.55, halfW = Math.tan(fov * Math.PI / 360) * aspect * depth, wide = aspect >= 1.2, s = 0.92 * Math.min(1, Math.max(0.55, Math.min(ph / 640, pw / 560)));   /* words keep their pixel size, so a short or narrow screen gets a smaller torch to leave them room */
-    root.position.set(wide ? Math.min(0.3, halfW * 0.62) : halfW * 0.42, -0.27, -depth); root.rotation.set(0, -0.1, 0);
+    H.baseY = -0.27; root.position.set(wide ? Math.min(0.3, halfW * 0.62) : halfW * 0.42, H.baseY + H.lift, -depth); root.rotation.set(0, -0.1, 0);
     inner.rotation.set(-0.6, 0, wide ? -0.26 : -0.1); inner.scale.setScalar(s); inner.position.copy(FIST).multiplyScalar(-s).applyEuler(inner.rotation); },
     update(time, k) { rag.emissiveIntensity = 0.12 + 0.88 * Math.min(1, k); const f = k * (0.86 + 0.1 * Math.sin(time * 9.1) + 0.06 * Math.sin(time * 21)); flame.material.opacity = Math.max(0, Math.min(1, f)); flame.visible = f > 0.02; flame.scale.set(0.16 * (0.92 + 0.14 * Math.sin(time * 11)), 0.24 * (0.9 + 0.18 * Math.sin(time * 14)), 1); light.intensity = 4 * Math.max(0, f); } };
   return H;

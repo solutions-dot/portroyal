@@ -27,7 +27,7 @@ These are being developed across the games and are not in `CLAUDE.md` yet. Follo
 
 ## Where things are now
 
-Status: the **first slice is built**: the inside of the Tube and the night the water came (chapters 2 and 3 of the plan below, with placeholder voices). Nothing else exists yet: no title-screen chapters menu, journal, saving, people, station yard, flashback or ending scenes.
+Status: the **first slice is built**: an opening, the inside of the Tube and the night the water came (chapters 2 and 3 of the plan below, with placeholder voices), staged cinematically. Nothing else exists yet: no title-screen chapters menu, journal, saving, people, station yard, flashback or ending scenes.
 
 Code is in `games/bog-walk/`:
 
@@ -47,14 +47,31 @@ Test it:
 ```bash
 node tools/build.mjs bog-walk --dev          # dev build: test views and the autoplayer
 python3 -m http.server 8765                  # then open http://localhost:8765/games/bog-walk/site/
-# ?shot=view1 (the start), patch (&p=0 to 5, &half=n or &clean=0,1 to show scraping), up, manhole, torch (&t=0 to 5), back (&z=-18),
+# ?shot=view1 (the start), cap (an opening title card; &line=2), end (the end card; &skipped=1), fist (the hand brought close), patch (&p=0 to 5, &half=n or &clean=0,1 to show scraping), up, manhole, torch (&t=0 to 5), back (&z=-18),
 #   water (&wl=0.55&z=-12&yaw=3.14), dark (&wl=0.9&torch=0&vig=0.85), hud (the worst-case words and buttons) are views;
 #   add &x= &z= &yaw= &pitch= &wl= &torch= &vig= &sky= to place the camera and the water by hand, and &quick to run every timed part at 15% length.
-# ?auto=1 plays the whole night, ?auto=2 presses Skip at the first sign of water. The result is in the page title and in #autolog.
+# ?auto=1 plays the whole night, ?auto=2 presses Skip at the first sign of water, ?auto=3 plays the opening cards by their own timers first. The result is in the page title and in #autolog.
 # In the console: __bw.hudOverlaps() and __bw.propOverlaps() list anything that overlaps (both should print []).
 ```
 
+### The cinematic moments (owner rule: the major events must feel cinematic)
+
+Each major event is staged, not just switched on. The helpers are `bars`, `hideHud`, `caption` and `captionOff` in `main.js`, the camera's acting is in `tick`, and the sounds are in `sfx.js`.
+
+| Moment | What the player sees and hears |
+|---|---|
+| **The opening** (`startIntro`) | Black, with the letterbox bars in. Two title cards fade in and out: "Bog Walk, Jamaica / June 1904", then "The last tram has gone. / The water in the pipe is shut off." Then a slow fade up into the Tube as the bars slide away and the words appear. Any key or tap skips it ("Tap or press a key to skip"). It plays once per visit; "Play the night again" goes straight to the work. |
+| **The first water** (`startTrickle`) | A held breath: almost every sound drops away for about 2.6 s, your view slowly dips to the water at your feet and comes back, and a low drone starts under everything. |
+| **The rush** (`startRise`) | A deep boom heard far off. From then on the camera has a low rumble that grows with the water, the roar grows, the drone climbs. |
+| **The torches go out** (`startDark`) | The black bars slide in (the words move inside them and the hand rises to stay clear), the view narrows a little, and the torches on the walls go out one by one, the far ones first, each with a hiss; yours goes last. A soft heartbeat starts and speeds up a little. The edges of the screen darken. Only the pale light from the manhole is left. |
+| **The climb** (`startOut`) | The words fade away and the bars stay. You glide to the manhole and up into its neck, looking up. The air swells, the sky turns from night blue to dawn, the view widens, the rumble dies, and the picture fades to white. |
+| **The end** (`showEnd`) | The bars go, and a card says you are out. |
+
+No cinematic element may break the no-overlap rule. The bars are in the same flex layout as the words (the whole `#hud` is inset by the height of a bar), the captions only show while the words are hidden, and the hand is lifted clear of the bottom bar. The overlap check runs with the bars in (`&cine=1`). Test views: `?shot=cap` (an opening card, `&line=2` for the second), `&cine=1` on any view (bars in), `?auto=3` (plays the opening cards on their own timers, then the night).
+
 ### Known issues and notes
+
+- **Credit link.** "Created by **Kellz 5.0**" is a link to `https://www.instagram.com/kellzilla_5.0` (opens in a new tab, `rel="noopener noreferrer"`), on the title screen and on the end card. The other places that show the credit are not linked yet: `menu/index.html`, `menu/about.html`, and the credits panels in `games/port-royal`, `games/garvey` and `games/kendal` (their `#dev` button and `.crbig` line). Link them in one small commit when the owner says so.
 
 - **Engine bug (not fixed here, because `engine/` is shared and other chats are editing games):** `stepSound('water')` in `engine/audio.js` sets `src.buffer` twice (line 23 sets it for every kind, then the `'water'` branch sets it again). Browsers allow the buffer to be set only once, so the second set throws `InvalidStateError` and breaks whatever calls it, the first time anyone steps in water with sound on. Muted runs and headless runs never reach it. The fix: delete `src.buffer = AU.step || AU.crack;` from the `'water'` branch, and add `|| k === 'water'` to the condition on line 23, so water gets the softer `AU.step` source it was meant to have. Bog Walk uses its own `waterStep` in `src/sfx.js` instead. Check whether Port Royal's swim and Kendal's beach call the engine's version.
 - **Test sound in a browser that allows it.** The autoplayer is silent in headless Chrome unless it is started with `--autoplay-policy=no-user-gesture-required`; run it that way once after any sound change, because errors in sound code only show when the sound really plays.

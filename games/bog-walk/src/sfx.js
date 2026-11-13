@@ -16,9 +16,13 @@ export function initTubeSound() {
   B.rumble = chan('brown', 'lowpass', 180); B.air = chan('white', 'bandpass', 520, 0.7); B.stream = chan('white', 'bandpass', 3200, 1.4);
   B.roar = chan('brown', 'lowpass', 420); B.rush = chan('white', 'bandpass', 1100, 0.5);
   const n = c.sampleRate * 0.6 | 0; noiseBuf = c.createBuffer(1, n, c.sampleRate); const dd = noiseBuf.getChannelData(0); for (let i = 0; i < n; i++) dd[i] = Math.random() * 2 - 1;
-  B.levels = { rumble: 0, air: 0, stream: 0, roar: 0, rush: 0 };
+  /* a low drone for tension: two soft notes a fifth apart, the filter wobbling slowly */
+  const d1 = c.createOscillator(), d2 = c.createOscillator(), dl = c.createBiquadFilter(), dg = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+  d1.type = 'sine'; d1.frequency.value = 55; d2.type = 'triangle'; d2.frequency.value = 82.4; dl.type = 'lowpass'; dl.frequency.value = 240; lfo.frequency.value = 0.17; lg.gain.value = 70; dg.gain.value = 0;
+  lfo.connect(lg); lg.connect(dl.frequency); d1.connect(dl); d2.connect(dl); dl.connect(dg); dg.connect(AU.master); d1.start(); d2.start(); lfo.start(); B.drone = dg;
+  B.levels = { rumble: 0, air: 0, stream: 0, roar: 0, rush: 0, drone: 0 };
 }
-export function setBeds(l, tc = 0.5) { if (!AU.ctx || !B.ok) return; for (const k of ['rumble', 'air', 'stream', 'roar', 'rush']) { const v = l[k] || 0; if (B.levels[k] !== v) { B.levels[k] = v; setG(B[k], v, tc); } } }
+export function setBeds(l, tc = 0.5) { if (!AU.ctx || !B.ok) return; for (const k of ['rumble', 'air', 'stream', 'roar', 'rush', 'drone']) { const v = l[k] || 0; if (B.levels[k] !== v) { B.levels[k] = v; setG(B[k], v, tc); } } }
 export function hushTube(tc = 0.4) { setBeds({}, tc); }
 
 /* a sound that goes to the speakers and, a little quieter, into the echo */
@@ -61,4 +65,21 @@ export function waterStep(depth = 0.1) {
   f.frequency.setValueAtTime(500 - 220 * deep, t0); f.frequency.exponentialRampToValueAtTime(1800 - 900 * deep, t0 + 0.12); f.frequency.exponentialRampToValueAtTime(700 - 300 * deep, t0 + 0.5);
   g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.22 + 0.12 * deep, t0 + 0.07); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.55 + 0.25 * deep);
   src.connect(f); f.connect(g); src.start(t0); src.stop(t0 + 0.85);
+}
+
+/* cinematic sounds */
+export function heartbeat(vol = 0.16) {   /* a soft heartbeat, lub-dub */
+  if (!live() || !B.ok) return; const c = AU.ctx, t0 = c.currentTime + 0.02;
+  for (const [dt, v] of [[0, 1], [0.2, 0.7]]) { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(72, t0 + dt); o.frequency.exponentialRampToValueAtTime(38, t0 + dt + 0.14);
+    g.gain.setValueAtTime(0.0001, t0 + dt); g.gain.exponentialRampToValueAtTime(vol * v, t0 + dt + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dt + 0.2); o.connect(g); g.connect(AU.master); o.start(t0 + dt); o.stop(t0 + dt + 0.25); }
+}
+export function boom() {   /* a deep boom with a rumble, when the first rush of water is heard far off */
+  if (!live() || !B.ok) return; const c = AU.ctx, t0 = c.currentTime + 0.03, o = c.createOscillator(), g = send(0, 0.7), src = c.createBufferSource(), lp = c.createBiquadFilter(), ng = c.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(64, t0); o.frequency.exponentialRampToValueAtTime(28, t0 + 1.2); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.6); o.connect(g); o.start(t0); o.stop(t0 + 1.7);
+  src.buffer = noiseBuf; src.loop = true; lp.type = 'lowpass'; lp.frequency.value = 260; ng.gain.setValueAtTime(0.0001, t0); ng.gain.exponentialRampToValueAtTime(0.22, t0 + 0.12); ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.8); src.connect(lp); lp.connect(ng); ng.connect(AU.master); src.start(t0); src.stop(t0 + 1.9);
+}
+export function airSwell(dur = 2.4) {   /* cool air rushing down the manhole as you climb: a soft rising whoosh */
+  if (!live() || !B.ok) return; const c = AU.ctx, t0 = c.currentTime + 0.03, src = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+  src.buffer = noiseBuf; src.loop = true; bp.type = 'bandpass'; bp.Q.value = 0.6; bp.frequency.setValueAtTime(350, t0); bp.frequency.exponentialRampToValueAtTime(2600, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.12, t0 + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur + 0.6); src.connect(bp); bp.connect(g); g.connect(AU.master); src.start(t0); src.stop(t0 + dur + 0.7);
 }

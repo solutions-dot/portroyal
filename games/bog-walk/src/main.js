@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, crackle, AU } from '../../../engine/audio.js';
 import { setAniso } from './gfx.js';
 import { buildTube, makeHand, R, SAND, ZMIN, ZMAX, ZM, halfChord } from './tube.js';
-import { initTubeSound, setBeds, hushTube, drip, scrapeSound, voice, hiss, clank, waterStep } from './sfx.js';
+import { initTubeSound, setBeds, hushTube, drip, scrapeSound, voice, hiss, clank, waterStep, heartbeat, boom, airSwell } from './sfx.js';
 
 const $ = (id) => document.getElementById(id);
 const q = new URLSearchParams(location.search);
@@ -32,10 +32,10 @@ addEventListener('resize', resize); resize();
 
 /* ---------- where you are, and the night ---------- */
 const S = { started: false, x: 0.12, z: ZM - 1.5, yaw: 0, pitch: 0, eye: SAND + 1.45 };   /* yaw 0 looks down the pipe, toward -z */
-const N = { phase: 'title', t: 0, q: [], wl: 0, torch: 1, vig: 0, sky: 0, scraped: 0, allDone: false, doneT: 0, dripT: 2, clankT: 7, voiceT: 5, crackT: 3, mixT: 0, hintT: 0, skipped: false, fast: false, out: null };
+const N = { phase: 'title', t: 0, q: [], wl: 0, torch: 1, vig: 0, sky: 0, scraped: 0, allDone: false, doneT: 0, dripT: 2, clankT: 7, voiceT: 5, crackT: 3, mixT: 0, hintT: 0, skipped: false, fast: false, out: null, intro: false, glance: 0, glanceT: 0, glanceOn: false, duck: 0, hbT: 0, lift: 0, cine: false, liftNeed: 0, order: null, handHissed: false };
 const LANE = 0.62;   /* how far from the middle of the pipe you can stand: the wall curves in, and your torch needs room */
 const keys = new Set();
-function locked() { return !$('card').hidden || !S.started || ['title', 'out', 'end'].includes(N.phase); }
+function locked() { return !$('card').hidden || !S.started || ['title', 'intro', 'out', 'end'].includes(N.phase); }
 
 /* ---------- words on the screen ---------- */
 let goalText = '', subTimer = 0;
@@ -45,8 +45,18 @@ function say(who, text, ms = 4200) {   /* a line spoken in the pipe, shown as a 
   const el = $('sub'); el.textContent = who ? who + ': ' + text : text; el.classList.remove('dim'); clearTimeout(subTimer); subTimer = setTimeout(() => el.classList.add('dim'), ms * (QUICK ? 0.4 : 1)); voice(Math.random() * 1.2 - 0.6, who !== 'Mr Douparrouzel');
 }
 function fadeTo(color, op, ms) { const f = $('fade'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; f.style.opacity = op; }
+/* ---------- the cinematic layer: black bars (the words and buttons move inside them), captions on black, a held breath ---------- */
+function bars(on) { N.cine = on; document.body.classList.toggle('cine', on); if (on) calcLift(); }
+function calcLift() {   /* how far the hand must rise to keep the fist out from under the bottom bar (7% of the screen), at this screen size */
+  const prev = N.lift; hand.setLift(0); const low = hand.lowestFistPx(camera, innerHeight); hand.setLift(prev);
+  N.liftNeed = Math.max(0, low + 8 - (innerHeight - innerHeight * 0.07)) / innerHeight * 0.742;   /* 0.742 camera units is the height of the screen at the fist's distance */
+}
+addEventListener('resize', () => { if (N.cine) calcLift(); });
+function hideHud(on) { document.body.classList.toggle('cine-hide', on); }
+function caption(a, b) { const c = $('cap'); c.querySelector('.a').textContent = a || ''; c.querySelector('.b').textContent = b || ''; c.classList.add('on'); }
+function captionOff() { $('cap').classList.remove('on'); }
 function showCard(title, text, ok, onOk, no, onNo) {
-  $('ctitle').textContent = title; $('ctext').textContent = text; $('cok').textContent = ok; $('cno').hidden = !no; if (no) $('cno').textContent = no;
+  $('ccredit').hidden = true; $('ctitle').textContent = title; $('ctext').textContent = text; $('cok').textContent = ok; $('cno').hidden = !no; if (no) $('cno').textContent = no;
   $('cok').onclick = () => { $('card').hidden = true; onOk && onOk(); }; $('cno').onclick = () => { $('card').hidden = true; onNo && onNo(); }; $('card').hidden = false; $('cok').focus();
 }
 $('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 'Sound on' : 'Sound off'; };
@@ -61,7 +71,7 @@ function nearPatch() {   /* the closest unscraped patch that is within reach and
 function scrape(p) { if (!p) return; T.startClean(p); scrapeSound(); }
 function act() { if (!locked()) scrape(nearPatch()); }
 $('act').onclick = act;
-addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k); if ((k === 'e' || k === 'enter') && !e.repeat) act(); });
+addEventListener('keydown', (e) => { if (N.intro) { skipIntro(); return; } const k = e.key.toLowerCase(); keys.add(k); if ((k === 'e' || k === 'enter') && !e.repeat) act(); });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 
 /* ---------- the night, one phase at a time ---------- */
@@ -74,37 +84,48 @@ function resetNight() {
   for (const p of T.patches) T.setPatchClean(p, 0);
   T.water.set(0); T.manhole.setSky(0); $('vig').style.opacity = 0; fadeTo('#000', 0, 0); $('skip').hidden = true; $('act').hidden = true; $('sub').classList.add('dim');
   S.x = 0.12; S.z = ZM - 1.5; S.yaw = 0; S.pitch = 0; S.eye = SAND + 1.45; keys.clear();
+  bars(false); hideHud(false); captionOff(); $('skiphint').hidden = true; N.intro = false; N.glance = 0; N.glanceOn = false; N.duck = 0; N.lift = 0; N.order = null; N.handHissed = false; hand.setLift(0);
+  for (const t of T.torches) { t.on = 1; t.hissed = false; } if (camera.fov !== 68) { camera.fov = 68; camera.updateProjectionMatrix(); }
 }
-function startWork() {
-  resetNight(); setPhase('work'); setClock('1 a.m.'); setGoal(scrapeGoal(), true);
+/* The opening: black, two title cards, then the fade up into the Tube. Any key or tap skips it. */
+function startIntro() {
+  resetNight(); setPhase('intro'); N.intro = true; bars(true); hideHud(true); fadeTo('#000', 1, 0); setClock(''); setGoal('', true); $('skiphint').hidden = false;
+  at([[0.8, () => caption('Bog Walk, Jamaica', 'June 1904')], [3.8, captionOff], [4.8, () => caption('The last tram has gone.', 'The water in the pipe is shut off.')], [7.8, captionOff], [8.8, endIntro]]);
+}
+function endIntro() { if (!N.intro) return; N.intro = false; captionOff(); $('skiphint').hidden = true; fadeTo('#000', 0, 2200); bars(false); hideHud(false); startWork(true); }
+function skipIntro() { if (N.intro) endIntro(); }
+function startWork(keep) {
+  if (!keep) resetNight(); N.hintT = 0; setPhase('work'); setClock('1 a.m.'); setGoal(scrapeGoal(), true);
   say('Mr Douparrouzel', 'Scrape the plates clean. Take your time.', 5200);   /* placeholder wording */
   at([[7, () => setGoal('Walk down the pipe. Look for the rust patches.', true)]]);
 }
 function startTrickle() {
-  setPhase('trickle'); $('skip').hidden = false; setGoal('Look at the floor. Something is not right.');
+  setPhase('trickle'); $('skip').hidden = false; setGoal('Look at the floor. Something is not right.'); N.glanceOn = true; N.glanceT = 0; N.duck = D(2.6);   /* a held breath: the sound drops away and your eyes drop to the water at your feet */
   at([[1, () => say('Rudy', 'My boots are wet.')],
       [6, () => say('Mr Douparrouzel', 'A little water is coming. It is not from the dam.', 5200)],   /* the line he told the Gleaner he said (to check in the 1904 report) */
       [11.5, () => say('Old Zeke', 'It will pass. It always passes.')]]);
 }
 function startRise() {
-  setPhase('rise'); setClock('4 a.m.'); setGoal('Go to the manhole. Follow the voices.');
+  setPhase('rise'); setClock('4 a.m.'); setGoal('Go to the manhole. Follow the voices.'); boom();
   say('Mr Douparrouzel', 'Out, all of you! Go to the manhole!');
   at([[6, () => say('Rudy', 'This way! Hurry!')], [15, () => say('Old Zeke', 'Keep to the wall. Go on.')]]);
 }
 function startDark() {
-  setPhase('dark'); hiss(); setGoal('Go on. Head for the light.'); say('Old Zeke', 'Go on, lad. Keep going.');
+  setPhase('dark'); bars(true); N.handHissed = false; N.hbT = D(1.0); N.order = T.torches.slice().sort((a, b) => Math.abs(b.pos.z - S.z) - Math.abs(a.pos.z - S.z));   /* the far torches go first */
+  setGoal('Go on. Head for the light.'); say('Old Zeke', 'Go on, lad. Keep going.');
   at([[7, () => say('Rudy', 'I can see the light! This way!')], [14, () => say('', 'Keep your hand on the wall.', 3800)]]);
 }
 function startOut(skipped) {
   N.skipped = !!skipped; N.fast = !!skipped; setPhase('out'); $('skip').hidden = true; $('act').hidden = true; setGoal(skipped ? 'You are out.' : 'A hand reaches down. You are out.', true);
-  N.out = { x0: S.x, z0: S.z, e0: S.eye, p0: S.pitch, y0: S.yaw }; if (!skipped) cue('end');
+  N.out = { x0: S.x, z0: S.z, e0: S.eye, p0: S.pitch, y0: S.yaw }; hideHud(true); if (!skipped) { bars(true); cue('end'); airSwell(2.6); }
   at(skipped ? [[0.2, () => fadeTo('#000', 1, 700)], [1.2, showEnd]] : [[2.3, () => fadeTo('#fff', 1, 1200)], [3.8, showEnd]]);
 }
 function showEnd() {
-  setPhase('end'); setClock('');
+  setPhase('end'); setClock(''); bars(false); hideHud(true); captionOff();   /* the words stay hidden behind the card; "Play the night again" brings them back */
   showCard('You are out', N.skipped ? 'You skipped the dark part of the night. In the story, you get out of the Tube and the sky is going grey.' : 'The air is cool. The sky is going grey. Many men are still in the pipe.',
     'Play the night again', () => startWork(), null);
   $('ctext').textContent += ' The rest of the story is still being made.';
+  $('ccredit').hidden = false;   /* the credit shows on the end card, like the end of a film */
 }
 function skipNight() { if (['trickle', 'rise', 'dark'].includes(N.phase)) startOut(true); }
 $('skip').onclick = skipNight;
@@ -123,11 +144,14 @@ function nightTick(dt) {
   } else if (ph === 'trickle') { N.wl = 0.014 + 0.126 * ease(N.t / D(15)); if (N.t > D(15)) startRise(); }
   else if (ph === 'rise') { N.wl = 0.14 + 0.62 * ease(N.t / D(38)); if (N.t > D(26) || (N.t > D(12) && S.z > ZM - 9)) startDark(); }
   else if (ph === 'dark') {
-    N.wl = 0.76 + 0.3 * ease(N.t / D(26)); N.torch = Math.max(0, 1 - N.t / D(3.5)); N.vig = Math.min(0.8, N.t / D(5) * 0.8);
+    N.wl = 0.76 + 0.3 * ease(N.t / D(26)); N.vig = Math.min(0.8, Math.max(0, N.t - D(1.5)) / D(5) * 0.8);
+    (N.order || []).forEach((t, i) => { const st = D(0.3 + i * 0.5); t.on = 1 - ease((N.t - st) / D(0.45)); if (N.t >= st && !t.hissed) { t.hissed = true; if (i < 3) hiss(); } });   /* one by one, with a hiss for the first few */
+    N.torch = 1 - ease((N.t - D(3.6)) / D(1.0)); if (N.t >= D(3.6) && !N.handHissed) { N.handHissed = true; hiss(); }   /* yours goes last */
+    N.hbT -= dt; if (N.hbT <= 0) { heartbeat(0.15); N.hbT = Math.max(0.6, 0.95 - N.t * 0.012); }   /* a soft heartbeat, a little quicker as it goes on */
     if (Math.abs(S.z - ZM) < 1.5 || N.t > D(24)) startOut(false);
   } else if (ph === 'out') {
     const o = N.out, T1 = N.fast ? 1.0 : 2.6, k = ease(N.t / D(T1)), g = ease(N.t / D(T1 * 0.4));
-    S.x = o.x0 + (0 - o.x0) * g; S.z = o.z0 + (ZM - o.z0) * g; S.eye = o.e0 + (2 * R + 0.1 - o.e0) * k; S.pitch = o.p0 + (1.0 - o.p0) * k;   /* rise into the neck of the manhole and look up at the sky; stop under the sky so the world outside is never seen */ N.sky = k; N.vig = Math.max(0, N.vig * (1 - k)); N.torch = 0;
+    S.x = o.x0 + (0 - o.x0) * g; S.z = o.z0 + (ZM - o.z0) * g; S.eye = o.e0 + (2 * R + 0.1 - o.e0) * k; S.pitch = o.p0 + (1.0 - o.p0) * k;   /* rise into the neck of the manhole and look up at the sky; stop under the sky so the world outside is never seen */ N.sky = k; N.vig = Math.max(0, N.vig * (1 - k)); N.torch = 0; for (const t of T.torches) t.on = Math.max(0, t.on - dt * 2);
     N.wl = Math.min(1.1, N.wl + dt * 0.02);
   }
   T.water.set(N.wl); T.manhole.setSky(N.sky); $('vig').style.opacity = N.vig;
@@ -135,6 +159,7 @@ function nightTick(dt) {
   if (['work', 'trickle', 'rise'].includes(ph)) { N.dripT -= dt; if (N.dripT <= 0) { drip(); N.dripT = ph === 'work' ? 1.4 + Math.random() * 3 : 0.5 + Math.random() * 1.1; } }
   if (ph === 'work') { N.clankT -= dt; if (N.clankT <= 0) { clank(); N.clankT = 9 + Math.random() * 11; } N.voiceT -= dt; if (N.voiceT <= 0) { voice(Math.random() * 1.6 - 0.8, true); N.voiceT = 5 + Math.random() * 6; } }
   if (N.torch > 0.2) { N.crackT -= dt; if (N.crackT <= 0) { crackle(); N.crackT = 3 + Math.random() * 5; } }
+  if (N.duck > 0) N.duck -= dt;
   N.hintT += dt; if (N.hintT > 16 && $('hint').textContent) $('hint').textContent = '';
   N.mixT -= dt; if (N.mixT <= 0) { N.mixT = 0.1; mix(); }
 }
@@ -145,7 +170,9 @@ function mix() {   /* the beds, by phase: a rumble and moving air always; a tric
   else if (ph === 'rise' || ph === 'dark') { const k = Math.min(1, Math.max(0, (wl - 0.1) / 0.9)); stream = 0.1; roar = 0.06 + 0.5 * k; rush = 0.03 + 0.22 * k; rumble = 0.14; }
   else if (ph === 'out') { const f = 1 - ease(N.t / D(N.fast ? 1 : 3)); stream = 0.1 * f; roar = 0.5 * f; rush = 0.2 * f; rumble = 0.14 * f; air = 0.035 * f; }
   else if (ph === 'end' || ph === 'title') { rumble = air = 0; }
-  setBeds({ rumble, air, stream, roar, rush }, 0.5);
+  let drone = 0; if (ph === 'trickle') drone = 0.015 + 0.04 * Math.min(1, wl / 0.14); else if (ph === 'rise') drone = 0.055 + 0.1 * Math.min(1, (wl - 0.14) / 0.6); else if (ph === 'dark') drone = 0.16; else if (ph === 'out') drone = 0.16 * (1 - ease(N.t / D(N.fast ? 1 : 3)));
+  const f = N.duck > 0 ? 0.1 : 1; if (N.duck > 0) drone = 0;   /* the held breath: for a moment almost everything drops away */
+  setBeds({ rumble: rumble * f, air: air * f, stream: stream * f, roar: roar * f, rush: rush * f, drone }, N.duck > 0 ? 0.12 : 0.5);
 }
 
 /* ---------- movement: keys, touch (left half is a stick, right half looks) and mouse drag to look ---------- */
@@ -165,6 +192,7 @@ function tapPatch(cx, cy) {   /* a tap (not a drag) on a rust patch scrapes it, 
   const p = T.patches.find((pp) => pp.rust === hit.object); if (p && p.pos.distanceTo(new THREE.Vector3(S.x, S.eye, S.z)) < 2.6) scrape(p);
 }
 canvas.addEventListener('pointerdown', (e) => {
+  if (N.intro) { skipIntro(); return; }
   if (locked()) return;
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; const s = $('stick'); s.hidden = false; s.style.left = e.clientX + 'px'; s.style.top = e.clientY + 'px'; s.firstElementChild.style.transform = ''; }
   else { look.id = e.pointerId; look.x = e.clientX; look.y = e.clientY; look.moved = 0; }
@@ -192,10 +220,10 @@ function moveTick(dt) {
 }
 
 /* ---------- starting ---------- */
-function begin() {
-  audioInit(); initTubeSound(); $('title').hidden = true; $('hud').hidden = false; S.started = true; $('hint').textContent = TOUCH ? 'Left thumb to walk. Drag to look. Tap the rust.' : 'WASD to walk. Drag to look. E to scrape.'; startWork(); canvas.focus();
+function begin(skipIntroCards) {
+  audioInit(); initTubeSound(); $('title').hidden = true; $('hud').hidden = false; S.started = true; $('hint').textContent = TOUCH ? 'Left thumb to walk. Drag to look. Tap the rust.' : 'WASD to walk. Drag to look. E to scrape.'; if (skipIntroCards) startWork(); else startIntro(); canvas.focus();
 }
-$('start').disabled = false; $('start').textContent = 'Start'; $('start').onclick = begin;
+$('start').disabled = false; $('start').textContent = 'Start'; $('start').onclick = () => begin(false);
 
 /* ---------- the frame loop ---------- */
 let last = performance.now(), manual = false, frames = 0;
@@ -204,12 +232,18 @@ function tick(dt) {
   if (S.started && N.phase !== 'shot') { const sp = moveTick(dt); walkPh += sp * dt * 3; nightTick(dt); }
   if (N.phase === 'shot') { T.water.set(N.wl); }
   const bob = Math.sin(walkPh * 2.4) * 0.012;
-  T.update(dt, ft, S.z, N.torch); hand.update(ft, N.torch); T.hemi.intensity = 0.85 + 0.55 * (1 - N.torch);   /* once the torches are out your eyes get used to the dark a little */
-  camera.position.set(S.x, S.eye + bob, S.z); camera.rotation.set(S.pitch, S.yaw, 0, 'YXZ');
+  T.update(dt, ft, S.z, 1); hand.update(ft, N.torch); T.hemi.intensity = 0.85 + 0.55 * (1 - N.torch);   /* once the torches are out your eyes get used to the dark a little */
+  /* the camera's own acting: a low rumble as the water comes (stronger as it rises), a slow glance at the floor at the first sign of water, a view that narrows as the dark closes in
+     and widens as you reach the sky, and the hand rising a little when the black bars are in. None of it changes where you look: your own turning is added to it. */
+  const ph = N.phase; let shake = 0; if (S.started && ph !== 'shot') shake = (ph === 'rise' ? 0.4 + 0.6 * ease(N.wl) : ph === 'dark' ? 1 : ph === 'out' ? Math.max(0, 1 - N.t / D(1.6)) : 0) * 0.0045;
+  if (N.glanceOn) { N.glanceT += dt; N.glance = -0.34 * Math.sin(Math.min(1, N.glanceT / D(3.2)) * Math.PI); if (N.glanceT > D(3.2)) { N.glanceOn = false; N.glance = 0; } }
+  const fovT = ph === 'dark' ? 61 : ph === 'out' ? 72 : 68; if (Math.abs(camera.fov - fovT) > 0.01) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 1.1); camera.updateProjectionMatrix(); }
+  const liftT = N.cine ? N.liftNeed : 0; if (Math.abs(N.lift - liftT) > 0.002) { N.lift += (liftT - N.lift) * Math.min(1, dt * 3); hand.setLift(N.lift); }
+  camera.position.set(S.x + Math.sin(ft * 43) * shake, S.eye + bob + Math.sin(ft * 57 + 1) * shake * 0.7, S.z); camera.rotation.set(S.pitch + N.glance, S.yaw, Math.sin(ft * 31) * shake * 1.6, 'YXZ');
   const near = !locked() && !!nearPatch(); $('act').hidden = !near;
 }
 function render() { renderer.render(scene, camera); }
-function frame(t) { if (!manual) requestAnimationFrame(frame); const dt = Math.min(0.05, (t - last) / 1000); last = t; tick(dt); render(); document.body.dataset.frames = ++frames; }
+function frame(t) { if (!manual) requestAnimationFrame(frame); const dt = Math.max(0, Math.min(0.05, (t - last) / 1000)); last = t; tick(dt);   /* never negative: the first frame can be stamped a little before `last` */ render(); document.body.dataset.frames = ++frames; }
 requestAnimationFrame(frame);
 
 /* ---------- test views and a scripted playthrough: dev builds only (node tools/build.mjs bog-walk --dev) ---------- */
@@ -229,14 +263,15 @@ if (__DEV__) {
     return out;
   }
   function hudOverlaps() {   /* every pair of visible words and buttons that overlap, and any that run off the screen */
-    const ids = ['goal', 'clock', 'sound', 'skip', 'hint', 'act', 'sub', 'dialogue'], out = [], vis = [];
+    const ids = ['goal', 'clock', 'sound', 'skip', 'hint', 'act', 'sub', 'dialogue', 'barT', 'barB'], out = [], vis = [];
     for (const id of ids) { const e = $(id); if (!e) continue; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || e.closest('[hidden]') || (id === 'sub' && e.classList.contains('dim')) || (!e.textContent.trim() && e.tagName === 'P')) continue; const r = e.getBoundingClientRect(); if (r.width < 1 || r.height < 1) continue; vis.push([id, r]); }
     for (const [id, r] of vis) if (r.left < -0.5 || r.top < -0.5 || r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5) out.push(id + ' off screen');
     /* the torch, fist and sleeve in your hand, tested by the picture they really draw: rays are shot through the screen and must not hit the hand inside any word or
        button, along the sides or top of the screen (the sleeve leaves through the bottom on purpose), or round the middle of the view. The flame is a rectangle of its own. */
     { const parts = []; hand.root.traverse((o) => { if (o.isMesh && o.visible) parts.push(o); }); const flame = handRects().find((r) => r.name === 'flame'), ray = new THREE.Raycaster(), nd = new THREE.Vector2();
       const hit = (sx, sy) => { if (flame && sx >= flame.left && sx <= flame.right && sy >= flame.top && sy <= flame.bottom) return 'flame'; nd.set(sx / innerWidth * 2 - 1, -(sy / innerHeight) * 2 + 1); ray.setFromCamera(nd, camera); const h = ray.intersectObjects(parts, false)[0]; return h ? (h.object.name || 'part') : null; };
-      for (const [id, r] of vis) { let found = null; for (let i = 0; i <= 8 && !found; i++) for (let j = 0; j <= 5 && !found; j++) found = hit(r.left + (r.right - r.left) * i / 8, r.top + (r.bottom - r.top) * j / 5); if (found) out.push('hand overlaps ' + id + ' (' + found + ')'); }
+      for (const [id, r] of vis) { let found = null; for (let i = 0; i <= 8 && !found; i++) for (let j = 0; j <= 5 && !found; j++) { const f = hit(r.left + (r.right - r.left) * i / 8, r.top + (r.bottom - r.top) * j / 5); if (f && !(id === 'barB' && ['wrist', 'sleeve', 'cuff', 'stick'].includes(f))) found = f; }   /* the forearm and the foot of the stick leave through the bottom, under the bar, on purpose; the fist and flame must stay clear */
+        if (found) out.push('hand overlaps ' + id + ' (' + found + ')'); }
       let off = false; for (let k = 0; k <= 40 && !off; k++) { const f = k / 40; if (hit(2, f * innerHeight * 0.92) || hit(innerWidth - 3, f * innerHeight * 0.92) || hit(f * innerWidth, 2)) off = true; }
       if (off) out.push('hand runs off the side or top');
       const c = Math.min(innerWidth, innerHeight) * 0.07; let mid = false; for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) if (hit(innerWidth / 2 + i * c, innerHeight / 2 + j * c)) mid = true;
@@ -250,16 +285,19 @@ if (__DEV__) {
     for (const d of T.drifts) { for (const p of s) if (Math.abs(p.z - d.z) < d.l / 2 + p.r && Math.abs(p.x - d.x) < d.w / 2 + p.r) out.push(p.what + ' sits in a sand drift'); if (Math.abs(d.z - ZM) < d.l / 2 + 0.6) out.push('a sand drift is under the manhole'); }
     return out;
   }
-  window.__bw = { S, N, T, hand, tick, render, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), hudOverlaps, handRects, propOverlaps, begin, skipNight, setGoal, say };
+  window.__bw = { S, N, T, hand, tick, render, startIntro, skipIntro, bars, hideHud, caption, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), hudOverlaps, handRects, propOverlaps, begin, skipNight, setGoal, say };
   const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
   const shot = q.get('shot');
   if (shot) {
-    begin(); setPhase('shot'); $('hint').textContent = q.has('nohint') ? '' : $('hint').textContent;
+    begin(true); setPhase('shot'); T.torches.forEach((t) => { t.on = num('torch', 1); }); $('hint').textContent = q.has('nohint') ? '' : $('hint').textContent;
     const wl = num('wl', 0), cl = (q.get('clean') || '').split(',').filter(Boolean).map(Number);
     S.x = num('x', 0.12); S.z = num('z', ZM - 1.5); S.yaw = num('yaw', 0); S.pitch = num('pitch', 0); N.wl = wl; N.torch = num('torch', 1); N.vig = num('vig', 0); N.sky = num('sky', 0); $('vig').style.opacity = N.vig; T.manhole.setSky(N.sky);
     cl.forEach((i) => T.setPatchClean(T.patches[i], 1)); if (q.has('half')) T.setPatchClean(T.patches[+q.get('half')], 0.5);
     if (shot === 'patch') { const p = T.patches[+(q.get('p') || 0)]; S.z = p.z + 1.6; S.x = -Math.sign(p.pos.x) * 0.1; lookAt(p.pos.x, p.pos.y, p.pos.z); }
     if (shot === 'fist') { hand.root.position.set(0.02, 0.36 + num('fy', 0), -0.3 + num('fz', 0)); hand.root.rotation.set(0, num('fry', -0.1), 0); S.pitch = 0; S.yaw = 0; }   /* the hand brought close, to inspect the grip */
+    if (q.has('cine')) { document.body.classList.add('notrans'); bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); }   /* the black bars in, as in the dark and the climb */
+    if (shot === 'cap') { document.body.classList.add('notrans'); hideHud(true); bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); fadeTo('#000', 1, 0); $('fade').style.transition = 'none'; $('cap').style.transition = 'none'; q.get('line') === '2' ? caption('The last tram has gone.', 'The water in the pipe is shut off.') : caption('Bog Walk, Jamaica', 'June 1904'); }   /* an opening title card */
+    if (shot === 'end') { N.skipped = q.has('skipped'); showEnd(); }   /* the end card, with the credit */
     if (shot === 'up') { S.x = 0; S.z = ZM - 0.12; S.pitch = 1.5; }
     if (shot === 'manhole') { S.x = 0; S.z = ZM - 3.4; lookAt(0, 2 * R, ZM); }
     if (shot === 'torch') { const tt = T.torches[+(q.get('t') || 0)]; S.x = 0; S.z = tt.pos.z + 2.8; lookAt(tt.pos.x, tt.pos.y, tt.pos.z); }
@@ -272,9 +310,9 @@ if (__DEV__) {
     manual = true; const mode = q.get('auto'), pre = document.body.appendChild(document.createElement('pre')); pre.id = 'autolog'; pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#000;color:#9f9;font-size:11px;max-height:100%;overflow:auto;margin:0';
     const log = (m) => { pre.textContent += m + '\n'; };
     setTimeout(() => {
-      begin(); const dt = 1 / 30; let simT = 0, lastPh = '', ok = true; const seen = [];
+      begin(mode !== '3'); const dt = 1 / 30;   /* ?auto=3 plays the opening cards by their own timers, the others skip them */ let simT = 0, lastPh = '', ok = true; const seen = [];
       const step = (n) => { for (let i = 0; i < n; i++) { tick(dt); simT += dt; if (N.phase !== lastPh) { lastPh = N.phase; seen.push(lastPh); log(simT.toFixed(1) + 's phase=' + lastPh + ' goal="' + goalText + '" z=' + S.z.toFixed(1) + ' wl=' + N.wl.toFixed(2)); } } };
-      step(2);
+      step(2); if (mode === '3') { let g = 0; while (N.phase === 'intro' && g++ < 30 * 15) step(1); log('intro finished after ' + simT.toFixed(1) + 's'); if (N.phase === 'intro') ok = false; }
       for (const p of T.patches) { S.z = p.z + 1.5; S.x = -Math.sign(p.pos.x) * 0.1; lookAt(p.pos.x, p.pos.y, p.pos.z); tick(dt); const np = nearPatch(); if (np !== p) { ok = false; log('FAIL: no scrape action at patch ' + p.i); } act(); step(60); }
       log('scraped ' + N.scraped + ' of ' + T.patches.length); if (N.scraped !== T.patches.length) ok = false;
       let guard = 0; while (N.phase === 'work' && guard++ < 400) step(1); if (N.phase === 'work') { ok = false; log('FAIL: never left work'); }
