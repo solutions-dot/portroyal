@@ -145,6 +145,7 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 #tprint{font-size:2.6rem;padding:.8rem 0;box-shadow:0 6px 16px rgba(0,0,0,.5)}
 .tbtns{display:flex;gap:.6rem;justify-content:flex-end}
 @media (max-width:520px){#tcase{grid-template-columns:repeat(4,1fr)}.slot,.tile{width:46px;height:54px}}
+@media (max-width:520px){.panel{gap:.5rem;padding:.8rem .9rem 1rem}.panel h2{font-size:1.2rem}#dcquote{font-size:1rem}#dcbanner{height:54px}}
 /* the front page activity (chapter 4) */
 #pgpage{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:6px;padding:10px;background:#efe7d2;border-radius:4px;box-shadow:0 6px 16px rgba(0,0,0,.5)}
 .bx{border:2px dashed #8b8068;border-radius:4px;background:rgba(0,0,0,.05);color:#6a604c;font:700 .8rem Georgia,serif;min-height:46px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;padding:4px}
@@ -156,7 +157,11 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 .pc{border:0;border-radius:5px;background:#8e8f8a;color:#17130f;cursor:pointer;box-shadow:0 3px 0 #55564f;font:700 1rem Georgia,serif;padding:.55rem .8rem;min-height:48px}
 .pc.sel{outline:3px solid var(--brass);outline-offset:2px}
 .pc:disabled{opacity:.25;cursor:default;box-shadow:none}
-#pgmsg,#inmsg{margin:0;min-height:2.6em}
+#pgmsg,#inmsg,#dcmsg{margin:0;min-height:2.6em}
+#dcquote{font-size:1.1rem;line-height:1.3;padding:.6rem .9rem;letter-spacing:.02em;margin:0}
+#dcbanner{display:flex;flex-direction:column;flex:none;height:66px;border-radius:4px;overflow:hidden;border:2px solid #efe7d2}#dcbanner span{flex:1;background:#efe7d2;opacity:.25}
+#dccolors{display:flex;gap:8px;justify-content:center}
+.pc[data-c=red]{background:#b3262b;color:#fff;box-shadow:0 3px 0 #6e1519}.pc[data-c=black]{background:#14141a;color:#fff;box-shadow:0 3px 0 #000;outline:1px solid #5a5a62}.pc[data-c=green]{background:#1f7a3d;color:#fff;box-shadow:0 3px 0 #124a25}
 #inrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 </style>
 </head>
@@ -218,6 +223,17 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
     <div id="inrow" aria-label="Parts of the ship"></div>
     <p id="inmsg" aria-live="polite"></p>
     <div class="tbtns"><button id="indone" class="btn" hidden>Done</button></div>
+  </div>
+  <div id="decl" class="panel" role="dialog" aria-labelledby="dctitle" hidden>
+    <button id="dcx" class="x" aria-label="Stop reading">&times;</button>
+    <h2 id="dctitle">The Declaration of Rights</h2>
+    <p>The convention signed a Declaration on 13 August 1920. One line from it, in its own words:</p>
+    <blockquote id="dcquote" class="paper">That the colors, Red, Black and Green, be the colors of the Negro race.</blockquote>
+    <p>Colour the banner. Tap the colours in the order the line gives.</p>
+    <div id="dcbanner" aria-label="The banner"><span></span><span></span><span></span></div>
+    <div id="dccolors"><button class="pc" data-c="black">Black</button><button class="pc" data-c="green">Green</button><button class="pc" data-c="red">Red</button></div>
+    <p id="dcmsg" aria-live="polite"></p>
+    <div class="tbtns"><button id="dcdone" class="btn" hidden>Done</button></div>
   </div>
   <div id="dialogue" role="dialog" aria-labelledby="who" hidden>
     <button id="dclose" aria-label="Stop talking">&times;</button>
