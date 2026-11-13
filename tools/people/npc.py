@@ -117,10 +117,11 @@ if G.get('coat'):
     if hem:
         ZT=HIP+0.06; ZB=KNEE+hem
         def flare(v):
-            t=max(0,(ZT-v.co.z)/(ZT-ZB)); f=1+0.16*t*t+0.05*t; v.co.x*=f; v.co.y=(v.co.y+0.02)*f*(1+0.15*t*(v.co.y>0))-0.02
+            t=max(0,(ZT-v.co.z)/(ZT-ZB)); f=1+0.26*t*t+0.07*t; v.co.x*=f; v.co.y=(v.co.y+0.02)*f*(1+0.15*t*(v.co.y>0))-0.02
         op=G.get('coatopen',True)   # 1690 coats hang open at the front below the waist: an opening that widens to the hem, so the knees pass through instead of poking out
         front_gap=lambda c: op and c.y<-0.01 and abs(c.x)<0.018+0.075*max(0.0,min(1.0,(ZT-c.z)/(ZT-ZB)))
-        sk=piece('CoatSkirt','helper-skirt',lambda c:ZB<c.z<ZT+0.02 and not front_gap(c),0.03,'Coat',cuts=[((0,0,ZB),(0,0,-1),None)],shape=flare)
+        back_vent=lambda c: op and c.y>0.01 and abs(c.x)<0.008+0.035*max(0.0,min(1.0,(ZT-c.z-0.08)/(ZT-ZB)))   # and a vent up the back, as 1690 coats had
+        sk=piece('CoatSkirt','helper-skirt',lambda c:ZB<c.z<ZT+0.02 and not front_gap(c) and not back_vent(c),lambda c:0.045 if c.y<-0.02 else 0.03,'Coat',cuts=[((0,0,ZB),(0,0,-1),None)],shape=flare)
         parts.append(('coatskirt',sk))
 if G.get('breeches'):
     bk=G.get('breechkind','plain'); low=KNEE-0.05*s
@@ -151,7 +152,8 @@ for k,o in parts:            # coat skirts follow both legs as one cloth, like A
     for g in o.vertex_groups:
         if g.name.startswith('mixamorig:'): g.remove(idx)
     for v in o.data.vertices:
-        t=max(0.0,min(1.0,(HIP+0.06-v.co.z)/0.5)); leg=0.6*sstep(0.1,0.9,t); left=sstep(-1.0,1.0,v.co.x/0.15)
+        t=max(0.0,min(1.0,(HIP+0.06-v.co.z)/0.5)); front=sstep(0.02,-0.07,v.co.y); leg=front*0.95*sstep(-0.15,0.45,t)+(1-front)*0.25*sstep(0.1,0.9,t);   # the front panels ride on their own thigh (the knee carries them forward), the back hangs from the hips and opens at the vent
+        left=sstep(-1.0,1.0,v.co.x/0.15)
         for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left),('RightUpLeg',leg*(1-left))):
             if val>0.001: B[n].add([v.index],val,'REPLACE')
 # extra pieces bound to one bone: hat, cap, bands, apron
