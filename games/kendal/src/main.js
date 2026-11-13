@@ -7,14 +7,16 @@ import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, gullCry, chirp } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
-import { G, T, makeSky, ease, clamp01, lerp, rng } from './gfx.js';
+import { G, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
 import { ENV, mixEnv, makeRig, TRACK_Y } from './common.js';
 import { makeSmoke, spin } from './trains.js';
-import { lantern, hamper, bucket, bananaBunch, flowers, attach, PM } from './props.js';
+import { lantern, hamper, bucket, bananaBunch, flowers, attach, suitcase, PM } from './props.js';
 import { buildRoad, buildStation45, buildRide45, buildHill } from './places1.js';
 import { buildKingston57, buildCoach, buildBeach, buildCrash, buildMemorial } from './places2.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL } from './content.js';
 import * as SFX from './sfx.js';
+import { DECOR } from './decor.js';
+import { makeBirds } from './detail.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -28,7 +30,10 @@ const canvas = $('stage');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; G.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(66, 1, 0.1, 800); scene.add(camera);
-const hemi = new THREE.HemisphereLight(0xffffff, 0x887766, 2); scene.add(hemi); const sun = new THREE.DirectionalLight(0xfff0d0, 2); sun.position.set(10, 20, 10); scene.add(sun);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x887766, 2); scene.add(hemi); const sun = new THREE.DirectionalLight(0xfff0d0, 2); sun.position.set(10, 20, 10); scene.add(sun); scene.add(sun.target);
+const SHADOWS = !matchMedia('(pointer: coarse)').matches && !(__DEV__ && /[?&]noshadow/.test(location.search));   /* real shadows on computers; phones get soft blob shadows under people instead */
+renderer.shadowMap.enabled = SHADOWS; renderer.shadowMap.type = THREE.PCFShadowMap; sun.shadow.mapSize.set(2048, 2048); { const sc = sun.shadow.camera; sc.left = -46; sc.right = 46; sc.top = 46; sc.bottom = -46; sc.near = 1; sc.far = 260; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.06; }
+const sunDir = new THREE.Vector3(0.4, 0.8, 0.4);
 const handLamp = new THREE.PointLight(0xffc878, 0, 16, 1.7); handLamp.position.set(0.25, -0.25, -0.5); camera.add(handLamp);   /* Mass Ezra's lamp, in your hand */
 const sky = makeSky(); for (const o of sky.objects) scene.add(o);
 scene.fog = new THREE.Fog(0xcfe2e6, 60, 240);
@@ -37,9 +42,9 @@ addEventListener('resize', resize); resize();
 let envNow = ENV.morning;
 function setEnv(e) {   /* the time of day: sky, haze, sun and ambient light */
   envNow = e; sky.setSky(e.top, e.hor, e.stars, e.moon); scene.fog.color.setHex(e.fog); scene.fog.near = e.fogN; scene.fog.far = e.fogF; scene.background = scene.fog.color;
-  hemi.color.setHex(e.hemi[0]); hemi.groundColor.setHex(e.hemi[1]); hemi.intensity = e.hemi[2]; sun.color.setHex(e.sun[0]); sun.intensity = e.sun[1]; sun.position.set(...e.sun[2]);
+  hemi.color.setHex(e.hemi[0]); hemi.groundColor.setHex(e.hemi[1]); hemi.intensity = e.hemi[2]; sun.color.setHex(e.sun[0]); sun.intensity = e.sun[1]; sunDir.set(...e.sun[2]).normalize(); sun.castShadow = SHADOWS && e.sun[1] > 0.9 && !(PL[cur] && PL[cur].ride);
+  sky.setSky(e.top, e.hor, e.stars, e.moon, Math.min(1, e.hemi[2] / 1.8));
 }
-setEnv(ENV.morning);
 
 /* ---------- state and controls ---------- */
 const state = { x: 0, z: 0, yaw: 0, pitch: 0, started: false };
@@ -76,33 +81,39 @@ function stickUI() {
 /* ---------- people: a dozen bodies, recoloured per person; places are built when a chapter needs them ---------- */
 const BASES = {}, basePromises = {};
 function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePromises[id] = basePromises[id] || model(id).then((g) => { g.scene.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); BASES[id] = g; return g; })); }
-const PROPS = { basket: () => { const h = hamper(0xb08a48); return h; }, hamper: () => hamper(), lantern: () => lantern(), bucket: () => bucket() };
+const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb08a48); return h; }, hamper: () => hamper(), lantern: () => lantern(), bucket: () => bucket() };
 const PROP_AT = { RightHand: { pos: [0.02, -0.12, 0.05], rot: [0, 0, 0] }, Head: { pos: [0, 0.14, 0.02], rot: [0, 0, 0] } };
 function makeBody(s) {
-  const m = skClone(BASES[s.base].scene);
+  const m = skClone(BASES[s.bodyId || s.base].scene);
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const mat = o.material, nm = mat.name || '';
     if ((s.hide && s.hide.includes(nm)) || (s.hat === false && nm === 'Hat')) { o.visible = false; return; }
     o.material = mat.clone(); const t = s.tint && s.tint[nm]; if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
     else if (s.skin && (nm === 'Skin' || nm.startsWith('Human'))) o.material.color.setScalar(s.skin); });
+  m.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
   m.scale.setScalar(s.scale || 1); m.position.set(s.x, s.ground || 0, s.z); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
+  if (!/^Sit/.test(s.anim || '')) { const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.05; b.renderOrder = 1; m.add(b); }
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl;
   for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); const at = PROP_AT[bone] || {}; const w = attach(m, bone, o, at.pos, at.rot, prop === 'basket' ? 1.1 : 1); if (o.userData.flame) s._flame = o.userData.flame; }
   if (s.lamp) { const o = lantern(); attach(m, 'RightHand', o, PROP_AT.RightHand.pos, PROP_AT.RightHand.rot, 1); s._flame = o.userData.flame; }
   if (s.blanket) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.33, 10, 6, 0, PI * 2, 0, PI / 2), new THREE.MeshStandardMaterial({ color: [0xb86a3c, 0x8a3a3a, 0x4a6a8a, 0x8a7a3a][(Math.round(s.x) & 3)], roughness: 1 })); b.scale.set(1.2, 0.8, 1); b.position.set(0, 1.0, 0.05); m.add(b); }
   return m;
 }
+const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBasicMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.6, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
 const PL = {}; let cur = null;
+setEnv(ENV.morning);
 const BUILD = { road: buildRoad, station45: buildStation45, ride45: buildRide45, hill: buildHill, kingston57: buildKingston57, coach: buildCoach, beach: buildBeach, crash: buildCrash, memorial: buildMemorial };
 let modelsReady = false; const placeLoading = {};
 function buildPlace(id) {   /* the geometry only: quick, and enough for a title backdrop. People come later (populate). */
-  if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.actions = []; P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; PL[id] = P;
+  if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.actions = []; P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; PL[id] = P; if (DECOR[id]) DECOR[id](P.group, P); if (!P.group.userData.noBatch) P.batch = batchStatic(P.group);
+  P.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.alphaTest > 0)) { o.castShadow = o.receiveShadow = true; } else if (o.isMesh && Array.isArray(o.material)) { o.castShadow = o.receiveShadow = true; } });
   if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); return P;
 }
 function ensurePlace(id) {   /* the place with its people: loads the bodies it needs */
   const P = buildPlace(id); if (P.populated) return Promise.resolve(P); if (placeLoading[id]) return placeLoading[id];
   return (placeLoading[id] = (async () => {
     P.specs.extras = P.specs.extras.filter((e) => Math.hypot(e.x - P.start.x, e.z - P.start.z) > 2.6 || e.seated);
-    const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.base)); await Promise.all([...bases].map(loadBase));
+    for (const e of P.specs.extras) e.bodyId = e.base + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
+    const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
     const mk = (s, talk) => { const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk }); n.m = makeBody(s); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
     P.people = P.specs.people.map((s) => mk(s, true)); P.extras = P.specs.extras.map((s) => mk(s, false)); P.people.forEach(addMark);
     if (P.group.visible) for (const n of P.npcs) n.m.visible = !n.hidden;
@@ -119,7 +130,7 @@ function enterPlace(id, { keepPos = false, env } = {}) {
   if (!keepPos) { state.x = P.start.x; state.z = P.start.z; state.yaw = P.start.yaw; state.pitch = 0; }
   EYE = P.eye || 1.32; FX.roll = 0; FX.tilt = 0; stick.id = null; stick.dx = stick.dy = 0; sitting = false;
 }
-const smoke = makeSmoke(scene);
+const smoke = makeSmoke(scene); const birds = makeBirds(scene, 7);
 function clampPos(x, z) {
   const P = P_(), b = P.bounds; x = Math.max(b.x0, Math.min(b.x1, x)); z = Math.max(b.z0, Math.min(b.z1, z));
   for (const [x0, z0, x1, z1] of P.walls) if (x > x0 && x < x1 && z > z0 && z < z1) { const dl = x - x0, dr = x1 - x, dt = z - z0, db = z1 - z, m = Math.min(dl, dr, dt, db); if (m === dl) x = x0; else if (m === dr) x = x1; else if (m === dt) z = z0; else z = z1; }
@@ -150,7 +161,7 @@ const TALK_SVG = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" st
 const TB = { el: null, v: new THREE.Vector3() };
 function addMark(n) { n.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); n.mark.renderOrder = 5; n.mark.visible = false; scene.add(n.mark); }
 const headTop = (n) => (n.m.userData.ground || 0) + (n.h || 1.8) - 0.03;
-const POSTER = __DEV__ && /[?&]shot=poster/.test(location.search); let DEV_NOSTOP = false;
+const POSTER = __DEV__ && /[?&]shot=poster/.test(location.search); let DEV_NOSTOP = false;   /* the menu poster is rendered from this view with no marks or bubbles */
 function bubbleTick(now) {
   const show = state.started && !busy && !frozen && $('card').hidden && !POSTER && !DIR.on && !sitting;
   for (const n of P_() ? P_().people : []) { const m = n.mark; if (!m) continue; if (!show || !n.m || !n.m.visible) { m.visible = false; continue; } const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
@@ -540,6 +551,7 @@ function update(dt, now) {
       if (len > 0.05) { const sp = (keys.has('shift') ? 3.6 : 2.3) * Math.min(1, len), fx = -Math.sin(state.yaw), fz = -Math.cos(state.yaw); sitting = false;
         [state.x, state.z] = clampPos(state.x + (fx * f - fz * r) / Math.max(1, len) * sp * dt, state.z + (fz * f + fx * r) / Math.max(1, len) * sp * dt); stepT -= dt * sp; if (stepT <= 0) { stepT = 1.35; if (!RIDE.on || RIDE.v < 12) stepSound(FOOT[cur]); } } }
   }
+  if ((frameN & 7) === 0) for (const n of P.extras) { const d = Math.hypot(state.x - n.x, state.z - n.z); n.m.visible = d < 75 && !n.hidden; }
   for (const n of P.npcs) npcTick(n, dt);
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
@@ -558,6 +570,7 @@ function frame(t) {
   else if (!state.started && P_() && P_().titleView) { const tv = P_().titleView, s = t / 1000; camera.position.set(tv.x - Math.sin(s * 0.08) * 3, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(s * 0.05) * 0.04, 0, 'YXZ'); }
   else { camera.position.set(state.x, EYE - (sitting ? 0.35 : 0) + FX.bob, state.z); camera.rotation.set(state.pitch, state.yaw, FX.roll + FX.tilt, 'YXZ'); }
   if (FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.035; }
+  sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110); birds.tick(t / 1000, !!(P_() && envNow.stars < 0.3 && !P_().ride && P_().id !== 'crash'), camera.position.x, camera.position.z);
   sky.dome.position.copy(camera.position); sky.stars.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380);
   if (!NORENDER) renderer.render(scene, camera);
 }
@@ -575,22 +588,32 @@ function devViews() {
     st1: ['station45', 20, -2, 6.5, 0.15, 0], st2: ['station45', 20, -7, 4.2, 0.9, 0.02], st3: ['station45', 20, 14, 5, 0.25, 0.05],
     hill1: ['hill', 30, -24, 5.5, -1.5, 0], hill2: ['hill', 30, -10, 4, -0.3, 0.05],
     k1: ['kingston57', 40, -22, 5, PI / 2 - 0.2, 0], k2: ['kingston57', 40, -22, 5, -PI / 2 + 0.4, 0], k3: ['kingston57', 40, -9, 6.2, 0.35, 0], k4: ['kingston57', 41, 28, 4, -PI / 2, 0],
-    ride1: ['ride45', 23, 0.2, 0, PI / 2 + 0.25, 0], ride2: ['ride45', 23, 0.2, 0, 0.3, 0.05], coach1: ['coach', 51, 3.6, 0, -PI / 2, 0], coach2: ['coach', 51, 0, 0, 1.2, 0], coach3: ['coach', 51, 3.2, 0.2, -PI / 2 - 0.5, 0],
+    ride1: ['ride45', 23, 0.2, 0, PI / 2 + 0.25, 0], ride2: ['ride45', 23, 0.2, 0, 0.3, 0.05], poster: ['kingston57', 40, 47, -9.0, PI / 2 + 0.5, 0.03, ENV.gold], lurch: ['coach', 53, 1.5, 0, -PI / 2 + 0.5, 0], coach1: ['coach', 51, 3.6, 0, -PI / 2, 0], coach2: ['coach', 51, 0, 0, 1.2, 0], coach3: ['coach', 51, 3.2, 0.2, -PI / 2 - 0.5, 0],
     beach1: ['beach', 43, 0, 9, 0.1, 0], beach2: ['beach', 43, 8, 3, -1.2, 0],
-    crash1: ['crash', 60, 17, 5.8, 1.7, 0], crash2: ['crash', 60, 8, 6, 2.2, 0.05], crash3: ['crash', 61, -4, 9, 3.14, 0.02],
+    crash4: ['crash', 61, 8, 4.4, 0.9, 0.04], crash1: ['crash', 60, 17, 5.8, 1.7, 0], crash2: ['crash', 60, 8, 6, 2.2, 0.05], crash3: ['crash', 61, -4, 9, 3.14, 0.02], crash5: ['crash', 66, 9, 5, 0.75, 0.0],
     mem1: ['memorial', 70, 0, 4.6, 0, 0.02], mem2: ['memorial', 71, 4, -4, 0.0, 0.1],
   };
+  if (shot === 'talk1') go('road', 10, -27, 4.2, -0.7, 0).then((P) => { startTalk(byId('dudley')); });
+  if (shot === 'talk2') go('crash', 62, 9, 8, PI, 0).then((P) => { story.lamp = true; updateLamp(); startTalk(byId('dawn')); });
+  if (shot === 'card1') go('coach', 52, 2, 0, -PI / 2, 0).then(() => { crashIntro(); });
+  if (shot === 'journal1') go('road', 10, -27, 4.2, 0, 0).then(() => { for (const id of ['slowroad', 'higglers', 'free', 'cause']) unlock(id, true); openJournal('cause'); });
+  if (shot === 'chap1') go('road', 10, -27, 4.2, 0, 0).then(() => { best = 35; modelsReady = true; openChapters(); });
   if (V[shot]) go(...V[shot]).then((P) => {
     if (shot === 'st3') { /* the governor's end */ }
     if (shot === 'hill2') { P.train.visible = true; P.train.position.x = 0; }
     if (/^ride/.test(shot)) { RIDE.on = true; RIDE.kind = 'steam'; RIDE.v = RIDE.target = 9; for (let i = 0; i < 40; i++) update(0.05); }
+    if (shot === 'poster') { $('hud').hidden = true; for (let i = 0; i < 4; i++) update(0.05); }
+    if (shot === 'lurch') { setRigTheme(P, 'night'); setEnv(ENV.night); RIDE.on = true; RIDE.kind = 'diesel'; RIDE.v = RIDE.target = 24; P.lamp.intensity = 3; for (let i = 0; i < 30; i++) update(0.05); P.group.rotation.x = 0.17; FX.shake = 0.5; bars(true); say('The brakes scream.', 99999); }
     if (/^coach/.test(shot)) { RIDE.on = true; RIDE.kind = 'diesel'; RIDE.v = RIDE.target = 12; for (let i = 0; i < 30; i++) update(0.05); }
     if (shot === 'coach3') { setRigTheme(P, 'night'); setEnv(ENV.night); }
     if (/^crash/.test(shot)) { story.lamp = true; updateLamp(); if (shot === 'crash2') { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; handLamp.intensity = 0; P.torches.forEach((t) => { t.visible = false; }); } }
     if (shot === 'crash3') { setEnv(ENV.dawn); }
+    if (shot === 'crash5') { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; handLamp.intensity = 0; lampMesh.visible = false; P.torches.forEach((t) => { t.visible = false; }); }
     if (/^k\d/.test(shot)) SFX.initBeds;
     for (let i = 0; i < 6; i++) update(0.05);
+    if (q.has('stats')) setTimeout(() => { renderer.info.reset(); renderer.render(scene, camera); const i = renderer.info; const t = 'STATS calls=' + i.render.calls + ' tris=' + i.render.triangles + ' geo=' + i.memory.geometries + ' tex=' + i.memory.textures; document.title = t; console.log(t); }, 1500);
   });
+  if (q.has('clickstart')) setTimeout(() => $('start').click(), 300);   /* the real start, with real fades (the other test views skip them) */
   if (q.has('auto')) {   /* ?auto=N plays chapter N (1 to 7) and the ones after it; add &one to stop after N. It logs every change to the page title and #autolog, and says STALL if nothing changes for a while. */
     const N = +q.get('auto'), one = q.has('one'), log = [], sleep = (ms) => new Promise((r) => setTimeout(r, ms)); const L = (m) => { log.push(m); document.title = log.join(' | '); const el = $('autolog'); if (el) el.textContent = log.join('\n'); };
     (async () => {

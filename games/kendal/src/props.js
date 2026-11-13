@@ -49,15 +49,17 @@ export function scatter(parent, make, n, area, clear = [], seed = 5) {
 }
 
 /* ---------- hills: a ring of rounded green hills around the play area, built as one coloured mesh each ---------- */
+const HILLM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
 export function hillRing(radius = 150, count = 18, hMax = 60, { seed = 3, base = [0.2, 0.42, 0.22], far = 0 } = {}) {
   const r = rng(seed), g = grp();
   for (let i = 0; i < count; i++) { const a = i / count * Math.PI * 2 + r() * 0.2, w = 60 + r() * 60, h = hMax * (0.45 + r() * 0.55), geo = new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2); const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
     for (let k = 0; k < pos.count; k++) { const y = pos.getY(k), v = 0.82 + 0.35 * y + (r() - 0.5) * 0.12; col[k * 3] = base[0] * v; col[k * 3 + 1] = base[1] * v; col[k * 3 + 2] = base[2] * v; pos.setY(k, y * (1 + (r() - 0.5) * 0.15)); }
-    geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true })); m.scale.set(w, h, w * (0.7 + r() * 0.4)); m.position.set(Math.cos(a) * radius, -2, Math.sin(a) * radius); m.rotation.y = r() * 3; g.add(m); }
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); const m = new THREE.Mesh(geo, HILLM); m.scale.set(w, h, w * (0.7 + r() * 0.4)); m.position.set(Math.cos(a) * radius, -2, Math.sin(a) * radius); m.rotation.y = r() * 3; g.add(m); }
   return g;
 }
 
 /* ---------- houses and sheds ---------- */
+const TM2 = solid(0x4a4c50, 0.6, 0.3);
 export function boardHouse(w = 5, d = 4, h = 2.8, { wall = [188, 160, 110], roof = [140, 90, 70], porch = true, seed = 1 } = {}) {   /* a Jamaican board house: walls of boards, a zinc roof, a front veranda */
   const g = grp(), r = rng(seed); const wt = T.plank(wall, 8, [w / 2, 1]).clone(); wt.needsUpdate = true; wt.repeat.set(w / 2, 1);
   box(w, h, d, std(wt, 0.9), 0, h / 2, 0, g);
@@ -67,6 +69,11 @@ export function boardHouse(w = 5, d = 4, h = 2.8, { wall = [188, 160, 110], roof
   for (const s of [-1, 1]) { const gable = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-d / 2, 0), new THREE.Vector2(d / 2, 0), new THREE.Vector2(0, rise)])), std(wt, 0.9), s * (w / 2 + 0.005), h, 0, g); gable.rotation.y = s * Math.PI / 2; gable.material.side = THREE.DoubleSide; }
   const shut = solid(0x2f6a3f, 0.9); for (const x of [-w * 0.28, w * 0.28]) { box(0.9, 0.9, 0.06, M.woodDark, x, h * 0.62, d / 2 + 0.02, g); box(0.4, 0.8, 0.07, shut, x - 0.62, h * 0.62, d / 2 + 0.04, g); box(0.4, 0.8, 0.07, shut, x + 0.62, h * 0.62, d / 2 + 0.04, g); }
   box(0.9, 1.9, 0.07, solid(0x4a2f1e, 0.9), 0, 0.95, d / 2 + 0.03, g);
+  const wf = solid(0xe8e0cc, 0.8); for (const x of [-w * 0.28, w * 0.28]) { box(1.14, 0.06, 0.07, wf, x, h * 0.62 + 0.47, d / 2 + 0.05, g); box(1.14, 0.06, 0.07, wf, x, h * 0.62 - 0.47, d / 2 + 0.05, g); box(1.2, 0.05, 0.14, wf, x, h * 0.62 - 0.52, d / 2 + 0.1, g); for (const s of [-0.54, 0, 0.54]) box(0.05, 0.94, 0.07, wf, x + s, h * 0.62, d / 2 + 0.05, g); }
+  box(1.06, 0.06, 0.08, wf, 0, 1.94, d / 2 + 0.05, g); for (const s of [-0.5, 0.5]) box(0.06, 1.9, 0.08, wf, s, 0.95, d / 2 + 0.05, g);
+  for (const [x, z] of [[-w / 2 + 0.2, -d / 2 + 0.2], [w / 2 - 0.2, -d / 2 + 0.2], [-w / 2 + 0.2, d / 2 - 0.2], [w / 2 - 0.2, d / 2 - 0.2], [0, d / 2 - 0.2], [0, -d / 2 + 0.2]]) cyl(0.13, 0.16, 0.3, solid(0x9a968a, 1), x, 0.1, z, g, 8);
+  box(w + 0.8, 0.1, 0.2, TM2, 0, h + rise + 0.04, 0, g); box(0.5, 0.16, 0.12, wf, 0, h + 0.5, d / 2 + 0.02, g);
+  if (porch) { box(1.5, 0.18, 0.5, M.woodDark, 0, 0.09, d / 2 + 1.85, g); box(1.2, 0.18, 0.4, M.woodDark, 0, 0.24, d / 2 + 1.6, g); for (let x = -w / 2 + 0.2; x < w / 2; x += 0.28) box(0.04, 0.22, 0.04, wf, x, 2.44, d / 2 + 1.5, g); }
   if (porch) { box(w + 0.4, 0.14, 1.6, M.woodDark, 0, 0.2, d / 2 + 0.8, g); for (const x of [-w / 2, 0, w / 2]) box(0.12, 2.4, 0.12, M.wood, x, 1.4, d / 2 + 1.5, g); const pz = box(w + 0.6, 0.06, 1.9, std(zt, 0.75), 0, 2.65, d / 2 + 0.9, g); pz.rotation.x = 0.12; }
   return g;
 }
@@ -120,7 +127,7 @@ export function truck(c = 0x2f5f6a) {
   const g = grp(), m = solid(c, 0.6, 0.2); box(2.6, 0.9, 1.9, m, 0, 0.9, 0, g); box(1.3, 0.9, 1.8, m, 1.05, 1.6, 0, g); box(0.04, 0.5, 1.4, new THREE.MeshBasicMaterial({ color: 0x1a2630 }), 1.72, 1.65, 0, g); box(1.4, 0.4, 1.9, solid(0x4a4640, 0.9), -0.4, 1.55, 0, g).visible = false;
   for (const x of [-0.9, 1.0]) for (const z of [-0.9, 0.9]) { const w = cyl(0.42, 0.42, 0.3, M.black, x, 0.42, z, g, 12); w.rotation.x = Math.PI / 2; }
   for (const z of [-0.6, 0.6]) { box(0.08, 0.2, 0.3, M.lanternGlass, 1.76, 1.0, z, g); }
-  const beam = new THREE.Mesh(new THREE.ConeGeometry(2.2, 9, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); beam.rotation.z = -Math.PI / 2; beam.position.set(6.2, 1.0, 0); g.add(beam);
+  const beam = new THREE.Mesh(new THREE.ConeGeometry(2.2, 9, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); beam.rotation.z = -Math.PI / 2; beam.position.set(6.2, 1.0, 0); g.add(beam);
   return g;
 }
 

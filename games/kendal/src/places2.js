@@ -48,7 +48,7 @@ export function buildKingston57() {
   extras.push(...crowd57(44, 57, [-26, 1.4, 44, 8.6], { faceZ: PI * 0.8 }).filter(free(walls)));
   extras.push(...crowd57(8, 71, [-50, 1.6, -28, 8], { faceZ: -PI / 2 }).filter(free(walls)));
   return { id: 'kingston57', group: g, walls, bounds: { x0: -52, x1: 44, z0: 0.2, z1: 8.6 }, start: { x: -22, z: 5, yaw: -PI / 2 + 0.4 }, people, extras, env: ENV.morning, train, coaches, diesels: [dA, dB],
-    titleView: { x: 32, y: 3.4, z: 6.4, yaw: PI / 2 - 0.35, pitch: -0.02 }, spots: { board: [35.4, 0.5], coachEnd: [39.5, -3] }, tick: () => {} };
+    titleView: { x: 46, y: 0.5, z: -10, yaw: PI / 2 + 0.52, pitch: 0.02 }, spots: { board: [35.4, 0.5], coachEnd: [39.5, -3] }, tick: () => {} };
 }
 
 /* ============ the inside of a wooden coach: seven rows of benches, an aisle, windows both sides, a rig of scenery passing outside ============ */
@@ -81,15 +81,15 @@ export function buildCoach() {
 export function buildBeach() {
   const g = grp(), walls = [], people = [], extras = [];
   const sandM = mesh(new THREE.PlaneGeometry(900, 460), std(T.sand([90, 46]), 1), 0, 0, 210, g); sandM.rotation.x = -PI / 2;
-  const sea = mesh(new THREE.PlaneGeometry(800, 500), std(T.water([60, 40]).clone(), 0.35, { metalness: 0.1, transparent: true, opacity: 0.92 }), 0, -0.08, -270, g); sea.rotation.x = -PI / 2; sea.material.map.needsUpdate = true;
-  const foam = mesh(new THREE.PlaneGeometry(400, 3), new THREE.MeshBasicMaterial({ map: cv(256, 64, (x, w, h) => { const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.85)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, w, h); }, [60, 1], true), transparent: true, depthWrite: false }), 0, -0.04, -20.5, g); foam.rotation.x = -PI / 2;
+  const sea = mesh(new THREE.PlaneGeometry(800, 500), std(T.water([60, 40]).clone(), 0.35, { metalness: 0.1, transparent: true, opacity: 0.92 }), 0, -0.08, -270, g); sea.rotation.x = -PI / 2; sea.material.map.needsUpdate = true; sea.userData.noBatch = true;
+  const foam = mesh(new THREE.PlaneGeometry(400, 3), new THREE.MeshBasicMaterial({ map: cv(256, 64, (x, w, h) => { const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.85)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, w, h); }, [60, 1], true), transparent: true, depthWrite: false }), 0, -0.04, -20.5, g); foam.rotation.x = -PI / 2; foam.userData.noBatch = true;
   const wet = mesh(new THREE.PlaneGeometry(400, 3.5), new THREE.MeshBasicMaterial({ color: 0x9a8a68, transparent: true, opacity: 0.45, depthWrite: false }), 0, 0.01, -18.2, g); wet.rotation.x = -PI / 2;
   scatter(g, (i, r) => palm(6 + r() * 3, i), 22, [-60, 14, 60, 30], [], 6); scatter(g, (i) => bush(i, 1.2), 14, [-60, 12, 60, 24], [], 9); { const hr = hillRing(260, 18, 70, { seed: 5 }); hr.children.forEach((c) => { if (c.position.z < 90) c.visible = false; }); g.add(hr); }
   const cabin = boardHouse(6, 4, 2.6, { wall: [220, 210, 190], roof: [190, 80, 70], seed: 4 }); cabin.position.set(-32, 0, 17); cabin.rotation.y = PI; g.add(cabin); walls.push([-35.4, 14.8, -28.6, 19.2]);
   const um = (x, z, c) => { const u = grp(g, x, 0, z); cyl(0.04, 0.04, 2.6, TM.woodDark, 0, 1.3, 0, u, 6); const top = mesh(new THREE.ConeGeometry(1.6, 0.6, 12), solid(c, 0.9), 0, 2.7, 0, u); const tw = plane(1.0, 1.7, solid(c === 0xd94a3a ? 0xf0e6c8 : 0xe9a04a, 1), 1.3, 0.02, 0.3, u); tw.rotation.x = -PI / 2; return u; };
   for (const [x, z, c] of [[-8, 9, 0xd94a3a], [10, 7, 0xf0c040], [-20, 4, 0x3a8ad9], [24, 11, 0xd94a3a], [-2, 11.4, 0x3ab07a]]) um(x, z, c);
   walls.push([-9.5, 7.8, -6.5, 10.2], [8.5, 5.8, 11.5, 8.2]);
-  const castle = grp(g, -12, 0, -4); const mound = mesh(new THREE.ConeGeometry(1.2, 1.0, 10), solid(0xd6c394, 1), 0, 0.5, 0, castle); mound.scale.set(0.01, 0.01, 0.01); castle.userData.mound = mound;
+  const castle = grp(g, -12, 0, -4); castle.userData.noBatch = true; const mound = mesh(new THREE.ConeGeometry(1.2, 1.0, 10), solid(0xd6c394, 1), 0, 0.5, 0, castle); mound.scale.set(0.01, 0.01, 0.01); castle.userData.mound = mound;
   const band = grp(g, 14, 0, 4); const box1 = box(0.5, 0.5, 0.5, TM.wood, 1.4, 0.25, 0.2, band); box(0.1, 0.5, 0.14, TM.woodDark, 1.4, 0.55, 0.2, band);
   people.push(person('gran4', 'gran', 'Gran', 0, 7.8, 0.2, { h: 1.7 }));
   const beachers = crowd57(12, 91, [-26, -14.5, 26, -9], { anims: ['Idle', 'Wave', 'Laugh', 'Cheer', 'Idle'], faceZ: -PI / 2 + 0.2, kids: 0.4 }); extras.push(...beachers);
@@ -120,9 +120,9 @@ export function buildCrash() {
   /* the calling place, a pipe, a fire and torches */
   const lp = lampPost(3.4, true); lp.position.set(-6, 0, 15); g.add(lp); const tb = box(1.6, 0.8, 0.7, TM.wood, -6, 0.4, 16.2, g); walls.push([-6.9, 15.7, -5.1, 16.7]);
   const sp = standpipe(); sp.position.set(26, 0, 8); g.add(sp); walls.push([25.4, 7.4, 26.6, 8.6]); const bk = bucket(); bk.position.set(25.3, 0, 8.7); g.add(bk);
-  const fire = grp(g, -3, 0, 6); for (let i = 0; i < 5; i++) { const lg = cyl(0.06, 0.06, 0.8, TM.woodDark, Math.cos(i * 1.26) * 0.25, 0.18, Math.sin(i * 1.26) * 0.25, fire, 5); lg.rotation.z = Math.cos(i * 1.26) * 0.8; lg.rotation.x = Math.sin(i * 1.26) * 0.8; }
+  const fire = grp(g, -3, 0, 6); fire.userData.noBatch = true; for (let i = 0; i < 5; i++) { const lg = cyl(0.06, 0.06, 0.8, TM.woodDark, Math.cos(i * 1.26) * 0.25, 0.18, Math.sin(i * 1.26) * 0.25, fire, 5); lg.rotation.z = Math.cos(i * 1.26) * 0.8; lg.rotation.x = Math.sin(i * 1.26) * 0.8; }
   const flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); flame.scale.set(1.5, 2.0, 1); flame.position.y = 0.9; fire.add(flame);
-  const torches = []; for (const [x, z] of [[-10, 3], [0, 3.6], [16, 6], [-2, 12], [-14, 10], [8, 16]]) { const t = torch(); t.position.set(x, 0, z); g.add(t); torches.push(t); }
+  const torches = []; for (const [x, z] of [[-10, 3], [0, 3.6], [16, 6], [-2, 12], [-14, 10], [8, 16]]) { const t = torch(); t.position.set(x, 0, z); t.userData.noBatch = true; g.add(t); torches.push(t); }
   const l1 = new THREE.PointLight(0xffb060, 9, 24, 1.8); l1.position.set(-3, 2.2, 6); l1.userData.k = 1; g.add(l1); const l2 = new THREE.PointLight(0xffc880, 7, 22, 1.8); l2.position.set(-6, 3.4, 14); l2.userData.k = 1; g.add(l2);
   /* people */
   people.push(person('gran6', 'gran', 'Gran', 14, 4.4, PI + 0.4, { h: 1.7, anim: 'Idle' }));

@@ -1,6 +1,7 @@
 /* games/kendal/src/gfx.js: textures drawn in code (no image files), materials, small builders and the sky.
    Everything here is plain three.js. Textures are cached by key, so a place can ask for the same one again cheaply. */
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const G = { aniso: 4 };
 
@@ -89,6 +90,12 @@ export const T = {
   window(night) {
     return once('win' + night, () => cv(64, 96, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); if (night) { g.addColorStop(0, '#ffcf80'); g.addColorStop(1, '#c47a30'); } else { g.addColorStop(0, '#34485a'); g.addColorStop(1, '#1d2a35'); } x.fillStyle = g; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(255,255,255,0.12)'; x.fillRect(6, 6, 18, 80); }));
   },
+  tuft() {   /* a clump of grass blades on a transparent card, for the instanced grass */
+    return once('tuft', () => cv(128, 128, (x, w, h) => { x.clearRect(0, 0, w, h); for (let i = 0; i < 22; i++) { const bx = 10 + Math.random() * (w - 20), bh = 40 + Math.random() * 80, lean = (Math.random() - 0.5) * 36, g = 160 + Math.random() * 90; x.fillStyle = `rgb(${g * 0.62 | 0},${g | 0},${g * 0.38 | 0})`; x.beginPath(); x.moveTo(bx - 3, h); x.quadraticCurveTo(bx + lean * 0.3, h - bh * 0.6, bx + lean, h - bh); x.quadraticCurveTo(bx + lean * 0.3 + 3, h - bh * 0.5, bx + 3, h); x.fill(); } }, [1, 1], true));
+  },
+  cloud() {
+    return once('cloud', () => cv(256, 128, (x, w, h) => { x.clearRect(0, 0, w, h); for (let i = 0; i < 16; i++) { const cx = 40 + Math.random() * (w - 80), cy = h * 0.55 + (Math.random() - 0.5) * 20, r = 22 + Math.random() * 26, g = x.createRadialGradient(cx, cy, 2, cx, cy, r); g.addColorStop(0, 'rgba(255,255,255,0.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2); } }, [1, 1], true));
+  },
   flame() {
     return once('flame', () => cv(64, 64, (x) => { const g = x.createRadialGradient(32, 40, 2, 32, 36, 30); g.addColorStop(0, 'rgba(255,250,210,1)'); g.addColorStop(0.3, 'rgba(255,190,70,0.85)'); g.addColorStop(0.7, 'rgba(255,110,20,0.25)'); g.addColorStop(1, 'rgba(255,90,10,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); }, null, true));
   },
@@ -98,10 +105,12 @@ export const T = {
 };
 
 /* ---------- materials and little builders ---------- */
-export const std = (map, rough = 0.9, extra) => new THREE.MeshStandardMaterial({ map, roughness: rough, ...(extra || {}) });
-export const solid = (color, rough = 0.85, metal = 0, extra) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, ...(extra || {}) });
-export const flat = (color, extra) => new THREE.MeshStandardMaterial({ color, roughness: 1, flatShading: true, ...(extra || {}) });
-export const glow = (color) => new THREE.MeshBasicMaterial({ color });
+const MC = new Map();   /* materials are shared when they ask for the same thing, so static scenery can be merged into a few big meshes (batchStatic) */
+const cached = (key, make) => { let m = MC.get(key); if (!m) { m = make(); MC.set(key, m); } return m; };
+export const std = (map, rough = 0.9, extra) => cached('s|' + (map ? map.uuid : '') + '|' + rough + '|' + JSON.stringify(extra || {}), () => new THREE.MeshStandardMaterial({ map, roughness: rough, ...(extra || {}) }));
+export const solid = (color, rough = 0.85, metal = 0, extra) => extra ? new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, ...extra }) : cached('c|' + color + '|' + rough + '|' + metal, () => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal }));
+export const flat = (color, extra) => extra ? new THREE.MeshStandardMaterial({ color, roughness: 1, flatShading: true, ...extra }) : cached('f|' + color, () => new THREE.MeshStandardMaterial({ color, roughness: 1, flatShading: true }));
+export const glow = (color) => cached('g|' + color, () => new THREE.MeshBasicMaterial({ color }));
 export function mesh(geo, m, x = 0, y = 0, z = 0, parent) { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); if (parent) parent.add(o); return o; }
 export const box = (w, h, d, m, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), m, x, y, z, parent);
 export const cyl = (r0, r1, h, m, x, y, z, parent, seg = 16) => mesh(new THREE.CylinderGeometry(r0, r1, h, seg), m, x, y, z, parent);
@@ -120,7 +129,27 @@ export function makeSky() {
   const stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xfff6e0, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false })); stars.frustumCulled = false; stars.renderOrder = -1;
   const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: cv(128, 128, (x) => { const gg = x.createRadialGradient(64, 64, 10, 64, 64, 62); gg.addColorStop(0, 'rgba(255,250,230,1)'); gg.addColorStop(0.22, 'rgba(255,248,225,0.95)'); gg.addColorStop(0.3, 'rgba(255,245,220,0.25)'); gg.addColorStop(1, 'rgba(255,245,220,0)'); x.fillStyle = gg; x.fillRect(0, 0, 128, 128); }, null, true), transparent: true, depthWrite: false, fog: false, opacity: 0 }));
   moon.scale.set(60, 60, 1); moon.position.set(-190, 230, -380); moon.renderOrder = -1;
+  const clouds = new THREE.Group(), cr = rng(21); for (let i = 0; i < 22; i++) { const a = cr() * Math.PI * 2, e = 0.1 + cr() * 0.34, rr = R - 40, c = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.cloud(), transparent: true, depthWrite: false, fog: false, opacity: 0.8 })); c.position.set(Math.cos(a) * Math.cos(e) * rr, Math.sin(e) * rr, Math.sin(a) * Math.cos(e) * rr); const sc = 170 + cr() * 190; c.scale.set(sc, sc * 0.42, 1); c.renderOrder = -1; clouds.add(c); } clouds.frustumCulled = false;
   const top = new THREE.Color(), hor = new THREE.Color(), c = new THREE.Color(); const pos = g.attributes.position, col = g.attributes.color;
-  function setSky(topHex, horHex, starsOn = 0, moonOn = 0) { top.set(topHex); hor.set(horHex); for (let i = 0; i < n; i++) { const e = Math.max(0, pos.getY(i) / R); c.copy(hor).lerp(top, Math.pow(e, 0.55)); col.setXYZ(i, c.r, c.g, c.b); } col.needsUpdate = true; stars.material.opacity = starsOn; moon.material.opacity = moonOn; stars.visible = starsOn > 0.01; moon.visible = moonOn > 0.01; }
-  return { dome, stars, moon, setSky, objects: [dome, stars, moon] };
+  function setSky(topHex, horHex, starsOn = 0, moonOn = 0, light = 1) { top.set(topHex); hor.set(horHex); for (let i = 0; i < n; i++) { const e = Math.max(0, pos.getY(i) / R); c.copy(hor).lerp(top, Math.pow(e, 0.55)); col.setXYZ(i, c.r, c.g, c.b); } col.needsUpdate = true; stars.material.opacity = starsOn; moon.material.opacity = moonOn; for (const c of clouds.children) { c.material.color.copy(hor).lerp(new THREE.Color(0xffffff), 0.55).multiplyScalar(0.25 + 0.75 * light); c.material.opacity = 0.85 * (1 - starsOn * 0.75); } stars.visible = starsOn > 0.01; moon.visible = moonOn > 0.01; }
+  return { dome, stars, moon, clouds, setSky, objects: [dome, stars, moon, clouds] };
+}
+
+/* ---------- batchStatic: merge every still mesh under root into one mesh per material. Things that move (or are switched on and off one by one)
+   are marked with userData.noBatch = true and are left alone, together with everything inside them. ---------- */
+export function batchStatic(root) {
+  root.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), rel = new THREE.Matrix4(), buckets = new Map(), dead = [], keep = ['position', 'normal', 'uv', 'color'];
+  (function walk(o, skip) {
+    if (o.userData.noBatch || skip) skip = true;
+    if (!skip && o.isMesh && !o.isSkinnedMesh && !o.isInstancedMesh && !Array.isArray(o.material) && o.visible && o.geometry.attributes.position && o.geometry.attributes.normal) {
+      rel.multiplyMatrices(inv, o.matrixWorld); if (rel.determinant() > 0) {
+        const g = o.geometry.clone(); for (const k of Object.keys(g.attributes)) if (!keep.includes(k)) g.deleteAttribute(k); if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+        g.applyMatrix4(rel); const ni = g.index ? g.toNonIndexed() : g; const key = o.material.uuid + (ni.attributes.color ? 'c' : ''); let b = buckets.get(key); if (!b) buckets.set(key, (b = { mat: o.material, geos: [] })); b.geos.push(ni); dead.push(o);
+      }
+    }
+    for (const c of [...o.children]) walk(c, skip);
+  })(root, false);
+  for (const o of dead) { o.parent.remove(o); }
+  for (const b of buckets.values()) { const g = mergeGeometries(b.geos, false); if (!g) continue; const m = new THREE.Mesh(g, b.mat); m.userData.batched = true; m.matrixAutoUpdate = false; root.add(m); }
+  return { merged: buckets.size, removed: dead.length };
 }

@@ -3,7 +3,7 @@
    which is also the height of a platform, so rail tops are at y = -1.1 (see RAIL_TOP). Colours and shapes are our best guess:
    we have not found photographs to copy (see docs/games/kendal.md). */
 import * as THREE from 'three';
-import { T, cv, grain, std, solid, mesh, box, cyl, grp, rng } from './gfx.js';
+import { T, cv, grain, std, solid, mesh, box, cyl, plane, grp, rng } from './gfx.js';
 
 export const RAIL_TOP = -1.1;      /* height of the top of the rails under a vehicle whose floor is at y = 0 */
 const GAUGE = 1.435;               /* standard gauge, in metres */
@@ -70,6 +70,7 @@ export function woodCoach(n = 1, L = 11, W = 2.7) {
     box(0.5, 0.3, 0.3, M.iron, s * (L / 2 + 1.15), -0.4, 0.5, g); box(0.5, 0.3, 0.3, M.iron, s * (L / 2 + 1.15), -0.4, -0.5, g);   /* buffers */
     box(0.08, 2.0, 0.9, solid(0x44190f, 0.9), s * (L / 2 + 0.01), 1.0, 0, g);   /* the end door */
   }
+  coachDetail(g, L, W);
   return g;
 }
 
@@ -89,6 +90,7 @@ export function dieselLoco(L = 13.4) {
   box(0.2, 0.5, 2.6, M.stripe, -L / 2, 0.7, 0, g); box(0.9, 0.3, 0.3, M.iron, -L / 2 - 0.4, -0.3, 0.6, g); box(0.9, 0.3, 0.3, M.iron, -L / 2 - 0.4, -0.3, -0.6, g);
   box(0.9, 0.3, 0.3, M.iron, L / 2 + 0.4, -0.3, 0.6, g); box(0.9, 0.3, 0.3, M.iron, L / 2 + 0.4, -0.3, -0.6, g);
   for (const s of [-1, 1]) { const bg = grp(g, s * L * 0.3, 0, 0); box(3.6, 0.25, 1.9, M.iron, 0, -0.75, 0, bg); for (const dx of [-1.4, 0, 1.4]) wheelset(0.5, dx, -0.6, bg, g.userData.wheels); }
+  dieselDetail(g, L, W);
   return g;
 }
 
@@ -115,6 +117,7 @@ export function steamLoco(kind = 'early') {
   /* the tender: a small truck of coal or wood behind the engine */
   const tx = early ? 3.9 : 5.2; box(early ? 2.4 : 3.0, 0.9, 1.6, solid(early ? 0x1f4d2e : 0x1d1e22, 0.6), tx, 1.45, 0, g); box(early ? 2.2 : 2.8, 0.7, 1.4, solid(0x1c1b1b, 1), tx, 1.9, 0, g);
   wheelset(0.5, tx - 0.8, RAIL_TOP + 0.5, g, g.userData.wheels, true); wheelset(0.5, tx + 0.8, RAIL_TOP + 0.5, g, g.userData.wheels, true); box(early ? 2.4 : 3.0, 0.2, 1.4, M.black, tx, 0.78, 0, g);
+  steamDetail(g, early, { bx, by, br, bl, sbx, tx, chh });
   return g;
 }
 
@@ -169,4 +172,40 @@ export function makeSmoke(scene, n = 36) {
     tick(dt) { for (const p of pool) { if (p.age >= p.life) { p.s.visible = false; continue; } p.age += dt; const k = p.age / p.life; p.s.position.addScaledVector(p.v, dt); const sz = p.size + p.grow * k; p.s.scale.set(sz, sz, sz); p.s.material.opacity = p.op * Math.min(1, p.age * 4) * (1 - k); } },
     clear() { for (const p of pool) { p.age = p.life; p.s.visible = false; } },
   };
+}
+
+/* ---------- finer detail: rails to hold, pipes, vents, lamps, rods and the little things that make a vehicle look used ---------- */
+function hrail(g, x0, x1, y, z, m = M.steel, post = 1.6) { const c = cyl(0.025, 0.025, Math.abs(x1 - x0), m, (x0 + x1) / 2, y, z, g, 6); c.rotation.z = Math.PI / 2; for (let x = Math.min(x0, x1); x <= Math.max(x0, x1) + 0.01; x += post) box(0.03, 0.14, 0.03, m, x, y - 0.07, z, g); }
+function coachDetail(g, L, W) {
+  for (const x of [-L * 0.3, 0, L * 0.3]) { const v = cyl(0.14, 0.17, 0.2, M.iron, x, 2.62, 0.2, g, 8); box(0.34, 0.04, 0.34, M.black, x, 2.72, 0.2, g); }   /* roof ventilators */
+  for (const s of [-1, 1]) { for (const e of [-1, 1]) { box(0.05, 1.6, 0.05, M.steel, e * (L / 2 - 0.35), 1.05, s * (W / 2 + 0.05), g); box(0.07, 0.3, 0.12, M.brass, e * (L / 2 - 0.55), 0.9, s * (W / 2 + 0.04), g); }
+    hrail(g, -L / 2 + 0.5, L / 2 - 0.5, 2.42, s * (W / 2 + 0.03), M.steel, 2.8);   /* the rain gutter along the roof edge */
+    for (const e of [-1, 1]) { box(0.5, 0.05, 0.22, M.woodDark, e * (L / 2 - 0.4), -0.42, s * (W / 2 + 0.1), g); box(0.5, 0.05, 0.22, M.woodDark, e * (L / 2 - 0.4), -0.74, s * (W / 2 + 0.12), g); }   /* the steps */ }
+  for (const z of [-0.5, 0.5]) { const t = cyl(0.02, 0.02, L - 2.4, M.iron, 0, -0.36, z, g, 5); t.rotation.z = Math.PI / 2; }   /* truss rods under the floor */
+  cyl(0.2, 0.2, 0.9, M.iron, 1.2, -0.65, 0.35, g, 10).rotation.x = Math.PI / 2; box(0.7, 0.3, 0.5, M.iron, -1.6, -0.62, -0.5, g);   /* a brake cylinder and a battery box */
+  for (const e of [-1, 1]) { const w = cyl(0.17, 0.17, 0.06, M.iron, e * (L / 2 + 0.95), 0.9, 0.7, g, 12); w.rotation.x = Math.PI / 2; cyl(0.02, 0.02, 0.9, M.iron, e * (L / 2 + 0.95), 0.45, 0.7, g, 5); }   /* a hand brake wheel on each end platform */
+  for (const e of [-1, 1]) { box(0.14, 0.14, 0.14, M.headlamp, e * (L / 2 + 0.3), 2.2, 0.8, g); }   /* a lamp on each end */
+}
+function dieselDetail(g, L, W) {
+  for (const s of [-1, 1]) { hrail(g, -L / 2 + 0.6, L * 0.17, 1.55, s * (W / 2 + 0.2), M.steel, 2.2); hrail(g, L * 0.17, L * 0.45, 2.6, s * (W / 2 + 0.06), M.steel, 1.4);
+    for (let i = 0; i < 6; i++) box(0.9, 0.04, 0.04, solid(0x161a18, 0.7), -L * 0.28 + i * 1.2, 2.44, s * (W / 2 - 0.1), g);
+    box(1.4, 0.5, 0.5, M.black, -L * 0.1, -0.2, s * 1.35, g); box(0.9, 0.35, 0.5, M.iron, L * 0.2, -0.2, s * 1.35, g);   /* fuel tank and batteries */
+    const r = box(0.12, 0.12, 0.05, solid(0xd22a2a, 0.5), -L / 2 - 0.02, 1.2, s * 0.9, g); }
+  cyl(0.25, 0.3, 0.7, M.black, L * 0.02, 2.95, 0.4, g, 10); const horn = cyl(0.11, 0.18, 0.5, M.brass, L * 0.1, 2.75, -0.4, g, 8); horn.rotation.x = 0.3; horn.rotation.z = 0.2;
+  const np = new THREE.MeshBasicMaterial({ map: T_num() }); plane(0.9, 0.35, np, 0, 1.6, -L / 2 - 0.12, g).rotation.y = Math.PI;
+  for (const s of [-1, 1]) { box(0.7, 0.6, 0.03, solid(0x19231f, 0.6), L * 0.31, 1.4, s * (W / 2 + 0.01), g); box(0.1, 0.05, 0.22, M.iron, L * 0.31 + 0.3, 1.5, s * (W / 2 + 0.1), g); }
+  for (const e of [-1, 1]) for (const z of [-0.5, 0.5]) { const h = cyl(0.04, 0.04, 0.4, M.black, e * (L / 2 + 0.25), 0.4, z, g, 5); }
+}
+let _num; function T_num() { return _num || (_num = cv(128, 48, (x, w, h) => { x.fillStyle = '#16202a'; x.fillRect(0, 0, w, h); x.strokeStyle = '#e8dcb0'; x.lineWidth = 3; x.strokeRect(3, 3, w - 6, h - 6); x.fillStyle = '#e8dcb0'; x.font = '700 28px Georgia, serif'; x.textAlign = 'center'; x.fillText('J.G.R. 12', w / 2, 34); })); }
+function steamDetail(g, early, d) {
+  const { bx, by, br, bl, sbx, tx } = d;
+  const sd = cyl(br * 0.92, br * 0.92, 0.06, M.iron, sbx - 0.37, by, 0, g, 22); sd.rotation.z = Math.PI / 2; const ring = cyl(br * 0.95, br * 0.95, 0.04, M.brass, sbx - 0.4, by, 0, g, 22); ring.rotation.z = Math.PI / 2; box(0.05, 0.3, 0.05, M.brass, sbx - 0.42, by, 0, g);
+  for (const s of [-1, 1]) { hrail(g, bx - bl / 2 + 0.4, bx + bl / 2 - 0.2, by + br * 0.45, s * (br + 0.06), M.brass, 1.0); const pipe = cyl(0.05, 0.05, bl * 0.7, M.iron, bx, by - br * 0.45, s * (br + 0.05), g, 6); pipe.rotation.z = Math.PI / 2;
+    box(1.0, 0.5, 0.45, M.iron, sbx + 0.5, 0.95, s * 0.8, g); const pr = cyl(0.04, 0.04, 1.1, M.steel, sbx - 0.1, 0.95, s * 0.8, g, 6); pr.rotation.z = Math.PI / 2;   /* cylinders and piston rods */
+    box(early ? 2.0 : 3.2, 0.07, 0.07, M.steel, early ? 0.9 : 1.5, early ? -0.2 : -0.3, s * (GAUGE / 2 + 0.25), g);   /* the side rods */
+    box(0.4, 0.04, 0.3, M.woodDark, bx + bl / 2 - 0.4, 0.55, s * 0.95, g); box(0.4, 0.04, 0.3, M.woodDark, bx + bl / 2 - 0.4, 0.2, s * 0.98, g); }   /* footsteps */
+  cyl(0.05, 0.07, 0.35, M.brass, bx + 0.3, by + br + 0.45, 0, g, 8); for (const dx of [-0.2, 0.2]) cyl(0.04, 0.05, 0.2, M.brass, bx + bl / 2 + 0.1 + dx, by + br + 0.15, 0, g, 6);   /* whistle and safety valves */
+  for (let i = 0; i < 9; i++) mesh(new THREE.DodecahedronGeometry(0.3 + (i % 3) * 0.05, 0), solid(0x141414, 1), tx - 0.8 + (i % 4) * 0.5, early ? 2.35 + (i % 2) * 0.1 : 2.45 + (i % 2) * 0.1, -0.4 + Math.floor(i / 4) * 0.4 + (i % 3) * 0.05, g);   /* coal in the tender */
+  box(0.5, 0.2, 0.3, M.woodDark, tx + 0.8, early ? 2.1 : 2.2, 0.5, g); cyl(0.14, 0.14, 0.06, M.brass, tx - 0.5, early ? 2.12 : 2.22, -0.5, g, 10);
+  if (!early) { for (const s of [-1, 1]) { box(1.2, 0.08, 0.04, M.brass, bx + bl / 2 + 0.8, by + 1.15, s * 0.97, g); box(0.1, 0.8, 0.04, M.steel, bx + bl / 2 + 0.3, by + 0.7, s * 0.97, g); } const dome = mesh(new THREE.SphereGeometry(0.3, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), M.black, bx - 0.8, by + br, 0, g); }
 }

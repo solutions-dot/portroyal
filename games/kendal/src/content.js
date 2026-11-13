@@ -43,7 +43,7 @@ export const GOALS = {
   52: () => 'Sit down with Gran and hold on.',
   53: () => 'Hold on!',
   60: () => 'Stay close to Gran. Then talk to Mr. Clive.',
-  61: (P) => `Help the nurse. Fill the bucket, then take the water to her: ${P.water || 0} of 2.`,
+  61: (P) => `Fill the bucket and take it to the nurse: ${P.water || 0} of 2.`,
   62: () => 'A little girl is lost. Talk to her.',
   63: () => 'Take the girl to the calling place, by the lamp.',
   64: () => 'Hold your lamp up, so the helpers can see the way.',
@@ -77,7 +77,7 @@ export const TALK = {
   cleo: () => [
     { who: 'Miss Cleo', text: `Fresh yams! Sweet potatoes! Ripe bananas!` },
     { who: Y, text: `Do you sell at the market?` },
-    { who: 'Miss Cleo', text: `Yes. I am a higgler. I buy from farmers and sell in town.` },
+    { who: 'Miss Cleo', text: `I am a higgler. I buy from farmers and sell in town.` },
     { who: 'Miss Cleo', text: `I carry it all on my head. Twelve miles, with a smile.`, unlock: 'higglers' },
     { who: 'Miss Cleo', text: `Women have run the markets in Jamaica for a long time.` },
   ],
@@ -87,17 +87,18 @@ export const TALK = {
     { who: 'The traveller', text: `Have you heard? They plan to build a railway!` },
     { who: Y, text: `What is a railway?` },
     { who: 'The traveller', text: `Iron rails, and a steam engine to pull carriages along them.` },
-    { who: 'The traveller', text: `One hour from Kingston to Spanish Town, they say. I have my doubts.`, unlock: 'free' },
+    { who: 'The traveller', text: `An hour to Spanish Town, they say. I have my doubts.`, unlock: 'free' },
   ],
   muleDone: () => [
     { who: 'Mass Dudley', text: `Thank you, child. Bess feels lighter already.` },
     { who: 'Mass Dudley', text: `Come. Men are working down the road. Something new.` },
-    { who: 'Mass Dudley', text: `Some say a railway will help us. Some say it will take our work.` },
+    { who: 'Mass Dudley', text: `Some say a railway will help us.` },
+    { who: 'Mass Dudley', text: `Some say it will take our work.` },
     { who: 'Mass Dudley', text: `What do you think?`, choices: [
       { t: 'It will help people.', set: { road: 'help' }, then: [{ who: 'Mass Dudley', text: `Maybe so. It would be much faster.` }] },
       { t: 'It might take your work.', set: { road: 'worry' }, then: [{ who: 'Mass Dudley', text: `You see far, child. I worry too.` }] },
       { t: 'I do not know yet.', set: { road: 'ask' }, then: [{ who: 'Mass Dudley', text: `That is honest. Let us go and look.` }] }] },
-    { who: 'Mass Dudley', text: `Walk to the end of the road. Ask the men with the poles.` },
+    { who: 'Mass Dudley', text: `Walk to the end of the road. Ask the men with poles.` },
   ],
   surveyor: () => [
     { who: 'The surveyor', text: `Mind the poles, child. I am measuring the land.` },
@@ -180,7 +181,8 @@ export const TALK = {
   abel2: () => [
     { who: 'Mr. Abel', text: `The train is in. Now, a lesson.` },
     { who: 'Mr. Abel', text: `Before a train goes down the hill, we test its brakes.` },
-    { who: 'Mr. Abel', text: `Walk along the train and check three places. Tell me what you find.` },
+    { who: 'Mr. Abel', text: `Walk along the train. Check three places.` },
+    { who: 'Mr. Abel', text: `Then tell me what you find.` },
   ],
   abel3: () => [
     { who: 'Mr. Abel', text: `Good. Brakes that hold mean everyone gets home.` },
@@ -191,7 +193,7 @@ export const TALK = {
   /* ===== chapter 4: Kingston Railway Station, Sunday 1 September 1957 ===== */
   gran: () => [
     { who: 'Gran', text: `Good morning, my dear. Did you eat your breakfast?` },
-    { who: 'Gran', text: `Today we ride the train to Montego Bay. All the way to the sea!` },
+    { who: 'Gran', text: `Today we ride the train to Montego Bay, by the sea!` },
     { who: 'Gran', text: `Our whole church is going. More than a thousand people!`, unlock: 'excursion' },
     { who: 'Gran', text: `Hold the hamper. It has our dinner. Do not drop it.` },
     { who: 'Gran', text: `Stay close to me, and we will have a lovely day.` },
@@ -206,7 +208,7 @@ export const TALK = {
   ezra: () => [
     { who: 'Mass Ezra', text: `Morning, young ones. I know this line like my own hand.` },
     { who: Y, text: `Were you the boy on the hill station?` },
-    { who: 'Mass Ezra', text: `Ha! That was me, long ago. I stayed on the railway all my life.`, unlock: 'ezra' },
+    { who: 'Mass Ezra', text: `Ha! That was me. I stayed on the railway all my life.`, unlock: 'ezra' },
     { who: 'Mass Ezra', text: `Back then, every engine was steam. The whistle scared the hens!` },
     { who: 'Mass Ezra', text: `Now it is diesel. But the hills are the same old hills.` },
     { who: 'Mass Ezra', text: `Going up is slow. Coming down, hold on tight, hear?` },
@@ -262,7 +264,7 @@ export const TALK = {
   /* ===== chapter 6: the long night at Kendal ===== */
   gran6: () => [
     { who: 'Gran', text: `I am here, my dear. Are you hurt?` },
-    { who: 'Gran', text: `My head is sore, but I can stand. Let me look at you.` },
+    { who: 'Gran', text: `My head is sore, but I can stand. Come here.` },
     { who: 'Gran', text: `Lloyd is here, too. Praise God, we are all together.` },
     { who: 'Gran', text: `Hear those voices? People need help. Stay close to me.` },
     { who: 'Gran', text: `Mass Ezra's lamp! Hold it up. Someone may need the light.` },
@@ -271,7 +273,8 @@ export const TALK = {
     { who: 'Mr. Clive', text: `We heard it from the hills! We ran down at once.` },
     { who: 'Mr. Clive', text: `Everyone from Kendal is coming. More every minute.` },
     { who: 'Mr. Clive', text: `Child, can you help? The nurse needs water.` },
-    { who: 'Mr. Clive', text: `The pipe is by the road. Fill the bucket, and take it to her.` },
+    { who: 'Mr. Clive', text: `The pipe is by the road.` },
+    { who: 'Mr. Clive', text: `Fill the bucket and take it to her.` },
   ],
   nurse: () => [
     { who: 'Nurse Gray', text: `Thank you, child. Water, please. Slowly, do not spill.` },
@@ -286,18 +289,18 @@ export const TALK = {
   ],
   louise: () => [
     { who: 'Sister Louise', text: `Over here! This is where families call out names.` },
-    { who: 'Sister Louise', text: `A girl in a pink dress? A blue hat, you say? Wait here.` },
+    { who: 'Sister Louise', text: `A girl in a pink dress? Wait here, dear.` },
     { who: 'Sister Louise', text: `There! Someone is calling for a little girl. Go to her, dear.` },
     { who: 'Dawn', text: `Mama! Mama!` },
-    { who: 'Sister Louise', text: `Good work, child. A lamp and a kind heart. That is what we need tonight.` },
+    { who: 'Sister Louise', text: `Good work, child. A lamp and a kind heart are what we need.` },
   ],
   clive2: () => [
     { who: 'Mr. Clive', text: `Thank you, child. Kendal will not forget this night.` },
     { who: 'Mr. Clive', text: `Many people did not make it home. We will remember them.` },
-    { who: 'Mr. Clive', text: `You and your Gran are safe. That is something to thank God for.` },
+    { who: 'Mr. Clive', text: `You and your Gran are safe. Thank God for that.` },
   ],
   gran66: () => [
-    { who: 'Gran', text: `The sun is up, my dear. We are alive. Hold on to that.` },
+    { who: 'Gran', text: `The sun is up, my dear. We are alive.` },
     { who: 'Gran', text: `So many people helped us. Strangers. Neighbours. God bless them.` },
     { who: 'Gran', text: `Let us never forget this night, or the people of Kendal.` },
   ],
@@ -322,7 +325,7 @@ export const TALK = {
 };
 export const LATER = {
   dudley: (S) => [S.road === 'help' ? `You think the railway will help. We shall see.` : `Bess is stubborn today. Load her, child.`, `Mind the mud, child.`],
-  cleo: () => [`Fresh yams! Sweet potatoes!`, `My head is strong. The basket is heavy, but I am used to it.`],
+  cleo: () => [`Fresh yams! Sweet potatoes!`, `My head is strong. I am used to the weight.`],
   traveller: () => [`A railway! I will believe it when I see it.`],
   surveyor: () => [`Mind the poles, child.`, `Flat and straight. That is the secret of a railway.`],
   dudley2: () => [`Look at that smoke! Like a cloud on wheels.`, `You ride, child. Tell me all about it.`],
@@ -384,13 +387,13 @@ export const JOURNAL = [
     deeper: [`Church excursions by train were popular days out.`, `Gran, Lloyd and the other people in this game are made up. They stand for the families who were there.`, `The names of real passengers, and what they said, are not used.`] },
   { id: 'diesel', title: 'The 1957 train', simple: [`The train had two diesel engines at the front.`, `It pulled twelve wooden coaches.`, `Each coach was meant to carry 80 people. Many carried more than 130.`],
     deeper: [`Diesel engines burn diesel fuel, not coal. They had come to Jamaica's railway in the 1950s.`, `The number in each coach is from the Gleaner: 130 to 150 people. The limit was 80.`, `Our trains are our best guess of how they looked.`] },
-  { id: 'mento', title: 'Mento music', simple: [`Mento is Jamaican folk music.`, `A mento band plays a banjo, a guitar and a rumba box. The rumba box is a big thumb piano you sit on.`, `It was very popular in the 1950s.`],
+  { id: 'mento', title: 'Mento music', simple: [`Mento is Jamaican folk music.`, `A mento band plays a banjo, a guitar and a rumba box.`, `A rumba box is a big thumb piano you sit on.`, `It was very popular in the 1950s.`],
     deeper: [`This comes from general knowledge. We have not found a source that says a mento band played on the beach that day.`, `The band on the beach is made up.`] },
   { id: 'greenvale', title: 'Greenvale', simple: [`Greenvale is a station high in the hills.`, `It is the highest station on the Montego Bay line.`, `After Greenvale, trains go downhill toward Kendal.`],
     deeper: [`One source gives its height as 1,890 feet above the sea.`, `Going downhill, a train depends on its brakes.`] },
   { id: 'crash', title: 'What happened at Kendal', simple: [`On the way home, late that night, the train ran downhill near Kendal.`, `Three whistle blasts sounded. The train went faster and then left the rails on a curve.`, `Eight of the twelve coaches were wrecked.`, `The last two coaches stayed on the track.`],
     deeper: [`This was about half past eleven at night. Some sources say ten past eleven.`, `Some say the train was going about 55 miles an hour at the foot of the slope.`, `Some coaches fell into a gully. One coach ran on for about a quarter of a mile before it stopped.`, `This is the worst rail disaster in the history of Jamaica.`] },
-  { id: 'cause', title: 'Why it happened', simple: [`After the crash, a Commission of Enquiry looked for the reason.`, `It found that a brake valve had been closed.`, `It also found that the train was too full, and its brakes had not been looked after well.`, `Many things went wrong together.`],
+  { id: 'cause', title: 'Why it happened', simple: [`After the crash, a Commission of Enquiry looked for the reason.`, `It found that a brake valve had been closed.`, `It also found that the train was too full.`, `And its brakes had not been looked after well.`, `Many things went wrong together.`],
     deeper: [`The valve is called an angled wheel cock. It was shut, so the brakes did not work as they should.`, `The enquiry said it could not be sure how. Some people said someone may have meddled with it. Others said it was wrong from the start. The game does not decide.`, `The enquiry also found problems in the whole Jamaica Government Railway.`] },
   { id: 'helpers', title: 'The helpers of Kendal', simple: [`Hundreds of people from the area ran to help.`, `They came in the dark with torches and lamps.`, `Passing cars and trucks carried people to hospitals in Mandeville, Spaldings and May Pen.`, `Doctors and nurses asked for volunteers and for blood.`],
     deeper: [`There was no electric light near the crash.`, `Nurse Gray, Mr. Clive, Sister Louise and Dawn are made up. They stand for the many real helpers.`, `The monument at Kendal also thanks the people who helped.`] },

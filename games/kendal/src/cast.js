@@ -45,8 +45,8 @@ export function crowd57(n, seed, area, { anims = ['Idle', 'Talk1', 'Talk2', 'Lau
   for (let i = 0; i < n; i++) {
     const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), kind = r(), ry = faceZ + (r() - 0.5) * 2.2, anim = pick(anims);
     if (kind < kids) out.push({ base: 'nb_youth', tint: { Shirt: pick(DRESS), Breeches: pick(TROUS), Shoes: 0x1c1816, Hair: 0x1c1816 }, hide: ['Hat'], scale: 0.55 + r() * 0.25, x, z, ry, anim, skin: 0.85 + r() * 0.4 });
-    else if (kind < 0.62) out.push({ base: pick(women57), tint: { Shirt: pick(DRESS), Skirt: pick(DARK), Hat: pick([0xf0e8d8, 0xd8b8d8, 0x2a3a5a, 0xc8a050, 0x8a4a5a]), Collar: 0xf4f0e8, Hair: pick([0x1c1816, 0x1c1816, 0x6a6a6a]), Shoes: 0x1c1816 }, x, z, ry, anim, skin: 0.85 + r() * 0.4 });
-    else out.push({ base: pick(men57), tint: { Shirt: 0xf4f0e6, Breeches: pick(TROUS), Waistcoat: pick(DARK), Hat: pick([0xc2a45c, 0x2a2a30, 0xcdb372, 0x4a4036]), Collar: 0xf4f0e6, Tie: pick([0x9a2a2a, 0x2a3a5a, 0x2a2a2a]), Shoes: 0x15110e, Hair: pick([0x1c1816, 0x1c1816, 0xc0bcb4]) }, hide: r() < 0.5 ? ['Waistcoat'] : [], x, z, ry, anim, skin: 0.85 + r() * 0.4 });
+    else if (kind < 0.62) out.push({ props: r() < 0.3 ? [['RightHand', 'hamper']] : undefined, base: pick(women57), tint: { Shirt: pick(DRESS), Skirt: pick(DARK), Hat: pick([0xf0e8d8, 0xd8b8d8, 0x2a3a5a, 0xc8a050, 0x8a4a5a]), Collar: 0xf4f0e8, Hair: pick([0x1c1816, 0x1c1816, 0x6a6a6a]), Shoes: 0x1c1816 }, x, z, ry, anim, skin: 0.85 + r() * 0.4 });
+    else out.push({ props: r() < 0.25 ? [['RightHand', 'suitcase']] : undefined, base: pick(men57), tint: { Shirt: 0xf4f0e6, Breeches: pick(TROUS), Waistcoat: pick(DARK), Hat: pick([0xc2a45c, 0x2a2a30, 0xcdb372, 0x4a4036]), Collar: 0xf4f0e6, Tie: pick([0x9a2a2a, 0x2a3a5a, 0x2a2a2a]), Shoes: 0x15110e, Hair: pick([0x1c1816, 0x1c1816, 0xc0bcb4]) }, hide: r() < 0.5 ? ['Waistcoat'] : [], x, z, ry, anim, skin: 0.85 + r() * 0.4 });
   }
   return out;
 }

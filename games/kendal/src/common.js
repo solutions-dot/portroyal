@@ -34,6 +34,7 @@ export function stationBase(g, { x0 = -60, x1 = 60, zc = -3, zEdge = 1.75, zBack
   const t = wood ? T.plank([128, 98, 66], 12, [L / 3, 1], true).clone() : T.concrete().clone(); t.needsUpdate = true; t.repeat.set(L / 3, W / 3);
   const slab = new THREE.Mesh(new THREE.BoxGeometry(L, depth, W), [solid(0x5a5a50, 1), solid(0x5a5a50, 1), std(t, 0.95), solid(0x3a3a34, 1), solid(0x6a6a5e, 1), solid(0x6a6a5e, 1)]); slab.position.set(cx, -depth / 2, cz); g.add(slab);
   const edge = box(L, 0.02, 0.35, solid(0xe2c34a, 0.8), cx, 0.015, zc + zEdge + 0.25, g);
+  const bp = mesh(new THREE.PlaneGeometry(900, 300), std(T.grass([200, 70], ground), 1), 0, 0, zBack + 150, g); bp.rotation.x = -Math.PI / 2; box(900, depth, 0.3, solid(0x5a5a50, 1), 0, -depth / 2, zBack, g);   /* level ground behind the platform */
   return { top: 0, zc };
 }
 
@@ -52,7 +53,7 @@ function stripSide(theme, side, seed) {   /* one strip of roadside things, on on
   return g;
 }
 export function makeRig(theme, { far = 0x3e6a44, farTop = 0x5d8a58 } = {}) {   /* returns { group, update(dt, speed) } to place under the train, at the track's ground level */
-  const group = grp(), strips = [];
+  const group = grp(), strips = []; group.userData.noBatch = true;
   for (const side of [-1, 1]) for (let k = 0; k < 2; k++) { const s = stripSide(theme, side, 11 + side * 3); s.position.x = -k * S; group.add(s); strips.push(s); }
   const gt = T.grass([60, 8], theme === 'night' ? [34, 52, 36] : theme === 'coast' ? [96, 130, 62] : [74, 112, 52]).clone(); gt.needsUpdate = true; const ground = mesh(new THREE.PlaneGeometry(S * 3, 120), std(gt, 1), 0, 0, 0, group); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02;
   const farG = hillRing(210, 14, 70, { seed: 9, base: theme === 'night' ? [0.07, 0.11, 0.1] : [0.2, 0.42, 0.22] }); group.add(farG);

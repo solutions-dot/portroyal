@@ -33,7 +33,7 @@ export function buildRoad() {
   for (const x of [26, 32, 38]) { const p = surveyPole(); p.position.set(x, 0, -3.5); g.add(p); }
   const wb = grp(g, 36, 0, -6.6); box(0.9, 0.1, 0.5, TM.woodDark, 0, 0.45, 0, wb); cyl(0.2, 0.2, 0.06, TM.wood, 0.3, 0.2, 0.3, wb, 10).rotation.x = PI / 2;
   /* the mule, her load and a heap of baskets by Mass Dudley */
-  const bess = loadedMule(0); bess.position.set(-26, 0, 2.8); bess.rotation.y = -0.15; g.add(bess); walls.push([-27, 2.2, -25, 3.4]);
+  const bess = loadedMule(0); bess.userData.noBatch = true; bess.position.set(-26, 0, 2.8); bess.rotation.y = -0.15; g.add(bess); walls.push([-27, 2.2, -25, 3.4]);
   for (let i = 0; i < 3; i++) { const h = hamper([0xa8803c, 0xb89050, 0x9a7a38][i]); h.position.set(-27.8 + i * 0.5, 0, 4.9 - (i % 2) * 0.3); g.add(h); }
   const tc = cart(); tc.position.set(2, 0, -2.5); tc.rotation.y = 0.15; g.add(tc); walls.push([-0.6, -3.5, 5.2, -1.4]);
   people.push(person('dudley', 'muleteer', 'Mass Dudley', -28.4, 2.0, 0.4, { h: 1.78 }));
@@ -59,7 +59,7 @@ export function buildStation45() {
   const bt = T.bunting().clone(); bt.needsUpdate = true; bt.repeat.set(3, 1);
   for (const x of [-14, -2, 10, 22, 34]) { const p = pole(5.4); p.position.set(x, 0, -0.8); g.add(p); }
   for (let i = 0; i < 4; i++) { const b = mesh(new THREE.PlaneGeometry(12, 0.7), new THREE.MeshBasicMaterial({ map: bt, transparent: true, side: THREE.DoubleSide, alphaTest: 0.3 }), -8 + i * 12, 4.5, -0.8, g); b.rotation.x = 0.06; }
-  for (const x of [-14, 10, 34]) { const f = mesh(new THREE.PlaneGeometry(1.7, 0.9), flagMat(), x + 0.95, 5.2, -0.8, g); f.userData.flag = true; }
+  for (const x of [-14, 10, 34]) { const f = mesh(new THREE.PlaneGeometry(1.7, 0.9), flagMat(), x + 0.95, 5.2, -0.8, g); f.userData.flag = true; f.userData.noBatch = true; }
   const tab = grp(g, -3, 0, 8); box(2.2, 0.9, 0.8, TM.wood, 0, 0.45, 0, tab); const ts = signBoard('TICKETS', 1.6, 0.4); ts.position.set(0, 1.45, 0.45); tab.add(ts); walls.push([-4.3, 7.4, -1.7, 8.6]);
   for (let i = 0; i < 4; i++) { const c = crate(0.7); c.position.set(30 + (i % 2) * 0.9, 0, 6 + Math.floor(i / 2) * 0.8); c.rotation.y = i; g.add(c); } walls.push([29.4, 5.4, 31.8, 7.4]);
   people.push(person('dudley2', 'muleteer', 'Mass Dudley', -8, 8, PI * 0.9, { h: 1.78 }));
@@ -76,7 +76,7 @@ export function buildStation45() {
 /* ============ the open carriage of the first train (chapter 2's ride) ============ */
 export function buildRide45() {
   const g = grp(), walls = [], people = [], extras = [];
-  const rig = makeRig('morass'); rig.group.position.y = TRACK_Y; g.add(rig.group);
+  const rig = makeRig('morass'); rig.group.position.y = TRACK_Y; g.add(rig.group); g.userData.noBatch = true;
   const car = carriage1845('third', 6.4, 2.4, 'sides'); g.add(car);
   const loco = steamLoco('early'); loco.position.set(-10.2, 0, 0); g.add(loco);
   const t2 = carriage1845('third', 6.4, 2.4, 'sides'); t2.position.set(7.2, 0, 0); g.add(t2);
@@ -98,15 +98,15 @@ export function buildHill() {
   scatter(g, (i) => banana(i), 40, [-34, 18, 44, 60], [[-6, 16, 10, 22]], 5); scatter(g, (i) => tree(5 + (i % 3), i), 16, [-30, 24, 40, 70], [], 8); scatter(g, (i) => bush(i, 1.4), 24, [-34, 15, 44, 40], [[-6, 15, 10, 22]], 3);
   /* two goods wagons waiting on the track, and the pile of banana bunches the farmer has cut */
   const w1 = wagon(), w2 = wagon(); w1.position.set(-20, 0, -3); w2.position.set(-12.8, 0, -3); g.add(w1, w2); walls.push([-24, -4.6, -9, -1.2]);
-  const pile = grp(g, -14, 0, 5.6); const mat = box(3.2, 0.06, 2.2, solid(0x8a7a3a, 1), 0, 0.03, 0, pile); const bunches = [];
+  const pile = grp(g, -14, 0, 5.6); pile.userData.noBatch = true; const mat = box(3.2, 0.06, 2.2, solid(0x8a7a3a, 1), 0, 0.03, 0, pile); const bunches = [];
   for (let i = 0; i < 8; i++) { const b = bananaBunch(1.1); b.position.set(-1.2 + (i % 4) * 0.8, 0.07, -0.5 + Math.floor(i / 4) * 0.9); b.rotation.set(0, i * 1.3, PI / 2 * 0.9); pile.add(b); bunches.push(b); }
-  const inWagon = []; for (let i = 0; i < 4; i++) { const b = bananaBunch(1.1); b.position.set(-14.6 + (i % 2) * 0.8, 0.5, -3.3 + Math.floor(i / 2) * 0.7); b.rotation.set(0, i, PI / 2); b.visible = false; w1.parent === g && g.add(b); inWagon.push(b); }
+  const inWagon = []; for (let i = 0; i < 4; i++) { const b = bananaBunch(1.1); b.position.set(-14.6 + (i % 2) * 0.8, 0.5, -3.3 + Math.floor(i / 2) * 0.7); b.rotation.set(0, i, PI / 2); b.visible = false; b.userData.noBatch = true; g.add(b); inWagon.push(b); }
   for (const [x, z] of [[-3, 6.8], [8, 9], [20, 7]]) { const c = crate(0.8); c.position.set(x, 0, z); g.add(c); } for (let i = 0; i < 3; i++) { const b = barrel(); b.position.set(14 + i * 0.7, 0, 8.4); g.add(b); }
   const bp = bench(2.2); bp.position.set(-1, 0, 9.3); bp.rotation.y = PI; g.add(bp);
   /* the train that climbs in: a steam engine, its tender, a carriage and a wagon. It starts far to the east and runs west to the platform. */
   const train = grp(g, 0, 0, -3); const loco = steamLoco('late'); loco.position.x = -0.4; train.add(loco);
   const car = carriage1845('first', 6.2); car.position.x = 10; train.add(car); const w3 = wagon(); w3.position.x = 17.4; train.add(w3);
-  train.userData.wheels = [loco, car, w3].flatMap((v) => v.userData.wheels); train.position.x = 90; train.visible = false;
+  train.userData.wheels = [loco, car, w3].flatMap((v) => v.userData.wheels); train.position.x = 90; train.visible = false; train.userData.noBatch = true;
   people.push(person('gordon', 'stationmaster', 'Mr. Gordon', -0.5, 7.4, PI, { h: 1.78 }));
   people.push(person('abel', 'foreman', 'Mr. Abel', -18, 2.2, PI * 1.1, { h: 1.8 }));
   people.push(person('ezraboy', 'ezraBoy', 'Ezra', 6, 4.4, PI * 1.2, { h: 1.15 }));
