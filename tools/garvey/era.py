@@ -90,6 +90,16 @@ def drape_front(bm):
                 k=max(0.0,min(1.0,(v.co.z-(WAIST+0.02))/0.10))   # full hang over the belly, gathered back in above the waistband
                 hang=lo+(v.co.y-lo)*0.15; v.co.y=v.co.y+(hang-v.co.y)*k*k
     bm.normal_update()
+def smooth_edge(bm,iters=6):
+    # cuts made on part of the mesh leave a stair-stepped edge: relax each boundary vertex toward its two boundary neighbours
+    for _ in range(iters):
+        mv={}
+        for v in bm.verts:
+            if not v.is_boundary: continue
+            nb=[e.other_vert(v) for e in v.link_edges if e.is_boundary]
+            if len(nb)==2: mv[v]=(nb[0].co+nb[1].co)*0.5
+        for v,c in mv.items(): v.co=v.co.lerp(c,0.55)
+    bm.normal_update()
 def trim_seat(bm):
     # keep breeches from ballooning out behind: cap how far the seat sticks out past the small of the back
     ys=[v.co.y for v in bm.verts if v.co.y>0 and abs(v.co.z-(HIP+0.1))<0.02]
@@ -127,7 +137,7 @@ if G.get('breeches'):
     parts.append(('breeches',piece('Breeches','helper-tights',lambda c:low-0.03<c.z<HIP+0.13 and side_arm(c) is None,wide,'Breeches',post=trim_seat,cuts=[((0,0,low),(0,0,-1),None),((0,0,HIP+0.12),(0,0,1),None)])))
 if G.get('waistcoat'):
     wcol=NECK-0.02*s
-    parts.append(('waistcoat',piece('Waistcoat','helper-tights',lambda c:c.z>HIP+0.03 and abs(c.x)<SX*0.9,lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Waistcoat',post=drape_front,
+    parts.append(('waistcoat',piece('Waistcoat','helper-tights',lambda c:c.z>HIP+0.03 and abs(c.x)<SX*0.9,lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Waistcoat',post=lambda bm:(drape_front(bm),smooth_edge(bm)),
         cuts=[((0,0,wcol),(0,0,1),None),((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0),((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)])))
 if G.get('skirt'):
     ZT=HIP+0.08; ZB=ANK+0.07
@@ -197,16 +207,18 @@ if G.get('hat')=='felt':
         if r>0.62 and abs(d.z)<0.01: v.co.z+=0.028*((r-0.62)/0.38)**2*(0.6+0.4*math.sin(math.atan2(d.y,d.x)*2+1.2))   # brim turned up a little, unevenly
     rigid('Hat',bm,'Hat','Head')
 if G.get('hat')=='flat':
-    # a flat cap: a low, wide crown that overhangs the head a little, with a short peak at the front
+    # a flat (newsboy) cap: a band at the brow, a low dome that puffs out past it, and a short stiff peak at the front
     BZ=TOP-0.085*s; xs=[];ys=[]
     for v in h.data.vertices:
         if abs(v.co.z-(BZ+0.012*s))<0.012*s: xs.append(v.co.x); ys.append(v.co.y)
-    cx=(max(xs)+min(xs))/2; cy=(max(ys)+min(ys))/2; rx=(max(xs)-min(xs))/2+0.012; ry=(max(ys)-min(ys))/2+0.012
-    C0=Vector((cx,cy,BZ)); bm=bmesh.new(); H=(TOP-BZ)*0.9
-    g=bmesh.ops.create_cone(bm,cap_ends=True,segments=28,radius1=1,radius2=1.34,depth=H,matrix=Matrix.Translation(C0+Vector((0,0,H/2-0.004))))
-    for v in g['verts']:
-        d=v.co-C0; top=min(1.0,max(0.0,(d.z-0.01)/H)); v.co.x=cx+d.x*rx; v.co.y=cy+d.y*ry+(-0.012*s*top)   # tipped a touch forward
-    pk=[bm.verts.new((cx+dx*rx,cy-ry*dy,BZ+dz)) for dx,dy,dz in ((-0.62,0.86,0.014),(0.62,0.86,0.014),(0.55,1.60,-0.012),(-0.55,1.60,-0.012))]
+    cx=(max(xs)+min(xs))/2; cy=(max(ys)+min(ys))/2; rx=(max(xs)-min(xs))/2+0.010; ry=(max(ys)-min(ys))/2+0.010
+    bm=bmesh.new(); zc=BZ+0.022*s; rv=(TOP-zc)+0.012*s
+    band=bmesh.ops.create_cone(bm,cap_ends=False,segments=28,radius1=1,radius2=1,depth=0.026*s,matrix=Matrix.Translation((cx,cy,BZ+0.010*s)))
+    for v in band['verts']: d=v.co-Vector((cx,cy,BZ+0.010*s)); v.co.x=cx+d.x*rx; v.co.y=cy+d.y*ry
+    dome=bmesh.ops.create_uvsphere(bm,u_segments=28,v_segments=10,radius=1,matrix=Matrix.Translation((cx,cy-0.010*s,zc)))
+    for v in dome['verts']: d=v.co-Vector((cx,cy-0.010*s,zc)); v.co=Vector((cx+d.x*rx*1.22,cy-0.010*s+d.y*ry*1.22,zc+d.z*rv))
+    bmesh.ops.delete(bm,geom=[f for f in bm.faces if f.calc_center_median().z<zc-0.001 and all(v in dome['verts'] for v in f.verts)],context='FACES')
+    pk=[bm.verts.new((cx+dx*rx,cy-ry*dy,BZ+dz)) for dx,dy,dz in ((-0.70,0.95,0.018),(0.70,0.95,0.018),(0.58,1.62,-0.010),(-0.58,1.62,-0.010))]
     bm.faces.new(pk)
     rigid('Hat',bm,'Hat','Head')
 def _front(z):
@@ -216,13 +228,16 @@ def _radius(z,a):
     return (hit-o).length if hit else 0.06
 if G.get('collar'):      # a stiff white standing collar round the neck
     bm=bmesh.new(); seg=20; rings=[]
-    for zz,extra in ((NECK-0.030*s,0.007),(NECK+0.018*s,0.007)):
-        rings.append([bm.verts.new((math.sin(2*math.pi*k/seg)*(_radius(zz,2*math.pi*k/seg)+extra),J('Neck').y-math.cos(2*math.pi*k/seg)*(_radius(zz,2*math.pi*k/seg)+extra),zz)) for k in range(seg)])
+    for zz,extra in ((NECK+0.004*s,0.007),(NECK+0.050*s,0.006)):
+        side=_radius(zz,math.pi/2)+extra; back=_radius(zz,math.pi)+extra; ring=[]
+        for k in range(seg):
+            a=2*math.pi*k/seg; bk=back+(0.016 if math.cos(a)>0 else 0); r=1/math.sqrt((math.sin(a)/side)**2+(math.cos(a)/bk)**2); ring.append(bm.verts.new((math.sin(a)*r,J('Neck').y-math.cos(a)*r,zz)))
+        rings.append(ring)
     for r0,r1 in zip(rings,rings[1:]):
         for k in range(seg): bm.faces.new((r0[k],r0[(k+1)%seg],r1[(k+1)%seg],r1[k]))
     rigid('Collar',bm,'Collar','Spine2')
 if G.get('tie'):         # a plain tie: a small knot and a narrow strip lying on the chest
-    bm=bmesh.new(); zk=NECK-0.045*s; n=6; L=0.20*s; row=[]
+    bm=bmesh.new(); zk=NECK-0.018*s; n=6; L=0.20*s; row=[]
     for t in range(n+1):
         f=t/n; z=zk-0.012-L*f; w=0.014+0.012*f*(1 if f<0.85 else 0.4); y=_front(z)-0.012
         row.append((bm.verts.new((-w,y,z)),bm.verts.new((w,y,z))))
