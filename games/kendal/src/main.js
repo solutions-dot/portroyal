@@ -10,12 +10,13 @@ import { model, onLoadFail } from '../../../engine/loader.js';
 import { G, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
 import { ENV, mixEnv, makeRig, TRACK_Y } from './common.js';
 import { makeSmoke, spin } from './trains.js';
-import { lantern, hamper, bucket, bananaBunch, flowers, attach, suitcase, PM } from './props.js';
+import { lantern, hamper, bucket, bananaBunch, flowers, attach, hold, suitcase, PM } from './props.js';
 import { buildRoad, buildStation45, buildRide45, buildHill } from './places1.js';
 import { buildKingston57, buildCoach, buildBeach, buildCrash, buildMemorial } from './places2.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL } from './content.js';
 import * as SFX from './sfx.js';
 import { DECOR } from './decor.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
 
 const $ = (id) => document.getElementById(id);
@@ -82,20 +83,22 @@ function stickUI() {
 const BASES = {}, basePromises = {};
 function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePromises[id] = basePromises[id] || model(id).then((g) => { g.scene.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); BASES[id] = g; return g; })); }
 const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb08a48); return h; }, hamper: () => hamper(), lantern: () => lantern(), bucket: () => bucket() };
-const PROP_AT = { RightHand: { pos: [0.02, -0.12, 0.05], rot: [0, 0, 0] }, Head: { pos: [0, 0.14, 0.02], rot: [0, 0, 0] } };
+/* how each thing is carried (see hold() in props.js): handleY is the height of its handle, out is how far the hand's item sits from the body. After changing these run ?test=held. */
+let GRIP = { hamper: { handleY: 0.52, scale: 0.5, out: 0.16 }, suitcase: { handleY: 0.5, scale: 0.8, out: 0.16 }, lantern: { handleY: 0.31, scale: 0.85, out: 0.14 }, bucket: { handleY: 0.34, scale: 0.9, out: 0.15 }, basket: { dy: 0.12, scale: 0.8 } };
+const SKIN_LIGHT = 1.55;   /* the bodies' skin is built dark, so we lighten it a little (as in Marcus Garvey) so faces read in every light */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const mat = o.material, nm = mat.name || '';
     if ((s.hide && s.hide.includes(nm)) || (s.hat === false && nm === 'Hat')) { o.visible = false; return; }
     o.material = mat.clone(); const t = s.tint && s.tint[nm]; if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
-    else if (s.skin && (nm === 'Skin' || nm.startsWith('Human'))) o.material.color.setScalar(s.skin); });
+    else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); });
   m.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
   m.scale.setScalar(s.scale || 1); m.position.set(s.x, s.ground || 0, s.z); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
   if (!/^Sit/.test(s.anim || '')) { const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.05; b.renderOrder = 1; m.add(b); }
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl;
-  for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); const at = PROP_AT[bone] || {}; const w = attach(m, bone, o, at.pos, at.rot, prop === 'basket' ? 1.1 : 1); if (o.userData.flame) s._flame = o.userData.flame; }
-  if (s.lamp) { const o = lantern(); attach(m, 'RightHand', o, PROP_AT.RightHand.pos, PROP_AT.RightHand.rot, 1); s._flame = o.userData.flame; }
-  if (s.blanket) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.33, 10, 6, 0, PI * 2, 0, PI / 2), new THREE.MeshStandardMaterial({ color: [0xb86a3c, 0x8a3a3a, 0x4a6a8a, 0x8a7a3a][(Math.round(s.x) & 3)], roughness: 1 })); b.scale.set(1.2, 0.8, 1); b.position.set(0, 1.0, 0.05); m.add(b); }
+  m.userData.held = []; ctl.mx.update(0);   /* pose the body once, so the grips below are measured on the real hand */
+  for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); hold(m, bone, o, GRIP[prop]); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) s._flame = o.userData.flame; }
+  if (s.lamp) { const o = lantern(); hold(m, 'RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
   return m;
 }
 const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBasicMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.6, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
@@ -104,14 +107,31 @@ setEnv(ENV.morning);
 const BUILD = { road: buildRoad, station45: buildStation45, ride45: buildRide45, hill: buildHill, kingston57: buildKingston57, coach: buildCoach, beach: buildBeach, crash: buildCrash, memorial: buildMemorial };
 let modelsReady = false; const placeLoading = {};
 function buildPlace(id) {   /* the geometry only: quick, and enough for a title backdrop. People come later (populate). */
-  if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.actions = []; P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; PL[id] = P; if (DECOR[id]) DECOR[id](P.group, P); if (!P.group.userData.noBatch) P.batch = batchStatic(P.group);
+  if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.actions = []; P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; PL[id] = P; P.keepOut = []; if (DECOR[id]) DECOR[id](P.group, P); if (__DEV__) P.snap = snapMeshes(P.group); if (!P.group.userData.noBatch) P.batch = batchStatic(P.group);
   P.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.alphaTest > 0)) { o.castShadow = o.receiveShadow = true; } else if (o.isMesh && Array.isArray(o.material)) { o.castShadow = o.receiveShadow = true; } });
   if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); return P;
+}
+/* spreadOut: nobody stands inside anybody. Background figures that are too close to someone are moved to a free spot nearby (a walker's whole loop moves with them);
+   a figure that cannot be placed, or a walk that would pass through someone standing still, is dropped. The audit (?test=audit) then checks the result. */
+function spreadOut(P) {
+  const r = rng(77), seated = (e) => /^Sit/.test(e.anim || ''), loop = (e) => { if (!e.path) return [[e.x, e.z]]; const pts = []; for (let i = 0; i < e.path.length; i++) { const a = e.path[i], b = e.path[(i + 1) % e.path.length], k = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.5)); for (let j = 0; j < k; j++) pts.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k]); } return pts; };
+  const fixed = [], paths = []; for (const p of P.specs.people) { if (p.path) loop(p).forEach((q) => paths.push([q[0], q[1], 0.7])); else fixed.push([p.x, p.z, seated(p) ? 0.4 : 0.7]); } for (const k of P.keepOut || []) fixed.push(k);
+  const b = P.bounds, inWall = (x, z) => P.walls.some((w) => x > w[0] - 0.3 && x < w[2] + 0.3 && z > w[1] - 0.3 && z < w[3] + 0.3), keep = [];
+  const free = (pts, walker) => pts.every(([x, z]) => !inWall(x, z) && fixed.every((f) => Math.hypot(f[0] - x, f[1] - z) >= (f[2] < 0.6 ? Math.min(f[2] + 0.2, 0.72) : 0.72)) && (walker || paths.every((f) => Math.hypot(f[0] - x, f[1] - z) >= 0.72)) && Math.hypot(x - P.start.x, z - P.start.z) > 1.4);
+  for (const e of P.specs.extras) {
+    if (e.ground > 0 || seated(e)) { keep.push(e); fixed.push([e.x, e.z, 0.5]); continue; }
+    let ok = free(loop(e), !!e.path), tries = 0; const x0 = e.x, z0 = e.z, path0 = e.path ? e.path.map((p) => [p[0], p[1]]) : null;
+    while (!ok && tries++ < 40) { const dx = (r() - 0.5) * 2 * (1 + tries * 0.12), dz = (r() - 0.5) * 2 * (1 + tries * 0.12); e.x = Math.max(b.x0, Math.min(b.x1, x0 + dx)); e.z = Math.max(b.z0, Math.min(b.z1, z0 + dz)); if (path0) e.path = path0.map((p) => [p[0] + (e.x - x0), p[1] + (e.z - z0)]); ok = free(loop(e), !!e.path); }
+    if (!ok && e.path) { e.path = null; e.walker = false; e.x = x0; e.z = z0; ok = free([[e.x, e.z]], false); }   /* a walk that cannot be made safe becomes a person standing still */
+    if (ok) { keep.push(e); if (e.path) loop(e).forEach((q) => paths.push([q[0], q[1], 0.7])); else fixed.push([e.x, e.z, 0.7]); }
+  }
+  P.specs.extras = keep;
 }
 function ensurePlace(id) {   /* the place with its people: loads the bodies it needs */
   const P = buildPlace(id); if (P.populated) return Promise.resolve(P); if (placeLoading[id]) return placeLoading[id];
   return (placeLoading[id] = (async () => {
     P.specs.extras = P.specs.extras.filter((e) => Math.hypot(e.x - P.start.x, e.z - P.start.z) > 2.6 || e.seated);
+    spreadOut(P);
     for (const e of P.specs.extras) e.bodyId = e.base + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
     const mk = (s, talk) => { const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk }); n.m = makeBody(s); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
@@ -213,7 +233,7 @@ function chapterFade(title, sub, fn) {   /* fade to a black title card, change t
 function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; if (on) { f.hidden = false; $('fadeT').textContent = ''; $('fadeS').textContent = ''; f.classList.remove('txt'); requestAnimationFrame(() => f.classList.add('on')); } else { f.classList.remove('on'); setTimeout(() => { f.hidden = true; f.style.transition = ''; }, QUICK ? 0 : ms + 50); } }
 const bars = (on) => document.body.classList.toggle('cine', on);
 let subTimer = 0;
-function say(text, ms = 3800) { const el = $('sub'); el.textContent = text; el.classList.remove('dim'); clearTimeout(subTimer); subTimer = setTimeout(() => el.classList.add('dim'), Math.max(500, ms * TS)); }
+function say(text, ms = 3800) { const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
 function flash(op, ms = 0, color = '#fff') { const f = $('flash'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease-out'; f.style.opacity = op; }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms * TS));
 async function run(steps) { const ep = EP; for (const [ms, fn] of steps) { await wait(ms); if (ep !== EP) return false; fn(); } return true; }   /* timed steps: [wait in ms, then do this]. Stops if the chapter changes. */
@@ -244,17 +264,17 @@ function applySave(d) {
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.started) saveGame(); });
 
 /* ---------- talking: one line at a time; "You" lines get their own colour; the x, Escape or a tap outside ends it ---------- */
-let step = 0, lines = [], talkN = 0, talkFull = false, convoEnd = null; const TALKS = ['Talk1', 'Talk2', 'Talk3'];
+let step = 0, lines = [], talkN = 0, talkFull = false, convoEnd = null, convoForced = false;   /* convoForced: a conversation that finishes something you already did (carrying the last bucket), so closing it early must not undo that */ const TALKS = ['Talk1', 'Talk2', 'Talk3'];
 const ALIAS = () => ({ abel: stage === 33 ? 'abel2' : 'abel', gran5: stage === 42 ? 'granCoach' : 'gran5', lloyd5: stage === 42 ? 'lloydCoach' : 'lloyd5', gran6: stage === 66 ? 'gran66' : 'gran6', clive: stage === 66 ? 'clive2' : 'clive' });
 const wantsTalk = (n) => !n.extra && !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
 function activate(t) { if (t.go) t.go(); else startTalk(t); }
 function startTalk(n) {
   if (busy || frozen) return; talkFull = wantsTalk(n); const id = ALIAS()[n.id] || n.id;
   if (talkFull) lines = [...TALK[id](story)]; else { const later = (LATER[id] || LATER[n.id] || (() => ['...']))(story); lines = [{ who: n.who, text: later[n.heard++ % later.length] }]; }
-  openConvo(lines, null, n);
+  convoForced = false; openConvo(lines, null, n);
 }
-function convo(ls, onEnd, who) { if (busy && !$('card').hidden) hideCard(); talkFull = false; openConvo([...ls], onEnd, who || null); }
-function openConvo(ls, onEnd, n) { busy = true; talkWith = n || null; lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; showLine(); }
+function convo(ls, onEnd, who) { if (busy && !$('card').hidden) hideCard(); talkFull = false; convoForced = true; openConvo([...ls], onEnd, who || null); }
+function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; showLine(); }
 function showLine() {
   const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock); if (s.give === 'lamp') { story.lamp = true; saveGame(); toast('Mass Ezra gives you his lamp.'); updateLamp(); }
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
@@ -265,13 +285,14 @@ function showLine() {
 function choose(s, c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  const n = talkWith, cb = convoEnd; talkWith = null; convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl && !/^Sit/.test(n.anim || '')) n.ctl.play(null);
-  if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); } if (finished && cb) cb();
+  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl && !/^Sit/.test(n.anim || '')) n.ctl.play(null);
+  const forced = convoForced; convoForced = false;
+  if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); } if (cb && (finished || forced)) cb();
 }
-function leaveTalk() { if (!$('dialogue').hidden) { const cb = convoEnd; endTalk(false); void cb; } }
+function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
 $('next').onclick = nextLine; $('dclose').onclick = leaveTalk; $('talk').onclick = () => { if (near && !busy) activate(near); };
 function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => { const n = byId(id); return n && n.talked; })) setStage(NEXT_AFTER_TALK[stage]); }
-function updateLamp() { const on = !!story.lamp && (cur === 'crash'); handLamp.intensity = on ? 3.6 : 0; lampMesh.visible = on; }
+function updateLamp() { const on = !!story.lamp && cur === 'crash' && stage < 66; handLamp.intensity = on ? 3.6 : 0; lampMesh.visible = on; }
 const lampMesh = lantern(); lampMesh.scale.setScalar(1.0); lampMesh.position.set(0.36, -0.42, -0.62); lampMesh.visible = false; camera.add(lampMesh);
 
 /* ---------- chapters, stages and the story machine ---------- */
@@ -291,23 +312,25 @@ function nextCard(i, s, tries = 0) {
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetTransient() {   /* leave anything running: scripted scenes, a ride, the crash, the camera director */
-  EP++; RIDE.on = false; RIDE.v = RIDE.target = 0; endCut(); frozen = false; moveLock = false; bars(false); $('sub').classList.add('dim'); $('holdwrap').hidden = true; flash(0, 0); $('vig').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.tilt = 0; RING = 0; HUSH = false; CRBEDS = {};
+  EP++; RIDE.on = false; RIDE.v = RIDE.target = 0; endCut(); frozen = false; moveLock = false; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; flash(0, 0); $('vig').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.tilt = 0; RING = 0; HUSH = false; CRBEDS = {};
   SFX.mento(false); SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); if (cur && PL[cur]) PL[cur].group.rotation.set(0, 0, 0); sitting = false; document.body.classList.remove('flashing');
 }
 let moveLock = false, RING = 0, HUSH = false, CRBEDS = {};
 async function beginChapter(i, st) {
   if (fading) return; resetTransient(); st = st || CH_FIRST[i]; const C = CHAPTERS[i]; hideCard(); closeJournal(); closeChapters(); $('dialogue').hidden = true; busy = false; talkWith = null;
-  if (!PL[CH_PLACE[i]] || !PL[CH_PLACE[i]].populated) toast('Loading', 4000); await ensurePlace(CH_PLACE[i]); for (const id of PRELOAD[i] || []) ensurePlace(id);
+  if (!PL[CH_PLACE[i]] || !PL[CH_PLACE[i]].populated) toast('Loading', 4000); await ensurePlace(CH_PLACE[i]); if (i === 3 && st >= 43) await ensurePlace('beach'); for (const id of PRELOAD[i] || []) ensurePlace(id);
   chapterFade(C.title, C.sub, () => startScene(i, st));
 }
 function startScene(i, st) {
   const ep = EP; const id = CH_PLACE[i]; const P = PL[id];
   if (i === 4) { enterPlace('coach', { env: ENV.dusk }); setRigTheme(P, 'night'); RIDE.on = true; RIDE.v = RIDE.target = 0; RIDE.kind = 'diesel'; P.lamp.intensity = 9; }
   else if (i === 5) { enterPlace('crash'); story.lamp = true; }
+  else if (i === 3 && st >= 43) enterPlace('beach', { env: st >= 44 ? ENV.gold : ENV.day });   /* a saved game from the beach resumes on the beach */
   else enterPlace(id);
-  state.started = true; updateLamp(); setStage(st); showPlace();
+  state.started = true; setStage(st); updateLamp(); showPlace();
   if (i === 1) setTimeout(() => { if (ep === EP) { SFX.fanfare(); SFX.stationGong(); } }, 900 * TS);
-  if (i === 2) { P.train.visible = false; P.train.position.x = 90; }
+  if (i === 2) { const late = st >= 33; P.train.visible = late; P.train.position.x = late ? 0 : 90; if (st >= 32) { P.bunches.forEach((b) => { b.visible = false; }); P.inWagon.forEach((b) => { b.visible = true; }); } }   /* resuming after the train came in */
+  if (i === 5 && st >= 66) { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; P.torches.forEach((t) => { t.visible = false; }); P.flame.visible = false; }   /* resuming after the night */
   if (i === 3) { SFX.mento(false); }
 }
 function chaptersOpen(i) { return i === 0 || best >= DONE[i - 1]; }
@@ -354,9 +377,9 @@ function smokeTick(dt) {
 /* ---------- things to do: ACTIONS_FOR[place](P) makes the list of that place. A thing shows as a button when you stand at it. ---------- */
 const ACTIONS_FOR = {
   road: (P) => [
-    { label: 'Load the mule', x: P.spots.mule[0], z: P.spots.mule[1], r: 2.6, on: () => stage === 11, go: () => {
-      ctr.mule = (ctr.mule || 0) + 1; P.mule.userData.loads.forEach((v, i) => { v.visible = i < ctr.mule; }); uiSound('goal'); toast('Loaded ' + ctr.mule + ' of 3'); refreshGoal(true);
-      if (ctr.mule >= 3) convo(TALK.muleDone(story), () => setStage(12), byId('dudley')); }, } ],
+    { label: 'Load the mule', x: P.spots.mule[0], z: P.spots.mule[1], r: 3.0, on: () => stage === 11 && !P.loading, go: () => {
+      const n = ctr.mule || 0; const item = P.goods[n]; P.loading = true; ctr.mule = n + 1; refreshGoal(true); toast(P.goodsText[n], 3400); const d = byId('dudley'); if (d && d.ctl) d.ctl.play('Talk2', true);
+      loadItem(P, item, n).then(() => { P.loading = false; if (ctr.mule >= 3) { SFX.snort(); convo(TALK.muleDone(story), () => setStage(12), byId('dudley')); } }); }, } ],
   station45: (P) => [
     { label: 'Look at the engine', x: P.spots.engine[0], z: P.spots.engine[1], r: 3.4, on: () => stage === 21, go: () => { unlock('projector'); card('The Projector', ['This steam engine was built in Manchester, England, in 1844.', 'Boiling water makes steam. The steam pushes pistons, and the pistons turn the big wheels.', 'She can pull a whole train at up to 30 miles an hour. That is very fast for 1845!'], [{ t: 'Good!', go: () => { hideCard(); setStage(22); } }]); } },
     { label: 'Climb aboard', x: P.spots.board[0], z: P.spots.board[1], r: 3.2, on: () => stage === 22, go: () => setStage(23) } ],
@@ -386,6 +409,15 @@ const ACTIONS_FOR = {
     { label: 'Leave a flower', x: P.spots.flower[0], z: P.spots.flower[1], r: 2.8, on: () => stage === 72, go: () => leaveFlower() } ],
 };
 const RIDE45 = { water: false };
+
+/* ---------- chapter 1: carrying a load to the mule. The item flies in an arc to the mule's pack, the mule sinks a little under the weight. ---------- */
+function loadItem(P, item, n) {
+  const mu = P.mule, slot = mu.userData.slots[n], from = item.position.clone(), to = new THREE.Vector3(...slot); mu.localToWorld(to); P.group.worldToLocal(to); const ep = EP;
+  uiSound('tap'); const done = tween(0.9, (k) => { const e = ease(k); item.position.lerpVectors(from, to, e); item.position.y += Math.sin(k * PI) * 1.1; item.rotation.y += 0.04; });
+  return done.then((ok) => { if (!ok || ep !== EP) return; mu.attach(item); item.position.set(...slot); item.rotation.set(0, n * 1.4, 0); item.scale.setScalar(n === 2 ? 0.9 : 0.8); mu.userData.dip = (n + 1) / 3; SFX.settle(); setTimeout(() => SFX.snort(), 350 * TS);
+    for (let i = 0; i < 5; i++) { const w = new THREE.Vector3(mu.position.x + (Math.random() - 0.5) * 1.4, 0.15, mu.position.z + (Math.random() - 0.5) * 1.0); smoke.emit(w, new THREE.Vector3((Math.random() - 0.5) * 0.4, 0.3, (Math.random() - 0.5) * 0.4), { size: 0.5, grow: 1.4, life: 1.4, color: 0xc9a878, opacity: 0.35 }); } });
+}
+function resetMule(P) { const mu = P.mule; for (const it of P.goods) { if (it.parent !== P.group) P.group.attach(it); it.position.copy(it.userData.home); it.scale.setScalar(1); } mu.userData.dip = 0; P.loading = false; }
 
 /* ---------- chapter 2: the first train ---------- */
 ON[23] = async () => {
@@ -437,7 +469,7 @@ const HOLD = { on: false, v: 0 };
 for (const ev of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) $('hold').addEventListener(ev, (e) => { HOLD.on = ev === 'pointerdown'; $('hold').classList.toggle('on', HOLD.on); e.preventDefault(); });
 addEventListener('keydown', (e) => { if ($('holdwrap').hidden) return; if (e.key === ' ' || e.key === 'Enter') HOLD.on = true; }); addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') HOLD.on = false; });
 async function crashRun() {
-  const ep = EP, P = P_(); CR.on = true; CR.phase = 0; unlock('greenvale'); setStage(53); frozen = false; moveLock = false; busy = false; talkWith = null; state.x = 0.5; state.z = 0; state.yaw = -PI / 2; state.pitch = 0; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
+  const ep = EP, P = P_(); CR.on = true; CR.phase = 0; unlock('greenvale'); setStage(53); frozen = false; moveLock = false; busy = false; talkWith = null; state.x = 2.6; state.z = 0; state.yaw = PI / 2; state.pitch = 0; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
   const live = () => ep === EP && CR.on, lamp = P.lamp;
   const step = async (ms, fn) => { await wait(ms); if (!live()) return false; fn(); return true; };
   SFX.mento(false); say('Greenvale. The highest station on the line.', 3600); RIDE.target = 8; await wait(3600);
@@ -498,7 +530,7 @@ function nudgeTarget() {
   let bestT = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; bestT = [n.x, n.z]; } } return bestT;
 }
 function nudgeTick(now) {
-  const el = $('nudge'); if (!el) return; const quiet = state.started && !busy && !frozen && !DIR.on && !CR.on && $('dialogue').hidden && $('card').hidden && goalText && !fading;
+  const el = $('nudge'); if (!el) return; const quiet = state.started && !busy && !frozen && !DIR.on && !CR.on && $('holdwrap').hidden && $('dialogue').hidden && $('card').hidden && goalText && !fading;
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
   if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30000); NUDGE.still = now; }
@@ -513,15 +545,15 @@ function nudgeTick(now) {
 }
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
-let auNext = 0, onceAt = 6;
-const SOUNDSCAPE = { road: { wind: 0.07, crowd: 0.01, once: chirp }, station45: { crowd: 0.16, wind: 0.04, once: () => SFX.hiss(1.4, 0.06) }, ride45: { wind: 0.05 }, hill: { wind: 0.12, crowd: 0.02, once: chirp }, kingston57: { crowd: 0.2, wind: 0.03, idle: 0.1, once: () => SFX.stationGong() }, coach: { room: 0.1, crowd: 0.05 }, beach: { sea: 0.24, surf: 0.1, wind: 0.05, crowd: 0.05, once: gullCry }, crash: { cricket: 0.32, crowd: 0.1, wind: 0.05 }, memorial: { wind: 0.06, once: chirp } };
+let auNext = 0, onceAt = 6; const AMB = 0.4;   /* the ambient beds are kept low so voices, whistles and the story stay clear */
+const SOUNDSCAPE = { road: { wind: 0.07, crowd: 0.01, once: chirp }, station45: { crowd: 0.16, wind: 0.04, once: () => SFX.hiss(1.4, 0.06) }, ride45: { wind: 0.05 }, hill: { wind: 0.12, crowd: 0.02, once: chirp }, kingston57: { crowd: 0.2, wind: 0.03, idle: 0.1, once: () => SFX.stationGong() }, coach: { room: 0.1, crowd: 0.05 }, beach: { sea: 0.24, surf: 0.1, wind: 0.05, crowd: 0.05, once: gullCry }, crash: { cricket: 0.14, crowd: 0.05, wind: 0.03 }, memorial: { wind: 0.06, once: chirp } };
 const FOOT = { road: 'grass', station45: 'wood', ride45: 'wood', hill: 'wood', kingston57: 'stone', coach: 'wood', beach: 'sand', crash: 'grass', memorial: 'grass' };
 function audioTick(t, now) {
   if (!AU.ctx) return; SFX.mentoTick(t); if (t < auNext) return; auNext = t + 0.1; const S = SOUNDSCAPE[cur] || {};
   SFX.mento(cur === 'beach' && Math.hypot(state.x - 14, state.z - 4) < 24 && stage >= 43 && stage <= 44);
   if (HUSH) { for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], 0, 0.2); SFX.setBeds({ ...CRBEDS, ring: RING }, 0.3); return; }
-  for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], S[k] || 0);
-  const v = RIDE.on ? RIDE.v : 0; SFX.setBeds({ rumble: Math.min(0.5, v / 28), rush: Math.min(0.2, v / 70), idle: (S.idle || 0) + (RIDE.on && RIDE.kind === 'diesel' ? 0.06 : 0), cricket: S.cricket || 0, ring: RING });
+  for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], (S[k] || 0) * AMB);
+  const v = RIDE.on ? RIDE.v : 0; SFX.setBeds({ rumble: Math.min(0.5, v / 28) * 0.6, rush: Math.min(0.2, v / 70) * 0.5, idle: ((S.idle || 0) + (RIDE.on && RIDE.kind === 'diesel' ? 0.06 : 0)) * 0.6, cricket: (S.cricket || 0) * 0.5, ring: RING });
   if (t > onceAt) { onceAt = t + 6 + Math.random() * 6; if (S.once && AU.on && state.started) S.once(); }
 }
 
@@ -577,6 +609,10 @@ function frame(t) {
 const NORENDER = __DEV__ && /[?&]auto=/.test(location.search);   /* the scripted playthrough does not need pictures, and software drawing is slow */
 requestAnimationFrame(frame);
 
+/* ---------- the place audit (dev builds): the checks live in engine/audit.js. Run ?test=audit and expect 0 issues in every place. ---------- */
+const auditPlace = (P) => auditPlaceE({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start,
+  actions: P.actions, people: P.people.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
+
 /* ---------- test views and scripted playthroughs: dev builds only (node tools/build.mjs kendal --dev) ---------- */
 function devViews() {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), errs = [];
@@ -584,11 +620,11 @@ function devViews() {
   addEventListener('unhandledrejection', (e) => { errs.push(String((e.reason && e.reason.stack) || e.reason).slice(0, 300)); document.title = 'ERROR ' + errs.join(' | '); });
   const go = async (id, st, x, z, yaw, pitch, env) => { const P = await ensurePlace(id); $('title').hidden = true; $('hud').hidden = false; state.started = true; enterPlace(id, { env }); stage = st; best = Math.max(best, st); state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch || 0; unlock('you', true); refreshGoal(); return P; };
   const V = {
-    road1: ['road', 10, -33, 0.6, -1.35, 0], road2: ['road', 12, 22, 0.8, -1.5, 0.02], road3: ['road', 10, -22, 2.2, -0.1, 0],
+    mule1: ['road', 11, -29.5, 6.4, -0.35, -0.05], mule2: ['road', 11, -25.4, 6.6, 0.15, -0.02], road1: ['road', 10, -33, 0.6, -1.35, 0], road2: ['road', 12, 22, 0.8, -1.5, 0.02], road3: ['road', 10, -22, 2.2, -0.1, 0],
     st1: ['station45', 20, -2, 6.5, 0.15, 0], st2: ['station45', 20, -7, 4.2, 0.9, 0.02], st3: ['station45', 20, 14, 5, 0.25, 0.05],
     hill1: ['hill', 30, -24, 5.5, -1.5, 0], hill2: ['hill', 30, -10, 4, -0.3, 0.05],
     k1: ['kingston57', 40, -22, 5, PI / 2 - 0.2, 0], k2: ['kingston57', 40, -22, 5, -PI / 2 + 0.4, 0], k3: ['kingston57', 40, -9, 6.2, 0.35, 0], k4: ['kingston57', 41, 28, 4, -PI / 2, 0],
-    ride1: ['ride45', 23, 0.2, 0, PI / 2 + 0.25, 0], ride2: ['ride45', 23, 0.2, 0, 0.3, 0.05], poster: ['kingston57', 40, 47, -9.0, PI / 2 + 0.5, 0.03, ENV.gold], lurch: ['coach', 53, 1.5, 0, -PI / 2 + 0.5, 0], coach1: ['coach', 51, 3.6, 0, -PI / 2, 0], coach2: ['coach', 51, 0, 0, 1.2, 0], coach3: ['coach', 51, 3.2, 0.2, -PI / 2 - 0.5, 0],
+    ride1: ['ride45', 23, 0.2, 0, PI / 2 + 0.25, 0], ride2: ['ride45', 23, 0.2, 0, 0.3, 0.05], poster: ['kingston57', 40, 47, -9.0, PI / 2 + 0.5, 0.03, ENV.gold], lurch: ['coach', 53, 1.5, 0, PI / 2 + 0.5, 0], coach1: ['coach', 51, 4.3, 0, PI / 2, 0], coach2: ['coach', 51, 0, 0, 1.2, 0], coach3: ['coach', 51, 3.2, 0.2, PI / 2 - 0.5, 0],
     beach1: ['beach', 43, 0, 9, 0.1, 0], beach2: ['beach', 43, 8, 3, -1.2, 0],
     crash4: ['crash', 61, 8, 4.4, 0.9, 0.04], crash1: ['crash', 60, 17, 5.8, 1.7, 0], crash2: ['crash', 60, 8, 6, 2.2, 0.05], crash3: ['crash', 61, -4, 9, 3.14, 0.02], crash5: ['crash', 66, 9, 5, 0.75, 0.0],
     mem1: ['memorial', 70, 0, 4.6, 0, 0.02], mem2: ['memorial', 71, 4, -4, 0.0, 0.1],
@@ -601,6 +637,7 @@ function devViews() {
   if (V[shot]) go(...V[shot]).then((P) => {
     if (shot === 'st3') { /* the governor's end */ }
     if (shot === 'hill2') { P.train.visible = true; P.train.position.x = 0; }
+    if (shot === 'mule2') { (async () => { for (let i = 0; i < 3; i++) { loadItem(P, P.goods[i], i); for (let k = 0; k < 30; k++) update(0.05); } for (let k = 0; k < 10; k++) update(0.05); })(); }
     if (/^ride/.test(shot)) { RIDE.on = true; RIDE.kind = 'steam'; RIDE.v = RIDE.target = 9; for (let i = 0; i < 40; i++) update(0.05); }
     if (shot === 'poster') { $('hud').hidden = true; for (let i = 0; i < 4; i++) update(0.05); }
     if (shot === 'lurch') { setRigTheme(P, 'night'); setEnv(ENV.night); RIDE.on = true; RIDE.kind = 'diesel'; RIDE.v = RIDE.target = 24; P.lamp.intensity = 3; for (let i = 0; i < 30; i++) update(0.05); P.group.rotation.x = 0.17; FX.shake = 0.5; bars(true); say('The brakes scream.', 99999); }
@@ -613,6 +650,41 @@ function devViews() {
     for (let i = 0; i < 6; i++) update(0.05);
     if (q.has('stats')) setTimeout(() => { renderer.info.reset(); renderer.render(scene, camera); const i = renderer.info; const t = 'STATS calls=' + i.render.calls + ' tris=' + i.render.triangles + ' geo=' + i.memory.geometries + ' tex=' + i.memory.textures; document.title = t; console.log(t); }, 1500);
   });
+  if (q.get('test') === 'layout') {   /* ?test=layout : open each UI state and check that no two visible things overlap, nothing is cut off, and nothing is off the screen. Run at several window sizes. */
+    (async () => { const out = [], W = innerWidth, Hh = innerHeight; await ensurePlace('road'); startGame(true); enterPlace('road'); $('hud').hidden = false; $('title').hidden = true; stage = 11; refreshGoal();
+      const IDS = ['goal', 'topr', 'talk', 'hint', 'toast', 'sub', 'dialogue', 'cinner', 'place', 'hold', 'nudge'], rect = (id) => { const e = id === 'cinner' ? document.querySelector('#card .cardin') : $(id); if (!e || e.hidden) return null; const cs = getComputedStyle(e); if (cs.display === 'none' || +cs.opacity < 0.05 || cs.visibility === 'hidden') return null; const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1 ? { id, r, e } : null; };
+      const check = (name) => { const L = IDS.map(rect).filter(Boolean); for (const a of L) { if (a.r.left < -1 || a.r.top < -1 || a.r.right > W + 1 || a.r.bottom > Hh + 1) out.push(`${W}x${Hh} ${name}: ${a.id} is off the screen (${a.r.left | 0},${a.r.top | 0},${a.r.right | 0},${a.r.bottom | 0})`); if (a.e.scrollWidth > a.e.clientWidth + 2 && getComputedStyle(a.e).overflow !== 'visible' && a.id !== 'dialogue') out.push(`${W}x${Hh} ${name}: ${a.id} text is cut off`); }
+        for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i].r, b = L[j].r, ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top); if (ox > 4 && oy > 4) out.push(`${W}x${Hh} ${name}: ${L[i].id} overlaps ${L[j].id} by ${ox | 0}x${oy | 0}`); } };
+      const reset = () => { for (const id of ['talk', 'toast', 'dialogue', 'card', 'holdwrap', 'nudge']) $(id).hidden = true; $('hint').hidden = true; bars(false); document.body.classList.remove('subbing', 'talking'); $('sub').classList.add('dim'); $('place').hidden = true; };
+      const settle = () => new Promise((r) => setTimeout(r, 700));
+      reset(); showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; showHint(); toast('Loaded 2 of 3'); showPlace('The Spanish Town road, about 1844'); await settle(); check('play: goal, talk, hint, toast, place');
+      reset(); showGoal(true); say('The train climbs into the hills, slowly and steadily, and the engines work very hard indeed.', 1e6); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; showHint(); toast('Loaded 2 of 3'); await settle(); check('narration without bars');
+      reset(); bars(true); say('The train climbs into the hills, slowly and steadily, and the engines work very hard indeed.', 1e6); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; showHint(); await settle(); await new Promise((r) => setTimeout(r, 1100)); check('narration inside the bars');
+      reset(); showGoal(true); document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Mass Dudley'; $('line').textContent = 'Some say a railway will help us. Some say it will take our work. What do you think about that, child?'; $('choices').innerHTML = '<button class="btn ghost">It will help people.</button><button class="btn ghost">It might take your work.</button><button class="btn ghost">I do not know yet.</button>'; $('next').hidden = true; await settle(); check('dialogue with three choices');
+      reset(); bars(true); say('Hold on!', 1e6); $('holdwrap').hidden = false; $('talk').hidden = true; await settle(); await new Promise((r) => setTimeout(r, 1100)); check('hold on button in the bars');
+      reset(); card('About half past eleven', ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], [{ t: 'Begin', go: () => {} }, { t: 'Read what happened instead', go: () => {} }], { col: true }); await settle(); check('card');
+      reset(); $('nudge').hidden = false; showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Give the water to the nurse'; await settle(); check('helper arrow with talk button');
+      document.title = 'LAYOUT ' + out.length; const el = $('autolog'); if (el) el.textContent = (out.length ? out : [W + 'x' + Hh + ': no layout problems']).join('\n'); })();
+  }
+  if (q.get('test') === 'held') {
+    if (q.get('hs')) for (const k of ['hamper', 'suitcase', 'bucket']) { GRIP[k] = { ...GRIP[k], scale: +q.get('hs') * (k === 'suitcase' ? 1.4 : 1), out: +q.get('ho') }; } if (q.get('ls')) GRIP.lantern = { ...GRIP.lantern, scale: +q.get('ls'), out: +q.get('lo') };   /* ?test=held : every carried thing, in every place: at the hand, upright, clear of the body */
+    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { n.m.userData.anim.mx.update(0.1); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) out.push(id + ': ' + l); } }
+      out.unshift('held items: ' + (out.length) + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + out.length; })();
+  }
+  if (q.get('test') === 'audit') {   /* ?test=audit&p=road,hill : floating objects, people inside solids, unreachable spots */
+    (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
+      const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + out.length; })();
+  }
+  if (q.get('test') === 'resume') {   /* saved games resume in the right place, and closing a finishing conversation still moves the story on */
+    (async () => { const out = []; startGame(true);
+      await beginChapter(3, 44); out.push('ch4@44 place=' + cur + ' stage=' + stage); await beginChapter(3, 43); out.push('ch4@43 place=' + cur);
+      await beginChapter(2, 34); const H = PL.hill; out.push('ch3@34 place=' + cur + ' train=' + H.train.visible + '@' + H.train.position.x);
+      await beginChapter(5, 66); out.push('ch6@66 place=' + cur + ' lamp=' + (handLamp.intensity > 0) + ' sun=' + envNow.sun[1].toFixed(1));
+      await beginChapter(5, 61); out.push('ch6@61 lamp=' + (handLamp.intensity > 0));
+      let ran = 0; convo([{ who: 'x', text: 'y' }, { who: 'x', text: 'z' }], () => { ran++; }); leaveTalk(); out.push('convo closed early, callback ran=' + ran);
+      let ran2 = 0; startTalk(P_().people[0]); leaveTalk(); out.push('ordinary talk closed early: talked=' + !!P_().people[0].talked);
+      document.title = 'RESUME ' + out.join(' | '); })();
+  }
   if (q.has('clickstart')) setTimeout(() => $('start').click(), 300);   /* the real start, with real fades (the other test views skip them) */
   if (q.has('auto')) {   /* ?auto=N plays chapter N (1 to 7) and the ones after it; add &one to stop after N. It logs every change to the page title and #autolog, and says STALL if nothing changes for a while. */
     const N = +q.get('auto'), one = q.has('one'), log = [], sleep = (ms) => new Promise((r) => setTimeout(r, ms)); const L = (m) => { log.push(m); document.title = log.join(' | '); const el = $('autolog'); if (el) el.textContent = log.join('\n'); };

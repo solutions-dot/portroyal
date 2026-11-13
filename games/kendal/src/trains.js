@@ -66,7 +66,7 @@ export function woodCoach(n = 1, L = 11, W = 2.7) {
     const ex = s * (L / 2 + 0.5); box(1.0, 0.12, 2.3, M.woodDark, ex, -0.14, 0, g);
     for (const z of [-1.05, 1.05]) { box(0.06, 0.95, 0.06, M.iron, s * (L / 2 + 0.95), 0.4, z, g); box(1.0, 0.05, 0.05, M.iron, ex, 0.88, z, g); }
     box(0.05, 0.05, 2.1, M.iron, s * (L / 2 + 0.95), 0.88, 0, g); box(0.05, 0.05, 2.1, M.iron, s * (L / 2 + 0.95), 0.45, 0, g);
-    for (const z of [-1.2, 1.2]) box(0.4, 0.05, 0.3, M.woodDark, ex - s * 0.1, -0.62, z, g);
+    for (const z of [-1.2, 1.2]) { box(0.4, 0.05, 0.3, M.woodDark, ex - s * 0.1, -0.62, z, g); box(0.05, 0.5, 0.05, M.iron, ex - s * 0.1, -0.38, z * 0.97, g); }   /* a step under each end of the platform, on an iron strap */
     box(0.5, 0.3, 0.3, M.iron, s * (L / 2 + 1.15), -0.4, 0.5, g); box(0.5, 0.3, 0.3, M.iron, s * (L / 2 + 1.15), -0.4, -0.5, g);   /* buffers */
     box(0.08, 2.0, 0.9, solid(0x44190f, 0.9), s * (L / 2 + 0.01), 1.0, 0, g);   /* the end door */
   }
@@ -94,30 +94,43 @@ export function dieselLoco(L = 13.4) {
   return g;
 }
 
-/* ---------- steam engines: 'early' is 1845 (the Projector); 'late' is the 1890s ---------- */
+/* ---------- steam engines: 'early' is the 1845 Projector (a 2-2-2 with one big pair of driving wheels, a brass dome and a tall chimney);
+   'late' is a 4-4-0 of the 1890s with a cab. Every height is measured from the rails (H), so the wheels, frame, boiler and footplate line up. ---------- */
+const H = (h) => RAIL_TOP + h;
 export function steamLoco(kind = 'early') {
-  const g = grp(); g.userData.wheels = []; const early = kind === 'early';
-  const bc = early ? 0x1f4d2e : 0x17181a, br = early ? 0.5 : 0.66, bl = early ? 3.4 : 4.4, by = early ? 1.62 : 1.9, bx = early ? -0.5 : -0.9;
-  const boiler = cyl(br, br, bl, solid(bc, 0.45, 0.25), bx, by, 0, g, 22); boiler.rotation.z = Math.PI / 2;
-  for (const dx of [-1.0, 0.5, 1.6]) { const band = cyl(br + 0.025, br + 0.025, 0.1, M.brass, bx + dx * (bl / 3.4) * 0.9, by, 0, g, 22); band.rotation.z = Math.PI / 2; }
-  const sbx = bx - bl / 2 + 0.3; const smoke = cyl(br + 0.06, br + 0.06, 0.7, M.black, sbx, by, 0, g, 22); smoke.rotation.z = Math.PI / 2;
-  const chh = early ? 1.5 : 1.0; cyl(early ? 0.14 : 0.2, early ? 0.15 : 0.2, chh, M.black, sbx, by + br + chh / 2 - 0.1, 0, g, 12); if (early) cyl(0.26, 0.15, 0.3, M.brass, sbx, by + br + chh - 0.12, 0, g, 12); else cyl(0.3, 0.2, 0.28, M.black, sbx, by + br + chh - 0.1, 0, g, 12);
-  const chim = new THREE.Object3D(); chim.position.set(sbx, by + br + chh + 0.1, 0); g.add(chim); g.userData.chimney = chim;
-  mesh(new THREE.SphereGeometry(0.3, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), M.brass, bx + 0.3, by + br - 0.02, 0, g);
-  if (early) { box(1.3, 1.5, 1.3, solid(0x2a4a33, 0.5, 0.2), bx + bl / 2 + 0.3, by + 0.05, 0, g); box(1.5, 0.08, 1.5, M.brass, bx + bl / 2 + 0.3, by + 0.82, 0, g); box(2.4, 0.1, 1.5, M.woodDark, bx + bl / 2 + 0.7, 0.95, 0, g);
-    for (const z of [-0.65, 0.65]) box(0.05, 1.0, 0.05, M.iron, bx + bl / 2 + 1.85, 1.45, z, g); box(0.06, 0.06, 1.4, M.iron, bx + bl / 2 + 1.85, 1.95, 0, g); }
-  else { box(1.9, 2.3, 1.9, solid(0x1d1e22, 0.7), bx + bl / 2 + 0.8, by + 0.4, 0, g); box(2.3, 0.1, 2.4, M.black, bx + bl / 2 + 0.8, by + 1.6, 0, g); const wt = new THREE.MeshBasicMaterial({ color: 0x1a2630 }); for (const s of [-1, 1]) box(0.9, 0.7, 0.03, wt, bx + bl / 2 + 0.8, by + 0.7, s * 0.96, g); box(2.4, 0.1, 2.0, M.woodDark, bx + bl / 2 + 1.0, 0.95, 0, g); }
-  box(early ? 5.4 : 7.0, 0.2, 1.4, M.black, early ? 0.2 : 0.4, 0.78, 0, g);
-  for (const s of [-1, 1]) { box(0.7, 0.45, 0.4, M.iron, sbx + 0.5, 0.95, s * 0.75, g); box(1.6, 0.06, 0.06, M.steel, early ? 0.4 : 0.2, 0.9, s * (GAUGE / 2 + 0.2), g); }
-  const R = early ? 0.9 : 0.78, ws = g.userData.wheels;
-  if (early) { wheelset(0.5, -1.7, RAIL_TOP + 0.5, g, ws, true); wheelset(R, 0.9, RAIL_TOP + R, g, ws, true); wheelset(0.5, 2.3, RAIL_TOP + 0.5, g, ws, true); }
-  else { for (const dx of [-2.4, -1.6]) wheelset(0.5, dx, RAIL_TOP + 0.5, g, ws, true); for (const dx of [0.3, 1.5, 2.7]) wheelset(R, dx, RAIL_TOP + R, g, ws, true); }
-  box(0.3, 0.5, 1.9, M.black, bx - bl / 2 - 0.45, 0.8, 0, g); for (const z of [-0.65, 0.65]) cyl(0.1, 0.1, 0.3, M.iron, bx - bl / 2 - 0.65, 0.8, z, g, 8).rotation.z = Math.PI / 2;
-  const lamp = cyl(0.17, 0.17, 0.2, M.headlamp, sbx - 0.4, by + br + 0.1, 0, g, 10); lamp.rotation.z = Math.PI / 2;
-  /* the tender: a small truck of coal or wood behind the engine */
-  const tx = early ? 3.9 : 5.2; box(early ? 2.4 : 3.0, 0.9, 1.6, solid(early ? 0x1f4d2e : 0x1d1e22, 0.6), tx, 1.45, 0, g); box(early ? 2.2 : 2.8, 0.7, 1.4, solid(0x1c1b1b, 1), tx, 1.9, 0, g);
-  wheelset(0.5, tx - 0.8, RAIL_TOP + 0.5, g, g.userData.wheels, true); wheelset(0.5, tx + 0.8, RAIL_TOP + 0.5, g, g.userData.wheels, true); box(early ? 2.4 : 3.0, 0.2, 1.4, M.black, tx, 0.78, 0, g);
-  steamDetail(g, early, { bx, by, br, bl, sbx, tx, chh });
+  const g = grp(); g.userData.wheels = []; const early = kind === 'early', W = g.userData.wheels;
+  const green = early ? solid(0x1f4d2e, 0.45, 0.2) : solid(0x1b1c20, 0.6, 0.25), casing = early ? solid(0x2a5a38, 0.5, 0.2) : solid(0x202126, 0.65, 0.2), line = solid(0xb08a3a, 0.5, 0.4);
+  const br = early ? 0.5 : 0.62, by = H(early ? 1.82 : 2.05), bx0 = early ? -2.3 : -3.0, bx1 = early ? 0.9 : 1.0;   /* boiler from bx0 to bx1, centre height by */
+  /* the frame, buffer beam and coupling */
+  box(early ? 6.2 : 7.4, 0.16, 1.2, M.black, early ? 0.2 : 0.2, H(1.0), 0, g); box(0.22, 0.42, 1.9, M.black, early ? -3.2 : -3.7, H(1.0), 0, g);
+  for (const z of [-0.7, 0.7]) { const bf = cyl(0.09, 0.12, 0.38, M.iron, early ? -3.4 : -3.9, H(1.0), z, g, 8); bf.rotation.z = Math.PI / 2; mesh(new THREE.SphereGeometry(0.12, 8, 6), M.steel, early ? -3.6 : -4.1, H(1.0), z, g); }
+  /* the boiler, its bands, the smokebox, a door on its front, the chimney, dome and whistle */
+  const boiler = cyl(br, br, bx1 - bx0, green, (bx0 + bx1) / 2, by, 0, g, 24); boiler.rotation.z = Math.PI / 2;
+  for (let i = 1; i <= 3; i++) { const bd = cyl(br + 0.022, br + 0.022, 0.09, line, bx0 + (bx1 - bx0) * i / 4, by, 0, g, 24); bd.rotation.z = Math.PI / 2; }
+  const sbx = bx0 + 0.3, sb = cyl(br + 0.05, br + 0.05, 0.62, M.black, sbx, by, 0, g, 24); sb.rotation.z = Math.PI / 2; const door = cyl(br * 0.9, br * 0.9, 0.05, M.iron, bx0 - 0.02, by, 0, g, 24); door.rotation.z = Math.PI / 2; const dr = cyl(br * 0.93, br * 0.93, 0.04, line, bx0 - 0.045, by, 0, g, 24); dr.rotation.z = Math.PI / 2; box(0.04, 0.34, 0.06, line, bx0 - 0.07, by, 0, g);
+  const chh = early ? 1.55 : 1.15; cyl(early ? 0.13 : 0.19, early ? 0.15 : 0.19, chh, M.black, sbx, by + br + chh / 2 - 0.1, 0, g, 12); cyl(early ? 0.27 : 0.3, early ? 0.15 : 0.2, 0.3, early ? M.brass : M.black, sbx, by + br + chh - 0.05, 0, g, 12);
+  const chim = new THREE.Object3D(); chim.position.set(sbx, by + br + chh + 0.12, 0); g.add(chim); g.userData.chimney = chim;
+  mesh(new THREE.SphereGeometry(early ? 0.3 : 0.36, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), M.brass, bx1 - 0.7, by + br - 0.05, 0, g); cyl(0.05, 0.07, 0.34, M.brass, bx1 - 0.7, by + br + 0.45, 0, g, 8);   /* the dome, and the whistle on it */
+  for (const dx of [0.0, 0.3]) cyl(0.04, 0.05, 0.22, M.brass, bx1 - 1.2 + dx, by + br + 0.1, 0, g, 6);   /* safety valves */
+  if (!early) { mesh(new THREE.SphereGeometry(0.28, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), M.black, bx0 + 1.4, by + br - 0.03, 0, g); }
+  for (const s of [-1, 1]) { hrail(g, bx0 + 0.4, bx1 - 0.2, by + br * 0.55, s * (br + 0.07), M.brass, 1.0); const pipe = cyl(0.05, 0.05, bx1 - bx0 - 0.6, M.iron, (bx0 + bx1) / 2, by - br * 0.5, s * (br + 0.06), g, 6); pipe.rotation.z = Math.PI / 2; }
+  /* the firebox (early: a brass-topped casing behind the boiler; late: the cab) and the footplate */
+  if (early) { box(1.25, 1.3, 1.3, casing, bx1 + 0.62, by + 0.1, 0, g); const top = cyl(0.66, 0.66, 1.25, M.brass, bx1 + 0.62, by + 0.76, 0, g, 16); top.rotation.x = Math.PI / 2; top.scale.set(1, 0.34, 1);
+    box(1.9, 0.07, 1.7, M.woodDark, bx1 + 1.6, H(1.2), 0, g); box(0.06, 0.7, 1.7, M.woodDark, bx1 + 2.0, H(1.58), 0, g); for (const z of [-0.83, 0.83]) { box(0.05, 0.9, 0.05, M.iron, bx1 + 2.5, H(1.6), z, g); } box(0.05, 0.05, 1.7, M.iron, bx1 + 2.5, H(2.05), 0, g); }
+  else { const cx = bx1 + 1.2; box(0.07, 1.7, 1.9, casing, bx1 + 0.12, H(2.15), 0, g); for (const z of [-0.95, 0.95]) { box(2.2, 1.55, 0.06, casing, cx, H(2.07), z, g); box(0.9, 0.62, 0.02, new THREE.MeshBasicMaterial({ color: 0x1a2630 }), cx - 0.25, H(2.35), z * 1.02, g); }
+    box(2.5, 0.1, 2.3, M.black, cx + 0.05, H(3.0), 0, g); box(0.07, 1.2, 1.9, casing, cx + 1.1, H(1.85), 0, g); box(2.3, 0.07, 1.9, M.woodDark, cx, H(1.2), 0, g); box(0.5, 0.2, 0.04, line, cx - 0.4, H(2.6), 0.97, g); }
+  /* steps, a lamp at the front, the outside rods */
+  for (const s of [-1, 1]) { box(0.45, 0.04, 0.3, M.woodDark, bx1 + (early ? 1.6 : 1.2), H(0.78), s * 0.95, g); box(0.45, 0.04, 0.3, M.woodDark, bx1 + (early ? 1.6 : 1.2), H(0.42), s * 0.98, g); }
+  const lamp = cyl(0.17, 0.17, 0.2, M.headlamp, bx0 - 0.15, by + br + 0.12, 0, g, 10); lamp.rotation.z = Math.PI / 2;
+  /* wheels */
+  const R = early ? 0.82 : 0.86;
+  if (early) { wheelset(0.45, -1.9, H(0.45), g, W, true); wheelset(R, 0.8, H(R), g, W, true); wheelset(0.45, 2.3, H(0.45), g, W, true); for (const s of [-1, 1]) box(1.5, 0.07, 0.07, M.steel, 0.8, H(R), s * (GAUGE / 2 + 0.17), g); }
+  else { for (const dx of [-2.3, -1.4]) wheelset(0.45, dx, H(0.45), g, W, true); for (const dx of [0.4, 1.9]) wheelset(R, dx, H(R), g, W, true); for (const s of [-1, 1]) { box(1.6, 0.08, 0.07, M.steel, 1.15, H(R), s * (GAUGE / 2 + 0.17), g); cyl(0.14, 0.14, 0.8, M.iron, -1.3, H(1.0), s * 0.82, g, 10).rotation.z = Math.PI / 2; } }
+  /* the tender: a low frame, a green tank, coal heaped on top, a filler cap and a toolbox */
+  const tx = early ? 5.5 : 5.4, tl = early ? 2.5 : 3.1; box(tl + 0.3, 0.12, 1.2, M.black, tx, H(0.95), 0, g); box(tl, 0.85, 1.5, early ? solid(0x1f4d2e, 0.6) : solid(0x1b1c20, 0.7), tx, H(1.5), 0, g); box(tl + 0.06, 0.08, 1.56, line, tx, H(1.94), 0, g);
+  for (let i = 0; i < 11; i++) mesh(new THREE.DodecahedronGeometry(0.26 + (i % 3) * 0.05, 0), solid(0x131313, 1), tx - tl * 0.35 + (i % 4) * tl * 0.24, H(2.15 + (i % 2) * 0.1), -0.4 + Math.floor(i / 4) * 0.4 + (i % 3) * 0.06, g);
+  cyl(0.14, 0.14, 0.06, M.brass, tx - tl * 0.3, H(1.96), 0.5, g, 10); box(0.5, 0.22, 0.34, M.woodDark, tx + tl * 0.3, H(2.05), -0.5, g);
+  wheelset(0.45, tx - tl * 0.32, H(0.45), g, W, true); wheelset(0.45, tx + tl * 0.32, H(0.45), g, W, true); box(0.7, 0.12, 0.12, M.black, tx - tl / 2 - 0.5, H(0.95), 0, g);
   return g;
 }
 
@@ -127,7 +140,7 @@ export function carriage1845(kind = 'third', L = 5.2, W = 2.4, layout = 'rows') 
   if (kind === 'first') {
     const tex = cv(512, 192, (x, w, h) => { x.fillStyle = '#c9a23a'; x.fillRect(0, 0, w, h); x.fillStyle = '#243a62'; x.fillRect(0, h * 0.45, w, h * 0.55); for (let i = 0; i < 3; i++) { const cx = 90 + i * 165; x.fillStyle = '#f2e6bd'; x.fillRect(cx - 52, 18, 104, 66); x.fillStyle = '#26394d'; x.fillRect(cx - 46, 24, 92, 54); x.fillStyle = 'rgba(255,255,255,0.14)'; x.fillRect(cx - 40, 28, 18, 46); }
       x.fillStyle = '#f2e6bd'; x.font = '700 22px Georgia, serif'; x.textAlign = 'center'; x.fillText('FIRST CLASS', w / 2, h - 28); grain(x, w, h, 12); });
-    const side = std(tex, 0.8), cap = solid(0x24324a, 0.8); const body = new THREE.Mesh(new THREE.BoxGeometry(L, 1.9, W), [cap, cap, cap, cap, side, side]); body.position.y = 1.1; g.add(body); box(L + 0.2, 0.12, W + 0.2, solid(0x2b2b30, 0.8), 0, 2.1, 0, g);
+    const side = std(tex, 0.8), cap = solid(0x24324a, 0.8); const body = new THREE.Mesh(new THREE.BoxGeometry(L, 2.0, W), [cap, cap, cap, cap, side, side]); body.position.y = 0.85; g.add(body); box(L + 0.2, 0.12, W + 0.2, solid(0x2b2b30, 0.8), 0, 1.9, 0, g);
   } else {
     box(L, 0.14, W, M.woodDark, 0, 0.1, 0, g); for (const s of [-1, 1]) { box(L, 0.55, 0.08, M.wood, 0, 0.5, s * (W / 2 - 0.04), g); } box(0.08, 0.55, W, M.wood, -L / 2 + 0.04, 0.5, 0, g); box(0.08, 0.55, W, M.wood, L / 2 - 0.04, 0.5, 0, g);
     if (layout === 'sides') for (const s of [-1, 1]) { box(L - 1.0, 0.06, 0.45, M.wood, 0, 0.45, s * (W / 2 - 0.32), g); box(L - 1.0, 0.45, 0.06, M.wood, 0, 0.75, s * (W / 2 - 0.08), g); for (const x of [-L / 2 + 0.8, L / 2 - 0.8]) box(0.08, 0.35, 0.4, M.woodDark, x, 0.27, s * (W / 2 - 0.32), g); }
@@ -180,7 +193,7 @@ function coachDetail(g, L, W) {
   for (const x of [-L * 0.3, 0, L * 0.3]) { const v = cyl(0.14, 0.17, 0.2, M.iron, x, 2.62, 0.2, g, 8); box(0.34, 0.04, 0.34, M.black, x, 2.72, 0.2, g); }   /* roof ventilators */
   for (const s of [-1, 1]) { for (const e of [-1, 1]) { box(0.05, 1.6, 0.05, M.steel, e * (L / 2 - 0.35), 1.05, s * (W / 2 + 0.05), g); box(0.07, 0.3, 0.12, M.brass, e * (L / 2 - 0.55), 0.9, s * (W / 2 + 0.04), g); }
     hrail(g, -L / 2 + 0.5, L / 2 - 0.5, 2.42, s * (W / 2 + 0.03), M.steel, 2.8);   /* the rain gutter along the roof edge */
-    for (const e of [-1, 1]) { box(0.5, 0.05, 0.22, M.woodDark, e * (L / 2 - 0.4), -0.42, s * (W / 2 + 0.1), g); box(0.5, 0.05, 0.22, M.woodDark, e * (L / 2 - 0.4), -0.74, s * (W / 2 + 0.12), g); }   /* the steps */ }
+    for (const e of [-1, 1]) { box(0.5, 0.05, 0.22, M.woodDark, e * (L / 2 - 0.4), -0.42, s * (W / 2 + 0.1), g); box(0.5, 0.05, 0.22, M.woodDark, e * (L / 2 - 0.4), -0.74, s * (W / 2 + 0.12), g); for (const dx of [-0.22, 0.22]) box(0.04, 0.72, 0.04, M.iron, e * (L / 2 - 0.4) + dx, -0.4, s * (W / 2 + 0.07), g); }   /* the steps, hung from the body on two iron straps */ }
   for (const z of [-0.5, 0.5]) { const t = cyl(0.02, 0.02, L - 2.4, M.iron, 0, -0.36, z, g, 5); t.rotation.z = Math.PI / 2; }   /* truss rods under the floor */
   cyl(0.2, 0.2, 0.9, M.iron, 1.2, -0.65, 0.35, g, 10).rotation.x = Math.PI / 2; box(0.7, 0.3, 0.5, M.iron, -1.6, -0.62, -0.5, g);   /* a brake cylinder and a battery box */
   for (const e of [-1, 1]) { const w = cyl(0.17, 0.17, 0.06, M.iron, e * (L / 2 + 0.95), 0.9, 0.7, g, 12); w.rotation.x = Math.PI / 2; cyl(0.02, 0.02, 0.9, M.iron, e * (L / 2 + 0.95), 0.45, 0.7, g, 5); }   /* a hand brake wheel on each end platform */
@@ -197,15 +210,3 @@ function dieselDetail(g, L, W) {
   for (const e of [-1, 1]) for (const z of [-0.5, 0.5]) { const h = cyl(0.04, 0.04, 0.4, M.black, e * (L / 2 + 0.25), 0.4, z, g, 5); }
 }
 let _num; function T_num() { return _num || (_num = cv(128, 48, (x, w, h) => { x.fillStyle = '#16202a'; x.fillRect(0, 0, w, h); x.strokeStyle = '#e8dcb0'; x.lineWidth = 3; x.strokeRect(3, 3, w - 6, h - 6); x.fillStyle = '#e8dcb0'; x.font = '700 28px Georgia, serif'; x.textAlign = 'center'; x.fillText('J.G.R. 12', w / 2, 34); })); }
-function steamDetail(g, early, d) {
-  const { bx, by, br, bl, sbx, tx } = d;
-  const sd = cyl(br * 0.92, br * 0.92, 0.06, M.iron, sbx - 0.37, by, 0, g, 22); sd.rotation.z = Math.PI / 2; const ring = cyl(br * 0.95, br * 0.95, 0.04, M.brass, sbx - 0.4, by, 0, g, 22); ring.rotation.z = Math.PI / 2; box(0.05, 0.3, 0.05, M.brass, sbx - 0.42, by, 0, g);
-  for (const s of [-1, 1]) { hrail(g, bx - bl / 2 + 0.4, bx + bl / 2 - 0.2, by + br * 0.45, s * (br + 0.06), M.brass, 1.0); const pipe = cyl(0.05, 0.05, bl * 0.7, M.iron, bx, by - br * 0.45, s * (br + 0.05), g, 6); pipe.rotation.z = Math.PI / 2;
-    box(1.0, 0.5, 0.45, M.iron, sbx + 0.5, 0.95, s * 0.8, g); const pr = cyl(0.04, 0.04, 1.1, M.steel, sbx - 0.1, 0.95, s * 0.8, g, 6); pr.rotation.z = Math.PI / 2;   /* cylinders and piston rods */
-    box(early ? 2.0 : 3.2, 0.07, 0.07, M.steel, early ? 0.9 : 1.5, early ? -0.2 : -0.3, s * (GAUGE / 2 + 0.25), g);   /* the side rods */
-    box(0.4, 0.04, 0.3, M.woodDark, bx + bl / 2 - 0.4, 0.55, s * 0.95, g); box(0.4, 0.04, 0.3, M.woodDark, bx + bl / 2 - 0.4, 0.2, s * 0.98, g); }   /* footsteps */
-  cyl(0.05, 0.07, 0.35, M.brass, bx + 0.3, by + br + 0.45, 0, g, 8); for (const dx of [-0.2, 0.2]) cyl(0.04, 0.05, 0.2, M.brass, bx + bl / 2 + 0.1 + dx, by + br + 0.15, 0, g, 6);   /* whistle and safety valves */
-  for (let i = 0; i < 9; i++) mesh(new THREE.DodecahedronGeometry(0.3 + (i % 3) * 0.05, 0), solid(0x141414, 1), tx - 0.8 + (i % 4) * 0.5, early ? 2.35 + (i % 2) * 0.1 : 2.45 + (i % 2) * 0.1, -0.4 + Math.floor(i / 4) * 0.4 + (i % 3) * 0.05, g);   /* coal in the tender */
-  box(0.5, 0.2, 0.3, M.woodDark, tx + 0.8, early ? 2.1 : 2.2, 0.5, g); cyl(0.14, 0.14, 0.06, M.brass, tx - 0.5, early ? 2.12 : 2.22, -0.5, g, 10);
-  if (!early) { for (const s of [-1, 1]) { box(1.2, 0.08, 0.04, M.brass, bx + bl / 2 + 0.8, by + 1.15, s * 0.97, g); box(0.1, 0.8, 0.04, M.steel, bx + bl / 2 + 0.3, by + 0.7, s * 0.97, g); } const dome = mesh(new THREE.SphereGeometry(0.3, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), M.black, bx - 0.8, by + br, 0, g); }
-}

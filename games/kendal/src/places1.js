@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng } from './gfx.js';
 import { rails, steamLoco, carriage1845, wagon, TM } from './trains.js';
-import { palm, tree, banana, bananaBunch, bush, boardHouse, shed, hillRing, scatter, mule, loadedMule, cart, crate, sack, hamper, barrel, bucket, pole, lampPost, milestone, signBoard, surveyPole, waterTower, bench, suitcase, PM } from './props.js';
+import { palm, tree, banana, bananaBunch, bush, boardHouse, shed, hillRing, scatter, mule, yamBasket, provisionSack, bananaLoad, cart, crate, sack, hamper, barrel, bucket, pole, lampPost, milestone, signBoard, surveyPole, waterTower, bench, suitcase, PM } from './props.js';
 import { ENV, stationBase, groundPlane, makeRig, TRACK_Y } from './common.js';
 import { person, extra, crowd45 } from './cast.js';
 
@@ -33,23 +33,24 @@ export function buildRoad() {
   for (const x of [26, 32, 38]) { const p = surveyPole(); p.position.set(x, 0, -3.5); g.add(p); }
   const wb = grp(g, 36, 0, -6.6); box(0.9, 0.1, 0.5, TM.woodDark, 0, 0.45, 0, wb); cyl(0.2, 0.2, 0.06, TM.wood, 0.3, 0.2, 0.3, wb, 10).rotation.x = PI / 2;
   /* the mule, her load and a heap of baskets by Mass Dudley */
-  const bess = loadedMule(0); bess.userData.noBatch = true; bess.position.set(-26, 0, 2.8); bess.rotation.y = -0.15; g.add(bess); walls.push([-27, 2.2, -25, 3.4]);
-  for (let i = 0; i < 3; i++) { const h = hamper([0xa8803c, 0xb89050, 0x9a7a38][i]); h.position.set(-27.8 + i * 0.5, 0, 4.9 - (i % 2) * 0.3); g.add(h); }
+  const bess = mule(); bess.userData.noBatch = true; bess.position.set(-26, 0, 2.8); bess.rotation.y = -0.15; g.add(bess); walls.push([-27, 2.1, -25, 3.5]);
+  const goods = [yamBasket(), provisionSack(), bananaLoad()]; goods.forEach((o, i) => { o.userData.noBatch = true; o.position.set(-28.2 + i * 1.15, 0, 5.2 + (i % 2) * 0.25); o.rotation.y = i * 0.9; g.add(o); o.userData.home = o.position.clone(); });   /* the three loads, waiting on the ground */
+  const mat = mesh(new THREE.PlaneGeometry(4.4, 1.5), solid(0x8a7a50, 1), -26.4, 0.02, 5.3, g); mat.rotation.x = -PI / 2;
   const tc = cart(); tc.position.set(2, 0, -2.5); tc.rotation.y = 0.15; g.add(tc); walls.push([-0.6, -3.5, 5.2, -1.4]);
   people.push(person('dudley', 'muleteer', 'Mass Dudley', -28.4, 2.0, 0.4, { h: 1.78 }));
-  people.push(person('cleo', 'higgler', 'Miss Cleo', -15, -2.6, PI * 0.8, { h: 1.7, props: [['Head', 'basket']] }));
+  people.push(person('cleo', 'higgler', 'Miss Cleo', -15, -2.6, PI * 0.8, { h: 2.18, props: [['Head', 'basket']] }));
   people.push(person('traveller', 'gent45', 'The traveller', -3.5, 2.3, -0.4, { h: 1.8, path: [[-3.5, 2.3], [3.5, 1.8], [-1, 1.4]] }));
   people.push(person('surveyor', 'surveyor', 'The surveyor', 31, -2.2, PI * 0.9, { h: 1.78 }));
-  extras.push(extra('worker45', 36.5, -5.4, 0.3, 'Carry'), extra('worker45', 22, -6.2, -0.8, 'CarryIdle'), extra('worker45', 41, -4.2, PI, 'Idle'));
-  return { id: 'road', group: g, walls, bounds: { x0: -40, x1: 46, z0: -7, z1: 7 }, start: { x: -36, z: 0.6, yaw: -PI / 2 }, people, extras, env: ENV.hazy, mule: bess,
-    spots: { mule: [-26, 4.2], end: [24, 0] }, tick: (dt, t) => { if (bess.userData.tick) bess.userData.tick(t); } };
+  extras.push(extra('worker45', 33.4, -4.7, 0.3, 'Carry'), extra('worker45', 17.5, -4.5, -0.8, 'CarryIdle'), extra('worker45', 41, -4.3, PI, 'Idle'), extra('worker45', 38, -6.5, PI * 0.5, 'Talk2', { ground: 0.6 }));
+  return { id: 'road', group: g, walls, bounds: { x0: -40, x1: 46, z0: -7, z1: 7 }, start: { x: -36, z: 0.6, yaw: -PI / 2 }, people, extras, env: ENV.hazy, mule: bess, goods, goodsText: ['A basket of yams goes into the left pannier.', 'A sack of provisions goes into the right one.', 'A bunch of bananas is tied on top.'],
+    spots: { mule: [-26, 4.4], end: [24, 0] }, tick: (dt, t) => { if (bess.userData.tick) bess.userData.tick(t); } };
 }
 
 /* ============ chapter 2: the Kingston terminus, 21 November 1845 ============ */
 export function buildStation45() {
   const g = grp(), walls = [], people = [], extras = [];
   stationBase(g, { x0: -50, x1: 60, zc: -3, zBack: 17, wood: true });
-  const train = grp(g, 0, 0, -3); const loco = steamLoco('early'); loco.position.x = -8.2; train.add(loco);
+  const train = grp(g, 0, 0, -3); const loco = steamLoco('early'); loco.position.x = -10.4; train.add(loco);
   const kinds = ['first', 'third', 'third', 'first']; const cars = kinds.map((k, i) => { const c = carriage1845(k); c.position.x = i * 6; train.add(c); return c; });
   train.userData.wheels = [loco, ...cars].flatMap((v) => v.userData.wheels);
   walls.push([-13.5, -4.6, 21, -1.2]);   /* the train is a wall: you stand on the platform side */
@@ -60,14 +61,14 @@ export function buildStation45() {
   for (const x of [-14, -2, 10, 22, 34]) { const p = pole(5.4); p.position.set(x, 0, -0.8); g.add(p); }
   for (let i = 0; i < 4; i++) { const b = mesh(new THREE.PlaneGeometry(12, 0.7), new THREE.MeshBasicMaterial({ map: bt, transparent: true, side: THREE.DoubleSide, alphaTest: 0.3 }), -8 + i * 12, 4.5, -0.8, g); b.rotation.x = 0.06; }
   for (const x of [-14, 10, 34]) { const f = mesh(new THREE.PlaneGeometry(1.7, 0.9), flagMat(), x + 0.95, 5.2, -0.8, g); f.userData.flag = true; f.userData.noBatch = true; }
-  const tab = grp(g, -3, 0, 8); box(2.2, 0.9, 0.8, TM.wood, 0, 0.45, 0, tab); const ts = signBoard('TICKETS', 1.6, 0.4); ts.position.set(0, 1.45, 0.45); tab.add(ts); walls.push([-4.3, 7.4, -1.7, 8.6]);
+  const tab = grp(g, -3, 0, 8); box(2.2, 0.9, 0.8, TM.wood, 0, 0.45, 0, tab); const ts = signBoard('TICKETS', 1.6, 0.4); ts.position.set(0, 0.5, -0.44); ts.rotation.y = PI; tab.add(ts); walls.push([-4.3, 7.4, -1.7, 8.6]);
   for (let i = 0; i < 4; i++) { const c = crate(0.7); c.position.set(30 + (i % 2) * 0.9, 0, 6 + Math.floor(i / 2) * 0.8); c.rotation.y = i; g.add(c); } walls.push([29.4, 5.4, 31.8, 7.4]);
   people.push(person('dudley2', 'muleteer', 'Mass Dudley', -8, 8, PI * 0.9, { h: 1.78 }));
   people.push(person('boy', 'boy45', 'The boy', 3, 3.6, PI, { h: 1.2 }));
   people.push(person('clerk', 'clerk45', 'The clerk', -3, 9.4, PI, { h: 1.78 }));
   people.push(person('lady', 'lady45', 'The lady', 13, 5.2, PI, { h: 1.7 }));
   extras.push(extra('governor', 19, 1.8, PI, 'Idle', { name: 'governor' }), extra('gent45', 17.4, 2.2, PI, 'Idle'), extra('gent45', 20.6, 2.5, PI, 'Talk1'));
-  extras.push(extra('fireman', -6.3, -3.4, 0, 'Wave', { ground: 0.9 }), extra('worker45', -5.4, -2.6, PI * 1.1, 'Idle', { ground: 0.9 }));
+  extras.push(extra('fireman', -7.1, -3.4, 0, 'Wave', { ground: 0.14 }), extra('worker45', -6.4, -2.7, PI * 1.1, 'Idle', { ground: 0.14 }));
   extras.push(...crowd45(26, 21, [-20, 2.6, 30, 11], { faceZ: PI }).filter((e) => !walls.some((w) => e.x > w[0] && e.x < w[2] && e.z > w[1] && e.z < w[3])));
   return { id: 'station45', group: g, walls, bounds: { x0: -26, x1: 34, z0: 0.2, z1: 14 }, start: { x: -2, z: 6.5, yaw: 0.2 }, people, extras, env: ENV.day, train, loco, cars,
     smokers: [{ obj: loco.userData.chimney, rate: 5, v: 0.8 }], spots: { engine: [-6.5, 0.4], board: [9, 0.6] }, tick: (dt, t) => { for (const o of g.children) if (o.userData.flag) o.rotation.y = Math.sin(t * 3 + o.position.x) * 0.25; } };
@@ -78,7 +79,7 @@ export function buildRide45() {
   const g = grp(), walls = [], people = [], extras = [];
   const rig = makeRig('morass'); rig.group.position.y = TRACK_Y; g.add(rig.group); g.userData.noBatch = true;
   const car = carriage1845('third', 6.4, 2.4, 'sides'); g.add(car);
-  const loco = steamLoco('early'); loco.position.set(-10.2, 0, 0); g.add(loco);
+  const loco = steamLoco('early'); loco.position.set(-10.8, 0, 0); g.add(loco);
   const t2 = carriage1845('third', 6.4, 2.4, 'sides'); t2.position.set(7.2, 0, 0); g.add(t2);
   const wheels = [...loco.userData.wheels, ...car.userData.wheels, ...t2.userData.wheels];
   people.push(person('boyRide', 'boy45', 'The boy', 1.6, 0.9, PI, { h: 1.2, anim: 'SitTalk', ground: 0.17 }));
@@ -104,7 +105,7 @@ export function buildHill() {
   for (const [x, z] of [[-3, 6.8], [8, 9], [20, 7]]) { const c = crate(0.8); c.position.set(x, 0, z); g.add(c); } for (let i = 0; i < 3; i++) { const b = barrel(); b.position.set(14 + i * 0.7, 0, 8.4); g.add(b); }
   const bp = bench(2.2); bp.position.set(-1, 0, 9.3); bp.rotation.y = PI; g.add(bp);
   /* the train that climbs in: a steam engine, its tender, a carriage and a wagon. It starts far to the east and runs west to the platform. */
-  const train = grp(g, 0, 0, -3); const loco = steamLoco('late'); loco.position.x = -0.4; train.add(loco);
+  const train = grp(g, 0, 0, -3); const loco = steamLoco('late'); loco.position.x = -1.2; train.add(loco);
   const car = carriage1845('first', 6.2); car.position.x = 10; train.add(car); const w3 = wagon(); w3.position.x = 17.4; train.add(w3);
   train.userData.wheels = [loco, car, w3].flatMap((v) => v.userData.wheels); train.position.x = 90; train.visible = false; train.userData.noBatch = true;
   people.push(person('gordon', 'stationmaster', 'Mr. Gordon', -0.5, 7.4, PI, { h: 1.78 }));

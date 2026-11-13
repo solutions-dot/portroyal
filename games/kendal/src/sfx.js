@@ -63,3 +63,7 @@ export function mentoTick(now) {
   if (!MENTO.on || !live() || now < MENTO.next) return; MENTO.next = now + 0.27; const i = MENTO.i++ % 16, bar = (i / 4) | 0, ch = [[196, 247, 294], [262, 330, 392], [196, 247, 294], [294, 370, 440]][bar];   /* G, C, G, D */
   if (i % 4 === 0 || i % 4 === 2) thump(0.12); if (i % 2 === 1) for (const f of ch) pluck(f * 2, 0.025, 0.25);
 }
+
+/* a mule's snort and the creak of a load settling on the pack frame */
+export function snort() { if (!live()) return; noiseHit(520, 0.8, 0.28, 0.14, -0.2); tone(150, 90, 0.3, 'sawtooth', 0.03, -0.2, 0.02); }
+export function settle() { if (!live()) return; tone(95, 60, 0.18, 'sine', 0.16, -0.3); noiseHit(260, 2, 0.1, 0.12, -0.3); tone(210, 175, 0.4, 'sawtooth', 0.018, -0.3, 0.1); }

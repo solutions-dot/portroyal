@@ -5,7 +5,7 @@ import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv, grain }
 import { rails, railsCurve, woodCoach, dieselLoco, platform, TM } from './trains.js';
 import { palm, tree, banana, bush, flowers, boardHouse, hillRing, scatter, crate, hamper, suitcase, sack, bucket, bench, pole, lampPost, torch, lantern, signBoard, standpipe, truck, PM } from './props.js';
 import { ENV, stationBase, groundPlane, makeRig, TRACK_Y } from './common.js';
-import { person, extra, crowd57, villagers, LOOKS } from './cast.js';
+import { person, extra, crowd57, villagers, walkers, LOOKS } from './cast.js';
 import { roadStrip } from './places1.js';
 
 const PI = Math.PI;
@@ -45,7 +45,7 @@ export function buildKingston57() {
   people.push(person('ezra', 'ezra57', 'Mass Ezra', 9, 9.6, PI * 1.1, { h: 1.8 }));
   people.push(person('guard', 'guard57', 'Mr. Ellis', 3, 1.2, 0, { h: 1.8, path: [[3, 1.2], [22, 1.2]] }));
   people.push(person('pearl', 'vendor', 'Miss Pearl', 16, 7.6, PI, { h: 1.7 }));
-  extras.push(...crowd57(44, 57, [-26, 1.4, 44, 8.6], { faceZ: PI * 0.8 }).filter(free(walls)));
+  extras.push(...walkers(crowd57(34, 57, [-26, 1.4, 44, 8.6], { faceZ: PI * 0.8 }).filter(free(walls)), 8, [-30, 1.4, 44, 8.6], 0.35, 9));
   extras.push(...crowd57(8, 71, [-50, 1.6, -28, 8], { faceZ: -PI / 2 }).filter(free(walls)));
   return { id: 'kingston57', group: g, walls, bounds: { x0: -52, x1: 44, z0: 0.2, z1: 8.6 }, start: { x: -22, z: 5, yaw: -PI / 2 + 0.4 }, people, extras, env: ENV.morning, train, coaches, diesels: [dA, dB],
     titleView: { x: 46, y: 0.5, z: -10, yaw: PI / 2 + 0.52, pitch: 0.02 }, spots: { board: [35.4, 0.5], coachEnd: [39.5, -3] }, tick: () => {} };
@@ -72,8 +72,8 @@ export function buildCoach() {
   people.push(person('mother', 'mother', 'The mother', rows[2], 0.62, -PI / 2, { anim: 'SitIdle', h: 1.35 }));
   const taken = (x, s, k) => (x === rows[4] && s < 0) || (x === rows[2] && s > 0 && k === 0) || ((x === rows[3] || x === rows[5]) && s > 0 && k === 1);
   const crowd = crowd57(30, 33, [0, 0, 1, 1], { anims: ['SitIdle'], kids: 0.18 }); let ci = 0;
-  for (const x of rows) for (const s of [-1, 1]) for (const k of [0, 1]) { if (taken(x, s, k) || (Math.round(x * 10) + k + (s > 0 ? 1 : 0)) % 4 === 0) continue; const e = crowd[ci++]; Object.assign(e, { x, z: s * (k ? 1.0 : 0.5), ry: -PI / 2, anim: ['SitIdle', 'SitTalk'][(ci * 7) % 2], seated: true }); extras.push(e); }
-  return { id: 'coach', group: g, walls, bounds: { x0: -4.8, x1: 4.8, z0: -0.28, z1: 0.28 }, start: { x: 3.6, z: 0, yaw: -PI / 2 }, people, extras, env: ENV.day, rig, lamp, ride: true, wheels: [],
+  for (const x of rows) for (const s of [-1, 1]) for (const k of [0, 1]) { if (taken(x, s, k) || (Math.round(x * 10) + k + (s > 0 ? 1 : 0)) % 4 === 0) continue; const e = crowd[ci++]; Object.assign(e, { x, z: s * (k ? 1.0 : 0.5), ry: -PI / 2, anim: ['SitIdle', 'SitTalk'][(ci * 7) % 2], seated: true, props: undefined }); extras.push(e); }
+  return { id: 'coach', group: g, walls, bounds: { x0: -4.8, x1: 4.8, z0: -0.28, z1: 0.28 }, start: { x: 4.3, z: 0, yaw: PI / 2 }, people, extras, env: ENV.day, rig, lamp, ride: true, wheels: [],
     spots: { seat: [rows[4], -0.25], windows: [[-2.5, 0.2, 1], [2.9, -0.2, -1]] }, tick: () => {} };
 }
 
@@ -91,9 +91,9 @@ export function buildBeach() {
   walls.push([-9.5, 7.8, -6.5, 10.2], [8.5, 5.8, 11.5, 8.2]);
   const castle = grp(g, -12, 0, -4); castle.userData.noBatch = true; const mound = mesh(new THREE.ConeGeometry(1.2, 1.0, 10), solid(0xd6c394, 1), 0, 0.5, 0, castle); mound.scale.set(0.01, 0.01, 0.01); castle.userData.mound = mound;
   const band = grp(g, 14, 0, 4); const box1 = box(0.5, 0.5, 0.5, TM.wood, 1.4, 0.25, 0.2, band); box(0.1, 0.5, 0.14, TM.woodDark, 1.4, 0.55, 0.2, band);
-  people.push(person('gran4', 'gran', 'Gran', 0, 7.8, 0.2, { h: 1.7 }));
-  const beachers = crowd57(12, 91, [-26, -14.5, 26, -9], { anims: ['Idle', 'Wave', 'Laugh', 'Cheer', 'Idle'], faceZ: -PI / 2 + 0.2, kids: 0.4 }); extras.push(...beachers);
-  extras.push(...crowd57(8, 17, [-30, 2, 30, 12], { anims: ['Idle', 'Talk1', 'Laugh'], faceZ: PI * 0.5 }).filter(free(walls)));
+  people.push(person('gran4', 'gran', 'Gran', 0, 7.8, PI, { h: 1.7 }));   /* PI: she faces the sea (north, -z) */
+  const beachers = walkers(crowd57(14, 91, [-26, -14.5, 26, -9], { anims: ['Idle', 'Wave', 'Laugh', 'Cheer', 'Idle'], faceZ: PI, kids: 0.4 }), 4, [-34, -15.5, 34, 11], 0.7, 9); extras.push(...beachers);
+  extras.push(...walkers(crowd57(10, 17, [-30, 2, 30, 12], { anims: ['Idle', 'Talk1', 'Laugh'], faceZ: PI * 0.5 }).filter(free(walls)), 6, [-34, -15.5, 34, 11], 0.7, 10));
   extras.push(extra('clive', 13.3, 4.9, -0.8, 'Clap', { skin: 1 }), extra('worker45', 14.6, 3.2, -PI / 2 + 0.2, 'Clap'), extra('muleteer', 14.4, 5.4, -PI * 0.7, 'Talk2'));
   return { id: 'beach', group: g, walls, bounds: { x0: -38, x1: 38, z0: -17, z1: 13 }, start: { x: 0, z: 9.5, yaw: PI * 0.04 }, people, extras, env: ENV.day, sea, castle, bandPos: [14, 4.2], seaTex: sea.material.map,
     spots: { sea: [0, -16], castle: [-12, -2.6], band: [12.2, 4.4] }, tick: (dt, t) => { sea.material.map.offset.set(t * 0.004, t * 0.01); sea.position.y = -0.08 + Math.sin(t * 0.9) * 0.03; foam.position.z = -20.5 + Math.sin(t * 0.7) * 0.6; foam.material.opacity = 0.6 + Math.sin(t * 0.7) * 0.3; } };

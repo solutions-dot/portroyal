@@ -90,6 +90,9 @@ export const T = {
   window(night) {
     return once('win' + night, () => cv(64, 96, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); if (night) { g.addColorStop(0, '#ffcf80'); g.addColorStop(1, '#c47a30'); } else { g.addColorStop(0, '#34485a'); g.addColorStop(1, '#1d2a35'); } x.fillStyle = g; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(255,255,255,0.12)'; x.fillRect(6, 6, 18, 80); }));
   },
+  weave(repeat = [2, 1]) {   /* a woven basket: bands going over and under */
+    return once('weave' + repeat, () => cv(128, 128, (x, w, h) => { x.fillStyle = '#a07a38'; x.fillRect(0, 0, w, h); for (let r = 0; r < 16; r++) for (let c = 0; c < 16; c++) { const v = ((r + c) % 2) ? 28 : -16; x.fillStyle = `rgb(${170 + v},${130 + v},${62 + v * 0.6})`; x.fillRect(c * 8 + 1, r * 8 + 1, 6, 6); } x.fillStyle = 'rgba(40,24,8,0.3)'; for (let i = 0; i <= 16; i++) { x.fillRect(i * 8, 0, 1, h); x.fillRect(0, i * 8, w, 1); } }, repeat));
+  },
   tuft() {   /* a clump of grass blades on a transparent card, for the instanced grass */
     return once('tuft', () => cv(128, 128, (x, w, h) => { x.clearRect(0, 0, w, h); for (let i = 0; i < 22; i++) { const bx = 10 + Math.random() * (w - 20), bh = 40 + Math.random() * 80, lean = (Math.random() - 0.5) * 36, g = 160 + Math.random() * 90; x.fillStyle = `rgb(${g * 0.62 | 0},${g | 0},${g * 0.38 | 0})`; x.beginPath(); x.moveTo(bx - 3, h); x.quadraticCurveTo(bx + lean * 0.3, h - bh * 0.6, bx + lean, h - bh); x.quadraticCurveTo(bx + lean * 0.3 + 3, h - bh * 0.5, bx + 3, h); x.fill(); } }, [1, 1], true));
   },
