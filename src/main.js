@@ -574,7 +574,7 @@ canvas.addEventListener('pointerdown', (e) => { if (!state.started || busy) retu
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stick.id) { let dx = e.clientX - stick.ox, dy = e.clientY - stick.oy; const l = Math.hypot(dx, dy), m = 48; if (l > m) { dx *= m / l; dy *= m / l; } stick.x = dx / m; stick.y = dy / m; $('nub').style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`; }
   else if (e.pointerId === look.id) { const k = e.pointerType === 'touch' ? 0.0052 : 0.0034; state.yaw -= (e.clientX - look.lx) * k; state.pitch = Math.max(-0.9, Math.min(0.9, state.pitch - (e.clientY - look.ly) * k)); look.lx = e.clientX; look.ly = e.clientY; } });
-const up = (e) => { if (e.pointerId === stick.id) { stick.id = null; stick.x = stick.y = 0; $('stick').hidden = true; } if (e.pointerId === look.id) look.id = null; };
+const up = (e) => { if (e.pointerId === stick.id) { stick.id = null; stick.x = stick.y = 0; $('stick').hidden = true; $('nub').style.transform = 'translate(-50%,-50%)'; } if (e.pointerId === look.id) look.id = null; };
 canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
 
 let propC = null;
@@ -804,6 +804,17 @@ function audioTick(t) { if (!AU.ctx || !state.started || t < auNext) return; auN
   if (!shaking && p === 'out' && !Q.ruin && state.x > X0 && state.x < X1 && t > hammerAt) { hammerAt = t + 5 + Math.random() * 8; hammer(); }
   if (p === 'in' && t > clinkAt) { clinkAt = t + 2.5 + Math.random() * 6; clink(); } }
 let creakAt = 0, hammerAt = 0, clinkAt = 0;
+/* on touch screens the joystick rests faintly at the bottom left, so young players can see where their thumb goes */
+TICKS.push(() => { if (!isTouch) return; const st = $('stick'); const rest = state.started && !busy && stick.id === null && $('dialogue').hidden && $('card').hidden;
+  if (rest) { st.hidden = false; st.classList.add('rest'); st.style.left = '86px'; st.style.top = (innerHeight - 96) + 'px'; } else if (stick.id === null) { st.hidden = true; st.classList.remove('rest'); } else st.classList.remove('rest'); });
+/* game controllers: left stick walks, right stick looks, A talks or carries on, Y opens the journal, a bumper hurries */
+const PAD = { prev: [] };
+function padRead(dt) { const gp = navigator.getGamepads ? [...navigator.getGamepads()].find((g) => g && g.connected) : null; if (!gp) return null; const dz = (v) => Math.abs(v) < 0.18 ? 0 : (v - Math.sign(v) * 0.18) / 0.82;
+  const b = gp.buttons.map((x) => x.pressed), was = PAD.prev, hit = (i) => b[i] && !was[i]; PAD.prev = b;
+  if (hit(0)) { if (!$('card').hidden) { const c = $('cbtns').querySelector('button'); if (c) c.click(); } else if (!$('dialogue').hidden) { const ch = $('choices').querySelector('button:not([disabled])'); if (ch && !$('choices').hidden) ch.click(); else $('next').click(); } else if (!busy && current) current.go(); else if (!state.started) $('start').click(); }
+  if (hit(1)) { closeJournal(); if (!$('chapters').hidden) closeChapters(); }
+  if (hit(3)) { $('journal').hidden ? openJournal() : closeJournal(); }
+  return { f: -dz(gp.axes[1] || 0), r: dz(gp.axes[0] || 0), lx: dz(gp.axes[2] || 0), ly: dz(gp.axes[3] || 0), hurry: b[4] || b[5] || b[7] || b[10] }; }
 /* gulls wheeling over the harbour: simple flapping wings, a few at a time */
 const GULLS = [];
 function gullsInit() { if (GULLS.length) return; const wm = new THREE.MeshBasicMaterial({ color: 0xf4f2ec, side: THREE.DoubleSide, fog: true }), tip = new THREE.MeshBasicMaterial({ color: 0x3a3a3a, side: THREE.DoubleSide });
@@ -1050,10 +1061,10 @@ function frame(now) {
   if (state.started && !busy) {
     let f = 0, r = 0; if (keys.has('w') || keys.has('arrowup')) f += 1; if (keys.has('s') || keys.has('arrowdown')) f -= 1; if (keys.has('d')) r += 1; if (keys.has('a')) r -= 1;
     const turnT = (keys.has('arrowleft') ? 1 : 0) - (keys.has('arrowright') ? 1 : 0); MV.turn += (turnT * 1.9 - MV.turn) * Math.min(1, dt * 8); state.yaw += MV.turn * dt;   /* turning eases in and out */
-    f -= stick.y; r += stick.x; if (f || r) MV.tap = null;
+    f -= stick.y; r += stick.x; const pad = padRead(dt); if (pad) { f += pad.f; r += pad.r; state.yaw -= pad.lx * 2.3 * dt; state.pitch = Math.max(-0.9, Math.min(0.9, state.pitch - pad.ly * 1.6 * dt)); } if (f || r) MV.tap = null;
     if (MV.tap) { const dx = MV.tap[0] - state.x, dz = MV.tap[1] - state.z, d = Math.hypot(dx, dz); if (d < 0.35) MV.tap = null; else { const want = Math.atan2(-dx, -dz); let e = want - state.yaw; e = Math.atan2(Math.sin(e), Math.cos(e)); state.yaw += e * Math.min(1, dt * 5); f = Math.min(1, d / 0.8) * Math.max(0, Math.cos(e)); } }   /* tap the ground to walk there */
     const l = Math.hypot(f, r); if (l > 1) { f /= l; r /= l; }
-    const hurry = keys.has('shift') && state.place !== 'sea' && !FB.on ? 1.45 : 1;
+    const hurry = (keys.has('shift') || (pad && pad.hurry)) && state.place !== 'sea' && !FB.on ? 1.45 : 1;
     const top = (third && galdy && galdy.visible && state.place !== 'sea' ? Math.min(moveSpeed, 1.75) : moveSpeed) * hurry, sy = Math.sin(state.yaw), cy = Math.cos(state.yaw);
     const tvx = (-sy * f + cy * r) * top, tvz = (-cy * f - sy * r) * top, acc = (f || r) ? 9 : 12; MV.vx += (tvx - MV.vx) * Math.min(1, dt * acc); MV.vz += (tvz - MV.vz) * Math.min(1, dt * acc);   /* ease into and out of a walk */
     if (Math.hypot(MV.vx, MV.vz) < 0.02) { MV.vx = MV.vz = 0; }
@@ -1061,8 +1072,8 @@ function frame(now) {
     if ((MV.vx || MV.vz) && Math.hypot(nx - tx, nz - tz) > 1e-4) { const [ax, az] = clampPos(tx, state.z), [bx, bz] = clampPos(state.x, tz); const da = Math.hypot(ax - state.x, az - state.z), db = Math.hypot(bx - state.x, bz - state.z), dn = Math.hypot(nx - state.x, nz - state.z);   /* slide along walls instead of stopping dead */
       if (da > dn && da >= db) { nx = ax; nz = az; } else if (db > dn) { nx = bx; nz = bz; } if (MV.tap && Math.max(da, db, dn) < 0.002) MV.tap = null; }
     if (l > 0.05 && !reduceMotion) bob += dt * 8.5 * Math.min(1, l); stepDist += Math.hypot(nx - state.x, nz - state.z); if (nx !== state.x || nz !== state.z) lastStep = performance.now(); if (stepDist > 1.35) { stepDist = 0; footstep(); } state.x = nx; state.z = nz;
-  } else if (!state.started) { state.yaw = Math.PI / 2 - 0.12 + Math.sin(now / 5200) * 0.14; }
-  if (busy) { MV.vx = MV.vz = MV.turn = 0; MV.tap = null; }   /* no drifting off after a conversation */
+  } else if (!state.started) { state.yaw = Math.PI / 2 - 0.12 + Math.sin(now / 5200) * 0.14; padRead(dt); }
+  if (busy) { MV.vx = MV.vz = MV.turn = 0; MV.tap = null; padRead(dt); }   /* no drifting off after a conversation */
   camLift += (groundY(state.x, state.z) - camLift) * Math.min(1, dt * 10);
   ftAvg += (dt * 1000 - ftAvg) * 0.05; ftT += dt; if (ftT > 3 && state.started) { ftT = 0; if (ftAvg > 26 && pxr > 0.8) { pxr = Math.max(0.8, pxr - 0.2); renderer.setPixelRatio(pxr); } }
   if (Q.on) { quakeTick(dt, now / 1000); debrisTick(dt); } const sh = Q.shake * (reduceMotion ? 0.15 : 1), tt = now / 1000;
@@ -1130,7 +1141,8 @@ async function loadAll() {
   keys.add('w'); run(10, 'w0.33s'); run(20, 'w1s'); keys.delete('w'); run(10, 'stop0.33s'); keys.add('a'); run(30, 'strafe'); keys.delete('a'); run(10, 'end');
   state.x = SHORE - 3; state.z = 1.3; MV.vx = MV.vz = 0; const zx = state.x; state.yaw = Math.PI / 2 - 0.4; keys.add('w'); run(30, 'wallslide'); keys.delete('w'); res.push('slid_x=' + (zx - state.x).toFixed(2) + ' z=' + state.z.toFixed(2));
   MV.tap = [state.x - 3, 0.2]; run(60, 'tap'); res.push('tapdone=' + (MV.tap === null) + ' at ' + state.x.toFixed(2) + ',' + state.z.toFixed(2));
-  document.title = 'STEP ' + res.join(' '); window.requestAnimationFrame = raf; }, 9000); } if (q.get('shot') === 'credits') { $('credits').hidden = false; } if (q.get('shot') === 'resetc') { setTimeout(() => $('reset').click(), 4000); } if (q.get('shot') === 'camp3') { beginAfter(); state.x = -4.2; state.z = 3.4; state.yaw = Math.PI / 2 - 0.2; } if (q.get('shot') === 'npc4') { beginAfter(); state.x = -7.4; state.z = 3.2; state.yaw = Math.atan2(-(-9.65 + 7.4), -(1.75 - 3.2)); } if (q.get('shot') === 'street') { state.x = 17; state.z = 0.4; } if (q.get('shot') === 'ships') { state.x = SHORE + 1; state.z = 0.9; state.yaw = -Math.PI / 2 + 0.25; state.pitch = 0.22; } if (q.get('shot') === 'beach') { state.x = SHORE - 6; state.z = 1; state.yaw = -Math.PI / 2 - 0.9; state.pitch = -0.05; } if (q.get('shot') === 'beach2') { state.x = SHORE - 7; state.z = -2; state.yaw = -Math.PI / 2 + 0.8; state.pitch = 0.05; } if (q.get('shot') === 'in' || q.get('shot') === 'stew') { state.talked = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = 2.6; state.yaw = 0.25; state.pitch = -0.12; setGoal(); if (q.get('shot') === 'stew') { state.x = -200.6; state.z = -0.6; state.yaw = 0.1; setTimeout(() => { $('talk').click(); state.step = 1; advance(); }, 400); } } } }, 300);
+  document.title = 'STEP ' + res.join(' '); window.requestAnimationFrame = raf; }, 9000); } if (q.get('shot') === 'pad') { setTimeout(() => { window.requestAnimationFrame = () => 0; const fake = { connected: true, axes: [0, -1, 0.6, 0], buttons: Array.from({ length: 16 }, () => ({ pressed: false })) }; navigator.getGamepads = () => [fake]; const x0 = state.x, y0 = state.yaw; let t = last; for (let i = 0; i < 30; i++) { t += 33; frame(t); }
+  const moved = Math.hypot(state.x - x0, state.z), turned = state.yaw - y0; fake.axes = [0, 0, 0, 0]; fake.buttons[3].pressed = true; t += 33; frame(t); document.title = 'PAD moved=' + moved.toFixed(2) + ' turned=' + turned.toFixed(2) + ' journal=' + !$('journal').hidden; }, 9000); } if (q.get('shot') === 'credits') { $('credits').hidden = false; } if (q.get('shot') === 'resetc') { setTimeout(() => $('reset').click(), 4000); } if (q.get('shot') === 'camp3') { beginAfter(); state.x = -4.2; state.z = 3.4; state.yaw = Math.PI / 2 - 0.2; } if (q.get('shot') === 'npc4') { beginAfter(); state.x = -7.4; state.z = 3.2; state.yaw = Math.atan2(-(-9.65 + 7.4), -(1.75 - 3.2)); } if (q.get('shot') === 'street') { state.x = 17; state.z = 0.4; } if (q.get('shot') === 'ships') { state.x = SHORE + 1; state.z = 0.9; state.yaw = -Math.PI / 2 + 0.25; state.pitch = 0.22; } if (q.get('shot') === 'beach') { state.x = SHORE - 6; state.z = 1; state.yaw = -Math.PI / 2 - 0.9; state.pitch = -0.05; } if (q.get('shot') === 'beach2') { state.x = SHORE - 7; state.z = -2; state.yaw = -Math.PI / 2 + 0.8; state.pitch = 0.05; } if (q.get('shot') === 'in' || q.get('shot') === 'stew') { state.talked = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = 2.6; state.yaw = 0.25; state.pitch = -0.12; setGoal(); if (q.get('shot') === 'stew') { state.x = -200.6; state.z = -0.6; state.yaw = 0.1; setTimeout(() => { $('talk').click(); state.step = 1; advance(); }, 400); } } } }, 300);
 }
 function start(saved) { try { if (sessionStorage.getItem('pr-fresh')) { sessionStorage.removeItem('pr-fresh'); saved = {}; } } catch (e) { /* ignore */ } if (!(saved && saved.started)) applySave(loadGame()); loadAll().catch(() => {}); if (saved && saved.started) { Object.assign(state, saved); if (state.place !== 'out' || state.x > SHORE + 24 || state.x < X0 - 1 || Math.abs(state.z) > 9.5) { state.place = 'out'; state.x = 17; state.z = 0.4; state.yaw = Math.PI / 2; state.pitch = 0; } $('start').addEventListener('click', () => { if (state.unlocked.length) { $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; } }, { once: true }); } requestAnimationFrame(frame); }
 /* ---------- test-only autoplayer (?auto=<chapter>): follows what the game offers, logs it, and flags stalls ---------- */
