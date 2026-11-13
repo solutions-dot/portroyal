@@ -2,7 +2,10 @@
    Copy this folder to games/<your-game>/ and grow it (see docs/NEW_GAME.md).
    It shows: a scene, first-person movement (keys, touch joystick, drag to look, gamepad-free),
    simple collisions, one person who plays shared animations, talking with a dialogue box,
-   a goal line, footsteps and UI sounds, and a link back to the game menu. */
+   a goal line, footsteps and UI sounds, and a link back to the game menu.
+   RULE for every game (CLAUDE.md rule 8): before the first PR, wire the automatic audits from engine/audit.js (floating objects, people in solids,
+   unreachable spots, held items, overlapping people) and a layout test into the dev build, and fix everything they report.
+   See docs/TESTING.md section 5 and games/kendal/src/main.js ("the place audit"). */
 import * as THREE from 'three';
 import { CL, mixers, loadClips, animate } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, AU } from '../../../engine/audio.js';

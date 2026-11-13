@@ -1148,7 +1148,8 @@ function dTree(g, x, z, h = 3.2, r = 1.1) {   /* a street or park tree: a trunk 
 }
 function dBarrel(g, x, y, z, sc = 1, mat = woodDark) { cyl(0.27 * sc, 0.27 * sc, 0.78 * sc, mat, x, y + 0.39 * sc, z, g, 14); for (const dy of [0.2, 0.58]) cyl(0.285 * sc, 0.285 * sc, 0.035 * sc, iron, x, y + dy * sc, z, g, 14); }
 function dCrate(g, x, y, z, s = 0.6, ry = 0) { const b = box(s, s, s, wood, x, y + s / 2, z, g); b.rotation.y = ry; box(s + 0.02, 0.05, s + 0.02, woodDark, x, y + s * 0.2, z, g).rotation.y = ry; box(s + 0.02, 0.05, s + 0.02, woodDark, x, y + s * 0.8, z, g).rotation.y = ry; }
-function dClock(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k); mesh(new THREE.CircleGeometry(0.21, 28), new THREE.MeshStandardMaterial({ map: clockTex(), roughness: 0.5 }), 0, 0, 0.045, k); mesh(new THREE.TorusGeometry(0.215, 0.025, 8, 28), brass, 0, 0, 0.04, k); cyl(0.23, 0.23, 0.05, woodDark, 0, 0, 0.02, k, 20).rotation.x = Math.PI / 2; }
+function dClock(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k);   /* the face sits clear of the wooden back (0.03) and gets a depth offset, so it never flickers (z-fights) as you walk about */
+  mesh(new THREE.CircleGeometry(0.21, 28), new THREE.MeshStandardMaterial({ map: clockTex(), roughness: 0.5, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 0, 0, 0.045, k); mesh(new THREE.TorusGeometry(0.215, 0.025, 8, 28), brass, 0, 0, 0.04, k); cyl(0.23, 0.23, 0.05, woodDark, 0, 0, 0.005, k, 20).rotation.x = Math.PI / 2; }
 function dPegs(g, x, y, z, ry, n = 4) {   /* a coat board with pegs, and two hats hung on it */
   const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k); box(0.2 + n * 0.22, 0.12, 0.03, woodDark, 0, 0, 0.015, k);
   for (let i = 0; i < n; i++) { const px = (i - (n - 1) / 2) * 0.22; cyl(0.012, 0.012, 0.08, brass, px, 0, 0.07, k, 6).rotation.x = Math.PI / 2; if (i === 0 || i === n - 2) { const hc = i === 0 ? 0x2c2a2a : 0x6b5a45; cyl(0.12, 0.12, 0.012, solid(hc, 0.9), px, -0.12, 0.1, k, 16).rotation.x = Math.PI / 2; cyl(0.075, 0.085, 0.09, solid(hc, 0.9), px, -0.12, 0.14, k, 14).rotation.x = Math.PI / 2; } } }
@@ -1161,7 +1162,7 @@ function dShip(g, x, z, len, ry = 0, funnel = true) { const k = new THREE.Group(
 
 /* the print shop (built when the page loads) */
 { const g = room;
-  dClock(g, -2.65, 2.55, Z0 + 0.03, 0); dPegs(g, -2.7, 1.75, Z1 - 0.04, Math.PI);
+  dClock(g, 3.3, 2.75, Z0 + 0.03, 0);   /* on plain wall beside the shelves (it used to hang in front of the back window) */ dPegs(g, -2.7, 1.75, Z1 - 0.04, Math.PI);
   dPlant(g, -3.7, 3.0, 1.1); WALLS.push([-4.0, 2.7, -3.4, 3.3]);
   dBarrel(g, 4.05, 0, 1.15, 1, woodDark); WALLS.push([3.75, 0.85, 4.35, 1.45]);
   cyl(0.012, 0.012, 1.5, wood, 4.38, 0.75, 3.1, g, 6).rotation.z = 0.06; box(0.3, 0.2, 0.04, solid(0xb59a5a, 0.95), 4.3, 0.1, 3.1, g);   /* a broom */

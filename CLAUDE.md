@@ -33,6 +33,7 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 5. **Everything must work on phones**: touch joystick, drag to look, tap people to talk. Check with the phone layout.
 6. **Check your work before calling it done**: build, take screenshots of what you changed, and run the autoplayer (see `docs/TESTING.md`).
 7. **Git**: commit as `M Squared <msquared.mail@gmail.com>` and add the attribution trailer the session asks for. Work on a branch, open a PR, and merge to `main` when the owner asks.
+8. **Run the automatic audits and fix everything they report, in every game.** Spotting floating signs and lamps, people stuck in walls, held items that cut through a body, people standing inside each other, seated people whose seat cuts through them or who sit on nothing, and text that overlaps one by one does not scale. `engine/audit.js` and the layout test find them for you. Every game wires them into its dev build (`?test=audit`, `?test=held`, `?test=layout`; see `docs/TESTING.md`, section 5) and every place must report **0 issues** before work is called done. A new game wires them before its first PR. When you find a new kind of mistake by eye, add a check for it to the audit, then fix it.
 
 ## Quick commands
 

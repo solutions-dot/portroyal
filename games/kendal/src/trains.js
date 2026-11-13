@@ -3,7 +3,7 @@
    which is also the height of a platform, so rail tops are at y = -1.1 (see RAIL_TOP). Colours and shapes are our best guess:
    we have not found photographs to copy (see docs/games/kendal.md). */
 import * as THREE from 'three';
-import { T, cv, grain, std, solid, mesh, box, cyl, plane, grp, rng } from './gfx.js';
+import { T, cv, grain, std, solid, mesh, box, cyl, plane, grp, rng, batchStatic } from './gfx.js';
 
 export const RAIL_TOP = -1.1;      /* height of the top of the rails under a vehicle whose floor is at y = 0 */
 const GAUGE = 1.435;               /* standard gauge, in metres */
@@ -39,7 +39,7 @@ export function wheel(r, spokes = false, thick = 0.13) {   /* its axle runs alon
   return g;
 }
 function wheelset(r, x, y, parent, wheels, spokes) {   /* a pair of wheels on an axle across the track, at x */
-  for (const s of [-1, 1]) { const w = wheel(r, spokes); w.position.set(x, y, s * (GAUGE / 2 + 0.02)); parent.add(w); if (wheels) wheels.push({ w, r }); }
+  for (const s of [-1, 1]) { const w = wheel(r, spokes); w.userData.noBatch = true; w.position.set(x, y, s * (GAUGE / 2 + 0.02)); parent.add(w); if (wheels) wheels.push({ w, r }); }
   const ax = cyl(0.07, 0.07, GAUGE + 0.1, M.iron, x, y, 0, parent, 8); ax.rotation.x = Math.PI / 2;
 }
 export function spin(train, dx) { for (const o of train.userData.wheels || []) o.w.rotation.z -= dx / o.r; }   /* roll the wheels as the train moves dx metres toward -x */
@@ -97,7 +97,80 @@ export function dieselLoco(L = 13.4) {
 /* ---------- steam engines: 'early' is the 1845 Projector (a 2-2-2 with one big pair of driving wheels, a brass dome and a tall chimney);
    'late' is a 4-4-0 of the 1890s with a cab. Every height is measured from the rails (H), so the wheels, frame, boiler and footplate line up. ---------- */
 const H = (h) => RAIL_TOP + h;
+/* ---------- the 1890s engine: a green 4-4-0 with a flared chimney, a brass dome, running boards, outside cylinders, a roofed cab and a coal tender.
+   Every height is measured from the rails (H), so the wheels, frame, boiler, boards and cab all sit on each other. Colours are our best guess. ---------- */
+function lateLoco() {
+  const g = grp(), Wl = []; g.userData.wheels = Wl;
+  const green = solid(0x27503a, 0.45, 0.2), dark = solid(0x1b1c20, 0.6, 0.3), lining = solid(0xd9c78c, 0.5, 0.3), red = solid(0x9a2c24, 0.6, 0.15), roof = solid(0x3a3d41, 0.7, 0.2), glassM = new THREE.MeshBasicMaterial({ color: 0x1a2630 }), fire = new THREE.MeshBasicMaterial({ color: 0xff8a2a });
+  const R = 0.86, by = H(2.1), br = 0.62, tx = 5.4, tl = 3.1, Z = GAUGE / 2;
+  /* the frame, the buffer beam with its buffers, and the drawbar to the tender */
+  box(7.2, 0.2, 1.3, dark, 0, H(1.05), 0, g); box(0.2, 0.5, 2.0, red, -3.7, H(1.15), 0, g);
+  for (const z of [-0.72, 0.72]) { const bf = cyl(0.08, 0.1, 0.38, M.iron, -3.9, H(1.15), z, g, 8); bf.rotation.z = Math.PI / 2; mesh(new THREE.SphereGeometry(0.12, 8, 6), M.steel, -4.08, H(1.15), z, g); }
+  box(0.5, 0.1, 0.12, M.iron, -3.95, H(0.95), 0, g); box(0.36, 0.08, 0.2, M.iron, 3.78, H(0.98), 0, g);
+  /* the boiler on its saddle, the firebox on its foundation, the smokebox and its door */
+  box(0.9, 0.45, 1.0, dark, -2.55, H(1.37), 0, g); box(1.3, 0.62, 1.1, dark, 0.65, H(1.46), 0, g);
+  const barrel = cyl(br, br, 2.4, green, -0.9, by, 0, g, 24); barrel.rotation.z = Math.PI / 2;
+  for (const x of [-1.8, -1.0, -0.2]) { const bd = cyl(br + 0.02, br + 0.02, 0.08, lining, x, by, 0, g, 24); bd.rotation.z = Math.PI / 2; }
+  const sbox = cyl(br + 0.04, br + 0.04, 0.95, dark, -2.575, by, 0, g, 24); sbox.rotation.z = Math.PI / 2;
+  const door = cyl(br * 0.92, br * 0.92, 0.05, M.iron, -3.07, by, 0, g, 24); door.rotation.z = Math.PI / 2; const dring = mesh(new THREE.TorusGeometry(br * 0.88, 0.022, 6, 24), M.brass, -3.1, by, 0, g); dring.rotation.y = Math.PI / 2; box(0.04, 0.34, 0.06, M.brass, -3.12, by, 0, g);
+  box(1.0, 1.4, 1.3, green, 0.6, H(2.45), 0, g);   /* the firebox casing */
+  /* the chimney with its flared cap, the dome and the whistle, the sand dome, the safety valves */
+  cyl(0.17, 0.2, 1.0, dark, -2.6, H(3.15), 0, g, 12); cyl(0.34, 0.17, 0.3, dark, -2.6, H(3.75), 0, g, 14); cyl(0.345, 0.345, 0.04, M.brass, -2.6, H(3.91), 0, g, 14);
+  const chim = new THREE.Object3D(); chim.position.set(-2.6, H(3.98), 0); g.add(chim); g.userData.chimney = chim;
+  cyl(0.34, 0.34, 0.14, M.brass, -0.9, H(2.7), 0, g, 14); mesh(new THREE.SphereGeometry(0.33, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), M.brass, -0.9, H(2.77), 0, g); cyl(0.04, 0.06, 0.34, M.brass, -0.9, H(3.27), 0, g, 8);
+  cyl(0.26, 0.26, 0.1, dark, -1.8, H(2.7), 0, g, 12); mesh(new THREE.SphereGeometry(0.25, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), dark, -1.8, H(2.75), 0, g);
+  for (const dx of [0, 0.32]) cyl(0.045, 0.06, 0.22, M.brass, 0.4 + dx, H(3.26), 0, g, 6); cyl(0.04, 0.05, 0.3, M.brass, 0.85, H(3.3), 0, g, 6);
+  for (const s of [-1, 1]) { const rail = cyl(0.025, 0.025, 2.9, M.brass, -1.55, by + 0.31, s * 0.63, g, 6); rail.rotation.z = Math.PI / 2; for (const x of [-2.8, -1.8, -0.8, 0.0]) box(0.03, 0.03, 0.1, M.brass, x, by + 0.31, s * 0.585, g); }   /* the handrails, each held to the boiler by short stays */
+  /* the headlamp on its bracket and the brass number plate */
+  box(0.12, 0.1, 0.12, dark, -3.0, H(2.82), 0, g); box(0.3, 0.3, 0.28, dark, -3.0, H(3.0), 0, g); const lamp = cyl(0.12, 0.12, 0.04, M.headlamp, -3.17, H(3.0), 0, g, 10); lamp.rotation.z = Math.PI / 2; g.userData.headlamp = lamp;
+  cyl(0.16, 0.16, 0.02, M.brass, -3.13, by + 0.32, 0, g, 12).rotation.z = Math.PI / 2;
+  /* running boards: low at the front, stepping up over the big wheels; each held by brackets to the frame */
+  for (const s of [-1, 1]) {
+    box(2.9, 0.05, 0.5, dark, -2.05, H(1.5), s * 0.87, g); box(2.9, 0.025, 0.03, lining, -2.05, H(1.53), s * 1.1, g);
+    for (const x of [-3.2, -2.2, -1.2]) box(0.04, 0.35, 0.3, dark, x, H(1.33), s * 0.72, g);
+    box(0.05, 0.45, 0.5, dark, -0.55, H(1.72), s * 0.87, g);
+    box(1.6, 0.05, 0.45, dark, 0.25, H(1.95), s * 0.82, g); box(1.6, 0.12, 0.03, green, 0.25, H(1.87), s * 1.04, g);
+    for (const x of [-0.2, 0.7]) box(0.04, 0.4, 0.3, dark, x, H(1.75), s * 0.66, g);
+  }
+  /* the cab: a floor, two sides with windows, a front wall, the roof on top, and the steps down */
+  box(2.9, 0.1, 2.0, M.woodDark, 2.45, H(1.9), 0, g);
+  for (const s of [-1, 1]) {
+    box(2.3, 1.45, 0.06, green, 2.25, H(2.7), s * 0.97, g); box(2.3, 0.025, 0.012, lining, 2.25, H(3.36), s * 1.005, g); box(2.3, 0.025, 0.012, lining, 2.25, H(2.06), s * 1.005, g);
+    for (const x of [1.85, 2.85]) { box(0.72, 0.6, 0.02, glassM, x, H(2.85), s * 1.005, g); box(0.78, 0.04, 0.03, lining, x, H(3.17), s * 1.012, g); box(0.78, 0.04, 0.03, lining, x, H(2.53), s * 1.012, g); }
+    box(0.07, 1.45, 0.07, green, 3.38, H(2.7), s * 0.93, g);
+    for (const x of [2.95, 3.45]) box(0.05, 1.0, 0.04, M.iron, x, H(1.45), s * 1.0, g);   /* iron straps hold the two steps */
+    box(0.5, 0.04, 0.3, M.woodDark, 3.2, H(1.45), s * 1.0, g); box(0.5, 0.04, 0.3, M.woodDark, 3.2, H(0.97), s * 1.0, g);
+  }
+  box(0.07, 1.45, 1.94, green, 1.14, H(2.7), 0, g);
+  box(2.9, 0.07, 2.2, roof, 2.3, H(3.46), 0, g); box(2.4, 0.06, 1.2, roof, 2.3, H(3.52), 0, g);
+  box(0.03, 0.4, 0.42, M.iron, 1.19, H(2.2), 0, g); box(0.02, 0.2, 0.3, fire, 1.21, H(2.2), 0, g);   /* the fire door, seen through the cab window */
+  for (const z of [-0.4, 0.4]) { const gg = cyl(0.07, 0.07, 0.03, M.brass, 1.19, H(2.95), z, g, 10); gg.rotation.z = Math.PI / 2; }
+  /* the wheels: a pair of small ones in front of the cylinders and two big driving pairs, linked by rods */
+  for (const dx of [-2.3, -1.4]) wheelset(0.45, dx, H(0.45), g, Wl, true); box(1.4, 0.12, 1.0, dark, -1.85, H(0.8), 0, g);
+  for (const dx of [0.4, 1.9]) wheelset(R, dx, H(R), g, Wl, true);
+  for (const s of [-1, 1]) {
+    const zr = s * (Z + 0.17), zc = s * 0.95;
+    box(1.5, 0.08, 0.06, M.steel, 1.15, H(R), zr, g); for (const x of [0.4, 1.9]) { const bs = cyl(0.07, 0.07, 0.1, M.brass, x, H(R), zr, g, 10); bs.rotation.x = Math.PI / 2; }
+    const mr = box(1.05, 0.08, 0.06, M.steel, -0.08, H(1.03), zr, g); mr.rotation.z = -0.343;   /* the main rod, from the crosshead down to the first driving wheel */
+    const cyl1 = cyl(0.16, 0.16, 0.7, dark, -1.85, H(1.2), zc, g, 12); cyl1.rotation.z = Math.PI / 2; const cap = cyl(0.17, 0.17, 0.04, M.brass, -2.22, H(1.2), zc, g, 12); cap.rotation.z = Math.PI / 2;
+    const pr = cyl(0.03, 0.03, 0.9, M.steel, -1.05, H(1.2), zc, g, 6); pr.rotation.z = Math.PI / 2; box(0.2, 0.14, 0.1, M.iron, -0.58, H(1.2), zc, g); box(0.6, 0.04, 0.08, M.steel, -0.8, H(1.2), zc, g);
+    box(0.1, 0.12, 0.34, dark, -1.85, H(1.38), s * 0.82, g);   /* the pipe that carries steam out to the cylinder */
+  }
+  /* the tender: frame, a green tank with cream lining, a coal bunker heaped with coal, a hand brake, the rear buffer beam */
+  box(tl + 0.3, 0.14, 1.3, dark, tx, H(0.98), 0, g); box(tl, 0.9, 1.6, green, tx, H(1.52), 0, g); box(tl + 0.02, 0.03, 1.62, lining, tx, H(1.94), 0, g);
+  for (const s of [-1, 1]) { for (const y of [1.2, 1.84]) box(tl - 0.3, 0.02, 0.012, lining, tx, H(y), s * 0.806, g); for (const dx of [-1, 1]) box(0.02, 0.64, 0.012, lining, tx + dx * (tl / 2 - 0.15), H(1.52), s * 0.806, g); box(tl - 0.3, 0.3, 0.05, green, tx - 0.15, H(2.1), s * 0.77, g); }
+  box(0.05, 0.55, 1.6, green, tx - tl / 2 + 0.1, H(2.2), 0, g); box(0.05, 0.55, 1.6, green, tx + tl / 2 - 0.05, H(2.2), 0, g);
+  const coal = solid(0x111214, 0.95), mound = mesh(new THREE.SphereGeometry(1, 12, 8), coal, tx - 0.05, H(1.97), 0, g); mound.scale.set(1.3, 0.5, 0.74);
+  for (let i = 0; i < 9; i++) mesh(new THREE.DodecahedronGeometry(0.16 + (i % 3) * 0.04, 0), coal, tx - 0.95 + (i % 5) * 0.45, H(2.38 - Math.abs((i % 5) - 2) * 0.1), -0.25 + Math.floor(i / 5) * 0.4 + (i % 2) * 0.05, g);
+  cyl(0.025, 0.025, 0.8, M.iron, tx + tl / 2 - 0.2, H(2.45), 0.6, g, 6); cyl(0.12, 0.12, 0.03, M.iron, tx + tl / 2 - 0.2, H(2.86), 0.6, g, 10);
+  box(0.18, 0.46, 1.9, red, tx + tl / 2 + 0.12, H(1.1), 0, g); for (const z of [-0.7, 0.7]) { const bf = cyl(0.07, 0.09, 0.3, M.iron, tx + tl / 2 + 0.34, H(1.1), z, g, 8); bf.rotation.z = Math.PI / 2; }
+  wheelset(0.45, tx - tl * 0.32, H(0.45), g, Wl, true); wheelset(0.45, tx + tl * 0.32, H(0.45), g, Wl, true);
+  batchStatic(g);   /* everything that does not move becomes a handful of meshes; the wheels (marked noBatch) still spin */
+  return g;
+}
+
 export function steamLoco(kind = 'early') {
+  if (kind !== 'early') return lateLoco();
   const g = grp(); g.userData.wheels = []; const early = kind === 'early', W = g.userData.wheels;
   const green = early ? solid(0x1f4d2e, 0.45, 0.2) : solid(0x1b1c20, 0.6, 0.25), casing = early ? solid(0x2a5a38, 0.5, 0.2) : solid(0x202126, 0.65, 0.2), line = solid(0xb08a3a, 0.5, 0.4);
   const br = early ? 0.5 : 0.62, by = H(early ? 1.82 : 2.05), bx0 = early ? -2.3 : -3.0, bx1 = early ? 0.9 : 1.0;   /* boiler from bx0 to bx1, centre height by */
@@ -131,6 +204,7 @@ export function steamLoco(kind = 'early') {
   for (let i = 0; i < 11; i++) mesh(new THREE.DodecahedronGeometry(0.26 + (i % 3) * 0.05, 0), solid(0x131313, 1), tx - tl * 0.35 + (i % 4) * tl * 0.24, H(2.15 + (i % 2) * 0.1), -0.4 + Math.floor(i / 4) * 0.4 + (i % 3) * 0.06, g);
   cyl(0.14, 0.14, 0.06, M.brass, tx - tl * 0.3, H(1.96), 0.5, g, 10); box(0.5, 0.22, 0.34, M.woodDark, tx + tl * 0.3, H(2.05), -0.5, g);
   wheelset(0.45, tx - tl * 0.32, H(0.45), g, W, true); wheelset(0.45, tx + tl * 0.32, H(0.45), g, W, true); box(0.7, 0.12, 0.12, M.black, tx - tl / 2 - 0.5, H(0.95), 0, g);
+  batchStatic(g);   /* the parts that never move become a handful of meshes; the wheels still spin */
   return g;
 }
 

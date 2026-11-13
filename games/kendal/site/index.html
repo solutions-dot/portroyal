@@ -43,7 +43,7 @@ button{font:inherit;color:inherit}
 #title h1 span{font-family:var(--serif);font-style:italic;font-size:.42em;display:block;margin-top:.35em;color:var(--paper)}
 #title p{margin:0;max-width:32rem}
 .dev{background:none;border:0;color:var(--paper);font-family:var(--text);font-size:.95rem;opacity:.85;cursor:pointer;padding:.4em .2em;min-height:44px;letter-spacing:.02em}.dev b{color:var(--brass);font-weight:700}.dev:hover{opacity:1;text-decoration:underline;text-underline-offset:4px}
-#credits{position:fixed;inset:0;background:rgba(18,28,38,.8);display:grid;place-items:center;padding:16px;z-index:40}#credits[hidden]{display:none}#credits .book{max-height:88vh;overflow:auto}#credits .crbody{padding:1.4rem clamp(1.2rem,4vw,2.6rem) 1.8rem;max-width:40rem;margin:0 auto}#credits .crbig{text-align:center;font-size:1.3rem;margin:.4em 0 .2em}#credits h3{font-family:var(--display);font-weight:400;margin:1.4em 0 .5em;font-size:1.05rem;text-align:center;border-top:1px solid rgba(40,30,20,.25);padding-top:1em}#credits p,#credits li{margin:.25em 0;line-height:1.45}#credits ul{padding-left:1.1em;margin:.2em 0}
+#credits{position:fixed;inset:0;background:rgba(18,28,38,.8);display:grid;place-items:center;padding:16px;z-index:51}#credits[hidden]{display:none}#credits .book{max-height:88vh;overflow:auto}#credits .crbody{padding:1.4rem clamp(1.2rem,4vw,2.6rem) 1.8rem;max-width:40rem;margin:0 auto}#credits .crbig{text-align:center;font-size:1.3rem;margin:.4em 0 .2em}#credits h3{font-family:var(--display);font-weight:400;margin:1.4em 0 .5em;font-size:1.05rem;text-align:center;border-top:1px solid rgba(40,30,20,.25);padding-top:1em}#credits p,#credits li{margin:.25em 0;line-height:1.45}#credits ul{padding-left:1.1em;margin:.2em 0}
 .loading{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:.4rem}
 .track{flex:1 1 9rem;height:6px;background:var(--ink-2);border-radius:3px;overflow:hidden;min-width:8rem}
 #bar{height:100%;width:0;background:var(--brass);transition:width .2s}
@@ -111,7 +111,7 @@ body.cine #goal,body.cine #hint,body.cine #toast{opacity:.0;pointer-events:none}
 body.cine #dialogue{bottom:calc(13vh + 12px)}body.cine #talk{bottom:calc(13vh + 20px)}
 body.cine #sub{bottom:0;height:13vh;display:flex;align-items:center;justify-content:center;font-size:clamp(1rem,2.6vw,1.5rem)}   /* the narration sits inside the lower black bar */
 body.subbing #hint,body.subbing #toast{opacity:0;pointer-events:none}   /* the hint and the toast wait while narration shows */
-body.talking #sub{opacity:0!important}
+body.talking #sub{opacity:0!important;visibility:hidden}
 body.talking #goal,body.talking #hint{visibility:hidden}   /* while someone is speaking, the goal and the hint step aside */   /* narration waits while someone is speaking, so the two never overlap */
 #sub{position:fixed;left:50%;bottom:clamp(124px,26vh,190px);transform:translateX(-50%);z-index:48;width:min(44rem,calc(100% - 28px));text-align:center;font-family:var(--serif);font-style:italic;font-size:clamp(1.1rem,3.2vw,1.8rem);line-height:1.25;color:#fff6e0;text-shadow:0 2px 10px rgba(0,0,0,.9);pointer-events:none;margin:0;transition:opacity .6s}
 #sub.dim{opacity:0}
@@ -129,7 +129,7 @@ body.talking #goal,body.talking #hint{visibility:hidden}   /* while someone is s
 #topr{position:absolute;right:16px;top:16px;display:flex;gap:8px}
 #topr #jbtn{position:static}
 #reset,#snd{background:rgba(18,28,38,.88);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}
-#chapters{position:fixed;inset:0;background:rgba(18,28,38,.8);display:grid;place-items:center;padding:16px;z-index:30}
+#chapters{position:fixed;inset:0;background:rgba(18,28,38,.8);display:grid;place-items:center;padding:16px;z-index:51}   /* above the HUD (47) and the narration (48), so the goal and the buttons never sit on top of the panel */
 .chnote{margin:.9rem 1.2rem 0;color:var(--paper-ink);font-size:.95rem}
 .chlist{list-style:none;margin:0;padding:.9rem 1.2rem;display:flex;flex-direction:column;gap:.5rem}
 .chbtn{width:100%;display:grid;grid-template-columns:8rem 1fr auto;align-items:center;gap:.8rem;text-align:left;background:transparent;border:1.5px solid var(--paper-ink);border-radius:6px;padding:.6rem .85rem;cursor:pointer;color:var(--paper-ink);min-height:52px}
@@ -148,6 +148,11 @@ body.talking #goal,body.talking #hint{visibility:hidden}   /* while someone is s
 #place{position:absolute;left:50%;top:max(22%,152px);transform:translateX(-50%);font-family:var(--display);font-size:clamp(1.3rem,4.6vw,2.4rem);letter-spacing:.02em;text-align:center;text-shadow:0 2px 12px rgba(0,0,0,.8);pointer-events:none;transition:opacity 1.6s;margin:0;width:min(34rem,calc(100% - 24px))}
 @media (max-width:520px){.chbtn{grid-template-columns:1fr auto}.chbtn .yr{grid-column:1}.chbtn .nm{grid-column:1}.chbtn .st{grid-row:1 / span 2;grid-column:2}}
 @media (max-width:520px){#journal footer span{display:none}#jhome{margin-left:0}#journal footer{justify-content:flex-end}html,body{font-size:17px}#goal{font-size:.85rem}#hint{white-space:normal;text-align:center}}
+/* a card covers the whole screen, so everything under it steps aside */
+body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){visibility:hidden}
+/* short screens (a phone on its side): tighter cards, a lower toast, and no place caption while a toast shows */
+@media (max-height:460px){#toast{bottom:118px}#sub{bottom:118px;font-size:1rem}body:has(#toast:not([hidden])) #place{opacity:0!important}#place{font-size:clamp(1.05rem,3.4vw,1.5rem)}
+  #card{padding:10px}.cardin{gap:.45rem}.cardin h2{font-size:1.5rem}#cbody p{font-size:.95rem;margin:0 0 .35rem}#cbtns.col{flex-direction:row;align-items:center}}
 @media (prefers-reduced-motion:reduce){#bar{transition:none}#hold{animation:none}}
 </style>
 </head>

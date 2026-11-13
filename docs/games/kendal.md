@@ -87,6 +87,12 @@ timeout 290 google-chrome --headless=new --no-sandbox --use-gl=swiftshader --ena
   --virtual-time-budget=150000 --dump-dom "http://localhost:8765/games/kendal/site/index.html?auto=5&one" | sed -n '/<pre id="autolog"/,/<\/pre>/p'
 ```
 
+- Engine views: `seat1` to `seat3` (the coach benches), `sit1` (benches at the crash site), `loco1` to `loco4` (the 1890s engine), `eloco1`, `eloco2` (the 1845 engine), `bunch1`, `bunch2` (banana bunches), `mule1`, `mule2` (the loaded mule).
+- **Automatic checks (a rule for every game, see `docs/TESTING.md`, section 5).** Each place must report 0 issues:
+  - `?test=audit` (or `&p=hill,road`): floating signs and lamps, people inside solids, unreachable spots, people standing inside each other, and seated people (seat through the thighs, hanging, sitting on nothing). Add `&seats=1` to print each seated person's hip height. The code is `engine/audit.js`.
+  - `?test=held`: carried things are at the hand and clear of the body.
+  - `?test=layout`: interface overlap, clipped text and off-screen items, in each state. Run it with the window at 390x800, 667x375, 800x500 and 1280x720.
+  - `?test=resume`: a saved game resumes in the right place.
 - The menu poster `menu/kendal.jpg` comes from `?shot=poster` at 1280 by 720 (the HUD is hidden).
 
 ## Research (checked 13 November 2026 against secondary sources only)

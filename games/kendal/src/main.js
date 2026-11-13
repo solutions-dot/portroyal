@@ -16,7 +16,7 @@ import { buildKingston57, buildCoach, buildBeach, buildCrash, buildMemorial } fr
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL } from './content.js';
 import * as SFX from './sfx.js';
 import { DECOR } from './decor.js';
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
 
 const $ = (id) => document.getElementById(id);
@@ -84,7 +84,8 @@ const BASES = {}, basePromises = {};
 function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePromises[id] = basePromises[id] || model(id).then((g) => { g.scene.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); BASES[id] = g; return g; })); }
 const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb08a48); return h; }, hamper: () => hamper(), lantern: () => lantern(), bucket: () => bucket() };
 /* how each thing is carried (see hold() in props.js): handleY is the height of its handle, out is how far the hand's item sits from the body. After changing these run ?test=held. */
-let GRIP = { hamper: { handleY: 0.52, scale: 0.5, out: 0.16 }, suitcase: { handleY: 0.5, scale: 0.8, out: 0.16 }, lantern: { handleY: 0.31, scale: 0.85, out: 0.14 }, bucket: { handleY: 0.34, scale: 0.9, out: 0.15 }, basket: { dy: 0.12, scale: 0.8 } };
+const SIT_HIPS = 0.12;   /* metres from the seat to the hip joint of a seated person at full size (the audit checks it) */
+let GRIP = { hamper: { handleY: 0.52, scale: 0.5, out: 0.2 }, suitcase: { handleY: 0.5, scale: 0.8, out: 0.17, yaw: Math.PI / 2 }, lantern: { handleY: 0.31, scale: 0.85, out: 0.14 }, bucket: { handleY: 0.34, scale: 0.9, out: 0.15 }, basket: { dy: 0.12, scale: 0.8 } };
 const SKIN_LIGHT = 1.55;   /* the bodies' skin is built dark, so we lighten it a little (as in Marcus Garvey) so faces read in every light */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
@@ -97,6 +98,10 @@ function makeBody(s) {
   if (!/^Sit/.test(s.anim || '')) { const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.05; b.renderOrder = 1; m.add(b); }
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl;
   m.userData.held = []; ctl.mx.update(0);   /* pose the body once, so the grips below are measured on the real hand */
+  if (/^Sit/.test(s.anim || '')) m.userData.noGround = true;   /* a seated body is placed on its seat, so the per-frame foot grounding must leave it alone */
+  if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
+      m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
+      if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat (its top is s.seat): the hip joint rides 12 cm above it, whatever the body's size */
   for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); hold(m, bone, o, GRIP[prop]); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) s._flame = o.userData.flame; }
   if (s.lamp) { const o = lantern(); hold(m, 'RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
   return m;
@@ -530,7 +535,7 @@ function nudgeTarget() {
   let bestT = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; bestT = [n.x, n.z]; } } return bestT;
 }
 function nudgeTick(now) {
-  const el = $('nudge'); if (!el) return; const quiet = state.started && !busy && !frozen && !DIR.on && !CR.on && $('holdwrap').hidden && $('dialogue').hidden && $('card').hidden && goalText && !fading;
+  const el = $('nudge'); if (!el) return; const quiet = state.started && !busy && !frozen && !DIR.on && !CR.on && $('holdwrap').hidden && $('dialogue').hidden && $('card').hidden && $('place').style.opacity !== '1' && !document.body.classList.contains('subbing') && goalText && !fading;
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
   if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30000); NUDGE.still = now; }
@@ -588,7 +593,7 @@ function update(dt, now) {
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
   for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); }
-  if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible) groundFeet(m);
+  if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
   if (P.tick) P.tick(dt, (now || 0) / 1000); rideTick(dt, (now || 0) / 1000); smokeTick(dt);
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
   if (cur === 'road' && stage === 12 && state.x > 24) setStage(13);
@@ -610,7 +615,10 @@ const NORENDER = __DEV__ && /[?&]auto=/.test(location.search);   /* the scripted
 requestAnimationFrame(frame);
 
 /* ---------- the place audit (dev builds): the checks live in engine/audit.js. Run ?test=audit and expect 0 issues in every place. ---------- */
-const auditPlace = (P) => auditPlaceE({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start,
+const auditPlace = (P) => { const r = auditPlaceBase(P); for (const n of P.npcs) if (/^Sit/.test(n.anim || '') && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); if (!n.m.userData.noGround) groundFeet(n.m);   /* the same step the game runs every other frame */
+       for (const l of auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, SEATLOG)) r.inside.push(l); } return r; };
+const SEATLOG = [];   /* ?test=audit&seats=1 also prints how high each seated person's hips are above the seat */
+const auditPlaceBase = (P) => auditPlaceE({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start,
   actions: P.actions, people: P.people.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
 
 /* ---------- test views and scripted playthroughs: dev builds only (node tools/build.mjs kendal --dev) ---------- */
@@ -622,7 +630,7 @@ function devViews() {
   const V = {
     mule1: ['road', 11, -29.5, 6.4, -0.35, -0.05], mule2: ['road', 11, -25.4, 6.6, 0.15, -0.02], road1: ['road', 10, -33, 0.6, -1.35, 0], road2: ['road', 12, 22, 0.8, -1.5, 0.02], road3: ['road', 10, -22, 2.2, -0.1, 0],
     st1: ['station45', 20, -2, 6.5, 0.15, 0], st2: ['station45', 20, -7, 4.2, 0.9, 0.02], st3: ['station45', 20, 14, 5, 0.25, 0.05],
-    hill1: ['hill', 30, -24, 5.5, -1.5, 0], hill2: ['hill', 30, -10, 4, -0.3, 0.05],
+    hill1: ['hill', 30, -24, 5.5, -1.5, 0], hill2: ['hill', 30, -10, 4, -0.3, 0.05], loco1: ['hill', 30, -9, 2.2, -1.0, 0.02], seat1: ['coach', 52, 2.45, 0.1, 0.92, -0.3], seat2: ['coach', 52, 1.9, 0.25, 0.25, -0.38], seat3: ['coach', 52, 1.0, 0.25, -0.35, -0.38], sit1: ['crash', 61, 1.0, 7.2, 1.99, -0.15], bunch1: ['hill', 30, -11.2, 8.2, 0.75, -0.32], bunch2: ['hill', 30, -12.6, 6.6, 0.6, -0.75], loco2: ['hill', 30, 0.5, 2.6, 0, 0.0], loco3: ['hill', 30, 6.5, 2.2, 1.0, 0.0], loco4: ['hill', 30, -12, 1.0, -1.35, 0.0], eloco1: ['station45', 20, -16.5, 3.2, -1.05, 0.0], eloco2: ['station45', 20, -10.5, 3.0, 0, 0.0],
     k1: ['kingston57', 40, -22, 5, PI / 2 - 0.2, 0], k2: ['kingston57', 40, -22, 5, -PI / 2 + 0.4, 0], k3: ['kingston57', 40, -9, 6.2, 0.35, 0], k4: ['kingston57', 41, 28, 4, -PI / 2, 0],
     ride1: ['ride45', 23, 0.2, 0, PI / 2 + 0.25, 0], ride2: ['ride45', 23, 0.2, 0, 0.3, 0.05], poster: ['kingston57', 40, 47, -9.0, PI / 2 + 0.5, 0.03, ENV.gold], lurch: ['coach', 53, 1.5, 0, PI / 2 + 0.5, 0], coach1: ['coach', 51, 4.3, 0, PI / 2, 0], coach2: ['coach', 51, 0, 0, 1.2, 0], coach3: ['coach', 51, 3.2, 0.2, PI / 2 - 0.5, 0],
     beach1: ['beach', 43, 0, 9, 0.1, 0], beach2: ['beach', 43, 8, 3, -1.2, 0],
@@ -636,13 +644,14 @@ function devViews() {
   if (shot === 'chap1') go('road', 10, -27, 4.2, 0, 0).then(() => { best = 35; modelsReady = true; openChapters(); });
   if (V[shot]) go(...V[shot]).then((P) => {
     if (shot === 'st3') { /* the governor's end */ }
-    if (shot === 'hill2') { P.train.visible = true; P.train.position.x = 0; }
+    if (shot === 'hill2' || /^loco/.test(shot)) { P.train.visible = true; P.train.position.x = 0; }
     if (shot === 'mule2') { (async () => { for (let i = 0; i < 3; i++) { loadItem(P, P.goods[i], i); for (let k = 0; k < 30; k++) update(0.05); } for (let k = 0; k < 10; k++) update(0.05); })(); }
     if (/^ride/.test(shot)) { RIDE.on = true; RIDE.kind = 'steam'; RIDE.v = RIDE.target = 9; for (let i = 0; i < 40; i++) update(0.05); }
     if (shot === 'poster') { $('hud').hidden = true; for (let i = 0; i < 4; i++) update(0.05); }
     if (shot === 'lurch') { setRigTheme(P, 'night'); setEnv(ENV.night); RIDE.on = true; RIDE.kind = 'diesel'; RIDE.v = RIDE.target = 24; P.lamp.intensity = 3; for (let i = 0; i < 30; i++) update(0.05); P.group.rotation.x = 0.17; FX.shake = 0.5; bars(true); say('The brakes scream.', 99999); }
-    if (/^coach/.test(shot)) { RIDE.on = true; RIDE.kind = 'diesel'; RIDE.v = RIDE.target = 12; for (let i = 0; i < 30; i++) update(0.05); }
+    if (/^coach|^seat/.test(shot)) { RIDE.on = true; RIDE.kind = 'diesel'; RIDE.v = RIDE.target = 12; for (let i = 0; i < 30; i++) update(0.05); }
     if (shot === 'coach3') { setRigTheme(P, 'night'); setEnv(ENV.night); }
+    if (shot === 'seat1') { setRigTheme(P, 'night'); setEnv(ENV.night); }
     if (/^crash/.test(shot)) { story.lamp = true; updateLamp(); if (shot === 'crash2') { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; handLamp.intensity = 0; P.torches.forEach((t) => { t.visible = false; }); } }
     if (shot === 'crash3') { setEnv(ENV.dawn); }
     if (shot === 'crash5') { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; handLamp.intensity = 0; lampMesh.visible = false; P.torches.forEach((t) => { t.visible = false; }); }
@@ -651,11 +660,12 @@ function devViews() {
     if (q.has('stats')) setTimeout(() => { renderer.info.reset(); renderer.render(scene, camera); const i = renderer.info; const t = 'STATS calls=' + i.render.calls + ' tris=' + i.render.triangles + ' geo=' + i.memory.geometries + ' tex=' + i.memory.textures; document.title = t; console.log(t); }, 1500);
   });
   if (q.get('test') === 'layout') {   /* ?test=layout : open each UI state and check that no two visible things overlap, nothing is cut off, and nothing is off the screen. Run at several window sizes. */
-    (async () => { const out = [], W = innerWidth, Hh = innerHeight; await ensurePlace('road'); startGame(true); enterPlace('road'); $('hud').hidden = false; $('title').hidden = true; stage = 11; refreshGoal();
+    (async () => { const out = [], W = innerWidth, Hh = innerHeight; const st = document.createElement('style'); st.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st);   /* headless Chrome draws few frames, so fades would be caught half way */
+      await ensurePlace('road'); startGame(true); enterPlace('road'); $('hud').hidden = false; $('title').hidden = true; stage = 11; refreshGoal();
       const IDS = ['goal', 'topr', 'talk', 'hint', 'toast', 'sub', 'dialogue', 'cinner', 'place', 'hold', 'nudge'], rect = (id) => { const e = id === 'cinner' ? document.querySelector('#card .cardin') : $(id); if (!e || e.hidden) return null; const cs = getComputedStyle(e); if (cs.display === 'none' || +cs.opacity < 0.05 || cs.visibility === 'hidden') return null; const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1 ? { id, r, e } : null; };
       const check = (name) => { const L = IDS.map(rect).filter(Boolean); for (const a of L) { if (a.r.left < -1 || a.r.top < -1 || a.r.right > W + 1 || a.r.bottom > Hh + 1) out.push(`${W}x${Hh} ${name}: ${a.id} is off the screen (${a.r.left | 0},${a.r.top | 0},${a.r.right | 0},${a.r.bottom | 0})`); if (a.e.scrollWidth > a.e.clientWidth + 2 && getComputedStyle(a.e).overflow !== 'visible' && a.id !== 'dialogue') out.push(`${W}x${Hh} ${name}: ${a.id} text is cut off`); }
-        for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i].r, b = L[j].r, ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top); if (ox > 4 && oy > 4) out.push(`${W}x${Hh} ${name}: ${L[i].id} overlaps ${L[j].id} by ${ox | 0}x${oy | 0}`); } };
-      const reset = () => { for (const id of ['talk', 'toast', 'dialogue', 'card', 'holdwrap', 'nudge']) $(id).hidden = true; $('hint').hidden = true; bars(false); document.body.classList.remove('subbing', 'talking'); $('sub').classList.add('dim'); $('place').hidden = true; };
+        for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i].r, b = L[j].r, ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top); if (ox > 4 && oy > 4) out.push(`${W}x${Hh} ${name}: ${L[i].id} overlaps ${L[j].id} by ${ox | 0}x${oy | 0} [${L[i].id} op ${getComputedStyle(L[i].e).opacity} ${L[i].r.top | 0}-${L[i].r.bottom | 0}, ${L[j].id} op ${getComputedStyle(L[j].e).opacity} ${L[j].r.top | 0}-${L[j].r.bottom | 0}]`); } };
+      const reset = () => { for (const id of ['talk', 'toast', 'dialogue', 'card', 'holdwrap', 'nudge']) $(id).hidden = true; $('hint').hidden = true; bars(false); document.body.classList.remove('subbing', 'talking'); $('sub').classList.add('dim'); $('place').hidden = true; $('place').style.opacity = 0; };
       const settle = () => new Promise((r) => setTimeout(r, 700));
       reset(); showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; showHint(); toast('Loaded 2 of 3'); showPlace('The Spanish Town road, about 1844'); await settle(); check('play: goal, talk, hint, toast, place');
       reset(); showGoal(true); say('The train climbs into the hills, slowly and steadily, and the engines work very hard indeed.', 1e6); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; showHint(); toast('Loaded 2 of 3'); await settle(); check('narration without bars');
@@ -663,7 +673,13 @@ function devViews() {
       reset(); showGoal(true); document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Mass Dudley'; $('line').textContent = 'Some say a railway will help us. Some say it will take our work. What do you think about that, child?'; $('choices').innerHTML = '<button class="btn ghost">It will help people.</button><button class="btn ghost">It might take your work.</button><button class="btn ghost">I do not know yet.</button>'; $('next').hidden = true; await settle(); check('dialogue with three choices');
       reset(); bars(true); say('Hold on!', 1e6); $('holdwrap').hidden = false; $('talk').hidden = true; await settle(); await new Promise((r) => setTimeout(r, 1100)); check('hold on button in the bars');
       reset(); card('About half past eleven', ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], [{ t: 'Begin', go: () => {} }, { t: 'Read what happened instead', go: () => {} }], { col: true }); await settle(); check('card');
-      reset(); $('nudge').hidden = false; showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Give the water to the nurse'; await settle(); check('helper arrow with talk button');
+      reset(); $('nudge').hidden = false; $('nudge').style.left = (W * 0.75 | 0) + 'px'; $('nudge').style.top = (Hh * 0.45 | 0) + 'px'; showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Give the water to the nurse'; await settle(); check('helper arrow with talk button');
+      /* panels opened in the middle of play (the journal, the chapters list, the credits) must be on top: their title and Close button must be what you touch there */
+      const covered = (name, panel, ids) => { for (const id of ids) { const e = $(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (!t || !$(panel).contains(t)) out.push(`${W}x${Hh} ${name}: ${id} is covered by ${t ? (t.id || t.className || t.tagName) : 'nothing'}`); } };
+      reset(); showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; await settle();
+      openChapters(); await settle(); covered('chapters panel in play', 'chapters', ['chtitle', 'chclose']); closeChapters();
+      openJournal(); await settle(); covered('journal panel in play', 'journal', ['jtitle', 'jclose']); closeJournal();
+      openCredits(); await settle(); covered('credits panel in play', 'credits', ['crtitle', 'crclose']); closeCredits();
       document.title = 'LAYOUT ' + out.length; const el = $('autolog'); if (el) el.textContent = (out.length ? out : [W + 'x' + Hh + ': no layout problems']).join('\n'); })();
   }
   if (q.get('test') === 'held') {
@@ -673,7 +689,7 @@ function devViews() {
   }
   if (q.get('test') === 'audit') {   /* ?test=audit&p=road,hill : floating objects, people inside solids, unreachable spots */
     (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
-      const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + out.length; })();
+      if (q.get('seats')) out.push(...SEATLOG); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + out.length; })();
   }
   if (q.get('test') === 'resume') {   /* saved games resume in the right place, and closing a finishing conversation still moves the story on */
     (async () => { const out = []; startGame(true);

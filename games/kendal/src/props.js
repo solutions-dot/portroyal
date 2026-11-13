@@ -28,15 +28,52 @@ export function tree(h = 5.5, seed = 1, tone = 0) {   /* a broad tree like a man
   for (let i = 0; i < 5; i++) { const s = h * (0.22 + r() * 0.16), b = mesh(new THREE.IcosahedronGeometry(s, 1), flat(cols[(r() * cols.length) | 0]), (r() - 0.5) * h * 0.4, h * 0.62 + r() * h * 0.22, (r() - 0.5) * h * 0.4, g); b.scale.y = 0.8; }
   return g;
 }
-export function banana(seed = 1) {
+export function banana(seed = 1, fruit = false) {   /* a banana plant; with fruit = true it carries a hanging bunch and the purple flower bud */
   const r = rng(seed), g = grp(); cyl(0.11, 0.17, 2.6, solid(0x6f8f3a, 1), 0, 1.3, 0, g, 8);
+  if (fruit) { const h = grp(g, 0, 0, 0); h.rotation.y = r() * 6.28; const fr = bananaBunch(1.15); fr.position.set(0.36, 1.66, 0); h.add(fr); const arm = cyl(0.03, 0.03, 0.4, solid(0x7a8440, 1), 0.18, 2.535, 0, h, 5); arm.rotation.z = -1.82; const bud = mesh(new THREE.SphereGeometry(0.1, 8, 6), solid(0x6a2a58, 0.6), 0.36, 1.56, 0, h); bud.scale.set(0.8, 1.5, 0.8); }
   for (let i = 0; i < 6; i++) { const f = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 2.7, 1, 4), BLM()); const p = f.geometry.attributes.position; for (let k = 0; k < p.count; k++) { const y = p.getY(k) + 1.35; p.setZ(k, -(y * y) * 0.09); } f.geometry.translate(0, 1.3, 0); f.position.y = 2.5; f.rotation.order = 'YXZ'; f.rotation.y = i / 6 * Math.PI * 2 + r() * 0.5; f.rotation.x = -0.55 - r() * 0.5; g.add(f); }
   return g;
 }
-export function bananaBunch(scale = 1) {   /* a hand of green bananas on a stem, for carrying and loading */
-  const g = grp(); cyl(0.04, 0.05, 0.7 * scale, M.trunk, 0, 0.35 * scale, 0, g, 6);
-  for (let i = 0; i < 7; i++) { const h = mesh(new THREE.CylinderGeometry(0.07 * scale, 0.05 * scale, 0.5 * scale, 6), solid(0x7fa83a, 0.9), Math.cos(i * 0.9) * 0.1 * scale, (0.45 - i * 0.045) * scale, Math.sin(i * 0.9) * 0.1 * scale, g); h.rotation.z = 0.3; h.rotation.y = i; }
-  return g;
+/* a real-looking bunch of green bananas: a curved stalk with six "hands", each hand two rows of five-sided fingers that leave the stalk
+   pointing out and down, then curve up. Built once as a single vertex-coloured mesh and shared by every bunch in the game (about 1.7k triangles).
+   Bananas are cut green for the ship, so green is right. The stalk runs from y = 0 (the bud end) to y = 0.72 (the cut end). */
+let _bunchGeo, _bunchMat;
+function bunchGeometry() {
+  if (_bunchGeo) return _bunchGeo;
+  const r = rng(11), pos = [], col = [], V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z), C = (h) => new THREE.Color(h);
+  const tri = (a, b, c, ca, cb, cc) => { pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z); col.push(ca.r, ca.g, ca.b, cb.r, cb.g, cb.b, cc.r, cc.g, cc.b); };
+  const tube = (P, rad, colAt, sides, ref) => {   /* a tube along the points P, its radius and colour set along its length, closed at the far end */
+    const rings = P.map((p, i) => { const t = V().subVectors(P[Math.min(i + 1, P.length - 1)], P[Math.max(i - 1, 0)]).normalize(), n = V().crossVectors(t, ref).normalize(), sd = V().crossVectors(n, t).normalize(), k = i / (P.length - 1), q = rad(k), ring = [];
+      for (let j = 0; j < sides; j++) { const a = j / sides * Math.PI * 2; ring.push(V().copy(p).addScaledVector(sd, Math.cos(a) * q).addScaledVector(n, Math.sin(a) * q * 0.92)); } return { ring, c: colAt(k), p }; });
+    for (let i = 0; i < rings.length - 1; i++) for (let j = 0; j < sides; j++) { const j2 = (j + 1) % sides, A = rings[i], B = rings[i + 1]; tri(A.ring[j], B.ring[j], B.ring[j2], A.c, B.c, B.c); tri(A.ring[j], B.ring[j2], A.ring[j2], A.c, B.c, A.c); }
+    const E = rings[rings.length - 1]; for (let j = 0; j < sides; j++) tri(E.p, E.ring[j], E.ring[(j + 1) % sides], E.c, E.c, E.c);
+  };
+  const lerpC = (a, b, k) => a.clone().lerp(b, k);
+  const stalkX = (y) => 0.025 * Math.sin(Math.PI * (y / 0.72));
+  /* the stalk: pale cut end at the top, a thin dark tail where the flower was, at the bottom */
+  const sp = []; for (let i = 0; i <= 6; i++) { const y = 0.72 - i * 0.12; sp.push(V(stalkX(y), y, 0)); }
+  const cut = C(0xd6d39a), stalkC = C(0x7a8440), tail = C(0x3a3522);
+  tube(sp, (k) => 0.03 - 0.016 * k, (k) => (k < 0.04 ? cut : lerpC(stalkC, tail, Math.max(0, (k - 0.6) / 0.4))), 6, V(0, 0, 1));
+  const HANDS = [[6, 0.27, 0.64], [6, 0.26, 0.555], [5, 0.245, 0.47], [5, 0.23, 0.385], [4, 0.2, 0.3], [3, 0.17, 0.225]];
+  const stem = C(0xaabd68), tip = C(0x4a4824);
+  HANDS.forEach(([m, len, y0], h) => {
+    const az = h * 2.2 + 0.4, sx = stalkX(y0);
+    for (let row = 0; row < 2; row++) for (let j = 0; j < m; j++) {
+      const a = az + (j - (m - 1) / 2) * 0.27 + (row ? 0.13 : 0), L = len * (row ? 1.0 : 0.88) * (0.92 + r() * 0.16), y = y0 + (row ? -0.024 : 0.014) + (r() - 0.5) * 0.008, u = V(Math.cos(a), 0, Math.sin(a));
+      const root = V(sx, y, 0).addScaledVector(u, 0.05), th0 = -0.5 + (r() - 0.5) * 0.12, bend = 1.75 + (r() - 0.5) * 0.3, pts = [root.clone()], p = root.clone();
+      for (let k = 1; k <= 3; k++) { const th = th0 + bend * (k - 0.5) / 3; p.addScaledVector(u, Math.cos(th) * L / 3); p.y += Math.sin(th) * L / 3; pts.push(p.clone()); }
+      const g1 = lerpC(C(0x7aa63a), C(0x93bb4c), r()).multiplyScalar(0.9 + r() * 0.16);
+      tube(pts, (k) => (k < 0.3 ? 0.011 + 0.014 * (k / 0.3) : k < 0.78 ? 0.025 : 0.025 - 0.012 * ((k - 0.78) / 0.22)), (k) => (k < 0.12 ? lerpC(stem, g1, k / 0.12) : k > 0.9 ? lerpC(g1, tip, (k - 0.9) / 0.1) : g1), 5, V(-Math.sin(a), 0, Math.cos(a)));
+    }
+    const arc = []; for (let i = 0; i <= 3; i++) { const aa = az + (i - 1.5) * 0.32; arc.push(V(sx + Math.cos(aa) * 0.05, y0 - 0.006, Math.sin(aa) * 0.05)); }   /* the cushion the hand grows from */
+    tube(arc, () => 0.03, () => C(0x6b7a38), 5, V(0, 1, 0));
+  });
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.computeVertexNormals();   /* flat faces: the five ridges of each finger show */
+  return (_bunchGeo = geo);
+}
+export function bananaBunch(scale = 1) {
+  _bunchMat = _bunchMat || new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0, side: THREE.DoubleSide });
+  const g = grp(), m = new THREE.Mesh(bunchGeometry(), _bunchMat); m.scale.setScalar(scale); g.add(m); return g;
 }
 export function bush(seed = 1, s = 1) { const r = rng(seed), g = grp(); for (let i = 0; i < 3; i++) mesh(new THREE.IcosahedronGeometry(0.5 * s, 1), flat([0x35703a, 0x4a8a3c, 0x2d6035][i]), (r() - 0.5) * 0.6 * s, 0.35 * s, (r() - 0.5) * 0.6 * s, g); return g; }
 export function flowers(seed = 1) { const r = rng(seed), g = grp(); for (let i = 0; i < 7; i++) { const c = [0xe8505b, 0xf5c542, 0xffffff, 0xe27ad8][(r() * 4) | 0]; mesh(new THREE.SphereGeometry(0.07, 6, 5), glow(c), (r() - 0.5) * 0.7, 0.14 + r() * 0.1, (r() - 0.5) * 0.7, g); } mesh(new THREE.SphereGeometry(0.4, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), flat(0x3d7a38), 0, 0, 0, g).scale.y = 0.4; return g; }
@@ -90,6 +127,13 @@ export function lantern() {   /* a hand lamp: a metal frame, a glowing glass, a 
   const flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); flame.scale.set(0.5, 0.5, 1); flame.position.y = 0.2; g.add(flame); g.userData.flame = flame; return g;
 }
 export function torch() { const g = grp(); cyl(0.03, 0.04, 1.1, M.woodDark, 0, 0.55, 0, g, 6); const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); f.scale.set(0.9, 1.1, 1); f.position.y = 1.2; g.add(f); g.userData.flame = f; return g; }
+let _rockMat;
+export function seatRock(h = 0.46, r = 0.36, seed = 1) {   /* a boulder with a flat top, to sit on (top at y = h). The sides are lumpy, the top is level. */
+  _rockMat = _rockMat || new THREE.MeshStandardMaterial({ color: 0x8a867a, roughness: 1, flatShading: true });
+  const geo = new THREE.CylinderGeometry(r * 0.86, r, h, 8, 1), p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) { const a = Math.atan2(p.getZ(i), p.getX(i)), f = 1 + 0.14 * Math.sin(3 * a + seed) + 0.09 * Math.sin(5 * a + seed * 2); p.setX(i, p.getX(i) * f); p.setZ(i, p.getZ(i) * f); }
+  geo.computeVertexNormals(); const g = grp(); mesh(geo, _rockMat, 0, h / 2, 0, g); return g;
+}
 export function bench(L = 2, c = 0x6b4a30) { const g = grp(), m = solid(c, 0.95); box(L, 0.07, 0.5, m, 0, 0.45, 0, g); box(L, 0.5, 0.06, m, 0, 0.75, -0.24, g); for (const x of [-L / 2 + 0.1, L / 2 - 0.1]) box(0.08, 0.45, 0.44, M.woodDark, x, 0.22, 0, g); return g; }
 export function pole(h = 7) { const g = grp(); cyl(0.09, 0.12, h, M.woodDark, 0, h / 2, 0, g, 6); box(1.6, 0.08, 0.08, M.woodDark, 0, h - 0.4, 0, g); for (const x of [-0.7, -0.25, 0.25, 0.7]) cyl(0.03, 0.03, 0.16, solid(0xc9d6d0, 0.4), x, h - 0.3, 0, g, 6); return g; }
 export function lampPost(h = 3.6, lit = true) { const g = grp(); cyl(0.06, 0.09, h, M.iron, 0, h / 2, 0, g, 8); box(0.34, 0.34, 0.34, lit ? M.lanternGlass : M.iron, 0, h + 0.1, 0, g); box(0.46, 0.06, 0.46, M.iron, 0, h + 0.32, 0, g); return g; }
@@ -129,7 +173,9 @@ const PI2 = Math.PI / 2;
 /* things to load: a basket of yams, a sack of provisions, a bunch of bananas bound with rope */
 export function yamBasket() { const g = grp(); cyl(0.26, 0.2, 0.34, std(T.weave([3, 1]), 0.95), 0, 0.17, 0, g, 14); for (let i = 0; i < 7; i++) { const y = mesh(new THREE.SphereGeometry(0.1, 8, 6), solid([0x8a5a30, 0x9a6a3a, 0x7a4a28][i % 3], 1), Math.cos(i * 1.1) * 0.12, 0.4 + (i > 4 ? 0.07 : 0), Math.sin(i * 1.1) * 0.12, g); y.scale.set(1.5, 0.8, 0.9); y.rotation.y = i; } return g; }
 export function provisionSack() { const g = grp(); const b = mesh(new THREE.SphereGeometry(0.28, 12, 9), solid(0xc2ad78, 1), 0, 0.28, 0, g); b.scale.set(1, 1.15, 0.85); const neck = cyl(0.07, 0.1, 0.1, solid(0xa89258, 1), 0, 0.6, 0, g, 8); mesh(new THREE.TorusGeometry(0.075, 0.014, 5, 10), solid(0x6a4a28, 1), 0, 0.58, 0, g).rotation.x = PI2; return g; }
-export function bananaLoad() { const g = grp(); for (let i = 0; i < 3; i++) { const b = bananaBunch(1.0); b.position.set((i - 1) * 0.16, 0.05, (i % 2) * 0.1); b.rotation.set(0, i * 1.2, PI2 * 0.85); g.add(b); } cyl(0.014, 0.014, 0.5, solid(0xb8a070, 1), 0, 0.2, 0, g, 5).rotation.z = PI2; return g; }
+export function bananaLoad() {   /* three bunches lying across the mule's back, tied round with rope */
+  const g = grp(); [[-0.13, 0.17], [0.13, 0.17], [0, 0.36]].forEach(([x, y], i) => { const b = bananaBunch(0.66); b.rotation.order = 'ZXY'; b.rotation.set(PI2, i * 1.5, 0); b.position.set(x, y, -0.22); g.add(b); });
+  const rope = mesh(new THREE.TorusGeometry(0.26, 0.012, 5, 18), solid(0xb8a070, 1), 0, 0.2, 0.0, g); rope.scale.y = 0.85; return g; }
 export function loadedMule() { return mule(); }
 export function cart(L = 2.6, W = 1.4) {
   const g = grp(); box(L, 0.1, W, M.wood, 0, 0.7, 0, g); for (const s of [-1, 1]) box(L, 0.4, 0.07, M.wood, 0, 0.95, s * W / 2, g); box(0.07, 0.4, W, M.wood, -L / 2, 0.95, 0, g);
@@ -162,10 +208,10 @@ export function attach(model, boneName, obj, pos = [0, 0, 0], rot = [0, 0, 0], s
    The character must already be posed (its mixer updated once). The item's origin is its bottom centre; handleY is the height of its handle above that origin.
    For a hand: the handle goes at the hand, pushed `out` metres away from the body so the item clears the hip and thigh. For the head: the item rests `dy` above the head bone.
    (engine/audit.js, auditHeld, checks the result: at the hand, upright, clear of the body.) */
-export function hold(model, boneName, obj, { handleY = 0.4, scale = 1, out = 0.14, dy = null } = {}) {
+export function hold(model, boneName, obj, { handleY = 0.4, scale = 1, out = 0.14, dy = null, yaw = 0 } = {}) {
   const bone = model.getObjectByName('mixamorig' + boneName); if (!bone) return null; model.updateMatrixWorld(true);
   const bp = bone.getWorldPosition(new THREE.Vector3()), bq = bone.getWorldQuaternion(new THREE.Quaternion()), bs = bone.getWorldScale(new THREE.Vector3()).x || 1, mq = model.getWorldQuaternion(new THREE.Quaternion());
   const hips = model.getObjectByName('mixamorigHips'), hp = hips ? hips.getWorldPosition(new THREE.Vector3()) : bp.clone(); const away = new THREE.Vector3(bp.x - hp.x, 0, bp.z - hp.z); if (away.lengthSq() < 1e-4) away.set(1, 0, 0).applyQuaternion(mq); away.normalize();
   const world = bp.clone().addScaledVector(away, dy === null ? out : 0); world.y += dy === null ? -handleY * scale : dy;   /* where the item's origin goes */
-  const wrap = new THREE.Group(); bone.add(wrap); wrap.position.copy(bone.worldToLocal(world.clone())); wrap.quaternion.copy(bq).invert().multiply(mq); wrap.scale.setScalar(scale / bs); wrap.add(obj); return wrap;
+  const wrap = new THREE.Group(); bone.add(wrap); wrap.position.copy(bone.worldToLocal(world.clone())); wrap.quaternion.copy(bq).invert().multiply(mq); wrap.scale.setScalar(scale / bs); obj.rotation.y = yaw; wrap.add(obj); return wrap;
 }
