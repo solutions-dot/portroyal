@@ -31,7 +31,8 @@ JSON fields:
   | `sleeve` | 0 to 1, how far down the arm |
   | `coat` | `true` |
   | `coatsleeve` | 0 to 1 |
-  | `coathem` | skirt length, for example 0.06 to 0.12 |
+  | `coathem` | skirt length above the knee, for example 0.02 to 0.06 (longer skirts clip the knees when walking) |
+  | `coatopen` | `true` by default: the skirt is open at the front below the waist, as 1690 coats were, so the legs pass through when walking. Set `false` for a closed skirt |
   | `breeches` | `true` |
   | `breechkind` | `"slops"` for wide sailor breeches |
   | `shoes`, `stockings`, `apron` | `true` |

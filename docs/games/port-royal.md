@@ -45,7 +45,7 @@ Made-up characters say so on their journal page (owner rule 3).
 
 | Who | Real or made up | Where | Model |
 |---|---|---|---|
-| Lewis Galdy (you) | real | everywhere | `galdy` (third-person view with V) |
+| Lewis Galdy (you) | real | everywhere | `galdy` (third-person view with V); walks with the shared `Walk` clip, paced to his speed |
 | Abba, tavern keeper | made up (stands for the free Black people of Port Royal) | by the tavern door (-5.2, 0.9) | `abba` |
 | Old Ned, retired buccaneer | made up | tavern table, sitting | `ned` |
 | Kofi, enslaved dockworker | made up | carries crates from the stack at (19.4, 3.1) to the pier | `kofi` |
@@ -71,8 +71,10 @@ People who stroll use `STROLL` (paths per id); they stop and face you within 3.6
 - **Later lines**: `npcTalk` and `nsTalk` give different short lines on repeat visits (`state.ch.seen`, `state.ch.heard`).
 - **Journal**: `JOURNAL` pages, each `{ id, title, simple: [...], deeper: [...] }`. Every id must be unique. `unlock(id)` adds a page.
 - **Goals**: `setGoal()` for chapter 0; chapters set `goalText` and call `showGoal()`.
-- **Helper arrow**: `NUDGE` and `NUDGE_MAP`. If you stand still 15 s, or a goal does not change for 50 s, the goal pops open and pulses, and a gold arrow points to the next thing to do (above it when on screen, at the screen edge otherwise). Add a row to `NUDGE_MAP` for every new goal: `[goal regex, action-label regex or [x, z]]`.
+- **Helper arrow**: `NUDGE` and `NUDGE_MAP`. If you stand still 15 s, or a goal does not change for 50 s, the goal pops open and pulses, and a gold arrow shows the way: pointing down at the target with "Here!" when it is in front ("Look down" or "Look up" when it is off the top or bottom of the screen), or a big "This way" arrow at the left or right edge when you need to turn. Add a row to `NUDGE_MAP` for every new goal: `[goal regex, action-label regex or [x, z]]`.
 - **Controls**: `MV` (easing, wall sliding), Shift to hurry, `padRead` (gamepad), touch joystick (left), drag to look (right), tap-to-walk is mouse only.
+- **Solid things**: everything added to the scene after `nStreet` in the harbour section becomes solid (`streetProps`, `buildPropC`). People are solid through the list near the end of `clampPos` (Abba, `NPCS`, `NS_PEOPLE`, the soldier).
+- **Menu link**: `MENU` checks whether `../../../menu/` exists; if it does, "All games" shows on the title screen, in the Journal and in the restart panel.
 - **Per-frame hooks**: `TICKS.push((dt) => ...)`.
 - **Sounds**: `engine/audio.js`; `footstep()` picks the floor kind.
 - **Earthquake**: `Q` (phases calm, tremor, sink, sea).
