@@ -412,7 +412,7 @@ function resetChapter() {   /* the print shop again: people go home, the goal st
 const CHAPTER_END = { 3: 0, 14: 1, 23: 2, 34: 3, 44: 4, 54: 5, 64: 6 };   /* the last stage of each chapter but the final one, and which chapter it ends */
 function nextCard(i, s, tries = 0) {   /* when a chapter is finished, offer the next one on screen, so nobody has to dig through Chapters */
   if (stage !== s) return;   /* the player has moved on or restarted */
-  if ((panelsOpen() || fading) && tries < 10) { setTimeout(() => nextCard(i, s, tries + 1), 800); return; }
+  if (panelsOpen() || fading) { if (tries < 10) setTimeout(() => nextCard(i, s, tries + 1), 800); return; }   /* never take over a panel the player is reading: if it stays open, drop the prompt (Chapters still works) */
   const nx = CHAPTERS[i + 1]; if (!nx || !nx.ready) return; uiSound('goal');
   card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); nx.go(); } }, { t: 'Stay here', go: hideCard }]);
 }
