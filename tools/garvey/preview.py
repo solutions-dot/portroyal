@@ -21,6 +21,8 @@ for rot,en in (((50,0,-35),5.0),((60,0,140),2.0)):
     s=bpy.data.lights.new('s','SUN'); s.energy=en; so=bpy.data.objects.new('s',s); sc.collection.objects.link(so); so.rotation_euler=tuple(math.radians(x) for x in rot)
 cam=bpy.data.cameras.new('c'); cam.lens=55; co=bpy.data.objects.new('c',cam); sc.collection.objects.link(co); sc.camera=co
 cx=(len(names)-1)*0.5
-for p,loc in (('build/garvey_front.png',(cx,-6.2,0.95)),('build/garvey_34.png',(cx+3.6,-5.0,1.0))):
-    co.location=Vector(loc); co.rotation_euler=(Vector((cx,0,0.88))-co.location).to_track_quat('-Z','Y').to_euler()
+views=[('build/garvey_front.png',(cx,-6.2,0.95),(cx,0,0.88)),('build/garvey_34.png',(cx+3.6,-5.0,1.0),(cx,0,0.88))]
+if os.environ.get('GV_CLOSE'): views=[('build/garvey_close_front.png',(0,-2.3,1.38),(0,0,1.34)),('build/garvey_close_34.png',(1.5,-1.9,1.38),(0,0,1.34)),('build/garvey_close_back.png',(0.6,2.3,1.38),(0,0,1.34))]
+for p,loc,tgt in views:
+    co.location=Vector(loc); co.rotation_euler=(Vector(tgt)-co.location).to_track_quat('-Z','Y').to_euler()
     sc.render.resolution_x,sc.render.resolution_y=(1300,880); sc.render.filepath=p; bpy.ops.render.render(write_still=True)
