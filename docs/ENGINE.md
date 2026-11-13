@@ -1,0 +1,84 @@
+# Engine (shared code)
+
+The engine is plain ES modules in `engine/`, bundled into each game by `tools/build.mjs`. A game imports what it needs:
+
+```js
+import { CL, mixers, grounded, loadClips, setFallbackClip, clipFor, animate, groundFeet, seamLoop } from '../../../engine/anim.js';
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, tone, noiseHit, gullCry, crackle, chirp, shipCreak, hammer, clink, setG, out } from '../../../engine/audio.js';
+import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
+```
+
+## engine/loader.js: loading packed models
+
+Models ship as `site/models/<name>.js`, each defining `window.__models[name] = "<base64 glb>"`. This keeps everything as text, so any static host serves it, including claude.ai artifacts.
+
+| Function | Use |
+|---|---|
+| `onLoadFail(fn)` | `fn(name)` is called if a file fails, for example to show "reload the page". |
+| `script(name)` | Loads `models/<name>.js`. Texture packs (`tex_*`) only need this. |
+| `model(name)` | Loads and parses a packed glTF and resolves to the gltf (`.scene`, `.animations`). Meshopt-compressed files are supported. |
+| `stage([names], onEach)` | Loads several in parallel and puts results in `window.__got[name]`. `onEach(fraction)` drives a progress bar. |
+
+## engine/anim.js: animation for every character
+
+Every character uses the same Mixamo skeleton (`mixamorig*` bones, from `shared/rig/char.blend`), so one clip library animates everyone.
+
+| Name | Use |
+|---|---|
+| `CL` | Clip library, name to `AnimationClip`. Fill it with `loadClips(gltfOf('anims'))`. |
+| `clipFor(name)` | Returns a ready-to-play copy of a clip (details below). |
+| `animate(model, name)` | Gives a character a controller, also kept as `model.userData.anim`. |
+| `mixers` | Every mixer `animate()` makes. The game loop calls `mx.update(dt)` on visible ones. |
+| `grounded`, `groundFeet(m)` | Push a model into `grounded` and call `groundFeet` each frame: it pins the lowest toe to `m.userData.ground` (default 0), so feet never float or sink. |
+| `seamLoop(clip)` | Makes a loop end exactly where it starts. Already applied to Walk, Run, Carry, Tread, SadWalk. |
+| `setFallbackClip(c)` | The clip used if a named one is missing. |
+
+What `clipFor` does to each copy:
+- It drops scale tracks and moving-root tracks.
+- It keeps the hips' height only for clips matching `HIPS_Y` (sitting, stumbling, praying, sword work...).
+- It locks seated clips over their seat, facing the way the character is placed.
+- `WalkM` is a steadier man's walk made from `Walk`, with less hip and spine twist.
+
+The controller from `animate()` (`ctl`):
+- `ctl.play('Wave', once)` plays a clip, cross-faded. With `once` it returns to the base clip afterwards.
+- `ctl.play('Walk')` loops a clip.
+- `ctl.rest()` goes back to the base clip.
+- `ctl.tick(dt)` is called each frame for the once-timers.
+
+Clips in the library: Idle, Run, Walk, StartWalk, StopWalk, Carry, CarryIdle, TurnR, TurnL, TurnRW, TurnLW, JogStumble, StumbleBack, Tread, Talk1, Talk2, Talk3, Point, Wave, WaveSlow, Laugh, Salute, Clap, Cheer, SitDisbelief, SitTalk, SitIdle, SitDrink, Write, Terrified, Sad1, Sad2, Cry, Block, Punch, Sword1, Sword2, Sheathe, PickUp, Pray, Drink. To add one, see PIPELINE.md.
+
+## engine/audio.js: sound made in code
+
+There are no audio files. Everything is Web Audio noise and oscillators.
+
+| Name | Use |
+|---|---|
+| `soundPref('mygame-sound')` | Call once at startup; it remembers on/off per game. |
+| `audioInit()` | Call on the first user tap (browsers block sound before one). It creates the looping beds `AU.ch.sea`, `surf`, `wind`, `crowd`, `room`. |
+| `setG(AU.ch.sea, level)` | Fades a bed. A game's own `audioTick()` decides the levels per place every 0.1 s. |
+| `setSound(on)` | The mute button. |
+| `stepSound(kind)` | A footstep: `'sand'`, `'grass'`, `'wood'`, `'stone'` or `'water'` (a splash stroke). |
+| `uiSound(kind)` | Interface sounds: `'page'` (new journal page), `'goal'` (goal changed), `'tap'` (conversation starts). |
+| `cue(kind)` | Short music phrases: `'begin'`, `'sad'`, `'end'`. |
+| `gullCry()`, `chirp()`, `crackle()`, `shipCreak()`, `hammer()`, `clink()` | One-shot ambience. |
+| `tone(f0, f1, dur, type, vol, pan, delay)`, `noiseHit(freq, q, dur, vol, pan, delay)`, `out(pan)` | Building blocks for new sounds. |
+
+## Still inside Port Royal, ready to move next
+
+These systems are general but still live in `games/port-royal/src/main.js`, because they read Port Royal's UI and state directly. When a second game needs one, move it into `engine/` and pass the game's details in as options:
+
+- **Conversation system**: `startConvo`, `showStep`, choices with `ok: true`, `unlock` on a line, speaker animation (`speakerModel`), the talk badge (`TB`, `BUBBLE`, `setActionButton`) and turning to face the player (two `TICKS` hooks).
+- **Actions**: the `ACTIONS` list and the nearest-action picker.
+- **Journal and goals**: `JOURNAL`, `unlock`, `renderJournal`, `showGoal`, the goal box that folds away.
+- **Chapters and saving**: `CHAPTERS` (each with `go`, `done`), `chapterFade`, `saveGame`, the Reset button.
+- **Movement and controls**:
+  - the keyboard, touch joystick (resting outline) and drag-to-look code;
+  - `padRead` for game controllers;
+  - the `MV` easing (walking speeds up and slows down smoothly);
+  - wall sliding;
+  - mouse-only tap-to-walk;
+  - the `clampPos` pattern (bounds per place, then collision circles and boxes).
+- **People who stroll**: `STROLL` routes, stopping when the player is near, and later-visit lines (`MORE`, `NS_MORE`, `npcTalk`, `nsTalk`).
+- **Test harness**: the `?shot=` views and the `?auto=` autoplayer.
+
+`games/_template/src/main.js` has small, self-contained versions of movement, talking and the frame loop, so a new game can start without pulling these out first.

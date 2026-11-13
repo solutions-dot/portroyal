@@ -1,7 +1,8 @@
 import bpy, bmesh, math, sys, json
 from mathutils import Vector, Matrix, noise
 from mathutils.bvhtree import BVHTree
-P=json.loads(sys.argv[-1]); OUT='/tmp/web/site/models/'
+import os
+P=json.loads(sys.argv[-1]); OUT=os.environ.get('NPC_OUT','games/port-royal/site/models/')   # where the .glb goes; see docs/PIPELINE.md
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.preferences.addon_enable(module='bl_ext.user_default.mpfb')
 from bl_ext.user_default.mpfb.services.humanservice import HumanService
@@ -12,7 +13,7 @@ for k,v in P['body'].items(): HumanObjectProperties.set_value(k,v,entity_referen
 TargetService.reapply_macro_details(h)
 def ov(o): return bpy.context.temp_override(object=o,active_object=o,selected_objects=[o],selected_editable_objects=[o])
 with ov(h): bpy.ops.object.shape_key_remove(all=True,apply_mix=True)
-eyes=HumanService.add_mhclo_asset('/tmp/mh/makehuman/data/eyes/low-poly/low-poly.mhclo',h,asset_type='Eyes',subdiv_levels=0)
+eyes=HumanService.add_mhclo_asset(os.path.join(os.environ.get('MAKEHUMAN','/tmp/mh/makehuman'),'data/eyes/low-poly/low-poly.mhclo'),h,asset_type='Eyes',subdiv_levels=0)
 rig=HumanService.add_builtin_rig(h,'mixamo')
 for m in list(h.modifiers):
     if m.type=='MASK': h.modifiers.remove(m)
@@ -262,7 +263,7 @@ def paint(o):
 for o in clothes+[h]: paint(o)
 for m in eyes.data.materials:
     for n in m.node_tree.nodes:
-        if n.type=='TEX_IMAGE' and n.image: n.image.filepath='/tmp/char/eye.png'; n.image.reload()
+        if n.type=='TEX_IMAGE' and n.image: n.image.filepath=os.path.abspath('shared/rig/eye.png'); n.image.reload()
 # relaxed arms and curled fingers, the same pose Abba uses
 def aim(n,t):
     pb=rig.pose.bones[n]; bpy.context.view_layer.update(); M=pb.matrix.copy()
@@ -277,7 +278,7 @@ for side,sx in (('Left',1),('Right',-1)):
             bpy.context.view_layer.update(); M=pb.matrix.copy(); hd=M.to_translation(); pb.matrix=Matrix.Translation(hd)@Matrix.Rotation(math.radians(ang),4,ax)@Matrix.Translation(-hd)@M
 bpy.context.view_layer.update()
 print('TRIS',sum(len(p.vertices)-2 for o in bpy.data.objects if o.type=='MESH' for p in o.data.polygons))
-bpy.ops.wm.save_as_mainfile(filepath='/tmp/npc/'+P['name']+'.blend')
+os.makedirs('build/people',exist_ok=True); bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath('build/people/'+P['name']+'.blend'))
 bpy.ops.export_scene.gltf(filepath=OUT+P['name']+'.glb',export_image_format='JPEG',export_apply=False,export_vertex_color='NAME',export_vertex_color_name='Col',export_skins=True,export_animations=False,export_rest_position_armature=False)
 # a copy for Mixamo: rest pose, with skin, so the user can pick animations for it
 if P.get('fbx'):

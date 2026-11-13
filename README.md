@@ -1,14 +1,61 @@
-# Port Royal 1690
+# History Games
 
-An educational, playable 3D game about Port Royal, Jamaica, told through the life of Lewis Galdy: a French Huguenot refugee who arrived in the busiest town in the English Caribbean, was swallowed by the earthquake of 7 June 1692, was thrown back into the sea and rescued, and lived another 47 years. It runs in a phone or desktop browser.
+Educational 3D history games for the web, for children aged 6 and up and for adults. They run in a phone, tablet or desktop browser. Every game shares one engine: animations, sounds, model loading, the character generator and the build.
 
-Written for younger readers and adults alike: every journal page has a plain-language layer, with dates, sources and detail behind a "Dig deeper" button.
+| Game | Folder | Status |
+|---|---|---|
+| **Port Royal, 1690**: the story of Lewis Galdy, from his arrival to the 1692 earthquake and after | `games/port-royal/` | finished and live |
+| **Marcus Garvey** | not started | next (see `docs/NEW_GAME.md`) |
+
+The home page (`menu/index.html`) lists the games.
+
+## Start here
+
+New to the repo, or starting a new chat? Read `CLAUDE.md`, then the guide for what you are doing:
+
+| If you are... | Read |
+|---|---|
+| New to the repo | `docs/ARCHITECTURE.md` |
+| Using shared code (animation, sound, loading) | `docs/ENGINE.md` |
+| Making characters, animations, buildings or packed models | `docs/PIPELINE.md` |
+| Writing dialogue, goals, journal pages, chapters | `docs/CONTENT.md` |
+| Checking your work | `docs/TESTING.md` |
+| Publishing (Vercel, the artifact) or pushing code | `docs/PUBLISHING.md` |
+| Starting a new game | `docs/NEW_GAME.md` |
+| Working on Port Royal | `docs/games/port-royal.md` |
+
+## Run it
+
+```bash
+npm install
+npm run build:dev    # Port Royal with test views (?shot=...) and the autoplayer (?auto=<chapter>&one)
+npm run serve        # http://localhost:8765/menu/  or  http://localhost:8765/games/port-royal/site/
+npm run dist         # the whole website (menu and every game, public builds) into dist/
+npm run serve:dist   # check dist/ at http://localhost:8766/
+```
+
+Deploying: the repo is set up for Vercel (`vercel.json`). Import the repo in Vercel and deploy; every push to `main` updates the site. Details in `docs/PUBLISHING.md`.
+
+## Layout
+
+```
+engine/            shared runtime code: anim.js, audio.js, loader.js
+games/port-royal/  src/main.js (the game), site/ (index.html, app.js, models/), assets/ (source .glb)
+games/_template/   a small working starter for a new game
+menu/              the home page that lists the games
+shared/            the animation library, the character rig, the Mixamo sources
+tools/             build.mjs, dist.mjs, the character generator (people/), animation retargeting (anims/), Blender scripts
+docs/              the guides listed above
+```
+
+# Port Royal, 1690
 
 ## Chapters
 
 | Year | Chapter | What happens |
 |---|---|---|
-| 1690 | Arrival | Step off the ship, meet Abba, buy stew at The Turtle, find four objects |
+| 1690 | Arrival | Step off the ship, meet Abba, buy stew at The Turtle, find four objects, hear Ned's story, walk to the fort, explore the market street |
+| 1670 | Ned's story | A flashback: Henry Morgan, the buccaneers' articles, a sword drill, loading the ships |
 | 1691 | The warehouse | Check cargo, make change, weigh a clipped coin, read a letter from a slave ship's captain |
 | 7 June 1692 | The earthquake | The town sinks into the sand; swallowed, thrown into the sea, rescued |
 | 1692 | The days after | The survivors' camp; stay or leave for what becomes Kingston |
@@ -16,33 +63,11 @@ Written for younger readers and adults alike: every journal page has a plain-lan
 
 Progress saves in the browser. Teachers can open all chapters from the Chapters menu.
 
-## Run it
-
-```
-npm install
-npm run build     # bundles src/main.js into game/app.js
-npm run build:dev # same, plus test views (?shot=...) and the autoplayer (?auto=<chapter>, add &one for one chapter)
-npm run serve     # http://localhost:8765
-```
-
-`game/` is the complete, deployable game (static files only).
-
-## Layout
-
-- `game/` built game: `index.html`, `app.js`, and `models/*.js` (each 3D model as base64 inside a script, because the original host only serves certain file types; `tools/pack_models.py` makes them)
-- `src/main.js` game source (three.js)
-- `assets/` the 3D models as `.glb`: houses, the two ships, and Abba
-- `tools/blender/` Blender Python scripts that generate the textures, houses, ships and Abba
-- `tools/people/` work in progress: the generator for townspeople (dockworker, sailor, the pewterer Simon Benning, the Rev. Emmanuel Heath)
-- `tools/optimize_models.mjs` compresses house geometry; `tools/camp_check.py` checks scene layouts for overlapping objects
-
-The Blender scripts were written on the build machine and still use its working paths (`/tmp/...`); change those before running them elsewhere. They need Blender 4.2+ (or the `bpy` Python module) and the MPFB (MakeHuman) add-on for the characters.
-
 ## What is history and what is invented
 
 **From the record:** Galdy's birth in Montpellier in 1659, his flight as a Huguenot, being swallowed and thrown into the sea in 1692, his rescue by boat, his trade in wine, cocoa and enslaved people as an agent of the Asiento, his seats in the Assembly, his work on St Peter's Church (1726), his death in 1739 and the tomb's move in 1953. Also the brick houses of up to four storeys, the brick floors, pewter, clay pipes and bottles found by archaeologists, the watch stopped at 11:43, liquefaction of the sand, and the minister preaching in a tent.
 
-**Invented:** Abba and her tavern The Turtle, the customer and prices in the warehouse, the captain's letter, who was in the boat that saved Galdy, the camp layout, and all dialogue. The journal says so on each relevant page.
+**Invented:** Abba and her tavern The Turtle, old Ned, Kofi, Sam, the gunner, the soldier, the market street's people (Grace, Peter, Daniel Mendes, Constable Hart), the customer and prices in the warehouse, the captain's letter, who was in the boat that saved Galdy, the camp layout, and all dialogue. The journal says so on each relevant page.
 
 ## Sources
 
@@ -50,11 +75,14 @@ The Blender scripts were written on the build machine and still use its working 
 - Frank Cundall, *Historic Jamaica* (1915)
 - Donny Hamilton and the Texas A&M Port Royal excavations
 - Rev. Emmanuel Heath, letters on the earthquake (1692)
+- John Taylor's description of Port Royal (1687 to 1688): markets, prices, turtles
+- The 1677 deed for a synagogue on New Street (Jew Street); histories of Jamaica's Jews (for example Arbell, 2000)
+- Alexandre Exquemelin, *The Buccaneers of America* (1678)
 - National Geographic, "How the 'wickedest city on Earth' was sunk by an earthquake"
 - Jamaica Gleaner, "Lewis Galdy cheated death twice" (2024)
 
 ## Notes for contributors
 
 - Peter Dunn's reconstruction paintings and the UCLA Cultural Virtual Reality Lab model were used as visual reference only and are not included.
-- Abba's idle animation comes from Mixamo and is baked into `assets/characters/abba_animated.glb`. The raw Mixamo files are not included here.
+- Animations come from Mixamo. The source files are in `shared/anim-sources/` and are retargeted into one shared library (`shared/models/anims.js`); see `docs/PIPELINE.md`.
 - The script has not yet been reviewed by a historian. Please have it checked before classroom use.
