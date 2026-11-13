@@ -2,7 +2,26 @@
 
 Agreed design for the second game. Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the story, the systems and the research rules. Port Royal's guide is `docs/games/port-royal.md`.
 
-Status: planned, not started. Code will live in `games/garvey/` (copy `games/_template/`).
+Status: early demo, in progress. It is playable from the game menu ("Early demo" card). Code is in `games/garvey/`.
+
+## Where things are now
+
+- **Demo scene** (`games/garvey/src/main.js`): a Kingston print shop, about 1907. A made-up printer stands at his type stand and a made-up customer walks through the shop. Both talk (placeholder lines). It is the first slice of chapter 1.
+- **Characters** (`tools/garvey/`): `era.py` makes 1900s clothes (see its README for setup). Two test characters exist: `printer1907` and `woman1914`.
+- **Menu**: the Garvey block links to the game.
+- **One pull request**: all Garvey work goes into one PR that stays open, so there is a single merge to `main` when the owner is ready.
+
+Test it:
+
+```bash
+node tools/build.mjs garvey --dev          # dev build: test views and the scripted playthrough
+python3 -m http.server 8765                # then open http://localhost:8765/games/garvey/site/
+# ?shot=shop1 ... shop7 and ?shot=talk are camera views; ?test=walk steps the customer's route; ?auto=1 plays the scene through.
+# The result of ?test=walk and ?auto=1 is written to the page title.
+```
+
+Next: the type-setting activity and the strike choice (chapter 1), a journal, the Port Royal systems copied in, then chapter 2 (Kingston, 1914). Known gaps: the waistcoat has no V opening; the street seen through the door is only a flat picture; dialogue is placeholder; no journal, saving or helper arrow yet; the Kingston details need checking against photographs of Kingston (the reference photos used so far are of US printing offices).
+
 
 ## Decisions (agreed with the owner)
 
