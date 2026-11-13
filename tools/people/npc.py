@@ -83,7 +83,7 @@ def drape_front(bm):
         for v in vs:
             lo=min(lo,v.co.y)
             if v.co.y>lo:
-                k=max(0.0,min(1.0,(v.co.z-(HIP+0.04))/0.10))   # full hang over the belly, gathered back in at the waistband
+                k=max(0.0,min(1.0,(v.co.z-(WAIST+0.02))/0.10))   # full hang over the belly, gathered back in above the waistband
                 hang=lo+(v.co.y-lo)*0.15; v.co.y=v.co.y+(hang-v.co.y)*k*k
     bm.normal_update()
 def trim_seat(bm):
@@ -95,12 +95,13 @@ def trim_seat(bm):
         if v.co.y>cap: v.co.y=cap+(v.co.y-cap)*0.3
     bm.normal_update()
 G=P['garments']; parts=[]
+WAIST=HIP+0.13 if G.get('breeches') else HIP+0.02   # with breeches the shirt is tucked in under their waistband
 def arm_ok(c,upto):
     t=side_arm(c); return t is None or t<=upto+0.06
 sleeve=G.get('sleeve',0.86)
 cuts_sleeve=lambda t:[(armcut(t,1)[0],armcut(t,1)[1],lambda c:c.x>SX*0.8),(armcut(t,-1)[0],armcut(t,-1)[1],lambda c:c.x<-SX*0.8)]
 # shirt
-parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>HIP-0.02 and arm_ok(c,sleeve),lambda c:0.012 if abs(c.x)>SX*0.8 else 0.008,'Shirt',post=(None if G.get('coat') else drape_front),
+parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>(HIP+0.07 if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve),lambda c:0.012 if abs(c.x)>SX*0.8 else 0.008,'Shirt',post=(None if G.get('coat') else drape_front),
    cuts=[((0,0,NECK+0.005-(0.062*s if G.get('coat') else 0)),(0,0,1),None),((0,-0.1,NECK-0.035*s-(0.06*s if G.get('coat') else 0)),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
