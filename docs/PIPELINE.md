@@ -32,7 +32,7 @@ JSON fields:
   | `coat` | `true` |
   | `coatsleeve` | 0 to 1 |
   | `coathem` | skirt length above the knee, for example 0.02 to 0.06 (longer skirts clip the knees when walking) |
-  | `coatopen` | `true` by default: the skirt is open at the front below the waist, as 1690 coats were, so the legs pass through when walking. Set `false` for a closed skirt |
+  | `coatopen` | `true` by default: the skirt is open at the front below the waist, as 1690 coats were, so the legs pass through when walking. Set `false` for a closed skirt. There is also a vent up the back. The front panels follow their own thigh and the back follows the hips, so walking does not push the legs through the cloth (check with `?shot=gwalk&clip=Walk&cam=front`, and `&who=soldier` for the soldier) |
   | `breeches` | `true` |
   | `breechkind` | `"slops"` for wide sailor breeches |
   | `shoes`, `stockings`, `apron` | `true` |
