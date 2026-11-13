@@ -1,8 +1,10 @@
 # Garvey-era characters (about 1900 to 1930)
 
-Status: working. Used for every Garvey character so far: the printer and customer (chapter 1) and Garvey, Amy Ashwood and three neighbours (chapter 2), in `people/`. `era.py` is a copy of `tools/people/npc.py` with extra garments. Port Royal's `npc.py` has changed since (the neckcloth and coat-skirt fixes); folding the two together is a tidy-up for later.
+Status: working. Used for every Garvey character so far, in `people/`: the printer and customer (chapter 1), Garvey, Amy Ashwood and three neighbours (chapter 2), Garvey in street clothes and three Harlem people (chapter 3), and a pressman and a seaman (chapter 4). `era.py` is a copy of `tools/people/npc.py` with extra garments. Port Royal's `npc.py` has changed since (the neckcloth and coat-skirt fixes); folding the two together is a tidy-up for later.
 
 ## Set up on a fresh Linux machine
+
+The `bpy` wheel can also be installed from a saved file: `pip install ./bpy-5.3.0-cp313-cp313-manylinux_2_28_x86_64.whl` works offline. MakeHuman's data folder must be a complete clone (check that `makehuman/data/eyes/low-poly/low-poly.mhclo` exists) and `MAKEHUMAN` points at its inner `makehuman` folder.
 
 These are the steps that worked on 13 November 2026 (Python 3.13, no Blender install needed).
 
@@ -40,6 +42,7 @@ The bpy module has no Draco or meshopt, so the first `.glb` is large (about 1.5 
 | `skirt` | A long skirt that hangs from both legs (colour key `Skirt`) |
 | `jacket` | A suit jacket with a V opening, waist-length, sleeves to the wrist (colour key `Jacket`; `jacketsleeve` sets how far down the arm) |
 | `bun` | Hair gathered into a bun |
+| `smooth` | Smooths the cut edges of a man's shirt (neckline and sleeves). Used for the pressman and the seaman. |
 
 Women use the body macros `gender: 0.0`, `cupsize` and `firmness`, as in `tools/blender/abba.py`.
 

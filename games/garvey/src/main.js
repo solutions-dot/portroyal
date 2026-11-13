@@ -169,12 +169,12 @@ const START = { x: -0.5, z: 2.9, yaw: 0 };
 const EYE = 1.55, isTouch = matchMedia('(pointer: coarse)').matches;
 const keys = new Set(); let busy = false, fading = false;   /* busy: a talk, the journal or another panel is open, so do not move */
 let talkWith = null, near = null, DEV_NOSTOP = false, curWalls = WALLS, curBounds = BOUNDS;   /* DEV_NOSTOP: test views only, so a walker keeps walking while the camera is close */
-const panelsOpen = () => ['dialogue', 'typeset', 'journal', 'chapters', 'credits', 'card'].some((id) => !$(id).hidden);   /* closing one panel must not unpause the world while another is open */
+const panelsOpen = () => ['dialogue', 'typeset', 'pagebuild', 'journal', 'chapters', 'credits', 'card'].some((id) => !$(id).hidden);   /* closing one panel must not unpause the world while another is open */
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && state.started) e.preventDefault();
   keys.add(k); if (!state.started) return;
-  if (k === 'escape') { if (!$('dialogue').hidden) { leaveTalk(); return; } closeJournal(); closeChapters(); closeCredits(); closeType(false); if (!$('card').hidden) hideCard(); }
+  if (k === 'escape') { if (!$('dialogue').hidden) { leaveTalk(); return; } closeJournal(); closeChapters(); closeCredits(); closeType(false); closePage(false); if (!$('card').hidden) hideCard(); }
   if ((k === 'e' || k === 'enter') && !busy && near) activate(near);
 });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
@@ -241,7 +241,7 @@ const SHOP_PEOPLE = [
 function initPerson(n) { n.m = null; n.walking = false; n.wait = 1.5 + Math.random() * 2; n.i = 0; n.heard = 0; n.talked = false; n.hx = n.x; n.hz = n.z; n.dest = null; n.delay = 0; n.hidden = false; }
 for (const n of SHOP_PEOPLE) initPerson(n);
 let PEOPLE = SHOP_PEOPLE;   /* the people in the place you are in */
-const allPeople = () => [...SHOP_PEOPLE, ...HALL_PEOPLE, ...STREET_PEOPLE];
+const allPeople = () => [...SHOP_PEOPLE, ...HALL_PEOPLE, ...STREET_PEOPLE, ...PRESS_PEOPLE];
 const byId = (id) => allPeople().find((n) => n.id === id);
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function tapPerson(cx, cy) {
@@ -294,6 +294,12 @@ const JOURNAL = [
     deeper: ['His ship was the SS Tallac. Sources give the day he arrived as 23 or 24 March.', 'He worked as a printer after he arrived.', 'Garvey is said to have first spoken at the corner of 135th Street and Lenox Avenue. This comes from one source.'] },
   { id: 'unia-ny', title: 'The UNIA in New York', simple: ['In 1917 Garvey started a New York branch of the UNIA.', 'It grew quickly in Harlem.'],
     deeper: ['Sources give the first members as 13 or 17.', 'Liberty Hall in Harlem, a large meeting hall, opened in 1919.'] },
+  { id: 'negro-world', title: 'The Negro World', simple: ['The Negro World was a newspaper. Marcus Garvey and the UNIA made it.', 'It came out every week and cost five cents.', 'People read it in Harlem and in many other places.'],
+    deeper: ['The first issue came out on 17 August 1918. At first it was printed in English.', 'Copies travelled by ship. Black sailors and others carried them from port to port.', 'The headlines and the people in this game are made up.', 'These details come from books and articles. We still need to check them against the Marcus Garvey and UNIA Papers.'] },
+  { id: 'frontpage', title: 'How a front page is made', simple: ['The name of the paper goes at the top.', 'Then come the big headline, a picture, and the price.', 'Printers lock all the pieces into a frame before they print.'],
+    deeper: ['The name at the top of a paper is called the masthead.', 'A page of type locked in an iron frame is called a forme. The stone table where printers did this is called the imposing stone.'] },
+  { id: 'ban', title: 'The paper is banned', simple: ['Some governments did not want people to read the Negro World.', 'They banned it. That means it was not allowed.', 'Sailors still carried copies from port to port.'],
+    deeper: ['It was banned in several places, such as Trinidad, British Guiana and St Vincent. Sources differ on the years.', 'The sailor in this game is made up, and so is his voyage. He shows how the paper really did travel.', 'The sources we have do not say how copies were carried past officers, so the game does not show it.'] },
   { id: 'unia', title: 'The UNIA begins', simple: ['UNIA stands for Universal Negro Improvement Association.', 'It was founded in Kingston, Jamaica, in July 1914.', 'It wanted to help people in need, build pride, and open a trade school.'],
     deeper: ['Many sources give the first meeting as 20 July 1914. Others point to 1 August, Emancipation Day. Where it met is also uncertain.', 'In 1914 Garvey wrote to Booker T. Washington about a trade school like Tuskegee. Washington died in 1915.', 'Garvey sailed for the United States in March 1916.'] },
 ];
@@ -319,12 +325,13 @@ $('jbtn').onclick = () => openJournal(); $('jclose').onclick = closeJournal;
 /* ---------- goal, hint, sound button (as in Port Royal) ---------- */
 let stage = 0, best = 0;   /* the story is a number. Chapter 1: 0 talk, 1 set the type, 2 (reserved), 3 done. Chapter 2: 10 meet, 11 print the poster, 12 welcome the neighbours, 13 listen, 14 done. best: the furthest stage ever reached */
 const GOALS = { 0: 'Talk to the printer and the customer.', 1: 'Set the type for a notice. Go to the type stand.', 2: 'Talk to the printer. He has news.', 3: 'Well done! The print shop chapter is finished. Open Chapters for the next one.',
+  30: 'Talk to the pressman and Marcus Garvey.', 31: 'Lay out the front page on the stone table.', 32: 'Talk to the sailor by the door.', 33: 'The sailor is back. Talk to him and the pressman.', 34: 'Well done! Chapter 4 is finished. More is coming soon.',
   20: 'Listen to the three people at the corner.', 21: 'Talk to Marcus Garvey.', 22: 'The older man has a question. Talk to him.', 23: 'Well done! Chapter 3 is finished. More is coming soon.',
   10: 'Talk to Amy Ashwood and Marcus Garvey.', 11: 'Print the poster at the press table.', 12: 'Welcome the three neighbours as they arrive.', 13: 'Listen to Marcus Garvey.', 14: 'Well done! Chapter 2 is finished. More is coming soon.' };
-const TALK_TARGETS = { 20: ['worker', 'woman', 'critic'], 21: ['garvey3'], 22: ['critic'], 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
-const NEXT_AFTER_TALK = { 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
+const TALK_TARGETS = { 30: ['pressman', 'garvey4'], 32: ['sailor'], 33: ['sailor', 'pressman'], 20: ['worker', 'woman', 'critic'], 21: ['garvey3'], 22: ['critic'], 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
+const NEXT_AFTER_TALK = { 30: 31, 32: 33, 33: 34, 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
 const wantsTalk = (n) => !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
-function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); }
+function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); }
 function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); }
 let goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) {
@@ -375,7 +382,7 @@ function resetChapter() {   /* the print shop again: people go home, the goal st
 /* ---------- chapters (only the first is built so far) ---------- */
 const CHAPTERS = [
   { year: 'About 1908', name: 'The print shop', ready: true, go: () => chapterFade('About 1908', 'A print shop in Kingston', resetChapter), done: () => best >= 3 },
-  { year: 'July 1914', name: 'The first followers', ready: true, go: () => { toast('Loading the hall'); ensureHall().then(() => chapterFade('1914', 'A meeting hall in Kingston', resetChapter2)); }, done: () => best >= 14 }, { year: '1916', name: 'The streets of Harlem', ready: true, go: () => { toast('Loading Harlem'); ensureStreet().then(() => chapterFade('1916', 'Harlem, New York', resetChapter3)); }, done: () => best >= 23 }, { year: '1918 to 1919', name: 'The power of the press' },
+  { year: 'July 1914', name: 'The first followers', ready: true, go: () => { toast('Loading the hall'); ensureHall().then(() => chapterFade('1914', 'A meeting hall in Kingston', resetChapter2)); }, done: () => best >= 14 }, { year: '1916', name: 'The streets of Harlem', ready: true, go: () => { toast('Loading Harlem'); ensureStreet().then(() => chapterFade('1916', 'Harlem, New York', resetChapter3)); }, done: () => best >= 23 }, { year: '1918 to 1919', name: 'The power of the press', ready: true, go: () => { toast('Loading the press room'); ensurePress().then(() => chapterFade('1918', 'The press room, Harlem', resetChapter4)); }, done: () => best >= 34 },
   { year: '1919', name: 'The Black Star Line' }, { year: 'August 1920', name: 'A movement becomes a nation' }, { year: '1922 to 1927', name: 'The price of a dream' }, { year: '1927 to today', name: 'The dream lives on' },
 ];
 function renderChapters() {
@@ -398,7 +405,7 @@ $('dev').onclick = openCredits; $('chcred').onclick = () => { closeChapters(); o
 /* the reset button: this chapter again, the whole story again, or back to all games */
 $('reset').onclick = () => { if (fading) return; closeJournal();
   card('Reset', ['Start this chapter again, or start the whole story again.'], [
-    { t: 'Restart “' + CHAPTERS[stage >= 20 ? 2 : stage >= 10 ? 1 : 0].name + '”', go: () => { hideCard(); CHAPTERS[stage >= 20 ? 2 : stage >= 10 ? 1 : 0].go(); } },
+    { t: 'Restart “' + CHAPTERS[stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].name + '”', go: () => { hideCard(); CHAPTERS[stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].go(); } },
     { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) },
     { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'All games', go: toMenu }] : [])]); };
 
@@ -447,7 +454,7 @@ function tapTile(b, L) {
   else { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('tmsg').textContent = 'Not that one. Look at the word again.'; }
 }
 $('tpress').onclick = () => { pressThump(); $('tprint').textContent = typeWord; $('tprint').hidden = false; $('tcase').hidden = true; $('tpress').hidden = true; $('tdone').hidden = false; $('tmsg').textContent = 'Printed! The words come out the right way round.'; };
-function closeType(done) { if ($('typeset').hidden) return; $('typeset').hidden = true; busy = panelsOpen(); if (done && typeDone) { const f = typeDone; typeDone = null; f(); } }
+function closeType(done) { closePage(false); if ($('typeset').hidden) return; $('typeset').hidden = true; busy = panelsOpen(); if (done && typeDone) { const f = typeDone; typeDone = null; f(); } }
 $('tclose').onclick = () => closeType(false); $('tdone').onclick = () => closeType(true);
 
 /* ---------- a glowing speech mark over each person, a bubble on the nearest, and the Talk button for things to do ---------- */
@@ -628,16 +635,121 @@ function resetChapter3() {   /* the street corner again: the journal and your ch
   enterPlace('street'); setStage(20); showPlace();
 }
 
+/* ---------- chapter 4: the press room in Harlem, 1918 ---------- */
+const pressG = new THREE.Group(); pressG.visible = false; scene.add(pressG);
+const PRESS = { x0: -5, x1: 5, z0: -4, z1: 4, h: 4.2 }, PRESS_WALLS = [], PRESS_BOUNDS = { x0: -4.5, x1: 4.5, z0: -3.5, z1: 3.55 };
+const pressLamp = new THREE.PointLight(0xffd29a, 9, 13, 2); pressLamp.position.set(0, 3.3, -0.5); pressLamp.visible = false; scene.add(pressLamp);
+let pressBuilt = false, wallPage = null; const bundles = [];
+const HEADLINES = { pride: 'Be Proud of Who You Are', learn: 'Read, Learn and Grow', unity: 'Stand Together' };   /* made up, and the journal says so */
+function brickTex() { return cv(256, 256, (x, w, h) => { x.fillStyle = '#3c2a22'; x.fillRect(0, 0, w, h); const bh = 16, bw = 42; for (let r = 0; r * bh < h; r++) for (let c = -1; c * bw < w; c++) { const v = 0.82 + Math.random() * 0.3; x.fillStyle = `rgb(${128 * v | 0},${74 * v | 0},${58 * v | 0})`; x.fillRect(c * bw + (r % 2) * bw / 2 + 1, r * bh + 1, bw - 2, bh - 2); } grain(x, w, h, 10); }); }
+function frontPageTex(head) {   /* the finished front page, as a picture for the wall */
+  return cv(256, 340, (x, w, h) => { x.fillStyle = '#efe7d2'; x.fillRect(0, 0, w, h); x.fillStyle = '#1d1a16'; x.textAlign = 'center'; x.font = '700 27px Georgia, serif'; x.fillText('THE NEGRO WORLD', w / 2, 40); x.fillRect(14, 50, w - 28, 3); x.fillRect(14, 56, w - 28, 1);
+    x.font = '700 20px Georgia, serif'; const rows = []; let cur = ''; for (const wd of head.split(' ')) { if ((cur + ' ' + wd).trim().length > 16) { rows.push(cur); cur = wd; } else cur = (cur + ' ' + wd).trim(); } rows.push(cur); rows.forEach((r, i) => x.fillText(r, w / 2, 86 + i * 24));
+    const top = 96 + rows.length * 24; x.fillStyle = '#8a8272'; x.fillRect(16, top, 100, 84); x.fillStyle = '#1d1a16'; for (let i = 0; i < 14; i++) x.fillRect(126, top + i * 6, 100 + (i % 3) * 4, 3);
+    for (let i = 0; i < 8; i++) x.fillRect(16, top + 98 + i * 14, w - 32, 3); x.font = '700 14px Georgia, serif'; x.fillText('5 cents', w - 44, h - 12); grain(x, w, h, 10); });
+}
+function buildPress() {
+  if (pressBuilt) return; pressBuilt = true; const g = pressG, W2 = PRESS.x1 - PRESS.x0, D2 = PRESS.z1 - PRESS.z0, H2 = PRESS.h;
+  mesh(new THREE.PlaneGeometry(W2, D2), std(plankTex([92, 70, 50], 7, [W2 / 1.05, D2 / 2]), 0.9), 0, 0, 0, g).rotation.x = -Math.PI / 2;
+  mesh(new THREE.PlaneGeometry(W2, D2), std(plankTex([62, 48, 36], 8, [W2 / 1.2, D2 / 2]), 0.95), 0, H2, 0, g).rotation.x = Math.PI / 2;
+  const brick = brickTex(), wallP = (w, cx, cz, ry) => { const t = brick.clone(); t.needsUpdate = true; t.repeat.set(w / 2.6, H2 / 1.8); const p = mesh(new THREE.PlaneGeometry(w, H2), std(t, 1), cx, H2 / 2, cz, g); p.rotation.y = ry; };
+  wallP(W2, 0, PRESS.z0, 0); wallP(D2, PRESS.x0, 0, Math.PI / 2); wallP(D2, PRESS.x1, 0, -Math.PI / 2);
+  const dw = 2.2, dh = 3.0, sw = (W2 - dw) / 2; wallP(sw, PRESS.x0 + sw / 2, PRESS.z1, Math.PI); wallP(sw, PRESS.x1 - sw / 2, PRESS.z1, Math.PI);
+  box(dw + 0.3, H2 - dh, 0.14, solid(0x6a4a3a, 1), 0, (dh + H2) / 2, PRESS.z1 - 0.07, g);
+  for (const x of [-dw / 2 - 0.07, dw / 2 + 0.07]) box(0.16, dh, 0.2, beam, x, dh / 2, PRESS.z1 - 0.1, g); box(dw + 0.36, 0.18, 0.2, beam, 0, dh + 0.09, PRESS.z1 - 0.1, g);
+  for (let i = 0; i < 4; i++) mesh(new THREE.PlaneGeometry(4.5, 9), new THREE.MeshBasicMaterial({ map: facadeTex(i + 1) }), -6.75 + i * 4.5, 4.5, PRESS.z1 + 3.4, g).rotation.y = Math.PI;   /* the houses across the street, seen through the door */
+  mesh(new THREE.PlaneGeometry(18, 3.4), new THREE.MeshBasicMaterial({ color: 0xa9a291 }), 0, 0.01, PRESS.z1 + 1.7, g).rotation.x = -Math.PI / 2;
+  mesh(new THREE.PlaneGeometry(2.6, 3.2), patchM, 0, 0.013, PRESS.z1 - 1.6, g).rotation.x = -Math.PI / 2;
+  for (let z = PRESS.z0 + 0.6; z < PRESS.z1; z += 1.2) box(0.16, 0.24, W2, beam, 0, H2 - 0.12, z, g).rotation.y = Math.PI / 2;
+  for (const [wx, wz, ry] of [[-2.6, PRESS.z0, 0], [2.6, PRESS.z0, 0], [PRESS.x0, 1.4, Math.PI / 2], [PRESS.x1, 1.4, -Math.PI / 2]]) {   /* tall windows, the same frames and shutters as the other rooms */
+    const w = 1.2, h = 1.9, sill = 1.0, y = sill + h / 2, gg = new THREE.Group(); gg.position.set(wx, 0, wz); gg.rotation.y = ry; g.add(gg);
+    mesh(new THREE.PlaneGeometry(w, h), viewM, 0, y, 0.012, gg); for (const dx of [-w / 2, w / 2]) box(0.09, h + 0.12, 0.12, beam, dx, y, 0.05, gg); for (const dy of [sill - 0.03, sill + h + 0.03]) box(w + 0.2, 0.09, 0.12, beam, 0, dy, 0.05, gg); box(0.05, h, 0.06, beam, 0, y, 0.04, gg); box(w, 0.04, 0.06, beam, 0, y + h * 0.1, 0.04, gg);
+    for (const dx of [-(w / 2 + w / 4 + 0.05), w / 2 + w / 4 + 0.05]) mesh(new THREE.PlaneGeometry(w / 2, h), louverM, dx, y, 0.02, gg); }
+  /* the press: an iron flatbed press against the right wall, with a flywheel */
+  box(2.6, 0.7, 1.3, iron, 3.55, 0.35, -1.9, g); box(2.2, 0.5, 1.0, iron, 3.55, 0.95, -1.9, g); cyl(0.42, 0.42, 1.15, iron, 3.3, 1.45, -1.9, g, 20).rotation.x = Math.PI / 2;
+  cyl(0.62, 0.62, 0.12, iron, 4.2, 1.15, -1.2, g, 26).rotation.x = Math.PI / 2; cyl(0.14, 0.14, 0.18, brass, 4.2, 1.15, -1.17, g, 12).rotation.x = Math.PI / 2; box(0.62, 0.02, 0.46, paper, 2.7, 1.22, -1.9, g);
+  PRESS_WALLS.push([2.2, -2.6, 4.9, -1.1]);
+  /* the stone table where a page is locked up, with a forme on it */
+  box(2.4, 0.9, 1.1, woodDark, -1.4, 0.45, -1.2, g); mesh(new THREE.PlaneGeometry(2.5, 1.2), std(stoneTex(), 0.7), -1.4, 0.92, -1.2, g).rotation.x = -Math.PI / 2;
+  mesh(new THREE.PlaneGeometry(0.9, 0.68), std(formeTex(), 0.6), -1.7, 0.93, -1.2, g).rotation.x = -Math.PI / 2; box(0.3, 0.05, 0.22, paper, -0.7, 0.95, -1.0, g); PRESS_WALLS.push([-2.7, -1.85, -0.1, -0.55]);
+  /* type cases along the left wall */
+  for (const z of [-2.6, -1.3, 0.0]) { box(0.7, 0.95, 1.1, woodDark, -4.55, 0.475, z, g); mesh(new THREE.PlaneGeometry(0.62, 1.0), std(caseTex(), 0.6), -4.55, 0.97, z, g).rotation.x = -Math.PI / 2; } PRESS_WALLS.push([-4.95, -3.2, -4.15, 0.6]);
+  /* printed sheets hung up to dry along the back wall */
+  cyl(0.01, 0.01, 8.4, solid(0x222222), 0, 2.75, -3.55, g, 4).rotation.z = Math.PI / 2; const dry = new THREE.MeshStandardMaterial({ map: sheetTex('NEWS'), roughness: 1, side: THREE.DoubleSide });
+  for (let i = 0; i < 9; i++) mesh(new THREE.PlaneGeometry(0.4, 0.55), dry, -3.6 + i * 0.9, 2.45, -3.55, g).rotation.z = (i % 3 - 1) * 0.04;
+  /* the printed copies in bundles by the door */
+  const cord = solid(0x3a2a1d, 0.9); [[3.0, 0.14, 3.2], [3.5, 0.14, 3.2], [4.0, 0.14, 3.2], [3.25, 0.4, 3.2], [3.75, 0.4, 3.2], [3.5, 0.66, 3.2]].forEach(([x, y, z]) => { const b = new THREE.Group(); b.position.set(x, y, z); g.add(b); box(0.44, 0.26, 0.34, paper, 0, 0, 0, b); box(0.46, 0.27, 0.04, cord, 0, 0, 0, b); box(0.04, 0.27, 0.36, cord, 0, 0, 0, b); b.visible = false; bundles.push(b); }); PRESS_WALLS.push([2.7, 2.9, 4.3, 3.55]);
+  cyl(0.008, 0.008, 0.9, solid(0x222222), 0, H2 - 0.55, -0.5, g, 6); cyl(0.05, 0.16, 0.12, brass, 0, 3.15, -0.5, g); cyl(0.11, 0.11, 0.26, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.8, transparent: true, opacity: 0.75 }), 0, 2.96, -0.5, g);
+  box(0.74, 0.94, 0.05, woodDark, -4.0, 1.9, PRESS.z0 + 0.03, g);   /* the finished front page is pinned up here */
+  wallPage = mesh(new THREE.PlaneGeometry(0.62, 0.82), new THREE.MeshStandardMaterial({ map: frontPageTex(HEADLINES.pride), roughness: 1 }), -4.0, 1.9, PRESS.z0 + 0.065, g); wallPage.visible = false;
+}
+function showWallPage() { if (!wallPage) return; wallPage.material.map = frontPageTex(HEADLINES[story.headline] || HEADLINES.pride); wallPage.material.needsUpdate = true; wallPage.visible = stage >= 32; }
+const PRESS_SPOTS = { pressman: [2.0, -0.4], garvey4: [-0.2, -2.8], sailor: [2.7, 2.3] }, SAILOR_BACK = [0.9, 2.2];
+function arrangePress() {   /* what the room shows at this stage: the page, the bundles and where the sailor stands */
+  const sa = byId('sailor'), back = stage >= 33; sa.x = (back ? SAILOR_BACK : PRESS_SPOTS.sailor)[0]; sa.z = (back ? SAILOR_BACK : PRESS_SPOTS.sailor)[1]; sa.ry = faceToward(sa.x, sa.z, 0, 0); if (sa.m) { sa.m.position.set(sa.x, 0, sa.z); sa.m.rotation.y = sa.ry; }
+  const left = stage < 32 ? 0 : stage < 33 ? 6 : ({ all: 0, split: 3, hold: 4 })[story.delivery] ?? 0; bundles.forEach((b, i) => { b.visible = i < left; }); showWallPage();
+}
+/* the front page activity: tap a piece, then the box where it belongs */
+let pageDone = null, pageSel = null, pageLeft = 0;
+const PAGE_BOXES = { title: ['bxTitle', 'The name of the paper'], head: ['bxHead', 'The big news'], pic: ['bxPic', 'A picture'], price: ['bxPrice', 'What it costs'] };
+const PAGE_FACTS = { title: 'The name at the top is called the masthead.', head: 'The headline tells readers the main news.', pic: 'A picture helps people understand a story.', price: 'The paper costs five cents.' };
+function openPage(done) {
+  if (busy) return; busy = true; keys.clear(); pageDone = done; pageSel = null; pageLeft = 4; unlock('frontpage'); $('pagebuild').hidden = false; $('pgtray').style.display = ''; $('pgpress').hidden = true; $('pgdone').hidden = true;
+  const pg = $('pgpage'); pg.replaceChildren(); for (const [k, [id, hint]] of Object.entries(PAGE_BOXES)) { const b = document.createElement('button'); b.className = 'bx'; b.id = id; b.dataset.k = k; b.textContent = hint; b.setAttribute('aria-label', 'Box: ' + hint); b.onclick = () => dropPiece(b); pg.appendChild(b); }
+  const pieces = [['title', 'THE NEGRO WORLD'], ['head', HEADLINES[story.headline] || HEADLINES.pride], ['pic', 'A picture'], ['price', '5 cents']].sort(() => Math.random() - 0.5);
+  const tr = $('pgtray'); tr.replaceChildren(); for (const [k, t] of pieces) { const b = document.createElement('button'); b.className = 'pc'; b.dataset.k = k; b.textContent = t; b.onclick = () => pickPiece(b); tr.appendChild(b); }
+  $('pgmsg').textContent = '';
+}
+function pickPiece(b) { if (b.disabled) return; uiSound('tap'); pageSel = b; for (const x of $('pgtray').children) x.classList.toggle('sel', x === b); for (const x of $('pgpage').children) x.classList.toggle('hot', !x.disabled); }
+function dropPiece(box) {
+  if (box.disabled) return; if (!pageSel) { $('pgmsg').textContent = 'Pick a piece first.'; return; }
+  const k = pageSel.dataset.k;
+  if (k !== box.dataset.k) { box.classList.add('no'); setTimeout(() => box.classList.remove('no'), 400); $('pgmsg').textContent = 'That piece does not go there. Read it again.'; return; }
+  uiSound('tap'); box.className = 'bx ok'; box.disabled = true; box.textContent = pageSel.textContent; box.style.fontSize = { title: '1.5rem', head: '1.2rem', pic: '.9rem', price: '1.1rem' }[k];
+  if (k === 'pic') { box.style.background = '#8a8272'; box.style.color = '#efe7d2'; } pageSel.disabled = true; pageSel.classList.remove('sel'); pageSel = null; for (const x of $('pgpage').children) x.classList.remove('hot'); pageLeft--;
+  $('pgmsg').textContent = PAGE_FACTS[k] + (pageLeft ? '' : ' The page is ready. Press!'); if (!pageLeft) { $('pgtray').style.display = 'none'; $('pgpress').hidden = false; $('pgpress').focus(); }
+}
+$('pgpress').onclick = () => { pressThump(); $('pgpress').hidden = true; $('pgdone').hidden = false; $('pgdone').focus(); $('pgmsg').textContent = 'Printed! The front page of the Negro World is ready.'; };
+function closePage(done) { if ($('pagebuild').hidden) return; $('pagebuild').hidden = true; busy = panelsOpen(); if (done && pageDone) { const f = pageDone; pageDone = null; f(); } }
+$('pgclose').onclick = () => closePage(false); $('pgdone').onclick = () => closePage(true);
+const PRESS_ACTIONS = [{ id: 'layout', label: 'Lay out the front page', x: -1.4, z: -0.1, r: 1.2, on: () => stage === 31, go: () => openPage(() => { story.laid = true; unlock('negro-world'); setStage(32); arrangePress(); uiSound('goal'); }) }];
+const headline = (id, t) => ({ t, set: { headline: id }, then: [{ who: 'Marcus Garvey', text: '“' + HEADLINES[id] + '.” Yes. That is the one.' }, { who: 'Marcus Garvey', text: 'Please lay out the front page on the stone table.' }] });
+const ship = (id, t, reply) => ({ t, set: { delivery: id }, then: [{ who: 'Sailor', text: reply }, { who: 'Sailor', text: 'I will take them to my ship tonight. Wish me luck!' }] });
+const BACK = { all: 'I took every bundle. At one port an officer took the biggest one. The rest were read by many.', split: 'I shared the bundles with friends. One was taken. The others were read.', hold: 'I took only a few. None were taken. But only a few people read them.' };
+const PRESS_PEOPLE = [
+  { id: 'pressman', model: 'hl_pressman', who: 'Pressman', label: 'Talk to the pressman', x: PRESS_SPOTS.pressman[0], z: PRESS_SPOTS.pressman[1], ry: faceToward(2.0, -0.4, -1.4, -1.0), base: 'Idle',
+    lines: () => stage === 33 ? [{ who: 'Pressman', text: 'Some places banned our paper.' }, { who: 'Pressman', text: 'People still passed it from hand to hand.' }, { who: 'You', text: 'So the news still travelled.' }, { who: 'Pressman', text: 'It did. We print again tomorrow.' }]
+      : [{ who: 'Pressman', text: 'This is our press. Type goes in, paper comes out.' }, { who: 'You', text: 'What do we print?' }, { who: 'Pressman', text: 'A new weekly paper, the Negro World.', unlock: 'negro-world' }, { who: 'Pressman', text: 'The stone table is where we lock up each page.' }],
+    later: () => ({ 31: ['The stone table is on the left. Lay out the page there.'], 32: ['The sailor is by the door. Talk to him.'] })[stage] || ['Mind the ink. It stains!'] },
+  { id: 'garvey4', model: 'garvey1916', who: 'Marcus Garvey', label: 'Talk to Marcus Garvey', x: PRESS_SPOTS.garvey4[0], z: PRESS_SPOTS.garvey4[1], ry: 0, base: 'Idle', ground: 0,
+    lines: () => [{ who: 'Marcus Garvey', text: 'Welcome to our new paper.' }, { who: 'Marcus Garvey', text: 'We call it the Negro World.' }, { who: 'Marcus Garvey', text: 'It comes out every week. It costs five cents.' }, { who: 'Marcus Garvey', text: 'What should our big headline say?', choices: [headline('pride', HEADLINES.pride), headline('learn', HEADLINES.learn), headline('unity', HEADLINES.unity)] }],
+    later: () => ({ 31: ['The front page is up to you.'], 32: ['Our paper must travel. Talk to the sailor.'] })[stage] || ['Thank you for your help.'] },
+  { id: 'sailor', model: 'seaman1919', who: 'Sailor', label: 'Talk to the sailor', x: PRESS_SPOTS.sailor[0], z: PRESS_SPOTS.sailor[1], ry: faceToward(2.7, 2.3, 0, 0), base: 'Idle',
+    lines: () => stage === 33 ? [{ who: 'Sailor', text: 'I am back! The paper travelled far.' }, { who: 'Sailor', text: BACK[story.delivery] || BACK.all }, { who: 'Sailor', text: 'In some places the paper was not allowed at all.', unlock: 'ban' }, { who: 'You', text: 'Why would anyone stop a newspaper?' }, { who: 'Sailor', text: 'Some leaders did not want people to read it.' }, { who: 'Sailor', text: 'But the news still found its readers.' }]
+      : [{ who: 'Sailor', text: 'Good day! I work on a ship. We visit many ports.' }, { who: 'You', text: 'Will you take some papers with you?' }, { who: 'Sailor', text: 'Gladly. People far away want news from Harlem.' }, { who: 'Sailor', text: 'But some officers do not like this paper. How should I carry it?', choices: [ship('all', 'Take every bundle', 'Every bundle. Then many people can read it.'), ship('split', 'Share them with your friends', 'Small bundles, shared out. Then not all are lost if one is found.'), ship('hold', 'Take only a few', 'A few. Safer for me, but fewer people will read it.')] }],
+    later: () => stage >= 33 ? ['It is good to be home.'] : ['My ship sails soon. Are the papers ready?'] },
+];
+for (const n of PRESS_PEOPLE) initPerson(n);
+let pressLoading = null;
+function ensurePress() { if (!pressLoading) { buildPress(); pressLoading = Promise.all(PRESS_PEOPLE.map(loadPerson)); } return pressLoading; }
+function resetChapter4() {   /* the press room again: the page comes down, the journal and your choices in earlier chapters are kept */
+  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); stage = 30; delete story.headline; delete story.delivery; delete story.laid;
+  for (const n of PRESS_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  enterPlace('press'); setStage(30); showPlace();
+}
+
 /* ---------- places ---------- */
 const PLACES = {
   shop: { group: room, lamp: lampLight, walls: WALLS, bounds: BOUNDS, people: SHOP_PEOPLE, actions: SHOP_ACTIONS, start: START, caption: 'Kingston, about 1908' },
   hall: { group: hallG, lamp: hallLamp, walls: HALL_WALLS, bounds: HALL_BOUNDS, people: HALL_PEOPLE, actions: HALL_ACTIONS, start: { x: 0, z: 3.1, yaw: 0 }, caption: 'Kingston, July 1914' },
-  street: { group: streetG, lamp: new THREE.Object3D(), walls: STREET_WALLS, bounds: STREET_BOUNDS, people: STREET_PEOPLE, actions: [], start: { x: -7, z: 2.6, yaw: -1.25 }, caption: 'Harlem, New York, 1916', sky: 0x9ec8e6 } };
+  street: { group: streetG, lamp: new THREE.Object3D(), walls: STREET_WALLS, bounds: STREET_BOUNDS, people: STREET_PEOPLE, actions: [], start: { x: -7, z: 2.6, yaw: -1.25 }, caption: 'Harlem, New York, 1916', sky: 0x9ec8e6 },
+  press: { group: pressG, lamp: pressLamp, walls: PRESS_WALLS, bounds: PRESS_BOUNDS, people: PRESS_PEOPLE, actions: PRESS_ACTIONS, start: { x: 0, z: 3.1, yaw: 0 }, caption: 'Harlem, New York, 1918' } };
 let place = 'shop', placeT = 0;
 function enterPlace(name, keepPos) {
   place = name; const P = PLACES[name];
   for (const k of Object.keys(PLACES)) { const Q = PLACES[k]; Q.group.visible = k === name; Q.lamp.visible = k === name; for (const n of Q.people) { if (n.mark) n.mark.visible = false; if (n.m) n.m.visible = k === name && !n.hidden; } }
   if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.dest) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; }
+  if (name === 'press') arrangePress();
   curWalls = P.walls; curBounds = P.bounds; PEOPLE = P.people; ACTIONS = P.actions; near = null;
   scene.background = new THREE.Color(P.sky || 0x2a2118); scene.fog = P.sky ? new THREE.Fog(0xcbd9de, 28, 90) : null;   /* outdoor places have sky and haze; rooms do not */
   hemi.intensity = P.sky ? 2.3 : 1.25; sun.intensity = P.sky ? 2.2 : 1.7; sun.position.set(P.sky ? -5 : 6, P.sky ? 9 : 7, P.sky ? 4 : 5);   /* daylight outside is brighter, so dark skin still shows */
@@ -658,7 +770,7 @@ let modelsReady = false;
     loadClips(anims);
     PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; });
       m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = 0; scene.add(m); animate(m, n.base); grounded.push(m); n.m = m; });
-    (stage >= 20 ? ensureStreet() : stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 20 ? 'street' : stage >= 10 ? 'hall' : 'shop'); showPoster(); if (__DEV__) devViews(); });
+    (stage >= 30 ? ensurePress() : stage >= 20 ? ensureStreet() : stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 30 ? 'press' : stage >= 20 ? 'street' : stage >= 10 ? 'hall' : 'shop'); showPoster(); if (__DEV__) devViews(); });
     modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave;
   }); }
 function startGame() {
@@ -714,6 +826,14 @@ function devViews() {
   if (shot === 'bubble') { go(-2.3, -0.8, 0.25, 0.08); }
   if (shot === 'nudge') { go(-0.5, 2.9, Math.PI / 2, 0); NUDGE.still = performance.now() - 20000; }
   const inStreet = (st, x, z, yaw, pitch) => ensureStreet().then(() => { stage = st; best = Math.max(best, st); enterPlace('street'); go(x, z, yaw, pitch); });
+  const inPress = (st, x, z, yaw, pitch) => ensurePress().then(() => { stage = st; best = Math.max(best, st); enterPlace('press'); go(x, z, yaw, pitch); });
+  if (shot === 'press1') inPress(30, 0, 3.1, 0, 0.03);
+  if (shot === 'press2') inPress(31, 1.2, 1.2, -0.8, -0.02);
+  if (shot === 'press3') inPress(32, -0.6, 1.4, 0.7, -0.05);
+  if (shot === 'pagebuild') inPress(31, -1.4, -0.1, 1.5, 0).then(() => openPage());
+  if (shot === 'pagedone') inPress(31, -1.4, -0.1, 1.5, 0).then(() => { openPage(); for (const k of ['title', 'head', 'pic', 'price']) { $('pgtray').querySelector('[data-k="' + k + '"]').click(); $('pgpage').querySelector('[data-k="' + k + '"]').click(); } $('pgpress').click(); });
+  if (shot === 'pressback') { story.delivery = 'split'; story.headline = 'learn'; inPress(33, 0.4, 0.2, 0.55, -0.02); }
+  if (shot === 'presschat') inPress(32, 2.4, 0.5, -2.98, 0.05).then(() => startTalk(byId('sailor')));
   if (shot === 'street1') inStreet(20, -7, 2.6, -1.25, 0.02);
   if (shot === 'street2') inStreet(21, 4.5, 1.2, 1.35, 0.03);
   if (shot === 'streetchat') inStreet(21, 0.3, 2.9, 0.1, 0.05).then(() => startTalk(byId('garvey3')));
@@ -755,6 +875,16 @@ function devViews() {
         L('garvey lines=' + await talkTo(byId('garvey3')) + ' words=' + story.words + ' stage=' + stage);
         L('critic lines=' + await talkTo(byId('critic')) + ' answer=' + story.answer + ' stage=' + stage + ' goal="' + $('goal').textContent + '" pages=' + unlocked.join(','));
         L(stage === 23 && story.words === 'work' && story.answer === 'listen' && place === 'street' && CHAPTERS[2].done() ? 'ALLDONE' : 'STALL'); L('DONE');
+      } else if (q.get('auto') === '5') {
+        $('start').click(); best = 23; stage = 23; CHAPTERS[3].go(); for (let i = 0; i < 300 && place !== 'press'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '" people=' + PEOPLE.map((n) => n.id).join(','));
+        for (const id of ['pressman', 'garvey4']) L(id + ' lines=' + await talkTo(byId(id))); L('headline=' + story.headline + ' stage=' + stage);
+        const act = ACTIONS.find((a) => a.on()); L('action=' + (act && act.label)); act.go();
+        $('pgtray').querySelector('[data-k="price"]').click(); $('pgpage').querySelector('[data-k="title"]').click(); L('wrong drop placed=' + $('pgpage').querySelector('[data-k="title"]').disabled + ' msg="' + $('pgmsg').textContent + '"');
+        for (const k of ['title', 'head', 'pic', 'price']) { $('pgtray').querySelector('[data-k="' + k + '"]').click(); $('pgpage').querySelector('[data-k="' + k + '"]').click(); }
+        L('page msg="' + $('pgmsg').textContent + '" press shown=' + !$('pgpress').hidden); $('pgpress').click(); $('pgdone').click(); L('stage=' + stage + ' laid=' + story.laid + ' bundles=' + bundles.filter((b) => b.visible).length + ' busy=' + busy);
+        L('sailor lines=' + await talkTo(byId('sailor')) + ' delivery=' + story.delivery + ' stage=' + stage + ' bundles=' + bundles.filter((b) => b.visible).length);
+        L('sailor back lines=' + await talkTo(byId('sailor'))); L('pressman lines=' + await talkTo(byId('pressman')) + ' stage=' + stage + ' goal="' + $('goal').textContent + '" pages=' + unlocked.join(','));
+        L(stage === 34 && story.headline === 'pride' && story.delivery === 'all' && place === 'press' && CHAPTERS[3].done() && unlocked.includes('ban') ? 'ALLDONE' : 'STALL'); L('DONE');
       } else {
         $('start').click(); best = 3; stage = 3; CHAPTERS[1].go(); for (let i = 0; i < 200 && place !== 'hall'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '"');
         L('amy lines=' + await talkTo(byId('amy'))); L('garvey lines=' + await talkTo(byId('garvey')) + ' poster=' + story.poster + ' stage=' + stage);
