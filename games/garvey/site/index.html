@@ -41,7 +41,7 @@ button{font:inherit;color:inherit}
 #title h1 span{font-family:"IM Fell English",Georgia,serif;font-style:italic;font-size:.5em;display:block;margin-top:.25em;color:var(--paper)}
 #title p{margin:0;max-width:30rem}
 .dev{background:none;border:0;color:var(--paper);font-family:var(--text);font-size:.95rem;opacity:.85;cursor:pointer;padding:.4em .2em;min-height:44px;letter-spacing:.02em}.dev b{color:var(--brass);font-weight:700}.dev:hover{opacity:1;text-decoration:underline;text-underline-offset:4px}
-#credits{position:fixed;inset:0;background:rgba(16,34,43,.78);display:grid;place-items:center;padding:16px;z-index:40}#credits[hidden]{display:none}#credits .book{max-height:88vh;overflow:auto}#credits .crbody{padding:1.4rem clamp(1.2rem,4vw,2.6rem) 1.8rem;max-width:40rem;margin:0 auto}#credits .crbig{text-align:center}#credits .crbig{font-size:1.4rem}#credits h3{font-family:var(--display);margin:1.4em 0 .5em;font-size:1.15rem;text-align:center;border-top:1px solid rgba(40,30,20,.25);padding-top:1em}#credits ul{padding-left:1.2em}#credits p,#credits li{margin:.25em 0;line-height:1.45}#credits ul{padding-left:1.1em;margin:.2em 0}.crbig{font-size:1.25rem;margin:.4em 0 .2em}
+#credits{position:fixed;inset:0;background:rgba(16,34,43,.78);display:grid;place-items:center;padding:16px;z-index:40}#credits[hidden]{display:none}#credits .book{max-height:88vh;overflow:auto}#credits .crbody{padding:1.4rem clamp(1.2rem,4vw,2.6rem) 1.8rem;max-width:40rem;margin:0 auto}#credits .crbig{text-align:center}#credits .crbig a{color:inherit;text-decoration:underline;text-underline-offset:3px;display:inline-block;padding:.3rem .2rem;margin:-.3rem -.2rem}#credits .crbig a:hover,#credits .crbig a:focus-visible{text-decoration-thickness:2px}#credits .crbig{font-size:1.4rem}#credits h3{font-family:var(--display);margin:1.4em 0 .5em;font-size:1.15rem;text-align:center;border-top:1px solid rgba(40,30,20,.25);padding-top:1em}#credits ul{padding-left:1.2em}#credits p,#credits li{margin:.25em 0;line-height:1.45}#credits ul{padding-left:1.1em;margin:.2em 0}.crbig{font-size:1.25rem;margin:.4em 0 .2em}
 .loading{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:.4rem}
 .track{flex:1 1 9rem;height:6px;background:var(--ink-2);border-radius:3px;overflow:hidden;min-width:8rem}
 #bar{height:100%;width:0;background:var(--brass);transition:width .2s}
@@ -294,7 +294,7 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 <section id="credits" role="dialog" aria-labelledby="crtitle" hidden>
   <div class="book">
     <header><h2 id="crtitle">Credits</h2><button id="crclose">Close</button></header>
-    <div class="crbody"><p class="crbig">Created by <b>Kellz 5.0</b></p>
+    <div class="crbody"><p class="crbig">Created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p>
     <h3>Where the history comes from</h3>
     <ul>
       <li>PBS American Experience, <i>Marcus Garvey</i> (timeline and the story of the UNIA)</li>
