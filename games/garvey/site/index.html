@@ -156,7 +156,8 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 .pc{border:0;border-radius:5px;background:#8e8f8a;color:#17130f;cursor:pointer;box-shadow:0 3px 0 #55564f;font:700 1rem Georgia,serif;padding:.55rem .8rem;min-height:48px}
 .pc.sel{outline:3px solid var(--brass);outline-offset:2px}
 .pc:disabled{opacity:.25;cursor:default;box-shadow:none}
-#pgmsg{margin:0;min-height:2.6em}
+#pgmsg,#inmsg{margin:0;min-height:2.6em}
+#inrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 </style>
 </head>
 <body>
@@ -210,6 +211,13 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
     <div id="pgtray" aria-label="The pieces"></div>
     <p id="pgmsg" aria-live="polite"></p>
     <div class="tbtns"><button id="pgpress" class="btn" hidden>Press</button><button id="pgdone" class="btn" hidden>Done</button></div>
+  </div>
+  <div id="inspect" class="panel" role="dialog" aria-labelledby="intitle" hidden>
+    <button id="inclose" class="x" aria-label="Stop looking at the ship">&times;</button>
+    <h2 id="intitle">Look the old ship over</h2>
+    <div id="inrow" aria-label="Parts of the ship"></div>
+    <p id="inmsg" aria-live="polite"></p>
+    <div class="tbtns"><button id="indone" class="btn" hidden>Done</button></div>
   </div>
   <div id="dialogue" role="dialog" aria-labelledby="who" hidden>
     <button id="dclose" aria-label="Stop talking">&times;</button>

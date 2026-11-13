@@ -169,7 +169,7 @@ const START = { x: -0.5, z: 2.9, yaw: 0 };
 const EYE = 1.55, isTouch = matchMedia('(pointer: coarse)').matches;
 const keys = new Set(); let busy = false, fading = false;   /* busy: a talk, the journal or another panel is open, so do not move */
 let talkWith = null, near = null, DEV_NOSTOP = false, curWalls = WALLS, curBounds = BOUNDS;   /* DEV_NOSTOP: test views only, so a walker keeps walking while the camera is close */
-const panelsOpen = () => ['dialogue', 'typeset', 'pagebuild', 'journal', 'chapters', 'credits', 'card'].some((id) => !$(id).hidden);   /* closing one panel must not unpause the world while another is open */
+const panelsOpen = () => ['dialogue', 'typeset', 'pagebuild', 'inspect', 'journal', 'chapters', 'credits', 'card'].some((id) => !$(id).hidden);   /* closing one panel must not unpause the world while another is open */
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && state.started) e.preventDefault();
@@ -241,7 +241,7 @@ const SHOP_PEOPLE = [
 function initPerson(n) { n.m = null; n.walking = false; n.wait = 1.5 + Math.random() * 2; n.i = 0; n.heard = 0; n.talked = false; n.hx = n.x; n.hz = n.z; n.dest = null; n.delay = 0; n.hidden = false; }
 for (const n of SHOP_PEOPLE) initPerson(n);
 let PEOPLE = SHOP_PEOPLE;   /* the people in the place you are in */
-const allPeople = () => [...SHOP_PEOPLE, ...HALL_PEOPLE, ...STREET_PEOPLE, ...PRESS_PEOPLE];
+const allPeople = () => [...SHOP_PEOPLE, ...HALL_PEOPLE, ...STREET_PEOPLE, ...PRESS_PEOPLE, ...DOCK_PEOPLE];
 const byId = (id) => allPeople().find((n) => n.id === id);
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function tapPerson(cx, cy) {
@@ -300,6 +300,10 @@ const JOURNAL = [
     deeper: ['The name at the top of a paper is called the masthead.', 'A page of type locked in an iron frame is called a forme. The stone table where printers did this is called the imposing stone.'] },
   { id: 'ban', title: 'The paper is banned', simple: ['Some governments did not want people to read the Negro World.', 'They banned it. That means it was not allowed.', 'Sailors still carried copies from port to port.'],
     deeper: ['It was banned in several places, such as Trinidad, British Guiana and St Vincent. Sources differ on the years.', 'The sailor in this game is made up, and so is his voyage. He shows how the paper really did travel.', 'The sources we have do not say how copies were carried past officers, so the game does not show it.'] },
+  { id: 'bsl', title: 'The Black Star Line', simple: ['The Black Star Line was a company that planned to own ships.', 'People bought shares in it for five dollars each.', 'Marcus Garvey hoped the ships would help Black people trade and travel on their own.'],
+    deeper: ['The company was set up in June 1919 in the state of Delaware. Sources give the day as 23 or 27 June.', 'Its first ship was the Yarmouth, bought in 1919. She was old and in poor condition. Some people called her the Frederick Douglass.', 'Two more ships followed in 1920: the Shady Side, a small excursion boat, and the Kanawha, a steam yacht. Sources say they were old and cost too much.', 'The company had many troubles and collapsed in the early 1920s.', 'The clerk, the engineer, the friend and the ship inspection in this game are made up. The ships and the five dollar shares are real.', 'These details come from books and websites. We still need to check them against the Marcus Garvey and UNIA Papers.'] },
+  { id: 'shares', title: 'What is a share?', simple: ['A share is a small part of a company.', 'If the company does well, people who own shares can share the profit.', 'If it does badly, they can lose the money they put in.'],
+    deeper: ['Garvey sold shares for five dollars so that people with little money could join in.', 'Nearly 100,000 shares were sold by August 1920. The exact number differs between sources.'] },
   { id: 'unia', title: 'The UNIA begins', simple: ['UNIA stands for Universal Negro Improvement Association.', 'It was founded in Kingston, Jamaica, in July 1914.', 'It wanted to help people in need, build pride, and open a trade school.'],
     deeper: ['Many sources give the first meeting as 20 July 1914. Others point to 1 August, Emancipation Day. Where it met is also uncertain.', 'In 1914 Garvey wrote to Booker T. Washington about a trade school like Tuskegee. Washington died in 1915.', 'Garvey sailed for the United States in March 1916.'] },
 ];
@@ -325,11 +329,12 @@ $('jbtn').onclick = () => openJournal(); $('jclose').onclick = closeJournal;
 /* ---------- goal, hint, sound button (as in Port Royal) ---------- */
 let stage = 0, best = 0;   /* the story is a number. Chapter 1: 0 talk, 1 set the type, 2 (reserved), 3 done. Chapter 2: 10 meet, 11 print the poster, 12 welcome the neighbours, 13 listen, 14 done. best: the furthest stage ever reached */
 const GOALS = { 0: 'Talk to the printer and the customer.', 1: 'Set the type for a notice. Go to the type stand.', 2: 'Talk to the printer. He has news.', 3: 'Well done! The print shop chapter is finished. Open Chapters for the next one.',
+  40: 'Meet Marcus Garvey, the share clerk and the engineer.', 41: 'Look the old ship over, at the edge of the dock.', 42: 'Talk to Marcus Garvey about the ship.', 43: 'Your friend wants to buy shares. Talk to her.', 44: 'Well done! Chapter 5 is finished. More is coming soon.',
   30: 'Talk to the pressman and Marcus Garvey.', 31: 'Lay out the front page on the stone table.', 32: 'Talk to the sailor by the door.', 33: 'The sailor is back. Talk to him and the pressman.', 34: 'Well done! Chapter 4 is finished. More is coming soon.',
   20: 'Listen to the three people at the corner.', 21: 'Talk to Marcus Garvey.', 22: 'The older man has a question. Talk to him.', 23: 'Well done! Chapter 3 is finished. More is coming soon.',
   10: 'Talk to Amy Ashwood and Marcus Garvey.', 11: 'Print the poster at the press table.', 12: 'Welcome the three neighbours as they arrive.', 13: 'Listen to Marcus Garvey.', 14: 'Well done! Chapter 2 is finished. More is coming soon.' };
-const TALK_TARGETS = { 30: ['pressman', 'garvey4'], 32: ['sailor'], 33: ['sailor', 'pressman'], 20: ['worker', 'woman', 'critic'], 21: ['garvey3'], 22: ['critic'], 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
-const NEXT_AFTER_TALK = { 30: 31, 32: 33, 33: 34, 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
+const TALK_TARGETS = { 40: ['garvey5', 'clerk', 'engineer'], 42: ['garvey5'], 43: ['friend'], 30: ['pressman', 'garvey4'], 32: ['sailor'], 33: ['sailor', 'pressman'], 20: ['worker', 'woman', 'critic'], 21: ['garvey3'], 22: ['critic'], 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
+const NEXT_AFTER_TALK = { 40: 41, 42: 43, 43: 44, 30: 31, 32: 33, 33: 34, 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
 const wantsTalk = (n) => !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
 function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); }
 function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); }
@@ -383,7 +388,7 @@ function resetChapter() {   /* the print shop again: people go home, the goal st
 const CHAPTERS = [
   { year: 'About 1908', name: 'The print shop', ready: true, go: () => chapterFade('About 1908', 'A print shop in Kingston', resetChapter), done: () => best >= 3 },
   { year: 'July 1914', name: 'The first followers', ready: true, go: () => { toast('Loading the hall'); ensureHall().then(() => chapterFade('1914', 'A meeting hall in Kingston', resetChapter2)); }, done: () => best >= 14 }, { year: '1916', name: 'The streets of Harlem', ready: true, go: () => { toast('Loading Harlem'); ensureStreet().then(() => chapterFade('1916', 'Harlem, New York', resetChapter3)); }, done: () => best >= 23 }, { year: '1918 to 1919', name: 'The power of the press', ready: true, go: () => { toast('Loading the press room'); ensurePress().then(() => chapterFade('1918', 'The press room, Harlem', resetChapter4)); }, done: () => best >= 34 },
-  { year: '1919', name: 'The Black Star Line' }, { year: 'August 1920', name: 'A movement becomes a nation' }, { year: '1922 to 1927', name: 'The price of a dream' }, { year: '1927 to today', name: 'The dream lives on' },
+  { year: '1919', name: 'The Black Star Line', ready: true, go: () => { toast('Loading the dock'); ensureDock().then(() => chapterFade('1919', 'A dock in New York', resetChapter5)); }, done: () => best >= 44 }, { year: 'August 1920', name: 'A movement becomes a nation' }, { year: '1922 to 1927', name: 'The price of a dream' }, { year: '1927 to today', name: 'The dream lives on' },
 ];
 function renderChapters() {
   const ul = $('chlist'); ul.replaceChildren();
@@ -405,7 +410,7 @@ $('dev').onclick = openCredits; $('chcred').onclick = () => { closeChapters(); o
 /* the reset button: this chapter again, the whole story again, or back to all games */
 $('reset').onclick = () => { if (fading) return; closeJournal();
   card('Reset', ['Start this chapter again, or start the whole story again.'], [
-    { t: 'Restart “' + CHAPTERS[stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].name + '”', go: () => { hideCard(); CHAPTERS[stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].go(); } },
+    { t: 'Restart “' + CHAPTERS[stage >= 40 ? 4 : stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].name + '”', go: () => { hideCard(); CHAPTERS[stage >= 40 ? 4 : stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].go(); } },
     { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) },
     { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'All games', go: toMenu }] : [])]); };
 
@@ -454,7 +459,7 @@ function tapTile(b, L) {
   else { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('tmsg').textContent = 'Not that one. Look at the word again.'; }
 }
 $('tpress').onclick = () => { pressThump(); $('tprint').textContent = typeWord; $('tprint').hidden = false; $('tcase').hidden = true; $('tpress').hidden = true; $('tdone').hidden = false; $('tmsg').textContent = 'Printed! The words come out the right way round.'; };
-function closeType(done) { closePage(false); if ($('typeset').hidden) return; $('typeset').hidden = true; busy = panelsOpen(); if (done && typeDone) { const f = typeDone; typeDone = null; f(); } }
+function closeType(done) { closePage(false); closeInspect(false); if ($('typeset').hidden) return; $('typeset').hidden = true; busy = panelsOpen(); if (done && typeDone) { const f = typeDone; typeDone = null; f(); } }
 $('tclose').onclick = () => closeType(false); $('tdone').onclick = () => closeType(true);
 
 /* ---------- a glowing speech mark over each person, a bubble on the nearest, and the Talk button for things to do ---------- */
@@ -738,11 +743,87 @@ function resetChapter4() {   /* the press room again: the page comes down, the j
   enterPlace('press'); setStage(30); showPlace();
 }
 
+/* ---------- chapter 5: a dock in New York, 1919 ---------- */
+const dockG = new THREE.Group(); dockG.visible = false; scene.add(dockG);
+const DOCK_WALLS = [], DOCK_BOUNDS = { x0: -9.2, x1: 9.2, z0: -3.6, z1: 3.4 };
+let dockBuilt = false;
+function signTex(lines, w = 512, h = 160) { return cv(w, h, (x) => { x.fillStyle = '#2b2118'; x.fillRect(0, 0, w, h); x.strokeStyle = '#d6b45c'; x.lineWidth = 6; x.strokeRect(8, 8, w - 16, h - 16); x.fillStyle = '#efe3c0'; x.textAlign = 'center'; let y = 16; for (const [t, size] of lines) { y += size; x.font = '700 ' + size + 'px Georgia, serif'; x.fillText(t, w / 2, y); y += 12; } }); }
+function buildDock() {
+  if (dockBuilt) return; dockBuilt = true; const g = dockG;
+  mesh(new THREE.PlaneGeometry(240, 240), std(cv(128, 128, (x, w, h) => { x.fillStyle = '#4c6f7c'; x.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { x.fillStyle = `rgba(${120 + Math.random() * 60 | 0},${160 + Math.random() * 50 | 0},${180 + Math.random() * 40 | 0},0.18)`; x.fillRect(Math.random() * w, Math.random() * h, 10 + Math.random() * 22, 2); } }, [40, 40]), 0.35), 0, -0.7, 0, g).rotation.x = -Math.PI / 2;
+  box(20.4, 0.7, 8.6, woodDark, 0, -0.35, 0, g); mesh(new THREE.PlaneGeometry(20.4, 8.6), std(plankTex([118, 90, 62], 7, [20.4 / 1.05, 8.6 / 2]), 0.9), 0, 0.005, 0, g).rotation.x = -Math.PI / 2;
+  for (let i = 0; i < 14; i++) cyl(0.16, 0.18, 1.4, woodDark, -9.6 + i * 1.5, -0.7, 4.4, g, 8);   /* pilings along the edge */
+  for (const bx of [-6.5, -2, 2.5, 7]) { cyl(0.18, 0.26, 0.5, iron, bx, 0.25, 4.0, g, 12); }   /* bollards */
+  for (let i = 0; i < 5; i++) mesh(new THREE.PlaneGeometry(4.5, 9), std(facadeTex(i + 3), 0.95), -9 + i * 4.5, 4.5, -4.5, g);   /* warehouses behind the dock */
+  /* the old ship, moored on the far side of a gap of water */
+  const hullM = solid(0x23262b, 0.7), white = solid(0xdcd6c4, 0.8), rust = solid(0x6b3a2a, 0.9);
+  box(13, 2.6, 3.4, hullM, 0, 0.6, 8.4, g); box(13.05, 0.22, 3.45, solid(0x7a2e24, 0.8), 0, -0.55, 8.4, g);
+  const bow = new THREE.ExtrudeGeometry((() => { const sh = new THREE.Shape(); sh.moveTo(0, -1.7); sh.lineTo(2.8, 0); sh.lineTo(0, 1.7); sh.closePath(); return sh; })(), { depth: 2.6, bevelEnabled: false }); bow.rotateX(-Math.PI / 2); const bw = mesh(bow, hullM, 6.5, -0.7, 8.4, g); bw.rotation.y = 0;
+  box(12.9, 0.1, 0.1, white, 0, 1.75, 6.68, g); box(8.6, 1.5, 2.2, white, -1.0, 2.9, 8.4, g); box(3.2, 1.0, 1.8, white, -0.6, 4.2, 8.4, g);
+  cyl(0.38, 0.42, 2.0, solid(0x16181b, 0.7), -2.6, 4.2, 8.4, g, 16); cyl(0.4, 0.4, 0.4, solid(0x16181b, 0.7), -2.6, 5.3, 8.4, g, 16);
+  for (const mx of [3.8, -5.2]) { cyl(0.07, 0.1, 6.2, woodDark, mx, 4.5, 8.4, g, 8); box(0.05, 0.05, 2.4, woodDark, mx, 6.0, 8.4, g); }
+  for (const lx of [-3.8, 1.6, 3.2]) box(1.4, 0.5, 0.7, rust, lx, 2.2, 6.9, g);
+  for (let i = 0; i < 12; i++) cyl(0.025, 0.025, 0.7, white, -6 + i * 1.1, 2.1, 6.72, g, 5);
+  box(0.9, 0.06, 3.1, wood, 0, 1.1, 5.4, g).rotation.x = -0.62;   /* a gangway from the dock to the deck */
+  mesh(new THREE.PlaneGeometry(2.8, 0.7), new THREE.MeshBasicMaterial({ map: signTex([['YARMOUTH', 60]], 512, 128) }), -4.2, 1.3, 6.69, g).rotation.y = Math.PI;
+  /* the share table, with a sign */
+  box(2.3, 0.9, 0.9, woodDark, -4.5, 0.45, -0.9, g); box(2.4, 0.06, 1.0, wood, -4.5, 0.93, -0.9, g); box(0.34, 0.02, 0.45, paper, -5.1, 0.97, -0.9, g); box(0.34, 0.02, 0.45, paper, -4.7, 0.97, -0.85, g); cyl(0.05, 0.07, 0.2, brass, -3.8, 1.05, -0.9, g, 10);
+  mesh(new THREE.PlaneGeometry(2.6, 0.82), new THREE.MeshBasicMaterial({ map: signTex([['BLACK STAR LINE', 52], ['SHARES FIVE DOLLARS EACH', 30]], 512, 160) }), -4.5, 2.5, -1.6, g); box(0.07, 2.4, 0.07, beam, -5.75, 1.2, -1.6, g); box(0.07, 2.4, 0.07, beam, -3.25, 1.2, -1.6, g); DOCK_WALLS.push([-5.75, -1.5, -3.2, -0.4]);
+  /* crates, barrels and rope */
+  const crate = (x, z, s2, y2 = 0) => { box(s2, s2, s2, wood, x, s2 / 2 + y2, z, g).rotation.y = x * 0.7; DOCK_WALLS.push([x - s2 * 0.75, z - s2 * 0.75, x + s2 * 0.75, z + s2 * 0.75]); };
+  crate(6.2, -2.4, 0.9); crate(7.1, -2.2, 0.8); crate(6.5, -2.3, 0.7, 0.9); crate(-8, 1.2, 0.9); crate(-8.2, 2.2, 0.8);
+  for (const [bx, bz] of [[7.6, 0.4], [8.2, 1.2], [7.4, 1.4]]) { cyl(0.34, 0.34, 0.8, woodDark, bx, 0.4, bz, g, 14); cyl(0.35, 0.35, 0.06, iron, bx, 0.55, bz, g, 14); DOCK_WALLS.push([bx - 0.4, bz - 0.4, bx + 0.4, bz + 0.4]); }
+  mesh(new THREE.TorusGeometry(0.4, 0.1, 8, 20), solid(0x8c7a52, 1), 0.8, 0.12, 3.5, g).rotation.x = Math.PI / 2;
+  for (const lx of [-7, 0, 7]) { cyl(0.05, 0.07, 3.6, solid(0x202428, 0.6), lx, 1.8, -3.9, g, 8); cyl(0.22, 0.16, 0.34, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffd48a, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }), lx, 3.7, -3.9, g, 8); }
+}
+const DOCK_SPOTS = { garvey5: [1.4, -0.4], clerk: [-4.5, -1.5], engineer: [5.0, 2.0], friend: [-1.6, 1.4] };
+let inspected = 0;
+const INSPECT = { hull: ['Hull', 'The paint looks fresh. Under it, the plates are rusty.'], engine: ['Engine', 'The engineer says it runs, but it is very old and will need many repairs.'], deck: ['Deck', 'The planks are worn, and some of the rails are loose.'] };
+let inspectDone = null, inspectSeen = {};
+function openInspect(done) {
+  if (busy) return; busy = true; keys.clear(); inspectDone = done; inspectSeen = {}; state.yaw = Math.PI; state.pitch = 0.12; $('inspect').hidden = false; $('indone').hidden = true; $('inmsg').textContent = 'Tap each part of the ship to look at it.';
+  const row = $('inrow'); row.replaceChildren(); for (const [k, [t]] of Object.entries(INSPECT)) { const b = document.createElement('button'); b.className = 'pc'; b.dataset.k = k; b.textContent = t; b.onclick = () => lookAt(b, k); row.appendChild(b); }
+}
+function lookAt(b, k) {
+  uiSound('tap'); inspectSeen[k] = true; b.classList.add('sel'); $('inmsg').textContent = INSPECT[k][1];
+  if (Object.keys(INSPECT).every((x) => inspectSeen[x])) { $('indone').hidden = false; $('indone').focus(); $('inmsg').textContent += ' You have looked at everything. The ship is old.'; }
+}
+function closeInspect(done) { if ($('inspect').hidden) return; $('inspect').hidden = true; busy = panelsOpen(); if (done && inspectDone) { const f = inspectDone; inspectDone = null; f(); } }
+$('inclose').onclick = () => closeInspect(false); $('indone').onclick = () => closeInspect(true);
+const DOCK_ACTIONS = [{ id: 'inspect', label: 'Look the old ship over', x: 0, z: 3.0, r: 1.6, on: () => stage === 41, go: () => openInspect(() => { unlock('shares'); setStage(42); uiSound('goal'); }) }];
+const plan = (id, t, reply) => ({ t, set: { plan: id }, then: [{ who: 'Marcus Garvey', text: reply }, { who: 'Marcus Garvey', text: 'People have paid their money. They want to see a ship.' }, { who: 'Marcus Garvey', text: 'So I will buy this one. Thank you for your honest advice.' }] });
+const advice = (id, t, reply) => ({ t, set: { advice: id }, then: [{ who: 'Friend', text: reply }] });
+const DOCK_PEOPLE = [
+  { id: 'garvey5', model: 'garvey1916', who: 'Marcus Garvey', label: 'Talk to Marcus Garvey', x: DOCK_SPOTS.garvey5[0], z: DOCK_SPOTS.garvey5[1], ry: faceToward(1.4, -0.4, 0, 3), base: 'Idle', ground: 0,
+    lines: () => stage === 42 ? [{ who: 'You', text: 'The ship is old. It needs many repairs.' }, { who: 'Marcus Garvey', text: 'I know. We have little money, and people are waiting.' }, { who: 'Marcus Garvey', text: 'What do you advise? Buy this ship now, or save for a better one?', choices: [plan('now', 'Buy it now', 'Now. Yes, a ship people can see is a strong thing.'), plan('wait', 'Save for a better ship', 'A better ship would cost much more.')] }]
+      : [{ who: 'Marcus Garvey', text: 'Welcome to the dock. We are starting a shipping company.', unlock: 'bsl' }, { who: 'Marcus Garvey', text: 'It is called the Black Star Line.' }, { who: 'Marcus Garvey', text: 'People will buy shares, and with the money we will buy ships.' }, { who: 'Marcus Garvey', text: 'Please look at our first ship. Talk to the clerk and the engineer first.' }],
+    later: () => ({ 41: ['Please look the ship over. The edge of the dock is the best place.'], 43: ['A friend of yours is waiting to talk to you.'] })[stage] || ['Thank you for your help.'] },
+  { id: 'clerk', model: 'clerk1919', who: 'Share clerk', label: 'Talk to the share clerk', x: DOCK_SPOTS.clerk[0], z: DOCK_SPOTS.clerk[1], ry: 0, base: 'Idle',
+    lines: () => [{ who: 'Share clerk', text: 'Shares in the Black Star Line! Five dollars each.', unlock: 'shares' }, { who: 'You', text: 'What is a share?' }, { who: 'Share clerk', text: 'A small part of the company. Many people can afford one.' }, { who: 'Share clerk', text: 'If the company does well, the owners do well too.' }],
+    later: () => ['Shares, five dollars each!', 'Come and join us.'] },
+  { id: 'engineer', model: 'engineer1919', who: 'Engineer', label: 'Talk to the engineer', x: DOCK_SPOTS.engineer[0], z: DOCK_SPOTS.engineer[1], ry: faceToward(5.0, 2.0, 0, 5), base: 'Idle',
+    lines: () => [{ who: 'Engineer', text: 'I look after the engine of this ship.' }, { who: 'You', text: 'Is she a good ship?' }, { who: 'Engineer', text: 'She is old. She has carried coal for years.' }, { who: 'Engineer', text: 'Look her over yourself. Start at the dock edge.' }],
+    later: () => ['Mind the ropes.', 'She is old, but she floats.'] },
+  { id: 'friend', model: 'hl_woman', who: 'Friend', label: 'Talk to your friend', x: DOCK_SPOTS.friend[0], z: DOCK_SPOTS.friend[1], ry: faceToward(-1.6, 1.4, -4.5, -0.9), base: 'Idle',
+    lines: () => stage === 43 ? [{ who: 'Friend', text: 'I have saved a little money. I want to buy shares.' }, { who: 'Friend', text: 'You have seen the ship. What should I do?', choices: [advice('truth', 'Tell the truth: the ship is old', 'Thank you for telling me. I will buy just one share.'), advice('cheer', 'Say it will surely succeed', 'Then I will buy five shares! Thank you!'), advice('wait', 'Say wait and see', 'Good idea. I will wait and look again next month.')] }]
+      : [{ who: 'Friend', text: 'I am thinking about buying a share.' }, { who: 'You', text: 'It is a big choice.' }, { who: 'Friend', text: 'It is. My savings are small.' }],
+    later: () => stage >= 44 ? ({ truth: ['I bought one share. I hope for the best.'], cheer: ['I bought five shares. I hope you were right.'], wait: ['I am waiting and watching the ship.'] })[story.advice] || ['Thank you.'] : ['I am still thinking.'] },
+];
+for (const n of DOCK_PEOPLE) initPerson(n);
+let dockLoading = null;
+function ensureDock() { if (!dockLoading) { buildDock(); dockLoading = Promise.all(DOCK_PEOPLE.map(loadPerson)); } return dockLoading; }
+function resetChapter5() {   /* the dock again: your choices here are cleared, the journal is kept */
+  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); stage = 40; delete story.plan; delete story.advice;
+  for (const n of DOCK_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  enterPlace('dock'); setStage(40); showPlace();
+}
+
 /* ---------- places ---------- */
 const PLACES = {
   shop: { group: room, lamp: lampLight, walls: WALLS, bounds: BOUNDS, people: SHOP_PEOPLE, actions: SHOP_ACTIONS, start: START, caption: 'Kingston, about 1908' },
   hall: { group: hallG, lamp: hallLamp, walls: HALL_WALLS, bounds: HALL_BOUNDS, people: HALL_PEOPLE, actions: HALL_ACTIONS, start: { x: 0, z: 3.1, yaw: 0 }, caption: 'Kingston, July 1914' },
   street: { group: streetG, lamp: new THREE.Object3D(), walls: STREET_WALLS, bounds: STREET_BOUNDS, people: STREET_PEOPLE, actions: [], start: { x: -7, z: 2.6, yaw: -1.25 }, caption: 'Harlem, New York, 1916', sky: 0x9ec8e6 },
+  dock: { group: dockG, lamp: new THREE.Object3D(), walls: DOCK_WALLS, bounds: DOCK_BOUNDS, people: DOCK_PEOPLE, actions: DOCK_ACTIONS, start: { x: 0, z: -2.6, yaw: Math.PI }, caption: 'New York, 1919', sky: 0x9fc6dc },
   press: { group: pressG, lamp: pressLamp, walls: PRESS_WALLS, bounds: PRESS_BOUNDS, people: PRESS_PEOPLE, actions: PRESS_ACTIONS, start: { x: 0, z: 3.1, yaw: 0 }, caption: 'Harlem, New York, 1918' } };
 let place = 'shop', placeT = 0;
 function enterPlace(name, keepPos) {
@@ -770,7 +851,7 @@ let modelsReady = false;
     loadClips(anims);
     PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; });
       m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = 0; scene.add(m); animate(m, n.base); grounded.push(m); n.m = m; });
-    (stage >= 30 ? ensurePress() : stage >= 20 ? ensureStreet() : stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 30 ? 'press' : stage >= 20 ? 'street' : stage >= 10 ? 'hall' : 'shop'); showPoster(); if (__DEV__) devViews(); });
+    (stage >= 40 ? ensureDock() : stage >= 30 ? ensurePress() : stage >= 20 ? ensureStreet() : stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 40 ? 'dock' : stage >= 30 ? 'press' : stage >= 20 ? 'street' : stage >= 10 ? 'hall' : 'shop'); showPoster(); if (__DEV__) devViews(); });
     modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave;
   }); }
 function startGame() {
@@ -826,6 +907,12 @@ function devViews() {
   if (shot === 'bubble') { go(-2.3, -0.8, 0.25, 0.08); }
   if (shot === 'nudge') { go(-0.5, 2.9, Math.PI / 2, 0); NUDGE.still = performance.now() - 20000; }
   const inStreet = (st, x, z, yaw, pitch) => ensureStreet().then(() => { stage = st; best = Math.max(best, st); enterPlace('street'); go(x, z, yaw, pitch); });
+  const inDock = (st, x, z, yaw, pitch) => ensureDock().then(() => { stage = st; best = Math.max(best, st); enterPlace('dock'); go(x, z, yaw, pitch); });
+  if (shot === 'dock1') inDock(40, 0, -2.6, Math.PI, 0.05);
+  if (shot === 'dock2') inDock(41, 0, 3.0, 0, 0.12);
+  if (shot === 'dock3') inDock(42, -1.0, -2.2, -2.6, 0.02);
+  if (shot === 'inspect') inDock(41, 0, 3.0, 0, 0.1).then(() => { openInspect(); $('inrow').querySelector('[data-k="hull"]').click(); });
+  if (shot === 'dockchat') inDock(43, -0.4, 3.0, 0.64, 0.05).then(() => startTalk(byId('friend')));
   const inPress = (st, x, z, yaw, pitch) => ensurePress().then(() => { stage = st; best = Math.max(best, st); enterPlace('press'); go(x, z, yaw, pitch); });
   if (shot === 'press1') inPress(30, 0, 3.1, 0, 0.03);
   if (shot === 'press2') inPress(31, 1.2, 1.2, -0.8, -0.02);
@@ -885,6 +972,12 @@ function devViews() {
         L('sailor lines=' + await talkTo(byId('sailor')) + ' delivery=' + story.delivery + ' stage=' + stage + ' bundles=' + bundles.filter((b) => b.visible).length);
         L('sailor back lines=' + await talkTo(byId('sailor'))); L('pressman lines=' + await talkTo(byId('pressman')) + ' stage=' + stage + ' goal="' + $('goal').textContent + '" pages=' + unlocked.join(','));
         L(stage === 34 && story.headline === 'pride' && story.delivery === 'all' && place === 'press' && CHAPTERS[3].done() && unlocked.includes('ban') ? 'ALLDONE' : 'STALL'); L('DONE');
+      } else if (q.get('auto') === '6') {
+        $('start').click(); best = 34; stage = 34; CHAPTERS[4].go(); for (let i = 0; i < 300 && place !== 'dock'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '" people=' + PEOPLE.map((n) => n.id).join(','));
+        for (const id of ['garvey5', 'clerk', 'engineer']) L(id + ' lines=' + await talkTo(byId(id))); L('stage=' + stage);
+        const act = ACTIONS.find((a) => a.on()); L('action=' + (act && act.label)); act.go(); $('inrow').querySelector('[data-k="hull"]').click(); L('done shown early=' + !$('indone').hidden); for (const k of ['engine', 'deck']) $('inrow').querySelector('[data-k="' + k + '"]').click(); L('msg="' + $('inmsg').textContent + '" done shown=' + !$('indone').hidden); $('indone').click(); L('stage=' + stage + ' busy=' + busy);
+        L('garvey lines=' + await talkTo(byId('garvey5')) + ' plan=' + story.plan + ' stage=' + stage); L('friend lines=' + await talkTo(byId('friend')) + ' advice=' + story.advice + ' stage=' + stage + ' goal="' + $('goal').textContent + '" pages=' + unlocked.join(','));
+        L(stage === 44 && story.plan === 'now' && story.advice === 'truth' && place === 'dock' && CHAPTERS[4].done() && unlocked.includes('bsl') && unlocked.includes('shares') ? 'ALLDONE' : 'STALL'); L('DONE');
       } else {
         $('start').click(); best = 3; stage = 3; CHAPTERS[1].go(); for (let i = 0; i < 200 && place !== 'hall'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '"');
         L('amy lines=' + await talkTo(byId('amy'))); L('garvey lines=' + await talkTo(byId('garvey')) + ' poster=' + story.poster + ' stage=' + stage);
