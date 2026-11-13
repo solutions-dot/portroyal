@@ -127,13 +127,6 @@ export function lantern() {   /* a hand lamp: a metal frame, a glowing glass, a 
   const flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); flame.scale.set(0.5, 0.5, 1); flame.position.y = 0.2; g.add(flame); g.userData.flame = flame; return g;
 }
 export function torch() { const g = grp(); cyl(0.03, 0.04, 1.1, M.woodDark, 0, 0.55, 0, g, 6); const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); f.scale.set(0.9, 1.1, 1); f.position.y = 1.2; g.add(f); g.userData.flame = f; return g; }
-let _rockMat;
-export function seatRock(h = 0.46, r = 0.36, seed = 1) {   /* a boulder with a flat top, to sit on (top at y = h). The sides are lumpy, the top is level. */
-  _rockMat = _rockMat || new THREE.MeshStandardMaterial({ color: 0x8a867a, roughness: 1, flatShading: true });
-  const geo = new THREE.CylinderGeometry(r * 0.86, r, h, 8, 1), p = geo.attributes.position;
-  for (let i = 0; i < p.count; i++) { const a = Math.atan2(p.getZ(i), p.getX(i)), f = 1 + 0.14 * Math.sin(3 * a + seed) + 0.09 * Math.sin(5 * a + seed * 2); p.setX(i, p.getX(i) * f); p.setZ(i, p.getZ(i) * f); }
-  geo.computeVertexNormals(); const g = grp(); mesh(geo, _rockMat, 0, h / 2, 0, g); return g;
-}
 export function bench(L = 2, c = 0x6b4a30) { const g = grp(), m = solid(c, 0.95); box(L, 0.07, 0.5, m, 0, 0.45, 0, g); box(L, 0.5, 0.06, m, 0, 0.75, -0.24, g); for (const x of [-L / 2 + 0.1, L / 2 - 0.1]) box(0.08, 0.45, 0.44, M.woodDark, x, 0.22, 0, g); return g; }
 export function pole(h = 7) { const g = grp(); cyl(0.09, 0.12, h, M.woodDark, 0, h / 2, 0, g, 6); box(1.6, 0.08, 0.08, M.woodDark, 0, h - 0.4, 0, g); for (const x of [-0.7, -0.25, 0.25, 0.7]) cyl(0.03, 0.03, 0.16, solid(0xc9d6d0, 0.4), x, h - 0.3, 0, g, 6); return g; }
 export function lampPost(h = 3.6, lit = true) { const g = grp(); cyl(0.06, 0.09, h, M.iron, 0, h / 2, 0, g, 8); box(0.34, 0.34, 0.34, lit ? M.lanternGlass : M.iron, 0, h + 0.1, 0, g); box(0.46, 0.06, 0.46, M.iron, 0, h + 0.32, 0, g); return g; }

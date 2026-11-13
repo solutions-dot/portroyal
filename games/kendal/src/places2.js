@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv, grain } from './gfx.js';
 import { rails, railsCurve, woodCoach, dieselLoco, platform, TM } from './trains.js';
-import { palm, tree, banana, bush, flowers, boardHouse, hillRing, scatter, crate, hamper, suitcase, sack, bucket, bench, seatRock, pole, lampPost, torch, lantern, signBoard, standpipe, truck, PM } from './props.js';
+import { palm, tree, banana, bush, flowers, boardHouse, hillRing, scatter, crate, hamper, suitcase, sack, bucket, bench, pole, lampPost, torch, lantern, signBoard, standpipe, truck, PM } from './props.js';
 import { ENV, stationBase, groundPlane, makeRig, TRACK_Y } from './common.js';
 import { person, extra, crowd57, villagers, walkers, LOOKS } from './cast.js';
 import { roadStrip } from './places1.js';
@@ -133,9 +133,9 @@ export function buildCrash() {
   people.push(person('dawn', 'dawn', 'Dawn', 9.5, 10, PI, { h: 1.05, anim: 'Sad1' }));
   people.push(person('louise', 'louise', 'Sister Louise', -6.6, 13.6, PI, { h: 1.7, props: [['RightHand', 'lantern']] }));
   const sit = [[-2.6, 8.8], [-4.8, 9.8], [-1.2, 10.2], [-6.0, 7.6]];
-  for (const [i, [x, z]] of sit.entries()) {   /* survivors rest on flat-topped rocks by the fire (the sitting poses are chair-high, so a rock is about 0.46 m) */
-    const ry = PI * 0.4 + i, top = 0.34 + (i % 3) * 0.04, rk = seatRock(top, 0.36, i + 1); rk.position.set(x, 0, z); g.add(rk); walls.push([x - 0.45, z - 0.45, x + 0.45, z + 0.45]);
-    extras.push({ ...crowd57(1, 50 + i, [0, 0, 1, 1], { anims: ['SitDisbelief'] })[0], x, z, ry, anim: ['SitDisbelief', 'SitIdle'][i % 2], blanket: true, seat: top });
+  for (const [i, [x, z]] of sit.entries()) {   /* survivors stand by the fire and cry, turned toward it (the standing-crying clip, 'Cry') */
+    const ry = Math.atan2(-3 - x, 6 - z) + (i % 2 ? 0.5 : -0.4);
+    extras.push({ ...crowd57(1, 50 + i, [0, 0, 1, 1], { anims: ['Cry'] })[0], x, z, ry, anim: 'Cry', props: undefined });
   }
   extras.push(...villagers(16, 61, [-14, 1, 22, 13], { faceZ: PI }).filter(free(walls)));
   extras.push(...villagers(6, 73, [-12, 14, 4, 20], { faceZ: PI }).map((e) => ({ ...e, anim: 'Talk1' })));

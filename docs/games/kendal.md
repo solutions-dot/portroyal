@@ -3,7 +3,7 @@
 Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the story, the systems, the research and what is left to polish.
 
 - Code: `games/kendal/src/` (split into modules, see "Code map"). Page and styles: `games/kendal/site/index.html`.
-- Models: `games/kendal/site/models/*.js` (13 character bodies and their light copies). The animation library is copied in by the build and trimmed to the 16 clips this game plays (`games/kendal/anim-clips.json`, about 445 KB instead of 979 KB). If you play a new clip, add its name there, or the build's copy will not have it.
+- Models: `games/kendal/site/models/*.js` (13 character bodies and their light copies). The animation library is copied in by the build and trimmed to the 17 clips this game plays (`games/kendal/anim-clips.json`, about 445 KB instead of 979 KB). If you play a new clip, add its name there, or the build's copy will not have it.
 - Build: `node tools/build.mjs kendal --dev` (test views and the autoplayer) or without `--dev` (public).
 - Status: all seven chapters are playable. It is new, so expect polish work (see "What is left").
 
