@@ -253,7 +253,7 @@ function tick(dt) {
   const liftT = N.cine ? N.liftNeed : 0; if (Math.abs(N.lift - liftT) > 0.002) { N.lift += (liftT - N.lift) * Math.min(1, dt * 3); hand.setLift(N.lift); }
   { const csT = N.cine ? 1 : 0; if (Math.abs(hand.cs - csT) > 0.002) hand.setCine(hand.cs + (csT - hand.cs) * Math.min(1, dt * 3)); }   /* the torch shrinks a little while the bars are in */
   camera.position.set(S.x + Math.sin(ft * 43) * shake, S.eye + bob + Math.sin(ft * 57 + 1) * shake * 0.7, S.z); camera.rotation.set(S.pitch + N.glance, S.yaw, Math.sin(ft * 31) * shake * 1.6, 'YXZ');
-  const near = !locked() && !!nearPatch(); $('act').hidden = !near;
+  const near = !locked() && !!nearPatch(); if (N.phase !== 'shot') $('act').hidden = !near;   /* test views and checks set the Scrape button themselves */
 }
 function render() { renderer.render(scene, camera); }
 function frame(t) { if (!manual) requestAnimationFrame(frame); const dt = Math.max(0, Math.min(0.05, (t - last) / 1000)); last = t; tick(dt);   /* never negative: the first frame can be stamped a little before `last` */ render(); document.body.dataset.frames = ++frames; }
@@ -285,8 +285,7 @@ if (__DEV__) {
       const hit = (sx, sy) => { if (flame && sx >= flame.left && sx <= flame.right && sy >= flame.top && sy <= flame.bottom) return 'flame'; nd.set(sx / innerWidth * 2 - 1, -(sy / innerHeight) * 2 + 1); ray.setFromCamera(nd, camera); const h = ray.intersectObjects(parts, false)[0]; return h ? (h.object.name || 'part') : null; };
       for (const [id, r] of vis) { let found = null; for (let i = 0; i <= 8 && !found; i++) for (let j = 0; j <= 5 && !found; j++) { const f = hit(r.left + (r.right - r.left) * i / 8, r.top + (r.bottom - r.top) * j / 5); if (f && !(id === 'barB' && ['wrist', 'sleeve', 'cuff', 'stick'].includes(f))) found = f; }   /* the forearm and the foot of the stick leave through the bottom, under the bar, on purpose; the fist and flame must stay clear */
         if (found) out.push('hand overlaps ' + id + ' (' + found + ')'); }
-      const arm = (h) => h && !['wrist', 'sleeve', 'cuff'].includes(h);   /* the forearm comes in from the lower right, as a real held torch does, so it may leave the side low down; nothing else may */
-      let off = false; for (let k = 0; k <= 40 && !off; k++) { const f = k / 40, y = f * innerHeight * 0.92, low = y > innerHeight * 0.8; if ((low ? arm(hit(2, y)) : hit(2, y)) || (low ? arm(hit(innerWidth - 3, y)) : hit(innerWidth - 3, y)) || hit(f * innerWidth, 2)) off = true; }
+      let off = false; for (let k = 0; k <= 40 && !off; k++) { const f = k / 40; if (hit(2, f * innerHeight * 0.92) || hit(innerWidth - 3, f * innerHeight * 0.92) || hit(f * innerWidth, 2)) off = true; }
       if (off) out.push('hand runs off the side or top');
       const c = Math.min(innerWidth, innerHeight) * 0.07; let mid = false; for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) if (hit(innerWidth / 2 + i * c, innerHeight / 2 + j * c)) mid = true;
       if (mid) out.push('hand covers the middle of the view'); }

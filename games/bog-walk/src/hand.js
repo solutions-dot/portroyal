@@ -115,8 +115,8 @@ export function makeHand(camera) {
     place(aspect, fov, ph, pw) {   /* the fist sits at a fixed low spot, fully in view; the torch is turned and scaled about it, so a small or narrow screen shrinks the torch, not the grip */
       const depth = 0.55, halfW = Math.tan(fov * Math.PI / 360) * aspect * depth, wide = aspect >= 1.2, s = 0.94 * Math.min(1, Math.max(0.55, Math.min(ph / 640, pw / 560)));   /* words keep their pixel size, so a short or narrow screen gets a smaller torch to leave them room */
       const tn = H.tune || {};
-      root.position.set(wide ? Math.min(0.34, halfW * 0.7) : halfW * 0.36, H.baseY + H.lift, -depth); root.rotation.set(0, tn.ry ?? 0.34, 0);
-      inner.rotation.set(tn.rx ?? -0.2, 0, tn.rz ?? (wide ? -0.15 : -0.07)); H.s = s; H.setCine(H.cs); },
+      root.position.set(wide ? Math.min(0.34, halfW * 0.7) : halfW * (tn.x ?? 0.36), H.baseY + H.lift, -depth); root.rotation.set(0, tn.ry ?? (wide ? 0.34 : 0.2), 0);   /* on a tall phone the hand turns a little less, so the forearm leaves through the bottom edge, not the side */
+      inner.rotation.set(tn.rx ?? -0.2, 0, tn.rz ?? (wide ? -0.15 : -0.07)); H.s = s * (tn.sm ?? 1); H.setCine(H.cs); },
     update(time, k) {
       rag.emissiveIntensity = 0.1 + 0.9 * Math.min(1, k); const f = k * (0.86 + 0.1 * Math.sin(time * 9.1) + 0.06 * Math.sin(time * 21)), f2 = k * (0.9 + 0.1 * Math.sin(time * 13.3 + 1));
       flame.material.opacity = Math.max(0, Math.min(1, f)); flame.visible = f > 0.02; flame.scale.set(0.17 * (0.92 + 0.14 * Math.sin(time * 11)), 0.26 * (0.9 + 0.18 * Math.sin(time * 14)), 1);
