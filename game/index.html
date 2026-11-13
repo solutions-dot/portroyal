@@ -61,6 +61,7 @@ button{font:inherit;color:inherit}
 #toast{position:absolute;left:50%;top:auto;bottom:128px;transform:translateX(-50%);background:var(--paper);color:var(--paper-ink);padding:.5em 1em;border-radius:6px;font-weight:700;font-size:.9rem;max-width:calc(100% - 32px);text-align:center;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(239,231,211,.55);background:rgba(16,34,43,.3);pointer-events:none}
 #nub{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;background:var(--brass);transform:translate(-50%,-50%)}
+#stick.rest{opacity:.45}#stick.rest #nub{opacity:.7}
 
 #dialogue{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(40rem,calc(100% - 32px));background:rgba(16,34,43,.95);border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.7rem}
 #who{font-family:var(--display);font-size:1.25rem;letter-spacing:.08em;color:var(--brass);margin:0}
@@ -98,6 +99,7 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 .book footer .btn{background:var(--paper-ink);color:var(--paper);font-family:var(--text);letter-spacing:0}
 #topr{position:absolute;right:16px;top:16px;display:flex;gap:8px}
 #topr #jbtn{position:static}
+#fbexit{background:var(--paper);color:#10222b;border:0;border-radius:6px;height:48px;padding:0 14px;font:600 1rem/1 inherit;cursor:pointer}#fbexit[hidden]{display:none}
 #reset{background:rgba(16,34,43,.86);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}
 #view{background:rgba(16,34,43,.86);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}#view[hidden]{display:none}#view[aria-pressed=true]{color:var(--brass)}
 #snd{background:rgba(16,34,43,.86);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}
@@ -127,8 +129,8 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
   <div class="card">
     <p class="place">Jamaica &middot; Kingston Harbour</p>
     <h1>Port Royal, 1690 <span>The story of Lewis Galdy</span></h1>
-    <p class="intro">1690. You are Lewis Galdy, a young Frenchman who fled his home to keep his faith. Your ship has just tied up at Port Royal: the richest, busiest and wildest town in the Caribbean, full of merchants, sailors, enslaved workers and old pirates who once sailed with Captain Morgan.</p>
-    <p class="intro">Nobody here knows it yet, but in two years the ground beneath this town will open and swallow it. And you will be one of the few who lives to tell the tale.</p>
+    <p class="intro">It is 1690. You are Lewis Galdy, a young man from France. Your ship has just landed at Port Royal, the busiest, wildest town in the Caribbean.</p>
+    <p class="intro">Nobody knows it yet, but in two years an earthquake will swallow this town. And you will live to tell the tale.</p>
     <div class="loading">
       <button id="start" class="btn" disabled>Building the town</button>
       <button id="tchap" class="btn ghost" hidden>Chapters</button>
@@ -144,7 +146,7 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 <div id="fade" hidden><div id="fadeT"></div><div id="fadeS"></div></div>
 <div id="hud" hidden>
   <button id="goal" aria-expanded="true"></button>
-  <div id="topr"><button id="view" aria-pressed="false" aria-label="See Lewis Galdy. Tap to switch the view." title="Switch view (V)" hidden><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="6" r="3"/><path d="M7 21v-6a5 5 0 0 1 10 0v6"/></svg></button><button id="reset" aria-label="Reset" title="Reset"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button><button id="snd" aria-pressed="true" aria-label="Sound on. Tap to turn off."><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><g id="sndon"><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></g><g id="sndoff"><path d="M17 9l5 6M22 9l-5 6"/></g></svg></button><button id="jbtn" aria-haspopup="dialog">Journal <span id="jcount" hidden>0</span></button></div>
+  <div id="topr"><button id="fbexit" hidden>Leave story</button><button id="view" aria-pressed="false" aria-label="See Lewis Galdy. Tap to switch the view." title="Switch view (V)" hidden><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="6" r="3"/><path d="M7 21v-6a5 5 0 0 1 10 0v6"/></svg></button><button id="reset" aria-label="Reset" title="Reset"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button><button id="snd" aria-pressed="true" aria-label="Sound on. Tap to turn off."><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><g id="sndon"><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></g><g id="sndoff"><path d="M17 9l5 6M22 9l-5 6"/></g></svg></button><button id="jbtn" aria-haspopup="dialog">Journal <span id="jcount" hidden>0</span></button></div>
   <p id="toast" role="status" hidden></p>
   <button id="talk" class="btn" hidden>Talk to her</button>
   <p id="hint"></p>
