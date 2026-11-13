@@ -291,7 +291,7 @@ if (__DEV__) {
     return auditPlace({ id: 'tube', snap: snapMeshes(T.group), npcs: [], walls, bounds: { x0: -LANE, x1: LANE, z0: ZMIN + 3, z1: ZMAX - 1.6 }, start: { x: 0.12, z: ZM - 1.5 },
       actions: T.patches.map((p) => ({ label: 'scrape patch ' + p.i, x: p.pos.x, z: p.pos.z, r: 2.3 })), people: [] });
   }
-  window.__bw = { S, N, T, hand, runAudit, audit: runAudit, tick, render, startIntro, skipIntro, bars, hideHud, caption, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), hudOverlaps, handRects, propOverlaps, begin, skipNight, setGoal, say };
+  window.__bw = { S, N, T, hand, runAudit, audit: runAudit, stepSound, tick, render, startIntro, skipIntro, bars, hideHud, caption, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), hudOverlaps, handRects, propOverlaps, begin, skipNight, setGoal, say };
   const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
   const shot = q.get('shot');
   if (shot) {

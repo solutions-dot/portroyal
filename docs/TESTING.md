@@ -103,6 +103,7 @@ Rules of thumb the audit enforces:
 
 - **A collision check that ran everywhere** blocked all movement off the spit. Test walking in every place after touching `clampPos`.
 - **Cutting dialogue lines** left empty "second visit" arrays and crashed. Run the autoplayer after editing text.
+- **Sound errors only show when sound really plays.** `stepSound('water')` threw (it set a sound's buffer twice) but every muted headless test passed. Run the autoplayer once with sound allowed: add `--autoplay-policy=no-user-gesture-required` to Chrome (Playwright: in `args`), then check `AU.ctx.state` is `running` and that the page logged no errors. Do it after any change to sound code.
 - **Clones copy `userData` as JSON**: store bone references in a `WeakMap`, not in `userData`.
 - **Starting a chapter from the menu** must clean up the last chapter's people and props.
 - **Gamepad presses**: save the previous button state before comparing, or no press ever registers.
