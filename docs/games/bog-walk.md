@@ -126,6 +126,73 @@ All of this comes from secondary sources. The original *Gleaner* of 28 June 1904
 
 Sources used so far: the *Gleaner* retellings "1904 Bog Walk disaster relived" (2 July 2021) and "33 die in Bog Walk tube incident" (6 July 2022), both sponsored pieces that say they are independent of the newsroom; Rebecca Tortello, "Bog Walk Tube", *Pieces of the Past* (*Gleaner*); Wikipedia "Bog Walk" and "Rio Cobre Dam"; jamaicans.com, "See What's Left of the Bog Walk Tube" (2016, contains errors, so used for the ruins only).
 
+## The build script (agreed with the owner, 13 Nov 2026)
+
+The owner said yes to all three next steps: a better torch hand, an in-game menu like the other games (Journal, Chapters, Reset, sound icon, Main Menu), and more story before and after the Tube. This section is the script the build follows. It refines the chapter table above; where they differ, this section wins.
+
+### Rules for the words
+
+- **Real people say only words from the record.** Mr Douparrouzel's one line is his own report: he told the men "there was a little water coming but it was not from the dam". In the game he says "A little water is coming. It is not from the dam." Nobody else real speaks. Dr Hammond, the ministers, Mr Haggart and Mr Osborne-Smith are seen doing what the record says they did, and the words on screen describe it ("Dr Hammond looks after the men."). They never speak.
+- **Orders in the pipe come from Bass Henry**, the fictional leader of the gang. The earlier build gave Douparrouzel made-up lines ("Scrape the plates clean", "Out, all of you!"). Those lines now belong to Bass Henry.
+- Lines are about 12 words or fewer. Fictional people get first names or nicknames only.
+
+### Places (one site, three times, plus Kingston)
+
+| Place | Used in | What it is |
+|---|---|---|
+| The station, evening | Ch 0 | A yard by the river with hills behind. The turbine house (a brick building with tall windows and a spinning wheel and a switchboard inside), the end of the Tube where it curves down into the station, a valve wheel on a stand by the Tube (a general picture: the record does not say where the valve was), a notice board, lamps. Sunset into night. |
+| Kingston, 31 March 1899 | Ch 1 | A street with board-and-zinc shops with verandas, gas lamps, a track in the road, overhead wires on poles, the tram depot doors. A crowd. A mule car standing at the side, retired. The first electric car, painted, with an open platform and a trolley pole. |
+| Inside the Tube | Ch 2 and 3 | The existing night (tube.js and the night code). |
+| The station yard, morning | Ch 4 | The same yard as Ch 0, at dawn going to day. The superintendent's house (a wooden house with a veranda), a gate, a short siding where a special train stops. |
+| The ruins, today | Ch 5 | The same site among trees: broken brick walls of the turbine house with no roof, concrete supports in a row, a rusted half-shell of the pipe, the river and the dam, an information board. Bright day. |
+
+### Chapters
+
+**0. The station (Sunday evening, 26 June 1904).** You are a young labourer on your first Sunday-night shift.
+- Rudy (your friend) waves you over: "There you are! First night on the gang?"
+- Bass Henry: "We go in when the last tram is done."
+- Go into the turbine house and see the wheel spin. Old Zeke: "This water makes the light for all of Kingston." "It turns the wheel. The wheel makes the power."
+- The notice board: put the journey of the water in order (river, dam, Tube, wheel, wires, tram). Card buttons, as in Garvey's timeline. A wrong pick just says "Not yet. Try again."
+- Midnight. Zeke: "Help me turn the wheel. Slow and steady." Hold the button (or drag round) to close the valve. The hum fades, the lamps dim, the yard goes quiet.
+- Zeke: "Now the Tube is empty. Our work can start."
+- The chapter ends with a card and the jump to Ch 2 (or Ch 1 if you choose "Hear Zeke's story").
+
+**1. The first electric tram (Kingston, Friday 31 March 1899).** Zeke tells it on the break: "Let me tell you about the day the trams changed." You are a boy of about 15, first person. An Exit button works at any time.
+- An old mule-car driver (fictional, "Mr Bertie") by his mule car: "My mules pulled this car for years." "Now the wires will do it."
+- A woman in the crowd (fictional): "They say it runs with no mule at all!"
+- A conductor (fictional) by the depot: "Mind the track. The car is coming out."
+- The car glides out with a hum and a bell. People cheer. Ride it a short way toward the foot of King Street (the first line ran from the depot on Orange Street to the foot of King Street).
+- The end: "The power for these trams came from Bog Walk." Back to the station (Ch 2).
+
+**2. Inside the Tube (about 1 to 3 a.m.).** The existing work phase. Bass Henry gives the orders. Zeke: "Sand and rust. The same every Sunday night." When water reaches your boots, a choice: **Tell Bass Henry** or **Keep working**. Either way Mr Douparrouzel's own line follows. Neither choice is called wrong. Only the next line changes: Bass Henry nods, "Keep your eyes open.", or Rudy asks, "Did you see the water?"
+
+**3. The water (about 4 a.m.).** The existing night: trickle, rise, dark, out. Bass Henry: "Out, all of you! Go to the manhole!" Zeke: "Keep to the wall. Go on." Skip button as now.
+
+**4. The morning after (Monday 27 June 1904, dawn to noon).** The words stay gentle.
+- A card first: "Of about 61 men in the Tube, 28 came out. 33 did not."
+- The men who came out sit on the ground in blankets. Rudy sits with them: "I am here. I made it." (Rudy came out.)
+- Seen, not spoken: Dr Hammond looks after the men. The two ministers from Linstead talk with families. Mr Haggart, the company's lawyer, writes names in a book. Mr Osborne-Smith speaks calmly to the crowd at the gate. Each one has a small caption when you look at them ("Dr Hammond was woken at 4:15 a.m. He came to help.").
+- A reporter (fictional, "the man from the Gleaner"): "What did you see in there?" Sort cards into "I saw it" and "I heard it": I saw: water at my boots; the torches go out; the light at the manhole. I heard: "80 men are dead" (wrong: the first reports were wrong); "a board was taken off at the dam" (a theory); "the water came from the dam" (not known). He says: "Thank you. I will only print what you saw."
+- Zeke's daughter (fictional, "Miss Ivy") at the gate: "Have you seen my father? Zeke?" The game says plainly: "Zeke did not come out." Choice: **Tell her what you saw** ("He helped me find the wall.") or **Tell her he was brave** ("He was calm. He helped the young ones."). Her reply changes: "Thank you for telling me." / "Thank you. I will remember that." Nothing more is shown.
+- A train whistle. A caption: "A special train came at ten to twelve. It brought coffins for the men." The scene fades.
+- Card: "The company paid for the burials and helped families. Many people still felt someone had made a mistake."
+
+**5. The ruins today.** A fictional teacher ("Miss Grant") and a student ("Kemar").
+- Miss Grant: "This is where the Tube came down to the power station."
+- The information board shows the real 1904 Gleaner headline (older readers' version), and a gentle line under it: "In 1904, 33 men died here when water came into the pipe."
+- Kemar: "Why did the water come?" Sort cards: **We know**: 33 men died; it was a Sunday night shift; the pipe was 8 feet across. **People guessed**: a board at the dam was opened; sand made a dam that burst. **Nobody knows**: which guess is true.
+- Put later events in order: the trams run again within days; the trams stop (1948); the power station closes (1966).
+- Kemar: "Who was to blame?" Choice: **"Nobody can say for sure."** or **"We should keep asking questions."** Miss Grant's reply changes slightly; both are right.
+- The end card. Every choice is listed on the "Your journey" journal page.
+
+### Interface (same as the other games)
+
+The top right holds the Reset button (icon), the sound button (icon) and the Journal button with a count. The Journal panel has tabs and a footer with Main Menu (shown only on the History Games site, as now) and Chapters. The Chapters panel lists the six chapters; each opens when the one before is done; footer: Credits and Start again. Reset opens a card: restart this chapter, start the whole story again, or Main Menu. Progress, journal pages and choices are saved in localStorage (key `bogwalk-save`), with `?test=resume` wired as in the other games.
+
+### Journal pages (each with "Dig deeper")
+
+The power station; The Tube; The first electric trams (1899); Sunday nights; The water; The morning after; What the newspaper said; Why did it happen? (theories, no verdict); The ruins today; Who is real and who is fictional (Rudy, Zeke, Ivy, Bass Henry, Mr Bertie, the reporter, Miss Grant and Kemar are fictional; Douparrouzel, Dr Hammond, the ministers, Mr Haggart and Mr Osborne-Smith are real); Your journey.
+
 ## The story
 
 You are a fictional young labourer on your first season with the tramway company's Sunday-night gang. The story is one long night and the morning after. The dramatic question, in plain words: **what do we owe the people whose hard work keeps the lights on, and how do we remember a disaster when nobody can say exactly why it happened?**
