@@ -102,7 +102,10 @@ def arm_ok(c,upto):
 sleeve=G.get('sleeve',0.86)
 cuts_sleeve=lambda t:[(armcut(t,1)[0],armcut(t,1)[1],lambda c:c.x>SX*0.8),(armcut(t,-1)[0],armcut(t,-1)[1],lambda c:c.x<-SX*0.8)]
 # shirt
-parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>(HIP+0.07 if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve),lambda c:0.012 if abs(c.x)>SX*0.8 else 0.008,'Shirt',post=(None if G.get('coat') else drape_front),
+def under_coat(c):   # the shirt sleeve between shoulder and cuff is hidden by the coat sleeve; leaving it there made it push through on the backs of the arms
+    if not (G.get('coat') and G.get('coatsleeves',True)): return False
+    t=side_arm(c); return t is not None and 0.1<t<G.get('coatsleeve',0.82)-0.1
+parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>(HIP+0.07 if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve) and not under_coat(c),lambda c:0.012 if abs(c.x)>SX*0.8 else 0.008,'Shirt',post=(None if G.get('coat') else drape_front),
    cuts=[((0,0,NECK+0.005-(0.062*s if G.get('coat') else 0)),(0,0,1),None),((0,-0.1,NECK-0.035*s-(0.06*s if G.get('coat') else 0)),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
@@ -199,11 +202,11 @@ if G.get('bands'):
     bm=bmesh.new(); seg=20; rings=[]
     for zz in (NECK-0.04*s,NECK-0.018*s,NECK+0.006*s):        # the wrap round the neck
         ring=[]
-        for k in range(seg):
-            a=2*math.pi*k/seg; r=radius(zz,a)+0.008; ring.append(bm.verts.new((math.sin(a)*r,J('Neck').y-math.cos(a)*r,zz)))
+        for k in range(seg+1):     # the front of the neck only: the coat collar covers the back, and a full ring poked out through it when the head turned
+            a=-0.62*math.pi+1.24*math.pi*k/seg; r=radius(zz,a)+0.008; ring.append(bm.verts.new((math.sin(a)*r,J('Neck').y-math.cos(a)*r,zz)))
         rings.append(ring)
     for r0,r1 in zip(rings,rings[1:]):
-        for k in range(seg): bm.faces.new((r0[k],r0[(k+1)%seg],r1[(k+1)%seg],r1[k]))
+        for k in range(seg): bm.faces.new((r0[k],r0[k+1],r1[k+1],r1[k]))
     zk=NECK-0.05*s; yk=front(zk)-0.03        # the knot
     knot=bmesh.ops.create_uvsphere(bm,u_segments=10,v_segments=6,radius=0.016,matrix=Matrix.Translation((0,yk,zk)))
     for v in knot['verts']: v.co.x=v.co.x*1.7; v.co.y=yk+(v.co.y-yk)*0.6; v.co.z=zk+(v.co.z-zk)*0.85
