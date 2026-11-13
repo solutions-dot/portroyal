@@ -100,3 +100,13 @@ These systems are general but still live in `games/port-royal/src/main.js`, beca
 - **Test harness**: the `?shot=` views and the `?auto=` autoplayer.
 
 `games/_template/src/main.js` has small, self-contained versions of movement, talking and the frame loop, so a new game can start without pulling these out first.
+
+## engine/grip.js: hands that hold things, arms that clear the body
+
+| Name | Use |
+|---|---|
+| `grip(model, 'Right', item, { handleY, scale, yaw, lift })` | Closes that hand into a fist, hangs the item from the fist by its handle (upright whatever the hand does) and lifts the arm `lift` radians away from the body so the item clears the hip, thigh or skirt. Pose the mixer once first. |
+| `spreadArms(model, angle)` | Holds both empty arms a little further out, so hands do not sink into a wide skirt or a jacket. |
+| `gripTick(model)` | Call every frame after the mixer update for any model with `userData.grips`. |
+
+Kendal and Marcus Garvey use it. Check the result with `?test=held`.

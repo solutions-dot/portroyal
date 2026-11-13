@@ -3,6 +3,7 @@
    it moves into engine/ after the Port Royal work has merged (see docs/games/garvey.md, "Working alongside the Port Royal chat").
    The two people and their lines are placeholders for testing the pipeline. Both are fictional. */
 import * as THREE from 'three';
+import { gripTick, spreadArms } from '../../../engine/grip.js';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
 import { model, prefetch, onLoadFail } from '../../../engine/loader.js';
@@ -628,7 +629,7 @@ function startArrivals() {
 }
 function loadPerson(n) {
   if (n.loading) return n.loading;
-  n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); grounded.push(m); n.m = m; m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); n.h = Math.max(1.3, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
+  n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; if (n.scale) m.scale.setScalar(n.scale);   /* a child's body is stored enlarged and shrunk here (see tools/people/kids) */ m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); n.h = Math.max(1.1, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
   return n.loading;
 }
 let shopLoading = null;
@@ -1114,7 +1115,7 @@ const PARK_PEOPLE = [
   { id: 'guide', model: 'guide2020', who: 'Guide', label: 'Talk to the guide', x: -1.8, z: 2.2, ry: faceToward(-1.8, 2.2, 0, -3), base: 'Idle',
     lines: () => [{ who: 'Guide', text: 'Welcome to National Heroes Park in Kingston.' }, { who: 'Guide', text: 'This shrine is for Marcus Garvey.', unlock: 'shrine' }, { who: 'Guide', text: 'In 1927 he came home to Jamaica.', unlock: 'later' }, { who: 'Guide', text: 'In 1929 he started a political party here.' }, { who: 'Guide', text: 'In 1935 he moved to London. He died there in 1940.' }, { who: 'Guide', text: 'In 1964 his remains came home, to this shrine.' }, { who: 'Guide', text: 'In 1969 he was named a National Hero.' }],
     later: () => ({ 71: ['Try the timeline board on the left. I will help if you forget.'], 73: ['Take your time. There is no wrong answer.'] })[stage] || ['I like it here. It is quiet and green.'] },
-  { id: 'student', model: 'student2020', who: 'Student', label: 'Talk to the student', x: 1.8, z: 2.4, ry: faceToward(1.8, 2.4, 0, -3), base: 'Idle',
+  { id: 'student', model: 'student2020', scale: 0.85, who: 'Student', label: 'Talk to the student', x: 1.8, z: 2.4, ry: faceToward(1.8, 2.4, 0, -3), base: 'Idle',
     lines: () => stage === 72 ? [{ who: 'Student', text: 'You know a lot about Marcus Garvey now.' }, { who: 'Student', text: 'People say he dreamed of pride, learning and working together.' }, { who: 'Student', text: 'Has his dream come true?' }, { who: 'You', text: 'That is a big question.' }, { who: 'Student', text: 'Please answer it at the shrine, in your own words.' }]
       : [{ who: 'Student', text: 'Hi! We learned about Marcus Garvey at school.' }, { who: 'Student', text: 'I came here to think about it.' }, { who: 'Student', text: 'The guide knows the whole story.' }],
     later: () => stage >= 74 ? ['Thank you. I will think about your answer.'] : ({ 71: ['I have a big question for you soon.'], 73: ['I am listening.'] })[stage] || ['It is a good place to think.'] },
@@ -1267,7 +1268,7 @@ let modelsReady = false;
   Promise.all([model('anims').then(tick), ...(needShop ? SHOP_PEOPLE.map((n) => model(n.model).then(tick)) : [])]).then(([anims, ...gl]) => {
     loadClips(anims);
     if (needShop) SHOP_PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; });
-      m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = 0; scene.add(m); animate(m, n.base); grounded.push(m); n.m = m; });
+      m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = 0; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; });
     (stage >= 70 ? ensurePark() : stage >= 60 ? ensureOffice() : stage >= 50 ? ensureLiberty() : stage >= 40 ? ensureDock() : stage >= 30 ? ensurePress() : stage >= 20 ? ensureStreet() : stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 70 ? 'park' : stage >= 60 ? 'office' : stage >= 50 ? 'liberty' : stage >= 40 ? 'dock' : stage >= 30 ? 'press' : stage >= 20 ? 'street' : stage >= 10 ? 'hall' : 'shop'); showPoster(); if (__DEV__) devViews(); });
     modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave;
   }); }
@@ -1293,7 +1294,7 @@ function update(dt, now) {
   near = null; if (state.started && !busy) { let best = 2.6; for (const n of PEOPLE) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < best) { best = d; near = n; } }
     for (const a of ACTIONS) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }   /* standing at a thing to do beats a person nearby */
   const talkBtn = $('talk'); talkBtn.hidden = !(near && near.go); if (near && near.go) talkBtn.textContent = near.label;   /* people get the bubble; things to do get this button */
-  for (const mx of mixers) mx.update(dt); for (const n of PEOPLE) if (n.m && n.m.userData.anim) n.m.userData.anim.tick(dt);
+  for (const mx of mixers) mx.update(dt); for (const n of PEOPLE) if (n.m && n.m.userData.anim) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   for (const m of grounded) groundFeet(m);
   if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }
