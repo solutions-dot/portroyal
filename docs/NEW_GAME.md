@@ -19,7 +19,7 @@ The template runs straight away. You get:
 The template has no journal, chapters, saving or helper arrow yet. Port Royal has all of them in `games/port-royal/src/main.js`; copy or move them into `engine/` when the new game needs them (section 2).
 
 Then:
-1. Add the game to `menu/index.html`: replace the "Coming soon" panel with a copy of the Port Royal `<a class="game">` block, set `data-game="garvey"` and `href="games/garvey/site/"`, and set its background picture (for example `menu/garvey.jpg`, taken with a `?shot=thumb`-style test view). On phones the menu fits one screen without scrolling. On desktop it shows two games per row and the page scrolls down for more, so a new game needs no grid change.
+1. Add the game to `menu/index.html`: replace the "Coming soon" panel with a copy of the Port Royal `<a class="game">` block, set `data-game="garvey"` and `href="games/garvey/site/"`, and set its background picture (for example `menu/garvey.jpg`, taken with a `?shot=thumb`-style test view). The menu scrolls on every screen size: one card per row on phones (the browser's own bars leave too little height to fit three cards), two per row on desktop. A new game needs no grid change. Check it at 414x706, 360x640 and 320x568 (no text clipped, no badge on top of the year) and on desktop.
 2. Change `soundPref('template-sound')` in `src/main.js` to the game's own key.
 3. `node tools/dist.mjs` builds every game that does not start with `_`, so the new game goes live with the next deploy (see PUBLISHING.md).
 

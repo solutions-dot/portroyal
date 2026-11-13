@@ -674,6 +674,12 @@ function devViews() {
       reset(); bars(true); say('Hold on!', 1e6); $('holdwrap').hidden = false; $('talk').hidden = true; await settle(); await new Promise((r) => setTimeout(r, 1100)); check('hold on button in the bars');
       reset(); card('About half past eleven', ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], [{ t: 'Begin', go: () => {} }, { t: 'Read what happened instead', go: () => {} }], { col: true }); await settle(); check('card');
       reset(); $('nudge').hidden = false; $('nudge').style.left = (W * 0.75 | 0) + 'px'; $('nudge').style.top = (Hh * 0.45 | 0) + 'px'; showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Give the water to the nurse'; await settle(); check('helper arrow with talk button');
+      /* panels opened in the middle of play (the journal, the chapters list, the credits) must be on top: their title and Close button must be what you touch there */
+      const covered = (name, panel, ids) => { for (const id of ids) { const e = $(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (!t || !$(panel).contains(t)) out.push(`${W}x${Hh} ${name}: ${id} is covered by ${t ? (t.id || t.className || t.tagName) : 'nothing'}`); } };
+      reset(); showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; await settle();
+      openChapters(); await settle(); covered('chapters panel in play', 'chapters', ['chtitle', 'chclose']); closeChapters();
+      openJournal(); await settle(); covered('journal panel in play', 'journal', ['jtitle', 'jclose']); closeJournal();
+      openCredits(); await settle(); covered('credits panel in play', 'credits', ['crtitle', 'crclose']); closeCredits();
       document.title = 'LAYOUT ' + out.length; const el = $('autolog'); if (el) el.textContent = (out.length ? out : [W + 'x' + Hh + ': no layout problems']).join('\n'); })();
   }
   if (q.get('test') === 'held') {
