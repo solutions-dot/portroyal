@@ -115,7 +115,9 @@ if G.get('coat'):
         ZT=HIP+0.06; ZB=KNEE+hem
         def flare(v):
             t=max(0,(ZT-v.co.z)/(ZT-ZB)); f=1+0.16*t*t+0.05*t; v.co.x*=f; v.co.y=(v.co.y+0.02)*f*(1+0.15*t*(v.co.y>0))-0.02
-        sk=piece('CoatSkirt','helper-skirt',lambda c:ZB<c.z<ZT+0.02,0.03,'Coat',cuts=[((0,0,ZB),(0,0,-1),None)],shape=flare)
+        op=G.get('coatopen',True)   # 1690 coats hang open at the front below the waist: an opening that widens to the hem, so the knees pass through instead of poking out
+        front_gap=lambda c: op and c.y<-0.01 and abs(c.x)<0.018+0.075*max(0.0,min(1.0,(ZT-c.z)/(ZT-ZB)))
+        sk=piece('CoatSkirt','helper-skirt',lambda c:ZB<c.z<ZT+0.02 and not front_gap(c),0.03,'Coat',cuts=[((0,0,ZB),(0,0,-1),None)],shape=flare)
         parts.append(('coatskirt',sk))
 if G.get('breeches'):
     bk=G.get('breechkind','plain'); low=KNEE-0.05*s

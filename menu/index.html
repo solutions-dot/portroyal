@@ -3,63 +3,96 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>History Games</title>
-<meta name="description" content="Play your way through history. 3D story games for ages 6 and up.">
+<title>Jamaican History Games</title>
+<meta name="description" content="3D story games about Jamaica's past, for ages 6 and up.">
+<meta name="theme-color" content="#06283D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
 <style>
-  /* The game menu. Same colours and fonts as the games. Add a game by copying one <li class="game"> card. */
-  :root{--ink:#10222b;--panel:#18313c;--paper:#f2e8d0;--brass:#d9a441;--brass-ink:#2a1f08;--muted:#a9bcc2;
-    --display:"IM Fell English SC","IM Fell English",Georgia,serif;--body:"Atkinson Hyperlegible",system-ui,sans-serif}
+  /* The game menu. One screen, no scrolling. Colours from the island: harbour blue, sea glass, mango, hibiscus.
+     To add a game: copy the Port Royal <a class="game"> block, or turn the "soon" panel into a game when it is ready. */
+  :root{
+    --harbour:#06283D; --deep:#041B2A; --sea:#1FB5A3; --mango:#FFB627; --hibiscus:#E8505B; --paper:#FFF7E8;
+    --font:"Bricolage Grotesque",system-ui,sans-serif;
+  }
   *{box-sizing:border-box}
-  html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at top,#1d3a47,var(--ink) 70%);color:var(--paper);font-family:var(--body);font-size:18px;line-height:1.45}
-  main{max-width:68rem;margin:0 auto;padding:max(2.2rem,env(safe-area-inset-top)) 1.2rem 3rem}
-  header{margin-bottom:2rem}
-  .eyebrow{font-family:var(--display);color:var(--brass);letter-spacing:.08em;margin:0}
-  h1{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(2.4rem,7vw,4rem);line-height:1.05;margin:.2rem 0 .6rem}
-  header p{max-width:36rem;margin:0;color:var(--muted)}
-  ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,20rem),1fr));gap:1.4rem}
-  .game{background:var(--panel);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-  .pic{aspect-ratio:16/9;background:#0c1a20 center/cover no-repeat;position:relative}
-  .pic span{position:absolute;left:.8rem;bottom:.7rem;background:rgba(16,34,43,.86);border-left:4px solid var(--brass);padding:.2rem .6rem;font-family:var(--display);letter-spacing:.05em;font-size:.95rem}
-  .info{padding:1rem 1.1rem 1.2rem;display:flex;flex-direction:column;gap:.6rem;flex:1}
-  h2{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:1.7rem;margin:0;line-height:1.1}
-  .info p{margin:0;color:var(--muted)}
-  .play{margin-top:auto;align-self:flex-start;display:inline-block;background:var(--brass);color:var(--brass-ink);font-weight:700;text-decoration:none;padding:.75rem 1.4rem;border-radius:6px;min-height:48px}
-  .play:hover,.play:focus-visible{filter:brightness(1.08);outline:3px solid var(--paper);outline-offset:2px}
-  .soon .pic{background:linear-gradient(135deg,#2a4a3a,#1a2f28 60%,#3a2a12)}
-  .soon .pic::after{content:"Coming soon";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:1.5rem;letter-spacing:.08em;color:var(--brass)}
-  .tag{font-size:.85rem;color:var(--brass);font-weight:700;letter-spacing:.03em}
-  footer{margin-top:2.5rem;color:var(--muted);font-size:.9rem}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--harbour);color:var(--paper);font-family:var(--font);-webkit-font-smoothing:antialiased}
+  main{height:100dvh;display:grid;grid-template-rows:auto 1fr;gap:clamp(.8rem,2vh,1.4rem);padding:max(1rem,env(safe-area-inset-top)) clamp(1rem,3vw,2.2rem) max(1rem,env(safe-area-inset-bottom))}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem}
+  h1{margin:0;font-weight:800;font-size:clamp(1.7rem,4.2vw,3.2rem);line-height:.95;letter-spacing:-.03em;font-variation-settings:"opsz" 96}
+  h1 span{display:block;color:var(--sea)}
+  .credit{margin:0;font-size:.95rem;color:rgba(255,247,232,.7);white-space:nowrap}
+  .credit b{color:var(--paper);font-weight:600}
+
+  .games{display:grid;grid-template-columns:2fr 1fr;gap:clamp(.7rem,1.6vw,1.2rem);min-height:0}
+
+  /* Port Royal: the poster. Full-bleed scene, the title set big across the bottom. */
+  .game{position:relative;display:block;min-height:0;border-radius:28px;overflow:hidden;color:var(--paper);text-decoration:none;isolation:isolate;
+    background:#0c3348 url(port-royal.jpg) center 40%/cover no-repeat}
+  .game::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,rgba(4,27,42,.92) 0%,rgba(4,27,42,.55) 34%,rgba(4,27,42,0) 62%)}
+  .game .text{position:absolute;left:0;right:0;bottom:0;padding:clamp(1rem,2.6vw,2rem);display:grid;grid-template-columns:1fr auto;align-items:end;gap:1rem}
+  .year{display:block;font-weight:800;font-size:clamp(1rem,1.8vw,1.35rem);color:var(--mango);letter-spacing:-.01em}
+  .game h2{margin:.1em 0 .2em;font-weight:800;font-size:clamp(2.6rem,7.2vw,6.4rem);line-height:.86;letter-spacing:-.045em;font-variation-settings:"opsz" 96}
+  .game p{margin:0;max-width:34ch;font-size:clamp(.95rem,1.25vw,1.1rem);line-height:1.4;color:rgba(255,247,232,.88)}
+  .play{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 1.7rem;border-radius:999px;background:var(--mango);color:var(--deep);font-weight:800;font-size:1.1rem;white-space:nowrap;box-shadow:0 0 0 0 rgba(255,182,39,.6);animation:call 2.4s ease-out 1.2s 2}
+  .game:hover .play,.game:focus-visible .play{background:var(--paper)}
+  .game:focus-visible{outline:4px solid var(--mango);outline-offset:4px}
+  @keyframes call{0%{box-shadow:0 0 0 0 rgba(255,182,39,.6)}100%{box-shadow:0 0 0 18px rgba(255,182,39,0)}}
+
+  /* Marcus Garvey: a solid mango block, its own big type. Not a card copy of the poster. */
+  .soon{min-height:0;border-radius:28px;background:var(--mango);color:var(--deep);padding:clamp(1rem,2.4vw,1.8rem);display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative}
+  .soon .when{margin:0;align-self:flex-start;background:var(--deep);color:var(--mango);font-weight:600;font-size:.95rem;padding:.35rem .8rem;border-radius:999px}
+  .soon h2{margin:0;font-weight:800;font-size:clamp(2.2rem,4.6vw,4.4rem);line-height:.86;letter-spacing:-.045em;font-variation-settings:"opsz" 96}
+  .soon p{margin:.6rem 0 0;font-size:clamp(.95rem,1.15vw,1.05rem);line-height:1.4;max-width:28ch}
+  .soon::before{content:"";position:absolute;width:62%;aspect-ratio:1;right:-18%;top:-14%;border-radius:50%;background:var(--hibiscus);opacity:.9}
+  .soon > *{position:relative}
+
+  /* Phones: the poster on top, Garvey as a band below. Still one screen. */
+  @media (max-width:760px){
+    .games{grid-template-columns:1fr;grid-template-rows:1fr auto}
+    .game h2{font-size:clamp(2.6rem,13vw,4.2rem)}
+    .game .text{grid-template-columns:1fr}
+    .play{justify-self:start}
+    .soon{flex-direction:row;align-items:center;gap:1rem;border-radius:22px;padding:1rem 1.1rem}
+    .soon h2{font-size:clamp(1.7rem,8vw,2.4rem)}
+    .soon p:not(.when){display:none}
+    .soon::before{display:none}
+    .soon .when{order:2;margin-left:auto;align-self:center;white-space:nowrap}
+    .soon > div{min-width:0}
+    .game{border-radius:22px}
+    header{align-items:flex-start;flex-direction:column;gap:.35rem}
+  }
+  @media (max-height:600px){.game p{display:none}}
+  @media (prefers-reduced-motion:reduce){.play{animation:none}}
 </style>
 </head>
 <body>
 <main>
   <header>
-    <p class="eyebrow">Play your way through history</p>
-    <h1>History Games</h1>
-    <p>Walk the streets, meet the people and see the past for yourself. For ages 6 and up, and grown-ups too. Works on phones, tablets and computers.</p>
+    <h1>Jamaican <span>History Games</span></h1>
+    <p class="credit">Created by <b>Kellz 5.0</b></p>
   </header>
-  <ul>
-    <li class="game">
-      <div class="pic" style="background-image:url(port-royal.jpg)"><span>Jamaica, 1690</span></div>
-      <div class="info">
-        <h2>Port Royal, 1690</h2>
-        <p class="tag">The story of Lewis Galdy</p>
-        <p>Step off a ship into the busiest town in the Caribbean. Meet the people who lived there, and live through the great earthquake of 1692.</p>
-        <a class="play" data-game="port-royal" href="games/port-royal/site/">Play</a>
+  <section class="games" aria-label="Games">
+    <a class="game" data-game="port-royal" href="games/port-royal/site/">
+      <div class="text">
+        <div>
+          <span class="year">Jamaica, 1690</span>
+          <h2>Port Royal</h2>
+          <p>Step off a ship into the busiest town in the Caribbean, meet the people who lived there, and live through the great earthquake of 1692.</p>
+        </div>
+        <span class="play">Play</span>
       </div>
-    </li>
-    <li class="game soon">
-      <div class="pic"></div>
-      <div class="info">
+    </a>
+    <div class="soon">
+      <p class="when">Coming soon</p>
+      <div>
         <h2>Marcus Garvey</h2>
-        <p class="tag">Jamaica and the world</p>
         <p>Follow Marcus Garvey from St Ann's Bay, Jamaica, to the wider world.</p>
       </div>
-    </li>
-  </ul>
-  <footer>Created by <b>Kellz 5.0</b></footer>
+    </div>
+  </section>
 </main>
 <script>
   /* On the live site this page is the home page. In the repo it sits in menu/, one folder down, so the game links need "../". */
