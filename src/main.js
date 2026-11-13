@@ -8,7 +8,7 @@ import { mergeGeometries as mergeG } from 'three/addons/utils/BufferGeometryUtil
 const JOURNAL = [
   { id: 'galdy', title: 'Who is Lewis Galdy?',
     simple: ['Lewis Galdy was a real person. He was born in France in 1659.',
-             'His family were Huguenots. That means French Protestants. In France they were punished for their religion, so Lewis sailed across the ocean to Jamaica.'],
+             'His family were Huguenots, French Protestants. France punished them for their faith, so Lewis sailed to Jamaica.'],
     deeper: ['We know this from the words carved on his tombstone. You can still read it at St Peter’s Church in Port Royal.',
              'Nobody wrote down the year he arrived. This game starts his story in 1690. That date is our best guess, not a fact.'] },
   { id: 'town', title: 'The town on the sand',
@@ -22,7 +22,7 @@ const JOURNAL = [
     deeper: ['In most English colonies, people swapped goods like sugar or tobacco. Port Royal was different. So much Spanish silver arrived, through trade and through raids on Spanish ships and towns, that people used coins every day.'] },
   { id: 'people', title: 'Who lived here?',
     simple: ['People came to Port Royal from England, France, Africa and many other places.',
-             'Not everyone chose to come, and not everyone was free. Many African people here were enslaved. That means they were forced to work, were not paid, and were not allowed to leave.',
+             'Not everyone was free. Many African people here were enslaved: forced to work, unpaid, and not allowed to leave.',
              'Abba is a free woman. That was rare.'],
     deeper: ['About 2,500 of the people in the town were enslaved Africans. Part of Port Royal’s wealth came from buying and selling human beings. This game will not hide that.',
              'Abba is a character we made up. She stands for the free Black and mixed-race people who really lived in Jamaica at this time. Church records list a free Black couple, Peter Moore and Black Betty, who married in 1677.'] },
@@ -60,7 +60,7 @@ const JOURNAL = [
     deeper: ['As many as 2,000 people died that day. Thousands more died in the days and weeks after.',
              'A news sheet printed in London that year lists what people saw: houses falling, the great church and its tower coming down, the wharf covered by the sea, and a boat coming to save people.'] },
   { id: 'sand', title: 'Why the ground swallowed the town',
-    simple: ['Port Royal was built on loose, wet sand.', 'When loose, wet sand is shaken very hard, it stops acting like solid ground. It flows like a liquid. Heavy brick houses sank straight down into it.'],
+    simple: ['Port Royal was built on loose, wet sand.', 'When wet sand shakes hard, it acts like a liquid. Heavy houses sank straight down into it.'],
     deeper: ['Scientists call this liquefaction.', 'It is why divers found some buildings under the sea with their brick floors still in place.'] },
   { id: 'watch', title: 'The stopped watch',
     simple: ['In 1959, divers found a brass pocket watch under the sea at Port Royal.', 'Its hands had stopped at 17 minutes before noon.'],
@@ -70,7 +70,7 @@ const JOURNAL = [
     deeper: ['His tombstone says he was \u201cmiraculously saved by swimming until a boat took him up.\u201d He lived for 47 more years.',
              'In this game, Abba is in the boat. We made that part up. Nobody wrote down who was in the boat that saved him.'] },
   { id: 'after', title: 'The days after',
-    simple: ['The earthquake lasted about three minutes. The hard days came after.', 'People had little food and no clean water. Many who lived through the earthquake became sick. Thousands more died.'],
+    simple: ['The earthquake lasted about three minutes. The hard days came after.', 'There was little food and no clean water. Many people got sick, and thousands more died.'],
     deeper: ['At night, thieves robbed the broken houses. The town\u2019s minister wrote about them in a letter.', 'The camp in this game is made up. The hunger, the sickness and the thieves were real.'] },
   { id: 'tentp', title: 'Church in a tent',
     simple: ['The great church fell down in the earthquake.', 'So the minister held church in a tent.'],
@@ -79,14 +79,14 @@ const JOURNAL = [
     simple: ['Most people who lived left Port Royal. They crossed the harbour and began a new town.', 'That town became Kingston, the capital of Jamaica today.'],
     deeper: ['Port Royal was built again, but smaller. It was never again the great trading town it had been.', 'A few merchants and fishermen stayed. Lewis Galdy was one of them.'] },
   { id: 'fortune', title: 'Where the money came from',
-    simple: ['Lewis Galdy became rich again. He sold wine and cocoa. He also sold people.', 'He worked for a company that shipped enslaved African people to Spanish lands. This game does not look away from that.'],
+    simple: ['Lewis Galdy became rich again. He sold wine and cocoa. He also sold people.', 'He worked for a company that shipped enslaved African people to Spanish lands. This game does not hide that.'],
     deeper: ['That trade was called the Asiento. Galdy was one of its agents in Jamaica.', 'He also sat in Jamaica\u2019s Assembly, which made the island\u2019s laws.'] },
   { id: 'stone', title: 'The tombstone',
     simple: ['Lewis Galdy died in 1739. He was 80 years old.', 'His tombstone tells how the earthquake swallowed him and how he was saved. You can visit it today at St Peter\u2019s Church in Port Royal.'],
     deeper: ['As a churchwarden, he helped to get this church built again. It was finished in 1725.', 'His tomb was first at a place called Green Bay, across the harbour. It was moved here in 1953.',
              'The stone tells his story. The people he bought and sold have no stones, and most of their names were never written down.'] },
   { id: 'sugar', title: 'Sugar',
-    simple: ['These big casks are full of sugar. Sugar was the main thing Jamaica sold to the world.', 'Enslaved African people grew the sugar cane and made the sugar. The work was very hard and very dangerous.'],
+    simple: ['These big casks are full of sugar. Sugar was the main thing Jamaica sold to the world.', 'Enslaved African people grew the sugar cane and made the sugar. The work was hard and dangerous.'],
     deeper: ['A big cask like this is called a hogshead.', 'Sugar made planters and merchants rich. The people who made it were paid nothing.'] },
   { id: 'cocoa', title: 'Cocoa',
     simple: ['These sacks hold cocoa beans. People ground them up to make a chocolate drink.', 'We know that Lewis Galdy traded in cocoa.'],
@@ -95,111 +95,110 @@ const JOURNAL = [
     simple: ['This dark red wood is called logwood. It was not for building.', 'People boiled it to make dye for cloth.'],
     deeper: ['Many old privateers became logwood cutters on the coast of Central America. Much of their wood was shipped through Jamaica to Europe.'] },
   { id: 'scales', title: 'Weighing coins',
-    simple: ['Merchants did not just count coins. They weighed them.', 'Some people shaved silver off the edges of coins and kept it. A scale showed if a coin was too light.'],
+    simple: ['Merchants did not just count coins. They weighed them.', 'Some people shaved silver off coins to keep it. A scale showed if a coin was too light.'],
     deeper: ['Shaving coins was called clipping. It was a crime.'] },
   { id: 'market', title: 'The slave market',
-    simple: ['Ships brought enslaved African people to Port Royal to be sold.', 'Families were split apart on the wharf. The law allowed this. It was still wrong.'],
+    simple: ['Ships brought enslaved African people to Port Royal to be sold.', 'Families were split up on the wharf. The law allowed it. It was still wrong.'],
     deeper: ['Until 1698, one company, the Royal African Company, was the only English company allowed to bring enslaved people from Africa.',
              'We do not know the year Lewis Galdy began to buy and sell people. We know that he did. The letter in this game is made up, to show the choice in front of him.',
              'Abba\u2019s mother is made up too. Thousands of real mothers were sold in Port Royal.'] },
   { id: 'swan', title: 'The ship over the houses',
-    simple: ['When the earthquake struck, the sea rushed over the wharf.', 'A ship called the Swan was being repaired by the shore. The water lifted it and carried it over the tops of the sunken houses.'],
+    simple: ['When the earthquake struck, the sea rushed over the wharf.', 'A ship called the Swan was by the shore. The water carried it right over the sunken houses.'],
     deeper: ['People in the water climbed onto the Swan and were saved.', 'Sam is a character we made up, but people who were there wrote about the Swan.'] },
   { id: 'kofi', title: 'Kofi\u2019s name',
-    simple: ['Many enslaved people in Jamaica were taken from West Africa. Kofi is an Akan name from West Africa. It is given to a boy born on a Friday.', 'Owners often gave enslaved people new names. Many people kept their own names among themselves.'],
+    simple: ['Many enslaved people in Jamaica came from West Africa. Kofi is a West African name for a boy born on a Friday.', 'Owners often gave enslaved people new names. Many kept their own names among themselves.'],
     deeper: ['Enslaved Africans did much of the hardest work in Port Royal: loading ships, carrying goods, building and rowing.', 'Kofi is a character we made up. About 2,500 enslaved people lived in Port Royal, and most of their names were never written down.'] },
   { id: 'privateer', title: 'Pirates and privateers',
-    simple: ['A privateer had a paper from the government that allowed him to attack enemy ships. A pirate had no paper, and attacked anyone.', 'In the 1660s, English leaders let privateers sail from Port Royal to raid Spanish ships and towns.'],
+    simple: ['A privateer had papers from the government to attack enemy ships. A pirate had no papers.', 'In the 1660s, English leaders let privateers from Port Royal raid Spanish ships and towns.'],
     deeper: ['The most famous was Henry Morgan. He later became Lieutenant Governor of Jamaica.', 'By the 1680s the government had turned against the raiders. Pirates caught by the law were hanged at Gallows Point, just outside the town.', 'Sam is a character we made up.'] },
   { id: 'benning', title: 'The Bennings, pewterers',
-    simple: ['Simon Benning was a real pewterer: he made plates, spoons and cups from pewter. He came from England by way of Barbados, and was working in Jamaica by the 1660s.', 'He died in 1687. His son, also called Symon, carried on the shop. He was still a pewterer in Port Royal when the earthquake struck in 1692.'],
+    simple: ['Simon Benning was a real pewterer. He made plates, spoons and cups from pewter.', 'He died in 1687. His son Symon kept the shop going until the earthquake.'],
     deeper: ['Their mark was a pineapple with the letters S and B. Pewter with this mark has been found under the sea at Port Royal.', 'Marks like these help archaeologists work out who made the things they find.', 'The words of Symon Benning in this game are made up.'] },
   { id: 'heath', title: 'The Reverend Emmanuel Heath',
-    simple: ['Emmanuel Heath was a real person. He was the minister of St Paul\u2019s Church in Port Royal.', 'He lived through the earthquake and wrote letters about it. Much of what we know about that day comes from him.'],
+    simple: ['Emmanuel Heath was a real person. He was the minister of St Paul\u2019s Church in Port Royal.', 'He lived through the earthquake and wrote letters about it. We know a lot about that day because of him.'],
     deeper: ['He wrote from a ship called the Granada, out in the harbour. He went ashore to pray with the hurt and dying, and to christen children.', 'Like many people then, he believed the earthquake was God\u2019s punishment. Today, scientists explain it with loose, wet sand turning to liquid.', 'His words in this game are made up, but they follow what he wrote.'] },
 ];
 const COINS = [
-  { who: 'You', text: 'A ship\u2019s cook wants a sack of cocoa. The price is 20 reales.' },
+  { who: 'You', text: 'A cook wants a sack of cocoa. It costs 20 reales.' },
   { who: 'You', text: 'He gives me 3 pieces of eight. Each one is worth 8 reales. How many reales do I give back?',
     choices: [{ t: '2 reales' }, { t: '4 reales', ok: true }, { t: '6 reales' }], hint: 'Not quite. Three eights are 24. Take away 20.' },
-  { who: 'You', text: 'Four reales. But first I weigh his coins. One is too light. Someone has shaved its edge.', unlock: 'scales' },
+  { who: 'You', text: 'Four reales. But one coin is too light. Someone shaved its edge!', unlock: 'scales' },
 ];
 const WARE1 = [
   { who: 'Abba', text: 'Good day, Lewis. I need a cask of wine for The Turtle.' },
   { who: 'You', text: 'Take the one by the door. You can pay me on Friday.' },
-  { who: 'Abba', text: 'There is a letter on your desk. The captain of the slave ship left it. I know what it asks.' },
-  { who: 'Abba', text: 'My mother was sold on that wharf, Lewis. Read it. Then decide what kind of merchant you are.', unlock: 'market' },
-  { who: 'You', text: 'Abba, wait. I have not said yes to anything.' },
-  { who: 'Abba', text: 'I know. That is why I came to tell you. I will send a boy for the wine.' },
+  { who: 'Abba', text: 'There is a letter on your desk. It is from the captain of a slave ship.' },
+  { who: 'Abba', text: 'My mother was sold on that wharf. Read the letter. Then decide.', unlock: 'market' },
+  { who: 'You', text: 'Abba, wait. I have not said yes.' },
+  { who: 'Abba', text: 'I know. That is why I came.' },
   { who: 'Abba', text: 'Good day, Lewis.' },
 ];
 const NPCS = [
   { id: 'kofi', label: 'Talk to the dockworker', who: 'Kofi', x: 21.7, z: 2.35, ry: Math.PI + 0.5, route: [[21.4, 2.2], [21.4, -0.3], [31, -0.3]], talk: [
-    { who: 'Kofi', text: 'Mind the casks. They are heavy, and the captain wants them on board by noon.' },
+    { who: 'Kofi', text: 'Mind the casks. They are heavy!' },
     { who: 'You', text: 'Do you work for the captain?' },
-    { who: 'Kofi', text: 'No. I am enslaved. A merchant in this town says he owns me. I work, and I am not paid.' },
-    { who: 'Kofi', text: 'My mother named me Kofi, because I was born on a Friday. Here they call me something else. I keep my own name.', unlock: 'kofi' }],
-    again: [{ who: 'Kofi', text: 'I have work to do. Go well.' }] },
+    { who: 'Kofi', text: 'No. I am enslaved. A man says he owns me. I work, but I am not paid.' },
+    { who: 'Kofi', text: 'My name is Kofi. It means I was born on a Friday. I keep my own name.', unlock: 'kofi' }],
+    again: [{ who: 'Kofi', text: 'I must get back to work.' }] },
   { id: 'sailor', label: 'Talk to the sailor', who: 'Sam', x: 34.5, z: 0.55, y: 0.06, ry: Math.PI / 2, talk: [
-    { who: 'Sam', anim: 'Point', text: 'Fine sloop, isn\u2019t she? Built of Jamaica cedar. Fast enough to catch anything on the sea.' },
+    { who: 'Sam', anim: 'Point', text: 'Fine boat, isn’t she? Made of Jamaica cedar. Very fast!' },
     { who: 'You', text: 'Are you a pirate?' },
-    { who: 'Sam', text: 'Hush! Years ago, when Captain Morgan led us, the governor gave us papers to attack Spanish ships. That made us privateers, not pirates.' },
-    { who: 'Sam', text: 'Now the law has changed. Attack a ship without papers and they hang you at Gallows Point.', unlock: 'privateer' }],
-    again: [{ who: 'Sam', text: 'We sail with the tide. Keep your purse close in the taverns.' }] },
+    { who: 'Sam', text: 'Hush! Captain Morgan had papers to fight Spain. That made us privateers, not pirates.' },
+    { who: 'Sam', text: 'Now the law has changed. Pirates get hanged.', unlock: 'privateer' }],
+    again: [{ who: 'Sam', text: 'We sail with the tide. Keep your money safe!' }] },
   { id: 'benning', label: 'Talk to the pewterer', who: 'Symon Benning', x: 8.6, z: 4.0, ry: Math.PI, talk: [
-    { who: 'Symon Benning', text: 'Good day! Symon Benning, pewterer. Plates, spoons, tankards. All made right here in Port Royal.' },
-    { who: 'You', text: 'You make them here, not in England?' },
-    { who: 'Symon Benning', text: 'My father started this shop. I melt the metal and pour it into moulds, then scrape and polish, just as he taught me.' },
-    { who: 'Symon Benning', text: 'Look underneath for our mark: a pineapple, with an S and a B. Ships bring the metal. We do the rest.', unlock: 'benning' }],
-    again: [{ who: 'Symon Benning', text: 'Come back when you need plates. Good pewter lasts a lifetime.' }] },
+    { who: 'Symon Benning', text: 'Good day! I am Symon Benning. I make pewter plates and cups.' },
+    { who: 'You', text: 'You make them here?' },
+    { who: 'Symon Benning', text: 'Yes. I melt the metal and pour it into moulds. My father taught me.' },
+    { who: 'Symon Benning', text: 'Look under a plate for our mark: a pineapple!', unlock: 'benning' }],
+    again: [{ who: 'Symon Benning', text: 'Come back when you need plates!' }] },
 ];
 const HEATH = { x: -9.65, z: 1.75, ry: Math.PI / 2 }, SURV = [[-2.6, -1.3, -0.6, 'sailor'], [-13.4, -1.6, 0.4, 'benning'], [-7.2, 3.9, Math.PI + 0.3, 'kofi']], EXTRA = [[-0.6, -0.4, -1.8, 'benning', 'Sad1', [0.62, 0.6, 0.58]], [-4.3, 3.7, 2.8, 'kofi', 'Sad2', [0.9, 0.85, 0.8]], [-14.4, 3.6, 2.2, 'sailor', 'Sad2', [0.7, 0.7, 0.66]], [-15.2, 1.4, 1.4, 'kofi', 'Cry', [0.75, 0.72, 0.7]]];
 const SAM_AFTER = [
-  { who: 'Sam', text: 'Mr Galdy! You\u2019re alive. I saw the ground take you.' },
-  { who: 'Sam', text: 'The sea came up over the wharf. A big ship, the Swan, was washed right over the tops of the houses. I saw it with my own eyes.' },
-  { who: 'Sam', text: 'Our sloop broke her ropes and was gone. I have nothing now but these clothes.', unlock: 'swan' },
-  { who: 'Sam', text: 'And they say the Palisadoes graveyard went under the sea. Even Captain Morgan\u2019s grave. The sea has him at last.' }];
+  { who: 'Sam', text: 'Mr Galdy! You are alive! I saw the ground swallow you.' },
+  { who: 'Sam', text: 'The sea came over the wharf. A big ship, the Swan, floated right over the houses!' },
+  { who: 'Sam', text: 'Our boat is gone. I have nothing now.', unlock: 'swan' },
+  { who: 'Sam', text: 'They say even Captain Morgan’s grave is under the sea now.' }];
 const KOFI_AFTER = [
-  { who: 'Kofi', text: 'A wall came down by the wharf. I got out. Many did not.' },
-  { who: 'Kofi', text: 'Many of us were working there when the sea came in. Nobody will write down their names.' },
-  { who: 'Kofi', text: 'So I say them. Every night, I say them.' }];
+  { who: 'Kofi', text: 'A wall fell by the wharf. I got out. Many did not.' },
+  { who: 'Kofi', text: 'Nobody will write down their names.' },
+  { who: 'Kofi', text: 'So I say their names. Every night.' }];
 const BENNING_AFTER = [
-  { who: 'Symon Benning', text: 'My shop is under the sea. The moulds, the metal, the plates. My father\u2019s work, gone in a minute.' },
+  { who: 'Symon Benning', text: 'My shop is under the sea. My father’s work is gone.' },
   { who: 'You', text: 'I am sorry, Symon.' },
-  { who: 'Symon Benning', text: 'Maybe one day someone will find our plates down there and see the pineapple mark. Then they will know we were here.' }];
+  { who: 'Symon Benning', text: 'Maybe one day someone will find our plates. Then they will know we were here.' }];
 const HEATH_TALK = [
-  { who: 'Emmanuel Heath', text: 'I am Emmanuel Heath, minister of this town. My church fell in the earthquake. I heard the tower come down.' },
-  { who: 'Emmanuel Heath', text: 'I sleep on a ship in the harbour now. I come ashore to pray with the sick, and to christen the babies.' },
-  { who: 'Emmanuel Heath', text: 'Many people say God punished this town for its wickedness. I fear they are right. Pray for us.', unlock: 'heath' }];
+  { who: 'Emmanuel Heath', text: 'I am Emmanuel Heath, the minister. My church fell down.' },
+  { who: 'Emmanuel Heath', text: 'Now I sleep on a ship. I come ashore to help the sick.' },
+  { who: 'Emmanuel Heath', text: 'Some say God was angry with this town. Pray for us.', unlock: 'heath' }];
 const AFTER1 = [
-  { who: 'Abba', text: 'You are alive! I pulled so many from the water. Not enough.' },
-  { who: 'Abba', text: 'It has been three days. There is little food, the water is bad, and people are getting sick.', unlock: 'after' },
-  { who: 'Abba', text: 'At night, thieves go through the broken houses. In the day, we share what we have.' },
-  { who: 'Abba', text: 'Look around. Then come back and tell me what you will do.' },
+  { who: 'Abba', text: 'You are alive! I pulled so many from the water.' },
+  { who: 'Abba', text: 'It has been three days. There is little food, and people are sick.', unlock: 'after' },
+  { who: 'Abba', text: 'Look around. Then come back to me.' },
 ];
 const AFTER2 = [
-  { who: 'Abba', text: 'Most people are leaving. They are crossing the harbour to build a new town.' },
-  { who: 'Abba', text: 'You are a merchant, Lewis. You will be rich again. Ask yourself what you will sell to get there.' },
+  { who: 'Abba', text: 'Most people are leaving. They will build a new town across the water.' },
+  { who: 'Abba', text: 'You will be rich again, Lewis. But think about what you sell.' },
 ];
 const TALK = [
   { who: 'Abba', text: 'Morning! You look lost. Are you new in Port Royal?',
     choices: ['Yes. I just got off the ship.', 'Is it that easy to tell?'] },
   { who: 'Abba', text: 'Everyone here came from somewhere else. Where is home?' },
-  { who: 'You', text: 'France. A town called Montpellier. It was not safe for my family to pray the way we do. So we left.', unlock: 'galdy' },
-  { who: 'Abba', text: 'Then you are in good company. This town is full of people starting again. I am Abba. I keep this tavern.', unlock: 'people' },
-  { who: 'Abba', text: 'Here is some advice. Money in this town is Spanish silver. People call the coins pieces of eight. Learn what things cost before you spend one.', unlock: 'coins' },
-  { who: 'Abba', text: 'And look around you. Brick houses four floors high, on a strip of sand! Come inside when you are hungry. My turtle stew is the best on Lime Street.', unlock: 'town' },
+  { who: 'You', text: 'France. We had to leave because of the way we pray.', unlock: 'galdy' },
+  { who: 'Abba', text: 'Lots of people here are starting again. I am Abba. This is my tavern.', unlock: 'people' },
+  { who: 'Abba', text: 'Money here is silver coins. They are called pieces of eight.', unlock: 'coins' },
+  { who: 'Abba', text: 'Come inside when you are hungry. My turtle stew is the best in town!', unlock: 'town' },
 ];
 
 const STEW = [
-  { who: 'Abba', text: 'Welcome to The Turtle! A bowl of turtle stew is two reales.' },
+  { who: 'Abba', text: 'Welcome to The Turtle! Stew costs two reales.' },
   { who: 'You', text: 'I only have this. One piece of eight.' },
-  { who: 'Abba', text: 'A piece of eight is worth eight reales. The stew is two. How many reales do I give you back?',
+  { who: 'Abba', text: 'A piece of eight is eight reales. The stew is two. How much change do I give you?',
     choices: [{ t: 'Four reales' }, { t: 'Six reales', ok: true }, { t: 'Eight reales' }], hint: 'Not quite. Start with eight and take away two.' },
-  { who: 'Abba', text: 'Six it is. Here is your change, and here is your stew. Eat while it is hot!', unlock: 'change' },
-  { who: 'Abba', text: 'Look around while you eat. Almost everything in this room came here on a ship.' },
+  { who: 'Abba', text: 'Six! Here is your change, and your stew.', unlock: 'change' },
+  { who: 'Abba', text: 'Look around while you eat. Most things here came on a ship.' },
 ];
-const AFTER = [{ who: 'Abba', text: 'Take your time. Look around. Port Royal will still be here tomorrow.' }];
+const AFTER = [{ who: 'Abba', text: 'Take your time. Look around.' }];
 const FINDS = [
   { id: 'bottle', label: 'Look at the bottle', x: -198.8, z: -2.15, y: 1.02 },
   { id: 'pewter', label: 'Look at the plates', x: -198.2, z: 1.3, y: 0.78 },
@@ -620,12 +619,12 @@ function setGoal() {
   if (Q.on || state.place === 'ware' || FB.on) return;          // chapters set their own goals
   let g;
   if (!state.unlocked.includes('harbour')) g = 'Walk down the pier and into the town.';
-  else if (!state.talked) g = 'Find the woman in the white head wrap. She keeps the tavern with the turtle sign.';
-  else if (state.place === 'out' && !state.ate) g = 'Go into The Turtle. The door is right beside Abba.';
-  else if (!state.ate) g = 'Abba is behind the counter. Ask her for some stew.';
-  else if (foundCount() < FINDS.length) g = 'Look around the tavern. Things found: ' + foundCount() + ' of ' + FINDS.length + '.';
-  else if (!state.unlocked.includes('morgan')) g = 'Old Ned, sitting at the table by the window, has a story about Captain Morgan.';
-  else if (!state.unlocked.includes('forts')) g = 'Walk out to Fort Charles. Follow the beach past the last houses, away from the pier.';
+  else if (!state.talked) g = 'Find the woman in the white head wrap.';
+  else if (state.place === 'out' && !state.ate) g = 'Go into the tavern. The door is next to Abba.';
+  else if (!state.ate) g = 'Ask Abba for some stew.';
+  else if (foundCount() < FINDS.length) g = 'Find 4 things in the tavern. Found: ' + foundCount() + ' of ' + FINDS.length + '.';
+  else if (!state.unlocked.includes('morgan')) g = 'Talk to old Ned at the table. He has a story.';
+  else if (!state.unlocked.includes('forts')) g = 'Walk to Fort Charles, along the beach past the houses.';
   else g = 'You have finished the first part. Open your journal for the next part of the story.';
   if (g !== goalText) { goalText = g; showGoal(); }
   if (state.ate && foundCount() === FINDS.length && state.unlocked.includes('forts') && !state.done) { state.done = true; setTimeout(() => toast('Well done! Your journal now has ' + state.unlocked.length + ' pages.'), 3800); }
@@ -646,7 +645,7 @@ const ACTIONS = [
   ...['sugar', 'cocoa', 'logwood'].map((id, i) => ({ label: ['Look at the casks', 'Look at the sacks', 'Look at the red wood'][i], r: 2.6, where: () => state.place === 'ware' && !state.unlocked.includes(id) && WGOODS[id], go: () => { unlock(id); wareMark[id].visible = false; wareGoal(); } })),
   { label: 'Sit at the desk', r: 2.4, where: () => state.place === 'ware' && wareSeen() && !W.coins && [-258.6, 2.9], go: () => startConvo(COINS, () => { W.coins = true; abba.visible = true; ABBA.x = -250.2; ABBA.z = 0.4; abba.position.set(ABBA.x, 0, ABBA.z); toast('Abba has come in.'); wareGoal(); }) },
   { label: 'Talk to Abba', r: 3.0, where: () => state.place === 'ware' && W.coins && !W.talked && [ABBA.x, ABBA.z], go: () => startConvo(WARE1, () => { W.talked = true; const ac = abba.userData.anim; if (ac && CL.WaveSlow) ac.play('WaveSlow', true); setTimeout(() => { if (state.place === 'ware') { abba.visible = false; ABBA.x = 9999; toast('Abba goes out to the wharf.'); } }, 2600); wareGoal(); }) },
-  { label: 'Go out to the wharf', r: 1.8, where: () => state.place === 'ware' && [WX1 - 0.7, 0.8], go: () => card('Leave the warehouse?', ['Lewis can come back to 1691 any time from the Chapters menu.'], [{ t: 'Back to the town', go: leaveWare }, { t: 'Stay', go: hideCard }]) },
+  { label: 'Go out to the wharf', r: 1.8, where: () => state.place === 'ware' && [WX1 - 0.7, 0.8], go: () => card('Leave the warehouse?', ['You can come back any time from the Chapters menu.'], [{ t: 'Back to the town', go: leaveWare }, { t: 'Stay', go: hideCard }]) },
   { label: 'Read the letter', r: 2.4, where: () => state.place === 'ware' && W.talked && [-258.6, 2.9], go: readLetter },
   { label: 'Talk to Abba', r: 3.2, where: () => state.place === 'after' && [ABBA.x, ABBA.z], go: () => { if (afterDone() && Q.aTalk) startConvo(AFTER2, stayOrGo); else startConvo(AFTER1, () => { Q.aTalk = true; afterGoal(); }); } },
   { label: 'Look at the big tent', r: 3.6, where: () => state.place === 'after' && !state.unlocked.includes('tentp') && [-12.5, 0.8], go: () => { unlock('tentp'); afterGoal(); } },
@@ -810,9 +809,9 @@ function rumble() { audioInit(); if (!AU.ctx || Q.gain) return; const c = AU.ctx
   const src = c.createBufferSource(); src.buffer = buf; src.loop = true; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 150; Q.gain = c.createGain(); Q.gain.gain.value = 0; src.connect(lp); lp.connect(Q.gain); Q.gain.connect(AU.master); src.start(); }
 function setPhase(p) { Q.phase = p; Q.t = 0; }
 function quakeIntro() { cue('sad'); if (!townReady || !tavernReady) { toast('The town is still loading.'); return; } closeJournal(); $('card').hidden = true; $('dialogue').hidden = true; $('goal').hidden = false;
-  card('7 June 1692', ['Two years have passed. Lewis Galdy is now a merchant in Port Royal.', 'This part of the story shows the great earthquake. It is loud, and it can be scary.'], [{ t: 'Begin', go: beginQuake }, { t: 'Read what happened instead', go: () => finishQuake(true) }]); }
+  card('7 June 1692', ['Two years later. Lewis is now a merchant.', 'Next comes the great earthquake. It is loud, and it may be scary.'], [{ t: 'Begin', go: beginQuake }, { t: 'Read what happened instead', go: () => finishQuake(true) }]); }
 function beginQuake() { hideCard(); rumble(); if (state.place !== 'out') setPlace('out'); resetWorld(); Q.on = true; setPhase('calm'); state.place = 'out'; state.x = 1; state.z = 0.6; state.yaw = -Math.PI / 2; state.pitch = 0; if (ring) ring.visible = false;
-  npcShow(false); goalText = 'It is a hot, still morning. Walk down to the harbour.'; showGoal(); toast('7 June 1692, late morning'); }
+  npcShow(false); goalText = 'It is a hot morning. Walk to the harbour.'; showGoal(); toast('7 June 1692, late morning'); }
 function resetWorld() { Q.abbaHit = Q.abbaTrip = false; clearDebris(); if (abba && abba.userData.anim) { const st = abba.userData.anim.get('JogStumble'); if (st) st.stop(); } if (Q.abbaRun || (runA && runA.isRunning()) || (abba && abba.userData.anim && abba.userData.anim.cur !== idle)) { Q.abbaRun = false; if (runA) runA.stop(); const ac = abba.userData.anim; if (ac && ac.cur !== idle) { ac.cur.stop(); ac.cur = idle; ac.timer = 0; } idle.reset().setEffectiveWeight(1).play(); } Q.ruin = false; Q.shake = 0; Q.T = 0; sinkTown(0, 0); seaLevel = -0.35; moveSpeed = 2.7; eyeY = 1.62; scene.fog.color.copy(HAZE); scene.fog.near = 70; scene.fog.far = 900; sky.material.color.set(0xffffff); $('vig').style.opacity = 0;
   const m = shipsM.merchant, sl = shipsM.sloop; m.position.set(SHORE + 17.5, -0.35, -5.9); m.rotation.set(0, 0, 0); sl.position.set(SHORE + 17.5, -0.35, 4.9); sl.rotation.set(0, Math.PI, 0);
   if (afterG) afterG.visible = false; if (yardG) yardG.visible = false; for (const p of streetProps) p.visible = true; npcShow(true); for (const o of townObjs) o.m.visible = true; shipsM.merchant.visible = shipsM.sloop.visible = true; Q.aTalk = false;
@@ -824,11 +823,11 @@ function buildSeaProps() { if (Q.boat) return; const wood = new THREE.MeshStanda
   const mark = mk(new THREE.OctahedronGeometry(0.28), new THREE.MeshBasicMaterial({ color: 0xd9a441 }), 0, 3.3, 0, b); b.userData.mark = mark; Q.boat = b;
   for (let i = 0; i < 12; i++) { const k = i % 3, d = mk(k === 0 ? new THREE.CylinderGeometry(0.3, 0.3, 0.9, 10) : k === 1 ? new THREE.BoxGeometry(0.7, 0.6, 0.7) : new THREE.BoxGeometry(2.6, 0.12, 0.3), tim, SHORE + 8 + ((i * 37) % 50), 0, 12 + ((i * 53) % 55)); if (k === 0) d.rotation.z = Math.PI / 2; d.rotation.y = i * 1.3; d.userData.ph = i * 1.7; Q.debris.push(d); } }
 function abbaIdle() { if (!abba || !idle) return; if (runA) runA.stop(); const ac = abba.userData.anim; if (ac) { for (const n of ['JogStumble', 'StumbleBack', 'Terrified']) { const a = ac.get(n); if (a) a.stop(); } if (ac.cur !== idle) ac.cur.stop(); ac.cur = idle; ac.timer = 0; } idle.reset().setEffectiveWeight(1).fadeIn(0.2).play(); }
-function toSea() { hideCard(); buildSeaProps(); Q.ruin = true; sinkTown(0, 1); seaLevel = 0.2; moveSpeed = 1.5; $('vig').style.opacity = 0; scene.fog.color.copy(DUST); scene.fog.near = 25; scene.fog.far = 320; sky.material.color.set(0xd9cdb4);
+function toSea() { hideCard(); buildSeaProps(); Q.ruin = true; sinkTown(0, 1); seaLevel = 0.2; moveSpeed = 2.3; $('vig').style.opacity = 0; scene.fog.color.copy(DUST); scene.fog.near = 25; scene.fog.far = 320; sky.material.color.set(0xd9cdb4);
   const m = shipsM.merchant, sl = shipsM.sloop; m.position.set(SHORE + 19, -1.2, -7); m.rotation.set(0.42, 0.15, 0.05); sl.position.set(SHORE - 6, 0.5, 13); sl.rotation.set(-0.5, 2.2, 0.08);                 // one ship heeled over, one driven up into the town
-  state.place = 'sea'; state.x = SHORE + 12; state.z = 22; Q.boat.position.set(SHORE + 30, seaLevel, 46); Q.boat.rotation.y = 0.6; Q.boat.visible = true; for (const d of Q.debris) d.visible = true;
+  state.place = 'sea'; state.x = SHORE + 12; state.z = 22; Q.boat.position.set(SHORE + 20, seaLevel, 32); Q.boat.rotation.y = 0.6; Q.boat.visible = true; for (const d of Q.debris) d.visible = true;
   state.yaw = Math.atan2(-(Q.boat.position.x - state.x), -(Q.boat.position.z - state.z)); state.pitch = 0; ABBA.x = Q.boat.position.x; ABBA.z = Q.boat.position.z; abba.visible = true; Q.abbaRun = false; abbaIdle(); abba.rotation.y = Math.atan2(state.x - ABBA.x, state.z - ABBA.z); setPhase('sea');
-  goalText = 'Swim to the boat with the gold marker.'; showGoal(); toast('A second shock throws you into the sea.'); }
+  goalText = 'Swim to the boat with the gold marker!'; showGoal(); toast('A second shock throws you into the sea.'); }
 function finishQuake(skipped) { for (const id of ['quake', 'sand', 'watch', 'tomb']) unlock(id); Q.shake = 0; if (Q.gain) Q.gain.gain.value = 0; Q.phase = 'end';
   card(skipped ? 'What happened' : 'Saved', skipped ? ['Just before noon, an earthquake shook Port Royal. The wet sand under the town turned to liquid, and most of the town sank into the sea.', 'Lewis Galdy was swallowed by the ground, thrown out into the sea by a second shock, and saved by a boat.', 'Four new pages are in your journal.']
     : ['Hands pull you over the side of the boat. You are alive.', 'Behind you, most of Port Royal is under the sea.', 'Four new pages are in your journal.'],
@@ -841,11 +840,12 @@ function quakeTick(dt, time) { Q.t += dt; const t = Q.t;
     if (t > 2.5 && abba.visible && !Q.abbaRun) { toast('Abba: \u201cRun! To the boats!\u201d'); if (runA) { Q.abbaRun = true; ABBA.x = 9999; const ac = abba.userData.anim; (ac ? ac.cur : idle).fadeOut(0.25); runA.reset().fadeIn(0.25).play(); if (ac) { ac.cur = runA; ac.timer = 0; } } else abba.visible = false; }
     if (Q.abbaRun) { if (!Q.abbaTrip && abba.position.x > 6 && CL.JogStumble && abba.userData.anim) { Q.abbaTrip = true; const ac = abba.userData.anim, st = ac.get('JogStumble'); st.reset().setLoop(THREE.LoopOnce).fadeIn(0.15).play(); st.clampWhenFinished = false; runA.fadeOut(0.15); setTimeout(() => { if (Q.abbaRun) { runA.reset().fadeIn(0.2).play(); st.fadeOut(0.2); } }, (st.getClip().duration - 0.2) * 1000); } abba.rotation.y = Math.PI / 2 - 0.08; abba.position.x += 4.6 * dt; abba.position.z += 0.35 * dt; if (abba.position.x > SHORE + 4) { abba.visible = false; Q.abbaRun = false; } } if (t > 8.5) { setPhase('swallow'); goalText = 'The sand is pulling you down!'; showGoal(); } }
   else if (Q.phase === 'swallow') { Q.shake = 1; Q.T += dt; sinkTown(Q.T); const k = ease(t / 3.6); eyeY = 1.62 - 1.25 * k; moveSpeed = 2.7 * (1 - 0.9 * k); $('vig').style.opacity = k;
-    if (t > 4 && $('card').hidden) { Q.shake = 0.3; card('Swallowed', ['The wet sand has turned to liquid. It closes around you, up to your neck.', 'You cannot move. Then the ground shakes again.'], [{ t: 'Next', go: toSea }]); } }
+    if (t > 4 && $('card').hidden) { Q.shake = 0.3; card('Swallowed', ['The wet sand has gone soft, like mud. You sink up to your neck.', 'You cannot move. Then the ground shakes again!'], [{ t: 'Next', go: toSea }]); } }
   else if (Q.phase === 'sea') { Q.shake = t < 1.5 ? 0.6 * (1 - t / 1.5) : (Math.sin(time * 0.5) > 0.96 ? 0.25 : 0); eyeY = seaLevel + 0.32 + Math.sin(time * 1.6) * 0.07;
     const b = Q.boat; b.position.y = seaLevel + 0.12 + Math.sin(time * 1.2) * 0.06; b.rotation.z = Math.sin(time * 0.9) * 0.05; b.userData.mark.rotation.y = time * 1.5; abba.position.set(b.position.x - 0.3, b.position.y + 0.05, b.position.z);
     for (const d of Q.debris) { d.position.y = seaLevel + Math.sin(time * 1.1 + d.userData.ph) * 0.07; d.rotation.x = Math.sin(time * 0.7 + d.userData.ph) * 0.12; }
-    if (Math.hypot(state.x - b.position.x, state.z - b.position.z) < 2.3 && $('card').hidden) finishQuake(false); }
+    { const dx = state.x - b.position.x, dz = state.z - b.position.z, d = Math.hypot(dx, dz); if (d > 2.6 && t > 1.5) { const v = Math.min(1.1, 0.25 + t * 0.05) * dt; b.position.x += dx / d * v; b.position.z += dz / d * v; b.rotation.y = Math.atan2(dx, dz) + Math.PI / 2; } }   /* Abba rows toward you, so you always get there */
+    if (Math.hypot(state.x - b.position.x, state.z - b.position.z) < 2.8 && $('card').hidden) finishQuake(false); }
   if (Q.gain) Q.gain.gain.value = Math.min(1, Q.shake) * 0.9;
 }
 /* ---------- the days after, and the ending ---------- */
@@ -887,9 +887,9 @@ function beginAfter() { cue('sad'); hideCard(); buildAfter(); buildSeaProps(); i
   scene.fog.color.copy(DUST); scene.fog.near = 35; scene.fog.far = 420; sky.material.color.set(0xe2d8c2);
   state.place = 'after'; state.x = -1.6; state.z = 0; state.yaw = Math.PI / 2; state.pitch = 0; ABBA.x = -8.9; ABBA.z = 0.7; for (const p of streetProps) p.visible = false; abba.position.set(ABBA.x, 0, ABBA.z); abba.visible = true; if (ring) ring.visible = false;
   npcShow(false); afterGoal(); toast('Three days later'); }
-function stayOrGo() { card('Stay, or go?', ['The town you knew is under the sea. Across the harbour, people are starting again.', 'What will you do?'],
-  [{ t: 'Stay and build again', go: () => card('He stayed', ['The real Lewis Galdy stayed in Port Royal. He traded, grew rich, and helped to build a new church.'], [{ t: 'Go to the church', go: toYard }]) },
-   { t: 'Cross the harbour', go: () => card('Most people left', ['Most survivors crossed the harbour, and their new town became Kingston.', 'But the real Lewis Galdy stayed in Port Royal. He traded, grew rich, and helped to build a new church.'], [{ t: 'Go to the church', go: toYard }]) }]); }
+function stayOrGo() { card('Stay, or go?', ['Your town is under the sea. Across the water, people are starting again.', 'What will you do?'],
+  [{ t: 'Stay and build again', go: () => card('He stayed', ['The real Lewis Galdy stayed. He grew rich and helped build a new church.'], [{ t: 'Go to the church', go: toYard }]) },
+   { t: 'Cross the harbour', go: () => card('Most people left', ['Most people crossed the water. Their new town became Kingston.', 'But the real Lewis Galdy stayed. He grew rich and helped build a new church.'], [{ t: 'Go to the church', go: toYard }]) }]); }
 function buildYard() { if (yardG) return; yardG = new THREE.Group(); scene.add(yardG); cur = yardG;
   const stone = new THREE.MeshStandardMaterial({ map: noiseTex([176, 172, 160], 26, 2), roughness: 0.9 }), roofM = new THREE.MeshStandardMaterial({ map: noiseTex([96, 84, 74], 30, 6), roughness: 0.95 }), dark = new THREE.MeshStandardMaterial({ color: 0x1b1a18, roughness: 0.9 }), tim = new THREE.MeshStandardMaterial({ map: plankTex([84, 62, 44], 4, 1, 1), roughness: 0.9 });
   const gr = mk(new THREE.PlaneGeometry(30, 30), new THREE.MeshStandardMaterial({ map: noiseTex([126, 138, 92], 36, 10), roughness: 1 }), YX, 0.02, YZ - 4); gr.rotation.x = -Math.PI / 2;
@@ -935,8 +935,8 @@ function buildYard() { if (yardG) return; yardG = new THREE.Group(); scene.add(y
   cur = scene; }
 function toYard() { hideCard(); if (state.place !== 'out') setPlace('out'); state.ch.after = true; saveGame(); buildYard(); resetWorld(); Q.on = true; Q.phase = 'yard'; for (const o of townObjs) o.m.visible = false; shipsM.merchant.visible = shipsM.sloop.visible = false; abba.visible = false; npcShow(false); yardG.visible = true;
   state.place = 'yard'; state.x = YX + 11; state.z = YZ + 3.5; state.yaw = 0.95; state.pitch = 0.06; ABBA.x = 9999; goalText = 'Find the tomb beside the church.'; showGoal(); toast('St Peter\u2019s Church, Port Royal'); }
-function readStone() { card('Here lies Lewis Galdy', ['\u201cHere Lyes the Body of LEWIS GALDY Esq. who departed this Life at Port Royal the 22d December 1739, Aged 80.', 'He was Born at Montpelier in France, but left that Country for his Religion, and came to settle in this Island, where he was swallowed up in the Great Earthquake in the Year 1692,', 'and By the Providence of God was by another Shock thrown into the Sea, and Miraculously saved by swimming until a Boat took him up.', 'He lived many Years after in great Reputation, Beloved by all that knew him, and much Lamented at his Death.\u201d'], [{ t: 'Go on', go: endStory }]); }
-function endStory() { cue('end'); unlock('fortune'); unlock('stone'); card('The end of the story', ['Lewis Galdy lived for 47 more years. His tombstone tells of his escape, and says that everyone loved him.', 'It does not say what he sold to grow rich. Abba would have told it another way.', 'Two new pages are in your journal.'],
+function readStone() { card('Here lies Lewis Galdy', ['The stone says Lewis Galdy died here in 1739. He was 80.', 'He was born in France. He left because of his religion.', 'The earthquake swallowed him. Another shock threw him into the sea. He swam until a boat picked him up.', 'Everyone who knew him loved him.'], [{ t: 'Go on', go: endStory }]); }
+function endStory() { cue('end'); unlock('fortune'); unlock('stone'); card('The end of the story', ['Lewis Galdy lived 47 more years.', 'His stone does not say what he sold to get rich. Abba would tell it another way.', 'Two new pages are in your journal.'],
   [{ t: 'Read the journal', go: () => { hideCard(); openJournal(); } }, { t: 'Credits', go: () => { hideCard(); $('credits').hidden = false; } }, { t: 'Go back to 1690', go: leaveQuake }]); }
 /* ---------- 1691: the warehouse ---------- */
 let wareG = null, wLamp = null; const WX0 = -262, WX1 = -248, W = { coins: false, talked: false }, wareMark = {}, WGOODS = { sugar: [-259.5, -2.6], cocoa: [-254.6, -2.9], logwood: [-250.4, -2.9] };
@@ -989,9 +989,9 @@ function buildWare() { if (wareG) return; wareG = new THREE.Group(); wareG.visib
   for (const k in WGOODS) { const r = mk(new THREE.RingGeometry(0.75, 0.86, 36), new THREE.MeshBasicMaterial({ color: 0xd9a441, side: THREE.DoubleSide }), WGOODS[k][0], 0.02, WGOODS[k][1] + 0.9); r.rotation.x = -Math.PI / 2; wareMark[k] = r; if (state.unlocked.includes(k)) r.visible = false; }
   cur = scene; }
 function wareIntro() { cue('begin'); if (!townReady || !tavernReady) { toast('The town is still loading.'); return; } closeJournal(); $('dialogue').hidden = true; $('goal').hidden = false;
-  card('1691', ['A year has passed. Lewis Galdy now has a warehouse of his own, close to the wharf.', 'Ships bring goods in. He sells them on. This is how a merchant gets rich.'], [{ t: 'Begin', go: beginWare }, { t: 'Not now', go: hideCard }]); }
+  card('1691', ['One year later. Lewis has his own warehouse by the wharf.', 'Ships bring goods. He sells them. That is how merchants get rich.'], [{ t: 'Begin', go: beginWare }, { t: 'Not now', go: hideCard }]); }
 function beginWare() { hideCard(); if (Q.on) { resetWorld(); Q.on = false; } buildWare(); W.coins = W.talked = false; setPlace('ware'); state.x = -249.0; state.z = -0.4; state.yaw = Math.PI / 2 - 0.12; state.pitch = 0; wareGoal(); }
-function readLetter() { card('The letter', ['\u201cMr Galdy. Spanish buyers will pay well for enslaved people from Jamaica. Put your money in with mine, and we will both be rich.\u201d', 'It is signed by the captain of a ship in the harbour.'],
+function readLetter() { card('The letter', ['“Mr Galdy, let us sell enslaved people to Spanish buyers. We will both get rich.”', 'It is from the captain of a slave ship.'],
   [{ t: 'Say yes', go: () => wareEnd('You said yes', ['In later years, the real Lewis Galdy made this choice. It made him rich.', 'The people who were sold had no choice at all.']) },
    { t: 'Say no', go: () => wareEnd('You said no', ['That was the right thing to do.', 'In later years, the real Lewis Galdy said yes. It made him rich. The people who were sold had no choice at all.']) }]); }
 function wareEnd(title, paras) { state.ch.ware = true; saveGame(); card(title, paras, [{ t: 'Go on to 7 June 1692', go: quakeIntro }, { t: 'Go back to 1690', go: leaveWare }]); }
@@ -1073,7 +1073,7 @@ async function loadAll() {
   setTimeout(() => { buildTavern(); for (const f of FINDS) if (state.unlocked.includes(f.id)) finds[f.id].visible = false; if (state.ate) stew.visible = true; tavernReady = true; $('tchap').hidden = false; model('heath').then((g) => { people.heath = prep(g.scene); placeHeath(); }).catch(() => {}); for (const n of ['ned', 'buc1', 'buc2', 'morgan', 'gunner']) model(n).then((g) => { people[n] = prep(g.scene); pirateReady(n); }).catch(() => {});
     model('galdy').then((g) => { galdy = prep(g.scene); galdy.scale.multiplyScalar(0.94); galdy.visible = false; scene.add(galdy); animate(galdy, 'Idle'); $('view').hidden = false; }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
   if (__DEV__ && q.has('shot')) { $('start').click(); if (q.get('shot') === 'talk') { state.x = -3.6; state.z = -1.4; state.yaw = 0.62; state.pitch = -0.02; setTimeout(() => $('talk').click(), 300); } if (q.get('shot') === 'abbarun') { beginQuake(); setPhase('main'); Q.t = 1.6; state.x = 5; state.z = -0.5; state.yaw = Math.PI / 2 - 0.3; } if (q.get('shot') === 'quake1') { beginQuake(); setPhase('main'); Q.t = 6.5; state.x = 6; state.yaw = Math.PI / 2 + 0.3; } if (q.get('shot') === 'quake2') { beginQuake(); toSea(); state.yaw += 0.0; } if (q.get('shot') === 'quake3') { beginQuake(); toSea(); state.x = SHORE + 14; state.z = 20; state.yaw = Math.PI / 2 + 0.35; state.pitch = 0.1; } if (q.get('shot') === 'after') { beginAfter(); state.x = -2; state.z = -1; state.yaw = Math.PI / 2 - 0.1; } if (q.get('shot') === 'after2') { beginAfter(); state.x = -12; state.z = -1; state.yaw = -Math.PI / 2 - 0.15; } if (q.get('shot') === 'yard') { toYard(); } if (q.get('shot') === 'yard2') { toYard(); state.x = YX + 6; state.z = YZ - 0.2; state.yaw = 0; state.pitch = -1.1; } if (q.get('shot') === 'church') { toYard(); state.x = YX + 9; state.z = YZ + 9; state.yaw = Math.atan2(-(YX - 4 - state.x), -(YZ - 6 - state.z)); state.pitch = 0.18; } if (q.get('shot') === 'ware') { beginWare(); } if (q.get('shot') === 'door') { beginWare(); state.x = -253; state.z = 0.6; state.yaw = -Math.PI / 2; state.pitch = 0; } if (q.get('shot') === 'ware2') { beginWare(); state.x = -256.6; state.z = 0.2; state.yaw = 0.62 + Math.PI * 0; state.yaw = Math.atan2(-(-258.6 - state.x), -(2.9 - state.z)); state.pitch = -0.25; } if (q.get('shot') === 'chapters') { openChapters(); } if (q.get('shot') === 'third') { state.x = 12; state.z = 0.3; state.yaw = Math.PI / 2; setTimeout(() => toggleView(), 4500); } if (q.get('shot') === 'kofi2') { state.x = 29; state.z = 0.9; state.yaw = Math.PI / 2; state.pitch = 0.02; } if (q.get('shot') === 'kofitalk') { state.x = 22.9; state.z = 0.9; state.yaw = Math.atan2(-(21.7 - 23.6), -(2.35 - 0.6)); setTimeout(() => { if (current) current.go(); }, 6500); } if (q.get('shot') === 'npc1') { state.x = 23.6; state.z = 0.6; state.yaw = Math.atan2(-(21.7 - 23.6), -(2.35 - 0.6)); } if (q.get('shot') === 'npc2') { state.x = 37.2; state.z = 0.2; state.yaw = Math.PI / 2 - 0.25; } if (q.get('shot') === 'npc3') { state.x = 8.6; state.z = 0.9; state.yaw = Math.PI; state.pitch = 0.05; } if (q.get('shot') === 'tav') { state.talked = state.ate = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.0; state.z = -2.2; state.yaw = Math.atan2(-2.7, -2.2); state.pitch = -0.05; } if (q.get('shot') === 'tav2') { state.talked = state.ate = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = -0.6; state.yaw = Math.atan2(2.0, -2.5); state.pitch = -0.08; } if (q.get('shot') === 'fort') { state.x = 27; state.z = -21; state.yaw = Math.atan2(-(50 - 27), -(-30 + 21)); state.pitch = 0.1; } if (q.get('shot') === 'fortin') { setTimeout(() => { state.x = 40.5; state.z = -27.5; state.fz = 'court'; state.yaw = Math.atan2(-(50 - 40.5), -(-30 + 27.5)); state.pitch = 0.12; }, 5000); } if (q.get('shot') === 'fortwall') { setTimeout(() => { state.x = 53.5; state.z = -37.2; state.fz = 'ring'; state.yaw = Math.atan2(-(62 - 53.5), -(-30 + 37.2)); state.pitch = -0.05; }, 5000); } if (q.get('shot') === 'fortair') { setTimeout(() => { state.x = 30; state.z = -12; state.yaw = Math.atan2(-(50 - 30), -(-30 + 12)); state.pitch = -0.3; eyeY = 14; }, 5000); } if (q.get('shot') === 'fort2') { setTimeout(() => { state.x = 13; state.z = -24; state.yaw = Math.PI * 0.75 + 0.2; }, 5000); } if (q.get('shot') === 'fb') { setTimeout(() => fbStart(), 4500); setTimeout(() => { state.x = SHORE - 3.4; state.z = 0.2; state.yaw = Math.PI - 0.15; state.pitch = 0.05; }, 6000); } if (q.get('shot') === 'camp4') { beginAfter(); state.x = -3; state.z = -3.2; state.yaw = Math.PI - 0.6; state.pitch = 0.05; } if (q.get('shot') === 'ned') { state.talked = state.ate = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.4; state.z = 0.2; state.yaw = Math.atan2(-(-201.6 + 199.4), -(1.8 - 0.2)); state.pitch = -0.12; } if (q.get('shot') === 'fortflag') { setTimeout(() => { const p = FORT.fpos || [55, 12, -30]; state.x = p[0] - 9; state.z = p[2] + 7; state.fz = 'court'; state.yaw = Math.atan2(-(p[0] - state.x), -(p[2] - state.z)); state.pitch = 0.45; }, 5000); } if (q.get('shot') === 'shipflag') { setTimeout(() => { let best = null; scene.traverse((o) => { if (o.isMesh && o.material && o.material.name === 'Flag' && !best) { const b = new THREE.Box3().setFromObject(o); best = b.getCenter(new THREE.Vector3()); } }); if (!best) return; state.x = best.x + 5; state.z = best.z + 5; state.yaw = Math.atan2(-(best.x - state.x), -(best.z - state.z)); state.pitch = 0; eyeY = best.y; }, 5000); } if (q.get('shot') === 'kofistack') { state.x = 28.6; state.z = 0.4; state.yaw = -Math.PI / 2; state.pitch = -0.1; } if (q.get('shot') === 'spit') { setTimeout(() => { state.x = 24; state.z = -15; state.fz = 'spit'; state.yaw = Math.atan2(-(46 - 24), -(-32 + 15)); state.pitch = -0.04; }, 5000); } if (q.get('shot') === 'spit2') { setTimeout(() => { state.x = 34; state.z = -20; state.fz = 'spit'; state.yaw = Math.atan2(-(24 - 34), -(-24 + 20)); state.pitch = -0.1; }, 5000); } if (q.get('shot') === 'mline') { setTimeout(() => { state.x = 27.5; state.z = -28.5; state.fz = 'spit'; state.yaw = Math.atan2(-(34 - 27.5), -(-39 + 28.5)); state.pitch = -0.08; }, 5000); } if (q.get('shot') === 'gwalk') { state.x = 14; state.z = 0.4; state.yaw = Math.PI / 2; setTimeout(() => { const out = document.createElement('div'); out.id = 'frames'; out.hidden = true; document.body.appendChild(out); if (!galdy) return; const ac = galdy.userData.anim; galdy.visible = true; galdy.position.set(14, 0, 0.4); galdy.rotation.y = Math.PI / 2 + Math.PI; ac.play(q.get('clip') || 'WalkM'); ac.cur.timeScale = 1.1; ac.mx.update(0.5); const c = camera.clone(); c.position.set(14, 0.95, 4.6); c.lookAt(14, 0.85, 0.4); c.fov = 26; c.aspect = canvas.width / canvas.height; c.updateProjectionMatrix();
-  for (let n = 0; n < 12; n++) { ac.mx.update(1 / 12); if (grounded.includes(galdy)) groundFeet(galdy); renderer.render(scene, c); const im = document.createElement('i'); im.textContent = canvas.toDataURL('image/jpeg', 0.75); out.appendChild(im); } }, 6000); } if (q.get('shot') === 'move') { const x0 = state.x, z0 = state.z; setTimeout(() => { keys.add('w'); setTimeout(() => { keys.delete('w'); document.title = 'MOVED ' + Math.hypot(state.x - x0, state.z - z0).toFixed(2) + ' place=' + state.place; }, 3000); }, 5000); } if (q.get('shot') === 'credits') { $('credits').hidden = false; } if (q.get('shot') === 'resetc') { setTimeout(() => $('reset').click(), 4000); } if (q.get('shot') === 'camp3') { beginAfter(); state.x = -4.2; state.z = 3.4; state.yaw = Math.PI / 2 - 0.2; } if (q.get('shot') === 'npc4') { beginAfter(); state.x = -7.4; state.z = 3.2; state.yaw = Math.atan2(-(-9.65 + 7.4), -(1.75 - 3.2)); } if (q.get('shot') === 'street') { state.x = 17; state.z = 0.4; } if (q.get('shot') === 'ships') { state.x = SHORE + 1; state.z = 0.9; state.yaw = -Math.PI / 2 + 0.25; state.pitch = 0.22; } if (q.get('shot') === 'beach') { state.x = SHORE - 6; state.z = 1; state.yaw = -Math.PI / 2 - 0.9; state.pitch = -0.05; } if (q.get('shot') === 'beach2') { state.x = SHORE - 7; state.z = -2; state.yaw = -Math.PI / 2 + 0.8; state.pitch = 0.05; } if (q.get('shot') === 'in' || q.get('shot') === 'stew') { state.talked = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = 2.6; state.yaw = 0.25; state.pitch = -0.12; setGoal(); if (q.get('shot') === 'stew') { state.x = -200.6; state.z = -0.6; state.yaw = 0.1; setTimeout(() => { $('talk').click(); state.step = 1; advance(); }, 400); } } } }, 300);
+  for (let n = 0; n < 12; n++) { ac.mx.update(1 / 12); if (grounded.includes(galdy)) groundFeet(galdy); renderer.render(scene, c); const im = document.createElement('i'); im.textContent = canvas.toDataURL('image/jpeg', 0.75); out.appendChild(im); } }, 6000); } if (q.get('shot') === 'move') { const x0 = state.x, z0 = state.z; setTimeout(() => { keys.add('w'); setTimeout(() => { keys.delete('w'); document.title = 'MOVED ' + Math.hypot(state.x - x0, state.z - z0).toFixed(2) + ' place=' + state.place; }, 3000); }, 5000); } if (q.get('shot') === 'swim') { setTimeout(() => { beginQuake(); toSea(); const x0 = state.x, z0 = state.z; document.body.dataset.boat = Q.boat ? Q.boat.position.x.toFixed(1) + ',' + Q.boat.position.z.toFixed(1) + ' yaw ' + state.yaw.toFixed(2) : 'none'; keys.add('w'); setTimeout(() => { keys.delete('w'); document.title = 'SWIM ' + Math.hypot(state.x - x0, state.z - z0).toFixed(2) + ' from ' + x0.toFixed(1) + ',' + z0.toFixed(1) + ' to ' + state.x.toFixed(1) + ',' + state.z.toFixed(1) + ' place=' + state.place + ' busy=' + busy + ' card=' + !$('card').hidden + ' speed=' + moveSpeed; }, 4000); }, 4000); } if (q.get('shot') === 'boat') { setTimeout(() => { beginQuake(); toSea(); const d0 = Math.hypot(state.x - Q.boat.position.x, state.z - Q.boat.position.z); for (let i = 0; i < 400 && Q.phase === 'sea'; i++) quakeTick(0.05, i * 0.05); setTimeout(() => { document.title = 'BOAT ' + d0.toFixed(1) + ' -> ' + Math.hypot(state.x - Q.boat.position.x, state.z - Q.boat.position.z).toFixed(1) + ' phase=' + Q.phase + ' Qt=' + Q.t.toFixed(1); }, 8000); }, 4000); } if (q.get('shot') === 'credits') { $('credits').hidden = false; } if (q.get('shot') === 'resetc') { setTimeout(() => $('reset').click(), 4000); } if (q.get('shot') === 'camp3') { beginAfter(); state.x = -4.2; state.z = 3.4; state.yaw = Math.PI / 2 - 0.2; } if (q.get('shot') === 'npc4') { beginAfter(); state.x = -7.4; state.z = 3.2; state.yaw = Math.atan2(-(-9.65 + 7.4), -(1.75 - 3.2)); } if (q.get('shot') === 'street') { state.x = 17; state.z = 0.4; } if (q.get('shot') === 'ships') { state.x = SHORE + 1; state.z = 0.9; state.yaw = -Math.PI / 2 + 0.25; state.pitch = 0.22; } if (q.get('shot') === 'beach') { state.x = SHORE - 6; state.z = 1; state.yaw = -Math.PI / 2 - 0.9; state.pitch = -0.05; } if (q.get('shot') === 'beach2') { state.x = SHORE - 7; state.z = -2; state.yaw = -Math.PI / 2 + 0.8; state.pitch = 0.05; } if (q.get('shot') === 'in' || q.get('shot') === 'stew') { state.talked = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = 2.6; state.yaw = 0.25; state.pitch = -0.12; setGoal(); if (q.get('shot') === 'stew') { state.x = -200.6; state.z = -0.6; state.yaw = 0.1; setTimeout(() => { $('talk').click(); state.step = 1; advance(); }, 400); } } } }, 300);
 }
 function start(saved) { try { if (sessionStorage.getItem('pr-fresh')) { sessionStorage.removeItem('pr-fresh'); saved = {}; } } catch (e) { /* ignore */ } if (!(saved && saved.started)) applySave(loadGame()); loadAll().catch(() => {}); if (saved && saved.started) { Object.assign(state, saved); if (state.place !== 'out' || state.x > SHORE + 24 || state.x < X0 - 1 || Math.abs(state.z) > 9.5) { state.place = 'out'; state.x = 17; state.z = 0.4; state.yaw = Math.PI / 2; state.pitch = 0; } $('start').addEventListener('click', () => { if (state.unlocked.length) { $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; } }, { once: true }); } requestAnimationFrame(frame); }
 /* ---------- test-only autoplayer (?auto=<chapter>): follows what the game offers, logs it, and flags stalls ---------- */
@@ -1114,25 +1114,25 @@ goArrive = chapterFade('goArrive', goArrive); leaveWare = chapterFade('leaveWare
 $('dev').onclick = () => { $('credits').hidden = false; }; $('crclose').onclick = () => { $('credits').hidden = true; }; $('chcred').onclick = () => { $('credits').hidden = false; };
 
 /* first person or third person (see Lewis Galdy) */
-function toggleView() { if (!galdy) return; third = !third; $('view').setAttribute('aria-pressed', String(third)); toast(third ? 'You can see Lewis Galdy. Press V to look through his eyes again.' : 'You see through Galdy\u2019s eyes.'); }
+function toggleView() { if (!galdy || FB.on) return;   /* in Ned’s story you are young Ned, so no Galdy view */ third = !third; $('view').setAttribute('aria-pressed', String(third)); toast(third ? 'You can see Lewis Galdy. Press V to look through his eyes again.' : 'You see through Galdy\u2019s eyes.'); }
 $('view').onclick = toggleView; addEventListener('keydown', (e) => { if ((e.key === 'v' || e.key === 'V') && !e.repeat && document.activeElement?.tagName !== 'INPUT') toggleView(); });
 
 /* reset: this chapter again, or the whole story */
 function chapterNow() { if (FB.on) return 1; if (state.place === 'ware') return 2; if (Q.on && Q.phase === 'yard') return 5; if (Q.on && (Q.phase === 'after' || state.place === 'after')) return 4; if (Q.on) return 3; return 0; }
 $('reset').onclick = () => { if (fading) return; closeJournal(); const i = chapterNow(), c = CHAPTERS[i];
-  card('Reset', ['Go back to the start of this chapter, or begin the whole story again.'], [{ t: 'Restart \u201c' + c.name + '\u201d', go: () => { hideCard(); if (i === 0) { state.x = 43; state.z = 0; } c.go(); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This erases everything you have found, including your journal pages.'], [{ t: 'Yes, start again', go: () => { try { localStorage.removeItem(SAVE_KEY); sessionStorage.setItem('pr-fresh', '1'); } catch (e) { /* ignore */ } location.reload(); } }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }]); };
+  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart \u201c' + c.name + '\u201d', go: () => { hideCard(); if (i === 0) { state.x = 43; state.z = 0; } c.go(); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: () => { try { localStorage.removeItem(SAVE_KEY); sessionStorage.setItem('pr-fresh', '1'); } catch (e) { /* ignore */ } location.reload(); } }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }]); };
 
 /* ================= Pirates, Henry Morgan, Fort Charles ================= */
 const FB = { on: false }, FORT = { ready: false };
 JOURNAL.push(
   { id: 'morgan', title: 'Captain Henry Morgan',
-    simple: ['Henry Morgan was the most famous privateer of Port Royal. He came from Wales and arrived in Jamaica as a young man, around 1658.', 'The governor of Jamaica gave him papers to attack Spanish ships and towns. His men chose him as their admiral.'],
+    simple: ['Henry Morgan was the most famous privateer of Port Royal. He came from Wales.', 'The governor gave him papers to attack Spanish ships and towns. His men chose him to lead them.'],
     deeper: ['He raided Portobelo in 1668 and Maracaibo in 1669. In January 1671 his men took the city of Panama, and it burned.', 'England and Spain had just made peace, so Morgan was arrested and sent to England in 1672. Instead of being punished, he was made a knight in 1674.', 'He came back in 1675 as Lieutenant Governor of Jamaica, and the law he served now hanged pirates. Ned is a made-up character, but Morgan was real.'] },
   { id: 'funeral', title: 'Morgan’s grave',
-    simple: ['Henry Morgan died in Port Royal on 25 August 1688.', 'He was buried in the Palisadoes cemetery, and the ships in the harbour fired a 22-gun salute.'],
+    simple: ['Henry Morgan died in Port Royal on 25 August 1688.', 'He was buried near the town. The ships fired 22 guns for him.'],
     deeper: ['Four years later, the 1692 earthquake carried that cemetery into the sea. His grave has never been found.', 'Many stories say Morgan hid treasure in Port Royal. None of them have ever been proved.'] },
   { id: 'forts', title: 'The forts of Port Royal',
-    simple: ['Six forts with cannons guarded Port Royal: Fort Charles, Fort James, Fort Carlisle, Fort Rupert, Fort Morgan and Fort Walker.', 'Any enemy ship had to sail past their guns to reach the harbour.'],
+    simple: ['Six forts with cannons guarded Port Royal. Fort Charles was the first.', 'Any enemy ship had to sail past their guns to reach the harbour.'],
     deeper: ['Fort Charles was the first, begun in 1655. It is the only one that survived the 1692 earthquake, and you can still visit it today.', 'Forts James, Carlisle and Rupert sank into the sea in the earthquake.', 'Fort Charles in this game is simpler than the real one, and placed to fit the game.'] });
 
 /* ---------- characters ---------- */
@@ -1163,26 +1163,26 @@ TICKS.push((dt) => { const a = people.buc1, b = people.buc2; if (!a || !b || sta
       if (c1 === 'Punch' && TV.n++ % 2 === 0 && Math.hypot(state.x + 199, state.z) < 6) setTimeout(() => toast('Abba: “Not in my tavern, boys! Take it outside!”'), 700); }
   if (TV.t > 26) TV.t = 0; });
 const BUCS = [
-  { who: 'Will', text: 'Ha! Mind your feet, friend. Jack here thinks he can beat me at anything.' },
-  { who: 'Jack', text: 'I can! I sailed with Captain Morgan himself. I carried his flag at Portobelo!' },
-  { who: 'Will', text: 'And I carried your hat home when you lost it. Go on, ask old Ned. He was really there.' }];
+  { who: 'Will', text: 'Ha! Mind your feet, friend.' },
+  { who: 'Jack', text: 'I sailed with Captain Morgan himself!' },
+  { who: 'Will', text: 'Ask old Ned. He was really there.' }];
 const NED = [
-  { who: 'Ned', text: 'Sit down, lad. You look like you want a story. I sailed with Henry Morgan, back when I was young.' },
-  { who: 'Ned', text: 'Morgan came out from Wales with nothing. By 1668 he was our admiral. Portobelo, Maracaibo, then Panama, the richest city in the Spanish lands.' },
+  { who: 'Ned', text: 'Sit down, lad. Want a story? I sailed with Henry Morgan when I was young.' },
+  { who: 'Ned', text: 'Morgan came from Wales with nothing. Soon he led a whole fleet of ships.' },
   { who: 'You', text: 'Was he a pirate?' },
-  { who: 'Ned', text: 'He had papers from the governor, so the law called him a privateer. The Spanish called him worse.', choices: [{ t: 'Tell me the story', ok: true }, { t: 'Maybe another time', ok: true }] },
-  { who: 'Ned', text: 'Close your eyes. It is August 1670. I am fifteen, a ship’s boy, and the harbour is full of Morgan’s ships...' }];
+  { who: 'Ned', text: 'The governor gave him papers, so he was a privateer. The Spanish called him worse!', choices: [{ t: 'Tell me the story', ok: true }, { t: 'Maybe another time', ok: true }] },
+  { who: 'Ned', text: 'Close your eyes. It is 1670. I am a ship’s boy...' }];
 const NED_AGAIN = [
-  { who: 'Ned', text: 'Morgan was knighted by the King, and came back to be Lieutenant Governor. Then he hanged pirates! Ha.' },
-  { who: 'Ned', text: 'And Exquemelin, our surgeon, wrote a book about us. Morgan took the London printers to court over it, and won! Two hundred pounds!', unlock: 'exquemelin' },
-  { who: 'Ned', text: 'He died two years ago. The ships fired 22 guns over his grave out on the Palisadoes. I was there.', unlock: 'funeral' },
-  { who: 'Ned', text: 'The forts fired too. Go and see Fort Charles, past the last houses. Those guns keep us all safe.' }];
+  { who: 'Ned', text: 'Later the King made Morgan a knight. Then he hanged pirates! Ha.' },
+  { who: 'Ned', text: 'Our ship’s doctor wrote a book about us. Morgan did not like it!', unlock: 'exquemelin' },
+  { who: 'Ned', text: 'He died two years ago. The ships fired 22 guns for him. I was there.', unlock: 'funeral' },
+  { who: 'Ned', text: 'Go and see Fort Charles, past the last houses. Its guns keep us safe.' }];
 ACTIONS.push(
   { label: 'Talk to the sailors', r: 2.2, where: () => state.place === 'in' && people.buc1 && people.buc1.parent && [-198.5, -0.7], go: () => startConvo(BUCS) },
   { label: 'Talk to old Ned', r: 2.4, where: () => state.place === 'in' && people.ned && people.ned.parent && [TAV.ned[0], TAV.ned[1]], go: () => {
       if (state.unlocked.includes('morgan')) { startConvo(NED_AGAIN, setGoal); return; }
       let chose = 'yes'; const c = NED.map((st) => st.choices ? { ...st, choices: [{ t: 'Tell me the story', ok: true }, { t: 'Maybe another time', ok: true }] } : st);
-      startConvo(c.slice(0, 4), () => card('Ned’s story', ['Ned is going to tell you about the summer Morgan’s fleet got ready for Panama.', 'In his story, you are young Ned.'], [{ t: 'Hear the story', go: () => { hideCard(); fbStart(); } }, { t: 'Another time', go: hideCard }])); } });
+      startConvo(c.slice(0, 4), () => card('Ned’s story', ['Ned will tell you about the summer Morgan’s ships got ready to sail.', 'In his story, you are young Ned.'], [{ t: 'Hear the story', go: () => { hideCard(); fbStart(); } }, { t: 'Another time', go: hideCard }])); } });
 speakerModel = ((orig) => (who) => who === 'Ned' ? people.ned : who === 'Will' ? people.buc1 : who === 'Jack' ? people.buc2 : who === 'Henry Morgan' ? people.morgan : who === 'The gunner' ? people.gunner : orig(who))(speakerModel);
 
 /* ---------- Fort Charles ---------- */
@@ -1231,12 +1231,12 @@ function boom(x, z) { audioInit(); if (AU.ctx && AU.on) { const c = AU.ctx, t0 =
 TICKS.push((dt) => { if (!FORT.ready || state.place !== 'out') return; const t = performance.now() / 1000, f = FORT.flag; for (let i = 0; i < f.p.count; i++) { const d = Math.max(0, (1.05 - f.base[i * 3]) / 2.1); f.p.setZ(i, f.base[i * 3 + 2] + (Math.sin(d * 5.5 - t * 5.2) * 0.26 + Math.sin(d * 11 - t * 8.3) * 0.06) * d); f.p.setY(i, f.base[i * 3 + 1] + Math.sin(d * 4 - t * 3.1) * 0.07 * d - 0.08 * d * d); f.p.setX(i, f.base[i * 3] + 0.06 * d * (1 - Math.cos(d * 5.5 - t * 5.2))); } f.p.needsUpdate = true; if (!Q.on) for (const sp of dustP) { const u = sp.userData; if (!u.fort) continue; } });
 TICKS.push((dt) => { if (Q.on || !dustP.length || debP.length) return; for (let i = dustP.length - 1; i >= 0; i--) { const sp = dustP[i], u = sp.userData; u.age += dt; if (u.age < 0) continue; const k = u.age / u.life; sp.scale.setScalar(1 + k * 5); sp.position.y += dt * 0.4; sp.material.opacity = Math.min(0.7, u.age * 2) * (1 - k); if (k >= 1) { scene.remove(sp); sp.material.dispose(); dustP.splice(i, 1); } } });
 const GUNNER = [
-  { who: 'The gunner', text: 'Welcome to Fort Charles! It was the first fort built here. There are five more around the town.' },
-  { who: 'The gunner', text: 'Fort James, Fort Carlisle, Fort Rupert, Fort Morgan and Fort Walker. Any enemy ship has to sail past all our guns.' },
+  { who: 'The gunner', text: 'Welcome to Fort Charles! There are five more forts around the town.' },
+  { who: 'The gunner', text: 'Any enemy ship has to sail past all our guns.' },
   { who: 'You', text: 'Have the guns ever been fired?' },
-  { who: 'The gunner', text: 'For practice, and for honour. When Sir Henry Morgan was buried, the ships fired 22 guns for him. Want to hear one?', unlock: 'forts' }];
+  { who: 'The gunner', text: 'For practice, and for honour. When Henry Morgan died, the ships fired 22 guns. Want to hear one?', unlock: 'forts' }];
 ACTIONS.push(
-  { label: 'Talk to the gunner', r: 2.4, where: () => FORT.ready && !Q.on && state.place === 'out' && people.gunner && [FORTP.gunner[0], FORTP.gunner[1]], go: () => startConvo(state.unlocked.includes('forts') ? [{ who: 'The gunner', text: 'Stand back from the wall, and cover your ears!' }] : GUNNER, () => { setGoal(); const ac = people.gunner && people.gunner.userData.anim; if (ac && CL.Salute) ac.play('Salute', true); fireSalute(); }) });
+  { label: 'Talk to the gunner', r: 2.4, where: () => FORT.ready && !Q.on && state.place === 'out' && people.gunner && [FORTP.gunner[0], FORTP.gunner[1]], go: () => startConvo(state.unlocked.includes('forts') ? [{ who: 'The gunner', text: 'Stand back and cover your ears!' }] : GUNNER, () => { setGoal(); const ac = people.gunner && people.gunner.userData.anim; if (ac && CL.Salute) ac.play('Salute', true); fireSalute(); }) });
 function fireSalute() { if (!FORT.guns) return; const guns = FORT.guns.slice(0, 4); guns.forEach((c, i) => setTimeout(() => { if (state.place !== 'out' || FB.on) return; const p = new THREE.Vector3(0, 0.62, 1.4); c.localToWorld(p); boom(p.x, p.z); const br = c.children.find((o) => o.geometry && o.geometry.type === 'CylinderGeometry' && o.position.z > 0.3); if (br) { br.position.z = 0.1; setTimeout(() => { br.position.z = 0.35; }, 500); } }, 600 + i * 900)); }
 TICKS.push(() => { if (FORT.g) FORT.g.visible = state.place === 'out' && !(Q.on && Q.phase === 'yard'); });
 
@@ -1244,9 +1244,9 @@ TICKS.push(() => { if (FORT.g) FORT.g.visible = state.place === 'out' && !(Q.on 
 const FBP = { morgan: [SHORE + 9.5, -0.55, -Math.PI / 2], d1: [SHORE - 4.2, 2.6, Math.PI / 2], d2: [SHORE - 2.6, 2.6, -Math.PI / 2], c1: [SHORE + 3, 0.7, Math.PI / 2], watch: [[SHORE - 3.4, 4.2, Math.PI, 'Laugh'], [SHORE - 5.6, 1.2, Math.PI * 0.7, 'Talk2'], [SHORE + 14, 0.8, -Math.PI / 2, 'Wave']] };
 const FBG = { group: null, cast: [] };
 JOURNAL.push({ id: 'panama', title: 'The raid on Panama',
-  simple: ['In August 1670 Morgan gathered a fleet of ships and more than a thousand men.', 'In January 1671 they crossed the land to Panama on foot and took the city. It burned.'],
+  simple: ['In 1670 Morgan gathered many ships and over a thousand men.', 'In 1671 they walked across the land to Panama and took the city. It burned.'],
   deeper: ['Morgan’s men were paid with a share of what they captured. Most got far less than they hoped.', 'The young Ned in this story is made up. The raid was real.'] });
-function fbIntro() { if (!townReady || !tavernReady || !people.morgan) { toast('The town is still loading.'); return; } closeJournal(); card('1670', ['This is old Ned’s story, from twenty years before.', 'In it, you are young Ned, a ship’s boy in Port Royal, the summer Morgan’s fleet got ready for Panama.'], [{ t: 'Begin', go: () => { hideCard(); fbStart(); } }, { t: 'Not now', go: hideCard }]); }
+function fbIntro() { if (!townReady || !tavernReady || !people.morgan) { toast('The town is still loading.'); return; } closeJournal(); card('1670', ['This is old Ned’s story, from 20 years ago.', 'In it, you are young Ned, a ship’s boy.'], [{ t: 'Begin', go: () => { hideCard(); fbStart(); } }, { t: 'Not now', go: hideCard }]); }
 function clone(id, tint) { const keep = people[id].userData.anim, sw = people[id].userData.sword; delete people[id].userData.anim; delete people[id].userData.sword; const m = skClone(people[id]); people[id].userData.anim = keep; if (sw) people[id].userData.sword = sw; if (tint) m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); return m; }
 function fbBuild() { if (FBG.group) return; const g = new THREE.Group(); g.visible = false; scene.add(g); FBG.group = g;
   const put = (m, [x, z, ry], clip) => { m.position.set(x, groundYAt(x, z), z); m.rotation.y = ry; m.visible = true; g.add(m); animate(m, clip); FBG.cast.push(m); m.userData.ground = groundYAt(x, z); grounded.push(m); return m; };
@@ -1256,25 +1256,32 @@ function fbBuild() { if (FBG.group) return; const g = new THREE.Group(); g.visib
   const mo = people.morgan; mo.position.set(FBP.morgan[0], 0.06, FBP.morgan[1]); mo.rotation.y = FBP.morgan[2]; g.add(mo); mo.visible = true; cutlass(mo);
   FBG.box = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.32, 0.34), new THREE.MeshStandardMaterial({ map: plankTex([150, 118, 80], 3, 1, 2), roughness: 0.9 })); g.add(FBG.box); }
 const FB_TALK = [
-  { who: 'Henry Morgan', text: 'You, boy! Are you the new ship’s boy? Good. Keep out from under the men’s feet.' },
-  { who: 'Henry Morgan', text: 'I am Admiral Henry Morgan. The Governor of Jamaica has given me papers to fight the Spanish. That makes us privateers, not pirates.' },
+  { who: 'Henry Morgan', text: 'You, boy! Are you the new ship’s boy? Good. Stay out of the way.' },
+  { who: 'Henry Morgan', text: 'I am Admiral Henry Morgan. I have papers to fight Spain. So I am a privateer, not a pirate.' },
   { who: 'You', text: 'Where are we going, Admiral?' },
-  { who: 'Henry Morgan', text: 'Somewhere rich. Every man gets a share of what we take, and nothing if we take nothing. So we practise until we are the best.', anim: 'Point' },
-  { who: 'Henry Morgan', text: 'Now run along and watch the men at their sword drill. Then go and help load the ships.', unlock: 'morgan' }];
+  { who: 'Henry Morgan', text: 'Somewhere rich! Every man gets a share of what we take.', anim: 'Point' },
+  { who: 'Henry Morgan', text: 'Now go and watch the sword drill. Then help load the ships.', unlock: 'morgan' }];
 function fbStart() { fbBuild(); FB.on = true; FB.step = 0; FB.met = false; FB.drill = false; FB.asked.clear(); if (people.morgan) { people.morgan.position.set(FBP.morgan[0], 0.06, FBP.morgan[1]); people.morgan.rotation.y = FBP.morgan[2]; } for (const m of FBG.cast) if (m.userData.sword) m.userData.sword.visible = true; FB.wasThird = third; third = false; setPlace('out'); npcShow(false); abba.visible = false; ABBA.x = 9999; if (KP.box) KP.box.visible = false; if (galdy) galdy.visible = false;
   state.x = SHORE + 15; state.z = 0; state.yaw = Math.PI / 2; state.pitch = 0; FBG.group.visible = true; document.body.classList.add('flash');
-  goalText = 'Find Admiral Morgan on the pier. He wears a red coat.'; showGoal(); toast('Port Royal, August 1670'); }
-function fbEnd() { card('What happened next', ['The fleet sailed. In January 1671 Morgan’s men took Panama, and the city burned.', 'Exquemelin wrote that about 1,200 men marched with Morgan across the land to Panama.', 'England had just made peace with Spain, so Morgan was arrested and sent to England. Instead of being punished, he was made a knight. He came back to help rule Jamaica, and now the law he served hanged pirates.', 'He died in 1688. Four years later, the earthquake took his grave into the sea.'], [{ t: 'Back to the tavern', go: fbLeave }]); }
-function fbLeave() { hideCard(); FB.on = false; document.body.classList.remove('flash'); FBG.group.visible = false; people.morgan.visible = false; npcShow(true); third = !!FB.wasThird; unlock('panama'); state.ch.ned = true; state.talked = true; if (!state.unlocked.includes('harbour')) state.unlocked.push('harbour'); saveGame();   /* you come back inside the tavern, so the arrival goals are behind you */
-  setPlace('in'); state.x = -200.4; state.z = 2.4; state.yaw = Math.PI - 0.4; state.pitch = 0; setGoal(); toast('Ned: “And that is how it was. Now, who is buying?”'); }
+  goalText = 'Find Admiral Morgan on the pier. He has a red coat.'; showGoal(); toast('Port Royal, August 1670'); }
+function fbEnd() { card('What happened next', ['The ships sailed. Morgan’s men took the city of Panama, and it burned.', 'About 1,200 men marched with him.', 'Later the King made Morgan a knight. He came back to help rule Jamaica, and hanged pirates.', 'He died in 1688. In 1692 the earthquake took his grave into the sea.'], [{ t: 'Back to the tavern', go: fbLeave }]); }
+function fbLeave(early) { hideCard(); FB.on = false; document.body.classList.remove('flash'); FBG.group.visible = false; people.morgan.visible = false; npcShow(true); third = !!FB.wasThird; if (early !== true) { unlock('panama'); state.ch.ned = true; } state.talked = true; if (!state.unlocked.includes('harbour')) state.unlocked.push('harbour'); saveGame();   /* you come back inside the tavern, so the arrival goals are behind you */
+  setPlace('in'); state.x = -200.4; state.z = 2.4; state.yaw = Math.PI - 0.4; state.pitch = 0; setGoal(); toast(early === true ? 'Ned: “Another time, then.”' : 'Ned: “And that is how it was. Now, who is buying?”'); }
+$('fbexit').onclick = () => { if (!FB.on || busy) return; card('Leave Ned’s story?', ['You can hear it again from the Chapters menu.'], [{ t: 'Leave the story', go: () => fbLeave(true) }, { t: 'Stay', go: hideCard }]); };
+TICKS.push(() => { const h = !FB.on; if ($('fbexit').hidden !== h) $('fbexit').hidden = h; if (FB.on && third) third = false; if (galdy) { const vh = FB.on; if ($('view').hidden !== vh) $('view').hidden = vh; } });
 ACTIONS.push(
-  { fb: true, label: 'Talk to Admiral Morgan', r: 2.6, where: () => FB.on && [FBP.morgan[0], FBP.morgan[1]], go: () => startConvo(FB.step ? [{ who: 'Henry Morgan', text: 'Still here? Go and watch the sword drill, then help with the loading.' }] : FB_TALK, () => { FB.step = Math.max(FB.step, 1); goalText = 'Watch the sword drill on the beach, by the boats.'; showGoal(); }) },
-  { fb: true, label: 'Watch the sword drill', r: 3.4, where: () => FB.on && FB.step >= 1 && [(FBP.d1[0] + FBP.d2[0]) / 2, FBP.d1[1]], go: () => { const [a, b] = FBG.d; startConvo([{ who: 'Tom', text: 'Watch close, boy! Feet apart, sword up. Block high, then low!' }, { who: 'Dick', text: 'And when you lose, you say so, like a gentleman. Yield?' }, { who: 'Tom', text: 'I yield! Ha! Again tomorrow.' }], () => { a.userData.anim.play(CL.Sheathe ? 'Sheathe' : 'Laugh', true); b.userData.anim.play('Laugh', true, 3); setTimeout(() => { a.userData.anim.play('Sword1'); b.userData.anim.play('Sword2'); }, 7000); FB.step = Math.max(FB.step, 2); goalText = 'Help load the ships: talk to the man carrying crates.'; showGoal(); }); } },
-  { fb: true, label: 'Help load the ships', r: 2.6, where: () => FB.on && FB.step >= 2 && FBG.carrier && [FBG.carrier.position.x, FBG.carrier.position.z], go: () => startConvo([{ who: 'Sailor', text: 'Biscuit, water, powder, shot. Enough for months at sea. Hand me that crate, boy.' }, { who: 'Sailor', text: 'Ha! Good lad. That is the last of it. We sail with the morning tide.' }], fbEnd) });
+  { fb: true, label: 'Talk to Admiral Morgan', r: 2.6, where: () => FB.on && [FBP.morgan[0], FBP.morgan[1]], go: () => startConvo(FB.step ? [{ who: 'Henry Morgan', text: 'Still here? Go and watch the sword drill!' }] : FB_TALK, () => { FB.step = Math.max(FB.step, 1); goalText = 'Watch the sword drill on the beach.'; showGoal(); }) },
+  { fb: true, label: 'Watch the sword drill', r: 3.4, where: () => FB.on && FB.step >= 1 && [(FBP.d1[0] + FBP.d2[0]) / 2, FBP.d1[1]], go: () => { const [a, b] = FBG.d; startConvo([{ who: 'Tom', text: 'Watch, boy! Feet apart, sword up. Block high, then low!' }, { who: 'Dick', text: 'If you lose, you say so. Do you give up?' }, { who: 'Tom', text: 'I give up! Ha! Again tomorrow.' }], () => { a.userData.anim.play(CL.Sheathe ? 'Sheathe' : 'Laugh', true); b.userData.anim.play('Laugh', true, 3); setTimeout(() => { a.userData.anim.play('Sword1'); b.userData.anim.play('Sword2'); }, 7000); FB.step = Math.max(FB.step, 2); goalText = 'Help load the ships. Talk to the man with the crates.'; showGoal(); }); } },
+  { fb: true, label: 'Help load the ships', r: 2.6, where: () => FB.on && FB.step >= 2 && FBG.carrier && [FBG.carrier.position.x, FBG.carrier.position.z], go: () => startConvo([{ who: 'Sailor', text: 'Food, water and gunpowder. Hand me that crate, boy.' }, { who: 'Sailor', text: 'Good lad! That is the last one.' }], fbEnd) });
 speakerModel = ((orig) => (who) => who === 'Tom' ? FBG.d && FBG.d[0] : who === 'Dick' ? FBG.d && FBG.d[1] : who === 'Sailor' ? FBG.carrier : orig(who))(speakerModel);
 TICKS.push((dt) => { if (!FB.on || !FBG.carrier) return; const m = FBG.carrier, t = performance.now() / 1000, k = (Math.sin(t * 0.25) + 1) / 2, x = SHORE + 1 + k * 9, dir = Math.cos(t * 0.25) > 0 ? Math.PI / 2 : -Math.PI / 2;
   if (speaker === m) return; m.position.set(x, groundYAt(x, 0.7), 0.7); m.rotation.y = dir; const hl = m.getObjectByName('mixamorigLeftHand'), hr = m.getObjectByName('mixamorigRightHand'); if (hl && hr) { FBG.box.position.copy(hl.getWorldPosition(_dp)).add(hr.getWorldPosition(_ds)).multiplyScalar(0.5); FBG.box.position.x += Math.sin(dir) * 0.24; FBG.box.position.z += Math.cos(dir) * 0.24; FBG.box.rotation.y = dir; } });
 TICKS.push(() => { if (!FB.on) return; const m = people.morgan; if (!m) return; const dx = state.x - m.position.x, dz = state.z - m.position.z; if (Math.hypot(dx, dz) < 5) m.rotation.y += (Math.atan2(dx, dz) - m.rotation.y) * 0.08; });
+TICKS.push((dt) => {   /* whoever you can talk to turns toward you as you come near */
+  if (!current || busy || !current.where) return; const w = current.where(); if (!w) return; const cands = [abba, ...Object.values(people), ...Object.values(survivors), FBG.qm, FBG.exq, FBG.carrier, ...(FBG.d || [])];
+  let best = null, bd = 1.6; const p = new THREE.Vector3(); for (const m of cands) { if (!m || !m.parent || !m.visible || m.userData.sits || m === people.kofi) continue; m.getWorldPosition(p); const d = Math.hypot(p.x - w[0], p.z - w[1]); if (d < bd) { bd = d; best = m; } }
+  if (!best) return; best.getWorldPosition(p); const want = Math.atan2(state.x - p.x, state.z - p.z); let e = want - best.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); best.rotation.y += e * Math.min(1, dt * 3); });
+TICKS.push((dt) => { const m = speaker; if (!m || !m.parent || m.userData.sits || ($('dialogue').hidden && $('card').hidden)) return; const p = new THREE.Vector3(); m.getWorldPosition(p); const want = Math.atan2(state.x - p.x, state.z - p.z); let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * 4); });   /* whoever is talking to you turns to face you */
 const _clampFB = clampPos; clampPos = (nx, nz) => { if (FB.on && state.place === 'out') { nx = Math.max(SHORE - 9, Math.min(SHORE + 21.5, nx)); if (nx > SHORE - 1.5) nz = Math.max(-1.4, Math.min(1.4, nz)); else nz = Math.max(-5, Math.min(6, nz)); for (const m of [people.morgan, ...FBG.cast]) { if (!m || m === FBG.carrier) continue; const dx = nx - m.position.x, dz = nz - m.position.z, d = Math.hypot(dx, dz); if (d < 0.75 && d > 0) { nx = m.position.x + dx / d * 0.75; nz = m.position.z + dz / d * 0.75; } } return [nx, nz]; } return _clampFB(nx, nz); };
 
 FADE_TITLES.fbStart = ['August 1670', 'Ned\u2019s story']; FADE_TITLES.fbLeave = ['1690', 'Back in The Turtle'];
@@ -1285,47 +1292,47 @@ TICKS.push(() => { if (FBG.group) FBG.group.visible = FB.on; if (people.morgan &
 /* ---------- Ned's story, deeper: Morgan's own account, the articles, the surgeon who wrote it all down, and the muster ---------- */
 JOURNAL.push(
   { id: 'articles', title: 'The buccaneers’ articles',
-    simple: ['Before a voyage, buccaneers agreed to rules called articles.', 'Nobody was paid wages. They shared what they captured. The captain got more shares, and a ship’s boy got half a share.'],
+    simple: ['Before a trip, buccaneers agreed to rules called articles.', 'Nobody got wages. They shared what they took. A ship’s boy got half a share.'],
     deeper: ['A man who was badly hurt was paid first. The surgeon Exquemelin wrote that the loss of a right arm was worth 600 pieces of eight.', 'He also wrote that this could be paid as six enslaved people. Even these rules treated human beings as money.'] },
   { id: 'exquemelin', title: 'The surgeon who wrote it down',
-    simple: ['Alexandre Exquemelin was a real barber-surgeon who sailed with Morgan’s buccaneers and was at Panama.', 'He wrote a book about them, first printed in Dutch in 1678. It made Morgan famous all over Europe.'],
+    simple: ['Alexandre Exquemelin was a real ship’s doctor. He sailed with Morgan to Panama.', 'He wrote a book about them in 1678. It made Morgan famous.'],
     deeper: ['When it came out in English in 1684, Morgan sued the publishers for saying false things about him. He won, and was paid £200.', 'Much of what we know about Morgan comes from that book, but historians read it carefully, because it is not always fair.'] });
 const MORGAN_TOPICS = [
   { t: 'Who are you, Admiral?', lines: [
-    { who: 'Henry Morgan', text: 'Henry Morgan, from Wales. I came out to Jamaica as a young man, about twelve years ago.' },
-    { who: 'Henry Morgan', text: 'I learned my trade under Captain Mansfield. When he died, the men chose me as their admiral. Buccaneers vote, boy. Remember that.' }] },
+    { who: 'Henry Morgan', text: 'I am Henry Morgan, from Wales. I came to Jamaica as a young man.' },
+    { who: 'Henry Morgan', text: 'When our old captain died, the men voted for me to lead them.' }] },
   { t: 'Are you a pirate?', lines: [
-    { who: 'Henry Morgan', text: 'A pirate? Watch your tongue! The Governor, Sir Thomas Modyford, gave me a commission: papers that let me fight Spain.', anim: 'Point' },
-    { who: 'Henry Morgan', text: 'Spain is England’s enemy out here. A man with papers is a privateer. A man without them is a pirate, and pirates hang.' }] },
+    { who: 'Henry Morgan', text: 'A pirate? Watch your tongue! The Governor gave me papers to fight Spain.', anim: 'Point' },
+    { who: 'Henry Morgan', text: 'With papers, you are a privateer. Without them, you are a pirate. And pirates hang.' }] },
   { t: 'What happened at Portobelo?', lines: [
-    { who: 'Henry Morgan', text: 'In 1668 we took Portobelo, a strong Spanish town with three castles, with only a few hundred men.' },
-    { who: 'Henry Morgan', text: 'The Spanish paid a great ransom to get their town back. Some in London said I went too far. The court said the raid was lawful.' }] },
+    { who: 'Henry Morgan', text: 'In 1668 we took Portobelo, a Spanish town with three castles.' },
+    { who: 'Henry Morgan', text: 'The Spanish paid us lots of silver to get their town back.' }] },
   { t: 'And Maracaibo?', lines: [
-    { who: 'Henry Morgan', text: 'Last year, at Maracaibo, three Spanish warships trapped us inside a great lake.' },
-    { who: 'Henry Morgan', text: 'So we dressed an old ship up as a warship, with logs painted like cannons, and filled her with gunpowder. She set their biggest ship on fire.', anim: 'Point' },
-    { who: 'Henry Morgan', text: 'Then we pretended to land men, so the fort turned its guns toward the land. That night we slipped out past it on the tide. Ha!', anim: 'Laugh' }] },
+    { who: 'Henry Morgan', text: 'Last year, three Spanish warships trapped us in a big lake.' },
+    { who: 'Henry Morgan', text: 'So we filled an old ship with gunpowder and sent it at them. Boom!', anim: 'Point' },
+    { who: 'Henry Morgan', text: 'Then we tricked their fort and slipped out at night. Ha!', anim: 'Laugh' }] },
   { t: 'Where are we going next?', lines: [
-    { who: 'Henry Morgan', text: 'That is a secret, boy! I will only say it is the richest city the Spanish have on this side of the world.' },
-    { who: 'Henry Morgan', text: 'Remember this summer, August 1670. People will tell stories about it for a long time.' }] }];
+    { who: 'Henry Morgan', text: 'That is a secret, boy! But it is the richest Spanish city of all.' },
+    { who: 'Henry Morgan', text: 'Remember this summer. People will tell stories about it.' }] }];
 FB.asked = new Set();
-function morganHub() { const left = MORGAN_TOPICS.filter((q) => !FB.asked.has(q.t)), btn = [];
+function morganHub() { if (people.morgan) speaker = people.morgan; const left = MORGAN_TOPICS.filter((q) => !FB.asked.has(q.t)), btn = [];
   for (const q of left) btn.push({ t: q.t, go: () => { hideCard(); startConvo(q.lines, () => { FB.asked.add(q.t); if (FB.asked.size >= 3) unlock('morgan'); morganHub(); }); } });
   btn.push({ t: FB.asked.size >= 3 ? 'Thank you, Admiral' : 'Goodbye for now', go: () => { hideCard(); if (FB.asked.size >= 3) { FB.step = Math.max(FB.step, 1); fbGoal(); } } });   /* fbGoal keeps the goal where the player has got to */
   card('Admiral Henry Morgan', [FB.asked.size ? 'Ask him something else.' : '“Well, boy? Speak up. What do you want to know?”'], btn); }
 const QM_TALK = [
-  { who: 'Quartermaster', text: 'Ship’s boy, eh? Before we sail, every man swears to the articles. Those are our rules.' },
-  { who: 'Quartermaster', text: 'Nobody gets wages. We share what we take. The Admiral gets the most shares. A boy like you gets half a share.' },
-  { who: 'Quartermaster', text: 'If a man loses an arm or a leg, he is paid first, before anyone. A right arm is worth six hundred pieces of eight.' },
-  { who: 'Quartermaster', text: 'And no fighting each other on board. Save it for the Spanish.', unlock: 'articles' }];
+  { who: 'Quartermaster', text: 'Ship’s boy, eh? Every man here agrees to our rules. We call them articles.' },
+  { who: 'Quartermaster', text: 'Nobody gets paid wages. We share what we take. You get half a share.' },
+  { who: 'Quartermaster', text: 'If a man is badly hurt, he is paid first.' },
+  { who: 'Quartermaster', text: 'And no fighting each other on the ship!', unlock: 'articles' }];
 const EXQ_TALK = [
-  { who: 'Exquemelin', text: 'Bonjour! Alexandre Exquemelin, ship’s surgeon. When the men get cut, I sew them up.' },
-  { who: 'Exquemelin', text: 'And I write down everything I see. The ships, the men, the Admiral. One day it will be a book.' },
+  { who: 'Exquemelin', text: 'Bonjour! I am Exquemelin, the ship’s doctor. I sew up cuts.' },
+  { who: 'Exquemelin', text: 'I also write down everything I see. One day it will be a book.' },
   { who: 'You', text: 'Will the Admiral like your book?' },
   { who: 'Exquemelin', text: 'Ha! Not every page, I think.', unlock: 'exquemelin' }];
 const MUSTER = [
-  { who: 'Henry Morgan', text: 'Men! The ships are loaded. On the morning tide we sail to join the rest of the fleet.', anim: 'Point' },
-  { who: 'Henry Morgan', text: 'Remember your articles. Every man gets his share, and every hurt man is paid first.' },
-  { who: 'Henry Morgan', text: 'Stay together, and we will do something nobody has ever done!' }];
+  { who: 'Henry Morgan', text: 'Men! The ships are loaded. We sail in the morning!', anim: 'Point' },
+  { who: 'Henry Morgan', text: 'Every man gets his share. Every hurt man is paid first.' },
+  { who: 'Henry Morgan', text: 'Stay together, and we will do great things!' }];
 FBP.exq = [SHORE - 6.6, 3.75, Math.PI]; FBP.qm = [SHORE - 1.6, -3.0, Math.PI / 2];
 const _fbBuild = fbBuild; fbBuild = () => { const first = !FBG.group; _fbBuild(); if (!first) return; const g = FBG.group, prev = cur; cur = g;
   const seat = mk(new THREE.BoxGeometry(0.5, 0.42, 0.45), new THREE.MeshStandardMaterial({ map: plankTex([132, 100, 70], 3, 1, 2), roughness: 0.9 }), FBP.exq[0], groundYAt(FBP.exq[0], FBP.exq[1]) + 0.21, FBP.exq[1] + 0.2);
@@ -1340,13 +1347,13 @@ const _fbBuild = fbBuild; fbBuild = () => { const first = !FBG.group; _fbBuild()
 function clone2(src, tint) { const keep = src.userData.anim; delete src.userData.anim; const m = skClone(src); src.userData.anim = keep; m.scale.copy(src.scale); m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); return m; }
 speakerModel = ((orig) => (who) => who === 'Quartermaster' ? FBG.qm : who === 'Exquemelin' ? FBG.exq : orig(who))(speakerModel);
 for (let i = ACTIONS.length - 1; i >= 0; i--) if (ACTIONS[i].fb) ACTIONS.splice(i, 1);
-function fbGoal() { if (FB.step >= 1 && FB.step < 2 && state.unlocked.includes('articles') && FB.drill) { FB.step = 2; goalText = 'Help load the ships: talk to the man carrying crates.'; showGoal(); } else if (FB.step === 1) { goalText = !state.unlocked.includes('articles') ? (FB.drill ? 'Find the quartermaster on the beach. He has the ship’s rules.' : 'Learn the ship’s rules from the quartermaster, and watch the sword drill on the beach.') : 'Watch the sword drill on the beach, by the barrels.'; showGoal(); } }
+function fbGoal() { if (FB.step >= 1 && FB.step < 2 && state.unlocked.includes('articles') && FB.drill) { FB.step = 2; goalText = 'Help load the ships. Talk to the man with the crates.'; showGoal(); } else if (FB.step === 1) { goalText = !state.unlocked.includes('articles') ? (FB.drill ? 'Talk to the quartermaster on the beach.' : 'Talk to the quartermaster. Then watch the sword drill.') : 'Watch the sword drill by the barrels.'; showGoal(); } }
 ACTIONS.push(
-  { fb: true, label: 'Talk to Admiral Morgan', r: 2.6, where: () => FB.on && FB.step < 3 && [people.morgan.position.x, people.morgan.position.z], go: () => { if (FB.step === 0 && !FB.met) { FB.met = true; startConvo([{ who: 'Henry Morgan', text: 'You, boy! You must be the new ship’s boy. Good. Keep out from under the men’s feet.' }], morganHub); } else morganHub(); } },
+  { fb: true, label: 'Talk to Admiral Morgan', r: 2.6, where: () => FB.on && FB.step < 3 && [people.morgan.position.x, people.morgan.position.z], go: () => { if (FB.step === 0 && !FB.met) { FB.met = true; startConvo([{ who: 'Henry Morgan', text: 'You, boy! You must be the new ship’s boy. Stay out of the way.' }], morganHub); } else morganHub(); } },
   { fb: true, label: 'Talk to the quartermaster', r: 2.4, where: () => FB.on && FB.step >= 1 && FBG.qm && [FBP.qm[0], FBP.qm[1]], go: () => startConvo(QM_TALK, fbGoal) },
   { fb: true, label: 'Talk to the surgeon', r: 2.4, where: () => FB.on && FBG.exq && [FBP.exq[0], FBP.exq[1] - 0.2], go: () => startConvo(state.unlocked.includes('exquemelin') ? [{ who: 'Exquemelin', text: 'Shh. I am writing.' }] : EXQ_TALK) },
-  { fb: true, label: 'Watch the sword drill', r: 3.4, where: () => FB.on && FB.step >= 1 && [(FBP.d1[0] + FBP.d2[0]) / 2, FBP.d1[1]], go: () => { const [a, b] = FBG.d; startConvo([{ who: 'Tom', text: 'Watch close, boy! Feet apart, sword up. Block high, then low!' }, { who: 'Dick', text: 'And when you lose, you say so, like a gentleman. Do you yield?' }, { who: 'Tom', text: 'I yield! Ha! Again tomorrow.' }], () => { a.userData.anim.play(CL.Sheathe ? 'Sheathe' : 'Laugh', true); b.userData.anim.play('Laugh', true, 3); setTimeout(() => { a.userData.anim.play('Sword1'); b.userData.anim.play('Sword2'); }, 6000); FB.drill = true; fbGoal(); }); } },
-  { fb: true, label: 'Help load the ships', r: 2.6, where: () => FB.on && FB.step === 2 && FBG.carrier && [FBG.carrier.position.x, FBG.carrier.position.z], go: () => startConvo([{ who: 'Sailor', text: 'Biscuit, water, powder, shot. Enough for months at sea. Hand me that crate, boy.' }, { who: 'Sailor', text: 'Good lad. That is the last of it. Quick, the Admiral is calling everyone to the pier!' }], fbMuster) });
+  { fb: true, label: 'Watch the sword drill', r: 3.4, where: () => FB.on && FB.step >= 1 && [(FBP.d1[0] + FBP.d2[0]) / 2, FBP.d1[1]], go: () => { const [a, b] = FBG.d; startConvo([{ who: 'Tom', text: 'Watch, boy! Feet apart, sword up. Block high, then low!' }, { who: 'Dick', text: 'If you lose, you say so. Do you give up?' }, { who: 'Tom', text: 'I give up! Ha! Again tomorrow.' }], () => { a.userData.anim.play(CL.Sheathe ? 'Sheathe' : 'Laugh', true); b.userData.anim.play('Laugh', true, 3); setTimeout(() => { a.userData.anim.play('Sword1'); b.userData.anim.play('Sword2'); }, 6000); FB.drill = true; fbGoal(); }); } },
+  { fb: true, label: 'Help load the ships', r: 2.6, where: () => FB.on && FB.step === 2 && FBG.carrier && [FBG.carrier.position.x, FBG.carrier.position.z], go: () => startConvo([{ who: 'Sailor', text: 'Food, water and gunpowder. Hand me that crate, boy.' }, { who: 'Sailor', text: 'Good lad. That is the last one. Quick, the Admiral is calling everyone!' }], fbMuster) });
 function fbMuster() { FB.step = 3; const mo = people.morgan; mo.position.set(SHORE + 1.2, 0.06, 0); mo.rotation.y = -Math.PI / 2; const spots = [[SHORE - 1.2, -1.6], [SHORE - 1.6, -0.4], [SHORE - 1.5, 0.9], [SHORE - 0.9, 2.0], [SHORE - 2.6, -1.0], [SHORE - 2.7, 1.4]];
   FBG.cast.filter((m) => m !== FBG.exq && m !== FBG.carrier).forEach((m, i) => { const p = spots[i % spots.length]; m.position.set(p[0], groundYAt(p[0], p[1]), p[1]); m.userData.ground = m.position.y; m.rotation.y = Math.atan2(mo.position.x - p[0], mo.position.z - p[1]); if (m.userData.sword) m.userData.sword.visible = false; m.userData.anim.rest(); });
   state.x = SHORE - 3.6; state.z = -0.2; state.yaw = -Math.PI / 2; state.pitch = 0.04;
@@ -1365,12 +1372,12 @@ function loadBuild() { if (LOAD.g) return; const g = new THREE.Group(); FBG.grou
 function loadReset() { if (!LOAD.g) return; LOAD.n = 0; LOAD.carrying = false; LOAD.held.visible = false; LOAD.crates.forEach((c) => { c.visible = true; }); for (const c of LOAD.inBoat) c.parent && c.parent.remove(c); LOAD.inBoat.length = 0; }
 TICKS.push(() => { if (!LOAD.g) return; const on = FB.on && FB.step === 2; LOAD.r1.visible = on && !LOAD.carrying; LOAD.r2.visible = on && LOAD.carrying; if (!FB.on) LOAD.held.visible = false; });
 ACTIONS.push(
-  { fb: true, label: 'Pick up a crate', r: 1.6, where: () => FB.on && FB.step === 2 && !LOAD.carrying && [LOAD.pile[0], LOAD.pile[1] - 0.9], go: () => { const c = LOAD.crates.filter((k) => k.visible).pop(); if (c) c.visible = false; LOAD.carrying = true; LOAD.held.visible = true; goalText = 'Carry the crate along the pier to the ship’s boat (gold ring). Loaded: ' + LOAD.n + ' of ' + LOAD.need + '.'; showGoal(); } },
+  { fb: true, label: 'Pick up a crate', r: 1.6, where: () => FB.on && FB.step === 2 && !LOAD.carrying && [LOAD.pile[0], LOAD.pile[1] - 0.9], go: () => { const c = LOAD.crates.filter((k) => k.visible).pop(); if (c) c.visible = false; LOAD.carrying = true; LOAD.held.visible = true; goalText = 'Carry it to the boat on the pier (gold ring). Loaded: ' + LOAD.n + ' of ' + LOAD.need + '.'; showGoal(); } },
   { fb: true, label: 'Put the crate in the boat', r: 1.8, where: () => FB.on && FB.step === 2 && LOAD.carrying && LOAD.drop, go: () => { LOAD.carrying = false; LOAD.held.visible = false; LOAD.n++; const c = LOAD.held.clone(); c.position.set(LOAD.drop[0] - 1 + LOAD.n * 0.55, -0.0, LOAD.drop[1] - 1.6); LOAD.g.add(c); LOAD.inBoat.push(c);
-      if (LOAD.n >= LOAD.need) { startConvo([{ who: 'Sailor', text: 'Good lad! That is the last of it. Biscuit, water, powder and shot, enough for months at sea.' }, { who: 'Sailor', text: 'Quick now, the Admiral is calling everyone to the pier!' }], fbMuster); }
-      else { goalText = 'Good! Fetch another crate from the pile by the pier. Loaded: ' + LOAD.n + ' of ' + LOAD.need + '.'; showGoal(); toast('Crate loaded!'); } } });
+      if (LOAD.n >= LOAD.need) { startConvo([{ who: 'Sailor', text: 'Good lad! That is the last one.' }, { who: 'Sailor', text: 'Quick now, the Admiral is calling everyone to the pier!' }], fbMuster); }
+      else { goalText = 'Good! Get another crate. Loaded: ' + LOAD.n + ' of ' + LOAD.need + '.'; showGoal(); toast('Crate loaded!'); } } });
 for (let i = ACTIONS.length - 1; i >= 0; i--) if (ACTIONS[i].fb && ACTIONS[i].label === 'Help load the ships') ACTIONS.splice(i, 1);
-const _fbGoal = fbGoal; fbGoal = () => { _fbGoal(); if (FB.step === 2) { loadBuild(); goalText = LOAD.carrying ? 'Carry the crate along the pier to the ship’s boat (gold ring). Loaded: ' + LOAD.n + ' of ' + LOAD.need + '.' : 'Help load the fleet: pick up a crate from the pile by the pier (gold ring). Loaded: ' + LOAD.n + ' of ' + LOAD.need + '.'; showGoal(); } };
+const _fbGoal = fbGoal; fbGoal = () => { _fbGoal(); if (FB.step === 2) { loadBuild(); goalText = LOAD.carrying ? 'Carry it to the boat on the pier (gold ring). Loaded: ' + LOAD.n + ' of ' + LOAD.need + '.' : 'Pick up a crate from the pile (gold ring). Loaded: ' + LOAD.n + ' of ' + LOAD.need + '.'; showGoal(); } };
 const _fbStartL = fbStart; fbStart = (...a) => { _fbStartL(...a); };
 TICKS.push(() => { if (FB.on && FB.step === 0 && LOAD.n) loadReset(); });
 
@@ -1522,11 +1529,11 @@ function dressSpit(g, stone, wood, dark) {
 FORTP.gunner = [FC.C[0] - 6.2, FC.C[1] + 2.2, -Math.PI / 2];
 ACTIONS.forEach((a) => { if (a.label === 'Talk to the gunner') a.where = () => FORT.ready && !Q.on && state.place === 'out' && people.gunner && [FORTP.gunner[0], FORTP.gunner[1]]; });
 GUNNER.splice(0, GUNNER.length,
-  { who: 'The gunner', text: 'Welcome to Fort Charles, the first fort on the Point! The sea is on three sides of us, so no ship gets into the harbour without passing our guns.' },
-  { who: 'The gunner', text: 'Eight walls, thirty-eight great guns and a mortar. That round tower was the first fort here. Now it is our powder magazine, so no fire near it!' },
-  { who: 'The gunner', text: 'Five more forts guard the town: James, Carlisle, Rupert, Walker, and Morgan’s Line, out along the shore there.' },
+  { who: 'The gunner', text: 'Welcome to Fort Charles! The sea is all around us. No ship gets past our guns.' },
+  { who: 'The gunner', text: 'We have 38 big guns. The round tower holds the gunpowder, so no fire near it!' },
+  { who: 'The gunner', text: 'Five more forts guard the town.' },
   { who: 'You', text: 'Have the guns ever been fired?' },
-  { who: 'The gunner', text: 'For practice, and for honour. When Sir Henry Morgan was buried, the ships fired 22 guns for him. Climb the ramp and watch the sea side!', unlock: 'forts' });
+  { who: 'The gunner', text: 'When Henry Morgan died, the ships fired 22 guns for him. Climb the ramp and watch the sea!', unlock: 'forts' });
 { const j = JOURNAL.find((p) => p.id === 'forts'); if (j) j.deeper = ['Fort Charles was the first, begun in 1655 around a round stone tower. In 1687 a visitor, John Taylor, described it with eight sides, 38 guns and a mortar, and the old tower used to store gunpowder. That is the fort in this game.', 'It was the only fort that survived the 1692 earthquake. Forts James, Carlisle and Rupert sank into the sea.', 'Over the next hundred years it was rebuilt in red brick, into the fort you can visit in Port Royal today.']; }
 const _fire = fireSalute; fireSalute = () => { if (!FORT.guns) return; const sea = FORT.guns.filter((c) => c.position.x > FC.C[0] + 4 && c.position.y > 1).slice(0, 5); sea.forEach((c, i) => setTimeout(() => { if (state.place !== 'out' || FB.on) return; const p = new THREE.Vector3(0, 0.62, 1.5); c.localToWorld(p); boom(p.x, p.z); }, 700 + i * 950)); };
 
