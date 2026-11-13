@@ -1,3 +1,4 @@
+import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/garvey/src/main.js: Marcus Garvey. First test scene: a print shop in Kingston, Jamaica, about 1907.
    Built from games/_template. The movement, talking and talk-button code is still the template's small version;
    it moves into engine/ after the Port Royal work has merged (see docs/games/garvey.md, "Working alongside the Port Royal chat").
@@ -187,10 +188,10 @@ let talkWith = null, near = null, DEV_NOSTOP = false, curWalls = WALLS, curBound
 const panelsOpen = () => ['dialogue', 'typeset', 'pagebuild', 'inspect', 'decl', 'sortp', 'letp', 'timep', 'ansp', 'journal', 'chapters', 'credits', 'card'].some((id) => !$(id).hidden);   /* closing one panel must not unpause the world while another is open */
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
-  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && state.started) e.preventDefault();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && state.started) e.preventDefault();
   keys.add(k); if (!state.started) return;
   if (k === 'escape') { if (!$('dialogue').hidden) { leaveTalk(); return; } closeJournal(); closeChapters(); closeCredits(); closeType(false); closePage(false); if (!$('card').hidden) hideCard(); }
-  if ((k === 'e' || k === 'enter') && !busy && near) activate(near);
+  useInteractionKey(e, () => { if (!$('dialogue').hidden && !$('next').hidden) { $('next').click(); return; } if (!busy && near) { activate(near); return; } return false; });
 });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 function clampPos(x, z) {   /* keep inside the room, out of furniture (slide along it) and out of people */
@@ -200,6 +201,7 @@ function clampPos(x, z) {   /* keep inside the room, out of furniture (slide alo
   return [x, z];
 }
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0, moved: 0 };
+releaseOnBlur(keys, [stick, look]);
 canvas.addEventListener('pointerdown', (e) => {
   if (busy) return;
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }
@@ -1274,7 +1276,7 @@ let modelsReady = false;
   }); }
 function startGame() {
   audioInit(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); setGoal();
-  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. E to use.'; showHint();
+  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint();
   showPlace(); canvas.focus();
 }
 $('start').onclick = () => { startGame(); cue('begin'); };
@@ -1294,8 +1296,8 @@ function update(dt, now) {
   near = null; if (state.started && !busy) { let best = 2.6; for (const n of PEOPLE) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < best) { best = d; near = n; } }
     for (const a of ACTIONS) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }   /* standing at a thing to do beats a person nearby */
   const talkBtn = $('talk'); talkBtn.hidden = !(near && near.go); if (near && near.go) talkBtn.textContent = near.label;   /* people get the bubble; things to do get this button */
-  for (const mx of mixers) mx.update(dt); for (const n of PEOPLE) if (n.m && n.m.userData.anim) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
-  for (const m of grounded) groundFeet(m);
+  for (const mx of mixers) { const r = mx.getRoot(); if (r.visible) mx.update(dt); } for (const n of PEOPLE) if (n.m && n.m.userData.anim) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
+  for (const m of grounded) if (m.visible) groundFeet(m);
   if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }
 let last = performance.now(), stepT = 0;

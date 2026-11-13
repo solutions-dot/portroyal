@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><title>Running layout regression fixtures</title>
+<style>body{margin:0;font:16px Arial}h2,p{margin:0}button{height:32px}</style>
+<script type="module">
+import {contentsOverlap} from '../engine/ui-audit.js';
+const make=(tag,text,style,parent=document.body)=>{const e=document.createElement(tag);e.textContent=text;e.style.cssText='position:absolute;'+style;parent.append(e);return e;};
+const checks=[];
+const title=make('h2','Title','left:10px;top:20px;width:300px;padding-right:40px'),close=make('button','Close','left:270px;top:20px;width:70px');
+checks.push(['heading padding is not text',!contentsOverlap(title,close)]);
+const text=make('p','This text must not be covered.','left:10px;top:100px'),over=make('button','Cover','left:30px;top:100px');
+checks.push(['real painted text overlap is detected',contentsOverlap(text,over)]);
+const scroll=make('div','','left:10px;top:180px;width:300px;height:30px;overflow:auto'),hidden=make('p','Below the scroll viewport','left:0;top:80px',scroll),outside=make('button','Outside','left:10px;top:260px');
+checks.push(['clipped scroll content is not visible overlap',!contentsOverlap(hidden,outside)]);
+const one=make('button','One','left:400px;top:20px;width:80px'),two=make('button','Two','left:450px;top:20px;width:80px');
+checks.push(['overlapping tap areas are detected',contentsOverlap(one,two)]);
+const failed=checks.filter(([,ok])=>!ok);document.title=failed.length?'FAIL '+failed.map(([label])=>label).join('; '):'PASS '+checks.length+' layout regressions';
+const out=document.createElement('pre');out.textContent=JSON.stringify(checks);document.body.append(out);
+</script>

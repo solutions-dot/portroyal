@@ -22,6 +22,13 @@ export function snapMeshes(group) {
   return out;
 }
 
+// A rotated bench's world AABB includes empty corners beside its backrest.
+export function insideBoxFootprint(mesh, x, y, z) {
+  if (!mesh.inv) return true;
+  const p = new THREE.Vector3(x, y, z).applyMatrix4(mesh.inv), inset = 0.05 / mesh.sc;
+  return p.x > mesh.lb.min.x + inset && p.x < mesh.lb.max.x - inset && p.z > mesh.lb.min.z + inset && p.z < mesh.lb.max.z - inset;
+}
+
 /* place: { id, snap, npcs: [{id, x, z, anim, ground}], walls: [[x0, z0, x1, z1]], bounds: {x0, x1, z0, z1}, start: {x, z}, actions: [{label, x, z, r}], people: [{id, x, z, anim}] } */
 export function auditPlace(place) {
   const L = place.snap, n = L.length, par = Array.from({ length: n }, (_, i) => i), find = (i) => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; }, uni = (a, b) => { par[find(a)] = find(b); };
@@ -35,7 +42,7 @@ export function auditPlace(place) {
   const floating = []; for (const idx of comps.values()) { const b = new THREE.Box3(); idx.forEach((i) => b.union(L[i].b)); const sz = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()); if (Math.max(sz.x, sz.y, sz.z) < 0.1) continue; floating.push(`float@(${c.x.toFixed(1)},${c.y.toFixed(1)},${c.z.toFixed(1)}) ${sz.x.toFixed(1)}x${sz.y.toFixed(1)}x${sz.z.toFixed(1)} ${idx.length} meshes, first is ${L[idx[0]].geo} ${L[idx[0]].mat}`); }
   /* people inside a solid box or cylinder, or inside a walking wall */
   const inside = [];
-  for (const p of place.npcs) { const g = p.ground || 0; for (let i = 0; i < n; i++) { const b = L[i].b, sz = size[i]; if (big.includes(i) || sz.y < 0.3 || b.max.y < g + (/^Sit/.test(p.anim || '') ? 0.62 : 0.3) || b.min.y > g + 1.3 || (L[i].geo !== 'BoxGeometry' && L[i].geo !== 'CylinderGeometry')) continue; if (p.x > b.min.x + 0.05 && p.x < b.max.x - 0.05 && p.z > b.min.z + 0.05 && p.z < b.max.z - 0.05) { inside.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) inside a ${L[i].geo} ${sz.x.toFixed(1)}x${sz.y.toFixed(1)}x${sz.z.toFixed(1)}, y ${b.min.y.toFixed(1)} to ${b.max.y.toFixed(1)}`); break; } } }
+  for (const p of place.npcs) { const g = p.ground || 0; for (let i = 0; i < n; i++) { const b = L[i].b, sz = size[i]; if (big.includes(i) || sz.y < 0.3 || b.max.y < g + (/^Sit/.test(p.anim || '') ? 0.62 : 0.3) || b.min.y > g + 1.3 || (L[i].geo !== 'BoxGeometry' && L[i].geo !== 'CylinderGeometry')) continue; const exact = insideBoxFootprint(L[i], p.x, Math.max(g + 0.7, b.min.y + 0.05), p.z); if (exact && p.x > b.min.x + 0.05 && p.x < b.max.x - 0.05 && p.z > b.min.z + 0.05 && p.z < b.max.z - 0.05) { inside.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) inside a ${L[i].geo} ${sz.x.toFixed(1)}x${sz.y.toFixed(1)}x${sz.z.toFixed(1)}, y ${b.min.y.toFixed(1)} to ${b.max.y.toFixed(1)}`); break; } } }
   for (const p of place.npcs) if (!(p.ground > 0) && !/^Sit/.test(p.anim || '')) for (const w of place.walls) if (p.x > w[0] && p.x < w[2] && p.z > w[1] && p.z < w[3]) { inside.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) inside a walking wall`); break; }
   /* walk the floor on a 0.25 m grid from the start, then check that everything the player needs can be reached */
   const bd = place.bounds, st = 0.25, W = Math.round((bd.x1 - bd.x0) / st) + 1, D = Math.round((bd.z1 - bd.z0) / st) + 1, seen = new Uint8Array(W * D);

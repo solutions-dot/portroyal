@@ -33,7 +33,7 @@ export function buildRoad() {
   for (const x of [26, 32, 38]) { const p = surveyPole(); p.position.set(x, 0, -3.5); g.add(p); }
   const wb = grp(g, 36, 0, -6.6); box(0.9, 0.1, 0.5, TM.woodDark, 0, 0.45, 0, wb); cyl(0.2, 0.2, 0.06, TM.wood, 0.3, 0.2, 0.3, wb, 10).rotation.x = PI / 2;
   /* the mule, her load and a heap of baskets by Mass Dudley */
-  const bess = mule(); bess.userData.noBatch = true; bess.position.set(-26, 0, 2.8); bess.rotation.y = -0.15; g.add(bess); walls.push([-27, 2.1, -25, 3.5]);
+  const bess = mule(); bess.userData.noBatch = true; bess.position.set(-26, 0, 2.8); bess.rotation.y = -0.15; g.add(bess); walls.push([-27, 1.9, -24.4, 3.7]);
   const goods = [yamBasket(), provisionSack(), bananaLoad()]; goods.forEach((o, i) => { o.userData.noBatch = true; o.position.set(-28.2 + i * 1.15, 0, 5.2 + (i % 2) * 0.25); o.rotation.y = i * 0.9; g.add(o); o.userData.home = o.position.clone(); });   /* the three loads, waiting on the ground */
   const mat = mesh(new THREE.PlaneGeometry(4.4, 1.5), solid(0x8a7a50, 1), -26.4, 0.02, 5.3, g); mat.rotation.x = -PI / 2;
   const tc = cart(); tc.position.set(2, 0, -2.5); tc.rotation.y = 0.15; g.add(tc); walls.push([-0.6, -3.5, 5.2, -1.4]);

@@ -247,7 +247,7 @@ bmesh.ops.delete(bm,geom=[f for f in bm.faces if not all(v[dl].get(gi,0)>0 for v
 h.data.materials.clear(); h.data.materials.append(colmat('Skin',0.68)); h.name='Body'
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
 def paint(o):
-    me=o.data; bm=bmesh.new(); bm.from_mesh(me); cl=bm.loops.layers.color.new('Col')
+    me=o.data; bm=bmesh.new(); bm.from_mesh(me); cl=bm.loops.layers.float_color.new('Col')
     for f in bm.faces:
         name=me.materials[f.material_index].name.split('.')[0]; base=COL[name]
         for l in f.loops:
@@ -286,7 +286,8 @@ for side,sx in (('Left',1),('Right',-1)):
 bpy.context.view_layer.update()
 print('TRIS',sum(len(p.vertices)-2 for o in bpy.data.objects if o.type=='MESH' for p in o.data.polygons))
 os.makedirs('build/people',exist_ok=True); bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath('build/people/'+P['name']+'.blend'))
-bpy.ops.export_scene.gltf(filepath=OUT+P['name']+'.glb',export_image_format='JPEG',export_apply=False,export_vertex_color='NAME',export_vertex_color_name='Col',export_skins=True,export_animations=False,export_rest_position_armature=False)
+bpy.context.scene['vertexColorSpace'] = 'linear'
+bpy.ops.export_scene.gltf(export_extras=True,filepath=OUT+P['name']+'.glb',export_image_format='JPEG',export_apply=False,export_vertex_color='NAME',export_vertex_color_name='Col',export_skins=True,export_animations=False,export_rest_position_armature=False)
 # a copy for Mixamo: rest pose, with skin, so the user can pick animations for it
 if P.get('fbx'):
     rig.data.pose_position='REST'; bpy.context.view_layer.update()

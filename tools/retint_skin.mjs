@@ -14,12 +14,14 @@ const DIR = arg('--dir'), from = (arg('--from') || '').split(',').map(Number), t
 const names = process.argv.slice(2).filter((a, i, all) => !a.startsWith('--') && !['--dir', '--from', '--to'].includes(all[i - 1]));
 if (!DIR || from.length !== 3 || to.length !== 3 || !names.length) { console.error('usage: node tools/retint_skin.mjs --dir <models dir> --from r,g,b --to r,g,b name [name...]'); process.exit(1); }
 // npc.py writes each colour as (sRGB / 255) ^ 2.2 into a byte colour layer, and Blender treats those bytes as already sRGB-encoded,
-// so the exported linear value is raised to 2.2 again: stored = (sRGB / 255) ^ 4.84. The scale below gives the same result as rebuilding from the JSON.
-const k = from.map((f, i) => Math.pow(to[i] / f, 2.2 * 2.2));
+// so old exports apply another transfer. New FLOAT_COLOR exports carry the linear scene marker and need only one recipe exponent.
+const exponent = (doc) => doc.getRoot().listScenes().some((s) => s.getExtras().vertexColorSpace === 'linear') ? 2.2 : 2.2 * 2.2;
 for (const n of names) {
   const file = `${DIR}/${n}.js`, src = fs.readFileSync(file, 'utf8'), m = src.match(/"([A-Za-z0-9+/=]{200,})"/);
   if (!m) { console.error(n + ': no packed model found in ' + file); process.exit(1); }
   const doc = await io.readBinary(new Uint8Array(Buffer.from(m[1], 'base64')));
+  const k = from.map((f, i) => Math.pow(to[i] / f, exponent(doc)));
+
   let verts = 0;
   for (const mesh of doc.getRoot().listMeshes()) for (const p of mesh.listPrimitives()) {
     if (p.getMaterial()?.getName() !== 'Skin') continue;

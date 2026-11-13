@@ -1,3 +1,4 @@
+import { contentsOverlap } from '../../../engine/ui-audit.js';
 /* games/bog-walk/src/dev.js: test views, the automatic checks and the scripted playthrough. Dev builds only: main.js loads this file from code that runs
    only when __DEV__ is true, so the public build leaves it out (node tools/build.mjs bog-walk --dev to include it). See docs/TESTING.md and docs/games/bog-walk.md.
    Every check writes its lines to #autolog and its count of problems to the page title (AUDIT n, HELD n, LAYOUT n, RESUME n); every one must report 0.
@@ -14,7 +15,7 @@ export function dev(D) {
   const hits = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
 
   /* ---------- the hand and the words: every visible word or button that overlaps another, runs off the screen, or is under the hand ---------- */
-  function handRects() {   /* the screen box of each part of the hand */
+  function handRects() { hand.setPanelOpen(!$('pick').hidden);   /* the screen box of each part of the hand */
     camera.updateMatrixWorld(true); const v = new THREE.Vector3(), c = new THREE.Vector3(), out = [], th = Math.tan(camera.fov * Math.PI / 360);
     hand.root.traverse((o) => { if (!(o.isMesh || o.isSprite) || !o.visible) return; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
       if (o.isSprite) { const sx = v.setFromMatrixColumn(o.matrixWorld, 0).length(), sy = v.setFromMatrixColumn(o.matrixWorld, 1).length(); c.setFromMatrixPosition(o.matrixWorld).applyMatrix4(camera.matrixWorldInverse); const d = -c.z; if (d <= 0) return;
@@ -47,7 +48,7 @@ export function dev(D) {
     for (const e of els) { const r = box(e), nm = e.id || e.tagName.toLowerCase() + ' "' + e.textContent.trim().slice(0, 24) + '"';
       if (r.left < -1 || r.right > W + 1) out.push(`${name}: ${nm} runs off the side`); if ((r.top < -1 || r.bottom > H + 1) && !scrolls(e)) out.push(`${name}: ${nm} is off the screen`);
       if (e.tagName === 'BUTTON' && e.scrollWidth > e.clientWidth + 2) out.push(`${name}: ${nm} is cut off`); }
-    for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) { const a = els[i], b = els[j]; if (a.contains(b) || b.contains(a)) continue; if (hits(box(a), box(b))) out.push(`${name}: "${a.textContent.trim().slice(0, 20)}" overlaps "${b.textContent.trim().slice(0, 20)}"`); }
+    for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) { const a = els[i], b = els[j]; if (a.contains(b) || b.contains(a)) continue; if (contentsOverlap(a, b)) out.push(`${name}: "${a.textContent.trim().slice(0, 20)}" overlaps "${b.textContent.trim().slice(0, 20)}"`); }
     const first = root.querySelector('button:not([hidden])'); if (first && vis(first)) { const r = box(first); if (r.top >= 0 && r.bottom <= H) { const top = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2); if (!top || !(top === first || first.contains(top))) out.push(`${name}: its first button is covered by ${top ? (top.id || top.className || top.tagName) : 'nothing'}`); } }
     return out;
   }
@@ -85,7 +86,7 @@ export function dev(D) {
   /* the engine's place audit for a place outside: floating things, people inside solids or each other, spots that cannot be reached, and seated people on their seats */
   function auditWorld(P) {
     const r = D.auditPlace({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start,
-      actions: P.actions.map((a) => ({ label: a.label, x: a.x, z: a.z, r: a.r })), people: P.people.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
+      actions: P.actions.filter((a) => a.on()).map((a) => ({ label: a.label, x: a.x, z: a.z, r: a.r })), people: P.people.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
     for (const n of P.npcs) if (/^Sit/.test(n.anim || '') && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); for (const l of D.auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, [])) r.inside.push(l); }
     /* our own rule for this game: nobody stands on the tram track or the siding where something will run */
     if (P.id === 'kingston') for (const n of P.npcs) if (Math.abs(n.hz) < 1.6 && n.hx > -46 && n.hx < 82) r.inside.push((n.id || n.base) + ' stands on the tram track at (' + n.hx.toFixed(1) + ',' + n.hz.toFixed(1) + ')');
@@ -203,7 +204,7 @@ export function dev(D) {
     D.openJournal('journey'); await settle(); covered('journal panel in play', 'journal', ['jtitle', 'jclose']); panel('the journal', '#journal'); document.querySelector('#jpage details').open = true; await settle(); panel('the journal, dig deeper', '#journal'); D.closeJournal();
     D.openChapters(); await settle(); covered('chapters panel in play', 'chapters', ['chtitle', 'chclose']); panel('the chapters', '#chapters'); D.closeChapters();
     D.openCredits(); await settle(); covered('credits panel in play', 'credits', ['crtitle', 'crclose']); panel('the credits', '#credits'); D.closeCredits();
-    reset(); D.ON[65](); for (let i = 0; i < 20; i++) D.tick(0.1); await settle(); panel('the end card', '#card'); { const a = $('ccredit').querySelector('a'); inside('end card', 'credit link', a); const r = box(a), top = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2); if (r.top >= 0 && r.bottom <= Hh && (!top || !(top === a || a.contains(top)))) out.push(pre + 'end card: the credit link is covered'); } D.hideCard();
+    reset(); D.ON[65](); for (let i = 0; i < 20; i++) D.tick(0.1); await settle(); panel('the end card', '#card'); { const a = $('ccredit').querySelector('a'); for (const l of panelCheck('end card', $('card'))) out.push(pre + l); const r = box(a), top = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2); if (r.top >= 0 && r.bottom <= Hh && (!top || !(top === a || a.contains(top)))) out.push(pre + 'end card: the credit link is covered'); } D.hideCard();
     /* the Tube */
     reset(); D.enterTube(); D.resetNight(); D.setPhase('shot'); await settle();
     const busy = () => { D.setGoal('Scrape the rust off the pipe: 3 of 6. This is a long goal to test the wrapping on a small screen.', true); D.setClock('4 a.m.'); D.say('Bass Henry', 'Out, all of you! Go to the manhole! This is a long line to test two rows.', 6e7); $('sub').classList.remove('dim'); };
@@ -247,13 +248,16 @@ export function dev(D) {
     const step = (n) => { for (let i = 0; i < n; i++) { D.tick(dt); simT += dt; } };
     D.manual = true; await waitFor(() => D.modelsReady); D.startGame(); if (night || mode === 'all') { for (let i = 0; i < 6; i++) D.doneCh[i] = false; }
     const plan = mode === 'all' ? [0, 1, 2, 3, 4, 5] : night ? [2, 3] : one ? [first] : [0, 1, 2, 3, 4, 5].filter((i) => i >= first);
+    const usedActions = new Set(); let lastProgress = '', progressAt = 0;
     let lastKey = '', lastT = 0, skipped = false; const stopAt = one ? first : night ? 3 : 5;
     log('plan: chapters ' + plan.join(', ')); D.beginChapter(plan[0]);   /* not awaited: the chapter's fade runs on the game's own clock, which this loop drives */
     for (let it = 0; it < 80000; it++) {
       if (it % 6 === 0) await sleep(0); step(6);
       const lk = D.stage + '|' + D.cur + '|' + N.phase + '|' + ($('card').hidden ? '' : $('ctitle').textContent), key = D.stage + '|' + D.cur + '|' + N.phase + '|' + D.unlocked.length + '|' + ($('card').hidden ? '' : $('ctitle').textContent) + '|' + ($('dialogue').hidden ? '' : $('line').textContent) + '|' + ($('puzzle').hidden ? '' : $('pzmsg').textContent);
       if (key !== lastKey) { lastKey = key; lastT = simT; } if (lk !== D.__lk) { D.__lk = lk; const ph = D.cur === 'tube' ? N.phase : D.cur; if (seen[seen.length - 1] !== ph) seen.push(ph); log(simT.toFixed(1) + 's s' + D.stage + ' ' + D.cur + ' ' + N.phase + ' pages=' + D.unlocked.length + ($('card').hidden ? '' : ' card="' + $('ctitle').textContent + '"') + ' goal="' + $('goal').textContent + '"'); }
-      if (simT - lastT > 60) { ok = false; log('STALL at stage ' + D.stage + ' in ' + D.cur + ' phase ' + N.phase + ' frozen=' + D.frozen + ' fading=' + D.fading + ' panels=' + D.panelsOpen()); break; }
+      const progress = D.stage + '|' + D.cur + '|' + N.phase + '|' + D.unlocked.length;
+      if (progress !== lastProgress) { lastProgress = progress; progressAt = simT; }
+      if (simT - lastT > 60 || simT - progressAt > 120) { ok = false; log('STALL at stage ' + D.stage + ' in ' + D.cur + ' phase ' + N.phase + ' frozen=' + D.frozen + ' fading=' + D.fading + ' panels=' + D.panelsOpen()); break; }
       if (errs.length) { ok = false; log('ERRORS: ' + errs.join(' | ')); break; }
       if (one && D.doneCh[first] && first !== 2) { log('chapter ' + first + ' done'); break; }
       if (!$('card').hidden) {   /* cards: at the end of a chapter, follow the plan; otherwise the first button */
@@ -282,7 +286,8 @@ export function dev(D) {
       if (D.locked() || D.RIDE.on) continue;
       if (!$('holdbox').hidden) { D.HOLD.on = true; continue; }
       const P = PL[D.cur]; if (!P || !P.populated) continue;
-      const a = P.actions.find((x) => x.on()); if (a) { S.x = a.x; S.z = a.z + 0.4; step(2); if (D.near === a) a.go(); else { S.x = a.x; S.z = a.z; step(2); if (D.near === a) a.go(); } continue; }
+      const actionKey = (x) => D.stage + '|' + D.cur + '|' + x.label;
+      const a = P.actions.find((x) => x.on() && !usedActions.has(actionKey(x))); if (a) { usedActions.add(actionKey(a)); S.x = a.x; S.z = a.z + 0.4; step(2); if (D.near === a) a.go(); else { S.x = a.x; S.z = a.z; step(2); if (D.near === a) a.go(); } continue; }
       if (D.stage === 15) { S.x = P.spots.valve[0]; S.z = P.spots.valve[1]; step(2); continue; }
       const n = P.people.find((p) => D.wantsTalk(p) || (p.see && D.stage === 51 && !D.ctr['seen_' + ({ hammond: 'hammond', minister1: 'ministers', minister2: 'ministers', haggart: 'haggart', osborne: 'osborne' })[p.id]]));
       if (n) { const ang = Math.atan2(S.x - n.x, S.z - n.z), dd = 1.2; S.x = n.x + Math.sin(ang) * dd; S.z = n.z + Math.cos(ang) * dd; step(2); if (D.near !== n) { S.x = n.x + 1.0; S.z = n.z + 0.3; step(2); } D.activate(n); continue; }

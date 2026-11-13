@@ -1,3 +1,4 @@
+import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/kendal/src/main.js: Kendal 1957, The Excursion Train.
    The story of the Jamaica Railway, from the slow road before it to the Kendal train crash of 1 September 1957 and how it is remembered.
    Built on the shared engine (engine/anim.js, engine/audio.js, engine/loader.js). Controls, journal, chapters and saving follow Port Royal and Marcus Garvey.
@@ -58,13 +59,14 @@ const keys = new Set(); let busy = false, fading = false, frozen = false, talkWi
 const PANELS = ['dialogue', 'journal', 'chapters', 'credits', 'card'];
 const panelsOpen = () => PANELS.some((id) => !$(id).hidden);
 addEventListener('keydown', (e) => {
-  const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && state.started) e.preventDefault();
+  const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && state.started) e.preventDefault();
   keys.add(k); if (!state.started) return;
   if (k === 'escape') { if (!$('dialogue').hidden) { leaveTalk(); return; } closeJournal(); closeChapters(); closeCredits(); if (!$('card').hidden && CARD.dismiss) CARD.dismiss(); }
-  if ((k === 'e' || k === 'enter') && !busy && !frozen && near) activate(near);
+  useInteractionKey(e, () => { if (!$('dialogue').hidden && !$('next').hidden) { $('next').click(); return; } if (!busy && !frozen && near) { activate(near); return; } return false; });
 });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0, moved: 0 };
+releaseOnBlur(keys, [stick, look]);
 canvas.addEventListener('pointerdown', (e) => {
   if (busy || frozen) return;
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }
@@ -89,7 +91,7 @@ const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb
 /* how each thing is carried (see hold() in props.js): handleY is the height of its handle, out is how far the hand's item sits from the body. After changing these run ?test=held. */
 const SIT_HIPS = 0.12;   /* metres from the seat to the hip joint of a seated person at full size (the audit checks it) */
 /* scale: the item's size. lift: how far (radians) the arm is held out from the body, so the item clears the hip, thigh and skirt. The handle height comes from each prop (userData.handleY). */
-let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.46 }, suitcase: { handleY: 0.5, scale: 0.8, lift: 0.22, yaw: Math.PI / 2 }, lantern: { handleY: 0.32, scale: 0.85, lift: 0.26 }, bucket: { handleY: 0.49, scale: 0.9, lift: 0.34 }, basket: { dy: 0.12, scale: 0.8 } };
+let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.46 }, suitcase: { handleY: 0.5, scale: 0.8, lift: 0.4, straighten: 0.8, yaw: Math.PI / 2 }, lantern: { handleY: 0.32, scale: 0.85, lift: 0.26 }, bucket: { handleY: 0.49, scale: 0.9, lift: 0.34 }, basket: { dy: 0.12, scale: 0.8 } };
 const SKIN_LIGHT = 1.55;   /* the bodies' skin is built dark, so we lighten it a little (as in Marcus Garvey) so faces read in every light */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
@@ -108,7 +110,7 @@ function makeBody(s) {
   if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
       m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
       if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat (its top is s.seat): the hip joint rides 12 cm above it, whatever the body's size */
-  const carry = (bone, o, G) => { if (/Hand$/.test(bone)) grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY || G.handleY, scale: G.scale, yaw: G.yaw || 0, lift: G.lift }); else hold(m, bone, o, G); };   /* in a hand: a real grip (engine/grip.js); on the head: balanced there */
+  const carry = (bone, o, G) => { if (/Hand$/.test(bone)) grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY || G.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.4, G.lift || 0), straighten: G.straighten ?? 0.8 }); else hold(m, bone, o, G); };   /* in a hand: a real grip (engine/grip.js); on the head: balanced there */
   for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); carry(bone, o, GRIP[prop]); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) s._flame = o.userData.flame; }
   if (s.lamp) { const o = lantern(); carry('RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
   if (!/^Sit/.test(s.anim || '')) spreadArms(m, /^(woman|girl|guide)/.test(s.base) ? 0.15 : s.base === 'man_suit' ? 0.11 : 0.05);   /* arms hang clear of skirts and jackets (engine/grip.js) */
@@ -580,7 +582,7 @@ applySave(loadGame());
 async function backgroundLoad() { for (const id of ['station45', 'hill', 'kingston57', 'ride45', 'coach', 'beach', 'crash', 'memorial']) { await ensurePlace(id); await wait(400); } }
 function startGame(quiet) {
   if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
-  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. E to use.'; showHint(); canvas.focus(); if (!quiet) cue('begin');
+  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] || stage) : 10; beginChapter(hasSave && stage >= 10 ? chapterOf(stage) : 0, hasSave && stage >= 10 ? st : 10); setTimeout(backgroundLoad, 4000); };
 
@@ -715,12 +717,12 @@ function devViews() {
   }
   if (q.get('test') === 'held') {
     if (q.get('hs')) for (const k of ['hamper', 'suitcase', 'bucket']) { GRIP[k] = { ...GRIP[k], scale: +q.get('hs') * (k === 'suitcase' ? 1.4 : 1), out: +q.get('ho') }; } if (q.get('ls')) GRIP.lantern = { ...GRIP.lantern, scale: +q.get('ls'), out: +q.get('lo') };   /* ?test=held : every carried thing, in every place: at the hand, upright, clear of the body */
-    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { n.m.userData.anim.mx.update(0.1); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) out.push(id + ': ' + l); } }
-      out.unshift('held items: ' + (out.length) + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + out.length; })();
+    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { const ac = n.m.userData.anim, found = new Set(); for (let pose = 0; pose < 12; pose++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) found.add(l); } for (const l of found) out.push(id + ': ' + l); } }
+      const count = out.length; out.unshift('held items: ' + count + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + count; })();
   }
   if (q.get('test') === 'audit') {   /* ?test=audit&p=road,hill : floating objects, people inside solids, unreachable spots */
-    (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
-      if (q.get('seats')) out.push(...SEATLOG); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + out.length; })();
+    (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); count += r.floating.length + r.inside.length + r.stuck.length; out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
+      if (q.get('seats')) out.push(...SEATLOG); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + count; })();
   }
   if (q.get('test') === 'resume') {   /* saved games resume in the right place, and closing a finishing conversation still moves the story on */
     (async () => { const out = []; startGame(true);

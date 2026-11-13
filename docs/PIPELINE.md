@@ -41,7 +41,7 @@ JSON fields:
   | `hairvol` | 0 to 1 |
 
 - `colors`: RGB for Skin, Shirt, Coat, Breeches, Stockings, Shoes, Hat, Hair, Apron, Bands. Every garment you use needs its colour, or the script stops with a KeyError.
-  - **Skin (owner rule 9).** Use a `Skin` colour inside the Marcus Garvey range, about `[134, 90, 64]` to `[156, 108, 80]`, never darker; vary it a little between people. The script writes colours so they come out darker in the game than the numbers suggest, and Blender's preview darkens them further. So each game also lightens the skin material when it loads a person: Kendal multiplies it by `SKIN_LIGHT = 1.55` (`makeBody` in `games/kendal/src/main.js`), and Marcus Garvey uses brighter daylight. Check faces in a game screenshot in the darkest light the person appears in (night, indoors, firelight). If a face is too dark, raise its `Skin` and rebuild, or use `tools/retint_skin.mjs` on a packed model.
+  - **Skin (owner rule 9).** Use a `Skin` colour inside the Marcus Garvey range, about `[134, 90, 64]` to `[156, 108, 80]`, never darker; vary it a little between people. The builders now write linear RGB to a FLOAT_COLOR layer and mark the exported scene with `vertexColorSpace: linear`. Keep that marker when packing. `engine/colours.js` repairs the extra sRGB transfer in older, unmarked character exports once at load time; scenery and textures are untouched. Do not run that repair twice or change the skin recipes to compensate for an export error. Each game can still use its face-lighting material multiplier. Judge faces in game screenshots in daylight, indoors and at night.
 
 Built in for realism:
 - Shirts and coats drape flat from the chest.

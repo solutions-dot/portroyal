@@ -9,9 +9,9 @@ const _gp = new THREE.Vector3();
 export const HIPS_Y = /^(Sit|Injured|StumbleBack|JogStumble|Terrified|Pray|Sad|Sword|Slash|Block|Punch|Laugh|Sheathe|Draw|Write)/;
 export function seamLoop(c) {   /* make a looping clip end exactly where it starts, spreading the gap over the cycle so it never snaps */
   const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), err = new THREE.Quaternion(), part = new THREE.Quaternion(), id = new THREE.Quaternion();
-  for (const t of c.tracks) { const v = t.values, tm = t.times, n = tm.length; if (n < 3) continue; const T0 = tm[0], T = tm[n - 1] - T0 || 1;
-    if (/quaternion$/.test(t.name)) { qa.fromArray(v, 0); qb.fromArray(v, (n - 1) * 4); err.copy(qb).invert().premultiply(qa);   /* err * last = first */
-      for (let i = 1; i < n; i++) { part.copy(id).slerp(err, (tm[i] - T0) / T); qb.fromArray(v, i * 4).premultiply(part); qb.toArray(v, i * 4); } }
+  for (const t of c.tracks) { const v = t.values, tm = t.times, n = tm.length; if (!n) continue; const T0 = tm[0], T = tm[n - 1] - T0 || 1;
+    if (/quaternion$/.test(t.name)) { qa.fromArray(v, 0).normalize(); qb.fromArray(v, (n - 1) * 4).normalize(); err.copy(qb).invert().premultiply(qa).normalize(); qa.toArray(v, 0);   /* err * last = first */
+      for (let i = 1; i < n; i++) { part.copy(id).slerp(err, (tm[i] - T0) / T); qb.fromArray(v, i * 4).normalize().premultiply(part).normalize(); qb.toArray(v, i * 4); } }
     else { const k = v.length / n; for (let j = 0; j < k; j++) { const d = v[j] - v[(n - 1) * k + j]; for (let i = 1; i < n; i++) v[i * k + j] += d * (tm[i] - T0) / T; } } }
   return c; }
 export function walkM() {   /* a steadier man's walk from the shared clip: damp the hip and spine twist and the swing of the arms */

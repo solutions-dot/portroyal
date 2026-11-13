@@ -1,3 +1,4 @@
+import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/_template/src/main.js: the smallest working game on the shared engine.
    Copy this folder to games/<your-game>/ and grow it (see docs/NEW_GAME.md).
    It shows: a scene, first-person movement (keys, touch joystick, drag to look, gamepad-free),
@@ -40,7 +41,7 @@ building(-6, -8, 5, 4, 4, 0xb86a4a); building(1, -8, 5, 4, 5, 0xe0d4b8); buildin
 /* ---------- player state and movement ---------- */
 const state = { x: 0, z: 4, yaw: 0, pitch: 0, started: false };   // yaw 0 looks toward -z
 const keys = new Set(); let busy = false;   // busy: a talk is open, so do not move
-addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k); if (k === 'escape') leaveTalk(); if ((k === 'e' || k === 'enter') && !busy && near) startTalk(); });
+addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k); if (k === 'escape') leaveTalk(); useInteractionKey(e, () => { if (!$('dialogue').hidden) { $('next').click(); return; } if (state.started && !busy && near) { startTalk(); return; } return false; }); });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 function clampPos(x, z) {   // keep inside the map and out of buildings (slide along walls)
   x = Math.max(-35, Math.min(35, x)); z = Math.max(-35, Math.min(35, z));
@@ -49,6 +50,7 @@ function clampPos(x, z) {   // keep inside the map and out of buildings (slide a
 }
 /* touch: left half of the screen is a joystick, right half drags to look; mouse drags to look */
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0 };
+releaseOnBlur(keys, [stick, look]);
 canvas.addEventListener('pointerdown', (e) => {
   if (busy) { leaveTalk(); return; }   // tapping the world while talking ends the talk
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }

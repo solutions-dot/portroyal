@@ -1,3 +1,4 @@
+import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/eventide/src/main.js: Eventide 1980 (the plan is docs/games/eventide.md).
    Early local build: the walking and talking shell from games/_template, the first characters made with tools/eventide/people.py,
    and dev views to check them under the game's own light. Owner rule 9: skin must read clearly in every light, so the Skin
@@ -70,7 +71,7 @@ function makeBody(base, o = {}) {
 /* ---------- player state and movement (as the template) ---------- */
 const state = { x: 0, z: 4, yaw: 0, pitch: 0, started: false };   // yaw 0 looks toward -z
 const keys = new Set(); let busy = false;
-addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k); if (k === 'escape') leaveTalk(); if ((k === 'e' || k === 'enter') && !busy && near) startTalk(); });
+addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k); if (k === 'escape') leaveTalk(); useInteractionKey(e, () => { if (!$('dialogue').hidden) { $('next').click(); return; } if (state.started && !busy && near) { startTalk(); return; } return false; }); });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 function clampPos(x, z) {
   const b = place ? place.bounds : { x0: -35, x1: 35, z0: -35, z1: 35 }; x = Math.max(b.x0, Math.min(b.x1, x)); z = Math.max(b.z0, Math.min(b.z1, z));
@@ -78,6 +79,7 @@ function clampPos(x, z) {
   return [x, z];
 }
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0 };
+releaseOnBlur(keys, [stick, look]);
 canvas.addEventListener('pointerdown', (e) => {
   if (busy) { leaveTalk(); return; }
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }

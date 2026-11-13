@@ -109,3 +109,11 @@ Rules of thumb the audit enforces:
 - **Clones copy `userData` as JSON**: store bone references in a `WeakMap`, not in `userData`.
 - **Starting a chapter from the menu** must clean up the last chapter's people and props.
 - **Gamepad presses**: save the previous button state before comparing, or no press ever registers.
+
+## Focus, colour and visible-walk regressions
+
+`npm test` runs the Node regression fixtures through the existing esbuild dependency. No extra test framework is needed. `tests/ui-audit.html`, served from the repository, checks the browser's real text rectangles and clipped scroll content; its title must read `PASS 4 layout regressions`.
+
+Port Royal's dev build also supports `?test=walk`. Wait for `WALK 0` and read `#autolog`. It steps the actual Lewis Galdy controller through normal and hurried walking, backward and sideways movement, stopping, foot grounding and Walk/WalkM loop seams. `?shot=gwalk&clip=WalkM&cam=front` and `&cam=side` capture twelve poses for clothing and foot inspection. The preview and visible player now use the same walk clip.
+
+For desktop input, approach a person and focus the game canvas. Both Space and Enter must open the conversation once. With Next or a choice focused, the same keys must activate that button normally. Journal/menu buttons must retain native keyboard activation, and text fields must not trigger world actions.
