@@ -1,65 +1,235 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Marcus Garvey</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
-  /* The same look as Port Royal: dark teal panels, one brass accent for things you can press, big touch targets (48px). */
-  :root{--ink:#10222b;--paper:#f2e8d0;--brass:#d9a441;--brass-ink:#2a1f08;--display:"IM Fell English SC","IM Fell English",Georgia,serif;--body:"Atkinson Hyperlegible",system-ui,sans-serif}
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--body);font-size:18px;touch-action:none;-webkit-user-select:none;user-select:none}
-  #c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
-  [hidden]{display:none!important}
-  .btn{font:700 1rem var(--body);background:var(--brass);color:var(--brass-ink);border:0;border-radius:6px;padding:.75rem 1.3rem;min-height:48px;cursor:pointer}
-  .btn:disabled{opacity:.6;cursor:default}
-  .btn.ghost{background:transparent;color:var(--paper);border:2px solid var(--brass)}
-  #title{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;gap:.8rem;padding:2rem max(1.5rem,6vw);background:linear-gradient(90deg,rgba(16,34,43,.95),rgba(16,34,43,.6))}
-  #title h1{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(2.4rem,8vw,4.2rem);margin:0;line-height:1.05}
-  #title p{max-width:30rem;margin:0}
-  #title .row{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
-  #title a{color:inherit}
-  #hud{position:fixed;inset:0;pointer-events:none}
-  #hud > *{pointer-events:auto}
-  #place{position:absolute;left:50%;top:22%;transform:translateX(-50%);font-family:var(--display);font-size:clamp(1.5rem,5vw,2.6rem);letter-spacing:.03em;text-align:center;text-shadow:0 2px 12px rgba(0,0,0,.7);pointer-events:none;transition:opacity 1.6s;margin:0}
-  #goal{position:absolute;left:16px;top:16px;max-width:min(24rem,calc(100% - 170px));background:rgba(16,34,43,.86);padding:.55em .85em;border-left:4px solid var(--brass);border-radius:0 6px 6px 0;margin:0}
-  #sound{position:absolute;right:16px;top:16px}
-  #talk{position:absolute;right:16px;bottom:24px}
-  #dialogue{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(40rem,calc(100% - 32px));background:rgba(16,34,43,.95);border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.7rem}
-  #who{font-family:var(--display);color:var(--brass);margin:0;font-size:1.2rem;padding-right:40px}
-  #line{margin:0;font-size:1.1rem}
-  #next{align-self:flex-end}
-  #dclose{position:absolute;top:6px;right:8px;width:44px;height:44px;border:0;background:none;color:inherit;font-size:1.9rem;cursor:pointer;opacity:.75;border-radius:50%}
-  #dialogue.me{background:rgba(242,232,208,.97);border-top-color:#2f6f8f}
-  #dialogue.me #who{color:#2f6f8f}#dialogue.me #line,#dialogue.me #dclose{color:#1c2a30}
+:root{
+  /* One world, one theme: a harbour at midday seen through a merchant's ledger.
+     Layout: full-screen 3D stage; quiet ink panels float over it; the journal is the one paper surface. */
+  --ink:#10222b;          /* deep harbour water, used for panels */
+  --ink-2:#1b3642;
+  --paper:#efe7d3;        /* ledger page */
+  --paper-ink:#23211c;
+  --brass:#d9a441;        /* the only accent: things you can press */
+  --brass-ink:#2a1f08;
+  --rule:#c9bd9f;
+  --display:"IM Fell English SC","IM Fell English",Georgia,"Times New Roman",serif;
+  --text:"Atkinson Hyperlegible",Verdana,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);font-family:var(--text);font-size:18px;line-height:1.5;overflow:hidden}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none;cursor:grab}
+#stage:active{cursor:grabbing}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+.btn{background:var(--brass);color:var(--brass-ink);border:0;border-radius:6px;padding:.7em 1.3em;font-weight:700;font-size:1rem;cursor:pointer;min-height:48px}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:transparent;color:var(--paper);border:2px solid var(--brass);text-align:left}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+/* title card */
+#title{position:fixed;inset:0;display:flex;align-items:flex-end;padding:clamp(16px,4vw,48px);background:linear-gradient(180deg,rgba(16,34,43,0) 30%,rgba(16,34,43,.93) 72%)}
+#title .card{max-width:34rem;display:flex;flex-direction:column;gap:.7rem}
+#title .place{font-family:var(--display);letter-spacing:.14em;font-size:.95rem;color:var(--brass);margin:0}
+#title h1{font-family:var(--display);font-weight:400;font-size:clamp(2.6rem,9vw,5rem);line-height:.95;margin:0;text-wrap:balance}
+#title h1 span{font-family:"IM Fell English",Georgia,serif;font-style:italic;font-size:.5em;display:block;margin-top:.25em;color:var(--paper)}
+#title p{margin:0;max-width:30rem}
+.dev{background:none;border:0;color:var(--paper);font-family:var(--text);font-size:.95rem;opacity:.85;cursor:pointer;padding:.4em .2em;min-height:44px;letter-spacing:.02em}.dev b{color:var(--brass);font-weight:700}.dev:hover{opacity:1;text-decoration:underline;text-underline-offset:4px}
+#credits{position:fixed;inset:0;background:rgba(16,34,43,.78);display:grid;place-items:center;padding:16px;z-index:40}#credits[hidden]{display:none}#credits .book{max-height:88vh;overflow:auto}#credits .crbody{padding:1.4rem clamp(1.2rem,4vw,2.6rem) 1.8rem;max-width:40rem;margin:0 auto}#credits .crbig{text-align:center}#credits .crbig{font-size:1.4rem}#credits h3{font-family:var(--display);margin:1.4em 0 .5em;font-size:1.15rem;text-align:center;border-top:1px solid rgba(40,30,20,.25);padding-top:1em}#credits ul{padding-left:1.2em}#credits p,#credits li{margin:.25em 0;line-height:1.45}#credits ul{padding-left:1.1em;margin:.2em 0}.crbig{font-size:1.25rem;margin:.4em 0 .2em}
+.loading{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:.4rem}
+.track{flex:1 1 9rem;height:6px;background:var(--ink-2);border-radius:3px;overflow:hidden;min-width:8rem}
+#bar{height:100%;width:0;background:var(--brass);transition:width .2s}
+#loadnote{font-size:.85rem;opacity:.8;flex-basis:100%;margin:0}
+
+/* in-game */
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud>*{pointer-events:auto}
+#goal{position:absolute;left:16px;top:16px;max-width:min(24rem,calc(100% - 170px));background:rgba(16,34,43,.86);padding:.55em .85em;border:0;border-left:4px solid var(--brass);border-radius:0 6px 6px 0;font-size:.95rem;margin:0;text-align:left;cursor:pointer;min-height:48px;line-height:1.35}
+#goal:not(.folded){top:76px;max-width:min(26rem,calc(100% - 32px))}
+#goal.folded{font-family:var(--display);letter-spacing:.06em;font-size:1.05rem;padding:.55em .9em}
+#jbtn{position:absolute;right:16px;top:16px;background:var(--paper);color:var(--paper-ink);border:0;border-radius:6px;padding:.55em .9em;font-family:var(--display);font-size:1.1rem;letter-spacing:.06em;cursor:pointer;min-height:48px;display:flex;gap:.5em;align-items:center}
+#jcount{background:var(--brass);color:var(--brass-ink);font-family:var(--text);font-weight:700;font-size:.8rem;border-radius:999px;min-width:1.6em;height:1.6em;display:inline-grid;place-items:center}
+#hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(16,34,43,.7);padding:.3em .8em;border-radius:6px;font-size:.85rem;margin:0;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+#talk{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);box-shadow:0 6px 22px rgba(0,0,0,.45);font-size:1.1rem}#talk.icon{width:76px;height:76px;min-height:76px;border-radius:50%;padding:0;display:grid;place-items:center;box-shadow:0 0 0 4px rgba(243,194,90,.35),0 6px 22px rgba(0,0,0,.45);animation:talkpulse 1.6s ease-in-out infinite}#talk.icon .who{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:6px;white-space:nowrap;font-size:.85rem;font-weight:700;color:var(--paper);text-shadow:0 1px 3px rgba(0,0,0,.8);text-transform:capitalize}.tbub{position:fixed;transform:translate(-50%,-100%);width:56px;height:56px;border-radius:50%;border:0;background:var(--brass);color:var(--brass-ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 0 0 4px rgba(243,194,90,.35),0 0 26px 8px rgba(255,205,110,.45),0 6px 18px rgba(0,0,0,.4);animation:talkpulse 1.6s ease-in-out infinite;z-index:5;padding:0}.tbub[hidden]{display:none}.tbub .who{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;white-space:nowrap;font-size:.85rem;font-weight:700;color:var(--paper);text-shadow:0 1px 3px rgba(0,0,0,.85);text-transform:capitalize}@media (prefers-reduced-motion:reduce){.tbub{animation:none}}
+@keyframes talkpulse{50%{box-shadow:0 0 0 9px rgba(243,194,90,.15),0 6px 22px rgba(0,0,0,.45)}}@media (prefers-reduced-motion:reduce){#talk.icon{animation:none}}
+#toast{position:absolute;left:50%;top:auto;bottom:128px;transform:translateX(-50%);background:var(--paper);color:var(--paper-ink);padding:.5em 1em;border-radius:6px;font-weight:700;font-size:.9rem;max-width:calc(100% - 32px);text-align:center;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(239,231,211,.55);background:rgba(16,34,43,.3);pointer-events:none}
+#nub{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;background:var(--brass);transform:translate(-50%,-50%)}
+#stick.rest{opacity:.45}#stick.rest #nub{opacity:.7}
+
+#dialogue{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(40rem,calc(100% - 32px));background:rgba(16,34,43,.95);border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.7rem}
+#who{font-family:var(--display);font-size:1.25rem;letter-spacing:.08em;color:var(--brass);margin:0}
+#dialogue.me{background:rgba(242,232,208,.97);border-top-color:#2f6f8f}#dialogue.me #who{color:#2f6f8f}#dialogue.me #line{color:#1c2a30}#dialogue.me .btn.ghost{color:#1c2a30;border-color:#2f6f8f}
+#line{margin:0;font-size:1.1rem;max-width:65ch}
+#choices{display:flex;flex-direction:column;gap:.5rem}
+#next{align-self:flex-end}
+
+/* the journal: the one paper surface */
+#journal{position:absolute;inset:0;background:rgba(16,34,43,.72);display:grid;place-items:center;padding:16px}
+.book{background:var(--paper);color:var(--paper-ink);width:min(46rem,100%);max-height:100%;overflow:auto;border-radius:4px;box-shadow:0 20px 60px rgba(0,0,0,.55);display:flex;flex-direction:column}
+.book header{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.9rem 1.2rem;border-bottom:2px solid var(--paper-ink)}
+.book h2{font-family:var(--display);font-weight:400;font-size:1.7rem;margin:0;letter-spacing:.05em}
+#jclose,#chclose,#crclose{background:var(--paper-ink);color:var(--paper);border:0;border-radius:6px;padding:.5em 1.1em;font:700 1rem var(--text,system-ui);cursor:pointer;min-height:44px;-webkit-appearance:none;appearance:none}
+#jtabs{display:flex;flex-wrap:wrap;gap:.4rem;padding:.8rem 1.2rem 0}
+.tab{background:transparent;border:1.5px solid var(--paper-ink);border-radius:999px;padding:.3em .9em;font-size:.9rem;cursor:pointer;color:var(--paper-ink);min-height:40px}
+.tab.on{background:var(--paper-ink);color:var(--paper)}
+.tab:disabled{border-style:dashed;opacity:.5;cursor:default}
+#jpage{padding:1rem 1.2rem 1.4rem;background-image:repeating-linear-gradient(180deg,transparent 0 1.72rem,var(--rule) 1.72rem calc(1.72rem + 1px));line-height:1.72rem}
+#jpage h3{font-family:"IM Fell English",Georgia,serif;font-style:italic;font-weight:400;font-size:1.75rem;line-height:3.44rem;margin:0;text-wrap:balance}
+#jpage p{margin:0 0 1.72rem;max-width:62ch;font-size:1.05rem}
+#jpage details{border-left:4px solid var(--brass);padding-left:.9rem}
+#jpage summary{font-weight:700;cursor:pointer;line-height:1.72rem;margin-bottom:1.72rem}
+#jpage details p{font-size:.98rem}
+.book .book-focus:focus-visible,#jclose:focus-visible,#chclose:focus-visible,#crclose:focus-visible,.tab:focus-visible,#jpage summary:focus-visible{outline-color:var(--paper-ink)}
+#fade{position:fixed;inset:0;z-index:50;background:#120d09;opacity:0;transition:opacity .7s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f3e6cc;text-align:center;pointer-events:none}#fade.on{opacity:1;pointer-events:auto}#fade[hidden]{display:none}#fadeT{font-family:'IM Fell English SC',serif;font-size:clamp(34px,7vw,64px);opacity:0;transform:translateY(8px);transition:opacity .8s ease,transform .8s ease}#fadeS{font-family:'Atkinson Hyperlegible',sans-serif;font-size:clamp(15px,2.6vw,20px);margin-top:10px;opacity:0;color:#d9c39b;transition:opacity .8s ease .25s}#fade.txt #fadeT{opacity:1;transform:none}#fade.txt #fadeS{opacity:.9}
+body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) brightness(1.02)}body.flash::after{content:'';position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 140px 30px rgba(60,40,20,.55)}
+#vig{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 40%,#5a4a36 0%,#2a2118 70%)}
+#card{position:absolute;inset:0;background:rgba(16,34,43,.9);display:grid;place-items:center;padding:16px}
+.cardin{width:min(34rem,100%);display:flex;flex-direction:column;gap:.9rem}
+.cardin h2{font-family:var(--display);font-weight:400;font-size:clamp(2rem,7vw,3.2rem);line-height:1;margin:0;color:var(--brass);text-wrap:balance}
+#cbody p{margin:0 0 .7rem;font-size:1.1rem;max-width:60ch}
+#cbtns{display:flex;flex-direction:row;flex-wrap:wrap;gap:.6rem;align-items:center}#cbtns .btn{flex:0 1 auto}
+.book footer{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;padding:.8rem 1.2rem;border-top:2px solid var(--paper-ink);font-family:var(--display);letter-spacing:.05em}
+.chap{display:flex;gap:.5rem;flex-wrap:wrap}
+.book footer .btn{background:var(--paper-ink);color:var(--paper);font-family:var(--text);letter-spacing:0}
+#topr{position:absolute;right:16px;top:16px;display:flex;gap:8px}
+#topr #jbtn{position:static}
+#fbexit{background:var(--paper);color:#10222b;border:0;border-radius:6px;height:48px;padding:0 14px;font:600 1rem/1 inherit;cursor:pointer}#fbexit[hidden]{display:none}
+#reset{background:rgba(16,34,43,.86);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}
+#view{background:rgba(16,34,43,.86);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}#view[hidden]{display:none}#view[aria-pressed=true]{color:var(--brass)}
+#snd{background:rgba(16,34,43,.86);color:var(--paper);border:0;border-radius:6px;width:48px;height:48px;display:grid;place-items:center;cursor:pointer}
+#savenote{font-size:.85rem;opacity:.8}
+#chapters{position:fixed;inset:0;background:rgba(16,34,43,.78);display:grid;place-items:center;padding:16px}
+.chnote{margin:.9rem 1.2rem 0;color:var(--paper-ink);font-size:.95rem}
+.chlist{list-style:none;margin:0;padding:.9rem 1.2rem;display:flex;flex-direction:column;gap:.5rem}
+.chbtn{width:100%;display:grid;grid-template-columns:8rem 1fr auto;align-items:center;gap:.8rem;text-align:left;background:transparent;border:1.5px solid var(--paper-ink);border-radius:6px;padding:.6rem .85rem;cursor:pointer;color:var(--paper-ink);min-height:52px}
+.chbtn:hover:not(:disabled){background:rgba(35,33,28,.07)}
+.chbtn .yr{font-family:var(--display);letter-spacing:.05em}
+.chbtn .nm{font-weight:700}
+.chbtn .st{font-size:.85rem}
+.chbtn.done .st::before{content:"\2713\00a0"}
+.chbtn:disabled{border-style:dashed;opacity:.55;cursor:default}
+.chfoot{flex-wrap:wrap}
+.chfoot .btn.ghost{color:var(--paper-ink);border-color:var(--paper-ink);background:transparent;font-family:var(--text);letter-spacing:0;font-size:.9rem;min-height:44px}
+.book footer.chfoot .btn{background:transparent;color:var(--paper-ink)}
+#nudge{position:absolute;z-index:4;pointer-events:none;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}#nudge span{font:700 .85rem var(--body,system-ui);color:#fff3d6;background:rgba(16,34,43,.85);padding:2px 8px;border-radius:10px;white-space:nowrap}#nudge svg{display:block}#nudge.down svg{transform:rotate(180deg);animation:nbdown 1s ease-in-out infinite}#nudge.down{flex-direction:column-reverse}#nudge.left svg{transform:rotate(-90deg);animation:nbleft 1s ease-in-out infinite}#nudge.right svg{transform:rotate(90deg);animation:nbright 1s ease-in-out infinite}@keyframes nbdown{50%{transform:rotate(180deg) translateY(-8px)}}@keyframes nbleft{50%{transform:rotate(-90deg) translateY(-8px)}}@keyframes nbright{50%{transform:rotate(90deg) translateY(-8px)}}#goal.nudge{animation:goalpulse 1.1s ease-in-out 4}@keyframes goalpulse{50%{box-shadow:0 0 0 6px rgba(232,184,74,.55);background:rgba(40,60,70,.95)}}@media (prefers-reduced-motion:reduce){#nudge svg,#goal.nudge{animation:none!important}}
+#dclose{position:absolute;top:6px;right:8px;width:44px;height:44px;border:0;background:none;color:inherit;font-size:1.9rem;line-height:1;cursor:pointer;opacity:.75;border-radius:50%}#dclose:hover,#dclose:focus-visible{opacity:1;background:rgba(255,255,255,.12)}#dialogue.me #dclose{color:#1c2a30}#dialogue #who{padding-right:40px}
+#jhome{text-decoration:none;display:inline-flex;align-items:center;margin-left:auto;margin-right:.6rem}
+#allgames{color:inherit;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;min-height:44px}
+@media (max-width:520px){.chbtn{grid-template-columns:1fr auto}.chbtn .yr{grid-column:1}.chbtn .nm{grid-column:1}.chbtn .st{grid-row:1 / span 2;grid-column:2}}
+@media (max-width:520px){#journal footer span{display:none}#jhome{margin-left:0}#journal footer{justify-content:flex-end}html,body{font-size:17px}#goal{font-size:.85rem}#hint{white-space:normal;text-align:center}}
+@media (prefers-reduced-motion:reduce){#bar{transition:none}}
+/* Garvey only: the place caption and the type-setting activity */
+#place{position:absolute;left:50%;top:22%;transform:translateX(-50%);font-family:var(--display);font-size:clamp(1.5rem,5vw,2.6rem);letter-spacing:.03em;text-align:center;text-shadow:0 2px 12px rgba(0,0,0,.7);pointer-events:none;transition:opacity 1.6s;margin:0}
+.panel{position:absolute;left:50%;top:3vh;transform:translateX(-50%);width:min(42rem,calc(100% - 24px));max-height:94vh;background:#10222b;border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem 1.15rem;overflow:auto;display:flex;flex-direction:column;gap:.75rem;z-index:5}
+.panel h2{font-family:var(--display);color:var(--brass);font-weight:400;margin:0;font-size:1.5rem;padding-right:48px}
+.panel .x{position:absolute;top:6px;right:8px;width:44px;height:44px;border:0;background:none;color:inherit;font-size:1.9rem;cursor:pointer;opacity:.75;border-radius:50%}
+.paper{background:#efe7d2;color:#1d1a16;font-family:Georgia,serif;font-weight:700;text-align:center;border-radius:4px;letter-spacing:.12em}
+#tword{font-size:2rem;padding:.35rem 0}
+#tstick{display:flex;gap:6px;justify-content:center;padding:8px;background:#3a2c20;border-radius:6px}
+.slot,.tile{width:52px;height:58px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;font:700 1.7rem Georgia,serif}
+.slot{background:#17120e;color:#d6d2c6}
+#tcase{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;justify-items:center}
+.tile{border:0;background:#8e8f8a;color:#17130f;cursor:pointer;box-shadow:0 3px 0 #55564f}
+.tile:disabled{opacity:.25;cursor:default;box-shadow:none}
+.tile.no{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.mir{display:inline-block;transform:scaleX(-1)}
+#tmsg{margin:0;min-height:2.6em}
+#tprint{font-size:2.6rem;padding:.8rem 0;box-shadow:0 6px 16px rgba(0,0,0,.5)}
+.tbtns{display:flex;gap:.6rem;justify-content:flex-end}
+@media (max-width:520px){#tcase{grid-template-columns:repeat(4,1fr)}.slot,.tile{width:46px;height:54px}}
 </style>
 </head>
 <body>
-<canvas id="c" tabindex="0" aria-label="The game world"></canvas>
+<canvas id="stage" tabindex="0" aria-label="A print shop in Kingston, Jamaica, about 1907"></canvas>
+
 <section id="title">
-  <h1>Marcus Garvey</h1>
-  <p>An early test scene. You are in a print shop in Kingston, Jamaica, about the year 1907. More is coming soon.</p>
-  <p>Walk with the arrow keys or WASD, or the left side of the screen on a phone. Drag to look. Tap a person to talk.</p>
-  <div class="row">
-    <button id="start" class="btn" disabled>Loading</button>
-    <a href="../../../menu/">All games</a>
+  <div class="card">
+    <p class="place">Jamaica &middot; Kingston</p>
+    <h1>Marcus Garvey <span>An early demo</span></h1>
+    <p class="intro">It is about 1907. You are a young helper in a print shop in Kingston, Jamaica. Meet the people of the shop and learn how printing works.</p>
+    <p class="intro">Marcus Garvey learned this trade. Later, his words would reach people across the world.</p>
+    <div class="loading">
+      <button id="start" class="btn" disabled>Loading</button>
+      <button id="tchap" class="btn ghost" hidden>Chapters</button>
+      <a id="allgames" class="dev" href="../../../menu/">All games</a>
+      <button id="dev" class="dev" title="Credits">Created by <b>Kellz 5.0</b></button>
+      <div class="track" aria-hidden="true"><div id="bar"></div></div>
+      <p id="loadnote">Loading people.</p>
+    </div>
+    <p id="savenote" hidden>Your progress is saved on this device.</p>
   </div>
-  <p id="loadnote">Loading people.</p>
 </section>
+
+<div id="vig" aria-hidden="true"></div>
+<div id="fade" hidden><div id="fadeT"></div><div id="fadeS"></div></div>
 <div id="hud" hidden>
+  <button id="goal" aria-expanded="true"></button>
+  <div id="nudge" hidden aria-hidden="true"><svg viewBox="0 0 48 48" width="56" height="56"><path d="M24 4 L42 30 L30 30 L30 44 L18 44 L18 30 L6 30 Z" fill="#e8b84a" stroke="#3a2614" stroke-width="3" stroke-linejoin="round"/></svg><span>This way</span></div>
+  <div id="topr"><button id="reset" aria-label="Reset" title="Reset"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button><button id="snd" aria-pressed="true" aria-label="Sound on. Tap to turn off."><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><g id="sndon"><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></g><g id="sndoff"><path d="M17 9l5 6M22 9l-5 6"/></g></svg></button><button id="jbtn" aria-haspopup="dialog">Journal <span id="jcount" hidden>0</span></button></div>
+  <p id="toast" role="status" hidden></p>
+  <button id="talk" class="btn" hidden>Talk to her</button>
+  <p id="hint"></p>
+  <div id="stick" hidden><div id="nub"></div></div>
   <p id="place" hidden>Kingston, about 1907</p>
-  <p id="goal"></p>
-  <button id="sound" class="btn ghost">Sound on</button>
-  <button id="talk" class="btn" hidden>Talk</button>
+  <div id="typeset" class="panel" role="dialog" aria-labelledby="ttitle" hidden>
+    <button id="tclose" class="x" aria-label="Stop setting type">&times;</button>
+    <h2 id="ttitle">Set the type</h2>
+    <p>Set this word:</p>
+    <div id="tword" class="paper"></div>
+    <div id="tstick" aria-label="The composing stick"></div>
+    <div id="tcase" aria-label="The case of letters"></div>
+    <p id="tmsg" aria-live="polite"></p>
+    <div id="tprint" class="paper" hidden></div>
+    <div class="tbtns"><button id="tpress" class="btn" hidden>Press</button><button id="tdone" class="btn" hidden>Done</button></div>
+  </div>
   <div id="dialogue" role="dialog" aria-labelledby="who" hidden>
     <button id="dclose" aria-label="Stop talking">&times;</button>
     <p id="who"></p>
     <p id="line" aria-live="polite"></p>
     <button id="next" class="btn">Next</button>
   </div>
+  <div id="card" role="dialog" aria-labelledby="ctitle" hidden><div class="cardin"><h2 id="ctitle"></h2><div id="cbody"></div><div id="cbtns"></div></div></div>
+  <div id="journal" role="dialog" aria-labelledby="jtitle" hidden>
+    <div class="book">
+      <header><h2 id="jtitle">Journal</h2><button id="jclose">Close</button></header>
+      <div id="jtabs"></div>
+      <div id="jpage"></div>
+      <footer><span>More chapters are coming</span><a id="jhome" class="btn ghost" href="../../../menu/" hidden>All games</a><button id="jchap" class="btn">Chapters</button></footer>
+    </div>
+  </div>
 </div>
+<section id="credits" role="dialog" aria-labelledby="crtitle" hidden>
+  <div class="book">
+    <header><h2 id="crtitle">Credits</h2><button id="crclose">Close</button></header>
+    <div class="crbody"><p class="crbig">Created by <b>Kellz 5.0</b></p>
+    <h3>Where the history comes from</h3>
+    <ul>
+      <li>The US National Archives, on the life of Marcus Garvey</li>
+      <li>The Jamaica Gleaner, <i>The Marcus Garvey Story</i></li>
+      <li>Encyclopedia.com and Biography.com, on Garvey&rsquo;s early work as a printer</li>
+      <li>Library of Congress photographs of printing offices, as a guide for the print shop</li>
+      <li>Still to come: the Marcus Garvey and UNIA Papers, the National Library of Jamaica and the Jamaica National Heritage Trust</li>
+    </ul>
+    <p>The printer, the customer and you are made up. Marcus Garvey was a real person. Dates in this early demo still need checking against the Papers.</p>
+    </div>
+  </div>
+</section>
+<section id="chapters" role="dialog" aria-labelledby="chtitle" hidden>
+  <div class="book">
+    <header><h2 id="chtitle">Chapters</h2><button id="chclose">Close</button></header>
+    <p class="chnote">Each chapter opens when you finish the one before it.</p>
+    <ol id="chlist" class="chlist"></ol>
+    <footer class="chfoot"><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
+  </div>
+</section>
 <script src="app.js"></script>
 </body>
 </html>
