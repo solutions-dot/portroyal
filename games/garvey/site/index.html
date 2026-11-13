@@ -145,6 +145,18 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 #tprint{font-size:2.6rem;padding:.8rem 0;box-shadow:0 6px 16px rgba(0,0,0,.5)}
 .tbtns{display:flex;gap:.6rem;justify-content:flex-end}
 @media (max-width:520px){#tcase{grid-template-columns:repeat(4,1fr)}.slot,.tile{width:46px;height:54px}}
+/* the front page activity (chapter 4) */
+#pgpage{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:6px;padding:10px;background:#efe7d2;border-radius:4px;box-shadow:0 6px 16px rgba(0,0,0,.5)}
+.bx{border:2px dashed #8b8068;border-radius:4px;background:rgba(0,0,0,.05);color:#6a604c;font:700 .8rem Georgia,serif;min-height:46px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;padding:4px}
+.bx.hot{border-color:#b8862a;background:rgba(216,166,60,.22)}
+.bx.ok{border-style:solid;border-color:transparent;background:transparent;color:#1d1a16;cursor:default}
+.bx.no,.pc.no{animation:shake .35s}
+#bxTitle{grid-column:1 / span 2;min-height:56px}#bxHead{grid-column:1 / span 2;min-height:56px}#bxPic{min-height:96px}#bxPrice{min-height:96px}
+#pgtray{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.pc{border:0;border-radius:5px;background:#8e8f8a;color:#17130f;cursor:pointer;box-shadow:0 3px 0 #55564f;font:700 1rem Georgia,serif;padding:.55rem .8rem;min-height:48px}
+.pc.sel{outline:3px solid var(--brass);outline-offset:2px}
+.pc:disabled{opacity:.25;cursor:default;box-shadow:none}
+#pgmsg{margin:0;min-height:2.6em}
 </style>
 </head>
 <body>
@@ -189,6 +201,15 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
     <p id="tmsg" aria-live="polite"></p>
     <div id="tprint" class="paper" hidden></div>
     <div class="tbtns"><button id="tpress" class="btn" hidden>Press</button><button id="tdone" class="btn" hidden>Done</button></div>
+  </div>
+  <div id="pagebuild" class="panel" role="dialog" aria-labelledby="pgtitle" hidden>
+    <button id="pgclose" class="x" aria-label="Stop laying out the page">&times;</button>
+    <h2 id="pgtitle">Lay out the front page</h2>
+    <p>Tap a piece, then tap the box where it belongs.</p>
+    <div id="pgpage" aria-label="The front page"></div>
+    <div id="pgtray" aria-label="The pieces"></div>
+    <p id="pgmsg" aria-live="polite"></p>
+    <div class="tbtns"><button id="pgpress" class="btn" hidden>Press</button><button id="pgdone" class="btn" hidden>Done</button></div>
   </div>
   <div id="dialogue" role="dialog" aria-labelledby="who" hidden>
     <button id="dclose" aria-label="Stop talking">&times;</button>
