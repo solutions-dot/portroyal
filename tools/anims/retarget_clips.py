@@ -1,12 +1,14 @@
 import bpy, sys, json
 # retarget each Mixamo clip onto our rig by copying WORLD bone rotations (so A-pose vs T-pose rest doesn't matter), then bake
 clips=json.loads(open(sys.argv[-1]).read())
-bpy.ops.wm.open_mainfile(filepath='/tmp/char/char.blend')
+import os
+bpy.ops.wm.open_mainfile(filepath=os.path.abspath('shared/rig/char.blend'))   # Abba's rig: every character shares this skeleton
 ours=bpy.data.objects['Human.rig']
 for pb in ours.pose.bones: pb.matrix_basis.identity()
 ours.animation_data_create(); ours.animation_data.action=None
 sc=bpy.context.scene; sc.render.fps=30
 for name,path in clips.items():
+    path=path if os.path.isabs(path) else os.path.abspath(os.path.join('shared/anim-sources',path))   # clips.json lists file names in shared/anim-sources
     before=set(bpy.data.objects)
     bpy.ops.import_scene.fbx(filepath=path,automatic_bone_orientation=False)
     new=[o for o in bpy.data.objects if o not in before]
@@ -34,5 +36,5 @@ for name,path in clips.items():
     print('CLIP',name,f0,f1)
 for o in bpy.data.objects: o.select_set(o==ours)
 bpy.context.view_layer.objects.active=ours
-r=bpy.ops.export_scene.gltf(filepath='/tmp/web/site/models/anims.glb',use_selection=True,export_skins=True,export_animations=True,export_animation_mode='NLA_TRACKS',export_frame_step=2,export_force_sampling=True,export_optimize_animation_size=True,export_def_bones=True)
+r=bpy.ops.export_scene.gltf(filepath=os.path.abspath('build/anims.glb'),use_selection=True,export_skins=True,export_animations=True,export_animation_mode='NLA_TRACKS',export_frame_step=2,export_force_sampling=True,export_optimize_animation_size=True,export_def_bones=True)
 print('EXPORT',r)

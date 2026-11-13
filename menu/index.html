@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>History Games</title>
+<meta name="description" content="Play your way through history. 3D story games for ages 6 and up.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  /* The game menu. Same colours and fonts as the games. Add a game by copying one <li class="game"> card. */
+  :root{--ink:#10222b;--panel:#18313c;--paper:#f2e8d0;--brass:#d9a441;--brass-ink:#2a1f08;--muted:#a9bcc2;
+    --display:"IM Fell English SC","IM Fell English",Georgia,serif;--body:"Atkinson Hyperlegible",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at top,#1d3a47,var(--ink) 70%);color:var(--paper);font-family:var(--body);font-size:18px;line-height:1.45}
+  main{max-width:68rem;margin:0 auto;padding:max(2.2rem,env(safe-area-inset-top)) 1.2rem 3rem}
+  header{margin-bottom:2rem}
+  .eyebrow{font-family:var(--display);color:var(--brass);letter-spacing:.08em;margin:0}
+  h1{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(2.4rem,7vw,4rem);line-height:1.05;margin:.2rem 0 .6rem}
+  header p{max-width:36rem;margin:0;color:var(--muted)}
+  ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,20rem),1fr));gap:1.4rem}
+  .game{background:var(--panel);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .pic{aspect-ratio:16/9;background:#0c1a20 center/cover no-repeat;position:relative}
+  .pic span{position:absolute;left:.8rem;bottom:.7rem;background:rgba(16,34,43,.86);border-left:4px solid var(--brass);padding:.2rem .6rem;font-family:var(--display);letter-spacing:.05em;font-size:.95rem}
+  .info{padding:1rem 1.1rem 1.2rem;display:flex;flex-direction:column;gap:.6rem;flex:1}
+  h2{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:1.7rem;margin:0;line-height:1.1}
+  .info p{margin:0;color:var(--muted)}
+  .play{margin-top:auto;align-self:flex-start;display:inline-block;background:var(--brass);color:var(--brass-ink);font-weight:700;text-decoration:none;padding:.75rem 1.4rem;border-radius:6px;min-height:48px}
+  .play:hover,.play:focus-visible{filter:brightness(1.08);outline:3px solid var(--paper);outline-offset:2px}
+  .soon .pic{background:linear-gradient(135deg,#2a4a3a,#1a2f28 60%,#3a2a12)}
+  .soon .pic::after{content:"Coming soon";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:1.5rem;letter-spacing:.08em;color:var(--brass)}
+  .tag{font-size:.85rem;color:var(--brass);font-weight:700;letter-spacing:.03em}
+  footer{margin-top:2.5rem;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Play your way through history</p>
+    <h1>History Games</h1>
+    <p>Walk the streets, meet the people and see the past for yourself. For ages 6 and up, and grown-ups too. Works on phones, tablets and computers.</p>
+  </header>
+  <ul>
+    <li class="game">
+      <div class="pic" style="background-image:url(port-royal.jpg)"><span>Jamaica, 1690</span></div>
+      <div class="info">
+        <h2>Port Royal, 1690</h2>
+        <p class="tag">The story of Lewis Galdy</p>
+        <p>Step off a ship into the busiest town in the Caribbean. Meet the people who lived there, and live through the great earthquake of 1692.</p>
+        <a class="play" data-game="port-royal" href="games/port-royal/site/">Play</a>
+      </div>
+    </li>
+    <li class="game soon">
+      <div class="pic"></div>
+      <div class="info">
+        <h2>Marcus Garvey</h2>
+        <p class="tag">Jamaica and the world</p>
+        <p>Follow Marcus Garvey from St Ann's Bay, Jamaica, to the wider world.</p>
+      </div>
+    </li>
+  </ul>
+  <footer>Created by <b>Kellz 5.0</b></footer>
+</main>
+<script>
+  /* On the live site this page is the home page. In the repo it sits in menu/, one folder down, so the game links need "../". */
+  if (/\/menu\/?(index\.html)?$/.test(location.pathname)) for (const a of document.querySelectorAll('a[data-game]')) a.href = '../games/' + a.dataset.game + '/site/';
+</script>
+</body>
+</html>
