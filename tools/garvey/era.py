@@ -138,7 +138,7 @@ if G.get('breeches'):
 if G.get('waistcoat'):
     wcol=NECK-0.02*s
     parts.append(('waistcoat',piece('Waistcoat','helper-tights',lambda c:c.z>HIP+0.03 and abs(c.x)<SX*0.9,lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Waistcoat',post=lambda bm:(drape_front(bm),smooth_edge(bm)),
-        cuts=[((0,0,wcol),(0,0,1),None),((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0),((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)])))
+        cuts=[((0,0,wcol),(0,0,1),None)]+([((0,0,wcol-0.17*s),Vector((-1.1,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,wcol-0.17*s),Vector((1.1,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if G.get('vwaist') else [((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)])+[((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)])))
 if G.get('jacket'):   # a plain suit jacket: waist-length hem, sleeves to the wrist, a V opening over the waistcoat
     jcol=NECK-0.012*s; jcs=G.get('jacketsleeve',0.9)
     vz=jcol-0.20*s   # the V opening: two angled cuts, one each side of the middle, so only a narrow wedge is removed and the shoulders stay covered

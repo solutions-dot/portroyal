@@ -47,7 +47,7 @@ All eight chapters are built, so what remains is quality work, roughly in this o
 1. **Read every line aloud** for the 6+ reading level (a script already flags lines over 12 words; the journal's "Dig deeper" text can be longer). All dialogue is placeholder wording written for this game.
 2. **Check facts against primary sources.** Every date and claim comes from secondary sources (see the research tables). Check the Marcus Garvey and UNIA Papers, then remove the "we still need to check" notes from the journal pages.
 3. **Check places against photographs.** The Kingston shops and hall are built from US printing-office photographs and general knowledge. Harlem, Liberty Hall, the dock and the shrine are also general pictures, not copies of real places.
-4. **Characters.** The waistcoat has no V opening, an apron does not fit over a skirt, shirt and apron edges are ragged at close range, there are no women's hats, and there is no UNIA uniform or Black Cross Nurses' dress. All faces are built from the same body, so they look alike.
+4. **Characters.** An apron does not fit over a skirt, shirt and apron edges are ragged at close range, there are no women's hats, and there is no UNIA uniform or Black Cross Nurses' dress. All faces are built from the same body, so they look alike.
 5. **Sound.** Each place now has its own mix of the engine's beds and one small sound (press thump in the shop and press room, gulls and ship creaks at the dock, birds in the park), set in `SOUNDSCAPE`. Still to do: footsteps that change by floor, and a short music cue at the end of each chapter.
 6. **Third-person view** (V key) and a teen body for the hero.
 7. **Window views.** Most rooms show the same leafy yard through the windows.

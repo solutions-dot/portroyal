@@ -34,6 +34,7 @@ The bpy module has no Draco or meshopt, so the first `.glb` is large (about 1.5 
 |---|---|
 | `trousers` | Long trousers to the ankle |
 | `waistcoat` | A sleeveless waistcoat over the shirt (colour key `Waistcoat`) |
+| `vwaist` | With `waistcoat`: a V opening at the front that shows the shirt and tie. Used for every waistcoat in the game. |
 | `collar` | A stiff white standing collar (colour key `Collar`) |
 | `tie` | A plain tie (colour key `Tie`) |
 | `hat: "flat"` | A flat cap with a short peak |
@@ -48,7 +49,6 @@ Women use the body macros `gender: 0.0`, `cupsize` and `firmness`, as in `tools/
 
 ## Known issues (to fix before use in a game)
 
-- The waistcoat is a plain panel with no V opening (the jacket has one).
 - A very young or very short body (age below about 0.3) leaves skin strips down the trouser legs; use proportions like `printer1907.json`.
 - A woman's apron does not fit over a skirt (it is cast onto the body, not the skirt).
 - Still to make: women's hats, the UNIA uniform (from chapter 6), the Black Cross Nurses' dress, and a teen body for the young hero.
