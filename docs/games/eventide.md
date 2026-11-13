@@ -2,11 +2,23 @@
 
 Status: **story plot only, for the owner to sign off.** No code, models or menu card exist yet. Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/games/garvey.md` first. Garvey is the closest model: its panels, journal, chapters, saving and helper arrow are the ones to copy, and two of its activities are reused below.
 
+Owner decisions so far (13 Nov 2026): **two of the four women get out**, and **the night chapter can be a little more detailed, but never graphic**. The other decisions at the end are still open.
+
 Working title: **Eventide 1980**. Code would live in `games/eventide/` (copied from `games/_template/`, then the Garvey panels).
 
 ## The idea in one paragraph
 
-A fictional child lives near Slipe Pen Road in Kingston and visits friends in the Eventide Home, a government home for poor old women, in May 1980. The child gets to know four women in the old wooden Myers Ward, hears their lives, and says goodnight to them on a Monday evening. In the early hours of Tuesday 20 May the ward burns. The child watches from behind the police rope and helps a neighbour's gate, then goes with Gran to the day of national mourning, when the women are laid in one grave at National Heroes Park. Later chapters ask what is known and what is only rumour, and the last chapter is at the monument today, where the grown-up hero tells a young listener who the women were.
+A fictional child lives near Slipe Pen Road in Kingston and visits friends in the Eventide Home, a government home for poor old women, in May 1980. The child gets to know four women in the old wooden Myers Ward, hears their lives, and says goodnight to them on a Monday evening. In the early hours of Tuesday 20 May the ward burns. The child watches from behind the police rope, holds a gate while the children from the next building are led out, and finds two of the four women wrapped in blankets by the road. The other two did not get out. The child then goes with Gran to the day of national mourning, when the women who died are laid in one grave at National Heroes Park. Later chapters ask what is known and what is only rumour, and the last chapter is at the monument today, where the grown-up hero tells a young listener who the women were.
+
+## What it is like to play
+
+**The feel.** The same as Port Royal and Garvey: a first-person 3D game in the browser, on a phone or a computer. Walk with the keys or the touch joystick, drag to look, tap a person with a glowing speech mark to talk. A small Goal tab says what to do next, and a gold arrow helps if you stall. The Journal collects pages with a plain side and a "Dig deeper" side. Progress saves in the browser. There are no scores, meters or lives, so you cannot lose. Your choices show up as what people say to you later.
+
+**The shape.** My target is about 5 to 10 minutes a chapter (a design aim, not measured), so the whole story is under an hour. The mood runs: warm (chapters 1 to 3), the night (4), grief and quiet (5), questions (6), remembering (7). Each chapter ends with the "Next chapter" card and a "History / Story" journal page.
+
+**What you do.** Talk and listen. Read a letter aloud. Tidy a woman's things by tapping an item and then its place (Garvey's page builder, with new content). Hold a gate. Hand out blankets. Lay a flower. Sort six cards into fact, opinion or rumour. Put six events in order on a timeline board.
+
+**What you never do.** Fight, race a clock, solve a puzzle to save someone, or see anyone hurt.
 
 ## The footnote
 
@@ -20,13 +32,13 @@ The line the whole game answers, from a real speaker: Jean Lowrie-Chin, founder 
 
 This is the hardest history in the family of games: it is recent, relatives are alive, the victims were poor, old and disabled, and the cause is political and unproven. These rules are part of the plan, not polish.
 
-1. **Never show inside the ward or any person in the fire.** The fire is seen only from far away, behind a police rope: a glow, smoke, sparks, then quiet.
-2. **No sounds of distress.** Sirens, crackle, engines, a crowd going quiet.
+1. **The fire can be seen, but never inside it.** From behind the police rope the player sees the old ward burning: flames in the windows and along the roof, sparks, thick smoke, firefighters with hoses and ladders, and the roof and walls falling, all at a distance. Never show the inside of the ward, any person in the fire, or any person hurt. No burns, blood or bodies.
+2. **Sound can be big, but never distressing.** Sirens, engines, the roar and crackle, neighbours calling to each other, a hymn from the crowd, then quiet. No screams or cries of pain. Women who got out are shown tired and wrapped in blankets, with no visible injuries.
 3. **The player is never in danger** and the rope stops the player near the fire (the same kind of clamp as `clampPos`).
 4. **No choice in the night chapter.** Nothing you do changes what happened, and a line says so: "They could not get in, child. It was too fast." (Real fact: firefighters could not enter and the building fell about four minutes after they arrived.) This stops a child feeling it was their fault.
 5. **Numbers only in the Journal, said plainly:** "More than 140 women died. Sources give different numbers, from 144 to 157." About 58 of the women in the ward got out. No counting of bodies on the main path.
 6. **The cause is never settled.** The game says: "Nobody has proved what started the fire. People still disagree." No party, person or group is named as the cause on the main path. "Dig deeper" gives the two reported views, fairly: the Prime Minister's (arson, with phone lines said to be cut) and the fire chief's (an electrical fault was possible, no proof of arson), and the 1981 inquest.
-7. **Left out completely:** the smell, what was heard, anything about bodies, and any claim that doors or windows were locked (no source read says so).
+7. **Left out completely:** the smell, any account of what people inside went through, anything about bodies, burns or injuries, and any claim that doors or windows were locked (no source read says so).
 8. **Staff are not blamed.** The Home had about 180 staff for about 700 residents (JNHT), and the Journal can say plainly that it was crowded and old.
 9. **Real officials appear only as distant figures at the burial, with no fictional speech.** News comes through a fictional radio voice that only says documented facts ("Monday is a day of national mourning").
 10. **A "This chapter is sad" card** before chapter 4, with "Continue" and "Skip to the morning". The game is for ages 6 and up.
@@ -46,18 +58,18 @@ Seven chapters, in the Garvey pattern: one place, one or two hands-on activities
 | # | Where and when | Walk and do | Remembered choice |
 |---|---|---|---|
 | 1 | **Slipe Pen Road**, a Saturday in early May 1980 | Ride the No. 43 bus with Gran. Walk past the shops and the cemetery wall to the gate of the Home. Meet the gatekeeper, then Miss Iris, a blind woman on the Myers Ward veranda. Give her your gift and read her a letter aloud. Journal: "Eventide Home" (opened 1 July 1870, paid for by the city). | What you bring Miss Iris: mangoes, radio batteries, or a song. She mentions it later. |
-| 2 | **Inside Myers Ward**, the same afternoon | A long wooden hall of iron beds close together, because it holds more women than it was built for. Meet Miss Pearl (sold yam at the market), Miss Maude (taught children to read) and one more. Help each woman put her things back where she likes them (a photo, a Bible, a comb, a radio). Each item opens a "life" journal page. | Whose story you sit with longest. Her name is on your token in chapter 7. |
-| 3 | **Goodnight**, Monday 19 May, dusk | A quiet evening on the veranda. A hymn. A fictional radio voice talks about the election campaign and the grown-ups look worried. The nurse on duty says "We have more ladies than beds." Say goodnight to each woman. Nothing sad happens, and the player is never warned. | Your promise at goodnight ("I will come Saturday"). It comes back in chapter 5. |
-| 4 | **The night**, Tuesday 20 May, about 1 a.m. | Woken by sirens. Go to the corner with Gran and stop at the police rope. The glow, the engines from Kingston and St Andrew, the crowd. A firefighter asks you to hold the gate while the children from the nearby building are led out to the road. Wrap a child in a blanket. The ward falls. Quiet. Dawn: smoke over the road, the No. 43 bus waved through by a police officer. | None. The card before it offers "Skip to the morning". |
-| 5 | **A day of mourning**, Monday 26 May, National Heroes Park | Thousands in the park. Walk with Gran to the grave. Hear three mourners (a retired nurse, a neighbour, a man whose aunt lived at the Home). See the Home's staff walking to the grave and an old lady being comforted. Learn which of your four women got out and which did not (see decisions). | How you take part: lay a flower, sing, or stand quietly. People later remember it. |
-| 6 | **After**, 1980 to about 1985, the new Golden Age Home | Visit the women who got out. Hear what changed: a committee, a new home, an inquest in May 1981 that found no one criminally responsible. **Fact, opinion or rumour:** sort six cards (reuse Garvey chapter 7), then choose a fair question to ask about the cause. | The fair question you ask about the cause. |
-| 7 | **The monument**, National Heroes Park, today | You are grown. A young listener asks who the women were. Put six events on the timeline board (reuse Garvey chapter 8): 1870, 1980, the burial, 1981, the new home, the memorial day. Hold your token at the monument and tell the listener who you knew. The shrine of Marcus Garvey is in the same park. Journal gets a "Your journey" page. | The final answer: what a country owes the people who cannot look after themselves. |
+| 2 | **Inside Myers Ward**, the same afternoon | A long wooden hall of iron beds close together, because it holds more women than it was built for. Meet Miss Pearl (sold yam at the market), Miss Maude (taught children to read) and one more. Help each woman put her things back where she likes them (a photo, a Bible, a comb, a radio). Each item opens a "life" journal page. | Whose story you sit with longest. If she got out, you visit her first in chapter 6. If she did not, you speak of her first at the monument in chapter 7. |
+| 3 | **Goodnight**, Monday 19 May, dusk | A quiet evening on the veranda. A hymn. A fictional radio voice talks about the election campaign and the grown-ups look worried. The nurse on duty says "We have more ladies than beds." Say goodnight to each woman. Nothing sad happens, and the player is never warned. | Your words at goodnight ("I will come Saturday"). They come back at the monument in chapter 7. |
+| 4 | **The night**, Tuesday 20 May, about 1 a.m. | Woken by sirens and an orange light on the ceiling. Run with Gran to the corner and stop at the police rope. From there you see the old wooden ward burning: flames in the windows and along the roof, sparks, thick smoke, the engines from Kingston and St Andrew, firefighters with hoses and ladders, and a crowd of neighbours. A firefighter asks you to hold the gate while the children from the nearby building are led out to the road. The roof and walls fall, seen from far off, and the crowd goes quiet. Hand blankets to the children and to the women who got out. You find Miss Pearl and Miss Maude sitting wrapped in blankets and ask after Miss Iris and the others. A nurse says, "We are checking every name." Dawn: smoke over the road, the No. 43 bus waved through by a police officer. | None. The card before it offers "Skip to the morning". |
+| 5 | **A day of mourning**, Monday 26 May, National Heroes Park | Thousands in the park. Walk with Gran to the grave. Hear three mourners (a retired nurse, a neighbour, a man whose aunt lived at the Home). See the Home's staff walking to the grave and an old lady being comforted. Learn that Miss Iris and the fourth woman did not get out. A nurse from the Home says it plainly and gently. | How you take part: lay a flower, sing, or stand quietly. People later remember it. |
+| 6 | **After**, 1980 to about 1985, the new Golden Age Home | Visit Miss Pearl and Miss Maude, who got out. Hear what changed: a committee, a new home, an inquest in May 1981 that found no one criminally responsible. **Fact, opinion or rumour:** Miss Maude, the teacher, marks your six cards (reuse Garvey chapter 7), then choose a fair question to ask about the cause. | The fair question you ask about the cause. |
+| 7 | **The monument**, National Heroes Park, today | You are grown. A young listener asks who the women were. Put six events on the timeline board (reuse Garvey chapter 8): 1870, 1980, the burial, 1981, the new home, the memorial day. Place a token for each of the two women who did not get out, and tell the listener who they were. The shrine of Marcus Garvey is in the same park. Journal gets a "Your journey" page. | The final answer: what a country owes the people who cannot look after themselves. |
 
 Optional extra, only if wanted later: a short **1870 flashback** for the Home's opening, like Port Royal's Ned story. Every scene would be fictional and labelled, so it is not needed for the main arc.
 
 ### Rule of truth
 
-Big events stay as they happened. Your choices change what you learn, what people say to you later, and whose name is on your token. Nobody can be saved. Every chapter ends with a "History / Story" journal page that says what really happened and what was fictional.
+Big events stay as they happened. Your choices change what you learn, what people say to you later, and whose name is on your token. Nobody can be saved, and which two women get out is fixed, not a choice. Every chapter ends with a "History / Story" journal page that says what really happened and what was fictional.
 
 ## Cast
 
@@ -65,7 +77,7 @@ Big events stay as they happened. Your choices change what you learn, what peopl
 |---|---|
 | The hero (child, then grown) | Fictional |
 | Gran | Fictional |
-| Miss Iris, Miss Pearl, Miss Maude and one more woman | Fictional. They stand for the real women. The journal says so. |
+| Miss Iris, Miss Pearl, Miss Maude and one more woman | Fictional. They stand for the real women. The journal says so. Miss Pearl and Miss Maude get out. Miss Iris and the fourth woman do not (my proposal for which two). |
 | The gatekeeper, the nurse on duty, a firefighter, a police officer, the radio voice, three mourners, the young listener, the children from the nearby building | Fictional |
 | Governor General Florizel Glasspole, Prime Minister Michael Manley, Edward Seaga | Real. Seen only as distant figures at the burial (chapter 5), no speech. |
 | Allen Ridgeway, Kingston's fire chief | Real. Named only in "Dig deeper". |
@@ -137,6 +149,8 @@ All lines are 12 words or fewer. They still need a reading-level pass and a fact
 - Miss Iris at goodnight: "Come Saturday. Bring me batteries for my radio."
 - A firefighter: "Stay behind the rope. Help the little ones to the road."
 - Gran, after: "They could not get in, child. It was too fast."
+- The nurse, at dawn: "We are checking every name. Please be patient."
+- Miss Maude, in a blanket: "Child, you came. Sit with me."
 - The radio: "Monday will be a day of national mourning."
 - The young listener: "Who are they, in the big grave?"
 - You, at the monument: "They were people. Each one had a name."
@@ -160,7 +174,7 @@ A sample journal page:
 
 - **Slipe Pen Road, 1980:** a shopfront row, a cemetery wall, JOS bus stop and bus (route 43), power poles, zinc roofs, a gate.
 - **Myers Ward:** a two-storey wooden building with verandas, and a long ward inside. There are no photographs yet, so it is built from descriptions and the journal says it is an impression.
-- **The fire sequence:** orange glow and flicker, smoke, sparks, sirens, a rope clamp, a fire engine, firefighters and a police officer in 1980 uniform. All sound is synthesised in `engine/audio.js` (no audio files).
+- **The fire sequence:** flames in the windows and roof, flicker, smoke, sparks, the roof and walls falling at a distance, sirens, a rope clamp, a fire engine, firefighters and a police officer in 1980 uniform, blankets, and women and children sitting by the road. Nothing inside the ward. All sound is synthesised in `engine/audio.js` (no audio files).
 - **Characters (the real risk):**
   - Elderly women: older body macros, head ties, house dresses and cardigans, a stick, a white cane. `era.py` makes skirts, blouses and buns but no elderly look yet.
   - **Children** for the nearby building and the park. Garvey's known issue says a very young or short body leaves skin strips at the trouser legs, and a child body is still unbuilt. Allow time.
@@ -170,9 +184,11 @@ A sample journal page:
 
 ## Decisions for the owner (my recommendation first)
 
+Decided by the owner on 13 Nov 2026: items 2 and 3. Items 1 and 4 to 8 are still open, and the plot above assumes my recommendation for each.
+
 1. **The hero:** a fictional child, then grown in chapter 7. (Alternatives: a fictional young nurse's aide, which invites blame questions; a school child on the No. 43 bus, who can only watch.)
-2. **How many of the four women get out:** two, so the survivors can carry chapter 6. The Journal still gives the real numbers, so the page is honest even if the cast is kinder.
-3. **The night:** glow, smoke and sound only, seen from behind the rope. No building collapse shown close, no one inside.
+2. **How many of the four women get out: two (decided).** The survivors carry chapter 6, and the Journal still gives the real numbers, so the page is honest even if the cast is kinder. Which two is my proposal, not yet confirmed: Miss Pearl and Miss Maude get out, Miss Iris and the fourth woman do not. Miss Maude, a teacher, can run chapter 6's sorting activity.
+3. **The night: a little more detailed, but not graphic (decided).** The burning ward can be seen from behind the rope, including the fall of the roof and walls at a distance. Never the inside, never anyone hurt. See "How the fire is told".
 4. **A "Skip to the morning" card** before chapter 4.
 5. **Politics:** no party named on the main path. The two official views and the inquest go in "Dig deeper".
 6. **Fact, opinion or rumour** as chapter 6's activity, which teaches how to read uncertain history.
