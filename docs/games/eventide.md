@@ -1,0 +1,194 @@
+# Eventide 1980: the game plan (story draft)
+
+Status: **story plot only, for the owner to sign off.** No code, models or menu card exist yet. Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/games/garvey.md` first. Garvey is the closest model: its panels, journal, chapters, saving and helper arrow are the ones to copy, and two of its activities are reused below.
+
+Working title: **Eventide 1980**. Code would live in `games/eventide/` (copied from `games/_template/`, then the Garvey panels).
+
+## The idea in one paragraph
+
+A made-up child lives near Slipe Pen Road in Kingston and visits friends in the Eventide Home, a government home for poor old women, in May 1980. The child gets to know four women in the old wooden Myers Ward, hears their lives, and says goodnight to them on a Monday evening. In the early hours of Tuesday 20 May the ward burns. The child watches from behind the police rope and helps a neighbour's gate, then goes with Gran to the day of national mourning, when the women are laid in one grave at National Heroes Park. Later chapters ask what is known and what is only rumour, and the last chapter is at the monument today, where the grown-up hero tells a young listener who the women were.
+
+## The footnote
+
+Port Royal is about one earthquake and the people in it. Eventide is a fire that history books give a few lines, and those lines sit inside a bigger story: the violent 1980 election year. The game's job is to turn that line back into people. It does this the way Port Royal did, with a real event, real places and made-up neighbours who say they are made up. The one thing it cannot copy from Port Royal is a real person at the centre. No source found so far names a survivor, a rescuer or one of the women (see "Not found"), so the hero is made up, as in Garvey.
+
+Dramatic question: **who gets remembered, and who looks after people who cannot look after themselves?**
+
+The line the whole game answers, from a real speaker: Jean Lowrie-Chin, founder of the Caribbean Community of Retired Persons, laid a wreath at the monument in 2020 and said, "These elderly women, they must have done so much to build this country." (Gleaner, 20 May 2020). Use it in "Dig deeper", with her name.
+
+## How the fire is told (owner rule 4, applied)
+
+This is the hardest history in the family of games: it is recent, relatives are alive, the victims were poor, old and disabled, and the cause is political and unproven. These rules are part of the plan, not polish.
+
+1. **Never show inside the ward or any person in the fire.** The fire is seen only from far away, behind a police rope: a glow, smoke, sparks, then quiet.
+2. **No sounds of distress.** Sirens, crackle, engines, a crowd going quiet.
+3. **The player is never in danger** and the rope stops the player near the fire (the same kind of clamp as `clampPos`).
+4. **No choice in the night chapter.** Nothing you do changes what happened, and a line says so: "They could not get in, child. It was too fast." (Real fact: firefighters could not enter and the building fell about four minutes after they arrived.) This stops a child feeling it was their fault.
+5. **Numbers only in the Journal, said plainly:** "More than 140 women died. Sources give different numbers, from 144 to 157." About 58 of the women in the ward got out. No counting of bodies on the main path.
+6. **The cause is never settled.** The game says: "Nobody has proved what started the fire. People still disagree." No party, person or group is named as the cause on the main path. "Dig deeper" gives the two reported views, fairly: the Prime Minister's (arson, with phone lines said to be cut) and the fire chief's (an electrical fault was possible, no proof of arson), and the 1981 inquest.
+7. **Left out completely:** the smell, what was heard, anything about bodies, and any claim that doors or windows were locked (no source read says so).
+8. **Staff are not blamed.** The Home had about 180 staff for about 700 residents (JNHT), and the Journal can say plainly that it was crowded and old.
+9. **Real officials appear only as distant figures at the burial, with no invented speech.** News comes through a made-up radio voice that only says documented facts ("Monday is a day of national mourning").
+10. **A "This chapter is sad" card** before chapter 4, with "Continue" and "Skip to the morning". The game is for ages 6 and up.
+11. **A review step before it goes public:** have a Jamaican heritage or elder-care person read the finished game. Families of the women are alive.
+
+## The hero
+
+- Made up, first person "you", no name (as in Garvey). About 11 in 1980.
+- Lives on a lane off Slipe Pen Road with **Gran** (made up), who visits her friend in the Home on Saturdays.
+- In chapter 7 you are the same person grown up (about 57 in 2026) at the monument with a young listener, as chapter 8 of Garvey jumps to the present.
+- The journal says: the hero, Gran, and the four women are made up and stand for the real women of Eventide.
+
+## Chapters
+
+Seven chapters, in the Garvey pattern: one place, one or two hands-on activities, one remembered choice. Branches rejoin so each chapter has one `done()` test for the autoplayer.
+
+| # | Where and when | Walk and do | Remembered choice |
+|---|---|---|---|
+| 1 | **Slipe Pen Road**, a Saturday in early May 1980 | Ride the No. 43 bus with Gran. Walk past the shops and the cemetery wall to the gate of the Home. Meet the gatekeeper, then Miss Iris, a blind woman on the Myers Ward veranda. Give her your gift and read her a letter aloud. Journal: "Eventide Home" (opened 1 July 1870, paid for by the city). | What you bring Miss Iris: mangoes, radio batteries, or a song. She mentions it later. |
+| 2 | **Inside Myers Ward**, the same afternoon | A long wooden hall of iron beds close together, because it holds more women than it was built for. Meet Miss Pearl (sold yam at the market), Miss Maude (taught children to read) and one more. Help each woman put her things back where she likes them (a photo, a Bible, a comb, a radio). Each item opens a "life" journal page. | Whose story you sit with longest. Her name is on your token in chapter 7. |
+| 3 | **Goodnight**, Monday 19 May, dusk | A quiet evening on the veranda. A hymn. A made-up radio voice talks about the election campaign and the grown-ups look worried. The nurse on duty says "We have more ladies than beds." Say goodnight to each woman. Nothing sad happens, and the player is never warned. | Your promise at goodnight ("I will come Saturday"). It comes back in chapter 5. |
+| 4 | **The night**, Tuesday 20 May, about 1 a.m. | Woken by sirens. Go to the corner with Gran and stop at the police rope. The glow, the engines from Kingston and St Andrew, the crowd. A firefighter asks you to hold the gate while the children from the nearby building are led out to the road. Wrap a child in a blanket. The ward falls. Quiet. Dawn: smoke over the road, the No. 43 bus waved through by a police officer. | None. The card before it offers "Skip to the morning". |
+| 5 | **A day of mourning**, Monday 26 May, National Heroes Park | Thousands in the park. Walk with Gran to the grave. Hear three mourners (a retired nurse, a neighbour, a man whose aunt lived at the Home). See the Home's staff walking to the grave and an old lady being comforted. Learn which of your four women got out and which did not (see decisions). | How you take part: lay a flower, sing, or stand quietly. People later remember it. |
+| 6 | **After**, 1980 to about 1985, the new Golden Age Home | Visit the women who got out. Hear what changed: a committee, a new home, an inquest in May 1981 that found no one criminally responsible. **Fact, opinion or rumour:** sort six cards (reuse Garvey chapter 7), then choose a fair question to ask about the cause. | The fair question you ask about the cause. |
+| 7 | **The monument**, National Heroes Park, today | You are grown. A young listener asks who the women were. Put six events on the timeline board (reuse Garvey chapter 8): 1870, 1980, the burial, 1981, the new home, the memorial day. Hold your token at the monument and tell the listener who you knew. The shrine of Marcus Garvey is in the same park. Journal gets a "Your journey" page. | The final answer: what a country owes the people who cannot look after themselves. |
+
+Optional extra, only if wanted later: a short **1870 flashback** for the Home's opening, like Port Royal's Ned story. Every scene would be made up and labelled, so it is not needed for the main arc.
+
+### Rule of truth
+
+Big events stay as they happened. Your choices change what you learn, what people say to you later, and whose name is on your token. Nobody can be saved. Every chapter ends with a "History / Story" journal page that says what really happened and what was made up.
+
+## Cast
+
+| Who | Real or made up |
+|---|---|
+| The hero (child, then grown) | Made up |
+| Gran | Made up |
+| Miss Iris, Miss Pearl, Miss Maude and one more woman | Made up. They stand for the real women. The journal says so. |
+| The gatekeeper, the nurse on duty, a firefighter, a police officer, the radio voice, three mourners, the young listener, the children from the nearby building | Made up |
+| Governor General Florizel Glasspole, Prime Minister Michael Manley, Edward Seaga | Real. Seen only as distant figures at the burial (chapter 5), no speech. |
+| Allen Ridgeway, Kingston's fire chief | Real. Named only in "Dig deeper". |
+| The real residents who died or survived | Never named. No source read names them. |
+
+## What really happened (the facts the game stands on)
+
+Each line is checked against at least one source below. "Sources differ" lines are listed again under "Research".
+
+- **1 July 1870:** the Eventide Home opens on Slipe Pen Road, Kingston 5, for old women. It is paid for by the city's "poor rates" and later takes in old men and disabled children too. (JNHT; Local Government Jamaica.)
+- **By 1980:** about 700 residents and about 180 staff. Three buildings. Newspapers had reported poor conditions for years. (JNHT; Gleaner 2020.)
+- **Tuesday 20 May 1980, about 1 a.m.:** fire in the Myers Ward, an old two-storey wooden building with 204 to 211 women in it against a legal limit of 180. Kingston and St Andrew crews arrive quickly but cannot enter. The building falls about four minutes after they arrive. They carry disabled children out of a nearby building and stop the fire spreading to the rest of the Home.
+- **That morning:** smoke over Slipe Pen Road. A Gleaner reader remembers a police officer waving the No. 43 bus on.
+- **Monday 26 May 1980:** a day of national mourning. About 145 of the dead are buried in 26 wooden coffins in one grave at National Heroes Park. Thousands attend. A memorial service is held at Holy Trinity Cathedral on North Street.
+- **30 October 1980:** the general election. The JLP (Edward Seaga) wins 51 of 60 seats from the PNP (Michael Manley). The campaign was very violent. Sources say hundreds died. About six months after the fire, gunmen attack the Home again and two people are hurt (JNHT).
+- **5 May 1981:** a coroner's jury meets for 17 minutes and finds no one criminally responsible. (Gleaner 2020.)
+- **About 1984 or 1985:** the survivors are moved to the new Golden Age Home. (Dates differ.)
+- **1997:** Sistren Theatre Collective stages *QPH* in memory of the fire.
+- **2020:** a wreath-laying at the monument on the 40th anniversary.
+- **2025:** the Local Government Minister says the Government will ask the Governor General to mark 20 May as Eventide Home Memorial Day. (To verify, see below.)
+
+## Research
+
+Everything below comes from secondary sources read on 13 Nov 2026. **The New York Times (1980), the Daily Gleaner of May 1980, Eyre's 1984 *Geographical Review* paper and Davis (1993) were not read directly.** Wikipedia cites them, so treat those lines as "reported by". Public photographs of the Home, the ward and the monument were not found. Verify before any line goes in the game.
+
+### Sources read
+
+- Wikipedia, [Eventide Home fire](https://en.wikipedia.org/wiki/Eventide_Home_fire) (a pointer to its sources only).
+- Jamaica National Heritage Trust, [Dis 'N Dat column by Daive A. Dunkley](http://www.jnht.com/disndat_eventide.php).
+- Local Government Jamaica, [The History of the Eventide Home](https://www.localgovjamaica.gov.jm/the-history-of-the-eventide-home/).
+- The Gleaner: [Eventide Home fire kills 153 old women](http://past.jamaica-gleaner.com/article/news/20241120/eventide-home-fire-kills-153-old-women) (20 Nov 2024), [Eventide memories still raw](https://past.jamaica-gleaner.com/article/lead-stories/20200520/eventide-memories-still-raw), [Eventide fire victims remembered 40 years later](http://past.jamaica-gleaner.com/article/news/20200520/eventide-fire-victims-remembered-40-years-later), [Eventide 40 years: elderly warehousing concern](https://past.jamaica-gleaner.com/article/lead-stories/20200520/eventide-40-years-elderly-warehousing-concern) (all 20 May 2020), and [Photo flashback: Eventide Home fire victims buried in Heroes Park](https://past.jamaica-gleaner.com/article/esponsored/20230526/photo-flashbackeventide-home-fire-victims-buried-heroes-park) (26 May 2023).
+- Jamaica Observer, [May 20 on this day in Jamaican history](https://www.jamaicaobserver.com/2020/05/20/may-20-on-this-day-in-jamaican-history-the-eventide-tragedy-claims-144-lives/) (20 May 2020).
+- Our Today, [Moves to have May 20 declared Eventide Home Memorial Day](https://our.today/moves-to-have-may-20-declared-eventide-home-memorial-day/) (31 May 2025).
+- Wikipedia, [1980 Jamaican general election](https://en.wikipedia.org/wiki/1980_Jamaican_general_election) and [National Heroes Park](https://en.wikipedia.org/wiki/National_Heroes_Park).
+
+### Where sources disagree (the game must not pick a side silently)
+
+| Question | What the sources say | Plan |
+|---|---|---|
+| How many died | 144 recovered plus 2 who died in hospital plus 7 missing and presumed dead (Observer, Gleaner 2024); 145 buried (Gleaner, 27 May 1980); 146 (JNHT); 153 (Gleaner headline); 157 (a New York Times headline, via Wikipedia) | "More than 140 women died. Sources give different numbers." |
+| How many were in the ward and how many got out | 211, with 58 escaping (JNHT, Observer); 204 (Wikipedia, Our Today). The NYT reportedly said only 33 of 204 had been found alive hours later. | "About 58 got out" with the doubt in "Dig deeper" |
+| What started the fire | Prime Minister: arson possible, phone lines said to be cut. Fire chief: electrical fault possible, no proof of arson. Police noted reports of four men running from the building. A UK Home Office scientist wrote that a deliberate start could not be ruled out. The 1981 jury found no one criminally responsible. | "Nobody has proved it." No name or party. |
+| When the survivors moved | 1984 (Gleaner 2020) or 1985 (Local Government Jamaica) | "About five years later" |
+| Whether the reforms worked | JNHT: the committee's ideas were not carried out and Eventide closed in the mid 1980s. Local Government Jamaica: a new home was built to avoid another fire. The Gleaner later reported poor treatment at the new home. | Say there was a new home and that people said more was needed |
+| The memorial day | Our Today (31 May 2025): the Minister said the Government will ask the Governor General to mark 20 May, and that there had never been an official day. Local Government Jamaica: Cabinet approved a National Day of Remembrance on 26 May 2025. | Find the Gazette or Cabinet note before chapter 7 names a date |
+| Who is buried | 145 (Gleaner 1980) or "140 women" (Wikipedia, National Heroes Park) | "About 145" with the doubt in "Dig deeper" |
+
+### Not found (never invent)
+
+- The name of any woman who died or survived, and of any staff member (a "Master David E. Dunkley" is mentioned in one JNHT summary and still has to be checked).
+- What the ward looked like inside, daily routines, why each woman was admitted.
+- The inscription or exact design of the Eventide monument. One source says each token on it stands for a life lost (Observer, 2020). Look at photographs and the Heritage Trust before the game shows it.
+- The time the fire was reported, and what neighbours did that night. Chapter 4's gate-holding scene is made up, built on the real fact that firefighters carried disabled children out. The journal says so.
+- Whether the Home had fire alarms, locks or a night watch.
+
+### To read next
+
+The Daily Gleaner for 21 to 27 May 1980 (Gleaner archive and the National Library of Jamaica), the NYT from May 1980, Fae Ellington's documentary *The Golden Years*, the Sistren Theatre Collective's *QPH* (1997), the Eyre paper, and the 1981 inquest report. Also confirm the "General Echo" record titled "Eventide Fire a Disaster" (a record store listing, not yet checked) before any mention.
+
+## Sample lines (placeholder wording, for tone only)
+
+All lines are 12 words or fewer. They still need a reading-level pass and a facts check.
+
+- Gran: "Hold the mangoes in both hands. They are for Miss Iris."
+- Miss Iris: "I cannot see you, child. But I know your footsteps."
+- Miss Pearl: "Thirty years I sold yam in the market. My feet remember."
+- Miss Maude: "I taught half this street to read. Ask me a sum!"
+- The nurse on duty: "We have more ladies than beds. We do our best."
+- Miss Iris at goodnight: "Come Saturday. Bring me batteries for my radio."
+- A firefighter: "Stay behind the rope. Help the little ones to the road."
+- Gran, after: "They could not get in, child. It was too fast."
+- The radio: "Monday will be a day of national mourning."
+- The young listener: "Who are they, in the big grave?"
+- You, at the monument: "They were people. Each one had a name."
+
+A sample journal page:
+
+```js
+{ id: 'footnote', title: 'A footnote',
+  simple: ['A footnote is a small note at the bottom of a page.', 'Some events get only a line like that.', 'In this game, each woman gets a face.'],
+  deeper: ['Miss Iris, Miss Pearl and Miss Maude are made up. They stand for the real women of Eventide.',
+           '"These elderly women, they must have done so much to build this country." Jean Lowrie-Chin, Gleaner, 20 May 2020.'] }
+```
+
+## What the engine gives and what is new
+
+**Reuse from Garvey (copy, as Garvey copied Port Royal):** the title screen, Journal and chapters panel, saving, the "Next chapter" card, the helper arrow, the talk and listening pattern with remembered choices, the **sort cards** (chapter 7 there, chapter 6 here), the **timeline board** (chapter 8 there, chapter 7 here), and **National Heroes Park** (Garvey's chapter 8 place, used in chapters 5 and 7 here, with the Eventide monument added and, for chapter 5, the 1980 park without it). No shared code is moved into `engine/` for now.
+
+**Reuse from Port Royal:** the earthquake's phase pattern (`Q`: calm, tremor, sink, sea) is the model for chapter 4's phases: asleep, sirens, the rope, the ward falls, dawn. Fire and smoke are lights and simple sprites.
+
+**New to build:**
+
+- **Slipe Pen Road, 1980:** a shopfront row, a cemetery wall, JOS bus stop and bus (route 43), power poles, zinc roofs, a gate.
+- **Myers Ward:** a two-storey wooden building with verandas, and a long ward inside. There are no photographs yet, so it is built from descriptions and the journal says it is an impression.
+- **The fire sequence:** orange glow and flicker, smoke, sparks, sirens, a rope clamp, a fire engine, firefighters and a police officer in 1980 uniform. All sound is synthesised in `engine/audio.js` (no audio files).
+- **Characters (the real risk):**
+  - Elderly women: older body macros, head ties, house dresses and cardigans, a stick, a white cane. `era.py` makes skirts, blouses and buns but no elderly look yet.
+  - **Children** for the nearby building and the park. Garvey's known issue says a very young or short body leaves skin strips at the trouser legs, and a child body is still unbuilt. Allow time.
+  - 1980s clothes for men, women, schoolchildren and officials.
+  - A slow walk clip for the women, and sitting, which already exists.
+- **Menu card and a poster picture** at the end, as for Garvey.
+
+## Decisions for the owner (my recommendation first)
+
+1. **The hero:** a made-up child, then grown in chapter 7. (Alternatives: a made-up young nurse's aide, which invites blame questions; a school child on the No. 43 bus, who can only watch.)
+2. **How many of the four women get out:** two, so the survivors can carry chapter 6. The Journal still gives the real numbers, so the page is honest even if the cast is kinder.
+3. **The night:** glow, smoke and sound only, seen from behind the rope. No building collapse shown close, no one inside.
+4. **A "Skip to the morning" card** before chapter 4.
+5. **Politics:** no party named on the main path. The two official views and the inquest go in "Dig deeper".
+6. **Fact, opinion or rumour** as chapter 6's activity, which teaches how to read uncertain history.
+7. **Title:** "Eventide 1980" (working).
+8. **Memorial day:** do not name a date until the Gazette or Cabinet note is found.
+
+## Build order
+
+1. Owner signs off this plot (and decisions above).
+2. Research pass two (the sources under "To read next"). Update the tables.
+3. Spike: build an elderly woman and a child character and check them under the game's lights.
+4. Chapters 1 to 3, the warm part. Start here so players care before the night.
+5. Chapter 4, the night, built and tested alone.
+6. Chapters 5 to 7, using Garvey's park, sort cards and timeline.
+7. Polish: reading-level pass, facts check, phone layout, sound, the sensitivity read by a heritage or elder-care reader, the menu card.
+
+## Checks before shipping
+
+`docs/TESTING.md`: screenshots of every place, the autoplayer for every chapter, the phone layout, a reading-level pass, a facts check against this file, and the review step in "How the fire is told", rule 11.
