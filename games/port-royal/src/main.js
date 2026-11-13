@@ -1828,7 +1828,8 @@ const markY = (a, w) => {   /* how high above their feet the speech mark floats:
   const cands = [abba, ...Object.values(people), ...Object.values(survivors), FBG.qm, FBG.exq, FBG.carrier, ...(FBG.d || [])]; let best = null, bd = 1.6; const p = new THREE.Vector3();
   for (const m of cands) { if (!m || !m.parent || !m.visible) continue; m.getWorldPosition(p); const d = Math.hypot(p.x - w[0], p.z - w[1]); if (d < bd) { bd = d; best = m; } }
   if (!best) return fall; const now = performance.now(), u = best.userData;
-  if (!u.hgt || now - (u.hgtT || 0) > 1500) { best.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(best), h = bb.max.y - bb.min.y; u.hgt = Math.max(1.0, Math.min(2.3, h)); u.hgtT = now; }
+  if (!u.hgt || now - (u.hgtT || 0) > 1500) { best.updateMatrixWorld(true); best.traverse((o) => { if (o.isSkinnedMesh) { o.skeleton.update(); o.computeBoundingBox(); } });   /* a skinned mesh keeps its first bounding box, so refresh it from the pose it is in now */
+    const bb = new THREE.Box3().setFromObject(best), h = bb.max.y - bb.min.y; u.hgt = Math.max(1.0, Math.min(2.3, h)); u.hgtT = now; }
   return u.hgt + 0.14; };
 const TB = { el: null, world: new THREE.Vector3(), a: null };
 TICKS.push(() => { markN = 0; TB.a = null; const now = performance.now() / 1000;
