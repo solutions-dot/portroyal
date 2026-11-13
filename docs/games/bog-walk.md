@@ -51,9 +51,20 @@ python3 -m http.server 8765                  # then open http://localhost:8765/g
 #   water (&wl=0.55&z=-12&yaw=3.14), dark (&wl=0.9&torch=0&vig=0.85), hud (the worst-case words and buttons) are views;
 #   add &x= &z= &yaw= &pitch= &wl= &torch= &vig= &sky= to place the camera and the water by hand, and &quick to run every timed part at 15% length.
 # ?auto=1 plays the whole night, ?auto=2 presses Skip at the first sign of water, ?auto=3 plays the opening cards by their own timers first. The result is in the page title and in #autolog.
-# In the console: __bw.hudOverlaps() and __bw.propOverlaps() list anything that overlaps (both should print []), and
-#   __bw.audit() runs the engine's place audit (engine/audit.js: floating objects, people inside solids, spots that cannot be reached) and should report nothing.
-#   The autoplayer runs all three and fails if any reports a problem. The engine's auditHeld needs a Mixamo body, so it does not apply to the first-person hand (hudOverlaps tests that by rays).
+# The automatic checks (owner rule, docs/TESTING.md section 5). Each writes its lines to #autolog and its count to the page title; every one must report 0:
+#   ?test=audit    AUDIT n   the engine's place audit (floating things, people inside solids, spots that cannot be reached), tools that overlap, and anything hung
+#                            inside the pipe that is really outside its wall (hidden). The Tube has no people yet.
+#   ?test=held     HELD n    the torch in your hand (first person, so no skeleton for the engine's auditHeld): exactly four fingers and one thumb with a nail, every digit on
+#                            the stick, the stick upright, and the hand never overlaps a word or button, runs off the screen, or covers the middle (with and without the black bars)
+#   ?test=layout   LAYOUT n  each interface state in turn (title, work, the water, the dark with the black bars in, the opening card, the end card): nothing overlaps, runs off
+#                            the screen or is clipped; the end card's button and credit link are on top. Run it at 390x800, 667x375, 800x500 and 1280x720.
+#   (?test=resume does not apply yet: this game does not save.)
+#   node tools/build.mjs bog-walk --dev, then for example:  google-chrome --headless=new --no-sandbox --use-gl=swiftshader --enable-unsafe-swiftshader --window-size=667,375 \
+#     --virtual-time-budget=60000 --dump-dom "http://localhost:8765/games/bog-walk/site/index.html?test=layout" | sed -n '/<pre id="autolog"/,/<\/pre>/p'
+# Proof that the checks can fail: with a flame hung above the roof, a bucket under the manhole, a finger off the stick, a fifth finger, only three fingers, a tipped torch, or
+#   a word moved onto another, the right check reports it, and with everything restored it reports 0. Do this again whenever a check is changed.
+# In the console: __bw.hudOverlaps(), __bw.propOverlaps(), __bw.tubeAudit() and __bw.tubeHeld() return the lists behind those checks (all should be empty).
+#   The autoplayer (?auto=1, 2 or 3) runs the audit and the overlap checks too and fails if any reports a problem.
 ```
 
 ### The cinematic moments (owner rule: the major events must feel cinematic)
@@ -75,9 +86,9 @@ No cinematic element may break the no-overlap rule. The bars are in the same fle
 
 - **Menu card.** The card is in `menu/index.html` (class `bogwalk`, rust orange, "New" tag, "Bog Walk, 1904 / The Tube") with the poster `menu/bog-walk.jpg`. To remake the poster, build with `--dev`, serve the repo and render `games/bog-walk/site/index.html?shot=poster` at 1280 by 720 (the view hides the words and frames the manhole's light at the end of the pipe); the card's picture is that render brightened about a third and saved as a JPEG of about 80 KB. The menu was checked at seven sizes for overlapping or clipped card text.
 
-- **Credit link.** "Created by **Kellz 5.0**" is a link to `https://www.instagram.com/kellzilla_5.0` (opens in a new tab, `rel="noopener noreferrer"`), on the title screen and on the end card. The other places that show the credit are not linked yet: `menu/index.html`, `menu/about.html`, and the credits panels in `games/port-royal`, `games/garvey` and `games/kendal` (their `#dev` button and `.crbig` line). Link them in one small commit when the owner says so.
+- **Credit link.** "Created by **Kellz 5.0**" is a link to `https://www.instagram.com/kellzilla_5.0` everywhere it appears: this game's title screen and end card, the menu header, the About page footer, and the credits panels of Port Royal, Garvey and Kendal (the big "Created by" line inside the panel; the small "Created by Kellz 5.0" button in those games still just opens the panel). Every link opens in a new tab with `rel="noopener noreferrer"`. A new game should do the same.
 
-- **Engine bug (not fixed here, because `engine/` is shared and other chats are editing games):** `stepSound('water')` in `engine/audio.js` sets `src.buffer` twice (line 23 sets it for every kind, then the `'water'` branch sets it again). Browsers allow the buffer to be set only once, so the second set throws `InvalidStateError` and breaks whatever calls it, the first time anyone steps in water with sound on. Muted runs and headless runs never reach it. The fix: delete `src.buffer = AU.step || AU.crack;` from the `'water'` branch, and add `|| k === 'water'` to the condition on line 23, so water gets the softer `AU.step` source it was meant to have. Bog Walk uses its own `waterStep` in `src/sfx.js` instead. Check whether Port Royal's swim and Kendal's beach call the engine's version.
+- **Engine bug, fixed.** `stepSound('water')` in `engine/audio.js` used to set the sound's buffer twice, which browsers refuse, so it threw the first time anyone stepped in water with sound on (Port Royal's swim, Kendal's beach and bucket actions call it). It is fixed in the engine now. Bog Walk keeps its own `waterStep` in `src/sfx.js` only because it deepens the sound with the water and sends it through the pipe's echo.
 - **Test sound in a browser that allows it.** The autoplayer is silent in headless Chrome unless it is started with `--autoplay-policy=no-user-gesture-required`; run it that way once after any sound change, because errors in sound code only show when the sound really plays.
 - **It is already on the public site.** `tools/dist.mjs` builds every folder in `games/` that does not start with `_`, so this game is served at `/games/bog-walk/site/` after the next deploy, although the menu does not link to it yet. Add the menu card (see `docs/NEW_GAME.md`, step 1) only when the owner says it is ready.
 - **Looking straight up the manhole** (`?shot=up`) is the roughest view: the neck and the ring seam beside it are lit very close and a little faceted. The end of the night will glide you up through it, so polish it when the station yard is built.

@@ -57,8 +57,7 @@ export function clank() {   /* iron knocking on iron, a long way off */
   for (const [k, v] of [[1, 0.06], [2.76, 0.03], [5.4, 0.015]]) { const o = c.createOscillator(), og = c.createGain(); o.type = 'sine'; o.frequency.value = f * k; og.gain.setValueAtTime(0.0001, t0); og.gain.exponentialRampToValueAtTime(v, t0 + 0.004); og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9); o.connect(og); og.connect(g); o.start(t0); o.stop(t0 + 0.95); }
 }
 
-/* A foot in water. The engine has its own stepSound('water'), but it sets the sound's buffer twice, which browsers refuse, so it throws.
-   This one is used here instead (see docs/games/bog-walk.md). Deeper water makes a lower, heavier slosh. */
+/* A foot in water, for this game: it goes through the pipe's echo and gets lower and heavier as the water deepens (the engine's plain stepSound('water') does neither). */
 export function waterStep(depth = 0.1) {
   if (!live() || !B.ok) return; const c = AU.ctx, t0 = c.currentTime + 0.005, src = c.createBufferSource(), f = c.createBiquadFilter(), g = send(Math.random() * 0.3 - 0.15, 0.4), deep = Math.min(1, depth / 0.8);
   src.buffer = noiseBuf; src.loop = true; f.type = 'bandpass'; f.Q.value = 0.8;

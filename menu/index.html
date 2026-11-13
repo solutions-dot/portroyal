@@ -53,6 +53,9 @@
   .sub-small{font-size:.9rem;color:rgba(255,247,232,.8)}
   .sub-box a{color:var(--mango)}
   .credit b{color:var(--paper);font-weight:600}
+  .credit a{color:inherit;text-decoration:underline;text-underline-offset:3px;display:inline-block;padding:.35rem .15rem;margin:-.35rem -.15rem}   /* the padding makes a bigger tap area; the negative margin keeps the layout where it was */
+  .credit a:hover{color:var(--mango)}
+  .credit a:focus-visible{outline:3px solid var(--mango);outline-offset:2px;border-radius:4px}
 
   .games{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:clamp(.7rem,1.6vw,1.2rem);min-height:0}
 
@@ -125,7 +128,7 @@
   <header>
     <h1><b class="jam">Jamaican<svg class="flag" viewBox="0 0 60 30" role="img" aria-label="Flag of Jamaica"><clipPath id="fl"><rect width="60" height="30"/></clipPath><g clip-path="url(#fl)"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></g></svg></b><span>History Games</span></h1>
     <div class="side">
-      <p class="credit">Created by <b>Kellz 5.0</b></p>
+      <p class="credit">Created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p>
       <nav class="links" aria-label="More">
         <a href="about.html">About this platform</a>
         <button type="button" id="subopen" class="get">Get updates</button>
