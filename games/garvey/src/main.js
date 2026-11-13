@@ -331,6 +331,7 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = fals
 function showCount() { $('jcount').textContent = unlocked.length; $('jcount').hidden = !unlocked.length; }
 function unlock(id, quiet) { if (unlocked.includes(id)) return; unlocked.push(id); showCount(); saveGame(); if (!quiet) { uiSound('page'); toast('Journal: ' + JOURNAL.find((p) => p.id === id).title); } }
 function renderJournal(sel) {
+  refreshJourney();   /* "Your journey" always shows the choices as they are now, even after a chapter is replayed */
   const tabs = $('jtabs'); tabs.replaceChildren(); const open = sel || unlocked[unlocked.length - 1];
   JOURNAL.filter((p) => unlocked.includes(p.id)).forEach((p) => { const b = document.createElement('button'); b.className = 'tab' + (p.id === open ? ' on' : ''); b.textContent = p.title; b.onclick = () => renderJournal(p.id); tabs.appendChild(b); });
   const left = JOURNAL.length - unlocked.length; if (left > 0) { const m = document.createElement('button'); m.className = 'tab'; m.disabled = true; m.textContent = left + ' more to find'; tabs.appendChild(m); }
