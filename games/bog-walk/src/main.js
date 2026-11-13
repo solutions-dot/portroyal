@@ -5,7 +5,8 @@ import * as THREE from 'three';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, crackle, AU } from '../../../engine/audio.js';
 import { snapMeshes, auditPlace } from '../../../engine/audit.js';   /* dev checks only: it is dropped from the public build */
 import { setAniso } from './gfx.js';
-import { buildTube, makeHand, R, SAND, ZMIN, ZMAX, ZM, halfChord } from './tube.js';
+import { buildTube, R, SAND, ZMIN, ZMAX, ZM, halfChord } from './tube.js';
+import { makeHand } from './hand.js';
 import { initTubeSound, setBeds, hushTube, drip, scrapeSound, voice, hiss, clank, waterStep, heartbeat, boom, airSwell } from './sfx.js';
 
 const $ = (id) => document.getElementById(id);
@@ -33,7 +34,7 @@ addEventListener('resize', resize); resize();
 
 /* ---------- where you are, and the night ---------- */
 const S = { started: false, x: 0.12, z: ZM - 1.5, yaw: 0, pitch: 0, eye: SAND + 1.45 };   /* yaw 0 looks down the pipe, toward -z */
-const N = { phase: 'title', t: 0, q: [], wl: 0, torch: 1, vig: 0, sky: 0, scraped: 0, allDone: false, doneT: 0, dripT: 2, clankT: 7, voiceT: 5, crackT: 3, mixT: 0, hintT: 0, skipped: false, fast: false, out: null, intro: false, glance: 0, glanceT: 0, glanceOn: false, duck: 0, hbT: 0, lift: 0, cine: false, liftNeed: 0, order: null, handHissed: false };
+const N = { phase: 'title', t: 0, q: [], wl: 0, torch: 1, vig: 0, sky: 0, scraped: 0, allDone: false, doneT: 0, dripT: 2, clankT: 7, voiceT: 5, crackT: 3, mixT: 0, hintT: 0, skipped: false, fast: false, out: null, intro: false, glance: 0, glanceT: 0, glanceOn: false, duck: 0, hbT: 0, lift: 0, cine: false, liftNeed: 0, order: null, handHissed: false, turn: null, deadT: 0 };
 const LANE = 0.62;   /* how far from the middle of the pipe you can stand: the wall curves in, and your torch needs room */
 const keys = new Set();
 function locked() { return !$('card').hidden || !S.started || ['title', 'intro', 'out', 'end'].includes(N.phase); }
@@ -42,8 +43,8 @@ function locked() { return !$('card').hidden || !S.started || ['title', 'intro',
 let goalText = '', subTimer = 0;
 function setGoal(t, quiet) { goalText = t; $('goal').textContent = t; if (!quiet) uiSound('goal'); }
 function setClock(t) { $('clock').hidden = !t; $('clock').textContent = t || ''; }
-function say(who, text, ms = 4200) {   /* a line spoken in the pipe, shown as a subtitle; the speaker is heard, not seen */
-  const el = $('sub'); el.textContent = who ? who + ': ' + text : text; el.classList.remove('dim'); clearTimeout(subTimer); subTimer = setTimeout(() => el.classList.add('dim'), ms * (QUICK ? 0.4 : 1)); voice(Math.random() * 1.2 - 0.6, who !== 'Mr Douparrouzel');
+function say(who, text, ms = 4200) {   /* in the water phases the voices come from the direction of the light */   /* a line spoken in the pipe, shown as a subtitle; the speaker is heard, not seen */
+  const el = $('sub'); el.textContent = who ? who + ': ' + text : text; el.classList.remove('dim'); clearTimeout(subTimer); subTimer = setTimeout(() => el.classList.add('dim'), ms * (QUICK ? 0.4 : 1)); voice(['rise', 'dark'].includes(N.phase) ? Math.max(-0.9, Math.min(0.9, -Math.sin(bearingToLight()) * 0.9)) : Math.random() * 1.2 - 0.6, who !== 'Mr Douparrouzel');
 }
 function fadeTo(color, op, ms) { const f = $('fade'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; f.style.opacity = op; }
 /* ---------- the cinematic layer: black bars (the words and buttons move inside them), captions on black, a held breath ---------- */
@@ -107,13 +108,13 @@ function startTrickle() {
       [11.5, () => say('Old Zeke', 'It will pass. It always passes.')]]);
 }
 function startRise() {
-  setPhase('rise'); setClock('4 a.m.'); setGoal('Go to the manhole. Follow the voices.'); boom();
+  setPhase('rise'); setClock('4 a.m.'); setGoal('Turn around. Go to the manhole. Follow the voices.'); boom(); turnToLight();
   say('Mr Douparrouzel', 'Out, all of you! Go to the manhole!');
   at([[6, () => say('Rudy', 'This way! Hurry!')], [15, () => say('Old Zeke', 'Keep to the wall. Go on.')]]);
 }
 function startDark() {
   setPhase('dark'); bars(true); N.handHissed = false; N.hbT = D(1.0); N.order = T.torches.slice().sort((a, b) => Math.abs(b.pos.z - S.z) - Math.abs(a.pos.z - S.z));   /* the far torches go first */
-  setGoal('Go on. Head for the light.'); say('Old Zeke', 'Go on, lad. Keep going.');
+  setGoal('Go on. Head for the pale light behind you.', true); say('Old Zeke', 'Go on, lad. Keep going.'); turnToLight();
   at([[7, () => say('Rudy', 'I can see the light! This way!')], [14, () => say('', 'Keep your hand on the wall.', 3800)]]);
 }
 function startOut(skipped) {
@@ -128,6 +129,10 @@ function showEnd() {
   $('ctext').textContent += ' The rest of the story is still being made.';
   $('ccredit').hidden = false;   /* the credit shows on the end card, like the end of a film */
 }
+/* ---------- the way to the light: you start the night facing away from the manhole, so when the water comes the game turns you toward it, a cue tells you which way to turn, and the voices come from its direction ---------- */
+const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+function bearingToLight() { const dx = 0 - S.x, dz = ZM - S.z; return wrapA(Math.atan2(-dx, -dz) - S.yaw); }   /* + means the light is to your left, - to your right, 3.14 is straight behind */
+function turnToLight(force) { const rel = bearingToLight(); if (!force && Math.abs(rel) < 0.9) return; N.turn = { t: 0, dur: 1.4, from: S.yaw, d: rel }; }   /* a slow, gentle turn of the head toward the shout */
 function skipNight() { if (['trickle', 'rise', 'dark'].includes(N.phase)) startOut(true); }
 $('skip').onclick = skipNight;
 
@@ -149,12 +154,13 @@ function nightTick(dt) {
     (N.order || []).forEach((t, i) => { const st = D(0.3 + i * 0.5); t.on = 1 - ease((N.t - st) / D(0.45)); if (N.t >= st && !t.hissed) { t.hissed = true; if (i < 3) hiss(); } });   /* one by one, with a hiss for the first few */
     N.torch = 1 - ease((N.t - D(3.6)) / D(1.0)); if (N.t >= D(3.6) && !N.handHissed) { N.handHissed = true; hiss(); }   /* yours goes last */
     N.hbT -= dt; if (N.hbT <= 0) { heartbeat(0.15); N.hbT = Math.max(0.6, 0.95 - N.t * 0.012); }   /* a soft heartbeat, a little quicker as it goes on */
-    if (Math.abs(S.z - ZM) < 1.5 || N.t > D(24)) startOut(false);
+    if (Math.abs(S.z - ZM) < 1.5 || N.t > D(40)) startOut(false);   /* if you are still far away after 40 s, a hand takes you the rest of the way */
   } else if (ph === 'out') {
     const o = N.out, T1 = N.fast ? 1.0 : 2.6, k = ease(N.t / D(T1)), g = ease(N.t / D(T1 * 0.4));
     S.x = o.x0 + (0 - o.x0) * g; S.z = o.z0 + (ZM - o.z0) * g; S.eye = o.e0 + (2 * R + 0.1 - o.e0) * k; S.pitch = o.p0 + (1.0 - o.p0) * k;   /* rise into the neck of the manhole and look up at the sky; stop under the sky so the world outside is never seen */ N.sky = k; N.vig = Math.max(0, N.vig * (1 - k)); N.torch = 0; for (const t of T.torches) t.on = Math.max(0, t.on - dt * 2);
     N.wl = Math.min(1.1, N.wl + dt * 0.02);
   }
+  if ((ph === 'rise' || ph === 'dark') && S.z < ZMIN + 8) { N.deadT -= dt; if (N.deadT <= 0) { N.deadT = D(9); say('Rudy', 'Not that way! The light is behind you!'); turnToLight(true); } }   /* the dead end of the pipe is the wrong way: say so, and turn the head toward the light */
   T.water.set(N.wl); T.manhole.setSky(N.sky); $('vig').style.opacity = N.vig;
   /* small sounds, so the pipe is never silent */
   if (['work', 'trickle', 'rise'].includes(ph)) { N.dripT -= dt; if (N.dripT <= 0) { drip(); N.dripT = ph === 'work' ? 1.4 + Math.random() * 3 : 0.5 + Math.random() * 1.1; } }
@@ -214,7 +220,7 @@ function moveTick(dt) {
   if (keys.has('w') || keys.has('arrowup')) f += 1; if (keys.has('s') || keys.has('arrowdown')) f -= 1; if (keys.has('d')) r += 1; if (keys.has('a')) r -= 1;
   const len = Math.hypot(f, r); if (len < 0.05) return 0;
   const busyScraping = T.patches.some((p) => p.clean > 0 && p.clean < 1); if (busyScraping) return 0;   /* you stand still while you scrape */
-  const deep = Math.min(1, N.wl / 1.1), sp = (keys.has('shift') ? 3.2 : 2.1) * Math.min(1, len) * (1 - 0.5 * deep), fx = -Math.sin(S.yaw), fz = -Math.cos(S.yaw), n = Math.max(1, len);
+  const deep = Math.min(1, N.wl / 1.1), sp = (keys.has('shift') ? 3.2 : 2.1) * Math.min(1, len) * (1 - 0.35 * deep), fx = -Math.sin(S.yaw), fz = -Math.cos(S.yaw), n = Math.max(1, len);
   [S.x, S.z] = clampPos(S.x + (fx * f - fz * r) / n * sp * dt, S.z + (fz * f + fx * r) / n * sp * dt);
   stepT -= dt * sp; if (stepT <= 0) { stepT = 1.25; if (N.wl > 0.05) waterStep(N.wl); else stepSound('sand'); }
   return sp;
@@ -225,6 +231,8 @@ function begin(skipIntroCards) {
   audioInit(); initTubeSound(); $('title').hidden = true; $('hud').hidden = false; S.started = true; $('hint').textContent = TOUCH ? 'Left thumb to walk. Drag to look. Tap the rust.' : 'WASD to walk. Drag to look. E to scrape.'; if (skipIntroCards) startWork(); else startIntro(); canvas.focus();
 }
 $('start').disabled = false; $('start').textContent = 'Start'; $('start').onclick = () => begin(false);
+const MENU = { ok: false, url: '../../../menu/' };   /* the Main Menu button shows only where the real game menu exists (the website, not a single-file copy), as in the other games */
+{ const a = $('allgames'); fetch(MENU.url, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then((t) => { if (/History Games/.test(t)) { MENU.ok = true; a.hidden = false; } }).catch(() => {}); }
 
 /* ---------- the frame loop ---------- */
 let last = performance.now(), manual = false, frames = 0;
@@ -236,10 +244,14 @@ function tick(dt) {
   T.update(dt, ft, S.z, 1); hand.update(ft, N.torch); T.hemi.intensity = 0.85 + 0.55 * (1 - N.torch);   /* once the torches are out your eyes get used to the dark a little */
   /* the camera's own acting: a low rumble as the water comes (stronger as it rises), a slow glance at the floor at the first sign of water, a view that narrows as the dark closes in
      and widens as you reach the sky, and the hand rising a little when the black bars are in. None of it changes where you look: your own turning is added to it. */
+  if (N.turn) { N.turn.t += dt; const k = ease(N.turn.t / N.turn.dur); S.yaw = N.turn.from + N.turn.d * k; if (N.turn.t >= N.turn.dur) N.turn = null; }   /* the guided turn toward the light */
+  { const w = $('way'), on = S.started && ['rise', 'dark'].includes(N.phase), rel = on ? bearingToLight() : 0, behind = Math.abs(rel) > 2.2, show = on && Math.abs(rel) > 0.6 && !N.turn;
+    if (w.hidden === show) w.hidden = !show; if (show) { $('waytext').textContent = behind ? 'Turn around' : 'This way'; $('wayarrow').style.transform = behind ? 'rotate(-90deg) scaleX(-1)' : 'rotate(' + (rel > 0 ? 180 : 0) + 'deg)'; } }   /* the cue: a gold arrow and "This way", or "Turn around" when the light is behind you */
   const ph = N.phase; let shake = 0; if (S.started && ph !== 'shot') shake = (ph === 'rise' ? 0.4 + 0.6 * ease(N.wl) : ph === 'dark' ? 1 : ph === 'out' ? Math.max(0, 1 - N.t / D(1.6)) : 0) * 0.0045;
   if (N.glanceOn) { N.glanceT += dt; N.glance = -0.34 * Math.sin(Math.min(1, N.glanceT / D(3.2)) * Math.PI); if (N.glanceT > D(3.2)) { N.glanceOn = false; N.glance = 0; } }
   const fovT = ph === 'dark' ? 61 : ph === 'out' ? 72 : 68; if (Math.abs(camera.fov - fovT) > 0.01) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 1.1); camera.updateProjectionMatrix(); }
   const liftT = N.cine ? N.liftNeed : 0; if (Math.abs(N.lift - liftT) > 0.002) { N.lift += (liftT - N.lift) * Math.min(1, dt * 3); hand.setLift(N.lift); }
+  { const csT = N.cine ? 1 : 0; if (Math.abs(hand.cs - csT) > 0.002) hand.setCine(hand.cs + (csT - hand.cs) * Math.min(1, dt * 3)); }   /* the torch shrinks a little while the bars are in */
   camera.position.set(S.x + Math.sin(ft * 43) * shake, S.eye + bob + Math.sin(ft * 57 + 1) * shake * 0.7, S.z); camera.rotation.set(S.pitch + N.glance, S.yaw, Math.sin(ft * 31) * shake * 1.6, 'YXZ');
   const near = !locked() && !!nearPatch(); $('act').hidden = !near;
 }
@@ -264,7 +276,7 @@ if (__DEV__) {
     return out;
   }
   function hudOverlaps() {   /* every pair of visible words and buttons that overlap, and any that run off the screen */
-    const ids = ['goal', 'clock', 'sound', 'skip', 'hint', 'act', 'sub', 'dialogue', 'barT', 'barB'], out = [], vis = [];
+    const ids = ['goal', 'clock', 'sound', 'skip', 'hint', 'act', 'sub', 'dialogue', 'barT', 'barB', 'way'], out = [], vis = [];
     for (const id of ids) { const e = $(id); if (!e) continue; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || e.closest('[hidden]') || (id === 'sub' && e.classList.contains('dim')) || (!e.textContent.trim() && e.tagName === 'P')) continue; const r = e.getBoundingClientRect(); if (r.width < 1 || r.height < 1) continue; vis.push([id, r]); }
     for (const [id, r] of vis) if (r.left < -0.5 || r.top < -0.5 || r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5) out.push(id + ' off screen');
     /* the torch, fist and sleeve in your hand, tested by the picture they really draw: rays are shot through the screen and must not hit the hand inside any word or
@@ -273,7 +285,8 @@ if (__DEV__) {
       const hit = (sx, sy) => { if (flame && sx >= flame.left && sx <= flame.right && sy >= flame.top && sy <= flame.bottom) return 'flame'; nd.set(sx / innerWidth * 2 - 1, -(sy / innerHeight) * 2 + 1); ray.setFromCamera(nd, camera); const h = ray.intersectObjects(parts, false)[0]; return h ? (h.object.name || 'part') : null; };
       for (const [id, r] of vis) { let found = null; for (let i = 0; i <= 8 && !found; i++) for (let j = 0; j <= 5 && !found; j++) { const f = hit(r.left + (r.right - r.left) * i / 8, r.top + (r.bottom - r.top) * j / 5); if (f && !(id === 'barB' && ['wrist', 'sleeve', 'cuff', 'stick'].includes(f))) found = f; }   /* the forearm and the foot of the stick leave through the bottom, under the bar, on purpose; the fist and flame must stay clear */
         if (found) out.push('hand overlaps ' + id + ' (' + found + ')'); }
-      let off = false; for (let k = 0; k <= 40 && !off; k++) { const f = k / 40; if (hit(2, f * innerHeight * 0.92) || hit(innerWidth - 3, f * innerHeight * 0.92) || hit(f * innerWidth, 2)) off = true; }
+      const arm = (h) => h && !['wrist', 'sleeve', 'cuff'].includes(h);   /* the forearm comes in from the lower right, as a real held torch does, so it may leave the side low down; nothing else may */
+      let off = false; for (let k = 0; k <= 40 && !off; k++) { const f = k / 40, y = f * innerHeight * 0.92, low = y > innerHeight * 0.8; if ((low ? arm(hit(2, y)) : hit(2, y)) || (low ? arm(hit(innerWidth - 3, y)) : hit(innerWidth - 3, y)) || hit(f * innerWidth, 2)) off = true; }
       if (off) out.push('hand runs off the side or top');
       const c = Math.min(innerWidth, innerHeight) * 0.07; let mid = false; for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) if (hit(innerWidth / 2 + i * c, innerHeight / 2 + j * c)) mid = true;
       if (mid) out.push('hand covers the middle of the view'); }
@@ -291,7 +304,7 @@ if (__DEV__) {
     return auditPlace({ id: 'tube', snap: snapMeshes(T.group), npcs: [], walls, bounds: { x0: -LANE, x1: LANE, z0: ZMIN + 3, z1: ZMAX - 1.6 }, start: { x: 0.12, z: ZM - 1.5 },
       actions: T.patches.map((p) => ({ label: 'scrape patch ' + p.i, x: p.pos.x, z: p.pos.z, r: 2.3 })), people: [] });
   }
-  window.__bw = { S, N, T, hand, runAudit, audit: runAudit, stepSound, tick, render, startIntro, skipIntro, bars, hideHud, caption, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), hudOverlaps, handRects, propOverlaps, begin, skipNight, setGoal, say };
+  window.__bw = { S, N, T, hand, keys, runAudit, audit: runAudit, tubeAudit, tubeHeld, stepSound, startRise, startDark, startWork, tick, render, startIntro, skipIntro, bars, hideHud, caption, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), hudOverlaps, handRects, propOverlaps, begin, skipNight, setGoal, say };
   const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
   const shot = q.get('shot');
   if (shot) {
@@ -301,8 +314,8 @@ if (__DEV__) {
     cl.forEach((i) => T.setPatchClean(T.patches[i], 1)); if (q.has('half')) T.setPatchClean(T.patches[+q.get('half')], 0.5);
     if (shot === 'patch') { const p = T.patches[+(q.get('p') || 0)]; S.z = p.z + 1.6; S.x = -Math.sign(p.pos.x) * 0.1; lookAt(p.pos.x, p.pos.y, p.pos.z); }
     if (shot === 'fist') { hand.root.position.set(0.02, 0.36 + num('fy', 0), -0.3 + num('fz', 0)); hand.root.rotation.set(0, num('fry', -0.1), 0); S.pitch = 0; S.yaw = 0; }   /* the hand brought close, to inspect the grip */
-    if (q.has('cine')) { document.body.classList.add('notrans'); bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); }   /* the black bars in, as in the dark and the climb */
-    if (shot === 'cap') { document.body.classList.add('notrans'); hideHud(true); bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); fadeTo('#000', 1, 0); $('fade').style.transition = 'none'; $('cap').style.transition = 'none'; q.get('line') === '2' ? caption('The last tram has gone.', 'The water in the pipe is shut off.') : caption('Bog Walk, Jamaica', 'June 1904'); }   /* an opening title card */
+    if (q.has('cine')) { document.body.classList.add('notrans'); bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); hand.setCine(1); }   /* the black bars in, as in the dark and the climb */
+    if (shot === 'cap') { document.body.classList.add('notrans'); hideHud(true); bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); hand.setCine(1); fadeTo('#000', 1, 0); $('fade').style.transition = 'none'; $('cap').style.transition = 'none'; q.get('line') === '2' ? caption('The last tram has gone.', 'The water in the pipe is shut off.') : caption('Bog Walk, Jamaica', 'June 1904'); }   /* an opening title card */
     if (shot === 'poster') {   /* a clean picture for the menu card: no words, the manhole's beam at the end of the pipe, a sheen of water, your torch lit. Render at 1280x720. */
       hideHud(true); document.body.classList.add('notrans'); if (!q.has('z')) S.z = -2; if (!q.has('yaw')) S.yaw = Math.PI; if (!q.has('pitch')) S.pitch = 0.03; if (!q.has('wl')) N.wl = 0.2; if (!q.has('vig')) { N.vig = 0.22; $('vig').style.opacity = N.vig; } }
     if (shot === 'end') { N.skipped = q.has('skipped'); showEnd(); }   /* the end card, with the credit */
@@ -313,6 +326,68 @@ if (__DEV__) {
     if (shot === 'hud') {   /* the busiest screen: a long goal, the clock, two lines of speech, and one button (add &act=1 for Scrape; Scrape and Skip never show together) */
       setGoal('Scrape the rust off the pipe: 3 of 6. This is a long goal to test wrapping on a small screen.', true); setClock('4 a.m.'); $('skip').hidden = q.has('act'); $('act').hidden = !q.has('act'); say('Mr Douparrouzel', 'Out, all of you! Go to the manhole! This is a long line to test two rows.', 60000); }
     setTimeout(() => { document.body.dataset.shot = shot; document.body.dataset.overlaps = hudOverlaps().join('; ') || 'none'; }, 400);
+  }
+  /* ---------- the automatic checks (owner rule, docs/TESTING.md section 5): ?test=audit, ?test=held, ?test=layout ----------
+     Each writes its lines to #autolog and its count of problems to the page title (AUDIT n, HELD n, LAYOUT n); every one must report 0.
+     ?test=resume does not apply: this game does not save yet. */
+  const report = (title, lines, count) => {
+    let pre = document.getElementById('autolog'); if (!pre) { pre = document.body.appendChild(document.createElement('pre')); pre.id = 'autolog'; pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#000;color:#9f9;font-size:11px;max-width:100%;max-height:100%;overflow:auto;margin:0;padding:4px'; }
+    pre.textContent = lines.join('\n'); document.title = title + ' ' + count;
+  };
+  function tubeAudit() {   /* floating things, people inside solids, spots that cannot be reached (engine/audit.js), tools that overlap, and anything hung inside the pipe that is really outside its wall */
+    const r = runAudit(), issues = [...r.floating, ...r.inside, ...r.stuck, ...propOverlaps()], v = new THREE.Vector3(), sz = new THREE.Vector3();
+    for (const s of snapMeshes(T.group)) {   /* a mesh whose far corner is well outside the pipe would be hidden behind the wall (the first torches were hung above the roof) */
+      s.b.getSize(sz); if (sz.z > 40 || Math.abs((s.b.min.z + s.b.max.z) / 2 - ZM) < 0.9) continue;   /* the wall, floor and water; the manhole's neck, flange and beam */
+      if (s.geo === 'CircleGeometry' && Math.max(sz.x, sz.y) <= 2 * R + 0.06) continue;   /* a round disc as wide as the pipe (its ends): the corners of its square box are not part of it */
+      let far = 0; for (const x of [s.b.min.x, s.b.max.x]) for (const y of [s.b.min.y, s.b.max.y]) far = Math.max(far, Math.hypot(x, y - R)); if (far > R + 0.25) issues.push('a ' + s.geo + ' near z ' + ((s.b.min.z + s.b.max.z) / 2).toFixed(1) + ' reaches ' + far.toFixed(2) + ' m from the pipe axis, outside the wall (hidden)');
+    }
+    T.group.traverse((o) => { if (!o.isSprite) return; v.copy(o.position); if (Math.abs(v.z - ZM) < 0.9) return; const d = Math.hypot(v.x, v.y - R); if (d > R - 0.05) issues.push('a flame at z ' + v.z.toFixed(1) + ' is ' + d.toFixed(2) + ' m from the pipe axis, outside the wall (hidden)'); });
+    return issues;
+  }
+  function tubeHeld() {   /* the torch in your hand (first person, so there is no skeleton for the engine's auditHeld): four fingers and one thumb, every digit on the stick, the stick upright, and the on-screen checks */
+    const lines = [], A = hand.stickA, B = hand.stickB, ab = B.clone().sub(A), len2 = ab.lengthSq(), by = (n) => { const out = []; hand.root.traverse((o) => { if (o.isMesh && o.name === n) out.push(o); }); return out; };
+    const ctr = (o) => { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); return o.geometry.boundingBox.getCenter(new THREE.Vector3()).applyMatrix4(o.matrix); };   /* the middle of a part, whether its shape is baked in or placed by position */
+    const onStick = (p) => { const t = Math.max(0, Math.min(1, p.clone().sub(A).dot(ab) / len2)); return { t, d: p.distanceTo(A.clone().addScaledVector(ab, t)) }; };
+    const fingers = by('finger'), tips = by('fingernail'), palm = by('palm')[0], thumbs = by('thumb'), nails = by('thumbnail');
+    if (fingers.length !== 4) lines.push('the fist has ' + fingers.length + ' fingers, not 4'); if (tips.length !== 4) lines.push('the fist has ' + tips.length + ' fingernails, not 4'); if (nails.length !== 1 || !thumbs.length) lines.push('the fist needs exactly one thumb with a nail (' + thumbs.length + ' thumb parts, ' + nails.length + ' nails)');
+    fingers.forEach((f, i) => { const s = onStick(ctr(f)); if (s.d > 0.05) lines.push('finger ' + (i + 1) + ' is ' + (s.d * 100).toFixed(1) + ' cm from the stick'); if (s.t < 0.15 || s.t > 0.85) lines.push('finger ' + (i + 1) + ' is not on the middle of the stick (at ' + (s.t * 100).toFixed(0) + '%)'); });
+    if (palm) { const s = onStick(ctr(palm)); if (s.d > 0.07) lines.push('the palm is ' + (s.d * 100).toFixed(1) + ' cm from the stick'); }
+    for (const th of thumbs) { const s = onStick(ctr(th)); if (s.d > 0.07) lines.push('a thumb part is ' + (s.d * 100).toFixed(1) + ' cm from the stick'); }
+    { const top = (o) => { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); return new THREE.Box3().copy(o.geometry.boundingBox).applyMatrix4(o.matrix).max.y; };   /* the highest point of a part: the thumb's tip must rise above the top finger */
+      const topFinger = fingers.reduce((hi, f) => (!hi || top(f) > top(hi) ? f : hi), null), thumbTip = thumbs.reduce((hi, f) => (!hi || top(f) > top(hi) ? f : hi), null);
+      if (topFinger && thumbTip && top(thumbTip) < top(topFinger) + 0.005) lines.push('the thumb does not rise above the index finger'); }
+    const up = ab.clone().normalize().applyQuaternion(hand.inner.quaternion).applyQuaternion(hand.root.quaternion).y; if (up < 0.6) lines.push('the torch is tipped over (its up is ' + up.toFixed(2) + ')');
+    document.body.classList.add('notrans'); for (const cine of [false, true]) { bars(cine); if (cine) calcLift(); N.lift = cine ? N.liftNeed : 0; hand.setLift(N.lift); hand.setCine(cine ? 1 : 0); for (const l of hudOverlaps()) if (/^hand/.test(l)) lines.push((cine ? 'with the black bars in: ' : '') + l); } bars(false); N.lift = 0; hand.setLift(0); hand.setCine(0);
+    return lines;
+  }
+  if (q.get('test') === 'audit') { begin(true); setPhase('shot'); setTimeout(() => { const l = tubeAudit(); report('AUDIT', ['tube: ' + l.length + ' issues', ...l.map((x) => '  ' + x)], l.length); }, 600); }
+  if (q.get('test') === 'held') { begin(true); setPhase('shot'); setTimeout(() => { const l = tubeHeld(); report('HELD', ['held items: ' + l.length + ' issues', ...l.map((x) => '  ' + x)], l.length); }, 600); }
+  if (q.get('test') === 'layout') {   /* each interface state in turn: nothing overlaps, runs off the screen or is clipped (run at 390x800, 667x375, 800x500 and 1280x720) */
+    (async () => {
+      const out = [], W = innerWidth, Hh = innerHeight, settle = () => new Promise((r) => setTimeout(r, 500)); document.body.classList.add('notrans');
+      const box = (e) => { const r = e.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }; }, hits = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+      const inside = (name, id, e) => { const r = box(e); if (r.left < -1 || r.top < -1 || r.right > W + 1 || r.bottom > Hh + 1) out.push(`${W}x${Hh} ${name}: ${id} is off the screen (${r.left | 0},${r.top | 0},${r.right | 0},${r.bottom | 0})`); };
+      const check = (name) => {
+        for (const l of hudOverlaps()) out.push(`${W}x${Hh} ${name}: ${l}`);
+        for (const id of ['goal', 'clock', 'sound', 'skip', 'hint', 'act', 'sub']) { const e = $(id), cs = getComputedStyle(e); if (!e.closest('[hidden]') && cs.display !== 'none' && cs.visibility !== 'hidden' && e.getBoundingClientRect().width > 0 && e.textContent.trim() && e.scrollWidth > e.clientWidth + 2) out.push(`${W}x${Hh} ${name}: ${id} is clipped`); }
+      };
+      const reset = () => { for (const id of ['skip', 'act']) $(id).hidden = true; $('hint').textContent = ''; $('sub').classList.add('dim'); bars(false); hideHud(false); captionOff(); $('card').hidden = true; $('skiphint').hidden = true; setClock(''); N.lift = 0; hand.setLift(0); hand.setCine(0); };
+      const busy = () => { setGoal('Scrape the rust off the pipe: 3 of 6. This is a long goal to test the wrapping on a small screen.', true); setClock('4 a.m.'); say('Mr Douparrouzel', 'Out, all of you! Go to the manhole! This is a long line to test two rows.', 6e7); $('sub').classList.remove('dim'); };
+      /* the title screen: the Start button, the link and the words must be in view without scrolling */
+      { const t = $('title'); t.hidden = false; $('hud').hidden = true; await settle(); for (const [id, e] of [['title Start', $('start')], ['title credit link', t.querySelector('.credit a')], ['title heading', t.querySelector('h1')]]) inside('title screen', id, e);
+        const sb = box($('start')), cb = box(t.querySelector('.credit a')); if (hits(sb, cb)) out.push(`${W}x${Hh} title screen: Start overlaps the credit link`); t.hidden = true; }
+      begin(true); setPhase('shot'); await settle();
+      reset(); busy(); $('hint').textContent = TOUCH ? 'Left thumb to walk. Drag to look. Tap the rust.' : 'WASD to walk. Drag to look. E to scrape.'; $('act').hidden = false; await settle(); check('work: goal, clock, speech, hint and the Scrape button');
+      reset(); busy(); $('skip').hidden = false; await settle(); check('the water: goal, clock, speech and the Skip button');
+      reset(); busy(); $('skip').hidden = false; bars(true); calcLift(); N.lift = N.liftNeed; hand.setLift(N.lift); hand.setCine(1); await settle(); check('the dark: black bars in, with the Skip button');
+      reset(); busy(); $('act').hidden = false; bars(true); calcLift(); N.lift = N.liftNeed; hand.setLift(N.lift); hand.setCine(1); await settle(); check('black bars in, with the Scrape button');
+      reset(); hideHud(true); bars(true); fadeTo('#000', 1, 0); $('fade').style.transition = 'none'; $('cap').style.transition = 'none'; caption('The last tram has gone.', 'The water in the pipe is shut off.'); $('skiphint').hidden = false; await settle();
+      { const parts = [...document.querySelectorAll('#cap p')].filter((e) => e.textContent), sh = $('skiphint'); parts.forEach((e, i) => inside('opening card', 'caption line ' + (i + 1), e)); inside('opening card', 'skip hint', sh); for (const e of parts) if (hits(box(e), box(sh))) out.push(`${W}x${Hh} opening card: the caption overlaps the skip hint`); const bb = box($('barB')); if (hits(box(sh), box($('barT')))) out.push(`${W}x${Hh} opening card: the skip hint is in the top bar`); if (box(sh).top < bb.top - 1 || box(sh).bottom > bb.bottom + 1) out.push(`${W}x${Hh} opening card: the skip hint is not inside the bottom bar`); }
+      reset(); fadeTo('#000', 0, 0); N.skipped = false; showEnd(); await settle();
+      { const c = document.querySelector('#card .box'); inside('end card', 'card', c); for (const id of ['cok']) { const e = $(id), r = box(e), top = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2); if (!top || !(top === e || e.contains(top))) out.push(`${W}x${Hh} end card: the ${id} button is covered by ${top ? (top.id || top.tagName) : 'nothing'}`); }
+        const a = $('ccredit').querySelector('a'), r = box(a), top = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2); inside('end card', 'credit link', a); if (!top || !(top === a || a.contains(top))) out.push(`${W}x${Hh} end card: the credit link is covered`); if (!c.contains(a)) out.push(`${W}x${Hh} end card: the credit link is outside the card`); if (hits(box($('cok')), r)) out.push(`${W}x${Hh} end card: the button overlaps the credit link`); }
+      report('LAYOUT', out.length ? out : [`${W}x${Hh}: no layout problems`], out.length);
+    })();
   }
   if (q.get('auto')) {   /* ?auto=1 plays the whole night; ?auto=2 skips the dark part. The result is written to the page title and to #autolog. */
     manual = true; const mode = q.get('auto'), pre = document.body.appendChild(document.createElement('pre')); pre.id = 'autolog'; pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#000;color:#9f9;font-size:11px;max-height:100%;overflow:auto;margin:0';

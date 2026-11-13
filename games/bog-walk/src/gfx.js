@@ -142,3 +142,20 @@ export function rippleNormalTex() {
   g.putImageData(im, 0, 0);
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.NoColorSpace; t.anisotropy = ANISO; return t;
 }
+
+/* the torch handle: turned wood, the grain running along it */
+export function woodTex() {
+  return cv(64, 256, (x, w, h) => { const r = rng(41); x.fillStyle = '#6a4526'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 46; i++) { const gx = r() * w, lw = 0.6 + r() * 2.2; x.strokeStyle = r() < 0.6 ? `rgba(40,24,12,${0.12 + r() * 0.2})` : `rgba(150,104,60,${0.1 + r() * 0.16})`; x.lineWidth = lw; x.beginPath(); x.moveTo(gx, 0); x.bezierCurveTo(gx + (r() - 0.5) * 6, h * 0.3, gx + (r() - 0.5) * 6, h * 0.7, gx + (r() - 0.5) * 4, h); x.stroke(); }
+    for (let i = 0; i < 3; i++) { const kx = r() * w, ky = r() * h; x.fillStyle = 'rgba(34,20,10,0.5)'; x.beginPath(); x.ellipse(kx, ky, 2.5, 5, 0, 0, 7); x.fill(); }
+    const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(20,12,6,0.45)'); g.addColorStop(0.18, 'rgba(20,12,6,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h);   /* soot near the head (the top of the picture) */
+    grain(x, 14, r); });
+}
+/* the torch head: rags wound round and round, soaked in oil and scorched */
+export function ragTex() {
+  return cv(128, 128, (x, w, h) => { const r = rng(43); x.fillStyle = '#3a2a1c'; x.fillRect(0, 0, w, h);
+    for (let b = -4; b < 12; b++) { const y0 = b * 14 + r() * 4, v = 30 + r() * 34; x.fillStyle = `rgb(${(v + 18) | 0},${(v + 6) | 0},${(v - 6) | 0})`; x.beginPath(); x.moveTo(0, y0); x.lineTo(w, y0 + 26); x.lineTo(w, y0 + 36); x.lineTo(0, y0 + 10); x.closePath(); x.fill();   /* one turn of rag, on a slant */
+      x.strokeStyle = 'rgba(12,8,5,0.75)'; x.lineWidth = 1.6; x.beginPath(); x.moveTo(0, y0 + 10); x.lineTo(w, y0 + 36); x.stroke(); x.strokeStyle = 'rgba(190,160,120,0.16)'; x.lineWidth = 1; x.beginPath(); x.moveTo(0, y0 + 1); x.lineTo(w, y0 + 27); x.stroke(); }
+    for (let i = 0; i < 40; i++) { x.fillStyle = `rgba(8,6,4,${0.15 + r() * 0.3})`; x.beginPath(); x.ellipse(r() * w, r() * h * 0.6, 3 + r() * 9, 2 + r() * 6, r() * 3, 0, 7); x.fill(); }   /* scorch marks, thicker toward the top */
+    grain(x, 22, r); });
+}

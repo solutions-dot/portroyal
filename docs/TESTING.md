@@ -85,6 +85,8 @@ timeout 150 google-chrome --headless=new --no-sandbox --use-gl=swiftshader --ena
   --virtual-time-budget=60000 --dump-dom "http://localhost:8765/games/kendal/site/index.html?test=layout" | sed -n '/<pre id="autolog"/,/<\/pre>/p'
 ```
 
+Bog Walk (`docs/games/bog-walk.md`) is a first-person game with no people yet, so its `?test=held` checks the hand and torch directly (finger count, grip on the stick, on screen) instead of calling `auditHeld`, and its `?test=audit` adds a rule that nothing hung in the pipe may be outside the wall. It is a second model for games like that.
+
 How to wire it into a game (Kendal's `main.js` is the model: search for "the place audit"):
 1. When a place is built, take `snap = snapMeshes(group)` **before** `batchStatic` merges the meshes.
 2. Call `auditPlace({ id, snap, npcs, walls, bounds, start, actions, people })` and print `floating`, `inside` and `stuck`.

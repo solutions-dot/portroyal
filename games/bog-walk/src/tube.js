@@ -105,7 +105,7 @@ export function buildTube(scene) {
     const grip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 0.03), wood); grip.position.copy(top).addScaledVector(d, -0.04); grip.quaternion.setFromUnitVectors(UP, d); grip.rotateZ(Math.PI / 2); group.add(grip);
     const blade = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.3, 0.22), metal); blade.position.copy(foot).addScaledVector(d, 0.15); blade.quaternion.setFromUnitVectors(UP, d); group.add(blade);
     T.solids.push({ x, z, r: 0.16, what: 'shovel' }); };
-  for (const [x, z] of [[-0.52, -2.4], [0.5, -16.5], [-0.5, -27.0], [0.48, -37.5]]) bucket(x, z);
+  for (const [x, z] of [[-0.78, -2.4], [0.78, -16.5], [-0.78, -27.0], [0.78, -37.5]]) bucket(x, z);   /* against the walls, never in the middle of the lane: the player's collision slides them toward the middle, round the tool (a tool in the middle trapped anyone walking along the wall) */
   for (const [x, z] of [[0.8, -8.6], [-0.8, -19.5], [0.8, -31.5]]) shovel(x, z);
   {   /* drifts, kept at least 1.3 m (along the pipe) from every tool */
     const r2 = rng(33); let tries = 0;
@@ -186,52 +186,4 @@ export function buildTube(scene) {
   T.startClean = (p) => { if (p.clean === 0) p.clean = 0.001; };
   T.setPatchClean = (p, k) => { p.clean = k; p.counted = k >= 1; p.rust.visible = k < 1; p.rust.material.opacity = 1 - smooth(0, 1, k); p.steel.material.opacity = smooth(0, 1, k); };
   return T;
-}
-
-/* ----- what you hold: a torch in your right hand, low down in front of you (a child of the camera). The hand is a real fist closed round the stick
-   and a sleeve runs off the bottom of the screen, so the torch is never floating. It leans away from you and out to the right, and stays small and low,
-   so it never covers the middle of the view (owner rules: held things are held properly and never cover the body or the view). ----- */
-export function makeHand(camera) {
-  const root = new THREE.Group(), inner = new THREE.Group(); camera.add(root); root.add(inner);
-  const skin = new THREE.MeshStandardMaterial({ color: 0x6a4028, roughness: 0.75, emissive: 0x120905 }), cloth = new THREE.MeshStandardMaterial({ color: 0x6f6657, roughness: 0.95, emissive: 0x151209 }), wood = new THREE.MeshStandardMaterial({ color: 0x4d3620, roughness: 0.9, emissive: 0x0e0804 });
-  const rag = new THREE.MeshStandardMaterial({ color: 0x241a11, roughness: 1, emissive: 0x4a1c08, emissiveIntensity: 1 });
-  /* everything below is in the hand's own space: the stick runs up the y axis, the fist is round its middle, the palm is on the far side of it */
-  const stick = between(new THREE.Vector3(-0.012, -0.64, 0), new THREE.Vector3(0.023, -0.26, 0), 0.016, 0.02, wood, 8); inner.add(stick);
-  const binding = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.033, 0.03, 9), rag); binding.position.set(0.022, -0.275, 0); binding.rotation.z = -0.09; inner.add(binding);   /* rags wound on with cord */
-  const head = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.028, 0.085, 10), rag); head.position.set(0.025, -0.225, 0); head.rotation.z = -0.09; inner.add(head);
-  const flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex(), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false })); flame.scale.set(0.16, 0.24, 1); flame.position.set(0.028, -0.125, 0); inner.add(flame);
-  /* The fist, seen from behind and a little to the left (a right hand). The stick is a little to the left of the palm. Each of the four fingers goes across the
-     FRONT of the stick and curls back round its left side, so the stick passes through the closed loop of palm and fingers. The thumb lies across the front of the
-     fingers and joins the palm at its base. The forearm comes up from the bottom right, as your own arm would. */
-  const palm = new THREE.Mesh(new THREE.SphereGeometry(0.04, 14, 10), skin); palm.scale.set(0.95, 1.5, 0.95); palm.position.set(0.034, -0.442, -0.012); inner.add(palm);
-  /* exactly four fingers, a little different in length (the middle one longest, the little one shortest), then ONE thumb */
-  const LENS = [0.042, 0.047, 0.041, 0.033];
-  for (let i = 0; i < 4; i++) {
-    const y = -0.405 - i * 0.0275, r = 0.0125 - (i === 3 ? 0.0015 : 0), len = LENS[i], cx = 0.0085 + (0.042 - len) * 0.5 * 0.5;
-    const across = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 4, 10), skin); across.rotation.z = Math.PI / 2; across.position.set(cx, y, 0.031); across.name = 'finger'; inner.add(across);
-    const tip = new THREE.Mesh(new THREE.CapsuleGeometry(r * 0.92, 0.022, 4, 10), skin); tip.rotation.x = Math.PI / 2; tip.position.set(cx - len / 2 - r + 0.004, y, 0.0165); tip.name = 'fingertip'; inner.add(tip);
-  }
-  /* the thumb: shorter and fatter than a finger, from the top of the palm diagonally down across the front of the first two fingers, with a thumbnail, so it cannot be mistaken for another finger */
-  { const from = new THREE.Vector3(0.05, -0.372, 0.03), to = new THREE.Vector3(0.002, -0.4, 0.062), thumb = between(from, to, 0.0155, 0.0145, skin, 12); thumb.name = 'thumb'; inner.add(thumb);
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.0145, 12, 8), skin); cap.position.copy(to); cap.name = 'thumb'; inner.add(cap);
-    const nail = new THREE.Mesh(new THREE.SphereGeometry(0.0105, 10, 6), new THREE.MeshStandardMaterial({ color: 0xcaa98c, roughness: 0.45, emissive: 0x1a120c })); nail.scale.set(1.0, 0.4, 1.25); nail.position.set(0.0, -0.389, 0.068); nail.rotation.set(0.5, 0, 0.3); nail.name = 'thumbnail'; inner.add(nail); }
-  const wrist = between(new THREE.Vector3(0.038, -0.5, -0.03), new THREE.Vector3(0.046, -0.6, -0.075), 0.03, 0.027, skin, 12); inner.add(wrist);
-  const sleeve = between(new THREE.Vector3(0.046, -0.59, -0.075), new THREE.Vector3(0.13, -1.0, -0.22), 0.05, 0.064, cloth, 14); inner.add(sleeve);
-  const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.053, 0.012, 6, 16), cloth); cuff.position.set(0.048, -0.602, -0.077); cuff.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0.09, -0.41, -0.145).normalize()); inner.add(cuff);
-  [['stick', stick], ['binding', binding], ['head', head], ['flame', flame], ['palm', palm], ['wrist', wrist], ['sleeve', sleeve], ['cuff', cuff]].forEach(([n, o]) => { o.name = n; });
-  inner.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.renderOrder = 10; } });
-  const light = new THREE.PointLight(0xffa860, 4, 18, 1.2); light.position.set(0.028, -0.1, 0.1); inner.add(light);
-  const FIST = new THREE.Vector3(0.012, -0.44, 0.01);   /* the middle of the fist, in the hand's own space */
-  const H = { root, flame, light, lift: 0, baseY: -0.27, setLift(u) { H.lift = u; root.position.y = H.baseY + u; },   /* lift (in camera units): the black bars are in, so the whole hand rises just enough to keep the fist clear of the bottom bar */
-    lowestFistPx(camera, screenH) {   /* the lowest point of the palm, fingers and thumb on the screen, in pixels from the top, from their shapes in the camera's frame */
-      camera.updateMatrixWorld(true); const v = new THREE.Vector3(); let low = 0;
-      inner.traverse((o) => { if (!o.isMesh || !['finger', 'fingertip', 'palm', 'thumb'].includes(o.name)) return; if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox;
-        for (const x of [bb.min.x, bb.max.x]) for (const y of [bb.min.y, bb.max.y]) for (const z of [bb.min.z, bb.max.z]) { v.set(x, y, z).applyMatrix4(o.matrixWorld).project(camera); low = Math.max(low, (-v.y * 0.5 + 0.5) * screenH); } });
-      return low; },
-    place(aspect, fov, ph, pw) {   /* the fist sits at a fixed low spot, fully in view; the torch is pivoted and scaled about it, so a small or narrow screen shrinks the torch, not the grip */
-    const depth = 0.55, halfW = Math.tan(fov * Math.PI / 360) * aspect * depth, wide = aspect >= 1.2, s = 0.92 * Math.min(1, Math.max(0.55, Math.min(ph / 640, pw / 560)));   /* words keep their pixel size, so a short or narrow screen gets a smaller torch to leave them room */
-    H.baseY = -0.27; root.position.set(wide ? Math.min(0.3, halfW * 0.62) : halfW * 0.42, H.baseY + H.lift, -depth); root.rotation.set(0, -0.1, 0);
-    inner.rotation.set(-0.6, 0, wide ? -0.26 : -0.1); inner.scale.setScalar(s); inner.position.copy(FIST).multiplyScalar(-s).applyEuler(inner.rotation); },
-    update(time, k) { rag.emissiveIntensity = 0.12 + 0.88 * Math.min(1, k); const f = k * (0.86 + 0.1 * Math.sin(time * 9.1) + 0.06 * Math.sin(time * 21)); flame.material.opacity = Math.max(0, Math.min(1, f)); flame.visible = f > 0.02; flame.scale.set(0.16 * (0.92 + 0.14 * Math.sin(time * 11)), 0.24 * (0.9 + 0.18 * Math.sin(time * 14)), 1); light.intensity = 4 * Math.max(0, f); } };
-  return H;
 }

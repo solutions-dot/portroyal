@@ -16,7 +16,9 @@
   .btn{font:700 1rem var(--body);background:var(--brass);color:var(--brass-ink);border:0;border-radius:6px;padding:.75rem 1.3rem;min-height:48px;cursor:pointer}
   .btn:disabled{opacity:.6;cursor:default}
   .btn.ghost{background:rgba(16,34,43,.85);color:var(--paper);border:2px solid var(--brass)}
-  #title{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;gap:.8rem;padding:2rem max(1.5rem,6vw);background:linear-gradient(90deg,rgba(11,9,7,.96),rgba(11,9,7,.55));z-index:5;overflow:auto}
+  #allgames{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;text-align:center}
+  #title{position:fixed;inset:0;display:flex;flex-direction:column;gap:.8rem;padding:2rem max(1.5rem,6vw);background:linear-gradient(90deg,rgba(11,9,7,.96),rgba(11,9,7,.55));z-index:5;overflow:auto}
+  #title > :first-child{margin-top:auto}#title > :last-child{margin-bottom:auto}   /* centred when there is room; when there is not, it starts at the top and scrolls (plain centring would push the heading off the top where it cannot be reached) */
   #title h1{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(2.2rem,8vw,4rem);margin:0;line-height:1.05}
   #title h1 small{display:block;font-family:var(--display);font-size:.5em;color:var(--brass);letter-spacing:.04em;margin-top:.25em}
   #title p{max-width:30rem;margin:0}
@@ -26,6 +28,9 @@
   .credit{font-size:.9rem;opacity:.9;margin:0}
   .credit a{color:inherit;text-decoration:underline;text-underline-offset:3px;display:inline-block;padding:.55rem 0;line-height:1.5}
   .credit a:hover,.credit a:focus-visible{color:var(--brass);opacity:1}
+  /* short screens (a phone on its side): tighter spacing, and the subtitle on the heading's line. These come after the base rules they override. */
+  @media (max-height:340px){#title h1 small{display:inline;margin:0 0 0 .5em}}
+  @media (max-height:460px){#title{padding:.8rem max(1.5rem,6vw);gap:.4rem}#title h1{font-size:clamp(1.7rem,6vw,2.4rem)}#title h1 small{font-size:.55em;margin-top:.1em}#title p{font-size:.95rem}#title .small{font-size:.78rem}#title .row .btn{min-height:44px;padding:.5rem 1.1rem}.credit a{padding:.3rem 0}}
 
   /* The on-screen words and buttons are laid out as one column of rows (top bar, subtitle, a middle row with the buttons down the right edge, bottom bar), so no two of them can ever overlap,
      whatever the screen size. Nothing here is positioned on its own. The subtitle sits under the top bar and the buttons sit at the right edge, and the hint sits at the bottom left,
@@ -46,6 +51,10 @@
   #act{min-width:7.5rem}
   @media (max-width:520px){#hint{display:none}#mid{align-items:flex-start}}   /* on a narrow phone the torch is in the middle of the right half, so the buttons go to the left */
   body.talk #bottom,body.talk #sub{visibility:hidden}
+  #way{align-self:center;display:flex;align-items:center;gap:.6rem;background:rgba(16,34,43,.88);border:2px solid var(--brass);border-radius:999px;padding:.35rem 1.1rem;font-weight:700;pointer-events:none;animation:wayp 1.1s ease-in-out infinite}
+  #wayarrow{display:inline-block;color:var(--brass);font-size:1.4rem;line-height:1;transition:transform .2s}
+  @keyframes wayp{0%,100%{opacity:.75}50%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){#way{animation:none}}
   #stick{position:fixed;width:96px;height:96px;margin:-48px 0 0 -48px;border:2px solid rgba(242,232,208,.45);border-radius:50%;pointer-events:none;z-index:2}
   #stick i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(217,164,65,.55)}
   #dialogue{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:3;width:min(40rem,calc(100% - 32px));background:rgba(16,34,43,.95);border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.7rem}
@@ -91,7 +100,7 @@
   <p>On a Sunday night in June 1904, a gang of workers goes into a huge iron pipe to clean it. This is their story.</p>
   <div class="row">
     <button id="start" class="btn" disabled>Loading</button>
-    <a href="../../../menu/">All games</a>
+    <a id="allgames" class="btn ghost" href="../../../menu/" hidden>Main Menu</a>
   </div>
   <p class="small">Walk with the arrow keys or WASD, or the left side of the screen on a phone. Drag to look. One part of this game may be a little scary, and you can skip it.</p>
   <p id="loadnote" class="small"></p>
@@ -107,6 +116,7 @@
   </div>
   <p id="sub" class="dim"></p>
   <div id="mid">
+    <div id="way" hidden><span id="wayarrow" aria-hidden="true">&#10148;</span><span id="waytext">This way</span></div>
     <button id="act" class="btn" hidden>Scrape</button>
     <button id="skip" class="btn ghost" hidden>Skip this part</button>
   </div>

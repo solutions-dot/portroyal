@@ -51,9 +51,20 @@ python3 -m http.server 8765                  # then open http://localhost:8765/g
 #   water (&wl=0.55&z=-12&yaw=3.14), dark (&wl=0.9&torch=0&vig=0.85), hud (the worst-case words and buttons) are views;
 #   add &x= &z= &yaw= &pitch= &wl= &torch= &vig= &sky= to place the camera and the water by hand, and &quick to run every timed part at 15% length.
 # ?auto=1 plays the whole night, ?auto=2 presses Skip at the first sign of water, ?auto=3 plays the opening cards by their own timers first. The result is in the page title and in #autolog.
-# In the console: __bw.hudOverlaps() and __bw.propOverlaps() list anything that overlaps (both should print []), and
-#   __bw.audit() runs the engine's place audit (engine/audit.js: floating objects, people inside solids, spots that cannot be reached) and should report nothing.
-#   The autoplayer runs all three and fails if any reports a problem. The engine's auditHeld needs a Mixamo body, so it does not apply to the first-person hand (hudOverlaps tests that by rays).
+# The automatic checks (owner rule, docs/TESTING.md section 5). Each writes its lines to #autolog and its count to the page title; every one must report 0:
+#   ?test=audit    AUDIT n   the engine's place audit (floating things, people inside solids, spots that cannot be reached), tools that overlap, and anything hung
+#                            inside the pipe that is really outside its wall (hidden). The Tube has no people yet.
+#   ?test=held     HELD n    the torch in your hand (first person, so no skeleton for the engine's auditHeld): exactly four fingers and one thumb with a nail, every digit on
+#                            the stick, the stick upright, and the hand never overlaps a word or button, runs off the screen, or covers the middle (with and without the black bars)
+#   ?test=layout   LAYOUT n  each interface state in turn (title, work, the water, the dark with the black bars in, the opening card, the end card): nothing overlaps, runs off
+#                            the screen or is clipped; the end card's button and credit link are on top. Run it at 390x800, 667x375, 800x500 and 1280x720.
+#   (?test=resume does not apply yet: this game does not save.)
+#   node tools/build.mjs bog-walk --dev, then for example:  google-chrome --headless=new --no-sandbox --use-gl=swiftshader --enable-unsafe-swiftshader --window-size=667,375 \
+#     --virtual-time-budget=60000 --dump-dom "http://localhost:8765/games/bog-walk/site/index.html?test=layout" | sed -n '/<pre id="autolog"/,/<\/pre>/p'
+# Proof that the checks can fail: with a flame hung above the roof, a bucket under the manhole, a finger off the stick, a fifth finger, only three fingers, a tipped torch, or
+#   a word moved onto another, the right check reports it, and with everything restored it reports 0. Do this again whenever a check is changed.
+# In the console: __bw.hudOverlaps(), __bw.propOverlaps(), __bw.tubeAudit() and __bw.tubeHeld() return the lists behind those checks (all should be empty).
+#   The autoplayer (?auto=1, 2 or 3) runs the audit and the overlap checks too and fails if any reports a problem.
 ```
 
 ### The cinematic moments (owner rule: the major events must feel cinematic)
