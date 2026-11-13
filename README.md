@@ -5,7 +5,7 @@ Educational 3D history games for the web, for children aged 6 and up and for adu
 | Game | Folder | Status |
 |---|---|---|
 | **Port Royal, 1690**: the story of Lewis Galdy, from his arrival to the 1692 earthquake and after | `games/port-royal/` | finished and live |
-| **Marcus Garvey** | chapters 1 and 2 playable (a Kingston print shop about 1908; a meeting hall in July 1914) | in progress (see `docs/games/garvey.md`) |
+| **Marcus Garvey** | all eight chapters playable (Kingston 1908, Kingston 1914, Harlem 1916, a press room 1918, a dock 1919, Liberty Hall 1920, Amy Jacques Garvey's desk 1925, and Kingston today) | new, still being polished (see `docs/games/garvey.md`) |
 
 The home page (`menu/index.html`) lists the games.
 

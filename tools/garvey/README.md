@@ -1,6 +1,6 @@
 # Garvey-era characters (about 1900 to 1930)
 
-Status: working. Used for every Garvey character so far, in `people/`: the printer and customer (chapter 1), Garvey, Amy Ashwood and three neighbours (chapter 2), Garvey in street clothes and three Harlem people (chapter 3), a pressman and a seaman (chapter 4), a clerk and an engineer (chapter 5), a nurse, a traveller and a steward (chapter 6), and Amy Jacques Garvey (chapter 7). `era.py` is a copy of `tools/people/npc.py` with extra garments. Port Royal's `npc.py` has changed since (the neckcloth and coat-skirt fixes); folding the two together is a tidy-up for later.
+Status: working. Used for every Garvey character so far, in `people/`: the printer and customer (chapter 1), Garvey, Amy Ashwood and three neighbours (chapter 2), Garvey in street clothes and three Harlem people (chapter 3), a pressman and a seaman (chapter 4), a clerk and an engineer (chapter 5), a nurse, a traveller and a steward (chapter 6), Amy Jacques Garvey (chapter 7), and a modern student and a park guide (chapter 8). `era.py` is a copy of `tools/people/npc.py` with extra garments. Port Royal's `npc.py` has changed since (the neckcloth and coat-skirt fixes); folding the two together is a tidy-up for later.
 
 ## Set up on a fresh Linux machine
 
