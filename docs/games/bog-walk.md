@@ -51,7 +51,9 @@ python3 -m http.server 8765                  # then open http://localhost:8765/g
 #   water (&wl=0.55&z=-12&yaw=3.14), dark (&wl=0.9&torch=0&vig=0.85), hud (the worst-case words and buttons) are views;
 #   add &x= &z= &yaw= &pitch= &wl= &torch= &vig= &sky= to place the camera and the water by hand, and &quick to run every timed part at 15% length.
 # ?auto=1 plays the whole night, ?auto=2 presses Skip at the first sign of water, ?auto=3 plays the opening cards by their own timers first. The result is in the page title and in #autolog.
-# In the console: __bw.hudOverlaps() and __bw.propOverlaps() list anything that overlaps (both should print []).
+# In the console: __bw.hudOverlaps() and __bw.propOverlaps() list anything that overlaps (both should print []), and
+#   __bw.audit() runs the engine's place audit (engine/audit.js: floating objects, people inside solids, spots that cannot be reached) and should report nothing.
+#   The autoplayer runs all three and fails if any reports a problem. The engine's auditHeld needs a Mixamo body, so it does not apply to the first-person hand (hudOverlaps tests that by rays).
 ```
 
 ### The cinematic moments (owner rule: the major events must feel cinematic)

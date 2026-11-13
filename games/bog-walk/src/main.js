@@ -3,6 +3,7 @@
    follow the voices to the manhole. No one can fail and no one is shown in the water. All the spoken lines here are placeholders written for this game. */
 import * as THREE from 'three';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, crackle, AU } from '../../../engine/audio.js';
+import { snapMeshes, auditPlace } from '../../../engine/audit.js';   /* dev checks only: it is dropped from the public build */
 import { setAniso } from './gfx.js';
 import { buildTube, makeHand, R, SAND, ZMIN, ZMAX, ZM, halfChord } from './tube.js';
 import { initTubeSound, setBeds, hushTube, drip, scrapeSound, voice, hiss, clank, waterStep, heartbeat, boom, airSwell } from './sfx.js';
@@ -285,7 +286,12 @@ if (__DEV__) {
     for (const d of T.drifts) { for (const p of s) if (Math.abs(p.z - d.z) < d.l / 2 + p.r && Math.abs(p.x - d.x) < d.w / 2 + p.r) out.push(p.what + ' sits in a sand drift'); if (Math.abs(d.z - ZM) < d.l / 2 + 0.6) out.push('a sand drift is under the manhole'); }
     return out;
   }
-  window.__bw = { S, N, T, hand, tick, render, startIntro, skipIntro, bars, hideHud, caption, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), hudOverlaps, handRects, propOverlaps, begin, skipNight, setGoal, say };
+  function runAudit() {   /* the engine's place audit (engine/audit.js): nothing floats in the air, nobody is inside a solid, everything the player needs can be reached on foot */
+    const walls = T.solids.filter((s) => s.r > 0).map((s) => [s.x - s.r - 0.3, s.z - s.r - 0.3, s.x + s.r + 0.3, s.z + s.r + 0.3]);
+    return auditPlace({ id: 'tube', snap: snapMeshes(T.group), npcs: [], walls, bounds: { x0: -LANE, x1: LANE, z0: ZMIN + 3, z1: ZMAX - 1.6 }, start: { x: 0.12, z: ZM - 1.5 },
+      actions: T.patches.map((p) => ({ label: 'scrape patch ' + p.i, x: p.pos.x, z: p.pos.z, r: 2.3 })), people: [] });
+  }
+  window.__bw = { S, N, T, hand, runAudit, audit: runAudit, tick, render, startIntro, skipIntro, bars, hideHud, caption, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), hudOverlaps, handRects, propOverlaps, begin, skipNight, setGoal, say };
   const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
   const shot = q.get('shot');
   if (shot) {
@@ -324,6 +330,7 @@ if (__DEV__) {
       }
       keys.delete('w'); if (N.phase !== 'end') { ok = false; log('FAIL: did not reach the end (phase ' + N.phase + ')'); }
       if ($('card').hidden) { ok = false; log('FAIL: no end card'); }
+      const au = runAudit(), an = au.floating.length + au.inside.length + au.stuck.length; log('place audit: ' + an + ' problems'); if (an) { ok = false; log('FAIL audit: ' + JSON.stringify(au)); }
       const po = propOverlaps(); if (po.length) { ok = false; log('FAIL props: ' + po.join('; ')); } const ho = hudOverlaps(); if (ho.length) { ok = false; log('FAIL hud: ' + ho.join('; ')); }
       if (errs.length) { ok = false; log('FAIL errors: ' + errs.join(' | ')); }
       log('phases: ' + seen.join(' > ')); document.title = (ok ? 'AUTO OK ' : 'AUTO FAIL ') + seen.join('>'); render();
