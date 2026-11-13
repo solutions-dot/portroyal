@@ -6,7 +6,7 @@ Status: all eight chapters are playable from the game menu (the "New" card). Cod
 
 ## Where things are now
 
-- **Demo scene** (`games/garvey/src/main.js`): a Kingston print shop, about 1907. A made-up printer stands at his type stand and a made-up customer walks through the shop. Both talk (placeholder lines). After you talk to both, you set the type for a notice at the type stand (letters are mirror images, as on real type), press it, and three journal pages open. It is the first slice of chapter 1.
+- **Demo scene** (`games/garvey/src/main.js`): a Kingston print shop, about 1907. A fictional printer stands at his type stand and a fictional customer walks through the shop. Both talk (placeholder lines). After you talk to both, you set the type for a notice at the type stand (letters are mirror images, as on real type), press it, and three journal pages open. It is the first slice of chapter 1.
 - **Characters** (`tools/garvey/`): `era.py` makes 1900s clothes (see its README for setup). Two test characters exist: `printer1907` and `woman1914`.
 - **Menu**: the Garvey block links to the game.
 - **One pull request**: all Garvey work goes into one PR that stays open, so there is a single merge to `main` when the owner is ready.
@@ -65,7 +65,7 @@ All eight chapters are built, so what remains is quality work, roughly in this o
 
 | Question | Decision |
 |---|---|
-| Who do you play? | A made-up Jamaican apprentice printer who grows up with the movement. Real people (Garvey, the two Amys) are met, never played. |
+| Who do you play? | A fictional Jamaican apprentice printer who grows up with the movement. Real people (Garvey, the two Amys) are met, never played. |
 | Age | Same as every game here: 6 and up, plus adults. Plain words on the main path. Prison, the trial and other contested points go in "Dig deeper". |
 | Voice | Text only. The engine has no audio files. Voice may be added later for a few key lines. |
 | Meters | No numbers on screen. Choices show up as what you see (who is in the hall, who stands with you) and what people say on later visits. |
@@ -75,13 +75,13 @@ Still open: the hero's name and look, and the game's title (the concept PDF says
 
 ## The story in one paragraph
 
-A made-up apprentice in a Kingston print shop sees what words can do. The apprentice follows Marcus Garvey and the UNIA from Kingston to Harlem, helps print the *Negro World*, sees the Black Star Line dream meet hard reality, and keeps the work going when Garvey is in prison. The last chapter jumps to Jamaica today, where a child asks: the world has changed, but has the dream been fulfilled?
+A fictional apprentice in a Kingston print shop sees what words can do. The apprentice follows Marcus Garvey and the UNIA from Kingston to Harlem, helps print the *Negro World*, sees the Black Star Line dream meet hard reality, and keeps the work going when Garvey is in prison. The last chapter jumps to Jamaica today, where a child asks: the world has changed, but has the dream been fulfilled?
 
 Dramatic question: how much are you willing to risk to change the world?
 
 ## The hero
 
-- Made up. The journal page says so (owner rule 3).
+- Fictional. The journal page says so (owner rule 3).
 - Grows with the story: about 14 in 1907, 21 in 1914, 27 in 1920, 34 in 1927. In chapter 8 the "you" is a present-day Jamaican child.
 - Always first person. A third-person view (V key) needs two body sizes, a teen and a young adult.
 - The hero's work is the print shop: apprentice, printer, pressman at the *Negro World*, helper at Amy Jacques Garvey's desk.
@@ -101,7 +101,7 @@ Branches rejoin at the end of each chapter, so every chapter has one `done()` te
 | 7 | Amy Jacques Garvey's desk, Harlem, 1925 ("The price of a dream") | Talk to Amy, sort four news cards into fact or rumour, choose the fair question to ask before printing a rumour, then read the letter from your friend in chapter 5 (it changes with your advice there) and write back (built) | The question you ask, and how you write back to your friend |
 | 8 | National Heroes Park, Kingston, today ("The question that remains") | A guide tells his later life (1927 home, 1929 party, 1935 London, 1940 death, 1964 remains home, 1969 National Hero), put six events in order on the timeline board, then answer a student's question "has the dream come true?" by choosing how to start and why. The Journal then gets a "Your journey" page listing all your choices (built) | The final answer. Dropped: the world map idea, and the 1927 to 1940 scenes (the guide tells them instead). |
 
-Rule of truth: big events stay as they happened. Your choices change who you protected, what you learned and what friends say later. The Black Star Line fails whichever plan you pick. Every chapter ends with a "History / Story" journal page saying what really happened and what was made up.
+Rule of truth: big events stay as they happened. Your choices change who you protected, what you learned and what friends say later. The Black Star Line fails whichever plan you pick. Every chapter ends with a "History / Story" journal page saying what really happened and what was fictional.
 
 ## New systems
 
@@ -181,17 +181,17 @@ Same caveat as the second pass: the Papers could not be reached.
 | *Negro World*: first issue 17 August 1918, weekly, five cents, English at first; banned in places such as Trinidad, British Guiana and St Vincent; carried by seamen and others | Secondary sources. How copies were hidden (stewards, clothing) was not found: do not invent it. |
 | Black Star Line: incorporated June 1919; $5 shares; 96,285 sold by August 1920; *Yarmouth*, *Shady Side* and *Kanawha* were old and overpriced | Secondary sources. This replaces the second-pass note that the $5 price was unconfirmed, but still say "about" for counts. |
 
-In chapter 4 the three headlines (Be Proud of Who You Are, Read, Learn and Grow, Stand Together) and the sailor and his voyage are made up, and the journal says so. The consequences of the sailor's choice (one bundle taken, the rest read) are story, not record. The real facts used are the paper's name, weekly, five cents, the first issue on 17 August 1918, the bans, and that seamen carried copies.
+In chapter 4 the three headlines (Be Proud of Who You Are, Read, Learn and Grow, Stand Together) and the sailor and his voyage are fictional, and the journal says so. The consequences of the sailor's choice (one bundle taken, the rest read) are story, not record. The real facts used are the paper's name, weekly, five cents, the first issue on 17 August 1918, the bans, and that seamen carried copies.
 
-In chapter 8 the guide and the student are made up and labelled in the journal. The real facts used: Garvey reached Kingston in December 1927; he formed the People's Political Party in 1929 and moved to London in 1935 (each from one source, so the journal says so); he died in London on 10 June 1940; his remains came home in 1964 (the day is 10 or 15 November in different sources) and were placed in the shrine in National Heroes Park; he was named a National Hero in 1969 (Jamaica Information Service); the monument was designed in 1964 with a bronze bust by T. Alvin Marriott placed in the park in 1956 (Jamaica National Heritage Trust); US President Joe Biden gave him a posthumous pardon in January 2025, and his family and supporters continue to seek exoneration from Congress (several news reports). The shrine in the game is an outline from descriptions (a black star on the ground, an angled stone wall, a bronze bust on a plinth). Its plaque shows only his name and dates, because the real inscription was not found. Left out: the London plaques' quotations (they belong to the London memorials, not the Kingston shrine), and any bill number or status for the exoneration effort.
+In chapter 8 the guide and the student are fictional and labelled in the journal. The real facts used: Garvey reached Kingston in December 1927; he formed the People's Political Party in 1929 and moved to London in 1935 (each from one source, so the journal says so); he died in London on 10 June 1940; his remains came home in 1964 (the day is 10 or 15 November in different sources) and were placed in the shrine in National Heroes Park; he was named a National Hero in 1969 (Jamaica Information Service); the monument was designed in 1964 with a bronze bust by T. Alvin Marriott placed in the park in 1956 (Jamaica National Heritage Trust); US President Joe Biden gave him a posthumous pardon in January 2025, and his family and supporters continue to seek exoneration from Congress (several news reports). The shrine in the game is an outline from descriptions (a black star on the ground, an angled stone wall, a bronze bust on a plinth). Its plaque shows only his name and dates, because the real inscription was not found. Left out: the London plaques' quotations (they belong to the London memorials, not the Kingston shrine), and any bill number or status for the exoneration effort.
 
-In chapter 7 Amy's words, the reader and the friend's letters are made up and labelled in the journal. The real facts used: Amy Jacques Garvey was born in Kingston and became Marcus Garvey's wife in the 1920s; she edited the page "Our Women and What They Think" in the *Negro World* (1924 to 1927, one source gives February 1924 to November 1927) and gathered his writings in *Philosophy and Opinions* (1923, 1925); Garvey was convicted in June 1923, went to the Atlanta penitentiary in 1925, and had his sentence shortened in November 1927 before being deported. Left out: the date of the marriage, whether Amy led the UNIA while he was jailed (one source says so), and any view on whether the trial was fair beyond saying that people still disagree. The four news cards are made up, and the two "facts" (the paper came out every week; Garvey went to prison in Atlanta in 1925) are from the sources above.
+In chapter 7 Amy's words, the reader and the friend's letters are fictional and labelled in the journal. The real facts used: Amy Jacques Garvey was born in Kingston and became Marcus Garvey's wife in the 1920s; she edited the page "Our Women and What They Think" in the *Negro World* (1924 to 1927, one source gives February 1924 to November 1927) and gathered his writings in *Philosophy and Opinions* (1923, 1925); Garvey was convicted in June 1923, went to the Atlanta penitentiary in 1925, and had his sentence shortened in November 1927 before being deported. Left out: the date of the marriage, whether Amy led the UNIA while he was jailed (one source says so), and any view on whether the trial was fair beyond saying that people still disagree. The four news cards are fictional, and the two "facts" (the paper came out every week; Garvey went to prison in Atlanta in 1925) are from the sources above.
 
-In chapter 6 the nurse, the traveller, the messenger and the steward are made up, and so are Garvey's words. The real facts used are the dates (the convention ran 1 to 31 August 1920; the Declaration is dated 13 August), that most sources place it at Liberty Hall, that delegates came from more than twenty countries (sources vary, so no number is shown), that the Black Cross Nurses were a UNIA women's group, and the exact wording of item 39, checked against the Bill of Rights Institute's copy of the Declaration: "That the colors, Red, Black and Green, be the colors of the Negro race." The banner is an illustration; the game does not say when a flag was first raised. Left out: crowd sizes (sources give 12,000 to 50,000), the parade route and date (1, 2 or 3 August in different sources), and the claim that a mass meeting was held at Madison Square Garden (one source says the convention opened there).
+In chapter 6 the nurse, the traveller, the messenger and the steward are fictional, and so are Garvey's words. The real facts used are the dates (the convention ran 1 to 31 August 1920; the Declaration is dated 13 August), that most sources place it at Liberty Hall, that delegates came from more than twenty countries (sources vary, so no number is shown), that the Black Cross Nurses were a UNIA women's group, and the exact wording of item 39, checked against the Bill of Rights Institute's copy of the Declaration: "That the colors, Red, Black and Green, be the colors of the Negro race." The banner is an illustration; the game does not say when a flag was first raised. Left out: crowd sizes (sources give 12,000 to 50,000), the parade route and date (1, 2 or 3 August in different sources), and the claim that a mass meeting was held at Madison Square Garden (one source says the convention opened there).
 
-In chapter 5 the clerk, the engineer, the friend and the ship inspection are made up and labelled in the journal. The real facts used are the company's start in June 1919 (Delaware; the day differs between sources), the five dollar shares, and that the first ship, the *Yarmouth*, was old and in poor condition (some called her the *Frederick Douglass*). The *Shady Side* (an excursion boat) and the *Kanawha* (a steam yacht) are only named in the journal. Not used because they are unconfirmed or one-source claims: Cockburn's pay or the whisky cruise, the exact price of the *Yarmouth*, and the first voyage date. There is no coin purse: the "spend coins" idea was dropped so the game keeps no on-screen meters.
+In chapter 5 the clerk, the engineer, the friend and the ship inspection are fictional and labelled in the journal. The real facts used are the company's start in June 1919 (Delaware; the day differs between sources), the five dollar shares, and that the first ship, the *Yarmouth*, was old and in poor condition (some called her the *Frederick Douglass*). The *Shady Side* (an excursion boat) and the *Kanawha* (a steam yacht) are only named in the journal. Not used because they are unconfirmed or one-source claims: Cockburn's pay or the whisky cruise, the exact price of the *Yarmouth*, and the first voyage date. There is no coin purse: the "spend coins" idea was dropped so the game keeps no on-screen meters.
 
-In chapter 3 the words Garvey and the others speak are made up and credited as such in the journal. The street itself (brownstones, lamps) is a general picture of Harlem, not a copy of one real corner.
+In chapter 3 the words Garvey and the others speak are fictional and credited as such in the journal. The street itself (brownstones, lamps) is a general picture of Harlem, not a copy of one real corner.
 
 ### To research before use
 
@@ -201,15 +201,15 @@ In chapter 3 the words Garvey and the others speak are made up and credited as s
 
 ## Cast
 
-| Who | Real or made up |
+| Who | Real or fictional |
 |---|---|
 | Marcus Garvey | Real. Short traced quotes only. |
 | Amy Ashwood | Real |
 | Amy Jacques Garvey | Real |
 | Joshua Cockburn, first captain of the Black Star Line | Real |
-| The hero | Made up |
-| Printers, the foreman, neighbours, Harlem listeners, the older man, a pressman, a sailor, a share clerk, an engineer, a friend who invested, a nurse, a traveller, a messenger, a steward, a park guide, a student | Made up. Each journal page says so. |
-| You | Made up. The hero stays a first-person "you"; the plan for a visible teen body is still open. |
+| The hero | Fictional |
+| Printers, the foreman, neighbours, Harlem listeners, the older man, a pressman, a sailor, a share clerk, an engineer, a friend who invested, a nurse, a traveller, a messenger, a steward, a park guide, a student | Fictional. Each journal page says so. |
+| You | Fictional. The hero stays a first-person "you"; the plan for a visible teen body is still open. |
 
 ## Assets the game needs
 

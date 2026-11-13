@@ -67,7 +67,7 @@ export function buildCoach() {
   for (const x of [-3.2, 0, 3.2]) { cyl(0.16, 0.16, 0.06, new THREE.MeshBasicMaterial({ color: 0xffe3a6 }), x, 2.62, 0, g, 12); }
   const lamp = new THREE.PointLight(0xffd9a0, 9, 14, 1.3); lamp.position.set(0, 2.3, 0); g.add(lamp);
   for (const [x, z, k] of [[-4.6, 0.0, 0], [4.7, -0.1, 1], [-4.4, -0.1, 2], [4.5, 0.15, 0], [-1.5, 0.1, 1]]) { const o = k === 0 ? hamper() : k === 1 ? suitcase() : sack(); o.position.set(x, 0, z); o.rotation.y = x; g.add(o); }
-  /* the passengers: Gran, Lloyd and the mother have their seats; the rest are made up from the crowd generator, sitting */
+  /* the passengers: Gran, Lloyd and the mother have their seats; the rest come from the crowd generator, sitting */
   people.push(person('gran5', 'gran', 'Gran', rows[4], -0.96, -PI / 2, { anim: 'SitIdle', h: 1.35, seat: SEAT }));
   people.push(person('lloyd5', 'lloyd', 'Lloyd', rows[4], -0.42, -PI / 2, { anim: 'SitTalk', h: 1.05, seat: SEAT }));
   people.push(person('mother', 'mother', 'The mother', rows[2], 0.5, -PI / 2, { anim: 'SitIdle', h: 1.35, seat: SEAT }));

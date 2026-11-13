@@ -11,7 +11,7 @@ Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the story, the syste
 
 It is Sunday 1 September 1957. A long train takes a church group from Kingston to Montego Bay for the day. On the way home that night it runs away down the hill at Kendal and crashes. It is the worst railway disaster in Jamaica's history. The game tells the history of the railway first (how people travelled before trains, the first train, the hill railway), then the day, the night, the crash, the long night of helping, and how Kendal remembers today.
 
-You are made up: a child, first person, at a child's eye height (1.32 m). Gran, Cousin Lloyd, Mass Ezra and everyone you meet are made up. The railway, the crash and the helpers of Kendal are real.
+You are fictional: a child, first person, at a child's eye height (1.32 m). Gran, Cousin Lloyd, Mass Ezra and everyone you meet are fictional. The railway, the crash and the helpers of Kendal are real.
 
 Mass Ezra is the thread through the story. He is the boy at the hill station in the 1890s (chapter 3). In 1957 he is the old railwayman who gives you his hand lamp in chapter 4. You carry that lamp through the night at Kendal in chapter 6. His grandfather is Mass Dudley the muleteer (chapters 1 and 2).
 

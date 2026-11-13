@@ -8,13 +8,13 @@ Title: **Bog Walk 1904: The Tube**. The game is in `games/bog-walk/`, started fr
 
 | Question | Decision |
 |---|---|
-| Who do you play? | A made-up young labourer. Real survivors are met in the journal only, never played. |
+| Who do you play? | A fictional young labourer. Real survivors are met in the journal only, never played. |
 | Name the men who died? | **No.** The game never names any man who died, and does not use the surnames of the families on the newspaper's list either. They are "the men" and a number. |
 | Does Zeke, the old valve man, come out? | **No.** He does not come out. It is told gently, in the morning scene with his daughter. |
 | The 1899 flashback | **Yes.** It is chapter 1 and it is built. |
 | The title | **Bog Walk 1904: The Tube.** |
 
-Still open: the made-up characters' final names (Zeke, Rudy and Zeke's daughter are working names), and how the menu card picture looks.
+Still open: the fictional characters' final names (Zeke, Rudy and Zeke's daughter are working names), and how the menu card picture looks.
 
 ## Build rules from the owner (13 Nov 2026)
 
@@ -117,20 +117,20 @@ Sources used so far: the *Gleaner* retellings "1904 Bog Walk disaster relived" (
 
 ## The story
 
-You are a made-up young labourer on your first season with the tramway company's Sunday-night gang. The story is one long night and the morning after. The dramatic question, in plain words: **what do we owe the people whose hard work keeps the lights on, and how do we remember a disaster when nobody can say exactly why it happened?**
+You are a fictional young labourer on your first season with the tramway company's Sunday-night gang. The story is one long night and the morning after. The dramatic question, in plain words: **what do we owe the people whose hard work keeps the lights on, and how do we remember a disaster when nobody can say exactly why it happened?**
 
 The honest centre of the game is the *not knowing*. The first reports were wrong (80 dead, 300 saved), the sources still disagree on the date, and nobody could say why the water came. The game teaches how we sort what we know from what we heard, which suits Garvey's fact-or-rumour cards and a history class.
 
 ### The hero
 
-- Made up. The journal page says so (owner rule 3).
+- Fictional. The journal page says so (owner rule 3).
 - About 20. The Gleaner says most of the men were unmarried labourers between about 20 and 50, so the game does not put a child in the pipe.
 - Always first person, as in Garvey. You never see your own body.
 - **Real people are met, never played.** Colin McDonald and the other survivors are not played and do not speak. They appear in the journal and in what the newspaper printed. The hero "stands for" the men who got out.
 
 ### Chapters
 
-Six chapters, matching Port Royal's six (0 to 5), chosen from the Chapters menu. Each ends with a "History / Story" journal page saying what really happened and what is made up.
+Six chapters, matching Port Royal's six (0 to 5), chosen from the Chapters menu. Each ends with a "History / Story" journal page saying what really happened and what is fictional.
 
 | # | Port Royal chapter it matches | Where and when | Walk and do | Remembered choice |
 |---|---|---|---|---|
@@ -138,8 +138,8 @@ Six chapters, matching Port Royal's six (0 to 5), chosen from the Chapters menu.
 | 1 | Ned's story (flashback) | **Kingston, 31 March 1899: the first electric tram.** Zeke tells it on the break; you play the day, first person, as a boy of about 15. | Stand in the crowd on a Kingston street, watch the first car, hear what the mule trams were like. Gives the reason the Tube mattered, and shows the joy before the grief. An Exit button works at any time, as in Ned's story. | none |
 | 2 | The warehouse (ordinary life before the shock) | **Inside the Tube, about 1 to 3 a.m.** A round iron tunnel, 8 feet across, lit by torches, rivets in rows, sand on the floor. | Scrape the rust patches until the metal shines (tap each one), shovel sand into buckets, pass them to the manhole, talk to the gang. Time is called out: "Two o'clock." Water begins to drip. | Notice water around your boots and **tell Mr Douparrouzel or keep working.** Either way the record is kept: he says his real line, or a worker does. Later lines change, never the outcome, and neither choice is called wrong. |
 | 3 | The earthquake | **The water, about 4 a.m.** | The playable sequence (below). You reach the manhole and a hand pulls you out. | none |
-| 4 | The days after | **The station yard, dawn to noon, 27 June.** | The men who came out sit on the ground. Meet the doctor, the two ministers, the company's attorney and a member of the Legislative Council, each doing what the record says they did. A *Gleaner* reporter (made up) asks what you saw: sort "what I saw" from "what I heard" and pick only what you saw. Zeke's daughter asks about her father. A train whistle: the coffins arrive. | How you answer Zeke's daughter: **say plainly what you saw, or say he was brave** (the game never says he was a hero because no one knows). Her later line changes. |
-| 5 | The tombstone (and today) | **The ruins of the Tube, today.** The dam, the turbine house walls, the concrete supports, a shell of the pipe. | A made-up teacher and a student. Read the real *Gleaner* headline on an information board (older readers' version first, a gentler line for the youngest). Sort the theories and the facts we still do not have. Put the later events in order: trams again within days, buses in the 1930s, trams end 1948, station closes 1966. | The student asks "Who was to blame?" Choose how to answer. The "Your journey" journal page lists every choice. |
+| 4 | The days after | **The station yard, dawn to noon, 27 June.** | The men who came out sit on the ground. Meet the doctor, the two ministers, the company's attorney and a member of the Legislative Council, each doing what the record says they did. A *Gleaner* reporter (fictional) asks what you saw: sort "what I saw" from "what I heard" and pick only what you saw. Zeke's daughter asks about her father. A train whistle: the coffins arrive. | How you answer Zeke's daughter: **say plainly what you saw, or say he was brave** (the game never says he was a hero because no one knows). Her later line changes. |
+| 5 | The tombstone (and today) | **The ruins of the Tube, today.** The dam, the turbine house walls, the concrete supports, a shell of the pipe. | A fictional teacher and a student. Read the real *Gleaner* headline on an information board (older readers' version first, a gentler line for the youngest). Sort the theories and the facts we still do not have. Put the later events in order: trams again within days, buses in the 1930s, trams end 1948, station closes 1966. | The student asks "Who was to blame?" Choose how to answer. The "Your journey" journal page lists every choice. |
 
 The branches rejoin at the end of every chapter, so each has one `done()` test and the autoplayer can follow it.
 
@@ -166,27 +166,27 @@ Rules for this sequence:
 - 33 of 61 died. Some of the story's people do not come out. We say so plainly and kindly, in the aftermath, in words: "Zeke did not come out." Nothing is graphic.
 - The company paid for coffins and burials and gave money to families. Many people also felt someone had blundered. **Both are stated, as reported, with no verdict.**
 - Douparrouzel is a real man who was in the pipe and led men out. He is shown fairly. The cause theories name no person.
-- Real people only say words traced to the record. At present those are Douparrouzel's one line and the newspaper headline. Everyone else's lines are labelled as made up in the journal. Doctors, ministers and officials appear doing what the report says they did and say only short, plain lines.
+- Real people only say words traced to the record. At present those are Douparrouzel's one line and the newspaper headline. Everyone else's lines are labelled as fictional in the journal. Doctors, ministers and officials appear doing what the report says they did and say only short, plain lines.
 - Do not invent facts the record does not give: wages, hours, who hired whom, what tools the men used, where the valve was. Where the game shows these, it is "a general picture" and the journal says so, as Garvey's print shop does.
 
 ### Cast
 
-| Who | Real or made up |
+| Who | Real or fictional |
 |---|---|
-| The hero (you) | Made up |
+| The hero (you) | Fictional |
 | Mr Douparrouzel, chief electrician | Real. One traced line. |
 | Mr Lewis (company manager), Mr Haggart (company attorney), Dr Hammond, the Rev. J.T. Dillon, the Rev. C.R.G. Thomas, the Hon. E.G. Osborne-Smith | Real. They appear in chapter 4 doing what the report says. Spellings and roles to check. |
 | Colin McDonald and the other survivors | Real. Named in the journal only. |
 | The 33 men who died | Real. **Not named anywhere in the game.** They appear as a number and as "the men". |
-| Old Zeke, the valve man (working name) | Made up. Does not come out. |
-| Rudy, your friend (working name) | Made up. Comes out. |
-| Zeke's daughter (working name) | Made up |
-| The *Gleaner* reporter | Made up. Stands for the reporters who were there. |
+| Old Zeke, the valve man (working name) | Fictional. Does not come out. |
+| Rudy, your friend (working name) | Fictional. Comes out. |
+| Zeke's daughter (working name) | Fictional |
+| The *Gleaner* reporter | Fictional. Stands for the reporters who were there. |
 | The man with the torch at the manhole | Real, unnamed in the record. The hand that pulls you out stands for him. |
-| The teacher and the student, today | Made up |
-| Tram conductor and crowd, 1899 | Made up |
+| The teacher and the student, today | Fictional |
+| Tram conductor and crowd, 1899 | Fictional |
 
-Made-up people get first names or nicknames only, so no one can be mistaken for a real man.
+Fictional people get first names or nicknames only, so no one can be mistaken for a real man.
 
 ## What is needed
 

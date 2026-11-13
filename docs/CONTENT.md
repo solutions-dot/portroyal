@@ -5,7 +5,7 @@
 - **Ages 6 and up.** Short lines, about 12 words or fewer, one idea each. Common words. Explain a hard word the first time ("a privateer had papers from the government").
 - **Main path in plain words. Detail in "Dig deeper".** Journal pages have `simple` lines for everyone and `deeper` lines for older readers and teachers.
 - **Accurate.** Check every fact against a source before writing it, and note the source in the commit or the game's doc.
-  - Made-up people are fine, but their journal page must say so ("Grace in this game is made up").
+  - Fictional people are fine, but their journal page must say so ("Grace in this game is fictional").
   - Real people only say things they could have said; never invent famous quotes.
   - Real objects use their real words (the Port Royal tombstone shows its actual 1739 inscription).
 - **Hard history, told gently.** Slavery is named plainly ("enslaved: forced to work, unpaid, not free to leave"). Violence stays in the background. No one is shown dying.
@@ -42,7 +42,7 @@ const MORE = { kofi: [[() => true, 'I must get back to work.'], [() => state.ate
 ```js
 { id: 'turtles', title: 'Turtles and crawls',
   simple: ['Green turtle was one of the town’s main foods.', 'They kept them alive in pens in the sea, called crawls.'],
-  deeper: ['Ships bought turtles to eat on long voyages.', 'Peter in this game is made up.'] }
+  deeper: ['Ships bought turtles to eat on long voyages.', 'Peter in this game is fictional.'] }
 ```
 
 Add pages to `JOURNAL` (or `JOURNAL.push(...)` in a later section). Pages are listed in the order they were added.
