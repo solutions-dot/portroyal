@@ -96,7 +96,7 @@ timeout 290 google-chrome --headless=new --no-sandbox --use-gl=swiftshader --ena
   - `?test=layout`: interface overlap, clipped text and off-screen items, in each state. Run it with the window at 390x800, 667x375, 800x500 and 1280x720.
   - `?test=resume`: a saved game resumes in the right place.
   - `?test=walkers`: every body walks without sliding, sinking or jumping (0 issues).
-  - `?test=cloth`: under layers that show through their cover. It is new and **not yet at 0** (354 lines on 14 November 2026). The biggest groups: skin at the edge of a shirt, a shirt at the top of the trousers, the collar of the suit against the jacket, a bun against a hat. Some lines may be the check being too strict; each group needs a look before it is fixed in `tools/garvey/era.py`.
+  - `?test=cloth`: under layers that show through their cover. On 14 November 2026 it printed 19 lines (64 points) for Kendal, down from 354 lines (6,840 points). What is left is a few points where a shirt tail meets the trousers when a person sits (`man_shirt`, `man_elder`, `man_work`, `man_apron`, `student2020`), a tie edge against the waistcoat, a boy's knee against his shorts when striding, and one jacket hem when sitting. Garvey's `?test=cloth` (same check, 21 bodies) printed 18 lines. See `docs/PIPELINE.md` section 5 for the cloth rules that removed the rest.
 - The menu poster `menu/kendal.jpg` comes from `?shot=poster` at 1280 by 720 (the HUD is hidden).
 
 ## Research (checked 13 November 2026 against secondary sources only)

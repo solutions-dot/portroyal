@@ -10,7 +10,7 @@ await MeshoptEncoder.ready; await MeshoptDecoder.ready; await MeshoptSimplifier.
 const io = () => new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder });
 const A = process.argv.slice(2), opt = (k, d) => { const i = A.indexOf(k); return i >= 0 ? A[i + 1] : d; };
 const OUT = opt('--out', 'games/kendal/site/models'), MAX = +opt('--max', 32000), SMALL = 1300, WHOLE = /Collar|Tie|Belt|Hat|Cap|Band|Sole|Wrap|Bonnet|Moustache|Puffs|Ribbons|Bun|Knot/   /* pieces that are never simplified */, LO = A.includes('--lo'), SRC = opt('--src', 'build/people'), CLOTH = /^(Shirt|Waistcoat|Jacket|JacketSkirt|Breeches|Skirt|Apron|Coat|CoatSkirt)$/, CLOTH_KEEP = +opt('--cloth', 0.36);   /* in a light copy the clothes keep this share of their triangles */
-const names = A.filter((a, i) => !a.startsWith('--') && !['--out', '--max', '--src', '--cloth'].includes(A[i - 1]));
+const names = A.filter((a, i) => !a.startsWith('--') && !['--out', '--max', '--src', '--cloth', '--lomax'].includes(A[i - 1]));
 const eye = fs.readFileSync('shared/rig/eye_small.jpg');
 const tris = (doc) => { let t = 0; for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) t += (p.getIndices() ? p.getIndices().getCount() : p.getAttribute('POSITION').getCount()) / 3; return t | 0; };
 const pack = (name, bin) => fs.writeFileSync(`${OUT}/${name}.js`, `(window.__models=window.__models||{})["${name}"]="${Buffer.from(bin).toString('base64')}";`);
@@ -73,7 +73,7 @@ for (const n of names) {
       if (light) {   /* a light copy: the clothes keep more of their shape than the skin does (a shirt cut to a tenth crumples, and specks of it show through the waistcoat), and the body pays for it */
         const cl = sum('cloth'); if (cl) await only('cloth', Math.min(CLOTH_KEEP, 1900 / cl), 0.004);   /* at most about 1,900 triangles of cloth, so the face keeps its share and a body with a long full skirt stays light */
         const clNow = prims.filter((x) => x.kind === 'cloth').reduce((a, x) => a + x.p.getIndices().getCount() / 3, 0);
-        await only('rest', Math.max(0.05, (t0 * ratio - sum('keep') - clNow) / sum('rest')), 0.012);
+        await only('rest', Math.max(0.05, (t0 * ratio - sum('keep') - clNow) / sum('rest')), +opt('--lomax', 5900) < 5900 ? 0.03 : 0.012);
       } else await only('rest', Math.max(0.05, (t0 * ratio - sum('keep')) / sum('rest')), 0.02);
       await doc.transform(prune({ keepAttributes: false, keepLeaves: true }));
       if (light) liftLayers(doc);
@@ -83,6 +83,6 @@ for (const n of names) {
   };
   const full = await make((t) => Math.min(1, MAX / t)); pack(n, full.bin);
   let msg = `${n}: ${full.t0} -> ${full.t1} tris, ${(full.bin.length * 4 / 3 / 1024) | 0} KB`;
-  if (LO) { const lo = await make((t) => Math.min(1, 5900 / t), true); pack(n + '_lo', lo.bin); msg += `; lo ${lo.t1} tris, ${(lo.bin.length * 4 / 3 / 1024) | 0} KB`; }
+  if (LO) { const lo = await make((t) => Math.min(1, +opt('--lomax', 5900) / t), true); pack(n + '_lo', lo.bin); msg += `; lo ${lo.t1} tris, ${(lo.bin.length * 4 / 3 / 1024) | 0} KB`; }
   console.log(msg);
 }
