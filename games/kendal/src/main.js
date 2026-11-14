@@ -20,6 +20,7 @@ import { HATS, LOOKS, KID } from './cast.js';
 import { DECOR } from './decor.js';
 import * as TRN from './trains.js'; import * as PRP from './props.js';   /* whole modules, for the dev model viewer only */
 import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditWalk, auditCloth } from '../../../engine/audit.js';
+import { skinProbe } from '../../../engine/skinprobe.js';
 import { makeBirds } from './detail.js';
 
 const $ = (id) => document.getElementById(id);
@@ -726,6 +727,13 @@ function devViews() {
         for (const va of vars) { const b = makeBody({ base, bodyId, tint: {}, scale: KID[base] || 1, x: 0, z: 0, ry: 0, anim: 'Idle', hat: va.hat, hide: va.hide }), name = bodyId + (va.hat ? ' +' + va.hat : '') + (va.hide.length ? ' -' + va.hide.join('-') : ''); scene.add(b);
           const r = auditCloth(name, b, { poses: va.poses || POSES, after: gripTick, where: q.has('where') }); out.push(name + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const l of r.lines) out.push('  ' + l); bad += r.lines.length; pts += r.points; scene.remove(b); await new Promise((res) => setTimeout(res, 0)); } }
       out.unshift('cloth: ' + bad + ' issues (' + pts + ' points)'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'CLOTH ' + bad; })();
+  }
+  if (q.get('test') === 'skin') {   /* ?test=skin : how dark each face really looks in daylight (engine/skinprobe.js). Every look, plus a sample of crowd people at the ends of their skin range. &env=day picks the light. */
+    (async () => { const out = []; startGame(true); await waitFor(() => modelsReady); setEnv(ENV[q.get('env') || 'day']);
+      const list = Object.keys(LOOKS).map((k) => [k, LOOKS[k]]); for (const sk of [0.85, 1.0, 1.25]) list.push(['crowd woman57 skin ' + sk, { base: 'woman57', tint: {}, skin: sk }], ['crowd man_suit skin ' + sk, { base: 'man_suit', tint: {}, skin: sk }]);
+      for (const [name, look] of list) { await loadBase(look.base); const b = makeBody({ ...look, x: 4000, z: 4000, ry: 0, anim: 'Idle', hat: false }); scene.add(b); b.userData.anim.mx.update(0.3); const r = skinProbe(renderer, scene, b); scene.remove(b);
+        out.push(name + ' (' + look.base + ', skin ' + (look.skin || 1) + '): mean ' + r.rgb.join(',') + '  darkest ' + r.lo.join(',') + '  lightest ' + r.hi.join(',')); }
+      let el = $('autolog'); el.textContent = out.join('\n'); document.title = 'SKIN ' + out.length; })();
   }
   if (q.get('test') === 'walkers') {   /* ?test=walkers : every body walks whole loops at the speed the game moves it. Feet must not slide, sink or float, the loop must join, and a carried thing must stay clear of the body. */
     (async () => { const out = []; let bad = 0; startGame(true); await waitFor(() => modelsReady);

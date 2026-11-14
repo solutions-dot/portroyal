@@ -8,6 +8,7 @@ import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../e
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
 import { model, prefetch, onLoadFail } from '../../../engine/loader.js';
 import { auditCloth } from '../../../engine/audit.js';
+import { skinProbe } from '../../../engine/skinprobe.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -1384,6 +1385,12 @@ function devViews() {
   if (shot === 'hallseat2') inHall(13, 0.3, 0.9, -Math.PI / 2 + 0.25, 0.0, 'LEARN');
   if (shot === 'hallseat3') inHall(13, 0.0, 3.6, 0.0, 0.05, 'LEARN');
   if (shot === 'hallchat') inHall(10, -0.8, -1.2, 0, 0.04).then(() => startTalk(byId('garvey')));
+  if (q.get('test') === 'skin') {   /* ?test=skin : how dark each face really looks in this game's light (engine/skinprobe.js), every body */
+    (async () => { const out = []; while (!CL.Idle) await new Promise((r) => setTimeout(r, 100));
+      const names = (q.get('b') || 'amy1914,amyj1925,clerk1919,delegate1920,engineer1919,garvey1914,garvey1916,guide2020,hl_critic,hl_pressman,hl_woman,hl_worker,nb_elder,nb_seller,nb_youth,nurse1920,printer1907,seaman1919,steward1920,student2020,woman1914').split(',');
+      for (const nm of names) { const m = (await model(nm)).scene; m.position.set(400, 0, 400); scene.add(m); animate(m, 'Idle'); m.userData.anim.mx.update(0.3); const r = skinProbe(renderer, scene, m); scene.remove(m);
+        out.push(nm + ': mean ' + r.rgb.join(',') + '  darkest ' + r.lo.join(',') + '  lightest ' + r.hi.join(',')); }
+      let el = $('autolog'); if (!el) { el = document.createElement('pre'); el.id = 'autolog'; el.hidden = true; document.body.appendChild(el); } el.textContent = out.join('\n'); document.title = 'SKIN ' + out.length; })(); }
   if (q.get('test') === 'cloth') {   /* ?test=cloth : does an under layer show through its cover (skin through a shirt, a shirt through a jacket)? Every Garvey body, standing, walking, talking, waving and seated. &b=garvey1914,amy1914 picks bodies, &where adds the spot of the worst point. */
     (async () => { const out = []; let bad = 0, pts = 0; while (!CL.Idle) await new Promise((r) => setTimeout(r, 100));
       const POSES = [['Idle', 0.3], ['Walk', 0.25], ['Walk', 0.75], ['Talk1', 0.4], ['Wave', 0.5], ['SitIdle', 0.3]], names = (q.get('b') || 'amy1914,amyj1925,clerk1919,delegate1920,engineer1919,garvey1914,garvey1916,guide2020,hl_critic,hl_pressman,hl_woman,hl_worker,nb_elder,nb_seller,nb_youth,nurse1920,printer1907,seaman1919,steward1920,student2020,woman1914').split(',');

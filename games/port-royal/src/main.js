@@ -5,6 +5,7 @@ import { CL, mixers, grounded, HIPS_Y, setFallbackClip, loadClips, seamLoop, cli
 import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, chirp, cue, setG, tone, noiseHit, shipCreak, hammer, clink, uiSound } from '../../../engine/audio.js';
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 import { auditHeld, auditCloth } from '../../../engine/audit.js';   /* used only by the dev tests ?test=held and ?test=cloth */
+import { skinProbe } from '../../../engine/skinprobe.js';   /* dev only: ?test=skin */
 soundPref('portroyal-sound');
 onLoadFail((n) => { $('loadnote').hidden = false; $('loadnote').textContent = 'Part of the game did not load (' + n + '). Reload the page to try again.'; });
 
@@ -1157,6 +1158,12 @@ async function loadAll() {
   setTimeout(() => { buildTavern(); try { loadSoldier(); } catch (e) {} try { buildNewStreet(); } catch (e) { NS.err = String(e && e.stack || e); document.body.dataset.nserr = NS.err.slice(0, 300); }   /* never let the extra street stop the tavern */ for (const f of FINDS) if (state.unlocked.includes(f.id)) finds[f.id].visible = false; if (state.ate) stew.visible = true; tavernReady = true; $('tchap').hidden = false; model('heath').then((g) => { people.heath = prep(g.scene); placeHeath(); }).catch(() => {}); for (const n of ['ned', 'buc1', 'buc2', 'morgan', 'gunner']) model(n).then((g) => { people[n] = prep(g.scene); pirateReady(n); }).catch(() => {});
     model('galdy').then((g) => { galdy = prep(g.scene); galdy.scale.multiplyScalar(0.94); galdy.visible = false; scene.add(galdy); animate(galdy, 'Idle'); $('view').hidden = false; }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
   if (__DEV__ && q.has('seed')) { const [sx, sz] = q.get('seed').split(',').map(Number); applySave({ unlocked: ['galdy'], talked: true, ate: false, done: false, ch: {}, pos: [sx, sz, 0] }); setTimeout(() => { document.title = 'RESTORE x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2) + ' ns=' + NS.ready; }, 12000); }
+  if (__DEV__ && q.get('test') === 'skin') (async () => {   /* ?test=skin : how dark each face really looks in this game's daylight (engine/skinprobe.js) */
+    const out = []; for (const name of (q.get('b') || 'abba,grace,galdy,kofi,sailor,benning,heath,ned,buc1,buc2,morgan,gunner,soldier,turtler,mendes,constable').split(',')) { let G = name === 'abba' ? abba : name === 'grace' ? people.grace : null, own = false;
+      if (!G) { try { G = prep((await model(name)).scene); animate(G); own = true; } catch (e) { out.push(name + ': not loaded'); continue; } }
+      const px = G.position.clone(), vis = G.visible, par = G.parent; scene.add(G); G.visible = true; G.position.set(0, 400, 0); if (G.userData.anim) G.userData.anim.mx.update(0.3); const r = skinProbe(renderer, scene, G); G.position.copy(px); G.visible = vis; if (par) par.add(G); else scene.remove(G); if (own) scene.remove(G);
+      out.push(name + ': mean ' + r.rgb.join(',') + '  darkest ' + r.lo.join(',') + '  lightest ' + r.hi.join(',')); }
+    let el = document.getElementById('autolog'); if (!el) { el = document.createElement('pre'); el.id = 'autolog'; el.hidden = true; document.body.appendChild(el); } el.textContent = out.join('\n'); document.title = 'SKIN ' + out.length; })();
   /* pairs the cloth check must not judge here, each looked at by eye in ?shot=sheet:
      - a Lining is the hidden body kept in the colour of its cover (tools/garvey/era.py), so it is never a cover itself, and where it meets the breeches' waistband it is inside the shirt or coat;
      - all of the body under the breeches is Lining, so the Body the check finds beside them is the knee and shin coming out of the hem of knee breeches, which is how they are worn;
