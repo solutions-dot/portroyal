@@ -1,6 +1,6 @@
 # Melissa 2025: character recipes
 
-Follows `docs/PEOPLE.md` (branch `claude/affectionate-pasteur-xvhvlq`, PR 50). Every recipe sets `era`, `hat` as `[kind, material]` pairs, a `collar` kind and `colors` for each garment.
+Follows `docs/PEOPLE.md` (on `main` since PR 50). Every recipe sets `era`, `hat` as `[kind, material]` pairs, a `collar` kind and `colors` for each garment.
 
 ## Status: recipes written, bodies NOT built yet
 

@@ -61,11 +61,11 @@ python3 -m http.server 8765                 # then open http://localhost:8765/ga
 
 - Views (`?shot=NAME`): `y88a` to `y88d`, `y25a` to `y25e`, `aft1` to `aft6`, `tdy1` to `tdy3`, `room1` to `room3`, `hall1` to `hall4`, `stormhall`, `stormroom`, `stormyard`, `talk1`, `talk2`, `card1`, `journal1`, `chap1`, `poster`. Add `&k=1&rain=0.9` to put wind and rain on a view. `?shot=model&m=house|shop|fallen|props|wreck|tank|people&ids=pearl,winston&one` shows models and people.
 - Autoplayer: `?auto=N&one` plays chapter N (1 to 6). Without `&one` it carries on. Read it from `#autolog` and the page title (`--dump-dom`; the title can hold several lines).
-- Automatic checks (owner rule 8): `?test=audit` (0 in all six places on 14 Nov 2026), `?test=held`, `?test=layout` (run at 390x800, 667x375, 800x500 and 1280x720), `?test=resume`. `PEOPLE.md` also asks for `?test=cloth`, `?test=walkers` and `?test=skin`; those arrive with `engine/skinprobe.js` in PR 50 and are not wired here yet.
+- Automatic checks (owner rule 8): `?test=audit` (0 in all six places on 14 Nov 2026), `?test=held`, `?test=layout` (run at 390x800, 667x375, 800x500 and 1280x720), `?test=resume`. `PEOPLE.md` also asks for `?test=cloth`, `?test=walkers` and `?test=skin`. The engine has them now (`auditCloth` and `auditWalk` in `engine/audit.js`, `engine/skinprobe.js`), but they are not wired here yet: copy Kendal's blocks.
 
 ## People (follow `docs/PEOPLE.md`)
 
-`docs/PEOPLE.md` is on the branch `claude/affectionate-pasteur-xvhvlq` (PR 50). Recipes for the 1988 and 2025 bodies are in `tools/melissa/people/` (see its README). They are **not built**, because MakeHuman and Blender were not available when the game was started. The game uses bodies already built for Kendal (allowed: a body used by two games is built once and copied), recoloured per person in `cast.js`. The stand-ins wear 1950s cuts; build the real bodies and point `cast.js` at them.
+`docs/PEOPLE.md` is on `main` (PR 50 merged). Recipes for the 1988 and 2025 bodies are in `tools/melissa/people/` (see its README). They are **not built**, because MakeHuman and Blender were not available when the game was started. The game uses bodies already built for Kendal, plus Garvey's `guide2020` and `student2020` (allowed: a body used by two games is built once and copied), recoloured per person in `cast.js`. The stand-ins wear 1950s cuts; build the real bodies and point `cast.js` at them.
 
 ## Research
 
@@ -97,7 +97,7 @@ A point to keep straight: the government called Gilbert the previous benchmark, 
 
 ## What is left
 
-1. **Build the six character recipes** in `tools/melissa/people/` and swap the stand-in bodies (see above). Then run the skin, cloth and walker tests from `PEOPLE.md` once they exist.
+1. **Build the six character recipes** in `tools/melissa/people/` and swap the stand-in bodies (see above). Then wire and run the skin, cloth and walker tests from `PEOPLE.md` (copy Kendal's blocks).
 2. **Run the layout test** at 390x800, 667x375, 800x500 and 1280x720 and fix everything it finds; run `?test=held` and `?test=resume`.
 3. **Look at every place** in close screenshots (the 1988 yard, the room, the village after the storm, today). Only the 2025 yard, the hall, the storm in the hall and the village today have been looked at so far. The wreckage (zinc sheets, wires, tarps, the fallen tree) needs a pass for how it reads from the lane.
 4. **Read every line aloud** for the 6+ level (lines of about 12 words or fewer). All dialogue is new wording.
@@ -105,5 +105,5 @@ A point to keep straight: the government called Gilbert the previous benchmark, 
 6. **Real people.** Nobody real speaks. If the owner wants a real official or a real survivor, use only words from the record.
 7. **Source the Gilbert dishes** (see above).
 8. **Sound** has been written but not heard: run the autoplayer once with sound allowed (`--autoplay-policy=no-user-gesture-required`) and check `AU.ctx.state` is `running`, as `docs/TESTING.md` says.
-9. **Menu card, poster, `CLAUDE.md` index line and `docs/ARCHITECTURE.md`** are left until the owner says the game is ready (as with Bog Walk), and until PR 50, which edits `CLAUDE.md`, has landed.
+9. **Menu card, poster, `CLAUDE.md` index line and `docs/ARCHITECTURE.md`**: done (the card went on the menu on 14 Nov 2026). Still missing: a row for this file in `CLAUDE.md`'s "Read these" table (the owner's file).
 10. **Phones.** Rain and sway cost little (one set of lines, one set of points), but measure with `?shot=y25a&stats` and on a real phone.

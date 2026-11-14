@@ -1,6 +1,6 @@
 # Garvey-era characters (about 1900 to 1930)
 
-Status: working. Used for every Garvey character so far, in `people/`: the printer and customer (chapter 1), Garvey, Amy Ashwood and three neighbours (chapter 2), Garvey in street clothes and three Harlem people (chapter 3), a pressman and a seaman (chapter 4), a clerk and an engineer (chapter 5), a nurse, a traveller and a steward (chapter 6), Amy Jacques Garvey (chapter 7), and a modern student and a park guide (chapter 8). `era.py` is a copy of `tools/people/npc.py` with extra garments. Port Royal's `npc.py` has changed since (the neckcloth and coat-skirt fixes); folding the two together is a tidy-up for later.
+Status: working. `era.py` is now the one clothes builder for every game's people (Port Royal's 1690 recipes too); the rules are in `docs/PEOPLE.md` and every recipe key is listed in `docs/PIPELINE.md`, section 5. It began as a copy of Port Royal's old `tools/people/npc.py`, which is now retired and kept only for reference. The Garvey bodies are in `people/`: the printer and customer (chapter 1), Garvey, Amy Ashwood and three neighbours (chapter 2), Garvey in street clothes and three Harlem people (chapter 3), a pressman and a seaman (chapter 4), a clerk and an engineer (chapter 5), a nurse, a traveller and a steward (chapter 6), Amy Jacques Garvey (chapter 7), and a modern student and a park guide (chapter 8).
 
 ## Set up on a fresh Linux machine
 
@@ -23,33 +23,21 @@ npm install
 mkdir -p build/people
 MAKEHUMAN=~/mh/makehuman NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/era.py "$(cat tools/garvey/people/printer1907.json)"
 NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/preview.py -- printer1907,woman1914    # build/garvey_front.png, build/garvey_34.png
-node tools/optimize_models.mjs --dir build/people --chars printer1907 woman1914             # compress, then pack as in docs/PIPELINE.md
+node tools/people/pack.mjs --out games/garvey/site/models printer1907 woman1914          # trim, compress and pack (add --lo for light copies)
 ```
 
-The bpy module has no Draco or meshopt, so the first `.glb` is large (about 1.5 MB). The compress step brings it to about 290 KB (printer) and 210 KB (woman).
+The bpy module has no Draco or meshopt, so the first `.glb` is large (about 1.5 MB). Packing brings a full body to about 320 to 420 KB (printer1907 397 KB, woman1914 323 KB). The same bodies are also copied into other games (Bog Walk uses several); copy the packed files, do not rebuild them per game.
 
-## What `era.py` adds to `npc.py`
+## Recipe keys
 
-| Key in `garments` | What it makes |
-|---|---|
-| `trousers` | Long trousers to the ankle |
-| `waistcoat` | A sleeveless waistcoat over the shirt (colour key `Waistcoat`) |
-| `vwaist` | With `waistcoat`: a V opening at the front that shows the shirt and tie. Used for every waistcoat in the game. |
-| `collar` | A stiff white standing collar (colour key `Collar`) |
-| `tie` | A plain tie (colour key `Tie`) |
-| `hat: "flat"` | A flat cap with a short peak |
-| `woman` | The blouse follows the figure instead of a man's shirt drape |
-| `highneck` | A high-necked blouse |
-| `skirt` | A long skirt that hangs from both legs (colour key `Skirt`) |
-| `jacket` | A suit jacket with a V opening, waist-length, sleeves to the wrist (colour key `Jacket`; `jacketsleeve` sets how far down the arm) |
-| `bun` | Hair gathered into a bun |
-| `smooth` | Smooths the cut edges of a man's shirt (neckline and sleeves). Used for the pressman and the seaman. |
+The full, current list of keys is in `docs/PIPELINE.md`, section 5 (and section 1 for 1690 recipes). The Garvey recipes were written before `docs/PEOPLE.md`: they leave out `era` (so they build as 1915), give `hat` as one word instead of a list, and use `collar: true`. They still build, but bring each one up to the standard (`docs/STANDARD.md`) when you next change it. `smooth`, set in some of them, is no longer read.
 
-Women use the body macros `gender: 0.0`, `cupsize` and `firmness`, as in `tools/blender/abba.py`.
+Women use the body macros `gender: 0.0`, `cupsize` and `firmness`.
 
-## Known issues (to fix before use in a game)
+## Known issues
 
-- A very young or very short body (age below about 0.3) leaves skin strips down the trouser legs; use proportions like `printer1907.json`.
-- A woman's apron does not fit over a skirt (it is cast onto the body, not the skirt).
-- Still to make: women's hats, the UNIA uniform (from chapter 6), the Black Cross Nurses' dress, and a teen body for the young hero.
-- The preview makes deep skin tones look very dark. Check them under the game's own lighting.
+- A child must be a real child body built with `upscale` (`docs/PEOPLE.md`), as `student2020` is. Kendal's `boy.json` and `girl.json` are the models to start from.
+- A woman's apron does not fit over a skirt: `era.py` lays the apron on the body (or on trousers after 1800), not on the skirt.
+- Still to make: the UNIA uniform (from chapter 6), the Black Cross Nurses' dress, women's hats for this game's women, and a teen body for the young hero.
+- The preview makes deep skin tones look darker than the game does. Check them in the game with `?test=skin` (`docs/PIPELINE.md`, "Skin").
+- `?test=cloth` printed 7 issues (49 points) on 14 November 2026: trousers through the jacket hem when sitting (`delegate1920`, `garvey1914`, `garvey1916`, `hl_critic`) and a few points at a shirt's waist (`nb_youth`, `student2020`).

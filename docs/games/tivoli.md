@@ -5,7 +5,7 @@ Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the plan, the rules 
 - Code: `games/tivoli/` (started from `games/_template/`; see "Code map").
 - **On the menu since 14 November 2026** (the owner's choice), in `games/tivoli/`. The folder used to start with an underscore so `tools/dist.mjs` skipped it.
 - Build: `node tools/build.mjs tivoli --dev`, then open `http://localhost:8765/games/tivoli/site/` (see "Test it").
-- Status (14 November 2026): **scaffold only, with a second research pass done (see "Research").** It builds and runs as the template does. There are no chapters, places, people or journal yet. There is a placeholder pose layer for the gunfight scenes (`src/clips.js`) and a staging view for it.
+- Status (14 November 2026): **scaffold only, with a second research pass done (see "Research").** It builds and runs as the template does. There are no chapters, places or journal yet. Two uniform bodies are built (`soldier2010`, `police2010`); the template's talking person is still the Port Royal sailor stand-in. There is a placeholder pose layer for the gunfight scenes (`src/clips.js`) and a staging view for it.
 
 ## What this game is, and why it needs care
 
@@ -138,11 +138,11 @@ node tools/people/pack.mjs --out games/tivoli/site/models --max 30000 --lo soldi
 - Colour by vertex, never by face: per-face colour splits every vertex and doubled the file size.
 - Budget: full bodies about 28,600 triangles and 460 KB; light copies 5,900 to 6,000 triangles. `--max 30000` keeps the full copy under budget.
 - In the game: `games/tivoli/src/cast.js` (Kendal's pattern; `SKIN_LIGHT = 1.55`). View them with `?shot=uniforms` (`&lo` for the light copies).
-- **Rebuild these bodies when the people branch (`claude/affectionate-pasteur-xvhvlq`) is merged**: it changes `era.py`, skin and `SKIN_LIGHT`, and brings `engine/people.js`. Then delete `games/tivoli/src/checks.js` and use the engine's checks.
+- **The people branch is merged (PR 50).** `engine/audit.js` now has `auditCloth` and `auditWalk`, and `engine/skinprobe.js` exists, so `games/tivoli/src/checks.js` can go: switch the imports to the engine and delete it. `engine/people.js` was planned but does not exist; keep Kendal's pattern in `cast.js`. Rebuild these bodies if `era.py` changes the pieces they use. `cast.js` lightens Hair as well as Skin; `docs/PEOPLE.md` says hair keeps its own colour.
 
-Checks (14 November 2026; `games/tivoli/src/checks.js` holds local copies of the people branch's checks, because main's `engine/` does not have them):
+Checks (14 November 2026, measured with the local copies in `games/tivoli/src/checks.js`, before PR 50 merged):
 - `?test=cloth`: 19 issues on 55 points, every one at most 2.8 mm except two single points (one point of shoe through each police boot, from `pack.mjs` simplifying the light copy and from `era.py`'s shoe; one point of skin under the police sleeve when pointing). Most are the harness straps grazing the vest's edges by 1 to 3 mm in different poses. Down from 175 issues on 16,750 points. Not yet 0.
-- `?test=walkers`: shoes sink 4.3 cm walking and 10.3 cm running, the same for both bodies and both copies. That is main's `groundFeet` pinning only the toe joint; the people branch's `engine/anim.js` fixes it ("Pinning only the toe joint let the heel sink 3 to 5 cm"). Nothing in the uniforms causes it.
+- `?test=walkers`: shoes sink 4.3 cm walking and 10.3 cm running, the same for both bodies and both copies. That was the old `groundFeet` pinning only the toe joint. `engine/anim.js` on main now pins the lowest points of the soles, so run it again.
 - `?test=skin`: faces read a warm mid-brown in the template's daylight (soldier mean 99,62,42; police 110,71,49). Judge again in the real places and lighten if they read too dark.
 
 ## Weapons (Tivoli only)
@@ -160,7 +160,10 @@ Checks (14 November 2026; `games/tivoli/src/checks.js` holds local copies of the
 
 | File | What it holds |
 |---|---|
-| `src/main.js` | The template's starting point (scene, movement, one talking person), plus the dev-only block `devViews` (`?shot=fight`, `?test=clips`). |
+| `src/main.js` | The template's starting point (scene, movement, one talking person), plus the dev-only block `devViews` (`?shot=fight`, `rifles`, `hands`, `slung`, `uniforms`; `?test=clips`, `measure`, `held`, `cloth`, `skin`, `walkers`). |
+| `src/cast.js` | The uniform bodies (`BODIES`), their looks and `makeBody` (Kendal's pattern) |
+| `src/weapons.js` | The rifle and pistol, and the two-handed hold |
+| `src/checks.js` | Local copies of `auditCloth`, `auditWalk` and `skinProbe` (the engine has them now; delete this file) |
 | `src/clips.js` | `POSES` (real name, stand-in, what it must show), `pose(name)`, `standIns()` |
 | `anim-clips.json` | The clips the build keeps in this game's copy of the animation library: `Idle, Walk, Run, Talk1, Block, Point, Terrified` (214 KB instead of 979 KB) |
 | `site/models/sailor.js` | The template's stand-in character. Tivoli needs its own people (see "What is left"). |
@@ -173,7 +176,7 @@ node tools/build.mjs tivoli --dev          # dev build
 python3 -m http.server 8765                 # then open http://localhost:8765/games/tivoli/site/
 ```
 
-Views: `?shot=fight`, `?test=clips`. The automatic audits and the layout test are **not wired yet** because there are no places. When there are characters, `docs/PEOPLE.md` (on branch `claude/affectionate-pasteur-xvhvlq` until it is merged) also requires `?test=cloth`, `?test=walkers` and `?test=skin`. CLAUDE.md rule 8 says to wire them before the first PR that contains a place (copy the blocks from `games/kendal/src/main.js`, see `docs/TESTING.md` section 5).
+Views: `?shot=fight`, `?test=clips` and the others in the code map. `?test=held`, `?test=cloth`, `?test=walkers` and `?test=skin` are wired. The place audit and the layout test are **not wired yet** because there are no places. CLAUDE.md rule 8 says to wire them before the first PR that contains a place (copy the blocks from `games/kendal/src/main.js`, see `docs/TESTING.md` section 5).
 
 ## Research (14 November 2026: second pass, from primary documents and newspaper archives)
 
@@ -241,12 +244,12 @@ Real people in the game: none speak. Coke, politicians, commanders, officers and
 2. **The open decision** above (the West Kingston reviewer), and the elder's name and age.
 3. **A reviewer from West Kingston.**
 4. **Characters.** Tivoli needs its own people: the elder, a child, neighbours, police and soldiers in real uniforms, gunmen in everyday clothes. Skin must follow CLAUDE.md rule 9. See `docs/PIPELINE.md`.
-   - **Before adding any character**, run `git fetch --depth=50 origin claude/affectionate-pasteur-xvhvlq` and read `docs/PEOPLE.md` from that branch (`git show origin/claude/affectionate-pasteur-xvhvlq:docs/PEOPLE.md`). Follow it for every person. It may change before it is merged, so read it again at the start of each character session.
-   - **Owner's rules for this work:** put recipes in `tools/tivoli/people/` (one JSON file per body, named after the body); keep all game work inside `games/tivoli/`; do **not** edit `tools/garvey/era.py`, `tools/people/pack.mjs` or anything in `engine/`, because another branch is changing them.
+   - **Before adding any character**, read `docs/PEOPLE.md` and `docs/STANDARD.md` (both on `main`). Follow them for every person.
+   - **Owner's rules for this work:** put recipes in `tools/tivoli/people/` (one JSON file per body, named after the body); keep all game work inside `games/tivoli/`; do **not** edit `tools/garvey/era.py`, `tools/people/pack.mjs` or anything in `engine/`: every game shares them, so a change goes in its own PR for the owner (`docs/STANDARD.md`).
    - **What PEOPLE.md requires, in short:** every recipe sets `era`, `hat` as a list of `[kind, material]` pairs, `collar` as a kind, and `colors` for every garment. Children are real child bodies built with `upscale` (start from Kendal's `boy.json` and `girl.json`). Build with `era.py`, pack with `pack.mjs --out games/tivoli/site/models --lo <name>` (always pass `--out`). Skin follows CLAUDE.md rule 9. Wire `?test=cloth`, `?test=walkers` and `?test=skin` as well as audit, held and layout (see "Test it").
-   - **Open problem (found 14 November 2026):** `era.py` dresses people for about 1900 to 1957 and for 2020. The 1960s chapters can start from the 1957 clothes and the 2010 civilians from the 2020 ones. But 2010 police and soldier kit (uniforms, helmets, vests) is not in `era.py`, and the uniform cap is the only uniform piece. Use plain stand-ins (Kendal's guard uniform recoloured) until the other branch's work lands or the owner says how to proceed. Do not edit `era.py` to fix it.
+   - **Open problem (found 14 November 2026):** `era.py` dresses people for about 1900 to 1957 and for 2020. The 1960s chapters can start from the 1957 clothes and the 2010 civilians from the 2020 ones. But 2010 police and soldier kit (uniforms, helmets, vests) is not in `era.py`, and the uniform cap is the only uniform piece. This game solved it with `tools/tivoli/kit.py`, which adds the 2010 kit on top of an `era.py` body (see "Characters" above). Do not edit `era.py` to fix it.
 5. **Places**: Back-o-Wall, new Tivoli streets and flats, a home interior, a rooftop or window view, the community centre.
 6. **The remaining gunfight clips** (crouch, duck, run low, advance; table above), **weapon props** (rifles and pistols with a two-handed grip: `engine/grip.js` only does one hand, and must not be edited here), flashes and sounds. 
 7. **Story code**: chapters, journal, goals, saving (copy the patterns from `games/kendal/src/`).
 8. **Wire the automatic audits and layout test** before the first PR that has a place.
-9. **The menu card and the poster**, once the owner decides to publish.
+9. **The poster picture.** The menu card is up (14 November 2026) with a plain green background; there is no `menu/tivoli.jpg` yet.

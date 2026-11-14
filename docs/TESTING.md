@@ -63,6 +63,8 @@ The autoplayer jumps between actions instead of walking, so it can't catch movem
 
 ## 4. Character and model checks
 
+The rules every character must meet are in `docs/PEOPLE.md`; the checklist is in `docs/STANDARD.md`.
+
 - `tools/people/preview_heads.py` and `preview_body.py` render front, back and close-up images with Blender.
 - `tools/garvey/preview.py` renders front and three-quarter views of bodies built by `era.py`, brighter than the two above: `NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/preview.py -- printer1907,woman1914` (writes `build/garvey_front.png` and `build/garvey_34.png`).
 - Blender previews make dark skin look darker than the game does. Judge skin with `?test=skin` and game screenshots (`docs/PIPELINE.md`, "Skin").
