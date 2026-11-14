@@ -2,6 +2,7 @@
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from 'three';
 import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv } from './wgfx.js';
+import { blob } from './detail.js';
 
 const M = {
   trunk: solid(0x6a4c33, 1), palmTrunk: solid(0x8a7156, 1), wood: solid(0x7a5a3c, 0.95), woodDark: solid(0x3d2d20, 0.95), iron: solid(0x2b2d31, 0.6, 0.3), steel: solid(0x8c8f93, 0.4, 0.6),
@@ -11,8 +12,8 @@ const M = {
 export { M as PM };
 
 /* ---------- plants ---------- */
-const leafMat = () => new THREE.MeshBasicMaterial({ map: T.leaf(), transparent: true, alphaTest: 0.35, side: THREE.DoubleSide });
-let _leaf, _bleaf; const LM = () => (_leaf = _leaf || leafMat()), BLM = () => (_bleaf = _bleaf || new THREE.MeshBasicMaterial({ map: T.bananaLeaf(), transparent: true, alphaTest: 0.35, side: THREE.DoubleSide }));
+const leafMat = () => new THREE.MeshLambertMaterial({ map: T.leaf(), alphaTest: 0.4, side: THREE.DoubleSide });   /* lit, so palms darken at dusk and night like everything else */
+let _leaf, _bleaf; const LM = () => (_leaf = _leaf || leafMat()), BLM = () => (_bleaf = _bleaf || new THREE.MeshLambertMaterial({ map: T.bananaLeaf(), alphaTest: 0.4, side: THREE.DoubleSide }));
 export function palm(h = 6.5, seed = 1) {
   const r = rng(seed), g = grp(); const lean = (r() - 0.5) * 0.35;
   const trunk = cyl(0.16, 0.26, h, M.palmTrunk, -Math.sin(lean) * h / 2, Math.cos(lean) * h / 2, 0, g, 8); trunk.rotation.z = lean;
@@ -22,10 +23,13 @@ export function palm(h = 6.5, seed = 1) {
   for (let i = 0; i < 3; i++) mesh(new THREE.SphereGeometry(0.16, 8, 6), solid(0x6b8a2a, 1), (r() - 0.5) * 0.4, -0.15, (r() - 0.5) * 0.4, crown);
   return g;
 }
-export function tree(h = 5.5, seed = 1, tone = 0) {   /* a broad tree like a mango or a guango: a trunk and lumpy dark-green blobs */
-  const r = rng(seed), g = grp(); cyl(0.28, 0.4, h * 0.55, M.trunk, 0, h * 0.275, 0, g, 8);
-  const cols = [0x2f6a35, 0x3a7a3a, 0x285d30, 0x3f8040]; if (tone) cols.push(0x5a7a30);
-  for (let i = 0; i < 5; i++) { const s = h * (0.22 + r() * 0.16), b = mesh(new THREE.IcosahedronGeometry(s, 1), flat(cols[(r() * cols.length) | 0]), (r() - 0.5) * h * 0.4, h * 0.62 + r() * h * 0.22, (r() - 0.5) * h * 0.4, g); b.scale.y = 0.8; }
+export function tree(h = 5.5, seed = 1, tone = 0) {   /* a broad tree like a guango: a trunk, a few branches and soft rounded masses of leaves */
+  const r = rng(seed), g = grp(); cyl(0.24, 0.38, h * 0.55, M.trunk, 0, h * 0.275, 0, g, 9);
+  const dark = tone ? 0x2a4a20 : 0x1d4824, light = tone ? 0x7a9a40 : 0x4f8a3e;
+  blob(g, 0, h * 0.74, 0, h * 0.3, seed * 5 + 2, dark, light, { squash: 0.75 });
+  for (let i = 0; i < 4; i++) { const a = i / 4 * 6.28 + r(), d = h * (0.22 + r() * 0.08), bx = Math.cos(a) * d, bz = Math.sin(a) * d, by = h * (0.62 + r() * 0.14);
+    const br = cyl(0.04, 0.1, d * 1.2, M.trunk, bx * 0.5, h * 0.5 + (by - h * 0.5) * 0.5, bz * 0.5, g, 5); br.lookAt(bx, by, bz); br.rotateX(Math.PI / 2);
+    blob(g, bx, by, bz, h * (0.18 + r() * 0.07), seed * 11 + i, dark, light, { squash: 0.8 }); }
   return g;
 }
 export function banana(seed = 1, fruit = false) {   /* a banana plant; with fruit = true it carries a hanging bunch and the purple flower bud */
@@ -86,12 +90,17 @@ export function scatter(parent, make, n, area, clear = [], seed = 5) {
 }
 
 /* ---------- hills: a ring of rounded green hills around the play area, built as one coloured mesh each ---------- */
-const HILLM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
+const HILLM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 });
+/* soft noise from a few sines: smooth, so the hills have rounded shoulders and valleys instead of flat facets */
+const hn = (x, z, s) => Math.sin(x * 1.7 + s) * Math.cos(z * 1.3 - s * 0.7) * 0.5 + Math.sin(x * 3.9 - z * 2.3 + s * 2.1) * 0.22 + Math.sin(x * 7.7 + z * 6.1 + s) * 0.08;
 export function hillRing(radius = 150, count = 18, hMax = 60, { seed = 3, base = [0.2, 0.42, 0.22], far = 0 } = {}) {
   const r = rng(seed), g = grp();
-  for (let i = 0; i < count; i++) { const a = i / count * Math.PI * 2 + r() * 0.2, w = 60 + r() * 60, h = hMax * (0.45 + r() * 0.55), geo = new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2); const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
-    for (let k = 0; k < pos.count; k++) { const y = pos.getY(k), v = 0.82 + 0.35 * y + (r() - 0.5) * 0.12; col[k * 3] = base[0] * v; col[k * 3 + 1] = base[1] * v; col[k * 3 + 2] = base[2] * v; pos.setY(k, y * (1 + (r() - 0.5) * 0.15)); }
-    geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); const m = new THREE.Mesh(geo, HILLM); m.scale.set(w, h, w * (0.7 + r() * 0.4)); m.position.set(Math.cos(a) * radius, -2, Math.sin(a) * radius); m.rotation.y = r() * 3; g.add(m); }
+  for (let i = 0; i < count; i++) { const a = i / count * Math.PI * 2 + r() * 0.2, w = 60 + r() * 60, h = hMax * (0.45 + r() * 0.55), s0 = r() * 20, geo = new THREE.SphereGeometry(1, 40, 14, 0, Math.PI * 2, 0, Math.PI / 2); const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+    for (let k = 0; k < pos.count; k++) { const x = pos.getX(k), y = pos.getY(k), z = pos.getZ(k), n = hn(x * 1.4, z * 1.4, s0);
+      const yy = Math.pow(y, 0.85) * (1 + n * 0.35), sp = 1 + n * 0.08 * (1 - y); pos.setXYZ(k, x * sp, Math.max(0, yy), z * sp);
+      const forest = hn(x * 4 + 3, z * 4 - 2, s0 + 5) > 0.05 ? 0.8 : 1.0, v = (0.72 + 0.4 * y) * forest + n * 0.08;
+      col[k * 3] = base[0] * v * (1 + (1 - y) * 0.25); col[k * 3 + 1] = base[1] * v; col[k * 3 + 2] = base[2] * v; }
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals(); const m = new THREE.Mesh(geo, HILLM); m.scale.set(w, h, w * (0.7 + r() * 0.4)); m.position.set(Math.cos(a) * radius, -2, Math.sin(a) * radius); m.rotation.y = r() * 3; g.add(m); }
   return g;
 }
 
