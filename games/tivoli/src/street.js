@@ -20,8 +20,8 @@ function materials() {
   return {
     asphalt: W(TX.asphalt(), TX.TILE.asphalt, 0.95, 1.1), paving: W(TX.paving(), TX.TILE.paving), grass: W(TX.grass(), TX.TILE.grass),
     cream: st(0xdccfae, 3), blue: st(0xa6bfcb, 4), pink: st(0xdcb7a6, 5), green: st(0xb0c4a2, 6), yellow: st(0xe2d28a, 7), white: st(0xe8e4d8, 8), rawblock: W(TX.block(0x9a968c), TX.TILE.block),
-    wallw: W(TX.block(0xe4e0d2, 9), TX.TILE.block), zinc: W(TX.zinc(), TX.TILE.zinc, 0.6), roofc: W(TX.stucco(0x8c8c88, 10), TX.TILE.stucco),
-    win: M(0x364049, 0.5), frame: M(0xe6e2d6), slat: M(0x3a444c, 0.5), bar: M(0x2a2a2e, 0.6, 0.3), door: M(0x4a3a2c), kerb: M(0xb4b0a4), drain: M(0x1a1a1c), mark: M(0xdad6c4),
+    fence: W(TX.fenceBlock(), TX.TILE.fence, 0.9, 1.1), wallw: W(TX.block(0xe4e0d2, 9), TX.TILE.block), zinc: W(TX.zinc(), TX.TILE.zinc, 0.6), roofc: W(TX.stucco(0x8c8c88, 10), TX.TILE.stucco),
+    win: M(0x364049, 0.5), frame: M(0xe6e2d6), slat: M(0x3a444c, 0.5), bar: M(0x2a2a2e, 0.6, 0.3), gate: M(0xf0eee6, 0.6, 0.2), door: M(0x4a3a2c), kerb: M(0xb4b0a4), drain: M(0x1a1a1c), mark: M(0xdad6c4),
     tank: M(0x1d1d20, 0.7), dish: M(0xe0e0e0, 0.5, 0.2), ac: M(0xc4c6c6, 0.6), rebar: M(0x7a4a30, 0.8, 0.3), pole: M(0x6a5e50), insul: M(0x2d6a60, 0.4), lamp: new THREE.MeshStandardMaterial({ color: 0xeeeedd, emissive: 0x555544 }),
     trunk: M(0x5d4a35), leaf1: M(0x4d7a39), leaf2: M(0x628a45), leaf3: M(0x3f6a35), frond: M(0x5a8a3a), tyre: M(0x1b1b1d), wood: M(0x8c6b45), plank: M(0xa88a5c), rust: M(0x8a5a3c, 0.8, 0.3), junk: M(0x6a6a68),
     glass: M(0x2a3640, 0.2, 0.4), laundry1: M(0xd04a3a), laundry2: M(0x3a6ac0), laundry3: M(0xf0ece0), laundry4: M(0xe0c030),
@@ -71,12 +71,25 @@ export function buildStreet(opts = {}) {
     box(mat, w, 3.4, d, x, 0, z); box(X.rawblock, w + 0.05, 0.7, d + 0.05, x, 0, z); const r = box(X.zinc, w + 0.7, 0.14, d + 0.7, x, 3.4, z); r.rotation.z = 0.05;
     const fz = z - (d / 2 + 0.04); box(X.zinc, w * 0.72, 2.3, 0.08, x, 0.1, fz); for (let k = 0; k < 14; k++) box(X.bar, 0.02, 2.3, 0.02, x - w * 0.34 + k * (w * 0.68 / 13), 0.1, fz - 0.05);
     const sg = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.7, 0.9), new THREE.MeshStandardMaterial({ map: TX.sign(signText, signBg), roughness: 0.7 })); sg.position.set(x, 2.95, fz - 0.06); sg.rotation.y = Math.PI; lines.push(sg);
+    box(X.roofc, w + 0.4, 0.18, 1.9, x, 3.22, fz - 1.0); for (const cx of [-w / 2 + 0.15, 0, w / 2 - 0.15]) box(X.wallw, 0.24, 3.22, 0.24, x + cx, 0, fz - 1.8);   /* a covered walkway: a concrete slab on square posts over the pavement (Coronation Market street, Gleaner, 26 May 2010) */
   }
 
   /* north side: tall flats; south side: shops and lower flats (the child's window is on the x = 22 block, second floor, at the east end) */
   flats(-2, -13, 16, 9, 4, X.cream); flats(20, -13, 14, 9, 4, X.blue); flats(-24, -13, 14, 9, 4, X.pink); flats(-44, -13, 16, 9, 4, X.green); flats(38, -13, 14, 9, 4, X.yellow);
   shop(-14, 12, 8, 7, X.wallw, 'GROCERY', 0xd8c02a); shop(-30, 12, 9, 7, X.pink, 'BAR & LOUNGE', 0x2f6a8a); flats(-8, 14, 14, 8, 2, X.blue, -1); flats(22, 14, 14, 8, 2, X.cream, -1);
   for (let x = 2; x < 15; x += 1.2) box(X.zinc, 1.22, 2.1, 0.06, x + 0.6, 0, 9.9, 0.02 * ((x * 7) % 3 - 1));   /* a vacant lot behind a zinc-sheet fence, between the flats */ flats(-46, 14, 12, 8, 2, X.yellow, -1);
+
+  /* ---- white block fences and gates along the lanes, with bushy shrubs behind (Gleaner photographs, 24 to 27 May 2010: white cast-block fences with round openings, iron gates, thick greenery) ---- */
+  function fenceRun(x0, x1, z, gate) {
+    const n = Math.round((x1 - x0) / 1.3), step = (x1 - x0) / n;
+    for (let i = 0; i < n; i++) { const cx = x0 + (i + 0.5) * step; if (Math.abs(cx - gate) < 0.9) continue; box(X.fence, step - 0.22, 1.3, 0.16, cx, 0.0, z); box(X.wallw, step - 0.1, 0.1, 0.22, cx, 1.3, z); }
+    for (let i = 0; i <= n; i++) { const px = x0 + i * step; if (Math.abs(px - gate) < 0.5 || Math.abs(px - gate) < 1.05) { box(X.wallw, 0.3, 1.6, 0.3, px, 0, z); box(X.wallw, 0.38, 0.1, 0.38, px, 1.6, z); } else if (i % 2 === 0) { box(X.wallw, 0.26, 1.45, 0.26, px, 0, z); } }
+    box(X.wallw, 0.3, 1.6, 0.3, gate - 0.95, 0, z); box(X.wallw, 0.3, 1.6, 0.3, gate + 0.95, 0, z);
+    for (let b = 0; b < 9; b++) box(X.gate, 0.03, 1.3, 0.03, gate - 0.64 + b * 0.16, 0.05, z); box(X.gate, 1.4, 0.04, 0.04, gate, 0.35, z); box(X.gate, 1.4, 0.04, 0.04, gate, 1.1, z);   /* the white iron gate */
+  }
+  fenceRun(-9.8, -1.6, 8.7, -5.7); fenceRun(15.4, 24.2, 8.7, 19.8);
+  function bush(x, z, s = 1) { for (const [dx, dy, dz, r, mm] of [[0, 1.1, 0, 0.9, X.leaf1], [0.7, 0.8, 0.2, 0.7, X.leaf2], [-0.6, 0.9, -0.2, 0.75, X.leaf3], [0.1, 1.7, 0, 0.6, X.leaf2]]) { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(r * s, 1), mm); l.position.set(x + dx * s, dy * s, z + dz * s); g.add(l); } }
+  for (const [x, z, sc] of [[-8.6, 9.5, 1.1], [-3.0, 9.4, 1.2], [16.8, 9.5, 1.1], [22.6, 9.4, 1]]) bush(x, z, sc);
 
   /* ---- cover and vehicles ---- */
   box(X.wallw, 0.35, 1.15, 4.2, -2, 0, -2.4); spots.wallA = [[-0.7, -3.4], [-0.7, -2.2], [-0.7, -1.2]];

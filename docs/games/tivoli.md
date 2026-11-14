@@ -289,3 +289,5 @@ Real people in the game: none speak. Coke, politicians, commanders, officers and
 ## STANDARD.md follow-up (14 November 2026)
 
 `docs/STANDARD.md` (on branch `claude/affectionate-pasteur-xvhvlq`) says: Hair is set to 1, not multiplied (done in `src/cast.js`); do not borrow other games' bodies. Still borrowed: `girl`, `woman_elder`, `man_elder` (Kendal) and `guide2020` (Garvey). They need Tivoli recipes in `tools/tivoli/people/` (Ivy as girl and grandmother, Miss Pearl, Mass Roy, a 2020 guide). The Back-o-Wall place has no `?test=audit` wiring yet.
+
+**Street details from Gleaner photographs (14 November 2026).** From two photos only (soldiers on a residential lane, 24 to 27 May 2010; the Coronation Market street): white cast-block fences with round openings and white iron gates (`fenceBlock` texture, `fenceRun` in `street.js`), bushy shrubs behind them, and covered concrete walkways on posts over shop pavements (awnings on the shops). These are general looks, not copies of any real fence or shop. The tall blocks are still generic walk-up flats; no photograph of Tivoli's high-rise blocks was found. `?test=audit` stays at 0.
