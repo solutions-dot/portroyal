@@ -99,6 +99,9 @@ Promise.all([model('anims'), model('anims_tivoli'), model('sailor')]).then(([ani
   if (__DEV__) devViews(sailor);
 });
 
+$('start').onclick = () => { audioInit(); $('title').hidden = true; $('hud').hidden = false; state.started = true; setGoal('Walk to the sailor and talk to him.'); canvas.focus(); };
+$('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 'Sound on' : 'Sound off'; };
+
 /* ---------- dev only: test views. This whole block is left out of the public build. ---------- */
 const DEVG = [];   // models whose feet are pinned to the ground each frame
 const waitTick = () => new Promise((r) => setTimeout(r, 0));
