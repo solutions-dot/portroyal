@@ -93,7 +93,7 @@ let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.46 }, suitcase: { hand
 const SKIN_LIGHT = 1.55;   /* the bodies' skin is built dark, so we lighten it a little (as in Marcus Garvey) so faces read in every light */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
-  const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat); if (/^man_(work|shirt|elder|suit)$/.test(s.base) && !(s.hide || []).includes('Waistcoat')) offHats.push('Belt', 'Buckle');   /* a waistcoat covers the belt */   /* a body carries several hats; show the one this person wears (s.hat), or none */
+  const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat); if (/^man_(work|shirt|elder|suit)$/.test(s.base) && !(s.hide || []).includes('Waistcoat')) offHats.push('Belt', 'Buckle');   if (s.hat === 'Wrap') offHats.push('Bun');   /* a head tie covers the bun */   /* a waistcoat covers the belt */   /* a body carries several hats; show the one this person wears (s.hat), or none */
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const mat = o.material, nm = mat.name || '';
     if ((s.hide && s.hide.includes(nm)) || offHats.some((h) => nm === h || nm === h + 'Band')) { o.visible = false; return; }
     o.material = mat.clone(); const T = s.tint || {}, t = nm === 'Hair' ? undefined : T[nm] !== undefined ? T[nm] : nm === 'Collar' ? T.Shirt : nm === 'Pocket' && T.Shirt !== undefined ? new THREE.Color(T.Shirt).multiplyScalar(0.9).getHex() : (nm === 'Sash' ? T.Belt : undefined);   /* a collar is the shirt's own cloth unless it is given a colour; a patch pocket is a shade darker than its shirt */   /* hair keeps its own painted colours: they fade into the skin at the hairline */

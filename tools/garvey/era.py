@@ -66,7 +66,7 @@ cz=lambda f:f.calc_center_median()
 def side_arm(c):     # 0..1 position along the arm from shoulder to wrist, or None if not on the arm
     sx=1 if c.x>=0 else -1; a=Vector((SH.x*sx,SH.y,SH.z)); b=Vector((HA.x*sx,HA.y,HA.z)); d=b-a; t=(c-a).dot(d)/d.length_squared
     if t<-0.05 or t>1.15: return None
-    if (a+d*t-c).length>0.11*s: return None
+    if (a+d*t-c).length>(0.11 if P.get('era',1915)<1800 else 0.15)*s: return None      # later eras: the relaxed arm bends at the elbow, so the cloth round the elbow is still the arm's
     return t
 def armcut(t,sx):    # plane across the arm at fraction t, keeping the shoulder side
     a=Vector((SH.x*sx,SH.y,SH.z)); b=Vector((HA.x*sx,HA.y,HA.z)); d=(b-a).normalized(); return (a+(b-a)*t, d)
@@ -166,7 +166,7 @@ def puff_tube(end):      # a short puffed sleeve: full and round from the should
 def under_coat(c):   # the shirt sleeve between shoulder and cuff is hidden by the coat sleeve; leaving it there made it push through on the backs of the arms
     if not (G.get('coat') and G.get('coatsleeves',True)): return False
     t=side_arm(c); return t is not None and 0.1<t<G.get('coatsleeve',0.82)-0.1
-parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if OLD else HIP+0.07) if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve) and not under_coat(c),lambda c:0.012 if abs(c.x)>SX*0.8 else (0.003 if OLD and G.get('breeches') and c.z<HIP+0.13 else 0.008),'Shirt',shape=sleeve_tube(0.053,0.042,(sleeve-0.07,0.036) if sleeve>0.8 else None) if not G.get('woman') else (puff_tube(sleeve) if G.get('puff') else sleeve_tube(0.050,0.038,(sleeve-0.06,0.032) if sleeve>0.8 else None)),post=((lambda bm:smooth_edge(bm,ok=lambda c:not (c.y<0 and c.z>VZ-0.012 and abs(c.x)<0.075*s))) if G.get('woman') and CK=='camp' else smooth_edge if G.get('woman') else ((smooth_edge if OLD else None) if G.get('coat') else ((lambda bm:(drape_front(bm),smooth_edge(bm))) if G.get('smooth') else drape_front))),
+parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>(HIP+0.095 if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve) and not under_coat(c),lambda c:0.012 if abs(c.x)>SX*0.8 else (0.003 if OLD and G.get('breeches') and c.z<HIP+0.13 else 0.008),'Shirt',shape=sleeve_tube(0.053,0.042,(sleeve-0.07,0.036) if sleeve>0.8 else None) if not G.get('woman') else (puff_tube(sleeve) if G.get('puff') else sleeve_tube(0.050,0.038,(sleeve-0.06,0.032) if sleeve>0.8 else None)),post=((lambda bm:smooth_edge(bm,ok=lambda c:not (c.y<0 and c.z>VZ-0.012 and abs(c.x)<0.075*s))) if G.get('woman') and CK=='camp' else smooth_edge if G.get('woman') else ((smooth_edge if OLD else None) if G.get('coat') else ((lambda bm:(drape_front(bm),smooth_edge(bm))) if G.get('smooth') else drape_front))),
    cuts=[((0,0,NECK+0.005-(0.062*s if G.get('coat') and G.get('coatsleeves',True) else 0)),(0,0,1),None),((0,-0.1,NCUT),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+([((0,0,VZ),Vector((-VK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,VZ),Vector((VK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if CK=='camp' else [])+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar; a camp collar opens the front in a narrow V
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
@@ -831,12 +831,16 @@ if G.get('coat') and G.get('coatbuttons',OLD):      # a row of buttons down the 
         if hit: bmesh.ops.create_circle(bm,cap_ends=True,segments=6,radius=0.0075*s,matrix=Matrix.Translation((0.010*s,hit.y-0.004,z))@Matrix.Rotation(math.pi/2,4,'X'))
     COL.setdefault('CoatButtons',COL['Coat']*0.5); soft('CoatButtons',bm,'CoatButtons')
 if G.get('apron'):
+    BRT=tree_of(PART['breeches']) if 'breeches' in PART else None
     bm=bmesh.new(); nu,nv=10,16; rows=[]; ZA,ZE=HIP+0.1,KNEE+0.02
     for jv in range(nv+1):
         t=jv/nv; z=ZA-t*(ZA-ZE); hw=0.15+0.03*t; row=[]
         for iu in range(nu+1):
-            x=-hw+2*hw*iu/nu; hit=tree.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]
-            row.append(bm.verts.new((x,(hit.y if hit else -0.12)-0.035,z)))
+            x=-hw+2*hw*iu/nu; hit=tree.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]; yy=(hit.y if hit else -0.12)
+            if not OLD and 'breeches' in PART:      # later eras: the apron lies on the trousers, a hand's breadth clear of them
+                hb=BRT.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]
+                if hb: yy=min(yy,hb.y)
+            row.append(bm.verts.new((x,yy-(0.035 if OLD else 0.030),z)))
         rows.append(row)
     for jv in range(nv):
         for iu in range(nu): bm.faces.new((rows[jv][iu],rows[jv][iu+1],rows[jv+1][iu+1],rows[jv+1][iu]))
