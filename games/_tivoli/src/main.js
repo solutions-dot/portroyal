@@ -12,8 +12,9 @@ import * as THREE from 'three';
 import { CL, mixers, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, AU } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
-import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
-import { pose, standIns, POSES } from './clips.js';   // gunfight poses: real clips when the library has them, stand-ins until then
+import { pose, standIns, POSES } from './clips.js';
+import { LOOKS, BODIES, loadBase, makeBody } from './cast.js';
+import { auditCloth, auditWalk, skinProbe } from './checks.js';   // dev only: local copies until the engine has them (see checks.js)   // gunfight poses: real clips when the library has them, stand-ins until then
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -91,29 +92,51 @@ $('next').onclick = nextLine; $('dclose').onclick = leaveTalk; $('talk').onclick
 function setGoal(t) { $('goal').textContent = t; }
 
 /* ---------- loading ---------- */
-Promise.all([model('anims'), model('sailor')]).then(([anims, sailor]) => {
-  loadClips(anims);
+Promise.all([model('anims'), model('anims_tivoli'), model('sailor')]).then(([anims, own, sailor]) => {
+  loadClips(anims); loadClips(own);   // the shared library, then Tivoli's own shooting and peeking clips (tools/tivoli/pack_clips.mjs)
   person = sailor.scene; person.position.set(PERSON.x, 0, PERSON.z); scene.add(person); animate(person, 'Idle');
   $('start').disabled = false; $('start').textContent = 'Start'; $('loadnote').textContent = '';
   if (__DEV__) devViews(sailor);
 });
 
 /* ---------- dev only: test views. This whole block is left out of the public build. ---------- */
-const DEVG = [];   // models whose feet are pinned to the ground each frame (the stand-in poses move the hips)
-function devViews(sailor) {
-  const q = new URLSearchParams(location.search), shot = q.get('shot'), test = q.get('test');
+const DEVG = [];   // models whose feet are pinned to the ground each frame
+const waitTick = () => new Promise((r) => setTimeout(r, 0));
+function devLog(lines, title) { let el = $('autolog'); if (!el) { el = document.createElement('pre'); el.id = 'autolog'; el.style.cssText = 'position:fixed;left:0;bottom:0;max-height:45%;overflow:auto;margin:0;padding:6px;background:#000c;color:#cfc;font:11px monospace;z-index:9'; document.body.appendChild(el); } el.textContent = lines.join('\n'); document.title = title; }
+async function devViews(sailor) {
+  const q = new URLSearchParams(location.search), shot = q.get('shot'), test = q.get('test'), lo = q.has('lo') ? '_lo' : '';
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
-  if (shot === 'fight') {   /* ?shot=fight: every gunfight pose on its stand-in clip, in a row, in front of a low wall. A look at the placeholders. */
+  if (!shot && !test) return;
+  scene.remove(sailor.scene); await Promise.all(BODIES.flatMap((b) => [loadBase(b), loadBase(b + '_lo')]));
+  const place = (look, x, z, ry, anim) => { const b = makeBody({ ...LOOKS[look], bodyId: LOOKS[look].base + lo, x, z, ry, anim }); scene.add(b); DEVG.push(b); return b; };
+  const cam = (x, z, yaw, pitch) => { state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch; state.started = true; $('title').hidden = true; $('hud').hidden = true; };
+  if (shot === 'fight') {   /* ?shot=fight: every gunfight pose, soldiers and police in turn, in front of a low wall (the poses are stand-ins until the real clips arrive) */
     const wall = new THREE.Mesh(new THREE.BoxGeometry(14, 1.1, 0.4), new THREE.MeshStandardMaterial({ color: 0xc9b99a, roughness: 1 })); wall.position.set(0, 0.55, -1.2); scene.add(wall);
-    const names = Object.keys(POSES), gap = 1.5, ctl = sailor.scene.userData.anim; delete sailor.scene.userData.anim;   /* a clone copies userData as JSON, and the controller points back at the model, so set it aside while cloning */
-    names.forEach((n, i) => { const p = skClone(sailor.scene); p.position.set((i - (names.length - 1) / 2) * gap, 0, 0); scene.add(p); animate(p, pose(n)); DEVG.push(p); });
-    sailor.scene.userData.anim = ctl; scene.remove(sailor.scene);
-    state.x = 0; state.z = 8.5; state.yaw = 0; state.pitch = -0.04; state.started = true; $('title').hidden = true; $('hud').hidden = true;
-    document.title = 'fight: ' + names.map((n) => n + '=' + pose(n)).join(' ');
+    const names = Object.keys(POSES); names.forEach((n, i) => place(i % 2 ? 'police' : 'soldier', (i - (names.length - 1) / 2) * 1.5, 0, 0, pose(n)));
+    cam(0, 8.5, 0, -0.04); document.title = 'fight: ' + names.map((n) => n + '=' + pose(n)).join(' ');
+  }
+  if (shot === 'uniforms') {   /* ?shot=uniforms (&lo for the light copies): soldier and police, front and back, close up */
+    place('soldier', -1.5, 0, 0); place('soldier', -0.5, 0, Math.PI); place('police', 0.5, 0, 0); place('police', 1.5, 0, Math.PI);
+    cam(0, 3.6, 0, -0.1); document.title = 'uniforms' + lo;
+  }
+  if (test === 'cloth') {   /* ?test=cloth (&b=soldier2010 &full or &lo &idle &where): does an under layer show through its cover (skin through a sleeve, shirt through the vest, hair through the helmet)? Both bodies, full and light copy, in the poses the game uses. */
+    const out = []; let bad = 0, pts = 0; const POSE_LIST = [['Idle', 0.3], ['Walk', 0.25], ['Walk', 0.75], ['Run', 0.3], ['Talk1', 0.4], ['Point', 0.5], ['Block', 0.5]];
+    for (const base of (q.get('b') ? q.get('b').split(',') : BODIES)) for (const l of ['', '_lo']) { if ((l && q.has('full')) || (!l && q.has('lo'))) continue; const b = makeBody({ base, bodyId: base + l, anim: 'Idle' }); scene.add(b);
+      const r = auditCloth(base + l, b, { poses: q.has('idle') ? [['Idle', 0.3]] : POSE_LIST, where: q.has('where') }); out.push(base + l + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const x of r.lines) out.push('  ' + x); bad += r.lines.length; pts += r.points; scene.remove(b); await waitTick(); }
+    out.unshift('cloth: ' + bad + ' issues (' + pts + ' points)'); devLog(out, 'CLOTH ' + bad);
+  }
+  if (test === 'skin') {   /* ?test=skin: how dark each face really looks in this game's light (the copied engine skin probe) */
+    const out = []; for (const [k, look] of Object.entries(LOOKS)) for (const l of ['', '_lo']) { const b = makeBody({ ...look, bodyId: look.base + l, x: 400, z: 400, anim: 'Idle' }); scene.add(b); b.userData.anim.mx.update(0.3);
+      const r = skinProbe(renderer, scene, b); scene.remove(b); out.push(k + l + ': mean ' + r.rgb.join(',') + '  darkest ' + r.lo.join(',') + '  lightest ' + r.hi.join(',')); }
+    devLog(out, 'SKIN ' + out.length);
+  }
+  if (test === 'walkers') {   /* ?test=walkers: each body walks and runs at game speed: feet must not slide, sink or float */
+    const out = []; let bad = 0;
+    for (const base of BODIES) for (const [clip, v] of [['Walk', 1.3], ['Run', 3.2]]) for (const l of ['', '_lo']) { const b = makeBody({ base, bodyId: base + l, ry: Math.PI / 2, anim: clip }); scene.add(b);
+      const r = auditWalk(base + l + ' ' + clip, b, v); out.push(`${base}${l} ${clip} at ${v} m/s: stride ${(r.stride * 100).toFixed(0)} cm, clip speed ${r.pace.toFixed(2)}, slide ${r.slide.toFixed(1)} cm a loop, shoes ${r.sink.toFixed(1)} to ${r.float.toFixed(1)} cm`); for (const x of r.lines) { out.push('  ' + x); bad++; } scene.remove(b); await waitTick(); }
+    out.unshift('walkers: ' + bad + ' issues'); devLog(out, 'WALKERS ' + bad);
   }
 }
-$('start').onclick = () => { audioInit(); $('title').hidden = true; $('hud').hidden = false; state.started = true; setGoal('Walk to the sailor and talk to him.'); canvas.focus(); };
-$('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 'Sound on' : 'Sound off'; };
 
 /* ---------- the frame loop ---------- */
 let last = performance.now(), stepT = 0;

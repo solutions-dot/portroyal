@@ -16,20 +16,27 @@ export const POSES = {
   DuckDown:     ['Block',  'Drop quickly from standing to a crouch at a shot. Plays once, ends in CrouchIdle.'],
   CrouchAim:    ['Point',  'Crouched, weapon raised, aiming over the cover. Loops.'],
   CrouchFire:   ['Point',  'Crouched, firing over the cover with a small recoil. Short loop.'],
-  StandAim:     ['Point',  'Standing, weapon raised, aiming. Loops.'],
-  StandFire:    ['Point',  'Standing, firing with a small recoil. Short loop.'],
-  PeekAround:   ['Idle',   'Lean out from a wall corner, look, pull back. Plays once.'],
+  StandAim:     ['Point',  'Standing, weapon raised, aiming. Loops.', ['PeekAim']],
+  StandFire:    ['Point',  'Standing, firing a rifle with a small recoil. Short loop.', ['ShootRifle']],
+  PeekAround:   ['Idle',   'Lean out from a wall corner, look, pull back. Plays once.', ['PeekCorner']],
+  AimCorner:    ['Point',  'Lean out from a corner and aim, then pull back.', ['PeekAim']],
+  PistolFire:   ['Point',  'Firing a pistol (police).', ['ShootPistol', 'Gunplay']],
+  ProneFire:    ['Block',  'Lying flat, firing a rifle.', ['ProneFire']],
+  ProneTurn:    ['Block',  'Lying flat, turning to the right.', ['ProneTurnR']],
   RunLow:       ['Run',    'Run bent over from one cover to the next. Loops, in place.'],
   AdvanceReady: ['Walk',   'Walk with the weapon at the ready, slow and steady. Loops, in place.'],
 };
+/* The owner's Mixamo clips (tools/tivoli/anim-sources/, packed into site/models/anims_tivoli.js by tools/tivoli/pack_clips.mjs):
+   ShootRifle, Gunplay, ShootPistol, ProneFire, ProneTurnR, PeekAim, PeekCorner. A pose lists the real clips it may use, best first (third column);
+   without a list it waits for a clip with its own name. */
 
 /* the clip name to play now: the real one if the library has it, otherwise its stand-in */
 export function pose(name) {
-  if (CL[name]) return name;
   const p = POSES[name];
   if (!p) throw new Error('tivoli clips: no pose called ' + name);
+  for (const c of [name, ...(p[2] || [])]) if (CL[c]) return c;
   return p[0];
 }
 
 /* the poses still using a stand-in (for the dev check and the doc) */
-export function standIns() { return Object.keys(POSES).filter((n) => !CL[n]); }
+export function standIns() { return Object.keys(POSES).filter((n) => pose(n) === POSES[n][0]); }
