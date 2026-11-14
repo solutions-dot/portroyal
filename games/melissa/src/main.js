@@ -484,6 +484,11 @@ function tearRoof(P, n = 5) {
     setTimeout(() => { if (!ST.on) { m.visible = false; return; } SFX.zincBang(0.8); tween(1.8, (k) => { m.position.set(p0.x + d.x * k, p0.y + d.y * k * k, p0.z + d.z * k); m.rotation.set(r0.x + sp * k * 1.5, r0.y + sp * k, r0.z + sp * k * 2); }).then(() => { m.visible = false; }); }, j * 300 * TS); });
 }
 function restoreRoof(P, torn, n = P.tornN || 5) { const hide = torn ? new Set(tornSet(P, n).map((s) => s.m)) : new Set(); for (const s of roofSheets(P)) { s.m.position.copy(s.m.userData.p0); s.m.rotation.copy(s.m.userData.r0); s.m.visible = !hide.has(s.m); } }
+/* what the wind throws across the gap in the roof: zinc sheets, and in 1988 the big satellite dishes torn off their posts */
+function skyDebris(kind) {
+  const o = new THREE.Vector3(state.x, 0, state.z), v = (x, y, z) => o.clone().add(new THREE.Vector3(x, y, z));
+  const g88 = kind === 'g88'; STORM.throwSheet(v(-9, 5, 4), v(9, 6, -5), 2.2); if (g88) setTimeout(() => STORM.throwDish(v(-9, 6, -3), v(8, 8, 4), 2.8), 700 * TS); setTimeout(() => STORM.throwSheet(v(8, 4, 5), v(-8, 7, -4), 2.2), 1500 * TS); if (g88) setTimeout(() => STORM.throwDish(v(9, 6, -1), v(-9, 7, 3), 2.6), 2600 * TS);
+}
 async function stormRun(kind) {
   const ep = EP, P = P_(), L = LINES[kind], hall = kind === 'm25', live = () => ep === EP && ST.on, lights = hall ? P.lights : [P.lampLight];
   ST.on = true; moveLock = true; busy = false; frozen = false; talkWith = null; keys.clear(); stick.id = null; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
@@ -500,7 +505,7 @@ async function stormRun(kind) {
   if (!(await gust)) return; if (!live()) return; $('holdwrap').hidden = true; goalText = ''; $('goal').textContent = '';
   /* the roof lifts */
   SFX.treeCrack(1.2); FX.shake = 0.9; SB = { wind: 1, howl: 0.6, roar: 0.8, rattle: 0.6, rain: 0.8 }; flash(0.6, 40, '#ffffff'); setTimeout(() => flash(0, 260, '#ffffff'), 80);
-  tearRoof(P, kind === 'm25' ? 6 : 5); WIND.k = 1; STORM.mask(P.group.position.x + 0, P.group.position.z + 0, kind === 'm25' ? 5 : 3); STORM.set({ rain: 0.9, wind: [1.2, 0.5], leaves: 0.9 }); say(L.b[4], 4200);
+  tearRoof(P, kind === 'm25' ? 6 : 5); WIND.k = 1; skyDebris(kind); STORM.mask(P.group.position.x + 0, P.group.position.z + 0, kind === 'm25' ? 5 : 3); STORM.set({ rain: 0.9, wind: [1.2, 0.5], leaves: 0.9 }); say(L.b[4], 4200);
   const camA = [state.x, EYE, state.z]; cut(camA, camA, [state.x + 1, EYE + 0.3, state.z], [state.x + 0.4, EYE + 5, state.z - 0.4], 2.6).then(() => {});
   await wait(3600); if (!live()) return; endCut(); FX.shake = 0.5; say(L.b[5], 4200); 
   if (hall) { SB.hymn = 0.8; } await wait(4400); if (!live()) return; say(L.b[6], 4200); FX.shake = 0.3; await wait(4400); if (!live()) return;
@@ -663,13 +668,14 @@ function devViews() {
     aft1: ['after', 40, 36, 0.4, PI / 2, 0], aft2: ['after', 41, -6, 3.4, PI / 2 + 0.4, 0], aft3: ['after', 42, -26, -1.8, 0, 0.12], aft4: ['after', 43, -14, 5.5, -PI / 2 - 0.3, 0.02], aft5: ['after', 44, 4, 3, PI / 2 - 0.2, 0.05], aft6: ['after', 51, 20, 2.2, -PI / 2 - 0.4, 0],
     tdy1: ['today', 60, -30, 0.4, -PI / 2, 0], tdy2: ['today', 61, 30, 1.8, -PI / 2 + 0.3, 0], tdy3: ['today', 60, -10, 3.6, PI / 2, 0.02],
     room1: ['room88', 14, 0, 1.4, 0, 0], room2: ['room88', 14, 1.8, 1.6, 0.9, 0], room3: ['room88', 14, -1.5, -1.0, 2.5, 0.35],
+    aftA: ['after', 42, -8, 3.5, 0.95, 0.03], aftB: ['after', 41, 36, -1.4, PI / 2 + 0.12, 0.03], y88e: ['yard88', 10, -15, -5.4, 0, 0.14], y88f: ['yard88', 10, -9, 1.8, 0.25, 0.08], aftC: ['after', 44, -9.5, 2.0, -PI / 2, 0.05],
     hall1: ['hall', 30, -6.2, 0.2, -PI / 2, 0], hall2: ['hall', 30, 0, 0.0, PI / 2, 0.02], hall3: ['hall', 31, 0.5, -2.2, 0.3, 0.02], hall4: ['hall', 33, -6, 0, -PI / 2 + 0.5, 0.0],
   };
   /* ?shot=model&m=people&ids=pearl,winston&one : people lined up for a close look. m=house|shop|fallen|props|roof show code-built things from four sides. */
   if (shot === 'model') go('yard25', 20, 0, 0, 0, 0).then(async (P) => {
     const pids = (q.get('ids') || '').split(',').filter(Boolean), plo = q.has('lo'); if (pids.length) await Promise.all(pids.map((id) => loadBase(LOOKS[id].base + (plo ? '_lo' : ''))));
     P.group.visible = false; $('hud').hidden = true; const m = q.get('m') || 'people', num = (k, d) => (q.has(k) ? +q.get(k) : d), root = new THREE.Group(); scene.add(root);
-    const MODELS = { house: [() => HSE.house({ style: q.get('style') || 'block', roof: q.get('roof') || 'on', shutters: q.get('sh') || 'open', tank: true, dish: true }), 9, 4, 1.6], shop: [() => HSE.shop({ roof: q.get('roof') || 'on' }), 9, 4, 1.6], fallen: [() => HSE.fallenTree(), 11, 4, 1.2], props: [() => { const g = new THREE.Group(); [HSE.waterDrum(), HSE.jug(), HSE.goBag(), HSE.radio(), HSE.tins(), HSE.bread(), HSE.candle(), HSE.kerosene(), HSE.zincSheet({ len: 2.2, curl: 0.4 }), HSE.plank(1.5, 2), HSE.mattress(), HSE.standpipeTap(), HSE.clothes()].forEach((o, i) => { o.position.x = (i - 6) * 0.95; g.add(o); }); return g; }, 4.6, 1.4, 0.4], wreck: [() => { const g = new THREE.Group(); [HSE.bareTree(5, 2), HSE.snappedPalm(6, 1), HSE.leaningPole({ lean: 0.38 }), HSE.cutLogs()].forEach((o, i) => { o.position.x = (i - 1.5) * 4.2; g.add(o); }); return g; }, 15, 5, 1.8], tank: [() => HSE.tankOnStand(), 7, 3, 1.5],
+    const MODELS = { house: [() => HSE.house({ style: q.get('style') || 'block', roof: q.get('roof') || 'on', shutters: q.get('sh') || 'open', tank: true }), 9, 4, 1.6], shop: [() => HSE.shop({ roof: q.get('roof') || 'on' }), 9, 4, 1.6], fallen: [() => HSE.fallenTree(), 11, 4, 1.2], props: [() => { const g = new THREE.Group(); [HSE.waterDrum(), HSE.jug(), HSE.goBag(), HSE.radio(), HSE.tins(), HSE.bread(), HSE.candle(), HSE.kerosene(), HSE.zincSheet({ len: 2.2, curl: 0.4 }), HSE.plank(1.5, 2), HSE.mattress(), HSE.standpipeTap(), HSE.clothes()].forEach((o, i) => { o.position.x = (i - 6) * 0.95; g.add(o); }); return g; }, 4.6, 1.4, 0.4], wreck: [() => { const g = new THREE.Group(); [HSE.bareTree(5, 2), HSE.snappedPalm(6, 1), HSE.leaningPole({ lean: 0.38 }), HSE.cutLogs()].forEach((o, i) => { o.position.x = (i - 1.5) * 4.2; g.add(o); }); return g; }, 15, 5, 1.8], tank: [() => HSE.tankOnStand(), 7, 3, 1.5],
       people: [() => { const g = new THREE.Group(); pids.forEach((id, i) => { const b = makeBody({ ...LOOKS[id], bodyId: LOOKS[id].base + (plo ? '_lo' : ''), x: (i - (pids.length - 1) / 2) * 0.75, z: 0, ry: 0, anim: q.get('anim') || 'Idle' }); b.userData.anim.mx.update(+(q.get('at') || 0.4)); g.add(b); }); return g; }, 3.2, 1.3, 1.0] };
     const [make, d0, h0, t0] = MODELS[m] || MODELS.people, obj = make(); root.add(obj);
     const gr = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x9a9c8c, roughness: 1 })); gr.rotation.x = -PI / 2; gr.position.y = -0.005; gr.receiveShadow = true; root.add(gr);
@@ -686,9 +692,17 @@ function devViews() {
   if (shot === 'journal1') go('yard25', 20, -27, 0.4, 0, 0).then(() => { for (const id of ['gilbert', 'hurricanes', 'warnings', 'wires']) unlock(id, true); openJournal('gilbert'); });
   if (shot === 'chap1') go('yard25', 20, -27, 0.4, 0, 0).then(() => { best = 35; modelsReady = true; openChapters(); });
   /* the storm, frozen at its worst: ?shot=stormhall, stormroom, stormyard (add &k=1 for wind strength, &rain=0.9) */
-  if (shot === 'stormhall' || shot === 'stormroom' || shot === 'stormyard') go(shot === 'stormhall' ? 'hall' : shot === 'stormroom' ? 'room88' : 'yard25', shot === 'stormhall' ? 33 : shot === 'stormroom' ? 14 : 24, shot === 'stormyard' ? -6 : shot === 'stormhall' ? 0.4 : 0.4, shot === 'stormyard' ? 2.2 : 0.8, shot === 'stormyard' ? -PI / 2 + 0.2 : shot === 'stormroom' ? 0.6 : PI / 2 + 0.3, shot === 'stormhall' || shot === 'stormroom' ? 0.35 : 0.0).then((P) => {
-    const kk = +(q.get('k') || 1); ST.on = true; WIND.k = kk; if (shot !== 'stormyard') { restoreRoof(P, true, shot === 'stormhall' ? 6 : 5); for (const l of shot === 'stormhall' ? P.lights : [P.lampLight]) l.userData.k = +(q.get('lamp') || 0.15); setEnv(ENV.roomStorm); STORM.mask(0, 0, shot === 'stormhall' ? 5 : 3); torch(true); } else setEnv(ENV.gale);
-    STORM.set({ rain: +(q.get('rain') || 0.9), wind: [1.2, 0.5], leaves: 0.9 }); for (let i = 0; i < 6; i++) update(0.05, 100 * i); P.sway && swayTick(P.sway, 3, kk, [1.2, 0.5]); });
+  if (shot === 'stormhall' || shot === 'stormroom' || shot === 'stormyard') go(shot === 'stormhall' ? 'hall' : shot === 'stormroom' ? 'room88' : q.get('y') === '88' ? 'yard88' : 'yard25', shot === 'stormhall' ? 33 : shot === 'stormroom' ? 14 : 24, shot === 'stormyard' ? -6 : shot === 'stormhall' ? 0.4 : 0.4, shot === 'stormyard' ? 2.2 : 0.8, shot === 'stormyard' ? -PI / 2 + 0.2 : shot === 'stormroom' ? 0.6 : PI / 2 + 0.3, shot === 'stormhall' || shot === 'stormroom' ? 0.35 : 0.0).then((P) => {
+    const kk = +(q.get('k') || 1); ST.on = true; WIND.k = kk; if (shot !== 'stormyard') { restoreRoof(P, true, shot === 'stormhall' ? 6 : 5); for (const l of shot === 'stormhall' ? P.lights : [P.lampLight]) l.userData.k = +(q.get('lamp') || 0.15); setEnv(ENV.roomStorm); STORM.mask(0, 0, shot === 'stormhall' ? 5 : 3); torch(true); } else setEnv(ENV[q.get('sky') || 'gale']);
+    STORM.set({ rain: +(q.get('rain') || 0.9), wind: [1.2, 0.5], leaves: 0.9 }); for (let i = 0; i < 6; i++) update(0.05, 100 * i);
+    if (q.has('pitch')) state.pitch = +q.get('pitch');
+    if (q.has('fly') && shot !== 'stormyard') { const c = new THREE.Vector3(state.x - Math.sin(state.yaw) * 2.6, 0, state.z - Math.cos(state.yaw) * 2.6), v = (x, y, z) => c.clone().add(new THREE.Vector3(x, y, z));   /* things crossing the sky above the gap in the roof, frozen mid-flight */
+      STORM.throwSheet(v(-5, 1, 3), v(5, 2, -3), 2.4); if (q.get('fly') === 'dish') { STORM.throwDish(v(-4, 1.6, 1), v(4, 2.2, -1), 2.6); STORM.throwDish(v(3, 1.4, 4), v(-3, 2.0, -3), 2.6); } STORM.tick(1.15, 3); for (const f of [...STORM.sheets, ...STORM.dishes]) f.dur = 1e6; }
+    if (shot === 'stormyard' && q.has('sheets')) { const o = new THREE.Vector3(state.x, 0, state.z), v = (x, y, z) => o.clone().add(new THREE.Vector3(x, y, z));
+      STORM.throwSheet(v(9, -1.6, 4), v(4, -1.2, -4), 2.4); STORM.throwSheet(v(13, -1.5, -3), v(7, -1.0, 4), 2.2);
+      if (q.get('y') === '88') { STORM.throwDish(v(12, -0.4, 3), v(5, -0.2, -3), 2.4); STORM.throwDish(v(8, -0.6, -4), v(3, -0.2, 3), 2.2); }
+      STORM.tick(1.1, 3); for (const f of [...STORM.sheets, ...STORM.dishes]) f.dur = 1e6; }
+  });
   if (V[shot]) go(...V[shot]).then((P) => {
     if (q.has('k')) { WIND.k = +q.get('k'); STORM.set({ rain: +(q.get('rain') || 0), wind: [1.2, 0.5], leaves: Math.min(1, WIND.k * 1.2) }); if (q.has('env')) setEnv(ENV[q.get('env')]); }
     if (q.has('sky')) setEnv(ENV[q.get('sky')]);

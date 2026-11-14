@@ -5,7 +5,7 @@
    - flying sheets: a handful of real zinc meshes that glide along arcs (used only in the big moments).
    - sway: plants marked with swayable() lean and shake in the wind (swayTick). */
 import * as THREE from 'three';
-import { zincSheet } from './houses.js';
+import { zincSheet, bigDish } from './houses.js';
 
 const RAIN_V = `attribute vec4 seed; attribute float end; uniform float uTime; uniform vec3 uCam; uniform vec2 uWind; uniform float uLen; uniform float uDens; uniform vec3 uMask; varying float vA;
 void main(){ float R = 15.0, H = 13.0, fall = 17.0 + seed.y * 7.0;
@@ -41,15 +41,18 @@ export function makeStorm(scene, camera, { count = 1700, leaves = 260 } = {}) {
   const rain = mk(count, RAIN_V, RAIN_F, ru, 'lines'), leaf = mk(leaves, LEAF_V, LEAF_F, lu, 'points');
   /* flying zinc sheets: a pool, each with its own arc */
   const sheets = []; for (let i = 0; i < 5; i++) { const sh = zincSheet({ len: 2.2, curl: 0.35, seed: 40 + i }); sh.visible = false; sh.userData.noBatch = true; scene.add(sh); sheets.push({ o: sh, t: 1, dur: 1, a: new THREE.Vector3(), b: new THREE.Vector3(), spin: 0 }); }
-  S.rain = rain; S.leaves = leaf; S.sheets = sheets;
+  const dishes = []; for (let i = 0; i < 3; i++) { const d = bigDish(); d.visible = false; d.userData.noBatch = true; scene.add(d); dishes.push({ o: d, t: 1, dur: 1, a: new THREE.Vector3(), b: new THREE.Vector3(), spin: 0 }); }   /* big satellite dishes torn off their posts (Gilbert only) */
+  S.rain = rain; S.leaves = leaf; S.sheets = sheets; S.dishes = dishes;
   S.set = ({ rain: r, wind, leaves: l, dens }) => { if (r !== undefined) { ru.uAlpha.value = r * 0.62; rain.visible = r > 0.01; } if (dens !== undefined) { ru.uDens.value = lu.uDens.value = dens; } if (wind) S.wind.set(wind[0], wind[1]); if (l !== undefined) { leaf.visible = l > 0.01; lu.uDens.value = Math.min(1, l); } };
+  S.throwDish = (from, to, dur = 2.6) => { const s = dishes.find((q) => q.t >= 1); if (!s) return; s.t = 0; s.dur = dur; s.a.copy(from); s.b.copy(to); s.spin = (Math.random() > 0.5 ? 1 : -1) * (5 + Math.random() * 4); s.o.visible = true; s.o.position.copy(from); };
   S.mask = (cx, cz, r) => { ru.uMask.value.set(cx, cz, r); };
   S.throwSheet = (from, to, dur = 2.4) => { const s = sheets.find((q) => q.t >= 1); if (!s) return; s.t = 0; s.dur = dur; s.a.copy(from); s.b.copy(to); s.spin = (Math.random() - 0.5) * 6; s.o.visible = true; s.o.position.copy(from); };
   S.tick = (dt, t) => {
     ru.uTime.value = t; ru.uCam.value.copy(camera.position);
     for (const s of sheets) { if (s.t >= 1) continue; s.t += dt / s.dur; const k = Math.min(1, s.t); s.o.position.lerpVectors(s.a, s.b, k); s.o.position.y += Math.sin(k * Math.PI) * 3.2; s.o.rotation.set(k * s.spin * 1.7, k * s.spin * 2.3, k * s.spin); if (k >= 1) s.o.visible = false; }
+    for (const s of dishes) { if (s.t >= 1) continue; s.t += dt / s.dur; const k = Math.min(1, s.t); s.o.position.lerpVectors(s.a, s.b, k); s.o.position.y += Math.sin(k * Math.PI) * 2.6; s.o.rotation.set(k * s.spin * 1.3, k * s.spin * 0.7, k * s.spin * 1.9); if (k >= 1) s.o.visible = false; }
   };
-  S.clear = () => { rain.visible = leaf.visible = false; ru.uAlpha.value = 0; for (const s of sheets) { s.t = 1; s.o.visible = false; } };
+  S.clear = () => { rain.visible = leaf.visible = false; ru.uAlpha.value = 0; for (const s of sheets) { s.t = 1; s.o.visible = false; } for (const s of dishes) { s.t = 1; s.o.visible = false; } };
   return S;
 }
 

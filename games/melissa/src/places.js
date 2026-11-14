@@ -8,8 +8,8 @@
    Each builder returns the group, walking bounds, walls, people, background figures and the spots the game's actions use. */
 import * as THREE from 'three';
 import { T, std, solid, mesh, box, cyl, plane, grp, rng } from './gfx.js';
-import { palm, tree, banana, bush, hillRing, scatter, pole, lantern, bucket, crate, barrel, sack, truck } from './props.js';
-import { house, shop, shopGoods, zincSheet, plank, branch, mattress, bareTree, snappedPalm, fallenTree, cutLogs, leaningPole, tarpOnGround, clothes, kerosene, tankOnStand, waterDrum, jug, standpipeTap, plywood, goBag, radio, roofOf, bread, tarpMesh } from './houses.js';
+import { palm, tree, banana, bush, hillRing, scatter, pole, lantern, bucket, crate, barrel, sack } from './props.js';
+import { house, shop, shopGoods, zincSheet, plank, branch, mattress, bareTree, snappedPalm, fallenTree, cutLogs, leaningPole, tarpOnGround, clothes, kerosene, tankOnStand, waterDrum, jug, standpipeTap, plywood, goBag, radio, roofOf, bread, tarpMesh, bigDish, waterTruck } from './houses.js';
 import { mangoTree, flameTree, hibiscus, croton, stump, grassField, flowerField, rockField, blotches, fence, bamboo } from './detail.js';
 import { swayable } from './storm.js';
 import { ENV, groundPlane } from './common.js';
@@ -35,13 +35,13 @@ function village({ id, year, phase }) {
   const tone = [[226, 196, 150], [200, 228, 214], [244, 226, 176], [212, 182, 206]];
 
   /* ---- the family's house: a board house in 1988, painted block in 2025 ---- */
-  const home = house({ w: 6.4, d: 4.4, style: y88 ? 'board' : 'block', wall: y88 ? [186, 152, 104] : tone[0], roofRgb: y88 ? [150, 124, 108] : today ? [196, 200, 198] : [150, 154, 150], roof: after ? 'half' : 'on', shutters: after ? 'boarded' : 'open', seed: 11, tarp: false, dish: false });
+  const home = house({ w: 6.4, d: 4.4, style: y88 ? 'board' : 'block', wall: y88 ? [186, 152, 104] : tone[0], roofRgb: y88 ? [150, 124, 108] : today ? [196, 200, 198] : [150, 154, 150], roof: after ? 'half' : 'on', shutters: after ? 'boarded' : 'open', seed: 11, tarp: false });
   put(home, SPOT.home[0], SPOT.home[1]); wall(-29.8, -10.8, -22.2, -4.55); g.userData.home = home;
   /* ---- Miss Hyacinth's old board house ---- */
   const hy = house({ w: 5.2, d: 4, style: 'board', wall: [198, 176, 130], roofRgb: after ? [140, 140, 136] : [144, 120, 104], roof: after ? 'off' : 'on', shutters: after ? 'closed' : 'open', seed: 12, shutCol: 0x3a6a8a, damaged: after ? 1 : 0 });
   put(hy, SPOT.hyacinth[0], SPOT.hyacinth[1], PI); wall(-6.8, 4.75, -1.2, 10.7);
   /* ---- the block house of the neighbour (Mass Clifford in 1988, his son Raymond in 2025) ---- */
-  const bl = house({ w: 6, d: 4.4, style: 'block', wall: y88 ? [236, 224, 196] : tone[2], roofRgb: after ? [150, 154, 150] : [150, 154, 150], roof: after ? 'half' : 'on', shutters: after ? 'boarded' : 'open', seed: 13, tank: !y88, dish: !y88 && !after, tarp: after, shutCol: 0x2a5a8a });
+  const bl = house({ w: 6, d: 4.4, style: 'block', wall: y88 ? [236, 224, 196] : tone[2], roofRgb: after ? [150, 154, 150] : [150, 154, 150], roof: after ? 'half' : 'on', shutters: after ? 'boarded' : 'open', seed: 13, tank: !y88, tarp: after, shutCol: 0x2a5a8a });
   put(bl, SPOT.raymond[0], SPOT.raymond[1]); wall(12.8, -11.1, 19.2, -4.55); if (!y88) wall(20.6, -9.9, 22.3, -8.4);   /* the tank stand */
   /* ---- the shop ---- */
   const sh = shop({ name: y88 ? "DORRIT'S SHOP" : "BEV'S SHOP", roof: after ? 'off' : 'on', seed: 14 }); put(sh, SPOT.shop[0], SPOT.shop[1], PI); wall(27.2, 5.7, 32.8, 10.9);
@@ -77,6 +77,7 @@ function village({ id, year, phase }) {
   scatter(g, (i) => { const b = bush(i, 1.0); return b; }, after ? 6 : 28, [-46, -13, 52, 13], [[-70, -3.4, 70, 3.4], [-30, -11, -22, -4], [12, -11, 20, -4], [-7, 4, -1, 11], [26, 5, 33, 11], [37, -14, 51, -4], [-14, -6, -10, 4]], 9);
   if (!after) for (const [x, z, s] of [[-16.5, -11.5, 1], [24, 11.5, 2], [-1.5, -10, 3]]) put(hibiscus(s), x, z);
   if (!after && !today) put(flameTree(6.5, 5), 4, -11.5);
+  if (y88) for (const [x, z, ry] of [[-15.0, -11.0, 0.0], [23.8, -9.8, 0.0]]) { const d = bigDish(); d.userData.noBatch = true; put(d, x, z, ry); wall(x - 1.0, z - 1.0, x + 1.0, z + 1.0); }   /* the big backyard satellite dishes of 1988 */
   if (!y88 || after) for (let i = 0; i < 2; i++) put(croton(i + 1), -31 + i * 1.5, -4.6 + i * 0.2);
   /* yard fences: the sides of the family yard and Miss Hyacinth's */
   if (!after) { fence(g, -33.5, -12.4, -33.5, -4.8); fence(g, -21.5, -12.4, -21.5, -4.8); fence(g, -7.5, 5.4, -7.5, 12); fence(g, -0.5, 5.4, -0.5, 12); }
@@ -104,7 +105,7 @@ function village({ id, year, phase }) {
     put(tarpOnGround(), 24.5, -6.7, 0.3);
     { const tm = tarpMesh(6.4, 4.4, 2.7, 1.25); tm.position.set(SPOT.home[0], 0, SPOT.home[1]); tm.visible = false; tm.userData.noBatch = true; g.add(tm); g.userData.tarpHome = tm; }
     { const hl = new THREE.PointLight(0xffd08a, 0, 9, 1.7); hl.position.set(SPOT.home[0], 2.0, SPOT.home[1] + 3.6); hl.visible = false; g.add(hl); g.userData.homeLamp = hl; }
-    { const tk = truck(); tk.position.set(26, 0, 1.1); tk.rotation.y = 0; g.add(tk); wall(22.4, -0.5, 29.6, 2.9); }
+    { const tk = waterTruck(); tk.position.set(26, 0, 1.1); g.add(tk); wall(22.5, -0.1, 29.5, 2.3); }
   }
   if (today) { const bd = grp(g, 36, 0, 3.4); box(0.12, 1.6, 0.12, WOODD, -0.9, 0.8, 0, bd); box(0.12, 1.6, 0.12, WOODD, 0.9, 0.8, 0, bd); const s = plane(1.9, 1.0, std(T.sign('BREADNUT CORNER READY PLAN', 512, 270, '#f3ecd8', '#1c2a40', '700 44px Georgia, serif', true), 0.9), 0, 1.35, 0.08, bd); s.material = s.material.clone(); s.material.side = THREE.DoubleSide; wall(34.9, 3.0, 37.1, 3.9); g.userData.planBoard = [36, 3.4]; for (const [x, z] of [[-31, -1.5], [30, -1]]) { const lg = cutLogs({ seed: x }); put(lg, x, z, 0.3); } }
 

@@ -28,8 +28,8 @@ export function roofOf(w, d, h, { rise = 1.25, rgb = [150, 154, 150], state = 'o
 
 /* ---------- a house ----------
    style: 'board' (timber walls) or 'block' (painted concrete block, with window grills)
-   roof: 'on' | 'half' | 'off'. shutters: 'open' | 'closed' | 'boarded' (plywood nailed across). tank: a black water tank on a stand. tarp: a blue tarpaulin over bare rafters. dish: a satellite dish. */
-export function house({ w = 6, d = 4.4, h = 2.7, style = 'board', wall = [188, 160, 110], roofRgb = [150, 154, 150], roof = 'on', shutters = 'open', porch = true, seed = 1, tank = false, tarp = false, dish = false, shutCol = 0x2f6a3f, doorCol = 0x4a2f1e, damaged = 0 } = {}) {
+   roof: 'on' | 'half' | 'off'. shutters: 'open' | 'closed' | 'boarded' (plywood nailed across). tank: a black water tank on a stand. tarp: a blue tarpaulin over bare rafters. */
+export function house({ w = 6, d = 4.4, h = 2.7, style = 'board', wall = [188, 160, 110], roofRgb = [150, 154, 150], roof = 'on', shutters = 'open', porch = true, seed = 1, tank = false, tarp = false, shutCol = 0x2f6a3f, doorCol = 0x4a2f1e, damaged = 0 } = {}) {
   const g = grp(), r = rng(seed), block = style === 'block';
   const wt = block ? tex(T.plaster(wall, [1, 1], 'rgba(120,100,80,0.18)'), w / 3, 1) : tex(T.plank(wall, 8, [w / 2, 1]), w / 2, 1), dt = block ? tex(T.plaster(wall, [1, 1], 'rgba(120,100,80,0.18)'), d / 3, 1) : tex(T.plank(wall, 8, [d / 2, 1]), d / 2, 1);
   const wm = std(wt, 0.92), dm = std(dt, 0.92);
@@ -57,7 +57,6 @@ export function house({ w = 6, d = 4.4, h = 2.7, style = 'board', wall = [188, 1
     else { box(w + 0.5, 0.08, 0.1, WOODD, 0, 2.62, d / 2 + 1.5, g); box(w + 0.5, 0.08, 0.1, WOODD, 0, 2.62, d / 2 + 0.1, g); for (const x of [-w / 2, 0, w / 2]) { const rf = box(0.07, 0.1, 1.9, WOOD, x, 2.64, d / 2 + 0.8, g); rf.rotation.x = 0.1; } }
   }
   if (tank) { const t = tankOnStand(); t.position.set(w / 2 + 1.3, 0, -d / 2 + 0.2); g.add(t); }
-  if (dish) { const dg = grp(g, -w / 2 + 0.6, h + 0.2, d / 2 - 0.5); box(0.1, 0.9, 0.1, IRON, 0, 0.45, 0, dg); const dd = mesh(new THREE.SphereGeometry(0.34, 12, 6, 0, PI * 2, 0, 0.9), solid(0xdcdcd8, 0.6), 0, 0.95, 0, dg); dd.rotation.x = -1.0; dd.material = dd.material.clone(); dd.material.side = THREE.DoubleSide; }
   if (tarp) g.add(tarpMesh(w, d, h, rise));
   if (damaged > 0) { const sg = grp(g); for (let i = 0; i < 3; i++) { const p = box(0.9, 0.05, 0.16, RAW, (r() - 0.5) * w * 0.8, h * 0.45 + r() * h * 0.2, d / 2 + 0.07, sg); p.rotation.z = (r() - 0.5) * 0.5; } }
   g.userData.w = w; g.userData.d = d; g.userData.h = h; return g;
@@ -67,6 +66,26 @@ export function house({ w = 6, d = 4.4, h = 2.7, style = 'board', wall = [188, 1
 export function tarpMesh(w, d, h, rise = 1.25) {
   const g = grp(), over = 0.35, run = d / 2 + over, Ls = Math.hypot(run, rise), th = Math.atan2(rise, run), sl = grp(g, 0, h + rise / 2 + 0.04, run / 2 - over / 2 + 0.02); sl.rotation.x = th;
   box(w * 0.82, 0.03, Ls * 0.96, solid(0x2a6ab0, 0.7), 0, 0.09, 0, sl); for (const x of [-w * 0.3, 0, w * 0.3]) box(0.05, 0.05, Ls * 0.98, solid(0x6a5a40, 0.9), x, 0.12, 0, sl); return g;
+}
+
+/* a big backyard satellite dish of the 1980s: a pale bowl about 2 m across on a post, tilted up toward the sky, with its arm and receiver. Only Gilbert (1988) has them in this game. */
+export function bigDish(r = 1.15) {
+  const g = grp(), m = solid(0xd8d8d2, 0.6), dk = solid(0x2b2d31, 0.6, 0.3), R = r * 1.25; cyl(0.07, 0.09, 1.7, dk, 0, 0.85, 0, g, 8);
+  const tilt = grp(g, 0, 1.7, 0); tilt.rotation.x = 0.95;   /* faces south and up: in Jamaica the satellites are to the south */
+  const geo = new THREE.SphereGeometry(R, 28, 10, 0, PI * 2, PI - 0.78, 0.78); geo.translate(0, R, 0); const bowl = new THREE.Mesh(geo, m.clone()); bowl.material.side = THREE.DoubleSide; tilt.add(bowl);   /* the bowl opens up, its middle on the post */
+  cyl(0.02, 0.02, R * 0.5, dk, 0, R * 0.25, 0, tilt, 6); mesh(new THREE.SphereGeometry(0.07, 8, 6), dk, 0, R * 0.52, 0, tilt);
+  for (const a of [0, 2.1, 4.2]) { const sx = Math.cos(a) * R * 0.7, sz = Math.sin(a) * R * 0.7, st = cyl(0.012, 0.012, R * 0.62, dk, sx / 2, R * 0.33, sz / 2, tilt, 4); st.rotation.set(sz / (R * 0.62) * -1, 0, sx / (R * 0.62)); }
+  return g;
+}
+/* a modern water tanker: a white cab on a dark chassis with a blue tank, the front toward +x */
+export function waterTruck() {
+  const g = grp(), cab = solid(0xe8e8e4, 0.5, 0.2), tank = solid(0x2a6ab0, 0.45, 0.3), dk = solid(0x1a1b1e, 0.8), glass = new THREE.MeshBasicMaterial({ color: 0x1a2630 });
+  box(6.6, 0.3, 2.0, dk, 0, 0.75, 0, g); box(1.9, 1.7, 2.2, cab, 2.4, 1.75, 0, g); box(0.06, 0.75, 1.8, glass, 3.36, 2.05, 0, g); box(0.3, 0.3, 2.3, solid(0x8a8c90, 0.5, 0.5), 3.45, 0.7, 0, g);
+  for (const z of [-0.7, 0.7]) box(0.08, 0.2, 0.34, new THREE.MeshBasicMaterial({ color: 0xfff0c0 }), 3.38, 1.15, z, g);
+  const t = cyl(0.95, 0.95, 4.2, tank, -0.9, 1.9, 0, g, 18); t.rotation.z = PI / 2; for (const x of [-2.4, -0.9, 0.6]) { const ring = cyl(0.97, 0.97, 0.08, solid(0x1c4a7a, 0.5, 0.3), x, 1.9, 0, g, 18); ring.rotation.z = PI / 2; }
+  box(0.14, 0.5, 0.14, dk, -3.0, 1.1, 1.1, g); cyl(0.05, 0.05, 1.0, dk, -3.0, 0.7, 1.1, g, 8).rotation.z = PI / 2;
+  for (const x of [-2.6, -1.3, 2.5]) for (const z of [-1.05, 1.05]) cyl(0.55, 0.55, 0.4, dk, x, 0.55, z, g, 14).rotation.x = PI / 2;
+  return g;
 }
 
 /* ---------- water: a black tank on a stand, a drum with a tap, a standpipe with a bucket under it ---------- */

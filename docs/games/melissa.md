@@ -24,6 +24,10 @@ Two time lines meet in one family. In 1988 you are **Pearl**, aged twelve, with 
 
 Hard history is told gently: nobody is hurt on screen, the loud scenes have an opt-in card ("Read what happened instead"), and deaths are stated plainly in the journal (45 in Jamaica for Melissa, about 45 for Gilbert, about 150 for Charlie).
 
+### Satellite dishes (Gilbert 1988 only)
+
+The 1988 yard has two big backyard satellite dishes on posts (about 2 m across, facing south and up). In Gilbert's storm scene they are torn off their posts and cross the sky above the gap in the roof; the Melissa scenes have only flying zinc sheets. This was the owner's direction ("as was common then", "only Gilbert"). **It is not sourced yet**: no source in `docs/games/melissa-facts.md` says dishes were common or were thrown by Gilbert, so the journal makes no claim about it. Find one (the Gleaner archive of September 1988) before adding it to a journal page.
+
 ### The storm scene (`stormRun` in `main.js`)
 
 Same idea as Kendal's crash. An opt-in card, then: the wind rises, the roof groans, the lights go out (a torch is in your hand), a "Hold on!" button you can hold, the roof sheets over the middle of the room lift off one by one (rain falls only inside a circle under the hole: `STORM.mask`), a hymn (chapter 3), then fade to a title card and back to the room afterwards. Lines are in `LINES` in `content.js`.
@@ -99,6 +103,7 @@ A point to keep straight: the government called Gilbert the previous benchmark, 
 4. **Read every line aloud** for the 6+ level (lines of about 12 words or fewer). All dialogue is new wording.
 5. **Check Gilbert in the west** in the Gleaner archive (see above) and check the Charlie and 1903 numbers against the Gleaner of the time.
 6. **Real people.** Nobody real speaks. If the owner wants a real official or a real survivor, use only words from the record.
-7. **Sound** has been written but not heard: run the autoplayer once with sound allowed (`--autoplay-policy=no-user-gesture-required`) and check `AU.ctx.state` is `running`, as `docs/TESTING.md` says.
-8. **Menu card, poster, `CLAUDE.md` index line and `docs/ARCHITECTURE.md`** are left until the owner says the game is ready (as with Bog Walk), and until PR 50, which edits `CLAUDE.md`, has landed.
-9. **Phones.** Rain and sway cost little (one set of lines, one set of points), but measure with `?shot=y25a&stats` and on a real phone.
+7. **Source the Gilbert dishes** (see above).
+8. **Sound** has been written but not heard: run the autoplayer once with sound allowed (`--autoplay-policy=no-user-gesture-required`) and check `AU.ctx.state` is `running`, as `docs/TESTING.md` says.
+9. **Menu card, poster, `CLAUDE.md` index line and `docs/ARCHITECTURE.md`** are left until the owner says the game is ready (as with Bog Walk), and until PR 50, which edits `CLAUDE.md`, has landed.
+10. **Phones.** Rain and sway cost little (one set of lines, one set of points), but measure with `?shot=y25a&stats` and on a real phone.
