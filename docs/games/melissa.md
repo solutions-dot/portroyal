@@ -4,7 +4,7 @@ Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/CONTENT.md` first. This file is t
 
 - Code: `games/melissa/src/`. Page and styles: `games/melissa/site/index.html`.
 - Build: `node tools/build.mjs melissa --dev` (test views and the autoplayer) or without `--dev` (public).
-- Status (14 November 2026): **all seven chapters play from start to end** under the autoplayer, the place audit reports 0 issues in all nine places, and the layout test is clean at three phone and tablet sizes. It is on the menu (the owner added the card). See "What is left".
+- Status (14 November 2026): **all seven chapters play from start to end** under the autoplayer, the place audit reports 0 issues in all nine places, and the layout test is clean at all four sizes (390x800, 667x375, 800x500, 1280x720). It is on the menu (the owner added the card). See "What is left".
 - The framework is Kendal 1957's (talking, journal, cards, chapters, saving, the audits, the cinematic layer). The new parts are the weather (`storm.js`), the houses and wreckage (`houses.js`), the village (`places.js`) and the sounds (`sfx.js`).
 
 ## The story
@@ -64,7 +64,7 @@ python3 -m http.server 8765                 # then open http://localhost:8765/ga
 
 - Views (`?shot=NAME`): `c51a` to `c51c` and `r51` (1951), `y88a` to `y88d`, `y25a` to `y25e`, `aft1` to `aft6`, `tdy1` to `tdy3`, `room1` to `room3`, `hall1` to `hall4`, `stormhall`, `stormroom`, `stormyard`, `cam` (a frozen camera-director view: `&p=kingston88&c=x,y,z&l=x,y,z&dishk=0.4&rain=0.8&sheets=1`), `talk1`, `talk2`, `card1`, `journal1`, `chap1`, `poster`. Add `&k=1&rain=0.9` to put wind and rain on a view. `?shot=model&m=house|shop|fallen|props|wreck|tank|people&ids=pearl,winston&one` shows models and people.
 - Autoplayer: `?auto=N&one` plays chapter N (1 to 6). Without `&one` it carries on. Read it from `#autolog` and the page title (`--dump-dom`; the title can hold several lines).
-- Automatic checks (owner rule 8): `?test=audit` (0 in all nine places on 14 Nov 2026), `?test=held`, `?test=layout` (run at 390x800, 667x375, 800x500 and 1280x720), `?test=resume`. `PEOPLE.md` also asks for `?test=cloth`, `?test=walkers` and `?test=skin`; those arrive with `engine/skinprobe.js` in PR 50 and are not wired here yet.
+- Automatic checks (owner rule 8): `?test=audit` (0 in all nine places on 14 Nov 2026), `?test=held`, `?test=layout` (run at 390x800, 667x375, 800x500 and 1280x720; all four clean on 14 Nov 2026), `?test=resume`, and `?test=sound` (see below). `PEOPLE.md` also asks for `?test=cloth`, `?test=walkers` and `?test=skin`; those arrive with `engine/skinprobe.js` in PR 50 and are not wired here yet.
 
 ## People (follow `docs/PEOPLE.md`)
 
@@ -98,15 +98,26 @@ From the Gleaner (30 October 2025, "More destruction in the 1800s and 1900s") an
 
 A point to keep straight: the government called Gilbert the previous benchmark, and Gilbert was the most damaging storm in living memory, but **Charlie killed about three times as many people in Jamaica** (about 150 against 45). The game says so.
 
+### The sound check (`?test=sound`)
+
+Nobody can listen in the build container, so `?test=sound` plays the game's own mixes into an offline recorder (`OfflineAudioContext`) and measures them: each place's bed and each storm moment, then each one-shot played over the bed it meets in the story. It reports peak, loudness and low (under 250 Hz), middle and high (over 2 kHz) levels in dB, and flags clipping, a bed that is too quiet or not silent, a storm step that is not louder than the one before it (in total and in the middle band, which is all a phone speaker plays), less than 20 dB from the calm yard to the storm's peak, and a bang or crack that does not rise above its bed. Every run must report 0 problems. The offline recorder is not tied to a headless page's virtual time, so run it with Playwright, not `--dump-dom`:
+
+```bash
+node tools/build.mjs melissa --dev
+node pw.js "http://localhost:8765/games/melissa/site/index.html?test=sound" SOUND 150000   # waits for the page title "SOUND 0"; read #autolog
+```
+
+The storm levels (`SB_GROAN`, `SB_LIGHT`, `SB_PEAK`) live in `main.js` and the test plays those same objects. This check finds mistakes in levels, not in taste: it is a floor, and a person still has to listen (see "What is left"). What the first run found and the fixes (14 Nov 2026): the 1951 sea was as loud as a gale (now about 8 dB quieter), the storm's middle band hardly grew from the dark to the peak (the peak wind is now 1.5, above the old ceiling of 1, and the howl is louder), bangs and the roof groan were lost under the storm (zinc bang and groan louder; the groan is now its own sound in `sfx.js`, because the engine's `shipCreak` is too quiet), the chainsaw was nearly silent (about 9 dB louder), and the helicopter was all bass that a phone drops (its filter opened up and it is quieter overall). The 1951 room was getting the outdoor wind level; it now counts as indoors like the 1988 room.
+
 ## What is left
 
 1. **Build the six character recipes** in `tools/melissa/people/` and swap the stand-in bodies (see above). Then run the skin, cloth and walker tests from `PEOPLE.md` once they exist.
-2. **Run the layout test** at 390x800, 667x375, 800x500 and 1280x720 and fix everything it finds; run `?test=held` and `?test=resume`.
+2. ~~Run the layout test at the four sizes.~~ Done 14 Nov 2026: 0 problems at all four. Run it again after any change to the interface text.
 3. **Look at every place** in close screenshots (the 1988 yard, the room, the village after the storm, today). Only the 2025 yard, the hall, the storm in the hall and the village today have been looked at so far. The wreckage (zinc sheets, wires, tarps, the fallen tree) needs a pass for how it reads from the lane.
 4. **Read every line aloud** for the 6+ level (lines of about 12 words or fewer). All dialogue is new wording.
 5. **Check Gilbert in the west** in the Gleaner archive (see above) and check the Charlie and 1903 numbers against the Gleaner of the time.
 6. **Real people.** Nobody real speaks. If the owner wants a real official or a real survivor, use only words from the record.
 7. **Source the Gilbert dishes and the Kingston contrast** (see above). Also check the Charlie details used in chapter 1 (the sea close by, the block house, the night landfall) against the Gleaner of August 1951; the 1951 bay and family are made up.
-8. **Sound** has been written but not heard: run the autoplayer once with sound allowed (`--autoplay-policy=no-user-gesture-required`) and check `AU.ctx.state` is `running`, as `docs/TESTING.md` says.
-9. **Menu card, poster, `CLAUDE.md` index line and `docs/ARCHITECTURE.md`** are left until the owner says the game is ready (as with Bog Walk), and until PR 50, which edits `CLAUDE.md`, has landed.
+8. **Sound** is measured (`?test=sound`, 0 problems) but still not heard. A person needs to play it once with speakers and a phone and say what is wrong: the helicopter and the chainsaw are the likeliest to need a nudge, and the levels were set by numbers, not by ear.
+9. **`docs/ARCHITECTURE.md`**: the menu card (with its picture) and the `CLAUDE.md` index line are done; the ARCHITECTURE.md mention is left. The menu picture shows the village road at dusk and does not yet show Charlie or the Kingston street.
 10. **Phones.** Rain and sway cost little (one set of lines, one set of points), but measure with `?shot=y25a&stats` and on a real phone.
