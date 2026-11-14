@@ -16,10 +16,10 @@ import { buildRoad, buildStation45, buildRide45, buildHill } from './places1.js'
 import { buildKingston57, buildCoach, buildBeach, buildCrash, buildMemorial } from './places2.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL } from './content.js';
 import * as SFX from './sfx.js';
-import { HATS, LOOKS } from './cast.js';
+import { HATS, LOOKS, KID } from './cast.js';
 import { DECOR } from './decor.js';
 import * as TRN from './trains.js'; import * as PRP from './props.js';   /* whole modules, for the dev model viewer only */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditWalk } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditWalk, auditCloth } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
 
 const $ = (id) => document.getElementById(id);
@@ -714,6 +714,15 @@ function devViews() {
       openJournal(); await settle(); covered('journal panel in play', 'journal', ['jtitle', 'jclose']); closeJournal();
       openCredits(); await settle(); covered('credits panel in play', 'credits', ['crtitle', 'crclose']); closeCredits();
       document.title = 'LAYOUT ' + out.length; const el = $('autolog'); if (el) el.textContent = (out.length ? out : [W + 'x' + Hh + ': no layout problems']).join('\n'); })();
+  }
+  if (q.get('test') === 'cloth') {   /* ?test=cloth : does an under layer show through its cover (skin through a shirt, shirt through a waistcoat, hair through a hat)? Every body, full and light copy, each hat, with and without the waistcoat, in the poses the game uses. &b=man_suit,boy picks bodies, &full or &lo picks one kind. */
+    (async () => { const out = []; let bad = 0, pts = 0; startGame(true); await waitFor(() => modelsReady);
+      const POSES = [['Idle', 0.3], ['Walk', 0.0], ['Walk', 0.25], ['Walk', 0.5], ['Walk', 0.75], ['Talk1', 0.4], ['Wave', 0.5], ['SitIdle', 0.3], ['Carry', 0.3]], bases = (q.get('b') || 'man_work,man_suit,man_shirt,man_elder,man_apron,woman_long,woman57,woman_elder,boy,girl,girl_small,guide2020,student2020').split(',');
+      for (const base of bases) for (const lo of [false, true]) { if ((lo && q.has('full')) || (!lo && q.has('lo'))) continue; const bodyId = base + (lo ? '_lo' : ''); await loadBase(bodyId);
+        const hats = [...(HATS[base] || []), false], vars = hats.map((hat) => ({ hat, hide: [] })); if (/^man_(work|shirt|elder)$/.test(base)) vars.push({ hat: false, hide: ['Waistcoat'] }); if (base === 'man_shirt') vars.push({ hat: false, hide: ['Tie'] });
+        for (const va of vars) { const b = makeBody({ base, bodyId, tint: {}, scale: KID[base] || 1, x: 0, z: 0, ry: 0, anim: 'Idle', ...va }), name = bodyId + (va.hat ? ' +' + va.hat : '') + (va.hide.length ? ' -' + va.hide.join('-') : ''); scene.add(b);
+          const r = auditCloth(name, b, { poses: POSES, after: gripTick }); out.push(name + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const l of r.lines) out.push('  ' + l); bad += r.lines.length; pts += r.points; scene.remove(b); await new Promise((res) => setTimeout(res, 0)); } }
+      out.unshift('cloth: ' + bad + ' issues (' + pts + ' points)'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'CLOTH ' + bad; })();
   }
   if (q.get('test') === 'walkers') {   /* ?test=walkers : every body walks whole loops at the speed the game moves it. Feet must not slide, sink or float, the loop must join, and a carried thing must stay clear of the body. */
     (async () => { const out = []; let bad = 0; startGame(true); await waitFor(() => modelsReady);
