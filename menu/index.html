@@ -138,6 +138,7 @@
       <p id="testingnote" hidden>Testing menu. Eventide Home is an early prototype.</p>
       <nav class="links" aria-label="More">
         <a href="about.html">About this platform</a>
+        <a href="#eventide-card">Test Eventide Home</a>
         <button type="button" id="subopen" class="get">Get updates</button>
       </nav>
     </div>
@@ -186,7 +187,7 @@
         <span class="play">Play</span>
       </div>
     </a>
-    <a class="game eventide" data-game="eventide" href="games/eventide/site/?testing=1" hidden>
+    <a class="game eventide" data-game="eventide" id="eventide-card" href="games/eventide/site/">
       <p class="tag">Testing prototype</p>
       <div class="text">
         <div><span class="year">Kingston, 1980</span><h2>Eventide Home</h2><p>Explore the Home and meet Miss Iris in this early test.</p></div>
@@ -213,10 +214,9 @@
 <script src="site.js"></script>
 <script>
   /* On the live site this page is the home page. In the repo it sits in menu/, one folder down, so the game links need "../". */
-  if (/\/menu\/?(index\.html)?$/.test(location.pathname)) for (const a of document.querySelectorAll('a[data-game]')) a.href = '../games/' + a.dataset.game + '/site/' + (a.dataset.game==='eventide'?'?testing=1':'');
+  if (/\/menu\/?(index\.html)?$/.test(location.pathname)) for (const a of document.querySelectorAll('a[data-game]')) a.href = '../games/' + a.dataset.game + '/site/';
   if(new URLSearchParams(location.search).get('testing')==='1'||document.querySelector('meta[name="testing-build"]')){
-    const card=document.querySelector('[data-game="eventide"]'), note=document.getElementById('testingnote');
-    fetch(new URL('index.html',card.href)).then(r=>r.ok?r.text():'').then(html=>{if(/<title>Eventide/.test(html)){card.hidden=false;note.hidden=false;document.title='History Games: Testing';}}).catch(()=>{});
+    document.getElementById('testingnote').hidden=false;document.title='History Games: Testing';
   }
 </script>
 </body>
