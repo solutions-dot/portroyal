@@ -49,7 +49,7 @@ export function grip(model, side, obj, { handleY = 0.4, scale = 1, yaw = 0, lift
   /* the handle sits inside the closed fingers: half way between the knuckle and the fingertip of the middle finger */
   const tip = B('HandMiddle3'), gp = mid && tip ? wp(mid).lerp(wp(tip), 0.5) : wp(hand), bs = hand.getWorldScale(new THREE.Vector3()).x || 1;
   const wrap = new THREE.Group(); hand.add(wrap); wrap.position.copy(hand.worldToLocal(gp.clone())); wrap.scale.setScalar(scale / bs); wrap.quaternion.copy(wq(hand)).invert().multiply(wq(model));
-  obj.position.set(0, -handleY, 0); obj.rotation.y = yaw; wrap.add(obj); g.wrap = wrap; g.armQ.copy(arm ? arm.quaternion : g.armQ);
+  obj.userData.gripHandle=[0,handleY,0]; obj.position.set(0, -handleY, 0); obj.rotation.y = yaw; wrap.add(obj); g.wrap = wrap; g.armQ.copy(arm ? arm.quaternion : g.armQ);
   (model.userData.grips = model.userData.grips || []).push(g); model.updateMatrixWorld(true); return wrap;
 }
 /* spreadArms(model, angle): hold both arms a little further from the body than the animation does, so hands do not sink into a wide skirt or a jacket.

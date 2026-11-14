@@ -60,6 +60,7 @@
   .games{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:clamp(.7rem,1.6vw,1.2rem);min-height:0}
 
   /* Port Royal: the poster. Full-bleed scene, the title set big across the bottom. */
+  .game[hidden]{display:none}
   .game{position:relative;display:block;min-height:0;border-radius:28px;overflow:hidden;color:var(--paper);text-decoration:none;isolation:isolate;
     background:#0c3348 url(port-royal.jpg) center 40%/cover no-repeat}
   .game::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,rgba(4,27,42,.92) 0%,rgba(4,27,42,.55) 34%,rgba(4,27,42,0) 62%)}
@@ -97,6 +98,11 @@
   .game.bogwalk:hover .play,.game.bogwalk:focus-visible .play{background:var(--paper)}
   .game.bogwalk .tag{position:absolute;top:clamp(.8rem,1.6vw,1.2rem);left:clamp(.8rem,1.6vw,1.2rem);margin:0;background:#e8873f;color:var(--deep);font-weight:800;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;padding:.35rem .8rem;border-radius:999px}
 
+  .game.eventide{background:#223a32 url(eventide.jpg) center 35%/cover no-repeat}
+  .game.eventide .year{color:#a9dcc2}
+  .game.eventide .tag{position:absolute;top:1rem;left:1rem;background:#a9dcc2;color:var(--deep);padding:.35rem .8rem;border-radius:999px;font-weight:800}
+  .game.eventide h2{font-size:clamp(2.6rem,5.6vw,5.2rem)}
+  #testingnote{max-width:40ch;font-size:.85rem;line-height:1.4;color:#a9dcc2}
   /* Desktop and tablets: two games per row, the page scrolls down for more. */
   @media (min-width:761px){
     html,body{height:auto;min-height:100%;overflow-y:auto;overflow-x:hidden}
@@ -129,6 +135,7 @@
     <h1><b class="jam">Jamaican<svg class="flag" viewBox="0 0 60 30" role="img" aria-label="Flag of Jamaica"><clipPath id="fl"><rect width="60" height="30"/></clipPath><g clip-path="url(#fl)"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></g></svg></b><span>History Games</span></h1>
     <div class="side">
       <p class="credit">Created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p>
+      <p id="testingnote" hidden>Testing menu. Eventide Home is an early prototype.</p>
       <nav class="links" aria-label="More">
         <a href="about.html">About this platform</a>
         <button type="button" id="subopen" class="get">Get updates</button>
@@ -179,6 +186,13 @@
         <span class="play">Play</span>
       </div>
     </a>
+    <a class="game eventide" data-game="eventide" href="games/eventide/site/?testing=1" hidden>
+      <p class="tag">Testing prototype</p>
+      <div class="text">
+        <div><span class="year">Kingston, 1980</span><h2>Eventide Home</h2><p>Explore the Home and meet Miss Iris in this early test.</p></div>
+        <span class="play">Test game</span>
+      </div>
+    </a>
   </section>
 </main>
 <div id="subpanel" role="dialog" aria-modal="true" aria-labelledby="subtitle" hidden>
@@ -199,7 +213,11 @@
 <script src="site.js"></script>
 <script>
   /* On the live site this page is the home page. In the repo it sits in menu/, one folder down, so the game links need "../". */
-  if (/\/menu\/?(index\.html)?$/.test(location.pathname)) for (const a of document.querySelectorAll('a[data-game]')) a.href = '../games/' + a.dataset.game + '/site/';
+  if (/\/menu\/?(index\.html)?$/.test(location.pathname)) for (const a of document.querySelectorAll('a[data-game]')) a.href = '../games/' + a.dataset.game + '/site/' + (a.dataset.game==='eventide'?'?testing=1':'');
+  if(new URLSearchParams(location.search).get('testing')==='1'||document.querySelector('meta[name="testing-build"]')){
+    const card=document.querySelector('[data-game="eventide"]'), note=document.getElementById('testingnote');
+    fetch(new URL('index.html',card.href)).then(r=>r.ok?r.text():'').then(html=>{if(/<title>Eventide/.test(html)){card.hidden=false;note.hidden=false;document.title='History Games: Testing';}}).catch(()=>{});
+  }
 </script>
 </body>
 </html>

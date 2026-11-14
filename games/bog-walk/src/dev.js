@@ -1,3 +1,4 @@
+import { gripTick } from '../../../engine/grip.js';
 import { contentsOverlap } from '../../../engine/ui-audit.js';
 /* games/bog-walk/src/dev.js: test views, the automatic checks and the scripted playthrough. Dev builds only: main.js loads this file from code that runs
    only when __DEV__ is true, so the public build leaves it out (node tools/build.mjs bog-walk --dev to include it). See docs/TESTING.md and docs/games/bog-walk.md.
@@ -10,7 +11,7 @@ export function dev(D) {
   const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d), sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const lookAt = (x, y, z) => { const dx = x - S.x, dz = z - S.z, dy = y - S.eye; S.yaw = Math.atan2(-dx, -dz); S.pitch = Math.atan2(dy, Math.hypot(dx, dz)); };
   const report = (title, lines, count) => { let pre = $('autolog'); pre.hidden = false; pre.textContent = lines.join('\n'); document.title = title + ' ' + count; };
-  const vis = (e) => { if (!e || e.closest('[hidden]')) return false; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.05) return false; const r = e.getBoundingClientRect(); return r.width >= 1 && r.height >= 1; };
+  const vis = (e) => { if (!e || e.closest('[hidden]')) return false; const folded=e.closest('details:not([open])');if(folded&&!folded.querySelector(':scope > summary')?.contains(e))return false; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.05) return false; const r = e.getBoundingClientRect(); return r.width >= 1 && r.height >= 1; };
   const box = (e) => { const r = e.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }; };
   const hits = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
 
@@ -92,7 +93,7 @@ export function dev(D) {
     if (P.id === 'kingston') for (const n of P.npcs) if (Math.abs(n.hz) < 1.6 && n.hx > -46 && n.hx < 82) r.inside.push((n.id || n.base) + ' stands on the tram track at (' + n.hx.toFixed(1) + ',' + n.hz.toFixed(1) + ')');
     return r;
   }
-  window.__bw = { ...D, hudOverlaps, handRects, propOverlaps, tubeAudit, tubeHeld, auditWorld, panelCheck };
+  window.__bw = Object.defineProperties({hudOverlaps,handRects,propOverlaps,tubeAudit,tubeHeld,auditWorld,panelCheck},Object.getOwnPropertyDescriptors(D));
 
   /* ---------- test views: ?shot=<name>. Tube views as before; places outside are ?shot=<view> below or ?shot=w&p=<place>&st=<stage>&x=&z=&yaw=&pitch= ---------- */
   const shot = q.get('shot');
@@ -150,7 +151,7 @@ export function dev(D) {
     for (let i = 0; i < 4; i++) D.tick(0.05); });
 
   /* ---------- ?test=audit: every place, and the Tube ---------- */
-  if (q.get('test') === 'audit') (async () => {
+  if (['audit','collision','seating'].includes(q.get('test'))) (async () => {
     const out = [], ids = (q.get('p') || Object.keys(D.BUILD).join(',')).split(','); let n = 0; D.startGame();
     for (const id of ids) { const P = await D.ensurePlace(id); const r = auditWorld(P), l = [...r.floating, ...r.inside, ...r.stuck]; n += l.length; out.push(id + ': ' + l.length + ' issues', ...l.map((x) => '  ' + x)); }
     D.enterTube(); const t = tubeAudit(); n += t.length; out.push('tube: ' + t.length + ' issues', ...t.map((x) => '  ' + x));
@@ -159,7 +160,7 @@ export function dev(D) {
   /* ---------- ?test=held: things carried by people in every place (engine auditHeld), and the torch in your hand ---------- */
   if (q.get('test') === 'held') (async () => {
     const out = []; let n = 0, items = 0; D.startGame();
-    for (const id of Object.keys(D.BUILD)) { const P = await D.ensurePlace(id); for (const p of P.npcs) if (p.m.userData.held && p.m.userData.held.length) { items += p.m.userData.held.length; p.m.userData.anim.mx.update(0.1); for (const l of D.auditHeld(p.id || p.base, p.m, p.m.userData.held)) { out.push(id + ': ' + l); n++; } } }
+    for (const id of Object.keys(D.BUILD)) { const P = await D.ensurePlace(id); for (const p of P.npcs) if (p.m.userData.held && p.m.userData.held.length) { items += p.m.userData.held.length; p.m.userData.anim.mx.update(0.1);gripTick(p.m); for (const l of D.auditHeld(p.id || p.base, p.m, p.m.userData.held)) { out.push(id + ': ' + l); n++; } } }
     D.enterTube(); D.resetNight(); D.setPhase('shot'); const t = tubeHeld(); n += t.length; out.push(...t.map((x) => 'torch hand: ' + x));
     out.unshift('held items: ' + n + ' issues (' + items + ' things carried by people, and the torch in your hand)'); report('HELD', out, n);
   })();

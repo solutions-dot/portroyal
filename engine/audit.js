@@ -1,3 +1,4 @@
+import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
 /* engine/audit.js: automatic checks of a built place, for every game. Rule (CLAUDE.md): run it, and fix everything it reports, before calling a place done.
    It finds three kinds of mistake that are easy to miss by eye and tedious to find one at a time:
      float   an object (a sign, a lamp, a roof) that touches nothing connected to the ground, so it hangs in the air
@@ -51,7 +52,9 @@ export function auditPlace(place) {
   while (q.length) { const [cx, cz] = q.pop(); for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = cx + dx, nz = cz + dz; if (nx < 0 || nz < 0 || nx >= W || nz >= D || seen[nz * W + nx] || !ok(bd.x0 + nx * st, bd.z0 + nz * st)) continue; seen[nz * W + nx] = 1; q.push([nx, nz]); } }
   const reach = (x, z, r) => { for (let cz = 0; cz < D; cz++) for (let cx = 0; cx < W; cx++) if (seen[cz * W + cx] && Math.hypot(bd.x0 + cx * st - x, bd.z0 + cz * st - z) <= r) return true; return false; };
   const stuck = []; if (!startOK) stuck.push('the START is inside a wall or outside the bounds'); for (const a of place.actions) if (!reach(a.x, a.z, a.r * 0.9)) stuck.push('thing to do "' + a.label + '" cannot be reached'); for (const p of place.people) if (!/^Sit/.test(p.anim || '') && !reach(p.x, p.z, 2.3)) stuck.push('person ' + p.id + ' cannot be reached to talk to');
+  for(const p of place.npcs)if(!/^Sit/.test(p.anim||''))inside.push(...furnitureRouteIssues(p.id,[[p.x,p.z]],L,p.ground||0,.16));
   const overlap = auditPeople(place.npcs, place.start);
+  for(const p of place.npcs) if(p.path && !(p.ground>0)) { inside.push(...routeIssues(p.id,p.path,place.walls,.22)); inside.push(...furnitureRouteIssues(p.id,p.path,L,p.ground||0)); }
   return { id: place.id, floating, inside: inside.concat(overlap), stuck };
 }
 
@@ -65,6 +68,7 @@ export function auditHeld(id, body, items) {
   const dist = (p, A, B) => { const ab = B.clone().sub(A), t = Math.max(0, Math.min(1, p.clone().sub(A).dot(ab) / (ab.lengthSq() || 1))); return p.distanceTo(A.clone().addScaledVector(ab, t)); };
   for (const it of items) {
     const box = new THREE.Box3().setFromObject(it.obj), hand = P(it.bone), name = id + ' ' + (it.label || 'item') + ' at ' + it.bone; if (!hand) continue;
+    if(it.obj.userData.gripHandle){const handle=new THREE.Vector3().fromArray(it.obj.userData.gripHandle);it.obj.localToWorld(handle);const side=it.bone.startsWith('Left')?'Left':'Right',knuckle=P(side+'HandMiddle1'),tip=P(side+'HandMiddle3'),palm=knuckle&&tip?knuckle.lerp(tip,.5):hand;if(handle.distanceTo(palm)>.035*sc)out.push(name+' handle is separated from the closed fingers');}
     const near = box.clampPoint(hand, new THREE.Vector3()).distanceTo(hand); if (near > 0.12) out.push(name + ' is ' + (near * 100).toFixed(0) + ' cm from the hand');
     const up = new THREE.Vector3(0, 1, 0).transformDirection(it.obj.matrixWorld); if (it.bone !== 'Head' || true) { if (up.y < 0.6) out.push(name + ' is tipped (up is ' + up.y.toFixed(2) + ')'); }
     const pts = []; it.obj.updateMatrixWorld(true); it.obj.traverse((o) => { if (!o.isMesh || !o.geometry.attributes.position) return; const a = o.geometry.attributes.position, step = Math.max(1, Math.floor(a.count / 120)); for (let i = 0; i < a.count; i += step) pts.push(new THREE.Vector3().fromBufferAttribute(a, i).applyMatrix4(o.matrixWorld)); });   /* the item's real surface, not its box */
@@ -92,7 +96,7 @@ export function auditPeople(npcs, start) {
      - faces the back of a seat (a thin, tall board close in front of them).
    stats (optional array) collects one line per person, for tuning. */
 export function auditSeated(id, body, snap, ground = 0, stats) {
-  body.updateMatrixWorld(true); const out = [], pts = [], v = new THREE.Vector3(), hb = body.getObjectByName('mixamorigHips'); if (!hb) return out;
+  anchorSeat(body); body.updateMatrixWorld(true); const out = [], pts = [], v = new THREE.Vector3(), hb = body.getObjectByName('mixamorigHips'); if (!hb) return out;
   body.traverse((o) => { if (!o.isSkinnedMesh || !o.visible || !o.geometry.attributes.position) return; o.skeleton.update(); const n = o.geometry.attributes.position.count, step = Math.max(1, Math.floor(n / 500)); for (let i = 0; i < n; i += step) { o.getVertexPosition(i, v); pts.push(v.clone().applyMatrix4(o.matrixWorld)); } });
   if (!pts.length) return out;
   const hips = hb.getWorldPosition(new THREE.Vector3()), box = new THREE.Box3().setFromPoints(pts).expandByScalar(0.1), fwd = new THREE.Vector3(0, 0, 1).transformDirection(body.matrixWorld), seats = snap.filter((m) => m.lb && m.b.intersectsBox(box));
@@ -107,7 +111,7 @@ export function auditSeated(id, body, snap, ground = 0, stats) {
       for (const p of pts) { q.copy(p).applyMatrix4(m.inv); const lb = m.lb; if (q.x > lb.min.x && q.x < lb.max.x && q.y > lb.min.y && q.y < lb.max.y && q.z > lb.min.z && q.z < lb.max.z) { const d = Math.min(q.x - lb.min.x, lb.max.x - q.x, q.y - lb.min.y, lb.max.y - q.y, q.z - lb.min.z, lb.max.z - q.z) * m.sc; if (d > thr) { n++; deep = Math.max(deep, d); } } }
       if (n >= Math.max(3, pts.length * 0.01)) out.push(`${id} cuts into a ${sz.x.toFixed(2)}x${sz.y.toFixed(2)}x${sz.z.toFixed(2)} box at y ${m.b.min.y.toFixed(2)} to ${m.b.max.y.toFixed(2)} (up to ${(deep * 100).toFixed(0)} cm deep, ${n} points)`);
     }
-    if (upright) { const c = m.b.getCenter(new THREE.Vector3()), dx = c.x - hips.x, dz = c.z - hips.z, ahead = dx * fwd.x + dz * fwd.z, side = Math.abs(dx * fwd.z - dz * fwd.x); if (ahead > 0.2 && ahead < 0.9 && side < 0.6 && m.b.min.y < hips.y + 0.3 && m.b.max.y > hips.y + 0.2) out.push(`${id} faces the back of a seat (a board ${(ahead * 100).toFixed(0)} cm ahead)`); }
+    if (upright && (!under || m.b.intersectsBox(under.b.clone().expandByScalar(.09)))) { const c = m.b.getCenter(new THREE.Vector3()), dx = c.x - hips.x, dz = c.z - hips.z, ahead = dx * fwd.x + dz * fwd.z, side = Math.abs(dx * fwd.z - dz * fwd.x); if (ahead > 0.2 && ahead < 0.9 && side < 0.6 && m.b.min.y < hips.y + 0.3 && m.b.max.y > hips.y + 0.2) out.push(`${id} faces the back of a seat (a board ${(ahead * 100).toFixed(0)} cm ahead at ${c.x.toFixed(2)},${c.z.toFixed(2)})`); }
   }
   /* the seat under the hips: the lowest part of the pelvis may sink a little into a cushion, but not far, and the person must not hover */
   let lowBack = 1e9, lowThigh = 1e9; for (const p of pts) { const dx = p.x - hips.x, dz = p.z - hips.z, ahead = dx * fwd.x + dz * fwd.z, side = Math.abs(dx * fwd.z - dz * fwd.x); if (side > 0.3 || p.y < hips.y - 0.45) continue; if (ahead > -0.25 && ahead < 0.05) lowBack = Math.min(lowBack, p.y); else if (ahead >= 0.05 && ahead < 0.35) lowThigh = Math.min(lowThigh, p.y); }

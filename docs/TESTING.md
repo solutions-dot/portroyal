@@ -117,3 +117,9 @@ Rules of thumb the audit enforces:
 Port Royal's dev build also supports `?test=walk`. Wait for `WALK 0` and read `#autolog`. It steps the actual Lewis Galdy controller through normal and hurried walking, backward and sideways movement, stopping, foot grounding and Walk/WalkM loop seams. `?shot=gwalk&clip=WalkM&cam=front` and `&cam=side` capture twelve poses for clothing and foot inspection. The preview and visible player now use the same walk clip.
 
 For desktop input, approach a person and focus the game canvas. Both Space and Enter must open the conversation once. With Next or a choice focused, the same keys must activate that button normally. Journal/menu buttons must retain native keyboard activation, and text fields must not trigger world actions.
+
+Teacher access: in a fresh browser, open Chapters, check the normal locks, turn on Teacher unlock, and verify that every chapter is available. Reload to check persistence; switch it off before starting a chapter to verify that the normal locks return. Check Port Royal (6), Garvey (8), Kendal (7), and Bog Walk (6). Selecting a chapter still changes the current story position normally.
+
+The Pipe's ordering challenge shares its journey data with the physical notice board and the picture buttons. Its board guide remains in the panel; the full board can be expanded. Check a wrong pick, all six correct picks, Done, and keyboard activation at 390x800 and 667x375.
+
+Use `?test=collision` or `?test=seating` for seating and furniture checks. Port Royal includes the dock and new street routes, Ned in the tavern, Benning after the earthquake, and Exquemelin at his desk. Garvey includes all places, complete route segments and bench approaches. Kendal and Bog Walk include these checks in their place audits. A missing walking wall must also be checked against the actual furniture boxes.

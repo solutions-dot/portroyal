@@ -24,3 +24,5 @@ games/bog-walk/site/models/anims.js
 # Eventide: built files are made by tools/build.mjs (and by the Vercel build), so they are not tracked
 games/eventide/site/app.js
 games/eventide/site/models/anims.js
+
+dist-testing/

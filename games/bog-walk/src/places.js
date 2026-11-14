@@ -1,3 +1,4 @@
+import { JOURNEY } from './content.js';
 /* games/bog-walk/src/places.js: the places outside the Tube, built in code (see docs/games/bog-walk.md, "Places").
    One site at three times (the station on Sunday evening, the yard the morning after, the ruins today) and Kingston in 1899.
    Each builder returns { id, group, walls, bounds, start, people, extras, env, eye, spots, tick, ... } like Kendal's places.
@@ -82,17 +83,21 @@ const ICONS = {
   wires(x, s) { x.fillStyle = '#9ac0d8'; x.fillRect(-s, -s, 2 * s, 2 * s); x.fillStyle = '#5a8a3a'; x.fillRect(-s, s * 0.6, 2 * s, s * 0.4); x.fillStyle = '#4a3020'; for (const px of [-0.7, 0.05, 0.8]) { x.fillRect(px * s - 4, -s * 0.6, 8, s * 1.3); x.fillRect(px * s - s * 0.2, -s * 0.55, s * 0.4, 5); } x.strokeStyle = '#1a1a1a'; x.lineWidth = 2; for (const dy of [-0.5, -0.38]) { x.beginPath(); x.moveTo(-s, dy * s); x.quadraticCurveTo(-s * 0.32, (dy + 0.12) * s, 0.05 * s, dy * s); x.quadraticCurveTo(s * 0.42, (dy + 0.12) * s, s, dy * s); x.stroke(); } },
   tram(x, s) { x.fillStyle = '#d8c8a8'; x.fillRect(-s, -s, 2 * s, 2 * s); x.fillStyle = '#7a7060'; x.fillRect(-s, s * 0.62, 2 * s, s * 0.38); x.strokeStyle = '#1a1a1a'; x.lineWidth = 2; x.beginPath(); x.moveTo(-s, -s * 0.8); x.lineTo(s, -s * 0.8); x.stroke(); x.beginPath(); x.moveTo(0, -s * 0.25); x.lineTo(s * 0.35, -s * 0.8); x.stroke(); x.fillStyle = '#2f5a3a'; x.fillRect(-s * 0.75, -s * 0.25, s * 1.5, s * 0.75); x.fillStyle = '#efe4c8'; x.fillRect(-s * 0.75, -s * 0.25, s * 1.5, s * 0.3); x.fillStyle = '#3a4a5a'; for (let i = 0; i < 4; i++) x.fillRect(-s * 0.62 + i * s * 0.32, -s * 0.18, s * 0.22, s * 0.18); x.fillStyle = '#1a1a1a'; for (const wx of [-0.45, 0.45]) { x.beginPath(); x.arc(wx * s, s * 0.56, s * 0.12, 0, 7); x.fill(); } },
 };
-const ICON_ORDER = ['river', 'dam', 'tube', 'wheel', 'wires', 'tram'], ICON_NAMES = { river: 'The river', dam: 'The dam', tube: 'The Tube', wheel: 'The wheel', wires: 'The wires', tram: 'The tram' };
+const ICON_ORDER=JOURNEY.map(e=>e[2]), ICON_NAMES=Object.fromEntries(JOURNEY.map(e=>[e[2],e[0]]));
+export function journeyIcon(index) {
+  const texture=cv(160,128,(x)=>{x.fillStyle='#eee3c4';x.fillRect(0,0,160,128);x.save();x.translate(80,64);ICONS[ICON_ORDER[index]](x,54);x.restore();},null);
+  const url=texture.image.toDataURL();texture.dispose();return url;
+}
 export function noticeTex(solved) {
   return cv(1024, 704, (x, w, h) => {
     x.fillStyle = '#e8dcbc'; x.fillRect(0, 0, w, h); const r = rng(3); for (let i = 0; i < 40; i++) { x.fillStyle = `rgba(120,90,40,${0.03 + r() * 0.05})`; x.beginPath(); x.ellipse(r() * w, r() * h, 30 + r() * 90, 20 + r() * 50, 0, 0, 7); x.fill(); }
     x.strokeStyle = '#2a2014'; x.lineWidth = 6; x.strokeRect(14, 14, w - 28, h - 28); x.lineWidth = 2; x.strokeRect(26, 26, w - 52, h - 52);
     x.fillStyle = '#1e1810'; x.textAlign = 'center'; x.font = '700 50px Georgia, serif'; x.fillText('BOG WALK POWER STATION', w / 2, 92); x.font = 'italic 34px Georgia, serif'; x.fillText('The journey of the water', w / 2, 140);
-    const order = solved ? ICON_ORDER : ['wheel', 'river', 'tram', 'tube', 'wires', 'dam'], s = 62;
+    const order = ICON_ORDER, s = 62;
     order.forEach((k, i) => { const cx = 110 + i * 161, cy = 290; x.save(); x.translate(cx, cy); x.beginPath(); x.rect(-s, -s, 2 * s, 2 * s); x.clip(); ICONS[k](x, s); x.restore(); x.strokeStyle = '#2a2014'; x.lineWidth = 4; x.strokeRect(cx - s, cy - s, 2 * s, 2 * s);
-      x.fillStyle = '#1e1810'; x.font = '700 24px Georgia, serif'; x.fillText(solved ? ICON_NAMES[k] : '?', cx, cy + s + 36);
-      if (solved && i < 5) { x.fillStyle = '#8a1a14'; x.beginPath(); x.moveTo(cx + s + 8, cy - 12); x.lineTo(cx + s + 24, cy - 12); x.lineTo(cx + s + 24, cy - 22); x.lineTo(cx + s + 36, cy); x.lineTo(cx + s + 24, cy + 22); x.lineTo(cx + s + 24, cy + 12); x.lineTo(cx + s + 8, cy + 12); x.fill(); } });
-    x.font = '700 30px Georgia, serif'; x.fillText(solved ? 'River, dam, Tube, wheel, wires, tram.' : 'Can you put the pictures in order?', w / 2, 470);
+      x.fillStyle = '#1e1810'; x.font = '700 24px Georgia, serif'; x.fillText(ICON_NAMES[k], cx, cy + s + 36);
+      if (i < 5) { x.fillStyle = '#8a1a14'; x.beginPath(); x.moveTo(cx + s + 8, cy - 12); x.lineTo(cx + s + 24, cy - 12); x.lineTo(cx + s + 24, cy - 22); x.lineTo(cx + s + 36, cy); x.lineTo(cx + s + 24, cy + 22); x.lineTo(cx + s + 24, cy + 12); x.lineTo(cx + s + 8, cy + 12); x.fill(); } });
+    x.font = '700 30px Georgia, serif'; x.fillText(JOURNEY.map(e=>e[0].replace(/^The /,'')).join(', ')+'.', w / 2, 470);
     x.strokeStyle = '#2a2014'; x.lineWidth = 2; x.beginPath(); x.moveTo(80, 510); x.lineTo(w - 80, 510); x.stroke();
     x.font = '700 30px Georgia, serif'; x.fillText('NOTICE', w / 2, 562); x.font = '28px Georgia, serif'; x.fillText('The water is shut off at twelve o\'clock on Sunday nights,', w / 2, 606); x.fillText('after all traffic has ceased.', w / 2, 644);
     grain(x, w, h, 10); }, null);

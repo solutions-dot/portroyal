@@ -112,6 +112,12 @@
   #cbtns.col{flex-direction:column;align-items:stretch}
   body:has(#card:not([hidden])) #hud,body:has(#puzzle:not([hidden])) #hud,body:has(#card:not([hidden])) .tbub,body:has(#puzzle:not([hidden])) .tbub{visibility:hidden}
   .x{position:absolute;top:8px;right:8px;width:44px;height:44px;border:0;background:none;color:var(--paper);font-size:1.9rem;line-height:1;cursor:pointer;opacity:.8;border-radius:50%}
+  #pzguide{margin:0;background:var(--paper);color:var(--paper-ink);padding:.65rem;border-radius:5px;font-weight:700;line-height:1.45}
+  #pzreference{background:var(--paper);color:var(--paper-ink);border-radius:5px;padding:.6rem;line-height:1.45}
+  #pzreference summary{font-weight:700;cursor:pointer;min-height:44px;display:flex;align-items:center}
+  #pzboard{display:block;width:min(100%,420px);height:auto;margin:0 auto}
+  #pzfacts{margin:.5rem 0 0}
+  #pztray .pc img{display:block;max-width:100%;height:60px;width:78px;object-fit:contain;margin:0 auto .2rem}
   #pzprog{margin:0;opacity:.85}
   #pzlist{margin:0;padding-left:1.6rem;display:flex;flex-direction:column;gap:2px}#pzlist:empty{display:none}
   #pzcard{background:var(--paper);color:var(--paper-ink);border-radius:5px;font:700 1.15rem/1.4 var(--body);padding:.8rem 1rem;min-height:4.4em;display:flex;align-items:center;justify-content:center;text-align:center}
@@ -224,6 +230,12 @@
     <button id="pzx" class="x" aria-label="Close">&times;</button>
     <h2 id="pztitle"></h2>
     <p id="pzprog"></p>
+    <p id="pzguide" hidden></p>
+    <details id="pzreference" hidden>
+      <summary>View the station board</summary>
+      <img id="pzboard" alt="The station board shows a river, dam, Tube, wheel, wires and tram." width="1024" height="704">
+      <p id="pzfacts"></p>
+    </details>
     <ol id="pzlist"></ol>
     <div id="pzcard" hidden></div>
     <div id="pztray"></div>
@@ -243,8 +255,9 @@
   <div class="book">
     <header><h2 id="chtitle">Chapters</h2><button id="chclose">Close</button></header>
     <p class="chnote">Each chapter opens when you finish the one before it. Zeke's story and the Tube both open after the station.</p>
+    <p id="chteachernote" class="chnote" hidden>All chapters are open for teaching.</p>
     <ol id="chlist" class="chlist"></ol>
-    <footer><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
+    <footer><button id="chteacher" class="btn ghost" aria-pressed="false">Teacher unlock</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
   </div>
 </section>
 <section id="credits" role="dialog" aria-labelledby="crtitle" hidden>

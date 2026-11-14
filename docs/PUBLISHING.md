@@ -76,3 +76,7 @@ gh api repos/solutions-dot/portroyal/pulls -f title="..." -f head=my-change -f b
 Large binaries in the repo: `shared/anim-sources/*.fbx` (about 38 MB), the source `.glb` files in `games/*/assets/`, and the packed models in `games/*/site/models/`.
 
 Eventide is currently an unfinished local prototype. The public distribution deliberately excludes it; build it directly with `node tools/build.mjs eventide --dev` for development. Add it to the released distribution only after its story, title and required checks are complete.
+
+For a testing build that includes Eventide Home, run `npm run dist:testing` and serve `dist-testing/`. It builds all five games with their test parameters and shows the Eventide prototype card in the menu. The ordinary `npm run dist` build still contains the four released games. While serving the repository, open `menu/?testing=1` to show the same testing card.
+
+All four released games offer a **Teacher unlock** toggle in Chapters. The choice stays in that browser. The toggle changes access; selecting a chapter still advances the current story position normally. Eventide is an exploration prototype and does not yet have a chapter sequence.

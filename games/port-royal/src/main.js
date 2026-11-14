@@ -1,3 +1,5 @@
+import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
+import { snapMeshes, auditSeated } from '../../../engine/audit.js';
 import { updateWalk } from '../../../engine/locomotion.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import * as THREE from 'three';
@@ -710,12 +712,12 @@ function renderChapters() { const ul = $('chlist'); ul.replaceChildren();
     b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !tavernReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', c.name], ['st', !tavernReady ? 'Loading' : dn ? 'Done' : open ? 'Play' : 'Locked']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
     b.onclick = () => playChapter(c); li.appendChild(b); ul.appendChild(li); });
-  $('chteach').hidden = !!state.ch.all; $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = ''; }
+  $('chteacher').setAttribute('aria-pressed',String(!!state.ch.all));$('chteacher').textContent=state.ch.all?'Teacher unlock: on':'Teacher unlock';$('chteachernote').hidden=!state.ch.all; $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = ''; }
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = !$('card').hidden; if (state.started) canvas.focus(); }
 function playChapter(c) { navGen++; $('chapters').hidden = true; busy = false; fbReset(); if (!state.started) startGame(); c.go(); }
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
-$('chteach').onclick = () => { state.ch.all = true; saveGame(); renderChapters(); };
+$('chteacher').onclick = () => { state.ch.all = !state.ch.all; saveGame(); renderChapters();$('chteacher').focus(); };
 $('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } try { localStorage.removeItem(SAVE_KEY); sessionStorage.setItem('pr-fresh', '1'); } catch (e) { /* ignore */ } location.reload(); };
 
 /* ---------- sound: made in the browser, no audio files ---------- */
@@ -765,7 +767,7 @@ function gullsInit() { if (GULLS.length) return; const wm = new THREE.MeshBasicM
     g.userData = { l: wing(-1), r: wing(1), cx: i < 2 ? 4 + Math.random() * 8 : SHORE + 6 + Math.random() * 18, cz: i < 2 ? 18.6 : (Math.random() - 0.5) * 22, rad: 5 + Math.random() * 7, h: 7 + Math.random() * 6, sp: (0.18 + Math.random() * 0.12) * (Math.random() < 0.5 ? -1 : 1), a: Math.random() * 6.3, ph: Math.random() * 6 };
     scene.add(g); GULLS.push(g); } }
 /* ---------- a soldier of the fort's garrison: he walks the main street into the tavern, comes back out, and walks along the quay and the sand spit to Fort Charles ---------- */
-const SOLDIER = { m: null, pike: null, path: [[-6.18, -4.7], [-6.18, -3.0], [-6.0, -1.1], [4, -1.2], [12, -0.9], [17, -0.6], [21.95, -2.6], [21.95, -9.0], [26, -14], [30, -22], [34.5, -29.4], [37.6, -30]], i: 5, dir: -1, wait: 0, hidden: false, walking: false };
+const SOLDIER = { m: null, pike: null, path: [[-6.18, -4.7], [-6.18, -3.0], [-6.0, -1.1], [4, -1.2], [12, -0.9], [17, -0.6], [22.7, -2.2], [22.7, -4.4], [21.95, -9.0], [26, -14], [30, -22], [34.5, -29.4], [37.6, -30]], i: 5, dir: -1, wait: 0, hidden: false, walking: false };
 function loadSoldier() { model('soldier').then((gl) => { const m = prep(gl.scene); const [x, z] = SOLDIER.path[SOLDIER.i]; m.position.set(x, 0, z); scene.add(m); SOLDIER.m = m; animate(m);
   const wood = new THREE.MeshStandardMaterial({ map: plankTex([112, 84, 56], 3, 1, 1), roughness: 0.9 }), iron = new THREE.MeshStandardMaterial({ color: 0x6a6e72, roughness: 0.35, metalness: 0.8 });
   const pike = new THREE.Group(); const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 1.75, 7), wood); shaft.position.y = 0.42; pike.add(shaft); const tip = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.2, 4), iron); tip.position.y = 1.39; pike.add(tip); scene.add(pike); SOLDIER.pike = pike;   /* a half-pike, carried upright */
@@ -951,7 +953,7 @@ function buildAfter() { if (afterG) return; afterG = new THREE.Group(); scene.ad
     const pile = mk(new THREE.ConeGeometry(1.1 + rnd(20) * 0.6, 0.5, 9), bm, p.x + 1.5, 0.15, p.z - side * 1.8); pile.rotation.y = rnd(21) * 3; }
   for (const [x, z, ry, id, clip, tint] of EXTRA) { if (!people[id]) continue; const keep = people[id].userData.anim; delete people[id].userData.anim; const m = skClone(people[id]); people[id].userData.anim = keep;
     m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); m.position.set(x, 0, z); m.rotation.y = ry; m.visible = true; afterG.add(m); animate(m, clip); grounded.push(m); }
-  for (const [x, z, ry, id] of SURV) { if (!people[id]) continue; const keep = people[id].userData.anim; delete people[id].userData.anim; const m = skClone(people[id]); people[id].userData.anim = keep; m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(0.78, 0.74, 0.68); } }); m.visible = true; m.position.set(x, 0, z); m.rotation.y = ry; afterG.add(m); animate(m, id === 'sailor' ? 'Sad2' : id === 'kofi' ? 'Sad1' : (CL.SitDisbelief ? 'SitDisbelief' : 'Sad2')); survivors[id] = m; grounded.push(m); if (id === 'benning' && CL.SitDisbelief) { m.userData.sits = true; const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 0.45), new THREE.MeshStandardMaterial({ map: plankTex([132, 100, 70], 3, 1, 2), roughness: 0.9 })); seat.position.set(x - Math.sin(ry) * 0.18, 0.21, z - Math.cos(ry) * 0.18); seat.rotation.y = ry; afterG.add(seat); } }
+  for (const [x, z, ry, id] of SURV) { if (!people[id]) continue; const keep = people[id].userData.anim; delete people[id].userData.anim; const m = skClone(people[id]); people[id].userData.anim = keep; m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(0.78, 0.74, 0.68); } }); m.visible = true; m.position.set(x, 0, z); m.rotation.y = ry; afterG.add(m); animate(m, id === 'sailor' ? 'Sad2' : id === 'kofi' ? 'Sad1' : (CL.SitDisbelief ? 'SitDisbelief' : 'Sad2')); survivors[id] = m; grounded.push(m); if (id === 'benning' && CL.SitDisbelief) { m.userData.sits = true; m.userData.seatAnchor={x:x-Math.sin(ry)*.18,z:z-Math.cos(ry)*.18,top:.42,ry}; const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 0.45), new THREE.MeshStandardMaterial({ map: plankTex([132, 100, 70], 3, 1, 2), roughness: 0.9 })); seat.position.set(x - Math.sin(ry) * 0.18, 0.21, z - Math.cos(ry) * 0.18); seat.rotation.y = ry; afterG.add(seat); } }
   cur = scene; }
 function placeHeath() { const m = people.heath; if (!m || !afterG || m.parent) return; grounded.push(m); m.position.set(HEATH.x, 0, HEATH.z); m.rotation.y = HEATH.ry; afterG.add(m); animate(m, 'Pray'); m.userData.ground = 0; }
 function afterDone() { return state.unlocked.includes('tentp') && state.unlocked.includes('kingston'); }
@@ -1461,7 +1463,7 @@ function cutlass(m) { const h = m.getObjectByName('mixamorigRightHand'); if (!h 
   else { g.position.set(0, 0.07, 0.02); g.rotation.set(Math.PI / 2, 0, 0); }
   h.add(g); m.userData.sword = g; }
 function pirateReady(n) { buildFort(); const m = people[n]; if (!m) return;
-  if (n === 'ned' && indoor) { const [x, z, ry] = TAV.ned; m.position.set(x, 0, z); m.rotation.y = ry; m.userData.sits = true; indoor.add(m); animate(m, CL.SitIdle ? 'SitIdle' : CL.SitTalk ? 'SitTalk' : null);   /* Ned just sits at his table; no cup in hand */ grounded.push(m); EXTRA_IN.push([x, z, 0.5]); }
+  if (n === 'ned' && indoor) { const [x, z, ry] = TAV.ned; m.position.set(x, 0, z); m.rotation.y = ry; m.userData.sits = true; m.userData.seatAnchor={x,z:1.72,top:.475,ry}; indoor.add(m); animate(m, CL.SitIdle ? 'SitIdle' : CL.SitTalk ? 'SitTalk' : null);   /* Ned just sits at his table; no cup in hand */ grounded.push(m); EXTRA_IN.push([x, z, 0.5]); }
   if (n === 'buc1' || n === 'buc2') { const [x, z, ry] = n === 'buc1' ? TAV.b1 : TAV.b2; m.position.set(x, 0, z); m.rotation.y = ry; indoor.add(m); animate(m); grounded.push(m); EXTRA_IN.push([x, z, 0.55]); }
   if (n === 'gunner') { buildFort(); const [x, z, ry] = FORTP.gunner; m.position.set(x, 0, z); m.rotation.y = ry; FORT.g.add(m); animate(m); }
   if (n === 'morgan') { m.visible = false; scene.add(m); animate(m); } }
@@ -1657,7 +1659,7 @@ const _fbBuild = fbBuild; fbBuild = () => { const first = !FBG.group; _fbBuild()
   const paper = mk(new THREE.BoxGeometry(0.3, 0.01, 0.22), new THREE.MeshStandardMaterial({ color: 0xefe4c6, roughness: 0.9 }), FBP.qm[0] + 0.55, 0.81, FBP.qm[1]);
   cur = prev;
   const put = (m, [x, z, ry], clip) => { m.position.set(x, groundYAt(x, z), z); m.rotation.y = ry; m.visible = true; g.add(m); animate(m, clip); FBG.cast.push(m); m.userData.ground = groundYAt(x, z); grounded.push(m); return m; };
-  if (galdy) { FBG.exq = put(clone2(galdy, [0.8, 0.9, 1.05]), FBP.exq, CL.Write ? 'Write' : null); FBG.exq.userData.sits = true; }
+  if (galdy) { FBG.exq = put(clone2(galdy, [0.8, 0.9, 1.05]), FBP.exq, CL.Write ? 'Write' : null); FBG.exq.userData.sits = true; FBG.exq.userData.seatAnchor={x:FBP.exq[0],z:FBP.exq[1]+.2,top:groundYAt(FBP.exq[0],FBP.exq[1])+.42,ry:FBP.exq[2]}; }
   if (people.gunner) FBG.qm = put(clone('gunner', [0.75, 0.95, 0.8]), FBP.qm, 'Talk2'); };
 function clone2(src, tint) { const keep = src.userData.anim; delete src.userData.anim; const m = skClone(src); src.userData.anim = keep; m.scale.copy(src.scale); m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); return m; }
 speakerModel = ((orig) => (who) => who === 'Quartermaster' ? FBG.qm : who === 'Exquemelin' ? FBG.exq : orig(who))(speakerModel);
@@ -1944,4 +1946,27 @@ function runGaldyWalkTest() {
   window.__galdyWalkCheck = { checks, failures };
   let out = document.getElementById('autolog'); if (!out) { out = document.createElement('pre'); out.id = 'autolog'; document.body.append(out); } out.textContent = [...checks, ...failures].join('\n');
   document.title = 'WALK ' + failures.length;
+}
+
+
+// The released game's walkers and every seated character use the same checks
+// as the other games. This view also includes the tavern and the 1670 camp.
+if (__DEV__ && ['collision','seating'].includes(new URLSearchParams(location.search).get('test'))) {
+  (async()=>{
+    const wait=ms=>new Promise(r=>setTimeout(r,ms));
+    for(let i=0;i<150 && !(built&&tavernReady&&people.ned&&people.morgan&&galdy&&NS.ready&&SOLDIER.m);i++)await wait(200);
+    const out=[],checks=[];
+    const staticSnap=g=>{const list=[];g.updateMatrixWorld(true);for(const c of g.children)if(c.visible&&!c.userData.anim&&!c.isSkinnedMesh&&c!==KP.box)list.push(...snapMeshes(c));return list;};
+    setPlace('out');const snap=staticSnap(scene);
+    for(const n of NPCS)out.push(...furnitureRouteIssues(n.id,[[n.x,n.z]],snap,0,.16));
+    for(const n of NS_PEOPLE)out.push(...furnitureRouteIssues(n.id,[[n.x,n.z]],staticSnap(NS.g),0,.16));
+    for(const n of NPCS)if(n.route){const hits=furnitureRouteIssues(n.id,n.route,snap,0,.22,false);out.push(...hits);checks.push(n.id+' route: '+hits.length);}
+    const soldierHits=furnitureRouteIssues('soldier',SOLDIER.path,snap,0,.22,false);out.push(...soldierHits);checks.push('soldier route: '+soldierHits.length);
+    for(const [id,path]of Object.entries(STROLL)){const hits=[...routeIssues(id,path,NS.col,.22),...furnitureRouteIssues(id,path,staticSnap(NS.g))];out.push(...hits);checks.push(id+' route: '+hits.length);}
+    const seated=(id,m,g)=>{if(!m){out.push(id+' did not load');return;}const found=new Set();for(let i=0;i<12;i++){m.userData.anim.mx.update(m.userData.anim.cur.getClip().duration/12);anchorSeat(m);for(const issue of auditSeated(id,m,staticSnap(g),m.userData.ground||0))found.add(issue);}out.push(...found);checks.push(id+' seating: '+found.size);};
+    setPlace('in');seated('Ned',people.ned,indoor);
+    buildAfter();seated('Benning after the earthquake',survivors.benning,afterG);
+    fbBuild();seated('Exquemelin at his desk',FBG.exq,FBG.group);
+    const pre=document.createElement('pre');pre.id='autolog';pre.textContent=[...checks,...out].join('\n');document.body.append(pre);document.title='COLLISION '+out.length;
+  })().catch(e=>{document.title='ERROR '+e.message;console.error(e);});
 }

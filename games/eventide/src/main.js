@@ -1,3 +1,4 @@
+import { slideWalls } from '../../../engine/placement.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/eventide/src/main.js: Eventide 1980 (the plan is docs/games/eventide.md).
    Early local build: the walking and talking shell from games/_template, the first characters made with tools/eventide/people.py,
@@ -75,6 +76,7 @@ addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k);
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 function clampPos(x, z) {
   const b = place ? place.bounds : { x0: -35, x1: 35, z0: -35, z1: 35 }; x = Math.max(b.x0, Math.min(b.x1, x)); z = Math.max(b.z0, Math.min(b.z1, z));
+  [x,z]=slideWalls([state.x,state.z],[x,z],WALLS,.22);
   for (const [x0, z0, x1, z1] of WALLS) if (x > x0 && x < x1 && z > z0 && z < z1) { const dl = x - x0, dr = x1 - x, dt = z - z0, db = z1 - z, m = Math.min(dl, dr, dt, db); if (m === dl) x = x0; else if (m === dr) x = x1; else if (m === dt) z = z0; else z = z1; }
   return [x, z];
 }
@@ -121,7 +123,7 @@ const CAST = ['iris1980', 'girl1980', 'boy1980'];
 Promise.all([model('anims'), ...CAST.map((n) => model(n))]).then(([anims, ...bodies]) => {
   loadClips(anims); CAST.forEach((n, i) => { BASES[n] = bodies[i]; });
   if (__DEV__ && q.has('shot')) { devView(q.get('shot')); return; }
-  if (__DEV__ && q.get('test') === 'audit') { runAudit(); return; }
+  if (__DEV__ && ['audit','collision','seating'].includes(q.get('test'))) { runAudit(); return; }
   enterPlace('slipe'); const sp = place.spots.iris; PERSON = { ...PERSON, x: sp.x, z: sp.z };
   person = makeBody('iris1980', { x: sp.x, z: sp.z, ry: sp.ry, ground: sp.ground });
   $('start').disabled = false; $('start').textContent = 'Start'; $('loadnote').textContent = '';
