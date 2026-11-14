@@ -19,8 +19,10 @@ It is the hardest subject in the family. The usual rules hold (CLAUDE.md rules 2
 - The game covers the whole history, with May 2010 as the centre.
 - The 2010 chapters show police and soldiers shooting and taking cover behind buildings, and gunmen shooting back from hiding places. **No one dies on screen.** The owner says these scenes are integral.
 - Real animations (crouch, duck and so on) will come later. Placeholders now (see "Placeholder poses").
+- **CLAUDE.md rule 4 is changed for this game only** (done). It now carries a one-sentence Tivoli exception with the limits below: seen from a safe place, behind an opt-in card, no one hit, no blood, the player never holds or fires a weapon. Every other game keeps "fights happen in the background".
+- **A fictional elder is the thread through the chapters:** a girl in the 1960s chapters and a grandmother in 2010, with a child as the main character from chapter 4 on. Her name and exact age are still to choose, so the dates fit (a girl in the 1960s is about 55 in 2010). Like Mass Ezra in Kendal, she is fictional and her journal page says so.
 
-**Proposed by Claude, not objected to, to be confirmed**
+**Proposed by Claude.** The first four points (the player never fires, the opt-in card, the safe place, no one hit and no blood) are now also in CLAUDE.md rule 4, so they are settled. The rest are still to be confirmed.
 - The player never fires and never holds a weapon. No crosshair.
 - The gunfight is a directed scene, like the Kendal crash: an opt-in card first ("It is loud, and it may be scary", with "Begin" or "Read what happened instead").
 - The child sees it from a safe place (a window, a roof, a gap in a fence), with the camera cutting between wide views.
@@ -32,10 +34,8 @@ It is the hardest subject in the family. The usual rules hold (CLAUDE.md rules 2
 - Settings to turn off screen shake and to turn down loud sounds. (Kendal still lacks the shake setting.)
 
 **Open (waiting for the owner)**
-1. CLAUDE.md rule 4 says "Fights happen in the background." This game goes beyond that. Proposal: change the wording for Tivoli only, with the limits above written in. Not changed yet.
-2. A "play with a grown-up" note on the menu card (Claude recommends yes, because guns are on screen).
-3. A reviewer from West Kingston before anything is published (Claude recommends yes).
-4. A fictional elder as the thread through the chapters (a girl in the 1960s, a grandmother in 2010), with a child as the main character from chapter 4 on.
+1. A "play with a grown-up" note on the menu card (Claude recommends yes, because guns are on screen).
+2. A reviewer from West Kingston before anything is published (Claude recommends yes).
 
 ## The story (proposed)
 
@@ -51,6 +51,8 @@ It is the hardest subject in the family. The usual rules hold (CLAUDE.md rules 2
 | 8 | Today | The community now |
 
 You are fictional. Every person you talk to is fictional, and each journal page says so. The events, the places and the findings are real.
+
+The thread is a fictional elder. In chapters 1 and 2 she is a girl in Back-o-Wall and then in the new Tivoli. In chapter 3 she grows up and raises a family. In chapters 4 to 6 she is the grandmother of the child you play. In chapters 7 and 8 she looks back with you.
 
 ## The dispute (what the game must tell, with attribution)
 
@@ -132,7 +134,7 @@ Real people in the game: none speak. Coke, politicians, commanders and officers 
 ## What is left
 
 1. **Research in primary sources**: the Commission's report (the hearings and Chapter 15 for the deaths), the Public Defender's reports, the Gleaner and Observer archives. Replace this table's "secondary only" note.
-2. **The four open decisions** above, and CLAUDE.md rule 4 if the owner agrees.
+2. **The two open decisions** above (the age note, the West Kingston reviewer), and the elder's name and age.
 3. **A reviewer from West Kingston.**
 4. **Characters.** Tivoli needs its own people: the elder, a child, neighbours, police and soldiers in real uniforms, gunmen in everyday clothes. Skin must follow CLAUDE.md rule 9. See `docs/PIPELINE.md`.
 5. **Places**: Back-o-Wall, new Tivoli streets and flats, a home interior, a rooftop or window view, the community centre.
