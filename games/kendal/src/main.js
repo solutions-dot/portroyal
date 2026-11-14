@@ -19,7 +19,7 @@ import * as SFX from './sfx.js';
 import { HATS, LOOKS } from './cast.js';
 import { DECOR } from './decor.js';
 import * as TRN from './trains.js'; import * as PRP from './props.js';   /* whole modules, for the dev model viewer only */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditWalk } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
 
 const $ = (id) => document.getElementById(id);
@@ -176,16 +176,18 @@ function tapPerson(cx, cy) {
   for (const n of P_().people) if (n.m && n.m.visible && Math.hypot(state.x - n.x, state.z - n.z) < 6 && ray.intersectObject(n.m, true).length > 0) return n; return null;
 }
 const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); };
+const walkSpeed = (m, v = 1.1) => v * Math.sqrt(m.scale.y);   /* a small child has shorter legs: it walks slower than a grown-up, with quicker steps */
 function npcTick(n, dt) {
   const m = n.m; if (!m || !m.visible) return; if (POSTER) { m.rotation.y = n.ry0; return; }
   const ac = n.ctl, d = Math.hypot(state.x - n.x, state.z - n.z), seated = /^Sit/.test(n.anim || ''), isNear = !n.extra && !seated && ((d < 3.2 && !DEV_NOSTOP) || talkWith === n);
-  if (n.follow && talkWith !== n) { const dx = state.x - n.x, dz = state.z - n.z, dist = Math.hypot(dx, dz); if (dist > 1.5) { const sp = Math.min(2.2, 0.8 + dist * 0.35) * dt; n.x += dx / dist * sp; n.z += dz / dist * sp; if (!n.walking) { n.walking = true; ac.play('Walk'); } faceTo(m, Math.atan2(dx, dz), dt); } else if (n.walking) { n.walking = false; ac.play(null); } m.position.set(n.x, m.userData.ground, n.z); return; }
+  if (n.follow && talkWith !== n) { const dx = state.x - n.x, dz = state.z - n.z, dist = Math.hypot(dx, dz); if (dist > 1.5) { const v = Math.min(2.2, 0.8 + dist * 0.35), sp = v * dt, fast = v > (n.running ? 1.45 : 1.75) * Math.sqrt(m.scale.y) && !!CL.Run; n.x += dx / dist * sp; n.z += dz / dist * sp;   /* a child who must hurry to keep up breaks into a run */
+      if (!n.walking || fast !== n.running) { n.walking = true; n.running = fast; ac.play(fast ? 'Run' : 'Walk'); } ac.pace(v); faceTo(m, Math.atan2(dx, dz), dt); } else if (n.walking) { n.walking = false; n.running = false; ac.play(null); } m.position.x = n.x; m.position.z = n.z; return; }
   if (!n.path) { if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else if (!n.extra) faceTo(m, n.ry0, dt, 2); return; }
   if (isNear || n.wait > 0) { if (n.walking) { n.walking = false; ac.play(null); } if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else { n.wait -= dt; if (n.wait <= 0) { n.walking = true; ac.play('Walk'); } } return; }
   if (!n.walking) { n.walking = true; ac.play('Walk'); }
-  const to = n.path[(n.i + 1) % n.path.length], dx = to[0] - n.x, dz = to[1] - n.z, dist = Math.hypot(dx, dz), sp = 1.1 * dt; faceTo(m, Math.atan2(dx, dz), dt);
+  const to = n.path[(n.i + 1) % n.path.length], dx = to[0] - n.x, dz = to[1] - n.z, dist = Math.hypot(dx, dz), v = walkSpeed(m), sp = v * dt; faceTo(m, Math.atan2(dx, dz), dt); ac.pace(v);   /* the steps keep time with the ground, whatever the size of the body */
   if (dist <= sp) { n.x = to[0]; n.z = to[1]; n.i = (n.i + 1) % n.path.length; n.wait = 2 + Math.random() * 3; n.walking = false; ac.play(null); } else { n.x += dx / dist * sp; n.z += dz / dist * sp; }
-  m.position.set(n.x, m.userData.ground, n.z);
+  m.position.x = n.x; m.position.z = n.z;   /* the height belongs to groundFeet: setting it here made walkers jump up and down every other frame */
 }
 
 /* ---------- a glowing speech mark over each person, and a bubble on the nearest ---------- */
@@ -655,7 +657,7 @@ function devViews() {
     const MODELS = { diesel: [() => TRN.dieselLoco(), 1, 17, 3.2, 1.2], coach: [() => TRN.woodCoach(7), 1, 15, 3, 1.2], early: [() => TRN.steamLoco('early'), 1, 11, 2.4, 0.6], late: [() => TRN.steamLoco('late'), 1, 12, 2.6, 0.8], first: [() => TRN.carriage1845('first'), 1, 8, 2.4, 0.6], third: [() => TRN.carriage1845('third'), 1, 8, 2.4, 0.6], sides: [() => TRN.carriage1845('third', 6.4, 2.4, 'sides'), 1, 9, 2.4, 0.6], wagon: [() => TRN.wagon(), 1, 9, 2.4, 0.4],
       mule: [() => PRP.mule(), 0, 3.6, 1.5, 0.95], mule3: [() => { const mu = PRP.mule(), L = [PRP.yamBasket(), PRP.provisionSack(), PRP.bananaLoad()]; L.forEach((o, i) => { mu.add(o); o.position.set(...mu.userData.slots[i]); o.rotation.set(0, i * 1.4, 0); o.scale.setScalar(i === 2 ? 0.9 : 0.8); }); mu.userData.dip = 1; return mu; }, 0, 3.6, 1.5, 0.95],
       cart: [() => PRP.cart(), 0, 5.5, 1.8, 0.7], truck: [() => PRP.truck(), 0, 7.5, 2.2, 1.0], bench: [() => PRP.bench(2.2), 0, 3.4, 1.3, 0.45],
-      people: [() => { const g = new THREE.Group(); pids.forEach((id, i) => { const b = makeBody({ ...LOOKS[id], bodyId: LOOKS[id].base + (plo ? '_lo' : ''), x: (i - (pids.length - 1) / 2) * 0.75, z: 0, ry: 0, anim: q.get('anim') || 'Idle', props: q.get('hold') ? [['RightHand', q.get('hold')]] : undefined }); b.userData.anim.mx.update(+(q.get('at') || 0.4)); gripTick(b); g.add(b); }); return g; }, 0, 3.2, 1.3, 1.0],
+      people: [() => { const g = new THREE.Group(); pids.forEach((id, i) => { const b = makeBody({ ...LOOKS[id], bodyId: LOOKS[id].base + (plo ? '_lo' : ''), x: (i - (pids.length - 1) / 2) * num('sp', 0.75), z: 0, ry: num('ry', 0), anim: q.get('anim') || 'Idle', props: q.get('hold') ? [['RightHand', q.get('hold')]] : undefined }); const c = b.userData.anim; if (q.has('at')) { c.base.time = num('at', 0) * c.base.getClip().duration; c.mx.update(0); } else c.mx.update(0.4); gripTick(b); g.add(b); if (q.has('at')) for (let k = 0; k < 30; k++) groundFeet(b); }); return g; }, 0, 3.2, 1.3, 1.0],   /* &anim=Walk&at=0.25 poses everyone a quarter of the way through the loop, feet on the ground; &ry=1.57 turns them side-on; &sp= is the gap between them */
       props: [() => { const g = new THREE.Group(); [PRP.suitcase(), PRP.hamper(), PRP.bucket(), PRP.lantern(), PRP.sack(), PRP.crate(), PRP.barrel()].forEach((o, i) => { o.position.x = (i - 3) * 0.85; g.add(o); }); return g; }, 0, 3.6, 1.0, 0.3],
       loads: [() => { const g = new THREE.Group(); [PRP.yamBasket(), PRP.provisionSack(), PRP.bananaLoad(), PRP.torch(), PRP.standpipe(), PRP.board()].forEach((o, i) => { o.position.x = (i - 2.5) * 1.0; g.add(o); }); return g; }, 0, 4.2, 1.1, 0.4] };
     const [make, rail, d0, h0, t0] = MODELS[m] || MODELS.diesel, obj = make(); root.add(obj); const gy = rail ? -1.69 : 0;
@@ -712,6 +714,17 @@ function devViews() {
       openJournal(); await settle(); covered('journal panel in play', 'journal', ['jtitle', 'jclose']); closeJournal();
       openCredits(); await settle(); covered('credits panel in play', 'credits', ['crtitle', 'crclose']); closeCredits();
       document.title = 'LAYOUT ' + out.length; const el = $('autolog'); if (el) el.textContent = (out.length ? out : [W + 'x' + Hh + ': no layout problems']).join('\n'); })();
+  }
+  if (q.get('test') === 'walkers') {   /* ?test=walkers : every body walks whole loops at the speed the game moves it. Feet must not slide, sink or float, the loop must join, and a carried thing must stay clear of the body. */
+    (async () => { const out = []; let bad = 0; startGame(true); await waitFor(() => modelsReady);
+      const kidOf = (base, scale) => ({ base, scale, tint: {} });
+      const LIST = [['muleteer'], ['gent45'], ['surveyor'], ['ezra57'], ['foreman'], ['higgler'], ['mother'], ['gran'], ['joy'], ['andre'], ['lloyd'], ['dawn'], ['girl 0.80', kidOf('girl', 0.8)], ['girl 0.68', kidOf('girl', 0.68)], ['boy 0.68', kidOf('boy', 0.68)],
+        ['man with a suitcase (light copy)', { ...LOOKS.gent45, bodyId: 'man_suit_lo', props: [['RightHand', 'suitcase']] }], ['woman with a hamper (light copy)', { ...LOOKS.mother, bodyId: 'woman57_lo', props: [['RightHand', 'hamper']] }], ['elder woman with a hamper (light copy)', { ...LOOKS.gran, bodyId: 'woman_elder_lo', props: [['RightHand', 'hamper']] }], ['dawn hurrying after you', LOOKS.dawn, 1.4], ['dawn running after you', LOOKS.dawn, 2.2, 'Run']];
+      for (const [name, look, vIn, clip] of LIST) { const spec = { ...(look || LOOKS[name]), x: 0, z: 0, ry: PI / 2, anim: clip || 'Walk' }; await loadBase(spec.bodyId || spec.base); const b = makeBody(spec); scene.add(b);
+        const v = vIn || walkSpeed(b), old = auditWalk(name, b, 1.1, { after: gripTick, paced: false, loops: 1 }), r = auditWalk(name, b, v, { after: gripTick, heldItems: b.userData.held });
+        out.push(`${name} (${spec.bodyId || spec.base} x${(spec.scale || 1).toFixed(2)}): stride ${(r.stride * 100).toFixed(0)} cm, ${v.toFixed(2)} m/s, clip speed ${r.pace.toFixed(2)}, slide ${r.slide.toFixed(1)} cm a loop (was ${old.slide.toFixed(1)} at 1.10 m/s and clip speed 1), shoes ${r.sink.toFixed(1)} to ${r.float.toFixed(1)} cm, biggest jump ${r.pop.toFixed(1)}x, body rises and falls ${r.rise.toFixed(1)} cm (at most ${r.bob.toFixed(1)} cm in a step)`);
+        for (const l of r.lines) { out.push('  ' + l); bad++; } scene.remove(b); }
+      out.unshift('walkers: ' + bad + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'WALKERS ' + bad; })();
   }
   if (q.get('test') === 'held') {
     if (q.get('hs')) for (const k of ['hamper', 'suitcase', 'bucket']) { GRIP[k] = { ...GRIP[k], scale: +q.get('hs') * (k === 'suitcase' ? 1.4 : 1), out: +q.get('ho') }; } if (q.get('ls')) GRIP.lantern = { ...GRIP.lantern, scale: +q.get('ls'), out: +q.get('lo') };   /* ?test=held : every carried thing, in every place: at the hand, upright, clear of the body */

@@ -12,6 +12,7 @@
      seated  a person sitting who cuts into a seat or its back, floats above the seat, sits on nothing, or faces the back of the seat
    Nothing here runs in a public build unless a game imports it into code that is only reached when __DEV__ is true. */
 import * as THREE from 'three';
+import { groundFeet, strideOf } from './anim.js';
 
 /* a list of the world-space box of every visible mesh under a group (instanced meshes are skipped) */
 export function snapMeshes(group) {
@@ -109,5 +110,44 @@ export function auditSeated(id, body, snap, ground = 0, stats) {
   if (under && lift < want - 0.07) out.push(`${id} sits ${((want - lift) * 100).toFixed(0)} cm too low: the seat passes through the pelvis and thighs`);
   else if (under && lift > 0.3) out.push(`${id} hangs ${(lift * 100).toFixed(0)} cm above its seat`);
   else if (!under && lift > 0.3 && lift < 0.7) out.push(`${id} sits on nothing (hips ${(lift * 100).toFixed(0)} cm above the floor)`);
+  return out;
+}
+
+/* Walking: step one person through whole loops of the walk they are playing (their controller's current clip) while moving them at ground speed v, the way a game does,
+   and measure what the eye would see. Give `after(body)` if the game does something after each animation step (gripTick). paced=false leaves the clip speed alone, to measure "before".
+   Returns { stride, pace, slide, sink, float, pop, bob, rise, lines } (bob: the most the body rises or falls in one step, rise: how far it goes up and down in all, both in cm):
+     stride  metres of ground one loop covers on this body          pace   the clip speed that was used
+     slide   how far the feet slip over the ground in one loop (cm): the planted foot's net travel. A good walk is under 3 cm (or 3 in every 100 of a long running stride).
+     sink / float  the lowest and highest that the lowest point of the shoes gets, against the ground (cm). The sole rests 1 cm into the ground on purpose; a heel may dip to 3 cm for a frame or two as it lands, because the body is eased up, not jerked.
+     pop     the biggest jump of a foot in one step, as a multiple of a usual step: a loop that does not join, or a body that jerks up and down, shows here
+   lines lists the faults in words; an empty list means the walk is clean. */
+export function auditWalk(id, body, v, { after = null, paced = true, loops = 2, ground = body.userData.ground || 0, heldItems = null } = {}) {
+  const ctl = body.userData.anim, out = { stride: 0, pace: 1, slide: 0, sink: 0, float: 0, pop: 0, lines: [] }; if (!ctl) return out;
+  const act = ctl.cur, clip = act.getClip(), B = (n) => body.getObjectByName('mixamorig' + n), feet = [B('LeftFoot'), B('RightFoot')], P = new THREE.Vector3(); if (feet.some((f) => !f)) return out;
+  out.stride = strideOf(body, clip); act.timeScale = 1; out.pace = paced ? ctl.pace(v) : 1; act.time = 0; ctl.mx.update(0);
+  const N = 96, dt = clip.duration / out.pace / N, fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(body.quaternion), x0 = body.position.x, z0 = body.position.z, y0 = body.position.y;
+  const shoes = []; body.traverse((o) => { if (o.isSkinnedMesh && o.visible && /Shoes|Sole/.test(o.material.name || '')) shoes.push(o); }); if (!shoes.length) body.traverse((o) => { if (o.isSkinnedMesh && o.visible && /Skin/.test(o.material.name || '')) shoes.push(o); });
+  const read = () => { body.updateMatrixWorld(true); return feet.map((f) => { f.getWorldPosition(P); return [P.x * fwd.x + P.z * fwd.z, P.y, P.x * fwd.z - P.z * fwd.x]; }); };
+  for (let i = 0; i < 20; i++) groundFeet(body);   /* settle on the ground first */
+  const run = /Run/.test(clip.name), hs = []; let prev = read(), slide = 0, lo = 1e9, hi = -1e9, steps = [], prevY = body.position.y, bob = 0, yLo = 1e9, yHi = -1e9; const held = new Set(), log = [];
+  for (let i = 0; i < N * loops; i++) {
+    body.position.x += fwd.x * v * dt; body.position.z += fwd.z * v * dt; ctl.mx.update(dt); if (after) after(body); groundFeet(body); const now = read();
+    const k = prev[0][1] + now[0][1] < prev[1][1] + now[1][1] ? 0 : 1; log.push([now[k][0] - prev[k][0], Math.max(prev[k][1], now[k][1]) - body.position.y]); hs.push(now[0][1] - body.position.y, now[1][1] - body.position.y); yLo = Math.min(yLo, body.position.y); yHi = Math.max(yHi, body.position.y);
+    for (const j of [0, 1]) steps.push(Math.hypot(now[j][0] - prev[j][0] - v * dt, now[j][1] - prev[j][1], now[j][2] - prev[j][2]));
+    bob = Math.max(bob, Math.abs(body.position.y - prevY)); prevY = body.position.y; prev = now;
+    if (i % 8 === 0) { let low = 1e9; for (const o of shoes) { o.skeleton.update(); const n = o.geometry.attributes.position.count; for (let j = 0; j < n; j++) { o.getVertexPosition(j, P).applyMatrix4(o.matrixWorld); if (P.y < low) low = P.y; } } lo = Math.min(lo, low - ground); hi = Math.max(hi, low - ground);
+      if (heldItems && heldItems.length) for (const l of auditHeld(id, body, heldItems)) held.add(l.replace(/ is \d+ cm from/, ' is far from')); }
+  }
+  const hMin = Math.min(...hs), hMax = Math.max(...hs), band = run ? hMin + (hMax - hMin) * 0.2 : 1e9; for (const [d, h] of log) if (h <= band) slide += d;   /* in a run, only a foot that is down can slide */
+  out.rise = (yHi - yLo) * 100;
+  const sorted = steps.slice().sort((a, b) => a - b), usual = sorted[sorted.length >> 1] || 1e-6;
+  out.slide = Math.abs(slide) / loops * 100; out.sink = lo * 100; out.float = hi * 100; out.pop = sorted[sorted.length - 1] / usual; out.bob = bob * 100;
+  body.position.set(x0, y0, z0);
+  if (out.stride < 0.05) out.lines.push(`${id}: no stride could be measured for ${clip.name}`);
+  if (out.slide > Math.max(3, out.stride * 3)) out.lines.push(`${id}: feet slide ${out.slide.toFixed(1)} cm in each loop of ${clip.name} at ${v.toFixed(2)} m/s (stride ${(out.stride * 100).toFixed(0)} cm, clip speed ${out.pace.toFixed(2)})`);
+  if (out.sink < -3) out.lines.push(`${id}: shoes sink ${(-out.sink).toFixed(1)} cm into the ground while walking`);
+  if (out.float > 2.5) out.lines.push(`${id}: the lower shoe floats ${out.float.toFixed(1)} cm above the ground while walking`);
+  if (out.pop > 6) out.lines.push(`${id}: a foot jumps ${out.pop.toFixed(1)} times a usual step (a loop that does not join, or a jerk)`);
+  for (const l of held) out.lines.push(l + ' while walking');
   return out;
 }
