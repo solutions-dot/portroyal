@@ -5,5 +5,16 @@
  "Gunplay": "../../tools/tivoli/anim-sources/Gunplay.fbx",
  "ShootPistol": "../../tools/tivoli/anim-sources/Shooting_Pistol.fbx",
  "PeekAim": "../../tools/tivoli/anim-sources/Female_Peek_And_Aim.fbx",
- "PeekCorner": "../../tools/tivoli/anim-sources/Femme_Peek_Around_Corner.fbx"
+ "PeekCorner": "../../tools/tivoli/anim-sources/Femme_Peek_Around_Corner.fbx",
+ "Ducking": "../../tools/tivoli/anim-sources/Ducking.fbx",
+ "CrouchIdle": "../../tools/tivoli/anim-sources/Crouch_Idle.fbx",
+ "RunLow": "../../tools/tivoli/anim-sources/Crouched_Run.fbx",
+ "CrouchTurnStand": "../../tools/tivoli/anim-sources/Crouch_Turn_To_Stand.fbx",
+ "CrouchToStand": "../../tools/tivoli/anim-sources/Crouch_To_Stand.fbx",
+ "WalkCrouchR": "../../tools/tivoli/anim-sources/Walk_Crouching_Right.fbx",
+ "RunBackward": "../../tools/tivoli/anim-sources/Run_Backward.fbx",
+ "RunLow2": "../../tools/tivoli/anim-sources/Crouched_Run_1.fbx",
+ "RunRight": "../../tools/tivoli/anim-sources/Run_Right.fbx",
+ "RunLeft": "../../tools/tivoli/anim-sources/Run_Left.fbx",
+ "RunForward": "../../tools/tivoli/anim-sources/Run_Forward.fbx"
 }

@@ -70,13 +70,15 @@ function setHands(body, w, shut) {
 }
 
 /* two-bone IK: turn the upper arm and forearm so the wrist reaches T, keeping the elbow on the side the clip had it (the same plane) */
-function reach(body, side, T) {
+function reach(body, side, T, pole) {
   const A = bone(body, side + 'Arm'), B = bone(body, side + 'ForeArm'), C = bone(body, side + 'Hand'); if (!A || !B || !C) return;
   body.updateMatrixWorld(true); const a = wpos(A), b = wpos(B), c = wpos(C), lab = a.distanceTo(b), lcb = b.distanceTo(c), lat = Math.min(Math.max(a.distanceTo(T), 0.02), lab + lcb - 0.005);
   const ang = (u, v) => Math.acos(Math.max(-1, Math.min(1, u.clone().normalize().dot(v.clone().normalize()))));
   const acab = ang(c.clone().sub(a), b.clone().sub(a)), babc = ang(a.clone().sub(b), c.clone().sub(b));
   const acab1 = Math.acos(Math.max(-1, Math.min(1, (lcb * lcb - lab * lab - lat * lat) / (-2 * lab * lat)))), babc1 = Math.acos(Math.max(-1, Math.min(1, (lat * lat - lab * lab - lcb * lcb) / (-2 * lab * lcb))));
-  let ax0 = new THREE.Vector3().crossVectors(c.clone().sub(a), b.clone().sub(a)); if (ax0.lengthSq() < 1e-10) return; ax0.normalize();
+  const ab = b.clone().sub(a), ac = c.clone().sub(a); let ax0 = new THREE.Vector3().crossVectors(ac, ab);
+  if (pole && ax0.length() < 0.15 * ac.length() * ab.length()) ax0 = new THREE.Vector3().crossVectors(ac, ab.clone().addScaledVector(pole, 0.12));   /* an almost straight arm has no bend plane: use the side the elbow should bulge to */
+  if (ax0.lengthSq() < 1e-10) return; ax0.normalize();
   turnWorld(A, ax0, acab1 - acab); turnWorld(B, ax0, babc1 - babc);
   const c2 = wpos(C), ax1 = new THREE.Vector3().crossVectors(c2.clone().sub(a), T.clone().sub(a)); if (ax1.lengthSq() > 1e-10) turnWorld(A, ax1.normalize(), ang(c2.clone().sub(a), T.clone().sub(a)));
 }
@@ -90,7 +92,7 @@ function palmTo(body, side, dir) {
 
 /* Bones this file turns (arms, hands, neck, head) start each frame from the clip's pose. A clip that does not move a bone leaves our last turn
    in place, and turning it again would pile up frame after frame, so such a bone is first put back to how it was before we touched it. */
-const ADJUST = ['RightHand', 'LeftHand', 'LeftArm', 'LeftForeArm', 'Neck', 'Head'];
+const ADJUST = ['RightHand', 'RightArm', 'RightForeArm', 'LeftHand', 'LeftArm', 'LeftForeArm', 'Neck', 'Head'];
 function freshen(body, w) {
   w.base = w.base || new Map(); w.last = w.last || new Map();
   for (const n of ADJUST) { const b = bone(body, n); if (!b) continue; const l = w.last.get(b);
@@ -130,12 +132,12 @@ function place(obj, p, f, u, fl, ul) {
 }
 export function modeOf(body) {
   const w = body.userData.weapon, clip = body.userData.anim && body.userData.anim.cur.getClip().name; if (!w) return 'none';
-  if (w.kind === 'rifle') return RIFLE_CLIPS.test(clip) ? 'hands' : 'slung';
+  if (w.kind === 'rifle') return RIFLE_CLIPS.test(clip) ? 'hands' : (w.carry === 'ready' ? 'ready' : 'slung');   /* carry 'ready': held low across the chest while moving or standing, as soldiers do (no clip needed) */
   return PISTOL_CLIPS.test(clip) ? 'hands' : 'holster';
 }
 export function weaponTick(body) {
   const w = body.userData.weapon; if (!w) return; const mode = modeOf(body), m = w.mesh;
-  freshen(body, w); setHands(body, w, mode === 'hands'); body.updateMatrixWorld(true);   /* fingers closed round the weapon while it is in the hands, relaxed otherwise */
+  freshen(body, w); setHands(body, w, mode === 'hands' || mode === 'ready'); body.updateMatrixWorld(true);   /* fingers closed round the weapon while it is in the hands, relaxed otherwise */
   try { tickWeapon(body, w, mode, m); } finally { remember(body, w); }
 }
 function tickWeapon(body, w, mode, m) {
@@ -162,6 +164,25 @@ function tickWeapon(body, w, mode, m) {
       const u = eye.clone().sub(piv), v = eyeWant.clone().sub(piv), ax = new THREE.Vector3().crossVectors(u, v); if (ax.lengthSq() > 1e-10) turnWorld(hb, ax.normalize(), Math.min(lim, u.angleTo(v)) * 0.5); }
     return;
   }
+  if (w.kind === 'rifle' && mode === 'ready') {   /* low ready: the grip low in front of the right side of the chest, the muzzle about 25 degrees below level, both hands placed by IK */
+    const sR = wpos(bone(body, 'RightArm')), sL = wpos(bone(body, 'LeftArm')), inward = sL.clone().sub(sR).normalize(), chest = wpos(bone(body, 'Spine1'));
+    const bodyUp = wpos(bone(body, 'Neck')).sub(wpos(bone(body, 'Spine'))).normalize(), bodyFwd = new THREE.Vector3().crossVectors(inward, bodyUp).normalize();
+    const grip = chest.clone().addScaledVector(bodyFwd, 0.16).addScaledVector(bodyUp, -0.1).addScaledVector(inward, -0.05), dir = bodyFwd.clone().multiplyScalar(Math.cos(0.45)).addScaledVector(bodyUp, -Math.sin(0.45));
+    const lsh = wpos(bone(body, 'LeftArm')), lel = wpos(bone(body, 'LeftForeArm')), armL = lsh.distanceTo(lel) + lel.distanceTo(wpos(bone(body, 'LeftHand')));
+    for (let it = 0; it < 3; it++) {   /* the handguard must be within the left arm's reach: when the torso leans in a run, draw the whole rifle towards the left shoulder */
+      place(m, grip, dir, bodyUp, new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 1, 0)); m.updateMatrixWorld(true);
+      const wn = new THREE.Vector3(0, SUPPORT.y - 0.028, 0.15).applyMatrix4(m.matrixWorld), d = wn.distanceTo(lsh); if (d <= 0.88 * armL) break; grip.addScaledVector(wn.sub(lsh).normalize(), -(d - 0.88 * armL));
+    }
+    place(m, grip, dir, bodyUp, new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 1, 0)); m.updateMatrixWorld(true);
+    const pole = bodyFwd.clone().negate().addScaledVector(bodyUp, -0.5).normalize(), rifleUp = new THREE.Vector3(0, 1, 0).transformDirection(m.matrixWorld), side = new THREE.Vector3(1, 0, 0).transformDirection(m.matrixWorld), want = new THREE.Vector3(0, SUPPORT.y - 0.024 - 0.004, 0.15).applyMatrix4(m.matrixWorld);
+    for (let k = 0; k < 3; k++) {
+      palmTo(body, 'Right', side); reach(body, 'Right', grip.clone().sub(palm(body, 'Right', V()).sub(wpos(bone(body, 'RightHand')))), pole);
+      palmTo(body, 'Left', rifleUp); reach(body, 'Left', want.clone().sub(palm(body, 'Left', V()).sub(wpos(bone(body, 'LeftHand')))), pole);
+    }
+    palmTo(body, 'Right', side); palmTo(body, 'Left', rifleUp);
+    const sh = wpos(bone(body, 'LeftArm')); w.dbg = { left: palm(body, 'Left', V()).distanceTo(want), right: palm(body, 'Right', V()).distanceTo(grip), reachL: sh.distanceTo(want), arm: wpos(bone(body, 'LeftArm')).distanceTo(wpos(bone(body, 'LeftForeArm'))) + wpos(bone(body, 'LeftForeArm')).distanceTo(wpos(bone(body, 'LeftHand'))) };
+    return;
+  }
   if (w.kind === 'pistol') {
     const R = palm(body, 'Right', _a), f = _d.subVectors(bone(body, 'RightHand').getWorldPosition(_b), bone(body, 'RightForeArm').getWorldPosition(_c));
     place(m, R, f, up, new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 1, 0)); return;
@@ -174,7 +195,7 @@ function tickWeapon(body, w, mode, m) {
 }
 /* how well the hands meet the weapon: the right palm on the grip (cm) and, for a rifle in the hands, the left palm on the handguard (cm) */
 export function heldReport(body) {
-  const w = body.userData.weapon, mode = modeOf(body), out = { mode, right: 0, left: 0, rightTip: 0, leftTip: 0 }; if (!w || mode !== 'hands') return out;
+  const w = body.userData.weapon, mode = modeOf(body), out = { mode, right: 0, left: 0, rightTip: 0, leftTip: 0 }; if (!w || (mode !== 'hands' && mode !== 'ready')) return out;
   weaponTick(body); w.mesh.updateMatrixWorld(true); const R = palm(body, 'Right', V()), L = palm(body, 'Left', V());
   out.right = R.distanceTo(V().setFromMatrixPosition(w.mesh.matrixWorld)) * 100;
   const inv = new THREE.Matrix4().copy(w.mesh.matrixWorld).invert(), tip = (side) => { const b = bone(body, side + 'HandMiddle3') || bone(body, side + 'HandMiddle2'); return b ? wpos(b).applyMatrix4(inv) : null; };

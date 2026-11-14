@@ -21,16 +21,16 @@ const TINTS = [{ Shirt: 0x3a3a40, Breeches: 0x39486c }, { Shirt: 0x6a2a2a, Breec
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 /* ---------- people: who, where they start, and what they do (steps); a step is { w: wait s } | { until: 'contact' } | { go: [x, z], run } | { act: pose, t: s, fire, face } ---------- */
-const fireLoop = (rifle, a = 3, b = 5) => [{ act: rifle ? 'StandFire' : 'PistolFire', t: rnd(a, b), fire: true }, { act: 'DuckDown', t: rnd(1, 1.8) }];
-const loopOf = (rifle) => () => [...fireLoop(rifle), ...fireLoop(rifle), { act: 'DuckDown', t: rnd(0.8, 1.4) }];
+const fireLoop = (rifle, a = 3, b = 5) => [{ act: rifle ? 'StandFire' : 'PistolFire', t: rnd(a, b), fire: true }, { act: 'DuckDown', t: 1.4 }, { act: 'CrouchIdle', t: rnd(1.2, 3) }];   /* fire, duck (the owner's Ducking clip), then stay crouched behind cover */
+const loopOf = (rifle) => () => [...fireLoop(rifle), ...fireLoop(rifle), { act: 'CrouchIdle', t: rnd(1, 2) }];
 const SOLDIERS = [
   { look: 'soldier', kind: 'rifle', from: [19, -3.8], steps: [{ w: 0.4 }, { go: [4, -3.8] }, { until: 'contact' }, { go: [-0.7, -3.4], run: 1 }, 'LOOP'] },
   { look: 'policeCamo', kind: 'rifle', from: [21.5, -3.2], steps: [{ w: 1.2 }, { go: [5, -3.3] }, { until: 'contact' }, { go: [-0.7, -2.2], run: 1 }, 'LOOP'] },
-  { look: 'soldier', kind: 'rifle', from: [19, 3.6], steps: [{ w: 0.8 }, { go: [8, 3.2] }, { until: 'contact' }, { go: [4.6, 2.9], run: 1 }, 'LOOP'] },
-  { look: 'soldier', kind: 'rifle', from: [22, 2.4], steps: [{ w: 1.8 }, { go: [8, 1.8] }, { until: 'contact' }, { go: [4.6, 1.5], run: 1 }, 'LOOP'] },
+  { look: 'soldier', kind: 'rifle', from: [19, 3.6], steps: [{ w: 0.8 }, { go: [8, 3.2] }, { until: 'contact' }, { go: [4.7, 2.9], run: 1 }, 'LOOP'] },
+  { look: 'soldier', kind: 'rifle', from: [22, 2.4], steps: [{ w: 1.8 }, { go: [8, 1.8] }, { until: 'contact' }, { go: [5.9, 1.7], run: 1 }, 'LOOP'] },
   { look: 'policeCamo', kind: 'rifle', from: [24.5, -4.1], steps: [{ w: 2.2 }, { go: [8, -3.8] }, { until: 'contact' }, { w: 14 }, { go: [-0.7, -1.2], run: 1 }, 'LOOP'] },
   { look: 'soldier', kind: 'rifle', from: [27, -4.4], steps: [{ w: 3 }, { go: [9, -4.2] }, { until: 'contact' }, { w: 22 }, { go: [-14.3, -3.8], run: 1 }, 'LOOP'] },
-  { look: 'police', kind: 'pistol', from: [20, 1.0], steps: [{ w: 1.4 }, { go: [8, 0.8] }, { until: 'contact' }, { go: [4.5, 0.4], run: 1 }, 'LOOP'] },
+  { look: 'police', kind: 'pistol', from: [20, 1.0], steps: [{ w: 1.4 }, { go: [8, 0.8] }, { until: 'contact' }, { go: [4.6, 0.5], run: 1 }, 'LOOP'] },
   { look: 'police', kind: 'pistol', from: [24, 4.5], steps: [{ w: 0.6 }, { go: [9, 4.4] }, { until: 'contact' }, { go: [-9.7, 3.4], run: 1 }, 'LOOP'] },
   { look: 'police', kind: 'rifle', from: [29, -2.2], steps: [{ w: 3.6 }, { go: [10, -2.6] }, { until: 'contact' }, { w: 18 }, { go: [-14.3, -2.6], run: 1 }, 'LOOP'] },
 ].map((s) => ({ ...s, face: W }));
@@ -68,11 +68,11 @@ export async function begin() {
   for (const s of [...SOLDIERS, ...GUNMEN]) {
     const look = LOOKS[s.look], bodyId = (s.look === 'gunman' ? 'civilian2010' : look.base) + (s.lo ? '_lo' : ''), b = makeBody({ ...look, bodyId, tint: s.tint, x: s.from[0], z: s.from[1], ry: s.face, anim: 'Idle' });
     if (s.look !== 'gunman') b.traverse((o) => { if (o.isMesh && o.material.name === 'ArmBandText' && s.look !== 'policeCamo') o.visible = false; });
-    b.visible = false; b.traverse((o) => { if (o.isMesh) o.castShadow = true; }); scene.add(b); arm(b, s.kind, scene); FIGHT.bodies.push(b);
+    b.visible = false; b.traverse((o) => { if (o.isMesh) o.castShadow = true; }); scene.add(b); arm(b, s.kind, scene); b.userData.weapon.carry = 'ready'; FIGHT.bodies.push(b);
     const steps = s.steps.flatMap((x) => (x === 'LOOP' ? [{ loopStart: true }] : [x]));
     FIGHT.actors.push({ s, b, steps, i: 0, t: 0, started: false, shotT: rnd(0.2, 0.9), rifle: s.kind === 'rifle', loopFrom: steps.findIndex((x) => x.loopStart), cur: null });
   }
-  FIGHT.on = true; $('windowframe').hidden = false; $('fade').style.opacity = 1; $('fade').hidden = false; requestAnimationFrame(() => { $('fade').style.transition = 'opacity 1.5s'; $('fade').style.opacity = 0; });
+  FIGHT.on = true; SFX.ambience(true, FX.calm); $('windowframe').hidden = false; $('fade').style.opacity = 1; $('fade').hidden = false; requestAnimationFrame(() => { $('fade').style.transition = 'opacity 1.5s'; $('fade').style.opacity = 0; });
   $('scenetitle').hidden = false; $('hud').hidden = true;
   setTimeout(() => { $('scenetitle').hidden = true; }, 4200);
   FIGHT.cleanup = () => { scene.remove(st.group, FX.group); for (const b of FIGHT.bodies) { disarm(b); scene.remove(b); } FIGHT.hidden.forEach((c) => (c.visible = true)); FIGHT.lights.forEach(([l, v]) => (l.intensity = v)); renderer.shadowMap.enabled = FIGHT.shadowWas; scene.fog = FIGHT.fog; scene.background = FIGHT.bg; FX.items.length = 0; FX.group.clear(); };
@@ -100,15 +100,17 @@ function fire(a, camera) {
 }
 export function tick(dt) {
   if (!FIGHT.on || FIGHT.freeze) return; const { camera } = FIGHT.env; FIGHT.T += dt; const T = FIGHT.T;
-  if (!FIGHT.contact && T >= 9) FIGHT.contact = true;   /* both sides open fire together: no one is shown firing first */
+  if (!FIGHT.contact) SFX.quietLife(dt, FX.calm);
+  if (!FIGHT.contact && T >= 9) { FIGHT.contact = true; SFX.ambience(false); }   /* both sides open fire together: no one is shown firing first; the street's ordinary sounds stop */
   for (const a of FIGHT.actors) {
     const st = stepOf(a); if (!st) continue; a.t += dt; const b = a.b, endSoft = T > 40 ? Math.max(0, 1 - (T - 40) / 5) : 1;
     if (st.loopStart) { nextStep(a); continue; }
-    if (st.w !== undefined) { b.visible = a.started; if (a.started) play(a, FIGHT.contact ? 'DuckDown' : 'Idle'); if (a.t >= st.w) nextStep(a); continue; }
+    if (st.w !== undefined) { b.visible = a.started; if (a.started) play(a, FIGHT.contact ? 'CrouchIdle' : 'Idle'); if (a.t >= st.w) nextStep(a); continue; }
     if (st.until) { if (FIGHT.contact) nextStep(a); else { b.visible = a.started; if (a.started) play(a, 'Idle'); } continue; }
     if (st.go) {
       a.started = true; b.visible = true; const dx = st.go[0] - b.position.x, dz = st.go[1] - b.position.z, dist = Math.hypot(dx, dz), v = st.run ? 3.4 : 1.4;
-      if (dist < 0.12) { nextStep(a); continue; } play(a, st.run ? 'RunLow' : 'AdvanceReady', v); const step = Math.min(dist, v * dt); b.position.x += dx / dist * step; b.position.z += dz / dist * step;
+      if (dist < 0.12) { nextStep(a); continue; } play(a, st.run ? 'RunLow' : 'AdvanceReady', v); const step = Math.min(dist, v * dt);
+      a.stepT = (a.stepT || 0) - dt; if (a.stepT <= 0) { a.stepT = st.run ? 0.2 : 0.5; const dc = b.position.distanceTo(camera.position); if (dc < 40) SFX.step(Math.max(-0.9, Math.min(0.9, (b.position.clone().project(camera).x) * 0.8)), 0.16 * (1 - dc / 40), FX.calm); }   /* footsteps, louder when near */ b.position.x += dx / dist * step; b.position.z += dz / dist * step;
       let e = Math.atan2(dx, dz) - b.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); b.rotation.y += e * Math.min(1, dt * 8); continue;
     }
     if (st.act) {
@@ -119,7 +121,7 @@ export function tick(dt) {
   }
   updateFx(dt);
   if (T > 12 && T < 38 && Math.random() < dt * 0.35) SFX.rattle(rnd(-0.8, 0.8), FX.calm);   /* more fighting, further off */
-  if (T >= END - 2 && !FIGHT.ended) { FIGHT.ended = true; $('fade').style.transition = 'opacity 2s'; $('fade').hidden = false; $('fade').style.opacity = 1; SFX.ring(FX.calm); setTimeout(() => { $('windowframe').hidden = true; show('aftercard'); $('aftercard').hidden = false; }, 2600); }
+  if (T >= END - 2 && !FIGHT.ended) { FIGHT.ended = true; SFX.ambience(false); $('fade').style.transition = 'opacity 2s'; $('fade').hidden = false; $('fade').style.opacity = 1; SFX.ring(FX.calm); setTimeout(() => { $('windowframe').hidden = true; show('aftercard'); $('aftercard').hidden = false; }, 2600); }
 }
 /* what runs after the mixers: feet on the ground, and the camera */
 const SHOTS = [   /* all from the child's window: the balcony of the second floor of the south flats (x 16.5, y 4.8, z 8.9), looking west along the street */
