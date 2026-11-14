@@ -66,7 +66,8 @@ addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && state.started) e.preventDefault();
   keys.add(k); if (!state.started) return;
   if (k === 'escape') { if (!$('dialogue').hidden) { leaveTalk(); return; } closeJournal(); closeChapters(); closeCredits(); if (!$('card').hidden && CARD.dismiss) CARD.dismiss(); }
-  if (HORN.on && !e.repeat && !e.target?.closest?.('button')) { if (k === '1' || k === 'arrowleft') { $('hshort').click(); return; } if (k === '2' || k === 'arrowright') { $('hlong').click(); return; } }
+  if (HORN.on && !e.repeat) {   /* 1 and 2 (or the left and right arrows) blow the horn even while a horn button has the focus: those keys do not press a button by themselves */
+    if (k === '1' || k === 'arrowleft') { $('hshort').click(); return; } if (k === '2' || k === 'arrowright') { $('hlong').click(); return; } }
   useInteractionKey(e, () => { if (!$('dialogue').hidden && !$('next').hidden) { $('next').click(); return; } if (!busy && !frozen && near) { activate(near); return; } return false; });
 });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
