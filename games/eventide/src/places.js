@@ -13,7 +13,7 @@
        with a black triangular plaque. The plaque's small emblem is not shown because it cannot be made out. */
 import * as THREE from 'three';
 import { T, cv, std, solid, flat, box, cyl, plane, grp, rng, mesh } from './gfx.js';
-import { palm, tree, bench, standpipe, waterTower, truck, boardHouse, hillRing } from './props.js';
+import { palm, tree, bench, standpipe, waterTower, truck, boardHouse, hillRing, flowers, signBoard } from './props.js';
 import { grassField, flowerField, flameTree, mangoTree, hibiscus, croton } from './detail.js';
 
 const DS = { side: THREE.DoubleSide };
@@ -84,12 +84,14 @@ function myersWard() {
     box(x1 - x0, 0.08, 1.0, solid(0x4a3426, 1), (x0 + x1) / 2, 0.04, -17.05, g); wall(x0, -17.6, x1, -16.5);
     for (let x = x0 + 0.7, i = 0; x < x1 - 0.3; x += 1.5, i++) { const p = (i % 2 ? hibiscus : croton)(i + (x0 < 0 ? 0 : 50)); p.position.set(x, 0.08, -17.05); g.add(p); }
   }
+  box(0.5, 0.7, 0.4, solid(0x6a4c33, 0.9), -10, F1 + 0.35, -20.05, g); box(0.3, 0.2, 0.12, solid(0x2a2a2e, 0.5), -10, F1 + 0.8, -20.05, g); box(0.012, 0.3, 0.012, solid(0xb0b4b8, 0.4, 0.6), -9.88, F1 + 1.05, -20.05, g);   /* a little table with Miss Iris's radio */
+  wall(-10.35, -20.3, -9.65, -19.8);
   const groundAt = (x, z) => {
     if (Math.abs(x) < L / 2 && z < VZ && z > Z0) return F1;   /* on the veranda */
     if (Math.abs(x) < 1.5 && z <= VZ + 1.2 && z >= VZ) return F1 * (1 - (z - VZ) / 1.2);   /* the steps */
     return 0;
   };
-  return { group: g, walls, groundAt, foot: [-L / 2 - 0.6, Z1 - 0.6, L / 2 + 0.6, VZ + 1.5], iris: [-4.5, -19.2], F1 };
+  return { group: g, walls, groundAt, foot: [-L / 2 - 0.6, Z1 - 0.6, L / 2 + 0.6, VZ + 1.5], iris: [-4.5, -19.2], F1, L, Z0, Z1, VZ, EAVE };
 }
 
 /* ---------- the men's ward, after the owner's photograph of a two-storey building: a plastered lower storey with arches, a row of upper windows,
@@ -244,7 +246,22 @@ export function buildSlipe(g) {
   const fore = plane(12, 7, std(T.dirt([4, 2], [178, 152, 112]))); fore.rotation.x = -Math.PI / 2; fore.position.set(0, 0.018, -10.5); g.add(fore);
   out.clear.push([-AW / 2 - 0.4, AV1, AW / 2 + 0.4, AV0], [-6, -14, 6, -7]);
   /* ---- the three buildings: the Myers Ward on the east of the avenue, the men's ward and the children's ward on the west ---- */
-  const myers = myersWard(), toMy = put(g, myers, -12, -38, -Math.PI / 2, out);
+  const myers = myersWard(); myers.group.userData.noBatch = true; const toMy = put(g, myers, -12, -38, -Math.PI / 2, out);
+  /* a bus at the stop, and one that drives by at dawn (the colours are a guess) */
+  const bus = (x, z) => { const b = grp(g, x, 0, z); box(9, 2.5, 2.4, solid(0xe8e4d6, 0.6), 0, 1.75, 0, b); box(9.02, 0.5, 2.42, solid(0x2f6a4a, 0.6), 0, 1.0, 0, b); box(8.4, 0.8, 2.44, solid(0x22303a, 0.3), 0, 2.3, 0, b); for (const wx of [-3, 3]) for (const wz of [-1.1, 1.1]) { const w = cyl(0.45, 0.45, 0.3, solid(0x161616, 0.9), wx, 0.45, wz, b, 12); w.rotation.x = Math.PI / 2; } box(1.0, 0.4, 0.05, std(T.sign('43', 128, 64, '#f3ecd8', '#1a1a1a', '700 44px Arial, sans-serif')), 3.6, 2.75, 1.24, b); return b; };
+  bus(-37, 2.3); wall(-41.7, 1.0, -32.3, 3.6);
+  const bus2 = bus(-70, -2.3); bus2.userData.noBatch = true; bus2.visible = false;
+  /* the night of the fire: a rope inside the gate, a fire engine, the fire itself, and what is left at dawn. All hidden until chapter 4. */
+  const night = grp(g); night.userData.noBatch = true; night.visible = false;
+  for (const x of [-3, 0, 3]) cyl(0.04, 0.05, 1.0, solid(0xd8d2c0, 0.8), x, 0.5, -9.4, night); { const rp = cyl(0.02, 0.02, 6, solid(0xe8d8a0, 0.8), 0, 0.92, -9.4, night); rp.rotation.z = Math.PI / 2; }
+  const eng = truck(0xb8281e); eng.traverse((o) => { if (o.isMesh && o.geometry.type === 'ConeGeometry') o.visible = false; }); eng.position.set(-0.6, 0, -17); eng.rotation.y = Math.PI / 2; night.add(eng); box(1.9, 0.5, 2.2, solid(0xb8281e, 0.6), -0.6, 1.6, -16.4, night);
+  { const hose = cyl(0.05, 0.05, 9, solid(0xc9c0a0, 0.9), 2.4, 0.05, -21, night); hose.rotation.x = Math.PI / 2; hose.rotation.z = 0.5; }
+  const fire = makeFire(night, toMy, myers);
+  const ruin = grp(g); ruin.userData.noBatch = true; ruin.visible = false;   /* after the photograph "Myers Ward after fire": fallen zinc sheets and timbers on the low foundation */
+  { const rr = rng(41), zm = new THREE.MeshStandardMaterial({ map: wrap(T.zinc([96, 92, 88], [1, 1]), 1, 1), roughness: 0.8, ...DS }), ch = solid(0x2a2420, 1), [cx, cz] = toMy(0, -24);
+    box(11.5, 0.6, 36, std(T.concrete([4, 12], [92, 88, 84])), cx, 0.3, cz, ruin);
+    for (let i = 0; i < 46; i++) { const zs = i % 3 !== 0, b = zs ? box(1.8 + rr() * 1.6, 0.04, 0.9 + rr(), zm, 0, 0, 0, ruin) : box(0.14, 0.14, 2 + rr() * 3, ch, 0, 0, 0, ruin); b.position.set(cx + (rr() - 0.5) * 10.5, 0.7 + rr() * 0.5, cz + (rr() - 0.5) * 34); b.rotation.set((rr() - 0.5) * 0.5, rr() * 3, (rr() - 0.5) * 0.5); }
+    for (let i = 0; i < 9; i++) box(0.3, 0.9 + rr() * 0.8, 0.3, ch, cx + (i % 2 ? 5.4 : -5.4), 0.9, cz - 16 + i * 4, ruin); }
   put(g, mensWard(), -15.5, -21, Math.PI / 2, out);
   put(g, oneStorey(16, 8), -13.5, -46, Math.PI / 2, out);
   /* the kitchen and laundry at the far end, with a water tank on a stand, a standpipe and the meal van (the Home had a meal van: JNHT) */
@@ -273,7 +290,7 @@ export function buildSlipe(g) {
   for (const [x, z, ry] of [[-5.6, -15, Math.PI / 2], [-5.6, -36, Math.PI / 2], [-5.6, -54, Math.PI / 2], [5.6, -13, -Math.PI / 2], [5.6, -62, -Math.PI / 2]]) { const b = bench(2.2, 0x5a4632); b.position.set(x, 0, z); b.rotation.y = ry; g.add(b); wall(x - 0.35, z - 1.2, x + 0.35, z + 1.2); }
   for (const z of [-17, -31, -45, -59]) { const l = streetLamp(4.8); l.position.set(-3.5, 0, z); g.add(l); wall(-3.7, z - 0.2, -3.3, z + 0.2); }
   /* bougainvillea spilling over the front wall */
-  for (const x of [-40, -28, -16, -9, 9, 16, 28, 40]) for (let i = 0; i < 4; i++) mesh(new THREE.IcosahedronGeometry(0.45 + r() * 0.15, 1), flat(i % 3 === 2 ? 0x3f7a32 : (i % 2 ? 0xd23a8a : 0xe0559e)), x + (r() - 0.5) * 1.4, 1.7 + r() * 0.7, -7.25 - r() * 0.2, g);
+  for (const x of [-40, -28, -16, -9, 9, 16, 28, 40]) for (let i = 0; i < 4; i++) { const rad = 0.45 + r() * 0.15; mesh(new THREE.IcosahedronGeometry(rad, 1), flat(i % 3 === 2 ? 0x3f7a32 : (i % 2 ? 0xd23a8a : 0xe0559e)), x + (r() - 0.5) * 1.4, 2.05 + r() * 0.45, -7.28 - rad - r() * 0.25, g); }   /* grown inside the wall: each clump sits wholly behind it, so only the top shows over the coping */
   /* grass, kept off the avenue and the buildings; a few flowers */
   grassField(g, [-47.6, -65.6, 47.6, -7.4], 2200, { seed: 9, clear: out.clear, h: 0.32, w: 0.55, tint: 0xc4c07c, vary: 0.35 });
   flowerField(g, [-47, -65, 47, -8], 220, { seed: 4, clear: out.clear, colors: [0xe2232a, 0xf5c542, 0xffffff, 0xe27ad8] });
@@ -281,10 +298,100 @@ export function buildSlipe(g) {
   for (let i = 0; i < 26; i++) { const x = -70 + r() * 140, z = -72 - r() * 30, t = r() < 0.35 ? palm(7 + r() * 3, i) : tree(6 + r() * 3, 60 + i); t.position.set(x, 0, z); g.add(t); }
   g.add(hillRing(190, 18, 80, { seed: 5, base: [0.24, 0.42, 0.24] }));
 
-  const groundAt = (x, z) => { for (const f of out.floors) { const y = f(x, z); if (y) return y; } return 0; };
+  /* lights that come on at dusk: the avenue lamps, the lamp under the arch, and warm windows in the wards */
+  const lamps = [], glowM = new THREE.MeshBasicMaterial({ color: 0xffe2a0, fog: false }), lampG = grp(g); lampG.userData.noBatch = true; lamps.push(lampG);
+  for (const z of [-17, -31, -45, -59]) { box(0.42, 0.06, 0.24, glowM, -2.55, 4.56, z, lampG); const pl = new THREE.PointLight(0xffd9a0, 14, 16, 1.8); pl.position.set(-2.4, 4.2, z); lampG.add(pl); }
+  box(0.28, 0.36, 0.28, glowM, 0, PH + 0.14 + 2.0 - 0.85, -7, lampG); { const pl = new THREE.PointLight(0xffd9a0, 10, 14, 1.8); pl.position.set(0, 4.4, -6.6); lampG.add(pl); }
+  for (let k = 0; k < 12; k += 1) for (const fy of [0.6, 3.9]) { if (k % 3 === 1) continue; const [x, z] = toMy(-18 + 1.5 + k * 3, -20.4 + 0.07); const w = box(0.03, 1.3, 0.9, new THREE.MeshBasicMaterial({ color: 0xffd890, fog: false }), x, fy + 1.55, z, lampG); w.userData.win = true; }
+  lampG.visible = false;
+  const groundAt = (x, z) => { for (const f of out.floors) { const y = f(x, z); if (y) return y; } return Math.abs(x) < 65 && Math.abs(z) > 4.0 && Math.abs(z) < 5.8 ? 0.15 : 0; };   /* the pavements stand 15 cm above the road */
   const [ix, iz] = toMy(...myers.iris);
   return { walls, bounds: { x0: -47.5, x1: 47.5, z0: -65.5, z1: 7.2 }, start: { x: -26, z: 4.6, yaw: -0.6 }, groundAt,
-    spots: { iris: { x: ix, z: iz, ry: -Math.PI / 2, ground: myers.F1 }, gate: { x: 0, z: -7 }, busstop: { x: -26, z: 5.5 } } };
+    myers, toMy, night, fire, ruin, bus2, lamps,
+    spots: { iris: { x: ix, z: iz, ry: -Math.PI / 2, ground: myers.F1 }, ver: (lx) => { const [x, z] = toMy(lx, -19.3); return { x, z, ry: -Math.PI / 2, ground: myers.F1 }; }, radio: toMy(-10, -19.1), gate: { x: 0, z: -7 }, busstop: { x: -26, z: 5.5 } } };
+}
+
+/* ---------- the fire, seen from behind the rope: flames along the windows and roof, smoke, sparks and a glow. Nothing of the inside is shown.
+   setLevel(1) is the ward burning, about 0.4 after the roof has fallen, about 0.08 smoke only at dawn. ---------- */
+function makeFire(parent, toMy, my) {
+  const g = grp(parent), r = rng(8), fl = [], sm = [], ft = T.flame(), pt = T.puff(); let level = 0;
+  const light = new THREE.PointLight(0xff7a2a, 0, 120, 1.6); { const [x, z] = toMy(0, my.VZ + 1); light.position.set(x, 6, z); g.add(light); }
+  for (let i = 0; i < 44; i++) { const roof = i % 4 === 0, lx = (r() - 0.5) * my.L, lz = roof ? my.Z0 - r() * 8 : my.VZ - 0.3, [x, z] = toMy(lx, lz), y = roof ? my.EAVE + 0.8 + r() * 1.6 : (i % 2 ? 2.3 : 5.6) + r() * 0.6;
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: ft, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); s.position.set(x, y, z); s.userData = { y, k: 1.6 + r() * 2.2 + (roof ? 1.6 : 0), ph: r() * 6.28, low: !roof && i % 2 === 1 }; g.add(s); fl.push(s); }
+  for (let i = 0; i < 16; i++) { const [x, z] = toMy((r() - 0.5) * my.L * 0.9, my.Z0 - 2 - r() * 6), s = new THREE.Sprite(new THREE.SpriteMaterial({ map: pt, color: 0x3a3634, transparent: true, opacity: 0.5, depthWrite: false })); s.userData = { x, z, t: r() * 14, sp: 0.6 + r() * 0.5 }; g.add(s); sm.push(s); }
+  const N = 90, pos = new Float32Array(N * 3), sd = []; for (let i = 0; i < N; i++) { const [x, z] = toMy((r() - 0.5) * my.L, my.Z0 - r() * 8); sd.push({ x, z, t: r() * 5, sp: 1.5 + r() * 2.5, dx: (r() - 0.5) * 2 }); }
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const sparks = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffc070, size: 0.18, transparent: true, depthWrite: false, fog: false })); sparks.frustumCulled = false; g.add(sparks);
+  let surge = 0;
+  return { light, setLevel(v) { level = v; }, get level() { return level; }, burst(k) { surge = Math.sin(Math.min(1, k) * Math.PI); },
+    tick(dt, t) { light.intensity = level * (620 + Math.sin(t * 9) * 90 + Math.sin(t * 23) * 50);
+      for (const s of fl) { const u = s.userData, on = level > 0.7 ? 1 : (u.low && level > 0.2 ? level : 0), k = u.k * on * (0.8 + 0.3 * Math.sin(t * 7 + u.ph) + 0.15 * Math.sin(t * 17 + u.ph * 2)); s.visible = k > 0.05; s.scale.set(k * 0.9, k * 1.5, 1); s.position.y = (level > 0.7 ? u.y : 1.0) + k * 0.4; }
+      for (const s of sm) { const u = s.userData; u.t = (u.t + dt * u.sp) % 14; const k = u.t / 14; s.visible = level > 0.02; s.position.set(u.x + k * 6, (level > 0.7 ? 8 : 2) + u.t * 1.7, u.z + Math.sin(u.t) * 1.2); const sc = 4 + u.t * 1.1; s.scale.set(sc, sc, 1); s.material.opacity = (1 - k) * (level > 0.7 ? 0.55 : 0.4); }
+      sparks.visible = level > 0.3; sparks.material.size = 0.18 + surge * 0.22; for (let i = 0; i < N; i++) { const u = sd[i]; u.t = (u.t + dt) % 5; pos[i * 3] = u.x + u.dx * u.t; pos[i * 3 + 1] = (level > 0.7 ? 7 : 1.5) + u.t * u.sp * (1.6 + surge * 3); pos[i * 3 + 2] = u.z + Math.sin(u.t * 3 + i) * 0.6; } sg.attributes.position.needsUpdate = true; } };
+}
+
+/* ---------- inside the Myers Ward: one long wooden room with iron beds close together. No photograph was found: this is our best guess. ---------- */
+export function buildWard(g) {
+  const walls = [], wall = (a, b, c, d) => walls.push([a, b, c, d]), HX = 15, HZ = 4, H = 3.3;
+  const floor = plane(2 * HX, 2 * HZ, std(T.plank([150, 118, 84], 10, [10, 3], true))); floor.rotation.x = -Math.PI / 2; g.add(floor);
+  const inside = std(wrap(T.plank(CREAM, 5, [1, 1], true), 10, 3), 0.95), win = std(louvre(), 0.8), glow = new THREE.MeshBasicMaterial({ color: 0xfff1cc });
+  box(2 * HX, H, 0.12, inside, 0, H / 2, -HZ - 0.06, g); box(2 * HX, H, 0.12, inside, 0, H / 2, HZ + 0.06, g); box(0.12, H, 2 * HZ, inside, -HX - 0.06, H / 2, 0, g); box(0.12, H, 2 * HZ, inside, HX + 0.06, H / 2, 0, g);
+  const ceil = plane(2 * HX, 2 * HZ, solid(0xd8ceb4, 1, 0, DS)); ceil.rotation.x = Math.PI / 2; ceil.position.y = H; g.add(ceil);
+  for (let x = -12.75; x < 13; x += 3) for (const s of [-1, 1]) { box(1.0, 1.3, 0.03, glow, x, 1.95, s * (HZ - 0.02), g); box(0.44, 1.3, 0.05, win, x - 0.74, 1.95, s * (HZ - 0.03), g); box(0.44, 1.3, 0.05, win, x + 0.74, 1.95, s * (HZ - 0.03), g); }
+  box(0.05, 2.3, 1.6, std(doorTex(), 0.8), -HX + 0.03, 1.15, 0, g);
+  for (let x = -12; x <= 12; x += 6) { cyl(0.012, 0.012, 0.7, solid(0x2a2a2a), x, H - 0.35, 0, g); mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff0c8 }), x, H - 0.75, 0, g); }
+  /* the beds: iron frames, thin mattresses, white sheets. They stand closer than they should: more women than the ward was built for. */
+  const iron = solid(0x3a3d40, 0.6, 0.4), sheet = solid(0xf2f0ea, 0.95), blank = [0x8aa0b8, 0xb89a8a, 0x9ab08a, 0xb8a8c8], pillow = solid(0xfaf8f2, 0.9);
+  for (const s of [-1, 1]) for (let i = 0; i < 17; i++) { const x = -13.2 + i * 1.6 + (s > 0 ? 0.5 : 0), zc = s * 2.85; if (s > 0 && x < -11.5) continue;
+    box(0.86, 0.18, 1.9, sheet, x, 0.52, zc, g); box(0.88, 0.06, 1.2, solid(blank[(i + (s > 0 ? 2 : 0)) % 4], 0.95), x, 0.63, zc - s * 0.3, g); box(0.6, 0.1, 0.36, pillow, x, 0.66, zc + s * 0.7, g);
+    for (const e of [-1, 1]) { box(0.9, e * s > 0 ? 1.0 : 0.7, 0.05, iron, x, e * s > 0 ? 0.5 : 0.35, zc + e * 0.95, g); }
+    box(0.04, 0.06, 1.9, iron, x - 0.43, 0.4, zc, g); box(0.04, 0.06, 1.9, iron, x + 0.43, 0.4, zc, g);
+    wall(x - 0.5, Math.min(zc - 1.0, zc + 1.0), x + 0.5, Math.max(zc - 1.0, zc + 1.0)); }
+  /* a table by the door, where lost things are kept */
+  box(1.6, 0.06, 0.7, solid(0x6a4c33, 0.9), -12.6, 0.78, 2.9, g); for (const [dx, dz] of [[-0.7, -0.28], [0.7, -0.28], [-0.7, 0.28], [0.7, 0.28]]) box(0.07, 0.76, 0.07, solid(0x5a3f2a, 0.9), -12.6 + dx, 0.38, 2.9 + dz, g); wall(-13.5, 2.45, -11.7, 3.35);
+  const item = (m, x) => { const o = grp(g, x, 0.81, 2.9); o.userData.noBatch = true; o.add(m); return o; };
+  const things = [item(box(0.26, 0.2, 0.03, solid(0x8a6a3a, 0.7)), -13.2), item(box(0.2, 0.06, 0.28, solid(0x1e1a1a, 0.8)), -12.8), item(box(0.2, 0.02, 0.06, solid(0x9a5a2a, 0.5)), -12.4), item(box(0.26, 0.16, 0.1, solid(0x2a2a2e, 0.5)), -12.0)];
+  things[0].children[0].position.y = 0.1; things[0].children[0].rotation.x = -0.3; things[1].children[0].position.y = 0.03; things[2].children[0].position.y = 0.01; things[3].children[0].position.y = 0.08;
+  const beds = { hyacinth: [-6.8, -2.6], maude: [2.9, 2.6], dora: [9.2, -2.6], irisbed: [12.7, 2.6] };
+  return { walls, bounds: { x0: -HX + 0.4, x1: HX - 0.4, z0: -HZ + 0.4, z1: HZ - 0.4 }, start: { x: -13.4, z: 0, yaw: -Math.PI / 2 }, groundAt: () => 0, indoor: true, things, beds,
+    spots: { table: [-12.6, 1.9], hyacinth: [-6.8, -1.4], maude: [2.9, 1.4], dora: [9.2, -1.4], irisbed: [12.7, 1.4] } };
+}
+
+/* ---------- National Heroes Park, Monday 26 May 1980: the grave, after the owner's photograph (a long concrete-lined trench with planks across it, a crowd behind a rail).
+   Here the grave is already closed with slabs, as it was sealed that day. The officials stand far off and say nothing. ---------- */
+export function buildPark80(g) {
+  const walls = [], wall = (a, b, c, d) => walls.push([a, b, c, d]), r = rng(17);
+  const grass = plane(240, 240, std(T.grass([70, 70], [96, 128, 62]))); grass.rotation.x = -Math.PI / 2; g.add(grass);
+  const conc = std(T.concrete([6, 2], [198, 194, 184])), earth = solid(0x8a6a48, 1);
+  box(16.6, 0.5, 5.2, conc, 0, 0.25, -2, g); for (let i = 0; i < 8; i++) box(1.96, 0.1, 4.6, std(T.concrete([1, 2], [176 + (i % 2) * 14, 172 + (i % 2) * 14, 162 + (i % 2) * 12])), -7 + i * 2, 0.55, -2, g);
+  for (const [x, z, s] of [[-11.5, -2, 2.4], [11.5, -2.6, 2.8], [-4, -6.4, 2.2], [5, -6.8, 2.6]]) { const m = mesh(new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), earth, x, 0, z, g); m.scale.set(s, s * 0.45, s * 0.8); }
+  for (let i = 0; i < 3; i++) { const p = box(3.2, 0.06, 0.3, solid(0x8a6a42, 0.95), -12 + i * 0.5, 0.05 + i * 0.07, 0.6 - i * 0.1, g); p.rotation.y = 0.3 + i * 0.2; }
+  const rail = solid(0x5a4632, 0.9); for (let x = -12; x <= 12; x += 2) box(0.1, 1.05, 0.1, rail, x, 0.525, 2.0, g); box(24.1, 0.07, 0.07, rail, 0, 1.0, 2.0, g); box(24.1, 0.07, 0.07, rail, 0, 0.55, 2.0, g); wall(-12.2, -6, 12.2, 2.3);
+  for (const x of [-6, -2.5, 2.5, 6.5]) { const f = flowers((x * 7) | 0); f.position.set(x, 0.6, -0.4); f.scale.setScalar(1.5); g.add(f); }
+  const spray = grp(g, 0, 0, 1.55); spray.userData.noBatch = true; spray.visible = false; { const f = flowers(5); f.scale.setScalar(1.6); spray.add(f); }
+  for (let i = 0; i < 22; i++) { const a = r() * 6.28, d = 34 + r() * 30, t = i % 4 === 0 ? palm(8 + r() * 3, i) : tree(8 + r() * 4, 20 + i); t.position.set(Math.cos(a) * d, 0, Math.sin(a) * d); g.add(t); }
+  for (const [x, z] of [[-17, 9], [16, 12], [-14, 22], [19, 4]]) { const t = mangoTree(8, (x * 3) | 0); t.position.set(x, 0, z); g.add(t); wall(x - 0.5, z - 0.5, x + 0.5, z + 0.5); }
+  g.add(hillRing(190, 18, 80, { seed: 6, base: [0.24, 0.42, 0.24] }));
+  return { walls, bounds: { x0: -24, x1: 24, z0: -4, z1: 26 }, start: { x: 0, z: 17, yaw: 0 }, groundAt: () => 0, spray, spots: { rail: [0, 3.4] }, crowd: [[-22, -16, 22, -8], [-22, 4, -13, 24], [13, 4, 22, 24]] };
+}
+
+/* ---------- the Golden Age Home, about 1985: small houses round a garden instead of one big ward (after the fire a committee asked for "cottage-type units").
+   The look of the place is an impression. ---------- */
+export function buildGolden(g) {
+  const walls = [], out = { walls, floors: [], clear: [] }, wall = (a, b, c, d) => walls.push([a, b, c, d]), r = rng(29);
+  const grass = plane(220, 220, std(T.grass([70, 70], [104, 138, 66]))); grass.rotation.x = -Math.PI / 2; g.add(grass);
+  const pathM = std(T.concrete([1, 8], [196, 192, 180])); for (const [w, d, x, z] of [[2.2, 26, 0, 3], [22, 2.2, 0, -3]]) { const p = plane(w, d, pathM, x, 0.02, z, g); p.rotation.x = -Math.PI / 2; }
+  put(g, oneStorey(11, 6), 0, -13, 0, out); put(g, oneStorey(10, 6), -16, 2, Math.PI / 2, out); put(g, oneStorey(10, 6), 16, 2, -Math.PI / 2, out);
+  for (const [x, z] of [[-5, 3.5], [5, 9], [-6, 10]]) { box(3, 0.1, 1.4, solid(0x4a3426, 1), x, 0.05, z, g); wall(x - 1.6, z - 0.8, x + 1.6, z + 0.8); for (let i = 0; i < 3; i++) { const p = (i % 2 ? hibiscus : croton)(i + (x | 0)); p.position.set(x - 1 + i, 0.08, z); g.add(p); } }
+  for (const [x, z] of [[-9.5, 12], [10, 13.5]]) { const t = (x < 0 ? flameTree : mangoTree)(7, 9); t.position.set(x, 0, z); g.add(t); wall(x - 0.5, z - 0.5, x + 0.5, z + 0.5); }
+  { const b = bench(2.2, 0x5a4632); b.position.set(-4, 0, -6.2); g.add(b); wall(-5.2, -6.6, -2.8, -5.9); }
+  box(1.5, 0.06, 0.9, solid(0x6a4c33, 0.9), 5, 0.76, 2.6, g); for (const [dx, dz] of [[-0.65, -0.35], [0.65, -0.35], [-0.65, 0.35], [0.65, 0.35]]) box(0.07, 0.74, 0.07, solid(0x5a3f2a, 0.9), 5 + dx, 0.37, 2.6 + dz, g); wall(4.1, 2.0, 5.9, 3.2);
+  for (let i = 0; i < 6; i++) box(0.16, 0.012, 0.22, solid(0xf4f0e2, 0.8), 4.45 + (i % 3) * 0.5, 0.8 + 0.001 * i, 2.42 + ((i / 3) | 0) * 0.36, g).rotation.y = (r() - 0.5) * 0.5;
+  limeWall(g, wall, -24, 18, -1.6, 18, 1.6); limeWall(g, wall, 1.6, 18, 24, 18, 1.6); limeWall(g, wall, -24, -20, 24, -20, 1.6); limeWall(g, wall, -24, -20, -24, 18, 1.6); limeWall(g, wall, 24, -20, 24, 18, 1.6);
+  grassField(g, [-23, -19, 23, 17], 700, { seed: 3, clear: [...out.clear, [-1.4, -10, 1.4, 17], [-11, -4.4, 11, -1.6]], h: 0.3, w: 0.5, tint: 0xb4d08a });
+  flowerField(g, [-23, -19, 23, 17], 160, { seed: 6, clear: out.clear });
+  for (let i = 0; i < 16; i++) { const a = r() * 6.28, d = 34 + r() * 26, t = i % 3 === 0 ? palm(8, i) : tree(8 + r() * 3, i); t.position.set(Math.cos(a) * d, 0, Math.sin(a) * d); g.add(t); }
+  g.add(hillRing(190, 18, 80, { seed: 7, base: [0.24, 0.42, 0.24] }));
+  return { walls, bounds: { x0: -23, x1: 23, z0: -19, z1: 17 }, start: { x: 0, z: 14, yaw: 0 }, groundAt: () => 0, spots: { table: [5, 3.9] } };
 }
 
 /* ---------- the Eventide monument, National Heroes Park, today (from a 2025 photograph) ---------- */
@@ -316,5 +423,12 @@ export function buildMonument(g) {
   /* shrubs round the circle */
   const shrub = solid(0x5a8a2a, 0.95), r = rng(3);
   for (let i = 0; i < 10; i++) { const a = 0.6 + i * 0.5 + r() * 0.2; if (Math.sin(a) > 0.55) continue;   /* leave the path to the plaque clear */ const s = new THREE.Mesh(new THREE.IcosahedronGeometry(0.6 + r() * 0.3, 1), shrub); s.position.set(Math.cos(a) * 6.2, 0.45, Math.sin(a) * 6.2 - 1); g.add(s); }
-  return { walls, bounds: { x0: -30, x1: 30, z0: -30, z1: 28 }, start: { x: 0, z: 6, yaw: 0 }, groundAt: () => 0, spots: { plaque: { x: 0, z: 1.6 } } };
+  /* low white stepped slabs stand behind the monument in the photograph (what they mark is not known yet) */
+  for (let i = 0; i < 3; i++) box(5 - i * 1.2, 0.3, 3 - i * 0.8, std(T.concrete([2, 1], [240, 238, 232])), 6.5, 0.15 + i * 0.3, -9, g); walls.push([3.8, -10.7, 9.2, -7.3]);
+  /* a story board on two posts, and trees */
+  for (const x of [4.1, 6.3]) cyl(0.05, 0.05, 1.9, solid(0x5a5e5c, 0.5, 0.5), x, 0.95, 5.2, g); const sb = signBoard('OUR STORY', 2.4, 1.0, { bg: '#f3ecd8', fg: '#2a3a2e' }); sb.position.set(5.2, 1.5, 5.2); g.add(sb); walls.push([3.9, 4.9, 6.5, 5.5]);
+  for (let i = 0; i < 20; i++) { const a = r() * 6.28, d = 30 + r() * 30, t = i % 4 === 0 ? palm(8, i) : tree(8 + r() * 3, i + 5); t.position.set(Math.cos(a) * d, 0, Math.sin(a) * d - 4); g.add(t); }
+  g.add(hillRing(190, 18, 80, { seed: 8, base: [0.24, 0.42, 0.24] }));
+  const laid = [-0.95, 0.95].map((x) => { const o = grp(g, x, BH, D / 2 + 0.42); o.userData.noBatch = true; o.visible = false; const f = flowers(x > 0 ? 3 : 8); f.scale.setScalar(1.4); o.add(f); return o; });
+  return { walls, bounds: { x0: -30, x1: 30, z0: -30, z1: 28 }, start: { x: 0, z: 19, yaw: 0 }, groundAt: () => 0, laid, spots: { plaque: [0, 2.0], board: [5.2, 6.6], guard: [[-2.3, 4, 12], [2.3, 4, 12]] } };
 }

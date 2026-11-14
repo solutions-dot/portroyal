@@ -1,5 +1,18 @@
+diff --git a/games/bog-walk/src/dev.js b/games/bog-walk/src/dev.js
+index 72138ec..c679ed6 100644
+--- a/games/bog-walk/src/dev.js
++++ b/games/bog-walk/src/dev.js
+@@ -113,7 +113,7 @@ export function dev(D) {
+     S.x = num('x', 0.12); S.z = num('z', D.ZM - 1.5); S.yaw = num('yaw', 0); S.pitch = num('pitch', 0); N.wl = wl; N.torch = num('torch', 1); N.vig = num('vig', 0); N.sky = num('sky', 0); $('vig').style.opacity = N.vig; T.manhole.setSky(N.sky);
+     cl.forEach((i) => T.setPatchClean(T.patches[i], 1)); if (q.has('half')) T.setPatchClean(T.patches[+q.get('half')], 0.5);
+     if (shot === 'patch') { const p = T.patches[+(q.get('p') || 0)]; S.z = p.z + 1.6; S.x = -Math.sign(p.pos.x) * 0.1; lookAt(p.pos.x, p.pos.y, p.pos.z); }
+-    if (shot === 'fist') { hand.root.position.set(0.02, 0.36 + num('fy', 0), -0.3 + num('fz', 0)); hand.root.rotation.set(0, num('fry', -0.1), 0); S.pitch = 0; S.yaw = 0; }
++    if (shot === 'fist') { hand.baseX = 0.05 + num('fx', 0); hand.root.position.set(hand.baseX, -0.03 + num('fy', 0), -0.3 + num('fz', 0)); hand.root.rotation.set(0, num('fry', 0.2), 0); S.pitch = 0; S.yaw = 0; }   /* the hand brought close, to inspect the grip (baseX, because the hand keeps its x there each frame) */
+     if (q.has('cine')) { document.body.classList.add('notrans'); D.bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); hand.setCine(1); }
+     if (shot === 'cap') { document.body.classList.add('notrans'); D.hideHud(true); D.bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); hand.setCine(1); D.fadeTo('#000', 1, 0); $('fade').style.transition = 'none'; $('cap').style.transition = 'none'; q.get('line') === '2' ? D.caption('The last tram has gone.', 'The water in the pipe is shut off.') : D.caption('Inside the Tube', 'Monday 27 June 1904, about 1 a.m.'); }
+     if (shot === 'poster') { D.poster = true; D.hideHud(true); document.body.classList.add('notrans'); if (!q.has('z')) S.z = -2; if (!q.has('yaw')) S.yaw = Math.PI; if (!q.has('pitch')) S.pitch = 0.03; if (!q.has('wl')) N.wl = 0.2; if (!q.has('vig')) { N.vig = 0.22; $('vig').style.opacity = N.vig; } }
 diff --git a/games/bog-walk/src/hand.js b/games/bog-walk/src/hand.js
-index eb08bde..ab04423 100644
+index 6156d52..9efae2f 100644
 --- a/games/bog-walk/src/hand.js
 +++ b/games/bog-walk/src/hand.js
 @@ -1,52 +1,78 @@
@@ -13,20 +26,22 @@ index eb08bde..ab04423 100644
 -     - the fleshy base of the thumb and the heel of the palm on the right, the wrist, and the forearm going off to the lower right, toward you.
 -   Owner rules: a held thing is held properly, never floats, never passes through the body and never covers the middle of the view.
 -   The dev check ?test=held counts the fingers and the thumb, checks that every finger goes round the handle, and tests the picture on the screen. */
-+   to the left. The hand itself is a real modelled hand: the shared character "hl_worker" with its fingers closed round the handle in Blender
-+   (tools/bog-walk/hand_blender.py, which writes ./handmesh.js; docs/games/bog-walk.md says how to remake it). What it shows:
++   to the left. It is a real modelled hand: the shared character "hl_worker" with its joints turned in Blender so the fingers close round the handle
++   (tools/bog-walk/hand_blender.py writes ./handmesh.js; docs/games/bog-walk.md says how to remake it). What it shows:
 +     - the handle passes right through the closed fist, across the palm at a slant;
-+     - four fingers, stacked tight, each one wrapped round the handle, their tips (and nails) curled back toward you;
-+     - one thumb, lying UP along the near side of the handle and pressed against it, its tip above the index finger, with a thumbnail;
++     - four fingers, stacked tight, each one wrapped round the handle, their tips curled back toward the palm;
++     - one thumb, lying UP along the handle and pressed against it, its tip above the index finger, with a thumbnail;
 +     - the back of the hand facing right, the wrist, and the forearm going off to the lower right, toward you, into a rolled shirt sleeve.
-+   The mesh comes as one smooth skin, so its normals are worked out on the whole of it and then it is split into named parts (palm, four fingers, thumb, thenar,
-+   wrist, sleeve, the nails), which the dev check ?test=held counts and tests one by one.
-+   Owner rules: a held thing is held properly, never floats, never passes through the body and never covers the middle of the view. */
++   The mesh comes as one smooth skin. It is smoothed once more here, its normals are worked out on the whole of it, and then it is split into named parts
++   (palm, four fingers, thumb, thenar, wrist, sleeve, the nails), which the dev check ?test=held counts and tests one by one.
++   Owner rules: a held thing is held properly, never floats, never passes through the body and never covers the middle of the view. Skin follows owner
++   rule 9: a colour inside Marcus Garvey's range, lightened as Kendal does (SKIN_LIGHT), so the hand reads in the dark of the pipe. */
  import * as THREE from 'three';
  import { flameTex, woodTex, ragTex } from './gfx.js';
 +import { HANDMESH } from './handmesh.js';
  
 -const DEG = Math.PI / 180;
++const SKIN_LIGHT = 1.55, SKIN = [148, 100, 72];   /* owner rule 9: inside [134, 90, 64] to [156, 108, 80], then lightened */
 +const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
  
 -/* A smooth limb: circles (flattened if asked) swept along a curve through the points [[x, y, z, radius], ...], with rounded ends.
@@ -55,8 +70,8 @@ index eb08bde..ab04423 100644
 -  const P = g.attributes.position, Nn = g.attributes.normal, col = new Float32Array(P.count * 3), p = new THREE.Vector3(), nn = new THREE.Vector3();
 -  for (let i = 0; i < P.count; i++) { p.fromBufferAttribute(P, i); nn.fromBufferAttribute(Nn, i); const k = o.shade ? Math.max(0, Math.min(1, o.shade(p, nn))) : 1; col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = k; }
 -  g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeBoundingBox(); return g;
-+/* One step of Loop subdivision: every triangle becomes four and the surface is smoothed (the mesh ships coarse, about a quarter of the size, and is made smooth
-+   here). pos: xyz per vertex, att: one more number per vertex carried along (the baked light), tri: three vertex numbers per triangle. Edges with only one
++/* One step of Loop subdivision: every triangle becomes four and the surface is smoothed (the mesh ships coarse and is made smooth here, so it stays small).
++   pos: xyz per vertex, att: one more number per vertex carried along (the baked light), tri: three vertex numbers per triangle. Edges with only one
 +   triangle (the cut ends of the forearm and sleeve) are kept as curves. */
 +function loopSubdivide(pos, att, tri) {
 +  const nv = pos.length / 3, nt = tri.length / 3, edges = new Map(), key = (a, b) => (a < b ? a * nv + b : b * nv + a);
@@ -64,21 +79,18 @@ index eb08bde..ab04423 100644
 +    const a = tri[t * 3 + e], b = tri[t * 3 + (e + 1) % 3], c = tri[t * 3 + (e + 2) % 3], k = key(a, b); let E = edges.get(k);
 +    if (!E) { E = { a, b, opp: [], id: 0 }; edges.set(k, E); } E.opp.push(c); }
 +  const P = new Float32Array((nv + edges.size) * 3), A = new Float32Array(nv + edges.size);
-+  /* the old vertices move toward the average of their neighbours (on a cut edge: toward their two neighbours along it) */
 +  const sum = new Float32Array(nv * 3), cnt = new Uint16Array(nv), bsum = new Float32Array(nv * 3), bcnt = new Uint8Array(nv);
 +  for (const E of edges.values()) for (const [u, w] of [[E.a, E.b], [E.b, E.a]]) {
 +    for (let i = 0; i < 3; i++) sum[u * 3 + i] += pos[w * 3 + i]; cnt[u]++;
 +    if (E.opp.length !== 2) { for (let i = 0; i < 3; i++) bsum[u * 3 + i] += pos[w * 3 + i]; bcnt[u]++; } }
-+  for (let v = 0; v < nv; v++) {
++  for (let v = 0; v < nv; v++) {   /* the old vertices move toward the average of their neighbours (on a cut edge: toward their two neighbours along it) */
 +    A[v] = att[v];
-+    if (bcnt[v]) { if (bcnt[v] === 2) for (let i = 0; i < 3; i++) P[v * 3 + i] = 0.75 * pos[v * 3 + i] + 0.125 * bsum[v * 3 + i]; else for (let i = 0; i < 3; i++) P[v * 3 + i] = pos[v * 3 + i]; continue; }
++    if (bcnt[v]) { for (let i = 0; i < 3; i++) P[v * 3 + i] = bcnt[v] === 2 ? 0.75 * pos[v * 3 + i] + 0.125 * bsum[v * 3 + i] : pos[v * 3 + i]; continue; }
 +    const n = cnt[v], beta = n > 3 ? 3 / (8 * n) : 3 / 16;
 +    for (let i = 0; i < 3; i++) P[v * 3 + i] = (1 - n * beta) * pos[v * 3 + i] + beta * sum[v * 3 + i];
 +  }
-+  /* a new vertex on every edge */
-+  let id = nv;
-+  for (const E of edges.values()) { E.id = id;
-+    const inner = E.opp.length === 2;
++  let id = nv;   /* a new vertex on every edge */
++  for (const E of edges.values()) { E.id = id; const inner = E.opp.length === 2;
 +    for (let i = 0; i < 3; i++) P[id * 3 + i] = inner ? 0.375 * (pos[E.a * 3 + i] + pos[E.b * 3 + i]) + 0.125 * (pos[E.opp[0] * 3 + i] + pos[E.opp[1] * 3 + i]) : 0.5 * (pos[E.a * 3 + i] + pos[E.b * 3 + i]);
 +    A[id] = 0.5 * (att[E.a] + att[E.b]); id++; }
 +  const T = new Uint32Array(nt * 12);
@@ -89,19 +101,18 @@ index eb08bde..ab04423 100644
 +}
 +
 +/* The hand from handmesh.js, in this file's hand space (the handle is the y axis, +z toward you, +x to your right, which is how grip space already lies),
-+   moved up the handle so the middle of the fist is at height y. It is smoothed once, its normals are worked out on the whole skin (so the parts meet
-+   without a seam), and then it is split into its named parts. Returns [name, geometry] for each part. */
++   moved up the handle so the middle of the fist is at height y. Returns [name, geometry] for each part. */
 +function handParts(y) {
-+  const H = HANDMESH, pb = b64(H.pos), q = new Int16Array(pb.buffer, pb.byteOffset, pb.byteLength >> 1), ab = b64(H.ao), ib = b64(H.idx), idx0 = new Uint16Array(ib.buffer, ib.byteOffset, ib.byteLength >> 1);
++  const H = HANDMESH, pb = b64(H.pos), q = new Int16Array(pb.buffer, pb.byteOffset, pb.byteLength >> 1), ib = b64(H.idx);
 +  let pos = new Float32Array(q.length); for (let i = 0; i < q.length; i += 3) { pos[i] = q[i] * H.scale; pos[i + 1] = q[i + 1] * H.scale + y; pos[i + 2] = q[i + 2] * H.scale; }
-+  let att = Float32Array.from(ab, (x) => x / 255), idx = idx0, per = 1;
++  let att = Float32Array.from(b64(H.ao), (x) => x / 255), idx = new Uint16Array(ib.buffer, ib.byteOffset, ib.byteLength >> 1), per = 1;
 +  for (let k = 0; k < (H.smooth ?? 1); k++) { const r = loopSubdivide(pos, att, idx); pos = r.pos; att = r.att; idx = r.tri; per *= 4; }
 +  const all = new THREE.BufferGeometry(); all.setAttribute('position', new THREE.BufferAttribute(pos, 3)); all.setIndex(new THREE.BufferAttribute(idx, 1)); all.computeVertexNormals();
 +  const nor = all.attributes.normal.array, out = [];
 +  for (const [name, t0, nt] of H.parts) {   /* a triangle's four children follow it, so each part is still one run of triangles */
 +    const map = new Map(), P = [], N = [], C = [], I = [];
 +    for (let k = t0 * 3 * per; k < (t0 + nt) * 3 * per; k++) { const v = idx[k]; let w = map.get(v);
-+      if (w === undefined) { w = map.size; map.set(v, w); P.push(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2]); N.push(nor[v * 3], nor[v * 3 + 1], nor[v * 3 + 2]); const a = 0.25 + 0.75 * att[v]; C.push(a, a, a); }
++      if (w === undefined) { w = map.size; map.set(v, w); P.push(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2]); N.push(nor[v * 3], nor[v * 3 + 1], nor[v * 3 + 2]); const a = 0.3 + 0.7 * att[v]; C.push(a, a, a); }
 +      I.push(w); }
 +    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setIndex(I); g.computeBoundingBox();
 +    out.push([name, g]); }
@@ -112,13 +123,16 @@ index eb08bde..ab04423 100644
    const root = new THREE.Group(), inner = new THREE.Group(); camera.add(root); root.add(inner);
    /* Everything is in the hand's own space: the handle runs straight up the y axis through (0, y, 0); +z is toward you, +x is to your right. */
 -  const RH = 0.0148, RF = 0.0098, Y0 = -0.43, GAP = 0.0188;   /* handle radius at the grip, finger radius, height of the index finger, spacing of the fingers */
-+  const RH = HANDMESH.info.handleRadius, FISTY = -0.457;   /* the handle's radius where the hand holds it (the hand was closed round exactly this), and the height of the middle of the fist */
-   const skin = new THREE.MeshStandardMaterial({ color: 0x7a4a2e, roughness: 0.62, metalness: 0, vertexColors: true, emissive: 0x160a05 });
+-  const skin = new THREE.MeshStandardMaterial({ color: 0x7a4a2e, roughness: 0.62, metalness: 0, vertexColors: true, emissive: 0x160a05 });
 -  const nailMat = new THREE.MeshStandardMaterial({ color: 0xb48a74, roughness: 0.32, emissive: 0x1a100b });
++  const RH = HANDMESH.info.handleRadius, FISTY = -0.457;   /* the handle's radius where the hand holds it (the hand was closed round exactly this), and the height of the middle of the fist */
++  const skinCol = new THREE.Color().setRGB(SKIN[0] / 255, SKIN[1] / 255, SKIN[2] / 255, THREE.SRGBColorSpace).multiplyScalar(SKIN_LIGHT);
++  const skin = new THREE.MeshStandardMaterial({ color: skinCol, roughness: 0.58, metalness: 0, vertexColors: true, emissive: 0x160a05 });
++  const nailMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(186 / 255, 140 / 255, 120 / 255, THREE.SRGBColorSpace).multiplyScalar(SKIN_LIGHT), roughness: 0.3, vertexColors: true, emissive: 0x1a100b });
    const add = (geo, mat, name) => { const m = new THREE.Mesh(geo, mat); m.name = name; inner.add(m); return m; };
  
    /* ----- the torch: a turned wooden handle with a rounded butt, a head of oil-soaked rags bound on with wire, and a flame ----- */
-@@ -66,44 +92,13 @@ export function makeHand(camera) {
+@@ -66,44 +92,12 @@ export function makeHand(camera) {
    const core = new THREE.Sprite(flameMat()); core.name = 'flamecore'; core.position.set(0, -0.088, 0.001); inner.add(core);   /* a smaller, brighter flame inside the first */
    const light = new THREE.PointLight(0xffa860, 4, 18, 1.2); light.position.set(-0.02, -0.07, 0.1); inner.add(light);
  
@@ -158,25 +172,11 @@ index eb08bde..ab04423 100644
    const cloth = new THREE.MeshStandardMaterial({ color: 0x8a8272, roughness: 0.95, emissive: 0x14110b, vertexColors: true });
 -  add(limbGeo([[...fa(0.105), 0.0275], [...fa(0.13), 0.0288], [...fa(0.145), 0.0275]], { steps: 8, radial: 18, flat: 1.42 }), cloth, 'cuff');   /* the roll of the sleeve */
 -  add(limbGeo([[...fa(0.135), 0.0258], [...fa(0.22), 0.03], [...fa(0.3), 0.034]], { steps: 12, radial: 18, flat: 1.4 }), cloth, 'sleeve');
-+  const nailMat = new THREE.MeshStandardMaterial({ color: 0x8a5844, roughness: 0.8, emissive: 0x1a100b, vertexColors: true });
-+  for (const [name, g] of handParts(FISTY)) add(g, name === 'sleeve' ? cloth : /nail$/.test(name) ? nailMat : skin, name);
++  for (const [name, g] of handParts(FISTY)) add(g, name === 'sleeve' || name === 'cuff' ? cloth : /nail$/.test(name) ? nailMat : skin, name);
    inner.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.renderOrder = 10; } });
  
 -  const FIST = new THREE.Vector3(0, yMid, 0.004);   /* the middle of the fist: the hand is turned and scaled about this point */
 +  const FIST = new THREE.Vector3(0, FISTY, 0.004);   /* the middle of the fist: the hand is turned and scaled about this point */
-   const H = { root, inner, stickA, stickB, flame, light, lift: 0, baseY: -0.25, tune: null, s: 1, cs: 0,
+   const H = { root, inner, stickA, stickB, flame, light, lift: 0, panelOpen: false, baseX: 0, baseY: -0.25, tune: null, s: 1, cs: 0,
+     setPanelOpen(on) { H.panelOpen = on; root.position.x = H.baseX - (on ? 0.22 : 0); },
      setLift(u) { H.lift = u; root.position.y = H.baseY + u; },
-     setCine(c) { H.cs = c; const s = H.s * (1 - 0.14 * c); inner.scale.setScalar(s); inner.position.copy(FIST).multiplyScalar(-s).applyEuler(inner.rotation); },   /* the black bars push the words down, so the torch shrinks a little about the fist to keep its flame clear of them */   /* lift (in camera units): the black bars are in, so the whole hand rises just enough to keep the fist clear of the bottom bar */
-diff --git a/games/bog-walk/src/main.js b/games/bog-walk/src/main.js
-index 80da022..5471b96 100644
---- a/games/bog-walk/src/main.js
-+++ b/games/bog-walk/src/main.js
-@@ -312,7 +312,7 @@ if (__DEV__) {
-     S.x = num('x', 0.12); S.z = num('z', ZM - 1.5); S.yaw = num('yaw', 0); S.pitch = num('pitch', 0); N.wl = wl; N.torch = num('torch', 1); N.vig = num('vig', 0); N.sky = num('sky', 0); $('vig').style.opacity = N.vig; T.manhole.setSky(N.sky);
-     cl.forEach((i) => T.setPatchClean(T.patches[i], 1)); if (q.has('half')) T.setPatchClean(T.patches[+q.get('half')], 0.5);
-     if (shot === 'patch') { const p = T.patches[+(q.get('p') || 0)]; S.z = p.z + 1.6; S.x = -Math.sign(p.pos.x) * 0.1; lookAt(p.pos.x, p.pos.y, p.pos.z); }
--    if (shot === 'fist') { hand.root.position.set(0.02, 0.36 + num('fy', 0), -0.3 + num('fz', 0)); hand.root.rotation.set(0, num('fry', -0.1), 0); S.pitch = 0; S.yaw = 0; }   /* the hand brought close, to inspect the grip */
-+    if (shot === 'fist') { hand.root.position.set(0.06 + num('fx', 0), -0.05 + num('fy', 0), -0.3 + num('fz', 0)); if (q.has('fry')) hand.root.rotation.y = num('fry', 0); S.pitch = 0; S.yaw = 0; }   /* the hand brought close, to inspect the grip */
-     if (q.has('cine')) { document.body.classList.add('notrans'); bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); hand.setCine(1); }   /* the black bars in, as in the dark and the climb */
-     if (shot === 'cap') { document.body.classList.add('notrans'); hideHud(true); bars(true); N.lift = N.liftNeed; hand.setLift(N.lift); hand.setCine(1); fadeTo('#000', 1, 0); $('fade').style.transition = 'none'; $('cap').style.transition = 'none'; q.get('line') === '2' ? caption('The last tram has gone.', 'The water in the pipe is shut off.') : caption('Bog Walk, Jamaica', 'June 1904'); }   /* an opening title card */
-     if (shot === 'poster') {   /* a clean picture for the menu card: no words, the manhole's beam at the end of the pipe, a sheen of water, your torch lit. Render at 1280x720. */

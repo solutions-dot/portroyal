@@ -11,6 +11,7 @@ import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
      held    something carried (a basket, a lamp, a case) that is not at the hand, hangs the wrong way up, or cuts into the carrier's body
      overlap two people standing in the same spot (or walking through someone who stands still), or someone on top of the player's start
      seated  a person sitting who cuts into a seat or its back, floats above the seat, sits on nothing, or faces the back of the seat
+     through a bush, tree or other leafy shape that pokes through a wall and shows on both sides of it (call auditThrough(snap) and report its lines with the rest)
    Nothing here runs in a public build unless a game imports it into code that is only reached when __DEV__ is true. */
 import * as THREE from 'three';
 
@@ -56,6 +57,18 @@ export function auditPlace(place) {
   const overlap = auditPeople(place.npcs, place.start);
   for(const p of place.npcs) if(p.path && !(p.ground>0)) { inside.push(...routeIssues(p.id,p.path,place.walls,.22)); inside.push(...furnitureRouteIssues(p.id,p.path,L,p.ground||0)); }
   return { id: place.id, floating, inside: inside.concat(overlap), stuck };
+}
+
+/* Leafy shapes (bushes, tree crowns, flowers: icosahedra, spheres, dodecahedra, cones) that cross a wall and show on both sides of it.
+   A wall here is a straight box at least 1 m tall standing on the ground, under 0.5 m thick and over 1.5 m long, lined up with the x or z axis. */
+const LEAFY = new Set(['IcosahedronGeometry', 'SphereGeometry', 'DodecahedronGeometry', 'OctahedronGeometry', 'ConeGeometry']);
+export function auditThrough(snap) {
+  const V = new THREE.Vector3(), walls = [], plants = [], out = [];
+  for (const m of snap) { const s = m.b.getSize(V); if (m.geo === 'BoxGeometry' && s.y >= 1 && m.b.min.y <= 0.3) { const thinX = s.x < 0.5 && s.z > 1.5, thinZ = s.z < 0.5 && s.x > 1.5; if (thinX || thinZ) walls.push({ b: m.b, ax: thinX ? 'x' : 'z' }); } else if (LEAFY.has(m.geo) && Math.max(s.x, s.y, s.z) < 8) plants.push(m); }
+  for (const p of plants) for (const w of walls) { const a = w.ax, o = a === 'x' ? 'z' : 'x', pb = p.b, wb = w.b;
+    if (pb.min[a] < wb.min[a] - 0.02 && pb.max[a] > wb.max[a] + 0.02 && pb.max[o] > wb.min[o] && pb.min[o] < wb.max[o] && pb.min.y < wb.max.y - 0.05 && pb.max.y > wb.min.y) {
+      const c = pb.getCenter(V); out.push(`a ${p.geo.replace('Geometry', '').toLowerCase()} at (${c.x.toFixed(1)}, ${c.y.toFixed(1)}, ${c.z.toFixed(1)}) pokes through a wall`); break; } }
+  return out;
 }
 
 /* Held items. body: the character's root Object3D, already posed (call the mixer's update first). items: [{ obj, bone, label }] where obj is the carried thing
