@@ -503,6 +503,14 @@ if not OLD:
     if 'shirt' in _P: clear_layer(_P['shirt'],_skin,0.006)
     _sh=[_tr(_P['shirt'])] if 'shirt' in _P else []
     if 'breeches' in _P: clear_layer(_P['breeches'],_skin+_sh,0.007)
+    if 'breeches' in _P:      # the waistband: the pushes folded its top edge under itself in places (a hidden lip the eye cannot see but the cloth check can). Relax the band, then lift it clear once more point by point
+        bm=bmesh.new(); bm.from_mesh(_P['breeches'].data); band=[v for v in bm.verts if v.co.z>HIP+0.07]
+        for _ in range(4): bmesh.ops.smooth_vert(bm,verts=band,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=False)
+        for v in band:
+            for t in _skin+_sh:
+                loc,nrm,_i,dd=t.find_nearest(v.co,0.03)
+                if loc is not None and (v.co-loc).dot(nrm)<0.007: v.co+=nrm*(0.007-(v.co-loc).dot(nrm))
+        bm.normal_update(); bm.to_mesh(_P['breeches'].data); bm.free()
     if 'skirt' in _P: clear_layer(_P['skirt'],_skin+_sh,0.004)
     _lay=_sh+([_tr(_P['breeches'])] if 'breeches' in _P else [])
     if 'waistcoat' in _P: clear_layer(_P['waistcoat'],_skin+_lay,0.008)
