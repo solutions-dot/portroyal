@@ -278,10 +278,13 @@ $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
 
 /* ---------- saving: kept in this browser only ---------- */
 const SAVE_KEY = 'melissa-save-v1'; let hasSave = false, erasing = false;
-function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, unlocked, stage, best, story, talked: allPeople().filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
+function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 2, unlocked, stage, best, story, talked: allPeople().filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
 function loadGame() { try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; } }
+/* Saves are versioned. Version 1 (before the Charlie chapter was added at the front) numbered its stages ten lower: Gilbert was 10 to 16, Today was 60 to 64. Moving a version 1 save up by ten keeps the player where they were. 0 (no progress) stays 0. */
+const migrateStage = (n, v) => (v === 2 || !Number.isInteger(n) || n < 10 ? n : n + 10);
 function applySave(d) {
-  if (!d || !Array.isArray(d.unlocked)) return; for (const id of d.unlocked) if (JOURNAL.some((p) => p.id === id) && !unlocked.includes(id)) unlocked.push(id);
+  if (!d || !Array.isArray(d.unlocked)) return; const v = d.v === 2 ? 2 : 1; d = { ...d, stage: migrateStage(d.stage, v), best: migrateStage(d.best, v) };
+  for (const id of d.unlocked) if (JOURNAL.some((p) => p.id === id) && !unlocked.includes(id)) unlocked.push(id);
   if (d.story && typeof d.story === 'object') Object.assign(story, d.story); stage = Number.isInteger(d.stage) && d.stage in GOALS ? d.stage : 0; best = Number.isInteger(d.best) ? Math.max(d.best, stage) : stage; hasSave = unlocked.length > 1 || stage > 0 || best > 0;
 }
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.started) saveGame(); });
@@ -795,6 +798,8 @@ function devViews() {
       await beginChapter(4, 51); out.push('c5@51 place=' + cur + ' youthHidden=' + !youth().m.visible); await beginChapter(5, 61); out.push('c6@61 place=' + cur + ' fallen=' + P_().group.userData.fallen.visible + ' youthVisible=' + youth().m.visible); await beginChapter(5, 62); out.push('c6@62 youthVisible=' + youth().m.visible + ' fallen=' + P_().group.userData.fallen.visible + ' tarp=' + P_().tarpHome.visible);
       await beginChapter(2, 31); { const bo = P_().actions.find((a) => a.label === 'Board up the window'), nb = () => P_().group.userData.boards.filter((b) => b.visible).length; bo.go(); const a1 = (ctr.boardDone ? 'done' : 'open') + nb(); bo.go(); out.push('boards: after 1 tap ' + a1 + ', after 2 taps ' + (ctr.boardDone ? 'done' : 'open') + nb()); }
       await beginChapter(6, 71); out.push('c7@71 place=' + cur);
+      { const keep = [stage, best, hasSave]; const check = (d) => { stage = 0; best = 0; applySave(d); return stage + '/' + best; };
+        out.push('saves: v1 60/64 -> ' + check({ v: 1, unlocked: ['you'], stage: 60, best: 64, story: {} }) + ', v1 0 -> ' + check({ v: 1, unlocked: ['you'], stage: 0, best: 0, story: {} }) + ', v1 64/64 -> ' + check({ v: 1, unlocked: ['you'], stage: 64, best: 64, story: {} }) + ', v2 74/74 -> ' + check({ v: 2, unlocked: ['you'], stage: 74, best: 74, story: {} })); [stage, best, hasSave] = keep; }
       let ran = 0; convo([{ who: 'x', text: 'y' }, { who: 'x', text: 'z' }], () => { ran++; }); leaveTalk(); out.push('convo closed early, callback ran=' + ran);
       startTalk(P_().people[0]); leaveTalk(); out.push('ordinary talk closed early: talked=' + !!P_().people[0].talked);
       document.title = 'RESUME ' + out.join(' | '); })();
