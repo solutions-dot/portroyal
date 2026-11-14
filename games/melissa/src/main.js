@@ -7,13 +7,13 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import * as THREE from 'three';
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp } from '../../../engine/audio.js';
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, gullCry } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
 import { G, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
 import { ENV, mixEnv } from './common.js';
 import { lantern, hamper, bucket, attach, hold, PM } from './props.js';
-import { buildYard88, buildYard25, buildAfter, buildToday, buildRoom88, buildHall } from './places.js';
+import { buildYard51, buildYard88, buildYard25, buildAfter, buildToday, buildRoom51, buildRoom88, buildHall, buildKingston88 } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, CHOICE_NAMES, LINES, KIT, STORMS } from './content.js';
 import * as SFX from './sfx.js';
 import { HATS, LOOKS } from './cast.js';
@@ -119,7 +119,7 @@ function makeBody(s) {
 const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBasicMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.6, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
 const PL = {}; let cur = null;
 setEnv(ENV.morning);
-const BUILD = { yard88: buildYard88, yard25: buildYard25, after: buildAfter, today: buildToday, room88: buildRoom88, hall: buildHall };
+const BUILD = { yard51: buildYard51, room51: buildRoom51, yard88: buildYard88, room88: buildRoom88, kingston88: buildKingston88, yard25: buildYard25, hall: buildHall, after: buildAfter, today: buildToday };
 let modelsReady = false; const placeLoading = {};
 function buildPlace(id) {   /* the geometry only: quick, and enough for a title backdrop. People come later (populate). */
   if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.actions = []; P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; PL[id] = P; P.keepOut = [];
@@ -278,17 +278,20 @@ $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
 
 /* ---------- saving: kept in this browser only ---------- */
 const SAVE_KEY = 'melissa-save-v1'; let hasSave = false, erasing = false;
-function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, unlocked, stage, best, story, talked: allPeople().filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
+function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 2, unlocked, stage, best, story, talked: allPeople().filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
 function loadGame() { try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; } }
+/* Saves are versioned. Version 1 (before the Charlie chapter was added at the front) numbered its stages ten lower: Gilbert was 10 to 16, Today was 60 to 64. Moving a version 1 save up by ten keeps the player where they were. 0 (no progress) stays 0. */
+const migrateStage = (n, v) => (v === 2 || !Number.isInteger(n) || n < 10 ? n : n + 10);
 function applySave(d) {
-  if (!d || !Array.isArray(d.unlocked)) return; for (const id of d.unlocked) if (JOURNAL.some((p) => p.id === id) && !unlocked.includes(id)) unlocked.push(id);
+  if (!d || !Array.isArray(d.unlocked)) return; const v = d.v === 2 ? 2 : 1; d = { ...d, stage: migrateStage(d.stage, v), best: migrateStage(d.best, v) };
+  for (const id of d.unlocked) if (JOURNAL.some((p) => p.id === id) && !unlocked.includes(id)) unlocked.push(id);
   if (d.story && typeof d.story === 'object') Object.assign(story, d.story); stage = Number.isInteger(d.stage) && d.stage in GOALS ? d.stage : 0; best = Number.isInteger(d.best) ? Math.max(d.best, stage) : stage; hasSave = unlocked.length > 1 || stage > 0 || best > 0;
 }
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.started) saveGame(); });
 
 /* ---------- talking: one line at a time; "You" lines get their own colour; the x, Escape or a tap outside ends it ---------- */
 let step = 0, lines = [], talkN = 0, talkFull = false, convoEnd = null, convoForced = false;   /* convoForced: a conversation that finishes something you already did (carrying the last bucket), so closing it early must not undo that */ const TALKS = ['Talk1', 'Talk2', 'Talk3'];
-const ALIAS = () => ({ pearlH: stage === 34 ? 'pearlH2' : 'pearlH', pastor: stage === 34 ? 'pastor2' : 'pastor', dadR: stage === 15 ? 'dadR2' : 'dadR', pearlA: stage === 43 ? 'pearlA2' : 'pearlA' });
+const ALIAS = () => ({ pearlH: stage === 44 ? 'pearlH2' : 'pearlH', pastor: stage === 44 ? 'pastor2' : 'pastor', dadR: stage === 25 ? 'dadR2' : 'dadR', pearlA: stage === 53 ? 'pearlA2' : 'pearlA' });
 const wantsTalk = (n) => !n.extra && !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
 function activate(t) { if (t.go) t.go(); else startTalk(t); }
 function startTalk(n) {
@@ -318,10 +321,14 @@ function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => { 
 const lampMesh = (() => { const g = new THREE.Group(), b = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.26, 10), new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.5 })), l = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.035, 0.05, 10), new THREE.MeshBasicMaterial({ color: 0xfff0c0 })); b.rotation.x = l.rotation.x = Math.PI / 2; l.position.z = -0.15; g.add(b, l); g.position.set(0.3, -0.3, -0.55); g.visible = false; camera.add(g); return g; })();
 
 /* ---------- chapters, stages and the story machine ---------- */
-const CH_PLACE = ['yard88', 'yard25', 'hall', 'after', 'after', 'today'], CH_FIRST = [10, 20, 30, 40, 50, 60], DONE = [16, 26, 35, 45, 55, 64];
-const PRELOAD = { 0: ['room88'], 1: ['hall'], 2: ['after'], 3: [], 4: [] };
-const SAFE = { 32: 31, 53: 52 };   /* a saved game never resumes in the middle of a scripted scene */
-const chapterOf = (s) => Math.max(0, Math.min(5, Math.floor(s / 10) - 1));
+const CH_PLACE = ['yard51', 'yard88', 'yard25', 'hall', 'after', 'after', 'today'], CH_FIRST = [10, 20, 30, 40, 50, 60, 70], DONE = [16, 26, 36, 45, 55, 65, 74];
+const PRELOAD = { 0: ['room51'], 1: ['room88', 'kingston88'], 2: ['hall'], 3: ['after'], 4: [], 5: [] };
+const SAFE = { 42: 41, 63: 62 };   /* a saved game never resumes in the middle of a scripted scene */
+const chapterOf = (s) => Math.max(0, Math.min(6, Math.floor(s / 10) - 1));
+/* the two flashback chapters (Charlie 1951 and Gilbert 1988) have one shape: talk (base), three jobs (base+1), talk to the neighbour with the strong house (base+2),
+   go inside (base+3), the storm night (base+4), the morning (base+5), done (base+6). */
+const BYGONE = { c51: { base: 10, ch: 0, yard: 'yard51', room: 'room51' }, g88: { base: 20, ch: 1, yard: 'yard88', room: 'room88' } };
+const bygoneOf = (i) => (i === 0 ? BYGONE.c51 : i === 1 ? BYGONE.g88 : null);
 const ON = {}, TICKS = [];   /* ON[stage]: what happens when a stage begins. TICKS: per-frame jobs from tween(). */
 let hasLoaded = false;
 function setStage(s) {
@@ -340,18 +347,18 @@ function resetTransient() {   /* leave anything running: scripted scenes, the st
 let moveLock = false;
 async function beginChapter(i, st) {
   if (fading) return; resetTransient(); st = st || CH_FIRST[i]; const C = CHAPTERS[i]; hideCard(); closeJournal(); closeChapters(); $('dialogue').hidden = true; busy = false; talkWith = null;
-  const first = i === 0 && st >= 14 ? 'room88' : CH_PLACE[i]; if (!PL[first] || !PL[first].populated) toast('Loading', 4000); await ensurePlace(first); for (const id of PRELOAD[i] || []) ensurePlace(id);
+  const B = bygoneOf(i), first = B && st >= B.base + 4 ? B.room : CH_PLACE[i]; if (!PL[first] || !PL[first].populated) toast('Loading', 4000); await ensurePlace(first); for (const id of PRELOAD[i] || []) ensurePlace(id);
   chapterFade(C.title, C.sub, () => startScene(i, st));
 }
 function startScene(i, st) {
-  const ep = EP; const id = i === 0 && st >= 14 ? 'room88' : CH_PLACE[i]; const P = PL[id];
-  if (id === 'room88' || id === 'hall') { restoreRoof(P, (id === 'room88' && st >= 15) || (id === 'hall' && st >= 34)); for (const l of id === 'hall' ? P.lights : [P.lampLight]) l.userData.k = (id === 'room88' && st >= 15) || (id === 'hall' && st >= 34) ? 0 : 1; }
-  if (id === 'yard88' || id === 'yard25') { const done = st >= (i === 0 ? 12 : 22), ud = P.group.userData; for (const b of ud.boards) b.visible = done; if (ud.washing) ud.washing.visible = !(i === 0 && st >= 12); }   /* a chapter started again, or resumed, shows its jobs as done or not done */
-  if (id === 'after') { for (const n of P.people) if (n.stage5) n.hidden = i !== 4;   /* chapter 5's people are there from its first stage, even in a saved game resumed half way */
-    P.group.userData.homeLamp.visible = false; const fallen = P.group.userData.fallen, logs = P.group.userData.logs; if (fallen) { fallen.visible = true; logs.visible = false; const tw = P.group.userData.treeWall; if (tw && !P.walls.includes(tw)) P.walls.push(tw); } if (i === 4 && st >= 52) clearTree(P, true); P.tarpHome.visible = i === 4 && st >= 52; }
+  const ep = EP, B = bygoneOf(i), id = B && st >= B.base + 4 ? B.room : CH_PLACE[i], P = PL[id], torn = (B && st >= B.base + 5) || (id === 'hall' && st >= 44);
+  if ((B && id === B.room) || id === 'hall') { restoreRoof(P, torn); for (const l of id === 'hall' ? P.lights : [P.lampLight]) l.userData.k = torn ? 0 : 1; }
+  const JOBS_AT = { yard51: 12, yard88: 22, yard25: 32 };
+  if (JOBS_AT[id]) { const done = st >= JOBS_AT[id], ud = P.group.userData; for (const b of ud.boards) b.visible = done; if (ud.washing) ud.washing.visible = !done; if (ud.canoe) ud.canoe.position.z = done ? 11.6 : 13.4; }   /* a chapter started again, or resumed, shows its jobs as done or not done */
+  if (id === 'after') { for (const n of P.people) if (n.stage5) n.hidden = i !== 5;   /* chapter 6's people are there from its first stage, even in a saved game resumed half way */
+    P.group.userData.homeLamp.visible = false; const fallen = P.group.userData.fallen, logs = P.group.userData.logs; if (fallen) { fallen.visible = true; logs.visible = false; const tw = P.group.userData.treeWall; if (tw && !P.walls.includes(tw)) P.walls.push(tw); } if (i === 5 && st >= 62) clearTree(P, true); P.tarpHome.visible = i === 5 && st >= 62; }
   enterPlace(id); state.started = true; setStage(st); showPlace();
-  if (id === 'room88' && st >= 15) setEnv(mixEnv(ENV.after, ENV.room, 0.5));
-  if (id === 'hall' && st >= 34) setEnv(mixEnv(ENV.after, ENV.room, 0.5));
+  if (torn) setEnv(mixEnv(ENV.after, ENV.room, 0.5));
 }
 function chaptersOpen(i) { return i === 0 || best >= DONE[i - 1]; }
 let teacherMode=false;try{teacherMode=localStorage.getItem('melissa-teacher')==='1';}catch{}
@@ -391,81 +398,92 @@ function tapJob(key, n, msgs, total) {
 }
 const jobsDone = (total, next) => { if ((ctr.jobs || 0) >= total) { uiSound('goal'); setStage(next); return true; } return false; };
 const ACTIONS_FOR = {
-  yard88: (P) => [
-    { label: 'Fill the water drum', x: P.spots.standpipe[0], z: P.spots.standpipe[1], r: 2.6, on: () => stage === 11 && !ctr.drumDone, go: () => { SFX.pourWater(); tapJob('drum', 3, ['The drum is a third full.', 'Two thirds full.', 'The drum is full. We will need water.']); jobsDone(3, 12); } },
-    { label: 'Nail a board over the window', x: P.spots.boards[0], z: P.spots.boards[1], r: 3.0, on: () => stage === 11 && !ctr.boardDone, go: () => { SFX.hammerTap(3); const b = P.group.userData.boards[ctr.board || 0]; if (b) b.visible = true; tapJob('board', 2, ['One window is covered. Bang, bang, bang.', 'Both windows are covered.']); jobsDone(3, 12); } },
-    { label: 'Take in the washing', x: P.spots.washing[0], z: P.spots.washing[1], r: 2.8, on: () => stage === 11 && !ctr.washDone, go: () => { SFX.bag(); P.group.userData.washing.visible = false; ctr.washDone = true; ctr.jobs = (ctr.jobs || 0) + 1; toast('The washing is in. The wind would take it.'); refreshGoal(true); jobsDone(3, 12); } },
-    { label: 'Go inside with your family', x: P.spots.clifford[0], z: P.spots.clifford[1], r: 3.0, on: () => stage === 13, go: () => { setStage(14); transition('room88', { env: ENV.room, after: () => { WIND.k = 0.45; setBedsFor('room'); showPlace(CHAPTERS[0].caption2); } }); } } ],
-  room88: (P) => [
-    { label: 'Sit down with your family', x: P.spots.lamp[0], z: P.spots.lamp[1] + 0.9, r: 3.0, on: () => stage === 14 && !ST.on, go: () => stormIntro('g88') } ],
+  yard51: (P) => bygoneYard(P, 'c51'), yard88: (P) => bygoneYard(P, 'g88'), room51: (P) => bygoneRoom(P, 'c51'), room88: (P) => bygoneRoom(P, 'g88'),
   yard25: (P) => [
-    { label: 'Buy water and tins', x: P.spots.shop[0], z: P.spots.shop[1], r: 2.6, on: () => stage === 21 && !ctr.shopDone, go: () => { SFX.clink(); tapJob('shop', 2, ['Six bottles of water. Good.', 'Tins of food and bread. Good.']); jobsDone(4, 22); } },
-    { label: 'Fill the buckets', x: P.spots.standpipe[0], z: P.spots.standpipe[1], r: 2.6, on: () => stage === 21 && !ctr.stdDone, go: () => { SFX.pourWater(); tapJob('std', 3, ['The first bucket is full.', 'The second bucket is full.', 'Three full buckets. Water for washing and flushing.']); jobsDone(4, 22); } },
-    { label: 'Board up the window', x: P.spots.boards[0], z: P.spots.boards[1], r: 3.0, on: () => stage === 21 && !ctr.boardDone, go: () => { SFX.hammerTap(3); const b = P.group.userData.boards[ctr.board || 0]; if (b) b.visible = true; tapJob('board', 2, ['One window is covered.', 'Both windows are covered. Glass can break in the wind.']); jobsDone(4, 22); } },
-    { label: 'Pack the go-bag', x: P.spots.bag[0], z: P.spots.bag[1], r: 2.4, on: () => stage === 21 && !ctr.bagDone, go: () => { SFX.bag(); tapJob('bag', 3, ['Papers go in a plastic bag, to keep them dry.', 'A torch and spare batteries.', 'The phone and its charger. The radio too.']); jobsDone(4, 22); } },
-    { label: 'Hand up the nails', x: P.spots.ladder[0], z: P.spots.ladder[1], r: 2.8, on: () => stage === 23 && !ctr.nailDone, go: () => { SFX.hammerTap(3); tapJob('nail', 3, ['Mr. Raymond nails a sheet down. Tap, tap, tap.', 'Another sheet is fixed to its rafter.', 'The last sheet is tight.']); if (ctr.nailDone) setStage(24); } },
-    { label: 'Listen to the radio', x: P.spots.home[0], z: P.spots.home[1], r: 3.0, on: () => stage === 24, go: () => radioCard() },
-    { label: 'Walk to the church hall', x: P.spots.church[0], z: P.spots.church[1], r: 3.2, on: () => stage === 25, go: () => setStage(26) } ],
+    { label: 'Buy water and tins', x: P.spots.shop[0], z: P.spots.shop[1], r: 2.6, on: () => stage === 31 && !ctr.shopDone, go: () => { SFX.clink(); tapJob('shop', 2, ['Six bottles of water. Good.', 'Tins of food and bread. Good.']); jobsDone(4, 32); } },
+    { label: 'Fill the buckets', x: P.spots.standpipe[0], z: P.spots.standpipe[1], r: 2.6, on: () => stage === 31 && !ctr.stdDone, go: () => { SFX.pourWater(); tapJob('std', 3, ['The first bucket is full.', 'The second bucket is full.', 'Three full buckets. Water for washing and flushing.']); jobsDone(4, 32); } },
+    { label: 'Board up the window', x: P.spots.boards[0], z: P.spots.boards[1], r: 3.0, on: () => stage === 31 && !ctr.boardDone, go: () => { SFX.hammerTap(3); const b = P.group.userData.boards[ctr.board || 0]; if (b) b.visible = true; tapJob('board', 2, ['One window is covered.', 'Both windows are covered. Glass can break in the wind.']); jobsDone(4, 32); } },
+    { label: 'Pack the go-bag', x: P.spots.bag[0], z: P.spots.bag[1], r: 2.4, on: () => stage === 31 && !ctr.bagDone, go: () => { SFX.bag(); tapJob('bag', 3, ['Papers go in a plastic bag, to keep them dry.', 'A torch and spare batteries.', 'The phone and its charger. The radio too.']); jobsDone(4, 32); } },
+    { label: 'Hand up the nails', x: P.spots.ladder[0], z: P.spots.ladder[1], r: 2.8, on: () => stage === 33 && !ctr.nailDone, go: () => { SFX.hammerTap(3); tapJob('nail', 3, ['Mr. Raymond nails a sheet down. Tap, tap, tap.', 'Another sheet is fixed to its rafter.', 'The last sheet is tight.']); if (ctr.nailDone) setStage(34); } },
+    { label: 'Listen to the radio', x: P.spots.home[0], z: P.spots.home[1], r: 3.0, on: () => stage === 34, go: () => radioCard() },
+    { label: 'Walk to the church hall', x: P.spots.church[0], z: P.spots.church[1], r: 3.2, on: () => stage === 35, go: () => setStage(36) } ],
   hall: (P) => [
-    { label: 'Hand out a blanket', x: P.spots.blankets[0], z: P.spots.blankets[1], r: 2.6, on: () => stage === 31 && !ctr.blkDone, go: () => { SFX.bag(); tapJob('blk', 2, ['A blanket for a little girl.', 'A blanket for Miss Hyacinth.']); jobsDone(2, 32); } },
-    { label: 'Pour water for people', x: P.spots.table[0], z: P.spots.table[1], r: 2.4, on: () => stage === 31 && !ctr.watDone, go: () => { SFX.pourWater(); tapJob('wat', 2, ['A cup for Gran.', 'A cup for the nurse.']); jobsDone(2, 32); } },
-    { label: 'Sit down with Mum and Gran', x: P.spots.seat[0], z: P.spots.seat[1], r: 3.2, on: () => stage === 33 && !ST.on, go: () => stormIntro('m25') } ],
+    { label: 'Hand out a blanket', x: P.spots.blankets[0], z: P.spots.blankets[1], r: 2.6, on: () => stage === 41 && !ctr.blkDone, go: () => { SFX.bag(); tapJob('blk', 2, ['A blanket for a little girl.', 'A blanket for Miss Hyacinth.']); jobsDone(2, 42); } },
+    { label: 'Pour water for people', x: P.spots.table[0], z: P.spots.table[1], r: 2.4, on: () => stage === 41 && !ctr.watDone, go: () => { SFX.pourWater(); tapJob('wat', 2, ['A cup for Gran.', 'A cup for the nurse.']); jobsDone(2, 42); } },
+    { label: 'Sit down with Mum and Gran', x: P.spots.seat[0], z: P.spots.seat[1], r: 3.2, on: () => stage === 43 && !ST.on, go: () => stormIntro('m25') } ],
   after: (P) => [
-    { label: 'Look at the fallen tree', x: P.spots.tree[0], z: P.spots.tree[1], r: 3.0, on: () => (stage === 41 || stage === 43) && !unlocked.includes('trees'), go: () => { ctr.tree = 1; unlock('trees'); card('A fallen tree', ['A big mango tree fell across the lane. Its roots came up out of the soil.', 'After lots of rain, the ground is soft. Strong wind can push a tree right over.'], [{ t: 'Go on', go: hideCard }]); } },
-    { label: 'Keep away from the wire', x: P.spots.wire[0], z: P.spots.wire[1], r: 3.4, on: () => (stage === 41 || stage === 43 || stage === 44) && !unlocked.includes('wires'), go: () => { ctr.wire = 1; unlock('wires'); card('Fallen wires', ['A pole fell, and its wires are on the ground.', 'Never touch a fallen wire. It might still carry power, even if the lights are out.', 'Keep away. Tell a grown-up, and call the light company.'], [{ t: 'I will keep away', go: hideCard }]); } },
-    { label: 'Look at the house', x: P.spots.home[0], z: P.spots.home[1], r: 3.2, on: () => stage === 42, go: () => houseLook() },
-    { label: 'Help move the logs', x: P.spots.tree[0], z: P.spots.tree[1], r: 3.0, on: () => stage === 51 && !ctr.logDone, go: () => { SFX.thump(0.2); tapJob('log', 3, ['Mr. Raymond cuts the trunk. You roll a log.', 'Another log rolls to the side.', 'The lane is open again.']); if (ctr.logDone) clearTree(P); refreshGoal(true); jobsDone(4, 52); } },
-    { label: 'Fill a bucket at the truck', x: P.spots.truck[0], z: P.spots.truck[1], r: 3.0, on: () => stage === 51 && !ctr.truckDone, go: () => { SFX.pourWater(); tapJob('truck', 2, ['A full bucket for home.', 'A full bucket for Miss Hyacinth.']); jobsDone(4, 52); } },
-    { label: 'Hold the tarp rope', x: P.spots.tarp[0], z: P.spots.tarp[1], r: 3.0, on: () => stage === 51 && !ctr.tarpDone, go: () => { SFX.bag(); tapJob('tarp', 3, ['You hold the rope. Mum pulls.', 'The blue tarp goes over the bare roof.', 'Tied down. Rain cannot get in now.']); if (ctr.tarpDone) P.tarpHome.visible = true; jobsDone(4, 52); } },
-    { label: 'Take a plate of food', x: P.spots.church[0], z: P.spots.church[1], r: 3.2, on: () => stage === 51 && !ctr.plate && !ctr.foodDone, go: () => { ctr.plate = 1; SFX.clink(); toast('A hot plate from the church kitchen. Take it to Miss Hyacinth.'); } },
-    { label: 'Give food to Miss Hyacinth', x: P.spots.hyacinth[0], z: P.spots.hyacinth[1], r: 3.0, on: () => stage === 51 && ctr.plate && !ctr.foodDone, go: () => { SFX.clink(); ctr.foodDone = true; ctr.jobs = (ctr.jobs || 0) + 1; toast('Miss Hyacinth smiles. "Bless you, child."'); refreshGoal(true); jobsDone(4, 52); } },
-    { label: 'Switch on the light', x: P.spots.home[0], z: P.spots.home[1], r: 3.2, on: () => stage === 54, go: () => lightsBack() } ],
+    { label: 'Look at the fallen tree', x: P.spots.tree[0], z: P.spots.tree[1], r: 3.0, on: () => (stage === 51 || stage === 53) && !unlocked.includes('trees'), go: () => { ctr.tree = 1; unlock('trees'); card('A fallen tree', ['A big mango tree fell across the lane. Its roots came up out of the soil.', 'After lots of rain, the ground is soft. Strong wind can push a tree right over.'], [{ t: 'Go on', go: hideCard }]); } },
+    { label: 'Keep away from the wire', x: P.spots.wire[0], z: P.spots.wire[1], r: 3.4, on: () => (stage === 51 || stage === 53 || stage === 54) && !unlocked.includes('wires'), go: () => { ctr.wire = 1; unlock('wires'); card('Fallen wires', ['A pole fell, and its wires are on the ground.', 'Never touch a fallen wire. It might still carry power, even if the lights are out.', 'Keep away. Tell a grown-up, and call the light company.'], [{ t: 'I will keep away', go: hideCard }]); } },
+    { label: 'Look at the house', x: P.spots.home[0], z: P.spots.home[1], r: 3.2, on: () => stage === 52, go: () => houseLook() },
+    { label: 'Help move the logs', x: P.spots.tree[0], z: P.spots.tree[1], r: 3.0, on: () => stage === 61 && !ctr.logDone, go: () => { SFX.thump(0.2); tapJob('log', 3, ['Mr. Raymond cuts the trunk. You roll a log.', 'Another log rolls to the side.', 'The lane is open again.']); if (ctr.logDone) clearTree(P); refreshGoal(true); jobsDone(4, 62); } },
+    { label: 'Fill a bucket at the truck', x: P.spots.truck[0], z: P.spots.truck[1], r: 3.0, on: () => stage === 61 && !ctr.truckDone, go: () => { SFX.pourWater(); tapJob('truck', 2, ['A full bucket for home.', 'A full bucket for Miss Hyacinth.']); jobsDone(4, 62); } },
+    { label: 'Hold the tarp rope', x: P.spots.tarp[0], z: P.spots.tarp[1], r: 3.0, on: () => stage === 61 && !ctr.tarpDone, go: () => { SFX.bag(); tapJob('tarp', 3, ['You hold the rope. Mum pulls.', 'The blue tarp goes over the bare roof.', 'Tied down. Rain cannot get in now.']); if (ctr.tarpDone) P.tarpHome.visible = true; jobsDone(4, 62); } },
+    { label: 'Take a plate of food', x: P.spots.church[0], z: P.spots.church[1], r: 3.2, on: () => stage === 61 && !ctr.plate && !ctr.foodDone, go: () => { ctr.plate = 1; SFX.clink(); toast('A hot plate from the church kitchen. Take it to Miss Hyacinth.'); } },
+    { label: 'Give food to Miss Hyacinth', x: P.spots.hyacinth[0], z: P.spots.hyacinth[1], r: 3.0, on: () => stage === 61 && ctr.plate && !ctr.foodDone, go: () => { SFX.clink(); ctr.foodDone = true; ctr.jobs = (ctr.jobs || 0) + 1; toast('Miss Hyacinth smiles. "Bless you, child."'); refreshGoal(true); jobsDone(4, 62); } },
+    { label: 'Switch on the light', x: P.spots.home[0], z: P.spots.home[1], r: 3.2, on: () => stage === 64, go: () => lightsBack() } ],
   today: (P) => [
-    { label: 'Read the Ready Plan', x: P.spots.plan[0], z: P.spots.plan[1], r: 2.8, on: () => stage === 61 && !ctr.plan, go: () => { ctr.plan = 1; unlock('plan'); card('Breadnut Corner Ready Plan', ['1. Know your risk. Is your home safe in a hurricane? Is it near water?', '2. Make a family plan. Where will we go? Who will we call?', '3. Keep a kit. Water, food, a torch, a radio, medicine and papers.', '4. Fix the roof early. Strong straps and nails help it stay on.', '5. Listen to the official warnings, and leave early if you are told to.'], [{ t: 'Good!', go: () => { hideCard(); setStage(62); } }], { col: true }); } },
-    { label: 'Pack the family kit', x: P.spots.plan[0] - 5, z: P.spots.plan[1], r: 2.8, on: () => stage === 62, go: () => kitQuiz(0) } ],
+    { label: 'Read the Ready Plan', x: P.spots.plan[0], z: P.spots.plan[1], r: 2.8, on: () => stage === 71 && !ctr.plan, go: () => { ctr.plan = 1; unlock('plan'); card('Breadnut Corner Ready Plan', ['1. Know your risk. Is your home safe in a hurricane? Is it near water?', '2. Make a family plan. Where will we go? Who will we call?', '3. Keep a kit. Water, food, a torch, a radio, medicine and papers.', '4. Fix the roof early. Strong straps and nails help it stay on.', '5. Listen to the official warnings, and leave early if you are told to.'], [{ t: 'Good!', go: () => { hideCard(); setStage(72); } }], { col: true }); } },
+    { label: 'Pack the family kit', x: P.spots.plan[0] - 5, z: P.spots.plan[1], r: 2.8, on: () => stage === 72, go: () => kitQuiz(0) } ],
 };
+
+/* the yard of a flashback chapter (Charlie or Gilbert): three jobs in any order, then the neighbour's strong house */
+function bygoneYard(P, k) {
+  const B = BYGONE[k], b = B.base, j = b + 1, sp = P.spots, c51 = k === 'c51', finish = () => jobsDone(3, b + 2);
+  const acts = [
+    { label: 'Fill the water drum', x: sp.standpipe[0], z: sp.standpipe[1], r: 2.6, on: () => stage === j && !ctr.drumDone, go: () => { SFX.pourWater(); tapJob('drum', 3, ['The drum is a third full.', 'Two thirds full.', 'The drum is full. We will need water.']); finish(); } },
+    { label: 'Nail a board over the window', x: sp.boards[0], z: sp.boards[1], r: 3.0, on: () => stage === j && !ctr.boardDone, go: () => { SFX.hammerTap(3); const bd = P.group.userData.boards[ctr.board || 0]; if (bd) bd.visible = true; tapJob('board', 2, ['One window is covered. Bang, bang, bang.', 'Both windows are covered.']); finish(); } } ];
+  if (c51) acts.push({ label: 'Haul the canoe up the beach', x: sp.canoe[0], z: sp.canoe[1], r: 2.8, on: () => stage === j && !ctr.canoeDone, go: () => { SFX.thump(0.2); P.group.userData.canoe.position.z = 13.4 - 0.6 * ((ctr.canoe || 0) + 1); tapJob('canoe', 3, ['The canoe slides up the sand.', 'Higher, away from the waves.', 'Tied to a palm. It is safe.']); finish(); } });
+  else acts.push({ label: 'Take in the washing', x: sp.washing[0], z: sp.washing[1], r: 2.8, on: () => stage === j && !ctr.washDone, go: () => { SFX.bag(); P.group.userData.washing.visible = false; ctr.washDone = true; ctr.jobs = (ctr.jobs || 0) + 1; toast('The washing is in. The wind would take it.'); refreshGoal(true); finish(); } });
+  acts.push({ label: 'Go inside with your family', x: sp.clifford[0], z: sp.clifford[1], r: 3.0, on: () => stage === b + 3, go: () => { setStage(b + 4); transition(B.room, { env: ENV.room, after: () => { WIND.k = 0.45; setBedsFor('room'); showPlace(CHAPTERS[B.ch].caption2); } }); } });
+  return acts;
+}
+function bygoneRoom(P, k) { const b = BYGONE[k].base; return [{ label: 'Sit down with your family', x: P.spots.lamp[0], z: P.spots.lamp[1] + 0.9, r: 3.0, on: () => stage === b + 4 && !ST.on, go: () => stormIntro(k) }]; }
 
 /* ---------- weather in a scene, and the storm's sounds ---------- */
 const WIND = { k: 0.06, dir: [0.6, 0.2] }; let SB = null;   /* WIND.k is how hard the wind blows (0 still, 1 a hurricane); SB: the storm's sound levels while a storm scene runs */
 const ST = { on: false };
 const BEDS_BY = { calm: { wind: 0.12 }, rising: { wind: 0.35, howl: 0.15 }, gale: { wind: 0.6, howl: 0.35, rain: 0.25 }, room: { wind: 0.55, howl: 0.25, roar: 0.1, rain: 0.2, rattle: 0.1 }, after: { wind: 0.08 }, saw: { wind: 0.06, saw: 0.9 }, heli: { wind: 0.06, heli: 1 }, quiet: {} };
+/* the storm night's sound levels, from first groans to the peak (the sound test plays these same ones) */
+const SB_GROAN = { wind: 0.7, howl: 0.35, roar: 0.3, rattle: 0.3, rain: 0.3 }, SB_LIGHT = { wind: 0.9, howl: 0.5, roar: 0.5, rattle: 0.5, rain: 0.45 }, SB_PEAK = { wind: 1.5, howl: 0.95, roar: 0.8, rattle: 0.7, rain: 0.85 };
 let bedsKey = 'calm'; const setBedsFor = (k) => { bedsKey = k; };
 function weather(k, rain, env) { WIND.k = k; STORM.set({ rain: rain || 0, wind: WIND.dir, leaves: Math.min(1, k * 1.4), dens: 1 }); if (env) setEnv(env); }
 function ease2(env, to, sec) { const a = env; return tween(sec, (k) => setEnv(mixEnv(a, to, ease(k)))); }
 
-/* ---------- chapter 1: Gilbert, 1988 ---------- */
-ON[10] = () => { weather(0.07, 0, ENV.calm); setBedsFor('calm'); };
-ON[11] = () => { const a = envNow; ease2(a, ENV.hazy, 25); weather(0.16, 0, null); setBedsFor('rising'); };
-ON[12] = () => { weather(0.3, 0.12, null); ease2(envNow, ENV.overcast, 12); };
-ON[13] = () => { weather(0.45, 0.3, null); ease2(envNow, ENV.gale, 10); setBedsFor('gale'); };
-ON[14] = () => { setBedsFor('room'); };
-ON[15] = () => { /* morning in the room, the roof torn */ };
-ON[16] = () => { unlock('gilbert'); unlock('hurricanes'); };
+/* ---------- chapters 1 and 2: Charlie, 1951 and Gilbert, 1988 (one shape, see BYGONE) ---------- */
+for (const k of Object.keys(BYGONE)) { const b = BYGONE[k].base;
+  ON[b] = () => { weather(0.07, 0, ENV.calm); setBedsFor('calm'); };
+  ON[b + 1] = () => { const a = envNow; ease2(a, ENV.hazy, 25); weather(0.16, 0, null); setBedsFor('rising'); };
+  ON[b + 2] = () => { weather(0.3, 0.12, null); ease2(envNow, ENV.overcast, 12); };
+  ON[b + 3] = () => { weather(0.45, 0.3, null); ease2(envNow, ENV.gale, 10); setBedsFor('gale'); };
+  ON[b + 4] = () => { setBedsFor('room'); };
+  ON[b + 5] = () => { /* morning in the room, the roof torn */ };
+  ON[b + 6] = () => { unlock(LINES[k].page); unlock(LINES[k].page2); };
+}
 
 /* ---------- chapter 2: Melissa is coming ---------- */
-ON[20] = () => { weather(0.07, 0, ENV.calm); setBedsFor('calm'); };
-ON[21] = () => { weather(0.1, 0, null); ease2(envNow, ENV.hazy, 20); };
-ON[22] = () => { weather(0.18, 0, null); };
-ON[23] = () => { weather(0.3, 0.1, null); ease2(envNow, ENV.overcast, 10); setBedsFor('rising'); };
-ON[24] = () => { weather(0.4, 0.2, null); ease2(envNow, ENV.gale, 10); setBedsFor('gale'); showPlace('Breadnut Corner, Monday 27 October 2025'); };
-ON[25] = () => { };
-ON[26] = () => { unlock('shelter'); };
+ON[30] = () => { weather(0.07, 0, ENV.calm); setBedsFor('calm'); };
+ON[31] = () => { weather(0.1, 0, null); ease2(envNow, ENV.hazy, 20); };
+ON[32] = () => { weather(0.18, 0, null); };
+ON[33] = () => { weather(0.3, 0.1, null); ease2(envNow, ENV.overcast, 10); setBedsFor('rising'); };
+ON[34] = () => { weather(0.4, 0.2, null); ease2(envNow, ENV.gale, 10); setBedsFor('gale'); showPlace('Breadnut Corner, Monday 27 October 2025'); };
+ON[35] = () => { };
+ON[36] = () => { unlock('shelter'); };
 function radioCard() {
   SFX.radioTune(); unlock('warnings');
-  card('The radio', ['It is Monday morning. A radio voice reads the news.', 'Melissa is now a Category 5 hurricane, the strongest kind. It is still moving very slowly.', 'Listen for the warnings. Go to a shelter early if your home is not strong.', 'Mum looks at Grandpa. "We will go to the church hall," she says.'], [{ t: 'Go on', go: () => { hideCard(); setStage(25); } }], { col: true });
+  card('The radio', ['It is Monday morning. A radio voice reads the news.', 'Melissa is now a Category 5 hurricane, the strongest kind. It is still moving very slowly.', 'Listen for the warnings. Go to a shelter early if your home is not strong.', 'Mum looks at Grandpa. "We will go to the church hall," she says.'], [{ t: 'Go on', go: () => { hideCard(); setStage(35); } }], { col: true });
 }
 
 /* ---------- chapter 3: the storm ---------- */
-ON[30] = () => { weather(0, 0, ENV.room); setBedsFor('room'); const P = P_(); P.lights.forEach((l) => { l.userData.k = 1; }); };
-ON[31] = () => { };
-ON[32] = async () => {
+ON[40] = () => { weather(0, 0, ENV.room); setBedsFor('room'); const P = P_(); P.lights.forEach((l) => { l.userData.k = 1; }); };
+ON[41] = () => { };
+ON[42] = async () => {
   const P = P_(), ep = EP; frozen = true; busy = false; bars(true); goalText = ''; say('The evening goes by. People talk softly. The wind grows.', 4200); await wait(4400); if (ep !== EP) return;
   say('Night. The hall is full of sleeping people, and a baby cries.', 4200); BEDS_BY.room = { wind: 0.7, howl: 0.35, roar: 0.2, rain: 0.35, rattle: 0.2 }; await wait(4400); if (ep !== EP) return;
   fadeBlack(true, 1600); await wait(1800); if (ep !== EP) return; $('fadeT').textContent = 'Tuesday morning'; $('fadeS').textContent = '28 October 2025'; $('fade').classList.add('txt'); await wait(3000); if (ep !== EP) return;
-  $('fade').classList.remove('txt'); fadeBlack(false, 1600); await wait(1500); if (ep !== EP) return; bars(false); frozen = false; setStage(33);
+  $('fade').classList.remove('txt'); fadeBlack(false, 1600); await wait(1500); if (ep !== EP) return; bars(false); frozen = false; setStage(43);
 };
-ON[34] = () => { };
-ON[35] = () => { unlock('melissa'); unlock('wind'); };
+ON[44] = () => { };
+ON[45] = () => { unlock('melissa'); unlock('wind'); };
 
 /* ---------- the storm sequence (chapter 1's night and chapter 3's morning): an opt-in card, then a scripted scene ---------- */
 function stormIntro(kind) {
@@ -487,24 +505,47 @@ function restoreRoof(P, torn, n = P.tornN || 5) { const hide = torn ? new Set(to
 /* what the wind throws across the gap in the roof: zinc sheets, and in 1988 the big satellite dishes torn off their posts */
 function skyDebris(kind) {
   const o = new THREE.Vector3(state.x, 0, state.z), v = (x, y, z) => o.clone().add(new THREE.Vector3(x, y, z));
-  const g88 = kind === 'g88'; STORM.throwSheet(v(-9, 5, 4), v(9, 6, -5), 2.2); if (g88) setTimeout(() => STORM.throwDish(v(-9, 6, -3), v(8, 8, 4), 2.8), 700 * TS); setTimeout(() => STORM.throwSheet(v(8, 4, 5), v(-8, 7, -4), 2.2), 1500 * TS); if (g88) setTimeout(() => STORM.throwDish(v(9, 6, -1), v(-9, 7, 3), 2.6), 2600 * TS);
+  STORM.throwSheet(v(-9, 5, 4), v(9, 6, -5), 2.2); setTimeout(() => STORM.throwSheet(v(8, 4, 5), v(-8, 7, -4), 2.2), 1500 * TS);
+}
+/* the one dish's flight, shared by the cutaway and the dev view: k runs 0 to 1 from its post, over the wall, toward the crowded yards */
+const dishAt = (d, p0, r0, k) => { d.position.set(p0.x + 9 * k, p0.y + 2.2 * k + Math.sin(k * PI) * 3.4, p0.z + 11 * k); d.rotation.set(r0.x + k * 6.5, r0.y + k * 4.1, r0.z + k * 8.2); };
+/* Gilbert's storm scene begins in Kingston at midday, when the eye passed over: an uptown house behind a high wall, and crowded zinc-roofed yards across the street.
+   A cutaway with the camera director. The one satellite dish is torn from its post here. Skipped with the rest of the scene by "Read what happened instead". */
+async function kingstonCutaway() {
+  const ep = EP, K = LINES.kingston, live = () => ep === EP && ST.on, P = PL.kingston88; if (!P) return true;
+  const d = P.dish, p0 = d.position.clone(), r0 = d.rotation.clone(); d.visible = true; d.position.copy(p0); d.rotation.copy(r0);
+  fadeBlack(true, 800); await wait(900); if (!live()) return false;
+  enterPlace('kingston88', { env: ENV.gale }); frozen = true; WIND.k = 0.85; STORM.set({ rain: 0.7, wind: [1.2, 0.4], leaves: 0.8 }); SB = { wind: 0.7, howl: 0.35, roar: 0.25, rain: 0.4, rattle: 0.2 };
+  $('fadeT').textContent = K.title; $('fadeS').textContent = K.sub; $('fade').classList.add('txt'); await wait(2600); if (!live()) return false; $('fade').classList.remove('txt'); fadeBlack(false, 900);
+  say(K.b[0], 3800); cut([-8, 5.6, 3.4], [2, 5.8, 3.4], [-12, 2.6, -10], [6, 2.4, 8], 4.0); await wait(4100); if (!live()) return false;
+  say(K.b[1], 3600); cut([-4, 4.6, 2.6], [-12, 4.8, 2.0], [-14, 2.8, -14], [-14, 3.0, -14], 3.8); await wait(3900); if (!live()) return false;
+  say(K.b[2], 4800); cut([-27, 4.4, 0.6], [-26, 4.0, -0.6], [-24.5, 2.2, -10.2], [-23, 3.2, -10.2], 4.4); await wait(1500); if (!live()) return false;
+  SFX.zincBang(0.9); SFX.gust(1, 2.4); FX.shake = 0.3; tween(2.9, (k) => dishAt(d, p0, r0, k)); await wait(3000); if (!live()) return false;
+  d.visible = false; FX.shake = 0.15; say(K.b[3], 4200);
+  STORM.throwSheet(new THREE.Vector3(4, 0.2, 9), new THREE.Vector3(14, 3, 1), 2.4); STORM.throwSheet(new THREE.Vector3(-9, 0.5, 14), new THREE.Vector3(1, 2.6, 6), 2.6); setTimeout(() => STORM.throwSheet(new THREE.Vector3(21, 0.2, 8), new THREE.Vector3(8, 3, 0), 2.2), 900 * TS);
+  cut([-5, 3.0, 1.8], [3, 3.2, 1.6], [2, 2.6, 9], [9, 3.4, 9], 4.2); await wait(4300); if (!live()) return false;
+  say(K.b[4], 3800); cut([-33, 5.5, 0.5], [-24, 5.2, 0.5], [10, 2.5, 0], [4, 2.5, 0], 4.0); await wait(4100); if (!live()) return false;
+  fadeBlack(true, 900); await wait(1000); if (!live()) return false;
+  endCut(); frozen = false; FX.shake = 0; STORM.clear(); d.position.copy(p0); d.rotation.copy(r0); d.visible = true;
+  enterPlace(BYGONE.g88.room, { env: ENV.room }); WIND.k = 0.6; fadeBlack(false, 900); await wait(800); return live();
 }
 async function stormRun(kind) {
   const ep = EP, P = P_(), L = LINES[kind], hall = kind === 'm25', live = () => ep === EP && ST.on, lights = hall ? P.lights : [P.lampLight];
   ST.on = true; moveLock = true; busy = false; frozen = false; talkWith = null; keys.clear(); stick.id = null; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
   const step = async (ms, fn) => { await wait(ms); if (!live()) return false; fn(); return true; };
   const lightK = (k) => { for (const l of lights) { l.userData.k = k; } };
+  if (kind === 'g88') { await ensurePlace('kingston88'); if (!(await kingstonCutaway())) return; }   /* the storm begins in Kingston */
   SB = { wind: 0.5, howl: 0.2, roar: 0.15, rattle: 0.15 }; WIND.k = 0.6; FX.shake = 0.05;
   say(L.b[0], 4200); await wait(4400); if (!live()) return;
-  if (!(await step(100, () => { say(L.b[1], 4000); SB = { wind: 0.7, howl: 0.35, roar: 0.3, rattle: 0.3, rain: 0.3 }; FX.shake = 0.12; SFX.roofGroan(); }))) return;
-  if (!(await step(3800, () => { say(L.b[2], 3800); lightK(0.2); setTimeout(() => lightK(1), 160); setTimeout(() => lightK(0), 420); SFX.zincBang(0.6); FX.shake = 0.25; torch(true); }))) return;
-  if (!(await step(3800, () => { say(L.b[3], 4000); SB = { wind: 0.9, howl: 0.5, roar: 0.5, rattle: 0.5, rain: 0.45 }; FX.shake = 0.4; SFX.gust(1, 3); ease2(envNow, ENV.roomStorm, 3); }))) return;
+  if (!(await step(100, () => { say(L.b[1], 4000); SB = SB_GROAN; FX.shake = 0.12; SFX.roofGroan(); }))) return;
+  if (!(await step(3800, () => { say(L.b[2], 3800); lightK(0.2); setTimeout(() => lightK(1), 160); setTimeout(() => lightK(0), 420); SFX.zincBang(0.9); FX.shake = 0.25; torch(true); }))) return;
+  if (!(await step(3800, () => { say(L.b[3], 4000); SB = SB_LIGHT; FX.shake = 0.4; SFX.gust(1, 3); ease2(envNow, ENV.roomStorm, 3); }))) return;
   /* hold on: press and hold to keep steady while the wind builds */
   $('holdwrap').hidden = false; HOLD.v = 0; goalText = 'Hold on!'; showGoal();
   const gust = tween(4.6, (k, dk) => { const held = HOLD.on ? 1 : 0; HOLD.v = clamp01(HOLD.v + (held ? 0.9 : -0.5) * dk * 4); $('holdbar').firstElementChild.style.width = (HOLD.v * 100) + '%'; FX.shake = 0.45 + k * 0.5 - HOLD.v * 0.25; FX.roll = Math.sin(k * 40) * 0.008; if (Math.random() < 0.04) SFX.zincBang(0.4); });
   if (!(await gust)) return; if (!live()) return; $('holdwrap').hidden = true; goalText = ''; $('goal').textContent = '';
   /* the roof lifts */
-  SFX.treeCrack(1.2); FX.shake = 0.9; SB = { wind: 1, howl: 0.6, roar: 0.8, rattle: 0.6, rain: 0.8 }; flash(0.6, 40, '#ffffff'); setTimeout(() => flash(0, 260, '#ffffff'), 80);
+  SFX.treeCrack(1.2); FX.shake = 0.9; SB = SB_PEAK; flash(0.6, 40, '#ffffff'); setTimeout(() => flash(0, 260, '#ffffff'), 80);
   tearRoof(P, kind === 'm25' ? 6 : 5); WIND.k = 1; skyDebris(kind); STORM.mask(P.group.position.x + 0, P.group.position.z + 0, kind === 'm25' ? 5 : 3); STORM.set({ rain: 0.9, wind: [1.2, 0.5], leaves: 0.9 }); say(L.b[4], 4200);
   const camA = [state.x, EYE, state.z]; cut(camA, camA, [state.x + 1, EYE + 0.3, state.z], [state.x + 0.4, EYE + 5, state.z - 0.4], 2.6).then(() => {});
   await wait(3600); if (!live()) return; endCut(); FX.shake = 0.5; say(L.b[5], 4200); 
@@ -518,50 +559,50 @@ function stormAfter(kind, fromRun) {
   const P = P_(), hall = kind === 'm25'; ST.on = false; moveLock = false; SB = null; endCut(); FX.shake = 0; FX.roll = 0; $('holdwrap').hidden = true; STORM.mask(0, 0, 1e5); STORM.clear(); weather(0.1, 0, null); setBedsFor('after'); torch(false);
   for (const l of hall ? P.lights : [P.lampLight]) l.userData.k = 0; restoreRoof(P, true); setEnv(mixEnv(ENV.after, ENV.room, 0.5));
   bars(false); fadeBlack(false, fromRun ? 3200 : 700); frozen = false; busy = false;
-  const st = hall ? 34 : 15; setStage(st); say(LINES[kind].morning, 5200);
+  const st = hall ? 44 : BYGONE[kind].base + 5; setStage(st); say(LINES[kind].morning, 5200);
 }
 /* the torch in your hand: a small light that follows the view, used in the dark */
 function torch(on) { handLamp.intensity = on ? 3.4 : 0; lampMesh.visible = on; }
 
 /* ---------- chapter 4: the morning after ---------- */
-ON[40] = () => { weather(0.04, 0, ENV.after); setBedsFor('after'); const P = P_(); P.tarpHome.visible = false; };
-ON[41] = () => { const m = byId('pearlA'); if (m) { m.follow = true; m.ctl.play(null); } };
-ON[42] = () => { };
+ON[50] = () => { weather(0.04, 0, ENV.after); setBedsFor('after'); const P = P_(); P.tarpHome.visible = false; };
+ON[51] = () => { const m = byId('pearlA'); if (m) { m.follow = true; m.ctl.play(null); } };
+ON[52] = () => { };
 function houseLook() {
   const P = P_(); unlock('afterhouse'); ctr.look = 1;
-  card('Home', ['Half the roof is gone. The sky shows where the zinc used to be.', 'The window boards held, and the walls are standing.', 'Mum holds your hand. "Things can be mended," she says. "We are together."'], [{ t: 'Go on', go: () => { hideCard(); const m = byId('pearlA'); if (m) m.follow = false; setStage(43); } }], { col: true });
+  card('Home', ['Half the roof is gone. The sky shows where the zinc used to be.', 'The window boards held, and the walls are standing.', 'Mum holds your hand. "Things can be mended," she says. "We are together."'], [{ t: 'Go on', go: () => { hideCard(); const m = byId('pearlA'); if (m) m.follow = false; setStage(53); } }], { col: true });
 }
-ON[43] = () => { };
-ON[45] = () => { unlock('neighbours'); unlock('afterhouse'); };
+ON[53] = () => { };
+ON[55] = () => { unlock('neighbours'); unlock('afterhouse'); };
 
 /* ---------- chapter 5: the days after ---------- */
 function clearTree(P, quiet) { const tw = P.group.userData.treeWall; if (tw) { const i = P.walls.indexOf(tw); if (i >= 0) P.walls.splice(i, 1); } if (P.group.userData.fallen) P.group.userData.fallen.visible = false; if (P.group.userData.logs) P.group.userData.logs.visible = true; if (!quiet) SFX.sawStart(); }
-ON[50] = () => { weather(0.05, 0, ENV.overcast); setBedsFor('after'); const P = P_(); P.tarpHome.visible = false; for (const n of P.people) { if (n.stage5) n.hidden = false; n.m.visible = !n.hidden && cur === 'after'; } };
-ON[51] = () => { setBedsFor('saw'); };
-ON[52] = () => { setBedsFor('after'); };
-ON[53] = async () => {
+ON[60] = () => { weather(0.05, 0, ENV.overcast); setBedsFor('after'); const P = P_(); P.tarpHome.visible = false; for (const n of P.people) { if (n.stage5) n.hidden = false; n.m.visible = !n.hidden && cur === 'after'; } };
+ON[61] = () => { setBedsFor('saw'); };
+ON[62] = () => { setBedsFor('after'); };
+ON[63] = async () => {
   const ep = EP; frozen = true; busy = false; bars(true); say('A helicopter flies over, low and loud. It is carrying food and water.', 4200); setBedsFor('heli'); await wait(4400); if (ep !== EP) return; say('The soldiers and the volunteers come from many places.', 4000); await wait(4200); if (ep !== EP) return;
-  setBedsFor('after'); endCut(); frozen = false; bars(false); setStage(54);
+  setBedsFor('after'); endCut(); frozen = false; bars(false); setStage(64);
 };
 async function lightsBack() {
-  const P = P_(), ep = EP; frozen = true; ctr.on = 1; SFX.chime(520); say('Click. The light comes on. Everyone cheers!', 3800); P.homeLamp.intensity = 7; P.homeLamp.visible = true; await wait(3800); if (ep !== EP) return; frozen = false; setStage(55);
+  const P = P_(), ep = EP; frozen = true; ctr.on = 1; SFX.chime(520); say('Click. The light comes on. Everyone cheers!', 3800); P.homeLamp.intensity = 7; P.homeLamp.visible = true; await wait(3800); if (ep !== EP) return; frozen = false; setStage(65);
 }
-ON[55] = () => { unlock('recovery'); unlock('help'); unlock('compare'); };
+ON[65] = () => { unlock('recovery'); unlock('help'); unlock('compare'); };
 
 /* ---------- chapter 6: today ---------- */
-ON[60] = () => { weather(0.05, 0, ENV.day); setBedsFor('after'); };
+ON[70] = () => { weather(0.05, 0, ENV.day); setBedsFor('after'); };
 function quiz(list, round, done) {   /* a few questions on cards: a wrong answer says why and lets you try again; the right one moves on */
   const R = list[round]; if (!R) { done(); return; }
   card(R.q, [R.note], R.opts.map((o) => ({ t: o.t, go: () => { if (o.ok) { uiSound('goal'); toast(o.say, 3000); quiz(list, round + 1, done); } else { toast(o.say, 3000); } } })), { col: true });
 }
 function kitQuiz(round) {
-  quiz(KIT, round, () => { unlock('kit'); card('A good kit', ['You packed well: water, food that keeps, a torch, a radio, a charged phone, medicine and papers in a bag.', 'A kit is small, but it helps a lot.'], [{ t: 'Next', go: () => { hideCard(); quiz(STORMS, 0, () => { unlock('storms'); card('Jamaica\'s storms', ['Hurricanes are not new to Jamaica. They come, and people get ready and rebuild.', 'Read about the earlier storms in your Journal.'], [{ t: 'Done', go: () => { hideCard(); setStage(63); } }], { col: true }); }); } }], { col: true }); });
+  quiz(KIT, round, () => { unlock('kit'); card('A good kit', ['You packed well: water, food that keeps, a torch, a radio, a charged phone, medicine and papers in a bag.', 'A kit is small, but it helps a lot.'], [{ t: 'Next', go: () => { hideCard(); quiz(STORMS, 0, () => { unlock('storms'); card('Jamaica\'s storms', ['Hurricanes are not new to Jamaica. They come, and people get ready and rebuild.', 'Read about the earlier storms in your Journal.'], [{ t: 'Done', go: () => { hideCard(); setStage(73); } }], { col: true }); }); } }], { col: true }); });
 }
-ON[64] = () => { unlock('journey'); setTimeout(() => card('The end', LINES.end, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); };
+ON[74] = () => { unlock('journey'); setTimeout(() => card('The end', LINES.end, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); };
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
-const NUDGE_EXTRA = { 41: () => [-26, -3.4] };
+const NUDGE_EXTRA = { 51: () => [-26, -3.4] };
 function nudgeTarget() {
   const P = P_(); if (!P) return null; if (NUDGE_EXTRA[stage]) return NUDGE_EXTRA[stage](); const a = P.actions.find((x) => x.on()); if (a) return [a.x, a.z];
   let bestT = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; bestT = [n.x, n.z]; } } return bestT;
@@ -583,12 +624,12 @@ function nudgeTick(now) {
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
 let auNext = 0, onceAt = 6; const AMB = 0.4;
-const SOUNDSCAPE = { yard88: { once: chirp }, yard25: { once: chirp }, hall: { crowd: 0.2 }, room88: { room: 0.1 }, after: {}, today: { once: chirp } };
-const FOOT = { yard88: 'grass', yard25: 'grass', after: 'grass', today: 'grass', room88: 'wood', hall: 'stone' };
+const SOUNDSCAPE = { yard51: { sea: 0.12, surf: 0.05, once: () => (Math.random() < 0.5 ? gullCry() : chirp()) }, room51: { room: 0.1, sea: 0.03 }, kingston88: {}, yard88: { once: chirp }, yard25: { once: chirp }, hall: { crowd: 0.2 }, room88: { room: 0.1 }, after: {}, today: { once: chirp } };
+const FOOT = { yard51: 'sand', room51: 'wood', kingston88: 'stone', yard88: 'grass', yard25: 'grass', after: 'grass', today: 'grass', room88: 'wood', hall: 'stone' };
 function audioTick(t, now) {
   if (!AU.ctx) return; SFX.hymnTick(t); if (t < auNext) return; auNext = t + 0.1; const S = SOUNDSCAPE[cur] || {};
   for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], SB ? 0 : (S[k] || 0) * AMB, 0.4);
-  const B = SB || BEDS_BY[bedsKey] || {}, indoor = cur === 'hall' || cur === 'room88', wk = SB ? 1 : indoor ? 0.6 : 1;
+  const B = SB || BEDS_BY[bedsKey] || {}, indoor = cur === 'hall' || cur === 'room88' || cur === 'room51', wk = SB ? 1 : indoor ? 0.6 : 1;
   SFX.setBeds({ wind: (B.wind || 0) * wk, howl: B.howl, roar: B.roar, rain: B.rain, rattle: B.rattle, hymn: B.hymn, saw: B.saw, heli: B.heli, gen: B.gen, cricket: B.cricket }, 0.4);
   if (t > onceAt) { onceAt = t + 6 + Math.random() * 6; if (S.once && AU.on && state.started && !SB && WIND.k < 0.25) S.once(); }
 }
@@ -627,7 +668,7 @@ function update(dt, now) {
   if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
   if (P.tick) P.tick(dt, (now || 0) / 1000); lightTick(P, dt, (now || 0) / 1000); STORM.tick(dt, (now || 0) / 1000); if (P.sway) swayTick(P.sway, (now || 0) / 1000, WIND.k, WIND.dir);
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
-  if (cur === 'after' && stage === 41 && Math.hypot(state.x - P.spots.home[0], state.z - P.spots.home[1]) < 6.5) setStage(42);
+  if (cur === 'after' && stage === 51 && Math.hypot(state.x - P.spots.home[0], state.z - P.spots.home[1]) < 6.5) setStage(52);
   if (now !== undefined) { audioTick(now / 1000, now); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }
 let last = performance.now();
@@ -663,16 +704,16 @@ function devViews() {
   const go = async (id, st, x, z, yaw, pitch, env) => { const P = await ensurePlace(id); $('title').hidden = true; $('hud').hidden = false; state.started = true; enterPlace(id, { env }); stage = st; best = Math.max(best, st); state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch || 0; unlock('you', true); refreshGoal(); return P; };
   /* views: [place, stage, x, z, yaw, pitch, env]. yaw 0 looks toward -z, -PI/2 toward +x (east). */
   const V = {
-    y88a: ['yard88', 10, -35, 0.4, -PI / 2, 0], y88b: ['yard88', 11, -22, 1.6, -PI / 2 + 0.7, 0], y88c: ['yard88', 12, 8, 1.2, -PI / 2, 0.02], y88d: ['yard88', 13, 14, -0.8, -PI / 2 + 0.2, 0],
-    y25a: ['yard25', 20, -35, 0.4, -PI / 2, 0], y25b: ['yard25', 21, -24, 1.6, -0.3, 0.03], y25c: ['yard25', 21, 24, 2.4, -PI / 2 - 0.6, 0.02], y25d: ['yard25', 23, 10, -0.6, -PI / 2 + 0.5, 0.1], y25e: ['yard25', 25, 38, 0.2, -PI / 2 + 0.2, 0],
-    aft1: ['after', 40, 36, 0.4, PI / 2, 0], aft2: ['after', 41, -6, 3.4, PI / 2 + 0.4, 0], aft3: ['after', 42, -26, -1.8, 0, 0.12], aft4: ['after', 43, -14, 5.5, -PI / 2 - 0.3, 0.02], aft5: ['after', 44, 4, 3, PI / 2 - 0.2, 0.05], aft6: ['after', 51, 20, 2.2, -PI / 2 - 0.4, 0],
-    tdy1: ['today', 60, -30, 0.4, -PI / 2, 0], tdy2: ['today', 61, 30, 1.8, -PI / 2 + 0.3, 0], tdy3: ['today', 60, -10, 3.6, PI / 2, 0.02],
-    room1: ['room88', 14, 0, 1.4, 0, 0], room2: ['room88', 14, 1.8, 1.6, 0.9, 0], room3: ['room88', 14, -1.5, -1.0, 2.5, 0.35],
-    aftA: ['after', 42, -8, 3.5, 0.95, 0.03], aftB: ['after', 41, 36, -1.4, PI / 2 + 0.12, 0.03], y88e: ['yard88', 10, -15, -5.4, 0, 0.14], y88f: ['yard88', 10, -9, 1.8, 0.25, 0.08], aftC: ['after', 44, -9.5, 2.0, -PI / 2, 0.05],
-    hall1: ['hall', 30, -6.2, 0.2, -PI / 2, 0], hall2: ['hall', 30, 0, 0.0, PI / 2, 0.02], hall3: ['hall', 31, 0.5, -2.2, 0.3, 0.02], hall4: ['hall', 33, -6, 0, -PI / 2 + 0.5, 0.0],
+    y88a: ['yard88', 20, -35, 0.4, -PI / 2, 0], y88b: ['yard88', 21, -22, 1.6, -PI / 2 + 0.7, 0], y88c: ['yard88', 22, 8, 1.2, -PI / 2, 0.02], y88d: ['yard88', 23, 14, -0.8, -PI / 2 + 0.2, 0],
+    y25a: ['yard25', 30, -35, 0.4, -PI / 2, 0], y25b: ['yard25', 31, -24, 1.6, -0.3, 0.03], y25c: ['yard25', 31, 24, 2.4, -PI / 2 - 0.6, 0.02], y25d: ['yard25', 33, 10, -0.6, -PI / 2 + 0.5, 0.1], y25e: ['yard25', 35, 38, 0.2, -PI / 2 + 0.2, 0],
+    aft1: ['after', 50, 36, 0.4, PI / 2, 0], aft2: ['after', 51, -6, 3.4, PI / 2 + 0.4, 0], aft3: ['after', 52, -26, -1.8, 0, 0.12], aft4: ['after', 53, -14, 5.5, -PI / 2 - 0.3, 0.02], aft5: ['after', 54, 4, 3, PI / 2 - 0.2, 0.05], aft6: ['after', 61, 20, 2.2, -PI / 2 - 0.4, 0],
+    tdy1: ['today', 70, -30, 0.4, -PI / 2, 0], tdy2: ['today', 71, 30, 1.8, -PI / 2 + 0.3, 0], tdy3: ['today', 70, -10, 3.6, PI / 2, 0.02],
+    room1: ['room88', 24, 0, 1.4, 0, 0], room2: ['room88', 24, 1.8, 1.6, 0.9, 0], room3: ['room88', 24, -1.5, -1.0, 2.5, 0.35],
+    aftA: ['after', 52, -8, 3.5, 0.95, 0.03], aftB: ['after', 51, 36, -1.4, PI / 2 + 0.12, 0.03], c51a: ['yard51', 10, -35, 0.4, -PI / 2, 0], c51b: ['yard51', 11, 8.5, 7.8, PI, 0.03], c51c: ['yard51', 12, 4, 1.4, -PI / 2 - 0.9, 0.02], r51: ['room51', 14, 0, 1.4, 0, 0], aftC: ['after', 54, -9.5, 2.0, -PI / 2, 0.05],
+    hall1: ['hall', 40, -6.2, 0.2, -PI / 2, 0], hall2: ['hall', 40, 0, 0.0, PI / 2, 0.02], hall3: ['hall', 41, 0.5, -2.2, 0.3, 0.02], hall4: ['hall', 43, -6, 0, -PI / 2 + 0.5, 0.0],
   };
   /* ?shot=model&m=people&ids=pearl,winston&one : people lined up for a close look. m=house|shop|fallen|props|roof show code-built things from four sides. */
-  if (shot === 'model') go('yard25', 20, 0, 0, 0, 0).then(async (P) => {
+  if (shot === 'model') go('yard25', 30, 0, 0, 0, 0).then(async (P) => {
     const pids = (q.get('ids') || '').split(',').filter(Boolean), plo = q.has('lo'); if (pids.length) await Promise.all(pids.map((id) => loadBase(LOOKS[id].base + (plo ? '_lo' : ''))));
     P.group.visible = false; $('hud').hidden = true; const m = q.get('m') || 'people', num = (k, d) => (q.has(k) ? +q.get(k) : d), root = new THREE.Group(); scene.add(root);
     const MODELS = { house: [() => HSE.house({ style: q.get('style') || 'block', roof: q.get('roof') || 'on', shutters: q.get('sh') || 'open', tank: true }), 9, 4, 1.6], shop: [() => HSE.shop({ roof: q.get('roof') || 'on' }), 9, 4, 1.6], fallen: [() => HSE.fallenTree(), 11, 4, 1.2], props: [() => { const g = new THREE.Group(); [HSE.waterDrum(), HSE.jug(), HSE.goBag(), HSE.radio(), HSE.tins(), HSE.bread(), HSE.candle(), HSE.kerosene(), HSE.zincSheet({ len: 2.2, curl: 0.4 }), HSE.plank(1.5, 2), HSE.mattress(), HSE.standpipeTap(), HSE.clothes()].forEach((o, i) => { o.position.x = (i - 6) * 0.95; g.add(o); }); return g; }, 4.6, 1.4, 0.4], wreck: [() => { const g = new THREE.Group(); [HSE.bareTree(5, 2), HSE.snappedPalm(6, 1), HSE.leaningPole({ lean: 0.38 }), HSE.cutLogs()].forEach((o, i) => { o.position.x = (i - 1.5) * 4.2; g.add(o); }); return g; }, 15, 5, 1.8], tank: [() => HSE.tankOnStand(), 7, 3, 1.5],
@@ -686,13 +727,20 @@ function devViews() {
         camera.aspect = w / hh; camera.fov = 40; camera.updateProjectionMatrix(); camera.position.set(-Math.cos(a) * d, h, Math.sin(a) * d); camera.lookAt(0, ty, 0); sun.target.position.set(0, 0, 0); sun.position.copy(sunDir).multiplyScalar(110); sun.target.updateMatrixWorld(); renderer.render(scene, camera); });
       if (++n === 3) { let tris = 0, calls = 0; obj.traverse((o) => { if (o.isMesh) { calls += Array.isArray(o.material) ? o.material.length : 1; const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1); } }); document.title = 'MODEL ' + m + ' meshes=' + calls + ' tris=' + Math.round(tris); } };
   });
-  if (shot === 'talk1') go('yard25', 20, -27, 0.4, -0.2, 0).then(() => { startTalk(byId('pearl')); });
-  if (shot === 'talk2') go('hall', 30, -2.4, 0.3, PI / 2, 0).then(() => { startTalk(byId('pearlH')); });
-  if (shot === 'card1') go('hall', 33, -1.0, 1.0, PI / 2, 0).then(() => { stormIntro('m25'); });
-  if (shot === 'journal1') go('yard25', 20, -27, 0.4, 0, 0).then(() => { for (const id of ['gilbert', 'hurricanes', 'warnings', 'wires']) unlock(id, true); openJournal('gilbert'); });
-  if (shot === 'chap1') go('yard25', 20, -27, 0.4, 0, 0).then(() => { best = 35; modelsReady = true; openChapters(); });
+  /* ?shot=cam&p=kingston88&c=x,y,z&l=x,y,z : the camera director's view, frozen. &dishk=0.4 puts the dish part way through its flight, &rain=1 adds weather. */
+  if (shot === 'cam') go(q.get('p') || 'kingston88', 20, 0, 0, 0, 0).then((P) => {
+    const n = (k, d) => (q.get(k) || d).split(',').map(Number); $('hud').hidden = true; DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.resolve = null; DIR.a = new THREE.Vector3(...n('c', '0,3,6')); DIR.b = DIR.a.clone(); DIR.la = new THREE.Vector3(...n('l', '0,2,0')); DIR.lb = DIR.la.clone();
+    if (q.has('rain')) { WIND.k = 0.85; STORM.set({ rain: +q.get('rain'), wind: [1.2, 0.4], leaves: 0.8 }); setEnv(ENV[q.get('sky') || 'gale']); }
+    if (q.has('dishk') && P.dish) dishAt(P.dish, P.dish.position.clone(), P.dish.rotation.clone(), +q.get('dishk'));
+    if (q.has('sheets')) { STORM.throwSheet(new THREE.Vector3(4, 0.2, 9), new THREE.Vector3(14, 3, 1), 2.4); STORM.throwSheet(new THREE.Vector3(-9, 0.5, 14), new THREE.Vector3(1, 2.6, 6), 2.6); STORM.tick(1.1, 3); for (const f of [...STORM.sheets, ...STORM.dishes]) f.dur = 1e6; }
+    for (let i = 0; i < 4; i++) update(0.05); P.sway && swayTick(P.sway, 2, WIND.k, [1.2, 0.4]); });
+  if (shot === 'talk1') go('yard25', 30, -27, 0.4, -0.2, 0).then(() => { startTalk(byId('pearl')); });
+  if (shot === 'talk2') go('hall', 40, -2.4, 0.3, PI / 2, 0).then(() => { startTalk(byId('pearlH')); });
+  if (shot === 'card1') go('hall', 43, -1.0, 1.0, PI / 2, 0).then(() => { stormIntro('m25'); });
+  if (shot === 'journal1') go('yard25', 30, -27, 0.4, 0, 0).then(() => { for (const id of ['gilbert', 'hurricanes', 'warnings', 'wires']) unlock(id, true); openJournal('gilbert'); });
+  if (shot === 'chap1') go('yard25', 30, -27, 0.4, 0, 0).then(() => { best = 45; modelsReady = true; openChapters(); });
   /* the storm, frozen at its worst: ?shot=stormhall, stormroom, stormyard (add &k=1 for wind strength, &rain=0.9) */
-  if (shot === 'stormhall' || shot === 'stormroom' || shot === 'stormyard') go(shot === 'stormhall' ? 'hall' : shot === 'stormroom' ? 'room88' : q.get('y') === '88' ? 'yard88' : 'yard25', shot === 'stormhall' ? 33 : shot === 'stormroom' ? 14 : 24, shot === 'stormyard' ? -6 : shot === 'stormhall' ? 0.4 : 0.4, shot === 'stormyard' ? 2.2 : 0.8, shot === 'stormyard' ? -PI / 2 + 0.2 : shot === 'stormroom' ? 0.6 : PI / 2 + 0.3, shot === 'stormhall' || shot === 'stormroom' ? 0.35 : 0.0).then((P) => {
+  if (shot === 'stormhall' || shot === 'stormroom' || shot === 'stormyard') go(shot === 'stormhall' ? 'hall' : shot === 'stormroom' ? 'room88' : q.get('y') === '88' ? 'yard88' : 'yard25', shot === 'stormhall' ? 43 : shot === 'stormroom' ? 24 : 34, shot === 'stormyard' ? -6 : shot === 'stormhall' ? 0.4 : 0.4, shot === 'stormyard' ? 2.2 : 0.8, shot === 'stormyard' ? -PI / 2 + 0.2 : shot === 'stormroom' ? 0.6 : PI / 2 + 0.3, shot === 'stormhall' || shot === 'stormroom' ? 0.35 : 0.0).then((P) => {
     const kk = +(q.get('k') || 1); ST.on = true; WIND.k = kk; if (shot !== 'stormyard') { restoreRoof(P, true, shot === 'stormhall' ? 6 : 5); for (const l of shot === 'stormhall' ? P.lights : [P.lampLight]) l.userData.k = +(q.get('lamp') || 0.15); setEnv(ENV.roomStorm); STORM.mask(0, 0, shot === 'stormhall' ? 5 : 3); torch(true); } else setEnv(ENV[q.get('sky') || 'gale']);
     STORM.set({ rain: +(q.get('rain') || 0.9), wind: [1.2, 0.5], leaves: 0.9 }); for (let i = 0; i < 6; i++) update(0.05, 100 * i);
     if (q.has('pitch')) state.pitch = +q.get('pitch');
@@ -713,10 +761,10 @@ function devViews() {
     if (P.sway) swayTick(P.sway, 2, WIND.k, WIND.dir);
     if (q.has('stats')) setTimeout(() => { renderer.info.reset(); renderer.render(scene, camera); const i = renderer.info; const t = 'STATS calls=' + i.render.calls + ' tris=' + i.render.triangles + ' geo=' + i.memory.geometries + ' tex=' + i.memory.textures; document.title = t; console.log(t); }, 1500);
   });
-  if (q.get('shot') === 'poster') go('yard25', 20, -30, 0.5, -PI / 2 + 0.05, 0.03, ENV.gold).then((P) => { $('hud').hidden = true; for (let i = 0; i < 4; i++) update(0.05); });
+  if (q.get('shot') === 'poster') go('yard25', 30, -30, 0.5, -PI / 2 + 0.05, 0.03, ENV.gold).then((P) => { $('hud').hidden = true; for (let i = 0; i < 4; i++) update(0.05); });
   if (q.get('test') === 'layout') {   /* ?test=layout : open each UI state and check that no two visible things overlap, nothing is cut off, and nothing is off the screen. Run at several window sizes. */
     (async () => { const out = [], W = innerWidth, Hh = innerHeight; const st = document.createElement('style'); st.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st);
-      await ensurePlace('yard25'); startGame(true); enterPlace('yard25'); $('hud').hidden = false; $('title').hidden = true; stage = 21; refreshGoal(); if (W < 700) $('hint').textContent = 'Left thumb walks. Drag to look. Tap a person to talk.';   /* phones show the touch hint */
+      await ensurePlace('yard25'); startGame(true); enterPlace('yard25'); $('hud').hidden = false; $('title').hidden = true; stage = 31; refreshGoal(); if (W < 700) $('hint').textContent = 'Left thumb walks. Drag to look. Tap a person to talk.';   /* phones show the touch hint */
       const IDS = ['goal', 'topr', 'talk', 'hint', 'toast', 'sub', 'dialogue', 'cinner', 'place', 'hold', 'nudge'], rect = (id) => { const e = id === 'cinner' ? document.querySelector('#card .cardin') : $(id); if (!e || e.hidden) return null; const cs = getComputedStyle(e); if (cs.display === 'none' || +cs.opacity < 0.05 || cs.visibility === 'hidden') return null; const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1 ? { id, r, e } : null; };
       const check = (name) => { const L = IDS.map(rect).filter(Boolean); for (const a of L) { if (a.r.left < -1 || a.r.top < -1 || a.r.right > W + 1 || a.r.bottom > Hh + 1) out.push(`${W}x${Hh} ${name}: ${a.id} is off the screen (${a.r.left | 0},${a.r.top | 0},${a.r.right | 0},${a.r.bottom | 0})`); if (a.e.scrollWidth > a.e.clientWidth + 2 && getComputedStyle(a.e).overflow !== 'visible' && a.id !== 'dialogue') out.push(`${W}x${Hh} ${name}: ${a.id} text is cut off`); }
         for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i].r, b = L[j].r, ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top); if (ox > 4 && oy > 4) out.push(`${W}x${Hh} ${name}: ${L[i].id} overlaps ${L[j].id} by ${ox | 0}x${oy | 0}`); } };
@@ -745,14 +793,54 @@ function devViews() {
       if (q.get('seats')) out.push(...SEATLOG); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + count; })();
   }
   if (q.get('test') === 'resume') {   /* saved games resume in the right place, and closing a finishing conversation still moves the story on */
-    (async () => { const out = []; startGame(true);
-      await beginChapter(0, 14); out.push('ch1@14 place=' + cur + ' stage=' + stage + ' roof=' + roofSheets(P_()).every((s) => s.m.visible)); await beginChapter(0, 15); out.push('ch1@15 place=' + cur + ' torn=' + roofSheets(P_()).some((s) => !s.m.visible));
-      await beginChapter(0, 11); out.push('ch1@11 place=' + cur); await beginChapter(2, 33); out.push('ch3@33 place=' + cur + ' roofWhole=' + roofSheets(P_()).every((s) => s.m.visible)); await beginChapter(2, 34); out.push('ch3@34 place=' + cur + ' torn=' + roofSheets(P_()).some((s) => !s.m.visible));
-      await beginChapter(3, 41); out.push('ch4@41 place=' + cur); await beginChapter(3, 41); out.push('ch4@41 youthHidden=' + !P_().people.find((p) => p.id === 'youth').m.visible); await beginChapter(4, 51); out.push('ch5@51 place=' + cur + ' fallen=' + P_().group.userData.fallen.visible + ' youthVisible=' + P_().people.find((p) => p.id === 'youth').m.visible); await beginChapter(4, 52); out.push('ch5@52 youthVisible=' + P_().people.find((p) => p.id === 'youth').m.visible + ' fallen=' + P_().group.userData.fallen.visible + ' tarp=' + P_().tarpHome.visible);
-      await beginChapter(1, 21); { const bo = P_().actions.find((a) => a.label === 'Board up the window'), nb = () => P_().group.userData.boards.filter((b) => b.visible).length; bo.go(); const a1 = (ctr.boardDone ? 'done' : 'open') + nb(); bo.go(); out.push('boards: after 1 tap ' + a1 + ', after 2 taps ' + (ctr.boardDone ? 'done' : 'open') + nb()); } await beginChapter(5, 61); out.push('ch6@61 place=' + cur);
+    (async () => { const out = []; startGame(true); const roofs = () => roofSheets(P_()), whole = () => roofs().every((s) => s.m.visible), torn = () => roofs().some((s) => !s.m.visible), youth = () => P_().people.find((p) => p.id === 'youth');
+      await beginChapter(0, 14); out.push('c1@14 place=' + cur + ' stage=' + stage + ' roofWhole=' + whole()); await beginChapter(0, 15); out.push('c1@15 place=' + cur + ' torn=' + torn()); await beginChapter(0, 12); out.push('c1@12 place=' + cur + ' canoeUp=' + (P_().group.userData.canoe.position.z < 12.5));
+      await beginChapter(1, 24); out.push('c2@24 place=' + cur + ' roofWhole=' + whole()); await beginChapter(1, 25); out.push('c2@25 place=' + cur + ' torn=' + torn()); await beginChapter(1, 21); out.push('c2@21 place=' + cur);
+      await beginChapter(3, 43); out.push('c4@43 place=' + cur + ' roofWhole=' + whole()); await beginChapter(3, 44); out.push('c4@44 place=' + cur + ' torn=' + torn());
+      await beginChapter(4, 51); out.push('c5@51 place=' + cur + ' youthHidden=' + !youth().m.visible); await beginChapter(5, 61); out.push('c6@61 place=' + cur + ' fallen=' + P_().group.userData.fallen.visible + ' youthVisible=' + youth().m.visible); await beginChapter(5, 62); out.push('c6@62 youthVisible=' + youth().m.visible + ' fallen=' + P_().group.userData.fallen.visible + ' tarp=' + P_().tarpHome.visible);
+      await beginChapter(2, 31); { const bo = P_().actions.find((a) => a.label === 'Board up the window'), nb = () => P_().group.userData.boards.filter((b) => b.visible).length; bo.go(); const a1 = (ctr.boardDone ? 'done' : 'open') + nb(); bo.go(); out.push('boards: after 1 tap ' + a1 + ', after 2 taps ' + (ctr.boardDone ? 'done' : 'open') + nb()); }
+      await beginChapter(6, 71); out.push('c7@71 place=' + cur);
+      { const keep = [stage, best, hasSave]; const check = (d) => { stage = 0; best = 0; applySave(d); return stage + '/' + best; };
+        out.push('saves: v1 60/64 -> ' + check({ v: 1, unlocked: ['you'], stage: 60, best: 64, story: {} }) + ', v1 0 -> ' + check({ v: 1, unlocked: ['you'], stage: 0, best: 0, story: {} }) + ', v1 64/64 -> ' + check({ v: 1, unlocked: ['you'], stage: 64, best: 64, story: {} }) + ', v2 74/74 -> ' + check({ v: 2, unlocked: ['you'], stage: 74, best: 74, story: {} })); [stage, best, hasSave] = keep; }
       let ran = 0; convo([{ who: 'x', text: 'y' }, { who: 'x', text: 'z' }], () => { ran++; }); leaveTalk(); out.push('convo closed early, callback ran=' + ran);
       startTalk(P_().people[0]); leaveTalk(); out.push('ordinary talk closed early: talked=' + !!P_().people[0].talked);
       document.title = 'RESUME ' + out.join(' | '); })();
+  }
+  if (q.get('test') === 'sound') {   /* ?test=sound : plays the game's own mixes into an offline recorder (no speakers needed) and reports, for each place and storm moment, the peak, the loudness and the low, middle and high balance; each one-shot is played over the bed it meets in the story and must stand out from it. Run it with Playwright: the offline recorder is not tied to a headless page's virtual time. */
+    (async () => {
+      const SR = 22050, Q = 128, rq = (t) => Math.round(t * SR / Q) * Q / SR, segs = [], out = [], DB = (x) => (x > 1e-9 ? 20 * Math.log10(x) : -99), BEDS = {};
+      const bed = (name, where, key, sb) => { BEDS[name] = { where, key, sb }; segs.push({ name, len: 4, bed: true, ...BEDS[name] }); };
+      const shot = (name, fn, over, len = 4, min = 6) => segs.push({ name, len, shot: true, over, fn, min, ...BEDS[over] });   /* min: how many dB the sound must rise above its bed (bangs and cracks 5; a groan or a gust is a swell inside the storm, 3) */
+      bed('silence', 'after', 'quiet'); bed('yard51 calm (sea)', 'yard51', 'calm'); bed('room51 night', 'room51', 'room'); bed('yard88 calm', 'yard88', 'calm'); bed('yard88 rising', 'yard88', 'rising'); bed('yard88 gale', 'yard88', 'gale'); bed('room88 night', 'room88', 'room');
+      bed('storm: kingston', 'kingston88', 'quiet', { wind: 0.7, howl: 0.35, roar: 0.25, rain: 0.4, rattle: 0.2 }); bed('storm: first gusts', 'yard88', 'quiet', { wind: 0.5, howl: 0.2, roar: 0.15, rattle: 0.15 });
+      bed('storm: roof groans', 'yard88', 'quiet', SB_GROAN); bed('storm: the light goes', 'yard88', 'quiet', SB_LIGHT); bed('storm: the peak', 'yard88', 'quiet', SB_PEAK); bed('storm: the hall hymn', 'hall', 'quiet', { wind: 0.7, howl: 0.3, roar: 0.4, rain: 0.6, hymn: 0.6 });
+      bed('after the storm', 'after', 'after'); bed('chainsaw', 'after', 'saw'); bed('helicopter', 'after', 'heli'); bed('today', 'today', 'after');
+      shot('zinc bang (0.9)', () => SFX.zincBang(0.9), 'storm: roof groans', 4, 5); shot('roof groan', () => SFX.roofGroan(), 'storm: roof groans', 4, 3); shot('dish bang + gust', () => { SFX.zincBang(0.9); SFX.gust(1, 2.4); }, 'storm: kingston', 4, 5);
+      shot('tree crack (1.2)', () => SFX.treeCrack(1.2), 'storm: the light goes', 4, 5); shot('gust', () => SFX.gust(1, 3), 'storm: the light goes', 4, 3); shot('worst case: crack + bang + gust on the peak', () => { SFX.treeCrack(1.2); SFX.zincBang(0.9); SFX.gust(1, 3); }, 'storm: the peak', 4, 0);
+      for (const [n, f, l] of [['hammering', () => SFX.hammerTap(3)], ['pouring water', () => SFX.pourWater()], ['scoop', () => SFX.scoop()], ['bag', () => SFX.bag()], ['radio', () => SFX.radioTune()], ['church bell', () => SFX.churchBell(2), 8], ['thump', () => SFX.thump()], ['chime', () => SFX.chime()]]) shot(n, f, 'yard88 calm', l);
+      const total = segs.reduce((a, g) => a + g.len, 0) + 1; let t0 = 0; for (const g of segs) { g.t0 = rq(t0); t0 += g.len; }
+      const RealAC = window.AudioContext; AU.ctx = null; let ctx;
+      window.AudioContext = function () { ctx = new OfflineAudioContext(2, Math.round(SR * total), SR); Object.defineProperty(ctx, 'state', { get: () => 'running' }); ctx.resumeReal = ctx.resume.bind(ctx); ctx.resume = () => Promise.resolve(); return ctx; };
+      audioInit(); SFX.initBeds(); window.AudioContext = RealAC; AU.on = true;
+      let tick = 1e6; const run = (g) => { cur = g.where; bedsKey = g.key; SB = g.sb || null; onceAt = 1e12; for (let i = 0; i < 3; i++) { tick += 1; audioTick(tick, 0); } if (g.fn) g.fn(); };
+      segs.forEach((g, i) => { if (i === 0) run(g); else ctx.suspend(g.t0).then(() => { run(g); ctx.resumeReal(); }); });
+      const buf = await ctx.startRendering(), L = buf.getChannelData(0), R = buf.getChannelData(1);
+      const fft = (re, im) => { const n = re.length; for (let i = 1, j = 0; i < n; i++) { let b = n >> 1; for (; j & b; b >>= 1) j ^= b; j ^= b; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+        for (let len = 2; len <= n; len <<= 1) { const a = -2 * PI / len; for (let i = 0; i < n; i += len) for (let k = 0; k < len / 2; k++) { const c = Math.cos(a * k), s = Math.sin(a * k), xr = re[i + k + len / 2] * c - im[i + k + len / 2] * s, xi = re[i + k + len / 2] * s + im[i + k + len / 2] * c; re[i + k + len / 2] = re[i + k] - xr; im[i + k + len / 2] = im[i + k] - xi; re[i + k] += xr; im[i + k] += xi; } } };
+      const bands = (x, a, b) => { const N = 2048, P = [0, 0, 0]; let n = 0; for (let s = a; s + N <= b; s += N) { const re = new Float64Array(N), im = new Float64Array(N); for (let i = 0; i < N; i++) re[i] = x[s + i] * (0.5 - 0.5 * Math.cos(2 * PI * i / N)); fft(re, im); for (let k = 1; k < N / 2; k++) { const f = k * SR / N, p = re[k] * re[k] + im[k] * im[k]; P[f < 250 ? 0 : f < 2000 ? 1 : 2] += p; } n++; } return P.map((v) => DB(Math.sqrt(v / Math.max(1, n)) / N * 2)); };
+      const burst = (a, b, sec) => { const W = Math.round(SR * sec); let m = 0; for (let s = a; s + W <= b; s += W >> 1) { let q2 = 0; for (let i = s; i < s + W; i++) q2 += (L[i] * L[i] + R[i] * R[i]) / 2; m = Math.max(m, Math.sqrt(q2 / W)); } return m; };
+      let problems = 0; const res = {}; out.push('segment | peak dBFS | loudness dBFS | low / mid / high dB | loudest 20 or 100 ms over its bed');
+      for (const g of segs) { const a = Math.round(g.t0 * SR), b = Math.min(buf.length, Math.round((g.t0 + g.len) * SR)), from = g.bed ? a + Math.round((b - a) * 0.5) : a; let pk = 0, sq = 0, bad = 0;
+        for (let i = from; i < b; i++) { const v = Math.max(Math.abs(L[i]), Math.abs(R[i])); if (!Number.isFinite(v)) bad++; else { if (v > pk) pk = v; sq += (L[i] * L[i] + R[i] * R[i]) / 2; } }
+        const rms = Math.sqrt(sq / (b - from)), bd = bands(L, from, b); res[g.name] = { pk, rms, bd }; const flags = []; let lift = '';
+        if (g.shot) { const over = res[g.over], l = Math.max(DB(burst(a, b, 0.02)), DB(burst(a, b, 0.1))) - DB(over.rms); lift = ' | ' + (l >= 0 ? '+' : '') + l.toFixed(1) + ' dB over "' + g.over + '"'; if (l < g.min) flags.push('LOST UNDER ITS BED'); }
+        if (bad) flags.push('NOT A NUMBER'); if (pk > 0.98) flags.push('CLIPS'); if (g.bed && g.name !== 'silence' && DB(rms) < -56) flags.push('TOO QUIET'); if (g.name === 'silence' && DB(rms) > -70) flags.push('NOT SILENT');
+        problems += flags.length; out.push(g.name + ' | ' + DB(pk).toFixed(1) + ' | ' + DB(rms).toFixed(1) + ' | ' + bd.map((v) => v.toFixed(0)).join(' / ') + lift + (flags.length ? '  <-- ' + flags.join(', ') : '')); }
+      const chain = ['yard88 calm', 'yard88 rising', 'yard88 gale', 'storm: roof groans', 'storm: the light goes', 'storm: the peak'];
+      for (let i = 1; i < chain.length; i++) for (const [k, nm] of [[1, 'middle'], [2, 'high']]) { const d = DB(Math.pow(10, res[chain[i]].bd[k] / 20)) - DB(Math.pow(10, res[chain[i - 1]].bd[k] / 20)); if (k === 1 && d < 1.5) { problems++; out.push('ORDER: the ' + nm + ' of "' + chain[i] + '" is not louder than "' + chain[i - 1] + '" (' + d.toFixed(1) + ' dB), so on a phone speaker the storm would not seem to grow'); } }
+      for (let i = 1; i < chain.length; i++) if (DB(res[chain[i]].rms) <= DB(res[chain[i - 1]].rms) + 1) { problems++; out.push('ORDER: "' + chain[i] + '" is not louder than "' + chain[i - 1] + '"'); }
+      const range = DB(res['storm: the peak'].rms) - DB(res['yard88 calm'].rms); if (range < 20) { problems++; out.push('RANGE: calm to the peak is only ' + range.toFixed(1) + ' dB'); }
+      out.unshift('sound check: ' + problems + ' problems'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'SOUND ' + problems; })();
   }
   if (q.has('clickstart')) setTimeout(() => $('start').click(), 300);   /* the real start, with real fades (the other test views skip them) */
   if (q.has('auto')) {   /* ?auto=N plays chapter N (1 to 6) and the ones after it; add &one to stop after N. It logs every change to the page title and #autolog, and says STALL if nothing changes for a while. */
@@ -768,12 +856,12 @@ function devViews() {
         if (!$('card').hidden) { const bs = $('cbtns').querySelectorAll('button'); if (bs.length) bs[(qi++) % bs.length].click(); continue; }
         if (!$('dialogue').hidden) { const c = $('choices').firstChild; if (c) c.click(); else $('next').click(); continue; }
         if (!$('holdwrap').hidden) { HOLD.on = true; continue; }
-        if (finished()) { L('chapter ' + (ch + 1) + ' DONE at stage ' + stage); if (one || ch >= 5) { L('ALLDONE'); break; } ch++; L('next ch' + (ch + 1)); await beginChapter(ch); lastT = performance.now(); continue; }
+        if (finished()) { L('chapter ' + (ch + 1) + ' DONE at stage ' + stage); if (one || ch >= 6) { L('ALLDONE'); break; } ch++; L('next ch' + (ch + 1)); await beginChapter(ch); lastT = performance.now(); continue; }
         if (busy || frozen || DIR.on || fading || ST.on) continue;
         const P = P_(); if (!P) continue; const a = P.actions.find((x) => x.on());
         if (a) { state.x = a.x; state.z = a.z; update(0.016); a.go(); continue; }
         const n = P.people.find((p) => wantsTalk(p)); if (n) { state.x = n.x + 1.1; state.z = n.z + 0.4; update(0.016); startTalk(n); continue; }
-        if (cur === 'after' && stage === 41) { state.x = P.spots.home[0]; state.z = P.spots.home[1]; update(0.016); }
+        if (cur === 'after' && stage === 51) { state.x = P.spots.home[0]; state.z = P.spots.home[1]; update(0.016); }
       }
     })();
   }
