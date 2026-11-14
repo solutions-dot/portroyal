@@ -7,7 +7,7 @@ Status: all eight chapters are playable from the game menu (the "New" card). Cod
 ## Where things are now
 
 - **Demo scene** (`games/garvey/src/main.js`): a Kingston print shop, about 1907. A fictional printer stands at his type stand and a fictional customer walks through the shop. Both talk (placeholder lines). After you talk to both, you set the type for a notice at the type stand (letters are mirror images, as on real type), press it, and three journal pages open. It is the first slice of chapter 1.
-- **Characters** (`tools/garvey/`): `era.py` makes 1900s clothes (see its README for setup). Two test characters exist: `printer1907` and `woman1914`.
+- **Characters**: 21 bodies, recipes in `tools/garvey/people/`, built by `tools/garvey/era.py` (setup in `tools/garvey/README.md`) and packed into `games/garvey/site/models/`. People in the game follow `docs/PEOPLE.md`; this game's gaps against that standard are in `docs/STANDARD.md` ("Where each game stands"). In the game the Skin material is multiplied by `SKIN_K = 1.2`.
 - **Menu**: the Garvey block links to the game.
 - **One pull request**: all Garvey work goes into one PR that stays open, so there is a single merge to `main` when the owner is ready.
 
@@ -19,6 +19,7 @@ python3 -m http.server 8765                # then open http://localhost:8765/gam
 # ?shot=shop1 ... shop7, talk, strike, type, typedone, journal, chapters, reset, credits, bubble, nudge, hall1 ... hall4, hallchat, hallseat, hallseat2, hallseat3, hallamy, hallwalk (add &t=seconds), street1, street2, streetchat and the press views are views;
 # ?test=walk steps the customer's route; ?auto=1 plays chapter 1 and opens every menu; ?auto=2 plays chapter 2; ?auto=3 checks old saves and replayed choices; ?auto=4 plays chapter 3; ?auto=5 plays chapter 4 (press1 to press3, pagebuild, pagedone, pressback and presschat are its views); ?auto=6 plays chapter 5 (dock1 to dock3, inspect and dockchat are its views); ?auto=7 plays chapter 6 (lib1 to lib3, decl, decldone and libchat are its views); ?auto=8 plays chapter 7 (off1, off2, sort, sortdone, letter and offchat are its views); ?auto=9 plays chapter 8 (park1, park2, time, timedone, answer, journey and parkchat are its views).
 # The result of ?test=walk and ?auto=1 is written to the page title.
+# Checks: ?test=cloth (&b=garvey1914 picks bodies), ?test=skin, and ?test=overlap (also collision, seating: people against furniture). ?test=audit, held and layout are not wired yet (docs/TESTING.md, section 6).
 ```
 
 ### Navigation and menus: the same as Port Royal
@@ -55,7 +56,7 @@ All eight chapters are built, so what remains is quality work, roughly in this o
 1. **Read every line aloud** for the 6+ reading level (a script already flags lines over 12 words; the journal's "Dig deeper" text can be longer). All dialogue is placeholder wording written for this game.
 2. **Check facts against primary sources.** Every date and claim comes from secondary sources (see the research tables). Check the Marcus Garvey and UNIA Papers, then remove the "we still need to check" notes from the journal pages.
 3. **Check places against photographs.** The Kingston shops and hall are built from US printing-office photographs and general knowledge. Harlem, Liberty Hall, the dock and the shrine are also general pictures, not copies of real places.
-4. **Characters.** Rebuilt in November 2026 with the newer clothes builder (`docs/PIPELINE.md`, section 5): collars, ties, lapels, hanging trousers, shoes with soles, smooth hairlines. Marcus Garvey's face, hair and moustache follow a photograph the owner supplied. The student in chapter 8 is a real child body. Still to do: the UNIA uniform and Black Cross Nurses' dress, women's hats in this game, and more varied faces for everyone else.
+4. **Characters.** Rebuilt in November 2026 with the clothes builder (`docs/PIPELINE.md`, section 5; rules in `docs/PEOPLE.md`): collars, ties, lapels, hanging trousers, shoes with soles, smooth hairlines. Marcus Garvey's face, hair and moustache follow a photograph the owner supplied. The student in chapter 8 is a real child body. Still to do: the UNIA uniform and Black Cross Nurses' dress, women's hats in this game, and more varied faces for everyone else. `?test=cloth` printed 7 issues (49 points) on 14 November 2026, mostly trousers through the jacket hem when sitting. The recipes still leave out `era` and give hats and collars the old way (see `docs/STANDARD.md`).
 5. **Sound.** Each place now has its own mix of the engine's beds and one small sound (press thump in the shop and press room, gulls and ship creaks at the dock, birds in the park), set in `SOUNDSCAPE`. Still to do: footsteps that change by floor, and a short music cue at the end of each chapter.
 6. **Third-person view** (V key) and a teen body for the hero.
 7. **Window views.** Most rooms show the same leafy yard through the windows.
@@ -213,7 +214,7 @@ In chapter 3 the words Garvey and the others speak are fictional and credited as
 
 ## Assets the game needs
 
-- Women's characters: `tools/people/npc.py` makes men only. Add dress, blouse, skirt and hat pieces (see PIPELINE.md). Needed in chapters 2, 4, 6, 7.
+- Women's characters: done with `era.py` (`woman`, `highneck`, `skirt`, `bun`): Amy Ashwood, Amy Jacques Garvey, the neighbours, the nurse. Women's hats for this game are still to make.
 - Clothes 1900 to 1930: trousers, waistcoat, jacket, collar and tie, caps and hats. Later the UNIA uniform and the nurses' dress.
 - Places: Kingston timber and brick shops with verandas and zinc roofs; Harlem brownstones and a streetcar; an early-1900s steamer; a printing press; a meeting hall; a Madison Square Garden hall; a courtroom and an office.
 - Props: type cases, newspapers, bundles, ledgers, flags (from 1920).

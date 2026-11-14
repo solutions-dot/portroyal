@@ -41,7 +41,11 @@ JSON fields:
   | `bands` | `true` gives a cravat: a band round the neck, a knot and two ends that lie on the coat |
   | `hairvol` | 0 to 1 |
 
-- `colors`: RGB for Skin, Shirt, Coat, Breeches, Stockings, Shoes, Hat, Hair, Apron, Bands. Every garment you use needs its colour, or the script stops with a KeyError.
+- `colors`: sRGB 0 to 255 for each material: Skin, Hair, Shirt, Coat, Breeches, Stockings, Shoes, Hat, Apron, Bands and so on. Every garment you use needs its colour, or the script stops with a KeyError, except these, which `era.py` fills in when they are left out:
+  - `Sole` (dark brown), `Belt`, `Buttons`, `Buckle`, `Band` (a hat band), `Ribbon` and `Sock` (off-white) have fixed defaults;
+  - `Collar` is the `Shirt` colour, and `Pocket` is the shirt a little darker (`Shirt` x 0.86);
+  - each hat's material (for example `Hat2` in `[["felt", "Hat2"]]`) is the `Hat` colour, and its band is `Band`;
+  - `CoatButtons` is the coat a little darker (1690 coats), and `ShoeBuckle` a dull metal (1690 shoes).
   - **Skin (owner rule 9).** Use a `Skin` colour inside the Marcus Garvey range, about `[134, 90, 64]` to `[156, 108, 80]`, never darker; vary it a little between people. The builders now write linear RGB to a FLOAT_COLOR layer and mark the exported scene with `vertexColorSpace: linear`. Keep that marker when packing. `engine/colours.js` repairs the extra sRGB transfer in older, unmarked character exports once at load time; scenery and textures are untouched. Do not run that repair twice or change the skin recipes to compensate for an export error. Each game can still use its face-lighting material multiplier. Judge faces in game screenshots in daylight, indoors and at night.
 
 Built in, so nothing shows through when the body moves (all of it only for `era` before 1800, so later games build as before):
@@ -70,7 +74,13 @@ All clips are retargeted onto one rig (`shared/rig/char.blend`), so they play on
    - It drops scale tracks, moving-root tracks and fingers 2 to 4, resamples, and compresses with meshopt.
    - Its `UNUSED` set removes clips no game uses; keep it in step with what games call.
    - Check the input and output paths at the top of the file.
-5. Pack it as `shared/models/anims.js` (step 4) and rebuild the games.
+5. Pack it as `shared/models/anims.js` (the base64 one-liner in section 4) and rebuild the games.
+
+**Which clips a game ships.** `games/<game>/anim-clips.json` lists the clips that game plays; `tools/build.mjs` trims the game's copy of the library to them. If a game starts playing a new clip, add its name there, or it will be missing in that game.
+
+**Clips for one game only.** A clip that only one game needs stays out of the shared library, so other games do not change. Tivoli does this: its sources are in `tools/tivoli/anim-sources/`, its list is `tools/tivoli/clips.json`, `tools/anims/retarget_clips.py tools/tivoli/clips.json` retargets them (it writes `build/anims.glb`, so move the shared one aside first), and `node tools/tivoli/pack_clips.mjs` writes `games/tivoli/site/models/anims_tivoli.js`, which the game loads after the shared library. Copy that pattern.
+
+**A new body for Mixamo.** Set top-level `"fbx": true` in a recipe and `era.py` also writes `build/people/<name>_for_mixamo.fbx`, a rest-pose copy with skin to upload to mixamo.com.
 
 ## 3. Buildings, ships, textures: `tools/blender/`
 
@@ -82,21 +92,55 @@ In the game, `TEXMAP` maps material names (Brick, Stone, ClayTile, Wood, Plaster
 
 ## 4. Compress and pack models
 
+**Characters** are always packed with `tools/people/pack.mjs` (section 5). Do not use the commands below for people.
+
+**Buildings, ships and other models** (`tools/blender/` output) are compressed and packed like this:
+
 ```bash
-node tools/optimize_models.mjs --dir games/port-royal/site/models --chars mendes turtler   # writes mendes.m.glb and turtler.m.glb (uses shared/rig/eye_small.jpg for the eyes; without it a character packs to over 1 MB)
-python3 tools/pack_models.py ...                                                           # or the one-liner below
-for n in mendes turtler; do printf '(window.__models=window.__models||{})["%s"]="%s";' $n "$(base64 -w0 games/port-royal/site/models/$n.m.glb)" > games/port-royal/site/models/$n.js; done
+node tools/optimize_models.mjs --dir games/port-royal/site/models h1 h2    # writes h1.m.glb and h2.m.glb next to h1.glb and h2.glb
+python3 tools/pack_models.py ...                                           # or the one-liner below
+for n in h1 h2; do printf '(window.__models=window.__models||{})["%s"]="%s";' $n "$(base64 -w0 games/port-royal/site/models/$n.m.glb)" > games/port-royal/site/models/$n.js; done
 ```
 
-Only the `.js` files are loaded by the game. Keep each character at roughly 300 to 480 KB packed. Port Royal's people are packed with `tools/people/pack.mjs` (section 1), not with the commands above.
+Only the `.js` files are loaded by the game. Check the arguments at the top of `tools/optimize_models.mjs` before you run it (it also has an older `--chars` mode for characters, which `pack.mjs` replaced).
 
-## 5. The clothes builder: `tools/garvey/era.py` (Garvey, Kendal, children, and Port Royal)
+## 5. The clothes builder: `tools/garvey/era.py` (every game's people)
 
-`era.py` builds every body for Marcus Garvey and Kendal 1957 (recipes in `tools/garvey/people/`, `tools/kendal/people/`, `tools/people/kids/`). Set up Blender, MPFB and MakeHuman as in `tools/garvey/README.md`.
+`era.py` builds every body that is built from a recipe: Port Royal (`tools/people/*.json`), Marcus Garvey (`tools/garvey/people/`), Kendal 1957 (`tools/kendal/people/`, including the real child bodies `boy`, `girl` and `girl_small`), Tivoli (`tools/tivoli/people/`), and the recipes waiting to be built for Nanny Town (`tools/nanny/people/`) and Hurricane Melissa (`tools/melissa/people/`). Eventide's three 1980 bodies were built by its own copy, `tools/eventide/people.py`. The rules for every game are in `docs/PEOPLE.md`. Set up Blender, MPFB and MakeHuman as in `tools/garvey/README.md`.
+
+`tools/people/kids/` holds older copies of `boy.json` and `girl.json`. Kendal's copies in `tools/kendal/people/` are the current ones (camp and round collars, a pocket, wider legs); build children from those.
 
 ```bash
-MAKEHUMAN=~/mh/makehuman NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/era.py "$(cat tools/kendal/people/woman57.json)"
+MAKEHUMAN=~/mh/makehuman NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/era.py "$(cat tools/kendal/people/woman57.json)"   # writes build/people/woman57.glb
 node tools/people/pack.mjs --out games/kendal/site/models --lo woman57     # trims, compresses, writes woman57.js and woman57_lo.js
+```
+
+`era.py` settings (environment variables):
+
+| Variable | What it does |
+|---|---|
+| `NPC_OUT` | The folder the `.glb` is written to, ending in `/`. Default `games/port-royal/site/models/`, so always set it to `build/people/`. It also saves `build/people/<name>.blend`. |
+| `MAKEHUMAN` | MakeHuman's inner `makehuman` folder (for the eyes). Default `/tmp/mh/makehuman`. |
+| `FOLDS=1` | Prints how many faces of each piece face the wrong way. |
+| `PROBE` | Debug output used while working on the builder. |
+
+`tools/people/pack.mjs` options:
+
+| Option | What it does |
+|---|---|
+| `--out <folder>` | Where `<name>.js` goes. **Always pass it**: the default is `games/kendal/site/models`, so leaving it out writes into Kendal. |
+| `--src <folder>` | Where the built `.glb` files are read from. Default `build/people`. |
+| `--max <n>` | The most triangles a full body keeps. Default 32,000. |
+| `--lo` | Also writes `<name>_lo.js`, a light copy for crowds and far-off people. |
+| `--lomax <n>` | The triangle target for a light copy. Default 5,900. Pieces that are never simplified (collar, tie, belt, hat, sole and so on) come on top, so real light copies are about 5,900 to 6,300 triangles. |
+| `--cloth <share>` | In a light copy, the share of their triangles the clothes keep (default 0.36, at most about 1,900 cloth triangles in all). |
+
+It prints each body's triangles and size, for example `woman57: 61000 -> 25554 tris, 380 KB; lo 6156 tris, 182 KB`.
+
+`tools/people/fix_colours.mjs` mends a packed body that was built between the two colour fixes (Skin written right, every other colour made linear twice, so far too dark). It undoes the extra step on every piece except Skin, marks the body `vertexColorSpace: linear`, and skips a body that is already marked. With `--skin old=r,g,b new=r,g,b` it also rescales Skin to a new recipe colour, without a rebuild:
+
+```bash
+node tools/people/fix_colours.mjs games/kendal/site/models/boy.js --skin old=150,102,74 new=146,98,72
 ```
 
 What it makes (keys in `garments` unless noted):
@@ -104,18 +148,26 @@ What it makes (keys in `garments` unless noted):
 | Key | What it does |
 |---|---|
 | `trousers`, `shorts`, `legwidth` | Trouser legs hang as tubes from the thigh, with a crease. `shorts` stops above the knee. |
-| `sleeve`, `jacket`, `waistcoat`, `vwaist` | Sleeves hang loose with a cuff. A jacket gets lapels, buttons and a skirt past the hips. |
-| `collar`: `"turn"`, `"stand"`, `"open"` | A collar built round the neck with a yoke under it, so no skin shows between collar and shirt when the body moves. `true` picks by `era` (top-level year). |
+| `sleeve`, `jacket`, `jacketsleeve`, `jackethem`, `waistcoat`, `vwaist` | Sleeves hang loose with a cuff (`sleeve` 0 to 1, default 0.86). A jacket gets lapels, buttons and a skirt past the hips; `jacketsleeve` is how far down the arm its sleeve comes (default 0.9) and `jackethem` moves its hem down (bigger) or up (smaller; default -0.05 after 1800). `vwaist` gives a waistcoat a V opening at the front. |
+| `woman`, `highneck` | `woman` cuts the shirt as a blouse that follows the figure (and leaves off the button band). `highneck` brings the neckline up to the throat. |
+| `scarf` | A neck scarf with a knot at the throat (material `Scarf`). |
+| `collar`: `"turn"`, `"stand"`, `"open"`; `softcollar` | A collar built round the neck with a yoke under it, so no skin shows between collar and shirt when the body moves. `true` picks by `era`: a stiff `stand` collar before 1925, a `turn` collar from 1925 (and also before 1925 when `softcollar` is set). Write the kind, not `true` (`docs/PEOPLE.md`). |
 | `collar`: `"camp"`, `"round"`, `leaf`, `vdepth`, `vslope` | The flat collars of 1950s shirts and blouses (not for 1900 to 1930 people): `camp` is a broad open pointed collar over a narrow V, `round` a flat round collar. `leaf` is how wide the collar lies on the shirt. |
 | `puff`, `sash`, `pocket`, `hang` | Puffed short sleeves, a deep smooth sash (material `Belt`), a chest pocket (material `Pocket`, a clean rectangle), and how far loose cloth hangs from the chest. |
 | `tie`, `buttons`, `belt` | A tie with a knot, a button band, a belt with a buckle (`belt: "always"` keeps it under a waistcoat). |
 | `skirt`, `hem`, `flare`, `pleats` | `hem` 0 is the ankle, 1 the knee. Soft folds deepen toward the hem. |
-| `shoes`, `lowshoes`, `socks` | Shoes with a thin sole joined to the upper. With a skirt the shoe is low cut. `socks` is how far up the shin. |
-| `hat` | One kind, or a list `[[kind, materialName], ...]` so a game can show one and hide the rest. Kinds: `felt`, `flat`, `trilby`, `straw`, `bowler`, `top`, `church`, `pillbox`, `peaked`, `wrap`. |
-| `hair`: `"puffs"`, `"plaits"`, `"afro"`; `bun`, `hairvol`, `recede`, `temples`, `bays`, `fade` | Hair grows from the body's own scalp line and fades into the skin at the edge, so hairlines are smooth. `bays` are receding temples, `fade` cuts the sides short. |
+| `shoes`, `lowshoes`, `socks`, `stockings` | Shoes with a thin sole joined to the upper. With a skirt the shoe is low cut. `socks` is how far up the shin. `stockings` (1690) colours the leg from knee to ankle. |
+| `hat` | One kind, or a list `[[kind, materialName], ...]` so a game can show one and hide the rest. Kinds: `felt`, `flat`, `trilby`, `straw`, `bowler`, `top`, `church`, `pillbox`, `peaked`, `wrap`. `brim` sets the brim width (1 is the wide 1690 brim, about 0.4 a short one). |
+| `hair`: `"puffs"`, `"plaits"`, `"afro"`, `"none"`; `bun`, `hairvol`, `recede`, `temples`, `bays`, `fade` | Hair grows from the body's own scalp line and fades into the skin at the edge, so hairlines are smooth. `bays` are receding temples, `fade` cuts the sides short. |
 | `moustache`, `moustachewidth`, `moustachedroop`, `brows`, `browwide` | A soft moustache that feathers out at its edges; heavier eyebrows. |
 | top-level `targets` | MakeHuman face and body targets by name (for a likeness), `lr-` for both sides. |
+| `apron` | An apron that lies on the trousers, a hand's breadth clear of them, and rides on the thighs. |
+| top-level `era` | The year the person is dressed for. Before 1800 uses the 1690 tailoring (section 1). Left out, it builds as 1915. |
+| top-level `fbx` | `true` also writes `build/people/<name>_for_mixamo.fbx` in the rest pose, to upload to mixamo.com (section 2). |
+| top-level `body` | MakeHuman macros 0 to 1 (`gender`, `age`, `muscle`, `weight`, `height`, `proportions`, `african`, `caucasian`, `asian`; women may also set `cupsize`, `firmness`). |
 | top-level `upscale` | For a child: the body is built at a child's shape, then enlarged so animations fit. The game shrinks it back with `scale`. |
+
+That is every key `era.py` reads. `smooth`, still set in some Garvey and Eventide recipes, is no longer read and does nothing.
 
 Marcus Garvey's face (`garvey1914.json`, `garvey1916.json`) was shaped against a photograph the owner supplied. Check any change to it against that photograph.
 

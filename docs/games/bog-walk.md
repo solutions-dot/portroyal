@@ -27,18 +27,24 @@ These are being developed across the games and are not in `CLAUDE.md` yet. Follo
 
 ## Where things are now
 
-Status: the **first slice is built**: an opening, the inside of the Tube and the night the water came (chapters 2 and 3 of the plan below, with placeholder voices), staged cinematically. Nothing else exists yet: no title-screen chapters menu, journal, saving, people, station yard, flashback or ending scenes.
+Status (checked against the code, November 2026): all six chapters in `src/content.js` are built: the station on Sunday evening, Zeke's story in Kingston in 1899, inside the Tube, the water, the morning after, and the ruins today. There is a chapters menu, a journal and saving (`localStorage`), and people in the places outside the Tube. The people are bodies built for Marcus Garvey (`clerk1919`, `delegate1920`, `engineer1919`, `guide2020`, `hl_pressman`, `hl_woman`, `hl_worker`, `nb_elder`, `nb_seller`, `nb_youth`, `student2020`, `woman1914`), recoloured per person in `src/cast.js`; this game has no recipes of its own yet (to fix, follow `docs/PEOPLE.md` and the checklist in `docs/STANDARD.md`). Skin is lightened by `SKIN_LIGHT = 1.55` (Garvey draws the same bodies at 1.2). Some notes below were written for the first slice and still describe only the Tube.
 
 Code is in `games/bog-walk/`:
 
 | File | What it holds |
 |---|---|
-| `src/main.js` | renderer, the HUD, controls (keys, touch stick, drag to look, tap the rust), the night's phases (`work`, `trickle`, `rise`, `dark`, `out`, `end`), sound mixing, the dev test views and the autoplayer |
+| `src/main.js` | renderer, the HUD, controls (keys, touch stick, drag to look, tap the rust), people (`loadBase`, `makeBody`), places (`BUILD`: station, kingston, yard, ruins), the night's phases (`work`, `trickle`, `rise`, `dark`, `out`, `end`), sound mixing |
+| `src/dev.js` | the dev test views, the automatic checks and the autoplayer (dev builds only) |
+| `src/content.js` | every word outside the Tube's own subtitles: `CHAPTERS`, `GOALS`, `TALK`, `LATER`, `JOURNAL`, `TALK_TARGETS` |
+| `src/cast.js` | `LOOKS`: each person is a shared body plus colours |
+| `src/places.js` | the station, the yard and the ruins (one site at three times) and Kingston in 1899 |
+| `src/props.js`, `src/trains.js`, `src/detail.js`, `src/wgfx.js` | copied from Kendal: props, trains, grass and plants, textures and materials |
+| `src/hand.js`, `src/handmesh.js` | the torch hand in first person (made by `tools/bog-walk/hand_blender.py`) |
 | `src/tube.js` | `buildTube`: the pipe wall (a grid we make so the manhole is a real hole), sand, rivets and flanges (instanced, in 10 m chunks), tools, rust patches, hung torches, the manhole, the rising water; and `makeHand`: the torch and fist in first person |
 | `src/gfx.js` | every texture, drawn in code with a seeded random generator |
 | `src/sfx.js` | the pipe's sounds on top of `engine/audio.js`: a short echo, drips, scraping, voices heard from far off, a torch hissing out, a clank, the water beds |
 | `site/index.html` | the page and its styles (one flex column of words and buttons, so nothing overlaps) |
-| `anim-clips.json` | the 14 shared animation clips this game will use (the build trims `anims.js` to them) |
+| `anim-clips.json` | the 17 shared animation clips this game uses (the build trims `anims.js` to them) |
 
 Measurements that matter (all in `tube.js`): the pipe is 2.44 m across (`R = 1.22`), the sand floor is at `SAND = 0.5`, so the roof is 1.94 m above the floor and your eyes are at 1.45 m. The pipe runs from `ZMIN = -62` to `ZMAX = 14` and the manhole is at `ZM = 7.75`. Anything hung on the wall must stay under the roof (2.44 m up): a first version hung the torches too high and they were hidden behind the wall.
 
@@ -53,12 +59,13 @@ python3 -m http.server 8765                  # then open http://localhost:8765/g
 # ?auto=1 plays the whole night, ?auto=2 presses Skip at the first sign of water, ?auto=3 plays the opening cards by their own timers first. The result is in the page title and in #autolog.
 # The automatic checks (owner rule, docs/TESTING.md section 5). Each writes its lines to #autolog and its count to the page title; every one must report 0:
 #   ?test=audit    AUDIT n   the engine's place audit (floating things, people inside solids, spots that cannot be reached), tools that overlap, and anything hung
-#                            inside the pipe that is really outside its wall (hidden). The Tube has no people yet.
-#   ?test=held     HELD n    the torch in your hand (first person, so no skeleton for the engine's auditHeld): exactly four fingers and one thumb with a nail, every digit on
+#                            inside the pipe that is really outside its wall (hidden), for every place and the Tube.
+#   ?test=held     HELD n    things people carry in every place (the engine's auditHeld), and the torch in your hand: exactly four fingers and one thumb with a nail, every digit on
 #                            the stick, the stick upright, and the hand never overlaps a word or button, runs off the screen, or covers the middle (with and without the black bars)
 #   ?test=layout   LAYOUT n  each interface state in turn (title, work, the water, the dark with the black bars in, the opening card, the end card): nothing overlaps, runs off
 #                            the screen or is clipped; the end card's button and credit link are on top. Run it at 390x800, 667x375, 800x500 and 1280x720.
-#   (?test=resume does not apply yet: this game does not save.)
+#   ?test=resume   every saved stage reloads into the right place.
+#   Not wired yet: ?test=cloth, ?test=walkers, ?test=skin (docs/PEOPLE.md).
 #   node tools/build.mjs bog-walk --dev, then for example:  google-chrome --headless=new --no-sandbox --use-gl=swiftshader --enable-unsafe-swiftshader --window-size=667,375 \
 #     --virtual-time-budget=60000 --dump-dom "http://localhost:8765/games/bog-walk/site/index.html?test=layout" | sed -n '/<pre id="autolog"/,/<\/pre>/p'
 # Proof that the checks can fail: with a flame hung above the roof, a bucket under the manhole, a finger off the stick, a fifth finger, only three fingers, a tipped torch, or

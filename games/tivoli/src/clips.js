@@ -13,9 +13,9 @@ import { CL } from '../../../engine/anim.js';
    Look for these on Mixamo (all "In Place", FBX without skin): the rifle and crouch packs. */
 export const POSES = {
   CrouchIdle:   ['Block',  'Crouched or kneeling behind cover, weapon held low, small breathing. Loops.'],
-  DuckDown:     ['Block',  'Drop quickly from standing to a crouch at a shot. Plays once, ends in CrouchIdle.'],
-  CrouchAim:    ['Point',  'Crouched, weapon raised, aiming over the cover. Loops.'],
-  CrouchFire:   ['Point',  'Crouched, firing over the cover with a small recoil. Short loop.'],
+  DuckDown:     ['Block',  'Drop quickly from standing to a crouch at a shot. Plays once, ends in CrouchIdle.', ['Ducking']],
+  CrouchAim:    ['Point',  'Crouched, weapon raised, aiming over the cover. Loops.', ['ShootRifle']],
+  CrouchFire:   ['Point',  'Crouched, firing over the cover with a small recoil. Short loop.', ['ShootRifle']],
   StandAim:     ['Point',  'Standing, rifle raised, aiming. Loops.', ['ShootRifle']],
   StandFire:    ['Point',  'Standing, firing a rifle with a small recoil. Short loop.', ['ShootRifle']],
   PeekAround:   ['Idle',   'Lean out from a wall corner, look, pull back. Plays once.', ['PeekCorner']],
@@ -24,6 +24,9 @@ export const POSES = {
   ProneFire:    ['Block',  'Lying flat, firing a rifle.', ['ProneFire']],
   ProneTurn:    ['Block',  'Lying flat, turning to the right.', ['ProneTurnR']],
   RunLow:       ['Run',    'Run bent over from one cover to the next. Loops, in place.'],
+  CrouchToStand:   ['Idle', 'Rise from a crouch to standing. Plays once.'],
+  CrouchTurnStand: ['Idle', 'Turn and rise from a crouch. Plays once.'],
+  WalkCrouchR:     ['Walk', 'Walk crouching, moving to the right. Loops, in place.'],
   AdvanceReady: ['Walk',   'Walk with the weapon at the ready, slow and steady. Loops, in place.'],
 };
 /* The owner's Mixamo clips (tools/tivoli/anim-sources/, packed into site/models/anims_tivoli.js by tools/tivoli/pack_clips.mjs):

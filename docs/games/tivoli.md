@@ -5,7 +5,7 @@ Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the plan, the rules 
 - Code: `games/tivoli/` (started from `games/_template/`; see "Code map").
 - **On the menu since 14 November 2026** (the owner's choice), in `games/tivoli/`. The folder used to start with an underscore so `tools/dist.mjs` skipped it.
 - Build: `node tools/build.mjs tivoli --dev`, then open `http://localhost:8765/games/tivoli/site/` (see "Test it").
-- Status (14 November 2026): **scaffold only, with a second research pass done (see "Research").** It builds and runs as the template does. There are no chapters, places, people or journal yet. There is a placeholder pose layer for the gunfight scenes (`src/clips.js`) and a staging view for it.
+- Status (14 November 2026): **two playable parts**: chapter 1 (Back-o-Wall, with Ivy, journal and chapters list) and the May 2010 street scene (from the Chapters list), with 2010 uniforms, weapons, the owner's clips and research. Chapters 2 to 4 and 6 to 8 are not built yet. There is a placeholder pose layer (`src/clips.js`) and a staging view for it.
 
 ## What this game is, and why it needs care
 
@@ -106,7 +106,7 @@ To swap in a real clip:
 2. Add its name to `games/tivoli/anim-clips.json`. Do this only **after** the clip is in the library: the build stops with "clips not in the library" for a name that is missing.
 3. Rebuild. The stand-in drops out by itself. No game code changes.
 
-**The owner's clips (14 November 2026).** Seven Mixamo clips are in `tools/tivoli/anim-sources/`: Shoot_Rifle, Gunplay, Shooting_Pistol, Prone_Firing_Rifle, Prone_Right_Turn, Female_Peek_And_Aim, Femme_Peek_Around_Corner. They are retargeted (`tools/tivoli/clips.json`, `tools/anims/retarget_clips.py`, a few seconds) and packed by `tools/tivoli/pack_clips.mjs` into `games/tivoli/site/models/anims_tivoli.js` (134 KB), which the game loads after the shared library. They are kept apart from the shared library so no other game changes. `StandFire` now plays ShootRifle, `StandAim` and `AimCorner` play PeekAim, `PeekAround` plays PeekCorner, and three new poses use the rest: `PistolFire` (ShootPistol, then Gunplay), `ProneFire`, `ProneTurn`. Still stand-ins: `CrouchIdle`, `DuckDown`, `CrouchAim`, `CrouchFire`, `RunLow`, `AdvanceReady`. The prone clips lie flat on the ground because `groundFeet` drops the body until the toes touch; the hips' height is not kept (`HIPS_Y` in `engine/anim.js` does not list them, and `engine/` is not edited here).
+**The owner's clips (14 November 2026).** Eighteen Mixamo clips are in `tools/tivoli/anim-sources/`: Shoot_Rifle, Gunplay, Shooting_Pistol, Prone_Firing_Rifle, Prone_Right_Turn, Female_Peek_And_Aim, Femme_Peek_Around_Corner, Ducking, Crouch_Idle, Crouched_Run, Crouched_Run_1, Crouch_To_Stand, Crouch_Turn_To_Stand, Walk_Crouching_Right, Run_Forward, Run_Backward, Run_Left, Run_Right. They are retargeted (`tools/tivoli/clips.json`, `tools/anims/retarget_clips.py`, a few seconds) and packed by `tools/tivoli/pack_clips.mjs` into `games/tivoli/site/models/anims_tivoli.js` (about 270 KB), which the game loads after the shared library. They are kept apart from the shared library so no other game changes. Poses: `StandFire`, `StandAim`, `CrouchAim`, `CrouchFire` play ShootRifle; `PeekAround` PeekCorner; `AimCorner` PeekAim (a pistol clip); `PistolFire` ShootPistol or Gunplay; `ProneFire`, `ProneTurn`; `DuckDown` Ducking; `CrouchIdle`; `RunLow` Crouched_Run (a second one, `RunLow2`); `CrouchToStand`, `CrouchTurnStand`, `WalkCrouchR`; and the four rifle runs `RunForward`, `RunBackward`, `RunLeft`, `RunRight`. **The only stand-in left is `AdvanceReady` (Walk)**, and the rifle's low-ready carry (see Weapons) makes a plain Walk look like an advance with the rifle at the ready. The prone clips lie flat on the ground because `groundFeet` drops the body until the toes touch; the hips' height is not kept (`HIPS_Y` in `engine/anim.js` does not list them, and `engine/` is not edited here).
 
 Checks (dev build):
 - `?test=clips` lists the poses that still use a stand-in, in the page title and the console. It must be empty before anything is published.
@@ -138,12 +138,34 @@ node tools/people/pack.mjs --out games/tivoli/site/models --max 30000 --lo soldi
 - Colour by vertex, never by face: per-face colour splits every vertex and doubled the file size.
 - Budget: full bodies about 28,600 triangles and 460 KB; light copies 5,900 to 6,000 triangles. `--max 30000` keeps the full copy under budget.
 - In the game: `games/tivoli/src/cast.js` (Kendal's pattern; `SKIN_LIGHT = 1.55`). View them with `?shot=uniforms` (`&lo` for the light copies).
-- **Rebuild these bodies when the people branch (`claude/affectionate-pasteur-xvhvlq`) is merged**: it changes `era.py`, skin and `SKIN_LIGHT`, and brings `engine/people.js`. Then delete `games/tivoli/src/checks.js` and use the engine's checks.
+- **The people branch is merged (PR 50).** `engine/audit.js` now has `auditCloth` and `auditWalk`, and `engine/skinprobe.js` exists, so `games/tivoli/src/checks.js` can go: switch the imports to the engine and delete it. `engine/people.js` was planned but does not exist; keep Kendal's pattern in `cast.js`. Rebuild these bodies if `era.py` changes the pieces they use. `cast.js` lightens Hair as well as Skin; `docs/PEOPLE.md` says hair keeps its own colour.
 
-Checks (14 November 2026; `games/tivoli/src/checks.js` holds local copies of the people branch's checks, because main's `engine/` does not have them):
+Checks (14 November 2026, measured with the local copies in `games/tivoli/src/checks.js`, before PR 50 merged):
 - `?test=cloth`: 19 issues on 55 points, every one at most 2.8 mm except two single points (one point of shoe through each police boot, from `pack.mjs` simplifying the light copy and from `era.py`'s shoe; one point of skin under the police sleeve when pointing). Most are the harness straps grazing the vest's edges by 1 to 3 mm in different poses. Down from 175 issues on 16,750 points. Not yet 0.
-- `?test=walkers`: shoes sink 4.3 cm walking and 10.3 cm running, the same for both bodies and both copies. That is main's `groundFeet` pinning only the toe joint; the people branch's `engine/anim.js` fixes it ("Pinning only the toe joint let the heel sink 3 to 5 cm"). Nothing in the uniforms causes it.
+- `?test=walkers`: shoes sink 4.3 cm walking and 10.3 cm running, the same for both bodies and both copies. That was the old `groundFeet` pinning only the toe joint. `engine/anim.js` on main now pins the lowest points of the soles, so run it again.
 - `?test=skin`: faces read a warm mid-brown in the template's daylight (soldier mean 99,62,42; police 110,71,49). Judge again in the real places and lighten if they read too dark.
+
+## The street scene (chapter 5, the first playable scene)
+
+Start it from the title screen: "May 2010 street scene (work in progress)". In the dev build, `?scene=fight&at=22&hold` jumps to 22 seconds and freezes there (for pictures).
+
+**How it runs** (`games/tivoli/src/fight.js`; the scene lasts about 50 seconds):
+1. An opt-in card: "Next is a loud scene with gunfire. You watch from a window. No one is shown hurt. It may feel scary." Buttons: Begin, **Read what happened instead** (a plain-words card with the facts and the disagreement), Not now. A **Calm mode** tick box (saved in the browser) makes it quieter, with no bright flashes and no shaking.
+2. Title: "Monday 24 May 2010. A street in West Kingston. It is made up. The day was real." Then a quiet street, soldiers and police walking in file.
+3. At 9 seconds both sides open fire together (the scene never says who fired first). Soldiers and police run to cover (a parked car, low walls, a minibus), kneel, fire and duck. Gunmen are tiny, far away behind the barricade, in plain clothes, and unidentified. Flashes, dust on walls and ground, gunshot sounds made in code, a little shake. **Nobody is hit.** Dust never lands on a person. No blood.
+4. Fade to black with a thin ringing, then the **after card**: "This street is made up. The day was real. About 70 civilians died. Civilians are people who are not soldiers or police. One soldier died too. Soldiers and police said armed men fought them. Many neighbours said they never saw armed men inside. People still disagree. Later chapters look at what was found."
+- You watch from the balcony of a second-floor flat (all shots are from there, with different lenses). You never hold or fire a weapon (rule 4).
+- Everything the people do is general (take cover, fire, duck, move up), not a record of a real event. The street is made up. Every number and claim on the cards comes from the Research tables below.
+
+**Sound** (all made in code, `sfx.js`; there are no recordings): gunshots with a crack, a body and a low thump, and an echo off the buildings (a decaying-noise reverb); far shots softer, duller and later; a footstep tap for runners, louder when near; before the shooting, a breeze, far-off city, now and then a bird and a dog bark; a thin ringing at the end. Calm mode is about a third as loud. Real recordings (gunfire, a Kingston street) would sound better; they would have to be licensed files supplied by the owner.
+
+**Files**: `fight.js` (the people, their steps, the camera shots, the cards), `street.js` (the street), `vehicles.js`, `textures.js`, `fx.js` (flashes, dust, shake, calm mode), `sfx.js` (gunfire sounds), `walk.js` (stride and pace, copied from the people branch).
+
+**The street** (`street.js`, built from code and merged into one mesh per material, with textures mapped by world position): four-storey walk-up flats in faded pastel render with plinths, balconies, railings, burglar bars, louvred windows, window air conditioners, laundry, satellite dishes, black rooftop water tanks and rebar; shops with zinc roofs, roll-down shutters and painted signs (GROCERY, BAR & LOUNGE); a worn asphalt road with patches, cracks, oil, edge lines, a faded zebra crossing, manholes, storm drains; paved pavements with weeds in the joints, kerbs, litter; wooden utility poles with sagging wires and lamps; mango trees and coconut palms; a zinc-fenced vacant lot; a bus shelter; a hazy sky with clouds; hills round Kingston; real sun shadows on computers (phones get none). The barricade at the far end is an overturned minibus, a pushed car, tyres, pallets, planks and rubble. All textures are drawn in code (`textures.js`), so there are no image files.
+- **Vehicles** (`vehicles.js`): a small saloon (like a Toyota Corolla) and a Hiace-style minibus (the common route taxi), each an extruded side profile with wheels and hubs, dark glass, lights, bumpers, mirrors and door lines, plus an "overturned" version. General shapes, not copies of any real vehicle or plate. No military vehicles: nothing read mentions them.
+- **Gunmen** wear plain clothes: the `civilian2010` body (T-shirt and jeans, `tools/tivoli/people/civilian2010.json`, 25,400 triangles, light copy 5,200), tinted per person. They are shown only as light copies, far away.
+
+**Checks wired (CLAUDE.md rule 8)**: `?test=audit` (the street: floating objects, people inside solids; 14 November 2026: **0 issues** after it found and we fixed floating satellite dishes, a floating bus stop sign, lamp arms that did not touch their poles, and people starting on top of each other); `?test=layout` (every card and title state at 390x800, 320x568, 667x375, 800x500, 1280x720: **0 issues**); `?test=held`, `?test=cloth`, `?test=walkers`, `?test=skin` as before.
 
 ## Weapons (Tivoli only)
 
@@ -151,6 +173,7 @@ Checks (14 November 2026; `games/tivoli/src/checks.js` holds local copies of the
 - **Rifle clips** (`ShootRifle`, `ProneFire`, `ProneTurnR`): the grip sits in the right palm and the butt in the right shoulder pocket (a little in front of, inside and below the shoulder joint), which sets the rifle's direction. It never points more than about 11 degrees above level or 30 below (the prone turn lifts the hands). The right palm is turned against the side of the pistol grip. The left arm reaches the handguard by two-bone IK, under it where the clip had the hand along it, palm turned up to cradle it. The neck and head tip (at most about 25 degrees each) to bring the cheek to the stock and the eye behind the rear sight.
 - **Fingers**: the right hand closes into a fist round the grip (index finger curled less, on the trigger); the left wraps the handguard, or the shooting hand in the two-handed pistol clips. Same method as `engine/grip.js`.
 - **Pistol clips** (`ShootPistol`, `Gunplay`, `PeekAim`): the pistol is in the right hand along the forearm. `PeekAim` is a pistol clip (the hands are 13 to 22 cm apart with the arms out), so `AimCorner` is a police pistol pose and `StandAim` uses `ShootRifle`.
+- **Low ready** (`weapon.carry = 'ready'`, set for everyone in the street scene): in any other clip (walking, running, crouching, standing) the rifle is held across the chest, grip low in front of the right side, muzzle about 25 degrees below level, both hands placed by IK, so no clip for "rifle at the ready" is needed. The right palm is turned against the grip; the left hand is under the handguard. The rifle is drawn in towards the left shoulder whenever the handguard would be out of the left arm's reach (the arm is 53 cm; a leaning torso in a run pushed it out), and the IK has a preferred elbow direction for an almost straight arm. `?test=held` checks it in walking, five runs, crouched walk, crouch idle and ducking: all within 0.3 cm on the grip and 0.2 cm on the handguard.
 - **Otherwise** the rifle is slung across the back (muzzle up over the right shoulder) and the pistol is in the holster; the hands relax.
 - Bones this file turns start each frame from the clip's pose; a bone the clip does not move is put back to its pose before our turn, or turns would pile up (they did: the head spun back).
 - `arm(body, 'rifle' | 'pistol')`; `weaponTick(body)` runs in the frame loop for everyone armed (`ARMED`). The player is never armed (rule 4).
@@ -160,7 +183,10 @@ Checks (14 November 2026; `games/tivoli/src/checks.js` holds local copies of the
 
 | File | What it holds |
 |---|---|
-| `src/main.js` | The template's starting point (scene, movement, one talking person), plus the dev-only block `devViews` (`?shot=fight`, `?test=clips`). |
+| `src/main.js` | The template's starting point (scene, movement, one talking person), plus the dev-only block `devViews` (`?shot=fight`, `rifles`, `hands`, `slung`, `uniforms`; `?test=clips`, `measure`, `held`, `cloth`, `skin`, `walkers`). |
+| `src/cast.js` | The uniform bodies (`BODIES`), their looks and `makeBody` (Kendal's pattern) |
+| `src/weapons.js` | The rifle and pistol, and the two-handed hold |
+| `src/checks.js` | Local copies of `auditCloth`, `auditWalk` and `skinProbe` (the engine has them now; delete this file) |
 | `src/clips.js` | `POSES` (real name, stand-in, what it must show), `pose(name)`, `standIns()` |
 | `anim-clips.json` | The clips the build keeps in this game's copy of the animation library: `Idle, Walk, Run, Talk1, Block, Point, Terrified` (214 KB instead of 979 KB) |
 | `site/models/sailor.js` | The template's stand-in character. Tivoli needs its own people (see "What is left"). |
@@ -173,7 +199,7 @@ node tools/build.mjs tivoli --dev          # dev build
 python3 -m http.server 8765                 # then open http://localhost:8765/games/tivoli/site/
 ```
 
-Views: `?shot=fight`, `?test=clips`. The automatic audits and the layout test are **not wired yet** because there are no places. When there are characters, `docs/PEOPLE.md` (on branch `claude/affectionate-pasteur-xvhvlq` until it is merged) also requires `?test=cloth`, `?test=walkers` and `?test=skin`. CLAUDE.md rule 8 says to wire them before the first PR that contains a place (copy the blocks from `games/kendal/src/main.js`, see `docs/TESTING.md` section 5).
+Views: `?shot=fight`, `?test=clips` and the others in the code map. `?test=held`, `?test=cloth`, `?test=walkers` and `?test=skin` are wired. The place audit and the layout test are **not wired yet** because there are no places. CLAUDE.md rule 8 says to wire them before the first PR that contains a place (copy the blocks from `games/kendal/src/main.js`, see `docs/TESTING.md` section 5).
 
 ## Research (14 November 2026: second pass, from primary documents and newspaper archives)
 
@@ -219,6 +245,18 @@ Views: `?shot=fight`, `?test=clips`. The automatic audits and the layout test ar
 | Arrested near Kingston on 22 June 2010 (the US says 22 June; some Jamaican reports say 23 June). On 24 June he waived his extradition hearing in Jamaica and was flown to the US that afternoon. Pleaded guilty on 31 August 2011 to racketeering conspiracy and conspiracy to commit assault with a dangerous weapon in aid of racketeering. Sentenced on 8 June 2012 to 23 years. The US government describes him as leader of the "Shower Posse" ("Presidential Click") and says Tivoli Gardens was "guarded by a group of gunmen" at his direction | Journal only, and the US description is attributed to the US | [US Attorney, SDNY, 8 June 2012](https://www.justice.gov/archive/usao/nys/pressreleases/June12/cokechristophersentencing.html) (O); [JIS](https://jis.gov.jm/coke-waives-right-for-extradition-trial-off-to-the-us/) (O) |
 | A pastor who drove him was convicted in 2016 of attempting to pervert the course of justice | Not used | Gleaner, 24 May 2020 (N) |
 
+### Back-o-Wall and the clearance (third pass, 14 November 2026)
+
+| Fact | Used as | Source (grade) |
+|---|---|---|
+| The larger part of Back-o-Wall was demolished in 1963 to make way for the new low-cost Tivoli Gardens estate. The remainder, at Industrial Terrace, was bulldozed on 12 July 1966. (This is why sources give 1963 or 1966.) | "From 1963", and "the last part on 12 July 1966" | [Gleaner, 16 July 2021, a feature on the 1966 clearance](https://jamaica-gleaner.com/article/esponsored/20210716/crime-being-poor-squatters-sent-packing) (N, a modern feature that reprints 1966 reporting) |
+| July 1966: after fighting in West Kingston (gang warfare that spread to some political clashes; one man killed, about 30 seriously hurt, two police revolvers taken), the Government set a midnight deadline on 11 July. On 12 and 13 July bulldozers cleared Industrial Terrace and part of Foreshore Road; over 800 shanties were pulled down, and when the bulldozer sank on 13 July the rest were set on fire. A 300-strong police detachment stood by and there were no incidents. The churches helped some families find somewhere to stay; others moved to places such as Riverton City and Tower Hill. The Government said Tivoli Gardens would grow on the cleared Industrial Terrace land. | Journal "The clearing" | same Gleaner feature (N) |
+| People still disagree: some say the clearance was needed to stop violence; others that it made many families homeless and spread the trouble | Both views, plainly | same (N) |
+| The size of Back-o-Wall: Edward Seaga said about 1,500 people on 40 acres; the historian Clinton Hutton said about 2,300 huts were bulldozed between 1963 and 1966 | "People disagree about how many." Both figures, attributed. | Gleaner, Tafari-Ama, 2021 (S, opinion, quoting Seaga); [Gleaner via Stabroek News, 2010](https://stabroeknews.com/2010/08/30/news/regional/jamaicans-still-being-forced-to-flee-communities-decades-on) (N, quoting Hutton) |
+| Hutton puts the clearance in the context of Jamaica's housing shortage after independence | Journal | Stabroek News, 2010 (N) |
+| Who lived there: Rastafari and other people (Seaga's description, via a search summary; not read in full). A 2015 Gleaner opinion column says the population was mostly PNP supporters; others say the clearing and rebuilding made a JLP stronghold. | Say only that many Rastafari and other families lived there. Politics are left to a later chapter, as a disagreement. | Not confirmed in a source I read in full. **Needs a primary source.** |
+| Daily life in Back-o-Wall (how people got water, worked, played) | **Nothing is claimed.** The chapter shows general everyday life as the game's own imagining and the journal says so. | Not found. **Needs oral histories or photographs.** |
+
 ### Before 2010: the origins
 
 | Fact | Used as | Source (grade) |
@@ -241,12 +279,16 @@ Real people in the game: none speak. Coke, politicians, commanders, officers and
 2. **The open decision** above (the West Kingston reviewer), and the elder's name and age.
 3. **A reviewer from West Kingston.**
 4. **Characters.** Tivoli needs its own people: the elder, a child, neighbours, police and soldiers in real uniforms, gunmen in everyday clothes. Skin must follow CLAUDE.md rule 9. See `docs/PIPELINE.md`.
-   - **Before adding any character**, run `git fetch --depth=50 origin claude/affectionate-pasteur-xvhvlq` and read `docs/PEOPLE.md` from that branch (`git show origin/claude/affectionate-pasteur-xvhvlq:docs/PEOPLE.md`). Follow it for every person. It may change before it is merged, so read it again at the start of each character session.
-   - **Owner's rules for this work:** put recipes in `tools/tivoli/people/` (one JSON file per body, named after the body); keep all game work inside `games/tivoli/`; do **not** edit `tools/garvey/era.py`, `tools/people/pack.mjs` or anything in `engine/`, because another branch is changing them.
+   - **Before adding any character**, read `docs/PEOPLE.md` and `docs/STANDARD.md` (both on `main`). Follow them for every person.
+   - **Owner's rules for this work:** put recipes in `tools/tivoli/people/` (one JSON file per body, named after the body); keep all game work inside `games/tivoli/`; do **not** edit `tools/garvey/era.py`, `tools/people/pack.mjs` or anything in `engine/`: every game shares them, so a change goes in its own PR for the owner (`docs/STANDARD.md`).
    - **What PEOPLE.md requires, in short:** every recipe sets `era`, `hat` as a list of `[kind, material]` pairs, `collar` as a kind, and `colors` for every garment. Children are real child bodies built with `upscale` (start from Kendal's `boy.json` and `girl.json`). Build with `era.py`, pack with `pack.mjs --out games/tivoli/site/models --lo <name>` (always pass `--out`). Skin follows CLAUDE.md rule 9. Wire `?test=cloth`, `?test=walkers` and `?test=skin` as well as audit, held and layout (see "Test it").
-   - **Open problem (found 14 November 2026):** `era.py` dresses people for about 1900 to 1957 and for 2020. The 1960s chapters can start from the 1957 clothes and the 2010 civilians from the 2020 ones. But 2010 police and soldier kit (uniforms, helmets, vests) is not in `era.py`, and the uniform cap is the only uniform piece. Use plain stand-ins (Kendal's guard uniform recoloured) until the other branch's work lands or the owner says how to proceed. Do not edit `era.py` to fix it.
+   - **Open problem (found 14 November 2026):** `era.py` dresses people for about 1900 to 1957 and for 2020. The 1960s chapters can start from the 1957 clothes and the 2010 civilians from the 2020 ones. But 2010 police and soldier kit (uniforms, helmets, vests) is not in `era.py`, and the uniform cap is the only uniform piece. This game solved it with `tools/tivoli/kit.py`, which adds the 2010 kit on top of an `era.py` body (see "Characters" above). Do not edit `era.py` to fix it.
 5. **Places**: Back-o-Wall, new Tivoli streets and flats, a home interior, a rooftop or window view, the community centre.
-6. **The remaining gunfight clips** (crouch, duck, run low, advance; table above), **weapon props** (rifles and pistols with a two-handed grip: `engine/grip.js` only does one hand, and must not be edited here), flashes and sounds. 
+6. **A proper `AdvanceReady` clip** (a walk with the weapon at the ready; the procedural low-ready carry stands in), **weapon props** (rifles and pistols with a two-handed grip: `engine/grip.js` only does one hand, and must not be edited here), flashes and sounds. 
 7. **Story code**: chapters, journal, goals, saving (copy the patterns from `games/kendal/src/`).
 8. **Wire the automatic audits and layout test** before the first PR that has a place.
-9. **The menu card and the poster**, once the owner decides to publish.
+9. **The poster picture.** The menu card is up (14 November 2026) with a plain green background; there is no `menu/tivoli.jpg` yet.
+
+## STANDARD.md follow-up (14 November 2026)
+
+`docs/STANDARD.md` says: Hair is set to 1, not multiplied (done in `src/cast.js`); do not borrow other games' bodies. Still borrowed: `girl`, `woman_elder`, `man_elder` (Kendal) and `guide2020` (Garvey). They need Tivoli recipes in `tools/tivoli/people/` (Ivy as girl and grandmother, Miss Pearl, Mass Roy, a 2020 guide). The Back-o-Wall place has no `?test=audit` wiring yet.

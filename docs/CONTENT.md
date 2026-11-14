@@ -16,7 +16,7 @@
 ```js
 const KOFI = [
   { who: 'Kofi', text: 'Mind the casks. They are heavy!' },
-  { who: 'Lewis', text: 'Do you work for the merchant?' },
+  { who: 'You', text: 'Do you work for the merchant?' },
   { who: 'Kofi', text: 'No. I am enslaved. A man says he owns me.', unlock: 'kofi' },   // opens a journal page
   { who: 'Abba', text: 'How much change?', choices: [{ t: '6 reales', ok: true }, { t: '4 reales' }] },  // a question; wrong answers grey out
   { who: 'Kofi', anim: 'Wave', text: 'Go well.' },                                    // optional animation for the speaker
@@ -24,8 +24,18 @@ const KOFI = [
 startConvo(KOFI, () => { /* runs after the last line */ });
 ```
 
-- `who` must match a name `speakerModel()` knows, so the right person animates and turns to you.
+- `who` is the name shown above the line. `'You'` marks the player's own lines, which get their own colour (Port Royal also accepts `'Lewis'`). Lines with `choices` are the player's too.
+- **Port Royal:** every other `who` must match a name `speakerModel()` knows, so the right person animates and turns to you.
+- **The later games** (Marcus Garvey, Kendal, Bog Walk, Nanny Town, Eventide, Hurricane Melissa): `who` is only the name shown. The person who animates is the one you are talking to. Use the same name the journal uses ("Mass Dudley", "Gran"), and keep fictional people to first names or nicknames.
 - `unlock: 'id'` opens journal page `id`, with a chime and a toast.
+
+## Where the words live
+
+- **Port Royal:** everything is in `games/port-royal/src/main.js` (`JOURNAL`, the conversations, `MORE`, `CHAPTERS`).
+- **Marcus Garvey:** `games/garvey/src/main.js` (`JOURNAL`, `CHAPTERS`, `GOALS`, `TALK_TARGETS`, `NEXT_AFTER_TALK`, `CHAPTER_END`).
+- **Kendal, Bog Walk, Nanny Town, Eventide, Hurricane Melissa:** `games/<game>/src/content.js` holds every word the player reads: `CHAPTERS`, `GOALS` (one per stage), `TALK` (first conversations, by person id), `LATER` (short later lines), `JOURNAL`, `TALK_TARGETS` (who must be talked to at each stage) and, except Bog Walk, `NEXT_AFTER_TALK` and `CHAPTER_END`. Copy this layout for a new game; Kendal's `docs/games/kendal.md` explains how the stages move.
+
+The examples below are Port Royal's. The fields (`who`, `text`, `unlock`, `choices`, `anim`, `simple`, `deeper`) are the same in every game.
 
 ## Later visits
 
