@@ -1,3 +1,4 @@
+import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/kendal/src/main.js: Kendal 1957, The Excursion Train.
    The story of the Jamaica Railway, from the slow road before it to the Kendal train crash of 1 September 1957 and how it is remembered.
@@ -107,7 +108,7 @@ function makeBody(s) {
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl;
   m.userData.held = []; ctl.mx.update(0);   /* pose the body once, so the grips below are measured on the real hand */
   if (/^Sit/.test(s.anim || '')) m.userData.noGround = true;   /* a seated body is placed on its seat, so the per-frame foot grounding must leave it alone */
-  if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
+  if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.userData.seatAnchor={top:s.seat}; m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
       m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
       if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat (its top is s.seat): the hip joint rides 12 cm above it, whatever the body's size */
   const carry = (bone, o, G) => { if (/Hand$/.test(bone)) grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY || G.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.4, G.lift || 0), straighten: G.straighten ?? 0.8 }); else hold(m, bone, o, G); };   /* in a hand: a real grip (engine/grip.js); on the head: balanced there */
@@ -132,7 +133,7 @@ function spreadOut(P) {
   const r = rng(77), seated = (e) => /^Sit/.test(e.anim || ''), loop = (e) => { if (!e.path) return [[e.x, e.z]]; const pts = []; for (let i = 0; i < e.path.length; i++) { const a = e.path[i], b = e.path[(i + 1) % e.path.length], k = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.5)); for (let j = 0; j < k; j++) pts.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k]); } return pts; };
   const fixed = [], paths = []; for (const p of P.specs.people) { if (p.path) loop(p).forEach((q) => paths.push([q[0], q[1], 0.7])); else fixed.push([p.x, p.z, seated(p) ? 0.4 : 0.7]); } for (const k of P.keepOut || []) fixed.push(k);
   const b = P.bounds, inWall = (x, z) => P.walls.some((w) => x > w[0] - 0.3 && x < w[2] + 0.3 && z > w[1] - 0.3 && z < w[3] + 0.3), keep = [];
-  const free = (pts, walker) => pts.every(([x, z]) => !inWall(x, z) && fixed.every((f) => Math.hypot(f[0] - x, f[1] - z) >= (f[2] < 0.6 ? Math.min(f[2] + 0.2, 0.72) : 0.72)) && (walker || paths.every((f) => Math.hypot(f[0] - x, f[1] - z) >= 0.72)) && Math.hypot(x - P.start.x, z - P.start.z) > 1.4);
+  const free = (pts, walker) => (!walker||!routeIssues('crowd',pts,P.walls,.22).length)&&pts.every(([x, z]) => !inWall(x, z) && fixed.every((f) => Math.hypot(f[0] - x, f[1] - z) >= (f[2] < 0.6 ? Math.min(f[2] + 0.2, 0.72) : 0.72)) && (walker || paths.every((f) => Math.hypot(f[0] - x, f[1] - z) >= 0.72)) && Math.hypot(x - P.start.x, z - P.start.z) > 1.4);
   for (const e of P.specs.extras) {
     if (e.ground > 0 || seated(e)) { keep.push(e); fixed.push([e.x, e.z, 0.5]); continue; }
     let ok = free(loop(e), !!e.path), tries = 0; const x0 = e.x, z0 = e.z, path0 = e.path ? e.path.map((p) => [p[0], p[1]]) : null;
@@ -181,12 +182,19 @@ const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.a
 function npcTick(n, dt) {
   const m = n.m; if (!m || !m.visible) return; if (POSTER) { m.rotation.y = n.ry0; return; }
   const ac = n.ctl, d = Math.hypot(state.x - n.x, state.z - n.z), seated = /^Sit/.test(n.anim || ''), isNear = !n.extra && !seated && ((d < 3.2 && !DEV_NOSTOP) || talkWith === n);
-  if (n.follow && talkWith !== n) { const dx = state.x - n.x, dz = state.z - n.z, dist = Math.hypot(dx, dz); if (dist > 1.5) { const sp = Math.min(2.2, 0.8 + dist * 0.35) * dt; n.x += dx / dist * sp; n.z += dz / dist * sp; if (!n.walking) { n.walking = true; ac.play('Walk'); } faceTo(m, Math.atan2(dx, dz), dt); } else if (n.walking) { n.walking = false; ac.play(null); } m.position.set(n.x, m.userData.ground, n.z); return; }
+  if(n.follow && talkWith!==n){
+    const distance=Math.hypot(state.x-n.x,state.z-n.z);
+    if(distance>1.5){
+      if(!n.followGoal||Math.hypot(state.x-n.followGoal[0],state.z-n.followGoal[1])>.8){n.followGoal=[state.x,state.z];n.followRoute=walkRoute([n.x,n.z],n.followGoal,PL[cur].walls,.22,PL[cur].bounds);}
+      const to=n.followRoute?.[0];if(to){const dx=to[0]-n.x,dz=to[1]-n.z,d=Math.hypot(dx,dz),sp=Math.min(d,(.8+Math.min(1.4,distance*.35))*dt);[n.x,n.z]=slideWalls([n.x,n.z],[n.x+dx/(d||1)*sp,n.z+dz/(d||1)*sp],PL[cur].walls,.22);if(d<.12)n.followRoute.shift();if(!n.walking){n.walking=true;ac.play('Walk');}faceTo(m,Math.atan2(dx,dz),dt);}
+      else if(n.walking){n.walking=false;ac.play(null);}
+    }else if(n.walking){n.walking=false;ac.play(null);}m.position.set(n.x,m.userData.ground,n.z);return;
+  }
   if (!n.path) { if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else if (!n.extra) faceTo(m, n.ry0, dt, 2); return; }
   if (isNear || n.wait > 0) { if (n.walking) { n.walking = false; ac.play(null); } if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else { n.wait -= dt; if (n.wait <= 0) { n.walking = true; ac.play('Walk'); } } return; }
   if (!n.walking) { n.walking = true; ac.play('Walk'); }
   const to = n.path[(n.i + 1) % n.path.length], dx = to[0] - n.x, dz = to[1] - n.z, dist = Math.hypot(dx, dz), sp = 1.1 * dt; faceTo(m, Math.atan2(dx, dz), dt);
-  if (dist <= sp) { n.x = to[0]; n.z = to[1]; n.i = (n.i + 1) % n.path.length; n.wait = 2 + Math.random() * 3; n.walking = false; ac.play(null); } else { n.x += dx / dist * sp; n.z += dz / dist * sp; }
+  if (dist <= sp) { n.x = to[0]; n.z = to[1]; n.i = (n.i + 1) % n.path.length; n.wait = 2 + Math.random() * 3; n.walking = false; ac.play(null); } else { [n.x,n.z]=slideWalls([n.x,n.z],[n.x+dx/dist*sp,n.z+dz/dist*sp],PL[cur].walls,.22); }
   m.position.set(n.x, m.userData.ground, n.z);
 }
 
@@ -349,15 +357,18 @@ function startScene(i, st) {
   if (i === 3) { SFX.mento(false); }
 }
 function chaptersOpen(i) { return i === 0 || best >= DONE[i - 1]; }
+let teacherMode=false;try{teacherMode=localStorage.getItem('kendal-teacher')==='1';}catch{}
 function renderChapters() {
+  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent=teacherMode?'Teacher unlock: on':'Teacher unlock';$('chteachernote').hidden=!teacherMode;
   const ul = $('chlist'); ul.replaceChildren();
-  CHAPTERS.forEach((c, i) => { const open = chaptersOpen(i), dn = best >= DONE[i], li = document.createElement('li'), b = document.createElement('button'); b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !modelsReady;
+  CHAPTERS.forEach((c, i) => { const open = teacherMode || chaptersOpen(i), dn = best >= DONE[i], li = document.createElement('li'), b = document.createElement('button'); b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !modelsReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', c.name], ['st', !modelsReady ? 'Loading' : dn ? 'Done' : 'Play']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
     b.onclick = () => { $('chapters').hidden = true; busy = false; if (!state.started) startGame(true); beginChapter(i); }; li.appendChild(b); ul.appendChild(li); });
   $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = '';
 }
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = panelsOpen(); if (state.started) canvas.focus(); }
+$('chteacher').onclick=()=>{teacherMode=!teacherMode;try{localStorage.setItem('kendal-teacher',teacherMode?'1':'0');}catch{}renderChapters();$('chteacher').focus();};
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
 function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } location.reload(); }
 $('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
@@ -720,7 +731,7 @@ function devViews() {
     (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { const ac = n.m.userData.anim, found = new Set(); for (let pose = 0; pose < 12; pose++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) found.add(l); } for (const l of found) out.push(id + ': ' + l); } }
       const count = out.length; out.unshift('held items: ' + count + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + count; })();
   }
-  if (q.get('test') === 'audit') {   /* ?test=audit&p=road,hill : floating objects, people inside solids, unreachable spots */
+  if (['audit','collision','seating'].includes(q.get('test'))) {   /* ?test=audit&p=road,hill : floating objects, people inside solids, unreachable spots */
     (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); count += r.floating.length + r.inside.length + r.stuck.length; out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
       if (q.get('seats')) out.push(...SEATLOG); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + count; })();
   }

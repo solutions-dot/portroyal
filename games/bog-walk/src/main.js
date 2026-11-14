@@ -1,3 +1,4 @@
+import { grip, gripTick } from '../../../engine/grip.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/bog-walk/src/main.js: Bog Walk 1904: The Tube. The script is docs/games/bog-walk.md, "The build script (agreed with the owner, 13 Nov 2026)".
    Six chapters: the station on Sunday evening (0), Zeke's story of the first electric tram in 1899 (1), inside the Tube (2), the water (3),
@@ -16,7 +17,7 @@ import { G as WG, makeSky, batchStatic } from './wgfx.js';
 import { buildTube, R, SAND, ZMIN, ZMAX, ZM } from './tube.js';
 import { makeHand } from './hand.js';
 import { initTubeSound, setBeds, drip, scrapeSound, voice, hiss, clank, waterStep, heartbeat, boom, airSwell, initWorldSound, setWorld, setMotor, bell, whistle, valveTurn, cheer } from './sfx.js';
-import { ENV, mixEnv, buildStation, buildYard, buildRuins, buildKingston, noticeTex } from './places.js';
+import { ENV, mixEnv, buildStation, buildYard, buildRuins, buildKingston, noticeTex, journeyIcon } from './places.js';
 import { lantern, hold } from './props.js';
 import { makeSmoke } from './trains.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, TALK, LATER, SEEN, SEEN_GROUP, JOURNEY, REPORT, WHY, AFTER, CHOICE_NAMES, JOURNAL } from './content.js';
@@ -264,10 +265,10 @@ function makeBody(s) {
   if (!/^Sit/.test(s.anim || '')) { const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.05; b.renderOrder = 1; m.add(b); }
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl; m.userData.held = []; ctl.mx.update(0);
   if (/^Sit/.test(s.anim || '')) m.userData.noGround = true;
-  if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
+  if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.userData.seatAnchor={top:s.seat}; m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
     m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
     if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat: the hip joint rides 12 cm above it, whatever the body's size */
-  if (s.lamp) { const o = lantern(); hold(m, 'RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
+  if (s.lamp) { const o = lantern(); grip(m,'Right',o,{handleY:o.userData.handleY||.31,scale:.85,lift:.4,straighten:.8}); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
   return m;
 }
 const PL = {}; let cur = 'tube';
@@ -428,8 +429,10 @@ function look(n) {
 const PZ = { done: null, kind: '', i: 0, items: null };
 function openOrder(title, items, prompt, done, { years = false } = {}) {   /* items: [[name, note or year]] in the right order. A wrong pick just says "Not yet. Try again." */
   keys.clear(); Object.assign(PZ, { done, kind: 'order', i: 0, items, years }); $('pztitle').textContent = title; $('pzprog').textContent = prompt; $('pzcard').hidden = true; $('pzlist').replaceChildren(); $('pzlist').hidden = false; $('pzmsg').textContent = 'Which comes first?';
+  const reference=$('pzreference');reference.hidden=years;reference.open=false;$('pzguide').hidden=years;$('pzguide').textContent=years?'':'Board guide: '+items.map(e=>e[0].replace(/^The /,'')).join(' → ');
+  if(!years){const texture=noticeTex(false);$('pzboard').src=texture.image.toDataURL();texture.dispose();$('pzfacts').textContent=items.map(e=>e[1]).join(' ');}
   const tray = $('pztray'); tray.replaceChildren(); const order = items.map((e, i) => i), r = (k) => ((k * 7 + 3) % items.length); order.sort((a, b) => r(a) - r(b));   /* a fixed shuffle, so the board looks the same every time */
-  for (const i of order) { const b = document.createElement('button'); b.className = 'pc'; b.dataset.i = i; b.textContent = items[i][0]; b.onclick = () => pickOrder(b); tray.appendChild(b); }
+  for (const i of order) { const b = document.createElement('button'); b.className = 'pc'; b.dataset.i = i; b.textContent = items[i][0]; if(!years){const img=document.createElement('img');img.src=journeyIcon(i);img.alt='';img.width=96;img.height=77;b.prepend(img);} b.onclick = () => pickOrder(b); tray.appendChild(b); }
   $('pzdone').hidden = true; $('pznext').hidden = true; $('puzzle').hidden = false; tray.firstChild.focus({ preventScroll: true });
 }
 function pickOrder(b) {
@@ -438,7 +441,7 @@ function pickOrder(b) {
   if (PZ.i >= PZ.items.length) { $('pzmsg').textContent = PZ.years ? 'Yes! That is the order it happened.' : 'Yes! That is the journey of the water.'; $('pzdone').hidden = false; $('pzdone').focus({ preventScroll: true }); } else $('pzmsg').textContent = PZ.years ? 'Good. What came next?' : 'Good. ' + it[1] + ' What comes next?';
 }
 function openSort(set, done) {   /* set: { title, prompt, bins: [[key, label]], cards: [[text, key, reply]] } */
-  keys.clear(); Object.assign(PZ, { done, kind: 'sort', i: 0, items: set }); $('pztitle').textContent = set.title; $('pzlist').hidden = true; $('pzcard').hidden = false;
+  $('pzreference').hidden=true;$('pzguide').hidden=true;keys.clear(); Object.assign(PZ, { done, kind: 'sort', i: 0, items: set }); $('pztitle').textContent = set.title; $('pzlist').hidden = true; $('pzcard').hidden = false;
   const tray = $('pztray'); tray.replaceChildren(); for (const [k, label] of set.bins) { const b = document.createElement('button'); b.className = 'pc'; b.dataset.a = k; b.textContent = label; b.onclick = () => answerSort(b); tray.appendChild(b); }
   $('pzdone').hidden = true; $('puzzle').hidden = false; showSortCard();
 }
@@ -495,8 +498,10 @@ function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const P of Object.values(PL)) for (const n of P.people) n.talked = false;
   const di = DONE.indexOf(s); if (di >= 0) doneCh[di] = true; saveGame(); refreshGoal(); if (ON[s]) ON[s]();
 }
-function chapterOpen(i) { return i === 0 || ((i === 1 || i === 2) ? doneCh[0] : doneCh[i - 1]); }   /* Zeke's story (1) is a side path: both it and the Tube (2) open after the station (0) */
+let teacherMode=false;try{teacherMode=localStorage.getItem('bogwalk-teacher')==='1';}catch{}
+function chapterOpen(i) { return teacherMode || i === 0 || ((i === 1 || i === 2) ? doneCh[0] : doneCh[i - 1]); }   /* Zeke's story (1) is a side path: both it and the Tube (2) open after the station (0) */
 function renderChapters() {
+  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent=teacherMode?'Teacher unlock: on':'Teacher unlock';$('chteachernote').hidden=!teacherMode;
   const ul = $('chlist'); ul.replaceChildren();
   CHAPTERS.forEach((c, i) => { const open = chapterOpen(i), dn = doneCh[i], li = document.createElement('li'), b = document.createElement('button'); b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !modelsReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', (i + 1) + '. ' + c.name], ['st', !modelsReady ? 'Loading' : dn ? 'Done' : open ? 'Play' : 'Locked']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
@@ -505,6 +510,7 @@ function renderChapters() {
 }
 function openChapters() { closeJournal(); closeCredits(); keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; if (S.started) canvas.focus(); }
+$('chteacher').onclick=()=>{teacherMode=!teacherMode;try{localStorage.setItem('bogwalk-teacher',teacherMode?'1':'0');}catch{}renderChapters();$('chteacher').focus();};
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
 function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } location.reload(); }
 $('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
@@ -701,7 +707,7 @@ function worldTick(dt, ft) {
   for (const n of P.npcs) npcTick(n, dt);
   near = null; if (S.started && !locked() && !RIDE.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(S.x - n.x, S.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(S.x - a.x, S.z - a.z) < a.r) near = a; }
   const showAct = !!(near && near.go); if ($('act').hidden === showAct) $('act').hidden = !showAct; if (showAct && $('act').textContent !== near.label) $('act').textContent = near.label;
-  for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); }
+  for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); gripTick(n.m); }
   if ((frames & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
   if (P.tick) P.tick(dt, ft); smoke.tick(dt); holdTick(dt);
 }

@@ -1,3 +1,4 @@
+import { anchorSeat } from './placement.js';
 /* engine/anim.js: one Mixamo clip library shared by every character (same skeleton).
    loadClips(gltf) fills CL; animate(model, clipName) gives each person a controller. See docs/ENGINE.md. */
 import * as THREE from 'three';
@@ -36,8 +37,8 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
     get(n) { if (!acts[n]) { const c = clipFor(n); if (!c) return null; acts[n] = mx.clipAction(c); } return acts[n]; },
     play(n, once, hold) { const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
     rest() { this.play(null); },
-    tick(dt) { if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } } };
+    tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } } };
   m.userData.anim = ctl; return ctl; }
 export const grounded = [];
 const TOES = new WeakMap();   /* not in userData: clones copy userData as plain JSON, which would break the bone references */
-export function groundFeet(m) { let t = TOES.get(m); if (!t) { t = ['Left', 'Right'].map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean); TOES.set(m, t); } if (!t.length) return; m.updateMatrixWorld(true); let low = 1e9; for (const b of t) low = Math.min(low, b.getWorldPosition(_gp).y); m.position.y += ((m.userData.ground || 0) + 0.035 - low); }
+export function groundFeet(m) { if(m.userData.seatAnchor){anchorSeat(m);return;} let t = TOES.get(m); if (!t) { t = ['Left', 'Right'].map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean); TOES.set(m, t); } if (!t.length) return; m.updateMatrixWorld(true); let low = 1e9; for (const b of t) low = Math.min(low, b.getWorldPosition(_gp).y); m.position.y += ((m.userData.ground || 0) + 0.035 - low); }

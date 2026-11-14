@@ -162,7 +162,7 @@ export const SEEN_GROUP = { hammond: 'hammond', minister1: 'ministers', minister
 
 /* ---------- the puzzles ---------- */
 /* the notice board, chapter 0: the journey of the water, in order */
-export const JOURNEY = [['The river', 'The Rio Cobre runs down from the hills.'], ['The dam', 'A dam holds the river water back.'], ['The Tube', 'The water runs down the huge pipe.'], ['The wheel', 'The water turns the wheel. The wheel makes the power.'], ['The wires', 'The power runs along wires to Kingston.'], ['The tram', 'The power makes the trams go.']];
+export const JOURNEY = [['The river', 'The Rio Cobre runs down from the hills.', 'river'], ['The dam', 'A dam holds the river water back.', 'dam'], ['The Tube', 'The water runs down the huge pipe.', 'tube'], ['The wheel', 'The water turns the wheel. The wheel makes the power.', 'wheel'], ['The wires', 'The power runs along wires to Kingston.', 'wires'], ['The tram', 'The power makes the trams go.', 'tram']];
 /* the reporter, chapter 4: I saw it, or I heard it */
 export const REPORT = { title: 'What did you see?', prompt: 'Did you see this yourself, or did you hear it?', bins: [['saw', 'I saw it'], ['heard', 'I heard it']], cards: [
   ['Water at my boots', 'saw', 'Yes. You saw this yourself.'],

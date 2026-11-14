@@ -104,3 +104,22 @@ test('animal loft has outward end caps, finite normals and a modest mesh budget'
   const tri=(i)=>{const a=new Vector3().fromBufferAttribute(p,index.getX(i)),b=new Vector3().fromBufferAttribute(p,index.getX(i+1)),c=new Vector3().fromBufferAttribute(p,index.getX(i+2));return b.sub(a).cross(c.sub(a)).normalize();};
   const capStart=index.count-16*6;assert.ok(tri(capStart).x<-.9);assert.ok(tri(index.count-3).x>.9);
 });
+
+import { anchorSeat, segmentHitsWall, slideWalls, walkRoute, routeIssues, furnitureRouteIssues } from '../engine/placement.js';
+test('swept collision catches thin furniture between safe endpoints and keeps sliding along it',()=>{
+  const wall=[.9,-1,1,1];assert.ok(segmentHitsWall([0,0],[2,0],wall,.2));assert.ok(!segmentHitsWall([0,2],[2,2],wall,.2));
+  const p=slideWalls([0,0],[2,.7],[wall],.2);assert.ok(p[0]<=.7);assert.ok(p[1]>.6);assert.equal(routeIssues('person',[[0,0],[2,0]],[wall]).length,2);
+});
+test('a follower detours around furniture while preserving radius clearance',()=>{
+  const walls=[[0,0,1,1]],a=[-1,.5],b=[2,.5],route=walkRoute(a,b,walls,.22,{x0:-3,x1:3,z0:-3,z1:3});
+  assert.ok(route.length>=3);assert.deepEqual(route.at(-1),b);assert.deepEqual(routeIssues('follower',[a,...route],walls,.22,false),[]);
+});
+test('furniture route checks find a missing walking wall and respect rotated empty corners',()=>{
+  const scene=new Scene(),box=new Mesh(new BoxGeometry(2,1,.2),new MeshBasicMaterial());box.rotation.y=Math.PI/4;box.position.y=.5;scene.add(box);const snap=snapMeshes(scene);
+  assert.ok(furnitureRouteIssues('walk',[[-1,0],[1,0]],snap,0,.1,false).length);
+  assert.deepEqual(furnitureRouteIssues('walk',[[.65,.65],[.8,.65]],snap,0,.01,false),[]);
+});
+test('seat anchoring holds pelvis position through animation and movement of its parent',()=>{
+  const train=new Group(),model=new Group(),hips=new Bone();hips.name='mixamorigHips';model.add(hips);train.add(model);model.userData.seatAnchor={x:1,z:2,top:.5,ry:Math.PI};
+  for(const y of [.7,.5,.63]){hips.position.set(.1,y,.2);anchorSeat(model);const p=hips.getWorldPosition(new Vector3());train.worldToLocal(p);assert.ok(Math.abs(p.x-1)<1e-6);assert.ok(Math.abs(p.z-2)<1e-6);assert.ok(Math.abs(p.y-.62)<1e-6);train.position.x+=3;train.rotation.y+=.2;}
+});

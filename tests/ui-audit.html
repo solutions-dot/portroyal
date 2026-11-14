@@ -12,6 +12,11 @@ const scroll=make('div','','left:10px;top:180px;width:300px;height:30px;overflow
 checks.push(['clipped scroll content is not visible overlap',!contentsOverlap(hidden,outside)]);
 const one=make('button','One','left:400px;top:20px;width:80px'),two=make('button','Two','left:450px;top:20px;width:80px');
 checks.push(['overlapping tap areas are detected',contentsOverlap(one,two)]);
+const details=make('details','','left:400px;top:140px;width:200px');
+const summary=document.createElement('summary');summary.textContent='Reference';details.append(summary);
+const folded=make('p','Hidden reference facts','left:0;top:30px',details),referenceButton=make('button','Choice','left:400px;top:170px');
+checks.push(['closed reference text is not painted overlap',!contentsOverlap(folded,referenceButton)]);
+details.open=true;checks.push(['opening the reference restores real overlap checks',contentsOverlap(folded,referenceButton)]);
 const failed=checks.filter(([,ok])=>!ok);document.title=failed.length?'FAIL '+failed.map(([label])=>label).join('; '):'PASS '+checks.length+' layout regressions';
 const out=document.createElement('pre');out.textContent=JSON.stringify(checks);document.body.append(out);
 </script>

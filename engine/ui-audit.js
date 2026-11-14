@@ -1,6 +1,8 @@
 // Test painted text, not the unused padding of a heading or paragraph. Buttons
 // still use their whole hit area. Clip text to scroll containers as the browser does.
 export function contentRects(el) {
+  if(el.closest('[hidden]'))return [];
+  for(let p=el;p;p=p.parentElement)if(p.matches('details:not([open])')){const summary=p.querySelector(':scope > summary');if(!summary||!summary.contains(el))return [];}
   let rects;
   if (el.matches('button,a,input,select')) rects = [el.getBoundingClientRect()];
   else {
