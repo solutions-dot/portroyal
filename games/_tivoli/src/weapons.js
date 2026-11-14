@@ -25,14 +25,18 @@ function rifleGeo() {   /* an M16A2, about 1 m: a side profile (stock, receiver,
   Butt plate 33 cm behind the grip, handguard from 12 to 42 cm ahead of it (measured clips: palm to shoulder 36 to 40 cm, palm to palm 31 to 34 cm). */
   if (RIFLE_GEO) return RIFLE_GEO;
   const P = [[-0.33, -0.045], [-0.12, 0.03], [-0.035, 0.03], [-0.055, -0.07], [-0.03, -0.078], [-0.005, 0.0], [0.0, -0.012], [0.055, -0.012], [0.062, 0.022],
-    [0.072, 0.022], [0.098, -0.13], [0.142, -0.118], [0.125, 0.022], [0.135, 0.042], [0.135, 0.095], [0.105, 0.095], [0.1, 0.132], [-0.062, 0.132], [-0.072, 0.095],
+    [0.072, 0.022], [0.125, 0.022], [0.135, 0.042], [0.135, 0.095], [0.105, 0.095], [0.1, 0.132], [-0.062, 0.132], [-0.072, 0.095],
     [-0.12, 0.092], [-0.33, 0.082]];   /* [z, y] round the outline */
   const sh = new THREE.Shape(); P.forEach(([z, y], k) => (k ? sh.lineTo(z, y) : sh.moveTo(z, y))); sh.closePath();
   const body = new THREE.ExtrudeGeometry(sh, { depth: 0.022, bevelEnabled: true, bevelThickness: 0.003, bevelSize: 0.003, bevelSegments: 1, curveSegments: 1 });
   body.translate(0, 0, -0.011); body.rotateY(-Math.PI / 2);   /* the shape was drawn in x (here z) and y; turn it so the outline's x runs along +z */
   const sight = new THREE.ExtrudeGeometry(new THREE.Shape([new THREE.Vector2(0.43, 0.062), new THREE.Vector2(0.475, 0.062), new THREE.Vector2(0.462, 0.122), new THREE.Vector2(0.452, 0.122)]), { depth: 0.012, bevelEnabled: false });
   sight.translate(0, 0, -0.006); sight.rotateY(-Math.PI / 2);
-  const g = mergeGeometries([body.toNonIndexed(), sight.toNonIndexed(), tube(0.024, 0.3, 0, 0.062, 0.27, 16).toNonIndexed(), tube(0.0085, 0.22, 0, 0.062, 0.53).toNonIndexed(), tube(0.011, 0.05, 0, 0.062, 0.655).toNonIndexed(), box(0.03, 0.006, 0.05, 0, 0.096, 0.02).toNonIndexed()]);
+  /* the magazine: a thin curved 30-round box (3.2 cm front to back, 1.9 cm wide, 14 cm long), swept forward at the bottom */
+  const MP = [[0.074, 0.022], [0.108, 0.022], [0.113, -0.04], [0.121, -0.1], [0.131, -0.132], [0.099, -0.128], [0.09, -0.1], [0.082, -0.04]];
+  const msh = new THREE.Shape(); MP.forEach(([z, y], k) => (k ? msh.lineTo(z, y) : msh.moveTo(z, y))); msh.closePath();
+  const mag = new THREE.ExtrudeGeometry(msh, { depth: 0.016, bevelEnabled: true, bevelThickness: 0.0015, bevelSize: 0.0015, bevelSegments: 1 }); mag.translate(0, 0, -0.008); mag.rotateY(-Math.PI / 2);
+  const g = mergeGeometries([body.toNonIndexed(), mag.toNonIndexed(), sight.toNonIndexed(), tube(0.024, 0.3, 0, 0.062, 0.27, 16).toNonIndexed(), tube(0.0085, 0.22, 0, 0.062, 0.53).toNonIndexed(), tube(0.011, 0.05, 0, 0.062, 0.655).toNonIndexed(), box(0.03, 0.006, 0.05, 0, 0.096, 0.02).toNonIndexed()]);
   g.computeVertexNormals(); return (RIFLE_GEO = g);
 }
 function pistolGeo() {   /* a black semi-automatic pistol: slide and frame, grip, trigger guard. Origin: the hand on the grip. */
@@ -148,7 +152,7 @@ function tickWeapon(body, w, mode, m) {
     place(m, R, aimOf(R, pocket), up, new THREE.Vector3(0, -BUTT.y, -BUTT.z), new THREE.Vector3(0, 1, 0)); m.updateMatrixWorld(true);
     /* left hand: under the handguard, where along it the clip put the hand (17 to 40 cm ahead of the grip), palm turned up to cradle it */
     const inv = new THREE.Matrix4().copy(m.matrixWorld).invert(), Lw = palm(body, 'Left', _b), Ll = Lw.clone().applyMatrix4(inv), z = Math.max(0.17, Math.min(0.4, Ll.z));
-    const want = new THREE.Vector3(0, SUPPORT.y - 0.024 - 0.016, z).applyMatrix4(m.matrixWorld), rifleUp = new THREE.Vector3(0, 1, 0).transformDirection(m.matrixWorld);
+    const want = new THREE.Vector3(0, SUPPORT.y - 0.024 - 0.004, z).applyMatrix4(m.matrixWorld), rifleUp = new THREE.Vector3(0, 1, 0).transformDirection(m.matrixWorld);
     for (let k = 0; k < 2; k++) { palmTo(body, 'Left', rifleUp); const off = palm(body, 'Left', V()).sub(wpos(bone(body, 'LeftHand'))); reach(body, 'Left', want.clone().sub(off)); }
     palmTo(body, 'Left', rifleUp);
     /* cheek to the stock: tip the neck and head (at most about 25 degrees each) so the eye comes down behind the rear sight */
