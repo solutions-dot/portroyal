@@ -296,7 +296,7 @@ function spreadOut(P) {
   const b = P.bounds, inWall = (x, z) => P.walls.some((w) => x > w[0] - 0.3 && x < w[2] + 0.3 && z > w[1] - 0.3 && z < w[3] + 0.3), keep = [];
   const free = (x, z) => !inWall(x, z) && fixed.every((f) => Math.hypot(f[0] - x, f[1] - z) >= Math.max(0.72, f[2])) && Math.hypot(x - P.start.x, z - P.start.z) > 1.4;
   for (const e of P.specs.extras) {
-    if (seated(e)) { keep.push(e); fixed.push([e.x, e.z, 0.5]); continue; }
+    if (seated(e) || e.fixed) { keep.push(e); fixed.push([e.x, e.z, 0.5]); continue; }
     let ok = free(e.x, e.z), tries = 0; const x0 = e.x, z0 = e.z;
     while (!ok && tries++ < 40) { e.x = Math.max(b.x0, Math.min(b.x1, x0 + (r() - 0.5) * 2 * (1 + tries * 0.12))); e.z = Math.max(b.z0, Math.min(b.z1, z0 + (r() - 0.5) * 2 * (1 + tries * 0.12))); ok = free(e.x, e.z); }
     if (ok) { keep.push(e); fixed.push([e.x, e.z, 0.72]); }
@@ -564,7 +564,7 @@ function startScene(i, st) {
   const id = CH_PLACE[i], P = PL[id]; S.started = true; N.phase = 'world';
   if (i === 0) { P.setPower(1); P.notice.material.map = noticeTex(st >= 14); P.notice.material.needsUpdate = true; P.valve.rotation.z = 0; showPerson(byId('zeke'), st < 14); showPerson(byId('zekeV'), st >= 14); enterPlace(id, { env: st >= 14 ? ENV.night : ENV.dusk }); setClock(st >= 14 ? 'Midnight' : 'Evening'); }
   if (i === 1) { P.car.position.x = st >= 22 ? -20 : -46; enterPlace(id); $('exit').hidden = false; for (const n of P.extras) n.ctl.play(null); }
-  if (i === 4) { P.train.position.z = -44; showPerson(byId('ivy'), st >= 53); enterPlace(id, { env: st >= 52 ? ENV.morning : ENV.dawn }); }
+  if (i === 4) { P.train.position.z = P.spots.trainStart; showPerson(byId('ivy'), st >= 53); enterPlace(id, { env: st >= 52 ? ENV.morning : ENV.dawn }); }
   if (i === 5) enterPlace(id);
   showHint(); setStage(st);
 }
@@ -637,7 +637,7 @@ ON[53] = () => { showPerson(byId('ivy'), true); };
 ON[54] = async () => {   /* a whistle: the special train comes in at ten to twelve with coffins for the men; the scene fades */
   const P = PL.yard; if (cur !== 'yard') return; frozen = true; bars(true); whistle(1.4); turnTo(28, -6, 1.8); const tr = P.train, a = envNow;
   await wait(1.0); say('', 'A train whistle.', 2600);
-  const ok = await tween(10, (k, dt) => { tr.position.z = -44 + (P.spots.trainStop + 44) * (1 - Math.pow(1 - k, 2)); setEnv(mixEnv(a, ENV.day, k)); if (Math.random() < dt * 4) { const c = new THREE.Vector3(); (tr.children[0].userData.chimney || tr).getWorldPosition(c); smoke.emit(c, new THREE.Vector3(0.3, 1.4, 0.2), { size: 0.8, grow: 3, life: 3, opacity: 0.45 }); } });
+  const ok = await tween(10, (k, dt) => { tr.position.z = P.spots.trainStart + (P.spots.trainStop - P.spots.trainStart) * (1 - Math.pow(1 - k, 2)); setEnv(mixEnv(a, ENV.day, k)); if (Math.random() < dt * 4) { const c = new THREE.Vector3(); (tr.children[0].userData.chimney || tr).getWorldPosition(c); smoke.emit(c, new THREE.Vector3(0.3, 1.4, 0.2), { size: 0.8, grow: 3, life: 3, opacity: 0.45 }); } });
   if (!ok) return; whistle(0.6); say('', 'A special train came at ten to twelve. It brought coffins for the men.', 6000); await wait(6.2);
   fadeTo('#000', 1, 1600); await wait(1.8); frozen = false; bars(false); fadeTo('#000', 0, 0); unlock('paper', true); cue('sad');
   card('The morning after', ['The company paid for the burials and helped families.', 'Many people still felt someone had made a mistake.'], [{ t: 'Go on', go: () => { hideCard(); setStage(55); } }]);
@@ -766,7 +766,15 @@ function tick(dt, clockDt = dt) {
   if (MODE === 'tube') { const nearP = !locked() && !!nearPatch(); if (N.phase !== 'shot') { if ($('act').hidden === nearP) $('act').hidden = !nearP; if (nearP && $('act').textContent !== 'Scrape') $('act').textContent = 'Scrape'; } }   /* test views and checks set the Scrape button themselves */
   else { sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110); for (const o of [sky.dome, sky.stars, sky.clouds]) o.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380); bubbleTick(time); }
 }
-function render() { hand.setPanelOpen(!$('pick').hidden); renderer.render(scene, camera); }
+/* people outside the view are not drawn: their meshes are hidden (not the group, which the game logic reads) until they are back in the frustum. A body is about 10k triangles and
+   several draw calls, so with 30 people in a place this is the biggest saving on a phone. Off in the automatic checks, which read the real visibility. */
+const _fr = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sp = new THREE.Sphere(), _sv = new THREE.Vector3(), NOCULL = __DEV__ && !!q.get('test');
+function cullBodies() {
+  const P = P_(); if (!P || NOCULL) return; camera.updateMatrixWorld(); _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _fr.setFromProjectionMatrix(_pm);
+  for (const n of P.npcs) { const m = n.m; if (!m.visible) continue; if (!m.userData.cullList) { const l = []; m.traverse((o) => { if (o.isMesh && o.visible) l.push(o); }); m.userData.cullList = l; m.userData.inView = true; }
+    const on = _fr.intersectsSphere(_sp.set(_sv.set(m.position.x, m.position.y + 0.9, m.position.z), 1.7)); if (m.userData.inView !== on) { m.userData.inView = on; for (const o of m.userData.cullList) o.visible = on; } }
+}
+function render() { hand.setPanelOpen(!$('pick').hidden); cullBodies(); renderer.render(scene, camera); }
 function frame(t) { if (!manual) requestAnimationFrame(frame); const elapsed = Math.max(0, (t - last) / 1000), dt = Math.min(0.05, elapsed); last = t;
   // Keep walking and water simulation bounded, but do not stretch chapter fades
   // on slower phones. Bound long pauses too, so returning to a tab stays gentle.

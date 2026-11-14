@@ -10,11 +10,11 @@ const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(
 /* grass tufts: three crossed cards of thin blades, lit like the ground, in many shades of green and straw. Real size: a tuft is ankle to shin high.
    Every instanced plant is marked userData.veg, so the place audit can check that none grows inside a building (P.indoor). */
 let _tuftGeo, _tuftMat;
-export function grassField(parent, area, n, { seed = 1, clear = [], h = 0.3, w = 0.42, tint = 0xc4cc9a, vary = 0.22, y = 0 } = {}) {
+export function grassField(parent, area, n, { seed = 1, clear = [], h = 0.34, w = 0.5, tint = 0xc4cc9a, vary = 0.22, y = 0 } = {}) {
   if (!_tuftGeo) { const pos = [], nor = [], uv = [], idx = []; let off = 0;
     for (let k = 0; k < 3; k++) { const a = new THREE.PlaneGeometry(1, 1); a.translate(0, 0.5, 0); a.rotateY(k * Math.PI / 3); for (let i = 0; i < a.attributes.position.count; i++) { pos.push(a.attributes.position.getX(i), a.attributes.position.getY(i), a.attributes.position.getZ(i)); nor.push(0, 1, 0); uv.push(a.attributes.uv.getX(i), a.attributes.uv.getY(i)); } for (const i of a.index.array) idx.push(i + off); off += a.attributes.position.count; }
     _tuftGeo = new THREE.BufferGeometry(); _tuftGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); _tuftGeo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); _tuftGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); _tuftGeo.setIndex(idx);
-    _tuftMat = new THREE.MeshLambertMaterial({ map: T.tuft(), alphaTest: 0.45, side: THREE.DoubleSide }); }
+    _tuftMat = new THREE.MeshLambertMaterial({ map: T.tuft(), alphaTest: 0.5, side: THREE.DoubleSide }); _tuftMat.map.generateMipmaps = true; }
   const r = rng(seed), im = new THREE.InstancedMesh(_tuftGeo, _tuftMat, n); let k = 0, tries = 0;
   while (k < n && tries++ < n * 6) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]); if (inClear(x, z, clear)) continue; const sc = 0.6 + r() * 0.8; M4.compose(V.set(x, y, z), Q.setFromEuler(E.set(0, r() * 6.28, 0)), S.set(w * sc * (0.8 + r() * 0.5), h * sc, w * sc)); im.setMatrixAt(k, M4); C.set(tint).offsetHSL((r() - 0.5) * 0.05, (r() - 0.5) * 0.16, (r() - 0.5) * vary); im.setColorAt(k, C); k++; }
   im.count = k; im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.userData.noBatch = true; im.userData.veg = true; im.frustumCulled = false; parent.add(im); return im;
