@@ -1,0 +1,372 @@
+/* games/nanny/src/content.js: everything people read. Plain words for ages 6 and up; harder detail goes in "Dig deeper".
+   Rules (see docs/CONTENT.md and docs/games/nanny.md): lines of about 12 words or fewer, one idea each; no em dashes.
+   Every journal page says where its facts come from: written records, Maroon tradition, or fiction made for this game.
+   Nanny never speaks: nobody wrote down her words. Kromanti ceremonies and the Bump Grave are not shown. The word "obeah" is not used. */
+
+/* ---------- chapters: the title card and the place caption of each ---------- */
+export const CHAPTERS = [
+  { year: 'About 1730', name: 'The night road', title: 'About 1730', sub: 'A night walk to the mountains.', caption: 'A sugar estate in eastern Jamaica, about 1730' },
+  { year: 'About 1730', name: 'The hill town', title: 'Nanny Town', sub: 'High in the Blue Mountains.', caption: 'Nanny Town, about 1730' },
+  { year: 'About 1731', name: 'The watchers', title: 'About 1731', sub: 'The lookout above the path.', caption: 'The watch rock, about 1731' },
+  { year: 'About 1731', name: 'The narrow path', title: 'The narrow path', sub: 'Soldiers are climbing the mountain.', caption: 'The path below the town' },
+  { year: '1734', name: 'The guns in the night', title: '1734', sub: 'The night the town was taken.', caption: 'Nanny Town, 1734' },
+  { year: '1740 and today', name: 'The paper', title: '5 August 1740', sub: 'A new town, and a paper with her name.', caption: 'New Nanny Town, 1740' },
+];
+
+/* ---------- goals: one short sentence each. A function gets the live counters. ---------- */
+export const GOALS = {
+  10: () => 'Talk to Mama and Quamin.',
+  11: () => 'Follow Quamin along the cane field.',
+  12: () => 'Cross the cart road when the lantern is far away.',
+  13: () => 'Follow Quamin over the stream and up the hill.',
+  14: () => 'Talk to Quamin at the top.',
+  15: () => 'Well done! Next, the hill town.',
+  20: () => 'Climb the narrow path to the town.',
+  21: () => 'Talk to Auntie Mimba, Cubbenah and Beneba.',
+  22: (P) => `Help Auntie Mimba plant yams: ${P.yam || 0} of 3.`,
+  23: () => 'Go to Cubbenah and learn the horn.',
+  24: () => 'Talk to Auntie Mimba.',
+  25: () => 'Well done! Next, the watchers.',
+  30: () => 'Talk to Quamin and Cubbenah at the watch rock.',
+  31: () => 'Look out over the valley from the rock.',
+  32: () => 'Pass the horn call on.',
+  33: (P) => `Set forked sticks by the trenches: ${P.fork || 0} of 3.`,
+  34: () => 'Talk to Mama at the top of the path.',
+  35: () => 'Well done! Next, the narrow path.',
+  40: () => 'Talk to Cubbenah behind the rock.',
+  41: () => 'Take your place behind the rock.',
+  42: () => 'Stay low. Blow the call when Cubbenah nods.',
+  43: () => 'Talk to Cubbenah and Mama.',
+  44: () => 'Well done! Next, three years later.',
+  50: () => 'Talk to Mama.',
+  51: (P) => `Wake the houses on your row: ${P.door || 0} of 3.`,
+  52: () => 'Talk to Beneba.',
+  53: () => 'Find little Phibba by the cotton tree.',
+  54: () => 'Take Phibba to the back trail.',
+  55: () => 'Talk to Mama on the ridge.',
+  56: () => 'Well done! Next, six years later.',
+  60: () => 'Talk to Mama, Cubbenah and Beneba.',
+  61: () => 'Look at the paper on the flat stone.',
+  62: () => 'Talk to Beneba. Play her game.',
+  63: () => 'Answer the last question.',
+  64: () => 'You finished the story. Thank you for playing! Read your journey in the Journal.',
+};
+export const TALK_TARGETS = { 10: ['mama', 'quamin'], 14: ['quamin'], 21: ['mimba', 'cubbenah', 'beneba'], 24: ['mimba'], 30: ['quamin3', 'cubbenah3'], 34: ['mama3'], 40: ['cubbenah3'], 43: ['cubbenah3', 'mama4'], 50: ['mama5'], 52: ['beneba5'], 53: ['phibba'], 55: ['mama5b'], 60: ['mama6', 'cub6', 'beneba6'], 62: ['beneba6'] };
+export const NEXT_AFTER_TALK = { 10: 11, 14: 15, 21: 22, 24: 25, 30: 31, 34: 35, 40: 41, 43: 44, 50: 51, 52: 53, 53: 54, 55: 56, 60: 61, 62: 63 };
+export const CHAPTER_END = { 15: 0, 25: 1, 35: 2, 44: 3, 56: 4 };   /* the last stage of each chapter but the final one, and the index of the chapter it ends */
+
+/* ---------- conversations: TALK[id](story) gives the first, full conversation; LATER[id](story) gives short lines for later visits ---------- */
+const Y = 'You', MA = 'Mama', QU = 'Quamin', MI = 'Auntie Mimba', CU = 'Cubbenah', BE = 'Beneba', PH = 'Phibba';
+export const TALK = {
+  /* ===== chapter 1: the night road, about 1730 ===== */
+  mama: () => [
+    { who: MA, text: 'Hush, child. Tonight we walk.' },
+    { who: Y, text: 'Where are we going, Mama?' },
+    { who: MA, text: 'Up to the mountains. To people who live free.' },
+    { who: MA, text: 'Here we are enslaved. We are forced to work.', unlock: 'enslaved' },
+    { who: MA, text: 'We are not free to leave. So we go at night.' },
+    { who: MA, text: 'Stay close to me. Stay quiet.' },
+  ],
+  quamin: () => [
+    { who: QU, text: 'I am Quamin. I come from the hill town.' },
+    { who: Y, text: 'Is it far?' },
+    { who: QU, text: 'It is a long, steep walk. I know the way.' },
+    { who: QU, text: 'My people are called Maroons.', unlock: 'maroons' },
+    { who: QU, text: 'A watchman walks the cart road with a lantern.' },
+    { who: QU, text: 'When his light comes near, wait in the dark.' },
+    { who: QU, text: 'Follow me. Walk where I walk.' },
+  ],
+  quaminTop: () => [
+    { who: QU, text: 'Look. Morning is coming.' },
+    { who: QU, text: 'Those are the Blue Mountains.', unlock: 'mountains' },
+    { who: Y, text: 'They are so high!' },
+    { who: QU, text: 'High and steep. That keeps us safe.' },
+    { who: QU, text: 'Hear that horn? They know we are coming.' },
+  ],
+  /* ===== chapter 2: Nanny Town, about 1730 ===== */
+  mimba: () => [
+    { who: MI, text: 'Welcome, child. You walked a long way.' },
+    { who: MI, text: 'This is Nanny Town.', unlock: 'town' },
+    { who: Y, text: 'There are so many houses!' },
+    { who: MI, text: 'More than one hundred and forty.' },
+    { who: MI, text: 'Here nobody owns you. Here everybody works.' },
+    { who: MI, text: 'Come and help me plant, later.' },
+  ],
+  cubbenah: () => [
+    { who: CU, text: 'You climbed the path. Good legs!' },
+    { who: Y, text: 'It is so narrow.' },
+    { who: CU, text: 'Two people cannot walk it side by side.', unlock: 'path' },
+    { who: CU, text: 'That is why the town is here.' },
+    { who: CU, text: 'I keep the horn. I will teach you.' },
+  ],
+  beneba: () => [
+    { who: BE, text: 'Are you new? I am Beneba.' },
+    { who: BE, text: 'I was born on a Tuesday. That is my name.', unlock: 'names' },
+    { who: Y, text: 'I came with my Mama, at night.' },
+    { who: BE, text: 'I will show you everything!' },
+    { who: BE, text: 'The gardens, the big cotton tree, the high rock.' },
+  ],
+  mimbaYam: () => [
+    { who: MI, text: 'Good work. Yams feed us for many months.', unlock: 'food' },
+    { who: MI, text: 'We grow plantains too. The hunters bring wild hog.' },
+    { who: MI, text: 'Now go and find Cubbenah. He has the horn.' },
+  ],
+  cubHorn: () => [
+    { who: CU, text: 'Well blown! The horn talks across the valleys.', unlock: 'horn' },
+    { who: CU, text: 'Our lookouts use it to warn the town.' },
+    { who: CU, text: 'Look up there. On the high rock.' },
+  ],
+  mimbaWork: () => [
+    { who: MI, text: 'That was Nanny. She leads this town.', unlock: 'nanny' },
+    { who: Y, text: 'Everybody stopped to look.' },
+    { who: MI, text: 'We trust her. She keeps us free.' },
+    { who: MI, text: 'In this town, everyone has work.' },
+    { who: MI, text: 'What work would you like, child?', choices: [
+      { t: 'Watch from the high rock.', set: { job: 'watch' }, then: [{ who: MI, text: 'Good. Sharp eyes keep us safe.' }] },
+      { t: 'Help in the gardens.', set: { job: 'garden' }, then: [{ who: MI, text: 'Good. Full bellies keep us strong.' }] },
+      { t: 'Carry messages.', set: { job: 'run' }, then: [{ who: MI, text: 'Good. Quick feet keep us together.' }] } ] },
+  ],
+  /* ===== chapter 3: the watch rock, about 1731 ===== */
+  quamin3: () => [
+    { who: QU, text: 'From here we see the whole valley.' },
+    { who: QU, text: 'Our lookouts sit far below, by the trails.' },
+    { who: QU, text: 'They give us hours of warning.', unlock: 'sentries' },
+    { who: Y, text: 'Warning of what?' },
+    { who: QU, text: 'Soldiers. They have come before.' },
+  ],
+  cubbenah3: (s) => [
+    { who: CU, text: s.job === 'watch' ? 'You chose the watch. I am glad.' : 'Today you watch with me.' },
+    { who: CU, text: 'Keep the horn ready, little one.' },
+    { who: CU, text: 'If a call comes, we pass it on.' },
+    { who: CU, text: 'Go to the edge. Look out over the valley.' },
+  ],
+  cubRelay: () => [
+    { who: CU, text: 'Hear them? The whole mountain knows now.' },
+    { who: CU, text: 'The soldiers are still hours away.' },
+    { who: CU, text: 'Take forked sticks down to the trenches.', unlock: 'trenches' },
+  ],
+  mama3: () => [
+    { who: MA, text: 'The little ones and the elders go up the back trail.' },
+    { who: MA, text: 'I will go with them.' },
+    { who: Y, text: 'I want to stay with Cubbenah.' },
+    { who: MA, text: 'Then stay behind the rock. Stay low.' },
+    { who: MA, text: 'Here. Put on this cloak of leaves.', unlock: 'leaves', give: 'cloak' },
+  ],
+  /* ===== chapter 4: the narrow path, about 1731 ===== */
+  cub4: () => [
+    { who: CU, text: 'They are on the path now.' },
+    { who: CU, text: 'Do not be afraid. We know this mountain.' },
+    { who: CU, text: 'When I nod, blow the call.' },
+  ],
+  cub4b: () => [
+    { who: CU, text: 'They have gone back down the mountain.' },
+    { who: CU, text: 'You blew that horn well.' },
+    { who: Y, text: 'Will they come again?' },
+    { who: CU, text: 'Yes. They will come again.', unlock: 'attacks' },
+  ],
+  mama4: () => [
+    { who: MA, text: 'You are safe! Let me look at you.' },
+    { who: MA, text: 'Today nobody in our town was lost.' },
+    { who: MA, text: 'It is not always so, child.' },
+    { who: Y, text: 'I know, Mama.' },
+  ],
+  /* ===== chapter 5: 1734 ===== */
+  mama5: () => [
+    { who: MA, text: 'Wake up, child! The horn!' },
+    { who: MA, text: 'Soldiers are on the path. Very many.' },
+    { who: MA, text: 'This time they carry small cannon.' },
+    { who: Y, text: 'What do we do?' },
+    { who: MA, text: 'We leave. A town is its people.' },
+    { who: MA, text: 'Wake the houses on our row. Quickly!' },
+  ],
+  beneba5: () => [
+    { who: BE, text: 'I cannot find Phibba! My little sister!' },
+    { who: Y, text: 'I will help you look.' },
+    { who: BE, text: 'She hides by the cotton tree when she is scared.' },
+  ],
+  phibba: () => [
+    { who: PH, text: 'The noise is too big.' },
+    { who: Y, text: 'Hold my hand. We will go together.' },
+    { who: PH, text: 'Will you stay with me?' },
+    { who: Y, text: 'All the way.' },
+  ],
+  mama5b: () => [
+    { who: MA, text: 'Look back, child. Only once.' },
+    { who: Y, text: 'Our house is burning.' },
+    { who: MA, text: 'Houses can be built again.' },
+    { who: MA, text: 'We are alive. We are together.' },
+    { who: Y, text: 'Where will we go?' },
+    { who: MA, text: 'Deeper into the mountains. Then we build.', unlock: 'rebuilt' },
+  ],
+  /* ===== chapter 6: New Nanny Town, 5 August 1740 ===== */
+  mama6: () => [
+    { who: MA, text: 'Six years since the old town. You have grown!' },
+    { who: MA, text: 'We built again, here by the river.' },
+    { who: Y, text: 'Is the fighting over?' },
+    { who: MA, text: 'Yes. Peace was made last year.', unlock: 'treaty' },
+  ],
+  cub6: () => [
+    { who: CU, text: 'Now my horn calls people to meet.' },
+    { who: CU, text: 'The peace has rules. Some are hard.' },
+    { who: CU, text: 'We must send back people who escape to us.' },
+    { who: Y, text: 'What happens to them?' },
+    { who: CU, text: 'They are taken back to the estates.' },
+    { who: CU, text: 'It is a hard rule. People still argue about it.' },
+  ],
+  beneba6: () => [
+    { who: BE, text: 'Phibba is taller than me now!' },
+    { who: BE, text: 'A paper has come. It has Nanny’s name on it.' },
+    { who: BE, text: 'It lies on the flat stone. Come and see.' },
+  ],
+  sort: () => [
+    { who: BE, text: 'Let us play a game. How do we know things?', unlock: 'sources' },
+    { who: BE, text: 'A paper gave Nanny 500 acres. How do we know?', choices: KNOW('paper') },
+    { who: BE, text: 'The path was too narrow for two people. How do we know?', choices: KNOW('paper') },
+    { who: BE, text: 'Nanny caught bullets and sent them back. How do we know?', choices: KNOW('told') },
+    { who: BE, text: 'Pumpkin seeds fed the town in a week. How do we know?', choices: KNOW('told'), unlock: 'stories' },
+    { who: BE, text: 'You led Phibba up the back trail. How do we know?', choices: KNOW('game') },
+    { who: BE, text: 'Cubbenah taught you the horn. How do we know?', choices: KNOW('game') },
+    { who: BE, text: 'Good! Now you know how to ask.' },
+  ],
+};
+/* the three answers of Beneba's game; `ok` marks the right one. A wrong pick goes grey and you try again. */
+function KNOW(right) { return [{ t: 'It was written down.', ok: right === 'paper' }, { t: 'Maroon families tell it.', ok: right === 'told' }, { t: 'It is fictional, for this game.', ok: right === 'game' }]; }
+
+export const LATER = {
+  mama: () => ['Stay close to me.', 'Quiet now, child.'],
+  quamin: () => ['Walk where I walk.', 'Watch for the lantern.'],
+  quaminTop: () => ['The town is up there, in the mist.', 'Not far now.'],
+  mimba: (s) => [s.job === 'garden' ? 'My best helper! The yams are growing.' : 'The yams are growing well.', 'Everybody works here. Everybody eats.'],
+  cubbenah: () => ['Hold the horn steady. Breathe slow.', 'The path is steep. That is good for us.'],
+  beneba: () => ['Race you to the cotton tree!', 'Did you see the high rock?'],
+  quamin3: () => ['I am watching the river trail.', 'Hours of warning. That is our gift.'],
+  cubbenah3: () => ['Eyes on the valley.', 'Listen for the far horns.'],
+  mama3: () => ['Stay low. I will see you after.', 'Keep that cloak on.'],
+  mama4: () => ['Come here, child. Stay near me.', 'You were brave today.'],
+  mama5: () => ['Quickly, child!', 'No time. Wake them!'],
+  beneba5: () => ['Please find her!', 'By the cotton tree. Look there.'],
+  phibba: () => ['I am holding your hand.', 'Do not let go.'],
+  mama5b: () => ['Houses can be built again.', 'We walk at first light.'],
+  mama6: () => ['A new town. The same people.', 'The river sings here.'],
+  cub6: () => ['Peace has rules. Some are hard.', 'I still keep the horn.'],
+  beneba6: () => ['Come and see the paper!', 'Do you want to play again? Ask me.'],
+};
+
+/* ---------- narration: short lines shown during scenes ---------- */
+export const SAY = {
+  follow: 'Quamin moves like a shadow. Follow him.',
+  road: 'The cart road. A lantern swings in the dark.',
+  roadWait: 'Wait in the shadows. Let the light pass.',
+  roadGo: 'Now! Cross while the light is far.',
+  roadSeen: 'Too close! Back into the shadows.',
+  roadDone: 'Across. The cane is behind you now.',
+  stream: 'Cold water. Step from stone to stone.',
+  climb: 'The trail climbs into the forest. Fireflies blink.',
+  dawn1: 'The sky turns from black to rose.',
+  dawn2: 'Mountain after mountain, as far as you can see.',
+  dawn3: 'Far above, a horn calls.',
+  pathUp: 'One path. Steep, and no wider than you.',
+  townIn: 'Smoke from cook fires. Voices. A town in the sky.',
+  yam: ['You press a yam top into the mound.', 'Two planted. One more.', 'Three yam hills, ready to grow.'],
+  nanny1: 'Everyone turns toward the high rock.',
+  nanny2: 'A woman stands there, looking over the valley.',
+  nanny3: 'That is Nanny. Her people call her Granny Nanny.',
+  look1: 'Mist fills the valley like a white sea.',
+  look2: 'Far down, something moves. A thin red line.',
+  look3: 'Soldiers. A far horn has seen them too.',
+  relay: 'Listen to the call. Then blow it back.',
+  answer: 'Horns answer from every ridge.',
+  fork: ['A forked stick, to rest a gun on.', 'Two set. One more.', 'Three trenches ready.'],
+  cloak: 'Leaves on your back. You look like a bush.',
+  f1: 'The forest is still. Not a leaf moves.',
+  f2: 'They come up the path, one by one.',
+  f3: 'A drum taps. A trumpet calls.',
+  f4: 'Cubbenah nods.',
+  f5: 'Horns answer from every side. Not a person can be seen.',
+  f6: 'The soldiers stop. They look up into the trees.',
+  f7: 'Smoke and thunder. Stay low!',
+  f8: 'Cubbenah nods again.',
+  f9: 'The bush falls away. The hillside is full of people.',
+  f10: 'The soldiers turn. They go back down the mountain.',
+  f11: 'The path is empty. Birds begin to sing.',
+  n1: 'The horn again. Close, and fast.',
+  door: ['A voice answers. "We are coming!"', 'Feet on the floor. A door opens.', 'The last house is awake.'],
+  n2: 'A boom shakes the hill. Then another.',
+  n3: 'Go! Up the back trail!',
+  n4: 'Behind you, the night glows orange.',
+  n5: 'People climb in a long line, quiet and quick.',
+  n6: 'The sun comes up over the ridge.',
+  n7: 'Far below, soldiers stand in an empty town.',
+  t1: 'Six years later. A new town, by a river.',
+  t2: 'Today, the town is called Moore Town.',
+};
+
+/* ---------- cards ---------- */
+export const CARDS = {
+  fight: { title: 'The narrow path', paras: ['The next part is loud, and it may be scary.', 'It shows a fight from far away. Nobody is hurt on the screen.'], go: 'Begin', skip: 'Read what happened instead' },
+  fightRead: { title: 'What happened', paras: ['Soldiers climbed the narrow path in a single line.', 'Horns called from every side, but nobody could be seen.', 'Guns fired from the bush. Then the hillside filled with people.', 'The soldiers went back down the mountain.'], go: 'Go on' },
+  fightEnd: { title: 'The soldiers went back', paras: ['This fight is fictional. It shows how a fight on the path may have gone.', 'Soldiers really did attack Nanny Town in 1730, 1731 and 1732.', 'In this war people were hurt and killed, on both sides. We do not show that.'], go: 'Go on' },
+  guns: { title: 'The guns in the night', paras: ['The next part is loud, and it may be scary.', 'You will hear cannon and see fire far away. Nobody is hurt on the screen.'], go: 'Begin', skip: 'Read what happened instead' },
+  gunsRead: { title: 'What happened', paras: ['In 1734 soldiers dragged small cannon up the narrow path.', 'They fired on the town and burnt many houses.', 'In this game, your family climbs the back trail and gets away.'], go: 'Go on' },
+  real1734: { title: 'What really happened in 1734?', paras: ['Soldiers took Nanny Town in 1734. That is sure.', 'A planter wrote, almost 60 years later, that many people were killed.', 'One historian has argued that fewer than ten died. Another account says the town was already empty.', 'We do not know what happened to every family. We do know the people built again.'], go: 'Go on' },
+  paper: { title: 'The paper', paras: ['Letters patent dated 5 August 1740', '"granted unto Nanny a free Negroe and the people under command her & their heirs & Assigns for ever a parcell of land containing 500 acres in the parish of Portland."', 'These are the real words, from a clerk’s short copy. The spelling is his.'], go: 'Close' },
+  today: { title: 'Today', paras: ['Nanny is a National Hero of Jamaica. She is the only woman among the seven.', 'Her people’s town is now called Moore Town. Maroons still live there.', 'Nobody knows what she looked like. But her name is not forgotten.'], go: 'Go on' },
+  why: { title: 'Why do we remember Nanny?', paras: ['There is no wrong answer. Choose the one you feel most.'], choices: [['lead', 'She led her people.'], ['free', 'She helped keep them free.'], ['story', 'Her people kept her story.']] },
+  end: { title: 'The end', paras: ['Nanny and her people kept a free town in the mountains.', 'Much of their story was never written down. Maroon families kept it.', 'Thank you for playing. You can read your journey in the Journal.'] },
+};
+export const CHOICE_NAMES = {
+  job: { watch: 'In Nanny Town you chose to watch from the high rock.', garden: 'In Nanny Town you chose to help in the gardens.', run: 'In Nanny Town you chose to carry messages.' },
+  why: { lead: 'You said we remember Nanny because she led her people.', free: 'You said we remember Nanny because she helped keep them free.', story: 'You said we remember Nanny because her people kept her story.' },
+};
+
+/* ---------- the horn calls. L is a long note, S a short one. These calls are fictional: the real ones belong to the Maroons. ---------- */
+export const CALLS = { well: { name: 'All is well', notes: 'LL' }, come: { name: 'Come home', notes: 'SSL' }, danger: { name: 'Soldiers on the trail', notes: 'LSS' }, ready: { name: 'Be ready', notes: 'SLS' }, now: { name: 'Now!', notes: 'SSS' }, all: { name: 'All together', notes: 'LLS' } };
+
+/* ---------- the journal. simple: for everyone. deeper: for older readers and teachers, with where each fact comes from. ---------- */
+export const JOURNAL = [
+  { id: 'you', title: 'You in this game', simple: ['You are fictional.', 'You are a child who walks to Nanny Town.', 'Mama, Quamin and the people you talk to are fictional too.', 'Nanny, her town and the soldiers were real.'],
+    deeper: ['We know very little about any one family in Nanny Town.', 'So this game follows a fictional family through real events.', 'Each page says what comes from written records, what Maroon families tell, and what is fictional.'] },
+  { id: 'enslaved', title: 'Enslaved', simple: ['Enslaved means forced to work, unpaid, and not free to leave.', 'In Jamaica, very many African people were enslaved on sugar estates.', 'Some escaped to the mountains.'],
+    deeper: ['The English took Jamaica from Spain in 1655.', 'People who had been enslaved by the Spanish went into the eastern mountains. So did some Taino people, who lived in Jamaica first.', 'Later, more people escaped from the estates and joined them.', 'The estate, the watchman and the night walk in this game are fictional.'] },
+  { id: 'maroons', title: 'The Maroons', simple: ['Maroons were people who escaped slavery and lived free in the mountains.', 'They built their own towns and grew their own food.', 'In the east were the Windward Maroons. In the west were the Leeward Maroons.'],
+    deeper: ['Nanny’s people were Windward Maroons, in the Blue Mountains of Portland.', 'Cudjoe led the Leeward Maroons.', 'Maroon towns are still there today: Moore Town, Charles Town, Scott’s Hall and Accompong.'] },
+  { id: 'mountains', title: 'The Blue Mountains', simple: ['The Blue Mountains are the highest mountains in Jamaica.', 'They are often covered in mist.', 'Steep ridges and thick forest made them hard to reach.'],
+    deeper: ['Blue Mountain Peak is 2,256 metres high.', 'In 2015 the Blue and John Crow Mountains became a World Heritage Site. One reason was the Maroon trails, towns and hiding places.', 'We do not know which plants grew at Nanny Town. The forest in this game is a general picture.'] },
+  { id: 'town', title: 'Nanny Town', simple: ['Nanny Town was high in the Blue Mountains, in Portland.', 'It was about 2,000 feet up.', 'At its biggest it had more than 140 houses.'],
+    deeper: ['These facts come from the Jamaica National Heritage Trust.', 'The town was built in the 1720s. The English did not find it until 1728.', 'No drawing of the town survives. Our huts are a guess.', 'Sources do not agree which river ran below the town, so we do not name one.'] },
+  { id: 'path', title: 'The only path', simple: ['One steep, rocky path led up to the town.', 'It was too narrow for two people side by side.'],
+    deeper: ['A planter named Bryan Edwards wrote this in a book printed in 1793.', 'That was almost 60 years later. He took the planters’ side.', 'His words: "not wide enough to admit the passage of two persons abreast".'] },
+  { id: 'names', title: 'Day names', simple: ['Many people in Jamaica then had Akan day names.', 'A day name tells the day of the week you were born.', 'Quamin is a boy born on Saturday. Beneba is a girl born on Tuesday.'],
+    deeper: ['The Akan people live in what is now Ghana.', 'Edward Long printed the boys’ names in 1774. Later lists give the girls’ names.', 'Cudjoe is Monday. Cubbenah is Tuesday. Quao is Thursday. Mimba is a Saturday girl. Phibba is a Friday girl.', 'Quamin, Mimba, Cubbenah, Beneba and Phibba in this game are fictional.'] },
+  { id: 'food', title: 'Food in the hills', simple: ['Maroons grew yams and plantains.', 'They hunted wild hogs.', 'They cooked the meat slowly over a fire. This is called jerk.'],
+    deeper: ['Soldiers who came to a Windward town in 1739 saw yams and plantains growing.', 'A writer named Dallas wrote in 1803 of "jerked hog broiling" at a Maroon camp.', 'We have no list of healing plants from that time, so the game names none.'] },
+  { id: 'horn', title: 'The horn', simple: ['Maroons used a cow horn to send messages across the valleys.', 'Today it is called the abeng.', 'Different calls meant different things.'],
+    deeper: ['In 1739 a soldier named Thicknesse heard Maroon horns answer all around him.', 'He wrote that "not a man of them was to be seen".', 'Dallas wrote in 1803 that each person had a call of their own.', 'The calls in this game are fictional. The real ones belong to the Maroons.'] },
+  { id: 'nanny', title: 'Nanny', simple: ['Nanny led the Windward Maroons of this town.', 'Maroons call her Granny Nanny.', 'Nobody wrote down her words. So in this game she does not speak.'],
+    deeper: ['Maroon tradition says she came from the Akan people, and was a healer and a leader in war.', 'We do not know when she was born or when she died.', 'Nobody drew her from life. Nobody knows what she looked like.', 'So this game only shows her from far away.'] },
+  { id: 'sentries', title: 'Hours of warning', simple: ['Maroon lookouts watched the trails far below.', 'They could give five or six hours of warning.'],
+    deeper: ['Thicknesse wrote this about a Windward town he visited in 1739.', 'That town was led by Quao. It was not Nanny Town.', 'We use it to show how a mountain town kept watch.'] },
+  { id: 'trenches', title: 'Trenches on the path', simple: ['In 1739 a Windward path had holes dug beside it.', 'A forked stick stood by each hole, to rest a gun on.'],
+    deeper: ['Thicknesse and Dallas both wrote about these.', 'The holes were about four feet deep.', 'They wrote about Quao’s town. We do not know if Nanny Town had them.'] },
+  { id: 'leaves', title: 'Dressed in leaves', simple: ['Maroons tell that their fighters dressed in leaves and branches.', 'They stood so still that they looked like trees.'],
+    deeper: ['This is Maroon tradition. It is not in the papers written at the time.', 'Thicknesse did write that Maroons hid in thick bush in 1739.', 'They cut the bush away, and the hillside was covered with people.'] },
+  { id: 'attacks', title: 'The attacks', simple: ['Soldiers attacked Nanny Town in 1730, 1731 and 1732.', 'They attacked several times in 1734.', 'The fight in this game is fictional. It shows how such a fight may have gone.'],
+    deeper: ['The years come from the Jamaica National Heritage Trust.', 'We do not know how each attack went.', 'People were hurt and killed in this war, on both sides. The game does not show that.', 'The government sent British soldiers, local militia, and armed Black men it had hired.'] },
+  { id: 'fall', title: '1734: the town is taken', simple: ['In 1734 soldiers took Nanny Town.', 'They came up the only path with small cannon, called swivel guns.', 'Many houses were burnt.'],
+    deeper: ['Bryan Edwards wrote that Captain Stoddart led the attack, and that many people were killed.', 'He wrote almost 60 years later. One historian has argued that fewer than ten died. We have not read that study ourselves.', 'Another account says the town was already empty when soldiers came in December 1734.', 'In this game your family gets away. We do not know what happened to every family.'] },
+  { id: 'rebuilt', title: 'They built again', simple: ['The people of Nanny Town did not give up.', 'They went deeper into the mountains.', 'Later they came back and built houses again.'],
+    deeper: ['The Jamaica National Heritage Trust says the Maroons rebuilt the burnt houses.', 'The fighting went on for about four more years.', 'Maroon tradition says Nanny went on leading her people.'] },
+  { id: 'treaty', title: 'Peace in 1739', simple: ['In 1739 the Maroons and the British made peace.', 'Cudjoe made peace for the Leeward Maroons on 1 March 1739.', 'Quao made peace for the Windward Maroons later that year.'],
+    deeper: ['The treaties gave the Maroons land.', 'Cudjoe’s treaty said his people were free for ever.', 'In return, Maroons had to send back people who escaped from the estates.', 'That part is still painful. Maroons today do not all agree about it.', 'Maroon families tell this history in more than one way.'] },
+  { id: 'patent', title: 'The paper with her name', simple: ['On 5 August 1740 a paper gave land to Nanny and her people.', 'It gave them 500 acres in Portland.', 'It is the only paper from the time that names her as a leader.'],
+    deeper: ['The words on the stone are real. They come from a clerk’s short copy of the paper.', 'It calls her "Nanny a free Negroe" and speaks of "the people under command her".', 'The copy is kept in the National Archives in Britain. We have not seen the full paper.', 'An older paper, from 1733, says a man was rewarded for killing a woman called Nanny. If it meant her, it was wrong: this paper names her seven years later.', 'The land was given under a law made to bring white settlers to Jamaica.'] },
+  { id: 'sources', title: 'How do we know?', simple: ['Some things were written down long ago.', 'Some things are told by Maroon families, parent to child.', 'Some things in this game are fictional.', 'It helps to know which is which.'],
+    deeper: ['Most papers were written by soldiers and planters. They were on the other side.', 'Maroons kept their own history by telling it.', 'When the two do not agree, this game says so.'] },
+  { id: 'stories', title: 'Stories of Nanny', simple: ['Maroons tell many stories about Nanny.', 'One says she caught bullets and sent them back.', 'One says her pumpkin seeds grew in a week and fed her people.'],
+    deeper: ['These are tradition, handed down by Maroon families.', 'They are not in the papers written at the time.', 'They show how much she means to her people.'] },
+  { id: 'hero', title: 'National Hero', simple: ['Nanny is a National Hero of Jamaica.', 'She is the only woman among the seven National Heroes.', 'Her picture is on the 500 dollar note.'],
+    deeper: ['She was named a National Hero in the 1970s. Most sources say 1975.', 'The note came out in 1994.', 'Its picture was drawn by an art student in 1976. Nobody knows what Nanny really looked like.'] },
+  { id: 'mooretown', title: 'Moore Town today', simple: ['Nanny’s people built New Nanny Town.', 'Today it is called Moore Town.', 'Maroons still live there. Their leader is called the Colonel.'],
+    deeper: ['Each October, on National Heroes Day, Moore Town keeps Nanny Day.', 'In 2008 UNESCO, part of the United Nations, listed the Maroon heritage of Moore Town.', 'Some Maroon ceremonies are private. This game does not show them.'] },
+  { id: 'journey', title: 'Your journey', simple: ['You finished the story.'], deeper: ['Your choices did not change what really happened. They show how you took part in it.'] },
+];
