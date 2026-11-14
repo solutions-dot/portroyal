@@ -113,6 +113,7 @@ Then open `http://localhost:8765/games/nanny/site/`.
   - `?test=held`: horns, muskets and the lantern are at the hand and clear of the body, standing and walking.
   - `?test=layout`: at 390x800, 667x375, 800x500 and 1280x720. It includes the horn panel and the "Stay low" button.
   - `?test=resume`: saved stages resume in the right place.
+  - `?test=walkers`: people who walk do not bounce, float or sink (the lowest toe stays on the ground, and the body does not jump against the ground between steps), the guide is never behind you, and a follower does not shuffle stop-start. A run is allowed more rise and fall than a walk.
 - `npm test` includes two tests of the land code (`tests/regressions.mjs`).
 - Reading level: `node tools/nanny/readcheck.mjs games/nanny/src/content.js` flags dialogue and narration over 12 words, long goals and journal lines, dashes, and journal pages that are repeated or missing. Run it after editing any text.
 - The menu poster `menu/nanny.jpg` comes from `?shot=poster` at 1280 by 720.
