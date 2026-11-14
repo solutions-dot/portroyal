@@ -309,8 +309,9 @@ def pose_thumb(x):
     for n, a, b in ((n2, x[3], x[4]), (n3, x[5], 0)):
         bd = TAIL(n) - HEAD(n); bd /= np.linalg.norm(bd); lat = np.cross(bd, p); lat /= np.linalg.norm(lat)
         LOCAL[n] = rotm(lat, a, HEAD(n)) @ (rotm(bd, b, HEAD(n)) if b else np.eye(4))
-def thumb_cost(x, verbose=False):
-    pose_thumb(x); M = mats()
+TLIM = np.array([0.6, 0.6, 0.5, 0.6, 0.25, 0.5])   # how far each thumb joint may turn (radians): the roll about the thumb's own axis (x[4]) and the tip bend (x[5]) are kept small,
+def thumb_cost(x, verbose=False):                    # so the thumb is a natural, nearly straight thumb with no twist and no hooked tip
+    x = np.clip(x, -TLIM, TLIM); pose_thumb(x); M = mats()
     P = skin(SK, thI, M); d = radial(P, C) - RM
     pen = np.sum(np.minimum(0, d + PRESS) ** 2) * 4e7
     P3 = P[np.isin(thI, th3)]; P2 = P[np.isin(thI, th2)]
@@ -318,12 +319,12 @@ def thumb_cost(x, verbose=False):
     c2 = (radial(P2, C).min() - RM + PRESS * 0.5) ** 2 * 1.5e5
     tipP = (M[BI['RightHandThumb3']] @ np.r_[TAIL('RightHandThumb3'), 1])[:3]; baseP = (M[BI['RightHandThumb2']] @ np.r_[HEAD('RightHandThumb2'), 1])[:3]
     dirn = tipP - baseP; dirn /= np.linalg.norm(dirn)
-    align = (1 - dirn @ AX) * 30
+    align = (1 - dirn @ AX) * 60
     m3 = P3.mean(0) - C; m3 -= AX * (m3 @ AX); m3 /= np.linalg.norm(m3)
     side = (1 - m3 @ WANT) * 12
     dd = np.sqrt(((P[:, None, :] - fiP[None, ::2, :]) ** 2).sum(-1)).min(1)
     clash = np.sum(np.minimum(0, dd - 0.0035) ** 2) * 2e7
-    reg = sum(v * v for v in x) * 0.3
+    reg = (x[0] ** 2 * 1.0 + x[1] ** 2 * 1.0 + x[2] ** 2 * 4.0 + x[3] ** 2 * 2.0 + x[4] ** 2 * 60.0 + x[5] ** 2 * 6.0)
     cost = pen + c3 + c2 + align + side + clash + reg
     if verbose: log('thumb cost', {k_: round(float(v_), 3) for k_, v_ in dict(pen=pen, c3=c3, c2=c2, align=align, side=side, clash=clash, reg=reg).items()})
     return cost
@@ -351,7 +352,7 @@ for start in ([0, 0, 0, 0, 0, 0], [0.5, 0, 0, 0.3, 0, 0.2], [-0.5, 0, 0, 0.3, 0,
     x, v = nelder_mead(thumb_cost, start, 0.35, 260)
     if best is None or v < best[1]: best = (x, v)
 x, v = nelder_mead(thumb_cost, best[0], 0.08, 300)
-thumb_cost(x, True); report['thumb'] = [round(float(q) / DEG, 1) for q in x]
+x = np.clip(x, -TLIM, TLIM); thumb_cost(x, True); report['thumb'] = [round(float(q) / DEG, 1) for q in x]
 log('thumb angles', report['thumb'])
 
 # ---------- the wrist: turn the hand on the forearm so the forearm leaves toward the lower right, toward you (fx= fy= fz= in grip space) ----------
