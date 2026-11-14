@@ -20,6 +20,11 @@ export const LOOKS = {
   mama88: L('woman57', { Shirt: 0xe8a0b8, Skirt: 0x2e5a7a, Belt: 0x4a2a3a, Shoes: 0x2a2018 }, { hat: false }),
   delroy88: L('boy', { Shirt: 0xd8402a, Breeches: 0x3a4a6a, Shoes: 0x2a2018 }, { hat: false, scale: 0.62 }),
   clifford88: L('man_elder', { Hat: STRAW, Shirt: 0xc8d0d8, Breeches: 0x5a5040, Waistcoat: 0x5a5040, Shoes: 0x2a2018 }, { hat: 'Hat', hide: ['Waistcoat'] }),
+  /* ===== 1951: a seaside yard near Kingston. The bodies were built for the 1950s, so these are in their own time. ===== */
+  papa51: L('man_work', { Shirt: 0xd8d0b8, Breeches: 0x4a4a50, Hat: 0xcdb372, Shoes: 0x2a2018 }, { hat: 'Hat', hide: ['Waistcoat'] }),
+  mama51: L('woman57', { Shirt: 0xe8d0dc, Skirt: 0x5a3a52, Belt: 0x3a2434, Shoes: 0x2a2018 }, { hat: false }),
+  cyril: L('man_elder', { Hat: 0xcdb372, Shirt: 0xe8e4d4, Breeches: 0x5a5a68, Waistcoat: 0x5a5a68, Shoes: 0x2a2018 }, { hat: 'Hat', hide: ['Waistcoat'] }),
+  ivy51: L('woman_elder', { Wrap: 0x3a6a9a, Shirt: 0xf0eee4, Skirt: 0x4a3a5a, Shoes: 0x2a2018 }, { hat: 'Wrap', hide: ['Hair'] }),
   /* ===== 2025 ===== */
   pearl: L('woman57', { Shirt: 0x3a8e9c, Skirt: 0x2a3a5a, Belt: 0x2a2030, Shoes: 0x2a2018 }, { hat: false }),                                   /* Mum, 49: the girl of chapter 1 grown up */
   winston: L('man_elder', { Hat: STRAW, Shirt: 0xe4e0d0, Breeches: 0x4a4a46, Waistcoat: 0x4a4a46, Shoes: 0x2a2018 }, { hat: 'Hat', hide: ['Waistcoat'] }),   /* Grandpa, 75 */
@@ -46,17 +51,17 @@ function kid(r, pick) {
     : { base: 'boy', tint: { Shirt: c, Breeches: pick(TROUS), Shoes: 0x1c1816 }, hat: false, scale: size };
 }
 /* people of the village: n people inside area [x0, z0, x1, z1]. Plain cotton clothes, some caps, hats and head ties. kids: share of children. */
-export function folk(n, seed, area, { anims = ['Idle', 'Talk1', 'Talk2', 'Idle', 'Laugh'], faceZ = 0, kids = 0.2, elders = 0.2 } = {}) {
+export function folk(n, seed, area, { anims = ['Idle', 'Talk1', 'Talk2', 'Idle', 'Laugh'], faceZ = 0, kids = 0.2, elders = 0.2, modern = true } = {}) {   /* modern: false leaves out the two bodies of today (1951 and 1988 crowds) */
   const r = rng(seed), out = [], pick = (a) => a[(r() * a.length) | 0];
   for (let i = 0; i < n; i++) {
     const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), ry = faceZ + (r() - 0.5) * 2.2, anim = pick(anims), at = { x, z, ry, anim, skin: 0.85 + r() * 0.4 }, kind = r();
     if (kind < kids) out.push({ ...kid(r, pick), ...at });
-    else if (kind < 0.55) { const old = r() < elders * 1.4, modern = !old && r() < 0.45;
-      if (modern) out.push({ base: 'guide2020', tint: { Shirt: pick(BRIGHT), Skirt: pick(DARK) }, ...at });
+    else if (kind < 0.55) { const old = r() < elders * 1.4, mod = modern && !old && r() < 0.45;
+      if (mod) out.push({ base: 'guide2020', tint: { Shirt: pick(BRIGHT), Skirt: pick(DARK) }, ...at });
       else out.push({ base: old ? 'woman_elder' : 'woman57', hat: old ? pick(['Wrap', 'Hat', 'Wrap']) : r() < 0.2 ? 'Hat' : false, tint: { Shirt: pick(old ? PALE : BRIGHT), Skirt: pick(DARK), Wrap: pick([0x7a4a8a, 0x3a6a9a, 0xe8e0d0, 0x5a8a4a, 0xd8a030]), Hat: pick([0xe8dcc0, 0xcdb372]), Belt: pick(DARK), Shoes: 0x1c1816 }, ...at }); }
     else { const k = r();
       if (k < 0.5) out.push({ base: 'man_work', hat: r() < 0.5 ? 'Cap' : false, tint: { Shirt: pick([...BRIGHT, 0xc8c0a4, 0xe4e0d0]), Breeches: pick(TROUS), Cap: pick([0x2a2a30, 0x3a4a5a, 0x7a3a3a, 0xcdb372]), Shoes: 0x1c1816 }, hide: ['Waistcoat'], ...at });
-      else if (k < 0.72) out.push({ base: 'student2020', tint: { Shirt: pick(BRIGHT), Breeches: pick(TROUS) }, scale: 0.97, ...at });
+      else if (modern && k < 0.72) out.push({ base: 'student2020', tint: { Shirt: pick(BRIGHT), Breeches: pick(TROUS) }, scale: 0.97, ...at });
       else if (k < 0.88) out.push({ base: 'man_shirt', hat: r() < 0.4 ? 'Cap' : false, tint: { Shirt: pick(PALE), Breeches: pick(TROUS), Cap: pick([0x2a2a30, 0x4a3a2a]), Shoes: 0x1c1816 }, hide: ['Waistcoat', 'Tie'], ...at });
       else out.push({ base: 'man_elder', hat: pick(['Hat', false]), tint: { Shirt: pick(PALE), Breeches: pick(TROUS), Hat: pick([STRAW, 0x8a8472]), Shoes: 0x1c1816 }, hide: ['Waistcoat'], ...at }); }
   }

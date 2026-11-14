@@ -77,6 +77,24 @@ export function bigDish(r = 1.15) {
   for (const a of [0, 2.1, 4.2]) { const sx = Math.cos(a) * R * 0.7, sz = Math.sin(a) * R * 0.7, st = cyl(0.012, 0.012, R * 0.62, dk, sx / 2, R * 0.33, sz / 2, tilt, 4); st.rotation.set(sz / (R * 0.62) * -1, 0, sx / (R * 0.62)); }
   return g;
 }
+/* a family car of the 1980s: a boxy saloon (front toward +x) */
+export function car(c = 0x8a2a2a) {
+  const g = grp(), body = solid(c, 0.4, 0.3), dk = solid(0x1a1b1e, 0.8), glass = new THREE.MeshBasicMaterial({ color: 0x20303a });
+  box(4.3, 0.7, 1.7, body, 0, 0.68, 0, g); box(2.3, 0.62, 1.55, body, -0.2, 1.32, 0, g); box(0.05, 0.46, 1.4, glass, 0.96, 1.34, 0, g); box(0.05, 0.42, 1.4, glass, -1.36, 1.34, 0, g);
+  for (const z of [-0.79, 0.79]) box(2.0, 0.4, 0.04, glass, -0.2, 1.34, z, g);
+  box(0.12, 0.3, 1.6, solid(0xb8bcc0, 0.3, 0.8), 2.17, 0.5, 0, g); box(0.12, 0.3, 1.6, solid(0xb8bcc0, 0.3, 0.8), -2.17, 0.5, 0, g);
+  for (const x of [-1.35, 1.35]) for (const z of [-0.85, 0.85]) cyl(0.34, 0.34, 0.25, dk, x, 0.34, z, g, 14).rotation.x = PI / 2;
+  return g;
+}
+/* a fence of zinc sheets standing on end, from (x0, z0) to (x1, z1) along x or z */
+export function zincFence(x0, z0, x1, z1, h = 1.9, seed = 1) {
+  const g = grp(), r = rng(seed), alongX = Math.abs(x1 - x0) >= Math.abs(z1 - z0), L = alongX ? Math.abs(x1 - x0) : Math.abs(z1 - z0), n = Math.ceil(L / 0.8), m = zincMat([150, 150, 146]), m2 = zincMat([150, 110, 90]);
+  for (let i = 0; i < n; i++) { const t = (i + 0.5) / n, x = x0 + (x1 - x0) * t, z = z0 + (z1 - z0) * t, hh = h * (0.9 + r() * 0.15), sh = box(alongX ? 0.8 : 0.04, hh, alongX ? 0.04 : 0.8, r() < 0.3 ? m2 : m, x, hh / 2, z, g); }
+  for (let i = 0; i <= Math.ceil(L / 2.4); i++) { const t = Math.min(1, i * 2.4 / L), x = x0 + (x1 - x0) * t, z = z0 + (z1 - z0) * t; box(0.1, h + 0.1, 0.1, WOOD, x, (h + 0.1) / 2, z, g); }
+  box(alongX ? L : 0.1, 0.08, alongX ? 0.1 : L, WOOD, (x0 + x1) / 2, h * 0.85, (z0 + z1) / 2, g);
+  return g;
+}
+
 /* a modern water tanker: a white cab on a dark chassis with a blue tank, the front toward +x */
 export function waterTruck() {
   const g = grp(), cab = solid(0xe8e8e4, 0.5, 0.2), tank = solid(0x2a6ab0, 0.45, 0.3), dk = solid(0x1a1b1e, 0.8), glass = new THREE.MeshBasicMaterial({ color: 0x1a2630 });
