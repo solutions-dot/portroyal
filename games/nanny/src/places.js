@@ -51,7 +51,7 @@ export function buildEstate() {
   plantPalms(g, spotsOn(G, 16, [-60, -6, 60, 9.5], 12, (x, z) => !nearTrail(x, z) && Math.abs(z - 8) > 4.2, { smin: 0.8, smax: 1.2 }));
   const shade = [{ x: -6.6, z: 14.6, s: 1.25, ry: 1, k: 0.4 }, { x: 3.4, z: 1.4, s: 1.3, ry: 2.2, k: 0.6 }, { x: -8.5, z: -3, s: 1.1, ry: 4, k: 0.5 }].map((p) => ({ ...p, y: G.h(p.x, p.z) })); plant(g, treeGeo('broad', 4), treeM, shade);
   forest(g, G, [-75, -110, 75, -19], { seed: 21, trees: 130, tall: 46, bushes: 110, ferns: 46, ground: 200, grass: 500, rocks: 50, near: [-34, -72, 40, -19], keepTrees: (x, z) => !(z < -63.5 && z > -116 && Math.abs(x - 6) < 34) });
-  plantGrass(g, spotsOn(G, 700, [-40, -8, 40, 10], 8, (x, z) => G.trailness(x, z) < 0.4 && Math.abs(z - 8) > 3 && Math.abs(z - streamZ(x)) > 3.2), { tint: 0x9ab878 });
+  plantGrass(g, spotsOn(G, 700, [-40, -8, 40, 10], 8, (x, z) => G.trailness(x, z) < 0.4 && Math.abs(z - 8) > 3 && Math.abs(z - streamZ(x)) > 3.2), { tint: 0x6c8a52 });
   plant(g, rockGeo(5), treeM, spotsOn(G, 34, [-50, -19, 50, -9], 14, (x, z) => Math.abs(z - streamZ(x)) < 4.2 && !nearTrail(x, z), { smin: 0.3, smax: 1.0 }), { sink: 0.2 });
   const top = pathLength(trail.dense), sRoadS = sAt(trail.dense, (p) => p[1] < 12.6), sRoadN = sAt(trail.dense, (p) => p[1] < 3.4);
   const people = [person('mama', 'mama', 'Mama', 4.2, 42.6, face(4.2, 42.6, 2, 40)), person('quamin', 'quamin', 'Quamin', 0.2, 38.4, face(0.2, 38.4, 2, 41))];

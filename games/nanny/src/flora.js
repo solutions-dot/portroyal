@@ -16,20 +16,37 @@ const GREENS = [[0.11, 0.27, 0.12], [0.14, 0.32, 0.13], [0.09, 0.24, 0.12], [0.1
 const BARK = [0.26, 0.20, 0.15];
 let _treeMat = null; const treeMat = () => _treeMat || (_treeMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 }));
 
-/* a lump of leaves: a ball with its points pushed in and out, darker underneath */
-function blob(r, s, x, y, z, green, squash = 0.78) {
-  const g = new THREE.IcosahedronGeometry(s, 1), p = g.attributes.position; for (let i = 0; i < p.count; i++) { const k = 0.84 + vnoise(p.getX(i) * 1.7 + x, p.getY(i) * 1.7 + z + p.getZ(i), 7) * 0.34; p.setXYZ(i, p.getX(i) * k, p.getY(i) * k * squash, p.getZ(i) * k); }
-  paint(g, (t) => green.map((c) => c * (0.5 + 0.6 * t))); g.translate(x, y, z); return g;
+/* phones draw fewer plants: the same forest, thinned */
+export const LOW = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
+/* a lump of leaves: a ball with its points pushed in and out. Darker underneath and inside, lighter on top and on the side the sun reaches, and dappled, so a crown reads as leaves and not as one smooth shape. */
+function blob(r, s, x, y, z, green, squash = 0.78, detail = 1) {
+  const g = new THREE.IcosahedronGeometry(s, detail), p = g.attributes.position; for (let i = 0; i < p.count; i++) { const k = 0.8 + vnoise(p.getX(i) * 2.3 + x, p.getY(i) * 2.3 + z + p.getZ(i) * 1.7, 7) * 0.42; p.setXYZ(i, p.getX(i) * k, p.getY(i) * k * squash, p.getZ(i) * k); }
+  paint(g, (t, i) => { const d = 0.86 + vnoise(p.getX(i) * 4.1 + x * 3, p.getZ(i) * 4.1 + p.getY(i) * 2.9 + z, 11) * 0.3, sun = 0.94 + 0.1 * Math.max(0, (p.getX(i) - p.getZ(i)) / (s * 1.4)), k = (0.42 + 0.7 * t) * d * sun; return [green[0] * k + 0.035 * t * t, green[1] * k + 0.05 * t * t, green[2] * k]; });
+  g.translate(x, y, z); return g;
 }
-/* tree shapes. kind: 'broad' (a wide dark crown), 'tall' (a long trunk with a small high crown), 'bush' (no trunk) */
+/* a limb: a tapered piece of trunk or branch from one point to another, in bark colours */
+const _up = new THREE.Vector3(0, 1, 0), _d = new THREE.Vector3(), _q = new THREE.Quaternion();
+function limb(a, b, r0, r1, seg = 6, bark = BARK) {
+  _d.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]); const len = _d.length(), g = new THREE.CylinderGeometry(r1, r0, len, seg, 2), p = g.attributes.position; g.translate(0, len / 2, 0);
+  paint(g, (t, i) => { const k = 0.72 + vnoise(p.getX(i) * 9 + a[0], p.getY(i) * 2.2 + a[2], 4) * 0.5; return [bark[0] * k, bark[1] * k, bark[2] * k * (0.9 + 0.2 * t)]; });
+  g.applyQuaternion(_q.setFromUnitVectors(_up, _d.normalize())); g.translate(a[0], a[1], a[2]); return g;
+}
+/* the foot of a trunk: it widens into the ground, with a few low roots */
+function foot(r0, hgt, seed, bark = BARK) { const g = new THREE.CylinderGeometry(r0, r0 * 1.9, hgt, 8, 2), p = g.attributes.position; for (let i = 0; i < p.count; i++) { const a = Math.atan2(p.getZ(i), p.getX(i)), low = 1 - (p.getY(i) + hgt / 2) / hgt, k = 1 + low * 0.45 * Math.max(0, Math.sin(a * 3 + seed)); p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k); }
+  g.translate(0, hgt / 2 - 0.12, 0); paint(g, (t) => bark.map((c) => c * (0.6 + 0.35 * t))); return g; }
+/* tree shapes. kind: 'broad' (a spreading crown on branching limbs), 'tall' (a long straight trunk with a small high crown), 'bush' (no trunk) */
 export function treeGeo(kind = 'broad', seed = 1) {
   const r = rng(seed), parts = [], pick = () => GREENS[(r() * GREENS.length) | 0];
-  if (kind === 'bush') { for (let i = 0; i < 4; i++) parts.push(blob(r, 0.45 + r() * 0.35, (r() - 0.5) * 1.1, 0.35 + r() * 0.3, (r() - 0.5) * 1.1, pick(), 0.7)); return flatGeo(parts); }
-  const h = kind === 'tall' ? 15 : 8.5, tr = new THREE.CylinderGeometry(kind === 'tall' ? 0.2 : 0.2, kind === 'tall' ? 0.42 : 0.4, h * (kind === 'tall' ? 0.78 : 0.6), 7, 3); const tp = tr.attributes.position;
-  for (let i = 0; i < tp.count; i++) tp.setX(i, tp.getX(i) + Math.sin(tp.getY(i) * 0.5 + seed) * 0.12);
-  tr.translate(0, h * (kind === 'tall' ? 0.39 : 0.3), 0); paint(tr, (t) => BARK.map((c) => c * (0.8 + 0.3 * t))); parts.push(tr);
-  const n = kind === 'tall' ? 4 : 6, sp = kind === 'tall' ? 0.22 : 0.5;
-  for (let i = 0; i < n; i++) parts.push(blob(r, h * (kind === 'tall' ? 0.13 + r() * 0.07 : 0.2 + r() * 0.13), (r() - 0.5) * h * sp, h * (kind === 'tall' ? 0.78 + r() * 0.2 : 0.62 + r() * 0.26), (r() - 0.5) * h * sp, pick()));
+  if (kind === 'bush') { for (let i = 0; i < 5; i++) parts.push(blob(r, 0.38 + r() * 0.34, (r() - 0.5) * 1.2, 0.32 + r() * 0.34, (r() - 0.5) * 1.2, pick(), 0.72, i < 3 ? 1 : 0)); return flatGeo(parts); }
+  const tall = kind === 'tall', h = tall ? 15.5 : 8.6, fork = h * (tall ? 0.7 : 0.4), lean = [(r() - 0.5) * 0.7, fork, (r() - 0.5) * 0.7], bark = tall ? [0.33, 0.29, 0.24] : BARK;
+  parts.push(foot(tall ? 0.36 : 0.4, 1.1, seed, bark)); parts.push(limb([0, 0.7, 0], lean, tall ? 0.34 : 0.38, tall ? 0.2 : 0.26, 7, bark));
+  const n = tall ? 3 : 4 + ((r() * 2) | 0), a0 = r() * 6.28;
+  for (let i = 0; i < n; i++) {   /* each main limb ends in a clump of leaves */
+    const a = a0 + i / n * 6.283 + (r() - 0.5) * 0.5, reach = h * (tall ? 0.12 + r() * 0.06 : 0.26 + r() * 0.14), rise = h * (tall ? 0.13 + r() * 0.08 : 0.2 + r() * 0.16), e = [lean[0] + Math.cos(a) * reach, fork + rise, lean[2] + Math.sin(a) * reach];
+    parts.push(limb(lean, e, tall ? 0.14 : 0.17, 0.06, 5, bark)); const s = h * (tall ? 0.105 : 0.15) * (0.85 + r() * 0.4), g = pick();
+    parts.push(blob(r, s, e[0], e[1] + s * 0.25, e[2], g)); parts.push(blob(r, s * 0.62, e[0] + Math.cos(a) * s * 0.75, e[1] - s * 0.05 + r() * s * 0.3, e[2] + Math.sin(a) * s * 0.75, pick(), 0.74, 0));
+    if (!tall) parts.push(blob(r, s * 0.55, e[0] + Math.cos(a + 1.7) * s * 0.7, e[1] + s * 0.35, e[2] + Math.sin(a + 1.7) * s * 0.7, g, 0.7, 0)); }
+  const top = h * (tall ? 0.12 : 0.17); parts.push(blob(r, top, lean[0], h * (tall ? 0.93 : 0.8), lean[2], pick())); parts.push(blob(r, top * 0.7, lean[0] + top * 0.5, h * (tall ? 0.99 : 0.9), lean[2] - top * 0.3, pick(), 0.74, 0));
   return flatGeo(parts);
 }
 /* a rock: a lumpy grey stone with a little moss on top */
@@ -88,15 +105,16 @@ export function plantPalms(parent, spots, seed = 9) {
   const fr = frondGeo(12, 3.1, 0.9, 0.55, -0.9, seed, 6.9); fr.translate(0.9, 0, 0); plant(parent, fr, cardMat('leaf'), spots, { vary: 0.08 });
 }
 export const plantGroundFerns = (parent, spots, seed = 7) => plant(parent, frondGeo(7, 0.75, 0.26, 0.85, -0.35, seed, 0.02, 3), cardMat('leaf'), spots, { vary: 0.12, sink: 0, shadow: false, tint: 0xcfe8b8 });
-export const plantGrass = (parent, spots, { h = 0.5, w = 0.8, tint = 0x5e7a48 } = {}) => { const g = crossGeo(); g.scale(w, h, w); return plant(parent, g, cardMat('tuft'), spots, { vary: 0.16, sink: 0.02, shadow: false, tint }); };
+export const plantGrass = (parent, spots, { h = 0.5, w = 0.8, tint = 0x6c8a52 } = {}) => { const g = crossGeo(); g.scale(w, h, w); return plant(parent, g, cardMat('tuft'), spots, { vary: 0.05, sink: 0.02, shadow: false, tint }); };
 export const plantCane = (parent, spots) => { const g = crossGeo(); g.scale(1.5, 2.9, 1.5); return plant(parent, g, cardMat('cane'), spots, { vary: 0.1, sink: 0.05, shadow: false }); };
 
 /* the usual forest for a place: big trees, tall trees, bushes, tree ferns, ground ferns, grass and rocks, kept off the trails.
    opts.keep(x, z): extra places to leave clear. Returns the tree spots (so a place can make them solid). */
 export function forest(parent, G, area, { seed = 11, trees = 120, tall = 40, bushes = 120, ferns = 40, ground = 240, grass = 900, rocks = 60, keep = () => true, keepTrees = () => true, near = null } = {}) {
   const ok = offTrail(G), okk = (x, z, y) => ok(x, z, y) && keep(x, z) && keepTrees(x, z), okNear = (x, z, y) => G.trailness(x, z) < 0.02 && keep(x, z);
+  const K = LOW ? 0.6 : 1; trees = Math.round(trees * K); tall = Math.round(tall * K); bushes = Math.round(bushes * K); ferns = Math.round(ferns * K); ground = Math.round(ground * K); grass = Math.round(grass * K);
   const A = spotsOn(G, trees, area, seed, okk, { smin: 0.75, smax: 1.5 }), B = spotsOn(G, tall, area, seed + 1, okk, { smin: 0.8, smax: 1.3 });
-  plant(parent, treeGeo('broad', seed), treeMat(), A.filter((_, i) => i % 2 === 0)); plant(parent, treeGeo('broad', seed + 5), treeMat(), A.filter((_, i) => i % 2 === 1)); plant(parent, treeGeo('tall', seed + 9), treeMat(), B);
+  for (let v = 0; v < 3; v++) plant(parent, treeGeo('broad', seed + v * 5), treeMat(), A.filter((_, i) => i % 3 === v)); plant(parent, treeGeo('tall', seed + 9), treeMat(), B.filter((_, i) => i % 2 === 0)); plant(parent, treeGeo('tall', seed + 13), treeMat(), B.filter((_, i) => i % 2 === 1));
   plant(parent, treeGeo('bush', seed + 3), treeMat(), spotsOn(G, bushes, area, seed + 2, okNear, { smin: 0.7, smax: 1.7 }), { sink: 0.1, shadow: false });
   plantTreeFerns(parent, spotsOn(G, ferns, area, seed + 3, okk, { smin: 0.7, smax: 1.3 }), seed);
   const nearArea = near || area; plantGroundFerns(parent, spotsOn(G, ground, nearArea, seed + 4, okNear, { smin: 0.7, smax: 1.5 }), seed);
@@ -105,15 +123,33 @@ export function forest(parent, G, area, { seed = 11, trees = 120, tall = 40, bus
   return A.concat(B);
 }
 
-/* the great cotton tree (a ceiba): a huge grey trunk with wing-like roots and a wide flat crown. One mesh. */
+/* the great cotton tree (a ceiba). The trunk is one smooth skin: near the ground it swells into tall wing-like roots that fade into the round trunk higher up.
+   Thick limbs leave the top in curves and carry a wide, flat crown. Smooth bark (its own material), leafy clumps like the other trees. */
+let _barkMat = null; const barkMat = () => _barkMat || (_barkMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+function curveLimb(pts, r0, r1, seed, grey) {   /* a smooth tapering limb along a curve */
+  const c = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), N = 10, R = 9, fr = c.computeFrenetFrames(N, false), pos = [], col = [], idx = [], P = new THREE.Vector3();
+  for (let i = 0; i <= N; i++) { const t = i / N, r = r0 + (r1 - r0) * Math.pow(t, 0.8); c.getPointAt(t, P); for (let k = 0; k < R; k++) { const a = k / R * Math.PI * 2, nx = Math.cos(a), ny = Math.sin(a), n = fr.normals[i], b = fr.binormals[i]; pos.push(P.x + (n.x * nx + b.x * ny) * r, P.y + (n.y * nx + b.y * ny) * r, P.z + (n.z * nx + b.z * ny) * r); const k2 = 0.82 + vnoise(a * 2 + seed, t * 6, 5) * 0.3; col.push(grey[0] * k2, grey[1] * k2, grey[2] * k2); }
+    if (i < N) for (let k = 0; k < R; k++) { const q = i * R + k, q2 = i * R + (k + 1) % R; idx.push(q, q + R, q2, q2, q + R, q2 + R); } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); return g;
+}
 export function cottonTree(h = 24, seed = 2) {
-  const r = rng(seed), parts = [], grey = [0.44, 0.40, 0.35];
-  const tr = new THREE.CylinderGeometry(0.75, 1.35, h * 0.62, 10, 4); tr.translate(0, h * 0.31, 0); paint(tr, (t) => grey.map((c) => c * (0.8 + 0.25 * t))); parts.push(tr);
-  for (let i = 0; i < 7; i++) {   /* a root like a thin wall: wide at the ground, running up the trunk */
-    const a = i / 7 * Math.PI * 2 + r() * 0.3, out = 2.6 + r() * 1.6, up = 3.2 + r() * 2, w = 0.16, ca = Math.cos(a), sa = Math.sin(a), g = new THREE.BufferGeometry();
-    const P = (d, y, s) => [ca * d - sa * s * w, y, sa * d + ca * s * w], v = [P(0.9, 0, -1), P(out, 0, -1), P(0.8, up, -1), P(0.9, 0, 1), P(out, 0, 1), P(0.8, up, 1)], f = [0, 2, 1, 3, 4, 5, 1, 2, 5, 1, 5, 4, 0, 1, 4, 0, 4, 3];
-    g.setAttribute('position', new THREE.Float32BufferAttribute(f.flatMap((k) => v[k]), 3)); g.computeVertexNormals(); paint(g, (t) => grey.map((c) => c * (0.7 + 0.3 * t))); parts.push(g); }
-  for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + r() * 0.4, len = h * (0.26 + r() * 0.1), b = new THREE.CylinderGeometry(0.16, 0.38, len, 6); b.translate(0, len / 2, 0); b.rotateZ(-1.05 - r() * 0.2); b.rotateY(a); b.translate(0, h * 0.58, 0); paint(b, () => grey.map((c) => c * 0.9)); parts.push(b); }
-  for (let i = 0; i < 14; i++) { const a = r() * Math.PI * 2, d = h * (0.1 + r() * 0.34); parts.push(blob(r, h * (0.11 + r() * 0.07), Math.cos(a) * d, h * (0.74 + r() * 0.16), Math.sin(a) * d, GREENS[(r() * GREENS.length) | 0], 0.62)); }
-  const m = new THREE.Mesh(flatGeo(parts), treeMat()); m.castShadow = true; m.userData.noBatch = true; m.name = 'cottonTree'; return m;
+  const r = rng(seed), grey = [0.47, 0.43, 0.37], grp = new THREE.Group(), TH = h * 0.6, RAD = 40, ROWS = 22, wings = 6, w0 = r() * 6.28, pos = [], col = [], idx = [];
+  const wingAt = Array.from({ length: wings }, (_, i) => ({ a: w0 + i / wings * 6.283 + (r() - 0.5) * 0.35, out: 2.0 + r() * 1.5, up: 3.6 + r() * 2.2 }));
+  for (let j = 0; j <= ROWS; j++) { const t = Math.pow(j / ROWS, 1.6), y = t * TH, core = 1.25 - 0.5 * Math.pow(t, 0.7) + 0.22 * Math.exp(-y / 1.2);
+    for (let k = 0; k < RAD; k++) { const a = k / RAD * 6.2832; let wing = 0; for (const w of wingAt) { let d = Math.abs(a - (w.a % 6.2832)); d = Math.min(d, 6.2832 - d); const reach = w.out * Math.pow(Math.max(0, 1 - y / w.up), 1.7), width = 0.2 + 0.16 * (y / w.up); wing = Math.max(wing, reach * Math.exp(-(d * d) / (width * width))); }
+      const rr = core + wing + vnoise(a * 3 + seed, y * 0.7, 9) * 0.07; pos.push(Math.cos(a) * rr, y - 0.25, Math.sin(a) * rr);
+      const k2 = (0.7 + 0.3 * Math.min(1, y / 5)) * (0.86 + vnoise(a * 5 + seed, y * 1.4, 3) * 0.26) * (1 - 0.16 * Math.min(1, wing / 1.5)), moss = Math.max(0, 0.5 - y / 4) * vnoise(a * 2, y * 2 + seed, 6); col.push(grey[0] * k2 * (1 - moss * 0.5), grey[1] * k2 * (1 + moss * 0.15), grey[2] * k2 * (1 - moss * 0.5)); }
+    if (j < ROWS) for (let k = 0; k < RAD; k++) { const q = j * RAD + k, q2 = j * RAD + (k + 1) % RAD; idx.push(q, q + RAD, q2, q2, q + RAD, q2 + RAD); } }
+  const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); tg.setIndex(idx);
+  const wood = [tg], leaves = [], n = 7, a0 = r() * 6.28;
+  { const cap = new THREE.SphereGeometry(0.78, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2).toNonIndexed(); cap.scale(1, 0.7, 1); cap.translate(0, TH - 0.3, 0); cap.deleteAttribute('uv'); cap.deleteAttribute('normal'); paint(cap, () => grey.map((c) => c * 0.95)); const ci = []; for (let i = 0; i < cap.attributes.position.count; i++) ci.push(i); cap.setIndex(ci); wood.push(cap); }
+  for (let i = 0; i < n; i++) {   /* the great limbs: out, then up, each ending in clumps of leaves */
+    const a = a0 + i / n * 6.283 + (r() - 0.5) * 0.4, reach = h * (0.3 + r() * 0.12), rise = h * (0.14 + r() * 0.1), ca = Math.cos(a), sa = Math.sin(a), y0 = TH - 1.2 - r() * 1.6, e = [ca * reach, y0 + rise, sa * reach];
+    wood.push(curveLimb([[ca * 0.3, y0 - 0.6, sa * 0.3], [ca * reach * 0.36, y0 + rise * 0.16, sa * reach * 0.36], [ca * reach * 0.74, y0 + rise * 0.56, sa * reach * 0.74], e], 0.46, 0.1, seed + i, grey));
+    const s = h * (0.085 + r() * 0.035), g = GREENS[(r() * GREENS.length) | 0]; leaves.push(blob(r, s, e[0], e[1] + s * 0.3, e[2], g, 0.6)); leaves.push(blob(r, s * 0.8, e[0] * 0.72 + sa * s * 0.6, e[1] + s * 0.1, e[2] * 0.72 - ca * s * 0.6, GREENS[(r() * GREENS.length) | 0], 0.6));
+    leaves.push(blob(r, s * 0.7, e[0] * 1.12 - sa * s * 0.5, e[1] - s * 0.1, e[2] * 1.12 + ca * s * 0.5, g, 0.6, 0)); leaves.push(blob(r, s * 0.6, e[0] * 0.9, e[1] + s * 0.75, e[2] * 0.9, g, 0.62, 0)); }
+  for (let i = 0; i < 4; i++) { const a = r() * 6.28, d = h * 0.12 * r(); leaves.push(blob(r, h * 0.1, Math.cos(a) * d, TH + h * (0.2 + r() * 0.08), Math.sin(a) * d, GREENS[(r() * GREENS.length) | 0], 0.6)); }
+  wood.push(curveLimb([[0, TH - 1.5, 0], [0.3, TH + h * 0.1, 0.2], [0.1, TH + h * 0.2, -0.1]], 0.5, 0.12, seed + 31, grey));
+  const wg = mergeGeometries(wood, false); wg.computeVertexNormals(); const wm = new THREE.Mesh(wg, barkMat()); wm.castShadow = true; wm.userData.noBatch = true; grp.add(wm);
+  const lm = new THREE.Mesh(flatGeo(leaves), treeMat()); lm.castShadow = true; lm.userData.noBatch = true; grp.add(lm); grp.userData.noBatch = true; grp.name = 'cottonTree'; return grp;
 }

@@ -12,7 +12,7 @@ Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the story, the rules
 These sit on top of the owner's rules in `CLAUDE.md`. They exist because Nanny is thinly documented and her people's heritage is living.
 
 1. **Nanny never speaks.** Nobody wrote down her words, so the game gives her none. Other people talk about her.
-2. **Nanny is only seen from far away.** Nobody drew her from life. The face on the 500 dollar note comes from a student's drawing made in 1976. She stands on the high rock in chapter 2 and under the meeting tree in chapter 6, and you cannot walk up to her.
+2. **Nanny is only seen from far away.** Nobody drew her from life. The face on the 500 dollar note comes from a student's drawing made in 1976. She stands on the high rock in chapter 2 and under the meeting tree in chapter 6, and you cannot walk up to her. Her look (a pale head wrap, a plain light garment, a string of beads) follows the best known picture of her, which the owner supplied. That picture was drawn long after her time, and the journal says so.
 3. **Nothing sacred is shown.** No Kromanti ceremony, song, drumming or language. No burial and no Bump Grave. No healing plant is named. The journal says these exist and are private.
 4. **The word "obeah" is not used.** It was the colonists' word. The 1733 record that uses it is described without it.
 5. **Every journal page says where its facts come from**: written records, Maroon tradition, or fiction made for this game. The last chapter turns this into a game ("How do we know?").

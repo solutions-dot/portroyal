@@ -17,7 +17,8 @@ export const LOOKS = {
   mama: L('woman_long', { Shirt: 0xd8ccae, Skirt: 0x2f3f6a, Hat: 0xc9962e, Shoes: BARE, Sole: BARE }, { hat: 'Hat', hide: ['Belt'], h: 1.74 }),
   mamaOld: L('woman_elder', { Shirt: 0xd8ccae, Skirt: 0x2f3f6a, Wrap: 0xc9962e, Shoes: BARE, Sole: BARE }, { hat: 'Wrap', hide: ['Collar'], h: 1.72 }),
   mimba: L('woman_elder', { Shirt: 0xc9bb98, Skirt: 0x7a4a2e, Wrap: 0x2f3f6a, Shoes: BARE, Sole: BARE }, { hat: 'Wrap', hide: ['Collar'], h: 1.72 }),
-  nanny: L('woman_elder', { Shirt: 0xe2d8c0, Skirt: 0x8a2e24, Wrap: 0x8a2e24, Shoes: BARE, Sole: BARE }, { hat: 'Wrap', hide: ['Collar'], h: 1.72 }),
+  /* Nanny: a pale head wrap, a plain light garment and a string of beads, after the best known picture of her (which was drawn long after her time). Seen far off only. */
+  nanny: L('woman_elder', { Shirt: 0xe6dcc4, Skirt: 0xd4c7a6, Wrap: 0xf2ecdc, Shoes: BARE, Sole: BARE }, { hat: 'Wrap', hide: ['Collar'], h: 1.72, beads: true }),
   benebaGrown: L('woman_long', { Shirt: 0xe2d8c0, Skirt: 0xa8402e, Hat: 0x2f3f6a, Shoes: BARE, Sole: BARE }, { hat: 'Hat', hide: ['Belt'], h: 1.74 }),
   quamin: L('kofi', { Shirt: 0xc9bb98, Breeches: 0x5a4636 }, { h: 1.8 }),
   cubbenah: L('turtler', { Shirt: 0xd8ccae, Breeches: 0x6a4a34, Hat: 0x4a3a2a }, { hat: 'Hat', h: 1.84 }),

@@ -19,7 +19,7 @@ import { buildEstate, buildTown, buildWatch, buildNewTown } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, SAY, CARDS, CHOICE_NAMES, CALLS } from './content.js';
 import * as SFX from './sfx.js';
 import { HATS, LOOKS } from './cast.js';
-import { musket, lantern, horn, leafCloak } from './props.js';
+import { musket, lantern, horn, leafCloak, beads, attach } from './props.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -96,7 +96,7 @@ function bareLegs(g) { g.scene.traverse((o) => { const c = o.isMesh && o.materia
   for (let i = 0; i < c.count; i += 7) { const x = c.getX(i), y = c.getY(i), z = c.getZ(i); if (x < 0.6 && x > y && y > z) { r += x; gr += y; b += z; n++; } } if (!n) return; r /= n; gr /= n; b /= n;
   for (let i = 0; i < c.count; i++) if (Math.min(c.getX(i), c.getY(i), c.getZ(i)) > 0.62) c.setXYZ(i, r, gr, b); c.needsUpdate = true; }); }
 function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePromises[id] = basePromises[id] || model(id).then((g) => { g.scene.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); if (/^(boy|girl)/.test(id)) bareLegs(g); BASES[id] = g; return g; })); }
-const PROPS = { musket: () => musket(), lantern: () => lantern(), horn: () => horn() };
+const PROPS = { musket: (s) => musket(!s.fixed && !s.fine), lantern: () => lantern(), horn: () => horn() };   /* people far off carry the plain musket; the ones you can walk up to carry the full one */
 /* how each thing is carried (engine/grip.js): scale is its size, lift how far the arm is held out from the body. After changing these run ?test=held. */
 const GRIP = { musket: { scale: 1, lift: 0.3, straighten: 0.9 }, lantern: { scale: 1.1, lift: 0.5 }, horn: { scale: 1, lift: 0.32 } };
 const SKIN_LIGHT = 1.55;   /* the bodies' skin is built dark, so we lighten it (owner rule 9) so faces read in every light */
@@ -113,9 +113,9 @@ function makeBody(s) {
   m.scale.setScalar(s.scale || 1); m.position.set(s.x, s.ground || 0, s.z); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
   const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.06; b.renderOrder = 1; m.add(b);
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl; m.userData.held = []; ctl.mx.update(0);   /* pose the body once, so the grips below are measured on the real hand */
-  for (const [bone, prop] of s.props || []) { const o = PROPS[prop](), G = GRIP[prop]; grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.3, G.lift || 0), straighten: G.straighten ?? 0.8 }); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) m.userData.flame = o.userData.flame; }
+  for (const [bone, prop] of s.props || []) { const o = PROPS[prop](s), G = GRIP[prop]; grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.3, G.lift || 0), straighten: G.straighten ?? 0.8 }); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) m.userData.flame = o.userData.flame; }
   if (s.lampLight) { const L = new THREE.PointLight(0xffc878, 5.5, 15, 1.6); L.position.set(0.35, 0.95, 0.35); m.add(L); m.userData.lamp = L; }
-  if (s.cloak) leafCloak(m, (s.x * 7 + s.z * 3) | 0);
+  if (s.cloak) leafCloak(m, (s.x * 7 + s.z * 3) | 0); if (s.beads) attach(m, 'Neck', beads(), [0, 0.0, 0.015]);
   spreadArms(m, /^(woman|girl)/.test(s.base) ? 0.15 : 0.06);   /* arms hang clear of skirts (engine/grip.js) */
   return m;
 }
@@ -732,7 +732,7 @@ function devViews() {
   const go = async (id, st, x, z, yaw, pitch, env) => { const P = await ensurePlace(id); $('title').hidden = true; $('hud').hidden = false; state.started = true; stage = st; best = Math.max(best, st); enterPlace(id, { env: env || CH_ENV[chapterOf(st)] }); resetScenery(P, chapterOf(st), st); state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch || 0; unlock('you', true); refreshGoal(); leavesUI(); return P; };
   const V = {
     est1: ['estate', 10, 2, 38.4, 0.4, 0], est2: ['estate', 12, -2.4, 15.5, 0.1, 0], est3: ['estate', 13, 4, -9, 0.1, -0.05], est4: ['estate', 13, -5, -40, -0.3, 0.1], est5: ['estate', 14, 6, -63.5, 0.4, 0.06, ENV.dawn], est6: ['estate', 10, 6, 36, 2.6, 0.05],
-    town1: ['town', 20, 37, 58, 0.3, 0.25], town2: ['town', 20, 44, 28, 1.2, 0.2], town3: ['town', 21, 5, 9.5, 0.6, 0.05], town4: ['town', 21, -8, 9, -0.9, 0.05], town5: ['town', 22, -15.5, 3, 1.3, -0.1], town6: ['town', 24, 0.5, 8, 0, 0.3], town7: ['town', 21, 10, -11, 2.3, 0.1], town8: ['town', 21, 0, -12, 3.14, -0.05],
+    town1: ['town', 20, 37, 58, 0.3, 0.25], town2: ['town', 20, 44, 28, 1.2, 0.2], town3: ['town', 21, 5, 9.5, 0.6, 0.05], town4: ['town', 21, -8, 9, -0.9, 0.05], town5: ['town', 22, -15.5, 3, 1.3, -0.1], town6: ['town', 24, 0.5, 8, 0, 0.3], town7: ['town', 21, 10, -11, 2.3, 0.1], town8: ['town', 21, 0, -12, 3.14, -0.05], hut1: ['town', 21, 11.6, 4.6, -1.35, 0.08],
     night1: ['town', 50, -4.6, 8.8, 1.0, 0], night2: ['town', 53, 4, -2, -2.2, 0.05], night3: ['town', 54, -30, -27, -2.3, 0.3], ridge1: ['town', 55, -62.4, -59.6, -2.2, -0.2, ENV.dawn], ridge2: ['town', 55, -62.4, -59.6, -0.9, 0.0, ENV.dawn],
     watch1: ['watch', 30, -1.2, -2.6, PI, -0.1], watch2: ['watch', 30, 0.2, 4.0, PI - 0.3, -0.6], watch3: ['watch', 33, -27, 9, 2.6, -0.25], watch4: ['watch', 34, -10.4, 1.6, 1.3, 0], watch7: ['watch', 30, 0.2, 4.0, PI - 0.3, -0.2], watch5: ['watch', 43, -1.5, -2.5, PI, -0.05], watch6: ['watch', 30, -3, -4, PI - 0.5, 0.05, ENV.dawn],
     new1: ['newtown', 60, 0.5, 9.5, 0.1, 0], new2: ['newtown', 61, 2.6, -2.2, -0.35, -0.5], new3: ['newtown', 60, 8, 0, 1.2, 0.05], new4: ['newtown', 60, 0, -11, 0.2, 0.08], new5: ['newtown', 60, 20, 6, -1.6, 0],
@@ -741,7 +741,7 @@ function devViews() {
   if (shot === 'model') go('newtown', 60, 0, 0, 0, 0).then(async (P) => {
     const pids = (q.get('ids') || 'mama,quamin').split(','), plo = q.has('lo'); await Promise.all(pids.map((id) => loadBase(LOOKS[id].base + (plo ? '_lo' : '')))); P.group.visible = false; $('hud').hidden = true; mist.group.visible = false; ridges.group.visible = false;
     const num = (k, d) => (q.has(k) ? +q.get(k) : d), root = new THREE.Group(); scene.add(root); const gr = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x8a9a7c, roughness: 1 })); gr.rotation.x = -PI / 2; gr.receiveShadow = true; root.add(gr);
-    pids.forEach((id, i) => { const b = makeBody({ ...LOOKS[id], bodyId: LOOKS[id].base + (plo ? '_lo' : ''), x: (i - (pids.length - 1) / 2) * 0.8, z: 0, ry: 0, ground: 0, anim: q.get('anim') || 'Idle', props: q.get('hold') ? [['RightHand', q.get('hold')]] : LOOKS[id].props, cloak: q.has('cloak') }); b.userData.anim.mx.update(+(q.get('at') || 0.4)); gripTick(b); groundFeet(b); root.add(b); });
+    pids.forEach((id, i) => { const b = makeBody({ ...LOOKS[id], bodyId: LOOKS[id].base + (plo ? '_lo' : ''), x: (i - (pids.length - 1) / 2) * 0.8, z: 0, ry: 0, ground: 0, anim: q.get('anim') || 'Idle', props: q.get('hold') ? [['RightHand', q.get('hold')]] : LOOKS[id].props, cloak: q.has('cloak'), fine: !q.has('plain') }); b.userData.anim.mx.update(+(q.get('at') || 0.4)); gripTick(b); groundFeet(b); root.add(b); });
     const a0 = num('a', 0.5), d = num('d', 3.4), hh = num('h', 1.3), ty = num('t', 1.0), one = q.has('one');
     MV = () => { const W = renderer.domElement.width, Hh = renderer.domElement.height, angs = one ? [a0] : [a0, a0 + 1.35, a0 + PI, a0 + PI + 1.1], pr = renderer.getPixelRatio(); renderer.setScissorTest(true);
       angs.forEach((a, i) => { const w = one ? W : W / 2, h2 = one ? Hh : Hh / 2, x = one ? 0 : (i % 2) * w, y = one ? 0 : (1 - (i >> 1)) * h2; renderer.setViewport(x / pr, y / pr, w / pr, h2 / pr); renderer.setScissor(x / pr, y / pr, w / pr, h2 / pr);
@@ -769,6 +769,7 @@ function devViews() {
   if (shot === 'skipfight') go('watch', 41, 0.2, 4.0, PI, -0.3).then(() => { fightIntro(); });
   if (shot === 'skipguns') go('town', 54, -7.6, -8.1, 0.8, 0).then(() => { gunsIntro(); });
   if (shot === 'seen') go('estate', 12, -2, 10, 0, 0).then((P) => { const w = byId('watchman'); w.x = 1; w.z = 8.2; w.wait = 99; w.m.position.set(1, groundAt(1, 8.2), 8.2); for (let i = 0; i < 40; i++) update(0.05); setTimeout(() => { for (let i = 0; i < 10; i++) update(0.05); document.title = 'SEEN back=' + (state.z > 12.6) + ' z=' + state.z.toFixed(1) + ' sub=' + $('sub').textContent; }, 400); });
+  if (shot === 'swivel') go('town', 54, 0, 0, 0, 0, ENV.morning).then((P) => { const S = P.spots, k = S.knoll, gy = groundAt(k[0], k[1]); S.guns.forEach((g) => { g.visible = true; }); DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(k[0] + 1.9, gy + 1.5, k[1] - 0.6); DIR.b = DIR.a; DIR.la = new THREE.Vector3(k[0] - 0.9, gy + 1.0, k[1] - 0.5); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 50; FOV = 50; resize(); $('hud').hidden = true; });
   if (shot === 'poster') go('watch', 30, -0.4, -3.9, PI + 0.06, -0.03, ENV.dawn).then((P) => { $('hud').hidden = true; EYE = 1.75; P.spots.sticks.visible = false; });
   if (V[shot]) go(...V[shot]).then((P) => {
     if (shot === 'est2' || shot === 'est3' || shot === 'est4') { const S = P.spots, qn = byId('quamin'), m = byId('mama'); lead(qn, S.trail.dense, 4.6, { side: 0.45 }); lead(m, S.trail.dense, -2.6, { side: -0.4 }); for (let i = 0; i < 200; i++) update(0.05); state.yaw = V[shot][4]; }
