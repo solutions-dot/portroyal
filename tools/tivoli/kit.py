@@ -15,6 +15,7 @@
 #   helmet              a ballistic helmet of the 1980s US shape (a dome with a lower edge at the sides and back), camouflaged if listed in camo
 #   armband             a band round the left upper arm (the yellow armbands worn in the operation)
 #   boots               trousers tucked into high black boots
+#   armbandtext         a word in letters round the armband ("POLICE": shown only for police attached to the army; the game hides it for soldiers)
 #   backtext, fronttext a word in raised letters across the back of the vest and, smaller, across its front (police: "POLICE" on both)
 # Colours come from the recipe's "colors" (Vest, Helmet, Pouch, Straps, ArmBand, Boots, VestText), in sRGB 0 to 255.
 import bpy, bmesh, sys, json, os, math
@@ -215,7 +216,7 @@ if K.get('straps') and surf:
             o0 = Vector((x, sp2.y, z)) + d * 0.6; ray = -d; r = hit(o0, ray, surf)    # start OUTSIDE the side this point belongs to (front, back, or above and around the shoulder)
             if not r: continue
             nn = r[1] if r[1].dot(-ray) > 0 else -r[1]
-            p = r[0] + nn * (0.02 if r[3] is vest else 0.06); t = Vector((1, 0, 0))   # off the vest's edge the strap hangs straight down at the vest's thickness, not tucked under it
+            p = r[0] + nn * (0.06 if (r[3] is not vest and z < BELT_TOP + 0.09) else 0.02); t = Vector((1, 0, 0))   # below the vest's hem the strap hangs straight down at the vest's thickness, not tucked under it; everywhere else it lies on the vest
             pair = (bm.verts.new(p - t * W), bm.verts.new(p + t * W))
             if prev: bm.faces.new((prev[0], prev[1], pair[1], pair[0]))
             prev = pair
@@ -371,6 +372,21 @@ if 'chevrons' in D:      # rank chevrons on both upper sleeves (two stripes, as 
                 pa = q0; pb = q0 + mdir * 0.042; th = up * 0.007
                 v = [bm.verts.new(x) for x in (pa - th, pb - th, pb + th, pa + th)]; bm.faces.new(v)
     o = new_obj('Chevrons', bm, 'Chevrons', weights_from=shirt, only=('LeftArm', 'RightArm')); paint(o, COL.get('Chevrons', srgb((214, 178, 60)))); made.append(o)
+
+# ---------- letters on the armband (police attached to the army wore yellow armbands marked POLICE) ----------
+if K.get('armbandtext') and K.get('armband'):
+    band = next(o for o in made if o.name == 'ArmBand'); bt = tree(band)
+    a0, a1 = J('LeftArm'), T('LeftArm'); ax = (a1 - a0).normalized(); bc = sum((v.co for v in band.data.vertices), Vector()) / len(band.data.vertices)
+    out = Vector((1, 0, 0)) - ax * ax.x; out.normalize(); tg = ax.cross(out).normalized()   # out: the outer side of the left arm; tg: round the arm
+    cu = bpy.data.curves.new('txt', 'FONT'); cu.body = K['armbandtext']; cu.align_x = 'CENTER'; cu.align_y = 'CENTER'; cu.size = 0.032; cu.extrude = 0.001; cu.resolution_u = 3
+    to = bpy.data.objects.new('txt', cu); bpy.context.scene.collection.objects.link(to); bpy.context.view_layer.update()
+    tm = bpy.data.meshes.new_from_object(to.evaluated_get(bpy.context.evaluated_depsgraph_get())); bpy.data.objects.remove(to)
+    bm = bmesh.new(); bm.from_mesh(tm); R = 0.075
+    for v in bm.verts:     # wrap the word round the band: reading round the arm, letters standing along the arm (up the arm is up)
+        ang = -v.co.x / R; d = (out * math.cos(ang) + tg * math.sin(ang)).normalized(); c0 = bc - ax * v.co.y
+        loc, nrm, _, _ = bt.ray_cast(c0 + d * 0.3, -d)
+        v.co = (loc + d * (0.0015 + v.co.z)) if loc is not None else c0 + d * R
+    o = new_obj('ArmBandText', bm, 'ArmBandText', bone='LeftArm'); paint(o, COL.get('ArmBandText', srgb((22, 22, 22)))); made.append(o)
 
 # ---------- remove layers that are always covered ----------
 def hide_under(inner, outer, gap=0.05, clear=0.03):

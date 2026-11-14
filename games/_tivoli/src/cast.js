@@ -10,7 +10,8 @@ export const SKIN_LIGHT = 1.55;   /* as Kendal: the bodies' skin is built dark, 
 export const HATS = { soldier2010: [], police2010: [] };   /* the helmets are part of the uniform bodies and always shown */
 /* A look: a body (base) plus, optionally, tint {material: 0xrrggbb} and skin (a factor on SKIN_LIGHT). The uniforms keep their painted colours. */
 export const LOOKS = {
-  soldier: { base: 'soldier2010' },     /* Jamaica Defence Force, May 2010: woodland camouflage, covered helmet, olive vest and harness, yellow armband */
+  soldier: { base: 'soldier2010', hide: ['ArmBandText'] },     /* Jamaica Defence Force, May 2010: woodland camouflage, covered helmet, olive vest and harness, yellow armband */
+  policeCamo: { base: 'soldier2010' },  /* police attached to the army in May 2010: the same camouflage and kit, with POLICE on the yellow armband (Gleaner photographs) */
   police: { base: 'police2010' },       /* Jamaica Constabulary Force, May 2010: navy shirt and trousers, black vest marked POLICE, grey helmet */
 };
 export const BODIES = ['soldier2010', 'police2010'];

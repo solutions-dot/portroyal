@@ -14,6 +14,7 @@ import { soundPref, setSound, audioInit, stepSound, uiSound, AU } from '../../..
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { pose, standIns, POSES } from './clips.js';
 import { LOOKS, BODIES, loadBase, makeBody } from './cast.js';
+import { arm, weaponTick, heldReport, ARMED, modeOf } from './weapons.js';
 import { auditCloth, auditWalk, skinProbe } from './checks.js';   // dev only: local copies until the engine has them (see checks.js)   // gunfight poses: real clips when the library has them, stand-ins until then
 
 const $ = (id) => document.getElementById(id);
@@ -115,8 +116,25 @@ async function devViews(sailor) {
   const cam = (x, z, yaw, pitch) => { state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch; state.started = true; $('title').hidden = true; $('hud').hidden = true; };
   if (shot === 'fight') {   /* ?shot=fight: every gunfight pose, soldiers and police in turn, in front of a low wall (the poses are stand-ins until the real clips arrive) */
     const wall = new THREE.Mesh(new THREE.BoxGeometry(14, 1.1, 0.4), new THREE.MeshStandardMaterial({ color: 0xc9b99a, roughness: 1 })); wall.position.set(0, 0.55, -1.2); scene.add(wall);
-    const names = Object.keys(POSES); names.forEach((n, i) => place(i % 2 ? 'police' : 'soldier', (i - (names.length - 1) / 2) * 1.5, 0, 0, pose(n)));
+    const names = Object.keys(POSES); names.forEach((n, i) => { const look = n === 'PistolFire' ? 'police' : ['soldier', 'police', 'policeCamo'][i % 3], b = place(look, (i - (names.length - 1) / 2) * 1.5, 0, 0, pose(n)); arm(b, n === 'PistolFire' ? 'pistol' : 'rifle', scene); });
     cam(0, 8.5, 0, -0.04); document.title = 'fight: ' + names.map((n) => n + '=' + pose(n)).join(' ');
+  }
+  if (shot === 'rifles') {   /* ?shot=rifles: the rifle and pistol clips close up, each with its weapon, plus one person with the rifle slung */
+    [['soldier', 'ShootRifle', 'rifle'], ['policeCamo', 'PeekAim', 'rifle'], ['police', 'ShootPistol', 'pistol'], ['soldier', 'Idle', 'rifle'], ['police', 'ProneFire', 'rifle']].forEach(([look, clip, kind], i) => { const b = place(look, (i - 2) * 1.3, 0, i === 3 ? Math.PI : 0, clip); arm(b, kind, scene); });
+    cam(0, 4.6, 0, -0.12); document.title = 'rifles';
+  }
+  if (shot === 'slung') {   /* ?shot=slung: the rifle slung across the back, from behind and from the front */
+    const a = place('soldier', -0.5, 0, Math.PI, 'Idle'); arm(a, 'rifle', scene); const b = place('policeCamo', 0.5, 0, 0, 'Walk'); arm(b, 'rifle', scene);
+    cam(0, 2.6, 0, -0.15); document.title = 'slung';
+  }
+  if (test === 'held') {   /* ?test=held: in every weapon clip, through the whole clip, the right palm is on the grip and (rifle) the left palm on the handguard. Faults: a hand more than 4 cm off. */
+    const out = []; let bad = 0;
+    for (const [look, clip, kind] of [['soldier', 'ShootRifle', 'rifle'], ['soldier', 'PeekAim', 'rifle'], ['soldier', 'ProneFire', 'rifle'], ['soldier', 'ProneTurnR', 'rifle'], ['police', 'ShootRifle', 'rifle'], ['police', 'ShootPistol', 'pistol'], ['police', 'Gunplay', 'pistol']]) {
+      const b = makeBody({ ...LOOKS[look], anim: clip }); scene.add(b); arm(b, kind, scene); const ctl = b.userData.anim, D = ctl.cur.getClip().duration; let worstR = 0, worstL = 0;
+      for (let k = 0; k < 12; k++) { ctl.cur.time = D * k / 12; ctl.mx.update(0); groundFeet(b); const r = heldReport(b); worstR = Math.max(worstR, r.right); worstL = Math.max(worstL, r.left); }
+      const f = worstR > 4 || worstL > 4; if (f) bad++; out.push(`${f ? 'FAULT ' : ''}${look} ${clip} (${kind}): right hand ${worstR.toFixed(1)} cm from the grip, left hand ${worstL.toFixed(1)} cm from the handguard (worst of 12 moments)`);
+      b.userData.weapon.mesh.removeFromParent(); ARMED.splice(ARMED.indexOf(b), 1); scene.remove(b); await waitTick(); }
+    out.unshift('held: ' + bad + ' issues'); devLog(out, 'HELD ' + bad);
   }
   if (shot === 'uniforms') {   /* ?shot=uniforms (&lo for the light copies): soldier and police, front and back, close up */
     place('soldier', -1.5, 0, 0); place('soldier', -0.5, 0, Math.PI); place('police', 0.5, 0, 0); place('police', 1.5, 0, Math.PI);
@@ -159,6 +177,7 @@ function frame(t) {
   if (person) { const want = Math.atan2(state.x - PERSON.x, state.z - PERSON.z); let e = want - person.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); if (near || busy) person.rotation.y += e * Math.min(1, dt * 5); }   // turn to face you
   for (const mx of mixers) mx.update(dt); if (person && person.userData.anim) person.userData.anim.tick(dt);
   if (__DEV__) for (const m of DEVG) groundFeet(m);
+  for (const m of ARMED) weaponTick(m);   // after the mixer and the feet: weapons follow the hands
   camera.position.set(state.x, 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ');
   renderer.render(scene, camera);
 }
