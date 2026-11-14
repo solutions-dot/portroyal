@@ -116,25 +116,34 @@ async function devViews(sailor) {
   const cam = (x, z, yaw, pitch) => { state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch; state.started = true; $('title').hidden = true; $('hud').hidden = true; };
   if (shot === 'fight') {   /* ?shot=fight: every gunfight pose, soldiers and police in turn, in front of a low wall (the poses are stand-ins until the real clips arrive) */
     const wall = new THREE.Mesh(new THREE.BoxGeometry(14, 1.1, 0.4), new THREE.MeshStandardMaterial({ color: 0xc9b99a, roughness: 1 })); wall.position.set(0, 0.55, -1.2); scene.add(wall);
-    const names = Object.keys(POSES); names.forEach((n, i) => { const look = n === 'PistolFire' ? 'police' : ['soldier', 'police', 'policeCamo'][i % 3], b = place(look, (i - (names.length - 1) / 2) * 1.5, 0, 0, pose(n)); arm(b, n === 'PistolFire' ? 'pistol' : 'rifle', scene); });
+    const names = Object.keys(POSES); names.forEach((n, i) => { const pistol = n === 'PistolFire' || n === 'AimCorner', look = pistol ? 'police' : ['soldier', 'police', 'policeCamo'][i % 3], b = place(look, (i - (names.length - 1) / 2) * 1.5, 0, 0, pose(n)); arm(b, pistol ? 'pistol' : 'rifle', scene); });
     cam(0, 8.5, 0, -0.04); document.title = 'fight: ' + names.map((n) => n + '=' + pose(n)).join(' ');
   }
   if (shot === 'rifles') {   /* ?shot=rifles: the rifle and pistol clips close up, each with its weapon, plus one person with the rifle slung */
-    [['soldier', 'ShootRifle', 'rifle'], ['policeCamo', 'PeekAim', 'rifle'], ['police', 'ShootPistol', 'pistol'], ['soldier', 'Idle', 'rifle'], ['police', 'ProneFire', 'rifle']].forEach(([look, clip, kind], i) => { const b = place(look, (i - 2) * 1.3, 0, i === 3 ? Math.PI : 0, clip); arm(b, kind, scene); });
+    [['soldier', 'ShootRifle', 'rifle'], ['police', 'PeekAim', 'pistol'], ['police', 'ShootPistol', 'pistol'], ['soldier', 'Idle', 'rifle'], ['police', 'ProneFire', 'rifle']].forEach(([look, clip, kind], i) => { const b = place(look, (i - 2) * 1.3, 0, i === 3 ? Math.PI : 0, clip); arm(b, kind, scene); });
     cam(0, 4.6, 0, -0.12); document.title = 'rifles';
   }
   if (shot === 'hands') {   /* ?shot=hands&clip=ShootRifle (&t=0.3, &look=police, &kind=pistol, &yaw=0.6): one person close up, to look at the hands on the weapon */
     const b = place(q.get('look') || 'soldier', 0, 0, +(q.get('yaw') || 0.6), q.get('clip') || 'ShootRifle'); arm(b, q.get('kind') || 'rifle', scene);
     const c = b.userData.anim.cur; c.time = c.getClip().duration * +(q.get('t') || 0.3); c.timeScale = 0;
-    cam(0.15, 1.15, 0, -0.12); document.title = 'hands';
+    const cd = +(q.get('dist') || 1.15), ch = +(q.get('h') || 1.6); state.x = 0.15; state.z = cd; state.yaw = 0; state.pitch = -0.12; state.started = true; $('title').hidden = true; $('hud').hidden = true; state.camY = ch; document.title = 'hands';
   }
   if (shot === 'slung') {   /* ?shot=slung: the rifle slung across the back, from behind and from the front */
     const a = place('soldier', -0.5, 0, Math.PI, 'Idle'); arm(a, 'rifle', scene); const b = place('policeCamo', 0.5, 0, 0, 'Walk'); arm(b, 'rifle', scene);
     cam(0, 2.6, 0, -0.15); document.title = 'slung';
   }
+  if (test === 'measure') {   /* ?test=measure: in each rifle clip, the distance from the right palm to the right shoulder joint and to the left palm (cm), to size the rifle to the clips */
+    const out = []; const P = (b, n) => b.getObjectByName('mixamorig' + n).getWorldPosition(new THREE.Vector3());
+    for (const clip of ['ShootRifle', 'PeekAim', 'ProneFire', 'ProneTurnR']) { const b = makeBody({ ...LOOKS.soldier, anim: clip }); scene.add(b); const c = b.userData.anim.cur, D = c.getClip().duration, rows = [];
+      for (let k = 0; k < 6; k++) { c.time = D * k / 6; b.userData.anim.mx.update(0); groundFeet(b); b.updateMatrixWorld(true);
+        const R = P(b, 'RightHand').lerp(P(b, 'RightHandMiddle1'), 0.55), L = P(b, 'LeftHand').lerp(P(b, 'LeftHandMiddle1'), 0.55), S = P(b, 'RightArm'), H = P(b, 'Head');
+        rows.push(`R-S ${(R.distanceTo(S) * 100).toFixed(0)} R-L ${(R.distanceTo(L) * 100).toFixed(0)} S-head ${(S.distanceTo(H) * 100).toFixed(0)}`); }
+      out.push(clip + ': ' + rows.join(' | ')); scene.remove(b); }
+    devLog(out, 'MEASURE');
+  }
   if (test === 'held') {   /* ?test=held: in every weapon clip, through the whole clip, the right palm is on the grip and (rifle) the left palm on the handguard, with the fingers closed round them. Faults: a palm more than 4 cm off, or fingertips more than 3 cm beyond the weapon. */
     const out = []; let bad = 0;
-    for (const [look, clip, kind] of [['soldier', 'ShootRifle', 'rifle'], ['soldier', 'PeekAim', 'rifle'], ['soldier', 'ProneFire', 'rifle'], ['soldier', 'ProneTurnR', 'rifle'], ['police', 'ShootRifle', 'rifle'], ['police', 'ShootPistol', 'pistol'], ['police', 'Gunplay', 'pistol']]) {
+    for (const [look, clip, kind] of [['soldier', 'ShootRifle', 'rifle'], ['police', 'PeekAim', 'pistol'], ['soldier', 'ProneFire', 'rifle'], ['soldier', 'ProneTurnR', 'rifle'], ['police', 'ShootRifle', 'rifle'], ['police', 'ShootPistol', 'pistol'], ['police', 'Gunplay', 'pistol']]) {
       const b = makeBody({ ...LOOKS[look], anim: clip }); scene.add(b); arm(b, kind, scene); const ctl = b.userData.anim, D = ctl.cur.getClip().duration; let worstR = 0, worstL = 0, tipR = 0, tipL = 0;
       for (let k = 0; k < 12; k++) { ctl.cur.time = D * k / 12; ctl.mx.update(0); groundFeet(b); const r = heldReport(b); worstR = Math.max(worstR, r.right); worstL = Math.max(worstL, r.left); tipR = Math.max(tipR, r.rightTip); tipL = Math.max(tipL, r.leftTip); }
       const f = worstR > 4 || worstL > 4 || tipR > 3 || tipL > 3; if (f) bad++; out.push(`${f ? 'FAULT ' : ''}${look} ${clip} (${kind}): right hand ${worstR.toFixed(1)} cm from the grip, left hand ${worstL.toFixed(1)} cm from the handguard; fingertips ${tipR.toFixed(1)} cm (right) and ${tipL.toFixed(1)} cm (left) beyond them (worst of 12 moments)`);
@@ -183,7 +192,7 @@ function frame(t) {
   for (const mx of mixers) mx.update(dt); if (person && person.userData.anim) person.userData.anim.tick(dt);
   if (__DEV__) for (const m of DEVG) groundFeet(m);
   for (const m of ARMED) weaponTick(m);   // after the mixer and the feet: weapons follow the hands
-  camera.position.set(state.x, 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ');
+  camera.position.set(state.x, state.camY || 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ');
   renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);

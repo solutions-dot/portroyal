@@ -10,26 +10,30 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
-export const RIFLE_CLIPS = /^(ShootRifle|PeekAim|ProneFire|ProneTurnR)$/, PISTOL_CLIPS = /^(ShootPistol|Gunplay)$/;
+export const RIFLE_CLIPS = /^(ShootRifle|ProneFire|ProneTurnR)$/, PISTOL_CLIPS = /^(ShootPistol|Gunplay|PeekAim)$/;   /* PeekAim holds a pistol: the hands are 13 to 22 cm apart and the arms stretched out (?test=measure) */
 const MAT = new THREE.MeshStandardMaterial({ color: 0x1d1e1f, roughness: 0.55, metalness: 0.35 });
-const SUPPORT = new THREE.Vector3(0, 0.062, 0.3);   /* where the left hand holds the handguard, in the rifle's own frame (origin: the right hand on the grip) */
+const SUPPORT = new THREE.Vector3(0, 0.062, 0.3);   /* the handguard's middle, in the rifle's own frame (origin: the right hand on the grip) */
+const BUTT = new THREE.Vector3(0, 0.02, -0.33);      /* the middle of the butt plate, which sits in the shoulder pocket */
+const EYE = new THREE.Vector3(0, 0.145, -0.135);    /* where the aiming eye sits: just above the line of the sights, a hand's width behind the rear sight */
 
 function part(geo, x, y, z, rx = 0) { geo.rotateX(rx); geo.translate(x, y, z); return geo; }
 const box = (w, h, l, x, y, z, rx) => part(new THREE.BoxGeometry(w, h, l), x, y, z, rx);
 const tube = (r, l, x, y, z, seg = 10) => part(new THREE.CylinderGeometry(r, r, l, seg).rotateX(Math.PI / 2), x, y, z);
 let RIFLE_GEO = null, PISTOL_GEO = null;
-function rifleGeo() {   /* about 1 m long: stock, receiver with carry handle, curved 30-round magazine, round handguard, triangular front sight, barrel, flash hider. +z is the muzzle, +y up. */
-  return RIFLE_GEO || (RIFLE_GEO = mergeGeometries([
-    box(0.034, 0.072, 0.24, 0, 0.055, -0.22), box(0.04, 0.11, 0.02, 0, 0.04, -0.345),            // stock and butt plate
-    box(0.03, 0.068, 0.25, 0, 0.068, 0.02),                                                        // receiver
-    box(0.018, 0.03, 0.15, 0, 0.12, 0.03), box(0.02, 0.03, 0.025, 0, 0.13, -0.04),                 // carry handle and rear sight
-    box(0.026, 0.085, 0.036, 0, -0.018, -0.012, -0.32),                                             // pistol grip
-    box(0.022, 0.16, 0.052, 0, -0.035, 0.1, 0.2),                                                   // magazine, raked forward
-    box(0.008, 0.012, 0.05, 0, 0.026, 0.0),                                                         // trigger guard
-    tube(0.026, 0.3, 0, 0.062, 0.3, 12),                                                            // handguard
-    tube(0.008, 0.2, 0, 0.062, 0.54), box(0.012, 0.055, 0.016, 0, 0.095, 0.5), box(0.02, 0.012, 0.03, 0, 0.07, 0.5),   // barrel, front sight post and base
-    tube(0.011, 0.05, 0, 0.062, 0.66),                                                              // flash hider
-  ]));
+function rifleGeo() {   /* an M16A2, about 1 m: a side profile (stock, receiver, carry handle, pistol grip, trigger guard, curved magazine) extruded to 2.8 cm,
+  with a round handguard, a triangular front sight, barrel and flash hider. +z is the muzzle, +y up; the origin is the middle of the pistol grip, where the right palm holds it.
+  Butt plate 33 cm behind the grip, handguard from 12 to 42 cm ahead of it (measured clips: palm to shoulder 36 to 40 cm, palm to palm 31 to 34 cm). */
+  if (RIFLE_GEO) return RIFLE_GEO;
+  const P = [[-0.33, -0.045], [-0.12, 0.03], [-0.035, 0.03], [-0.055, -0.07], [-0.03, -0.078], [-0.005, 0.0], [0.0, -0.012], [0.055, -0.012], [0.062, 0.022],
+    [0.072, 0.022], [0.098, -0.13], [0.142, -0.118], [0.125, 0.022], [0.135, 0.042], [0.135, 0.095], [0.105, 0.095], [0.1, 0.132], [-0.062, 0.132], [-0.072, 0.095],
+    [-0.12, 0.092], [-0.33, 0.082]];   /* [z, y] round the outline */
+  const sh = new THREE.Shape(); P.forEach(([z, y], k) => (k ? sh.lineTo(z, y) : sh.moveTo(z, y))); sh.closePath();
+  const body = new THREE.ExtrudeGeometry(sh, { depth: 0.022, bevelEnabled: true, bevelThickness: 0.003, bevelSize: 0.003, bevelSegments: 1, curveSegments: 1 });
+  body.translate(0, 0, -0.011); body.rotateY(-Math.PI / 2);   /* the shape was drawn in x (here z) and y; turn it so the outline's x runs along +z */
+  const sight = new THREE.ExtrudeGeometry(new THREE.Shape([new THREE.Vector2(0.43, 0.062), new THREE.Vector2(0.475, 0.062), new THREE.Vector2(0.462, 0.122), new THREE.Vector2(0.452, 0.122)]), { depth: 0.012, bevelEnabled: false });
+  sight.translate(0, 0, -0.006); sight.rotateY(-Math.PI / 2);
+  const g = mergeGeometries([body.toNonIndexed(), sight.toNonIndexed(), tube(0.024, 0.3, 0, 0.062, 0.27, 16).toNonIndexed(), tube(0.0085, 0.22, 0, 0.062, 0.53).toNonIndexed(), tube(0.011, 0.05, 0, 0.062, 0.655).toNonIndexed(), box(0.03, 0.006, 0.05, 0, 0.096, 0.02).toNonIndexed()]);
+  g.computeVertexNormals(); return (RIFLE_GEO = g);
 }
 function pistolGeo() {   /* a black semi-automatic pistol: slide and frame, grip, trigger guard. Origin: the hand on the grip. */
   return PISTOL_GEO || (PISTOL_GEO = mergeGeometries([box(0.03, 0.034, 0.19, 0, 0.045, 0.06), box(0.028, 0.105, 0.05, 0, -0.01, -0.005, -0.25), box(0.008, 0.01, 0.04, 0, 0.012, 0.05)]));
@@ -61,6 +65,44 @@ function setHands(body, w, shut) {
   for (const j of w.fingers) j.b.quaternion.copy(shut ? j.closed : j.open);
 }
 
+/* two-bone IK: turn the upper arm and forearm so the wrist reaches T, keeping the elbow on the side the clip had it (the same plane) */
+function reach(body, side, T) {
+  const A = bone(body, side + 'Arm'), B = bone(body, side + 'ForeArm'), C = bone(body, side + 'Hand'); if (!A || !B || !C) return;
+  body.updateMatrixWorld(true); const a = wpos(A), b = wpos(B), c = wpos(C), lab = a.distanceTo(b), lcb = b.distanceTo(c), lat = Math.min(Math.max(a.distanceTo(T), 0.02), lab + lcb - 0.005);
+  const ang = (u, v) => Math.acos(Math.max(-1, Math.min(1, u.clone().normalize().dot(v.clone().normalize()))));
+  const acab = ang(c.clone().sub(a), b.clone().sub(a)), babc = ang(a.clone().sub(b), c.clone().sub(b));
+  const acab1 = Math.acos(Math.max(-1, Math.min(1, (lcb * lcb - lab * lab - lat * lat) / (-2 * lab * lat)))), babc1 = Math.acos(Math.max(-1, Math.min(1, (lat * lat - lab * lab - lcb * lcb) / (-2 * lab * lcb))));
+  let ax0 = new THREE.Vector3().crossVectors(c.clone().sub(a), b.clone().sub(a)); if (ax0.lengthSq() < 1e-10) return; ax0.normalize();
+  turnWorld(A, ax0, acab1 - acab); turnWorld(B, ax0, babc1 - babc);
+  const c2 = wpos(C), ax1 = new THREE.Vector3().crossVectors(c2.clone().sub(a), T.clone().sub(a)); if (ax1.lengthSq() > 1e-10) turnWorld(A, ax1.normalize(), ang(c2.clone().sub(a), T.clone().sub(a)));
+}
+/* turn a hand about its wrist so its palm faces dir (the palm's normal, as closeHand works it out) */
+function palmTo(body, side, dir) {
+  const B = (n) => bone(body, side + n), hand = B('Hand'), idx = B('HandIndex1'), mid = B('HandMiddle1'), pky = B('HandPinky1'), th = B('HandThumb2') || B('HandThumb1'); if (!hand || !idx || !mid || !pky) return;
+  body.updateMatrixWorld(true); const M = wpos(mid), f = M.clone().sub(wpos(hand)).normalize(), w = wpos(idx).sub(wpos(pky)).normalize(), n = new THREE.Vector3().crossVectors(w, f).normalize();
+  if (th && n.dot(wpos(th).sub(M)) < 0) n.negate();
+  const ax = new THREE.Vector3().crossVectors(n, dir); if (ax.lengthSq() > 1e-8) turnWorld(hand, ax.normalize(), n.angleTo(dir));
+}
+
+/* Bones this file turns (arms, hands, neck, head) start each frame from the clip's pose. A clip that does not move a bone leaves our last turn
+   in place, and turning it again would pile up frame after frame, so such a bone is first put back to how it was before we touched it. */
+const ADJUST = ['RightHand', 'LeftHand', 'LeftArm', 'LeftForeArm', 'Neck', 'Head'];
+function freshen(body, w) {
+  w.base = w.base || new Map(); w.last = w.last || new Map();
+  for (const n of ADJUST) { const b = bone(body, n); if (!b) continue; const l = w.last.get(b);
+    if (l && b.quaternion.equals(l)) b.quaternion.copy(w.base.get(b)); else w.base.set(b, b.quaternion.clone()); }
+}
+function remember(body, w) { for (const n of ADJUST) { const b = bone(body, n); if (b) w.last.set(b, b.quaternion.clone()); } }
+
+/* the rifle's direction from the shoulder pocket to the grip, but never pointing more than about 11 degrees above level (some clips lift the
+   hands, and a rifle aimed at the sky reads badly) nor more than about 30 degrees below it: the grip stays in the palm and the butt gives a little at the shoulder */
+const MAX_UP = 0.19, MAX_DOWN = 0.52;
+function aimOf(R, pocket) {
+  const d = R.clone().sub(pocket), flat = Math.hypot(d.x, d.z), e = Math.atan2(d.y, flat), e2 = Math.max(-MAX_DOWN, Math.min(MAX_UP, e));
+  if (e2 !== e && flat > 1e-6) { const len = d.length(); d.set(d.x / flat * Math.cos(e2) * len, Math.sin(e2) * len, d.z / flat * Math.cos(e2) * len); }
+  return d;
+}
+
 export const ARMED = [];
 export function arm(body, kind = 'rifle', scene = body.parent) {
   const mesh = new THREE.Mesh(kind === 'pistol' ? pistolGeo() : rifleGeo(), MAT); mesh.castShadow = true; mesh.frustumCulled = false; mesh.matrixAutoUpdate = false;
@@ -89,14 +131,32 @@ export function modeOf(body) {
 }
 export function weaponTick(body) {
   const w = body.userData.weapon; if (!w) return; const mode = modeOf(body), m = w.mesh;
-  setHands(body, w, mode === 'hands'); body.updateMatrixWorld(true);   /* fingers closed round the weapon while it is in the hands, relaxed otherwise */
+  freshen(body, w); setHands(body, w, mode === 'hands'); body.updateMatrixWorld(true);   /* fingers closed round the weapon while it is in the hands, relaxed otherwise */
+  try { tickWeapon(body, w, mode, m); } finally { remember(body, w); }
+}
+function tickWeapon(body, w, mode, m) {
   m.visible = mode !== 'holster'; if (!m.visible) return;
   const up = _u.set(0, 1, 0);
   if (w.kind === 'rifle' && mode === 'hands') {
-    const R = palm(body, 'Right', _a), L = palm(body, 'Left', _b), d = _d.subVectors(L, R);
-    if (d.length() > 0.12) {   /* the left palm goes on the handguard line at whatever distance the clip puts it (15 to 45 cm ahead of the grip); hands closer than 12 cm: sling it instead */
-      const D = d.length(), z = Math.max(0.15, Math.min(0.45, Math.sqrt(Math.max(0, D * D - SUPPORT.y * SUPPORT.y))));
-      place(m, R, d, up, new THREE.Vector3(0, SUPPORT.y, z), new THREE.Vector3(0, 1, 0)); return; }
+    /* grip in the right palm, butt in the right shoulder pocket (a little in front of, inside and below the shoulder joint) */
+    let R = palm(body, 'Right', _a); const sR = wpos(bone(body, 'RightArm')), sL = wpos(bone(body, 'LeftArm')), inward = sL.clone().sub(sR).normalize();
+    const bodyUp = wpos(bone(body, 'Neck')).sub(wpos(bone(body, 'Spine'))).normalize(), bodyFwd = new THREE.Vector3().crossVectors(inward, bodyUp).normalize();
+    const pocket = sR.clone().addScaledVector(bodyFwd, 0.045).addScaledVector(inward, 0.035).addScaledVector(bodyUp, -0.025);
+    place(m, R, aimOf(R, pocket), up, new THREE.Vector3(0, -BUTT.y, -BUTT.z), new THREE.Vector3(0, 1, 0)); m.updateMatrixWorld(true);
+    /* right hand: palm against the side of the pistol grip, so the fist wraps it (the rifle's +x points from its right side to its left) */
+    palmTo(body, 'Right', new THREE.Vector3(1, 0, 0).transformDirection(m.matrixWorld)); R = palm(body, 'Right', _a);
+    place(m, R, aimOf(R, pocket), up, new THREE.Vector3(0, -BUTT.y, -BUTT.z), new THREE.Vector3(0, 1, 0)); m.updateMatrixWorld(true);
+    /* left hand: under the handguard, where along it the clip put the hand (17 to 40 cm ahead of the grip), palm turned up to cradle it */
+    const inv = new THREE.Matrix4().copy(m.matrixWorld).invert(), Lw = palm(body, 'Left', _b), Ll = Lw.clone().applyMatrix4(inv), z = Math.max(0.17, Math.min(0.4, Ll.z));
+    const want = new THREE.Vector3(0, SUPPORT.y - 0.024 - 0.016, z).applyMatrix4(m.matrixWorld), rifleUp = new THREE.Vector3(0, 1, 0).transformDirection(m.matrixWorld);
+    for (let k = 0; k < 2; k++) { palmTo(body, 'Left', rifleUp); const off = palm(body, 'Left', V()).sub(wpos(bone(body, 'LeftHand'))); reach(body, 'Left', want.clone().sub(off)); }
+    palmTo(body, 'Left', rifleUp);
+    /* cheek to the stock: tip the neck and head (at most about 25 degrees each) so the eye comes down behind the rear sight */
+    const eyeWant = EYE.clone().applyMatrix4(m.matrixWorld);
+    for (const [n, lim] of [['Neck', 0.3], ['Head', 0.45]]) { const hb = bone(body, n), hd = bone(body, 'Head'); if (!hb || !hd) continue; body.updateMatrixWorld(true);
+      const piv = wpos(hb), eye = wpos(hd).addScaledVector(bodyUp, 0.075).addScaledVector(bodyFwd, 0.085).addScaledVector(inward, -0.032);   /* the right eye */
+      const u = eye.clone().sub(piv), v = eyeWant.clone().sub(piv), ax = new THREE.Vector3().crossVectors(u, v); if (ax.lengthSq() > 1e-10) turnWorld(hb, ax.normalize(), Math.min(lim, u.angleTo(v)) * 0.5); }
+    return;
   }
   if (w.kind === 'pistol') {
     const R = palm(body, 'Right', _a), f = _d.subVectors(bone(body, 'RightHand').getWorldPosition(_b), bone(body, 'RightForeArm').getWorldPosition(_c));
