@@ -76,5 +76,5 @@ function solePoints(m) {
   return out; }
 export function groundFeet(m) { let t = TOES.get(m); if (!t) { t = { soles: solePoints(m), toes: ['Left', 'Right'].map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean) }; TOES.set(m, t); }
   if (t.soles.length) { m.updateMatrixWorld(true); let low = 1e9; for (const s of t.soles) low = Math.min(low, _gp.copy(s.p).applyMatrix4(s.bone.matrixWorld).y); const e = (m.userData.ground || 0) - 0.008 - low;   /* the sole rests a hair into the ground, so no gap ever shows under a shoe */
-    m.position.y += (t.set && Math.abs(e) < 0.06) ? e * (e > 0 ? 0.6 : 0.4) : e; t.set = true; return; }   /* small corrections are eased in over a few frames, so the body never jerks when the other heel lands; a big one (a new place to stand) is made at once */
+    m.position.y += (t.set && Math.abs(e) < 0.06) ? e * (e > 0 ? 0.7 : 0.4) : e; t.set = true; return; }   /* small corrections are eased in over a few frames, so the body never jerks when the other heel lands; a big one (a new place to stand) is made at once */
   if (!t.toes.length) return; m.updateMatrixWorld(true); let low = 1e9; for (const b of t.toes) low = Math.min(low, b.getWorldPosition(_gp).y); m.position.y += ((m.userData.ground || 0) + 0.035 - low); }

@@ -1,6 +1,6 @@
 // Compress character bodies and pack them for a game: node tools/people/pack.mjs --out games/kendal/site/models [--max 32000] [--lo] name1 name2 ...
 // Reads build/people/<name>.glb (from tools/garvey/era.py), gives it the small eye texture, drops what is unused, trims it to at most --max triangles,
-// compresses it (meshopt) and writes <out>/<name>.js. With --lo it also writes <name>_lo.js, a light copy (about a fifth of the triangles) for crowds.
+// compresses it (meshopt) and writes <out>/<name>.js. With --lo it also writes <name>_lo.js, a light copy (about 5,900 triangles) for crowds.
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { weld, simplify, prune, meshopt } from '@gltf-transform/functions';
@@ -9,15 +9,15 @@ import fs from 'fs';
 await MeshoptEncoder.ready; await MeshoptDecoder.ready; await MeshoptSimplifier.ready;
 const io = () => new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder });
 const A = process.argv.slice(2), opt = (k, d) => { const i = A.indexOf(k); return i >= 0 ? A[i + 1] : d; };
-const OUT = opt('--out', 'games/kendal/site/models'), MAX = +opt('--max', 32000), SMALL = 1300, WHOLE = /Collar|Tie|Belt|Hat|Cap|Band|Sole|Wrap|Bonnet|Moustache|Puffs|Ribbons|Bun|Knot/   /* pieces that are never simplified */, LO = A.includes('--lo'), SRC = opt('--src', 'build/people');
-const names = A.filter((a, i) => !a.startsWith('--') && !['--out', '--max', '--src'].includes(A[i - 1]));
+const OUT = opt('--out', 'games/kendal/site/models'), MAX = +opt('--max', 32000), SMALL = 1300, WHOLE = /Collar|Tie|Belt|Hat|Cap|Band|Sole|Wrap|Bonnet|Moustache|Puffs|Ribbons|Bun|Knot/   /* pieces that are never simplified */, LO = A.includes('--lo'), SRC = opt('--src', 'build/people'), CLOTH = /^(Shirt|Waistcoat|Jacket|JacketSkirt|Breeches|Skirt|Apron|Coat|CoatSkirt)$/, CLOTH_KEEP = +opt('--cloth', 0.36);   /* in a light copy the clothes keep this share of their triangles */
+const names = A.filter((a, i) => !a.startsWith('--') && !['--out', '--max', '--src', '--cloth'].includes(A[i - 1]));
 const eye = fs.readFileSync('shared/rig/eye_small.jpg');
 const tris = (doc) => { let t = 0; for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) t += (p.getIndices() ? p.getIndices().getCount() : p.getAttribute('POSITION').getCount()) / 3; return t | 0; };
 const pack = (name, bin) => fs.writeFileSync(`${OUT}/${name}.js`, `(window.__models=window.__models||{})["${name}"]="${Buffer.from(bin).toString('base64')}";`);
 /* Light copies only. Simplifying each garment on its own lets a waistcoat or a jacket dip under the shirt it lies on, so specks of shirt show on the dark cloth.
    After simplifying, lift the outer garment clear again: every point of it must sit at least GAP above the cloth beneath, and nothing beneath may come through one of its faces.
    Only the outer garment moves, and only outwards, so a shirt worn without its waistcoat (the game can hide it) is untouched and never sinks into the skin. */
-const LAYERS = [['Shirt', 'Waistcoat'], ['Shirt', 'Jacket'], ['Waistcoat', 'Jacket'], ['Shirt', 'JacketSkirt'], ['Waistcoat', 'JacketSkirt'], ['Breeches', 'JacketSkirt'], ['Breeches', 'Waistcoat']], GAP = 0.007, REACH = 0.03;
+const LAYERS = [['Body', 'Shirt'], ['Body', 'Breeches'], ['Body', 'Skirt'], ['Shirt', 'Breeches'], ['Shirt', 'Skirt'], ['Shirt', 'Waistcoat'], ['Shirt', 'Jacket'], ['Waistcoat', 'Jacket'], ['Shirt', 'JacketSkirt'], ['Waistcoat', 'JacketSkirt'], ['Breeches', 'JacketSkirt'], ['Breeches', 'Waistcoat'], ['Jacket', 'JacketSkirt']], GAP = 0.007, REACH = 0.03;
 function closest(p, a, b, c) {   /* the nearest point of triangle abc to p (Ericson); returns [x, y, z] */
   const sub = (u, v) => [u[0] - v[0], u[1] - v[1], u[2] - v[2]], dot = (u, v) => u[0] * v[0] + u[1] * v[1] + u[2] * v[2], at = (u, v, t) => [u[0] + v[0] * t, u[1] + v[1] * t, u[2] + v[2] * t];
   const ab = sub(b, a), ac = sub(c, a), ap = sub(p, a), d1 = dot(ab, ap), d2 = dot(ac, ap); if (d1 <= 0 && d2 <= 0) return a;
@@ -46,10 +46,10 @@ function liftLayers(doc) {
   for (const [inner, outer] of LAYERS) { const In = soup(doc, inner), Out = soup(doc, outer); if (!In || !Out) continue;
     for (let pass = 0; pass < 3; pass++) {
       for (const s of Out) for (const g of s.groups) { const p = V(s.pos, g[0]), h = nearest(p, In); if (!h) continue;   /* a point of the outer garment that is under, or too close to, the cloth beneath */
-        const along = h.d[0] * h.n[0] + h.d[1] * h.n[1] + h.d[2] * h.n[2], side = Math.hypot(h.d[0] - h.n[0] * along, h.d[1] - h.n[1] * along, h.d[2] - h.n[2] * along); if (side > 0.004 || along >= GAP) continue;   /* off the edge of the cloth beneath: nothing is under it there */
+        const along = h.d[0] * h.n[0] + h.d[1] * h.n[1] + h.d[2] * h.n[2], side = Math.hypot(h.d[0] - h.n[0] * along, h.d[1] - h.n[1] * along, h.d[2] - h.n[2] * along); if (side > 0.004 || along >= GAP || along < -0.012) continue;   /* off the edge of the cloth beneath: nothing is under it there. A point far beneath is on the other side of a thin limb, not a dip: leave it */
         for (const i of g) for (let k = 0; k < 3; k++) s.pos[i * 3 + k] += h.n[k] * (GAP - along); moved++; }
       for (const s of In) for (const g of s.groups) { const p = V(s.pos, g[0]), h = nearest(p, Out); if (!h) continue;   /* a point of the cloth beneath that comes through, or nearly through, a face of the outer garment: lift that face */
-        const along = h.d[0] * h.n[0] + h.d[1] * h.n[1] + h.d[2] * h.n[2], side = Math.hypot(h.d[0] - h.n[0] * along, h.d[1] - h.n[1] * along, h.d[2] - h.n[2] * along); if (side > 0.004 || along <= -GAP) continue;
+        const along = h.d[0] * h.n[0] + h.d[1] * h.n[1] + h.d[2] * h.n[2], side = Math.hypot(h.d[0] - h.n[0] * along, h.d[1] - h.n[1] * along, h.d[2] - h.n[2] * along); if (side > 0.004 || along <= -GAP || along > 0.012) continue;
         const push = along + GAP, o = h.s, done = new Set(); for (let c = 0; c < 3; c++) { const vi = o.idx[h.t * 3 + c], grp = o.groups.find((x) => x.includes(vi)) || [vi]; for (const i of grp) { if (done.has(i)) continue; done.add(i); for (let k = 0; k < 3; k++) o.pos[i * 3 + k] += h.n[k] * push; } } moved++; }
     }
     for (const s of Out) s.P.setArray(s.pos); }
@@ -64,11 +64,17 @@ for (const n of names) {
     await doc.transform(weld(), prune({ keepAttributes: false, keepLeaves: true }));
     const t0 = tris(doc), ratio = ratioOf(t0);
     if (ratio < 0.98) {   /* trim only the big pieces (skin, shirt, trousers, skirt): small ones such as a collar, a belt or a hat band fall apart if they are simplified, so they are kept whole */
-      const keep = []; let small = 0; const whole = new Set(doc.getRoot().listNodes().filter((nd) => nd.getMesh() && WHOLE.test(nd.getName())).map((nd) => nd.getMesh()));
-      for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const n = p.getIndices().getCount() / 3; if (whole.has(m) || n < (light ? 260 : SMALL)) { small += n; keep.push({ p, idx: p.getIndices().clone(), at: p.listSemantics().map((k) => [k, p.getAttribute(k).clone()]) }); } }
-      const r2 = Math.max(0.05, (t0 * ratio - small) / (t0 - small));
-      await doc.transform(simplify({ simplifier: MeshoptSimplifier, ratio: r2, error: light ? 0.012 : 0.02, lockBorder: true }));   /* edges of cloth (hems, cuffs, necklines) are never moved, so they stay clean */
-      for (const k of keep) { k.p.setIndices(k.idx); for (const [n, a] of k.at) k.p.setAttribute(n, a); }
+      const whole = new Set(doc.getRoot().listNodes().filter((nd) => nd.getMesh() && WHOLE.test(nd.getName())).map((nd) => nd.getMesh())), cloth = new Set(doc.getRoot().listNodes().filter((nd) => nd.getMesh() && CLOTH.test(nd.getName())).map((nd) => nd.getMesh()));
+      const prims = []; for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const n = p.getIndices().getCount() / 3; prims.push({ p, n, kind: whole.has(m) || n < (light ? 260 : SMALL) ? 'keep' : (light && cloth.has(m)) ? 'cloth' : 'rest' }); }
+      const sum = (k) => prims.filter((x) => x.kind === k).reduce((a, x) => a + x.n, 0);
+      const only = async (kind, r, error) => {   /* simplify the pieces of one kind and put every other piece back as it was; edges of cloth (hems, cuffs, necklines) are never moved, so they stay clean */
+        const save = prims.filter((x) => x.kind !== kind).map((x) => ({ p: x.p, idx: x.p.getIndices().clone(), at: x.p.listSemantics().map((k) => [k, x.p.getAttribute(k).clone()]) }));
+        await doc.transform(simplify({ simplifier: MeshoptSimplifier, ratio: r, error, lockBorder: true })); for (const k of save) { k.p.setIndices(k.idx); for (const [nm, at] of k.at) k.p.setAttribute(nm, at); } };
+      if (light) {   /* a light copy: the clothes keep more of their shape than the skin does (a shirt cut to a tenth crumples, and specks of it show through the waistcoat), and the body pays for it */
+        const cl = sum('cloth'); if (cl) await only('cloth', Math.min(CLOTH_KEEP, 1900 / cl), 0.004);   /* at most about 1,900 triangles of cloth, so the face keeps its share and a body with a long full skirt stays light */
+        const clNow = prims.filter((x) => x.kind === 'cloth').reduce((a, x) => a + x.p.getIndices().getCount() / 3, 0);
+        await only('rest', Math.max(0.05, (t0 * ratio - sum('keep') - clNow) / sum('rest')), 0.012);
+      } else await only('rest', Math.max(0.05, (t0 * ratio - sum('keep')) / sum('rest')), 0.02);
       await doc.transform(prune({ keepAttributes: false, keepLeaves: true }));
       if (light) liftLayers(doc);
     }
@@ -77,6 +83,6 @@ for (const n of names) {
   };
   const full = await make((t) => Math.min(1, MAX / t)); pack(n, full.bin);
   let msg = `${n}: ${full.t0} -> ${full.t1} tris, ${(full.bin.length * 4 / 3 / 1024) | 0} KB`;
-  if (LO) { const lo = await make((t) => Math.min(1, 5200 / t), true); pack(n + '_lo', lo.bin); msg += `; lo ${lo.t1} tris, ${(lo.bin.length * 4 / 3 / 1024) | 0} KB`; }
+  if (LO) { const lo = await make((t) => Math.min(1, 5900 / t), true); pack(n + '_lo', lo.bin); msg += `; lo ${lo.t1} tris, ${(lo.bin.length * 4 / 3 / 1024) | 0} KB`; }
   console.log(msg);
 }
