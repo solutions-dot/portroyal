@@ -285,3 +285,7 @@ Real people in the game: none speak. Coke, politicians, commanders, officers and
 7. **Story code**: chapters, journal, goals, saving (copy the patterns from `games/kendal/src/`).
 8. **Wire the automatic audits and layout test** before the first PR that has a place.
 9. **The menu card and the poster**, once the owner decides to publish.
+
+## STANDARD.md follow-up (14 November 2026)
+
+`docs/STANDARD.md` (on branch `claude/affectionate-pasteur-xvhvlq`) says: Hair is set to 1, not multiplied (done in `src/cast.js`); do not borrow other games' bodies. Still borrowed: `girl`, `woman_elder`, `man_elder` (Kendal) and `guide2020` (Garvey). They need Tivoli recipes in `tools/tivoli/people/` (Ivy as girl and grandmother, Miss Pearl, Mass Roy, a 2020 guide). The Back-o-Wall place has no `?test=audit` wiring yet.
