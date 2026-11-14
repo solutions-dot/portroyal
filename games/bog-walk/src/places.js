@@ -6,7 +6,7 @@ import { JOURNEY } from './content.js';
    The turbine house, the valve wheel, the switchboard and the trams are a general picture: the record does not say how they looked or where the valve was. */
 import * as THREE from 'three';
 import { T, cv, grain, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng } from './wgfx.js';
-import { palm, tree, banana, bush, boardHouse, hillRing, scatter, mule, bench, lampPost, crate, barrel, bucket, sack, lantern } from './props.js';
+import { palm, tree, banana, bush, boardHouse, hillRing, scatter, mule, bench, lampPost, crate, barrel, bucket, sack, lantern, cart } from './props.js';
 import { grassField, flowerField, rockField, blotches, fence, mangoTree, bamboo, flameTree, hibiscus, croton, stump } from './detail.js';
 import { rails, steamLoco, wagon } from './trains.js';
 import { person, extra, crowd04, crowd99, crowdNow } from './cast.js';
@@ -188,7 +188,7 @@ const seatAt = (x, z, ry, along = 0) => [x + Math.cos(ry) * along + Math.sin(ry)
 function siteGround(g, kind) {
   const r = rng(kind === 'ruin' ? 9 : 4); const dry = kind === 'ruin' ? [70, 116, 50] : [96, 124, 58];
   groundPlane(g, T.grass([200, 200], dry));
-  if (kind !== 'ruin') { const yard = mesh(new THREE.PlaneGeometry(46, 26), std(T.dirt([6, 4], [142, 104, 70]), 1), 0, 0.02, 4, g); yard.rotation.x = -PI / 2; }
+  if (kind !== 'ruin') { const wide = kind === 'morn', yard = mesh(new THREE.PlaneGeometry(wide ? 62 : 46, 26), std(T.dirt(wide ? [8, 4] : [6, 4], [142, 104, 70]), 1), wide ? 7 : 0, 0.016, 4, g); yard.rotation.x = -PI / 2; }
   else { const path = mesh(new THREE.PlaneGeometry(3, 30), std(T.dirt([1, 6], [150, 120, 84]), 1), 2, 0.02, 4, g); path.rotation.x = -PI / 2; }
   /* the Rio Cobre, behind the station, and its banks */
   const wt = T.water([40, 3]).clone(); wt.needsUpdate = true; wt.repeat.set(40, 2);
@@ -216,16 +216,36 @@ function pipeAndSaddles(g, kind) {   /* the Tube coming down from the dam, on co
     const col = cyl(PR + 0.12, PR + 0.12, 0.25, M.iron, -7.05, PY - 0.7, PZ, g, 36); col.rotation.z = PI / 2;
     for (let x = -112; x <= -16; x += 12) { const f = cyl(PR + 0.05, PR + 0.05, 0.14, M.iron, x + 3, PY, PZ, g, 36); f.rotation.z = PI / 2; }   /* joint rings */
   } else {
-    for (const x of xs) if (x > -70) saddle(g, x, PZ, 0, PY - PR + 0.25, 0.7, M.concOld);   /* the supports are still there in a row; the pipe is gone */
+    for (const x of xs) if (x > -70) ruinSupport(g, x, PZ, x);   /* the supports are still there in a row; the pipe is gone */
     /* a rusted half-shell of the pipe, lying on the ground */
     /* a long rusted half of one section of the pipe, 8 feet across, lying open side up in the grass; the plate is thick, with a flange ring at one end */
-    const rm = new THREE.MeshStandardMaterial({ map: TX.rivets([3, 1], [104, 62, 40], 3), roughness: 0.95, metalness: 0.15, side: THREE.DoubleSide });
+    const rm = new THREE.MeshStandardMaterial({ map: TX.rivets([4, 2.2], [78, 54, 42], 3), roughness: 0.95, metalness: 0.25, side: THREE.DoubleSide });
     const half = (len, arc, x, z, ry, roll, y) => { const geo = new THREE.CylinderGeometry(PR, PR, len, 36, 1, true, (PI - arc) / 2, arc); geo.rotateZ(-PI / 2); const sh = grp(g, x, y, z); sh.rotation.set(roll, ry, 0); mesh(geo, rm, 0, 0, 0, sh);
       const lip = new THREE.CylinderGeometry(PR + 0.035, PR + 0.035, len, 36, 1, true, (PI - arc) / 2, arc); lip.rotateZ(-PI / 2); mesh(lip, rm, 0, 0, 0, sh);   /* the thickness of the plate, seen at the cut edges */
-      const fl = new THREE.TorusGeometry(PR + 0.03, 0.06, 6, 30, arc); fl.rotateZ(-PI / 2 - arc / 2); fl.rotateY(PI / 2); mesh(fl, rm, len / 2 - 0.05, 0, 0, sh); return sh; };
-    half(7, PI, -30, PZ + 3.5, 0.1, 0.12, PR - 0.1);
+      const fl = new THREE.TorusGeometry(PR + 0.03, 0.06, 6, 30, arc); fl.rotateZ(-PI / 2 - arc / 2); fl.rotateY(PI / 2); mesh(fl, rm, len / 2 - 0.05, 0, 0, sh);
+      for (let i = 1; i < Math.floor(len / 2.4); i++) { const rb = new THREE.TorusGeometry(PR + 0.02, 0.035, 5, 30, arc); rb.rotateZ(-PI / 2 - arc / 2); rb.rotateY(PI / 2); mesh(rb, rm, -len / 2 + i * len / Math.floor(len / 2.4), 0, 0, sh); }   /* the seams where the plates were riveted together, ridged ribs round the pipe */
+      return sh; };
+    half(9.6, PI, -8.2, -1.2, 0.35, 0.0, PR - 0.1);   /* the big piece: a whole length of the pipe, split, lying open side up where you can walk up to it */
     half(3.4, PI * 0.7, -42, PZ + 0.2, -0.5, 1.0, PR - 0.03);   /* a smaller broken piece, tipped on its side against the old supports */
+    half(5.2, PI * 0.8, -31, PZ + 3.6, 0.15, 0.1, PR - 0.1);
   }
+}
+function ruinSupport(g, x, z, seed) {   /* an old concrete support: a wide footing, a pedestal with a chipped, broken top, rusty rebar stubs sticking out, and moss at the foot */
+  const r = rng(seed * 13 + 5), grp1 = grp(g, x, 0, z), cm = M.concOld, rust = solid(0x6a3a22, 0.9, 0.3), lean = (r() - 0.5) * 0.08;
+  box(1.2, 0.22, 2.6, cm, 0, 0.11, 0, grp1); const ped = box(0.7, 0.9, 1.9, cm, 0, 0.67, 0, grp1); ped.rotation.z = lean;
+  const top = PY - PR + 0.25, hh = top - 1.12 - (r() < 0.4 ? 0.35 : 0);
+  const up = box(0.7, hh, 2.0, cm, 0, 1.12 + hh / 2, 0, grp1); up.rotation.z = lean;
+  for (let i = 0; i < 3; i++) { const bk = box(0.3 + r() * 0.25, 0.18 + r() * 0.16, 0.5 + r() * 0.5, cm, (r() - 0.5) * 0.4, 1.12 + hh + 0.06, (r() - 0.5) * 1.3, grp1); bk.rotation.set(r() - 0.5, r() * 2, r() * 0.4); }   /* chipped, broken lumps at the top */
+  for (const dz of [-0.7, -0.25, 0.25, 0.7]) { const rb = cyl(0.012, 0.012, 0.3 + r() * 0.35, rust, (r() - 0.5) * 0.4, 1.12 + hh + 0.22, dz, grp1, 5); rb.rotation.set((r() - 0.5) * 0.7, 0, (r() - 0.5) * 0.7); }   /* rebar stubs */
+  for (const dz of [-0.8, 0.8]) { const rb = cyl(0.012, 0.012, 0.28, rust, 0.35, 0.34, dz, grp1, 5); rb.rotation.z = -0.6; }
+  const moss = mesh(new THREE.CircleGeometry(0.9, 10), solid(0x3a5a2a, 1), 0, 0.235, 0, grp1); moss.rotation.x = -PI / 2; moss.scale.set(0.9, 1.4, 1);
+  /* weathering: rain streaks down the faces, green moss creeping up the foot, a crack, a darker band where the formwork joined, and bevelled corners */
+  const stain = solid(0x5e5a50, 1), mossy = solid(0x4a6a34, 1), top1 = 1.12 + hh;
+  for (const sx of [-1, 1]) { for (let i = 0; i < 5; i++) { const w = 0.05 + r() * 0.1, h = 0.4 + r() * (top1 - 0.6); box(w, h, 0.012, stain, sx * 0.356, top1 - h / 2 - 0.05, (r() - 0.5) * 1.7, grp1).rotation.y = PI / 2;
+      } for (let i = 0; i < 4; i++) { const w = 0.15 + r() * 0.3, h = 0.12 + r() * 0.3; box(0.014, h, w, mossy, sx * 0.357, 0.3 + h / 2, (r() - 0.5) * 1.7, grp1); } box(0.014, 0.05, 1.96, solid(0x66625a, 1), sx * 0.357, 1.12, 0, grp1); }
+  for (const sz of [-1, 1]) for (let i = 0; i < 3; i++) { const w = 0.05 + r() * 0.1, h = 0.4 + r() * (top1 - 0.6); box(w, h, 0.014, stain, (r() - 0.5) * 0.5, top1 - h / 2 - 0.05, sz * 1.006, grp1); }
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const ch = box(0.05, top1 - 0.9, 0.05, cm, sx * 0.35, 0.9 + (top1 - 0.9) / 2, sz * 1.0, grp1); ch.rotation.y = PI / 4; }   /* the corner bevels */
+  { const ck = box(0.016, 0.7, 0.03, solid(0x2e2c28, 1), 0.357, top1 - 0.55, 0.3, grp1); ck.rotation.x = 0.35; }
 }
 function turbineHouse(g, kind, P) {
   /* the brick house: 14 m by 10 m, walls 0.4 m thick and 6.5 m high, a door in the south wall. Inside: the turbine casing, the shaft, the spinning wheel,
@@ -296,7 +316,15 @@ function turbineHouse(g, kind, P) {
   } else {
     /* broken walls: uneven heights, no roof, a gap where the door was, brick rubble and trees growing inside */
     const r = rng(41), segs = [], seg = (xa, za, xb, zb, hs) => { const n = hs.length, dx = (xb - xa) / n, dz = (zb - za) / n; for (let i = 0; i < n; i++) { const h = hs[i]; if (h <= 0) continue; const along = Math.hypot(dx, dz), w = Math.abs(dx) > 0.01 ? along : th, d = Math.abs(dz) > 0.01 ? along : th; bw(w, h, d, xa + dx * (i + 0.5), h / 2, za + dz * (i + 0.5)); segs.push([xa + dx * (i + 0.5), za + dz * (i + 0.5), along, h, Math.abs(dx) > 0.01]); } };
-    seg(x0, z0, x1, z0, [4.2, 5.1, 3.8, 2.6, 4.6, 3.2, 1.4]); seg(x0, z0, x0, z1, [3.6, 2.4, 1.2, 0.6, 2.0]); seg(x1, z0, x1, z1, [2.8, 3.9, 2.2, 0.0, 1.0]);
+    /* the north and west walls stand almost to their full height: one slab each with arched window openings cut through and a broken, stepped top edge */
+    const brickT = bt.clone(); brickT.needsUpdate = true; brickT.repeat.set(1 / 3.2, 1 / 2.4); const brickM = std(brickT, 0.92, { side: THREE.DoubleSide });
+    const slab = (len, cols, wins, x, z, ry) => { const sh = new THREE.Shape(); sh.moveTo(0, 0); sh.lineTo(len, 0); for (let i = cols.length - 1; i >= 0; i--) { const u1 = (i + 1) * len / cols.length, u0 = i * len / cols.length, jit = (r() - 0.5) * 0.3; sh.lineTo(u1, cols[i] + jit); sh.lineTo(u0, cols[i] + jit); } sh.lineTo(0, 0);
+      for (const u of wins) { const hp = new THREE.Path(), hw = 0.65, y0 = 1.6, y1 = 4.2; hp.moveTo(u - hw, y0); hp.lineTo(u + hw, y0); hp.lineTo(u + hw, y1); hp.absarc(u, y1, hw, 0, PI, false); hp.lineTo(u - hw, y0); sh.holes.push(hp); }
+      const geo = new THREE.ExtrudeGeometry(sh, { depth: th, bevelEnabled: false }); const m = mesh(geo, brickM, x, 0, z, g); m.rotation.y = ry; return m; };
+    slab(x1 - x0, [3.2, 4.4, 5.8, 6.4, 6.5, 6.5, 6.5, 6.4, 6.5, 6.5, 6.5, 5.9, 4.8, 3.0], [3.5, 7, 10.5], x0, z0 - th / 2, 0);
+    slab(z1 - z0, [1.5, 2.6, 5.6, 6.5, 7.4, 8.4, 7.6, 6.5, 5.4, 3.0], [3.0, 7.0], x0 + th / 2, z0, -PI / 2);   /* turned -90 degrees, the slab runs from z0 toward z1 and its thickness goes toward -x, so it is centred on x0 like the wall's collision box */
+    for (const [cx, cz, al, h, ax] of [[-4, z0, 3, 6, true], [3, z0, 3, 6, true], [x0, -12.5, 3, 5.5, false], [x0, -8.5, 3, 7, false]]) segs.push([cx, cz, al, h, ax]);
+    seg(x1, z0, x1, z1, [2.8, 3.9, 2.2, 0.0, 1.0]);
     seg(x0, z1, -1.4, z1, [1.8, 2.6, 1.2]); seg(1.4, z1, x1, z1, [0.9, 2.2, 3.0]);
     walls.push([x0 - 0.3, z0 - 0.3, x1 + 0.3, z0 + 0.3], [x0 - 0.3, z0, x0 + 0.3, z1], [x1 - 0.3, z0, 7.3, -9.5], [x1 - 0.3, -7.5, x1 + 0.3, z1], [x0 - 0.3, z1 - 0.3, -1.4, z1 + 0.3], [1.4, z1 - 0.3, x1 + 0.3, z1 + 0.3]);
     for (const [x, z, h] of [[-3.6, -10.6, 0.5], [2.6, -10.6, 0.55]]) { box(2.0, h, 2.6, M.concOld, x, h / 2, z, g); for (const dx of [-0.6, 0.6]) for (const dz of [-0.9, 0.9]) cyl(0.04, 0.04, 0.12, solid(0x5a3a28, 0.9), x + dx, h + 0.06, z + dz, g, 6); }   /* the machine beds, with their old bolts */
@@ -304,7 +332,7 @@ function turbineHouse(g, kind, P) {
     for (let i = 0; i < 18; i++) { const b = box(0.24, 0.08 + r() * 0.06, 0.12, std(bt, 0.9), (r() - 0.5) * 12, 0.05, -10.5 + (r() - 0.5) * 8, g); b.rotation.y = r() * 3; }   /* loose bricks */
     /* creepers climbing the old walls, inside and out, and heaps of fallen brick at their feet */
     const vm = new THREE.MeshStandardMaterial({ map: TX.vine(), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 1 });
-    segs.forEach(([cx, cz, along, h, alongX], i) => { if (h < 1.2) return; for (const side of [-1, 1]) { if (r() < 0.45) continue; const vh = h * (0.5 + r() * 0.45), vw = along * (0.6 + r() * 0.35), off = side * (th / 2 + 0.015);
+    segs.forEach(([cx, cz, along, h, alongX], i) => { if (h < 1.2) return; for (const side of [-1, 1]) { if (r() < 0.3) continue; const vh = h * (0.5 + r() * 0.45), vw = along * (0.6 + r() * 0.35), off = side * (th / 2 + 0.015);
       const v = plane(vw, vh, vm, alongX ? cx + (r() - 0.5) * (along - vw) : cx + off, vh / 2, alongX ? cz + off : cz + (r() - 0.5) * (along - vw), g); v.rotation.y = alongX ? 0 : PI / 2; } });
     const heap = new THREE.DodecahedronGeometry(1, 1); for (const [x, z, sx, sz] of [[-6.0, -13.2, 1.2, 0.9], [6.1, -8.6, 1.0, 1.4], [-6.0, -9.2, 0.8, 0.9], [2.5, -15.0, 1.6, 0.7]]) { const hp = mesh(heap, std(bt, 1), x, 0, z, g); hp.scale.set(sx, 0.35, sz); walls.push([x - sx * 0.8, z - sz * 0.8, x + sx * 0.8, z + sz * 0.8]); }
     for (const [x, z, s2] of [[-2.0, -13.6, 0.8], [4.6, -7.0, 0.7], [-5.6, -10.6, 0.9], [0.4, -14.4, 0.6]]) { const b = bush(x * 7 | 0, s2); b.position.set(x, 0, z); g.add(b); }
@@ -370,10 +398,11 @@ function superHouse(g, P, kind) {   /* the superintendent's house: wooden, with 
 }
 function yardBits(g, P, kind) {
   /* the fence and gate at the road, the east fence, lamps on posts, and the siding beyond the east fence */
-  fence(g, -22, 17, -2.2, 17, { h: 1.2 }); fence(g, 2.2, 17, 22, 17, { h: 1.2 }); fence(g, 22, -6, 22, 17, { h: 1.2 }); fence(g, -22, -6, -22, 17, { h: 1.2 });
+  const XE = kind === 'morn' ? 36 : 22;   /* in the morning the fence takes in the siding, so the special train stands inside it */
+  fence(g, -22, 17, -2.2, 17, { h: 1.2 }); fence(g, 2.2, 17, XE, 17, { h: 1.2 }); fence(g, XE, kind === 'morn' ? -24 : -6, XE, 17, { h: 1.2 }); fence(g, -22, -6, -22, 17, { h: 1.2 });
   for (const s of [-1, 1]) { box(0.3, 1.8, 0.3, M.woodDark, s * 2.3, 0.9, 17, g); const gt = grp(g, s * 2.15, 0, 17); for (const y of [0.35, 0.95]) box(1.9, 0.1, 0.06, M.wood, -s * 0.95, y, 0, gt).position.x = -s * 0; gt.rotation.y = s * 1.25; gt.children.forEach((c) => { c.position.x = -s * 0.98; }); box(0.08, 1.0, 0.06, M.wood, -s * 1.9, 0.65, 0, gt); }
   const road = mesh(new THREE.PlaneGeometry(120, 6), std(T.dirt([24, 1], [150, 110, 76]), 1), 0, 0.02, 21, g); road.rotation.x = -PI / 2;
-  const tr = rails(110); tr.rotation.y = PI / 2; tr.position.set(28, 0, 0); g.add(tr); P.walls.push([22, -40, 40, 60]);
+  const tr = rails(110); tr.rotation.y = PI / 2; tr.position.set(28, 0, 0); g.add(tr); if (kind === 'morn') P.walls.push([22.6, -4.2, 25.9, 12.2], [26.0, -40, 30, 60]); else P.walls.push([22, -40, 40, 60]);
   const plat = box(3.0, 0.9, 16, M.conc, 24.2, 0.45, 4, g);   /* a low platform beside the siding */
   for (const [x, z] of [[-6, -2.6], [8, -2.4], [-13, 6], [6, 11], [-8, 14.5], [10.5, 14.5]]) { const lp = grp(g, x, 0, z); cyl(0.12, 0.15, 0.4, M.iron, 0, 0.2, 0, lp, 10); cyl(0.05, 0.08, 3.0, M.iron, 0, 1.9, 0, lp, 8); box(0.56, 0.04, 0.04, M.iron, 0, 3.0, 0, lp);   /* an iron lamp post with a ladder bar */
     cyl(0.12, 0.08, 0.1, M.iron, 0, 3.43, 0, lp, 4).rotation.y = PI / 4; const gl = cyl(0.19, 0.13, 0.4, kind === 'eve' ? P.lampGlass : solid(0x8a9098, 0.15, 0.3), 0, 3.68, 0, lp, 4); gl.rotation.y = PI / 4;
@@ -392,11 +421,11 @@ function yardBits(g, P, kind) {
 }
 /* grass, flowers and trees round the edges, not on the yard */
 function siteNature(g, kind, keep) {
-  const r = rng(kind === 'ruin' ? 21 : 13), yard = [-23, -7, 23, 18], ruin = kind === 'ruin';
+  const r = rng(kind === 'ruin' ? 21 : 13), yard = [-23, -7, kind === 'morn' ? 37 : 23, 18], ruin = kind === 'ruin';
   const roofed = ruin ? [[-3.6 - 1.1, -12, -3.6 + 1.1, -9.2], [1.5, -12, 3.7, -9.2]] : [[-7.6, -16.1, 7.6, -4.9], [11.4, 0, 20.2, 9.4], [21.6, -40, 40, 60]];   /* never under a roof, a machine bed or on the siding */
   const clear = ruin ? [...keep, ...roofed] : [yard, ...keep, ...roofed];
-  grassField(g, [-32, -22.4, 32, 22], ruin ? 9000 : 6000, { seed: 2, clear, h: ruin ? 0.42 : 0.3 });   /* close round the site: thick, ankle to shin high */
-  grassField(g, [-70, -22.4, 70, 45], ruin ? 5000 : 3600, { seed: 3, clear: [...clear, [-32, -22.4, 32, 22]], h: ruin ? 0.45 : 0.32, w: 0.5 });
+  grassField(g, [-32, -22.4, 32, 22], ruin ? 9000 : 6000, { seed: 2, clear, h: ruin ? 0.32 : 0.28 });   /* close round the site: thick, ankle to shin high */
+  grassField(g, [-70, -22.4, 70, 45], ruin ? 5000 : 3600, { seed: 3, clear: [...clear, [-32, -22.4, 32, 22]], h: ruin ? 0.34 : 0.3, w: 0.46 });
   flowerField(g, [-40, -22, 40, 30], ruin ? 360 : 180, { seed: 5, clear });
   blotches(g, [-50, -20, 50, 30], 20, { seed: 4 });
   const spots = kind === 'ruin' ? [[-14, -2], [-18, 8], [14, -4], [16, 10], [-10, 14], [12, 18], [-26, -16], [24, -16], [-30, 4], [28, 2], [10, 26], [-16, 28]] : [[-30, 6], [-28, 18], [35, -2], [35, 12], [-12, 26], [14, 28], [-30, -16], [35, -18]];
@@ -428,19 +457,53 @@ export function buildStation() {   /* chapter 0: Sunday evening. Sunset into nig
   P.titleView = { x: -2, y: 1.7, z: 14, yaw: 0.35, pitch: 0.08 };
   return P;
 }
+/* the life of the yard: cart ruts, patches of trampled earth, a washing line, water butts, trees, a handcart, planks and a tarpaulin, so no corner is bare */
+function yardLife(g, P) {
+  const r = rng(77), rut = cv(64, 256, (x, w, h) => { x.clearRect(0, 0, w, h); for (const cx of [14, 50]) { const gr = x.createLinearGradient(cx - 9, 0, cx + 9, 0); gr.addColorStop(0, 'rgba(70,42,24,0)'); gr.addColorStop(0.5, 'rgba(70,42,24,0.55)'); gr.addColorStop(1, 'rgba(70,42,24,0)'); x.fillStyle = gr; x.fillRect(cx - 9, 0, 18, h); }
+    for (let i = 0; i < 80; i++) { x.fillStyle = 'rgba(40,24,14,0.25)'; x.fillRect(r() * w, r() * h, 2, 3); } }, null, true);
+  const rm = new THREE.MeshStandardMaterial({ map: rut, transparent: true, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  for (const [x0, z0, x1, z1, w] of [[0.2, 17, 0.4, -4.6, 1.5], [0.4, 14, 11.8, 12.5, 1.5], [0.2, 4, -17, 12, 1.5], [-14, -2.6, 10, -2.6, 1.5]]) { const L = Math.hypot(x1 - x0, z1 - z0), p = mesh(new THREE.PlaneGeometry(w, L), rm, (x0 + x1) / 2, 0.026, (z0 + z1) / 2, g); p.rotation.x = -PI / 2; p.rotation.z = Math.atan2(x1 - x0, z1 - z0) * -1 + 0 ; p.rotation.order = 'YXZ'; p.rotation.set(-PI / 2, 0, 0); p.rotation.y = 0; p.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), Math.atan2(x1 - x0, z1 - z0)); }
+  blotches(g, [-20, -3, 34, 16], 16, { seed: 9, colors: [0x7a5a3a, 0x9a7a54, 0x6a4a30, 0xa88a60] });
+  /* a washing line behind the house gate side: two forked poles, a line with sheets and shirts */
+  { const ax = 13.4, bx = 19.2, z = 11.2; for (const x of [ax, bx]) { cyl(0.05, 0.07, 2.4, M.woodDark, x, 1.2, z, g, 6); box(0.28, 0.05, 0.05, M.woodDark, x, 2.35, z, g); } P.walls.push([ax - 0.2, z - 0.2, ax + 0.2, z + 0.2], [bx - 0.2, z - 0.2, bx + 0.2, z + 0.2]);
+    box(bx - ax, 0.012, 0.012, solid(0xc8c0a8, 1), (ax + bx) / 2, 2.3, z, g); const cols = [0xf0ece0, 0xc8d4e0, 0xe8dcc0, 0xd8b8a8, 0xf0ece0];
+    cols.forEach((c, i) => { const m = solid(c, 1, 0, { side: THREE.DoubleSide }), w = 0.7 + (i % 2) * 0.35, x = ax + 0.6 + i * 1.1; const sh = plane(w, 0.9 - (i % 2) * 0.2, m, x, 2.3 - (0.9 - (i % 2) * 0.2) / 2, z, g); sh.rotation.y = 0.05 * i; }); }
+  /* water butts under the house roof, hooped, with a downpipe */
+  for (const [x, z] of [[16.0, 9.2], [16.0, -0.2]]) { const b = cyl(0.42, 0.34, 0.9, solid(0x5a4630, 0.9), x, 0.45, z, g, 14); for (const y of [0.2, 0.7]) cyl(0.43 - y * 0.05, 0.43 - y * 0.05, 0.04, M.iron, x, y, z, g, 14); cyl(0.4, 0.4, 0.03, solid(0x1a2a30, 0.2), x, 0.9, z, g, 14); const dp = cyl(0.04, 0.04, 2.8, M.iron, x, 2.3, z + (z > 4 ? -0.28 : 0.28), g, 6); P.walls.push([x - 0.5, z - 0.5, x + 0.5, z + 0.5]); }
+  /* a handcart left near the gate, planks on trestles, and a tarpaulin over a heap of stores */
+  { const c = cart(2.0, 1.1); c.position.set(-17.4, 0, 14.6); c.rotation.y = 0.5; g.add(c); P.walls.push([-19.0, 13.2, -15.8, 16.0]); }
+  { const t = grp(g, -3.4, 0, -3.8); for (const dx of [-0.9, 0.9]) { box(0.08, 0.7, 0.5, M.woodDark, dx, 0.35, 0, t); } for (let i = 0; i < 3; i++) box(2.2, 0.05, 0.22, M.wood, 0, 0.72 + i * 0.0, (i - 1) * 0.25, t); P.walls.push([-4.7, -4.4, -2.1, -3.2]); }
+  { const tp = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 1.6, 12, 1, true, 0, PI), solid(0x5a6a58, 1, 0, { side: THREE.DoubleSide })); tp.rotation.z = PI / 2; tp.rotation.y = 0.3; tp.position.set(17.8, 0.05, -2.0); tp.scale.set(1, 1, 0.7); g.add(tp); const crt = crate(0.6, 0x8a6a42); crt.position.set(17.8, 0, -2.0); g.add(crt); P.walls.push([16.6, -3.2, 19.0, -0.8]); }
+  /* trees inside the fence, so the corners are not bare */
+  for (const [x, z, k] of [[-20.2, 0.5, 0], [-20.4, 12.8, 1], [20.6, 14.8, 2], [33.5, -10, 0], [33.5, 12, 1]]) { const o = k === 0 ? mangoTree(6.2, 3 + (x | 0)) : k === 1 ? flameTree(6, 4) : mangoTree(5.6, 8); o.position.set(x, 0, z); g.add(o); P.walls.push([x - 0.5, z - 0.5, x + 0.5, z + 0.5]); }
+  /* the middle of the yard: short trampled grass, pebbles, mud puddles, and the things people dropped. Kept off houses and anything solid. */
+  const inClear = (x, z, rs) => rs.some(([a, b, c, d]) => x > a && x < c && z > b && z < d);
+  const pad = P.walls.map(([a, b, c, d]) => [a - 0.5, b - 0.5, c + 0.5, d + 0.5]), keep = [...HOUSES, [-8, -16, 8, -4.5], ...pad];
+  grassField(g, [-21, -4, 22, 17], 1200, { seed: 31, h: 0.15, w: 0.34, tint: 0xe0e0a8, clear: keep });
+  rockField(g, [-21, -4, 22, 17], 70, { seed: 32, size: 0.1, tone: 0x8a7e68, clear: keep });
+  const sky = new THREE.MeshStandardMaterial({ color: 0x4a5a62, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  for (const [x, z, sx, sz, ry] of [[-2.0, 7.4, 1.6, 0.9, 0.4], [5.2, 12.8, 1.2, 0.8, 1.1], [-9.5, 6.5, 1.0, 0.7, 0.2], [2.2, 1.0, 0.9, 0.6, 2.0]]) { if (inClear(x, z, pad)) continue; const p = mesh(new THREE.CircleGeometry(0.5, 20), sky, x, 0.03, z, g); p.rotation.x = -PI / 2; p.scale.set(sx, sz, 1); p.rotation.z = ry; }
+  for (const [x, z, ry] of [[-4.6, 4.8, 0.7], [1.0, 3.3, 2.1], [6.2, 9.9, 4.0], [-11.0, 8.4, 1.3]]) { if (inClear(x, z, pad)) continue; const h = grp(g, x, 0, z); h.rotation.y = ry; const hat = solid(0xb8a47a, 1); cyl(0.17, 0.2, 0.012, hat, 0, 0.02, 0, h, 14); cyl(0.1, 0.1, 0.11, hat, 0, 0.07, 0, h, 14); cyl(0.102, 0.102, 0.02, solid(0x3a2a1c, 1), 0, 0.045, 0, h, 14); }   /* dropped straw hats */
+  for (const [x, z, ry] of [[-6.4, 10.8, 0.4], [0.2, 6.4, 2.6]]) { if (inClear(x, z, pad)) continue; const b = grp(g, x, 0, z); b.rotation.y = ry; box(0.12, 0.05, 0.3, solid(0x2a2018, 1), -0.08, 0.025, 0, b); box(0.12, 0.05, 0.3, solid(0x2a2018, 1), 0.1, 0.025, 0.04, b); }   /* a pair of boots left behind */
+}
 export function buildYard() {   /* chapter 4: the morning after. Dawn going to day; the lamps out, the wheel still. */
   const g = grp(), P = { id: 'yard', group: g, walls: [], spots: {}, flames: [], people: [], extras: [], env: ENV.dawn, eye: 1.6 };
   P.glass = new THREE.MeshStandardMaterial({ color: 0x2a3440, roughness: 0.2 }); P.glassIn = P.glass; P.bulb = new THREE.MeshStandardMaterial({ color: 0x6a6458 }); P.lampGlass = M.iron;
   siteGround(g, 'morn'); pipeAndSaddles(g, 'morn'); turbineHouse(g, 'morn', P); valveStand(g, P, 'morn'); noticeBoard(g, P); P.notice.material.map = noticeTex(true); superHouse(g, P, 'morn'); yardBits(g, P, 'morn'); siteNature(g, 'morn', []);
   P.notice.material.needsUpdate = true;
-  /* the men who came out, sitting on benches by the house, blankets on the benches beside them */
-  const benches = [[9.6, 1.6, -PI / 2], [9.6, 4.6, -PI / 2], [6.6, -1.2, 0.0]];
-  benches.forEach(([x, z, ry]) => { benchWithBack(g, x, z, ry, 2.2); const c = Math.cos(ry), s = Math.sin(ry); P.walls.push([x - (Math.abs(c) * 1.2 + Math.abs(s) * 0.35), z - (Math.abs(s) * 1.2 + Math.abs(c) * 0.35), x + (Math.abs(c) * 1.2 + Math.abs(s) * 0.35), z + (Math.abs(s) * 1.2 + Math.abs(c) * 0.35)]); });
-  const blanket = (x, y, z, ry, mat) => { const b = box(0.56, 0.09, 0.38, mat, x, y, z, g); b.rotation.y = ry; const f = box(0.56, 0.03, 0.36, mat, x, y + 0.06, z, g); f.rotation.y = ry + 0.08; return b; };   /* a folded blanket on the seat between two men */
-  const sitters = [];
-  benches.forEach(([x, z, ry], bi) => { for (const a of [-0.62, 0.62]) { const [px, pz] = seatAt(x, z, ry, a); sitters.push([px, pz, ry]); } const [bx, bz] = seatAt(x, z, ry, 0); blanket(bx, SEAT_TOP + 0.045, bz, ry, bi % 2 ? M.blanket2 : M.blanket); });
-  const [rx, rz, rry] = sitters[0]; P.people.push(person('rudy4', 'rudy', 'Rudy', rx, rz, rry, { anim: 'SitIdle', seat: SEAT_TOP, h: 1.3 }));
-  sitters.slice(1).forEach(([x, z, ry], i) => P.extras.push(extra('labourer', x, z, ry, ['SitIdle', 'SitTalk', 'SitIdle', 'SitIdle', 'SitTalk'][i], { seat: SEAT_TOP, seated: true, tint: { ...extra('labourer', 0, 0).tint, Shirt: [0xb8b0a0, 0xa8a090, 0xc8c0a8][i % 3] } })));
+  /* the men who came out, sitting on low plank forms and crates (nobody sits on the bare ground: the sitting clips are chair poses), blankets folded on the seats and spread on the ground */
+  const form = (x, z, ry, L = 2.2) => { const f = grp(g, x, 0, z); f.rotation.y = ry; box(L, 0.07, 0.4, M.wood, 0, 0.45, 0, f); for (const dx of [-L / 2 + 0.2, L / 2 - 0.2]) box(0.08, 0.42, 0.34, M.woodDark, dx, 0.21, 0, f); box(L - 0.5, 0.05, 0.05, M.woodDark, 0, 0.3, 0, f);
+    const c = Math.abs(Math.cos(ry)), sn = Math.abs(Math.sin(ry)); P.walls.push([x - (c * L / 2 + sn * 0.25), z - (sn * L / 2 + c * 0.25), x + (c * L / 2 + sn * 0.25), z + (sn * L / 2 + c * 0.25)]); };
+  const blanket = (x, y, z, ry, mat, big = false) => { const w = big ? 1.5 : 0.56, d = big ? 1.0 : 0.38, b = box(w, big ? 0.03 : 0.09, d, mat, x, y, z, g); b.rotation.y = ry; if (!big) { const f = box(w, 0.03, d - 0.02, mat, x, y + 0.06, z, g); f.rotation.y = ry + 0.08; } else for (const k of [-0.3, 0.3]) { const st = box(w, 0.012, 0.07, solid(0xb8a888, 1), x, y + 0.02, z, g); st.rotation.y = ry; st.position.x += Math.sin(ry) * k * 0.9; st.position.z += Math.cos(ry) * k * 0.9; } return b; };
+  const seats = [], FORMS = [[9.2, 1.6, PI / 2], [9.2, 4.6, PI / 2], [6.6, -1.2, PI], [-9.5, -1.0, PI]];
+  FORMS.forEach(([x, z, ry], bi) => { form(x, z, ry); for (const a of [-0.62, 0.62]) { const [px, pz] = seatAt(x, z, ry, a); seats.push([px - Math.sin(ry) * 0.04 + Math.sin(ry) * -0.0, pz, ry]); } const [bx, bz] = seatAt(x, z, ry, 0); blanket(bx, SEAT_TOP + 0.045, bz, ry, bi % 2 ? M.blanket2 : M.blanket); });
+  for (const [x, z, ry] of [[-13.6, 1.6, 0.8], [-12.6, 3.4, 0.5]]) { const c = crate(0.606, 0x7a5a3c); c.position.set(x, 0, z); c.rotation.y = ry; g.add(c); P.walls.push([x - 0.35, z - 0.35, x + 0.35, z + 0.35]); seats.push([x, z, ry]); }
+  blanket(-11.4, 0.03, 3.2, 0.4, M.blanket2, true); blanket(-15.2, 0.03, 3.8, -0.3, M.blanket, true); blanket(7.4, 0.03, 6.6, 0.2, M.blanket, true);   /* blankets spread on the ground */
+  for (const [x, z] of [[-11.9, 1.2], [-14.6, 2.6], [8.0, 0.6]]) { cyl(0.04, 0.035, 0.08, M.steel, x, 0.04, z, g, 8); }   /* tin mugs */
+  const [rx, rz, rry] = seats[0]; P.people.push(person('rudy4', 'rudy', 'Rudy', rx, rz, rry, { anim: 'SitIdle', seat: SEAT_TOP, h: 1.3 }));
+  seats.slice(1).forEach(([x, z, ry], i) => P.extras.push(extra('labourer', x, z, ry, ['SitIdle', 'SitTalk', 'SitIdle', 'SitIdle', 'SitTalk', 'SitIdle', 'SitIdle', 'SitTalk'][i % 8], { seat: SEAT_TOP, seated: true, tint: { ...extra('labourer', 0, 0).tint, Shirt: [0xb8b0a0, 0xa8a090, 0xc8c0a8][i % 3] } })));
+  /* officials and families on the veranda of the superintendent's house (the deck is 27 cm high) */
+  for (const [z, anim, who] of [[2.3, 'Sad1', 'minister'], [6.5, 'Idle', 'minister'], [4.5, 'Sad2', 'labourer']]) P.extras.push(extra(who, 12.45, z, -PI / 2, anim, { ground: 0.27, fixed: true }));
   /* the real people of the morning: seen, not heard */
   P.people.push(person('hammond', 'hammond', 'Dr Hammond', 7.8, 3.0, PI / 2, { h: 1.8, see: true, anim: 'Idle' }));
   P.people.push(person('minister1', 'minister', 'A minister', -3.4, 9.6, 0.5, { h: 1.8, see: true, anim: 'Idle', carry: 'book' }));
@@ -455,17 +518,17 @@ export function buildYard() {   /* chapter 4: the morning after. Dawn going to d
   P.extras.push(...crowd04(8, 11, [-9, 14.4, 9, 16.1], { face: PI, women: 0.6, anims: ['Idle', 'Sad1', 'Sad2', 'Idle'] }));
   P.extras.push(extra('minister', -2.2, 10.4, -2.6, 'Sad1', { base: 'nb_seller', tint: { Shirt: 0xd8c8a8, Skirt: 0x3a3a4a, Hair: 0x1c1816 } }), extra('labourer', -6.6, 5.6, 2.8, 'Sad2'));
   P.extras.push(extra('labourer', -19.5, -6.8, 0.5, 'Idle'), extra('labourer', -18.4, -5.8, -2.6, 'Sad1'));
-  P.indoor = HOUSES; P.bounds = { x0: -21.4, x1: 21.4, z0: -21, z1: 16.4 }; P.start = { x: -1, z: 0.5, yaw: PI - 0.5 };
+  yardLife(g, P); P.indoor = HOUSES; P.bounds = { x0: -21.4, x1: 22.5, z0: -21, z1: 16.4 }; P.start = { x: -1, z: 0.5, yaw: PI - 0.5 };
   P.keepOut = [[3.2, 15.0, 0.7]];
-  /* the special train, waiting beyond the east fence until the whistle */
-  const train = grp(g, 28, 1.69, -44); train.rotation.y = PI / 2; train.userData.noBatch = true; const loco = steamLoco('late'); train.add(loco); const van = wagon(); van.position.x = 9.4; train.add(van); P.train = train; P.spots.trainStop = 6;
+  /* the special train, standing inside the east fence on the siding (empty vans), until the whistle brings it up to the platform */
+  const train = grp(g, 28, 1.69, -16); train.rotation.y = PI / 2; train.userData.noBatch = true; const loco = steamLoco('late'); train.add(loco); const van = wagon(); van.position.x = 9.4; train.add(van); const van2 = wagon(); van2.position.x = 16.1; train.add(van2); P.train = train; P.spots.trainStart = -16; P.spots.trainStop = 6;
   P.tick = (dt, t) => { g.userData.river.offset.x = (t * 0.02) % 1; };
   return P;
 }
 export function buildRuins() {   /* chapter 5: today, bright day among trees */
   const g = grp(), P = { id: 'ruins', group: g, walls: [], spots: {}, flames: [], people: [], extras: [], env: ENV.day, eye: 1.6 };
   siteGround(g, 'ruin'); pipeAndSaddles(g, 'ruin'); turbineHouse(g, 'ruin', P); siteNature(g, 'ruin', [[-8, -16, 8, -5], [-1, -6, 5, 20], [-60, PZ - 1.5, -14, PZ + 1.5], [-34, -10, -25, -5.5]]);
-  P.walls.push([-121, PZ - 1.0, -14, PZ + 1.0], [-33.8, PZ + 2.1, -26.2, PZ + 4.9], [-44.0, PZ - 1.4, -40.0, PZ + 1.8]);
+  P.walls.push([-121, PZ - 1.0, -14, PZ + 1.0], [-35.3, PZ + 2.2, -26.7, PZ + 5.0], [-44.0, PZ - 1.4, -40.0, PZ + 1.8], [-13.6, -2.7, -2.8, 0.7]);
   /* the information board: two posts, a sloping panel under a little roof */
   { const x = 4.2, z = -2.2, b = grp(g, x, 0, z); for (const s of [-1, 1]) cyl(0.06, 0.06, 2.1, solid(0x2a3a34, 0.5, 0.4), s * 0.86, 1.05, 0, b, 10); box(1.9, 1.3, 0.06, solid(0x1f4a3a, 0.6), 0, 1.35, -0.02, b);
     const face = mesh(new THREE.PlaneGeometry(1.8, 1.26), new THREE.MeshStandardMaterial({ map: infoTex(), roughness: 0.6 }), 0, 1.35, 0.015, b); const roof = box(2.1, 0.05, 0.34, solid(0x2a3a34, 0.6), 0, 2.08, 0.05, b); roof.rotation.x = -0.15;
