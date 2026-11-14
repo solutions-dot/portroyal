@@ -346,7 +346,9 @@ async function beginChapter(i, st) {
 function startScene(i, st) {
   const ep = EP; const id = i === 0 && st >= 14 ? 'room88' : CH_PLACE[i]; const P = PL[id];
   if (id === 'room88' || id === 'hall') { restoreRoof(P, (id === 'room88' && st >= 15) || (id === 'hall' && st >= 34)); for (const l of id === 'hall' ? P.lights : [P.lampLight]) l.userData.k = (id === 'room88' && st >= 15) || (id === 'hall' && st >= 34) ? 0 : 1; }
-  if (id === 'after') { P.group.userData.homeLamp.visible = false; const fallen = P.group.userData.fallen, logs = P.group.userData.logs; if (fallen) { fallen.visible = true; logs.visible = false; const tw = P.group.userData.treeWall; if (tw && !P.walls.includes(tw)) P.walls.push(tw); } }
+  if (id === 'yard88' || id === 'yard25') { const done = st >= (i === 0 ? 12 : 22), ud = P.group.userData; for (const b of ud.boards) b.visible = done; if (ud.washing) ud.washing.visible = !(i === 0 && st >= 12); }   /* a chapter started again, or resumed, shows its jobs as done or not done */
+  if (id === 'after') { for (const n of P.people) if (n.stage5) n.hidden = i !== 4;   /* chapter 5's people are there from its first stage, even in a saved game resumed half way */
+    P.group.userData.homeLamp.visible = false; const fallen = P.group.userData.fallen, logs = P.group.userData.logs; if (fallen) { fallen.visible = true; logs.visible = false; const tw = P.group.userData.treeWall; if (tw && !P.walls.includes(tw)) P.walls.push(tw); } if (i === 4 && st >= 52) clearTree(P, true); P.tarpHome.visible = i === 4 && st >= 52; }
   enterPlace(id); state.started = true; setStage(st); showPlace();
   if (id === 'room88' && st >= 15) setEnv(mixEnv(ENV.after, ENV.room, 0.5));
   if (id === 'hall' && st >= 34) setEnv(mixEnv(ENV.after, ENV.room, 0.5));
@@ -363,7 +365,7 @@ function renderChapters() {
 }
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = panelsOpen(); if (state.started) canvas.focus(); }
-$('chteacher').onclick=()=>{teacherMode=!teacherMode;try{localStorage.setItem('kendal-teacher',teacherMode?'1':'0');}catch{}renderChapters();$('chteacher').focus();};
+$('chteacher').onclick=()=>{teacherMode=!teacherMode;try{localStorage.setItem('melissa-teacher',teacherMode?'1':'0');}catch{}renderChapters();$('chteacher').focus();};
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
 function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } location.reload(); }
 $('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
@@ -391,7 +393,7 @@ const jobsDone = (total, next) => { if ((ctr.jobs || 0) >= total) { uiSound('goa
 const ACTIONS_FOR = {
   yard88: (P) => [
     { label: 'Fill the water drum', x: P.spots.standpipe[0], z: P.spots.standpipe[1], r: 2.6, on: () => stage === 11 && !ctr.drumDone, go: () => { SFX.pourWater(); tapJob('drum', 3, ['The drum is a third full.', 'Two thirds full.', 'The drum is full. We will need water.']); jobsDone(3, 12); } },
-    { label: 'Nail a board over the window', x: P.spots.boards[0], z: P.spots.boards[1], r: 3.0, on: () => stage === 11 && !ctr.boardDone, go: () => { SFX.hammerTap(3); const b = P.group.userData.boards[ctr.board || 0]; if (b) b.visible = true; ctr.board = (ctr.board || 0) + 1; tapJob('board', 2, ['One window is covered. Bang, bang, bang.', 'Both windows are covered.']); jobsDone(3, 12); } },
+    { label: 'Nail a board over the window', x: P.spots.boards[0], z: P.spots.boards[1], r: 3.0, on: () => stage === 11 && !ctr.boardDone, go: () => { SFX.hammerTap(3); const b = P.group.userData.boards[ctr.board || 0]; if (b) b.visible = true; tapJob('board', 2, ['One window is covered. Bang, bang, bang.', 'Both windows are covered.']); jobsDone(3, 12); } },
     { label: 'Take in the washing', x: P.spots.washing[0], z: P.spots.washing[1], r: 2.8, on: () => stage === 11 && !ctr.washDone, go: () => { SFX.bag(); P.group.userData.washing.visible = false; ctr.washDone = true; ctr.jobs = (ctr.jobs || 0) + 1; toast('The washing is in. The wind would take it.'); refreshGoal(true); jobsDone(3, 12); } },
     { label: 'Go inside with your family', x: P.spots.clifford[0], z: P.spots.clifford[1], r: 3.0, on: () => stage === 13, go: () => { setStage(14); transition('room88', { env: ENV.room, after: () => { WIND.k = 0.45; setBedsFor('room'); showPlace(CHAPTERS[0].caption2); } }); } } ],
   room88: (P) => [
@@ -399,7 +401,7 @@ const ACTIONS_FOR = {
   yard25: (P) => [
     { label: 'Buy water and tins', x: P.spots.shop[0], z: P.spots.shop[1], r: 2.6, on: () => stage === 21 && !ctr.shopDone, go: () => { SFX.clink(); tapJob('shop', 2, ['Six bottles of water. Good.', 'Tins of food and bread. Good.']); jobsDone(4, 22); } },
     { label: 'Fill the buckets', x: P.spots.standpipe[0], z: P.spots.standpipe[1], r: 2.6, on: () => stage === 21 && !ctr.stdDone, go: () => { SFX.pourWater(); tapJob('std', 3, ['The first bucket is full.', 'The second bucket is full.', 'Three full buckets. Water for washing and flushing.']); jobsDone(4, 22); } },
-    { label: 'Board up the window', x: P.spots.boards[0], z: P.spots.boards[1], r: 3.0, on: () => stage === 21 && !ctr.boardDone, go: () => { SFX.hammerTap(3); const b = P.group.userData.boards[ctr.board || 0]; if (b) b.visible = true; ctr.board = (ctr.board || 0) + 1; tapJob('board', 2, ['One window is covered.', 'Both windows are covered. Glass can break in the wind.']); jobsDone(4, 22); } },
+    { label: 'Board up the window', x: P.spots.boards[0], z: P.spots.boards[1], r: 3.0, on: () => stage === 21 && !ctr.boardDone, go: () => { SFX.hammerTap(3); const b = P.group.userData.boards[ctr.board || 0]; if (b) b.visible = true; tapJob('board', 2, ['One window is covered.', 'Both windows are covered. Glass can break in the wind.']); jobsDone(4, 22); } },
     { label: 'Pack the go-bag', x: P.spots.bag[0], z: P.spots.bag[1], r: 2.4, on: () => stage === 21 && !ctr.bagDone, go: () => { SFX.bag(); tapJob('bag', 3, ['Papers go in a plastic bag, to keep them dry.', 'A torch and spare batteries.', 'The phone and its charger. The radio too.']); jobsDone(4, 22); } },
     { label: 'Hand up the nails', x: P.spots.ladder[0], z: P.spots.ladder[1], r: 2.8, on: () => stage === 23 && !ctr.nailDone, go: () => { SFX.hammerTap(3); tapJob('nail', 3, ['Mr. Raymond nails a sheet down. Tap, tap, tap.', 'Another sheet is fixed to its rafter.', 'The last sheet is tight.']); if (ctr.nailDone) setStage(24); } },
     { label: 'Listen to the radio', x: P.spots.home[0], z: P.spots.home[1], r: 3.0, on: () => stage === 24, go: () => radioCard() },
@@ -528,7 +530,7 @@ ON[43] = () => { };
 ON[45] = () => { unlock('neighbours'); unlock('afterhouse'); };
 
 /* ---------- chapter 5: the days after ---------- */
-function clearTree(P) { const tw = P.group.userData.treeWall; if (tw) { const i = P.walls.indexOf(tw); if (i >= 0) P.walls.splice(i, 1); } if (P.group.userData.fallen) P.group.userData.fallen.visible = false; if (P.group.userData.logs) P.group.userData.logs.visible = true; SFX.sawStart(); }
+function clearTree(P, quiet) { const tw = P.group.userData.treeWall; if (tw) { const i = P.walls.indexOf(tw); if (i >= 0) P.walls.splice(i, 1); } if (P.group.userData.fallen) P.group.userData.fallen.visible = false; if (P.group.userData.logs) P.group.userData.logs.visible = true; if (!quiet) SFX.sawStart(); }
 ON[50] = () => { weather(0.05, 0, ENV.overcast); setBedsFor('after'); const P = P_(); P.tarpHome.visible = false; for (const n of P.people) { if (n.stage5) n.hidden = false; n.m.visible = !n.hidden && cur === 'after'; } };
 ON[51] = () => { setBedsFor('saw'); };
 ON[52] = () => { setBedsFor('after'); };
@@ -732,7 +734,8 @@ function devViews() {
     (async () => { const out = []; startGame(true);
       await beginChapter(0, 14); out.push('ch1@14 place=' + cur + ' stage=' + stage + ' roof=' + roofSheets(P_()).every((s) => s.m.visible)); await beginChapter(0, 15); out.push('ch1@15 place=' + cur + ' torn=' + roofSheets(P_()).some((s) => !s.m.visible));
       await beginChapter(0, 11); out.push('ch1@11 place=' + cur); await beginChapter(2, 33); out.push('ch3@33 place=' + cur + ' roofWhole=' + roofSheets(P_()).every((s) => s.m.visible)); await beginChapter(2, 34); out.push('ch3@34 place=' + cur + ' torn=' + roofSheets(P_()).some((s) => !s.m.visible));
-      await beginChapter(3, 41); out.push('ch4@41 place=' + cur); await beginChapter(4, 51); out.push('ch5@51 place=' + cur + ' fallen=' + P_().group.userData.fallen.visible); await beginChapter(5, 61); out.push('ch6@61 place=' + cur);
+      await beginChapter(3, 41); out.push('ch4@41 place=' + cur); await beginChapter(3, 41); out.push('ch4@41 youthHidden=' + !P_().people.find((p) => p.id === 'youth').m.visible); await beginChapter(4, 51); out.push('ch5@51 place=' + cur + ' fallen=' + P_().group.userData.fallen.visible + ' youthVisible=' + P_().people.find((p) => p.id === 'youth').m.visible); await beginChapter(4, 52); out.push('ch5@52 youthVisible=' + P_().people.find((p) => p.id === 'youth').m.visible + ' fallen=' + P_().group.userData.fallen.visible + ' tarp=' + P_().tarpHome.visible);
+      await beginChapter(1, 21); { const bo = P_().actions.find((a) => a.label === 'Board up the window'), nb = () => P_().group.userData.boards.filter((b) => b.visible).length; bo.go(); const a1 = (ctr.boardDone ? 'done' : 'open') + nb(); bo.go(); out.push('boards: after 1 tap ' + a1 + ', after 2 taps ' + (ctr.boardDone ? 'done' : 'open') + nb()); } await beginChapter(5, 61); out.push('ch6@61 place=' + cur);
       let ran = 0; convo([{ who: 'x', text: 'y' }, { who: 'x', text: 'z' }], () => { ran++; }); leaveTalk(); out.push('convo closed early, callback ran=' + ran);
       startTalk(P_().people[0]); leaveTalk(); out.push('ordinary talk closed early: talked=' + !!P_().people[0].talked);
       document.title = 'RESUME ' + out.join(' | '); })();
