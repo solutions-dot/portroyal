@@ -74,7 +74,13 @@ All clips are retargeted onto one rig (`shared/rig/char.blend`), so they play on
    - It drops scale tracks, moving-root tracks and fingers 2 to 4, resamples, and compresses with meshopt.
    - Its `UNUSED` set removes clips no game uses; keep it in step with what games call.
    - Check the input and output paths at the top of the file.
-5. Pack it as `shared/models/anims.js` (step 4) and rebuild the games.
+5. Pack it as `shared/models/anims.js` (the base64 one-liner in section 4) and rebuild the games.
+
+**Which clips a game ships.** `games/<game>/anim-clips.json` lists the clips that game plays; `tools/build.mjs` trims the game's copy of the library to them. If a game starts playing a new clip, add its name there, or it will be missing in that game.
+
+**Clips for one game only.** A clip that only one game needs stays out of the shared library, so other games do not change. Tivoli does this: its sources are in `tools/tivoli/anim-sources/`, its list is `tools/tivoli/clips.json`, `tools/anims/retarget_clips.py tools/tivoli/clips.json` retargets them (it writes `build/anims.glb`, so move the shared one aside first), and `node tools/tivoli/pack_clips.mjs` writes `games/tivoli/site/models/anims_tivoli.js`, which the game loads after the shared library. Copy that pattern.
+
+**A new body for Mixamo.** Set top-level `"fbx": true` in a recipe and `era.py` also writes `build/people/<name>_for_mixamo.fbx`, a rest-pose copy with skin to upload to mixamo.com.
 
 ## 3. Buildings, ships, textures: `tools/blender/`
 
@@ -142,18 +148,26 @@ What it makes (keys in `garments` unless noted):
 | Key | What it does |
 |---|---|
 | `trousers`, `shorts`, `legwidth` | Trouser legs hang as tubes from the thigh, with a crease. `shorts` stops above the knee. |
-| `sleeve`, `jacket`, `waistcoat`, `vwaist` | Sleeves hang loose with a cuff. A jacket gets lapels, buttons and a skirt past the hips. |
-| `collar`: `"turn"`, `"stand"`, `"open"` | A collar built round the neck with a yoke under it, so no skin shows between collar and shirt when the body moves. `true` picks by `era` (top-level year). |
+| `sleeve`, `jacket`, `jacketsleeve`, `jackethem`, `waistcoat`, `vwaist` | Sleeves hang loose with a cuff (`sleeve` 0 to 1, default 0.86). A jacket gets lapels, buttons and a skirt past the hips; `jacketsleeve` is how far down the arm its sleeve comes (default 0.9) and `jackethem` moves its hem down (bigger) or up (smaller; default -0.05 after 1800). `vwaist` gives a waistcoat a V opening at the front. |
+| `woman`, `highneck` | `woman` cuts the shirt as a blouse that follows the figure (and leaves off the button band). `highneck` brings the neckline up to the throat. |
+| `scarf` | A neck scarf with a knot at the throat (material `Scarf`). |
+| `collar`: `"turn"`, `"stand"`, `"open"`; `softcollar` | A collar built round the neck with a yoke under it, so no skin shows between collar and shirt when the body moves. `true` picks by `era`: a stiff `stand` collar before 1925, a `turn` collar from 1925 (and also before 1925 when `softcollar` is set). Write the kind, not `true` (`docs/PEOPLE.md`). |
 | `collar`: `"camp"`, `"round"`, `leaf`, `vdepth`, `vslope` | The flat collars of 1950s shirts and blouses (not for 1900 to 1930 people): `camp` is a broad open pointed collar over a narrow V, `round` a flat round collar. `leaf` is how wide the collar lies on the shirt. |
 | `puff`, `sash`, `pocket`, `hang` | Puffed short sleeves, a deep smooth sash (material `Belt`), a chest pocket (material `Pocket`, a clean rectangle), and how far loose cloth hangs from the chest. |
 | `tie`, `buttons`, `belt` | A tie with a knot, a button band, a belt with a buckle (`belt: "always"` keeps it under a waistcoat). |
 | `skirt`, `hem`, `flare`, `pleats` | `hem` 0 is the ankle, 1 the knee. Soft folds deepen toward the hem. |
-| `shoes`, `lowshoes`, `socks` | Shoes with a thin sole joined to the upper. With a skirt the shoe is low cut. `socks` is how far up the shin. |
-| `hat` | One kind, or a list `[[kind, materialName], ...]` so a game can show one and hide the rest. Kinds: `felt`, `flat`, `trilby`, `straw`, `bowler`, `top`, `church`, `pillbox`, `peaked`, `wrap`. |
-| `hair`: `"puffs"`, `"plaits"`, `"afro"`; `bun`, `hairvol`, `recede`, `temples`, `bays`, `fade` | Hair grows from the body's own scalp line and fades into the skin at the edge, so hairlines are smooth. `bays` are receding temples, `fade` cuts the sides short. |
+| `shoes`, `lowshoes`, `socks`, `stockings` | Shoes with a thin sole joined to the upper. With a skirt the shoe is low cut. `socks` is how far up the shin. `stockings` (1690) colours the leg from knee to ankle. |
+| `hat` | One kind, or a list `[[kind, materialName], ...]` so a game can show one and hide the rest. Kinds: `felt`, `flat`, `trilby`, `straw`, `bowler`, `top`, `church`, `pillbox`, `peaked`, `wrap`. `brim` sets the brim width (1 is the wide 1690 brim, about 0.4 a short one). |
+| `hair`: `"puffs"`, `"plaits"`, `"afro"`, `"none"`; `bun`, `hairvol`, `recede`, `temples`, `bays`, `fade` | Hair grows from the body's own scalp line and fades into the skin at the edge, so hairlines are smooth. `bays` are receding temples, `fade` cuts the sides short. |
 | `moustache`, `moustachewidth`, `moustachedroop`, `brows`, `browwide` | A soft moustache that feathers out at its edges; heavier eyebrows. |
 | top-level `targets` | MakeHuman face and body targets by name (for a likeness), `lr-` for both sides. |
+| `apron` | An apron that lies on the trousers, a hand's breadth clear of them, and rides on the thighs. |
+| top-level `era` | The year the person is dressed for. Before 1800 uses the 1690 tailoring (section 1). Left out, it builds as 1915. |
+| top-level `fbx` | `true` also writes `build/people/<name>_for_mixamo.fbx` in the rest pose, to upload to mixamo.com (section 2). |
+| top-level `body` | MakeHuman macros 0 to 1 (`gender`, `age`, `muscle`, `weight`, `height`, `proportions`, `african`, `caucasian`, `asian`; women may also set `cupsize`, `firmness`). |
 | top-level `upscale` | For a child: the body is built at a child's shape, then enlarged so animations fit. The game shrinks it back with `scale`. |
+
+That is every key `era.py` reads. `smooth`, still set in some Garvey and Eventide recipes, is no longer read and does nothing.
 
 Marcus Garvey's face (`garvey1914.json`, `garvey1916.json`) was shaped against a photograph the owner supplied. Check any change to it against that photograph.
 
