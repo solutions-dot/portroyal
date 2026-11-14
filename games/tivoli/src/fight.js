@@ -14,6 +14,7 @@ import { pace } from './walk.js';
 import { buildStreet } from './street.js';
 import { FX, flash, puff, kick, updateFx, shakeOffset } from './fx.js';
 import * as SFX from './sfx.js';
+import { finishChapter } from './story.js';
 
 export const FIGHT = { on: false, T: 0, contact: false, bodies: [], actors: [], hidden: [], env: null, street: null, cleanup: null };
 const END = 46, W = -Math.PI / 2, E = Math.PI / 2;   /* the clock runs from -4 (the quiet start) to 46 s; a body faces +z, so facing west (-x) is -pi/2 */
@@ -48,9 +49,8 @@ function show(id) { for (const c of ['fightcard', 'readcard', 'aftercard']) $(c)
 async function load() { await Promise.all([...BODIES, 'civilian2010'].flatMap((b) => [loadBase(b), loadBase(b + '_lo')])); }
 export function wire(env) {
   FIGHT.env = env;
-  $('fightbtn').onclick = openCard;
   $('fbegin').onclick = () => { calmPref = $('fcalm').checked; try { localStorage.setItem('tivoli-calm', calmPref ? '1' : '0'); } catch (e) { /* ignore */ } begin(); };
-  $('fread').onclick = () => show('readcard');
+  $('fread').onclick = () => { show('readcard'); finishChapter(5); };   /* reading what happened counts as finishing the chapter: its journal pages open */
   $('fback').onclick = () => show('fightcard');
   $('fcancel').onclick = () => { $('fightcard').hidden = true; $('title').hidden = false; };
   $('fdone').onclick = finish;
@@ -121,7 +121,7 @@ export function tick(dt) {
   }
   updateFx(dt);
   if (T > 12 && T < 38 && Math.random() < dt * 0.35) SFX.rattle(rnd(-0.8, 0.8), FX.calm);   /* more fighting, further off */
-  if (T >= END - 2 && !FIGHT.ended) { FIGHT.ended = true; SFX.ambience(false); $('fade').style.transition = 'opacity 2s'; $('fade').hidden = false; $('fade').style.opacity = 1; SFX.ring(FX.calm); setTimeout(() => { $('windowframe').hidden = true; show('aftercard'); $('aftercard').hidden = false; }, 2600); }
+  if (T >= END - 2 && !FIGHT.ended) { FIGHT.ended = true; SFX.ambience(false); $('fade').style.transition = 'opacity 2s'; $('fade').hidden = false; $('fade').style.opacity = 1; SFX.ring(FX.calm); setTimeout(() => { $('windowframe').hidden = true; show('aftercard'); $('aftercard').hidden = false; finishChapter(5); }, 2600); }
 }
 /* what runs after the mixers: feet on the ground, and the camera */
 const SHOTS = [   /* all from the child's window: the balcony of the second floor of the south flats (x 16.5, y 4.8, z 8.9), looking west along the street */

@@ -1,9 +1,8 @@
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/tivoli/src/main.js: Tivoli (West Kingston, from the 1960s to today, with May 2010 at the centre). Read docs/games/tivoli.md first.
    Started from games/_template/. It is on the menu (the owner's choice, 14 November 2026) while it is still being made.
-   There is no story code yet: what follows is still the template's starting point. It shows: a scene, first-person movement (keys, touch joystick, drag to look, gamepad-free),
-   simple collisions, one person who plays shared animations, talking with a dialogue box,
-   a goal line, footsteps and UI sounds, and a link back to the game menu.
+   Story: chapter 1 (Back-o-Wall) and chapter 5 (the May 2010 street scene) are playable; see content.js, story.js, ch1.js, fight.js. The walking, looking and touch controls below are the
+   template's. Test views are dev only (docs/games/tivoli.md).
    RULE for every game (CLAUDE.md rule 8): before the first PR, wire the automatic audits from engine/audit.js (floating objects, people in solids,
    unreachable spots, held items, overlapping people) and a layout test into the dev build, and fix everything they report.
    See docs/TESTING.md section 5 and games/kendal/src/main.js ("the place audit"). */
@@ -17,7 +16,10 @@ import { arm, weaponTick, heldReport, ARMED, modeOf } from './weapons.js';
 import { snapMeshes, auditPlace } from '../../../engine/audit.js';   // dev only: the place audit (CLAUDE.md rule 8)
 import { contentRects, contentsOverlap } from '../../../engine/ui-audit.js';   // dev only: the layout test
 import { buildStreet } from './street.js';
-import { FIGHT, positions as fightPositions, wire as wireFight, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
+import { Talk, setupTalk, tapNpc, updateTalk, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
+import { initStory, nextChapter, unlock as unlockPage } from './story.js';
+import { CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip } from './ch1.js';
+import { FIGHT, positions as fightPositions, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
 import { auditCloth, auditWalk, skinProbe } from './checks.js';   // dev only: local copies until the engine has them (see checks.js)   // gunfight poses: real clips when the library has them, stand-ins until then
 
 const $ = (id) => document.getElementById(id);
@@ -35,21 +37,23 @@ const sun = new THREE.DirectionalLight(0xfff2dc, 2.2); sun.position.set(20, 30, 
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 
+/* ---------- the dev backdrop: ground and a few boxes, so test views have a world (public builds start on the title screen over a plain colour) ---------- */
+scene.background = new THREE.Color(0x10222b); scene.fog = null;
+const WALLS = [];   // [x0, z0, x1, z1] boxes the player cannot enter; each chapter fills it with its own place's walls
 /* ---------- the world: ground and a few buildings (each building is also a wall you cannot walk through) ---------- */
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0xd8c8a0, roughness: 1 }));
-ground.rotation.x = -Math.PI / 2; scene.add(ground);
-const WALLS = [];   // [x0, z0, x1, z1] boxes the player cannot enter
+let ground; if (__DEV__) { ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0xd8c8a0, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; scene.add(ground); scene.background = new THREE.Color(0xbcd6e0); scene.fog = new THREE.Fog(0xbcd6e0, 30, 90); }
 function building(x, z, w, d, h, color) {
   const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color, roughness: 0.9 })); b.position.set(x, h / 2, z); scene.add(b);
   const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * 0.75, 1.6, 4), new THREE.MeshStandardMaterial({ color: 0x8a4a32 })); roof.position.set(x, h + 0.8, z); roof.rotation.y = Math.PI / 4; roof.scale.set(w / Math.max(w, d), 1, d / Math.max(w, d)); scene.add(roof);
   WALLS.push([x - w / 2 - 0.3, z - d / 2 - 0.3, x + w / 2 + 0.3, z + d / 2 + 0.3]);
 }
-building(-6, -8, 5, 4, 4, 0xb86a4a); building(1, -8, 5, 4, 5, 0xe0d4b8); building(8, -8, 5, 4, 4, 0x9a6a4a); building(-6, 8, 5, 4, 4, 0xe0d4b8); building(6, 8, 6, 4, 4.5, 0xb86a4a);
+if (__DEV__) { building(-6, -8, 5, 4, 4, 0xb86a4a); building(1, -8, 5, 4, 5, 0xe0d4b8); building(8, -8, 5, 4, 4, 0x9a6a4a); building(-6, 8, 5, 4, 4, 0xe0d4b8); building(6, 8, 6, 4, 4.5, 0xb86a4a); }
 
 /* ---------- player state and movement ---------- */
 const state = { x: 0, z: 4, yaw: 0, pitch: 0, started: false };   // yaw 0 looks toward -z
 const keys = new Set(); let busy = false;   // busy: a talk is open, so do not move
-addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k); if (k === 'escape') leaveTalk(); useInteractionKey(e, () => { if (!$('dialogue').hidden) { $('next').click(); return; } if (state.started && !busy && near) { startTalk(); return; } return false; }); });
+addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k); if (k === 'escape') talkLeave(); useInteractionKey(e, () => { if (!$('dialogue').hidden) { talkNext(); return; } if (CH.on && state.started && !busy && Talk.near) { talkStart(Talk.near); return; } return false; }); });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 function clampPos(x, z) {   // keep inside the map and out of buildings (slide along walls)
   x = Math.max(-35, Math.min(35, x)); z = Math.max(-35, Math.min(35, z));
@@ -60,7 +64,7 @@ function clampPos(x, z) {   // keep inside the map and out of buildings (slide a
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0 };
 releaseOnBlur(keys, [stick, look]);
 canvas.addEventListener('pointerdown', (e) => {
-  if (busy) { leaveTalk(); return; }   // tapping the world while talking ends the talk
+  if (busy && Talk.open) { talkLeave(); return; }   // tapping the world while talking ends the talk
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }
   else { look.id = e.pointerId; look.x = e.clientX; look.y = e.clientY; look.moved = 0; }
   canvas.setPointerCapture(e.pointerId);
@@ -71,39 +75,25 @@ canvas.addEventListener('pointermove', (e) => {
 });
 const endPointer = (e) => {
   if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; }
-  if (e.pointerId === look.id) { if (look.moved < 8 && tapPerson(e.clientX, e.clientY)) startTalk(); look.id = null; }   // a tap (not a drag) on a person starts a talk
+  if (e.pointerId === look.id) { if (look.moved < 8 && CH.on) { const n = tapNpc(e.clientX, e.clientY, state); if (n) talkStart(n); } look.id = null; }   // a tap (not a drag) on a person starts a talk
 };
 canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
 
-/* ---------- a person to talk to ---------- */
-let person = null, near = false;
-const PERSON = { x: 3, z: -2, who: 'Sam the sailor' };
-const TALK = [
-  { who: 'Sam the sailor', text: 'Hello! Welcome to town.' },
-  { who: 'You', text: 'Thank you. What is this place?' },
-  { who: 'Sam the sailor', text: 'This is your new game. Make it your own!' }];
-const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-function tapPerson(cx, cy) { if (!person) return false; ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); return ray.intersectObject(person, true).length > 0 && Math.hypot(state.x - PERSON.x, state.z - PERSON.z) < 6; }
-
-/* ---------- talking: one line at a time; "You" lines get their own colour; the x, Escape or a tap outside ends it ---------- */
-let step = 0, goalDone = false;
-function startTalk() { busy = true; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; if (person && CL.Talk1) person.userData.anim.play('Talk1'); showLine(); }
-function showLine() { const s = TALK[step], me = s.who === 'You'; $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me); $('next').focus(); }
-function nextLine() { uiSound('tap'); step++; if (step >= TALK.length) { endTalk(true); return; } showLine(); }
-function endTalk(finished) { busy = false; $('dialogue').hidden = true; if (person) person.userData.anim.rest(); if (finished && !goalDone) { goalDone = true; setGoal('Well done! Now build your own story.'); uiSound('goal'); } }
-function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
-$('next').onclick = nextLine; $('dclose').onclick = leaveTalk; $('talk').onclick = startTalk;
 function setGoal(t) { $('goal').textContent = t; }
+let busyBy = 0; const setBusy = (b) => { busy = b; if (b) keys.clear(); };
 
 /* ---------- loading ---------- */
-Promise.all([model('anims'), model('anims_tivoli'), model('sailor')]).then(([anims, own, sailor]) => {
-  loadClips(anims); loadClips(own);   // the shared library, then Tivoli's own shooting and peeking clips (tools/tivoli/pack_clips.mjs)
-  person = sailor.scene; person.position.set(PERSON.x, 0, PERSON.z); scene.add(person); animate(person, 'Idle');
-  $('start').disabled = false; $('start').textContent = 'Start'; $('loadnote').textContent = '';
-  if (__DEV__) devViews(sailor);
+Promise.all([model('anims'), model('anims_tivoli')]).then(([anims, own]) => {
+  loadClips(anims); loadClips(own);   // the shared library, then Tivoli's own clips (tools/tivoli/pack_clips.mjs)
+  $('start').disabled = false; $('start').textContent = 'Play'; $('loadnote').textContent = '';
+  if (__DEV__) devViews();
 });
 
-$('start').onclick = () => { audioInit(); $('title').hidden = true; $('hud').hidden = false; state.started = true; setGoal('Walk to the sailor and talk to him.'); canvas.focus(); };
+const uiS = (k) => uiSound(k);
+function startChapter(id) { if (id === 1) ch1Begin(); else if (id === 5) fightOpen(); }
+$('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
+const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n) };
+setupTalk(talkEnv); setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS }); initStory({ startChapter, uiSound: uiS });
 wireFight({ scene, camera, renderer, audioInit });
 $('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 'Sound on' : 'Sound off'; };
 
@@ -111,12 +101,13 @@ $('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 
 const DEVG = [];   // models whose feet are pinned to the ground each frame
 const waitTick = () => new Promise((r) => setTimeout(r, 0));
 function devLog(lines, title) { let el = $('autolog'); if (!el) { el = document.createElement('pre'); el.id = 'autolog'; el.style.cssText = 'position:fixed;left:0;bottom:0;max-height:45%;overflow:auto;margin:0;padding:6px;background:#000c;color:#cfc;font:11px monospace;z-index:9'; document.body.appendChild(el); } el.textContent = lines.join('\n'); document.title = title; }
-async function devViews(sailor) {
+async function devViews() {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), test = q.get('test'), lo = q.has('lo') ? '_lo' : '';
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
+  if (q.get('chapter') === '1') { await ch1Begin(); if (q.get('at')) ch1Skip(q.get('at')); return; }
   if (q.get('scene') === 'fight') { await fightBegin(); const at = +(q.get('at') || 0); if (at) fightSkip(at); if (q.has('hold')) FIGHT.freeze = true; return; }
   if (!shot && !test) return;
-  scene.remove(sailor.scene); await Promise.all(BODIES.flatMap((b) => [loadBase(b), loadBase(b + '_lo')]));
+  await Promise.all(BODIES.flatMap((b) => [loadBase(b), loadBase(b + '_lo')]));
   const place = (look, x, z, ry, anim) => { const b = makeBody({ ...LOOKS[look], bodyId: LOOKS[look].base + lo, x, z, ry, anim }); scene.add(b); DEVG.push(b); return b; };
   const cam = (x, z, yaw, pitch) => { state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch; state.started = true; $('title').hidden = true; $('hud').hidden = true; };
   if (shot === 'fight') {   /* ?shot=fight: every gunfight pose, soldiers and police in turn, in front of a low wall (the poses are stand-ins until the real clips arrive) */
@@ -209,12 +200,13 @@ function frame(t) {
       [state.x, state.z] = clampPos(state.x + (fx * f - fz * r) / Math.max(1, len) * sp * dt, state.z + (fz * f + fx * r) / Math.max(1, len) * sp * dt);
       stepT -= dt * sp; if (stepT <= 0) { stepT = 1.4; stepSound('sand'); } }
   }
-  near = state.started && !busy && !FIGHT.on && Math.hypot(state.x - PERSON.x, state.z - PERSON.z) < 2.6; $('talk').hidden = !near;
-  if (person) { const want = Math.atan2(state.x - PERSON.x, state.z - PERSON.z); let e = want - person.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); if (near || busy) person.rotation.y += e * Math.min(1, dt * 5); }   // turn to face you
-  for (const mx of mixers) mx.update(dt); if (person && person.userData.anim) person.userData.anim.tick(dt);
+  if (CH.on) { updateTalk(dt, state, state.started && !busy); ch1Tick(dt); }
+  for (const mx of mixers) mx.update(dt); for (const n of Talk.npcs) if (n.body.userData.anim) n.body.userData.anim.tick(dt);
   if (__DEV__) for (const m of DEVG) groundFeet(m);
   for (const m of ARMED) weaponTick(m);   // after the mixer and the feet: weapons follow the hands
   if (FIGHT.on) fightAfter(t / 1000); else { camera.position.set(state.x, state.camY || 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); }
   renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);
+
+if (__DEV__) window.__T = { state, Talk, CH, talkStart, talkNext };   // dev only: the test scripts drive the chapter through this

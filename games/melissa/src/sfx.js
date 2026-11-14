@@ -1,7 +1,7 @@
 /* games/melissa/src/sfx.js: the weather's and the village's sounds, made in code on top of engine/audio.js (no audio files).
    Beds (always running, we only turn them up and down): wind, a thin howl, a deep roar, rain, a rattling roof, a generator, a helicopter far off, a chainsaw, a hymn, crickets.
    One-shots: a zinc sheet banging, a tree cracking, a roof groaning, a gust, hammering, a radio being tuned, a phone, a bell. */
-import { AU, out, tone, noiseHit, chan, noiseSrc, setG, shipCreak } from '../../../engine/audio.js';
+import { AU, out, tone, noiseHit, chan, noiseSrc, setG } from '../../../engine/audio.js';
 
 const live = () => AU.ctx && AU.on && AU.ctx.state === 'running';
 const B = {}, NAMES = ['wind', 'howl', 'roar', 'rain', 'rattle', 'gen', 'heli', 'saw', 'hymn', 'cricket'];
@@ -24,7 +24,7 @@ export function initBeds() {
   /* a petrol generator: a low saw with a fast wobble in its loudness */
   { const o = c.createOscillator(), lp = c.createBiquadFilter(), am = c.createGain(), lv = c.createGain(); o.type = 'sawtooth'; o.frequency.value = 58; lp.type = 'lowpass'; lp.frequency.value = 420; am.gain.value = 0.6; lv.gain.value = 0; lfo(am.gain, 24, 0.4); o.connect(lp); lp.connect(am); am.connect(lv); lv.connect(AU.master); o.start(); B.gen = lv; B.genO = o; }
   /* a helicopter, far off: a low thump at about 11 beats a second on soft noise */
-  { const lp = c.createBiquadFilter(), am = c.createGain(), lv = c.createGain(); lp.type = 'lowpass'; lp.frequency.value = 260; am.gain.value = 0.5; lv.gain.value = 0; lfo(am.gain, 10.5, 0.5); noiseSrc('brown').connect(lp); lp.connect(am); am.connect(lv); lv.connect(AU.master); B.heli = lv; }
+  { const lp = c.createBiquadFilter(), am = c.createGain(), lv = c.createGain(); lp.type = 'lowpass'; lp.frequency.value = 420; am.gain.value = 0.5; lv.gain.value = 0; lfo(am.gain, 10.5, 0.5); noiseSrc('brown').connect(lp); lp.connect(am); am.connect(lv); lv.connect(AU.master); B.heli = lv; }
   /* a chainsaw: a buzzing saw that revs and eases */
   { const o = c.createOscillator(), bp = c.createBiquadFilter(), am = c.createGain(), lv = c.createGain(); o.type = 'sawtooth'; o.frequency.value = 118; bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 1.2; am.gain.value = 0.55; lv.gain.value = 0; lfo(o.frequency, 0.4, 26); lfo(am.gain, 33, 0.45, 'square'); o.connect(bp); bp.connect(am); am.connect(lv); lv.connect(AU.master); o.start(); B.saw = lv; }
   /* a hymn: slow chords of soft waves */
@@ -33,7 +33,7 @@ export function initBeds() {
     B.hymn = g; B.hymnOscs = oscs; B.hymnT = 0; }
   /* crickets */
   { const co = c.createOscillator(), cg = c.createGain(), ch = c.createOscillator(), chg = c.createGain(), cl = c.createGain(); co.frequency.value = 4300; ch.type = 'square'; ch.frequency.value = 24; chg.gain.value = 0.5; cg.gain.value = 0.5; ch.connect(chg); chg.connect(cg.gain); cl.gain.value = 0; co.connect(cg); cg.connect(cl); cl.connect(AU.master); co.start(); ch.start(); B.cricket = cl; }
-  B.levels = {}; B.scale = { wind: 0.5, howl: 0.06, roar: 0.9, rain: 0.16, rain2: 0.2, rattle: 0.12, gen: 0.06, heli: 0.7, saw: 0.05, hymn: 0.05, cricket: 0.5 };
+  B.levels = {}; B.scale = { wind: 0.5, howl: 0.09, roar: 0.9, rain: 0.16, rain2: 0.2, rattle: 0.12, gen: 0.06, heli: 0.45, saw: 0.15, hymn: 0.05, cricket: 0.5 };
 }
 export function setBeds(l, tc = 0.4) {
   if (!AU.ctx || !B.ok) return; const lv = { ...l }; if (lv.rain !== undefined && lv.rain2 === undefined) lv.rain2 = lv.rain;
@@ -45,19 +45,23 @@ export function hymnTick(t) { if (!B.ok || !AU.ctx || t < (B.hymnT || 0)) return
 export function genPitch(f) { if (B.ok && B.genO) B.genO.frequency.setTargetAtTime(f, AU.ctx.currentTime, 0.4); }
 
 /* ---------- one-shots ---------- */
-export function zincBang(vol = 1) { if (!live()) return; const p = Math.random() * 1.4 - 0.7; noiseHit(1900, 1.6, 0.6, 0.28 * vol, p); noiseHit(900, 2, 0.8, 0.2 * vol, p, 0.03); tone(170, 70, 0.5, 'triangle', 0.18 * vol, p); for (let i = 0; i < 4; i++) noiseHit(2400 + Math.random() * 1500, 4, 0.12, 0.08 * vol, p, 0.1 + i * 0.09); }
+export function zincBang(vol = 1) { if (!live()) return; const p = Math.random() * 1.4 - 0.7, k = 2.2 * vol; noiseHit(1900, 1.6, 0.6, 0.28 * k, p); noiseHit(900, 2, 0.8, 0.2 * k, p, 0.03); tone(170, 70, 0.5, 'triangle', 0.18 * k, p); for (let i = 0; i < 4; i++) noiseHit(2400 + Math.random() * 1500, 4, 0.12, 0.08 * k, p, 0.1 + i * 0.09); }
 export function treeCrack(vol = 1) { if (!live()) return; noiseHit(500, 0.8, 0.9, 0.3 * vol, -0.3); noiseHit(1800, 3, 0.15, 0.25 * vol, -0.3); tone(90, 28, 1.3, 'sine', 0.4 * vol, -0.3, 0.2); noiseHit(300, 1, 1.4, 0.22 * vol, -0.3, 0.5); }
-export function roofGroan() { if (!live()) return; shipCreak(); setTimeout(() => shipCreak(), 380); }
+/* timber groaning: a low saw bent upward through a narrow band, with a fast shiver in its loudness. `at` is the delay in seconds. (engine shipCreak is too quiet to carry over a storm, so this one is our own.) */
+function creak(vol, at) { const c = AU.ctx, t0 = c.currentTime + 0.03 + at, o = c.createOscillator(), g = c.createGain(), bp = c.createBiquadFilter(), d = out(0.5 + Math.random() * 0.4), dur = 0.7 + Math.random() * 0.7, f = 70 + Math.random() * 50, sh = c.createOscillator(), sg = c.createGain();
+  o.type = 'sawtooth'; o.frequency.setValueAtTime(f, t0); o.frequency.linearRampToValueAtTime(f * (1.15 + Math.random() * 0.3), t0 + dur); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 2.5; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + dur * 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  sh.frequency.value = 18 + Math.random() * 14; sg.gain.value = vol * 0.8; sh.connect(sg); sg.connect(g.gain); o.connect(bp); bp.connect(g); g.connect(d); o.start(t0); sh.start(t0); o.stop(t0 + dur + 0.05); sh.stop(t0 + dur + 0.05); }
+export function roofGroan() { if (!live()) return; creak(0.45, 0); creak(0.38, 0.4); }
 export function gust(vol = 1, dur = 2.4) { if (!live()) return; const c = AU.ctx, t0 = c.currentTime + 0.02, src = c.createBufferSource(), len = c.sampleRate * dur, b = c.createBuffer(1, len, c.sampleRate), d = b.getChannelData(0), bp = c.createBiquadFilter(), g = c.createGain(), o = out(0);
   for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.5; src.buffer = b; bp.type = 'bandpass'; bp.Q.value = 0.9; bp.frequency.setValueAtTime(400, t0); bp.frequency.linearRampToValueAtTime(1100, t0 + dur * 0.5); bp.frequency.linearRampToValueAtTime(500, t0 + dur);
-  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.5 * vol, t0 + dur * 0.45); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); src.connect(bp); bp.connect(g); g.connect(o); src.start(t0); }
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.9 * vol, t0 + dur * 0.45); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); src.connect(bp); bp.connect(g); g.connect(o); src.start(t0); }
 export function thunderRoll() { if (!live()) return; tone(60, 30, 2.2, 'sine', 0.25, 0); noiseHit(260, 0.6, 2.4, 0.18, 0); }
 export function knock(n = 3) { if (!live()) return; for (let i = 0; i < n; i++) { noiseHit(380, 3, 0.1, 0.18, 0, i * 0.3); tone(150, 90, 0.1, 'triangle', 0.14, 0, i * 0.3); } }
 export function hammerTap(n = 3) { if (!live()) return; for (let i = 0; i < n; i++) { noiseHit(1100, 7, 0.1, 0.16, 0.1, i * 0.34); tone(300, 240, 0.1, 'triangle', 0.05, 0.1, i * 0.34); } }
 export function pourWater() { if (!live()) return; noiseHit(1400, 0.5, 1.1, 0.12, 0); noiseHit(2600, 0.7, 0.9, 0.06, 0.1, 0.1); }
-export function scoop() { if (!live()) return; noiseHit(240, 1.2, 0.25, 0.14, 0); noiseHit(900, 2, 0.12, 0.08, 0, 0.12); }
+export function scoop() { if (!live()) return; noiseHit(240, 1.2, 0.25, 0.3, 0); noiseHit(900, 2, 0.12, 0.18, 0, 0.12); }
 export function bag() { if (!live()) return; noiseHit(3000, 0.6, 0.25, 0.1, 0); noiseHit(2000, 0.8, 0.2, 0.07, 0, 0.18); }
-export function radioTune() { if (!live()) return; for (let i = 0; i < 5; i++) { noiseHit(1500 + i * 700, 0.6, 0.18, 0.07, -0.2, i * 0.17); } tone(880, 880, 0.18, 'square', 0.025, -0.2, 0.9); tone(660, 660, 0.18, 'square', 0.025, -0.2, 1.15); tone(880, 880, 0.3, 'square', 0.025, -0.2, 1.4); }
+export function radioTune() { if (!live()) return; for (let i = 0; i < 5; i++) { noiseHit(1500 + i * 700, 0.6, 0.18, 0.14, -0.2, i * 0.17); } tone(880, 880, 0.18, 'square', 0.05, -0.2, 0.9); tone(660, 660, 0.18, 'square', 0.05, -0.2, 1.15); tone(880, 880, 0.3, 'square', 0.05, -0.2, 1.4); }
 export function phoneRing(n = 2) { if (!live()) return; for (let i = 0; i < n; i++) { for (const d of [0, 0.16, 0.32]) { tone(1100, 1100, 0.1, 'sine', 0.05, 0, i * 1.2 + d); tone(1450, 1450, 0.1, 'sine', 0.04, 0, i * 1.2 + d); } } }
 export function chime(f = 660) { if (!live()) return; tone(f, f, 0.5, 'sine', 0.06, 0); tone(f * 1.5, f * 1.5, 0.7, 'sine', 0.04, 0, 0.14); }
 export function churchBell(n = 3) { if (!live()) return; for (let i = 0; i < n; i++) for (const [m, v] of [[1, 0.1], [2.0, 0.05], [2.76, 0.035], [4.1, 0.02]]) tone(196 * m, 196 * m * 0.998, 3.2, 'sine', v, 0, i * 2.2); }

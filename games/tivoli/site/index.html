@@ -26,6 +26,8 @@
   #hud > *{pointer-events:auto}
   #goal{position:absolute;left:16px;top:16px;max-width:min(24rem,calc(100% - 170px));background:rgba(16,34,43,.86);padding:.55em .85em;border-left:4px solid var(--brass);border-radius:0 6px 6px 0;margin:0}
   #sound{position:absolute;right:16px;top:16px}
+  #jhud{position:absolute;right:16px;top:76px}
+  #hud .btn.ghost{background:rgba(16,34,43,.78)}
   #talk{position:absolute;right:16px;bottom:24px}
   #dialogue{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(40rem,calc(100% - 32px));background:rgba(16,34,43,.95);border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.7rem}
   #who{font-family:var(--display);color:var(--brass);margin:0;font-size:1.2rem;padding-right:40px}
@@ -45,6 +47,11 @@
   #windowframe{position:fixed;inset:0;pointer-events:none;border:3.2vmin solid #1d1814;border-bottom-width:9vmin;border-radius:1vmin;box-shadow:inset 0 0 8vmin rgba(0,0,0,.55);z-index:5}
   #scenetitle{position:fixed;left:50%;top:14%;transform:translateX(-50%);text-align:center;z-index:6;text-shadow:0 2px 8px #000;pointer-events:none;width:min(90vw,34rem)}
   #scenetitle b{display:block;font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(1.8rem,6vw,2.8rem)}
+  .chrow{display:flex;gap:1rem;align-items:center;justify-content:space-between;padding:.7rem 0;border-bottom:1px solid rgba(242,232,208,.18);max-width:44rem}
+  .chrow b{display:block;font-size:1.15rem}.chrow span{display:block;font-size:.95rem;opacity:.8}.chrow p{margin:.2rem 0 0;font-size:1rem}
+  .jrow{display:block;width:100%;max-width:30rem;text-align:left;margin:.3rem 0}
+  #jpdeeper p,#jpsimple p{max-width:36rem}details#jdig{max-width:36rem;margin:.4rem 0}details#jdig summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700;color:var(--brass)}
+  #toast{position:fixed;left:50%;bottom:8%;transform:translateX(-50%);background:rgba(16,34,43,.95);border-left:4px solid var(--brass);padding:.7rem 1rem;border-radius:6px;z-index:25;max-width:90vw}
   #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:15}
 </style>
 </head>
@@ -52,10 +59,11 @@
 <canvas id="c" tabindex="0" aria-label="The game world"></canvas>
 <section id="title">
   <h1>Tivoli</h1>
-  <p>Work in progress. Walk with the arrow keys or WASD, or the left side of the screen on a phone. Drag to look.</p>
+  <p>The story of Tivoli Gardens, West Kingston. Work in progress. Walk with the arrow keys or WASD, or the left side of the screen on a phone. Drag to look.</p>
   <div class="row">
     <button id="start" class="btn" disabled>Loading</button>
-    <button id="fightbtn" class="btn ghost">May 2010 street scene (work in progress)</button>
+    <button id="chbtn" class="btn ghost">Chapters</button>
+    <button id="jbtn" class="btn ghost">Journal</button>
     <a id="allgames" class="btn ghost" href="../../../menu/">Main Menu</a>
   </div>
   <p id="loadnote">Loading people.</p>
@@ -63,6 +71,7 @@
 <div id="hud" hidden>
   <p id="goal"></p>
   <button id="sound" class="btn ghost">Sound on</button>
+  <button id="jhud" class="btn ghost">Journal</button>
   <button id="talk" class="btn" hidden>Talk</button>
   <div id="dialogue" role="dialog" aria-labelledby="who" hidden>
     <button id="dclose" aria-label="Stop talking">&times;</button>
@@ -71,6 +80,15 @@
     <button id="next" class="btn">Next</button>
   </div>
 </div>
+<div id="chapters" class="card" hidden><h2>Chapters</h2><div id="chlist"></div><div class="row"><button id="chclose" class="btn ghost">Close</button></div></div>
+<div id="journal" class="card" hidden>
+  <h2>Journal</h2><p id="jcount"></p>
+  <div id="jlist"></div>
+  <div id="jpage" hidden><h3 id="jptitle"></h3><div id="jpsimple"></div><details id="jdig"><summary>Dig deeper</summary><div id="jpdeeper"></div></details><div class="row"><button id="jback" class="btn ghost">Back to the pages</button></div></div>
+  <div class="row"><button id="jclose" class="btn">Close</button></div>
+</div>
+<div id="chcard" class="card" hidden><h2 id="chcardt"></h2><div id="chcardl"></div><div class="row"><button id="chdone" class="btn">Back to the start</button></div></div>
+<div id="toast" hidden></div>
 <div id="fightcard" class="card" hidden>
   <h2>May 2010</h2>
   <p>Next is a loud scene with gunfire.</p>

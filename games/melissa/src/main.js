@@ -7,7 +7,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import * as THREE from 'three';
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp } from '../../../engine/audio.js';
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, gullCry } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
 import { G, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
@@ -443,6 +443,8 @@ function bygoneRoom(P, k) { const b = BYGONE[k].base; return [{ label: 'Sit down
 const WIND = { k: 0.06, dir: [0.6, 0.2] }; let SB = null;   /* WIND.k is how hard the wind blows (0 still, 1 a hurricane); SB: the storm's sound levels while a storm scene runs */
 const ST = { on: false };
 const BEDS_BY = { calm: { wind: 0.12 }, rising: { wind: 0.35, howl: 0.15 }, gale: { wind: 0.6, howl: 0.35, rain: 0.25 }, room: { wind: 0.55, howl: 0.25, roar: 0.1, rain: 0.2, rattle: 0.1 }, after: { wind: 0.08 }, saw: { wind: 0.06, saw: 0.9 }, heli: { wind: 0.06, heli: 1 }, quiet: {} };
+/* the storm night's sound levels, from first groans to the peak (the sound test plays these same ones) */
+const SB_GROAN = { wind: 0.7, howl: 0.35, roar: 0.3, rattle: 0.3, rain: 0.3 }, SB_LIGHT = { wind: 0.9, howl: 0.5, roar: 0.5, rattle: 0.5, rain: 0.45 }, SB_PEAK = { wind: 1.5, howl: 0.95, roar: 0.8, rattle: 0.7, rain: 0.85 };
 let bedsKey = 'calm'; const setBedsFor = (k) => { bedsKey = k; };
 function weather(k, rain, env) { WIND.k = k; STORM.set({ rain: rain || 0, wind: WIND.dir, leaves: Math.min(1, k * 1.4), dens: 1 }); if (env) setEnv(env); }
 function ease2(env, to, sec) { const a = env; return tween(sec, (k) => setEnv(mixEnv(a, to, ease(k)))); }
@@ -535,15 +537,15 @@ async function stormRun(kind) {
   if (kind === 'g88') { await ensurePlace('kingston88'); if (!(await kingstonCutaway())) return; }   /* the storm begins in Kingston */
   SB = { wind: 0.5, howl: 0.2, roar: 0.15, rattle: 0.15 }; WIND.k = 0.6; FX.shake = 0.05;
   say(L.b[0], 4200); await wait(4400); if (!live()) return;
-  if (!(await step(100, () => { say(L.b[1], 4000); SB = { wind: 0.7, howl: 0.35, roar: 0.3, rattle: 0.3, rain: 0.3 }; FX.shake = 0.12; SFX.roofGroan(); }))) return;
-  if (!(await step(3800, () => { say(L.b[2], 3800); lightK(0.2); setTimeout(() => lightK(1), 160); setTimeout(() => lightK(0), 420); SFX.zincBang(0.6); FX.shake = 0.25; torch(true); }))) return;
-  if (!(await step(3800, () => { say(L.b[3], 4000); SB = { wind: 0.9, howl: 0.5, roar: 0.5, rattle: 0.5, rain: 0.45 }; FX.shake = 0.4; SFX.gust(1, 3); ease2(envNow, ENV.roomStorm, 3); }))) return;
+  if (!(await step(100, () => { say(L.b[1], 4000); SB = SB_GROAN; FX.shake = 0.12; SFX.roofGroan(); }))) return;
+  if (!(await step(3800, () => { say(L.b[2], 3800); lightK(0.2); setTimeout(() => lightK(1), 160); setTimeout(() => lightK(0), 420); SFX.zincBang(0.9); FX.shake = 0.25; torch(true); }))) return;
+  if (!(await step(3800, () => { say(L.b[3], 4000); SB = SB_LIGHT; FX.shake = 0.4; SFX.gust(1, 3); ease2(envNow, ENV.roomStorm, 3); }))) return;
   /* hold on: press and hold to keep steady while the wind builds */
   $('holdwrap').hidden = false; HOLD.v = 0; goalText = 'Hold on!'; showGoal();
   const gust = tween(4.6, (k, dk) => { const held = HOLD.on ? 1 : 0; HOLD.v = clamp01(HOLD.v + (held ? 0.9 : -0.5) * dk * 4); $('holdbar').firstElementChild.style.width = (HOLD.v * 100) + '%'; FX.shake = 0.45 + k * 0.5 - HOLD.v * 0.25; FX.roll = Math.sin(k * 40) * 0.008; if (Math.random() < 0.04) SFX.zincBang(0.4); });
   if (!(await gust)) return; if (!live()) return; $('holdwrap').hidden = true; goalText = ''; $('goal').textContent = '';
   /* the roof lifts */
-  SFX.treeCrack(1.2); FX.shake = 0.9; SB = { wind: 1, howl: 0.6, roar: 0.8, rattle: 0.6, rain: 0.8 }; flash(0.6, 40, '#ffffff'); setTimeout(() => flash(0, 260, '#ffffff'), 80);
+  SFX.treeCrack(1.2); FX.shake = 0.9; SB = SB_PEAK; flash(0.6, 40, '#ffffff'); setTimeout(() => flash(0, 260, '#ffffff'), 80);
   tearRoof(P, kind === 'm25' ? 6 : 5); WIND.k = 1; skyDebris(kind); STORM.mask(P.group.position.x + 0, P.group.position.z + 0, kind === 'm25' ? 5 : 3); STORM.set({ rain: 0.9, wind: [1.2, 0.5], leaves: 0.9 }); say(L.b[4], 4200);
   const camA = [state.x, EYE, state.z]; cut(camA, camA, [state.x + 1, EYE + 0.3, state.z], [state.x + 0.4, EYE + 5, state.z - 0.4], 2.6).then(() => {});
   await wait(3600); if (!live()) return; endCut(); FX.shake = 0.5; say(L.b[5], 4200); 
@@ -622,12 +624,12 @@ function nudgeTick(now) {
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
 let auNext = 0, onceAt = 6; const AMB = 0.4;
-const SOUNDSCAPE = { yard51: { once: chirp }, room51: { room: 0.1 }, kingston88: {}, yard88: { once: chirp }, yard25: { once: chirp }, hall: { crowd: 0.2 }, room88: { room: 0.1 }, after: {}, today: { once: chirp } };
+const SOUNDSCAPE = { yard51: { sea: 0.12, surf: 0.05, once: () => (Math.random() < 0.5 ? gullCry() : chirp()) }, room51: { room: 0.1, sea: 0.03 }, kingston88: {}, yard88: { once: chirp }, yard25: { once: chirp }, hall: { crowd: 0.2 }, room88: { room: 0.1 }, after: {}, today: { once: chirp } };
 const FOOT = { yard51: 'sand', room51: 'wood', kingston88: 'stone', yard88: 'grass', yard25: 'grass', after: 'grass', today: 'grass', room88: 'wood', hall: 'stone' };
 function audioTick(t, now) {
   if (!AU.ctx) return; SFX.hymnTick(t); if (t < auNext) return; auNext = t + 0.1; const S = SOUNDSCAPE[cur] || {};
   for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], SB ? 0 : (S[k] || 0) * AMB, 0.4);
-  const B = SB || BEDS_BY[bedsKey] || {}, indoor = cur === 'hall' || cur === 'room88', wk = SB ? 1 : indoor ? 0.6 : 1;
+  const B = SB || BEDS_BY[bedsKey] || {}, indoor = cur === 'hall' || cur === 'room88' || cur === 'room51', wk = SB ? 1 : indoor ? 0.6 : 1;
   SFX.setBeds({ wind: (B.wind || 0) * wk, howl: B.howl, roar: B.roar, rain: B.rain, rattle: B.rattle, hymn: B.hymn, saw: B.saw, heli: B.heli, gen: B.gen, cricket: B.cricket }, 0.4);
   if (t > onceAt) { onceAt = t + 6 + Math.random() * 6; if (S.once && AU.on && state.started && !SB && WIND.k < 0.25) S.once(); }
 }
@@ -803,6 +805,42 @@ function devViews() {
       let ran = 0; convo([{ who: 'x', text: 'y' }, { who: 'x', text: 'z' }], () => { ran++; }); leaveTalk(); out.push('convo closed early, callback ran=' + ran);
       startTalk(P_().people[0]); leaveTalk(); out.push('ordinary talk closed early: talked=' + !!P_().people[0].talked);
       document.title = 'RESUME ' + out.join(' | '); })();
+  }
+  if (q.get('test') === 'sound') {   /* ?test=sound : plays the game's own mixes into an offline recorder (no speakers needed) and reports, for each place and storm moment, the peak, the loudness and the low, middle and high balance; each one-shot is played over the bed it meets in the story and must stand out from it. Run it with Playwright: the offline recorder is not tied to a headless page's virtual time. */
+    (async () => {
+      const SR = 22050, Q = 128, rq = (t) => Math.round(t * SR / Q) * Q / SR, segs = [], out = [], DB = (x) => (x > 1e-9 ? 20 * Math.log10(x) : -99), BEDS = {};
+      const bed = (name, where, key, sb) => { BEDS[name] = { where, key, sb }; segs.push({ name, len: 4, bed: true, ...BEDS[name] }); };
+      const shot = (name, fn, over, len = 4, min = 6) => segs.push({ name, len, shot: true, over, fn, min, ...BEDS[over] });   /* min: how many dB the sound must rise above its bed (bangs and cracks 5; a groan or a gust is a swell inside the storm, 3) */
+      bed('silence', 'after', 'quiet'); bed('yard51 calm (sea)', 'yard51', 'calm'); bed('room51 night', 'room51', 'room'); bed('yard88 calm', 'yard88', 'calm'); bed('yard88 rising', 'yard88', 'rising'); bed('yard88 gale', 'yard88', 'gale'); bed('room88 night', 'room88', 'room');
+      bed('storm: kingston', 'kingston88', 'quiet', { wind: 0.7, howl: 0.35, roar: 0.25, rain: 0.4, rattle: 0.2 }); bed('storm: first gusts', 'yard88', 'quiet', { wind: 0.5, howl: 0.2, roar: 0.15, rattle: 0.15 });
+      bed('storm: roof groans', 'yard88', 'quiet', SB_GROAN); bed('storm: the light goes', 'yard88', 'quiet', SB_LIGHT); bed('storm: the peak', 'yard88', 'quiet', SB_PEAK); bed('storm: the hall hymn', 'hall', 'quiet', { wind: 0.7, howl: 0.3, roar: 0.4, rain: 0.6, hymn: 0.6 });
+      bed('after the storm', 'after', 'after'); bed('chainsaw', 'after', 'saw'); bed('helicopter', 'after', 'heli'); bed('today', 'today', 'after');
+      shot('zinc bang (0.9)', () => SFX.zincBang(0.9), 'storm: roof groans', 4, 5); shot('roof groan', () => SFX.roofGroan(), 'storm: roof groans', 4, 3); shot('dish bang + gust', () => { SFX.zincBang(0.9); SFX.gust(1, 2.4); }, 'storm: kingston', 4, 5);
+      shot('tree crack (1.2)', () => SFX.treeCrack(1.2), 'storm: the light goes', 4, 5); shot('gust', () => SFX.gust(1, 3), 'storm: the light goes', 4, 3); shot('worst case: crack + bang + gust on the peak', () => { SFX.treeCrack(1.2); SFX.zincBang(0.9); SFX.gust(1, 3); }, 'storm: the peak', 4, 0);
+      for (const [n, f, l] of [['hammering', () => SFX.hammerTap(3)], ['pouring water', () => SFX.pourWater()], ['scoop', () => SFX.scoop()], ['bag', () => SFX.bag()], ['radio', () => SFX.radioTune()], ['church bell', () => SFX.churchBell(2), 8], ['thump', () => SFX.thump()], ['chime', () => SFX.chime()]]) shot(n, f, 'yard88 calm', l);
+      const total = segs.reduce((a, g) => a + g.len, 0) + 1; let t0 = 0; for (const g of segs) { g.t0 = rq(t0); t0 += g.len; }
+      const RealAC = window.AudioContext; AU.ctx = null; let ctx;
+      window.AudioContext = function () { ctx = new OfflineAudioContext(2, Math.round(SR * total), SR); Object.defineProperty(ctx, 'state', { get: () => 'running' }); ctx.resumeReal = ctx.resume.bind(ctx); ctx.resume = () => Promise.resolve(); return ctx; };
+      audioInit(); SFX.initBeds(); window.AudioContext = RealAC; AU.on = true;
+      let tick = 1e6; const run = (g) => { cur = g.where; bedsKey = g.key; SB = g.sb || null; onceAt = 1e12; for (let i = 0; i < 3; i++) { tick += 1; audioTick(tick, 0); } if (g.fn) g.fn(); };
+      segs.forEach((g, i) => { if (i === 0) run(g); else ctx.suspend(g.t0).then(() => { run(g); ctx.resumeReal(); }); });
+      const buf = await ctx.startRendering(), L = buf.getChannelData(0), R = buf.getChannelData(1);
+      const fft = (re, im) => { const n = re.length; for (let i = 1, j = 0; i < n; i++) { let b = n >> 1; for (; j & b; b >>= 1) j ^= b; j ^= b; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+        for (let len = 2; len <= n; len <<= 1) { const a = -2 * PI / len; for (let i = 0; i < n; i += len) for (let k = 0; k < len / 2; k++) { const c = Math.cos(a * k), s = Math.sin(a * k), xr = re[i + k + len / 2] * c - im[i + k + len / 2] * s, xi = re[i + k + len / 2] * s + im[i + k + len / 2] * c; re[i + k + len / 2] = re[i + k] - xr; im[i + k + len / 2] = im[i + k] - xi; re[i + k] += xr; im[i + k] += xi; } } };
+      const bands = (x, a, b) => { const N = 2048, P = [0, 0, 0]; let n = 0; for (let s = a; s + N <= b; s += N) { const re = new Float64Array(N), im = new Float64Array(N); for (let i = 0; i < N; i++) re[i] = x[s + i] * (0.5 - 0.5 * Math.cos(2 * PI * i / N)); fft(re, im); for (let k = 1; k < N / 2; k++) { const f = k * SR / N, p = re[k] * re[k] + im[k] * im[k]; P[f < 250 ? 0 : f < 2000 ? 1 : 2] += p; } n++; } return P.map((v) => DB(Math.sqrt(v / Math.max(1, n)) / N * 2)); };
+      const burst = (a, b, sec) => { const W = Math.round(SR * sec); let m = 0; for (let s = a; s + W <= b; s += W >> 1) { let q2 = 0; for (let i = s; i < s + W; i++) q2 += (L[i] * L[i] + R[i] * R[i]) / 2; m = Math.max(m, Math.sqrt(q2 / W)); } return m; };
+      let problems = 0; const res = {}; out.push('segment | peak dBFS | loudness dBFS | low / mid / high dB | loudest 20 or 100 ms over its bed');
+      for (const g of segs) { const a = Math.round(g.t0 * SR), b = Math.min(buf.length, Math.round((g.t0 + g.len) * SR)), from = g.bed ? a + Math.round((b - a) * 0.5) : a; let pk = 0, sq = 0, bad = 0;
+        for (let i = from; i < b; i++) { const v = Math.max(Math.abs(L[i]), Math.abs(R[i])); if (!Number.isFinite(v)) bad++; else { if (v > pk) pk = v; sq += (L[i] * L[i] + R[i] * R[i]) / 2; } }
+        const rms = Math.sqrt(sq / (b - from)), bd = bands(L, from, b); res[g.name] = { pk, rms, bd }; const flags = []; let lift = '';
+        if (g.shot) { const over = res[g.over], l = Math.max(DB(burst(a, b, 0.02)), DB(burst(a, b, 0.1))) - DB(over.rms); lift = ' | ' + (l >= 0 ? '+' : '') + l.toFixed(1) + ' dB over "' + g.over + '"'; if (l < g.min) flags.push('LOST UNDER ITS BED'); }
+        if (bad) flags.push('NOT A NUMBER'); if (pk > 0.98) flags.push('CLIPS'); if (g.bed && g.name !== 'silence' && DB(rms) < -56) flags.push('TOO QUIET'); if (g.name === 'silence' && DB(rms) > -70) flags.push('NOT SILENT');
+        problems += flags.length; out.push(g.name + ' | ' + DB(pk).toFixed(1) + ' | ' + DB(rms).toFixed(1) + ' | ' + bd.map((v) => v.toFixed(0)).join(' / ') + lift + (flags.length ? '  <-- ' + flags.join(', ') : '')); }
+      const chain = ['yard88 calm', 'yard88 rising', 'yard88 gale', 'storm: roof groans', 'storm: the light goes', 'storm: the peak'];
+      for (let i = 1; i < chain.length; i++) for (const [k, nm] of [[1, 'middle'], [2, 'high']]) { const d = DB(Math.pow(10, res[chain[i]].bd[k] / 20)) - DB(Math.pow(10, res[chain[i - 1]].bd[k] / 20)); if (k === 1 && d < 1.5) { problems++; out.push('ORDER: the ' + nm + ' of "' + chain[i] + '" is not louder than "' + chain[i - 1] + '" (' + d.toFixed(1) + ' dB), so on a phone speaker the storm would not seem to grow'); } }
+      for (let i = 1; i < chain.length; i++) if (DB(res[chain[i]].rms) <= DB(res[chain[i - 1]].rms) + 1) { problems++; out.push('ORDER: "' + chain[i] + '" is not louder than "' + chain[i - 1] + '"'); }
+      const range = DB(res['storm: the peak'].rms) - DB(res['yard88 calm'].rms); if (range < 20) { problems++; out.push('RANGE: calm to the peak is only ' + range.toFixed(1) + ' dB'); }
+      out.unshift('sound check: ' + problems + ' problems'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'SOUND ' + problems; })();
   }
   if (q.has('clickstart')) setTimeout(() => $('start').click(), 300);   /* the real start, with real fades (the other test views skip them) */
   if (q.has('auto')) {   /* ?auto=N plays chapter N (1 to 6) and the ones after it; add &one to stop after N. It logs every change to the page title and #autolog, and says STALL if nothing changes for a while. */

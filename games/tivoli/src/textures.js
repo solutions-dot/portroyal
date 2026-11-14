@@ -14,7 +14,7 @@ function tex(draw, size = 256, seed = 1) {
 function speckle(g, s, r, n, a = 0.08) { for (let i = 0; i < n; i++) { g.fillStyle = r() < 0.5 ? `rgba(0,0,0,${a})` : `rgba(255,255,255,${a})`; g.fillRect(r() * s, r() * s, 1 + r() * 2, 1 + r() * 2); } }
 function wrapped(g, s, x, y, w, h, draw) { for (const dx of [0, -s, s]) for (const dy of [0, -s, s]) { g.save(); g.translate(dx, dy); draw(x, y, w, h); g.restore(); } }
 
-export const TILE = { stucco: 4, block: 3, zinc: 3, asphalt: 6, paving: 3, grass: 5 };
+export const TILE = { stucco: 4, block: 3, zinc: 3, asphalt: 6, paving: 3, grass: 5, boards: 2, dirt: 5 };
 
 export function stucco(colour, seed = 3) {
   return tex((g, s, r) => {
@@ -76,4 +76,26 @@ export function sign(text, bg = 0xd8c02a, fg = '#1b1b1b') {
   g.fillStyle = fg; g.font = '700 64px Arial Black, Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 68, 480);
   const r = rng(text.length * 7); for (let i = 0; i < 700; i++) { g.fillStyle = `rgba(0,0,0,${r() * 0.12})`; g.fillRect(r() * 512, r() * 128, 2, 2); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+
+/* weathered painted boards, as on the board-and-zinc houses: vertical planks of slightly different tone, grain, nails, gaps, peeling paint and rain streaks */
+export function boards(colour, seed = 19) {
+  return tex((g, s, r) => {
+    const n = 8, w = s / n; for (let i = 0; i < n; i++) { g.fillStyle = mix(colour, 0.86 + r() * 0.24); g.fillRect(i * w, 0, w, s); g.fillStyle = 'rgba(30,24,18,0.5)'; g.fillRect(i * w - 1, 0, 3, s); }
+    for (let i = 0; i < 90; i++) { g.strokeStyle = `rgba(40,30,20,${0.05 + r() * 0.1})`; g.lineWidth = 1; const x = r() * s; g.beginPath(); g.moveTo(x, r() * s); g.lineTo(x + (r() - 0.5) * 6, r() * s); g.stroke(); }   /* grain */
+    for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(${150 + r() * 60},${130 + r() * 50},${100 + r() * 40},${0.25 + r() * 0.3})`; const ww = 6 + r() * 26, hh = 8 + r() * 40; wrapped(g, s, r() * s, r() * s, ww, hh, (x, y) => g.fillRect(x, y, ww, hh)); }   /* bare wood where the paint has gone */
+    for (let i = 0; i < n; i++) for (const y of [s * 0.12, s * 0.5, s * 0.88]) { g.fillStyle = 'rgba(20,16,12,0.6)'; g.fillRect(i * w + w * 0.5, y, 2, 2); }   /* nail heads */
+    for (let i = 0; i < 22; i++) { const x = r() * s, gr = g.createLinearGradient(0, 0, 0, s * 0.7); gr.addColorStop(0, 'rgba(50,40,30,0.3)'); gr.addColorStop(1, 'rgba(50,40,30,0)'); g.fillStyle = gr; g.fillRect(x, 0, 3 + r() * 9, s * (0.3 + r() * 0.5)); }
+    speckle(g, s, r, 900);
+  }, 256, seed);
+}
+/* packed earth: tan and brown patches, pebbles, dry cracks and worn tracks */
+export function dirt(seed = 23) {
+  return tex((g, s, r) => {
+    g.fillStyle = '#a58a62'; g.fillRect(0, 0, s, s);
+    for (let i = 0; i < 46; i++) { const v = 0.82 + r() * 0.34; g.fillStyle = `rgba(${165 * v},${138 * v},${98 * v},0.5)`; const w = 16 + r() * 60, h = 16 + r() * 60; wrapped(g, s, r() * s, r() * s, w, h, (x, y) => g.fillRect(x, y, w, h)); }
+    for (let i = 0; i < 140; i++) { const v = r() < 0.5 ? 0.6 : 1.3; g.fillStyle = `rgba(${150 * v},${126 * v},${96 * v},0.7)`; g.fillRect(r() * s, r() * s, 1 + r() * 3, 1 + r() * 2); }   /* pebbles */
+    g.strokeStyle = 'rgba(70,52,34,0.35)'; g.lineWidth = 1; for (let i = 0; i < 8; i++) { let x = r() * s, y = r() * s; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 8; k++) { x += (r() - 0.5) * 22; y += (r() - 0.5) * 22; g.lineTo(x, y); } g.stroke(); }
+    speckle(g, s, r, 2200, 0.1);
+  }, 256, seed);
 }
