@@ -5,7 +5,7 @@ Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the plan, the rules 
 - Code: `games/tivoli/` (started from `games/_template/`; see "Code map").
 - **On the menu since 14 November 2026** (the owner's choice), in `games/tivoli/`. The folder used to start with an underscore so `tools/dist.mjs` skipped it.
 - Build: `node tools/build.mjs tivoli --dev`, then open `http://localhost:8765/games/tivoli/site/` (see "Test it").
-- Status (14 November 2026): **scaffold only, with a second research pass done (see "Research").** It builds and runs as the template does. There are no chapters, places or journal yet. Two uniform bodies are built (`soldier2010`, `police2010`); the template's talking person is still the Port Royal sailor stand-in. There is a placeholder pose layer for the gunfight scenes (`src/clips.js`) and a staging view for it.
+- Status (14 November 2026): **one playable scene** (the May 2010 street, from the title screen), with 2010 uniforms, weapons, the owner's shooting clips and a second research pass. There are no chapters, journal or story yet beyond that. It builds and runs as the template does. There are no chapters, places, people or journal yet. There is a placeholder pose layer for the gunfight scenes (`src/clips.js`) and a staging view for it.
 
 ## What this game is, and why it needs care
 
@@ -144,6 +144,26 @@ Checks (14 November 2026, measured with the local copies in `games/tivoli/src/ch
 - `?test=cloth`: 19 issues on 55 points, every one at most 2.8 mm except two single points (one point of shoe through each police boot, from `pack.mjs` simplifying the light copy and from `era.py`'s shoe; one point of skin under the police sleeve when pointing). Most are the harness straps grazing the vest's edges by 1 to 3 mm in different poses. Down from 175 issues on 16,750 points. Not yet 0.
 - `?test=walkers`: shoes sink 4.3 cm walking and 10.3 cm running, the same for both bodies and both copies. That was the old `groundFeet` pinning only the toe joint. `engine/anim.js` on main now pins the lowest points of the soles, so run it again.
 - `?test=skin`: faces read a warm mid-brown in the template's daylight (soldier mean 99,62,42; police 110,71,49). Judge again in the real places and lighten if they read too dark.
+
+## The street scene (chapter 5, the first playable scene)
+
+Start it from the title screen: "May 2010 street scene (work in progress)". In the dev build, `?scene=fight&at=22&hold` jumps to 22 seconds and freezes there (for pictures).
+
+**How it runs** (`games/tivoli/src/fight.js`; the scene lasts about 50 seconds):
+1. An opt-in card: "Next is a loud scene with gunfire. You watch from a window. No one is shown hurt. It may feel scary." Buttons: Begin, **Read what happened instead** (a plain-words card with the facts and the disagreement), Not now. A **Calm mode** tick box (saved in the browser) makes it quieter, with no bright flashes and no shaking.
+2. Title: "Monday 24 May 2010. A street in West Kingston. It is made up. The day was real." Then a quiet street, soldiers and police walking in file.
+3. At 9 seconds both sides open fire together (the scene never says who fired first). Soldiers and police run to cover (a parked car, low walls, a minibus), kneel, fire and duck. Gunmen are tiny, far away behind the barricade, in plain clothes, and unidentified. Flashes, dust on walls and ground, gunshot sounds made in code, a little shake. **Nobody is hit.** Dust never lands on a person. No blood.
+4. Fade to black with a thin ringing, then the **after card**: "This street is made up. The day was real. About 70 civilians died. Civilians are people who are not soldiers or police. One soldier died too. Soldiers and police said armed men fought them. Many neighbours said they never saw armed men inside. People still disagree. Later chapters look at what was found."
+- You watch from the balcony of a second-floor flat (all shots are from there, with different lenses). You never hold or fire a weapon (rule 4).
+- Everything the people do is general (take cover, fire, duck, move up), not a record of a real event. The street is made up. Every number and claim on the cards comes from the Research tables below.
+
+**Files**: `fight.js` (the people, their steps, the camera shots, the cards), `street.js` (the street), `vehicles.js`, `textures.js`, `fx.js` (flashes, dust, shake, calm mode), `sfx.js` (gunfire sounds), `walk.js` (stride and pace, copied from the people branch).
+
+**The street** (`street.js`, built from code and merged into one mesh per material, with textures mapped by world position): four-storey walk-up flats in faded pastel render with plinths, balconies, railings, burglar bars, louvred windows, window air conditioners, laundry, satellite dishes, black rooftop water tanks and rebar; shops with zinc roofs, roll-down shutters and painted signs (GROCERY, BAR & LOUNGE); a worn asphalt road with patches, cracks, oil, edge lines, a faded zebra crossing, manholes, storm drains; paved pavements with weeds in the joints, kerbs, litter; wooden utility poles with sagging wires and lamps; mango trees and coconut palms; a zinc-fenced vacant lot; a bus shelter; a hazy sky with clouds; hills round Kingston; real sun shadows on computers (phones get none). The barricade at the far end is an overturned minibus, a pushed car, tyres, pallets, planks and rubble. All textures are drawn in code (`textures.js`), so there are no image files.
+- **Vehicles** (`vehicles.js`): a small saloon (like a Toyota Corolla) and a Hiace-style minibus (the common route taxi), each an extruded side profile with wheels and hubs, dark glass, lights, bumpers, mirrors and door lines, plus an "overturned" version. General shapes, not copies of any real vehicle or plate. No military vehicles: nothing read mentions them.
+- **Gunmen** wear plain clothes: the `civilian2010` body (T-shirt and jeans, `tools/tivoli/people/civilian2010.json`, 25,400 triangles, light copy 5,200), tinted per person. They are shown only as light copies, far away.
+
+**Checks wired (CLAUDE.md rule 8)**: `?test=audit` (the street: floating objects, people inside solids; 14 November 2026: **0 issues** after it found and we fixed floating satellite dishes, a floating bus stop sign, lamp arms that did not touch their poles, and people starting on top of each other); `?test=layout` (every card and title state at 390x800, 320x568, 667x375, 800x500, 1280x720: **0 issues**); `?test=held`, `?test=cloth`, `?test=walkers`, `?test=skin` as before.
 
 ## Weapons (Tivoli only)
 
