@@ -158,7 +158,7 @@ bmesh.ops.delete(bm,geom=dead,context='FACES'); bm.to_mesh(h.data); bm.free()
 h.data.materials.clear(); h.data.materials.append(SKIN); h.name='Body'
 # colour everything through vertex colours
 def paint(o):
-    me=o.data; bm=bmesh.new(); bm.from_mesh(me); cl=bm.loops.layers.color.new('Col')
+    me=o.data; bm=bmesh.new(); bm.from_mesh(me); cl=bm.loops.layers.float_color.new('Col')
     for f in bm.faces:
         base=C[me.materials[f.material_index].name]
         for l in f.loops:
@@ -195,7 +195,8 @@ try:
     bpy.ops.export_scene.fbx(filepath=OUT+'abba_for_mixamo.fbx',object_types={'ARMATURE','MESH'},add_leaf_bones=False,path_mode='COPY',embed_textures=True,colors_type='SRGB',mesh_smooth_type='FACE',bake_anim=False)
     print('FBX ok')
 except Exception as e: print('FBXERR',repr(e))
-bpy.ops.export_scene.gltf(filepath=OUT+'lead_character_apose.glb',export_image_format='JPEG',export_apply=False,export_vertex_color='NAME',export_vertex_color_name='Col',export_skins=True)
+bpy.context.scene['vertexColorSpace'] = 'linear'
+bpy.ops.export_scene.gltf(export_extras=True,filepath=OUT+'lead_character_apose.glb',export_image_format='JPEG',export_apply=False,export_vertex_color='NAME',export_vertex_color_name='Col',export_skins=True)
 from mathutils import Matrix
 def aim(n,t):
     pb=rig.pose.bones[n]; bpy.context.view_layer.update(); M=pb.matrix.copy()
@@ -215,4 +216,5 @@ for side,sx in (('Left',1),('Right',-1)):
             pb.matrix=Matrix.Translation(hd)@Matrix.Rotation(math.radians(ang),4,ax)@Matrix.Translation(-hd)@M
 bpy.context.view_layer.update()
 bpy.ops.wm.save_as_mainfile(filepath='/tmp/char/char.blend')
-bpy.ops.export_scene.gltf(filepath=OUT+'lead_character_draft.glb',export_image_format='JPEG',export_apply=False,export_vertex_color='NAME',export_vertex_color_name='Col',export_skins=True,export_rest_position_armature=False)
+bpy.context.scene['vertexColorSpace'] = 'linear'
+bpy.ops.export_scene.gltf(export_extras=True,filepath=OUT+'lead_character_draft.glb',export_image_format='JPEG',export_apply=False,export_vertex_color='NAME',export_vertex_color_name='Col',export_skins=True,export_rest_position_armature=False)

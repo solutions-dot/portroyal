@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Tivoli (work in progress)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  /* The same look as Port Royal: dark teal panels, one brass accent for things you can press, big touch targets (48px). */
+  :root{--ink:#10222b;--paper:#f2e8d0;--brass:#d9a441;--brass-ink:#2a1f08;--display:"IM Fell English SC","IM Fell English",Georgia,serif;--body:"Atkinson Hyperlegible",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--body);font-size:18px;touch-action:none;-webkit-user-select:none;user-select:none}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+  [hidden]{display:none!important}
+  .btn{font:700 1rem var(--body);background:var(--brass);color:var(--brass-ink);border:0;border-radius:6px;padding:.75rem 1.3rem;min-height:48px;cursor:pointer}
+  .btn:disabled{opacity:.6;cursor:default}
+  .btn.ghost{background:transparent;color:var(--paper);border:2px solid var(--brass)}
+  #allgames{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+  #title{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;gap:.8rem;padding:2rem max(1.5rem,6vw);background:linear-gradient(90deg,rgba(16,34,43,.95),rgba(16,34,43,.6))}
+  #title h1{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(2.4rem,8vw,4.2rem);margin:0;line-height:1.05}
+  #title p{max-width:30rem;margin:0}
+  #title .row{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+  #title a{color:inherit}
+  #hud{position:fixed;inset:0;pointer-events:none}
+  #hud > *{pointer-events:auto}
+  #goal{position:absolute;left:16px;top:16px;max-width:min(24rem,calc(100% - 170px));background:rgba(16,34,43,.86);padding:.55em .85em;border-left:4px solid var(--brass);border-radius:0 6px 6px 0;margin:0}
+  #sound{position:absolute;right:16px;top:16px}
+  #talk{position:absolute;right:16px;bottom:24px}
+  #dialogue{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(40rem,calc(100% - 32px));background:rgba(16,34,43,.95);border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.7rem}
+  #who{font-family:var(--display);color:var(--brass);margin:0;font-size:1.2rem;padding-right:40px}
+  #line{margin:0;font-size:1.1rem}
+  #next{align-self:flex-end}
+  #dclose{position:absolute;top:6px;right:8px;width:44px;height:44px;border:0;background:none;color:inherit;font-size:1.9rem;cursor:pointer;opacity:.75;border-radius:50%}
+  #dialogue.me{background:rgba(242,232,208,.97);border-top-color:#2f6f8f}
+  #dialogue.me #who{color:#2f6f8f}#dialogue.me #line,#dialogue.me #dclose{color:#1c2a30}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0" aria-label="The game world"></canvas>
+<section id="title">
+  <h1>Tivoli</h1>
+  <p>Work in progress. Walk with the arrow keys or WASD, or the left side of the screen on a phone. Drag to look.</p>
+  <div class="row">
+    <button id="start" class="btn" disabled>Loading</button>
+    <a id="allgames" class="btn ghost" href="../../../menu/">Main Menu</a>
+  </div>
+  <p id="loadnote">Loading people.</p>
+</section>
+<div id="hud" hidden>
+  <p id="goal"></p>
+  <button id="sound" class="btn ghost">Sound on</button>
+  <button id="talk" class="btn" hidden>Talk</button>
+  <div id="dialogue" role="dialog" aria-labelledby="who" hidden>
+    <button id="dclose" aria-label="Stop talking">&times;</button>
+    <p id="who"></p>
+    <p id="line" aria-live="polite"></p>
+    <button id="next" class="btn">Next</button>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

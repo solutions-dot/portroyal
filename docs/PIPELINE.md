@@ -41,7 +41,8 @@ JSON fields:
   | `bands` | `true` gives a cravat: a band round the neck, a knot and two ends that lie on the coat |
   | `hairvol` | 0 to 1 |
 
-- `colors`: RGB for Skin, Shirt, Coat, Breeches, Stockings, Shoes, Hat, Hair, Apron, Bands. Every garment you use needs its colour, or the script stops with a KeyError. Optional: `CoatButtons`, `ShoeBuckle`.
+- `colors`: RGB for Skin, Shirt, Coat, Breeches, Stockings, Shoes, Hat, Hair, Apron, Bands. Every garment you use needs its colour, or the script stops with a KeyError.
+  - **Skin (owner rule 9).** Use a `Skin` colour inside the Marcus Garvey range, about `[134, 90, 64]` to `[156, 108, 80]`, never darker; vary it a little between people. The builders now write linear RGB to a FLOAT_COLOR layer and mark the exported scene with `vertexColorSpace: linear`. Keep that marker when packing. `engine/colours.js` repairs the extra sRGB transfer in older, unmarked character exports once at load time; scenery and textures are untouched. Do not run that repair twice or change the skin recipes to compensate for an export error. Each game can still use its face-lighting material multiplier. Judge faces in game screenshots in daylight, indoors and at night.
 
 Built in, so nothing shows through when the body moves (all of it only for `era` before 1800, so later games build as before):
 - **Lining.** The body under the clothes is not thrown away. It is kept, thinned, as a `Lining` piece painted in the colour of the cloth over it. Loose cloth creases when an arm drops; whatever shows in a crease is then the same cloth, never skin or a dark hole.
@@ -134,14 +135,11 @@ Marcus Garvey's face (`garvey1914.json`, `garvey1916.json`) was shaped against a
 
 ## Skin
 
-**Target.** In daylight, a Black character's face, measured as the mean of the forehead and cheeks with the person turned to four headings, is a warm brown of about R 85 to 120 (for example 101,67,47 in Kendal). West African people (Kofi, the turtler) sit at the darker end (about R 70 to 80 as a mean, R 90 to 100 on the lit side) and are never near-black; mixed-heritage people (buc1, the sailor) are a little lighter. Light-skinned Port Royal characters keep the look they always had.
+**Rule (owner rule 9).** Build every Black character's `Skin` inside Marcus Garvey's range, about `[134, 90, 64]` to `[156, 108, 80]`, never darker, with a little variety between people. West African people (Kofi) sit at the darker end of that range, mixed-heritage people (buc1, the sailor) a little lighter. Light-skinned Port Royal characters keep their own recipe colours. Faces must read clearly in every light: never near-black, never pale.
 
-**Why the games used to differ.** The builder wrote colours that were already linear into a colour layer that Blender treats as sRGB, so every colour was made linear twice: a recipe skin of 150,102,74 drew as about 67,32,16 (very dark and red). Kendal then lightened skin by 1.55, Port Royal used ACES tone mapping and bright light with no factor, and Garvey's rooms are lit more softly, so the same recipe looked different in each game.
+**How colours reach the screen.** `tools/garvey/era.py` writes the recipe colours, made linear, into a float colour layer and marks the exported scene `vertexColorSpace: linear`, so every recipe colour (skin and cloth alike) is drawn as written. `engine/colours.js` repairs older, unmarked character files, which were made linear twice and drew far too dark. Bodies built between the two fixes were brought up to date with `tools/people/fix_colours.mjs` (it also rescales Skin when a recipe's skin changes, without a rebuild).
 
-**What is done now.**
-- `tools/garvey/era.py` writes skin as its recipe says (`SKS`), so a recipe skin is the same brown in every game. Garments keep the old behaviour. The light-skinned 1690 recipes were changed to the value they used to produce, divided by Port Royal's factor, so they look as before.
-- Each game has one documented factor on the `Skin` material for its own light: Kendal `SKIN_LIGHT = 1.0` (none), Garvey `SKIN_K = 1.2`, Port Royal `SKIN_K = 0.85`. Kendal crowds vary skin by 0.9 to 1.15 only.
-- Typical recipe values: 150,102,74 for most Kendal and Garvey people, 116,76,55 for Kofi and 110,72,52 for the turtler, about 168,118,86 for mixed heritage.
+**Per game.** Each game multiplies the `Skin` material by one documented factor for its own light: Kendal `SKIN_LIGHT = 1.55` (rule 9), Garvey `SKIN_K = 1.2`, Port Royal `SKIN_K = 1.0` (its sun, sky and tone mapping are already bright). New games start from Kendal's 1.55 and check with `?test=skin`. Kendal crowds vary skin by 0.9 to 1.15 only.
 
 **How to measure.** `?test=skin` in each game's dev build (`engine/skinprobe.js`) renders each face in that game's own light from four headings and prints the mean, darkest and lightest colour (Garvey prints indoor and outdoor light). Check new people against the target before calling them done.
 

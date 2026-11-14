@@ -1,3 +1,6 @@
+import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
+import { auditSeated, snapMeshes } from '../../../engine/audit.js';
+import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/garvey/src/main.js: Marcus Garvey. First test scene: a print shop in Kingston, Jamaica, about 1907.
    Built from games/_template. The movement, talking and talk-button code is still the template's small version;
    it moves into engine/ after the Port Royal work has merged (see docs/games/garvey.md, "Working alongside the Port Royal chat").
@@ -190,19 +193,21 @@ let talkWith = null, near = null, DEV_NOSTOP = false, curWalls = WALLS, curBound
 const panelsOpen = () => ['dialogue', 'typeset', 'pagebuild', 'inspect', 'decl', 'sortp', 'letp', 'timep', 'ansp', 'journal', 'chapters', 'credits', 'card'].some((id) => !$(id).hidden);   /* closing one panel must not unpause the world while another is open */
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
-  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && state.started) e.preventDefault();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && state.started) e.preventDefault();
   keys.add(k); if (!state.started) return;
   if (k === 'escape') { if (!$('dialogue').hidden) { leaveTalk(); return; } closeJournal(); closeChapters(); closeCredits(); closeType(false); closePage(false); if (!$('card').hidden) hideCard(); }
-  if ((k === 'e' || k === 'enter') && !busy && near) activate(near);
+  useInteractionKey(e, () => { if (!$('dialogue').hidden && !$('next').hidden) { $('next').click(); return; } if (!busy && near) { activate(near); return; } return false; });
 });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 function clampPos(x, z) {   /* keep inside the room, out of furniture (slide along it) and out of people */
   x = Math.max(curBounds.x0, Math.min(curBounds.x1, x)); z = Math.max(curBounds.z0, Math.min(curBounds.z1, z));
+  [x,z]=slideWalls([state.x,state.z],[x,z],curWalls,.22);
   for (const [x0, z0, x1, z1] of curWalls) { if (x > x0 && x < x1 && z > z0 && z < z1) { const dl = x - x0, dr = x1 - x, dt = z - z0, db = z1 - z, m = Math.min(dl, dr, dt, db); if (m === dl) x = x0; else if (m === dr) x = x1; else if (m === dt) z = z0; else z = z1; } }
   for (const n of PEOPLE) { const d = Math.hypot(x - n.x, z - n.z); if (n.m && n.m.visible && d < 0.5) { x = n.x + (x - n.x) / (d || 1) * 0.5; z = n.z + (z - n.z) / (d || 1) * 0.5; } }
   return [x, z];
 }
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0, moved: 0 };
+releaseOnBlur(keys, [stick, look]);
 canvas.addEventListener('pointerdown', (e) => {
   if (busy) return;
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }
@@ -269,15 +274,15 @@ function tapPerson(cx, cy) {
 }
 const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); };
 const sitClip = (talking) => (talking && CL.SitTalk ? 'SitTalk' : CL.SitIdle ? 'SitIdle' : null);
-function sitDown(n) { n.seated = true; n.walking = false; n.m.userData.anim.play(sitClip(false)); }
+function sitDown(n) { n.seated = true; n.walking = false; n.x=n.seat[0]; n.z=n.seat[1]; n.ry=Math.PI; n.m.userData.seatAnchor={x:n.x,z:n.z,top:0.5,ry:n.ry}; n.m.userData.anim.play(sitClip(false)); }
 function npcTick(n, dt) {
   const m = n.m; if (!m) return; if (POSTER) { m.rotation.y = n.ry; return; }   /* the menu poster: everyone keeps the pose they were given */
   const ac = m.userData.anim, d = Math.hypot(state.x - n.x, state.z - n.z), isNear = (d < 3.2 && !DEV_NOSTOP) || talkWith === n;
   if (n.delay > 0) { n.delay -= dt; if (n.delay <= 0) { n.hidden = false; m.visible = place === 'hall'; n.walking = true; ac.play('Walk'); } return; }
   if (n.dest && talkWith !== n) { const dx = n.dest[0] - n.x, dz = n.dest[1] - n.z, dist = Math.hypot(dx, dz), sp = 1.25 * dt; faceTo(m, Math.atan2(dx, dz), dt);
-    if (dist <= sp) { n.x = n.dest[0]; n.z = n.dest[1]; if (n.legs && n.legs.length) { n.dest = n.legs.shift(); } else { n.dest = null; n.walking = false; n.ry = Math.PI; if (n.seat) sitDown(n); else ac.play(null); } } else { n.x += dx / dist * sp; n.z += dz / dist * sp; } m.position.set(n.x, 0, n.z); return; }
+    if (dist <= sp) { n.x = n.dest[0]; n.z = n.dest[1]; if (n.legs && n.legs.length) { n.dest = n.legs.shift(); } else { n.dest = null; n.walking = false; n.ry = Math.PI; if (n.seat) sitDown(n); else ac.play(null); } } else { [n.x,n.z] = slideWalls([n.x,n.z],[n.x+dx/dist*sp,n.z+dz/dist*sp],curWalls,.22); } if(!n.seated)m.position.set(n.x, 0, n.z); return; }
   const toPlayer = Math.atan2(state.x - n.x, state.z - n.z);
-  if (n.seated) { faceTo(m, talkWith === n ? toPlayer : n.ry, dt, 3); return; }
+  if (n.seated) { anchorSeat(m); return; }
   if (!n.path) { if (isNear) faceTo(m, toPlayer, dt); else faceTo(m, n.ry, dt, 2); return; }   /* the printer stays at his stand, and turns to look at you */
   if (isNear || n.wait > 0) {   /* stop, and look at the player if they are close */
     if (n.walking) { n.walking = false; ac.play(null); }
@@ -286,7 +291,7 @@ function npcTick(n, dt) {
   if (!n.walking) { n.walking = true; ac.play('Walk'); }
   const to = n.path[(n.i + 1) % n.path.length], dx = to[0] - n.x, dz = to[1] - n.z, dist = Math.hypot(dx, dz), sp = 1.05 * dt;
   faceTo(m, Math.atan2(dx, dz), dt);
-  if (dist <= sp) { n.x = to[0]; n.z = to[1]; n.i = (n.i + 1) % n.path.length; n.wait = 2.5 + Math.random() * 3; n.walking = false; ac.play(null); } else { n.x += dx / dist * sp; n.z += dz / dist * sp; }
+  if (dist <= sp) { n.x = to[0]; n.z = to[1]; n.i = (n.i + 1) % n.path.length; n.wait = 2.5 + Math.random() * 3; n.walking = false; ac.play(null); } else { [n.x,n.z] = slideWalls([n.x,n.z],[n.x+dx/dist*sp,n.z+dz/dist*sp],curWalls,.22); }
   m.position.set(n.x, 0, n.z);
 }
 
@@ -425,7 +430,7 @@ function chapterFade(title, sub, fn) {
 }
 function resetChapter() {   /* the print shop again: people go home, the goal starts over, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); enterPlace('shop');
-  for (const n of SHOP_PEOPLE) { n.talked = false; n.heard = 0; n.i = 0; n.walking = false; n.wait = 1.5; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  for (const n of SHOP_PEOPLE) { n.talked = false; n.heard = 0; n.i = 0; n.walking = false; n.wait = 1.5; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   setStage(0); showPlace();
 }
 
@@ -442,9 +447,11 @@ const CHAPTERS = [
   { year: 'July 1914', name: 'The first followers', ready: true, go: () => { toast('Loading the hall'); ensureHall().then(() => chapterFade('1914', 'A meeting hall in Kingston', resetChapter2)); }, done: () => best >= 14 }, { year: '1916', name: 'The streets of Harlem', ready: true, go: () => { toast('Loading Harlem'); ensureStreet().then(() => chapterFade('1916', 'Harlem, New York', resetChapter3)); }, done: () => best >= 23 }, { year: '1918 to 1919', name: 'The power of the press', ready: true, go: () => { toast('Loading the press room'); ensurePress().then(() => chapterFade('1918', 'The press room, Harlem', resetChapter4)); }, done: () => best >= 34 },
   { year: '1919', name: 'The Black Star Line', ready: true, go: () => { toast('Loading the dock'); ensureDock().then(() => chapterFade('1919', 'A dock in New York', resetChapter5)); }, done: () => best >= 44 }, { year: 'August 1920', name: 'The great convention', ready: true, go: () => { toast('Loading Liberty Hall'); ensureLiberty().then(() => chapterFade('August 1920', 'Liberty Hall, Harlem', resetChapter6)); }, done: () => best >= 54 }, { year: '1922 to 1927', name: 'The price of a dream', ready: true, go: () => { toast('Loading the office'); ensureOffice().then(() => chapterFade('1925', 'Amy Jacques Garvey\'s desk, Harlem', resetChapter7)); }, done: () => best >= 64 }, { year: '1927 to today', name: 'The question that remains', ready: true, go: () => { toast('Loading the park'); ensurePark().then(() => chapterFade('Today', 'National Heroes Park, Kingston', resetChapter8)); }, done: () => best >= 74 },
 ];
+let teacherMode=false;try{teacherMode=localStorage.getItem('garvey-teacher')==='1';}catch{}
 function renderChapters() {
+  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent=teacherMode?'Teacher unlock: on':'Teacher unlock';$('chteachernote').hidden=!teacherMode;
   const ul = $('chlist'); ul.replaceChildren();
-  CHAPTERS.forEach((c, i) => { const open = !!c.ready && (i === 0 || CHAPTERS[i - 1].done() || stage >= 10 * i), dn = c.done ? c.done() : false, li = document.createElement('li'), b = document.createElement('button');
+  CHAPTERS.forEach((c, i) => { const open = !!c.ready && (teacherMode || i === 0 || CHAPTERS[i - 1].done() || stage >= 10 * i), dn = c.done ? c.done() : false, li = document.createElement('li'), b = document.createElement('button');
     b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !modelsReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', c.name], ['st', !c.ready ? 'Coming soon' : !modelsReady ? 'Loading' : dn ? 'Done' : 'Play']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
     b.onclick = () => playChapter(c); li.appendChild(b); ul.appendChild(li); });
@@ -453,6 +460,7 @@ function renderChapters() {
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = panelsOpen(); if (state.started) canvas.focus(); }
 function playChapter(c) { $('chapters').hidden = true; busy = false; if (!state.started) startGame(); c.go(); }
+$('chteacher').onclick=()=>{teacherMode=!teacherMode;try{localStorage.setItem('garvey-teacher',teacherMode?'1':'0');}catch{}renderChapters();$('chteacher').focus();};
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
 function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } location.reload(); }
 $('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
@@ -594,7 +602,7 @@ function buildHall() {
     mesh(new THREE.PlaneGeometry(w, h), viewM, 0, y, 0.012, gg); for (const dx of [-w / 2, w / 2]) box(0.09, h + 0.12, 0.12, beam, dx, y, 0.05, gg); for (const dy of [sill - 0.03, sill + h + 0.03]) box(w + 0.2, 0.09, 0.12, beam, 0, dy, 0.05, gg); box(0.05, h, 0.06, beam, 0, y, 0.04, gg); box(w, 0.04, 0.06, beam, 0, y + h * 0.1, 0.04, gg);
     for (const dx of [-(w / 2 + w / 4 + 0.05), w / 2 + w / 4 + 0.05]) mesh(new THREE.PlaneGeometry(w / 2, h), louverM, dx, y, 0.02, gg); }
   for (const bx of [-2.6, 2.6]) for (const bz of [-1.2, 0.2, 1.4]) {   /* benches either side of the middle aisle */
-    box(3.0, 0.08, 0.42, wood, bx, 0.46, bz, g); box(3.0, 0.5, 0.05, wood, bx, 0.78, bz + 0.22, g);   /* the backrest is behind the sitter, who faces the platform */ for (const dx of [-1.35, 1.35]) box(0.06, 0.46, 0.4, woodDark, bx + dx, 0.23, bz, g); HALL_WALLS.push([bx - 1.6, bz - 0.35, bx + 1.6, bz + 0.3]); }
+    box(3.0, 0.08, 0.42, wood, bx, 0.46, bz, g); box(3.0, 0.5, 0.05, wood, bx, 0.78, bz + 0.22, g);   /* the backrest is behind the sitter, who faces the platform */ for (const dx of [-1.35, 1.35]) box(0.06, 0.46, 0.4, woodDark, bx + dx, 0.23, bz, g); HALL_WALLS.push([bx - 1.5, bz - 0.21, bx + 1.5, bz + 0.245]); }
   box(8.4, 0.25, 1.7, wood, 0, 0.125, HALL.z0 + 0.85, g); HALL_WALLS.push([-4.3, HALL.z0, 4.3, HALL.z0 + 1.75]);   /* the platform at the back, with a table and a lamp */
   box(2.2, 0.85, 0.8, woodDark, 0, 0.25 + 0.425, HALL.z0 + 0.7, g); box(2.4, 0.06, 0.95, wood, 0, 0.25 + 0.88, HALL.z0 + 0.7, g);
   cyl(0.07, 0.1, 0.22, brass, -0.6, 0.25 + 1.04, HALL.z0 + 0.7, g); cyl(0.09, 0.09, 0.2, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.7, transparent: true, opacity: 0.8 }), -0.6, 0.25 + 1.25, HALL.z0 + 0.7, g);
@@ -628,7 +636,7 @@ const HALL_PEOPLE = [
 for (const n of HALL_PEOPLE) initPerson(n);
 for (const n of HALL_PEOPLE.slice(2)) n.hidden = true;   /* the neighbours arrive when the poster is printed */
 function startArrivals() {
-  HALL_PEOPLE.slice(2).forEach((n, i) => { if (!n.m) return; n.hidden = true; n.m.visible = false; n.x = (i - 1) * 0.6; n.z = 5.2; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.legs = [...n.route.map((q) => q.slice()), n.seat.slice()]; n.dest = n.legs.shift(); n.seated = false; n.delay = 1.2 + i * 1.8; });   /* walk the aisle and the gap between the rows, then sit */
+  HALL_PEOPLE.slice(2).forEach((n, i) => { if (!n.m) return; n.hidden = true; n.m.visible = false; n.x = (i - 1) * 0.6; n.z = 5.2; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; delete n.m.userData.seatAnchor; n.legs = [...n.route.map((q) => q.slice()), [n.seat[0],n.seat[1]-0.6]]; n.dest = n.legs.shift(); n.seated = false; n.delay = 1.2 + i * 1.8; });   /* walk the aisle and the gap between the rows, then sit */
 }
 function loadPerson(n) {
   if (n.loading) return n.loading;
@@ -702,7 +710,7 @@ let streetLoading = null;
 function ensureStreet() { if (!streetLoading) { buildStreet(); streetLoading = Promise.all(STREET_PEOPLE.map(loadPerson)); } return streetLoading; }
 function resetChapter3() {   /* the street corner again: the journal and your choices are kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 20; delete story.words; delete story.answer;
-  for (const n of STREET_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  for (const n of STREET_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('street'); setStage(20); showPlace();
 }
 
@@ -806,7 +814,7 @@ let pressLoading = null;
 function ensurePress() { if (!pressLoading) { buildPress(); pressLoading = Promise.all(PRESS_PEOPLE.map(loadPerson)); } return pressLoading; }
 function resetChapter4() {   /* the press room again: the page comes down, the journal and your choices in earlier chapters are kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); stage = 30; delete story.headline; delete story.delivery; delete story.laid;
-  for (const n of PRESS_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  for (const n of PRESS_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('press'); setStage(30); showPlace();
 }
 
@@ -835,7 +843,7 @@ function buildDock() {
   mesh(new THREE.PlaneGeometry(2.8, 0.7), new THREE.MeshBasicMaterial({ map: signTex([['YARMOUTH', 60]], 512, 128) }), -4.2, 1.3, 6.69, g).rotation.y = Math.PI;
   /* the share table, with a sign */
   box(2.3, 0.9, 0.9, woodDark, -4.5, 0.45, -0.9, g); box(2.4, 0.06, 1.0, wood, -4.5, 0.93, -0.9, g); box(0.34, 0.02, 0.45, paper, -5.1, 0.97, -0.9, g); box(0.34, 0.02, 0.45, paper, -4.7, 0.97, -0.85, g); cyl(0.05, 0.07, 0.2, brass, -3.8, 1.05, -0.9, g, 10);
-  mesh(new THREE.PlaneGeometry(2.6, 0.82), new THREE.MeshBasicMaterial({ map: signTex([['BLACK STAR LINE', 52], ['SHARES FIVE DOLLARS EACH', 30]], 512, 160) }), -4.5, 2.5, -2.4, g); box(0.07, 2.4, 0.07, beam, -5.75, 1.2, -2.4, g); box(0.07, 2.4, 0.07, beam, -3.25, 1.2, -2.4, g); DOCK_WALLS.push([-5.75, -2.3, -3.2, -0.4]);   /* the sign stands well behind the clerk, who stands behind the table */
+  mesh(new THREE.PlaneGeometry(2.6, 0.82), new THREE.MeshBasicMaterial({ map: signTex([['BLACK STAR LINE', 52], ['SHARES FIVE DOLLARS EACH', 30]], 512, 160) }), -4.5, 2.5, -2.4, g); box(0.07, 2.4, 0.07, beam, -5.75, 1.2, -2.4, g); box(0.07, 2.4, 0.07, beam, -3.25, 1.2, -2.4, g); DOCK_WALLS.push([-5.7,-1.4,-3.3,-0.4],[-5.80,-2.45,-5.70,-2.35],[-3.30,-2.45,-3.20,-2.35]);   /* the sign stands well behind the clerk, who stands behind the table */
   /* crates, barrels and rope */
   const crate = (x, z, s2, y2 = 0) => { box(s2, s2, s2, wood, x, s2 / 2 + y2, z, g).rotation.y = x * 0.7; DOCK_WALLS.push([x - s2 * 0.75, z - s2 * 0.75, x + s2 * 0.75, z + s2 * 0.75]); };
   crate(6.2, -2.4, 0.9); crate(7.1, -2.2, 0.8); crate(6.5, -2.3, 0.7, 0.9); crate(-8, 1.2, 0.9); crate(-8.2, 2.2, 0.8);
@@ -881,7 +889,7 @@ let dockLoading = null;
 function ensureDock() { if (!dockLoading) { buildDock(); dockLoading = Promise.all(DOCK_PEOPLE.map(loadPerson)); } return dockLoading; }
 function resetChapter5() {   /* the dock again: your choices here are cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); stage = 40; delete story.plan; delete story.advice;
-  for (const n of DOCK_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  for (const n of DOCK_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('dock'); setStage(40); showPlace();
 }
 
@@ -961,7 +969,7 @@ let libLoading = null;
 function ensureLiberty() { if (!libLoading) { buildLiberty(); libLoading = Promise.all(LIB_PEOPLE.map(loadPerson)); } return libLoading; }
 function resetChapter6() {   /* Liberty Hall again: the banner is plain, your choice here is cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); closeDecl(false); stage = 50; delete story.helped; delete story.banner; showBanner();
-  for (const n of LIB_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  for (const n of LIB_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('liberty'); setStage(50); showPlace();
 }
 
@@ -1037,7 +1045,7 @@ let offLoading = null;
 function ensureOffice() { if (!offLoading) { buildOffice(); offLoading = Promise.all(OFF_PEOPLE.map(loadPerson)); } return offLoading; }
 function resetChapter7() {   /* Amy's desk again: your choices here are cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 60; delete story.question; delete story.reassure;
-  for (const n of OFF_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  for (const n of OFF_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('office'); setStage(60); showPlace();
 }
 
@@ -1128,7 +1136,7 @@ let parkLoading = null;
 function ensurePark() { if (!parkLoading) { buildPark(); parkLoading = Promise.all(PARK_PEOPLE.map(loadPerson)); } return parkLoading; }
 function resetChapter8() {   /* the park again: your last answer is cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 70; delete story.final;
-  for (const n of PARK_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  for (const n of PARK_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('park'); setStage(70); showPlace();
 }
 
@@ -1259,7 +1267,7 @@ function enterPlace(name, keepPos) {
 function showPlace() { const el = $('place'); el.textContent = PLACES[place].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(placeT); placeT = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetChapter2() {   /* the hall again: the poster comes down, the neighbours go home, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); delete story.poster; delete story.printed; showPoster(); stage = 10;
-  for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.legs = null; n.seated = false; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; n.m.userData.anim.play(null); } }
+  for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.legs = null; n.seated = false; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('hall'); setStage(10); showPlace();
 }
 
@@ -1277,7 +1285,7 @@ let modelsReady = false;
   }); }
 function startGame() {
   audioInit(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); setGoal();
-  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. E to use.'; showHint();
+  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint();
   showPlace(); canvas.focus();
 }
 $('start').onclick = () => { startGame(); cue('begin'); };
@@ -1297,8 +1305,8 @@ function update(dt, now) {
   near = null; if (state.started && !busy) { let best = 2.6; for (const n of PEOPLE) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < best) { best = d; near = n; } }
     for (const a of ACTIONS) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }   /* standing at a thing to do beats a person nearby */
   const talkBtn = $('talk'); talkBtn.hidden = !(near && near.go); if (near && near.go) talkBtn.textContent = near.label;   /* people get the bubble; things to do get this button */
-  for (const mx of mixers) mx.update(dt); for (const n of PEOPLE) if (n.m && n.m.userData.anim) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
-  for (const m of grounded) groundFeet(m);
+  for (const mx of mixers) { const r = mx.getRoot(); if (r.visible) mx.update(dt); } for (const n of PEOPLE) if (n.m && n.m.userData.anim) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
+  for (const m of grounded) if (m.visible) groundFeet(m);
   if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }
 let last = performance.now(), stepT = 0;
@@ -1398,19 +1406,22 @@ function devViews() {
       for (const nm of names) { const gl = await model(nm), m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K); } }); scene.add(m); m.userData.ground = 0; animate(m, 'Idle'); m.userData.anim.mx.update(0);
         const r = auditCloth(nm, m, { poses: POSES, after: gripTick, where: q.has('where') }); out.push(nm + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const l of r.lines) out.push('  ' + l); bad += r.lines.length; pts += r.points; scene.remove(m); await new Promise((res) => setTimeout(res, 0)); }
       out.unshift('cloth: ' + bad + ' issues (' + pts + ' points)'); let el = $('autolog'); if (!el) { el = document.createElement('pre'); el.id = 'autolog'; el.hidden = true; document.body.appendChild(el); } el.textContent = out.join('\n'); document.title = 'CLOTH ' + bad; })(); }
-  if (q.get('test') === 'overlap') {   /* is anyone standing or walking inside furniture? Checks every place's people against its walls (furniture rectangles) */
+  if (['overlap','collision','seating'].includes(q.get('test'))) {   /* is anyone standing or walking inside furniture? Checks every place's people against its walls (furniture rectangles) */
     (async () => {
       const tm = []; for (const [nm, f] of [['hall', ensureHall], ['street', ensureStreet], ['press', ensurePress], ['dock', ensureDock], ['liberty', ensureLiberty], ['office', ensureOffice], ['park', ensurePark]]) { const t0 = performance.now(); await f(); tm.push(nm + ' ' + Math.round(performance.now() - t0) + 'ms'); }
       console.log('LOAD ' + tm.join(', ') + ' | drawing=' + Math.round(TEXMS) + 'ms textures=' + renderer.info.memory.textures + ' geometries=' + renderer.info.memory.geometries);
-      const out = [], R = 0.28, hit = (W, x, z) => W.find(([x0, z0, x1, z1]) => x > x0 - R && x < x1 + R && z > z0 - R && z < z1 + R);
+      const out = [], R = 0.22, hit = (W, x, z) => W.find(([x0, z0, x1, z1]) => x > x0 - R && x < x1 + R && z > z0 - R && z < z1 + R);
       for (const [name, P] of Object.entries(PLACES)) for (const n of P.people) {
+        if(!n.seat)out.push(...furnitureRouteIssues(name+':'+n.id,[[n.hx??n.x,n.hz??n.z]],snapMeshes(P.group),n.ground||0,.16));
         const pts = [['start', n.hx !== undefined ? n.hx : n.x, n.hz !== undefined ? n.hz : n.z]];
         if (n.path) { n.path.forEach((c, i) => { pts.push(['path' + i, c[0], c[1]]); const d = n.path[(i + 1) % n.path.length]; for (let k = 1; k < 8; k++) pts.push(['path' + i + '>' + ((i + 1) % n.path.length) + ' ' + k + '/8', c[0] + (d[0] - c[0]) * k / 8, c[1] + (d[1] - c[1]) * k / 8]); }); }
-        if (n.seat) pts.push(['seat', n.seat[0], n.seat[1]]);
-        if (n.legs || n.route) { let prev = [n.x, n.z]; for (const c of [...(n.route || []), n.seat].filter(Boolean)) { for (let k = 1; k <= 8; k++) pts.push(['route ' + k + '/8', prev[0] + (c[0] - prev[0]) * k / 8, prev[1] + (c[1] - prev[1]) * k / 8]); prev = c; } }
-        for (const [what, x, z] of pts) { const w = hit(P.walls, x, z); if (w) out.push(name + ':' + n.id + ' ' + what + ' (' + x.toFixed(2) + ',' + z.toFixed(2) + ') in [' + w.map((v) => v.toFixed(2)).join(',') + ']'); }
+        if (n.seat) { sitDown(n); n.m.userData.anim.mx.update(0.5); anchorSeat(n.m); out.push(...auditSeated(n.id,n.m,snapMeshes(P.group),n.ground||0)); }
+        if (n.legs || n.route) { let prev = [n.hx ?? n.x,n.hz ?? n.z]; for (const c of [...(n.route || []), n.seat&&[n.seat[0],n.seat[1]-.6]].filter(Boolean)) { for (let k = 1; k <= 8; k++) pts.push(['route ' + k + '/8', prev[0] + (c[0] - prev[0]) * k / 8, prev[1] + (c[1] - prev[1]) * k / 8]); prev = c; } }
+        if(n.path&&!(n.ground>0)){out.push(...routeIssues(name+':'+n.id,n.path,P.walls,.22));out.push(...furnitureRouteIssues(name+':'+n.id,n.path,snapMeshes(P.group)));}
+        if(n.route)out.push(...routeIssues(name+':'+n.id,[[n.hx,n.hz],...n.route,[n.seat[0],n.seat[1]-.6]],P.walls,.22,false));
+        for (const [what, x, z] of pts) { const w = hit(P.walls, x, z); if (w && !(n.ground>0)) out.push(name + ':' + n.id + ' ' + what + ' (' + x.toFixed(2) + ',' + z.toFixed(2) + ') in [' + w.map((v) => v.toFixed(2)).join(',') + ']'); }
       }
-      document.title = 'OVERLAP ' + (out.length ? out.join(' | ') : 'none');
+      const pre=document.createElement('pre');pre.id='autolog';pre.textContent=out.join('\n');document.body.append(pre);document.title='COLLISION '+out.length;
     })(); }
   if (q.get('test') === 'walk') {   /* step the world by hand and watch the customer walk her route */
     const c = SHOP_PEOPLE[1]; go(4.0, -1.2, 0, 0); const trail = []; let dist = 0, px = c.x, pz = c.z, minx = 9, maxx = -9, minz = 9, maxz = -9, walked = 0;

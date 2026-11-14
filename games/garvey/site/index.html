@@ -167,6 +167,7 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 #dccolors{display:flex;gap:8px;justify-content:center}
 .pc[data-c=red]{background:#b3262b;color:#fff;box-shadow:0 3px 0 #6e1519}.pc[data-c=black]{background:#14141a;color:#fff;box-shadow:0 3px 0 #000;outline:1px solid #5a5a62}.pc[data-c=green]{background:#1f7a3d;color:#fff;box-shadow:0 3px 0 #124a25}
 #inrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chfoot{flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -316,8 +317,9 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
   <div class="book">
     <header><h2 id="chtitle">Chapters</h2><button id="chclose">Close</button></header>
     <p class="chnote">Each chapter opens when you finish the one before it.</p>
+    <p id="chteachernote" class="chnote" hidden>All chapters are open for teaching.</p>
     <ol id="chlist" class="chlist"></ol>
-    <footer class="chfoot"><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
+    <footer class="chfoot"><button id="chteacher" class="btn ghost" aria-pressed="false">Teacher unlock</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
   </div>
 </section>
 <script src="app.js"></script>

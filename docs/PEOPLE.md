@@ -34,7 +34,7 @@ node tools/people/pack.mjs --src build/people --out games/<game>/site/models --l
 ## 3. Skin and colour
 
 - Skin colour comes from the recipe's `Skin` value. Do not multiply whole bodies by a colour: that changes skin, hair and clothes together.
-- Black characters read as a warm, rich brown in daylight: never near-black and never light. West African people sit at the darker end, mixed-heritage people a little lighter, with natural variety between people.
+- Owner rule 9: build a Black character's `Skin` inside Marcus Garvey's range, about `[134, 90, 64]` to `[156, 108, 80]`, never darker, then lighten the Skin material in the game (Kendal's `SKIN_LIGHT = 1.55` is the starting point). Faces read as a warm brown in every light: never near-black and never pale. West African people sit at the darker end of the range, mixed-heritage people a little lighter, with natural variety between people.
 - Check what a face really looks like in your game's lighting with `engine/skinprobe.js` (dev only), never by eye on one screen. The target range, the one factor each game may use, and how to measure are in `docs/PIPELINE.md` ("Skin").
 - Hair keeps its own painted colour (dark, or grey for an elder). Collar matches the shirt; a pocket is a shade darker than the shirt.
 

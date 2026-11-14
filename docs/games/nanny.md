@@ -1,0 +1,192 @@
+# Nanny Town 1734: The Narrow Path (the game guide)
+
+Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the story, the rules that are special to this game, the research, the code map and what is left.
+
+- Code: `games/nanny/src/` (modules, see "Code map"). Page and styles: `games/nanny/site/index.html`.
+- Models: `games/nanny/site/models/*.js`. These are **stand-in bodies** copied from Port Royal and Kendal (see "Characters").
+- Build: `node tools/build.mjs nanny --dev` (test views and the autoplayer) or without `--dev` (public).
+- Status: all six chapters are playable from start to end. It is new, so expect polish work (see "What is left").
+
+## Rules that are special to this game
+
+These sit on top of the owner's rules in `CLAUDE.md`. They exist because Nanny is thinly documented and her people's heritage is living.
+
+1. **Nanny never speaks.** Nobody wrote down her words, so the game gives her none. Other people talk about her.
+2. **Nanny is only seen from far away.** Nobody drew her from life. The face on the 500 dollar note comes from a student's drawing made in 1976. She stands on the high rock in chapter 2 and under the meeting tree in chapter 6, and you cannot walk up to her. Her look (a pale head wrap, a plain light garment, a string of beads) follows the best known picture of her, which the owner supplied. That picture was drawn long after her time, and the journal says so.
+3. **Nothing sacred is shown.** No Kromanti ceremony, song, drumming or language. No burial and no Bump Grave. No healing plant is named. The journal says these exist and are private.
+4. **The word "obeah" is not used.** It was the colonists' word. The 1733 record that uses it is described without it.
+5. **Every journal page says where its facts come from**: written records, Maroon tradition, or fiction made for this game. The last chapter turns this into a game ("How do we know?").
+6. **The fight is fictional and says so.** It shows methods that were written down, mostly for another Windward town in 1739. Nobody is shown hurt and nobody falls. A card after it says that people were hurt and killed in this war, on both sides.
+7. **Review before release.** We found no written guidance from the Moore Town Maroon Council or the Jamaica National Heritage Trust on how to tell this story. Send them the journal pages and the two set pieces and ask. The credits already say the game has not been reviewed yet.
+
+## The story
+
+You are fictional: a child, first person, at a child's eye height (1.32 m). You and your mother leave a sugar estate at night with a Maroon scout, and live in Nanny Town through an attack that is driven back, the night the town is taken in 1734, and the day in 1740 when a paper with Nanny's name on it reaches the new town.
+
+| # | When and where | Walk and do | Remembered choice |
+|---|---|---|---|
+| 1 | About 1730, a sugar estate at night (`estate`) | Talk to Mama and Quamin. Follow Quamin along the cane. Cross the cart road while the watchman's lantern is far away (if he comes close you go back to the shadows and try again). Cross the stream, climb the hill, watch the sun rise on the Blue Mountains. | None |
+| 2 | About 1730, Nanny Town (`town`) | Climb the narrow path with Mama and Quamin. Talk to Auntie Mimba, Cubbenah and Beneba. Plant three yams. Learn two horn calls. See Nanny, far off on the high rock. | The work you choose: watch, garden or carry messages. Mimba and Cubbenah remember it. |
+| 3 | About 1731, the watch rock (`watch`) | Talk to Quamin and Cubbenah. Look out over the valley and see a thin red line of soldiers, far away. Pass two horn calls on. Set three forked sticks by the trenches. Mama gives you a cloak of leaves. | None |
+| 4 | About 1731, the same rock | The fight (see below). Then talk to Cubbenah and Mama. | None. You can choose "Read what happened instead". |
+| 5 | 1734, Nanny Town at night | The horn wakes you. Knock on three doors. Find little Phibba by the cotton tree; she holds your hand. Climb the back trail while small cannon fire behind you. At the top the sun rises and you look back once. | None. You can choose "Read what happened instead". |
+| 6 | 5 August 1740, New Nanny Town (`newtown`), then today | Talk to Mama, Cubbenah and Beneba. Look at the paper on the flat stone: the real words. Play Beneba's game: six statements, and for each, how do we know? A card about today, then the last question. | Why we remember Nanny (she led her people, she helped keep them free, her people kept her story) |
+
+Rule of truth: real events stay as they happened. Choices change only what people say and the "Your journey" page.
+
+### The fight (chapter 4, `fightRun` in `main.js`)
+
+Same idea as the Port Royal earthquake and the Kendal crash: an opt-in card first ("It is loud, and it may be scary"), then phases. You stand at the edge of the watch rock between two boulders and cannot walk, but you can look round.
+
+1. The forest is still. A camera shot down the path: red coats come out of the mist in single file. A drum and a trumpet.
+2. Cubbenah nods. You blow "Now!" on the horn. Horns answer from every side, and nobody can be seen.
+3. The soldiers stop. Guns flash and smoke from the bushes, and the soldiers fire back at nothing. A "Stay low!" button lets you duck behind the rock (your leaf cloak closes in).
+4. Cubbenah nods again. You blow "All together". The bushes are cut away at one stroke and the hillside is full of Maroons.
+5. The soldiers turn and run back down the mountain. Birds sing.
+6. A card: this fight is fictional, the attacks were real, and people were hurt and killed in this war.
+
+What each part rests on: horns answering unseen, the trenches and forked sticks, and the bush cut away to show a hillside full of people are from Thicknesse (1788) and Dallas (1803), about Quao's town in 1739. The leaf cloaks are Maroon tradition. The single-file path is Edwards (1793). That soldiers attacked Nanny Town in 1730, 1731 and 1732 is from the Jamaica National Heritage Trust. How any one attack went is not recorded.
+
+### The guns in the night (chapter 5, `gunsRun`, `ridgeDawn`)
+
+After another opt-in card, two swivel guns on a knoll by the path fire every few seconds (a boom, a flash, a shake). Houses begin to glow. You walk the back trail with Phibba; Mama and the neighbours climb ahead of you. At the top the game fades the night into dawn, the camera looks back at the smoking town with soldiers standing in it, and a card called "What really happened in 1734?" gives the three accounts that disagree.
+
+## Code map
+
+`games/nanny/src/`:
+
+| File | What it holds |
+|---|---|
+| `main.js` | renderer, sky, the far ridges and mist, controls, people, the place registry, the journal, cards, the cinematic layer (`bars`, `say`, `flash`, `fadeBlack`, the camera director `cut` with zoom), saving, chapters and stages, the horn game (`hornGame`), the lantern (`estateTick`), the fight (`FIGHT`, `fightRun`), the guns (`GUNS`, `gunsRun`, `ridgeDawn`), the loop, the place audit, test views and the autoplayer |
+| `content.js` | every word the player reads: `CHAPTERS`, `GOALS`, `TALK`, `LATER`, `SAY` (narration), `CARDS`, `CALLS` (the horn calls), `JOURNAL` |
+| `land.js` | noise, `makeGround` (heights, trails, clearings, where you may walk), `landMesh`, `ribbon`, `streamMesh`, `makeRidges`, `makeMist`, `makeSun`, `makeFireflies`, `makeSmoke`, the times of day (`ENV`, `mixEnv`) |
+| `flora.js` | trees, tree ferns, plantains, palms, cane, grass and rocks, each drawn many times at once; `forest()`; the cotton tree |
+| `props.js` | huts, cook fire, jerk frame, yam hill, trench, forked stick, musket, swivel gun, horn, baskets, the paper on its stone, the lantern, the leaf cloak |
+| `places.js` | the four places |
+| `cast.js` | `LOOKS` (a body plus colours per person), villagers, fighters |
+| `sfx.js` | the horn, guns heard from far away, drum, trumpet, night insects, stream, fire, owl, frog |
+| `gfx.js` | copied from Kendal: textures drawn in code, shared materials, the sky, `batchStatic` |
+
+### What is new in this game's engine code
+
+- **Land with heights.** Earlier games are flat. Here `makeGround({ base, trails, flats })` gives `h(x, z)`. A trail is a list of `[x, z, y]` points with a half-width; a flat is a round clearing. The land is levelled to a bench under each one and eases back to the wild slope. People stand at `G.h(x, z)`. The camera follows it.
+- **Walking on trails.** You may stand on a trail or a clearing and nowhere else. `G.clamp(x, z)` gives the nearest allowed spot, so you slide smoothly along a trail's edge. A trail marked `nowalk` shapes the land but cannot be walked (the soldiers' path). For the engine's audits, `G.walls(0.5)` turns everything you may not walk on into rectangles.
+- **Leading and following.** `lead(n, dense, offset)` makes a person keep `offset` metres ahead of you along a trail (or behind, if negative). Quamin leads, Mama follows. `n.goto` walks someone to a spot. `n.tag` makes Phibba stay one step behind you anywhere.
+- **Who is where.** A place holds different people in different chapters, so each person has `when: [firstStage, lastStage]`. `refreshCast()` shows and hides them. A person with `hiddenNow` waits for the script to show them (the soldiers, the Maroons in the bushes).
+- **The horn.** `hornGame(['well', 'come'])` shows each call as dots and bars, plays it, then waits for you to tap Short and Long in the same order. A wrong tap just restarts that call. Keys 1 and 2 also work.
+- **The backdrop.** Six rings of ridges (`makeRidges`) follow the camera and take their colours from the time of day, paler with distance. Sheets and banks of mist sit at `backdrop.mist`. `backdrop.lift` raises or lowers the ridges for each place.
+
+### How a game moves
+
+- `stage` is the story as a number: chapter n uses stages n0 to n9 (chapter 1 is 10 to 15, chapter 2 is 20 to 25, and so on). `DONE` in `main.js` says which stage finishes each chapter. `ON[stage]` runs scripted scenes. `SAFE` moves a saved game out of the middle of a scene.
+- Timed scenes use `run`, `tween`, `cut`, `waitFor` and `wait`. They stop themselves when the chapter changes (`EP`, the "epoch").
+- Speed: draw calls and triangles are in line with Kendal (`?shot=town3&stats` gives about 600 calls and 760,000 triangles with shadows on a computer; phones have no shadows).
+
+## Coordinates
+
+Metres. `yaw = 0` looks toward -z (north). In the mountain places +z is south and downhill.
+
+| Place | Notes |
+|---|---|
+| `estate` | You start at (2, 40.6) by three huts. The trail runs north: cane on both sides, the cart road at z 8 (the watchman walks it from x -27 to 25), the stream at z -13.5 with stepping stones, then up the hill to the lookout at (6, -65.5), 19.8 m up. |
+| `town` | The clearing is a circle of radius 14.5 round (0, 0). The narrow path comes in from the south-east, starting at (36, 60), 24.5 m lower. The garden is at (-23, 5). The cotton tree is at (7.5, -6). The high rock is at (3, -24.5). The back trail leaves at (-9, -9.5) and climbs to the ridge at (-64, -61), 36.5 m up. The soldiers' knoll is at (22, 22). |
+| `watch` | The rock is a circle of radius 4.6 round (0, 0) at the top of a 15 m drop. You stand at (0.2, 4.0) for the fight. The top of the path (walkable, with the trenches) runs west and down to (-31, 27). The soldiers' path (not walkable) winds from there down the slope below the rock to (40, 100), where it goes into the mist at y -46. The far spur with the red line is at (50, 158). |
+| `newtown` | The clearing is a circle of radius 13 round (0, 0). The paper stone is at (3.6, -4.6). The river runs along x 27. The meeting tree and Nanny are on a knoll at (-9, -37), which you cannot reach. The waterfall is at (-72, 6). |
+
+## Test it
+
+```bash
+node tools/build.mjs nanny --dev
+```
+
+```bash
+python3 -m http.server 8765
+```
+
+Then open `http://localhost:8765/games/nanny/site/`.
+
+- Views (`?shot=NAME`, dev build only): `est1` to `est6`, `town1` to `town8`, `night1` to `night3`, `ridge1`, `ridge2`, `watch1` to `watch7`, `new1` to `new5`, `talk1`, `talk2`, `card1`, `paper`, `journal1`, `chap1`, `horn`, `nanny`, `look`, `guns`, `poster`, and `fight&at=1` to `fight&at=4` (the march, smoke and thunder, the hillside full of people, the soldiers go back). Add `&stats` to a place view to print draw calls and triangles to the page title.
+- People up close: `?shot=model&ids=mama,quamin,cubbenah&one&a=1.57&d=4.4` (`&lo` for light copies, `&hold=musket`, `&cloak`, `&anim=Walk`). Full bodies take a while to load: wait about 20 seconds.
+- Autoplayer: `?auto=N&one` plays chapter N (1 to 6). Without `&one` it carries on to the end and logs `ALLDONE`. It writes `STALL` if nothing changes for 30 seconds.
+- **Automatic checks (owner rule 8).** Each must report 0 issues:
+  - `?test=audit`: the engine's place audit, run once for each set of people who are in a place together, plus two checks added for land with heights (everyone stands on the ground; nobody stands in a tree, a hut or a fire). Background figures may stand on open hillside beside a trail, so the engine's "walking wall" line is kept only for people you talk to.
+  - `?test=held`: horns, muskets and the lantern are at the hand and clear of the body, standing and walking.
+  - `?test=layout`: at 390x800, 667x375, 800x500 and 1280x720. It includes the horn panel and the "Stay low" button.
+  - `?test=resume`: saved stages resume in the right place.
+- `npm test` includes two tests of the land code (`tests/regressions.mjs`).
+- Reading level: `node tools/nanny/readcheck.mjs games/nanny/src/content.js` flags dialogue and narration over 12 words, long goals and journal lines, dashes, and journal pages that are repeated or missing. Run it after editing any text.
+- The menu poster `menu/nanny.jpg` comes from `?shot=poster` at 1280 by 720.
+
+## Research (checked 14 November 2026)
+
+A research pass read the sources below. The full report was a working file and is summarised here. Labels: **record** (written at or near the time), **scholars** (later, and consistent), **tradition** (handed down by Maroons), **disputed** (sources disagree).
+
+| Fact | Used as | Source and caveat |
+|---|---|---|
+| Old Nanny Town was in Portland, high in the Blue Mountains, about 2,000 feet up, with over 140 houses at its biggest; built about 1723; found by the English in 1728; attacked in 1730, 1731, 1732 and several times in 1734 | Used. "In the 1720s" for the building date, because other sources say 1720. | Jamaica National Heritage Trust, Nanny Town site page. Scholars. |
+| Which river ran below it | Not named | Disputed: Stony River in some sources, between the Rio Grande and the Back River in the National Library of Jamaica's notes. |
+| "The only path", steep and rocky, "not wide enough to admit the passage of two persons abreast" | Used, with his words quoted in the journal | Bryan Edwards, printed 1793. Record, but hostile and 59 years late. Read in the 1801 edition. |
+| 1734: Captain Stoddart attacked with "portable swivel guns"; "many were slain" | The journal names Stoddart and says a planter wrote that many were killed | Edwards. He gives no day or month and no source. |
+| 1734: other accounts | The journal and a card give all three | One account (Gleaner, 2021) says troops under a Captain Brook reached the town on 17 December 1734 and found it empty. A 2018 thesis by Michael Siva is reported to argue fewer than ten Maroons died; we have not read it. Stoddart's and Brooks's attacks may be two events. |
+| Houses burnt by the militia and rebuilt by the Maroons in the four years of fighting before the treaty | Used | Jamaica National Heritage Trust |
+| Horns: Maroons answered the soldiers' trumpet with horns, "not a man of them was to be seen"; each person had a call | Used. The word "abeng" is given as today's name. | Thicknesse (1788), an eyewitness in 1739; Dallas (1803). About Quao's town, not Nanny Town. Neither uses the word abeng. |
+| Sentries gave "five or six hours notice" | Used in the journal; in dialogue it is "hours of warning" | Thicknesse and Dallas, on Quao's town |
+| Trenches about four feet deep along the path, with forked sticks to rest guns on | Used | Thicknesse and Dallas, on Quao's town |
+| "An acre of under wood" cut away and the hillside "covered with" Maroons | Used as the turning point of the fight | Thicknesse, on Quao's town |
+| Fighters dressed in leaves and branches and stood still like trees | Used, labelled as tradition | Not in any contemporary account we found. Tradition. |
+| Yams and plantains grown; wild hog "jerked" | Used | Thicknesse and Dallas |
+| Akan day names in Jamaica (Cudjoe Monday, Cubbenah Tuesday, Quaco Wednesday, Quao Thursday, Cuffee Friday, Quamin Saturday, Quashee Sunday; Juba, Beneba, Cuba, Abba, Phibba, Mimba, Quasheba for girls) | Used for the fictional people | Edward Long (1774) for the boys' names; later tables for the girls' names |
+| Cudjoe's treaty, 1 March 1739 (printed as 1 March 1738 in the old calendar): freedom, 1,500 acres, a duty to return runaways | Used | Dallas prints it. Record. |
+| Quao's treaty for the Windward Maroons, 1739: land, a duty to return runaways | Used with the year only | Disputed date: 23 June or 23 December 1739. National Library of Jamaica copy. |
+| The duty to return runaways is still painful, and Maroons do not all agree about it | Stated plainly, not judged | Observer reports of 2022; Bilby (2010) |
+| Land patent of 5 August 1740: "granted unto Nanny a free Negroe and the people under command her & their heirs & Assigns for ever a parcell of land containing 500 acres in the parish of Portland" | Shown on the paper and on a card, word for word | The docket in "Return of Land Grants 1735-1754", UK National Archives CO 137/28, entry 55, read in a transcription on jamaicanfamilysearch.com. Not checked against the original, or against the patent itself (Jamaica Archives, Patents volume 22, folio 15). Granted under a 1723 Act for bringing in white settlers. |
+| Assembly Journal, March 1733: a man rewarded for killing "Nanny, the rebels old obeah woman" | Mentioned in "Dig deeper" without the colonists' word | Second hand (Mavis Campbell, page 177, as quoted by others). If it meant her, the 1740 patent shows it was wrong. |
+| Nanny's dates | "We do not know when she was born or when she died" | Disputed: born about 1600 to 1686, died 1733 to about 1762 |
+| Akan origin; healer; leader in war; the stories of bullets and pumpkin seeds; that she kept leading after 1734 | Used, labelled as tradition | Tradition |
+| That she freed over 1,000 people | Left out | We could not trace where the number comes from |
+| National Hero; the only woman of the seven | Used. "In the 1970s. Most sources say 1975." | Disputed year: 1975, 1976 or 31 March 1982 in official and newspaper sources. Check the Jamaica Gazette. |
+| The 500 dollar note (1994); its portrait drawn by an art student in 1976; no picture from life | Used | Jamaica Information Service; Observer (2005) |
+| New Nanny Town is now Moore Town; its leader is the Colonel; Nanny Day on National Heroes Day | Used | Jamaica National Heritage Trust; Jamaica Information Service |
+| UNESCO: the Blue and John Crow Mountains inscribed 28 June 2015; the Maroon heritage of Moore Town listed in 2008 | Used | UNESCO decision 39 COM 8B.7 (read in a copy); UNESCO intangible heritage page |
+| Blue Mountain Peak, 2,256 m; the mountains are often in mist | Used | IUCN and UNESCO summaries |
+
+Real people in the game: Nanny appears and never speaks. Quao, Cudjoe, Stoddart and Edwards are named in the journal only.
+
+### Could not be checked
+
+1. The Assembly Journals for 1733, and the Windward treaty as entered there.
+2. The patent itself and the original of CO 137/28.
+3. Whether Stoddart's and Brooks's attacks were one event or two (Campbell 1990 and Carey 1997 would settle it; neither was read).
+4. Siva's thesis.
+5. Agorsah's reports on the archaeology of Old Nanny Town. So the game says nothing about what was dug up.
+6. The Jamaica Gazette for the year Nanny was named a National Hero.
+7. A plant list for the site. The forest is a general picture of moist hill forest.
+
+## Look and feel: what is a guess
+
+- **The huts.** No drawing or description of Nanny Town's houses survives. Ours have woven-stick walls and thatch.
+- **Clothes.** One line survives about a Leeward captain in 1738: loose drawers to the knee, a small round hat, no shirt. Nothing on Windward dress, women or children. Ours are plain cloth in earth colours and indigo. The soldiers wear red coats and round felt hats; cocked hats would be right for the 1730s.
+- **The layout of every place.** The town on a shoulder with one narrow path and a back trail, the watch rock, the knoll for the guns ("a small eminence, commanding the huts" in Edwards), the new town by a river.
+- **The horn calls.** All six are fictional. The real calls belong to the Maroons.
+- **The estate.** A general picture. It is not a real estate.
+
+## Characters
+
+The character builder is being rebuilt in another pull request (`docs/PEOPLE.md` on that branch is the standard). To stay out of its way this game does two things.
+
+- **Stand-in bodies now.** Men are `kofi`, `turtler`, `buc1` and `ned` from Port Royal. Soldiers are `soldier` and `gunner` from Port Royal. Women are `woman_long` and `woman_elder` from Kendal. Children are `boy`, `girl` and `girl_small` from Kendal. The full copies are byte-for-byte copies; the Port Royal light copies (`_lo`) were made with `tools/people/pack.mjs`. `cast.js` recolours them. Shoes are tinted to the skin, and `bareLegs` in `main.js` repaints the children's white socks as skin.
+- **Recipes for real bodies.** `tools/nanny/people/` has eleven recipes written to the new standard, and `tools/nanny/README.md` says how to build them and what the builder may need first. They have not been built.
+
+Skin (owner rule 9): `SKIN_LIGHT = 1.55` as in Kendal, plus a soft light that goes with you at night (`nightFill`) so faces near you can be read in the dark. Check faces in game screenshots after any change to the times of day.
+
+## What is left (polish list)
+
+1. **Maroon review.** Rule 7 above. Nothing else matters as much.
+2. **Primary sources.** The list under "Could not be checked".
+3. **Real bodies.** Build the recipes, then remove the stand-ins, the shoe tint and `bareLegs`.
+4. **Read every line aloud** for the 6+ level. All dialogue is new wording.
+5. **Phones.** The autoplayer and the layout test pass at phone sizes, but nobody has played it on a real phone. The fight has about 35 people on screen; watch the frame rate.
+6. **The watchman.** If he sees you, you go back a few steps. There is no setting to switch the lantern off for a child who finds it hard.
+7. **Sound.** The horn is synthesised. A recording of a real abeng, given with permission, would be far better.
+8. **Screen shake.** The guns and the fight shake the camera, and there is no setting to turn that off.
+9. **Chapter 6 "today".** It is a card and two journal pages. A walk in Moore Town today would be better, and should only be made with the town's help.

@@ -6,7 +6,8 @@
   "cleanUrls": true,
   "redirects": [
     { "source": "/port-royal", "destination": "/games/port-royal/site/", "permanent": false },
-    { "source": "/kendal", "destination": "/games/kendal/site/", "permanent": false }
+    { "source": "/kendal", "destination": "/games/kendal/site/", "permanent": false },
+    { "source": "/nanny", "destination": "/games/nanny/site/", "permanent": false }
   ],
   "headers": [
     { "source": "/games/(.*)/site/models/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },

@@ -36,7 +36,7 @@ build/                    scratch output from tools (git-ignored)
 
 `site/` is fully static: `index.html`, `app.js` and `models/*.js`. It works from any static host, including a claude.ai artifact (see PUBLISHING.md).
 
-`node tools/dist.mjs` (`npm run dist`) builds the whole website into `dist/`: the menu as the home page (and again at `/menu/`), and every game that does not start with `_` at `/games/<game>/site/`, as public builds. Vercel runs it on every push (`vercel.json`).
+`node tools/dist.mjs` (`npm run dist`) builds the whole website into `dist/`: the menu as the home page (and again at `/menu/`), and each released game (excluding `_` templates and the Eventide prototype) at `/games/<game>/site/`, as public builds. Vercel runs it on every push (`vercel.json`).
 
 ## How a game runs (Port Royal as the example)
 

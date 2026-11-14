@@ -1,3 +1,4 @@
+import { anchorSeat } from './placement.js';
 /* engine/anim.js: one Mixamo clip library shared by every character (same skeleton).
    loadClips(gltf) fills CL; animate(model, clipName) gives each person a controller. See docs/ENGINE.md. */
 import * as THREE from 'three';
@@ -9,9 +10,9 @@ const _gp = new THREE.Vector3();
 export const HIPS_Y = /^(Sit|Injured|StumbleBack|JogStumble|Terrified|Pray|Sad|Sword|Slash|Block|Punch|Laugh|Sheathe|Draw|Write)/;
 export function seamLoop(c) {   /* make a looping clip end exactly where it starts, spreading the gap over the cycle so it never snaps */
   const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), err = new THREE.Quaternion(), part = new THREE.Quaternion(), id = new THREE.Quaternion();
-  for (const t of c.tracks) { const v = t.values, tm = t.times, n = tm.length; if (n < 3) continue; const T0 = tm[0], T = tm[n - 1] - T0 || 1;
-    if (/quaternion$/.test(t.name)) { qa.fromArray(v, 0); qb.fromArray(v, (n - 1) * 4); err.copy(qb).invert().premultiply(qa);   /* err * last = first */
-      for (let i = 1; i < n; i++) { part.copy(id).slerp(err, (tm[i] - T0) / T); qb.fromArray(v, i * 4).premultiply(part); qb.toArray(v, i * 4); } }
+  for (const t of c.tracks) { const v = t.values, tm = t.times, n = tm.length; if (!n) continue; const T0 = tm[0], T = tm[n - 1] - T0 || 1;
+    if (/quaternion$/.test(t.name)) { qa.fromArray(v, 0).normalize(); qb.fromArray(v, (n - 1) * 4).normalize(); err.copy(qb).invert().premultiply(qa).normalize(); qa.toArray(v, 0);   /* err * last = first */
+      for (let i = 1; i < n; i++) { part.copy(id).slerp(err, (tm[i] - T0) / T); qb.fromArray(v, i * 4).normalize().premultiply(part).normalize(); qb.toArray(v, i * 4); } }
     else { const k = v.length / n; for (let j = 0; j < k; j++) { const d = v[j] - v[(n - 1) * k + j]; for (let i = 1; i < n; i++) v[i * k + j] += d * (tm[i] - T0) / T; } } }
   return c; }
 export function walkM() {   /* a steadier man's walk from the shared clip: damp the hip and spine twist and the swing of the arms */
@@ -54,7 +55,7 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
     play(n, once, hold) { const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
-    tick(dt) { if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } } };
+    tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } } };
   m.userData.anim = ctl; return ctl; }
 export const grounded = [];
 const TOES = new WeakMap(), SOLES = new WeakMap();   /* not in userData: clones copy userData as plain JSON, which would break the bone references */
@@ -74,7 +75,8 @@ function solePoints(m) {
   for (const nm in best) { const b = best[nm], seen = new Set(); for (let a = -70; a <= 70; a += 14) { const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180); let top = null, d = -1e9; for (const c of b.list) { const k = -c[2] * ca + c[3] * sa; if (k > d) { d = k; top = c; } }
       if (top && !seen.has(top)) { seen.add(top); out.push({ bone: top[4].skeleton.bones[top[0]], p: new THREE.Vector3(top[1], top[2], top[3]).applyMatrix4(top[4].skeleton.boneInverses[top[0]]) }); } } }
   return out; }
-export function groundFeet(m) { let t = TOES.get(m); if (!t) { t = { soles: solePoints(m), toes: ['Left', 'Right'].map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean) }; TOES.set(m, t); }
+export function groundFeet(m) { if (m.userData.seatAnchor) { anchorSeat(m); return; }   /* a seated person stays on the seat (engine/placement.js) */
+  let t = TOES.get(m); if (!t) { t = { soles: solePoints(m), toes: ['Left', 'Right'].map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean) }; TOES.set(m, t); }
   if (t.soles.length) { m.updateMatrixWorld(true); let low = 1e9; for (const s of t.soles) low = Math.min(low, _gp.copy(s.p).applyMatrix4(s.bone.matrixWorld).y); const e = (m.userData.ground || 0) - 0.008 - low;   /* the sole rests a hair into the ground, so no gap ever shows under a shoe */
     m.position.y += (t.set && Math.abs(e) < 0.06) ? e * (e > 0 ? 0.7 : 0.4) : e; t.set = true; return; }   /* small corrections are eased in over a few frames, so the body never jerks when the other heel lands; a big one (a new place to stand) is made at once */
   if (!t.toes.length) return; m.updateMatrixWorld(true); let low = 1e9; for (const b of t.toes) low = Math.min(low, b.getWorldPosition(_gp).y); m.position.y += ((m.userData.ground || 0) + 0.035 - low); }

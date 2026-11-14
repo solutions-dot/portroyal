@@ -82,3 +82,43 @@ export function airSwell(dur = 2.4) {   /* cool air rushing down the manhole as 
   src.buffer = noiseBuf; src.loop = true; bp.type = 'bandpass'; bp.Q.value = 0.6; bp.frequency.setValueAtTime(350, t0); bp.frequency.exponentialRampToValueAtTime(2600, t0 + dur);
   g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.12, t0 + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur + 0.6); src.connect(bp); bp.connect(g); g.connect(AU.master); src.start(t0); src.stop(t0 + dur + 0.7);
 }
+
+/* ---------- outside the Tube: the turbine's hum, crickets at night, the tram's motor and bell, a steam whistle, the valve wheel turning, a cheer ---------- */
+const W = {};
+export function initWorldSound() {
+  if (!AU.ctx || W.ok) return; const c = AU.ctx; W.ok = true;
+  /* the hum of the turbine and the generator: a low mains-like note with its overtones, and a slow wobble */
+  const hg = c.createGain(), lp = c.createBiquadFilter(), wob = c.createOscillator(), wg = c.createGain(); hg.gain.value = 0; lp.type = 'lowpass'; lp.frequency.value = 520; lp.connect(hg); hg.connect(AU.master);
+  for (const [f, v] of [[50, 0.55], [100, 0.5], [150, 0.22], [200, 0.16], [300, 0.06]]) { const o = c.createOscillator(), og = c.createGain(); o.type = 'sine'; o.frequency.value = f; og.gain.value = v; o.connect(og); og.connect(lp); o.start(); }
+  wob.frequency.value = 0.7; wg.gain.value = 60; wob.connect(wg); wg.connect(lp.frequency); wob.start(); W.hum = hg;
+  /* the tram's motor: a buzzing note that rises with the speed */
+  const mo = c.createOscillator(), mf = c.createBiquadFilter(), mg = c.createGain(); mo.type = 'sawtooth'; mo.frequency.value = 55; mf.type = 'lowpass'; mf.frequency.value = 380; mg.gain.value = 0; mo.connect(mf); mf.connect(mg); mg.connect(AU.master); mo.start(); W.motor = mg; W.motorO = mo;
+  /* crickets: a high tone chopped fast, and a slower chop on top (as in Kendal) */
+  const co = c.createOscillator(), cg = c.createGain(), ch = c.createOscillator(), chg = c.createGain(), ch2 = c.createOscillator(), ch2g = c.createGain(), cl = c.createGain(); co.frequency.value = 4300; ch.type = 'square'; ch.frequency.value = 24; chg.gain.value = 0.5; ch2.type = 'square'; ch2.frequency.value = 3.1; ch2g.gain.value = 0.5;
+  cg.gain.value = 0.5; ch.connect(chg); chg.connect(cg.gain); ch2.connect(ch2g); ch2g.connect(cg.gain); cl.gain.value = 0; co.connect(cg); cg.connect(cl); cl.connect(AU.master); W.cricket = cl; co.start(); ch.start(); ch2.start();
+  /* the river: a soft rushing bed */
+  W.river = chan('pink', 'bandpass', 900, 0.4);
+  W.levels = { hum: 0, motor: 0, cricket: 0, river: 0 };
+}
+export function setWorld(l, tc = 0.4) { if (!AU.ctx || !W.ok) return; for (const k of ['hum', 'motor', 'cricket', 'river']) { const v = l[k] || 0; if (W.levels[k] !== v) { W.levels[k] = v; setG(W[k], v, tc); } } }
+export function setMotor(speed) { if (W.ok) W.motorO.frequency.setTargetAtTime(48 + speed * 14, AU.ctx.currentTime, 0.3); }
+export function bell(n = 2) {   /* the tram's foot gong: a bright ding, twice */
+  if (!live()) return; const c = AU.ctx;
+  for (let i = 0; i < n; i++) { const t0 = c.currentTime + 0.03 + i * 0.42, d = out(0.1); for (const [f, v] of [[1480, 0.12], [2210, 0.06], [3960, 0.025]]) { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.3); o.connect(g); g.connect(d); o.start(t0); o.stop(t0 + 1.4); } }
+}
+export function whistle(len = 1.2, vol = 0.2) {   /* a steam whistle far off: two notes together (as in Kendal's sfx) */
+  if (!live()) return; const c = AU.ctx, t0 = c.currentTime + 0.03, d = out(0.4);
+  for (const f of [392, 494]) { const o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f * 0.97, t0); o.frequency.exponentialRampToValueAtTime(f, t0 + 0.08); lp.type = 'lowpass'; lp.frequency.value = 1300;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.08); g.gain.setValueAtTime(vol, t0 + len - 0.1); g.gain.exponentialRampToValueAtTime(0.0001, t0 + len + 0.4); o.connect(lp); lp.connect(g); g.connect(d); o.start(t0); o.stop(t0 + len + 0.5); }
+}
+export function valveTurn() {   /* iron grinding on iron as the valve wheel turns a little */
+  if (!live()) return; const c = AU.ctx, t0 = c.currentTime + 0.02, o = c.createOscillator(), bp = c.createBiquadFilter(), g = out(-0.2);
+  o.type = 'sawtooth'; o.frequency.setValueAtTime(70 + Math.random() * 20, t0); o.frequency.linearRampToValueAtTime(55, t0 + 0.5); bp.type = 'bandpass'; bp.frequency.value = 700; bp.Q.value = 3;
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.05, t0 + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.55); o.connect(bp); bp.connect(g); o.start(t0); o.stop(t0 + 0.6);
+}
+export function cheer(n = 10) {   /* a crowd cheering: many short voices, rising */
+  if (!live()) return; const c = AU.ctx;
+  for (let i = 0; i < n; i++) { const t0 = c.currentTime + 0.03 + Math.random() * 1.2, o = c.createOscillator(), f = c.createBiquadFilter(), g = out(Math.random() * 1.6 - 0.8), b = 180 + Math.random() * 200;
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(b, t0); o.frequency.linearRampToValueAtTime(b * 1.5, t0 + 0.35); o.frequency.linearRampToValueAtTime(b * 1.2, t0 + 0.9); f.type = 'bandpass'; f.frequency.value = 900 + Math.random() * 500; f.Q.value = 1.5;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.025, t0 + 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.0); o.connect(f); f.connect(g); o.start(t0); o.stop(t0 + 1.05); }
+}

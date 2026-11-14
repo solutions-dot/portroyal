@@ -1,3 +1,4 @@
+import { loftSkin as skin } from '../../../engine/loft.js';
 /* games/kendal/src/props.js: plants, hills, houses, animals and the many small things that fill a scene.
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from 'three';
@@ -120,14 +121,6 @@ export function shed(w = 6, d = 3, h = 2.6, wall = [150, 120, 84]) { return boar
 /* skin(): a smooth skin over a row of rings, for bodies, legs, necks and handles. Each ring is [x, y, z, w, h, colour, colour underneath]:
    w is the half width sideways and h the half height (for a limb that runs up and down, h is front to back). `ref` is the direction that h follows. Both ends are closed. */
 const SKIN = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92 });
-function skin(rings, sides = 10, ref = [0, 1, 0]) {
-  const P = rings.map((r) => new THREE.Vector3(r[0], r[1], r[2])), R = new THREE.Vector3(...ref), pos = [], col = [], idx = [], n = rings.length, c = new THREE.Color(), c2 = new THREE.Color();
-  for (let i = 0; i < n; i++) { const t = new THREE.Vector3().subVectors(P[Math.min(i + 1, n - 1)], P[Math.max(i - 1, 0)]).normalize(), sd = new THREE.Vector3().crossVectors(t, R).normalize(), up = new THREE.Vector3().crossVectors(sd, t).normalize(), r = rings[i]; c.set(r[5]); c2.set(r[6] === undefined ? r[5] : r[6]);
-    for (let j = 0; j < sides; j++) { const a = j / sides * Math.PI * 2, sn = Math.sin(a), p = P[i].clone().addScaledVector(sd, Math.cos(a) * r[3]).addScaledVector(up, sn * r[4]); pos.push(p.x, p.y, p.z); const k = Math.max(0, Math.min(1, (-sn - 0.15) / 0.6)); col.push(c.r + (c2.r - c.r) * k, c.g + (c2.g - c.g) * k, c.b + (c2.b - c.b) * k); } }
-  for (let i = 0; i < n - 1; i++) for (let j = 0; j < sides; j++) { const a = i * sides + j, b = i * sides + (j + 1) % sides, d = a + sides, e = b + sides; idx.push(a, d, b, b, d, e); }
-  for (const [i, flip] of [[0, false], [n - 1, true]]) { const ci = pos.length / 3; pos.push(P[i].x, P[i].y, P[i].z); c.set(rings[i][5]); col.push(c.r, c.g, c.b); for (let j = 0; j < sides; j++) { const a = i * sides + j, b = i * sides + (j + 1) % sides; if (flip) idx.push(ci, a, b); else idx.push(ci, b, a); } }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
-}
 /* a handle a hand can close round: a bar on two posts (the origin is the middle of the bar) */
 function barHandle(parent, y, len, m, across = false, drop = 0.1) { const g = grp(parent, 0, y, 0); const b = cyl(0.0125, 0.0125, len, m, 0, 0, 0, g, 8); b.rotation.z = Math.PI / 2; for (const s of [-1, 1]) cyl(0.009, 0.009, drop, m, s * (len / 2 - 0.006), -drop / 2, 0, g, 6); if (across) g.rotation.y = Math.PI / 2; return g; }
 /* a bail: a wire hoop over the top, from one side of a rim to the other, with a grip in the middle. r is the rim's radius, top the height of the grip above the rim. */
@@ -206,9 +199,15 @@ export function mule(c = 0x6a5644) {
   const g = grp(), C = new THREE.Color(c), hx = (k) => C.clone().multiplyScalar(k).getHex(), coat = hx(1), coatD = hx(0.78), bellyC = 0xa8947a, leg = hx(0.42), hoofC = 0x1c1714, muz = 0xc4b49c, mane = 0x241c16;
   const dk = solid(0x2d241d, 1), leather = solid(0x4a3020, 0.9), cloth = solid(0x9a3a2a, 1), wood = solid(0x7a5a3c, 0.95), rope = solid(0xb8a070, 1), eyeM = solid(0x0a0806, 0.25), part = (geo, parent, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(geo, SKIN); m.position.set(x, y, z); parent.add(m); return m; };
   /* the barrel: rump, flank, belly, shoulder, chest. The back dips a little behind the withers. */
-  const torso = part(skin([[-0.8, 1.13, 0, 0.06, 0.08, coatD], [-0.76, 1.1, 0, 0.19, 0.21, coatD], [-0.62, 1.07, 0, 0.275, 0.29, coat, coatD], [-0.42, 1.04, 0, 0.3, 0.31, coat, bellyC], [-0.15, 1.01, 0, 0.315, 0.32, coat, bellyC], [0.12, 1.0, 0, 0.32, 0.325, coat, bellyC], [0.36, 1.02, 0, 0.305, 0.32, coat, bellyC], [0.54, 1.05, 0, 0.27, 0.32, coat, coatD], [0.68, 1.06, 0, 0.2, 0.27, coat], [0.77, 1.05, 0, 0.08, 0.13, coat]], 14), g);
-  /* the neck, with a short upright mane along its crest */
-  part(skin([[0.42, 1.12, 0, 0.19, 0.27, coat], [0.58, 1.3, 0, 0.155, 0.215, coat], [0.72, 1.46, 0, 0.125, 0.17, coat], [0.84, 1.59, 0, 0.105, 0.135, coat], [0.93, 1.68, 0, 0.09, 0.11, coat]], 12, [-0.7, 0.7, 0]), g);
+  const torso = part(skin([
+    [-0.8, 1.13, 0, 0.04, 0.06, coatD], [-0.68, 1.07, 0, 0.25, 0.28, coat],
+    [-0.42, 1.04, 0, 0.3, 0.31, coat, bellyC], [-0.15, 1.01, 0, 0.315, 0.32, coat, bellyC],
+    [0.12, 1.0, 0, 0.32, 0.325, coat, bellyC], [0.34, 1.03, 0, 0.3, 0.31, coat, bellyC],
+    [0.5, 1.1, 0, 0.255, 0.29, coat], [0.61, 1.3, 0, 0.16, 0.21, coat],
+    [0.73, 1.47, 0, 0.125, 0.17, coat], [0.85, 1.6, 0, 0.105, 0.135, coat],
+    [0.93, 1.69, 0, 0.08, 0.1, coat]
+  ], 20), g);
+  /* A short upright mane follows the neck's crest. */
   part(skin([[0.4, 1.38, 0, 0.012, 0.03, mane], [0.48, 1.45, 0, 0.016, 0.055, mane], [0.61, 1.59, 0, 0.016, 0.06, mane], [0.75, 1.705, 0, 0.016, 0.055, mane], [0.86, 1.77, 0, 0.012, 0.035, mane]], 6, [-0.7, 0.7, 0]), g);
   /* the head: a long face from the poll down to a pale muzzle; it nods about the poll */
   const head = grp(g, 0.93, 1.69, 0);
@@ -233,8 +232,9 @@ export function mule(c = 0x6a5644) {
   for (const x of [-0.27, 0.23]) { for (const s of [-1, 1]) { const bk = box(0.05, 0.46, 0.045, wood, x, 1.44, s * 0.06, pack); bk.rotation.x = -s * 0.62; } }
   for (const s of [-1, 1]) { box(0.6, 0.035, 0.09, wood, -0.02, 1.3, s * 0.2, pack).rotation.x = -s * 0.62; }
   const girth = mesh(new THREE.TorusGeometry(0.34, 0.013, 5, 22), leather, 0.06, 1.0, 0, pack); girth.rotation.y = PI2; girth.scale.set(1.0, 1.0, 1);
-  for (const s of [-1, 1]) { const bs = box(0.52, 0.03, 0.012, leather, 0.45, 1.13, s * 0.29, pack); bs.rotation.y = s * 0.2; bs.rotation.z = -0.12; const br = box(0.6, 0.03, 0.012, leather, -0.52, 1.1, s * 0.285, pack); br.rotation.y = -s * 0.22; br.rotation.z = 0.2; }
-  box(0.02, 0.03, 0.3, leather, 0.74, 1.09, 0, pack); box(0.02, 0.03, 0.3, leather, -0.82, 1.02, 0, pack);
+  const strap = (points) => mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p))), 28, 0.014, 6, false), leather, 0, 0, 0, pack);
+  strap([[0.12,1.13,-0.32],[0.43,1.13,-0.29],[0.65,1.23,-0.15],[0.77,1.2,0],[0.65,1.23,0.15],[0.43,1.13,0.29],[0.12,1.13,0.32]]);
+  strap([[0.12,1.13,-0.32],[-0.45,1.1,-0.3],[-0.7,1.08,-0.18],[-0.78,1.1,0],[-0.7,1.08,0.18],[-0.45,1.1,0.3],[0.12,1.13,0.32]]);
   /* two woven panniers, each hung from both cross pieces by rope and held off her side by the pad */
   const wv = std(T.weave([3, 1]), 0.95), dark = solid(0x3a2a16, 1);
   for (const s of [-1, 1]) { const z = s * 0.58; mesh(new THREE.CylinderGeometry(0.23, 0.18, 0.44, 14, 1, false), wv, -0.02, 0.98, z, pack); const rim = mesh(new THREE.TorusGeometry(0.23, 0.02, 5, 16), solid(0x8a6428, 1), -0.02, 1.2, z, pack); rim.rotation.x = PI2; const ins = mesh(new THREE.CircleGeometry(0.22, 14), dark, -0.02, 1.185, z, pack); ins.rotation.x = -PI2;

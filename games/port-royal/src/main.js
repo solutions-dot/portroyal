@@ -1,3 +1,7 @@
+import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
+import { snapMeshes, auditSeated } from '../../../engine/audit.js';
+import { updateWalk } from '../../../engine/locomotion.js';
+import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import * as THREE from 'three';
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { mergeGeometries as mergeG } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -480,7 +484,7 @@ const imgs = {};
 async function decodeTex() { await Promise.all(Object.keys(window.__tex || {}).filter((k) => !imgs[k]).map((k) => new Promise((res) => { const im = new Image(); im.onload = () => { imgs[k] = im; res(); }; im.onerror = () => res(); im.src = window.__tex[k]; }))); }
 function sharedTex(key, color) { if (!texCache[key] && imgs[key]) { const t = new THREE.Texture(imgs[key]); t.needsUpdate = true; t.flipY = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.anisotropy = maxAniso; texCache[key] = t; } return texCache[key] || null; }
 function prep(root) { root.traverse((o) => { if (o.isMesh && TEXMAP[o.material.name]) { const n = o.material.name; if (!matCache[n]) { const m = o.material, [c, nm] = TEXMAP[n]; m.map = sharedTex(c, true); m.color.set(0xffffff); if (nm) m.normalMap = sharedTex(nm, false); m.needsUpdate = true; matCache[n] = m; } o.material = matCache[n]; } }); return prep0(root); }
-const SKIN_K = 0.85;   /* the one skin factor for this game's light (docs/PIPELINE.md, "Skin"): this game's sun, sky and tone mapping are brighter than Kendal's, so every body's Skin is drawn at this share, and a recipe skin reads as the same brown in every game. Measured with ?test=skin */
+const SKIN_K = 1.0;   /* the skin factor for this game's light (docs/PIPELINE.md, "Skin"): this game's sun, sky and tone mapping are brighter than Kendal's, so Skin is drawn as built. Measured with ?test=skin */
 function prep0(root) { root.traverse((o) => { if (o.isMesh) { const m = o.material; if (m.name === 'Skin' && o.isSkinnedMesh) m.color.setScalar(SKIN_K); if (m.map) m.map.anisotropy = maxAniso; if (m.name === 'LeadedGlass') { m.emissive = new THREE.Color(0x4a6470); m.emissiveMap = m.map; m.roughness = 0.2; } if (o.isSkinnedMesh) o.frustumCulled = false; } }); return root; }
 let mixer = null, idle = null, runA = null; const survivors = {}; let galdy = null, third = false, gWalk = false; const people = {};
 const MENU = { ok: false, url: '../../../menu/' }; { const links = ['allgames', 'jhome'].map((id) => document.getElementById(id)).filter(Boolean); for (const a of links) a.hidden = true; fetch(MENU.url, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then((t) => { if (/History Games/.test(t)) { MENU.ok = true; for (const a of links) a.hidden = false; } }).catch(() => {}); }   /* only when the real game menu is there */   /* the 'Main Menu' button shows only where the game menu exists (the website, not the artifact copy) */
@@ -536,18 +540,17 @@ function buildTown() {
 
 /* ---------- movement ---------- */
 let holdToast = false; const keys = new Set(); const stick = { id: null, ox: 0, oy: 0, x: 0, y: 0 }; const look = { id: null, lx: 0, ly: 0 };
+releaseOnBlur(keys, [stick, look]);
 let busy = false;                     // true while a panel is open
 let navGen = 0;                       // counts chapter changes: a "next chapter" card that was waiting is dropped if the player has gone to a chapter since
 addEventListener('keydown', (e) => { const k = e.key.toLowerCase();
-  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && state.started) e.preventDefault();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && state.started) e.preventDefault();
   keys.add(k);
   if (!state.started) return;
   if (k === 'escape') { if (!$('dialogue').hidden) { leaveTalk(); return; } closeJournal(); closeChapters(); }
-  if ($('dialogue').hidden === false && (k === 'enter' || k === ' ')) { const b = $('next'); if (!b.hidden) b.click(); }
-  else if ((k === 'e' || k === 'enter') && !$('talk').hidden) $('talk').click();
-  else if (k === 'j') { $('journal').hidden ? openJournal() : closeJournal(); } });
+  useInteractionKey(e, () => { if (!$('dialogue').hidden && !$('next').hidden) { $('next').click(); return; } if (!busy && current) { current.go(); return; } return false; });
+  if (k === 'j') { $('journal').hidden ? openJournal() : closeJournal(); } });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
-addEventListener('blur', () => keys.clear());
 canvas.addEventListener('pointerdown', (e) => { if (!state.started || busy) return; canvas.setPointerCapture(e.pointerId);
   if (e.pointerType === 'touch' && e.clientX < innerWidth * 0.42 && stick.id === null) { stick.id = e.pointerId; stick.ox = e.clientX; stick.oy = e.clientY; stick.x = stick.y = 0; const s = $('stick'); s.hidden = false; s.style.left = e.clientX + 'px'; s.style.top = e.clientY + 'px'; $('nub').style.transform = 'translate(-50%,-50%)'; }
   else if (look.id === null) { look.id = e.pointerId; look.lx = e.clientX; look.ly = e.clientY; } });
@@ -676,7 +679,7 @@ function openJournal() { if (!$('dialogue').hidden) return; busy = true; keys.cl
 function closeJournal() { if ($('journal').hidden) return; $('journal').hidden = true; busy = false; }
 $('jbtn').onclick = openJournal; $('jclose').onclick = closeJournal;
 function startGame() { audioInit(); state.started = true; $('title').hidden = true; $('hud').hidden = false; if (state.unlocked.length) { $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; }
-  setGoal(); $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look.' : 'W A S D to walk, Shift to hurry. Drag to look. E to use.'; showHint(); canvas.focus(); }
+  setGoal(); $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); }
 $('start').onclick = () => { startGame(); cue('begin'); };
 
 const RESTORE = { pos: null };   /* a saved spot waits until its streets exist, or the walking rules would push you out of a street that has not loaded yet */
@@ -713,12 +716,12 @@ function renderChapters() { const ul = $('chlist'); ul.replaceChildren();
     b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !tavernReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', c.name], ['st', !tavernReady ? 'Loading' : dn ? 'Done' : open ? 'Play' : 'Locked']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
     b.onclick = () => playChapter(c); li.appendChild(b); ul.appendChild(li); });
-  $('chteach').hidden = !!state.ch.all; $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = ''; }
+  $('chteacher').setAttribute('aria-pressed',String(!!state.ch.all));$('chteacher').textContent=state.ch.all?'Teacher unlock: on':'Teacher unlock';$('chteachernote').hidden=!state.ch.all; $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = ''; }
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = !$('card').hidden; if (state.started) canvas.focus(); }
 function playChapter(c) { navGen++; $('chapters').hidden = true; busy = false; fbReset(); if (!state.started) startGame(); c.go(); }
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
-$('chteach').onclick = () => { state.ch.all = true; saveGame(); renderChapters(); };
+$('chteacher').onclick = () => { state.ch.all = !state.ch.all; saveGame(); renderChapters();$('chteacher').focus(); };
 $('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } try { localStorage.removeItem(SAVE_KEY); sessionStorage.setItem('pr-fresh', '1'); } catch (e) { /* ignore */ } location.reload(); };
 
 /* ---------- sound: made in the browser, no audio files ---------- */
@@ -768,7 +771,7 @@ function gullsInit() { if (GULLS.length) return; const wm = new THREE.MeshBasicM
     g.userData = { l: wing(-1), r: wing(1), cx: i < 2 ? 4 + Math.random() * 8 : SHORE + 6 + Math.random() * 18, cz: i < 2 ? 18.6 : (Math.random() - 0.5) * 22, rad: 5 + Math.random() * 7, h: 7 + Math.random() * 6, sp: (0.18 + Math.random() * 0.12) * (Math.random() < 0.5 ? -1 : 1), a: Math.random() * 6.3, ph: Math.random() * 6 };
     scene.add(g); GULLS.push(g); } }
 /* ---------- a soldier of the fort's garrison: he walks the main street into the tavern, comes back out, and walks along the quay and the sand spit to Fort Charles ---------- */
-const SOLDIER = { m: null, pike: null, path: [[-6.18, -4.7], [-6.18, -3.0], [-6.0, -1.1], [4, -1.2], [12, -0.9], [17, -0.6], [21.95, -2.6], [21.95, -9.0], [26, -14], [30, -22], [34.5, -29.4], [37.6, -30]], i: 5, dir: -1, wait: 0, hidden: false, walking: false };
+const SOLDIER = { m: null, pike: null, path: [[-6.18, -4.7], [-6.18, -3.0], [-6.0, -1.1], [4, -1.2], [12, -0.9], [17, -0.6], [22.7, -2.2], [22.7, -4.4], [21.95, -9.0], [26, -14], [30, -22], [34.5, -29.4], [37.6, -30]], i: 5, dir: -1, wait: 0, hidden: false, walking: false };
 function loadSoldier() { model('soldier').then((gl) => { const m = prep(gl.scene); const [x, z] = SOLDIER.path[SOLDIER.i]; m.position.set(x, 0, z); scene.add(m); SOLDIER.m = m; animate(m);
   const wood = new THREE.MeshStandardMaterial({ map: plankTex([112, 84, 56], 3, 1, 1), roughness: 0.9 }), iron = new THREE.MeshStandardMaterial({ color: 0x6a6e72, roughness: 0.35, metalness: 0.8 });
   const pike = new THREE.Group(); const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 1.75, 7), wood); shaft.position.y = 0.42; pike.add(shaft); const tip = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.2, 4), iron); tip.position.y = 1.39; pike.add(tip); scene.add(pike); SOLDIER.pike = pike;   /* a half-pike, carried upright */
@@ -955,7 +958,7 @@ function buildAfter() { if (afterG) return; afterG = new THREE.Group(); scene.ad
     const pile = mk(new THREE.ConeGeometry(1.1 + rnd(20) * 0.6, 0.5, 9), bm, p.x + 1.5, 0.15, p.z - side * 1.8); pile.rotation.y = rnd(21) * 3; }
   for (const [x, z, ry, id, clip, tint] of EXTRA) { if (!people[id]) continue; const keep = people[id].userData.anim; delete people[id].userData.anim; const m = skClone(people[id]); people[id].userData.anim = keep;
     m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); m.position.set(x, 0, z); m.rotation.y = ry; m.visible = true; afterG.add(m); animate(m, clip); grounded.push(m); }
-  for (const [x, z, ry, id] of SURV) { if (!people[id]) continue; const keep = people[id].userData.anim; delete people[id].userData.anim; const m = skClone(people[id]); people[id].userData.anim = keep; m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(0.78, 0.74, 0.68); } }); m.visible = true; m.position.set(x, 0, z); m.rotation.y = ry; afterG.add(m); animate(m, id === 'sailor' ? 'Sad2' : id === 'kofi' ? 'Sad1' : (CL.SitDisbelief ? 'SitDisbelief' : 'Sad2')); survivors[id] = m; grounded.push(m); if (id === 'benning' && CL.SitDisbelief) { m.userData.sits = true; const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 0.45), new THREE.MeshStandardMaterial({ map: plankTex([132, 100, 70], 3, 1, 2), roughness: 0.9 })); seat.position.set(x - Math.sin(ry) * 0.18, 0.21, z - Math.cos(ry) * 0.18); seat.rotation.y = ry; afterG.add(seat); } }
+  for (const [x, z, ry, id] of SURV) { if (!people[id]) continue; const keep = people[id].userData.anim; delete people[id].userData.anim; const m = skClone(people[id]); people[id].userData.anim = keep; m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(0.78, 0.74, 0.68); } }); m.visible = true; m.position.set(x, 0, z); m.rotation.y = ry; afterG.add(m); animate(m, id === 'sailor' ? 'Sad2' : id === 'kofi' ? 'Sad1' : (CL.SitDisbelief ? 'SitDisbelief' : 'Sad2')); survivors[id] = m; grounded.push(m); if (id === 'benning' && CL.SitDisbelief) { m.userData.sits = true; m.userData.seatAnchor={x:x-Math.sin(ry)*.18,z:z-Math.cos(ry)*.18,top:.42,ry}; const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 0.45), new THREE.MeshStandardMaterial({ map: plankTex([132, 100, 70], 3, 1, 2), roughness: 0.9 })); seat.position.set(x - Math.sin(ry) * 0.18, 0.21, z - Math.cos(ry) * 0.18); seat.rotation.y = ry; afterG.add(seat); } }
   cur = scene; }
 function placeHeath() { const m = people.heath; if (!m || !afterG || m.parent) return; grounded.push(m); m.position.set(HEATH.x, 0, HEATH.z); m.rotation.y = HEATH.ry; afterG.add(m); animate(m, 'Pray'); m.userData.ground = 0; }
 function afterDone() { return state.unlocked.includes('tentp') && state.unlocked.includes('kingston'); }
@@ -1081,6 +1084,7 @@ function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; if (c
 let tavernReady = false; let last = performance.now(), bob = 0, built = false, headYaw = 0, faceAmt = 0, restQ = null, frameN = 0; const animQ = new Map(); const _q = new THREE.Quaternion(), _e = new THREE.Euler();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; resize();
+  let walkedX = 0, walkedZ = 0;
   if (state.started && !busy) {
     let f = 0, r = 0; if (keys.has('w') || keys.has('arrowup')) f += 1; if (keys.has('s') || keys.has('arrowdown')) f -= 1; if (keys.has('d')) r += 1; if (keys.has('a')) r -= 1;
     const turnT = (keys.has('arrowleft') ? 1 : 0) - (keys.has('arrowright') ? 1 : 0); MV.turn += (turnT * 1.9 - MV.turn) * Math.min(1, dt * 8); state.yaw += MV.turn * dt;   /* turning eases in and out */
@@ -1094,14 +1098,15 @@ function frame(now) {
     const tx = state.x + MV.vx * dt, tz = state.z + MV.vz * dt; let [nx, nz] = clampPos(tx, tz);
     if ((MV.vx || MV.vz) && Math.hypot(nx - tx, nz - tz) > 1e-4) { const [ax, az] = clampPos(tx, state.z), [bx, bz] = clampPos(state.x, tz); const da = Math.hypot(ax - state.x, az - state.z), db = Math.hypot(bx - state.x, bz - state.z), dn = Math.hypot(nx - state.x, nz - state.z);   /* slide along walls instead of stopping dead */
       if (da > dn && da >= db) { nx = ax; nz = az; } else if (db > dn) { nx = bx; nz = bz; } if (MV.tap && Math.max(da, db, dn) < 0.002) MV.tap = null; }
-    if (l > 0.05 && !reduceMotion) bob += dt * 8.5 * Math.min(1, l); stepDist += Math.hypot(nx - state.x, nz - state.z); if (nx !== state.x || nz !== state.z) lastStep = performance.now(); if (stepDist > 1.35) { stepDist = 0; footstep(); } state.x = nx; state.z = nz;
+    if (l > 0.05 && !reduceMotion) bob += dt * 8.5 * Math.min(1, l); walkedX = nx - state.x; walkedZ = nz - state.z; stepDist += Math.hypot(walkedX, walkedZ); if (nx !== state.x || nz !== state.z) lastStep = performance.now(); if (stepDist > 1.35) { stepDist = 0; footstep(); } state.x = nx; state.z = nz;
   } else if (!state.started) { state.yaw = Math.PI / 2 - 0.12 + Math.sin(now / 5200) * 0.14; padRead(dt); }
   if (busy) { MV.vx = MV.vz = MV.turn = 0; MV.tap = null; padRead(dt); }   /* no drifting off after a conversation */
   camLift += (groundY(state.x, state.z) - camLift) * Math.min(1, dt * 10);
   ftAvg += (dt * 1000 - ftAvg) * 0.05; ftT += dt; if (ftT > 3 && state.started) { ftT = 0; if (ftAvg > 26 && pxr > 0.8) { pxr = Math.max(0.8, pxr - 0.2); renderer.setPixelRatio(pxr); } }
   if (Q.on) { quakeTick(dt, now / 1000); debrisTick(dt); } const sh = Q.shake * (reduceMotion ? 0.15 : 1), tt = now / 1000;
-  if (galdy) { const show = third && state.started && !(Q.on && (Q.phase === 'swallow')); galdy.visible = show; if (show) { galdy.position.set(state.x, state.place === 'sea' ? seaLevel - 1.32 : groundY(state.x, state.z), state.z); galdy.rotation.y = state.yaw + Math.PI;
-      const moving = stepDist > 0 && performance.now() - lastStep < 250, ac = galdy.userData.anim; if (ac && state.place === 'sea') { if (CL.Tread && ac.cur !== ac.get('Tread')) ac.play('Tread'); gWalk = null; } else if (ac && moving !== gWalk) { gWalk = moving; if (moving) ac.play(CL.Walk ? 'Walk' : null); else ac.rest(); } if (ac && gWalk && ac.cur !== ac.base) ac.cur.timeScale = Math.max(0.85, Math.min(1.7, Math.hypot(MV.vx, MV.vz) / 1.3));   /* the same walk as everyone else, its pace matched to his speed so the feet do not slide */ } }
+  if (galdy) { const show = third && state.started && !(Q.on && (Q.phase === 'swallow')); galdy.visible = show; if (show) { galdy.position.set(state.x, state.place === 'sea' ? seaLevel - 1.32 : groundY(state.x, state.z), state.z); const ac = galdy.userData.anim;
+      if (ac && state.place === 'sea') { galdy.rotation.y = state.yaw + Math.PI; if (CL.Tread && ac.cur !== ac.get('Tread')) ac.play('Tread'); }
+      else if (CL.Walk) updateWalk(galdy, walkedX, walkedZ, dt); } }
   camera.position.set(state.x + Math.sin(tt * 31) * 0.06 * sh, eyeY + camLift + (reduceMotion ? 0 : Math.sin(bob) * 0.035) + Math.sin(tt * 37) * 0.05 * sh, state.z + Math.sin(tt * 27) * 0.05 * sh); camera.rotation.set(state.pitch + Math.sin(tt * 29) * 0.015 * sh, state.yaw, Math.sin(tt * 23) * 0.03 * sh); if (galdy && galdy.visible) { const back = state.place === 'out' ? 2.6 : 1.9, wx = camera.position.x + Math.sin(state.yaw) * back, wz = camera.position.z + Math.cos(state.yaw) * back, sx = state.x, sz = state.z; const [cx2, cz2] = camBounds(wx, wz); camera.position.x = cx2; camera.position.z = cz2; state.x = sx; state.z = sz; camera.position.y += 0.35; camera.rotation.x -= 0.12; }
   for (const [b, q] of animQ) b.quaternion.copy(q);            // put back the animation's own pose before adding ours
   if (seaN && state.place !== 'in' && state.place !== 'ware') { const t = now / 1000; seaN.offset.x = t * 0.02; seaN.offset.y = t * 0.013;
@@ -1111,6 +1116,7 @@ function frame(now) {
   audioTick(now / 1000); if (state.started && now - lastSave > 5000) { lastSave = now; saveGame(); }
   if (mixer) mixer.update(dt); for (const mx of mixers) { const r = mx.getRoot(); let v = r.visible, o = r.parent; while (v && o) { v = o.visible; o = o.parent; } if (v) mx.update(dt); } for (const m of [abba, ...Object.values(people), ...Object.values(survivors)]) if (m && m.userData.anim) m.userData.anim.tick(dt);
   for (const m of grounded) if (m.visible && m.parent && m.parent.visible) groundFeet(m);
+  if (galdy && galdy.visible && state.place !== 'sea') { galdy.userData.ground = groundY(state.x, state.z); groundFeet(galdy); }
   for (const f of TICKS) f(dt);
   if (built && people.kofi && people.kofi.visible && CL.Carry) kofiTick(dt);
   if (built) for (const n of NPCS) { const m = people[n.id]; if (!m || !m.visible || n.walking) continue; const dx = state.x - n.x, dz = state.z - n.z; let w = n.ry; if (Math.hypot(dx, dz) < 4.5) { let d = Math.atan2(dx, dz) - n.ry; d = Math.atan2(Math.sin(d), Math.cos(d)); w = n.ry + d; } let e = w - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * 3); const ac = m.userData.anim; if (ac && CL.TurnL && Math.abs(e) > 0.75 && ac.cur === ac.base && speaker !== m) ac.play(e > 0 ? 'TurnL' : 'TurnR', true);   /* face whoever comes to talk */ }
@@ -1157,7 +1163,7 @@ async function loadAll() {
   buildTown(); if (ring) ring.visible = !state.talked; window.__got = null; townReady = true; built = true;
   // stage 3: the tavern is built in a spare moment, before you can reach its door
   setTimeout(() => { buildTavern(); try { loadSoldier(); } catch (e) {} try { buildNewStreet(); } catch (e) { NS.err = String(e && e.stack || e); document.body.dataset.nserr = NS.err.slice(0, 300); }   /* never let the extra street stop the tavern */ for (const f of FINDS) if (state.unlocked.includes(f.id)) finds[f.id].visible = false; if (state.ate) stew.visible = true; tavernReady = true; $('tchap').hidden = false; model('heath').then((g) => { people.heath = prep(g.scene); placeHeath(); }).catch(() => {}); for (const n of ['ned', 'buc1', 'buc2', 'morgan', 'gunner']) model(n).then((g) => { people[n] = prep(g.scene); pirateReady(n); }).catch(() => {});
-    model('galdy').then((g) => { galdy = prep(g.scene); galdy.scale.multiplyScalar(0.94); galdy.visible = false; scene.add(galdy); animate(galdy, 'Idle'); $('view').hidden = false; }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
+    model('galdy').then((g) => { galdy = prep(g.scene); galdy.scale.multiplyScalar(0.94); galdy.visible = false; scene.add(galdy); animate(galdy, 'Idle'); $('view').hidden = false; if (__DEV__ && new URLSearchParams(location.search).get('test') === 'walk') runGaldyWalkTest(); }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
   if (__DEV__ && q.has('seed')) { const [sx, sz] = q.get('seed').split(',').map(Number); applySave({ unlocked: ['galdy'], talked: true, ate: false, done: false, ch: {}, pos: [sx, sz, 0] }); setTimeout(() => { document.title = 'RESTORE x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2) + ' ns=' + NS.ready; }, 12000); }
   if (__DEV__ && q.get('test') === 'skin') (async () => {   /* ?test=skin : how dark each face really looks in this game's daylight (engine/skinprobe.js) */
     const out = []; for (const name of (q.get('b') || 'abba,grace,galdy,kofi,sailor,benning,heath,ned,buc1,buc2,morgan,gunner,soldier,turtler,mendes,constable').split(',')) { let G = name === 'abba' ? abba : name === 'grace' ? people.grace : null, own = false;
@@ -1195,7 +1201,7 @@ async function loadAll() {
         angs.forEach((a, i) => { c.position.set(14 + Math.sin(a) * zm[1], zm[0] + 0.1, 0.4 + Math.cos(a) * zm[1]); c.lookAt(14, zm[0], 0.4); renderer.render(scene, c); x2.drawImage(canvas, i * W, 0); }); window.__sheet.push(sh.toDataURL('image/jpeg', 0.9)); }
       document.title = 'SHEET ' + who + ' ' + window.__sheet.length; } catch (e) { document.title = 'SHEET ERROR ' + (e && e.stack || e); } }, +(q.get('wait') || 7000)); }
   if (q.get('shot') === 'gwalk') { state.x = 14; state.z = 0.4; state.yaw = Math.PI / 2; setTimeout(() => { const out = document.createElement('div'); out.id = 'frames'; out.hidden = true; document.body.appendChild(out); const G = q.get('who') === 'soldier' ? SOLDIER.m : galdy; if (!G) return; SOLDIER.m && (SOLDIER.m.visible = false); const ac = G.userData.anim; G.visible = true; G.position.set(14, 0, 0.4); G.rotation.y = Math.PI / 2 + Math.PI; if (G === SOLDIER.m) { SOLDIER.wait = 1e9; SOLDIER.hidden = false; } ac.play(q.get('clip') || 'WalkM'); ac.cur.timeScale = 1.1; ac.mx.update(0.5); const c = camera.clone(); if (q.get('cam') === 'front') c.position.set(10.6, 1.0, 2.9); else c.position.set(14, 0.95, 4.6); c.lookAt(14, 0.75, 0.4); c.fov = 26; c.aspect = canvas.width / canvas.height; c.updateProjectionMatrix();
-  for (let n = 0; n < 12; n++) { ac.mx.update(1 / 12);  renderer.render(scene, c); const im = document.createElement('i'); im.textContent = canvas.toDataURL('image/jpeg', 0.75); out.appendChild(im); } }, 6000); } if (q.get('shot') === 'move') { window.addEventListener('error', (e) => { document.body.dataset.err = e.message + ' @' + e.lineno; }); const x0 = state.x, z0 = state.z; setTimeout(() => { keys.add('w'); let vmax = 0, frames = 0; const iv = setInterval(() => { vmax = Math.max(vmax, Math.hypot(MV.vx, MV.vz)); }, 50); TICKS.push(() => { frames++; }); setTimeout(() => { clearInterval(iv); document.body.dataset.v = vmax.toFixed(2) + ' frames=' + frames + ' x=' + state.x.toFixed(2); keys.delete('w'); }, 6000); }, 4000); } if (false) { setTimeout(() => { setTimeout(() => { document.title = 'MOVED ' + Math.hypot(state.x - x0, state.z - z0).toFixed(2) + ' place=' + state.place + ' v=' + MV.vx.toFixed(2) + ',' + MV.vz.toFixed(2) + ' busy=' + busy + ' started=' + state.started + ' keys=' + [...keys].join(''); }, 3000); }, 5000); } if (q.get('shot') === 'swim') { setTimeout(() => { beginQuake(); toSea(); const x0 = state.x, z0 = state.z; document.body.dataset.boat = Q.boat ? Q.boat.position.x.toFixed(1) + ',' + Q.boat.position.z.toFixed(1) + ' yaw ' + state.yaw.toFixed(2) : 'none'; keys.add('w'); setTimeout(() => { keys.delete('w'); document.title = 'SWIM ' + Math.hypot(state.x - x0, state.z - z0).toFixed(2) + ' from ' + x0.toFixed(1) + ',' + z0.toFixed(1) + ' to ' + state.x.toFixed(1) + ',' + state.z.toFixed(1) + ' place=' + state.place + ' busy=' + busy + ' card=' + !$('card').hidden + ' speed=' + moveSpeed; }, 4000); }, 4000); } if (q.get('shot') === 'boat') { setTimeout(() => { beginQuake(); toSea(); const d0 = Math.hypot(state.x - Q.boat.position.x, state.z - Q.boat.position.z); for (let i = 0; i < 400 && Q.phase === 'sea'; i++) quakeTick(0.05, i * 0.05); setTimeout(() => { document.title = 'BOAT ' + d0.toFixed(1) + ' -> ' + Math.hypot(state.x - Q.boat.position.x, state.z - Q.boat.position.z).toFixed(1) + ' phase=' + Q.phase + ' Qt=' + Q.t.toFixed(1); }, 8000); }, 4000); } if (q.get('shot') === 'mug') { state.talked = state.ate = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -200.7; state.z = 0.9; state.yaw = Math.atan2(-(-201.6 + 200.7), -(1.8 - 0.9)); state.pitch = -0.3; eyeY = 1.3; } if (q.get('shot') === 'fbquit') { setTimeout(() => { fbStart(); setTimeout(() => { const a1 = FBG.group.visible; fbReset(); const a2 = FBG.group.visible; playChapter(CHAPTERS[0]); document.body.dataset.a2 = a2; setTimeout(() => { for (const t of TICKS) { try { t(0.016); } catch (e) {} } document.title = 'FBQUIT during=' + a1 + ' after=' + FBG.group.visible + ' fb=' + FB.on + ' morgan=' + (people.morgan && people.morgan.visible) + ' kofi=' + (people.kofi && people.kofi.visible); }, 800); }, 1500); }, 4000); } if (q.get('shot') === 'step') { setTimeout(() => { const raf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0; const x0 = state.x, z0 = state.z, res = []; let t = last;
+  for (let n = 0; n < 12; n++) { ac.mx.update(1 / 12); groundFeet(G); renderer.render(scene, c); const im = document.createElement('i'); im.textContent = canvas.toDataURL('image/jpeg', 0.75); out.appendChild(im); } }, 6000); } if (q.get('shot') === 'move') { window.addEventListener('error', (e) => { document.body.dataset.err = e.message + ' @' + e.lineno; }); const x0 = state.x, z0 = state.z; setTimeout(() => { keys.add('w'); let vmax = 0, frames = 0; const iv = setInterval(() => { vmax = Math.max(vmax, Math.hypot(MV.vx, MV.vz)); }, 50); TICKS.push(() => { frames++; }); setTimeout(() => { clearInterval(iv); document.body.dataset.v = vmax.toFixed(2) + ' frames=' + frames + ' x=' + state.x.toFixed(2); keys.delete('w'); }, 6000); }, 4000); } if (false) { setTimeout(() => { setTimeout(() => { document.title = 'MOVED ' + Math.hypot(state.x - x0, state.z - z0).toFixed(2) + ' place=' + state.place + ' v=' + MV.vx.toFixed(2) + ',' + MV.vz.toFixed(2) + ' busy=' + busy + ' started=' + state.started + ' keys=' + [...keys].join(''); }, 3000); }, 5000); } if (q.get('shot') === 'swim') { setTimeout(() => { beginQuake(); toSea(); const x0 = state.x, z0 = state.z; document.body.dataset.boat = Q.boat ? Q.boat.position.x.toFixed(1) + ',' + Q.boat.position.z.toFixed(1) + ' yaw ' + state.yaw.toFixed(2) : 'none'; keys.add('w'); setTimeout(() => { keys.delete('w'); document.title = 'SWIM ' + Math.hypot(state.x - x0, state.z - z0).toFixed(2) + ' from ' + x0.toFixed(1) + ',' + z0.toFixed(1) + ' to ' + state.x.toFixed(1) + ',' + state.z.toFixed(1) + ' place=' + state.place + ' busy=' + busy + ' card=' + !$('card').hidden + ' speed=' + moveSpeed; }, 4000); }, 4000); } if (q.get('shot') === 'boat') { setTimeout(() => { beginQuake(); toSea(); const d0 = Math.hypot(state.x - Q.boat.position.x, state.z - Q.boat.position.z); for (let i = 0; i < 400 && Q.phase === 'sea'; i++) quakeTick(0.05, i * 0.05); setTimeout(() => { document.title = 'BOAT ' + d0.toFixed(1) + ' -> ' + Math.hypot(state.x - Q.boat.position.x, state.z - Q.boat.position.z).toFixed(1) + ' phase=' + Q.phase + ' Qt=' + Q.t.toFixed(1); }, 8000); }, 4000); } if (q.get('shot') === 'mug') { state.talked = state.ate = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -200.7; state.z = 0.9; state.yaw = Math.atan2(-(-201.6 + 200.7), -(1.8 - 0.9)); state.pitch = -0.3; eyeY = 1.3; } if (q.get('shot') === 'fbquit') { setTimeout(() => { fbStart(); setTimeout(() => { const a1 = FBG.group.visible; fbReset(); const a2 = FBG.group.visible; playChapter(CHAPTERS[0]); document.body.dataset.a2 = a2; setTimeout(() => { for (const t of TICKS) { try { t(0.016); } catch (e) {} } document.title = 'FBQUIT during=' + a1 + ' after=' + FBG.group.visible + ' fb=' + FB.on + ' morgan=' + (people.morgan && people.morgan.visible) + ' kofi=' + (people.kofi && people.kofi.visible); }, 800); }, 1500); }, 4000); } if (q.get('shot') === 'step') { setTimeout(() => { const raf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0; const x0 = state.x, z0 = state.z, res = []; let t = last;
   const run = (n, k) => { for (let i = 0; i < n; i++) { t += 33; frame(t); } res.push(k + ':' + Math.hypot(state.x - x0, state.z - z0).toFixed(2)); };
   keys.add('w'); run(10, 'w0.33s'); run(20, 'w1s'); keys.delete('w'); run(10, 'stop0.33s'); keys.add('a'); run(30, 'strafe'); keys.delete('a'); run(10, 'end');
   state.x = SHORE - 3; state.z = 1.3; MV.vx = MV.vz = 0; const zx = state.x; state.yaw = Math.PI / 2 - 0.4; keys.add('w'); run(30, 'wallslide'); keys.delete('w'); res.push('slid_x=' + (zx - state.x).toFixed(2) + ' z=' + state.z.toFixed(2));
@@ -1462,7 +1468,7 @@ goArrive = chapterFade('goArrive', goArrive); leaveWare = chapterFade('leaveWare
 $('dev').onclick = () => { $('credits').hidden = false; }; $('crclose').onclick = () => { $('credits').hidden = true; }; $('chcred').onclick = () => { $('credits').hidden = false; };
 
 /* first person or third person (see Lewis Galdy) */
-function toggleView() { if (!galdy || FB.on) return;   /* in Ned’s story you are young Ned, so no Galdy view */ third = !third; $('view').setAttribute('aria-pressed', String(third)); toast(third ? 'You can see Lewis Galdy. Press V to look through his eyes again.' : 'You see through Galdy\u2019s eyes.'); }
+function toggleView() { if (!galdy || FB.on) return;   /* in Ned’s story you are young Ned, so no Galdy view */ third = !third; if (third) galdy.rotation.y = state.yaw + Math.PI; $('view').setAttribute('aria-pressed', String(third)); toast(third ? 'You can see Lewis Galdy. Press V to look through his eyes again.' : 'You see through Galdy\u2019s eyes.'); }
 $('view').onclick = toggleView; addEventListener('keydown', (e) => { if ((e.key === 'v' || e.key === 'V') && !e.repeat && document.activeElement?.tagName !== 'INPUT') toggleView(); });
 
 /* reset: this chapter again, or the whole story */
@@ -1497,7 +1503,7 @@ function cutlass(m) { const h = m.getObjectByName('mixamorigRightHand'); if (!h 
   else { g.position.set(0, 0.07, 0.02); g.rotation.set(Math.PI / 2, 0, 0); }
   h.add(g); m.userData.sword = g; }
 function pirateReady(n) { buildFort(); const m = people[n]; if (!m) return;
-  if (n === 'ned' && indoor) { const [x, z, ry] = TAV.ned; m.position.set(x, 0, z); m.rotation.y = ry; m.userData.sits = true; indoor.add(m); animate(m, CL.SitIdle ? 'SitIdle' : CL.SitTalk ? 'SitTalk' : null);   /* Ned just sits at his table; no cup in hand */ grounded.push(m); EXTRA_IN.push([x, z, 0.5]); }
+  if (n === 'ned' && indoor) { const [x, z, ry] = TAV.ned; m.position.set(x, 0, z); m.rotation.y = ry; m.userData.sits = true; m.userData.seatAnchor={x,z:1.72,top:.475,ry}; indoor.add(m); animate(m, CL.SitIdle ? 'SitIdle' : CL.SitTalk ? 'SitTalk' : null);   /* Ned just sits at his table; no cup in hand */ grounded.push(m); EXTRA_IN.push([x, z, 0.5]); }
   if (n === 'buc1' || n === 'buc2') { const [x, z, ry] = n === 'buc1' ? TAV.b1 : TAV.b2; m.position.set(x, 0, z); m.rotation.y = ry; indoor.add(m); animate(m); grounded.push(m); EXTRA_IN.push([x, z, 0.55]); }
   if (n === 'gunner') { buildFort(); const [x, z, ry] = FORTP.gunner; m.position.set(x, 0, z); m.rotation.y = ry; FORT.g.add(m); animate(m); }
   if (n === 'morgan') { m.visible = false; scene.add(m); animate(m); } }
@@ -1693,7 +1699,7 @@ const _fbBuild = fbBuild; fbBuild = () => { const first = !FBG.group; _fbBuild()
   const paper = mk(new THREE.BoxGeometry(0.3, 0.01, 0.22), new THREE.MeshStandardMaterial({ color: 0xefe4c6, roughness: 0.9 }), FBP.qm[0] + 0.55, 0.81, FBP.qm[1]);
   cur = prev;
   const put = (m, [x, z, ry], clip) => { m.position.set(x, groundYAt(x, z), z); m.rotation.y = ry; m.visible = true; g.add(m); animate(m, clip); FBG.cast.push(m); m.userData.ground = groundYAt(x, z); grounded.push(m); return m; };
-  if (galdy) { FBG.exq = put(clone2(galdy, [0.8, 0.9, 1.05]), FBP.exq, CL.Write ? 'Write' : null); FBG.exq.userData.sits = true; }
+  if (galdy) { FBG.exq = put(clone2(galdy, [0.8, 0.9, 1.05]), FBP.exq, CL.Write ? 'Write' : null); FBG.exq.userData.sits = true; FBG.exq.userData.seatAnchor={x:FBP.exq[0],z:FBP.exq[1]+.2,top:groundYAt(FBP.exq[0],FBP.exq[1])+.42,ry:FBP.exq[2]}; }
   if (people.gunner) FBG.qm = put(clone('gunner', [0.75, 0.95, 0.8]), FBP.qm, 'Talk2'); };
 function clone2(src, tint) { const keep = src.userData.anim; delete src.userData.anim; const m = skClone(src); src.userData.anim = keep; m.scale.copy(src.scale); m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); return m; }
 speakerModel = ((orig) => (who) => who === 'Quartermaster' ? FBG.qm : who === 'Exquemelin' ? FBG.exq : orig(who))(speakerModel);
@@ -1942,3 +1948,65 @@ function tankard(m) {   /* a pewter tankard that follows Ned's hand but stays up
     m.getWorldQuaternion(q); const e = new THREE.Euler().setFromQuaternion(q, 'YXZ'); yq.setFromAxisAngle(Y, e.y + Math.PI / 2);   /* handle toward the palm */
     let tip = 0; if (head && sp) { head.getWorldPosition(hp); sp.getWorldPosition(cp); tip = Math.max(0, Math.min(1, (a.y - cp.y) / Math.max(0.05, hp.y - cp.y))); }
     tq.setFromAxisAngle(X, -tip * 1.3); g.quaternion.copy(yq).multiply(tq); }); }
+
+// Exercise the real controller across several footstep-counter resets.
+function runGaldyWalkTest() {
+  if (!__DEV__) return;
+  const failures = [], checks = [], originalRAF = window.requestAnimationFrame, originalRender = renderer.render;
+  window.requestAnimationFrame = () => 0; renderer.render = () => {};
+  const ac = galdy.userData.anim;
+  try {
+    hideCard(); closeJournal(); $('title').hidden = true; $('hud').hidden = false;
+    state.started = true; third = true; busy = false; state.place = 'out';
+    const prepare = () => { keys.clear(); MV.vx = MV.vz = 0; state.x = 8; state.z = 0.4; state.yaw = Math.PI / 2; };
+    let t = last;
+    const step = () => { t += 1000 / 30; frame(t); };
+    prepare(); keys.add('w'); let idleFrames = 0;
+    for (let i = 0; i < 130; i++) { step(); if (i > 15 && ac.cur === ac.base) idleFrames++; }
+    checks.push('forward idle frames=' + idleFrames); if (idleFrames) failures.push('idle flicker during walking');
+    const normalPace = ac.cur.timeScale; keys.add('shift'); for (let i = 0; i < 15; i++) step();
+    checks.push('normal=' + normalPace.toFixed(2) + ' hurry=' + ac.cur.timeScale.toFixed(2)); if (ac.cur.timeScale <= normalPace) failures.push('hurry pace');
+    for (const key of ['s', 'd', 'a']) {
+      prepare(); keys.add(key); let dx = 0, dz = 0;
+      for (let i = 0; i < 40; i++) { const x = state.x, z = state.z; step(); dx = state.x - x; dz = state.z - z; }
+      const distance = Math.hypot(dx, dz), alignment = distance ? (Math.sin(galdy.rotation.y) * dx + Math.cos(galdy.rotation.y) * dz) / distance : 0;
+      checks.push(key + ' facing alignment=' + alignment.toFixed(3)); if (alignment < 0.98) failures.push(key + ' faces away from travel');
+    }
+    keys.clear(); for (let i = 0; i < 40; i++) step(); if (ac.cur !== ac.base) failures.push('does not return to idle');
+    checks.push('stopped=' + (ac.cur === ac.base));
+    const toeY = ['Left', 'Right'].map((s) => galdy.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y);
+    const error = Math.abs(Math.min(...toeY) - groundY(state.x, state.z) - 0.035); checks.push('foot ground error=' + error.toFixed(4)); if (!toeY.length || error > 0.005) failures.push('feet off ground');
+    for (const name of ['Walk', 'WalkM']) {
+      const clip = clipFor(name); let max = 0;
+      for (const track of clip.tracks) if (track.name.endsWith('.quaternion')) { const q1 = new THREE.Quaternion().fromArray(track.values).normalize(), q2 = new THREE.Quaternion().fromArray(track.values, track.values.length - 4).normalize(); max = Math.max(max, q1.angleTo(q2)); }
+      checks.push(name + ' seam radians=' + max.toFixed(5)); if (max > 0.002) failures.push(name + ' loop seam');
+    }
+  } catch (e) { failures.push(e.stack || String(e)); }
+  finally { keys.clear(); last = performance.now(); renderer.render = originalRender; window.requestAnimationFrame = originalRAF; }
+  window.__galdyWalkCheck = { checks, failures };
+  let out = document.getElementById('autolog'); if (!out) { out = document.createElement('pre'); out.id = 'autolog'; document.body.append(out); } out.textContent = [...checks, ...failures].join('\n');
+  document.title = 'WALK ' + failures.length;
+}
+
+
+// The released game's walkers and every seated character use the same checks
+// as the other games. This view also includes the tavern and the 1670 camp.
+if (__DEV__ && ['collision','seating'].includes(new URLSearchParams(location.search).get('test'))) {
+  (async()=>{
+    const wait=ms=>new Promise(r=>setTimeout(r,ms));
+    for(let i=0;i<150 && !(built&&tavernReady&&people.ned&&people.morgan&&galdy&&NS.ready&&SOLDIER.m);i++)await wait(200);
+    const out=[],checks=[];
+    const staticSnap=g=>{const list=[];g.updateMatrixWorld(true);for(const c of g.children)if(c.visible&&!c.userData.anim&&!c.isSkinnedMesh&&c!==KP.box)list.push(...snapMeshes(c));return list;};
+    setPlace('out');const snap=staticSnap(scene);
+    for(const n of NPCS)out.push(...furnitureRouteIssues(n.id,[[n.x,n.z]],snap,0,.16));
+    for(const n of NS_PEOPLE)out.push(...furnitureRouteIssues(n.id,[[n.x,n.z]],staticSnap(NS.g),0,.16));
+    for(const n of NPCS)if(n.route){const hits=furnitureRouteIssues(n.id,n.route,snap,0,.22,false);out.push(...hits);checks.push(n.id+' route: '+hits.length);}
+    const soldierHits=furnitureRouteIssues('soldier',SOLDIER.path,snap,0,.22,false);out.push(...soldierHits);checks.push('soldier route: '+soldierHits.length);
+    for(const [id,path]of Object.entries(STROLL)){const hits=[...routeIssues(id,path,NS.col,.22),...furnitureRouteIssues(id,path,staticSnap(NS.g))];out.push(...hits);checks.push(id+' route: '+hits.length);}
+    const seated=(id,m,g)=>{if(!m){out.push(id+' did not load');return;}const found=new Set();for(let i=0;i<12;i++){m.userData.anim.mx.update(m.userData.anim.cur.getClip().duration/12);anchorSeat(m);for(const issue of auditSeated(id,m,staticSnap(g),m.userData.ground||0))found.add(issue);}out.push(...found);checks.push(id+' seating: '+found.size);};
+    setPlace('in');seated('Ned',people.ned,indoor);
+    buildAfter();seated('Benning after the earthquake',survivors.benning,afterG);
+    fbBuild();seated('Exquemelin at his desk',FBG.exq,FBG.group);
+    const pre=document.createElement('pre');pre.id='autolog';pre.textContent=[...checks,...out].join('\n');document.body.append(pre);document.title='COLLISION '+out.length;
+  })().catch(e=>{document.title='ERROR '+e.message;console.error(e);});
+}

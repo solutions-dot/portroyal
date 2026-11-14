@@ -1,3 +1,4 @@
+import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
 /* engine/audit.js: automatic checks of a built place, for every game. Rule (CLAUDE.md): run it, and fix everything it reports, before calling a place done.
    It finds three kinds of mistake that are easy to miss by eye and tedious to find one at a time:
      float   an object (a sign, a lamp, a roof) that touches nothing connected to the ground, so it hangs in the air
@@ -10,6 +11,7 @@
      held    something carried (a basket, a lamp, a case) that is not at the hand, hangs the wrong way up, or cuts into the carrier's body
      overlap two people standing in the same spot (or walking through someone who stands still), or someone on top of the player's start
      seated  a person sitting who cuts into a seat or its back, floats above the seat, sits on nothing, or faces the back of the seat
+     through a bush, tree or other leafy shape that pokes through a wall and shows on both sides of it (call auditThrough(snap) and report its lines with the rest)
    Nothing here runs in a public build unless a game imports it into code that is only reached when __DEV__ is true. */
 import * as THREE from 'three';
 import { groundFeet, strideOf } from './anim.js';
@@ -21,6 +23,13 @@ export function snapMeshes(group) {
     if (o.geometry.type === 'BoxGeometry') { o.geometry.computeBoundingBox(); e.lb = o.geometry.boundingBox.clone(); e.inv = o.matrixWorld.clone().invert(); e.sc = Math.cbrt(Math.abs(o.matrixWorld.determinant())) || 1; }   /* the exact box, for seats */
     out.push(e); } });
   return out;
+}
+
+// A rotated bench's world AABB includes empty corners beside its backrest.
+export function insideBoxFootprint(mesh, x, y, z) {
+  if (!mesh.inv) return true;
+  const p = new THREE.Vector3(x, y, z).applyMatrix4(mesh.inv), inset = 0.05 / mesh.sc;
+  return p.x > mesh.lb.min.x + inset && p.x < mesh.lb.max.x - inset && p.z > mesh.lb.min.z + inset && p.z < mesh.lb.max.z - inset;
 }
 
 /* place: { id, snap, npcs: [{id, x, z, anim, ground}], walls: [[x0, z0, x1, z1]], bounds: {x0, x1, z0, z1}, start: {x, z}, actions: [{label, x, z, r}], people: [{id, x, z, anim}] } */
@@ -36,7 +45,7 @@ export function auditPlace(place) {
   const floating = []; for (const idx of comps.values()) { const b = new THREE.Box3(); idx.forEach((i) => b.union(L[i].b)); const sz = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()); if (Math.max(sz.x, sz.y, sz.z) < 0.1) continue; floating.push(`float@(${c.x.toFixed(1)},${c.y.toFixed(1)},${c.z.toFixed(1)}) ${sz.x.toFixed(1)}x${sz.y.toFixed(1)}x${sz.z.toFixed(1)} ${idx.length} meshes, first is ${L[idx[0]].geo} ${L[idx[0]].mat}`); }
   /* people inside a solid box or cylinder, or inside a walking wall */
   const inside = [];
-  for (const p of place.npcs) { const g = p.ground || 0; for (let i = 0; i < n; i++) { const b = L[i].b, sz = size[i]; if (big.includes(i) || sz.y < 0.3 || b.max.y < g + (/^Sit/.test(p.anim || '') ? 0.62 : 0.3) || b.min.y > g + 1.3 || (L[i].geo !== 'BoxGeometry' && L[i].geo !== 'CylinderGeometry')) continue; if (p.x > b.min.x + 0.05 && p.x < b.max.x - 0.05 && p.z > b.min.z + 0.05 && p.z < b.max.z - 0.05) { inside.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) inside a ${L[i].geo} ${sz.x.toFixed(1)}x${sz.y.toFixed(1)}x${sz.z.toFixed(1)}, y ${b.min.y.toFixed(1)} to ${b.max.y.toFixed(1)}`); break; } } }
+  for (const p of place.npcs) { const g = p.ground || 0; for (let i = 0; i < n; i++) { const b = L[i].b, sz = size[i]; if (big.includes(i) || sz.y < 0.3 || b.max.y < g + (/^Sit/.test(p.anim || '') ? 0.62 : 0.3) || b.min.y > g + 1.3 || (L[i].geo !== 'BoxGeometry' && L[i].geo !== 'CylinderGeometry')) continue; const exact = insideBoxFootprint(L[i], p.x, Math.max(g + 0.7, b.min.y + 0.05), p.z); if (exact && p.x > b.min.x + 0.05 && p.x < b.max.x - 0.05 && p.z > b.min.z + 0.05 && p.z < b.max.z - 0.05) { inside.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) inside a ${L[i].geo} ${sz.x.toFixed(1)}x${sz.y.toFixed(1)}x${sz.z.toFixed(1)}, y ${b.min.y.toFixed(1)} to ${b.max.y.toFixed(1)}`); break; } } }
   for (const p of place.npcs) if (!(p.ground > 0) && !/^Sit/.test(p.anim || '')) for (const w of place.walls) if (p.x > w[0] && p.x < w[2] && p.z > w[1] && p.z < w[3]) { inside.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) inside a walking wall`); break; }
   /* walk the floor on a 0.25 m grid from the start, then check that everything the player needs can be reached */
   const bd = place.bounds, st = 0.25, W = Math.round((bd.x1 - bd.x0) / st) + 1, D = Math.round((bd.z1 - bd.z0) / st) + 1, seen = new Uint8Array(W * D);
@@ -45,8 +54,22 @@ export function auditPlace(place) {
   while (q.length) { const [cx, cz] = q.pop(); for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = cx + dx, nz = cz + dz; if (nx < 0 || nz < 0 || nx >= W || nz >= D || seen[nz * W + nx] || !ok(bd.x0 + nx * st, bd.z0 + nz * st)) continue; seen[nz * W + nx] = 1; q.push([nx, nz]); } }
   const reach = (x, z, r) => { for (let cz = 0; cz < D; cz++) for (let cx = 0; cx < W; cx++) if (seen[cz * W + cx] && Math.hypot(bd.x0 + cx * st - x, bd.z0 + cz * st - z) <= r) return true; return false; };
   const stuck = []; if (!startOK) stuck.push('the START is inside a wall or outside the bounds'); for (const a of place.actions) if (!reach(a.x, a.z, a.r * 0.9)) stuck.push('thing to do "' + a.label + '" cannot be reached'); for (const p of place.people) if (!/^Sit/.test(p.anim || '') && !reach(p.x, p.z, 2.3)) stuck.push('person ' + p.id + ' cannot be reached to talk to');
+  for(const p of place.npcs)if(!/^Sit/.test(p.anim||''))inside.push(...furnitureRouteIssues(p.id,[[p.x,p.z]],L,p.ground||0,.16));
   const overlap = auditPeople(place.npcs, place.start);
+  for(const p of place.npcs) if(p.path && !(p.ground>0)) { inside.push(...routeIssues(p.id,p.path,place.walls,.22)); inside.push(...furnitureRouteIssues(p.id,p.path,L,p.ground||0)); }
   return { id: place.id, floating, inside: inside.concat(overlap), stuck };
+}
+
+/* Leafy shapes (bushes, tree crowns, flowers: icosahedra, spheres, dodecahedra, cones) that cross a wall and show on both sides of it.
+   A wall here is a straight box at least 1 m tall standing on the ground, under 0.5 m thick and over 1.5 m long, lined up with the x or z axis. */
+const LEAFY = new Set(['IcosahedronGeometry', 'SphereGeometry', 'DodecahedronGeometry', 'OctahedronGeometry', 'ConeGeometry']);
+export function auditThrough(snap) {
+  const V = new THREE.Vector3(), walls = [], plants = [], out = [];
+  for (const m of snap) { const s = m.b.getSize(V); if (m.geo === 'BoxGeometry' && s.y >= 1 && m.b.min.y <= 0.3) { const thinX = s.x < 0.5 && s.z > 1.5, thinZ = s.z < 0.5 && s.x > 1.5; if (thinX || thinZ) walls.push({ b: m.b, ax: thinX ? 'x' : 'z' }); } else if (LEAFY.has(m.geo) && Math.max(s.x, s.y, s.z) < 8) plants.push(m); }
+  for (const p of plants) for (const w of walls) { const a = w.ax, o = a === 'x' ? 'z' : 'x', pb = p.b, wb = w.b;
+    if (pb.min[a] < wb.min[a] - 0.02 && pb.max[a] > wb.max[a] + 0.02 && pb.max[o] > wb.min[o] && pb.min[o] < wb.max[o] && pb.min.y < wb.max.y - 0.05 && pb.max.y > wb.min.y) {
+      const c = pb.getCenter(V); out.push(`a ${p.geo.replace('Geometry', '').toLowerCase()} at (${c.x.toFixed(1)}, ${c.y.toFixed(1)}, ${c.z.toFixed(1)}) pokes through a wall`); break; } }
+  return out;
 }
 
 /* Held items. body: the character's root Object3D, already posed (call the mixer's update first). items: [{ obj, bone, label }] where obj is the carried thing
@@ -59,6 +82,7 @@ export function auditHeld(id, body, items) {
   const dist = (p, A, B) => { const ab = B.clone().sub(A), t = Math.max(0, Math.min(1, p.clone().sub(A).dot(ab) / (ab.lengthSq() || 1))); return p.distanceTo(A.clone().addScaledVector(ab, t)); };
   for (const it of items) {
     const box = new THREE.Box3().setFromObject(it.obj), hand = P(it.bone), name = id + ' ' + (it.label || 'item') + ' at ' + it.bone; if (!hand) continue;
+    if(it.obj.userData.gripHandle){const handle=new THREE.Vector3().fromArray(it.obj.userData.gripHandle);it.obj.localToWorld(handle);const side=it.bone.startsWith('Left')?'Left':'Right',knuckle=P(side+'HandMiddle1'),tip=P(side+'HandMiddle3'),palm=knuckle&&tip?knuckle.lerp(tip,.5):hand;if(handle.distanceTo(palm)>.035*sc)out.push(name+' handle is separated from the closed fingers');}
     const near = box.clampPoint(hand, new THREE.Vector3()).distanceTo(hand); if (near > 0.12) out.push(name + ' is ' + (near * 100).toFixed(0) + ' cm from the hand');
     const up = new THREE.Vector3(0, 1, 0).transformDirection(it.obj.matrixWorld); if (it.bone !== 'Head' || true) { if (up.y < 0.6) out.push(name + ' is tipped (up is ' + up.y.toFixed(2) + ')'); }
     const pts = []; it.obj.updateMatrixWorld(true); it.obj.traverse((o) => { if (!o.isMesh || !o.geometry.attributes.position) return; const a = o.geometry.attributes.position, step = Math.max(1, Math.floor(a.count / 120)); for (let i = 0; i < a.count; i += step) pts.push(new THREE.Vector3().fromBufferAttribute(a, i).applyMatrix4(o.matrixWorld)); });   /* the item's real surface, not its box */
@@ -86,7 +110,7 @@ export function auditPeople(npcs, start) {
      - faces the back of a seat (a thin, tall board close in front of them).
    stats (optional array) collects one line per person, for tuning. */
 export function auditSeated(id, body, snap, ground = 0, stats) {
-  body.updateMatrixWorld(true); const out = [], pts = [], v = new THREE.Vector3(), hb = body.getObjectByName('mixamorigHips'); if (!hb) return out;
+  anchorSeat(body); body.updateMatrixWorld(true); const out = [], pts = [], v = new THREE.Vector3(), hb = body.getObjectByName('mixamorigHips'); if (!hb) return out;
   body.traverse((o) => { if (!o.isSkinnedMesh || !o.visible || !o.geometry.attributes.position) return; o.skeleton.update(); const n = o.geometry.attributes.position.count, step = Math.max(1, Math.floor(n / 500)); for (let i = 0; i < n; i += step) { o.getVertexPosition(i, v); pts.push(v.clone().applyMatrix4(o.matrixWorld)); } });
   if (!pts.length) return out;
   const hips = hb.getWorldPosition(new THREE.Vector3()), box = new THREE.Box3().setFromPoints(pts).expandByScalar(0.1), fwd = new THREE.Vector3(0, 0, 1).transformDirection(body.matrixWorld), seats = snap.filter((m) => m.lb && m.b.intersectsBox(box));
@@ -101,7 +125,7 @@ export function auditSeated(id, body, snap, ground = 0, stats) {
       for (const p of pts) { q.copy(p).applyMatrix4(m.inv); const lb = m.lb; if (q.x > lb.min.x && q.x < lb.max.x && q.y > lb.min.y && q.y < lb.max.y && q.z > lb.min.z && q.z < lb.max.z) { const d = Math.min(q.x - lb.min.x, lb.max.x - q.x, q.y - lb.min.y, lb.max.y - q.y, q.z - lb.min.z, lb.max.z - q.z) * m.sc; if (d > thr) { n++; deep = Math.max(deep, d); } } }
       if (n >= Math.max(3, pts.length * 0.01)) out.push(`${id} cuts into a ${sz.x.toFixed(2)}x${sz.y.toFixed(2)}x${sz.z.toFixed(2)} box at y ${m.b.min.y.toFixed(2)} to ${m.b.max.y.toFixed(2)} (up to ${(deep * 100).toFixed(0)} cm deep, ${n} points)`);
     }
-    if (upright) { const c = m.b.getCenter(new THREE.Vector3()), dx = c.x - hips.x, dz = c.z - hips.z, ahead = dx * fwd.x + dz * fwd.z, side = Math.abs(dx * fwd.z - dz * fwd.x); if (ahead > 0.2 && ahead < 0.9 && side < 0.6 && m.b.min.y < hips.y + 0.3 && m.b.max.y > hips.y + 0.2) out.push(`${id} faces the back of a seat (a board ${(ahead * 100).toFixed(0)} cm ahead)`); }
+    if (upright && (!under || m.b.intersectsBox(under.b.clone().expandByScalar(.09)))) { const c = m.b.getCenter(new THREE.Vector3()), dx = c.x - hips.x, dz = c.z - hips.z, ahead = dx * fwd.x + dz * fwd.z, side = Math.abs(dx * fwd.z - dz * fwd.x); if (ahead > 0.2 && ahead < 0.9 && side < 0.6 && m.b.min.y < hips.y + 0.3 && m.b.max.y > hips.y + 0.2) out.push(`${id} faces the back of a seat (a board ${(ahead * 100).toFixed(0)} cm ahead at ${c.x.toFixed(2)},${c.z.toFixed(2)})`); }
   }
   /* the seat under the hips: the lowest part of the pelvis may sink a little into a cushion, but not far, and the person must not hover */
   let lowBack = 1e9, lowThigh = 1e9; for (const p of pts) { const dx = p.x - hips.x, dz = p.z - hips.z, ahead = dx * fwd.x + dz * fwd.z, side = Math.abs(dx * fwd.z - dz * fwd.x); if (side > 0.3 || p.y < hips.y - 0.45) continue; if (ahead > -0.25 && ahead < 0.05) lowBack = Math.min(lowBack, p.y); else if (ahead >= 0.05 && ahead < 0.35) lowThigh = Math.min(lowThigh, p.y); }
