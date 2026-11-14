@@ -1072,17 +1072,22 @@ if not OLD and G.get('socks'):
     for f in bm.faces: f.material_index=1 if cz(f).z<ZSK else 0
     bm.to_mesh(h.data); bm.free(); h.data.materials.append(colmat('Sock',0.85))
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
+# Skin colour. The colour layer written below is a byte layer that Blender reads as sRGB, and every value put in it was already made linear (srgb() above),
+# so the exporter made it linear a second time: each colour came out far darker and redder than its recipe (a recipe skin of 150,102,74 drew as about 67,32,16).
+# Skin is now written as its recipe says (SKS), so a recipe skin means the same brown in every game. Garments keep the old behaviour, and the light-skinned
+# 1690 recipes were changed to the darker value that they used to produce, so they look exactly as before (docs/PIPELINE.md, "Skin").
+SKS=Vector(tuple(x**(1/2.2) for x in COL['Skin']))
 def paint(o):
     me=o.data; bm=bmesh.new(); bm.from_mesh(me); cl=bm.loops.layers.color.new('Col'); RL=bm.verts.layers.float.get('ramp') if o.name in ('Hair','Moustache') else None
     for f in bm.faces:
-        name=me.materials[f.material_index].name.split('.')[0]; base=COL[name]
+        name=me.materials[f.material_index].name.split('.')[0]; base=SKS if name=='Skin' else COL[name]
         for l in f.loops:
             p=l.vert.co; col=base.copy()
             if o is h:
                 if G.get('stockings') and ANK-0.01<p.z<KNEE+0.02: col=COL['Stockings'].copy()
                 if G.get('socks') and OLD and p.z<ANK+G['socks']*(KNEE-ANK): col=COL['Sock'].copy()      # later eras: socks are their own material (see above)
                 lip=max(0,1-((p.x/0.026)**2+((p.z-LIPZ)/0.010)**2)) if p.y<J('Head').y-0.09 else 0
-                col=col.lerp(col*0.62+Vector((0.05,0.0,0.0)),min(1,lip*1.2))
+                col=col.lerp(col*0.80+Vector((0.03,0.0,0.0)),min(1,lip*1.2))      # (in the skin's own sRGB values: about the same darkening as 0.62 in linear ones)
                 for sx in (-1,1):
                     bx=(p.x-sx*0.034*s)/(0.022*G.get('browwide',1.0)); bz=(p.z-BROWZ-0.003*(1-abs(bx)))/(0.0045*G.get('brows',1.0))
                     br=max(0,1-(bx*bx+bz*bz)) if p.y<J('Head').y-0.07 else 0
@@ -1090,7 +1095,7 @@ def paint(o):
                 k=0.94+noise.noise(p*9)*0.06
             else:
                 k=0.88+noise.noise(p*14)*0.1+noise.noise(p*3)*0.08
-                if RL is not None: col=COL['Skin'].lerp(col,min(1.0,l.vert[RL]*1.7) if o.name=='Hair' else min(1.0,l.vert[RL]*1.25)**0.8); k=0.9+noise.noise(p*90)*0.14
+                if RL is not None: col=SKS.lerp(col,min(1.0,l.vert[RL]*1.7) if o.name=='Hair' else min(1.0,l.vert[RL]*1.25)**0.8); k=0.9+noise.noise(p*90)*0.14
                 if p.z<KNEE and name in ('Breeches','Coat'): k*=0.85
             l[cl]=(col.x*k,col.y*k,col.z*k,1)
     bm.to_mesh(me); bm.free(); ca=me.color_attributes; ca.active_color=ca['Col']; ca.render_color_index=list(ca.keys()).index('Col')

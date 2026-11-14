@@ -57,7 +57,7 @@ function kid(r, pick, shirts = DRESS) {
 export function crowd57(n, seed, area, { anims = ['Idle', 'Talk1', 'Talk2', 'Laugh', 'Wave', 'Idle'], faceZ = 0, kids = 0.25 } = {}) {   /* n people on a platform in their Sunday best: frocks and church hats, suits and trilbies; area: [x0, z0, x1, z1] */
   const r = rng(seed), out = []; const pick = (a) => a[(r() * a.length) | 0];
   for (let i = 0; i < n; i++) {
-    const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), kind = r(), ry = faceZ + (r() - 0.5) * 2.2, anim = pick(anims), at = { x, z, ry, anim, skin: 0.85 + r() * 0.4 };
+    const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), kind = r(), ry = faceZ + (r() - 0.5) * 2.2, anim = pick(anims), at = { x, z, ry, anim, skin: 0.9 + r() * 0.25 };
     if (kind < kids) out.push({ ...kid(r, pick), ...at });
     else if (kind < 0.62) { const elder = r() < 0.25, c = pick(DRESS), two = r() < 0.4;
       out.push({ props: r() < 0.3 ? [['RightHand', 'hamper']] : undefined, base: elder ? 'woman_elder' : 'woman57', hat: r() < 0.75 ? 'Hat' : (elder ? false : pick(['Cap', false])),
@@ -74,7 +74,7 @@ export function crowd57(n, seed, area, { anims = ['Idle', 'Talk1', 'Talk2', 'Lau
 export function crowd45(n, seed, area, { anims = ['Idle', 'Wave', 'Clap', 'Cheer', 'Talk1', 'Idle'], faceZ = Math.PI } = {}) {   /* townspeople of 1845 watching the engine: straw hats, head ties, white shirts */
   const r = rng(seed), out = [], pick = (a) => a[(r() * a.length) | 0];
   for (let i = 0; i < n; i++) {
-    const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), ry = faceZ + (r() - 0.5) * 1.4, anim = pick(anims), k = r(), at = { x, z, ry, anim, skin: 0.9 + r() * 0.3 };
+    const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), ry = faceZ + (r() - 0.5) * 1.4, anim = pick(anims), k = r(), at = { x, z, ry, anim, skin: 0.9 + r() * 0.25 };
     if (k < 0.2) { const girl = r() < 0.45, c = pick([0xf0ece0, 0xe8d8b8, 0xd0e0e8]);
       out.push(girl ? { base: 'girl', tint: { Shirt: c, Skirt: c, Belt: 0x8a6a4a, Ribbon: 0xf0ece0, Shoes: 0x3a2e24 }, scale: 0.68 + r() * 0.14, ...at } : { base: 'boy', hat: r() < 0.6 ? 'Hat' : false, tint: { Shirt: 0xf0ece0, Breeches: pick([0x5a5a68, 0x6a5a46]), Hat: 0xc2a45c, Shoes: 0x3a2e24 }, scale: 0.68 + r() * 0.14, ...at }); }
     else if (k < 0.55) out.push({ base: 'woman_long', hat: r() < 0.7 ? 'Hat' : 'Bonnet', tint: { Shirt: pick([0xf0ebe0, 0xe8d8b8, 0xd0e0e8]), Skirt: pick([0x8a4a3a, 0x2f6f8f, 0x5a3a52, 0x4a6a3a, 0x9a7a3a]), Hat: pick([0xf0e8d8, 0xd9b84a, 0xb84a3a, 0xd8c8a0]), Bonnet: 0xd8c8a0, Belt: 0x5a4030 }, ...at });
@@ -87,7 +87,7 @@ export function villagers(n, seed, area, { anims = ['Idle', 'Talk1', 'Sad1', 'Id
   const r = rng(seed), out = [], pick = (a) => a[(r() * a.length) | 0];
   for (let i = 0; i < n; i++) {
     const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), ry = faceZ + (r() - 0.5) * 2, k = r();
-    const common = { x, z, ry, anim: 'Idle', lamp: r() < lamp, skin: 0.9 + r() * 0.3 };
+    const common = { x, z, ry, anim: 'Idle', lamp: r() < lamp, skin: 0.9 + r() * 0.25 };
     if (k < 0.45) { const old = r() < 0.3; out.push({ ...common, base: old ? 'woman_elder' : 'woman57', hat: old ? 'Wrap' : false, tint: { Shirt: pick([0xe8e0d0, 0xd8c8a8, 0xb8c8d0, 0xe0b0a0]), Skirt: pick([0x4a4a52, 0x6a4a3a, 0x3a4a5a, 0x5a3a52]), Wrap: pick([0xd8c8a0, 0xb84a3a, 0xe8e0d0]), Belt: 0x3a3030 } }); }
     else { const b = pick(['man_work', 'man_work', 'man_elder', 'man_apron']); out.push({ ...common, base: b, hat: b === 'man_work' ? pick(['Cap', 'Hat', false]) : (b === 'man_elder' ? pick(['Hat', false]) : false), tint: { Shirt: pick([0xc8c0a4, 0xd8d0b8, 0x8a98a8, 0xb8a888]), Breeches: pick([0x4a4636, 0x3a3a40, 0x5a5040]), Hat: pick([0x6a5a40, 0xc2a45c]), Cap: pick([0x6a5a40, 0x2a2a30]), Waistcoat: 0x4a4636, Apron: 0x7a6a50 }, hide: ['Waistcoat'] }); }
   }

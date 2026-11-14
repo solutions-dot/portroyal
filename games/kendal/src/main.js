@@ -91,7 +91,7 @@ const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb
 const SIT_HIPS = 0.12;   /* metres from the seat to the hip joint of a seated person at full size (the audit checks it) */
 /* scale: the item's size. lift: how far (radians) the arm is held out from the body, so the item clears the hip, thigh and skirt. The handle height comes from each prop (userData.handleY). */
 let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.46 }, suitcase: { handleY: 0.5, scale: 0.8, lift: 0.22, yaw: Math.PI / 2 }, lantern: { handleY: 0.32, scale: 0.85, lift: 0.26 }, bucket: { handleY: 0.49, scale: 0.9, lift: 0.34 }, basket: { dy: 0.12, scale: 0.8 } };
-const SKIN_LIGHT = 1.55;   /* the bodies' skin is built dark, so we lighten it a little (as in Marcus Garvey) so faces read in every light */
+const SKIN_LIGHT = 1.0;   /* the one skin factor for this game's light (docs/PIPELINE.md, "Skin"): 1 means the recipe's brown is drawn as it is. Measured with ?test=skin */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat); if (/^man_(work|shirt|elder|suit)$/.test(s.base) && !(s.hide || []).includes('Waistcoat')) offHats.push('Belt', 'Buckle');   /* a waistcoat covers the belt */   /* a body carries several hats; show the one this person wears (s.hat), or none */
@@ -730,7 +730,7 @@ function devViews() {
   }
   if (q.get('test') === 'skin') {   /* ?test=skin : how dark each face really looks in daylight (engine/skinprobe.js). Every look, plus a sample of crowd people at the ends of their skin range. &env=day picks the light. */
     (async () => { const out = []; startGame(true); await waitFor(() => modelsReady); setEnv(ENV[q.get('env') || 'day']);
-      const list = Object.keys(LOOKS).map((k) => [k, LOOKS[k]]); for (const sk of [0.85, 1.0, 1.25]) list.push(['crowd woman57 skin ' + sk, { base: 'woman57', tint: {}, skin: sk }], ['crowd man_suit skin ' + sk, { base: 'man_suit', tint: {}, skin: sk }]);
+      const list = Object.keys(LOOKS).map((k) => [k, LOOKS[k]]); for (const sk of [0.9, 1.0, 1.15]) list.push(['crowd woman57 skin ' + sk, { base: 'woman57', tint: {}, skin: sk }], ['crowd man_suit skin ' + sk, { base: 'man_suit', tint: {}, skin: sk }]);
       for (const [name, look] of list) { await loadBase(look.base); const b = makeBody({ ...look, x: 4000, z: 4000, ry: 0, anim: 'Idle', hat: false }); scene.add(b); b.userData.anim.mx.update(0.3); const r = skinProbe(renderer, scene, b); scene.remove(b);
         out.push(name + ' (' + look.base + ', skin ' + (look.skin || 1) + '): mean ' + r.rgb.join(',') + '  darkest ' + r.lo.join(',') + '  lightest ' + r.hi.join(',')); }
       let el = $('autolog'); el.textContent = out.join('\n'); document.title = 'SKIN ' + out.length; })();
