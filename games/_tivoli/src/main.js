@@ -15,6 +15,10 @@ import { model, onLoadFail } from '../../../engine/loader.js';
 import { pose, standIns, POSES } from './clips.js';
 import { LOOKS, BODIES, loadBase, makeBody } from './cast.js';
 import { arm, weaponTick, heldReport, ARMED, modeOf } from './weapons.js';
+import { snapMeshes, auditPlace } from '../../../engine/audit.js';   // dev only: the place audit (CLAUDE.md rule 8)
+import { contentRects, contentsOverlap } from '../../../engine/ui-audit.js';   // dev only: the layout test
+import { buildStreet } from './street.js';
+import { FIGHT, positions as fightPositions, wire as wireFight, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
 import { auditCloth, auditWalk, skinProbe } from './checks.js';   // dev only: local copies until the engine has them (see checks.js)   // gunfight poses: real clips when the library has them, stand-ins until then
 
 const $ = (id) => document.getElementById(id);
@@ -101,6 +105,7 @@ Promise.all([model('anims'), model('anims_tivoli'), model('sailor')]).then(([ani
 });
 
 $('start').onclick = () => { audioInit(); $('title').hidden = true; $('hud').hidden = false; state.started = true; setGoal('Walk to the sailor and talk to him.'); canvas.focus(); };
+wireFight({ scene, camera, renderer, audioInit });
 $('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 'Sound on' : 'Sound off'; };
 
 /* ---------- dev only: test views. This whole block is left out of the public build. ---------- */
@@ -110,6 +115,7 @@ function devLog(lines, title) { let el = $('autolog'); if (!el) { el = document.
 async function devViews(sailor) {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), test = q.get('test'), lo = q.has('lo') ? '_lo' : '';
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
+  if (q.get('scene') === 'fight') { await fightBegin(); const at = +(q.get('at') || 0); if (at) fightSkip(at); if (q.has('hold')) FIGHT.freeze = true; return; }
   if (!shot && !test) return;
   scene.remove(sailor.scene); await Promise.all(BODIES.flatMap((b) => [loadBase(b), loadBase(b + '_lo')]));
   const place = (look, x, z, ry, anim) => { const b = makeBody({ ...LOOKS[look], bodyId: LOOKS[look].base + lo, x, z, ry, anim }); scene.add(b); DEVG.push(b); return b; };
@@ -131,6 +137,22 @@ async function devViews(sailor) {
   if (shot === 'slung') {   /* ?shot=slung: the rifle slung across the back, from behind and from the front */
     const a = place('soldier', -0.5, 0, Math.PI, 'Idle'); arm(a, 'rifle', scene); const b = place('policeCamo', 0.5, 0, 0, 'Walk'); arm(b, 'rifle', scene);
     cam(0, 2.6, 0, -0.15); document.title = 'slung';
+  }
+  if (test === 'audit') {   /* ?test=audit: the street (built unmerged): floating signs, lamps, tanks, roofs, and anyone standing or running through a solid. Expect 0 issues. */
+    const st = buildStreet({}), snap = snapMeshes(st.raw), r = auditPlace({ id: 'street', snap, npcs: fightPositions(), walls: [], bounds: { x0: -45, x1: 40, z0: -4.4, z1: 4.4 }, start: { x: -10, z: 0 }, actions: [], people: [] });
+    const lines = ['street: ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + r.floating.length + ' floating, ' + r.inside.length + ' inside solids, ' + r.stuck.length + ' unreachable)', ...r.floating.map((l) => '  floating: ' + l), ...r.inside.map((l) => '  inside: ' + l), ...r.stuck.map((l) => '  stuck: ' + l)];
+    devLog(lines, 'AUDIT ' + (r.floating.length + r.inside.length + r.stuck.length));
+  }
+  if (test === 'layout') {   /* ?test=layout: show each card and title state and check that no two bits of text overlap, nothing is off the sides of the screen, and every button is big enough to touch (44 px). Run at 390x800, 320x568, 667x375, 800x500, 1280x720. */
+    const out = [], W = innerWidth, Hh = innerHeight, st2 = document.createElement('style'); st2.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st2);
+    const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'windowframe', 'hud'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['scenetitle', 'windowframe']]]) {
+      for (const id of ALL) $(id).hidden = !show.includes(id); await frames();
+      const els = show.flatMap((id) => [...$(id).querySelectorAll('h1,h2,p,label,button,a,b')]).filter((e) => contentRects(e).length);
+      for (const e of els) { for (const r of contentRects(e)) if (r.left < -1 || r.right > W + 1) out.push(`${W}x${Hh} ${name}: "${(e.textContent || '').slice(0, 30)}" is off the side of the screen`); if (e.matches('button,a.btn') && e.getBoundingClientRect().height < 44) out.push(`${W}x${Hh} ${name}: button "${e.textContent.slice(0, 24)}" is under 44 px tall`); }
+      for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) if (!els[i].contains(els[j]) && !els[j].contains(els[i]) && contentsOverlap(els[i], els[j])) out.push(`${W}x${Hh} ${name}: "${els[i].textContent.slice(0, 24)}" overlaps "${els[j].textContent.slice(0, 24)}"`);
+    }
+    devLog(out.length ? out : [W + 'x' + Hh + ': no layout problems'], 'LAYOUT ' + out.length);
   }
   if (test === 'measure') {   /* ?test=measure: in each rifle clip, the distance from the right palm to the right shoulder joint and to the left palm (cm), to size the rifle to the clips */
     const out = []; const P = (b, n) => b.getObjectByName('mixamorig' + n).getWorldPosition(new THREE.Vector3());
@@ -178,7 +200,8 @@ let last = performance.now(), stepT = 0;
 function frame(t) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (t - last) / 1000); last = t;
-  if (state.started && !busy) {
+  if (FIGHT.on) fightTick(dt);   // the street scene moves its own people and takes over the camera
+  if (state.started && !busy && !FIGHT.on) {
     if (keys.has('arrowleft')) state.yaw += 1.8 * dt; if (keys.has('arrowright')) state.yaw -= 1.8 * dt;
     let f = stick.id !== null ? -stick.dy : 0, r = stick.id !== null ? stick.dx : 0;
     if (keys.has('w') || keys.has('arrowup')) f += 1; if (keys.has('s') || keys.has('arrowdown')) f -= 1; if (keys.has('d')) r += 1; if (keys.has('a')) r -= 1;
@@ -187,12 +210,12 @@ function frame(t) {
       [state.x, state.z] = clampPos(state.x + (fx * f - fz * r) / Math.max(1, len) * sp * dt, state.z + (fz * f + fx * r) / Math.max(1, len) * sp * dt);
       stepT -= dt * sp; if (stepT <= 0) { stepT = 1.4; stepSound('sand'); } }
   }
-  near = state.started && !busy && Math.hypot(state.x - PERSON.x, state.z - PERSON.z) < 2.6; $('talk').hidden = !near;
+  near = state.started && !busy && !FIGHT.on && Math.hypot(state.x - PERSON.x, state.z - PERSON.z) < 2.6; $('talk').hidden = !near;
   if (person) { const want = Math.atan2(state.x - PERSON.x, state.z - PERSON.z); let e = want - person.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); if (near || busy) person.rotation.y += e * Math.min(1, dt * 5); }   // turn to face you
   for (const mx of mixers) mx.update(dt); if (person && person.userData.anim) person.userData.anim.tick(dt);
   if (__DEV__) for (const m of DEVG) groundFeet(m);
   for (const m of ARMED) weaponTick(m);   // after the mixer and the feet: weapons follow the hands
-  camera.position.set(state.x, state.camY || 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ');
+  if (FIGHT.on) fightAfter(t / 1000); else { camera.position.set(state.x, state.camY || 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); }
   renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);

@@ -12,6 +12,7 @@ export const HATS = { soldier2010: [], police2010: [] };   /* the helmets are pa
 export const LOOKS = {
   soldier: { base: 'soldier2010', hide: ['ArmBandText'] },     /* Jamaica Defence Force, May 2010: woodland camouflage, covered helmet, olive vest and harness, yellow armband */
   policeCamo: { base: 'soldier2010' },  /* police attached to the army in May 2010: the same camouflage and kit, with POLICE on the yellow armband (Gleaner photographs) */
+  gunman: { base: 'civilian2010' },     /* shown only far away behind the barricade and unidentified (docs/games/tivoli.md "The dispute"); plain clothes */
   police: { base: 'police2010' },       /* Jamaica Constabulary Force, May 2010: navy shirt and trousers, black vest marked POLICE, grey helmet */
 };
 export const BODIES = ['soldier2010', 'police2010'];
