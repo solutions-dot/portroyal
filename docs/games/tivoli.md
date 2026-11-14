@@ -21,6 +21,7 @@ It is the hardest subject in the family. The usual rules hold (CLAUDE.md rules 2
 - Real animations (crouch, duck and so on) will come later. Placeholders now (see "Placeholder poses").
 - **CLAUDE.md rule 4 is changed for this game only** (done). It now carries a one-sentence Tivoli exception with the limits below: seen from a safe place, behind an opt-in card, no one hit, no blood, the player never holds or fires a weapon. Every other game keeps "fights happen in the background".
 - **A fictional elder is the thread through the chapters:** a girl in the 1960s chapters and a grandmother in 2010, with a child as the main character from chapter 4 on. Her name and exact age are still to choose, so the dates fit (a girl in the 1960s is about 55 in 2010). Like Mass Ezra in Kendal, she is fictional and her journal page says so.
+- **No "play with a grown-up" note on the menu card.** The game keeps the same audience as the others (6 and up, plus adults). The in-game protection stays: the opt-in card before the gunfight, with "Read what happened instead".
 
 **Proposed by Claude.** The first four points (the player never fires, the opt-in card, the safe place, no one hit and no blood) are now also in CLAUDE.md rule 4, so they are settled. The rest are still to be confirmed.
 - The player never fires and never holds a weapon. No crosshair.
@@ -34,8 +35,7 @@ It is the hardest subject in the family. The usual rules hold (CLAUDE.md rules 2
 - Settings to turn off screen shake and to turn down loud sounds. (Kendal still lacks the shake setting.)
 
 **Open (waiting for the owner)**
-1. A "play with a grown-up" note on the menu card (Claude recommends yes, because guns are on screen).
-2. A reviewer from West Kingston before anything is published (Claude recommends yes).
+1. A reviewer from West Kingston before anything is published (Claude recommends yes).
 
 ## The story (proposed)
 
@@ -134,11 +134,11 @@ Real people in the game: none speak. Coke, politicians, commanders and officers 
 ## What is left
 
 1. **Research in primary sources**: the Commission's report (the hearings and Chapter 15 for the deaths), the Public Defender's reports, the Gleaner and Observer archives. Replace this table's "secondary only" note.
-2. **The two open decisions** above (the age note, the West Kingston reviewer), and the elder's name and age.
+2. **The open decision** above (the West Kingston reviewer), and the elder's name and age.
 3. **A reviewer from West Kingston.**
 4. **Characters.** Tivoli needs its own people: the elder, a child, neighbours, police and soldiers in real uniforms, gunmen in everyday clothes. Skin must follow CLAUDE.md rule 9. See `docs/PIPELINE.md`.
 5. **Places**: Back-o-Wall, new Tivoli streets and flats, a home interior, a rooftop or window view, the community centre.
 6. **The real gunfight clips** (table above), weapon props, flashes and sounds.
 7. **Story code**: chapters, journal, goals, saving (copy the patterns from `games/kendal/src/`).
 8. **Wire the automatic audits and layout test** before the first PR that has a place.
-9. **The menu card, the poster and the age note**, once the owner decides to publish.
+9. **The menu card and the poster**, once the owner decides to publish.
