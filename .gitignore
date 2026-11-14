@@ -25,4 +25,8 @@ games/bog-walk/site/models/anims.js
 games/eventide/site/app.js
 games/eventide/site/models/anims.js
 
+# Tivoli (unpublished while its folder starts with an underscore): built files are made by tools/build.mjs
+games/_tivoli/site/app.js
+games/_tivoli/site/models/anims.js
+
 dist-testing/
