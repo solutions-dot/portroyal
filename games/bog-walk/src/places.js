@@ -219,10 +219,12 @@ function pipeAndSaddles(g, kind) {   /* the Tube coming down from the dam, on co
     for (const x of xs) if (x > -70) ruinSupport(g, x, PZ, x);   /* the supports are still there in a row; the pipe is gone */
     /* a rusted half-shell of the pipe, lying on the ground */
     /* a long rusted half of one section of the pipe, 8 feet across, lying open side up in the grass; the plate is thick, with a flange ring at one end */
-    const rm = new THREE.MeshStandardMaterial({ map: TX.rivets([4, 2.2], [104, 62, 40], 3), roughness: 0.95, metalness: 0.15, side: THREE.DoubleSide });
+    const rm = new THREE.MeshStandardMaterial({ map: TX.rivets([4, 2.2], [78, 54, 42], 3), roughness: 0.95, metalness: 0.25, side: THREE.DoubleSide });
     const half = (len, arc, x, z, ry, roll, y) => { const geo = new THREE.CylinderGeometry(PR, PR, len, 36, 1, true, (PI - arc) / 2, arc); geo.rotateZ(-PI / 2); const sh = grp(g, x, y, z); sh.rotation.set(roll, ry, 0); mesh(geo, rm, 0, 0, 0, sh);
       const lip = new THREE.CylinderGeometry(PR + 0.035, PR + 0.035, len, 36, 1, true, (PI - arc) / 2, arc); lip.rotateZ(-PI / 2); mesh(lip, rm, 0, 0, 0, sh);   /* the thickness of the plate, seen at the cut edges */
-      const fl = new THREE.TorusGeometry(PR + 0.03, 0.06, 6, 30, arc); fl.rotateZ(-PI / 2 - arc / 2); fl.rotateY(PI / 2); mesh(fl, rm, len / 2 - 0.05, 0, 0, sh); return sh; };
+      const fl = new THREE.TorusGeometry(PR + 0.03, 0.06, 6, 30, arc); fl.rotateZ(-PI / 2 - arc / 2); fl.rotateY(PI / 2); mesh(fl, rm, len / 2 - 0.05, 0, 0, sh);
+      for (let i = 1; i < Math.floor(len / 2.4); i++) { const rb = new THREE.TorusGeometry(PR + 0.02, 0.035, 5, 30, arc); rb.rotateZ(-PI / 2 - arc / 2); rb.rotateY(PI / 2); mesh(rb, rm, -len / 2 + i * len / Math.floor(len / 2.4), 0, 0, sh); }   /* the seams where the plates were riveted together, ridged ribs round the pipe */
+      return sh; };
     half(9.6, PI, -8.2, -1.2, 0.35, 0.0, PR - 0.1);   /* the big piece: a whole length of the pipe, split, lying open side up where you can walk up to it */
     half(3.4, PI * 0.7, -42, PZ + 0.2, -0.5, 1.0, PR - 0.03);   /* a smaller broken piece, tipped on its side against the old supports */
     half(5.2, PI * 0.8, -31, PZ + 3.6, 0.15, 0.1, PR - 0.1);
@@ -467,6 +469,15 @@ function yardLife(g, P) {
   { const tp = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 1.6, 12, 1, true, 0, PI), solid(0x5a6a58, 1, 0, { side: THREE.DoubleSide })); tp.rotation.z = PI / 2; tp.rotation.y = 0.3; tp.position.set(17.8, 0.05, -2.0); tp.scale.set(1, 1, 0.7); g.add(tp); const crt = crate(0.6, 0x8a6a42); crt.position.set(17.8, 0, -2.0); g.add(crt); P.walls.push([16.6, -3.2, 19.0, -0.8]); }
   /* trees inside the fence, so the corners are not bare */
   for (const [x, z, k] of [[-20.2, 0.5, 0], [-20.4, 12.8, 1], [20.6, 14.8, 2], [33.5, -10, 0], [33.5, 12, 1]]) { const o = k === 0 ? mangoTree(6.2, 3 + (x | 0)) : k === 1 ? flameTree(6, 4) : mangoTree(5.6, 8); o.position.set(x, 0, z); g.add(o); P.walls.push([x - 0.5, z - 0.5, x + 0.5, z + 0.5]); }
+  /* the middle of the yard: short trampled grass, pebbles, mud puddles, and the things people dropped. Kept off houses and anything solid. */
+  const inClear = (x, z, rs) => rs.some(([a, b, c, d]) => x > a && x < c && z > b && z < d);
+  const pad = P.walls.map(([a, b, c, d]) => [a - 0.5, b - 0.5, c + 0.5, d + 0.5]), keep = [...HOUSES, [-8, -16, 8, -4.5], ...pad];
+  grassField(g, [-21, -4, 22, 17], 1200, { seed: 31, h: 0.15, w: 0.34, tint: 0xe0e0a8, clear: keep });
+  rockField(g, [-21, -4, 22, 17], 70, { seed: 32, size: 0.1, tone: 0x8a7e68, clear: keep });
+  const sky = new THREE.MeshStandardMaterial({ color: 0x4a5a62, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  for (const [x, z, sx, sz, ry] of [[-2.0, 7.4, 1.6, 0.9, 0.4], [5.2, 12.8, 1.2, 0.8, 1.1], [-9.5, 6.5, 1.0, 0.7, 0.2], [2.2, 1.0, 0.9, 0.6, 2.0]]) { if (inClear(x, z, pad)) continue; const p = mesh(new THREE.CircleGeometry(0.5, 20), sky, x, 0.03, z, g); p.rotation.x = -PI / 2; p.scale.set(sx, sz, 1); p.rotation.z = ry; }
+  for (const [x, z, ry] of [[-4.6, 4.8, 0.7], [1.0, 3.3, 2.1], [6.2, 9.9, 4.0], [-11.0, 8.4, 1.3]]) { if (inClear(x, z, pad)) continue; const h = grp(g, x, 0, z); h.rotation.y = ry; const hat = solid(0xb8a47a, 1); cyl(0.17, 0.2, 0.012, hat, 0, 0.02, 0, h, 14); cyl(0.1, 0.1, 0.11, hat, 0, 0.07, 0, h, 14); cyl(0.102, 0.102, 0.02, solid(0x3a2a1c, 1), 0, 0.045, 0, h, 14); }   /* dropped straw hats */
+  for (const [x, z, ry] of [[-6.4, 10.8, 0.4], [0.2, 6.4, 2.6]]) { if (inClear(x, z, pad)) continue; const b = grp(g, x, 0, z); b.rotation.y = ry; box(0.12, 0.05, 0.3, solid(0x2a2018, 1), -0.08, 0.025, 0, b); box(0.12, 0.05, 0.3, solid(0x2a2018, 1), 0.1, 0.025, 0.04, b); }   /* a pair of boots left behind */
 }
 export function buildYard() {   /* chapter 4: the morning after. Dawn going to day; the lamps out, the wheel still. */
   const g = grp(), P = { id: 'yard', group: g, walls: [], spots: {}, flames: [], people: [], extras: [], env: ENV.dawn, eye: 1.6 };
