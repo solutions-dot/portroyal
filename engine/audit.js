@@ -151,3 +151,51 @@ export function auditWalk(id, body, v, { after = null, paced = true, loops = 2, 
   for (const l of held) out.lines.push(l + ' while walking');
   return out;
 }
+
+/* Cloth: does an under layer show through the layer that should cover it? (skin through a shirt, a shirt through a waistcoat, hair through a hat, a collar cut by a jacket...)
+   auditCloth(id, body, { poses, after }) poses the body ([clip name, how far through the clip 0..1]), works out where every vertex really is (skinning on the CPU), and tests each
+   visible piece against each other visible piece. Which piece is the under layer is read from the body itself in its rest shape: a point that starts out just beneath a face
+   of another piece is meant to stay beneath it. If most of a piece's nearby points start beneath the other, every nearby point is held to that (so a speck that is already
+   through in the rest shape is caught as well). Points tested: each vertex and the middle of each triangle. A fault is a point more than half a millimetre outside.
+   Returns { lines, points, worst }: one line per pose and pair of pieces, with how many points and the worst depth in millimetres. Hidden pieces (another hat, a hidden waistcoat) are ignored. */
+const CL_SKIP = /low-poly|Eye|Teeth|Tongue|Lash|Brow/i, CL_REL = new WeakMap();
+function clTri(p, P, a, b, c, o) {   /* nearest point of a triangle (corner indices a, b, c into P) to p, written to o */
+  const ax = P[a], ay = P[a + 1], az = P[a + 2], abx = P[b] - ax, aby = P[b + 1] - ay, abz = P[b + 2] - az, acx = P[c] - ax, acy = P[c + 1] - ay, acz = P[c + 2] - az, apx = p[0] - ax, apy = p[1] - ay, apz = p[2] - az;
+  const d1 = abx * apx + aby * apy + abz * apz, d2 = acx * apx + acy * apy + acz * apz; if (d1 <= 0 && d2 <= 0) { o[0] = ax; o[1] = ay; o[2] = az; return; }
+  const bpx = p[0] - P[b], bpy = p[1] - P[b + 1], bpz = p[2] - P[b + 2], d3 = abx * bpx + aby * bpy + abz * bpz, d4 = acx * bpx + acy * bpy + acz * bpz; if (d3 >= 0 && d4 <= d3) { o[0] = P[b]; o[1] = P[b + 1]; o[2] = P[b + 2]; return; }
+  const vc = d1 * d4 - d3 * d2; if (vc <= 0 && d1 >= 0 && d3 <= 0) { const v = d1 / (d1 - d3); o[0] = ax + abx * v; o[1] = ay + aby * v; o[2] = az + abz * v; return; }
+  const cpx = p[0] - P[c], cpy = p[1] - P[c + 1], cpz = p[2] - P[c + 2], d5 = abx * cpx + aby * cpy + abz * cpz, d6 = acx * cpx + acy * cpy + acz * cpz; if (d6 >= 0 && d5 <= d6) { o[0] = P[c]; o[1] = P[c + 1]; o[2] = P[c + 2]; return; }
+  const vb = d5 * d2 - d1 * d6; if (vb <= 0 && d2 >= 0 && d6 <= 0) { const w = d2 / (d2 - d6); o[0] = ax + acx * w; o[1] = ay + acy * w; o[2] = az + acz * w; return; }
+  const va = d3 * d6 - d5 * d4; if (va <= 0 && d4 - d3 >= 0 && d5 - d6 >= 0) { const w = (d4 - d3) / ((d4 - d3) + (d5 - d6)); o[0] = P[b] + (P[c] - P[b]) * w; o[1] = P[b + 1] + (P[c + 1] - P[b + 1]) * w; o[2] = P[b + 2] + (P[c + 2] - P[b + 2]) * w; return; }
+  const dn = 1 / (va + vb + vc), v = vb * dn, w = vc * dn; o[0] = ax + abx * v + acx * w; o[1] = ay + aby * v + acy * w; o[2] = az + abz * v + acz * w; }
+function clGrid(P, idx, cell) { const g = new Map(), K = (x, y, z) => (x * 73856093) ^ (y * 19349663) ^ (z * 83492791);   /* which triangles pass through each small cube of space (each triangle's box is widened by one cell) */
+  for (let t = 0; t < idx.length; t += 3) { const a = idx[t] * 3, b = idx[t + 1] * 3, c = idx[t + 2] * 3, lo = [0, 0, 0], hi = [0, 0, 0]; for (let k = 0; k < 3; k++) { lo[k] = Math.floor(Math.min(P[a + k], P[b + k], P[c + k]) / cell) - 1; hi[k] = Math.floor(Math.max(P[a + k], P[b + k], P[c + k]) / cell) + 1; }
+    for (let x = lo[0]; x <= hi[0]; x++) for (let y = lo[1]; y <= hi[1]; y++) for (let z = lo[2]; z <= hi[2]; z++) { const k = K(x, y, z); let l = g.get(k); if (!l) g.set(k, l = []); l.push(t); } }
+  return { g, K, cell }; }
+const _cq = [0, 0, 0], _cr = { along: 0, side: 0 };
+function clNear(p, P, idx, G) {   /* the nearest face of a piece to p: how far p is outside it (along, negative when beneath) and how far off its edge (side). null when nothing is within a cell */
+  const l = G.g.get(G.K(Math.floor(p[0] / G.cell), Math.floor(p[1] / G.cell), Math.floor(p[2] / G.cell))); if (!l) return null; let bd = G.cell * G.cell, hit = false;
+  for (const t of l) { const a = idx[t] * 3, b = idx[t + 1] * 3, c = idx[t + 2] * 3; clTri(p, P, a, b, c, _cq); const dx = p[0] - _cq[0], dy = p[1] - _cq[1], dz = p[2] - _cq[2], dd = dx * dx + dy * dy + dz * dz; if (dd >= bd) continue;
+    const ux = P[b] - P[a], uy = P[b + 1] - P[a + 1], uz = P[b + 2] - P[a + 2], vx = P[c] - P[a], vy = P[c + 1] - P[a + 1], vz = P[c + 2] - P[a + 2]; let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const nl = Math.hypot(nx, ny, nz); if (nl < 1e-12) continue; nx /= nl; ny /= nl; nz /= nl;
+    bd = dd; hit = true; _cr.along = dx * nx + dy * ny + dz * nz; _cr.side = Math.hypot(dx - nx * _cr.along, dy - ny * _cr.along, dz - nz * _cr.along); }
+  return hit ? _cr : null; }
+function clPoint(P, s, i, o) { const a = s[i * 3] * 3, b = s[i * 3 + 1] * 3, c = s[i * 3 + 2] * 3; o[0] = (P[a] + P[b] + P[c]) / 3; o[1] = (P[a + 1] + P[b + 1] + P[c + 1]) / 3; o[2] = (P[a + 2] + P[b + 2] + P[c + 2]) / 3; }
+function clParts(body) { const parts = []; body.traverse((o) => { if (!o.isSkinnedMesh || !o.geometry.index || CL_SKIP.test(o.name) || CL_SKIP.test(o.material.name || '')) return; let vis = true; for (let q = o; q && q !== body.parent; q = q.parent) if (!q.visible) vis = false; if (!vis) return;
+    const g = o.geometry, n = g.attributes.position.count, idx = g.index.array; let samples = g.userData.clSamples; if (!samples) { samples = new Uint32Array(n * 3 + idx.length); for (let i = 0; i < n; i++) samples[i * 3] = samples[i * 3 + 1] = samples[i * 3 + 2] = i; samples.set(idx, n * 3); g.userData.clSamples = samples; }
+    let rest = g.userData.clRest; if (!rest) { rest = new Float32Array(n * 3); const v = new THREE.Vector3(); for (let i = 0; i < n; i++) { v.fromBufferAttribute(g.attributes.position, i).applyMatrix4(o.bindMatrix); rest[i * 3] = v.x; rest[i * 3 + 1] = v.y; rest[i * 3 + 2] = v.z; } g.userData.clRest = rest; }
+    parts.push({ o, name: o.name || o.material.name, g, idx, samples, rest, pos: new Float32Array(n * 3) }); }); return parts; }
+function clRelation(A, B) {   /* which sample points of piece A are meant to lie beneath piece B (from the rest shape). Cached per pair of shapes. */
+  let m = CL_REL.get(A.g); if (!m) CL_REL.set(A.g, m = new WeakMap()); let r = m.get(B.g); if (r !== undefined) return r;
+  const G = B.g.userData.clGrid || (B.g.userData.clGrid = clGrid(B.rest, B.idx, 0.03)), p = [0, 0, 0], near = [], under = []; let below = 0;
+  for (let i = 0; i < A.samples.length / 3; i++) { clPoint(A.rest, A.samples, i, p); const h = clNear(p, B.rest, B.idx, G); if (!h || h.side > 0.004 || Math.abs(h.along) > 0.03) continue; near.push(i); if (h.along < 0) { below++; if (h.along < -0.001) under.push(i); } }
+  r = near.length < 8 ? null : below >= near.length * 0.7 ? near : below <= near.length * 0.3 ? null : under; if (r && !r.length) r = null; m.set(B.g, r); return r; }
+export function auditCloth(id, body, { poses = [['Idle', 0.3]], after = null, skip = null } = {}) {
+  const ctl = body.userData.anim, out = { lines: [], points: 0, worst: 0 }, parts = clParts(body), sc = body.getWorldScale(new THREE.Vector3()).x || 1, v = new THREE.Vector3(), p = [0, 0, 0]; if (!ctl || parts.length < 2) return out;
+  for (const [clipName, at] of poses) { const act = ctl.get(clipName); if (!act) continue; ctl.mx.stopAllAction(); act.reset().play(); act.time = at * act.getClip().duration; ctl.mx.update(0); if (after) after(body); body.updateMatrixWorld(true);
+    for (const P of parts) { P.o.skeleton.update(); const n = P.pos.length / 3; for (let i = 0; i < n; i++) { P.o.getVertexPosition(i, v).applyMatrix4(P.o.matrixWorld); P.pos[i * 3] = v.x; P.pos[i * 3 + 1] = v.y; P.pos[i * 3 + 2] = v.z; } P.grid = null; }
+    for (const A of parts) for (const B of parts) { if (A === B || (skip && skip(A.name, B.name))) continue; const rel = clRelation(A, B); if (!rel) continue; const G = B.grid || (B.grid = clGrid(B.pos, B.idx, 0.03 * sc)); let n = 0, worst = 0;
+      for (const i of rel) { clPoint(A.pos, A.samples, i, p); const h = clNear(p, B.pos, B.idx, G); if (!h || h.side > 0.004 * sc || h.along <= 0.0005 * sc) continue; n++; if (h.along > worst) worst = h.along; }
+      if (n) { out.points += n; out.worst = Math.max(out.worst, worst / sc * 1000); out.lines.push(`${id} ${clipName}@${at}: ${A.name} shows through ${B.name}: ${n} points, worst ${(worst / sc * 1000).toFixed(1)} mm`); } } }
+  ctl.mx.stopAllAction(); ctl.base.reset().play(); ctl.cur = ctl.base; ctl.mx.update(0); if (after) after(body);
+  return out;
+}
