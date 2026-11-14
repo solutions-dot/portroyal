@@ -76,6 +76,13 @@ def take(obj, keep_dom):
     return {'bm': bm, 'co': co, 'W': W, 'dom': [dom(v) for v in bm.verts]}
 
 SK = take(body, set(HANDJ + ['RightForeArm']))
+# The model's fingers are thick (about 22 mm across, a real finger is about 17), too thick to close round a torch handle, so each finger vertex is
+# moved toward the axis of its own bone by slim= (1 leaves them alone). The thumb is left as it is.
+SLIM = num('slim', 0.78)
+for i, d in enumerate(SK['dom']):
+    if d and any(d.startswith('RightHand' + fn) for fn in FINGERS):
+        h, t = HEAD(d), TAIL(d); u = (SK['co'][i] - h) @ (t - h) / np.dot(t - h, t - h); c = h + (t - h) * min(1.0, max(0.0, u))
+        SK['co'][i] = c + (SK['co'][i] - c) * SLIM
 SH = take(shirt, {'RightForeArm', 'RightArm'})
 log('kept', len(SK['co']), 'skin vertices and', len(SH['co']), 'sleeve vertices')
 
@@ -246,11 +253,51 @@ if 'search' in ARGS:   # try handle placements (back, sink, slant) and keep the 
                 res.append((tot, bk, sk, sl)); log('back %.3f sink %.3f slant %d: cost %.2f' % (bk, sk, sl, tot), angs)
     res.sort(); log('best placements', res[:5])
     sys.exit(0)
-C, AX = handle_at(BACK, num('sink', 0.009), SLANT / DEG)
-for fn in FINGERS: LOCAL.pop('RightHand%s1' % fn, None)
-_, angs, POSED, _ = solve_fingers(C, AX)
-for fn in FINGERS: pose_finger(fn, angs[fn])
-report['fingers'] = angs
+C, AX = handle_at(BACK, num('sink', 0.004), SLANT / DEG)
+# ---------- close the fingers: each finger is bent along a path that leaves its knuckle, runs straight to the handle's surface, then goes round the handle in a
+# circle (the fingers' own length decides how far round it gets), and the finger's skin is carried along that path (every vertex keeps its distance along the finger and
+# its offsets across it). The fingers are stacked along the handle, close together, as in a real fist. The joints are not turned one by one: a finger is not a rigid rod
+# at a joint but a soft tube that follows the handle, and this closes all four fully, which a search over the joint angles could not (it kept stopping short). ----------
+e_f = f - (f @ AX) * AX; e_f /= np.linalg.norm(e_f)      # in the plane across the handle: along the fingers, and toward the palm side
+e_p = p - (p @ AX) * AX; e_p /= np.linalg.norm(e_p)
+STRETCH = num('stretch', 1.1)    # the model's fingers are short for a thin handle; stretching them a little along their length lets the tips reach the palm
+RHO = RM + num('rho', 0.0092)    # the radius of the path of a finger's own axis round the handle: the handle's radius and the depth of the finger's pad
+SQ = num('squeeze', 0.8)         # how close together the fingers are stacked along the handle (1 keeps the knuckles' spacing)
+cross2 = lambda a_, b_: a_[0] * b_[1] - a_[1] * b_[0]
+J0s = {fn: HEAD('RightHand%s1' % fn) for fn in FINGERS}
+hs = {fn: (J0s[fn] - C) @ AX for fn in FINGERS}; hm = np.mean(list(hs.values()))
+D = np.zeros_like(SK['co']); SREST = np.zeros(len(SK['co'])); FWHICH = np.full(len(SK['co']), -1)
+POSED = {}; wrapinfo = {}
+for fi_, fn in enumerate(FINGERS):
+    names3 = ['RightHand%s%d' % (fn, j) for j in (1, 2, 3)]
+    J0, J3 = J0s[fn], TAIL(names3[2]); fdir = (J3 - J0) / np.linalg.norm(J3 - J0)
+    pd = p - fdir * (p @ fdir); pd /= np.linalg.norm(pd); kd = np.cross(fdir, pd); ksign = 1.0 if kd @ AX > 0 else -1.0
+    q0 = np.array([(J0 - C) @ e_f, (J0 - C) @ e_p]); h_i = hm + (hs[fn] - hm) * SQ
+    # the straight part: from the knuckle to the point where it touches the circle (tangent), the circle then taken in the direction that curls toward the palm
+    phis = np.linspace(-math.pi * 0.999, math.pi * 0.999, 6000); Tp = RHO * np.c_[np.cos(phis), np.sin(phis)]; tg = np.c_[-np.sin(phis), np.cos(phis)]
+    v_ = Tp - q0; g = v_[:, 0] * tg[:, 1] - v_[:, 1] * tg[:, 0]; dt = (v_ * tg).sum(1)
+    cand_ = [i for i in range(len(phis) - 1) if g[i] * g[i + 1] <= 0 and dt[i] > 0]
+    ph_t = phis[cand_[0]]; Tpt = RHO * np.array([math.cos(ph_t), math.sin(ph_t)]); seg = np.linalg.norm(Tpt - q0); ds = (Tpt - q0) / seg
+    wrapinfo[fn] = dict(segMm=round(seg * 1000, 1), startDeg=round(math.degrees(ph_t), 1))
+    nrm_s = np.array([-ds[1], ds[0]]);  nrm_s = nrm_s if nrm_s @ (-q0) > 0 else -nrm_s     # across the straight part, toward the handle (the pad side)
+    def path(sv):
+        sv = np.asarray(sv); pos = np.zeros((len(sv), 2)); nr = np.zeros((len(sv), 2))
+        ins = sv <= seg; pos[ins] = q0 + np.outer(sv[ins], ds); nr[ins] = nrm_s
+        a_ = ph_t + (sv[~ins] - seg) / RHO; pos[~ins] = RHO * np.c_[np.cos(a_), np.sin(a_)]; nr[~ins] = -np.c_[np.cos(a_), np.sin(a_)]
+        return pos, nr
+    # weight of each vertex to this finger: how much of it the finger's three bones own
+    wF = SK['W'][:, [BI[n] for n in names3]].sum(1)
+    sel = np.nonzero(wF > 0.02)[0]
+    rel = SK['co'][sel] - J0; sr = rel @ fdir; perp = rel - np.outer(sr, fdir); op = perp @ pd; ok = perp @ kd
+    pos, nr = path(sr * STRETCH)
+    tgt = C + np.outer(pos[:, 0], e_f) + np.outer(pos[:, 1], e_p) + np.outer(np.full(len(sel), h_i), AX) + np.outer(op * num('padk', 1.0), np.zeros(3))
+    tgt = tgt + np.outer(op, np.zeros(3)) + nr[:, :1] * op[:, None] * e_f + nr[:, 1:] * op[:, None] * e_p + np.outer(ok * ksign, AX)
+    D[sel] += (tgt - SK['co'][sel]) * wF[sel, None]
+    inFinger = ids(SK, set(names3)); POSED[fn] = None
+    SREST[sel] = np.maximum(SREST[sel], sr * STRETCH); FWHICH[inFinger] = fi_
+    log(fn, 'wrapped: straight part %.1f mm, circle starts at %.0f degrees, finger path %.1f mm' % (seg * 1000, math.degrees(ph_t), np.linalg.norm(J3 - J0) * STRETCH * 1000))
+report['wrap'] = wrapinfo
+for fn in FINGERS: POSED[fn] = (SK['co'] + D)[ids(SK, {'RightHand%s%d' % (fn, j) for j in (1, 2, 3)})]
 
 # ---------- the thumb: a search over its joints so it lies up along the handle, pressed on it ----------
 thI = ids(SK, {'RightHandThumb2', 'RightHandThumb3'}); th3 = ids(SK, {'RightHandThumb3'}); th2 = ids(SK, {'RightHandThumb2'})
@@ -325,7 +372,7 @@ log('wrist turned %.0f degrees' % math.degrees(ang_))
 
 # ---------- grip space ----------
 M = mats()
-Pall = skin(SK, None, M)
+Pall = skin(SK, None, M) + D @ R3.T   # the wrist turned the whole hand; the wrapped fingers' displacements turn with it
 # soft skin: anything inside the handle is pressed out onto its surface, and the push fades out over the neighbouring skin so there is no ridge
 def press_out(P, C_, A_, keep_in):
     r = radial(P, C_, A_); d = P - C_; d -= np.outer(d @ A_, A_); u = d / np.maximum(1e-9, np.linalg.norm(d, axis=1, keepdims=True))
@@ -340,9 +387,11 @@ for it in range(int(num('pressIters', 6))):
     Pall = Pall + D
 log('soft skin: the most the handle still goes into the skin is %.2f mm' % max(0, (RM - radial(Pall, Cg, AXg).min()) * 1000))
 yv, zv, xv = frame(AXg, fg)
-iy = [(skin(SK, ids(SK, {'RightHand%s2' % fn}), M) - Cg) @ yv for fn in ('Index', 'Pinky')]
+iy = [(Pall[ids(SK, {'RightHand%s2' % fn})] - Cg) @ yv for fn in ('Index', 'Pinky')]
 O = Cg + yv * (iy[0].mean() + iy[1].mean()) / 2
-G = lambda P: np.c_[(P - O) @ xv, (P - O) @ yv, (P - O) @ zv] * SCALE
+ROLL = num('roll', 30) * DEG   # turn the whole hand about the handle, so the curled fingers face the player a little more
+RY = np.array([[math.cos(ROLL), 0, -math.sin(ROLL)], [0, 1, 0], [math.sin(ROLL), 0, math.cos(ROLL)]])   # x' = x cos + z sin, z' = -x sin + z cos (row vectors)
+G = lambda P: (np.c_[(P - O) @ xv, (P - O) @ yv, (P - O) @ zv] @ RY) * SCALE
 fore = HEAD('RightForeArm') - HEAD('RightHand'); fore /= np.linalg.norm(fore)
 report['forearm'] = [round(float(v_), 3) for v_ in (fore @ xv, fore @ yv, fore @ zv)]
 log('forearm direction in grip space', report['forearm'])
@@ -367,27 +416,33 @@ def add_part(src, P, label, keep=None):
         nf = out.faces.new([vs[v.index] for v in fc.verts])
         doms = [src['dom'][v.index] for v in fc.verts]
         nf[play] = label(max(set(doms), key=doms.count))
+SREST_OUT = {i: SREST[i] for i in range(len(SREST))}   # (the skin's vertices come first in the output mesh, in the same order)
 add_part(SK, Pall, part_of, lambda fc: min(tfore(np.array(v.co)) for v in fc.verts) > FCUT)
 SHP = skin(SH, None, M)
 add_part(SH, SHP, lambda d: 8, lambda fc: min(tfore(np.array(v.co)) for v in fc.verts) > FCUT - 0.12)
 
 # the nails: on each end joint, the faces on the back of the finger, toward its tip
-out.faces.ensure_lookup_table(); out.normal_update()
-for i, fn in enumerate(FINGERS + ['Thumb']):
+out.verts.index_update(); out.faces.ensure_lookup_table(); out.normal_update()
+for i, fn in enumerate(FINGERS):
+    cand = [fc for fc in out.faces if fc[play] == 1 + i]
+    L3 = np.linalg.norm(TAIL('RightHand%s3' % fn) - HEAD('RightHand%s3' % fn)) * STRETCH; tipS = max(SREST[ids(SK, {'RightHand%s3' % fn})])
+    for fc in cand:
+        c = np.array(fc.calc_center_median()); r = np.array([c[0], 0, c[2]]); rn = np.linalg.norm(r)
+        sv = np.mean([SREST_OUT.get(v.index, 0) for v in fc.verts])
+        if sv < tipS - L3 * (1 - num('nailFrom', 0.38)) or sv > tipS * 0.995: continue
+        if rn > 1e-6 and np.array(fc.normal) @ (r / rn) > num('nailCos', 0.55): fc[play] = 9 + i
+for i, fn in enumerate(['Thumb']):
     n = 'RightHand%s3' % fn; Mb = M[BI[n]]
     h, t = G(np.array([(Mb @ np.r_[HEAD(n), 1])[:3]]))[0], G(np.array([(Mb @ np.r_[TAIL(n), 1])[:3]]))[0]
     bd = (t - h) / np.linalg.norm(t - h)
-    back = Mb[:3, :3] @ (-p); back = np.array([back @ xv, back @ yv, back @ zv]); back -= bd * (back @ bd); back /= np.linalg.norm(back)
-    lab = 5 if fn == 'Thumb' else 1 + i
-    cand = [fc for fc in out.faces if fc[play] == lab]
+    back = Mb[:3, :3] @ (-p); back = np.array([back @ xv, back @ yv, back @ zv]) @ RY; back -= bd * (back @ bd); back /= np.linalg.norm(back)
+    cand = [fc for fc in out.faces if fc[play] == 5]
     tipd = max(((np.array(v.co) - h) @ bd for fc in cand for v in fc.verts))
-    L0, L1 = num('nailFrom', 0.4), num('nailTo', 0.97)
     for fc in cand:
         c = np.array(fc.calc_center_median()); tq = (c - h) @ bd
-        if tq < tipd * L0 or tq > tipd * L1: continue
+        if tq < tipd * 0.4 or tq > tipd * 0.97: continue
         rv = (c - h) - bd * tq; up = rv @ back
-        if up > 0 and np.array(fc.normal) @ back > num('nailCos', 0.7) and up > np.linalg.norm(rv) * 0.75:
-            fc[play] = 13 if fn == 'Thumb' else 9 + i
+        if up > 0 and np.array(fc.normal) @ back > 0.7 and up > np.linalg.norm(rv) * 0.75: fc[play] = 13
 
 bmesh.ops.delete(out, geom=[v for v in out.verts if not v.link_faces], context='VERTS')
 bmesh.ops.join_triangles(out, faces=out.faces[:], angle_face_threshold=math.pi, angle_shape_threshold=math.pi, cmp_seam=False, cmp_sharp=False, cmp_uvs=False, cmp_vcols=False, cmp_materials=False)
