@@ -35,10 +35,38 @@ function pistolGeo() {   /* a black semi-automatic pistol: slide and frame, grip
   return PISTOL_GEO || (PISTOL_GEO = mergeGeometries([box(0.03, 0.034, 0.19, 0, 0.045, 0.06), box(0.028, 0.105, 0.05, 0, -0.01, -0.005, -0.25), box(0.008, 0.01, 0.04, 0, 0.012, 0.05)]));
 }
 
+/* ---------- closing the fingers round the weapon (the same method as engine/grip.js, which is not changed here) ----------
+   Each finger joint turns about the axis across the palm; the thumb turns towards the index finger. The turned rotations are worked out once,
+   when the weapon is given, and put back every frame while the weapon is in the hands (the shared clips do not move finger joints 2 and 3).
+   Right hand: a fist round the pistol grip, the index finger curled less, on the trigger. Left hand: wrapped round the handguard (rifle) or round the shooting hand (pistol). */
+const HOLD = { Right: { Index: [0.55, 0.75, 0.5], Middle: [1.0, 1.35, 0.9], Ring: [1.0, 1.35, 0.9], Pinky: [1.0, 1.35, 0.9], thumb: 0.7 },
+  Left: { Index: [0.85, 1.1, 0.8], Middle: [0.9, 1.2, 0.85], Ring: [0.95, 1.25, 0.85], Pinky: [1.0, 1.3, 0.9], thumb: 0.6 } };
+const wpos = (b) => b.getWorldPosition(new THREE.Vector3()), wquat = (o) => o.getWorldQuaternion(new THREE.Quaternion());
+function turnWorld(b, axis, angle) { const pq = wquat(b.parent), r = new THREE.Quaternion().setFromAxisAngle(axis, angle); b.quaternion.premultiply(pq.clone().invert().multiply(r).multiply(pq)); b.updateMatrixWorld(true); }
+function closeHand(body, side) {
+  const B = (n) => bone(body, side + n), hand = B('Hand'), idx = B('HandIndex1'), mid = B('HandMiddle1'), pky = B('HandPinky1'), th = B('HandThumb2') || B('HandThumb1'); if (!hand || !idx || !mid || !pky) return [];
+  const joints = []; for (const fn of ['Index', 'Middle', 'Ring', 'Pinky']) for (let j = 1; j <= 3; j++) { const b = B('Hand' + fn + j); if (b) joints.push(b); } for (let j = 1; j <= 3; j++) { const b = B('HandThumb' + j); if (b) joints.push(b); }
+  const open = joints.map((b) => b.quaternion.clone()); body.updateMatrixWorld(true);
+  const M = wpos(mid), f = M.clone().sub(wpos(hand)).normalize(), w = wpos(idx).sub(wpos(pky)).normalize(), n = new THREE.Vector3().crossVectors(w, f).normalize();
+  if (th && n.dot(wpos(th).sub(M)) < 0) n.negate();   /* n points out of the palm */
+  const axis = new THREE.Vector3().crossVectors(f, n).normalize(), H = HOLD[side];
+  for (const fn of ['Index', 'Middle', 'Ring', 'Pinky']) H[fn].forEach((a, j) => { const b = B('Hand' + fn + (j + 1)); if (b) turnWorld(b, axis, a); });
+  const t1 = B('HandThumb1'), t3 = B('HandThumb3'), i2 = B('HandIndex2');
+  if (t1 && t3 && i2) { const td = wpos(t3).sub(wpos(t1)).normalize(), want = wpos(i2).sub(wpos(t1)).normalize(), ax = new THREE.Vector3().crossVectors(td, want); if (ax.lengthSq() > 1e-6) turnWorld(t1, ax.normalize(), Math.min(H.thumb, td.angleTo(want) * 0.8)); }
+  const closed = joints.map((b) => b.quaternion.clone()); joints.forEach((b, i) => b.quaternion.copy(open[i])); body.updateMatrixWorld(true);
+  return joints.map((b, i) => ({ b, open: open[i], closed: closed[i] }));
+}
+function setHands(body, w, shut) {
+  if (w.shut === shut) { if (!shut) return; } w.shut = shut;
+  for (const j of w.fingers) j.b.quaternion.copy(shut ? j.closed : j.open);
+}
+
 export const ARMED = [];
 export function arm(body, kind = 'rifle', scene = body.parent) {
   const mesh = new THREE.Mesh(kind === 'pistol' ? pistolGeo() : rifleGeo(), MAT); mesh.castShadow = true; mesh.frustumCulled = false; mesh.matrixAutoUpdate = false;
-  (scene || body).add(mesh); body.userData.weapon = { kind, mesh }; ARMED.push(body); return mesh;
+  (scene || body).add(mesh); body.userData.anim && body.userData.anim.mx.update(0);
+  const fingers = [...closeHand(body, 'Right'), ...closeHand(body, 'Left')];   /* the left hand wraps the handguard, or the shooting hand in the two-handed pistol clips */
+  body.userData.weapon = { kind, mesh, fingers, shut: false }; ARMED.push(body); return mesh;
 }
 export function disarm(body) { const w = body.userData.weapon; if (!w) return; w.mesh.removeFromParent(); delete body.userData.weapon; const i = ARMED.indexOf(body); if (i >= 0) ARMED.splice(i, 1); }
 
@@ -60,12 +88,15 @@ export function modeOf(body) {
   return PISTOL_CLIPS.test(clip) ? 'hands' : 'holster';
 }
 export function weaponTick(body) {
-  const w = body.userData.weapon; if (!w) return; body.updateMatrixWorld(true); const mode = modeOf(body), m = w.mesh;
+  const w = body.userData.weapon; if (!w) return; const mode = modeOf(body), m = w.mesh;
+  setHands(body, w, mode === 'hands'); body.updateMatrixWorld(true);   /* fingers closed round the weapon while it is in the hands, relaxed otherwise */
   m.visible = mode !== 'holster'; if (!m.visible) return;
   const up = _u.set(0, 1, 0);
   if (w.kind === 'rifle' && mode === 'hands') {
     const R = palm(body, 'Right', _a), L = palm(body, 'Left', _b), d = _d.subVectors(L, R);
-    if (d.length() > 0.12) { place(m, R, d, up, SUPPORT, new THREE.Vector3(0, 1, 0)); return; }   /* hands too close together to hold a rifle: sling it instead */
+    if (d.length() > 0.12) {   /* the left palm goes on the handguard line at whatever distance the clip puts it (15 to 45 cm ahead of the grip); hands closer than 12 cm: sling it instead */
+      const D = d.length(), z = Math.max(0.15, Math.min(0.45, Math.sqrt(Math.max(0, D * D - SUPPORT.y * SUPPORT.y))));
+      place(m, R, d, up, new THREE.Vector3(0, SUPPORT.y, z), new THREE.Vector3(0, 1, 0)); return; }
   }
   if (w.kind === 'pistol') {
     const R = palm(body, 'Right', _a), f = _d.subVectors(bone(body, 'RightHand').getWorldPosition(_b), bone(body, 'RightForeArm').getWorldPosition(_c));
@@ -79,9 +110,12 @@ export function weaponTick(body) {
 }
 /* how well the hands meet the weapon: the right palm on the grip (cm) and, for a rifle in the hands, the left palm on the handguard (cm) */
 export function heldReport(body) {
-  const w = body.userData.weapon, mode = modeOf(body), out = { mode, right: 0, left: 0 }; if (!w || mode !== 'hands') return out;
+  const w = body.userData.weapon, mode = modeOf(body), out = { mode, right: 0, left: 0, rightTip: 0, leftTip: 0 }; if (!w || mode !== 'hands') return out;
   weaponTick(body); w.mesh.updateMatrixWorld(true); const R = palm(body, 'Right', V()), L = palm(body, 'Left', V());
   out.right = R.distanceTo(V().setFromMatrixPosition(w.mesh.matrixWorld)) * 100;
+  const inv = new THREE.Matrix4().copy(w.mesh.matrixWorld).invert(), tip = (side) => { const b = bone(body, side + 'HandMiddle3') || bone(body, side + 'HandMiddle2'); return b ? wpos(b).applyMatrix4(inv) : null; };
+  const rt = tip('Right'); if (rt) out.rightTip = Math.max(0, Math.hypot(rt.x, rt.y + 0.018, rt.z + 0.012) - 0.045) * 100;   /* right fingertips to the pistol grip (a 4.5 cm ball round its middle) */
+  if (w.kind === 'rifle') { const lt = tip('Left'); if (lt) { const z = Math.max(0.15, Math.min(0.45, lt.z)); out.leftTip = Math.max(0, Math.hypot(lt.x, lt.y - 0.062, lt.z - z) - 0.045) * 100; } }   /* left fingertips to the handguard */
   if (w.kind === 'rifle') {   /* the left palm to the handguard: a tube of radius 2.6 cm along the barrel line from 15 to 45 cm ahead of the grip */
     const p = L.clone().applyMatrix4(new THREE.Matrix4().copy(w.mesh.matrixWorld).invert()), z = Math.max(0.15, Math.min(0.45, p.z));
     out.left = Math.max(0, Math.hypot(p.x, p.y - 0.062, p.z - z) - 0.026) * 100; }
