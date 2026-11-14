@@ -16,6 +16,7 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 |---|---|
 | New to the repo | `docs/ARCHITECTURE.md` (layout, how a game runs, the build) |
 | Using shared code (animation, sound, loading) | `docs/ENGINE.md` |
+| Adding or changing people in any game (the standard every game follows) | `docs/PEOPLE.md` |
 | Making characters, animations, buildings or packed models | `docs/PIPELINE.md` |
 | Writing dialogue, goals, journal pages, chapters | `docs/CONTENT.md` |
 | Checking your work | `docs/TESTING.md` |
