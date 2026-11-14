@@ -178,26 +178,32 @@ function tapPerson(cx, cy) {
 const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); };
 /* how far along a path (metres from its start) the nearest point to (x, z) is */
 function pathS(d, x, z) { let b = 1e9, s = 0, out = 0; for (let i = 1; i < d.length; i++) { const ax = d[i - 1][0], az = d[i - 1][1], dx = d[i][0] - ax, dz = d[i][1] - az, L = Math.hypot(dx, dz) || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (L * L))), k = Math.hypot(x - ax - dx * t, z - az - dz * t); if (k < b) { b = k; out = s + t * L; } s += L; } return out; }
+/* put a moving person at (n.x, n.z) on the land. Only the change in the ground's height is added to their height: the foot pinning (groundFeet, every frame)
+   has already set how high the body rides in this step of the walk, and resetting that each frame made people bounce. */
+function stand(n, G) { const m = n.m, g = G.h(n.x, n.z); m.position.x = n.x; m.position.z = n.z; m.position.y += g - (m.userData.ground || 0); m.userData.ground = g; }
 const setWalk = (n, on, clip = 'Walk') => { if (on && (!n.walking || n.clip !== clip)) { n.walking = true; n.clip = clip; n.ctl.play(clip); } else if (!on && n.walking) { n.walking = false; n.ctl.play(null); } };
 function npcTick(n, dt) {
   const m = n.m; if (!m || !m.visible) return; if (POSTER) { m.rotation.y = n.ry0; return; } if (n.scripted) return;
   const G = P_().G, d = Math.hypot(state.x - n.x, state.z - n.z), isNear = !n.extra && (d < 3.2 || talkWith === n);
   if (n.follow) {   /* someone who leads or follows you along a trail: they keep `offset` metres ahead of you (or behind, if negative) */
     const f = n.follow, want = Math.max(f.min || 0, Math.min(f.max === undefined ? f.len : f.max, pathS(f.dense, state.x, state.z) + f.offset)), diff = want - n.s;
-    if (Math.abs(diff) > 0.3 && talkWith !== n) { n.s += Math.sign(diff) * Math.min(Math.abs(diff), (Math.abs(diff) > 5 ? 3.5 : 2.2) * dt); setWalk(n, true); const [x, z, a] = pathAt(f.dense, n.s); n.x = x + Math.cos(a) * (f.side || 0); n.z = z - Math.sin(a) * (f.side || 0); faceTo(m, diff > 0 ? a : a + PI, dt, 6); }
+    /* they match your pace: a gentle walk for a small gap, a quicker walk at your own speed, and a run only when you hurry or they are well behind. A guide is never left trailing. */
+    const gap = Math.abs(diff), sp = Math.min(gap > 6 ? 5.4 : 4.0, 0.9 + gap * 1.15), run = sp > 3.0 || (n.clip === 'Run' && n.walking && sp > 2.5);
+    if (gap > (n.walking ? 0.1 : 0.9) && talkWith !== n) {   /* once walking they keep on until they arrive, and they do not set off again for a small gap: no stop-start shuffle */
+      n.s += Math.sign(diff) * Math.min(gap, sp * dt); setWalk(n, true, run && CL.Run ? 'Run' : 'Walk'); const [x, z, a] = pathAt(f.dense, n.s); n.x = x + Math.cos(a) * (f.side || 0); n.z = z - Math.sin(a) * (f.side || 0); faceTo(m, diff > 0 ? a : a + PI, dt, 6); }
     else { setWalk(n, false); if (d < 9) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt, 3); }
-    m.userData.ground = G.h(n.x, n.z); m.position.set(n.x, m.userData.ground, n.z); return;
+    stand(n, G); return;
   }
   if (n.goto) {   /* walk straight to a spot, then stand there */
     const dx = n.goto[0] - n.x, dz = n.goto[1] - n.z, dist = Math.hypot(dx, dz), sp = (n.speed || 1.5) * dt;
     if (dist <= sp) { n.x = n.goto[0]; n.z = n.goto[1]; n.ry0 = n.goto[2] === undefined ? m.rotation.y : n.goto[2]; n.goto = null; setWalk(n, false); } else { n.x += dx / dist * sp; n.z += dz / dist * sp; setWalk(n, true, n.gait || 'Walk'); faceTo(m, Math.atan2(dx, dz), dt, 7); }
-    m.userData.ground = G.h(n.x, n.z); m.position.set(n.x, m.userData.ground, n.z); return;
+    stand(n, G); return;
   }
   if (!n.path) { if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else if (!n.extra) faceTo(m, n.ry0, dt, 2); return; }
   if (n.wait > 0) { setWalk(n, false); n.wait -= dt; return; }
   setWalk(n, true); const to = n.path[(n.i + 1) % n.path.length], dx = to[0] - n.x, dz = to[1] - n.z, dist = Math.hypot(dx, dz), sp = (n.speed || 1.1) * dt; faceTo(m, Math.atan2(dx, dz), dt);
   if (dist <= sp) { n.x = to[0]; n.z = to[1]; n.i = (n.i + 1) % n.path.length; n.wait = 1.5 + Math.random() * 1.5; } else { n.x += dx / dist * sp; n.z += dz / dist * sp; }
-  m.userData.ground = G.h(n.x, n.z); m.position.set(n.x, m.userData.ground, n.z);
+  stand(n, G);
 }
 
 /* ---------- a glowing speech mark over each person, and a bubble on the nearest ---------- */
@@ -451,7 +457,7 @@ const lead = (n, dense, offset, o = {}) => { n.follow = { dense, len: pathLength
 ON[10] = () => { if (cur === 'estate') { say(SAY.start, 4200); SFX.owl(); } };
 ON[11] = () => { const P = PL.estate, S = P.spots, q = byId('quamin'), m = byId('mama'); lead(q, S.trail.dense, 4.6, { max: S.sRoadS - 1.2, side: 0.45 }); lead(m, S.trail.dense, -2.6, { side: -0.4 }); say(SAY.follow, 3800); SFX.owl(); };
 ON[12] = () => { say(SAY.road, 3600); ctr.t = 0; };
-ON[13] = () => { const S = PL.estate.spots, q = byId('quamin'); if (q && q.follow) q.follow.max = S.top - 2.2; say(SAY.roadDone, 3200); $('glow').style.opacity = 0; SFX.whistle(); };
+ON[13] = () => { const S = PL.estate.spots, q = byId('quamin'); if (q && q.follow) { q.follow.max = S.top - 2.2; q.follow.min = 0; } say(SAY.roadDone, 3200); $('glow').style.opacity = 0; SFX.whistle(); };
 function estateTick(dt) {
   const P = P_(), S = P.spots, sP = pathS(S.trail.dense, state.x, state.z), w = byId('watchman'); if (w && w.m.userData.flame) w.m.userData.flame.scale.setScalar(0.6 + Math.random() * 0.2);
   /* you cannot run on ahead of the story: before you have talked, and before the road, the trail stops you */
@@ -459,6 +465,7 @@ function estateTick(dt) {
   if (stage === 11 && sP >= S.sRoadS - 2.2) setStage(12);
   else if (stage === 12 && w) {
     const dW = Math.hypot(state.x - w.x, state.z - w.z), onRoad = state.z < S.roadZ[1] - 0.2 && state.z > S.roadZ[0]; $('glow').style.opacity = clamp01((19 - dW) / 11) * (onRoad ? 0.95 : 0.6);
+    const q = byId('quamin'); if (q && q.follow && !ctr.qAcross && Math.hypot(S.crossX - w.x, 8 - w.z) > 21) { ctr.qAcross = 1; q.follow.max = S.sRoadN + 3.4; q.follow.min = S.sRoadN + 2.6; }   /* Quamin goes first: when the light is far he slips across and waits for you on the other side */
     ctr.t = (ctr.t || 0) + dt; if (ctr.t > 4) { if (dW > 20 && !onRoad && ctr.hint !== 'go') { ctr.hint = 'go'; say(SAY.roadGo, 3000); } else if (dW < 15 && !onRoad && ctr.hint !== 'wait') { ctr.hint = 'wait'; say(SAY.roadWait, 3000); } }
     if (onRoad && dW < 8.5 && !frozen) { frozen = true; say(SAY.roadSeen, 2600); flash(0.5, 60, '#ffb060'); setTimeout(() => flash(0, 500, '#ffb060'), 120); const [x, z] = pathAt(S.trail.dense, S.sRoadS - 4); const ep = EP; setTimeout(() => { if (ep !== EP) return; state.x = x; state.z = z; frozen = false; ctr.hint = ''; }, 900 * TS); }
     else if (sP >= S.sRoadN + 0.8) setStage(13);
@@ -521,7 +528,7 @@ function fightIntro() { const c = CARDS.fight; card(c.title, c.paras, [{ t: c.go
 async function fightSkip() { const c = CARDS.fightRead; unlock('trenches'); unlock('attacks'); await infoCard(c); fightAfter(); }
 function columnPlace(P, sHead, up, clip) {   /* the soldiers stand in single file on the path: the first at sHead, the others behind, 2.3 m apart */
   const S = P.spots; for (const n of P.extras) { if (n.column === undefined) continue; const s = sHead + n.column * 2.3, vis = s < S.sClimb - 1; n.scripted = true; n.cue = !vis; n.m.visible = vis && cur === 'watch'; if (!vis) continue;
-    const [x, z, a] = pathAt(S.climb.dense, s); n.x = x; n.z = z; n.m.userData.ground = P.G.h(x, z); n.m.position.set(x, n.m.userData.ground, z); n.m.rotation.y = up ? a + PI : a; if (n.clip !== clip) { n.clip = clip; n.ctl.play(clip === 'Idle' ? null : clip); } }
+    const [x, z, a] = pathAt(S.climb.dense, s); n.x = x; n.z = z; stand(n, P.G); n.m.rotation.y = up ? a + PI : a; if (n.clip !== clip) { n.clip = clip; n.ctl.play(clip === 'Idle' ? null : clip); } }
 }
 function fightTick(dt, t) {
   const P = PL.watch, S = P.spots, F = FIGHT; F.t += dt;
@@ -577,7 +584,7 @@ ON[54] = () => { const p = byId('phibba'); if (!p) return; p.ctl.base = p.ctl.ge
 function tagTick(n, dt) {   /* little Phibba holds your hand: she stays a step behind you wherever you go */
   const m = n.m, G = P_().G, d = Math.hypot(state.x - n.x, state.z - n.z); if (talkWith === n) return;
   if (d > 1.25) { const sp = Math.min(d - 1.0, (d > 3 ? 3.6 : 2.4) * dt), [x, z] = G.clamp(n.x + (state.x - n.x) / d * sp, n.z + (state.z - n.z) / d * sp); n.x = x; n.z = z; setWalk(n, true); faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt, 7); } else setWalk(n, false);
-  m.userData.ground = G.h(n.x, n.z); m.position.set(n.x, m.userData.ground, n.z);
+  stand(n, G);
 }
 function gunsIntro() { const c = CARDS.guns; card(c.title, c.paras, [{ t: c.go, go: () => { hideCard(); gunsRun(); } }, { t: c.skip, go: () => { hideCard(); infoCard(CARDS.gunsRead).then(() => ridgeDawn(true)); } }], { col: true }); }
 function gunsRun() {
@@ -683,7 +690,7 @@ function update(dt, now) {
   near = null; if (state.started && !busy && !frozen && !DIR.on && !HORN.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
   for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
-  if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible) groundFeet(m);
+  frameN++; for (const m of P.bodies) if (m.visible) groundFeet(m);   /* every frame: on a slope, every other frame shows as a bounce */
   if (P.tick) P.tick(dt, t); if (P.waters) for (const w of P.waters) w.userData.flow(dt); mist.tick(dt); smoke.tick(dt); fxTick(dt);
   if (P.smokers && (frameN & 15) === 0 && !envNow.stars) for (const s of P.smokers) if (Math.random() < s.rate * 0.3) smoke.emit(_p.set(s.x, groundAt(s.x, s.z) + s.y, s.z), new THREE.Vector3(0.25 + Math.random() * 0.2, s.mist ? 0.4 : 0.9, 0.1), { size: s.mist ? 2.2 : 0.5, grow: s.mist ? 5 : 2.6, life: s.mist ? 4 : 5, color: s.mist ? 0xffffff : 0xcfcfc8, opacity: s.mist ? 0.3 : 0.32 });
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
@@ -814,6 +821,17 @@ function devViews() {
   if (['audit', 'collision', 'seating'].includes(q.get('test'))) {   /* ?test=audit&p=town,watch : floating objects, people inside solids or off the ground, unreachable spots */
     (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); count += r.floating.length + r.inside.length + r.stuck.length; out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + P.npcs.length + ' people, ' + P.walls.length + ' wall pieces)'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
       const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + count; })();
+  }
+  if (q.get('test') === 'walkers') {   /* ?test=walkers : people who walk must not bounce, float or sink. Quamin and Mama are led up the estate trail and the soldiers up the path, 30 steps a second;
+       each step the lowest toe must be on the ground (within 3 cm) and the body must not jump more than 2.5 cm against the ground from one step to the next. */
+    (async () => { const out = [], toe = new THREE.Vector3(), probe = (n, tag, st) => { const m = n.m; m.updateMatrixWorld(true); let low = 1e9; for (const sd of ['Left', 'Right']) { const b = m.getObjectByName('mixamorig' + sd + 'ToeBase'); if (b) low = Math.min(low, b.getWorldPosition(toe).y); } const g = m.userData.ground || 0, off = low - g - 0.035, ride = m.position.y - g;
+        if (n.clip !== st.clip) { st.clip = n.clip; st.skip = 14; st.last = null; } if (st.skip > 0) { st.skip--; return; }   /* a change of step (standing to walking, walking to running) blends two poses for a third of a second: that is not judged */
+        if (Math.abs(off) > 0.03) st.float = Math.max(st.float, Math.abs(off)); if (st.last !== null && Math.abs(ride - st.last) > (n.clip === 'Run' ? 0.08 : 0.025)   /* a run really does rise and fall */) st.jump = Math.max(st.jump, Math.abs(ride - st.last)); st.last = ride; st.n++; };
+      let behind = 0; let starts = 0, was = false; const report = (name, st) => { out.push(name + ': ' + st.n + ' steps, worst toe gap ' + (st.float * 100).toFixed(1) + ' cm, worst jump ' + (st.jump * 100).toFixed(1) + ' cm' + (st.float || st.jump ? '  PROBLEM' : '')); return st.float || st.jump ? 1 : 0; }; let bad = 0;
+      startGame(true); await beginChapter(0, 11); { const P = PL.estate, S = P.spots, qn = byId('quamin'), ma = byId('mama'), a = { float: 0, jump: 0, last: null, n: 0 }, b = { float: 0, jump: 0, last: null, n: 0 }; qn.follow.max = S.top - 2; stage = 13;
+        for (let i = 0; i < 900; i++) { const [x, z] = pathAt(S.trail.dense, Math.min(S.top - 5, 6 + i * 0.075)); state.x = x; state.z = z; update(1 / 30); if (i > 20) { if (qn.walking) probe(qn, 'q', a); else { a.last = null; a.clip = null; } if (ma.walking) probe(ma, 'm', b); else { b.last = null; b.clip = null; } } if (i > 60 && qn.s < pathS(S.trail.dense, state.x, state.z) - 0.5) behind++; if (ma.walking && !was) starts++; was = ma.walking; } bad += report('Quamin leading on the estate trail', a) + report('Mama following on the estate trail', b); out.push('Quamin behind you: ' + behind + ' steps' + (behind ? '  PROBLEM' : '')); out.push('Mama set off ' + starts + ' times in 30 seconds of steady walking' + (starts > 12 ? '  PROBLEM (stop-start shuffle)' : '')); bad += (behind ? 1 : 0) + (starts > 12 ? 1 : 0); }
+      await beginChapter(3, 41); { const P = PL.watch, st = { float: 0, jump: 0, last: null, n: 0 }, n = P.extras.find((e) => e.column === 3); FIGHT.on = true; FIGHT.mode = 'march'; FIGHT.sHead = 100; for (let i = 0; i < 500; i++) { update(1 / 30); if (i > 20 && n.m.visible) probe(n, 's', st); } FIGHT.on = false; bad += report('a soldier climbing the path', st); }
+      document.title = 'WALKERS ' + bad; const el = $('autolog'); if (el) el.textContent = out.join('\n'); })();
   }
   if (q.get('test') === 'resume') {   /* saved games resume in the right place, and closing a finishing conversation still moves the story on */
     (async () => { const out = []; startGame(true); const at = () => 'place=' + cur + ' stage=' + stage + ' at ' + state.x.toFixed(0) + ',' + state.z.toFixed(0);
