@@ -156,9 +156,9 @@ function tubePipe(parent, pts, mat, radius = PR, seg = 120) {   /* the big pipe 
   const m = mat.clone(); m.map = mat.map.clone(); m.map.needsUpdate = true; m.map.repeat.set(len / 2.4, 3); if (m.bumpMap) m.bumpMap = m.map;
   return mesh(new THREE.TubeGeometry(curve, seg, radius, 36, false), m, 0, 0, 0, parent);
 }
-function saddle(parent, x, z, y0 = 0, top = PY - PR + 0.25, w = 0.7, mat = M.conc) {   /* a concrete support under the pipe: a footing, a block, and two cheeks rising up the sides of the pipe to cradle it */
+function saddle(parent, x, z, y0 = 0, top = PY - PR + 0.25, w = 0.7, mat = M.conc) {   /* a concrete support under the pipe: a footing and a block under the pipe */
   const g = grp(parent, x, y0, z); box(w, top - y0, PR * 1.7, mat, 0, (top - y0) / 2, 0, g); box(w + 0.3, 0.18, PR * 2.0, mat, 0, 0.09, 0, g);
-  for (const s of [-1, 1]) { const ch = box(w, 0.55, 0.3, mat, 0, top + 0.2, s * (PR * 0.98), g); ch.rotation.x = s * 0.35; } return g;
+  return g;
 }
 function handWheel(r = 0.55, spokes = 6, mat = M.ironPaint) {   /* a cast-iron valve hand wheel facing +z: rim, spokes, hub, and two handles on the rim */
   const g = grp(); const rim = mesh(new THREE.TorusGeometry(r, 0.045, 10, 40), mat, 0, 0, 0, g);
