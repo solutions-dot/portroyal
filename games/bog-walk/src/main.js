@@ -18,7 +18,7 @@ import { buildTube, R, SAND, ZMIN, ZMAX, ZM } from './tube.js';
 import { makeHand } from './hand.js';
 import { initTubeSound, setBeds, drip, scrapeSound, voice, hiss, clank, waterStep, heartbeat, boom, airSwell, initWorldSound, setWorld, setMotor, bell, whistle, valveTurn, cheer } from './sfx.js';
 import { ENV, mixEnv, buildStation, buildYard, buildRuins, buildKingston, noticeTex, journeyIcon } from './places.js';
-import { lantern, hold } from './props.js';
+import { lantern, hold, bucket } from './props.js';
 import { makeSmoke } from './trains.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, TALK, LATER, SEEN, SEEN_GROUP, JOURNEY, REPORT, WHY, AFTER, CHOICE_NAMES, JOURNAL } from './content.js';
 
@@ -268,9 +268,18 @@ function makeBody(s) {
   if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.userData.seatAnchor={top:s.seat}; m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
     m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
     if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat: the hip joint rides 12 cm above it, whatever the body's size */
+  if (s.carry) { const o = CARRY[s.carry](); grip(m, 'Right', o, { handleY: o.userData.handleY, scale: 1, lift: s.carry === 'bucket' ? 0.4 : 0.25, straighten: s.carry === 'bucket' ? 0.8 : 0.3 }); m.userData.held.push({ obj: o, bone: 'RightHand', label: s.carry }); }
   if (s.lamp) { const o = lantern(); grip(m,'Right',o,{handleY:o.userData.handleY||.31,scale:.85,lift:.4,straighten:.8}); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
   return m;
 }
+/* things people carry in one hand (engine/grip.js holds each by its handle, upright, clear of the body): their origin is the bottom middle, handleY the grip */
+const CARRY = {
+  bucket() { const o = bucket(0x8a9090); o.userData.handleY = 0.47; return o; },   /* a galvanised bucket held by its bail */
+  book() { const g = new THREE.Group(), c = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.24, 0.04), new THREE.MeshStandardMaterial({ color: 0x1c1a18, roughness: 0.7 })); c.position.y = 0.12; g.add(c);
+    const pg = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.228, 0.032), new THREE.MeshStandardMaterial({ color: 0xe8e0c8, roughness: 0.9 })); pg.position.set(0.006, 0.12, 0); g.add(pg); g.userData.handleY = 0.21; return g; },   /* a Bible, held at its top edge */
+  notebook() { const g = new THREE.Group(), c = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.17, 0.02), new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.8 })); c.position.y = 0.085; g.add(c);
+    const pg = new THREE.Mesh(new THREE.BoxGeometry(0.104, 0.16, 0.016), new THREE.MeshStandardMaterial({ color: 0xf0ead8, roughness: 0.9 })); pg.position.set(0.004, 0.085, 0); g.add(pg); g.userData.handleY = 0.15; return g; },   /* the reporter's notebook */
+};
 const PL = {}; let cur = 'tube';
 const BUILD = { station: buildStation, kingston: buildKingston, yard: buildYard, ruins: buildRuins };
 const placeLoading = {};
@@ -335,7 +344,10 @@ function npcTick(n, dt) {
 }
 
 /* ---------- a glowing mark over each person you can talk to, and a tap bubble with the name over the nearest ---------- */
-const BUBBLE = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 8, 64, 64, 62); g.addColorStop(0, 'rgba(255,190,70,0.9)'); g.addColorStop(0.35, 'rgba(255,180,60,0.45)'); g.addColorStop(1, 'rgba(255,170,50,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); x.fillStyle = '#f6c45c'; x.strokeStyle = 'rgba(70,45,10,0.85)'; x.lineWidth = 3; x.beginPath(); x.arc(64, 64, 15, 0, PI * 2); x.fill(); x.stroke(); x.fillStyle = '#fff3d0'; x.beginPath(); x.arc(59, 59, 5, 0, PI * 2); x.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+/* the far marker over someone you can talk to: a flat gold badge with a speech balloon, the same as the tap bubble, so it never looks like a lamp floating in the air */
+const BUBBLE = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.fillStyle = 'rgba(40,26,8,0.55)'; x.beginPath(); x.arc(64, 68, 50, 0, PI * 2); x.fill(); x.fillStyle = '#f0b93e'; x.strokeStyle = '#3a2608'; x.lineWidth = 6; x.beginPath(); x.arc(64, 62, 48, 0, PI * 2); x.fill(); x.stroke();
+  x.fillStyle = '#fff6dc'; x.strokeStyle = '#3a2608'; x.lineWidth = 4; x.beginPath(); x.ellipse(64, 58, 28, 21, 0, 0, PI * 2); x.fill(); x.stroke(); x.beginPath(); x.moveTo(50, 74); x.lineTo(44, 90); x.lineTo(62, 78); x.fill(); x.fillStyle = '#3a2608'; for (const dx of [-12, 0, 12]) { x.beginPath(); x.arc(64 + dx, 58, 4.5, 0, PI * 2); x.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
 const TALK_SVG = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12c0 4-4 7-9 7-1.2 0-2.4-.2-3.4-.5L3 20l1.5-4.2C3.6 14.7 3 13.4 3 12c0-4 4-7 9-7s9 3 9 7z"/><circle cx="8" cy="12" r=".6" fill="currentColor"/><circle cx="12" cy="12" r=".6" fill="currentColor"/><circle cx="16" cy="12" r=".6" fill="currentColor"/></svg>';
 const EYE_SVG = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const TB = { el: null, v: new THREE.Vector3(), rects: [], rectT: 0 };
@@ -458,23 +470,39 @@ $('pzx').onclick = () => closePuzzle(false); $('pzdone').onclick = () => closePu
 let stage = 0, best = 0;
 function refreshGoal(quiet) { if (cur === 'tube') return; const g = GOALS[stage]; setGoal(g ? g(ctr) : '', quiet); }
 function showHint() { $('hint').textContent = TOUCH ? (MODE === 'tube' ? 'Left thumb to walk. Drag to look. Tap the rust.' : 'Left thumb to walk. Drag to look. Tap a person to talk.') : (MODE === 'tube' ? 'WASD to walk. Drag to look. E to scrape.' : 'WASD to walk. Drag to look. Space or Enter to talk or use.'); N.hintT = 0; }
-/* the helper: stand still or stall for a while and the goal opens again, and the "This way" pill points to what to do next */
-const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false };
+/* the helper (the same rules as the other games): stand still for 15 s, or take 50 s over one goal, and the goal opens again and a gold arrow marks the next
+   thing to do: a down arrow with "Here!" floating over the person or the place, or a side arrow ("This way", "Turn around") when it is off the screen.
+   The arrow is moved up or down out of the way of every word and button (and the tap bubble); if there is no free spot it waits. In the Tube the night keeps its own cue (#way). */
+const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false, rectT: -1, rects: [] }, _nv = new THREE.Vector3();
+const NUDGE_AVOID = ['goal', 'icons', 'clock', 'sub', 'toast', 'way', 'pick', 'act', 'holdbox', 'skip', 'exit', 'hint', 'barT', 'barB', 'dialogue', 'tbub'];
 function nudgeTarget() {
-  const P = P_(); if (!P) return null; const a = P.actions.find((x) => x.on()); if (a) return [a.x, a.z];
-  let bt = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && markWanted(n)) { const d = Math.hypot(S.x - n.x, S.z - n.z); if (d < bd) { bd = d; bt = [n.x, n.z]; } } return bt;
+  const P = P_(); if (!P) return null; const a = P.actions.find((x) => x.on()); if (a) return [a.x, a.z, 1.7];
+  let bt = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && markWanted(n)) { const d = Math.hypot(S.x - n.x, S.z - n.z); if (d < bd) { bd = d; bt = [n.x, n.z, headTop(n) + 0.75]; } } return bt;
+}
+function placeNudge(x, y, cls, label, fresh) {   /* show the arrow near (x, y) on the screen, moved to the nearest spot that covers no word or button */
+  const el = $('nudge'), W = innerWidth, H = innerHeight, lab = el.querySelector('span'); if (el.className !== cls) el.className = cls; if (lab.textContent !== label) lab.textContent = label; el.hidden = false;
+  const now = performance.now(); if (fresh || now - NUDGE.rectT > 250) { NUDGE.rectT = now; NUDGE.rects = NUDGE_AVOID.map($).filter((e) => e && !e.closest('[hidden]') && getComputedStyle(e).visibility !== 'hidden' && getComputedStyle(e).display !== 'none' && (e.tagName !== 'P' || e.textContent.trim()) && !(e.id === 'sub' && e.classList.contains('dim'))).map((e) => e.getBoundingClientRect()).filter((r) => r.width > 1 && r.height > 1); }
+  const hw = (el.offsetWidth || 90) / 2 + 4, hh = (el.offsetHeight || 80) / 2 + 4; x = Math.max(hw + 6, Math.min(W - hw - 6, x));
+  const free = (xx, yy) => yy - hh >= 4 && yy + hh <= H - 4 && !NUDGE.rects.some((q) => xx - hw < q.right && q.left < xx + hw && yy - hh < q.bottom && q.top < yy + hh);
+  for (let k = 0; k < 60; k++) for (const sy of [1, -1]) { const yy = y + sy * k * 10; if (free(x, yy)) { el.style.left = x + 'px'; el.style.top = yy + 'px'; return true; } }
+  el.hidden = true; return false;
 }
 function nudgeTick(now) {
-  if (MODE !== 'world') return; const w = $('way'), quiet = S.started && !locked() && !RIDE.on && goalText && $('holdbox').hidden;
+  const el = $('nudge'); if (MODE !== 'world') { el.hidden = true; return; } if (!$('way').hidden) $('way').hidden = true;
+  const quiet = S.started && !locked() && !RIDE.on && goalText && $('holdbox').hidden && $('dialogue').hidden && !fading;
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(S.x - NUDGE.lx, S.z - NUDGE.lz) > 0.6) { NUDGE.lx = S.x; NUDGE.lz = S.z; NUDGE.still = now; }
   if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30); NUDGE.still = now; }
   const tgt = quiet ? nudgeTarget() : null;
   if (!NUDGE.on && quiet && tgt && (now - NUDGE.still > 15 || now - NUDGE.since > 50)) { NUDGE.on = true; setGoal(goalText, true); }
   if (NUDGE.on && tgt && Math.hypot(S.x - tgt[0], S.z - tgt[1]) < 2.4) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
-  const show = NUDGE.on && !!tgt; if (w.hidden === show) w.hidden = !show; if (!show) return;
-  const rel = bearingTo(tgt[0], tgt[1]), behind = Math.abs(rel) > 2.2, ahead = Math.abs(rel) < 0.45;
-  $('waytext').textContent = behind ? 'Turn around' : ahead ? 'Straight ahead' : 'This way'; $('wayarrow').style.transform = behind ? 'rotate(-90deg) scaleX(-1)' : ahead ? 'rotate(-90deg)' : 'rotate(' + (rel > 0 ? 180 : 0) + 'deg)';
+  if (!NUDGE.on || !tgt) { if (!el.hidden) el.hidden = true; return; }
+  showNudgeAt(tgt);
+}
+function showNudgeAt(tgt, fresh) {   /* the arrow for a target [x, z, height]: over it when it is in view, at the side of the screen when it is not */
+  const W = innerWidth, H = innerHeight, rel = bearingTo(tgt[0], tgt[1]); _nv.set(tgt[0], tgt[2] || 1.8, tgt[1]).project(camera);
+  if (Math.abs(rel) < 0.55 && _nv.z < 1 && Math.abs(_nv.x) < 0.95) { const sy = (1 - _nv.y) / 2 * H; return placeNudge((_nv.x + 1) / 2 * W, Math.max(70, Math.min(H * 0.7, sy)), 'down', sy > H * 0.8 ? 'Look down' : 'Here!', fresh); }
+  const left = rel > 0, behind = Math.abs(rel) > 2.2; return placeNudge(left ? 60 : W - 60, H * 0.45, left ? 'left' : 'right', behind ? 'Turn around' : 'This way', fresh);
 }
 
 /* ---------- saving: kept in this browser only ---------- */
@@ -522,7 +550,7 @@ $('reset').onclick = () => { if (fading || !S.started) return; closeJournal(); l
 $('exit').onclick = () => { if (locked()) return; card('Leave Zeke\'s story?', ['You can come back to it from the Chapters list.'], [{ t: 'Yes, go into the Tube', go: () => { hideCard(); beginChapter(2); } }, { t: 'No, stay here', go: hideCard }]); };
 
 function resetTransient() {   /* leave anything running: scripted scenes, a ride, the night's timers, the cinematic layer */
-  EP++; TICKS.length = 0; frozen = false; RIDE.on = false; bars(false); hideHud(false); captionOff(); fadeTo('#000', 0, 0); $('sub').classList.add('dim'); $('holdbox').hidden = true; $('pick').hidden = true; $('exit').hidden = true; $('skip').hidden = true; $('way').hidden = true; $('act').hidden = true; $('vig').style.opacity = 0;
+  EP++; TICKS.length = 0; frozen = false; RIDE.on = false; bars(false); hideHud(false); captionOff(); fadeTo('#000', 0, 0); $('sub').classList.add('dim'); $('holdbox').hidden = true; $('pick').hidden = true; $('nudge').hidden = true; NUDGE.on = false; $('exit').hidden = true; $('skip').hidden = true; $('way').hidden = true; $('act').hidden = true; $('vig').style.opacity = 0;
   N.q = []; N.intro = false; N.turn = null; $('skiphint').hidden = true; setClock(''); HOLD.v = 0; HOLD.on = false; setWorld({}, 0.1); setBeds({}, 0.1); smoke.clear(); leaveTalk(); closePuzzle(false); closeJournal(); closeChapters(); closeCredits(); hideCard();
 }
 async function beginChapter(i, st) {
@@ -591,9 +619,9 @@ ON[21] = async () => {   /* the first electric car glides out of the depot, with
   await wait(1.4); let x0 = car.position.x; const ok = await tween(9, (k) => { car.position.x = -46 + 26 * (1 - Math.pow(1 - k, 2)); const v = (car.position.x - x0) / Math.max(1e-3, 1 / 30); x0 = car.position.x; for (const w of car.userData.wheels) w.rotation.z -= 0.08 * Math.sign(v + 1e-6); setMotor(Math.min(6, Math.abs(v))); if (k > 0.25 && !ON[21].c) { ON[21].c = 1; cheer(16); for (const n of P.extras) if (n.ctl && CL.Cheer) n.ctl.play(['Cheer', 'Clap', 'Wave'][(n.x * 10 | 0) % 3]); say('', 'The car rolls out by itself. No mules! The crowd cheers.', 4200); } if (!N.turn) S.yaw += (wrapA(Math.atan2(-(car.position.x - S.x), -(0 - S.z)) - S.yaw)) * 0.04; });
   ON[21].c = 0; if (!ok) return; bell(1); setWorld({ motor: 0.0 }); await wait(1.2); bars(false); frozen = false; setStage(22);
 };
-ON[23] = async () => {   /* the ride: on the back platform, down the street toward the foot of King Street */
+ON[23] = async () => {   /* the ride: on the front platform, down the street toward the foot of King Street */
   const P = PL.kingston, car = P.car; if (cur !== 'kingston') return; RIDE.on = true; $('exit').hidden = true; bars(true); const fl = car.userData.floor;
-  const put = () => { S.x = car.position.x - 3.4; S.z = 0.3; S.eye = fl + 1.5; }; put(); S.yaw = -PI / 2; S.pitch = 0; bell(2); setWorld({ motor: 0.06 });
+  const put = () => { S.x = car.position.x + 3.0; S.z = 0.05; S.eye = fl + 1.5; };   /* on the front platform, beside the motorman's controller, looking down the street */ put(); S.yaw = -PI / 2; S.pitch = 0; bell(2); setWorld({ motor: 0.06 });
   say('', 'Ding, ding! Off we go.', 3000); let lastX = car.position.x;
   const ok = await tween(20, (k, dt) => { car.position.x = -20 + 100 * ease(k); const v = (car.position.x - lastX) / Math.max(1e-3, dt); lastX = car.position.x; for (const w of car.userData.wheels) w.rotation.z -= v * dt / 0.38; setMotor(Math.min(8, v)); put();
     if (k > 0.2 && !ON[23].a) { ON[23].a = 1; say('', 'The car glides down the street. People wave.', 3800); cheer(10); } if (k > 0.55 && !ON[23].b) { ON[23].b = 1; say('', 'On toward the foot of King Street.', 3800); } });
@@ -724,7 +752,7 @@ function tick(dt, clockDt = dt) {
   /* the camera's own acting: a low rumble as the water comes, a slow glance at the floor at the first sign of water, a view that narrows as the dark closes in
      and widens as you reach the sky, and the hand rising a little when the black bars are in. None of it changes where you look: your own turning is added to it. */
   if (N.turn) { N.turn.t += dt; const k = ease(N.turn.t / N.turn.dur); S.yaw = N.turn.from + N.turn.d * k; if (N.turn.t >= N.turn.dur) N.turn = null; }
-  if (MODE === 'tube') { const w = $('way'), on = S.started && ['rise', 'dark'].includes(N.phase), rel = on ? bearingToLight() : 0, behind = Math.abs(rel) > 2.2, show = on && Math.abs(rel) > 0.6 && !N.turn;
+  if (MODE === 'tube') { if (!$('nudge').hidden) $('nudge').hidden = true; const w = $('way'), on = S.started && ['rise', 'dark'].includes(N.phase), rel = on ? bearingToLight() : 0, behind = Math.abs(rel) > 2.2, show = on && Math.abs(rel) > 0.6 && !N.turn;
     if (w.hidden === show) w.hidden = !show; if (show) { $('waytext').textContent = behind ? 'Turn around' : 'This way'; $('wayarrow').style.transform = behind ? 'rotate(-90deg) scaleX(-1)' : 'rotate(' + (rel > 0 ? 180 : 0) + 'deg)'; } }   /* the cue: a gold arrow and "This way", or "Turn around" when the light is behind you */
   else nudgeTick(time);
   const ph = N.phase; let shake = 0; if (MODE === 'tube' && S.started && ph !== 'shot') shake = (ph === 'rise' ? 0.4 + 0.6 * ease(N.wl) : ph === 'dark' ? 1 : ph === 'out' ? Math.max(0, 1 - N.t / D(1.6)) : 0) * 0.0045;
@@ -751,5 +779,5 @@ function devViews() { if (__DEV__) import('./dev.js').then((m) => m.dev(DEV)); }
 const DEV = __DEV__ ? { THREE, q, $, S, N, T, PL, hand, keys, camera, scene, renderer, CL, story, ctr, unlocked, doneCh, JOURNAL, CHAPTERS, REPORT, WHY, AFTER, JOURNEY, TALK_TARGETS, BUILD, DONE, SAFE, CH_PLACE,
   get cur() { return cur; }, get stage() { return stage; }, set stage(v) { stage = v; }, get MODE() { return MODE; }, get near() { return near; }, get frozen() { return frozen; }, get fading() { return fading; }, get envNow() { return envNow; }, set manual(v) { manual = v; }, set poster(v) { POSTER = v; }, RIDE, HOLD, TB,
   tick, render, begin, startGame, startWork, startIntro, skipIntro, startRise, startDark, startTrickle, startBoots, skipNight, setPhase, resetNight, setGoal, setClock, say, toast, bars, hideHud, caption, captionOff, fadeTo, calcLift, nearPatch, act, showEnd, showPick,
-  ensurePlace, enterPlace, enterTube, beginChapter, setStage, setEnv, showPerson, byId, startTalk, convo, leaveTalk, activate, look, openOrder, openSort, closePuzzle, card, hideCard, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeChapters2: closeChapters, closeCredits, unlock, saveGame, loadGame, applySave, panelsOpen, locked,
+  ensurePlace, enterPlace, enterTube, showNudgeAt, placeNudge, NUDGE, beginChapter, setStage, setEnv, showPerson, byId, startTalk, convo, leaveTalk, activate, look, openOrder, openSort, closePuzzle, card, hideCard, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeChapters2: closeChapters, closeCredits, unlock, saveGame, loadGame, applySave, panelsOpen, locked,
   auditPlace, auditHeld, auditSeated, snapMeshes, groundFeet, LANE, ZM, ZMIN, ZMAX, R, SAND, ENV, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), wantsTalk, get modelsReady() { return modelsReady; }, ON, noticeTex } : null;
