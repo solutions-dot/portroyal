@@ -71,7 +71,7 @@ export function makeHand(camera) {
   /* Everything is in the hand's own space: the handle runs straight up the y axis through (0, y, 0); +z is toward you, +x is to your right. */
   const RH = HANDMESH.info.handleRadius, FISTY = -0.457;   /* the handle's radius where the hand holds it (the hand was closed round exactly this), and the height of the middle of the fist */
   const skinCol = new THREE.Color().setRGB(SKIN[0] / 255, SKIN[1] / 255, SKIN[2] / 255, THREE.SRGBColorSpace).multiplyScalar(SKIN_LIGHT);
-  const skin = new THREE.MeshStandardMaterial({ color: skinCol, roughness: 0.58, metalness: 0, vertexColors: true, emissive: 0x160a05 });
+  const skin = new THREE.MeshStandardMaterial({ color: skinCol, roughness: 0.58, metalness: 0, vertexColors: true, emissive: 0x2c150a });   /* a warm glow of its own, so the hand never goes black in the dark of the pipe */
   const nailMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(160 / 255, 108 / 255, 86 / 255, THREE.SRGBColorSpace).multiplyScalar(SKIN_LIGHT), roughness: 0.5, vertexColors: true, emissive: 0x1a100b });
   const add = (geo, mat, name) => { const m = new THREE.Mesh(geo, mat); m.name = name; inner.add(m); return m; };
 
@@ -93,7 +93,7 @@ export function makeHand(camera) {
   const light = new THREE.PointLight(0xffa860, 4, 18, 1.2); light.position.set(-0.02, -0.07, 0.1); inner.add(light);
 
   /* ----- the hand, the forearm and the shirt sleeve: one modelled mesh split into named parts ----- */
-  const cloth = new THREE.MeshStandardMaterial({ color: 0x8a8272, roughness: 0.95, emissive: 0x14110b, vertexColors: true });
+  const cloth = new THREE.MeshStandardMaterial({ color: 0x776f60, roughness: 0.95, emissive: 0x14110b, vertexColors: true });
   for (const [name, g] of handParts(FISTY)) add(g, name === 'sleeve' || name === 'cuff' ? cloth : /nail$/.test(name) ? nailMat : skin, name);
   inner.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.renderOrder = 10; } });
 
@@ -113,7 +113,7 @@ export function makeHand(camera) {
       root.position.set(wide ? Math.min(0.34, halfW * 0.7) : halfW * (tn.x ?? 0.31), H.baseY + H.lift, -depth); H.baseX = root.position.x; H.halfW = halfW; H.setPanelOpen(H.panelOpen); root.rotation.set(0, tn.ry ?? (wide ? 0.34 : 0.0), 0);   /* on a tall phone the hand turns a little less, so the forearm leaves through the bottom edge, not the side */
       inner.rotation.set(tn.rx ?? -0.2, 0, tn.rz ?? (wide ? -0.15 : -0.07)); H.s = s * (tn.sm ?? 1); H.setCine(H.cs); },
     update(time, k) {
-      rag.emissiveIntensity = 0.1 + 0.9 * Math.min(1, k); const f = k * (0.86 + 0.1 * Math.sin(time * 9.1) + 0.06 * Math.sin(time * 21)), f2 = k * (0.9 + 0.1 * Math.sin(time * 13.3 + 1));
+      rag.emissiveIntensity = 0.1 + 0.9 * Math.min(1, k); skin.emissiveIntensity = 0.8 + 0.5 * Math.min(1, k); const f = k * (0.86 + 0.1 * Math.sin(time * 9.1) + 0.06 * Math.sin(time * 21)), f2 = k * (0.9 + 0.1 * Math.sin(time * 13.3 + 1));
       flame.material.opacity = Math.max(0, Math.min(1, f)); flame.visible = f > 0.02; flame.scale.set(0.17 * (0.92 + 0.14 * Math.sin(time * 11)), 0.26 * (0.9 + 0.18 * Math.sin(time * 14)), 1);
       core.material.opacity = Math.max(0, Math.min(1, f2)); core.visible = f2 > 0.02; core.scale.set(0.085 * (0.9 + 0.2 * Math.sin(time * 17 + 2)), 0.15 * (0.88 + 0.22 * Math.sin(time * 19 + 0.5)), 1); core.position.x = 0.004 * Math.sin(time * 7.3);
       light.intensity = 4 * Math.max(0, f); } };

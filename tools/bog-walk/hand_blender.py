@@ -83,7 +83,7 @@ for i, d in enumerate(SK['dom']):
     if d and any(d.startswith('RightHand' + fn) for fn in FINGERS):
         h, t = HEAD(d), TAIL(d); u = (SK['co'][i] - h) @ (t - h) / np.dot(t - h, t - h); c = h + (t - h) * min(1.0, max(0.0, u))
         SK['co'][i] = c + (SK['co'][i] - c) * SLIM
-SH = take(shirt, {'RightForeArm', 'RightArm'})
+SH = take(shirt, {'RightArm'})
 log('kept', len(SK['co']), 'skin vertices and', len(SH['co']), 'sleeve vertices')
 
 # ---------- forward kinematics: every bone's transform (rest space to posed space) is a chain of turns about the joints' rest positions ----------
@@ -309,8 +309,9 @@ def pose_thumb(x):
     for n, a, b in ((n2, x[3], x[4]), (n3, x[5], 0)):
         bd = TAIL(n) - HEAD(n); bd /= np.linalg.norm(bd); lat = np.cross(bd, p); lat /= np.linalg.norm(lat)
         LOCAL[n] = rotm(lat, a, HEAD(n)) @ (rotm(bd, b, HEAD(n)) if b else np.eye(4))
-def thumb_cost(x, verbose=False):
-    pose_thumb(x); M = mats()
+TLIM = np.array([0.6, 0.6, 0.5, 0.6, 0.25, 0.5])   # how far each thumb joint may turn (radians): the roll about the thumb's own axis (x[4]) and the tip bend (x[5]) are kept small,
+def thumb_cost(x, verbose=False):                    # so the thumb is a natural, nearly straight thumb with no twist and no hooked tip
+    x = np.clip(x, -TLIM, TLIM); pose_thumb(x); M = mats()
     P = skin(SK, thI, M); d = radial(P, C) - RM
     pen = np.sum(np.minimum(0, d + PRESS) ** 2) * 4e7
     P3 = P[np.isin(thI, th3)]; P2 = P[np.isin(thI, th2)]
@@ -318,12 +319,12 @@ def thumb_cost(x, verbose=False):
     c2 = (radial(P2, C).min() - RM + PRESS * 0.5) ** 2 * 1.5e5
     tipP = (M[BI['RightHandThumb3']] @ np.r_[TAIL('RightHandThumb3'), 1])[:3]; baseP = (M[BI['RightHandThumb2']] @ np.r_[HEAD('RightHandThumb2'), 1])[:3]
     dirn = tipP - baseP; dirn /= np.linalg.norm(dirn)
-    align = (1 - dirn @ AX) * 30
+    align = (1 - dirn @ AX) * 60
     m3 = P3.mean(0) - C; m3 -= AX * (m3 @ AX); m3 /= np.linalg.norm(m3)
     side = (1 - m3 @ WANT) * 12
     dd = np.sqrt(((P[:, None, :] - fiP[None, ::2, :]) ** 2).sum(-1)).min(1)
     clash = np.sum(np.minimum(0, dd - 0.0035) ** 2) * 2e7
-    reg = sum(v * v for v in x) * 0.3
+    reg = (x[0] ** 2 * 1.0 + x[1] ** 2 * 1.0 + x[2] ** 2 * 4.0 + x[3] ** 2 * 2.0 + x[4] ** 2 * 60.0 + x[5] ** 2 * 6.0)
     cost = pen + c3 + c2 + align + side + clash + reg
     if verbose: log('thumb cost', {k_: round(float(v_), 3) for k_, v_ in dict(pen=pen, c3=c3, c2=c2, align=align, side=side, clash=clash, reg=reg).items()})
     return cost
@@ -351,14 +352,16 @@ for start in ([0, 0, 0, 0, 0, 0], [0.5, 0, 0, 0.3, 0, 0.2], [-0.5, 0, 0, 0.3, 0,
     x, v = nelder_mead(thumb_cost, start, 0.35, 260)
     if best is None or v < best[1]: best = (x, v)
 x, v = nelder_mead(thumb_cost, best[0], 0.08, 300)
-thumb_cost(x, True); report['thumb'] = [round(float(q) / DEG, 1) for q in x]
+x = np.clip(x, -TLIM, TLIM); thumb_cost(x, True); report['thumb'] = [round(float(q) / DEG, 1) for q in x]
 log('thumb angles', report['thumb'])
 
 # ---------- the wrist: turn the hand on the forearm so the forearm leaves toward the lower right, toward you (fx= fy= fz= in grip space) ----------
 def frame(A_, f_):
     yv = np.array(A_); zv = -f_ - A_ * ((-f_) @ A_); zv = zv / np.linalg.norm(zv); return yv, zv, np.cross(yv, zv)
 yv, zv, xv = frame(AX, f)
-want = np.array([num('fx', 0.15), num('fy', -0.42), num('fz', 0.89)]); want /= np.linalg.norm(want)
+ROLL = num('roll', 30) * DEG   # turn the whole hand about the handle, so the curled fingers face the player a little more
+RY = np.array([[math.cos(ROLL), 0, -math.sin(ROLL)], [0, 1, 0], [math.sin(ROLL), 0, math.cos(ROLL)]])   # x' = x cos + z sin, z' = -x sin + z cos (row vectors)
+want = np.array([num('fx', 0.3), num('fy', -0.42), num('fz', 0.85)]); want /= np.linalg.norm(want); want = want @ RY.T   # the direction the player sees, turned back to before the roll
 wantW = want[0] * xv + want[1] * yv + want[2] * zv
 have = HEAD('RightForeArm') - HEAD('RightHand'); have /= np.linalg.norm(have)
 # the hand turns so that the forearm's direction, seen from the hand, becomes "want": the hand turns by the rotation taking wantW to have
@@ -389,8 +392,6 @@ log('soft skin: the most the handle still goes into the skin is %.2f mm' % max(0
 yv, zv, xv = frame(AXg, fg)
 iy = [(Pall[ids(SK, {'RightHand%s2' % fn})] - Cg) @ yv for fn in ('Index', 'Pinky')]
 O = Cg + yv * (iy[0].mean() + iy[1].mean()) / 2
-ROLL = num('roll', 30) * DEG   # turn the whole hand about the handle, so the curled fingers face the player a little more
-RY = np.array([[math.cos(ROLL), 0, -math.sin(ROLL)], [0, 1, 0], [math.sin(ROLL), 0, math.cos(ROLL)]])   # x' = x cos + z sin, z' = -x sin + z cos (row vectors)
 G = lambda P: (np.c_[(P - O) @ xv, (P - O) @ yv, (P - O) @ zv] @ RY) * SCALE
 fore = HEAD('RightForeArm') - HEAD('RightHand'); fore /= np.linalg.norm(fore)
 report['forearm'] = [round(float(v_), 3) for v_ in (fore @ xv, fore @ yv, fore @ zv)]
@@ -407,7 +408,7 @@ def part_of(d):
 
 EL = HEAD('RightForeArm'); WR = HEAD('RightHand')
 tfore = lambda P: (P - EL) @ (WR - EL) / np.dot(WR - EL, WR - EL)    # 0 at the elbow, 1 at the wrist (rest space)
-FCUT = num('forecut', 0.3)       # keep the forearm from this far down from the elbow: only its lower part is ever on screen
+FCUT = num('forecut', 0.36)       # keep the forearm from this far down from the elbow: only its lower part is ever on screen
 out = bmesh.new(); play = out.faces.layers.int.new('part')
 def add_part(src, P, label, keep=None):
     bm = src['bm']; vs = [out.verts.new(q) for q in G(P)]
@@ -418,8 +419,26 @@ def add_part(src, P, label, keep=None):
         nf[play] = label(max(set(doms), key=doms.count))
 SREST_OUT = {i: SREST[i] for i in range(len(SREST))}   # (the skin's vertices come first in the output mesh, in the same order)
 add_part(SK, Pall, part_of, lambda fc: min(tfore(np.array(v.co)) for v in fc.verts) > FCUT)
-SHP = skin(SH, None, M)
-add_part(SH, SHP, lambda d: 8, lambda fc: min(tfore(np.array(v.co)) for v in fc.verts) > FCUT - 0.12)
+
+# a short rolled cuff and the open end of a sleeve, built round the forearm (the shirt mesh only reaches the upper arm). Rings along the forearm, quads between them.
+AXF = (WR - EL) / np.linalg.norm(WR - EL); uF = np.cross(AXF, [0, 0, 1.0]); uF /= np.linalg.norm(uF); vF = np.cross(AXF, uF)
+ST = SK['co']; tS = tfore(ST); domF = np.array([d == 'RightForeArm' for d in SK['dom']])
+def forearm_r(t):
+    t = max(t, float(tS[domF].min()) + 0.04)     # the kept forearm only reaches so far up; further up the radius is taken from its upper end
+    sel = domF & (np.abs(tS - t) < 0.04); d = ST[sel] - EL - np.outer((ST[sel] - EL) @ AXF, AXF); return float(np.median(np.linalg.norm(d, axis=1)))
+RINGS = [(0.30, 1.50, 8), (0.38, 1.42, 8), (0.46, 1.32, 8), (0.51, 1.25, 8), (0.52, 1.25, 14), (0.55, 1.36, 14), (0.58, 1.36, 14), (0.605, 1.20, 14), (0.612, 1.06, 14)]
+NS = 20; rows = []
+for t_, m_, lab_ in RINGS:
+    r_ = forearm_r(t_) * m_ if t_ < 0.6 else forearm_r(0.58) * m_; ctr = EL + (WR - EL) * t_
+    pts = np.array([ctr + (uF * math.cos(2 * math.pi * j / NS) + vF * math.sin(2 * math.pi * j / NS)) * r_ for j in range(NS)])
+    rows.append(([out.verts.new(q) for q in G(pts)], lab_))
+cuffF = []
+for (ra, la), (rb, lb) in zip(rows[:-1], rows[1:]):
+    for j in range(NS):
+        fc = out.faces.new([ra[j], ra[(j + 1) % NS], rb[(j + 1) % NS], rb[j]]); fc[play] = lb if lb == 14 else 8; cuffF.append(fc)
+out.normal_update(); cen = np.mean([np.array(v.co) for v in rows[3][0]], axis=0)
+if np.mean([np.array(fc.normal) @ (np.array(fc.calc_center_median()) - cen) for fc in cuffF[:NS]]) < 0:
+    for fc in cuffF: fc.normal_flip()
 
 # the nails: on each end joint, the faces on the back of the finger, toward its tip
 out.verts.index_update(); out.faces.ensure_lookup_table(); out.normal_update()
@@ -445,6 +464,10 @@ for i, fn in enumerate(['Thumb']):
         if up > 0 and np.array(fc.normal) @ back > 0.7 and up > np.linalg.norm(rv) * 0.75: fc[play] = 13
 
 bmesh.ops.delete(out, geom=[v for v in out.verts if not v.link_faces], context='VERTS')
+if num('dissolve', 0.06) > 0:   # drop the vertices on nearly flat ground (the forearm, the back of the hand), never across two parts, to keep the phone's triangle count down
+    for fc in out.faces: fc.material_index = fc[play]
+    bmesh.ops.dissolve_limit(out, angle_limit=num('dissolve', 0.06), use_dissolve_boundaries=False, verts=out.verts[:], edges=out.edges[:], delimit={'MATERIAL'})
+    bmesh.ops.triangulate(out, faces=out.faces[:], quad_method='BEAUTY', ngon_method='BEAUTY')
 bmesh.ops.join_triangles(out, faces=out.faces[:], angle_face_threshold=math.pi, angle_shape_threshold=math.pi, cmp_seam=False, cmp_sharp=False, cmp_uvs=False, cmp_vcols=False, cmp_materials=False)
 me = bpy.data.meshes.new('hand'); out.to_mesh(me)
 for poly in me.polygons: poly.use_smooth = True
