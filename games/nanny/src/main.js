@@ -447,11 +447,14 @@ const ACTIONS_FOR = {
 
 /* ---------- chapter 1: the night road. Quamin leads, Mama follows; a watchman with a lantern walks the cart road. ---------- */
 const lead = (n, dense, offset, o = {}) => { n.follow = { dense, len: pathLength(dense), offset, ...o }; n.s = pathS(dense, n.x, n.z); };
+ON[10] = () => { if (cur === 'estate') { say(SAY.start, 4200); SFX.owl(); } };
 ON[11] = () => { const P = PL.estate, S = P.spots, q = byId('quamin'), m = byId('mama'); lead(q, S.trail.dense, 4.6, { max: S.sRoadS - 1.2, side: 0.45 }); lead(m, S.trail.dense, -2.6, { side: -0.4 }); say(SAY.follow, 3800); SFX.owl(); };
 ON[12] = () => { say(SAY.road, 3600); ctr.t = 0; };
 ON[13] = () => { const S = PL.estate.spots, q = byId('quamin'); if (q && q.follow) q.follow.max = S.top - 2.2; say(SAY.roadDone, 3200); $('glow').style.opacity = 0; SFX.whistle(); };
 function estateTick(dt) {
   const P = P_(), S = P.spots, sP = pathS(S.trail.dense, state.x, state.z), w = byId('watchman'); if (w && w.m.userData.flame) w.m.userData.flame.scale.setScalar(0.6 + Math.random() * 0.2);
+  /* you cannot run on ahead of the story: before you have talked, and before the road, the trail stops you */
+  const cap = stage === 10 ? 12 : stage === 11 ? S.sRoadS - 1.4 : 1e9; if (sP > cap + 0.4) { const [x, z] = pathAt(S.trail.dense, cap); state.x = x; state.z = z; if (stage === 10 && !ctr.capHint) { ctr.capHint = 1; toast(SAY.notYet, 3000); } }
   if (stage === 11 && sP >= S.sRoadS - 2.2) setStage(12);
   else if (stage === 12 && w) {
     const dW = Math.hypot(state.x - w.x, state.z - w.z), onRoad = state.z < S.roadZ[1] - 0.2 && state.z > S.roadZ[0]; $('glow').style.opacity = clamp01((19 - dW) / 11) * (onRoad ? 0.95 : 0.6);
@@ -477,6 +480,7 @@ function townTick(dt, t) {
   const P = P_(), S = P.spots; if (P.fire.userData.flame) P.fire.userData.flame.scale.set(0.9 + Math.sin(t * 11) * 0.08, 1.1 + Math.sin(t * 7.3) * 0.14, 1); if (S.hearth.intensity > 0) S.hearth.intensity = 2.2 + Math.sin(t * 13) * 0.3 + Math.sin(t * 5.1) * 0.3;
   if (stage === 20 && pathS(S.pathIn.dense, state.x, state.z) >= S.sIn - 1.2) setStage(21);
   if (stage >= 55 && stage <= 59) for (const b of S.burn) if (b.visible && Math.random() < dt * 0.5) smoke.emit(b.position, new THREE.Vector3(0.5, 1.8 + Math.random(), 0.2), { size: 2.2, grow: 8, life: 8, color: 0x5a524c, opacity: 0.42 });
+  if (stage >= 50 && stage <= 54 && !GUNS.on) { const sB = pathS(S.back.dense, state.x, state.z); if (sB > 9 && Math.hypot(state.x, state.z) > 15) { const [x, z] = pathAt(S.back.dense, 8.6); state.x = x; state.z = z; if (!ctr.stayHint) { ctr.stayHint = 1; toast(stage === 54 ? 'Go up the back trail from its start.' : SAY.stay, 3000); } } }   /* the back trail waits until everyone is ready */
   if (GUNS.on) gunsTick(dt, t);
 }
 async function hornLesson() {
@@ -496,7 +500,7 @@ async function nannyScene() {   /* Nanny is seen once, far off on the high rock,
 async function lookOut() {
   const ep = EP, P = P_(), S = P.spots; frozen = true; busy = false; bars(true); goalText = ''; $('goal').textContent = ''; S.redline.visible = true; say(SAY.look1, 4200);
   const a = eyeNow(), h = a[1], fs = S.far; await cut(a, [0.2, h + 0.5, 4.3], [-70, h - 34, 90], [30, h - 30, 120], 6); if (ep !== EP) return;
-  say(SAY.look2, 4400); await cut([0.2, h + 0.5, 4.3], [0.4, h + 0.6, 4.5], [30, h - 30, 120], [fs[0], fs[1] - 4, fs[2]], 5, 15); if (ep !== EP) return;
+  say(SAY.look2, 4400); await cut([0.2, h + 0.5, 4.3], [0.4, h + 0.6, 4.5], [30, h - 30, 120], [fs[0], fs[1] - 3, fs[2]], 5, 21); if (ep !== EP) return;
   say(SAY.look3, 4200); SFX.hornCall(CALLS.danger.notes, { far: 0.85, pan: 0.5, pitch: 300 }); await wait(4200); if (ep !== EP) return;
   endCut(); bars(false); state.yaw = PI - 0.3; state.pitch = -0.25; setStage(32);
 }
@@ -760,7 +764,11 @@ function devViews() {
       DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(at === 4 ? 10 : 22, h + (at === 4 ? 2 : 4), at === 4 ? 7 : 9); DIR.b = DIR.a; DIR.la = new THREE.Vector3(at === 4 ? 8 : 11, at === 4 ? -34 : -25, at === 4 ? 60 : 39); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 50; FOV = 50; resize(); for (let i = 0; i < 14; i++) update(0.05); }
   });
   if (shot === 'guns') go('town', 54, -22, -20.5, -2.3 + PI, 0.1).then((P) => { gunsRun(); for (let i = 0; i < 260; i++) update(0.05); state.x = -24; state.z = -22; state.yaw = 0.95; state.pitch = -0.1; const g = P.spots.guns[0], w = g.localToWorld(new THREE.Vector3(...g.userData.muzzle)); gunFlash(w.x, w.y, w.z, 3.2, 3); say(SAY.n4, 1e6); });
-  if (shot === 'look') go('watch', 31, 0, 3.5, PI, -0.2).then((P) => { P.spots.redline.visible = true; const h = groundAt(0, 3.5) + EYE, fs = P.spots.far; DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(0.4, h + 0.6, 4.5); DIR.b = DIR.a; DIR.la = new THREE.Vector3(fs[0], fs[1] - 4, fs[2]); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 15; FOV = 15; resize(); bars(true); say(SAY.look2, 1e6); for (let i = 0; i < 6; i++) update(0.05, 6000); });
+  if (shot === 'look') go('watch', 31, 0, 3.5, PI, -0.2).then((P) => { P.spots.redline.visible = true; const h = groundAt(0, 3.5) + EYE, fs = P.spots.far; DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(0.4, h + 0.6, 4.5); DIR.b = DIR.a; DIR.la = new THREE.Vector3(fs[0], fs[1] - 3, fs[2]); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 21; FOV = 21; resize(); bars(true); say(SAY.look2, 1e6); for (let i = 0; i < 6; i++) update(0.05, 6000); });
+  /* the paths the autoplayer never takes: "Read what happened instead" for both set pieces, and being seen by the watchman */
+  if (shot === 'skipfight') go('watch', 41, 0.2, 4.0, PI, -0.3).then(() => { fightIntro(); });
+  if (shot === 'skipguns') go('town', 54, -7.6, -8.1, 0.8, 0).then(() => { gunsIntro(); });
+  if (shot === 'seen') go('estate', 12, -2, 10, 0, 0).then((P) => { const w = byId('watchman'); w.x = 1; w.z = 8.2; w.wait = 99; w.m.position.set(1, groundAt(1, 8.2), 8.2); for (let i = 0; i < 40; i++) update(0.05); setTimeout(() => { for (let i = 0; i < 10; i++) update(0.05); document.title = 'SEEN back=' + (state.z > 12.6) + ' z=' + state.z.toFixed(1) + ' sub=' + $('sub').textContent; }, 400); });
   if (shot === 'poster') go('watch', 30, -0.4, -3.9, PI + 0.06, -0.03, ENV.dawn).then((P) => { $('hud').hidden = true; EYE = 1.75; P.spots.sticks.visible = false; });
   if (V[shot]) go(...V[shot]).then((P) => {
     if (shot === 'est2' || shot === 'est3' || shot === 'est4') { const S = P.spots, qn = byId('quamin'), m = byId('mama'); lead(qn, S.trail.dense, 4.6, { side: 0.45 }); lead(m, S.trail.dense, -2.6, { side: -0.4 }); for (let i = 0; i < 200; i++) update(0.05); state.yaw = V[shot][4]; }

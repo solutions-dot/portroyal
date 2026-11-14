@@ -254,6 +254,9 @@ export const LATER = {
 
 /* ---------- narration: short lines shown during scenes ---------- */
 export const SAY = {
+  start: 'Night on the estate. The cane stands taller than you.',
+  notYet: 'Talk to Mama and Quamin first.',
+  stay: 'Not yet. People here still need you.',
   follow: 'Quamin moves like a shadow. Follow him.',
   road: 'The cart road. A lantern swings in the dark.',
   roadWait: 'Wait in the shadows. Let the light pass.',
