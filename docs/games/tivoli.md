@@ -129,7 +129,7 @@ node tools/build.mjs _tivoli --dev          # dev build
 python3 -m http.server 8765                 # then open http://localhost:8765/games/_tivoli/site/
 ```
 
-Views: `?shot=fight`, `?test=clips`. The automatic audits and the layout test are **not wired yet** because there are no places. CLAUDE.md rule 8 says to wire them before the first PR that contains a place (copy the blocks from `games/kendal/src/main.js`, see `docs/TESTING.md` section 5).
+Views: `?shot=fight`, `?test=clips`. The automatic audits and the layout test are **not wired yet** because there are no places. When there are characters, `docs/PEOPLE.md` (on branch `claude/affectionate-pasteur-xvhvlq` until it is merged) also requires `?test=cloth`, `?test=walkers` and `?test=skin`. CLAUDE.md rule 8 says to wire them before the first PR that contains a place (copy the blocks from `games/kendal/src/main.js`, see `docs/TESTING.md` section 5).
 
 ## Research (14 November 2026: second pass, from primary documents and newspaper archives)
 
@@ -197,6 +197,10 @@ Real people in the game: none speak. Coke, politicians, commanders, officers and
 2. **The open decision** above (the West Kingston reviewer), and the elder's name and age.
 3. **A reviewer from West Kingston.**
 4. **Characters.** Tivoli needs its own people: the elder, a child, neighbours, police and soldiers in real uniforms, gunmen in everyday clothes. Skin must follow CLAUDE.md rule 9. See `docs/PIPELINE.md`.
+   - **Before adding any character**, run `git fetch --depth=50 origin claude/affectionate-pasteur-xvhvlq` and read `docs/PEOPLE.md` from that branch (`git show origin/claude/affectionate-pasteur-xvhvlq:docs/PEOPLE.md`). Follow it for every person. It may change before it is merged, so read it again at the start of each character session.
+   - **Owner's rules for this work:** put recipes in `tools/tivoli/people/` (one JSON file per body, named after the body); keep all game work inside `games/_tivoli/`; do **not** edit `tools/garvey/era.py`, `tools/people/pack.mjs` or anything in `engine/`, because another branch is changing them.
+   - **What PEOPLE.md requires, in short:** every recipe sets `era`, `hat` as a list of `[kind, material]` pairs, `collar` as a kind, and `colors` for every garment. Children are real child bodies built with `upscale` (start from Kendal's `boy.json` and `girl.json`). Build with `era.py`, pack with `pack.mjs --out games/_tivoli/site/models --lo <name>` (always pass `--out`). Skin follows CLAUDE.md rule 9. Wire `?test=cloth`, `?test=walkers` and `?test=skin` as well as audit, held and layout (see "Test it").
+   - **Open problem (found 14 November 2026):** `era.py` dresses people for about 1900 to 1957 and for 2020. The 1960s chapters can start from the 1957 clothes and the 2010 civilians from the 2020 ones. But 2010 police and soldier kit (uniforms, helmets, vests) is not in `era.py`, and the uniform cap is the only uniform piece. Use plain stand-ins (Kendal's guard uniform recoloured) until the other branch's work lands or the owner says how to proceed. Do not edit `era.py` to fix it.
 5. **Places**: Back-o-Wall, new Tivoli streets and flats, a home interior, a rooftop or window view, the community centre.
 6. **The real gunfight clips** (table above), weapon props, flashes and sounds.
 7. **Story code**: chapters, journal, goals, saving (copy the patterns from `games/kendal/src/`).
