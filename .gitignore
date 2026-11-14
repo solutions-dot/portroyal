@@ -34,3 +34,7 @@ games/_tivoli/site/app.js
 games/_tivoli/site/models/anims.js
 
 dist-testing/
+
+# Melissa: built files are made by tools/build.mjs (and by the Vercel build), so they are not tracked
+games/melissa/site/app.js
+games/melissa/site/models/anims.js
