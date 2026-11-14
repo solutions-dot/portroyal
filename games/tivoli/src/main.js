@@ -129,7 +129,7 @@ async function devViews(sailor) {
     cam(0, 4.6, 0, -0.12); document.title = 'rifles';
   }
   if (shot === 'hands') {   /* ?shot=hands&clip=ShootRifle (&t=0.3, &look=police, &kind=pistol, &yaw=0.6): one person close up, to look at the hands on the weapon */
-    const b = place(q.get('look') || 'soldier', 0, 0, +(q.get('yaw') || 0.6), q.get('clip') || 'ShootRifle'); arm(b, q.get('kind') || 'rifle', scene);
+    const b = place(q.get('look') || 'soldier', 0, 0, +(q.get('yaw') || 0.6), q.get('clip') || 'ShootRifle'); arm(b, q.get('kind') || 'rifle', scene); if (q.get('carry')) b.userData.weapon.carry = q.get('carry');
     const c = b.userData.anim.cur; c.time = c.getClip().duration * +(q.get('t') || 0.3); c.timeScale = 0;
     const cd = +(q.get('dist') || 1.15), ch = +(q.get('h') || 1.6); state.x = 0.15; state.z = cd; state.yaw = 0; state.pitch = -0.12; state.started = true; $('title').hidden = true; $('hud').hidden = true; state.camY = ch; document.title = 'hands';
   }
@@ -164,10 +164,10 @@ async function devViews(sailor) {
   }
   if (test === 'held') {   /* ?test=held: in every weapon clip, through the whole clip, the right palm is on the grip and (rifle) the left palm on the handguard, with the fingers closed round them. Faults: a palm more than 4 cm off, or fingertips more than 3 cm beyond the weapon. */
     const out = []; let bad = 0;
-    for (const [look, clip, kind] of [['soldier', 'ShootRifle', 'rifle'], ['police', 'PeekAim', 'pistol'], ['soldier', 'ProneFire', 'rifle'], ['soldier', 'ProneTurnR', 'rifle'], ['police', 'ShootRifle', 'rifle'], ['police', 'ShootPistol', 'pistol'], ['police', 'Gunplay', 'pistol']]) {
-      const b = makeBody({ ...LOOKS[look], anim: clip }); scene.add(b); arm(b, kind, scene); const ctl = b.userData.anim, D = ctl.cur.getClip().duration; let worstR = 0, worstL = 0, tipR = 0, tipL = 0;
-      for (let k = 0; k < 12; k++) { ctl.cur.time = D * k / 12; ctl.mx.update(0); groundFeet(b); const r = heldReport(b); worstR = Math.max(worstR, r.right); worstL = Math.max(worstL, r.left); tipR = Math.max(tipR, r.rightTip); tipL = Math.max(tipL, r.leftTip); }
-      const f = worstR > 4 || worstL > 4 || tipR > 3 || tipL > 3; if (f) bad++; out.push(`${f ? 'FAULT ' : ''}${look} ${clip} (${kind}): right hand ${worstR.toFixed(1)} cm from the grip, left hand ${worstL.toFixed(1)} cm from the handguard; fingertips ${tipR.toFixed(1)} cm (right) and ${tipL.toFixed(1)} cm (left) beyond them (worst of 12 moments)`);
+    for (const [look, clip, kind, carry] of [['soldier', 'Walk', 'rifle', 'ready'], ['soldier', 'Run', 'rifle', 'ready'], ['soldier', 'RunForward', 'rifle', 'ready'], ['soldier', 'RunLeft', 'rifle', 'ready'], ['soldier', 'RunRight', 'rifle', 'ready'], ['soldier', 'RunBackward', 'rifle', 'ready'], ['soldier', 'RunLow', 'rifle', 'ready'], ['soldier', 'RunLow2', 'rifle', 'ready'], ['soldier', 'WalkCrouchR', 'rifle', 'ready'], ['soldier', 'CrouchIdle', 'rifle', 'ready'], ['soldier', 'Ducking', 'rifle', 'ready'], ['police', 'Idle', 'rifle', 'ready'], ['soldier', 'ShootRifle', 'rifle'], ['police', 'PeekAim', 'pistol'], ['soldier', 'ProneFire', 'rifle'], ['soldier', 'ProneTurnR', 'rifle'], ['police', 'ShootRifle', 'rifle'], ['police', 'ShootPistol', 'pistol'], ['police', 'Gunplay', 'pistol']]) {
+      const b = makeBody({ ...LOOKS[look], anim: clip }); scene.add(b); arm(b, kind, scene); if (carry) b.userData.weapon.carry = carry; const ctl = b.userData.anim, D = ctl.cur.getClip().duration; let worstR = 0, worstL = 0, tipR = 0, tipL = 0, atL = 0;
+      for (let k = 0; k < 12; k++) { ctl.cur.time = D * k / 12; ctl.mx.update(0); groundFeet(b); const r = heldReport(b); if (b.userData.weapon.dbg && k === (clip === 'Run' ? 6 : 4)) out.push('   dbg ' + look + ' ' + clip + ' k' + k + ': ' + Object.entries(b.userData.weapon.dbg).map(([n, v]) => n + ' ' + (v * 100).toFixed(1)).join(', ')); worstR = Math.max(worstR, r.right); if (r.left > worstL) atL = k; worstL = Math.max(worstL, r.left); tipR = Math.max(tipR, r.rightTip); tipL = Math.max(tipL, r.leftTip); }
+      const f = worstR > 4 || worstL > 4 || tipR > 3 || tipL > 3; if (f) bad++; out.push(`${f ? 'FAULT ' : ''}${look} ${clip} (${kind}): right hand ${worstR.toFixed(1)} cm from the grip, left hand ${worstL.toFixed(1)} cm from the handguard; fingertips ${tipR.toFixed(1)} cm (right) and ${tipL.toFixed(1)} cm (left) beyond them (worst of 12 moments, left worst at moment ${atL})`);
       b.userData.weapon.mesh.removeFromParent(); ARMED.splice(ARMED.indexOf(b), 1); scene.remove(b); await waitTick(); }
     out.unshift('held: ' + bad + ' issues'); devLog(out, 'HELD ' + bad);
   }
