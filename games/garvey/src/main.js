@@ -7,6 +7,7 @@ import { gripTick, spreadArms } from '../../../engine/grip.js';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
 import { model, prefetch, onLoadFail } from '../../../engine/loader.js';
+import { auditCloth } from '../../../engine/audit.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -1383,6 +1384,12 @@ function devViews() {
   if (shot === 'hallseat2') inHall(13, 0.3, 0.9, -Math.PI / 2 + 0.25, 0.0, 'LEARN');
   if (shot === 'hallseat3') inHall(13, 0.0, 3.6, 0.0, 0.05, 'LEARN');
   if (shot === 'hallchat') inHall(10, -0.8, -1.2, 0, 0.04).then(() => startTalk(byId('garvey')));
+  if (q.get('test') === 'cloth') {   /* ?test=cloth : does an under layer show through its cover (skin through a shirt, a shirt through a jacket)? Every Garvey body, standing, walking, talking, waving and seated. &b=garvey1914,amy1914 picks bodies, &where adds the spot of the worst point. */
+    (async () => { const out = []; let bad = 0, pts = 0; while (!CL.Idle) await new Promise((r) => setTimeout(r, 100));
+      const POSES = [['Idle', 0.3], ['Walk', 0.25], ['Walk', 0.75], ['Talk1', 0.4], ['Wave', 0.5], ['SitIdle', 0.3]], names = (q.get('b') || 'amy1914,amyj1925,clerk1919,delegate1920,engineer1919,garvey1914,garvey1916,guide2020,hl_critic,hl_pressman,hl_woman,hl_worker,nb_elder,nb_seller,nb_youth,nurse1920,printer1907,seaman1919,steward1920,student2020,woman1914').split(',');
+      for (const nm of names) { const gl = await model(nm), m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); scene.add(m); m.userData.ground = 0; animate(m, 'Idle'); m.userData.anim.mx.update(0);
+        const r = auditCloth(nm, m, { poses: POSES, after: gripTick, where: q.has('where') }); out.push(nm + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const l of r.lines) out.push('  ' + l); bad += r.lines.length; pts += r.points; scene.remove(m); await new Promise((res) => setTimeout(res, 0)); }
+      out.unshift('cloth: ' + bad + ' issues (' + pts + ' points)'); let el = $('autolog'); if (!el) { el = document.createElement('pre'); el.id = 'autolog'; el.hidden = true; document.body.appendChild(el); } el.textContent = out.join('\n'); document.title = 'CLOTH ' + bad; })(); }
   if (q.get('test') === 'overlap') {   /* is anyone standing or walking inside furniture? Checks every place's people against its walls (furniture rectangles) */
     (async () => {
       const tm = []; for (const [nm, f] of [['hall', ensureHall], ['street', ensureStreet], ['press', ensurePress], ['dock', ensureDock], ['liberty', ensureLiberty], ['office', ensureOffice], ['park', ensurePark]]) { const t0 = performance.now(); await f(); tm.push(nm + ' ' + Math.round(performance.now() - t0) + 'ms'); }
