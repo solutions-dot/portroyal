@@ -18,10 +18,11 @@ import { buildRoad, buildStation45, buildRide45, buildHill } from './places1.js'
 import { buildKingston57, buildCoach, buildBeach, buildCrash, buildMemorial } from './places2.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL } from './content.js';
 import * as SFX from './sfx.js';
-import { HATS, LOOKS } from './cast.js';
+import { HATS, LOOKS, KID } from './cast.js';
 import { DECOR } from './decor.js';
 import * as TRN from './trains.js'; import * as PRP from './props.js';   /* whole modules, for the dev model viewer only */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditWalk, auditCloth } from '../../../engine/audit.js';
+import { skinProbe } from '../../../engine/skinprobe.js';
 import { makeBirds } from './detail.js';
 
 const $ = (id) => document.getElementById(id);
@@ -93,15 +94,15 @@ const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb
 const SIT_HIPS = 0.12;   /* metres from the seat to the hip joint of a seated person at full size (the audit checks it) */
 /* scale: the item's size. lift: how far (radians) the arm is held out from the body, so the item clears the hip, thigh and skirt. The handle height comes from each prop (userData.handleY). */
 let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.46 }, suitcase: { handleY: 0.5, scale: 0.8, lift: 0.4, straighten: 0.8, yaw: Math.PI / 2 }, lantern: { handleY: 0.32, scale: 0.85, lift: 0.26 }, bucket: { handleY: 0.49, scale: 0.9, lift: 0.34 }, basket: { dy: 0.12, scale: 0.8 } };
-const SKIN_LIGHT = 1.55;   /* the bodies' skin is built dark, so we lighten it a little (as in Marcus Garvey) so faces read in every light */
+const SKIN_LIGHT = 1.55;   /* owner rule 9: build Skin inside Marcus Garvey's range, then lighten it here so faces read in every light (docs/PIPELINE.md, "Skin"). Check with ?test=skin */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat); if (/^man_(work|shirt|elder|suit)$/.test(s.base) && !(s.hide || []).includes('Waistcoat')) offHats.push('Belt', 'Buckle');   /* a waistcoat covers the belt */   /* a body carries several hats; show the one this person wears (s.hat), or none */
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const mat = o.material, nm = mat.name || '';
-    if ((s.hide && s.hide.includes(nm)) || offHats.some((h) => nm === h || nm === h + 'Band')) { o.visible = false; return; }
-    o.material = mat.clone(); const t = nm === 'Hair' ? undefined : s.tint && s.tint[nm];   /* hair keeps its own painted colours: they fade into the skin at the hairline */
+    if ((s.hat === 'Wrap' && o.name === 'Bun') || (s.hide && s.hide.includes(nm)) || offHats.some((h) => nm === h || nm === h + 'Band')) { o.visible = false; return; }
+    o.material = mat.clone(); const T = s.tint || {}, t = nm === 'Hair' ? undefined : T[nm] !== undefined ? T[nm] : nm === 'Collar' ? T.Shirt : nm === 'Pocket' && T.Shirt !== undefined ? new THREE.Color(T.Shirt).multiplyScalar(0.9).getHex() : (nm === 'Sash' ? T.Belt : undefined);   /* a collar is the shirt's own cloth unless it is given a colour; a patch pocket is a shade darker than its shirt */   /* hair keeps its own painted colours: they fade into the skin at the hairline */
     if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
-    else if (nm === 'Skin' || nm === 'Hair') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); });
+    else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); else if (nm === 'Hair') o.material.color.setScalar(1); });   /* hair keeps its own painted colour (dark, or grey for an elder); only skin is lightened. The hairline fade is a few millimetres wide, so its skin end being slightly darker than the face is not seen */
   m.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
   m.scale.setScalar(s.scale || 1); m.position.set(s.x, s.ground || 0, s.z); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
   if (!/^Sit/.test(s.anim || '')) { const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.05; b.renderOrder = 1; m.add(b); }
@@ -179,23 +180,27 @@ function tapPerson(cx, cy) {
   for (const n of P_().people) if (n.m && n.m.visible && Math.hypot(state.x - n.x, state.z - n.z) < 6 && ray.intersectObject(n.m, true).length > 0) return n; return null;
 }
 const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); };
+const walkSpeed = (m, v = 1.1) => v * Math.sqrt(m.scale.y);   /* a small child has shorter legs: it walks slower than a grown-up, with quicker steps */
 function npcTick(n, dt) {
   const m = n.m; if (!m || !m.visible) return; if (POSTER) { m.rotation.y = n.ry0; return; }
   const ac = n.ctl, d = Math.hypot(state.x - n.x, state.z - n.z), seated = /^Sit/.test(n.anim || ''), isNear = !n.extra && !seated && ((d < 3.2 && !DEV_NOSTOP) || talkWith === n);
-  if(n.follow && talkWith!==n){
-    const distance=Math.hypot(state.x-n.x,state.z-n.z);
-    if(distance>1.5){
-      if(!n.followGoal||Math.hypot(state.x-n.followGoal[0],state.z-n.followGoal[1])>.8){n.followGoal=[state.x,state.z];n.followRoute=walkRoute([n.x,n.z],n.followGoal,PL[cur].walls,.22,PL[cur].bounds);}
-      const to=n.followRoute?.[0];if(to){const dx=to[0]-n.x,dz=to[1]-n.z,d=Math.hypot(dx,dz),sp=Math.min(d,(.8+Math.min(1.4,distance*.35))*dt);[n.x,n.z]=slideWalls([n.x,n.z],[n.x+dx/(d||1)*sp,n.z+dz/(d||1)*sp],PL[cur].walls,.22);if(d<.12)n.followRoute.shift();if(!n.walking){n.walking=true;ac.play('Walk');}faceTo(m,Math.atan2(dx,dz),dt);}
-      else if(n.walking){n.walking=false;ac.play(null);}
-    }else if(n.walking){n.walking=false;ac.play(null);}m.position.set(n.x,m.userData.ground,n.z);return;
-  }
+  if (n.follow && talkWith !== n) {   /* follow the player along a route round the walls (engine/placement.js); a child who must hurry to keep up breaks into a run */
+    const distance = Math.hypot(state.x - n.x, state.z - n.z);
+    if (distance > 1.5) {
+      if (!n.followGoal || Math.hypot(state.x - n.followGoal[0], state.z - n.followGoal[1]) > .8) { n.followGoal = [state.x, state.z]; n.followRoute = walkRoute([n.x, n.z], n.followGoal, PL[cur].walls, .22, PL[cur].bounds); }
+      const to = n.followRoute?.[0];
+      if (to) { const dx = to[0] - n.x, dz = to[1] - n.z, d = Math.hypot(dx, dz), v = .8 + Math.min(1.4, distance * .35), sp = Math.min(d, v * dt), fast = v > (n.running ? 1.45 : 1.75) * Math.sqrt(m.scale.y) && !!CL.Run;
+        [n.x, n.z] = slideWalls([n.x, n.z], [n.x + dx / (d || 1) * sp, n.z + dz / (d || 1) * sp], PL[cur].walls, .22); if (d < .12) n.followRoute.shift();
+        if (!n.walking || fast !== n.running) { n.walking = true; n.running = fast; ac.play(fast ? 'Run' : 'Walk'); } ac.pace(v); faceTo(m, Math.atan2(dx, dz), dt); }
+      else if (n.walking) { n.walking = false; n.running = false; ac.play(null); }
+    } else if (n.walking) { n.walking = false; n.running = false; ac.play(null); }
+    m.position.x = n.x; m.position.z = n.z; return; }   /* the height belongs to groundFeet */
   if (!n.path) { if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else if (!n.extra) faceTo(m, n.ry0, dt, 2); return; }
   if (isNear || n.wait > 0) { if (n.walking) { n.walking = false; ac.play(null); } if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else { n.wait -= dt; if (n.wait <= 0) { n.walking = true; ac.play('Walk'); } } return; }
   if (!n.walking) { n.walking = true; ac.play('Walk'); }
-  const to = n.path[(n.i + 1) % n.path.length], dx = to[0] - n.x, dz = to[1] - n.z, dist = Math.hypot(dx, dz), sp = 1.1 * dt; faceTo(m, Math.atan2(dx, dz), dt);
-  if (dist <= sp) { n.x = to[0]; n.z = to[1]; n.i = (n.i + 1) % n.path.length; n.wait = 2 + Math.random() * 3; n.walking = false; ac.play(null); } else { [n.x,n.z]=slideWalls([n.x,n.z],[n.x+dx/dist*sp,n.z+dz/dist*sp],PL[cur].walls,.22); }
-  m.position.set(n.x, m.userData.ground, n.z);
+  const to = n.path[(n.i + 1) % n.path.length], dx = to[0] - n.x, dz = to[1] - n.z, dist = Math.hypot(dx, dz), v = walkSpeed(m), sp = v * dt; faceTo(m, Math.atan2(dx, dz), dt); ac.pace(v);   /* the steps keep time with the ground, whatever the size of the body */
+  if (dist <= sp) { n.x = to[0]; n.z = to[1]; n.i = (n.i + 1) % n.path.length; n.wait = 2 + Math.random() * 3; n.walking = false; ac.play(null); } else { [n.x, n.z] = slideWalls([n.x, n.z], [n.x + dx / dist * sp, n.z + dz / dist * sp], PL[cur].walls, .22); }
+  m.position.x = n.x; m.position.z = n.z;   /* the height belongs to groundFeet: setting it here made walkers jump up and down every other frame */
 }
 
 /* ---------- a glowing speech mark over each person, and a bubble on the nearest ---------- */
@@ -663,18 +668,21 @@ function devViews() {
   /* ?shot=model&m=diesel : one code-built model on plain ground, drawn from four sides at once. &a= turns it, &d= is the camera distance, &h= the camera height, &t= the height it looks at.
      Vehicles stand on a piece of track. m can be: diesel, coach, early, late, first, third, sides, wagon, mule, mule3 (loaded), cart, truck, bench, props (the small things in a row), loads. */
   if (shot === 'model') go('beach', 43, 0, 0, 0, 0).then(async (P) => {
-    const pids = (q.get('ids') || '').split(',').filter(Boolean), plo = q.has('lo'); if (pids.length) await Promise.all(pids.map((id) => loadBase(LOOKS[id].base + (plo ? '_lo' : ''))));   /* ?shot=model&m=people&ids=gran,lloyd[&lo][&hold=suitcase][&anim=Walk] lines people up for a close look */
+    const pids = (q.get('ids') || '').split(',').filter(Boolean), plo = q.has('lo'); if (pids.length) await Promise.all(pids.map((id) => loadBase((LOOKS[id] || { base: id }).base + (plo ? '_lo' : ''))));   /* ?shot=model&m=people&ids=gran,lloyd[&lo][&hold=suitcase][&anim=Walk] lines people up for a close look */
     P.group.visible = false; $('hud').hidden = true; const m = q.get('m') || 'diesel', num = (k, d) => (q.has(k) ? +q.get(k) : d), root = new THREE.Group(); scene.add(root);
     const MODELS = { diesel: [() => TRN.dieselLoco(), 1, 17, 3.2, 1.2], coach: [() => TRN.woodCoach(7), 1, 15, 3, 1.2], early: [() => TRN.steamLoco('early'), 1, 11, 2.4, 0.6], late: [() => TRN.steamLoco('late'), 1, 12, 2.6, 0.8], first: [() => TRN.carriage1845('first'), 1, 8, 2.4, 0.6], third: [() => TRN.carriage1845('third'), 1, 8, 2.4, 0.6], sides: [() => TRN.carriage1845('third', 6.4, 2.4, 'sides'), 1, 9, 2.4, 0.6], wagon: [() => TRN.wagon(), 1, 9, 2.4, 0.4],
       mule: [() => PRP.mule(), 0, 3.6, 1.5, 0.95], mule3: [() => { const mu = PRP.mule(), L = [PRP.yamBasket(), PRP.provisionSack(), PRP.bananaLoad()]; L.forEach((o, i) => { mu.add(o); o.position.set(...mu.userData.slots[i]); o.rotation.set(0, i * 1.4, 0); o.scale.setScalar(i === 2 ? 0.9 : 0.8); }); mu.userData.dip = 1; return mu; }, 0, 3.6, 1.5, 0.95],
       cart: [() => PRP.cart(), 0, 5.5, 1.8, 0.7], truck: [() => PRP.truck(), 0, 7.5, 2.2, 1.0], bench: [() => PRP.bench(2.2), 0, 3.4, 1.3, 0.45],
-      people: [() => { const g = new THREE.Group(); pids.forEach((id, i) => { const b = makeBody({ ...LOOKS[id], bodyId: LOOKS[id].base + (plo ? '_lo' : ''), x: (i - (pids.length - 1) / 2) * 0.75, z: 0, ry: 0, anim: q.get('anim') || 'Idle', props: q.get('hold') ? [['RightHand', q.get('hold')]] : undefined }); b.userData.anim.mx.update(+(q.get('at') || 0.4)); gripTick(b); g.add(b); }); return g; }, 0, 3.2, 1.3, 1.0],
+      people: [() => { const g = new THREE.Group(); pids.forEach((id, i) => { const b = makeBody({ ...(LOOKS[id] || { base: id, tint: {} }), ...(q.get('hide') ? { hide: q.get('hide').split('-') } : {}), bodyId: (LOOKS[id] || { base: id }).base + (plo ? '_lo' : ''), x: (i - (pids.length - 1) / 2) * num('sp', 0.75), z: 0, ry: num('ry', 0), anim: q.get('anim') || 'Idle', props: q.get('hold') ? [['RightHand', q.get('hold')]] : undefined }); const c = b.userData.anim; if (q.has('at')) { c.base.time = num('at', 0) * c.base.getClip().duration; c.mx.update(0); } else c.mx.update(0.4); gripTick(b); g.add(b); if (q.has('at')) for (let k = 0; k < 30; k++) groundFeet(b);
+        if (q.has('ds')) b.traverse((o) => { if (o.isMesh) o.material.side = THREE.DoubleSide; });   /* &ds draws the back of every face too (dev only): a hole that vanishes with it is a face folded over */
+        if (q.has('cloth')) { g.updateMatrixWorld(true); const marks = [], tm = c.base.time, r = auditCloth(id, b, { poses: [[q.get('anim') || 'Idle', tm / c.base.getClip().duration]], after: gripTick, where: true, marks }); c.base.time = tm; c.mx.update(0); gripTick(b); console.log('CLOTH ' + id + '\n' + r.lines.join('\n'));   /* &cloth marks every show-through point with a red dot (dev only) */
+          const dot = new THREE.SphereGeometry(0.006, 6, 4), dm = new THREE.MeshBasicMaterial({ color: 0xff0020, depthTest: false }); for (const mk of marks) { const d = new THREE.Mesh(dot, dm); d.position.set(mk[0], mk[1], mk[2]); d.renderOrder = 9; d.userData.dot = true; g.add(d); } } }); return g; }, 0, 3.2, 1.3, 1.0],   /* &anim=Walk&at=0.25 poses everyone a quarter of the way through the loop, feet on the ground; &ry=1.57 turns them side-on; &sp= is the gap between them */
       props: [() => { const g = new THREE.Group(); [PRP.suitcase(), PRP.hamper(), PRP.bucket(), PRP.lantern(), PRP.sack(), PRP.crate(), PRP.barrel()].forEach((o, i) => { o.position.x = (i - 3) * 0.85; g.add(o); }); return g; }, 0, 3.6, 1.0, 0.3],
       loads: [() => { const g = new THREE.Group(); [PRP.yamBasket(), PRP.provisionSack(), PRP.bananaLoad(), PRP.torch(), PRP.standpipe(), PRP.board()].forEach((o, i) => { o.position.x = (i - 2.5) * 1.0; g.add(o); }); return g; }, 0, 4.2, 1.1, 0.4] };
     const [make, rail, d0, h0, t0] = MODELS[m] || MODELS.diesel, obj = make(); root.add(obj); const gy = rail ? -1.69 : 0;
     if (rail) { const tr = TRN.rails(30); tr.position.y = gy; root.add(tr); }
     const gr = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x9a9c8c, roughness: 1 })); gr.rotation.x = -PI / 2; gr.position.y = gy - 0.005; gr.receiveShadow = true; root.add(gr);
-    root.traverse((o) => { if (o.isMesh && o !== gr) o.castShadow = o.receiveShadow = true; });
+    root.traverse((o) => { if (o.isMesh && o !== gr && !o.userData.dot) o.castShadow = o.receiveShadow = true; });
     const a0 = num('a', 0.5), d = num('d', d0), h = num('h', h0), ty = num('t', t0), one = q.has('one'), tick = obj.userData.tick; let n = 0;
     MV = () => { if (tick) tick(performance.now() / 1000); const W = renderer.domElement.width, Hh = renderer.domElement.height, angs = one ? [a0] : [a0, a0 + 1.35, a0 + PI, a0 + PI + 1.1]; renderer.setScissorTest(true);
       angs.forEach((a, i) => { const w = one ? W : W / 2, hh = one ? Hh : Hh / 2, x = one ? 0 : (i % 2) * w, y = one ? 0 : (1 - (i >> 1)) * hh; renderer.setViewport(x / renderer.getPixelRatio(), y / renderer.getPixelRatio(), w / renderer.getPixelRatio(), hh / renderer.getPixelRatio()); renderer.setScissor(x / renderer.getPixelRatio(), y / renderer.getPixelRatio(), w / renderer.getPixelRatio(), hh / renderer.getPixelRatio());
@@ -725,6 +733,33 @@ function devViews() {
       openJournal(); await settle(); covered('journal panel in play', 'journal', ['jtitle', 'jclose']); closeJournal();
       openCredits(); await settle(); covered('credits panel in play', 'credits', ['crtitle', 'crclose']); closeCredits();
       document.title = 'LAYOUT ' + out.length; const el = $('autolog'); if (el) el.textContent = (out.length ? out : [W + 'x' + Hh + ': no layout problems']).join('\n'); })();
+  }
+  if (q.get('test') === 'cloth') {   /* ?test=cloth : does an under layer show through its cover (skin through a shirt, shirt through a waistcoat, hair through a hat)? Every body, full and light copy, each hat, with and without the waistcoat, in the poses the game uses. &b=man_suit,boy picks bodies, &full or &lo picks one kind. */
+    (async () => { const out = []; let bad = 0, pts = 0; startGame(true); await waitFor(() => modelsReady);
+      const POSES = [['Idle', 0.3], ['Walk', 0.25], ['Walk', 0.75], ['Talk1', 0.4], ['Wave', 0.5], ['SitIdle', 0.3]], bases = (q.get('b') || 'man_work,man_suit,man_shirt,man_elder,man_apron,woman_long,woman57,woman_elder,boy,girl,girl_small,guide2020,student2020').split(',');
+      for (const base of bases) for (const lo of [false, true]) { if ((lo && q.has('full')) || (!lo && q.has('lo'))) continue; const bodyId = base + (lo ? '_lo' : ''); await loadBase(bodyId);
+        const hats = [...(HATS[base] || []), false], vars = hats.map((hat, i) => ({ hat, hide: [], poses: i ? [['Idle', 0.3], ['Walk', 0.25]] : POSES }));   /* the first hat in every pose; the other hats and the bare head standing and in one stride */ if (/^man_(work|shirt|elder)$/.test(base)) vars.push({ hat: false, hide: ['Waistcoat'] }); if (base === 'man_shirt') vars.push({ hat: false, hide: ['Tie'] });
+        for (const va of vars) { const b = makeBody({ base, bodyId, tint: {}, scale: KID[base] || 1, x: 0, z: 0, ry: 0, anim: 'Idle', hat: va.hat, hide: va.hide }), name = bodyId + (va.hat ? ' +' + va.hat : '') + (va.hide.length ? ' -' + va.hide.join('-') : ''); scene.add(b);
+          const r = auditCloth(name, b, { poses: va.poses || POSES, after: gripTick, where: q.has('where') }); out.push(name + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const l of r.lines) out.push('  ' + l); bad += r.lines.length; pts += r.points; scene.remove(b); await new Promise((res) => setTimeout(res, 0)); } }
+      out.unshift('cloth: ' + bad + ' issues (' + pts + ' points)'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'CLOTH ' + bad; })();
+  }
+  if (q.get('test') === 'skin') {   /* ?test=skin : how dark each face really looks in daylight (engine/skinprobe.js). Every look, plus a sample of crowd people at the ends of their skin range. &env=day picks the light. */
+    (async () => { const out = []; startGame(true); await waitFor(() => modelsReady); setEnv(ENV[q.get('env') || 'day']);
+      const list = Object.keys(LOOKS).map((k) => [k, LOOKS[k]]); for (const sk of [0.9, 1.0, 1.15]) list.push(['crowd woman57 skin ' + sk, { base: 'woman57', tint: {}, skin: sk }], ['crowd man_suit skin ' + sk, { base: 'man_suit', tint: {}, skin: sk }]);
+      for (const [name, look] of list) { await loadBase(look.base); const b = makeBody({ ...look, x: 4000, z: 4000, ry: 0, anim: 'Idle', hat: false }); scene.add(b); b.userData.anim.mx.update(0.3); const r = skinProbe(renderer, scene, b); scene.remove(b);
+        out.push(name + ' (' + look.base + ', skin ' + (look.skin || 1) + '): mean ' + r.rgb.join(',') + '  darkest ' + r.lo.join(',') + '  lightest ' + r.hi.join(',')); }
+      let el = $('autolog'); el.textContent = out.join('\n'); document.title = 'SKIN ' + out.length; })();
+  }
+  if (q.get('test') === 'walkers') {   /* ?test=walkers : every body walks whole loops at the speed the game moves it. Feet must not slide, sink or float, the loop must join, and a carried thing must stay clear of the body. */
+    (async () => { const out = []; let bad = 0; startGame(true); await waitFor(() => modelsReady);
+      const kidOf = (base, scale) => ({ base, scale, tint: {} });
+      const LIST = [['muleteer'], ['gent45'], ['surveyor'], ['ezra57'], ['foreman'], ['higgler'], ['mother'], ['gran'], ['joy'], ['andre'], ['lloyd'], ['dawn'], ['girl 0.80', kidOf('girl', 0.8)], ['girl 0.68', kidOf('girl', 0.68)], ['boy 0.68', kidOf('boy', 0.68)],
+        ['man with a suitcase (light copy)', { ...LOOKS.gent45, bodyId: 'man_suit_lo', props: [['RightHand', 'suitcase']] }], ['woman with a hamper (light copy)', { ...LOOKS.mother, bodyId: 'woman57_lo', props: [['RightHand', 'hamper']] }], ['elder woman with a hamper (light copy)', { ...LOOKS.gran, bodyId: 'woman_elder_lo', props: [['RightHand', 'hamper']] }], ['dawn hurrying after you', LOOKS.dawn, 1.4], ['dawn running after you', LOOKS.dawn, 2.2, 'Run']];
+      for (const [name, look, vIn, clip] of LIST) { const spec = { ...(look || LOOKS[name]), x: 0, z: 0, ry: PI / 2, anim: clip || 'Walk' }; await loadBase(spec.bodyId || spec.base); const b = makeBody(spec); scene.add(b);
+        const v = vIn || walkSpeed(b), old = auditWalk(name, b, 1.1, { after: gripTick, paced: false, loops: 1 }), r = auditWalk(name, b, v, { after: gripTick, heldItems: b.userData.held });
+        out.push(`${name} (${spec.bodyId || spec.base} x${(spec.scale || 1).toFixed(2)}): stride ${(r.stride * 100).toFixed(0)} cm, ${v.toFixed(2)} m/s, clip speed ${r.pace.toFixed(2)}, slide ${r.slide.toFixed(1)} cm a loop (was ${old.slide.toFixed(1)} at 1.10 m/s and clip speed 1), shoes ${r.sink.toFixed(1)} to ${r.float.toFixed(1)} cm, biggest jump ${r.pop.toFixed(1)}x, body rises and falls ${r.rise.toFixed(1)} cm (at most ${r.bob.toFixed(1)} cm in a step)`);
+        for (const l of r.lines) { out.push('  ' + l); bad++; } scene.remove(b); }
+      out.unshift('walkers: ' + bad + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'WALKERS ' + bad; })();
   }
   if (q.get('test') === 'held') {
     if (q.get('hs')) for (const k of ['hamper', 'suitcase', 'bucket']) { GRIP[k] = { ...GRIP[k], scale: +q.get('hs') * (k === 'suitcase' ? 1.4 : 1), out: +q.get('ho') }; } if (q.get('ls')) GRIP.lantern = { ...GRIP.lantern, scale: +q.get('ls'), out: +q.get('lo') };   /* ?test=held : every carried thing, in every place: at the hand, upright, clear of the body */
