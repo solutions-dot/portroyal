@@ -192,18 +192,18 @@ function clRelation(A, B) {   /* which sample points of piece A are meant to lie
   const G = B.g.userData.clGrid || (B.g.userData.clGrid = clGrid(B.rest, B.idx, 0.03)), p = [0, 0, 0], near = [], under = []; let below = 0;
   for (let i = 0; i < A.samples.length / 3; i++) { clPoint(A.rest, A.samples, i, p); const h = clNear(p, B.rest, B.idx, G); if (!h || h.side > 0.004 || Math.abs(h.along) > 0.03) continue; near.push(i); if (h.along < 0) { below++; if (h.along < -0.001) under.push(i); } }
   const ra = clRank(A.name), rb = clRank(B.name), known = ra >= 0 && rb >= 0; if (known && (ra >= rb || (ra === 0 && rb === 1))) { m.set(B.g, null); return null; }   /* skin under hair is not tested: the hair is painted to fade into the skin at its edge */
-  r = near.length < 8 ? null : below >= near.length * (known ? 0.7 : 0.9) ? near : (below <= near.length * 0.3 && !known) ? null : under; if (r && !r.length) r = null; m.set(B.g, r); return r; }
-export function auditCloth(id, body, { poses = [['Idle', 0.3]], after = null, skip = null } = {}) {
+  r = near.length < 8 ? null : below >= near.length * (known ? 0.5 : 0.9) ? near : below <= near.length * 0.3 ? null : under;   /* two pieces whose order is known: every point of the under one that lies beneath a face of the cover is held to it, so a speck that is already through in the rest shape is caught too */ if (r && !r.length) r = null; m.set(B.g, r); return r; }
+export function auditCloth(id, body, { poses = [['Idle', 0.3]], after = null, skip = null, where = false, marks = null } = {}) {
   const ctl = body.userData.anim, out = { lines: [], points: 0, worst: 0 }, parts = clParts(body), sc = body.getWorldScale(new THREE.Vector3()).x || 1, v = new THREE.Vector3(), p = [0, 0, 0]; if (!ctl || parts.length < 2) return out;
   for (const [clipName, at] of poses) { const act = ctl.get(clipName); if (!act) continue; ctl.mx.stopAllAction(); act.reset().play(); act.time = at * act.getClip().duration; ctl.mx.update(0); if (after) after(body); body.updateMatrixWorld(true);
     for (const P of parts) { P.o.skeleton.update(); const n = P.pos.length / 3; for (let i = 0; i < n; i++) { P.o.getVertexPosition(i, v).applyMatrix4(P.o.matrixWorld); P.pos[i * 3] = v.x; P.pos[i * 3 + 1] = v.y; P.pos[i * 3 + 2] = v.z; } P.grid = null; }
     const grid = (X) => X.grid || (X.grid = clGrid(X.pos, X.idx, 0.03 * sc));
     for (const A of parts) for (const B of parts) { if (A === B || /^(Body|Skin)$/.test(B.name) || A.mat === B.mat || (/Sole|Shoes/.test(A.name) && /Sole|Shoes/.test(B.name)) || (skip && skip(A.name, B.name))) continue;   /* cloth outside the skin is always right; two pieces of one cloth (jacket and lapels) cannot show through each other; a sole wraps its shoe on purpose */
-      const rel = clRelation(A, B); if (!rel) continue; const G = grid(B); let n = 0, worst = 0;
+      const rel = clRelation(A, B); if (!rel) continue; const G = grid(B); let n = 0, worst = 0, wi = 0;
       for (const i of rel) { clPoint(A.pos, A.samples, i, p); const h = clNear(p, B.pos, B.idx, G); if (!h || h.side > 0.004 * sc || h.along <= 0.0005 * sc) continue; const al = h.along; let hid = false;
         for (const C of parts) { if (C === A || C === B || C.mat === A.mat) continue; const hc = clNear(p, C.pos, C.idx, grid(C)); if (hc && hc.side < 0.004 * sc && hc.along < -0.0005 * sc) { hid = true; break; } } if (hid) continue;   /* still under a third piece (a shirt through a waistcoat, under a jacket): nobody can see it */
-        n++; if (al > worst) worst = al; }
-      if (n) { out.points += n; out.worst = Math.max(out.worst, worst / sc * 1000); out.lines.push(`${id} ${clipName}@${at}: ${A.name} shows through ${B.name}: ${n} points, worst ${(worst / sc * 1000).toFixed(1)} mm`); } } }
+        n++; if (marks) marks.push([p[0], p[1], p[2], A.name, B.name]); if (al > worst) { worst = al; wi = i; } }
+      if (n) { clPoint(A.pos, A.samples, wi, p); out.points += n; out.worst = Math.max(out.worst, worst / sc * 1000); out.lines.push(`${id} ${clipName}@${at}: ${A.name} shows through ${B.name}: ${n} points, worst ${(worst / sc * 1000).toFixed(1)} mm` + (where ? ` at x ${p[0].toFixed(3)} y ${p[1].toFixed(3)} z ${p[2].toFixed(3)}` : '')); } } }
   ctl.mx.stopAllAction(); ctl.base.reset().play(); ctl.cur = ctl.base; ctl.mx.update(0); if (after) after(body);
   return out;
 }

@@ -36,6 +36,7 @@ Port Royal views:
 | `quake2`, `swim`, `boat` | the earthquake and the swim |
 | `camp4`, `npc3` | the camp, Benning |
 | `gwalk` | 12 side-on frames of Galdy's walk as data URLs |
+| `sheet` | one body in the game's light: `&who=galdy&clip=Walk&zoom=full` (or `top`, `legs`, `head`); rows are standing and three moments of the clip, columns front, side, back, three-quarter. Pictures are left in `window.__sheet` as data URLs |
 | `walkcheck` | scans walk clips for jumps and loop seams |
 | `move`, `step`, `pad`, `nswalk` | step the frame loop by hand: walking, controller, a scripted walk into the second street |
 | `fbquit` | starts the flashback, picks a chapter, and checks it cleans up |
@@ -86,6 +87,8 @@ timeout 280 google-chrome --headless=new --no-sandbox --use-gl=swiftshader --ena
 timeout 150 google-chrome --headless=new --no-sandbox --use-gl=swiftshader --enable-unsafe-swiftshader --window-size=667,375 \
   --virtual-time-budget=60000 --dump-dom "http://localhost:8765/games/kendal/site/index.html?test=layout" | sed -n '/<pre id="autolog"/,/<\/pre>/p'
 ```
+
+Port Royal has `?test=held` (the soldier's half-pike, Grace's basket, Kofi's crate, standing and walking) and `?test=cloth` (every body standing, mid-stride, talking and sitting; `&b=galdy,kofi` picks bodies). Its place audit and layout test are not wired yet.
 
 Bog Walk (`docs/games/bog-walk.md`) is a first-person game with no people yet, so its `?test=held` checks the hand and torch directly (finger count, grip on the stick, on screen) instead of calling `auditHeld`, and its `?test=audit` adds a rule that nothing hung in the pipe may be outside the wall. It is a second model for games like that.
 

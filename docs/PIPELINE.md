@@ -10,49 +10,46 @@ Everything runs from the repo root. Scratch output goes to `build/` (git-ignored
 - **MakeHuman data**, for eyes and helper meshes: `git clone https://github.com/makehumancommunity/makehuman /tmp/mh`. Then set `MAKEHUMAN=/tmp/mh/makehuman`, or keep that default path.
 - **Headless Chrome**, for tests (see TESTING.md).
 
-## 1. Characters (men): `tools/people/npc.py`
+## 1. Port Royal's people (1690): recipes in `tools/people/`, built by `tools/garvey/era.py`
 
-Each character is one JSON file in `tools/people/`. The script builds a MakeHuman body, cuts clothes from helper meshes, paints vertex colours, rigs it with the shared Mixamo skeleton and writes `<name>.glb`.
+Each man is one JSON file in `tools/people/` (`galdy.json`, `kofi.json` and so on, one file each). They are built by the same builder as the later games, `tools/garvey/era.py` (section 5). A recipe with top-level `"era": 1690` gets the 1690 cut. The old builder `tools/people/npc.py` is retired and kept only for reference.
 
 ```bash
-python3 tools/people/npc.py "$(cat tools/people/mendes.json)"      # writes games/port-royal/site/models/mendes.glb
-NPC_OUT=games/garvey/site/models/ python3 tools/people/npc.py "$(cat tools/people/x.json)"   # another game
-python3 tools/people/preview_heads.py turtler,mendes,constable       # renders build/heads.png to check
-python3 tools/people/preview_body.py buc1,ned                        # build/front.png and build/back.png
+MAKEHUMAN=~/mh/makehuman NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/era.py "$(cat tools/people/mendes.json)"   # writes build/people/mendes.glb
+node tools/people/pack.mjs --src build/people --out games/port-royal/site/models mendes                                  # writes models/mendes.js
+node tools/build.mjs port-royal --dev                                                                                     # then look: ?shot=sheet&who=mendes and ?test=cloth (docs/TESTING.md)
 ```
 
 JSON fields:
-- `name`
+- `name`, `era` (1690)
 - `body`: MakeHuman macros 0 to 1: `gender` (1 is male), `age`, `muscle`, `weight`, `height`, `proportions`, `african`, `caucasian`, `asian`.
 - `garments`:
 
   | Key | Values |
   |---|---|
-  | `sleeve` | 0 to 1, how far down the arm |
-  | `coat` | `true` |
-  | `coatsleeve` | 0 to 1 |
-  | `coathem` | skirt length above the knee, for example 0.02 to 0.06 (longer skirts clip the knees when walking) |
-  | `coatopen` | `true` by default: the skirt is open at the front below the waist, as 1690 coats were, so the legs pass through when walking. Set `false` for a closed skirt. There is also a vent up the back. The front panels follow their own thigh and the back follows the hips, so walking does not push the legs through the cloth (check with `?shot=gwalk&clip=Walk&cam=front`, and `&who=soldier` for the soldier) |
-  | `breeches` | `true` |
-  | `breechkind` | `"slops"` for wide sailor breeches |
-  | `shoes`, `stockings`, `apron` | `true` |
-  | `hat` | `"felt"` (fitted to the head) or `"cap"` |
-  | `bands` | `true` gives a cravat |
+  | `sleeve` | 0 to 1, how far down the arm the shirt sleeve comes. Sleeves hang as loose tubes. Without a coat the shirt ends in a narrow neckband, open at the throat |
+  | `coat` | `true`. A row of cloth buttons runs down the front (`coatbuttons: false` leaves them off) |
+  | `coatsleeve` | 0 to 1; the sleeve ends in a wide cuff and the shirt cuff shows below it |
+  | `coatsleeves` | `false` gives a coat with no sleeves, worn over the whole shirt (Benning) |
+  | `coathem` | skirt length above the knee, for example 0.02 to 0.12 (longer skirts clip the knees when walking) |
+  | `coatopen` | `true` by default: the skirt is open at the front below the waist, as 1690 coats were, so the legs pass through when walking. Set `false` for a closed skirt. There is also a vent up the back. The front panels follow their own thigh and the back follows the hips, so walking does not push the legs through the cloth |
+  | `breeches` | `true`: cut full and gathered into a band below the knee. Under a coat's skirt the fullness is kept to the front, so the breeches cannot push out through the skirt |
+  | `breechkind` | `"slops"` for wide open sailor breeches |
+  | `shoes`, `stockings`, `apron` | `true`. Shoes are one smooth shape with a thin joined sole. The apron rides on the thighs, so a knee lifts it |
+  | `buckles` | `true`: a small metal buckle and a tongue on each shoe |
+  | `hat` | `"felt"` (a low round crown and a broad brim, turned round the head's own outline) or `"cap"` (hair shows below it) |
+  | `bands` | `true` gives a cravat: a band round the neck, a knot and two ends that lie on the coat |
   | `hairvol` | 0 to 1 |
 
-- `colors`: RGB for Skin, Shirt, Coat, Breeches, Stockings, Shoes, Hat, Hair, Apron, Bands. Every garment you use needs its colour, or the script stops with a KeyError.
+- `colors`: RGB for Skin, Shirt, Coat, Breeches, Stockings, Shoes, Hat, Hair, Apron, Bands. Every garment you use needs its colour, or the script stops with a KeyError. Optional: `CoatButtons`, `ShoeBuckle`.
 
-Built in for realism:
-- Shirts and coats drape flat from the chest.
-- Shirts tuck in under breeches.
-- Breeches don't balloon at the seat.
-- Felt hats are measured to each head.
+Built in, so nothing shows through when the body moves (all of it only for `era` before 1800, so later games build as before):
+- **Lining.** The body under the clothes is not thrown away. It is kept, thinned, as a `Lining` piece painted in the colour of the cloth over it. Loose cloth creases when an arm drops; whatever shows in a crease is then the same cloth, never skin or a dark hole.
+- **Neck.** The cravat (or the shirt's neckband) has a yoke under it that lies on the skin, and the coat has a narrow facing of its own cloth round the sides and back of the neck. No skin shows there when the shoulders lift.
+- **Weights.** Shirt and coat bone weights are averaged across the cloth, so a sleeve and the chest bend as one piece. Each leg of the breeches follows its own leg only.
+- **Hair** grows from the body's own scalp line and fades into the skin at its edge.
 
-Then compress and pack (step 4).
-
-**Women**: `npc.py` makes men only. Abba comes from `tools/blender/abba.py` (MPFB body, bodice, skirt, apron, head wrap). Grace in Port Royal is Abba recoloured in code, with a different shape and a basket on her head. A new game with many women should extend `npc.py` with skirt, bodice and dress garments, following `abba.py`.
-
-**Clothes from other eras**: `npc.py` garments are 1690 styles. For the Garvey era (about 1900 to 1940) add: trousers (long breeches), a suit jacket (shorter coat with lapels), a collar and tie, a waistcoat, a peaked cap, a bowler or homburg hat, women's long dresses and blouses. Add each as a new `piece(...)` cut from the MakeHuman helper meshes, the same way the coat and breeches are made.
+**Abba and Grace.** Abba was built by `tools/blender/abba.py` and then given her Idle clip by hand, so she cannot be rebuilt by `era.py`. Her source is `games/port-royal/assets/characters/abba_animated.glb`. `node tools/people/abba_fix.mjs` applies small fixes to that file (her apron stands a little further out from her skirt, so the skirt does not come through it when she walks) and writes `build/people/abba.glb`; pack it like the men. Grace is Abba recoloured in code, with a different shape and a basket on her head. A new 1690 woman should be built with `era.py` (`woman`, `skirt`, `hat: "wrap"`).
 
 ## 2. Animations: `tools/anims/`
 
@@ -90,9 +87,9 @@ python3 tools/pack_models.py ...                                                
 for n in mendes turtler; do printf '(window.__models=window.__models||{})["%s"]="%s";' $n "$(base64 -w0 games/port-royal/site/models/$n.m.glb)" > games/port-royal/site/models/$n.js; done
 ```
 
-Only the `.js` files are loaded by the game. Keep each character at roughly 300 to 400 KB packed.
+Only the `.js` files are loaded by the game. Keep each character at roughly 300 to 480 KB packed. Port Royal's people are packed with `tools/people/pack.mjs` (section 1), not with the commands above.
 
-## 5. The newer clothes builder: `tools/garvey/era.py` (Garvey, Kendal, children)
+## 5. The clothes builder: `tools/garvey/era.py` (Garvey, Kendal, children, and Port Royal)
 
 `era.py` builds every body for Marcus Garvey and Kendal 1957 (recipes in `tools/garvey/people/`, `tools/kendal/people/`, `tools/people/kids/`). Set up Blender, MPFB and MakeHuman as in `tools/garvey/README.md`.
 
