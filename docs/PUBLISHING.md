@@ -58,7 +58,7 @@ A new game gets its own artifact: create it with `publish_files` without a slug 
 ```bash
 git checkout -b my-change
 git add -A
-git -c user.name="M Squared" -c user.email="msquared.mail@gmail.com" commit -m "Short summary
+git -c user.name="Johnathon Kelly" -c user.email="msquared.mail@gmail.com" commit -m "Short summary
 
 What changed and why, in plain words.
 
