@@ -5,7 +5,7 @@
 #
 #   MAKEHUMAN=~/mh/makehuman NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/era.py "$(cat tools/tivoli/people/soldier2010.json)"
 #   ~/venv/bin/python3 tools/tivoli/kit.py "$(cat tools/tivoli/people/soldier2010.json)"
-#   node tools/people/pack.mjs --out games/_tivoli/site/models --lo soldier2010
+#   node tools/people/pack.mjs --out games/tivoli/site/models --lo soldier2010
 #
 # The recipe's "kit" block says what to add (all optional):
 #   camo: [materials]   paint these in four-colour woodland camouflage (Jamaica Defence Force, May 2010; see docs/games/tivoli.md "Uniforms")
