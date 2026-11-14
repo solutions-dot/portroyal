@@ -1,4 +1,4 @@
-/* games/_tivoli/src/weapons.js: rifles and pistols for Tivoli's security forces, May 2010 (the M16-type rifles with a carry handle seen in
+/* games/tivoli/src/weapons.js: rifles and pistols for Tivoli's security forces, May 2010 (the M16-type rifles with a carry handle seen in
    the Gleaner photographs). Tivoli only: engine/grip.js holds a thing in one hand and must not be changed here (owner's rule), so this file
    does the two-handed hold itself. No weapon is ever given to the player (CLAUDE.md rule 4, the Tivoli exception).
 

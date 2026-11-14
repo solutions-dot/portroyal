@@ -75,8 +75,8 @@ gh api repos/solutions-dot/portroyal/pulls -f title="..." -f head=my-change -f b
 
 Large binaries in the repo: `shared/anim-sources/*.fbx` (about 38 MB), the source `.glb` files in `games/*/assets/`, and the packed models in `games/*/site/models/`.
 
-Eventide is currently an unfinished local prototype. The menu labels it as a testing prototype; build it directly with `node tools/build.mjs eventide --dev` for development. Keep its testing badge until the story and required checks are complete.
+The menu lists every game in `games/` whose folder does not start with an underscore: Port Royal, Marcus Garvey, Kendal 1957, The Tube (Bog Walk), Nanny Town, Eventide Home, Hurricane Melissa and Tivoli. The owner put Eventide, Melissa and Tivoli on the menu on 14 November 2026, while they are still being finished (Tivoli's card says "Early version").
 
-For a testing build that includes Eventide Home, run `npm run dist:testing` and serve `dist-testing/`. It builds all five games with their test parameters and keeps the test parameters available for every game. The ordinary `npm run dist` build also includes Eventide as a clearly marked testing prototype, so its visible menu link works. Eventide Home is visible in the ordinary menu, with a Test Eventide Home shortcut at the top.
+For a testing build, run `npm run dist:testing` and serve `dist-testing/`. It builds every game with its test parameters available.
 
 All four released games offer a **Teacher unlock** toggle in Chapters. The choice stays in that browser. The toggle changes access; selecting a chapter still advances the current story position normally. Eventide is an exploration prototype and does not yet have a chapter sequence.

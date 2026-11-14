@@ -1,5 +1,5 @@
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
-/* games/_tivoli/src/main.js: Tivoli (West Kingston, from the 1960s to today, with May 2010 at the centre). Read docs/games/tivoli.md first.
+/* games/tivoli/src/main.js: Tivoli (West Kingston, from the 1960s to today, with May 2010 at the centre). Read docs/games/tivoli.md first.
    Started from games/_template/. The folder name starts with an underscore so tools/dist.mjs does not publish it yet:
    rename it to games/tivoli/ (and fix the paths in docs/games/tivoli.md and .gitignore) when the owner decides to publish.
    There is no story code yet: what follows is still the template's starting point. It shows: a scene, first-person movement (keys, touch joystick, drag to look, gamepad-free),

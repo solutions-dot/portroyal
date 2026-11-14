@@ -1,9 +1,9 @@
-/* games/_tivoli/src/clips.js: the gunfight poses, with stand-ins until the real clips are added.
+/* games/tivoli/src/clips.js: the gunfight poses, with stand-ins until the real clips are added.
 
    The game asks for a pose by its REAL clip name, always through pose(). If the shared animation library has that clip,
    it plays. If not, the stand-in listed below plays instead. So scenes can be built and timed now, and look right later
    with no change to the game code: add the clip to the library (docs/PIPELINE.md, section 2), add its name to
-   games/_tivoli/anim-clips.json, rebuild, and the stand-in drops out by itself.
+   games/tivoli/anim-clips.json, rebuild, and the stand-in drops out by itself.
 
    Every stand-in is an existing clip, so nothing here needs new art. They will look wrong (standing, not crouching).
    That is expected. Do not ship with any stand-in left: ?test=clips (dev build) lists the ones still in use. */

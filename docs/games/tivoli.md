@@ -2,9 +2,9 @@
 
 Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the plan, the rules for this game, the placeholders and the research.
 
-- Code: `games/_tivoli/` (started from `games/_template/`; see "Code map").
-- **The folder name starts with an underscore on purpose.** `tools/dist.mjs` skips such folders, so nothing here is published or listed on the menu. When the owner decides to publish, rename it to `games/tivoli/`, add the menu card, and fix the paths in this file and in `.gitignore`.
-- Build: `node tools/build.mjs _tivoli --dev`, then open `http://localhost:8765/games/_tivoli/site/` (see "Test it").
+- Code: `games/tivoli/` (started from `games/_template/`; see "Code map").
+- **On the menu since 14 November 2026** (the owner's choice), in `games/tivoli/`. The folder used to start with an underscore so `tools/dist.mjs` skipped it.
+- Build: `node tools/build.mjs tivoli --dev`, then open `http://localhost:8765/games/tivoli/site/` (see "Test it").
 - Status (14 November 2026): **scaffold only, with a second research pass done (see "Research").** It builds and runs as the template does. There are no chapters, places, people or journal yet. There is a placeholder pose layer for the gunfight scenes (`src/clips.js`) and a staging view for it.
 
 ## What this game is, and why it needs care
@@ -87,7 +87,7 @@ Read this before writing any 2010 scene. Almost every part of the operation has 
 
 ## Placeholder poses
 
-The game asks for a pose by its real clip name through `pose(name)` in `games/_tivoli/src/clips.js`. If the shared animation library has that clip, it plays. If not, a stand-in (an existing clip) plays, so scenes can be built and timed now.
+The game asks for a pose by its real clip name through `pose(name)` in `games/tivoli/src/clips.js`. If the shared animation library has that clip, it plays. If not, a stand-in (an existing clip) plays, so scenes can be built and timed now.
 
 | Real clip to add | Stand-in now | What the real clip must show |
 |---|---|---|
@@ -103,10 +103,10 @@ The game asks for a pose by its real clip name through `pose(name)` in `games/_t
 
 To swap in a real clip:
 1. Download it from Mixamo ("In Place", FBX without skin), add it to `tools/anims/clips.json` and rebuild the library (`docs/PIPELINE.md`, section 2).
-2. Add its name to `games/_tivoli/anim-clips.json`. Do this only **after** the clip is in the library: the build stops with "clips not in the library" for a name that is missing.
+2. Add its name to `games/tivoli/anim-clips.json`. Do this only **after** the clip is in the library: the build stops with "clips not in the library" for a name that is missing.
 3. Rebuild. The stand-in drops out by itself. No game code changes.
 
-**The owner's clips (14 November 2026).** Seven Mixamo clips are in `tools/tivoli/anim-sources/`: Shoot_Rifle, Gunplay, Shooting_Pistol, Prone_Firing_Rifle, Prone_Right_Turn, Female_Peek_And_Aim, Femme_Peek_Around_Corner. They are retargeted (`tools/tivoli/clips.json`, `tools/anims/retarget_clips.py`, a few seconds) and packed by `tools/tivoli/pack_clips.mjs` into `games/_tivoli/site/models/anims_tivoli.js` (134 KB), which the game loads after the shared library. They are kept apart from the shared library so no other game changes. `StandFire` now plays ShootRifle, `StandAim` and `AimCorner` play PeekAim, `PeekAround` plays PeekCorner, and three new poses use the rest: `PistolFire` (ShootPistol, then Gunplay), `ProneFire`, `ProneTurn`. Still stand-ins: `CrouchIdle`, `DuckDown`, `CrouchAim`, `CrouchFire`, `RunLow`, `AdvanceReady`. The prone clips lie flat on the ground because `groundFeet` drops the body until the toes touch; the hips' height is not kept (`HIPS_Y` in `engine/anim.js` does not list them, and `engine/` is not edited here).
+**The owner's clips (14 November 2026).** Seven Mixamo clips are in `tools/tivoli/anim-sources/`: Shoot_Rifle, Gunplay, Shooting_Pistol, Prone_Firing_Rifle, Prone_Right_Turn, Female_Peek_And_Aim, Femme_Peek_Around_Corner. They are retargeted (`tools/tivoli/clips.json`, `tools/anims/retarget_clips.py`, a few seconds) and packed by `tools/tivoli/pack_clips.mjs` into `games/tivoli/site/models/anims_tivoli.js` (134 KB), which the game loads after the shared library. They are kept apart from the shared library so no other game changes. `StandFire` now plays ShootRifle, `StandAim` and `AimCorner` play PeekAim, `PeekAround` plays PeekCorner, and three new poses use the rest: `PistolFire` (ShootPistol, then Gunplay), `ProneFire`, `ProneTurn`. Still stand-ins: `CrouchIdle`, `DuckDown`, `CrouchAim`, `CrouchFire`, `RunLow`, `AdvanceReady`. The prone clips lie flat on the ground because `groundFeet` drops the body until the toes touch; the hips' height is not kept (`HIPS_Y` in `engine/anim.js` does not list them, and `engine/` is not edited here).
 
 Checks (dev build):
 - `?test=clips` lists the poses that still use a stand-in, in the page title and the console. It must be empty before anything is published.
@@ -131,23 +131,23 @@ How they are made (`era.py` and `pack.mjs` are not changed; another branch owns 
 ```bash
 MAKEHUMAN=~/mh/makehuman NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/era.py "$(cat tools/tivoli/people/soldier2010.json)"
 ~/venv/bin/python3 tools/tivoli/kit.py "$(cat tools/tivoli/people/soldier2010.json)"      # adds the 2010 kit to build/people/soldier2010.glb
-node tools/people/pack.mjs --out games/_tivoli/site/models --max 30000 --lo soldier2010 police2010
+node tools/people/pack.mjs --out games/tivoli/site/models --max 30000 --lo soldier2010 police2010
 ```
 
 - `tools/tivoli/kit.py` reads the recipe's `kit` block (camo, vest, pouches, straps, helmet, armband, boots, backtext, fronttext, details) and adds each piece in the body's rest shape, with bone weights and `Col` vertex colours like `era.py`'s own. It also removes skin that is always under the shirt, shirt that is always under the trousers and shoe tops inside the boots (they can never be seen and poked through in some poses), and removes hair under the helmet.
 - Colour by vertex, never by face: per-face colour splits every vertex and doubled the file size.
 - Budget: full bodies about 28,600 triangles and 460 KB; light copies 5,900 to 6,000 triangles. `--max 30000` keeps the full copy under budget.
-- In the game: `games/_tivoli/src/cast.js` (Kendal's pattern; `SKIN_LIGHT = 1.55`). View them with `?shot=uniforms` (`&lo` for the light copies).
-- **Rebuild these bodies when the people branch (`claude/affectionate-pasteur-xvhvlq`) is merged**: it changes `era.py`, skin and `SKIN_LIGHT`, and brings `engine/people.js`. Then delete `games/_tivoli/src/checks.js` and use the engine's checks.
+- In the game: `games/tivoli/src/cast.js` (Kendal's pattern; `SKIN_LIGHT = 1.55`). View them with `?shot=uniforms` (`&lo` for the light copies).
+- **Rebuild these bodies when the people branch (`claude/affectionate-pasteur-xvhvlq`) is merged**: it changes `era.py`, skin and `SKIN_LIGHT`, and brings `engine/people.js`. Then delete `games/tivoli/src/checks.js` and use the engine's checks.
 
-Checks (14 November 2026; `games/_tivoli/src/checks.js` holds local copies of the people branch's checks, because main's `engine/` does not have them):
+Checks (14 November 2026; `games/tivoli/src/checks.js` holds local copies of the people branch's checks, because main's `engine/` does not have them):
 - `?test=cloth`: 19 issues on 55 points, every one at most 2.8 mm except two single points (one point of shoe through each police boot, from `pack.mjs` simplifying the light copy and from `era.py`'s shoe; one point of skin under the police sleeve when pointing). Most are the harness straps grazing the vest's edges by 1 to 3 mm in different poses. Down from 175 issues on 16,750 points. Not yet 0.
 - `?test=walkers`: shoes sink 4.3 cm walking and 10.3 cm running, the same for both bodies and both copies. That is main's `groundFeet` pinning only the toe joint; the people branch's `engine/anim.js` fixes it ("Pinning only the toe joint let the heel sink 3 to 5 cm"). Nothing in the uniforms causes it.
 - `?test=skin`: faces read a warm mid-brown in the template's daylight (soldier mean 99,62,42; police 110,71,49). Judge again in the real places and lighten if they read too dark.
 
 ## Weapons (Tivoli only)
 
-`games/_tivoli/src/weapons.js`: an M16A2 rifle and a black pistol, built in code. The rifle is a side profile (tapered stock, receiver, carry handle, angled pistol grip, trigger guard, curved magazine) extruded to 2.8 cm, with a round handguard, a triangular front sight, barrel and flash hider: 33 cm from the grip to the butt plate, handguard 12 to 42 cm ahead of the grip. Those sizes fit the clips (`?test=measure`: right palm to shoulder joint 36 to 40 cm, palm to palm 31 to 34 cm). `engine/grip.js` holds one-handed things and is not changed here, so this file does the hold itself, every frame after the mixer:
+`games/tivoli/src/weapons.js`: an M16A2 rifle and a black pistol, built in code. The rifle is a side profile (tapered stock, receiver, carry handle, angled pistol grip, trigger guard, curved magazine) extruded to 2.8 cm, with a round handguard, a triangular front sight, barrel and flash hider: 33 cm from the grip to the butt plate, handguard 12 to 42 cm ahead of the grip. Those sizes fit the clips (`?test=measure`: right palm to shoulder joint 36 to 40 cm, palm to palm 31 to 34 cm). `engine/grip.js` holds one-handed things and is not changed here, so this file does the hold itself, every frame after the mixer:
 - **Rifle clips** (`ShootRifle`, `ProneFire`, `ProneTurnR`): the grip sits in the right palm and the butt in the right shoulder pocket (a little in front of, inside and below the shoulder joint), which sets the rifle's direction. It never points more than about 11 degrees above level or 30 below (the prone turn lifts the hands). The right palm is turned against the side of the pistol grip. The left arm reaches the handguard by two-bone IK, under it where the clip had the hand along it, palm turned up to cradle it. The neck and head tip (at most about 25 degrees each) to bring the cheek to the stock and the eye behind the rear sight.
 - **Fingers**: the right hand closes into a fist round the grip (index finger curled less, on the trigger); the left wraps the handguard, or the shooting hand in the two-handed pistol clips. Same method as `engine/grip.js`.
 - **Pistol clips** (`ShootPistol`, `Gunplay`, `PeekAim`): the pistol is in the right hand along the forearm. `PeekAim` is a pistol clip (the hands are 13 to 22 cm apart with the arms out), so `AimCorner` is a police pistol pose and `StandAim` uses `ShootRifle`.
@@ -169,8 +169,8 @@ Checks (14 November 2026; `games/_tivoli/src/checks.js` holds local copies of th
 
 ```bash
 npm install
-node tools/build.mjs _tivoli --dev          # dev build
-python3 -m http.server 8765                 # then open http://localhost:8765/games/_tivoli/site/
+node tools/build.mjs tivoli --dev          # dev build
+python3 -m http.server 8765                 # then open http://localhost:8765/games/tivoli/site/
 ```
 
 Views: `?shot=fight`, `?test=clips`. The automatic audits and the layout test are **not wired yet** because there are no places. When there are characters, `docs/PEOPLE.md` (on branch `claude/affectionate-pasteur-xvhvlq` until it is merged) also requires `?test=cloth`, `?test=walkers` and `?test=skin`. CLAUDE.md rule 8 says to wire them before the first PR that contains a place (copy the blocks from `games/kendal/src/main.js`, see `docs/TESTING.md` section 5).
@@ -242,8 +242,8 @@ Real people in the game: none speak. Coke, politicians, commanders, officers and
 3. **A reviewer from West Kingston.**
 4. **Characters.** Tivoli needs its own people: the elder, a child, neighbours, police and soldiers in real uniforms, gunmen in everyday clothes. Skin must follow CLAUDE.md rule 9. See `docs/PIPELINE.md`.
    - **Before adding any character**, run `git fetch --depth=50 origin claude/affectionate-pasteur-xvhvlq` and read `docs/PEOPLE.md` from that branch (`git show origin/claude/affectionate-pasteur-xvhvlq:docs/PEOPLE.md`). Follow it for every person. It may change before it is merged, so read it again at the start of each character session.
-   - **Owner's rules for this work:** put recipes in `tools/tivoli/people/` (one JSON file per body, named after the body); keep all game work inside `games/_tivoli/`; do **not** edit `tools/garvey/era.py`, `tools/people/pack.mjs` or anything in `engine/`, because another branch is changing them.
-   - **What PEOPLE.md requires, in short:** every recipe sets `era`, `hat` as a list of `[kind, material]` pairs, `collar` as a kind, and `colors` for every garment. Children are real child bodies built with `upscale` (start from Kendal's `boy.json` and `girl.json`). Build with `era.py`, pack with `pack.mjs --out games/_tivoli/site/models --lo <name>` (always pass `--out`). Skin follows CLAUDE.md rule 9. Wire `?test=cloth`, `?test=walkers` and `?test=skin` as well as audit, held and layout (see "Test it").
+   - **Owner's rules for this work:** put recipes in `tools/tivoli/people/` (one JSON file per body, named after the body); keep all game work inside `games/tivoli/`; do **not** edit `tools/garvey/era.py`, `tools/people/pack.mjs` or anything in `engine/`, because another branch is changing them.
+   - **What PEOPLE.md requires, in short:** every recipe sets `era`, `hat` as a list of `[kind, material]` pairs, `collar` as a kind, and `colors` for every garment. Children are real child bodies built with `upscale` (start from Kendal's `boy.json` and `girl.json`). Build with `era.py`, pack with `pack.mjs --out games/tivoli/site/models --lo <name>` (always pass `--out`). Skin follows CLAUDE.md rule 9. Wire `?test=cloth`, `?test=walkers` and `?test=skin` as well as audit, held and layout (see "Test it").
    - **Open problem (found 14 November 2026):** `era.py` dresses people for about 1900 to 1957 and for 2020. The 1960s chapters can start from the 1957 clothes and the 2010 civilians from the 2020 ones. But 2010 police and soldier kit (uniforms, helmets, vests) is not in `era.py`, and the uniform cap is the only uniform piece. Use plain stand-ins (Kendal's guard uniform recoloured) until the other branch's work lands or the owner says how to proceed. Do not edit `era.py` to fix it.
 5. **Places**: Back-o-Wall, new Tivoli streets and flats, a home interior, a rooftop or window view, the community centre.
 6. **The remaining gunfight clips** (crouch, duck, run low, advance; table above), **weapon props** (rifles and pistols with a two-handed grip: `engine/grip.js` only does one hand, and must not be edited here), flashes and sounds. 
