@@ -313,7 +313,7 @@ function turbineHouse(g, kind, P) {
       for (const u of wins) { const hp = new THREE.Path(), hw = 0.65, y0 = 1.6, y1 = 4.2; hp.moveTo(u - hw, y0); hp.lineTo(u + hw, y0); hp.lineTo(u + hw, y1); hp.absarc(u, y1, hw, 0, PI, false); hp.lineTo(u - hw, y0); sh.holes.push(hp); }
       const geo = new THREE.ExtrudeGeometry(sh, { depth: th, bevelEnabled: false }); const m = mesh(geo, brickM, x, 0, z, g); m.rotation.y = ry; return m; };
     slab(x1 - x0, [3.2, 4.4, 5.8, 6.4, 6.5, 6.5, 6.5, 6.4, 6.5, 6.5, 6.5, 5.9, 4.8, 3.0], [3.5, 7, 10.5], x0, z0 - th / 2, 0);
-    slab(z1 - z0, [1.5, 2.6, 5.6, 6.5, 7.4, 8.4, 7.6, 6.5, 5.4, 3.0], [3.0, 7.0], x0 - th / 2, z1, -PI / 2);
+    slab(z1 - z0, [1.5, 2.6, 5.6, 6.5, 7.4, 8.4, 7.6, 6.5, 5.4, 3.0], [3.0, 7.0], x0 + th / 2, z0, -PI / 2);   /* turned -90 degrees, the slab runs from z0 toward z1 and its thickness goes toward -x, so it is centred on x0 like the wall's collision box */
     for (const [cx, cz, al, h, ax] of [[-4, z0, 3, 6, true], [3, z0, 3, 6, true], [x0, -12.5, 3, 5.5, false], [x0, -8.5, 3, 7, false]]) segs.push([cx, cz, al, h, ax]);
     seg(x1, z0, x1, z1, [2.8, 3.9, 2.2, 0.0, 1.0]);
     seg(x0, z1, -1.4, z1, [1.8, 2.6, 1.2]); seg(1.4, z1, x1, z1, [0.9, 2.2, 3.0]);

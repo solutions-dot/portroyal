@@ -770,7 +770,8 @@ function tick(dt, clockDt = dt) {
    several draw calls, so with 30 people in a place this is the biggest saving on a phone. Off in the automatic checks, which read the real visibility. */
 const _fr = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sp = new THREE.Sphere(), _sv = new THREE.Vector3(), NOCULL = __DEV__ && !!q.get('test');
 function cullBodies() {
-  const P = P_(); if (!P || NOCULL) return; camera.updateMatrixWorld(); _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _fr.setFromProjectionMatrix(_pm);
+  const P = P_(); if (!P || NOCULL || SHADOWS) return;   /* with shadows (desktop) a hidden body would lose its shadow too, so only phones, which draw none, cull */
+  camera.updateMatrixWorld(); _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _fr.setFromProjectionMatrix(_pm);
   for (const n of P.npcs) { const m = n.m; if (!m.visible) continue; if (!m.userData.cullList) { const l = []; m.traverse((o) => { if (o.isMesh && o.visible) l.push(o); }); m.userData.cullList = l; m.userData.inView = true; }
     const on = _fr.intersectsSphere(_sp.set(_sv.set(m.position.x, m.position.y + 0.9, m.position.z), 1.7)); if (m.userData.inView !== on) { m.userData.inView = on; for (const o of m.userData.cullList) o.visible = on; } }
 }
