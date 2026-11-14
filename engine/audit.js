@@ -183,18 +183,22 @@ function clPoint(P, s, i, o) { const a = s[i * 3] * 3, b = s[i * 3 + 1] * 3, c =
 function clParts(body) { const parts = []; body.traverse((o) => { if (!o.isSkinnedMesh || !o.geometry.index || CL_SKIP.test(o.name) || CL_SKIP.test(o.material.name || '')) return; let vis = true; for (let q = o; q && q !== body.parent; q = q.parent) if (!q.visible) vis = false; if (!vis) return;
     const g = o.geometry, n = g.attributes.position.count, idx = g.index.array; let samples = g.userData.clSamples; if (!samples) { samples = new Uint32Array(n * 3 + idx.length); for (let i = 0; i < n; i++) samples[i * 3] = samples[i * 3 + 1] = samples[i * 3 + 2] = i; samples.set(idx, n * 3); g.userData.clSamples = samples; }
     let rest = g.userData.clRest; if (!rest) { rest = new Float32Array(n * 3); const v = new THREE.Vector3(); for (let i = 0; i < n; i++) { v.fromBufferAttribute(g.attributes.position, i).applyMatrix4(o.bindMatrix); rest[i * 3] = v.x; rest[i * 3 + 1] = v.y; rest[i * 3 + 2] = v.z; } g.userData.clRest = rest; }
-    parts.push({ o, name: o.name || o.material.name, g, idx, samples, rest, pos: new Float32Array(n * 3) }); }); return parts; }
+    parts.push({ o, name: o.name || o.material.name, mat: o.material.name || o.name, g, idx, samples, rest, pos: new Float32Array(n * 3) }); }); return parts; }
 function clRelation(A, B) {   /* which sample points of piece A are meant to lie beneath piece B (from the rest shape). Cached per pair of shapes. */
   let m = CL_REL.get(A.g); if (!m) CL_REL.set(A.g, m = new WeakMap()); let r = m.get(B.g); if (r !== undefined) return r;
   const G = B.g.userData.clGrid || (B.g.userData.clGrid = clGrid(B.rest, B.idx, 0.03)), p = [0, 0, 0], near = [], under = []; let below = 0;
-  for (let i = 0; i < A.samples.length / 3; i++) { clPoint(A.rest, A.samples, i, p); const h = clNear(p, B.rest, B.idx, G); if (!h || h.side > 0.004 || Math.abs(h.along) > 0.03) continue; near.push(i); if (h.along < 0) { below++; if (h.along < -0.001) under.push(i); } }
+  for (let i = 0; i < A.samples.length / 3; i++) { clPoint(A.rest, A.samples, i, p); const h = clNear(p, B.rest, B.idx, G); if (!h || h.side > 0.004 || Math.abs(h.along) > 0.03) continue; near.push(i); if (h.along < 0) { below++; if (h.along < -0.003) under.push(i); } }
   r = near.length < 8 ? null : below >= near.length * 0.7 ? near : below <= near.length * 0.3 ? null : under; if (r && !r.length) r = null; m.set(B.g, r); return r; }
 export function auditCloth(id, body, { poses = [['Idle', 0.3]], after = null, skip = null } = {}) {
   const ctl = body.userData.anim, out = { lines: [], points: 0, worst: 0 }, parts = clParts(body), sc = body.getWorldScale(new THREE.Vector3()).x || 1, v = new THREE.Vector3(), p = [0, 0, 0]; if (!ctl || parts.length < 2) return out;
   for (const [clipName, at] of poses) { const act = ctl.get(clipName); if (!act) continue; ctl.mx.stopAllAction(); act.reset().play(); act.time = at * act.getClip().duration; ctl.mx.update(0); if (after) after(body); body.updateMatrixWorld(true);
     for (const P of parts) { P.o.skeleton.update(); const n = P.pos.length / 3; for (let i = 0; i < n; i++) { P.o.getVertexPosition(i, v).applyMatrix4(P.o.matrixWorld); P.pos[i * 3] = v.x; P.pos[i * 3 + 1] = v.y; P.pos[i * 3 + 2] = v.z; } P.grid = null; }
-    for (const A of parts) for (const B of parts) { if (A === B || (skip && skip(A.name, B.name))) continue; const rel = clRelation(A, B); if (!rel) continue; const G = B.grid || (B.grid = clGrid(B.pos, B.idx, 0.03 * sc)); let n = 0, worst = 0;
-      for (const i of rel) { clPoint(A.pos, A.samples, i, p); const h = clNear(p, B.pos, B.idx, G); if (!h || h.side > 0.004 * sc || h.along <= 0.0005 * sc) continue; n++; if (h.along > worst) worst = h.along; }
+    const grid = (X) => X.grid || (X.grid = clGrid(X.pos, X.idx, 0.03 * sc));
+    for (const A of parts) for (const B of parts) { if (A === B || /^(Body|Skin)$/.test(B.name) || A.mat === B.mat || (/Sole|Shoes/.test(A.name) && /Sole|Shoes/.test(B.name)) || (skip && skip(A.name, B.name))) continue;   /* cloth outside the skin is always right; two pieces of one cloth (jacket and lapels) cannot show through each other; a sole wraps its shoe on purpose */
+      const rel = clRelation(A, B); if (!rel) continue; const G = grid(B); let n = 0, worst = 0;
+      for (const i of rel) { clPoint(A.pos, A.samples, i, p); const h = clNear(p, B.pos, B.idx, G); if (!h || h.side > 0.004 * sc || h.along <= 0.0005 * sc) continue; const al = h.along; let hid = false;
+        for (const C of parts) { if (C === A || C === B || C.mat === A.mat) continue; const hc = clNear(p, C.pos, C.idx, grid(C)); if (hc && hc.side < 0.004 * sc && hc.along < -0.0005 * sc) { hid = true; break; } } if (hid) continue;   /* still under a third piece (a shirt through a waistcoat, under a jacket): nobody can see it */
+        n++; if (al > worst) worst = al; }
       if (n) { out.points += n; out.worst = Math.max(out.worst, worst / sc * 1000); out.lines.push(`${id} ${clipName}@${at}: ${A.name} shows through ${B.name}: ${n} points, worst ${(worst / sc * 1000).toFixed(1)} mm`); } } }
   ctl.mx.stopAllAction(); ctl.base.reset().play(); ctl.cur = ctl.base; ctl.mx.update(0); if (after) after(body);
   return out;
