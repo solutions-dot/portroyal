@@ -6,8 +6,9 @@
    are agreed by every source). Metres. The street runs along x (east is +x, where the soldiers come from; west is -x, the barricade) and is 9 m wide (z -4.5 to 4.5).
    Everything static is merged into one mesh per material, and textures are mapped by world position (one repeat = a few metres), so walls never stretch. */
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { bake } from './bake.js';
 import * as TX from './textures.js';
+import { addSky } from './sky.js';
 import { sedan, minibus, overturned } from './vehicles.js';
 
 const rngOf = (seed) => { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
@@ -114,30 +115,10 @@ export function buildStreet(opts = {}) {
   spots.dust = [[-2.2, 0.8, -1.6], [-2.2, 1.0, -3.9], [-9.5, 1.1, 1.0], [-11.3, 0.9, 3.8], [1.6, 0.3, 3.4], [-15.2, 0.9, -1.2], [-6, 0.1, 0.5], [2, 0.1, -0.5], [-13, 0.1, 1.4], [-20, 0.1, 0.5]];
   spots.dustFar = [[-25.5, 1.4, -2.2], [-25.8, 0.8, 2.6], [-24.9, 1.9, 0.4], [-25.2, 2.2, -3.0], [-26.2, 0.4, 3.9]];
 
-  /* ---- merge everything static: one mesh per material, textures mapped by world position ---- */
-  const buckets = new Map(); g.updateMatrixWorld(true);
-  g.traverse((o) => {
-    if (!o.isMesh) return; let ge = o.geometry.clone(); ge.applyMatrix4(o.matrixWorld);
-    for (const k of Object.keys(ge.attributes)) if (!['position', 'normal', 'uv'].includes(k)) ge.deleteAttribute(k);
-    if (ge.index) ge = ge.toNonIndexed(); const m = o.material;
-    if (m.userData.tile) { const p = ge.attributes.position, n = ge.attributes.normal, uv = new Float32Array(p.count * 2), t = m.userData.tile;
-      for (let i = 0; i < p.count; i++) { const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)), az = Math.abs(n.getZ(i));
-        if (ax >= ay && ax >= az) { uv[i * 2] = p.getZ(i) / t; uv[i * 2 + 1] = p.getY(i) / t; } else if (ay >= az) { uv[i * 2] = p.getX(i) / t; uv[i * 2 + 1] = p.getZ(i) / t; } else { uv[i * 2] = p.getX(i) / t; uv[i * 2 + 1] = p.getY(i) / t; } }
-      ge.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); }
-    (buckets.get(m) || buckets.set(m, []).get(m)).push(ge);
-  });
-  const out = new THREE.Group();
-  for (const [m, gs] of buckets) { const me = new THREE.Mesh(mergeGeometries(gs), m); me.castShadow = m !== X.asphalt && m !== X.grass; me.receiveShadow = true; out.add(me); }
+  /* ---- merge everything static: one mesh per material, textures mapped by world position (bake.js) ---- */
+  const out = bake(g, [X.asphalt, X.grass]);
   for (const l of lines) out.add(l);
 
-  /* ---- the sky: a haze-to-blue dome, soft clouds, and a sun with shadows on computers (phones get none) ---- */
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(380, 24, 14), new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false }));
-  const pos = dome.geometry.attributes.position, col = new Float32Array(pos.count * 3), hz = new THREE.Color(0xdbe6ea), zn = new THREE.Color(0x4f90d0);
-  for (let i = 0; i < pos.count; i++) { const u = Math.max(0, Math.min(1, pos.getY(i) / 260)), c = hz.clone().lerp(zn, Math.pow(u, 0.6)); col.set([c.r, c.g, c.b], i * 3); }
-  dome.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3)); out.add(dome);
-  const cc = document.createElement('canvas'); cc.width = cc.height = 128; const cg = cc.getContext('2d'); for (let i = 0; i < 18; i++) { const r = cg.createRadialGradient(40 + i * 3, 64 + Math.sin(i) * 14, 0, 40 + i * 3, 64 + Math.sin(i) * 14, 30 + (i % 4) * 8); r.addColorStop(0, 'rgba(255,255,255,0.35)'); r.addColorStop(1, 'rgba(255,255,255,0)'); cg.fillStyle = r; cg.fillRect(0, 0, 128, 128); }
-  const ct = new THREE.CanvasTexture(cc); for (let i = 0; i < 14; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: ct, transparent: true, depthWrite: false, fog: false, opacity: 0.85 })); const a = rnd() * 6.28, d = 220 + rnd() * 100; sp.position.set(Math.cos(a) * d, 70 + rnd() * 90, Math.sin(a) * d); sp.scale.set(120 + rnd() * 120, 50 + rnd() * 30, 1); out.add(sp); }
-  const sun = new THREE.DirectionalLight(0xfff1d6, 3.3); sun.position.set(-26, 42, 24); sun.target.position.set(-8, 0, 0); out.add(sun, sun.target);
-  if (opts.shadows) { sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); const c = sun.shadow.camera; c.left = -60; c.right = 60; c.top = 30; c.bottom = -30; c.near = 5; c.far = 120; sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.04; }
+  const sun = addSky(out, rnd, { shadows: opts.shadows });
   return { group: out, spots, sun, raw: g };   /* raw: the unmerged parts, for the place audit (?test=audit) */
 }
