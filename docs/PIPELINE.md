@@ -127,4 +127,23 @@ Marcus Garvey's face (`garvey1914.json`, `garvey1916.json`) was shaped against a
 - Layers move as one: a waistcoat or jacket takes the bone weights of the shirt under it, the tucked-in shirt tail takes the trousers' waist weights, and collar, placket, pocket, buttons, tie and lapels take the weights of the garment they lie on.
 - Felt hats are one closed shell that clears the hair. A bun under a hat sits low on the nape. Aprons lie on the trousers.
 - Check with `?test=cloth` (see `docs/TESTING.md`) after every change, for both games.
+- A man's shirt, waistcoat and jacket fall almost straight from the chest to the waist (7 cm in a metre at the front, against 22 cm for a blouse), and the eased outline bridges across from the chest to the shoulders, so a man's chest never reads as two mounds.
+- Waistcoat and jacket take their bone weights from the shirt under them (read from the nearest face and blended), the shirt's torso has its arm weights faded out and evened, and the base of the neck (skin and shirt neckline alike) follows the chest. These keep V necks, necklines and hems clean while walking instead of breaking into saw teeth.
+- Clearance pushes are spread over neighbouring points and cut edges are relaxed afterwards, so no face folds over (`FOLDS=1` prints how many faces of each piece face the wrong way).
+- Socks are their own `Sock` material cut along one line, so their top edge stays clean on light copies. The build is repeatable: the same recipe gives the same file.
+
+## Skin
+
+**Target.** In daylight, a Black character's face, measured as the mean of the forehead and cheeks with the person turned to four headings, is a warm brown of about R 85 to 120 (for example 101,67,47 in Kendal). West African people (Kofi, the turtler) sit at the darker end (about R 70 to 80 as a mean, R 90 to 100 on the lit side) and are never near-black; mixed-heritage people (buc1, the sailor) are a little lighter. Light-skinned Port Royal characters keep the look they always had.
+
+**Why the games used to differ.** The builder wrote colours that were already linear into a colour layer that Blender treats as sRGB, so every colour was made linear twice: a recipe skin of 150,102,74 drew as about 67,32,16 (very dark and red). Kendal then lightened skin by 1.55, Port Royal used ACES tone mapping and bright light with no factor, and Garvey's rooms are lit more softly, so the same recipe looked different in each game.
+
+**What is done now.**
+- `tools/garvey/era.py` writes skin as its recipe says (`SKS`), so a recipe skin is the same brown in every game. Garments keep the old behaviour. The light-skinned 1690 recipes were changed to the value they used to produce, divided by Port Royal's factor, so they look as before.
+- Each game has one documented factor on the `Skin` material for its own light: Kendal `SKIN_LIGHT = 1.0` (none), Garvey `SKIN_K = 1.2`, Port Royal `SKIN_K = 0.85`. Kendal crowds vary skin by 0.9 to 1.15 only.
+- Typical recipe values: 150,102,74 for most Kendal and Garvey people, 116,76,55 for Kofi and 110,72,52 for the turtler, about 168,118,86 for mixed heritage.
+
+**How to measure.** `?test=skin` in each game's dev build (`engine/skinprobe.js`) renders each face in that game's own light from four headings and prints the mean, darkest and lightest colour (Garvey prints indoor and outdoor light). Check new people against the target before calling them done.
+
+**Not yet covered.** Abba and Grace in Port Royal still come from `tools/blender/abba.py` and draw much darker and redder (about 63,18,9); they need rebuilding with `era.py`.
 

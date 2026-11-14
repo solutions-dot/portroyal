@@ -49,7 +49,7 @@ function liftLayers(doc) {
         const along = h.d[0] * h.n[0] + h.d[1] * h.n[1] + h.d[2] * h.n[2], side = Math.hypot(h.d[0] - h.n[0] * along, h.d[1] - h.n[1] * along, h.d[2] - h.n[2] * along); if (side > 0.004 || along >= GAP || along < -0.012) continue;   /* off the edge of the cloth beneath: nothing is under it there. A point far beneath is on the other side of a thin limb, not a dip: leave it */
         for (const i of g) for (let k = 0; k < 3; k++) s.pos[i * 3 + k] += h.n[k] * (GAP - along); moved++; }
       for (const s of In) for (const g of s.groups) { const p = V(s.pos, g[0]), h = nearest(p, Out); if (!h) continue;   /* a point of the cloth beneath that comes through, or nearly through, a face of the outer garment: lift that face */
-        const along = h.d[0] * h.n[0] + h.d[1] * h.n[1] + h.d[2] * h.n[2], side = Math.hypot(h.d[0] - h.n[0] * along, h.d[1] - h.n[1] * along, h.d[2] - h.n[2] * along); if (side > 0.004 || along <= -GAP || along > 0.012) continue;
+        const along = h.d[0] * h.n[0] + h.d[1] * h.n[1] + h.d[2] * h.n[2], side = Math.hypot(h.d[0] - h.n[0] * along, h.d[1] - h.n[1] * along, h.d[2] - h.n[2] * along); if (side > 0.004 || along <= -GAP || along > (/^(Waistcoat|Shirt)$/.test(inner) && /^Jacket/.test(outer) ? 0.03 : 0.012)) continue;   /* a jacket simplified to large faces can sag well inside the waistcoat: lift it even then */
         const push = along + GAP, o = h.s, done = new Set(); for (let c = 0; c < 3; c++) { const vi = o.idx[h.t * 3 + c], grp = o.groups.find((x) => x.includes(vi)) || [vi]; for (const i of grp) { if (done.has(i)) continue; done.add(i); for (let k = 0; k < 3; k++) o.pos[i * 3 + k] += h.n[k] * push; } } moved++; }
     }
     for (const s of Out) s.P.setArray(s.pos); }
@@ -58,7 +58,7 @@ function liftLayers(doc) {
 for (const n of names) {
   const make = async (ratioOf, light) => {
     const doc = await io().read(`${SRC}/${n}.glb`);
-    if (light) for (const nd of doc.getRoot().listNodes()) if (/^(Buttons|JButtons|Placket|Buckle|Lapels)/.test(nd.getName())) { nd.setMesh(null); nd.setSkin(null); }   /* too small to see in a crowd */
+    if (light) for (const nd of doc.getRoot().listNodes()) if (/^(Buttons|JButtons|Placket|Buckle)/.test(nd.getName())) { nd.setMesh(null); nd.setSkin(null); }   /* too small to see in a crowd (lapels stay: they cover the edge of the jacket's opening) */
     for (const t of doc.getRoot().listTextures()) { t.setImage(new Uint8Array(eye)); t.setMimeType('image/jpeg'); }
     for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const mat = p.getMaterial(); if (!mat || !mat.getBaseColorTexture()) p.setAttribute('TEXCOORD_0', null); }
     await doc.transform(weld(), prune({ keepAttributes: false, keepLeaves: true }));

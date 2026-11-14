@@ -997,7 +997,7 @@ if G.get('jacket'):      # under a jacket only the shirt's front, collar zone an
         t=side_arm(c); return t is not None and t>G.get('jacketsleeve',0.9)-0.14
     bmesh.ops.delete(bm,geom=[f for f in bm.faces if not seen(cz(f))],context='FACES'); bm.to_mesh(o.data); bm.free()
     if PART.get('waistcoat'):      # and of the waistcoat only its front shows, through the jacket's opening: the sides and the back are cut away, so they cannot come through the jacket
-        o=PART['waistcoat']; bm=bmesh.new(); bm.from_mesh(o.data); bmesh.ops.delete(bm,geom=[f for f in bm.faces if cz(f).y>0.0 or abs(cz(f).x)>0.16*s],context='FACES'); bm.to_mesh(o.data); bm.free()
+        o=PART['waistcoat']; bm=bmesh.new(); bm.from_mesh(o.data); _vz=NECK-0.012*s-0.20*s; bmesh.ops.delete(bm,geom=[f for f in bm.faces if cz(f).y>0.0 or abs(cz(f).x)>max(0.0,cz(f).z-_vz)/1.5+0.015*s or cz(f).z<_vz-0.05*s],context='FACES'); bm.to_mesh(o.data); bm.free()      # only the wedge in the jacket's V and a narrow margin round it: elsewhere a light copy's simplified jacket let it through
 if G.get('coat') and OLD and G.get('coatsleeves',True):      # under a coat only the shirt's cuffs can be seen (all of each sleeve, when the coat has none): cut the rest away
     o=PART['shirt']; bm=bmesh.new(); bm.from_mesh(o.data); _sl=G.get('coatsleeves',True); _cs=G.get('coatsleeve',0.82)
     def seen(c):
