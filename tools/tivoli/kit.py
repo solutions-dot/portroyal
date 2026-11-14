@@ -139,6 +139,17 @@ if K.get('vest'):
         if abs(c.x) > 0.115 and c.z > NECK.z - 0.075: return True                                                  # narrow shoulder straps, not the whole shoulder
         return False
     bmesh.ops.delete(bm, geom=[f for f in bm.faces if cut(f)], context='FACES')
+    # clean edges: cutting by whole faces leaves a stepped outline, so level the hem and smooth the armholes and neckline along the edge
+    hem = BELT_TOP + 0.05
+    for v in bm.verts:
+        if v.is_boundary and v.co.z < hem + 0.035: v.co.z = hem
+    for _ in range(4):
+        new = {}
+        for v in bm.verts:
+            if not v.is_boundary or abs(v.co.z - hem) < 1e-4: continue
+            nb = [e.other_vert(v) for e in v.link_edges if e.is_boundary]
+            if len(nb) == 2: new[v] = v.co * 0.5 + (nb[0].co + nb[1].co) * 0.25
+        for v, c in new.items(): v.co = c
     bm.normal_update()
     for v in bm.verts: v.co += v.normal * 0.028
     vest = new_obj('Vest', bm, 'Vest', weights_from=shirt, only=TORSO); solidify(vest, 0.012); paint(vest, COL['Vest']); made.append(vest)
@@ -208,7 +219,7 @@ if K.get('straps') and surf:
             pair = (bm.verts.new(p - t * W), bm.verts.new(p + t * W))
             if prev: bm.faces.new((prev[0], prev[1], pair[1], pair[0]))
             prev = pair
-    o = new_obj('BeltStraps', bm, 'Straps', weights_from=vest or shirt, only=TORSO);   # one-sided: a thickened strap's inner face would point into the vest paint(o, COL['Straps']); made.append(o)
+    o = new_obj('BeltStraps', bm, 'Straps', weights_from=vest or shirt, only=TORSO); paint(o, COL['Straps']); made.append(o)   # one-sided: a thickened strap's inner face would point into the vest
 
 # ---------- the armband ----------
 if K.get('armband'):
