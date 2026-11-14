@@ -1,0 +1,9 @@
+{
+ "ProneFire": "../../tools/tivoli/anim-sources/Prone_Firing_Rifle.fbx",
+ "ProneTurnR": "../../tools/tivoli/anim-sources/Prone_Right_Turn.fbx",
+ "ShootRifle": "../../tools/tivoli/anim-sources/Shoot_Rifle.fbx",
+ "Gunplay": "../../tools/tivoli/anim-sources/Gunplay.fbx",
+ "ShootPistol": "../../tools/tivoli/anim-sources/Shooting_Pistol.fbx",
+ "PeekAim": "../../tools/tivoli/anim-sources/Female_Peek_And_Aim.fbx",
+ "PeekCorner": "../../tools/tivoli/anim-sources/Femme_Peek_Around_Corner.fbx"
+}
