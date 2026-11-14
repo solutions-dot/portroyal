@@ -79,7 +79,7 @@ export function bananaBunch(scale = 1) {
   _bunchMat = _bunchMat || new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0, side: THREE.DoubleSide });
   const g = grp(), m = new THREE.Mesh(bunchGeometry(), _bunchMat); m.scale.setScalar(scale); g.add(m); return g;
 }
-export function bush(seed = 1, s = 1) { const r = rng(seed), g = grp(); for (let i = 0; i < 3; i++) mesh(new THREE.IcosahedronGeometry(0.5 * s, 1), flat([0x35703a, 0x4a8a3c, 0x2d6035][i]), (r() - 0.5) * 0.6 * s, 0.35 * s, (r() - 0.5) * 0.6 * s, g); return g; }
+export function bush(seed = 1, s = 1) { const r = rng(seed), g = grp(); for (let i = 0; i < 3; i++) blob(g, (r() - 0.5) * 0.7 * s, 0.3 * s, (r() - 0.5) * 0.7 * s, 0.5 * s, seed * 3 + i, 0x1f4a24, 0x4f8a3c, { squash: 0.85 }); return g; }
 export function flowers(seed = 1) { const r = rng(seed), g = grp(); for (let i = 0; i < 7; i++) { const c = [0xe8505b, 0xf5c542, 0xffffff, 0xe27ad8][(r() * 4) | 0]; mesh(new THREE.SphereGeometry(0.07, 6, 5), glow(c), (r() - 0.5) * 0.7, 0.14 + r() * 0.1, (r() - 0.5) * 0.7, g); } mesh(new THREE.SphereGeometry(0.4, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), flat(0x3d7a38), 0, 0, 0, g).scale.y = 0.4; return g; }
 
 /* scatter: place items made by make(i) at random spots, skipping any that fall inside the keep-clear boxes */
@@ -107,12 +107,12 @@ export function hillRing(radius = 150, count = 18, hMax = 60, { seed = 3, base =
 /* ---------- houses and sheds ---------- */
 const TM2 = solid(0x4a4c50, 0.6, 0.3);
 export function boardHouse(w = 5, d = 4, h = 2.8, { wall = [188, 160, 110], roof = [140, 90, 70], porch = true, seed = 1 } = {}) {   /* a Jamaican board house: walls of boards, a zinc roof, a front veranda */
-  const g = grp(), r = rng(seed); const wt = T.plank(wall, 8, [w / 2, 1]).clone(); wt.needsUpdate = true; wt.repeat.set(w / 2, 1);
+  const g = grp(), r = rng(seed); const wt = T.plank(wall, 8, [w / 2, 1]);   /* textures and materials are shared by every house of the same colour and size, so a street of them batches into a few draw calls */
   box(w, h, d, std(wt, 0.9), 0, h / 2, 0, g);
-  const zt = T.zinc(roof).clone(); zt.needsUpdate = true; zt.repeat.set(2, d / 2);
+  const zt = T.zinc(roof, [2, d / 2]);
   const rise = 1.3, Ls = Math.hypot(d / 2 + 0.4, rise), th = Math.atan2(rise, d / 2 + 0.4);
   for (const s of [-1, 1]) { const p = box(w + 0.7, 0.08, Ls, std(zt, 0.75), 0, h + rise / 2 + 0.04, s * (d / 4 + 0.2), g); p.rotation.x = s * th; }
-  for (const s of [-1, 1]) { const gable = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-d / 2, 0), new THREE.Vector2(d / 2, 0), new THREE.Vector2(0, rise)])), std(wt, 0.9), s * (w / 2 + 0.005), h, 0, g); gable.rotation.y = s * Math.PI / 2; gable.material.side = THREE.DoubleSide; }
+  for (const s of [-1, 1]) { const gable = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-d / 2, 0), new THREE.Vector2(d / 2, 0), new THREE.Vector2(0, rise)])), std(wt, 0.9, { side: THREE.DoubleSide }), s * (w / 2 + 0.005), h, 0, g); gable.rotation.y = s * Math.PI / 2; }
   const shut = solid(0x2f6a3f, 0.9); for (const x of [-w * 0.28, w * 0.28]) { box(0.9, 0.9, 0.06, M.woodDark, x, h * 0.62, d / 2 + 0.02, g); box(0.4, 0.8, 0.07, shut, x - 0.62, h * 0.62, d / 2 + 0.04, g); box(0.4, 0.8, 0.07, shut, x + 0.62, h * 0.62, d / 2 + 0.04, g); }
   box(0.9, 1.9, 0.07, solid(0x4a2f1e, 0.9), 0, 0.95, d / 2 + 0.03, g);
   const wf = solid(0xe8e0cc, 0.8); for (const x of [-w * 0.28, w * 0.28]) { box(1.14, 0.06, 0.07, wf, x, h * 0.62 + 0.47, d / 2 + 0.05, g); box(1.14, 0.06, 0.07, wf, x, h * 0.62 - 0.47, d / 2 + 0.05, g); box(1.2, 0.05, 0.14, wf, x, h * 0.62 - 0.52, d / 2 + 0.1, g); for (const s of [-0.54, 0, 0.54]) box(0.05, 0.94, 0.07, wf, x + s, h * 0.62, d / 2 + 0.05, g); }

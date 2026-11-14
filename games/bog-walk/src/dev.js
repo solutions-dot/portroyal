@@ -27,7 +27,7 @@ export function dev(D) {
       out.push({ name: o.name || o.type, left: x0, right: x1, top: y0, bottom: y1 }); });
     return out;
   }
-  const HUD_IDS = ['goal', 'icons', 'clock', 'sub', 'toast', 'way', 'pick', 'act', 'holdbox', 'skip', 'exit', 'hint', 'barT', 'barB', 'dialogue', 'tbub'];
+  const HUD_IDS = ['goal', 'icons', 'clock', 'sub', 'toast', 'way', 'pick', 'act', 'holdbox', 'skip', 'exit', 'hint', 'barT', 'barB', 'dialogue', 'tbub', 'nudge'];
   function hudOverlaps() {
     const out = [], list = [];
     for (const id of HUD_IDS) { const e = $(id); if (!vis(e) || (id === 'sub' && e.classList.contains('dim')) || (!e.textContent.trim() && e.tagName === 'P')) continue; if ((id === 'barT' || id === 'barB') && e.getBoundingClientRect().height < 1) continue; list.push([id, box(e)]); }
@@ -89,6 +89,14 @@ export function dev(D) {
     const r = D.auditPlace({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start,
       actions: P.actions.filter((a) => a.on()).map((a) => ({ label: a.label, x: a.x, z: a.z, r: a.r })), people: P.people.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
     for (const n of P.npcs) if (/^Sit/.test(n.anim || '') && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); for (const l of D.auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, [])) r.inside.push(l); }
+    /* our own rules for this game, found by eye: (1) no grass or flower may grow under a roof (P.indoor), (2) every flame or glow has something holding it:
+       a person's hand, or a lamp body right round it (a light floating in the air is a mistake) */
+    { const m4 = new THREE.Matrix4(), v = new THREE.Vector3(), rooms = P.indoor || []; P.group.traverse((o) => { if (!o.isInstancedMesh || !o.userData.veg) return; let bad = 0, ex = null;
+        for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, m4); v.setFromMatrixPosition(m4); if (rooms.some((w) => v.x > w[0] && v.x < w[2] && v.z > w[1] && v.z < w[3])) { bad++; ex = ex || v.clone(); } }
+        if (bad) r.inside.push(`${bad} plants grow under a roof, the first at (${ex.x.toFixed(1)},${ex.z.toFixed(1)})`); }); }
+    { const v = new THREE.Vector3(), held = (o) => { for (let p = o.parent; p; p = p.parent) if (P.bodies.includes(p)) return true; return false; };
+      P.group.traverse((o) => { if (!o.isSprite || !o.visible || o.material.blending !== THREE.AdditiveBlending || held(o)) return; o.getWorldPosition(v); const near = P.snap.some((m) => m.b.distanceToPoint(v) < 0.12);
+        if (!near) r.floating.push(`a light with nothing holding it at (${v.x.toFixed(1)},${v.y.toFixed(1)},${v.z.toFixed(1)})`); }); }
     /* our own rule for this game: nobody stands on the tram track or the siding where something will run */
     if (P.id === 'kingston') for (const n of P.npcs) if (Math.abs(n.hz) < 1.6 && n.hx > -46 && n.hx < 82) r.inside.push((n.id || n.base) + ' stands on the tram track at (' + n.hx.toFixed(1) + ',' + n.hz.toFixed(1) + ')');
     return r;
@@ -107,7 +115,7 @@ export function dev(D) {
   const goWorld = async (id, st, x, z, yaw, pitch, env) => { D.startGame(); const P = await D.ensurePlace(id); $('title').hidden = true; $('hud').hidden = false; D.enterPlace(id, { env: env ? D.ENV[env] : undefined }); D.stage = st; N.phase = 'world'; S.started = true; S.x = x; S.z = z; S.yaw = yaw; S.pitch = pitch || 0; D.setGoal('', true);
     if (id === 'station') { P.setPower(st >= 16 ? 0 : 1); D.showPerson(D.byId('zeke'), st < 14); D.showPerson(D.byId('zekeV'), st >= 14); P.notice.material.map = D.noticeTex(st >= 14); P.notice.material.needsUpdate = true; }
     if (id === 'kingston') P.car.position.x = st >= 22 ? -20 : -46; if (id === 'yard') D.showPerson(D.byId('ivy'), st >= 53); return P; };
-  if (shot && !VIEWS[shot] && !['w', 'journal', 'chapters', 'credits', 'reset', 'order', 'sort', 'talk', 'final', 'ride'].includes(shot)) {   /* the Tube's own views */
+  if (shot && !VIEWS[shot] && !['w', 'nudge', 'nudge2', 'journal', 'chapters', 'credits', 'reset', 'order', 'sort', 'talk', 'final', 'ride'].includes(shot)) {   /* the Tube's own views */
     D.begin(true); D.setPhase('shot'); T.torches.forEach((t) => { t.on = num('torch', 1); }); $('hint').textContent = q.has('nohint') ? '' : $('hint').textContent;
     const wl = num('wl', 0), cl = (q.get('clean') || '').split(',').filter(Boolean).map(Number);
     S.x = num('x', 0.12); S.z = num('z', D.ZM - 1.5); S.yaw = num('yaw', 0); S.pitch = num('pitch', 0); N.wl = wl; N.torch = num('torch', 1); N.vig = num('vig', 0); N.sky = num('sky', 0); $('vig').style.opacity = N.vig; T.manhole.setSky(N.sky);
@@ -140,7 +148,10 @@ export function dev(D) {
       setTimeout(() => { document.body.dataset.shot = shot; document.body.dataset.overlaps = hudOverlaps().join('; ') || 'none'; }, 400);
     });
   }
-  if (shot === 'ride') goWorld('kingston', 23, -24, 0.3, -Math.PI / 2, 0).then((P) => { P.car.position.x = num('cx', 10); S.x = P.car.position.x - 3.4; S.z = 0.3; S.eye = P.car.userData.floor + 1.5; S.yaw = num('yaw', -Math.PI / 2 + 0.25); D.bars(true); D.say('', 'The car glides down the street. People wave.', 1e6); for (const n of P.extras) if (n.ctl && D.CL.Wave) n.ctl.play('Wave'); for (let i = 0; i < 8; i++) D.tick(0.05); });
+  if (shot === 'ride') goWorld('kingston', 23, -24, 0.3, -Math.PI / 2, 0).then((P) => { P.car.position.x = num('cx', 10); S.x = P.car.position.x + 3.0; S.z = 0.05; S.eye = P.car.userData.floor + 1.5; S.yaw = num('yaw', -Math.PI / 2 + 0.25); D.bars(true); D.say('', 'The car glides down the street. People wave.', 1e6); for (const n of P.extras) if (n.ctl && D.CL.Wave) n.ctl.play('Wave'); for (let i = 0; i < 8; i++) D.tick(0.05); });
+  if (shot === 'nudge' || shot === 'nudge2') goWorld('station', 13, shot === 'nudge' ? -3.5 : 2, shot === 'nudge' ? 9.5 : -1.5, shot === 'nudge' ? 0.3 : Math.PI, 0.0).then((P) => {   /* the helper arrow: over the notice board, and (nudge2) behind you */
+    if (q.has('hud')) D.setGoal('Read the notice board.', true); D.NUDGE.on = true; const a = P.actions.find((x) => x.on()); const t = a ? [a.x, a.z, 1.7] : [P.spots.notice[0], P.spots.notice[1], 1.7];
+    const go = () => { D.showNudgeAt(t, true); requestAnimationFrame(go); }; go(); for (let i = 0; i < 4; i++) D.tick(0.05); setTimeout(() => { document.body.dataset.shot = shot; document.body.dataset.overlaps = hudOverlaps().join('; ') || 'none'; }, 600); });
   if (shot === 'talk') goWorld('yard', 53, 2.6, 13.6, Math.PI - 0.4, 0.05).then(() => { D.startTalk(D.byId('ivy')); if (q.has('n')) for (let i = 0; i < +q.get('n'); i++) $('next').click(); });
   if (['journal', 'chapters', 'credits', 'reset', 'order', 'sort', 'final'].includes(shot)) goWorld('station', 13, -2, 13, 0.25, 0.02).then(() => {
     for (const p of D.JOURNAL) D.unlock(p.id, true); D.story.boots = 'tell'; D.story.ivy = 'saw'; D.story.blame = 'ask'; D.story.story = 'heard'; for (let i = 0; i < 6; i++) D.doneCh[i] = i < 4;
@@ -173,7 +184,7 @@ export function dev(D) {
       for (const id of HUD_IDS) { const e = $(id); if (!vis(e) || !e.textContent.trim() || id === 'dialogue' || id === 'barT' || id === 'barB') continue; if (e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflowX !== 'visible') out.push(`${pre}${name}: ${id} is clipped`); for (const b of e.querySelectorAll('button')) if (vis(b) && b.scrollWidth > b.clientWidth + 2) out.push(`${pre}${name}: a button in ${id} is cut off`); } };
     const panel = (name, sel) => { for (const l of panelCheck(name, document.querySelector(sel))) out.push(pre + l); };
     const covered = (name, panelId, ids) => { for (const id of ids) { const e = $(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (!t || !$(panelId).contains(t)) out.push(`${pre}${name}: ${id} is covered by ${t ? (t.id || t.className || t.tagName) : 'nothing'}`); } };
-    const reset = () => { for (const id of ['skip', 'act', 'pick', 'holdbox', 'exit', 'toast', 'way', 'dialogue', 'card', 'puzzle', 'journal', 'chapters', 'credits']) $(id).hidden = true; $('hint').textContent = ''; $('sub').classList.add('dim'); D.bars(false); D.hideHud(false); D.captionOff(); $('skiphint').hidden = true; D.setClock(''); document.body.classList.remove('talk'); N.lift = 0; hand.setLift(0); hand.setCine(0); if (D.TB.el) D.TB.el.hidden = true; };
+    const reset = () => { for (const id of ['skip', 'act', 'pick', 'holdbox', 'exit', 'toast', 'way', 'nudge', 'dialogue', 'card', 'puzzle', 'journal', 'chapters', 'credits']) $(id).hidden = true; $('hint').textContent = ''; $('sub').classList.add('dim'); D.bars(false); D.hideHud(false); D.captionOff(); $('skiphint').hidden = true; D.setClock(''); document.body.classList.remove('talk'); N.lift = 0; hand.setLift(0); hand.setCine(0); if (D.TB.el) D.TB.el.hidden = true; };
     const longGoal = 'Talk to Mr Bertie, the woman and the conductor: 2 of 3. This goal is long, to test it wrapping.';
     const sayLong = () => { D.say('Old Zeke', 'This water makes the light for all of Kingston. A long line to test two rows.', 6e7); $('sub').classList.remove('dim'); };
     /* the title screen */
@@ -181,7 +192,11 @@ export function dev(D) {
       for (const [id, e] of els) if (vis(e)) inside('title screen', id, e); for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) if (vis(els[i][1]) && vis(els[j][1]) && hits(box(els[i][1]), box(els[j][1]))) out.push(`${pre}title screen: ${els[i][0]} overlaps ${els[j][0]}`); }
     /* outside */
     D.startGame(); const P = await D.ensurePlace('station'); D.enterPlace('station'); N.phase = 'world'; S.started = true; D.stage = 13; await settle();
-    reset(); D.setGoal(longGoal, true); D.setClock('Midnight'); D.toast('Journal: The power station', 6e4); $('way').hidden = false; $('waytext').textContent = 'Turn around'; $('act').hidden = false; $('act').textContent = 'Read the notice board'; sayLong(); $('hint').textContent = 'WASD to walk. Drag to look. E to talk or use.'; await settle(); check('outside: goal, clock, toast, helper, button, words, hint');
+    reset(); D.setGoal(longGoal, true); D.setClock('Midnight'); D.toast('Journal: The power station', 6e4); $('act').hidden = false; $('act').textContent = 'Read the notice board'; sayLong(); $('hint').textContent = 'WASD to walk. Drag to look. E to talk or use.'; await settle(); check('outside: goal, clock, toast, button, words, hint');
+    /* the helper arrow, asked for on top of every word and button in turn and at the sides: it must move to a free spot (or wait), never cover them */
+    for (const id of ['act', 'goal', 'sub', 'toast', 'hint']) { const e = $(id); if (!vis(e)) continue; const r = box(e); D.placeNudge((r.left + r.right) / 2, (r.top + r.bottom) / 2, 'down', 'Here!', true); await sleep(60); check('the helper arrow asked for over ' + id); }
+    for (const [cls, lab] of [['left', 'This way'], ['right', 'Turn around']]) { D.placeNudge(cls === 'left' ? 60 : W - 60, Hh * 0.45, cls, lab, true); await sleep(60); check('the helper arrow at the ' + cls + ' side'); }
+    $('nudge').hidden = true;
     reset(); D.setGoal('Hold the button to turn the valve wheel.', true); D.setClock('Midnight'); $('holdbox').hidden = false; sayLong(); await settle(); check('the valve: hold button with words');
     reset(); D.setGoal(longGoal, true); $('exit').hidden = false; $('act').hidden = false; $('act').textContent = 'Climb on to the car'; D.toast('Loading', 6e4); await settle(); check('Kingston: leave button and the car button');
     reset(); D.setGoal(longGoal, true); D.bars(true); sayLong(); $('act').hidden = false; $('act').textContent = 'Climb on to the car'; await settle(); check('outside with the black bars in');
