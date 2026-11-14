@@ -1055,6 +1055,14 @@ def covered(f):
 bmesh.ops.delete(bm,geom=[f for f in bm.faces if not all(v[dl].get(gi,0)>0 for v in f.verts) or hidden(cz(f)) or (_covs and covered(f))],context='FACES'); bm.to_mesh(h.data); bm.free()
 if not OLD: neck_to_chest(h)      # the skin at the base of the neck follows the chest, like the shirt's neckline that lies on it
 h.data.materials.clear(); h.data.materials.append(colmat('Skin',0.68)); h.name='Body'
+if not OLD and G.get('socks'):
+    # socks are their own material, cut along one clean line round each leg: painted on the skin, their top edge smeared into the skin once a light copy was simplified.
+    # As a separate part of the mesh its edge is a border, which the packer keeps exactly
+    ZSK=ANK+G['socks']*(KNEE-ANK); bm=bmesh.new(); bm.from_mesh(h.data)
+    _g=[f for f in bm.faces if abs(cz(f).z-ZSK)<0.06]; bmesh.ops.bisect_plane(bm,geom=list({v for f in _g for v in f.verts})+list({e for f in _g for e in f.edges})+_g,plane_co=(0,0,ZSK),plane_no=(0,0,1))
+    bmesh.ops.triangulate(bm,faces=[f for f in bm.faces if len(f.verts)>4])
+    for f in bm.faces: f.material_index=1 if cz(f).z<ZSK else 0
+    bm.to_mesh(h.data); bm.free(); h.data.materials.append(colmat('Sock',0.85))
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
 def paint(o):
     me=o.data; bm=bmesh.new(); bm.from_mesh(me); cl=bm.loops.layers.color.new('Col'); RL=bm.verts.layers.float.get('ramp') if o.name in ('Hair','Moustache') else None
@@ -1064,7 +1072,7 @@ def paint(o):
             p=l.vert.co; col=base.copy()
             if o is h:
                 if G.get('stockings') and ANK-0.01<p.z<KNEE+0.02: col=COL['Stockings'].copy()
-                if G.get('socks') and p.z<ANK+G['socks']*(KNEE-ANK): col=COL['Sock'].copy()
+                if G.get('socks') and OLD and p.z<ANK+G['socks']*(KNEE-ANK): col=COL['Sock'].copy()      # later eras: socks are their own material (see above)
                 lip=max(0,1-((p.x/0.026)**2+((p.z-LIPZ)/0.010)**2)) if p.y<J('Head').y-0.09 else 0
                 col=col.lerp(col*0.62+Vector((0.05,0.0,0.0)),min(1,lip*1.2))
                 for sx in (-1,1):
