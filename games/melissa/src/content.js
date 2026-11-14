@@ -5,6 +5,7 @@
 
 /* ---------- chapters: the title card and the place caption of each ---------- */
 export const CHAPTERS = [
+  { year: 'August 1951', name: 'Charlie', title: 'Friday 17 August 1951', sub: 'The day Hurricane Charlie came.', caption: 'A fishing bay near Kingston, Friday 17 August 1951', caption2: "Miss Ivy's house, Friday night" },
   { year: 'September 1988', name: 'Gilbert', title: 'Sunday 11 September 1988', sub: 'The day before Hurricane Gilbert.', caption: 'Breadnut Corner, Sunday 11 September 1988', caption2: "Mass Clifford's house, Monday 12 September 1988" },
   { year: 'October 2025', name: 'Melissa is coming', title: 'Saturday 25 October 2025', sub: 'A big storm is out at sea.', caption: 'Breadnut Corner, Saturday 25 October 2025' },
   { year: 'Tuesday 28 October 2025', name: 'The storm', title: 'Monday 27 October 2025', sub: 'Night in the church hall.', caption: 'The church hall, Monday 27 October 2025' },
@@ -15,47 +16,54 @@ export const CHAPTERS = [
 
 /* ---------- goals: one short sentence each. A function gets the live counters. ---------- */
 export const GOALS = {
-  10: () => 'Talk to Dad, Mama and Delroy.',
+  10: () => 'Talk to Papa, Mama and Mass Cyril.',
   11: (P) => `Get ready: ${P.jobs || 0} of 3 jobs.`,
-  12: () => "Talk to Mass Clifford at his block house.",
-  13: () => 'Go inside Mass Clifford\'s house with your family.',
+  12: () => 'Talk to Miss Ivy at her block house.',
+  13: () => "Go inside Miss Ivy's house with your family.",
   14: () => 'The wind is rising. Sit down with your family.',
-  15: () => 'The wind has dropped. Talk to Dad.',
-  16: () => 'Well done! Next, Melissa, in 2025.',
-  20: () => 'Talk to Mum and Grandpa.',
-  21: (P) => `Get ready: ${P.jobs || 0} of 4 jobs.`,
-  22: () => 'Talk to Mr. Raymond about his roof.',
-  23: (P) => `Hand up the nails to Mr. Raymond: ${P.nail || 0} of 3.`,
-  24: () => 'Listen to the radio on the porch.',
-  25: () => 'Walk to the church hall. It is the shelter.',
-  26: () => 'Well done! Next, the night in the shelter.',
-  30: () => 'Talk to Mum, Pastor Gayle and Nurse Simone.',
-  31: (P) => `Help in the hall: ${P.jobs || 0} of 2 jobs.`,
-  32: () => 'The night goes by.',
-  33: () => 'The wind is very loud. Sit down with Mum and Gran.',
-  34: () => 'The worst is over. Talk to Mum and Pastor Gayle.',
-  35: () => 'Well done! Next, going home.',
-  40: () => 'Talk to Mum and Grandpa.',
-  41: () => 'Walk home along the lane. Look and listen.',
-  42: () => 'You are home. Look at the house.',
-  43: () => 'Talk to Mum.',
-  44: () => 'Check on Miss Hyacinth, along the lane.',
-  45: () => 'Well done! Next, the days after.',
-  50: () => 'Talk to Mr. Raymond.',
-  51: (P) => `Help your neighbours: ${P.jobs || 0} of 4 jobs.`,
-  52: () => 'Talk to Jordan, by the church.',
-  53: () => 'Listen. Something is coming.',
-  54: () => 'The light! Go and switch it on at home.',
-  55: () => 'Well done! Next, today.',
-  60: () => 'Talk to Miss Campbell.',
-  61: () => 'Read the Ready Plan board.',
-  62: () => 'Pack the family kit.',
-  63: () => 'Andre has a question. Talk to Andre.',
-  64: () => 'You have finished the story. Thank you for playing! Your journey is in the Journal.',
+  15: () => 'The wind has dropped. Talk to Papa.',
+  16: () => 'Well done! Next, Gilbert, in 1988.',
+  20: () => 'Talk to Dad, Mama and Delroy.',
+  21: (P) => `Get ready: ${P.jobs || 0} of 3 jobs.`,
+  22: () => "Talk to Mass Clifford at his block house.",
+  23: () => 'Go inside Mass Clifford\'s house with your family.',
+  24: () => 'The wind is rising. Sit down with your family.',
+  25: () => 'The wind has dropped. Talk to Dad.',
+  26: () => 'Well done! Next, Melissa, in 2025.',
+  30: () => 'Talk to Mum and Grandpa.',
+  31: (P) => `Get ready: ${P.jobs || 0} of 4 jobs.`,
+  32: () => 'Talk to Mr. Raymond about his roof.',
+  33: (P) => `Hand up the nails to Mr. Raymond: ${P.nail || 0} of 3.`,
+  34: () => 'Listen to the radio on the porch.',
+  35: () => 'Walk to the church hall. It is the shelter.',
+  36: () => 'Well done! Next, the night in the shelter.',
+  40: () => 'Talk to Mum, Pastor Gayle and Nurse Simone.',
+  41: (P) => `Help in the hall: ${P.jobs || 0} of 2 jobs.`,
+  42: () => 'The night goes by.',
+  43: () => 'The wind is very loud. Sit down with Mum and Gran.',
+  44: () => 'The worst is over. Talk to Mum and Pastor Gayle.',
+  45: () => 'Well done! Next, going home.',
+  50: () => 'Talk to Mum and Grandpa.',
+  51: () => 'Walk home along the lane. Look and listen.',
+  52: () => 'You are home. Look at the house.',
+  53: () => 'Talk to Mum.',
+  54: () => 'Check on Miss Hyacinth, along the lane.',
+  55: () => 'Well done! Next, the days after.',
+  60: () => 'Talk to Mr. Raymond.',
+  61: (P) => `Help your neighbours: ${P.jobs || 0} of 4 jobs.`,
+  62: () => 'Talk to Jordan, by the church.',
+  63: () => 'Listen. Something is coming.',
+  64: () => 'The light! Go and switch it on at home.',
+  65: () => 'Well done! Next, today.',
+  70: () => 'Talk to Miss Campbell.',
+  71: () => 'Read the Ready Plan board.',
+  72: () => 'Pack the family kit.',
+  73: () => 'Andre has a question. Talk to Andre.',
+  74: () => 'You have finished the story. Thank you for playing! Your journey is in the Journal.',
 };
-export const TALK_TARGETS = { 10: ['dad', 'mama', 'delroy'], 12: ['clifford'], 15: ['dadR'], 20: ['pearl', 'winston'], 22: ['raymond'], 30: ['pearlH', 'pastor', 'simone'], 34: ['pearlH', 'pastor'], 40: ['pearlA', 'winstonA'], 43: ['pearlA'], 44: ['hyacinthA'], 50: ['raymondA'], 52: ['youth'], 60: ['teacher'], 63: ['student'] };
-export const NEXT_AFTER_TALK = { 10: 11, 12: 13, 15: 16, 20: 21, 22: 23, 30: 31, 34: 35, 40: 41, 43: 44, 44: 45, 50: 51, 52: 53, 60: 61, 63: 64 };
-export const CHAPTER_END = { 16: 0, 26: 1, 35: 2, 45: 3, 55: 4 };   /* the last stage of each chapter but the final one, and the index of the chapter it ends */
+export const TALK_TARGETS = { 10: ['papa51', 'mama51', 'cyril'], 12: ['ivy'], 15: ['papaR51'], 20: ['dad', 'mama', 'delroy'], 22: ['clifford'], 25: ['dadR'], 30: ['pearl', 'winston'], 32: ['raymond'], 40: ['pearlH', 'pastor', 'simone'], 44: ['pearlH', 'pastor'], 50: ['pearlA', 'winstonA'], 53: ['pearlA'], 54: ['hyacinthA'], 60: ['raymondA'], 62: ['youth'], 70: ['teacher'], 73: ['student'] };
+export const NEXT_AFTER_TALK = { 10: 11, 12: 13, 15: 16, 20: 21, 22: 23, 25: 26, 30: 31, 32: 33, 40: 41, 44: 45, 50: 51, 53: 54, 54: 55, 60: 61, 62: 63, 70: 71, 73: 74 };
+export const CHAPTER_END = { 16: 0, 26: 1, 36: 2, 45: 3, 55: 4, 65: 5 };   /* the last stage of each chapter but the final one, and the index of the chapter it ends */
 
 /* what you chose, in your journey page */
 export const CHOICE_NAMES = {
@@ -65,9 +73,16 @@ export const CHOICE_NAMES = {
 
 /* the storm scenes: a card first, the narration in order, a title card after, and the same story in plain pages for anyone who skips the scene */
 export const LINES = {
+  c51: { cardTitle: 'Friday 17 August 1951', page: 'charlie', page2: 'hurricanes', title: 'Saturday morning', sub: '18 August 1951',
+    skip: ['Charlie came ashore on the night of 17 August 1951, just south of Kingston.', "In Miss Ivy's house, the wind lifted part of the roof. Everyone stayed low and together.", 'Your family was safe. Many people along the coast were not so lucky.'],
+    b: ['It is night. The wind rises, and the rain falls hard.', 'The sea roars close by. Miss Ivy checks the door.', 'The lamp goes out. Mama holds baby Winston close.', 'The wind screams. The whole house shakes.', 'A loud bang! The roof sheets lift off.', 'Rain pours in through the open roof!', 'Papa pulls a table over you all. "Stay low. Stay together."', 'Mama hums to Winston. The storm goes on for hours.'],
+    morning: 'The wind has dropped. Your family is safe.' },
+  /* a cutaway at the start of Gilbert's storm scene: Kingston at midday, uptown and downtown across one street */
+  kingston: { title: 'Kingston', sub: 'About midday, Monday 12 September 1988',
+    b: ['Midday in Kingston. The eye of Gilbert passes over.', 'Uptown, a family shelters in a big house behind a high wall.', 'A satellite dish tears off its post and sails over the wall!', 'Downtown, in crowded yards, zinc roofs lift off and fly.', 'Gilbert hit big houses and small houses alike.'] },
   g88: { cardTitle: 'Monday 12 September 1988', page: 'gilbert', page2: 'hurricanes', title: 'Later that day', sub: '12 September 1988',
-    skip: ['The wind got stronger all day. In Mass Clifford\'s house, the roof sheets lifted off.', 'Everyone stayed low and together. Nobody in the family was hurt.', 'Hurricane Gilbert crossed Jamaica from east to west on that Monday.'],
-    b: ['The wind rises. Zinc roofs rattle all over the village.', 'Mass Clifford checks the door. The lamp flickers.', 'The lamp goes out. Mama holds Delroy close.', 'The wind roars like a train. The whole house shakes.', 'A loud bang! The roof sheets lift off.', 'A big satellite dish sails past in the sky. Rain pours in!', 'Dad pulls the mattress over you all. "Stay low. Stay together."', 'Mama sings softly to Delroy. The storm goes on for hours.'],
+    skip: ['Around midday, the eye of Gilbert passed over Kingston.', 'In this story, an uptown garden loses its dish. Downtown, zinc roofs fly.', 'Gilbert hit big houses and small houses alike.', "Later, Mass Clifford's roof lifted off. Everyone stayed together."],
+    b: ['The wind rises. Zinc roofs rattle all over the village.', 'Mass Clifford checks the door. The lamp flickers.', 'The lamp goes out. Mama holds Delroy close.', 'The wind roars like a train. The whole house shakes.', 'A loud bang! The roof sheets lift off.', 'Rain pours in through the open roof!', 'Dad pulls the mattress over you all. "Stay low. Stay together."', 'Mama sings softly to Delroy. The storm goes on for hours.'],
     morning: 'The wind has dropped. Your family is safe.' },
   m25: { cardTitle: 'Tuesday 28 October 2025', page: 'melissa', page2: 'wind', title: 'Tuesday afternoon', sub: '28 October 2025',
     skip: ['Melissa came ashore in the west of Jamaica just after midday, as a Category 5 hurricane, the strongest kind.', 'In the church hall, the wind tore a part of the roof away. Rain poured in.', 'Everyone moved together to the middle and stayed safe. Pastor Gayle led a hymn.'],
@@ -91,12 +106,44 @@ export const STORMS = [
 /* ---------- conversations: TALK[id](story) gives the first, full conversation; LATER[id](story) gives short lines for later visits ---------- */
 const Y = 'You';
 export const TALK = {
-  /* ===== chapter 1: Breadnut Corner, 11 September 1988. You are Pearl, twelve. ===== */
+  /* ===== chapter 1: a fishing bay near Kingston, 17 August 1951. You are Hattie, ten. ===== */
+  papa51: () => [
+    { who: 'Papa', text: 'Hattie, the neighbours say a bad storm is coming.' },
+    { who: Y, text: 'How bad, Papa?' },
+    { who: 'Papa', text: 'Nobody knows. But the sea looks strange today.', unlock: 'hurricanes' },
+    { who: 'Papa', text: 'We must get ready, and quickly.' },
+  ],
+  mama51: () => [
+    { who: 'Mama', text: 'Hattie, bring your little brother here.' },
+    { who: Y, text: 'Winston is so heavy, Mama!' },
+    { who: 'Mama', text: 'He is only one year old. Keep him close.' },
+    { who: 'Mama', text: 'Keep calm, and help your father.' },
+  ],
+  cyril: () => [
+    { who: 'Mass Cyril', text: 'I am pulling my canoe up the beach.' },
+    { who: Y, text: 'Why, Mass Cyril?' },
+    { who: 'Mass Cyril', text: 'The sea will rise. A canoe left on the water is lost.' },
+    { who: 'Mass Cyril', text: 'Help me, child. Then go to Miss Ivy.' },
+  ],
+  ivy: () => [
+    { who: 'Miss Ivy', text: 'Hattie! Bring everyone here.' },
+    { who: 'Miss Ivy', text: 'My house is made of block. It is stronger than board.' },
+    { who: Y, text: 'Thank you, Miss Ivy.' },
+    { who: 'Miss Ivy', text: 'Come in tonight. The storm is near.' },
+  ],
+  papaR51: () => [
+    { who: 'Papa', text: 'Everyone is safe. Thank God.' },
+    { who: 'Papa', text: 'Half of this roof is gone. Many people lost their homes tonight.' },
+    { who: 'Papa', text: 'Charlie was a very big storm. People will remember it for ever.' },
+    { who: Y, text: 'I will remember it too.' },
+  ],
+  /* ===== chapter 2: Breadnut Corner, 11 September 1988. You are Pearl, twelve. ===== */
   dad: () => [
     { who: 'Dad', text: 'Pearl, the radio says a big storm is coming.' },
     { who: Y, text: 'Is it a hurricane, Dad?' },
     { who: 'Dad', text: 'Yes. It is called Gilbert.', unlock: 'hurricanes' },
     { who: 'Dad', text: 'We have not had a hurricane here for thirty-seven years.' },
+    { who: 'Dad', text: 'The last was Charlie. My big sister Hattie remembers it.' },
     { who: 'Dad', text: 'Our roof is old. We must get ready today.' },
   ],
   mama: () => [
@@ -234,6 +281,7 @@ export const TALK = {
 };
 const first = (...a) => () => a;
 export const LATER = {
+  papa51: () => ['Help Mass Cyril, then come back.', 'Stay close to your mother.'], mama51: () => ['Hold Winston tight.', 'Fill every bucket you can find.'], cyril: () => ['Pull hard! Tie her to the palm.'], ivy: () => ['Come early. Do not wait for the rain.'], papaR51: () => ['Stay low, Hattie. Stay together.'], mamaR51: () => ['Hush, Winston. We are safe in here.'], ivyR51: () => ['This house has stood a long time. It will stand tonight.'],
   dad: () => ['Go and help your mother.', 'Take your time, but not too much.'], mama: () => ['Stay close to me today.', 'Fill every bucket you can find.'], delroy: () => ['I am scared, but a little excited.', 'Is the mango tree okay?'], clifford: () => ['Come early. Do not wait for the rain.'],
   dadR: () => ['Stay low, Pearl. Stay together.'], mamaR: () => ['Hush, Delroy. We are safe in here.'], delroyR: () => ['The wind is so loud, Pearl.'], cliffordR: () => ['This house has stood a long time. It will stand tonight.'],
   pearl: (s) => ['Have you got your jobs done?', 'Keep your phone charged, love.'], winston: () => ['Good nails and a good plan. That is the secret.', 'Do not touch the roof. That is a job for grown-ups.'], bev: () => ['Water and tins are going fast today!', 'Everyone is buying early. That is wise.'], raymond: () => ['Careful on that ladder, now.', 'Tight sheets, safe house.'], hyacinth: () => ['I will go to the church when the time comes.', 'I remember Gilbert. Oh yes.'],
@@ -246,8 +294,9 @@ export const LATER = {
 
 /* ---------- the journal: pages open as you play. simple: for everyone. deeper: for older readers and teachers. ---------- */
 export const JOURNAL = [
-  { id: 'you', title: 'You', simple: ['In this story you are a made-up child in a made-up village called Breadnut Corner.', 'In 1988 you are Pearl, aged twelve. In 2025 you are Pearl\'s child.', 'The storms are real. The family is not.'], deeper: ['Pearl, Dad, Mama, Delroy, Mass Clifford, Mum, Grandpa, Gran, Mr. Raymond, Miss Bev, Miss Hyacinth, Pastor Gayle, Nurse Simone, Keisha, Marlon, Jordan, Miss Campbell and Andre are fictional.', 'Breadnut Corner is made up. The clothes, houses and tools are a general picture, not copied from photographs.', 'No real person speaks in this game.'] },
-  { id: 'gilbert', title: 'Hurricane Gilbert, 1988', simple: ['Hurricane Gilbert crossed Jamaica on Monday 12 September 1988, from east to west.', 'It was the first hurricane to hit Jamaica in 37 years.', 'More than 100,000 homes were damaged or destroyed.', 'Hundreds of thousands of people lost their homes or their roofs.', 'About 45 people died in Jamaica.'], deeper: ['The eye passed over Kingston around midday. The storm was over the island from the morning until about six in the evening.', 'The first report called Gilbert a Category 3 hurricane. A later study of the same records says it may have been a low Category 4.', 'Gilbert\'s lowest pressure came a day later, near Mexico, where it grew into a Category 5 storm. It killed 318 people in all the countries it crossed.', 'The whole export banana crop was destroyed, and the chicken farms were badly hit. The power and water systems stopped working, and some places waited three months for light.', 'Many people remember eating bully beef (tinned corned beef) in the weeks after Gilbert.', 'After Gilbert the disaster office was changed. In 1993 it became the Office of Disaster Preparedness and Emergency Management (ODPEM), which started the National Zonal Programme so that communities can look after themselves for at least 72 hours.', 'Many roofs rebuilt after Gilbert used metal straps at each rafter. Gilbert\'s name was retired, so no other storm will be called Gilbert.'] },
+  { id: 'you', title: 'You', simple: ['In this story you are a made-up child. The family is made up too.', 'In 1951 you are Hattie, aged ten. In 1988 you are Pearl, aged twelve. In 2025 you are Pearl\'s child.', 'The storms are real. The family is not.'], deeper: ['Hattie, Papa, Mama, baby Winston, Mass Cyril, Miss Ivy, Pearl, Dad, Mama, Delroy, Mass Clifford, Mum, Grandpa, Gran, Mr. Raymond, Miss Bev, Miss Hyacinth, Pastor Gayle, Nurse Simone, Keisha, Marlon, Jordan, Miss Campbell and Andre are fictional.', 'Breadnut Corner is made up. The clothes, houses and tools are a general picture, not copied from photographs.', 'No real person speaks in this game.'] },
+  { id: 'charlie', title: 'Hurricane Charlie, 1951', simple: ['Hurricane Charlie hit Jamaica on the night of 17 August 1951.', 'It came ashore just south of Kingston.', 'About 150 people died in Jamaica, and about 25,000 lost their homes.', 'It was Jamaica\'s deadliest natural disaster of the 1900s.'], deeper: ['Charlie was a high Category 3 hurricane. Kingston had about 17 inches of rain and winds of about 110 miles an hour.', 'The first newspaper headline said 110 dead. Later counts were higher: about 152 in Jamaica.', 'Newspapers of the time said that Morant Bay was four-fifths destroyed and that Port Royal was flattened. These are reports from 1951 that we have not checked against other sources.', 'About 70 to 80 per cent of the banana crop was destroyed, and the airport at Palisadoes lost a hangar.', 'After Charlie, Jamaica set up a Hurricane Housing Organization to rebuild homes. It joined the Department of Housing in 1956 (one source).', 'The bay, Hattie, her family and Miss Ivy in this game are made up.'] },
+  { id: 'gilbert', title: 'Hurricane Gilbert, 1988', simple: ['Hurricane Gilbert crossed Jamaica on Monday 12 September 1988, from east to west.', 'It was the first hurricane to hit Jamaica in 37 years.', 'More than 100,000 homes were damaged or destroyed.', 'Hundreds of thousands of people lost their homes or their roofs.', 'About 45 people died in Jamaica.'], deeper: ['The eye passed over Kingston around midday. The storm was over the island from the morning until about six in the evening. It hit uptown and downtown alike.', 'The first report called Gilbert a Category 3 hurricane. A later study of the same records says it may have been a low Category 4.', 'Gilbert\'s lowest pressure came a day later, near Mexico, where it grew into a Category 5 storm. It killed 318 people in all the countries it crossed.', 'The whole export banana crop was destroyed, and the chicken farms were badly hit. The power and water systems stopped working, and some places waited three months for light.', 'Many people remember eating bully beef (tinned corned beef) in the weeks after Gilbert.', 'After Gilbert the disaster office was changed. In 1993 it became the Office of Disaster Preparedness and Emergency Management (ODPEM), which started the National Zonal Programme so that communities can look after themselves for at least 72 hours.', 'Many roofs rebuilt after Gilbert used metal straps at each rafter. Gilbert\'s name was retired, so no other storm will be called Gilbert.'] },
   { id: 'hurricanes', title: 'What is a hurricane?', simple: ['A hurricane is a huge spinning storm. It grows over warm sea water.', 'It has very strong wind, heavy rain and big waves.', 'The wind in a hurricane is at least 74 miles an hour.', 'Hurricane season is from 1 June to 30 November.'], deeper: ['Hurricanes are rated from Category 1 to Category 5 on the Saffir-Simpson scale. Category 1 is 74 to 95 miles an hour, Category 3 is 111 to 129, and Category 5 is 157 or more.', 'The scale measures wind only, not rain or flood water.', 'The eye is the calm middle. The eyewall around it has the strongest wind.', 'Storm surge is sea water pushed onto the land by the wind. A slow storm drops more rain on the same places for longer, so slow storms can cause the worst floods.'] },
   { id: 'warnings', title: 'Watches and warnings', simple: ['A watch means a hurricane could come.', 'A warning means a hurricane is expected soon.', 'Listen to the radio, TV and phone alerts.', 'If you are told to go to a shelter, go early.'], deeper: ['A hurricane watch is usually given about 48 hours before strong winds. A hurricane warning is usually given about 36 hours before.', 'Melissa moved so slowly that the alerts came much earlier: the watch about a week before, and the hurricane warning about three and a half days before.', 'For Gilbert in 1988, the hurricane warning came about 22 hours before the eye arrived.', 'News comes from the Meteorological Service of Jamaica and the Office of Disaster Preparedness and Emergency Management (ODPEM). The radio voice in this game is made up.'] },
   { id: 'ready', title: 'Getting ready', simple: ['Fill buckets and keep water.', 'Keep food that needs no cooking, and bread.', 'Cover windows. Fix loose roof sheets.', 'Pack a go-bag: papers in a plastic bag, a torch, a charged phone and a radio.'], deeper: ['ODPEM and the Jamaica Information Service say to keep a battery radio, torches and spare batteries, first-aid things, plastic bags and tools, and four or five days of food that needs no fridge.', 'Choose two meeting places: one just outside your home and one outside your neighbourhood. Name a family contact in another area whom everyone can phone.', 'Practise your plan every six months. Pets are not allowed in shelters, so plan for them.', 'Pick the fruit off trees and trim branches near power lines. A torch is safer than a candle.'] },

@@ -27,3 +27,7 @@ node tools/people/pack.mjs --src build/people --out games/melissa/site/models --
 ```
 
 Then point the looks in `games/melissa/src/cast.js` at the new body ids, and run `?test=audit`, `?test=held`, `?test=layout`, `?test=cloth`, `?test=walkers` and `?test=skin` (see `docs/PEOPLE.md` section 5). These recipes have not been run through `era.py`: check the clothes in close screenshots before trusting them.
+
+## Hurricane Charlie, 1951 (chapter 1)
+
+The people of 1951 (`papa51`, `mama51`, `cyril`, `ivy51` in `cast.js`) use the Kendal bodies `man_work`, `woman57`, `man_elder` and `woman_elder` as they are: those bodies were built for the 1950s, so no new recipe is needed for them. Check their clothes against 1951 photographs when the bodies are reviewed (a general picture of the 1950s, not copied from photographs).
