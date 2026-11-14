@@ -437,8 +437,8 @@ async function holdGate(P) {
   if (frozen) return; frozen = true; const ep = EP, kids = [0, 1, 2].map((i) => byId('kid' + i)), path = [[-3, -44], [0, -34], [0, -12], [-1.2, -7.4]];
   bars(true); say('You hold the gate. Firefighters lead the children out, one by one.', 7000);
   cut([-2.3, 1.3, -7.2], [-3.4, 1.35, -5.4], [0, 1.2, -20], [-0.5, 1.0, -12], 9);   /* from the gate: the children come down the avenue, the fire behind them */
-  await Promise.all(kids.map((n, i) => (async () => { await wait(i * 1100); if (ep !== EP) return; n.m.visible = true; n.walking = true; n.ctl.play('Walk', true); const end = [-5 - i * 1.25, -5.2], pts = path.concat([end]);
-    for (let s = 0; s < pts.length - 1; s++) { const a = pts[s], b = pts[s + 1]; n.m.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]); await tween(Math.hypot(b[0] - a[0], b[1] - a[1]) / 5.5, (k) => { n.x = a[0] + (b[0] - a[0]) * k; n.z = a[1] + (b[1] - a[1]) * k; n.m.position.set(n.x, 0, n.z); }); if (ep !== EP) return; }
+  await Promise.all(kids.map((n, i) => (async () => { await wait(i * 1100); if (ep !== EP) return; n.m.visible = true; n.walking = true; walkOn(n, 1.7); const end = [-5 - i * 1.25, -5.2], pts = path.concat([end]);
+    for (let s = 0; s < pts.length - 1; s++) { const a = pts[s], b = pts[s + 1]; n.m.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]); await tween(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1.7,   /* a quick walk, holding hands, not a run */ (k) => { n.x = a[0] + (b[0] - a[0]) * k; n.z = a[1] + (b[1] - a[1]) * k; n.m.position.set(n.x, 0, n.z); }); if (ep !== EP) return; }
     n.ctl.play(null); n.walking = false; kidTo(n, end[0], end[1]); })()));
   if (ep !== EP) return; endCut(); state.x = -3.4; state.z = -5.6; state.yaw = 1.2; state.pitch = 0; frozen = false; setStage(43);
 }
@@ -531,12 +531,13 @@ function update(dt, now) {
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
   if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }
+/* start the looping walk, with the legs paced to the walking speed so the feet do not slide (the clip covers about 1.3 m a second) */
+function walkOn(n, sp) { const a = n.ctl.get('Walk'); if (!a) return; a.timeScale = Math.max(0.55, Math.min(1.8, (sp || n.speed || 1.1) / (1.3 * (n.scale || 1))));   /* a smaller body takes shorter steps */ if (n.ctl.cur !== a) n.ctl.play('Walk'); }
 /* a stroller: walk to one end of the path, wait a moment, walk back */
 function walkTick(n, dt) {
-  if (n.wait > 0) { n.wait -= dt; if (n.wait <= 0) n.ctl.play('Walk', true); return; } const [tx, tz] = n.path[n.leg], dx = tx - n.x, dz = tz - n.z, d = Math.hypot(dx, dz);
-  const px = state.x - n.x, pz = state.z - n.z; if (Math.hypot(px, pz) < 1.2 && px * dx + pz * dz > 0) { if (n.ctl.cur && n.ctl.cur.getClip().name === 'Walk') n.ctl.play(null); return; }   /* the player is in the way: stop and let them pass */
-  if (d < 0.2) { n.leg = 1 - n.leg; n.wait = 2 + Math.random() * 4; n.ctl.play(null); return; } if (!n.ctl.cur || n.ctl.cur.getClip().name !== 'Walk') n.ctl.play('Walk', true);
-  const sp = (n.speed || 1.1) * (n.scale || 1); n.x += dx / d * sp * dt; n.z += dz / d * sp * dt; n.m.position.set(n.x, n.ground, n.z); n.m.rotation.y = Math.atan2(dx, dz);
+  if (n.wait > 0) { n.wait -= dt; if (n.wait <= 0) walkOn(n); return; } const [tx, tz] = n.path[n.leg], dx = tx - n.x, dz = tz - n.z, d = Math.hypot(dx, dz);
+  const px = state.x - n.x, pz = state.z - n.z; if (Math.hypot(px, pz) < 1.2 && px * dx + pz * dz > 0) { if (n.ctl.cur === n.ctl.get('Walk')) n.ctl.play(null); return; }   /* the player is in the way: stop and let them pass */
+  if (d < 0.2) { n.leg = 1 - n.leg; n.wait = 2 + Math.random() * 4; n.ctl.play(null); return; } const sp = (n.speed || 1.1) * (n.scale || 1); if (n.ctl.cur !== n.ctl.get('Walk')) walkOn(n, sp); n.x += dx / d * sp * dt; n.z += dz / d * sp * dt; n.m.position.set(n.x, n.ground, n.z); n.m.rotation.y = Math.atan2(dx, dz);
 }
 /* Gran walks with you once she has told you where you are going: she follows your footsteps, so she comes through the gate the way you did */
 const TRAIL = [];
@@ -544,8 +545,8 @@ function followTick(n, dt) {
   if (stage < 11 || stage > 13 || DIR.on) { TRAIL.length = 0; return; } const lp = TRAIL[TRAIL.length - 1]; if (!lp || Math.hypot(lp[0] - state.x, lp[1] - state.z) > 0.4) TRAIL.push([state.x, state.z]);
   const dp = Math.hypot(state.x - n.x, state.z - n.z); n.walking = dp > 1.9;
   if (n.walking) { while (TRAIL.length > 1 && Math.hypot(TRAIL[0][0] - n.x, TRAIL[0][1] - n.z) < 0.3) TRAIL.shift(); const [tx, tz] = TRAIL[0] || [state.x, state.z], dx = tx - n.x, dz = tz - n.z, d = Math.hypot(dx, dz) || 1, sp = Math.min(2.8, 1.2 + (dp - 1.9) * 1.2);
-    n.x += dx / d * Math.min(d, sp * dt); n.z += dz / d * Math.min(d, sp * dt); n.ground = PL[cur].groundAt(n.x, n.z); n.m.position.set(n.x, n.ground, n.z); n.m.rotation.y = Math.atan2(dx, dz); if (!n.ctl.cur || n.ctl.cur.getClip().name !== 'Walk') n.ctl.play('Walk', true); }
-  else if (n.ctl.cur && n.ctl.cur.getClip().name === 'Walk') n.ctl.play(null);
+    n.x += dx / d * Math.min(d, sp * dt); n.z += dz / d * Math.min(d, sp * dt); n.ground = PL[cur].groundAt(n.x, n.z); n.m.position.set(n.x, n.ground, n.z); n.m.rotation.y = Math.atan2(dx, dz); walkOn(n, sp); }
+  else if (n.ctl.cur === n.ctl.get('Walk')) n.ctl.play(null);
 }
 let last = performance.now(), fixedCam = null;
 function frame(t) {
