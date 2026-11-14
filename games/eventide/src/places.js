@@ -290,7 +290,7 @@ export function buildSlipe(g) {
   for (const [x, z, ry] of [[-5.6, -15, Math.PI / 2], [-5.6, -36, Math.PI / 2], [-5.6, -54, Math.PI / 2], [5.6, -13, -Math.PI / 2], [5.6, -62, -Math.PI / 2]]) { const b = bench(2.2, 0x5a4632); b.position.set(x, 0, z); b.rotation.y = ry; g.add(b); wall(x - 0.35, z - 1.2, x + 0.35, z + 1.2); }
   for (const z of [-17, -31, -45, -59]) { const l = streetLamp(4.8); l.position.set(-3.5, 0, z); g.add(l); wall(-3.7, z - 0.2, -3.3, z + 0.2); }
   /* bougainvillea spilling over the front wall */
-  for (const x of [-40, -28, -16, -9, 9, 16, 28, 40]) for (let i = 0; i < 4; i++) mesh(new THREE.IcosahedronGeometry(0.45 + r() * 0.15, 1), flat(i % 3 === 2 ? 0x3f7a32 : (i % 2 ? 0xd23a8a : 0xe0559e)), x + (r() - 0.5) * 1.4, 1.7 + r() * 0.7, -7.25 - r() * 0.2, g);
+  for (const x of [-40, -28, -16, -9, 9, 16, 28, 40]) for (let i = 0; i < 4; i++) { const rad = 0.45 + r() * 0.15; mesh(new THREE.IcosahedronGeometry(rad, 1), flat(i % 3 === 2 ? 0x3f7a32 : (i % 2 ? 0xd23a8a : 0xe0559e)), x + (r() - 0.5) * 1.4, 2.05 + r() * 0.45, -7.28 - rad - r() * 0.25, g); }   /* grown inside the wall: each clump sits wholly behind it, so only the top shows over the coping */
   /* grass, kept off the avenue and the buildings; a few flowers */
   grassField(g, [-47.6, -65.6, 47.6, -7.4], 2200, { seed: 9, clear: out.clear, h: 0.32, w: 0.55, tint: 0xc4c07c, vary: 0.35 });
   flowerField(g, [-47, -65, 47, -8], 220, { seed: 4, clear: out.clear, colors: [0xe2232a, 0xf5c542, 0xffffff, 0xe27ad8] });
@@ -304,7 +304,7 @@ export function buildSlipe(g) {
   box(0.28, 0.36, 0.28, glowM, 0, PH + 0.14 + 2.0 - 0.85, -7, lampG); { const pl = new THREE.PointLight(0xffd9a0, 10, 14, 1.8); pl.position.set(0, 4.4, -6.6); lampG.add(pl); }
   for (let k = 0; k < 12; k += 1) for (const fy of [0.6, 3.9]) { if (k % 3 === 1) continue; const [x, z] = toMy(-18 + 1.5 + k * 3, -20.4 + 0.07); const w = box(0.03, 1.3, 0.9, new THREE.MeshBasicMaterial({ color: 0xffd890, fog: false }), x, fy + 1.55, z, lampG); w.userData.win = true; }
   lampG.visible = false;
-  const groundAt = (x, z) => { for (const f of out.floors) { const y = f(x, z); if (y) return y; } return 0; };
+  const groundAt = (x, z) => { for (const f of out.floors) { const y = f(x, z); if (y) return y; } return Math.abs(x) < 65 && Math.abs(z) > 4.0 && Math.abs(z) < 5.8 ? 0.15 : 0; };   /* the pavements stand 15 cm above the road */
   const [ix, iz] = toMy(...myers.iris);
   return { walls, bounds: { x0: -47.5, x1: 47.5, z0: -65.5, z1: 7.2 }, start: { x: -26, z: 4.6, yaw: -0.6 }, groundAt,
     myers, toMy, night, fire, ruin, bus2, lamps,
