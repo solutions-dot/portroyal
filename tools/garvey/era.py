@@ -77,7 +77,7 @@ def piece(name,group,keep,offset,mat,cuts=(),shape=None,sub=False,post=None):
     if cuts: bmesh.ops.triangulate(bm,faces=bm.faces[:])
     for co,no,flt in cuts:
         fs=[f for f in bm.faces if flt is None or flt(cz(f))]
-        bmesh.ops.bisect_plane(bm,geom=list({v for f in fs for v in f.verts})+list({e for f in fs for e in f.edges})+fs,plane_co=co,plane_no=no,clear_outer=True)
+        bmesh.ops.bisect_plane(bm,geom=list(dict.fromkeys(v for f in fs for v in f.verts))+list(dict.fromkeys(e for f in fs for e in f.edges))+fs,plane_co=co,plane_no=no,clear_outer=True)
     if cuts: bmesh.ops.remove_doubles(bm,verts=bm.verts[:],dist=0.001); bmesh.ops.dissolve_degenerate(bm,edges=bm.edges[:],dist=0.001)
     if sub: bmesh.ops.subdivide_edges(bm,edges=bm.edges[:],cuts=1,use_grid_fill=True,smooth=0.3)
     bmesh.ops.recalc_face_normals(bm,faces=bm.faces[:]); bm.normal_update()
@@ -1067,7 +1067,7 @@ if not OLD and G.get('socks'):
     # socks are their own material, cut along one clean line round each leg: painted on the skin, their top edge smeared into the skin once a light copy was simplified.
     # As a separate part of the mesh its edge is a border, which the packer keeps exactly
     ZSK=ANK+G['socks']*(KNEE-ANK); bm=bmesh.new(); bm.from_mesh(h.data)
-    _g=[f for f in bm.faces if abs(cz(f).z-ZSK)<0.06]; bmesh.ops.bisect_plane(bm,geom=list({v for f in _g for v in f.verts})+list({e for f in _g for e in f.edges})+_g,plane_co=(0,0,ZSK),plane_no=(0,0,1))
+    _g=[f for f in bm.faces if abs(cz(f).z-ZSK)<0.06]; bmesh.ops.bisect_plane(bm,geom=list(dict.fromkeys(v for f in _g for v in f.verts))+list(dict.fromkeys(e for f in _g for e in f.edges))+_g,plane_co=(0,0,ZSK),plane_no=(0,0,1))
     bmesh.ops.triangulate(bm,faces=[f for f in bm.faces if len(f.verts)>4])
     for f in bm.faces: f.material_index=1 if cz(f).z<ZSK else 0
     bm.to_mesh(h.data); bm.free(); h.data.materials.append(colmat('Sock',0.85))
