@@ -239,6 +239,13 @@ function ruinSupport(g, x, z, seed) {   /* an old concrete support: a wide footi
   for (const dz of [-0.7, -0.25, 0.25, 0.7]) { const rb = cyl(0.012, 0.012, 0.3 + r() * 0.35, rust, (r() - 0.5) * 0.4, 1.12 + hh + 0.22, dz, grp1, 5); rb.rotation.set((r() - 0.5) * 0.7, 0, (r() - 0.5) * 0.7); }   /* rebar stubs */
   for (const dz of [-0.8, 0.8]) { const rb = cyl(0.012, 0.012, 0.28, rust, 0.35, 0.34, dz, grp1, 5); rb.rotation.z = -0.6; }
   const moss = mesh(new THREE.CircleGeometry(0.9, 10), solid(0x3a5a2a, 1), 0, 0.235, 0, grp1); moss.rotation.x = -PI / 2; moss.scale.set(0.9, 1.4, 1);
+  /* weathering: rain streaks down the faces, green moss creeping up the foot, a crack, a darker band where the formwork joined, and bevelled corners */
+  const stain = solid(0x5e5a50, 1), mossy = solid(0x4a6a34, 1), top1 = 1.12 + hh;
+  for (const sx of [-1, 1]) { for (let i = 0; i < 5; i++) { const w = 0.05 + r() * 0.1, h = 0.4 + r() * (top1 - 0.6); box(w, h, 0.012, stain, sx * 0.356, top1 - h / 2 - 0.05, (r() - 0.5) * 1.7, grp1).rotation.y = PI / 2;
+      } for (let i = 0; i < 4; i++) { const w = 0.15 + r() * 0.3, h = 0.12 + r() * 0.3; box(0.014, h, w, mossy, sx * 0.357, 0.3 + h / 2, (r() - 0.5) * 1.7, grp1); } box(0.014, 0.05, 1.96, solid(0x66625a, 1), sx * 0.357, 1.12, 0, grp1); }
+  for (const sz of [-1, 1]) for (let i = 0; i < 3; i++) { const w = 0.05 + r() * 0.1, h = 0.4 + r() * (top1 - 0.6); box(w, h, 0.014, stain, (r() - 0.5) * 0.5, top1 - h / 2 - 0.05, sz * 1.006, grp1); }
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const ch = box(0.05, top1 - 0.9, 0.05, cm, sx * 0.35, 0.9 + (top1 - 0.9) / 2, sz * 1.0, grp1); ch.rotation.y = PI / 4; }   /* the corner bevels */
+  { const ck = box(0.016, 0.7, 0.03, solid(0x2e2c28, 1), 0.357, top1 - 0.55, 0.3, grp1); ck.rotation.x = 0.35; }
 }
 function turbineHouse(g, kind, P) {
   /* the brick house: 14 m by 10 m, walls 0.4 m thick and 6.5 m high, a door in the south wall. Inside: the turbine casing, the shaft, the spinning wheel,

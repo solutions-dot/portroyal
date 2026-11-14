@@ -72,7 +72,7 @@ export function makeHand(camera) {
   const RH = HANDMESH.info.handleRadius, FISTY = -0.457;   /* the handle's radius where the hand holds it (the hand was closed round exactly this), and the height of the middle of the fist */
   const skinCol = new THREE.Color().setRGB(SKIN[0] / 255, SKIN[1] / 255, SKIN[2] / 255, THREE.SRGBColorSpace).multiplyScalar(SKIN_LIGHT);
   const skin = new THREE.MeshStandardMaterial({ color: skinCol, roughness: 0.58, metalness: 0, vertexColors: true, emissive: 0x2c150a });   /* a warm glow of its own, so the hand never goes black in the dark of the pipe */
-  const nailMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(160 / 255, 108 / 255, 86 / 255, THREE.SRGBColorSpace).multiplyScalar(SKIN_LIGHT), roughness: 0.5, vertexColors: true, emissive: 0x1a100b });
+  const nailMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(184 / 255, 128 / 255, 108 / 255, THREE.SRGBColorSpace).multiplyScalar(SKIN_LIGHT), roughness: 0.3, vertexColors: true, emissive: 0x2a1a14 });
   const add = (geo, mat, name) => { const m = new THREE.Mesh(geo, mat); m.name = name; inner.add(m); return m; };
 
   /* ----- the torch: a turned wooden handle with a rounded butt, a head of oil-soaked rags bound on with wire, and a flame ----- */
