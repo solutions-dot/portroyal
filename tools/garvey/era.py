@@ -301,18 +301,21 @@ if not OLD:
         for _ in range(2):
             q=r[:]
             for k in range(n):
-                for j in range(1,n//7+1):
+                for j in range(1,(n//7 if G.get('woman') else n//4)+1):      # a man's shirt also spans from the chest across to the shoulder and the back, so the chest shows no mounds
                     a,b=r[(k-j)%n],r[(k+j)%n]; c=2*a*b*math.cos(2*math.pi*j/n)/(a+b)
                     if c>q[k]: q[k]=c
             r=q
         return r
+    # how steeply loose cloth falls back in below the chest. A man's shirt or coat falls almost straight from the chest to the waist (it must not show the chest as two mounds
+    # with a hollow under them), so at his front it falls in only 7 cm in a metre; a blouse follows the figure more (22 cm in a metre)
+    _slope=[(0.22/max(0.2,G.get('hang',1.0))) if (G.get('woman') or math.cos(2*math.pi*k/ENA)<0.1) else 0.07/G.get('hang',1.0) for k in range(ENA)]
     EVR=[_evrow(EZ0+i*EDZ) for i in range(ENZ)]; _eh=[_evhull(r) for r in EVR]; _hd=[r[:] for r in _eh]; _hu=[r[:] for r in _eh]; HANG=G.get('hang',1.0)
     for i in range(ENZ-2,-1,-1):
-        for k in range(ENA): _hd[i][k]=max(_eh[i][k],_hd[i+1][k]-(0.22/max(0.2,HANG))*EDZ)      # falling from the chest and the shoulder blades
+        for k in range(ENA): _hd[i][k]=max(_eh[i][k],_hd[i+1][k]-_slope[k]*EDZ)      # falling from the chest and the shoulder blades
     for i in range(1,ENZ):
         for k in range(ENA): _hu[i][k]=max(_eh[i][k],_hu[i-1][k]-0.5*EDZ) if math.cos(2*math.pi*k/ENA)>0.35 and EZ0+i*EDZ>TUCK+0.06 else _eh[i][k]       # and, on the front only, rising from the bust to the collarbone
     EVH=[[max(_hd[i][k],_hu[i][k]) for k in range(ENA)] for i in range(ENZ)]
-    for _ in range(2): EVH=[[(EVH[max(0,i-1)][k]+EVH[min(ENZ-1,i+1)][k]+EVH[i][(k-1)%ENA]+EVH[i][(k+1)%ENA]+2*EVH[i][k])/6 for k in range(ENA)] for i in range(ENZ)]
+    for _ in range(2 if G.get('woman') else 4): EVH=[[(EVH[max(0,i-1)][k]+EVH[min(ENZ-1,i+1)][k]+EVH[i][(k-1)%ENA]+EVH[i][(k+1)%ENA]+2*EVH[i][k])/6 for k in range(ENA)] for i in range(ENZ)]
     EVH=[[max(EVH[i][k],_eh[i][k]) for k in range(ENA)] for i in range(ENZ)]
     def env(z,a):
         fi=(z-EZ0)/EDZ; i=max(0,min(ENZ-2,int(fi))); t=max(0.0,min(1.0,fi-i)); fk=(a%(2*math.pi))/(2*math.pi)*ENA; k=int(fk)%ENA; u=fk-int(fk); k2=(k+1)%ENA
