@@ -81,6 +81,12 @@ People who stroll use `STROLL` (paths per id); they stop and face you within 3.6
 - **Earthquake**: `Q` (phases calm, tremor, sink, sea).
 - **Flashback**: `FB`, `FBP` positions, `LOAD` crate loading.
 
+## The people's bodies
+
+Every man is built from his recipe in `tools/people/<name>.json` by `tools/garvey/era.py` and packed by `tools/people/pack.mjs` (how to rebuild: `docs/PIPELINE.md`, section 1). Dress is 1690: shirt with a neckband, cravat, coat with skirts and cloth buttons, full breeches gathered below the knee or sailor's slops, stockings, buckled shoes, broad felt hats, knitted caps. Do not modernise it. The real people (Galdy, Morgan, Heath) have the same faces and colours as before; only the build quality of their clothes changed.
+
+Check a body in the game's own light with `?shot=sheet&who=galdy&clip=Walk&zoom=full|top|legs` (standing and three moments of the clip, each from the front, side, back and three-quarter; `&it=0.25,0.75` shows the standing clip at those moments instead). Then run `?test=cloth` (no layer shows through another) and `?test=held` (carried things are at the hand and clear of the body).
+
 ## Test views (dev build only)
 
 Open `games/port-royal/site/index.html?shot=<name>`. Useful ones: `ns1` to `ns9` (new street), `nsst1`, `nsst2` (stalls), `nsmen` (Mendes), `nsback` (harbour corner), `sold1`, `sold2` (the soldier), `nudge`, `nudge2` (helper arrow), `meline` (a "You" line), `leave` (ending a talk early), `thumb` (a clean picture for the menu card), `walkcheck`, `pad`, `move`, `fbquit`. The autoplayer: `?auto=0&one` plays chapter 0 and logs to the page title. See `docs/TESTING.md`.
@@ -105,6 +111,7 @@ If you stand still or stall, the Goal tab opens and a gold arrow points at the n
 
 - `models/anims.js` is about 1 MB. It could be split by chapter.
 - Galdy's own walk has a slight heel flick. A male Mixamo walk would fix it.
-- Grace is Abba's body recoloured. `npc.py` makes men only; a women's generator (bodice, skirt, head wrap) is needed for more women and for the Garvey game.
+- Grace is Abba's body recoloured, and Abba herself cannot be rebuilt by the builder (see `docs/PIPELINE.md`, section 1). Rebuilding both as `era.py` women would give them soles, a neck yoke and a lining like the men.
+- Port Royal has `?test=held` and `?test=cloth`. The place audit (`?test=audit`) and the layout test (`?test=layout`) are not wired yet.
 - Talking, journal, chapters, saving, controls, strolling and the helper arrow still live in main.js. Move each into `engine/` when a second game needs it.
 - When adding a goal, add its `NUDGE_MAP` row, or the helper arrow cannot point the way (the goal still pops open).

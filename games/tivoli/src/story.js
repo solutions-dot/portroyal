@@ -1,4 +1,4 @@
-/* games/_tivoli/src/story.js: saving, the journal and the chapters list. Progress is kept in this browser only (localStorage): which journal pages are unlocked and which chapters are done.
+/* games/tivoli/src/story.js: saving, the journal and the chapters list. Progress is kept in this browser only (localStorage): which journal pages are unlocked and which chapters are done.
    The journal has "simple" lines for everyone and "Dig deeper" lines (a closed <details>) for older readers. Pages come from content.js; nothing here is invented. */
 import { CHAPTERS, JOURNAL, PAGES_FOR } from './content.js';
 

@@ -1,4 +1,4 @@
-/* games/_tivoli/src/bake.js: merge everything static in a built place into one mesh per material, and map textures by WORLD position (a material with
+/* games/tivoli/src/bake.js: merge everything static in a built place into one mesh per material, and map textures by WORLD position (a material with
    userData.tile = metres per repeat), so a wall never stretches whatever its size. Used by street.js and backowall.js. */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';

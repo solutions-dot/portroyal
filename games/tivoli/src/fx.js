@@ -1,4 +1,4 @@
-/* games/_tivoli/src/fx.js: the look of gunfire without harm (CLAUDE.md rule 4, the Tivoli exception): muzzle flashes, dust kicked up on walls and the ground,
+/* games/tivoli/src/fx.js: the look of gunfire without harm (CLAUDE.md rule 4, the Tivoli exception): muzzle flashes, dust kicked up on walls and the ground,
    and a little camera shake. Nothing here ever touches a person: dust is only placed on walls and ground, never on a body, and there is no blood.
    Calm mode (the opt-in card) turns off the flashes' light, the shake and the dust's size, for anyone who finds them hard. */
 import * as THREE from 'three';

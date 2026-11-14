@@ -1,4 +1,4 @@
-/* games/_tivoli/src/checks.js: dev-only checks for Tivoli's people, COPIED from branch claude/affectionate-pasteur-xvhvlq
+/* games/tivoli/src/checks.js: dev-only checks for Tivoli's people, COPIED from branch claude/affectionate-pasteur-xvhvlq
    (engine/audit.js auditCloth and auditWalk, engine/anim.js strideOf, engine/skinprobe.js skinProbe), because main's engine/ does not have
    them yet and engine/ must not be edited here (another branch is changing it). When that branch is merged, delete this file and import
    the engine versions instead (docs/PEOPLE.md). Two Tivoli changes: the cloth layer order knows the 2010 kit pieces (vest, harness, pouches,

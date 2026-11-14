@@ -1,4 +1,4 @@
-/* games/_tivoli/src/sfx.js: gunfire sounds made in code, for the May 2010 street scene. Everything is Web Audio noise and tones (engine/audio.js), no files.
+/* games/tivoli/src/sfx.js: gunfire sounds made in code, for the May 2010 street scene. Everything is Web Audio noise and tones (engine/audio.js), no files.
    shot(pan, far, calm): one gunshot. A sharp crack, a short boom and a low thump; `far` (0 near, 1 far) makes it softer, duller and later.
    rattle(pan): a few quick shots far away. ring(): a thin high tone that fades, for the end of the scene. Calm mode makes everything about a third as loud. */
 import { AU, noiseHit, tone, setG, chirp } from '../../../engine/audio.js';

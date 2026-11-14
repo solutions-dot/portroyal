@@ -95,6 +95,8 @@ timeout 290 google-chrome --headless=new --no-sandbox --use-gl=swiftshader --ena
   - `?test=held`: carried things are at the hand and clear of the body.
   - `?test=layout`: interface overlap, clipped text and off-screen items, in each state. Run it with the window at 390x800, 667x375, 800x500 and 1280x720.
   - `?test=resume`: a saved game resumes in the right place.
+  - `?test=walkers`: every body walks without sliding, sinking or jumping (0 issues).
+  - `?test=cloth`: under layers that show through their cover. On 14 November 2026 it printed 9 lines (15 points) for Kendal, down from 354 lines (6,840 points). What is left is a few points where a shirt tail meets the trousers when a person sits (`man_shirt`, `man_elder`, `man_work`, `man_apron`, `student2020`), a tie edge against the waistcoat, a boy's knee against his shorts when striding, and one jacket hem when sitting. Garvey's `?test=cloth` (same check, 21 bodies) printed 11 lines. See `docs/PIPELINE.md` section 5 for the cloth rules that removed the rest.
 - The menu poster `menu/kendal.jpg` comes from `?shot=poster` at 1280 by 720 (the HUD is hidden).
 
 ## Research (checked 13 November 2026 against secondary sources only)
@@ -130,7 +132,7 @@ Look and feel: the 1957 diesel follows a National Library of Jamaica photograph 
 
 1. **Check facts in primary sources** (the Commission of Enquiry report, the 1957 Daily Gleaner, the railway's records) and remove the "one source" notes.
 2. **Read every line aloud** for the 6+ level. All dialogue is new wording.
-3. **Characters.** Rebuilt in November 2026: 1950s frocks and church hats, suits and trilbies, a guard's uniform and cap, real children. Still to do: faces repeat (13 bodies); the light crowd copies show a few specks of shirt through a waistcoat at very close range; the 1957 clothes are general pictures, not copied from photographs.
+3. **Characters.** Collars of 1957: `collar: "camp"` (an open pointed collar over a V neck: `boy`, `man_elder`, `student2020`, `woman57`) and `collar: "round"` (a flat round collar: `girl`, `girl_small`, `woman_elder`); `man_shirt` and `man_suit` keep the closed turn-down collar and tie, `man_work` its plain neck. `puff` gives short puffed sleeves, `sash` a deep waistband (material `Belt`), `pocket` a patch pocket (material `Pocket`). In the game a collar takes the shirt's tint unless `Collar` is set. Light copies are packed with their clothes kept finer than their skin (`tools/people/pack.mjs`), about 5,900 to 6,600 triangles. Rebuilt in November 2026: 1950s frocks and church hats, suits and trilbies, a guard's uniform and cap, real children. Still to do: faces repeat (13 bodies); the 1957 clothes are general pictures, not copied from photographs.
 4. **Places against photographs.** Kingston station, the coaches (colours, markings) and the 1845 engine are general pictures.
 5. **Sound.** A real mento recording and a recorded steam whistle would beat our synthesised ones.
 6. **Memory on phones.** The first load fetches about 3 MB of characters; later chapters load in the background. Consider splitting `anims.js`.

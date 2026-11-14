@@ -36,6 +36,7 @@ Port Royal views:
 | `quake2`, `swim`, `boat` | the earthquake and the swim |
 | `camp4`, `npc3` | the camp, Benning |
 | `gwalk` | 12 side-on frames of Galdy's walk as data URLs |
+| `sheet` | one body in the game's light: `&who=galdy&clip=Walk&zoom=full` (or `top`, `legs`, `head`); rows are standing and three moments of the clip, columns front, side, back, three-quarter. Pictures are left in `window.__sheet` as data URLs |
 | `walkcheck` | scans walk clips for jumps and loop seams |
 | `move`, `step`, `pad`, `nswalk` | step the frame loop by hand: walking, controller, a scripted walk into the second street |
 | `fbquit` | starts the flashback, picks a chapter, and checks it cleans up |
@@ -74,6 +75,9 @@ Owner rule, for every game: these checks are wired into the dev build, and **eve
 | Place audit | `?test=audit`, or `?test=audit&p=hill,road` for some places | **float**: a sign, lamp, roof or step that touches nothing connected to the ground. **inside**: a person inside a solid box or cylinder, or inside a walking wall. **stuck**: the start, a thing to do or a person to talk to that cannot be reached by walking. **overlap**: two people standing in the same spot, or someone on a walker's path or on the player's start. **seated**: a person who sits too low (the seat passes through the thighs), hangs above the seat, sits on nothing, cuts into the back of the seat or a wall, or faces the back of a seat. |
 | Held items | `?test=held` | Something carried (a basket, a lantern, a suitcase) that is not at the hand, hangs the wrong way up, or cuts into the carrier's body. It tests the real mesh vertices against the posed body. |
 | Layout | `?test=layout` | Interface text that overlaps other interface, is clipped, or runs off the screen, in each state (play, narration, dialogue, card, hold button, helper arrow), and checks that the journal, chapters and credits panels opened in the middle of play have their title and Close button on top (nothing from the HUD covers them). Run it at **390x800, 667x375, 800x500 and 1280x720**; the 1280x720 run takes about 4 minutes in software drawing. |
+| Walking | `?test=walkers` (Kendal) | Every body walks whole loops at the speed the game moves it (`auditWalk` in `engine/audit.js`). It reports the stride, the clip speed used, how far the feet slide in a loop (good is under 3 cm), how far the shoes sink or float, and any jump where the loop joins. A carried thing must stay clear of the body in every stride. |
+| Cloth | `?test=cloth` (Kendal and Garvey; `&b=man_suit,boy` picks bodies, `&full` or `&lo` one kind in Kendal; `&where` adds where the worst point is) | An under layer that shows through its cover: skin through a shirt, a shirt through a waistcoat or jacket, hair through a hat (`auditCloth` in `engine/audit.js`). It poses every body (and in Kendal every light copy, each hat, and with the waistcoat hidden) standing, mid-stride, talking, waving and sitting, works out the real vertex positions, and lists body, pose, the two pieces, how many points and the worst depth in millimetres. Hands and arms hanging against skirts, points near a sleeve hem or a neckline, and the shirt's own neck ring under a jacket are left out on purpose: they are openings, not show-through. In Kendal's people viewer `?shot=model&m=people&ids=gran,lloyd&cloth` draws a red dot on every fault. **Not yet at 0**: on 14 November 2026 Kendal had 9 lines (15 points), Garvey 11 lines (55 points) and Port Royal 34 lines (390 points). Kendal's and Garvey's are a few points at the waist of a shirt over trousers or at a jacket's hem when sitting; Port Royal's are a shirt collar against the coat when walking, breeches against the coat skirt and a shirt tail against the breeches when sitting, and buc1's waistband. See `docs/games/kendal.md`. |
+| Skin | `?test=skin` (Kendal, Garvey, Port Royal) | The colour each face is drawn in, in the game's own light, from four headings (`engine/skinprobe.js`). Compare with the target in `docs/PIPELINE.md`, "Skin". |
 | Resume | `?test=resume` (where the game saves) | Every saved stage reloads into the right place without breaking. |
 
 ```bash
@@ -84,6 +88,8 @@ timeout 280 google-chrome --headless=new --no-sandbox --use-gl=swiftshader --ena
 timeout 150 google-chrome --headless=new --no-sandbox --use-gl=swiftshader --enable-unsafe-swiftshader --window-size=667,375 \
   --virtual-time-budget=60000 --dump-dom "http://localhost:8765/games/kendal/site/index.html?test=layout" | sed -n '/<pre id="autolog"/,/<\/pre>/p'
 ```
+
+Port Royal has `?test=held` (the soldier's half-pike, Grace's basket, Kofi's crate, standing and walking) and `?test=cloth` (every body standing, mid-stride, talking and sitting; `&b=galdy,kofi` picks bodies). Its place audit and layout test are not wired yet.
 
 Bog Walk (`docs/games/bog-walk.md`) is a first-person game with no people yet, so its `?test=held` checks the hand and torch directly (finger count, grip on the stick, on screen) instead of calling `auditHeld`, and its `?test=audit` adds a rule that nothing hung in the pipe may be outside the wall. It is a second model for games like that.
 

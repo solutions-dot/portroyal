@@ -1,4 +1,4 @@
-/* games/_tivoli/src/textures.js: weathered surface textures drawn in code (no image files). Each maker returns a repeating CanvasTexture sized for
+/* games/tivoli/src/textures.js: weathered surface textures drawn in code (no image files). Each maker returns a repeating CanvasTexture sized for
    world-space mapping (street.js maps them by metres, so one repeat is TILE metres). Seeded, so a surface looks the same every run.
    stucco(colour): painted render with stains, damp at the bottom, hairline cracks and speckle. block(colour): painted concrete block with mortar lines.
    zinc(): corrugated zinc roofing with rust. asphalt(): worn road with patches, cracks and oil. paving(): concrete pavement slabs. grass(): dry grass with bare earth. */

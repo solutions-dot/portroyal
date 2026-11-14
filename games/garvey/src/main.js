@@ -10,6 +10,8 @@ import { gripTick, spreadArms } from '../../../engine/grip.js';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
 import { model, prefetch, onLoadFail } from '../../../engine/loader.js';
+import { auditCloth } from '../../../engine/audit.js';
+import { skinProbe } from '../../../engine/skinprobe.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -23,6 +25,7 @@ const maxAniso = renderer.capabilities.getMaxAnisotropy();
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2118);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 100);
 const hemi = new THREE.HemisphereLight(0xfff4e0, 0x7a6048, 1.25); scene.add(hemi);
+const SKIN_K = 1.2;   /* the one skin factor for this game's light (docs/PIPELINE.md, "Skin"): the rooms here are lit more softly than Kendal's daylight, so Skin is drawn a little brighter, and a recipe skin reads as the same brown in every game. Measured with ?test=skin */
 const sun = new THREE.DirectionalLight(0xfff0d0, 1.7); sun.position.set(6, 7, 5); scene.add(sun);
 const lampLight = new THREE.PointLight(0xffcf8a, 7, 9, 2); lampLight.position.set(0.2, 2.9, -0.3); scene.add(lampLight);
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -637,7 +640,7 @@ function startArrivals() {
 }
 function loadPerson(n) {
   if (n.loading) return n.loading;
-  n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; if (n.scale) m.scale.setScalar(n.scale);   /* a child's body is stored enlarged and shrunk here (see tools/people/kids) */ m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); n.h = Math.max(1.1, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
+  n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K); } }); m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; if (n.scale) m.scale.setScalar(n.scale);   /* a child's body is stored enlarged and shrunk here (see tools/people/kids) */ m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); n.h = Math.max(1.1, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
   return n.loading;
 }
 let shopLoading = null;
@@ -1275,7 +1278,7 @@ let modelsReady = false;
   let done = 0; const total = 1 + (needShop ? SHOP_PEOPLE.length : 0), tick = (x) => { done++; $('bar').style.width = (done / total * 100) + '%'; return x; };
   Promise.all([model('anims').then(tick), ...(needShop ? SHOP_PEOPLE.map((n) => model(n.model).then(tick)) : [])]).then(([anims, ...gl]) => {
     loadClips(anims);
-    if (needShop) SHOP_PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; });
+    if (needShop) SHOP_PEOPLE.forEach((n, i) => { const m = gl[i].scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K); } });
       m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; m.userData.ground = 0; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; });
     (stage >= 70 ? ensurePark() : stage >= 60 ? ensureOffice() : stage >= 50 ? ensureLiberty() : stage >= 40 ? ensureDock() : stage >= 30 ? ensurePress() : stage >= 20 ? ensureStreet() : stage >= 10 ? ensureHall() : Promise.resolve()).then(() => { enterPlace(stage >= 70 ? 'park' : stage >= 60 ? 'office' : stage >= 50 ? 'liberty' : stage >= 40 ? 'dock' : stage >= 30 ? 'press' : stage >= 20 ? 'street' : stage >= 10 ? 'hall' : 'shop'); showPoster(); if (__DEV__) devViews(); });
     modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave;
@@ -1391,6 +1394,18 @@ function devViews() {
   if (shot === 'hallseat2') inHall(13, 0.3, 0.9, -Math.PI / 2 + 0.25, 0.0, 'LEARN');
   if (shot === 'hallseat3') inHall(13, 0.0, 3.6, 0.0, 0.05, 'LEARN');
   if (shot === 'hallchat') inHall(10, -0.8, -1.2, 0, 0.04).then(() => startTalk(byId('garvey')));
+  if (q.get('test') === 'skin') {   /* ?test=skin : how dark each face really looks in this game's light (engine/skinprobe.js), every body */
+    (async () => { const out = []; while (!CL.Idle) await new Promise((r) => setTimeout(r, 100));
+      const names = (q.get('b') || 'amy1914,amyj1925,clerk1919,delegate1920,engineer1919,garvey1914,garvey1916,guide2020,hl_critic,hl_pressman,hl_woman,hl_worker,nb_elder,nb_seller,nb_youth,nurse1920,printer1907,seaman1919,steward1920,student2020,woman1914').split(',');
+      for (const nm of names) { const m = (await model(nm)).scene; m.traverse((o) => { if (o.isSkinnedMesh && o.material.name === 'Skin') o.material.color.setScalar(SKIN_K); }); m.position.set(400, 0, 400); scene.add(m); animate(m, 'Idle'); m.userData.anim.mx.update(0.3); const li = [hemi.intensity, sun.intensity, sun.position.clone()]; hemi.intensity = 1.25; sun.intensity = 1.7; sun.position.set(6, 7, 5); const r = skinProbe(renderer, scene, m); hemi.intensity = 2.3; sun.intensity = 2.2; sun.position.set(-5, 9, 4); const r2 = skinProbe(renderer, scene, m); hemi.intensity = li[0]; sun.intensity = li[1]; sun.position.copy(li[2]); scene.remove(m);   /* indoor light, then outdoor light (see the place setter) */
+        out.push(nm + ': indoors mean ' + r.rgb.join(',') + ' (darkest ' + r.lo.join(',') + ', lightest ' + r.hi.join(',') + ')  outdoors mean ' + r2.rgb.join(',') + ' (darkest ' + r2.lo.join(',') + ', lightest ' + r2.hi.join(',') + ')'); }
+      let el = $('autolog'); if (!el) { el = document.createElement('pre'); el.id = 'autolog'; el.hidden = true; document.body.appendChild(el); } el.textContent = out.join('\n'); document.title = 'SKIN ' + out.length; })(); }
+  if (q.get('test') === 'cloth') {   /* ?test=cloth : does an under layer show through its cover (skin through a shirt, a shirt through a jacket)? Every Garvey body, standing, walking, talking, waving and seated. &b=garvey1914,amy1914 picks bodies, &where adds the spot of the worst point. */
+    (async () => { const out = []; let bad = 0, pts = 0; while (!CL.Idle) await new Promise((r) => setTimeout(r, 100));
+      const POSES = [['Idle', 0.3], ['Walk', 0.25], ['Walk', 0.75], ['Talk1', 0.4], ['Wave', 0.5], ['SitIdle', 0.3]], names = (q.get('b') || 'amy1914,amyj1925,clerk1919,delegate1920,engineer1919,garvey1914,garvey1916,guide2020,hl_critic,hl_pressman,hl_woman,hl_worker,nb_elder,nb_seller,nb_youth,nurse1920,printer1907,seaman1919,steward1920,student2020,woman1914').split(',');
+      for (const nm of names) { const gl = await model(nm), m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K); } }); scene.add(m); m.userData.ground = 0; animate(m, 'Idle'); m.userData.anim.mx.update(0);
+        const r = auditCloth(nm, m, { poses: POSES, after: gripTick, where: q.has('where') }); out.push(nm + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const l of r.lines) out.push('  ' + l); bad += r.lines.length; pts += r.points; scene.remove(m); await new Promise((res) => setTimeout(res, 0)); }
+      out.unshift('cloth: ' + bad + ' issues (' + pts + ' points)'); let el = $('autolog'); if (!el) { el = document.createElement('pre'); el.id = 'autolog'; el.hidden = true; document.body.appendChild(el); } el.textContent = out.join('\n'); document.title = 'CLOTH ' + bad; })(); }
   if (['overlap','collision','seating'].includes(q.get('test'))) {   /* is anyone standing or walking inside furniture? Checks every place's people against its walls (furniture rectangles) */
     (async () => {
       const tm = []; for (const [nm, f] of [['hall', ensureHall], ['street', ensureStreet], ['press', ensurePress], ['dock', ensureDock], ['liberty', ensureLiberty], ['office', ensureOffice], ['park', ensurePark]]) { const t0 = performance.now(); await f(); tm.push(nm + ' ' + Math.round(performance.now() - t0) + 'ms'); }

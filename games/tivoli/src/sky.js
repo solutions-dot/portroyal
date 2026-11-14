@@ -1,4 +1,4 @@
-/* games/_tivoli/src/sky.js: a Kingston midday sky shared by every place: a haze-to-blue dome, soft clouds, and a sun that casts shadows on computers (phones get none). */
+/* games/tivoli/src/sky.js: a Kingston midday sky shared by every place: a haze-to-blue dome, soft clouds, and a sun that casts shadows on computers (phones get none). */
 import * as THREE from 'three';
 
 export function addSky(out, rnd, opts = {}) {

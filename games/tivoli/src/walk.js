@@ -1,4 +1,4 @@
-/* games/_tivoli/src/walk.js: how far one loop of a walking clip carries a body (strideOf) and the clip speed that stops the feet sliding at a given ground speed (pace).
+/* games/tivoli/src/walk.js: how far one loop of a walking clip carries a body (strideOf) and the clip speed that stops the feet sliding at a given ground speed (pace).
    COPIED from branch claude/affectionate-pasteur-xvhvlq (engine/anim.js strideOf, ctl.pace) because main's engine/ does not have them and must not be edited here.
    Delete this file and use the engine's versions when that branch is merged (docs/PEOPLE.md). */
 import * as THREE from 'three';

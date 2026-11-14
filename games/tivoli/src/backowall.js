@@ -1,4 +1,4 @@
-/* games/_tivoli/src/backowall.js: the place for chapter 1, Ivy's memory of Back-o-Wall. IMPORTANT: this place is IMAGINED. We have no photographs or oral histories of Back-o-Wall yet
+/* games/tivoli/src/backowall.js: the place for chapter 1, Ivy's memory of Back-o-Wall. IMPORTANT: this place is IMAGINED. We have no photographs or oral histories of Back-o-Wall yet
    (docs/games/tivoli.md "Back-o-Wall and the clearance": daily life there is "Not found"), so it shows only general things: houses of board and zinc built close together
    (the journal says families built their own homes of zinc and board), a lane, a yard, laundry, buckets, a mango tree. No claim is made about particular objects or customs,
    and the journal page says the scenes are our own imagining. Metres. The lane runs along x (west is -x, where the lane ends); the yard is on the south side (+z).

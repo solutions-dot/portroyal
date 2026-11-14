@@ -1,4 +1,4 @@
-/* games/_tivoli/src/fight.js: the May 2010 street scene (chapter 5, "the days"), a directed scene like the Kendal crash. CLAUDE.md rule 4 allows it for Tivoli only, with these limits,
+/* games/tivoli/src/fight.js: the May 2010 street scene (chapter 5, "the days"), a directed scene like the Kendal crash. CLAUDE.md rule 4 allows it for Tivoli only, with these limits,
    all kept here: it starts only from an opt-in card ("Read what happened instead" is the other choice); you watch from a window and never hold or fire a weapon; there is no blood;
    NOBODY IS HIT (dust only lands on walls and ground, never on a person); gunmen are shown only far away behind the barricade and unidentified; there are no numbers and no one is
    shown firing first (both sides open fire together); and straight after, a card says plainly that people died and that people disagree about what happened (docs/games/tivoli.md "The dispute").

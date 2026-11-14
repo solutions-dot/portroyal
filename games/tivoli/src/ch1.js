@@ -1,4 +1,4 @@
-/* games/_tivoli/src/ch1.js: chapter 1, Back-o-Wall. You walk through the memory of Ivy, a girl in Back-o-Wall about 1963 (in 2010 she is the grandmother). You talk to Ivy in her yard,
+/* games/tivoli/src/ch1.js: chapter 1, Back-o-Wall. You walk through the memory of Ivy, a girl in Back-o-Wall about 1963 (in 2010 she is the grandmother). You talk to Ivy in her yard,
    to her gran, and to a neighbour in the lane, then walk to the end of the lane. Everyone is fictional and the place is imagined (backowall.js); the journal says so.
    Nothing frightening is shown: the chapter ends with a card, not with the clearing itself. Facts: docs/games/tivoli.md "Back-o-Wall and the clearance". */
 import * as THREE from 'three';

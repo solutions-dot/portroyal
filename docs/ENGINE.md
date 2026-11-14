@@ -33,7 +33,8 @@ Every character uses the same Mixamo skeleton (`mixamorig*` bones, from `shared/
 | `clipFor(name)` | Returns a ready-to-play copy of a clip (details below). |
 | `animate(model, name)` | Gives a character a controller, also kept as `model.userData.anim`. |
 | `mixers` | Every mixer `animate()` makes. The game loop calls `mx.update(dt)` on visible ones. |
-| `grounded`, `groundFeet(m)` | Push a model into `grounded` and call `groundFeet` each frame: it pins the lowest toe to `m.userData.ground` (default 0), so feet never float or sink. |
+| `grounded`, `groundFeet(m)` | Push a model into `grounded` and call `groundFeet` each frame: it pins the lowest point of the shoes (heel edge, ball, toe tip, found from the body's own vertices) to `m.userData.ground` (default 0), so feet never float or sink. Small corrections are eased in over a few frames. Never set the model's height yourself after that. |
+| `strideOf(model, clip)`, `ctl.pace(v)` | How many metres one loop of a walk covers on this body (leg length and scale included). `ctl.pace(v)` sets the clip speed to fit ground speed `v`, so feet do not slide. Call it whenever a walker moves. |
 | `seamLoop(clip)` | Makes a loop end exactly where it starts. Already applied to Walk, Run, Carry, Tread, SadWalk. |
 | `setFallbackClip(c)` | The clip used if a named one is missing. |
 
@@ -77,6 +78,8 @@ Required for every game (CLAUDE.md rule 8, TESTING.md section 5). Nothing here r
 | `auditPlace({ id, snap, npcs, walls, bounds, start, actions, people })` | Returns `{ id, floating, inside, stuck }`: objects hanging in the air, people inside a solid (or overlapping another person), and spots the player cannot walk to. |
 | `auditHeld(id, model, held)` | For one person who carries things: each held item must be at the posed hand, upright, and clear of the body. Pose the mixer first (`mx.update(0.1)`). |
 | `auditSeated(id, body, snap, ground, stats)` | For one seated person (pose the mixer first): the seat must not pass through the thighs (the hip joint rides about 12 cm above the seat top), the person must not hang or sit on nothing, and must not cut into a seat back or wall. Uses the real skinned vertices. |
+| `auditWalk(id, body, v, opts)` | Steps a walking body through whole loops at ground speed `v` and measures foot slide, sinking, floating and jumps. |
+| `auditCloth(id, body, { poses })` | Finds an under layer that shows through its cover in each pose (skin, shirt, waistcoat, hair under a hat). The layer order is `CL_ORDER` in the file. |
 | `auditPeople(...)` | People standing in the same spot, or on a walker's path. `auditPlace` calls it. |
 
 Show the results in a dev-only `?test=audit` view and expect 0 issues. Kendal's `main.js` ("the place audit") is the example.

@@ -1,3 +1,5 @@
+# RETIRED: kept for reference only. Port Royal's people are now built by tools/garvey/era.py from the same recipes in tools/people/*.json (see docs/PIPELINE.md, section 1).
+# This old builder ignores the newer recipe keys (era, buckles) and makes the older, plainer bodies.
 import bpy, bmesh, math, sys, json
 from mathutils import Vector, Matrix, noise
 from mathutils.bvhtree import BVHTree

@@ -23,6 +23,10 @@ Then:
 2. Change `soundPref('template-sound')` in `src/main.js` to the game's own key.
 3. `node tools/dist.mjs` builds every game that does not start with `_`, so the new game goes live with the next deploy (see PUBLISHING.md).
 
+## People
+
+Every character in a new game follows `docs/PEOPLE.md`: recipes in `tools/<game>/people/`, built and packed the standard way, and the six checks wired before the first pull request. Where this page mentions `npc.py`, it is out of date: use `docs/PEOPLE.md`.
+
 ## 2. What you get for free, and what each game makes
 
 | Shared (reuse) | Made per game |

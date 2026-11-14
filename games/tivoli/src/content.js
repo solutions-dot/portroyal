@@ -1,4 +1,4 @@
-/* games/_tivoli/src/content.js: every word the player reads in the story, in one place (the same idea as Kendal's content.js).
+/* games/tivoli/src/content.js: every word the player reads in the story, in one place (the same idea as Kendal's content.js).
    Rules (CLAUDE.md): short lines, about 12 words or fewer, one idea each; plain words for ages 6 and up; no em dashes; every fact comes from the Research tables in
    docs/games/tivoli.md; real people say nothing (they appear only as facts in the journal); every fictional person is named as fictional in the journal.
    The framing (proposed, to be confirmed by the owner): the elder is Ivy, in 2010 a grandmother. In the early chapters you walk through her memories as a child. */

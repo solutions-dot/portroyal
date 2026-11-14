@@ -1,4 +1,4 @@
-/* games/_tivoli/src/vehicles.js: code-built vehicles for the street scene (no model files, so no licences to track). Two everyday Jamaican vehicles, general shapes only
+/* games/tivoli/src/vehicles.js: code-built vehicles for the street scene (no model files, so no licences to track). Two everyday Jamaican vehicles, general shapes only
    (a small saloon car like the Toyota Corolla, and a Hiace-style minibus, the common route taxi), not copies of any real vehicle or number plate.
    Each is built from a SIDE PROFILE extruded to the vehicle's width (so it has a real silhouette: sloped bonnet, windscreen, boot), then wheels with hubs,
    dark glass, lights, bumpers, mirrors and door lines. A vehicle faces +x, sits on the ground (y = 0) and is centred on x and z. Metres.

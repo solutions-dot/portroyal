@@ -33,7 +33,7 @@ export const LOOKS = {
   ezraBoy: L('boy', { Shirt: 0xd8d0b8, Breeches: 0x6a5a40, Hat: 0x6a5a40, Shoes: 0x2a2018 }, { hat: 'Hat', scale: 0.76 }),
   fireman: L('man_work', { Shirt: 0x3a3a40, Breeches: 0x3a3a40, Waistcoat: 0x2a2a30, Cap: 0x2a2a30, Shoes: 0x1c1816 }, { hat: 'Cap' }),
   /* 1957 */
-  gran: L('woman_elder', { Hat: 0x5a3a7a, HatBand: 0xe6e0ee, Shirt: 0xf2eee6, Skirt: 0x2a3a5a, Shoes: 0x1c1816 }, { hat: 'Hat' }),
+  gran: L('woman_elder', { Hat: 0x5a3a7a, HatBand: 0xe6e0ee, Shirt: 0xf2eee6, Skirt: 0x2a3a5a, Belt: 0x5a3a7a, Shoes: 0x1c1816 }, { hat: 'Hat' }),
   lloyd: L('boy', { Shirt: 0xf4f0e6, Breeches: 0xb5a07a, Shoes: 0x3a2a1e }, { hat: false, scale: 0.84 }),
   ezra57: L('man_elder', { Cap: 0x1f2a44, Shirt: 0xe8e4d4, Waistcoat: 0x2a3550, Breeches: 0x2a3550, Shoes: 0x1c1816 }, { hat: 'Cap' }),
   guard57: L('man_suit', { Cap: NAVY, Jacket: NAVY, Waistcoat: NAVY, Breeches: NAVY, Shirt: 0xf0ece0, Tie: 0x101826, Shoes: 0x15110e, Buttons: 0xc9a84a }, { hat: 'Cap' }),
@@ -57,22 +57,24 @@ function kid(r, pick, shirts = DRESS) {
 export function crowd57(n, seed, area, { anims = ['Idle', 'Talk1', 'Talk2', 'Laugh', 'Wave', 'Idle'], faceZ = 0, kids = 0.25 } = {}) {   /* n people on a platform in their Sunday best: frocks and church hats, suits and trilbies; area: [x0, z0, x1, z1] */
   const r = rng(seed), out = []; const pick = (a) => a[(r() * a.length) | 0];
   for (let i = 0; i < n; i++) {
-    const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), kind = r(), ry = faceZ + (r() - 0.5) * 2.2, anim = pick(anims), at = { x, z, ry, anim, skin: 0.85 + r() * 0.4 };
+    const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), kind = r(), ry = faceZ + (r() - 0.5) * 2.2, anim = pick(anims), at = { x, z, ry, anim, skin: 0.9 + r() * 0.25 };
     if (kind < kids) out.push({ ...kid(r, pick), ...at });
     else if (kind < 0.62) { const elder = r() < 0.25, c = pick(DRESS), two = r() < 0.4;
       out.push({ props: r() < 0.3 ? [['RightHand', 'hamper']] : undefined, base: elder ? 'woman_elder' : 'woman57', hat: r() < 0.75 ? 'Hat' : (elder ? false : pick(['Cap', false])),
-        tint: { Shirt: two ? 0xf4f0e8 : c, Skirt: two ? pick(DARK) : c, Hat: pick([0xf0e8d8, 0xd8b8d8, 0x2a3a5a, 0xf4f0e8, 0x8a4a5a]), HatBand: pick(DARK), Cap: pick([0xf0e8d8, 0x2a3a5a, 0x8a4a5a]), Belt: pick(DARK), Shoes: 0x1c1816 }, ...at }); }
+        tint: { Shirt: two ? 0xf4f0e8 : c, Skirt: two ? pick(DARK) : c, Hat: pick([0xf0e8d8, 0xd8b8d8, 0x2a3a5a, 0xf4f0e8, 0x8a4a5a]), HatBand: pick(DARK), Cap: pick([0xf0e8d8, 0x2a3a5a, 0x8a4a5a]), Belt: pick(DARK), Shoes: 0x1c1816 }, ...at });
+      const w = out[out.length - 1].tint; if (!two && i % 3 === 0) w.Belt = c; if (!two && i % 2 === 0) w.Collar = 0xf4f0e8; }   /* a blouse and skirt wear a dark sash; a one-colour frock has a dark sash or one of its own cloth, and often a white collar */
     else { const k = r(), c = pick(SUIT);
       if (k < 0.45) out.push({ props: r() < 0.25 ? [['RightHand', 'suitcase']] : undefined, base: 'man_suit', hat: r() < 0.7 ? 'Hat' : false, tint: { Shirt: 0xf4f0e6, Jacket: c, Waistcoat: c, Breeches: c, Hat: pick([0x5a5248, 0x2a2a30, 0x6a6458, 0x4a4036]), Tie: pick([0x9a2a2a, 0x2a3a5a, 0x2a2a2a]), Shoes: 0x15110e }, ...at });
       else if (k < 0.8) out.push({ props: r() < 0.25 ? [['RightHand', 'suitcase']] : undefined, base: 'man_shirt', hat: r() < 0.6 ? 'Hat' : false, tint: { Shirt: 0xf4f0e6, Breeches: pick(TROUS), Waistcoat: pick(DARK), Hat: pick([0xc2a45c, 0x5a5248, 0xcdb372, 0x4a4036]), Tie: pick([0x9a2a2a, 0x2a3a5a, 0x2a2a2a]), Shoes: 0x15110e }, hide: r() < 0.5 ? ['Waistcoat'] : [], ...at });
       else out.push({ base: 'man_elder', hat: pick(['Hat', 'Hat', false]), tint: { Shirt: 0xf4f0e6, Breeches: pick(TROUS), Waistcoat: pick(DARK), Hat: pick([0x5a5248, 0x6a6458]), Shoes: 0x15110e }, ...at }); }
+    const e = out[out.length - 1]; if (e.props) e.anim = 'Idle';   /* a hand that holds a suitcase or a hamper does not wave, clap or point: the case swung through the body */
   }
   return out;
 }
 export function crowd45(n, seed, area, { anims = ['Idle', 'Wave', 'Clap', 'Cheer', 'Talk1', 'Idle'], faceZ = Math.PI } = {}) {   /* townspeople of 1845 watching the engine: straw hats, head ties, white shirts */
   const r = rng(seed), out = [], pick = (a) => a[(r() * a.length) | 0];
   for (let i = 0; i < n; i++) {
-    const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), ry = faceZ + (r() - 0.5) * 1.4, anim = pick(anims), k = r(), at = { x, z, ry, anim, skin: 0.9 + r() * 0.3 };
+    const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), ry = faceZ + (r() - 0.5) * 1.4, anim = pick(anims), k = r(), at = { x, z, ry, anim, skin: 0.9 + r() * 0.25 };
     if (k < 0.2) { const girl = r() < 0.45, c = pick([0xf0ece0, 0xe8d8b8, 0xd0e0e8]);
       out.push(girl ? { base: 'girl', tint: { Shirt: c, Skirt: c, Belt: 0x8a6a4a, Ribbon: 0xf0ece0, Shoes: 0x3a2e24 }, scale: 0.68 + r() * 0.14, ...at } : { base: 'boy', hat: r() < 0.6 ? 'Hat' : false, tint: { Shirt: 0xf0ece0, Breeches: pick([0x5a5a68, 0x6a5a46]), Hat: 0xc2a45c, Shoes: 0x3a2e24 }, scale: 0.68 + r() * 0.14, ...at }); }
     else if (k < 0.55) out.push({ base: 'woman_long', hat: r() < 0.7 ? 'Hat' : 'Bonnet', tint: { Shirt: pick([0xf0ebe0, 0xe8d8b8, 0xd0e0e8]), Skirt: pick([0x8a4a3a, 0x2f6f8f, 0x5a3a52, 0x4a6a3a, 0x9a7a3a]), Hat: pick([0xf0e8d8, 0xd9b84a, 0xb84a3a, 0xd8c8a0]), Bonnet: 0xd8c8a0, Belt: 0x5a4030 }, ...at });
@@ -85,7 +87,7 @@ export function villagers(n, seed, area, { anims = ['Idle', 'Talk1', 'Sad1', 'Id
   const r = rng(seed), out = [], pick = (a) => a[(r() * a.length) | 0];
   for (let i = 0; i < n; i++) {
     const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), ry = faceZ + (r() - 0.5) * 2, k = r();
-    const common = { x, z, ry, anim: 'Idle', lamp: r() < lamp, skin: 0.9 + r() * 0.3 };
+    const common = { x, z, ry, anim: 'Idle', lamp: r() < lamp, skin: 0.9 + r() * 0.25 };
     if (k < 0.45) { const old = r() < 0.3; out.push({ ...common, base: old ? 'woman_elder' : 'woman57', hat: old ? 'Wrap' : false, tint: { Shirt: pick([0xe8e0d0, 0xd8c8a8, 0xb8c8d0, 0xe0b0a0]), Skirt: pick([0x4a4a52, 0x6a4a3a, 0x3a4a5a, 0x5a3a52]), Wrap: pick([0xd8c8a0, 0xb84a3a, 0xe8e0d0]), Belt: 0x3a3030 } }); }
     else { const b = pick(['man_work', 'man_work', 'man_elder', 'man_apron']); out.push({ ...common, base: b, hat: b === 'man_work' ? pick(['Cap', 'Hat', false]) : (b === 'man_elder' ? pick(['Hat', false]) : false), tint: { Shirt: pick([0xc8c0a4, 0xd8d0b8, 0x8a98a8, 0xb8a888]), Breeches: pick([0x4a4636, 0x3a3a40, 0x5a5040]), Hat: pick([0x6a5a40, 0xc2a45c]), Cap: pick([0x6a5a40, 0x2a2a30]), Waistcoat: 0x4a4636, Apron: 0x7a6a50 }, hide: ['Waistcoat'] }); }
   }

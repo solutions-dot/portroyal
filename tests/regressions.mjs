@@ -123,3 +123,21 @@ test('seat anchoring holds pelvis position through animation and movement of its
   const train=new Group(),model=new Group(),hips=new Bone();hips.name='mixamorigHips';model.add(hips);train.add(model);model.userData.seatAnchor={x:1,z:2,top:.5,ry:Math.PI};
   for(const y of [.7,.5,.63]){hips.position.set(.1,y,.2);anchorSeat(model);const p=hips.getWorldPosition(new Vector3());train.worldToLocal(p);assert.ok(Math.abs(p.x-1)<1e-6);assert.ok(Math.abs(p.z-2)<1e-6);assert.ok(Math.abs(p.y-.62)<1e-6);train.position.x+=3;train.rotation.y+=.2;}
 });
+
+/* Nanny Town 1734: land with heights (games/nanny/src/land.js). You may stand on trails and clearings only. */
+import { makeGround } from '../games/nanny/src/land.js';
+const nannyGround = () => makeGround({ base: () => 5, trails: [{ w: 1, pts: [[0, 0, 0], [20, 0, 0]] }, { w: 1, nowalk: true, pts: [[0, 10, 2], [20, 10, 2]] }], flats: [{ x: 30, z: 0, r: 3, y: 0 }] });
+test('a trail is walkable and levels the land; a trail marked nowalk levels the land but cannot be walked', () => {
+  const G = nannyGround();
+  assert.equal(G.walkable(10, 0.5), true); assert.equal(G.walkable(10, 3), false); assert.equal(G.walkable(31, 1), true); assert.equal(G.walkable(10, 10), false);
+  assert.ok(Math.abs(G.h(10, 0)) < 0.01); assert.ok(Math.abs(G.h(10, 10) - 2) < 0.01); assert.equal(G.h(10, 40), 5);
+  assert.ok(G.bounds.z1 < 9, 'the walking bounds leave out the trail that cannot be walked');
+  const [x, z] = G.clamp(10, 3); assert.ok(Math.abs(x - 10) < 0.01 && Math.abs(z - 1) < 0.01, 'stepping off a trail puts you back on its edge');
+  assert.deepEqual(G.clamp(10, 0.5), [10, 0.5]);
+  const along = G.clamp(12, 1.4); assert.ok(Math.abs(along[0] - 12) < 0.01, 'you slide along the edge, not back toward where you were');
+});
+test('the wall rectangles made for the audits cover the ground you may not walk on, and none of the ground you may', () => {
+  const G = nannyGround(), W = G.walls(0.5), hit = (x, z) => W.some((w) => x > w[0] && x < w[2] && z > w[1] && z < w[3]);
+  assert.equal(hit(10, 0), false); assert.equal(hit(31, 0.2), false); assert.equal(hit(10, 2.3), true); assert.equal(hit(25.5, 2.6), true);
+  for (const w of W) assert.ok(w[2] > w[0] && w[3] > w[1]);
+});

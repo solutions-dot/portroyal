@@ -1,4 +1,4 @@
-/* games/_tivoli/src/talk.js: talking to people, for every walking chapter. One line at a time in the dialogue box (the HTML is in index.html); "You" lines get their own colour;
+/* games/tivoli/src/talk.js: talking to people, for every walking chapter. One line at a time in the dialogue box (the HTML is in index.html); "You" lines get their own colour;
    the x, Escape or a tap outside ends the talk. The first talk tells the story; after that each person says one short line from their "later" list, in turn (docs/CONTENT.md).
    A line may carry unlock: 'page-id', which opens a journal page with a chime and a toast. Nobody here is real: every person you can talk to is fictional. */
 import * as THREE from 'three';

@@ -1,4 +1,4 @@
-/* games/_tivoli/src/street.js: the street for the May 2010 scene. It is MADE UP: no real street or address (the Commission's evidence about where things happened is
+/* games/tivoli/src/street.js: the street for the May 2010 scene. It is MADE UP: no real street or address (the Commission's evidence about where things happened is
    disputed, docs/games/tivoli.md "The dispute"). It is meant to feel like West Kingston at midday: walk-up flats of four storeys in faded pastel render, with balconies,
    burglar bars, louvred windows, laundry, satellite dishes, black water tanks and rebar on the roofs; shops with zinc roofs, roll-down shutters and painted signs;
    a worn road with patches and cracks, concrete kerbs, drains, litter; wooden poles with sagging wires, street lamps; mango trees and palms; a hazy sky with distant
