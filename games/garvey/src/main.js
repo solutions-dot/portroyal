@@ -1,6 +1,8 @@
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
+import { goTo, tick as followTick } from '../../../engine/follow.js';   /* people sent somewhere walk the same way in every game */
 import { auditSeated, snapMeshes, auditRest } from '../../../engine/audit.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
+import { buildShrine } from './shrine.js';   /* the Marcus Garvey monument in National Heroes Park (chapter 8) */
 /* games/garvey/src/main.js: Marcus Garvey. First test scene: a print shop in Kingston, Jamaica, about 1907.
    Built from games/_template. The movement, talking and talk-button code is still the template's small version;
    it moves into engine/ after the Port Royal work has merged (see docs/games/garvey.md, "Working alongside the Port Royal chat").
@@ -261,7 +263,7 @@ const SHOP_PEOPLE = [
       { who: 'Customer', text: 'I will wait. I like to watch the press.' }],
     later: ['I will wait here, thank you.', 'What a busy shop!'] },
 ];
-function initPerson(n) { n.m = null; n.walking = false; n.wait = 1.5 + Math.random() * 2; n.i = 0; n.heard = 0; n.talked = false; n.hx = n.x; n.hz = n.z; n.dest = null; n.delay = 0; n.hidden = false; }
+function initPerson(n) { n.m = null; n.walking = false; n.wait = 1.5 + Math.random() * 2; n.i = 0; n.heard = 0; n.talked = false; n.hx = n.x; n.hz = n.z; n.fol = null; n.delay = 0; n.hidden = false; }
 for (const n of SHOP_PEOPLE) initPerson(n);
 let PEOPLE = SHOP_PEOPLE;   /* the people in the place you are in */
 const allPeople = () => [...SHOP_PEOPLE, ...HALL_PEOPLE, ...STREET_PEOPLE, ...PRESS_PEOPLE, ...DOCK_PEOPLE, ...LIB_PEOPLE, ...OFF_PEOPLE, ...PARK_PEOPLE];
@@ -274,13 +276,13 @@ function tapPerson(cx, cy) {
 }
 const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); };
 const sitClip = (talking) => (talking && CL.SitTalk ? 'SitTalk' : CL.SitIdle ? 'SitIdle' : null);
+function arrive(n) { n.walking = false; n.ry = Math.PI; if (n.seat) sitDown(n); else n.m.userData.anim.play(null); }   /* at the end of a walk to a seat */
 function sitDown(n) { n.seated = true; n.walking = false; n.x=n.seat[0]; n.z=n.seat[1]; n.ry=Math.PI; n.m.userData.seatAnchor={x:n.x,z:n.z,top:0.5,ry:n.ry}; n.m.userData.anim.play(sitClip(false)); }
 function npcTick(n, dt) {
   const m = n.m; if (!m) return; if (POSTER) { m.rotation.y = n.ry; return; }   /* the menu poster: everyone keeps the pose they were given */
   const ac = m.userData.anim, d = Math.hypot(state.x - n.x, state.z - n.z), isNear = (d < 3.2 && !DEV_NOSTOP) || talkWith === n;
-  if (n.delay > 0) { n.delay -= dt; if (n.delay <= 0) { n.hidden = false; m.visible = place === 'hall'; n.walking = true; ac.play('Walk'); } return; }
-  if (n.dest && talkWith !== n) { const dx = n.dest[0] - n.x, dz = n.dest[1] - n.z, dist = Math.hypot(dx, dz), sp = 1.25 * dt; faceTo(m, Math.atan2(dx, dz), dt);
-    if (dist <= sp) { n.x = n.dest[0]; n.z = n.dest[1]; if (n.legs && n.legs.length) { n.dest = n.legs.shift(); } else { n.dest = null; n.walking = false; n.ry = Math.PI; if (n.seat) sitDown(n); else ac.play(null); } } else { [n.x,n.z] = slideWalls([n.x,n.z],[n.x+dx/dist*sp,n.z+dz/dist*sp],curWalls,.22); } if(!n.seated)m.position.set(n.x, 0, n.z); return; }
+  if (n.delay > 0) { n.delay -= dt; if (n.delay <= 0) { n.hidden = false; m.visible = place === 'hall'; const L = n.legs; if (L && L.length) goTo(n, L[L.length - 1][0], L[L.length - 1][1], { route: L, speed: 1.25, done: arrive }); } return; }
+  if (n.fol) { followTick(n, dt, { px: state.x, pz: state.z, talking: talkWith, place: (p) => { if (!p.seated) p.m.position.set(p.x, 0, p.z); } }); return; }   /* walking to a seat along a checked route (engine/follow.js goTo); they wait and look at you while you talk to them */
   const toPlayer = Math.atan2(state.x - n.x, state.z - n.z);
   if (n.seated) { anchorSeat(m); return; }
   if (!n.path) { if (isNear) faceTo(m, toPlayer, dt); else faceTo(m, n.ry, dt, 2); return; }   /* the printer stays at his stand, and turns to look at you */
@@ -343,8 +345,8 @@ const JOURNAL = [
     deeper: ['Good editors check a story before they print it.', 'We still need to ask the same questions today.'] },
   { id: 'later', title: 'His later life', simple: ['In 1927 Marcus Garvey was sent back to Jamaica.', 'He lived for a time in Kingston, then in London.', 'He died in London in 1940.'],
     deeper: ['He reached Kingston in December 1927. In 1929 he started a political party in Jamaica, the People\'s Political Party. This comes from one source.', 'He moved to London in 1935. This also comes from one source.', 'His remains were brought home to Jamaica in 1964 and placed in a shrine at National Heroes Park in Kingston. Sources give the day as 10 or 15 November.', 'In 1969 he was named a National Hero of Jamaica.'] },
-  { id: 'shrine', title: 'The shrine in Kingston', simple: ['Marcus Garvey\'s shrine is in National Heroes Park in Kingston.', 'It has a bronze bust of him.'],
-    deeper: ['The monument was designed in 1964. The bust is by the sculptor T. Alvin Marriott. It was placed in the park in 1956 and later moved into the monument.', 'In this game the shrine is only an outline, drawn from descriptions. The plaque gives just his name and dates, because we have not found the exact words on the real one.', 'The student and the guide in this game are fictional.'] },
+  { id: 'shrine', title: 'The shrine in Kingston', simple: ['Marcus Garvey\'s shrine is in National Heroes Park in Kingston.', 'His tomb is in the middle of a big black star.', 'A bronze bust of him stands in the wall behind.'],
+    deeper: ['The monument was designed in 1964 by G. C. Hodges, the Government Town Planner.', 'The black star stands for his Black Star Line. The tomb is made of terrazzo, a stone made of chips, set with marble.', 'The bust is by the sculptor T. Alvin Marriott. It was placed in the park in 1956 and later moved into the monument.', 'In this game the shrine is built from written descriptions, not measured, so its size and some details are a guess. The plaque gives just his name and dates, because we have not found the exact words on the real one.', 'The student and the guide in this game are fictional.'] },
   { id: 'pardon', title: 'The pardon', simple: ['In January 2025 US President Joe Biden pardoned Marcus Garvey.', 'This pardon came after his death.', 'His family and many supporters had asked for this for years.'],
     deeper: ['Some of them also want the US Congress to exonerate him, which would clear his name completely.', 'People still disagree about how fair his trial was. This game does not decide it for you.'] },
   { id: 'journey', title: 'Your journey', simple: ['You finished the story.'], deeper: ['Your choices did not change what really happened. They show how you took part in it.'] },
@@ -634,7 +636,7 @@ const HALL_PEOPLE = [
 for (const n of HALL_PEOPLE) initPerson(n);
 for (const n of HALL_PEOPLE.slice(2)) n.hidden = true;   /* the neighbours arrive when the poster is printed */
 function startArrivals() {
-  HALL_PEOPLE.slice(2).forEach((n, i) => { if (!n.m) return; n.hidden = true; n.m.visible = false; n.x = (i - 1) * 0.6; n.z = 5.2; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; delete n.m.userData.seatAnchor; n.legs = [...n.route.map((q) => q.slice()), [n.seat[0],n.seat[1]-0.6]]; n.dest = n.legs.shift(); n.seated = false; n.delay = 1.2 + i * 1.8; });   /* walk the aisle and the gap between the rows, then sit */
+  HALL_PEOPLE.slice(2).forEach((n, i) => { if (!n.m) return; n.hidden = true; n.m.visible = false; n.x = (i - 1) * 0.6; n.z = 5.2; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; delete n.m.userData.seatAnchor; n.legs = [...n.route.map((q) => q.slice()), [n.seat[0],n.seat[1]-0.6]]; n.fol = null; n.seated = false; n.delay = 1.2 + i * 1.8; });   /* walk the aisle and the gap between the rows, then sit */
 }
 function loadPerson(n) {
   if (n.loading) return n.loading;
@@ -708,7 +710,7 @@ let streetLoading = null;
 function ensureStreet() { if (!streetLoading) { buildStreet(); streetLoading = Promise.all(STREET_PEOPLE.map(loadPerson)); } return streetLoading; }
 function resetChapter3() {   /* the street corner again: the journal and your choices are kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 20; delete story.words; delete story.answer;
-  for (const n of STREET_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of STREET_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('street'); setStage(20); showPlace();
 }
 
@@ -812,7 +814,7 @@ let pressLoading = null;
 function ensurePress() { if (!pressLoading) { buildPress(); pressLoading = Promise.all(PRESS_PEOPLE.map(loadPerson)); } return pressLoading; }
 function resetChapter4() {   /* the press room again: the page comes down, the journal and your choices in earlier chapters are kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); stage = 30; delete story.headline; delete story.delivery; delete story.laid;
-  for (const n of PRESS_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of PRESS_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('press'); setStage(30); showPlace();
 }
 
@@ -887,7 +889,7 @@ let dockLoading = null;
 function ensureDock() { if (!dockLoading) { buildDock(); dockLoading = Promise.all(DOCK_PEOPLE.map(loadPerson)); } return dockLoading; }
 function resetChapter5() {   /* the dock again: your choices here are cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); stage = 40; delete story.plan; delete story.advice;
-  for (const n of DOCK_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of DOCK_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('dock'); setStage(40); showPlace();
 }
 
@@ -967,7 +969,7 @@ let libLoading = null;
 function ensureLiberty() { if (!libLoading) { buildLiberty(); libLoading = Promise.all(LIB_PEOPLE.map(loadPerson)); } return libLoading; }
 function resetChapter6() {   /* Liberty Hall again: the banner is plain, your choice here is cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); closeDecl(false); stage = 50; delete story.helped; delete story.banner; showBanner();
-  for (const n of LIB_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of LIB_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('liberty'); setStage(50); showPlace();
 }
 
@@ -1043,7 +1045,7 @@ let offLoading = null;
 function ensureOffice() { if (!offLoading) { buildOffice(); offLoading = Promise.all(OFF_PEOPLE.map(loadPerson)); } return offLoading; }
 function resetChapter7() {   /* Amy's desk again: your choices here are cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 60; delete story.question; delete story.reassure;
-  for (const n of OFF_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of OFF_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('office'); setStage(60); showPlace();
 }
 
@@ -1056,13 +1058,8 @@ function buildPark() {
   mesh(new THREE.PlaneGeometry(80, 60), std(cv(128, 128, (x, w, h) => { x.fillStyle = '#4f8a45'; x.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { x.fillStyle = `rgba(${40 + Math.random() * 40 | 0},${110 + Math.random() * 60 | 0},${30 + Math.random() * 40 | 0},0.5)`; x.fillRect(Math.random() * w, Math.random() * h, 2, 5 + Math.random() * 4); } }, [20, 15]), 1), 0, 0, 0, g).rotation.x = -Math.PI / 2;
   const walk = std(cv(128, 128, (x, w, h) => { x.fillStyle = '#c8bda2'; x.fillRect(0, 0, w, h); grain(x, w, h, 14); }, [1, 1]), 1);
   mesh(new THREE.PlaneGeometry(24, 2.4), walk, 0, 0.01, 3.2, g).rotation.x = -Math.PI / 2; mesh(new THREE.PlaneGeometry(2.4, 6.5), walk, 0, 0.011, -0.3, g).rotation.x = -Math.PI / 2;
-  mesh(new THREE.PlaneGeometry(9, 6), std(cv(128, 128, (x, w, h) => { x.fillStyle = '#b9ae94'; x.fillRect(0, 0, w, h); grain(x, w, h, 12); }, [1, 1]), 1), 0, 0.012, -3.4, g).rotation.x = -Math.PI / 2;   /* the paved circle round the shrine */
-  /* the shrine: a black star on the ground, an angled stone wall behind, and a bronze bust on a plinth (drawn from descriptions) */
-  const star = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 0.75 : 1.7; (i ? star.lineTo : star.moveTo).call(star, Math.cos(a) * r, Math.sin(a) * r); } star.closePath();
-  const starG = new THREE.ExtrudeGeometry(star, { depth: 0.12, bevelEnabled: false }); starG.rotateX(-Math.PI / 2); mesh(starG, solid(0x15161a, 0.5), 0, 0.012, -2.6, g);
-  const stone = solid(0xcfc6b0, 0.9); for (const sx of [-1, 1]) { const w = box(2.3, 2.4, 0.3, stone, sx * 1.05, 1.2, -4.5, g); w.rotation.y = -sx * 0.3; }
-  box(0.8, 0.9, 0.8, stone, 0, 0.45, -3.7, g); const bronze = solid(0x8a6a38, 0.45, 0.5); mesh(new THREE.SphereGeometry(0.23, 16, 12), bronze, 0, 1.25, -3.7, g); const sh = mesh(new THREE.SphereGeometry(0.34, 14, 10), bronze, 0, 0.98, -3.7, g); sh.scale.set(1.2, 0.55, 0.7);
-  mesh(new THREE.PlaneGeometry(0.6, 0.3), new THREE.MeshBasicMaterial({ map: signTex([['MARCUS MOSIAH GARVEY', 26], ['1887 to 1940', 24]], 512, 160) }), 0, 0.5, -3.29, g); PARK_WALLS.push([-1.6, -5.4, 1.6, -2.6]);
+  /* the shrine: the black star with the tomb at its centre, the peaked and angled wall behind and the bronze bust (built in shrine.js, from descriptions) */
+  PARK_WALLS.push(...buildShrine(g, { x: 0, z: -4.0, signTex }).walls);
   /* palm trees, benches, a low fence and the town beyond */
   const leaf = new THREE.MeshStandardMaterial({ color: 0x3f7d3a, roughness: 0.8, side: THREE.DoubleSide });
   const palm = (x, z, hgt) => { const t = cyl(0.11, 0.17, hgt, solid(0x7a6246, 0.9), x, hgt / 2, z, g, 8); for (let i = 0; i < 7; i++) { const l = mesh(new THREE.PlaneGeometry(2.0, 0.4), leaf, x + Math.cos(i * 0.9) * 0.9, hgt + 0.1, z + Math.sin(i * 0.9) * 0.9, g); l.rotation.set(-0.5, -i * 0.9, 0.25); } PARK_WALLS.push([x - 0.3, z - 0.3, x + 0.3, z + 0.3]); };
@@ -1134,7 +1131,7 @@ let parkLoading = null;
 function ensurePark() { if (!parkLoading) { buildPark(); parkLoading = Promise.all(PARK_PEOPLE.map(loadPerson)); } return parkLoading; }
 function resetChapter8() {   /* the park again: your last answer is cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 70; delete story.final;
-  for (const n of PARK_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of PARK_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('park'); setStage(70); showPlace();
 }
 
@@ -1254,7 +1251,7 @@ function prefetchNext(name) {   /* a few seconds after arriving, quietly fetch t
 function enterPlace(name, keepPos) {
   place = name; const P = PLACES[name]; prefetchNext(name);
   for (const k of Object.keys(PLACES)) { const Q = PLACES[k]; Q.group.visible = k === name; Q.lamp.visible = k === name; for (const n of Q.people) { if (n.mark) n.mark.visible = false; if (n.m) n.m.visible = k === name && !n.hidden; } }
-  if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.dest) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; if (n.seat) sitDown(n); }
+  if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.fol) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; if (n.seat) sitDown(n); }
   if (name === 'press') arrangePress();
   if (name === 'liberty') showBanner();   /* a saved game that was past the Declaration shows the finished banner */
   curWalls = P.walls; curBounds = P.bounds; PEOPLE = P.people; ACTIONS = P.actions; near = null;
@@ -1265,7 +1262,7 @@ function enterPlace(name, keepPos) {
 function showPlace() { const el = $('place'); el.textContent = PLACES[place].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(placeT); placeT = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetChapter2() {   /* the hall again: the poster comes down, the neighbours go home, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); delete story.poster; delete story.printed; showPoster(); stage = 10;
-  for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.legs = null; n.seated = false; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.legs = null; n.seated = false; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('hall'); setStage(10); showPlace();
 }
 
@@ -1337,6 +1334,7 @@ function devViews() {
   const inPark = (st, x, z, yaw, pitch) => ensurePark().then(() => { stage = st; best = Math.max(best, st); enterPlace('park'); go(x, z, yaw, pitch); });
   if (shot === 'park1') inPark(70, 0, 5.2, 0, 0.05);
   if (shot === 'park2') inPark(71, 0.6, 1.4, 0.0, 0.1);
+  if (shot === 'shrine') { if (q.has('free')) Object.assign(PARK_BOUNDS, { x0: -30, x1: 30, z0: -30, z1: 30 }); inPark(+(q.get('st') || 73), +(q.get('x') || 0), +(q.get('z') || -0.3), +(q.get('yaw') || 0), +(q.get('pitch') || 0)); }   /* the monument from anywhere: &x= &z= &yaw= &pitch=, and &free to stand outside the paths */
   if (shot === 'time') inPark(71, -5.0, 1.4, 0, 0).then(() => openTime());
   if (shot === 'timedone') inPark(71, -5.0, 1.4, 0, 0).then(() => { openTime(); for (let i = 0; i < EVENTS.length; i++) $('tmtray').querySelector('[data-i="' + i + '"]').click(); });
   if (shot === 'answer') inPark(73, 0, -0.3, 0, 0).then(() => { openAnswer(); $('anopen').children[2].click(); $('anwhy').children[2].click(); });
@@ -1503,7 +1501,7 @@ function devViews() {
         $('start').click(); best = 3; stage = 3; CHAPTERS[1].go(); for (let i = 0; i < 200 && place !== 'hall'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '"');
         L('amy lines=' + await talkTo(byId('amy'))); L('garvey lines=' + await talkTo(byId('garvey')) + ' poster=' + story.poster + ' stage=' + stage);
         state.x = 2.3; state.z = 1.7; update(0.016); L('near=' + (near && near.label)); near.go(); typeIt(); L('printed: stage=' + stage + ' poster visible=' + posterMesh.visible);
-        const nb = HALL_PEOPLE.slice(2); L('before arrivals visible=' + nb.filter((n) => n.m.visible).length); for (let i = 0; i < 60 * 12; i++) update(1 / 60); L('after arrivals visible=' + nb.filter((n) => n.m.visible).length + ' seated=' + nb.filter((n) => !n.dest && n.m.visible).length);
+        const nb = HALL_PEOPLE.slice(2); L('before arrivals visible=' + nb.filter((n) => n.m.visible).length); for (let i = 0; i < 60 * 12; i++) update(1 / 60); L('after arrivals visible=' + nb.filter((n) => n.m.visible).length + ' seated=' + nb.filter((n) => !n.fol && n.m.visible).length);
         for (const n of nb) L(n.id + ' lines=' + await talkTo(n) + ' says: ' + (NB[n.id][story.poster]).slice(0, 24)); L('stage=' + stage + ' goal="' + $('goal').textContent + '"');
         L('speech lines=' + await talkTo(byId('garvey')) + ' stage=' + stage + ' goal="' + $('goal').textContent + '" pages=' + unlocked.join(','));
         L(stage === 14 && unlocked.length === 4 && place === 'hall' ? 'ALLDONE' : 'STALL'); L('DONE');

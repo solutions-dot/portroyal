@@ -59,18 +59,55 @@ The full rules are in `docs/PEOPLE.md`; every recipe key is in `docs/PIPELINE.md
 
 ## 3. Places: buildings, ground, plants and props
 
-- **Where each game builds them today.** Port Royal uses Blender-made houses and ships (`tools/blender/street.py`, `variant.py`, `ships.py`, textures from `tex.py` and `tex2.py`; `docs/PIPELINE.md`, section 3) plus code in `games/port-royal/src/main.js`. Every later game builds its world in code: Kendal splits it into `places1.js`, `places2.js`, `props.js`, `trains.js`, `decor.js`, `detail.js`, `common.js` and `gfx.js`; Garvey keeps it all in `main.js`; Nanny Town adds `land.js` (terrain from noise) and `flora.js` (instanced forest); Melissa adds `houses.js` and `storm.js`; Eventide and Bog Walk copy Kendal's `gfx.js`, `props.js` and `detail.js`. For a new game, copy Kendal's `gfx.js`, `props.js` and `detail.js` into `games/<game>/src/` and change the copies, not Kendal's.
+- **Where each game builds them today.** Port Royal uses Blender-made houses and ships (`tools/blender/street.py`, `variant.py`, `ships.py`, textures from `tex.py` and `tex2.py`; `docs/PIPELINE.md`, section 3) plus code in `games/port-royal/src/main.js`. Every later game builds its world in code: Kendal splits it into `places1.js`, `places2.js`, `props.js`, `trains.js`, `decor.js`, `detail.js`, `common.js` and `gfx.js`; Garvey keeps most of it in `main.js` (its monument is in `shrine.js`); Nanny Town adds `land.js` (terrain from noise) and `flora.js` (instanced forest); Melissa adds `houses.js` and `storm.js`; Eventide and Bog Walk copy Kendal's `gfx.js`, `props.js` and `detail.js`. For a new game, copy Kendal's `gfx.js`, `props.js` and `detail.js` into `games/<game>/src/` and change the copies, not Kendal's. Railway vehicles are not copied: they are shared in `engine/vehicles.js`, which Kendal and Bog Walk both use (`docs/ENGINE.md`, "engine/vehicles.js").
 - **Shared engine pieces to reuse:** `engine/placement.js` (seats with `anchorSeat`, walls with `slideWalls`, routes with `walkRoute` and `routeIssues`), `engine/loft.js` (smooth animal bodies), `engine/audit.js` (`snapMeshes` before merging, then `auditPlace`). See `docs/ENGINE.md`.
 - **Textures** are drawn in code on canvases (no image files), cached and shared (`gfx.js`: `cv`, `std`, `solid`, `flat`). Photographs are references only, never textures.
 - **Speed and phones.** Merge each place's still scenery with `batchStatic` (in each game's `gfx.js`) after taking the audit snapshot; draw grass, flowers and trees instanced; share materials; hide far crowd figures (Kendal hides light copies beyond 75 m); real shadows on computers only (`SHADOWS` in Kendal's `main.js`), soft blob shadows under people on phones. Measure with `&stats` on a view (draw calls and triangles in the page title).
-- **Grounded and clear.** Everything stands on something: a sign or lamp needs a post, bracket or wall (`float` in the audit). Nothing solid stands in a walkway without a wall rectangle. People never stand in walls, in furniture or in each other, and bushes never poke through walls (`auditThrough`). A check for solid objects that overlap each other is being added to `engine/audit.js` by another branch; until it lands, look for it by eye.
+- **Grounded and clear.** Everything stands on something: a sign or lamp needs a post, bracket or wall (`float` in the audit). Nothing solid stands in a walkway without a wall rectangle. People never stand in walls, in furniture, in trees (trunks, low crowns, between buttress roots) or in each other, and bushes never poke through walls (`auditThrough`). `auditBodies` checks people against the real shapes, including merged and instanced ones, where they stand and along their routes.
 - **History.** Build from photographs, plans or descriptions of the real place where they exist, and say in the journal when a place is "a general picture" instead (rule 3).
 - **Check:** `?test=audit` with 0 issues in every place, then screenshots of each place close up and from far away, on a phone layout too.
 
+## People who follow or lead
+
+Every game uses `engine/follow.js` for anyone who walks with the player (`docs/ENGINE.md`). Do not write a game's own follow code.
+
+- **A follower** (`follow`): comes a comfortable way behind you and to one side (about 1.5 m; 1.3 m for a small child), never inside your personal space (about 0.9 m; 0.8 m for a small child), never blocks you (leave followers out of the player's collision with people), steps aside when you walk back into them, stops and faces you when you stop, and walks at a pace that fits (a run only to catch up, and only if the body has a Run clip).
+- **A guide** (`lead`): walks ahead along a path and waits, facing you, when you fall behind.
+- **Someone sent somewhere** (`goTo`): walks round furniture and solid things, or along a route the audit has checked.
+- **Nothing solid.** The game's `world.blocked` must know every solid thing a person could walk into: walls, furniture, trees, huts, rocks, fences, luggage. A footprint list that misses one lets a follower walk through it.
+- **Stop them** when the story says so and when a chapter is left.
+- **Check:** `?test=follow` walks the player along each follower's and guide's real route, with stops and a turn back into the follower, and must report 0 (nobody too close, inside anything, far behind for long, or stuck). The place audit checks guides' and followers' routes against the real shapes (`place.routes`).
+
+## Ambient life: background people
+
+Owner, November 2026: "too much standing around looking like zombies in most games, we need some moving around and such". Every game's background people (anyone who is not a story person in the current step) use `engine/ambient.js` (`docs/ENGINE.md`). Do not write a game's own stroll, crowd-idle or chat code for new work.
+
+- **Give everyone something to do,** as data in the place file: `wander` (short walks and pauses), `chat` (two to four facing each other, taking turns), `work` (a loop at a spot, or carrying between two points with the load shown), `sit` (seated idles, talking in turn with a neighbour), `watch` (looking at something, shifting weight, reacting), `errand` (A to B carrying something, and back), `play` (children running, chasing, cheering, slower near you).
+- **What counts as too static:** anyone on an idle clip (`Idle`, `SitIdle`, `CarryIdle`, `Sad1`...) with no step, turn, clip change or head turn for more than 12 seconds in a lively scene; a talk clip on someone with nobody to talk to; a crowd that starts the same clip in the same frame; a work or carry clip with nothing in the hand; a walker whose feet slide. A real crowd mixes kinds: in a market or a platform, about a third walking or on errands, a third chatting in small groups, the rest working, sitting or watching.
+- **The story first.** Pass the story paths and spots as `keepOff` and the step's story people as `story`: ambient people never stand on them and never crowd a story person. In a sad scene call `life.mood('sad')`: fewer people (some leave while out of view), slower, no laughing, cheering or games, but nobody freezes. Rule 4 holds: no fights, falls or fear clips in ambient life.
+- **Phones.** One `life.tick(dt, world)` a frame; only the nearest people (at most 14, 8 with `phone: true`) animate every frame, the rest less often, and a light copy (`n.lo`) far off.
+- **Clips** come from the game's `anim-clips.json`; `life.issues()` names any a behaviour asks for that the game does not ship.
+- **Check:** `?test=ambient` (`ambientTest`, run for a minute with the player walking through) must print `AMBIENT 0` in every place: nobody inside a solid or a person, no slide, no statue, nobody on a story path.
+
+## Story flow: who moves the story, the arrow, visible tasks
+
+The owner's three rules (November 2026). Every game follows them, through `engine/story.js` (`docs/ENGINE.md`). Do not write a game's own goal, mark or arrow code for new steps.
+
+1. **Only story people are the point of focus.** In each step only that step's story people get the gold talk mark and the arrow. Anyone else can be talked to for a short flavour line, but never moves the story on and never sends you to someone else (no "first", "come back", "go and", "go to", "talk to", "then", no other person's name). A person needed later is flavour until their step. No "go back to X" loops. Where order does not matter, any order works and the goal shows a count ("Talk to Gran and Mr. Clive: 1 of 2.").
+2. **The arrow comes quickly and points at what is needed.** It shows 2.5 s after a new goal (5 s for an explore step), even while the child walks. It points only at the step's unfinished needs, never at optional actions, nearest first, and moves to the next need at once when one is done. A count going up does not restart the wait. Route it round walls with the game's `route` callback.
+3. **Every required task shows on screen.** Something carried is drawn in the player's hand (`createCarry`: the camera slot in first person, the grip in third person); placing it leaves it where it goes; every `do` task changes something you can see (`shows`); counts show in the goal. A toast alone is not enough.
+
+How to use it:
+
+- Write the chapter as a step table: `{ goal, needs: { talk, do, go }, story, any, explore, optional, shows, next }`. The count is added to the goal for you.
+- In the game's `setStage` call `STORY.sync(stage)`. Ask `STORY.talk(id)` when a person is tapped, `STORY.marked(id)` for the gold mark, `STORY.tick(now, quiet)` for the arrow, and call `STORY.done(id)` when a whole first talk ends or a task is done.
+- Move one chapter's table at a time. Stages not in the table stay with the old code.
+- **Check:** `?test=flow` (`flowTest` in the dev build) must print `FLOW 0`, and `npm test` runs the module's own tests.
+
 ## 4. Animations
 
-- **The shared library** is `shared/models/anims.js`: 39 Mixamo clips on one skeleton (`docs/ENGINE.md` lists them). Every body has the same bones, so every clip plays on everyone.
-- **Adding a clip** (`docs/PIPELINE.md`, section 2): download from mixamo.com as **FBX, Without Skin**, with **In Place** ticked for anything that walks; put it in `shared/anim-sources/`; add it to `tools/anims/clips.json`; run `tools/anims/retarget_clips.py` (30 to 50 minutes), then `tools/anims/optimize_clips.mjs`, then pack. Changing the shared library is a shared-file change: its own pull request.
+- **The shared library** is `shared/models/anims.js`: 96 clips on one skeleton (Mixamo and hand-made) (`docs/ENGINE.md` lists them). Every body has the same bones, so every clip plays on everyone.
+- **Adding a clip** (`docs/PIPELINE.md`, section 2): download from mixamo.com as **FBX, Without Skin**, with **In Place** ticked for anything that walks; put it in `shared/anim-sources/`; add it to `tools/anims/clips.json`; run `tools/anims/retarget_clips.py` (about 11 minutes), then `tools/anims/optimize_clips.mjs`, which packs it, then `tools/anims/check_clips.mjs`. Changing the shared library is a shared-file change: its own pull request.
 - **A clip only one game needs** stays out of the shared library: Tivoli keeps its own in `tools/tivoli/anim-sources/` and `tools/tivoli/clips.json`, packs them with `tools/tivoli/pack_clips.mjs` into `games/tivoli/site/models/anims_tivoli.js`, and loads that after the shared library. Copy that.
 - **Each game's clip list:** `games/<game>/anim-clips.json`. The build trims the library to it, so add any clip the game starts to play.
 - **Walking and feet.** Call `groundFeet(m)` every frame for standing and walking people (it pins the lowest point of the shoes to the ground) and `ctl.pace(v)` whenever a walker moves, so feet do not slide. Seated people get a seat (`seatAnchor`, `docs/ENGINE.md`) and are not grounded.

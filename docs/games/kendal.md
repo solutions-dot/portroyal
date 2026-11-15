@@ -42,7 +42,7 @@ Same dramatic idea as the Port Royal earthquake: an opt-in card first ("It is lo
 | `cast.js` | `LOOKS` (a body plus colours per person) and crowd generators (`crowd57`, `crowd45`, `villagers`) |
 | `places1.js`, `places2.js` | the nine places: geometry, walking bounds, walls, people, spots for actions |
 | `decor.js`, `detail.js` | the extra detail (instanced grass, flowers, stones, fences, flame trees, mango trees, bamboo, birds). `DECOR[place]` runs before a place is merged. |
-| `trains.js` | track, steam engines (1845 and 1890s), a 1950s diesel, wooden coaches, 1845 carriages, wagons, platform, smoke |
+| `trains.js` | one line: track, steam engines (1845 and 1890s), a 1950s diesel, wooden coaches, 1845 carriages, wagons, platform and smoke, built by the shared `engine/vehicles.js` with Kendal's `gfx.js` (Bog Walk uses the same vehicles; change them there, and check both games) |
 | `props.js` | plants, hills, houses, animals, small things, accessories held in a hand or worn |
 | `common.js` | times of day (`ENV`, `mixEnv`), the station base (a sunk track beside a raised platform), the scrolling scenery rig for rides |
 | `gfx.js` | textures drawn in code, shared materials, the sky, `batchStatic` |

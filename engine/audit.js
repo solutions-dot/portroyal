@@ -12,6 +12,9 @@ import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
      overlap two people standing in the same spot (or walking through someone who stands still), or someone on top of the player's start
      seated  a person sitting who cuts into a seat or its back, floats above the seat, sits on nothing, or faces the back of the seat
      through a bush, tree or other leafy shape that pokes through a wall and shows on both sides of it (call auditThrough(snap) and report its lines with the rest)
+     vehicle a bus, cart, truck or train whose path passes through or close to a person, the player's spot or a walking wall (auditVehicles)
+     hang    a loose clump of leaves or flowers high up that touches nothing: no stem, no wall, no ground (auditHanging)
+     garment a small piece of clothing (buttons, a hat band, a buckle) that shows while its garment is hidden, or floats clear of every other piece (auditGarments)
    Nothing here runs in a public build unless a game imports it into code that is only reached when __DEV__ is true. */
 import * as THREE from 'three';
 import { groundFeet, strideOf } from './anim.js';
@@ -20,7 +23,7 @@ import { groundFeet, strideOf } from './anim.js';
 const SHAPE = new WeakMap();
 export function snapMeshes(group) {
   group.updateMatrixWorld(true); const out = [], inst = [];
-  group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg); e.card = isCard(o.material); e.name = o.name || (top !== o ? top.name : '') || '';   /* top: the object it belongs to (the child of the place's group that holds it) */
+  group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg); e.card = isCard(o.material); e.name = o.name || (top !== o ? top.name : '') || ''; for (let a = o; a && a !== group; a = a.parent) if (a.userData.hollow) e.hollow = true;   /* hollow: a vehicle or room people stand inside on purpose (a cab, a carriage): no outline test (auditBodies) */   /* top: the object it belongs to (the child of the place's group that holds it) */
     if (o.geometry.type === 'BoxGeometry') { o.geometry.computeBoundingBox(); e.lb = o.geometry.boundingBox.clone(); e.inv = o.matrixWorld.clone().invert(); e.sc = Math.cbrt(Math.abs(o.matrixWorld.determinant())) || 1; }   /* the exact box, for seats */
     out.push(e); }
     if (o.isInstancedMesh && o.visible && !o.isSkinnedMesh && (SOLID.has(o.geometry.type) || !isCard(o.material))) {   /* each drawn copy of an instanced shape (tree trunks, huts, whole trees, rocks) is kept aside, for the overlap check (solid shapes only) and the bodies check (auditBodies) */
@@ -109,7 +112,7 @@ export function auditOverlap(snap, { deep = 0.04 } = {}) {
    the real triangles of every shape near it are cut too. The person is inside a shape where a cut line of its surface passes closer than r to their middle (the
    surface goes through the body), or where they are enclosed by it (counted along four rays, which must agree, so an open strip never counts). A fault is two or
    more slices more than 3 cm deep. Flat things you can see through or walk through are left out: leaf cards (anything drawn with alphaTest or see-through), planes,
-   unlit glows and flames, people, and anything wider than 40 m (the ground). skip(entry) leaves out more (bushes that hide someone on purpose).
+   unlit glows and flames, people, thin small plants (under 12 cm across and 1.2 m tall: flower stalks, grass), and anything wider than 40 m (the ground). skip(entry) leaves out more (bushes that hide someone on purpose).
    people: [{ id, x, z, ground, h, r, what }] (what: "stands", "walks", "follows", put in the line). Lines name the thing and where it is. */
 const FLAT = new Set(['PlaneGeometry', 'CircleGeometry', 'RingGeometry', 'ShapeGeometry']);
 function isCard(material) { return [].concat(material).some((m) => m && (m.alphaTest > 0 || m.transparent || m.isMeshBasicMaterial || m.isSpriteMaterial)); }
@@ -138,7 +141,8 @@ function bodyDepth(t, px, pz, y0, y1, r) {   /* how many slices of the cylinder 
 }
 /* standing inside a shape's outline at shin height (y): between the buttress roots of a big tree, among the legs of a stool or a frame. Nothing cuts the body,
    but from almost every side the person looks as if they are inside the thing (found by eye in Nanny Town: a girl standing between the cotton tree's roots).
-   The outline is the convex hull of the shape's own cut line at that height; the person's middle must be more than `margin` inside it. */
+   The outline is the convex hull of the shape's own cut line at that height; the person's middle must be more than `margin` inside it.
+   A vehicle or room drawn as one shape, that people stand inside on purpose (a locomotive's cab), sets userData.hollow on its group and is left out of this test. */
 function outlineHas(t, px, pz, y, margin) {
   const pts = [], q = [0, 0, 0, 0]; for (let i = 0; i < t.length; i += 17) { if (t[i + 9] > y || t[i + 10] < y) continue; let m = 0;
     for (const [j, k] of [[0, 3], [3, 6], [6, 0]]) { const ay = t[i + j + 1], by = t[i + k + 1]; if ((ay > y) === (by > y)) continue; const f = (y - ay) / (by - ay); q[m * 2] = t[i + j] + (t[i + k] - t[i + j]) * f; q[m * 2 + 1] = t[i + j + 2] + (t[i + k + 2] - t[i + j + 2]) * f; if (++m === 2) break; }
@@ -151,11 +155,11 @@ function outlineHas(t, px, pz, y, margin) {
 }
 export function auditBodies(snap, people, { skip = null } = {}) {
   const out = [], sz = new THREE.Vector3(), cell = new Map(), key = (x, z) => ((x | 0) + 5000) * 20000 + ((z | 0) + 5000), C = 2, seen = new Set();
-  snap.forEach((e, i) => { if (e.skinned || e.unlit || e.flame || e.card || FLAT.has(e.geo) || !SHAPE.has(e)) return; e.b.getSize(sz); if (sz.x > 40 || sz.z > 40 || Math.max(sz.x, sz.y, sz.z) < 0.08) return; if (skip && skip(e)) return;
+  snap.forEach((e, i) => { if (e.skinned || e.unlit || e.flame || e.card || FLAT.has(e.geo) || !SHAPE.has(e)) return; e.b.getSize(sz); if (sz.x > 40 || sz.z > 40 || Math.max(sz.x, sz.y, sz.z) < 0.08 || (Math.max(sz.x, sz.z) < 0.12 && sz.y < 1.2)) return; if (skip && skip(e)) return;   /* flower stalks and grass blades (under 12 cm across and 1.2 m tall) are walked through */
     for (let x = Math.floor(e.b.min.x / C); x <= Math.floor(e.b.max.x / C); x++) for (let z = Math.floor(e.b.min.z / C); z <= Math.floor(e.b.max.z / C); z++) { const k = key(x, z); (cell.get(k) || cell.set(k, []).get(k)).push(i); } });
   for (const p of people) { const g = p.ground || 0, h = p.h || 1.6, r = p.r || 0.18, y0 = g + 0.1, y1 = g + h * 0.92, list = cell.get(key(Math.floor(p.x / C), Math.floor(p.z / C))); if (!list) continue;
-    for (const i of list) { const e = snap[i], tag = p.id + '|' + e.top; if (seen.has(tag) || e.b.max.y < y0 || e.b.min.y > y1 || e.b.max.x < p.x - r || e.b.min.x > p.x + r || e.b.max.z < p.z - r || e.b.min.z > p.z + r) continue;
-      const t = worldTris(e); if (!t) continue; const d = bodyDepth(t, p.x, p.z, y0, y1, r); if (d.hits < 2) { if (outlineHas(t, p.x, p.z, g + 0.25, 0.05)) d.among = true; else continue; } seen.add(tag);
+    for (const i of list) { const e = snap[i], tag = (p.key || p.id) + '|' + e.top; if (seen.has(tag) || e.b.max.y < y0 || e.b.min.y > y1 || e.b.max.x < p.x - r || e.b.min.x > p.x + r || e.b.max.z < p.z - r || e.b.min.z > p.z + r) continue;
+      const t = worldTris(e); if (!t) continue; const d = bodyDepth(t, p.x, p.z, y0, y1, r); if (d.hits < 2) { if (!e.hollow && outlineHas(t, p.x, p.z, g + 0.25, 0.05)) d.among = true; else continue; } seen.add(tag);
       const c = e.b.getCenter(sz), what = (e.name || e.geo.replace('Geometry', '').toLowerCase()) + (e.col ? ' ' + e.col : '') + (e.inst ? ' (one of many drawn at once)' : '');
       out.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) ${p.what || 'stands'} ` + (d.among ? `inside the outline of a ${what} at (${c.x.toFixed(1)},${c.z.toFixed(1)}), between its roots or legs` : `${d.inside ? 'inside' : 'cut by'} a ${what} at (${c.x.toFixed(1)},${c.z.toFixed(1)}), ${(d.worst * 100).toFixed(0)} cm deep`)); } }
   return out;
@@ -170,7 +174,7 @@ export function routeSpots(id, pts, { loop = false, step = 0.3, ground = null, h
 }
 function bodySpots(place) {
   const gAt = place.groundAt || null, out = [];
-  for (const p of place.npcs) { if (/^Sit/.test(p.anim || '')) continue; out.push({ id: p.id, x: p.x, z: p.z, ground: p.ground || 0, h: p.h, r: p.r });
+  for (const p of place.npcs) { if (/^Sit/.test(p.anim || '')) continue; out.push({ id: p.id, key: p.id + '@' + p.x.toFixed(1) + ',' + p.z.toFixed(1), x: p.x, z: p.z, ground: p.ground || 0, h: p.h, r: p.r });   /* key: two people with the same body name are reported apart */
     if (p.path && p.path.length > 1) out.push(...routeSpots(p.id, p.path, { loop: true, ground: gAt && !p.fixedGround ? gAt : () => p.ground || 0, h: p.h, r: p.r })); }
   for (const R of place.routes || []) out.push(...routeSpots(R.id, R.pts, { loop: !!R.loop, ground: gAt || (() => R.ground || 0), h: R.h, r: R.r, what: R.what || 'walks' }));
   return out;
@@ -246,6 +250,70 @@ export function auditPeople(npcs, start) {
   const out = [], sitting = (n) => /^Sit/.test(n.anim || ''), spots = (n) => { if (!n.path || n.path.length < 2) return [[n.x, n.z]]; const pts = []; for (let i = 0; i < n.path.length; i++) { const a = n.path[i], b = n.path[(i + 1) % n.path.length], len = Math.hypot(b[0] - a[0], b[1] - a[1]), k = Math.max(1, Math.ceil(len / 0.5)); for (let j = 0; j < k; j++) pts.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k]); } return pts; };
   for (let i = 0; i < npcs.length; i++) for (let j = i + 1; j < npcs.length; j++) { const a = npcs[i], b = npcs[j]; if (Math.abs((a.ground || 0) - (b.ground || 0)) > 0.3) continue; const need = sitting(a) && sitting(b) ? 0.4 : 0.65; const moving = a.path || b.path; let worst = 1e9; if (!moving) worst = Math.hypot(a.x - b.x, a.z - b.z); else { const A = a.path ? spots(a) : [[a.x, a.z]], B = b.path ? spots(b) : [[b.x, b.z]]; if (a.path && b.path) continue; for (const p of A) for (const q of B) worst = Math.min(worst, Math.hypot(p[0] - q[0], p[1] - q[1])); } if (worst < need) out.push(`${a.id} and ${b.id} are ${(worst * 100).toFixed(0)} cm apart${moving ? ' (along a walk)' : ''} at (${a.x.toFixed(1)},${a.z.toFixed(1)})`); }
   if (start) for (const n of npcs) if (!sitting(n)) for (const p of spots(n)) if (Math.hypot(p[0] - start.x, p[1] - start.z) < 1.1 && !(n.ground > 0)) { out.push(`${n.id} stands on the player's start at (${p[0].toFixed(1)},${p[1].toFixed(1)})`); break; }
+  return out;
+}
+
+
+
+/* Hanging plants: a clump of leaves or flowers (a loose leafy shape: bougainvillea over a wall, a bush top, a hanging basket) high above the ground that touches
+   nothing. The float check above forgives gaps of up to 20 cm, which is right for buildings but not for a bush: Eventide's bougainvillea hung 13 to 38 cm behind
+   its wall, in the air, with nothing under it (November 2026). Clumps that touch each other (within 3 cm) count as one plant; a plant is held up when one of its
+   clumps reaches the ground or touches a solid (a wall, a stem, a trellis) within 3 cm. Returns lines in words; expect none. */
+export function auditHanging(snap, groundAt = null) {
+  const leaf = snap.filter((m) => m.loose && !m.inst && LEAFY.has(m.geo) && !m.unlit && !m.card), out = []; if (!leaf.length) return out;
+  const par = leaf.map((_, i) => i), find = (i) => { while (par[i] !== i) i = par[i] = par[par[i]]; return i; }, ex = leaf.map((m) => m.b.clone().expandByScalar(0.03));
+  for (let a = 0; a < leaf.length; a++) for (let b = a + 1; b < leaf.length; b++) if (ex[a].intersectsBox(leaf[b].b)) par[find(a)] = find(b);
+  const held = new Set(), solids = snap.filter((m) => !LEAFY.has(m.geo) && !m.unlit && !m.card && !m.flame && m.b.getSize(new THREE.Vector3()).y > 0.05);
+  leaf.forEach((m, i) => { const c = m.b.getCenter(new THREE.Vector3()), g = groundAt ? groundAt(c.x, c.z) : 0; if (m.b.min.y <= g + 0.05 || solids.some((o) => o.b.intersectsBox(ex[i]))) held.add(find(i)); });
+  const seen = new Set(); leaf.forEach((m, i) => { const r = find(i); if (held.has(r) || seen.has(r)) return; seen.add(r); const c = m.b.getCenter(new THREE.Vector3()); out.push(`hang@(${c.x.toFixed(1)},${c.y.toFixed(1)},${c.z.toFixed(1)}) a clump of leaves (${m.geo.replace('Geometry', '').toLowerCase()} ${m.col}) ${(m.b.min.y).toFixed(2)} m up touches nothing that holds it`); });
+  return out;
+}
+
+/* Vehicles: a bus, a cart, a truck or a train that moves must never pass through a person or the player (Eventide, November 2026: "a bus drove through granny
+   on the street"). Every vehicle's body is swept along its whole path, as a box of half width `half` and half length `len` (metres) that turns with the path.
+   vehicles: [{ id, path: [[x, z], ...], half, len, loop }]   people: [{ id, x, z, path }] who are there while it moves (a walker's whole route counts)
+   start: the player's spot while it moves.   walls: walking walls [x0, z0, x1, z1] it must not drive through (a parked car, a wall).
+   A fault is a person or the start within `safe` metres of the side of the swept body (1 m by default: a grown-up stands well back from a passing bus), or a
+   walking wall the body passes through. A vehicle that stops and waits for people (as Eventide's bus does) still has to have a clear road here: the audit
+   checks where people stand, not whether the driver is kind. Returns lines in words; expect none. */
+export function auditVehicles(vehicles, people, { start = null, walls = [], safe = 1.0 } = {}) {
+  const out = [];
+  for (const V of vehicles || []) { const P = V.path, half = V.half || 1, len = V.len || 2; if (!P || P.length < 2) continue; const segs = [];
+    for (let i = 0; i < P.length - (V.loop ? 0 : 1); i++) { const a = P[i], b = P[(i + 1) % P.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1e-6, ux = (b[0] - a[0]) / L, uz = (b[1] - a[1]) / L, first = i === 0 && !V.loop, last = i === P.length - 2 && !V.loop;
+      segs.push({ ax: a[0] - (first ? ux * len : 0), az: a[1] - (first ? uz * len : 0), L: L + (first ? len : 0) + (last ? len : 0), ux, uz }); }   /* the body reaches half its length past each end of the path */
+    const gap = (x, z) => { let best = 1e9; for (const s of segs) { const dx = x - s.ax, dz = z - s.az, along = dx * s.ux + dz * s.uz, side = Math.abs(dx * s.uz - dz * s.ux), o = along < 0 ? -along : along > s.L ? along - s.L : 0; best = Math.min(best, Math.hypot(o, Math.max(0, side - half))); } return best; };   /* metres from the side of the swept body (0: inside it) */
+    const spotsOf = (p) => { if (!p.path || p.path.length < 2) return [[p.x, p.z]]; const pts = []; for (let i = 0; i < p.path.length - 1; i++) { const a = p.path[i], b = p.path[i + 1], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.3)); for (let k = 0; k <= n; k++) pts.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]); } return pts; };
+    for (const p of people || []) { let worst = 1e9, at = null; for (const [x, z] of spotsOf(p)) { const d = gap(x, z); if (d < worst) { worst = d; at = [x, z]; } } if (worst < safe) out.push(`${V.id} passes ${worst <= 0 ? 'through' : (worst * 100).toFixed(0) + ' cm from'} ${p.id}${p.path ? ' (along a walk)' : ''} at (${at[0].toFixed(1)},${at[1].toFixed(1)}): people must stand at least ${(safe * 100).toFixed(0)} cm from its side`); }
+    if (start) { const d = gap(start.x, start.z); if (d < safe) out.push(`${V.id} passes ${d <= 0 ? 'through' : (d * 100).toFixed(0) + ' cm from'} the player's spot at (${start.x.toFixed(1)},${start.z.toFixed(1)})`); }
+    for (const w of walls) { let hit = false; for (const s of segs) { for (let t = 0; t <= s.L && !hit; t += 0.25) for (let q = -half; q <= half + 1e-6 && !hit; q += half / 3) { const x = s.ax + s.ux * t + s.uz * q, z = s.az + s.uz * t - s.ux * q; if (x > w[0] + 0.02 && x < w[2] - 0.02 && z > w[1] + 0.02 && z < w[3] - 0.02) hit = true; } if (hit) break; }
+      if (hit) out.push(`${V.id} drives through a walking wall at (${((w[0] + w[2]) / 2).toFixed(1)},${((w[1] + w[3]) / 2).toFixed(1)}), ${(w[2] - w[0]).toFixed(1)} by ${(w[3] - w[1]).toFixed(1)} m`); }
+  }
+  return out;
+}
+
+/* Garments: a small piece of clothing left showing when the garment it belongs to is hidden floats in the air (Eventide, November 2026: waistcoat buttons,
+   a hat band or a belt buckle with no waistcoat, hat or belt under it). auditGarments(id, body) checks a body as it will be drawn:
+     - by name: a piece whose garment is in the body but hidden (WaistcoatButtons and Waistcoat, HatBand and Hat, CapBand and Cap, TopHatBand and TopHat,
+       JButtons and Lapels and Jacket, Buckle and Belt, WrapKnot and Wrap, Placket, Pocket, Buttons and Collar and Shirt);
+     - by shape: a small visible piece (under 45 cm across) that hardly touches any other visible piece (under 3 in 100 of its points within 1.5 cm), in the pose it stands in.
+   Returns lines in words; expect none. */
+const PIECE_OF = [[/^WaistcoatButtons$/, 'Waistcoat'], [/^(Hat)Band$/, 'Hat'], [/^CapBand$/, 'Cap'], [/^TopHatBand$/, 'TopHat'], [/^(JButtons|Lapels)$/, 'Jacket'], [/^Buckle$/, 'Belt'], [/^WrapKnot$/, 'Wrap'], [/^(Placket|Pocket|Buttons|Collar)$/, 'Shirt']];
+export function auditGarments(id, body) {
+  const out = [], all = [], shown = (o) => { for (let q = o; q && q !== body.parent; q = q.parent) if (!q.visible) return false; return true; };
+  body.updateMatrixWorld(true); body.traverse((o) => { if (o.isMesh && (o.isSkinnedMesh || o.userData.garment)) all.push({ o, mesh: o.name, mat: (o.material && o.material.name) || '', on: shown(o) }); });
+  const isPiece = (n) => PIECE_OF.some(([r]) => r.test(n));
+  for (const p of all) { if (!p.on) continue; const nm = isPiece(p.mesh) ? p.mesh : isPiece(p.mat) ? p.mat : null; if (!nm) continue; const g = PIECE_OF.find(([r]) => r.test(nm))[1];
+    const owners = all.filter((q) => q !== p && q.mat === g && !isPiece(q.mesh)); if (owners.length && owners.every((q) => !q.on)) out.push(`${id}: ${nm} shows but its ${g} is hidden`); }
+  /* by shape: every visible piece is posed (skinned on the CPU) into the body's own frame; a small piece floats when hardly any of it (under 3 in 100 of its points: a cap touches only at its rim, a stray button strip not at all) lies within 1.5 cm of the surface of another piece */
+  const v = new THREE.Vector3(), inv = new THREE.Matrix4().copy(body.matrixWorld).invert(), sc = body.getWorldScale(new THREE.Vector3()).x || 1;
+  const on = all.filter((p) => p.on && p.o.geometry.index && !/low-poly|Eye|Teeth|Tongue|Lash|Brow/i.test(p.mesh + ' ' + p.mat));
+  for (const p of on) { const o = p.o, n = o.geometry.attributes.position.count, pos = new Float32Array(n * 3); if (o.isSkinnedMesh) o.skeleton.update(); for (let i = 0; i < n; i++) { if (o.isSkinnedMesh) o.getVertexPosition(i, v); else v.fromBufferAttribute(o.geometry.attributes.position, i); v.applyMatrix4(o.matrixWorld).applyMatrix4(inv); pos.set([v.x, v.y, v.z], i * 3); } p.pos = pos; p.idx = o.geometry.index.array; }
+  const lim = 0.015 / sc, q = [0, 0, 0];
+  for (const p of on) { const n = p.pos.length / 3; let lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9]; for (let i = 0; i < n; i++) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], p.pos[i * 3 + k]); hi[k] = Math.max(hi[k], p.pos[i * 3 + k]); }
+    if (Math.max(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) * sc > 0.45 || n < 4) continue;
+    const grids = on.filter((r) => r !== p).map((r) => [r, r.grid || (r.grid = clGrid(r.pos, r.idx, 0.03 / sc))]); let close = 0;
+    for (let i = 0; i < n; i++) { q[0] = p.pos[i * 3]; q[1] = p.pos[i * 3 + 1]; q[2] = p.pos[i * 3 + 2]; for (const [r, G] of grids) { const h = clNear(q, r.pos, r.idx, G); if (h && Math.hypot(h.along, h.side) < lim) { close++; break; } } }
+    if (close < Math.max(3, n * 0.03)) out.push(`${id}: ${p.mesh || p.mat} floats: only ${close} of its ${n} points are within 1.5 cm of another piece`); }
   return out;
 }
 

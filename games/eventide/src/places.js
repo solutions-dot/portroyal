@@ -13,6 +13,7 @@
        with a black triangular plaque. The plaque's small emblem is not shown because it cannot be made out. */
 import * as THREE from 'three';
 import { T, cv, std, solid, flat, box, cyl, plane, grp, rng, mesh } from './gfx.js';
+import { woolMaterial } from './blanket.js';
 import { palm, tree, bench, standpipe, waterTower, truck, boardHouse, hillRing, flowers, signBoard } from './props.js';
 import { grassField, flowerField, flameTree, mangoTree, hibiscus, croton } from './detail.js';
 
@@ -219,7 +220,7 @@ export function buildSlipe(g) {
   for (const [x0, x1] of [[-33.5, -30], [-22, -19.5], [-8.5, -4.5], [1.5, 5], [15, 22.5], [31.5, 36.5]]) zincFence(g, x0, x1, 8.2);
   const bh = boardHouse(5, 4, 2.8, { wall: [196, 168, 120], seed: 3 }); bh.position.set(-1.5, 0, 11.6); bh.rotation.y = Math.PI; g.add(bh);
   [[-35, 21, [176, 196, 170]], [-12, 20, [206, 176, 140]], [8, 22, [190, 160, 120]], [25, 20, [200, 190, 160]], [40, 21, [170, 180, 196]]].forEach(([x, z, c], i) => { const h = boardHouse(5 + r() * 2, 4, 2.8, { wall: c, seed: 10 + i, porch: false }); h.position.set(x, 0, z); h.rotation.y = Math.PI; g.add(h); });
-  for (const [x, z, ry, c] of [[18, 2.6, 0, 0x9a3a2e], [-44, 2.6, Math.PI, 0xe8e2d0], [33, -2.6, Math.PI, 0x6a8a7a]]) { const c0 = car(c); c0.position.set(x, 0, z); c0.rotation.y = ry; g.add(c0); wall(x - 2.3, z - 1.0, x + 2.3, z + 1.0); }
+  for (const [x, z, ry, c] of [[18, 2.6, 0, 0x9a3a2e], [-44, 2.6, Math.PI, 0xe8e2d0], [33, 2.6, Math.PI, 0x6a8a7a]]) { const c0 = car(c); c0.position.set(x, 0, z); c0.rotation.y = ry; g.add(c0); wall(x - 2.3, z - 1.0, x + 2.3, z + 1.0); }   /* parked cars keep to the north side, out of the lane the bus drives at dawn */
   /* Calvary Cemetery along the road to the west (smoke rose over it that morning: Gleaner, 2020; its layout is an impression) */
   box(30, 2.0, 0.3, lime(8, 1), -62, 1.0, 6.9, g); for (const x of [-56, -52]) box(0.5, 2.6, 0.5, lime(), x, 1.3, 6.9, g);
   for (let i = 0; i < 36; i++) { const x = -76 + (i % 9) * 3.2 + r() * 0.6, z = 9.5 + ((i / 9) | 0) * 3 + r() * 0.5, tomb = solid(r() < 0.6 ? 0xeeeae0 : 0xb8b4aa, 0.9);
@@ -231,7 +232,7 @@ export function buildSlipe(g) {
   limeWall(g, wall, -48, -66, 48, -66, 2.0); limeWall(g, wall, -48, -66, -48, -7, 2.0); limeWall(g, wall, 48, -66, 48, -7, 2.0);
   for (const sx of [-1, 1]) { box(PIL, PH, PIL, lime(0.3, 1.2), sx * GX, PH / 2, -7, g); box(PIL + 0.14, 0.14, PIL + 0.14, solid(0xece8dc, 0.9), sx * GX, PH + 0.07, -7, g); wall(sx * GX - 0.5, -7.5, sx * GX + 0.5, -6.5); }
   const arch = gateArch(2 * GX, 2.0); arch.mesh.position.set(0, PH + 0.14 + arch.H / 2 - 0.12, -7); g.add(arch.mesh);
-  cyl(0.015, 0.015, 0.5, solid(0x25272a, 0.6), 0, PH + 0.14 + 2.0 - 0.45, -7, g);   /* the lamp hangs from the top of the arch */
+  cyl(0.015, 0.015, 0.56, solid(0x25272a, 0.6), 0, PH + 0.14 + 2.0 - 0.4, -7, g);   /* the lamp hangs from the top of the arch: the rod runs from the lamp's cap up into the arch's outer ring */
   box(0.26, 0.34, 0.26, solid(0xf4ecd0, 0.4), 0, PH + 0.14 + 2.0 - 0.85, -7, g); box(0.34, 0.06, 0.34, solid(0x25272a, 0.6), 0, PH + 0.14 + 2.0 - 0.66, -7, g);
   const gateM = new THREE.MeshStandardMaterial({ map: bars(), transparent: true, alphaTest: 0.4, ...DS, roughness: 0.6, metalness: 0.4 });
   for (const sx of [-1, 1]) {
@@ -265,7 +266,7 @@ export function buildSlipe(g) {
   put(g, mensWard(), -15.5, -21, Math.PI / 2, out);
   put(g, oneStorey(16, 8), -13.5, -46, Math.PI / 2, out);
   /* the kitchen and laundry at the far end, with a water tank on a stand, a standpipe and the meal van (the Home had a meal van: JNHT) */
-  put(g, oneStorey(11, 5, { overhang: 0, H: 3.0 }), 12.5, -61.5, -Math.PI / 2, out);
+  put(g, oneStorey(9.4, 5, { overhang: 0, H: 3.0 }), 12.5, -61.0, -Math.PI / 2, out);   /* between the end of the Myers Ward and the back wall, touching neither */
   const tw = waterTower(); tw.position.set(21, 0, -61); g.add(tw); wall(19.1, -62.9, 22.9, -59.1); out.clear.push([18.8, -63.2, 23.2, -58.8]);
   const sp = standpipe(); sp.position.set(8.8, 0, -57.6); g.add(sp); wall(8.4, -58, 9.2, -57.2);
   const van = truck(0xe6e2d4); van.traverse((o) => { if (o.isMesh && o.geometry.type === 'ConeGeometry') o.visible = false; }); van.position.set(5.2, 0, -58.5); van.rotation.y = -Math.PI / 2; g.add(van);
@@ -276,21 +277,23 @@ export function buildSlipe(g) {
   const sheets = [0xf4f2ec, 0xe8eef4, 0xf2e4e4, 0xf4f2ec, 0xe4ecdc, 0xf4f2ec, 0xeae4f2];
   for (let i = 0; i < 7; i++) { const sh = plane(1.4, 1.0, solid(sheets[i], 0.95, 0, DS), 25 + i * 2.1, 1.44, -30 + (r() - 0.5) * 0.04, g); sh.rotation.y = (r() - 0.5) * 0.12; }
   /* trees: tall shade trees along both sides of the avenue with whitewashed trunks, a casuarina by the gate, flame trees in bloom (May), palms */
-  const trunkBand = (x, z, br) => { cyl(br, br + 0.03, 1.0, white, x, 0.5, z, g); wall(x - br - 0.15, z - br - 0.15, x + br + 0.15, z + br + 0.15); };
+  const trunkBand = (t, x, z, br) => { cyl(br, br + 0.03, 1.0, white, 0, 0.5, 0, t); wall(x - br - 0.15, z - br - 0.15, x + br + 0.15, z + br + 0.15); };   /* the whitewash is part of its tree, so it is one thing with the trunk */
   for (let z = -11, i = 0; z > AV1 + 2; z -= 7, i++) for (const sx of [-1, 1]) {
     const x = sx * 4.4;
-    if (sx > 0 && z < -17 && z > -59) continue;   /* the Myers Ward's veranda and beds are there */
+    if (sx > 0 && z < -17 && z > -61) continue;   /* the Myers Ward's veranda and beds are there, and the meal van stands at the far end */
     if (sx < 0 && z > -12 && i === 0) { const c = casuarina(14, 3); c.position.set(-4.6, 0, -9.6); g.add(c); wall(-4.95, -9.95, -4.25, -9.25); continue; }
-    const t = (i + (sx > 0 ? 1 : 0)) % 3 === 0 ? mangoTree(9 + r() * 2, 40 + i) : tree(10 + r() * 3, 70 + i); t.position.set(x, 0, z); g.add(t); trunkBand(x, z, 0.46);
+    const t = (i + (sx > 0 ? 1 : 0)) % 3 === 0 ? mangoTree(9 + r() * 2, 40 + i) : tree(10 + r() * 3, 70 + i); t.position.set(x, 0, z); g.add(t); trunkBand(t, x, z, 0.46);
   }
-  for (const [x, z, h] of [[24, -14, 7.5], [-30, -36, 7], [30, -48, 7.5]]) { const t = flameTree(h, (x * 7) | 0); t.position.set(x, 0, z); g.add(t); trunkBand(x, z, 0.44); }
-  for (const [x, z] of [[36, -12], [-40, -56], [40, -58], [-36, -12]]) { const t = mangoTree(7, (z * 3) | 0); t.position.set(x, 0, z); g.add(t); trunkBand(x, z, 0.47); }
+  for (const [x, z, h] of [[24, -14, 7.5], [-30, -36, 7], [30, -48, 7.5]]) { const t = flameTree(h, (x * 7) | 0); t.position.set(x, 0, z); g.add(t); trunkBand(t, x, z, 0.44); }
+  for (const [x, z] of [[36, -12], [-40, -56], [40, -58], [-36, -12]]) { const t = mangoTree(7, (z * 3) | 0); t.position.set(x, 0, z); g.add(t); trunkBand(t, x, z, 0.47); }
   for (const [x, z] of [[-44, -10], [-44, -30], [44, -10], [44, -40]]) { const p = palm(8 + r() * 2, (z * 5) | 0); p.position.set(x, 0, z); g.add(p); wall(x - 0.35, z - 0.35, x + 0.35, z + 0.35); }
   /* benches under the trees, facing the avenue; lamps along it */
   for (const [x, z, ry] of [[-5.6, -15, Math.PI / 2], [-5.6, -36, Math.PI / 2], [-5.6, -54, Math.PI / 2], [5.6, -13, -Math.PI / 2], [5.6, -62, -Math.PI / 2]]) { const b = bench(2.2, 0x5a4632); b.position.set(x, 0, z); b.rotation.y = ry; g.add(b); wall(x - 0.35, z - 1.2, x + 0.35, z + 1.2); }
   for (const z of [-17, -31, -45, -59]) { const l = streetLamp(4.8); l.position.set(-3.5, 0, z); g.add(l); wall(-3.7, z - 0.2, -3.3, z + 0.2); }
   /* bougainvillea spilling over the front wall */
-  for (const x of [-40, -28, -16, -9, 9, 16, 28, 40]) for (let i = 0; i < 4; i++) { const rad = 0.45 + r() * 0.15; mesh(new THREE.IcosahedronGeometry(rad, 1), flat(i % 3 === 2 ? 0x3f7a32 : (i % 2 ? 0xd23a8a : 0xe0559e)), x + (r() - 0.5) * 1.4, 2.05 + r() * 0.45, -7.28 - rad - r() * 0.25, g); }   /* grown inside the wall: each clump sits wholly behind it, so only the top shows over the coping */
+  for (const x of [-40, -28, -16, -9, 9, 16, 28, 40]) {   /* grown inside the wall: each plant stands on its own woody stems and leans on the back of the wall, so only its top shows over the coping */
+    for (const dx of [-0.35, 0.3]) { const st = cyl(0.04, 0.07, 2.3, solid(0x5a4632, 0.95), x + dx, 1.15, -7.32, g, 6); st.rotation.z = dx * 0.25; }
+    for (let i = 0; i < 4; i++) { const rad = 0.45 + r() * 0.15; mesh(new THREE.IcosahedronGeometry(rad, 1), flat(i % 3 === 2 ? 0x3f7a32 : (i % 2 ? 0xd23a8a : 0xe0559e)), x + (r() - 0.5) * 1.4, 2.05 + r() * 0.45, -7.15 - rad * 0.8, g); } }
   /* grass, kept off the avenue and the buildings; a few flowers */
   grassField(g, [-47.6, -65.6, 47.6, -7.4], 2200, { seed: 9, clear: out.clear, h: 0.32, w: 0.55, tint: 0xc4c07c, vary: 0.35 });
   flowerField(g, [-47, -65, 47, -8], 220, { seed: 4, clear: out.clear, colors: [0xe2232a, 0xf5c542, 0xffffff, 0xe27ad8] });
@@ -308,6 +311,7 @@ export function buildSlipe(g) {
   const [ix, iz] = toMy(...myers.iris);
   return { walls, bounds: { x0: -47.5, x1: 47.5, z0: -65.5, z1: 7.2 }, start: { x: -26, z: 4.6, yaw: -0.6 }, groundAt,
     myers, toMy, night, fire, ruin, bus2, lamps,
+    vehicles: [{ id: 'the No. 43 bus at dawn', obj: bus2, path: [[-70, -2.3], [70, -2.3]], half: 1.25, len: 4.5 }],   /* everything that drives: its lane, half its width and half its length (engine/audit.js, auditVehicles) */
     spots: { iris: { x: ix, z: iz, ry: -Math.PI / 2, ground: myers.F1 }, ver: (lx) => { const [x, z] = toMy(lx, -19.3); return { x, z, ry: -Math.PI / 2, ground: myers.F1 }; }, radio: toMy(-10, -19.1), gate: { x: 0, z: -7 }, busstop: { x: -26, z: 5.5 } } };
 }
 
@@ -342,7 +346,7 @@ export function buildWard(g) {
   /* the beds: iron frames, thin mattresses, white sheets. They stand closer than they should: more women than the ward was built for. */
   const iron = solid(0x3a3d40, 0.6, 0.4), sheet = solid(0xf2f0ea, 0.95), blank = [0x8aa0b8, 0xb89a8a, 0x9ab08a, 0xb8a8c8], pillow = solid(0xfaf8f2, 0.9);
   for (const s of [-1, 1]) for (let i = 0; i < 17; i++) { const x = -13.2 + i * 1.6 + (s > 0 ? 0.5 : 0), zc = s * 2.85; if (s > 0 && x < -11.5) continue;
-    box(0.86, 0.18, 1.9, sheet, x, 0.52, zc, g); box(0.88, 0.06, 1.2, solid(blank[(i + (s > 0 ? 2 : 0)) % 4], 0.95), x, 0.63, zc - s * 0.3, g); box(0.6, 0.1, 0.36, pillow, x, 0.66, zc + s * 0.7, g);
+    box(0.86, 0.18, 1.9, sheet, x, 0.52, zc, g); bedBlanket(blank[(i + (s > 0 ? 2 : 0)) % 4], x, zc - s * 0.3, s, g); box(0.6, 0.1, 0.36, pillow, x, 0.66, zc + s * 0.7, g);
     for (const e of [-1, 1]) { box(0.9, e * s > 0 ? 1.0 : 0.7, 0.05, iron, x, e * s > 0 ? 0.5 : 0.35, zc + e * 0.95, g); }
     box(0.04, 0.06, 1.9, iron, x - 0.43, 0.4, zc, g); box(0.04, 0.06, 1.9, iron, x + 0.43, 0.4, zc, g);
     wall(x - 0.5, Math.min(zc - 1.0, zc + 1.0), x + 0.5, Math.max(zc - 1.0, zc + 1.0)); }
@@ -354,6 +358,13 @@ export function buildWard(g) {
   const beds = { hyacinth: [-6.8, -2.6], maude: [2.9, 2.6], dora: [9.2, -2.6], irisbed: [12.7, 2.6] };
   return { walls, bounds: { x0: -HX + 0.4, x1: HX - 0.4, z0: -HZ + 0.4, z1: HZ - 0.4 }, start: { x: -13.4, z: 0, yaw: -Math.PI / 2 }, groundAt: () => 0, indoor: true, things, beds,
     spots: { table: [-12.6, 1.9], hyacinth: [-6.8, -1.4], maude: [2.9, 1.4], dora: [9.2, -1.4], irisbed: [12.7, 1.4] } };
+}
+
+/* a wool blanket over the foot of a bed: across the mattress, hanging a little down each side, its top edge turned back in a soft roll (not a flat slab) */
+function bedBlanket(col, x, z, s, g) {
+  const m = woolMaterial(col); box(0.9, 0.03, 1.2, m, x, 0.625, z, g);
+  for (const e of [-1, 1]) box(0.02, 0.15, 1.2, m, x + e * 0.46, 0.565, z, g);   /* the sides hang down over the mattress edge, clear of the iron rails */
+  const roll = cyl(0.028, 0.028, 0.9, m, x, 0.655, z + s * 0.6, g, 10); roll.rotation.z = Math.PI / 2;   /* the turned-back top edge, toward the pillow */
 }
 
 /* ---------- National Heroes Park, Monday 26 May 1980: the grave, after the owner's photograph (a long concrete-lined trench with planks across it, a crowd behind a rail).

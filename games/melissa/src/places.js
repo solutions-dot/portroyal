@@ -77,7 +77,8 @@ function village({ id, year, phase }) {
       if (today && k === 'banana') o.scale.setScalar(0.65); if (today && k === 'palm') o.scale.setScalar(0.85);
       put(sw(o, k === 'banana' ? 2.2 : 1), x, z, r() * 6); if (k !== 'banana') trunk(x, z, 0.4); }
   });
-  scatter(g, (i) => { const b = bush(i, 1.0); return b; }, after ? 6 : 28, [-46, -13, 52, 13], [[-70, -3.4, 70, 3.4], [-30, -11, -22, -4], [12, -11, 20, -4], [-7, 4, -1, 11], [26, 5, 33, 11], [37, -14, 51, -4], [-14, -6, -10, 4]], 9);
+  const bushKeep = [];
+  scatter(g, (i) => { const b = bush(i, 1.0); return b; }, after ? 6 : 28, [-46, -13, 52, 13], [[-70, -3.4, 70, 3.4], [-30, -11, -22, -4], [12, -11, 20, -4], [-7, 4, -1, 11], [26, 5, 33, 11], [37, -14, 51, -4], [-14, -6, -10, 4]], 9).forEach((b) => bushKeep.push([b.position.x, b.position.z, 0.85]));   /* each bush is about 0.8 m round: its footprint keeps the crowd and anyone following you out of it (P.keepOut; ?test=audit, auditBodies) */
   if (!after) for (const [x, z, s] of [[-16.5, -11.5, 1], [24, 11.5, 2], [-1.5, -10, 3]]) put(hibiscus(s), x, z);
   if (!after && !today) put(flameTree(6.5, 5), 4, -11.5);
   if (!old || after) for (let i = 0; i < 2; i++) put(croton(i + 1), -31 + i * 1.5, -4.6 + i * 0.2);
@@ -138,7 +139,7 @@ function village({ id, year, phase }) {
     extras.push(...walkers(folk(6, 61, [-10, 4.2, 40, 6.2], { kids: 0.25 }), 9, [-8, 3.9, 40, 6.4], 0.55, 6));
   }
   const env = after ? ENV.after : today ? ENV.day : y88 ? ENV.calm : ENV.calm;
-  return { id, group: g, tarpHome: g.userData.tarpHome, homeLamp: g.userData.homeLamp, walls, bounds: { x0: -46, x1: 51, z0: -12.6, z1: 12.4 }, start: { x: !after ? -35 : 36, z: 0.4, yaw: -PI / 2 }, people, extras, env, eye: 1.32,
+  return { id, keepOut: bushKeep, group: g, tarpHome: g.userData.tarpHome, homeLamp: g.userData.homeLamp, walls, bounds: { x0: -46, x1: 51, z0: -12.6, z1: 12.4 }, start: { x: !after ? -35 : 36, z: 0.4, yaw: -PI / 2 }, people, extras, env, eye: 1.32,
     spots: { standpipe: [SPOT.standpipe[0], SPOT.standpipe[1] - 1.1], shop: [SPOT.shop[0], SPOT.shop[1] - 3.2], boards: [-26, -3.7], bag: [-22.7, -3.6], ladder: [SPOT.raymond[0] - 1.3, SPOT.raymond[1] + 3.6], washing: [-20, -7.6], home: [-26, -3.4], hyacinth: [-4, 4.4], clifford: [SPOT.raymond[0], -3.6], church: [44, -3.8], wire: [-4, -2.0], tree: [-12, 5.0], tarp: [-26, -3.6], truck: [24, 2.2], plan: [36, 2.2], canoe: [10, 10.4] },
     titleView: { x: -33, y: 1.5, z: 3, pitch: 0.02, yaw: -PI / 2 + 0.15 }, tick: () => {} };
 }

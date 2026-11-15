@@ -46,7 +46,7 @@ export function buildEstate() {
   /* you, and the people who walk with you, cross on the stepping stones, not through them: on the crossing the ground you stand on is the top of the nearest stone.
      The land and the water keep their own heights; only where a person stands changes (G.h is read for people and the camera from here on). */
   stones.updateMatrixWorld(true); const tops = stones.children.map((m) => { const b = new THREE.Box3().setFromObject(m); return [(b.min.x + b.max.x) / 2, (b.min.z + b.max.z) / 2, b.max.y - 0.03]; }), h0 = G.h;
-  G.h = (x, z) => { const y = h0(x, z); if (z > -10 || z < -18) return y; let best = 1e9, top = y; for (const t of tops) { const d = Math.hypot(t[0] - x, t[1] - z); if (d < best) { best = d; top = t[2]; } } return best < 0.9 ? Math.max(y, top) : y; };
+  G.h = (x, z) => { const y = h0(x, z); if (z > -10 || z < -18) return y; let sw = 0, sy = 0; for (const t of tops) { const d = Math.hypot(t[0] - x, t[1] - z); if (d < 0.9) { const w = 0.9 - d; sw += w; sy += w * t[2]; } } return sw > 0 ? Math.max(y, y + (sy / sw - y) * Math.min(1, sw / 0.6)) : y; };   /* a smooth mean of the stone tops near you, so feet do not float over a lower stone, eased in at the first and last stone */
   /* sugar cane on both sides of the first stretch, and the huts where you start */
   const nearTrail = (x, z) => G.trailness(x, z) > 0.01, cane = spotsOn(G, 1500, [-64, 10.8, 64, 66], 3, (x, z) => !nearTrail(x, z) && Math.hypot(x - 2, z - 41) > 10.5 && Math.abs(x - 54) > 13, { smin: 0.8, smax: 1.3 }); plantCane(g, cane);
   const HUTS = [[9.8, 44.5, -2.2], [-5.6, 46, 2.4], [10.2, 36, -1.4]]; HUTS.forEach(([x, z, ry], i) => put(g, G, hut(3.6, 3, 2, i + 2), x, z, ry, { sink: 0.05 }));

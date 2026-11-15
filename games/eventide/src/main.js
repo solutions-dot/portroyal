@@ -13,9 +13,10 @@ import { slideWalls, walkRoute } from '../../../engine/placement.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough, auditBodies } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough, auditBodies, auditVehicles, auditGarments, auditHanging } from '../../../engine/audit.js';
 import { G, makeSky, ease, rng, batchStatic } from './gfx.js';
 import { hamper, bucket, suitcase } from './props.js';
+import { foldedBlanket, drapeBlanket } from './blanket.js';
 import { buildSlipe, buildWard, buildPark80, buildGolden, buildMonument } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, LETTER, TIDY, RADIO, SORT, SORT_KINDS, TIMELINE, PLAQUE, CHOICE_NAMES } from './content.js';
 
@@ -90,7 +91,7 @@ function stickUI() {
   const el = $('stick'); if (!isTouch || !state.started || busy || frozen || DIR.on) { el.hidden = true; return; }
   el.hidden = false; const rest = stick.id === null; el.classList.toggle('rest', rest); el.style.left = (rest ? 84 : stick.x0) + 'px'; el.style.top = (rest ? innerHeight - 150 : stick.y0) + 'px'; $('nub').style.transform = `translate(calc(-50% + ${stick.dx * 30}px), calc(-50% + ${stick.dy * 30}px))`;
 }
-const wallsNow = () => (SC && SC.walls ? PL[cur].walls.concat(SC.walls) : PL[cur].walls);
+const wallsNow = () => { const W = SC && SC.walls ? PL[cur].walls.concat(SC.walls) : PL[cur].walls, bw = busWall(); return bw ? W.concat([bw]) : W; };
 function clampPos(x, z) {
   const b = PL[cur].bounds, W = wallsNow(); x = Math.max(b.x0, Math.min(b.x1, x)); z = Math.max(b.z0, Math.min(b.z1, z));
   [x, z] = slideWalls([state.x, state.z], [x, z], W, 0.22);
@@ -161,8 +162,13 @@ function makeBody(s) {
   spreadArms(m, /^(woman|girl|iris)/.test(s.base) ? 0.15 : s.base === 'man_suit' ? 0.11 : 0.05);   /* arms hang clear of skirts and jackets */
   return m;
 }
-/* a blanket round the shoulders: a soft cape that stands a little off the body (chapter 4) */
-function addBlanket(n, color = 0xb8a890) { if (n.blanket) return; const k = 1 / (n.scale || 1), h = n.h * k, c = new THREE.Mesh(new THREE.CylinderGeometry(0.2 * (n.kid ? 0.8 : 1), 0.33 * (n.kid ? 0.8 : 1), h * 0.4, 14, 1, true), new THREE.MeshStandardMaterial({ color, roughness: 1, side: THREE.DoubleSide })); c.position.y = h * 0.62; n.m.add(c); n.blanket = c; }
+/* a blanket round the shoulders (chapter 4): sized from the body, open at the front, in soft folds (games/eventide/src/blanket.js) */
+function addBlanket(n, color = 0xb8a890) { if (n.blanket) return; n.blanket = drapeBlanket(n.m, color) || true; }
+/* the pile of folded blankets on the pavement by the gate, and the one you carry (held low in front of you, as in your arms) */
+const PILE = [-2.3, -5.4], PILE_COLS = [0x8e3b34, 0x4a6488, 0x6e7a4a];   /* red, blue and army green wool */
+const HELD_BLANKET = (() => { const g = new THREE.Group(), b = foldedBlanket(PILE_COLS[2]); b.rotation.set(0.55, Math.PI / 2 - 0.35, 0); b.scale.setScalar(0.8); g.add(b); g.position.set(0.16, -0.31, -0.7);   /* its folded edges toward you */ g.visible = false; camera.add(g); return g; })();
+function pileShow(P, st = stage) { if (!P.pile) { P.pile = new THREE.Group(); P.pile.name = 'blanket pile'; PILE_COLS.forEach((c, k) => { const b = foldedBlanket(c); b.position.y = k * 0.105; b.rotation.y = (k - 1) * 0.12; P.pile.add(b); }); P.pile.position.set(PILE[0], P.groundAt(PILE[0], PILE[1]), PILE[1]); P.pile.rotation.y = 0.3; P.night.add(P.pile); }
+  const left = SC && SC.i === 3 ? (st < 43 ? 3 : st === 43 ? 3 - (ctr.blanket || 0) - (ctr.carry ? 1 : 0) : 0) : 0; P.pile.children.forEach((b, k) => { b.visible = k < left; }); }
 
 /* ---------- places (geometry, built once) and scenes (who is there in each chapter) ---------- */
 const BUILD = { slipe: buildSlipe, ward: buildWard, park80: buildPark80, golden: buildGolden, monument: buildMonument };
@@ -188,9 +194,9 @@ const SCENES = [
   { place: 'slipe', env: ENV.dusk, start: { x: 0, z: -22, yaw: -0.5 }, people: (P) => [person('nurse3', 'Nurse Bell', 'nurse', [3.7, -35.6, -PI / 2]), person('iris3', 'Miss Iris', 'iris', ver(P, -4.5)), person('hyacinth3', 'Miss Hyacinth', 'hyacinth', ver(P, -7.4)), person('maude3', 'Miss Maude', 'maude', ver(P, 4)), person('dora3', 'Miss Dora', 'dora', ver(P, 7.4))],
     extras: (P) => [extra('gran', [1.6, -24.5, 2.6], { props: [['RightHand', 'basket']] }), ...walkers(23, [[-1.6, -28, -1.6, -44], [-1.6, -46, -1.6, -62], [1.4, -40, 1.4, -50], [1.4, -52, 1.4, -62]], { slow: true }), lady(3, ver(P, -14)), lady(4, ver(P, 11)), lady(5, ver(P, 14.5))] },
   { place: 'slipe', env: ENV.night, start: { x: -9, z: -2.5, yaw: -1.1 }, walls: [[-3.2, -9.9, 3.2, -8.9]],
-    people: () => [person('gran4', 'Gran', 'granNight', [-7.4, -3.4, 2.2]), person('fireman', 'the firefighter', 'fireman', [1.9, -8.1, 0.2]), person('nurse4', 'Nurse Bell', 'nurse', [8.2, -4.9, -0.4], { hidden: true }), person('hyacinth4', 'Miss Hyacinth', 'hyacinth', [10.2, -5.3, 0], { hidden: true }), person('maude4', 'Miss Maude', 'maude', [11.6, -5.0, -0.3], { hidden: true }),
+    people: () => [person('gran4', 'Gran', 'granNight', [-7.4, -4.9, 2.2]), person('fireman', 'the firefighter', 'fireman', [1.9, -8.1, 0.2]), person('nurse4', 'Nurse Bell', 'nurse', [8.2, -4.9, -0.4], { hidden: true }), person('hyacinth4', 'Miss Hyacinth', 'hyacinth', [10.2, -5.3, 0], { hidden: true }), person('maude4', 'Miss Maude', 'maude', [11.6, -5.0, -0.3], { hidden: true }),
       ...['kidA', 'kidB', 'kidC'].map((k, i) => ({ id: 'kid' + i, who: 'a child', label: 'A child', kid: true, ...LOOKS[k], x: -13.5 + i * 0.4, z: -44 - i, ry: 0, hidden: true, anim: 'Idle' }))],
-    extras: () => [extra('police', [-3.6, -4.4, PI]), extra('fireman', [-1.9, -19.5, PI], { props: [['RightHand', 'bucket']] }), extra('fireman', [1.5, -21.5, PI - 0.5]), extra('fireman', [3.0, -26, PI - 0.9]), ...crowd(18, 9, [[-22, -5.3, -11, 3], [13.5, -5.3, 24, 3], [-10, 0.5, 9, 3.2]], { mood: 'night', face: [6, -30] })] },
+    extras: () => [extra('police', [-3.6, -4.9, PI]), extra('fireman', [-1.9, -19.5, PI], { props: [['RightHand', 'bucket']] }), extra('fireman', [1.5, -21.5, PI - 0.5]), extra('fireman', [3.0, -26, PI - 0.9]), ...crowd(18, 9, [[-22, -5.3, -11, 3], [13.5, -5.3, 24, 3], [-10, 0.5, 9, 3.2]], { mood: 'night', face: [6, -30] })] },
   { place: 'park80', env: ENV.hazy, people: () => [person('gran5', 'Gran', 'granBlack', [1.4, 14.6, 2.6]), person('mourner1', 'a retired nurse', 'mournerNurse', [-7, 5.2, 0.2]), person('mourner2', 'a neighbour', 'neighbour', [0.6, 6.4, -0.2]), person('mourner3', 'a man in a dark suit', 'nephew', [7.4, 5.0, -0.3]), person('nurse5', 'Nurse Bell', 'nurse', [10.6, 9.4, -0.8])],
     extras: (P) => [...[-2.4, -0.8, 0.8, 2.4].map((x, i) => extra(i === 3 ? 'neighbour' : 'official', [x, -8.6, 0])), ...crowd(40, 21, P.crowd, { mood: 'black', face: [0, -2] })] },
   { place: 'golden', env: ENV.day, people: () => [person('hyacinth6', 'Miss Hyacinth', 'hyacinth', [-4.4, -4.6, 0.4]), person('maude6', 'Miss Maude', 'maude', [7.2, 4.2, -0.9])],
@@ -351,7 +357,7 @@ function nextCard(i, s, tries = 0) {
   const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished', ['Next is "' + nx.name + '" (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() { EP++; frozen = false; endCut(); FX.shake = 0; $('sub').classList.add('dim'); document.body.classList.remove('subbing'); TICKS.length = 0; SIREN = 0; }
+function resetTransient() { EP++; frozen = false; HELD_BLANKET.visible = false; endCut(); FX.shake = 0; $('sub').classList.add('dim'); document.body.classList.remove('subbing'); TICKS.length = 0; SIREN = 0; }
 async function beginChapter(i, st) {
   if (fading) return; resetTransient(); st = st || CH_FIRST[i]; const C = CHAPTERS[i]; hideCard(); closeJournal(); closeChapters(); $('dialogue').hidden = true; busy = false; talkWith = null;
   if (!modelsReady || !PL[SCENES[i].place]) toast('Loading', 4000); const specs = await loadScene(i);
@@ -410,7 +416,8 @@ const ACTIONS = {
   2: (P) => [{ label: 'Listen to the radio', x: P.spots.radio[0], z: P.spots.radio[1], r: 2.0, on: () => stage === 30, go: () => convo(RADIO.map((text) => ({ who: 'The radio', text })).concat([{ who: 'Miss Iris', text: 'Trouble, trouble. Turn it down, child.' }]), () => setStage(31)) }],
   3: (P) => [
     { label: 'Hold the gate open', x: -1.9, z: -7.7, r: 2.3, on: () => stage === 42, go: () => holdGate(P) },
-    ...[0, 1, 2].map((i) => ({ label: 'Wrap the child in a blanket', get x() { return byId('kid' + i).x; }, get z() { return byId('kid' + i).z + 0.75; }, r: 1.5, on: () => stage === 43 && !byId('kid' + i).blanket, go: () => { addBlanket(byId('kid' + i), [0xb8a890, 0x8a9ab0, 0xb09a9a][i]); ctr.blanket = (ctr.blanket || 0) + 1; uiSound('goal'); refreshGoal(true); if (ctr.blanket >= 3) roofFalls(P); } }))],
+    { label: 'Take a blanket', x: PILE[0], z: PILE[1], r: 1.5, on: () => stage === 43 && !ctr.carry && (ctr.blanket || 0) < 3, go: () => { ctr.carry = true; HELD_BLANKET.children[0].material = HELD_BLANKET.children[0].material.clone(); HELD_BLANKET.children[0].material.map = P.pile.children[2 - (ctr.blanket || 0)].material.map; HELD_BLANKET.visible = true; pileShow(P); uiSound('tap'); refreshGoal(true); } },
+    ...[0, 1, 2].map((i) => ({ label: 'Wrap the child in a blanket', get x() { return byId('kid' + i).x; }, get z() { return byId('kid' + i).z + 0.75; }, r: 1.5, on: () => stage === 43 && ctr.carry && !byId('kid' + i).blanket, go: () => { const k = ctr.blanket || 0; ctr.carry = false; HELD_BLANKET.visible = false; addBlanket(byId('kid' + i), PILE_COLS[2 - k]); ctr.blanket = k + 1; uiSound('goal'); refreshGoal(true); if (ctr.blanket >= 3) roofFalls(P); } }))],
   4: (P) => [{ label: 'Stand at the rail', x: P.spots.rail[0], z: P.spots.rail[1], r: 2.6, on: () => stage === 53, go: () => card('At the grave', ['The grave is closed now, with concrete and steel.', 'How will you say goodbye?'], [
     { t: 'Lay a flower', go: () => { story.part = 'flower'; P.spray.visible = true; hideCard(); say('You lay a flower by the rail, for Miss Iris and Miss Dora.'); setStage(54); } },
     { t: 'Sing with the crowd', go: () => { story.part = 'sing'; hideCard(); say('The crowd sings a hymn. You sing too, as Miss Dora taught you.'); setStage(54); } },
@@ -427,20 +434,21 @@ ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 
 let SIREN = 0;
 function nightSetup(P, st) {
   const after = st >= 44, dawn = st >= 45; P.fire.setLevel(dawn ? 0.08 : after ? 0.4 : 1); P.myers.group.visible = !after; P.myers.group.scale.y = 1; P.ruin.visible = after; SIREN = dawn ? 0 : after ? 0.3 : 1;
-  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = after && !dawn; if (after && id !== 'nurse4') addBlanket(n, 0x9aa0a8); }
-  [0, 1, 2].forEach((i) => { const n = byId('kid' + i); if (st >= 43) { kidTo(n, -5 - i * 1.25, -5.2); n.m.visible = !dawn; if (after) addBlanket(n); } });
-  P.lamps.forEach((l) => { l.visible = !dawn; });
-  if (dawn) { setEnv(ENV.dawn); busPass(P); }
+  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = after && !dawn; if (after && id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
+  [0, 1, 2].forEach((i) => { const n = byId('kid' + i); if (st >= 43) { kidTo(n, -5 - i * 1.25, -5.2); n.m.visible = !dawn; if (after) addBlanket(n, PILE_COLS[2 - i]); } });
+  P.lamps.forEach((l) => { l.visible = !dawn; }); pileShow(P, st); HELD_BLANKET.visible = false;
+  if (dawn) { for (const n of SC.extras) if (n.z > -4.6 && n.z < 4.6) n.m.visible = false;   /* morning: the neighbours have gone home or stepped back onto the pavement, out of the road */
+    state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; setEnv(ENV.dawn); busPass(P); }
   else if (st === 40) (async () => { const ep = EP; frozen = true; bars(true); say('Sirens wake you. The sky over the Home is orange.', 6500);   /* an opening shot: from the dark road, up to the burning ward behind the wall */
     await cut([-16, 1.5, 3.2], [-9, 1.4, -2.5], [-6, 3, -8], [6, 7, -34], 7); if (ep !== EP) return; endCut(); frozen = false; })();
 }
-function kidTo(n, x, z) { n.x = x; n.z = z; n.m.position.set(x, 0, z); n.m.rotation.y = 0; }
+function kidTo(n, x, z) { n.x = x; n.z = z; n.ground = SC.P.groundAt(x, z); n.m.position.set(x, n.ground, z); n.m.userData.ground = n.ground; n.m.rotation.y = 0; }   /* on the pavement, not sunk into it */
 async function holdGate(P) {
   if (frozen) return; frozen = true; const ep = EP, kids = [0, 1, 2].map((i) => byId('kid' + i)), path = [[-3, -44], [0, -34], [0, -12], [-1.2, -7.4]];
   bars(true); say('You hold the gate. Firefighters lead the children out, one by one.', 7000);
   cut([-2.3, 1.3, -7.2], [-3.4, 1.35, -5.4], [0, 1.2, -20], [-0.5, 1.0, -12], 9);   /* from the gate: the children come down the avenue, the fire behind them */
   await Promise.all(kids.map((n, i) => (async () => { await wait(i * 1100); if (ep !== EP) return; n.m.visible = true; n.walking = true; walkOn(n, 1.7); const end = [-5 - i * 1.25, -5.2], pts = path.concat([end]);
-    for (let s = 0; s < pts.length - 1; s++) { const a = pts[s], b = pts[s + 1]; n.m.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]); await tween(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1.7,   /* a quick walk, holding hands, not a run */ (k) => { n.x = a[0] + (b[0] - a[0]) * k; n.z = a[1] + (b[1] - a[1]) * k; n.m.position.x = n.x; n.m.position.z = n.z; }); if (ep !== EP) return; }
+    for (let s = 0; s < pts.length - 1; s++) { const a = pts[s], b = pts[s + 1]; n.m.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]); await tween(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1.7,   /* a quick walk, holding hands, not a run */ (k) => { n.x = a[0] + (b[0] - a[0]) * k; n.z = a[1] + (b[1] - a[1]) * k; n.m.position.set(n.x, P.groundAt(n.x, n.z), n.z); }); if (ep !== EP) return; }
     n.ctl.play(null); n.walking = false; kidTo(n, end[0], end[1]); })()));
   if (ep !== EP) return; endCut(); state.x = -3.4; state.z = -5.6; state.yaw = 1.2; state.pitch = 0; frozen = false; setStage(43);
 }
@@ -450,13 +458,19 @@ async function roofFalls(P) {
   await wait(1500); if (ep !== EP) return; FX.shake = 0.5;
   await tween(3.6, (k) => { P.myers.group.scale.y = 1 - 0.9 * ease(k); P.fire.setLevel(1 - 0.6 * k); P.fire.burst(k); FX.shake = 0.5 * (1 - k); }); if (ep !== EP) return;
   P.myers.group.visible = false; P.ruin.visible = true; FX.shake = 0; say('Sparks fly up. The crowd goes quiet.', 5000); await wait(3600); if (ep !== EP) return;
-  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = true; if (id !== 'nurse4') addBlanket(n, 0x9aa0a8); }
+  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = true; if (id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
   await cut([4, 1.4, -2.2], [5.5, 1.35, -3.0], [10, 1.1, -5.2], [10.4, 1.1, -5.2], 4.5); if (ep !== EP) return;   /* then down to the road: two of your friends, safe */
   endCut(); state.x = 4.5; state.z = -2.6; state.yaw = -1.15; state.pitch = 0; say('Some of the ladies got out. They wait by the road in blankets.', 5200); frozen = false; setStage(44);
 }
-ON[45] = () => { const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); state.x = -9; state.z = -2.5; state.yaw = -1.1; fadeBlack(false, 1400); bars(true); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
+ON[45] = () => { const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; fadeBlack(false, 1400); bars(true); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
   await cut([-14, 1.6, 2.5], [-9, 1.4, -2.5], [20, 2, -1], [4, 3, -30], 7); if (ep !== EP) return; endCut(); frozen = false; })(); };   /* the bus goes by, as it did that morning (Gleaner, 2020) */
-function busPass(P) { P.bus2.visible = true; P.bus2.position.x = -70; tween(18, (k) => { P.bus2.position.x = -70 + 140 * k; }).then((ok) => { if (ok) P.bus2.visible = false; }); }
+const DAWN = { x: -9, z: -5.4, yaw: -1.1 };   /* where you stand at dawn: on the pavement, out of the road */
+/* the bus at dawn drives along its lane (P.vehicles) at about 28 km/h, and stops and waits while anyone, you included, is in the road just ahead of it or beside it */
+function busWaits(V, x) { const near = (px, pz) => Math.abs(pz - V.path[0][1]) < V.half + 0.9 && px > x - V.len - 0.5 && px < x + V.len + 4.5; return near(state.x, state.z) || SC.npcs.some((n) => n.m.visible && near(n.x, n.z)); }
+function busPass(P) { const V = P.vehicles[0], b = V.obj, ep = EP; b.visible = true; b.position.x = V.path[0][0]; V.waited = 0;
+  TICKS.push((dt) => { if (ep !== EP || !b.visible) return true; if (busWaits(V, b.position.x)) V.waited += dt; else b.position.x += 7.8 * dt / TS; if (b.position.x >= V.path[1][0]) { b.visible = false; return true; } return false; }); }
+/* while it moves, the bus is solid: you cannot walk into it */
+function busWall() { const P = SC && SC.P, V = P && P.vehicles && P.vehicles[0]; if (!V || !V.obj.visible) return null; const x = V.obj.position.x, z = V.path[0][1]; return [x - V.len, z - V.half, x + V.len, z + V.half]; }
 ON[54] = () => { if (QUICK || !SC || SC.i !== 4) return; (async () => { const ep = EP; frozen = true; bars(true); await cut([state.x, EYE, state.z], [0, 4.5, 9], [0, 0.6, -2], [0, 0.6, -2], 6); if (ep !== EP) return; await wait(1200); if (ep !== EP) return; endCut(); frozen = false; })(); };   /* a slow rise over the grave and the crowd */
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
@@ -572,6 +586,7 @@ function devViews() {
   const go = async (ch, st, x, z, yaw, pitch = 0) => { startGame(true); await beginChapter(ch, st); resetTransient(); if (x !== undefined) { state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch; } $('place').hidden = true; $('hint').hidden = true; $('toast').hidden = true; for (let i = 0; i < 8; i++) update(0.1, 1000 + i * 100); return SC.P; };
   const V = {   /* chapter (0 to 6), stage, x, z, yaw, pitch */
     road1: [0, 10, -27.6, 4.3, -PI / 2, 0.02], wall1: [0, 10, -13, 3.2, 0.35, 0.1], pave1: [0, 10, -12, -1.2, 1.9, 0.05], follow1: [0, 11, 0.3, -2.5, PI - 0.6, 0.1], road2: [0, 10, -20, 3.4, 0.9, 0.08], gate1: [0, 11, 0.3, -1.5, 0, 0.14], avenue1: [0, 12, 0, -12, 0, 0.06], ward1: [0, 12, -1.5, -32, -1.25, 0.12], iris1: [0, 13, 5.2, -41.2, -2.2, 0.05], men1: [0, 12, 1.5, -16, 1.75, 0.14], kids1: [0, 12, 1.5, -40, 1.9, 0.08],
+    wall2: [0, 12, -12, -11.5, PI, 0.12], arch1: [0, 11, 0.4, -1.0, 0, 0.42],
     in1: [1, 20, -13.4, 0, -PI / 2, -0.05], in2: [1, 21, -3, 0.6, -PI / 2 - 0.5, -0.1], in3: [1, 21, -11.6, 1.2, PI + 0.5, -0.4],
     dusk1: [2, 30, 0, -22, -0.5, 0.06], dusk2: [2, 32, 4.2, -40, -PI / 2, 0.1],
     night1: [3, 41, -9, -2.5, -1.1, 0.12], night2: [3, 41, 0, -6.2, 0, 0.14], night3: [3, 43, -1.5, -2.6, 0.6, -0.05], night4: [3, 44, 4.5, -2.6, -1.15, 0.0], ruin1: [3, 44, -1.6, -8.2, -0.5, 0.06], dawn1: [3, 45, -9, -2.5, -1.1, 0.1],
@@ -589,14 +604,25 @@ function devViews() {
   if (shot === 'time1') go(6, 71, 5.2, 8.2, 0).then(() => timeline(2));
   if (shot === 'title') { /* the title screen as it is */ }
   if (shot === 'fall') go(3, 43, -1.6, -8.2, -0.5, 0.1).then((P) => { fixedCam = { p: [-1.3, 1.45, -8.4], t: [9, 5, -35] }; P.myers.group.scale.y = 0.45; P.fire.setLevel(0.75); P.fire.burst(0.5); for (let i = 0; i < 20; i++) update(0.1, 3000 + i * 100); document.title = 'view fall ready'; });
+  /* ?shot=blanket1 : the pile of folded blankets, one child already wrapped, the next blanket in your arms. blanket2 : the same from close by. dawn2 : the bus at dawn, with you and Gran on the pavement (&old=1: Gran where she stood before) */
+  if (shot === 'blanket1' || shot === 'blanket2') go(3, 43, ...(shot === 'blanket1' ? [0.2, -3.6, 1.0, -0.14] : [-4.2, -4.2, 1.35, -0.3])).then(() => { const A = SC.actions, take = A.find((a) => a.label === 'Take a blanket'); take.go(); A.find((a) => a.on() && /^Wrap/.test(a.label)).go(); take.go(); for (let i = 0; i < 8; i++) update(0.1, 2000 + i * 100); document.title = 'view ' + shot + ' ready'; });
+  if (shot === 'dawn2') go(3, 45, -14, -5.4, -1.25, 0.0).then((P) => { if (q.get('old')) { const n = byId('gran4'); n.z = -3.4; n.m.position.set(n.x, 0, n.z); }   /* &old=1 puts Gran back where she stood before the fix, for a before picture */
+    P.bus2.visible = true; P.bus2.position.x = q.get('old') ? -7.4 : -6; for (let i = 0; i < 8; i++) update(0.1, 2000 + i * 100); document.title = 'view dawn2 ready'; });
+  /* ?shot=look&b=fireman&y=1.6&d=0.9&a=0.6 : one look close up, by day (y: height looked at, d: distance, a: angle round the body) */
+  if (shot === 'look') (async () => { await go(0, 10); const k = q.get('b') || 'gran'; await loadBase(LOOKS[k].base); const m = makeBody({ ...LOOKS[k], x: -40, z: -3.6, ry: 0 }); SC.P.group.add(m); const y = +(q.get('y') || 1.5), d = +(q.get('d') || 0.9), a = +(q.get('a') || 0.5); fixedCam = { p: [-40 + Math.sin(a) * d, y + 0.1, -3.6 + Math.cos(a) * d], t: [-40, y, -3.6] }; for (let i = 0; i < 4; i++) update(0.1, 2000 + i * 100); document.title = 'view look ready'; })();
   if (shot === 'cast') (async () => { await go(0, 10); const ids = Object.keys(LOOKS); await Promise.all(ids.map((k) => loadBase(LOOKS[k].base))); ids.forEach((k, i) => { const m = makeBody({ ...LOOKS[k], x: -40 + (i % 11) * 1.0, z: -3.6 + ((i / 11) | 0) * 1.6, ry: 0 }); SC.P.group.add(m); }); fixedCam = { p: [-35, 1.5, 3.4], t: [-35, 0.9, -3] }; if (q.get('night')) setEnv(ENV.night); document.title = 'view cast ready'; })();
 
   if (['audit', 'collision', 'seating'].includes(q.get('test'))) (async () => {   /* every chapter's scene: floating things, people in solids, unreachable spots, people inside each other */
     const linesOut = []; let total = 0; startGame(true);
-    for (let i = 0; i < SCENES.length; i++) { await beginChapter(i); resetTransient(); const P = SC.P, S = SCENES[i], st = S.start || P.start, vis = SC.npcs.filter((n) => !n.hidden);
+    const looks = new Map(), garments = (list) => { const o = []; for (const n of list) { const k = n.bodyId + JSON.stringify([n.hat, n.hide, n.props && n.props.length]); if (!looks.has(k)) looks.set(k, auditGarments(n.id || n.base, n.m)); o.push(...looks.get(k)); } return [...new Set(o)]; };   /* clothes: once for each look */
+    const passes = SCENES.map((S, i) => [i]); passes.splice(4, 0, [3, 45, 'chapter 4 at dawn']);   /* the dawn of chapter 4 too: the bus drives by */
+    for (const [i, st0, name] of passes) { await beginChapter(i, st0); resetTransient(); const P = SC.P, S = SCENES[i], st = st0 === 45 ? DAWN : S.start || P.start, vis = st0 ? SC.npcs.filter((n) => n.m.visible) : SC.npcs.filter((n) => !n.hidden);
+      const moving = st0 === 45 ? P.vehicles : [];   /* the vehicles that drive in this part of the chapter */
       const r = auditPlaceE({ id: P.id, snap: P.snap, npcs: vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, anim: n.anim, ground: n.walker ? 0 : (n.ground || 0), path: n.path }))   /* walkers' routes too, so the audit sees anyone they would walk through */, walls: P.walls.concat(S.walls || []), bounds: P.bounds, start: st,
         actions: SC.actions.filter((a) => !('get' in (Object.getOwnPropertyDescriptor(a, 'x') || {}))).map((a) => ({ label: a.label, x: a.x, z: a.z, r: a.r })), people: SC.people.filter((n) => !n.hidden && !n.kid).map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
-      const all = [...r.floating, ...r.inside, ...r.stuck, ...auditThrough(P.snap)]; total += all.length; linesOut.push('chapter ' + (i + 1) + ' (' + P.id + '): ' + all.length + ' issues, ' + vis.length + ' people', ...all.map((l) => '  ' + l)); }
+      const all = [...r.floating, ...r.inside, ...r.stuck, ...auditThrough(P.snap), ...auditHanging(P.snap, P.groundAt), ...auditVehicles(moving, vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, path: n.path })), { start: st, walls: P.walls.concat(S.walls || []) }), ...garments(vis)]; total += all.length; linesOut.push((name || 'chapter ' + (i + 1)) + ' (' + P.id + '): ' + all.length + ' issues, ' + vis.length + ' people', ...all.map((l) => '  ' + l)); }
+    { const m = makeBody({ ...LOOKS.gateman, x: 0, z: 0 }); m.traverse((o) => { if (o.isMesh && o.material.name === 'WaistcoatButtons') o.visible = true; }); const caught = auditGarments('self-test gateman', m);   /* the garment check must see buttons left showing on a hidden waistcoat */
+      if (caught.length) linesOut.push('self-test (not counted): the garment check sees buttons left on a hidden waistcoat: ' + caught[0]); else { total++; linesOut.push('self-test FAILED: the garment check missed waistcoat buttons left showing'); } }
     out('AUDIT ' + total, linesOut); })();
   if (q.get('test') === 'held') (async () => {   /* every carried thing, in every chapter: at the hand, upright, clear of the body, in twelve poses */
     const o = []; let n0 = 0; startGame(true);

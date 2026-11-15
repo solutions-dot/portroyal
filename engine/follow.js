@@ -4,7 +4,7 @@
                               in your own footsteps, so they come round corners and through gates the way you did. With opts.path they keep to that path instead (a narrow trail).
      lead(n, path, opts)      a guide who walks ahead of you along a path. If you fall behind they stop, turn and wait for you (with a small wave if the body has one),
                               and walk on when you catch up.
-     goTo(n, x, z, opts)      someone sent to a spot: they walk there round walls and solid things (engine/placement.js walkRoute), then stop.
+     goTo(n, x, z, opts)      someone sent to a spot: they walk there round walls and solid things (engine/placement.js walkRoute, or opts.route), then stop and call opts.done(n).
      stop(n)                  the story says they stop: they stand where they are.
      tick(n, dt, world)       call once a frame for each person whose n.fol is set. world says where you are and what is solid (see below).
    The rules every game gets:
@@ -36,7 +36,7 @@ export function pathSpots(path, s0 = 0, s1 = Infinity, side = 0, step = 0.3) { c
 const DEF = { gap: 1.5, side: 0.55, space: 0.9, walk: 1.15, run: true, far: 16, wait: 7, resume: 4.5, ahead: 4, wave: true, r: 0.25 };
 export function follow(n, opts = {}) { n.fol = { mode: 'follow', ...DEF, ...opts, crumbs: [], hdg: null, still: 0, stuckT: 0, lastX: n.x, lastZ: n.z, moving: false }; if (opts.path) { n.fol.len = pathLen(opts.path); n.fol.s = pathS(opts.path, n.x, n.z); } return n.fol; }
 export function lead(n, path, opts = {}) { n.fol = { mode: 'lead', ...DEF, ...opts, path, len: pathLen(path), s: pathS(path, n.x, n.z), waiting: false, waved: -99, t: 0, moving: false }; return n.fol; }
-export function goTo(n, x, z, opts = {}) { n.fol = { mode: 'go', ...DEF, speed: 1.3, ...opts, to: [x, z], route: null, moving: false }; return n.fol; }
+export function goTo(n, x, z, opts = {}) { n.fol = { mode: 'go', ...DEF, speed: 1.3, ...opts, to: [x, z], route: opts.route ? opts.route.map((p) => p.slice()) : null, moving: false }; return n.fol; }   /* opts.route: waypoints already checked by the place audit (the last is the spot); otherwise a route round world.walls */
 export function stop(n) { if (!n.fol) return; n.fol = null; gait(n, null); }
 export const isFollowing = (n) => !!(n && n.fol && n.fol.mode === 'follow');
 export const isLeading = (n) => !!(n && n.fol && n.fol.mode === 'lead');

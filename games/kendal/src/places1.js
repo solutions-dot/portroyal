@@ -50,7 +50,7 @@ export function buildRoad() {
 export function buildStation45() {
   const g = grp(), walls = [], people = [], extras = [];
   stationBase(g, { x0: -50, x1: 60, zc: -3, zBack: 17, wood: true });
-  const train = grp(g, 0, 0, -3); const loco = steamLoco('early'); loco.position.x = -10.4; train.add(loco);
+  const train = grp(g, 0, 0, -3); const loco = steamLoco('early'); loco.position.x = -10.4; train.add(loco); loco.userData.hollow = true;   /* the fireman stands in its cab (engine/audit.js, outline test) */
   const kinds = ['first', 'third', 'third', 'first']; const cars = kinds.map((k, i) => { const c = carriage1845(k); c.position.x = i * 6; train.add(c); return c; });
   train.userData.wheels = [loco, ...cars].flatMap((v) => v.userData.wheels);
   walls.push([-13.5, -4.6, 21, -1.2]);   /* the train is a wall: you stand on the platform side */
@@ -79,7 +79,7 @@ export function buildRide45() {
   const g = grp(), walls = [], people = [], extras = [];
   const rig = makeRig('morass'); rig.group.position.y = TRACK_Y; g.add(rig.group); g.userData.noBatch = true;
   const car = carriage1845('third', 6.4, 2.4, 'sides'); g.add(car);
-  const loco = steamLoco('early'); loco.position.set(-10.8, 0, 0); g.add(loco);
+  const loco = steamLoco('early'); loco.position.set(-10.8, 0, 0); g.add(loco); loco.userData.hollow = true;
   const t2 = carriage1845('third', 6.4, 2.4, 'sides'); t2.position.set(7.2, 0, 0); g.add(t2);
   const wheels = [...loco.userData.wheels, ...car.userData.wheels, ...t2.userData.wheels];
   people.push(person('boyRide', 'boy45', 'The boy', 1.6, 0.9, PI, { h: 1.2, anim: 'SitTalk', ground: 0.17, seat: 0.48 }));

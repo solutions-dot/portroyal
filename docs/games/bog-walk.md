@@ -38,7 +38,8 @@ Code is in `games/bog-walk/`:
 | `src/content.js` | every word outside the Tube's own subtitles: `CHAPTERS`, `GOALS`, `TALK`, `LATER`, `JOURNAL`, `TALK_TARGETS` |
 | `src/cast.js` | `LOOKS`: each person is a shared body plus colours |
 | `src/places.js` | the station, the yard and the ruins (one site at three times) and Kingston in 1899 |
-| `src/props.js`, `src/trains.js`, `src/detail.js`, `src/wgfx.js` | copied from Kendal: props, trains, grass and plants, textures and materials |
+| `src/props.js`, `src/detail.js`, `src/wgfx.js` | copied from Kendal: props, grass and plants, textures and materials |
+| `src/trains.js` | one line: the railway vehicles from the shared `engine/vehicles.js` (the same ones Kendal uses), built with `wgfx.js`. See "The train" below. |
 | `src/hand.js`, `src/handmesh.js` | the torch hand in first person (made by `tools/bog-walk/hand_blender.py`) |
 | `src/tube.js` | `buildTube`: the pipe wall (a grid we make so the manhole is a real hole), sand, rivets and flanges (instanced, in 10 m chunks), tools, rust patches, hung torches, the manhole, the rising water; and `makeHand`: the torch and fist in first person |
 | `src/gfx.js` | every texture, drawn in code with a seeded random generator |
@@ -73,6 +74,14 @@ python3 -m http.server 8765                  # then open http://localhost:8765/g
 # In the console: __bw.hudOverlaps(), __bw.propOverlaps(), __bw.tubeAudit() and __bw.tubeHeld() return the lists behind those checks (all should be empty).
 #   The autoplayer (?auto=1, 2 or 3) runs the audit and the overlap checks too and fails if any reports a problem.
 ```
+
+### The train
+
+The special train that brings the coffins into the yard in chapter 5 (`buildYard` in `places.js`, run by `ON[54]` in `main.js`) is Kendal's 1890s engine and goods wagons, from the shared `engine/vehicles.js`: `steamLoco('late')`, a 4-4-0 with outside cylinders, a roofed cab and a coal tender, and two `wagon()`s with slatted sides. Until November 2026 the game had its own older, rougher copy of Kendal's `trains.js`; it now shares Kendal's code, so a fix to a vehicle shows in both games.
+
+Why these fit 1904: the railway was handed back to the government in 1900 and became the Jamaica Government Railway, and it ran steam engines until 1964 (Wikipedia, "Rail transport in Jamaica"; International Steam Pages, "Jamaica"). We found no photograph or roster of the engines it used in 1904, so the 4-4-0 is a general picture of an engine of the 1890s, the same as in Kendal's 1890s chapter, and the slatted wagon is a goods wagon of the banana trade. Kendal's wooden bogie coach (`woodCoach`) is drawn as a 1950s coach and is not used here. The record says only that the coffins "came by special train" at 11:50; that it was an engine and goods wagons is our choice.
+
+The electric tram in Kingston in 1899 (chapter 2, `electricCar` in `places.js`) and the retired mule car are a different kind of vehicle, built in this game's own `places.js`. They are kept as they are, except that the tram's four wheels are now the railway's turned wheels with flanges (`wheel()` from `engine/vehicles.js`) instead of plain discs.
 
 ### The cinematic moments (owner rule: the major events must feel cinematic)
 

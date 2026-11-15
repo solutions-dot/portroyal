@@ -557,13 +557,16 @@ if OLD:
             smooth_weights(o,lambda c:c.z<CROTCH+0.06,3)
 for k,o in parts:            # coat skirts follow both legs as one cloth, like Abba's skirt
     if k not in ('coatskirt','skirt','jacketskirt'): continue
-    B={n:o.vertex_groups['mixamorig:'+n] for n in ('Hips','LeftUpLeg','RightUpLeg')}; idx=list(range(len(o.data.vertices)))
+    B={n:o.vertex_groups['mixamorig:'+n] for n in ('Hips','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg')}; idx=list(range(len(o.data.vertices)))
     for g in o.vertex_groups:
         if g.name.startswith('mixamorig:'): g.remove(idx)
     for v in o.data.vertices:
         t=max(0.0,min(1.0,(HIP+0.06-v.co.z)/0.5)); leg=(0.3 if k=='jacketskirt' else (0.6 if (OLD or k=='coatskirt') else 0.9))*sstep(0.1,0.9,t); left=sstep(-1.0,1.0,v.co.x/0.15)      # a later skirt rides almost wholly on the legs, so a leg that swings forward carries the cloth with it instead of pushing through
         if k=='coatskirt': front=sstep(0.02,-0.07,v.co.y); leg=front*0.95*sstep(-0.15,0.45,t)+(1-front)*0.25*sstep(0.1,0.9,t)   # the front panels ride on their own thigh (the knee carries them forward), the back hangs from the hips and opens at the vent
-        for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left),('RightUpLeg',leg*(1-left))):
+        shin=0.0
+        if k=='skirt' and not OLD:      # below the knee the front of a later skirt passes in part to the shins: seated, it falls over the knees and down instead of standing out from the thighs like a tray
+            shin=0.55*sstep(KNEE+0.07,KNEE-0.08,v.co.z)*sstep(0.03,-0.05,v.co.y)
+        for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left*(1-shin)),('RightUpLeg',leg*(1-left)*(1-shin)),('LeftLeg',leg*left*shin),('RightLeg',leg*(1-left)*shin)):
             if val>0.001: B[n].add([v.index],val,'REPLACE')
 # extra pieces bound to one bone: hat, cap, bands, apron
 def rigid(name,bm,mat,bone):
@@ -602,8 +605,8 @@ ON=lambda k:None if OLD else PART.get(k)      # later eras: a piece that lies on
 SHT=tree_of(PART['shirt'])
 def shirt_front(z,x=0.0):      # the y of the shirt's front surface
     hit=SHT.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]; sk=(SKIN if 'SKIN' in globals() else tree).ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]      # the skin alone: the full mesh also holds helper shapes that stand in front of the body
-    if hit and (sk is None or hit.y<sk.y+0.01): return hit.y
-    return (sk.y if sk else _front(z))-0.008      # the ray went through an opening (the V of a camp collar) and met the back of the shirt from inside: the front is the skin's, not the back's
+    if hit and (CK!='camp' or sk is None or hit.y<sk.y+0.01): return hit.y
+    return (sk.y if sk else _front(z))-0.008      # the ray went through an opening (the V of a camp collar) and met the back of the shirt from inside: the front is the skin's, not the back's (only a camp collar's V is open low enough for this)
 def quadstrip(bm,rows,flip=False,close=False):
     for r0,r1 in zip(rows,rows[1:]):
         n=len(r0)
@@ -691,9 +694,6 @@ if FLAT:
             for j in range(1,4):
                 for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
         for j,off in ((1,0.0035),(2,0.0065),(3,0.011)): ring_fix(rows,j,SHT,off,iters=2)
-        if PART.get('waistcoat'):      # the long points of a camp collar lie over a waistcoat's fronts, not under them
-            _wt=tree_of(PART['waistcoat'])
-            for j,off in ((2,0.003),(3,0.005)): ring_fix(rows,j,_wt,off,iters=1)
     quadstrip(bm,[[bm.verts.new(q) for q in row] for row in rows]); _co=soft('Collar',bm,'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD: ring_weights(_co,len(rows),4)
 if CK and not FLAT:
@@ -1067,7 +1067,7 @@ if G.get('apron'):
             x=-hw+2*hw*iu/nu; hit=tree.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]; yy=(hit.y if hit else -0.12)
             if not OLD and 'breeches' in PART:      # later eras: the apron lies on the trousers, a hand's breadth clear of them
                 hb=BRT.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]
-                if hb: yy=min(yy,hb.y)
+                if hb: yy=min(yy,hb.y-0.004)
             row.append(bm.verts.new((x,yy-(0.035 if OLD else 0.045),z)))
         rows.append(row)
     for jv in range(nv):
@@ -1112,6 +1112,7 @@ def hidden(c):
 def lining_of(c):      # which garment covers this hidden piece of the body
     if c.z>NECK-0.07*s or (G.get('shoes') and c.z<ANK+0.02): return None
     if G.get('breeches') and c.z<HIP+0.15: return 'Breeches' if c.z<HIP+0.12 else None      # no lining right at the waistband, where shirt and breeches overlap
+    if EASE_OLD or G.get('coat'): return None      # (and the shirt sleeves under a sleeveless coat) a shirt with ease stands clear of the body and no longer folds in at the chest, so it needs no lining (left in, the lining came through it at the front when walking)
     if G.get('coat') and G.get('coatsleeves',True): return 'Coat'
     return 'Shirt'
 if OLD:
@@ -1132,7 +1133,6 @@ if OLD:
     if kinds:      # nobody sees its shape, so it is thinned to about a third of its triangles
         md=lo.modifiers.new('thin','DECIMATE'); md.ratio=0.34
         with ov(lo): bpy.ops.object.modifier_move_to_index(modifier='thin',index=0); bpy.ops.object.modifier_apply(modifier='thin')
-    if kinds and EASE_OLD: shirt_weights(lo)      # the lining under a shirt with ease bends like that shirt (its chest no longer follows the arms), so it cannot come through it at the armpit
     if kinds: clothes.append(lo)
     else: bpy.data.objects.remove(lo)
 _covs=[]
