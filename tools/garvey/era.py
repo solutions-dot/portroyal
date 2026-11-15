@@ -1388,8 +1388,24 @@ for _o in [x for x in bpy.data.objects if x.type=='MESH' and x.vertex_groups]:  
     _kd=KDTree(len(_ok))
     for _i,_v in enumerate(_ok): _kd.insert(_v.co,_i)
     _kd.balance()
+    _adj={}
+    for _e in _o.data.edges:
+        _a,_b2=_e.vertices; _adj.setdefault(_a,[]).append(_b2); _adj.setdefault(_b2,[]).append(_a)
+    _okset={_v.index for _v in _ok}
+    def _conn(_v):      # the nearest point joined to it through the cloth (the nearest in space could be on the other leg, across the gap between them)
+        seen={_v.index}; front=[_v.index]
+        for _ in range(12):
+            nxt=[]
+            for i in front:
+                for j in _adj.get(i,[]):
+                    if j in seen: continue
+                    if j in _okset: return _o.data.vertices[j]
+                    seen.add(j); nxt.append(j)
+            front=nxt
+        return None
     for _v in _bad:
-        _c,_i,_d=_kd.find(_v.co); _src=_ok[_i]
+        _src=_conn(_v)
+        if _src is None: _c,_i,_d=_kd.find(_v.co); _src=_ok[_i]
         for g in list(_v.groups): _o.vertex_groups[g.group].remove([_v.index])
         for g in _src.groups:
             if g.group in _bones and g.weight>0.001: _o.vertex_groups[g.group].add([_v.index],g.weight,'REPLACE')
