@@ -562,16 +562,23 @@ if OLD:
         if k in ('shirt','coat'): smooth_weights(o,(lambda c:c.z>HIP+0.12 and abs(c.x)>SX*0.85) if (k=='shirt' and EASE_OLD) else (lambda c:c.z>HIP+0.12),16)      # (a shirt with ease: the sleeves only; its torso is evened out by shirt_weights below)
         if k=='shirt' and EASE_OLD: shirt_weights(o)      # as in later eras: the chest of the shirt no longer follows the arms (it bent into mounds and tore at the armholes), and the neckline follows the chest like the skin under it
         if k=='breeches':      # each leg of the breeches follows its own leg only: wide slops took some weight from the other thigh and tore at the hem
+            _nb={}
+            for e in o.data.edges:
+                a_,b_=e.vertices; _nb.setdefault(a_,[]).append(b_); _nb.setdefault(b_,[]).append(a_)
+            def _side(v):      # a point right on the middle line (the inside seam of each leg) belongs to the leg its neighbours are on; left undecided it followed both and was pulled out in a spike when the legs parted
+                if abs(v.co.x)>=0.002: return v.co.x
+                sx=sum(o.data.vertices[j].co.x for j in _nb.get(v.index,[])); return sx if abs(sx)>1e-5 else 0.0
             for v in o.data.vertices:
-                if v.co.z>CROTCH or abs(v.co.x)<0.002: continue
-                ws=[(g.group,g.weight) for g in v.groups]; bad=[gi_ for gi_,w in ws if ('Right' if v.co.x>0 else 'Left') in o.vertex_groups[gi_].name]
+                sd=_side(v)
+                if v.co.z>CROTCH or sd==0.0: continue
+                ws=[(g.group,g.weight) for g in v.groups]; bad=[gi_ for gi_,w in ws if ('Right' if sd>0 else 'Left') in o.vertex_groups[gi_].name]
                 if not bad: continue
                 for gi_ in bad: o.vertex_groups[gi_].remove([v.index])
                 keep=[(gi_,w) for gi_,w in ws if gi_ not in bad]; tot=sum(w for gi_,w in keep)
-                if tot<1e-4: o.vertex_groups['mixamorig:'+('Left' if v.co.x>0 else 'Right')+'UpLeg'].add([v.index],1.0,'REPLACE')
+                if tot<1e-4: o.vertex_groups['mixamorig:'+('Left' if sd>0 else 'Right')+'UpLeg'].add([v.index],1.0,'REPLACE')
                 else:
                     for gi_,w in keep: o.vertex_groups[gi_].add([v.index],w/tot,'REPLACE')
-            smooth_weights(o,lambda c:c.z<CROTCH+0.06,3)
+            smooth_weights(o,lambda c:c.z<CROTCH+0.06 and (c.z>CROTCH-0.03 or abs(c.x)>0.01),3)      # (not across the inside seams below the fork, which would mix the two legs again)
 if not OLD and 'breeches' in dict(parts):      # later trousers: at the fork each point took weights from both thighs and the hips unevenly, and seated (legs apart) single points were pulled two ways into spikes. The fork's weights are evened out over a wide patch
     _smooth_bones(dict(parts)['breeches'],lambda c:abs(c.x)<0.09 and CROTCH-0.07<c.z<CROTCH+0.10,14)
 for k,o in parts:            # coat skirts follow both legs as one cloth, like Abba's skirt
@@ -1374,6 +1381,27 @@ if 'breeches' in PART:      # the bottom of a jacket and the tucked part of a sh
             rb=(hit-o_).length; rs=(v.co-o_).length
             if rs>rb-0.003: v.co=o_+d*(rb-0.004)
         _sb.to_mesh(PART['shirt'].data); _sb.free()
+for _o in [x for x in bpy.data.objects if x.type=='MESH' and x.vertex_groups]:      # no point of any piece may follow only a helper group (neutral_bone and the like never move): it stayed behind as a spike when the body moved. It takes the bone weights of its nearest neighbour that has them
+    from mathutils.kdtree import KDTree
+    _bones={g.index for g in _o.vertex_groups if g.name.startswith('mixamorig:')}; _ok=[v for v in _o.data.vertices if any(g.group in _bones and g.weight>0.01 for g in v.groups)]; _bad=[v for v in _o.data.vertices if not any(g.group in _bones and g.weight>0.01 for g in v.groups)]
+    if not _bad or not _ok: continue
+    _kd=KDTree(len(_ok))
+    for _i,_v in enumerate(_ok): _kd.insert(_v.co,_i)
+    _kd.balance()
+    for _v in _bad:
+        _c,_i,_d=_kd.find(_v.co); _src=_ok[_i]
+        for g in list(_v.groups): _o.vertex_groups[g.group].remove([_v.index])
+        for g in _src.groups:
+            if g.group in _bones and g.weight>0.001: _o.vertex_groups[g.group].add([_v.index],g.weight,'REPLACE')
+if OLD and PART.get('breeches') and G.get('breechkind','plain')!='trousers':      # 1690 breeches gathered below the knee: the band below the knee follows the shin (on the thigh alone it stood out behind the bent knee)
+    _o=PART['breeches']; _vg=_o.vertex_groups
+    for v in _o.data.vertices:
+        f=sstep(KNEE+0.01,KNEE-0.04,v.co.z)
+        if f<=0: continue
+        sd='Left' if v.co.x>0 else 'Right'; up=_vg.get('mixamorig:'+sd+'UpLeg'); lg=_vg.get('mixamorig:'+sd+'Leg') or _vg.new(name='mixamorig:'+sd+'Leg')
+        wu=next((g.weight for g in v.groups if up and g.group==up.index),0.0)
+        if wu<=0: continue
+        up.add([v.index],wu*(1-f),'REPLACE'); wl=next((g.weight for g in v.groups if g.group==lg.index),0.0); lg.add([v.index],wl+wu*f,'REPLACE')
 def aim(n,t):
     pb=rig.pose.bones[n]; bpy.context.view_layer.update(); M=pb.matrix.copy()
     q=(M.to_3x3()@Vector((0,1,0))).normalized().rotation_difference(Vector(t).normalized()); hd=M.to_translation()
