@@ -24,7 +24,7 @@
        after: { gran6: ['...'] },                 what a story person says once their part of this step is done
        next: 61,                                  the step that follows (a stage id, or a function of the story)
        end: true,                                 the last step of the story (no next)
-       wait: true }                               a timed scene with nothing to point at (no needs, no arrow)
+       wait: true }                               a timed scene or a card with nothing to point at (no needs, no arrow). The game moves it on itself.
 
    createStory(options) gives a story. A game can switch one step table (or one stage) at a time: the story only owns stages that are in its
    table. For the others it goes idle and every question returns null, so the game's own code keeps working:
@@ -43,11 +43,11 @@
      tick(now, quiet)       call once a frame. quiet: no talk, card, cut scene or fade (time only counts while quiet). Returns the arrow:
                             { show, id, x, z, final, target: [x, z] } (x, z is the next point on the way, from options.route).
      pick()                 the need the arrow would point at now, nearest first: { id, kind, x, z } or null.
-     save(), restore(s)     { stage, got } for the game's save; restore puts the visible changes back with shows(n, of, true).
+     save(), restore(s)     { stage, got, met } for the game's save; restore puts the visible changes back with shows(n, of, true).
    options: { steps, where(id, kind) -> [x, z] | null (null: not in this place or hidden), player() -> [x, z] or { x, z },
               route(target, player, stage) -> [x, z] or [x, z, final] (Port Royal's nudgeStep, Eventide's gate and steps),
               advance(next), onStep(id, step), onGoal(text), onArrow(id) (once a step, when the arrow first shows: pop the goal open),
-              flavour: { id: [lines] }, meet: { id: [lines] }, names: { id: 'Mass Dudley' } (for the redirect check), items: { bucket: obj },
+              flavour: { id: [lines] or () => [lines] } (a game's LATER, wrapped), meet: { id: [lines] }, names: { id: 'Mass Dudley' } (for the redirect check), items: { bucket: obj },
               delay: 2500, exploreDelay: 5000, near: 2.2 (the arrow hides within this many metres of its target) }
 
    createCarry(options) is the player's hand (rule 3):
@@ -106,7 +106,6 @@ export function createStory(options) {
     if (!S.has(id)) { S.active = false; S.stage = id; S.step = null; return S; }
     S.stage = id; S.step = steps[id]; S.got = {}; S.active = true; waited = 0; last = null; arrowed = false;
     if (!o.dry) { if (o.onStep) o.onStep(id, S.step); if (o.onGoal) o.onGoal(goal()); }
-    if (!list().length && !S.step.wait && !o.dry) finish();   /* a step with nothing to do moves straight on */
     return S;
   };
   S.sync = (id) => (S.stage === id && S.active ? S : S.enter(id));
@@ -129,7 +128,7 @@ export function createStory(options) {
   S.talk = (id) => {
     if (!S.active) return null;
     if (open().some((e) => e.kind === 'talk' && e.id === id)) return { kind: 'story' };
-    const pickLine = (L, key) => { if (!L || !L.length) return null; heard[key] = (heard[key] || 0) + 1; return L[(heard[key] - 1) % L.length]; };
+    const pickLine = (L, key) => { if (typeof L === 'function') L = L(S); if (!L || !L.length) return null; heard[key] = (heard[key] || 0) + 1; return L[(heard[key] - 1) % L.length]; };
     if (S.isStory(id)) { const a = (S.step.after && S.step.after[id]) || (S.step.flavour && S.step.flavour[id]) || (o.flavour && o.flavour[id]); return { kind: 'after', line: pickLine(a, 'a:' + S.stage + ':' + id) }; }
     if (o.meet && o.meet[id] && !met.has(id)) { met.add(id); return { kind: 'meet' }; }
     const L = (S.step.flavour && S.step.flavour[id]) || (o.flavour && o.flavour[id]); return { kind: 'flavour', line: pickLine(L, 'f:' + id) };
@@ -158,8 +157,9 @@ export function createStory(options) {
     if (!arrowed) { arrowed = true; if (o.onArrow && !o.dry) o.onArrow(t.id); }
     return { show: true, id: t.id, kind: t.kind, x: w[0], z: w[1], final, target: [t.x, t.z] };
   };
-  S.save = () => ({ stage: S.stage, got: { ...S.got } });
+  S.save = () => ({ stage: S.stage, got: { ...S.got }, met: [...met] });
   S.restore = (s) => {
+    if (s && Array.isArray(s.met)) for (const id of s.met) met.add(id);
     if (!s || !S.has(s.stage)) return S; const q = o.dry; o.dry = true; S.enter(s.stage); o.dry = q;
     for (const e of list()) if (s.got && s.got[e.id]) S.got[e.id] = Math.min(e.n, s.got[e.id] | 0);
     for (const e of list()) if (S.got[e.id]) show(e.id, true);
@@ -223,7 +223,7 @@ export function createCarry({ camera = null, body = null, side = 'Right', slot =
      - a story person or need that is not in the place (where() gives nothing)
      - a flavour or meet line that sends you somewhere ('first', 'come back', 'go and', 'go to', 'talk to', 'then', 'go back'),
        names another person (options.names), or has an em dash
-     - a step with needs but no next (and not end)
+     - a step with needs but no next (and not end), or a step with no needs that is not marked wait or end
    opts: { place(stage) (bring the step's place in, so where() knows it), start(stage) -> [x, z] (where the player stands at the start of the
            step; default options.player()), only: [stages] }. */
 export function checkFlow(story, opts = {}) {
@@ -232,14 +232,15 @@ export function checkFlow(story, opts = {}) {
   const lint = (who, where, l) => {
     const t = lineText(l); if (!t) return; const by = lineWho(l); if (by === 'You') return;
     const w = REDIRECT.test(t) && REDIRECT_WORDS.find((x) => new RegExp('\\b' + x + '\\b', 'i').test(t)); if (w) bad(where, who + ' says "' + t + '": a flavour line must not send you on ("' + w + '")');
-    if (/—/.test(t)) bad(where, who + ' says "' + t + '": no em dashes');
+    if (/\u2014/.test(t)) bad(where, who + ' says "' + t + '": no em dashes');
     for (const [id, name] of Object.entries(o.names || {})) if (id !== who && name && new RegExp('\\b' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(t)) bad(where, who + ' says "' + t + '": a flavour line names ' + name);
   };
-  for (const [id, L] of Object.entries(o.flavour || {})) for (const l of L) lint(id, 'flavour', l);
-  for (const [id, L] of Object.entries(o.meet || {})) for (const l of L) lint(id, 'meet', l);
+  const lines = (L) => { try { L = typeof L === 'function' ? L(story) : L; } catch (e) { L = []; } return Array.isArray(L) ? L : []; };
+  for (const [id, L] of Object.entries(o.flavour || {})) for (const l of lines(L)) lint(id, 'flavour', l);
+  for (const [id, L] of Object.entries(o.meet || {})) for (const l of lines(L)) lint(id, 'meet', l);
   for (const st of ids) {
     const step = steps[st], L = needList(step);
-    for (const [id, Ls] of Object.entries(step.flavour || {})) for (const l of Ls) lint(id, st, l);
+    for (const [id, Ls] of Object.entries(step.flavour || {})) for (const l of lines(Ls)) lint(id, st, l);
     if (opts.place) opts.place(isNaN(+st) ? st : +st);
     let pos = xz(opts.start ? opts.start(isNaN(+st) ? st : +st) : o.player ? o.player() : [0, 0]) || [0, 0];
     const sim = createStory({ ...o, dry: true, player: () => pos, advance: () => {}, onStep: null, onGoal: null, onArrow: null });
@@ -247,6 +248,7 @@ export function checkFlow(story, opts = {}) {
     const of = L.reduce((s, e) => s + e.n, 0), g = sim.goal() || '';
     if (of > 1 && !/\b\d+ of \d+\b/.test(g)) bad(st, 'goal "' + g + '" has ' + of + ' things to do but no count');
     if (L.length && !step.end && (step.next === undefined || step.next === null)) bad(st, 'has needs but no next step');
+    if (!L.length && !step.wait && !step.end) bad(st, 'has nothing to do: give it needs, or wait: true for a timed scene or a card');
     for (const e of L) {
       if (e.kind === 'do' && !(step.shows && step.shows[e.id]) && !story.hasShow(e.id)) bad(st, 'do "' + e.id + '" has no visible change (shows)');
       if (e.carry && !(o.items && o.items[e.carry])) bad(st, 'do "' + e.id + '" carries "' + e.carry + '" but no such item is drawn (options.items)');
@@ -269,4 +271,14 @@ export function checkFlow(story, opts = {}) {
     }
   }
   return { issues, text: issues.join('\n') + (issues.length ? '\n' : '') + 'FLOW ' + issues.length };
+}
+
+/* the ?test=flow view for a game's dev build: run checkFlow and write the lines into #autolog, the way the other checks do
+   (docs/TESTING.md, section 5). Wire it only inside an `if (__DEV__)` block, so the public build leaves it out:
+     if (__DEV__ && q.get('test') === 'flow') flowTest(STORY, { place: (s) => enterPlaceFor(s), start: (s) => START[s] }); */
+export function flowTest(story, opts = {}) {
+  const r = checkFlow(story, opts), doc = typeof document !== 'undefined' ? document : null;
+  if (doc) { let el = doc.getElementById('autolog'); if (!el) { el = doc.createElement('pre'); el.id = 'autolog'; doc.body.appendChild(el); } el.textContent = r.text; el.hidden = false; }
+  if (typeof console !== 'undefined') console.log(r.text);
+  return r;
 }

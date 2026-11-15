@@ -82,13 +82,13 @@ test('rule 2: the arrow points only at unfinished needs, nearest first, moves on
   const G = fakeGame(); G.go(10); const S = G.S; let t = 0;
   G.pos = [6, 0]; for (; t <= 3000; t += 100) S.tick(t, true);
   assert.equal(S.tick(t += 100).id, 'clive', 'nearest first');
-  S.done('clive'); assert.equal(S.tick(t += 16).id, 'abel', 'next need at once, no new wait');
+  S.done('clive'); assert.equal(S.tick(t += 16).id, 'gran', 'next need at once, no new wait (Gran 11.7 m, Mr. Abel 12 m)');
   assert.equal(S.tick(t += 16).show, true);
-  S.done('abel'); assert.equal(S.tick(t += 16).id, 'gran');
-  G.pos = [0, 9]; const n = S.tick(t += 16); assert.equal(n.show, false); assert.equal(n.near, true, 'hides at the person: the talk button takes over');
+  S.done('gran'); assert.equal(S.tick(t += 16).id, 'abel');
+  G.pos = [-5, 0]; const n = S.tick(t += 16); assert.equal(n.show, false); assert.equal(n.near, true, 'hides at the person: the talk button takes over');
   G.pos = [0, 0]; assert.equal(S.tick(t += 16).show, true, 'walk away and it is back at once');
   /* step 11 has an optional tree right next to the player: the arrow still points at the bunches */
-  S.done('gran'); G.pos = [1, 1.5]; for (let k = 0; k < 30; k++) S.tick(t += 100, true);
+  S.done('abel'); G.pos = [1, 1.5]; for (let k = 0; k < 30; k++) S.tick(t += 100, true);
   assert.equal(S.tick(t += 100).id, 'bunch'); assert.equal(S.needs('tree'), false);
   assert.equal(S.done('tree'), false, 'an optional action never counts');
   /* a target in another place gives nothing to point at, not someone else */
@@ -146,14 +146,19 @@ test('?test=flow passes a good table and catches each kind of mistake', () => {
       31: { goal: 'Look at the tree.', needs: { do: ['tree'] }, optional: ['tree'], shows: { tree: () => {} }, next: 32 },
       32: { goal: 'Talk to Ivy.', needs: { talk: ['ivy'] }, story: ['ivy'], next: 33 },
       33: { goal: 'Carry the plate.', needs: { do: [{ id: 'plate', carry: 'plate' }] }, shows: { plate: () => {} } },
+      34: { goal: 'Walk to the gate.' },
+      35: { goal: 'The train is moving.', wait: true },
     },
-    opts: { flavour: { boy: ['Talk to Gran first.', 'Mr. Clive is nice.', 'So hot — phew.'], clive: ['Come back later.'] }, delay: 4000 },
+    opts: { flavour: { boy: ['Talk to Gran first.', 'Mr. Clive is nice.', 'So hot \u2014 phew.'], clive: ['Come back later.'] }, delay: 4000 },
   });
   const t = checkFlow(B.S, { start: () => [0, 0] }).text;
   for (const want of [/flow 30: goal "Pass the bucket: 0\." has 3 things to do but no count/, /flow 30: do "bucket" has no visible change/,
     /flow 31: the arrow points at "tree", which is not needed now/, /flow 32: story person "ivy" is not in the place/, /flow 32: the arrow has no target/,
-    /flow 33: has needs but no next step/, /flow 33: do "plate" carries "plate" but no such item/, /the arrow shows after 4\.\d s \(at most 3 s\)/,
+    /flow 33: has needs but no next step/, /flow 34: has nothing to do/, /flow 33: do "plate" carries "plate" but no such item/, /the arrow shows after 4\.\d s \(at most 3 s\)/,
     /boy says "Talk to Gran first\.": a flavour line must not send you on/, /boy says "Mr\. Clive is nice\.": a flavour line names Mr\. Clive/,
     /clive says "Come back later\."/, /no em dashes/]) assert.match(t, want);
-  assert.ok(REDIRECT.test('Then go and see Bass Henry.')); assert.ok(!REDIRECT.test('The engine is loud.'));
+  assert.ok(!/flow 35/.test(t), 'a timed scene marked wait is fine');
+  assert.ok(REDIRECT.test('Then go and see Bass Henry.'));
+  const F = fakeGame({ opts: { flavour: { boy: () => ['Go and help your mother.'] } } }); F.go(10); assert.equal(F.S.talk('boy').kind, 'meet'); assert.equal(F.S.talk('boy').line, 'Go and help your mother.', 'a LATER function works');
+  assert.match(checkFlow(F.S, { start: () => [0, 0] }).text, /boy says "Go and help your mother\."/); assert.ok(!REDIRECT.test('The engine is loud.'));
 });

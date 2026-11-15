@@ -78,6 +78,21 @@ Every game uses `engine/follow.js` for anyone who walks with the player (`docs/E
 - **Stop them** when the story says so and when a chapter is left.
 - **Check:** `?test=follow` walks the player along each follower's and guide's real route, with stops and a turn back into the follower, and must report 0 (nobody too close, inside anything, far behind for long, or stuck). The place audit checks guides' and followers' routes against the real shapes (`place.routes`).
 
+## Story flow: who moves the story, the arrow, visible tasks
+
+The owner's three rules (November 2026). Every game follows them, through `engine/story.js` (`docs/ENGINE.md`). Do not write a game's own goal, mark or arrow code for new steps.
+
+1. **Only story people are the point of focus.** In each step only that step's story people get the gold talk mark and the arrow. Anyone else can be talked to for a short flavour line, but never moves the story on and never sends you to someone else (no "first", "come back", "go and", "go to", "talk to", "then", no other person's name). A person needed later is flavour until their step. No "go back to X" loops. Where order does not matter, any order works and the goal shows a count ("Talk to Gran and Mr. Clive: 1 of 2.").
+2. **The arrow comes quickly and points at what is needed.** It shows 2.5 s after a new goal (5 s for an explore step), even while the child walks. It points only at the step's unfinished needs, never at optional actions, nearest first, and moves to the next need at once when one is done. A count going up does not restart the wait. Route it round walls with the game's `route` callback.
+3. **Every required task shows on screen.** Something carried is drawn in the player's hand (`createCarry`: the camera slot in first person, the grip in third person); placing it leaves it where it goes; every `do` task changes something you can see (`shows`); counts show in the goal. A toast alone is not enough.
+
+How to use it:
+
+- Write the chapter as a step table: `{ goal, needs: { talk, do, go }, story, any, explore, optional, shows, next }`. The count is added to the goal for you.
+- In the game's `setStage` call `STORY.sync(stage)`. Ask `STORY.talk(id)` when a person is tapped, `STORY.marked(id)` for the gold mark, `STORY.tick(now, quiet)` for the arrow, and call `STORY.done(id)` when a whole first talk ends or a task is done.
+- Move one chapter's table at a time. Stages not in the table stay with the old code.
+- **Check:** `?test=flow` (`flowTest` in the dev build) must print `FLOW 0`, and `npm test` runs the module's own tests.
+
 ## 4. Animations
 
 - **The shared library** is `shared/models/anims.js`: 39 Mixamo clips on one skeleton (`docs/ENGINE.md` lists them). Every body has the same bones, so every clip plays on everyone.

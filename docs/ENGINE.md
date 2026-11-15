@@ -8,7 +8,7 @@ import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, tone, nois
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 ```
 
-The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies) and `ui-audit.js` (text overlap). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
+The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `story.js` (who moves the story, the hint arrow, things the player carries), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies) and `ui-audit.js` (text overlap). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
 
 ## engine/loader.js: loading packed models
 
@@ -114,6 +114,59 @@ One system for every game (owner's request, November 2026). Each game used to ha
 | `isFollowing(n)`, `isLeading(n)` | For the game's own code: a follower must not block you, so leave them out of the player's collision with people. A hint arrow can point at a leader. |
 | `pathPoint`, `pathS`, `pathLen`, `pathSpots` | Path helpers; `pathSpots(path, s0, s1, side)` gives every spot on a path, for `place.routes`. |
 | `watch({ space, behind })`, `drive({...})` | The `?test=follow` check: `drive` walks the player along a real route through the game's own clamp and update; `watch.sample` each frame records a follower inside the personal space, inside something, more than `behind` metres away for over 2 seconds, or a guide that stands still while you wait near them. `watch.spots(n)` gives every place they stood, for `auditBodies`. |
+
+## engine/story.js: who moves the story, the hint arrow, and what the player carries
+
+One system for goals, talk targets, speech marks, the hint arrow and the player's hand (owner's rules, November 2026; `docs/STANDARD.md`, "Story flow"). Before it, every game had its own copy of `GOALS`, `TALK_TARGETS`, `NEXT_AFTER_TALK`, `wantsTalk`, `onTalked`, `NUDGE` and `nudgeTarget`. A game moves to it **one step table at a time**: the story only owns the stages in its table and goes idle for the rest, so the old code keeps running there.
+
+**A step** is plain data:
+
+```js
+const STEPS = {
+  60: { goal: 'Talk to Gran and Mr. Clive.', needs: { talk: ['gran6', 'clive'] }, next: 61 },            // goal shows "0 of 2" by itself
+  61: { goal: 'Take water to the nurse.', needs: { do: [{ id: 'water', n: 2, carry: 'bucket' }] }, next: 62 },
+  71: { goal: 'Look around the memorial.', needs: { do: ['board', 'monument'] }, explore: true, next: 72 },
+  51: { goal: 'Look at the house.', needs: { go: ['house'] }, optional: ['tree', 'wire'], next: 52 },
+  65: { goal: 'The night is long.', wait: true },                                                        // a timed scene: no arrow
+};
+```
+
+| Field | Meaning |
+|---|---|
+| `goal` | One short sentence, or a function of `{ n, of, got, stage }`. When the step has more than one thing to do, `: n of m.` is added (or put `{n}` and `{of}` in the text where you want them). |
+| `needs.talk` | People whose whole first talk moves the step on. |
+| `needs.do` | Things to do: an id (once) or `{ id, n, carry }`. Each needs a visible change (`shows`). `carry` names the item drawn in the hand (`options.items`). |
+| `needs.go` | Places to walk to. Arriving is the visible change. |
+| `story` | Who moves this step (default: `needs.talk`). Everyone else is flavour in this step, including people needed later. |
+| `any` | Any order (the default). `false`: one need at a time, in the listed order. |
+| `explore` | A look-around step: the arrow waits 5 s instead of 2.5 s. |
+| `optional` | Things you may do that never count and never get the arrow (Melissa's tree and wire). |
+| `at` | Where a need is when the game's `where()` does not know it: `{ id: [x, z] }` or a function. |
+| `shows` | `{ id: (n, of, restoring) => ... }`: the visible change for a `do` need. Or `story.shows(id, fn)`. |
+| `flavour`, `after` | Lines for this step only: flavour people, and story people whose part is done. |
+| `next`, `end`, `wait` | The stage that follows (or a function), the last step, a timed scene or card with nothing to point at. |
+
+**`createStory(options)`** returns the story. Options: `steps`, `where(id, kind)` (a person's or thing's `[x, z]` in the current place, or null), `player()`, `route(target, player, stage)` (the next point on the way: Port Royal's `nudgeStep`, Eventide's gate and veranda steps), `advance(next)` (the game's own `setStage`), `onStep`, `onGoal(text)`, `onArrow(id)` (once a step, when the arrow first shows: pop the goal open), `flavour: { id: [lines] }` (short lines, cycled; a value may be a function that returns them, so a game's `LATER` can be wrapped as `() => LATER[id](story)`), `meet: { id: [lines] }` (a full flavour talk played once, so Kendal's unreachable `TALK` entries can play), `names: { id: 'Mass Dudley' }` (for the check), `items`, `delay` (2500), `exploreDelay` (5000), `near` (2.2 m).
+
+| Call | Use |
+|---|---|
+| `sync(stage)` | From the game's `setStage`. Enters the step if the table has it, else the story goes idle. |
+| `owns()`, `has(stage)` | Is the current stage the story's; is this stage in the table. While idle every question below returns null or false, so the game's old code decides. |
+| `talk(id)` | What a talk should do now: `{ kind: 'story' }` (play their step talk, then `done(id)`), `{ kind: 'meet' }` (their one-off flavour talk), `{ kind: 'flavour', line }` or `{ kind: 'after', line }` (one short line that changes nothing; `line` is null when the table has none, so use the game's `LATER`). |
+| `done(id, k)` | The player did a need (a whole first talk, a task, arrived). Counts only for a current, unfinished need, calls its `shows`, sends `onGoal` with the new count, and after the last need calls `advance(next)`. |
+| `marked(id)` | Gold talk mark: only unfinished talk needs of this step (in an ordered step, only the next one). Use it in `bubbleTick` in place of "every person". |
+| `isStory(id)`, `needs(id)` | Is this person a story person now; is this id an unfinished need now (use it for `wantsTalk` and an action's `on()`). |
+| `goal()`, `count()` | The goal text with its count; `{ n, of }`. |
+| `tick(now, quiet)` | Once a frame. `quiet` is the game's old test (no talk, card, cut scene or fade). Returns `{ show, id, kind, x, z, final, target }`: the arrow shows once 2.5 s of quiet time have passed since the step began (5 s explore), whether or not the child is moving; it points at the nearest unfinished need, moves to the next one at once when one is done, and hides within `near` metres (`near: true`) so the talk button takes over. A count going up does not restart the wait. |
+| `pick()` | The need the arrow would point at, without the timer. |
+| `save()`, `restore(s)` | `{ stage, got, met }` in the game's save; `restore` calls each `shows` again with `restoring = true`. |
+| `arrowPose({ dx, dz, yaw, ndc, W, H, final })` | Where the `#nudge` element goes on screen and its label ('Here!', 'This way', 'Turn around', 'Look up', 'Look down'), the same rule every game copied. Bog Walk's `placeNudge` can still move it off words and buttons. |
+
+**`createCarry({ camera, body, side, slot, grip, gripOpts, view })`** is the player's hand. `carry(item)` takes the item from where it was (a pile goes down by one) and shows it on the camera at `slot` in first person, or in the grip of the player's body in third person (`engine/grip.js`). `place(item, spot)` leaves it where it goes (`spot` is an Object3D or `{ parent, at, ry, scale }`). `view('first' | 'third')` moves a held item to the other hand slot, `drop()` lets go, `holding()` says what is held, and `issues()` gives lines for a held item that is hidden, not in the hand or shrunk to nothing (add them to `?test=held`).
+
+**`checkFlow(story, opts)`** and **`flowTest(story, opts)`** are the engine side of `?test=flow`. For every step, in a dry copy that changes nothing in the scene, it fails: more than one thing to do and no count in the goal; an arrow with no target, or one that points at something not needed now (an optional action, a done one); an arrow that does not move to another unfinished need when one is done; a `do` need with no `shows`, or a `carry` item not in `options.items`; an arrow later than 3 s (5 s explore) while the child keeps walking; a story person not in the place; a step with needs and no `next`, or with no needs and not `wait` or `end`; and a flavour or meet line that uses "first", "come back", "go and", "go to", "talk to", "then" or "go back", names another person (`options.names`), or has an em dash. `opts.place(stage)` brings the step's place in so `where()` knows it, `opts.start(stage)` is where the player stands when the step begins, `opts.only` limits the stages. `flowTest` writes the lines and `FLOW <n>` into `#autolog`. Wire it inside `if (__DEV__)`; the public build leaves it out. Unit tests: `tests/story.mjs` (run by `npm test`).
+
+**Switching one table.** In the game's `setStage`, call `STORY.sync(stage)`. Where the game asks "does this person move the story?" (`wantsTalk`), "should this person have a mark?" (`bubbleTick`) and "where does the arrow point?" (`nudgeTarget`), ask the story first when `STORY.owns()` and fall back to the old code otherwise. When a talk ends with the whole first talk heard, call `STORY.done(id)`; in an action's `go()`, call `STORY.done(actionId)`. Then move one stage at a time from `GOALS` and `TALK_TARGETS` into the table and delete the old rows.
 
 ## engine/skinprobe.js: how dark a face really looks (dev only)
 
