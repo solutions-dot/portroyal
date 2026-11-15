@@ -171,6 +171,7 @@
   #hud.clean > *{visibility:hidden}   /* test pictures of the places, with no words */
   #autolog{position:fixed;left:0;top:0;z-index:99;background:#000;color:#9f9;font-size:11px;max-width:100%;max-height:100%;overflow:auto;margin:0;padding:4px;white-space:pre-wrap}
 </style>
+<link rel="stylesheet" href="title.css">
 </head>
 <body>
 <canvas id="c" tabindex="0" aria-label="The game world"></canvas>
@@ -184,15 +185,15 @@
 <section id="title">
   <h1>Bog Walk 1904<small>The Tube</small></h1>
   <p>On a Sunday night in June 1904, a gang of workers goes into a huge iron pipe to clean it. This is their story.</p>
-  <div class="row">
+  <div class="row title-actions">
     <button id="start" class="btn" disabled>Loading</button>
     <button id="tchap" class="btn ghost" hidden>Chapters</button>
-    <a id="allgames" class="btn ghost" href="../../../menu/" hidden>Main Menu</a>
+    <a id="allgames" class="btn ghost" href="../../../menu/">Main Menu</a>
+    <div class="track" aria-hidden="true"><div id="bar"></div></div>
   </div>
   <p class="small">Walk with the arrow keys or WASD, or the left side of the screen on a phone. Drag to look. Tap people to talk. One part of this game may be a little scary, and you can skip it.</p>
   <p id="loadnote" class="small">Loading the station.</p>
   <p id="savenote" class="small" hidden>Your progress is saved on this device.</p>
-  <div class="row"><p class="credit">Created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p><button id="dev" class="dev">Credits</button></div>
 </section>
 <div id="hud" hidden>
   <div id="top">
@@ -256,7 +257,7 @@
     <header><h2 id="jtitle">Journal</h2><button id="jclose">Close</button></header>
     <div id="jtabs"></div>
     <div id="jpage"></div>
-    <footer><span>Pages open as you play</span><a id="jhome" class="btn ghost" href="../../../menu/" hidden>Main Menu</a><button id="jchap" class="btn">Chapters</button></footer>
+    <footer><span>Pages open as you play</span><a id="jhome" class="btn ghost" href="../../../menu/">Main Menu</a><button id="jchap" class="btn">Chapters</button></footer>
   </div>
 </section>
 <section id="chapters" role="dialog" aria-labelledby="chtitle" hidden>

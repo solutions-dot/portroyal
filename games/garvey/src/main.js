@@ -295,10 +295,8 @@ function npcTick(n, dt) {
   m.position.set(n.x, 0, n.z);
 }
 
-/* ---------- the menu link: shown only where the real game menu exists (the website), as in Port Royal ---------- */
-const MENU = { ok: false, url: '../../../menu/' };
-{ const links = ['allgames', 'jhome'].map((id) => document.getElementById(id)).filter(Boolean); for (const a of links) a.hidden = true;
-  fetch(MENU.url, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then((t) => { if (/History Games/.test(t)) { MENU.ok = true; for (const a of links) a.hidden = false; } }).catch(() => {}); }
+/* ---------- the link back to the game collection ---------- */
+const MENU = { ok: true, url: '../../../menu/' };   /* Always available on the game collection, even if a menu fetch would fail. */
 function toMenu() { saveGame(); location.href = MENU.url; }
 
 /* ---------- the journal ---------- */
@@ -466,7 +464,7 @@ function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); }
 $('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
 function openCredits() { if (state.started) { closeJournal(); busy = true; keys.clear(); } $('credits').hidden = false; $('crclose').focus(); }
 function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = panelsOpen(); }
-$('dev').onclick = openCredits; $('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;
+$('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;
 /* the reset button: this chapter again, the whole story again, or back to all games */
 $('reset').onclick = () => { if (fading) return; closeJournal();
   card('Reset', ['Start this chapter again, or start the whole story again.'], [

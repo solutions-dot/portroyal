@@ -51,6 +51,14 @@ Tone for hard history:
 
 "A world created by Kellz 5.0" is on the **menu** (the header) and the About page footer. It is **not** on the intro screen. That was the owner's choice.
 
+## Game opening screens
+
+All game opening screens have a Main Menu button linking to `../../../menu/`. It is a normal link styled like Chapters and is available while models load, without a network probe or a check for the platform's name. Journal and reset links use the same destination.
+
+The standard order is Start (or Continue when a saved game is available), Chapters, Main Menu, then the loading bar while the game loads. The bar hides automatically as soon as Start or Continue is enabled. Tivoli keeps its extra Journal button after Main Menu. Games without chapter support omit Chapters. The saved-progress note appears only when saving is supported. Creator credits are removed from the opening screens; existing Credits panels remain available through Chapters.
+
+`shared/title.css` owns the shared control styles and is copied to each game's `site/title.css` by `tools/build.mjs`. The template uses it too. Keep every opening screen usable on narrow phones and short landscape screens.
+
 ## The intro
 
 Files: `menu/intro.js`, `menu/intro.css`, the `#intro` markup and a few lines in the head of `menu/index.html`.

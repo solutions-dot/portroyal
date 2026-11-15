@@ -1,0 +1,17 @@
+/* Shared opening-screen controls. Each game keeps its own colours and story. */
+#title{overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
+#title .card{flex-shrink:0;width:100%;max-width:34rem;min-width:0}
+#title .title-actions{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;margin-top:.4rem}
+#title .title-actions .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;max-width:100%;padding:.7em 1.3em;border:2px solid transparent;border-radius:6px;background:var(--brass);color:var(--brass-ink);font:700 1rem/1.3 var(--body,var(--text,system-ui));text-align:center;text-decoration:none;cursor:pointer}
+#title .title-actions .btn.ghost{border-color:var(--brass);background:transparent;color:var(--paper)}
+#title .title-actions .btn:hover:not(:disabled){background:var(--paper);border-color:var(--paper);color:var(--brass-ink);filter:none}
+#title .title-actions .btn:focus-visible{outline:3px solid var(--paper);outline-offset:3px}
+#title .title-actions .btn:disabled{opacity:.6;cursor:default}
+#title .title-actions .track{flex:1 1 9rem;min-width:6rem;max-width:14rem;height:6px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}
+#title:has(#start:not(:disabled)) .track{display:none}
+#title #bar{height:100%;width:0;background:var(--brass);transition:width .2s}
+#title #loadnote{flex-basis:100%;font-size:.85rem;opacity:.8}
+#title #savenote{font-size:.9rem;opacity:.8}
+@media(max-width:520px){#title .title-actions{gap:.6rem}#title .title-actions .btn{padding:.65em 1em}}
+@media(max-height:600px){#title{align-items:flex-start;justify-content:flex-start}#title .card{margin-top:0}}
+@media(prefers-reduced-motion:reduce){#title #bar{transition:none}}

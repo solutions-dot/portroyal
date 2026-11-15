@@ -157,6 +157,7 @@ body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){v
 @media (prefers-reduced-motion:reduce){#bar{transition:none}#hold{animation:none}}
 .chfoot{flex-wrap:wrap}
 </style>
+<link rel="stylesheet" href="title.css">
 </head>
 <body>
 <canvas id="stage" tabindex="0" aria-label="A railway station in Kingston, Jamaica, in 1957"></canvas>
@@ -167,11 +168,10 @@ body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){v
     <h1>Kendal 1957 <span>The Excursion Train</span></h1>
     <p class="intro">A long train takes a church group from Kingston to the sea. On the way home that night, it crashes near Kendal. It is the worst train crash in Jamaica's history.</p>
     <p class="intro">First, learn how people travelled before trains, and how the railway came to Jamaica. This is a sad story, told gently. It is also a story about helping.</p>
-    <div class="loading">
+    <div class="loading title-actions">
       <button id="start" class="btn" disabled>Loading</button>
       <button id="tchap" class="btn ghost" hidden>Chapters</button>
       <a id="allgames" class="btn ghost" href="../../../menu/">Main Menu</a>
-      <button id="dev" class="dev" title="Credits">Created by <b>Kellz 5.0</b></button>
       <div class="track" aria-hidden="true"><div id="bar"></div></div>
       <p id="loadnote">Loading the station.</p>
     </div>
@@ -207,7 +207,7 @@ body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){v
       <header><h2 id="jtitle">Journal</h2><button id="jclose">Close</button></header>
       <div id="jtabs"></div>
       <div id="jpage"></div>
-      <footer><span>Pages open as you play</span><a id="jhome" class="btn ghost" href="../../../menu/" hidden>Main Menu</a><button id="jchap" class="btn">Chapters</button></footer>
+      <footer><span>Pages open as you play</span><a id="jhome" class="btn ghost" href="../../../menu/">Main Menu</a><button id="jchap" class="btn">Chapters</button></footer>
     </div>
   </div>
 </div>

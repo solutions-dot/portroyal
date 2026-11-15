@@ -233,9 +233,7 @@ function renderJournal(sel) {
 function openJournal(sel) { if (busy && $('journal').hidden && !$('title').hidden) return; if (!$('journal').hidden) return; busy = true; keys.clear(); renderJournal(typeof sel === 'string' ? sel : undefined); $('journal').hidden = false; $('jclose').focus(); }
 function closeJournal() { if ($('journal').hidden) return; $('journal').hidden = true; busy = panelsOpen(); }
 $('jbtn').onclick = () => openJournal(); $('jclose').onclick = closeJournal;
-const MENU = { ok: false, url: '../../../menu/' };
-{ const links = ['allgames', 'jhome'].map((id) => document.getElementById(id)).filter(Boolean); for (const a of links) a.hidden = true;
-  fetch(MENU.url, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then((t) => { if (/History Games/.test(t)) { MENU.ok = true; for (const a of links) a.hidden = false; } }).catch(() => {}); }
+const MENU = { ok: true, url: '../../../menu/' };   /* Always available on the game collection, even if a menu fetch would fail. */
 function toMenu() { saveGame(); location.href = MENU.url; }
 
 const CARD = { dismiss: null };
@@ -372,7 +370,7 @@ function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); }
 $('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
 function openCredits() { if (state.started) { closeJournal(); busy = true; keys.clear(); } $('credits').hidden = false; $('crclose').focus(); }
 function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = panelsOpen(); }
-$('dev').onclick = openCredits; $('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;
+$('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;
 $('reset').onclick = () => { if (fading || FIGHT.on || HORN.on) return; closeJournal(); const i = chapterOf(stage);
   card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + CHAPTERS[i].name + '”', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : [])]); };
 
@@ -791,6 +789,14 @@ function devViews() {
   if (shot === 'cam') { const P3 = (k, d) => (q.get(k) || d).split(',').map(Number), c = P3('c', '0,2,6'), l = P3('l', '0,1,0'), me = q.has('me') ? P3('me', '0,0') : [c[0], c[2]];
     go(q.get('p') || 'town', +(q.get('st') || 21), me[0], me[1], 0, 0, q.has('env') ? ENV[q.get('env')] : undefined).then(() => { for (let i = 0; i < 6; i++) update(0.05); DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(c[0], groundAt(c[0], c[2]) + c[1], c[2]); DIR.b = DIR.a; DIR.la = new THREE.Vector3(l[0], groundAt(l[0], l[2]) + l[1], l[2]); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = +(q.get('fov') || 50); FOV = DIR.f0; resize(); $('hud').hidden = true; document.title = 'CAM ready'; }); }
   if (shot === 'swivel') go('town', 54, 0, 0, 0, 0, ENV.morning).then((P) => { const S = P.spots, k = S.knoll, gy = groundAt(k[0], k[1]); S.guns.forEach((g) => { g.visible = true; }); DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(k[0] + 1.9, gy + 1.5, k[1] - 0.6); DIR.b = DIR.a; DIR.la = new THREE.Vector3(k[0] - 0.9, gy + 1.0, k[1] - 0.5); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 50; FOV = 50; resize(); $('hud').hidden = true; });
+  /* A quiet, reusable poster frame from the soldiers' approach, before the fighting. */
+  if (shot === 'soldiers') go('watch', 42, 0.2, 4, PI, 0).then((P) => {
+    FIGHT.on = true; FIGHT.mode = 'halt'; FIGHT.sHead = 86; columnPlace(P, 86, true, 'Idle'); moveLock = true;
+    DIR.on = true; DIR.t = 0; DIR.dur = 1e6;
+    DIR.a = new THREE.Vector3(4, groundAt(0.2, 2.3) + EYE + 1.6, 6); DIR.b = DIR.a;
+    DIR.la = new THREE.Vector3(9, -39, 65); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 20; FOV = 20; resize();
+    $('hud').hidden = true; document.title = 'SOLDIERS READY';
+  });
   if (shot === 'poster') go('watch', 30, -0.4, -3.9, PI + 0.06, -0.03, ENV.dawn).then((P) => { $('hud').hidden = true; EYE = 1.75; P.spots.sticks.visible = false; });
   if (V[shot]) go(...V[shot]).then((P) => {
     if (shot === 'est2' || shot === 'est3' || shot === 'est4') { const S = P.spots, qn = byId('quamin'), m = byId('mama'); lead(qn, S.trail.dense, FOLLOW.quamin); follow(m, FOLLOW.mama); for (let i = 0; i < 200; i++) update(0.05); state.yaw = V[shot][4]; }

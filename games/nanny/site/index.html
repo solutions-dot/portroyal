@@ -178,7 +178,11 @@ body:has(#hornwrap:not([hidden])) :is(#talk,#hint,#toast,#nudge,#sub){visibility
 #leaves{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:43;background-size:100% 100%;transition:opacity .6s,transform .6s;transform:scale(1.22)}
 #leaves.on{opacity:1}#leaves.low{transform:scale(1.02)}
 @media (prefers-reduced-motion:reduce){#horndots.bad{animation:none}#leaves{transition:none}}
+/* The same in-game soldiers' approach is used on the main-menu card. */
+#title{background:linear-gradient(90deg,rgba(16,34,43,.94),rgba(16,34,43,.72) 42%,rgba(16,34,43,.1) 80%),url(title-scene.jpg) 65% center/cover no-repeat}
+@media(max-width:760px){#title{background-image:linear-gradient(180deg,rgba(16,34,43,.25),rgba(16,34,43,.94) 58%),url(title-scene.jpg)}}
 </style>
+<link rel="stylesheet" href="title.css">
 </head>
 <body>
 <canvas id="stage" tabindex="0" aria-label="The Blue Mountains of Jamaica at dawn, seen from a high rock"></canvas>
@@ -189,11 +193,10 @@ body:has(#hornwrap:not([hidden])) :is(#talk,#hint,#toast,#nudge,#sub){visibility
     <h1>Nanny Town 1734 <span>The Narrow Path</span></h1>
     <p class="intro">High in the Blue Mountains, people who escaped slavery built a free town. Its leader was Nanny. Soldiers came up the one narrow path, again and again.</p>
     <p class="intro">Walk there by night. Learn the horn. Stand watch. A story of courage, told gently.</p>
-    <div class="loading">
+    <div class="loading title-actions">
       <button id="start" class="btn" disabled>Loading</button>
       <button id="tchap" class="btn ghost" hidden>Chapters</button>
       <a id="allgames" class="btn ghost" href="../../../menu/">Main Menu</a>
-      <button id="dev" class="dev" title="Credits">Created by <b>Kellz 5.0</b></button>
       <div class="track" aria-hidden="true"><div id="bar"></div></div>
       <p id="loadnote">Loading the mountains.</p>
     </div>
@@ -232,7 +235,7 @@ body:has(#hornwrap:not([hidden])) :is(#talk,#hint,#toast,#nudge,#sub){visibility
       <header><h2 id="jtitle">Journal</h2><button id="jclose">Close</button></header>
       <div id="jtabs"></div>
       <div id="jpage"></div>
-      <footer><span>Pages open as you play</span><a id="jhome" class="btn ghost" href="../../../menu/" hidden>Main Menu</a><button id="jchap" class="btn">Chapters</button></footer>
+      <footer><span>Pages open as you play</span><a id="jhome" class="btn ghost" href="../../../menu/">Main Menu</a><button id="jchap" class="btn">Chapters</button></footer>
     </div>
   </div>
 </div>

@@ -196,7 +196,7 @@ The owner said yes to all three next steps: a better torch hand, an in-game menu
 
 ### Interface (same as the other games)
 
-The top right holds the Reset button (icon), the sound button (icon) and the Journal button with a count. The Journal panel has tabs and a footer with Main Menu (shown only on the History Games site, as now) and Chapters. The Chapters panel lists the six chapters; each opens when the one before is done; footer: Credits and Start again. Reset opens a card: restart this chapter, start the whole story again, or Main Menu. Progress, journal pages and choices are saved in localStorage (key `bogwalk-save`), with `?test=resume` wired as in the other games.
+The top right holds the Reset button (icon), the sound button (icon) and the Journal button with a count. The Journal panel has tabs and a footer with Main Menu (always available on the website) and Chapters. The Chapters panel lists the six chapters; each opens when the one before is done; footer: Credits and Start again. Reset opens a card: restart this chapter, start the whole story again, or Main Menu. Progress, journal pages and choices are saved in localStorage (key `bogwalk-save`), with `?test=resume` wired as in the other games.
 
 ### Journal pages (each with "Dig deeper")
 

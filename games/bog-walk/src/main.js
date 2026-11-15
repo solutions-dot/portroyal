@@ -386,8 +386,7 @@ function renderJournal(sel) {
 function openJournal(sel) { if (!$('journal').hidden) return; closeChapters(); closeCredits(); keys.clear(); renderJournal(typeof sel === 'string' ? sel : undefined); $('journal').hidden = false; $('jclose').focus(); }
 function closeJournal() { if ($('journal').hidden) return; $('journal').hidden = true; }
 $('jbtn').onclick = () => openJournal(); $('jclose').onclick = closeJournal;
-const MENU = { ok: false, url: '../../../menu/' };   /* the Main Menu buttons show only where the real game menu exists (the website, not a single-file copy) */
-{ const links = ['allgames', 'jhome'].map($); for (const a of links) a.hidden = true; fetch(MENU.url, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then((t) => { if (/History Games/.test(t)) { MENU.ok = true; for (const a of links) a.hidden = false; } }).catch(() => {}); }
+const MENU = { ok: true, url: '../../../menu/' };   /* Always available on the game collection, even if a menu fetch would fail. */
 function toMenu() { saveGame(); location.href = MENU.url; }
 
 /* ---------- cards ---------- */
@@ -544,7 +543,7 @@ function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); }
 $('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
 function openCredits() { closeJournal(); closeChapters(); keys.clear(); $('credits').hidden = false; $('crclose').focus(); }
 function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; }
-$('dev').onclick = openCredits; $('chcred').onclick = openCredits; $('crclose').onclick = closeCredits;
+$('chcred').onclick = openCredits; $('crclose').onclick = closeCredits;
 $('reset').onclick = () => { if (fading || !S.started) return; closeJournal(); leaveTalk(); closePuzzle(false); const i = chapterOf(stage);
   card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart "' + CHAPTERS[i].name + '"', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : []), { t: 'Cancel', go: hideCard }]); };
 $('exit').onclick = () => { if (locked()) return; card('Leave Zeke\'s story?', ['You can come back to it from the Chapters list.'], [{ t: 'Yes, go into the Tube', go: () => { hideCard(); beginChapter(2); } }, { t: 'No, stay here', go: hideCard }]); };
@@ -724,8 +723,8 @@ function begin(skipIntroCards) {   /* the night only (dev views and the night's 
 let modelsReady = false;
 applySave(loadGame());
 $('start').onclick = () => { startGame(); cue('begin'); const ch = hasSave ? chapterOf(stage) : 0, st = hasSave && stage >= 10 ? (SAFE[stage] || stage) : undefined; beginChapter(ch, ch === 2 || ch === 3 ? undefined : st); setTimeout(backgroundLoad, 5000); };
-model('anims').then((an) => { loadClips(an); return ensurePlace(hasSave ? (CH_PLACE[chapterOf(stage)] === 'tube' ? 'station' : CH_PLACE[chapterOf(stage)]) : 'station'); }).then(() => {
-  modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; if (__DEV__) devViews(); });
+model('anims').then((an) => { loadClips(an); $('bar').style.width = '50%'; return ensurePlace(hasSave ? (CH_PLACE[chapterOf(stage)] === 'tube' ? 'station' : CH_PLACE[chapterOf(stage)]) : 'station'); }).then(() => {
+  $('bar').style.width = '100%'; modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; if (__DEV__) devViews(); });
 async function backgroundLoad() { for (const id of ['station', 'kingston', 'yard', 'ruins']) { await ensurePlace(id); await new Promise((r) => setTimeout(r, 400)); } }
 
 /* ---------- the frame loop ---------- */
