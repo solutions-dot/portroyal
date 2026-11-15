@@ -2,7 +2,7 @@
 
 Read this before you add a single character to any game, new or old. It is the one standard for how people are built, coloured, placed and checked, so that every game looks the same and every new game starts right.
 
-Status, November 2026: the rules below hold now. A shared engine module (`engine/people.js`) and a shared test module are being built to replace the per-game code; until they land, copy the Kendal code named below. When they land, this page will be updated and every game will move to them.
+Status, November 2026: the rules below hold now. There is no shared people module yet: `engine/people.js` was planned but does not exist, so every game copies Kendal's code named below. The checks themselves are shared (`engine/audit.js`, `engine/skinprobe.js`). The step-by-step guide for bringing a game up to this standard, and where each game stands today, is `docs/STANDARD.md`.
 
 ## 1. Bodies come from recipes, never by hand
 
@@ -13,7 +13,7 @@ Status, November 2026: the rules below hold now. A shared engine module (`engine
   - `"hat"` as a list of `[kind, material]` pairs, even for one hat: `[["felt", "Hat"]]`. Several hats on one body are fine; the game shows one and hides the rest.
   - `"collar"` as a kind (`"camp"`, `"round"`, `"turn"`, `"stand"`), not `true`.
   - `"colors"` for every garment it wears, in sRGB 0 to 255, keyed by material name.
-- Children are real child bodies, never shrunken adults. Build them at a child's shape with `"upscale"` (so the adult animations fit), then shrink them in the game by about 1 / upscale (upscale 1.26 means scale 0.8). Start from `tools/kendal/people/boy.json` and `girl.json`.
+- Children are real child bodies, never shrunken adults. Build them at a child's shape with `"upscale"` (so the adult animations fit), then shrink them in the game by about 1 / upscale (upscale 1.26 means scale 0.8). Start from `tools/kendal/people/boy.json` and `girl.json` (not the older copies in `tools/people/kids/`).
 - Full list of recipe keys and what they do: `docs/PIPELINE.md`, section 5.
 
 ## 2. Building and packing
@@ -38,12 +38,12 @@ node tools/people/pack.mjs --src build/people --out games/<game>/site/models --l
 - Check what a face really looks like in your game's lighting with `engine/skinprobe.js` (dev only), never by eye on one screen. The target range, the one factor each game may use, and how to measure are in `docs/PIPELINE.md` ("Skin").
 - Hair keeps its own painted colour (dark, or grey for an elder). Collar matches the shirt; a pocket is a shade darker than the shirt.
 
-## 4. In the game (copy Kendal until `engine/people.js` lands)
+## 4. In the game (copy Kendal)
 
 Kendal's `games/kendal/src/main.js` and `cast.js` are the model to copy:
 
 - Load each body once and clone it per person (`loadBase`, `skClone`). Turn off frustum culling on skinned meshes.
-- Recolour by material name in one place (`makeBody`), with one palette table per period (`LOOKS` in `cast.js`).
+- Recolour by material name in one place (`makeBody`), with one palette table per period (`LOOKS` in `cast.js`). Multiply only the `Skin` material by the game's skin factor; set `Hair` to 1 (Kendal: `o.material.color.setScalar(1)`), never to the skin factor.
 - Show one hat, hide the others (`HATS`, `offHats`).
 - Animate with `engine/anim.js` (`animate`, `groundFeet` every frame for standing and walking people, `ctl.pace` for walkers so feet don't slide). Seated people are not grounded; give them a seat height.
 - Held items use `engine/grip.js` (`grip`, `spreadArms`, `gripTick` after the mixer). Never parent an item straight to a hand bone by hand.
@@ -61,6 +61,7 @@ Wire these into the dev build before the first pull request; each must report 0 
 | `?test=cloth` | skin or under-layers showing through clothes, standing, walking, talking, waving and sitting, full and light copies |
 | `?test=walkers` | walkers sliding, floating or sinking |
 | `?test=skin` | face colour as drawn in the game's own light |
+| `?test=resume` | every saved stage reloads in the right place (once the game saves) |
 
 Copy the Kendal blocks for each (search its `main.js` for `q.get('test')`). Then look yourself: close screenshots of every body, front and three-quarter, standing and mid-stride, full and light copy. Look for jagged necklines and hems, collars that float, hands in bodies, and wrong skin tone. See `docs/TESTING.md`.
 

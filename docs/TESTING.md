@@ -63,7 +63,12 @@ The autoplayer jumps between actions instead of walking, so it can't catch movem
 
 ## 4. Character and model checks
 
+The rules every character must meet are in `docs/PEOPLE.md`; the checklist is in `docs/STANDARD.md`.
+
 - `tools/people/preview_heads.py` and `preview_body.py` render front, back and close-up images with Blender.
+- `tools/garvey/preview.py` renders front and three-quarter views of bodies built by `era.py`, brighter than the two above: `NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/preview.py -- printer1907,woman1914` (writes `build/garvey_front.png` and `build/garvey_34.png`).
+- Blender previews make dark skin look darker than the game does. Judge skin with `?test=skin` and game screenshots (`docs/PIPELINE.md`, "Skin").
+- In the game: Port Royal's `?shot=sheet&who=<name>`, and Kendal's and Melissa's `?shot=model&m=people&ids=...` line people up for a close look.
 - Look for hair poking through hats, cloth gaps, shirts showing through, and floating feet.
 
 ## 5. Automatic checks (required for every game)
@@ -76,8 +81,8 @@ Owner rule, for every game: these checks are wired into the dev build, and **eve
 | Held items | `?test=held` | Something carried (a basket, a lantern, a suitcase) that is not at the hand, hangs the wrong way up, or cuts into the carrier's body. It tests the real mesh vertices against the posed body. |
 | Layout | `?test=layout` | Interface text that overlaps other interface, is clipped, or runs off the screen, in each state (play, narration, dialogue, card, hold button, helper arrow), and checks that the journal, chapters and credits panels opened in the middle of play have their title and Close button on top (nothing from the HUD covers them). Run it at **390x800, 667x375, 800x500 and 1280x720**; the 1280x720 run takes about 4 minutes in software drawing. |
 | Walking | `?test=walkers` (Kendal) | Every body walks whole loops at the speed the game moves it (`auditWalk` in `engine/audit.js`). It reports the stride, the clip speed used, how far the feet slide in a loop (good is under 3 cm), how far the shoes sink or float, and any jump where the loop joins. A carried thing must stay clear of the body in every stride. |
-| Cloth | `?test=cloth` (Kendal and Garvey; `&b=man_suit,boy` picks bodies, `&full` or `&lo` one kind in Kendal; `&where` adds where the worst point is) | An under layer that shows through its cover: skin through a shirt, a shirt through a waistcoat or jacket, hair through a hat (`auditCloth` in `engine/audit.js`). It poses every body (and in Kendal every light copy, each hat, and with the waistcoat hidden) standing, mid-stride, talking, waving and sitting, works out the real vertex positions, and lists body, pose, the two pieces, how many points and the worst depth in millimetres. Hands and arms hanging against skirts, points near a sleeve hem or a neckline, and the shirt's own neck ring under a jacket are left out on purpose: they are openings, not show-through. In Kendal's people viewer `?shot=model&m=people&ids=gran,lloyd&cloth` draws a red dot on every fault. **Not yet at 0**: on 14 November 2026 Kendal had 9 lines (15 points), Garvey 11 lines (55 points) and Port Royal 34 lines (390 points). Kendal's and Garvey's are a few points at the waist of a shirt over trousers or at a jacket's hem when sitting; Port Royal's are a shirt collar against the coat when walking, breeches against the coat skirt and a shirt tail against the breeches when sitting, and buc1's waistband. See `docs/games/kendal.md`. |
-| Skin | `?test=skin` (Kendal, Garvey, Port Royal) | The colour each face is drawn in, in the game's own light, from four headings (`engine/skinprobe.js`). Compare with the target in `docs/PIPELINE.md`, "Skin". |
+| Cloth | `?test=cloth` (Kendal, Garvey, Port Royal, Tivoli; `&b=man_suit,boy` picks bodies, `&full` or `&lo` one kind in Kendal; `&where` adds where the worst point is) | An under layer that shows through its cover: skin through a shirt, a shirt through a waistcoat or jacket, hair through a hat (`auditCloth` in `engine/audit.js`). It poses every body (and in Kendal every light copy, each hat, and with the waistcoat hidden) standing, mid-stride, talking, waving and sitting, works out the real vertex positions, and lists body, pose, the two pieces, how many points and the worst depth in millimetres. Hands and arms hanging against skirts, points near a sleeve hem or a neckline, and the shirt's own neck ring under a jacket are left out on purpose: they are openings, not show-through. In Kendal's people viewer `?shot=model&m=people&ids=gran,lloyd&cloth` draws a red dot on every fault. **Not yet at 0**: on 14 November 2026 Kendal had 9 lines (15 points), Garvey 7 lines (49 points: trousers through the jacket hem when sitting for `delegate1920`, `garvey1914`, `garvey1916` and `hl_critic`, and a few points at a shirt's waist) and Port Royal 34 lines (390 points). Kendal's are a few points at the waist of a shirt over trousers or at a jacket's hem when sitting; Port Royal's are a shirt collar against the coat when walking, breeches against the coat skirt and a shirt tail against the breeches when sitting, and buc1's waistband. See `docs/games/kendal.md`. |
+| Skin | `?test=skin` (Kendal, Garvey, Port Royal; Tivoli with a local copy) | The colour each face is drawn in, in the game's own light, from four headings (`engine/skinprobe.js`). Compare with the target in `docs/PIPELINE.md`, "Skin". |
 | Resume | `?test=resume` (where the game saves) | Every saved stage reloads into the right place without breaking. |
 
 ```bash
@@ -89,9 +94,9 @@ timeout 150 google-chrome --headless=new --no-sandbox --use-gl=swiftshader --ena
   --virtual-time-budget=60000 --dump-dom "http://localhost:8765/games/kendal/site/index.html?test=layout" | sed -n '/<pre id="autolog"/,/<\/pre>/p'
 ```
 
-Port Royal has `?test=held` (the soldier's half-pike, Grace's basket, Kofi's crate, standing and walking) and `?test=cloth` (every body standing, mid-stride, talking and sitting; `&b=galdy,kofi` picks bodies). Its place audit and layout test are not wired yet.
+Port Royal has `?test=held` (the soldier's half-pike, Grace's basket, Kofi's crate, standing and walking), `?test=cloth` (every body standing, mid-stride, talking and sitting; `&b=galdy,kofi` picks bodies), `?test=skin`, `?test=walk` and `?test=collision` / `?test=seating`. Its full place audit (`?test=audit`) and layout test are not wired yet.
 
-Bog Walk (`docs/games/bog-walk.md`) is a first-person game with no people yet, so its `?test=held` checks the hand and torch directly (finger count, grip on the stick, on screen) instead of calling `auditHeld`, and its `?test=audit` adds a rule that nothing hung in the pipe may be outside the wall. It is a second model for games like that.
+Bog Walk (`docs/games/bog-walk.md`) is first person, so its `?test=held` checks the torch hand directly (finger count, grip on the stick, on screen) as well as calling `auditHeld` for the people in its places, and its `?test=audit` adds a rule that nothing hung in the pipe may be outside the wall. Its checks live in `games/bog-walk/src/dev.js`. It is a second model for games like that.
 
 How to wire it into a game (Kendal's `main.js` is the model: search for "the place audit"):
 1. When a place is built, take `snap = snapMeshes(group)` **before** `batchStatic` merges the meshes.
@@ -106,6 +111,23 @@ Rules of thumb the audit enforces:
 - A person who sits needs a seat. Give the person spec `seat: <top of the seat>` and the engine places the hip joint 12 cm above it for any body size (`SIT_HIPS` in Kendal's `main.js`). The sitting clips are chair poses: outdoors, put a bench or stool under them.
 - Crowds and strollers use a relaxation pass and keep-out footprints so nobody overlaps; scenery must not sit on a path.
 - When you find a new kind of mistake by eye, add a check for it here, then fix the places.
+
+## 6. Which game wires which check
+
+Read from each game's code (`q.get('test')` in `games/<game>/src/`), November 2026. "yes" means the dev build answers that `?test=` name; it does not mean it reports 0. `collision` and `seating` are other names for the place audit where a game has one. The template wires none.
+
+| Game | audit | held | layout | cloth | walkers | skin | resume | other |
+|---|---|---|---|---|---|---|---|---|
+| Port Royal | no (only `collision`, `seating`) | yes | no | yes | no | yes | no | `walk` |
+| Marcus Garvey | no (`overlap`, `collision`, `seating` check people against furniture) | no | no | yes | no | yes | no | `walk` |
+| Kendal 1957 | yes | yes | yes | yes | yes | yes | yes | |
+| Bog Walk 1904 | yes | yes | yes | no | no | no | yes | |
+| Nanny Town 1734 | yes | yes | yes | no | yes | no | yes | |
+| Eventide 1980 | yes | yes | yes | no | no | no | yes | |
+| Hurricane Melissa | yes | yes | yes | no | no | no | yes | |
+| Tivoli | no (no places yet) | yes (weapon grips) | no | yes | yes | yes | no | `clips`, `measure` |
+
+Each game's current state and gaps are in `docs/STANDARD.md`, "Where each game stands".
 
 ## Lessons learned (bugs that slipped through)
 

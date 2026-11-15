@@ -1,5 +1,5 @@
 /* games/tivoli/src/cast.js: Tivoli's bodies and how each person looks. Copies Kendal's pattern (games/kendal/src/main.js and cast.js) until
-   engine/people.js lands (docs/PEOPLE.md, on branch claude/affectionate-pasteur-xvhvlq until merged): load each body once, clone it per person,
+   engine/people.js lands (docs/PEOPLE.md): load each body once, clone it per person,
    recolour by material name in one place, lighten the skin so faces read in every light (CLAUDE.md rule 9).
    Bodies come from recipes in tools/tivoli/people/ (era.py, then tools/tivoli/kit.py for the 2010 uniforms, then pack.mjs); see docs/games/tivoli.md "Uniforms". */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';

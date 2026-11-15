@@ -8,19 +8,39 @@ engine/                   shared runtime code, imported by every game
   anim.js                 clip library, per-character animation controller, seamless loops, feet on the ground
   audio.js                all sound, synthesised with Web Audio (no audio files)
   loader.js               loads models packed as base64 .js files (versioned URLs, background prefetch)
+  audit.js                dev-only checks: floating things, people in solids, held items, seats, walking, cloth
+  skinprobe.js            dev-only: how dark each face is drawn in the game's light
+  grip.js                 hands that hold things, arms held clear of the body
+  placement.js            seats (anchorSeat) and walking routes round walls
+  colours.js              mends the vertex colours of older character files at load
+  input.js                E / Enter / Space to act, and releasing keys when the page loses focus
+  locomotion.js           the player's visible walk (Port Royal)
+  loft.js                 smooth animal bodies (Kendal, Melissa)
+  ui-audit.js             painted-text overlap test (Bog Walk, tests/ui-audit.html)
 shared/
   models/anims.js         the shared animation library (39 Mixamo clips on one skeleton), copied into each game at build
   anim-sources/*.fbx      the original Mixamo downloads the library is made from
-  rig/char.blend          the reference rig every character uses (Abba's), plus eye.png
+  rig/char.blend          the reference rig every character uses (Abba's), plus eye.png and eye_small.jpg
 games/
-  port-royal/             the first game
+  port-royal/             Port Royal 1690, the first game
     src/main.js           all game-specific code (world, story, UI); imports engine/
     site/                 what gets published: index.html, app.js (built), models/*.js
     assets/               source .glb files (houses, ships, characters) before packing
-  _template/              a small working starter for a new game
-menu/index.html           the game picker page
+  garvey/                 Marcus Garvey (src/ split into modules from here on)
+  kendal/                 Kendal 1957
+  bog-walk/               Bog Walk 1904: The Tube
+  nanny/                  Nanny Town 1734
+  eventide/               Eventide Home 1980
+  melissa/                Hurricane Melissa (1988 and 2025)
+  tivoli/                 Tivoli (moved from games/_tivoli/ when it went on the menu)
+  _template/              a small working starter for a new game (not published)
+menu/index.html           the game picker page: one card per game, all eight on it
 tools/                    the asset pipeline (see PIPELINE.md) and the build script
-docs/                     these documents
+  garvey/era.py           the clothes builder every game's people come from
+  people/pack.mjs         packs built bodies for a game
+  <game>/people/*.json    each game's character recipes (Port Royal's are in tools/people/)
+tests/                    Node regression fixtures (npm test) and tests/ui-audit.html
+docs/                     these documents (docs/STANDARD.md is the how-to for making things)
 build/                    scratch output from tools (git-ignored)
 ```
 
@@ -28,7 +48,7 @@ build/                    scratch output from tools (git-ignored)
 
 `node tools/build.mjs <game> [--dev]` does two things:
 
-1. It copies `shared/models/*.js` into `games/<game>/site/models/`, so every game ships the same animation library. If `games/<game>/anim-clips.json` exists (a list of clip names), that game's copy is cut down to just those clips (`tools/anim_subset.mjs`, the clips are untouched). Garvey plays 7 of the 39, which takes its animation file from about 317 KB to 99 KB gzipped.
+1. It copies `shared/models/*.js` into `games/<game>/site/models/`, so every game ships the same animation library. If `games/<game>/anim-clips.json` exists (a list of clip names), that game's copy is cut down to just those clips (`tools/anim_subset.mjs`, the clips are untouched). Garvey plays 7 of the 39, which takes its animation file from 979 KB to 242 KB.
 2. It bundles `games/<game>/src/main.js` with esbuild into `games/<game>/site/app.js`. That includes three.js and any engine modules the game imports, and a fingerprint for every model file so models are asked for as `models/<name>.js?v=<fingerprint>` (see `docs/ENGINE.md`).
 
 - `--dev` defines `__DEV__ = true`, which keeps the test views (`?shot=...`) and the autoplayer (`?auto=N`).
@@ -36,7 +56,7 @@ build/                    scratch output from tools (git-ignored)
 
 `site/` is fully static: `index.html`, `app.js` and `models/*.js`. It works from any static host, including a claude.ai artifact (see PUBLISHING.md).
 
-`node tools/dist.mjs` (`npm run dist`) builds the whole website into `dist/`: the menu as the home page (and again at `/menu/`), and each released game (excluding `_` templates and the Eventide prototype) at `/games/<game>/site/`, as public builds. Vercel runs it on every push (`vercel.json`).
+`node tools/dist.mjs` (`npm run dist`) builds the whole website into `dist/`: the menu as the home page (and again at `/menu/`), and each game folder that has `src/main.js` and does not start with `_` at `/games/<game>/site/`, as public builds. Vercel runs it on every push (`vercel.json`).
 
 ## How a game runs (Port Royal as the example)
 

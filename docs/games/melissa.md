@@ -68,7 +68,7 @@ python3 -m http.server 8765                 # then open http://localhost:8765/ga
 
 ## People (follow `docs/PEOPLE.md`)
 
-`docs/PEOPLE.md` is on the branch `claude/affectionate-pasteur-xvhvlq` (PR 50). Recipes for the 1988 and 2025 bodies are in `tools/melissa/people/` (see its README). They are **not built**, because MakeHuman and Blender were not available when the game was started. The game uses bodies already built for Kendal (allowed: a body used by two games is built once and copied), recoloured per person in `cast.js`. The stand-ins wear 1950s cuts; build the real bodies and point `cast.js` at them.
+`docs/PEOPLE.md` is on `main` (PR 50 merged). Recipes for the 1988 and 2025 bodies are in `tools/melissa/people/` (see its README). They are **not built**, because MakeHuman and Blender were not available when the game was started. The game uses bodies already built for Kendal, plus Garvey's `guide2020` and `student2020` (allowed: a body used by two games is built once and copied), recoloured per person in `cast.js`. The stand-ins wear 1950s cuts; build the real bodies and point `cast.js` at them.
 
 ## Research
 

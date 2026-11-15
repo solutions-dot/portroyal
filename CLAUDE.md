@@ -20,6 +20,7 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 |---|---|
 | New to the repo | `docs/ARCHITECTURE.md` (layout, how a game runs, the build) |
 | Using shared code (animation, sound, loading) | `docs/ENGINE.md` |
+| Making or fixing people, clothes, places or animations in any game, or bringing one game up to the standard (checklist and each game's status) | `docs/STANDARD.md` |
 | Adding or changing people in any game (the standard every game follows) | `docs/PEOPLE.md` |
 | Making characters, animations, buildings or packed models | `docs/PIPELINE.md` |
 | Writing dialogue, goals, journal pages, chapters | `docs/CONTENT.md` |
@@ -31,6 +32,8 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 | Working on Kendal 1957 | `docs/games/kendal.md` |
 | Working on Bog Walk 1904 | `docs/games/bog-walk.md` |
 | Working on Nanny Town 1734 | `docs/games/nanny.md` |
+| Working on Eventide Home | `docs/games/eventide.md` |
+| Working on Hurricane Melissa | `docs/games/melissa.md` |
 | Working on Tivoli | `docs/games/tivoli.md` |
 
 ## Rules the owner has set (follow them every time)

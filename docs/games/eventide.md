@@ -1,16 +1,14 @@
 # Eventide 1980: the game plan (story draft)
 
-Status: **story plot, agreed by the owner on 13 Nov 2026.** No code, models or menu card exist yet, and the facts still need the second research pass. Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/games/garvey.md` first. Garvey is the closest model: its panels, journal, chapters, saving and helper arrow are the ones to copy, and two of its activities are reused below.
+Status: **the story plot was agreed by the owner on 13 Nov 2026, and the game is built and on the menu.** Code is in `games/eventide/` (seven chapters in `src/content.js`), and the menu has its card. The facts still need the second research pass. Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/games/garvey.md` first. Garvey is the closest model: its panels, journal, chapters, saving and helper arrow are the ones to copy, and two of its activities are reused below.
 
 Owner decisions (13 Nov 2026): **the hero is a fictional child who is grown in chapter 7**; **two of the four women get out, and they are Miss Hyacinth and Miss Maude**; **the night chapter can be a little more detailed, but never graphic**. The owner also agreed the storyline as a whole, which includes the other recommendations at the end of this file.
 
-Working title: **Eventide 1980**. Code would live in `games/eventide/` (copied from `games/_template/`, then the Garvey panels).
+Working title: **Eventide 1980**. Code lives in `games/eventide/` (copied from `games/_template/`, then the Garvey panels).
 
-## Build status (local work, 13 Nov 2026)
+## Build status (checked against the code, November 2026)
 
-Building has started on the branch only. Nothing is pushed, because other chats are changing other games at the same time.
-
-- **Characters** come from `tools/eventide/people.py`, a copy of `tools/garvey/era.py` so the shared tools stay untouched. It adds a head tie (`headtie`), a dress hem from ankle to knee (`hem`), a cardigan, glasses, children's knee shorts (`breechkind: "shorts"`) and short white socks. Clothes around the waist now scale with the body, so real children's bodies work: no more scaled-down adults. Built so far: Miss Iris (`iris1980`), a girl and a boy of about 10 (`girl1980`, `boy1980`), each 290 to 360 KB packed.
+- **Characters.** Eventide's own bodies were built with `tools/eventide/people.py`, a copy of `tools/garvey/era.py` that adds a head tie (`headtie`), a dress hem from ankle to knee (`hem`), a cardigan, glasses, children's knee shorts (`breechkind: "shorts"`) and short white socks. Built: Miss Iris (`iris1980`), a girl and a boy of about 10 (`girl1980`, `boy1980`; the game uses `girl1980`, not `boy1980`). Everyone else is a Kendal 1957 body recoloured (`man_elder`, `man_shirt`, `man_suit`, `man_work`, `woman57`, `woman_elder`, `boy`, `girl`), so they wear 1950s cuts. The three recipes in `tools/eventide/people/` leave out `era`. To meet `docs/PEOPLE.md`, move the extra garments into `era.py` (its own PR, guarded by era) and build every Eventide person from recipes there; see `docs/STANDARD.md`.
 - **Skin** follows owner rule 9: build colours in the Marcus Garvey range, lightened in the game (`SKIN_LIGHT = 1.55`). At night a soft warm light at the camera keeps the face of anyone you talk to visible.
 - **Places** are built in code in `games/eventide/src/places.js`, with helpers copied from Kendal into `gfx.js`.
   - Slipe Pen Road: the road, the bus stop, three shops, power poles, the chain-link fence and gate, the gatehouse, the Myers Ward and the children's building. The ward is two storeys of weatherboard with a two-storey veranda, louvred windows and a hip roof of zinc. Its size and colours are an impression.
@@ -18,13 +16,13 @@ Building has started on the branch only. Nothing is pushed, because other chats 
 - **Photographs from the owner (13 Nov 2026, reference only, never textures; sources still to record):** the entrance (whitewashed wall, two tall pillars, an iron arch reading EVENTIDE HOME with a hanging lamp, iron gates, a long dusty avenue of tall trees); a two-storey building with a plastered, arched lower storey, a gabled porch and outside stairs (used for the men's ward); a burnt one-storey building with a front overhang on square pillars (used for the children's ward); "Myers Ward after fire" (a field of zinc sheets and timber, with block buildings and a two-storey building with a small pyramid roof behind it: for chapter 4's dawn); and "Mass grave at National Heroes Park" (a concrete-lined trench with planks, a crowd behind a rail: for chapter 5). Which building each photo shows is our assumption.
 - **The compound now:** the photo entrance, a 57 m avenue with whitewashed tree trunks and benches, the Myers Ward facing the avenue (Miss Iris on its veranda), the men's and children's wards (the Home was a three-building facility), a kitchen, water tank, standpipe and the meal van (JNHT), clotheslines, flame trees in bloom, palms, bougainvillea, grass and flowers, and hills round about.
 - **Open:** the owner says there seems to be more than one monument. The 2025 photograph shows low white stepped slabs behind the triangle; what they are is not known yet.
-- **Checks:** `?test=audit` reports 0 issues in both places. `?test=held` and `?test=layout` are still to wire before the first PR.
+- **Checks:** `?test=audit` (also `collision`, `seating`), `?test=held`, `?test=layout` and `?test=resume` are wired (`games/eventide/src/main.js`). `?test=audit` reported 0 issues in both places on 13 Nov 2026. `?test=cloth`, `?test=walkers` and `?test=skin` are not wired yet. The game lightens both Skin and Hair by `SKIN_LIGHT = 1.55`; `docs/PEOPLE.md` says hair keeps its own colour.
 
 ```bash
 MAKEHUMAN=~/mh/makehuman NPC_OUT=build/people/ ~/venv/bin/python3 tools/eventide/people.py "$(cat tools/eventide/people/iris1980.json)"
-node tools/optimize_models.mjs --dir build/people --chars iris1980     # then pack into games/eventide/site/models/ as in docs/PIPELINE.md
+node tools/people/pack.mjs --out games/eventide/site/models --lo iris1980     # always pass --out (docs/PIPELINE.md, section 5)
 node tools/build.mjs eventide --dev
-# views: ?shot=cast, castnight, castclose, castnightclose, road1, gate1, avenue1, ward1, ward2, veranda1, men1, kids1, back1, wardnight, mon1, mon2, mon3; ?test=audit
+# views: ?shot=cast, castnight, castclose, castnightclose, road1, gate1, avenue1, ward1, ward2, veranda1, men1, kids1, back1, wardnight, mon1, mon2, mon3; ?test=audit, held, layout, resume
 ```
 
 Next: the other women and Gran, the nurse, a firefighter and a police officer in 1980 uniform, the inside of the ward, Miss Iris seated on the veranda (a chair, checked by the seat audit), and the night scene with the burning ward seen from the rope.
@@ -241,10 +239,10 @@ A second sample, for chapter 4's "History / Story" page, with a survivor's real 
 - **The fire sequence:** flames in the windows and roof, flicker, smoke, sparks, the roof and walls falling at a distance, sirens, a rope clamp, a fire engine, firefighters and a police officer in 1980 uniform, blankets, and women and children sitting by the road. Nothing inside the ward. All sound is synthesised in `engine/audio.js` (no audio files).
 - **Characters (the real risk):**
   - Elderly women: older body macros, head ties, house dresses and cardigans, a stick, a white cane. `era.py` makes skirts, blouses and buns but no elderly look yet.
-  - **Children** for the nearby building and the park. Garvey's known issue says a very young or short body leaves skin strips at the trouser legs, and a child body is still unbuilt. Allow time.
+  - **Children** for the nearby building and the park. Real child bodies now exist (`upscale`, Kendal's `boy.json` and `girl.json`, and this game's `girl1980` and `boy1980`).
   - 1980s clothes for men, women, schoolchildren and officials.
   - A slow walk clip for the women, and sitting, which already exists.
-- **Menu card and a poster picture** at the end, as for Garvey.
+- **Menu card and a poster picture**: the card is on the menu now.
 
 ## Decisions for the owner (my recommendation first)
 

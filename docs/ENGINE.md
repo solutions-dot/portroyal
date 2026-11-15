@@ -8,6 +8,8 @@ import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, tone, nois
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 ```
 
+The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies) and `ui-audit.js` (text overlap). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
+
 ## engine/loader.js: loading packed models
 
 Models ship as `site/models/<name>.js`, each defining `window.__models[name] = "<base64 glb>"`. This keeps everything as text, so any static host serves it, including claude.ai artifacts.
@@ -81,8 +83,50 @@ Required for every game (CLAUDE.md rule 8, TESTING.md section 5). Nothing here r
 | `auditWalk(id, body, v, opts)` | Steps a walking body through whole loops at ground speed `v` and measures foot slide, sinking, floating and jumps. |
 | `auditCloth(id, body, { poses })` | Finds an under layer that shows through its cover in each pose (skin, shirt, waistcoat, hair under a hat). The layer order is `CL_ORDER` in the file. |
 | `auditPeople(...)` | People standing in the same spot, or on a walker's path. `auditPlace` calls it. |
+| `auditThrough(snap)` | Bushes, tree crowns and other leafy shapes that poke through a wall and show on both sides. Call it and report its lines with the rest. |
+| `insideBoxFootprint(mesh, x, y, z)` | Whether a point is inside a mesh's own (rotated) box. A helper for the checks above. |
 
 Show the results in a dev-only `?test=audit` view and expect 0 issues. Kendal's `main.js` ("the place audit") is the example.
+
+## engine/placement.js: seats and walking routes
+
+| Name | Use |
+|---|---|
+| `anchorSeat(model)` | Puts a seated person on their seat by the pelvis, not the toes. Set `model.userData.seatAnchor = { top, x, z, ry, lift }` (only `top`, the seat's height, is needed); `groundFeet` and the animation controller then call it every frame. The hip joint rides about 12 cm above the seat (scaled with the body). Works in the model's parent's space, so a seat can ride in a train. |
+| `segmentHitsWall(a, b, wall, r)` | Whether a disc of radius `r` moving from `a` to `b` touches a wall rectangle `[x0, z0, x1, z1]`. |
+| `slideWalls(from, to, walls, r)` | Moves from `from` toward `to`, sliding along walls instead of stopping. |
+| `routeIssues(id, path, walls, r, loop)` | Lines for every leg of a walker's route that crosses a wall rectangle. |
+| `furnitureRouteIssues(id, path, snap, ground, r, loop)` | The same against the real furniture boxes from `snapMeshes`, so a missing wall rectangle is still caught. |
+| `walkRoute(a, b, walls, r, bounds)` | A short route round nearby walls, for people who follow the player. |
+
+## engine/skinprobe.js: how dark a face really looks (dev only)
+
+`skinProbe(renderer, scene, body)` turns a posed person in the scene to four headings, renders each face in the game's own light from 70 cm, and reads the forehead and cheeks. It returns `{ rgb, lo, hi, each }` (0 to 255 as drawn). Wire it as `?test=skin` and compare with the target in `docs/PIPELINE.md`, "Skin". Used by Kendal, Marcus Garvey and Port Royal (Tivoli has a local copy in `games/tivoli/src/checks.js`).
+
+## engine/colours.js: old character colours
+
+`model()` in `engine/loader.js` calls `repairLegacyVertexColours(gltf)` on every load. A character whose scene is not marked `vertexColorSpace: linear` (an older export, made linear twice) has its vertex colours mended once; marked files, scenery and textures are left alone. Nothing to call by hand. To fix a packed body for good, use `tools/people/fix_colours.mjs` (`docs/PIPELINE.md`, section 5).
+
+## engine/input.js: keys and focus
+
+| Name | Use |
+|---|---|
+| `useInteractionKey(e, action)` | On keydown: E, Enter or Space runs `action()` (talk, use), unless a button, link or text field has focus. Returns true if it acted. |
+| `releaseOnBlur(keys, pointers, onRelease)` | Clears held keys and touch pointers when the window loses focus or the page is hidden, so the player does not keep walking. |
+
+Every game and the template import it.
+
+## engine/locomotion.js: the player's visible walk
+
+`updateWalk(model, dx, dz, dt)` drives a visible walking body from the distance it really moved this frame: it turns the body to face the way it went, plays `WalkM` at a speed that fits, and rests when it stops. Port Royal uses it for Lewis Galdy (`?test=walk`).
+
+## engine/loft.js: smooth animal bodies
+
+`loftSkin(rings, sides, ref)` makes one smooth mesh along a curved centreline from rings `[x, y, z, width, height, topColour, bottomColour]`, so a neck and a chest never show end caps where they meet. Kendal and Hurricane Melissa use it for animals (`props.js`).
+
+## engine/ui-audit.js: text overlap
+
+`contentsOverlap(a, b)` says whether the painted text of two elements overlaps (`contentRects(el)` gives the rectangles, clipped to scrolling parents and closed `<details>`). Bog Walk's layout test uses it, and `tests/ui-audit.html` checks it (`docs/TESTING.md`). Other games have their own layout checks in `main.js`.
 
 ## Still inside Port Royal, ready to move next
 
@@ -112,4 +156,4 @@ These systems are general but still live in `games/port-royal/src/main.js`, beca
 | `spreadArms(model, angle)` | Holds both empty arms a little further out, so hands do not sink into a wide skirt or a jacket. |
 | `gripTick(model)` | Call every frame after the mixer update for any model with `userData.grips`. |
 
-Kendal and Marcus Garvey use it. Check the result with `?test=held`.
+Imported by Kendal, Marcus Garvey (`spreadArms` and `gripTick` only), Bog Walk (`grip` and `gripTick`), Eventide, Hurricane Melissa and Nanny Town. Port Royal still uses the older way (items placed on or parented to the hand bone in `main.js`), which new code must not copy, and Tivoli's two-handed weapon hold is its own code in `games/tivoli/src/weapons.js` (same method, `engine/grip.js` left unchanged). Check the result with `?test=held`.
