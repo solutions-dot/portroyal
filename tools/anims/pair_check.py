@@ -150,6 +150,11 @@ def run(name):
             if gp[i] in (REST[name] + 'Hand', REST[name] + 'Fingers', REST[name] + 'ForeArm'): continue   # the resting arm is measured from its own side above (a thin hand has no reliable inside)
             if d < 0.01: note(('taker ' + lab, 'giver ' + gp[i]), 0.01 - d)
         band.append(hand); parts.append(near)
+        if os.environ.get('SUGGEST') and k == 0:   # where a flat palm would lie: the surface under the palm's middle
+            pv = [v for v, lab in zip(gv, G['labels']) if lab == REST[name] + 'Hand']; pc = sum(pv, Vector()) / len(pv)
+            loc, nrm, idx, d = ttree.find_nearest(pc)
+            rb = G['rig'].pose.bones['mixamorig:' + REST[name] + 'ForeArm']; fa = (G['rig'].matrix_world.to_3x3() @ rb.matrix.to_3x3()).col[1].normalized()
+            print('SUGGEST palm_centre', tuple(round(x, 4) for x in pc), 'surface', tuple(round(x, 4) for x in loc), 'normal', tuple(round(x, 3) for x in nrm), 'forearm', tuple(round(x, 3) for x in fa))
         for who, (vs, ts, ps, labs) in (('giver', (gv, gt, gp, G['labels'])), ('taker', (tv, tt, tp, Tk['labels']))):   # hands through one's own body
             keep = [(t, pp) for t, pp in zip(ts, ps) if pp in ('body', 'shoulders', 'head', 'hips', 'legs', 'skirt')]
             own = BVHTree.FromPolygons(vs, [t for t, pp in keep]); kp = [pp for t, pp in keep]

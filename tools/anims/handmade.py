@@ -535,7 +535,7 @@ def embrace_arm(rig, frames, T, turn_body=0.5, lean_in=0.06, upper=(0.35, 0.2, 0
         if reach: W = S + V(*reach); d1 = V(0, 1.0, -0.8).normalized(); d2 = V(0, 0, 0)   # given as the hand's place from the shoulder instead; the elbow drops back and down
         if ride: W = W + ride[i]
         F = fit(name); W = W + F['w']
-        rest_hand(rig, p, 'Right', W, (d1 - d2).normalized() + F['pole'], down=F['down'], palm_dir=F['palm'], curl_by=F['curl'] - 0.1 * pt)   # palm flat on her shoulder, fingers forward over it
+        rest_hand(rig, p, 'Right', W, (d1 - d2).normalized() + F['pole'], down=F['down'], palm_dir=F['palm'], curl_by=F['curl'] - 0.1 * pt, fingers=F['fingers'])   # palm flat on her shoulder, fingers forward over it
         if seated:
             M = rig.fk(p)
             arm(rig, p, 'Left', body_point(rig, M, 'Left', -0.02, 0.32, -0.33, bone='Hips'), body_dir(rig, M, 'Left', 0.6, -0.3, -0.6, bone='Hips'),
@@ -555,15 +555,15 @@ def fit(name):
         import json; d = json.load(open(FIT_FILE)).get(name, {})
     except Exception: d = {}
     return {'w': V(*d.get('w', (0, 0, 0))), 'pole': V(*d.get('pole', (0, 0, 0))), 'palm': V(*d.get('palm', (0, 0, -1))),
-            'down': d.get('down', 0.25), 'curl': d.get('curl', 0.35)}
+            'down': d.get('down', 0.25), 'curl': d.get('curl', 0.35), 'fingers': V(*d['fingers']) if 'fingers' in d else None}
 
 
-def rest_hand(rig, p, side, wrist, elbow, down=0.25, palm_dir=V(0, 0, -1), curl_by=0.35):
+def rest_hand(rig, p, side, wrist, elbow, down=0.25, palm_dir=V(0, 0, -1), curl_by=0.35, fingers=None):
     """Lay a hand on top of someone's shoulder: the wrist nearly straight in line with the forearm, the palm facing
     down onto the shoulder (`palm_dir`), the fingers carrying on from the forearm and tipping `down` over its curve."""
     limb_ik(rig, p, side + 'Arm', side + 'ForeArm', side + 'Hand', wrist, elbow)   # first pass, to find where the forearm points
     M = rig.fk(p); fa = M[P + side + 'ForeArm'].to_3x3().col[1].normalized()
-    fingers = (fa + V(0, 0, -down)).normalized()
+    if fingers is None: fingers = (fa + V(0, 0, -down)).normalized()
     arm(rig, p, side, wrist, elbow, fingers, palm_dir, 0.5)
     curl(rig, p, side, curl_by, thumb=0.1)
 
@@ -614,7 +614,7 @@ def comfort_hand(rig):
         M = rig.fk(p)
         F = fit('ComfortHand')
         wrist = body_point(rig, Mfix, 'Left', FACE_OUT, FACE_GAP - 0.2 + FACE_FWD, FACE_UP + 0.008 * pt, bone='Hips') + ride[i] + F['w']
-        rest_hand(rig, p, 'Left', wrist, body_dir(rig, M, 'Left', 0.4, -0.2, -1, bone='Hips') + F['pole'], down=F['down'], palm_dir=F['palm'], curl_by=F['curl'] - 0.1 * pt)
+        rest_hand(rig, p, 'Left', wrist, body_dir(rig, M, 'Left', 0.4, -0.2, -1, bone='Hips') + F['pole'], down=F['down'], palm_dir=F['palm'], curl_by=F['curl'] - 0.1 * pt, fingers=F['fingers'])
         relaxed_arm(rig, p, 'Right')
     return frames
 
