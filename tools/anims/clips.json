@@ -121,5 +121,8 @@
  "SitIdle4": "Sitting_3.fbx",
  "HeadTurn": "Head_Turn.fbx",
  "Agree": "Agreeing.fbx",
- "HoldWalk": "Holding_Walk.fbx"
+ "HoldWalk": "Holding_Walk.fbx",
+ "RunM2": "Running_M.fbx",
+ "WalkM2": "Walking_M.fbx",
+ "StopWalkM2": "Walk_To_Stop_M.fbx"
 }
