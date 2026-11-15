@@ -2,6 +2,7 @@ import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../..
 import { goTo, tick as followTick } from '../../../engine/follow.js';   /* people sent somewhere walk the same way in every game */
 import { auditSeated, snapMeshes, auditRest } from '../../../engine/audit.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
+import { buildShrine } from './shrine.js';   /* the Marcus Garvey monument in National Heroes Park (chapter 8) */
 /* games/garvey/src/main.js: Marcus Garvey. First test scene: a print shop in Kingston, Jamaica, about 1907.
    Built from games/_template. The movement, talking and talk-button code is still the template's small version;
    it moves into engine/ after the Port Royal work has merged (see docs/games/garvey.md, "Working alongside the Port Royal chat").
@@ -1057,13 +1058,8 @@ function buildPark() {
   mesh(new THREE.PlaneGeometry(80, 60), std(cv(128, 128, (x, w, h) => { x.fillStyle = '#4f8a45'; x.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { x.fillStyle = `rgba(${40 + Math.random() * 40 | 0},${110 + Math.random() * 60 | 0},${30 + Math.random() * 40 | 0},0.5)`; x.fillRect(Math.random() * w, Math.random() * h, 2, 5 + Math.random() * 4); } }, [20, 15]), 1), 0, 0, 0, g).rotation.x = -Math.PI / 2;
   const walk = std(cv(128, 128, (x, w, h) => { x.fillStyle = '#c8bda2'; x.fillRect(0, 0, w, h); grain(x, w, h, 14); }, [1, 1]), 1);
   mesh(new THREE.PlaneGeometry(24, 2.4), walk, 0, 0.01, 3.2, g).rotation.x = -Math.PI / 2; mesh(new THREE.PlaneGeometry(2.4, 6.5), walk, 0, 0.011, -0.3, g).rotation.x = -Math.PI / 2;
-  mesh(new THREE.PlaneGeometry(9, 6), std(cv(128, 128, (x, w, h) => { x.fillStyle = '#b9ae94'; x.fillRect(0, 0, w, h); grain(x, w, h, 12); }, [1, 1]), 1), 0, 0.012, -3.4, g).rotation.x = -Math.PI / 2;   /* the paved circle round the shrine */
-  /* the shrine: a black star on the ground, an angled stone wall behind, and a bronze bust on a plinth (drawn from descriptions) */
-  const star = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 0.75 : 1.7; (i ? star.lineTo : star.moveTo).call(star, Math.cos(a) * r, Math.sin(a) * r); } star.closePath();
-  const starG = new THREE.ExtrudeGeometry(star, { depth: 0.12, bevelEnabled: false }); starG.rotateX(-Math.PI / 2); mesh(starG, solid(0x15161a, 0.5), 0, 0.012, -2.6, g);
-  const stone = solid(0xcfc6b0, 0.9); for (const sx of [-1, 1]) { const w = box(2.3, 2.4, 0.3, stone, sx * 1.05, 1.2, -4.5, g); w.rotation.y = -sx * 0.3; }
-  box(0.8, 0.9, 0.8, stone, 0, 0.45, -3.7, g); const bronze = solid(0x8a6a38, 0.45, 0.5); mesh(new THREE.SphereGeometry(0.23, 16, 12), bronze, 0, 1.25, -3.7, g); const sh = mesh(new THREE.SphereGeometry(0.34, 14, 10), bronze, 0, 0.98, -3.7, g); sh.scale.set(1.2, 0.55, 0.7);
-  mesh(new THREE.PlaneGeometry(0.6, 0.3), new THREE.MeshBasicMaterial({ map: signTex([['MARCUS MOSIAH GARVEY', 26], ['1887 to 1940', 24]], 512, 160) }), 0, 0.5, -3.29, g); PARK_WALLS.push([-1.6, -5.4, 1.6, -2.6]);
+  /* the shrine: the black star with the tomb at its centre, the peaked and angled wall behind and the bronze bust (built in shrine.js, from descriptions) */
+  PARK_WALLS.push(...buildShrine(g, { x: 0, z: -4.0, signTex }).walls);
   /* palm trees, benches, a low fence and the town beyond */
   const leaf = new THREE.MeshStandardMaterial({ color: 0x3f7d3a, roughness: 0.8, side: THREE.DoubleSide });
   const palm = (x, z, hgt) => { const t = cyl(0.11, 0.17, hgt, solid(0x7a6246, 0.9), x, hgt / 2, z, g, 8); for (let i = 0; i < 7; i++) { const l = mesh(new THREE.PlaneGeometry(2.0, 0.4), leaf, x + Math.cos(i * 0.9) * 0.9, hgt + 0.1, z + Math.sin(i * 0.9) * 0.9, g); l.rotation.set(-0.5, -i * 0.9, 0.25); } PARK_WALLS.push([x - 0.3, z - 0.3, x + 0.3, z + 0.3]); };
@@ -1338,6 +1334,7 @@ function devViews() {
   const inPark = (st, x, z, yaw, pitch) => ensurePark().then(() => { stage = st; best = Math.max(best, st); enterPlace('park'); go(x, z, yaw, pitch); });
   if (shot === 'park1') inPark(70, 0, 5.2, 0, 0.05);
   if (shot === 'park2') inPark(71, 0.6, 1.4, 0.0, 0.1);
+  if (shot === 'shrine') { if (q.has('free')) Object.assign(PARK_BOUNDS, { x0: -30, x1: 30, z0: -30, z1: 30 }); inPark(+(q.get('st') || 73), +(q.get('x') || 0), +(q.get('z') || -0.3), +(q.get('yaw') || 0), +(q.get('pitch') || 0)); }   /* the monument from anywhere: &x= &z= &yaw= &pitch=, and &free to stand outside the paths */
   if (shot === 'time') inPark(71, -5.0, 1.4, 0, 0).then(() => openTime());
   if (shot === 'timedone') inPark(71, -5.0, 1.4, 0, 0).then(() => { openTime(); for (let i = 0; i < EVENTS.length; i++) $('tmtray').querySelector('[data-i="' + i + '"]').click(); });
   if (shot === 'answer') inPark(73, 0, -0.3, 0, 0).then(() => { openAnswer(); $('anopen').children[2].click(); $('anwhy').children[2].click(); });

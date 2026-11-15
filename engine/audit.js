@@ -13,6 +13,7 @@ import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
      seated  a person sitting who cuts into a seat or its back, floats above the seat, sits on nothing, or faces the back of the seat
      through a bush, tree or other leafy shape that pokes through a wall and shows on both sides of it (call auditThrough(snap) and report its lines with the rest)
      vehicle a bus, cart, truck or train whose path passes through or close to a person, the player's spot or a walking wall (auditVehicles)
+     hang    a loose clump of leaves or flowers high up that touches nothing: no stem, no wall, no ground (auditHanging)
      garment a small piece of clothing (buttons, a hat band, a buckle) that shows while its garment is hidden, or floats clear of every other piece (auditGarments)
    Nothing here runs in a public build unless a game imports it into code that is only reached when __DEV__ is true. */
 import * as THREE from 'three';
@@ -252,6 +253,21 @@ export function auditPeople(npcs, start) {
 }
 
 
+
+/* Hanging plants: a clump of leaves or flowers (a loose leafy shape: bougainvillea over a wall, a bush top, a hanging basket) high above the ground that touches
+   nothing. The float check above forgives gaps of up to 20 cm, which is right for buildings but not for a bush: Eventide's bougainvillea hung 13 to 38 cm behind
+   its wall, in the air, with nothing under it (November 2026). Clumps that touch each other (within 3 cm) count as one plant; a plant is held up when one of its
+   clumps reaches the ground or touches a solid (a wall, a stem, a trellis) within 3 cm. Returns lines in words; expect none. */
+export function auditHanging(snap, groundAt = null) {
+  const leaf = snap.filter((m) => m.loose && !m.inst && LEAFY.has(m.geo) && !m.unlit && !m.card), out = []; if (!leaf.length) return out;
+  const par = leaf.map((_, i) => i), find = (i) => { while (par[i] !== i) i = par[i] = par[par[i]]; return i; }, ex = leaf.map((m) => m.b.clone().expandByScalar(0.03));
+  for (let a = 0; a < leaf.length; a++) for (let b = a + 1; b < leaf.length; b++) if (ex[a].intersectsBox(leaf[b].b)) par[find(a)] = find(b);
+  const held = new Set(), solids = snap.filter((m) => !LEAFY.has(m.geo) && !m.unlit && !m.card && !m.flame && m.b.getSize(new THREE.Vector3()).y > 0.05);
+  leaf.forEach((m, i) => { const c = m.b.getCenter(new THREE.Vector3()), g = groundAt ? groundAt(c.x, c.z) : 0; if (m.b.min.y <= g + 0.05 || solids.some((o) => o.b.intersectsBox(ex[i]))) held.add(find(i)); });
+  const seen = new Set(); leaf.forEach((m, i) => { const r = find(i); if (held.has(r) || seen.has(r)) return; seen.add(r); const c = m.b.getCenter(new THREE.Vector3()); out.push(`hang@(${c.x.toFixed(1)},${c.y.toFixed(1)},${c.z.toFixed(1)}) a clump of leaves (${m.geo.replace('Geometry', '').toLowerCase()} ${m.col}) ${(m.b.min.y).toFixed(2)} m up touches nothing that holds it`); });
+  return out;
+}
+
 /* Vehicles: a bus, a cart, a truck or a train that moves must never pass through a person or the player (Eventide, November 2026: "a bus drove through granny
    on the street"). Every vehicle's body is swept along its whole path, as a box of half width `half` and half length `len` (metres) that turns with the path.
    vehicles: [{ id, path: [[x, z], ...], half, len, loop }]   people: [{ id, x, z, path }] who are there while it moves (a walker's whole route counts)
@@ -284,8 +300,9 @@ const PIECE_OF = [[/^WaistcoatButtons$/, 'Waistcoat'], [/^(Hat)Band$/, 'Hat'], [
 export function auditGarments(id, body) {
   const out = [], all = [], shown = (o) => { for (let q = o; q && q !== body.parent; q = q.parent) if (!q.visible) return false; return true; };
   body.updateMatrixWorld(true); body.traverse((o) => { if (o.isMesh && (o.isSkinnedMesh || o.userData.garment)) all.push({ o, mesh: o.name, mat: (o.material && o.material.name) || '', on: shown(o) }); });
-  const has = (g) => all.filter((p) => p.mat === g || p.mesh === g || (p.mesh.startsWith('base') && p.mat === g));
-  for (const p of all) { if (!p.on) continue; for (const [re, g] of PIECE_OF) { if (!re.test(p.mesh) && !re.test(p.mat)) continue; if (p.mat === g && !/Band$|Buttons$|Knot$/.test(p.mesh)) continue; const owners = has(g).filter((q) => q !== p && !PIECE_OF.some(([r]) => r.test(q.mesh))); if (owners.length && owners.every((q) => !q.on)) out.push(`${id}: ${p.mesh || p.mat} shows but its ${g} is hidden`); } }
+  const isPiece = (n) => PIECE_OF.some(([r]) => r.test(n));
+  for (const p of all) { if (!p.on) continue; const nm = isPiece(p.mesh) ? p.mesh : isPiece(p.mat) ? p.mat : null; if (!nm) continue; const g = PIECE_OF.find(([r]) => r.test(nm))[1];
+    const owners = all.filter((q) => q !== p && q.mat === g && !isPiece(q.mesh)); if (owners.length && owners.every((q) => !q.on)) out.push(`${id}: ${nm} shows but its ${g} is hidden`); }
   /* by shape */
   const v = new THREE.Vector3(), inv = new THREE.Matrix4().copy(body.matrixWorld).invert(), sc = body.getWorldScale(new THREE.Vector3()).x || 1, P = new Map();
   const pointsOf = (p) => { if (P.has(p)) return P.get(p); const o = p.o, a = o.geometry.attributes.position, n = a.count, step = Math.max(1, Math.floor(n / 600)), pts = []; if (o.isSkinnedMesh) o.skeleton.update(); for (let i = 0; i < n; i += step) { if (o.isSkinnedMesh) o.getVertexPosition(i, v); else v.fromBufferAttribute(a, i); v.applyMatrix4(o.matrixWorld).applyMatrix4(inv); pts.push(v.clone()); } P.set(p, pts); return pts; };

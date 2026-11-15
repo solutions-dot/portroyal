@@ -155,6 +155,9 @@ def body_point(rig, M, side, out, fwd, up, bone='Spine2', at=None):
     return M[P + bone].translation + D @ (base + V(sx * out, -fwd, up))
 
 
+_TWIST = {}
+
+
 def limb_ik(rig, pose, upper, lower, end, target, pole, end_W=None, twist=0.0):
     """Two-bone IK: put the end bone's joint at `target`, the middle joint towards `pole`, and (if given) the end bone at
     world orientation end_W. `twist` is the share of the end bone's roll that the lower bone takes (forearms roll; shins do not)."""
@@ -170,7 +173,12 @@ def limb_ik(rig, pose, upper, lower, end, target, pole, end_W=None, twist=0.0):
     WU = frame(Y, rig.hinge[upper], d1, n); WL = frame(Y, rig.hinge[lower], d2, n)
     if end_W is not None and twist:
         q = (WL.inverted() @ end_W).to_quaternion(); th = 2 * math.atan2(q.y, q.w)
-        th = (th + math.pi) % TAU - math.pi; WL = WL @ rot(Y, twist * th)
+        th = (th + math.pi) % TAU - math.pi
+        last = _TWIST.get(lower)
+        if last is not None:   # keep the roll continuous from the last frame, so a forearm never flips round
+            while th - last > math.pi: th -= TAU
+            while last - th > math.pi: th += TAU
+        _TWIST[lower] = th; WL = WL @ rot(Y, twist * th)
     p = rig.parent[U]; pf = (M[p] @ rig.rel[U]).to_3x3()
     pose.rot[U] = (pf.inverted() @ WU).to_quaternion()
     pose.rot[L] = ((WU @ rig.rel3[L]).inverted() @ WL).to_quaternion()
@@ -268,6 +276,20 @@ def resample(frames, n_out, cycles=1):
         out.append(Pose({k: a.rot[k].slerp(b.rot[k], f) for k in a.rot}, a.loc.lerp(b.loc, f)))
     out[-1] = out[0].copy()
     return out
+
+
+def soften(frames, bones, sigma=4.0):
+    """Smooth these bones' turns over time (a Gaussian of `sigma` frames, wrapping round the loop), so a quick change
+    of hand or elbow direction eases in and out instead of snapping."""
+    n = len(frames) - 1; r = int(sigma * 3); w = [math.exp(-0.5 * (j / sigma) ** 2) for j in range(-r, r + 1)]
+    for b in bones:
+        k = P + b; src = [frames[i].rot[k].copy() for i in range(n)]
+        for i in range(n):
+            q0 = src[i]; acc = Vector((0, 0, 0, 0))
+            for j, wj in zip(range(-r, r + 1), w):
+                q = src[(i + j) % n]; acc += wj * (Vector(q) if q.dot(q0) >= 0 else -Vector(q))
+            frames[i].rot[k] = Quaternion(acc).normalized()
+        frames[n].rot[k] = frames[0].rot[k].copy()
 
 
 def mean_rot(frames, k):
@@ -580,7 +602,7 @@ def take_upper(rig, frames, T, wipe_side='Left', lap=False):
             face = body_point(rig, M, sd, 0.03, 0.20, -0.06, bone='Head', at='Head') + V(0, 0, -0.02)
             arm(rig, p, sd, low.lerp(face, k), body_dir(rig, M, sd, 0.5, -0.5, -0.8, bone='Hips'),
                 body_dir(rig, M, sd, -0.5, 0.3, -0.8).lerp(body_dir(rig, M, sd, -0.15, 0.35, 0.9), k),
-                body_dir(rig, M, sd, -0.3, 0.6, 0.2).lerp(body_dir(rig, M, sd, -0.3, -1.0, 0.0), k), 0.5)
+                body_dir(rig, M, sd, -1.0, 0.25, 0.0).lerp(body_dir(rig, M, sd, -0.5, -1.0, 0.1), k), 0.5)   # palm in, then to the face
             curl(rig, p, sd, 0.3 + 0.1 * k)
 
 
@@ -707,7 +729,8 @@ def main():
     bpy.context.scene.render.fps = FPS
     rig = Rig(ob)
     for name in names:
-        fn, _ = CLIPS[name]; frames = fn(rig)
+        fn, _ = CLIPS[name]; _TWIST.clear(); frames = fn(rig)
+        if 'Walk' not in name: soften(frames, [sd + b for sd in ('Left', 'Right') for b in ('Arm', 'ForeArm', 'Hand')])
         frames[-1] = frames[0].copy()   # an exact loop
         check(rig, name, frames)
         write_fbx(rig, name, frames, os.path.join(OUT, name + '.fbx'))

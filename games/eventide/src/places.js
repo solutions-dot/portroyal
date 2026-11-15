@@ -13,6 +13,7 @@
        with a black triangular plaque. The plaque's small emblem is not shown because it cannot be made out. */
 import * as THREE from 'three';
 import { T, cv, std, solid, flat, box, cyl, plane, grp, rng, mesh } from './gfx.js';
+import { woolMaterial } from './blanket.js';
 import { palm, tree, bench, standpipe, waterTower, truck, boardHouse, hillRing, flowers, signBoard } from './props.js';
 import { grassField, flowerField, flameTree, mangoTree, hibiscus, croton } from './detail.js';
 
@@ -231,7 +232,7 @@ export function buildSlipe(g) {
   limeWall(g, wall, -48, -66, 48, -66, 2.0); limeWall(g, wall, -48, -66, -48, -7, 2.0); limeWall(g, wall, 48, -66, 48, -7, 2.0);
   for (const sx of [-1, 1]) { box(PIL, PH, PIL, lime(0.3, 1.2), sx * GX, PH / 2, -7, g); box(PIL + 0.14, 0.14, PIL + 0.14, solid(0xece8dc, 0.9), sx * GX, PH + 0.07, -7, g); wall(sx * GX - 0.5, -7.5, sx * GX + 0.5, -6.5); }
   const arch = gateArch(2 * GX, 2.0); arch.mesh.position.set(0, PH + 0.14 + arch.H / 2 - 0.12, -7); g.add(arch.mesh);
-  cyl(0.015, 0.015, 0.5, solid(0x25272a, 0.6), 0, PH + 0.14 + 2.0 - 0.45, -7, g);   /* the lamp hangs from the top of the arch */
+  cyl(0.015, 0.015, 0.56, solid(0x25272a, 0.6), 0, PH + 0.14 + 2.0 - 0.4, -7, g);   /* the lamp hangs from the top of the arch: the rod runs from the lamp's cap up into the arch's outer ring */
   box(0.26, 0.34, 0.26, solid(0xf4ecd0, 0.4), 0, PH + 0.14 + 2.0 - 0.85, -7, g); box(0.34, 0.06, 0.34, solid(0x25272a, 0.6), 0, PH + 0.14 + 2.0 - 0.66, -7, g);
   const gateM = new THREE.MeshStandardMaterial({ map: bars(), transparent: true, alphaTest: 0.4, ...DS, roughness: 0.6, metalness: 0.4 });
   for (const sx of [-1, 1]) {
@@ -290,7 +291,9 @@ export function buildSlipe(g) {
   for (const [x, z, ry] of [[-5.6, -15, Math.PI / 2], [-5.6, -36, Math.PI / 2], [-5.6, -54, Math.PI / 2], [5.6, -13, -Math.PI / 2], [5.6, -62, -Math.PI / 2]]) { const b = bench(2.2, 0x5a4632); b.position.set(x, 0, z); b.rotation.y = ry; g.add(b); wall(x - 0.35, z - 1.2, x + 0.35, z + 1.2); }
   for (const z of [-17, -31, -45, -59]) { const l = streetLamp(4.8); l.position.set(-3.5, 0, z); g.add(l); wall(-3.7, z - 0.2, -3.3, z + 0.2); }
   /* bougainvillea spilling over the front wall */
-  for (const x of [-40, -28, -16, -9, 9, 16, 28, 40]) for (let i = 0; i < 4; i++) { const rad = 0.45 + r() * 0.15; mesh(new THREE.IcosahedronGeometry(rad, 1), flat(i % 3 === 2 ? 0x3f7a32 : (i % 2 ? 0xd23a8a : 0xe0559e)), x + (r() - 0.5) * 1.4, 2.05 + r() * 0.45, -7.28 - rad - r() * 0.25, g); }   /* grown inside the wall: each clump sits wholly behind it, so only the top shows over the coping */
+  for (const x of [-40, -28, -16, -9, 9, 16, 28, 40]) {   /* grown inside the wall: each plant stands on its own woody stems and leans on the back of the wall, so only its top shows over the coping */
+    for (const dx of [-0.35, 0.3]) { const st = cyl(0.04, 0.07, 2.3, solid(0x5a4632, 0.95), x + dx, 1.15, -7.32, g, 6); st.rotation.z = dx * 0.25; }
+    for (let i = 0; i < 4; i++) { const rad = 0.45 + r() * 0.15; mesh(new THREE.IcosahedronGeometry(rad, 1), flat(i % 3 === 2 ? 0x3f7a32 : (i % 2 ? 0xd23a8a : 0xe0559e)), x + (r() - 0.5) * 1.4, 2.05 + r() * 0.45, -7.15 - rad * 0.8, g); } }
   /* grass, kept off the avenue and the buildings; a few flowers */
   grassField(g, [-47.6, -65.6, 47.6, -7.4], 2200, { seed: 9, clear: out.clear, h: 0.32, w: 0.55, tint: 0xc4c07c, vary: 0.35 });
   flowerField(g, [-47, -65, 47, -8], 220, { seed: 4, clear: out.clear, colors: [0xe2232a, 0xf5c542, 0xffffff, 0xe27ad8] });
@@ -343,7 +346,7 @@ export function buildWard(g) {
   /* the beds: iron frames, thin mattresses, white sheets. They stand closer than they should: more women than the ward was built for. */
   const iron = solid(0x3a3d40, 0.6, 0.4), sheet = solid(0xf2f0ea, 0.95), blank = [0x8aa0b8, 0xb89a8a, 0x9ab08a, 0xb8a8c8], pillow = solid(0xfaf8f2, 0.9);
   for (const s of [-1, 1]) for (let i = 0; i < 17; i++) { const x = -13.2 + i * 1.6 + (s > 0 ? 0.5 : 0), zc = s * 2.85; if (s > 0 && x < -11.5) continue;
-    box(0.86, 0.18, 1.9, sheet, x, 0.52, zc, g); box(0.88, 0.06, 1.2, solid(blank[(i + (s > 0 ? 2 : 0)) % 4], 0.95), x, 0.63, zc - s * 0.3, g); box(0.6, 0.1, 0.36, pillow, x, 0.66, zc + s * 0.7, g);
+    box(0.86, 0.18, 1.9, sheet, x, 0.52, zc, g); bedBlanket(blank[(i + (s > 0 ? 2 : 0)) % 4], x, zc - s * 0.3, s, g); box(0.6, 0.1, 0.36, pillow, x, 0.66, zc + s * 0.7, g);
     for (const e of [-1, 1]) { box(0.9, e * s > 0 ? 1.0 : 0.7, 0.05, iron, x, e * s > 0 ? 0.5 : 0.35, zc + e * 0.95, g); }
     box(0.04, 0.06, 1.9, iron, x - 0.43, 0.4, zc, g); box(0.04, 0.06, 1.9, iron, x + 0.43, 0.4, zc, g);
     wall(x - 0.5, Math.min(zc - 1.0, zc + 1.0), x + 0.5, Math.max(zc - 1.0, zc + 1.0)); }
@@ -355,6 +358,13 @@ export function buildWard(g) {
   const beds = { hyacinth: [-6.8, -2.6], maude: [2.9, 2.6], dora: [9.2, -2.6], irisbed: [12.7, 2.6] };
   return { walls, bounds: { x0: -HX + 0.4, x1: HX - 0.4, z0: -HZ + 0.4, z1: HZ - 0.4 }, start: { x: -13.4, z: 0, yaw: -Math.PI / 2 }, groundAt: () => 0, indoor: true, things, beds,
     spots: { table: [-12.6, 1.9], hyacinth: [-6.8, -1.4], maude: [2.9, 1.4], dora: [9.2, -1.4], irisbed: [12.7, 1.4] } };
+}
+
+/* a wool blanket over the foot of a bed: across the mattress, hanging a little down each side, its top edge turned back in a soft roll (not a flat slab) */
+function bedBlanket(col, x, z, s, g) {
+  const m = woolMaterial(col); box(0.9, 0.03, 1.2, m, x, 0.625, z, g);
+  for (const e of [-1, 1]) box(0.02, 0.15, 1.2, m, x + e * 0.46, 0.565, z, g);   /* the sides hang down over the mattress edge, clear of the iron rails */
+  const roll = cyl(0.028, 0.028, 0.9, m, x, 0.655, z + s * 0.6, g, 10); roll.rotation.z = Math.PI / 2;   /* the turned-back top edge, toward the pillow */
 }
 
 /* ---------- National Heroes Park, Monday 26 May 1980: the grave, after the owner's photograph (a long concrete-lined trench with planks across it, a crowd behind a rail).

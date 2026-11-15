@@ -13,7 +13,7 @@ import { slideWalls, walkRoute } from '../../../engine/placement.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough, auditBodies } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough, auditBodies, auditVehicles, auditGarments, auditHanging } from '../../../engine/audit.js';
 import { G, makeSky, ease, rng, batchStatic } from './gfx.js';
 import { hamper, bucket, suitcase } from './props.js';
 import { foldedBlanket, drapeBlanket } from './blanket.js';
@@ -603,14 +603,20 @@ function devViews() {
   if (shot === 'time1') go(6, 71, 5.2, 8.2, 0).then(() => timeline(2));
   if (shot === 'title') { /* the title screen as it is */ }
   if (shot === 'fall') go(3, 43, -1.6, -8.2, -0.5, 0.1).then((P) => { fixedCam = { p: [-1.3, 1.45, -8.4], t: [9, 5, -35] }; P.myers.group.scale.y = 0.45; P.fire.setLevel(0.75); P.fire.burst(0.5); for (let i = 0; i < 20; i++) update(0.1, 3000 + i * 100); document.title = 'view fall ready'; });
+  /* ?shot=blanket1 : the pile of folded blankets, one child already wrapped, the next blanket in your arms. blanket2 : the same from close by. dawn2 : the bus at dawn, with you and Gran on the pavement */
+  if (shot === 'blanket1' || shot === 'blanket2') go(3, 43, ...(shot === 'blanket1' ? [0.2, -3.6, 1.0, -0.14] : [-4.2, -4.2, 1.35, -0.3])).then(() => { const A = SC.actions, take = A.find((a) => a.label === 'Take a blanket'); take.go(); A.find((a) => a.on() && /^Wrap/.test(a.label)).go(); take.go(); for (let i = 0; i < 8; i++) update(0.1, 2000 + i * 100); document.title = 'view ' + shot + ' ready'; });
+  if (shot === 'dawn2') go(3, 45, -9, -4.9, 1.25, 0.02).then((P) => { P.bus2.visible = true; P.bus2.position.x = -17; for (let i = 0; i < 8; i++) update(0.1, 2000 + i * 100); document.title = 'view dawn2 ready'; });
   if (shot === 'cast') (async () => { await go(0, 10); const ids = Object.keys(LOOKS); await Promise.all(ids.map((k) => loadBase(LOOKS[k].base))); ids.forEach((k, i) => { const m = makeBody({ ...LOOKS[k], x: -40 + (i % 11) * 1.0, z: -3.6 + ((i / 11) | 0) * 1.6, ry: 0 }); SC.P.group.add(m); }); fixedCam = { p: [-35, 1.5, 3.4], t: [-35, 0.9, -3] }; if (q.get('night')) setEnv(ENV.night); document.title = 'view cast ready'; })();
 
   if (['audit', 'collision', 'seating'].includes(q.get('test'))) (async () => {   /* every chapter's scene: floating things, people in solids, unreachable spots, people inside each other */
     const linesOut = []; let total = 0; startGame(true);
-    for (let i = 0; i < SCENES.length; i++) { await beginChapter(i); resetTransient(); const P = SC.P, S = SCENES[i], st = S.start || P.start, vis = SC.npcs.filter((n) => !n.hidden);
+    const looks = new Map(), garments = (list) => { const o = []; for (const n of list) { const k = n.bodyId + JSON.stringify([n.hat, n.hide, n.props && n.props.length]); if (!looks.has(k)) looks.set(k, auditGarments(n.id || n.base, n.m)); o.push(...looks.get(k)); } return [...new Set(o)]; };   /* clothes: once for each look */
+    const passes = SCENES.map((S, i) => [i]); passes.splice(4, 0, [3, 45, 'chapter 4 at dawn']);   /* the dawn of chapter 4 too: the bus drives by */
+    for (const [i, st0, name] of passes) { await beginChapter(i, st0); resetTransient(); const P = SC.P, S = SCENES[i], st = st0 === 45 ? DAWN : S.start || P.start, vis = st0 ? SC.npcs.filter((n) => n.m.visible) : SC.npcs.filter((n) => !n.hidden);
+      const moving = st0 === 45 ? P.vehicles : [];   /* the vehicles that drive in this part of the chapter */
       const r = auditPlaceE({ id: P.id, snap: P.snap, npcs: vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, anim: n.anim, ground: n.walker ? 0 : (n.ground || 0), path: n.path }))   /* walkers' routes too, so the audit sees anyone they would walk through */, walls: P.walls.concat(S.walls || []), bounds: P.bounds, start: st,
         actions: SC.actions.filter((a) => !('get' in (Object.getOwnPropertyDescriptor(a, 'x') || {}))).map((a) => ({ label: a.label, x: a.x, z: a.z, r: a.r })), people: SC.people.filter((n) => !n.hidden && !n.kid).map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
-      const all = [...r.floating, ...r.inside, ...r.stuck, ...auditThrough(P.snap)]; total += all.length; linesOut.push('chapter ' + (i + 1) + ' (' + P.id + '): ' + all.length + ' issues, ' + vis.length + ' people', ...all.map((l) => '  ' + l)); }
+      const all = [...r.floating, ...r.inside, ...r.stuck, ...auditThrough(P.snap), ...auditHanging(P.snap, P.groundAt), ...auditVehicles(moving, vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, path: n.path })), { start: st, walls: P.walls.concat(S.walls || []) }), ...garments(vis)]; total += all.length; linesOut.push((name || 'chapter ' + (i + 1)) + ' (' + P.id + '): ' + all.length + ' issues, ' + vis.length + ' people', ...all.map((l) => '  ' + l)); }
     out('AUDIT ' + total, linesOut); })();
   if (q.get('test') === 'held') (async () => {   /* every carried thing, in every chapter: at the hand, upright, clear of the body, in twelve poses */
     const o = []; let n0 = 0; startGame(true);

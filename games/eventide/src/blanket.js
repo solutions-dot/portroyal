@@ -15,7 +15,8 @@ function woolTex(color) {   /* a wool blanket: a soft weave, with a darker band 
   x.fillStyle = '#' + dark.getHexString(); x.fillRect(0, 12, 128, 7); x.fillRect(0, 109, 128, 7);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; TEX.set(key, t); return t;
 }
-export function woolMaterial(color, side = THREE.FrontSide) { return new THREE.MeshStandardMaterial({ color: 0xffffff, map: woolTex(color), roughness: 1, side }); }
+const MATS = new Map();
+export function woolMaterial(color, side = THREE.FrontSide) { const k = color + '/' + side; if (!MATS.has(k)) MATS.set(k, new THREE.MeshStandardMaterial({ color: 0xffffff, map: woolTex(color), roughness: 1, side, name: 'Blanket' })); return MATS.get(k); }   /* one per colour, shared */
 
 /* the side of a folded blanket: layers stacked, each fold a rounded edge. Drawn in x (width) and y (height), then pushed out in z (depth). */
 function foldShape(w, h, n) {
