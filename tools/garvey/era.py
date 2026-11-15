@@ -1067,7 +1067,7 @@ if G.get('apron'):
             x=-hw+2*hw*iu/nu; hit=tree.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]; yy=(hit.y if hit else -0.12)
             if not OLD and 'breeches' in PART:      # later eras: the apron lies on the trousers, a hand's breadth clear of them
                 hb=BRT.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]
-                if hb: yy=min(yy,hb.y-0.004)
+                if hb: yy=min(yy,hb.y)
             row.append(bm.verts.new((x,yy-(0.035 if OLD else 0.045),z)))
         rows.append(row)
     for jv in range(nv):
