@@ -102,5 +102,6 @@
  "SitIdle2": "Seated_Idle.fbx",
  "IdleTwist": "Catwalk_Idle_Twist_R.fbx",
  "IdleGuard": "Warrior_Idle.fbx",
- "BriefcaseIdle": "Standing_W_Briefcase_Idle.fbx"
+ "BriefcaseIdle": "Standing_W_Briefcase_Idle.fbx",
+ "TorchIdle": "Standing_Torch_Idle_02.fbx"
 }
