@@ -64,8 +64,31 @@ export function seatSkirt(m) {
   return (m.userData.seatSkirt = { seat, stand, on: false });
 }
 export function skirtTick(m) { const S = m.userData.seatSkirt, a = m.userData.anim; if (!S || !a) return;
-  const c = a.cur && a.cur.getClip(), n = c ? c.name : '', on = isSeated(n) || LOW_SKIRT.test(n);
+  let best = null, bw = 0; for (const x of a.mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } }   /* the clip with the most weight now (a.cur lags while a clip fades in, and a tool may play one directly) */
+  const c = (best || a.cur) && (best || a.cur).getClip(), n = c ? c.name : '', on = isSeated(n) || LOW_SKIRT.test(n);
   if (on === S.on) return; S.on = on; for (const o of S.seat) o.visible = on; for (const o of S.stand) o.visible = !on; }
+/* Hands on the lap: seated and kneeling clips rest the hands on the thighs, but a skirt or an apron makes the lap thicker than the body the clip was made on,
+   and the fingers sank into the cloth. After each mixer update, while such a clip plays, each fingertip and wrist is kept outside the lap (the thigh's line plus
+   the cloth's own thickness, measured once on this body) by turning the forearm at the elbow. */
+const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _v4 = new THREE.Vector3(), _hq = new THREE.Quaternion(), _hq2 = new THREE.Quaternion();
+function lapSetup(m) { if (m.userData.lap !== undefined) return m.userData.lap;
+  const bone = (n) => { let b = null; m.traverse((o) => { if (!b && o.isBone && o.name.replace(/[^A-Za-z0-9]/g, '').endsWith(n)) b = o; }); return b; };
+  const cloth = []; m.traverse((o) => { if (o.isSkinnedMesh && /^(SkirtSeat|Skirt|Breeches|Apron|JacketSkirt|CoatSkirt)/.test(o.name)) cloth.push(o); });
+  const sides = []; for (const S of ['Left', 'Right']) { const up = bone(S + 'UpLeg'), kn = bone(S + 'Leg'), fa = bone(S + 'ForeArm'), hd = bone(S + 'Hand'), tip = bone(S + 'HandMiddle3') || bone(S + 'HandMiddle2') || hd; if (up && kn && fa && hd) sides.push({ S, up, kn, fa, hd, tip, R: 0 }); }
+  if (!sides.length) return (m.userData.lap = null);
+  m.updateMatrixWorld(true); const v = new THREE.Vector3();
+  for (const sd of sides) { const A = sd.up.getWorldPosition(new THREE.Vector3()), K = sd.kn.getWorldPosition(new THREE.Vector3()), ax = K.clone().sub(A), L2 = ax.lengthSq(); const ds = [];
+    for (const o of cloth) { const n = o.geometry.attributes.position.count, step = Math.max(1, n >> 11); for (let i = 0; i < n; i += step) { o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld); const t = v.clone().sub(A).dot(ax) / L2; if (t < 0.25 || t > 0.9) continue; const c = A.clone().addScaledVector(ax, t), d = v.distanceTo(c); const other = sides.find((x) => x !== sd); if (other) { const A2 = other.up.getWorldPosition(new THREE.Vector3()); if (v.distanceTo(A2) < v.distanceTo(A) - 0.02) continue; } ds.push(d); } }
+    ds.sort((a, b) => a - b); const ws = m.getWorldScale(new THREE.Vector3()).x || 1; sd.R = (ds.length ? ds[Math.floor(ds.length * 0.6)] : 0.09) / ws; sd.foot = bone(sd.S + 'Foot'); }
+  return (m.userData.lap = sides); }
+export function lapHands(m, name) { const L = m.userData.lap; if (!L || !(isSeated(name) || /^(Kneel|Pray)/.test(name || ''))) return; m.updateMatrixWorld(true);
+  const sc = m.getWorldScale(_v4).x || 1;
+  for (let it = 0; it < 3; it++) for (const sd of L) for (const leg of L) for (const seg of [0, 1]) { if (seg && !leg.foot) continue; const A = (seg ? leg.kn : leg.up).getWorldPosition(_v1), K = (seg ? leg.foot : leg.kn).getWorldPosition(_v2), ax = _v3.copy(K).sub(A), L2 = ax.lengthSq(), R = ((seg ? leg.R * 0.75 : leg.R) + 0.012) * sc;   /* the thigh, then the shin (a kneeling hand rests on the knee) */
+    for (const pt of [sd.tip, sd.hd]) { const T = pt.getWorldPosition(new THREE.Vector3()), t = Math.min(1.05, Math.max(0, T.clone().sub(A).dot(ax) / L2)); if (t <= 0 || t >= 1.05) continue;
+      const C = A.clone().addScaledVector(ax, t), off = T.clone().sub(C), d = off.length(); if (d >= R || d < 1e-4) continue;
+      const E = sd.fa.getWorldPosition(new THREE.Vector3()), from = T.clone().sub(E), to = T.clone().addScaledVector(off.normalize(), R - d).sub(E);
+      _hq.setFromUnitVectors(from.normalize(), to.normalize()); sd.fa.getWorldQuaternion(_hq2); const pq = sd.fa.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+      sd.fa.quaternion.copy(pq.multiply(_hq.multiply(_hq2))); sd.fa.updateMatrixWorld(true); } } }
 export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipFor(name)) || clipFor('Idle') || peopleClip; if (!clip && !baseAct) return;
   const mx = mixerIn || new THREE.AnimationMixer(m), base = baseAct || mx.clipAction(clip); if (!baseAct) { base.play(); base.time = Math.random() * clip.duration; } if (!mixerIn) mixers.push(mx);
   const acts = {}, ctl = { mx, base, cur: base, timer: 0,
@@ -74,6 +97,7 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
     tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } } };
+  lapSetup(m); if (m.userData.lap) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
   if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
   m.userData.anim = ctl; return ctl; }
 export const grounded = [];
