@@ -472,10 +472,11 @@ def speech(rig):
     return frames
 
 
-GIVE_AT = (-0.43, -0.145)   # ComfortGive and ComfortTake: where the one comforted stands from the giver (x to his left, y backwards), facing the same way
-CHILD_GAP, CHILD_AHEAD = 0.34, 0.24   # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right and in front of her (clear of a skirt)
+GIVE_AT = (-0.415, -0.205)   # ComfortGive and ComfortTake: where the one comforted stands from the giver (x to his left, y backwards), facing the same way
+CHILD_GAP, CHILD_AHEAD = 0.34, 0.24   # ComfortChild: where the hand is aimed (the child, about 0.6 of an adult's height, to her right and in front)
+CHILD_AT = (-0.31, -0.24)   # ComfortChild: where the game places the child from her (found with pair_check.py --search), clear of her skirt
 CHILD_NUDGE = (-0.08, 0.010, -0.036)
-SIT_AT = (-0.465, -0.285)   # SitComfortGive and SitComfortTake: where she sits from him on the bench
+SIT_AT = (-0.465, -0.27)   # SitComfortGive and SitComfortTake: where she sits from him on the bench
 HAND_OUT, HAND_FWD, HAND_UP = 0.080, -0.04, -0.084   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
 FACE_OUT, FACE_FWD, FACE_UP = 0.06, 0.0, -0.09   # ComfortHand: fine placement of the resting hand
 FACE_GAP = 0.58   # ComfortHand: the other person stands this far in front of the giver, facing them
@@ -640,8 +641,11 @@ def take_upper(rig, frames, T, wipe_side='Left', lap=False):
             M = rig.fk(p); k = w if sd == wipe_side else 0.0
             low = body_point(rig, M, sd, -0.05, 0.36, -0.25, bone='Hips') if lap else body_point(rig, M, sd, -0.03, 0.27, -0.40, bone='Hips')
             face = body_point(rig, M, sd, 0.03, 0.20, -0.06, bone='Head', at='Head') + V(0, 0, -0.02)
-            arm(rig, p, sd, low.lerp(face, k), body_dir(rig, M, sd, 0.5, -0.5, -0.8, bone='Hips'),
-                body_dir(rig, M, sd, -0.5, 0.3, -0.8).lerp(body_dir(rig, M, sd, -0.15, 0.35, 0.9), k),
+            target = low.lerp(face, k); elbow = body_dir(rig, M, sd, 0.5, -0.5, -0.8, bone='Hips')
+            limb_ik(rig, p, sd + 'Arm', sd + 'ForeArm', sd + 'Hand', target, elbow)   # find the forearm, so the low hand carries straight on from it
+            fa = rig.fk(p)[P + sd + 'ForeArm'].to_3x3().col[1].normalized()
+            arm(rig, p, sd, target, elbow,
+                fa.lerp(body_dir(rig, M, sd, -0.15, 0.35, 0.9), k),
                 body_dir(rig, M, sd, -1.0, 0.25, 0.0).lerp(body_dir(rig, M, sd, -0.5, -1.0, 0.1), k), 0.5)   # palm in, then to the face
             curl(rig, p, sd, 0.3 + 0.1 * k)
     soften(frames, [sd + b for sd in ('Left', 'Right') for b in ('Arm', 'ForeArm', 'Hand')], 8.0)
