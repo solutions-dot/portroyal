@@ -12,13 +12,16 @@ import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditCloth, auditBodies } from '../../../engine/audit.js';
+import { walkRoute } from '../../../engine/placement.js';
+import { follow, lead, goTo, stop as stopFollow, tick as followTick, isFollowing, pathSpots, pathS as pathSE, watch as followWatch } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
+import { skinProbe } from '../../../engine/skinprobe.js';   /* dev checks only (?test=skin), dropped from the public build */
 import { G as GFX, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
 import { ENV, mixEnv, makeRidges, makeMist, makeSun, makeFireflies, makeSmoke, pathLength, pathAt } from './land.js';
 import { buildEstate, buildTown, buildWatch, buildNewTown } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, SAY, CARDS, CHOICE_NAMES, CALLS } from './content.js';
 import * as SFX from './sfx.js';
-import { HATS, LOOKS } from './cast.js';
+import { HATS, LOOKS, KID } from './cast.js';
 import { musket, lantern, horn, leafCloak, beads, attach } from './props.js';
 
 const $ = (id) => document.getElementById(id);
@@ -90,18 +93,13 @@ function stickUI() {
   el.hidden = false; const rest = stick.id === null; el.classList.toggle('rest', rest); el.style.left = (rest ? 84 : stick.x0) + 'px'; el.style.top = (rest ? innerHeight - 150 : stick.y0) + 'px'; $('nub').style.transform = `translate(calc(-50% + ${stick.dx * 30}px), calc(-50% + ${stick.dy * 30}px))`;
 }
 
-/* ---------- people: borrowed bodies, recoloured per person (cast.js); places are built when a chapter needs them ---------- */
+/* ---------- people: this game's bodies (tools/nanny/people/), recoloured per person (cast.js); places are built when a chapter needs them ---------- */
 const BASES = {}, basePromises = {};
-/* the borrowed child bodies (from Kendal 1957) have white socks painted into the skin. Children in a Maroon town of the 1730s did not wear them, so they are repainted as skin. */
-function bareLegs(g) { g.scene.traverse((o) => { const c = o.isMesh && o.material.name === 'Skin' && o.geometry.attributes.color; if (!c) return; let r = 0, gr = 0, b = 0, n = 0;
-  for (let i = 0; i < c.count; i += 7) { const x = c.getX(i), y = c.getY(i), z = c.getZ(i); if (x < 0.6 && x > y && y > z) { r += x; gr += y; b += z; n++; } } if (!n) return; r /= n; gr /= n; b /= n;
-  for (let i = 0; i < c.count; i++) if (Math.min(c.getX(i), c.getY(i), c.getZ(i)) > 0.62) c.setXYZ(i, r, gr, b); c.needsUpdate = true; }); }
-function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePromises[id] = basePromises[id] || model(id).then((g) => { g.scene.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); if (/^(boy|girl)/.test(id)) bareLegs(g); BASES[id] = g; return g; })); }
+function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePromises[id] = basePromises[id] || model(id).then((g) => { g.scene.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); BASES[id] = g; return g; })); }
 const PROPS = { musket: (s) => musket(!s.fixed && !s.fine), lantern: () => lantern(), horn: () => horn() };   /* people far off carry the plain musket; the ones you can walk up to carry the full one */
 /* how each thing is carried (engine/grip.js): scale is its size, lift how far the arm is held out from the body. After changing these run ?test=held. */
 const GRIP = { musket: { scale: 1, lift: 0.3, straighten: 0.9 }, lantern: { scale: 1.1, lift: 0.5 }, horn: { scale: 1, lift: 0.32 } };
-const SKIN_LIGHT = 1.55;   /* the bodies' skin is built dark, so we lighten it (owner rule 9) so faces read in every light */
-const SKIN_BASE = { kofi: 1.0, turtler: 1.0, buc1: 1.0, ned: 1.0, soldier: 1.0, gunner: 1.0 };   /* per-body corrections, judged in game screenshots */
+const SKIN_LIGHT = 1.55;   /* owner rule 9: Skin is built inside Marcus Garvey's range, then lightened here so faces read in every light (as in Kendal). The British soldiers (pale: true) are drawn as built. Check with ?test=skin */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat);   /* a body carries several hats; show the one this person wears (s.hat), or none */
@@ -109,7 +107,7 @@ function makeBody(s) {
     if ((s.hide && s.hide.includes(nm)) || offHats.some((h) => nm === h || nm === h + 'Band')) { o.visible = false; return; }
     o.material = mat.clone(); const t = nm === 'Hair' ? undefined : s.tint && s.tint[nm];   /* hair keeps its own painted colours */
     if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
-    else if (nm === 'Skin' || nm === 'Hair') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT * (SKIN_BASE[s.base] || 1)); });
+    else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * (s.pale ? 1 : SKIN_LIGHT)); else if (nm === 'Hair') o.material.color.setScalar(1); });   /* hair keeps its own painted colour; only skin is lightened */
   m.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
   m.scale.setScalar(s.scale || 1); m.position.set(s.x, s.ground || 0, s.z); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
   const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.06; b.renderOrder = 1; m.add(b);
@@ -117,7 +115,7 @@ function makeBody(s) {
   for (const [bone, prop] of s.props || []) { const o = PROPS[prop](s), G = GRIP[prop]; grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.3, G.lift || 0), straighten: G.straighten ?? 0.8 }); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) m.userData.flame = o.userData.flame; }
   if (s.lampLight) { const L = new THREE.PointLight(0xffc878, 5.5, 15, 1.6); L.position.set(0.35, 0.95, 0.35); m.add(L); m.userData.lamp = L; }
   if (s.cloak) leafCloak(m, (s.x * 7 + s.z * 3) | 0); if (s.beads) attach(m, 'Neck', beads(), [0, 0.0, 0.015]);
-  spreadArms(m, /^(woman|girl)/.test(s.base) ? 0.15 : 0.06);   /* arms hang clear of skirts (engine/grip.js) */
+  spreadArms(m, /^maroon_(woman|elder_woman|girl|child)/.test(s.base) ? 0.15 : 0.06);   /* arms hang clear of skirts (engine/grip.js) */
   return m;
 }
 const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBasicMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.6, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
@@ -126,15 +124,16 @@ const BUILD = { estate: buildEstate, town: buildTown, watch: buildWatch, newtown
 let modelsReady = false; const placeLoading = {};
 function buildPlace(id) {   /* the geometry only: quick, and enough for a title backdrop. People come later (ensurePlace). */
   if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.actions = []; P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; PL[id] = P;
-  P.bounds = P.G.bounds; P.walls = P.G.walls(0.5).concat(P.solids.map(([x, z, r]) => [x - r * 0.7, z - r * 0.7, x + r * 0.7, z + r * 0.7]));
+  P.bounds = P.G.bounds; P.solidWalls = P.solids.map(([x, z, r]) => [x - r * 0.7, z - r * 0.7, x + r * 0.7, z + r * 0.7]); P.walls = P.G.walls(0.5).concat(P.solidWalls);
+  P.solidBoxes = P.solids.flatMap(([x, z, r]) => { const R = r + 0.05, a = 0.8 * R, b = 0.62 * R; return [[x - a, z - a, x + a, z + a], [x - R, z - b, x + R, z + b], [x - b, z - R, x + b, z + R]]; });   /* three boxes that together hold each round footprint whole and hug it closely: routes round them never cut into one (engine/follow.js goTo) */
   if (__DEV__) P.snap = snapMeshes(P.group); P.batch = batchStatic(P.group);
   P.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.alphaTest > 0) && o.name !== 'land' && !o.material.isMeshBasicMaterial) o.castShadow = o.receiveShadow = true; });
   if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); return P;
 }
-/* background people placed at random are moved until nobody stands in anybody, in a fire, or off the ground you can walk on */
+/* background people placed at random are moved until nobody stands in anybody, in a fire, in a tree's roots or off the ground you can walk on (e.wild: they may stand on open hillside, at the height of the land there) */
 function settle(P) {
   const r = rng(77), fixed = P.specs.people.map((p) => [p.x, p.z, p.when]), G = P.G, both = (a, b) => !a || !b || (a[0] <= b[1] && b[0] <= a[1]), keep = [];
-  const free = (e) => fixed.every((f) => !both(f[2], e.when) || Math.hypot(f[0] - e.x, f[1] - e.z) >= 0.95) && P.solids.every((s) => Math.hypot(s[0] - e.x, s[1] - e.z) >= s[2] + 0.45) && (e.ground !== undefined || G.walkable(e.x, e.z, 0.5)) && Math.hypot(e.x - P.start.x, e.z - P.start.z) > 1.6;
+  const free = (e) => fixed.every((f) => !both(f[2], e.when) || Math.hypot(f[0] - e.x, f[1] - e.z) >= 0.95) && P.solids.every((s) => Math.hypot(s[0] - e.x, s[1] - e.z) >= s[2] + 0.45) && (e.ground !== undefined || e.wild || G.walkable(e.x, e.z, 0.5)) && Math.hypot(e.x - P.start.x, e.z - P.start.z) > 1.6;
   for (const e of P.specs.extras) { if (e.id || e.column !== undefined || e.fighter !== undefined || e.path || e.fixed) { keep.push(e); fixed.push([e.x, e.z, e.when]); continue; }
     const x0 = e.x, z0 = e.z; let ok = free(e), tries = 0; while (!ok && tries++ < 50) { e.x = x0 + (r() - 0.5) * 2 * (1 + tries * 0.14); e.z = z0 + (r() - 0.5) * 2 * (1 + tries * 0.14); ok = free(e); }
     if (ok) { keep.push(e); fixed.push([e.x, e.z, e.when]); } }
@@ -166,7 +165,7 @@ function enterPlace(id, { keepPos = false, env } = {}) {
 function clampPos(x, z) {
   const P = P_(); [x, z] = P.G.clamp(x, z);
   for (const s of P.solids) { const d = Math.hypot(x - s[0], z - s[1]); if (d < s[2]) { x = s[0] + (x - s[0]) / (d || 1) * s[2]; z = s[1] + (z - s[1]) / (d || 1) * s[2]; } }
-  for (const n of P.people) { if (!n.m || !n.m.visible) continue; const d = Math.hypot(x - n.x, z - n.z); if (d < 0.5) { x = n.x + (x - n.x) / (d || 1) * 0.5; z = n.z + (z - n.z) / (d || 1) * 0.5; } }
+  for (const n of P.people) { if (!n.m || !n.m.visible || isFollowing(n)) continue; const d = Math.hypot(x - n.x, z - n.z); if (d < 0.5) {   /* someone who comes with you never blocks you: they step aside (engine/follow.js) */ x = n.x + (x - n.x) / (d || 1) * 0.5; z = n.z + (z - n.z) / (d || 1) * 0.5; } }
   return P.G.clamp(x, z);
 }
 const groundAt = (x, z) => (P_() ? P_().G.h(x, z) : 0);
@@ -180,25 +179,16 @@ const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.a
 function pathS(d, x, z) { let b = 1e9, s = 0, out = 0; for (let i = 1; i < d.length; i++) { const ax = d[i - 1][0], az = d[i - 1][1], dx = d[i][0] - ax, dz = d[i][1] - az, L = Math.hypot(dx, dz) || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (L * L))), k = Math.hypot(x - ax - dx * t, z - az - dz * t); if (k < b) { b = k; out = s + t * L; } s += L; } return out; }
 /* put a moving person at (n.x, n.z) on the land. Only the change in the ground's height is added to their height: the foot pinning (groundFeet, every frame)
    has already set how high the body rides in this step of the walk, and resetting that each frame made people bounce. */
+/* where a person may not stand: off the ground you can walk on, or in the footprint of a solid thing (a hut, a fire, a rock, a tree's trunk and roots: P.solids) */
+function blockedAt(P, x, z, r = 0.25) { if (!P.G.walkable(x, z, Math.min(0.15, r * 0.5))) return true; for (const s of P.solids) if (Math.hypot(s[0] - x, s[1] - z) < s[2] + r * 0.4) return true; return false; }
+/* what engine/follow.js needs to know each frame: where you are, what is solid, who else is about, and how a person stands on the land */
+function followWorld() { const P = P_(); return { px: state.x, pz: state.z, blocked: (x, z, r) => blockedAt(P, x, z, r), walls: P.solidBoxes, bounds: P.bounds, others: P.npcs.filter((o) => o.m && o.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw }, place: (n) => stand(n, P.G) }; }
 function stand(n, G) { const m = n.m, g = G.h(n.x, n.z); m.position.x = n.x; m.position.z = n.z; m.position.y += g - (m.userData.ground || 0); m.userData.ground = g; }
 const setWalk = (n, on, clip = 'Walk') => { if (on && (!n.walking || n.clip !== clip)) { n.walking = true; n.clip = clip; n.ctl.play(clip); } else if (!on && n.walking) { n.walking = false; n.ctl.play(null); } };
 function npcTick(n, dt) {
   const m = n.m; if (!m || !m.visible) return; if (POSTER) { m.rotation.y = n.ry0; return; } if (n.scripted) return;
   const G = P_().G, d = Math.hypot(state.x - n.x, state.z - n.z), isNear = !n.extra && (d < 3.2 || talkWith === n);
-  if (n.follow) {   /* someone who leads or follows you along a trail: they keep `offset` metres ahead of you (or behind, if negative) */
-    const f = n.follow, want = Math.max(f.min || 0, Math.min(f.max === undefined ? f.len : f.max, pathS(f.dense, state.x, state.z) + f.offset)), diff = want - n.s;
-    /* they match your pace: a gentle walk for a small gap, a quicker walk at your own speed, and a run only when you hurry or they are well behind. A guide is never left trailing. */
-    const gap = Math.abs(diff), sp = Math.min(gap > 6 ? 5.4 : 4.0, 0.9 + gap * 1.15), run = sp > 3.0 || (n.clip === 'Run' && n.walking && sp > 2.5);
-    if (gap > (n.walking ? 0.1 : 0.9) && talkWith !== n) {   /* once walking they keep on until they arrive, and they do not set off again for a small gap: no stop-start shuffle */
-      n.s += Math.sign(diff) * Math.min(gap, sp * dt); setWalk(n, true, run && CL.Run ? 'Run' : 'Walk'); const [x, z, a] = pathAt(f.dense, n.s); n.x = x + Math.cos(a) * (f.side || 0); n.z = z - Math.sin(a) * (f.side || 0); faceTo(m, diff > 0 ? a : a + PI, dt, 6); }
-    else { setWalk(n, false); if (d < 9) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt, 3); }
-    stand(n, G); return;
-  }
-  if (n.goto) {   /* walk straight to a spot, then stand there */
-    const dx = n.goto[0] - n.x, dz = n.goto[1] - n.z, dist = Math.hypot(dx, dz), sp = (n.speed || 1.5) * dt;
-    if (dist <= sp) { n.x = n.goto[0]; n.z = n.goto[1]; n.ry0 = n.goto[2] === undefined ? m.rotation.y : n.goto[2]; n.goto = null; setWalk(n, false); } else { n.x += dx / dist * sp; n.z += dz / dist * sp; setWalk(n, true, n.gait || 'Walk'); faceTo(m, Math.atan2(dx, dz), dt, 7); }
-    stand(n, G); return;
-  }
+  if (n.fol) { followTick(n, dt, followWorld()); return; }   /* someone who leads you, follows you or was sent somewhere (engine/follow.js) */
   if (!n.path) { if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else if (!n.extra) faceTo(m, n.ry0, dt, 2); return; }
   if (n.wait > 0) { setWalk(n, false); n.wait -= dt; return; }
   setWalk(n, true); const to = n.path[(n.i + 1) % n.path.length], dx = to[0] - n.x, dz = to[1] - n.z, dist = Math.hypot(dx, dz), sp = (n.speed || 1.1) * dt; faceTo(m, Math.atan2(dx, dz), dt);
@@ -345,7 +335,7 @@ function nextCard(i, s, tries = 0) {
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetTransient() {   /* leave anything running: scripted scenes, the horn, the fight, the camera director */
   EP++; endCut(); frozen = false; moveLock = false; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; hornClose(); flash(0, 0); $('vig').style.opacity = 0; $('glow').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.low = 0; FIGHT.on = false; GUNS.on = false;
-  SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); for (const k of Object.keys(PL)) for (const n of PL[k].npcs) { n.follow = null; n.goto = null; n.scripted = false; n.cue = !!n.hiddenNow; if (n.walking) { n.walking = false; n.ctl.play(null); } n.x = n.hx; n.z = n.hz; if (n.m) { n.m.rotation.y = n.ry0; if (!n.fixedGround) n.m.userData.ground = PL[k].G.h(n.x, n.z); n.m.position.set(n.x, n.m.userData.ground, n.z); } }
+  SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); for (const k of Object.keys(PL)) for (const n of PL[k].npcs) { n.fol = null; n.scripted = false; n.cue = !!n.hiddenNow; if (n.walking) { n.walking = false; n.ctl.play(null); } n.x = n.hx; n.z = n.hz; if (n.m) { n.m.rotation.y = n.ry0; if (!n.fixedGround) n.m.userData.ground = PL[k].G.h(n.x, n.z); n.m.position.set(n.x, n.m.userData.ground, n.z); } }
 }
 async function beginChapter(i, st) {
   if (fading) return; resetTransient(); st = st || CH_FIRST[i]; const C = CHAPTERS[i]; hideCard(); closeJournal(); closeChapters(); $('dialogue').hidden = true; busy = false; talkWith = null;
@@ -453,11 +443,13 @@ const ACTIONS_FOR = {
 };
 
 /* ---------- chapter 1: the night road. Quamin leads, Mama follows; a watchman with a lantern walks the cart road. ---------- */
-const lead = (n, dense, offset, o = {}) => { n.follow = { dense, len: pathLength(dense), offset, ...o }; n.s = pathS(dense, n.x, n.z); };
 ON[10] = () => { if (cur === 'estate') { say(SAY.start, 4200); SFX.owl(); } };
-ON[11] = () => { const P = PL.estate, S = P.spots, q = byId('quamin'), m = byId('mama'); lead(q, S.trail.dense, 4.6, { max: S.sRoadS - 1.2, side: 0.45 }); lead(m, S.trail.dense, -2.6, { side: -0.4 }); say(SAY.follow, 3800); SFX.owl(); };
+/* how each person walks with you (engine/follow.js): a guide keeps `ahead` metres in front along the trail and waits if you fall behind; a follower keeps `gap` metres
+   behind (on the trail, or in your footsteps), never closer than `space`. The scenes and the place audit both read these numbers. */
+const FOLLOW = { quamin: { ahead: 4.6, side: 0.45 }, mama: { gap: 2.4, side: 0.5 }, quaminT: { ahead: 4.4 }, mamaT: { gap: 2.2, side: 0.5 }, mama5: { ahead: 3.6, side: 0.3 }, flee: (i) => ({ ahead: 7 + i * 3.2, side: i % 2 ? 0.3 : -0.3, wait: Infinity, wave: false }), phibba: { gap: 1.4, side: 0.55, space: 0.8 } };
+ON[11] = () => { const P = PL.estate, S = P.spots, q = byId('quamin'), m = byId('mama'); lead(q, S.trail.dense, { ...FOLLOW.quamin, max: S.sRoadS - 1.2 }); follow(m, FOLLOW.mama); say(SAY.follow, 3800); SFX.owl(); };
 ON[12] = () => { say(SAY.road, 3600); ctr.t = 0; };
-ON[13] = () => { const S = PL.estate.spots, q = byId('quamin'); if (q && q.follow) { q.follow.max = S.top - 2.2; q.follow.min = 0; } say(SAY.roadDone, 3200); $('glow').style.opacity = 0; SFX.whistle(); };
+ON[13] = () => { const S = PL.estate.spots, q = byId('quamin'); if (q && q.fol) { q.fol.max = S.top - 2.2; q.fol.min = 0; } say(SAY.roadDone, 3200); $('glow').style.opacity = 0; SFX.whistle(); };
 function estateTick(dt) {
   const P = P_(), S = P.spots, sP = pathS(S.trail.dense, state.x, state.z), w = byId('watchman'); if (w && w.m.userData.flame) w.m.userData.flame.scale.setScalar(0.6 + Math.random() * 0.2);
   /* you cannot run on ahead of the story: before you have talked, and before the road, the trail stops you */
@@ -465,7 +457,7 @@ function estateTick(dt) {
   if (stage === 11 && sP >= S.sRoadS - 2.2) setStage(12);
   else if (stage === 12 && w) {
     const dW = Math.hypot(state.x - w.x, state.z - w.z), onRoad = state.z < S.roadZ[1] - 0.2 && state.z > S.roadZ[0]; $('glow').style.opacity = clamp01((19 - dW) / 11) * (onRoad ? 0.95 : 0.6);
-    const q = byId('quamin'); if (q && q.follow && !ctr.qAcross && Math.hypot(S.crossX - w.x, 8 - w.z) > 21) { ctr.qAcross = 1; q.follow.max = S.sRoadN + 3.4; q.follow.min = S.sRoadN + 2.6; }   /* Quamin goes first: when the light is far he slips across and waits for you on the other side */
+    const q = byId('quamin'); if (q && q.fol && !ctr.qAcross && Math.hypot(S.crossX - w.x, 8 - w.z) > 21) { ctr.qAcross = 1; q.fol.max = S.sRoadN + 3.4; q.fol.min = S.sRoadN + 2.6; }   /* Quamin goes first: when the light is far he slips across and waits for you on the other side */
     ctr.t = (ctr.t || 0) + dt; if (ctr.t > 4) { if (dW > 20 && !onRoad && ctr.hint !== 'go') { ctr.hint = 'go'; say(SAY.roadGo, 3000); } else if (dW < 15 && !onRoad && ctr.hint !== 'wait') { ctr.hint = 'wait'; say(SAY.roadWait, 3000); } }
     if (onRoad && dW < 8.5 && !frozen) { frozen = true; say(SAY.roadSeen, 2600); flash(0.5, 60, '#ffb060'); setTimeout(() => flash(0, 500, '#ffb060'), 120); const [x, z] = pathAt(S.trail.dense, S.sRoadS - 4); const ep = EP; setTimeout(() => { if (ep !== EP) return; state.x = x; state.z = z; frozen = false; ctr.hint = ''; }, 900 * TS); }
     else if (sP >= S.sRoadN + 0.8) setStage(13);
@@ -473,7 +465,7 @@ function estateTick(dt) {
   else if (stage === 13) { if (!ctr.s1 && state.z < -9.5) { ctr.s1 = 1; say(SAY.stream, 3400); } if (!ctr.s2 && state.z < -24) { ctr.s2 = 1; say(SAY.climb, 3800); SFX.whistle(); } if (sP >= S.top - 4.6) setStage(14); }
 }
 ON[14] = async () => {
-  const ep = EP, P = PL.estate; if (cur !== 'estate') return; frozen = true; bars(true); const q = byId('quamin'), m = byId('mama'); if (q) q.follow.max = P.spots.top - 1.0; if (m) m.follow.offset = -1.9;
+  const ep = EP, P = PL.estate; if (cur !== 'estate') return; frozen = true; bars(true); const q = byId('quamin'), m = byId('mama'); if (q && q.fol) q.fol.max = P.spots.top - 1.0; if (m && m.fol) m.fol.gap = 1.9;
   say(SAY.dawn1, 4200); const e1 = envTo(ENV.predawn, 5); const a = eyeNow(), h = a[1];
   await cut(a, [a[0] - 0.4, h + 0.5, a[2] - 1.5], [a[0] - 30, h + 6, a[2] - 60], [a[0] - 60, h + 16, a[2] - 90], 6); if (ep !== EP) return; await e1;
   say(SAY.dawn2, 4600); const e2 = envTo(ENV.dawn, 7); await cut([a[0] - 0.4, h + 0.5, a[2] - 1.5], [a[0] + 2.5, h + 2.2, a[2] - 4], [a[0] - 60, h + 16, a[2] - 90], [a[0] + 70, h + 18, a[2] - 90], 8); if (ep !== EP) return; await e2;
@@ -482,8 +474,8 @@ ON[14] = async () => {
 };
 
 /* ---------- chapter 2: the hill town ---------- */
-ON[20] = () => { const P = PL.town, S = P.spots, q = byId('quaminT'), m = byId('mamaT'); if (!q || !m) return; const [qx, qz] = pathAt(S.pathIn.dense, 5), [mx, mz] = pathAt(S.pathIn.dense, 0.4); q.x = qx; q.z = qz; m.x = mx; m.z = mz; lead(q, S.pathIn.dense, 4.4); lead(m, S.pathIn.dense, -2.4); say(SAY.pathUp, 4200); };
-ON[21] = () => { const q = byId('quaminT'), m = byId('mamaT'); if (q && q.follow) { q.follow = null; q.goto = [q.hx, q.hz, q.ry0]; } if (m && m.follow) { m.follow = null; m.goto = [m.hx, m.hz, m.ry0]; } if (cur === 'town') say(SAY.townIn, 4200); };
+ON[20] = () => { const P = PL.town, S = P.spots, q = byId('quaminT'), m = byId('mamaT'); if (!q || !m) return; const [qx, qz] = pathAt(S.pathIn.dense, 5); q.x = qx; q.z = qz; m.x = P.start.x + 0.7; m.z = P.start.z + 1.3; lead(q, S.pathIn.dense, FOLLOW.quaminT); follow(m, FOLLOW.mamaT);   /* Quamin starts ahead of you, Mama behind you */ say(SAY.pathUp, 4200); };
+ON[21] = () => { const q = byId('quaminT'), m = byId('mamaT'); for (const n of [q, m]) if (n && n.fol) goTo(n, n.hx, n.hz, { face: n.ry0 });   /* home round the fire and the stools, not through them */ if (cur === 'town') say(SAY.townIn, 4200); };
 function townTick(dt, t) {
   const P = P_(), S = P.spots; if (P.fire.userData.flame) P.fire.userData.flame.scale.set(0.9 + Math.sin(t * 11) * 0.08, 1.1 + Math.sin(t * 7.3) * 0.14, 1); if (S.hearth.intensity > 0) S.hearth.intensity = 2.2 + Math.sin(t * 13) * 0.3 + Math.sin(t * 5.1) * 0.3;
   if (stage === 20 && pathS(S.pathIn.dense, state.x, state.z) >= S.sIn - 1.2) setStage(21);
@@ -580,17 +572,12 @@ function fightAfter() { FIGHT.on = false; moveLock = false; frozen = false; bars
 /* ---------- chapter 5: 1734, the guns in the night. You wake the row, find Phibba, and climb the back trail while the small cannon fire far behind you. ---------- */
 const GUNS = { on: false, t: 0, next: 0, n: 0 };
 ON[50] = () => { if (cur !== 'town') return; say(SAY.n1, 3600); SFX.hornCall('SSS', { far: 0.35, pan: -0.3, pitch: 330 }); setTimeout(() => SFX.hornCall('SSS', { far: 0.6, pan: 0.5, pitch: 300 }), 2200 * TS); };
-ON[54] = () => { const p = byId('phibba'); if (!p) return; p.ctl.base = p.ctl.get('Idle') || p.ctl.base; p.ctl.play(null); p.tag = true; };   /* she stops crying and comes with you */
-function tagTick(n, dt) {   /* little Phibba holds your hand: she stays a step behind you wherever you go */
-  const m = n.m, G = P_().G, d = Math.hypot(state.x - n.x, state.z - n.z); if (talkWith === n) return;
-  if (d > 1.25) { const sp = Math.min(d - 1.0, (d > 3 ? 3.6 : 2.4) * dt), [x, z] = G.clamp(n.x + (state.x - n.x) / d * sp, n.z + (state.z - n.z) / d * sp); n.x = x; n.z = z; setWalk(n, true); faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt, 7); } else setWalk(n, false);
-  stand(n, G);
-}
+ON[54] = () => { const p = byId('phibba'); if (!p) return; p.ctl.base = p.ctl.get('Idle') || p.ctl.base; p.ctl.play(null); follow(p, FOLLOW.phibba); };   /* she stops crying and comes with you: a step behind and to one side, never pressed against you (engine/follow.js) */
 function gunsIntro() { const c = CARDS.guns; card(c.title, c.paras, [{ t: c.go, go: () => { hideCard(); gunsRun(); } }, { t: c.skip, go: () => { hideCard(); infoCard(CARDS.gunsRead).then(() => ridgeDawn(true)); } }], { col: true }); }
 function gunsRun() {
   const P = PL.town, S = P.spots; GUNS.on = true; GUNS.t = 0; GUNS.next = 1.2; GUNS.n = 0; ctr.climb = 1; ctr.goal = 'Climb the back trail. Do not stop.'; refreshGoal(); unlock('fall'); S.guns.forEach((g) => { g.visible = true; }); say(SAY.n2, 3800);
-  P.extras.filter((e) => e.flee && e.m).forEach((e, i) => { const [x, z] = pathAt(S.back.dense, 2 + i * 2.6); e.x = x; e.z = z; lead(e, S.back.dense, 7 + i * 3.2, { side: (i % 2 ? 0.3 : -0.3) }); });
-  const m = byId('mama5'); if (m) lead(m, S.back.dense, 3.6, { side: 0.3 });
+  P.extras.filter((e) => e.flee && e.m).forEach((e, i) => { const [x, z] = pathAt(S.back.dense, 2 + i * 2.6); e.x = x; e.z = z; lead(e, S.back.dense, FOLLOW.flee(i)); });
+  const m = byId('mama5'); if (m) lead(m, S.back.dense, FOLLOW.mama5);
 }
 function gunsTick(dt, t) {
   const P = PL.town, S = P.spots, sP = pathS(S.back.dense, state.x, state.z); GUNS.t += dt;
@@ -604,7 +591,7 @@ function gunsTick(dt, t) {
 async function ridgeDawn(skipped) {   /* the top of the back trail: the sun comes up, and you look back once */
   const ep = EP, P = PL.town, S = P.spots; frozen = true; busy = false; bars(true); goalText = ''; $('goal').textContent = ''; unlock('fall');
   if (skipped) { fadeBlack(true, 500); await wait(700); if (ep !== EP) return; S.burn.forEach((b) => { b.visible = true; }); }
-  GUNS.on = false; S.guns.forEach((g) => { g.visible = false; }); const p = byId('phibba'); if (p) p.tag = false;
+  GUNS.on = false; S.guns.forEach((g) => { g.visible = false; }); const p = byId('phibba'); if (p) stopFollow(p);
   stage = 55; best = Math.max(best, 55); refreshCast(); arriveRidge(false); if (skipped) fadeBlack(false, 900);
   say(SAY.n6, 4600); const e1 = envTo(ENV.dawn, 9), a = eyeNow(), h = a[1];
   await cut(a, [a[0] + 1.5, h + 1.2, a[2] + 1], [a[0] - 40, h + 20, a[2] - 40], [a[0] + 30, h - 6, a[2] + 20], 7); if (ep !== EP) return;
@@ -686,7 +673,7 @@ function update(dt, now) {
         [state.x, state.z] = clampPos(state.x + (fx * f - fz * r) / Math.max(1, len) * sp * dt, state.z + (fz * f + fx * r) / Math.max(1, len) * sp * dt); stepT -= dt * sp; if (stepT <= 0) { stepT = 1.35; stepSound(cur === 'estate' && state.z < -11.2 && state.z > -15.9 ? 'water' : 'grass'); } } }
   }
   if ((frameN & 7) === 0) for (const n of P.extras) { if (n.scripted) continue; const d = Math.hypot(state.x - n.x, state.z - n.z); n.m.visible = (n.far || d < 70) && !n.hidden && !n.cue; }
-  for (const n of P.npcs) { if (n.tag && n.m.visible) tagTick(n, dt); else npcTick(n, dt); }
+  for (const n of P.npcs) npcTick(n, dt);
   near = null; if (state.started && !busy && !frozen && !DIR.on && !HORN.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
   for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
@@ -716,11 +703,27 @@ requestAnimationFrame(frame);
 
 /* ---------- the place audit (dev builds): the checks live in engine/audit.js. Run ?test=audit and expect 0 issues in every place.
    A place holds different people in different chapters, so it is checked once for each set of people who are there together.
-   Two checks are added for land with heights: everyone must stand on the ground (not above or below it), and nobody may stand in a tree, a hut or a fire. ---------- */
+   Two checks are added for land with heights: everyone must stand on the ground (not above or below it), and nobody may stand in a tree, a hut or a fire.
+   People inside solid things are checked against the real shapes (engine/audit.js, auditBodies): where each person stands, at their own height (a child is small),
+   along every route a guide, a follower or a runner takes (auditRoutes), and over all the ground you can walk on, because a follower such as Phibba goes wherever you go. ---------- */
+const tallOf = (n) => { if (n.tall) return n.tall; const hd = n.m.getObjectByName('mixamorigHead'); n.m.updateMatrixWorld(true); const y = hd ? hd.getWorldPosition(new THREE.Vector3()).y - (n.m.userData.ground || 0) + 0.14 : 1.65 * n.m.scale.y; return (n.tall = Math.max(0.8, Math.min(2.0, y))); };
+const bodyR = (n) => Math.max(0.11, Math.min(0.2, 0.18 * tallOf(n) / 1.7));
+function auditRoutes(P) {   /* the routes people walk in each place, with the stages when they walk them. The numbers are the scenes' own (FOLLOW, HALT). */
+  const S = P.spots, out = [], who = (id) => P.npcs.find((n) => n.id === id), sOf = (path, n) => pathSE(path, n.hx, n.hz), R = (n, what, pts, when) => { if (n) out.push({ id: n.id || n.base, what, pts, when, h: tallOf(n), r: bodyR(n) }); };
+  if (P.id === 'estate') { const q = who('quamin'), m = who('mama'); R(q, 'leads you', pathSpots(S.trail.dense, sOf(S.trail.dense, q), S.top - 1, FOLLOW.quamin.side), [11, 14]); R(m, 'follows you', pathSpots(S.trail.dense, sOf(S.trail.dense, m), S.top - 1.9, FOLLOW.mama.side), [11, 14]); }
+  if (P.id === 'town') { const end = S.pathIn.dense[S.pathIn.dense.length - 1];
+    R(who('quaminT'), 'leads you', pathSpots(S.pathIn.dense, 5, S.sIn), [20, 21]); R(who('mamaT'), 'follows you', pathSpots(S.pathIn.dense, 0.4, S.sIn), [20, 21]);
+    for (const n of [who('quaminT'), who('mamaT')]) { const r = walkRoute([end[0], end[1]], [n.hx, n.hz], P.solidBoxes, 0.22, P.bounds); R(n, 'walks home', [[end[0], end[1]], ...(r.length ? r : [[n.hx, n.hz]])], [21, 21]); }
+    const m5 = who('mama5'); R(m5, 'leads you', pathSpots(S.back.dense, sOf(S.back.dense, m5), S.sBack, FOLLOW.mama5.side), [54, 54]);
+    P.extras.filter((e) => e.flee).forEach((e, i) => { R(e, 'runs up the trail', pathSpots(S.back.dense, 2 + i * 2.6, S.sBack, FOLLOW.flee(i).side), [54, 54]); out[out.length - 1].id += '#' + i; }); }
+  if (P.id === 'watch') { const n = P.extras.find((e) => e.column === 3); R(n, 'marches', pathSpots(S.climb.dense, HALT, S.sClimb), [41, 42]); }
+  return out;
+}
 function auditPlace(P) {
-  const marks = [...new Set(P.npcs.filter((n) => n.when).map((n) => n.when[0]))].sort((a, b) => a - b), phases = marks.length ? marks : [0], out = { floating: [], inside: [], stuck: [] }, seen = new Set(), add = (k, l) => { if (!seen.has(l)) { seen.add(l); out[k].push(l); } };
-  for (const st of phases) { const here = P.npcs.filter((n) => !n.when || (st >= n.when[0] && st <= n.when[1]));
-    const r = auditPlaceE({ id: P.id, snap: P.snap, npcs: here.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start, actions: P.actions, people: here.filter((n) => !n.extra).map((n) => ({ id: n.id, x: n.hx, z: n.hz, anim: n.anim })) });
+  const marks = [...new Set(P.npcs.filter((n) => n.when).map((n) => n.when[0]).concat(auditRoutes(P).map((r) => r.when[0])))].sort((a, b) => a - b), phases = marks.length ? marks : [0], out = { floating: [], inside: [], stuck: [] }, seen = new Set(), add = (k, l) => { if (!seen.has(l)) { seen.add(l); out[k].push(l); } };
+  const hides = new Set(((P.spots && P.spots.cover) || []).map((c) => c.uuid)), bodySkip = (e) => hides.has(e.top);   /* the bushes the Maroons hide in on purpose (chapter 4) */
+  for (const st of phases) { const here = P.npcs.filter((n) => !n.when || (st >= n.when[0] && st <= n.when[1])), routes = auditRoutes(P).filter((r) => st >= r.when[0] && st <= r.when[1]);
+    const r = auditPlaceE({ id: P.id, snap: P.snap, groundAt: (x, z) => P.G.h(x, z), npcs: here.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path, fixedGround: n.fixedGround, h: tallOf(n), r: bodyR(n) })), routes, bodySkip, walls: P.walls, bounds: P.bounds, start: P.start, actions: P.actions, people: here.filter((n) => !n.extra).map((n) => ({ id: n.id, x: n.hx, z: n.hz, anim: n.anim })) });
     /* The engine calls everywhere you may not walk a "walking wall". Here that is open hillside, and background figures stand on it on purpose (the Maroons beside the path).
        So that one line is kept only for people you talk to; they are also checked just below against the ground you can walk on. */
     const bg = new Set(here.filter((n) => n.extra).map((n) => n.id || n.base));
@@ -729,6 +732,10 @@ function auditPlace(P) {
       for (const s of P.solids) if (Math.hypot(s[0] - n.hx, s[1] - n.hz) < s[2] * 0.8) add('inside', `${id}@(${n.hx.toFixed(1)},${n.hz.toFixed(1)}) stands in a solid thing at (${s[0].toFixed(1)},${s[1].toFixed(1)})`);
       if (!n.extra && !P.G.walkable(n.hx, n.hz, -0.3)) add('stuck', `person ${id} stands off the ground you can walk on`);
       for (const o of here) if (o !== n && here.indexOf(o) > here.indexOf(n) && Math.abs((o.m.userData.ground || 0) - (n.m.userData.ground || 0)) >= 0.3 && Math.hypot(o.hx - n.hx, o.hz - n.hz) < 0.65) add('inside', `${id} and ${o.id || o.base} are ${(Math.hypot(o.hx - n.hx, o.hz - n.hz) * 100).toFixed(0)} cm apart on a slope`); } }
+  /* all the ground you can walk on, every 50 cm, outside the footprints that keep you (and anyone following you) out of huts, fires, rocks and trees: nothing solid may stand there */
+  const B = P.bounds, open = []; for (let x = B.x0; x <= B.x1; x += 0.5) for (let z = B.z0; z <= B.z1; z += 0.5) if (P.G.walkable(x, z, 0.1) && !P.solids.some((s) => Math.hypot(s[0] - x, s[1] - z) < s[2])) open.push({ id: 'open ground', x, z, ground: P.G.h(x, z), h: 1.6, r: 0.14, what: 'is' });
+  for (const l of auditBodies(P.snap.concat(P.snap.inst || []), open, { skip: bodySkip })) add('inside', l);
+  if (P.id === 'town' && 8 + P.spots.farHuts <= 140) add('stuck', `the town shows ${8 + P.spots.farHuts} houses: the story says over 140 (Jamaica National Heritage Trust)`);
   return { id: P.id, ...out };
 }
 
@@ -772,15 +779,21 @@ function devViews() {
       DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(at === 4 ? 10 : 22, h + (at === 4 ? 2 : 4), at === 4 ? 7 : 9); DIR.b = DIR.a; DIR.la = new THREE.Vector3(at === 4 ? 8 : 11, at === 4 ? -34 : -25, at === 4 ? 60 : 39); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 50; FOV = 50; resize(); for (let i = 0; i < 14; i++) update(0.05); }
   });
   if (shot === 'guns') go('town', 54, -22, -20.5, -2.3 + PI, 0.1).then((P) => { gunsRun(); for (let i = 0; i < 260; i++) update(0.05); state.x = -24; state.z = -22; state.yaw = 0.95; state.pitch = -0.1; const g = P.spots.guns[0], w = g.localToWorld(new THREE.Vector3(...g.userData.muzzle)); gunFlash(w.x, w.y, w.z, 3.2, 3); say(SAY.n4, 1e6); });
+  if (shot === 'gun') go('town', 54, -22, -20.5, 0, 0).then((P) => {   /* ?shot=gun&a=0.6: one swivel gun close up, from heading a (radians) round it, to check its legs and feet on the ground */
+    const g = P.spots.guns[0], a = +(q.get('a') || 0.6), c = g.position; for (const s of P.spots.guns) s.visible = true; DIR.on = true; DIR.t = 0; DIR.dur = 1e6;
+    DIR.a = new THREE.Vector3(c.x + Math.sin(a) * 2.6, c.y + 1.0, c.z + Math.cos(a) * 2.6); DIR.b = DIR.a; DIR.la = new THREE.Vector3(c.x, c.y + 0.5, c.z); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 50; FOV = 50; resize(); for (let i = 0; i < 6; i++) update(0.05, 6000); });
   if (shot === 'look') go('watch', 31, 0, 3.5, PI, -0.2).then((P) => { P.spots.redline.visible = true; const h = groundAt(0, 3.5) + EYE, fs = P.spots.far; DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(0.4, h + 0.6, 4.5); DIR.b = DIR.a; DIR.la = new THREE.Vector3(fs[0], fs[1] - 3, fs[2]); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 21; FOV = 21; resize(); bars(true); say(SAY.look2, 1e6); for (let i = 0; i < 6; i++) update(0.05, 6000); });
   /* the paths the autoplayer never takes: "Read what happened instead" for both set pieces, and being seen by the watchman */
   if (shot === 'skipfight') go('watch', 41, 0.2, 4.0, PI, -0.3).then(() => { fightIntro(); });
   if (shot === 'skipguns') go('town', 54, -7.6, -8.1, 0.8, 0).then(() => { gunsIntro(); });
   if (shot === 'seen') go('estate', 12, -2, 10, 0, 0).then((P) => { const w = byId('watchman'); w.x = 1; w.z = 8.2; w.wait = 99; w.m.position.set(1, groundAt(1, 8.2), 8.2); for (let i = 0; i < 40; i++) update(0.05); setTimeout(() => { for (let i = 0; i < 10; i++) update(0.05); document.title = 'SEEN back=' + (state.z > 12.6) + ' z=' + state.z.toFixed(1) + ' sub=' + $('sub').textContent; }, 400); });
+  /* ?shot=cam&p=town&st=54&c=13,1.6,-10&l=9.9,0.8,-7.6 : a camera anywhere, for close checks of one spot. c and l are x, height above the ground there, z. &env=day lights it, &fov=50, &me=x,z puts you (the player) there */
+  if (shot === 'cam') { const P3 = (k, d) => (q.get(k) || d).split(',').map(Number), c = P3('c', '0,2,6'), l = P3('l', '0,1,0'), me = q.has('me') ? P3('me', '0,0') : [c[0], c[2]];
+    go(q.get('p') || 'town', +(q.get('st') || 21), me[0], me[1], 0, 0, q.has('env') ? ENV[q.get('env')] : undefined).then(() => { for (let i = 0; i < 6; i++) update(0.05); DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(c[0], groundAt(c[0], c[2]) + c[1], c[2]); DIR.b = DIR.a; DIR.la = new THREE.Vector3(l[0], groundAt(l[0], l[2]) + l[1], l[2]); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = +(q.get('fov') || 50); FOV = DIR.f0; resize(); $('hud').hidden = true; document.title = 'CAM ready'; }); }
   if (shot === 'swivel') go('town', 54, 0, 0, 0, 0, ENV.morning).then((P) => { const S = P.spots, k = S.knoll, gy = groundAt(k[0], k[1]); S.guns.forEach((g) => { g.visible = true; }); DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(k[0] + 1.9, gy + 1.5, k[1] - 0.6); DIR.b = DIR.a; DIR.la = new THREE.Vector3(k[0] - 0.9, gy + 1.0, k[1] - 0.5); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 50; FOV = 50; resize(); $('hud').hidden = true; });
   if (shot === 'poster') go('watch', 30, -0.4, -3.9, PI + 0.06, -0.03, ENV.dawn).then((P) => { $('hud').hidden = true; EYE = 1.75; P.spots.sticks.visible = false; });
   if (V[shot]) go(...V[shot]).then((P) => {
-    if (shot === 'est2' || shot === 'est3' || shot === 'est4') { const S = P.spots, qn = byId('quamin'), m = byId('mama'); lead(qn, S.trail.dense, 4.6, { side: 0.45 }); lead(m, S.trail.dense, -2.6, { side: -0.4 }); for (let i = 0; i < 200; i++) update(0.05); state.yaw = V[shot][4]; }
+    if (shot === 'est2' || shot === 'est3' || shot === 'est4') { const S = P.spots, qn = byId('quamin'), m = byId('mama'); lead(qn, S.trail.dense, FOLLOW.quamin); follow(m, FOLLOW.mama); for (let i = 0; i < 200; i++) update(0.05); state.yaw = V[shot][4]; }
     if (shot === 'est2') { const w = byId('watchman'); w.x = 9; w.z = 8.2; w.m.position.set(9, groundAt(9, 8.2), 8.2); w.wait = 99; $('glow').style.opacity = 0.5; say(SAY.roadWait, 1e6); }
     if (shot === 'town6') { byId('nanny').cue = false; refreshCast(); }
     if (/^night|^ridge/.test(shot)) { /* the night scenes */ }
@@ -822,20 +835,64 @@ function devViews() {
     (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); count += r.floating.length + r.inside.length + r.stuck.length; out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + P.npcs.length + ' people, ' + P.walls.length + ' wall pieces)'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
       const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + count; })();
   }
+  /* pairs the cloth check does not judge, as in Port Royal (the same 1690 tailoring): a Lining is the hidden body kept in the colour of the cloth over it (tools/garvey/era.py), so it is never
+     a cover itself; and the Body beside knee breeches is the shin coming out of the hem, which is how they are worn. A Lining in the shirt's colour that pokes through the breeches IS judged. */
+  const CLOTH_SKIP = (a, b) => /^Lining/.test(b) || (/^Body/.test(a) && /^Breeches/.test(b));
+  if (q.get('test') === 'cloth') {   /* ?test=cloth : does an under layer show through its cover (skin through a shirt, a shirt through breeches or a coat, hair through a hat)? Every body, full and light copy, with and without its hat, standing, mid-stride, talking and sitting (as Kendal). &b=maroon_man,redcoat picks bodies, &full or &lo one kind, &where says where. */
+    go('newtown', 60, 0, 0, 0, 0).then(async (P) => { const out = []; let bad = 0, pts = 0; P.group.visible = false;
+      const POSES = [['Idle', 0.3], ['Walk', 0.25], ['Walk', 0.75], ['Talk1', 0.4], ['SitIdle', 0.3]], bases = (q.get('b') || 'maroon_man,maroon_scout,maroon_elder,maroon_woman,maroon_elder_woman,maroon_girl,maroon_child,maroon_boy,redcoat,militia').split(',');
+      for (const base of bases) for (const lo of [false, true]) { if ((lo && q.has('full')) || (!lo && q.has('lo'))) continue; const bodyId = base + (lo ? '_lo' : ''); await loadBase(bodyId);
+        for (const [i, hat] of [...(HATS[base] || []), false].entries()) { const b = makeBody({ base, bodyId, tint: {}, scale: KID[base] || 1, x: 0, z: 0, ry: 0, anim: 'Idle', hat }), name = bodyId + (hat ? ' +' + hat : ''); scene.add(b);
+          const r = auditCloth(name, b, { poses: i ? [['Idle', 0.3], ['Walk', 0.25]] : POSES, after: gripTick, where: q.has('where'), skip: CLOTH_SKIP }); out.push(name + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const l of r.lines) out.push('  ' + l); bad += r.lines.length; pts += r.points; scene.remove(b); await new Promise((res) => setTimeout(res, 0)); } }
+      out.unshift('cloth: ' + bad + ' issues (' + pts + ' points)'); const el = $('autolog'); el.textContent = out.join('\n'); document.title = 'CLOTH ' + bad; });
+  }
+  if (q.get('test') === 'skin') {   /* ?test=skin : how each face is drawn in the game's own light (engine/skinprobe.js), every look plus crowd people at the ends of their skin range. &env=day picks the light (day, morning, dawn, night, firenight). Compare with docs/PIPELINE.md, "Skin". */
+    go('newtown', 60, 0, 0, 0, 0).then(async (P) => { const out = []; setEnv(ENV[q.get('env') || 'day']);
+      const list = Object.keys(LOOKS).map((k) => [k, LOOKS[k]]); for (const sk of [0.9, 1.15]) list.push(['crowd maroon_woman skin ' + sk, { base: 'maroon_woman', tint: {}, skin: sk }], ['crowd maroon_man skin ' + sk, { base: 'maroon_man', tint: {}, skin: sk }]);
+      for (const [name, look] of list) { await loadBase(look.base); const b = makeBody({ ...look, x: 4000, z: 4000, ry: 0, anim: 'Idle', hat: false, props: [], cloak: false, beads: false }); scene.add(b); b.userData.anim.mx.update(0.3); const r = skinProbe(renderer, scene, b); scene.remove(b);
+        out.push(name + ' (' + look.base + ', skin ' + (look.skin || 1) + '): mean ' + r.rgb.join(',') + '  darkest ' + r.lo.join(',') + '  lightest ' + r.hi.join(',')); }
+      const el = $('autolog'); el.textContent = out.join('\n'); document.title = 'SKIN ' + out.length; });
+  }
   if (q.get('test') === 'walkers') {   /* ?test=walkers : people who walk must not bounce, float or sink. Quamin and Mama are led up the estate trail and the soldiers up the path, 30 steps a second;
-       each step the lowest toe must be on the ground (within 3 cm) and the body must not jump more than 2.5 cm against the ground from one step to the next. */
-    (async () => { const out = [], toe = new THREE.Vector3(), probe = (n, tag, st) => { const m = n.m; m.updateMatrixWorld(true); let low = 1e9; for (const sd of ['Left', 'Right']) { const b = m.getObjectByName('mixamorig' + sd + 'ToeBase'); if (b) low = Math.min(low, b.getWorldPosition(toe).y); } const g = m.userData.ground || 0, off = low - g - 0.035, ride = m.position.y - g;
+       each step the lowest point of the feet must be on the ground (within 3 cm; groundFeet sets it 8 mm in) and the body must not jump more than 2.5 cm against the ground from one step to the next. */
+    (async () => { const out = [], toe = new THREE.Vector3(), feet = new WeakMap(), footPts = (m) => { let f = feet.get(m); if (f) return f; f = []; m.traverse((o) => { if (!o.isSkinnedMesh || !o.visible || !/Skin|Shoes|Sole/.test(o.material.name || '')) return; const SI = o.geometry.attributes.skinIndex, SW = o.geometry.attributes.skinWeight, bones = o.skeleton.bones, idx = [];
+        for (let i = 0; i < SI.count; i++) { let k = 0; for (let c = 1; c < 4; c++) if (SW.getComponent(i, c) > SW.getComponent(i, k)) k = c; if (/mixamorig(Left|Right)(Foot|ToeBase|Toe_End)$/.test((bones[SI.getComponent(i, k)] || {}).name || '')) idx.push(i); } if (idx.length) f.push([o, idx]); }); feet.set(m, f); return f; },
+      probe = (n, tag, st) => { const m = n.m; m.updateMatrixWorld(true); let low = 1e9; for (const [o, idx] of footPts(m)) { o.skeleton.update(); for (let i = 0; i < idx.length; i += 3) low = Math.min(low, o.getVertexPosition(idx[i], toe).applyMatrix4(o.matrixWorld).y); }   /* the lowest point of the foot (bare or shod), not the toe bone: a bare foot has no shoe sole under the bone */
+        const g = m.userData.ground || 0, off = low - g + 0.008, ride = m.position.y - g;
         if (n.clip !== st.clip) { st.clip = n.clip; st.skip = 14; st.last = null; } if (st.skip > 0) { st.skip--; return; }   /* a change of step (standing to walking, walking to running) blends two poses for a third of a second: that is not judged */
         if (Math.abs(off) > 0.03) st.float = Math.max(st.float, Math.abs(off)); if (st.last !== null && Math.abs(ride - st.last) > (n.clip === 'Run' ? 0.08 : 0.025)   /* a run really does rise and fall */) st.jump = Math.max(st.jump, Math.abs(ride - st.last)); st.last = ride; st.n++; };
       let behind = 0; let starts = 0, was = false; const report = (name, st) => { out.push(name + ': ' + st.n + ' steps, worst toe gap ' + (st.float * 100).toFixed(1) + ' cm, worst jump ' + (st.jump * 100).toFixed(1) + ' cm' + (st.float || st.jump ? '  PROBLEM' : '')); return st.float || st.jump ? 1 : 0; }; let bad = 0;
-      startGame(true); await beginChapter(0, 11); { const P = PL.estate, S = P.spots, qn = byId('quamin'), ma = byId('mama'), a = { float: 0, jump: 0, last: null, n: 0 }, b = { float: 0, jump: 0, last: null, n: 0 }; qn.follow.max = S.top - 2; stage = 13;
-        for (let i = 0; i < 900; i++) { const [x, z] = pathAt(S.trail.dense, Math.min(S.top - 5, 6 + i * 0.075)); state.x = x; state.z = z; update(1 / 30); if (i > 20) { if (qn.walking) probe(qn, 'q', a); else { a.last = null; a.clip = null; } if (ma.walking) probe(ma, 'm', b); else { b.last = null; b.clip = null; } } if (i > 60 && qn.s < pathS(S.trail.dense, state.x, state.z) - 0.5) behind++; if (ma.walking && !was) starts++; was = ma.walking; } bad += report('Quamin leading on the estate trail', a) + report('Mama following on the estate trail', b); out.push('Quamin behind you: ' + behind + ' steps' + (behind ? '  PROBLEM' : '')); out.push('Mama set off ' + starts + ' times in 30 seconds of steady walking' + (starts > 12 ? '  PROBLEM (stop-start shuffle)' : '')); bad += (behind ? 1 : 0) + (starts > 12 ? 1 : 0); }
+      startGame(true); await beginChapter(0, 11); { const P = PL.estate, S = P.spots, qn = byId('quamin'), ma = byId('mama'), a = { float: 0, jump: 0, last: null, n: 0 }, b = { float: 0, jump: 0, last: null, n: 0 }; qn.fol.max = S.top - 2; stage = 13;
+        for (let i = 0; i < 900; i++) { const [x, z] = pathAt(S.trail.dense, Math.min(S.top - 5, 6 + i * 0.075)); state.x = x; state.z = z; update(1 / 30); if (i > 20) { if (qn.walking) probe(qn, 'q', a); else { a.last = null; a.clip = null; } if (ma.walking) probe(ma, 'm', b); else { b.last = null; b.clip = null; } } if (i > 60 && qn.fol.s < pathS(S.trail.dense, state.x, state.z) - 0.5) behind++; if (ma.walking && !was) starts++; was = ma.walking; } bad += report('Quamin leading on the estate trail', a) + report('Mama following on the estate trail', b); out.push('Quamin behind you: ' + behind + ' steps' + (behind ? '  PROBLEM' : '')); out.push('Mama set off ' + starts + ' times in 30 seconds of steady walking' + (starts > 12 ? '  PROBLEM (stop-start shuffle)' : '')); bad += (behind ? 1 : 0) + (starts > 12 ? 1 : 0); }
       await beginChapter(3, 41); { const P = PL.watch, st = { float: 0, jump: 0, last: null, n: 0 }, n = P.extras.find((e) => e.column === 3); FIGHT.on = true; FIGHT.mode = 'march'; FIGHT.sHead = 100; for (let i = 0; i < 500; i++) { update(1 / 30); if (i > 20 && n.m.visible) probe(n, 's', st); } FIGHT.on = false; bad += report('a soldier climbing the path', st); }
       document.title = 'WALKERS ' + bad; const el = $('autolog'); if (el) el.textContent = out.join('\n'); })();
   }
+  if (q.get('test') === 'follow') {   /* ?test=follow : you walk the real routes, with stops and a turn back into the person behind you, and every guide and follower is watched (engine/follow.js, watch):
+       too close (inside the personal space), inside something (a footprint, or the real shapes: engine/audit.js auditBodies), left far behind, or a guide stuck. Expect 0. */
+    (async () => { const out = []; let bad = 0; startGame(true); const dt = 1 / 30;
+      const drive = (P, route, people, w, { speed = 2.3, stops = [] } = {}) => { for (let i = 1; i < route.length; i++) { const [tx, tz] = route[i]; let guard = 0;
+          while (Math.hypot(tx - state.x, tz - state.z) > 0.05 && guard++ < 4000) { const d = Math.hypot(tx - state.x, tz - state.z), k = Math.min(1, speed * dt / d); [state.x, state.z] = clampPos(state.x + (tx - state.x) * k, state.z + (tz - state.z) * k); update(dt); for (const n of people) w.sample(n, state.x, state.z, (x, z) => blockedAt(P, x, z, 0), dt); if (guard > 3000) break; }
+          if (stops.includes(i)) for (let f = 0; f < 75; f++) { update(dt); for (const n of people) w.sample(n, state.x, state.z, (x, z) => blockedAt(P, x, z, 0), dt); } } };
+      const report = (P, w, list) => { for (const [n, label] of list) { const lines = w.lines(n, label).concat(auditBodies(P.snap.concat(P.snap.inst || []), w.spots(n).map(([x, z]) => ({ id: label, x, z, ground: P.G.h(x, z), h: tallOf(n), r: bodyR(n), what: 'walks' })), { skip: (e) => ((P.spots && P.spots.cover) || []).some((c) => c.uuid === e.top) }));
+          out.push(label + ': ' + w.stats(n) + (lines.length ? '' : ', ok')); for (const l of lines) out.push('  ' + l); bad += lines.length; } };
+      /* chapter 1: Quamin leads you up the estate trail, Mama follows you */
+      await beginChapter(0, 11); { const P = PL.estate, S = P.spots, qn = byId('quamin'), ma = byId('mama'), w = followWatch({ space: FOLLOW.mama.space || 0.9, behind: 9 }); stage = 13; qn.fol.max = S.top - 2.2;
+        const s0 = pathSE(S.trail.dense, state.x, state.z), route = pathSpots(S.trail.dense, s0, S.top - 4, 0, 1.0); drive(P, route, [qn, ma], w, { stops: [12, 40, 70] });
+        const back = pathSpots(S.trail.dense, S.top - 9, S.top - 4, 0, 1.0).reverse(); drive(P, back, [qn, ma], w); report(P, w, [[qn, 'Quamin leads you up the estate trail'], [ma, 'Mama follows you up the estate trail']]); }
+      /* chapter 2: Quamin leads you up the narrow path, Mama follows; in the town they walk home */
+      await beginChapter(1, 20); { const P = PL.town, S = P.spots, qn = byId('quaminT'), ma = byId('mamaT'), w = followWatch({ space: 0.9, behind: 9 });
+        drive(P, pathSpots(S.pathIn.dense, pathSE(S.pathIn.dense, state.x, state.z), S.sIn, 0, 1.0).concat([[2.5, 7.5], [0.5, 6.5]]), [qn, ma], w, { stops: [15, 45] }); for (let f = 0; f < 900; f++) { update(dt); for (const n of [qn, ma]) w.sample(n, state.x, state.z, (x, z) => blockedAt(P, x, z, 0), dt); }
+        report(P, w, [[qn, 'Quamin leads you up the narrow path, then walks home'], [ma, 'Mama follows you up the narrow path, then walks home']]); if (qn.fol || Math.hypot(qn.x - qn.hx, qn.z - qn.hz) > 0.3) { out.push('  Quamin did not get home'); bad++; } }
+      /* chapter 5: little Phibba comes with you round the clearing (you stop, you turn back into her), to the back trail and up it; Mama leads, the neighbours run ahead */
+      await beginChapter(4, 53); { const P = PL.town, S = P.spots, ph = byId('phibba'); state.x = ph.x + 1.0; state.z = ph.z + 0.9; update(dt); setStage(54); const m5 = byId('mama5'), w = followWatch({ space: FOLLOW.phibba.space, behind: 6 });
+        drive(P, [[state.x, state.z], [2, -3], [-2, 2], [-5, 4.6], [-6.5, 1.5]], [ph], w, { stops: [2, 4] }); drive(P, [[state.x, state.z], [-3.5, 2.4]], [ph], w, { speed: 2.3 }); drive(P, [[state.x, state.z], [-5.5, -4.5], [-8.2, -8.4]], [ph], w, { stops: [2] });
+        gunsRun(); drive(P, pathSpots(S.back.dense, pathSE(S.back.dense, state.x, state.z), S.sBack - 3, 0, 1.0), [ph, m5], w, { speed: 2.6, stops: [20] });
+        report(P, w, [[ph, 'Phibba comes with you round the town and up the back trail'], [m5, 'Mama leads you up the back trail']]); GUNS.on = false; }
+      out.unshift('follow and lead: ' + bad + ' problems'); document.title = 'FOLLOW ' + bad; const el = $('autolog'); if (el) el.textContent = out.join('\n'); })();
+  }
   if (q.get('test') === 'resume') {   /* saved games resume in the right place, and closing a finishing conversation still moves the story on */
     (async () => { const out = []; startGame(true); const at = () => 'place=' + cur + ' stage=' + stage + ' at ' + state.x.toFixed(0) + ',' + state.z.toFixed(0);
-      await beginChapter(0, 11); out.push('ch1@11 ' + at() + ' lead=' + !!byId('quamin').follow); await beginChapter(1, 23); out.push('ch2@23 ' + at() + ' vines=' + PL.town.spots.yams[0].userData.vine.visible);
+      await beginChapter(0, 11); out.push('ch1@11 ' + at() + ' lead=' + !!byId('quamin').fol); await beginChapter(1, 23); out.push('ch2@23 ' + at() + ' vines=' + PL.town.spots.yams[0].userData.vine.visible);
       await beginChapter(2, 34); out.push('ch3@34 ' + at() + ' sticks=' + PL.watch.spots.trenches[0].t.userData.stick.visible + ' mama3=' + byId('mama3').m.visible); await beginChapter(3, 43); out.push('ch4@43 ' + at() + ' mama4=' + byId('mama4').m.visible + ' column=' + PL.watch.extras.filter((n) => n.column !== undefined && n.m.visible).length);
       await beginChapter(4, 55); out.push('ch5@55 ' + at() + ' mama5b=' + byId('mama5b').m.visible + ' env=' + (envNow === ENV.dawn ? 'dawn' : 'other')); await beginChapter(4, 51); out.push('ch5@51 ' + at() + ' mama5=' + byId('mama5').m.visible);
       await beginChapter(5, 62); out.push('ch6@62 ' + at());

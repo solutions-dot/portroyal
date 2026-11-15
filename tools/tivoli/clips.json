@@ -16,5 +16,9 @@
  "RunLow2": "../../tools/tivoli/anim-sources/Crouched_Run_1.fbx",
  "RunRight": "../../tools/tivoli/anim-sources/Run_Right.fbx",
  "RunLeft": "../../tools/tivoli/anim-sources/Run_Left.fbx",
- "RunForward": "../../tools/tivoli/anim-sources/Run_Forward.fbx"
+ "RunForward": "../../tools/tivoli/anim-sources/Run_Forward.fbx",
+ "StopWalkRifle": "../../tools/tivoli/anim-sources/Stop_Walking_With_Rifle.fbx",
+ "RifleKneelToStand": "../../tools/tivoli/anim-sources/Rifle_Kneel_To_Stand.fbx",
+ "RifleProneToKneel": "../../tools/tivoli/anim-sources/Rifle_Prone_To_Kneel.fbx",
+ "PistolKneelIdle": "../../tools/tivoli/anim-sources/Pistol_Kneeling_Idle.fbx"
 }

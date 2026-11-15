@@ -1,5 +1,5 @@
 import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
-import { snapMeshes, auditSeated } from '../../../engine/audit.js';
+import { snapMeshes, auditSeated, auditRest } from '../../../engine/audit.js';
 import { updateWalk } from '../../../engine/locomotion.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import * as THREE from 'three';
@@ -400,7 +400,7 @@ function buildTavern() {
   // tally slate and a turtle shell, the sign of the house
   mk(new THREE.PlaneGeometry(0.6, 0.45), new THREE.MeshStandardMaterial({ map: cv(128, 96, (x) => { x.fillStyle = '#23262a'; x.fillRect(0, 0, 128, 96); x.strokeStyle = '#d8d8d0'; x.lineWidth = 2; for (let r = 0; r < 3; r++) for (let i = 0; i < 4 + r * 2; i++) { x.beginPath(); x.moveTo(12 + i * 9, 14 + r * 26); x.lineTo(14 + i * 9, 30 + r * 26); x.stroke(); } x.strokeStyle = '#6b4a2c'; x.lineWidth = 6; x.strokeRect(0, 0, 128, 96); }), roughness: 0.9 }), -198.3, 1.7, IN.z0 + 0.012);
   const shellT = cv(128, 128, (x) => { x.fillStyle = '#6a4a24'; x.fillRect(0, 0, 128, 128); x.strokeStyle = '#2c1c0c'; x.lineWidth = 3; for (let r = 0; r < 4; r++) for (let i = 0; i < 4; i++) { const px = i * 34 + (r % 2) * 17 - 6, py = r * 34; x.fillStyle = `rgb(${120 + Math.random() * 40 | 0},${84 + Math.random() * 24 | 0},40)`; x.beginPath(); for (let a = 0; a < 6; a++) x.lineTo(px + 17 + Math.cos(a * 1.047) * 19, py + 17 + Math.sin(a * 1.047) * 19); x.closePath(); x.fill(); x.stroke(); } });
-  const shell = mk(new THREE.SphereGeometry(0.42, 18, 10, 0, 6.3, 0, 1.2), std(shellT, 0.45), IN.x1 - 0.62, 2.1, -0.6); shell.scale.set(0.8, 0.5, 1.05); shell.rotation.z = Math.PI / 2;
+  const shell = mk(new THREE.SphereGeometry(0.42, 18, 10, 0, 6.3, 0, 1.2), std(shellT, 0.45), IN.x1 - 0.52, 2.1, -0.6); shell.scale.set(0.8, 0.5, 1.05); shell.rotation.z = Math.PI / 2;   /* a turtle shell hung on the chimney breast: its rim (7.6 cm in front of its middle) lies on the breast's face at IN.x1 - 0.6; it hung 10 cm off it before */
 
   // casks on a stillage, with hoops and taps
   const caskG = new THREE.LatheGeometry([[0, -0.52], [0.34, -0.52], [0.4, -0.3], [0.44, 0], [0.4, 0.3], [0.34, 0.52], [0, 0.52]].map(([a, b]) => new THREE.Vector2(a, b)), 18);
@@ -945,7 +945,7 @@ function buildAfter() { if (afterG) return; afterG = new THREE.Group(); scene.ad
     const back = new THREE.Shape(); back.moveTo(-w / 2, 0); back.lineTo(0, h); back.lineTo(w / 2, 0); back.closePath(); mk(new THREE.ShapeGeometry(back), canvasM, 0, 0, -len / 2, g); };
   for (const t of CAMP_TENTS) tent(t[0], t[1], t[2], t[3], t[4], t[5]);
   for (const [dx, dz, r] of [[-0.2, 0, 0.3], [0.15, 0.1, -0.5], [0, -0.15, 1.3]]) { const l = mk(new THREE.CylinderGeometry(0.06, 0.06, 0.7, 7), tim, FX + dx, 0.08, FZ + dz); l.rotation.set(Math.PI / 2, 0, r); }
-  mk(new THREE.ConeGeometry(0.2, 0.5, 7), new THREE.MeshBasicMaterial({ color: 0xff9a2e }), FX, 0.33, FZ); for (const s of [-1, 1]) { const p = mk(new THREE.CylinderGeometry(0.02, 0.02, 1.3, 5), iron, FX + s * 0.3, 0.6, FZ); p.rotation.z = s * 0.45; } const pot = mk(new THREE.SphereGeometry(0.16, 10, 8), iron, FX, 0.7, FZ); pot.scale.y = 0.8;
+  mk(new THREE.ConeGeometry(0.2, 0.5, 7), new THREE.MeshBasicMaterial({ color: 0xff9a2e }), FX, 0.33, FZ); for (const s of [-1, 1]) { const p = mk(new THREE.CylinderGeometry(0.02, 0.02, 1.3, 5), iron, FX + s * 0.3, 0.6, FZ); p.rotation.z = s * 0.45; } const pot = mk(new THREE.SphereGeometry(0.16, 10, 8), iron, FX, 0.7, FZ); pot.scale.y = 0.8; mk(new THREE.CylinderGeometry(0.008, 0.008, 0.38, 5), iron, FX + 0.01, 1.0, FZ);   /* the chain the pot hangs from, down from where the two poles cross (it hung in the air before) */
   for (const [x, z, s] of [[-11.4, -2.4, 1], [-12.3, -2.6, 0.85], [-6.4, -0.1, 0.85], [-3.2, 2.5, 1], [-13.6, -2.5, 1]]) { const k = mk(new THREE.SphereGeometry(0.3, 10, 8), sackM, x, 0.2 * s, z); k.scale.set(1.2 * s, 0.7 * s, 0.9 * s); }
   const bm = brickM(1.5, 0.5); for (const [x, z, w, h, r, d] of [[-2.0, -2.4, 2.2, 0.7, 0.15, 1.2], [-1.0, 2.4, 2.0, 0.9, -0.2, 1.2], [-15.9, 2.5, 1.8, 0.5, 0.1, 1.0]]) { const b = mk(new THREE.BoxGeometry(w, h, d), bm, x, h / 2 - 0.1, z); b.rotation.set(0.12, r, 0.1); }
   for (const [x, z, l, ry, rz] of [[-4.3, -2.9, 3.0, 0.15, 0.18], [-3.6, 0.2, 2.6, -1.25, 0.12], [-9.6, 2.8, 3.0, 0.05, 0.3], [-10.8, -2.9, 2.4, -0.05, 0.1]]) { const b = mk(new THREE.BoxGeometry(l, 0.2, 0.2), tim, x, 0.35, z); b.rotation.set(0, ry, rz); }
@@ -2007,6 +2007,7 @@ if (__DEV__ && ['collision','seating'].includes(new URLSearchParams(location.sea
     setPlace('in');seated('Ned',people.ned,indoor);
     buildAfter();seated('Benning after the earthquake',survivors.benning,afterG);
     fbBuild();seated('Exquemelin at his desk',FBG.exq,FBG.group);
+    for(const [id,g] of [['town',scene],['tavern',indoor],['after the earthquake',afterG],['Exquemelin',FBG.group]]){const hits=auditRest(staticSnap(g)).map(l=>id+': '+l);out.push(...hits);checks.push(id+' rest: '+hits.length);}   /* pots and other standing things with nothing under them (engine/audit.js) */
     const pre=document.createElement('pre');pre.id='autolog';pre.textContent=[...checks,...out].join('\n');document.body.append(pre);document.title='COLLISION '+out.length;
   })().catch(e=>{document.title='ERROR '+e.message;console.error(e);});
 }

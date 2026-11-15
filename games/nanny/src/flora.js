@@ -73,17 +73,22 @@ const caneTex = () => cv(128, 256, (x, w, h) => { x.clearRect(0, 0, w, h); for (
 export function crossGeo() { const a = new THREE.PlaneGeometry(1, 1), b = new THREE.PlaneGeometry(1, 1); a.translate(0, 0.5, 0); b.translate(0, 0.5, 0); b.rotateY(Math.PI / 2); const g = mergeGeometries([a, b], false); const n = g.attributes.normal; for (let i = 0; i < n.count; i++) n.setXYZ(i, 0, 1, 0); return bothFaces(g); }
 
 /* ---------- placing things on the land ---------- */
-/* pick up to n spots in area [x0, z0, x1, z1] where ok(x, z, y) is true. Each spot: { x, y, z, s (size 0.7 to 1.4), ry } */
-export function spotsOn(G, n, area, seed, ok = () => true, { smin = 0.7, smax = 1.4, tries = 14 } = {}) {
+/* pick up to n spots in area [x0, z0, x1, z1] where ok(x, z, y) is true. Each spot: { x, y, z, s (size 0.7 to 1.4), ry }
+   room: for solid things (rocks, trunks, stems, huts), the radius each takes up at size 1. A spot whose circle would cut into anything already in the place's
+   footprint list (TAKEN: huts, props, the big rocks, earlier rocks and trunks) is skipped, so nothing grows or lies inside anything else (?test=audit, overlap). */
+const TAKEN = [];
+export const taken = { reset() { TAKEN.length = 0; }, add(x, z, r) { TAKEN.push([x, z, r]); }, free(x, z, r) { return TAKEN.every(([a, b, c]) => Math.hypot(a - x, b - z) >= c + r); } };
+export function spotsOn(G, n, area, seed, ok = () => true, { smin = 0.7, smax = 1.4, tries = 14, room = 0 } = {}) {
   const r = rng(seed), out = []; let t = 0;
-  while (out.length < n && t++ < n * tries) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), y = G.h(x, z); if (!ok(x, z, y, r)) continue; out.push({ x, y, z, s: smin + r() * (smax - smin), ry: r() * 6.283, k: r() }); }
+  while (out.length < n && t++ < n * tries) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), y = G.h(x, z); if (!ok(x, z, y, r)) continue; const p = { x, y, z, s: smin + r() * (smax - smin), ry: r() * 6.283, k: r() };
+    if (room) { if (!taken.free(x, z, room * p.s)) continue; taken.add(x, z, room * p.s); } out.push(p); }
   return out;
 }
 /* keep trees off trails and clearings, and off very steep ground */
 export const offTrail = (G, margin = 0.02, maxSlope = 1.1) => (x, z, y) => G.trailness(x, z) <= margin && Math.abs(G.h(x + 1.2, z) - y) < maxSlope * 1.2 && Math.abs(G.h(x, z + 1.2) - y) < maxSlope * 1.2;
 /* draw `geo` at every spot. vary: how much each one's colour differs. sink: metres pushed into the ground. */
-export function plant(parent, geo, mat, spots, { vary = 0.14, sink = 0.15, sy = 1, shadow = true, tint } = {}) {
-  if (!spots.length) return null; const im = new THREE.InstancedMesh(geo, mat, spots.length);
+export function plant(parent, geo, mat, spots, { vary = 0.14, sink = 0.15, sy = 1, shadow = true, tint, name = '' } = {}) {
+  if (!spots.length) return null; const im = new THREE.InstancedMesh(geo, mat, spots.length); im.name = name;   /* the name the place audit uses in its lines (a tree, a bush, a rock) */
   spots.forEach((p, i) => { M4.compose(V.set(p.x, p.y - sink * p.s, p.z), Q.setFromEuler(E.set(0, p.ry, 0)), S.set(p.s, p.s * sy * (0.9 + p.k * 0.25), p.s)); im.setMatrixAt(i, M4); C.set(tint || 0xffffff).offsetHSL((p.k - 0.5) * 0.05, 0, (p.k - 0.5) * vary * 2); im.setColorAt(i, C); });
   im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.userData.noBatch = true; im.frustumCulled = false; im.castShadow = shadow; im.receiveShadow = false; parent.add(im); return im;
 }
@@ -91,17 +96,17 @@ let _trunkMat = null; const trunkMat = () => _trunkMat || (_trunkMat = new THREE
 let _stemMat = null; const stemMat = () => _stemMat || (_stemMat = new THREE.MeshStandardMaterial({ color: 0x7a9a48, roughness: 0.9 }));
 /* tree ferns: a dark trunk and a crown of drooping fronds */
 export function plantTreeFerns(parent, spots, seed = 3) {
-  const tr = new THREE.CylinderGeometry(0.09, 0.13, 2.6, 6); tr.translate(0, 1.3, 0); plant(parent, tr, trunkMat(), spots, { vary: 0.05, sy: 1 });
+  const tr = new THREE.CylinderGeometry(0.09, 0.13, 2.6, 6); tr.translate(0, 1.3, 0); plant(parent, tr, trunkMat(), spots, { vary: 0.05, sy: 1, name: 'tree fern trunk' });
   plant(parent, frondGeo(11, 1.9, 0.62, 0.75, -0.75, seed, 2.55), cardMat('leaf'), spots, { vary: 0.1, sink: 0.15, tint: 0xdcf0c8 });
 }
 /* plantains: a soft green stem and wide torn leaves */
 export function plantPlantains(parent, spots, seed = 5) {
-  const st = new THREE.CylinderGeometry(0.07, 0.12, 1.9, 6); st.translate(0, 0.95, 0); plant(parent, st, stemMat(), spots, { vary: 0.05 });
+  const st = new THREE.CylinderGeometry(0.07, 0.12, 1.9, 6); st.translate(0, 0.95, 0); plant(parent, st, stemMat(), spots, { vary: 0.05, name: 'plantain stem' });
   plant(parent, frondGeo(7, 1.7, 0.62, 1.15, -0.5, seed, 1.8, 3), cardMat('banana'), spots, { vary: 0.08 });
 }
 /* coconut palms, for the low land by the estate */
 export function plantPalms(parent, spots, seed = 9) {
-  const tr = new THREE.CylinderGeometry(0.12, 0.2, 7, 6, 4); const p = tr.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) + Math.pow((p.getY(i) + 3.5) / 7, 2) * 0.9); tr.translate(0, 3.5, 0); plant(parent, tr, trunkMat(), spots, { vary: 0.05 });
+  const tr = new THREE.CylinderGeometry(0.12, 0.2, 7, 6, 4); const p = tr.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) + Math.pow((p.getY(i) + 3.5) / 7, 2) * 0.9); tr.translate(0, 3.5, 0); plant(parent, tr, trunkMat(), spots, { vary: 0.05, name: 'palm trunk' });
   const fr = frondGeo(12, 3.1, 0.9, 0.55, -0.9, seed, 6.9); fr.translate(0.9, 0, 0); plant(parent, fr, cardMat('leaf'), spots, { vary: 0.08 });
 }
 export const plantGroundFerns = (parent, spots, seed = 7) => plant(parent, frondGeo(7, 0.75, 0.26, 0.85, -0.35, seed, 0.02, 3), cardMat('leaf'), spots, { vary: 0.12, sink: 0, shadow: false, tint: 0xcfe8b8 });
@@ -111,15 +116,17 @@ export const plantCane = (parent, spots) => { const g = crossGeo(); g.scale(1.5,
 /* the usual forest for a place: big trees, tall trees, bushes, tree ferns, ground ferns, grass and rocks, kept off the trails.
    opts.keep(x, z): extra places to leave clear. Returns the tree spots (so a place can make them solid). */
 export function forest(parent, G, area, { seed = 11, trees = 120, tall = 40, bushes = 120, ferns = 40, ground = 240, grass = 900, rocks = 60, keep = () => true, keepTrees = () => true, near = null } = {}) {
-  const ok = offTrail(G), okk = (x, z, y) => ok(x, z, y) && keep(x, z) && keepTrees(x, z), okNear = (x, z, y) => G.trailness(x, z) < 0.02 && keep(x, z);
+  /* a tree's foot and roots reach about 0.95 m at size 1, and trees here grow to size 1.5: so a trunk stands at least 1.7 m from any ground you can walk on (a person beside a trail,
+     or a child following you, never stands in a trunk: ?test=audit, open ground). Tree ferns are thin: 0.5 m. */
+  const ok = offTrail(G), okk = (x, z, y) => ok(x, z, y) && keep(x, z) && keepTrees(x, z) && !G.walkable(x, z, -1.7), okFern = (x, z, y) => ok(x, z, y) && keep(x, z) && keepTrees(x, z) && !G.walkable(x, z, -0.5), okNear = (x, z, y) => G.trailness(x, z) < 0.02 && keep(x, z);
   const K = LOW ? 0.6 : 1; trees = Math.round(trees * K); tall = Math.round(tall * K); bushes = Math.round(bushes * K); ferns = Math.round(ferns * K); ground = Math.round(ground * K); grass = Math.round(grass * K);
-  const A = spotsOn(G, trees, area, seed, okk, { smin: 0.75, smax: 1.5 }), B = spotsOn(G, tall, area, seed + 1, okk, { smin: 0.8, smax: 1.3 });
-  for (let v = 0; v < 3; v++) plant(parent, treeGeo('broad', seed + v * 5), treeMat(), A.filter((_, i) => i % 3 === v)); plant(parent, treeGeo('tall', seed + 9), treeMat(), B.filter((_, i) => i % 2 === 0)); plant(parent, treeGeo('tall', seed + 13), treeMat(), B.filter((_, i) => i % 2 === 1));
-  plant(parent, treeGeo('bush', seed + 3), treeMat(), spotsOn(G, bushes, area, seed + 2, okNear, { smin: 0.7, smax: 1.7 }), { sink: 0.1, shadow: false });
-  plantTreeFerns(parent, spotsOn(G, ferns, area, seed + 3, okk, { smin: 0.7, smax: 1.3 }), seed);
+  const A = spotsOn(G, trees, area, seed, okk, { smin: 0.75, smax: 1.5, room: 0.45 }), B = spotsOn(G, tall, area, seed + 1, okk, { smin: 0.8, smax: 1.3, room: 0.5 });
+  for (let v = 0; v < 3; v++) plant(parent, treeGeo('broad', seed + v * 5), treeMat(), A.filter((_, i) => i % 3 === v), { name: 'tree' }); plant(parent, treeGeo('tall', seed + 9), treeMat(), B.filter((_, i) => i % 2 === 0), { name: 'tall tree' }); plant(parent, treeGeo('tall', seed + 13), treeMat(), B.filter((_, i) => i % 2 === 1), { name: 'tall tree' });
+  plant(parent, treeGeo('bush', seed + 3), treeMat(), spotsOn(G, bushes, area, seed + 2, okNear, { smin: 0.7, smax: 1.7 }).filter((p) => !G.walkable(p.x, p.z, -1.5 * p.s)), { sink: 0.1, shadow: false, name: 'bush' });   /* a bush spreads about 1.5 m at its size: kept that far from ground you can walk on */
+  plantTreeFerns(parent, spotsOn(G, ferns, area, seed + 3, okFern, { smin: 0.7, smax: 1.3, room: 0.16 }), seed);
   const nearArea = near || area; plantGroundFerns(parent, spotsOn(G, ground, nearArea, seed + 4, okNear, { smin: 0.7, smax: 1.5 }), seed);
   plantGrass(parent, spotsOn(G, grass, nearArea, seed + 5, (x, z) => G.trailness(x, z) < 0.5 && keep(x, z), { smin: 0.6, smax: 1.5 }));
-  plant(parent, rockGeo(seed), treeMat(), spotsOn(G, rocks, nearArea, seed + 6, (x, z) => G.trailness(x, z) < 0.3 && keep(x, z), { smin: 0.25, smax: 1.1 }), { sink: 0.25, vary: 0.1 });
+  plant(parent, rockGeo(seed), treeMat(), spotsOn(G, rocks, nearArea, seed + 6, (x, z) => G.trailness(x, z) < 0.3 && keep(x, z), { smin: 0.25, smax: 1.1, room: 1.15 }), { sink: 0.25, vary: 0.1, name: 'rock' });
   return A.concat(B);
 }
 
@@ -151,5 +158,7 @@ export function cottonTree(h = 24, seed = 2) {
   for (let i = 0; i < 4; i++) { const a = r() * 6.28, d = h * 0.12 * r(); leaves.push(blob(r, h * 0.1, Math.cos(a) * d, TH + h * (0.2 + r() * 0.08), Math.sin(a) * d, GREENS[(r() * GREENS.length) | 0], 0.6)); }
   wood.push(curveLimb([[0, TH - 1.5, 0], [0.3, TH + h * 0.1, 0.2], [0.1, TH + h * 0.2, -0.1]], 0.5, 0.12, seed + 31, grey));
   const wg = mergeGeometries(wood, false); wg.computeVertexNormals(); const wm = new THREE.Mesh(wg, barkMat()); wm.castShadow = true; wm.userData.noBatch = true; grp.add(wm);
-  const lm = new THREE.Mesh(flatGeo(leaves), treeMat()); lm.castShadow = true; lm.userData.noBatch = true; grp.add(lm); grp.userData.noBatch = true; grp.name = 'cottonTree'; return grp;
+  const lm = new THREE.Mesh(flatGeo(leaves), treeMat()); lm.castShadow = true; lm.userData.noBatch = true; grp.add(lm); grp.userData.noBatch = true; grp.name = 'cotton tree';
+  grp.userData.reach = 1.47 + Math.max(...wingAt.map((w) => w.out * Math.pow(Math.max(0, 1 - 0.5 / w.up), 1.7))) + 0.15;   /* how far the buttress roots reach at shin height: nobody stands closer than this, or they stand between the roots (?test=audit, outline) */
+  return grp;
 }

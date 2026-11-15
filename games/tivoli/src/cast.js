@@ -30,7 +30,7 @@ export function loadBase(id) {
 export function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene), off = (HATS[s.base] || []).filter((h) => h !== s.hat);
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const nm = o.material.name || '';
-    if ((s.hide && s.hide.includes(nm)) || off.includes(nm)) { o.visible = false; return; }
+    if ((s.hide && (s.hide.includes(nm) || (nm === 'WaistcoatButtons' && s.hide.includes('Waistcoat')))) || off.includes(nm)) { o.visible = false; return; }
     o.material = o.material.clone(); const t = nm === 'Hair' ? undefined : s.tint && s.tint[nm];
     if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
     else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); else if (nm === 'Hair') o.material.color.setScalar(1); });
