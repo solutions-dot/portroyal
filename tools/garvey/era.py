@@ -133,6 +133,7 @@ def trim_seat(bm):
         if v.co.y>cap: v.co.y=cap+(v.co.y-cap)*0.3
     bm.normal_update()
 G=P['garments']; parts=[]; OLD=P.get('era',1915)<1800
+EASE_OLD=OLD and not G.get('coat') and not G.get('woman') and not os.environ.get('NOEASE')      # a 1690 man's shirt worn without a coat: drape_front alone left the chest as two mounds over a hollow, cut back in to the waistband, so it gets the ease too
 if G.get('trousers'): G['breeches']=True; G['breechkind']='trousers'
 WAIST=HIP+0.13 if G.get('breeches') else HIP+0.02   # with breeches the shirt is tucked in under their waistband
 def arm_ok(c,upto):
@@ -169,7 +170,7 @@ def under_coat(c):   # the shirt sleeve between shoulder and cuff is hidden by t
     if not (G.get('coat') and G.get('coatsleeves',True)): return False
     t=side_arm(c); return t is not None and 0.1<t<G.get('coatsleeve',0.82)-0.1
 parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if OLD else (HIP+0.090 if P.get('era',1915)<1940 else HIP+0.100)) if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve) and not under_coat(c),lambda c:0.003 if OLD and G.get('breeches') and c.z<HIP+0.13 else (0.012 if abs(c.x)>SX*0.8 else 0.008),'Shirt',shape=(sleeve_tube(0.053,0.042,(sleeve-0.07,0.036) if sleeve>0.8 else None) if OLD else sleeve_tube(0.048,0.037,(sleeve-0.07,0.033) if sleeve>0.8 else None)) if not G.get('woman') else (puff_tube(sleeve) if G.get('puff') else sleeve_tube(0.050,0.038,(sleeve-0.06,0.032) if sleeve>0.8 else None)),post=((lambda bm:smooth_edge(bm,ok=lambda c:not (c.y<0 and c.z>VZ-0.012 and abs(c.x)<0.075*s))) if G.get('woman') and CK=='camp' else smooth_edge if G.get('woman') else ((smooth_edge if OLD else None) if G.get('coat') else ((lambda bm:(drape_front(bm),smooth_edge(bm))) if G.get('smooth') else (drape_front if OLD else neck_edge)))),
-   cuts=[((0,0,(NECK-0.006 if not OLD and CK in ('stand','turn') else NECK+0.005)-(0.062*s if G.get('coat') and G.get('coatsleeves',True) else 0)),(0,0,1),None),((0,-0.1,NCUT),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+([((0,0,VZ),Vector((-VK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,VZ),Vector((VK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if CK=='camp' else [])+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar; a camp collar opens the front in a narrow V; under a later standing or turn-down collar it stops just below the collar's band, so its cut edge cannot stand up above the band
+   cuts=[((0,0,(NECK-0.006 if (not OLD and CK in ('stand','turn')) or (EASE_OLD and CK=='band') else NECK+0.005)-(0.062*s if G.get('coat') and G.get('coatsleeves',True) else 0)),(0,0,1),None),((0,-0.1,NCUT),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+([((0,0,VZ),Vector((-VK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,VZ),Vector((VK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if CK=='camp' else [])+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar; a camp collar opens the front in a narrow V; under a later standing or turn-down collar it stops just below the collar's band, so its cut edge cannot stand up above the band
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
     sl=G.get('coatsleeves',True)
@@ -286,13 +287,13 @@ if _CAP:
     parts.append(('cap',piece('Cap','body',lambda c:c.z>HEAD+0.02,0.016,_CAP[0],cuts=[((0,Jy,HEAD+0.088*s),Vector((0,-0.075,-0.2)).normalized(),None)],sub=True)))
 if G.get('scarf'):
     parts.append(('scarf',piece('Scarf','body',lambda c:NECK-0.045*s<c.z<NECK+0.03*s and abs(c.x)<0.085,lambda c:0.018+0.02*max(0.0,min(1.0,(NECK-c.z)/(0.045*s))),'Scarf')))
-if not OLD:
-    # Cloth with ease (every era after 1800). A shirt cut from the body's own surface clings like paint: it shows each muscle and tucks in under the chest.
+if not OLD or EASE_OLD:
+    # Cloth with ease (every era after 1800, and a 1690 man's shirt worn without a coat). A shirt cut from the body's own surface clings like paint: it shows each muscle and tucks in under the chest.
     # Real cloth spans the hollows (it cannot dip between the shoulder blades or under the bust) and hangs from the fullest part of the chest and back until the waistband gathers it in.
     # EVR is the torso's own outline (height by angle round the spine), EVH the same outline with the hollows bridged and the hang added. Each layer then sits a set distance outside EVH,
     # so shirt, waistcoat and jacket keep a clear gap between them everywhere instead of fighting for the same few millimetres.
     _hy=J('Hips').y; YCz=lambda z:_hy+(NJ.y-_hy)*max(0.0,min(1.0,(z-HIP)/(NECK-HIP))); EZ0=CROTCH+0.012; EDZ=0.008; ENZ=int((NECK+0.02-EZ0)/EDZ)+2; ENA=72
-    TUCK=(HIP+0.125) if G.get('breeches') else (HIP+0.158 if G.get('sash') else HIP+0.10); ARMPIT=SH.z-0.085*s
+    TUCK=(HIP+(0.14 if OLD else 0.125)) if G.get('breeches') else (HIP+0.158 if G.get('sash') else HIP+0.10); ARMPIT=SH.z-0.085*s
     _sb=bmesh.new(); _sb.from_mesh(h.data); _sd=_sb.verts.layers.deform.verify(); bmesh.ops.delete(_sb,geom=[f for f in _sb.faces if not all(v[_sd].get(GI['body'],0)>0 for v in f.verts)],context='FACES'); SKIN=BVHTree.FromBMesh(_sb)      # the skin alone: the full mesh also holds helper shapes inside and around the body
     def _evrow(z):
         out=[]
@@ -348,6 +349,8 @@ for o in clothes:
     md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}
     md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
     with ov(o): bpy.ops.object.modifier_move_to_index(modifier='wt',index=0); bpy.ops.object.modifier_apply(modifier='wt')
+if EASE_OLD:      # 1690: only the shirt; it blouses out above the breeches' waistband (TUCK is above the band) and falls nearly straight from the chest
+    ease(dict(parts)['shirt'],0.009,tuck=0.003)
 if not OLD:      # the ease comes after the bone weights are copied: each point of cloth keeps the weights of the skin it started on, so loose cloth by the armpit does not follow the arm
     for k,o in parts:
         if k=='shirt': ease(o,0.009,tuck=0.003)
@@ -383,46 +386,59 @@ def smooth_weights(o,sel,iters=5):
         for gi_ in [g.group for g in me.vertices[i].groups]: o.vertex_groups[gi_].remove([i])
         for g,w in W[i].items():
             if w>0.002: o.vertex_groups[g].add([i],w,'REPLACE')
+def o_is_bone(o,gi): return o.vertex_groups[gi].name.startswith('mixamorig:')
+def _smooth_bones(o,sel,iters):      # like smooth_weights, but only the bone groups are read and written (the MakeHuman helper groups carry weight 1 and would crowd the bones out)
+    me=o.data; nbr={v.index:[] for v in me.vertices}
+    for e in me.edges: x_,y_=e.vertices; nbr[x_].append(y_); nbr[y_].append(x_)
+    bone={g.index for g in o.vertex_groups if g.name.startswith('mixamorig:')}
+    W=[{g.group:g.weight for g in v.groups if g.group in bone and g.weight>0} for v in me.vertices]; pick=[v.index for v in me.vertices if sel(v.co)]
+    for _ in range(iters):
+        N={}
+        for i_ in pick:
+            if not nbr[i_]: continue
+            acc={}
+            for j_ in nbr[i_]:
+                tj=sum(W[j_].values()) or 1
+                for g_,w_ in W[j_].items(): acc[g_]=acc.get(g_,0)+w_/tj/len(nbr[i_])
+            ti=sum(W[i_].values()) or 1
+            mix={g_:0.5*W[i_].get(g_,0)/ti+0.5*acc.get(g_,0) for g_ in set(W[i_])|set(acc)}; top=sorted(mix.items(),key=lambda x:-x[1])[:4]; tot=sum(w_ for g_,w_ in top) or 1; N[i_]={g_:w_/tot for g_,w_ in top}
+        for i_,d_ in N.items(): W[i_]=d_
+    for i_ in pick:
+        for g_ in [g.group for g in me.vertices[i_].groups if g.group in bone]: o.vertex_groups[g_].remove([i_])
+        for g_,w_ in W[i_].items():
+            if w_>0.002: o.vertex_groups[g_].add([i_],w_,'REPLACE')
+def neck_to_chest(o):
+    # The base of the neck, where a neckline lies, follows the chest and not the neck: the skin there and the shirt's neck ring get the same rule,
+    # so when the head nods neither comes through the other. Above the neckline the neck turns as before.
+    _nb={g.index for g in o.vertex_groups if g.name in ('mixamorig:Neck','mixamorig:Head')}; _s2=o.vertex_groups['mixamorig:Spine2']
+    for _v in o.data.vertices:
+        _f=sstep(NECK-0.045*s,NECK+0.005*s,_v.co.z)
+        if _f>=1 or _v.co.z<NECK-0.12*s: continue
+        _ws=[(g.group,g.weight) for g in _v.groups if o.vertex_groups[g.group].name.startswith('mixamorig:')]; _mv=sum(w for gi,w in _ws if gi in _nb)*(1-_f)
+        if _mv<1e-4: continue
+        for gi,w in _ws:
+            if gi in _nb:
+                if w*_f>0.002: o.vertex_groups[gi].add([_v.index],w*_f,'REPLACE')
+                else: o.vertex_groups[gi].remove([_v.index])
+        _cur=next((g.weight for g in _v.groups if g.group==_s2.index),0.0); _s2.add([_v.index],_cur+_mv,'REPLACE')
+def shirt_weights(_sh):      # the shirt's front and back, well inside the armholes, lose the arm weights of the skin there, and its torso's weights are evened out (see below, 'The layers of the torso')
+    _arm={g.index for g in _sh.vertex_groups if g.name.startswith('mixamorig:') and ('Arm' in g.name or 'Hand' in g.name)}
+    for _v in _sh.data.vertices:
+        _f=sstep(SX*0.70,SX*0.95,abs(_v.co.x))
+        if _f>=1 or _v.co.z<HIP: continue
+        _ws=[(g.group,g.weight) for g in _v.groups if o_is_bone(_sh,g.group)]
+        _new=[(gi,w*(_f if gi in _arm else 1.0)) for gi,w in _ws]; _tot=sum(w for gi,w in _new)
+        if _tot<1e-4: continue
+        for gi,w in _ws: _sh.vertex_groups[gi].remove([_v.index])
+        for gi,w in _new:
+            if w/_tot>0.002: _sh.vertex_groups[gi].add([_v.index],w/_tot,'REPLACE')
+    _smooth_bones(_sh,lambda c:abs(c.x)<SX*0.95 and HIP+0.02<c.z<NECK-0.01,10)      # and the torso's weights are evened out, so the cloth bends as one piece and its edges stay straight
+    neck_to_chest(_sh)
 if not OLD:
     # A last clearance pass. Whatever the shapes above did, no point of a garment may lie inside, or closer than MIN to, the layer under it: the skin, then the shirt, then the waistcoat.
     # Each point is pushed out along the face it is nearest to, twice, so edges that were cut, eased and smoothed cannot leave a speck of the layer beneath showing through.
     def _tr(o):
         b=bmesh.new(); b.from_mesh(o.data); b.normal_update(); return BVHTree.FromBMesh(b)
-    def o_is_bone(o,gi): return o.vertex_groups[gi].name.startswith('mixamorig:')
-    def _smooth_bones(o,sel,iters):      # like smooth_weights, but only the bone groups are read and written (the MakeHuman helper groups carry weight 1 and would crowd the bones out)
-        me=o.data; nbr={v.index:[] for v in me.vertices}
-        for e in me.edges: x_,y_=e.vertices; nbr[x_].append(y_); nbr[y_].append(x_)
-        bone={g.index for g in o.vertex_groups if g.name.startswith('mixamorig:')}
-        W=[{g.group:g.weight for g in v.groups if g.group in bone and g.weight>0} for v in me.vertices]; pick=[v.index for v in me.vertices if sel(v.co)]
-        for _ in range(iters):
-            N={}
-            for i_ in pick:
-                if not nbr[i_]: continue
-                acc={}
-                for j_ in nbr[i_]:
-                    tj=sum(W[j_].values()) or 1
-                    for g_,w_ in W[j_].items(): acc[g_]=acc.get(g_,0)+w_/tj/len(nbr[i_])
-                ti=sum(W[i_].values()) or 1
-                mix={g_:0.5*W[i_].get(g_,0)/ti+0.5*acc.get(g_,0) for g_ in set(W[i_])|set(acc)}; top=sorted(mix.items(),key=lambda x:-x[1])[:4]; tot=sum(w_ for g_,w_ in top) or 1; N[i_]={g_:w_/tot for g_,w_ in top}
-            for i_,d_ in N.items(): W[i_]=d_
-        for i_ in pick:
-            for g_ in [g.group for g in me.vertices[i_].groups if g.group in bone]: o.vertex_groups[g_].remove([i_])
-            for g_,w_ in W[i_].items():
-                if w_>0.002: o.vertex_groups[g_].add([i_],w_,'REPLACE')
-    def neck_to_chest(o):
-        # The base of the neck, where a neckline lies, follows the chest and not the neck: the skin there and the shirt's neck ring get the same rule,
-        # so when the head nods neither comes through the other. Above the neckline the neck turns as before.
-        _nb={g.index for g in o.vertex_groups if g.name in ('mixamorig:Neck','mixamorig:Head')}; _s2=o.vertex_groups['mixamorig:Spine2']
-        for _v in o.data.vertices:
-            _f=sstep(NECK-0.045*s,NECK+0.005*s,_v.co.z)
-            if _f>=1 or _v.co.z<NECK-0.12*s: continue
-            _ws=[(g.group,g.weight) for g in _v.groups if o.vertex_groups[g.group].name.startswith('mixamorig:')]; _mv=sum(w for gi,w in _ws if gi in _nb)*(1-_f)
-            if _mv<1e-4: continue
-            for gi,w in _ws:
-                if gi in _nb:
-                    if w*_f>0.002: o.vertex_groups[gi].add([_v.index],w*_f,'REPLACE')
-                    else: o.vertex_groups[gi].remove([_v.index])
-            _cur=next((g.weight for g in _v.groups if g.group==_s2.index),0.0); _s2.add([_v.index],_cur+_mv,'REPLACE')
     def clear_layer(o,under,mn,reach=0.03):
         # Each point that is inside, or closer than mn to, the layer beneath gets a push along that layer's normal. The pushes are then spread to the neighbours
         # (each point takes the biggest push within two rings, then the pushes are averaged three times), so the cloth moves out as one smooth piece.
@@ -470,18 +486,7 @@ if not OLD:
         # The layers of the torso share one set of bone weights. First the shirt's front and back, well inside the armholes, lose the arm weights the skin there carries
         # (the skin of the chest follows the arm a little, and cloth that did so bent into ridges). Then each waistcoat and jacket takes its weights from the shirt under it,
         # read from the nearest face and blended across it, so neighbouring points move alike and the layers can never slide through one another.
-        _sh=_P['shirt']; _arm={g.index for g in _sh.vertex_groups if g.name.startswith('mixamorig:') and ('Arm' in g.name or 'Hand' in g.name)}
-        for _v in _sh.data.vertices:
-            _f=sstep(SX*0.70,SX*0.95,abs(_v.co.x))
-            if _f>=1 or _v.co.z<HIP: continue
-            _ws=[(g.group,g.weight) for g in _v.groups if o_is_bone(_sh,g.group)]
-            _new=[(gi,w*(_f if gi in _arm else 1.0)) for gi,w in _ws]; _tot=sum(w for gi,w in _new)
-            if _tot<1e-4: continue
-            for gi,w in _ws: _sh.vertex_groups[gi].remove([_v.index])
-            for gi,w in _new:
-                if w/_tot>0.002: _sh.vertex_groups[gi].add([_v.index],w/_tot,'REPLACE')
-        _smooth_bones(_sh,lambda c:abs(c.x)<SX*0.95 and HIP+0.02<c.z<NECK-0.01,10)      # and the torso's weights are evened out, so the cloth bends as one piece and its edges stay straight
-        neck_to_chest(_sh)
+        _sh=_P['shirt']; shirt_weights(_sh)
         for _q in ('waistcoat','jacket'):
             if _q not in _P: continue
             _lo=_P[_q]; _md=_lo.modifiers.new('wt2','DATA_TRANSFER'); _md.object=_sh; _md.use_vert_data=True; _md.data_types_verts={'VGROUP_WEIGHTS'}
@@ -537,7 +542,8 @@ if not OLD:
         recut(_P['waistcoat'],[((0,0,WVZ),Vector((-WVK,0,1)).normalized(),lambda c:c.x>0),((0,0,WVZ),Vector((WVK,0,1)).normalized(),lambda c:c.x<0)],lambda c:c.y<0 and c.z>WVZ-0.03 and abs(c.x)<SX*0.9)
 if OLD:
     for k,o in parts:
-        if k in ('shirt','coat'): smooth_weights(o,lambda c:c.z>HIP+0.12,16)
+        if k in ('shirt','coat'): smooth_weights(o,(lambda c:c.z>HIP+0.12 and abs(c.x)>SX*0.85) if (k=='shirt' and EASE_OLD) else (lambda c:c.z>HIP+0.12),16)      # (a shirt with ease: the sleeves only; its torso is evened out by shirt_weights below)
+        if k=='shirt' and EASE_OLD: shirt_weights(o)      # as in later eras: the chest of the shirt no longer follows the arms (it bent into mounds and tore at the armholes), and the neckline follows the chest like the skin under it
         if k=='breeches':      # each leg of the breeches follows its own leg only: wide slops took some weight from the other thigh and tore at the hem
             for v in o.data.vertices:
                 if v.co.z>CROTCH or abs(v.co.x)<0.002: continue
@@ -708,14 +714,14 @@ if CK and not FLAT:
                 sx=1 if math.sin(a)>=0 else -1; zp=NECK-0.058*s; xp=sx*0.034*s; tip=Vector((xp,shirt_front(zp,xp)-0.008,zp)); e=e.lerp(tip,fr**0.8)
             row+=[q,e]
         rows.append(row)
-    if not OLD:      # every line of the collar is evened out along the ring (see ring_fix); the yoke stays on the skin and under the shirt, the band and the leaf stay clear of the shirt
+    if not OLD or EASE_OLD:      # every line of the collar is evened out along the ring (see ring_fix); the yoke stays on the skin and under the shirt, the band and the leaf stay clear of the shirt (the 1690 neckband had the same teeth)
         ny=0 if CK=='open' else 2
         for j in range(len(rows[0])):
             if j<ny: ring_fix(rows,j,SKIN,0.003,SHT,0.002)
             else: ring_fix(rows,j,SHT,0.003 if j==ny else 0.004)
     rows=[[bm.verts.new(q) for q in row] for row in rows]
     quadstrip(bm,[list(r) for r in zip(*rows)]); _co=soft('Collar',bm,'Shirt' if CK=='band' else 'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
-    if not OLD: ring_weights(_co,len(rows),len(rows[0]))
+    if not OLD or EASE_OLD: ring_weights(_co,len(rows),len(rows[0]))
 if G.get('tie'):         # a tie: a knot in the collar's opening and a blade that lies on the shirt, wider toward its tip
     bm=bmesh.new(); zk=collar_base(0)+0.016*s; n=8; L=(0.30 if not (G.get('waistcoat') or G.get('jacket')) else 0.24)*s; rows=[]
     for t in range(n+1):
@@ -751,7 +757,7 @@ if OLD and G.get('breeches') and not G.get('coat'):      # a waistband: a narrow
     for z,e in ((HIP+0.095,0.0),(HIP+0.100,0.006),(HIP+0.134,0.006),(HIP+0.139,0.0)):
         ring=[]
         for k in range(seg):
-            a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z-0.03)); hit=TT.ray_cast(o+d*0.4,-d)[0]; r=((hit-o).length if hit else 0.15)+e; ring.append(bm.verts.new(o+d*r+Vector((0,0,0.03))))
+            a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z-0.03)); hit=TT.ray_cast(o+d*0.4,-d)[0]; o2=Vector((0,J('Hips').y,z)); h2=SHT.ray_cast(o2,d,0.3)[0]; r=max(((hit-o).length if hit else 0.15),((h2-o2).length+0.002) if h2 is not None else 0.0)+e; ring.append(bm.verts.new(o+d*r+Vector((0,0,0.03))))      # never inside the shirt that blouses over it (measured from the inside out: from outside, a ray met the hanging sleeve first)
         rows.append(ring)
     quadstrip(bm,rows,close=True,flip=True); soft('Waistband',bm,'Breeches',only=('Hips','Spine'))
 if G.get('jacket'):      # lapels that lie along the jacket's opening, and its buttons
@@ -1147,7 +1153,7 @@ def covered(f):
         return True
     return False
 bmesh.ops.delete(bm,geom=[f for f in bm.faces if not all(v[dl].get(gi,0)>0 for v in f.verts) or hidden(cz(f)) or (_covs and covered(f))],context='FACES'); bm.to_mesh(h.data); bm.free()
-if not OLD: neck_to_chest(h)      # the skin at the base of the neck follows the chest, like the shirt's neckline that lies on it
+if not OLD or EASE_OLD: neck_to_chest(h)      # the skin at the base of the neck follows the chest, like the shirt's neckline that lies on it
 h.data.materials.clear(); h.data.materials.append(colmat('Skin',0.68)); h.name='Body'
 if not OLD and G.get('socks'):
     # socks are their own material, cut along one clean line round each leg: painted on the skin, their top edge smeared into the skin once a light copy was simplified.
