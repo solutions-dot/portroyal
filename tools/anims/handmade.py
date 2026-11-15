@@ -472,11 +472,10 @@ def speech(rig):
     return frames
 
 
-GIVE_AHEAD = 0.12
-SIDE_GAP = 0.44   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right and GIVE_AHEAD in front, facing the same way
+GIVE_AT = (-0.43, -0.145)   # ComfortGive and ComfortTake: where the one comforted stands from the giver (x to his left, y backwards), facing the same way
 CHILD_GAP, CHILD_AHEAD = 0.34, 0.24   # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right and in front of her (clear of a skirt)
 CHILD_NUDGE = (-0.08, 0.010, -0.036)
-SIT_GAP = 0.50    # SitComfortGive and SitComfortTake: side by side on a bench this far apart (the one comforted 0.16 m further forward)
+SIT_AT = (-0.465, -0.285)   # SitComfortGive and SitComfortTake: where she sits from him on the bench
 HAND_OUT, HAND_FWD, HAND_UP = 0.080, -0.04, -0.084   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
 FACE_OUT, FACE_FWD, FACE_UP = 0.06, 0.0, -0.09   # ComfortHand: fine placement of the resting hand
 FACE_GAP = 0.58   # ComfortHand: the other person stands this far in front of the giver, facing them
