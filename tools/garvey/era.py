@@ -366,6 +366,8 @@ for o in clothes:
     md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}
     md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
     with ov(o): bpy.ops.object.modifier_move_to_index(modifier='wt',index=0); bpy.ops.object.modifier_apply(modifier='wt')
+if EASE_OLD and G.get('breeches'):      # the shirt's tail inside the breeches is always hidden: trimmed below HIP+0.04 (seated, it bunched out through the front of the breeches); the shirt still overlaps the breeches up to the waistband
+    _o=dict(parts)['shirt']; _b=bmesh.new(); _b.from_mesh(_o.data); bmesh.ops.delete(_b,geom=[f for f in _b.faces if cz(f).z<HIP+0.04 and side_arm(cz(f)) is None],context='FACES'); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS'); _b.to_mesh(_o.data); _b.free()
 if EASE_OLD:      # 1690: only the shirt; it blouses out above the breeches' waistband (TUCK is above the band) and falls nearly straight from the chest
     ease(dict(parts)['shirt'],0.009,tuck=0.006 if G.get('breeches') else 0.003)      # tucked into breeches it fills the band (tucked tight, it left an open lip of breeches round it)
 if not OLD:      # the ease comes after the bone weights are copied: each point of cloth keeps the weights of the skin it started on, so loose cloth by the armpit does not follow the arm
