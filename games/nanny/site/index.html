@@ -178,9 +178,10 @@ body:has(#hornwrap:not([hidden])) :is(#talk,#hint,#toast,#nudge,#sub){visibility
 #leaves{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:43;background-size:100% 100%;transition:opacity .6s,transform .6s;transform:scale(1.22)}
 #leaves.on{opacity:1}#leaves.low{transform:scale(1.02)}
 @media (prefers-reduced-motion:reduce){#horndots.bad{animation:none}#leaves{transition:none}}
-/* The same in-game soldiers' approach is used on the main-menu card. */
+/* The poster covers loading; the live soldiers scene is revealed when ready. */
 #title{background:linear-gradient(90deg,rgba(16,34,43,.94),rgba(16,34,43,.72) 42%,rgba(16,34,43,.1) 80%),url(title-scene.jpg) 65% center/cover no-repeat}
-@media(max-width:760px){#title{background-image:linear-gradient(180deg,rgba(16,34,43,.25),rgba(16,34,43,.94) 58%),url(title-scene.jpg)}}
+#title.live-scene{background-image:linear-gradient(90deg,rgba(16,34,43,.94),rgba(16,34,43,.72) 42%,rgba(16,34,43,.1) 80%)}
+@media(max-width:760px){#title{background-image:linear-gradient(180deg,rgba(16,34,43,.25),rgba(16,34,43,.94) 58%),url(title-scene.jpg)}#title.live-scene{background-image:linear-gradient(180deg,rgba(16,34,43,.25),rgba(16,34,43,.94) 58%)}}
 </style>
 <link rel="stylesheet" href="title.css">
 </head>
