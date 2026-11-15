@@ -26,7 +26,7 @@ python3 -m http.server 8765                # then open http://localhost:8765/gam
 
 Players who know Port Royal should find everything where they expect it. The page (`games/garvey/site/index.html`) is built from Port Royal's, so the styles match.
 
-- **Title screen**: Start (or Continue), Chapters, Main Menu, Created by Kellz 5.0, and "Your progress is saved on this device".
+- **Title screen**: Start (or Continue), Chapters, Main Menu, the loading bar, and "Your progress is saved on this device" when there is a saved game. The title controls use `shared/title.css`.
 - **In the game**: reset, sound and Journal (with a count) at the top right; a Goal tab that folds after a few seconds; a controls hint; a glowing speech mark over each person and a bubble on the nearest; a resting joystick on phones.
 - **Journal**: a paper book with tabs and "Dig deeper". Its footer has **Main Menu** and **Chapters**.
 - **Chapters**: all eight chapters are listed and playable. Each opens when the one before it is done. The panel also has Credits and "Start again".
@@ -39,7 +39,7 @@ Players who know Port Royal should find everything where they expect it. The pag
 - **Speech marks and bubbles** sit just above each person's head or hat. The height is measured from the loaded model (`headTop`), so tall hats and short people both look right.
 - **Menu card**: a poster like Port Royal's, from `menu/garvey.jpg`. To remake it, build with `--dev`, serve the repo and render `games/garvey/site/index.html?shot=poster` at 1280 by 720 with the HUD hidden (the view hides marks and freezes the pose).
 - **Reset**: a card with "Restart this chapter", "Start the whole story again" (asks twice) and **Main Menu**.
-- **Main Menu** (a button, like Chapters; it used to be an "All games" link) is therefore reachable from the title, the Journal and the Reset card. It only shows where the real menu exists (the website), as in Port Royal.
+- **Main Menu** (a button, like Chapters; it used to be an "All games" link) is therefore reachable from the title, the Journal and the Reset card. It is always available on the website, without a fetch or a check for the platform name.
 - **Saving**: the Journal, the goal and who you have talked to are kept in the browser (`garvey-save-v1`).
 - **Keys**: Escape closes any panel; Space, Enter or E uses the nearest thing.
 

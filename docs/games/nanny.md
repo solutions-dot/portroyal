@@ -117,7 +117,7 @@ Then open `http://localhost:8765/games/nanny/site/`.
   - `?test=walkers`: people who walk do not bounce, float or sink (the lowest point of the feet stays on the ground, and the body does not jump against the ground between steps), the guide is never behind you, and a follower does not shuffle stop-start. A run is allowed more rise and fall than a walk.
 - `npm test` includes two tests of the land code (`tests/regressions.mjs`).
 - Reading level: `node tools/nanny/readcheck.mjs games/nanny/src/content.js` flags dialogue and narration over 12 words, long goals and journal lines, dashes, and journal pages that are repeated or missing. Run it after editing any text.
-- The menu poster `menu/nanny.jpg` comes from `?shot=poster` at 1280 by 720.
+- The menu poster `menu/nanny.jpg` and opening-screen background `games/nanny/site/title-scene.jpg` use the same real game capture from `?shot=soldiers` at 1600 by 900. This dev-only view frames the redcoats approaching on the path before the fighting, with no HUD or text. The opening screen uses a dark gradient over the image to keep its text readable.
 
 ## Research (checked 14 November 2026)
 

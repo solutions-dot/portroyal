@@ -84,9 +84,9 @@ function setGoal(t) { $('goal').textContent = t; }
 let busyBy = 0; const setBusy = (b) => { busy = b; if (b) keys.clear(); };
 
 /* ---------- loading ---------- */
-Promise.all([model('anims'), model('anims_tivoli')]).then(([anims, own]) => {
+Promise.all(['anims', 'anims_tivoli'].map((name) => model(name).then((asset) => { const bar = $('bar'); bar.dataset.done = +(bar.dataset.done || 0) + 1; bar.style.width = (+bar.dataset.done / 2 * 100) + '%'; return asset; }))).then(([anims, own]) => {
   loadClips(anims); loadClips(own);   // the shared library, then Tivoli's own clips (tools/tivoli/pack_clips.mjs)
-  $('start').disabled = false; $('start').textContent = 'Play'; $('loadnote').textContent = '';
+  $('start').disabled = false; $('start').textContent = 'Start'; $('loadnote').textContent = '';
   if (__DEV__) devViews();
 });
 
