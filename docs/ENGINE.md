@@ -8,7 +8,7 @@ import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, tone, nois
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 ```
 
-The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `story.js` (who moves the story, the hint arrow, things the player carries), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies) and `ui-audit.js` (text overlap). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
+The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `story.js` (who moves the story, the hint arrow, things the player carries), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies), `ui-audit.js` (text overlap) and `vehicles.js` (railway vehicles). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
 
 ## engine/loader.js: loading packed models
 
@@ -196,6 +196,30 @@ Every game and the template import it.
 ## engine/ui-audit.js: text overlap
 
 `contentsOverlap(a, b)` says whether the painted text of two elements overlaps (`contentRects(el)` gives the rectangles, clipped to scrolling parents and closed `<details>`). Bog Walk's layout test uses it, and `tests/ui-audit.html` checks it (`docs/TESTING.md`). Other games have their own layout checks in `main.js`.
+
+## engine/vehicles.js: railway vehicles
+
+Track, steam engines, coaches, carriages, wagons, a platform and smoke, built from boxes, cylinders and turned shapes with sides painted in code. It was Kendal's `trains.js`; Kendal 1957 and Bog Walk 1904 now both use it, and a new game with a railway should too, instead of copying the file. A game calls `makeVehicles` once with its own texture and material helpers, so each game keeps its own textures and caches. The game's own `src/trains.js` is then one line:
+
+```js
+import * as gfx from './gfx.js';   /* T, cv, grain, std, solid, mesh, box, cyl, plane, grp, rng, batchStatic (Kendal's gfx.js has them all) */
+import { makeVehicles } from '../../../engine/vehicles.js';
+export const { RAIL_TOP, TM, rails, railsCurve, wheel, spin, woodCoach, dieselLoco, steamLoco, carriage1845, wagon, platform, makeSmoke } = makeVehicles(gfx);
+```
+
+Trains run along x and face -x; every vehicle has its floor at y = 0 (platform height), so the rail tops are at `RAIL_TOP` (-1.1). `spin(train, dx)` turns the wheels as a train moves; `makeSmoke(scene)` is a pool of steam puffs (`emit`, `tick`, `clear`); an engine's `userData.chimney` is where the smoke comes out.
+
+| Builder | What it is | Fits |
+|---|---|---|
+| `steamLoco('early')` | a 2-2-2 with one big pair of driving wheels and a tall chimney, after the 1845 *Projector* | the 1840s and 1850s |
+| `steamLoco('late')` | a 4-4-0 with outside cylinders, a roofed cab and a coal tender | the 1890s to the 1910s (Kendal's 1890s chapter, Bog Walk's 1904 special train) |
+| `carriage1845('first' or 'third')` | four-wheel carriages | the 1840s to about the 1880s |
+| `wagon()` | a four-wheel goods wagon with slatted sides (for bananas) | the 1880s on |
+| `woodCoach(n)` | a wooden bogie coach, numbered n, maroon with cream lining, "J. G. R." | Kendal's 1957 train |
+| `dieselLoco()` | a 1950s diesel | the 1950s |
+| `rails(len)`, `railsCurve(R, a0, a1)`, `platform(...)` | track on ballast, a curve, a platform with a canopy | any time |
+
+The shapes and colours are general pictures, not copies of a photographed engine (see `docs/games/kendal.md`). Kendal's dev model viewer (`?shot=model&m=late`, and `diesel`, `coach`, `early`, `first`, `third`, `wagon`) shows each one on a piece of track.
 
 ## Still inside Port Royal, ready to move next
 

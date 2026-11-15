@@ -474,9 +474,9 @@ def speech(rig):
 
 SIDE_GAP = 0.44   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right and 0.12 m in front, facing the same way
 CHILD_GAP, CHILD_AHEAD = 0.34, 0.24   # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right and in front of her (clear of a skirt)
-CHILD_NUDGE = (-0.08, 0.022, -0.05)
+CHILD_NUDGE = (-0.08, 0.020, -0.044)
 SIT_GAP = 0.50    # SitComfortGive and SitComfortTake: side by side on a bench this far apart (the one comforted 0.16 m further forward)
-HAND_OUT, HAND_FWD, HAND_UP = 0.074, -0.04, -0.10   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
+HAND_OUT, HAND_FWD, HAND_UP = 0.077, -0.04, -0.095   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
 FACE_OUT, FACE_FWD, FACE_UP = 0.06, 0.0, -0.09   # ComfortHand: fine placement of the resting hand
 FACE_GAP = 0.58   # ComfortHand: the other person stands this far in front of the giver, facing them
 
@@ -489,7 +489,7 @@ def follow(rig, take_frames, bone, x, y, rz, scale=1.0):
     return [(q - m) * scale for q in pts]
 
 
-def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0.25), ride=None, ahead=0.12, half=0.12, nudge=(0.0, 0.0, 0.0), elbow_dir=(-0.15, -1.0, -0.55)):
+def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0.25), ride=None, ahead=0.12, half=0.12, nudge=(0.0, 0.0, 0.0), elbow_dir=(-0.15, -1.0, -0.45)):
     """An arm round the shoulders of someone standing (or sitting) `gap` metres to the right, facing the same way.
     The giver's body turns about 30 degrees towards them, the arm goes round their back and the hand rests on their far
     shoulder, with a few slow pats. `drop` is how far below the giver's own shoulder joint their shoulder top is; `lean`
@@ -575,7 +575,7 @@ def sit_base(rig, T):
 @clip('SitComfortGive', 'hand-made on the library SitIdle (Sitting_Idle.fbx)')
 def sit_comfort_give(rig):
     T = 8.0; frames = sit_base(rig, T); breathe(rig, frames, T, 2, amt=0.014)
-    comfort_arm(rig, frames, T, SIT_GAP, 0.08, lean=0.12, turn_to=0.35, ahead=0.16, nudge=(-0.03, 0.07, 0.06), elbow_dir=(-0.1, -1.0, -0.2))
+    comfort_arm(rig, frames, T, SIT_GAP, 0.08, lean=0.12, turn_to=0.35, ahead=0.16, nudge=(-0.03, 0.07, 0.06), elbow_dir=(-0.1, -1.0, -0.05))
     for p in frames: turn(rig, p, 'RightUpLeg', Z, 0.14)   # knees together, clear of hers
     return frames
 
