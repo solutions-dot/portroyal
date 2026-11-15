@@ -452,10 +452,10 @@ def speech(rig):
 
 SIDE_GAP = 0.40   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right, facing the same way
 CHILD_GAP = 0.32  # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right
-FACE_GAP = 0.55   # ComfortHand: the other person stands this far in front of the giver, facing them
+FACE_GAP = 0.45   # ComfortHand: the other person stands this far in front of the giver, facing them
 
 
-def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.5, look=(-0.3, 0.22)):
+def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0.25)):
     """An arm round the shoulders of someone standing (or sitting) `gap` metres to the right, facing the same way.
     The giver's body turns about 30 degrees towards them, the arm goes round their back and the hand rests on their far
     shoulder, with a few slow pats. `drop` is how far below the giver's own shoulder joint their shoulder top is; `lean`
@@ -518,7 +518,7 @@ def comfort_hand(rig):
         turn(rig, p, 'Spine1', X, 0.04)
         steady_head(rig, p, yaw=-0.05 + 0.03 * math.sin(TAU * t / T), pitch=0.25, roll=-0.05, neck=0.5)
         M = rig.fk(p)
-        wrist = body_point(rig, M, 'Right', -0.03, FACE_GAP - 0.17, -0.06 + 0.02 * pt, bone='Hips')
+        wrist = body_point(rig, M, 'Right', -0.04, FACE_GAP - 0.2, -0.17 + 0.02 * pt, bone='Hips')
         arm(rig, p, 'Right', wrist, body_dir(rig, M, 'Right', 0.4, -0.2, -1, bone='Hips'), body_dir(rig, M, 'Right', -0.1, 0.8, -0.6, bone='Hips'),
             body_dir(rig, M, 'Right', 0.0, 0.3, -1, bone='Hips'), 0.5)
         curl(rig, p, 'Right', 0.35 - 0.15 * pt, thumb=0.15)

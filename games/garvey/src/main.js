@@ -1,4 +1,5 @@
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
+import { goTo, tick as followTick } from '../../../engine/follow.js';   /* people sent somewhere walk the same way in every game */
 import { auditSeated, snapMeshes, auditRest } from '../../../engine/audit.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/garvey/src/main.js: Marcus Garvey. First test scene: a print shop in Kingston, Jamaica, about 1907.
@@ -261,7 +262,7 @@ const SHOP_PEOPLE = [
       { who: 'Customer', text: 'I will wait. I like to watch the press.' }],
     later: ['I will wait here, thank you.', 'What a busy shop!'] },
 ];
-function initPerson(n) { n.m = null; n.walking = false; n.wait = 1.5 + Math.random() * 2; n.i = 0; n.heard = 0; n.talked = false; n.hx = n.x; n.hz = n.z; n.dest = null; n.delay = 0; n.hidden = false; }
+function initPerson(n) { n.m = null; n.walking = false; n.wait = 1.5 + Math.random() * 2; n.i = 0; n.heard = 0; n.talked = false; n.hx = n.x; n.hz = n.z; n.fol = null; n.delay = 0; n.hidden = false; }
 for (const n of SHOP_PEOPLE) initPerson(n);
 let PEOPLE = SHOP_PEOPLE;   /* the people in the place you are in */
 const allPeople = () => [...SHOP_PEOPLE, ...HALL_PEOPLE, ...STREET_PEOPLE, ...PRESS_PEOPLE, ...DOCK_PEOPLE, ...LIB_PEOPLE, ...OFF_PEOPLE, ...PARK_PEOPLE];
@@ -274,13 +275,13 @@ function tapPerson(cx, cy) {
 }
 const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); };
 const sitClip = (talking) => (talking && CL.SitTalk ? 'SitTalk' : CL.SitIdle ? 'SitIdle' : null);
+function arrive(n) { n.walking = false; n.ry = Math.PI; if (n.seat) sitDown(n); else n.m.userData.anim.play(null); }   /* at the end of a walk to a seat */
 function sitDown(n) { n.seated = true; n.walking = false; n.x=n.seat[0]; n.z=n.seat[1]; n.ry=Math.PI; n.m.userData.seatAnchor={x:n.x,z:n.z,top:0.5,ry:n.ry}; n.m.userData.anim.play(sitClip(false)); }
 function npcTick(n, dt) {
   const m = n.m; if (!m) return; if (POSTER) { m.rotation.y = n.ry; return; }   /* the menu poster: everyone keeps the pose they were given */
   const ac = m.userData.anim, d = Math.hypot(state.x - n.x, state.z - n.z), isNear = (d < 3.2 && !DEV_NOSTOP) || talkWith === n;
-  if (n.delay > 0) { n.delay -= dt; if (n.delay <= 0) { n.hidden = false; m.visible = place === 'hall'; n.walking = true; ac.play('Walk'); } return; }
-  if (n.dest && talkWith !== n) { const dx = n.dest[0] - n.x, dz = n.dest[1] - n.z, dist = Math.hypot(dx, dz), sp = 1.25 * dt; faceTo(m, Math.atan2(dx, dz), dt);
-    if (dist <= sp) { n.x = n.dest[0]; n.z = n.dest[1]; if (n.legs && n.legs.length) { n.dest = n.legs.shift(); } else { n.dest = null; n.walking = false; n.ry = Math.PI; if (n.seat) sitDown(n); else ac.play(null); } } else { [n.x,n.z] = slideWalls([n.x,n.z],[n.x+dx/dist*sp,n.z+dz/dist*sp],curWalls,.22); } if(!n.seated)m.position.set(n.x, 0, n.z); return; }
+  if (n.delay > 0) { n.delay -= dt; if (n.delay <= 0) { n.hidden = false; m.visible = place === 'hall'; const L = n.legs; if (L && L.length) goTo(n, L[L.length - 1][0], L[L.length - 1][1], { route: L, speed: 1.25, done: arrive }); } return; }
+  if (n.fol) { followTick(n, dt, { px: state.x, pz: state.z, talking: talkWith, place: (p) => { if (!p.seated) p.m.position.set(p.x, 0, p.z); } }); return; }   /* walking to a seat along a checked route (engine/follow.js goTo); they wait and look at you while you talk to them */
   const toPlayer = Math.atan2(state.x - n.x, state.z - n.z);
   if (n.seated) { anchorSeat(m); return; }
   if (!n.path) { if (isNear) faceTo(m, toPlayer, dt); else faceTo(m, n.ry, dt, 2); return; }   /* the printer stays at his stand, and turns to look at you */
@@ -636,7 +637,7 @@ const HALL_PEOPLE = [
 for (const n of HALL_PEOPLE) initPerson(n);
 for (const n of HALL_PEOPLE.slice(2)) n.hidden = true;   /* the neighbours arrive when the poster is printed */
 function startArrivals() {
-  HALL_PEOPLE.slice(2).forEach((n, i) => { if (!n.m) return; n.hidden = true; n.m.visible = false; n.x = (i - 1) * 0.6; n.z = 5.2; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; delete n.m.userData.seatAnchor; n.legs = [...n.route.map((q) => q.slice()), [n.seat[0],n.seat[1]-0.6]]; n.dest = n.legs.shift(); n.seated = false; n.delay = 1.2 + i * 1.8; });   /* walk the aisle and the gap between the rows, then sit */
+  HALL_PEOPLE.slice(2).forEach((n, i) => { if (!n.m) return; n.hidden = true; n.m.visible = false; n.x = (i - 1) * 0.6; n.z = 5.2; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; delete n.m.userData.seatAnchor; n.legs = [...n.route.map((q) => q.slice()), [n.seat[0],n.seat[1]-0.6]]; n.fol = null; n.seated = false; n.delay = 1.2 + i * 1.8; });   /* walk the aisle and the gap between the rows, then sit */
 }
 function loadPerson(n) {
   if (n.loading) return n.loading;
@@ -710,7 +711,7 @@ let streetLoading = null;
 function ensureStreet() { if (!streetLoading) { buildStreet(); streetLoading = Promise.all(STREET_PEOPLE.map(loadPerson)); } return streetLoading; }
 function resetChapter3() {   /* the street corner again: the journal and your choices are kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 20; delete story.words; delete story.answer;
-  for (const n of STREET_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of STREET_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('street'); setStage(20); showPlace();
 }
 
@@ -814,7 +815,7 @@ let pressLoading = null;
 function ensurePress() { if (!pressLoading) { buildPress(); pressLoading = Promise.all(PRESS_PEOPLE.map(loadPerson)); } return pressLoading; }
 function resetChapter4() {   /* the press room again: the page comes down, the journal and your choices in earlier chapters are kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); stage = 30; delete story.headline; delete story.delivery; delete story.laid;
-  for (const n of PRESS_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of PRESS_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('press'); setStage(30); showPlace();
 }
 
@@ -889,7 +890,7 @@ let dockLoading = null;
 function ensureDock() { if (!dockLoading) { buildDock(); dockLoading = Promise.all(DOCK_PEOPLE.map(loadPerson)); } return dockLoading; }
 function resetChapter5() {   /* the dock again: your choices here are cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); stage = 40; delete story.plan; delete story.advice;
-  for (const n of DOCK_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of DOCK_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('dock'); setStage(40); showPlace();
 }
 
@@ -969,7 +970,7 @@ let libLoading = null;
 function ensureLiberty() { if (!libLoading) { buildLiberty(); libLoading = Promise.all(LIB_PEOPLE.map(loadPerson)); } return libLoading; }
 function resetChapter6() {   /* Liberty Hall again: the banner is plain, your choice here is cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); closeDecl(false); stage = 50; delete story.helped; delete story.banner; showBanner();
-  for (const n of LIB_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of LIB_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('liberty'); setStage(50); showPlace();
 }
 
@@ -1045,7 +1046,7 @@ let offLoading = null;
 function ensureOffice() { if (!offLoading) { buildOffice(); offLoading = Promise.all(OFF_PEOPLE.map(loadPerson)); } return offLoading; }
 function resetChapter7() {   /* Amy's desk again: your choices here are cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 60; delete story.question; delete story.reassure;
-  for (const n of OFF_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of OFF_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('office'); setStage(60); showPlace();
 }
 
@@ -1136,7 +1137,7 @@ let parkLoading = null;
 function ensurePark() { if (!parkLoading) { buildPark(); parkLoading = Promise.all(PARK_PEOPLE.map(loadPerson)); } return parkLoading; }
 function resetChapter8() {   /* the park again: your last answer is cleared, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 70; delete story.final;
-  for (const n of PARK_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of PARK_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('park'); setStage(70); showPlace();
 }
 
@@ -1256,7 +1257,7 @@ function prefetchNext(name) {   /* a few seconds after arriving, quietly fetch t
 function enterPlace(name, keepPos) {
   place = name; const P = PLACES[name]; prefetchNext(name);
   for (const k of Object.keys(PLACES)) { const Q = PLACES[k]; Q.group.visible = k === name; Q.lamp.visible = k === name; for (const n of Q.people) { if (n.mark) n.mark.visible = false; if (n.m) n.m.visible = k === name && !n.hidden; } }
-  if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.dest) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; if (n.seat) sitDown(n); }
+  if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.fol) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; if (n.seat) sitDown(n); }
   if (name === 'press') arrangePress();
   if (name === 'liberty') showBanner();   /* a saved game that was past the Declaration shows the finished banner */
   curWalls = P.walls; curBounds = P.bounds; PEOPLE = P.people; ACTIONS = P.actions; near = null;
@@ -1267,7 +1268,7 @@ function enterPlace(name, keepPos) {
 function showPlace() { const el = $('place'); el.textContent = PLACES[place].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(placeT); placeT = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetChapter2() {   /* the hall again: the poster comes down, the neighbours go home, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); delete story.poster; delete story.printed; showPoster(); stage = 10;
-  for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.dest = null; n.legs = null; n.seated = false; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
+  for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.legs = null; n.seated = false; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('hall'); setStage(10); showPlace();
 }
 
@@ -1505,7 +1506,7 @@ function devViews() {
         $('start').click(); best = 3; stage = 3; CHAPTERS[1].go(); for (let i = 0; i < 200 && place !== 'hall'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '"');
         L('amy lines=' + await talkTo(byId('amy'))); L('garvey lines=' + await talkTo(byId('garvey')) + ' poster=' + story.poster + ' stage=' + stage);
         state.x = 2.3; state.z = 1.7; update(0.016); L('near=' + (near && near.label)); near.go(); typeIt(); L('printed: stage=' + stage + ' poster visible=' + posterMesh.visible);
-        const nb = HALL_PEOPLE.slice(2); L('before arrivals visible=' + nb.filter((n) => n.m.visible).length); for (let i = 0; i < 60 * 12; i++) update(1 / 60); L('after arrivals visible=' + nb.filter((n) => n.m.visible).length + ' seated=' + nb.filter((n) => !n.dest && n.m.visible).length);
+        const nb = HALL_PEOPLE.slice(2); L('before arrivals visible=' + nb.filter((n) => n.m.visible).length); for (let i = 0; i < 60 * 12; i++) update(1 / 60); L('after arrivals visible=' + nb.filter((n) => n.m.visible).length + ' seated=' + nb.filter((n) => !n.fol && n.m.visible).length);
         for (const n of nb) L(n.id + ' lines=' + await talkTo(n) + ' says: ' + (NB[n.id][story.poster]).slice(0, 24)); L('stage=' + stage + ' goal="' + $('goal').textContent + '"');
         L('speech lines=' + await talkTo(byId('garvey')) + ' stage=' + stage + ' goal="' + $('goal').textContent + '" pages=' + unlocked.join(','));
         L(stage === 14 && unlocked.length === 4 && place === 'hall' ? 'ALLDONE' : 'STALL'); L('DONE');

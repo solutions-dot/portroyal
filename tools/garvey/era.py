@@ -557,13 +557,16 @@ if OLD:
             smooth_weights(o,lambda c:c.z<CROTCH+0.06,3)
 for k,o in parts:            # coat skirts follow both legs as one cloth, like Abba's skirt
     if k not in ('coatskirt','skirt','jacketskirt'): continue
-    B={n:o.vertex_groups['mixamorig:'+n] for n in ('Hips','LeftUpLeg','RightUpLeg')}; idx=list(range(len(o.data.vertices)))
+    B={n:o.vertex_groups['mixamorig:'+n] for n in ('Hips','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg')}; idx=list(range(len(o.data.vertices)))
     for g in o.vertex_groups:
         if g.name.startswith('mixamorig:'): g.remove(idx)
     for v in o.data.vertices:
         t=max(0.0,min(1.0,(HIP+0.06-v.co.z)/0.5)); leg=(0.3 if k=='jacketskirt' else (0.6 if (OLD or k=='coatskirt') else 0.9))*sstep(0.1,0.9,t); left=sstep(-1.0,1.0,v.co.x/0.15)      # a later skirt rides almost wholly on the legs, so a leg that swings forward carries the cloth with it instead of pushing through
         if k=='coatskirt': front=sstep(0.02,-0.07,v.co.y); leg=front*0.95*sstep(-0.15,0.45,t)+(1-front)*0.25*sstep(0.1,0.9,t)   # the front panels ride on their own thigh (the knee carries them forward), the back hangs from the hips and opens at the vent
-        for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left),('RightUpLeg',leg*(1-left))):
+        shin=0.0
+        if k=='skirt' and not OLD:      # below the knee the front of a later skirt passes in part to the shins: seated, it falls over the knees and down instead of standing out from the thighs like a tray
+            shin=0.55*sstep(KNEE+0.07,KNEE-0.08,v.co.z)*sstep(0.03,-0.05,v.co.y)
+        for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left*(1-shin)),('RightUpLeg',leg*(1-left)*(1-shin)),('LeftLeg',leg*left*shin),('RightLeg',leg*(1-left)*shin)):
             if val>0.001: B[n].add([v.index],val,'REPLACE')
 # extra pieces bound to one bone: hat, cap, bands, apron
 def rigid(name,bm,mat,bone):
