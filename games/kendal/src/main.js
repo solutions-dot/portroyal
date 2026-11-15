@@ -1,4 +1,5 @@
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
+import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/kendal/src/main.js: Kendal 1957, The Excursion Train.
    The story of the Jamaica Railway, from the slow road before it to the Kendal train crash of 1 September 1957 and how it is remembered.
@@ -21,7 +22,7 @@ import * as SFX from './sfx.js';
 import { HATS, LOOKS, KID } from './cast.js';
 import { DECOR } from './decor.js';
 import * as TRN from './trains.js'; import * as PRP from './props.js';   /* whole modules, for the dev model viewer only */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditWalk, auditCloth } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditWalk, auditCloth, auditBodies } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
 import { makeBirds } from './detail.js';
 
@@ -171,7 +172,7 @@ const smoke = makeSmoke(scene); const birds = makeBirds(scene, 7);
 function clampPos(x, z) {
   const P = P_(), b = P.bounds; x = Math.max(b.x0, Math.min(b.x1, x)); z = Math.max(b.z0, Math.min(b.z1, z));
   for (const [x0, z0, x1, z1] of P.walls) if (x > x0 && x < x1 && z > z0 && z < z1) { const dl = x - x0, dr = x1 - x, dt = z - z0, db = z1 - z, m = Math.min(dl, dr, dt, db); if (m === dl) x = x0; else if (m === dr) x = x1; else if (m === dt) z = z0; else z = z1; }
-  for (const n of P.people) { if (!n.m || !n.m.visible || n.m.userData.sits) continue; const d = Math.hypot(x - n.x, z - n.z); if (d < 0.5) { x = n.x + (x - n.x) / (d || 1) * 0.5; z = n.z + (z - n.z) / (d || 1) * 0.5; } }
+  for (const n of P.people) { if (!n.m || !n.m.visible || n.m.userData.sits || isFollowing(n)) continue; const d = Math.hypot(x - n.x, z - n.z); if (d < 0.5) {   /* someone who comes with you never blocks you: they step aside (engine/follow.js) */ x = n.x + (x - n.x) / (d || 1) * 0.5; z = n.z + (z - n.z) / (d || 1) * 0.5; } }
   return [x, z];
 }
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -181,20 +182,13 @@ function tapPerson(cx, cy) {
 }
 const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); };
 const walkSpeed = (m, v = 1.1) => v * Math.sqrt(m.scale.y);   /* a small child has shorter legs: it walks slower than a grown-up, with quicker steps */
+/* what engine/follow.js needs each frame: where you are, what is solid (the place's walls and furniture), who else is about, and the camera (a follower who is left far behind reappears out of view) */
+const inWallR = (W, x, z, r) => W.some((w) => x > w[0] - r && x < w[2] + r && z > w[1] - r && z < w[3] + r);
+function followWorld() { const P = P_(), b = P.bounds; return { px: state.x, pz: state.z, blocked: (x, z, r = 0.22) => x < b.x0 + r || x > b.x1 - r || z < b.z0 + r || z > b.z1 - r || inWallR(P.walls, x, z, r * 0.8), walls: P.walls, bounds: b, others: P.npcs.filter((o) => o.m && o.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } }; }
 function npcTick(n, dt) {
   const m = n.m; if (!m || !m.visible) return; if (POSTER) { m.rotation.y = n.ry0; return; }
   const ac = n.ctl, d = Math.hypot(state.x - n.x, state.z - n.z), seated = /^Sit/.test(n.anim || ''), isNear = !n.extra && !seated && ((d < 3.2 && !DEV_NOSTOP) || talkWith === n);
-  if (n.follow && talkWith !== n) {   /* follow the player along a route round the walls (engine/placement.js); a child who must hurry to keep up breaks into a run */
-    const distance = Math.hypot(state.x - n.x, state.z - n.z);
-    if (distance > 1.5) {
-      if (!n.followGoal || Math.hypot(state.x - n.followGoal[0], state.z - n.followGoal[1]) > .8) { n.followGoal = [state.x, state.z]; n.followRoute = walkRoute([n.x, n.z], n.followGoal, PL[cur].walls, .22, PL[cur].bounds); }
-      const to = n.followRoute?.[0];
-      if (to) { const dx = to[0] - n.x, dz = to[1] - n.z, d = Math.hypot(dx, dz), v = .8 + Math.min(1.4, distance * .35), sp = Math.min(d, v * dt), fast = v > (n.running ? 1.45 : 1.75) * Math.sqrt(m.scale.y) && !!CL.Run;
-        [n.x, n.z] = slideWalls([n.x, n.z], [n.x + dx / (d || 1) * sp, n.z + dz / (d || 1) * sp], PL[cur].walls, .22); if (d < .12) n.followRoute.shift();
-        if (!n.walking || fast !== n.running) { n.walking = true; n.running = fast; ac.play(fast ? 'Run' : 'Walk'); } ac.pace(v); faceTo(m, Math.atan2(dx, dz), dt); }
-      else if (n.walking) { n.walking = false; n.running = false; ac.play(null); }
-    } else if (n.walking) { n.walking = false; n.running = false; ac.play(null); }
-    m.position.x = n.x; m.position.z = n.z; return; }   /* the height belongs to groundFeet */
+  if (n.fol) { followTick(n, dt, followWorld()); return; }   /* someone who comes with you (engine/follow.js): behind you and to one side, never in your way; the height belongs to groundFeet */
   if (!n.path) { if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else if (!n.extra) faceTo(m, n.ry0, dt, 2); return; }
   if (isNear || n.wait > 0) { if (n.walking) { n.walking = false; ac.play(null); } if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else { n.wait -= dt; if (n.wait <= 0) { n.walking = true; ac.play('Walk'); } } return; }
   if (!n.walking) { n.walking = true; ac.play('Walk'); }
@@ -340,6 +334,7 @@ function nextCard(i, s, tries = 0) {
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetTransient() {   /* leave anything running: scripted scenes, a ride, the crash, the camera director */
+  for (const k of Object.keys(PL)) for (const n of PL[k].npcs || []) if (n.fol) stopFollow(n);   /* nobody keeps following you into another chapter */
   EP++; RIDE.on = false; RIDE.v = RIDE.target = 0; endCut(); frozen = false; moveLock = false; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; flash(0, 0); $('vig').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.tilt = 0; RING = 0; HUSH = false; CRBEDS = {};
   SFX.mento(false); SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); if (cur && PL[cur]) PL[cur].group.rotation.set(0, 0, 0); sitting = false; document.body.classList.remove('flashing');
 }
@@ -432,7 +427,7 @@ const ACTIONS_FOR = {
   crash: (P) => [
     { label: 'Fill the bucket', x: P.spots.pipe[0], z: P.spots.pipe[1], r: 2.4, on: () => stage === 61 && !ctr.has && (ctr.water || 0) < 2, go: () => { ctr.has = 1; stepSound('water'); toast('The bucket is full. Take it to the nurse.'); } },
     { label: 'Give the water to the nurse', x: P.spots.nurse[0], z: P.spots.nurse[1], r: 2.6, on: () => stage === 61 && ctr.has, go: () => { ctr.has = 0; ctr.water = (ctr.water || 0) + 1; refreshGoal(true); if (ctr.water >= 2) convo(TALK.nurse(story), () => setStage(62), byId('nurse')); else toast('She drinks, and thanks you. One more trip.'); } },
-    { label: 'Take Dawn to the calling place', x: P.spots.calling[0], z: P.spots.calling[1], r: 3.2, on: () => stage === 63, go: () => { const d = byId('dawn'); d.follow = false; d.walking = false; d.ctl.play(null); d.x = P.spots.calling[0] + 1.2; d.z = P.spots.calling[1] + 0.6; d.m.position.set(d.x, 0, d.z); convo(TALK.louise(story), () => setStage(64), byId('louise')); } },
+    { label: 'Take Dawn to the calling place', x: P.spots.calling[0], z: P.spots.calling[1], r: 3.2, on: () => stage === 63, go: () => { const d = byId('dawn'); stopFollow(d); d.x = P.spots.calling[0] + 1.2; d.z = P.spots.calling[1] + 0.6; d.m.position.set(d.x, 0, d.z); convo(TALK.louise(story), () => setStage(64), byId('louise')); } },
     { label: 'Hold your lamp up', x: P.spots.lamp[0], z: P.spots.lamp[1], r: 3.4, on: () => stage === 64, go: () => holdLamp() } ],
   memorial: (P) => [
     { label: 'Read the storyboard', x: P.spots.board[0], z: P.spots.board[1], r: 2.8, on: () => stage === 71 && !ctr.sb, go: () => { ctr.sb = 1; ctr.look = (ctr.look || 0) + 1; refreshGoal(true); card('The storyboard', ['A church excursion train came home from the sea.', 'It ran downhill and left the rails here, near Kendal.', 'Hundreds of people from Kendal came to help.', 'Close to 200 people died.'], [{ t: 'Close', go: () => { hideCard(); if (ctr.look >= 2) setStage(72); } }]); } },
@@ -525,7 +520,8 @@ async function arriveKendal(fromCrash) {
 
 /* ---------- chapter 6: the long night ---------- */
 ON[61] = () => { ctr.water = 0; ctr.has = 0; };
-ON[63] = () => { const d = byId('dawn'); if (d) { d.follow = true; d.ctl.play(null); } };
+const FOLLOW = { dawn: { gap: 1.3, side: 0.5, space: 0.8 } };   /* Dawn is small: she keeps close, a step behind you and to one side (engine/follow.js) */
+ON[63] = () => { const d = byId('dawn'); if (d) { d.ctl.play(null); follow(d, FOLLOW.dawn); } };
 async function holdLamp() {
   frozen = true; busy = false; const P = P_(), ep = EP; say('You hold the lamp high.', 2600); const l = handLamp, base = l.intensity; l.intensity = 7; lampMesh.position.y = -0.18; await wait(2800); if (ep !== EP) return;
   say('Helpers carry people up the path, safe in your light.', 3800); await wait(3800); if (ep !== EP) return; l.intensity = base; lampMesh.position.y = -0.42; frozen = false; setStage(65);
@@ -690,6 +686,8 @@ function devViews() {
       if (++n === 3) { let tris = 0, calls = 0; obj.traverse((o) => { if (o.isMesh) { calls += Array.isArray(o.material) ? o.material.length : 1; const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1); } }); document.title = 'MODEL ' + m + ' meshes=' + calls + ' tris=' + Math.round(tris); } };
   });
   if (shot === 'talk1') go('road', 10, -27, 4.2, -0.7, 0).then((P) => { startTalk(byId('dudley')); });
+  /* ?shot=follow : Dawn comes with you. You walk a few metres, stop, and turn round to look at her (engine/follow.js). &wait= frames after you stop */
+  if (shot === 'follow') go('crash', 63, 10.6, 10.9, PI / 2, 0).then((P) => { ON[63](); const route = [[7, 12.2], [3, 13.2]], n = byId('dawn'); for (const [tx, tz] of route) for (let i = 0; i < 900 && Math.hypot(tx - state.x, tz - state.z) > 0.05; i++) { const d = Math.hypot(tx - state.x, tz - state.z), k = Math.min(1, 2.3 / 30 / d); [state.x, state.z] = clampPos(state.x + (tx - state.x) * k, state.z + (tz - state.z) * k); update(1 / 30); } for (let i = 0; i < +(q.get('wait') || 60); i++) update(1 / 30); state.yaw = Math.atan2(-(n.x - state.x), -(n.z - state.z)) + (+(q.get('turn') || 0)); state.pitch = -0.12; document.title = 'FOLLOW ' + n.id + ' ' + Math.hypot(n.x - state.x, n.z - state.z).toFixed(2) + ' m'; });
   if (shot === 'talk2') go('crash', 62, 9, 8, PI, 0).then((P) => { story.lamp = true; updateLamp(); startTalk(byId('dawn')); });
   if (shot === 'card1') go('coach', 52, 2, 0, -PI / 2, 0).then(() => { crashIntro(); });
   if (shot === 'journal1') go('road', 10, -27, 4.2, 0, 0).then(() => { for (const id of ['slowroad', 'higglers', 'free', 'cause']) unlock(id, true); openJournal('cause'); });
@@ -769,6 +767,17 @@ function devViews() {
   if (['audit','collision','seating'].includes(q.get('test'))) {   /* ?test=audit&p=road,hill : floating objects, people inside solids, unreachable spots */
     (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); count += r.floating.length + r.inside.length + r.stuck.length; out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
       if (q.get('seats')) out.push(...SEATLOG); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + count; })();
+  }
+  if (q.get('test') === 'follow') {   /* ?test=follow : you walk the real route with Dawn, with stops and a turn back into her, and her is watched (engine/follow.js, watch): too close (inside the
+       personal space), inside a wall or a solid shape (engine/audit.js auditBodies), or left far behind. Expect 0. */
+    (async () => { const out = []; let bad = 0; const dt = 1 / 30; startGame(true); await beginChapter(5, 62); 
+      const P = PL.crash, n = byId('dawn'), w = followWatch({ space: FOLLOW.dawn.space, behind: 6 }), Wl = () => P.walls, blocked = (x, z) => inWallR(Wl(), x, z, 0), move = (x, z) => { const r = clampPos(x, z); state.x = r[0]; state.z = r[1]; return r; }, step = (t) => update(t);
+      state.x = n.x + 1.0; state.z = n.z + 0.6; update(dt); setStage(63);
+      const leg = (to, stops = []) => { const r = walkRoute([state.x, state.z], to, Wl(), 0.3, P.bounds); drive({ from: [state.x, state.z], route: r.length ? r : [to], stops, move, step, people: [n], w, blocked }); };
+      leg([2.5, 13], [0]); leg([5, 12.4]); leg([-3.6, 14.4], [0]);
+      const lines = w.lines(n, 'Dawn comes with you to the calling place').concat(auditBodies(P.snap.concat(P.snap.inst || []), w.spots(n).map(([x, z]) => ({ id: 'Dawn comes with you to the calling place', x, z, ground: n.m.userData.ground || 0, h: 1.05, r: 0.12, what: 'walks' }))));
+      out.push('Dawn comes with you to the calling place: ' + w.stats(n) + (lines.length ? '' : ', ok')); for (const l of lines) out.push('  ' + l); bad += lines.length;
+      out.unshift('follow: ' + bad + ' problems'); document.title = 'FOLLOW ' + bad; const el = $('autolog'); if (el) el.textContent = out.join('\n'); })();
   }
   if (q.get('test') === 'resume') {   /* saved games resume in the right place, and closing a finishing conversation still moves the story on */
     (async () => { const out = []; startGame(true);
