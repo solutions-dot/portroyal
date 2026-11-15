@@ -469,10 +469,10 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.5, look=(-0.3, 0.
         steady_head(rig, p, yaw=look[0] - turn_to + 0.03 * math.sin(TAU * t / T), pitch=look[1] + 0.02 * math.sin(TAU * 2 * t / T + 1), roll=-0.04, neck=0.5)
         M = rig.fk(p)
         far = gap - 0.16 + 0.12                                         # their far shoulder, from the giver's shoulder joint
-        wrist = body_point(rig, M, 'Right', far - 0.08, 0.02, -drop + 0.03 + 0.025 * pt, bone='Hips')
-        fingers = body_dir(rig, M, 'Right', 0.35, 0.6, -0.7, bone='Hips')
+        wrist = body_point(rig, M, 'Right', far - 0.06, 0.06, -drop - 0.07 + 0.02 * pt, bone='Hips')   # on their far shoulder and upper arm, low
+        fingers = body_dir(rig, M, 'Right', 0.2, 0.55, -0.8, bone='Hips')
         palm = body_dir(rig, M, 'Right', 0.3, 0.2, -1.0, bone='Hips')
-        elbow = body_dir(rig, M, 'Right', -0.2, -0.7, -1.0, bone='Hips')
+        elbow = body_dir(rig, M, 'Right', -0.1, -0.35, -1.0, bone='Hips')   # elbow tucked down
         arm(rig, p, 'Right', wrist, elbow, fingers, palm, 0.5)
         curl(rig, p, 'Right', 0.35 - 0.15 * pt, thumb=0.15)
         relaxed_arm(rig, p, 'Left')

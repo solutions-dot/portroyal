@@ -109,7 +109,7 @@ export function auditOverlap(snap, { deep = 0.04 } = {}) {
    the real triangles of every shape near it are cut too. The person is inside a shape where a cut line of its surface passes closer than r to their middle (the
    surface goes through the body), or where they are enclosed by it (counted along four rays, which must agree, so an open strip never counts). A fault is two or
    more slices more than 3 cm deep. Flat things you can see through or walk through are left out: leaf cards (anything drawn with alphaTest or see-through), planes,
-   unlit glows and flames, people, and anything wider than 40 m (the ground). skip(entry) leaves out more (bushes that hide someone on purpose).
+   unlit glows and flames, people, thin small plants (under 12 cm across and 1.2 m tall: flower stalks, grass), and anything wider than 40 m (the ground). skip(entry) leaves out more (bushes that hide someone on purpose).
    people: [{ id, x, z, ground, h, r, what }] (what: "stands", "walks", "follows", put in the line). Lines name the thing and where it is. */
 const FLAT = new Set(['PlaneGeometry', 'CircleGeometry', 'RingGeometry', 'ShapeGeometry']);
 function isCard(material) { return [].concat(material).some((m) => m && (m.alphaTest > 0 || m.transparent || m.isMeshBasicMaterial || m.isSpriteMaterial)); }
@@ -151,7 +151,7 @@ function outlineHas(t, px, pz, y, margin) {
 }
 export function auditBodies(snap, people, { skip = null } = {}) {
   const out = [], sz = new THREE.Vector3(), cell = new Map(), key = (x, z) => ((x | 0) + 5000) * 20000 + ((z | 0) + 5000), C = 2, seen = new Set();
-  snap.forEach((e, i) => { if (e.skinned || e.unlit || e.flame || e.card || FLAT.has(e.geo) || !SHAPE.has(e)) return; e.b.getSize(sz); if (sz.x > 40 || sz.z > 40 || Math.max(sz.x, sz.y, sz.z) < 0.08) return; if (skip && skip(e)) return;
+  snap.forEach((e, i) => { if (e.skinned || e.unlit || e.flame || e.card || FLAT.has(e.geo) || !SHAPE.has(e)) return; e.b.getSize(sz); if (sz.x > 40 || sz.z > 40 || Math.max(sz.x, sz.y, sz.z) < 0.08 || (Math.max(sz.x, sz.z) < 0.12 && sz.y < 1.2)) return; if (skip && skip(e)) return;   /* flower stalks and grass blades (under 12 cm across and 1.2 m tall) are walked through */
     for (let x = Math.floor(e.b.min.x / C); x <= Math.floor(e.b.max.x / C); x++) for (let z = Math.floor(e.b.min.z / C); z <= Math.floor(e.b.max.z / C); z++) { const k = key(x, z); (cell.get(k) || cell.set(k, []).get(k)).push(i); } });
   for (const p of people) { const g = p.ground || 0, h = p.h || 1.6, r = p.r || 0.18, y0 = g + 0.1, y1 = g + h * 0.92, list = cell.get(key(Math.floor(p.x / C), Math.floor(p.z / C))); if (!list) continue;
     for (const i of list) { const e = snap[i], tag = p.id + '|' + e.top; if (seen.has(tag) || e.b.max.y < y0 || e.b.min.y > y1 || e.b.max.x < p.x - r || e.b.min.x > p.x + r || e.b.max.z < p.z - r || e.b.min.z > p.z + r) continue;
