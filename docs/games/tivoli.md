@@ -287,8 +287,14 @@ Real people in the game: none speak. Coke, politicians, commanders, officers and
 6. **A proper `AdvanceReady` clip** (a walk with the weapon at the ready; the procedural low-ready carry stands in), **weapon props** (rifles and pistols with a two-handed grip: `engine/grip.js` only does one hand, and must not be edited here), flashes and sounds. 
 7. **Story code**: chapters, journal, goals, saving (copy the patterns from `games/kendal/src/`).
 8. **Wire the automatic audits and layout test** before the first PR that has a place.
-9. **The poster picture.** The menu card is up (14 November 2026) with a plain green background; there is no `menu/tivoli.jpg` yet.
+9. **The poster picture.** The menu card uses `menu/tivoli.jpg` (15 November 2026); see "Menu picture" below.
 
 ## STANDARD.md follow-up (14 November 2026)
 
-`docs/STANDARD.md` says: Hair is set to 1, not multiplied (done in `src/cast.js`); do not borrow other games' bodies. Still borrowed: `girl`, `woman_elder`, `man_elder` (Kendal) and `guide2020` (Garvey). They need Tivoli recipes in `tools/tivoli/people/` (Ivy as girl and grandmother, Miss Pearl, Mass Roy, a 2020 guide). The Back-o-Wall place has no `?test=audit` wiring yet.
+`docs/STANDARD.md` says: Hair is set to 1, not multiplied (done in `src/cast.js`); do not borrow other games' bodies. Still borrowed: `girl`, `woman_elder`, `man_elder` (Kendal) and `guide2020` (Garvey). They need Tivoli recipes in `tools/tivoli/people/` (Ivy as girl and grandmother, Miss Pearl, Mass Roy, a 2020 guide). The Back-o-Wall place is now in `?test=audit` (overlaps only; see below).
+
+**Street details from Gleaner photographs (14 November 2026).** From two photos only (soldiers on a residential lane, 24 to 27 May 2010; the Coronation Market street): white cast-block fences with round openings and white iron gates (`fenceBlock` texture, `fenceRun` in `street.js`), bushy shrubs behind them, and covered concrete walkways on posts over shop pavements (awnings on the shops). These are general looks, not copies of any real fence or shop. The tall blocks are still generic walk-up flats; no photograph of Tivoli's high-rise blocks was found. `?test=audit` stays at 0.
+
+**Overlap check (15 November 2026).** `?test=audit` now also runs `overlapSolids` (in `src/checks.js`) on the street and on Back-o-Wall. Each place lists its solid things as boxes (`solids`: buildings with roofs and balconies, walkways and posts, fences, trees split into trunk and canopy, poles and crossarms, vehicles, props, people). Two boxes that overlap by more than 5 cm on every side are reported, so a tree in a building, a drum in a house or a person in a wall shows up. Plants touching plants and building touching building are allowed. The first run found 36 overlaps in the street and 14 in Back-o-Wall (mostly trees standing in buildings). Trees now stand only in gaps between buildings, props moved off house walls, and both places report 0. When you add a thing to a place, add its box too.
+
+**Menu picture (15 November 2026).** The card uses `menu/tivoli.jpg`, taken from the quiet street with nobody in it: build with `--dev`, open `games/tivoli/site/?shot=poster` (optional `&cx=&cy=&cz=&tx=&ty=&tz=` to move the camera) at 1280x720 and save the screenshot as `menu/tivoli.jpg`. Retake it when the street changes.

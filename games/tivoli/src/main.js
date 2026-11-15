@@ -15,12 +15,13 @@ import { LOOKS, BODIES, loadBase, makeBody } from './cast.js';
 import { arm, weaponTick, heldReport, ARMED, modeOf } from './weapons.js';
 import { snapMeshes, auditPlace } from '../../../engine/audit.js';   // dev only: the place audit (CLAUDE.md rule 8)
 import { contentRects, contentsOverlap } from '../../../engine/ui-audit.js';   // dev only: the layout test
+import { buildBackOWall } from './backowall.js';
 import { buildStreet } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage } from './story.js';
 import { CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip } from './ch1.js';
 import { FIGHT, positions as fightPositions, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
-import { auditCloth, auditWalk, skinProbe } from './checks.js';   // dev only: local copies until the engine has them (see checks.js)   // gunfight poses: real clips when the library has them, stand-ins until then
+import { auditCloth, auditWalk, skinProbe, overlapSolids } from './checks.js';   // dev only: local copies until the engine has them (see checks.js)   // gunfight poses: real clips when the library has them, stand-ins until then
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -105,6 +106,11 @@ async function devViews() {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), test = q.get('test'), lo = q.has('lo') ? '_lo' : '';
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
   if (q.get('chapter') === '1') { await ch1Begin(); if (q.get('at')) ch1Skip(q.get('at')); return; }
+  if (shot === 'poster') {   /* ?shot=poster&cx=&cy=&cz=&tx=&ty=&tz=: the quiet street with nobody in it, for the menu picture (menu/tivoli.jpg) */
+    await fightBegin(); FIGHT.freeze = true; $('hud').hidden = true; for (const id of ['fightcard', 'readcard', 'scenetitle', 'windowframe']) { const e = $(id); if (e) e.hidden = true; }
+    scene.traverse((o) => { if (o.isSkinnedMesh) { let p = o; while (p.parent && p.parent !== scene) p = p.parent; p.visible = false; } });
+    const f = (k, d) => (q.has(k) ? +q.get(k) : d); FIGHT.on = false; for (const b of FIGHT.bodies) b.visible = false; const cx = f('cx', -9.5), cz = f('cz', 2.0); state.x = cx; state.z = cz; state.camY = f('cy', 1.7); state.yaw = Math.atan2(-(f('tx', 16) - cx), -(f('tz', -0.5) - cz)); state.pitch = f('pitch', 0.04); state.started = true; $('title').hidden = true; return;
+  }
   if (q.get('scene') === 'fight') { await fightBegin(); const at = +(q.get('at') || 0); if (at) fightSkip(at); if (q.has('hold')) FIGHT.freeze = true; return; }
   if (!shot && !test) return;
   await Promise.all(BODIES.flatMap((b) => [loadBase(b), loadBase(b + '_lo')]));
@@ -131,7 +137,9 @@ async function devViews() {
   if (test === 'audit') {   /* ?test=audit: the street (built unmerged): floating signs, lamps, tanks, roofs, and anyone standing or running through a solid. Expect 0 issues. */
     const st = buildStreet({}), snap = snapMeshes(st.raw), r = auditPlace({ id: 'street', snap, npcs: fightPositions(), walls: [], bounds: { x0: -45, x1: 40, z0: -4.4, z1: 4.4 }, start: { x: -10, z: 0 }, actions: [], people: [] });
     const lines = ['street: ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + r.floating.length + ' floating, ' + r.inside.length + ' inside solids, ' + r.stuck.length + ' unreachable)', ...r.floating.map((l) => '  floating: ' + l), ...r.inside.map((l) => '  inside: ' + l), ...r.stuck.map((l) => '  stuck: ' + l)];
-    devLog(lines, 'AUDIT ' + (r.floating.length + r.inside.length + r.stuck.length));
+    const ov = overlapSolids(st.solids); lines.push('overlaps: ' + ov.length); for (const l of ov) lines.push('  ' + l);
+    const bw = buildBackOWall({}), ov2 = overlapSolids(bw.solids); lines.push('back-o-wall overlaps: ' + ov2.length); for (const l of ov2) lines.push('  ' + l);
+    devLog(lines, 'AUDIT ' + (r.floating.length + r.inside.length + r.stuck.length + ov.length + ov2.length));
   }
   if (test === 'layout') {   /* ?test=layout: show each card and title state and check that no two bits of text overlap, nothing is off the sides of the screen, and every button is big enough to touch (44 px). Run at 390x800, 320x568, 667x375, 800x500, 1280x720. */
     const out = [], W = innerWidth, Hh = innerHeight, st2 = document.createElement('style'); st2.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st2);
