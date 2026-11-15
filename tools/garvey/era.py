@@ -794,7 +794,9 @@ if G.get('jacket'):      # lapels that lie along the jacket's opening, and its b
 if G.get('waistcoat') and not OLD and not G.get('jacket') and G.get('vwaist'):      # a row of small buttons down the waistcoat's front, from the point of the V to the hem (material WaistcoatButtons: a game that hides the Waistcoat hides these with it)
     WT=tree_of(PART['waistcoat']); bm=bmesh.new(); z1=WVZ-0.022*s; z0=HIP+0.07; nb=5
     for i in range(nb):
-        z=z1+(z0-z1)*i/(nb-1); hit=WT.ray_cast(Vector((0,-1,z)),Vector((0,1,0)))
+        z=z1+(z0-z1)*i/(nb-1)
+        if G.get('apron') and z<HIP+0.14: continue      # under an apron's top they cannot be seen, and a seated pose pushed them through it
+        hit=WT.ray_cast(Vector((0,-1,z)),Vector((0,1,0)))
         if hit[0] is not None: bmesh.ops.create_circle(bm,cap_ends=True,segments=8,radius=0.0065*s,matrix=Matrix.Translation(hit[0]-Vector((0,0.0025,0)))@Matrix.Rotation(math.pi/2,4,'X'))
     COL.setdefault('WaistcoatButtons',COL['Waistcoat']*0.45); soft('WaistcoatButtons',bm,'WaistcoatButtons',src=PART['waistcoat'])
 if G.get('pocket'):      # a patch pocket on the chest: a slightly raised panel with a rounded bottom, in its own material (a shade darker than the shirt unless the game sets it)
