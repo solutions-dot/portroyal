@@ -61,6 +61,7 @@ function setEnv(e) {   /* the time of day: sky, haze, sun, the far ridges and th
 /* ---------- state and controls ---------- */
 const state = { x: 0, z: 0, yaw: 0, pitch: 0, started: false };
 let EYE = 1.32; const FX = { shake: 0, roll: 0, low: 0 };   /* EYE: a child's eye height; FX: camera shake, and how far you are crouched (0 to 1) */
+const titleMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const isTouch = matchMedia('(pointer: coarse)').matches;
 const keys = new Set(); let busy = false, fading = false, frozen = false, talkWith = null, near = null, moveLock = false;
 const PANELS = ['dialogue', 'journal', 'chapters', 'credits', 'card'];
@@ -649,11 +650,19 @@ applySave(loadGame());
 { let done = 0; const total = 3, tick = () => { done++; $('bar').style.width = (done / total * 100) + '%'; };
   buildPlace('watch'); enterPlace('watch', { env: ENV.dawn });   /* the watch rock at dawn, as the picture behind the title */
   const first = CH_PLACE[hasSave && stage >= 10 ? chapterOf(stage) : 0];
-  model('anims').then((an) => { loadClips(an); tick(); return ensurePlace(first); }).then(() => { tick(); modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick();
+  model('anims').then((an) => { loadClips(an); tick(); return Promise.all([ensurePlace(first), ensurePlace('watch')]); }).then(() => { prepareTitleScene(); tick(); modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick();
     if (__DEV__) devViews(); }); }
+/* The title borrows the watch scene without starting a chapter or changing the save. */
+function prepareTitleScene() {
+  const P = PL.watch; enterPlace('watch', { keepPos: true, env: ENV.haze });
+  columnPlace(P, 86, true, 'Idle');
+  camera.position.set(4, groundAt(0.2, 2.3) + EYE + 1.6, 6); camera.lookAt(9, -39, 65); camera.rotation.reorder('YXZ');
+  P.titleView = { x: camera.position.x, y: camera.position.y, z: camera.position.z, pitch: camera.rotation.x, yaw: camera.rotation.y };
+  FOV = 20; resize(); $('title').classList.add('live-scene');
+}
 async function backgroundLoad() { for (const id of ['town', 'watch', 'newtown', 'estate']) { await ensurePlace(id); await wait(500); } }
 function startGame(quiet) {
-  if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
+  if (state.started) return; FOV = 66; resize(); audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
   $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] || stage) : 10; beginChapter(hasSave && stage >= 10 ? chapterOf(stage) : 0, hasSave && stage >= 10 ? st : 10); setTimeout(backgroundLoad, 5000); };
@@ -661,6 +670,7 @@ $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] 
 /* ---------- the frame loop ---------- */
 let stepT = 0, frameN = 0, camY = 0;
 function update(dt, now) {
+  if (!state.started && titleMotion.matches) dt = 0;
   const P = P_(); if (!P) return; const t = (now || 0) / 1000;
   if (DIR.on) { DIR.t += dt; if (DIR.t >= DIR.dur && DIR.resolve) { const r = DIR.resolve; DIR.resolve = null; r(true); } }
   if (state.started && !busy && !frozen && !DIR.on) {
@@ -686,7 +696,7 @@ let last = performance.now();
 function frame(t) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t); const P = P_(), s = t / 1000;
   if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); const f = lerp(DIR.f0, DIR.f1, k); if (Math.abs(f - FOV) > 0.05) { FOV = f; resize(); } }
-  else if (!state.started && P && P.titleView) { const tv = P.titleView; camera.position.set(tv.x - Math.sin(s * 0.08) * 1.6, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(s * 0.05) * 0.05, 0, 'YXZ'); }
+  else if (!state.started && P && P.titleView) { const tv = P.titleView, time = titleMotion.matches ? 0 : s; camera.position.set(tv.x - Math.sin(time * 0.08) * 1.6, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(time * 0.05) * 0.05, 0, 'YXZ'); }
   else { const gy = groundAt(state.x, state.z); camY += (gy - camY) * Math.min(1, dt * 14); if (Math.abs(gy - camY) > 1.5) camY = gy; camera.position.set(state.x, camY + EYE - FX.low * 0.55, state.z); camera.rotation.set(state.pitch, state.yaw, FX.roll, 'YXZ'); }
   if (FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.03; }
   const cp = camera.position; sun.target.position.set(cp.x, cp.y - 1.3, cp.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 120);
