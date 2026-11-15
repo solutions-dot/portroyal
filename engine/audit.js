@@ -294,7 +294,7 @@ export function auditVehicles(vehicles, people, { start = null, walls = [], safe
    a hat band or a belt buckle with no waistcoat, hat or belt under it). auditGarments(id, body) checks a body as it will be drawn:
      - by name: a piece whose garment is in the body but hidden (WaistcoatButtons and Waistcoat, HatBand and Hat, CapBand and Cap, TopHatBand and TopHat,
        JButtons and Lapels and Jacket, Buckle and Belt, WrapKnot and Wrap, Placket, Pocket, Buttons and Collar and Shirt);
-     - by shape: a small visible piece (under 45 cm across) most of whose points are more than 2 cm from every other visible piece, in the pose it stands in.
+     - by shape: a small visible piece (under 45 cm across) that hardly touches any other visible piece (under 3 in 100 of its points within 1.5 cm), in the pose it stands in.
    Returns lines in words; expect none. */
 const PIECE_OF = [[/^WaistcoatButtons$/, 'Waistcoat'], [/^(Hat)Band$/, 'Hat'], [/^CapBand$/, 'Cap'], [/^TopHatBand$/, 'TopHat'], [/^(JButtons|Lapels)$/, 'Jacket'], [/^Buckle$/, 'Belt'], [/^WrapKnot$/, 'Wrap'], [/^(Placket|Pocket|Buttons|Collar)$/, 'Shirt']];
 export function auditGarments(id, body) {
@@ -303,14 +303,16 @@ export function auditGarments(id, body) {
   const isPiece = (n) => PIECE_OF.some(([r]) => r.test(n));
   for (const p of all) { if (!p.on) continue; const nm = isPiece(p.mesh) ? p.mesh : isPiece(p.mat) ? p.mat : null; if (!nm) continue; const g = PIECE_OF.find(([r]) => r.test(nm))[1];
     const owners = all.filter((q) => q !== p && q.mat === g && !isPiece(q.mesh)); if (owners.length && owners.every((q) => !q.on)) out.push(`${id}: ${nm} shows but its ${g} is hidden`); }
-  /* by shape */
-  const v = new THREE.Vector3(), inv = new THREE.Matrix4().copy(body.matrixWorld).invert(), sc = body.getWorldScale(new THREE.Vector3()).x || 1, P = new Map();
-  const pointsOf = (p) => { if (P.has(p)) return P.get(p); const o = p.o, a = o.geometry.attributes.position, n = a.count, step = Math.max(1, Math.floor(n / 600)), pts = []; if (o.isSkinnedMesh) o.skeleton.update(); for (let i = 0; i < n; i += step) { if (o.isSkinnedMesh) o.getVertexPosition(i, v); else v.fromBufferAttribute(a, i); v.applyMatrix4(o.matrixWorld).applyMatrix4(inv); pts.push(v.clone()); } P.set(p, pts); return pts; };
-  const on = all.filter((p) => p.on && !/low-poly|Eye|Teeth|Tongue|Lash|Brow/i.test(p.mesh + ' ' + p.mat));
-  for (const p of on) { const pts = pointsOf(p), bb = new THREE.Box3().setFromPoints(pts), s = bb.getSize(new THREE.Vector3()); if (Math.max(s.x, s.y, s.z) * sc > 0.45 || pts.length < 4) continue;
-    const near = new THREE.Box3().copy(bb).expandByScalar(0.03 / sc), others = on.filter((q) => q !== p && q.mat !== p.mat).map(pointsOf).map((qs) => qs.filter((q) => near.containsPoint(q))).flat(); let far = 0;
-    for (const a of pts) { let best = 1e9; for (const b of others) { const d = a.distanceToSquared(b); if (d < best) best = d; } if (Math.sqrt(best) * sc > 0.02) far++; }
-    if (far > pts.length * 0.5) out.push(`${id}: ${p.mesh || p.mat} floats: ${far} of ${pts.length} of its points are more than 2 cm from any other piece`); }
+  /* by shape: every visible piece is posed (skinned on the CPU) into the body's own frame; a small piece floats when hardly any of it (under 3 in 100 of its points: a cap touches only at its rim, a stray button strip not at all) lies within 1.5 cm of the surface of another piece */
+  const v = new THREE.Vector3(), inv = new THREE.Matrix4().copy(body.matrixWorld).invert(), sc = body.getWorldScale(new THREE.Vector3()).x || 1;
+  const on = all.filter((p) => p.on && p.o.geometry.index && !/low-poly|Eye|Teeth|Tongue|Lash|Brow/i.test(p.mesh + ' ' + p.mat));
+  for (const p of on) { const o = p.o, n = o.geometry.attributes.position.count, pos = new Float32Array(n * 3); if (o.isSkinnedMesh) o.skeleton.update(); for (let i = 0; i < n; i++) { if (o.isSkinnedMesh) o.getVertexPosition(i, v); else v.fromBufferAttribute(o.geometry.attributes.position, i); v.applyMatrix4(o.matrixWorld).applyMatrix4(inv); pos.set([v.x, v.y, v.z], i * 3); } p.pos = pos; p.idx = o.geometry.index.array; }
+  const lim = 0.015 / sc, q = [0, 0, 0];
+  for (const p of on) { const n = p.pos.length / 3; let lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9]; for (let i = 0; i < n; i++) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], p.pos[i * 3 + k]); hi[k] = Math.max(hi[k], p.pos[i * 3 + k]); }
+    if (Math.max(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) * sc > 0.45 || n < 4) continue;
+    const grids = on.filter((r) => r !== p).map((r) => [r, r.grid || (r.grid = clGrid(r.pos, r.idx, 0.03 / sc))]); let close = 0;
+    for (let i = 0; i < n; i++) { q[0] = p.pos[i * 3]; q[1] = p.pos[i * 3 + 1]; q[2] = p.pos[i * 3 + 2]; for (const [r, G] of grids) { const h = clNear(q, r.pos, r.idx, G); if (h && Math.hypot(h.along, h.side) < lim) { close++; break; } } }
+    if (close < Math.max(3, n * 0.03)) out.push(`${id}: ${p.mesh || p.mat} floats: only ${close} of its ${n} points are within 1.5 cm of another piece`); }
   return out;
 }
 

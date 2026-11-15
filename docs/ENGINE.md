@@ -8,7 +8,7 @@ import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, tone, nois
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 ```
 
-The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `story.js` (who moves the story, the hint arrow, things the player carries), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies), `ui-audit.js` (text overlap) and `vehicles.js` (railway vehicles). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
+The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `ambient.js` (background people who walk about, chat, work, sit, watch and play), `story.js` (who moves the story, the hint arrow, things the player carries), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies), `ui-audit.js` (text overlap) and `vehicles.js` (railway vehicles). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
 
 ## engine/loader.js: loading packed models
 
@@ -114,6 +114,56 @@ One system for every game (owner's request, November 2026). Each game used to ha
 | `isFollowing(n)`, `isLeading(n)` | For the game's own code: a follower must not block you, so leave them out of the player's collision with people. A hint arrow can point at a leader. |
 | `pathPoint`, `pathS`, `pathLen`, `pathSpots` | Path helpers; `pathSpots(path, s0, s1, side)` gives every spot on a path, for `place.routes`. |
 | `watch({ space, behind })`, `drive({...})` | The `?test=follow` check: `drive` walks the player along a real route through the game's own clamp and update; `watch.sample` each frame records a follower inside the personal space, inside something, more than `behind` metres away for over 2 seconds, or a guide that stands still while you wait near them. `watch.spots(n)` gives every place they stood, for `auditBodies`. |
+
+## engine/ambient.js: background life (people who are not in the story)
+
+The owner, November 2026: "too much standing around looking like zombies in most games, we need some moving around and such". Every background person (anyone who does not move the story in the current step) gets a behaviour from this module instead of standing on `Idle`. A behaviour is plain data, so it can sit in a place file next to the person:
+
+```js
+import { createAmbient, ambientTest } from '../../../engine/ambient.js';
+const life = createAmbient({ walls: P.walls, bounds: P.bounds, blocked, keepOff: () => storyPaths(stage), seed: 7, phone: isPhone });
+life.add(n, { kind: 'wander', area: [x0, z0, x1, z1] });            // n = { id, x, z, m, ctl }, the same person engine/follow.js uses
+life.add(a, { kind: 'chat', group: 'well', at: [12, 4] }); life.add(b, { kind: 'chat', group: 'well' });
+life.add(c, { kind: 'work', between: [[3, 2], [8, 2]], show: (n, on) => { crate.visible = on; } });
+// every frame, after the player moves:
+life.tick(dt, { px: state.x, pz: state.z, story: storyPeople, talking: talkWith, view: { x, z, yaw } });
+```
+
+**Behaviours** (`spec.kind`):
+
+| Kind | What they do | Spec |
+|---|---|---|
+| `wander` | Short walks between a few points, or to random free spots in an area, round walls (`walkRoute`) and solids (`blocked`), paced so the feet do not slide; pauses of a few seconds to idle, glance about or look at you. | `pts: [[x, z], ...]` or `area: [x0, z0, x1, z1]` (or `reach` metres round where they stand), `pause: [2, 6]`, `speed`, `idles`, `min`, `max` (leg length) |
+| `chat` | Two to four people (same `group`) in a small ring facing the middle, taking turns to talk (mostly the one who has been quiet longest) while the others listen and look at the speaker; an odd laugh or nod after a turn; a look at you now and then when you come near. | `group`, `at: [x, z]` (lays the ring out; without it they face the middle of where they stand), `ring` (radius), `talks` |
+| `work` | A loop at a spot: a work clip, a short rest, a glance, again. With `between` they carry between two points instead: `PickUp` at each end, `Carry` there and `Walk` back, and `show(n, holding)` to show or hide the load. | `clip` or `clips`, `once`, `work: [5, 10]`, `rest: [1.5, 3.5]`, `face`, or `between: [[x, z], [x, z]]`, `walk`, `pick`, `idle`, `back`, `show`, `prop` |
+| `sit` | On a seat: `SitIdle` and its variants in turn (a held pose such as `SitPoseM` only for a few seconds), `SitTalk` in turn with a neighbour in the same `group`, looking at the neighbour or about. | `seat: { top, x, z, ry }` (sets `seatAnchor`) or a seat the game set, `group`, `clips`, `sadClips`, `every` |
+| `watch` | Stands looking toward a point of interest with small shifts of stance, another idle or a look round every few seconds, and now and then a reaction. | `at: [x, z]`, `react: ['Clap', 'Point']`, `every: [4, 8]` |
+| `errand` | Walks from `from` to `to` carrying something (`walk: 'CarryBagWalk'`), waits, walks back. With `drop` they put the load down at `to` and pick it up again at `from`. | `from`, `to`, `walk`, `idle`, `back`, `wait: [3, 8]`, `drop`, `pick`, `show`, `prop` |
+| `play` | A child runs between spots in an area, stops for a cheer, a clap or a laugh, and chases another child (`chase`). Within 6 m of you they walk instead of run, within 4 m more slowly still, and they never come into your personal space. | `area`, `chase` (another person), `run`, `joy` |
+
+**What every behaviour gets:**
+
+- **Variety.** Each person has a seeded random stream: a random start time and speed (0.88 to 1.12) on every looping clip, so nobody moves in step; idle variants in turn; their own walking speed (90 to 110 %, and the square root of their size for a child). Men get `WalkM` and `TalkM1`, `TalkM2`, `Talk2` when `n.sex === 'm'`; women `Talk1` to `Talk3` when `n.sex === 'f'`.
+- **Heads.** After the mixer, the neck and head turn toward you when you are within `look` metres (5) and in front of them, toward the speaker in a chat, toward a neighbour, a point of interest or a random glance; never more than `lookYaw` (1.05 rad) and never round to look behind them; eased in and out. A small nod is a head pitch.
+- **Personal space.** Nobody steps closer than their two radii plus 10 cm to another ambient person, closer than `space` (0.8 m) to you, or closer than `storySpace` (1 m) to a story person, unless the step takes them further away. Walkers bear right to pass each other, wait a moment, then one steps back out of a narrow way; someone you walk into steps aside; nobody steps into a wall rectangle, the bounds or anything `blocked(x, z, r)` says is solid.
+- **No slide.** Any walking clip (Walk, WalkM, Run, Carry, CarryBagWalk, CarryHeadWalk...) is paced from the body's own stride (`strideOf`), and speeds are kept inside the range a clip can be paced to. They turn round on the spot before setting off backwards, and slow down on sharp bends.
+- **The story first.** `keepOff` (an array, or a function of the stage) lists story paths `{ pts: [[x, z], ...], w }` and spots `{ at: [x, z], r }`: nobody picks a goal or pauses on them, and someone held up on one steps off at once. Pass the story people of the step as `story` in the tick (or `opts.story()`): goals keep clear of them. `life.hold(n)` hands a person to the game (a talk, a cut scene): they stop and their clips are the game's until `life.hold(n, false)`. The person you are talking to (`talking`) stops and turns to you.
+- **Mood.** `life.mood('lively' | 'calm' | 'sad')`. Calm is a little slower with longer pauses. Sad is slower still, with no laughing, cheering or children's games (children walk about quietly), `Sad1` and `Sad2` as idles, `SitDisbelief` among seated clips, quieter talk, and `MOODS.sad.hide` (40 %) of the lively people (wanderers, children, chat groups) go away, but only while the camera (`view`) cannot see them go. Give `spec.stay: true` to keep someone. Nobody is ever frozen.
+- **Phones.** One shared tick. Every 0.25 s each person gets a level by distance from you: full detail within `full` (14 m; 10 with `phone: true`) for at most `maxFull` people (14; 8), mixer, grips and feet every `midEvery` frames (3; 4) out to `mid` (30 m; 22 m), every `farEvery` frames (8; 10) beyond, a light copy beyond `far` (55 m) when the person has `n.lo` (its own `animate()`d body: it gets the same position, turn and clip), and hidden beyond `cull` (off by default). Heads turn only at full detail. Walking and choosing go on for everyone, so nobody is caught frozen when you turn round.
+
+**The system owns its people's bodies:** the tick sets `n.x`, `n.z`, `m.position.x` and `z` (or calls `opts.place(n)` on hilly land), the turn, and updates the mixer (`ctl.mx.update`, `ctl.tick`), `gripTick` and `groundFeet` for each of them. Leave ambient people out of the game's own mixer, `groundFeet` and walker loops, or set `mixers: false` / `ground: false` and do those yourself.
+
+| Call | Use |
+|---|---|
+| `createAmbient(opts)` | `walls`, `bounds`, `blocked(x, z, r)`, `keepOff`, `story()`, `seed`, `mood`, `phone`, `place(n)`, and any setting above (`full`, `mid`, `far`, `cull`, `maxFull`, `midEvery`, `farEvery`, `r`, `kidR`, `space`, `storySpace`, `walk`, `run`, `look`, `lookYaw`, `still`, `mixers`, `ground`). `stride(n, clip)` replaces `strideOf` (tests). |
+| `life.add(n, spec)` | Gives a person a behaviour (`spec.kind`, or a string such as `'wander'`). A body smaller than 0.88 counts as a child (`spec.kid` to say so). |
+| `life.tick(dt, world)` | Once a frame. `world = { px, pz, story, talking, view }`. |
+| `life.mood(name)`, `life.hold(n, on)`, `life.remove(n)`, `life.clear()` | Scene mood; hand a person to the game; take a person out; empty it when a place is left. |
+| `life.issues()` | Setup faults before anyone moves: a spot inside a solid or on a story path, no way between the two ends of an errand, a clip the game does not ship, a clip that shows a held thing (Carry, CarryIdle, CarryBagWalk, CarryHead..., Drink, Write, PlayGuitar, PlayPiano, Rifle...) with nothing in the hand (grip one, `show`, or `prop`), a seated behaviour with no seat or a standing one with a seat, a chat group of one or of more than four. |
+| `ambientCheck(life, opts)`, `ambientTest(life, opts)` | The engine side of `?test=ambient`, below. |
+| `onKeepOff(list, x, z, r)` | Whether a spot is on a story path or spot. |
+
+**The check, `?test=ambient`.** `ambientCheck(life, { seconds: 60, dt: 1 / 30, route, stops, start, story, view, still: 12 })` runs every ambient person for a minute without drawing, with the player walking `route` (stopping at `stops`, and at people, as the game's collision does) or standing at `start`, and returns `{ lines, stats }`. A line is: **inside** (standing in a wall, the bounds or a blocked spot), **overlap** (two people closer than their two radii, or someone walking into the player), **slide** (walking more than 25 % off the clip's paced speed for over 0.3 s, moving on a standing clip, or walking sideways), **still** (in a lively scene, an idle clip with no step, turn, clip change or head turn for longer than `still` seconds), **story** (standing on a story path or within 1 m of a story person for over a second), plus every `life.issues()` line. `ambientTest` returns the report as text starting `AMBIENT <count>`; expect `AMBIENT 0` in every place. A game wires it like `?test=audit`: build each place, add its people, call `ambientTest(life, { route: <the way a child walks through the place>, story })`, and print it in `#autolog` and `document.title`. `tests/ambient.mjs` runs it on a small fake yard with every behaviour (`npm test`).
 
 ## engine/story.js: who moves the story, the hint arrow, and what the player carries
 
