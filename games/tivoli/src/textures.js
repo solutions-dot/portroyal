@@ -114,3 +114,68 @@ export function fenceBlock(seed = 31) {
     speckle(g, s, r, 700);
   }, 256, seed);
 }
+
+/* fresh(colour): newly painted render for the 1960s estate: smooth paint with faint trowel marks and a little speckle, no stains or cracks (the buildings are new). */
+export function fresh(colour, seed = 41) {
+  return tex((g, s, r) => {
+    g.fillStyle = hex(colour); g.fillRect(0, 0, s, s);
+    for (let i = 0; i < 60; i++) { g.fillStyle = mix(colour, 0.97 + r() * 0.06); const w = 30 + r() * 70, h = 6 + r() * 14; wrapped(g, s, r() * s, r() * s, w, h, (x, y) => g.fillRect(x, y, w, h)); }   /* trowel marks */
+    speckle(g, s, r, 900, 0.04);
+  }, 256, seed);
+}
+
+/* mural(kind): a big painted wall picture for "today" (our own designs, not copies of the real Tivoli murals, which began in 2022 and are about hope and new beginnings).
+   'sunrise': a sun rising over green hills with birds; 'play': children playing football and dancing under a bright sky; 'bloom': a hibiscus and a doctor bird (Jamaica's national bird). */
+export function mural(kind) {
+  const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d'), r = rng(kind.length * 97);
+  const sky = g.createLinearGradient(0, 0, 0, 512);
+  if (kind === 'sunrise') {
+    sky.addColorStop(0, '#2a5fa8'); sky.addColorStop(0.55, '#f2a03a'); sky.addColorStop(1, '#f6d36a'); g.fillStyle = sky; g.fillRect(0, 0, 512, 512);
+    g.fillStyle = '#ffe27a'; g.beginPath(); g.arc(256, 330, 95, 0, 7); g.fill(); g.strokeStyle = '#ffe27a'; g.lineWidth = 10; for (let i = 0; i < 12; i++) { const a = Math.PI + i * Math.PI / 11; g.beginPath(); g.moveTo(256 + Math.cos(a) * 120, 330 + Math.sin(a) * 120); g.lineTo(256 + Math.cos(a) * 175, 330 + Math.sin(a) * 175); g.stroke(); }
+    for (const [y, col] of [[360, '#3f8a3a'], [400, '#2f7030'], [450, '#1f5a26']]) { g.fillStyle = col; g.beginPath(); g.moveTo(0, 512); for (let x = 0; x <= 512; x += 32) g.lineTo(x, y + Math.sin(x / 70 + y) * 22); g.lineTo(512, 512); g.fill(); }
+    g.strokeStyle = '#1d1d24'; g.lineWidth = 6; for (let i = 0; i < 6; i++) { const x = 90 + i * 60 + r() * 20, y = 90 + r() * 90; g.beginPath(); g.moveTo(x - 18, y); g.quadraticCurveTo(x - 9, y - 12, x, y); g.quadraticCurveTo(x + 9, y - 12, x + 18, y); g.stroke(); }
+  } else if (kind === 'play') {
+    /* a painted scene: children playing football and dancing on a green, the hills and a sun behind, bunting above. Full figures with clothes, hair and smiling faces. */
+    sky.addColorStop(0, '#3d8fd6'); sky.addColorStop(0.7, '#a8dcf2'); sky.addColorStop(1, '#e8f4d8'); g.fillStyle = sky; g.fillRect(0, 0, 512, 512);
+    g.fillStyle = '#ffd65a'; g.beginPath(); g.arc(420, 95, 46, 0, 7); g.fill(); g.fillStyle = 'rgba(255,214,90,0.25)'; g.beginPath(); g.arc(420, 95, 70, 0, 7); g.fill();
+    for (const [y, col] of [[300, '#6aa860'], [330, '#4e9450']]) { g.fillStyle = col; g.beginPath(); g.moveTo(0, 512); for (let x = 0; x <= 512; x += 16) g.lineTo(x, y + Math.sin(x / 60 + y) * 18); g.lineTo(512, 512); g.fill(); }
+    const grd = g.createLinearGradient(0, 360, 0, 512); grd.addColorStop(0, '#3f9a46'); grd.addColorStop(1, '#2d7a36'); g.fillStyle = grd; g.fillRect(0, 370, 512, 142);
+    g.strokeStyle = '#3a3a3a'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, 40); g.quadraticCurveTo(256, 90, 512, 40); g.stroke();
+    for (let i = 0; i < 14; i++) { const x = 18 + i * 36, y = 40 + Math.sin((i / 13) * Math.PI) * 25; g.fillStyle = ['#e8c030', '#2a9a4a', '#111', '#d0402a'][i % 4]; g.beginPath(); g.moveTo(x - 10, y); g.lineTo(x + 10, y); g.lineTo(x, y + 22); g.fill(); }
+    const lim = (x1, y1, x2, y2, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
+    /* one child: hip at (x, y); s scale; arms/legs as [dx, dy] ends from the shoulder/hip; skirt or shorts; hair puffs or short */
+    const child = (x, y, s, o) => {
+      const skin = o.skin || '#7a4a32', dark = '#4a2a1a', sh = y - 46 * s;
+      g.fillStyle = 'rgba(0,0,0,0.18)'; g.beginPath(); g.ellipse(x, y + 62 * s, 30 * s, 7 * s, 0, 0, 7); g.fill();
+      for (const [dx, dy] of o.legs) { lim(x, y, x + dx * s, y + dy * s, 13 * s, skin); g.fillStyle = o.shoe || '#f4f4f4'; g.beginPath(); g.ellipse(x + dx * s + 5 * s, y + dy * s + 2 * s, 9 * s, 5 * s, 0, 0, 7); g.fill(); }
+      if (o.skirt) { g.fillStyle = o.skirt; g.beginPath(); g.moveTo(x - 14 * s, y - 8 * s); g.lineTo(x + 14 * s, y - 8 * s); g.lineTo(x + 26 * s, y + 20 * s); g.lineTo(x - 26 * s, y + 20 * s); g.fill(); }
+      else { for (const [dx, dy] of o.legs) lim(x, y, x + dx * s * 0.45, y + dy * s * 0.45, 16 * s, o.shorts || '#222'); }
+      for (const [dx, dy] of o.arms) { lim(x, sh + 4 * s, x + dx * s, sh + dy * s, 10 * s, skin); g.fillStyle = skin; g.beginPath(); g.arc(x + dx * s, sh + dy * s, 6 * s, 0, 7); g.fill(); }
+      const tg = g.createLinearGradient(x - 16 * s, 0, x + 16 * s, 0); tg.addColorStop(0, o.shirt); tg.addColorStop(1, o.shirt2 || o.shirt); g.fillStyle = tg;
+      g.beginPath(); g.moveTo(x - 17 * s, sh); g.quadraticCurveTo(x, sh - 8 * s, x + 17 * s, sh); g.lineTo(x + 14 * s, y - 4 * s); g.lineTo(x - 14 * s, y - 4 * s); g.closePath(); g.fill();
+      for (const [dx, dy] of o.arms) lim(x, sh + 4 * s, x + dx * s * 0.35, sh + dy * s * 0.35, 13 * s, o.shirt);   /* sleeves */
+      const hy = sh - 22 * s; g.fillStyle = skin; g.fillRect(x - 5 * s, sh - 10 * s, 10 * s, 10 * s); g.beginPath(); g.arc(x, hy, 18 * s, 0, 7); g.fill();
+      g.fillStyle = '#1a120c'; if (o.puffs) { for (const dx of [-17, 17]) { g.beginPath(); g.arc(x + dx * s, hy - 14 * s, 9 * s, 0, 7); g.fill(); } g.beginPath(); g.arc(x, hy - 6 * s, 18 * s, Math.PI, 0); g.fill(); } else { g.beginPath(); g.arc(x, hy - 4 * s, 19 * s, Math.PI * 1.05, -0.05 * Math.PI); g.fill(); }
+      g.fillStyle = '#1a120c'; for (const dx of [-6, 6]) { g.beginPath(); g.arc(x + dx * s, hy + 1 * s, 2.2 * s, 0, 7); g.fill(); }
+      g.strokeStyle = dark; g.lineWidth = 2 * s; g.beginPath(); g.arc(x, hy + 5 * s, 7 * s, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
+      g.fillStyle = 'rgba(220,110,90,0.35)'; for (const dx of [-11, 11]) { g.beginPath(); g.arc(x + dx * s, hy + 6 * s, 3.5 * s, 0, 7); g.fill(); }
+    };
+    child(110, 400, 1.35, { shirt: '#f0c430', shirt2: '#d8a820', shorts: '#1d3a7a', legs: [[-10, 52], [38, 30]], arms: [[-34, 26], [30, 10]] });   /* kicking */
+    g.fillStyle = '#fafafa'; g.beginPath(); g.arc(178, 446, 15, 0, 7); g.fill(); g.fillStyle = '#222'; for (const [dx, dy] of [[0, 0], [-8, -7], [8, -6], [-7, 8], [7, 8]]) { g.beginPath(); g.arc(178 + dx, 446 + dy, 3.2, 0, 7); g.fill(); }
+    child(280, 405, 1.25, { shirt: '#d8402a', shirt2: '#b83020', skirt: '#f0e6c8', puffs: true, legs: [[-12, 52], [12, 52]], arms: [[-36, -40], [36, -44]] });   /* dancing, arms up */
+    child(400, 410, 1.2, { shirt: '#2a6ad0', shirt2: '#1e52a8', skirt: '#e8c030', puffs: true, skin: '#8a5a3a', legs: [[-18, 50], [16, 46]], arms: [[-40, -10], [34, -48]] });   /* dancing */
+    child(215, 440, 0.85, { shirt: '#2a9a5a', shorts: '#4a3a2a', skin: '#6a3e28', legs: [[-8, 52], [8, 52]], arms: [[-24, 30], [26, -20]] });   /* a small one waving */
+  } else {
+    g.fillStyle = '#1f6a5a'; g.fillRect(0, 0, 512, 512); for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(120,200,140,${0.15 + r() * 0.25})`; g.beginPath(); g.ellipse(r() * 512, r() * 512, 40, 14, r() * 3, 0, 7); g.fill(); }
+    g.fillStyle = '#e8402a'; for (let i = 0; i < 5; i++) { const a = i * 1.2566; g.beginPath(); g.ellipse(200 + Math.cos(a) * 70, 300 + Math.sin(a) * 70, 75, 48, a, 0, 7); g.fill(); } g.fillStyle = '#f6d36a'; g.fillRect(196, 210, 8, 90); g.beginPath(); g.arc(200, 300, 22, 0, 7); g.fillStyle = '#a82418'; g.fill();
+    /* a doctor bird (red-billed streamertail): emerald body, black cap, red bill, two long tail streamers, wings in a blur */
+    const bx = 370, by = 150; g.strokeStyle = '#0d0d0d'; g.lineWidth = 4; g.lineCap = 'round';
+    for (const s2 of [-1, 1]) { g.beginPath(); g.moveTo(bx - 30, by + 8); g.bezierCurveTo(bx - 80, by + 40 + s2 * 10, bx - 120, by + 90 + s2 * 30, bx - 150, by + 150 + s2 * 20); g.stroke(); }
+    g.fillStyle = 'rgba(160,230,180,0.35)'; for (const a2 of [-0.9, -1.3]) { g.beginPath(); g.ellipse(bx - 4, by - 26, 52, 16, a2, 0, 7); g.fill(); }
+    const bg2 = g.createLinearGradient(bx - 40, by, bx + 30, by); bg2.addColorStop(0, '#0f6a3a'); bg2.addColorStop(1, '#3fcf7a'); g.fillStyle = bg2; g.beginPath(); g.ellipse(bx, by, 40, 20, -0.35, 0, 7); g.fill();
+    g.fillStyle = '#0d0d0d'; g.beginPath(); g.arc(bx + 34, by - 16, 15, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(bx + 39, by - 19, 3, 0, 7); g.fill();
+    g.strokeStyle = '#e0302a'; g.lineWidth = 5; g.beginPath(); g.moveTo(bx + 48, by - 16); g.lineTo(bx + 96, by - 6); g.stroke();
+  }
+  g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 14; g.strokeRect(7, 7, 498, 498);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}

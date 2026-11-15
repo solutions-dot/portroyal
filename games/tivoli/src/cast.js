@@ -14,7 +14,15 @@ export const LOOKS = {
   ivyGirl: { base: 'girl', scale: 0.8, tint: { Shirt: 0xf2e6c8, Skirt: 0x4a78a8, Shoes: 0x2a211b } },                 /* Ivy as a girl in Back-o-Wall, about 1963 */
   pearl: { base: 'woman_elder', hat: 'Wrap', tint: { Wrap: 0xd8b04a, Shirt: 0xe9e2d2, Skirt: 0x5a4a6a, Shoes: 0x2a211b } },   /* Ivy's gran */
   roy: { base: 'man_elder', hat: 'Cap', tint: { Cap: 0x6a5a48, Shirt: 0xd9d2bc, Waistcoat: 0x6a4a3a, Breeches: 0x4a4a42, Shoes: 0x1c1816 } },   /* a neighbour, Mass Roy */
+  clarke: { base: 'man_elder', hat: 'Hat', tint: { Hat: 0x3a3a3a, Shirt: 0xf0ece2, Waistcoat: 0x3a4a5a, Breeches: 0x2e2e34, Shoes: 0x1c1816 } },   /* Mr Clarke at the community centre, 1960s (fictional) */
   ivyGran: { base: 'guide2020', tint: { Shirt: 0xc6603a, Skirt: 0x3a4a6a } },                                          /* Ivy as the grandmother in 2010 (a modern body; her hair is grey in the chapters that show her) */
+  dawn: { base: 'woman_elder', hat: 'Wrap', tint: { Wrap: 0x2f6a8a, Shirt: 0xe6d8b8, Skirt: 0x7a3a3a, Shoes: 0x2a211b } },   /* Miss Dawn at the grocery, 2010 (fictional; a borrowed Kendal body until a 2010 one is built) */
+  brown: { base: 'civilian2010', tint: { Shirt: 0x6a7a5a, Breeches: 0x3a3e48 } },                                          /* Mr Brown, a neighbour, 2010 (fictional) */
+  pastor: { base: 'man_elder', hat: 'Hat', tint: { Hat: 0x222226, Shirt: 0xf4f2ec, Waistcoat: 0x1e1e24, Breeches: 0x1e1e24, Shoes: 0x111111 } },   /* Pastor Grant, 2010 (fictional; a borrowed Kendal body) */
+  ivyMum: { base: 'guide2020', tint: { Shirt: 0xe8b84a, Skirt: 0x3a5a7a } },                                         /* Ivy grown up, about 1980 (fictional; the same body as Gran Ivy) */
+  coach: { base: 'civilian2010', tint: { Shirt: 0x1f7a3a, Breeches: 0xf0ece2, Shoes: 0x111111 } },                     /* Coach Davis, about 1980 (fictional) */
+  andre: { base: 'civilian2010', tint: { Shirt: 0x2a6ad0, Breeches: 0x6a5a48 } },                                       /* Andre the painter, today (fictional) */
+  kemesha: { base: 'girl', scale: 0.92, tint: { Shirt: 0xd0402a, Skirt: 0x111111, Shoes: 0xf0ece2 } },                  /* Kemesha from the dance troupe, today (fictional) */
   soldier: { base: 'soldier2010', hide: ['ArmBandText'] },     /* Jamaica Defence Force, May 2010: woodland camouflage, covered helmet, olive vest and harness, yellow armband */
   policeCamo: { base: 'soldier2010' },  /* police attached to the army in May 2010: the same camouflage and kit, with POLICE on the yellow armband (Gleaner photographs) */
   gunman: { base: 'civilian2010' },     /* shown only far away behind the barricade and unidentified (docs/games/tivoli.md "The dispute"); plain clothes */

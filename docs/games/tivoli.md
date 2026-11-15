@@ -183,13 +183,18 @@ Start it from the title screen: "May 2010 street scene (work in progress)". In t
 
 | File | What it holds |
 |---|---|
-| `src/main.js` | The template's starting point (scene, movement, one talking person), plus the dev-only block `devViews` (`?shot=fight`, `rifles`, `hands`, `slung`, `uniforms`; `?test=clips`, `measure`, `held`, `cloth`, `skin`, `walkers`). |
-| `src/cast.js` | The uniform bodies (`BODIES`), their looks and `makeBody` (Kendal's pattern) |
-| `src/weapons.js` | The rifle and pistol, and the two-handed hold |
-| `src/checks.js` | Local copies of `auditCloth`, `auditWalk` and `skinProbe` (the engine has them now; delete this file) |
-| `src/clips.js` | `POSES` (real name, stand-in, what it must show), `pose(name)`, `standIns()` |
-| `anim-clips.json` | The clips the build keeps in this game's copy of the animation library: `Idle, Walk, Run, Talk1, Block, Point, Terrified` (214 KB instead of 979 KB) |
-| `site/models/sailor.js` | The template's stand-in character. Tivoli needs its own people (see "What is left"). |
+| `src/main.js` | Scene, movement and touch controls, the frame loop, `startChapter`, and the dev-only block `devViews` (all `?shot=` and `?test=` views, `?chapter=N`) |
+| `src/content.js` | Every word the player reads: `CHAPTERS`, the words for each walking chapter (`CH1` to `CH8`), the journal pages (`JOURNAL`) |
+| `src/ch1.js` | The walking chapters (1, 2, 3, 4, 6, 7, 8) from one `WALKS` table: place, words, goal order, sky, camera height |
+| `src/backowall.js` | Chapter 1's place (imagined Back-o-Wall) |
+| `src/newtivoli.js` | The courtyard of flats, community centre and clinic, by year: 1965 (chapter 2), 1980 (3), 2010 (6), 2016 (7), today with murals (8) |
+| `src/street.js` | The 2010 street (chapter 5's scene) and `streetPlace()` for chapter 4 |
+| `src/fight.js` | Chapter 5, the directed street scene behind the opt-in card |
+| `src/talk.js`, `src/story.js` | Talking to people; saving, the journal and the chapters list |
+| `src/cast.js` | Bodies, looks (`LOOKS`) and `makeBody`; `SKIN_LIGHT` on Skin only |
+| `src/weapons.js`, `src/clips.js` | The rifle and pistol with the two-handed hold; the pose names and their stand-ins |
+| `src/textures.js`, `src/bake.js`, `src/sky.js` | Canvas textures (including `fresh` paint and the `mural` designs), merging by material, the sky |
+| `src/checks.js` | `overlapSolids` (solid boxes), `sinkCheck` (feet below a surface), and local copies of `auditCloth`, `auditWalk`, `skinProbe` |
 
 ## Test it
 
@@ -298,3 +303,53 @@ Real people in the game: none speak. Coke, politicians, commanders, officers and
 **Overlap check (15 November 2026).** `?test=audit` now also runs `overlapSolids` (in `src/checks.js`) on the street and on Back-o-Wall. Each place lists its solid things as boxes (`solids`: buildings with roofs and balconies, walkways and posts, fences, trees split into trunk and canopy, poles and crossarms, vehicles, props, people). Two boxes that overlap by more than 5 cm on every side are reported, so a tree in a building, a drum in a house or a person in a wall shows up. Plants touching plants and building touching building are allowed. The first run found 36 overlaps in the street and 14 in Back-o-Wall (mostly trees standing in buildings). Trees now stand only in gaps between buildings, props moved off house walls, and both places report 0. When you add a thing to a place, add its box too.
 
 **Menu picture (15 November 2026).** The card uses `menu/tivoli.jpg`, taken from the quiet street with nobody in it: build with `--dev`, open `games/tivoli/site/?shot=poster` (optional `&cx=&cy=&cz=&tx=&ty=&tz=` to move the camera) at 1280x720 and save the screenshot as `menu/tivoli.jpg`. Retake it when the street changes.
+
+## Chapter 2, the new Tivoli (15 November 2026)
+
+- **Playable.** Ivy remembers moving into the new Tivoli Gardens a few years after Back-o-Wall. You talk to Ivy on the path, Miss Pearl by the flats and Mr Clarke (fictional, new) by the community centre, in any order, then walk to the community centre door. The journal page "Tivoli Gardens is built" unlocks.
+- **Facts used** (Research table, "Tivoli Gardens was built in the 1960s"): built in the 1960s where Back-o-Wall stood; homes by the Ministry of Housing; the West Kingston Trust paid for a clinic, a creche, schools and a community centre with drama, singing and a steel band; dates differ (one source says 1963 to 1965); some say the clearing left many families homeless.
+- **The place** (`src/newtivoli.js`) is a general picture, not a copy: three-storey blocks of newly painted flats round a courtyard, balconies with washing, flower beds, young trees, benches, lamp posts, a community centre with a porch and sign, a clinic. The journal says so. New texture `fresh()` (clean new paint) in `textures.js`.
+- **Code:** `src/ch1.js` now runs both walking chapters from a `WALKS` table (place, words, order of goals, sky). `startChapter(2)` and `?chapter=2` start it. Words in `CH2` in `content.js`; look `clarke` in `cast.js` (a borrowed Kendal body, like the others).
+- **Any order.** Every talk in chapters 1 and 2 works in any order. Miss Pearl no longer says "Go and see Roy". The goal line shows the first person not yet met.
+- **Checks (15 November 2026):** `?test=audit` now runs the engine place audit (from main) on all three places plus the overlap check: street 0, Back-o-Wall 0, new Tivoli 0. The stricter engine audit first found 37 street issues (the barricade junk cut into the two vehicles, tyre stacks with nothing under them, satellite dishes not touching their posts). The junk now sits in front of the vehicles, tyres stack straight, and the satellite dishes are gone (the owner does not want them in this game). Layout test 0 at all five sizes. Scripted chapter 2 run (Mr Clarke first, then Miss Pearl, then Ivy): goals, toast, end card, journal 3 of 7, chapters list, no errors.
+- **Waiting on main** (do not build here): engine/follow.js and engine/story.js (gold marks and arrows for the people who move the story on), the new shared and Tivoli clips (Talk, Speech, Comfort, Kneel and others would suit Mr Clarke, Miss Pearl and the later chapters), and the clothes builder fixes before the bodies are rebuilt.
+
+## Chapter 4, May 2010: before (15 November 2026)
+
+- **Playable.** Sunday 23 May 2010. You are Ivy's grandchild (fictional). On the 2010 street, with the barricade already across the road and no soldiers yet, you talk to Gran Ivy by your gate, Miss Dawn at the grocery and Mr Brown near the bus stop, in any order, then go home through the gate. Talking to Miss Dawn unlocks "The man the US wanted".
+- **Facts used:** the US request (2009), the Government's agreement (18 May 2010, "last week" from 23 May), the state of emergency (23 May 2010), barricades at the entrances before the operation. Who built the barricades is not said: our sources do not say, so Mr Brown says people will argue about it. 23 May 2010 was a Sunday.
+- **Code:** `streetPlace()` in `street.js` reuses the street and makes its walls from the solid boxes. `WALKS[4]` in `ch1.js` (lower camera, 1.25 m, for a child). Words `CH4` in `content.js`; looks `dawn` (a borrowed Kendal body in 1957 clothes, to replace with a 2010 body) and `brown` (the Tivoli `civilian2010` body) in `cast.js`.
+- **Checks:** `?test=audit` 0 in all four places (street, Back-o-Wall, new Tivoli, street for chapter 4). The layout test now also shows the chapter title over the goal and buttons, the chapter end card, the journal and the chapters list; it found the chapter title touching the Journal button on phones (fixed: the title sits lower below 560 px). 0 at all five sizes. Scripted chapter 4 run (Mr Brown, Miss Dawn, then Gran Ivy): goals, end card, journal 4 of 7, no errors.
+- **Chapters now playable:** 1, 2, 4, 5, 6. Still to build: 3 (politics and power, 1970s to 2009), 7 (the report), 8 (today).
+
+## Chapter 6, after (15 November 2026)
+
+- **Playable.** A few days after the operation, in the chapter 2 courtyard as it is in 2010 (older paint, grown trees). You talk to Gran Ivy, Mr Brown (his son was taken away for questioning) and Pastor Grant (families planning funerals and asking for answers), in any order, then go into the community centre. Unlocks "Monday 24 May 2010" and "After". Nobody is shown hurt.
+- **Facts used** (journal pages "Monday 24 May 2010" and "After"): about 70 civilians and one soldier died; many people were held for days; a Commission of Enquiry looked at it later. Gran Ivy, Mr Brown and Pastor Grant are fictional, and the end card says so.
+- **Code:** `buildNewTivoli({ year: 2010, cast })` in `newtivoli.js`; `WALKS[6]` in `ch1.js`; words `CH6`; look `pastor` (a borrowed Kendal body).
+
+## Feet on pavements and paths (15 November 2026)
+
+- **The bug:** story people were pinned to height 0 everywhere, so on the 16 cm pavement (chapter 4) their shoes sank out of sight, and on the 6 cm paths (chapters 2 and 6) by a little. Their feet were also not re-pinned every frame.
+- **The fix:** each walking place now has `groundAt(x, z)` (street: pavement 16 cm, kerb 20 cm; courtyard: paths 6 cm; Back-o-Wall: 0). `ch1.js` passes it to `addNpc` as `ground`, and `main.js` calls `groundFeet` on every story person every frame.
+- **New check, `sinkCheck` in `src/checks.js`,** run by `?test=audit` on every place and on the gunfight positions: it finds anyone whose `ground` is below the top of a low flat surface (pavement, kerb, path, step) under their feet. Proved by turning the pavement height off: it reported Gran Ivy, Miss Dawn and Mr Brown 16 cm under. With the fix, 0 everywhere. Close screenshots of the feet in chapters 1, 2, 4 and 6 show shoes resting on the ground. The lowest point of each body is 1 to 3 cm under the surface (the engine's `groundFeet` sets soles 8 mm low on purpose and the toes bend); not visible.
+
+## Chapters 3, 7 and 8, and polish (15 November 2026)
+
+All eight chapters are now playable.
+
+- **Chapter 3, Politics and power (about 1980).** Ivy, grown up, Mass Roy (older, from Back-o-Wall) and Coach Davis, in the courtyard. Football (the club began in 1970), the dance troupe (1976), and what a "garrison" is, in plain words. The end card and the journal attribute Seaga's account (violence over politics from the mid-1970s, gangs in the late 1990s) and give the 2009 US request. New journal page "Politics and the garrison".
+- **Chapter 7, The report (June 2016).** Gran Ivy, Mr Brown and Pastor Grant: what the Commission said, a Defence Force lawyer's objection, the 2017 police review, and the Prime Minister's apology in December 2017 in his real words. Unlocks "What people disagree about" and "After".
+- **Chapter 8, Today.** Gran Ivy, Andre the painter and Kemesha from the dance troupe; murals on the courtyard walls (our own designs: a sunrise over hills, children playing and dancing, a hibiscus with a doctor bird). End card ends "Thank you for playing." New journal page "Tivoli Gardens today".
+- **New sources (15 November 2026):**
+
+| Fact | Used as | Source (grade) |
+|---|---|---|
+| A garrison is a political stronghold completely controlled by one party; Tivoli is often called the first | "A place almost fully controlled by one political party" | Gleaner, via search summary, 2010 (N); Wikipedia, Tivoli Gardens (S) |
+| The Tivoli Mural Project began in 2022 (about 12 years after the operation); murals about hope, resilience and new beginnings; some walls still have marks from 2010 | Chapter 8 and its journal page; the game's murals are our own designs | [Observer, 2 June 2024](https://jamaicaobserver.com/2024/06/02/mural-therapy) (N) |
+| The Tivoli Dance Troupe, linked to Tivoli Gardens High School, began in 1976 | Chapters 3 and 8 | [Observer, 27 June 2024](https://www.jamaicaobserver.com/2024/06/27/tivoli-dance-troupe-celebrates-30th-season-applause/) (N) |
+| Tivoli Gardens Football Club began in 1970 and has won Jamaica's top league several times (Wikipedia says 5) | Chapters 3 and 8: "several times" | [Wikipedia](https://en.wikipedia.org/wiki/Tivoli_Gardens_F.C.) (S) |
+
+- **Polish:** each courtyard chapter opens facing its first person; the end card has space between its lines; murals sit in front of the wall bands and are square panels, not stretched; the audit now runs every walking chapter with its own cast (`WALKS` is exported).
+- **Checks (15 November 2026):** `?test=audit` 0 in the street and in all seven walking chapters. Layout test 0 at 390x800, 320x568, 667x375, 800x500, 1280x720. A scripted run of all seven walking chapters from a fresh save (talking in reverse order each time) reached every end card, unlocked 9 of 9 journal pages, with no errors. The public build has no test code.
+- **Still to do:** own bodies for everyone (Ivy, Pearl, Roy, Clarke, Dawn, Pastor Grant and Kemesha use Kendal and Garvey bodies, so faces repeat); wire in the new clips (Talk, Comfort, Kneel and others) and `engine/story.js` and `engine/follow.js` when they land; the West Kingston reviewer; read the Commission's report itself.

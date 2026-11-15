@@ -14,6 +14,7 @@ export function setupTalk(env) { E = env; $('next').onclick = next; $('dclose').
 
 export async function addNpc(def) {   /* def: { id, name, look, x, z, ry, anim, lines, later } */
   await loadBase(LOOKS[def.look].base); const body = makeBody({ ...LOOKS[def.look], x: def.x, z: def.z, ry: def.ry, anim: def.anim || 'Idle' });
+  body.userData.ground = def.ground || 0;   /* the height of the surface they stand on (a pavement, a path), so groundFeet keeps their shoes on it */
   body.traverse((o) => { if (o.isMesh) o.castShadow = true; }); E.scene.add(body); const npc = { ...def, body, home: def.ry, talked: 0 }; Talk.npcs.push(npc); return npc;
 }
 export function clearNpcs() { for (const n of Talk.npcs) E.scene.remove(n.body); Talk.npcs.length = 0; Talk.near = null; Talk.open = null; $('dialogue').hidden = true; $('talk').hidden = true; E.setBusy(false); }

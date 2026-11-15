@@ -5,13 +5,13 @@
 
 export const CHAPTERS = [
   { id: 1, name: 'Back-o-Wall', when: 'Before the 1960s', line: 'A crowded part of West Kingston, through Ivy’s eyes.', playable: true },
-  { id: 2, name: 'The new Tivoli', when: 'The 1960s', line: 'New homes are built where Back-o-Wall stood.', playable: false },
-  { id: 3, name: 'Politics and power', when: '1970s to 2009', line: 'How leaders, parties and gangs grew together.', playable: false },
-  { id: 4, name: 'May 2010: before', when: 'May 2010', line: 'Barricades, a state of emergency, and a family waiting.', playable: false },
+  { id: 2, name: 'The new Tivoli', when: 'The 1960s', line: 'New homes are built where Back-o-Wall stood.', playable: true },
+  { id: 3, name: 'Politics and power', when: 'About 1980, and after', line: 'Football, dance, and politics that turned rough.', playable: true },
+  { id: 4, name: 'May 2010: before', when: 'Sunday 23 May 2010', line: 'Barricades, a state of emergency, and a family waiting.', playable: true },
   { id: 5, name: 'May 2010: the day', when: 'Monday 24 May 2010', line: 'A loud day. You watch from a window.', playable: true },
-  { id: 6, name: 'After', when: 'May 2010 and after', line: 'Finding people. Funerals. The inquiries.', playable: false },
-  { id: 7, name: 'The report', when: '2016 and 2017', line: 'What the Commission found, and the disagreement.', playable: false },
-  { id: 8, name: 'Today', when: 'Now', line: 'The community now.', playable: false },
+  { id: 6, name: 'After', when: 'May 2010 and after', line: 'Finding people. Funerals. The inquiries.', playable: true },
+  { id: 7, name: 'The report', when: '2016 and 2017', line: 'What the Commission found, and the disagreement.', playable: true },
+  { id: 8, name: 'Today', when: 'Now', line: 'Murals, dance and football. And remembering.', playable: true },
 ];
 
 /* ---------- Chapter 1: Back-o-Wall. All three people are fictional. The place is imagined (we have no photographs or oral histories yet); the journal says so. ---------- */
@@ -31,7 +31,7 @@ export const CH1 = {
       { who: 'Miss Pearl', text: 'We built this house ourselves, board by board.' },
       { who: 'You', text: 'Is it hard to find a home?' },
       { who: 'Miss Pearl', text: 'Very hard. There are not enough homes in Kingston.' },
-      { who: 'Miss Pearl', text: 'Go and see Roy in the lane. He has news.' },
+      { who: 'Miss Pearl', text: 'Mind how you go, child.' },
     ],
     roy: [
       { who: 'Mass Roy', text: 'Have you heard? The Government wants this land.' },
@@ -43,12 +43,256 @@ export const CH1 = {
   },
   later: {
     ivy: ['I hope Gran is not worried.', 'Gran is brave, but she is thinking hard.'],
-    pearl: ['Go on, child. See what Roy says.', 'We have each other.'],
+    pearl: ['We have each other.', 'Mind the step, child.'],
     roy: ['Whatever happens, we stay together.'],
   },
   end: {
     title: 'Back-o-Wall',
     lines: ['In 1963 the Government began to clear Back-o-Wall.', 'The last part was cleared on 12 July 1966.', 'Ivy, her gran and Mass Roy are made up.', 'What happened to Back-o-Wall was real.'],
+  },
+};
+
+/* ---------- Chapter 2: the new Tivoli Gardens, 1960s. Ivy, Miss Pearl and Mr Clarke are fictional. The place is a general picture (newtivoli.js).
+   Facts (docs/games/tivoli.md, Research): built in the 1960s where Back-o-Wall stood; homes by the Ministry of Housing; the West Kingston Trust paid for a clinic, a creche,
+   schools and a community centre with drama, singing and a steel band; some say the clearing left many families homeless. Every talk works in any order. ---------- */
+export const CH2 = {
+  start: ['Gran Ivy remembers.', 'A few years later. A new place called Tivoli Gardens.', 'Ivy and her gran have a new home.'],
+  goals: ['Talk to Ivy on the path.', 'Talk to Ivy’s gran by the flats.', 'Talk to Mr Clarke by the community centre.', 'Go to the community centre door.'],
+  talk: {
+    ivy: [
+      { who: 'Ivy', text: 'Look! We live here now.' },
+      { who: 'You', text: 'Where is this?' },
+      { who: 'Ivy', text: 'Tivoli Gardens. It is new.' },
+      { who: 'Ivy', text: 'It was built where Back-o-Wall used to be.', unlock: 'newtivoli' },
+      { who: 'Ivy', text: 'Our flat is upstairs. I can see the whole yard!' },
+    ],
+    pearl: [
+      { who: 'Miss Pearl', text: 'Hello, child. Our new home is in this block.' },
+      { who: 'Miss Pearl', text: 'The Government built these flats.' },
+      { who: 'You', text: 'Did everyone from Back-o-Wall get a flat?' },
+      { who: 'Miss Pearl', text: 'No. Some people say many families had nowhere to go.' },
+      { who: 'Miss Pearl', text: 'I think of our old neighbours every day.' },
+    ],
+    clarke: [
+      { who: 'Mr Clarke', text: 'Welcome to the community centre!' },
+      { who: 'Mr Clarke', text: 'Here we have drama, singing and a steel band.' },
+      { who: 'You', text: 'What else is here?' },
+      { who: 'Mr Clarke', text: 'A clinic, a crèche for babies, and schools.' },
+      { who: 'Mr Clarke', text: 'Come inside and hear the band practise.' },
+    ],
+  },
+  later: {
+    ivy: ['Gran says I must be good in the new place.', 'I like the trees. They are small now.'],
+    pearl: ['It is a nice flat. But I miss the old yard.', 'Mind the stairs, child.'],
+    clarke: ['The door is just there.', 'Everyone is welcome here.'],
+  },
+  end: {
+    title: 'The new Tivoli',
+    lines: ['Tivoli Gardens was built in the 1960s.', 'It had new homes, a clinic, a crèche, schools and a community centre.', 'People still disagree about the clearing that came first.', 'Ivy, her gran and Mr Clarke are made up.'],
+  },
+};
+
+/* ---------- Chapter 4: Sunday 23 May 2010, the day before. You are Ivy's grandchild (fictional). Gran Ivy, Miss Dawn and Mr Brown are fictional. The street is made up.
+   Facts (journal pages "The man the US wanted" and "Monday 24 May 2010"): the US asked for Christopher Coke in 2009; the Government agreed on 18 May 2010;
+   a state of emergency was declared on 23 May 2010; barricades blocked the entrances before the operation. Who built the barricades is not stated: our sources do not say. ---------- */
+export const CH4 = {
+  start: ['Sunday 23 May 2010.', 'You live in Tivoli Gardens with Gran Ivy.', 'The girl from Back-o-Wall is a grandmother now.'],
+  goals: ['Talk to Gran Ivy by the gate.', 'Talk to Miss Dawn at the shop.', 'Talk to Mr Brown near the bus stop.', 'Go home through the gate.'],
+  talk: {
+    gran: [
+      { who: 'Gran Ivy', text: 'There you are! Stay close to me today.' },
+      { who: 'You', text: 'Why, Gran?' },
+      { who: 'Gran Ivy', text: 'The radio says there is a state of emergency.' },
+      { who: 'Gran Ivy', text: 'Police and soldiers have extra powers now.' },
+      { who: 'Gran Ivy', text: 'Soon we go inside and stay together.' },
+    ],
+    dawn: [
+      { who: 'Miss Dawn', text: 'Hello, darling. How is your Gran?' },
+      { who: 'You', text: 'She is worried. What is happening?' },
+      { who: 'Miss Dawn', text: 'The United States wants a man from here.' },
+      { who: 'Miss Dawn', text: 'Last week the Government agreed to send him.', unlock: 'extradition' },
+      { who: 'Miss Dawn', text: 'I am closing the shop early. Take care.' },
+    ],
+    brown: [
+      { who: 'Mr Brown', text: 'Look down the road, youngster.' },
+      { who: 'Mr Brown', text: 'Barricades block the way in now.' },
+      { who: 'You', text: 'Who put them there?' },
+      { who: 'Mr Brown', text: 'People will argue about that for years.' },
+      { who: 'Mr Brown', text: 'Keep away from them. Stay with your Gran.' },
+    ],
+  },
+  later: {
+    gran: ['Not long now, then we go in.', 'Hold my hand when we cross.'],
+    dawn: ['Go on home, darling.', 'Tell your Gran I said hello.'],
+    brown: ['Keep away from the barricade.', 'Go home safe.'],
+  },
+  end: {
+    title: 'May 2010: before',
+    lines: ['On 23 May 2010 the Government declared a state of emergency.', 'Barricades blocked the roads into Tivoli Gardens.', 'The next day, soldiers and police went in.', 'Gran Ivy, Miss Dawn and Mr Brown are made up.'],
+  },
+};
+
+/* ---------- Chapter 6: after, a few days later, in the courtyard by the community centre (the chapter 2 place in 2010). Gran Ivy, Mr Brown and Pastor Grant are fictional.
+   Facts (journal pages "Monday 24 May 2010" and "After"): about 70 civilians and one soldier died; many people were held for days (the Public Defender said over 10,000,
+   some for up to a week); the Government later paid grants for burials and damage; a Commission of Enquiry looked at what happened. Told gently: nobody is shown hurt. ---------- */
+export const CH6 = {
+  start: ['A few days later.', 'Tivoli Gardens is quiet again.', 'Gran Ivy takes you to the community centre.'],
+  goals: ['Talk to Gran Ivy on the path.', 'Talk to Mr Brown by the flats.', 'Talk to Pastor Grant by the community centre.', 'Go into the community centre.'],
+  talk: {
+    gran: [
+      { who: 'Gran Ivy', text: 'The noise has stopped now.' },
+      { who: 'You', text: 'Is everyone all right, Gran?' },
+      { who: 'Gran Ivy', text: 'No, darling. Many people died.' },
+      { who: 'Gran Ivy', text: 'Some of them were our neighbours.', unlock: 'day' },
+      { who: 'Gran Ivy', text: 'We will remember them together.' },
+    ],
+    brown: [
+      { who: 'Mr Brown', text: 'My son was taken away for questioning.' },
+      { who: 'Mr Brown', text: 'Many people were held for days.' },
+      { who: 'You', text: 'Will he come home?' },
+      { who: 'Mr Brown', text: 'They say he will be let go soon.' },
+      { who: 'Mr Brown', text: 'I am waiting here for news.' },
+    ],
+    pastor: [
+      { who: 'Pastor Grant', text: 'Hello, child. We are helping families here.' },
+      { who: 'Pastor Grant', text: 'Some families are planning funerals.' },
+      { who: 'You', text: 'Will people find out what happened?' },
+      { who: 'Pastor Grant', text: 'Families are asking for answers.' },
+      { who: 'Pastor Grant', text: 'Finding the truth can take a long time.', unlock: 'after' },
+    ],
+  },
+  later: {
+    gran: ['Stay close, darling.', 'We look after each other.'],
+    brown: ['I will wait as long as it takes.', 'Thank you for asking, youngster.'],
+    pastor: ['Go in. There is food and water inside.', 'You are welcome here.'],
+  },
+  end: {
+    title: 'After',
+    lines: ['About 70 people died in Tivoli Gardens. One soldier died too.', 'Many people were held for days.', 'Families asked what happened. A Commission of Enquiry looked into it later.', 'Gran Ivy, Mr Brown and Pastor Grant are made up.'],
+  },
+};
+
+/* ---------- Chapter 3: about 1980, the same courtyard. Ivy (grown up), Mass Roy (older now) and Coach Davis are fictional.
+   Facts (Research): Edward Seaga said Tivoli thrived for about four years and that violence over politics changed it from the mid-1970s, and that gangs took hold in the
+   late 1990s (his own account, attributed); a "garrison" is a political stronghold controlled by one party (Gleaner), and a critic calls Tivoli the first;
+   Tivoli Gardens Football Club started in 1970 and the Tivoli Dance Troupe in 1976; the US asked for Christopher Coke in 2009. ---------- */
+export const CH3 = {
+  start: ['Gran Ivy remembers.', 'About 1980. Ivy is grown up now.', 'Tivoli Gardens is her home.'],
+  goals: ['Talk to Ivy on the path.', 'Talk to Mass Roy by the flats.', 'Talk to Coach Davis by the community centre.', 'Go to the community centre door.'],
+  talk: {
+    ivy: [
+      { who: 'Ivy', text: 'Hello again! I am all grown up now.' },
+      { who: 'Ivy', text: 'There is football, dancing and music here.' },
+      { who: 'You', text: 'Is it a happy place?' },
+      { who: 'Ivy', text: 'Mostly. But election time can be frightening.' },
+      { who: 'Ivy', text: 'Some people fight over politics. Some get hurt.' },
+    ],
+    roy: [
+      { who: 'Mass Roy', text: 'You remember me? From Back-o-Wall?' },
+      { who: 'Mass Roy', text: 'Politics is very strong in this area.' },
+      { who: 'Mass Roy', text: 'Some people call a place like this a garrison.' },
+      { who: 'You', text: 'What is a garrison?' },
+      { who: 'Mass Roy', text: 'A place where almost everyone backs one party.', unlock: 'politics' },
+      { who: 'Mass Roy', text: 'That can bring help. It can also bring trouble.' },
+    ],
+    coach: [
+      { who: 'Coach Davis', text: 'Hello! We train for the next match today.' },
+      { who: 'Coach Davis', text: 'Tivoli Gardens Football Club started in 1970.' },
+      { who: 'You', text: 'Can I play?' },
+      { who: 'Coach Davis', text: 'Of course. Sport keeps young people together.' },
+      { who: 'Coach Davis', text: 'Come and watch the dance troupe too.' },
+    ],
+  },
+  later: {
+    ivy: ['I want my children to grow up safe.', 'Go and enjoy yourself.'],
+    roy: ['Keep your head, child.', 'We have seen hard times before.'],
+    coach: ['Practise every day!', 'The door is just there.'],
+  },
+  end: {
+    title: 'Politics and power',
+    lines: ['Edward Seaga said fights over politics changed Tivoli from the mid-1970s.', 'He said gangs took hold in the late 1990s.', 'In 2009 the United States asked Jamaica to send it Christopher Coke.', 'Ivy, Mass Roy and Coach Davis are made up.'],
+  },
+};
+
+/* ---------- Chapter 7: June 2016, the same courtyard. Gran Ivy, Mr Brown and Pastor Grant are fictional.
+   Facts (Research, "The Commission"): the report was given to Parliament on 15 June 2016, about 900 pages, 51 recommendations; it found police may have killed people
+   unlawfully and said residents should get an apology and compensation; a Defence Force lawyer said it should have held some residents to blame; a police review in 2017
+   cleared the five officers it named; the Prime Minister apologised in Parliament in December 2017 ("We are truly sorry for the pain and loss that occurred"). ---------- */
+export const CH7 = {
+  start: ['June 2016.', 'Six years after May 2010.', 'A report about what happened is out at last.'],
+  goals: ['Talk to Gran Ivy on the path.', 'Talk to Mr Brown by the flats.', 'Talk to Pastor Grant by the community centre.', 'Go into the community centre.'],
+  talk: {
+    gran: [
+      { who: 'Gran Ivy', text: 'The Commission of Enquiry has finished its report.' },
+      { who: 'Gran Ivy', text: 'They listened to many people from here.' },
+      { who: 'You', text: 'What did it say?' },
+      { who: 'Gran Ivy', text: 'It said some police may have killed people unlawfully.' },
+      { who: 'Gran Ivy', text: 'It said we should get an apology and money.', unlock: 'dispute' },
+    ],
+    brown: [
+      { who: 'Mr Brown', text: 'Not everyone agrees with the report.' },
+      { who: 'Mr Brown', text: 'A lawyer for the army said it should blame some residents too.' },
+      { who: 'You', text: 'Who is right?' },
+      { who: 'Mr Brown', text: 'People still disagree. Read it all and think.' },
+      { who: 'Mr Brown', text: 'Later, a police review cleared the officers it named.' },
+    ],
+    pastor: [
+      { who: 'Pastor Grant', text: 'In December 2017 there was more news.' },
+      { who: 'Pastor Grant', text: 'The Prime Minister said sorry in Parliament.' },
+      { who: 'Pastor Grant', text: 'He said: “We are truly sorry for the pain and loss that occurred.”' },
+      { who: 'You', text: 'Does sorry help?' },
+      { who: 'Pastor Grant', text: 'A little. Many families still want justice.', unlock: 'after' },
+    ],
+  },
+  later: {
+    gran: ['Reading it brought it all back.', 'We keep their names in our hearts.'],
+    brown: ['My son came home. Others did not.', 'Keep asking questions, youngster.'],
+    pastor: ['Come in. We are reading the report together.', 'You are welcome here.'],
+  },
+  end: {
+    title: 'The report',
+    lines: ['On 15 June 2016 the Commission’s report went to Parliament.', 'It made 51 recommendations.', 'In December 2017 the Prime Minister said sorry.', 'People still disagree about what happened.', 'Gran Ivy, Mr Brown and Pastor Grant are made up.'],
+  },
+};
+
+/* ---------- Chapter 8: today, the same courtyard with murals. Gran Ivy, the painter Andre and Kemesha are fictional; the murals are our own designs.
+   Facts (Research, "Today"): the Tivoli Mural Project began in 2022, with murals about hope and new beginnings (Observer, 2 June 2024); the Tivoli Dance Troupe,
+   linked to Tivoli Gardens High School, began in 1976 (Observer, 27 June 2024); Tivoli Gardens Football Club began in 1970 and has won Jamaica's top league several
+   times (Wikipedia); in 2020 the Public Defender said nobody in the police or the army had been held to account (Gleaner, 24 May 2020). ---------- */
+export const CH8 = {
+  start: ['Today.', 'You are grown up now.', 'You come home to visit Gran Ivy.'],
+  goals: ['Talk to Gran Ivy on the path.', 'Talk to Andre by the murals.', 'Talk to Kemesha by the community centre.', 'Walk to the community centre.'],
+  talk: {
+    gran: [
+      { who: 'Gran Ivy', text: 'Look how much has changed, darling.' },
+      { who: 'Gran Ivy', text: 'I saw Back-o-Wall, the new flats, and May 2010.' },
+      { who: 'You', text: 'What do you hope for now?' },
+      { who: 'Gran Ivy', text: 'That children here grow up safe and proud.' },
+      { who: 'Gran Ivy', text: 'And that we never forget the people we lost.', unlock: 'today' },
+    ],
+    andre: [
+      { who: 'Andre', text: 'Do you like the murals?' },
+      { who: 'Andre', text: 'Artists began painting walls here in 2022.' },
+      { who: 'Andre', text: 'The pictures are about hope and new beginnings.' },
+      { who: 'You', text: 'Why paint here?' },
+      { who: 'Andre', text: 'Bright walls make people smile on the way home.' },
+    ],
+    kemesha: [
+      { who: 'Kemesha', text: 'Hi! I dance with the Tivoli Dance Troupe.' },
+      { who: 'Kemesha', text: 'The troupe started in 1976!' },
+      { who: 'You', text: 'Is it hard?' },
+      { who: 'Kemesha', text: 'Yes. But it makes me strong.' },
+      { who: 'Kemesha', text: 'And our football club is famous too!' },
+    ],
+  },
+  later: {
+    gran: ['Walk with me a while.', 'I am glad you came home.'],
+    andre: ['Come back when the next wall is done.', 'Every wall tells a story.'],
+    kemesha: ['Come and see our show!', 'Practise, practise, practise.'],
+  },
+  end: {
+    title: 'Today',
+    lines: ['Tivoli Gardens is still home to many families.', 'People remember May 2010. Some families say they still wait for justice.', 'Artists, dancers and footballers show another side of Tivoli.', 'Gran Ivy and her family are made up. Their history is real.', 'Thank you for playing.'],
   },
 };
 
@@ -60,6 +304,12 @@ export const JOURNAL = [
   { id: 'clearance', title: 'The clearing', from: 1,
     simple: ['In 1963 the Government began to clear Back-o-Wall.', 'Bulldozers knocked down the homes.', 'New homes were built there. They became Tivoli Gardens.', 'The last part was cleared on 12 July 1966.'],
     deeper: ['Before 12 July 1966 there was fighting in West Kingston. One man died and about 30 people were badly hurt.', 'The Government told people to leave by midnight on 11 July.', 'Over 800 shacks were pulled down, and then burned.', 'Churches helped some families find a place to stay.', 'People still disagree. Some say it was needed to stop violence. Others say it left many families homeless.'] },
+  { id: 'newtivoli', title: 'Tivoli Gardens is built', from: 2,
+    simple: ['Tivoli Gardens was built in the 1960s.', 'It was built where Back-o-Wall had been.', 'It had new homes, a clinic, a crèche and schools.', 'Its community centre had drama, singing and a steel band.'],
+    deeper: ['The Ministry of Housing built the homes.', 'A group called the West Kingston Trust paid for the clinic, crèche, schools and community centre.', 'Sources give different dates. One says building ran from 1963 to 1965.', 'Some people say the clearing left many families from Back-o-Wall with no home.', 'Some say the new homes helped one political party grow strong in the area. Chapter 3 tells more.', 'Ivy, Miss Pearl and Mr Clarke in this game are fictional. The flats in this chapter are a general picture, not a copy of the real streets.'] },
+  { id: 'politics', title: 'Politics and the garrison', from: 3,
+    simple: ['From the 1970s, fights over politics hurt many places in Kingston.', 'Some people call Tivoli Gardens a “garrison”.', 'A garrison is a place almost fully controlled by one political party.', 'Tivoli also had football, dancing and music.'],
+    deeper: ['Edward Seaga, a minister who helped build Tivoli, said it thrived for about four years.', 'He said violence over politics changed it from the mid-1970s, and gangs took hold in the late 1990s.', 'One critic calls Tivoli the first garrison in Jamaica.', 'She also says that before 2010 Tivoli had very little street crime. The police agreed.', 'Tivoli Gardens Football Club started in 1970. The Tivoli Dance Troupe started in 1976.', 'Ivy, Mass Roy and Coach Davis in this game are fictional.'] },
   { id: 'extradition', title: 'The man the US wanted', from: 5,
     simple: ['In 2009 the United States asked Jamaica for Christopher Coke.', 'The United States said he led a gang.', 'Jamaica took many months to agree.', 'On 23 May 2010 the Government declared a state of emergency.'],
     deeper: ['The request came on 25 August 2009.', 'The Government agreed on 18 May 2010.', 'Coke was arrested on 22 June 2010 and sent to the United States.', 'In 2012 a US court gave him 23 years in prison.'] },
@@ -72,6 +322,9 @@ export const JOURNAL = [
   { id: 'after', title: 'After', from: 5,
     simple: ['A Commission of Enquiry looked at what happened.', 'It said the people of Tivoli Gardens should get an apology and money.', 'In 2017 the Prime Minister said sorry in Parliament.'],
     deeper: ['The Commission was led by Sir David Simmons. Its report came out on 15 June 2016.', 'It made 51 recommendations, including counselling for people who suffered.', 'The Government paid grants for burials and damage, and over J$300 million by 2020.', 'The Public Defender said in 2020 that nobody in the police or the army had been held to account.'] },
+  { id: 'today', title: 'Tivoli Gardens today', from: 8,
+    simple: ['Tivoli Gardens is still home to many families.', 'Since 2022 artists have painted big murals on its walls.', 'The Tivoli Dance Troupe started in 1976.', 'Tivoli Gardens Football Club started in 1970.'],
+    deeper: ['The murals are about hope and new beginnings. Some walls still show marks from 2010.', 'The dance troupe is linked to Tivoli Gardens High School.', 'The football club has won Jamaica’s top league several times.', 'In 2020 the Public Defender said nobody in the police or the army had been held to account.', 'The murals in this game are our own designs, not copies of the real ones.', 'Gran Ivy, Andre and Kemesha in this game are fictional.'] },
 ];
 
 /* the journal's unlock rule: a chapter unlocks its pages when it is finished (or, for the street scene, when it is watched or read) */
