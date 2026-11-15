@@ -85,15 +85,15 @@ function bust(bronze, plain) {   /* bronze: the shaded material for the sculpted
   add(torsoGeo(), bronze, 0, 0, 0, b);   /* the cut under the chest is at y = 0 */
   const cap = add(new THREE.CircleGeometry(1, 32), dark, 0, 0.001, 0, b); cap.rotation.x = PI / 2; cap.scale.set(0.165, 0.098, 1);
   add(new THREE.CylinderGeometry(0.05, 0.056, 0.14, 16), plain, 0, 0.385, -0.004, b);   /* the neck */
-  const head = add(headGeo(), bronze, 0, 0.5, 0.004, b); head.rotation.x = -0.04;
-  for (const s of [-1, 1]) add(earGeo(s), bronze, s * 0.073, 0.49, -0.006, b);
+  const head = add(headGeo(), bronze, 0, 0.505, 0.004, b); head.rotation.x = -0.04; head.scale.setScalar(1.08);
+  for (const s of [-1, 1]) add(earGeo(s), bronze, s * 0.079, 0.495, -0.006, b);
   /* the shirt collar, the tie and its knot, and the jacket's lapels, lying on the chest */
-  for (const s of [-1, 1]) { const c = add(new THREE.BoxGeometry(0.05, 0.04, 0.012), plain, s * 0.03, 0.335, 0.052, b); c.rotation.set(-0.5, s * 0.35, s * 0.6); }
-  add(new THREE.BoxGeometry(0.032, 0.03, 0.022), dark, 0, 0.318, 0.066, b);
-  const tie = add(new THREE.BoxGeometry(0.036, 0.15, 0.012), dark, 0, 0.235, 0.112, b); tie.rotation.x = -0.28;
+  for (const s of [-1, 1]) { const c = add(new THREE.BoxGeometry(0.05, 0.04, 0.01), plain, s * 0.03, 0.335, 0.064, b); c.rotation.set(-0.5, 0, s * 0.6); }
+  add(new THREE.BoxGeometry(0.03, 0.03, 0.02), dark, 0, 0.318, 0.078, b);
+  const tie = add(new THREE.BoxGeometry(0.034, 0.17, 0.008), dark, 0, 0.225, 0.126, b); tie.rotation.x = -0.12;
   for (const s of [-1, 1]) {
-    const l = add(new THREE.BoxGeometry(0.075, 0.24, 0.014), plain, s * 0.07, 0.19, 0.121, b); l.rotation.set(-0.12, s * 0.28, s * 0.32);   /* a lapel, from the collar down to the cut */
-    const e = add(new THREE.BoxGeometry(0.008, 0.22, 0.016), dark, s * 0.036, 0.2, 0.126, b); e.rotation.set(-0.15, 0, s * 0.3);   /* the shadowed line where the jacket opens */
+    const l = add(new THREE.BoxGeometry(0.07, 0.24, 0.008), plain, s * 0.066, 0.19, 0.127, b); l.rotation.set(-0.06, 0, s * 0.32);   /* a lapel, from the collar down to the cut */
+    const e = add(new THREE.BoxGeometry(0.006, 0.22, 0.01), dark, s * 0.03, 0.2, 0.129, b); e.rotation.set(-0.06, 0, s * 0.32);   /* the shadowed line where the jacket opens */
   }
   return b;
 }
@@ -147,7 +147,7 @@ export function buildShrine(parent, { x = 0, z = -4.0, signTex } = {}) {
   walls.push([-0.9, pz - 0.4, 0.9, pz + PD / 2 + 0.45]);
 
   /* a wreath on a stand beside the tomb: wreaths are laid here every 17 August, his birthday */
-  const ws = new THREE.Group(); ws.position.set(0.66, 0.3, 0.45); ws.rotation.y = 0.5; ws.scale.setScalar(0.85); g.add(ws);
+  const ws = new THREE.Group(); ws.position.set(0.68, 0.3, 0.05); ws.rotation.y = 0.7; ws.scale.setScalar(0.85); g.add(ws);
   const easel = mat(0x3a2a1d, 0.8);
   for (const s of [-1, 1]) { const l = add(new THREE.CylinderGeometry(0.015, 0.015, 1.25, 6), easel, s * 0.22, 0.6, 0, ws); l.rotation.z = s * 0.16; l.rotation.x = 0.12; }
   const back = add(new THREE.CylinderGeometry(0.015, 0.015, 1.2, 6), easel, 0, 0.58, -0.17, ws); back.rotation.x = -0.25;

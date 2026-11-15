@@ -167,8 +167,8 @@ function addBlanket(n, color = 0xb8a890) { if (n.blanket) return; n.blanket = dr
 /* the pile of folded blankets on the pavement by the gate, and the one you carry (held low in front of you, as in your arms) */
 const PILE = [-2.3, -5.4], PILE_COLS = [0x8e3b34, 0x4a6488, 0x6e7a4a];   /* red, blue and army green wool */
 const HELD_BLANKET = (() => { const g = new THREE.Group(), b = foldedBlanket(PILE_COLS[2]); b.rotation.set(0.55, Math.PI / 2 - 0.35, 0); b.scale.setScalar(0.8); g.add(b); g.position.set(0.16, -0.31, -0.7);   /* its folded edges toward you */ g.visible = false; camera.add(g); return g; })();
-function pileShow(P) { if (!P.pile) { P.pile = new THREE.Group(); P.pile.name = 'blanket pile'; PILE_COLS.forEach((c, k) => { const b = foldedBlanket(c); b.position.y = k * 0.105; b.rotation.y = (k - 1) * 0.12; P.pile.add(b); }); P.pile.position.set(PILE[0], P.groundAt(PILE[0], PILE[1]), PILE[1]); P.pile.rotation.y = 0.3; P.night.add(P.pile); }
-  const left = SC && SC.i === 3 ? (stage < 43 ? 3 : stage === 43 ? 3 - (ctr.blanket || 0) - (ctr.carry ? 1 : 0) : 0) : 0; P.pile.children.forEach((b, k) => { b.visible = k < left; }); }
+function pileShow(P, st = stage) { if (!P.pile) { P.pile = new THREE.Group(); P.pile.name = 'blanket pile'; PILE_COLS.forEach((c, k) => { const b = foldedBlanket(c); b.position.y = k * 0.105; b.rotation.y = (k - 1) * 0.12; P.pile.add(b); }); P.pile.position.set(PILE[0], P.groundAt(PILE[0], PILE[1]), PILE[1]); P.pile.rotation.y = 0.3; P.night.add(P.pile); }
+  const left = SC && SC.i === 3 ? (st < 43 ? 3 : st === 43 ? 3 - (ctr.blanket || 0) - (ctr.carry ? 1 : 0) : 0) : 0; P.pile.children.forEach((b, k) => { b.visible = k < left; }); }
 
 /* ---------- places (geometry, built once) and scenes (who is there in each chapter) ---------- */
 const BUILD = { slipe: buildSlipe, ward: buildWard, park80: buildPark80, golden: buildGolden, monument: buildMonument };
@@ -436,7 +436,7 @@ function nightSetup(P, st) {
   const after = st >= 44, dawn = st >= 45; P.fire.setLevel(dawn ? 0.08 : after ? 0.4 : 1); P.myers.group.visible = !after; P.myers.group.scale.y = 1; P.ruin.visible = after; SIREN = dawn ? 0 : after ? 0.3 : 1;
   for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = after && !dawn; if (after && id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
   [0, 1, 2].forEach((i) => { const n = byId('kid' + i); if (st >= 43) { kidTo(n, -5 - i * 1.25, -5.2); n.m.visible = !dawn; if (after) addBlanket(n, PILE_COLS[2 - i]); } });
-  P.lamps.forEach((l) => { l.visible = !dawn; }); pileShow(P); HELD_BLANKET.visible = false;
+  P.lamps.forEach((l) => { l.visible = !dawn; }); pileShow(P, st); HELD_BLANKET.visible = false;
   if (dawn) { for (const n of SC.extras) if (n.z > -4.6 && n.z < 4.6) n.m.visible = false;   /* morning: the neighbours have gone home or stepped back onto the pavement, out of the road */
     state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; setEnv(ENV.dawn); busPass(P); }
   else if (st === 40) (async () => { const ep = EP; frozen = true; bars(true); say('Sirens wake you. The sky over the Home is orange.', 6500);   /* an opening shot: from the dark road, up to the burning ward behind the wall */

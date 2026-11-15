@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { T, cv, grain, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng } from './wgfx.js';
 import { palm, tree, banana, bush, boardHouse, hillRing, scatter, mule, bench, lampPost, crate, barrel, bucket, sack, lantern, cart } from './props.js';
 import { grassField, flowerField, rockField, blotches, fence, mangoTree, bamboo, flameTree, hibiscus, croton, stump } from './detail.js';
-import { rails, steamLoco, wagon } from './trains.js';
+import { rails, steamLoco, wagon, wheel } from './trains.js';
 import { person, extra, crowd04, crowd99, crowdNow } from './cast.js';
 
 const PI = Math.PI;
@@ -551,7 +551,7 @@ export function buildRuins() {   /* chapter 5: today, bright day among trees */
 export function electricCar(wireY = 6.1) {
   const g = grp(); g.userData.noBatch = true; const L = 5.2, W = 2.0, PL = 1.3, fl = 0.78, green = solid(0x2a4a36, 0.5, 0.15), cream = solid(0xece0c0, 0.6), gold = solid(0xc8a04a, 0.35, 0.6), dark = solid(0x1c1a18, 0.7), wood = solid(0x8a5a32, 0.6), glass = new THREE.MeshStandardMaterial({ color: 0x3a4a58, roughness: 0.1, metalness: 0.3, transparent: true, opacity: 0.55 });
   /* the truck: frame, wheels, axle boxes, the motor between the axles */
-  box(3.2, 0.24, 1.5, dark, 0, 0.52, 0, g); const W2 = []; for (const x of [-0.95, 0.95]) for (const z of [-0.72, 0.72]) { const w = cyl(0.38, 0.38, 0.1, solid(0x202226, 0.5, 0.5), x, 0.38, z, g, 20); w.rotation.x = PI / 2; W2.push(w); const hb = cyl(0.12, 0.12, 0.16, M.iron, x, 0.38, z * 1.12, g, 8); hb.rotation.x = PI / 2; }
+  box(3.2, 0.24, 1.5, dark, 0, 0.52, 0, g); const W2 = []; for (const x of [-0.95, 0.95]) for (const z of [-0.72, 0.72]) { const w = wheel(0.38); w.position.set(x, 0.38, z); if (z < 0) w.rotation.y = PI; g.add(w); W2.push(w);   /* a turned wheel with a flange, the same as the railway's (engine/vehicles.js) */ const hb = cyl(0.12, 0.12, 0.16, M.iron, x, 0.38, z * 1.12, g, 8); hb.rotation.x = PI / 2; }
   for (const z of [-0.85, 0.85]) box(2.6, 0.18, 0.1, dark, 0, 0.5, z, g); const mot = cyl(0.3, 0.3, 0.9, dark, 0, 0.44, 0, g, 14); mot.rotation.x = PI / 2;
   /* the floor and the saloon: dark green lower panels with gold lining, cream window band, pillars and windows, letterboard */
   box(L + 2 * PL, 0.1, W, wood, 0, fl, 0, g);
