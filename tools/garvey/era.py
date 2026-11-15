@@ -769,7 +769,7 @@ if G.get('trousers') and G.get('belt',True) and (not G.get('waistcoat') or G.get
     if not G.get('waistcoat'): bmesh.ops.create_cube(bm,size=1,matrix=Matrix.Translation((0,yb,HIP+0.098))@Matrix.Diagonal((0.044*s,0.006,0.038*s,1))); soft('Buckle',bm,'Buckle',only=('Hips','Spine'))
 if OLD and G.get('breeches') and not G.get('coat'):      # a waistband: a narrow band of the breeches' own cloth round their top edge, so that edge (cut across a curved body) reads as a clean seam
     TT=tree_of(PART['breeches']); bm=bmesh.new(); seg=32; rows=[]
-    for z,e in ((HIP+0.095,0.0),(HIP+0.100,0.006),(HIP+0.134,0.006),(HIP+0.139,0.0)):
+    for z,e in ((HIP+0.095,0.0),(HIP+0.099,0.003),(HIP+0.135,0.003),(HIP+0.139,0.0)):      # a flat band, not a roll
         ring=[]
         for k in range(seg):
             a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z-0.03)); hit=TT.ray_cast(o+d*0.4,-d)[0]; o2=Vector((0,J('Hips').y,z)); h2=SHT.ray_cast(o2,d,0.3)[0]; r=max(((hit-o).length if hit else 0.15),((h2-o2).length+0.002) if h2 is not None else 0.0)+e
@@ -1077,15 +1077,19 @@ if G.get('coat') and G.get('coatbuttons',OLD):      # a row of buttons down the 
     COL.setdefault('CoatButtons',COL['Coat']*0.5); soft('CoatButtons',bm,'CoatButtons')
 if G.get('apron'):
     BRT=tree_of(PART['breeches']) if 'breeches' in PART else None
-    bm=bmesh.new(); nu,nv=10,16; rows=[]; ZA,ZE=HIP+0.1,KNEE+0.02
-    for jv in range(nv+1):
-        t=jv/nv; z=ZA-t*(ZA-ZE); hw=0.15+0.03*t; row=[]
+    bm=bmesh.new(); nu,nv=10,16; rows=[]; ZA,ZE=HIP+0.1,KNEE+0.02; SRC=BRT if (not OLD and BRT) else tree; yprev=None
+    for jv in range(nv+1):      # the apron hangs as one sheet: each row lies across the fullest part of the front (never caught on a hand, never dipping between the legs), curves back a little at its sides, and never tucks in below a higher row
+        t=jv/nv; z=ZA-t*(ZA-ZE); hw=0.15+0.03*t; ys=[]
         for iu in range(nu+1):
-            x=-hw+2*hw*iu/nu; hit=tree.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]; yy=(hit.y if hit else -0.12)
-            if not OLD and 'breeches' in PART:      # later eras: the apron lies on the trousers, a hand's breadth clear of them
-                hb=BRT.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]
-                if hb: yy=min(yy,hb.y)
-            row.append(bm.verts.new((x,yy-(0.035 if OLD else 0.045),z)))
+            x=-hw+2*hw*iu/nu
+            if abs(x)>0.13: continue
+            hit=SRC.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]
+            if hit: ys.append(hit.y)
+        yf=(min(ys) if ys else (yprev if yprev is not None else -0.12))-(0.035 if OLD else 0.02)
+        if yprev is not None: yf=min(yf,yprev+0.004)
+        yprev=yf; row=[]
+        for iu in range(nu+1):
+            x=-hw+2*hw*iu/nu; row.append(bm.verts.new((x,yf+0.012*(x/hw)**2,z)))
         rows.append(row)
     for jv in range(nv):
         for iu in range(nu): bm.faces.new((rows[jv][iu],rows[jv][iu+1],rows[jv+1][iu+1],rows[jv+1][iu]))
