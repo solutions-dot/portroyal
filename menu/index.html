@@ -3,17 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jamaican History Games</title>
-<meta name="description" content="3D story games about Jamaica's past, for ages 6 and up.">
+<title>PastPort - Jamaica</title>
+<meta name="description" content="PastPort - Jamaica: 3D story games that take you into Jamaica's past, for ages 6 and up.">
 <meta name="theme-color" content="#06283D">
 <script>
-  /* The intro (intro.js) plays once for each browser tab. ?intro=1 plays it again, ?intro=0 skips it. */
-  try { var q = new URLSearchParams(location.search).get('intro'); if (q === '1' || (q !== '0' && !sessionStorage.getItem('intro-seen'))) document.documentElement.classList.add('intro-on'); } catch (e) { /* no intro */ }
+  /* The intro (intro.js) starts by itself and plays once for each browser tab. ?intro=1 plays it again, ?intro=0 skips it. */
+  try { var q = new URLSearchParams(location.search).get('intro'); if (q === '1' || (q !== '0' && !sessionStorage.getItem('intro-seen'))) { document.documentElement.classList.add('intro-on'); ['pastport-logo.webp', 'pastport-jamaica.webp'].forEach(function (f) { var l = document.createElement('link'); l.rel = 'preload'; l.as = 'image'; l.href = f; document.head.appendChild(l); }); } } catch (e) { /* no intro */ }
 </script>
 <noscript><style>#intro{display:none!important}</style></noscript>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fraunces:ital,wght@1,600&display=swap" rel="stylesheet">
+<link rel="icon" href="pastport-icon.png" type="image/png">
 <link rel="stylesheet" href="intro.css">
 <style>
   /* The game menu. One screen, no scrolling. Colours from the island: harbour blue, sea glass, mango, hibiscus.
@@ -27,10 +28,14 @@
   main{height:100dvh;display:grid;grid-template-rows:auto 1fr;gap:clamp(.8rem,2vh,1.4rem);padding:max(1rem,env(safe-area-inset-top)) clamp(1rem,3vw,2.2rem) max(1rem,env(safe-area-inset-bottom))}
 
   header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem}
-  h1{margin:0;font-weight:800;font-size:clamp(1.7rem,4.2vw,3.2rem);line-height:.95;letter-spacing:-.03em}
-  h1 span{display:block;color:var(--sea)}
-  h1 .jam{display:flex;align-items:center;gap:.3em;font-weight:inherit}
-  .flag{height:.62em;width:auto;flex:none;border-radius:.07em;box-shadow:0 0 0 1px rgba(255,247,232,.25)}   /* the flag of Jamaica, as drawn in the markup: gold saltire, green top and bottom, black sides */
+  /* The PastPort - Jamaica logo, from the owner's own artwork (pastport logo.png in the repo root). The web copies and how they are made are in docs/PLATFORM.md. */
+  h1.brand{margin:0;line-height:0}
+  .brand-wrap{position:relative;display:block;width:fit-content}
+  .brand-logo{display:block;height:clamp(4.6rem,10vw,7rem);width:auto}
+  /* "Jamaica" cycles through colours here too: the same picture again, shown only where the gold script is (the mask), with its hue turning slowly */
+  .brand-jam{position:absolute;inset:0;background:url(pastport-logo-sm.webp) center/100% 100% no-repeat;-webkit-mask:url(pastport-jamaica.webp) center/100% 100% no-repeat;mask:url(pastport-jamaica.webp) center/100% 100% no-repeat;animation:brandCycle 6s linear infinite}
+  @keyframes brandCycle{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.brand-jam{display:none}}
   .credit{margin:0;font-size:.95rem;color:rgba(255,247,232,.7);white-space:nowrap}
   .side{display:flex;flex-direction:column;align-items:flex-end;gap:.5rem}
   .links{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.5rem}
@@ -141,7 +146,7 @@
     html,body{height:auto;min-height:100%;overflow-y:auto;overflow-x:hidden}   /* phones scroll: the browser's own bars leave too little height to fit three cards */
     main{height:auto;min-height:100dvh}
     .games{grid-template-columns:1fr;grid-template-rows:none;grid-auto-rows:minmax(250px,auto)}
-    .game{min-height:320px}   /* room for the title, the story and the Play button */
+    .game{min-height:320px}   /* room for the title, the story and the Go there button */
     .game h2,.game.garvey h2,.game.kendal h2,.game.bogwalk h2,.game.nanny h2,.game.eventide h2,.game.melissa h2,.game.tivoli h2{font-size:clamp(1.7rem,8vw,2.4rem)}
     .game .year{font-size:.95rem}
     .game .text{grid-template-columns:1fr}
@@ -150,39 +155,40 @@
     header{align-items:flex-start;flex-direction:column;gap:.35rem}
     .side{align-items:flex-start;gap:.4rem}.links{justify-content:flex-start}.links a,.links button{min-height:40px;padding:0 .9rem;font-size:.9rem}
   }
-  @media (max-width:760px){.game:not([data-game="port-royal"]){background-size:cover;background-position:50% 30%}.game:not([data-game="port-royal"])::after{background:linear-gradient(to top,rgba(4,27,42,.96) 0%,rgba(4,27,42,.78) 40%,rgba(4,27,42,0) 70%)}}   /* phones: every card shows its title, what happened, and Play, one under the other */
+  @media (max-width:760px){.game:not([data-game="port-royal"]){background-size:cover;background-position:50% 30%}.game:not([data-game="port-royal"])::after{background:linear-gradient(to top,rgba(4,27,42,.96) 0%,rgba(4,27,42,.78) 40%,rgba(4,27,42,0) 70%)}}   /* phones: every card shows its title, what happened, and Go there, one under the other */
   @media (max-width:760px) and (max-height:700px){.game .text{padding:.8rem 1rem}.play{min-height:44px;padding:0 1.2rem;font-size:1rem}}
   @media (prefers-reduced-motion:reduce){.play{animation:none}}
 </style>
 </head>
 <body>
-<div id="intro" role="dialog" aria-modal="true" aria-label="Welcome">
+<div id="intro" role="dialog" aria-modal="true" aria-label="PastPort - Jamaica">
   <div class="in-stage">
-    <svg class="in-dial" viewBox="0 0 200 200" aria-hidden="true">
+    <svg class="in-dial" viewBox="-36 -36 272 272" aria-hidden="true">
       <circle class="in-ring2" cx="100" cy="100" r="99"/>
       <circle class="in-ring" cx="100" cy="100" r="92"/>
       <g class="in-ticks"></g>
       <circle class="in-halo" cx="100" cy="100" r="92"/>
       <path class="in-mark" d="M100 -2 L93 -14 L107 -14 Z"/>
+      <g class="in-stamps"></g>
     </svg>
     <p class="in-year" aria-hidden="true">2026</p>
-    <div class="in-title">
-      <p class="in-name">Longtime</p>
-      <p class="in-tag">Jamaican History Games</p>
+  </div>
+  <div class="in-final">
+    <div class="in-logo" role="img" aria-label="PastPort - Jamaica">
+      <img class="lg-base" data-src="pastport-logo.webp" width="1200" height="838" alt="" decoding="async">
+      <div class="lg-jam" aria-hidden="true"></div>
+      <div class="lg-shine" aria-hidden="true"></div>
+      <span class="lg-ring r1" aria-hidden="true"></span><span class="lg-ring r2" aria-hidden="true"></span>
+      <span class="lg-spark sp1" aria-hidden="true"></span><span class="lg-spark sp2" aria-hidden="true"></span><span class="lg-spark sp3" aria-hidden="true"></span>
     </div>
+    <p class="in-desc">Games that take you into Jamaica's past.</p>
   </div>
-  <div class="in-gate">
-    <p class="in-line">Step back in time.</p>
-    <button type="button" class="in-go">Begin</button>
-    <button type="button" class="in-sound" aria-pressed="true">Sound on</button>
-  </div>
-  <button type="button" class="in-skip">Skip</button>
 </div>
 <main>
   <header>
-    <h1><b class="jam">Jamaican<svg class="flag" viewBox="0 0 60 30" role="img" aria-label="Flag of Jamaica"><clipPath id="fl"><rect width="60" height="30"/></clipPath><g clip-path="url(#fl)"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></g></svg></b><span>History Games</span></h1>
+    <h1 class="brand"><span class="brand-wrap"><img class="brand-logo" src="pastport-logo-sm.webp" width="420" height="293" alt="PastPort - Jamaica"><span class="brand-jam" aria-hidden="true"></span></span></h1>
     <div class="side">
-      <p class="credit">Created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p>
+      <p class="credit">A world created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p>
       <p id="testingnote" hidden>Testing menu.</p>
       <nav class="links" aria-label="More">
         <a href="about.html">About this platform</a>
@@ -191,83 +197,83 @@
     </div>
   </header>
   <section class="games" aria-label="Games">
-    <a class="game" data-game="port-royal" href="games/port-royal/site/">
+    <a class="game" data-game="port-royal" data-year="1692" href="games/port-royal/site/">
       <div class="text">
         <div>
           <h2>Port Royal Earthquake, 1692</h2>
           <p>In 1692 a great earthquake shook Port Royal, and much of the town slid into the sea.</p>
         </div>
-        <span class="play">Play</span>
+        <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game garvey" data-game="garvey" href="games/garvey/site/">
+    <a class="game garvey" data-game="garvey" data-year="1914" href="games/garvey/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>Marcus Garvey and the UNIA, 1914</h2>
           <p>In 1914 Marcus Garvey started a movement in Kingston that spread around the world.</p>
         </div>
-        <span class="play">Play</span>
+        <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game kendal" data-game="kendal" href="games/kendal/site/">
+    <a class="game kendal" data-game="kendal" data-year="1957" href="games/kendal/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>Kendal Train Crash, 1957</h2>
           <p>In 1957 an excursion train crashed at Kendal. It was the worst rail disaster in Jamaica's history.</p>
         </div>
-        <span class="play">Play</span>
+        <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game bogwalk" data-game="bog-walk" href="games/bog-walk/site/">
+    <a class="game bogwalk" data-game="bog-walk" data-year="1904" href="games/bog-walk/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>Bog Walk Tube Flood, 1904</h2>
           <p>In June 1904 water rushed into a huge iron pipe while men were working inside.</p>
         </div>
-        <span class="play">Play</span>
+        <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game nanny" data-game="nanny" href="games/nanny/site/">
+    <a class="game nanny" data-game="nanny" data-year="1734" href="games/nanny/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>The Fall of Nanny Town, 1734</h2>
           <p>In 1734 British soldiers took Nanny Town, and the Maroons escaped into the mountains.</p>
         </div>
-        <span class="play">Play</span>
+        <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game eventide" data-game="eventide" href="games/eventide/site/">
+    <a class="game eventide" data-game="eventide" data-year="1980" href="games/eventide/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>Eventide Home Fire, 1980</h2>
           <p>In May 1980 a fire swept through a home for old women in Kingston.</p>
         </div>
-        <span class="play">Play</span>
+        <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game melissa" data-game="melissa" href="games/melissa/site/">
+    <a class="game melissa" data-game="melissa" data-year="2025" href="games/melissa/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>Hurricanes Charlie, Gilbert and Melissa</h2>
           <p>Charlie in 1951, Gilbert in 1988 and Melissa in 2025 were three of the worst storms ever to hit Jamaica.</p>
         </div>
-        <span class="play">Play</span>
+        <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game tivoli" data-game="tivoli" href="games/tivoli/site/">
+    <a class="game tivoli" data-game="tivoli" data-year="2010" href="games/tivoli/site/">
       <p class="tag">Early version</p>
       <div class="text">
         <div>
           <h2>Tivoli Incursion, 2010</h2>
           <p>In May 2010 soldiers and police entered Tivoli Gardens, and many people died.</p>
         </div>
-        <span class="play">Play</span>
+        <span class="play">Go there</span>
       </div>
     </a>
   </section>
@@ -293,7 +299,7 @@
   /* On the live site this page is the home page. In the repo it sits in menu/, one folder down, so the game links need "../". */
   if (/\/menu\/?(index\.html)?$/.test(location.pathname)) for (const a of document.querySelectorAll('a[data-game]')) a.href = '../games/' + a.dataset.game + '/site/';
   if(new URLSearchParams(location.search).get('testing')==='1'||document.querySelector('meta[name="testing-build"]')){
-    document.getElementById('testingnote').hidden=false;document.title='History Games: Testing';
+    document.getElementById('testingnote').hidden=false;document.title='PastPort - Jamaica (testing)';
   }
 </script>
 </body>

@@ -1,5 +1,6 @@
-/* The opening of the menu: a dial runs back through the years, two low notes land, and the name appears.
-   The behaviour is in intro.js, the markup is #intro in index.html. Nothing here touches the games.
+/* The opening of the menu. It starts by itself: a dial runs back through the years, a coloured passport stamp lands for every game,
+   two low notes sound, and the PastPort - Jamaica logo slams in with a glint of light, sparkles on the compass, and "Jamaica" cycling
+   through colours. There are no buttons on it. The behaviour is in intro.js, the markup is #intro in index.html.
    Without JavaScript the overlay is never shown (see the <noscript> in index.html), and if intro.js fails to load
    the overlay hides itself after 8 seconds (the animation at the top of #intro; intro.js switches it off). */
 #intro{display:none;position:fixed;inset:0;z-index:100;place-items:center;overflow:hidden;touch-action:none;
@@ -10,63 +11,82 @@
 @keyframes introFailsafe{to{visibility:hidden;pointer-events:none}}
 #intro.leaving{opacity:0;pointer-events:none;transition:opacity .7s ease}
 
-/* the dial: 36 ticks, one for every ten years. It turns backwards while the year counts down. */
-.in-stage{position:relative;width:min(66vmin,26rem);aspect-ratio:1;display:grid;place-items:center;transform:translateY(-5vh)}   /* a little above the middle, so the Begin button never touches the dial */
-.in-dial{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 14px rgba(255,182,39,.25));transition:opacity 1.1s ease,transform 1.6s ease}
-.in-ring{fill:none;stroke:rgba(255,182,39,.55);stroke-width:1.5}
+/* the dial and its stamps. --S is the size of the whole square. When the logo arrives the dial shrinks away. */
+.in-stage{--S:min(72vmin,28rem);position:relative;width:var(--S);aspect-ratio:1;display:grid;place-items:center;transition:opacity .3s ease,transform .5s ease}
+#intro.arrived .in-stage{opacity:0;transform:scale(.82)}
+.in-dial{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 14px rgba(255,182,39,.2))}
+.in-ring{fill:none;stroke:rgba(31,181,163,.85);stroke-width:2}
 .in-ring2{fill:none;stroke:rgba(255,247,232,.14);stroke-width:1}
 .in-tick{stroke:rgba(255,247,232,.55);stroke-width:1.6;stroke-linecap:round}
 .in-tick.major{stroke:rgba(255,182,39,.95);stroke-width:2.4}
 .in-mark{fill:var(--mango,#FFB627)}
 .in-halo{fill:none;stroke:var(--mango,#FFB627);stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center}
 #intro.arrived .in-halo{animation:halo 1.1s ease-out}
-@keyframes halo{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(1.28)}}
-#intro.named .in-dial{opacity:.18;transform:scale(1.12)}
+@keyframes halo{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(1.35)}}
+.in-year{position:relative;margin:0;font-weight:800;font-size:calc(var(--S) * .16);line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 
-.in-year{position:relative;margin:0;font-weight:800;font-size:clamp(2.8rem,16vmin,5.6rem);line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums;transition:opacity .25s ease}
-#intro:not(.running) .in-year{opacity:.55}
-#intro.named .in-year{opacity:0}
+/* a passport stamp for each game, in that game's own colour, tilted a little like a real one */
+.in-stamp{opacity:0;transform-box:fill-box;transform-origin:center;transform:scale(1.9) rotate(calc(var(--tilt) - 14deg))}
+.in-stamp.on{animation:stampIn .36s cubic-bezier(.2,1.3,.35,1) forwards}
+@keyframes stampIn{0%{opacity:0;transform:scale(1.9) rotate(calc(var(--tilt) - 14deg))}45%{opacity:1}100%{opacity:1;transform:scale(1) rotate(var(--tilt))}}
+.st-fill{fill-opacity:.18}
+.st-ring{fill:none;stroke-width:2}
+.st-dash{fill:none;stroke-width:1;stroke-dasharray:1.6 2.2;stroke-opacity:.7}
+.st-burst{fill:none;stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}
+.in-stamp.on .st-burst{animation:burst .6s ease-out .12s}
+@keyframes burst{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(1.9)}}
+.st-year{font-family:var(--font,system-ui,sans-serif);font-weight:800;letter-spacing:-.02em;text-anchor:middle;dominant-baseline:central}
 
-/* the name and the line under it */
-.in-title{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:1rem;text-align:center;pointer-events:none}
-.in-name{margin:0;font-weight:800;font-size:clamp(2.6rem,12.5vw,5.8rem);line-height:1;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
-.in-name span{display:inline-block;opacity:0}
-.in-tag{margin:0;font-weight:600;font-size:clamp(.8rem,2.6vw,1.05rem);letter-spacing:.3em;text-transform:uppercase;color:var(--sea,#1FB5A3);opacity:0;transition:opacity .8s ease .5s}
-#intro.named .in-name span{animation:letterIn .8s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.22s + var(--i) * 60ms)}   /* the year fades first, then the letters rise */
-#intro.named .in-tag{opacity:1}
-@keyframes letterIn{
-  0%{opacity:0;transform:translateY(.35em);filter:blur(10px);text-shadow:0 0 30px #FFB627}
-  60%{opacity:1;filter:blur(0)}
-  100%{opacity:1;transform:none;filter:blur(0);text-shadow:0 0 24px rgba(255,182,39,.35)}}
-
-/* before the first tap: the button that starts the sound (browsers only allow sound after a tap) */
-.in-gate{position:absolute;left:0;right:0;bottom:max(2.2rem,env(safe-area-inset-bottom));display:grid;justify-items:center;gap:.8rem;padding:0 1rem;text-align:center;transition:opacity .4s ease}
-#intro.running .in-gate{opacity:0;pointer-events:none;visibility:hidden;transition:opacity .4s ease,visibility 0s .4s}   /* hidden, so Tab cannot land on it */
-.in-line{margin:0;font-weight:600;font-size:1.05rem;color:rgba(255,247,232,.85)}
-.in-go{min-height:56px;padding:0 2.4rem;border:0;border-radius:999px;background:var(--mango,#FFB627);color:var(--deep,#041B2A);font:inherit;font-weight:800;font-size:1.15rem;cursor:pointer;animation:introCall 2.4s ease-out .6s 3}
-.in-go:hover{background:var(--paper,#FFF7E8)}
-@keyframes introCall{0%{box-shadow:0 0 0 0 rgba(255,182,39,.6)}100%{box-shadow:0 0 0 18px rgba(255,182,39,0)}}
-.in-sound,.in-skip{display:inline-flex;align-items:center;min-height:44px;padding:0 1.1rem;border-radius:999px;border:2px solid rgba(255,247,232,.45);background:transparent;color:var(--paper,#FFF7E8);font:inherit;font-weight:600;font-size:.95rem;cursor:pointer}
-.in-sound:hover,.in-skip:hover{background:var(--paper,#FFF7E8);color:var(--deep,#041B2A);border-color:var(--paper,#FFF7E8)}
-.in-skip{position:absolute;top:max(1rem,env(safe-area-inset-top));right:1rem}
-#intro button:focus-visible{outline:3px solid var(--mango,#FFB627);outline-offset:3px}
+/* the logo and the effects that play over it. Every layer is the same size as the logo, so they line up exactly. */
+.in-final{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:clamp(.7rem,2.2vh,1.3rem);padding-bottom:3vh;pointer-events:none}
+#intro.named .in-final{animation:breathe 5s ease-in-out infinite}   /* it breathes a little while it is held */
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.012)}}
+.in-logo{position:relative;width:min(88vw,80vh,44rem);aspect-ratio:1200 / 838;opacity:0}
+#intro.arrived .in-logo{animation:slam .55s cubic-bezier(.2,1.35,.4,1) forwards}   /* on the first low note */
+@keyframes slam{0%{opacity:0;transform:scale(1.55) rotate(-5deg);filter:blur(14px)}50%{opacity:1}100%{opacity:1;transform:none;filter:blur(0)}}
+.lg-base{display:block;width:100%;height:100%;filter:drop-shadow(0 0 22px rgba(255,200,40,.2))}
+/* "Jamaica" cycles through colours: the same picture again, shown only where the gold script is (pastport-jamaica.webp is that mask), with its hue turning */
+.lg-jam{position:absolute;inset:0;opacity:0;background:url(pastport-logo.webp) center/100% 100% no-repeat;-webkit-mask:url(pastport-jamaica.webp) center/100% 100% no-repeat;mask:url(pastport-jamaica.webp) center/100% 100% no-repeat}
+#intro.named .lg-jam{opacity:1;animation:jamCycle 3s linear .6s infinite}
+@keyframes jamCycle{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
+/* a glint of light crossing the logo, kept to the logo's own shape by the mask */
+.lg-shine{position:absolute;inset:0;opacity:0;-webkit-mask:url(pastport-logo.webp) center/100% 100% no-repeat;mask:url(pastport-logo.webp) center/100% 100% no-repeat;
+  background:linear-gradient(105deg,rgba(255,255,255,0) 38%,rgba(255,244,205,.95) 50%,rgba(255,255,255,0) 62%) 100% 0/250% 100% no-repeat;mix-blend-mode:screen}
+#intro.named .lg-shine{animation:shine 1.05s ease-in-out .15s forwards}
+@keyframes shine{0%{opacity:0;background-position:100% 0}10%,90%{opacity:1}100%{opacity:0;background-position:0 0}}
+/* a ring of light on each of the two low notes */
+.lg-ring{position:absolute;left:45%;top:44%;width:70%;aspect-ratio:1;border-radius:50%;border:3px solid rgba(254,209,0,.9);opacity:0;transform:translate(-50%,-50%) scale(.6)}
+#intro.arrived .lg-ring.r1{animation:ringOut .9s ease-out forwards}
+#intro.named .lg-ring.r2{animation:ringOut .9s ease-out forwards}
+@keyframes ringOut{0%{opacity:.85;transform:translate(-50%,-50%) scale(.6)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.7)}}
+/* a sparkle on the top, left and right points of the compass star */
+.lg-spark{position:absolute;width:15%;aspect-ratio:1;transform:translate(-50%,-50%) scale(0);opacity:0;background:radial-gradient(circle,rgba(255,255,255,.95) 0,rgba(255,236,160,.75) 14%,rgba(255,220,120,0) 42%)}
+.lg-spark::before,.lg-spark::after{content:"";position:absolute;left:50%;top:50%;width:100%;height:3px;transform:translate(-50%,-50%);background:linear-gradient(90deg,rgba(255,255,255,0),#fff,rgba(255,255,255,0))}
+.lg-spark::after{transform:translate(-50%,-50%) rotate(90deg)}
+.lg-spark.sp1{left:44.8%;top:17.4%}.lg-spark.sp2{left:11%;top:43.6%}.lg-spark.sp3{left:80.2%;top:43.6%}
+#intro.named .lg-spark{animation:spark .9s ease-out forwards}
+#intro.named .lg-spark.sp1{animation-delay:.55s}#intro.named .lg-spark.sp2{animation-delay:.7s}#intro.named .lg-spark.sp3{animation-delay:.85s}
+@keyframes spark{0%{opacity:0;transform:translate(-50%,-50%) scale(0) rotate(-30deg)}35%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}100%{opacity:0;transform:translate(-50%,-50%) scale(.25) rotate(40deg)}}
+/* one line about what it is, under the logo */
+.in-desc{margin:0;max-width:92vw;font-weight:600;font-size:clamp(.9rem,3.4vw,1.2rem);line-height:1.3;color:rgba(255,247,232,.9);text-align:center;opacity:0;transition:opacity .8s ease 1s;text-wrap:balance}
+#intro.named .in-desc{opacity:1}
 h1:focus{outline:none}
 
 /* the menu rising in as the intro fades away (only after an intro has played) */
 .menu-in header,.menu-in .game{animation:cardIn .7s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(.1s + var(--i,0) * 80ms)}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
 
-/* short screens, such as a phone held sideways: a smaller dial, and Begin and Sound side by side */
+/* short screens, such as a phone held sideways: a smaller dial */
 @media (max-height:520px){
-  .in-stage{width:min(52vmin,16rem);transform:translateY(-12vh)}
-  .in-gate{grid-auto-flow:column;align-items:center;justify-content:center;gap:.8rem}
-  .in-line{display:none}
+  .in-stage{--S:min(62vmin,18rem)}
 }
 
 @media (prefers-reduced-motion:reduce){
-  .in-dial{transition:none}
-  #intro.arrived .in-halo{animation:none}
-  #intro.named .in-name span{animation:none;opacity:1}
-  .in-go{animation:none}
+  .in-stage{transition:none}
+  #intro.arrived .in-halo,.in-stamp.on .st-burst{animation:none}
+  .in-stamp.on{animation:none;opacity:1;transform:rotate(var(--tilt))}
+  #intro.arrived .in-logo{animation:none;opacity:1}
+  #intro.named .in-final{animation:none}
+  #intro .lg-jam,#intro .lg-shine,#intro .lg-ring,#intro .lg-spark{animation:none!important;opacity:0!important}
   .menu-in header,.menu-in .game{animation:none}
 }
