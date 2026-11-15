@@ -64,5 +64,9 @@
  "SitPoseF": "Female_Sitting_Pose.fbx",
  "Crawl": "Crawling.fbx",
  "Pray2": "Praying_2.fbx",
- "Pray3": "Praying_3.fbx"
+ "Pray3": "Praying_3.fbx",
+ "RifleWalk": "Walk_With_Rifle.fbx",
+ "RifleWalk2": "Walk_With_Rifle_1.fbx",
+ "RifleCrouchWalk": "Rifle_Crouch_Walk.fbx",
+ "RifleWalkStop": "Rifle_Walk_To_Stop.fbx"
 }
