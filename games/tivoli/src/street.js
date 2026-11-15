@@ -1,6 +1,6 @@
 /* games/tivoli/src/street.js: the street for the May 2010 scene. It is MADE UP: no real street or address (the Commission's evidence about where things happened is
    disputed, docs/games/tivoli.md "The dispute"). It is meant to feel like West Kingston at midday: walk-up flats of four storeys in faded pastel render, with balconies,
-   burglar bars, louvred windows, laundry, satellite dishes, black water tanks and rebar on the roofs; shops with zinc roofs, roll-down shutters and painted signs;
+   burglar bars, louvred windows, laundry, black water tanks and rebar on the roofs; shops with zinc roofs, roll-down shutters and painted signs;
    a worn road with patches and cracks, concrete kerbs, drains, litter; wooden poles with sagging wires, street lamps; mango trees and palms; a hazy sky with distant
    hills. Vehicles are code-built (vehicles.js). At the far end a barricade of debris and an overturned minibus lies across the road (barricades at the vehicle entrances
    are agreed by every source). Metres. The street runs along x (east is +x, where the soldiers come from; west is -x, the barricade) and is 9 m wide (z -4.5 to 4.5).
@@ -22,7 +22,7 @@ function materials() {
     cream: st(0xdccfae, 3), blue: st(0xa6bfcb, 4), pink: st(0xdcb7a6, 5), green: st(0xb0c4a2, 6), yellow: st(0xe2d28a, 7), white: st(0xe8e4d8, 8), rawblock: W(TX.block(0x9a968c), TX.TILE.block),
     fence: W(TX.fenceBlock(), TX.TILE.fence, 0.9, 1.1), wallw: W(TX.block(0xe4e0d2, 9), TX.TILE.block), zinc: W(TX.zinc(), TX.TILE.zinc, 0.6), roofc: W(TX.stucco(0x8c8c88, 10), TX.TILE.stucco),
     win: M(0x364049, 0.5), frame: M(0xe6e2d6), slat: M(0x3a444c, 0.5), bar: M(0x2a2a2e, 0.6, 0.3), gate: M(0xf0eee6, 0.6, 0.2), door: M(0x4a3a2c), kerb: M(0xb4b0a4), drain: M(0x1a1a1c), mark: M(0xdad6c4),
-    tank: M(0x1d1d20, 0.7), dish: M(0xe0e0e0, 0.5, 0.2), ac: M(0xc4c6c6, 0.6), rebar: M(0x7a4a30, 0.8, 0.3), pole: M(0x6a5e50), insul: M(0x2d6a60, 0.4), lamp: new THREE.MeshStandardMaterial({ color: 0xeeeedd, emissive: 0x555544 }),
+    tank: M(0x1d1d20, 0.7), ac: M(0xc4c6c6, 0.6), rebar: M(0x7a4a30, 0.8, 0.3), pole: M(0x6a5e50), insul: M(0x2d6a60, 0.4), lamp: new THREE.MeshStandardMaterial({ color: 0xeeeedd, emissive: 0x555544 }),
     trunk: M(0x5d4a35), leaf1: M(0x4d7a39), leaf2: M(0x628a45), leaf3: M(0x3f6a35), frond: M(0x5a8a3a), tyre: M(0x1b1b1d), wood: M(0x8c6b45), plank: M(0xa88a5c), rust: M(0x8a5a3c, 0.8, 0.3), junk: M(0x6a6a68),
     glass: M(0x2a3640, 0.2, 0.4), laundry1: M(0xd04a3a), laundry2: M(0x3a6ac0), laundry3: M(0xf0ece0), laundry4: M(0xe0c030),
     litter1: M(0xd8d8d0), litter2: M(0x3a7a4a), litter3: M(0xc8a040), litter4: M(0x4a6aa8), hill: M(0x5d7a5a, 1),
@@ -46,7 +46,7 @@ export function buildStreet(opts = {}) {
   for (let x = -40; x < 40; x += 9) for (const sz of [-1, 1]) { box(X.drain, 0.9, 0.04, 0.35, x + 2 * sz, 0.0, sz * 4.2); for (let k = 0; k < 4; k++) box(X.kerb, 0.04, 0.045, 0.3, x + 2 * sz - 0.3 + k * 0.2, 0.005, sz * 4.2); }   /* storm drains with grates */
   const bits = [X.litter1, X.litter2, X.litter3, X.litter4]; for (let i = 0; i < 90; i++) { const sz = rnd() < 0.5 ? -1 : 1, x = -45 + rnd() * 90, z = rnd() < 0.6 ? sz * (4.0 + rnd() * 0.4) : sz * (4.8 + rnd() * 2.6); box(bits[(rnd() * 4) | 0], 0.1 + rnd() * 0.25, 0.04 + rnd() * 0.08, 0.08 + rnd() * 0.2, x, 0.0, z, rnd() * 3); }   /* litter */
 
-  /* ---- walk-up flats: render, plinth, balconies with railings and burglar bars, louvred windows, laundry, dishes, rooftop tanks and rebar ---- */
+  /* ---- walk-up flats: render, plinth, balconies with railings and burglar bars, louvred windows, laundry, rooftop tanks and rebar ---- */
   function flats(x, z, w, d, floors, mat, facing = 1) {
     const h = floors * 3.1, fz = z + facing * (d / 2 + 0.02), cols = Math.floor(w / 3.2), tall = floors > 2;
     SO('building', x - w / 2 - 0.15, x + w / 2 + 0.15, z - d / 2 - 0.15, z + d / 2 + 0.15, 0, h + 0.9, 'flats@' + x + ',' + z); if (floors > 1) SO('building', x - w / 2, x + w / 2, facing > 0 ? z + d / 2 : z - d / 2 - 1.4, facing > 0 ? z + d / 2 + 1.4 : z - d / 2, 3, h, 'balconies@' + x + ',' + z);
@@ -62,7 +62,7 @@ export function buildStreet(opts = {}) {
         if (f < 2 && tall) { for (let b = 0; b < 6; b++) box(X.bar, 0.025, 1.6, 0.025, wx - 0.6 + b * 0.24, wy - 0.1, fz + facing * 0.16); box(X.bar, 1.4, 0.03, 0.03, wx, wy + 0.4, fz + facing * 0.16); box(X.bar, 1.4, 0.03, 0.03, wx, wy - 0.4, fz + facing * 0.16); }   /* burglar bars */
         if (rnd() < 0.22) box(X.ac, 0.7, 0.45, 0.4, wx + 0.5, wy - 0.5, fz + facing * 0.3);                          /* a window air conditioner */
         if (f && rnd() < 0.2) { const lm = [X.laundry1, X.laundry2, X.laundry3, X.laundry4]; for (let k = 0; k < 3; k++) box(lm[(rnd() * 4) | 0], 0.4, 0.55, 0.02, wx - 0.5 + k * 0.5, y0 + 0.2, fz + facing * 1.25); }   /* laundry on the balcony rail */
-        if (f && rnd() < 0.16) { const dd = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 5, 0, Math.PI * 2, 0, 1.2), X.dish); dd.position.set(wx + 0.3, y0 + 1.5, fz + facing * 1.0); dd.rotation.set(facing * -0.9, 0, 0); g.add(dd); box(X.bar, 0.05, 1.4, 0.05, wx + 0.3, y0, fz + facing * 1.0); }   /* a satellite dish on a post standing on the balcony slab */
+        if (f) rnd();   /* keeps the random draws in step, so the street looks the same (there are no satellite dishes in this game) */
       }
     }
     box(X.door, 1.3, 2.2, 0.1, x - w / 2 + 1.6, 0.02, fz); box(X.frame, 1.5, 0.12, 0.14, x - w / 2 + 1.6, 2.25, fz);
@@ -109,11 +109,12 @@ export function buildStreet(opts = {}) {
 
   /* ---- the barricade at x = -27: an overturned minibus and a car pushed across the road, tyres, pallets, planks and rubble ---- */
   const bx = -27, ov = overturned(minibus(0xe4e8e4, 0xe4e8e4), 1, 1.7); ov.position.set(bx, 0, -1.4); ov.rotation.y = 1.32; g.add(ov);
-  const pushed = sedan(0x707880); pushed.position.set(bx + 0.3, 0.1, 2.6); pushed.rotation.set(0.05, 1.45, 0.06); g.add(pushed);
-  for (let i = 0; i < 5; i++) { cyl(X.tyre, 0.42, 0.24, bx + 0.9 + (i % 2) * 0.35, i * 0.25, 3.7, 14); cyl(X.tyre, 0.42, 0.24, bx - 0.6, i * 0.25, -3.8 + (i % 3) * 0.3, 14); }
-  for (let i = 0; i < 7; i++) { const p = box(X.wood, 1.2, 0.14, 1, bx + 1.1 + (i % 3) * 0.55, 0.15 + (i % 4) * 0.15, 0.4 + (i % 2) * 1.5, i * 0.5); for (let s = 0; s < 3; s++) box(X.plank, 1.2, 0.03, 0.08, bx + 1.1 + (i % 3) * 0.55, 0.23 + (i % 4) * 0.15, 0.1 + (i % 2) * 1.5 + s * 0.3, i * 0.5); }
-  for (let i = 0; i < 6; i++) box(X.plank, 0.12, 2.6, 0.2, bx + 1.8, 0, -4 + i * 1.6, 0.3, 0.5);
-  for (let i = 0; i < 40; i++) box(i % 3 ? X.rust : X.junk, 0.3 + (i % 5) * 0.18, 0.25 + (i % 3) * 0.22, 0.4 + (i % 4) * 0.1, bx - 1.3 + ((i * 37) % 36) / 10, 0, -4.3 + ((i * 53) % 86) / 10, i);
+  const pushed = sedan(0x707880); pushed.position.set(bx + 0.3, 0.1, 3.5); pushed.rotation.set(0.05, 1.45, 0.06); g.add(pushed);
+  /* the junk piled in front (east) of the two vehicles, kept clear of them (x from -24.9): two straight stacks of tyres, two stacks of pallets, leaning planks and rubble */
+  for (let i = 0; i < 5; i++) cyl(X.tyre, 0.42, 0.24, bx + 3.0, i * 0.24, 3.9, 14); for (let i = 0; i < 4; i++) cyl(X.tyre, 0.42, 0.24, bx + 3.0, i * 0.24, -3.9, 14);
+  for (const [pz, n] of [[1.5, 4], [-1.7, 3]]) for (let i = 0; i < n; i++) { const y = i * 0.17; box(X.wood, 1.2, 0.14, 1, bx + 2.9, y, pz); for (let k = 0; k < 3; k++) box(X.plank, 1.2, 0.03, 0.08, bx + 2.9, y + 0.14, pz - 0.3 + k * 0.3); }
+  for (let i = 0; i < 6; i++) box(X.plank, 0.12, 2.6, 0.2, bx + 3.9, 0, -4 + i * 1.6, 0.3, 0.5);
+  for (let i = 0; i < 30; i++) box(i % 3 ? X.rust : X.junk, 0.25 + (i % 5) * 0.12, 0.2 + (i % 3) * 0.16, 0.3 + (i % 4) * 0.08, bx + 2.5 + ((i * 37) % 13) / 10, 0, -3.2 + ((i * 53) % 64) / 10, i);
   spots.barricade = [[bx - 2.2, -3], [bx - 2.4, -1.2], [bx - 2.2, 0.8], [bx - 2.5, 2.4], [bx - 2.3, 3.8]];
 
   /* ---- poles, wires, street lamps, trees, hills ---- */
@@ -143,4 +144,26 @@ export function buildStreet(opts = {}) {
   /* vehicles: boxes from their real bounds, found after they are placed */
   for (const [nm, v] of [['car', car], ['van', van], ['parked', parked], ['parked2', parked2], ['parked3', parked3]]) { v.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(v); solids.push({ kind: 'vehicle', name: nm, x0: b.min.x, x1: b.max.x, z0: b.min.z, z1: b.max.z, y0: b.min.y, y1: b.max.y }); }
   return { group: out, spots, sun, raw: g, solids };   /* raw: the unmerged parts, for the place audit (?test=audit) */
+}
+
+/* Chapter 4 walks this same street on Sunday 23 May 2010, the day before the operation: no soldiers yet, three neighbours, the barricade already across the road.
+   The walls are made from the solid boxes (buildings, fences, vehicles, cover, posts, tree trunks), so the overlap check and the walking agree. */
+export function streetPlace(opts = {}) {
+  const st = buildStreet(opts), walls = [];
+  for (const s of st.solids) {
+    if (s.y0 > 1) continue;                                            /* canopies, balconies, crossarms, walkway roofs: overhead, not in the way */
+    if (s.kind === 'tree') { if (/^palm/.test(s.name)) { const cx = (s.x0 + s.x1) / 2, cz = (s.z0 + s.z1) / 2; walls.push([cx - 0.35, cz - 0.35, cx + 0.35, cz + 0.35]); } else if (/^trunk/.test(s.name)) walls.push([s.x0, s.z0, s.x1, s.z1]); continue; }
+    walls.push([s.x0 - 0.2, s.z0 - 0.2, s.x1 + 0.2, s.z1 + 0.2]);
+  }
+  walls.push([-31.5, -4.6, -24.2, 4.8]);                               /* the barricade itself: you cannot climb it */
+  const npcs = [
+    { id: 'gran', name: 'Gran Ivy', look: 'ivyGran', x: 18.4, z: 7.2, ry: -Math.PI / 2, anim: 'Idle' },
+    { id: 'dawn', name: 'Miss Dawn', look: 'dawn', x: -12.4, z: 5.4, ry: 0.2, anim: 'Idle' },
+    { id: 'brown', name: 'Mr Brown', look: 'brown', x: -20.2, z: 6.0, ry: -Math.PI / 2, anim: 'Idle' },
+  ];
+  for (const n of npcs) st.solids.push({ kind: 'person', name: n.id, x0: n.x - 0.3, x1: n.x + 0.3, z0: n.z - 0.3, z1: n.z + 0.3, y0: 0, y1: 1.7 });
+  const start = { x: 8, z: 6.4, yaw: Math.atan2(-(18.4 - 8), -(7.2 - 6.4)) };   /* facing Gran Ivy */
+  st.solids.push({ kind: 'person', name: 'start', x0: start.x - 0.3, x1: start.x + 0.3, z0: start.z - 0.3, z1: start.z + 0.3, y0: 0, y1: 1.7 });
+  const groundAt = (x, z) => (Math.abs(z) > 4.64 && Math.abs(z) <= 8.1 ? 0.16 : Math.abs(z) >= 4.36 && Math.abs(z) <= 4.64 ? 0.2 : 0);   /* pavements 16 cm, kerbs 20 cm, road and grass 0 */
+  return { ...st, groundAt, walls, npcs, start, endSpot: { x: 19.8, z: 7.9, r: 0.9 }, bounds: { x0: -44, x1: 40, z0: -8.2, z1: 8.3 } };
 }

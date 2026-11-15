@@ -16,12 +16,13 @@ import { arm, weaponTick, heldReport, ARMED, modeOf } from './weapons.js';
 import { snapMeshes, auditPlace } from '../../../engine/audit.js';   // dev only: the place audit (CLAUDE.md rule 8)
 import { contentRects, contentsOverlap } from '../../../engine/ui-audit.js';   // dev only: the layout test
 import { buildBackOWall } from './backowall.js';
-import { buildStreet } from './street.js';
+import { buildNewTivoli } from './newtivoli.js';
+import { buildStreet, streetPlace } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage } from './story.js';
-import { CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip } from './ch1.js';
+import { WALKS, CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip } from './ch1.js';
 import { FIGHT, positions as fightPositions, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
-import { auditCloth, auditWalk, skinProbe, overlapSolids } from './checks.js';   // dev only: local copies until the engine has them (see checks.js)   // gunfight poses: real clips when the library has them, stand-ins until then
+import { auditCloth, auditWalk, skinProbe, overlapSolids, sinkCheck } from './checks.js';   // dev only: local copies until the engine has them (see checks.js)   // gunfight poses: real clips when the library has them, stand-ins until then
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -91,7 +92,7 @@ Promise.all(['anims', 'anims_tivoli'].map((name) => model(name).then((asset) => 
 });
 
 const uiS = (k) => uiSound(k);
-function startChapter(id) { if (id === 1) ch1Begin(); else if (id === 5) fightOpen(); }
+function startChapter(id) { if ([1, 2, 3, 4, 6, 7, 8].includes(id)) ch1Begin(id); else if (id === 5) fightOpen(); }
 $('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
 const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n) };
 setupTalk(talkEnv); setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS }); initStory({ startChapter, uiSound: uiS });
@@ -105,7 +106,7 @@ function devLog(lines, title) { let el = $('autolog'); if (!el) { el = document.
 async function devViews() {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), test = q.get('test'), lo = q.has('lo') ? '_lo' : '';
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
-  if (q.get('chapter') === '1') { await ch1Begin(); if (q.get('at')) ch1Skip(q.get('at')); return; }
+  if (['1', '2', '3', '4', '6', '7', '8'].includes(q.get('chapter'))) { await ch1Begin(+q.get('chapter')); if (q.get('at')) ch1Skip(q.get('at')); return; }
   if (shot === 'poster') {   /* ?shot=poster&cx=&cy=&cz=&tx=&ty=&tz=: the quiet street with nobody in it, for the menu picture (menu/tivoli.jpg) */
     await fightBegin(); FIGHT.freeze = true; $('hud').hidden = true; for (const id of ['fightcard', 'readcard', 'scenetitle', 'windowframe']) { const e = $(id); if (e) e.hidden = true; }
     scene.traverse((o) => { if (o.isSkinnedMesh) { let p = o; while (p.parent && p.parent !== scene) p = p.parent; p.visible = false; } });
@@ -137,14 +138,22 @@ async function devViews() {
   if (test === 'audit') {   /* ?test=audit: the street (built unmerged): floating signs, lamps, tanks, roofs, and anyone standing or running through a solid. Expect 0 issues. */
     const st = buildStreet({}), snap = snapMeshes(st.raw), r = auditPlace({ id: 'street', snap, npcs: fightPositions(), walls: [], bounds: { x0: -45, x1: 40, z0: -4.4, z1: 4.4 }, start: { x: -10, z: 0 }, actions: [], people: [] });
     const lines = ['street: ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + r.floating.length + ' floating, ' + r.inside.length + ' inside solids, ' + r.stuck.length + ' unreachable)', ...r.floating.map((l) => '  floating: ' + l), ...r.inside.map((l) => '  inside: ' + l), ...r.stuck.map((l) => '  stuck: ' + l)];
-    const ov = overlapSolids(st.solids); lines.push('overlaps: ' + ov.length); for (const l of ov) lines.push('  ' + l);
-    const bw = buildBackOWall({}), ov2 = overlapSolids(bw.solids); lines.push('back-o-wall overlaps: ' + ov2.length); for (const l of ov2) lines.push('  ' + l);
-    devLog(lines, 'AUDIT ' + (r.floating.length + r.inside.length + r.stuck.length + ov.length + ov2.length));
+    const ov = overlapSolids(st.solids).concat(sinkCheck(snap, fightPositions())); lines.push('overlaps: ' + ov.length); for (const l of ov) lines.push('  ' + l);
+    let extra = 0;
+    for (const [id, pl] of [...Object.entries(WALKS).map(([n, w]) => ['chapter ' + n, w.build({})])]) {   /* every walking chapter, with its own place and people */   /* the walking places: the engine's place audit, and the solid-box overlap check */
+      const ov2 = overlapSolids(pl.solids), npc = pl.npcs.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: 'Idle', ground: pl.groundAt ? pl.groundAt(n.x, n.z) : 0 })), bd = pl.bounds || { x0: -23, x1: 17.5, z0: -13.6, z1: 14.2 };
+      const r2 = auditPlace({ id, snap: snapMeshes(pl.raw), npcs: npc, walls: pl.walls, bounds: bd, start: pl.start, actions: [{ label: 'end spot', ...pl.endSpot }], people: npc });
+      ov2.push(...sinkCheck(snapMeshes(pl.raw), npc)); const n2 = r2.floating.length + r2.inside.length + r2.stuck.length + ov2.length; extra += n2;
+      lines.push(id + ': ' + n2 + ' issues (' + r2.floating.length + ' floating, ' + r2.inside.length + ' inside solids, ' + r2.stuck.length + ' unreachable, ' + ov2.length + ' overlaps)', ...r2.floating.map((l) => '  floating: ' + l), ...r2.inside.map((l) => '  inside: ' + l), ...r2.stuck.map((l) => '  unreachable: ' + l), ...ov2.map((l) => '  ' + l));
+    }
+    devLog(lines, 'AUDIT ' + (r.floating.length + r.inside.length + r.stuck.length + ov.length + extra));
   }
   if (test === 'layout') {   /* ?test=layout: show each card and title state and check that no two bits of text overlap, nothing is off the sides of the screen, and every button is big enough to touch (44 px). Run at 390x800, 320x568, 667x375, 800x500, 1280x720. */
     const out = [], W = innerWidth, Hh = innerHeight, st2 = document.createElement('style'); st2.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st2);
-    const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'windowframe', 'hud'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['scenetitle', 'windowframe']]]) {
+    const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'windowframe', 'hud', 'chcard', 'journal', 'chapters'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['scenetitle', 'windowframe']], ['chapter title over the goal and buttons', ['scenetitle', 'hud']], ['chapter end card', ['chcard']], ['journal', ['journal']], ['chapters', ['chapters']]]) {
+      if (show.includes('hud')) { const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = 'Sunday 23 May 2010.'; t.append(b); for (const l of ['You live in Tivoli Gardens with Gran Ivy.', 'The girl from Back-o-Wall is a grandmother now.']) { const p = document.createElement('p'); p.textContent = l; t.append(p); } $('goal').textContent = 'Talk to Mr Clarke by the community centre.'; }
+      if (show.includes('chcard')) { $('chcardt').textContent = 'May 2010: before'; $('chcardl').replaceChildren(...['On 23 May 2010 the Government declared a state of emergency.', 'Barricades blocked the roads into Tivoli Gardens.', 'The next day, soldiers and police went in.', 'Gran Ivy, Miss Dawn and Mr Brown are made up.'].map((x) => { const p = document.createElement('p'); p.textContent = x; return p; })); }
       for (const id of ALL) $(id).hidden = !show.includes(id); await frames();
       const els = show.flatMap((id) => [...$(id).querySelectorAll('h1,h2,p,label,button,a,b')]).filter((e) => contentRects(e).length);
       for (const e of els) { for (const r of contentRects(e)) if (r.left < -1 || r.right > W + 1) out.push(`${W}x${Hh} ${name}: "${(e.textContent || '').slice(0, 30)}" is off the side of the screen`); if (e.matches('button,a.btn') && e.getBoundingClientRect().height < 44) out.push(`${W}x${Hh} ${name}: button "${e.textContent.slice(0, 24)}" is under 44 px tall`); }
@@ -209,7 +218,7 @@ function frame(t) {
       stepT -= dt * sp; if (stepT <= 0) { stepT = 1.4; stepSound('sand'); } }
   }
   if (CH.on) { updateTalk(dt, state, state.started && !busy); ch1Tick(dt); }
-  for (const mx of mixers) mx.update(dt); for (const n of Talk.npcs) if (n.body.userData.anim) n.body.userData.anim.tick(dt);
+  for (const mx of mixers) mx.update(dt); for (const n of Talk.npcs) { if (n.body.userData.anim) n.body.userData.anim.tick(dt); groundFeet(n.body); }   /* the story people: shoes pinned to the ground every frame, so feet never sink */
   if (__DEV__) for (const m of DEVG) groundFeet(m);
   for (const m of ARMED) weaponTick(m);   // after the mixer and the feet: weapons follow the hands
   if (FIGHT.on) fightAfter(t / 1000); else { camera.position.set(state.x, state.camY || 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); }
