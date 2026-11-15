@@ -487,7 +487,7 @@ function prep(root) { root.traverse((o) => { if (o.isMesh && TEXMAP[o.material.n
 const SKIN_K = 1.0;   /* the skin factor for this game's light (docs/PIPELINE.md, "Skin"): this game's sun, sky and tone mapping are brighter than Kendal's, so Skin is drawn as built. Measured with ?test=skin */
 function prep0(root) { root.traverse((o) => { if (o.isMesh) { const m = o.material; if (m.name === 'Skin' && o.isSkinnedMesh) m.color.setScalar(SKIN_K); if (m.map) m.map.anisotropy = maxAniso; if (m.name === 'LeadedGlass') { m.emissive = new THREE.Color(0x4a6470); m.emissiveMap = m.map; m.roughness = 0.2; } if (o.isSkinnedMesh) o.frustumCulled = false; } }); return root; }
 let mixer = null, idle = null, runA = null; const survivors = {}; let galdy = null, third = false, gWalk = false; const people = {};
-const MENU = { ok: false, url: '../../../menu/' }; { const links = ['allgames', 'jhome'].map((id) => document.getElementById(id)).filter(Boolean); for (const a of links) a.hidden = true; fetch(MENU.url, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : '')).then((t) => { if (/History Games/.test(t)) { MENU.ok = true; for (const a of links) a.hidden = false; } }).catch(() => {}); }   /* only when the real game menu is there */   /* the 'Main Menu' button shows only where the game menu exists (the website, not the artifact copy) */
+const MENU = { ok: true, url: '../../../menu/' };   /* Always available on the game collection, even if a menu fetch would fail. */
 const TICKS = [], EXTRA_IN = [];   /* Mixamo clips from anims.glb, shared by everyone (same skeleton) */
 const TALKS = ['Talk1', 'Talk2', 'Talk3']; let talkN = 0, speaker = null;
 function speakerModel(who) { if (who === 'Abba') return abba; if (who === 'Kofi') return state.place === 'after' ? survivors.kofi : people.kofi; if (who === 'Emmanuel Heath') return people.heath;
@@ -1150,7 +1150,7 @@ async function loadAll() {
   await stage(['tex_harbour', 'merchant', 'sloop'], (f) => { $('bar').style.width = Math.round(f * 100) + '%'; });
   await decodeTex();
   for (const k of ['merchant', 'sloop']) { shipsM[k] = prep(window.__got[k].scene); shipsM[k].traverse((o) => { if (o.isMesh && (o.material.name === 'Rope' || o.material.name === 'Tar')) { o.material.fog = false; o.material.color.multiplyScalar(0.55); o.material.needsUpdate = true; }   /* ropes stay dark against the sky instead of fading into pale dashes in the haze */ if (o.isMesh && o.material.name === 'Flag') { const q = o.geometry.attributes.position, f = new Float32Array(q.count * 3); for (let i = 0; i < q.count; i++) { f[i * 3] = q.getX(i); f[i * 3 + 1] = q.getY(i); f[i * 3 + 2] = q.getZ(i); } const p = new THREE.BufferAttribute(f, 3); o.geometry.setAttribute('position', p); o.updateMatrixWorld(true); const sc = o.getWorldScale(new THREE.Vector3()), u = o.geometry.attributes.uv, uv = { getX: (i) => u.getX(i) }; flagsM.push({ p, base: f.slice(), uv, k: 1 / ((sc.z || 1) / (shipsM[k].scale.z || 1)), ky: 1 / ((sc.y || 1) / (shipsM[k].scale.y || 1)) }); o.frustumCulled = false; } }); }
-  buildHarbour(); $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Step ashore'; $('savenote').hidden = !hasSave; $('loadnote').hidden = true; document.querySelector('.track').hidden = true;
+  buildHarbour(); $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('savenote').hidden = !hasSave; $('loadnote').hidden = true;
   // stage 2: the town streams in while you walk the pier
   await stage(['tex_town', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'abba', 'kofi', 'sailor', 'benning', 'anims']);
   await decodeTex(); for (const k in window.__tex) window.__tex[k] = '';
@@ -1465,7 +1465,7 @@ if (window.claude?.hot?.ready) window.claude.hot.ready(start); else start(window
 goArrive = chapterFade('goArrive', goArrive); leaveWare = chapterFade('leaveWare', leaveWare); beginWare = chapterFade('beginWare', beginWare); beginQuake = chapterFade('beginQuake', beginQuake); beginAfter = chapterFade('beginAfter', beginAfter); toYard = chapterFade('toYard', toYard); leaveQuake = chapterFade('leaveQuake', leaveQuake);
 
 /* credits */
-$('dev').onclick = () => { $('credits').hidden = false; }; $('crclose').onclick = () => { $('credits').hidden = true; }; $('chcred').onclick = () => { $('credits').hidden = false; };
+$('crclose').onclick = () => { $('credits').hidden = true; }; $('chcred').onclick = () => { $('credits').hidden = false; };
 
 /* first person or third person (see Lewis Galdy) */
 function toggleView() { if (!galdy || FB.on) return;   /* in Ned’s story you are young Ned, so no Galdy view */ third = !third; if (third) galdy.rotation.y = state.yaw + Math.PI; $('view').setAttribute('aria-pressed', String(third)); toast(third ? 'You can see Lewis Galdy. Press V to look through his eyes again.' : 'You see through Galdy\u2019s eyes.'); }

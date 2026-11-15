@@ -157,6 +157,7 @@ body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){v
 @media (prefers-reduced-motion:reduce){#bar{transition:none}#hold{animation:none}}
 .chfoot{flex-wrap:wrap}
 </style>
+<link rel="stylesheet" href="title.css">
 </head>
 <body>
 <canvas id="stage" tabindex="0" aria-label="A village lane in Jamaica, before a hurricane"></canvas>
@@ -166,12 +167,11 @@ body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){v
     <p class="place">Jamaica &middot; October 2025</p>
     <h1>Melissa 2025 <span>The Storm and the Days After</span></h1>
     <p class="intro">In October 2025, Hurricane Melissa came to Jamaica. It was one of the strongest storms ever to hit the island. You will meet a made-up family in a made-up village, get ready, shelter from the wind, and help your neighbours.</p>
-    <p class="intro">First, a flashback to Hurricane Gilbert in 1988. This story is told gently. It has loud parts you can skip. It is also a story about helping.</p>
-    <div class="loading">
+    <p class="intro">First, two flashbacks: Hurricane Charlie in 1951 and Hurricane Gilbert in 1988. This story is told gently. It has loud parts you can skip. It is also a story about helping.</p>
+    <div class="loading title-actions">
       <button id="start" class="btn" disabled>Loading</button>
       <button id="tchap" class="btn ghost" hidden>Chapters</button>
       <a id="allgames" class="btn ghost" href="../../../menu/">Main Menu</a>
-      <button id="dev" class="dev" title="Credits">Created by <b>Kellz 5.0</b></button>
       <div class="track" aria-hidden="true"><div id="bar"></div></div>
       <p id="loadnote">Loading the village.</p>
     </div>
@@ -207,7 +207,7 @@ body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){v
       <header><h2 id="jtitle">Journal</h2><button id="jclose">Close</button></header>
       <div id="jtabs"></div>
       <div id="jpage"></div>
-      <footer><span>Pages open as you play</span><a id="jhome" class="btn ghost" href="../../../menu/" hidden>Main Menu</a><button id="jchap" class="btn">Chapters</button></footer>
+      <footer><span>Pages open as you play</span><a id="jhome" class="btn ghost" href="../../../menu/">Main Menu</a><button id="jchap" class="btn">Chapters</button></footer>
     </div>
   </div>
 </div>
@@ -221,7 +221,10 @@ body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){v
       <li>The Jamaica Information Service, <i>Hurricane Gilbert: memories still linger after 35 years</i> (2023)</li>
       <li>The United States National Hurricane Center, Tropical Cyclone Report: Hurricane Melissa</li>
       <li>The Pan American Health Organization, situation reports on Hurricane Melissa in Jamaica</li>
-      <li>The Jamaica Gleaner and the Jamaica Observer, on Hurricane Melissa and Hurricane Gilbert</li>
+      <li>The Jamaica Gleaner and the Jamaica Observer, on Hurricane Melissa, Hurricane Gilbert and Hurricane Charlie (including the Gleaner front page of 20 August 1951, as printed again by the Gleaner)</li>
+      <li>The National Library of Jamaica, <i>History of Hurricanes and Floods in Jamaica</i></li>
+      <li>The United States National Hurricane Center, best-track records of Atlantic hurricanes (HURDAT2)</li>
+      <li>The UK Parliament record (Hansard), 1951 to 1955, on the help sent to Jamaica after Hurricane Charlie</li>
     </ul>
     <p>You, your family and everyone in Breadnut Corner are made up. Breadnut Corner is not a real village. The storms, the government and the helpers are real. No real person speaks in this game. Colours, clothes and the look of the houses are our best guess from general knowledge.</p>
     </div>

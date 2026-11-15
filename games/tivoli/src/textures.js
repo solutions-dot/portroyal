@@ -14,7 +14,7 @@ function tex(draw, size = 256, seed = 1) {
 function speckle(g, s, r, n, a = 0.08) { for (let i = 0; i < n; i++) { g.fillStyle = r() < 0.5 ? `rgba(0,0,0,${a})` : `rgba(255,255,255,${a})`; g.fillRect(r() * s, r() * s, 1 + r() * 2, 1 + r() * 2); } }
 function wrapped(g, s, x, y, w, h, draw) { for (const dx of [0, -s, s]) for (const dy of [0, -s, s]) { g.save(); g.translate(dx, dy); draw(x, y, w, h); g.restore(); } }
 
-export const TILE = { stucco: 4, block: 3, zinc: 3, asphalt: 6, paving: 3, grass: 5, boards: 2, dirt: 5 };
+export const TILE = { stucco: 4, block: 3, zinc: 3, asphalt: 6, paving: 3, grass: 5, boards: 2, dirt: 5, fence: 1.3 };
 
 export function stucco(colour, seed = 3) {
   return tex((g, s, r) => {
@@ -97,5 +97,20 @@ export function dirt(seed = 23) {
     for (let i = 0; i < 140; i++) { const v = r() < 0.5 ? 0.6 : 1.3; g.fillStyle = `rgba(${150 * v},${126 * v},${96 * v},0.7)`; g.fillRect(r() * s, r() * s, 1 + r() * 3, 1 + r() * 2); }   /* pebbles */
     g.strokeStyle = 'rgba(70,52,34,0.35)'; g.lineWidth = 1; for (let i = 0; i < 8; i++) { let x = r() * s, y = r() * s; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 8; k++) { x += (r() - 0.5) * 22; y += (r() - 0.5) * 22; g.lineTo(x, y); } g.stroke(); }
     speckle(g, s, r, 2200, 0.1);
+  }, 256, seed);
+}
+
+/* White-painted cast-block fence panels, as seen on the residential lanes in Gleaner photographs of 22 to 27 May 2010 (a repeating pattern of round openings in a white-washed panel, a little grubby at the foot). General look only, not a copy of any one fence. */
+export function fenceBlock(seed = 31) {
+  return tex((g, s, r) => {
+    g.fillStyle = '#e6e2d6'; g.fillRect(0, 0, s, s); const n = 2, c = s / n;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const cx = i * c + c / 2, cy = j * c + c / 2;
+      g.fillStyle = '#4a4740'; g.beginPath(); g.arc(cx, cy, c * 0.26, 0, 7); g.fill();            /* the opening */
+      g.strokeStyle = '#f4f1e8'; g.lineWidth = c * 0.07; g.beginPath(); g.arc(cx, cy, c * 0.3, 0, 7); g.stroke();   /* a lighter ring round it */
+      g.strokeStyle = '#cfcabb'; g.lineWidth = 3; g.strokeRect(i * c + 2, j * c + 2, c - 4, c - 4);
+    }
+    const gr = g.createLinearGradient(0, s * 0.7, 0, s); gr.addColorStop(0, 'rgba(90,80,60,0)'); gr.addColorStop(1, 'rgba(90,80,60,0.28)'); g.fillStyle = gr; g.fillRect(0, s * 0.7, s, s * 0.3);   /* dirt at the foot */
+    speckle(g, s, r, 700);
   }, 256, seed);
 }

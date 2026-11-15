@@ -91,7 +91,7 @@ function setGoal(t) { $('goal').textContent = t; }
 Promise.all([model('anims'), model('sailor')]).then(([anims, sailor]) => {
   loadClips(anims);
   person = sailor.scene; person.position.set(PERSON.x, 0, PERSON.z); scene.add(person); animate(person, 'Idle');
-  $('start').disabled = false; $('start').textContent = 'Start'; $('loadnote').textContent = '';
+  $('bar').style.width = '100%'; $('start').disabled = false; $('start').textContent = 'Start'; $('loadnote').textContent = '';
 });
 $('start').onclick = () => { audioInit(); $('title').hidden = true; $('hud').hidden = false; state.started = true; setGoal('Walk to the sailor and talk to him.'); canvas.focus(); };
 $('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 'Sound on' : 'Sound off'; };

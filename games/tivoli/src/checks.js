@@ -150,3 +150,16 @@ export function skinProbe(renderer, scene, body, { dist = 0.7, size = 256, yaws 
   const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2], srt = all.slice().sort((a, b) => lum(a) - lum(b));
   return { rgb: [0, 1, 2].map((k) => Math.round(all.reduce((a, c) => a + c[k], 0) / all.length)), lo: srt[0], hi: srt[srt.length - 1], each: all };
 }
+
+/* The overlap check: no solid thing stands inside another (a tree in a building, a car in a wall, a bush in a fence). Each solid is a box {kind, name, x0..x1, z0..z1, y0..y1}. Two boxes overlapping by more than 5 cm on every side are reported.
+   Not counted: plants touching plants, a building touching a building, posts under their own walkway, and things that are meant to touch. Returns a list of text lines (empty means 0). */
+const OK_PAIRS = new Set(['tree|tree', 'tree|bush', 'bush|bush', 'building|building', 'fence|fence', 'pole|pole', 'bush|pole', 'post|post']);
+export function overlapSolids(solids, tol = 0.05) {
+  const out = [];
+  for (let i = 0; i < solids.length; i++) for (let j = i + 1; j < solids.length; j++) {
+    const a = solids[i], b = solids[j]; if (OK_PAIRS.has(a.kind + '|' + b.kind) || OK_PAIRS.has(b.kind + '|' + a.kind)) continue;
+    const ox = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), oz = Math.min(a.z1, b.z1) - Math.max(a.z0, b.z0), oy = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+    if (ox > tol && oz > tol && oy > tol) out.push(`${a.name} (${a.kind}) overlaps ${b.name} (${b.kind}) by ${(ox * 100) | 0} x ${(oz * 100) | 0} x ${(oy * 100) | 0} cm`);
+  }
+  return out;
+}
