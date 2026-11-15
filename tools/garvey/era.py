@@ -800,7 +800,7 @@ if G.get('trousers') and G.get('belt',True) and (not G.get('waistcoat') or G.get
     if not G.get('waistcoat'): bmesh.ops.create_cube(bm,size=1,matrix=Matrix.Translation((0,yb,HIP+0.098))@Matrix.Diagonal((0.044*s,0.006,0.038*s,1))); soft('Buckle',bm,'Buckle',only=('Hips','Spine'))
 if OLD and G.get('breeches') and not G.get('coat'):      # a waistband: a narrow band of the breeches' own cloth round their top edge, so that edge (cut across a curved body) reads as a clean seam
     TT=tree_of(PART['breeches']); bm=bmesh.new(); seg=32; rows=[]
-    for z,e in ((HIP+0.095,0.0),(HIP+0.099,0.003),(HIP+0.135,0.003),(HIP+0.139,0.0)):      # a flat band, not a roll
+    for z,e in ((HIP+0.078,0.0),(HIP+0.082,0.003),(HIP+0.135,0.003),(HIP+0.139,0.0)):      # a flat band, not a roll, deep enough to cover the wavy top of the breeches and the tucked shirt under it
         ring=[]
         for k in range(seg):
             a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z-0.03)); hit=TT.ray_cast(o+d*0.4,-d)[0]; o2=Vector((0,J('Hips').y,z)); h2=SHT.ray_cast(o2,d,0.3)[0]; r=max(((hit-o).length if hit else 0.15),((h2-o2).length+0.002) if h2 is not None else 0.0)+e
@@ -1254,7 +1254,7 @@ def hidden(c):
     return False
 def lining_of(c):      # which garment covers this hidden piece of the body
     if c.z>NECK-0.07*s or (G.get('shoes') and c.z<ANK+0.02): return None
-    if G.get('breeches') and c.z<HIP+0.15: return 'Breeches' if c.z<HIP+0.12 and not G.get('coathem') else None      # no lining right at the waistband, where shirt and breeches overlap; none under a coat's skirt either (seated, it came through the skirt where the breeches already lie)
+    if G.get('breeches') and c.z<HIP+0.15: return 'Breeches' if c.z<(HIP+0.06 if EASE_OLD else HIP+0.12) and not G.get('coathem') else None      # (a tucked shirt fills the breeches above HIP+0.06: no lining there, it only crossed the shirt)      # no lining right at the waistband, where shirt and breeches overlap; none under a coat's skirt either (seated, it came through the skirt where the breeches already lie)
     if EASE_OLD or (G.get('coat') and not G.get('coatsleeves',True)): return None      # (and the shirt sleeves under a sleeveless coat) a shirt with ease stands clear of the body and no longer folds in at the chest, so it needs no lining (left in, the lining came through it at the front when walking)
     if G.get('coat') and G.get('coatsleeves',True): return 'Coat'
     return 'Shirt'
