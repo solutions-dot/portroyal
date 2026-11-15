@@ -450,8 +450,9 @@ def speech(rig):
     return frames
 
 
-SIDE_GAP = 0.40   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right, facing the same way
+SIDE_GAP = 0.40   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right and 0.10 m in front, facing the same way
 CHILD_GAP = 0.32  # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right
+HAND_OUT, HAND_FWD, HAND_UP = 0.03, -0.01, -0.10   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
 FACE_GAP = 0.58   # ComfortHand: the other person stands this far in front of the giver, facing them
 
 
@@ -469,10 +470,10 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
         steady_head(rig, p, yaw=look[0] - turn_to + 0.03 * math.sin(TAU * t / T), pitch=look[1] + 0.02 * math.sin(TAU * 2 * t / T + 1), roll=-0.04, neck=0.5)
         M = rig.fk(p)
         far = gap - 0.16 + 0.12                                         # their far shoulder, from the giver's shoulder joint
-        wrist = body_point(rig, M, 'Right', far - 0.06, 0.06, -drop - 0.07 + 0.02 * pt, bone='Hips')   # on their far shoulder and upper arm, low
-        fingers = body_dir(rig, M, 'Right', 0.2, 0.55, -0.8, bone='Hips')
-        palm = body_dir(rig, M, 'Right', 0.3, 0.2, -1.0, bone='Hips')
-        elbow = body_dir(rig, M, 'Right', -0.1, -0.35, -1.0, bone='Hips')   # elbow tucked down
+        wrist = body_point(rig, M, 'Right', far - 0.05 + HAND_OUT, 0.04 + HAND_FWD, -drop + HAND_UP + 0.012 * pt, bone='Hips')   # over their far shoulder, from behind
+        fingers = body_dir(rig, M, 'Right', 0.1, 0.45, -0.9, bone='Hips')     # down the back and outside of their upper arm
+        palm = body_dir(rig, M, 'Right', -0.4, 1.0, 0.1, bone='Hips')
+        elbow = body_dir(rig, M, 'Right', -0.15, -1.0, -0.8, bone='Hips')   # elbow down and back, behind them
         arm(rig, p, 'Right', wrist, elbow, fingers, palm, 0.5)
         curl(rig, p, 'Right', 0.35 - 0.15 * pt, thumb=0.15)
         relaxed_arm(rig, p, 'Left')
@@ -481,7 +482,7 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
 def relaxed_arm(rig, p, side):
     """The free arm hangs at the side, a little bent."""
     M = rig.fk(p)
-    arm(rig, p, side, body_point(rig, M, side, 0.04, 0.05, -0.44), body_dir(rig, M, side, 0.3, -1, -0.3),
+    arm(rig, p, side, body_point(rig, M, side, 0.09, 0.06, -0.43), body_dir(rig, M, side, 0.3, -1, -0.3),
         body_dir(rig, M, side, 0.0, 0.15, -1), body_dir(rig, M, side, -1, 0.1, 0), 0.5)
     curl(rig, p, side, 0.3)
 
@@ -554,14 +555,14 @@ def take_upper(rig, frames, T):
     for i, p in enumerate(frames):
         t = i / FPS; w = wipe(t); b = math.sin(TAU * 2 * t / T)
         turn(rig, p, 'Spine', Y, 0.03); turn(rig, p, 'Spine2', X, 0.03 - 0.01 * b)
-        steady_head(rig, p, yaw=0.15 + 0.03 * math.sin(TAU * t / T), pitch=0.28 + 0.06 * w + 0.015 * b, roll=0.16, neck=0.5)
+        steady_head(rig, p, yaw=0.15 + 0.03 * math.sin(TAU * t / T), pitch=0.28 + 0.06 * w + 0.015 * b, roll=0.08, neck=0.5)
         M = rig.fk(p)
-        lo_r = body_point(rig, M, 'Right', -0.08, 0.16, -0.43, bone='Hips')
+        lo_r = body_point(rig, M, 'Right', -0.05, 0.25, -0.40, bone='Hips')
         face = body_point(rig, M, 'Right', 0.03, 0.13, 0.0, bone='Head', at='Head') + V(0, 0, -0.02)
         arm(rig, p, 'Right', lo_r.lerp(face, w), body_dir(rig, M, 'Right', 0.5, -0.5, -0.8, bone='Hips'),
             body_dir(rig, M, 'Right', -0.5, 0.3, -0.8).lerp(body_dir(rig, M, 'Right', -0.4, 0.2, 1.0), w),
             body_dir(rig, M, 'Right', -0.3, 0.6, 0.2).lerp(body_dir(rig, M, 'Right', -0.3, -1.0, 0.0), w), 0.5)
-        lw = body_point(rig, M, 'Left', -0.06, 0.13, -0.45, bone='Hips')
+        lw = body_point(rig, M, 'Left', -0.03, 0.22, -0.42, bone='Hips')
         arm(rig, p, 'Left', lw, body_dir(rig, M, 'Left', 0.5, -0.5, -0.8, bone='Hips'), body_dir(rig, M, 'Left', -0.4, 0.3, -0.9),
             body_dir(rig, M, 'Left', -0.4, 0.5, 0.3), 0.5)
         curl(rig, p, 'Right', 0.3 + 0.1 * w); curl(rig, p, 'Left', 0.3)

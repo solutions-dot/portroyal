@@ -22,11 +22,12 @@ PEOPLE = os.path.join(ROOT, 'build', 'people')
 N = 32
 # giver clip, taker clip, giver body, taker body, where the taker stands relative to the giver (x, y, turn, scale), seated
 PAIRS = {
-    'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.40, 0.0, 0.0, 1.0), False),
+    'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.40, -0.10, 0.0, 1.0), False),
     'ComfortHand': ('ComfortHand', 'ComfortTake', 'man_shirt', 'woman57', (0.0, -0.58, math.pi, 1.0), False),
-    'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.32, 0.0, 0.0, 0.6), False),
-    'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.40, 0.0, 0.0, 1.0), True),
+    'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.32, -0.08, 0.0, 0.6), False),
+    'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.40, -0.10, 0.0, 1.0), True),
 }
+REST = {'ComfortGive': 1, 'ComfortHand': 1, 'ComfortChild': 1, 'SitComfort': 1}   # pairs where the giver's right hand and forearm rest on the other person
 SKIP = ('Human.low-poly', 'Cap')   # the proxy mesh and the spare cap (each game shows one hat; the giver's hat is skipped too)
 
 
@@ -124,20 +125,24 @@ def run(name):
         if not seated:
             for p in (G, Tk): ground(p, bpy.context.evaluated_depsgraph_get)
         dg = bpy.context.evaluated_depsgraph_get()
+        if os.environ.get('DEBUG') and k == 0:
+            W = lambda p, b: tuple(round(x, 3) for x in p['rig'].matrix_world @ p['rig'].pose.bones['mixamorig:' + b].head)
+            print('DEBUG giver', {b: W(G, b) for b in ('RightShoulder', 'RightArm', 'RightForeArm', 'RightHand', 'RightHandMiddle1')})
+            print('DEBUG taker', {b: W(Tk, b) for b in ('LeftArm', 'RightArm', 'RightForeArm', 'Spine2', 'Neck', 'Head')})
         gv, gt, gp = shape(G, dg); tv, tt, tp = shape(Tk, dg)
         gtree = BVHTree.FromPolygons(gv, gt); ttree = BVHTree.FromPolygons(tv, tt)
         hand = 9.0
         for v, lab in zip(gv, G['labels']):            # the giver against the taker
             d, i = signed(ttree, v, tp)
             if d is None: continue
-            if lab == 'RightHand':
-                hand = min(hand, d)
-                if d < 0: note(('giver RightHand', 'taker ' + tp[i]), -d)
+            if lab in ('RightHand', 'RightForeArm') and REST.get(name):   # the arm that rests on them may touch, never go in
+                if lab == 'RightHand': hand = min(hand, d)
+                if d < 0: note(('giver ' + lab, 'taker ' + tp[i]), -d)
             elif d < 0.01: note(('giver ' + lab, 'taker ' + tp[i]), 0.01 - d)
         for v, lab in zip(tv, Tk['labels']):            # the taker against the giver
             d, i = signed(gtree, v, gp)
             if d is None: continue
-            if gp[i] == 'RightHand' and lab in ('shoulders', 'LeftUpperArm', 'RightUpperArm', 'body', 'head') and d >= 0: continue   # where the hand rests
+            if gp[i] in ('RightHand', 'RightForeArm') and lab in ('shoulders', 'LeftUpperArm', 'RightUpperArm', 'body', 'head') and d >= 0: continue   # where the hand rests
             if d < 0.01: note(('taker ' + lab, 'giver ' + gp[i]), 0.01 - d)
         band.append(hand)
         for who, (vs, ts, ps, labs) in (('giver', (gv, gt, gp, G['labels'])), ('taker', (tv, tt, tp, Tk['labels']))):   # hands through one's own body
