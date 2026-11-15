@@ -601,7 +601,7 @@ PART=dict(parts)
 ON=lambda k:None if OLD else PART.get(k)      # later eras: a piece that lies on a garment (collar, front band, buttons, pocket, tie, lapels) takes its bone weights from that garment
 SHT=tree_of(PART['shirt'])
 def shirt_front(z,x=0.0):      # the y of the shirt's front surface
-    hit=SHT.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]; sk=tree.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]
+    hit=SHT.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]; sk=(SKIN if 'SKIN' in globals() else tree).ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]      # the skin alone: the full mesh also holds helper shapes that stand in front of the body
     if hit and (sk is None or hit.y<sk.y+0.01): return hit.y
     return (sk.y if sk else _front(z))-0.008      # the ray went through an opening (the V of a camp collar) and met the back of the shirt from inside: the front is the skin's, not the back's
 def quadstrip(bm,rows,flip=False,close=False):
