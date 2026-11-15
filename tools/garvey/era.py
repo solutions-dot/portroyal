@@ -1244,7 +1244,7 @@ def hidden(c):
     if OLD and G.get('breeches') and KNEE<c.z<HIP+0.05 and abs(c.x)<0.12: return True      # the cleft of the seat, between the two legs of the breeches: left bare, skin showed in flecks there
     if OLD and abs(c.x)>SX*0.75 and HIP+0.05<c.z<NECK-0.03*s and arm_axis(c)[1]<cov_arm-0.09: return True      # the armpit, the side of the chest and the shoulder under a shirt or coat: left in, the skin showed through at the back of the armpit when the arm swung
     if G.get('breeches') and ((KNEE+0.08*s if G.get('shorts') else ANK+0.03) if G.get('trousers') else (KNEE-0.05*s+0.012 if OLD else KNEE))<c.z<HIP+0.05 and math.hypot(c.x-leg_axis(c.z,1 if c.x>0 else -1).x,c.y-LHIP.y)<0.16*s: return True
-    if G.get('skirt') and SKB+(0.10 if OLD else 0.035)<c.z<HIP+0.05 and side_arm(c) is None: return True      # later eras keep only 3.5 cm of leg above the hem (seated, a taller band lay under the lap and came through the seated skirt)
+    if G.get('skirt') and SKB+(0.10 if OLD else 0.035)<c.z<HIP+0.05 and side_arm(c) is None and abs(c.x)<0.30: return True      # (the legs only: with the arms held out, the fingers hang at this height and were cut off as 'leg under the skirt') later eras keep only 3.5 cm of leg above the hem (seated, a taller band lay under the lap and came through the seated skirt)
     if G.get('shoes') and c.z<(ANK*0.5 if LOWCUT else ANK+0.02): return True
     return False
 def lining_of(c):      # which garment covers this hidden piece of the body
@@ -1288,6 +1288,7 @@ bm.normal_update()
 def covered(f):
     c=cz(f); n=f.normal
     if CK=='camp' and c.y<0 and c.z>VZ-0.03*s+VK*0.55*abs(c.x): return False
+    if abs(c.x)>SX*1.05 or side_arm(c) is not None: return False      # never an arm or a hand: with the arms held out, the fingers' inner faces looked straight at the skirt (its test reaches 30 cm) and were deleted, leaving stumps
     for bt,kd,k,nb in _covs:
         loc,nrm,_i,dist=bt.ray_cast(c+n*0.0005,n,0.30 if k=='skirt' else 0.08)
         if loc is None or nrm.dot(n)<0.15: continue
