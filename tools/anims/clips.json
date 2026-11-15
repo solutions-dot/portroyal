@@ -106,5 +106,10 @@
  "TorchIdle": "Standing_Torch_Idle_02.fbx",
  "IdleM": "Idle_M.fbx",
  "StartSprint": "Idle_To_Sprint.fbx",
- "BoxIdle2": "Box_Idle_1.fbx"
+ "BoxIdle2": "Box_Idle_1.fbx",
+ "Nod": "Acknowledging.fbx",
+ "Pray4": "Praying_4.fbx",
+ "TalkM3": "Talking_M3.fbx",
+ "ListenMusic": "Listening_To_Music.fbx",
+ "Shrug": "Shrugging.fbx"
 }
