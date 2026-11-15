@@ -37,13 +37,14 @@ Every character uses the same Mixamo skeleton (`mixamorig*` bones, from `shared/
 | `mixers` | Every mixer `animate()` makes. The game loop calls `mx.update(dt)` on visible ones. |
 | `grounded`, `groundFeet(m)` | Push a model into `grounded` and call `groundFeet` each frame: it pins the lowest point of the shoes (heel edge, ball, toe tip, found from the body's own vertices) to `m.userData.ground` (default 0), so feet never float or sink. Small corrections are eased in over a few frames. Never set the model's height yourself after that. |
 | `strideOf(model, clip)`, `ctl.pace(v)` | How many metres one loop of a walk covers on this body (leg length and scale included). `ctl.pace(v)` sets the clip speed to fit ground speed `v`, so feet do not slide. Call it whenever a walker moves. |
-| `seamLoop(clip)` | Makes a loop end exactly where it starts. Already applied to Walk, Run, Carry, Tread, SadWalk. |
+| `seamLoop(clip)` | Makes a loop end exactly where it starts. Already applied to every walk in `WALKS` (Walk, WalkM, WalkM2, Run, RunM2, Carry, SadWalk, CarryBagWalk, CarryHeadWalk, CarryHeadWalk2, HoldWalk, HurtWalk, InjuredWalk, RifleWalk, RifleWalk2, RifleCrouchWalk) and to Tread. |
+| `WALKS`, `SEATED`, `isSeated(name)` | Which clips walk (`ctl.pace` paces only these) and which are seated: every `Sit*` clip plus TalkM3, AskQuestion, PlayPiano and Pray4, which sit but are not named Sit. Use `isSeated` wherever a game asks "is this person sitting?" (`engine/audit.js` does). |
 | `setFallbackClip(c)` | The clip used if a named one is missing. |
 
 What `clipFor` does to each copy:
 - It drops scale tracks and moving-root tracks.
-- It keeps the hips' height only for clips matching `HIPS_Y` (sitting, stumbling, praying, sword work...).
-- It locks seated clips over their seat, facing the way the character is placed.
+- It keeps the hips' height only for clips matching `HIPS_Y` (sitting, stumbling, praying, sword work, and since November 2026 kneeling, crawling, crouching, ducking, the Hurt clips, the guitar and piano clips and the seated talk clips), so a kneeling body kneels at the right height instead of standing tall on bent legs (`tests/regressions.mjs` checks it; Kendal's Nurse Gray kneels with `Kneel`).
+- It locks seated clips (`isSeated`) over their seat, facing the way the character is placed.
 - `WalkM` is a steadier man's walk made from `Walk`, with less hip and spine twist.
 
 The controller from `animate()` (`ctl`):
@@ -52,7 +53,7 @@ The controller from `animate()` (`ctl`):
 - `ctl.rest()` goes back to the base clip.
 - `ctl.tick(dt)` is called each frame for the once-timers.
 
-Clips in the library: Idle, Run, Walk, StartWalk, StopWalk, Carry, CarryIdle, TurnR, TurnL, TurnRW, TurnLW, JogStumble, StumbleBack, Tread, Talk1, Talk2, Talk3, Point, Wave, WaveSlow, Laugh, Salute, Clap, Cheer, SitDisbelief, SitTalk, SitIdle, SitDrink, Write, Terrified, Sad1, Sad2, Cry, Block, Punch, Sword1, Sword2, Sheathe, PickUp, Pray, Drink. To add one, see PIPELINE.md.
+Clips in the library: the full list is `tools/anims/clips.json` (126 clips on 15 November 2026), and `docs/PIPELINE.md` section 2 says what each new one shows. To add one, see PIPELINE.md.
 
 ## engine/audio.js: sound made in code
 
@@ -246,6 +247,12 @@ Every game and the template import it.
 ## engine/ui-audit.js: text overlap
 
 `contentsOverlap(a, b)` says whether the painted text of two elements overlaps (`contentRects(el)` gives the rectangles, clipped to scrolling parents and closed `<details>`). Bog Walk's layout test uses it, and `tests/ui-audit.html` checks it (`docs/TESTING.md`). Other games have their own layout checks in `main.js`.
+
+## engine/checks.js: every automatic check at once (dev only)
+
+`checkAll(adapter, tables)` runs the shared gameplay, continuity and quality checks (journal, links, a11y, keys, chapters, steps, map, faces, budget, autoplay, camera, rule4, sound, continuity, errors) and prints `ALL <n>` into `#autolog`. The adapter's hooks and each check are in `docs/TESTING.md`, section 7. The rules are also exported as plain functions (`continuityIssues`, `itemIssues`, `lightIssues`, `ageIssues`, `gridReach`, `reachIssues`, `boundsIssues`, `stuckIssues`, `cameraIssues`, `resumeDiff`, `journalIssues`, `levelIssues`, `soundRefIssues`, `budgetIssues`, `clipIssues`, `intenseIssues`, `faceIssues`, `watchErrors`, `watchAudio`) and the shared tables `BANNED` (rule 4 clips), `BUDGET` and `SOUNDS`; `tools/lint_content.mjs` and `tests/checks.mjs` use the same functions.
+
+`engine/ui-audit.js` also has `tapTargetIssues(root, 44)`, `contrastIssues(root)` (WCAG AA), `focusOrderIssues(root)` and the colour helpers `parseColor`, `contrastRatio`, `contrastNeed`, `blend`.
 
 ## engine/vehicles.js: railway vehicles
 

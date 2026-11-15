@@ -2,6 +2,8 @@
 
 This is the one place to start when you make or fix anything in a game, old or new: people, clothes, places, or animations. Each section is short and points to the detailed doc. At the end there is a checklist for bringing one game up to the standard, and a table of where each game stands today.
 
+Every game wires `?test=all` (`engine/checks.js`, `docs/TESTING.md` section 7) and passes `npm test` (with the content lint) before a pull request.
+
 Follow `CLAUDE.md`'s rules every time. The ones that matter most here: plain words (rule 2), facts checked against sources first (rule 3), phones (rule 5), checks at 0 (rule 8), and skin (rule 9).
 
 ## Files that every game shares: do not edit them without the owner
@@ -106,7 +108,7 @@ How to use it:
 
 ## 4. Animations
 
-- **The shared library** is `shared/models/anims.js`: 96 clips on one skeleton (Mixamo and hand-made) (`docs/ENGINE.md` lists them). Every body has the same bones, so every clip plays on everyone.
+- **The shared library** is `shared/models/anims.js`: 126 clips on one skeleton (Mixamo and hand-made) (`docs/ENGINE.md` lists them). Every body has the same bones, so every clip plays on everyone.
 - **Adding a clip** (`docs/PIPELINE.md`, section 2): download from mixamo.com as **FBX, Without Skin**, with **In Place** ticked for anything that walks; put it in `shared/anim-sources/`; add it to `tools/anims/clips.json`; run `tools/anims/retarget_clips.py` (about 11 minutes), then `tools/anims/optimize_clips.mjs`, which packs it, then `tools/anims/check_clips.mjs`. Changing the shared library is a shared-file change: its own pull request.
 - **A clip only one game needs** stays out of the shared library: Tivoli keeps its own in `tools/tivoli/anim-sources/` and `tools/tivoli/clips.json`, packs them with `tools/tivoli/pack_clips.mjs` into `games/tivoli/site/models/anims_tivoli.js`, and loads that after the shared library. Copy that.
 - **Each game's clip list:** `games/<game>/anim-clips.json`. The build trims the library to it, so add any clip the game starts to play.

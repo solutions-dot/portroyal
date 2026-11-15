@@ -7,7 +7,13 @@ export const mixers = [];      /* every mixer made by animate(); the game update
 let peopleClip = null; export function setFallbackClip(c) { peopleClip = c; }   /* used when a named clip is missing */
 export function loadClips(gltf) { for (const a of gltf.animations) CL[a.name] = a; }
 const _gp = new THREE.Vector3();
-export const HIPS_Y = /^(Sit|Injured|StumbleBack|JogStumble|Terrified|Pray|Sad|Sword|Slash|Block|Punch|Laugh|Sheathe|Draw|Write)/;
+export const HIPS_Y = /^(Sit|Injured|StumbleBack|JogStumble|Terrified|Pray|Sad|Sword|Slash|Block|Punch|Laugh|Sheathe|Draw|Write|Kneel|Crawl|Scared|Duck|Hurt|PlayGuitar|PlayPiano|TalkM3$|AskQuestion$)/;   /* clips whose hips go low (sitting, kneeling, crouching, a sore stoop): keep their hips height, or a kneeling body would stand at full height on bent legs */
+/* seated clips: the hips stay over the spot the game put the person, and face the way the game turned them. Most are named Sit*, but some seated clips are not. */
+export const SEATED = /^(Sit|TalkM3$|AskQuestion$|PlayPiano$|Pray4$)/;
+export const isSeated = (name) => SEATED.test(name || '');
+/* walking clips (played in place, paced to the ground speed by ctl.pace) and the looping clips whose ends are joined so they never snap */
+export const WALKS = /^(Walk|WalkM|WalkM2|Run|RunM2|Carry|SadWalk|CarryBagWalk|CarryHeadWalk2?|HoldWalk|HurtWalk|InjuredWalk|RifleWalk2?|RifleCrouchWalk)$/;
+const SEAM = /^(Walk|WalkM|WalkM2|Run|RunM2|Carry|Tread|SadWalk|CarryBagWalk|CarryHeadWalk2?|HoldWalk|HurtWalk|InjuredWalk|RifleWalk2?|RifleCrouchWalk)$/;
 export function seamLoop(c) {   /* make a looping clip end exactly where it starts, spreading the gap over the cycle so it never snaps */
   const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), err = new THREE.Quaternion(), part = new THREE.Quaternion(), id = new THREE.Quaternion();
   for (const t of c.tracks) { const v = t.values, tm = t.times, n = tm.length; if (!n) continue; const T0 = tm[0], T = tm[n - 1] - T0 || 1;
@@ -23,12 +29,16 @@ export function walkM() {   /* a steadier man's walk from the shared clip: damp 
     for (let i = 0; i < v.length; i += 4) { e.setFromQuaternion(q.set(v[i], v[i + 1], v[i + 2], v[i + 3])); e.set(avg.x + (e.x - avg.x) * kx, avg.y + (e.y - avg.y) * ky, avg.z + (e.z - avg.z) * kz); if (m[1] === 'Hips' || /Spine/.test(m[1])) e.x = avg.x * 0.4 + (e.x - avg.x);   /* less forward lean */
       q.setFromEuler(e); v[i] = q.x; v[i + 1] = q.y; v[i + 2] = q.z; v[i + 3] = q.w; } }
   CL._wm = c; return c; }
+export const BOW = { '^Kneel': { Neck: 0.35, Head: 0.8, Spine2: 0.7, LeftShoulder: 0.3, RightShoulder: 0.3 } };   /* Kneel: keep 35% of the neck's bow, 80% of the head's and 70% of the upper chest's (a flat collar lies on the upper back; bowed fully, the neck pulled away and the collar stood up like a wing) */
 export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() : CL[name]; if (!src) return null; if (name === 'SitDrink' && !CL._sd) { CL._sd = THREE.AnimationUtils.subclip(src, 'SitDrink', 140, 455, 30); } if (name === 'SitDrink') src = CL._sd; const c = src.clone(); keepHips = keepHips || HIPS_Y.test(name);
   c.tracks = c.tracks.filter((t) => { if (t.name.endsWith('.scale')) return false; if (!t.name.endsWith('.position')) return true; if (!keepHips || !/Hips/.test(t.name)) return false;
-    const v = t.values; let x0 = v[0], z0 = v[2]; if (/^Sit/.test(name) && CL.Idle) { const it = CL.Idle.tracks.find((k) => k.name === t.name); if (it) { x0 = it.values[0]; z0 = it.values[2]; } }   /* seated clips: keep the hips over the spot we put him, not where the clip wandered to */
+    const v = t.values; let x0 = v[0], z0 = v[2]; if (SEATED.test(name) && CL.Idle) { const it = CL.Idle.tracks.find((k) => k.name === t.name); if (it) { x0 = it.values[0]; z0 = it.values[2]; } }   /* seated clips: keep the hips over the spot we put him, not where the clip wandered to */
  for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } return true; });   /* running stays in place; the game moves her */
-  if (/^(Walk|WalkM|Run|Carry|Tread|SadWalk)$/.test(name)) seamLoop(c);
-  if (/^Sit/.test(name)) { const t = c.tracks.find((k) => /Hips\.quaternion$/.test(k.name)); if (t) { const v = t.values, q0 = new THREE.Quaternion(v[0], v[1], v[2], v[3]), f = new THREE.Vector3(0, 0, 1).applyQuaternion(q0), fix = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.atan2(f.x, f.z)), q = new THREE.Quaternion();
+  if (SEAM.test(name)) seamLoop(c);
+  const damp = BOW[Object.keys(BOW).find((k) => new RegExp(k).test(name)) || ''];   /* clips whose neck bows so far that a collar stands off the nape: the neck and head turn only part of the way from standing */
+  if (damp && CL.Idle) for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const k = m ? damp[m[1]] : undefined; if (k === undefined) continue; const it = CL.Idle.tracks.find((x) => x.name === t.name); if (!it) continue;
+    const q0 = new THREE.Quaternion().fromArray(it.values, 0), q = new THREE.Quaternion(), v = t.values; for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i); q0.clone().slerp(q, k).toArray(v, i); } }
+  if (SEATED.test(name)) { const t = c.tracks.find((k) => /Hips\.quaternion$/.test(k.name)); if (t) { const v = t.values, q0 = new THREE.Quaternion(v[0], v[1], v[2], v[3]), f = new THREE.Vector3(0, 0, 1).applyQuaternion(q0), fix = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.atan2(f.x, f.z)), q = new THREE.Quaternion();
     for (let i = 0; i < v.length; i += 4) { q.set(v[i], v[i + 1], v[i + 2], v[i + 3]).premultiply(fix); v[i] = q.x; v[i + 1] = q.y; v[i + 2] = q.z; v[i + 3] = q.w; } } }   /* seated clips face the way we set the person, not the way the clip turned */
   return c; }
 /* strideOf(model, clip): how many metres of ground one loop of a walking clip covers on THIS body (its leg length and its scale are included).
@@ -47,7 +57,52 @@ export function strideOf(m, clip) {
   let dist = 0, on = 0, lo = 1e9, hi = -1e9; for (const l of pos) for (const q of l) { lo = Math.min(lo, q[1]); hi = Math.max(hi, q[1]); } const band = /Run/.test(clip.name) ? lo + (hi - lo) * 0.2 : 1e9;   /* a run has moments with both feet in the air: count a foot only while it is down */
   for (let i = 0; i < N; i++) { const k = (pos[0][i][1] + pos[0][i + 1][1] < pos[1][i][1] + pos[1][i + 1][1]) ? 0 : 1; if (pos[k][i][1] > band || pos[k][i + 1][1] > band) continue; dist += Math.max(0, pos[k][i][0] - pos[k][i + 1][0]); on++; }
   return (per[key] = on ? dist * N / on : 0); }
-export const WALKS = /^(Walk|WalkM|Run|Carry|SadWalk|CarryHeadWalk2?)$/;
+/* Seated skirt (tools/garvey/era.py, SkirtSeat): a later skirt body carries a second skirt cut close round both thighs. It shows only while a seated or kneeling
+   clip plays, and the standing skirt is hidden then, so a lap is covered without the standing skirt's flare tearing. Checked after each mixer update. */
+export const LOW_SKIRT = /^(Kneel|Crawl|Pray)/;
+const LAP = new WeakMap(), SEAT = new WeakMap();   /* kept outside userData: a game that clones a body copies userData as plain data, and bone references there became empty objects */
+export function seatSkirt(m) {
+  if (SEAT.has(m)) return SEAT.get(m);
+  const seat = [], stand = []; m.traverse((o) => { if (!o.isMesh) return; if (/^SkirtSeat/.test(o.name)) seat.push(o); else if (/^Skirt(_|\d|$)/.test(o.name)) stand.push(o); });
+  if (!seat.length) return (SEAT.set(m, null), null);
+  for (const o of seat) o.visible = false;
+  { const S0 = { seat, stand, on: false }; SEAT.set(m, S0); return S0; }
+}
+export function skirtTick(m) { const S = SEAT.get(m), a = m.userData.anim; if (!S || !a) return;
+  let best = null, bw = 0; for (const x of a.mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } }   /* the clip with the most weight now (a.cur lags while a clip fades in, and a tool may play one directly) */
+  const c = (best || a.cur) && (best || a.cur).getClip(), n = c ? c.name : '', on = isSeated(n) || LOW_SKIRT.test(n);
+  if (on === S.on) return; S.on = on; for (const o of S.seat) o.visible = on; for (const o of S.stand) o.visible = !on; }
+/* Hands clear of the cloth: seated and kneeling clips rest the hands on the thighs, and standing ones let them hang by the thighs; but a skirt or an apron makes the lap thicker than the body the clip was made on,
+   and the fingers sank into the cloth. After each mixer update, while such a clip plays, each fingertip and wrist is kept outside the lap (the thigh's line plus
+   the cloth's own thickness, measured once on this body) by turning the forearm at the elbow. */
+const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _v4 = new THREE.Vector3(), _hq = new THREE.Quaternion(), _hq2 = new THREE.Quaternion();
+function lapSetup(m) { if (LAP.has(m)) return LAP.get(m);
+  const bone = (n) => { let b = null; m.traverse((o) => { if (!b && o.isBone && o.name.replace(/[^A-Za-z0-9]/g, '').endsWith(n)) b = o; }); return b; };
+  const cloth = []; m.traverse((o) => { if (o.isSkinnedMesh && /^(SkirtSeat|Skirt|Breeches|Apron|JacketSkirt|CoatSkirt)/.test(o.name)) cloth.push(o); });
+  const sides = []; for (const S of ['Left', 'Right']) { const up = bone(S + 'UpLeg'), kn = bone(S + 'Leg'), fa = bone(S + 'ForeArm'), hd = bone(S + 'Hand'), tip = bone(S + 'HandMiddle3') || bone(S + 'HandMiddle2') || hd; const tips = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'].map((f) => bone(S + 'Hand' + f + '3') || bone(S + 'Hand' + f + '2')).filter(Boolean); if (up && kn && fa && hd) sides.push({ S, up, kn, fa, hd, tip, tips, R: 0 }); }
+  if (!sides.length) return (LAP.set(m, null), LAP.get(m));
+  m.updateMatrixWorld(true); const v = new THREE.Vector3();
+  for (const sd of sides) { const A = sd.up.getWorldPosition(new THREE.Vector3()), K = sd.kn.getWorldPosition(new THREE.Vector3()), ax = K.clone().sub(A), L2 = ax.lengthSq(); const ds = [];
+    for (const o of cloth) { const n = o.geometry.attributes.position.count, step = Math.max(1, n >> 11); for (let i = 0; i < n; i += step) { o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld); const t = v.clone().sub(A).dot(ax) / L2; if (t < 0.25 || t > 0.9) continue; const c = A.clone().addScaledVector(ax, t), d = v.distanceTo(c); const other = sides.find((x) => x !== sd); if (other) { const A2 = other.up.getWorldPosition(new THREE.Vector3()); if (v.distanceTo(A2) < v.distanceTo(A) - 0.02) continue; } ds.push(d); } }
+    ds.sort((a, b) => a - b); const ws = m.getWorldScale(new THREE.Vector3()).x || 1; sd.R = (ds.length ? ds[Math.floor(ds.length * (cloth.some((o) => /^Apron/.test(o.name)) ? 0.85 : 0.6))] : 0.09) / ws;   /* an apron lies over the lap on top of the skirt or trousers: measure out to it */ sd.foot = bone(sd.S + 'Foot'); }
+  { const hips = bone('Hips'), sp = bone('Spine1') || bone('Spine'); if (hips && sp) { const A = hips.getWorldPosition(new THREE.Vector3()), B = sp.getWorldPosition(new THREE.Vector3()), ax = B.clone().sub(A), L2 = ax.lengthSq(), ds = []; const waist = []; m.traverse((o) => { if (o.isSkinnedMesh && /^(Belt|Skirt|Breeches|Waistband)/.test(o.name)) waist.push(o); });   /* the belt and the skirt or trouser top (a blouse's sleeves hang at this height too, and made the waist too wide) */
+      for (const o of waist) { const n = o.geometry.attributes.position.count, step = Math.max(1, n >> 11); for (let i = 0; i < n; i += step) { o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld); const t = v.clone().sub(A).dot(ax) / L2; if (t < 0.3 || t > 1.0) continue; ds.push(v.distanceTo(A.clone().addScaledVector(ax, t))); } }
+      ds.sort((a, b) => a - b); const ws = m.getWorldScale(new THREE.Vector3()).x || 1; sides.waist = { hips, sp, R: (ds.length ? ds[Math.floor(ds.length * 0.6)] : 0.14) / ws }; } }   /* a hand on the hip rests on the belt and skirt top, not in them */
+  sides.skirt = cloth.some((o) => /^(SkirtSeat|Skirt)/.test(o.name)); sides.jacket = cloth.some((o) => /^(JacketSkirt|CoatSkirt)/.test(o.name));
+  return (LAP.set(m, sides), LAP.get(m)); }
+export function lapHands(m, name) { const L = LAP.get(m); if (!L) return; m.updateMatrixWorld(true);   /* every clip: standing, a hand hanging by a skirt or trousers is kept outside them too */
+  const sc = m.getWorldScale(_v4).x || 1;
+  const push = (sd, T, P, R) => { const off = T.clone().sub(P), d = off.length(); if (d >= R || d < 1e-4) return; const E = sd.fa.getWorldPosition(new THREE.Vector3()), from = T.clone().sub(E), to = T.clone().addScaledVector(off.normalize(), R - d).sub(E);
+    _hq.setFromUnitVectors(from.normalize(), to.normalize()); sd.fa.getWorldQuaternion(_hq2); const pq = sd.fa.parent.getWorldQuaternion(new THREE.Quaternion()).invert(); sd.fa.quaternion.copy(pq.multiply(_hq.multiply(_hq2))); sd.fa.updateMatrixWorld(true); };
+  if (L.length === 2 && L.skirt) for (let it = 0; it < 2; it++) for (const sd of L) { const A = L[0].up.getWorldPosition(new THREE.Vector3()).add(L[1].up.getWorldPosition(new THREE.Vector3())).multiplyScalar(0.5), K = L[0].kn.getWorldPosition(new THREE.Vector3()).add(L[1].kn.getWorldPosition(new THREE.Vector3())).multiplyScalar(0.5), ax = K.clone().sub(A), L2 = ax.lengthSq(), R = ((L[0].R + L[1].R) / 2 + 0.012) * sc;   /* a skirt spans the gap between the thighs: a hand resting in the middle of the lap lies on that bridge */
+    for (const pt of [...sd.tips, sd.hd]) { const T = pt.getWorldPosition(new THREE.Vector3()), t = T.clone().sub(A).dot(ax) / L2; if (t < 0.05 || t > 1.0) continue; push(sd, T, A.clone().addScaledVector(ax, t), R); } }
+  for (let it = 0; it < 2; it++) for (const sd of L) for (const leg of L) { const K = leg.kn.getWorldPosition(new THREE.Vector3()), R = (L.skirt ? leg.R + 0.035 : leg.R * 0.95 + 0.02) * sc;   /* a skirt drapes thicker over a raised knee */ for (const pt of [...sd.tips, sd.hd]) push(sd, pt.getWorldPosition(new THREE.Vector3()), K, R); }   /* the knee as a ball: fingertips that curl over a bent knee rest on the kneecap, which stands out past the thigh's line */
+  for (let it = 0; it < 3; it++) for (const sd of L) for (const leg of (L.waist ? [...L, L.waist] : L)) for (const seg of (leg === L.waist ? [2] : [0, 1])) { if (seg === 1 && !leg.foot) continue; const Ab = seg === 2 ? leg.hips : seg ? leg.kn : leg.up, Kb = seg === 2 ? leg.sp : seg ? leg.foot : leg.kn; if (!Ab || !Kb || !Ab.getWorldPosition || !Kb.getWorldPosition) continue; const A = Ab.getWorldPosition(_v1), K = Kb.getWorldPosition(_v2), ax = _v3.copy(K).sub(A), L2 = ax.lengthSq(), R = ((seg === 1 ? leg.R * 0.75 : leg.R) + (seg === 2 ? 0.008 : seg === 0 && L.skirt ? 0.024 : 0.012)) * sc;   /* a seated skirt lies looser over the thigh than trousers */   /* the thigh, then the shin (a kneeling hand rests on the knee) */
+    for (const pt of [...sd.tips, sd.hd]) {   /* every fingertip and the wrist */ const T = pt.getWorldPosition(new THREE.Vector3()), t0 = T.clone().sub(A).dot(ax) / L2, lo = seg === 0 ? -0.3 : seg === 2 ? -0.2 : 0, hi = seg === 2 ? 1.2 : 1.05, t = Math.min(hi, Math.max(lo, t0)); if (t0 <= lo || t0 >= hi) continue;   /* the thigh's line runs on a little above the hip joint, where a hand rests on the hip */
+      const Rt = seg === 0 ? R * (1 + 0.35 * Math.min(1, Math.max(0, (0.35 - t) / 0.65))) + (L.jacket ? 0.02 * sc * Math.min(1, Math.max(0, (0.4 - t) / 0.7)) : 0) : R,   /* a jacket's skirt stands out from the hip */ C = A.clone().addScaledVector(ax, t), off = T.clone().sub(C), d = off.length(); if (d >= Rt || d < 1e-4) continue;   /* the top of the thigh widens into the hip */
+      const E = sd.fa.getWorldPosition(new THREE.Vector3()), from = T.clone().sub(E), to = T.clone().addScaledVector(off.normalize(), Rt - d).sub(E);
+      _hq.setFromUnitVectors(from.normalize(), to.normalize()); sd.fa.getWorldQuaternion(_hq2); const pq = sd.fa.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+      sd.fa.quaternion.copy(pq.multiply(_hq.multiply(_hq2))); sd.fa.updateMatrixWorld(true); } } }
 export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipFor(name)) || clipFor('Idle') || peopleClip; if (!clip && !baseAct) return;
   const mx = mixerIn || new THREE.AnimationMixer(m), base = baseAct || mx.clipAction(clip); if (!baseAct) { base.play(); base.time = Math.random() * clip.duration; } if (!mixerIn) mixers.push(mx);
   const acts = {}, ctl = { mx, base, cur: base, timer: 0,
@@ -56,6 +111,8 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
     tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } } };
+  lapSetup(m); if (LAP.get(m)) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
+  if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
   m.userData.anim = ctl; return ctl; }
 export const grounded = [];
 const TOES = new WeakMap(), SOLES = new WeakMap();   /* not in userData: clones copy userData as plain JSON, which would break the bone references */

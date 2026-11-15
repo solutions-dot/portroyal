@@ -66,7 +66,7 @@ export function buildCoach() {
   walls.push([-5.2, -1.3, 5.2, -0.3], [-5.2, 0.3, 5.2, 1.3]);   /* the benches; you walk in the aisle between them */
   for (const x of [-3.2, 0, 3.2]) { cyl(0.16, 0.16, 0.06, new THREE.MeshBasicMaterial({ color: 0xffe3a6 }), x, 2.62, 0, g, 12); }
   const lamp = new THREE.PointLight(0xffd9a0, 9, 14, 1.3); lamp.position.set(0, 2.3, 0); g.add(lamp);
-  for (const [x, z, k] of [[-4.6, 0.0, 0], [4.7, -0.1, 1], [-4.4, -0.1, 2], [4.5, 0.15, 0], [-1.5, 0.1, 1]]) { const o = k === 0 ? hamper() : k === 1 ? suitcase() : sack(); o.position.set(x, 0, z); o.rotation.y = x; g.add(o); }
+  for (const [x, z, k] of [[-4.6, 0.0, 0], [4.5, 0.05, 0], [-1.5, 0.1, 1]]) { const o = k === 0 ? hamper() : k === 1 ? suitcase() : sack(); o.position.set(x, 0, z); o.rotation.y = x; g.add(o); }
   /* the passengers: Gran, Lloyd and the mother have their seats; the rest come from the crowd generator, sitting */
   people.push(person('gran5', 'gran', 'Gran', rows[4], -0.96, -PI / 2, { anim: 'SitIdle', h: 1.35, seat: SEAT }));
   people.push(person('lloyd5', 'lloyd', 'Lloyd', rows[4], -0.42, -PI / 2, { anim: 'SitTalk', h: 1.05, seat: SEAT }));
@@ -91,13 +91,14 @@ export function buildBeach() {
   for (const [x, z, c] of [[-8, 9, 0xd94a3a], [10, 7, 0xf0c040], [-20, 4, 0x3a8ad9], [24, 11, 0xd94a3a], [-2, 11.4, 0x3ab07a]]) um(x, z, c);
   walls.push([-9.5, 7.8, -6.5, 10.2], [8.5, 5.8, 11.5, 8.2]);
   const castle = grp(g, -12, 0, -4); castle.userData.noBatch = true; const mound = mesh(new THREE.ConeGeometry(1.2, 1.0, 10), solid(0xd6c394, 1), 0, 0.5, 0, castle); mound.scale.set(0.01, 0.01, 0.01); castle.userData.mound = mound;
-  const band = grp(g, 14, 0, 4); const box1 = box(0.5, 0.5, 0.5, TM.wood, 1.4, 0.25, 0.2, band); box(0.1, 0.5, 0.14, TM.woodDark, 1.4, 0.55, 0.2, band);
+  const band = grp(g, 14, 0, 4); const box1 = box(0.5, 0.5, 0.5, TM.wood, 1.4, 0.25, 0.05, band); for (let i = 0; i < 4; i++) box(0.035, 0.012, 0.12, TM.steel, 1.25 + i * 0.1, 0.36, 0.33, band);   /* the rumba box: a wooden box you sit on, with metal keys on its front to pluck */
+  walls.push([15.1, 3.75, 15.7, 4.35]);
   people.push(person('gran4', 'gran', 'Gran', 0, 7.8, PI, { h: 1.7 }));   /* PI: she faces the sea (north, -z) */
   const beachers = walkers(crowd57(14, 91, [-26, -14.5, 26, -9], { anims: ['Idle', 'Wave', 'Laugh', 'Cheer', 'Idle'], faceZ: PI, kids: 0.4 }), 4, [-34, -15.5, 34, 11], 0.7, 9); extras.push(...beachers);
   extras.push(...walkers(crowd57(10, 17, [-30, 2, 30, 12], { anims: ['Idle', 'Talk1', 'Laugh'], faceZ: PI * 0.5 }).filter(free(walls)), 6, [-34, -15.5, 34, 11], 0.7, 10));
-  extras.push(extra('clive', 13.3, 4.9, -0.8, 'Clap', { skin: 1 }), extra('worker45', 14.6, 3.2, -PI / 2 + 0.2, 'Clap'), extra('muleteer', 14.4, 5.4, -PI * 0.7, 'Talk2'));
+  /* the mento band (a guitar, a banjo and a rumba box, its player sitting on it) is added in life.js with the clips they play */
   return { id: 'beach', group: g, walls, bounds: { x0: -38, x1: 38, z0: -17, z1: 13 }, start: { x: 0, z: 9.5, yaw: PI * 0.04 }, people, extras, env: ENV.day, sea, castle, bandPos: [14, 4.2], seaTex: sea.material.map,
-    spots: { sea: [0, -16], castle: [-12, -2.6], band: [12.2, 4.4] }, tick: (dt, t) => { sea.material.map.offset.set(t * 0.004, t * 0.01); sea.position.y = -0.08 + Math.sin(t * 0.9) * 0.03; foam.position.z = -20.5 + Math.sin(t * 0.7) * 0.6; foam.material.opacity = 0.6 + Math.sin(t * 0.7) * 0.3; } };
+    spots: { sea: [0, -16], castle: [-12, -2.6], band: [11.6, 4.2] }, tick: (dt, t) => { sea.material.map.offset.set(t * 0.004, t * 0.01); sea.position.y = -0.08 + Math.sin(t * 0.9) * 0.03; foam.position.z = -20.5 + Math.sin(t * 0.7) * 0.6; foam.material.opacity = 0.6 + Math.sin(t * 0.7) * 0.3; } };
 }
 
 /* ============ the crash site: the embankment, two coaches that stayed on the rails, and the wreck in the gully ============ */
@@ -120,28 +121,31 @@ export function buildCrash() {
   g.add(hillRing(150, 14, 60, { seed: 8, base: [0.09, 0.16, 0.12] }));
   /* the calling place, a pipe, a fire and torches */
   const lp = lampPost(3.4, true); lp.position.set(-6, 0, 15); g.add(lp); const tb = box(1.6, 0.8, 0.7, TM.wood, -6, 0.4, 16.2, g); walls.push([-6.9, 15.7, -5.1, 16.7]);
-  const sp = standpipe(); sp.position.set(26, 0, 8); g.add(sp); walls.push([25.4, 7.4, 26.6, 8.6]); const bk = bucket(); bk.position.set(25.3, 0, 8.7); g.add(bk);
+  const sp = standpipe(); sp.position.set(26, 0, 8); g.add(sp); walls.push([25.4, 7.4, 26.6, 8.6]); const buckets = [[25.25, 8.85, 0.3], [24.85, 8.45, 1.9]].map(([x, z, r]) => { const b = bucket(); b.position.set(x, 0, z); b.rotation.y = r; b.userData.noBatch = true; b.userData.home = [x, z, r]; g.add(b); return b; });   /* two buckets by the pipe: you fill one and carry it to the nurse (engine/story.js createCarry) */
   const fire = grp(g, -3, 0, 6); fire.userData.noBatch = true; for (let i = 0; i < 5; i++) { const lg = cyl(0.06, 0.06, 0.8, TM.woodDark, Math.cos(i * 1.26) * 0.25, 0.18, Math.sin(i * 1.26) * 0.25, fire, 5); lg.rotation.z = Math.cos(i * 1.26) * 0.8; lg.rotation.x = Math.sin(i * 1.26) * 0.8; }
   const flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); flame.scale.set(1.5, 2.0, 1); flame.position.y = 0.9; fire.add(flame);
   const torches = []; for (const [x, z] of [[-10, 3], [0, 3.6], [16, 6], [-2, 12], [-14, 10], [8, 16]]) { const t = torch(); t.position.set(x, 0, z); t.userData.noBatch = true; g.add(t); torches.push(t); }
   const l1 = new THREE.PointLight(0xffb060, 9, 24, 1.8); l1.position.set(-3, 2.2, 6); l1.userData.k = 1; g.add(l1); const l2 = new THREE.PointLight(0xffc880, 7, 22, 1.8); l2.position.set(-6, 3.4, 14); l2.userData.k = 1; g.add(l2);
   /* people */
-  people.push(person('gran6', 'gran', 'Gran', 14, 4.4, PI + 0.4, { h: 1.7, anim: 'Idle' }));
-  extras.push(extra('lloyd', 15.4, 4.1, PI + 0.9, 'Sad1'));
-  people.push(person('clive', 'clive', 'Mr. Clive', 5, 7.4, PI + 0.2, { h: 1.8, props: [['RightHand', 'lantern']] }));
-  people.push(person('nurse', 'nurse', 'Nurse Gray', -4, 8.6, PI * 1.1, { h: 1.7 }));
+  /* Gran's hand rests on Lloyd's shoulder (ComfortChild on her, ComfortTake on him): he stands 0.25 m to her right and 0.25 m in front */
+  const gx = 14, gz = 4.4, gry = PI + 0.4; people.push(person('gran6', 'gran', 'Gran', gx, gz, gry, { h: 1.7, anim: 'ComfortChild' }));
+  extras.push(extra('lloyd', gx - Math.cos(gry) * 0.25 + Math.sin(gry) * 0.25, gz + Math.sin(gry) * 0.25 + Math.cos(gry) * 0.25, gry, 'ComfortTake', { noSpread: true, with: 'gran6' }));
+  people.push(person('clive', 'clive', 'Mr. Clive', 5, 7.4, PI + 0.2, { h: 1.8, anim: 'TorchIdle', props: [['RightHand', 'lantern']] }));
+  /* Nurse Gray kneels by a man who sits on a log by the fire; the water you bring is for him and the others */
+  const logM = solid(0x5a4030, 1), log = (x, z, len, ry) => { const lg = cyl(0.17, 0.17, len, logM, x, 0.17, z, g, 9); lg.rotation.z = PI / 2; lg.rotation.y = ry; walls.push([x - len / 2 * Math.abs(Math.cos(ry)) - 0.22, z - len / 2 * Math.abs(Math.sin(ry)) - 0.22, x + len / 2 * Math.abs(Math.cos(ry)) + 0.22, z + len / 2 * Math.abs(Math.sin(ry)) + 0.22]); };
+  log(-4.3, 10.35, 1.3, 0); log(-4.7, 4.55, 1.9, 0);
+  people.push(person('nurse', 'nurse', 'Nurse Gray', -4.3, 9.05, 0.05, { h: 1.2, anim: 'Kneel' }));   /* she kneels facing the man on the log */
+  extras.push({ ...crowd57(1, 47, [0, 0, 1, 1], { anims: ['SitIdle'] })[0], x: -4.3, z: 10.38, ry: PI, anim: 'SitIdle', seat: 0.34, seated: true, tended: true, props: undefined, hat: false });
   people.push(person('dawn', 'dawn', 'Dawn', 9.5, 10, PI, { h: 1.05, anim: 'Sad1' }));
-  people.push(person('louise', 'louise', 'Sister Louise', -6.6, 13.6, PI, { h: 1.7, props: [['RightHand', 'lantern']] }));
-  const sit = [[-2.6, 8.8], [-4.8, 9.8], [-1.2, 10.2], [-6.0, 7.6]];
-  for (const [i, [x, z]] of sit.entries()) {   /* survivors stand by the fire and cry, turned toward it (the standing-crying clip, 'Cry') */
-    const ry = Math.atan2(-3 - x, 6 - z) + (i % 2 ? 0.5 : -0.4);
-    extras.push({ ...crowd57(1, 50 + i, [0, 0, 1, 1], { anims: ['Cry'] })[0], x, z, ry, anim: 'Cry', props: undefined });
-  }
-  extras.push(...villagers(16, 61, [-14, 1, 22, 13], { faceZ: PI }).filter(free(walls)));
-  extras.push(...villagers(6, 73, [-12, 14, 4, 20], { faceZ: PI }).map((e) => ({ ...e, anim: 'Talk1' })));
-  extras.push(...villagers(4, 83, [-30, -3.5, -12, -1.5], { faceZ: 0, lamp: 1 }));
-  return { id: 'crash', group: g, walls, bounds: { x0: -36, x1: 34, z0: 2.6, z1: 24 }, start: { x: 17, z: 5.8, yaw: PI * 0.5 + 0.2 }, people, extras, env: ENV.night, lights: [l1, l2], torches, flame, fire, coaches: [c0, c1], wreck, trucks: [t1, t2],
-    spots: { pipe: [25.2, 9.4], nurse: [-4, 9.2], calling: [-6, 14.2], lamp: [-1, 13] }, tick: (dt, t) => { const f = 0.85 + Math.sin(t * 13) * 0.1 + Math.sin(t * 7.3) * 0.08; l1.intensity = 9 * f * l1.userData.k; l2.intensity = 7 * (0.9 + Math.sin(t * 9) * 0.1) * l2.userData.k; flame.scale.set(1.5 * f, 2.0 * f, 1); for (const t2 of torches) { const fl = t2.userData.flame; if (fl) { const s = 0.9 + Math.sin(t * 11 + t2.position.x) * 0.15; fl.scale.set(0.9 * s, 1.1 * s, 1); } } } };
+  people.push(person('louise', 'louise', 'Sister Louise', -6.6, 13.6, PI, { h: 1.7, props: [['LeftHand', 'lantern']], call: true }));   /* she calls out the names of the lost (Yell, now and then) */
+  /* survivors rest by the fire: two sit on the log, two stand and watch the flames, one of them hurt */
+  for (const [i, x] of [-5.2, -4.2].entries()) extras.push({ ...crowd57(1, 50 + i, [0, 0, 1, 1], { anims: ['SitIdle'] })[0], x, z: 4.52, ry: i ? 0.55 : 0.85, anim: 'SitIdle', seat: 0.34, seated: true, fire: true, props: undefined });
+  for (const [i, [x, z]] of [[-5.9, 7.0], [-1.3, 4.9]].entries()) extras.push({ ...crowd57(1, 52 + i, [0, 0, 1, 1], { anims: ['Sad1'] })[0], x, z, ry: Math.atan2(-3 - x, 6 - z), anim: 'Sad1', fire: true, hurt: i === 1, props: undefined });
+  extras.push(...villagers(16, 61, [-14, 2.8, 22, 13], { faceZ: PI }).filter(free(walls)));
+  extras.push(...villagers(3, 73, [-11, 17, -8, 19.6]).map((e) => ({ ...e, call: 'callA', lamp: false })), ...villagers(3, 74, [-1, 17.4, 2, 20]).map((e) => ({ ...e, call: 'callB', lamp: false })));   /* two groups at the calling place talk quietly */
+  extras.push(...villagers(4, 83, [-30, -3.5, -21, -1.5], { faceZ: 0, lamp: 1 }).map((e) => ({ ...e, gully: true })));
+  return { id: 'crash', group: g, walls, bounds: { x0: -36, x1: 34, z0: 2.6, z1: 24 }, lifeBounds: { x0: -36, x1: 34, z0: -4, z1: 24 }, start: { x: 17, z: 5.8, yaw: PI * 0.5 + 0.2 }, people, extras, env: ENV.night, lights: [l1, l2], torches, flame, fire, coaches: [c0, c1], wreck, trucks: [t1, t2], buckets,
+    spots: { pipe: [25.2, 9.4], nurse: [-3.1, 8.7], calling: [-6, 14.2], lamp: [-1, 13] }, tick: (dt, t) => { const f = 0.85 + Math.sin(t * 13) * 0.1 + Math.sin(t * 7.3) * 0.08; l1.intensity = 9 * f * l1.userData.k; l2.intensity = 7 * (0.9 + Math.sin(t * 9) * 0.1) * l2.userData.k; flame.scale.set(1.5 * f, 2.0 * f, 1); for (const t2 of torches) { const fl = t2.userData.flame; if (fl) { const s = 0.9 + Math.sin(t * 11 + t2.position.x) * 0.15; fl.scale.set(0.9 * s, 1.1 * s, 1); } } } };
 }
 
 /* ============ the memorial at Kendal, today ============ */

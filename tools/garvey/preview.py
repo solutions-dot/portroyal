@@ -23,6 +23,7 @@ cam=bpy.data.cameras.new('c'); cam.lens=55; co=bpy.data.objects.new('c',cam); sc
 cx=(len(names)-1)*0.5
 views=[('build/garvey_front.png',(cx,-6.2,0.95),(cx,0,0.88)),('build/garvey_34.png',(cx+3.6,-5.0,1.0),(cx,0,0.88))]
 if os.environ.get('GV_CLOSE'): views=[('build/garvey_close_front.png',(0,-2.3,1.38),(0,0,1.34)),('build/garvey_close_34.png',(1.5,-1.9,1.38),(0,0,1.34)),('build/garvey_close_back.png',(0.6,2.3,1.38),(0,0,1.34))]
+if os.environ.get('GV_SIDE'): views=[('build/garvey_side.png',(cx+2.6,0,1.15),(cx,0,1.1)),('build/garvey_waist.png',(cx+1.4,-1.6,1.0),(cx,0,0.98)),('build/garvey_waistside.png',(cx+1.2,-0.3,1.25),(cx,0,1.0))]
 for p,loc,tgt in views:
     co.location=Vector(loc); co.rotation_euler=(Vector(tgt)-co.location).to_track_quat('-Z','Y').to_euler()
     sc.render.resolution_x,sc.render.resolution_y=(1300,880); sc.render.filepath=p; bpy.ops.render.render(write_still=True)

@@ -196,7 +196,7 @@ def arm(rig, pose, side, wrist, elbow, fingers, palm, twist=0.55):
     limb_ik(rig, pose, side + 'Arm', side + 'ForeArm', side + 'Hand', wrist, elbow, hand_W(rig, side, fingers, palm), twist)
 
 
-def curl(rig, pose, side, amount, thumb=0.0):
+def curl(rig, pose, side, amount, thumb=0.0, thumb_in=0.0, together=0.0):
     """Bend the fingers towards the palm at their first joint (amount in radians). Only the first joints are set: the
     library packer drops finger joints 2 to 4 (tools/anims/optimize_clips.mjs), so those stay at rest in the games."""
     pn = rig.rest3[P + side + 'Hand'] @ rig.palm[side]
@@ -204,6 +204,10 @@ def curl(rig, pose, side, amount, thumb=0.0):
         n = P + side + 'Hand' + f + '1'
         yf = rig.rest3[n].col[1]; ax = rig.rest3[n].inverted() @ yf.cross(pn).normalized()
         pose.rot[n] = Quaternion(ax, amount * {'Index': 0.85, 'Middle': 1.0, 'Ring': 1.08, 'Pinky': 1.15}[f])
+        if together:   # close the spread of the fingers, in the plane of the palm
+            pose.rot[n] = pose.rot[n] @ Quaternion(rig.rest3[n].inverted() @ pn, together * {'Index': 1, 'Middle': 0, 'Ring': -1, 'Pinky': -2}[f] * (1 if side == 'Right' else -1))
+    if thumb_in:   # swing the thumb in the plane of the palm, towards the fingers
+        n = P + side + 'HandThumb1'; pose.rot[n] = pose.rot[n] @ Quaternion(rig.rest3[n].inverted() @ pn, thumb_in * (1 if side == 'Right' else -1))
     if thumb:
         n = P + side + 'HandThumb1'
         yf = rig.rest3[n].col[1]; ax = rig.rest3[n].inverted() @ yf.cross(pn).normalized()
@@ -473,9 +477,7 @@ def speech(rig):
 
 
 GIVE_AT = (-0.415, -0.205)   # ComfortGive and ComfortTake: where the one comforted stands from the giver (x to his left, y backwards), facing the same way
-CHILD_GAP, CHILD_AHEAD = 0.34, 0.24   # ComfortChild: where the hand is aimed (the child, about 0.6 of an adult's height, to her right and in front)
-CHILD_AT = (-0.31, -0.24)   # ComfortChild: where the game places the child from her (found with pair_check.py --search), clear of her skirt
-CHILD_NUDGE = (-0.08, 0.010, -0.036)
+CHILD_AT = (-0.25, -0.25)   # ComfortChild: where the game places the child from her (found with pair_check.py --search), clear of her skirt
 SIT_AT = (-0.465, -0.27)   # SitComfortGive and SitComfortTake: where she sits from him on the bench
 HAND_OUT, HAND_FWD, HAND_UP = 0.080, -0.04, -0.084   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
 FACE_OUT, FACE_FWD, FACE_UP = 0.06, 0.0, -0.09   # ComfortHand: fine placement of the resting hand
@@ -513,7 +515,7 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
 
 
 def embrace_arm(rig, frames, T, turn_body=0.5, lean_in=0.06, upper=(0.35, 0.2, 0.90), fore=(0.80, 0.45, 0.25), ride=None,
-                look=(-0.35, 0.28), seated=False, reach=None, hand=((-0.25, -0.2, -1.0), (0.5, -0.85, 0.0))):
+                look=(-0.35, 0.28), seated=False, reach=None, hand=((-0.25, -0.2, -1.0), (0.5, -0.85, 0.0)), name=''):
     """An arm round someone a little in front and to the right: the whole body turns `turn_body` towards them and leans
     in, the upper arm angles down and back (`upper`: towards them, back, down, in the room's directions), the elbow bends about 95 degrees and the forearm
     runs forwards and out across their shoulder blades (`fore`: towards them, forwards, up) to the hand on their far upper arm.
@@ -536,7 +538,8 @@ def embrace_arm(rig, frames, T, turn_body=0.5, lean_in=0.06, upper=(0.35, 0.2, 0
         E = S + d1 * l1; W = E + d2 * l2
         if reach: W = S + V(*reach); d1 = V(0, 1.0, -0.8).normalized(); d2 = V(0, 0, 0)   # given as the hand's place from the shoulder instead; the elbow drops back and down
         if ride: W = W + ride[i]
-        rest_hand(rig, p, 'Right', W, d1 - d2, curl_by=0.35 - 0.1 * pt)         # palm down on the top of her shoulder, fingers forward over it
+        F = fit(name); W = W + F['w']
+        rest_hand(rig, p, 'Right', W, (d1 - d2).normalized() + F['pole'], down=F['down'], palm_dir=F['palm'], curl_by=F['curl'] - 0.1 * pt, fingers=F['fingers'], roll=F['roll'])   # palm flat on her shoulder, fingers forward over it
         if seated:
             M = rig.fk(p)
             arm(rig, p, 'Left', body_point(rig, M, 'Left', -0.02, 0.32, -0.33, bone='Hips'), body_dir(rig, M, 'Left', 0.6, -0.3, -0.6, bone='Hips'),
@@ -545,14 +548,32 @@ def embrace_arm(rig, frames, T, turn_body=0.5, lean_in=0.06, upper=(0.35, 0.2, 0
         else: relaxed_arm(rig, p, 'Left')
 
 
-def rest_hand(rig, p, side, wrist, elbow, down=0.25, palm_dir=V(0, 0, -1), curl_by=0.35):
+THUMB_LIFT = 0.1
+THUMB_IN = 0.0
+TOGETHER = 0.12
+FIT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'comfort_fit.json')
+
+
+def fit(name):
+    """Fine placement of a resting hand, found by fitting against the real bodies (tools/anims/pair_check.py --fit):
+    w moves the wrist, pole swings the elbow (and so the forearm onto their back), palm turns the palm, down tips the
+    fingers, curl bends them."""
+    try:
+        import json; d = json.load(open(FIT_FILE)).get(name, {})
+    except Exception: d = {}
+    return {'w': V(*d.get('w', (0, 0, 0))), 'pole': V(*d.get('pole', (0, 0, 0))), 'palm': V(*d.get('palm', (0, 0, -1))),
+            'down': d.get('down', 0.25), 'curl': d.get('curl', 0.35), 'fingers': V(*d['fingers']) if 'fingers' in d else None, 'roll': d.get('roll', 0.0)}
+
+
+def rest_hand(rig, p, side, wrist, elbow, down=0.25, palm_dir=V(0, 0, -1), curl_by=0.35, fingers=None, roll=0.0):
     """Lay a hand on top of someone's shoulder: the wrist nearly straight in line with the forearm, the palm facing
     down onto the shoulder (`palm_dir`), the fingers carrying on from the forearm and tipping `down` over its curve."""
     limb_ik(rig, p, side + 'Arm', side + 'ForeArm', side + 'Hand', wrist, elbow)   # first pass, to find where the forearm points
     M = rig.fk(p); fa = M[P + side + 'ForeArm'].to_3x3().col[1].normalized()
-    fingers = (fa + V(0, 0, -down)).normalized()
+    if fingers is None: fingers = (fa + V(0, 0, -down)).normalized()
+    if roll: palm_dir = rot(fingers, roll) @ palm_dir   # tip the thumb edge off their body
     arm(rig, p, side, wrist, elbow, fingers, palm_dir, 0.5)
-    curl(rig, p, side, curl_by, thumb=0.1)
+    curl(rig, p, side, curl_by, thumb=THUMB_LIFT, thumb_in=THUMB_IN, together=TOGETHER)   # the thumb turned to lie along the hand, off their body
 
 
 def relaxed_arm(rig, p, side):
@@ -574,14 +595,15 @@ def stand_still(rig, T, seed):
 @clip('ComfortGive', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_give(rig):
     T = 8.0; frames = stand_still(rig, T, 31)
-    embrace_arm(rig, frames, T, ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0))
+    embrace_arm(rig, frames, T, ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0), name='ComfortGive')
     return frames
 
 
 @clip('ComfortChild', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_child(rig):
     T = 8.0; frames = stand_still(rig, T, 33)
-    comfort_arm(rig, frames, T, CHILD_GAP, 0.40, lean=0.3, turn_to=0.35, look=(-0.35, 0.55), ahead=CHILD_AHEAD, half=-0.06, nudge=CHILD_NUDGE, ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0, 0.6), elbow_dir=(0.6, -0.5, -1.0))   # the hand on the child's near shoulder, from behind
+    embrace_arm(rig, frames, T, turn_body=0.25, lean_in=0.05, upper=(0.15, 0.1, 1.0), fore=(0.6, 0.75, -0.35), look=(-0.3, 0.6),
+                ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0, 0.6), name='ComfortChild')   # upper arm hanging, forearm forward: the hand palm down on the child's shoulder
     return frames
 
 
@@ -598,10 +620,9 @@ def comfort_hand(rig):
         turn(rig, p, 'Spine1', X, 0.04)
         steady_head(rig, p, yaw=0.05 + 0.03 * math.sin(TAU * t / T), pitch=0.25, roll=0.05, neck=0.5)
         M = rig.fk(p)
-        wrist = body_point(rig, Mfix, 'Left', FACE_OUT, FACE_GAP - 0.2 + FACE_FWD, FACE_UP + 0.008 * pt, bone='Hips') + ride[i]
-        arm(rig, p, 'Left', wrist, body_dir(rig, M, 'Left', 0.4, -0.2, -1, bone='Hips'), body_dir(rig, M, 'Left', -0.1, 0.8, -0.6, bone='Hips'),
-            body_dir(rig, M, 'Left', 0.0, 0.3, -1, bone='Hips'), 0.5)
-        curl(rig, p, 'Left', 0.25 - 0.1 * pt, thumb=0.1)
+        F = fit('ComfortHand')
+        wrist = body_point(rig, Mfix, 'Left', FACE_OUT, FACE_GAP - 0.2 + FACE_FWD, FACE_UP + 0.008 * pt, bone='Hips') + ride[i] + F['w']
+        rest_hand(rig, p, 'Left', wrist, body_dir(rig, M, 'Left', 0.4, -0.2, -1, bone='Hips') + F['pole'], down=F['down'], palm_dir=F['palm'], curl_by=F['curl'] - 0.1 * pt, fingers=F['fingers'], roll=F['roll'])
         relaxed_arm(rig, p, 'Right')
     return frames
 
@@ -616,7 +637,7 @@ def sit_base(rig, T):
 @clip('SitComfortGive', 'hand-made on the library SitIdle (Sitting_Idle.fbx)')
 def sit_comfort_give(rig):
     T = 8.0; frames = sit_base(rig, T); breathe(rig, frames, T, 2, amt=0.014)
-    embrace_arm(rig, frames, T, turn_body=0.3, ride=follow(rig, sit_comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0), seated=True, reach=(-0.32, -0.03, -0.07), hand=((-0.35, -0.2, -0.9), (0.8, -0.4, 0.1)))
+    embrace_arm(rig, frames, T, turn_body=0.3, ride=follow(rig, sit_comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0), seated=True, reach=(-0.32, -0.03, -0.07), hand=((-0.35, -0.2, -0.9), (0.8, -0.4, 0.1)), name='SitComfortGive')
     for p in frames: turn(rig, p, 'RightUpLeg', Z, 0.14)   # knees together, clear of hers
     return frames
 
@@ -765,6 +786,119 @@ def check(rig, name, frames):
         print('      bob %.3f m  highest swing-foot lift %.3f m' % (max(g) - min(g), max(lift)))
 
 
+# ---------------------------------------------------------------- resting a hand on the other person (comfort clips)
+# The giver's resting hand is laid on top of the other person's shoulder, frame by frame, against their real, posed
+# body, as feet are planted on the floor: both bodies are loaded from build/people (the pair in tools/anims/pair_check.py),
+# posed with their clips and placed as the game places them. The palm goes flat on the top of the named shoulder (it
+# follows that shoulder as they breathe and sway), the fingers run forwards over it, the wrist stays nearly straight
+# and the elbow hangs relaxed. Each frame the real hand is posed and measured, and the solve corrected.
+CONTACT = {   # clip: (pair in pair_check.py, the giver's resting hand, the other person's shoulder it rests on, which way is "over" it)
+    'ComfortGive': ('ComfortGive', 'Right', 'LeftArm', 'forward'),
+    'SitComfortGive': ('SitComfort', 'Right', 'LeftArm', 'forward'),
+    'ComfortChild': ('ComfortChild', 'Right', 'LeftArm', 'forward'),
+    'ComfortHand': ('ComfortHand', 'Left', 'RightArm', 'back'),
+}
+PALM_OFF = 0.012   # the hand bone starts this far above the palm's skin (corrected each frame by measuring)
+PALM_AT = 0.055    # the middle of the palm is this far along the hand from the wrist
+FOREARM_CLEAR = 0.05   # the forearm's bone keeps at least this far from the other person
+CONTACT_ROUNDS = 10
+
+
+def contact_pass(name, n_frames):
+    """Solve the resting arm for every frame. Returns, per frame, the world turns of the arm, forearm and hand bones
+    (the clip then takes these on, so the same turns reach the game)."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import pair_check as pc
+    from mathutils.bvhtree import BVHTree
+    pair, side, shoulder, over = CONTACT[name]; gclip, tclip, gbody, tbody, place, seated = pc.PAIRS[pair]
+    bpy.ops.wm.read_factory_settings(use_empty=True); sc = bpy.context.scene
+    G = pc.load(sc, gbody, os.path.join(OUT, gclip + '.fbx'), (0, 0, 0, 1), True)
+    Tk = pc.load(sc, tbody, os.path.join(OUT, tclip + '.fbx'), place)
+    mr = Rig(G['rig']); f0 = G['frames'][0]; out = []; prev_ang = None
+    U, L, E = P + side + 'Arm', P + side + 'ForeArm', P + side + 'Hand'
+    pb = G['rig'].pose.bones
+    for b in (U, L, E):   # these three are set here, not copied from the clip
+        for c in list(pb[b].constraints): pb[b].constraints.remove(c)
+    l1 = mr.rel[L].translation.length; l2 = mr.rel[E].translation.length
+    labs = G['labels']; HAND, FING = side + 'Hand', side + 'Fingers'
+    off_p, tilt = PALM_OFF, 0.0; tk = Tk['rig']; ts = tk.matrix_world.to_scale().x
+    for i in range(n_frames):
+        sc.frame_set(f0 + i)
+        for b in (U, L, E): pb[b].matrix_basis.identity()
+        if not seated:
+            for q in (G, Tk): pc.ground(q, bpy.context.evaluated_depsgraph_get)
+        bpy.context.view_layer.update(); dg = bpy.context.evaluated_depsgraph_get()
+        tv, tt, tp = pc.shape(Tk, dg); tree = BVHTree.FromPolygons(tv, tt)
+        body = BVHTree.FromPolygons(tv, [t for t, q in zip(tt, tp) if q not in ('hat', 'head')])   # her shoulder without the hat brim above it
+        gw = G['rig'].matrix_world; S = gw @ pb[U].head
+        tb = tk.pose.bones; Jt = tk.matrix_world @ tb[P + shoulder].head; Nk = tk.matrix_world @ tb[P + 'Neck'].head
+        top = Jt.lerp(Nk, 0.15) + V(0, 0, 0.12 * ts)   # above the top of her shoulder, a little in from the joint
+        hit = body.ray_cast(top, V(0, 0, -1), 0.4)
+        tf = tk.matrix_world.to_3x3() @ V(0, -1, 0); tf.z = 0; tf.normalize()
+        g = tf if over == 'forward' else -tf
+        for rnd in range(CONTACT_ROUNDS):
+            q0 = hit[0] if hit[0] is not None else Jt
+            nrm = Vector(); loc = Vector(); cnt = 0
+            for o in ((0, 0, 0), (0.02, 0, 0), (-0.02, 0, 0), (0, 0.02, 0), (0, -0.02, 0)):   # a smoothed surface normal
+                h = body.find_nearest(q0 + Vector(o) * ts)
+                if h[0] is not None: nrm += h[1]; loc += h[0]; cnt += 1
+            nrm.normalize(); loc /= max(cnt, 1)
+            if nrm.z < 0.3: nrm = (nrm + V(0, 0, 1)).normalized()
+            arm_dir = (loc - S); arm_dir.z = 0
+            fd = (g + arm_dir.normalized() * 0.8).normalized()                 # forwards over her shoulder, turned a little the way his arm comes
+            fdir = (fd - nrm * fd.dot(nrm)).normalized()
+            fdir = (rot(fdir.cross(nrm).normalized(), tilt) @ fdir).normalized()   # tipped to follow her curve
+            nrm2 = (nrm - fdir * nrm.dot(fdir)).normalized()
+            palm_pt = loc + nrm * off_p
+            W = palm_pt - fdir * PALM_AT
+            WH = frame(Y, mr.palm[side], fdir, -nrm2)
+            d = W - S; dist = min(d.length, 0.995 * (l1 + l2)); u = d.normalized(); W = S + u * dist
+            a = (l1 * l1 - l2 * l2 + dist * dist) / (2 * dist); h = math.sqrt(max(0.0, l1 * l1 - a * a))
+            e1 = (V(0, 0, -1) - u * u.dot(V(0, 0, -1))).normalized(); e2 = u.cross(e1); best = None   # angle 0 is the elbow straight down
+            for k in range(-16, 17):   # the elbow hangs, swung a little either way
+                ang = TAU * k / 64; J = S + u * a + (e1 * math.cos(ang) + e2 * math.sin(ang)) * h
+                sc_ = 0.01 * ang * ang
+                for f in (0.2, 0.5, 0.8):   # the forearm keeps clear of her
+                    qq = J.lerp(W, f); hh = tree.find_nearest(qq)
+                    if hh[0] is None: continue
+                    dd = hh[3] if (qq - hh[0]).dot(hh[1]) >= 0 else -hh[3]
+                    if dd < FOREARM_CLEAR * ts: sc_ += (FOREARM_CLEAR * ts - dd) * 40
+                bend = math.degrees((W - J).normalized().angle(fdir)); sc_ += 0.0005 * max(0.0, bend - 15) ** 2
+                if prev_ang is not None: sc_ += 0.02 * (ang - prev_ang) ** 2
+                if best is None or sc_ < best[0]: best = (sc_, ang, J)
+            J = best[2]; d1 = (J - S).normalized(); d2 = (W - J).normalized(); nn = d1.cross(d2)
+            nn = nn.normalized() if nn.length > 1e-5 else e2
+            WU = frame(Y, mr.hinge[side + 'Arm'], d1, nn); WL = frame(Y, mr.hinge[side + 'ForeArm'], d2, nn)
+            qq = (WL.inverted() @ WH).to_quaternion(); th = 2 * math.atan2(qq.y, qq.w); th = (th + math.pi) % TAU - math.pi
+            WL = WL @ rot(Y, 0.5 * th)
+            gi = gw.inverted(); R3 = gi.to_3x3()
+            for b, Wb, at in ((U, WU, S), (L, WL, J), (E, WH, W)):   # pose the real arm and measure it against her
+                m = (R3 @ Wb).to_4x4(); m.translation = gi @ at; pb[b].matrix = m; bpy.context.view_layer.update()
+            dg = bpy.context.evaluated_depsgraph_get(); gv, gt, gp = pc.shape(G, dg)
+            near = {HAND: 9.0, FING: 9.0}
+            for v, lab in zip(gv, labs):
+                if lab in near:
+                    hh = body.find_nearest(v, 0.2)
+                    if hh[0] is None: continue
+                    dd = hh[3] if (v - hh[0]).dot(hh[1]) >= 0 else -hh[3]
+                    if dd > -0.05: near[lab] = min(near[lab], dd)
+            if near[HAND] < 9: off_p = max(-0.02, min(0.08, off_p - 0.6 * (near[HAND] + 0.001)))   # palm just pressing on her
+            if near[FING] < 9: tilt = max(-0.6, min(0.6, tilt - 0.5 * (near[FING] + 0.001) / 0.09))
+        prev_ang = best[1]
+        out.append((WU, WL, WH))
+        if i % 40 == 0: print('contact', name, i, 'palm %.3f fingers %.3f wrist %.0f off %.3f tilt %.2f reach %.3f/%.3f' % (near[HAND], near[FING], math.degrees(d2.angle(fdir)), off_p, tilt, (palm_pt - fdir * PALM_AT - S).length, l1 + l2), flush=True)
+    return out
+
+
+def apply_contact(rig, frames, side, worlds):
+    for p, (WU, WL, WH) in zip(frames, worlds):
+        set_world(rig, p, side + 'Arm', WU); set_world(rig, p, side + 'ForeArm', WL); set_world(rig, p, side + 'Hand', WH)
+        if os.environ.get('CDEBUG'):
+            M = rig.fk(p); print('APPLY', round(math.degrees(WL.col[1].angle(WH.col[1]))), round(math.degrees(M[P + side + 'ForeArm'].to_3x3().col[1].angle(M[P + side + 'Hand'].to_3x3().col[1]))), round(math.degrees(M[P + side + 'Hand'].to_3x3().col[1].angle(WH.col[1]))))
+
+
+
+
 def main():
     args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
     args = [a for a in args if not a.endswith('.py')]
@@ -772,19 +906,29 @@ def main():
         for k, (f, s) in CLIPS.items(): print(k, ':', s)
         return
     names = [a for a in args if not a.startswith('-')] or list(CLIPS)
-    bpy.ops.wm.open_mainfile(filepath=os.path.join(ROOT, 'shared', 'rig', 'char.blend'))
-    ob = bpy.data.objects['Human.rig']
-    for pb in ob.pose.bones: pb.matrix_basis.identity()
-    ob.animation_data_create(); ob.animation_data.action = None
-    bpy.context.scene.render.fps = FPS
-    rig = Rig(ob)
+    names.sort(key=lambda n: 0 if 'Take' in n else 1)   # the one comforted first: the giver's hand is laid on them
+    def open_rig():
+        bpy.ops.wm.open_mainfile(filepath=os.path.join(ROOT, 'shared', 'rig', 'char.blend'))
+        ob = bpy.data.objects['Human.rig']
+        for pb in ob.pose.bones: pb.matrix_basis.identity()
+        ob.animation_data_create(); ob.animation_data.action = None
+        bpy.context.scene.render.fps = FPS
+        return Rig(ob)
+    rig = open_rig()
     for name in names:
         fn, _ = CLIPS[name]; _TWIST.clear(); frames = fn(rig)
         if 'Walk' not in name: soften(frames, [sd + b for sd in ('Left', 'Right') for b in ('Arm', 'ForeArm', 'Hand')])
         frames[-1] = frames[0].copy()   # an exact loop
+        path = os.path.join(OUT, name + '.fbx')
+        if name in CONTACT and '--no-contact' not in args:
+            write_fbx(rig, name, frames, path)   # a first version, posed against the partner below
+            worlds = contact_pass(name, len(frames)); rig = open_rig()
+            apply_contact(rig, frames, CONTACT[name][1], worlds)
+            soften(frames, [CONTACT[name][1] + b for b in ('Arm', 'ForeArm', 'Hand')], 1.5)
+            frames[-1] = frames[0].copy()
         check(rig, name, frames)
-        write_fbx(rig, name, frames, os.path.join(OUT, name + '.fbx'))
-        print('WROTE', os.path.join(OUT, name + '.fbx'))
+        write_fbx(rig, name, frames, path)
+        print('WROTE', path)
 
 
 if __name__ == '__main__':

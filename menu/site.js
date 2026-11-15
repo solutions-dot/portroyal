@@ -63,3 +63,9 @@ if (contactPanel && contactOpen) {
     status.textContent = 'Your enquiry is ready in your email app. Press Send there to contact me. If nothing opened, email ' + CONTACT_EMAIL + ' directly. Your message is still here.';
   });
 }
+
+/* The games are listed in Jamaica's timeline, oldest first, by each card's data-year. A new card falls into place wherever it is written in index.html. */
+for (const list of document.querySelectorAll('.games')) {
+  const cards = [...list.querySelectorAll(':scope > .game')];
+  cards.sort((a, b) => (+a.dataset.year || 9999) - (+b.dataset.year || 9999)).forEach((c) => list.appendChild(c));
+}

@@ -85,6 +85,22 @@ test('loop seams normalize quantized rotations and meet the starting pose', () =
   assert.ok(first.angleTo(last)<0.000001);
 });
 
+import { VectorKeyframeTrack } from 'three';
+import { CL, clipFor, HIPS_Y, WALKS, isSeated } from '../engine/anim.js';
+test('kneeling, crouching and seated clips keep their low hips; every walk is paced and seam-looped', () => {
+  const pos = (name, y, x = 0) => new AnimationClip(name, 1, [new VectorKeyframeTrack('mixamorigHips.position', [0, 1], [x, y, 0, x, y, 0]), new QuaternionKeyframeTrack('mixamorigHips.quaternion', [0, 1], [0, 0, 0, 1, 0, 0, 0, 1])]);
+  const saved = { ...CL }; CL.Idle = pos('Idle', 0.86, 0.02);
+  for (const [n, y] of [['Kneel', 0.313], ['Kneel2', 0.313], ['KneelDown', 0.308], ['Crawl', 0.36], ['Scared', 0.467], ['Duck2', 0.518], ['HurtHoldIdle', 0.72], ['TalkM3', 0.529], ['AskQuestion', 0.54], ['PlayPiano', 0.527], ['SitScared', 0.48]]) {
+    CL[n] = pos(n, y, 0.3); const c = clipFor(n), t = c.tracks.find((k) => k.name === 'mixamorigHips.position');
+    assert.ok(t, n + ' keeps its hips track'); assert.ok(Math.abs(t.values[1] - y) < 1e-6, n + ' keeps its hips height');
+    if (isSeated(n)) assert.ok(Math.abs(t.values[0] - 0.02) < 1e-6, n + ' is seated: hips over the spot the game set'); }
+  CL.Talk1 = pos('Talk1', 0.86); assert.equal(clipFor('Talk1').tracks.find((k) => k.name === 'mixamorigHips.position'), undefined, 'a standing clip leaves the height to groundFeet');
+  for (const n of ['TalkM3', 'AskQuestion', 'PlayPiano', 'Pray4', 'SitIdle']) assert.ok(isSeated(n), n + ' is seated'); for (const n of ['Kneel', 'Talk1', 'TalkM1']) assert.ok(!isSeated(n));
+  for (const n of ['CarryBagWalk', 'CarryHeadWalk', 'CarryHeadWalk2', 'HoldWalk', 'WalkM2', 'RunM2', 'SadWalk', 'HurtWalk', 'InjuredWalk', 'RifleWalk', 'RifleWalk2', 'RifleCrouchWalk']) assert.ok(WALKS.test(n), n + ' is a walk');
+  assert.ok(HIPS_Y.test('Kneel') && !HIPS_Y.test('Idle'));
+  for (const k of Object.keys(CL)) delete CL[k]; Object.assign(CL, saved);
+});
+
 import { useInteractionKey } from '../engine/input.js';
 test('Space, Enter and E interact once and leave focused UI and text entry alone', () => {
   let count=0;
@@ -145,6 +161,7 @@ test('the wall rectangles made for the audits cover the ground you may not walk 
 /* engine/story.js: who moves the story, the hint arrow, carried items */
 import './story.mjs';
 import './ambient.mjs';
+import './checks.mjs';
 
 test('a follower keeps out of your personal space, steps aside when you walk back into them, and never stands in a wall', async () => {
   const { follow, tick, watch, drive } = await import('../engine/follow.js');
@@ -155,4 +172,12 @@ test('a follower keeps out of your personal space, steps aside when you walk bac
   let p = drive({ from: [0, 0], route: [[0, 2.5], [6, 2.5]], stops: [1], move, step, people: [n], w, blocked });   /* away, then along the wall */
   p = drive({ from: p, route: [[0, 2.5]], move, step, people: [n], w, blocked });   /* straight back at them */
   assert.deepEqual(w.lines(n, 'follower'), []);
+});
+
+test('menu lists every game in Jamaica\'s timeline, oldest first', async () => {
+  const { readFileSync, existsSync } = await import('node:fs');
+  const page = readFileSync('menu/index.html', 'utf8'), html = page.slice(page.indexOf('<section class="games"'), page.indexOf('</section>', page.indexOf('<section class="games"'))), cards = [...html.matchAll(/<a class="game[^"]*"([^>]*)>/g)].map((m) => m[1]);
+  assert.ok(cards.length > 0);
+  const years = cards.map((a) => { const y = a.match(/data-year="(\d{3,4})"/), g = a.match(/data-game="([a-z0-9-]+)"/); assert.ok(y, 'a game card has no data-year: ' + a); assert.ok(g && existsSync('games/' + g[1]), 'a game card names no game folder: ' + a); return +y[1]; });
+  assert.deepEqual(years, [...years].sort((a, b) => a - b), 'menu cards out of order: ' + years.join(', '));
 });

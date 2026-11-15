@@ -54,7 +54,7 @@ Built in, so nothing shows through when the body moves (all of it only for `era`
 - **Weights.** Shirt and coat bone weights are averaged across the cloth, so a sleeve and the chest bend as one piece. Each leg of the breeches follows its own leg only.
 - **Hair** grows from the body's own scalp line and fades into the skin at its edge.
 
-**Abba and Grace.** Abba was built by `tools/blender/abba.py` and then given her Idle clip by hand, so she cannot be rebuilt by `era.py`. Her source is `games/port-royal/assets/characters/abba_animated.glb`. `node tools/people/abba_fix.mjs` applies small fixes to that file (her apron stands a little further out from her skirt, so the skirt does not come through it when she walks) and writes `build/people/abba.glb`; pack it like the men. Grace is Abba recoloured in code, with a different shape and a basket on her head. A new 1690 woman should be built with `era.py` (`woman`, `skirt`, `hat: "wrap"`).
+**Abba and Grace.** Abba is a builder body now: `tools/people/abba.json` (15 November 2026). Her recipe sets `era: 1900`, as Nanny Town's 1734 women do: a woman's shift, bodice (`waistcoat`), skirt, apron and head wrap are the same pieces in either cut, and only the later cut has the seated skirt and the cloth ease. `wrapbrow: 1` brings the head wrap down to the hairline, as 1690 wraps were worn, and removes the hair under it. She has no clip of her own: the game gives her own mixer the shared Idle and Run (`games/port-royal/src/main.js`). Grace is Abba's body in her own colours. `tools/blender/abba.py`, `tools/people/abba_fix.mjs` and `assets/characters/abba_animated.glb` are kept only for reference.
 
 ## 2. Animations: `tools/anims/`
 
@@ -97,12 +97,84 @@ All clips are retargeted onto one rig (`shared/rig/char.blend`), so they play on
 | `Speech` | speaking to a crowd, 12 s: weight shifts, open arms, a raised arm, a hand to the heart, looking round the crowd | Idle | hand-made, CC0 (this project) |
 | `ComfortGive` | an arm round someone standing 0.415 m to the right and 0.205 m in front (same facing): his whole body turns about 30 degrees to them and leans in, the upper arm angles down and back, the elbow bends about 90 degrees behind their back and the forearm lies across their shoulder blades to the hand resting palm down on top of their far shoulder, wrist straight, fingers forward over it; head turned and bowed, slow pats; free arm relaxed | Idle | hand-made, CC0 (this project) |
 | `ComfortHand` | the simplest option: facing the other person 0.58 m in front, the left hand resting on their right shoulder, two slow pats | Idle | hand-made, CC0 (this project) |
-| `ComfortChild` | an adult's hand on the near shoulder of a child (about 0.6 of adult height) standing 0.31 m to the right and 0.24 m in front, clear of a skirt; the adult leans to them (pair it with `ComfortTake` on the child) | Idle | hand-made, CC0 (this project) |
+| `ComfortChild` | an adult's hand resting palm down on the near shoulder of a child (about 0.6 of adult height) standing 0.25 m to the right and 0.25 m in front, clear of a skirt; her upper arm hangs, the forearm reaches forward, head bowed to them (pair it with `ComfortTake` on the child) | Idle | hand-made, CC0 (this project) |
 | `SitComfortGive`, `SitComfortTake` | the comfort pair seated on one bench, the one comforted 0.465 m to the right and 0.27 m further forward (on the front of the seat), his elbow bent behind her back, his free hand on his knee, knees kept together | SitIdle | hand-made, CC0 (this project) |
 | `ComfortTake` | the one being comforted: upright, head bowed and tipped towards the giver on the left, hands loose in front, once a loop a hand to the eyes, slow breaths | Idle | hand-made, CC0 (this project) |
 | `SitScared` | seated, tense: hunched, gripping the seat beside the thighs, looking up and round, two small flinches | SitIdle | hand-made, CC0 (this project) |
 
 The head-load clips are planned for a load about 0.2 m in radius and 0.25 m tall sitting on the crown (the game holds it on the Head bone with `hold()`); a wider load needs `LOAD_R` in the script changed so the hand stays outside it. `ComfortGive` and `ComfortTake` are a pair: start them together and place them exactly as the table says, facing the same way (ComfortHand: facing each other). `python3 tools/anims/pair_check.py` poses both real bodies at 32 moments and reports any overlap by body part, the resting hand's height above the other person, and hands through one's own body; every comfort pair must report none. `--search Pair` slides the other person round the planned spot and lists the places with no overlap and the hand nearest the middle of its band.
+
+
+**Clips added on 15 November 2026.** Downloaded by the owner from mixamo.com (FBX files in `shared/anim-sources/`, the injured pack in `injured_pack/`). Source and licence for all: Mixamo (Adobe), free to use in games (Mixamo terms; the clips are not sold or shared on their own). "Plays once" means the last pose differs from the first, so do not loop it. Ten older clips that `optimize_clips.mjs` used to leave out (StartWalk, StopWalk, Injured, CarryTurn, BoxTurn, BoxIdle, Defeated, SlashIn, SlashOut, Draw) are now in the library too; `BoxIdle` is a standing guard with loose fists (a boxing stance), not someone holding a box. Tivoli's own four new clips are listed in `docs/games/tivoli.md`.
+
+| Clip | Source file | What it shows |
+|---|---|---|
+| `SadWalk` | `Sad_Walk.fbx` | walking slowly, head and shoulders down |
+| `InjuredWalk` | `Injured_Walking.fbx` | a limping walk, right arm held across the stomach (source loop has a 3 degree seam) |
+| `StopWalkM` | `Stop_Walking.fbx` | the same movement as `StopWalk` (a duplicate download) |
+| `CarryBagWalk` | `Walking_With_Shopping_Bag.fbx` | walking with a bag held low in the right hand (the game adds the bag) |
+| `WalkTurn180` | `Walking_Turn_180.fbx` | walking, then turning round to walk back |
+| `WalkTurn180b` | `Walking_Turn_180_1.fbx` | the same movement as `WalkTurn180` (a duplicate download) |
+| `ReachOut` | `Reaching_Out.fbx` | standing, then reaching one arm forward (plays once) |
+| `Yell` | `Yelling.fbx` | shouting with both arms spread wide |
+| `Argue` | `Standing_Arguing.fbx` | arguing: open hands, shrugs, pointing (20 s) |
+| `TalkM1` | `Talking_M1.fbx` | the same movement as `Talk2` (a duplicate download) |
+| `TalkM2` | `Talking_M2.fbx` | talking, one hand gesturing |
+| `TalkM3` | `Talking_M3.fbx` | talking while seated (needs a seat; name does not start with Sit) |
+| `AskQuestion` | `Asking_Question.fbx` | seated, raising a hand to ask (needs a seat; name does not start with Sit) |
+| `Agree` | `Agreeing.fbx` | standing, nodding agreement |
+| `Nod` | `Acknowledging.fbx` | a small nod of acknowledgement |
+| `Shrug` | `Shrugging.fbx` | a shrug |
+| `HeadTurn` | `Head_Turn.fbx` | standing, turning the head to look aside |
+| `LookAround` | `Looking_Around.fbx` | standing, looking round |
+| `WipeSweat` | `Wiping_Sweat.fbx` | wiping the brow with one hand |
+| `ListenMusic` | `Listening_To_Music.fbx` | swaying gently, as if to music |
+| `Kneel` | `Kneeling.fbx` | kneeling on one knee, idle |
+| `Kneel2` | `Kneeling_2.fbx` | the same movement as `Kneel` (a duplicate download) |
+| `KneelDown` | `Kneeling_Down.fbx` | going down from standing to one knee (plays once) |
+| `SitPoseM` | `Male_Sitting_Pose.fbx` | one still pose: sitting low, knees up, forearms on the knees |
+| `SitPoseF` | `Female_Sitting_Pose.fbx` | one still pose: sitting on a seat, hands on the knees |
+| `SitIdle2` | `Seated_Idle.fbx` | seated idle, hands by the seat |
+| `SitIdle3` | `Sitting_2.fbx` | seated, leaning forward, head bowed over the hands |
+| `SitIdle4` | `Sitting_3.fbx` | standing, then sitting down (plays once, not a loop) |
+| `Crawl` | `Crawling.fbx` | crawling on hands and knees |
+| `Pray2` | `Praying_2.fbx` | the same movement as `Pray` (kneel, pray, stand up; a duplicate download) |
+| `Pray3` | `Praying_3.fbx` | kneeling, hands together, looping |
+| `Pray4` | `Praying_4.fbx` | hands together, knees bent as if seated, looping (fits a seated hymn on a seat) |
+| `RifleWalk` | `Walk_With_Rifle.fbx` | walking, hands placed for a rifle held low |
+| `RifleWalk2` | `Walk_With_Rifle_1.fbx` | a quicker walk, rifle held up |
+| `RifleCrouchWalk` | `Rifle_Crouch_Walk.fbx` | a crouched walk with a rifle |
+| `RifleWalkStop` | `Rifle_Walk_To_Stop.fbx` | walking with a rifle, then stopping (plays once) |
+| `RifleIdle` | `Rifle_Idle.fbx` | standing idle, hands placed for a rifle |
+| `PlayPiano` | `Piano_Playing.fbx` | seated, playing a piano (needs a seat; name does not start with Sit) |
+| `PlayGuitar` | `Guitar_Playing.fbx` | standing, strumming a guitar |
+| `PlayGuitar2` | `Guitar_Playing_1.fbx` | standing, playing a guitar, calmer |
+| `Stagger` | `Jogging_Stumble_1.fbx` | the same movement as `JogStumble` (a duplicate download) |
+| `InjuredStumble1` | `Injured_Stumble_Idle_1.fbx` | the same movement as `Injured` (a duplicate download) |
+| `InjuredStumble2` | `Injured_Stumble_Idle_2.fbx` | the same movement as `Injured` (a duplicate download) |
+| `HurtIdle` | `injured_pack/injured_idle.fbx` | standing hurt, knees bent, swaying (3.5 degree source seam) |
+| `HurtHoldIdle` | `injured_pack/injured_hurting_idle.fbx` | doubled over, holding the stomach |
+| `HurtWaveIdle` | `injured_pack/injured_wave_idle.fbx` | hurt, waving one arm for help (5.4 degree source seam) |
+| `HurtWalk` | `injured_pack/injured_walk.fbx` | a hunched, hurt walk |
+| `HurtTurnL` | `injured_pack/injured_turn_left.fbx` | hurt, turning left on the spot |
+| `HurtTurnR` | `injured_pack/injured_turn_right.fbx` | hurt, turning right on the spot |
+| `Scared` | `Scared.fbx` | crouching low in fear, standing, crouching again (with skin; worked) |
+| `Terrified2` | `Terrified_2.fbx` | the same movement as `Terrified` (with skin; a duplicate download) |
+| `Duck2` | `Ducking_1.fbx` | ducking down, then up (the same as Tivoli `Ducking`) |
+| `IdleSturdy` | `Dwarf_Idle.fbx` | a wide, sturdy standing idle |
+| `OldIdle` | `Old_Man_Idle.fbx` | an old person standing, stooped, hands together |
+| `HappyIdle` | `Happy_Idle.fbx` | a light, cheerful standing idle |
+| `IdleM` | `Idle_M.fbx` | a man's standing idle, weight shifting |
+| `IdleTwist` | `Catwalk_Idle_Twist_R.fbx` | a poised standing idle with a small twist |
+| `IdleGuard` | `Warrior_Idle.fbx` | standing ready, arms loose, sometimes stretching out |
+| `BriefcaseIdle` | `Standing_W_Briefcase_Idle.fbx` | standing, one hand low as if holding a briefcase |
+| `TorchIdle` | `Standing_Torch_Idle_02.fbx` | standing, holding up a torch, turning to look; big reaching moves |
+| `StartSprint` | `Idle_To_Sprint.fbx` | from standing into a sprint (plays once) |
+| `HoldWalk` | `Holding_Walk.fbx` | walking with both hands holding something in front (6 degree source seam) |
+| `WalkM2` | `Walking_M.fbx` | a man's walk, arms held fairly high and bent (not In Place) |
+| `RunM2` | `Running_M.fbx` | a man's run (not In Place) |
+| `StopWalkM2` | `Walk_To_Stop_M.fbx` | a man walking, then stopping (plays once) |
+| `BoxIdle2` | `Box_Idle_1.fbx` | the same movement as `BoxIdle` (a duplicate download) |
 
 **A new body for Mixamo.** Set top-level `"fbx": true` in a recipe and `era.py` also writes `build/people/<name>_for_mixamo.fbx`, a rest-pose copy with skin to upload to mixamo.com.
 
@@ -177,7 +249,7 @@ What it makes (keys in `garments` unless noted):
 | `scarf` | A neck scarf with a knot at the throat (material `Scarf`). |
 | `collar`: `"turn"`, `"stand"`, `"open"`; `softcollar` | A collar built round the neck with a yoke under it, so no skin shows between collar and shirt when the body moves. `true` picks by `era`: a stiff `stand` collar before 1925, a `turn` collar from 1925 (and also before 1925 when `softcollar` is set). Write the kind, not `true` (`docs/PEOPLE.md`). |
 | `collar`: `"camp"`, `"round"`, `leaf`, `vdepth`, `vslope` | The flat collars of 1950s shirts and blouses (not for 1900 to 1930 people): `camp` is a broad open pointed collar over a narrow V, `round` a flat round collar. `leaf` is how wide the collar lies on the shirt. |
-| `puff`, `sash`, `pocket`, `hang` | Puffed short sleeves, a deep smooth sash (material `Belt`), a chest pocket (material `Pocket`, a clean rectangle), and how far loose cloth hangs from the chest. |
+| `puff`, `sash`, `pocket`, `hang` | Puffed short sleeves, a narrow sash about 5 cm tall that lies snug on the waist (material `Belt`), a chest pocket (material `Pocket`, a clean rectangle), and how far loose cloth hangs from the chest. |
 | `tie`, `buttons`, `belt` | A tie with a knot, a button band, a belt with a buckle (`belt: "always"` keeps it under a waistcoat). |
 | `skirt`, `hem`, `flare`, `pleats` | `hem` 0 is the ankle, 1 the knee. Soft folds deepen toward the hem. |
 | `shoes`, `lowshoes`, `socks`, `stockings` | Shoes with a thin sole joined to the upper. With a skirt the shoe is low cut. `socks` is how far up the shin. `stockings` (1690) colours the leg from knee to ankle. |
@@ -208,7 +280,8 @@ Marcus Garvey's face (`garvey1914.json`, `garvey1916.json`) was shaped against a
 - Collars are evened out along the ring: each line of a collar goes through a running median and a smoothing, any lift clear of the shirt is spread along the ring, and the collar's bone weights (arms folded into the shoulders, the head into the neck) are evened along it, so a collar never tears into saw teeth in a pose. The shirt's neckline is relaxed after it is cut, so its edge has no steps.
 - A V waistcoat (`vwaist`) is cut again after the ease, so its front is two straight edges meeting at the top button, and gets a row of five small buttons (piece and material `WaistcoatButtons`). A game that hides a body's `Waistcoat` must hide `WaistcoatButtons` with it (every game's `makeBody` does).
 - A head tie (`wrap`) ends in one smooth, flattened knot on the front of the head.
-- Below the knee the front of a skirt follows the shins in part, so when a woman sits the skirt falls over her knees instead of standing out from her lap.
+- Below the knee a skirt follows the shins in part (all round), so when a woman sits or kneels the skirt falls over her knees instead of standing out from her lap. `?test=cloth` also checks every skirt body in SitTalk, Kneel, PlayPiano, TalkM3 and AskQuestion when the game has those clips.
+- A man's cloth, seen from the side, runs straight from the fullest part of the chest down to the waistband (each line down the body is spanned like a sheet), so it neither shelves out from the chest nor follows a belly.
 - Waistcoat and jacket take their bone weights from the shirt under them (read from the nearest face and blended), the shirt's torso has its arm weights faded out and evened, and the base of the neck (skin and shirt neckline alike) follows the chest. These keep V necks, necklines and hems clean while walking instead of breaking into saw teeth.
 - Clearance pushes are spread over neighbouring points and cut edges are relaxed afterwards, so no face folds over (`FOLDS=1` prints how many faces of each piece face the wrong way).
 - Socks are their own `Sock` material cut along one line, so their top edge stays clean on light copies. The build is repeatable: the same recipe gives the same file.
@@ -223,5 +296,5 @@ Marcus Garvey's face (`garvey1914.json`, `garvey1916.json`) was shaped against a
 
 **How to measure.** `?test=skin` in each game's dev build (`engine/skinprobe.js`) renders each face in that game's own light from four headings and prints the mean, darkest and lightest colour (Garvey prints indoor and outdoor light). Check new people against the target before calling them done.
 
-**Not yet covered.** Abba and Grace in Port Royal still come from `tools/blender/abba.py` and draw much darker and redder (about 63,18,9); they need rebuilding with `era.py`.
+Abba and Grace in Port Royal are builder bodies now (skin `[138, 93, 66]`, at the owner's request a little darker than most, still inside the range).
 

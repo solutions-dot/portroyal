@@ -88,6 +88,7 @@ Owner rule, for every game: these checks are wired into the dev build, and **eve
 | Layout | `?test=layout` | Interface text that overlaps other interface, is clipped, or runs off the screen, in each state (play, narration, dialogue, card, hold button, helper arrow), and checks that the journal, chapters and credits panels opened in the middle of play have their title and Close button on top (nothing from the HUD covers them). Run it at **390x800, 667x375, 800x500 and 1280x720**; the 1280x720 run takes about 4 minutes in software drawing. |
 | Walking | `?test=walkers` (Kendal) | Every body walks whole loops at the speed the game moves it (`auditWalk` in `engine/audit.js`). It reports the stride, the clip speed used, how far the feet slide in a loop (good is under 3 cm), how far the shoes sink or float, and any jump where the loop joins. A carried thing must stay clear of the body in every stride. |
 | Cloth | `?test=cloth` (Kendal, Garvey, Port Royal, Tivoli, Nanny Town; `&b=man_suit,boy` picks bodies, `&full` or `&lo` one kind in Kendal; `&where` adds where the worst point is) | An under layer that shows through its cover: skin through a shirt, a shirt through a waistcoat or jacket, hair through a hat (`auditCloth` in `engine/audit.js`). It poses every body (and in Kendal every light copy, each hat, and with the waistcoat hidden) standing, mid-stride, talking, waving and sitting, works out the real vertex positions, and lists body, pose, the two pieces, how many points and the worst depth in millimetres. Hands and arms hanging against skirts, points near a sleeve hem or a neckline, and the shirt's own neck ring under a jacket are left out on purpose: they are openings, not show-through. In Kendal's people viewer `?shot=model&m=people&ids=gran,lloyd&cloth` draws a red dot on every fault. **Not yet at 0**: on 14 November 2026 Kendal had 9 lines (15 points), Garvey 7 lines (49 points: trousers through the jacket hem when sitting for `delegate1920`, `garvey1914`, `garvey1916` and `hl_critic`, and a few points at a shirt's waist) and Port Royal 34 lines (390 points). Kendal's are a few points at the waist of a shirt over trousers or at a jacket's hem when sitting; Port Royal's are a shirt collar against the coat when walking, breeches against the coat skirt and a shirt tail against the breeches when sitting, and buc1's waistband. See `docs/games/kendal.md`. |
+| Edges, fingers, hands | part of `?test=cloth` (every game that wires it) | Three more checks in `auditCloth` (`engine/audit.js`, 15 November 2026). **Jagged edges**: an open edge of a garment (collar rim, hem, neckline, skirt top) whose point juts more than 4 mm further from its neighbours than it does standing in Idle; edges under a belt, sash or apron, or tucked inside another garment, are left out. **Fingers in the cloth**: hand points more than 3 mm inside a skirt, seated skirt, apron, trousers or coat skirt (the show-through test leaves hands out on purpose, so this is their own check). **Fingers with holes**: an open edge on a finger (missing faces), checked once per body in Idle; this found every skirt body's fingertips deleted by the builder on 15 November 2026 (fixed the same day). **Malformed hands**: a hand edge over 4 mm stretched past 2.2 times, or squashed under 0.35 times, its Idle length. On the day they were added, every man in Kendal reported 3 hand edges in Walk at the thumb's web (not visible in close shots; judge before fixing), and many seated men in every game reported fingers in their trousers. |
 | Skin | `?test=skin` (Kendal, Garvey, Port Royal, Nanny Town; Tivoli with a local copy) | The colour each face is drawn in, in the game's own light, from four headings (`engine/skinprobe.js`). Compare with the target in `docs/PIPELINE.md`, "Skin". |
 | Resume | `?test=resume` (where the game saves) | Every saved stage reloads into the right place without breaking. |
 
@@ -137,7 +138,69 @@ Read from each game's code (`q.get('test')` in `games/<game>/src/`), November 20
 
 `?test=follow` (people who follow or lead, `engine/follow.js`): Nanny Town, Kendal, Melissa and Eventide. Garvey's people who walk to their seats use `goTo` and are checked by its route lines in `?test=collision`. Port Royal, Bog Walk and Tivoli have nobody who follows or leads.
 
-Each game's current state and gaps are in `docs/STANDARD.md`, "Where each game stands".
+Each game's current state and gaps are in `docs/STANDARD.md`, "Where each game stands". No game wires `?test=all` yet (15 November 2026); Bog Walk runs it through the test adapter (section 7).
+
+## 7. All the checks at once: `?test=all` and the content lint
+
+One runner, `checkAll(adapter, TABLES)` in `engine/checks.js`, runs every gameplay, continuity and quality check below and prints `ALL <n>` and a table (each check, its issues, its time, and "skip: needs game.x" for a hook the game has not given yet) into `#autolog`, with `ALL <n>` in the page title. Expect `ALL 0`. `&checks=journal,map` runs only those. Every game wires it before a pull request with one block in its dev code:
+
+```js
+import { checkAll } from '../../../engine/checks.js';
+if (__DEV__ && q.get('test') === 'all') whenReady(() => checkAll(CHECK_ADAPTER, CHECK_TABLES));   // CHECK_* live in the game's src/checktables.js
+```
+
+The adapter is a set of small hooks into the game. A check runs when its hooks are there, so a game can add them one at a time:
+
+| Check | What it finds | Hooks it needs (`game.x`) |
+|---|---|---|
+| `journal` | an unlock with no page, a page nothing unlocks, two pages with one id, a fictional speaker with no "X in this game is fictional" note (rule 3) | `journal()` returns `{ pages, unlocks, refs, speakers }` |
+| `links` | no "Main Menu" link (`#allgames`, `#jhome`), or one that does not go to the menu or does not load | none |
+| `a11y` | tap targets under 44 x 44 px, text under WCAG AA contrast (4.5, or 3 for large text; see-through panels are judged over black and white scenery), on the title and every screen `screens()` opens | optional `screens()`: `{ name: open() }` |
+| `keys` | a control you can tap but not reach with Tab, a positive `tabindex`, Tab going up the screen; with `keyMove()`, arrow keys and Enter/Space that do nothing | optional `keyMove()` |
+| `chapters` | a chapter the chapter list cannot open, or that opens with no step; collects who is in each chapter for `continuity` | `chapters()`, `openChapter(i)`, optional `step()`, `people()`, `light()` |
+| `steps` | for every step: its targets cannot be reached on foot from the start (`walkRoute` from `engine/placement.js`, then a 25 cm grid walk round walls and `blocked(x, z, r)` solids); save, resume and compare: goal, place, people, held items, position (the old `?test=resume`, at every step) | `steps()`, `goStep(s)`, `place()`, `targets()`, optional `held()`, `snapshot()`, `save()`, `restore(data)` |
+| `map` | the player leaves the map (every edge pushed outward, and 16 long walks from the start, through the game's own clamp) or gets stuck (a 1 m grid of reachable probe points; each needs two ways out) | `places()`, `goPlace(id)`, `place()`, `move(from, to, place)` |
+| `faces` | a face too dark or too pale in each place and each light (`engine/skinprobe.js`, not only daylight; `TABLES.lights = { place: ['night'] }`) | `faces()`, `renderer()`, `scene()`, `places()`, `goPlace(id, light)` |
+| `budget` | frame time, draw calls and triangles over the phone budget in each place, and the total download (`TABLES.budget`, defaults in `BUDGET`) | `renderer()`, `frame(dt)`, `places()`, `goPlace(id)` |
+| `autoplay` | the autoplayer does not finish a chapter, or stalls; while it plays, the runner samples the camera, the clips in view, the line shown, the light and the sound levels every 250 ms | `autoplay({ sample })` returns `{ ok, why, stalls }` |
+| `camera` | the camera below the ground, inside a wall (`[x0, z0, x1, z1, top]`) or inside a solid, along the autoplayer run and at every talk | `camera()`, optional `talks()`, `talkTo(id)` |
+| `rule4` | a banned clip in view (`BANNED`: falls, doubled over, boxing always; fights closer than 12 m; `Sword2` past its fall), anyone whose hips are under 55 % of standing height on a clip that is not sitting, kneeling or crouching; a step tagged intense (`TABLES.intense = { stage: cardId }`) entered without its opt-in card. Tivoli lists its allowed clips per step in `TABLES.allowClips` | `clips()` returns `[{ id, clip, t, dist, inView, hips }]`, optional `cardSeen(id)` |
+| `sound` | a sound name the engine does not make, a sound connected straight to the speakers (so the toggle cannot silence it), sound off leaving the master volume up, a bed louder than `TABLES.talkLevel` (0.3) during dialogue | `audio()` returns `AU`, optional `setSound(on)`, `talking()` |
+| `continuity` | one character (`TABLES.cast = { mama: ['mama', 'mama3'] }`) whose body, colours, hat or name changes between chapters or steps with no change declared (`TABLES.changes = [{ id, chapter or step, field }]`); a given item (`TABLES.given = { step: ['lamp'] }`) gone before its drop (`TABLES.drops`); a line tagged night, day, dawn or dusk (`TABLES.tagged = { 'line text': 'night' }`) shown in other light; ages that do not add up across eras (`TABLES.ages = { pearl: { born: 1976, seen: [[1988, 12], [2025, 49]] } }`) | `people()`, and what `chapters`, `steps` and `autoplay` collected |
+| `errors` | script errors, rejected promises, `console.error`, and files that fail to load, across the whole run | none |
+
+Phone size: run it at 390x800 (and 667x375) as for the layout test. `TABLES.budget` numbers are for a real phone with `?stats`; software drawing in headless Chrome is several times slower, so a headless run uses looser numbers.
+
+**Proving it on a game without touching its code.** `node tools/checks_browser.mjs harness bog-walk` (after `node tools/build.mjs bog-walk --dev`) loads the dev build, injects `engine/checks.js` and a test adapter (`tools/checks/adapters/bog-walk.js`, which reads the `window.__bw` object the dev build already has), and prints the table. Copy that adapter when wiring another game; once a game wires `?test=all` itself, its adapter moves into the game.
+
+**Content lint: `node tools/lint_content.mjs`** (part of `npm test`). It reads every word each game ships (`content.js` where there is one, and the dialogue, choices, goals and journal pages in every source file) and reports:
+
+| Finding | Rule |
+|---|---|
+| `long` | a dialogue line or choice over 12 words (rule 2); a short list of lines that must stay long goes in `allowLong` in `tools/checks/<game>.json` |
+| `goal` | a goal of more than one sentence, or over 14 words ("Well done!" in front is allowed) |
+| `dash` | an em dash anywhere in a game's source, page, docs or tools, and in the shared code and docs (rule 1). Write `\u2014` in code that looks for one |
+| `name` | a speaker's name spelled two ways ("Mr. Clive" and "Mr Clive") or one letter apart |
+| `fact` | a year, date or number (10 and over) the player reads that the game's facts doc (`docs/games/<game>.md` and `docs/games/<game>-*.md`) does not contain: add the fact and its source to the doc, or fix the text; puzzle numbers go in `factsIgnore` |
+| `journal` | the same rules as the `journal` check above |
+| `real` | every real person who speaks (the `real` list in `tools/checks/<game>.json`): check each line against the sources (rule 3) |
+| `sound` | `stepSound`, `uiSound` or `cue` with a name `engine/audio.js` does not make, or a missing sound file |
+| `rule4` | a clip from the rule 4 list named in a game's code: check it is in the background, never a fall in view |
+
+`--game nanny` lints one game, `--all` lists every finding, `--json out.json` writes them. `npm test` runs it with `--ci`, which fails only on findings that are not in `tools/checks/lint-baseline.json`, so a pull request cannot add new ones while the old ones are fixed. After fixing some, run `node tools/lint_content.mjs --update-baseline` so they cannot come back. The baseline must only shrink; rule 8 still wants 0.
+
+**Page checks: `node tools/checks_browser.mjs <what> [games]`** serves the repository laid out like `dist/` and drives headless Chrome (Playwright):
+
+| `<what>` | Checks | Time (Nov 2026, software drawing) |
+|---|---|---|
+| `menu` | clicks every game on the menu, checks it loads with no errors, its "Main Menu" links (`#allgames`, `#jhome`) go to the menu and load, and "Main Menu" really goes back | about 8 minutes for 8 games |
+| `errors` | loads each game (with `--auto`, runs `?auto=1&one`) and lists errors and files that fail to load | about 2 minutes a game |
+| `a11y` | the menu and each title screen at 390x800 (`--size 667x375`): tap targets, contrast, Tab order | about 1 to 2 minutes a game |
+| `size` | what each game downloads before Start is ready, against `budget.bytes` in `tools/checks/<game>.json` | about 1 to 2 minutes a game |
+| `harness bog-walk` | `checkAll` on the live dev build through `tools/checks/adapters/bog-walk.js` (`--checks steps,map` for some) | about 14 minutes |
+| `fixtures` | `tests/checks.html`: the accessibility checks catch planted faults (title `PASS 7 accessibility fixtures`) | seconds |
+
+**On pull requests:** `.github/workflows/checks.yml` runs `npm test` (the regression tests and the content lint) on every pull request, in about a minute, with no secrets. The page checks are a separate job started by hand from the Actions tab (about 25 to 40 minutes).
 
 ## Lessons learned (bugs that slipped through)
 

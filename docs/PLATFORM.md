@@ -84,7 +84,7 @@ Other rules it follows:
 
 The sound is made with Web Audio in `intro.js`, like the games' sound (no audio files). The timeline is `plan()` at the top of that file, and the light effects in `intro.css` are timed to match the notes. The low notes are meant to feel like the box bass of old mento music. They are an approximation, not a recording.
 
-**Adding a game:** put `data-year="1999"` on its card in `menu/index.html`. It gets a stamp in the colour of its Play button, and the intro makes room.
+**Adding a game:** put `data-year="1999"` on its card in `menu/index.html` (the year the card's title names). It gets a stamp in the colour of its Play button, and the intro makes room. The menu lists the games in Jamaica's timeline, oldest first: `menu/site.js` sorts the cards by `data-year` when the page loads, so a new card falls into place wherever it is written, and `npm test` fails if a card has no year or `index.html` lists them out of order (keep the file in order too, so the page is right before the script runs).
 
 **Another island:** it needs its own logo and mask, the one-line description (`#intro .in-desc`), the cards, and a decision on whether islands share this site or each get their own. That is not decided.
 

@@ -1,0 +1,49 @@
+# Automatic checks on every pull request (docs/TESTING.md, section 7). No secrets are used.
+#   checks:   npm test (the engine's regression tests, tests/*.mjs) and the content lint (tools/lint_content.mjs --ci, run by npm test).
+#             About 1 minute with the npm cache warm (install about 30 s, tests about 5 s, lint under 1 s).
+#   browser:  the headless page checks (menu click-through, errors, accessibility, download size). Each game loads its models in software
+#             drawing, so this takes about 25 to 40 minutes: run it by hand from the Actions tab (workflow_dispatch), not on every pull request.
+name: checks
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: 'Also run the headless browser checks (slow)'
+        type: boolean
+        default: true
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+  browser:
+    if: github.event_name == 'workflow_dispatch' && inputs.browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx -y playwright@1.63.0 install --with-deps chromium
+      - name: Build every game (public build, as published)
+        run: for g in $(ls games | grep -v '^_'); do [ -f games/$g/src/main.js ] && node tools/build.mjs $g; done
+      - name: Menu, errors, accessibility and size
+        run: npm i --no-save playwright@1.63.0 && node tools/checks_browser.mjs all --out browser-checks.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-checks
+          path: browser-checks.txt

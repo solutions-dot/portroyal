@@ -12,19 +12,20 @@
 #
 #   python3 tools/anims/pair_check.py                  # every pair
 #   python3 tools/anims/pair_check.py ComfortHand      # one pair
-import bpy, os, sys, math
+import bpy, os, sys, math, re
 from mathutils import Vector, Matrix
 from mathutils.bvhtree import BVHTree
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 CLIPS = os.path.join(ROOT, 'shared', 'anim-sources', 'handmade')
 PEOPLE = os.path.join(ROOT, 'build', 'people')
-N = 32
+N = int(os.environ.get('PAIR_N', 32))
+SOFT = 0.003   # the resting palm and fingers may press this far into the other person's clothes (soft contact); deeper is a fault
 # giver clip, taker clip, giver body, taker body, where the taker stands relative to the giver (x, y, turn, scale), seated
 PAIRS = {
     'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.415, -0.205, 0.0, 1.0), False),
     'ComfortHand': ('ComfortHand', 'ComfortTake', 'man_shirt', 'woman57', (0.0, -0.58, math.pi, 1.0), False),
-    'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.31, -0.24, 0.0, 0.6), False),
+    'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.25, -0.25, 0.0, 0.6), False),
     'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.465, -0.27, 0.0, 1.0), True),
 }
 REST = {'ComfortGive': 'Right', 'ComfortHand': 'Left', 'ComfortChild': 'Right', 'SitComfort': 'Right'}   # the giver's hand and forearm that rest on the other person
@@ -39,7 +40,8 @@ def part_of(obj_name, group):
     for side in ('Left', 'Right'):
         if g.startswith(side):
             r = g[len(side):]
-            if r.startswith('Hand'): return side + 'Hand'
+            if r == 'Hand': return side + 'Hand'
+            if r.startswith('Hand'): return side + ('Thumb' if 'Thumb' in r and os.environ.get('THUMB') else 'Fingers')
             if r.startswith('ForeArm'): return side + 'ForeArm'
             if r.startswith('Arm'): return side + 'UpperArm'
             if r.startswith('Shoulder'): return 'shoulders'
@@ -67,6 +69,7 @@ def load(scene, body, fbx, place, giver=False):
     for pb in rig.pose.bones:
         pb.matrix_basis.identity()
         if pb.name not in src.pose.bones: continue
+        if re.search(r'Hand(Thumb|Index|Middle|Ring|Pinky)[234]', pb.name): continue   # the packer drops these, so in the games they stay at rest
         c = pb.constraints.new('COPY_ROTATION'); c.target = src; c.subtarget = pb.name; c.target_space = 'WORLD'; c.owner_space = 'WORLD'
         if 'Hips' in pb.name:
             c2 = pb.constraints.new('COPY_LOCATION'); c2.target = src; c2.subtarget = pb.name; c2.target_space = 'WORLD'; c2.owner_space = 'WORLD'
@@ -117,7 +120,7 @@ def run(name):
     bpy.ops.wm.read_factory_settings(use_empty=True); sc = bpy.context.scene
     G = load(sc, gbody, os.path.join(CLIPS, gclip + '.fbx'), (0, 0, 0, 1), True)
     Tk = load(sc, tbody, os.path.join(CLIPS, tclip + '.fbx'), place)
-    f0, f1 = G['frames']; worst = {}; band = []; selfhit = {}
+    f0, f1 = G['frames']; worst = {}; band = []; selfhit = {}; parts = []
     def note(key, depth):
         if depth > worst.get(key, 0): worst[key] = depth
     for k in range(N):
@@ -131,23 +134,30 @@ def run(name):
             print('DEBUG taker', {b: W(Tk, b) for b in ('LeftArm', 'RightArm', 'RightForeArm', 'Spine2', 'Neck', 'Head')})
         gv, gt, gp = shape(G, dg); tv, tt, tp = shape(Tk, dg)
         gtree = BVHTree.FromPolygons(gv, gt); ttree = BVHTree.FromPolygons(tv, tt)
-        hand = 9.0
+        hand = 9.0; near = {}
         for v, lab in zip(gv, G['labels']):            # the giver against the taker
             d, i = signed(ttree, v, tp)
             if d is None: continue
-            if lab in (REST[name] + 'Hand', REST[name] + 'ForeArm'):   # the arm that rests on them may touch, never go in
-                if lab == REST[name] + 'Hand':
+            if lab in (REST[name] + 'Hand', REST[name] + 'Fingers', REST[name] + 'ForeArm'):   # the arm that rests on them may touch, never go in
+                if tp[i] != 'hat': near[lab] = min(near.get(lab, 9.0), d)   # how it rests on her body (a hat brim above is only a collision check)
+                if lab == REST[name] + 'Hand' and tp[i] != 'hat':
                     hand = min(hand, d)
                     if os.environ.get('DEBUG') and k == 0 and d < -0.02: print('DEBUG deep hand point', tuple(round(x, 3) for x in v), round(d, 3), tp[i], ttree.find_nearest(v)[0])
-                if d < 0: note(('giver ' + lab, 'taker ' + tp[i]), -d)
+                if d < (-SOFT if lab != REST[name] + 'ForeArm' else 0): note(('giver ' + lab, 'taker ' + tp[i]), -d)   # a hand pressing on cloth may sink SOFT metres in
+                if os.environ.get('DEBUG') and lab.endswith('Thumb') and d < -0.02: print('DEBUG thumb', tuple(round(x, 3) for x in v), round(d, 3), tp[i], tuple(round(x, 3) for x in ttree.find_nearest(v)[0]), tuple(round(x, 2) for x in ttree.find_nearest(v)[1]))
                 if d < -0.03 and os.environ.get('DEBUG') and lab.endswith('ForeArm'): print('DEBUG deep forearm', k, tuple(round(x, 3) for x in v), round(d, 3), tp[i])
             elif d < 0.01: note(('giver ' + lab, 'taker ' + tp[i]), 0.01 - d)
         for v, lab in zip(tv, Tk['labels']):            # the taker against the giver
             d, i = signed(gtree, v, gp)
             if d is None: continue
-            if gp[i] in (REST[name] + 'Hand', REST[name] + 'ForeArm'): continue   # the resting arm is measured from its own side above (a thin hand has no reliable inside)
+            if gp[i] in (REST[name] + 'Hand', REST[name] + 'Fingers', REST[name] + 'ForeArm'): continue   # the resting arm is measured from its own side above (a thin hand has no reliable inside)
             if d < 0.01: note(('taker ' + lab, 'giver ' + gp[i]), 0.01 - d)
-        band.append(hand)
+        band.append(hand); parts.append(near)
+        if os.environ.get('SUGGEST') and k == 0:   # where a flat palm would lie: the surface under the palm's middle
+            pv = [v for v, lab in zip(gv, G['labels']) if lab == REST[name] + 'Hand']; pc = sum(pv, Vector()) / len(pv)
+            loc, nrm, idx, d = ttree.find_nearest(pc)
+            rb = G['rig'].pose.bones['mixamorig:' + REST[name] + 'ForeArm']; fa = (G['rig'].matrix_world.to_3x3() @ rb.matrix.to_3x3()).col[1].normalized()
+            print('SUGGEST palm_centre', tuple(round(x, 4) for x in pc), 'surface', tuple(round(x, 4) for x in loc), 'normal', tuple(round(x, 3) for x in nrm), 'forearm', tuple(round(x, 3) for x in fa))
         for who, (vs, ts, ps, labs) in (('giver', (gv, gt, gp, G['labels'])), ('taker', (tv, tt, tp, Tk['labels']))):   # hands through one's own body
             keep = [(t, pp) for t, pp in zip(ts, ps) if pp in ('body', 'shoulders', 'head', 'hips', 'legs', 'skirt')]
             own = BVHTree.FromPolygons(vs, [t for t, pp in keep]); kp = [pp for t, pp in keep]
@@ -158,6 +168,9 @@ def run(name):
     print('PAIR', name, '(%s + %s, %s + %s)' % (gclip, tclip, gbody, tbody))
     rest = [b for b in band if b < 9]
     if os.environ.get('DEBUG'): print('DEBUG band', ' '.join('%.3f' % b for b in band))
+    for part in ('Hand', 'Fingers', 'ForeArm'):
+        vals = [q.get(REST[name] + part) for q in parts if q.get(REST[name] + part) is not None]
+        if vals: print('  resting %-8s nearest point above her surface: %.3f to %.3f m (want -0.003 to 0.005; forearm 0 to 0.01)' % ({'Hand': 'palm'}.get(part, part.lower()), min(vals), max(vals)))
     if rest: print('  giver resting hand above their surface: min %.3f m, max %.3f m (want 0.005 to 0.02, never over 0.03)' % (min(rest), max(rest)))
     bad = {k: v for k, v in worst.items() if v > 0}
     print('  contacts or overlaps (depth past the 1 cm gap; the resting hand counts only if it goes in):', 'none' if not bad else '')
@@ -180,7 +193,7 @@ def search(name, step=0.015, span=4, frames=6):
         if not seated:
             for p in (G, Tk): ground(p, bpy.context.evaluated_depsgraph_get)
         dg = bpy.context.evaluated_depsgraph_get(); poses.append((shape(G, dg), shape(Tk, dg)))
-    rest = (REST[name] + 'Hand', REST[name] + 'ForeArm'); res = []
+    rest = (REST[name] + 'Hand', REST[name] + 'Fingers', REST[name] + 'ForeArm'); res = []
     for ix in range(-span, span + 1):
         for iy in range(-span, span + 1):
             off = Vector((ix * step, iy * step, 0)); over = 0.0; lo, hi = 9.0, -9.0
@@ -190,7 +203,7 @@ def search(name, step=0.015, span=4, frames=6):
                     d, i = signed(ttree, v, tp)
                     if d is None: continue
                     if lab in rest:
-                        if lab == rest[0]: hand = min(hand, d)
+                        if lab in rest[:2]: hand = min(hand, d)
                         if d < 0: over = max(over, -d)
                     elif d < 0.01: over = max(over, 0.01 - d)
                 for v, lab in zip(tvs, Tk['labels']):
@@ -198,7 +211,7 @@ def search(name, step=0.015, span=4, frames=6):
                     if d is None or gp[i] in rest: continue
                     if d < 0.01: over = max(over, 0.01 - d)
                 lo = min(lo, hand); hi = max(hi, hand)
-            res.append((over, abs((lo + hi) / 2 - 0.012) + max(0, hi - lo - 0.015), place[0] + off.x, place[1] + off.y, lo, hi))
+            res.append((over, abs((lo + hi) / 2 - 0.0025) + max(0, hi - lo - 0.015), place[0] + off.x, place[1] + off.y, lo, hi))
     res.sort()
     for r in res[:8]: print('  place x %.3f y %.3f  overlap %.3f  hand %.3f to %.3f' % (r[2], r[3], r[0], r[4], r[5]))
 

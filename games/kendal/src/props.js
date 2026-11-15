@@ -82,7 +82,7 @@ export function flowers(seed = 1) { const r = rng(seed), g = grp(); for (let i =
 /* scatter: place items made by make(i) at random spots, skipping any that fall inside the keep-clear boxes */
 export function scatter(parent, make, n, area, clear = [], seed = 5) {
   const r = rng(seed); let placed = 0, tries = 0; const out = [];
-  while (placed < n && tries++ < n * 30) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]); if (clear.some((c) => x > c[0] && x < c[2] && z > c[1] && z < c[3])) continue; const o = make(placed, r); o.position.set(x, 0, z); o.rotation.y = r() * 6.28; parent.add(o); out.push(o); placed++; }
+  while (placed < n && tries++ < n * 30) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]); if (clear.some((c) => x > c[0] && x < c[2] && z > c[1] && z < c[3])) continue; const o = make(placed, r); o.position.set(x, 0, z); o.rotation.y = r() * 6.28; o.userData.decor = true; parent.add(o); out.push(o); placed++; }   /* decor: main.js (declutter) drops one that cuts into something else */
   return out;
 }
 
@@ -315,4 +315,19 @@ export function hold(model, boneName, obj, { handleY = 0.4, scale = 1, out = 0.1
   const hips = model.getObjectByName('mixamorigHips'), hp = hips ? hips.getWorldPosition(new THREE.Vector3()) : bp.clone(); const away = new THREE.Vector3(bp.x - hp.x, 0, bp.z - hp.z); if (away.lengthSq() < 1e-4) away.set(1, 0, 0).applyQuaternion(mq); away.normalize();
   const world = bp.clone().addScaledVector(away, dy === null ? out : 0); world.y += dy === null ? -handleY * scale : dy;   /* where the item's origin goes */
   const wrap = new THREE.Group(); bone.add(wrap); wrap.position.copy(bone.worldToLocal(world.clone())); wrap.quaternion.copy(bq).invert().multiply(mq); wrap.scale.setScalar(scale / bs); obj.rotation.y = yaw; wrap.add(obj); return wrap;
+}
+
+/* ---------- the mento band's instruments (1950s Jamaica: a guitar and a banjo; the rumba box is part of the beach in places2.js) ----------
+   Built with the neck along +x and the face toward +z; main.js (strap) lays them across a player's body, the body of the
+   instrument at the strumming hand and the neck toward the other hand. General pictures, not copies of a photographed instrument. */
+export function guitar() {
+  const g = grp(), wood = solid(0x9a6430, 0.6), dark = solid(0x3a2414, 0.7);
+  for (const [x, r] of [[-0.12, 0.17], [0.07, 0.135]]) { const c = cyl(r, r, 0.09, wood, x, 0, 0, g, 18); c.rotation.x = Math.PI / 2; }
+  const hole = mesh(new THREE.CircleGeometry(0.045, 14), dark, 0.03, 0, 0.0455, g); box(0.48, 0.05, 0.03, dark, 0.38, 0, 0.02, g); box(0.11, 0.07, 0.03, dark, 0.66, 0, 0.02, g);
+  box(0.02, 0.07, 0.012, dark, -0.16, 0, 0.05, g); g.userData.instrument = 'guitar'; return g;
+}
+export function banjo() {
+  const g = grp(), rim = solid(0x7a5028, 0.6), skinM = solid(0xe8dcc0, 0.9), dark = solid(0x3a2414, 0.7);
+  const pot = cyl(0.15, 0.15, 0.07, rim, -0.1, 0, 0, g, 20); pot.rotation.x = Math.PI / 2; const head = mesh(new THREE.CircleGeometry(0.14, 20), skinM, -0.1, 0, 0.0355, g);
+  box(0.6, 0.04, 0.025, dark, 0.32, 0, 0.0, g); box(0.1, 0.06, 0.025, dark, 0.66, 0, 0.0, g); g.userData.instrument = 'banjo'; return g;
 }

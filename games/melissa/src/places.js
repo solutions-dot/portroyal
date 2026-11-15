@@ -83,7 +83,7 @@ function village({ id, year, phase }) {
   if (!after && !today) put(flameTree(6.5, 5), 4, -11.5);
   if (!old || after) for (let i = 0; i < 2; i++) put(croton(i + 1), -31 + i * 1.5, -4.6 + i * 0.2);
   /* yard fences: the sides of the family yard and Miss Hyacinth's */
-  if (!after) { fence(g, -33.5, -12.4, -33.5, -4.8); fence(g, -21.5, -12.4, -21.5, -4.8); fence(g, -7.5, 5.4, -7.5, 12); fence(g, -0.5, 5.4, -0.5, 12); }
+  if (!after) { fence(g, -33.5, -12.4, -33.5, -4.8); fence(g, -21.5, -12.4, -21.5, -4.8); fence(g, -7.5, 5.4, -7.5, 12); fence(g, -0.5, 5.4, -0.5, 12); wall(-7.6, 5.3, -7.4, 12); wall(-0.6, 5.3, -0.4, 12); }   /* the two yard fences north of the lane are solid: nobody walks through them */
   else { fence(g, -33.5, -12.4, -33.5, -4.8); }
 
   /* ---- things people do or find, by chapter ---- */
