@@ -1,18 +1,20 @@
-/* games/tivoli/src/ch1.js: the walking chapters (1, Back-o-Wall; 2, the new Tivoli). Each has a place, three people to talk to in any order, and a spot to walk to at the end.
+/* games/tivoli/src/ch1.js: the walking chapters (1, Back-o-Wall; 2, the new Tivoli; 4, the day before). Each has a place, three people to talk to in any order, and a spot to walk to at the end.
    The WALKS table says which place and which words each chapter uses. Chapter 1, Back-o-Wall. You walk through the memory of Ivy, a girl in Back-o-Wall about 1963 (in 2010 she is the grandmother). You talk to Ivy in her yard,
    to her gran, and to a neighbour in the lane, then walk to the end of the lane. Everyone is fictional and the place is imagined (backowall.js); the journal says so.
    Nothing frightening is shown: the chapter ends with a card, not with the clearing itself. Facts: docs/games/tivoli.md "Back-o-Wall and the clearance". */
 import * as THREE from 'three';
 import { buildBackOWall } from './backowall.js';
 import { buildNewTivoli } from './newtivoli.js';
+import { streetPlace } from './street.js';
 import { addNpc, clearNpcs, Talk } from './talk.js';
-import { CH1, CH2 } from './content.js';
+import { CH1, CH2, CH4 } from './content.js';
 import { unlock, finishChapter } from './story.js';
 import { FX } from './fx.js';
 
 export const CH = { on: false, talked: {}, ended: false, id: 1 };
 const WALKS = {
   1: { build: buildBackOWall, text: CH1, order: ['ivy', 'pearl', 'roy'], loading: 'Loading Back-o-Wall.', sky: [0xdbe6ea, 0xcfdde4] },
+  4: { build: streetPlace, text: CH4, order: ['gran', 'dawn', 'brown'], loading: 'Loading Tivoli Gardens, 2010.', sky: [0xd8e4ec, 0xcfdbe2], camY: 1.25 },
   2: { build: buildNewTivoli, text: CH2, order: ['ivy', 'pearl', 'clarke'], loading: 'Loading Tivoli Gardens.', sky: [0xd6e4ee, 0xcbdbe6] },
 };
 const $ = (id) => document.getElementById(id);
@@ -33,7 +35,7 @@ export async function begin(id = 1) {
   CH.talked = {}; CH.ended = false;
   for (const n of pl.npcs) await addNpc({ ...n, lines: TXT.talk[n.id], later: TXT.later[n.id] });
   $('fightload').hidden = true;
-  state.x = pl.start.x; state.z = pl.start.z; state.yaw = pl.start.yaw; state.pitch = 0; state.camY = 1.3; state.started = true; E.setBusy(false);
+  state.x = pl.start.x; state.z = pl.start.z; state.yaw = pl.start.yaw; state.pitch = 0; state.camY = W.camY || 1.3; state.started = true; E.setBusy(false);
   $('hud').hidden = false; E.setGoal(goalNow());
   const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = TXT.start[0]; t.append(b); for (const l of TXT.start.slice(1)) { const p = document.createElement('p'); p.textContent = l; t.append(p); }
   t.hidden = false; setTimeout(() => { t.hidden = true; }, 5200);

@@ -16,6 +16,8 @@ export const LOOKS = {
   roy: { base: 'man_elder', hat: 'Cap', tint: { Cap: 0x6a5a48, Shirt: 0xd9d2bc, Waistcoat: 0x6a4a3a, Breeches: 0x4a4a42, Shoes: 0x1c1816 } },   /* a neighbour, Mass Roy */
   clarke: { base: 'man_elder', hat: 'Hat', tint: { Hat: 0x3a3a3a, Shirt: 0xf0ece2, Waistcoat: 0x3a4a5a, Breeches: 0x2e2e34, Shoes: 0x1c1816 } },   /* Mr Clarke at the community centre, 1960s (fictional) */
   ivyGran: { base: 'guide2020', tint: { Shirt: 0xc6603a, Skirt: 0x3a4a6a } },                                          /* Ivy as the grandmother in 2010 (a modern body; her hair is grey in the chapters that show her) */
+  dawn: { base: 'woman_elder', hat: 'Wrap', tint: { Wrap: 0x2f6a8a, Shirt: 0xe6d8b8, Skirt: 0x7a3a3a, Shoes: 0x2a211b } },   /* Miss Dawn at the grocery, 2010 (fictional; a borrowed Kendal body until a 2010 one is built) */
+  brown: { base: 'civilian2010', tint: { Shirt: 0x6a7a5a, Breeches: 0x3a3e48 } },                                          /* Mr Brown, a neighbour, 2010 (fictional) */
   soldier: { base: 'soldier2010', hide: ['ArmBandText'] },     /* Jamaica Defence Force, May 2010: woodland camouflage, covered helmet, olive vest and harness, yellow armband */
   policeCamo: { base: 'soldier2010' },  /* police attached to the army in May 2010: the same camouflage and kit, with POLICE on the yellow armband (Gleaner photographs) */
   gunman: { base: 'civilian2010' },     /* shown only far away behind the barricade and unidentified (docs/games/tivoli.md "The dispute"); plain clothes */

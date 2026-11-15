@@ -7,7 +7,7 @@ export const CHAPTERS = [
   { id: 1, name: 'Back-o-Wall', when: 'Before the 1960s', line: 'A crowded part of West Kingston, through Ivy’s eyes.', playable: true },
   { id: 2, name: 'The new Tivoli', when: 'The 1960s', line: 'New homes are built where Back-o-Wall stood.', playable: true },
   { id: 3, name: 'Politics and power', when: '1970s to 2009', line: 'How leaders, parties and gangs grew together.', playable: false },
-  { id: 4, name: 'May 2010: before', when: 'May 2010', line: 'Barricades, a state of emergency, and a family waiting.', playable: false },
+  { id: 4, name: 'May 2010: before', when: 'Sunday 23 May 2010', line: 'Barricades, a state of emergency, and a family waiting.', playable: true },
   { id: 5, name: 'May 2010: the day', when: 'Monday 24 May 2010', line: 'A loud day. You watch from a window.', playable: true },
   { id: 6, name: 'After', when: 'May 2010 and after', line: 'Finding people. Funerals. The inquiries.', playable: false },
   { id: 7, name: 'The report', when: '2016 and 2017', line: 'What the Commission found, and the disagreement.', playable: false },
@@ -89,6 +89,46 @@ export const CH2 = {
   end: {
     title: 'The new Tivoli',
     lines: ['Tivoli Gardens was built in the 1960s.', 'It had new homes, a clinic, a crèche, schools and a community centre.', 'People still disagree about the clearing that came first.', 'Ivy, her gran and Mr Clarke are made up.'],
+  },
+};
+
+/* ---------- Chapter 4: Sunday 23 May 2010, the day before. You are Ivy's grandchild (fictional). Gran Ivy, Miss Dawn and Mr Brown are fictional. The street is made up.
+   Facts (journal pages "The man the US wanted" and "Monday 24 May 2010"): the US asked for Christopher Coke in 2009; the Government agreed on 18 May 2010;
+   a state of emergency was declared on 23 May 2010; barricades blocked the entrances before the operation. Who built the barricades is not stated: our sources do not say. ---------- */
+export const CH4 = {
+  start: ['Sunday 23 May 2010.', 'You live in Tivoli Gardens with Gran Ivy.', 'The girl from Back-o-Wall is a grandmother now.'],
+  goals: ['Talk to Gran Ivy by the gate.', 'Talk to Miss Dawn at the shop.', 'Talk to Mr Brown near the bus stop.', 'Go home through the gate.'],
+  talk: {
+    gran: [
+      { who: 'Gran Ivy', text: 'There you are! Stay close to me today.' },
+      { who: 'You', text: 'Why, Gran?' },
+      { who: 'Gran Ivy', text: 'The radio says there is a state of emergency.' },
+      { who: 'Gran Ivy', text: 'Police and soldiers have extra powers now.' },
+      { who: 'Gran Ivy', text: 'Soon we go inside and stay together.' },
+    ],
+    dawn: [
+      { who: 'Miss Dawn', text: 'Hello, darling. How is your Gran?' },
+      { who: 'You', text: 'She is worried. What is happening?' },
+      { who: 'Miss Dawn', text: 'The United States wants a man from here.' },
+      { who: 'Miss Dawn', text: 'Last week the Government agreed to send him.', unlock: 'extradition' },
+      { who: 'Miss Dawn', text: 'I am closing the shop early. Take care.' },
+    ],
+    brown: [
+      { who: 'Mr Brown', text: 'Look down the road, youngster.' },
+      { who: 'Mr Brown', text: 'Barricades block the way in now.' },
+      { who: 'You', text: 'Who put them there?' },
+      { who: 'Mr Brown', text: 'People will argue about that for years.' },
+      { who: 'Mr Brown', text: 'Keep away from them. Stay with your Gran.' },
+    ],
+  },
+  later: {
+    gran: ['Not long now, then we go in.', 'Hold my hand when we cross.'],
+    dawn: ['Go on home, darling.', 'Tell your Gran I said hello.'],
+    brown: ['Keep away from the barricade.', 'Go home safe.'],
+  },
+  end: {
+    title: 'May 2010: before',
+    lines: ['On 23 May 2010 the Government declared a state of emergency.', 'Barricades blocked the roads into Tivoli Gardens.', 'The next day, soldiers and police went in.', 'Gran Ivy, Miss Dawn and Mr Brown are made up.'],
   },
 };
 

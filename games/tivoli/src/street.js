@@ -145,3 +145,24 @@ export function buildStreet(opts = {}) {
   for (const [nm, v] of [['car', car], ['van', van], ['parked', parked], ['parked2', parked2], ['parked3', parked3]]) { v.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(v); solids.push({ kind: 'vehicle', name: nm, x0: b.min.x, x1: b.max.x, z0: b.min.z, z1: b.max.z, y0: b.min.y, y1: b.max.y }); }
   return { group: out, spots, sun, raw: g, solids };   /* raw: the unmerged parts, for the place audit (?test=audit) */
 }
+
+/* Chapter 4 walks this same street on Sunday 23 May 2010, the day before the operation: no soldiers yet, three neighbours, the barricade already across the road.
+   The walls are made from the solid boxes (buildings, fences, vehicles, cover, posts, tree trunks), so the overlap check and the walking agree. */
+export function streetPlace(opts = {}) {
+  const st = buildStreet(opts), walls = [];
+  for (const s of st.solids) {
+    if (s.y0 > 1) continue;                                            /* canopies, balconies, crossarms, walkway roofs: overhead, not in the way */
+    if (s.kind === 'tree') { if (/^palm/.test(s.name)) { const cx = (s.x0 + s.x1) / 2, cz = (s.z0 + s.z1) / 2; walls.push([cx - 0.35, cz - 0.35, cx + 0.35, cz + 0.35]); } else if (/^trunk/.test(s.name)) walls.push([s.x0, s.z0, s.x1, s.z1]); continue; }
+    walls.push([s.x0 - 0.2, s.z0 - 0.2, s.x1 + 0.2, s.z1 + 0.2]);
+  }
+  walls.push([-31.5, -4.6, -24.2, 4.8]);                               /* the barricade itself: you cannot climb it */
+  const npcs = [
+    { id: 'gran', name: 'Gran Ivy', look: 'ivyGran', x: 18.4, z: 7.2, ry: -Math.PI / 2, anim: 'Idle' },
+    { id: 'dawn', name: 'Miss Dawn', look: 'dawn', x: -12.4, z: 5.4, ry: 0.2, anim: 'Idle' },
+    { id: 'brown', name: 'Mr Brown', look: 'brown', x: -20.2, z: 6.0, ry: -Math.PI / 2, anim: 'Idle' },
+  ];
+  for (const n of npcs) st.solids.push({ kind: 'person', name: n.id, x0: n.x - 0.3, x1: n.x + 0.3, z0: n.z - 0.3, z1: n.z + 0.3, y0: 0, y1: 1.7 });
+  const start = { x: 8, z: 6.4, yaw: Math.atan2(-(18.4 - 8), -(7.2 - 6.4)) };   /* facing Gran Ivy */
+  st.solids.push({ kind: 'person', name: 'start', x0: start.x - 0.3, x1: start.x + 0.3, z0: start.z - 0.3, z1: start.z + 0.3, y0: 0, y1: 1.7 });
+  return { ...st, walls, npcs, start, endSpot: { x: 19.8, z: 7.9, r: 0.9 }, bounds: { x0: -44, x1: 40, z0: -8.2, z1: 8.3 } };
+}
