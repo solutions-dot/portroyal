@@ -9,6 +9,7 @@ This repository holds a family of educational 3D history games for the web, buil
 - **Nanny Town 1734: The Narrow Path** (`games/nanny/`) tells the story of Nanny of the Windward Maroons and her town in the Blue Mountains, from a night walk to freedom about 1730 to the land paper of 1740, in six chapters. It is new, it uses stand-in character bodies, and it has not yet been reviewed by the Moore Town Maroons. Read `docs/games/nanny.md` first: it has rules of its own (Nanny never speaks, nothing sacred is shown).
 - **Tivoli** (`games/tivoli/`) is the story of Tivoli Gardens, West Kingston, from the 1960s to today, with the May 2010 security operation at the centre. It is on the menu (the owner's choice, 14 November 2026) but still early: some poses are stand-ins. It is the hardest subject here: read `docs/games/tivoli.md` before changing anything.
 - **Hurricane Melissa** (`games/melissa/`) follows a made-up family through Hurricane Charlie (1951), Hurricane Gilbert (1988) and Hurricane Melissa (2025) in seven chapters. It is new and still uses stand-in bodies. Read `docs/games/melissa.md` first.
+- **The Emporer's Arrival, 1966** (`games/selassie/`) follows Ruth, a fictional Kingston girl, to Haile Selassie I's arrival at Palisadoes Airport on 21 April 1966, in six chapters. It is new and not yet reviewed. Read `docs/games/selassie.md` first: Haile Selassie I and Mortimo Planno have no invented words.
 - **Eventide Home** (`games/eventide/`) is an early game set at the Eventide Home in Kingston, 1980.
 - New games start from `games/_template/`.
 
@@ -33,6 +34,7 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 | Working on Bog Walk 1904 | `docs/games/bog-walk.md` |
 | Working on Nanny Town 1734 | `docs/games/nanny.md` |
 | Working on Eventide Home | `docs/games/eventide.md` |
+| Working on The Emporer's Arrival, 1966 | `docs/games/selassie.md` |
 | Working on the menu, the intro, or the platform name and idea | `docs/PLATFORM.md` |
 | Working on Hurricane Melissa | `docs/games/melissa.md` |
 | Working on Tivoli | `docs/games/tivoli.md` |

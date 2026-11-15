@@ -95,6 +95,9 @@
   .game.garvey .tag{position:absolute;top:clamp(.8rem,1.6vw,1.2rem);left:clamp(.8rem,1.6vw,1.2rem);margin:0;background:var(--hibiscus);color:var(--paper);font-weight:800;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;padding:.35rem .8rem;border-radius:999px}
 
   /* Kendal 1957: a poster as well. The long train waiting at Kingston in the evening light; the year is in amber. */
+  .game.selassie{background:#24483d url(selassie.jpg) center 35%/cover no-repeat}
+  .game.selassie .play{background:#edc25f;color:var(--deep)}
+  .game.selassie:hover .play,.game.selassie:focus-visible .play{background:var(--paper)}
   .game.kendal{background:#1c1a22 url(kendal.jpg) 70% 0/auto 76% no-repeat}
   .game.kendal::after{background:linear-gradient(to top,rgba(4,27,42,.97) 0%,rgba(4,27,42,.93) 34%,rgba(4,27,42,.45) 50%,rgba(4,27,42,0) 66%)}
   .game.kendal .year{color:#f6c27c}
@@ -244,6 +247,15 @@
         <div>
           <h2>Kendal Train Crash, 1957</h2>
           <p>In 1957 an excursion train crashed at Kendal. It was the worst rail disaster in Jamaica's history.</p>
+        </div>
+        <span class="play">Go there</span>
+      </div>
+    </a>
+    <a class="game selassie" data-game="selassie" data-year="1966" href="games/selassie/site/">
+      <div class="text">
+        <div>
+          <h2>The Emporer’s Arrival, 1966</h2>
+          <p>An old picture takes a Kingston family toward the historic welcome for Haile Selassie I.</p>
         </div>
         <span class="play">Go there</span>
       </div>
