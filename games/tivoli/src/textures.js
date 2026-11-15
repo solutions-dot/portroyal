@@ -114,3 +114,12 @@ export function fenceBlock(seed = 31) {
     speckle(g, s, r, 700);
   }, 256, seed);
 }
+
+/* fresh(colour): newly painted render for the 1960s estate: smooth paint with faint trowel marks and a little speckle, no stains or cracks (the buildings are new). */
+export function fresh(colour, seed = 41) {
+  return tex((g, s, r) => {
+    g.fillStyle = hex(colour); g.fillRect(0, 0, s, s);
+    for (let i = 0; i < 60; i++) { g.fillStyle = mix(colour, 0.97 + r() * 0.06); const w = 30 + r() * 70, h = 6 + r() * 14; wrapped(g, s, r() * s, r() * s, w, h, (x, y) => g.fillRect(x, y, w, h)); }   /* trowel marks */
+    speckle(g, s, r, 900, 0.04);
+  }, 256, seed);
+}

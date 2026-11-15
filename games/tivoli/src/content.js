@@ -5,7 +5,7 @@
 
 export const CHAPTERS = [
   { id: 1, name: 'Back-o-Wall', when: 'Before the 1960s', line: 'A crowded part of West Kingston, through Ivy’s eyes.', playable: true },
-  { id: 2, name: 'The new Tivoli', when: 'The 1960s', line: 'New homes are built where Back-o-Wall stood.', playable: false },
+  { id: 2, name: 'The new Tivoli', when: 'The 1960s', line: 'New homes are built where Back-o-Wall stood.', playable: true },
   { id: 3, name: 'Politics and power', when: '1970s to 2009', line: 'How leaders, parties and gangs grew together.', playable: false },
   { id: 4, name: 'May 2010: before', when: 'May 2010', line: 'Barricades, a state of emergency, and a family waiting.', playable: false },
   { id: 5, name: 'May 2010: the day', when: 'Monday 24 May 2010', line: 'A loud day. You watch from a window.', playable: true },
@@ -31,7 +31,7 @@ export const CH1 = {
       { who: 'Miss Pearl', text: 'We built this house ourselves, board by board.' },
       { who: 'You', text: 'Is it hard to find a home?' },
       { who: 'Miss Pearl', text: 'Very hard. There are not enough homes in Kingston.' },
-      { who: 'Miss Pearl', text: 'Go and see Roy in the lane. He has news.' },
+      { who: 'Miss Pearl', text: 'Mind how you go, child.' },
     ],
     roy: [
       { who: 'Mass Roy', text: 'Have you heard? The Government wants this land.' },
@@ -43,12 +43,52 @@ export const CH1 = {
   },
   later: {
     ivy: ['I hope Gran is not worried.', 'Gran is brave, but she is thinking hard.'],
-    pearl: ['Go on, child. See what Roy says.', 'We have each other.'],
+    pearl: ['We have each other.', 'Mind the step, child.'],
     roy: ['Whatever happens, we stay together.'],
   },
   end: {
     title: 'Back-o-Wall',
     lines: ['In 1963 the Government began to clear Back-o-Wall.', 'The last part was cleared on 12 July 1966.', 'Ivy, her gran and Mass Roy are made up.', 'What happened to Back-o-Wall was real.'],
+  },
+};
+
+/* ---------- Chapter 2: the new Tivoli Gardens, 1960s. Ivy, Miss Pearl and Mr Clarke are fictional. The place is a general picture (newtivoli.js).
+   Facts (docs/games/tivoli.md, Research): built in the 1960s where Back-o-Wall stood; homes by the Ministry of Housing; the West Kingston Trust paid for a clinic, a creche,
+   schools and a community centre with drama, singing and a steel band; some say the clearing left many families homeless. Every talk works in any order. ---------- */
+export const CH2 = {
+  start: ['Gran Ivy remembers.', 'A few years later. A new place called Tivoli Gardens.', 'Ivy and her gran have a new home.'],
+  goals: ['Talk to Ivy on the path.', 'Talk to Ivy’s gran by the flats.', 'Talk to Mr Clarke by the community centre.', 'Go to the community centre door.'],
+  talk: {
+    ivy: [
+      { who: 'Ivy', text: 'Look! We live here now.' },
+      { who: 'You', text: 'Where is this?' },
+      { who: 'Ivy', text: 'Tivoli Gardens. It is new.' },
+      { who: 'Ivy', text: 'It was built where Back-o-Wall used to be.', unlock: 'newtivoli' },
+      { who: 'Ivy', text: 'Our flat is upstairs. I can see the whole yard!' },
+    ],
+    pearl: [
+      { who: 'Miss Pearl', text: 'Hello, child. Our new home is in this block.' },
+      { who: 'Miss Pearl', text: 'The Government built these flats.' },
+      { who: 'You', text: 'Did everyone from Back-o-Wall get a flat?' },
+      { who: 'Miss Pearl', text: 'No. Some people say many families had nowhere to go.' },
+      { who: 'Miss Pearl', text: 'I think of our old neighbours every day.' },
+    ],
+    clarke: [
+      { who: 'Mr Clarke', text: 'Welcome to the community centre!' },
+      { who: 'Mr Clarke', text: 'Here we have drama, singing and a steel band.' },
+      { who: 'You', text: 'What else is here?' },
+      { who: 'Mr Clarke', text: 'A clinic, a crèche for babies, and schools.' },
+      { who: 'Mr Clarke', text: 'Come inside and hear the band practise.' },
+    ],
+  },
+  later: {
+    ivy: ['Gran says I must be good in the new place.', 'I like the trees. They are small now.'],
+    pearl: ['It is a nice flat. But I miss the old yard.', 'Mind the stairs, child.'],
+    clarke: ['The door is just there.', 'Everyone is welcome here.'],
+  },
+  end: {
+    title: 'The new Tivoli',
+    lines: ['Tivoli Gardens was built in the 1960s.', 'It had new homes, a clinic, a crèche, schools and a community centre.', 'People still disagree about the clearing that came first.', 'Ivy, her gran and Mr Clarke are made up.'],
   },
 };
 
@@ -60,6 +100,9 @@ export const JOURNAL = [
   { id: 'clearance', title: 'The clearing', from: 1,
     simple: ['In 1963 the Government began to clear Back-o-Wall.', 'Bulldozers knocked down the homes.', 'New homes were built there. They became Tivoli Gardens.', 'The last part was cleared on 12 July 1966.'],
     deeper: ['Before 12 July 1966 there was fighting in West Kingston. One man died and about 30 people were badly hurt.', 'The Government told people to leave by midnight on 11 July.', 'Over 800 shacks were pulled down, and then burned.', 'Churches helped some families find a place to stay.', 'People still disagree. Some say it was needed to stop violence. Others say it left many families homeless.'] },
+  { id: 'newtivoli', title: 'Tivoli Gardens is built', from: 2,
+    simple: ['Tivoli Gardens was built in the 1960s.', 'It was built where Back-o-Wall had been.', 'It had new homes, a clinic, a crèche and schools.', 'Its community centre had drama, singing and a steel band.'],
+    deeper: ['The Ministry of Housing built the homes.', 'A group called the West Kingston Trust paid for the clinic, crèche, schools and community centre.', 'Sources give different dates. One says building ran from 1963 to 1965.', 'Some people say the clearing left many families from Back-o-Wall with no home.', 'Some say the new homes helped one political party grow strong in the area. Chapter 3 tells more.', 'Ivy, Miss Pearl and Mr Clarke in this game are fictional. The flats in this chapter are a general picture, not a copy of the real streets.'] },
   { id: 'extradition', title: 'The man the US wanted', from: 5,
     simple: ['In 2009 the United States asked Jamaica for Christopher Coke.', 'The United States said he led a gang.', 'Jamaica took many months to agree.', 'On 23 May 2010 the Government declared a state of emergency.'],
     deeper: ['The request came on 25 August 2009.', 'The Government agreed on 18 May 2010.', 'Coke was arrested on 22 June 2010 and sent to the United States.', 'In 2012 a US court gave him 23 years in prison.'] },

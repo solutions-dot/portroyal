@@ -16,6 +16,7 @@ import { arm, weaponTick, heldReport, ARMED, modeOf } from './weapons.js';
 import { snapMeshes, auditPlace } from '../../../engine/audit.js';   // dev only: the place audit (CLAUDE.md rule 8)
 import { contentRects, contentsOverlap } from '../../../engine/ui-audit.js';   // dev only: the layout test
 import { buildBackOWall } from './backowall.js';
+import { buildNewTivoli } from './newtivoli.js';
 import { buildStreet } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage } from './story.js';
@@ -91,7 +92,7 @@ Promise.all(['anims', 'anims_tivoli'].map((name) => model(name).then((asset) => 
 });
 
 const uiS = (k) => uiSound(k);
-function startChapter(id) { if (id === 1) ch1Begin(); else if (id === 5) fightOpen(); }
+function startChapter(id) { if (id === 1 || id === 2) ch1Begin(id); else if (id === 5) fightOpen(); }
 $('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
 const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n) };
 setupTalk(talkEnv); setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS }); initStory({ startChapter, uiSound: uiS });
@@ -105,7 +106,7 @@ function devLog(lines, title) { let el = $('autolog'); if (!el) { el = document.
 async function devViews() {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), test = q.get('test'), lo = q.has('lo') ? '_lo' : '';
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
-  if (q.get('chapter') === '1') { await ch1Begin(); if (q.get('at')) ch1Skip(q.get('at')); return; }
+  if (q.get('chapter') === '1' || q.get('chapter') === '2') { await ch1Begin(+q.get('chapter')); if (q.get('at')) ch1Skip(q.get('at')); return; }
   if (shot === 'poster') {   /* ?shot=poster&cx=&cy=&cz=&tx=&ty=&tz=: the quiet street with nobody in it, for the menu picture (menu/tivoli.jpg) */
     await fightBegin(); FIGHT.freeze = true; $('hud').hidden = true; for (const id of ['fightcard', 'readcard', 'scenetitle', 'windowframe']) { const e = $(id); if (e) e.hidden = true; }
     scene.traverse((o) => { if (o.isSkinnedMesh) { let p = o; while (p.parent && p.parent !== scene) p = p.parent; p.visible = false; } });
@@ -138,8 +139,14 @@ async function devViews() {
     const st = buildStreet({}), snap = snapMeshes(st.raw), r = auditPlace({ id: 'street', snap, npcs: fightPositions(), walls: [], bounds: { x0: -45, x1: 40, z0: -4.4, z1: 4.4 }, start: { x: -10, z: 0 }, actions: [], people: [] });
     const lines = ['street: ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + r.floating.length + ' floating, ' + r.inside.length + ' inside solids, ' + r.stuck.length + ' unreachable)', ...r.floating.map((l) => '  floating: ' + l), ...r.inside.map((l) => '  inside: ' + l), ...r.stuck.map((l) => '  stuck: ' + l)];
     const ov = overlapSolids(st.solids); lines.push('overlaps: ' + ov.length); for (const l of ov) lines.push('  ' + l);
-    const bw = buildBackOWall({}), ov2 = overlapSolids(bw.solids); lines.push('back-o-wall overlaps: ' + ov2.length); for (const l of ov2) lines.push('  ' + l);
-    devLog(lines, 'AUDIT ' + (r.floating.length + r.inside.length + r.stuck.length + ov.length + ov2.length));
+    let extra = 0;
+    for (const [id, pl] of [['back-o-wall', buildBackOWall({})], ['new tivoli', buildNewTivoli({})]]) {   /* the walking places: the engine's place audit, and the solid-box overlap check */
+      const ov2 = overlapSolids(pl.solids), npc = pl.npcs.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: 'Idle' })), bd = pl.bounds || { x0: -23, x1: 17.5, z0: -13.6, z1: 14.2 };
+      const r2 = auditPlace({ id, snap: snapMeshes(pl.raw), npcs: npc, walls: pl.walls, bounds: bd, start: pl.start, actions: [{ label: 'end spot', ...pl.endSpot }], people: npc });
+      const n2 = r2.floating.length + r2.inside.length + r2.stuck.length + ov2.length; extra += n2;
+      lines.push(id + ': ' + n2 + ' issues (' + r2.floating.length + ' floating, ' + r2.inside.length + ' inside solids, ' + r2.stuck.length + ' unreachable, ' + ov2.length + ' overlaps)', ...r2.floating.map((l) => '  floating: ' + l), ...r2.inside.map((l) => '  inside: ' + l), ...r2.stuck.map((l) => '  unreachable: ' + l), ...ov2.map((l) => '  ' + l));
+    }
+    devLog(lines, 'AUDIT ' + (r.floating.length + r.inside.length + r.stuck.length + ov.length + extra));
   }
   if (test === 'layout') {   /* ?test=layout: show each card and title state and check that no two bits of text overlap, nothing is off the sides of the screen, and every button is big enough to touch (44 px). Run at 390x800, 320x568, 667x375, 800x500, 1280x720. */
     const out = [], W = innerWidth, Hh = innerHeight, st2 = document.createElement('style'); st2.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st2);
