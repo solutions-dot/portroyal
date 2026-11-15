@@ -27,7 +27,7 @@ PAIRS = {
     'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.32, 0.0, 0.0, 0.6), False),
     'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.40, 0.0, 0.0, 1.0), True),
 }
-SKIP = ('Human.low-poly', 'Cap')   # the proxy mesh and the spare cap (each game shows one hat)
+SKIP = ('Human.low-poly', 'Cap')   # the proxy mesh and the spare cap (each game shows one hat; the giver's hat is skipped too)
 
 
 def part_of(obj_name, group):
@@ -49,14 +49,14 @@ def part_of(obj_name, group):
     return 'hips'
 
 
-def load(scene, body, fbx, place):
+def load(scene, body, fbx, place, giver=False):
     with bpy.data.libraries.load(os.path.join(PEOPLE, body + '.blend')) as (src, dst): dst.objects = src.objects
     rig = None; meshes = []
     for o in dst.objects:
         scene.collection.objects.link(o)
         if o.type == 'ARMATURE': rig = o
     for o in dst.objects:
-        if o.type == 'MESH' and o.parent == rig and not any(o.name.startswith(k) for k in SKIP): meshes.append(o)
+        if o.type == 'MESH' and o.parent == rig and not any(o.name.startswith(k) for k in SKIP + (('Hat',) if giver else ())): meshes.append(o)
     x, y, rz, s = place
     e = bpy.data.objects.new('off', None); scene.collection.objects.link(e)
     e.location = (x, y, 0); e.rotation_euler = (0, 0, rz); e.scale = (s, s, s)
@@ -100,17 +100,21 @@ def ground(p, dg_get):
     if lo < 9: p['rig'].location.z = -lo; p['off'].location.z = -lo
 
 
-def signed(tree, v):
+def signed(tree, v, parts=None):
+    """Distance to the nearest surface, negative when the point is behind it (inside). Garments are open shells, so a
+    point more than 5 cm behind the nearest surface is taken to be on its far side, not deep inside; hats (open brims)
+    are only measured by distance."""
     hit = tree.find_nearest(v, 0.2)
     if hit[0] is None: return None, None
     loc, nrm, idx, d = hit
-    return (d if (v - loc).dot(nrm) >= 0 else -d), idx
+    if (v - loc).dot(nrm) >= 0 or (parts and parts[idx] == 'hat'): return d, idx
+    return (-d if d < 0.05 else None), idx
 
 
 def run(name):
     gclip, tclip, gbody, tbody, place, seated = PAIRS[name]
     bpy.ops.wm.read_factory_settings(use_empty=True); sc = bpy.context.scene
-    G = load(sc, gbody, os.path.join(CLIPS, gclip + '.fbx'), (0, 0, 0, 1))
+    G = load(sc, gbody, os.path.join(CLIPS, gclip + '.fbx'), (0, 0, 0, 1), True)
     Tk = load(sc, tbody, os.path.join(CLIPS, tclip + '.fbx'), place)
     f0, f1 = G['frames']; worst = {}; band = []; selfhit = {}
     def note(key, depth):
@@ -124,14 +128,14 @@ def run(name):
         gtree = BVHTree.FromPolygons(gv, gt); ttree = BVHTree.FromPolygons(tv, tt)
         hand = 9.0
         for v, lab in zip(gv, G['labels']):            # the giver against the taker
-            d, i = signed(ttree, v)
+            d, i = signed(ttree, v, tp)
             if d is None: continue
             if lab == 'RightHand':
                 hand = min(hand, d)
                 if d < 0: note(('giver RightHand', 'taker ' + tp[i]), -d)
             elif d < 0.01: note(('giver ' + lab, 'taker ' + tp[i]), 0.01 - d)
         for v, lab in zip(tv, Tk['labels']):            # the taker against the giver
-            d, i = signed(gtree, v)
+            d, i = signed(gtree, v, gp)
             if d is None: continue
             if gp[i] == 'RightHand' and lab in ('shoulders', 'LeftUpperArm', 'RightUpperArm', 'body', 'head') and d >= 0: continue   # where the hand rests
             if d < 0.01: note(('taker ' + lab, 'giver ' + gp[i]), 0.01 - d)
