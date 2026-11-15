@@ -9,10 +9,11 @@ import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, tone, crackle } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
-import { slideWalls } from '../../../engine/placement.js';
+import { slideWalls, walkRoute } from '../../../engine/placement.js';
+import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough, auditBodies } from '../../../engine/audit.js';
 import { G, makeSky, ease, rng, batchStatic } from './gfx.js';
 import { hamper, bucket, suitcase } from './props.js';
 import { buildSlipe, buildWard, buildPark80, buildGolden, buildMonument } from './places.js';
@@ -94,7 +95,7 @@ function clampPos(x, z) {
   const b = PL[cur].bounds, W = wallsNow(); x = Math.max(b.x0, Math.min(b.x1, x)); z = Math.max(b.z0, Math.min(b.z1, z));
   [x, z] = slideWalls([state.x, state.z], [x, z], W, 0.22);
   for (const [x0, z0, x1, z1] of W) if (x > x0 && x < x1 && z > z0 && z < z1) { const dl = x - x0, dr = x1 - x, dt = z - z0, db = z1 - z, m = Math.min(dl, dr, dt, db); if (m === dl) x = x0; else if (m === dr) x = x1; else if (m === dt) z = z0; else z = z1; }
-  if (SC) for (const n of SC.npcs) if (n.m.visible && !n.walking) { const dx = x - n.x, dz = z - n.z, d = Math.hypot(dx, dz); if (d < 0.5 && d > 0.001) { x = n.x + dx / d * 0.5; z = n.z + dz / d * 0.5; } }   /* people are solid */
+  if (SC) for (const n of SC.npcs) if (n.m.visible && !n.walking && !isFollowing(n)) { const dx = x - n.x, dz = z - n.z, d = Math.hypot(dx, dz); if (d < 0.5 && d > 0.001) { x = n.x + dx / d * 0.5; z = n.z + dz / d * 0.5; } }   /* people are solid */
   return [x, z];
 }
 
@@ -524,7 +525,7 @@ function update(dt, now) {
       [state.x, state.z] = clampPos(state.x + (fx * f - fz * r) / Math.max(1, len) * sp * dt, state.z + (fz * f + fx * r) / Math.max(1, len) * sp * dt); stepT -= dt * sp; if (stepT <= 0) { stepT = 1.35; stepSound(P.groundAt(state.x, state.z) > 0.3 ? 'wood' : FOOT[cur]); } }
   }
   for (const n of SC.extras) if (n.walker && n.m.visible) walkTick(n, dt);
-  const gran = SC.i === 0 && byId('gran1'); if (gran) followTick(gran, dt);
+  const gran = SC.i === 0 && byId('gran1'); if (gran) granTick(gran, dt);
   for (const n of SC.people) if (!n.kid && n.m.visible && !n.walking) { const d = Math.hypot(state.x - n.x, state.z - n.z); if ((d < 3.4 && !DIR.on) || talkWith === n) { const want = Math.atan2(state.x - n.x, state.z - n.z); let e = want - n.m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); n.m.rotation.y += e * Math.min(1, dt * 4); } }
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of SC.people) { if (n.kid || !n.m.visible) continue; const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < b) { b = d; near = n; } } for (const a of SC.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
@@ -543,15 +544,13 @@ function walkTick(n, dt) {
   for (const o of SC.npcs) if (o !== n && o.m.visible && o.walking && !o.walker) { const ox = o.x - n.x, oz = o.z - n.z, od = Math.hypot(ox, oz); if (od < 0.9 && ox * dx + oz * dz > 0.3 * od * d) { if (n.ctl.cur === n.ctl.get('Walk')) n.ctl.play(null); return; } }   /* someone moving just ahead (Gran following you): wait for them. Not other strollers: each has its own lane, checked by the audit, so they pass side by side */
   if (d < 0.2) { n.leg = 1 - n.leg; n.wait = 2 + Math.random() * 4; n.ctl.play(null); return; } const sp = (n.speed || 1.1) * (n.scale || 1); if (n.ctl.cur !== n.ctl.get('Walk')) walkOn(n, sp); n.x += dx / d * sp * dt; n.z += dz / d * sp * dt; n.m.position.x = n.x; n.m.position.z = n.z; n.m.userData.ground = n.ground; n.m.rotation.y = Math.atan2(dx, dz);   /* height is left to groundFeet, which plants the feet; setting it here too made the body flicker between two heights */
 }
-/* Gran walks with you once she has told you where you are going: she follows your footsteps, so she comes through the gate the way you did */
-const TRAIL = [];
-function followTick(n, dt) {
-  if (stage < 11 || stage > 13 || DIR.on) { TRAIL.length = 0; return; } const lp = TRAIL[TRAIL.length - 1]; if (!lp || Math.hypot(lp[0] - state.x, lp[1] - state.z) > 0.4) TRAIL.push([state.x, state.z]);
-  const dp = Math.hypot(state.x - n.x, state.z - n.z); n.walking = dp > 1.9;
-  if (n.walking) { while (TRAIL.length > 1 && Math.hypot(TRAIL[0][0] - n.x, TRAIL[0][1] - n.z) < 0.3) TRAIL.shift(); const [tx, tz] = TRAIL[0] || [state.x, state.z], dx = tx - n.x, dz = tz - n.z, d = Math.hypot(dx, dz) || 1, sp = Math.min(2.8, 1.2 + (dp - 1.9) * 1.2);
-    n.x += dx / d * Math.min(d, sp * dt); n.z += dz / d * Math.min(d, sp * dt); n.ground = PL[cur].groundAt(n.x, n.z); n.m.position.x = n.x; n.m.position.z = n.z; n.m.userData.ground = n.ground; n.m.rotation.y = Math.atan2(dx, dz);   /* height is left to groundFeet, which plants the feet; setting it here too made the body flicker between two heights */ walkOn(n, sp); }
-  else if (n.ctl.cur === n.ctl.get('Walk')) n.ctl.play(null);
-}
+/* Gran walks with you once she has told you where you are going (stages 11 to 13): she follows your footsteps, so she comes through the gate the way you did,
+   a step behind and to one side, never in your way (engine/follow.js). In a cut scene she stands still. */
+const FOLLOW = { gran: { gap: 1.7, side: 0.6, space: 0.95 } };
+const inWallR = (W, x, z, r) => W.some((w) => x > w[0] - r && x < w[2] + r && z > w[1] - r && z < w[3] + r);
+function followWorld() { const P = PL[cur], b = P.bounds, W = wallsNow(); return { px: state.x, pz: state.z, blocked: (x, z, r = 0.22) => x < b.x0 + r || x > b.x1 - r || z < b.z0 + r || z > b.z1 - r || inWallR(W, x, z, r * 0.8), walls: W, bounds: b, others: SC.npcs.filter((o) => o.m && o.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw },
+  place: (n) => { n.ground = P.groundAt(n.x, n.z); n.m.position.x = n.x; n.m.position.z = n.z; n.m.userData.ground = n.ground; } }; }   /* height is left to groundFeet, which plants the feet */
+function granTick(n, dt) { const on = stage >= 11 && stage <= 13 && !DIR.on; if (on && !n.fol) follow(n, FOLLOW.gran); else if (!on && n.fol) stopFollow(n); if (n.fol) followTick(n, dt, followWorld()); }
 let last = performance.now(), fixedCam = null;
 function frame(t) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
@@ -583,6 +582,8 @@ function devViews() {
     mon1: [6, 70, 0, 19, 0, 0.05], mon2: [6, 73, 0, 3.1, 0, 0.22], mon3: [6, 71, 5.2, 8.6, 0, 0.05],
   };
   if (V[shot]) go(...V[shot]).then(() => { document.title = 'view ' + shot + ' ready'; });
+  /* ?shot=follow : Gran comes with you. You walk a few metres, stop, and turn round to look at her (engine/follow.js). &wait= frames after you stop */
+  if (shot === 'follow') go(0, 11, -24.6, 4.3, -PI / 2).then((P) => { const route = [[-20, 3.6], [-16, 3.2]], n = byId('gran1'); for (const [tx, tz] of route) for (let i = 0; i < 900 && Math.hypot(tx - state.x, tz - state.z) > 0.05; i++) { const d = Math.hypot(tx - state.x, tz - state.z), k = Math.min(1, 2.3 / 30 / d); [state.x, state.z] = clampPos(state.x + (tx - state.x) * k, state.z + (tz - state.z) * k); update(1 / 30); } for (let i = 0; i < +(q.get('wait') || 60); i++) update(1 / 30); state.yaw = Math.atan2(-(n.x - state.x), -(n.z - state.z)) + (+(q.get('turn') || 0)); state.pitch = -0.12; document.title = 'FOLLOW ' + n.id + ' ' + Math.hypot(n.x - state.x, n.z - state.z).toFixed(2) + ' m'; });
   if (shot === 'talk1') go(0, 10, -27.6, 4.3, -PI / 2).then(() => startTalk(byId('gran1')));
   if (shot === 'journal1') go(0, 12).then(() => { for (const id of ['home', 'who', 'iris']) unlock(id, true); openJournal('home'); });
   if (shot === 'chap1') go(0, 12).then(() => { best = 33; openChapters(); });
@@ -603,6 +604,17 @@ function devViews() {
     const o = []; let n0 = 0; startGame(true);
     for (let i = 0; i < SCENES.length; i++) { await beginChapter(i); resetTransient(); for (const n of SC.npcs) if (n.m.userData.held && n.m.userData.held.length) { n0++; const ac = n.m.userData.anim, found = new Set(); for (let pose = 0; pose < 12; pose++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) found.add(l); } for (const l of found) o.push('chapter ' + (i + 1) + ': ' + l); } }
     const c = o.length; o.unshift('held items: ' + c + ' issues, ' + n0 + ' people carry something'); out('HELD ' + c, o); })();
+  if (q.get('test') === 'follow') {   /* ?test=follow : you walk the real route with Gran, with stops and a turn back into her, and her is watched (engine/follow.js, watch): too close (inside the
+       personal space), inside a wall or a solid shape (engine/audit.js auditBodies), or left far behind. Expect 0. */
+    (async () => { const out = []; let bad = 0; const dt = 1 / 30; startGame(true); await beginChapter(0, 11); 
+      const P = SC.P, n = byId('gran1'), w = followWatch({ space: FOLLOW.gran.space, behind: 6 }), Wl = () => wallsNow(), blocked = (x, z) => inWallR(Wl(), x, z, 0), move = (x, z) => { const r = clampPos(x, z); state.x = r[0]; state.z = r[1]; return r; }, step = (t) => update(t);
+      state.x = n.x + 1.0; state.z = n.z + 0.6; update(dt); 
+      const leg = (to, stops = []) => { const r = walkRoute([state.x, state.z], to, Wl(), 0.3, P.bounds); drive({ from: [state.x, state.z], route: r.length ? r : [to], stops, move, step, people: [n], w, blocked }); };
+      leg([-16, 3.0], [0]); leg([-19, 3.4]); leg([-6, 0.6], [0]); leg([0.3, -1.5]); leg([0.3, -6]);
+      const lines = w.lines(n, 'Gran comes with you through the gate').concat(auditBodies(P.snap.concat(P.snap.inst || []), w.spots(n).map(([x, z]) => ({ id: 'Gran comes with you through the gate', x, z, ground: n.m.userData.ground || 0, h: 1.6, r: 0.18, what: 'walks' }))));
+      out.push('Gran comes with you through the gate: ' + w.stats(n) + (lines.length ? '' : ', ok')); for (const l of lines) out.push('  ' + l); bad += lines.length;
+      out.unshift('follow: ' + bad + ' problems'); document.title = 'FOLLOW ' + bad; const el = $('autolog'); if (el) el.textContent = out.join('\n'); })();
+  }
   if (q.get('test') === 'resume') (async () => {   /* saved games resume in the right place; closing a talk early does not finish it */
     const o = []; startGame(true);
     await beginChapter(3, 44); resetTransient(); o.push('ch4@44 ruin=' + SC.P.ruin.visible + ' ward=' + SC.P.myers.group.visible + ' ladies=' + byId('maude4').m.visible);

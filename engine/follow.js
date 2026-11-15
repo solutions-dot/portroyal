@@ -140,17 +140,27 @@ export function watch({ space = 0.9, behind = 6 } = {}) {
   const S = new Map(), get = (n) => S.get(n) || S.set(n, { close: 1e9, inside: 0, insideAt: null, lag: 0, lagT: 0, lagWorst: 0, stuckT: 0, stuckWorst: 0, frames: 0, pts: [], lx: n.x, lz: n.z }).get(n);
   return {
     sample(n, px, pz, blocked, dt = 1 / 30) { if (!n.m || n.m.visible === false) return; const s = get(n), d = Math.hypot(px - n.x, pz - n.z); s.frames++; if (s.frames % 3 === 0) s.pts.push([n.x, n.z]);
-      const f = n.fol; if (f && f.mode === 'follow') { s.close = Math.min(s.close, d); if (d > behind) { s.lagT += dt; s.lagWorst = Math.max(s.lagWorst, s.lagT); } else s.lagT = 0; s.lag = Math.max(s.lag, d); }
+      const f = n.fol; if (f && f.mode === 'follow') { if (d < s.close) s.closeAt = `frame ${s.frames}, you at (${px.toFixed(1)},${pz.toFixed(1)}), they at (${n.x.toFixed(1)},${n.z.toFixed(1)})`; s.close = Math.min(s.close, d); if (d > behind) { s.lagT += dt; if (s.lagT > s.lagWorst) { s.lagWorst = s.lagT; s.lagAt = `frame ${s.frames}, you at (${px.toFixed(1)},${pz.toFixed(1)}), they at (${n.x.toFixed(1)},${n.z.toFixed(1)})`; } } else s.lagT = 0; s.lag = Math.max(s.lag, d); }
       if (blocked && blocked(n.x, n.z)) { s.inside++; s.insideAt = s.insideAt || [n.x, n.z]; }
       if (f && f.mode === 'lead') { const movedNow = Math.hypot(n.x - s.lx, n.z - s.lz) > 1e-3, ahead = (f.max ?? f.len) - f.s; if (!movedNow && d < f.resume && ahead > 1 && !f.waiting) { s.stuckT += dt; s.stuckWorst = Math.max(s.stuckWorst, s.stuckT); } else s.stuckT = 0; }
       s.lx = n.x; s.lz = n.z; },
     lines(n, id) { const s = S.get(n); if (!s) return [`${id}: never seen`]; const out = [];
-      if (s.close < space - 0.05) out.push(`${id} came ${(s.close * 100).toFixed(0)} cm from you (personal space ${(space * 100).toFixed(0)} cm)`);
+      if (s.close < space - 0.05) out.push(`${id} came ${(s.close * 100).toFixed(0)} cm from you (personal space ${(space * 100).toFixed(0)} cm): ${s.closeAt}`);
       if (s.inside) out.push(`${id} stood inside something ${s.inside} times, first at (${s.insideAt[0].toFixed(1)},${s.insideAt[1].toFixed(1)})`);
-      if (s.lagWorst > 2) out.push(`${id} was more than ${behind} m behind you for ${s.lagWorst.toFixed(1)} s (furthest ${s.lag.toFixed(1)} m)`);
+      if (s.lagWorst > 2) out.push(`${id} was more than ${behind} m behind you for ${s.lagWorst.toFixed(1)} s (furthest ${s.lag.toFixed(1)} m): ${s.lagAt}`);
       if (s.stuckWorst > 3) out.push(`${id} stood still for ${s.stuckWorst.toFixed(1)} s while you waited near them`);
       return out; },
     stats(n) { const s = S.get(n); return s ? `closest ${s.close < 1e8 ? s.close.toFixed(2) : '-'} m, furthest ${s.lag.toFixed(1)} m, ${s.frames} frames` : 'not seen'; },
     spots(n) { const s = S.get(n); return s ? s.pts : []; },
   };
+}
+
+/* drive the player along a route for ?test=follow: move(x, z) asks the game where you end up (its own walls and clamp) and returns [x, z]; step(dt) runs one frame of the game.
+   stops: route indexes where you stand still for 2.5 seconds. Each frame every person in `people` is sampled by the watch w. Returns where you ended. */
+export function drive({ from, route, speed = 2.3, stops = [], dt = 1 / 30, move, step, people, w, blocked }) {
+  let p = from.slice(); const look = () => { for (const n of people) w.sample(n, p[0], p[1], blocked, dt); };
+  for (let i = 0; i < route.length; i++) { const [tx, tz] = route[i]; let guard = 0;
+    while (Math.hypot(tx - p[0], tz - p[1]) > 0.05 && guard++ < 3000) { const d = Math.hypot(tx - p[0], tz - p[1]), k = Math.min(1, speed * dt / d), q = move(p[0] + (tx - p[0]) * k, p[1] + (tz - p[1]) * k); if (Math.hypot(q[0] - p[0], q[1] - p[1]) < 1e-4) break; p = q; step(dt); look(); }
+    if (stops.includes(i)) for (let f = 0; f < 75; f++) { step(dt); look(); } }
+  return p;
 }
