@@ -475,7 +475,7 @@ def speech(rig):
 GIVE_AHEAD = 0.12
 SIDE_GAP = 0.44   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right and GIVE_AHEAD in front, facing the same way
 CHILD_GAP, CHILD_AHEAD = 0.34, 0.24   # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right and in front of her (clear of a skirt)
-CHILD_NUDGE = (-0.08, 0.008, -0.034)
+CHILD_NUDGE = (-0.08, 0.010, -0.036)
 SIT_GAP = 0.50    # SitComfortGive and SitComfortTake: side by side on a bench this far apart (the one comforted 0.16 m further forward)
 HAND_OUT, HAND_FWD, HAND_UP = 0.080, -0.04, -0.084   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
 FACE_OUT, FACE_FWD, FACE_UP = 0.06, 0.0, -0.09   # ComfortHand: fine placement of the resting hand
@@ -576,7 +576,7 @@ def comfort_give(rig):
 @clip('ComfortChild', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_child(rig):
     T = 8.0; frames = stand_still(rig, T, 33)
-    comfort_arm(rig, frames, T, CHILD_GAP, 0.40, lean=0.3, turn_to=0.35, look=(-0.35, 0.55), ahead=CHILD_AHEAD, half=-0.06, nudge=CHILD_NUDGE, ride=follow(rig, comfort_take(rig), 'LeftShoulder', -CHILD_GAP, -CHILD_AHEAD, 0.0, 0.6), elbow_dir=(0.6, -0.5, -1.0))   # the hand on the child's near shoulder, from behind
+    comfort_arm(rig, frames, T, CHILD_GAP, 0.40, lean=0.3, turn_to=0.35, look=(-0.35, 0.55), ahead=CHILD_AHEAD, half=-0.06, nudge=CHILD_NUDGE, ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0, 0.6), elbow_dir=(0.6, -0.5, -1.0))   # the hand on the child's near shoulder, from behind
     return frames
 
 
