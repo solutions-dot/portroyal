@@ -169,7 +169,7 @@ def under_coat(c):   # the shirt sleeve between shoulder and cuff is hidden by t
     if not (G.get('coat') and G.get('coatsleeves',True)): return False
     t=side_arm(c); return t is not None and 0.1<t<G.get('coatsleeve',0.82)-0.1
 parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if OLD else (HIP+0.090 if P.get('era',1915)<1940 else HIP+0.100)) if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve) and not under_coat(c),lambda c:0.003 if OLD and G.get('breeches') and c.z<HIP+0.13 else (0.012 if abs(c.x)>SX*0.8 else 0.008),'Shirt',shape=(sleeve_tube(0.053,0.042,(sleeve-0.07,0.036) if sleeve>0.8 else None) if OLD else sleeve_tube(0.048,0.037,(sleeve-0.07,0.033) if sleeve>0.8 else None)) if not G.get('woman') else (puff_tube(sleeve) if G.get('puff') else sleeve_tube(0.050,0.038,(sleeve-0.06,0.032) if sleeve>0.8 else None)),post=((lambda bm:smooth_edge(bm,ok=lambda c:not (c.y<0 and c.z>VZ-0.012 and abs(c.x)<0.075*s))) if G.get('woman') and CK=='camp' else smooth_edge if G.get('woman') else ((smooth_edge if OLD else None) if G.get('coat') else ((lambda bm:(drape_front(bm),smooth_edge(bm))) if G.get('smooth') else (drape_front if OLD else neck_edge)))),
-   cuts=[((0,0,NECK+0.005-(0.062*s if G.get('coat') and G.get('coatsleeves',True) else 0)),(0,0,1),None),((0,-0.1,NCUT),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+([((0,0,VZ),Vector((-VK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,VZ),Vector((VK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if CK=='camp' else [])+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar; a camp collar opens the front in a narrow V
+   cuts=[((0,0,(NECK-0.006 if not OLD and CK in ('stand','turn') else NECK+0.005)-(0.062*s if G.get('coat') and G.get('coatsleeves',True) else 0)),(0,0,1),None),((0,-0.1,NCUT),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+([((0,0,VZ),Vector((-VK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,VZ),Vector((VK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if CK=='camp' else [])+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar; a camp collar opens the front in a narrow V; under a later standing or turn-down collar it stops just below the collar's band, so its cut edge cannot stand up above the band
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
     sl=G.get('coatsleeves',True)
@@ -217,7 +217,7 @@ if G.get('breeches'):
     parts.append(('breeches',piece('Breeches','helper-tights',lambda c:low-0.03<c.z<HIP+0.13 and side_arm(c) is None,wide,'Breeches',post=((lambda bm:(trim_seat(bm),smooth_edge(bm,8,lambda c:c.z>HIP+0.08))) if OLD else trim_seat),shape=trouser_leg if bk=='trousers' else breech_leg,cuts=[((0,0,low),(0,0,-1),None),((0,0,HIP+0.12),(0,0,1),None)])))
 if G.get('waistcoat'):
     wcol=NECK-(0.075 if FLAT else 0.02)*s      # under a flat collar the waistcoat's neckline lies lower, so the collar's leaf lies over it
-    WVZ,WVK=(wcol-0.17*s,1.1) if OLD else (NECK-0.20*s,2.2)      # the V's point and how steep its sides are: later eras meet at the top button, about a hand below the collarbone, in two straight edges
+    WVZ,WVK=(wcol-0.17*s,1.1) if OLD else (NECK-0.20*s,(wcol-NECK+0.20*s)/(0.085*s))      # the V's point and how steep its sides are: later eras meet at the top button, about a hand below the collarbone, in two straight edges that open to about a hand's width at the top
     parts.append(('waistcoat',piece('Waistcoat','helper-tights',lambda c:c.z>HIP+0.03 and abs(c.x)<SX*0.9,lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Waistcoat',post=lambda bm:(drape_front(bm),smooth_edge(bm)),
         cuts=[((0,0,wcol),(0,0,1),None)]+([((0,0,WVZ),Vector((-WVK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,WVZ),Vector((WVK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if G.get('vwaist') else [((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)])+[((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)])))
 if G.get('jacket'):   # a plain suit jacket: waist-length hem, sleeves to the wrist, a V opening over the waistcoat
@@ -595,7 +595,9 @@ PART=dict(parts)
 ON=lambda k:None if OLD else PART.get(k)      # later eras: a piece that lies on a garment (collar, front band, buttons, pocket, tie, lapels) takes its bone weights from that garment
 SHT=tree_of(PART['shirt'])
 def shirt_front(z,x=0.0):      # the y of the shirt's front surface
-    hit=SHT.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]; return hit.y if hit else _front(z)-0.008
+    hit=SHT.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]; sk=tree.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]
+    if hit and (sk is None or hit.y<sk.y+0.01): return hit.y
+    return (sk.y if sk else _front(z))-0.008      # the ray went through an opening (the V of a camp collar) and met the back of the shirt from inside: the front is the skin's, not the back's
 def quadstrip(bm,rows,flip=False,close=False):
     for r0,r1 in zip(rows,rows[1:]):
         n=len(r0)
@@ -620,6 +622,7 @@ def ring_fix(rows,j,under=None,mn=0.0,inside=None,imn=0.0,iters=4):
         Z=Vector((0,0,0)); D=[]
         for q in P:
             loc,nrm,_i,_d=under.find_nearest(q,0.05); sd=(q-loc).dot(nrm) if loc is not None else mn
+            if loc is not None and (q-loc-nrm*sd).length>0.004: sd=mn      # off the edge of that surface: nothing is under the point there
             D.append(nrm*(mn-sd) if sd<mn else Z.copy())
         D=[max(D[max(0,i-2):i+3],key=lambda d:d.length) for i in range(n)]
         for _ in range(3): D=[(D[max(0,i-1)]+D[i]*2+D[min(n-1,i+1)])/4 for i in range(n)]
@@ -682,6 +685,9 @@ if FLAT:
             for j in range(1,4):
                 for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
         for j,off in ((1,0.0035),(2,0.0065),(3,0.011)): ring_fix(rows,j,SHT,off,iters=2)
+        if PART.get('waistcoat'):      # the long points of a camp collar lie over a waistcoat's fronts, not under them
+            _wt=tree_of(PART['waistcoat'])
+            for j,off in ((2,0.003),(3,0.005)): ring_fix(rows,j,_wt,off,iters=1)
     quadstrip(bm,[[bm.verts.new(q) for q in row] for row in rows]); _co=soft('Collar',bm,'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD: ring_weights(_co,len(rows),4)
 if CK and not FLAT:
