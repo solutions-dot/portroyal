@@ -73,10 +73,15 @@ const caneTex = () => cv(128, 256, (x, w, h) => { x.clearRect(0, 0, w, h); for (
 export function crossGeo() { const a = new THREE.PlaneGeometry(1, 1), b = new THREE.PlaneGeometry(1, 1); a.translate(0, 0.5, 0); b.translate(0, 0.5, 0); b.rotateY(Math.PI / 2); const g = mergeGeometries([a, b], false); const n = g.attributes.normal; for (let i = 0; i < n.count; i++) n.setXYZ(i, 0, 1, 0); return bothFaces(g); }
 
 /* ---------- placing things on the land ---------- */
-/* pick up to n spots in area [x0, z0, x1, z1] where ok(x, z, y) is true. Each spot: { x, y, z, s (size 0.7 to 1.4), ry } */
-export function spotsOn(G, n, area, seed, ok = () => true, { smin = 0.7, smax = 1.4, tries = 14 } = {}) {
+/* pick up to n spots in area [x0, z0, x1, z1] where ok(x, z, y) is true. Each spot: { x, y, z, s (size 0.7 to 1.4), ry }
+   room: for solid things (rocks, trunks, stems, huts), the radius each takes up at size 1. A spot whose circle would cut into anything already in the place's
+   footprint list (TAKEN: huts, props, the big rocks, earlier rocks and trunks) is skipped, so nothing grows or lies inside anything else (?test=audit, overlap). */
+const TAKEN = [];
+export const taken = { reset() { TAKEN.length = 0; }, add(x, z, r) { TAKEN.push([x, z, r]); }, free(x, z, r) { return TAKEN.every(([a, b, c]) => Math.hypot(a - x, b - z) >= c + r); } };
+export function spotsOn(G, n, area, seed, ok = () => true, { smin = 0.7, smax = 1.4, tries = 14, room = 0 } = {}) {
   const r = rng(seed), out = []; let t = 0;
-  while (out.length < n && t++ < n * tries) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), y = G.h(x, z); if (!ok(x, z, y, r)) continue; out.push({ x, y, z, s: smin + r() * (smax - smin), ry: r() * 6.283, k: r() }); }
+  while (out.length < n && t++ < n * tries) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]), y = G.h(x, z); if (!ok(x, z, y, r)) continue; const p = { x, y, z, s: smin + r() * (smax - smin), ry: r() * 6.283, k: r() };
+    if (room) { if (!taken.free(x, z, room * p.s)) continue; taken.add(x, z, room * p.s); } out.push(p); }
   return out;
 }
 /* keep trees off trails and clearings, and off very steep ground */
@@ -113,13 +118,13 @@ export const plantCane = (parent, spots) => { const g = crossGeo(); g.scale(1.5,
 export function forest(parent, G, area, { seed = 11, trees = 120, tall = 40, bushes = 120, ferns = 40, ground = 240, grass = 900, rocks = 60, keep = () => true, keepTrees = () => true, near = null } = {}) {
   const ok = offTrail(G), okk = (x, z, y) => ok(x, z, y) && keep(x, z) && keepTrees(x, z), okNear = (x, z, y) => G.trailness(x, z) < 0.02 && keep(x, z);
   const K = LOW ? 0.6 : 1; trees = Math.round(trees * K); tall = Math.round(tall * K); bushes = Math.round(bushes * K); ferns = Math.round(ferns * K); ground = Math.round(ground * K); grass = Math.round(grass * K);
-  const A = spotsOn(G, trees, area, seed, okk, { smin: 0.75, smax: 1.5 }), B = spotsOn(G, tall, area, seed + 1, okk, { smin: 0.8, smax: 1.3 });
+  const A = spotsOn(G, trees, area, seed, okk, { smin: 0.75, smax: 1.5, room: 0.45 }), B = spotsOn(G, tall, area, seed + 1, okk, { smin: 0.8, smax: 1.3, room: 0.5 });
   for (let v = 0; v < 3; v++) plant(parent, treeGeo('broad', seed + v * 5), treeMat(), A.filter((_, i) => i % 3 === v)); plant(parent, treeGeo('tall', seed + 9), treeMat(), B.filter((_, i) => i % 2 === 0)); plant(parent, treeGeo('tall', seed + 13), treeMat(), B.filter((_, i) => i % 2 === 1));
   plant(parent, treeGeo('bush', seed + 3), treeMat(), spotsOn(G, bushes, area, seed + 2, okNear, { smin: 0.7, smax: 1.7 }), { sink: 0.1, shadow: false });
-  plantTreeFerns(parent, spotsOn(G, ferns, area, seed + 3, okk, { smin: 0.7, smax: 1.3 }), seed);
+  plantTreeFerns(parent, spotsOn(G, ferns, area, seed + 3, okk, { smin: 0.7, smax: 1.3, room: 0.16 }), seed);
   const nearArea = near || area; plantGroundFerns(parent, spotsOn(G, ground, nearArea, seed + 4, okNear, { smin: 0.7, smax: 1.5 }), seed);
   plantGrass(parent, spotsOn(G, grass, nearArea, seed + 5, (x, z) => G.trailness(x, z) < 0.5 && keep(x, z), { smin: 0.6, smax: 1.5 }));
-  plant(parent, rockGeo(seed), treeMat(), spotsOn(G, rocks, nearArea, seed + 6, (x, z) => G.trailness(x, z) < 0.3 && keep(x, z), { smin: 0.25, smax: 1.1 }), { sink: 0.25, vary: 0.1 });
+  plant(parent, rockGeo(seed), treeMat(), spotsOn(G, rocks, nearArea, seed + 6, (x, z) => G.trailness(x, z) < 0.3 && keep(x, z), { smin: 0.25, smax: 1.1, room: 1.15 }), { sink: 0.25, vary: 0.1 });
   return A.concat(B);
 }
 

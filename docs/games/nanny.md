@@ -3,7 +3,7 @@
 Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the story, the rules that are special to this game, the research, the code map and what is left.
 
 - Code: `games/nanny/src/` (modules, see "Code map"). Page and styles: `games/nanny/site/index.html`.
-- Models: `games/nanny/site/models/*.js`. These are **stand-in bodies** copied from Port Royal and Kendal (see "Characters").
+- Models: `games/nanny/site/models/*.js`, built from `tools/nanny/people/` (see "Characters").
 - Build: `node tools/build.mjs nanny --dev` (test views and the autoplayer) or without `--dev` (public).
 - Status: all six chapters are playable from start to end. It is new, so expect polish work (see "What is left").
 
@@ -113,7 +113,8 @@ Then open `http://localhost:8765/games/nanny/site/`.
   - `?test=held`: horns, muskets and the lantern are at the hand and clear of the body, standing and walking.
   - `?test=layout`: at 390x800, 667x375, 800x500 and 1280x720. It includes the horn panel and the "Stay low" button.
   - `?test=resume`: saved stages resume in the right place.
-  - `?test=walkers`: people who walk do not bounce, float or sink (the lowest toe stays on the ground, and the body does not jump against the ground between steps), the guide is never behind you, and a follower does not shuffle stop-start. A run is allowed more rise and fall than a walk.
+  - `?test=cloth`: no skin or under layer shows through the clothes, every body, full and light copy, with and without a hat. `?test=skin` prints face colours (no pass mark; compare with `docs/PIPELINE.md`, "Skin").
+  - `?test=walkers`: people who walk do not bounce, float or sink (the lowest point of the feet stays on the ground, and the body does not jump against the ground between steps), the guide is never behind you, and a follower does not shuffle stop-start. A run is allowed more rise and fall than a walk.
 - `npm test` includes two tests of the land code (`tests/regressions.mjs`).
 - Reading level: `node tools/nanny/readcheck.mjs games/nanny/src/content.js` flags dialogue and narration over 12 words, long goals and journal lines, dashes, and journal pages that are repeated or missing. Run it after editing any text.
 - The menu poster `menu/nanny.jpg` comes from `?shot=poster` at 1280 by 720.
@@ -173,18 +174,29 @@ Real people in the game: Nanny appears and never speaks. Quao, Cudjoe, Stoddart 
 
 ## Characters
 
-The character builder is being rebuilt in another pull request (`docs/PEOPLE.md` on that branch is the standard). To stay out of its way this game does two things.
+The bodies are this game's own, built from the recipes in `tools/nanny/people/` by `tools/garvey/era.py` and packed with `tools/people/pack.mjs` (`tools/nanny/README.md` has the commands). `cast.js` recolours them per person.
 
-- **Stand-in bodies now.** Men are `kofi`, `turtler`, `buc1` and `ned` from Port Royal. Soldiers are `soldier` and `gunner` from Port Royal. Women are `woman_long` and `woman_elder` from Kendal. Children are `boy`, `girl` and `girl_small` from Kendal. The full copies are byte-for-byte copies; the Port Royal light copies (`_lo`) were made with `tools/people/pack.mjs`. `cast.js` recolours them. Shoes are tinted to the skin, and `bareLegs` in `main.js` repaints the children's white socks as skin.
-- **Recipes for real bodies.** `tools/nanny/people/` has eleven recipes written to the new standard, and `tools/nanny/README.md` says how to build them and what the builder may need first. They have not been built.
+| Body | Who |
+|---|---|
+| `maroon_scout` | Quamin, village men without a cap, fighters |
+| `maroon_man` | Cubbenah, the estate watchman, village men and fighters with a knitted cap |
+| `maroon_elder` | the old man of the town |
+| `maroon_woman` | Mama, Beneba grown up, village women |
+| `maroon_elder_woman` | Auntie Mimba, Mama in 1740, Nanny (seen far off only), old women |
+| `maroon_girl`, `maroon_child`, `maroon_boy` | Beneba, Phibba, village children (built big with `upscale`, shrunk in `cast.js` by 1 / upscale) |
+| `redcoat`, `militia` | British soldiers and their officer; the militia |
 
-Skin (owner rule 9): `SKIN_LIGHT = 1.55` as in Kendal, plus a soft light that goes with you at night (`nightFill`) so faces near you can be read in the dark. Check faces in game screenshots after any change to the times of day.
+- The men and soldiers use the 1690 tailoring (era 1734). The women and girls are built at era 1900 with the same keys, as `tools/nanny/README.md` allowed: the 1690 tailoring left a gap between blouse and skirt at the waist where skin showed. A plain blouse, a long skirt and a head wrap are not tied to a decade.
+- Everyone is barefoot except the soldiers. `blackshot` is built but not used yet, so its files are not in `site/models/`.
+- `?test=cloth` checks every body; `?test=skin` measures faces in the game's light (`&env=day`, `night`, `dawn`, `morning`, `firenight`).
+
+Skin (owner rule 9): recipes sit inside Marcus Garvey's range; `SKIN_LIGHT = 1.55` as in Kendal (the British soldiers, `pale: true`, are drawn as built), plus a soft light that goes with you at night (`nightFill`) so faces near you can be read in the dark. Hair keeps its own colour. Check faces in game screenshots after any change to the times of day.
 
 ## What is left (polish list)
 
 1. **Maroon review.** Rule 7 above. Nothing else matters as much.
 2. **Primary sources.** The list under "Could not be checked".
-3. **Real bodies.** Build the recipes, then remove the stand-ins, the shoe tint and `bareLegs`.
+3. **Bodies.** Built (November 2026). Still open: `?test=cloth` reports 22 small lines (see `docs/TESTING.md`), `?test=walkers` reports Quamin's lowest foot 3.1 cm off the trail at worst (limit 3) and a soldier's body rising 2.6 cm between two steps on the climb (limit 2.5), and the women's head wraps are small.
 4. **Read every line aloud** for the 6+ level. All dialogue is new wording.
 5. **Phones.** The autoplayer and the layout test pass at phone sizes, but nobody has played it on a real phone. The fight has about 35 people on screen; watch the frame rate.
 6. **The watchman.** If he sees you, you go back a few steps. There is no setting to switch the lantern off for a child who finds it hard.

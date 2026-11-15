@@ -166,7 +166,7 @@ def puff_tube(end):      # a short puffed sleeve: full and round from the should
 def under_coat(c):   # the shirt sleeve between shoulder and cuff is hidden by the coat sleeve; leaving it there made it push through on the backs of the arms
     if not (G.get('coat') and G.get('coatsleeves',True)): return False
     t=side_arm(c); return t is not None and 0.1<t<G.get('coatsleeve',0.82)-0.1
-parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if OLD else (HIP+0.090 if P.get('era',1915)<1940 else HIP+0.100)) if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve) and not under_coat(c),lambda c:0.012 if abs(c.x)>SX*0.8 else (0.003 if OLD and G.get('breeches') and c.z<HIP+0.13 else 0.008),'Shirt',shape=sleeve_tube(0.053,0.042,(sleeve-0.07,0.036) if sleeve>0.8 else None) if not G.get('woman') else (puff_tube(sleeve) if G.get('puff') else sleeve_tube(0.050,0.038,(sleeve-0.06,0.032) if sleeve>0.8 else None)),post=((lambda bm:smooth_edge(bm,ok=lambda c:not (c.y<0 and c.z>VZ-0.012 and abs(c.x)<0.075*s))) if G.get('woman') and CK=='camp' else smooth_edge if G.get('woman') else ((smooth_edge if OLD else None) if G.get('coat') else ((lambda bm:(drape_front(bm),smooth_edge(bm))) if G.get('smooth') else drape_front))),
+parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if OLD else (HIP+0.090 if P.get('era',1915)<1940 else HIP+0.100)) if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve) and not under_coat(c),lambda c:0.003 if OLD and G.get('breeches') and c.z<HIP+0.13 else (0.012 if abs(c.x)>SX*0.8 else 0.008),'Shirt',shape=sleeve_tube(0.053,0.042,(sleeve-0.07,0.036) if sleeve>0.8 else None) if not G.get('woman') else (puff_tube(sleeve) if G.get('puff') else sleeve_tube(0.050,0.038,(sleeve-0.06,0.032) if sleeve>0.8 else None)),post=((lambda bm:smooth_edge(bm,ok=lambda c:not (c.y<0 and c.z>VZ-0.012 and abs(c.x)<0.075*s))) if G.get('woman') and CK=='camp' else smooth_edge if G.get('woman') else ((smooth_edge if OLD else None) if G.get('coat') else ((lambda bm:(drape_front(bm),smooth_edge(bm))) if G.get('smooth') else drape_front))),
    cuts=[((0,0,NECK+0.005-(0.062*s if G.get('coat') and G.get('coatsleeves',True) else 0)),(0,0,1),None),((0,-0.1,NCUT),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+([((0,0,VZ),Vector((-VK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,VZ),Vector((VK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if CK=='camp' else [])+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar; a camp collar opens the front in a narrow V
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
@@ -277,9 +277,10 @@ def _hair_cuts():
     return out
 if G.get('hair')!='none': parts.append(('hair',piece('Hair','scalp',lambda c:True,0.0006,'Hair',cuts=_hair_cuts(),sub=True,post=hair_post)))
 # a knitted cap and a neckerchief made from the body's own surface, so they fit and move with it
-if G.get('hat')=='cap':
+_H=G.get('hat'); _CAP=[m for k,m in ([(_H,'Hat')] if isinstance(_H,str) else [tuple(x) for x in (_H or [])]) if k=='cap']   # the cap, given alone ("cap") or in the list of hats ([["cap", "Hat"]]), with its material name
+if _CAP:
     Jy=J('Head').y
-    parts.append(('cap',piece('Cap','body',lambda c:c.z>HEAD+0.02,0.016,'Hat',cuts=[((0,Jy,HEAD+0.088*s),Vector((0,-0.075,-0.2)).normalized(),None)],sub=True)))
+    parts.append(('cap',piece('Cap','body',lambda c:c.z>HEAD+0.02,0.016,_CAP[0],cuts=[((0,Jy,HEAD+0.088*s),Vector((0,-0.075,-0.2)).normalized(),None)],sub=True)))
 if G.get('scarf'):
     parts.append(('scarf',piece('Scarf','body',lambda c:NECK-0.045*s<c.z<NECK+0.03*s and abs(c.x)<0.085,lambda c:0.018+0.02*max(0.0,min(1.0,(NECK-c.z)/(0.045*s))),'Scarf')))
 if not OLD:
@@ -1035,8 +1036,9 @@ if OLD:
             f.material_index=kinds.index(m)
     bmesh.ops.delete(lb,geom=[v for v in lb.verts if not v.link_faces],context='VERTS'); lb.normal_update()
     for v in lb.verts: v.co-=v.normal*0.004
-    lb.to_mesh(lo.data); lb.free(); lo.data.materials.clear()
+    _mi=[f.material_index for f in lb.faces]; lb.to_mesh(lo.data); lb.free(); lo.data.materials.clear()
     for m in kinds: lo.data.materials.append(colmat(m))
+    for p,k in zip(lo.data.polygons,_mi): p.material_index=k      # set again: clearing the material slots resets every face to the first one (Blender 5), which put the shirt's colour inside the breeches
     if kinds:      # nobody sees its shape, so it is thinned to about a third of its triangles
         md=lo.modifiers.new('thin','DECIMATE'); md.ratio=0.34
         with ov(lo): bpy.ops.object.modifier_move_to_index(modifier='thin',index=0); bpy.ops.object.modifier_apply(modifier='thin')
