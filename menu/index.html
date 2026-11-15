@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jamaican History Games</title>
-<meta name="description" content="3D story games about Jamaica's past, for ages 6 and up.">
+<title>PastPort - Jamaica</title>
+<meta name="description" content="PastPort - Jamaica: 3D story games that take you into Jamaica's past, for ages 6 and up.">
 <meta name="theme-color" content="#06283D">
 <script>
   /* The intro (intro.js) plays once for each browser tab. ?intro=1 plays it again, ?intro=0 skips it. */
@@ -13,7 +13,8 @@
 <noscript><style>#intro{display:none!important}</style></noscript>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fraunces:ital,wght@1,600&display=swap" rel="stylesheet">
+<link rel="icon" href="pastport.svg" type="image/svg+xml">
 <link rel="stylesheet" href="intro.css">
 <style>
   /* The game menu. One screen, no scrolling. Colours from the island: harbour blue, sea glass, mango, hibiscus.
@@ -27,9 +28,16 @@
   main{height:100dvh;display:grid;grid-template-rows:auto 1fr;gap:clamp(.8rem,2vh,1.4rem);padding:max(1rem,env(safe-area-inset-top)) clamp(1rem,3vw,2.2rem) max(1rem,env(safe-area-inset-bottom))}
 
   header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem}
-  h1{margin:0;font-weight:800;font-size:clamp(1.7rem,4.2vw,3.2rem);line-height:.95;letter-spacing:-.03em}
-  h1 span{display:block;color:var(--sea)}
-  h1 .jam{display:flex;align-items:center;gap:.3em;font-weight:inherit}
+  /* The PastPort logo: a stamp mark (teal ring, ticks, a warm disc with a P) and the name in a sunset-to-sea sweep, so PAST is warm and PORT is cool.
+     The mark is the #pp-core symbol below, and pastport.svg is the same mark for the tab icon. */
+  h1.brand{margin:0;display:flex;align-items:center;gap:clamp(.6rem,1.6vw,1rem);font-weight:800;line-height:1}
+  .brand-mark{flex:none;width:clamp(3rem,6.2vw,4.6rem);height:auto}
+  .brand-text{display:grid;gap:.4rem}
+  .brand-name{justify-self:start;font-size:clamp(1.9rem,4.6vw,3.2rem);line-height:.95;letter-spacing:.02em;color:#FFB627;
+    background:linear-gradient(90deg,#FFB627 0%,#FF7A45 20%,#E8505B 40%,#B04FB0 60%,#2B8FD0 80%,#1FB5A3 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .brand-sub{display:flex;align-items:center;gap:.45em;font-family:"Fraunces",Georgia,"Times New Roman",serif;font-style:italic;font-weight:600;font-size:clamp(1.1rem,2.3vw,1.6rem);line-height:1;color:var(--paper)}   /* the island: second in importance to the name, and in a different type (an italic serif) */
+  .brand-sub .flag{height:.7em}
+  @media (forced-colors:active){.brand-name{background:none;-webkit-text-fill-color:currentColor;color:CanvasText}}
   .flag{height:.62em;width:auto;flex:none;border-radius:.07em;box-shadow:0 0 0 1px rgba(255,247,232,.25)}   /* the flag of Jamaica, as drawn in the markup: gold saltire, green top and bottom, black sides */
   .credit{margin:0;font-size:.95rem;color:rgba(255,247,232,.7);white-space:nowrap}
   .side{display:flex;flex-direction:column;align-items:flex-end;gap:.5rem}
@@ -156,23 +164,39 @@
 </style>
 </head>
 <body>
-<div id="intro" role="dialog" aria-modal="true" aria-label="Welcome">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="pp-warm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC83D"/><stop offset="1" stop-color="#E8505B"/></linearGradient>
+    <!-- the island: its flag here, and its name in .brand-sub and in #intro. Another island changes these three things. -->
+    <symbol id="flag-jm" viewBox="0 0 60 30"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></symbol>
+    <!-- the centre of the PastPort mark: a warm stamp disc with a P cut out of it -->
+    <symbol id="pp-core" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="48" fill="url(#pp-warm)"/>
+      <circle cx="50" cy="50" r="41" fill="none" stroke="#041B2A" stroke-opacity=".3" stroke-width="1.6"/>
+      <path transform="translate(-4.5 0)" fill="#041B2A" fill-rule="evenodd" d="M34 22H58A17 17 0 0 1 58 56H46V78H34ZM46 32V46H58A7 7 0 0 0 58 32Z"/>
+    </symbol>
+  </defs>
+</svg>
+<div id="intro" role="dialog" aria-modal="true" aria-label="Welcome to PastPort - Jamaica">
   <div class="in-stage">
-    <svg class="in-dial" viewBox="0 0 200 200" aria-hidden="true">
+    <svg class="in-dial" viewBox="-36 -36 272 272" aria-hidden="true">
       <circle class="in-ring2" cx="100" cy="100" r="99"/>
       <circle class="in-ring" cx="100" cy="100" r="92"/>
       <g class="in-ticks"></g>
       <circle class="in-halo" cx="100" cy="100" r="92"/>
       <path class="in-mark" d="M100 -2 L93 -14 L107 -14 Z"/>
+      <g class="in-stamps"></g>
+      <g class="in-core"><use href="#pp-core" x="54" y="54" width="92" height="92"/></g>
     </svg>
     <p class="in-year" aria-hidden="true">2026</p>
     <div class="in-title">
-      <p class="in-name">Longtime</p>
-      <p class="in-tag">Jamaican History Games</p>
+      <p class="in-name">PastPort</p>
+      <p class="in-island"><svg class="flag" viewBox="0 0 60 30" aria-hidden="true"><use href="#flag-jm"/></svg>Jamaica</p>
+      <p class="in-desc">Games that take you into Jamaica's past.</p>
     </div>
   </div>
   <div class="in-gate">
-    <p class="in-line">Step back in time.</p>
+    <p class="in-line">Your passport to the past.</p>
     <button type="button" class="in-go">Begin</button>
     <button type="button" class="in-sound" aria-pressed="true">Sound on</button>
   </div>
@@ -180,9 +204,15 @@
 </div>
 <main>
   <header>
-    <h1><b class="jam">Jamaican<svg class="flag" viewBox="0 0 60 30" role="img" aria-label="Flag of Jamaica"><clipPath id="fl"><rect width="60" height="30"/></clipPath><g clip-path="url(#fl)"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></g></svg></b><span>History Games</span></h1>
+    <h1 class="brand" aria-label="PastPort - Jamaica">
+      <svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="none" stroke="#1FB5A3" stroke-width="4"/><circle cx="50" cy="50" r="40.5" fill="none" stroke="#FFF7E8" stroke-opacity=".7" stroke-width="5" stroke-dasharray="2.2 8.4"/><use href="#pp-core" x="22" y="22" width="56" height="56"/></svg>
+      <span class="brand-text">
+        <span class="brand-name" aria-hidden="true">PastPort</span>
+        <span class="brand-sub" aria-hidden="true"><svg class="flag" viewBox="0 0 60 30" aria-hidden="true"><use href="#flag-jm"/></svg>Jamaica</span>
+      </span>
+    </h1>
     <div class="side">
-      <p class="credit">Created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p>
+      <p class="credit">A world created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p>
       <p id="testingnote" hidden>Testing menu.</p>
       <nav class="links" aria-label="More">
         <a href="about.html">About this platform</a>
@@ -191,7 +221,7 @@
     </div>
   </header>
   <section class="games" aria-label="Games">
-    <a class="game" data-game="port-royal" href="games/port-royal/site/">
+    <a class="game" data-game="port-royal" data-year="1692" href="games/port-royal/site/">
       <div class="text">
         <div>
           <h2>Port Royal Earthquake, 1692</h2>
@@ -200,7 +230,7 @@
         <span class="play">Play</span>
       </div>
     </a>
-    <a class="game garvey" data-game="garvey" href="games/garvey/site/">
+    <a class="game garvey" data-game="garvey" data-year="1914" href="games/garvey/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -210,7 +240,7 @@
         <span class="play">Play</span>
       </div>
     </a>
-    <a class="game kendal" data-game="kendal" href="games/kendal/site/">
+    <a class="game kendal" data-game="kendal" data-year="1957" href="games/kendal/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -220,7 +250,7 @@
         <span class="play">Play</span>
       </div>
     </a>
-    <a class="game bogwalk" data-game="bog-walk" href="games/bog-walk/site/">
+    <a class="game bogwalk" data-game="bog-walk" data-year="1904" href="games/bog-walk/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -230,7 +260,7 @@
         <span class="play">Play</span>
       </div>
     </a>
-    <a class="game nanny" data-game="nanny" href="games/nanny/site/">
+    <a class="game nanny" data-game="nanny" data-year="1734" href="games/nanny/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -240,7 +270,7 @@
         <span class="play">Play</span>
       </div>
     </a>
-    <a class="game eventide" data-game="eventide" href="games/eventide/site/">
+    <a class="game eventide" data-game="eventide" data-year="1980" href="games/eventide/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -250,7 +280,7 @@
         <span class="play">Play</span>
       </div>
     </a>
-    <a class="game melissa" data-game="melissa" href="games/melissa/site/">
+    <a class="game melissa" data-game="melissa" data-year="2025" href="games/melissa/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -260,7 +290,7 @@
         <span class="play">Play</span>
       </div>
     </a>
-    <a class="game tivoli" data-game="tivoli" href="games/tivoli/site/">
+    <a class="game tivoli" data-game="tivoli" data-year="2010" href="games/tivoli/site/">
       <p class="tag">Early version</p>
       <div class="text">
         <div>
@@ -293,7 +323,7 @@
   /* On the live site this page is the home page. In the repo it sits in menu/, one folder down, so the game links need "../". */
   if (/\/menu\/?(index\.html)?$/.test(location.pathname)) for (const a of document.querySelectorAll('a[data-game]')) a.href = '../games/' + a.dataset.game + '/site/';
   if(new URLSearchParams(location.search).get('testing')==='1'||document.querySelector('meta[name="testing-build"]')){
-    document.getElementById('testingnote').hidden=false;document.title='History Games: Testing';
+    document.getElementById('testingnote').hidden=false;document.title='PastPort - Jamaica (testing)';
   }
 </script>
 </body>

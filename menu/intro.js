@@ -1,34 +1,60 @@
-/* The intro for the menu. About five seconds, then the menu rises in.
-   What happens: you tap Begin (browsers only play sound after a tap), a dial runs backwards through the years,
-   two low notes land, a bell rings, and the name appears. Any tap, Escape or the Skip button ends it early.
+/* The intro for the menu. About six seconds, then the menu rises in.
+   What happens: you tap Begin (browsers only play sound after a tap), a dial runs backwards through the years and a passport stamp
+   lands for every game on the menu, two low notes sound, a bell rings, and the PastPort logo appears with a line about what it is.
+   Any tap, Escape or the Skip button ends it early.
 
    It plays once for each browser tab. ?intro=1 plays it again, ?intro=0 skips it (the check is in index.html).
-   The name and the line under it are text in index.html (#intro .in-name and .in-tag). Change them there.
+   The words are text in index.html (#intro .in-name, .in-island and .in-desc). A game gets a stamp when its card has data-year.
    The sound is made here with Web Audio, no audio files, the same way the games make theirs. See docs/PLATFORM.md. */
 (() => {
   const root = document.documentElement, el = document.getElementById('intro');
   if (!el || !root.classList.contains('intro-on')) return;
   el.style.animation = 'none';   /* the script loaded, so switch off the 8 second failsafe in intro.css */
 
-  const END_YEAR = 1690;                            /* the earliest game in the library, Port Royal */
   const START_YEAR = new Date().getFullYear();
-  const SPAN = START_YEAR - END_YEAR;
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const SOUND_KEY = 'platform-sound';
 
+  /* ---------- the stops: one for every game on the menu, newest first ---------- */
+  function readStops() {
+    const list = [...document.querySelectorAll('.game[data-year]')].map((g) => {
+      const play = g.querySelector('.play');
+      return { year: +g.dataset.year, colour: play ? getComputedStyle(play).backgroundColor : '#FFB627' };   /* the stamp wears the colour of the card's Play button */
+    }).filter((s) => s.year < START_YEAR).sort((a, b) => b.year - a.year);
+    return list.length ? list : [{ year: 1692, colour: '#FFB627' }];
+  }
+  const STOPS = readStops();
+  const END_YEAR = STOPS[STOPS.length - 1].year, SPAN = START_YEAR - END_YEAR;
+
   /* ---------- the timeline, in seconds after the tap ---------- */
   function plan(rm) {
-    const lead = rm ? 0.15 : 0.3, spin = rm ? 0 : 2.2, arrive = lead + spin, name = arrive + 0.28, hold = name + (rm ? 1.6 : 1.9);
-    const clicks = [];   /* one click each time a tick (ten years) passes the marker, slowing as the dial slows */
-    if (spin) for (let k = 1; k * 10 < SPAN; k++) clicks.push(lead + (1 - Math.cbrt(1 - (k * 10) / SPAN)) * spin);
-    return { lead, spin, arrive, name, hold, end: hold + 0.7, clicks };
+    const n = STOPS.length, lead = rm ? 0.15 : 0.25, gap = rm ? 0 : Math.min(0.26, 2.1 / n);
+    const stops = STOPS.map((s, i) => ({ year: s.year, colour: s.colour, t: lead + gap * (i + 1) }));   /* a stamp lands at each of these times */
+    const arrive = rm ? lead : lead + gap * n + 0.28, name = arrive + 0.28, hold = name + (rm ? 1.6 : 2.3);
+    const Y = [START_YEAR, ...stops.map((s) => s.year)], T = [lead, ...stops.map((s) => s.t)];
+    const smooth = (u) => u * u * (3 - 2 * u);   /* the dial eases out of one stop and into the next */
+    const yearAt = (t) => {
+      if (rm || t >= T[n]) return END_YEAR;
+      if (t <= T[0]) return START_YEAR;
+      let k = 0; while (k < n - 1 && t >= T[k + 1]) k++;
+      return Y[k] + (Y[k + 1] - Y[k]) * smooth((t - T[k]) / (T[k + 1] - T[k]));
+    };
+    const clicks = [];   /* one click each time a tick (ten years) passes the marker */
+    if (!rm) for (let m = 1; m * 10 < SPAN; m++) {
+      const b = START_YEAR - m * 10;
+      for (let k = 0; k < n; k++) if (Y[k + 1] <= b && b < Y[k]) {
+        const e = (Y[k] - b) / (Y[k] - Y[k + 1]);
+        let lo = 0, hi = 1; for (let i = 0; i < 24; i++) { const mid = (lo + hi) / 2; if (smooth(mid) < e) lo = mid; else hi = mid; }
+        clicks.push(T[k] + hi * gap); break;
+      }
+    }
+    return { lead, spin: gap * n, arrive, name, hold, end: hold + 0.7, stops, clicks, yearAt };
   }
-  const ease = (u) => 1 - Math.pow(1 - u, 3);   /* fast at first, then slower and slower (the inverse is used for the clicks) */
 
   /* ---------- the sound ---------- */
-  /* A quiet room, a rising whoosh and a clock ticking back, then two low plucked notes (D then A, an upward fifth,
-     meant to feel like the box bass of old Jamaican mento music) and a bell chord that rings out. The chord is D, A, E:
-     open and calm, neither happy nor sad, because the stories in the library are both. */
+  /* A quiet room, a rising whoosh and a clock ticking back. A small wooden note rings as each stamp lands, climbing upward.
+     Then two low plucked notes (D then A, an upward fifth, meant to feel like the box bass of old Jamaican mento music) and a bell chord
+     that rings out. The chord is D, A, E: open and calm, neither happy nor sad, because the stories in the library are both. */
   function chain(ctx) {   /* a filter that drops the rumble phones cannot play, a compressor so nothing is ever harsh, then the volume */
     const master = ctx.createGain(), hp = ctx.createBiquadFilter(), comp = ctx.createDynamicsCompressor(), vol = ctx.createGain();
     hp.type = 'highpass'; hp.frequency.value = 45;
@@ -65,6 +91,21 @@
         cg.gain.setValueAtTime(0.03 + 0.09 * ((c - p.lead) / p.spin), t); cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
         s.connect(f); f.connect(cg); out(cg, 0.05); s.start(t, Math.random() * 2, 0.05);
       }
+      /* a stamp lands: a short wooden note and a soft thump. The notes climb a major pentatonic scale from D. */
+      const SCALE = [0, 2, 4, 7, 9, 12, 14, 16];
+      p.stops.forEach((s, i) => {
+        const t = t0 + s.t, f = 587.33 * Math.pow(2, SCALE[i % SCALE.length] / 12), vol = 0.05 + 0.004 * Math.min(i, 8);
+        const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+        o.connect(g); out(g, 0.35); o.start(t); o.stop(t + 0.35);
+        const o2 = ctx.createOscillator(), g2 = ctx.createGain(); o2.frequency.value = f * 2;
+        g2.gain.setValueAtTime(0.0001, t); g2.gain.exponentialRampToValueAtTime(vol * 0.3, t + 0.003); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+        o2.connect(g2); out(g2, 0.2); o2.start(t); o2.stop(t + 0.15);
+        const th = ctx.createOscillator(), tg = ctx.createGain();
+        th.frequency.setValueAtTime(170, t); th.frequency.exponentialRampToValueAtTime(95, t + 0.06);
+        tg.gain.setValueAtTime(0.0001, t); tg.gain.exponentialRampToValueAtTime(vol * 1.6, t + 0.004); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+        th.connect(tg); out(tg, 0); th.start(t); th.stop(t + 0.12);
+      });
     }
     /* a low hum under it all, which swells until the notes land and then fades */
     for (const [f, v] of [[73.42, 0.1], [110, 0.06], [146.83, 0.03]]) {
@@ -96,26 +137,42 @@
         o.connect(g); out(g, 0.9); o.start(t); o.stop(t + d + 0.1);
       }
     };
-    pluck(arrive, 73.42, 0.5);                 /* the first note: D */
-    pluck(arrive + 0.27, 110, 0.62);           /* the second note, a fifth higher and a little stronger: A */
+    pluck(arrive, 73.42, 0.5);                 /* the first note: D, as the centre of the mark slams down */
+    pluck(arrive + 0.27, 110, 0.62);           /* the second note, a fifth higher and a little stronger: A, as the name drops in */
     for (const [i, f] of [587.33, 880, 1318.51].entries()) bell(arrive + 0.27 + i * 0.07, f, 0.065);
   }
-  window.IntroSting = { plan, chain, build, get ctx() { return audio && audio.ctx; } };   /* so the sound can be rendered and measured without a speaker */
+  window.IntroSting = { plan, chain, build, stops: STOPS, get ctx() { return audio && audio.ctx; } };   /* so the sound can be rendered and measured without a speaker */
 
   /* ---------- the picture ---------- */
   const $ = (s) => el.querySelector(s);
-  const ticks = $('.in-ticks'), yearEl = $('.in-year'), nameEl = $('.in-name'), goBtn = $('.in-go'), soundBtn = $('.in-sound'), skipBtn = $('.in-skip');
-  const main = document.querySelector('main');
   const NS = 'http://www.w3.org/2000/svg';
+  const svg = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  const ticks = $('.in-ticks'), stampsG = $('.in-stamps'), yearEl = $('.in-year'), nameEl = $('.in-name'), goBtn = $('.in-go'), soundBtn = $('.in-sound'), skipBtn = $('.in-skip');
+  const main = document.querySelector('main');
   for (let i = 0; i < 36; i++) {   /* a tick every ten degrees; the one at each quarter turn is gold */
-    const l = document.createElementNS(NS, 'line'), major = i % 9 === 0;
-    l.setAttribute('x1', 100); l.setAttribute('x2', 100); l.setAttribute('y1', major ? 6 : 10); l.setAttribute('y2', major ? 22 : 18);
-    l.setAttribute('transform', 'rotate(' + i * 10 + ' 100 100)'); l.setAttribute('class', major ? 'in-tick major' : 'in-tick');
-    ticks.appendChild(l);
+    const major = i % 9 === 0;
+    ticks.appendChild(svg('line', { x1: 100, x2: 100, y1: major ? 6 : 10, y2: major ? 22 : 18, transform: 'rotate(' + i * 10 + ' 100 100)', class: major ? 'in-tick major' : 'in-tick' }));
   }
-  const letters = nameEl.textContent.trim();   /* the letters rise one after another */
+  /* the stamps sit in a ring outside the dial, counter-clockwise from the top, with the first (newest) just left of the marker */
+  const stampEls = [], N = STOPS.length, R = 124, SR = N > 2 ? Math.min(17, R * Math.sin(Math.PI / N) * 0.9) : 17;
+  STOPS.forEach((s, i) => {
+    const a = (i + 0.5) * 2 * Math.PI / N, at = svg('g', { transform: 'translate(' + (100 - R * Math.sin(a)).toFixed(1) + ' ' + (100 - R * Math.cos(a)).toFixed(1) + ')' }), st = svg('g', { class: 'in-stamp' });
+    st.style.setProperty('--tilt', (((i * 37) % 21) - 10) + 'deg');   /* a little different for each, always the same */
+    const year = svg('text', { class: 'st-year', fill: s.colour }); year.textContent = s.year; year.style.fontSize = (SR * 0.62).toFixed(1) + 'px';
+    st.append(svg('circle', { class: 'st-fill', r: SR, fill: s.colour }), svg('circle', { class: 'st-ring', r: SR, stroke: s.colour }),
+      svg('circle', { class: 'st-dash', r: SR * 0.8, stroke: s.colour }), svg('circle', { class: 'st-burst', r: SR, stroke: s.colour }), year);
+    at.appendChild(st); stampsG.appendChild(at); stampEls.push(st);
+  });
+  /* the name: every letter has its own colour, a sunset (gold, orange, hibiscus, violet) running into the sea (blue, teal). So Past is warm and Port is cool. */
+  const SWEEP = ['#FFB627', '#FF7A45', '#E8505B', '#B04FB0', '#2B8FD0', '#1FB5A3'].map((h) => [1, 3, 5].map((j) => parseInt(h.slice(j, j + 2), 16)));
+  const sweep = (t) => { const x = t * (SWEEP.length - 1), i = Math.min(SWEEP.length - 2, Math.floor(x)), f = x - i; return SWEEP[i].map((v, k) => Math.round(v + (SWEEP[i + 1][k] - v) * f)); };
+  const letters = nameEl.textContent.trim();
   nameEl.setAttribute('aria-label', letters); nameEl.textContent = '';
-  [...letters].forEach((ch, i) => { const s = document.createElement('span'); s.textContent = ch; s.style.setProperty('--i', i); s.setAttribute('aria-hidden', 'true'); nameEl.appendChild(s); });
+  [...letters].forEach((ch, i, all) => {
+    const s = document.createElement('span'), c = sweep(all.length > 1 ? i / (all.length - 1) : 0);
+    s.textContent = ch; s.style.setProperty('--i', i); s.style.setProperty('--c', 'rgb(' + c.join(',') + ')'); s.style.setProperty('--glow', 'rgba(' + c.join(',') + ',.45)'); s.setAttribute('aria-hidden', 'true');
+    nameEl.appendChild(s);
+  });
   yearEl.textContent = START_YEAR;
   if (main) main.inert = true;   /* the menu underneath is not reachable until the intro is gone */
 
@@ -143,19 +200,19 @@
     try { if (fast) master.gain.setTargetAtTime(0, ctx.currentTime, 0.06); setTimeout(() => ctx.close(), fast ? 600 : 4500); } catch (e) { /* ignore */ }
   }
 
-  function begin() {
+  function begin(byKeyboard) {
     if (started || done) return;
     started = true; el.classList.add('running');
-    skipBtn.focus({ preventScroll: true });   /* Begin is about to disappear, so keyboard focus moves to the Skip button */
+    if (byKeyboard) skipBtn.focus({ preventScroll: true });   /* Begin is about to disappear, so keyboard focus moves to the Skip button (a mouse or finger does not need it, and would see a focus ring) */
     if (soundOn) startAudio();
     t0 = performance.now(); requestAnimationFrame(tick);
   }
   function tick(now) {
     if (done) return;
-    const t = Math.max(0, (now - t0) / 1000);
-    const u = P.spin ? Math.min(1, Math.max(0, (t - P.lead) / P.spin)) : (t >= P.lead ? 1 : 0), year = START_YEAR - SPAN * ease(u);
+    const t = Math.max(0, (now - t0) / 1000), year = P.yearAt(t);
     ticks.setAttribute('transform', 'rotate(' + -(START_YEAR - year) + ' 100 100)');   /* one degree for every year, so ten degrees is one tick */
     yearEl.textContent = Math.round(year);
+    P.stops.forEach((s, i) => { if (t >= s.t && !stampEls[i].classList.contains('on')) stampEls[i].classList.add('on'); });
     if (stage < 1 && t >= P.arrive) { stage = 1; el.classList.add('arrived'); }
     if (stage < 2 && t >= P.name) { stage = 2; el.classList.add('named'); }
     if (stage < 3 && t >= P.hold) { stage = 3; leave(false); }
@@ -174,7 +231,7 @@
     }, 750);
   }
 
-  goBtn.addEventListener('click', begin);
+  goBtn.addEventListener('click', (e) => begin(e.detail === 0));   /* a click with no pointer (detail 0) is Enter or Space */
   skipBtn.addEventListener('click', () => leave(true));
   el.addEventListener('pointerdown', (e) => { if (started && !e.target.closest('button')) leave(true); });   /* a tap anywhere ends it, once it has begun */
   addEventListener('keydown', (e) => {
