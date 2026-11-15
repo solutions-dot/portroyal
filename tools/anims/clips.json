@@ -94,5 +94,9 @@
  "ComfortChild": "handmade/ComfortChild.fbx",
  "SitComfortGive": "handmade/SitComfortGive.fbx",
  "SitComfortTake": "handmade/SitComfortTake.fbx",
- "ComfortHand": "handmade/ComfortHand.fbx"
+ "ComfortHand": "handmade/ComfortHand.fbx",
+ "IdleSturdy": "Dwarf_Idle.fbx",
+ "RifleIdle": "Rifle_Idle.fbx",
+ "OldIdle": "Old_Man_Idle.fbx",
+ "HappyIdle": "Happy_Idle.fbx"
 }
