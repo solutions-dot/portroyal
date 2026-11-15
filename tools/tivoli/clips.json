@@ -16,5 +16,6 @@
  "RunLow2": "../../tools/tivoli/anim-sources/Crouched_Run_1.fbx",
  "RunRight": "../../tools/tivoli/anim-sources/Run_Right.fbx",
  "RunLeft": "../../tools/tivoli/anim-sources/Run_Left.fbx",
- "RunForward": "../../tools/tivoli/anim-sources/Run_Forward.fbx"
+ "RunForward": "../../tools/tivoli/anim-sources/Run_Forward.fbx",
+ "StopWalkRifle": "../../tools/tivoli/anim-sources/Stop_Walking_With_Rifle.fbx"
 }

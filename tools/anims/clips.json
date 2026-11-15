@@ -48,5 +48,9 @@
  "Tread": "Treading_Water.fbx",
  "PickUp": "Picking_Up.fbx",
  "Clap": "Clapping.fbx",
- "Cheer": "Cheering.fbx"
+ "Cheer": "Cheering.fbx",
+ "InjuredWalk": "Injured_Walking.fbx",
+ "StopWalkM": "Stop_Walking.fbx",
+ "CarryBagWalk": "Walking_With_Shopping_Bag.fbx",
+ "WalkTurn180": "Walking_Turn_180.fbx"
 }
