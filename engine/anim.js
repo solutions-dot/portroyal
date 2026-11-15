@@ -67,7 +67,7 @@ export function skirtTick(m) { const S = m.userData.seatSkirt, a = m.userData.an
   let best = null, bw = 0; for (const x of a.mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } }   /* the clip with the most weight now (a.cur lags while a clip fades in, and a tool may play one directly) */
   const c = (best || a.cur) && (best || a.cur).getClip(), n = c ? c.name : '', on = isSeated(n) || LOW_SKIRT.test(n);
   if (on === S.on) return; S.on = on; for (const o of S.seat) o.visible = on; for (const o of S.stand) o.visible = !on; }
-/* Hands on the lap: seated and kneeling clips rest the hands on the thighs, but a skirt or an apron makes the lap thicker than the body the clip was made on,
+/* Hands clear of the cloth: seated and kneeling clips rest the hands on the thighs, and standing ones let them hang by the thighs; but a skirt or an apron makes the lap thicker than the body the clip was made on,
    and the fingers sank into the cloth. After each mixer update, while such a clip plays, each fingertip and wrist is kept outside the lap (the thigh's line plus
    the cloth's own thickness, measured once on this body) by turning the forearm at the elbow. */
 const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _v4 = new THREE.Vector3(), _hq = new THREE.Quaternion(), _hq2 = new THREE.Quaternion();
@@ -81,10 +81,10 @@ function lapSetup(m) { if (m.userData.lap !== undefined) return m.userData.lap;
     for (const o of cloth) { const n = o.geometry.attributes.position.count, step = Math.max(1, n >> 11); for (let i = 0; i < n; i += step) { o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld); const t = v.clone().sub(A).dot(ax) / L2; if (t < 0.25 || t > 0.9) continue; const c = A.clone().addScaledVector(ax, t), d = v.distanceTo(c); const other = sides.find((x) => x !== sd); if (other) { const A2 = other.up.getWorldPosition(new THREE.Vector3()); if (v.distanceTo(A2) < v.distanceTo(A) - 0.02) continue; } ds.push(d); } }
     ds.sort((a, b) => a - b); const ws = m.getWorldScale(new THREE.Vector3()).x || 1; sd.R = (ds.length ? ds[Math.floor(ds.length * 0.6)] : 0.09) / ws; sd.foot = bone(sd.S + 'Foot'); }
   return (m.userData.lap = sides); }
-export function lapHands(m, name) { const L = m.userData.lap; if (!L || !(isSeated(name) || /^(Kneel|Pray)/.test(name || ''))) return; m.updateMatrixWorld(true);
+export function lapHands(m, name) { const L = m.userData.lap; if (!L) return; m.updateMatrixWorld(true);   /* every clip: standing, a hand hanging by a skirt or trousers is kept outside them too */
   const sc = m.getWorldScale(_v4).x || 1;
   for (let it = 0; it < 3; it++) for (const sd of L) for (const leg of L) for (const seg of [0, 1]) { if (seg && !leg.foot) continue; const A = (seg ? leg.kn : leg.up).getWorldPosition(_v1), K = (seg ? leg.foot : leg.kn).getWorldPosition(_v2), ax = _v3.copy(K).sub(A), L2 = ax.lengthSq(), R = ((seg ? leg.R * 0.75 : leg.R) + 0.012) * sc;   /* the thigh, then the shin (a kneeling hand rests on the knee) */
-    for (const pt of [sd.tip, sd.hd]) { const T = pt.getWorldPosition(new THREE.Vector3()), t = Math.min(1.05, Math.max(0, T.clone().sub(A).dot(ax) / L2)); if (t <= 0 || t >= 1.05) continue;
+    for (const pt of [sd.tip, sd.hd]) { const T = pt.getWorldPosition(new THREE.Vector3()), t0 = T.clone().sub(A).dot(ax) / L2, t = Math.min(1.05, Math.max(seg ? 0 : -0.3, t0)); if (t0 <= (seg ? 0 : -0.3) || t0 >= 1.05) continue;   /* the thigh's line runs on a little above the hip joint, where a hand rests on the hip */
       const C = A.clone().addScaledVector(ax, t), off = T.clone().sub(C), d = off.length(); if (d >= R || d < 1e-4) continue;
       const E = sd.fa.getWorldPosition(new THREE.Vector3()), from = T.clone().sub(E), to = T.clone().addScaledVector(off.normalize(), R - d).sub(E);
       _hq.setFromUnitVectors(from.normalize(), to.normalize()); sd.fa.getWorldQuaternion(_hq2); const pq = sd.fa.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
