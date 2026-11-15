@@ -19,7 +19,7 @@ from mathutils.bvhtree import BVHTree
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 CLIPS = os.path.join(ROOT, 'shared', 'anim-sources', 'handmade')
 PEOPLE = os.path.join(ROOT, 'build', 'people')
-N = 32
+N = int(os.environ.get('PAIR_N', 32))
 # giver clip, taker clip, giver body, taker body, where the taker stands relative to the giver (x, y, turn, scale), seated
 PAIRS = {
     'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.415, -0.205, 0.0, 1.0), False),
