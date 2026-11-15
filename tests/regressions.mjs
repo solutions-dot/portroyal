@@ -141,3 +141,6 @@ test('the wall rectangles made for the audits cover the ground you may not walk 
   assert.equal(hit(10, 0), false); assert.equal(hit(31, 0.2), false); assert.equal(hit(10, 2.3), true); assert.equal(hit(25.5, 2.6), true);
   for (const w of W) assert.ok(w[2] > w[0] && w[3] > w[1]);
 });
+
+/* engine/story.js: who moves the story, the hint arrow, carried items */
+import './story.mjs';

@@ -255,6 +255,7 @@ export function checkFlow(story, opts = {}) {
     if (step.wait || !L.length) continue;
     /* the arrow: walk in small circles (moving must not hold it back) and see when it is ready */
     const limit = step.explore ? ARROW_LIMIT_EXPLORE : ARROW_LIMIT, c0 = pos.slice(); let t = 0;
+    sim.tick(0, true);
     while (!sim.ready() && t <= 10000) { t += 100; pos = [c0[0] + Math.cos(t / 600) * 0.8, c0[1] + Math.sin(t / 600) * 0.8]; sim.tick(t, true); }
     if (!sim.ready()) { bad(st, 'the arrow never shows'); continue; }
     if (t > limit) bad(st, 'the arrow shows after ' + (t / 1000).toFixed(1) + ' s (at most ' + limit / 1000 + ' s)');

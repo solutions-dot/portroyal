@@ -148,12 +148,12 @@ def run(name):
             if d < 0.01: note(('taker ' + lab, 'giver ' + gp[i]), 0.01 - d)
         band.append(hand)
         for who, (vs, ts, ps, labs) in (('giver', (gv, gt, gp, G['labels'])), ('taker', (tv, tt, tp, Tk['labels']))):   # hands through one's own body
-            keep = [t for t, pp in zip(ts, ps) if pp in ('body', 'shoulders', 'head', 'hips', 'legs', 'skirt')]
-            own = BVHTree.FromPolygons(vs, keep)
+            keep = [(t, pp) for t, pp in zip(ts, ps) if pp in ('body', 'shoulders', 'head', 'hips', 'legs', 'skirt')]
+            own = BVHTree.FromPolygons(vs, [t for t, pp in keep]); kp = [pp for t, pp in keep]
             for v, lab in zip(vs, labs):
                 if not lab.endswith('Hand'): continue
                 d, i = signed(own, v)
-                if d is not None and d < -0.004: selfhit[(who, lab)] = max(selfhit.get((who, lab), 0), -d)
+                if d is not None and d < -0.004: selfhit[(who, lab + ' in ' + kp[i])] = max(selfhit.get((who, lab + ' in ' + kp[i]), 0), -d)
     print('PAIR', name, '(%s + %s, %s + %s)' % (gclip, tclip, gbody, tbody))
     rest = [b for b in band if b < 9]
     if rest: print('  giver right hand above their surface: min %.3f m, max %.3f m (want 0.005 to 0.02, never over 0.03)' % (min(rest), max(rest)))

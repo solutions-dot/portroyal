@@ -452,7 +452,7 @@ def speech(rig):
 
 SIDE_GAP = 0.44   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right and 0.12 m in front, facing the same way
 CHILD_GAP = 0.32  # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right
-HAND_OUT, HAND_FWD, HAND_UP = 0.065, -0.04, -0.10   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
+HAND_OUT, HAND_FWD, HAND_UP = 0.069, -0.04, -0.10   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
 FACE_GAP = 0.58   # ComfortHand: the other person stands this far in front of the giver, facing them
 
 
@@ -470,7 +470,7 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
         steady_head(rig, p, yaw=look[0] - turn_to + 0.03 * math.sin(TAU * t / T), pitch=look[1] + 0.02 * math.sin(TAU * 2 * t / T + 1), roll=-0.04, neck=0.5)
         M = rig.fk(p)
         far = gap - 0.16 + 0.12                                         # their far shoulder, from the giver's shoulder joint
-        wrist = body_point(rig, M, 'Right', far - 0.05 + HAND_OUT, 0.04 + HAND_FWD, -drop + HAND_UP + 0.012 * pt, bone='Hips')   # over their far shoulder, from behind
+        wrist = body_point(rig, M, 'Right', far - 0.05 + HAND_OUT, 0.04 + HAND_FWD, -drop + HAND_UP + 0.008 * pt, bone='Hips')   # over their far shoulder, from behind
         fingers = body_dir(rig, M, 'Right', 0.25, 0.1, -1.0, bone='Hips')     # down the back and outside of their upper arm
         palm = body_dir(rig, M, 'Right', -0.4, 1.0, 0.1, bone='Hips')
         elbow = body_dir(rig, M, 'Right', -0.15, -1.0, -0.55, bone='Hips')   # elbow down and back, behind them
@@ -559,9 +559,9 @@ def take_upper(rig, frames, T, wipe_side='Left'):
         for sd in ('Right', 'Left'):
             M = rig.fk(p); k = w if sd == wipe_side else 0.0
             low = body_point(rig, M, sd, -0.03, 0.27, -0.40, bone='Hips')
-            face = body_point(rig, M, sd, 0.03, 0.16, 0.0, bone='Head', at='Head') + V(0, 0, -0.02)
+            face = body_point(rig, M, sd, 0.03, 0.20, -0.06, bone='Head', at='Head') + V(0, 0, -0.02)
             arm(rig, p, sd, low.lerp(face, k), body_dir(rig, M, sd, 0.5, -0.5, -0.8, bone='Hips'),
-                body_dir(rig, M, sd, -0.5, 0.3, -0.8).lerp(body_dir(rig, M, sd, -0.4, 0.2, 1.0), k),
+                body_dir(rig, M, sd, -0.5, 0.3, -0.8).lerp(body_dir(rig, M, sd, -0.15, 0.35, 0.9), k),
                 body_dir(rig, M, sd, -0.3, 0.6, 0.2).lerp(body_dir(rig, M, sd, -0.3, -1.0, 0.0), k), 0.5)
             curl(rig, p, sd, 0.3 + 0.1 * k)
 
