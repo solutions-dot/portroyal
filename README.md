@@ -86,5 +86,5 @@ Progress saves in the browser. Teachers can open all chapters from the Chapters 
 ## Notes for contributors
 
 - Peter Dunn's reconstruction paintings and the UCLA Cultural Virtual Reality Lab model were used as visual reference only and are not included.
-- Animations come from Mixamo. The source files are in `shared/anim-sources/` and are retargeted into one shared library (`shared/models/anims.js`); see `docs/PIPELINE.md`.
+- Animations come from Mixamo, and a few are made by hand (`tools/anims/handmade.py`, CC0). The source files are in `shared/anim-sources/` and are retargeted into one shared library (`shared/models/anims.js`); see `docs/PIPELINE.md`.
 - The script has not yet been reviewed by a historian. Please have it checked before classroom use.

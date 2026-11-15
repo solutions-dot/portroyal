@@ -58,7 +58,7 @@ function liftLayers(doc) {
 for (const n of names) {
   const make = async (ratioOf, light) => {
     const doc = await io().read(`${SRC}/${n}.glb`);
-    if (light) for (const nd of doc.getRoot().listNodes()) if (/^(Buttons|JButtons|WButtons|Placket|Buckle)/.test(nd.getName())) { nd.setMesh(null); nd.setSkin(null); }   /* too small to see in a crowd (lapels stay: they cover the edge of the jacket's opening) */
+    if (light) for (const nd of doc.getRoot().listNodes()) if (/^(Buttons|JButtons|WaistcoatButtons|Placket|Buckle)/.test(nd.getName())) { nd.setMesh(null); nd.setSkin(null); }   /* too small to see in a crowd (lapels stay: they cover the edge of the jacket's opening) */
     for (const t of doc.getRoot().listTextures()) { t.setImage(new Uint8Array(eye)); t.setMimeType('image/jpeg'); }
     for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const mat = p.getMaterial(); if (!mat || !mat.getBaseColorTexture()) p.setAttribute('TEXCOORD_0', null); }
     await doc.transform(weld(), prune({ keepAttributes: false, keepLeaves: true }));

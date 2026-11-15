@@ -124,10 +124,6 @@ def V(*a):
 
 
 # ---------------------------------------------------------------- posing tools (each works on a Pose in place)
-def world3(rig, pose, b, M=None):
-    M = M or rig.fk(pose); return M[P + b].to_3x3()
-
-
 def set_world(rig, pose, b, W, M=None):
     """Turn bone b so its world orientation is W (its children follow)."""
     M = M or rig.fk(pose); n = P + b; p = rig.parent[n]
@@ -219,12 +215,6 @@ def steady_head(rig, pose, yaw=0.0, pitch=0.0, roll=0.0, neck=0.5):
     M = rig.fk(pose); D = (Wt @ M[P + 'Head'].to_3x3().inverted()).to_quaternion()
     turn(rig, pose, 'Neck', D.axis, D.angle * neck, M)
     set_world(rig, pose, 'Head', Wt)
-
-
-def keep_world(rig, pose, bones, M_old):
-    """Put these bones back at the world orientation they had in M_old (for example the legs after the hips turn)."""
-    for b in bones:
-        set_world(rig, pose, b, M_old[P + b].to_3x3())
 
 
 def plant_foot(rig, pose, side, ankle, foot_W, knee_dir):
@@ -361,21 +351,17 @@ def raise_shoulder(rig, p, side, amt):
     M = rig.fk(p); turn(rig, p, side + 'Shoulder', Y, (-amt if side == 'Left' else amt), M)
 
 
-@clip('CarryHeadWalk', 'hand-made on the library Walk (abba_Walking.fbx)')
-def carry_head_walk(rig):
-    frames, T = carry_walk_pre(rig, ['Right'])
-    return frames
-
-
-def carry_walk_pre(rig, hands):
+def carry_walk(rig, hands):
+    """A walk with a load on the head, steadied by the hands named in `hands`."""
     base = load_base(rig, os.path.join(SRC, 'abba_Walking.fbx'))
-    base = seam(base); n = round((len(base) - 1) * 1.12)
+    base = seam(base); n = 2 * round((len(base) - 1) * 1.12 / 2)   # a slower cadence; an even frame count, so the packer's every-other-frame samples land on the last frame
     frames = resample(base, n); T = n / FPS
     z0 = sum(p.loc.z for p in frames) / len(frames)
     for p in frames:
         p.loc.x, p.loc.y = 0.006, 0.0
         p.loc.z = z0 + (p.loc.z - z0) * 0.55
-    dm = {'Hips': 0.45, 'Spine': 0.4, 'Spine1': 0.4, 'Spine2': 0.35}
+    dm = {'Hips': 0.45, 'Spine': 0.4, 'Spine1': 0.4, 'Spine2': 0.35,
+          'LeftUpLeg': 0.75, 'RightUpLeg': 0.75, 'LeftFoot': 0.75, 'RightFoot': 0.75}   # shorter, flatter steps: a gliding walk
     for sd in ('Left', 'Right'):
         if sd in hands: continue
         dm[sd + 'Arm'] = 0.55; dm[sd + 'ForeArm'] = 0.6
@@ -392,12 +378,17 @@ def carry_walk_pre(rig, hands):
         if 'Left' in hands: head_load_hand(rig, p, 'Left', t + 0.07, T, seed=5)
         for sd in ('Left', 'Right'):
             if sd not in hands: curl(rig, p, sd, 0.22)
-    return frames, T
+    return frames
+
+
+@clip('CarryHeadWalk', 'hand-made on the library Walk (abba_Walking.fbx)')
+def carry_head_walk(rig):
+    return carry_walk(rig, ['Right'])
 
 
 @clip('CarryHeadWalk2', 'hand-made on the library Walk (abba_Walking.fbx)')
 def carry_head_walk2(rig):
-    return carry_walk_pre(rig, ['Right', 'Left'])[0]
+    return carry_walk(rig, ['Right', 'Left'])
 
 
 @clip('CarryHeadIdle', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
@@ -431,7 +422,7 @@ def speech(rig):
     BEAT = (V(0.06, 0.30, -0.17), V(-0.15, 1, 0.25), V(-0.4, 0.1, -1), V(0.7, -0.1, -0.6))        # forearm forwards, palm down: making a point
     OPEN = (V(0.20, 0.26, -0.20), V(0.55, 0.8, 0.0), V(0.2, 0.3, 1), V(0.6, -0.1, -0.8))           # open, palm up
     WIDE = (V(0.34, 0.15, -0.12), V(0.8, 0.5, 0.2), V(0.1, 0.55, 0.85), V(0.3, -0.4, -0.85))       # arms wide, palms up and out
-    HIGH = (V(0.13, 0.22, 0.30), V(0.0, 0.25, 1), V(0.15, 1, 0.0), V(0.9, 0.2, -0.3))             # raised, palm to the crowd
+    HIGH = (V(0.14, 0.30, 0.24), V(0.0, 0.4, 1), V(0.15, 1, 0.0), V(0.9, 0.2, -0.3))             # raised, palm to the crowd
     CHEST = (V(-0.08, 0.20, -0.10), V(-1, 0.2, 0.2), V(0.15, -1, 0), V(0.6, 0.2, -0.8))            # hand to the heart
     R = [(0.0, LOW), (0.9, LOW), (1.7, BEAT), (2.3, BEAT), (3.3, OPEN), (4.6, OPEN), (5.8, HIGH), (7.2, HIGH), (8.3, BEAT), (9.3, WIDE), (10.3, WIDE), (11.4, LOW)]
     L = [(0.0, LOW), (1.4, LOW), (2.6, LOW), (3.5, OPEN), (4.8, OPEN), (5.6, LOW), (7.4, LOW), (8.4, CHEST), (9.5, WIDE), (10.5, WIDE), (11.6, LOW)]
@@ -445,6 +436,7 @@ def speech(rig):
     twist = Spline([(0, 0.0), (2.4, 0.12), (3.8, 0.1), (5.0, 0.0), (6.4, -0.14), (7.6, -0.12), (8.8, 0.0), (10.0, 0.08)], T, 0.8)
     for i, p in enumerate(frames):
         t = i / FPS
+        turn(rig, p, 'Spine', X, 0.04)                                  # stand up to the crowd, not leaning back
         turn(rig, p, 'Spine1', X, lean(t)); turn(rig, p, 'Spine1', Z, twist(t) * 0.5); turn(rig, p, 'Spine2', Z, twist(t) * 0.4)
         level(rig, p, 'Spine2', 0.4)
         steady_head(rig, p, yaw=look(t), pitch=nod(t), roll=0.03 * math.sin(TAU * t / T * 2), neck=0.5)
@@ -471,8 +463,8 @@ def comfort_give(rig):
     rub = lambda t: bump(t, 3.4, 5.6, 0.6, 0.8) * math.sin(TAU * (t - 3.4) / 1.1)
     for i, p in enumerate(frames):
         t = i / FPS
-        turn(rig, p, 'Spine', Y, -0.05); turn(rig, p, 'Spine1', Z, -0.06); turn(rig, p, 'Spine1', X, 0.03)   # turned and leaning to them
-        steady_head(rig, p, yaw=-0.42 + 0.03 * math.sin(TAU * t / T), pitch=0.2 + 0.03 * math.sin(TAU * 2 * t / T + 1), roll=-0.08, neck=0.5)
+        turn(rig, p, 'Spine', Y, -0.06); turn(rig, p, 'Spine1', Z, -0.08); turn(rig, p, 'Spine1', X, 0.06)   # turned and leaning to them
+        steady_head(rig, p, yaw=-0.62 + 0.04 * math.sin(TAU * t / T), pitch=0.28 + 0.03 * math.sin(TAU * 2 * t / T + 1), roll=-0.08, neck=0.5)
         raise_shoulder(rig, p, 'Right', 0.05)
         M = rig.fk(p); pt = pat(t); rb = rub(t)
         # the right arm across their back, the hand cupping their far shoulder
@@ -532,17 +524,18 @@ def sit_scared(rig):
     up = Spline([(0, 0.25), (1.1, 0.15), (2.2, 0.3), (2.6, 0.35), (3.3, 0.05), (4.4, 0.12), (5.5, 0.32), (6.9, 0.35), (7.9, 0.12)], T, 0.8)
     for i, p in enumerate(frames):
         t = i / FPS; f = flinch(t); b = math.sin(TAU * 4 * t / T)
-        turn(rig, p, 'Spine', X, 0.10 + 0.05 * f)                       # hunched forwards, tight
+        turn(rig, p, 'Spine', X, 0.17 + 0.05 * f)                       # hunched forwards, tight
+        turn(rig, p, 'Spine1', X, 0.05 + 0.03 * f)
         turn(rig, p, 'Spine2', X, 0.04 - 0.01 * b + 0.04 * f)
         for sd in ('Left', 'Right'):
             raise_shoulder(rig, p, sd, 0.12 + 0.12 * f)                 # shoulders up
             M = rig.fk(p); turn(rig, p, sd + 'Shoulder', Z, (0.05 if sd == 'Right' else -0.05), M)
-        steady_head(rig, p, yaw=look(t), pitch=-up(t) + 0.35 * f, roll=0.05 * math.sin(TAU * t / T), neck=0.55)   # looking up and round; ducks in a flinch
+        steady_head(rig, p, yaw=look(t), pitch=-0.75 * up(t) + 0.35 * f, roll=0.05 * math.sin(TAU * t / T), neck=0.55)   # looking up and round; ducks in a flinch
         M = rig.fk(p)
         for sd in ('Left', 'Right'):
             sx = -1 if sd == 'Right' else 1
-            edge = hipj[sd].lerp(knee[sd], 0.42); wrist = V(hipj[sd].x + sx * 0.115, edge.y, seat + 0.055 + 0.012 * f)
-            arm(rig, p, sd, wrist, body_dir(rig, M, sd, 1.0, -0.5, -0.2, bone='Spine'), V(sx * 0.35, -0.15, -1.0), V(-sx * 0.25, 0.0, -1.0), 0.6)
+            edge = hipj[sd].lerp(knee[sd], 0.5); wrist = V(hipj[sd].x + sx * 0.12, edge.y, seat + 0.045 + 0.01 * f)
+            arm(rig, p, sd, wrist, body_dir(rig, M, sd, 1.0, -0.6, -0.1, bone='Spine'), V(sx * 0.2, -1.0, -0.45), V(0, -0.1, -1.0), 0.6)
             curl(rig, p, sd, 0.55 + 0.1 * f, thumb=0.2)                 # gripping the edge
     return frames
 
@@ -555,9 +548,9 @@ def write_fbx(rig, name, frames, path):
         for n in rig.names:
             pb = ob.pose.bones[n]; pb.rotation_mode = 'QUATERNION'; q = p.rot[n].normalized()
             if n in prev: q.make_compatible(prev[n])
-            prev[n] = q; pb.rotation_quaternion = q; pb.keyframe_insert('rotation_quaternion', frame=1 + i, group=n)
-            if n == P + 'Hips': pb.location = p.loc; pb.keyframe_insert('location', frame=1 + i, group=n)
-    sc = bpy.context.scene; sc.render.fps = FPS; sc.frame_start = 1; sc.frame_end = len(frames)
+            prev[n] = q; pb.rotation_quaternion = q; pb.keyframe_insert('rotation_quaternion', frame=i, group=n)
+            if n == P + 'Hips': pb.location = p.loc; pb.keyframe_insert('location', frame=i, group=n)
+    sc = bpy.context.scene; sc.render.fps = FPS; sc.frame_start = 0; sc.frame_end = len(frames) - 1   # keys from time 0, like a Mixamo download
     for o in bpy.data.objects: o.select_set(o == ob)
     bpy.context.view_layer.objects.active = ob
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -581,6 +574,25 @@ def check(rig, name, frames):
             for bn in ('Hand', 'HandMiddle1', 'HandIndex3', 'ForeArm'):
                 q = M[P + sd + bn].translation; worst = min(worst, (q - hc).length)
     print('CHECK %-15s frames %4d  %.2f s  seam %.3f deg  nearest hand or forearm to the head middle %.3f m' % (name, len(frames), (len(frames) - 1) / FPS, seam_deg, worst))
+    if name.startswith('CarryHead'):   # the hand must stay outside the load: radius LOAD_R, from the crown up 0.25 m
+        near = 9.0
+        for p in frames[::2]:
+            M = rig.fk(p); H = M[P + 'Head']; D = H.to_3x3() @ rig.rest3[P + 'Head'].inverted(); Di = D.inverted()
+            for sd in ('Left', 'Right'):
+                for bn in ('Hand', 'HandIndex1', 'HandMiddle1', 'HandRing1', 'HandPinky1'):
+                    q = Di @ (M[P + sd + bn].translation - H.translation)
+                    if CROWN < q.z < CROWN + 0.25: near = min(near, math.hypot(q.x, q.y) - LOAD_R)
+        print('      hand joints beside the load: nearest %.3f m outside its side' % near)
+    if 'Walk' in name:   # how much the body rises and falls once the lower foot is pinned to the ground, and how high the swinging foot lifts
+        lows = []
+        for p in frames:
+            q = p.copy(); q.loc = Vector(); M = rig.fk(q); lo = []
+            for sd in ('Left', 'Right'):
+                T = M[P + sd + 'ToeBase']; tip = T.translation + T.to_3x3().col[1] * rig.length[P + sd + 'ToeBase']
+                lo.append(min(M[P + sd + 'Foot'].translation.z - 0.06, T.translation.z, tip.z))
+            lows.append(lo)
+        g = [min(a) for a in lows]; lift = [abs(a[0] - a[1]) for a in lows]
+        print('      bob %.3f m  highest swing-foot lift %.3f m' % (max(g) - min(g), max(lift)))
 
 
 def main():

@@ -83,5 +83,12 @@
  "HurtTurnR": "injured_pack/injured_turn_right.fbx",
  "WalkTurn180b": "Walking_Turn_180_1.fbx",
  "Scared": "Scared.fbx",
- "Terrified2": "Terrified_2.fbx"
+ "Terrified2": "Terrified_2.fbx",
+ "CarryHeadWalk": "handmade/CarryHeadWalk.fbx",
+ "CarryHeadWalk2": "handmade/CarryHeadWalk2.fbx",
+ "CarryHeadIdle": "handmade/CarryHeadIdle.fbx",
+ "Speech": "handmade/Speech.fbx",
+ "ComfortGive": "handmade/ComfortGive.fbx",
+ "ComfortTake": "handmade/ComfortTake.fbx",
+ "SitScared": "handmade/SitScared.fbx"
 }

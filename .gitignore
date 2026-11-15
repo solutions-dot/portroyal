@@ -38,3 +38,6 @@ dist-testing/
 # Melissa: built files are made by tools/build.mjs (and by the Vercel build), so they are not tracked
 games/melissa/site/app.js
 games/melissa/site/models/anims.js
+
+# Python byte code (from running tools/anims/handmade.py and others)
+__pycache__/
