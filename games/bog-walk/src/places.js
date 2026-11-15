@@ -210,7 +210,7 @@ function pipeAndSaddles(g, kind) {   /* the Tube coming down from the dam, on co
   const xs = []; for (let x = -118; x <= -16; x += 6) xs.push(x);
   if (!rust) {
     tubePipe(g, [[-130, PY, PZ], [-40, PY, PZ], [-20, PY, PZ], [-14.6, PY + 0.25, PZ], [-11.6, PY - 0.05, PZ], [-9.2, PY - 0.55, PZ], [-6.9, PY - 0.7, PZ]], mat);
-    for (const x of xs) { saddle(g, x, PZ); const st = cyl(PR + 0.03, PR + 0.03, 0.1, M.iron, x, PY, PZ, g, 40); st.rotation.z = PI / 2; for (const s of [-1, 1]) box(0.1, 0.32, 0.08, M.iron, x, PY - PR + 0.42, PZ + s * (PR * 0.86), g); }   /* an iron strap round the pipe at each support, bolted down to it */
+    for (const x of xs) { const sg = saddle(g, x, PZ), st = cyl(PR + 0.03, PR + 0.03, 0.1, M.iron, 0, PY, 0, sg, 40); st.rotation.z = PI / 2; for (const s of [-1, 1]) box(0.1, 0.32, 0.08, M.iron, 0, PY - PR + 0.42, s * (PR * 0.86), sg); }   /* an iron strap round the pipe at each support, bolted down to it (one object with its support, so the audit does not count the strap sitting in its own block) */
     saddle(g, -12.3, PZ, 0, PY - PR + 0.25, 0.7);
     /* a collar where the pipe goes into the wall */
     const col = cyl(PR + 0.12, PR + 0.12, 0.25, M.iron, -7.05, PY - 0.7, PZ, g, 36); col.rotation.z = PI / 2;
