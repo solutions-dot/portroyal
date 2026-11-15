@@ -7,14 +7,14 @@
 <meta name="description" content="PastPort - Jamaica: 3D story games that take you into Jamaica's past, for ages 6 and up.">
 <meta name="theme-color" content="#06283D">
 <script>
-  /* The intro (intro.js) plays once for each browser tab. ?intro=1 plays it again, ?intro=0 skips it. */
-  try { var q = new URLSearchParams(location.search).get('intro'); if (q === '1' || (q !== '0' && !sessionStorage.getItem('intro-seen'))) document.documentElement.classList.add('intro-on'); } catch (e) { /* no intro */ }
+  /* The intro (intro.js) starts by itself and plays once for each browser tab. ?intro=1 plays it again, ?intro=0 skips it. */
+  try { var q = new URLSearchParams(location.search).get('intro'); if (q === '1' || (q !== '0' && !sessionStorage.getItem('intro-seen'))) { document.documentElement.classList.add('intro-on'); ['pastport-logo.webp', 'pastport-jamaica.webp'].forEach(function (f) { var l = document.createElement('link'); l.rel = 'preload'; l.as = 'image'; l.href = f; document.head.appendChild(l); }); } } catch (e) { /* no intro */ }
 </script>
 <noscript><style>#intro{display:none!important}</style></noscript>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fraunces:ital,wght@1,600&display=swap" rel="stylesheet">
-<link rel="icon" href="pastport.svg" type="image/svg+xml">
+<link rel="icon" href="pastport-icon.png" type="image/png">
 <link rel="stylesheet" href="intro.css">
 <style>
   /* The game menu. One screen, no scrolling. Colours from the island: harbour blue, sea glass, mango, hibiscus.
@@ -28,17 +28,9 @@
   main{height:100dvh;display:grid;grid-template-rows:auto 1fr;gap:clamp(.8rem,2vh,1.4rem);padding:max(1rem,env(safe-area-inset-top)) clamp(1rem,3vw,2.2rem) max(1rem,env(safe-area-inset-bottom))}
 
   header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem}
-  /* The PastPort logo: a stamp mark (teal ring, ticks, a warm disc with a P) and the name in a sunset-to-sea sweep, so PAST is warm and PORT is cool.
-     The mark is the #pp-core symbol below, and pastport.svg is the same mark for the tab icon. */
-  h1.brand{margin:0;display:flex;align-items:center;gap:clamp(.6rem,1.6vw,1rem);font-weight:800;line-height:1}
-  .brand-mark{flex:none;width:clamp(3rem,6.2vw,4.6rem);height:auto}
-  .brand-text{display:grid;gap:.4rem}
-  .brand-name{justify-self:start;font-size:clamp(1.9rem,4.6vw,3.2rem);line-height:.95;letter-spacing:.02em;color:#FFB627;
-    background:linear-gradient(90deg,#FFB627 0%,#FF7A45 20%,#E8505B 40%,#B04FB0 60%,#2B8FD0 80%,#1FB5A3 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .brand-sub{display:flex;align-items:center;gap:.45em;font-family:"Fraunces",Georgia,"Times New Roman",serif;font-style:italic;font-weight:600;font-size:clamp(1.1rem,2.3vw,1.6rem);line-height:1;color:var(--paper)}   /* the island: second in importance to the name, and in a different type (an italic serif) */
-  .brand-sub .flag{height:.7em}
-  @media (forced-colors:active){.brand-name{background:none;-webkit-text-fill-color:currentColor;color:CanvasText}}
-  .flag{height:.62em;width:auto;flex:none;border-radius:.07em;box-shadow:0 0 0 1px rgba(255,247,232,.25)}   /* the flag of Jamaica, as drawn in the markup: gold saltire, green top and bottom, black sides */
+  /* The PastPort - Jamaica logo, from the owner's own artwork (pastport logo.png in the repo root). The web copies and how they are made are in docs/PLATFORM.md. */
+  h1.brand{margin:0;line-height:0}
+  .brand-logo{display:block;height:clamp(4.6rem,10vw,7rem);width:auto}
   .credit{margin:0;font-size:.95rem;color:rgba(255,247,232,.7);white-space:nowrap}
   .side{display:flex;flex-direction:column;align-items:flex-end;gap:.5rem}
   .links{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.5rem}
@@ -164,20 +156,7 @@
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <defs>
-    <linearGradient id="pp-warm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC83D"/><stop offset="1" stop-color="#E8505B"/></linearGradient>
-    <!-- the island: its flag here, and its name in .brand-sub and in #intro. Another island changes these three things. -->
-    <symbol id="flag-jm" viewBox="0 0 60 30"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></symbol>
-    <!-- the centre of the PastPort mark: a warm stamp disc with a P cut out of it -->
-    <symbol id="pp-core" viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r="48" fill="url(#pp-warm)"/>
-      <circle cx="50" cy="50" r="41" fill="none" stroke="#041B2A" stroke-opacity=".3" stroke-width="1.6"/>
-      <path transform="translate(-4.5 0)" fill="#041B2A" fill-rule="evenodd" d="M34 22H58A17 17 0 0 1 58 56H46V78H34ZM46 32V46H58A7 7 0 0 0 58 32Z"/>
-    </symbol>
-  </defs>
-</svg>
-<div id="intro" role="dialog" aria-modal="true" aria-label="Welcome to PastPort - Jamaica">
+<div id="intro" role="dialog" aria-modal="true" aria-label="PastPort - Jamaica">
   <div class="in-stage">
     <svg class="in-dial" viewBox="-36 -36 272 272" aria-hidden="true">
       <circle class="in-ring2" cx="100" cy="100" r="99"/>
@@ -186,31 +165,23 @@
       <circle class="in-halo" cx="100" cy="100" r="92"/>
       <path class="in-mark" d="M100 -2 L93 -14 L107 -14 Z"/>
       <g class="in-stamps"></g>
-      <g class="in-core"><use href="#pp-core" x="54" y="54" width="92" height="92"/></g>
     </svg>
     <p class="in-year" aria-hidden="true">2026</p>
-    <div class="in-title">
-      <p class="in-name">PastPort</p>
-      <p class="in-island"><svg class="flag" viewBox="0 0 60 30" aria-hidden="true"><use href="#flag-jm"/></svg>Jamaica</p>
-      <p class="in-desc">Games that take you into Jamaica's past.</p>
+  </div>
+  <div class="in-final">
+    <div class="in-logo" role="img" aria-label="PastPort - Jamaica">
+      <img class="lg-base" data-src="pastport-logo.webp" width="1200" height="838" alt="" decoding="async">
+      <div class="lg-jam" aria-hidden="true"></div>
+      <div class="lg-shine" aria-hidden="true"></div>
+      <span class="lg-ring r1" aria-hidden="true"></span><span class="lg-ring r2" aria-hidden="true"></span>
+      <span class="lg-spark sp1" aria-hidden="true"></span><span class="lg-spark sp2" aria-hidden="true"></span><span class="lg-spark sp3" aria-hidden="true"></span>
     </div>
+    <p class="in-desc">Games that take you into Jamaica's past.</p>
   </div>
-  <div class="in-gate">
-    <p class="in-line">Your passport to the past.</p>
-    <button type="button" class="in-go">Begin</button>
-    <button type="button" class="in-sound" aria-pressed="true">Sound on</button>
-  </div>
-  <button type="button" class="in-skip">Skip</button>
 </div>
 <main>
   <header>
-    <h1 class="brand" aria-label="PastPort - Jamaica">
-      <svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="none" stroke="#1FB5A3" stroke-width="4"/><circle cx="50" cy="50" r="40.5" fill="none" stroke="#FFF7E8" stroke-opacity=".7" stroke-width="5" stroke-dasharray="2.2 8.4"/><use href="#pp-core" x="22" y="22" width="56" height="56"/></svg>
-      <span class="brand-text">
-        <span class="brand-name" aria-hidden="true">PastPort</span>
-        <span class="brand-sub" aria-hidden="true"><svg class="flag" viewBox="0 0 60 30" aria-hidden="true"><use href="#flag-jm"/></svg>Jamaica</span>
-      </span>
-    </h1>
+    <h1 class="brand"><img class="brand-logo" src="pastport-logo-sm.webp" width="420" height="293" alt="PastPort - Jamaica"></h1>
     <div class="side">
       <p class="credit">A world created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p>
       <p id="testingnote" hidden>Testing menu.</p>

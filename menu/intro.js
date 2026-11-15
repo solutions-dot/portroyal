@@ -1,10 +1,13 @@
-/* The intro for the menu. About six seconds, then the menu rises in.
-   What happens: you tap Begin (browsers only play sound after a tap), a dial runs backwards through the years and a passport stamp
-   lands for every game on the menu, two low notes sound, a bell rings, and the PastPort logo appears with a line about what it is.
-   Any tap, Escape or the Skip button ends it early.
+/* The intro for the menu. It starts by itself when the page loads and takes about seven seconds, then the menu rises in.
+   There are no buttons on it. A tap, a click, or Escape, Enter or Space ends it early.
+   What happens: a dial runs backwards through the years and a passport stamp lands for every game on the menu, two low notes sound,
+   and the PastPort - Jamaica logo slams in with a glint of light, sparkles, and "Jamaica" cycling through colours.
 
    It plays once for each browser tab. ?intro=1 plays it again, ?intro=0 skips it (the check is in index.html).
-   The words are text in index.html (#intro .in-name, .in-island and .in-desc). A game gets a stamp when its card has data-year.
+   The line under the logo is text in index.html (#intro .in-desc). A game gets a stamp when its card has data-year.
+
+   SOUND: browsers (Chrome, Safari, Firefox) do not let a page start sound by itself, only after a tap or key press. So the intro asks
+   for sound when it starts. If the browser allows it, the sound plays with the picture. If not, the picture plays without it.
    The sound is made here with Web Audio, no audio files, the same way the games make theirs. See docs/PLATFORM.md. */
 (() => {
   const root = document.documentElement, el = document.getElementById('intro');
@@ -13,7 +16,7 @@
 
   const START_YEAR = new Date().getFullYear();
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const SOUND_KEY = 'platform-sound';
+  const SOUND_KEY = 'platform-sound';   /* an earlier version had a Sound on/off button; a saved "off" is still respected */
 
   /* ---------- the stops: one for every game on the menu, newest first ---------- */
   function readStops() {
@@ -26,11 +29,13 @@
   const STOPS = readStops();
   const END_YEAR = STOPS[STOPS.length - 1].year, SPAN = START_YEAR - END_YEAR;
 
-  /* ---------- the timeline, in seconds after the tap ---------- */
+  /* ---------- the timeline, in seconds after the start ---------- */
   function plan(rm) {
     const n = STOPS.length, lead = rm ? 0.15 : 0.25, gap = rm ? 0 : Math.min(0.26, 2.1 / n);
     const stops = STOPS.map((s, i) => ({ year: s.year, colour: s.colour, t: lead + gap * (i + 1) }));   /* a stamp lands at each of these times */
-    const arrive = rm ? lead : lead + gap * n + 0.28, name = arrive + 0.28, hold = name + (rm ? 1.6 : 2.3);
+    const arrive = rm ? lead : lead + gap * n + 0.28;   /* the first low note: the logo slams in */
+    const name = arrive + 0.28;                          /* the second low note: the glint, the sparkles and "Jamaica" start (intro.css has the delays) */
+    const hold = rm ? name + 1.6 : arrive + 3.5;         /* then the logo is held while "Jamaica" cycles */
     const Y = [START_YEAR, ...stops.map((s) => s.year)], T = [lead, ...stops.map((s) => s.t)];
     const smooth = (u) => u * u * (3 - 2 * u);   /* the dial eases out of one stop and into the next */
     const yearAt = (t) => {
@@ -54,7 +59,8 @@
   /* ---------- the sound ---------- */
   /* A quiet room, a rising whoosh and a clock ticking back. A small wooden note rings as each stamp lands, climbing upward.
      Then two low plucked notes (D then A, an upward fifth, meant to feel like the box bass of old Jamaican mento music) and a bell chord
-     that rings out. The chord is D, A, E: open and calm, neither happy nor sad, because the stories in the library are both. */
+     that rings out. The chord is D, A, E: open and calm, neither happy nor sad, because the stories in the library are both.
+     Last, a shimmer as the glint crosses the logo and three small high notes for the sparkles. */
   function chain(ctx) {   /* a filter that drops the rumble phones cannot play, a compressor so nothing is ever harsh, then the volume */
     const master = ctx.createGain(), hp = ctx.createBiquadFilter(), comp = ctx.createDynamicsCompressor(), vol = ctx.createGain();
     hp.type = 'highpass'; hp.frequency.value = 45;
@@ -137,9 +143,22 @@
         o.connect(g); out(g, 0.9); o.start(t); o.stop(t + d + 0.1);
       }
     };
-    pluck(arrive, 73.42, 0.5);                 /* the first note: D, as the centre of the mark slams down */
-    pluck(arrive + 0.27, 110, 0.62);           /* the second note, a fifth higher and a little stronger: A, as the name drops in */
+    pluck(arrive, 73.42, 0.5);                 /* the first note: D, as the logo slams in */
+    pluck(arrive + 0.27, 110, 0.62);           /* the second note, a fifth higher and a little stronger: A, as the glint starts */
     for (const [i, f] of [587.33, 880, 1318.51].entries()) bell(arrive + 0.27 + i * 0.07, f, 0.065);
+    if (p.spin) {
+      /* the glint crossing the logo, then the sparkles (these match the animation delays in intro.css) */
+      const lit = arrive + 0.28, sh = ctx.createBufferSource(), sb = ctx.createBiquadFilter(), sg = ctx.createGain();
+      sh.buffer = noise; sh.loop = true; sb.type = 'bandpass'; sb.Q.value = 2;
+      sb.frequency.setValueAtTime(1200, lit + 0.15); sb.frequency.exponentialRampToValueAtTime(7000, lit + 1.2);
+      sg.gain.setValueAtTime(0.0001, lit + 0.15); sg.gain.exponentialRampToValueAtTime(0.035, lit + 0.55); sg.gain.exponentialRampToValueAtTime(0.0001, lit + 1.25);
+      sh.connect(sb); sb.connect(sg); out(sg, 0.4); sh.start(lit + 0.15); sh.stop(lit + 1.3);
+      [[0.55, 2349.32], [0.7, 2637.02], [0.85, 3520]].forEach(([d, f]) => {
+        const t = lit + d, o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.022, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+        o.connect(g); out(g, 0.9); o.start(t); o.stop(t + 0.75);
+      });
+    }
   }
   window.IntroSting = { plan, chain, build, stops: STOPS, get ctx() { return audio && audio.ctx; } };   /* so the sound can be rendered and measured without a speaker */
 
@@ -147,7 +166,7 @@
   const $ = (s) => el.querySelector(s);
   const NS = 'http://www.w3.org/2000/svg';
   const svg = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
-  const ticks = $('.in-ticks'), stampsG = $('.in-stamps'), yearEl = $('.in-year'), nameEl = $('.in-name'), goBtn = $('.in-go'), soundBtn = $('.in-sound'), skipBtn = $('.in-skip');
+  const ticks = $('.in-ticks'), stampsG = $('.in-stamps'), yearEl = $('.in-year'), logoImg = $('.lg-base');
   const main = document.querySelector('main');
   for (let i = 0; i < 36; i++) {   /* a tick every ten degrees; the one at each quarter turn is gold */
     const major = i % 9 === 0;
@@ -163,36 +182,31 @@
       svg('circle', { class: 'st-dash', r: SR * 0.8, stroke: s.colour }), svg('circle', { class: 'st-burst', r: SR, stroke: s.colour }), year);
     at.appendChild(st); stampsG.appendChild(at); stampEls.push(st);
   });
-  /* the name: every letter has its own colour, a sunset (gold, orange, hibiscus, violet) running into the sea (blue, teal). So Past is warm and Port is cool. */
-  const SWEEP = ['#FFB627', '#FF7A45', '#E8505B', '#B04FB0', '#2B8FD0', '#1FB5A3'].map((h) => [1, 3, 5].map((j) => parseInt(h.slice(j, j + 2), 16)));
-  const sweep = (t) => { const x = t * (SWEEP.length - 1), i = Math.min(SWEEP.length - 2, Math.floor(x)), f = x - i; return SWEEP[i].map((v, k) => Math.round(v + (SWEEP[i + 1][k] - v) * f)); };
-  const letters = nameEl.textContent.trim();
-  nameEl.setAttribute('aria-label', letters); nameEl.textContent = '';
-  [...letters].forEach((ch, i, all) => {
-    const s = document.createElement('span'), c = sweep(all.length > 1 ? i / (all.length - 1) : 0);
-    s.textContent = ch; s.style.setProperty('--i', i); s.style.setProperty('--c', 'rgb(' + c.join(',') + ')'); s.style.setProperty('--glow', 'rgba(' + c.join(',') + ',.45)'); s.setAttribute('aria-hidden', 'true');
-    nameEl.appendChild(s);
-  });
   yearEl.textContent = START_YEAR;
-  if (main) main.inert = true;   /* the menu underneath is not reachable until the intro is gone */
+  logoImg.src = logoImg.dataset.src;   /* the head already asked for it, so this is quick */
+  if (main) main.inert = true;         /* the menu underneath is not reachable until the intro is gone */
 
   /* ---------- running it ---------- */
   const P = plan(RM);
-  let soundOn = true, audio = null, started = false, done = false, t0 = 0, stage = 0;
-  try { soundOn = localStorage.getItem(SOUND_KEY) !== 'off'; } catch (e) { /* default on */ }
-  const showSound = () => { soundBtn.textContent = soundOn ? 'Sound on' : 'Sound off'; soundBtn.setAttribute('aria-pressed', soundOn ? 'true' : 'false'); };
-  showSound();
-  soundBtn.addEventListener('click', () => { soundOn = !soundOn; try { localStorage.setItem(SOUND_KEY, soundOn ? 'on' : 'off'); } catch (e) { /* ignore */ } showSound(); });
+  let audio = null, done = false, t0 = 0, stage = 0;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const visible = () => document.visibilityState === 'visible' ? Promise.resolve() : new Promise((res) => {   /* a tab opened in the background waits until you look at it */
+    const f = () => { if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', f); res(); } };
+    document.addEventListener('visibilitychange', f);
+  });
 
-  function startAudio() {
+  async function startAudio() {   /* gives the sound, or null if it is not allowed (or was switched off) */
+    try { if (localStorage.getItem(SOUND_KEY) === 'off') return null; } catch (e) { /* default on */ }
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      const ctx = new AC(), master = chain(ctx);
-      if (ctx.state === 'suspended') ctx.resume();
+      if (!AC) return null;
+      const ctx = new AC();
+      const ok = await Promise.race([ctx.resume().then(() => ctx.state === 'running', () => false), wait(150).then(() => false)]);   /* no answer in 150 ms means the browser said no */
+      if (!ok) { ctx.close(); return null; }
+      const master = chain(ctx);
       build(ctx, master, ctx.currentTime + 0.06, P);
-      audio = { ctx, master };
-    } catch (e) { audio = null; }   /* no sound is fine: the picture still plays */
+      return { ctx, master };
+    } catch (e) { return null; }   /* no sound is fine: the picture still plays */
   }
   function stopAudio(fast) {
     if (!audio) return;
@@ -200,12 +214,13 @@
     try { if (fast) master.gain.setTargetAtTime(0, ctx.currentTime, 0.06); setTimeout(() => ctx.close(), fast ? 600 : 4500); } catch (e) { /* ignore */ }
   }
 
-  function begin(byKeyboard) {
-    if (started || done) return;
-    started = true; el.classList.add('running');
-    if (byKeyboard) skipBtn.focus({ preventScroll: true });   /* Begin is about to disappear, so keyboard focus moves to the Skip button (a mouse or finger does not need it, and would see a focus ring) */
-    if (soundOn) startAudio();
-    t0 = performance.now(); requestAnimationFrame(tick);
+  async function begin() {
+    await Promise.all([visible(), Promise.race([logoImg.decode().catch(() => {}), wait(1500)])]);   /* the logo is ready (or 1.5 seconds have passed) */
+    if (done) return;
+    audio = await startAudio();
+    if (done) { stopAudio(true); return; }
+    t0 = performance.now() + 60;   /* the sound was set to start 60 ms from now, so the picture does too */
+    requestAnimationFrame(tick);
   }
   function tick(now) {
     if (done) return;
@@ -231,13 +246,7 @@
     }, 750);
   }
 
-  goBtn.addEventListener('click', (e) => begin(e.detail === 0));   /* a click with no pointer (detail 0) is Enter or Space */
-  skipBtn.addEventListener('click', () => leave(true));
-  el.addEventListener('pointerdown', (e) => { if (started && !e.target.closest('button')) leave(true); });   /* a tap anywhere ends it, once it has begun */
-  addEventListener('keydown', (e) => {
-    if (done) return;
-    if (e.key === 'Escape') leave(true);
-    else if ((e.key === 'Enter' || e.key === ' ') && started && !e.target.closest('button')) { e.preventDefault(); leave(true); }
-  });
-  goBtn.focus({ preventScroll: true });
+  el.addEventListener('pointerdown', () => leave(true));   /* a tap or click anywhere ends it early (there is no button for it) */
+  addEventListener('keydown', (e) => { if (!done && (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); leave(true); } });
+  begin();
 })();
