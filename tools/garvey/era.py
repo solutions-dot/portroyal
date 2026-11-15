@@ -605,6 +605,29 @@ def neck_ring(z):        # the neck's outline at height z as an ellipse: (centre
 def collar_pt(a,zb,zf,grow):     # a point on a ring round the neck: height zb at the nape, zf at the throat
     f=0.5+0.5*math.cos(a); z=zb+(zf-zb)*f**1.5; yc,rx,ry=neck_ring(zb+(zf-zb)*0.35); return Vector((math.sin(a)*(rx+grow),yc-math.cos(a)*(ry+grow),z))
 def collar_base(a): return NECK-0.004-0.008*s*(0.5+0.5*math.cos(a))**1.5
+def ring_fix(rows,j,under=None,mn=0.0,inside=None,imn=0.0,iters=4):
+    # Even out one line of a collar (point j of every row) along the ring. Measured one by one, a point could land far from its neighbours (a ray that just missed the shoulder,
+    # the nearest point of a shirt that turns at the collarbone), and each such point stood up as a tooth. First a running median of five (round the neck's axis, so the ring
+    # keeps its size) removes single spikes, then the line is smoothed. under: lift it at least mn clear of that surface; the lifts are spread along the ring, so the line
+    # moves out as one smooth curve instead of point by point. inside: keep it at least imn inside that surface (a yoke that must stay under the shirt).
+    n=len(rows); cyl=lambda q:(math.atan2(q.x,-(q.y-NJ.y)),math.hypot(q.x,q.y-NJ.y),q.z); P=[rows[i][j].copy() for i in range(n)]
+    C=[cyl(q) for q in P]
+    for i in range(2,n-2):
+        a,_r,_z=C[i]; r=sorted(c[1] for c in C[i-2:i+3])[2]; z=sorted(c[2] for c in C[i-2:i+3])[2]; P[i]=Vector((math.sin(a)*r,NJ.y-math.cos(a)*r,z))
+    for _ in range(iters): P=[P[i] if i in (0,n-1) else (P[i-1]+P[i]*2+P[i+1])/4 for i in range(n)]
+    if under is not None:
+        Z=Vector((0,0,0)); D=[]
+        for q in P:
+            loc,nrm,_i,_d=under.find_nearest(q,0.05); sd=(q-loc).dot(nrm) if loc is not None else mn
+            D.append(nrm*(mn-sd) if sd<mn else Z.copy())
+        D=[max(D[max(0,i-2):i+3],key=lambda d:d.length) for i in range(n)]
+        for _ in range(3): D=[(D[max(0,i-1)]+D[i]*2+D[min(n-1,i+1)])/4 for i in range(n)]
+        P=[q+d for q,d in zip(P,D)]
+    if inside is not None:
+        for i,q in enumerate(P):
+            loc,nrm,_i,_d=inside.find_nearest(q,0.05)
+            if loc is not None and (q-loc).dot(nrm)>-imn: P[i]=q-nrm*((q-loc).dot(nrm)+imn)
+    for i in range(n): rows[i][j]=P[i]
 def ring_weights(o,n,m,iters=8):
     # A collar is built as n rows of m points round the neck, and each point copied its bone weights from the nearest point of the shirt. Neighbouring points often found
     # different shirt points (the neck edge, the shoulder, even the top of a sleeve), so one point followed the arm or the head and the next the chest: in any pose the edge
@@ -657,10 +680,7 @@ if FLAT:
         for _ in range(6):
             for j in range(1,4):
                 for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
-        for r_ in rows:
-            for j,off in ((1,0.0035),(2,0.0065),(3,0.011)):
-                loc,nrm,_i,_d=SHT.find_nearest(r_[j])
-                if loc is not None and (r_[j]-loc).dot(nrm)<off: r_[j]=loc+nrm*off
+        for j,off in ((1,0.0035),(2,0.0065),(3,0.011)): ring_fix(rows,j,SHT,off,iters=2)
     quadstrip(bm,[[bm.verts.new(q) for q in row] for row in rows]); _co=soft('Collar',bm,'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD: ring_weights(_co,len(rows),4)
 if CK and not FLAT:
@@ -680,7 +700,13 @@ if CK and not FLAT:
             if fr>0:      # the points: longer, lying on the shirt front, spread a little apart
                 sx=1 if math.sin(a)>=0 else -1; zp=NECK-0.058*s; xp=sx*0.034*s; tip=Vector((xp,shirt_front(zp,xp)-0.008,zp)); e=e.lerp(tip,fr**0.8)
             row+=[q,e]
-        rows.append([bm.verts.new(q) for q in row])
+        rows.append(row)
+    if not OLD:      # every line of the collar is evened out along the ring (see ring_fix); the yoke stays on the skin and under the shirt, the band and the leaf stay clear of the shirt
+        ny=0 if CK=='open' else 2
+        for j in range(len(rows[0])):
+            if j<ny: ring_fix(rows,j,SKIN,0.003,SHT,0.002)
+            else: ring_fix(rows,j,SHT,0.003 if j==ny else 0.004)
+    rows=[[bm.verts.new(q) for q in row] for row in rows]
     quadstrip(bm,[list(r) for r in zip(*rows)]); _co=soft('Collar',bm,'Shirt' if CK=='band' else 'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD: ring_weights(_co,len(rows),len(rows[0]))
 if G.get('tie'):         # a tie: a knot in the collar's opening and a blade that lies on the shirt, wider toward its tip
