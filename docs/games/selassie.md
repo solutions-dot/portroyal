@@ -1,4 +1,4 @@
-# The Emporer's Arrival
+# The Emperor's Arrival
 
 A six-chapter game about Haile Selassie I's arrival at Palisadoes Airport on 21 April 1966. The title follows the owner's chosen spelling. Folder and save namespace: `selassie`.
 
