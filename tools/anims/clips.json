@@ -116,5 +116,9 @@
  "AskQuestion": "Asking_Question.fbx",
  "Kneel2": "Kneeling_2.fbx",
  "LookAround": "Looking_Around.fbx",
- "WipeSweat": "Wiping_Sweat.fbx"
+ "WipeSweat": "Wiping_Sweat.fbx",
+ "Duck2": "Ducking_1.fbx",
+ "SitIdle4": "Sitting_3.fbx",
+ "HeadTurn": "Head_Turn.fbx",
+ "Agree": "Agreeing.fbx"
 }
