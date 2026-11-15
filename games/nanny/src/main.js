@@ -125,7 +125,7 @@ let modelsReady = false; const placeLoading = {};
 function buildPlace(id) {   /* the geometry only: quick, and enough for a title backdrop. People come later (ensurePlace). */
   if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.actions = []; P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; PL[id] = P;
   P.bounds = P.G.bounds; P.solidWalls = P.solids.map(([x, z, r]) => [x - r * 0.7, z - r * 0.7, x + r * 0.7, z + r * 0.7]); P.walls = P.G.walls(0.5).concat(P.solidWalls);
-  P.solidBoxes = P.solids.map(([x, z, r]) => [x - r - 0.05, z - r - 0.05, x + r + 0.05, z + r + 0.05]);   /* boxes that hold each round footprint whole: routes round them never cut into one (engine/follow.js goTo) */
+  P.solidBoxes = P.solids.flatMap(([x, z, r]) => { const R = r + 0.05, a = 0.8 * R, b = 0.62 * R; return [[x - a, z - a, x + a, z + a], [x - R, z - b, x + R, z + b], [x - b, z - R, x + b, z + R]]; });   /* three boxes that together hold each round footprint whole and hug it closely: routes round them never cut into one (engine/follow.js goTo) */
   if (__DEV__) P.snap = snapMeshes(P.group); P.batch = batchStatic(P.group);
   P.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.alphaTest > 0) && o.name !== 'land' && !o.material.isMeshBasicMaterial) o.castShadow = o.receiveShadow = true; });
   if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); return P;
