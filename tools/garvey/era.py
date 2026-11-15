@@ -820,7 +820,7 @@ if G.get('jacket'):      # lapels that lie along the jacket's opening, and its b
             xo=xi+w*0.80; zo=zi-w*0.45+(0.012*s if t>0.72 else 0)
             rows.append([bm.verts.new((sx*xi,jy(xi+0.012,zi-0.01)-0.004,zi)),bm.verts.new((sx*xo,jy(xo,zo)-0.011,zo))])
         quadstrip(bm,rows,flip=(sx<0))
-    soft('Lapels',bm,'Jacket',src=ON('jacket')); bm=bmesh.new()
+    _lp=soft('Lapels',bm,'Jacket',only=('Spine2','Spine1','Neck','LeftShoulder','RightShoulder')); _smooth_bones(_lp,lambda c:True,8); bm=bmesh.new()      # the lapels lie on the chest: with the jacket's own arm weights, the lapel on the side of a raised arm tore into slivers
     for i in range(2):
         z=vz_-0.035*s-0.075*s*i; bmesh.ops.create_circle(bm,cap_ends=True,segments=8,radius=0.009*s,matrix=Matrix.Translation((0.012*s,jy(0.012*s,z)-0.004,z))@Matrix.Rotation(math.pi/2,4,'X'))
     soft('JButtons',bm,'Buttons',src=ON('jacket'))
