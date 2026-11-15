@@ -10,27 +10,13 @@
   /* The intro (intro.js) starts by itself and plays once for each browser tab. ?intro=1 plays it again, ?intro=0 skips it. */
   try { var q = new URLSearchParams(location.search).get('intro'); if (q === '1' || (q !== '0' && !sessionStorage.getItem('intro-seen'))) { document.documentElement.classList.add('intro-on'); ['pastport-logo.webp', 'pastport-jamaica.webp'].forEach(function (f) { var l = document.createElement('link'); l.rel = 'preload'; l.as = 'image'; l.href = f; document.head.appendChild(l); }); } } catch (e) { /* no intro */ }
 </script>
-<noscript><style>#intro{display:none!important}  .contact-pill{display:inline-flex;align-items:center;justify-content:center;gap:.3em;min-height:44px;max-width:100%;padding:.65rem 1rem;border:1px solid rgba(255,247,232,.4);border-radius:999px;background:rgba(255,247,232,.04);font:inherit;font-size:.95rem;white-space:normal;cursor:pointer}
-  .contact-pill:hover{border-color:var(--sea);background:rgba(31,181,163,.12)}
-  .contact-pill:focus-visible,#contactpanel :focus-visible{outline:3px solid var(--mango);outline-offset:3px}
-  #contactpanel{width:min(36rem,calc(100% - 2rem));max-height:calc(100dvh - 2rem);padding:1.5rem;border:1px solid rgba(31,181,163,.6);border-radius:24px;background:var(--harbour);color:var(--paper);overflow:auto}
-  #contactpanel::backdrop{background:rgba(4,27,42,.85)}
-  #contactpanel h2{margin:0 2rem .5rem 0;font-size:1.7rem;color:var(--sea)}
-  #contactpanel p{line-height:1.5}
-  .contact-form{display:grid;gap:1rem;margin-top:1.2rem}
-  .contact-form label{display:grid;gap:.4rem;font-weight:600}
-  .contact-fields{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-  .contact-form input,.contact-form select,.contact-form textarea{width:100%;min-width:0;min-height:46px;padding:.7rem;border:1px solid rgba(255,247,232,.4);border-radius:10px;background:var(--deep);color:var(--paper);font:inherit;color-scheme:dark}
-  .contact-form textarea{resize:vertical;min-height:110px}
-  .contact-send{justify-self:start;min-height:48px;padding:.7rem 1.3rem;border:0;border-radius:999px;background:var(--mango);color:var(--deep);font:inherit;font-weight:800;cursor:pointer}
-  .contact-note{margin:0;color:rgba(255,247,232,.75);font-size:.85rem}
-  @media(max-width:480px){.contact-fields{grid-template-columns:1fr}#contactpanel{padding:1.1rem}.contact-pill{font-size:.85rem}}
-</style></noscript>
+<noscript><style>#intro{display:none!important}</style></noscript>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fraunces:ital,wght@1,600&display=swap" rel="stylesheet">
 <link rel="icon" href="pastport-icon.png" type="image/png">
 <link rel="stylesheet" href="intro.css">
+<link rel="stylesheet" href="contact.css">
 <style>
   /* The game menu. One screen, no scrolling. Colours from the island: harbour blue, sea glass, mango, hibiscus.
      To add a game: copy a game <a class="game"> block, add its picture (menu/<game>.jpg), and give it its own class for the colours. */
