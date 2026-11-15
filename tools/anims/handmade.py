@@ -506,11 +506,8 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
         far = gap - 0.16 + half                                         # their far shoulder, from the giver's shoulder joint
         wrist = body_point(rig, Mfix, 'Right', far - 0.05 + HAND_OUT + nudge[0], ahead - 0.08 + HAND_FWD + nudge[1], -drop + HAND_UP + nudge[2] + 0.008 * pt, bone='Hips')   # over their far shoulder, from behind
         if ride: wrist = wrist + ride[i]
-        fingers = body_dir(rig, M, 'Right', 0.25, 0.1, -1.0, bone='Hips')     # down the back and outside of their upper arm
-        palm = body_dir(rig, M, 'Right', -0.4, 1.0, 0.1, bone='Hips')
         elbow = body_dir(rig, M, 'Right', *elbow_dir, bone='Hips')   # elbow down and back, behind them
-        arm(rig, p, 'Right', wrist, elbow, fingers, palm, 0.5)
-        curl(rig, p, 'Right', 0.2 - 0.1 * pt, thumb=0.1)
+        rest_hand(rig, p, 'Right', wrist, elbow, curl_by=0.35 - 0.1 * pt)
         relaxed_arm(rig, p, 'Left')
 
 
@@ -538,15 +535,23 @@ def embrace_arm(rig, frames, T, turn_body=0.5, lean_in=0.06, upper=(0.35, 0.2, 0
         E = S + d1 * l1; W = E + d2 * l2
         if reach: W = S + V(*reach); d1 = V(0, 1.0, -0.8).normalized(); d2 = V(0, 0, 0)   # given as the hand's place from the shoulder instead; the elbow drops back and down
         if ride: W = W + ride[i]
-        fingers = V(*hand[0]); palm = V(*hand[1])                              # fingers down the outside of their upper arm, palm on it
-        arm(rig, p, 'Right', W, d1 - d2, fingers, palm, 0.5)
-        curl(rig, p, 'Right', 0.25 - 0.1 * pt, thumb=0.1)
+        rest_hand(rig, p, 'Right', W, d1 - d2, curl_by=0.35 - 0.1 * pt)         # palm down on the top of her shoulder, fingers forward over it
         if seated:
             M = rig.fk(p)
             arm(rig, p, 'Left', body_point(rig, M, 'Left', -0.02, 0.32, -0.33, bone='Hips'), body_dir(rig, M, 'Left', 0.6, -0.3, -0.6, bone='Hips'),
                 body_dir(rig, M, 'Left', -0.2, 0.9, -0.3, bone='Hips'), body_dir(rig, M, 'Left', -0.3, 0.0, -1, bone='Hips'), 0.5)   # the free hand on his knee
             curl(rig, p, 'Left', 0.35)
         else: relaxed_arm(rig, p, 'Left')
+
+
+def rest_hand(rig, p, side, wrist, elbow, down=0.25, palm_dir=V(0, 0, -1), curl_by=0.35):
+    """Lay a hand on top of someone's shoulder: the wrist nearly straight in line with the forearm, the palm facing
+    down onto the shoulder (`palm_dir`), the fingers carrying on from the forearm and tipping `down` over its curve."""
+    limb_ik(rig, p, side + 'Arm', side + 'ForeArm', side + 'Hand', wrist, elbow)   # first pass, to find where the forearm points
+    M = rig.fk(p); fa = M[P + side + 'ForeArm'].to_3x3().col[1].normalized()
+    fingers = (fa + V(0, 0, -down)).normalized()
+    arm(rig, p, side, wrist, elbow, fingers, palm_dir, 0.5)
+    curl(rig, p, side, curl_by, thumb=0.1)
 
 
 def relaxed_arm(rig, p, side):
@@ -729,7 +734,12 @@ def check(rig, name, frames):
         for up, lo in (('LeftArm', 'LeftForeArm'), ('RightArm', 'RightForeArm'), ('LeftUpLeg', 'LeftLeg'), ('RightUpLeg', 'RightLeg')):
             d1 = M[P + up].to_3x3().col[1]; d2 = M[P + lo].to_3x3().col[1]; n = d1.cross(d2)
             if n.length > 0.05 and n.dot(M[P + up].to_3x3() @ rig.hinge[up]) < 0: wrong += 1
-    print('      fastest bone turn %.1f deg a frame (%s); elbows or knees bent backwards: %d' % (fast, fb, wrong))
+    wb = 0.0
+    for p in frames[::3]:
+        M = rig.fk(p)
+        for sd in (('Right',) if 'Comfort' in name and 'Take' not in name else ('Left', 'Right')):
+            wb = max(wb, math.degrees(M[P + sd + 'ForeArm'].to_3x3().col[1].angle(M[P + sd + 'Hand'].to_3x3().col[1])))
+    print('      fastest bone turn %.1f deg a frame (%s); elbows or knees bent backwards: %d; most bent wrist %.0f deg' % (fast, fb, wrong, wb))
     if name.startswith('CarryHead'):   # the hand must stay outside the load: radius LOAD_R, from the crown up 0.25 m
         near = 9.0
         for p in frames[::2]:
