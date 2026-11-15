@@ -34,7 +34,7 @@ The player is a **Traveller**. The platform is how they travel. Each game is a *
 | Today's word | In the traveller idea |
 |---|---|
 | Games | Destinations (a place and a year) |
-| Play | Go there |
+| Play | Go there (done on the menu cards) |
 | Chapters | Stops |
 | Journal | Traveller's journal (it already is one) |
 | Menu | Where do you want to go? |
@@ -59,7 +59,7 @@ It touches no game.
 It **starts by itself** when the page loads and takes about seven seconds. There are **no buttons** on it (the owner asked for no Begin, no Sound and no Skip, and no "Step back in time" line):
 1. A dial and the current year. The dial runs backwards, one tick for every ten years. It stops at each game on the menu and a **passport stamp** lands, in that game's own colour, with a small wooden note that climbs a scale. A whoosh rises and the clicks slow down.
 2. Two low plucked notes (D, then A). On the first, the PastPort - Jamaica logo **slams in** (and a ring of light spreads). On the second, a second ring, a **glint of light** crosses the logo (kept to the logo's shape), and **sparkles** hit the top, left and right points of the compass star, each with a small high note. A bell rings (D, A, E: open and calm, neither happy nor sad).
-3. **"Jamaica" cycles through colours** (the whole colour wheel in 3 seconds) while the logo is held and breathes a little. One line about what it is fades in under it: "Games that take you into Jamaica's past."
+3. **"Jamaica" cycles through colours** (the whole colour wheel in 3 seconds) while the logo is held and breathes a little. The header logo on the menu cycles too, more slowly (6 seconds a turn, never with reduced motion), with the same mask. One line about what it is fades in under it: "Games that take you into Jamaica's past."
 4. The menu fades up with the cards one after another.
 
 **Sound and the browser rule.** Chrome, Safari and Firefox do not let a page start sound by itself. Sound needs a tap or key press first. So the intro asks for sound when it starts. If the browser allows it, the sound plays with the picture. If it does not (the usual case on a first visit that opens straight onto the page), the picture plays **without sound**. The intro never waits for a tap and never shows a button for it. If the owner wants sound every time, the only way is one tap before it starts (a Begin button or a tap anywhere), which the owner has chosen not to have. A saved `platform-sound` = `off` in `localStorage` (from an older Sound button) is still respected.
@@ -87,9 +87,8 @@ Checking it (done for this version, repeat after changes):
 
 ## Next steps (not built yet)
 
-- **Cycle "Jamaica" in the menu header too.** It is still in the header logo for now. The same mask trick would work there.
 - **Previews, like a streaming library.** When a card is hovered or focused, play a 6 to 10 second silent clip of that game, recorded from the game's own camera by the test tooling. On phones, show the clip when the card scrolls into view. Until then the poster stays still.
 - **An arrival card** at the start of each game ("You are arriving in Port Royal, Jamaica. 1692.") and "Back in 2026" when you leave, so the traveller idea runs through the games and not just the menu.
 - **Continue your trip.** Each game already saves progress. The menu can show "Continue: chapter 3" on that game's card.
-- **Wording.** Change "Play" on the cards to "Go there", and chapters to "stops", if the owner wants the traveller idea in the menu.
+- **More traveller wording.** The cards say "Go there" (the owner chose it). Chapters could become "stops" inside the games if the owner wants.
 - **Rows.** With about twelve games or more, group the menu into rows ("Storms and floods", "Freedom and leaders", "Everyday life"), or by era.
