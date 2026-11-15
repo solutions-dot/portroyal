@@ -450,16 +450,6 @@ def shirt_weights(_sh):      # the shirt's front and back, well inside the armho
             if w/_tot>0.002: _sh.vertex_groups[gi].add([_v.index],w/_tot,'REPLACE')
     _smooth_bones(_sh,lambda c:abs(c.x)<SX*0.95 and HIP+0.02<c.z<NECK-0.01,10)      # and the torso's weights are evened out, so the cloth bends as one piece and its edges stay straight
     neck_to_chest(_sh)
-    if FLAT and not OLD:      # under a flat collar the blouse follows the chest and shoulders, not the arms: when the arms reached forward its upper back slid away and the collar stood up off it like a wing
-        _vg=_sh.vertex_groups; _ar={g.index:('Left' if 'Left' in g.name else 'Right') for g in _vg if g.name[10:] in ('LeftArm','LeftForeArm','LeftHand','RightArm','RightForeArm','RightHand')}
-        for _v in _sh.data.vertices:
-            x,y,z=_v.co
-            if z<NECK-0.11*s or abs(x)>SX*0.78: continue
-            k=sstep(NECK-0.11*s,NECK-0.06*s,z)*(1-sstep(SX*0.62,SX*0.78,abs(x)))
-            for g in list(_v.groups):
-                if g.group in _ar and g.weight>0:
-                    mv=g.weight*k; sd=_ar[g.group]; tg=_vg.get('mixamorig:'+sd+'Shoulder') or _vg.new(name='mixamorig:'+sd+'Shoulder')
-                    _vg[g.group].add([_v.index],g.weight-mv,'REPLACE'); cur=next((q.weight for q in _v.groups if q.group==tg.index),0.0); tg.add([_v.index],cur+mv,'REPLACE')
 if not OLD:
     # A last clearance pass. Whatever the shapes above did, no point of a garment may lie inside, or closer than MIN to, the layer under it: the skin, then the shirt, then the waistcoat.
     # Each point is pushed out along the face it is nearest to, twice, so edges that were cut, eased and smoothed cannot leave a speck of the layer beneath showing through.
@@ -681,7 +671,7 @@ def ring_weights(o,n,m,iters=8,flat=False):
     # different shirt points (the neck edge, the shoulder, even the top of a sleeve), so one point followed the arm or the head and the next the chest: in any pose the edge
     # tore into saw teeth. Here the arms' share goes to their shoulder and the head's to the neck, and the weights are evened out along the ring, so the collar bends as one band.
     me=o.data; vg=o.vertex_groups; MAP={'Head':'Neck','LeftArm':'LeftShoulder','LeftForeArm':'LeftShoulder','LeftHand':'LeftShoulder','RightArm':'RightShoulder','RightForeArm':'RightShoulder','RightHand':'RightShoulder','Spine':'Spine1','Hips':'Spine1'}
-    if flat: MAP.update({'Head':'Spine2','Neck':'Spine2'})      # a flat collar lies on the shoulders: following the neck, its back stood up when the head bowed      # a flat collar lies on the shoulders: following the neck, its back stood up in a flap when the head bowed
+    if flat: MAP={'Head':'Spine2','Neck':'Spine2','Spine':'Spine1','Hips':'Spine1'}      # a flat collar lies on the blouse and must move as the blouse under it does, arm weights included (moved to the shoulder, the blouse dropped away under it when the arms reached down and the collar stood up like a wing); only the neck's share goes to the chest      # a flat collar lies on the shoulders: following the neck, its back stood up when the head bowed      # a flat collar lies on the shoulders: following the neck, its back stood up in a flap when the head bowed
     W=[]
     for v in me.vertices:
         d={}
@@ -715,7 +705,7 @@ if FLAT:
         f=0.5+0.5*math.cos(a); back=(1-f)**1.2; S=collar_pt(a,NECK+0.004,NECK-0.030*s if camp else NECK-0.012*s,0.010); D=Vector((math.sin(a),-math.cos(a),0)); w=LW*((0.72+0.28*f) if camp else 1.0)*wk      # a round collar keeps its width all round: narrower at the back, it left the slope of the shoulders showing beside it
         stand=(0.014*s*back if camp else 0.003*s)
         # the stand rises straight from the seam: set back from it, the two rows crossed at the nape and the cloth folded into teeth
-        base=on_shirt(S,0.004); top=base+Vector((0,0,max(stand,0.002)))+D*0.001; mid=on_shirt(S+D*w*0.5+Vector((0,0,-w*0.25)),0.011+0.004*back); out=on_shirt(S+D*w*0.9+Vector((0,0,-w*0.55)),0.015)      # the outer edge of the leaf lifts a little, so light and shadow draw the collar even when it is cut from the shirt's own cloth
+        base=on_shirt(S,0.004); top=base+Vector((0,0,max(stand,0.002)))+D*0.001; mid=on_shirt(S+D*w*0.5+Vector((0,0,-w*0.25)),(0.011+0.004*back) if camp else 0.006); out=on_shirt(S+D*w*0.9+Vector((0,0,-w*0.55)),0.015 if camp else 0.007)      # the outer edge of the leaf lifts a little, so light and shadow draw the collar even when it is cut from the shirt's own cloth
         return [base,top,mid,out]
     def v_row(t,sx):      # down the edge of the V: t 0 at its top corner, 1 at the notch
         x=sx*xw*(1-0.62*t); z=VZ+VK*abs(x)-0.002; S=Vector((x,shirt_front(z,x)-0.004,z)); D=Vector((sx*0.86,0,-0.5)); w=LW*(1.0+0.12*t)
@@ -730,7 +720,7 @@ if FLAT:
         for _ in range(12):
             for j in range(0,4):      # a round collar's seam row too: left on the nearest shirt point, it zigzagged at the throat
                 for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
-        for j,off in ((0,0.003),(1,0.0035),(2,0.0065),(3,0.011)): ring_fix(rows,j,SHT,off,iters=2)      # the seam row too, on every flat collar: left on the nearest shirt point it showed as teeth at the nape
+        for j,off in ((0,0.003),(1,0.0035),(2,0.0065 if camp else 0.005),(3,0.011 if camp else 0.006)): ring_fix(rows,j,SHT,off,iters=2)      # a round collar lies close on the blouse: its edge lifted 1.5 cm stood up like a wing when the back curved      # the seam row too, on every flat collar: left on the nearest shirt point it showed as teeth at the nape
         if not camp:
             for j,off in ((2,0.006),(3,0.008)): ring_fix(rows,j,SKIN,off,iters=1)      # and clear of the skin: at the top of the shoulder the skin rose above the shirt and came up through the collar
     if not camp and not OLD:      # a yoke under the seam, down onto the skin beneath the shirt, so no skin shows between the collar and the neck
