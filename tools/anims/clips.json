@@ -81,5 +81,7 @@
  "HurtWalk": "injured_pack/injured_walk.fbx",
  "HurtTurnL": "injured_pack/injured_turn_left.fbx",
  "HurtTurnR": "injured_pack/injured_turn_right.fbx",
- "WalkTurn180b": "Walking_Turn_180_1.fbx"
+ "WalkTurn180b": "Walking_Turn_180_1.fbx",
+ "Scared": "Scared.fbx",
+ "Terrified2": "Terrified_2.fbx"
 }
