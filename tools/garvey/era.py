@@ -366,6 +366,8 @@ for o in clothes:
     md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}
     md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
     with ov(o): bpy.ops.object.modifier_move_to_index(modifier='wt',index=0); bpy.ops.object.modifier_apply(modifier='wt')
+if EASE_OLD and G.get('breeches'):      # the shirt's tail inside the breeches is always hidden: trimmed below HIP+0.04 (seated, it bunched out through the front of the breeches); the shirt still overlaps the breeches up to the waistband
+    _o=dict(parts)['shirt']; _b=bmesh.new(); _b.from_mesh(_o.data); bmesh.ops.delete(_b,geom=[f for f in _b.faces if cz(f).z<HIP+0.04 and side_arm(cz(f)) is None],context='FACES'); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS'); _b.to_mesh(_o.data); _b.free()
 if EASE_OLD:      # 1690: only the shirt; it blouses out above the breeches' waistband (TUCK is above the band) and falls nearly straight from the chest
     ease(dict(parts)['shirt'],0.009,tuck=0.006 if G.get('breeches') else 0.003)      # tucked into breeches it fills the band (tucked tight, it left an open lip of breeches round it)
 if not OLD:      # the ease comes after the bone weights are copied: each point of cloth keeps the weights of the skin it started on, so loose cloth by the armpit does not follow the arm
@@ -800,7 +802,7 @@ if G.get('trousers') and G.get('belt',True) and (not G.get('waistcoat') or G.get
     if not G.get('waistcoat'): bmesh.ops.create_cube(bm,size=1,matrix=Matrix.Translation((0,yb,HIP+0.098))@Matrix.Diagonal((0.044*s,0.006,0.038*s,1))); soft('Buckle',bm,'Buckle',only=('Hips','Spine'))
 if OLD and G.get('breeches') and not G.get('coat'):      # a waistband: a narrow band of the breeches' own cloth round their top edge, so that edge (cut across a curved body) reads as a clean seam
     TT=tree_of(PART['breeches']); bm=bmesh.new(); seg=32; rows=[]
-    for z,e in ((HIP+0.095,0.0),(HIP+0.099,0.003),(HIP+0.135,0.003),(HIP+0.139,0.0)):      # a flat band, not a roll
+    for z,e in ((HIP+0.078,0.0),(HIP+0.082,0.003),(HIP+0.135,0.003),(HIP+0.139,0.0)):      # a flat band, not a roll, deep enough to cover the wavy top of the breeches and the tucked shirt under it
         ring=[]
         for k in range(seg):
             a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z-0.03)); hit=TT.ray_cast(o+d*0.4,-d)[0]; o2=Vector((0,J('Hips').y,z)); h2=SHT.ray_cast(o2,d,0.3)[0]; r=max(((hit-o).length if hit else 0.15),((h2-o2).length+0.002) if h2 is not None else 0.0)+e
@@ -818,7 +820,7 @@ if G.get('jacket'):      # lapels that lie along the jacket's opening, and its b
             xo=xi+w*0.80; zo=zi-w*0.45+(0.012*s if t>0.72 else 0)
             rows.append([bm.verts.new((sx*xi,jy(xi+0.012,zi-0.01)-0.004,zi)),bm.verts.new((sx*xo,jy(xo,zo)-0.011,zo))])
         quadstrip(bm,rows,flip=(sx<0))
-    soft('Lapels',bm,'Jacket',src=ON('jacket')); bm=bmesh.new()
+    _lp=soft('Lapels',bm,'Jacket',only=('Spine2','Spine1','Neck','LeftShoulder','RightShoulder')); _smooth_bones(_lp,lambda c:True,8); bm=bmesh.new()      # the lapels lie on the chest: with the jacket's own arm weights, the lapel on the side of a raised arm tore into slivers
     for i in range(2):
         z=vz_-0.035*s-0.075*s*i; bmesh.ops.create_circle(bm,cap_ends=True,segments=8,radius=0.009*s,matrix=Matrix.Translation((0.012*s,jy(0.012*s,z)-0.004,z))@Matrix.Rotation(math.pi/2,4,'X'))
     soft('JButtons',bm,'Buttons',src=ON('jacket'))
@@ -834,7 +836,7 @@ if G.get('pocket'):      # a patch pocket on the chest: a slightly raised panel 
     COL.setdefault('Pocket',COL['Shirt']*0.86); bm=bmesh.new(); px=0.088*s; pz=VZ-0.035*s; pw=0.040*s; ph=0.088*s; rows=[]
     for j in range(5):
         v=j/4; half=pw*(1.0 if v<0.75 else 0.82); rows.append([bm.verts.new(on_shirt(Vector((px+half*(i/2-1),-0.3,pz-ph*v)).lerp(Vector((px+half*(i/2-1),shirt_front(pz-ph*v,px+half*(i/2-1)),pz-ph*v)),1.0),0.0035)) for i in range(5)])
-    quadstrip(bm,rows); soft('Pocket',bm,'Pocket',only=('Spine2','Spine1','Spine'),src=ON('shirt'))
+    quadstrip(bm,rows); _pk=soft('Pocket',bm,'Pocket',only=('Spine2','Spine1','Spine')); _smooth_bones(_pk,lambda c:True,6)      # chest weights only (with the shirt's, its edge followed the raised arm and tore)
 if G.get('skirt') and G.get('belt'):     # a narrow belt where the bodice meets the skirt (or, with sash, a deep smooth waistband over the top of the skirt and the bottom of the blouse)
     TT=tree_of(PART['skirt']); bm=bmesh.new(); seg=28; rows=[]
     SA=G.get('sash'); seg=48 if SA else seg; zs=((HIP+0.078,0.0005),(HIP+0.080,0.003),(HIP+0.100,0.0035),(HIP+0.120,0.003),(HIP+0.122,0.0005)) if SA else ((HIP+0.070,0.001),(HIP+0.071,0.004),(HIP+0.094,0.004),(HIP+0.095,0.001))      # a flat band about 4 mm thick: thicker, it read as a roll
@@ -1254,7 +1256,7 @@ def hidden(c):
     return False
 def lining_of(c):      # which garment covers this hidden piece of the body
     if c.z>NECK-0.07*s or (G.get('shoes') and c.z<ANK+0.02): return None
-    if G.get('breeches') and c.z<HIP+0.15: return 'Breeches' if c.z<HIP+0.12 and not G.get('coathem') else None      # no lining right at the waistband, where shirt and breeches overlap; none under a coat's skirt either (seated, it came through the skirt where the breeches already lie)
+    if G.get('breeches') and c.z<HIP+0.15: return 'Breeches' if c.z<(HIP+0.06 if EASE_OLD else HIP+0.12) and not G.get('coathem') else None      # (a tucked shirt fills the breeches above HIP+0.06: no lining there, it only crossed the shirt)      # no lining right at the waistband, where shirt and breeches overlap; none under a coat's skirt either (seated, it came through the skirt where the breeches already lie)
     if EASE_OLD or (G.get('coat') and not G.get('coatsleeves',True)): return None      # (and the shirt sleeves under a sleeveless coat) a shirt with ease stands clear of the body and no longer folds in at the chest, so it needs no lining (left in, the lining came through it at the front when walking)
     if G.get('coat') and G.get('coatsleeves',True): return 'Coat'
     return 'Shirt'
