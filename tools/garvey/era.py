@@ -324,8 +324,8 @@ if not OLD or EASE_OLD:
         # neither hangs out from the chest like a shelf nor follows a belly or the chest's own curve. Each column (one angle round the body) becomes its upper convex hull over height
         zs=[EZ0+i*EDZ for i in range(ENZ)]
         for k in range(ENA):
-            col=[_eh[i][k] for i in range(ENZ)]; hull=[]
-            for i in range(ENZ):
+            col=[_eh[i][k] for i in range(ENZ)]; hull=[]; i_t=max(0,min(ENZ-2,int((TUCK-EZ0)/EDZ)))      # from the waistband up: below it the cloth is tucked in
+            for i in range(i_t,ENZ):
                 while len(hull)>=2:
                     i0,i1=hull[-2],hull[-1]
                     if (col[i1]-col[i0])*(zs[i]-zs[i0])<=(col[i]-col[i0])*(zs[i1]-zs[i0]): hull.pop()
@@ -578,7 +578,7 @@ for k,o in parts:            # coat skirts follow both legs as one cloth, like A
         if k=='coatskirt': front=sstep(0.02,-0.07,v.co.y); leg=front*0.95*sstep(-0.15,0.45,t)+(1-front)*0.25*sstep(0.1,0.9,t)   # the front panels ride on their own thigh (the knee carries them forward), the back hangs from the hips and opens at the vent
         shin=0.0
         if k=='skirt' and not OLD:      # below the knee the front of a later skirt passes in part to the shins: seated, it falls over the knees and down instead of standing out from the thighs like a tray
-            shin=0.55*sstep(KNEE+0.07,KNEE-0.08,v.co.z)*sstep(0.03,-0.05,v.co.y)
+            shin=0.7*sstep(KNEE+0.07,KNEE-0.08,v.co.z)*sstep(0.03,-0.05,v.co.y)
         for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left*(1-shin)),('RightUpLeg',leg*(1-left)*(1-shin)),('LeftLeg',leg*left*shin),('RightLeg',leg*(1-left)*shin)):
             if val>0.001: B[n].add([v.index],val,'REPLACE')
 # extra pieces bound to one bone: hat, cap, bands, apron
@@ -800,14 +800,14 @@ if G.get('pocket'):      # a patch pocket on the chest: a slightly raised panel 
     quadstrip(bm,rows); soft('Pocket',bm,'Pocket',only=('Spine2','Spine1','Spine'),src=ON('shirt'))
 if G.get('skirt') and G.get('belt'):     # a narrow belt where the bodice meets the skirt (or, with sash, a deep smooth waistband over the top of the skirt and the bottom of the blouse)
     TT=tree_of(PART['skirt']); bm=bmesh.new(); seg=28; rows=[]
-    SA=G.get('sash'); seg=48 if SA else seg; zs=((HIP+0.058,0.003),(HIP+0.060,0.008),(HIP+0.083,0.009),(HIP+0.105,0.009),(HIP+0.127,0.009),(HIP+0.150,0.008),(HIP+0.152,0.003)) if SA else ((HIP+0.070,0.003),(HIP+0.071,0.007),(HIP+0.094,0.007),(HIP+0.095,0.003))
+    SA=G.get('sash'); seg=48 if SA else seg; zs=((HIP+0.078,0.001),(HIP+0.080,0.004),(HIP+0.100,0.005),(HIP+0.120,0.004),(HIP+0.122,0.001)) if SA else ((HIP+0.070,0.003),(HIP+0.071,0.007),(HIP+0.094,0.007),(HIP+0.095,0.003))
     RR=[]
     for z,e in zs:
         rr_=[]
         for k in range(seg):
             a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z)); hit=TT.ray_cast(o,d)[0]; h2=SHT.ray_cast(o,d)[0] if SA else None; rr_.append(max((hit-o).length if hit else 0.0,(h2-o).length if h2 else 0.0) or 0.15)
         RR.append(rr_)
-    if SA:      # the sash is one smooth straight band: at each angle it takes the widest of its rows (so the folds of the skirt beneath cannot wave its edge), then it is evened out round the body
+    if SA:      # the sash is a narrow band of cloth (about 5 cm, as a 1950s dress sash) lying snug on the join of bodice and skirt: at each angle it takes the widest of its rows (so the folds of the skirt beneath cannot wave its edge), then it is evened out round the body
         col=[max(r_[k] for r_ in RR[1:-1]) for k in range(seg)]
         for _ in range(4): col=[max(col[k],(col[(k-1)%seg]+col[k]*2+col[(k+1)%seg])/4) for k in range(seg)]
         RR=[col for _ in RR]
