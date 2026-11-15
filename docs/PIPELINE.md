@@ -67,24 +67,27 @@ All clips are retargeted onto one rig (`shared/rig/char.blend`), so they play on
 2. Put it in `shared/anim-sources/` and add `"ClipName": "File.fbx"` to `tools/anims/clips.json`.
 3. Retarget and bake all clips:
    ```bash
-   timeout 3000 python3 tools/anims/retarget_clips.py tools/anims/clips.json   # writes build/anims.glb (long: about 30 to 50 minutes)
+   timeout 3600 ~/venv/bin/python3 tools/anims/retarget_clips.py tools/anims/clips.json   # writes build/anims.glb (about 11 minutes for 96 clips on 15 November 2026)
    ```
    This copies world rotations bone by bone, plus the hips position, so clips made on other bodies keep good poses on ours.
-4. Optimise: `node tools/anims/optimize_clips.mjs`.
-   - It drops scale tracks, moving-root tracks and fingers 2 to 4, resamples, and compresses with meshopt.
-   - Its `UNUSED` set removes clips no game uses; keep it in step with what games call.
-   - Check the input and output paths at the top of the file.
-5. Pack it as `shared/models/anims.js` (the base64 one-liner in section 4) and rebuild the games.
+   It exports every frame, each clip starting at time 0 on its own first frame and ending on its own last frame. Mixamo loops end on their first pose, so a looping clip closes exactly. (Until 15 November 2026 it exported every other frame from frame 1 on a timeline that starts at 0, so every clip held its first pose for a frame, a small pause at each loop, and dropped its last frame, which left a 7.3 degree seam in the Walk.)
+4. Pack: `node tools/anims/optimize_clips.mjs` (reads `build/anims.glb`, writes `shared/models/anims.js`, about 5 seconds).
+   - The clean-up is `tools/anims/clean_clips.mjs`, shared with Tivoli's packer: it drops scale tracks, moving-root tracks and fingers 2 to 4, keeps every other frame plus the last one, resamples, and compresses with meshopt.
+   - Every clip in `tools/anims/clips.json` goes in the library, and it warns about any that are missing. A game only downloads the clips in its `anim-clips.json` (below), so a clip no game plays costs nothing, except in a game with no `anim-clips.json` (Port Royal, which gets the whole library).
+5. Check: `node tools/anims/check_clips.mjs` prints each clip's length and loop seam (the largest bone turn between its last pose and its first; a looping clip should be under about 2 degrees), and lists clips that are the same movement as another (the same Mixamo clip downloaded twice). `--vs old.js` compares each clip with an older library, pose by pose.
+6. Rebuild the games (`node tools/build.mjs <game>`).
+
+**Changing a few clips** (a hand-made clip redone, say) does not need the whole library retargeted again: retarget just those (`ANIMS_OUT=build/anims_few.glb ~/venv/bin/python3 tools/anims/retarget_clips.py few.json`, seconds), then `node tools/anims/merge_clips.mjs build/anims.glb build/anims_few.glb` puts them into the full retarget, and step 4 packs it.
 
 **Which clips a game ships.** `games/<game>/anim-clips.json` lists the clips that game plays; `tools/build.mjs` trims the game's copy of the library to them. If a game starts playing a new clip, add its name there, or it will be missing in that game.
 
-**Clips for one game only.** A clip that only one game needs stays out of the shared library, so other games do not change. Tivoli does this: its sources are in `tools/tivoli/anim-sources/`, its list is `tools/tivoli/clips.json`, `tools/anims/retarget_clips.py tools/tivoli/clips.json` retargets them (it writes `build/anims.glb`, or the file named by `ANIMS_OUT=...`), and `node tools/tivoli/pack_clips.mjs` writes `games/tivoli/site/models/anims_tivoli.js`, which the game loads after the shared library. Copy that pattern.
+**Clips for one game only.** A clip that only one game needs stays out of the shared library, so other games do not change. Tivoli does this: its sources are in `tools/tivoli/anim-sources/`, its list is `tools/tivoli/clips.json`, `ANIMS_OUT=build/anims_tivoli.glb ~/venv/bin/python3 tools/anims/retarget_clips.py tools/tivoli/clips.json` retargets them (about 30 seconds; without `ANIMS_OUT` it writes `build/anims.glb` and replaces the shared retarget, so move that aside first), and `node tools/tivoli/pack_clips.mjs build/anims_tivoli.glb` writes `games/tivoli/site/models/anims_tivoli.js`, which the game loads after the shared library. Copy that pattern.
 
 **Hand-made clips: `tools/anims/handmade.py`.** For a movement no clip library has (a load on the head, a speech to a crowd, comforting someone), the clip is built by hand in Blender and saved as an FBX like a Mixamo download, so steps 3 to 5 above take it unchanged.
 - How a clip is built: it starts from a library source where that helps (the Walk or the calm part of the Idle in `shared/anim-sources/`, read onto our rig the same way `retarget_clips.py` reads it), then poses are layered on as smooth curves of time: `turn` a bone, `steady_head` (head level in the world), `level` (shoulders level), `stand` (slow weight shifts with the feet planted), `breathe`, and `arm` (a two-bone IK: the wrist goes to a spot, the elbow points a given way, the hand faces a given way). Every curve loops (`Waves`, `Spline`, `bump`), the last frame is set equal to the first, the hips stay in place, and it runs at 30 frames a second.
-- To add one: write a function that returns a list of poses, put `@clip('Name', 'what it is built on')` above it, run `python3 tools/anims/handmade.py Name` (it writes `shared/anim-sources/handmade/Name.fbx` and prints the loop seam and how close the hands come to the head), add `"Name": "handmade/Name.fbx"` to `tools/anims/clips.json`, then retarget and pack as usual. Seated clips must be named `Sit...` so the engine keeps them on the seat.
+- To add one: write a function that returns a list of poses, put `@clip('Name', 'what it is built on')` above it, run `python3 tools/anims/handmade.py Name` (it writes `shared/anim-sources/handmade/Name.fbx` and prints the loop seam and how close the hands come to the head), add `"Name": "handmade/Name.fbx"` to `tools/anims/clips.json`, then retarget and pack as usual (or retarget just it and merge, as above). Seated clips must be named `Sit...` so the engine keeps them on the seat.
 - To try new clips without rebuilding the library: `ANIMS_OUT=/tmp/new.glb python3 tools/anims/retarget_clips.py my_list.json` retargets only the clips in `my_list.json`, in seconds.
-- Keep it natural: let the limbs start a little apart in time, ease in and out, add a slow weight shift and breathing, and look at renders on a real game body, front and side, before calling it done. Only the first joint of each finger survives packing (`optimize_clips.mjs` drops joints 2 to 4), so curl fingers at that joint.
+- Keep it natural: let the limbs start a little apart in time, ease in and out, add a slow weight shift and breathing, and look at renders on a real game body, front and side, before calling it done. Only the first joint of each finger survives packing (`clean_clips.mjs` drops joints 2 to 4), so curl fingers at that joint.
 
 | Clip | What it is | Built on | Source |
 |---|---|---|---|

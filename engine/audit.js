@@ -12,6 +12,8 @@ import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
      overlap two people standing in the same spot (or walking through someone who stands still), or someone on top of the player's start
      seated  a person sitting who cuts into a seat or its back, floats above the seat, sits on nothing, or faces the back of the seat
      through a bush, tree or other leafy shape that pokes through a wall and shows on both sides of it (call auditThrough(snap) and report its lines with the rest)
+     vehicle a bus, cart, truck or train whose path passes through or close to a person, the player's spot or a walking wall (auditVehicles)
+     garment a small piece of clothing (buttons, a hat band, a buckle) that shows while its garment is hidden, or floats clear of every other piece (auditGarments)
    Nothing here runs in a public build unless a game imports it into code that is only reached when __DEV__ is true. */
 import * as THREE from 'three';
 import { groundFeet, strideOf } from './anim.js';
@@ -246,6 +248,52 @@ export function auditPeople(npcs, start) {
   const out = [], sitting = (n) => /^Sit/.test(n.anim || ''), spots = (n) => { if (!n.path || n.path.length < 2) return [[n.x, n.z]]; const pts = []; for (let i = 0; i < n.path.length; i++) { const a = n.path[i], b = n.path[(i + 1) % n.path.length], len = Math.hypot(b[0] - a[0], b[1] - a[1]), k = Math.max(1, Math.ceil(len / 0.5)); for (let j = 0; j < k; j++) pts.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k]); } return pts; };
   for (let i = 0; i < npcs.length; i++) for (let j = i + 1; j < npcs.length; j++) { const a = npcs[i], b = npcs[j]; if (Math.abs((a.ground || 0) - (b.ground || 0)) > 0.3) continue; const need = sitting(a) && sitting(b) ? 0.4 : 0.65; const moving = a.path || b.path; let worst = 1e9; if (!moving) worst = Math.hypot(a.x - b.x, a.z - b.z); else { const A = a.path ? spots(a) : [[a.x, a.z]], B = b.path ? spots(b) : [[b.x, b.z]]; if (a.path && b.path) continue; for (const p of A) for (const q of B) worst = Math.min(worst, Math.hypot(p[0] - q[0], p[1] - q[1])); } if (worst < need) out.push(`${a.id} and ${b.id} are ${(worst * 100).toFixed(0)} cm apart${moving ? ' (along a walk)' : ''} at (${a.x.toFixed(1)},${a.z.toFixed(1)})`); }
   if (start) for (const n of npcs) if (!sitting(n)) for (const p of spots(n)) if (Math.hypot(p[0] - start.x, p[1] - start.z) < 1.1 && !(n.ground > 0)) { out.push(`${n.id} stands on the player's start at (${p[0].toFixed(1)},${p[1].toFixed(1)})`); break; }
+  return out;
+}
+
+
+/* Vehicles: a bus, a cart, a truck or a train that moves must never pass through a person or the player (Eventide, November 2026: "a bus drove through granny
+   on the street"). Every vehicle's body is swept along its whole path, as a box of half width `half` and half length `len` (metres) that turns with the path.
+   vehicles: [{ id, path: [[x, z], ...], half, len, loop }]   people: [{ id, x, z, path }] who are there while it moves (a walker's whole route counts)
+   start: the player's spot while it moves.   walls: walking walls [x0, z0, x1, z1] it must not drive through (a parked car, a wall).
+   A fault is a person or the start within `safe` metres of the side of the swept body (1 m by default: a grown-up stands well back from a passing bus), or a
+   walking wall the body passes through. A vehicle that stops and waits for people (as Eventide's bus does) still has to have a clear road here: the audit
+   checks where people stand, not whether the driver is kind. Returns lines in words; expect none. */
+export function auditVehicles(vehicles, people, { start = null, walls = [], safe = 1.0 } = {}) {
+  const out = [];
+  for (const V of vehicles || []) { const P = V.path, half = V.half || 1, len = V.len || 2; if (!P || P.length < 2) continue; const segs = [];
+    for (let i = 0; i < P.length - (V.loop ? 0 : 1); i++) { const a = P[i], b = P[(i + 1) % P.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1e-6, ux = (b[0] - a[0]) / L, uz = (b[1] - a[1]) / L, first = i === 0 && !V.loop, last = i === P.length - 2 && !V.loop;
+      segs.push({ ax: a[0] - (first ? ux * len : 0), az: a[1] - (first ? uz * len : 0), L: L + (first ? len : 0) + (last ? len : 0), ux, uz }); }   /* the body reaches half its length past each end of the path */
+    const gap = (x, z) => { let best = 1e9; for (const s of segs) { const dx = x - s.ax, dz = z - s.az, along = dx * s.ux + dz * s.uz, side = Math.abs(dx * s.uz - dz * s.ux), o = along < 0 ? -along : along > s.L ? along - s.L : 0; best = Math.min(best, Math.hypot(o, Math.max(0, side - half))); } return best; };   /* metres from the side of the swept body (0: inside it) */
+    const spotsOf = (p) => { if (!p.path || p.path.length < 2) return [[p.x, p.z]]; const pts = []; for (let i = 0; i < p.path.length - 1; i++) { const a = p.path[i], b = p.path[i + 1], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.3)); for (let k = 0; k <= n; k++) pts.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]); } return pts; };
+    for (const p of people || []) { let worst = 1e9, at = null; for (const [x, z] of spotsOf(p)) { const d = gap(x, z); if (d < worst) { worst = d; at = [x, z]; } } if (worst < safe) out.push(`${V.id} passes ${worst <= 0 ? 'through' : (worst * 100).toFixed(0) + ' cm from'} ${p.id}${p.path ? ' (along a walk)' : ''} at (${at[0].toFixed(1)},${at[1].toFixed(1)}): people must stand at least ${(safe * 100).toFixed(0)} cm from its side`); }
+    if (start) { const d = gap(start.x, start.z); if (d < safe) out.push(`${V.id} passes ${d <= 0 ? 'through' : (d * 100).toFixed(0) + ' cm from'} the player's spot at (${start.x.toFixed(1)},${start.z.toFixed(1)})`); }
+    for (const w of walls) { let hit = false; for (const s of segs) { for (let t = 0; t <= s.L && !hit; t += 0.25) for (let q = -half; q <= half + 1e-6 && !hit; q += half / 3) { const x = s.ax + s.ux * t + s.uz * q, z = s.az + s.uz * t - s.ux * q; if (x > w[0] + 0.02 && x < w[2] - 0.02 && z > w[1] + 0.02 && z < w[3] - 0.02) hit = true; } if (hit) break; }
+      if (hit) out.push(`${V.id} drives through a walking wall at (${((w[0] + w[2]) / 2).toFixed(1)},${((w[1] + w[3]) / 2).toFixed(1)}), ${(w[2] - w[0]).toFixed(1)} by ${(w[3] - w[1]).toFixed(1)} m`); }
+  }
+  return out;
+}
+
+/* Garments: a small piece of clothing left showing when the garment it belongs to is hidden floats in the air (Eventide, November 2026: waistcoat buttons,
+   a hat band or a belt buckle with no waistcoat, hat or belt under it). auditGarments(id, body) checks a body as it will be drawn:
+     - by name: a piece whose garment is in the body but hidden (WaistcoatButtons and Waistcoat, HatBand and Hat, CapBand and Cap, TopHatBand and TopHat,
+       JButtons and Lapels and Jacket, Buckle and Belt, WrapKnot and Wrap, Placket, Pocket, Buttons and Collar and Shirt);
+     - by shape: a small visible piece (under 45 cm across) most of whose points are more than 2 cm from every other visible piece, in the pose it stands in.
+   Returns lines in words; expect none. */
+const PIECE_OF = [[/^WaistcoatButtons$/, 'Waistcoat'], [/^(Hat)Band$/, 'Hat'], [/^CapBand$/, 'Cap'], [/^TopHatBand$/, 'TopHat'], [/^(JButtons|Lapels)$/, 'Jacket'], [/^Buckle$/, 'Belt'], [/^WrapKnot$/, 'Wrap'], [/^(Placket|Pocket|Buttons|Collar)$/, 'Shirt']];
+export function auditGarments(id, body) {
+  const out = [], all = [], shown = (o) => { for (let q = o; q && q !== body.parent; q = q.parent) if (!q.visible) return false; return true; };
+  body.updateMatrixWorld(true); body.traverse((o) => { if (o.isMesh && (o.isSkinnedMesh || o.userData.garment)) all.push({ o, mesh: o.name, mat: (o.material && o.material.name) || '', on: shown(o) }); });
+  const has = (g) => all.filter((p) => p.mat === g || p.mesh === g || (p.mesh.startsWith('base') && p.mat === g));
+  for (const p of all) { if (!p.on) continue; for (const [re, g] of PIECE_OF) { if (!re.test(p.mesh) && !re.test(p.mat)) continue; if (p.mat === g && !/Band$|Buttons$|Knot$/.test(p.mesh)) continue; const owners = has(g).filter((q) => q !== p && !PIECE_OF.some(([r]) => r.test(q.mesh))); if (owners.length && owners.every((q) => !q.on)) out.push(`${id}: ${p.mesh || p.mat} shows but its ${g} is hidden`); } }
+  /* by shape */
+  const v = new THREE.Vector3(), inv = new THREE.Matrix4().copy(body.matrixWorld).invert(), sc = body.getWorldScale(new THREE.Vector3()).x || 1, P = new Map();
+  const pointsOf = (p) => { if (P.has(p)) return P.get(p); const o = p.o, a = o.geometry.attributes.position, n = a.count, step = Math.max(1, Math.floor(n / 600)), pts = []; if (o.isSkinnedMesh) o.skeleton.update(); for (let i = 0; i < n; i += step) { if (o.isSkinnedMesh) o.getVertexPosition(i, v); else v.fromBufferAttribute(a, i); v.applyMatrix4(o.matrixWorld).applyMatrix4(inv); pts.push(v.clone()); } P.set(p, pts); return pts; };
+  const on = all.filter((p) => p.on && !/low-poly|Eye|Teeth|Tongue|Lash|Brow/i.test(p.mesh + ' ' + p.mat));
+  for (const p of on) { const pts = pointsOf(p), bb = new THREE.Box3().setFromPoints(pts), s = bb.getSize(new THREE.Vector3()); if (Math.max(s.x, s.y, s.z) * sc > 0.45 || pts.length < 4) continue;
+    const near = new THREE.Box3().copy(bb).expandByScalar(0.03 / sc), others = on.filter((q) => q !== p && q.mat !== p.mat).map(pointsOf).map((qs) => qs.filter((q) => near.containsPoint(q))).flat(); let far = 0;
+    for (const a of pts) { let best = 1e9; for (const b of others) { const d = a.distanceToSquared(b); if (d < best) best = d; } if (Math.sqrt(best) * sc > 0.02) far++; }
+    if (far > pts.length * 0.5) out.push(`${id}: ${p.mesh || p.mat} floats: ${far} of ${pts.length} of its points are more than 2 cm from any other piece`); }
   return out;
 }
 

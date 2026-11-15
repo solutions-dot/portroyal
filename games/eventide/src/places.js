@@ -219,7 +219,7 @@ export function buildSlipe(g) {
   for (const [x0, x1] of [[-33.5, -30], [-22, -19.5], [-8.5, -4.5], [1.5, 5], [15, 22.5], [31.5, 36.5]]) zincFence(g, x0, x1, 8.2);
   const bh = boardHouse(5, 4, 2.8, { wall: [196, 168, 120], seed: 3 }); bh.position.set(-1.5, 0, 11.6); bh.rotation.y = Math.PI; g.add(bh);
   [[-35, 21, [176, 196, 170]], [-12, 20, [206, 176, 140]], [8, 22, [190, 160, 120]], [25, 20, [200, 190, 160]], [40, 21, [170, 180, 196]]].forEach(([x, z, c], i) => { const h = boardHouse(5 + r() * 2, 4, 2.8, { wall: c, seed: 10 + i, porch: false }); h.position.set(x, 0, z); h.rotation.y = Math.PI; g.add(h); });
-  for (const [x, z, ry, c] of [[18, 2.6, 0, 0x9a3a2e], [-44, 2.6, Math.PI, 0xe8e2d0], [33, -2.6, Math.PI, 0x6a8a7a]]) { const c0 = car(c); c0.position.set(x, 0, z); c0.rotation.y = ry; g.add(c0); wall(x - 2.3, z - 1.0, x + 2.3, z + 1.0); }
+  for (const [x, z, ry, c] of [[18, 2.6, 0, 0x9a3a2e], [-44, 2.6, Math.PI, 0xe8e2d0], [33, 2.6, Math.PI, 0x6a8a7a]]) { const c0 = car(c); c0.position.set(x, 0, z); c0.rotation.y = ry; g.add(c0); wall(x - 2.3, z - 1.0, x + 2.3, z + 1.0); }   /* parked cars keep to the north side, out of the lane the bus drives at dawn */
   /* Calvary Cemetery along the road to the west (smoke rose over it that morning: Gleaner, 2020; its layout is an impression) */
   box(30, 2.0, 0.3, lime(8, 1), -62, 1.0, 6.9, g); for (const x of [-56, -52]) box(0.5, 2.6, 0.5, lime(), x, 1.3, 6.9, g);
   for (let i = 0; i < 36; i++) { const x = -76 + (i % 9) * 3.2 + r() * 0.6, z = 9.5 + ((i / 9) | 0) * 3 + r() * 0.5, tomb = solid(r() < 0.6 ? 0xeeeae0 : 0xb8b4aa, 0.9);
@@ -308,6 +308,7 @@ export function buildSlipe(g) {
   const [ix, iz] = toMy(...myers.iris);
   return { walls, bounds: { x0: -47.5, x1: 47.5, z0: -65.5, z1: 7.2 }, start: { x: -26, z: 4.6, yaw: -0.6 }, groundAt,
     myers, toMy, night, fire, ruin, bus2, lamps,
+    vehicles: [{ id: 'the No. 43 bus at dawn', obj: bus2, path: [[-70, -2.3], [70, -2.3]], half: 1.25, len: 4.5 }],   /* everything that drives: its lane, half its width and half its length (engine/audit.js, auditVehicles) */
     spots: { iris: { x: ix, z: iz, ry: -Math.PI / 2, ground: myers.F1 }, ver: (lx) => { const [x, z] = toMy(lx, -19.3); return { x, z, ry: -Math.PI / 2, ground: myers.F1 }; }, radio: toMy(-10, -19.1), gate: { x: 0, z: -7 }, busstop: { x: -26, z: 5.5 } } };
 }
 

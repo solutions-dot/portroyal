@@ -144,3 +144,14 @@ test('the wall rectangles made for the audits cover the ground you may not walk 
 
 /* engine/story.js: who moves the story, the hint arrow, carried items */
 import './story.mjs';
+
+test('a follower keeps out of your personal space, steps aside when you walk back into them, and never stands in a wall', async () => {
+  const { follow, tick, watch, drive } = await import('../engine/follow.js');
+  const ctl = { play() {}, pace() { return 1; }, get() { return null; } }, n = { x: 0, z: -2, m: { visible: true, rotation: { y: 0 }, scale: { y: 1 }, position: {} }, ctl };
+  const walls = [[-3, 3, 3, 3.6]], W = { px: 0, pz: 0, blocked: (x, z, r = 0.22) => walls.some((w) => x > w[0] - r && x < w[2] + r && z > w[1] - r && z < w[3] + r), walls, others: [] };
+  follow(n, { gap: 1.5, space: 0.9 }); const w = watch({ space: 0.9, behind: 6 }), blocked = (x, z) => W.blocked(x, z, 0);
+  const move = (x, z) => { W.px = x; W.pz = z; return [x, z]; }, step = (dt) => tick(n, dt, W);
+  let p = drive({ from: [0, 0], route: [[0, 2.5], [6, 2.5]], stops: [1], move, step, people: [n], w, blocked });   /* away, then along the wall */
+  p = drive({ from: p, route: [[0, 2.5]], move, step, people: [n], w, blocked });   /* straight back at them */
+  assert.deepEqual(w.lines(n, 'follower'), []);
+});

@@ -24,8 +24,8 @@ N = 32
 PAIRS = {
     'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.44, -0.12, 0.0, 1.0), False),
     'ComfortHand': ('ComfortHand', 'ComfortTake', 'man_shirt', 'woman57', (0.0, -0.58, math.pi, 1.0), False),
-    'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.32, -0.08, 0.0, 0.6), False),
-    'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.44, -0.12, 0.0, 1.0), True),
+    'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.34, -0.24, 0.0, 0.6), False),
+    'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.50, -0.16, 0.0, 1.0), True),
 }
 REST = {'ComfortGive': 'Right', 'ComfortHand': 'Left', 'ComfortChild': 'Right', 'SitComfort': 'Right'}   # the giver's hand and forearm that rest on the other person
 SKIP = ('Human.low-poly', 'Cap')   # the proxy mesh and the spare cap (each game shows one hat; the giver's hat is skipped too)
@@ -140,11 +140,12 @@ def run(name):
                     hand = min(hand, d)
                     if os.environ.get('DEBUG') and k == 0 and d < -0.02: print('DEBUG deep hand point', tuple(round(x, 3) for x in v), round(d, 3), tp[i], ttree.find_nearest(v)[0])
                 if d < 0: note(('giver ' + lab, 'taker ' + tp[i]), -d)
+                if d < -0.03 and os.environ.get('DEBUG') and lab.endswith('ForeArm'): print('DEBUG deep forearm', k, tuple(round(x, 3) for x in v), round(d, 3), tp[i])
             elif d < 0.01: note(('giver ' + lab, 'taker ' + tp[i]), 0.01 - d)
         for v, lab in zip(tv, Tk['labels']):            # the taker against the giver
             d, i = signed(gtree, v, gp)
             if d is None: continue
-            if gp[i] in (REST[name] + 'Hand', REST[name] + 'ForeArm') and lab in ('shoulders', 'LeftUpperArm', 'RightUpperArm', 'body', 'head') and d >= 0: continue   # where the hand rests
+            if gp[i] in (REST[name] + 'Hand', REST[name] + 'ForeArm'): continue   # the resting arm is measured from its own side above (a thin hand has no reliable inside)
             if d < 0.01: note(('taker ' + lab, 'giver ' + gp[i]), 0.01 - d)
         band.append(hand)
         for who, (vs, ts, ps, labs) in (('giver', (gv, gt, gp, G['labels'])), ('taker', (tv, tt, tp, Tk['labels']))):   # hands through one's own body

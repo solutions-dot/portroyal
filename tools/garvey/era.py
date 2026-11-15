@@ -1115,6 +1115,7 @@ def hidden(c):
 def lining_of(c):      # which garment covers this hidden piece of the body
     if c.z>NECK-0.07*s or (G.get('shoes') and c.z<ANK+0.02): return None
     if G.get('breeches') and c.z<HIP+0.15: return 'Breeches' if c.z<HIP+0.12 else None      # no lining right at the waistband, where shirt and breeches overlap
+    if EASE_OLD: return None      # a shirt with ease stands clear of the body and no longer folds in at the chest, so it needs no lining (left in, the lining came through it at the front when walking)
     if G.get('coat') and G.get('coatsleeves',True): return 'Coat'
     return 'Shirt'
 if OLD:
@@ -1135,7 +1136,6 @@ if OLD:
     if kinds:      # nobody sees its shape, so it is thinned to about a third of its triangles
         md=lo.modifiers.new('thin','DECIMATE'); md.ratio=0.34
         with ov(lo): bpy.ops.object.modifier_move_to_index(modifier='thin',index=0); bpy.ops.object.modifier_apply(modifier='thin')
-    if kinds and EASE_OLD: shirt_weights(lo)      # the lining under a shirt with ease bends like that shirt (its chest no longer follows the arms), so it cannot come through it at the armpit
     if kinds: clothes.append(lo)
     else: bpy.data.objects.remove(lo)
 _covs=[]
