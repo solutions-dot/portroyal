@@ -1,0 +1,18 @@
+<!doctype html><meta charset="utf-8"><title>Running accessibility fixtures</title>
+<!-- The accessibility checks of engine/ui-audit.js (used by ?test=all, docs/TESTING.md section 7) catch planted faults and pass good cases.
+     Serve the repository and open tests/checks.html, or run node tools/checks_browser.mjs fixtures. The title must read PASS 7 accessibility fixtures. -->
+<style>body{margin:0;font:16px Arial;background:#fff;color:#111}.p{position:absolute}</style>
+<script type="module">
+import { tapTargetIssues, contrastIssues, focusOrderIssues } from '../engine/ui-audit.js';
+const box = (html) => { const d = document.createElement('section'); d.innerHTML = html; document.body.append(d); return d; };
+const checks = [];
+let a = box('<button class="p" style="left:10px;top:10px;width:48px;height:48px">Go</button>'); checks.push(['a 48 px button passes', tapTargetIssues(a).length === 0]); a.remove();
+a = box('<button class="p" style="left:10px;top:10px;width:30px;height:30px;padding:0">x</button>'); checks.push(['a 30 px button is too small', tapTargetIssues(a).length === 1]); a.remove();
+a = box('<p class="p" style="left:10px;top:10px;color:#999;background:#fff">Pale grey words</p>'); checks.push(['pale grey on white fails AA', contrastIssues(a).length === 1]); a.remove();
+a = box('<p class="p" style="left:10px;top:10px;color:#222;background:#fff">Dark words</p>'); checks.push(['dark on white passes', contrastIssues(a).length === 0]); a.remove();
+a = box('<div class="p" style="left:10px;top:10px;background:rgba(0,0,0,.78);color:#fff;padding:8px">White on a dark see-through panel</div>'); checks.push(['white on a dark see-through panel passes over any scene', contrastIssues(a).length === 0]); a.remove();
+a = box('<button class="p" style="left:10px;top:200px;width:60px;height:50px">One</button><button class="p" style="left:10px;top:20px;width:60px;height:50px">Two</button>'); checks.push(['Tab going up the screen is caught', focusOrderIssues(a).length === 1]); a.remove();
+a = box('<div class="p" role="button" tabindex="-1" style="left:10px;top:10px;width:60px;height:50px">Tap</div><button class="p" tabindex="3" style="left:100px;top:10px;width:60px;height:50px">B</button>'); checks.push(['a tap-only control and a positive tabindex are caught', focusOrderIssues(a).length === 2]); a.remove();
+const failed = checks.filter(([, ok]) => !ok); document.title = failed.length ? 'FAIL ' + failed.map(([l]) => l).join('; ') : 'PASS ' + checks.length + ' accessibility fixtures';
+const out = document.createElement('pre'); out.textContent = JSON.stringify(checks, null, 1); document.body.append(out);
+</script>

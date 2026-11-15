@@ -1,0 +1,6 @@
+{
+ "about": "Per-game settings for tools/lint_content.mjs and engine/checks.js (docs/TESTING.md, section 7). real: people who really lived and speak in the game (their lines are listed for checking, rule 3).",
+ "real": ["Henry Morgan", "Exquemelin", "Emmanuel Heath", "Symon Benning"],
+ "allowLong": [],
+ "factsIgnore": []
+}

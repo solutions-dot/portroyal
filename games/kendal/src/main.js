@@ -9,14 +9,14 @@ import * as THREE from 'three';
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet, isSeated } from '../../../engine/anim.js';
 import { createStory, createCarry, arrowPose, flowTest } from '../../../engine/story.js';   /* who moves the story, the hint arrow, the things you carry (docs/STANDARD.md, "Story flow") */
-import { createAmbient, ambientTest } from '../../../engine/ambient.js';   /* background people who walk, chat, work and play (docs/STANDARD.md, "Ambient life") */
+import { createAmbient, ambientTest, onKeepOff } from '../../../engine/ambient.js';   /* background people who walk, chat, work and play (docs/STANDARD.md, "Ambient life") */
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, gullCry, chirp } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
 import { G, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
 import { ENV, mixEnv, makeRig, TRACK_Y } from './common.js';
 import { makeSmoke, spin } from './trains.js';
-import { lantern, hamper, bucket, bananaBunch, flowers, attach, hold, suitcase, PM } from './props.js';
+import { lantern, hamper, bucket, bananaBunch, flowers, attach, hold, suitcase, crate, guitar, banjo, PM } from './props.js';
 import { buildRoad, buildStation45, buildRide45, buildHill } from './places1.js';
 import { buildKingston57, buildCoach, buildBeach, buildCrash, buildMemorial } from './places2.js';
 import { CHAPTERS, CHAPTER_END, TALK, LATER, JOURNAL } from './content.js';
@@ -94,7 +94,7 @@ function stickUI() {
 /* ---------- people: a dozen bodies, recoloured per person; places are built when a chapter needs them ---------- */
 const BASES = {}, basePromises = {};
 function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePromises[id] = basePromises[id] || model(id).then((g) => { g.scene.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); BASES[id] = g; return g; })); }
-const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb08a48); return h; }, hamper: () => hamper(), lantern: () => lantern(), bucket: () => bucket() };
+const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb08a48); return h; }, hamper: () => hamper(), lantern: () => lantern(), bucket: () => bucket(), guitar: () => guitar(), banjo: () => banjo() };
 /* how each thing is carried (see hold() in props.js): handleY is the height of its handle, out is how far the hand's item sits from the body. After changing these run ?test=held. */
 const SIT_HIPS = 0.12;   /* metres from the seat to the hip joint of a seated person at full size (the audit checks it) */
 /* scale: the item's size. lift: how far (radians) the arm is held out from the body, so the item clears the hip, thigh and skirt. The handle height comes from each prop (userData.handleY). */
@@ -119,10 +119,27 @@ function makeBody(s) {
       m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
       if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat (its top is s.seat): the hip joint rides 12 cm above it, whatever the body's size */
   const carry = (bone, o, G) => { if (/Hand$/.test(bone)) grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY || G.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.4, G.lift || 0), straighten: G.straighten ?? 0.8 }); else hold(m, bone, o, G); };   /* in a hand: a real grip (engine/grip.js); on the head: balanced there */
-  for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); carry(bone, o, GRIP[prop]); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) s._flame = o.userData.flame; }
+  for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); if (o.userData.instrument) { strap(m, o); continue; } carry(bone, o, GRIP[prop]); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) s._flame = o.userData.flame; }
   if (s.lamp) { const o = lantern(); carry('RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
   if (!seated && !s.noSpread) spreadArms(m, /^(woman|girl|guide)/.test(s.base) ? 0.15 : s.base === 'man_suit' ? 0.11 : 0.05);   /* arms hang clear of skirts and jackets (engine/grip.js) */
+  const load = s.life && s.life.load; if (load) { const o = load === 'crate' ? crate(0.42, 0x8a6a42) : bananaBunch(0.9); o.userData.noBatch = true;   /* a load carried by a background worker (engine/ambient.js shows and hides it with spec.show) */
+    if (load === 'crate') between(m, o, 'CarryIdle', 0.13); else { const w = new THREE.Group(); o.rotation.z = PI / 2; o.position.y = 0.06; w.add(o); hold(m, 'Head', w, { dy: 0.1, scale: 1 }); }
+    s.load = o; o.visible = false; s.life.show = (n, on) => { if (n.load) n.load.visible = on; }; }
   return m;
+}
+/* an instrument held across the body: its body at the strumming (right) hand, the neck toward the left hand, the face to the front. Measured on the posed body. */
+function strap(m, item) {
+  m.updateMatrixWorld(true); const L = m.getObjectByName('mixamorigLeftHand'), R = m.getObjectByName('mixamorigRightHand'), sp = m.getObjectByName('mixamorigSpine1') || m; if (!L || !R) return;
+  const l = L.getWorldPosition(new THREE.Vector3()), r = R.getWorldPosition(new THREE.Vector3()), fw = new THREE.Vector3(0, 0, 1).applyQuaternion(m.getWorldQuaternion(new THREE.Quaternion())); fw.y = 0; fw.normalize();
+  const x = l.clone().sub(r); x.addScaledVector(fw, -x.dot(fw)).normalize(); const y = fw.clone().cross(x).normalize(), z = x.clone().cross(y).normalize();
+  item.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z)); item.position.copy(r).addScaledVector(x, 0.06).addScaledVector(fw, -0.05); item.scale.setScalar(m.scale.x); item.updateMatrixWorld(true); sp.attach(item);
+}
+/* a box held in front in both hands (the Carry clips): put it between the hands of that clip's pose, a little below them */
+function between(m, item, clip, drop = 0.1) {
+  const c = m.userData.anim, a = c && c.get(clip); if (!a) return; c.base.setEffectiveWeight(0); a.reset().play(); c.mx.update(0); m.updateMatrixWorld(true);
+  const l = m.getObjectByName('mixamorigLeftHand').getWorldPosition(new THREE.Vector3()), r = m.getObjectByName('mixamorigRightHand').getWorldPosition(new THREE.Vector3()), sp = m.getObjectByName('mixamorigSpine') || m;
+  item.position.copy(l).add(r).multiplyScalar(0.5); item.position.y -= drop; item.rotation.set(0, m.rotation.y, 0); item.scale.setScalar(m.scale.x); item.updateMatrixWorld(true); sp.attach(item);
+  a.stop(); c.base.setEffectiveWeight(1); c.mx.update(0);
 }
 const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBasicMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.6, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
 const PL = {}; let cur = null;
@@ -130,9 +147,29 @@ setEnv(ENV.morning);
 const BUILD = { road: buildRoad, station45: buildStation45, ride45: buildRide45, hill: buildHill, kingston57: buildKingston57, coach: buildCoach, beach: buildBeach, crash: buildCrash, memorial: buildMemorial };
 let modelsReady = false; const placeLoading = {};
 function buildPlace(id) {   /* the geometry only: quick, and enough for a title backdrop. People come later (populate). */
-  if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.actions = []; P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; PL[id] = P; P.keepOut = []; if (DECOR[id]) DECOR[id](P.group, P); if (__DEV__) P.snap = snapMeshes(P.group); if (!P.group.userData.noBatch) P.batch = batchStatic(P.group);
+  if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.actions = []; P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; PL[id] = P; P.keepOut = []; if (DECOR[id]) DECOR[id](P.group, P); declutter(P); if (__DEV__) P.snap = snapMeshes(P.group); if (!P.group.userData.noBatch) P.batch = batchStatic(P.group);
   P.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.alphaTest > 0)) { o.castShadow = o.receiveShadow = true; } else if (o.isMesh && Array.isArray(o.material)) { o.castShadow = o.receiveShadow = true; } });
   if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); return P;
+}
+/* declutter: a stone, a tree, a hut or a piece of luggage scattered for detail (userData.decor, or a stone in a rock field) that cuts into something else is taken out,
+   so no two solid things stand inside each other (the audit's overlap check, engine/audit.js). The later of two scattered things goes; built things always stay. */
+const SOLIDG = new Set(['BoxGeometry', 'CylinderGeometry', 'SphereGeometry', 'LatheGeometry', 'DodecahedronGeometry', 'CapsuleGeometry', 'ExtrudeGeometry']);
+function declutter(P) {
+  const g = P.group, L = [], v = new THREE.Vector3(), m4 = new THREE.Matrix4(); let order = 0; g.updateMatrixWorld(true);
+  const unitOf = (o) => { for (let a = o; a && a !== g; a = a.parent) if (a.userData.decor) return a; return null; }, topOf = (o) => { let t = o; while (t.parent && t.parent !== g) t = t.parent; return t; };
+  g.traverse((o) => { if (!o.isMesh || o.isSkinnedMesh || !SOLIDG.has(o.geometry.type) || [].concat(o.material)[0].isMeshBasicMaterial) return; for (let a = o; a && a !== g; a = a.parent) if (a.visible === false) return;
+    if (o.isInstancedMesh) { const rem = !!o.userData.decorInst; if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, m4); L.push({ b: o.geometry.boundingBox.clone().applyMatrix4(m4.premultiply(o.matrixWorld)), im: rem ? o : null, k, top: o.uuid + '#' + k, rem, order: order++ }); } return; }   /* a stone in a rock field can go; a drawn copy of anything else (sleepers, trunks) stays */
+    const b = new THREE.Box3().setFromObject(o), sz = b.getSize(v); if (sz.x > 40 || sz.z > 40 || Math.min(sz.x, sz.y, sz.z) < 0.05) return; const u = unitOf(o); L.push({ b, unit: u, top: topOf(o).uuid, loose: o.parent === g, rem: !!u, order: order++ }); });
+  const cell = new Map(), key = (x, z) => ((x | 0) + 5000) * 20000 + ((z | 0) + 5000);
+  L.forEach((e, i) => { for (let x = Math.floor(e.b.min.x / 2); x <= Math.floor(e.b.max.x / 2); x++) for (let z = Math.floor(e.b.min.z / 2); z <= Math.floor(e.b.max.z / 2); z++) { const k = key(x, z); (cell.get(k) || cell.set(k, []).get(k)).push(i); } });
+  const gone = new Set(), dead = (e) => gone.has(e.unit || e.top), seen = new Set();
+  for (const [, l] of cell) for (let a = 0; a < l.length; a++) for (let c = a + 1; c < l.length; c++) { const A = L[l[a]], B = L[l[c]]; if (A.top === B.top || (A.loose && B.loose) || (!A.rem && !B.rem) || (A.unit && A.unit === B.unit) || dead(A) || dead(B)) continue;
+    const pk = Math.min(l[a], l[c]) + ':' + Math.max(l[a], l[c]); if (seen.has(pk)) continue; seen.add(pk); const ib = A.b.clone().intersect(B.b); if (ib.isEmpty()) continue; ib.getSize(v); if (v.x < 0.03 || v.y < 0.03 || v.z < 0.03) continue;
+    const X = !A.rem ? B : !B.rem ? A : (A.order > B.order ? A : B); gone.add(X.unit || X.top); }
+  for (const e of L) if (e.unit && gone.has(e.unit) && e.unit.parent) e.unit.parent.remove(e.unit);
+  const ims = new Set(L.filter((e) => e.im && gone.has(e.top)).map((e) => e.im));
+  for (const im of ims) { let w = 0; const col = im.instanceColor; for (let k = 0; k < im.count; k++) { if (gone.has(im.uuid + '#' + k)) continue; if (w !== k) { im.getMatrixAt(k, m4); im.setMatrixAt(w, m4); if (col) { const c = new THREE.Color(); im.getColorAt(k, c); im.setColorAt(w, c); } } w++; } im.count = w; im.instanceMatrix.needsUpdate = true; if (col) col.needsUpdate = true; }
+  return gone.size;
 }
 /* spreadOut: nobody stands inside anybody. Background figures that are too close to someone are moved to a free spot nearby (a walker's whole loop moves with them);
    a figure that cannot be placed, or a walk that would pass through someone standing still, is dropped. The audit (?test=audit) then checks the result. */
@@ -142,7 +179,7 @@ function spreadOut(P) {
   const b = P.bounds, inWall = (x, z) => P.walls.some((w) => x > w[0] - 0.3 && x < w[2] + 0.3 && z > w[1] - 0.3 && z < w[3] + 0.3), keep = [];
   const free = (pts, walker) => (!walker||!routeIssues('crowd',pts,P.walls,.22).length)&&pts.every(([x, z]) => !inWall(x, z) && fixed.every((f) => Math.hypot(f[0] - x, f[1] - z) >= (f[2] < 0.6 ? Math.min(f[2] + 0.2, 0.72) : 0.72)) && (walker || paths.every((f) => Math.hypot(f[0] - x, f[1] - z) >= 0.72)) && Math.hypot(x - P.start.x, z - P.start.z) > 1.4);
   for (const e of P.specs.extras) {
-    if (e.ground > 0 || seated(e)) { keep.push(e); fixed.push([e.x, e.z, 0.5]); continue; }
+    if (e.ground > 0 || seated(e) || e.noSpread) { keep.push(e); fixed.push([e.x, e.z, 0.5]); continue; }
     let ok = free(loop(e), !!e.path), tries = 0; const x0 = e.x, z0 = e.z, path0 = e.path ? e.path.map((p) => [p[0], p[1]]) : null;
     while (!ok && tries++ < 40) { const dx = (r() - 0.5) * 2 * (1 + tries * 0.12), dz = (r() - 0.5) * 2 * (1 + tries * 0.12); e.x = Math.max(b.x0, Math.min(b.x1, x0 + dx)); e.z = Math.max(b.z0, Math.min(b.z1, z0 + dz)); if (path0) e.path = path0.map((p) => [p[0] + (e.x - x0), p[1] + (e.z - z0)]); ok = free(loop(e), !!e.path); }
     if (!ok && e.path) { e.path = null; e.walker = false; e.x = x0; e.z = z0; ok = free([[e.x, e.z]], false); }   /* a walk that cannot be made safe becomes a person standing still */
@@ -154,15 +191,52 @@ function ensurePlace(id) {   /* the place with its people: loads the bodies it n
   const P = buildPlace(id); if (P.populated) return Promise.resolve(P); if (placeLoading[id]) return placeLoading[id];
   return (placeLoading[id] = (async () => {
     P.specs.extras = P.specs.extras.filter((e) => Math.hypot(e.x - P.start.x, e.z - P.start.z) > 2.6 || e.seated);
-    spreadOut(P);
+    spreadOut(P); lifeFor(P);   /* life.js: what each background person does (engine/ambient.js) */
     for (const e of P.specs.extras) e.bodyId = e.base + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
     const mk = (s, talk) => { const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk }); n.m = makeBody(s); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
+    P.specs.extras.forEach((e, i) => { e.id = e.id || e.base + '#' + i; });   /* every background person has a name of their own in the checks' reports */
     P.people = P.specs.people.map((s) => mk(s, true)); P.extras = P.specs.extras.map((s) => mk(s, false)); P.people.forEach(addMark);
+    makeLife(P); meetPeople(P);
     if (P.group.visible) for (const n of P.npcs) n.m.visible = !n.hidden;
     P.populated = true; delete placeLoading[id]; return P;
   })());
 }
+/* background life (engine/ambient.js): one system per place. It moves, turns, animates and grounds the people it owns; npcTick and the loops in update() leave them alone. */
+const MOOD = (st) => (st >= 60 && st < 66 ? 'sad' : st >= 66 && st < 70 ? 'sad' : st >= 70 ? 'calm' : st >= 50 && st < 60 ? 'calm' : 'lively');
+const blockedIn = (P) => (x, z, r = 0.22) => (P.keepOut || []).some((k) => Math.hypot(k[0] - x, k[1] - z) < k[2] + r * 0.3);
+function makeLife(P) {
+  P.keep = placeKeep(P);
+  P.life = createAmbient({ walls: P.walls, bounds: P.lifeBounds || P.bounds, blocked: blockedIn(P), keepOff: () => P.keep, seed: P.id.length * 7 + 3, phone: isTouch, cull: 75, mood: MOOD(stage) });
+  offPaths(P);
+  for (const n of P.npcs) if (n.life) { P.life.add(n, n.life); n.m.userData.amb = true; }
+  P.life.ready();
+}
+/* the story's ways through a place, which background people keep clear: from the start to everything any step in this place needs (round walls), and a space round each of those things.
+   One list for the whole place, so nobody is standing in a way that a later step opens. A story person who is also background life (Lloyd) is not a destination here. */
+function placeKeep(P) {
+  if (P.ride) return []; const out = [], pts = [];
+  for (const [k, st] of Object.entries(STEPS)) { if (placeOfStage(+k) !== P.id || !st.needs) continue;
+    for (const kind of ['talk', 'do', 'go']) for (const e of st.needs[kind] || []) { const id = typeof e === 'string' ? e : e.id, at = st.at && st.at[id]; if (P.people.some((n) => n.id === id && n.life)) continue;
+      const acts = (P.actions || []).filter((x) => x.need === id), pp = P.people.find((n) => n.id === id), list = at ? [at] : acts.length ? acts.map((x) => [x.x, x.z]) : pp ? [[pp.x, pp.z]] : []; for (const p of list) if (p && !pts.some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 0.4)) pts.push(p); } }
+  for (const n of P.people) if (n.path && n.path.length > 1) out.push({ pts: [...n.path, n.path[0]], w: 0.45 });   /* someone who walks up and down (the guard) */
+  for (const p of pts) { out.push({ at: p, r: 1.0 }); const r = walkRoute([P.start.x, P.start.z], p, P.walls, 0.3, P.bounds); out.push({ pts: [[P.start.x, P.start.z], ...(r.length ? r : [p])], w: 0.5 }); }
+  return out;
+}
+/* move anyone whose spot is on one of those ways to a free spot close by (a chat group moves together) */
+function offPaths(P) {
+  const B = P.lifeBounds || P.bounds, K = P.keep, all = P.npcs, blocked = blockedIn(P);
+  const okAt = (x, z, self) => x > B.x0 + 0.3 && x < B.x1 - 0.3 && z > B.z0 + 0.3 && z < B.z1 - 0.3 && !inWallR(P.walls, x, z, 0.32) && !blocked(x, z, 0.3) && !onKeepOff(K, x, z, 0.3) && all.every((o) => self.includes(o) || Math.hypot(o.x - x, o.z - z) > 0.78);
+  const groups = new Map(); for (const n of all) if (n.life && !isSeated(n.anim) && n.life.kind !== 'sit') { const g = n.life.kind === 'chat' ? 'c:' + n.life.group : n.id; (groups.get(g) || groups.set(g, []).get(g)).push(n); }
+  for (const ms of groups.values()) {
+    const ends = (n) => (n.life.kind === 'errand' ? [n.life.from, n.life.to] : n.life.between ? n.life.between : []).filter(Boolean);
+    const bad = (dx, dz) => ms.some((n) => !okAt(n.x + dx, n.z + dz, ms) || ends(n).some((e) => !okAt(e[0] + dx, e[1] + dz, ms)));
+    if (!bad(0, 0)) continue; let done = false;
+    for (let r = 0.4; r <= 5 && !done; r += 0.35) for (let k = 0; k < 16 && !done; k++) { const a = k / 16 * PI * 2 + r, dx = Math.cos(a) * r, dz = Math.sin(a) * r; if (bad(dx, dz)) continue; done = true;
+      for (const n of ms) { n.x += dx; n.z += dz; n.hx = n.x; n.hz = n.z; n.m.position.x = n.x; n.m.position.z = n.z; for (const e of ends(n)) { e[0] += dx; e[1] += dz; } } }
+  }
+}
+const KEEPC = {};
 const P_ = () => PL[cur];   /* the place you are in */
 const byId = (id) => { for (const k of Object.keys(PL)) { const n = PL[k].people.find((p) => p.id === id); if (n) return n; } return null; };
 const allPeople = () => Object.values(PL).flatMap((P) => P.people);
@@ -192,11 +266,13 @@ const inWallR = (W, x, z, r) => W.some((w) => x > w[0] - r && x < w[2] + r && z 
 function followWorld() { const P = P_(), b = P.bounds; return { px: state.x, pz: state.z, blocked: (x, z, r = 0.22) => x < b.x0 + r || x > b.x1 - r || z < b.z0 + r || z > b.z1 - r || inWallR(P.walls, x, z, r * 0.8) || (P.keepOut || []).some((k) => Math.hypot(k[0] - x, k[1] - z) < k[2] + r * 0.3), walls: P.walls, bounds: b, others: P.npcs.filter((o) => o.m && o.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } }; }
 function npcTick(n, dt) {
   const m = n.m; if (!m || !m.visible) return; if (POSTER) { m.rotation.y = n.ry0; return; }
+  if (n.amb) return;   /* engine/ambient.js moves this person */
+  if ((n.react || n.call) && talkWith !== n) { n.reactT = (n.reactT ?? 4 + Math.random() * 6) - dt; if (n.reactT <= 0 && n.ctl.cur === n.ctl.base) { n.ctl.play(n.call ? 'Yell' : n.react[(Math.random() * n.react.length) | 0], true); n.reactT = (n.call ? 9 : 7) + Math.random() * 7; } }   /* a fixed person's odd gesture: the fireman's wave, Sister Louise calling out names */
   const ac = n.ctl, d = Math.hypot(state.x - n.x, state.z - n.z), seated = isSeated(n.anim), isNear = !n.extra && !seated && ((d < 3.2 && !DEV_NOSTOP) || talkWith === n);
   if (n.fol) { followTick(n, dt, followWorld()); return; }   /* someone who comes with you (engine/follow.js): behind you and to one side, never in your way; the height belongs to groundFeet */
   if (!n.path) { if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else if (!n.extra) faceTo(m, n.ry0, dt, 2); return; }
-  if (isNear || n.wait > 0) { if (n.walking) { n.walking = false; ac.play(null); } if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else { n.wait -= dt; if (n.wait <= 0) { n.walking = true; ac.play('Walk'); } } return; }
-  if (!n.walking) { n.walking = true; ac.play('Walk'); }
+  if (isNear || n.wait > 0) { if (n.walking) { n.walking = false; ac.play(null); } if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else { n.wait -= dt; if (n.wait <= 0) { n.walking = true; ac.play(n.sex === 'm' && CL.WalkM2 ? 'WalkM2' : 'Walk'); } } return; }
+  if (!n.walking) { n.walking = true; ac.play(n.sex === 'm' && CL.WalkM2 ? 'WalkM2' : 'Walk'); }
   const to = n.path[(n.i + 1) % n.path.length], dx = to[0] - n.x, dz = to[1] - n.z, dist = Math.hypot(dx, dz), v = walkSpeed(m), sp = v * dt; faceTo(m, Math.atan2(dx, dz), dt); ac.pace(v);   /* the steps keep time with the ground, whatever the size of the body */
   if (dist <= sp) { n.x = to[0]; n.z = to[1]; n.i = (n.i + 1) % n.path.length; n.wait = 2 + Math.random() * 3; n.walking = false; ac.play(null); } else { [n.x, n.z] = slideWalls([n.x, n.z], [n.x + dx / dist * sp, n.z + dz / dist * sp], PL[cur].walls, .22); }
   m.position.x = n.x; m.position.z = n.z;   /* the height belongs to groundFeet: setting it here made walkers jump up and down every other frame */
@@ -222,10 +298,13 @@ function bubbleTick(now) {
 
 /* ---------- interface: toast, the journal, cards, the cinematic layer ---------- */
 let toastTimer = 0, EP = 0;   /* EP: the "epoch": starting a chapter bumps it, so timed scenes from an earlier chapter stop themselves */
-function toast(msg, ms = 2600) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, ms); }
+const TOASTQ = [];   /* toasts that came while someone was talking: they wait until the dialogue box closes */
+function toast(msg, ms = 2600) { if (!$('dialogue').hidden) { if (!TOASTQ.some((q) => q[0] === msg)) TOASTQ.push([msg, ms]); return; } const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; if (TOASTQ.length && $('dialogue').hidden) toast(...TOASTQ.shift()); }, ms); }
+function flushToasts() { if (TOASTQ.length && $('dialogue').hidden && $('toast').hidden) toast(...TOASTQ.shift()); }
 const unlocked = [], story = {}, ctr = {};   /* story: what you chose. ctr: counters for the stage you are in (bunches carried, brakes checked...) */
-function showCount() { $('jcount').textContent = unlocked.length; $('jcount').hidden = !unlocked.length; }
-function unlock(id, quiet) { if (unlocked.includes(id)) return; unlocked.push(id); showCount(); saveGame(); if (!quiet) { uiSound('page'); toast('Journal: ' + JOURNAL.find((p) => p.id === id).title); } }
+let fresh = 0;   /* journal pages found since the journal was last opened: the button glows and shows how many */
+function showCount() { const b = $('jbtn'), c = $('jcount'); c.textContent = fresh; c.hidden = !fresh; b.classList.toggle('glow', fresh > 0); b.setAttribute('aria-label', fresh ? 'Journal, ' + fresh + ' new page' + (fresh > 1 ? 's' : '') : 'Journal'); }
+function unlock(id, quiet) { if (unlocked.includes(id)) return; unlocked.push(id); if (!quiet) fresh++; showCount(); saveGame(); if (!quiet) { SFX.chime(); toast('New journal page: ' + JOURNAL.find((p) => p.id === id).title, 3200); } }
 const CHOICE_NAMES = { road: { help: 'You thought the railway would help people.', worry: 'You worried it might take Mass Dudley\'s work.', ask: 'You were not sure yet.' }, beach: { splash: 'At the beach you splashed in the sea.', castle: 'At the beach you built a sandcastle.', band: 'At the beach you listened to the mento band.' }, why: { safe: 'You said we remember Kendal so people stay safe.', honour: 'You said we remember Kendal to honour those who died.', thank: 'You said we remember Kendal to thank the helpers.' } };
 function refreshJourney() { const p = JOURNAL.find((q) => q.id === 'journey'); const lines = [story.road, story.beach, story.why].map((v, i) => (v ? CHOICE_NAMES[['road', 'beach', 'why'][i]][v] : null)).filter(Boolean); p.simple = lines.length ? ['You finished the story.', ...lines] : ['You finished the story.']; }
 function renderJournal(sel) {
@@ -237,7 +316,7 @@ function renderJournal(sel) {
   const h = document.createElement('h3'); h.textContent = p.title; page.appendChild(h); for (const t of p.simple) { const e = document.createElement('p'); e.textContent = t; page.appendChild(e); }
   const d = document.createElement('details'); const s = document.createElement('summary'); s.textContent = 'Dig deeper'; d.appendChild(s); for (const t of p.deeper) { const e = document.createElement('p'); e.textContent = t; d.appendChild(e); } page.appendChild(d);
 }
-function openJournal(sel) { if (busy && $('journal').hidden && !$('title').hidden) return; if (!$('journal').hidden) return; busy = true; keys.clear(); renderJournal(typeof sel === 'string' ? sel : undefined); $('journal').hidden = false; $('jclose').focus(); }
+function openJournal(sel) { if (busy && $('journal').hidden && !$('title').hidden) return; if (!$('journal').hidden) return; fresh = 0; showCount(); busy = true; keys.clear(); renderJournal(typeof sel === 'string' ? sel : undefined); $('journal').hidden = false; $('jclose').focus(); }
 function closeJournal() { if ($('journal').hidden) return; $('journal').hidden = true; busy = panelsOpen(); }
 $('jbtn').onclick = () => openJournal(); $('jclose').onclick = closeJournal;
 const MENU = { ok: true, url: '../../../menu/' };   /* Always available on the game collection, even if a menu fetch would fail. */
@@ -273,51 +352,90 @@ let sitting = false;
 let stage = 0, best = 0, goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); goalTimer = setTimeout(() => { el.textContent = 'Goal'; el.classList.add('folded'); el.setAttribute('aria-expanded', 'false'); }, 6500); if (withControls) showHint(); }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
-function refreshGoal(quiet) { const g = GOALS[stage]; goalText = g ? g(ctr) : ''; if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
+function refreshGoal(quiet) { goalText = STORY.goal() || ''; if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
 $('goal').onclick = () => showGoal(true);
 function showSound() { const b = $('snd'); b.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); b.setAttribute('aria-label', AU.on ? 'Sound on. Tap to turn off.' : 'Sound off. Tap to turn on.'); $('sndon').style.display = AU.on ? '' : 'none'; $('sndoff').style.display = AU.on ? 'none' : ''; }
 $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
 
 /* ---------- saving: kept in this browser only ---------- */
-const SAVE_KEY = 'kendal-save-v1'; let hasSave = false, erasing = false;
-function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, unlocked, stage, best, story, talked: allPeople().filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
+const SAVE_KEY = 'kendal-save-v1'; let hasSave = false, erasing = false, savedFlow = null;   /* savedFlow: how far into the saved step you were (engine/story.js save) */
+function saveGame() { if (erasing) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, unlocked, stage, best, story, fresh, flow: STORY.save(), talked: allPeople().filter((p) => p.talked).map((p) => p.id) })); } catch (e) { /* storage may be blocked; the game still plays */ } }
 function loadGame() { try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; } }
 function applySave(d) {
   if (!d || !Array.isArray(d.unlocked)) return; for (const id of d.unlocked) if (JOURNAL.some((p) => p.id === id) && !unlocked.includes(id)) unlocked.push(id);
-  if (d.story && typeof d.story === 'object') Object.assign(story, d.story); stage = Number.isInteger(d.stage) && d.stage in GOALS ? d.stage : 0; best = Number.isInteger(d.best) ? Math.max(d.best, stage) : stage; hasSave = unlocked.length > 1 || stage > 0 || best > 0;
+  if (d.story && typeof d.story === 'object') Object.assign(story, d.story); stage = Number.isFinite(d.stage) && d.stage in STEPS ? d.stage : 0; best = Number.isFinite(d.best) ? Math.max(d.best, stage) : stage; fresh = Number.isInteger(d.fresh) ? d.fresh : 0; savedFlow = d.flow && d.flow.stage === stage ? d.flow : null; hasSave = unlocked.length > 1 || stage > 0 || best > 0;
 }
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.started) saveGame(); });
 
 /* ---------- talking: one line at a time; "You" lines get their own colour; the x, Escape or a tap outside ends it ---------- */
-let step = 0, lines = [], talkN = 0, talkFull = false, convoEnd = null, convoForced = false;   /* convoForced: a conversation that finishes something you already did (carrying the last bucket), so closing it early must not undo that */ const TALKS = ['Talk1', 'Talk2', 'Talk3'];
-const ALIAS = () => ({ abel: stage === 33 ? 'abel2' : 'abel', gran5: stage === 42 ? 'granCoach' : 'gran5', lloyd5: stage === 42 ? 'lloydCoach' : 'lloyd5', gran6: stage === 66 ? 'gran66' : 'gran6', clive: stage === 66 ? 'clive2' : 'clive' });
-const wantsTalk = (n) => !n.extra && !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
+let step = 0, lines = [], talkN = 0, talkFull = false, convoEnd = null, convoForced = false;   /* convoForced: a conversation that finishes something you already did (carrying the last bucket), so closing it early must not undo that */
+const ALIAS = () => ({ abel: stage === 33 ? 'abel2' : 'abel', gran5: stage === 42 ? 'granCoach' : 'gran5', lloyd5: stage === 42 ? 'lloydCoach' : 'lloyd5', gran6: stage === 66 ? 'gran66' : 'gran6', clive: stage === 66 ? 'clive2' : 'clive' });   /* the same person, a different conversation in a later step */
+const wantsTalk = (n) => !n.extra && !!STORY.marked(n.id);   /* only the step's story people move the story (engine/story.js) */
 function activate(t) { if (t.go) t.go(); else startTalk(t); }
 function startTalk(n) {
-  if (busy || frozen) return; talkFull = wantsTalk(n); const id = ALIAS()[n.id] || n.id;
-  if (talkFull) lines = [...TALK[id](story)]; else { const later = (LATER[id] || LATER[n.id] || (() => ['...']))(story); lines = [{ who: n.who, text: later[n.heard++ % later.length] }]; }
-  convoForced = false; openConvo(lines, null, n);
+  if (busy || frozen) return; const id = ALIAS()[n.id] || n.id, r = STORY.talk(n.id) || { kind: 'flavour', line: null };
+  talkFull = r.kind === 'story';
+  if (talkFull || (r.kind === 'meet' && TALK[id])) lines = [...TALK[id](story)];   /* a story talk, or a flavour person's one full talk (meet) */
+  else { const later = r.line ? [r.line] : (LATER[id] || LATER[n.id] || (() => ['...']))(flavourArg()); const l = r.line || later[n.heard++ % later.length]; lines = [{ who: n.who, text: typeof l === 'string' ? l : l.text }]; }
+  convoForced = false; if (n.amb) P_().life.hold(n, true); openConvo(lines, null, n);
 }
 function convo(ls, onEnd, who) { if (busy && !$('card').hidden) hideCard(); talkFull = false; convoForced = true; openConvo([...ls], onEnd, who || null); }
-function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; showLine(); }
+function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; $('toast').hidden = true; showLine(); }
+/* the speaker's gestures: men and women their own talk clips, seated men TalkM3 and others SitTalk; anyone holding something, kneeling, sitting on the ground or held in a pair keeps their pose */
+const KEEP_POSE = /^(Kneel|Comfort|PlayPiano|PlayGuitar|Sad|Cry|Hurt|CarryHead)/;
+function gestureFor(n) { const a = n.anim || 'Idle', held = (n.m.userData.held || []).length;
+  if (isSeated(a)) return n.sex === 'm' && !/^(boy|girl)/.test(n.base) && CL.TalkM3 ? 'TalkM3' : 'SitTalk'; if (KEEP_POSE.test(a) || held) return null;
+  const L = n.sex === 'm' && !/^(boy|girl)/.test(n.base) ? ['TalkM1', 'TalkM2', 'Talk2'] : ['Talk1', 'Talk2', 'Talk3']; return L[talkN++ % L.length]; }
 function showLine() {
   const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock); if (s.give === 'lamp') { story.lamp = true; saveGame(); toast('Mass Ezra gives you his lamp.'); updateLamp(); }
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(s, c); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
-  const ac = talkWith && talkWith.ctl; if (ac && !/^Sit/.test(talkWith.anim || '')) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
+  const ac = talkWith && talkWith.ctl; if (ac) { const g = me ? null : gestureFor(talkWith); if (me || !g) { if (ac.cur !== ac.base && !isSeated(talkWith.anim)) ac.play(null); } else if (CL[g] || g === 'SitTalk') ac.play(g); }
 }
 function choose(s, c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl && !/^Sit/.test(n.anim || '')) n.ctl.play(null);
+  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
+  if (n && n.amb && P_() && P_().life) P_().life.hold(n, false);
   const forced = convoForced; convoForced = false;
-  if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); } if (cb && (finished || forced)) cb();
+  if (finished && n && talkFull) { n.talked = true; saveGame(); STORY.done(n.id); } if (cb && (finished || forced)) cb();
+  setTimeout(flushToasts, 250);   /* a page found while talking is shown now, not on top of the dialogue box */
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
 $('next').onclick = nextLine; $('dclose').onclick = leaveTalk; $('talk').onclick = () => { if (near && !busy) activate(near); };
-function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => { const n = byId(id); return n && n.talked; })) setStage(NEXT_AFTER_TALK[stage]); }
-function updateLamp() { const on = !!story.lamp && cur === 'crash' && stage < 66; handLamp.intensity = on ? 3.6 : 0; lampMesh.visible = on; }
+
+/* ---------- the story (engine/story.js): steps.js says what each step needs; here is where each thing is, what changes when it is done, and the arrow ---------- */
+const flavourArg = () => ({ ...story, stage, got: STORY.got });
+const OUTRO = {   /* a step whose last task ends in a short conversation or a scene before the next step begins */
+  11: (s) => { SFX.snort(); convo(TALK.muleDone(story), () => setStage(s), byId('dudley')); },
+  34: (s) => convo(TALK.abel3(story), () => setStage(s), byId('abel')),
+  52: () => (CR.choice === 'skip' ? crashSkip() : crashRun()),
+  61: (s) => convo(TALK.nurse(story), () => setStage(s), byId('nurse')),
+  63: (s) => convo(TALK.louise(story), () => setStage(s), byId('louise')),
+};
+function storyWhere(id, P = P_()) {   /* where a story person or a thing to do is in this place, or null (not here, or hidden) */
+  if (!P) return null; const n = P.people.find((p) => p.id === id); if (n) return n.m && (n.m.visible || !P.group.visible) && !n.hidden ? [n.x, n.z] : null;
+  const a = (P.actions || []).filter((x) => x.need === id || x.id === id); if (!a.length) return null; const on = a.filter((x) => x.on()); const L = on.length ? on : a;
+  let best = null, bd = Infinity; for (const x of L) { const d = Math.hypot(x.x - state.x, x.z - state.z); if (d < bd) { bd = d; best = [x.x, x.z]; } } return best;
+}
+const HAND = createCarry({ camera, slot: [-0.3, -0.46, -0.62] });   /* your left hand (the lamp, when you have it, is in your right) */
+const rideBucket = bucket(); rideBucket.name = 'the water bucket'; rideBucket.scale.setScalar(0.8);
+const STORY = createStory({
+  steps: STEPS, where: (id) => storyWhere(id), player: () => [state.x, state.z],
+  route: (t, p) => { const P = P_(); if (!P) return t; const r = walkRoute(p, t, P.walls, 0.3, P.bounds); return r.length > 1 ? [r[0][0], r[0][1], false] : t; },   /* round walls, not through them */
+  advance: (s) => (OUTRO[stage] ? OUTRO[stage](s) : setStage(s)),
+  onGoal: (t) => { goalText = t || ''; if (!syncing && state.started) showGoal(); },
+  onArrow: () => { showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); },
+  flavour: {}, meet: {}, names: {}, items: { bucket: rideBucket, bunch: bananaBunch(1.1) },
+});
+let syncing = false;
+function meetPeople(P) {   /* this place's people into the story's tables: their short lines (LATER), the full talk of a flavour person (played once), their names */
+  const o = STORY.options; for (const n of P.people) { const id = n.id; o.names[id] = n.who;
+    if (!o.flavour[id]) o.flavour[id] = () => (LATER[ALIAS()[id] || id] || LATER[id] || (() => []))(flavourArg());
+    if (['lady', 'guard', 'pearl', 'boyRide'].includes(id) && TALK[id] && !o.meet[id]) o.meet[id] = () => TALK[id](story); }
+}
+function updateLamp() { const on = !!story.lamp && stage >= 40 && stage < 66 && cur !== 'memorial'; handLamp.intensity = on && cur === 'crash' ? 3.6 : 0; lampMesh.visible = on; }   /* Mass Ezra's lamp is in your right hand from the moment he gives it; it is lit at Kendal */
 const lampMesh = lantern(); lampMesh.scale.setScalar(1.0); lampMesh.position.set(0.36, -0.42, -0.62); lampMesh.visible = false; camera.add(lampMesh);
 
 /* ---------- chapters, stages and the story machine ---------- */
@@ -328,7 +446,8 @@ const chapterOf = (s) => Math.max(0, Math.min(6, Math.floor(s / 10) - 1));
 const ON = {}, TICKS = [];   /* ON[stage]: what happens when a stage begins. TICKS: per-frame jobs from tween(). */
 let hasLoaded = false;
 function setStage(s) {
-  stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const n of allPeople()) n.talked = false; saveGame(); refreshGoal(); if (ON[s]) ON[s]();
+  stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const n of allPeople()) n.talked = false; syncing = true; STORY.enter(s); syncing = false; saveGame(); refreshGoal(); if (ON[s]) ON[s]();
+  for (const P of Object.values(PL)) if (P.life) P.life.mood(MOOD(s));
   if (!QUICK && s in CHAPTER_END) setTimeout(() => nextCard(CHAPTER_END[s], s), 900);
 }
 function nextCard(i, s, tries = 0) {
@@ -355,7 +474,8 @@ function startScene(i, st) {
   else enterPlace(id);
   state.started = true; setStage(st); updateLamp(); showPlace();
   if (i === 1) setTimeout(() => { if (ep === EP) { SFX.fanfare(); SFX.stationGong(); } }, 900 * TS);
-  if (i === 2) { const late = st >= 33; P.train.visible = late; P.train.position.x = late ? 0 : 90; if (st >= 32) { P.bunches.forEach((b) => { b.visible = false; }); P.inWagon.forEach((b) => { b.visible = true; }); } }   /* resuming after the train came in */
+  if (i === 2) { const late = st >= 33; P.train.visible = late; P.train.position.x = late ? 0 : 90; resetBunches(P); if (st >= 32) { P.bunches.slice(0, 4).forEach((b) => { b.visible = false; }); P.inWagon.forEach((b) => { b.visible = true; }); } }   /* resuming after the train came in */
+  if (savedFlow && savedFlow.stage === st) STORY.restore(savedFlow); savedFlow = null;   /* a saved game: the step's progress and what it changed in the scene */
   if (i === 5 && st >= 66) { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; P.torches.forEach((t) => { t.visible = false; }); P.flame.visible = false; }   /* resuming after the night */
   if (i === 3) { SFX.mento(false); }
 }
@@ -404,40 +524,58 @@ function smokeTick(dt) {
 }
 
 /* ---------- things to do: ACTIONS_FOR[place](P) makes the list of that place. A thing shows as a button when you stand at it. ---------- */
-const ACTIONS_FOR = {
+const ACTIONS_FOR = {   /* each thing has an id; `need` is the step need it counts toward (engine/story.js), and on() asks the story whether it is needed now */
   road: (P) => [
-    { label: 'Load the mule', x: P.spots.mule[0], z: P.spots.mule[1], r: 3.0, on: () => stage === 11 && !P.loading, go: () => {
-      const n = ctr.mule || 0; const item = P.goods[n]; P.loading = true; ctr.mule = n + 1; refreshGoal(true); toast(P.goodsText[n], 3400); const d = byId('dudley'); if (d && d.ctl) d.ctl.play('Talk2', true);
-      loadItem(P, item, n).then(() => { P.loading = false; if (ctr.mule >= 3) { SFX.snort(); convo(TALK.muleDone(story), () => setStage(12), byId('dudley')); } }); }, } ],
+    { id: 'mule', need: 'mule', label: 'Load the mule', x: P.spots.mule[0], z: P.spots.mule[1], r: 3.0, on: () => STORY.needs('mule') && !P.loading, go: () => {
+      const n = STORY.got.mule || 0; const item = P.goods[n]; P.loading = true; toast(P.goodsText[n], 3400); const d = byId('dudley'); if (d && d.ctl && CL.PickUp) d.ctl.play('PickUp', true);   /* Mass Dudley lifts with you */
+      loadItem(P, item, n).then((ok) => { P.loading = false; if (ok !== false) STORY.done('mule'); }); } } ],
   station45: (P) => [
-    { label: 'Look at the engine', x: P.spots.engine[0], z: P.spots.engine[1], r: 3.4, on: () => stage === 21, go: () => { unlock('projector'); card('The Projector', ['This steam engine was built in Manchester, England, in 1844.', 'Boiling water makes steam. The steam pushes pistons, and the pistons turn the big wheels.', 'She can pull a whole train at up to 30 miles an hour. That is very fast for 1845!'], [{ t: 'Good!', go: () => { hideCard(); setStage(22); } }]); } },
-    { label: 'Climb aboard', x: P.spots.board[0], z: P.spots.board[1], r: 3.2, on: () => stage === 22, go: () => setStage(23) } ],
-  ride45: (P) => [{ label: 'Pass the water bucket', x: P.spots.water[0], z: P.spots.water[1], r: 2.6, on: () => RIDE45.water && ctr.water < 3, go: () => { ctr.water = (ctr.water || 0) + 1; uiSound('goal'); stepSound('water'); toast('Passed ' + ctr.water + ' of 3'); } }],
+    { id: 'engine', need: 'engine', label: 'Look at the engine', x: P.spots.engine[0], z: P.spots.engine[1], r: 3.4, on: () => STORY.needs('engine'), go: () => { unlock('projector'); card('The Projector', ['This steam engine was built in Manchester, England, in 1844.', 'Boiling water makes steam. The steam pushes pistons, and the pistons turn the big wheels.', 'She can pull a whole train at up to 30 miles an hour. That is very fast for 1845!'], [{ t: 'Good!', go: () => { hideCard(); STORY.done('engine'); } }]); } },
+    { id: 'board', need: 'board', label: 'Climb aboard', x: P.spots.board[0], z: P.spots.board[1], r: 3.2, on: () => STORY.needs('board'), go: () => STORY.done('board') } ],
+  ride45: (P) => [{ id: 'water', need: 'water', label: 'Pass the water bucket', x: P.spots.water[0], z: P.spots.water[1], r: 2.6, on: () => STORY.needs('water') && !RIDE45.busy, go: () => passBucket(P) }],
   hill: (P) => [
-    { label: 'Carry a bunch to the wagon', x: P.spots.pile[0], z: P.spots.pile[1], r: 2.8, on: () => stage === 31, go: () => { const n = ctr.bun = (ctr.bun || 0) + 1; P.bunches[n - 1].visible = false; P.inWagon[n - 1].visible = true; uiSound('goal'); toast('Carried ' + n + ' of 4'); refreshGoal(true); if (n >= 4) setStage(32); } },
-    ...P.spots.brakes.map((b, i) => ({ label: 'Check the brake', x: b[0], z: b[1], r: 2.3, on: () => stage === 34 && !(ctr['b' + i]), go: () => { ctr['b' + i] = 1; ctr.brk = (ctr.brk || 0) + 1; uiSound('goal'); toast(['The tender brake is tight. Good.', 'The carriage brake handle holds. Good.', 'The wagon brake block is firm. Good.'][i]); refreshGoal(true); if (ctr.brk >= 3) convo(TALK.abel3(story), () => setStage(35), byId('abel')); } })) ],
-  kingston57: (P) => [{ label: 'Climb aboard the last coach', x: P.spots.board[0], z: P.spots.board[1], r: 3.2, on: () => stage === 41, go: () => setStage(42) }],
+    { id: 'pile', need: 'bunch', label: 'Pick up a bunch of bananas', x: P.spots.pile[0], z: P.spots.pile[1], r: 2.8, on: () => STORY.needs('bunch') && !HAND.holding(), go: () => { const b = P.bunches.find((q) => q.parent === P.pile); if (!b) return; HAND.carry(b, { slot: [0.05, -0.62, -0.7], yaw: 0.4 }); b.rotation.z = 0.25; stepSound('grass'); toast('You lift a heavy bunch. Now to the wagon.'); } },
+    { id: 'wagon', need: 'bunch', label: 'Put the bunch in the wagon', x: P.spots.wagon[0], z: P.spots.wagon[1], r: 2.8, on: () => STORY.needs('bunch') && !!HAND.holding(), go: () => { const n = STORY.got.bunch || 0, w = P.inWagon[n], b = HAND.holding(); HAND.place(b, { parent: P.group, at: [w.position.x, w.position.y, w.position.z], ry: w.rotation.y }); b.rotation.set(0, w.rotation.y, PI / 2); uiSound('goal'); STORY.done('bunch'); } },
+    ...P.spots.brakes.map((b, i) => ({ id: 'b' + i, need: 'b' + i, label: 'Check the brake', x: b[0], z: b[1], r: 2.3, on: () => STORY.needs('b' + i), go: () => { uiSound('goal'); toast(['The tender brake is tight. Good.', 'The carriage brake handle holds. Good.', 'The wagon brake block is firm. Good.'][i]); STORY.done('b' + i); } })) ],
+  kingston57: (P) => [{ id: 'board57', need: 'board57', label: 'Climb aboard the last coach', x: P.spots.board[0], z: P.spots.board[1], r: 3.2, on: () => STORY.needs('board57'), go: () => STORY.done('board57') }],
   coach: (P) => [
-    ...P.spots.windows.map((w, i) => ({ label: 'Look out of the window', x: w[0], z: w[1], r: 1.6, on: () => stage === 51 && !(ctr['w' + i]), go: () => { ctr['w' + i] = 1; ctr.win = (ctr.win || 0) + 1; state.yaw = w[2] > 0 ? PI : 0; state.pitch = 0; say(i === 0 ? 'A little station slips by. A lamp, a bell, a dog barking.' : 'Stars over the dark hills. Somewhere, a lamp in a window.', 4200); refreshGoal(true); if (ctr.win >= 2) setStage(52); } })),
-    { label: 'Sit down with Gran', x: P.spots.seat[0], z: P.spots.seat[1], r: 1.5, on: () => stage === 52 && !CR.on, go: () => crashIntro() } ],
+    ...P.spots.windows.map((w, i) => ({ id: 'w' + i, need: 'w' + i, label: 'Look out of the window', x: w[0], z: w[1], r: 1.6, on: () => STORY.needs('w' + i), go: () => { state.yaw = w[2] > 0 ? PI : 0; state.pitch = 0; say(i === 0 ? 'A little station slips by. A lamp, a bell, a dog barking.' : 'Stars over the dark hills. Somewhere, a lamp in a window.', 4200); STORY.done('w' + i); } })),
+    { id: 'seat', need: 'seat', label: 'Sit down with Gran', x: P.spots.seat[0], z: P.spots.seat[1], r: 1.5, on: () => STORY.needs('seat') && !CR.on, go: () => { sitting = true; crashIntro(); } } ],
   beach: (P) => {
-    const done = () => { P.done = P.done || {}; return P.done; }, fun = (k) => { done()[k] = true; uiSound('goal'); ctr.fun = (ctr.fun || 0) + 1; story.beach = story.beach || k; saveGame(); refreshGoal(true); if (ctr.fun >= 2) setStage(44); };
+    const done = () => { P.done = P.done || {}; return P.done; }, fun = (k) => { done()[k] = true; uiSound('goal'); story.beach = story.beach || k; saveGame(); STORY.done('fun'); };
     return [
-      { label: 'Splash in the sea', x: P.spots.sea[0], z: P.spots.sea[1], r: 2.6, on: () => stage === 43 && !done().sea, go: () => { stepSound('water'); setTimeout(() => stepSound('water'), 300); toast('Splash! The water is warm.'); fun('sea'); story.beach = story.beach === 'sea' ? 'splash' : story.beach; } },
-      { label: 'Build a sandcastle', x: P.spots.castle[0], z: P.spots.castle[1], r: 2.6, on: () => stage === 43 && !done().castle, go: () => { ctr.cp = (ctr.cp || 0) + 1; const m = P.castle.userData.mound; m.scale.setScalar(0.01 + ctr.cp / 3); uiSound('tap'); toast(ctr.cp < 3 ? 'Pat the sand... ' + ctr.cp + ' of 3' : 'A sandcastle!'); if (ctr.cp >= 3) fun('castle'); } },
-      { label: 'Listen to the band', x: P.spots.band[0], z: P.spots.band[1], r: 3.4, on: () => stage === 43 && !done().band, go: () => { unlock('mento'); toast('A mento band! Banjo, guitar and a rumba box.'); fun('band'); } } ];
+      { id: 'sea', need: 'fun', label: 'Splash in the sea', x: P.spots.sea[0], z: P.spots.sea[1], r: 2.6, on: () => STORY.needs('fun') && !done().sea, go: () => { stepSound('water'); setTimeout(() => stepSound('water'), 300); splash(P); toast('Splash! The water is warm.'); fun('splash'); } },
+      { id: 'castle', need: 'fun', label: 'Build a sandcastle', x: P.spots.castle[0], z: P.spots.castle[1], r: 2.6, on: () => STORY.needs('fun') && !done().castle, go: () => { ctr.cp = (ctr.cp || 0) + 1; const m = P.castle.userData.mound; m.scale.setScalar(0.01 + ctr.cp / 3); uiSound('tap'); toast(ctr.cp < 3 ? 'Pat the sand... ' + ctr.cp + ' of 3' : 'A sandcastle!'); if (ctr.cp >= 3) { done().castle = true; fun('castle'); } } },
+      { id: 'band', need: 'fun', label: 'Listen to the band', x: P.spots.band[0], z: P.spots.band[1], r: 3.4, on: () => STORY.needs('fun') && !done().band, go: () => { unlock('mento'); sitting = true; state.yaw = Math.atan2(-(14.2 - state.x), -(3.6 - state.z)); state.pitch = -0.05; toast('A mento band! Banjo, guitar and a rumba box.'); fun('band'); } } ];   /* you sit down on the sand to listen */
   },
   crash: (P) => [
-    { label: 'Fill the bucket', x: P.spots.pipe[0], z: P.spots.pipe[1], r: 2.4, on: () => stage === 61 && !ctr.has && (ctr.water || 0) < 2, go: () => { ctr.has = 1; stepSound('water'); toast('The bucket is full. Take it to the nurse.'); } },
-    { label: 'Give the water to the nurse', x: P.spots.nurse[0], z: P.spots.nurse[1], r: 2.6, on: () => stage === 61 && ctr.has, go: () => { ctr.has = 0; ctr.water = (ctr.water || 0) + 1; refreshGoal(true); if (ctr.water >= 2) convo(TALK.nurse(story), () => setStage(62), byId('nurse')); else toast('She drinks, and thanks you. One more trip.'); } },
-    { label: 'Take Dawn to the calling place', x: P.spots.calling[0], z: P.spots.calling[1], r: 3.2, on: () => stage === 63, go: () => { const d = byId('dawn'); stopFollow(d); d.x = P.spots.calling[0] + 1.2; d.z = P.spots.calling[1] + 0.6; d.m.position.set(d.x, 0, d.z); convo(TALK.louise(story), () => setStage(64), byId('louise')); } },
-    { label: 'Hold your lamp up', x: P.spots.lamp[0], z: P.spots.lamp[1], r: 3.4, on: () => stage === 64, go: () => holdLamp() } ],
+    { id: 'fill', need: 'water', label: 'Fill a bucket at the pipe', x: P.spots.pipe[0], z: P.spots.pipe[1], r: 2.4, on: () => STORY.needs('water') && !HAND.holding(), go: () => { const b = P.buckets.find((q) => !q.userData.given); if (!b) return; HAND.carry(b, { yaw: 0.3 }); stepSound('water'); toast('The bucket is full. Take it to the nurse.'); } },
+    { id: 'give', need: 'water', label: 'Give the water to the nurse', x: P.spots.nurse[0], z: P.spots.nurse[1], r: 2.6, on: () => STORY.needs('water') && !!HAND.holding(), go: () => { const b = HAND.holding(), k = STORY.got.water || 0; b.userData.given = true; HAND.place(b, { parent: P.group, at: [-3.75 + k * 0.42, 0, 9.55 + k * 0.1], ry: k }); uiSound('goal'); if (!k) toast('She gives the man a drink, and thanks you. One more trip.', 3400); STORY.done('water'); } },
+    { id: 'calling', need: 'calling', label: 'Take Dawn to the calling place', x: P.spots.calling[0], z: P.spots.calling[1], r: 3.2, on: () => STORY.needs('calling'), go: () => { const d = byId('dawn'); stopFollow(d); d.x = P.spots.calling[0] + 1.2; d.z = P.spots.calling[1] + 0.6; d.m.position.set(d.x, 0, d.z); d.ry0 = Math.atan2(-6.6 - d.x, 13.6 - d.z); STORY.done('calling'); } },
+    { id: 'lamp', need: 'lamp', label: 'Hold your lamp up', x: P.spots.lamp[0], z: P.spots.lamp[1], r: 3.4, on: () => STORY.needs('lamp'), go: () => holdLamp() } ],
   memorial: (P) => [
-    { label: 'Read the storyboard', x: P.spots.board[0], z: P.spots.board[1], r: 2.8, on: () => stage === 71 && !ctr.sb, go: () => { ctr.sb = 1; ctr.look = (ctr.look || 0) + 1; refreshGoal(true); card('The storyboard', ['A church excursion train came home from the sea.', 'It ran downhill and left the rails here, near Kendal.', 'Hundreds of people from Kendal came to help.', 'Close to 200 people died.'], [{ t: 'Close', go: () => { hideCard(); if (ctr.look >= 2) setStage(72); } }]); } },
-    { label: 'Read the monument', x: P.spots.wall[0], z: P.spots.wall[1], r: 3.0, on: () => stage === 71 && !ctr.mn, go: () => { ctr.mn = 1; ctr.look = (ctr.look || 0) + 1; refreshGoal(true); card('The monument', ['Our plaque says: Kendal, 1 September 1957. We remember them.', 'The real monument has the names of 177 people. It also thanks the helpers and remembers the survivors.', 'We do not know the real words, so these are our own.'], [{ t: 'Close', go: () => { hideCard(); if (ctr.look >= 2) setStage(72); } }]); } },
-    { label: 'Leave a flower', x: P.spots.flower[0], z: P.spots.flower[1], r: 2.8, on: () => stage === 72, go: () => leaveFlower() } ],
+    { id: 'sb', need: 'sb', label: 'Read the storyboard', x: P.spots.board[0], z: P.spots.board[1], r: 2.8, on: () => STORY.needs('sb'), go: () => { card('The storyboard', ['A church excursion train came home from the sea.', 'It ran downhill and left the rails here, near Kendal.', 'Hundreds of people from Kendal came to help.', 'Close to 200 people died.'], [{ t: 'Close', go: () => { hideCard(); STORY.done('sb'); } }]); } },
+    { id: 'mn', need: 'mn', label: 'Read the monument', x: P.spots.wall[0], z: P.spots.wall[1], r: 3.0, on: () => STORY.needs('mn'), go: () => { card('The monument', ['Our plaque says: Kendal, 1 September 1957. We remember them.', 'The real monument has the names of 177 people. It also thanks the helpers and remembers the survivors.', 'We do not know the real words, so these are our own.'], [{ t: 'Close', go: () => { hideCard(); STORY.done('mn'); } }]); } },
+    { id: 'flower', need: 'flower', label: 'Leave a flower', x: P.spots.flower[0], z: P.spots.flower[1], r: 2.8, on: () => STORY.needs('flower'), go: () => leaveFlower() } ],
 };
-const RIDE45 = { water: false };
+const RIDE45 = { busy: false };
+/* the 1845 water stop: the water boy hands you the bucket, you pass it on to the next passenger along the carriage */
+function passBucket(P) {
+  const k = STORY.got.water || 0, spot = [[0.5, 0.5], [-1.2, -0.5], [0.5, -0.5]][k % 3]; RIDE45.busy = true; HAND.carry(rideBucket, { yaw: 0.2 }); stepSound('water');
+  setTimeout(() => { HAND.place(rideBucket, { parent: P.group, at: [spot[0], 0.17, spot[1]], ry: k }); uiSound('goal'); RIDE45.busy = false; STORY.done('water'); }, 900 * TS);
+}
+/* a splash in the sea: spray thrown up in front of you */
+function splash(P) { const f = new THREE.Vector3(-Math.sin(state.yaw), 0, -Math.cos(state.yaw)); for (let i = 0; i < 14; i++) { const w = new THREE.Vector3(state.x + f.x * 1.4 + (Math.random() - 0.5) * 0.8, 0.05, state.z + f.z * 1.4 + (Math.random() - 0.5) * 0.8); smoke.emit(w, new THREE.Vector3((Math.random() - 0.5) * 1.2, 1.6 + Math.random() * 1.6, (Math.random() - 0.5) * 1.2), { size: 0.25, grow: 0.9, life: 1.1, color: 0xf4fbff, opacity: 0.85 }); } }
+/* the visible change for each task (engine/story.js shows). restoring: a saved game puts the scene back as it was. */
+function registerShows() {
+  STORY.shows('mule', (n, of, restoring) => { if (!restoring) return; const P = PL.road; if (!P) return; for (let i = 0; i < n; i++) { const it = P.goods[i], mu = P.mule; mu.attach(it); it.position.set(...mu.userData.slots[i]); it.rotation.set(0, i * 1.4, 0); it.scale.setScalar(i === 2 ? 0.9 : 0.8); mu.userData.dip = (i + 1) / 3; } });   /* the goods fly onto the mule in loadItem */
+  for (const id of ['engine', 'board', 'board57', 'w0', 'w1', 'sb', 'mn', 'calling', 'lamp', 'flower', 'seat']) STORY.shows(id, () => {});   /* each of these changes the scene itself: a card, a ride, the view turning, Dawn going to Sister Louise, the lamp held high, the flower */
+  STORY.shows('water', (n, of, restoring) => { if (!restoring || cur !== 'crash') return; const P = PL.crash; for (let i = 0; i < n; i++) { const b = P.buckets[i]; b.userData.given = true; P.group.add(b); b.position.set(-3.75 + i * 0.42, 0, 9.55 + i * 0.1); } });
+  STORY.shows('bunch', (n, of, restoring) => { if (!restoring) return; const P = PL.hill; resetBunches(P); for (let i = 0; i < n; i++) { const b = P.bunches[i], w = P.inWagon[i]; P.group.add(b); b.position.copy(w.position); b.rotation.set(0, w.rotation.y, PI / 2); } });
+  for (let i = 0; i < 3; i++) STORY.shows('b' + i, (n, of, restoring) => { const L = PL.hill && PL.hill.levers && PL.hill.levers[i]; if (L) { L.userData.handle.rotation.z = n ? -0.9 : 0.5; L.userData.tag.visible = !!n; } });   /* the brake handle is pulled down and a white tag hung on it */
+  STORY.shows('fun', () => {});   /* each beach thing shows itself: the splash, the sandcastle, you sitting by the band */
+}
+function resetBunches(P) { if (!P) return; for (const b of P.bunches) { const h = b.userData.home; if (b === HAND.holding()) HAND.drop(); P.pile.add(b); b.position.copy(h.p); b.rotation.copy(h.r); b.visible = true; } P.inWagon.forEach((b) => { b.visible = false; }); }
 
 /* ---------- chapter 1: carrying a load to the mule. The item flies in an arc to the mule's pack, the mule sinks a little under the weight. ---------- */
 function loadItem(P, item, n) {
@@ -451,17 +589,18 @@ function resetMule(P) { const mu = P.mule; for (const it of P.goods) { if (it.pa
 /* ---------- chapter 2: the first train ---------- */
 ON[23] = async () => {
   const ep = EP; await ensurePlace('ride45'); if (!(await transition('ride45', { after: () => { RIDE.on = true; RIDE.v = RIDE.target = 0; RIDE.kind = 'steam'; bars(true); frozen = false; } }))) return;
-  const P = P_(); RIDE45.water = false; ctr.water = 0;
+  const P = P_(); RIDE45.busy = false; if (HAND.holding()) HAND.drop(); rideBucket.visible = false;
   const ok = await run([[200, () => { say('The Governor takes his seat. The whistle blows!', 3200); SFX.whistleSteam(1.0); SFX.hiss(1.4); }], [3200, () => { RIDE.target = 4; say('The train jerks forward. The crowd cheers!', 3400); }], [3600, () => { RIDE.target = 8; say('Slowly at first, past the houses.', 3200); }], [4200, () => { RIDE.target = 10; say('Out across wet, marshy land, on a raised bank.', 3600); }], [5500, () => { RIDE.target = 0; say('At the new bridge over the Rio Cobre, the engine stops for water.', 4200); SFX.hiss(2.0); }]]);
-  if (!ok) return; bars(false); goalText = 'Help the water boy. Pass the bucket: 0 of 3.'; showGoal(); RIDE45.water = true; GOALS[23] = () => `Help the water boy. Pass the bucket: ${ctr.water || 0} of 3.`;
-  if (!(await waitFor(() => ctr.water >= 3))) return; RIDE45.water = false; GOALS[23] = () => 'Ride to Spanish Town. Look at the crowds!'; bars(true);
-  await run([[300, () => { say('Off again! Spanish Town is not far.', 3200); SFX.whistleSteam(0.7); RIDE.target = 9; }], [4200, () => { RIDE.target = 12; say('Cheers all along the line.', 3000); SFX.fanfare(); }], [5000, () => { RIDE.target = 0; say('Spanish Town, about an hour after leaving Kingston.', 4200); unlock('first-train'); }], [4600, () => { stage = 24; refreshGoal(); RIDE.target = 18; SFX.whistleSteam(0.6); say('The ride back is fast. About 30 miles an hour!', 4000); }], [4800, () => { RIDE.target = 20; say('Faster than any mule. Faster than any horse.', 3800); }], [4500, () => { RIDE.target = 0; say('Back in Kingston in about forty minutes.', 3600); }]]);
+  if (!ok) return; bars(false); RIDE45.busy = false; setStage(23.5);   /* the water stop is its own step (steps.js), so its goal and count never go stale */
+  if (!(await waitFor(() => stage === 23.6))) return; bars(true);
+  await run([[300, () => { say('Off again! Spanish Town is not far.', 3200); SFX.whistleSteam(0.7); RIDE.target = 9; }], [4200, () => { RIDE.target = 12; say('Cheers all along the line.', 3000); SFX.fanfare(); }], [5000, () => { RIDE.target = 0; say('Spanish Town, about an hour after leaving Kingston.', 4200); unlock('first-train'); }], [4600, () => { setStage(24); RIDE.target = 18; SFX.whistleSteam(0.6); say('The ride back is fast. About 30 miles an hour!', 4000); }], [4800, () => { RIDE.target = 20; say('Faster than any mule. Faster than any horse.', 3800); }], [4500, () => { RIDE.target = 0; say('Back in Kingston in about forty minutes.', 3600); }]]);
   if (!(await transition('station45', { after: () => { RIDE.on = false; bars(false); state.x = 8; state.z = 5; state.yaw = 0.3; } }))) return; setStage(25);
 };
 ON[21] = () => { /* nothing: the engine card is an action */ };
 
 /* ---------- chapter 3: a train comes up the hill, and the brake check ---------- */
-ON[31] = () => { const P = PL.hill; if (!P) return; P.bunches.forEach((b) => { b.visible = true; }); P.inWagon.forEach((b) => { b.visible = false; }); };
+ON[31] = () => resetBunches(PL.hill);
+ON[34] = () => { const P = PL.hill; if (P) for (const L of P.levers) { L.userData.handle.rotation.z = 0.5; L.userData.tag.visible = false; } };
 ON[32] = async () => {
   const P = P_(); if (cur !== 'hill') return; frozen = true; busy = false; bars(true); say('Listen! A train is coming up the hill.', 3600); const tr = P.train; tr.visible = true; tr.position.x = 100;
   const cam = [3, 1.6, 6.5]; await cut(cam, cam, [60, 2.4, -3], [20, 2.4, -3], 3);
@@ -485,11 +624,12 @@ ON[45] = () => { /* the chapter's end card comes from setStage */ };
 
 /* ---------- chapter 5: the night train and the crash ---------- */
 const CR = { on: false, phase: 0 };
-ON[50] = () => { if (cur === 'coach') { const P = P_(); setRigTheme(P, 'night'); RIDE.on = true; RIDE.v = RIDE.target = 0; P.lamp.intensity = 9; setEnv(ENV.dusk); tween(10, (k) => setEnv(mixEnv(ENV.dusk, ENV.night, k))); say('Montego Bay railway station. Evening, and the sky is going dark.', 4200); } };
+ON[50] = () => { const C = PL.coach; if (C) for (const n of C.npcs) { if (n.amb) C.life.hold(n, false); if (n.ctl && n.ctl.cur !== n.ctl.base) n.ctl.play(null); }   /* calm again after a restart */
+  if (cur === 'coach') { const P = P_(); setRigTheme(P, 'night'); RIDE.on = true; RIDE.v = RIDE.target = 0; P.lamp.intensity = 9; setEnv(ENV.dusk); tween(10, (k) => setEnv(mixEnv(ENV.dusk, ENV.night, k))); say('Montego Bay railway station. Evening, and the sky is going dark.', 4200); } };
 ON[51] = async () => { SFX.hornDiesel(1.2); say('The train pulls out of Montego Bay. Stars fill the windows.', 4200); RIDE.target = 12; };
 ON[52] = () => { if (cur !== 'coach') return; say('The train climbs into the hills, slowly and steadily.', 4200); RIDE.target = 9; };
 function crashIntro() {
-  if (CR.on) return; card('About half past eleven', ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], [{ t: 'Begin', go: () => { hideCard(); crashRun(); } }, { t: 'Read what happened instead', go: () => { hideCard(); crashSkip(); } }], { col: true });
+  if (CR.on) return; card('About half past eleven', ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], [{ t: 'Begin', go: () => { hideCard(); CR.choice = 'run'; STORY.done('seat'); } }, { t: 'Read what happened instead', go: () => { hideCard(); CR.choice = 'skip'; STORY.done('seat'); } }], { col: true });
 }
 function crashSkip() {
   unlock('crash'); unlock('greenvale'); card('What happened', ['The train climbed to Greenvale, the highest station on the line. Then it ran downhill toward Kendal.', 'Three whistle blasts sounded. The train went faster, and left the rails on a curve.', 'Eight of the twelve coaches were wrecked. The last two coaches stayed on the track.'], [{ t: 'Go on', go: () => { hideCard(); setStage(53); arriveKendal(); } }], { col: true });
@@ -497,6 +637,8 @@ function crashSkip() {
 const HOLD = { on: false, v: 0 };
 for (const ev of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) $('hold').addEventListener(ev, (e) => { HOLD.on = ev === 'pointerdown'; $('hold').classList.toggle('on', HOLD.on); e.preventDefault(); });
 addEventListener('keydown', (e) => { if ($('holdwrap').hidden) return; if (e.key === ' ' || e.key === 'Enter') HOLD.on = true; }); addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') HOLD.on = false; });
+function brace(P) {   /* the coach goes quiet and tense: nobody chats now; Lloyd and some passengers hold on to their seats (SitScared, a gentle seated clip) */
+  if (P.life) P.life.mood('sad'); let k = 0; for (const n of P.npcs) { if (!isSeated(n.anim)) continue; const scared = n.id === 'lloyd5' || (n.extra && (k++ % 3 === 0)); if (n.amb) P.life.hold(n, true); if (scared && CL.SitScared) n.ctl.play('SitScared'); else if (n.ctl.cur !== n.ctl.base) n.ctl.play(null); } }
 async function crashRun() {
   const ep = EP, P = P_(); CR.on = true; CR.phase = 0; unlock('greenvale'); setStage(53); frozen = false; moveLock = false; busy = false; talkWith = null; state.x = 2.6; state.z = 0; state.yaw = PI / 2; state.pitch = 0; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
   const live = () => ep === EP && CR.on, lamp = P.lamp;
@@ -504,7 +646,7 @@ async function crashRun() {
   SFX.mento(false); say('Greenvale. The highest station on the line.', 3600); RIDE.target = 8; await wait(3600);
   if (!(await step(300, () => { say('The train starts the long way down.', 3400); RIDE.target = 16; CR.phase = 1; })) ) return;
   if (!(await step(3500, () => { say('Lloyd: “We are going so fast!”', 3200); RIDE.target = 22; FX.shake = 0.08; }))) return;
-  if (!(await step(3500, () => { say('Gran takes your hand. “Hold on, my dear.”', 3400); RIDE.target = 27; FX.shake = 0.16; CR.phase = 2; moveLock = true; HUSH = true; CRBEDS = { rumble: 0.7, rush: 0.3 }; }))) return;
+  if (!(await step(3500, () => { say('Gran takes your hand. “Hold on, my dear.”', 3400); RIDE.target = 27; FX.shake = 0.16; CR.phase = 2; moveLock = true; HUSH = true; CRBEDS = { rumble: 0.7, rush: 0.3 }; brace(P); }))) return;
   if (!(await step(3500, () => { say('Three long whistle blasts.', 3600); SFX.threeBlasts(); FX.shake = 0.2; }))) return;
   if (!(await step(3100, () => { say('The brakes scream.', 3000); SFX.screech(3.4); FX.shake = 0.5; CR.phase = 3; flash(0.35, 60, '#ff9a40'); setTimeout(() => flash(0, 220, '#ff9a40'), 90); $('holdwrap').hidden = false; HOLD.v = 0; goalText = 'Hold on!'; showGoal(); }))) return;
   const t0 = performance.now(); let tilt = 0;
@@ -522,12 +664,12 @@ async function arriveKendal(fromCrash) {
 }
 
 /* ---------- chapter 6: the long night ---------- */
-ON[61] = () => { ctr.water = 0; ctr.has = 0; };
+ON[61] = () => { const P = PL.crash; if (P) for (const b of P.buckets) { if (b === HAND.holding()) HAND.drop(); b.userData.given = false; P.group.add(b); b.position.set(b.userData.home[0], 0, b.userData.home[1]); b.rotation.set(0, b.userData.home[2], 0); b.visible = true; } };
 const FOLLOW = { dawn: { gap: 1.3, side: 0.5, space: 0.8 } };   /* Dawn is small: she keeps close, a step behind you and to one side (engine/follow.js) */
 ON[63] = () => { const d = byId('dawn'); if (d) { d.ctl.play(null); follow(d, FOLLOW.dawn); } };
 async function holdLamp() {
   frozen = true; busy = false; const P = P_(), ep = EP; say('You hold the lamp high.', 2600); const l = handLamp, base = l.intensity; l.intensity = 7; lampMesh.position.y = -0.18; await wait(2800); if (ep !== EP) return;
-  say('Helpers carry people up the path, safe in your light.', 3800); await wait(3800); if (ep !== EP) return; l.intensity = base; lampMesh.position.y = -0.42; frozen = false; setStage(65);
+  say('Helpers carry people up the path, safe in your light.', 3800); await wait(3800); if (ep !== EP) return; l.intensity = base; lampMesh.position.y = -0.42; frozen = false; STORY.done('lamp');
 }
 ON[65] = async () => {
   const P = P_(), ep = EP; if (cur !== 'crash') return; frozen = true; busy = false; bars(true); goalText = ''; say('The night is long. The helpers work and work.', 4200);
@@ -548,30 +690,17 @@ ON[67] = finishCh6;
 /* ---------- chapter 7: Kendal today ---------- */
 ON[70] = () => { setTimeout(() => SFX.churchBell(2), 1200 * TS); };
 async function leaveFlower() {
-  const P = P_(), ep = EP; frozen = true; const f = flowers(7); f.position.set(P.spots.wall[0] + 1.0, 0, P.spots.wall[1] + 1.0); P.group.add(f); say('You leave a flower. For a moment, everything is quiet.', 4200); SFX.churchBell(2); await wait(4800); if (ep !== EP) return; frozen = false; setStage(73);
+  const P = P_(), ep = EP; frozen = true; const f = flowers(7); f.position.set(P.spots.wall[0] + 1.0, 0, P.spots.wall[1] + 1.0); P.group.add(f); say('You leave a flower. For a moment, everything is quiet.', 4200); SFX.churchBell(2); await wait(4800); if (ep !== EP) return; frozen = false; STORY.done('flower');
 }
 ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => card('The end', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); };
 
-/* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
-const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
-const NUDGE_EXTRA = { 12: () => [30, 0] };
-function nudgeTarget() {
-  const P = P_(); if (!P) return null; if (NUDGE_EXTRA[stage]) return NUDGE_EXTRA[stage](); const a = P.actions.find((x) => x.on()); if (a) return [a.x, a.z];
-  let bestT = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; bestT = [n.x, n.z]; } } return bestT;
-}
+/* ---------- the helper arrow (engine/story.js): 2.5 s after a new goal (5 s when you are looking about), even while you walk, it points at what the step still needs ---------- */
+const _nv = new THREE.Vector3();
 function nudgeTick(now) {
-  const el = $('nudge'); if (!el) return; const quiet = state.started && !busy && !frozen && !DIR.on && !CR.on && $('holdwrap').hidden && $('dialogue').hidden && $('card').hidden && $('place').style.opacity !== '1' && !document.body.classList.contains('subbing') && goalText && !fading;
-  if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
-  if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
-  if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30000); NUDGE.still = now; }
-  const tgt = quiet ? nudgeTarget() : null;
-  if (!NUDGE.on && quiet && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
-  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
-  if (!NUDGE.on || !tgt) { el.hidden = true; return; } el.hidden = false;
-  const W = innerWidth, H = innerHeight, dx = tgt[0] - state.x, dz = tgt[1] - state.z, rel = Math.atan2(-dx, -dz) - state.yaw, a = Math.atan2(Math.sin(rel), Math.cos(rel));
-  _nv.set(tgt[0], 2.0, tgt[1]).project(camera); const lab = el.querySelector('span');
-  if (Math.abs(a) < 0.55 && _nv.z < 1) { el.style.left = Math.max(60, Math.min(W - 60, (_nv.x + 1) / 2 * W)) + 'px'; el.style.top = Math.max(110, Math.min(H * 0.62, (1 - _nv.y) / 2 * H)) + 'px'; el.className = 'down'; const sy = (1 - _nv.y) / 2 * H; lab.textContent = sy > H * 0.75 ? 'Look down' : sy < 90 ? 'Look up' : 'Here!'; }
-  else { const left = a > 0; el.style.left = (left ? 58 : W - 58) + 'px'; el.style.top = (H * 0.45) + 'px'; el.className = left ? 'left' : 'right'; lab.textContent = 'This way'; }
+  const el = $('nudge'); if (!el) return; const quiet = state.started && !busy && !frozen && !DIR.on && !CR.on && $('holdwrap').hidden && $('dialogue').hidden && $('card').hidden && !fading && !POSTER;
+  const a = STORY.tick(now, quiet); if (!a.show) { el.hidden = true; return; }
+  _nv.set(a.x, 2.0, a.z).project(camera); const p = arrowPose({ dx: a.x - state.x, dz: a.z - state.z, yaw: state.yaw, ndc: [_nv.x, _nv.y, _nv.z], W: innerWidth, H: innerHeight, final: a.final });
+  el.hidden = false; el.className = p.cls; el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; const lab = el.querySelector('span'); if (lab.textContent !== p.label) lab.textContent = p.label;
 }
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
@@ -588,7 +717,7 @@ function audioTick(t, now) {
 }
 
 /* ---------- loading and starting ---------- */
-applySave(loadGame());
+registerShows(); applySave(loadGame());
 { let done = 0; const total = 3; const tick = () => { done++; $('bar').style.width = (done / total * 100) + '%'; };
   buildPlace('kingston57'); enterPlace('kingston57');   /* the long platform and the train, as a backdrop for the title card */
   const first = CH_PLACE[hasSave && stage >= 10 ? chapterOf(stage) : 0];
@@ -613,15 +742,17 @@ function update(dt, now) {
       if (len > 0.05) { const sp = (keys.has('shift') ? 3.6 : 2.3) * Math.min(1, len), fx = -Math.sin(state.yaw), fz = -Math.cos(state.yaw); sitting = false;
         [state.x, state.z] = clampPos(state.x + (fx * f - fz * r) / Math.max(1, len) * sp * dt, state.z + (fz * f + fx * r) / Math.max(1, len) * sp * dt); stepT -= dt * sp; if (stepT <= 0) { stepT = 1.35; if (!RIDE.on || RIDE.v < 12) stepSound(FOOT[cur]); } } }
   }
-  if ((frameN & 7) === 0) for (const n of P.extras) { const d = Math.hypot(state.x - n.x, state.z - n.z); n.m.visible = d < 75 && !n.hidden; }
+  if ((frameN & 7) === 0) for (const n of P.extras) { if (n.amb) continue; const d = Math.hypot(state.x - n.x, state.z - n.z); n.m.visible = d < 75 && !n.hidden; }
   for (const n of P.npcs) npcTick(n, dt);
+  if (P.life && !POSTER) { for (const n of P.people) if (n.amb) P.life.hold(n, !!STORY.isStory(n.id) || talkWith === n);   /* a story person is never background life in their own step */
+    P.life.tick(dt, { px: state.x, pz: state.z, story: P.people.filter((n) => STORY.isStory(n.id) && n.m.visible && !n.amb), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } }); }
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
-  for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
-  if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
+  for (const n of P.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
+  if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround && !m.userData.amb) groundFeet(m);
   if (P.tick) P.tick(dt, (now || 0) / 1000); rideTick(dt, (now || 0) / 1000); smokeTick(dt);
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
-  if (cur === 'road' && stage === 12 && state.x > 24) setStage(13);
+  if (cur === 'road' && STORY.needs('poles') && state.x > 24) STORY.done('poles');   /* you reached the men with the poles */
   if (cur === 'hill' && P.train.visible) { for (const o of P.train.userData.wheels || []) o.w.rotation.z += 0; }
   if (now !== undefined) { audioTick(now / 1000, now); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }
@@ -645,7 +776,7 @@ requestAnimationFrame(frame);
 const auditPlace = (P) => { const r = auditPlaceBase(P); for (const n of P.npcs) if (isSeated(n.anim) && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); if (!n.m.userData.noGround) groundFeet(n.m);   /* the same step the game runs every other frame */
        for (const l of auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, SEATLOG)) r.inside.push(l); } return r; };
 const SEATLOG = [];   /* ?test=audit&seats=1 also prints how high each seated person's hips are above the seat */
-const auditPlaceBase = (P) => auditPlaceE({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start,
+const auditPlaceBase = (P) => auditPlaceE({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path, with: n.with })), walls: P.walls, bounds: P.bounds, start: P.start,
   actions: P.actions, people: P.people.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
 
 /* ---------- test views and scripted playthroughs: dev builds only (node tools/build.mjs kendal --dev) ---------- */
@@ -653,14 +784,14 @@ function devViews() {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), errs = [];
   addEventListener('error', (e) => { errs.push(e.message); document.title = 'ERROR ' + errs.join(' | '); });
   addEventListener('unhandledrejection', (e) => { errs.push(String((e.reason && e.reason.stack) || e.reason).slice(0, 300)); document.title = 'ERROR ' + errs.join(' | '); });
-  const go = async (id, st, x, z, yaw, pitch, env) => { const P = await ensurePlace(id); $('title').hidden = true; $('hud').hidden = false; state.started = true; enterPlace(id, { env }); stage = st; best = Math.max(best, st); state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch || 0; unlock('you', true); refreshGoal(); return P; };
+  const go = async (id, st, x, z, yaw, pitch, env) => { const P = await ensurePlace(id); $('title').hidden = true; $('hud').hidden = false; state.started = true; enterPlace(id, { env }); stage = st; best = Math.max(best, st); STORY.enter(st); state.x = x; state.z = z; state.yaw = yaw; state.pitch = pitch || 0; unlock('you', true); refreshGoal(); return P; };
   const V = {
     mule1: ['road', 11, -29.5, 6.4, -0.35, -0.05], mule2: ['road', 11, -25.4, 6.6, 0.15, -0.02], road1: ['road', 10, -33, 0.6, -1.35, 0], road2: ['road', 12, 22, 0.8, -1.5, 0.02], road3: ['road', 10, -22, 2.2, -0.1, 0],
     st1: ['station45', 20, -2, 6.5, 0.15, 0], st2: ['station45', 20, -7, 4.2, 0.9, 0.02], st3: ['station45', 20, 14, 5, 0.25, 0.05],
     hill1: ['hill', 30, -24, 5.5, -1.5, 0], hill2: ['hill', 30, -10, 4, -0.3, 0.05], loco1: ['hill', 30, -9, 2.2, -1.0, 0.02], seat1: ['coach', 52, 2.45, 0.1, 0.92, -0.3], seat2: ['coach', 52, 1.9, 0.25, 0.25, -0.38], seat3: ['coach', 52, 1.0, 0.25, -0.35, -0.38], sit1: ['crash', 61, 1.0, 7.2, 1.99, -0.15], bunch1: ['hill', 30, -11.2, 8.2, 0.75, -0.32], bunch2: ['hill', 30, -12.6, 6.6, 0.6, -0.75], loco2: ['hill', 30, 0.5, 2.6, 0, 0.0], loco3: ['hill', 30, 6.5, 2.2, 1.0, 0.0], loco4: ['hill', 30, -12, 1.0, -1.35, 0.0], eloco1: ['station45', 20, -16.5, 3.2, -1.05, 0.0], eloco2: ['station45', 20, -10.5, 3.0, 0, 0.0],
     k1: ['kingston57', 40, -22, 5, PI / 2 - 0.2, 0], k2: ['kingston57', 40, -22, 5, -PI / 2 + 0.4, 0], k3: ['kingston57', 40, -9, 6.2, 0.35, 0], k4: ['kingston57', 41, 28, 4, -PI / 2, 0],
     ride1: ['ride45', 23, 0.2, 0, PI / 2 + 0.25, 0], ride2: ['ride45', 23, 0.2, 0, 0.3, 0.05], poster: ['kingston57', 40, 47, -9.0, PI / 2 + 0.5, 0.03, ENV.gold], lurch: ['coach', 53, 1.5, 0, PI / 2 + 0.5, 0], coach1: ['coach', 51, 4.3, 0, PI / 2, 0], coach2: ['coach', 51, 0, 0, 1.2, 0], coach3: ['coach', 51, 3.2, 0.2, PI / 2 - 0.5, 0],
-    beach1: ['beach', 43, 0, 9, 0.1, 0], beach2: ['beach', 43, 8, 3, -1.2, 0],
+    beach1: ['beach', 43, 0, 9, 0.1, 0], beach2: ['beach', 43, 8, 3, -1.2, 0], band1: ['beach', 43, 10.6, 6.4, -2.1, 0.02], nurse1: ['crash', 61, -1.6, 9.9, 1.35, -0.12], bucket1: ['crash', 61, 22.5, 9.2, -1.5, -0.1], gran1: ['crash', 60, 12.2, 6.6, 2.4, -0.05], bunch3: ['hill', 31, -14.2, 3.0, 0.1, -0.15], k5: ['kingston57', 41, -14, 6.5, -1.9, 0.02], road4: ['road', 12, 27, 1.2, -2.0, 0.0], jglow: ['road', 10, -27, 4.2, 0, 0],
     crash4: ['crash', 61, 8, 4.4, 0.9, 0.04], crash1: ['crash', 60, 17, 5.8, 1.7, 0], crash2: ['crash', 60, 8, 6, 2.2, 0.05], crash3: ['crash', 61, -4, 9, 3.14, 0.02], crash5: ['crash', 66, 9, 5, 0.75, 0.0],
     mem1: ['memorial', 70, 0, 4.6, 0, 0.02], mem2: ['memorial', 71, 4, -4, 0.0, 0.1],
   };
@@ -707,6 +838,10 @@ function devViews() {
     if (shot === 'seat1') { setRigTheme(P, 'night'); setEnv(ENV.night); }
     if (/^crash/.test(shot)) { story.lamp = true; updateLamp(); if (shot === 'crash2') { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; handLamp.intensity = 0; P.torches.forEach((t) => { t.visible = false; }); } }
     if (shot === 'crash3') { setEnv(ENV.dawn); }
+    if (shot === 'bucket1') { STORY.enter(61); const b = P.buckets[0]; HAND.carry(b, { yaw: 0.3 }); }
+    if (shot === 'bunch3') { const b = P.bunches[0]; HAND.carry(b, { slot: [0.05, -0.62, -0.7], yaw: 0.4 }); b.rotation.z = 0.25; }
+    if (shot === 'jglow') { unlock('slowroad'); unlock('higglers'); }
+    if (q.has('t')) for (let i = 0; i < +q.get('t') * 20; i++) update(0.05);   /* &t=seconds lets background life move before the picture */
     if (shot === 'crash5') { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; handLamp.intensity = 0; lampMesh.visible = false; P.torches.forEach((t) => { t.visible = false; }); }
     if (/^k\d/.test(shot)) SFX.initBeds;
     for (let i = 0; i < 6; i++) update(0.05);
@@ -727,6 +862,13 @@ function devViews() {
       reset(); bars(true); say('Hold on!', 1e6); $('holdwrap').hidden = false; $('talk').hidden = true; await settle(); await new Promise((r) => setTimeout(r, 1100)); check('hold on button in the bars');
       reset(); card('About half past eleven', ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], [{ t: 'Begin', go: () => {} }, { t: 'Read what happened instead', go: () => {} }], { col: true }); await settle(); check('card');
       reset(); $('nudge').hidden = false; $('nudge').style.left = (W * 0.75 | 0) + 'px'; $('nudge').style.top = (Hh * 0.45 | 0) + 'px'; showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Give the water to the nurse'; await settle(); check('helper arrow with talk button');
+      reset(); showGoal(true); showPlace('Kendal, Manchester. About half past eleven.'); $('nudge').hidden = false; $('nudge').className = 'down'; $('nudge').style.left = (W / 2 | 0) + 'px'; $('nudge').style.top = Math.max(110, Hh * 0.3 | 0) + 'px'; await settle(); check('helper arrow with the place name');
+      /* a journal page found while someone is talking: the Journal button glows with a count at once, but the toast waits until the dialogue box closes (it never covers it) */
+      reset(); fresh = 0; showCount(); convo([{ who: 'Mass Ezra', text: 'Here. Take my lamp. It has seen many nights on the line.' }, { who: 'You', text: 'Thank you, Mass Ezra.' }]); unlock('ezra'); await settle(); check('journal page found in a dialogue');
+      { const b = $('jbtn').getBoundingClientRect(), c = $('jcount').getBoundingClientRect(); if (!$('toast').hidden) out.push(`${W}x${Hh} journal page found in a dialogue: the toast shows while the dialogue box is open`); if (!$('jbtn').classList.contains('glow') || $('jcount').hidden) out.push(`${W}x${Hh} journal page found in a dialogue: the Journal button does not glow or show its count`);
+        if (c.left < b.left - 1 || c.right > b.right + 1 || c.top < b.top - 1 || c.bottom > b.bottom + 1 || b.right > W + 1 || b.top < -1) out.push(`${W}x${Hh} journal page found in a dialogue: the count badge is outside the Journal button or off the screen`); }
+      leaveTalk(); await settle(); check('journal page toast after the dialogue'); if ($('toast').hidden || !/journal page/i.test($('toast').textContent)) out.push(`${W}x${Hh} journal page toast after the dialogue: the waiting toast did not show`);
+      openJournal(); await settle(); if ($('jbtn').classList.contains('glow')) out.push(`${W}x${Hh} journal opened: the button still glows`); closeJournal(); unlocked.splice(unlocked.indexOf('ezra'), 1);
       /* panels opened in the middle of play (the journal, the chapters list, the credits) must be on top: their title and Close button must be what you touch there */
       const covered = (name, panel, ids) => { for (const id of ids) { const e = $(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (!t || !$(panel).contains(t)) out.push(`${W}x${Hh} ${name}: ${id} is covered by ${t ? (t.id || t.className || t.tagName) : 'nothing'}`); } };
       reset(); showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; await settle();
@@ -770,6 +912,18 @@ function devViews() {
   if (['audit','collision','seating'].includes(q.get('test'))) {   /* ?test=audit&p=road,hill : floating objects, people inside solids, unreachable spots */
     (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); count += r.floating.length + r.inside.length + r.stuck.length; out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
       if (q.get('seats')) out.push(...SEATLOG); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + count; })();
+  }
+  if (q.get('test') === 'flow') {   /* ?test=flow : every step of the story (engine/story.js checkFlow): counts in goals, the arrow within 2.5 s pointing only at what is needed, a visible change for every task, flavour lines that send nobody anywhere. Expect FLOW 0. */
+    (async () => { startGame(true); for (const id of Object.keys(BUILD)) await ensurePlace(id);
+      const r = flowTest(STORY, { place: (st) => { enterPlace(placeOfStage(st)); }, start: (st) => { const P = PL[placeOfStage(st)]; return [P.start.x, P.start.z]; } }); document.title = r.text.split('\n').pop(); })();
+  }
+  if (q.get('test') === 'ambient') {   /* ?test=ambient : every place's background life runs for a minute while you walk the story's way through it (engine/ambient.js ambientCheck). Expect AMBIENT 0 in every place. */
+    (async () => { const out = []; let total = 0; startGame(true); const ST = { road: 10, station45: 20, ride45: 23, hill: 31, kingston57: 40, coach: 50, beach: 43, crash: 61, memorial: 70 };
+      for (const id of (q.get('p') || Object.keys(BUILD).join(',')).split(',')) { const P = await ensurePlace(id); enterPlace(id); stage = ST[id]; STORY.enter(ST[id]); P.life.mood(MOOD(stage)); for (const k of Object.keys(KEEPC)) delete KEEPC[k];
+        const route = [[P.start.x, P.start.z]]; for (const [k, sp] of Object.entries(STEPS)) { if (placeOfStage(+k) !== id || !sp.needs) continue; for (const kind of ['talk', 'do', 'go']) for (const e of sp.needs[kind] || []) { const p = (sp.at && sp.at[typeof e === 'string' ? e : e.id]) || storyWhere(typeof e === 'string' ? e : e.id, P); if (p && !Array.isArray(p[0]) && typeof p !== 'function') { const w = walkRoute(route[route.length - 1], [p[0] + 0.9, p[1] + 0.5], P.walls, 0.3, P.bounds); route.push(...(w.length ? w : [[p[0] + 0.9, p[1] + 0.5]])); } } }
+        const story = () => P.people.filter((n) => STORY.isStory(n.id) && !n.amb), txt = ambientTest(P.life, { route, stops: route.map((_, i) => i), story, seconds: +(q.get('s') || 60), view: (pp) => ({ x: pp[0], z: pp[1], yaw: state.yaw }) }), n = +txt.split('\n')[0].split(' ')[1];
+        total += n; out.push(id + ': ' + txt.split('\n').filter((l, i) => i === 0 || (l && !/^\S+: (wander|chat|work|sit|watch|errand|play),/.test(l)) || q.has('stats')).join('\n  ')); await new Promise((r) => setTimeout(r, 0)); }
+      out.unshift('AMBIENT ' + total); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AMBIENT ' + total; })();
   }
   if (q.get('test') === 'follow') {   /* ?test=follow : you walk the real route with Dawn, with stops and a turn back into her, and her is watched (engine/follow.js, watch): too close (inside the
        personal space), inside a wall or a solid shape (engine/audit.js auditBodies), or left far behind. Expect 0. */

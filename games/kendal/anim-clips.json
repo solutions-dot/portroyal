@@ -1,1 +1,3 @@
-["Idle", "Walk", "Run", "Talk1", "Talk2", "Talk3", "Wave", "Laugh", "Clap", "Cheer", "SitIdle", "SitTalk", "SitDisbelief", "Sad1", "Sad2", "Carry", "CarryIdle", "Cry"]
+["Idle", "Walk", "Run", "Talk1", "Talk2", "Talk3", "Wave", "Laugh", "Clap", "Cheer", "SitIdle", "SitTalk", "SitDisbelief", "Sad1", "Sad2", "Carry", "CarryIdle", "Cry",
+ "TalkM1", "TalkM2", "TalkM3", "WalkM2", "IdleM", "OldIdle", "Nod", "LookAround", "WaveSlow", "Point", "PickUp", "BriefcaseIdle", "CarryBagWalk", "CarryHeadWalk", "CarryHeadIdle",
+ "SitPoseM", "SitPoseF", "SitScared", "PlayGuitar", "PlayGuitar2", "PlayPiano", "ListenMusic", "Kneel", "TorchIdle", "HurtIdle", "HurtWalk", "Yell", "ComfortChild", "ComfortTake"]

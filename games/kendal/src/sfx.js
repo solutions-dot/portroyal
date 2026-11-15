@@ -67,3 +67,4 @@ export function mentoTick(now) {
 /* a mule's snort and the creak of a load settling on the pack frame */
 export function snort() { if (!live()) return; noiseHit(520, 0.8, 0.28, 0.14, -0.2); tone(150, 90, 0.3, 'sawtooth', 0.03, -0.2, 0.02); }
 export function settle() { if (!live()) return; tone(95, 60, 0.18, 'sine', 0.16, -0.3); noiseHit(260, 2, 0.1, 0.12, -0.3); tone(210, 175, 0.4, 'sawtooth', 0.018, -0.3, 0.1); }
+export function chime() { if (!live()) return; tone(988, 980, 0.9, 'sine', 0.05, 0.1); tone(1319, 1310, 1.1, 'sine', 0.04, 0.1, 0.14); }   /* a soft two-note chime: a new journal page */

@@ -1124,8 +1124,8 @@ def hidden(c):
     return False
 def lining_of(c):      # which garment covers this hidden piece of the body
     if c.z>NECK-0.07*s or (G.get('shoes') and c.z<ANK+0.02): return None
-    if G.get('breeches') and c.z<HIP+0.15: return 'Breeches' if c.z<HIP+0.12 else None      # no lining right at the waistband, where shirt and breeches overlap
-    if EASE_OLD or G.get('coat'): return None      # (and the shirt sleeves under a sleeveless coat) a shirt with ease stands clear of the body and no longer folds in at the chest, so it needs no lining (left in, the lining came through it at the front when walking)
+    if G.get('breeches') and c.z<HIP+0.15: return 'Breeches' if c.z<HIP+0.12 and not G.get('coathem') else None      # no lining right at the waistband, where shirt and breeches overlap; none under a coat's skirt either (seated, it came through the skirt where the breeches already lie)
+    if EASE_OLD or (G.get('coat') and not G.get('coatsleeves',True)): return None      # (and the shirt sleeves under a sleeveless coat) a shirt with ease stands clear of the body and no longer folds in at the chest, so it needs no lining (left in, the lining came through it at the front when walking)
     if G.get('coat') and G.get('coatsleeves',True): return 'Coat'
     return 'Shirt'
 if OLD:

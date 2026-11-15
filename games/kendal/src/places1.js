@@ -30,7 +30,7 @@ export function buildRoad() {
   const bankM = solid(0x9a5a38, 1); box(44, 1.1, 4.2, bankM, 34, 0.55, -9.2, g); box(44, 0.6, 7, bankM, 34, 0.3, -9.2, g); walls.push([12, -12.5, 56, -6.4]);
   for (let i = 0; i < 6; i++) box(5.6, 0.1, 0.12, TM.steel, 24, 0.1 + i * 0.12, -4.7 + (i % 2) * 0.2, g); for (let i = 0; i < 7; i++) box(2.6, 0.14, 0.22, solid(0x6b4a30, 0.95), 29, 0.1 + i * 0.15, -4.8, g);
   walls.push([21, -5.4, 27, -4]); walls.push([27.6, -5.6, 30.4, -4]);
-  for (const x of [26, 32, 38]) { const p = surveyPole(); p.position.set(x, 0, -3.5); g.add(p); }
+  for (const x of [26, 32, 38]) { const p = surveyPole(); p.position.set(x, 0, -3.5); g.add(p); walls.push([x - 0.18, -3.68, x + 0.18, -3.32]); }   /* nobody walks through a pole */
   const wb = grp(g, 36, 0, -6.6); box(0.9, 0.1, 0.5, TM.woodDark, 0, 0.45, 0, wb); cyl(0.2, 0.2, 0.06, TM.wood, 0.3, 0.2, 0.3, wb, 10).rotation.x = PI / 2;
   /* the mule, her load and a heap of baskets by Mass Dudley */
   const bess = mule(); bess.userData.noBatch = true; bess.position.set(-26, 0, 2.8); bess.rotation.y = -0.15; g.add(bess); walls.push([-27, 1.9, -24.4, 3.7]);
@@ -68,7 +68,7 @@ export function buildStation45() {
   people.push(person('clerk', 'clerk45', 'The clerk', -3, 9.4, PI, { h: 1.78 }));
   people.push(person('lady', 'lady45', 'The lady', 13, 5.2, PI, { h: 1.7 }));
   extras.push(extra('governor', 19, 1.8, PI, 'Idle', { name: 'governor' }), extra('gent45', 17.4, 2.2, PI, 'Idle'), extra('gent45', 20.6, 2.5, PI, 'Talk1'));
-  extras.push(extra('fireman', -7.1, -3.4, 0, 'Wave', { ground: 0.14 }), extra('worker45', -6.4, -2.7, PI * 1.1, 'Idle', { ground: 0.14 }));
+  extras.push(extra('fireman', -7.1, -3.4, 0, 'Idle', { ground: 0.14, react: ['WaveSlow'] }));   /* he waves now and then from the cab */
   extras.push(...crowd45(26, 21, [-20, 2.6, 30, 11], { faceZ: PI }).filter((e) => !walls.some((w) => e.x > w[0] && e.x < w[2] && e.z > w[1] && e.z < w[3])));
   return { id: 'station45', group: g, walls, bounds: { x0: -26, x1: 34, z0: 0.2, z1: 14 }, start: { x: -2, z: 6.5, yaw: 0.2 }, people, extras, env: ENV.day, train, loco, cars,
     smokers: [{ obj: loco.userData.chimney, rate: 5, v: 0.8 }], spots: { engine: [-6.5, 0.4], board: [9, 0.6] }, tick: (dt, t) => { for (const o of g.children) if (o.userData.flag) o.rotation.y = Math.sin(t * 3 + o.position.x) * 0.25; } };
@@ -100,18 +100,21 @@ export function buildHill() {
   /* two goods wagons waiting on the track, and the pile of banana bunches the farmer has cut */
   const w1 = wagon(), w2 = wagon(); w1.position.set(-20, 0, -3); w2.position.set(-12.8, 0, -3); g.add(w1, w2); walls.push([-24, -4.6, -9, -1.2]);
   const pile = grp(g, -14, 0, 5.6); pile.userData.noBatch = true; const mat = box(3.2, 0.06, 2.2, solid(0x8a7a3a, 1), 0, 0.03, 0, pile); const bunches = [];
-  for (let i = 0; i < 8; i++) { const b = bananaBunch(1.1); b.position.set(-1.2 + (i % 4) * 0.8, 0.3, -0.5 + Math.floor(i / 4) * 0.9); b.rotation.set(0, i * 1.3, PI / 2); pile.add(b); bunches.push(b); }
+  for (let i = 0; i < 8; i++) { const b = bananaBunch(1.1); b.position.set(-1.2 + (i % 4) * 0.8, 0.3, -0.5 + Math.floor(i / 4) * 0.9); b.rotation.set(0, i * 1.3, PI / 2); b.name = 'a banana bunch'; b.userData.home = { p: b.position.clone(), r: b.rotation.clone() }; pile.add(b); bunches.push(b); }   /* you carry these one by one to the wagon (engine/story.js createCarry) */
   const inWagon = []; for (let i = 0; i < 4; i++) { const b = bananaBunch(1.1); b.position.set(-14.6 + (i % 2) * 0.8, 0.44, -3.3 + Math.floor(i / 2) * 0.7); b.rotation.set(0, i, PI / 2); b.visible = false; b.userData.noBatch = true; g.add(b); inWagon.push(b); }
   for (const [x, z] of [[-3, 6.8], [8, 9], [20, 7]]) { const c = crate(0.8); c.position.set(x, 0, z); g.add(c); } for (let i = 0; i < 3; i++) { const b = barrel(); b.position.set(14 + i * 0.7, 0, 8.4); g.add(b); }
-  const bp = bench(2.2); bp.position.set(-1, 0, 9.3); bp.rotation.y = PI; g.add(bp);
+  const bp = bench(2.2); bp.position.set(-1, 0, 8.7); bp.rotation.y = PI; g.add(bp);
   /* the train that climbs in: a steam engine, its tender, a carriage and a wagon. It starts far to the east and runs west to the platform. */
   const train = grp(g, 0, 0, -3); const loco = steamLoco('late'); loco.position.x = -1.2; train.add(loco);
   const car = carriage1845('first', 6.2); car.position.x = 10; train.add(car); const w3 = wagon(); w3.position.x = 17.4; train.add(w3);
   train.userData.wheels = [loco, car, w3].flatMap((v) => v.userData.wheels); train.position.x = 90; train.visible = false; train.userData.noBatch = true;
+  /* a brake handle on the platform side of the tender, the carriage and the far wagon: checking a brake pulls its handle down and hangs a white tag on it */
+  const levers = [[loco, 4.7], [car, 0], [w1, 2.6]].map(([v, lx]) => { v.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(v), o = v.getWorldPosition(new THREE.Vector3()), x = Math.max(bb.min.x - o.x + 0.3, Math.min(bb.max.x - o.x - 0.3, lx));
+    const L = grp(v, x, 0.32, bb.max.z - o.z + 0.04); L.userData.noBatch = true; box(0.08, 0.16, 0.06, TM.steel, 0, 0, 0, L); const h = grp(L, 0, 0.02, 0.05); box(0.035, 0.36, 0.035, solid(0xb83a2a, 0.6), 0, 0.17, 0, h); h.rotation.z = 0.5; const tag = box(0.08, 0.1, 0.012, solid(0xf4f0e4, 0.9), 0, 0.3, 0.025, h); tag.visible = false; L.userData.handle = h; L.userData.tag = tag; return L; });
   people.push(person('gordon', 'stationmaster', 'Mr. Gordon', -0.5, 7.4, PI, { h: 1.78 }));
   people.push(person('abel', 'foreman', 'Mr. Abel', -18, 2.2, PI * 1.1, { h: 1.8 }));
   people.push(person('ezraboy', 'ezraBoy', 'Ezra', 6, 4.4, PI * 1.2, { h: 1.15 }));
   people.push(person('ruby', 'farmer', 'Miss Ruby', -10.4, 6.2, PI * 0.8, { h: 1.7 }));
-  return { id: 'hill', group: g, walls, bounds: { x0: -28, x1: 42, z0: 0.2, z1: 13.5 }, start: { x: -22, z: 5.5, yaw: -PI / 2 }, people, extras, env: ENV.morning, train, loco, bunches, inWagon, w1, w2,
+  return { id: 'hill', group: g, walls, bounds: { x0: -28, x1: 42, z0: 0.2, z1: 13.5 }, start: { x: -22, z: 5.5, yaw: -PI / 2 }, people, extras, env: ENV.morning, train, loco, bunches, inWagon, w1, w2, pile, levers,
     smokers: [{ obj: loco.userData.chimney, rate: 6, v: 1.0, needsTrain: true }], spots: { pile: [-12.6, 4.0], wagon: [-14.4, 0.6], brakes: [[3.5, 0.5], [10, 0.5], [-17.4, 0.5]] }, tick: () => {} };
 }
