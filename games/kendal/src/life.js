@@ -14,7 +14,7 @@ const isMan = (e) => /^man_|^boy$|^student/.test(e.base);
 const holds = (e) => !!(e.props && e.props.length) || !!e.lamp;
 const idlesOf = (e) => (isElder(e) ? ['OldIdle', 'Idle'] : isMan(e) && !isKid(e) ? ['IdleM', 'Idle'] : ['Idle', 'LookAround']);
 const talksOf = (e) => (isMan(e) ? ['TalkM1', 'TalkM2', 'Talk2'] : ['Talk1', 'Talk2', 'Talk3']);
-const walkOf = (e) => (isMan(e) && !isKid(e) && !isElder(e) ? 'WalkM2' : 'Walk');
+const walkOf = (e) => (isMan(e) && !isKid(e) && !isElder(e) ? 'WalkM2' : 'Walk');   /* a man's own walk (WalkM2 slides less than the engine's WalkM on our bodies: ?test=walkers) */
 const at = (e, kind, spec = {}) => { e.life = { kind, ...spec }; delete e.path; e.walker = false; return e; };
 const clampTo = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -42,10 +42,10 @@ function crowd(list, o) {
 }
 
 const PLACES = {
-  road(P, people, extras) {   /* the railway works: two men carry baskets of earth from the cutting to the spoil heap, two talk, one picks up stones */
+  road(P, people, extras) {   /* the railway works: two men carry baskets of earth on their heads from the cutting to the spoil heap, two talk, one picks up stones */
     const w = extras.filter((e) => e.base === 'man_work');
-    if (w[0]) at(w[0], 'work', { between: [[19.2, -3.0], [35.2, -2.9]], walk: 'Carry', idle: 'CarryIdle', back: 'WalkM2', load: 'crate', wait: [2, 4] });
-    if (w[1]) { w[1].x = 18.6; w[1].z = -2.7; at(w[1], 'work', { between: [[18.6, -2.7], [34.8, -2.4]], walk: 'Carry', idle: 'CarryIdle', back: 'WalkM2', load: 'crate', wait: [3, 6] }); }
+    if (w[0]) at(w[0], 'work', { between: [[19.2, -3.0], [35.2, -2.9]], walk: 'CarryHeadWalk', idle: 'CarryHeadIdle', back: 'WalkM2', load: 'basket', wait: [2, 4] });
+    if (w[1]) { w[1].x = 18.6; w[1].z = -2.7; at(w[1], 'work', { between: [[18.6, -2.7], [34.8, -2.4]], walk: 'CarryHeadWalk', idle: 'CarryHeadIdle', back: 'WalkM2', load: 'basket', wait: [3, 6] }); }   /* baskets of earth carried on the head, from the cutting to the spoil heap */
     if (w[2]) { w[2].x = 41; w[2].z = -4.3; at(w[2], 'chat', { group: 'navvies', talks: ['TalkM1', 'TalkM2'], idles: ['IdleM', 'Idle'] }); }
     if (w[3]) { w[3].x = 42.1; w[3].z = -4.9; w[3].ground = 0; at(w[3], 'chat', { group: 'navvies', talks: ['TalkM1', 'TalkM2'], idles: ['IdleM', 'Idle'] }); }
     extras.push(at({ ...LOOKS.worker45, x: 40.2, z: -2.4, ry: PI, anim: 'Idle', skin: 1.05 }, 'work', { clip: 'PickUp', once: true, work: [4, 6], rest: [2, 4], idles: ['IdleM'] }));
@@ -95,7 +95,7 @@ const PLACES = {
       else if (!e.lamp && i % 4 === 1) at(e, 'watch', { at: [e.x - 2, e.z - 6], idles: ['Kneel', 'Kneel', 'Sad1'], sadIdles: ['Kneel', 'Kneel', 'Sad1'], every: [8, 14], stay: true });   /* kneeling at the edge of the gully, looking for people */
       else at(e, 'watch', { at: [-14, -12], idles: e.lamp ? ['TorchIdle', 'Idle'] : ['Sad1', 'Sad2'], sadIdles: e.lamp ? ['TorchIdle', 'Sad1'] : ['Sad1', 'Sad2', 'Idle'], every: [5, 9], stay: true });
     });
-    extras.push(at({ ...LOOKS.worker45, hat: false, x: -9.2, z: 4.2, ry: 0.6, anim: 'HurtIdle', skin: 1.0, tint: { ...LOOKS.worker45.tint, Shirt: 0xb8b0a0 } }, 'wander', { pts: [[-9.2, 4.2], [-7.4, 4.9], [-8.6, 5.6]], walk: 'HurtWalk', idles: ['HurtIdle'], sadIdles: ['HurtIdle'], speed: 0.6, pause: [5, 9], stay: true }));   /* a survivor who can walk, slowly, by the fire */
+    extras.push(at({ ...LOOKS.worker45, hat: false, x: -9.2, z: 4.2, ry: 0.6, anim: 'HurtIdle', skin: 1.0, tint: { ...LOOKS.worker45.tint, Shirt: 0xb8b0a0 } }, 'wander', { pts: [[-9.2, 4.2], [-7.4, 4.9], [-8.6, 5.6]], walk: 'Walk', idles: ['HurtIdle'], sadIdles: ['HurtIdle'], speed: 0.55, pause: [5, 9], stay: true }));   /* a survivor who can walk, slowly, by the fire */
   },
   memorial(P, people, extras) {   /* a school group at the memorial (calm): they look at the monument, two talk quietly. They stand to one side, clear of the ways to Miss Joy, Andre, the monument and the flowers */
     const spots = [[9.4, -2.0], [10.5, -1.3], [11.6, -2.1], [9.9, -0.4], [11.0, -0.1], [12.2, -0.9]];
