@@ -41,3 +41,6 @@ games/melissa/site/models/anims.js
 
 # Python byte code (from running tools/anims/handmade.py and others)
 __pycache__/
+
+# Shared title controls are copied into every game by the build.
+games/*/site/title.css

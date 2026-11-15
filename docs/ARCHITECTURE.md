@@ -35,6 +35,7 @@ games/
   tivoli/                 Tivoli (moved from games/_tivoli/ when it went on the menu)
   _template/              a small working starter for a new game (not published)
 menu/index.html           the game picker page: one card per game, all eight on it
+menu/intro.js, intro.css  the animated opening with sound that plays before the menu (docs/PLATFORM.md)
 tools/                    the asset pipeline (see PIPELINE.md) and the build script
   garvey/era.py           the clothes builder every game's people come from
   people/pack.mjs         packs built bodies for a game

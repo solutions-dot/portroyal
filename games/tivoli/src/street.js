@@ -20,8 +20,8 @@ function materials() {
   return {
     asphalt: W(TX.asphalt(), TX.TILE.asphalt, 0.95, 1.1), paving: W(TX.paving(), TX.TILE.paving), grass: W(TX.grass(), TX.TILE.grass),
     cream: st(0xdccfae, 3), blue: st(0xa6bfcb, 4), pink: st(0xdcb7a6, 5), green: st(0xb0c4a2, 6), yellow: st(0xe2d28a, 7), white: st(0xe8e4d8, 8), rawblock: W(TX.block(0x9a968c), TX.TILE.block),
-    wallw: W(TX.block(0xe4e0d2, 9), TX.TILE.block), zinc: W(TX.zinc(), TX.TILE.zinc, 0.6), roofc: W(TX.stucco(0x8c8c88, 10), TX.TILE.stucco),
-    win: M(0x364049, 0.5), frame: M(0xe6e2d6), slat: M(0x3a444c, 0.5), bar: M(0x2a2a2e, 0.6, 0.3), door: M(0x4a3a2c), kerb: M(0xb4b0a4), drain: M(0x1a1a1c), mark: M(0xdad6c4),
+    fence: W(TX.fenceBlock(), TX.TILE.fence, 0.9, 1.1), wallw: W(TX.block(0xe4e0d2, 9), TX.TILE.block), zinc: W(TX.zinc(), TX.TILE.zinc, 0.6), roofc: W(TX.stucco(0x8c8c88, 10), TX.TILE.stucco),
+    win: M(0x364049, 0.5), frame: M(0xe6e2d6), slat: M(0x3a444c, 0.5), bar: M(0x2a2a2e, 0.6, 0.3), gate: M(0xf0eee6, 0.6, 0.2), door: M(0x4a3a2c), kerb: M(0xb4b0a4), drain: M(0x1a1a1c), mark: M(0xdad6c4),
     tank: M(0x1d1d20, 0.7), dish: M(0xe0e0e0, 0.5, 0.2), ac: M(0xc4c6c6, 0.6), rebar: M(0x7a4a30, 0.8, 0.3), pole: M(0x6a5e50), insul: M(0x2d6a60, 0.4), lamp: new THREE.MeshStandardMaterial({ color: 0xeeeedd, emissive: 0x555544 }),
     trunk: M(0x5d4a35), leaf1: M(0x4d7a39), leaf2: M(0x628a45), leaf3: M(0x3f6a35), frond: M(0x5a8a3a), tyre: M(0x1b1b1d), wood: M(0x8c6b45), plank: M(0xa88a5c), rust: M(0x8a5a3c, 0.8, 0.3), junk: M(0x6a6a68),
     glass: M(0x2a3640, 0.2, 0.4), laundry1: M(0xd04a3a), laundry2: M(0x3a6ac0), laundry3: M(0xf0ece0), laundry4: M(0xe0c030),
@@ -31,6 +31,7 @@ function materials() {
 
 export function buildStreet(opts = {}) {
   const rnd = rngOf(20100524), g = new THREE.Group(), spots = {}, lines = [], X = materials();
+  const solids = [], SO = (kind, x0, x1, z0, z1, y0, y1, name = kind) => solids.push({ kind, name, x0: Math.min(x0, x1), x1: Math.max(x0, x1), z0: Math.min(z0, z1), z1: Math.max(z0, z1), y0, y1 });   /* the solid things, as boxes, for the overlap check (?test=audit) */
   const box = (mat, w, h, d, x, y, z, ry = 0, rz = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y + h / 2, z); m.rotation.set(0, ry, rz); g.add(m); return m; };
   const cyl = (mat, r, h, x, y, z, seg = 12, rx = 0, rz = 0, r2 = r) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r2, r, h, seg), mat); m.position.set(x, y + h / 2, z); m.rotation.set(rx, 0, rz); g.add(m); return m; };
 
@@ -48,6 +49,7 @@ export function buildStreet(opts = {}) {
   /* ---- walk-up flats: render, plinth, balconies with railings and burglar bars, louvred windows, laundry, dishes, rooftop tanks and rebar ---- */
   function flats(x, z, w, d, floors, mat, facing = 1) {
     const h = floors * 3.1, fz = z + facing * (d / 2 + 0.02), cols = Math.floor(w / 3.2), tall = floors > 2;
+    SO('building', x - w / 2 - 0.15, x + w / 2 + 0.15, z - d / 2 - 0.15, z + d / 2 + 0.15, 0, h + 0.9, 'flats@' + x + ',' + z); if (floors > 1) SO('building', x - w / 2, x + w / 2, facing > 0 ? z + d / 2 : z - d / 2 - 1.4, facing > 0 ? z + d / 2 + 1.4 : z - d / 2, 3, h, 'balconies@' + x + ',' + z);
     box(mat, w, h, d, x, 0, z); box(X.rawblock, w + 0.05, 0.9, d + 0.05, x, 0, z);                                  /* the body and a darker plinth */
     box(X.roofc, w + 0.3, 0.3, d + 0.3, x, h, z); box(mat, w + 0.3, 0.55, 0.2, x, h + 0.3, z + facing * (d / 2 + 0.05));   /* roof slab and a parapet on the street side */
     for (let f = 0; f < floors; f++) {
@@ -68,9 +70,11 @@ export function buildStreet(opts = {}) {
     for (let r = 0; r < 8; r++) box(X.rebar, 0.025, 1.3 + rnd() * 0.6, 0.025, x + w / 2 - 1 - (r % 4) * 0.3, h + 0.3, z - d / 2 + 0.8 + ((r / 4) | 0) * 0.3);   /* rebar left standing for a floor not yet built */
   }
   function shop(x, z, w, d, mat, signText, signBg) {   /* a low shop on the south side (front faces -z) with a zinc roof, a roll-down shutter and a painted sign */
+    SO('building', x - w / 2 - 0.35, x + w / 2 + 0.35, z - d / 2 - 0.35, z + d / 2 + 0.35, 0, 3.6, 'shop@' + x); SO('building', x - w / 2 - 0.2, x + w / 2 + 0.2, z - d / 2 - 1.95, z - d / 2, 3.2, 3.45, 'walkway@' + x); for (const cx of [-w / 2 + 0.15, 0, w / 2 - 0.15]) SO('post', x + cx - 0.12, x + cx + 0.12, z - d / 2 - 1.95, z - d / 2 - 1.7, 0, 3.2, 'post@' + x);
     box(mat, w, 3.4, d, x, 0, z); box(X.rawblock, w + 0.05, 0.7, d + 0.05, x, 0, z); const r = box(X.zinc, w + 0.7, 0.14, d + 0.7, x, 3.4, z); r.rotation.z = 0.05;
     const fz = z - (d / 2 + 0.04); box(X.zinc, w * 0.72, 2.3, 0.08, x, 0.1, fz); for (let k = 0; k < 14; k++) box(X.bar, 0.02, 2.3, 0.02, x - w * 0.34 + k * (w * 0.68 / 13), 0.1, fz - 0.05);
     const sg = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.7, 0.9), new THREE.MeshStandardMaterial({ map: TX.sign(signText, signBg), roughness: 0.7 })); sg.position.set(x, 2.95, fz - 0.06); sg.rotation.y = Math.PI; lines.push(sg);
+    box(X.roofc, w + 0.4, 0.18, 1.9, x, 3.22, fz - 1.0); for (const cx of [-w / 2 + 0.15, 0, w / 2 - 0.15]) box(X.wallw, 0.24, 3.22, 0.24, x + cx, 0, fz - 1.8);   /* a covered walkway: a concrete slab on square posts over the pavement (Coronation Market street, Gleaner, 26 May 2010) */
   }
 
   /* north side: tall flats; south side: shops and lower flats (the child's window is on the x = 22 block, second floor, at the east end) */
@@ -78,14 +82,29 @@ export function buildStreet(opts = {}) {
   shop(-14, 12, 8, 7, X.wallw, 'GROCERY', 0xd8c02a); shop(-30, 12, 9, 7, X.pink, 'BAR & LOUNGE', 0x2f6a8a); flats(-8, 14, 14, 8, 2, X.blue, -1); flats(22, 14, 14, 8, 2, X.cream, -1);
   for (let x = 2; x < 15; x += 1.2) box(X.zinc, 1.22, 2.1, 0.06, x + 0.6, 0, 9.9, 0.02 * ((x * 7) % 3 - 1));   /* a vacant lot behind a zinc-sheet fence, between the flats */ flats(-46, 14, 12, 8, 2, X.yellow, -1);
 
+  /* ---- white block fences and gates along the lanes, with bushy shrubs behind (Gleaner photographs, 24 to 27 May 2010: white cast-block fences with round openings, iron gates, thick greenery) ---- */
+  function fenceRun(x0, x1, z, gate) {
+    SO('fence', x0 - 0.15, x1 + 0.15, z - 0.17, z + 0.17, 0, 1.6, 'fence@' + x0);
+    const n = Math.round((x1 - x0) / 1.3), step = (x1 - x0) / n;
+    for (let i = 0; i < n; i++) { const cx = x0 + (i + 0.5) * step; if (Math.abs(cx - gate) < 0.9) continue; box(X.fence, step - 0.22, 1.3, 0.16, cx, 0.0, z); box(X.wallw, step - 0.1, 0.1, 0.22, cx, 1.3, z); }
+    for (let i = 0; i <= n; i++) { const px = x0 + i * step; if (Math.abs(px - gate) < 0.5 || Math.abs(px - gate) < 1.05) { box(X.wallw, 0.3, 1.6, 0.3, px, 0, z); box(X.wallw, 0.38, 0.1, 0.38, px, 1.6, z); } else if (i % 2 === 0) { box(X.wallw, 0.26, 1.45, 0.26, px, 0, z); } }
+    box(X.wallw, 0.3, 1.6, 0.3, gate - 0.95, 0, z); box(X.wallw, 0.3, 1.6, 0.3, gate + 0.95, 0, z);
+    for (let b = 0; b < 9; b++) box(X.gate, 0.03, 1.3, 0.03, gate - 0.64 + b * 0.16, 0.05, z); box(X.gate, 1.4, 0.04, 0.04, gate, 0.35, z); box(X.gate, 1.4, 0.04, 0.04, gate, 1.1, z);   /* the white iron gate */
+  }
+  fenceRun(-9.2, -1.6, 8.5, -5.7); fenceRun(15.4, 24.2, 8.5, 19.8);
+  function bush(x, z, s = 1) { SO('bush', x - 1.5 * s, x + 1.5 * s, z - 1.1 * s, z + 1.1 * s, 0, 2.3 * s, 'bush@' + x + ',' + z); for (const [dx, dy, dz, r, mm] of [[0, 1.1, 0, 0.9, X.leaf1], [0.7, 0.8, 0.2, 0.7, X.leaf2], [-0.6, 0.9, -0.2, 0.75, X.leaf3], [0.1, 1.7, 0, 0.6, X.leaf2]]) { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(r * s, 1), mm); l.position.set(x + dx * s, dy * s, z + dz * s); g.add(l); } }
+  for (const [x, z, sc] of [[-8.6, 9.2, 0.5], [-3.0, 9.2, 0.5], [16.8, 9.2, 0.5], [22.6, 9.2, 0.5], [4, 12, 1.1], [13, 12, 0.9]]) bush(x, z, sc);
+
   /* ---- cover and vehicles ---- */
+  SO('cover', -2.2, -1.8, -4.5, -0.3, 0, 1.15, 'wallA'); SO('cover', -11.2, -10.8, 0.8, 4.4, 0, 1.15, 'wallB');
   box(X.wallw, 0.35, 1.15, 4.2, -2, 0, -2.4); spots.wallA = [[-0.7, -3.4], [-0.7, -2.2], [-0.7, -1.2]];
   box(X.wallw, 0.35, 1.15, 3.6, -11, 0, 2.6); spots.wallB = [[-9.7, 3.4], [-9.7, 2.2]];
   const car = sedan(0x4c6a5c); car.position.set(2, 0, 1.9); car.rotation.y = 0.04; g.add(car); spots.car = [[4.7, 2.9], [5.9, 1.7], [4.6, 0.5]];
   const van = minibus(0xb9d0de, 0xb9d0de); van.position.set(-17, 0, -2.6); van.rotation.y = 0.1; g.add(van); spots.van = [[-14.3, -2.6], [-14.4, -3.8]];
   const parked = sedan(0xb1b6ba); parked.position.set(-6, 0, 5.2); parked.rotation.y = Math.PI; g.add(parked);                       /* parked at the south kerb */
-  const parked2 = minibus(0xe2cf7a, 0xe2cf7a); parked2.position.set(14, 0, -5.4); parked2.rotation.y = Math.PI; g.add(parked2);         /* a second minibus at the north kerb */
+  const parked2 = minibus(0xe2cf7a, 0xe2cf7a); parked2.position.set(17.6, 0, -5.4); parked2.rotation.y = Math.PI; g.add(parked2);         /* a second minibus at the north kerb */
   const parked3 = sedan(0x8a2d2a); parked3.position.set(-34, 0, 5.4); parked3.rotation.y = Math.PI + 0.05; g.add(parked3);
+  SO('shelter', -26, -22, 2.3, 4.2, 0, 2.7, 'busstop');
   box(X.zinc, 3.6, 0.1, 1.6, -24, 2.4, 3.2); for (const dx of [-1.7, 1.7]) box(X.pole, 0.1, 2.4, 0.1, -24 + dx, 0, 3.2); box(X.pole, 0.08, 2.7, 0.08, -24 + 2.2, 0, 3.2); box(X.frame, 0.06, 0.6, 0.5, -24 + 2.2, 2.1, 3.2);   /* bus shelter and a bus stop sign on its post */
 
   /* ---- the barricade at x = -27: an overturned minibus and a car pushed across the road, tyres, pallets, planks and rubble ---- */
@@ -99,16 +118,17 @@ export function buildStreet(opts = {}) {
 
   /* ---- poles, wires, street lamps, trees, hills ---- */
   const poles = [30, 14, -2, -18, -34, -50].map((x) => [x, -5.5]);
-  for (const [x, z] of poles) { box(X.pole, 0.24, 8.4, 0.24, x, 0, z); box(X.pole, 2.2, 0.14, 0.14, x, 7.4, z); for (const o of [-0.9, 0, 0.9]) cyl(X.insul, 0.06, 0.22, x + o, 7.5, z, 6); box(X.frame, 0.3, 0.5, 0.06, x, 3.2, z + 0.15); }
+  for (const [x, z] of poles) { SO('pole', x - 0.15, x + 0.15, z - 0.15, z + 0.15, 0, 8.4, 'pole@' + x); SO('pole', x - 1.1, x + 1.1, z - 0.1, z + 1.7, 6.2, 7.7, 'crossarm@' + x); box(X.pole, 0.24, 8.4, 0.24, x, 0, z); box(X.pole, 2.2, 0.14, 0.14, x, 7.4, z); for (const o of [-0.9, 0, 0.9]) cyl(X.insul, 0.06, 0.22, x + o, 7.5, z, 6); box(X.frame, 0.3, 0.5, 0.06, x, 3.2, z + 0.15); }
   const wireMat = new THREE.LineBasicMaterial({ color: 0x1a1a1c });
   for (let i = 0; i < poles.length - 1; i++) for (const o of [-0.9, 0, 0.9]) { const a = poles[i], b = poles[i + 1], pts = []; for (let k = 0; k <= 10; k++) { const u = k / 10; pts.push(new THREE.Vector3(a[0] + (b[0] - a[0]) * u + o, 7.7 - Math.sin(u * Math.PI) * 0.7, a[1])); } lines.push(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireMat)); }
   for (const [x, z] of poles) { box(X.pole, 0.08, 0.08, 1.6, x, 6.4, z + 0.8); box(X.lamp, 0.28, 0.14, 0.5, x, 6.26, z + 1.5); }   /* street lamps on arms from the utility poles */
-  function mango(x, z, s = 1) { cyl(X.trunk, 0.28 * s, 3 * s, x, 0, z, 8); [[0, 4.4, 0, 2.6, X.leaf1], [1.6, 4.0, 0.6, 1.9, X.leaf2], [-1.5, 3.9, -0.5, 2.0, X.leaf3], [0.2, 5.4, -0.3, 1.8, X.leaf2]].forEach(([dx, dy, dz, r, mm]) => { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(r * s, 1), mm); l.position.set(x + dx * s, dy * s, z + dz * s); g.add(l); }); }
+  function mango(x, z, s = 1) { SO('tree', x - 3.3 * s, x + 3.3 * s, z - 2.6 * s, z + 2.6 * s, 1.9 * s, 7.2 * s, 'mango@' + x + ',' + z); SO('tree', x - 0.4, x + 0.4, z - 0.4, z + 0.4, 0, 3 * s, 'trunk@' + x); cyl(X.trunk, 0.28 * s, 3 * s, x, 0, z, 8); [[0, 4.4, 0, 2.6, X.leaf1], [1.6, 4.0, 0.6, 1.9, X.leaf2], [-1.5, 3.9, -0.5, 2.0, X.leaf3], [0.2, 5.4, -0.3, 1.8, X.leaf2]].forEach(([dx, dy, dz, r, mm]) => { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(r * s, 1), mm); l.position.set(x + dx * s, dy * s, z + dz * s); g.add(l); }); }
   function palm(x, z, s = 1, lean = 0.08) {   /* a coconut palm: a tapering, slightly leaning trunk and nine drooping fronds round the crown */
-    const hgt = 7 * s; cyl(X.trunk, 0.2 * s, hgt, x, 0, z, 8, 0, lean, 0.14 * s); const cx = x - Math.sin(lean) * hgt * 0.5;
+    const hgt = 7 * s; SO('tree', x - 3.2 * s, x + 3.2 * s, z - 3.2 * s, z + 3.2 * s, 0, hgt + 0.2, 'palm@' + x + ',' + z); cyl(X.trunk, 0.2 * s, hgt, x, 0, z, 8, 0, lean, 0.14 * s); const cx = x - Math.sin(lean) * hgt * 0.5;
     for (let i = 0; i < 9; i++) { const a = i * 0.698, f = box(X.frond, 0.8 * s, 0.04, 3.0 * s, cx + Math.cos(a) * 1.3 * s, hgt - 0.1, z + Math.sin(a) * 1.3 * s); f.rotation.order = 'YXZ'; f.rotation.set(0.7, Math.PI / 2 - a, 0); }
   }
-  mango(26, 9, 1); mango(-22, 9.6, 1.2); mango(-34, -9.2, 1); mango(40, 8.5, 1.3); palm(30, 8.4, 1, 0.1); palm(-20, 9.8, 1.1, -0.07); palm(1, 13.2, 0.8, 0.05); palm(-40, 9.4, 1, 0.09); palm(14, -9.4, 1.2, -0.06);
+  /* trees stand only in the gaps between buildings (the overlap check in ?test=audit keeps them out of walls): south gaps x -24.8 to -18.7, -39.8 to -35.2 and past 29; the vacant lot x -0.8 to 14.8; north gaps x -16.8 to -10.2, -35.8 to -31.2 and 6.2 to 12.8 */
+  mango(-21.75, 9.6, 0.8); mango(-13.5, -10, 0.8); mango(-33.5, -10.4, 0.65); mango(40, 8.5, 1.3); palm(32.5, 9.5, 1, 0.1); palm(-37.5, 9.6, 0.7, 0.09); palm(3, 13.6, 0.8, 0.05); palm(11, 13.8, 0.9, -0.06); palm(9.5, -10, 0.9, -0.06);
   for (const [x, z, r, hh, c] of [[-170, -20, 70, 40, 0], [-150, 70, 60, 34, 0], [-120, -90, 80, 50, 0], [-40, -150, 90, 46, 0], [60, -160, 100, 52, 0], [150, -60, 80, 40, 0], [-200, 30, 90, 56, 0]]) { const h = new THREE.Mesh(new THREE.ConeGeometry(r, hh, 9), X.hill); h.position.set(x, hh / 2 - 2, z); g.add(h); }   /* the hills round Kingston, hazy in the distance */
 
   /* dust spots: the walls and ground where the fighting kicks up dust, away from where anyone stands (x, y, z) */
@@ -120,5 +140,7 @@ export function buildStreet(opts = {}) {
   for (const l of lines) out.add(l);
 
   const sun = addSky(out, rnd, { shadows: opts.shadows });
-  return { group: out, spots, sun, raw: g };   /* raw: the unmerged parts, for the place audit (?test=audit) */
+  /* vehicles: boxes from their real bounds, found after they are placed */
+  for (const [nm, v] of [['car', car], ['van', van], ['parked', parked], ['parked2', parked2], ['parked3', parked3]]) { v.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(v); solids.push({ kind: 'vehicle', name: nm, x0: b.min.x, x1: b.max.x, z0: b.min.z, z1: b.max.z, y0: b.min.y, y1: b.max.y }); }
+  return { group: out, spots, sun, raw: g, solids };   /* raw: the unmerged parts, for the place audit (?test=audit) */
 }

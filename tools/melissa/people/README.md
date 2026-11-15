@@ -30,4 +30,17 @@ Then point the looks in `games/melissa/src/cast.js` at the new body ids, and run
 
 ## Hurricane Charlie, 1951 (chapter 1)
 
-The people of 1951 (`papa51`, `mama51`, `cyril`, `ivy51` in `cast.js`) use the Kendal bodies `man_work`, `woman57`, `man_elder` and `woman_elder` as they are: those bodies were built for the 1950s, so no new recipe is needed for them. Check their clothes against 1951 photographs when the bodies are reviewed (a general picture of the 1950s, not copied from photographs).
+The people of 1951 (`papa51`, `mama51`, `cyril`, `ivy51` in `cast.js`) use the Kendal bodies `man_work`, `woman57`, `man_elder` and `woman_elder` as they are: those bodies were built for the 1950s, so no new recipe is needed for them. Check their clothes against 1951 photographs when the bodies are reviewed (a general picture of the 1950s, not copied from photographs). `docs/STANDARD.md` (section 1) says a body may be shared only if it was made for the same period and the same kind of person, and its table lists borrowing as a gap: decide with the owner whether the 1951 people get recipes of their own (`era: 1951`) once the builder fix lands.
+
+## Building where GitHub is blocked (trial run, 15 November 2026)
+
+`docs/PIPELINE.md` says to `git clone` MakeHuman, which fails where GitHub is blocked. Everything `era.py` needs was reachable another way. **Nothing from this trial was kept in the game:** the owner put the bodies on hold (build none until the builder fix lands on `origin/main`, then follow `docs/STANDARD.md`). These are the steps and what they showed, for whoever builds them.
+
+1. Blender as a module: `uv venv --python 3.13 ~/venv && uv pip install --python ~/venv/bin/python bpy==5.3.0` (PyPI).
+2. MPFB 2.0.18 from the Blender extensions site (`https://extensions.blender.org/api/v1/extensions/`, find `mpfb`, download its `archive_url` with `curl -L`, sha256 `c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad`). Unzip it into `~/.config/blender/5.3/extensions/user_default/mpfb/`. `era.py` then enables it as `bl_ext.user_default.mpfb`.
+3. The eye mesh `era.py` reads from `$MAKEHUMAN/data/eyes/low-poly/`: it is in the MakeHuman system assets (CC0), `https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip` (about 280 MB). Unzip it into `/tmp/mh/makehuman/data/` and set `MAKEHUMAN=/tmp/mh/makehuman`. (The `makehuman` wheel on PyPI does not contain the eyes.)
+4. Hosts a sandbox must allow: `extensions.blender.org`, `files.makehumancommunity.org` (and `static.makehumancommunity.org` to read the pack's page). `github.com` was not needed.
+5. Then the two commands above build and pack: about 3 seconds a body, all six inside the budgets (25,500 to 26,500 triangles, 375 to 400 KB full; 6,000 to 6,200 triangles light).
+
+What the six showed in the game's own checks (a trial in the working tree, not committed): `?test=held` 0, `?test=walkers` 0, `?test=skin` every face inside the rule 9 range once `Hair` is no longer multiplied, `?test=cloth` 0 for four of the six as written. The two elders needed small recipe changes to reach 0 in `?test=cloth`: `elderwoman2025` with `"collar": "round"` and `"sleeve": 0.4` (no collar left skin showing at the back of the neck), and `elderman2025` with `"sleeve": 0.5` (0.3, 0.4 and 0.6 each left a fault of 2 to 17 mm in the light copy or the sitting pose; the result moves with `sleeve`, so recheck after any change). The recipes in this folder are still the originals.
+
