@@ -33,6 +33,7 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 | Working on Bog Walk 1904 | `docs/games/bog-walk.md` |
 | Working on Nanny Town 1734 | `docs/games/nanny.md` |
 | Working on Eventide Home | `docs/games/eventide.md` |
+| Working on the menu, the intro, or the platform name and idea | `docs/PLATFORM.md` |
 | Working on Hurricane Melissa | `docs/games/melissa.md` |
 | Working on Tivoli | `docs/games/tivoli.md` |
 
