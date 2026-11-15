@@ -48,15 +48,17 @@ const hasRun = (n) => { const c = n.ctl || (n.m && n.m.userData.anim); return !!
 function turn(n, want, dt, k = 5) { const m = n.m; if (!m) return; let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); }
 const facePlayer = (n, W, dt, k = 3) => turn(n, Math.atan2(W.px - n.x, W.pz - n.z), dt, k);
 function place(n, W) { if (W.place) W.place(n); else if (n.m) { n.m.position.x = n.x; n.m.position.z = n.z; } }
-const freeAt = (W, x, z, r, n) => !(W.blocked && W.blocked(x, z, r)) && !(W.others || []).some((o) => o !== n && o.m && o.m.visible !== false && Math.hypot(o.x - x, o.z - z) < 0.6);
+const freeAt = (W, x, z, r, n) => !(W.blocked && W.blocked(x, z, r)) && !(W.others || []).some((o) => o !== n && o.m && o.m.visible !== false && Math.hypot(o.x - x, o.z - z) < 0.5);   /* 0.5 m: the room the player needs to pass someone */
+/* the spot itself if a person may stand there, else the nearest free spot within 40 cm (your footsteps can run along a wall, where a body does not fit) */
+function freeNear(W, x, z, r, n) { if (freeAt(W, x, z, r, n)) return [x, z]; for (const d of [0.15, 0.3, 0.4]) for (let a = 0; a < 8; a++) { const px = x + Math.cos(a * 0.785) * d, pz = z + Math.sin(a * 0.785) * d; if (freeAt(W, px, pz, r, n)) return [px, pz]; } return null; }
 /* a straight walk from a to b is clear: no wall rectangle and no blocked spot along it */
 function clear(W, a, b, r, n) { if ((W.walls || []).some((w) => segmentHitsWall(a, b, w, r))) return false; const L = Math.hypot(b[0] - a[0], b[1] - a[1]), k = Math.max(1, Math.ceil(L / 0.25)); for (let i = 1; i <= k; i++) { const x = a[0] + (b[0] - a[0]) * i / k, z = a[1] + (b[1] - a[1]) * i / k; if (W.blocked && W.blocked(x, z, r)) return false; } return true; }
 /* one step toward (tx, tz) at speed v: never into a blocked spot or another person, never inside your personal space */
 function stepTo(n, tx, tz, v, dt, W, keepOut) {
-  const dx = tx - n.x, dz = tz - n.z, d = Math.hypot(dx, dz); if (d < 1e-4) return 0; const sp = Math.min(d, v * dt);
-  for (const a of [0, 0.5, -0.5, 1.0, -1.0]) { const c = Math.cos(a), s = Math.sin(a), ux = (dx * c - dz * s) / d, uz = (dx * s + dz * c) / d, x = n.x + ux * sp, z = n.z + uz * sp;
+  const dx = tx - n.x, dz = tz - n.z, d = Math.hypot(dx, dz), f = n.fol; if (d < 1e-4) return 0; const sp = Math.min(d, v * dt), k = f.detour || 1;   /* round something in the way: keep to one side until past it, no dithering */
+  for (const a of [0, 0.5 * k, 1.0 * k, 1.5 * k, -0.5 * k, -1.0 * k, -1.5 * k]) { const c = Math.cos(a), s = Math.sin(a), ux = (dx * c - dz * s) / d, uz = (dx * s + dz * c) / d, x = n.x + ux * sp, z = n.z + uz * sp;
     if (keepOut && Math.hypot(x - W.px, z - W.pz) < keepOut && Math.hypot(x - W.px, z - W.pz) < Math.hypot(n.x - W.px, n.z - W.pz)) continue;
-    if (!freeAt(W, x, z, n.fol.r, n)) continue; n.x = x; n.z = z; return sp; }
+    if (!freeAt(W, x, z, f.r, n)) continue; n.x = x; n.z = z; f.detour = a === 0 ? f.detour : Math.sign(a); if (a === 0) f.clearT = (f.clearT || 0) + dt; else f.clearT = 0; if (f.clearT > 1) f.detour = 0; return sp; }
   return 0;
 }
 export function tick(n, dt, W) {
@@ -74,22 +76,24 @@ function followFree(n, f, dt, W) {
   const coming = pv > 0.3 && (pvx * (n.x - W.px) + pvz * (n.z - W.pz)) > 0.4 * pv * d;   /* you are walking toward them */
   if (d < f.space || (coming && d < f.space + 0.2 + pv * 0.45)) {   /* you walked (or are walking) into them: they step aside, across your way rather than in front of you, to a free spot */
     const hx = pv > 0.3 ? pvx / pv : (n.x - W.px) / (d || 1), hz = pv > 0.3 ? pvz / pv : (n.z - W.pz) / (d || 1), side = (hx * (n.z - W.pz) - hz * (n.x - W.px)) >= 0 ? 1 : -1, want = f.space + 0.35; let moved = false;
-    const cands = []; for (const k of [side, -side]) cands.push([n.x + hz * k * want, n.z - hx * k * want], [W.px + hz * k * want, W.pz - hx * k * want]); for (const a of [0, 0.7, -0.7, 1.4, -1.4]) { const c = Math.cos(a), s = Math.sin(a), ax = (n.x - W.px) / (d || 1), az = (n.z - W.pz) / (d || 1); cands.push([W.px + (ax * c - az * s) * want, W.pz + (ax * s + az * c) * want]); }
+    const cands = []; for (const k of [side, -side]) cands.push([n.x - hz * k * want, n.z + hx * k * want], [W.px - hz * k * want, W.pz + hx * k * want]);   /* to the side of your way that they are already on, then the other side */ for (const a of [0, 0.7, -0.7, 1.4, -1.4]) { const c = Math.cos(a), s = Math.sin(a), ax = (n.x - W.px) / (d || 1), az = (n.z - W.pz) / (d || 1); cands.push([W.px + (ax * c - az * s) * want, W.pz + (ax * s + az * c) * want]); }
     for (const [x, z] of cands) { if (!freeAt(W, x, z, f.r, n) || Math.hypot(x - W.px, z - W.pz) < f.space) continue; const v = Math.max(1.3, pv * 1.25); if (stepTo(n, x, z, v, dt, W, 0) > 0) { gait(n, v > 2.6 && hasRun(n) && f.run ? 'Run' : 'Walk', v); turn(n, Math.atan2(x - n.x, z - n.z), dt, 8); moved = true; break; } }
     if (!moved) { gait(n, null); facePlayer(n, W, dt); } f.moving = moved; return; }
   /* the spot to walk to: in your footsteps `gap` metres back, and to one side if that side is free */
   let back = f.gap, i = C.length - 1, sx = W.px, sz = W.pz, hd = f.hdg ?? Math.atan2(W.px - n.x, W.pz - n.z);
   for (; i > 0 && back > 0; i--) { const L = Math.hypot(C[i][0] - C[i - 1][0], C[i][1] - C[i - 1][1]); if (L >= back) { const t = back / L; sx = C[i][0] + (C[i - 1][0] - C[i][0]) * t; sz = C[i][1] + (C[i - 1][1] - C[i][1]) * t; hd = Math.atan2(C[i][0] - C[i - 1][0], C[i][1] - C[i - 1][1]); back = 0; break; } back -= L; sx = C[i - 1][0]; sz = C[i - 1][1]; }
   if (back > 0) { sx = W.px + (n.x - W.px) / (d || 1) * Math.min(d, f.gap); sz = W.pz + (n.z - W.pz) / (d || 1) * Math.min(d, f.gap); }   /* not enough footsteps yet: stay on this side of you */
+  { const c = freeNear(W, sx, sz, f.r, n); if (c) { sx = c[0]; sz = c[1]; } }
   let tx = sx, tz = sz; const ox = Math.cos(hd) * f.side, oz = -Math.sin(hd) * f.side;
   for (const k of [1, -1]) { const x = sx + ox * k, z = sz + oz * k; if (freeAt(W, x, z, f.r, n) && clear(W, [sx, sz], [x, z], f.r, n)) { tx = x; tz = z; break; } }
   const togo = Math.hypot(tx - n.x, tz - n.z), lag = d - f.gap;
-  if (d > f.far || (f.stuckT > 2.5 && lag > 1.5)) { if (rescue(n, f, W)) { f.stuckT = 0; gait(n, null); return; } }
+  f.pt = (f.pt || 0) + dt; if (f.pt >= 1) { const prog = Math.hypot(n.x - (f.p0x ?? n.x), n.z - (f.p0z ?? n.z)); f.stuckT = prog < 0.3 && lag > 1.5 ? f.stuckT + f.pt : 0; f.p0x = n.x; f.p0z = n.z; f.pt = 0; }   /* stuck: under 30 cm of real progress a second while you are getting away */
+  if (d > f.far || (f.stuckT >= 2.5 && lag > 1.5)) { if (rescue(n, f, W)) { f.stuckT = 0; gait(n, null); return; } }
   const go = f.moving ? togo > 0.2 && d > f.space + 0.15 : togo > 0.75 || lag > 0.8;   /* once walking they keep on until they arrive: no stop-start shuffle */
   if (!go) { f.moving = false; f.stuckT = 0; gait(n, null); if (d < 9) facePlayer(n, W, dt); return; }
   /* the way there: straight if nothing is in the way, else along your footsteps (you walked there, so it is open) */
-  let wx = tx, wz = tz; if (!clear(W, [n.x, n.z], [tx, tz], f.r, n)) { let bi = -1, bd = 1e9; for (let j = 0; j < C.length; j++) { const k = Math.hypot(C[j][0] - n.x, C[j][1] - n.z); if (k < bd) { bd = k; bi = j; } } if (bi >= 0) { let j = bi; while (j < C.length - 1 && Math.hypot(C[j][0] - n.x, C[j][1] - n.z) < 0.35) j++; wx = C[j][0]; wz = C[j][1]; } }
-  const v = speedFor(n, f, lag), moved = stepTo(n, wx, wz, v, dt, W, f.space); f.stuckT = moved < v * dt * 0.2 ? f.stuckT + dt : 0;
+  let wx = tx, wz = tz; if (!clear(W, [n.x, n.z], [tx, tz], f.r, n)) { let bi = -1, bd = 1e9; for (let j = 0; j < C.length; j++) { const k = Math.hypot(C[j][0] - n.x, C[j][1] - n.z); if (k < bd) { bd = k; bi = j; } } for (let j = C.length - 1; j > bi; j--) if (Math.hypot(C[j][0] - n.x, C[j][1] - n.z) < bd + 0.6) { bi = j; break; }   /* where you walked the same ground twice, take your latest footsteps, not the old ones that lead back */ if (bi >= 0) { let j = bi; while (j < C.length - 1 && Math.hypot(C[j][0] - n.x, C[j][1] - n.z) < 0.35) j++; const c = freeNear(W, C[j][0], C[j][1], f.r, n) || C[j]; wx = c[0]; wz = c[1]; } }
+  const v = speedFor(n, f, lag), moved = stepTo(n, wx, wz, v, dt, W, f.space);
   if (moved > 0) { f.moving = true; gait(n, clipFor(n, f, v), v); turn(n, Math.atan2(wx - n.x, wz - n.z) || n.m.rotation.y, dt, 7); } else { gait(n, null); facePlayer(n, W, dt); }
 }
 /* reappear at a free spot behind you, out of the camera's view if possible */
@@ -97,7 +101,7 @@ function rescue(n, f, W) {
   const C = f.crumbs, cand = []; let acc = 0; for (let i = C.length - 1; i > 0 && acc < f.gap + 5; i--) { acc += Math.hypot(C[i][0] - C[i - 1][0], C[i][1] - C[i - 1][1]); if (acc >= f.gap) cand.push(C[i - 1]); }
   for (let a = 0; a < 12; a++) cand.push([W.px + Math.sin(a / 12 * 6.283) * (f.gap + 0.3), W.pz + Math.cos(a / 12 * 6.283) * (f.gap + 0.3)]);
   const seen = (x, z) => { if (!W.view) return false; const fx = -Math.sin(W.view.yaw), fz = -Math.cos(W.view.yaw), dx = x - W.view.x, dz = z - W.view.z, L = Math.hypot(dx, dz) || 1; return (dx * fx + dz * fz) / L > 0.35; };
-  const ok = cand.filter(([x, z]) => freeAt(W, x, z, f.r, n) && Math.hypot(x - W.px, z - W.pz) >= f.space);
+  const ok = cand.map(([x, z]) => freeNear(W, x, z, f.r, n)).filter((c) => c && Math.hypot(c[0] - W.px, c[1] - W.pz) >= f.space);
   const best = ok.find(([x, z]) => !seen(x, z)) || ok[0]; if (!best) return false; n.x = best[0]; n.z = best[1]; return true;
 }
 /* someone who comes with you along a path (a narrow trail): they keep `gap` metres behind you on it, never in your personal space */
@@ -139,7 +143,7 @@ function goTick(n, f, dt, W) {
 export function watch({ space = 0.9, behind = 6 } = {}) {
   const S = new Map(), get = (n) => S.get(n) || S.set(n, { close: 1e9, inside: 0, insideAt: null, lag: 0, lagT: 0, lagWorst: 0, stuckT: 0, stuckWorst: 0, frames: 0, pts: [], lx: n.x, lz: n.z }).get(n);
   return {
-    sample(n, px, pz, blocked, dt = 1 / 30) { if (!n.m || n.m.visible === false) return; const s = get(n), d = Math.hypot(px - n.x, pz - n.z); s.frames++; if (s.frames % 3 === 0) s.pts.push([n.x, n.z]);
+    sample(n, px, pz, blocked, dt = 1 / 30) { if (!n.m || n.m.visible === false) return; const s = get(n), d = Math.hypot(px - n.x, pz - n.z); s.frames++; if (s.frames % 3 === 0) s.pts.push([n.x, n.z]); if (s.frames % 15 === 0) (s.log || (s.log = [])).push(`${s.frames}: you (${px.toFixed(1)},${pz.toFixed(1)}) them (${n.x.toFixed(1)},${n.z.toFixed(1)}) ${n.walking ? n.clip : 'still'}${n.fol && n.fol.stuckT > 0.5 ? ' stuck ' + n.fol.stuckT.toFixed(1) : ''}`);
       const f = n.fol; if (f && f.mode === 'follow') { if (d < s.close) s.closeAt = `frame ${s.frames}, you at (${px.toFixed(1)},${pz.toFixed(1)}), they at (${n.x.toFixed(1)},${n.z.toFixed(1)})`; s.close = Math.min(s.close, d); if (d > behind) { s.lagT += dt; if (s.lagT > s.lagWorst) { s.lagWorst = s.lagT; s.lagAt = `frame ${s.frames}, you at (${px.toFixed(1)},${pz.toFixed(1)}), they at (${n.x.toFixed(1)},${n.z.toFixed(1)})`; } } else s.lagT = 0; s.lag = Math.max(s.lag, d); }
       if (blocked && blocked(n.x, n.z)) { s.inside++; s.insideAt = s.insideAt || [n.x, n.z]; }
       if (f && f.mode === 'lead') { const movedNow = Math.hypot(n.x - s.lx, n.z - s.lz) > 1e-3, ahead = (f.max ?? f.len) - f.s; if (!movedNow && d < f.resume && ahead > 1 && !f.waiting) { s.stuckT += dt; s.stuckWorst = Math.max(s.stuckWorst, s.stuckT); } else s.stuckT = 0; }
@@ -152,6 +156,7 @@ export function watch({ space = 0.9, behind = 6 } = {}) {
       return out; },
     stats(n) { const s = S.get(n); return s ? `closest ${s.close < 1e8 ? s.close.toFixed(2) : '-'} m, furthest ${s.lag.toFixed(1)} m, ${s.frames} frames` : 'not seen'; },
     spots(n) { const s = S.get(n); return s ? s.pts : []; },
+    trace(n) { const s = S.get(n); return s && s.log ? s.log : []; },
   };
 }
 

@@ -1,4 +1,5 @@
 import bpy, sys, json
+# ANIMS_OUT=path/to/out.glb writes somewhere other than build/anims.glb (for example to try a few new clips on their own).
 # retarget each Mixamo clip onto our rig by copying WORLD bone rotations (so A-pose vs T-pose rest doesn't matter), then bake
 clips=json.loads(open(sys.argv[-1]).read())
 import os
@@ -36,5 +37,5 @@ for name,path in clips.items():
     print('CLIP',name,f0,f1)
 for o in bpy.data.objects: o.select_set(o==ours)
 bpy.context.view_layer.objects.active=ours
-r=bpy.ops.export_scene.gltf(filepath=os.path.abspath('build/anims.glb'),use_selection=True,export_skins=True,export_animations=True,export_animation_mode='NLA_TRACKS',export_frame_step=2,export_force_sampling=True,export_optimize_animation_size=True,export_def_bones=True)
+r=bpy.ops.export_scene.gltf(filepath=os.path.abspath(os.environ.get('ANIMS_OUT', 'build/anims.glb')),use_selection=True,export_skins=True,export_animations=True,export_animation_mode='NLA_TRACKS',export_frame_step=2,export_force_sampling=True,export_optimize_animation_size=True,export_def_bones=True)
 print('EXPORT',r)
