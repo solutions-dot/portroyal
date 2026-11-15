@@ -786,6 +786,131 @@ def check(rig, name, frames):
         print('      bob %.3f m  highest swing-foot lift %.3f m' % (max(g) - min(g), max(lift)))
 
 
+# ---------------------------------------------------------------- resting a hand on the other person (comfort clips)
+# The giver's resting arm is placed against the other person's real, posed body, frame by frame, as feet are planted on
+# the floor: both bodies are loaded from build/people (the pair in tools/anims/pair_check.py), posed with their clips and
+# placed as the game places them; then the palm is laid on the surface under it (palm facing in, fingers along her
+# shoulder), and of all the ways the elbow could go, the one that lets the forearm lie on her back is chosen.
+CONTACT = {   # clip: (pair in pair_check.py, resting side, which way the fingers run on her)
+    'ComfortGive': ('ComfortGive', 'Right', 'along'),
+    'SitComfortGive': ('SitComfort', 'Right', 'along'),
+    'ComfortChild': ('ComfortChild', 'Right', 'forward'),
+    'ComfortHand': ('ComfortHand', 'Left', 'back'),
+}
+PALM_OFF = 0.03   # the hand bone runs this far above the palm's skin
+PALM_AT = 0.055    # the middle of the palm is this far along the hand from the wrist
+CONTACT_ROUNDS = 8
+FOREARM_R = 0.08  # the forearm (with its sleeve) is about this thick from its bone
+
+
+def contact_pass(name, n_frames):
+    """Solve the resting arm against the partner for every frame. Returns, per frame, the world turn of the arm,
+    forearm and hand bones (which the clip then takes on, so the same turns reach the game). Each frame is solved,
+    the giver's real hand and forearm are posed and measured against her, and the solve is corrected (three rounds)."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import pair_check as pc
+    from mathutils.bvhtree import BVHTree
+    pair, side, guide = CONTACT[name]; gclip, tclip, gbody, tbody, place, seated = pc.PAIRS[pair]
+    bpy.ops.wm.read_factory_settings(use_empty=True); sc = bpy.context.scene
+    G = pc.load(sc, gbody, os.path.join(OUT, gclip + '.fbx'), (0, 0, 0, 1), True)
+    Tk = pc.load(sc, tbody, os.path.join(OUT, tclip + '.fbx'), place)
+    mr = Rig(G['rig']); f0 = G['frames'][0]; out = []; prev_ang = None
+    U, L, E = P + side + 'Arm', P + side + 'ForeArm', P + side + 'Hand'
+    pb = G['rig'].pose.bones
+    for b in (U, L, E):   # these three are set here, not copied from the clip
+        for c in list(pb[b].constraints): pb[b].constraints.remove(c)
+    l1 = mr.rel[L].translation.length; l2 = mr.rel[E].translation.length
+    labs = G['labels']; HAND, FING, FORE = side + 'Hand', side + 'Fingers', side + 'ForeArm'
+    off_p, off_f, tilt = PALM_OFF, FOREARM_R, 0.0
+    for i in range(n_frames):
+        sc.frame_set(f0 + i)
+        for b in (U, L, E): pb[b].matrix_basis.identity()
+        if not seated:
+            for q in (G, Tk): pc.ground(q, bpy.context.evaluated_depsgraph_get)
+        bpy.context.view_layer.update(); dg = bpy.context.evaluated_depsgraph_get()
+        tv, tt, tp = pc.shape(Tk, dg); tree = BVHTree.FromPolygons(tv, tt)
+        gw = G['rig'].matrix_world
+        S = gw @ pb[U].head
+        TW = lambda b: Tk['rig'].matrix_world @ Tk['rig'].pose.bones[P + b].head
+        if i == 0:
+            wrist0 = gw @ pb[E].head; hy0 = (gw.to_3x3() @ pb[E].matrix.to_3x3()).col[1].normalized(); anchor = wrist0 + hy0 * PALM_AT
+            anchor_local = Tk['rig'].matrix_world.inverted() @ anchor   # where on her the palm goes, carried with her body
+        pc0 = Tk['rig'].matrix_world @ anchor_local
+        tf = Tk['rig'].matrix_world.to_3x3() @ V(0, -1, 0)   # her forwards
+        g = {'along': (TW(side_far(side, pair)) - TW('Spine2')).normalized() + V(0, 0, -0.35), 'forward': tf + V(0, 0, -0.3), 'back': -tf + V(0, 0, -0.3)}[guide]
+        fdir = None
+        for rnd in range(CONTACT_ROUNDS):
+            nrm = Vector(); loc = Vector(); cnt = 0
+            for o in ((0, 0, 0), (0.02, 0, 0), (-0.02, 0, 0), (0, 0.02, 0), (0, -0.02, 0), (0, 0, 0.02), (0, 0, -0.02)):   # a smoothed surface normal
+                h = tree.find_nearest(pc0 + Vector(o))
+                if h[0] is not None: nrm += h[1]; loc += h[0]; cnt += 1
+            nrm.normalize(); loc /= max(cnt, 1)
+            if (loc - S).length > 0.97 * (l1 + l2) + PALM_AT * 0.7 and rnd < CONTACT_ROUNDS - 2:   # out of reach: slide the spot towards the giver
+                pc0 = S + (pc0 - S) * 0.97; continue
+            if fdir is None: fdir = (g - nrm * g.dot(nrm)).normalized()
+            palm_pt = loc + nrm * off_p
+            W = palm_pt - fdir * PALM_AT
+            d = W - S; dist = min(d.length, 0.995 * (l1 + l2)); u = d.normalized(); W = S + u * dist
+            a = (l1 * l1 - l2 * l2 + dist * dist) / (2 * dist); h = math.sqrt(max(0.0, l1 * l1 - a * a))
+            e1 = (V(0, 0, -1) - u * u.dot(V(0, 0, -1))).normalized(); e2 = u.cross(e1); best = None   # angle 0 is the elbow straight down
+            for k in range(48):   # every way the elbow could go round the line from shoulder to wrist
+                ang = TAU * k / 48; J = S + u * a + (e1 * math.cos(ang) + e2 * math.sin(ang)) * h
+                if J.z > S.z + 0.02: continue   # elbows do not lift above the shoulder here
+                sc_ = 0.0
+                for f in (0.35, 0.6, 0.85):   # the forearm should lie on her, not in her and not floating
+                    q = J.lerp(W, f); hh = tree.find_nearest(q)
+                    if hh[0] is None: sc_ += 1; continue
+                    sd = (q - hh[0]).dot(hh[1]); dd = hh[3] if sd >= 0 else -hh[3]
+                    sc_ += (dd - off_f) ** 2 * (40 if dd < off_f - 0.004 else 1)
+                if prev_ang is not None: sc_ += 0.0004 * min(abs(ang - prev_ang), TAU - abs(ang - prev_ang)) ** 2
+                if best is None or sc_ < best[0]: best = (sc_, ang, J)
+            if best is None: best = (0, 0, S + u * a - V(0, 0, h))
+            J = best[2]; d2 = (W - J).normalized()
+            fdir = (d2 - nrm * d2.dot(nrm)).normalized()                       # the fingers carry straight on from the forearm, laid on her
+            fdir = (rot(fdir.cross(nrm).normalized(), tilt) @ fdir).normalized()   # tipped to follow her curve
+            nrm2 = (nrm - fdir * nrm.dot(fdir)).normalized()
+            WH = frame(Y, mr.palm[side], fdir, -nrm2)
+            d1 = (J - S).normalized(); nn = d1.cross(d2)
+            nn = nn.normalized() if nn.length > 1e-5 else e1
+            WU = frame(Y, mr.hinge[side + 'Arm'], d1, nn); WL = frame(Y, mr.hinge[side + 'ForeArm'], d2, nn)
+            qq = (WL.inverted() @ WH).to_quaternion(); th = 2 * math.atan2(qq.y, qq.w); th = (th + math.pi) % TAU - math.pi
+            WL = WL @ rot(Y, 0.5 * th)
+            # pose the real arm and measure it against her
+            gi = gw.inverted(); R3 = gi.to_3x3()
+            for b, Wb, at in ((U, WU, S), (L, WL, J), (E, WH, W)):
+                m = (R3 @ Wb).to_4x4(); m.translation = gi @ at; pb[b].matrix = m; bpy.context.view_layer.update()
+            dg = bpy.context.evaluated_depsgraph_get(); gv, gt, gp = pc.shape(G, dg)
+            if os.environ.get('CDEBUG') and i == 40: print('POSED', rnd, tuple(round(x, 3) for x in (gw @ pb[E].head)), tuple(round(x, 3) for x in W), round(off_p, 3), round(tilt, 3), round(off_f, 3), {k: round(v, 3) for k, v in near.items()} if rnd else '')
+            near = {HAND: 9.0, FING: 9.0, FORE: 9.0}
+            for v, lab in zip(gv, labs):
+                if lab in near:
+                    hh = tree.find_nearest(v, 0.2)
+                    if hh[0] is None: continue
+                    dd = hh[3] if (v - hh[0]).dot(hh[1]) >= 0 else -hh[3]
+                    if dd > -0.05: near[lab] = min(near[lab], dd)
+            if near[HAND] < 9: off_p = max(0.0, min(0.08, off_p - near[HAND]))   # palm just touching
+            if near[FING] < 9: tilt = max(-0.6, min(0.6, tilt - (near[FING] - 0.0) / 0.09 * 0.8))   # fingers tip up out of her, or down to touch
+            if near[FORE] < 9: off_f = max(0.02, min(0.15, off_f + 0.004 - near[FORE]))   # forearm resting
+        prev_ang = best[1]
+        if os.environ.get('CDEBUG') and math.degrees(d2.angle(fdir)) > 40: print('BEND', i, round(math.degrees(d2.angle(fdir))), tuple(round(x, 2) for x in fdir), tuple(round(x, 2) for x in d2), tuple(round(x, 2) for x in nrm))
+        out.append((WU, WL, WH))
+        if i % 40 == 0: print('contact', name, i, 'palm %.3f fingers %.3f forearm %.3f' % (near[HAND], near[FING], near[FORE]), flush=True)
+    return out
+
+
+def side_far(side, pair):
+    return 'RightArm' if side == 'Right' else 'LeftArm'
+
+
+def apply_contact(rig, frames, side, worlds):
+    for p, (WU, WL, WH) in zip(frames, worlds):
+        set_world(rig, p, side + 'Arm', WU); set_world(rig, p, side + 'ForeArm', WL); set_world(rig, p, side + 'Hand', WH)
+        if os.environ.get('CDEBUG'):
+            M = rig.fk(p); print('APPLY', round(math.degrees(WL.col[1].angle(WH.col[1]))), round(math.degrees(M[P + side + 'ForeArm'].to_3x3().col[1].angle(M[P + side + 'Hand'].to_3x3().col[1]))), round(math.degrees(M[P + side + 'Hand'].to_3x3().col[1].angle(WH.col[1]))))
+
+
+
+
 def main():
     args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
     args = [a for a in args if not a.endswith('.py')]
@@ -793,19 +918,28 @@ def main():
         for k, (f, s) in CLIPS.items(): print(k, ':', s)
         return
     names = [a for a in args if not a.startswith('-')] or list(CLIPS)
-    bpy.ops.wm.open_mainfile(filepath=os.path.join(ROOT, 'shared', 'rig', 'char.blend'))
-    ob = bpy.data.objects['Human.rig']
-    for pb in ob.pose.bones: pb.matrix_basis.identity()
-    ob.animation_data_create(); ob.animation_data.action = None
-    bpy.context.scene.render.fps = FPS
-    rig = Rig(ob)
+    names.sort(key=lambda n: 0 if 'Take' in n else 1)   # the one comforted first: the giver's hand is laid on them
+    def open_rig():
+        bpy.ops.wm.open_mainfile(filepath=os.path.join(ROOT, 'shared', 'rig', 'char.blend'))
+        ob = bpy.data.objects['Human.rig']
+        for pb in ob.pose.bones: pb.matrix_basis.identity()
+        ob.animation_data_create(); ob.animation_data.action = None
+        bpy.context.scene.render.fps = FPS
+        return Rig(ob)
+    rig = open_rig()
     for name in names:
         fn, _ = CLIPS[name]; _TWIST.clear(); frames = fn(rig)
         if 'Walk' not in name: soften(frames, [sd + b for sd in ('Left', 'Right') for b in ('Arm', 'ForeArm', 'Hand')])
         frames[-1] = frames[0].copy()   # an exact loop
+        path = os.path.join(OUT, name + '.fbx')
+        if name in CONTACT and '--contact' in args:   # still being tuned: off unless asked for
+            write_fbx(rig, name, frames, path)   # a first version, posed against the partner below
+            worlds = contact_pass(name, len(frames)); rig = open_rig()
+            apply_contact(rig, frames, CONTACT[name][1], worlds)
+            frames[-1] = frames[0].copy()
         check(rig, name, frames)
-        write_fbx(rig, name, frames, os.path.join(OUT, name + '.fbx'))
-        print('WROTE', os.path.join(OUT, name + '.fbx'))
+        write_fbx(rig, name, frames, path)
+        print('WROTE', path)
 
 
 if __name__ == '__main__':

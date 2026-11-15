@@ -134,7 +134,7 @@ export function buildCrash() {
   /* Nurse Gray kneels by a man who sits on a log by the fire; the water you bring is for him and the others */
   const logM = solid(0x5a4030, 1), log = (x, z, len, ry) => { const lg = cyl(0.17, 0.17, len, logM, x, 0.17, z, g, 9); lg.rotation.z = PI / 2; lg.rotation.y = ry; walls.push([x - len / 2 * Math.abs(Math.cos(ry)) - 0.22, z - len / 2 * Math.abs(Math.sin(ry)) - 0.22, x + len / 2 * Math.abs(Math.cos(ry)) + 0.22, z + len / 2 * Math.abs(Math.sin(ry)) + 0.22]); };
   log(-4.3, 10.35, 1.3, 0); log(-4.7, 4.55, 1.9, 0);
-  people.push(person('nurse', 'nurse', 'Nurse Gray', -4.3, 9.05, 0.05, { h: 1.2, anim: 'Kneel' }));
+  people.push(person('nurse', 'nurse', 'Nurse Gray', -4.3, 9.05, 0.05, { h: 1.2, anim: 'Kneel' }));   /* she kneels facing the man on the log */
   extras.push({ ...crowd57(1, 47, [0, 0, 1, 1], { anims: ['SitIdle'] })[0], x: -4.3, z: 10.38, ry: PI, anim: 'SitIdle', seat: 0.34, seated: true, tended: true, props: undefined, hat: false });
   people.push(person('dawn', 'dawn', 'Dawn', 9.5, 10, PI, { h: 1.05, anim: 'Sad1' }));
   people.push(person('louise', 'louise', 'Sister Louise', -6.6, 13.6, PI, { h: 1.7, props: [['LeftHand', 'lantern']], call: true }));   /* she calls out the names of the lost (Yell, now and then) */

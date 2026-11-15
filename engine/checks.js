@@ -333,8 +333,8 @@ export const CHECKS = [
     return out; } },
   { id: 'steps', needs: ['steps', 'goStep'], async run(g, T, ctx) {
     /* every step: its targets reachable on foot, and (when the game saves) save, reload and compare */
-    const out = [], steps = await g.steps();
-    for (const s of steps) {
+    const out = ctx.partial = [], steps = await g.steps(); let done = 0;
+    for (const s of steps) { ctx.progress = `${done++} of ${steps.length} steps`;
       try { await g.goStep(s); } catch (e) { out.push(`step ${s} does not start: ${e.message}`); continue; }
       await sleep(T.settle ?? 200);
       if (g.place && g.targets) { const P = await g.place(), t = await g.targets(); if (P && P.bounds && t.length) out.push(...reachIssues({ start: P.start, targets: t, walls: P.walls || [], bounds: P.bounds, blocked: P.blocked, r: P.r || 0.25, label: `step ${s}: ` })); }
@@ -403,7 +403,7 @@ export const CHECKS = [
 /* the order they run in: checks that read what others collected (continuity, camera, rule4, sound) come after them; errors last */
 export const ORDER = ['journal', 'links', 'a11y', 'keys', 'chapters', 'steps', 'map', 'faces', 'budget', 'autoplay', 'camera', 'rule4', 'sound', 'continuity', 'errors'];
 
-/* run every check whose hooks the adapter has; opts.only = ['journal', 'map'] limits the list (also ?checks=journal,map in the URL) */
+/* run every check whose hooks the adapter has (each may take up to opts.timeout or tables.timeout, 15 minutes by default); opts.only = ['journal', 'map'] limits the list (also ?checks=journal,map in the URL) */
 export async function checkAll(game, tables = {}, opts = {}) {
   const ctx = { errors: watchErrors(), audio: watchAudio(), cast: [], items: [], chapterSteps: [], chapterLight: [], run: { camera: [], clips: [], lines: [], levels: [], entered: [], lastStep: undefined } };
   const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
@@ -414,12 +414,12 @@ export async function checkAll(game, tables = {}, opts = {}) {
     if (only && !only.includes(c.id)) continue;
     const miss = c.needs.filter((h) => typeof game[h] !== 'function' && game[h] === undefined);
     if (miss.length) { rows.push({ id: c.id, status: 'skip', why: 'needs ' + miss.map((m) => 'game.' + m).join(', '), lines: [] }); continue; }
-    const t0 = Date.now(); let lines = [], note = '', status = 'ok';
+    const t0 = Date.now(); let lines = [], note = '', status = 'ok'; ctx.partial = null; ctx.progress = '';
     try {
-      let timer; const limit = new Promise((_, no) => { timer = setTimeout(() => no(new Error('timed out')), opts.timeout || 240000); });
+      let timer; const limit = new Promise((_, no) => { timer = setTimeout(() => no(new Error('timed out')), opts.timeout || tables.timeout || 900000); });
       const r = await Promise.race([c.run(game, tables, ctx), limit]).finally(() => clearTimeout(timer));
       lines = Array.isArray(r) ? r : (r && r.lines) || []; note = (r && r.note) || '';
-    } catch (e) { status = 'error'; lines = [`${c.id} crashed: ${e.message}`]; }
+    } catch (e) { status = 'error'; lines = [...(ctx.partial || []), `${c.id} ${e.message === 'timed out' ? 'timed out' : 'crashed: ' + e.message}${ctx.progress ? ' after ' + ctx.progress : ''}`]; }
     rows.push({ id: c.id, status, lines, note, ms: Date.now() - t0 });
     if (opts.onRow) opts.onRow(rows[rows.length - 1]);
   }

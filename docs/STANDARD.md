@@ -2,6 +2,8 @@
 
 This is the one place to start when you make or fix anything in a game, old or new: people, clothes, places, or animations. Each section is short and points to the detailed doc. At the end there is a checklist for bringing one game up to the standard, and a table of where each game stands today.
 
+Every game wires `?test=all` (`engine/checks.js`, `docs/TESTING.md` section 7) and passes `npm test` (with the content lint) before a pull request.
+
 Follow `CLAUDE.md`'s rules every time. The ones that matter most here: plain words (rule 2), facts checked against sources first (rule 3), phones (rule 5), checks at 0 (rule 8), and skin (rule 9).
 
 ## Files that every game shares: do not edit them without the owner

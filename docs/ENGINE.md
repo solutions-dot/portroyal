@@ -247,6 +247,12 @@ Every game and the template import it.
 
 `contentsOverlap(a, b)` says whether the painted text of two elements overlaps (`contentRects(el)` gives the rectangles, clipped to scrolling parents and closed `<details>`). Bog Walk's layout test uses it, and `tests/ui-audit.html` checks it (`docs/TESTING.md`). Other games have their own layout checks in `main.js`.
 
+## engine/checks.js: every automatic check at once (dev only)
+
+`checkAll(adapter, tables)` runs the shared gameplay, continuity and quality checks (journal, links, a11y, keys, chapters, steps, map, faces, budget, autoplay, camera, rule4, sound, continuity, errors) and prints `ALL <n>` into `#autolog`. The adapter's hooks and each check are in `docs/TESTING.md`, section 7. The rules are also exported as plain functions (`continuityIssues`, `itemIssues`, `lightIssues`, `ageIssues`, `gridReach`, `reachIssues`, `boundsIssues`, `stuckIssues`, `cameraIssues`, `resumeDiff`, `journalIssues`, `levelIssues`, `soundRefIssues`, `budgetIssues`, `clipIssues`, `intenseIssues`, `faceIssues`, `watchErrors`, `watchAudio`) and the shared tables `BANNED` (rule 4 clips), `BUDGET` and `SOUNDS`; `tools/lint_content.mjs` and `tests/checks.mjs` use the same functions.
+
+`engine/ui-audit.js` also has `tapTargetIssues(root, 44)`, `contrastIssues(root)` (WCAG AA), `focusOrderIssues(root)` and the colour helpers `parseColor`, `contrastRatio`, `contrastNeed`, `blend`.
+
 ## engine/vehicles.js: railway vehicles
 
 Track, steam engines, coaches, carriages, wagons, a platform and smoke, built from boxes, cylinders and turned shapes with sides painted in code. It was Kendal's `trains.js`; Kendal 1957 and Bog Walk 1904 now both use it, and a new game with a railway should too, instead of copying the file. A game calls `makeVehicles` once with its own texture and material helpers, so each game keeps its own textures and caches. The game's own `src/trains.js` is then one line:

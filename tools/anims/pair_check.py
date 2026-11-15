@@ -20,6 +20,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 CLIPS = os.path.join(ROOT, 'shared', 'anim-sources', 'handmade')
 PEOPLE = os.path.join(ROOT, 'build', 'people')
 N = int(os.environ.get('PAIR_N', 32))
+SOFT = 0.003   # the resting palm and fingers may press this far into the other person's clothes (soft contact); deeper is a fault
 # giver clip, taker clip, giver body, taker body, where the taker stands relative to the giver (x, y, turn, scale), seated
 PAIRS = {
     'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.415, -0.205, 0.0, 1.0), False),
@@ -142,7 +143,7 @@ def run(name):
                 if lab == REST[name] + 'Hand':
                     hand = min(hand, d)
                     if os.environ.get('DEBUG') and k == 0 and d < -0.02: print('DEBUG deep hand point', tuple(round(x, 3) for x in v), round(d, 3), tp[i], ttree.find_nearest(v)[0])
-                if d < 0: note(('giver ' + lab, 'taker ' + tp[i]), -d)
+                if d < (-SOFT if lab != REST[name] + 'ForeArm' else 0): note(('giver ' + lab, 'taker ' + tp[i]), -d)   # a hand pressing on cloth may sink SOFT metres in
                 if os.environ.get('DEBUG') and lab.endswith('Thumb') and d < -0.02: print('DEBUG thumb', tuple(round(x, 3) for x in v), round(d, 3), tp[i], tuple(round(x, 3) for x in ttree.find_nearest(v)[0]), tuple(round(x, 2) for x in ttree.find_nearest(v)[1]))
                 if d < -0.03 and os.environ.get('DEBUG') and lab.endswith('ForeArm'): print('DEBUG deep forearm', k, tuple(round(x, 3) for x in v), round(d, 3), tp[i])
             elif d < 0.01: note(('giver ' + lab, 'taker ' + tp[i]), 0.01 - d)
@@ -169,7 +170,7 @@ def run(name):
     if os.environ.get('DEBUG'): print('DEBUG band', ' '.join('%.3f' % b for b in band))
     for part in ('Hand', 'Fingers', 'ForeArm'):
         vals = [q.get(REST[name] + part) for q in parts if q.get(REST[name] + part) is not None]
-        if vals: print('  resting %-8s nearest point above her surface: %.3f to %.3f m (want 0 to 0.005; forearm under 0.01)' % ({'Hand': 'palm'}.get(part, part.lower()), min(vals), max(vals)))
+        if vals: print('  resting %-8s nearest point above her surface: %.3f to %.3f m (want -0.003 to 0.005; forearm 0 to 0.01)' % ({'Hand': 'palm'}.get(part, part.lower()), min(vals), max(vals)))
     if rest: print('  giver resting hand above their surface: min %.3f m, max %.3f m (want 0.005 to 0.02, never over 0.03)' % (min(rest), max(rest)))
     bad = {k: v for k, v in worst.items() if v > 0}
     print('  contacts or overlaps (depth past the 1 cm gap; the resting hand counts only if it goes in):', 'none' if not bad else '')

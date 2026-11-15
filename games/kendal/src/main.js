@@ -98,7 +98,7 @@ const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb
 /* how each thing is carried (see hold() in props.js): handleY is the height of its handle, out is how far the hand's item sits from the body. After changing these run ?test=held. */
 const SIT_HIPS = 0.12;   /* metres from the seat to the hip joint of a seated person at full size (the audit checks it) */
 /* scale: the item's size. lift: how far (radians) the arm is held out from the body, so the item clears the hip, thigh and skirt. The handle height comes from each prop (userData.handleY). */
-let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.46 }, suitcase: { handleY: 0.5, scale: 0.8, lift: 0.4, straighten: 0.8, yaw: Math.PI / 2 }, lantern: { handleY: 0.32, scale: 0.85, lift: 0.26 }, bucket: { handleY: 0.49, scale: 0.9, lift: 0.34 }, basket: { dy: 0.12, scale: 0.8 } };
+let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.46 }, suitcase: { handleY: 0.5, scale: 0.8, lift: 0.4, straighten: 0.8, yaw: Math.PI / 2 }, lantern: { handleY: 0.32, scale: 0.85, lift: 0.26 }, bucket: { handleY: 0.49, scale: 0.9, lift: 0.34 }, basket: { dy: 0.12, scale: 0.62 } };   /* a smaller basket, so the hand that steadies it (CarryHeadIdle) rests at its rim, not in it */
 const SKIN_LIGHT = 1.55;   /* owner rule 9: build Skin inside Marcus Garvey's range, then lighten it here so faces read in every light (docs/PIPELINE.md, "Skin"). Check with ?test=skin */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
@@ -268,7 +268,7 @@ function npcTick(n, dt) {
   const m = n.m; if (!m || !m.visible) return; if (POSTER) { m.rotation.y = n.ry0; return; }
   if (n.amb) return;   /* engine/ambient.js moves this person */
   if ((n.react || n.call) && talkWith !== n) { n.reactT = (n.reactT ?? 4 + Math.random() * 6) - dt; if (n.reactT <= 0 && n.ctl.cur === n.ctl.base) { n.ctl.play(n.call ? 'Yell' : n.react[(Math.random() * n.react.length) | 0], true); n.reactT = (n.call ? 9 : 7) + Math.random() * 7; } }   /* a fixed person's odd gesture: the fireman's wave, Sister Louise calling out names */
-  const ac = n.ctl, d = Math.hypot(state.x - n.x, state.z - n.z), seated = isSeated(n.anim), isNear = !n.extra && !seated && ((d < 3.2 && !DEV_NOSTOP) || talkWith === n);
+  const ac = n.ctl, d = Math.hypot(state.x - n.x, state.z - n.z), seated = isSeated(n.anim) || /^(Kneel|Comfort)/.test(n.anim || ''), isNear = !n.extra && !seated && ((d < 3.2 && !DEV_NOSTOP) || talkWith === n);
   if (n.fol) { followTick(n, dt, followWorld()); return; }   /* someone who comes with you (engine/follow.js): behind you and to one side, never in your way; the height belongs to groundFeet */
   if (!n.path) { if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else if (!n.extra) faceTo(m, n.ry0, dt, 2); return; }
   if (isNear || n.wait > 0) { if (n.walking) { n.walking = false; ac.play(null); } if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else { n.wait -= dt; if (n.wait <= 0) { n.walking = true; ac.play(n.sex === 'm' && CL.WalkM2 ? 'WalkM2' : 'Walk'); } } return; }
@@ -419,7 +419,7 @@ function storyWhere(id, P = P_()) {   /* where a story person or a thing to do i
   const a = (P.actions || []).filter((x) => x.need === id || x.id === id); if (!a.length) return null; const on = a.filter((x) => x.on()); const L = on.length ? on : a;
   let best = null, bd = Infinity; for (const x of L) { const d = Math.hypot(x.x - state.x, x.z - state.z); if (d < bd) { bd = d; best = [x.x, x.z]; } } return best;
 }
-const HAND = createCarry({ camera, slot: [-0.3, -0.46, -0.62] });   /* your left hand (the lamp, when you have it, is in your right) */
+const HAND = createCarry({ camera, slot: [-0.34, -0.56, -0.78] });   /* your left hand (the lamp, when you have it, is in your right) */
 const rideBucket = bucket(); rideBucket.name = 'the water bucket'; rideBucket.scale.setScalar(0.8);
 const STORY = createStory({
   steps: STEPS, where: (id) => storyWhere(id), player: () => [state.x, state.z],
@@ -427,7 +427,7 @@ const STORY = createStory({
   advance: (s) => (OUTRO[stage] ? OUTRO[stage](s) : setStage(s)),
   onGoal: (t) => { goalText = t || ''; if (!syncing && state.started) showGoal(); },
   onArrow: () => { showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); },
-  flavour: {}, meet: {}, names: {}, items: { bucket: rideBucket, bunch: bananaBunch(1.1) },
+  flavour: {}, meet: {}, names: {}, items: { bucket: rideBucket, bunch: bananaBunch(1.1) }, near: 2.7,   /* the arrow gives way to the talk button, which shows within 2.6 m */
 });
 let syncing = false;
 function meetPeople(P) {   /* this place's people into the story's tables: their short lines (LATER), the full talk of a flavour person (played once), their names */
@@ -791,7 +791,7 @@ function devViews() {
     hill1: ['hill', 30, -24, 5.5, -1.5, 0], hill2: ['hill', 30, -10, 4, -0.3, 0.05], loco1: ['hill', 30, -9, 2.2, -1.0, 0.02], seat1: ['coach', 52, 2.45, 0.1, 0.92, -0.3], seat2: ['coach', 52, 1.9, 0.25, 0.25, -0.38], seat3: ['coach', 52, 1.0, 0.25, -0.35, -0.38], sit1: ['crash', 61, 1.0, 7.2, 1.99, -0.15], bunch1: ['hill', 30, -11.2, 8.2, 0.75, -0.32], bunch2: ['hill', 30, -12.6, 6.6, 0.6, -0.75], loco2: ['hill', 30, 0.5, 2.6, 0, 0.0], loco3: ['hill', 30, 6.5, 2.2, 1.0, 0.0], loco4: ['hill', 30, -12, 1.0, -1.35, 0.0], eloco1: ['station45', 20, -16.5, 3.2, -1.05, 0.0], eloco2: ['station45', 20, -10.5, 3.0, 0, 0.0],
     k1: ['kingston57', 40, -22, 5, PI / 2 - 0.2, 0], k2: ['kingston57', 40, -22, 5, -PI / 2 + 0.4, 0], k3: ['kingston57', 40, -9, 6.2, 0.35, 0], k4: ['kingston57', 41, 28, 4, -PI / 2, 0],
     ride1: ['ride45', 23, 0.2, 0, PI / 2 + 0.25, 0], ride2: ['ride45', 23, 0.2, 0, 0.3, 0.05], poster: ['kingston57', 40, 47, -9.0, PI / 2 + 0.5, 0.03, ENV.gold], lurch: ['coach', 53, 1.5, 0, PI / 2 + 0.5, 0], coach1: ['coach', 51, 4.3, 0, PI / 2, 0], coach2: ['coach', 51, 0, 0, 1.2, 0], coach3: ['coach', 51, 3.2, 0.2, PI / 2 - 0.5, 0],
-    beach1: ['beach', 43, 0, 9, 0.1, 0], beach2: ['beach', 43, 8, 3, -1.2, 0], band1: ['beach', 43, 10.6, 6.4, -2.1, 0.02], nurse1: ['crash', 61, -1.6, 9.9, 1.35, -0.12], bucket1: ['crash', 61, 22.5, 9.2, -1.5, -0.1], gran1: ['crash', 60, 12.2, 6.6, 2.4, -0.05], bunch3: ['hill', 31, -14.2, 3.0, 0.1, -0.15], k5: ['kingston57', 41, -14, 6.5, -1.9, 0.02], road4: ['road', 12, 27, 1.2, -2.0, 0.0], jglow: ['road', 10, -27, 4.2, 0, 0],
+    beach1: ['beach', 43, 0, 9, 0.1, 0], beach2: ['beach', 43, 8, 3, -1.2, 0], band1: ['beach', 43, 10.4, 6.6, -0.9, 0.02], nurse1: ['crash', 61, -1.6, 9.9, 1.35, -0.12], bucket1: ['crash', 61, 22.5, 9.2, -1.5, -0.1], gran1: ['crash', 60, 13.1, 2.9, -2.62, -0.12], bunch3: ['hill', 31, -14.2, 3.0, 0.1, -0.15], k5: ['kingston57', 41, -14, 6.5, -1.9, 0.02], road4: ['road', 12, 27, 1.2, -2.0, 0.0], jglow: ['road', 10, -27, 4.2, 0, 0],
     crash4: ['crash', 61, 8, 4.4, 0.9, 0.04], crash1: ['crash', 60, 17, 5.8, 1.7, 0], crash2: ['crash', 60, 8, 6, 2.2, 0.05], crash3: ['crash', 61, -4, 9, 3.14, 0.02], crash5: ['crash', 66, 9, 5, 0.75, 0.0],
     mem1: ['memorial', 70, 0, 4.6, 0, 0.02], mem2: ['memorial', 71, 4, -4, 0.0, 0.1],
   };
