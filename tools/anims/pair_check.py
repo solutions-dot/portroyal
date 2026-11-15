@@ -22,7 +22,7 @@ PEOPLE = os.path.join(ROOT, 'build', 'people')
 N = 32
 # giver clip, taker clip, giver body, taker body, where the taker stands relative to the giver (x, y, turn, scale), seated
 PAIRS = {
-    'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.44, -0.12, 0.0, 1.0), False),
+    'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.30, -0.066, 0.0, 1.0), False),
     'ComfortHand': ('ComfortHand', 'ComfortTake', 'man_shirt', 'woman57', (0.0, -0.58, math.pi, 1.0), False),
     'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.34, -0.24, 0.0, 0.6), False),
     'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.50, -0.16, 0.0, 1.0), True),

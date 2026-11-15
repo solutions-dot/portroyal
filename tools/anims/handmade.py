@@ -515,6 +515,39 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
         relaxed_arm(rig, p, 'Left')
 
 
+def embrace_arm(rig, frames, T, turn_body=0.5, lean_in=0.06, upper=(0.35, 0.2, 0.90), fore=(0.80, 0.45, 0.25), ride=None,
+                look=(-0.35, 0.28), seated=False):
+    """An arm round someone a little in front and to the right: the whole body turns `turn_body` towards them and leans
+    in, the upper arm angles down and back (`upper`: towards them, back, down, in the room's directions), the elbow bends about 95 degrees and the forearm
+    runs forwards and out across their shoulder blades (`fore`: towards them, forwards, up) to the hand on their far upper arm.
+    The arm is set by its directions, so the bend is the same on every body; the game places the other person where
+    the hand lands (tools/anims/pair_check.py measures it). `ride` adds their shoulder's breathing to the hand."""
+    pat = lambda t: sum(bump(t, t0, t0 + 0.8, 0.3, 0.5) for t0 in (1.2, 2.2, 5.6))
+    l1 = rig.rel[P + 'RightForeArm'].translation.length; l2 = rig.rel[P + 'RightHand'].translation.length
+    for i, p in enumerate(frames):
+        t = i / FPS; pt = pat(t)
+        if not seated: turn(rig, p, 'Hips', Z, -turn_body)                       # the whole body turns to them
+        else: turn(rig, p, 'Spine', Z, -0.6 * turn_body)
+        turn(rig, p, 'Spine', X, 0.07); turn(rig, p, 'Spine1', X, 0.03)          # stand up over the feet, not leaning back
+        turn(rig, p, 'Spine', Y, -lean_in); turn(rig, p, 'Spine1', Z, -0.15)    # lean and turn into them
+        steady_head(rig, p, yaw=look[0] - turn_body + 0.03 * math.sin(TAU * t / T), pitch=look[1] + 0.02 * math.sin(TAU * 2 * t / T + 1), roll=-0.06, neck=0.5)
+        M = rig.fk(p); S = M[P + 'RightArm'].translation
+        d1 = V(-upper[0], upper[1], -upper[2]).normalized()                     # in the room, not the turned body: towards them, back, down
+        d2 = V(-fore[0], -fore[1], fore[2] + 0.012 * pt).normalized()
+        E = S + d1 * l1; W = E + d2 * l2
+        if ride: W = W + ride[i]
+        fingers = V(-0.25, -0.2, -1.0)                                          # down the outside of their upper arm
+        palm = V(0.5, -0.85, 0.0)
+        arm(rig, p, 'Right', W, d1 - d2, fingers, palm, 0.5)
+        curl(rig, p, 'Right', 0.25 - 0.1 * pt, thumb=0.1)
+        if seated:
+            M = rig.fk(p)
+            arm(rig, p, 'Left', body_point(rig, M, 'Left', -0.02, 0.32, -0.33, bone='Hips'), body_dir(rig, M, 'Left', 0.6, -0.3, -0.6, bone='Hips'),
+                body_dir(rig, M, 'Left', -0.2, 0.9, -0.3, bone='Hips'), body_dir(rig, M, 'Left', -0.3, 0.0, -1, bone='Hips'), 0.5)   # the free hand on his knee
+            curl(rig, p, 'Left', 0.35)
+        else: relaxed_arm(rig, p, 'Left')
+
+
 def relaxed_arm(rig, p, side):
     """The free arm hangs at the side, a little bent."""
     M = rig.fk(p)
@@ -534,7 +567,7 @@ def stand_still(rig, T, seed):
 @clip('ComfortGive', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_give(rig):
     T = 8.0; frames = stand_still(rig, T, 31)
-    comfort_arm(rig, frames, T, SIDE_GAP, 0.10, ahead=GIVE_AHEAD)
+    embrace_arm(rig, frames, T, ride=follow(rig, comfort_take(rig), 'RightArm', 0.0, 0.0, 0.0))
     return frames
 
 
