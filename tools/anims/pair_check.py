@@ -12,7 +12,7 @@
 #
 #   python3 tools/anims/pair_check.py                  # every pair
 #   python3 tools/anims/pair_check.py ComfortHand      # one pair
-import bpy, os, sys, math
+import bpy, os, sys, math, re
 from mathutils import Vector, Matrix
 from mathutils.bvhtree import BVHTree
 
@@ -40,7 +40,7 @@ def part_of(obj_name, group):
         if g.startswith(side):
             r = g[len(side):]
             if r == 'Hand': return side + 'Hand'
-            if r.startswith('Hand'): return side + 'Fingers'
+            if r.startswith('Hand'): return side + ('Thumb' if 'Thumb' in r and os.environ.get('THUMB') else 'Fingers')
             if r.startswith('ForeArm'): return side + 'ForeArm'
             if r.startswith('Arm'): return side + 'UpperArm'
             if r.startswith('Shoulder'): return 'shoulders'
@@ -68,6 +68,7 @@ def load(scene, body, fbx, place, giver=False):
     for pb in rig.pose.bones:
         pb.matrix_basis.identity()
         if pb.name not in src.pose.bones: continue
+        if re.search(r'Hand(Thumb|Index|Middle|Ring|Pinky)[234]', pb.name): continue   # the packer drops these, so in the games they stay at rest
         c = pb.constraints.new('COPY_ROTATION'); c.target = src; c.subtarget = pb.name; c.target_space = 'WORLD'; c.owner_space = 'WORLD'
         if 'Hips' in pb.name:
             c2 = pb.constraints.new('COPY_LOCATION'); c2.target = src; c2.subtarget = pb.name; c2.target_space = 'WORLD'; c2.owner_space = 'WORLD'
@@ -142,6 +143,7 @@ def run(name):
                     hand = min(hand, d)
                     if os.environ.get('DEBUG') and k == 0 and d < -0.02: print('DEBUG deep hand point', tuple(round(x, 3) for x in v), round(d, 3), tp[i], ttree.find_nearest(v)[0])
                 if d < 0: note(('giver ' + lab, 'taker ' + tp[i]), -d)
+                if os.environ.get('DEBUG') and lab.endswith('Thumb') and d < -0.02: print('DEBUG thumb', tuple(round(x, 3) for x in v), round(d, 3), tp[i], tuple(round(x, 3) for x in ttree.find_nearest(v)[0]), tuple(round(x, 2) for x in ttree.find_nearest(v)[1]))
                 if d < -0.03 and os.environ.get('DEBUG') and lab.endswith('ForeArm'): print('DEBUG deep forearm', k, tuple(round(x, 3) for x in v), round(d, 3), tp[i])
             elif d < 0.01: note(('giver ' + lab, 'taker ' + tp[i]), 0.01 - d)
         for v, lab in zip(tv, Tk['labels']):            # the taker against the giver
