@@ -85,6 +85,22 @@ test('loop seams normalize quantized rotations and meet the starting pose', () =
   assert.ok(first.angleTo(last)<0.000001);
 });
 
+import { VectorKeyframeTrack } from 'three';
+import { CL, clipFor, HIPS_Y, WALKS, isSeated } from '../engine/anim.js';
+test('kneeling, crouching and seated clips keep their low hips; every walk is paced and seam-looped', () => {
+  const pos = (name, y, x = 0) => new AnimationClip(name, 1, [new VectorKeyframeTrack('mixamorigHips.position', [0, 1], [x, y, 0, x, y, 0]), new QuaternionKeyframeTrack('mixamorigHips.quaternion', [0, 1], [0, 0, 0, 1, 0, 0, 0, 1])]);
+  const saved = { ...CL }; CL.Idle = pos('Idle', 0.86, 0.02);
+  for (const [n, y] of [['Kneel', 0.313], ['Kneel2', 0.313], ['KneelDown', 0.308], ['Crawl', 0.36], ['Scared', 0.467], ['Duck2', 0.518], ['HurtHoldIdle', 0.72], ['TalkM3', 0.529], ['AskQuestion', 0.54], ['PlayPiano', 0.527], ['SitScared', 0.48]]) {
+    CL[n] = pos(n, y, 0.3); const c = clipFor(n), t = c.tracks.find((k) => k.name === 'mixamorigHips.position');
+    assert.ok(t, n + ' keeps its hips track'); assert.ok(Math.abs(t.values[1] - y) < 1e-6, n + ' keeps its hips height');
+    if (isSeated(n)) assert.ok(Math.abs(t.values[0] - 0.02) < 1e-6, n + ' is seated: hips over the spot the game set'); }
+  CL.Talk1 = pos('Talk1', 0.86); assert.equal(clipFor('Talk1').tracks.find((k) => k.name === 'mixamorigHips.position'), undefined, 'a standing clip leaves the height to groundFeet');
+  for (const n of ['TalkM3', 'AskQuestion', 'PlayPiano', 'Pray4', 'SitIdle']) assert.ok(isSeated(n), n + ' is seated'); for (const n of ['Kneel', 'Talk1', 'TalkM1']) assert.ok(!isSeated(n));
+  for (const n of ['CarryBagWalk', 'CarryHeadWalk', 'CarryHeadWalk2', 'HoldWalk', 'WalkM2', 'RunM2', 'SadWalk', 'HurtWalk', 'InjuredWalk', 'RifleWalk', 'RifleWalk2', 'RifleCrouchWalk']) assert.ok(WALKS.test(n), n + ' is a walk');
+  assert.ok(HIPS_Y.test('Kneel') && !HIPS_Y.test('Idle'));
+  for (const k of Object.keys(CL)) delete CL[k]; Object.assign(CL, saved);
+});
+
 import { useInteractionKey } from '../engine/input.js';
 test('Space, Enter and E interact once and leave focused UI and text entry alone', () => {
   let count=0;
