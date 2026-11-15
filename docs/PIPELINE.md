@@ -92,11 +92,13 @@ All clips are retargeted onto one rig (`shared/rig/char.blend`), so they play on
 | `CarryHeadWalk2` | the same with both hands on the load (a heavy load) | Walk | hand-made, CC0 (this project) |
 | `CarryHeadIdle` | standing with a load on the head, right hand on it; slow weight shifts, she turns her head and resettles her hold | Idle | hand-made, CC0 (this project) |
 | `Speech` | speaking to a crowd, 12 s: weight shifts, open arms, a raised arm, a hand to the heart, looking round the crowd | Idle | hand-made, CC0 (this project) |
-| `ComfortGive` | right arm round the shoulders of someone standing 0.42 m to the right (same facing), head turned to them, gentle pats; left hand on their arm | Idle | hand-made, CC0 (this project) |
+| `ComfortGive` | right arm round the shoulders of someone standing 0.36 m to the right (same facing): the upper arm low across their back, the hand cupping their far shoulder, elbow down; body and head turned to them, gentle pats; left hand on their arm | Idle | hand-made, CC0 (this project) |
+| `ComfortChild` | the same round a child about 0.6 of an adult's height standing 0.30 m to the right; the adult leans down to them (pair it with `ComfortTake` on the child) | Idle | hand-made, CC0 (this project) |
+| `SitComfortGive`, `SitComfortTake` | the comfort pair seated side by side, 0.40 m apart | SitIdle | hand-made, CC0 (this project) |
 | `ComfortTake` | the one being comforted: head bowed, leaning into the person on the left, hands held low, a few slow sobbing breaths | Idle | hand-made, CC0 (this project) |
 | `SitScared` | seated, tense: hunched, gripping the seat beside the thighs, looking up and round, two small flinches | SitIdle | hand-made, CC0 (this project) |
 
-The head-load clips are planned for a load about 0.2 m in radius and 0.25 m tall sitting on the crown (the game holds it on the Head bone with `hold()`); a wider load needs `LOAD_R` in the script changed so the hand stays outside it. `ComfortGive` and `ComfortTake` are a pair: start them together, with the person comforted 0.42 m to the giver's right.
+The head-load clips are planned for a load about 0.2 m in radius and 0.25 m tall sitting on the crown (the game holds it on the Head bone with `hold()`); a wider load needs `LOAD_R` in the script changed so the hand stays outside it. `ComfortGive` and `ComfortTake` are a pair: start them together, with the person comforted 0.36 m to the giver's right (0.30 m for `ComfortChild`, 0.40 m seated).
 
 **A new body for Mixamo.** Set top-level `"fbx": true` in a recipe and `era.py` also writes `build/people/<name>_for_mixamo.fbx`, a rest-pose copy with skin to upload to mixamo.com.
 
@@ -199,7 +201,7 @@ Marcus Garvey's face (`garvey1914.json`, `garvey1916.json`) was shaped against a
 - Felt hats are one closed shell that clears the hair. A bun under a hat sits low on the nape. Aprons lie on the trousers.
 - Check with `?test=cloth` (see `docs/TESTING.md`) after every change, for both games.
 - A man's shirt, waistcoat and jacket fall almost straight from the chest to the waist (3.5 cm in a metre at the front, against 22 cm for a blouse), run on nearly flat from the chest up to the collarbone, and the eased outline bridges across the chest, so a man's chest never reads as two mounds. A jacket sleeve is slimmer and tapers to the wrist.
-- Collars are evened out along the ring: each line of a collar goes through a running median and a smoothing, any lift clear of the shirt is spread along the ring, and the collar's bone weights (arms folded into the shoulders, the head into the neck) are evened along it, so a collar never tears into saw teeth in a pose. A standing or turn-down collar covers the shirt's cut edge, which stops just below its band.
+- Collars are evened out along the ring: each line of a collar goes through a running median and a smoothing, any lift clear of the shirt is spread along the ring, and the collar's bone weights (arms folded into the shoulders, the head into the neck) are evened along it, so a collar never tears into saw teeth in a pose. The shirt's neckline is relaxed after it is cut, so its edge has no steps.
 - A V waistcoat (`vwaist`) is cut again after the ease, so its front is two straight edges meeting at the top button, and gets a row of five small buttons (piece and material `WaistcoatButtons`). A game that hides a body's `Waistcoat` must hide `WaistcoatButtons` with it (every game's `makeBody` does).
 - A head tie (`wrap`) ends in one smooth, flattened knot on the front of the head.
 - Waistcoat and jacket take their bone weights from the shirt under them (read from the nearest face and blended), the shirt's torso has its arm weights faded out and evened, and the base of the neck (skin and shirt neckline alike) follows the chest. These keep V necks, necklines and hems clean while walking instead of breaking into saw teeth.

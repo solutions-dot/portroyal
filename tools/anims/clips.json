@@ -90,5 +90,8 @@
  "Speech": "handmade/Speech.fbx",
  "ComfortGive": "handmade/ComfortGive.fbx",
  "ComfortTake": "handmade/ComfortTake.fbx",
- "SitScared": "handmade/SitScared.fbx"
+ "SitScared": "handmade/SitScared.fbx",
+ "ComfortChild": "handmade/ComfortChild.fbx",
+ "SitComfortGive": "handmade/SitComfortGive.fbx",
+ "SitComfortTake": "handmade/SitComfortTake.fbx"
 }
