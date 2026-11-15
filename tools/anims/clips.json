@@ -52,5 +52,10 @@
  "InjuredWalk": "Injured_Walking.fbx",
  "StopWalkM": "Stop_Walking.fbx",
  "CarryBagWalk": "Walking_With_Shopping_Bag.fbx",
- "WalkTurn180": "Walking_Turn_180.fbx"
+ "WalkTurn180": "Walking_Turn_180.fbx",
+ "ReachOut": "Reaching_Out.fbx",
+ "Yell": "Yelling.fbx",
+ "Argue": "Standing_Arguing.fbx",
+ "TalkM1": "Talking_M1.fbx",
+ "TalkM2": "Talking_M2.fbx"
 }
