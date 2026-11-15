@@ -836,7 +836,7 @@ if G.get('pocket'):      # a patch pocket on the chest: a slightly raised panel 
     COL.setdefault('Pocket',COL['Shirt']*0.86); bm=bmesh.new(); px=0.088*s; pz=VZ-0.035*s; pw=0.040*s; ph=0.088*s; rows=[]
     for j in range(5):
         v=j/4; half=pw*(1.0 if v<0.75 else 0.82); rows.append([bm.verts.new(on_shirt(Vector((px+half*(i/2-1),-0.3,pz-ph*v)).lerp(Vector((px+half*(i/2-1),shirt_front(pz-ph*v,px+half*(i/2-1)),pz-ph*v)),1.0),0.0035)) for i in range(5)])
-    quadstrip(bm,rows); soft('Pocket',bm,'Pocket',only=('Spine2','Spine1','Spine'),src=ON('shirt'))
+    quadstrip(bm,rows); _pk=soft('Pocket',bm,'Pocket',only=('Spine2','Spine1','Spine')); _smooth_bones(_pk,lambda c:True,6)      # chest weights only (with the shirt's, its edge followed the raised arm and tore)
 if G.get('skirt') and G.get('belt'):     # a narrow belt where the bodice meets the skirt (or, with sash, a deep smooth waistband over the top of the skirt and the bottom of the blouse)
     TT=tree_of(PART['skirt']); bm=bmesh.new(); seg=28; rows=[]
     SA=G.get('sash'); seg=48 if SA else seg; zs=((HIP+0.078,0.0005),(HIP+0.080,0.003),(HIP+0.100,0.0035),(HIP+0.120,0.003),(HIP+0.122,0.0005)) if SA else ((HIP+0.070,0.001),(HIP+0.071,0.004),(HIP+0.094,0.004),(HIP+0.095,0.001))      # a flat band about 4 mm thick: thicker, it read as a roll
