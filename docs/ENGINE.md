@@ -52,7 +52,7 @@ The controller from `animate()` (`ctl`):
 - `ctl.rest()` goes back to the base clip.
 - `ctl.tick(dt)` is called each frame for the once-timers.
 
-Clips in the library: Idle, Run, Walk, StartWalk, StopWalk, Carry, CarryIdle, TurnR, TurnL, TurnRW, TurnLW, JogStumble, StumbleBack, Tread, Talk1, Talk2, Talk3, Point, Wave, WaveSlow, Laugh, Salute, Clap, Cheer, SitDisbelief, SitTalk, SitIdle, SitDrink, Write, Terrified, Sad1, Sad2, Cry, Block, Punch, Sword1, Sword2, Sheathe, PickUp, Pray, Drink. To add one, see PIPELINE.md.
+Clips in the library: the full list is `tools/anims/clips.json` (126 clips on 15 November 2026), and `docs/PIPELINE.md` section 2 says what each new one shows. To add one, see PIPELINE.md.
 
 ## engine/audio.js: sound made in code
 

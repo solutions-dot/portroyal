@@ -320,6 +320,19 @@ if not OLD or EASE_OLD:
     for i in range(1,ENZ):
         for k in range(ENA): _hu[i][k]=max(_eh[i][k],_hu[i-1][k]-(0.5 if G.get('woman') else 0.28)*EDZ) if math.cos(2*math.pi*k/ENA)>0.35 and EZ0+i*EDZ>TUCK+0.06 else _eh[i][k]       # and, on the front only, rising from the bust to the collarbone (a man's shirt runs on flatter from the chest to the collarbone, so the chest does not read as two mounds)
     EVH=[[max(_hd[i][k],_hu[i][k]) for k in range(ENA)] for i in range(ENZ)]
+    if not G.get('woman'):      # a man's cloth spans straight from the fullest part of the chest down to the waistband, like a sheet laid over the body: seen from the side it
+        # neither hangs out from the chest like a shelf nor follows a belly or the chest's own curve. Each column (one angle round the body) becomes its upper convex hull over height
+        zs=[EZ0+i*EDZ for i in range(ENZ)]
+        for k in range(ENA):
+            col=[_eh[i][k] for i in range(ENZ)]; hull=[]
+            for i in range(ENZ):
+                while len(hull)>=2:
+                    i0,i1=hull[-2],hull[-1]
+                    if (col[i1]-col[i0])*(zs[i]-zs[i0])<=(col[i]-col[i0])*(zs[i1]-zs[i0]): hull.pop()
+                    else: break
+                hull.append(i)
+            for a_,b_ in zip(hull,hull[1:]):
+                for i in range(a_,b_+1): EVH[i][k]=col[a_]+(col[b_]-col[a_])*(zs[i]-zs[a_])/(zs[b_]-zs[a_])
     for _ in range(2 if G.get('woman') else 4): EVH=[[(EVH[max(0,i-1)][k]+EVH[min(ENZ-1,i+1)][k]+EVH[i][(k-1)%ENA]+EVH[i][(k+1)%ENA]+2*EVH[i][k])/6 for k in range(ENA)] for i in range(ENZ)]
     EVH=[[max(EVH[i][k],_eh[i][k]) for k in range(ENA)] for i in range(ENZ)]
     def env(z,a):

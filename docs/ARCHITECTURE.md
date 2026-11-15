@@ -18,7 +18,7 @@ engine/                   shared runtime code, imported by every game
   loft.js                 smooth animal bodies (Kendal, Melissa)
   ui-audit.js             painted-text overlap test (Bog Walk, tests/ui-audit.html)
 shared/
-  models/anims.js         the shared animation library (96 clips on one skeleton), copied into each game at build
+  models/anims.js         the shared animation library (126 clips on one skeleton), copied into each game at build
   anim-sources/*.fbx      the original Mixamo downloads the library is made from
   rig/char.blend          the reference rig every character uses (Abba's), plus eye.png and eye_small.jpg
 games/

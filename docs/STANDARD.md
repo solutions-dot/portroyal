@@ -106,7 +106,7 @@ How to use it:
 
 ## 4. Animations
 
-- **The shared library** is `shared/models/anims.js`: 96 clips on one skeleton (Mixamo and hand-made) (`docs/ENGINE.md` lists them). Every body has the same bones, so every clip plays on everyone.
+- **The shared library** is `shared/models/anims.js`: 126 clips on one skeleton (Mixamo and hand-made) (`docs/ENGINE.md` lists them). Every body has the same bones, so every clip plays on everyone.
 - **Adding a clip** (`docs/PIPELINE.md`, section 2): download from mixamo.com as **FBX, Without Skin**, with **In Place** ticked for anything that walks; put it in `shared/anim-sources/`; add it to `tools/anims/clips.json`; run `tools/anims/retarget_clips.py` (about 11 minutes), then `tools/anims/optimize_clips.mjs`, which packs it, then `tools/anims/check_clips.mjs`. Changing the shared library is a shared-file change: its own pull request.
 - **A clip only one game needs** stays out of the shared library: Tivoli keeps its own in `tools/tivoli/anim-sources/` and `tools/tivoli/clips.json`, packs them with `tools/tivoli/pack_clips.mjs` into `games/tivoli/site/models/anims_tivoli.js`, and loads that after the shared library. Copy that.
 - **Each game's clip list:** `games/<game>/anim-clips.json`. The build trims the library to it, so add any clip the game starts to play.
