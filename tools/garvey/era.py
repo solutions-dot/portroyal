@@ -694,9 +694,6 @@ if FLAT:
             for j in range(1,4):
                 for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
         for j,off in ((1,0.0035),(2,0.0065),(3,0.011)): ring_fix(rows,j,SHT,off,iters=2)
-        if PART.get('waistcoat'):      # the long points of a camp collar lie over a waistcoat's fronts, not under them
-            _wt=tree_of(PART['waistcoat'])
-            for j,off in ((2,0.003),(3,0.005)): ring_fix(rows,j,_wt,off,iters=1)
     quadstrip(bm,[[bm.verts.new(q) for q in row] for row in rows]); _co=soft('Collar',bm,'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD: ring_weights(_co,len(rows),4)
 if CK and not FLAT:

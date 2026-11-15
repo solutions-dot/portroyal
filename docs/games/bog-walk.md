@@ -81,7 +81,7 @@ The special train that brings the coffins into the yard in chapter 5 (`buildYard
 
 Why these fit 1904: the railway was handed back to the government in 1900 and became the Jamaica Government Railway, and it ran steam engines until 1964 (Wikipedia, "Rail transport in Jamaica"; International Steam Pages, "Jamaica"). We found no photograph or roster of the engines it used in 1904, so the 4-4-0 is a general picture of an engine of the 1890s, the same as in Kendal's 1890s chapter, and the slatted wagon is a goods wagon of the banana trade. Kendal's wooden bogie coach (`woodCoach`) is drawn as a 1950s coach and is not used here. The record says only that the coffins "came by special train" at 11:50; that it was an engine and goods wagons is our choice.
 
-The electric tram in Kingston in 1899 (chapter 2, `electricCar` in `places.js`) and the retired mule car are a different kind of vehicle, built in this game's own `places.js`. They are kept as they are.
+The electric tram in Kingston in 1899 (chapter 2, `electricCar` in `places.js`) and the retired mule car are a different kind of vehicle, built in this game's own `places.js`. They are kept as they are, except that the tram's four wheels are now the railway's turned wheels with flanges (`wheel()` from `engine/vehicles.js`) instead of plain discs.
 
 ### The cinematic moments (owner rule: the major events must feel cinematic)
 
