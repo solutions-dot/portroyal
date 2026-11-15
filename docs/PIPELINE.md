@@ -92,13 +92,14 @@ All clips are retargeted onto one rig (`shared/rig/char.blend`), so they play on
 | `CarryHeadWalk2` | the same with both hands on the load (a heavy load) | Walk | hand-made, CC0 (this project) |
 | `CarryHeadIdle` | standing with a load on the head, right hand on it; slow weight shifts, she turns her head and resettles her hold | Idle | hand-made, CC0 (this project) |
 | `Speech` | speaking to a crowd, 12 s: weight shifts, open arms, a raised arm, a hand to the heart, looking round the crowd | Idle | hand-made, CC0 (this project) |
-| `ComfortGive` | right arm round the shoulders of someone standing 0.36 m to the right (same facing): the upper arm low across their back, the hand cupping their far shoulder, elbow down; body and head turned to them, gentle pats; left hand on their arm | Idle | hand-made, CC0 (this project) |
-| `ComfortChild` | the same round a child about 0.6 of an adult's height standing 0.30 m to the right; the adult leans down to them (pair it with `ComfortTake` on the child) | Idle | hand-made, CC0 (this project) |
+| `ComfortGive` | an arm round someone standing 0.40 m to the right (same facing): body turned about 30 degrees to them, forearm low across their shoulder blades, hand on their far shoulder and upper arm, elbow tucked; head turned to them and bowed a little, slow pats; free arm relaxed | Idle | hand-made, CC0 (this project) |
+| `ComfortHand` | the simplest option: facing the other person 0.45 m in front, the right hand resting on their left shoulder, a couple of slow pats | Idle | hand-made, CC0 (this project) |
+| `ComfortChild` | the same round a child about 0.6 of an adult's height standing 0.32 m to the right; the adult leans down to them (pair it with `ComfortTake` on the child) | Idle | hand-made, CC0 (this project) |
 | `SitComfortGive`, `SitComfortTake` | the comfort pair seated side by side, 0.40 m apart | SitIdle | hand-made, CC0 (this project) |
-| `ComfortTake` | the one being comforted: head bowed, leaning into the person on the left, hands held low, a few slow sobbing breaths | Idle | hand-made, CC0 (this project) |
+| `ComfortTake` | the one being comforted: upright, head bowed and tipped towards the giver on the left, hands loose in front, once a loop a hand to the eyes, slow breaths | Idle | hand-made, CC0 (this project) |
 | `SitScared` | seated, tense: hunched, gripping the seat beside the thighs, looking up and round, two small flinches | SitIdle | hand-made, CC0 (this project) |
 
-The head-load clips are planned for a load about 0.2 m in radius and 0.25 m tall sitting on the crown (the game holds it on the Head bone with `hold()`); a wider load needs `LOAD_R` in the script changed so the hand stays outside it. `ComfortGive` and `ComfortTake` are a pair: start them together, with the person comforted 0.36 m to the giver's right (0.30 m for `ComfortChild`, 0.40 m seated).
+The head-load clips are planned for a load about 0.2 m in radius and 0.25 m tall sitting on the crown (the game holds it on the Head bone with `hold()`); a wider load needs `LOAD_R` in the script changed so the hand stays outside it. `ComfortGive` and `ComfortTake` are a pair: start them together, with the person comforted 0.40 m to the giver's right (0.32 m for `ComfortChild`, 0.40 m seated); `ComfortHand` faces its partner, who stands 0.45 m in front.
 
 **A new body for Mixamo.** Set top-level `"fbx": true` in a recipe and `era.py` also writes `build/people/<name>_for_mixamo.fbx`, a rest-pose copy with skin to upload to mixamo.com.
 

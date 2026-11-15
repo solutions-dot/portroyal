@@ -63,9 +63,20 @@ The full rules are in `docs/PEOPLE.md`; every recipe key is in `docs/PIPELINE.md
 - **Shared engine pieces to reuse:** `engine/placement.js` (seats with `anchorSeat`, walls with `slideWalls`, routes with `walkRoute` and `routeIssues`), `engine/loft.js` (smooth animal bodies), `engine/audit.js` (`snapMeshes` before merging, then `auditPlace`). See `docs/ENGINE.md`.
 - **Textures** are drawn in code on canvases (no image files), cached and shared (`gfx.js`: `cv`, `std`, `solid`, `flat`). Photographs are references only, never textures.
 - **Speed and phones.** Merge each place's still scenery with `batchStatic` (in each game's `gfx.js`) after taking the audit snapshot; draw grass, flowers and trees instanced; share materials; hide far crowd figures (Kendal hides light copies beyond 75 m); real shadows on computers only (`SHADOWS` in Kendal's `main.js`), soft blob shadows under people on phones. Measure with `&stats` on a view (draw calls and triangles in the page title).
-- **Grounded and clear.** Everything stands on something: a sign or lamp needs a post, bracket or wall (`float` in the audit). Nothing solid stands in a walkway without a wall rectangle. People never stand in walls, in furniture or in each other, and bushes never poke through walls (`auditThrough`). A check for solid objects that overlap each other is being added to `engine/audit.js` by another branch; until it lands, look for it by eye.
+- **Grounded and clear.** Everything stands on something: a sign or lamp needs a post, bracket or wall (`float` in the audit). Nothing solid stands in a walkway without a wall rectangle. People never stand in walls, in furniture, in trees (trunks, low crowns, between buttress roots) or in each other, and bushes never poke through walls (`auditThrough`). `auditBodies` checks people against the real shapes, including merged and instanced ones, where they stand and along their routes.
 - **History.** Build from photographs, plans or descriptions of the real place where they exist, and say in the journal when a place is "a general picture" instead (rule 3).
 - **Check:** `?test=audit` with 0 issues in every place, then screenshots of each place close up and from far away, on a phone layout too.
+
+## People who follow or lead
+
+Every game uses `engine/follow.js` for anyone who walks with the player (`docs/ENGINE.md`). Do not write a game's own follow code.
+
+- **A follower** (`follow`): comes a comfortable way behind you and to one side (about 1.5 m; 1.3 m for a small child), never inside your personal space (about 0.9 m; 0.8 m for a small child), never blocks you (leave followers out of the player's collision with people), steps aside when you walk back into them, stops and faces you when you stop, and walks at a pace that fits (a run only to catch up, and only if the body has a Run clip).
+- **A guide** (`lead`): walks ahead along a path and waits, facing you, when you fall behind.
+- **Someone sent somewhere** (`goTo`): walks round furniture and solid things, or along a route the audit has checked.
+- **Nothing solid.** The game's `world.blocked` must know every solid thing a person could walk into: walls, furniture, trees, huts, rocks, fences, luggage. A footprint list that misses one lets a follower walk through it.
+- **Stop them** when the story says so and when a chapter is left.
+- **Check:** `?test=follow` walks the player along each follower's and guide's real route, with stops and a turn back into the follower, and must report 0 (nobody too close, inside anything, far behind for long, or stuck). The place audit checks guides' and followers' routes against the real shapes (`place.routes`).
 
 ## 4. Animations
 

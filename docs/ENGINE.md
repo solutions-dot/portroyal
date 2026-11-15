@@ -8,7 +8,7 @@ import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, tone, nois
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 ```
 
-The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies) and `ui-audit.js` (text overlap). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
+The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies) and `ui-audit.js` (text overlap). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
 
 ## engine/loader.js: loading packed models
 
@@ -82,6 +82,7 @@ Required for every game (CLAUDE.md rule 8, TESTING.md section 5). Nothing here r
 | `auditSeated(id, body, snap, ground, stats)` | For one seated person (pose the mixer first): the seat must not pass through the thighs (the hip joint rides about 12 cm above the seat top), the person must not hang or sit on nothing, and must not cut into a seat back or wall. Uses the real skinned vertices. |
 | `auditWalk(id, body, v, opts)` | Steps a walking body through whole loops at ground speed `v` and measures foot slide, sinking, floating and jumps. |
 | `auditCloth(id, body, { poses })` | Finds an under layer that shows through its cover in each pose (skin, shirt, waistcoat, hair under a hat). The layer order is `CL_ORDER` in the file. |
+| `auditBodies(snap, people, { skip })` | People inside any solid shape, tested against the real triangles: merged shapes (a whole tree, a hut drawn as one shape), each copy of an instanced shape (a forest, rocks, far huts), spheres, lathes and rocks, not only plain boxes and cylinders. Each person is an upright cylinder (their height `h`, radius `r`, 18 cm for a grown-up, less for a child) cut by slices every 12 cm: a fault is a surface passing through the body, being enclosed by a shape, or standing inside a shape's outline at shin height (between a big tree's buttress roots, among a stool's legs). Leaf cards, see-through and unlit things, planes, thin small plants and the ground are left out; `skip(entry)` leaves out more (bushes someone hides in on purpose). `auditPlace` calls it for every standing person, along every walker's loop, and along `place.routes` (`[{ id, pts, loop, what, h, r }]`: followers, guides, people sent somewhere). `routeSpots` samples a route the same way. |
 | `auditPeople(...)` | People standing in the same spot, or on a walker's path. `auditPlace` calls it. |
 | `auditThrough(snap)` | Bushes, tree crowns and other leafy shapes that poke through a wall and show on both sides. Call it and report its lines with the rest. |
 | `insideBoxFootprint(mesh, x, y, z)` | Whether a point is inside a mesh's own (rotated) box. A helper for the checks above. |
@@ -98,6 +99,21 @@ Show the results in a dev-only `?test=audit` view and expect 0 issues. Kendal's 
 | `routeIssues(id, path, walls, r, loop)` | Lines for every leg of a walker's route that crosses a wall rectangle. |
 | `furnitureRouteIssues(id, path, snap, ground, r, loop)` | The same against the real furniture boxes from `snapMeshes`, so a missing wall rectangle is still caught. |
 | `walkRoute(a, b, walls, r, bounds)` | A short route round nearby walls, for people who follow the player. |
+
+## engine/follow.js: people who follow you, lead you, or are sent somewhere
+
+One system for every game (owner's request, November 2026). Each game used to have its own copy; Kendal (Dawn), Melissa (Mum), Eventide (Gran), Nanny Town (Quamin, Mama, Phibba, the neighbours) and Garvey (people walking to their seats in the hall) now all use this module. Set a person up with one call and run `tick` once a frame for each person whose `n.fol` is set. All tuning is in `opts`.
+
+| Name | Use |
+|---|---|
+| `follow(n, opts)` | Someone who comes with you. They walk in your footsteps `gap` metres behind (about 1.5; 1.3 for a small child) and `side` metres to one side when there is room, never closer than `space` (about 0.9; 0.8 for a small child). If you walk back into them they step aside, across your way. They stop a step after you and turn to face you, run only to catch up and only if the body has a Run clip, route round anything in the way, and if stuck or left far behind (`far`, 16 m) reappear at a free spot behind you, out of the camera's view when possible. `opts.path` keeps them on a path instead. |
+| `lead(n, path, opts)` | A guide who walks `ahead` metres in front of you along a path (a list of `[x, z]`), within `min` and `max`. If you are more than `wait` metres away they stop, turn and wait (with a wave if the body has one) until you are within `resume`. |
+| `goTo(n, x, z, opts)` | Someone sent to a spot: round `world.walls` (or along `opts.route`, waypoints the audit has checked), then they stop, turn to `opts.face` and call `opts.done(n)`. |
+| `stop(n)` | They stand where they are. Call it when the story says so, and when a chapter is left (`resetTransient`). |
+| `tick(n, dt, world)` | `world = { px, pz, blocked(x, z, r), walls, bounds, others, talking, view, place(n) }`: where you are, where a person may not stand (walls, footprints of trees, huts, rocks, luggage), routes round furniture, other people (kept 0.5 m apart), the person you are talking to (they wait), the camera (for reappearing out of view), and `place(n)` to set the body's height on hilly land. Without `place` the tick sets x and z and leaves y to `groundFeet`. |
+| `isFollowing(n)`, `isLeading(n)` | For the game's own code: a follower must not block you, so leave them out of the player's collision with people. A hint arrow can point at a leader. |
+| `pathPoint`, `pathS`, `pathLen`, `pathSpots` | Path helpers; `pathSpots(path, s0, s1, side)` gives every spot on a path, for `place.routes`. |
+| `watch({ space, behind })`, `drive({...})` | The `?test=follow` check: `drive` walks the player along a real route through the game's own clamp and update; `watch.sample` each frame records a follower inside the personal space, inside something, more than `behind` metres away for over 2 seconds, or a guide that stands still while you wait near them. `watch.spots(n)` gives every place they stood, for `auditBodies`. |
 
 ## engine/skinprobe.js: how dark a face really looks (dev only)
 
