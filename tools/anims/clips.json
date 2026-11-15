@@ -103,5 +103,8 @@
  "IdleTwist": "Catwalk_Idle_Twist_R.fbx",
  "IdleGuard": "Warrior_Idle.fbx",
  "BriefcaseIdle": "Standing_W_Briefcase_Idle.fbx",
- "TorchIdle": "Standing_Torch_Idle_02.fbx"
+ "TorchIdle": "Standing_Torch_Idle_02.fbx",
+ "IdleM": "Idle_M.fbx",
+ "StartSprint": "Idle_To_Sprint.fbx",
+ "BoxIdle2": "Box_Idle_1.fbx"
 }
