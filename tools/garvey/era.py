@@ -191,7 +191,7 @@ if G.get('breeches'):
     bk=G.get('breechkind','plain'); low=(ANK+(0.035 if not G.get('shorts') else 0)) if bk=='trousers' else KNEE-0.05*s
     if G.get('shorts'): low=KNEE+0.05*s
     wide=0.012 if bk in ('trousers','slops') else 0.013
-    if OLD: wide=lambda c,_w=wide:_w+0.004*sstep(HIP+0.04,HIP+0.09,c.z)      # the waistband stands a little off the tucked shirt
+    if OLD: wide=lambda c,_w=wide:_w+0.001*sstep(HIP+0.04,HIP+0.09,c.z)      # the waistband sits just off the tucked shirt
     def breech_leg(v):
         # 1690 breeches are cut full and gathered into a band below the knee; a sailor's slops are wide open tubes. Either way the cloth hangs from the thigh instead of clinging to it
         z=v.co.z
@@ -363,7 +363,7 @@ for o in clothes:
     md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
     with ov(o): bpy.ops.object.modifier_move_to_index(modifier='wt',index=0); bpy.ops.object.modifier_apply(modifier='wt')
 if EASE_OLD:      # 1690: only the shirt; it blouses out above the breeches' waistband (TUCK is above the band) and falls nearly straight from the chest
-    ease(dict(parts)['shirt'],0.009,tuck=0.003)
+    ease(dict(parts)['shirt'],0.009,tuck=0.011 if G.get('breeches') else 0.003)      # tucked into breeches it fills the band (tucked tight, it left an open lip of breeches round it)
 if not OLD:      # the ease comes after the bone weights are copied: each point of cloth keeps the weights of the skin it started on, so loose cloth by the armpit does not follow the arm
     for k,o in parts:
         if k=='shirt': ease(o,0.009,tuck=0.003)
@@ -745,7 +745,9 @@ if G.get('tie'):         # a tie: a knot in the collar's opening and a blade tha
     for q in ((4,5,6,7),(0,4,7,3),(5,1,2,6),(7,6,2,3),(0,1,5,4)): bm.faces.new([kv[i] for i in q])
     soft('Tie',bm,'Tie',only=('Spine2','Spine1','Spine','Neck'),src=ON('shirt'))
 if G.get('buttons',not G.get('woman') and not OLD) and not G.get('coat'):      # the shirt's front band and its buttons
-    bm=bmesh.new(); z1=(VZ-0.004*s) if CK=='camp' else collar_base(0)-0.012*s; z0=WAIST+0.01; n=10 if OLD else 24; rows=[]
+    bm=bmesh.new(); z1=(VZ-0.004*s) if CK=='camp' else collar_base(0)-0.012*s; z0=WAIST+0.01
+    if G.get('skirt') and G.get('belt'): z0=max(z0,HIP+(0.118 if G.get('sash') else 0.092))      # the band stops where the belt or sash covers it, so it never lies on top of them
+    n=10 if OLD else 24; rows=[]
     for t in range(n+1):
         z=z1+(z0-z1)*t/n; y=min(shirt_front(z,-0.014*s),shirt_front(z),shirt_front(z,0.014*s))-(0.003 if OLD else 0.0045); rows.append([bm.verts.new((-0.014*s,y,z)),bm.verts.new((0.014*s,y,z))])      # later eras: a finer strip that clears the shirt across its whole width
     quadstrip(bm,rows); soft('Placket',bm,'Shirt',src=ON('shirt'))
@@ -770,7 +772,9 @@ if OLD and G.get('breeches') and not G.get('coat'):      # a waistband: a narrow
     for z,e in ((HIP+0.095,0.0),(HIP+0.100,0.006),(HIP+0.134,0.006),(HIP+0.139,0.0)):
         ring=[]
         for k in range(seg):
-            a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z-0.03)); hit=TT.ray_cast(o+d*0.4,-d)[0]; o2=Vector((0,J('Hips').y,z)); h2=SHT.ray_cast(o2,d,0.3)[0]; r=max(((hit-o).length if hit else 0.15),((h2-o2).length+0.002) if h2 is not None else 0.0)+e; ring.append(bm.verts.new(o+d*r+Vector((0,0,0.03))))      # never inside the shirt that blouses over it (measured from the inside out: from outside, a ray met the hanging sleeve first)
+            a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z-0.03)); hit=TT.ray_cast(o+d*0.4,-d)[0]; o2=Vector((0,J('Hips').y,z)); h2=SHT.ray_cast(o2,d,0.3)[0]; r=max(((hit-o).length if hit else 0.15),((h2-o2).length+0.002) if h2 is not None else 0.0)+e
+            if z>HIP+0.137 and h2 is not None: r=(h2-o2).length+0.002      # the top edge closes in onto the shirt: no open lip of band stands round it
+            ring.append(bm.verts.new(o+d*r+Vector((0,0,0.03))))      # never inside the shirt that blouses over it (measured from the inside out: from outside, a ray met the hanging sleeve first)
         rows.append(ring)
     quadstrip(bm,rows,close=True,flip=True); soft('Waistband',bm,'Breeches',only=('Hips','Spine'))
 if G.get('jacket'):      # lapels that lie along the jacket's opening, and its buttons
