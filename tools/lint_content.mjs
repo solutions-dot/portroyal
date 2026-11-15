@@ -194,8 +194,8 @@ async function main() {
   const t0 = Date.now(), results = [];
   for (const g of only ? [only] : GAMES()) results.push(await lintGame(g));
   if (!only) results.push(lintShared());
-  const bpath = join(ROOT, 'tools/checks/lint-baseline.json'), base = existsSync(bpath) ? JSON.parse(read(bpath)) : {};
-  if (update) { const b = Object.fromEntries(results.map((r) => [r.game, [...new Set(r.findings.map(keyOf))].sort()])); if (only) Object.assign(base, b); writeFileSync(bpath, JSON.stringify(only ? base : b, null, 1) + '\n'); console.log('baseline written: ' + relative(ROOT, bpath)); }
+  const bpath = join(ROOT, 'tools/checks/lint-baseline.json'); let base = existsSync(bpath) ? JSON.parse(read(bpath)) : {};
+  if (update) { const b = Object.fromEntries(results.map((r) => [r.game, [...new Set(r.findings.map(keyOf))].sort()])); const nb = only ? { ...base, ...b } : b; writeFileSync(bpath, JSON.stringify(nb, null, 1) + '\n'); base = nb; console.log('baseline written: ' + relative(ROOT, bpath)); }
   let fresh = 0, gone = 0;
   console.log('content lint (tools/lint_content.mjs)\n\ngame        long  goal  dash  name  fact  journal  real  sound  rule4  total  new');
   for (const r of results) {
