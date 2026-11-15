@@ -866,6 +866,29 @@ function devViews() {
       await beginChapter(3, 41); { const P = PL.watch, st = { float: 0, jump: 0, last: null, n: 0 }, n = P.extras.find((e) => e.column === 3); FIGHT.on = true; FIGHT.mode = 'march'; FIGHT.sHead = 100; for (let i = 0; i < 500; i++) { update(1 / 30); if (i > 20 && n.m.visible) probe(n, 's', st); } FIGHT.on = false; bad += report('a soldier climbing the path', st); }
       document.title = 'WALKERS ' + bad; const el = $('autolog'); if (el) el.textContent = out.join('\n'); })();
   }
+  if (q.get('test') === 'follow') {   /* ?test=follow : you walk the real routes, with stops and a turn back into the person behind you, and every guide and follower is watched (engine/follow.js, watch):
+       too close (inside the personal space), inside something (a footprint, or the real shapes: engine/audit.js auditBodies), left far behind, or a guide stuck. Expect 0. */
+    (async () => { const out = []; let bad = 0; startGame(true); const dt = 1 / 30;
+      const drive = (P, route, people, w, { speed = 2.3, stops = [] } = {}) => { for (let i = 1; i < route.length; i++) { const [tx, tz] = route[i]; let guard = 0;
+          while (Math.hypot(tx - state.x, tz - state.z) > 0.05 && guard++ < 4000) { const d = Math.hypot(tx - state.x, tz - state.z), k = Math.min(1, speed * dt / d); [state.x, state.z] = clampPos(state.x + (tx - state.x) * k, state.z + (tz - state.z) * k); update(dt); for (const n of people) w.sample(n, state.x, state.z, (x, z) => blockedAt(P, x, z, 0), dt); if (guard > 3000) break; }
+          if (stops.includes(i)) for (let f = 0; f < 75; f++) { update(dt); for (const n of people) w.sample(n, state.x, state.z, (x, z) => blockedAt(P, x, z, 0), dt); } } };
+      const report = (P, w, list) => { for (const [n, label] of list) { const lines = w.lines(n, label).concat(auditBodies(P.snap.concat(P.snap.inst || []), w.spots(n).map(([x, z]) => ({ id: label, x, z, ground: P.G.h(x, z), h: tallOf(n), r: bodyR(n), what: 'walks' })), { skip: (e) => ((P.spots && P.spots.cover) || []).some((c) => c.uuid === e.top) }));
+          out.push(label + ': ' + w.stats(n) + (lines.length ? '' : ', ok')); for (const l of lines) out.push('  ' + l); bad += lines.length; } };
+      /* chapter 1: Quamin leads you up the estate trail, Mama follows you */
+      await beginChapter(0, 11); { const P = PL.estate, S = P.spots, qn = byId('quamin'), ma = byId('mama'), w = followWatch({ space: FOLLOW.mama.space || 0.9, behind: 9 }); stage = 13; qn.fol.max = S.top - 2.2;
+        const s0 = pathSE(S.trail.dense, state.x, state.z), route = pathSpots(S.trail.dense, s0, S.top - 4, 0, 1.0); drive(P, route, [qn, ma], w, { stops: [12, 40, 70] });
+        const back = pathSpots(S.trail.dense, S.top - 9, S.top - 4, 0, 1.0).reverse(); drive(P, back, [qn, ma], w); report(P, w, [[qn, 'Quamin leads you up the estate trail'], [ma, 'Mama follows you up the estate trail']]); }
+      /* chapter 2: Quamin leads you up the narrow path, Mama follows; in the town they walk home */
+      await beginChapter(1, 20); { const P = PL.town, S = P.spots, qn = byId('quaminT'), ma = byId('mamaT'), w = followWatch({ space: 0.9, behind: 9 });
+        drive(P, pathSpots(S.pathIn.dense, pathSE(S.pathIn.dense, state.x, state.z), S.sIn, 0, 1.0).concat([[2.5, 7.5], [0.5, 6.5]]), [qn, ma], w, { stops: [15, 45] }); for (let f = 0; f < 300; f++) { update(dt); for (const n of [qn, ma]) w.sample(n, state.x, state.z, (x, z) => blockedAt(P, x, z, 0), dt); }
+        report(P, w, [[qn, 'Quamin leads you up the narrow path, then walks home'], [ma, 'Mama follows you up the narrow path, then walks home']]); if (qn.fol || Math.hypot(qn.x - qn.hx, qn.z - qn.hz) > 0.3) { out.push('  Quamin did not get home'); bad++; } }
+      /* chapter 5: little Phibba comes with you round the clearing (you stop, you turn back into her), to the back trail and up it; Mama leads, the neighbours run ahead */
+      await beginChapter(4, 53); { const P = PL.town, S = P.spots, ph = byId('phibba'); state.x = ph.x + 1.0; state.z = ph.z + 0.9; update(dt); setStage(54); const m5 = byId('mama5'), w = followWatch({ space: FOLLOW.phibba.space, behind: 6 });
+        drive(P, [[state.x, state.z], [2, -3], [-2, 2], [-5, 4.6], [-6.5, 1.5]], [ph], w, { stops: [2, 4] }); drive(P, [[state.x, state.z], [-3.5, 2.4]], [ph], w, { speed: 2.3 }); drive(P, [[state.x, state.z], [-5.5, -4.5], [-8.2, -8.4]], [ph], w, { stops: [2] });
+        gunsRun(); drive(P, pathSpots(S.back.dense, pathSE(S.back.dense, state.x, state.z), S.sBack - 3, 0, 1.0), [ph, m5], w, { speed: 2.6, stops: [20] });
+        report(P, w, [[ph, 'Phibba comes with you round the town and up the back trail'], [m5, 'Mama leads you up the back trail']]); GUNS.on = false; }
+      out.unshift('follow and lead: ' + bad + ' problems'); document.title = 'FOLLOW ' + bad; const el = $('autolog'); if (el) el.textContent = out.join('\n'); })();
+  }
   if (q.get('test') === 'resume') {   /* saved games resume in the right place, and closing a finishing conversation still moves the story on */
     (async () => { const out = []; startGame(true); const at = () => 'place=' + cur + ' stage=' + stage + ' at ' + state.x.toFixed(0) + ',' + state.z.toFixed(0);
       await beginChapter(0, 11); out.push('ch1@11 ' + at() + ' lead=' + !!byId('quamin').fol); await beginChapter(1, 23); out.push('ch2@23 ' + at() + ' vines=' + PL.town.spots.yams[0].userData.vine.visible);

@@ -70,10 +70,12 @@ const clipFor = (n, f, v) => (f.run && v > (n.running ? 2.0 : 2.4) * Math.sqrt((
 /* someone who comes with you, anywhere you walk */
 function followFree(n, f, dt, W) {
   const C = f.crumbs, last = C[C.length - 1]; if (!last || Math.hypot(W.px - last[0], W.pz - last[1]) > 0.25) { if (last) f.hdg = Math.atan2(W.px - last[0], W.pz - last[1]); C.push([W.px, W.pz]); if (C.length > 300) C.shift(); }
-  const d = Math.hypot(W.px - n.x, W.pz - n.z);
-  if (d < f.space) {   /* you walked into them: they step aside, away from you, to a free spot */
-    const ax = (n.x - W.px) / (d || 1), az = (n.z - W.pz) / (d || 1), want = f.space + 0.3; let moved = false;
-    for (const a of [0, 0.6, -0.6, 1.2, -1.2, 1.8, -1.8, Math.PI]) { const c = Math.cos(a), s = Math.sin(a), x = W.px + (ax * c - az * s) * want, z = W.pz + (ax * s + az * c) * want; if (freeAt(W, x, z, f.r, n)) { const v = Math.max(1.2, speedFor(n, f, 0)); if (stepTo(n, x, z, v, dt, W, 0) > 0) { gait(n, 'Walk', v); turn(n, Math.atan2(x - n.x, z - n.z), dt, 7); moved = true; } break; } }
+  const d = Math.hypot(W.px - n.x, W.pz - n.z), pvx = f.ppx === undefined ? 0 : (W.px - f.ppx) / (dt || 1), pvz = f.ppz === undefined ? 0 : (W.pz - f.ppz) / (dt || 1), pv = Math.hypot(pvx, pvz); f.ppx = W.px; f.ppz = W.pz;
+  const coming = pv > 0.3 && (pvx * (n.x - W.px) + pvz * (n.z - W.pz)) > 0.4 * pv * d;   /* you are walking toward them */
+  if (d < f.space || (coming && d < f.space + 0.2 + pv * 0.45)) {   /* you walked (or are walking) into them: they step aside, across your way rather than in front of you, to a free spot */
+    const hx = pv > 0.3 ? pvx / pv : (n.x - W.px) / (d || 1), hz = pv > 0.3 ? pvz / pv : (n.z - W.pz) / (d || 1), side = (hx * (n.z - W.pz) - hz * (n.x - W.px)) >= 0 ? 1 : -1, want = f.space + 0.35; let moved = false;
+    const cands = []; for (const k of [side, -side]) cands.push([n.x + hz * k * want, n.z - hx * k * want], [W.px + hz * k * want, W.pz - hx * k * want]); for (const a of [0, 0.7, -0.7, 1.4, -1.4]) { const c = Math.cos(a), s = Math.sin(a), ax = (n.x - W.px) / (d || 1), az = (n.z - W.pz) / (d || 1); cands.push([W.px + (ax * c - az * s) * want, W.pz + (ax * s + az * c) * want]); }
+    for (const [x, z] of cands) { if (!freeAt(W, x, z, f.r, n) || Math.hypot(x - W.px, z - W.pz) < f.space) continue; const v = Math.max(1.3, pv * 1.25); if (stepTo(n, x, z, v, dt, W, 0) > 0) { gait(n, v > 2.6 && hasRun(n) && f.run ? 'Run' : 'Walk', v); turn(n, Math.atan2(x - n.x, z - n.z), dt, 8); moved = true; break; } }
     if (!moved) { gait(n, null); facePlayer(n, W, dt); } f.moving = moved; return; }
   /* the spot to walk to: in your footsteps `gap` metres back, and to one side if that side is free */
   let back = f.gap, i = C.length - 1, sx = W.px, sz = W.pz, hd = f.hdg ?? Math.atan2(W.px - n.x, W.pz - n.z);
