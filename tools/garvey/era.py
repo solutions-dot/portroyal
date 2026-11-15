@@ -191,7 +191,7 @@ if G.get('breeches'):
     bk=G.get('breechkind','plain'); low=(ANK+(0.035 if not G.get('shorts') else 0)) if bk=='trousers' else KNEE-0.05*s
     if G.get('shorts'): low=KNEE+0.05*s
     wide=0.012 if bk in ('trousers','slops') else 0.013
-    if OLD: wide=lambda c,_w=wide:_w+0.001*sstep(HIP+0.04,HIP+0.09,c.z)      # the waistband sits just off the tucked shirt
+    if OLD: wide=lambda c,_w=wide:_w+0.004*sstep(HIP+0.04,HIP+0.09,c.z)      # the waistband stands a little off the tucked shirt
     def breech_leg(v):
         # 1690 breeches are cut full and gathered into a band below the knee; a sailor's slops are wide open tubes. Either way the cloth hangs from the thigh instead of clinging to it
         z=v.co.z
@@ -363,7 +363,7 @@ for o in clothes:
     md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
     with ov(o): bpy.ops.object.modifier_move_to_index(modifier='wt',index=0); bpy.ops.object.modifier_apply(modifier='wt')
 if EASE_OLD:      # 1690: only the shirt; it blouses out above the breeches' waistband (TUCK is above the band) and falls nearly straight from the chest
-    ease(dict(parts)['shirt'],0.009,tuck=0.011 if G.get('breeches') else 0.003)      # tucked into breeches it fills the band (tucked tight, it left an open lip of breeches round it)
+    ease(dict(parts)['shirt'],0.009,tuck=0.006 if G.get('breeches') else 0.003)      # tucked into breeches it fills the band (tucked tight, it left an open lip of breeches round it)
 if not OLD:      # the ease comes after the bone weights are copied: each point of cloth keeps the weights of the skin it started on, so loose cloth by the armpit does not follow the arm
     for k,o in parts:
         if k=='shirt': ease(o,0.009,tuck=0.003)
