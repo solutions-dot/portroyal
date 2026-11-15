@@ -183,13 +183,18 @@ Start it from the title screen: "May 2010 street scene (work in progress)". In t
 
 | File | What it holds |
 |---|---|
-| `src/main.js` | The template's starting point (scene, movement, one talking person), plus the dev-only block `devViews` (`?shot=fight`, `rifles`, `hands`, `slung`, `uniforms`; `?test=clips`, `measure`, `held`, `cloth`, `skin`, `walkers`). |
-| `src/cast.js` | The uniform bodies (`BODIES`), their looks and `makeBody` (Kendal's pattern) |
-| `src/weapons.js` | The rifle and pistol, and the two-handed hold |
-| `src/checks.js` | Local copies of `auditCloth`, `auditWalk` and `skinProbe` (the engine has them now; delete this file) |
-| `src/clips.js` | `POSES` (real name, stand-in, what it must show), `pose(name)`, `standIns()` |
-| `anim-clips.json` | The clips the build keeps in this game's copy of the animation library: `Idle, Walk, Run, Talk1, Block, Point, Terrified` (214 KB instead of 979 KB) |
-| `site/models/sailor.js` | The template's stand-in character. Tivoli needs its own people (see "What is left"). |
+| `src/main.js` | Scene, movement and touch controls, the frame loop, `startChapter`, and the dev-only block `devViews` (all `?shot=` and `?test=` views, `?chapter=N`) |
+| `src/content.js` | Every word the player reads: `CHAPTERS`, the words for each walking chapter (`CH1` to `CH8`), the journal pages (`JOURNAL`) |
+| `src/ch1.js` | The walking chapters (1, 2, 3, 4, 6, 7, 8) from one `WALKS` table: place, words, goal order, sky, camera height |
+| `src/backowall.js` | Chapter 1's place (imagined Back-o-Wall) |
+| `src/newtivoli.js` | The courtyard of flats, community centre and clinic, by year: 1965 (chapter 2), 1980 (3), 2010 (6), 2016 (7), today with murals (8) |
+| `src/street.js` | The 2010 street (chapter 5's scene) and `streetPlace()` for chapter 4 |
+| `src/fight.js` | Chapter 5, the directed street scene behind the opt-in card |
+| `src/talk.js`, `src/story.js` | Talking to people; saving, the journal and the chapters list |
+| `src/cast.js` | Bodies, looks (`LOOKS`) and `makeBody`; `SKIN_LIGHT` on Skin only |
+| `src/weapons.js`, `src/clips.js` | The rifle and pistol with the two-handed hold; the pose names and their stand-ins |
+| `src/textures.js`, `src/bake.js`, `src/sky.js` | Canvas textures (including `fresh` paint and the `mural` designs), merging by material, the sky |
+| `src/checks.js` | `overlapSolids` (solid boxes), `sinkCheck` (feet below a surface), and local copies of `auditCloth`, `auditWalk`, `skinProbe` |
 
 ## Test it
 
@@ -328,3 +333,23 @@ Real people in the game: none speak. Coke, politicians, commanders, officers and
 - **The bug:** story people were pinned to height 0 everywhere, so on the 16 cm pavement (chapter 4) their shoes sank out of sight, and on the 6 cm paths (chapters 2 and 6) by a little. Their feet were also not re-pinned every frame.
 - **The fix:** each walking place now has `groundAt(x, z)` (street: pavement 16 cm, kerb 20 cm; courtyard: paths 6 cm; Back-o-Wall: 0). `ch1.js` passes it to `addNpc` as `ground`, and `main.js` calls `groundFeet` on every story person every frame.
 - **New check, `sinkCheck` in `src/checks.js`,** run by `?test=audit` on every place and on the gunfight positions: it finds anyone whose `ground` is below the top of a low flat surface (pavement, kerb, path, step) under their feet. Proved by turning the pavement height off: it reported Gran Ivy, Miss Dawn and Mr Brown 16 cm under. With the fix, 0 everywhere. Close screenshots of the feet in chapters 1, 2, 4 and 6 show shoes resting on the ground. The lowest point of each body is 1 to 3 cm under the surface (the engine's `groundFeet` sets soles 8 mm low on purpose and the toes bend); not visible.
+
+## Chapters 3, 7 and 8, and polish (15 November 2026)
+
+All eight chapters are now playable.
+
+- **Chapter 3, Politics and power (about 1980).** Ivy, grown up, Mass Roy (older, from Back-o-Wall) and Coach Davis, in the courtyard. Football (the club began in 1970), the dance troupe (1976), and what a "garrison" is, in plain words. The end card and the journal attribute Seaga's account (violence over politics from the mid-1970s, gangs in the late 1990s) and give the 2009 US request. New journal page "Politics and the garrison".
+- **Chapter 7, The report (June 2016).** Gran Ivy, Mr Brown and Pastor Grant: what the Commission said, a Defence Force lawyer's objection, the 2017 police review, and the Prime Minister's apology in December 2017 in his real words. Unlocks "What people disagree about" and "After".
+- **Chapter 8, Today.** Gran Ivy, Andre the painter and Kemesha from the dance troupe; murals on the courtyard walls (our own designs: a sunrise over hills, children playing and dancing, a hibiscus with a doctor bird). End card ends "Thank you for playing." New journal page "Tivoli Gardens today".
+- **New sources (15 November 2026):**
+
+| Fact | Used as | Source (grade) |
+|---|---|---|
+| A garrison is a political stronghold completely controlled by one party; Tivoli is often called the first | "A place almost fully controlled by one political party" | Gleaner, via search summary, 2010 (N); Wikipedia, Tivoli Gardens (S) |
+| The Tivoli Mural Project began in 2022 (about 12 years after the operation); murals about hope, resilience and new beginnings; some walls still have marks from 2010 | Chapter 8 and its journal page; the game's murals are our own designs | [Observer, 2 June 2024](https://jamaicaobserver.com/2024/06/02/mural-therapy) (N) |
+| The Tivoli Dance Troupe, linked to Tivoli Gardens High School, began in 1976 | Chapters 3 and 8 | [Observer, 27 June 2024](https://www.jamaicaobserver.com/2024/06/27/tivoli-dance-troupe-celebrates-30th-season-applause/) (N) |
+| Tivoli Gardens Football Club began in 1970 and has won Jamaica's top league several times (Wikipedia says 5) | Chapters 3 and 8: "several times" | [Wikipedia](https://en.wikipedia.org/wiki/Tivoli_Gardens_F.C.) (S) |
+
+- **Polish:** each courtyard chapter opens facing its first person; the end card has space between its lines; murals sit in front of the wall bands and are square panels, not stretched; the audit now runs every walking chapter with its own cast (`WALKS` is exported).
+- **Checks (15 November 2026):** `?test=audit` 0 in the street and in all seven walking chapters. Layout test 0 at 390x800, 320x568, 667x375, 800x500, 1280x720. A scripted run of all seven walking chapters from a fresh save (talking in reverse order each time) reached every end card, unlocked 9 of 9 journal pages, with no errors. The public build has no test code.
+- **Still to do:** own bodies for everyone (Ivy, Pearl, Roy, Clarke, Dawn, Pastor Grant and Kemesha use Kendal and Garvey bodies, so faces repeat); wire in the new clips (Talk, Comfort, Kneel and others) and `engine/story.js` and `engine/follow.js` when they land; the West Kingston reviewer; read the Commission's report itself.

@@ -1,4 +1,4 @@
-/* games/tivoli/src/ch1.js: the walking chapters (1, Back-o-Wall; 2, the new Tivoli; 4, the day before; 6, after). Each has a place, three people to talk to in any order, and a spot to walk to at the end.
+/* games/tivoli/src/ch1.js: the walking chapters (1, Back-o-Wall; 2, the new Tivoli; 3, politics; 4, the day before; 6, after; 7, the report; 8, today). Each has a place, three people to talk to in any order, and a spot to walk to at the end.
    The WALKS table says which place and which words each chapter uses. Chapter 1, Back-o-Wall. You walk through the memory of Ivy, a girl in Back-o-Wall about 1963 (in 2010 she is the grandmother). You talk to Ivy in her yard,
    to her gran, and to a neighbour in the lane, then walk to the end of the lane. Everyone is fictional and the place is imagined (backowall.js); the journal says so.
    Nothing frightening is shown: the chapter ends with a card, not with the clearing itself. Facts: docs/games/tivoli.md "Back-o-Wall and the clearance". */
@@ -7,18 +7,30 @@ import { buildBackOWall } from './backowall.js';
 import { buildNewTivoli } from './newtivoli.js';
 import { streetPlace } from './street.js';
 import { addNpc, clearNpcs, Talk } from './talk.js';
-import { CH1, CH2, CH4, CH6 } from './content.js';
+import { CH1, CH2, CH3, CH4, CH6, CH7, CH8 } from './content.js';
 import { unlock, finishChapter } from './story.js';
 import { FX } from './fx.js';
 
 export const CH = { on: false, talked: {}, ended: false, id: 1 };
-const WALKS = {
+export const WALKS = {
   1: { build: buildBackOWall, text: CH1, order: ['ivy', 'pearl', 'roy'], loading: 'Loading Back-o-Wall.', sky: [0xdbe6ea, 0xcfdde4] },
   4: { build: streetPlace, text: CH4, order: ['gran', 'dawn', 'brown'], loading: 'Loading Tivoli Gardens, 2010.', sky: [0xd8e4ec, 0xcfdbe2], camY: 1.25 },
   6: { build: (o) => buildNewTivoli({ ...o, year: 2010, cast: [
     { id: 'gran', name: 'Gran Ivy', look: 'ivyGran', x: -4.5, z: -2.6, ry: 0.4, anim: 'Idle' },
     { id: 'brown', name: 'Mr Brown', look: 'brown', x: -24, z: -7.2, ry: 0, anim: 'Idle' },
     { id: 'pastor', name: 'Pastor Grant', look: 'pastor', x: 29.2, z: 3.8, ry: -Math.PI / 2, anim: 'Idle' }] }), text: CH6, order: ['gran', 'brown', 'pastor'], loading: 'Loading Tivoli Gardens, 2010.', sky: [0xd8e2ea, 0xcdd8e0], camY: 1.25 },
+  3: { build: (o) => buildNewTivoli({ ...o, year: 1980, cast: [
+    { id: 'ivy', name: 'Ivy', look: 'ivyMum', x: -9, z: -2.7, ry: 0.4, anim: 'Idle' },
+    { id: 'roy', name: 'Mass Roy', look: 'roy', x: -24, z: -7.2, ry: 0, anim: 'Idle' },
+    { id: 'coach', name: 'Coach Davis', look: 'coach', x: 29.2, z: 3.8, ry: -Math.PI / 2, anim: 'Idle' }] }), text: CH3, order: ['ivy', 'roy', 'coach'], loading: 'Loading Tivoli Gardens, about 1980.', sky: [0xd6e4ee, 0xcbdbe6] },
+  7: { build: (o) => buildNewTivoli({ ...o, year: 2016, cast: [
+    { id: 'gran', name: 'Gran Ivy', look: 'ivyGran', x: -4.5, z: -2.6, ry: 0.4, anim: 'Idle' },
+    { id: 'brown', name: 'Mr Brown', look: 'brown', x: 12, z: 7.6, ry: Math.PI, anim: 'Idle' },
+    { id: 'pastor', name: 'Pastor Grant', look: 'pastor', x: 29.2, z: 3.8, ry: -Math.PI / 2, anim: 'Idle' }] }), text: CH7, order: ['gran', 'brown', 'pastor'], loading: 'Loading Tivoli Gardens, 2016.', sky: [0xd8e2ea, 0xcdd8e0] },
+  8: { build: (o) => buildNewTivoli({ ...o, year: 2025, cast: [
+    { id: 'gran', name: 'Gran Ivy', look: 'ivyGran', x: -4.5, z: -2.6, ry: 0.4, anim: 'Idle' },
+    { id: 'andre', name: 'Andre', look: 'andre', x: 2.5, z: -7.6, ry: Math.PI, anim: 'Idle' },
+    { id: 'kemesha', name: 'Kemesha', look: 'kemesha', x: 29.2, z: 3.8, ry: -Math.PI / 2, anim: 'Idle' }] }), text: CH8, order: ['gran', 'andre', 'kemesha'], loading: 'Loading Tivoli Gardens today.', sky: [0xd4e4f0, 0xc8dbe8] },
   2: { build: buildNewTivoli, text: CH2, order: ['ivy', 'pearl', 'clarke'], loading: 'Loading Tivoli Gardens.', sky: [0xd6e4ee, 0xcbdbe6] },
 };
 const $ = (id) => document.getElementById(id);

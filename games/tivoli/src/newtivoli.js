@@ -13,7 +13,7 @@ const M = (c, r = 0.9, m = 0) => new THREE.MeshStandardMaterial({ color: c, roug
 const W = (map, tile, r = 0.95, bright = 1.15) => { const m = new THREE.MeshStandardMaterial({ map, roughness: r }); m.color.setScalar(bright); m.userData.tile = tile; return m; };
 
 export function buildNewTivoli(opts = {}) {
-  const old = opts.year === 2010;   /* chapter 6 uses the same courtyard in 2010: older paint, grown trees, its own people */
+  const year = opts.year || 1965, old = year >= 1980;   /* the same courtyard in later chapters: about 1980 (chapter 3), 2010 (6), 2016 (7) and today (8): older paint, grown trees, murals today */
   const rnd = rngOf(19650101), g = new THREE.Group(), walls = [];
   const solids = [], SO = (kind, name, x0, x1, z0, z1, y0, y1) => solids.push({ kind, name, x0: Math.min(x0, x1), x1: Math.max(x0, x1), z0: Math.min(z0, z1), z1: Math.max(z0, z1), y0, y1 });
   const X = {
@@ -81,7 +81,7 @@ export function buildNewTivoli(opts = {}) {
   /* young trees in the courtyard (the estate is new) and benches, with a washing line between two posts by the south row */
   const tree = (x, z, s) => { cyl(X.trunk, 0.12 * s, 2.4 * s, x, 0, z, 8, 0.15 * s); [[0, 3.0, 0, 1.3, X.leaf1], [0.7, 2.7, 0.3, 0.9, X.leaf2], [-0.7, 2.7, -0.2, 1.0, X.leaf3]].forEach(([dx, dy, dz, r, mm]) => { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(r * s, 1), mm); l.position.set(x + dx * s, dy * s, z + dz * s); g.add(l); });
     wall(x - 0.3, z - 0.3, x + 0.3, z + 0.3); SO('tree', 'tree@' + x + ',' + z, x - 1.8 * s, x + 1.8 * s, z - 1.6 * s, z + 1.6 * s, 1.6 * s, 4.4 * s); SO('tree', 'trunk@' + x + ',' + z, x - 0.25, x + 0.25, z - 0.25, z + 0.25, 0, 2.4 * s); };
-  for (const [x, z, s] of [[-28, -5.5, 1], [-17, 5.5, 0.9], [-12, -5.6, 1], [6, 5.6, 1.1], [18, -5.5, 0.9], [24, 5.6, 1]]) tree(x, z, old ? Math.min(s * 1.3, 1.25) : s);   /* young trees in the 1960s, grown by 2010 */
+  for (const [x, z, s] of [[-28, -5.5, 1], [-17, 5.5, 0.9], [-12, -5.6, 1], [6, 5.6, 1.1], [18, -5.5, 0.9], [24, 5.6, 1]]) tree(x, z, year >= 2010 ? Math.min(s * 1.3, 1.25) : old ? s * 1.15 : s);   /* young trees in the 1960s, grown by 2010 */
   const bench = (x, z) => { box(X.bench, 1.8, 0.08, 0.45, x, 0.42, z); for (const dx of [-0.75, 0.75]) box(X.bench, 0.08, 0.42, 0.4, x + dx, 0, z); wall(x - 1, z - 0.3, x + 1, z + 0.3); SO('prop', 'bench@' + x, x - 0.95, x + 0.95, z - 0.25, z + 0.25, 0, 0.5); };
   bench(-20, -3.4); bench(2, 3.4); bench(20, -3.4);
   for (const x of [-30, -22]) box(X.post, 0.08, 2.2, 0.08, x, 0, 6.5); box(X.rope, 8, 0.02, 0.02, -26, 2.0, 6.5); for (let k = 0; k < 6; k++) box(X.cloth[k % 4], 0.45, 0.65, 0.02, -29.2 + k * 1.2, 1.35, 6.5);
@@ -89,6 +89,13 @@ export function buildNewTivoli(opts = {}) {
 
   /* lamp posts along the main path: a pole, an arm and a lamp under it */
   for (const lx of [-34, -16, 4, 22]) { cyl(X.post, 0.07, 4.2, lx, 0, -2.1, 8); box(X.post, 0.06, 0.06, 0.9, lx, 4.1, -1.7); box(X.lamp, 0.3, 0.14, 0.4, lx, 3.96, -1.35); wall(lx - 0.25, -2.35, lx + 0.25, -1.85); SO('post', 'lamp@' + lx, lx - 0.1, lx + 0.1, -2.2, -2.0, 0, 4.2); }
+
+  /* murals, today only: on the end walls of the two north blocks that face each other across the gap, and on both long sides of the community centre (our own designs) */
+  if (year >= 2022) {
+    const wall2 = (kind, w, h, x, y, z, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: TX.mural(kind), roughness: 0.85 })); m.position.set(x, y, z); m.rotation.y = ry; g.add(m); };
+    wall2('sunrise', 7, 7, 1 + 0.03, 4.6, -13, Math.PI / 2); wall2('bloom', 7, 7, 4 - 0.03, 4.6, -13, -Math.PI / 2);
+    for (const [k, dx, sz] of [['play', -2.4, 1], ['bloom', 2.4, 1], ['sunrise', -2.4, -1], ['play', 2.4, -1]]) wall2(k, 4.4, 4.4, cx + dx, 2.8, sz * (cd / 2 + 0.07), sz > 0 ? 0 : Math.PI);   /* two square panels on each 10 m end of the hall, 7 cm off the wall (in front of the white band) */
+  }
 
   /* a low block wall round the estate: the edge you cannot pass */
   const edge = (x0, z0, x1, z1) => { const w = Math.abs(x1 - x0) || 0.3, d = Math.abs(z1 - z0) || 0.3; box(X.plinth, w, 1.0, d, (x0 + x1) / 2, 0, (z0 + z1) / 2); wall(Math.min(x0, x1) - 0.3, Math.min(z0, z1) - 0.3, Math.max(x0, x1) + 0.3, Math.max(z0, z1) + 0.3); };
@@ -101,7 +108,7 @@ export function buildNewTivoli(opts = {}) {
     { id: 'clarke', name: 'Mr Clarke', look: 'clarke', x: 29.2, z: 3.8, ry: -Math.PI / 2, anim: 'Idle' },
   ];
   for (const n of npcs) SO('person', n.id, n.x - 0.3, n.x + 0.3, n.z - 0.3, n.z + 0.3, 0, 1.7);
-  const start = { x: -8, z: 1.2, yaw: Math.atan2(-(-4.5 - -8), -(-2.6 - 1.2)) };   /* facing Ivy */
+  const f0 = npcs[0], start = { x: f0.x - 3.5, z: 1.2, yaw: Math.atan2(-3.5, -(f0.z - 1.2)) };   /* facing the first person in the cast */
   SO('person', 'start', start.x - 0.3, start.x + 0.3, start.z - 0.3, start.z + 0.3, 0, 1.7);
 
   const out = bake(g, [X.grass]);

@@ -20,7 +20,7 @@ import { buildNewTivoli } from './newtivoli.js';
 import { buildStreet, streetPlace } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage } from './story.js';
-import { CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip } from './ch1.js';
+import { WALKS, CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip } from './ch1.js';
 import { FIGHT, positions as fightPositions, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
 import { auditCloth, auditWalk, skinProbe, overlapSolids, sinkCheck } from './checks.js';   // dev only: local copies until the engine has them (see checks.js)   // gunfight poses: real clips when the library has them, stand-ins until then
 
@@ -92,7 +92,7 @@ Promise.all(['anims', 'anims_tivoli'].map((name) => model(name).then((asset) => 
 });
 
 const uiS = (k) => uiSound(k);
-function startChapter(id) { if ([1, 2, 4, 6].includes(id)) ch1Begin(id); else if (id === 5) fightOpen(); }
+function startChapter(id) { if ([1, 2, 3, 4, 6, 7, 8].includes(id)) ch1Begin(id); else if (id === 5) fightOpen(); }
 $('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
 const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n) };
 setupTalk(talkEnv); setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS }); initStory({ startChapter, uiSound: uiS });
@@ -106,7 +106,7 @@ function devLog(lines, title) { let el = $('autolog'); if (!el) { el = document.
 async function devViews() {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), test = q.get('test'), lo = q.has('lo') ? '_lo' : '';
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
-  if (['1', '2', '4', '6'].includes(q.get('chapter'))) { await ch1Begin(+q.get('chapter')); if (q.get('at')) ch1Skip(q.get('at')); return; }
+  if (['1', '2', '3', '4', '6', '7', '8'].includes(q.get('chapter'))) { await ch1Begin(+q.get('chapter')); if (q.get('at')) ch1Skip(q.get('at')); return; }
   if (shot === 'poster') {   /* ?shot=poster&cx=&cy=&cz=&tx=&ty=&tz=: the quiet street with nobody in it, for the menu picture (menu/tivoli.jpg) */
     await fightBegin(); FIGHT.freeze = true; $('hud').hidden = true; for (const id of ['fightcard', 'readcard', 'scenetitle', 'windowframe']) { const e = $(id); if (e) e.hidden = true; }
     scene.traverse((o) => { if (o.isSkinnedMesh) { let p = o; while (p.parent && p.parent !== scene) p = p.parent; p.visible = false; } });
@@ -140,7 +140,7 @@ async function devViews() {
     const lines = ['street: ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + r.floating.length + ' floating, ' + r.inside.length + ' inside solids, ' + r.stuck.length + ' unreachable)', ...r.floating.map((l) => '  floating: ' + l), ...r.inside.map((l) => '  inside: ' + l), ...r.stuck.map((l) => '  stuck: ' + l)];
     const ov = overlapSolids(st.solids).concat(sinkCheck(snap, fightPositions())); lines.push('overlaps: ' + ov.length); for (const l of ov) lines.push('  ' + l);
     let extra = 0;
-    for (const [id, pl] of [['back-o-wall', buildBackOWall({})], ['new tivoli', buildNewTivoli({})], ['street, chapter 4', streetPlace({})], ['courtyard, chapter 6', buildNewTivoli({ year: 2010 })]]) {   /* the walking places: the engine's place audit, and the solid-box overlap check */
+    for (const [id, pl] of [...Object.entries(WALKS).map(([n, w]) => ['chapter ' + n, w.build({})])]) {   /* every walking chapter, with its own place and people */   /* the walking places: the engine's place audit, and the solid-box overlap check */
       const ov2 = overlapSolids(pl.solids), npc = pl.npcs.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: 'Idle', ground: pl.groundAt ? pl.groundAt(n.x, n.z) : 0 })), bd = pl.bounds || { x0: -23, x1: 17.5, z0: -13.6, z1: 14.2 };
       const r2 = auditPlace({ id, snap: snapMeshes(pl.raw), npcs: npc, walls: pl.walls, bounds: bd, start: pl.start, actions: [{ label: 'end spot', ...pl.endSpot }], people: npc });
       ov2.push(...sinkCheck(snapMeshes(pl.raw), npc)); const n2 = r2.floating.length + r2.inside.length + r2.stuck.length + ov2.length; extra += n2;
