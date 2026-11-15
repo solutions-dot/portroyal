@@ -23,7 +23,7 @@ import { groundFeet, strideOf } from './anim.js';
 const SHAPE = new WeakMap();
 export function snapMeshes(group) {
   group.updateMatrixWorld(true); const out = [], inst = [];
-  group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg); e.card = isCard(o.material); e.name = o.name || (top !== o ? top.name : '') || '';   /* top: the object it belongs to (the child of the place's group that holds it) */
+  group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg); e.card = isCard(o.material); e.name = o.name || (top !== o ? top.name : '') || ''; for (let a = o; a && a !== group; a = a.parent) if (a.userData.hollow) e.hollow = true;   /* hollow: a vehicle or room people stand inside on purpose (a cab, a carriage): no outline test (auditBodies) */   /* top: the object it belongs to (the child of the place's group that holds it) */
     if (o.geometry.type === 'BoxGeometry') { o.geometry.computeBoundingBox(); e.lb = o.geometry.boundingBox.clone(); e.inv = o.matrixWorld.clone().invert(); e.sc = Math.cbrt(Math.abs(o.matrixWorld.determinant())) || 1; }   /* the exact box, for seats */
     out.push(e); }
     if (o.isInstancedMesh && o.visible && !o.isSkinnedMesh && (SOLID.has(o.geometry.type) || !isCard(o.material))) {   /* each drawn copy of an instanced shape (tree trunks, huts, whole trees, rocks) is kept aside, for the overlap check (solid shapes only) and the bodies check (auditBodies) */
@@ -141,7 +141,8 @@ function bodyDepth(t, px, pz, y0, y1, r) {   /* how many slices of the cylinder 
 }
 /* standing inside a shape's outline at shin height (y): between the buttress roots of a big tree, among the legs of a stool or a frame. Nothing cuts the body,
    but from almost every side the person looks as if they are inside the thing (found by eye in Nanny Town: a girl standing between the cotton tree's roots).
-   The outline is the convex hull of the shape's own cut line at that height; the person's middle must be more than `margin` inside it. */
+   The outline is the convex hull of the shape's own cut line at that height; the person's middle must be more than `margin` inside it.
+   A vehicle or room drawn as one shape, that people stand inside on purpose (a locomotive's cab), sets userData.hollow on its group and is left out of this test. */
 function outlineHas(t, px, pz, y, margin) {
   const pts = [], q = [0, 0, 0, 0]; for (let i = 0; i < t.length; i += 17) { if (t[i + 9] > y || t[i + 10] < y) continue; let m = 0;
     for (const [j, k] of [[0, 3], [3, 6], [6, 0]]) { const ay = t[i + j + 1], by = t[i + k + 1]; if ((ay > y) === (by > y)) continue; const f = (y - ay) / (by - ay); q[m * 2] = t[i + j] + (t[i + k] - t[i + j]) * f; q[m * 2 + 1] = t[i + j + 2] + (t[i + k + 2] - t[i + j + 2]) * f; if (++m === 2) break; }
@@ -157,8 +158,8 @@ export function auditBodies(snap, people, { skip = null } = {}) {
   snap.forEach((e, i) => { if (e.skinned || e.unlit || e.flame || e.card || FLAT.has(e.geo) || !SHAPE.has(e)) return; e.b.getSize(sz); if (sz.x > 40 || sz.z > 40 || Math.max(sz.x, sz.y, sz.z) < 0.08 || (Math.max(sz.x, sz.z) < 0.12 && sz.y < 1.2)) return; if (skip && skip(e)) return;   /* flower stalks and grass blades (under 12 cm across and 1.2 m tall) are walked through */
     for (let x = Math.floor(e.b.min.x / C); x <= Math.floor(e.b.max.x / C); x++) for (let z = Math.floor(e.b.min.z / C); z <= Math.floor(e.b.max.z / C); z++) { const k = key(x, z); (cell.get(k) || cell.set(k, []).get(k)).push(i); } });
   for (const p of people) { const g = p.ground || 0, h = p.h || 1.6, r = p.r || 0.18, y0 = g + 0.1, y1 = g + h * 0.92, list = cell.get(key(Math.floor(p.x / C), Math.floor(p.z / C))); if (!list) continue;
-    for (const i of list) { const e = snap[i], tag = p.id + '|' + e.top; if (seen.has(tag) || e.b.max.y < y0 || e.b.min.y > y1 || e.b.max.x < p.x - r || e.b.min.x > p.x + r || e.b.max.z < p.z - r || e.b.min.z > p.z + r) continue;
-      const t = worldTris(e); if (!t) continue; const d = bodyDepth(t, p.x, p.z, y0, y1, r); if (d.hits < 2) { if (outlineHas(t, p.x, p.z, g + 0.25, 0.05)) d.among = true; else continue; } seen.add(tag);
+    for (const i of list) { const e = snap[i], tag = (p.key || p.id) + '|' + e.top; if (seen.has(tag) || e.b.max.y < y0 || e.b.min.y > y1 || e.b.max.x < p.x - r || e.b.min.x > p.x + r || e.b.max.z < p.z - r || e.b.min.z > p.z + r) continue;
+      const t = worldTris(e); if (!t) continue; const d = bodyDepth(t, p.x, p.z, y0, y1, r); if (d.hits < 2) { if (!e.hollow && outlineHas(t, p.x, p.z, g + 0.25, 0.05)) d.among = true; else continue; } seen.add(tag);
       const c = e.b.getCenter(sz), what = (e.name || e.geo.replace('Geometry', '').toLowerCase()) + (e.col ? ' ' + e.col : '') + (e.inst ? ' (one of many drawn at once)' : '');
       out.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) ${p.what || 'stands'} ` + (d.among ? `inside the outline of a ${what} at (${c.x.toFixed(1)},${c.z.toFixed(1)}), between its roots or legs` : `${d.inside ? 'inside' : 'cut by'} a ${what} at (${c.x.toFixed(1)},${c.z.toFixed(1)}), ${(d.worst * 100).toFixed(0)} cm deep`)); } }
   return out;
@@ -173,7 +174,7 @@ export function routeSpots(id, pts, { loop = false, step = 0.3, ground = null, h
 }
 function bodySpots(place) {
   const gAt = place.groundAt || null, out = [];
-  for (const p of place.npcs) { if (/^Sit/.test(p.anim || '')) continue; out.push({ id: p.id, x: p.x, z: p.z, ground: p.ground || 0, h: p.h, r: p.r });
+  for (const p of place.npcs) { if (/^Sit/.test(p.anim || '')) continue; out.push({ id: p.id, key: p.id + '@' + p.x.toFixed(1) + ',' + p.z.toFixed(1), x: p.x, z: p.z, ground: p.ground || 0, h: p.h, r: p.r });   /* key: two people with the same body name are reported apart */
     if (p.path && p.path.length > 1) out.push(...routeSpots(p.id, p.path, { loop: true, ground: gAt && !p.fixedGround ? gAt : () => p.ground || 0, h: p.h, r: p.r })); }
   for (const R of place.routes || []) out.push(...routeSpots(R.id, R.pts, { loop: !!R.loop, ground: gAt || (() => R.ground || 0), h: R.h, r: R.r, what: R.what || 'walks' }));
   return out;

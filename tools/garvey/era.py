@@ -1070,7 +1070,7 @@ if G.get('apron'):
             x=-hw+2*hw*iu/nu; hit=tree.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]; yy=(hit.y if hit else -0.12)
             if not OLD and 'breeches' in PART:      # later eras: the apron lies on the trousers, a hand's breadth clear of them
                 hb=BRT.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]
-                if hb: yy=min(yy,hb.y)
+                if hb: yy=min(yy,hb.y-0.004)
             row.append(bm.verts.new((x,yy-(0.035 if OLD else 0.045),z)))
         rows.append(row)
     for jv in range(nv):
@@ -1115,7 +1115,7 @@ def hidden(c):
 def lining_of(c):      # which garment covers this hidden piece of the body
     if c.z>NECK-0.07*s or (G.get('shoes') and c.z<ANK+0.02): return None
     if G.get('breeches') and c.z<HIP+0.15: return 'Breeches' if c.z<HIP+0.12 else None      # no lining right at the waistband, where shirt and breeches overlap
-    if EASE_OLD: return None      # a shirt with ease stands clear of the body and no longer folds in at the chest, so it needs no lining (left in, the lining came through it at the front when walking)
+    if EASE_OLD or G.get('coat'): return None      # (and the shirt sleeves under a sleeveless coat) a shirt with ease stands clear of the body and no longer folds in at the chest, so it needs no lining (left in, the lining came through it at the front when walking)
     if G.get('coat') and G.get('coatsleeves',True): return 'Coat'
     return 'Shirt'
 if OLD:

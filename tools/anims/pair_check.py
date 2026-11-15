@@ -22,13 +22,13 @@ PEOPLE = os.path.join(ROOT, 'build', 'people')
 N = 32
 # giver clip, taker clip, giver body, taker body, where the taker stands relative to the giver (x, y, turn, scale), seated
 PAIRS = {
-    'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.40, -0.10, 0.0, 1.0), False),
+    'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.43, -0.145, 0.0, 1.0), False),
     'ComfortHand': ('ComfortHand', 'ComfortTake', 'man_shirt', 'woman57', (0.0, -0.58, math.pi, 1.0), False),
     'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.34, -0.24, 0.0, 0.6), False),
-    'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.50, -0.16, 0.0, 1.0), True),
+    'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.465, -0.285, 0.0, 1.0), True),
 }
 REST = {'ComfortGive': 'Right', 'ComfortHand': 'Left', 'ComfortChild': 'Right', 'SitComfort': 'Right'}   # the giver's hand and forearm that rest on the other person
-SKIP = ('Human.low-poly', 'Cap')   # the proxy mesh and the spare cap (each game shows one hat; the giver's hat is skipped too)
+SKIP = ('Human.low-poly', 'Cap')   # the proxy mesh and the spare cap (each game shows one hat)
 
 
 def part_of(obj_name, group):
@@ -57,7 +57,7 @@ def load(scene, body, fbx, place, giver=False):
         scene.collection.objects.link(o)
         if o.type == 'ARMATURE': rig = o
     for o in dst.objects:
-        if o.type == 'MESH' and o.parent == rig and not any(o.name.startswith(k) for k in SKIP + (('Hat',) if giver else ())): meshes.append(o)
+        if o.type == 'MESH' and o.parent == rig and not any(o.name.startswith(k) for k in SKIP): meshes.append(o)
     x, y, rz, s = place
     e = bpy.data.objects.new('off', None); scene.collection.objects.link(e)
     e.location = (x, y, 0); e.rotation_euler = (0, 0, rz); e.scale = (s, s, s)
@@ -166,6 +166,46 @@ def run(name):
     return bad, rest, selfhit
 
 
+def search(name, step=0.015, span=4, frames=6):
+    """Try the other person at nearby places (a grid of `step` metres, `span` steps each way) and print the places
+    with no overlap whose resting hand is nearest the middle of its band. The bodies are posed once; the other
+    person is only slid along the floor."""
+    gclip, tclip, gbody, tbody, place, seated = PAIRS[name]
+    bpy.ops.wm.read_factory_settings(use_empty=True); sc = bpy.context.scene
+    G = load(sc, gbody, os.path.join(CLIPS, gclip + '.fbx'), (0, 0, 0, 1), True)
+    Tk = load(sc, tbody, os.path.join(CLIPS, tclip + '.fbx'), place)
+    f0, f1 = G['frames']; poses = []
+    for k in range(frames):
+        sc.frame_set(f0 + round(k * (f1 - f0) / frames))
+        if not seated:
+            for p in (G, Tk): ground(p, bpy.context.evaluated_depsgraph_get)
+        dg = bpy.context.evaluated_depsgraph_get(); poses.append((shape(G, dg), shape(Tk, dg)))
+    rest = (REST[name] + 'Hand', REST[name] + 'ForeArm'); res = []
+    for ix in range(-span, span + 1):
+        for iy in range(-span, span + 1):
+            off = Vector((ix * step, iy * step, 0)); over = 0.0; lo, hi = 9.0, -9.0
+            for (gv, gt, gp), (tv, tt, tp) in poses:
+                tvs = [v + off for v in tv]; ttree = BVHTree.FromPolygons(tvs, tt); gtree = BVHTree.FromPolygons(gv, gt); hand = 9.0
+                for v, lab in zip(gv, G['labels']):
+                    d, i = signed(ttree, v, tp)
+                    if d is None: continue
+                    if lab in rest:
+                        if lab == rest[0]: hand = min(hand, d)
+                        if d < 0: over = max(over, -d)
+                    elif d < 0.01: over = max(over, 0.01 - d)
+                for v, lab in zip(tvs, Tk['labels']):
+                    d, i = signed(gtree, v, gp)
+                    if d is None or gp[i] in rest: continue
+                    if d < 0.01: over = max(over, 0.01 - d)
+                lo = min(lo, hand); hi = max(hi, hand)
+            res.append((over, abs((lo + hi) / 2 - 0.012) + max(0, hi - lo - 0.015), place[0] + off.x, place[1] + off.y, lo, hi))
+    res.sort()
+    for r in res[:8]: print('  place x %.3f y %.3f  overlap %.3f  hand %.3f to %.3f' % (r[2], r[3], r[0], r[4], r[5]))
+
+
 if __name__ == '__main__':
+    if '--search' in sys.argv:
+        for n in [a for a in sys.argv[1:] if a in PAIRS]: print('SEARCH', n); search(n)
+        sys.exit(0)
     args = [a for a in sys.argv[1:] if not a.endswith('.py')]
     for n in (args or list(PAIRS)): run(n)

@@ -165,8 +165,8 @@ function makeBody(s) {
 /* a blanket round the shoulders (chapter 4): sized from the body, open at the front, in soft folds (games/eventide/src/blanket.js) */
 function addBlanket(n, color = 0xb8a890) { if (n.blanket) return; n.blanket = drapeBlanket(n.m, color) || true; }
 /* the pile of folded blankets on the pavement by the gate, and the one you carry (held low in front of you, as in your arms) */
-const PILE = [-2.3, -5.4], PILE_COLS = [0xb8a890, 0x8a9ab0, 0xb09a9a];
-const HELD_BLANKET = (() => { const g = new THREE.Group(), b = foldedBlanket(0xb8a890); b.rotation.set(0.5, 0.25, 0); g.add(b); g.position.set(0.04, -0.34, -0.5); g.visible = false; camera.add(g); return g; })();
+const PILE = [-2.3, -5.4], PILE_COLS = [0x8e3b34, 0x4a6488, 0x6e7a4a];   /* red, blue and army green wool */
+const HELD_BLANKET = (() => { const g = new THREE.Group(), b = foldedBlanket(PILE_COLS[2]); b.rotation.set(0.55, Math.PI / 2 - 0.35, 0); b.scale.setScalar(0.8); g.add(b); g.position.set(0.16, -0.31, -0.7);   /* its folded edges toward you */ g.visible = false; camera.add(g); return g; })();
 function pileShow(P) { if (!P.pile) { P.pile = new THREE.Group(); P.pile.name = 'blanket pile'; PILE_COLS.forEach((c, k) => { const b = foldedBlanket(c); b.position.y = k * 0.105; b.rotation.y = (k - 1) * 0.12; P.pile.add(b); }); P.pile.position.set(PILE[0], P.groundAt(PILE[0], PILE[1]), PILE[1]); P.pile.rotation.y = 0.3; P.night.add(P.pile); }
   const left = SC && SC.i === 3 ? (stage < 43 ? 3 : stage === 43 ? 3 - (ctr.blanket || 0) - (ctr.carry ? 1 : 0) : 0) : 0; P.pile.children.forEach((b, k) => { b.visible = k < left; }); }
 
@@ -434,8 +434,8 @@ ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 
 let SIREN = 0;
 function nightSetup(P, st) {
   const after = st >= 44, dawn = st >= 45; P.fire.setLevel(dawn ? 0.08 : after ? 0.4 : 1); P.myers.group.visible = !after; P.myers.group.scale.y = 1; P.ruin.visible = after; SIREN = dawn ? 0 : after ? 0.3 : 1;
-  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = after && !dawn; if (after && id !== 'nurse4') addBlanket(n, 0x9aa0a8); }
-  [0, 1, 2].forEach((i) => { const n = byId('kid' + i); if (st >= 43) { kidTo(n, -5 - i * 1.25, -5.2); n.m.visible = !dawn; if (after) addBlanket(n); } });
+  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = after && !dawn; if (after && id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
+  [0, 1, 2].forEach((i) => { const n = byId('kid' + i); if (st >= 43) { kidTo(n, -5 - i * 1.25, -5.2); n.m.visible = !dawn; if (after) addBlanket(n, PILE_COLS[2 - i]); } });
   P.lamps.forEach((l) => { l.visible = !dawn; }); pileShow(P); HELD_BLANKET.visible = false;
   if (dawn) { for (const n of SC.extras) if (n.z > -4.6 && n.z < 4.6) n.m.visible = false;   /* morning: the neighbours have gone home or stepped back onto the pavement, out of the road */
     state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; setEnv(ENV.dawn); busPass(P); }
@@ -458,13 +458,13 @@ async function roofFalls(P) {
   await wait(1500); if (ep !== EP) return; FX.shake = 0.5;
   await tween(3.6, (k) => { P.myers.group.scale.y = 1 - 0.9 * ease(k); P.fire.setLevel(1 - 0.6 * k); P.fire.burst(k); FX.shake = 0.5 * (1 - k); }); if (ep !== EP) return;
   P.myers.group.visible = false; P.ruin.visible = true; FX.shake = 0; say('Sparks fly up. The crowd goes quiet.', 5000); await wait(3600); if (ep !== EP) return;
-  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = true; if (id !== 'nurse4') addBlanket(n, 0x9aa0a8); }
+  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = true; if (id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
   await cut([4, 1.4, -2.2], [5.5, 1.35, -3.0], [10, 1.1, -5.2], [10.4, 1.1, -5.2], 4.5); if (ep !== EP) return;   /* then down to the road: two of your friends, safe */
   endCut(); state.x = 4.5; state.z = -2.6; state.yaw = -1.15; state.pitch = 0; say('Some of the ladies got out. They wait by the road in blankets.', 5200); frozen = false; setStage(44);
 }
 ON[45] = () => { const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; fadeBlack(false, 1400); bars(true); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
   await cut([-14, 1.6, 2.5], [-9, 1.4, -2.5], [20, 2, -1], [4, 3, -30], 7); if (ep !== EP) return; endCut(); frozen = false; })(); };   /* the bus goes by, as it did that morning (Gleaner, 2020) */
-const DAWN = { x: -9, z: -4.9, yaw: -1.1 };   /* where you stand at dawn: on the pavement, out of the road */
+const DAWN = { x: -9, z: -5.4, yaw: -1.1 };   /* where you stand at dawn: on the pavement, out of the road */
 /* the bus at dawn drives along its lane (P.vehicles) at about 28 km/h, and stops and waits while anyone, you included, is in the road just ahead of it or beside it */
 function busWaits(V, x) { const near = (px, pz) => Math.abs(pz - V.path[0][1]) < V.half + 0.9 && px > x - V.len - 0.5 && px < x + V.len + 4.5; return near(state.x, state.z) || SC.npcs.some((n) => n.m.visible && near(n.x, n.z)); }
 function busPass(P) { const V = P.vehicles[0], b = V.obj, ep = EP; b.visible = true; b.position.x = V.path[0][0]; V.waited = 0;
@@ -604,9 +604,10 @@ function devViews() {
   if (shot === 'time1') go(6, 71, 5.2, 8.2, 0).then(() => timeline(2));
   if (shot === 'title') { /* the title screen as it is */ }
   if (shot === 'fall') go(3, 43, -1.6, -8.2, -0.5, 0.1).then((P) => { fixedCam = { p: [-1.3, 1.45, -8.4], t: [9, 5, -35] }; P.myers.group.scale.y = 0.45; P.fire.setLevel(0.75); P.fire.burst(0.5); for (let i = 0; i < 20; i++) update(0.1, 3000 + i * 100); document.title = 'view fall ready'; });
-  /* ?shot=blanket1 : the pile of folded blankets, one child already wrapped, the next blanket in your arms. blanket2 : the same from close by. dawn2 : the bus at dawn, with you and Gran on the pavement */
+  /* ?shot=blanket1 : the pile of folded blankets, one child already wrapped, the next blanket in your arms. blanket2 : the same from close by. dawn2 : the bus at dawn, with you and Gran on the pavement (&old=1: Gran where she stood before) */
   if (shot === 'blanket1' || shot === 'blanket2') go(3, 43, ...(shot === 'blanket1' ? [0.2, -3.6, 1.0, -0.14] : [-4.2, -4.2, 1.35, -0.3])).then(() => { const A = SC.actions, take = A.find((a) => a.label === 'Take a blanket'); take.go(); A.find((a) => a.on() && /^Wrap/.test(a.label)).go(); take.go(); for (let i = 0; i < 8; i++) update(0.1, 2000 + i * 100); document.title = 'view ' + shot + ' ready'; });
-  if (shot === 'dawn2') go(3, 45, -9, -4.9, 1.25, 0.02).then((P) => { P.bus2.visible = true; P.bus2.position.x = -17; for (let i = 0; i < 8; i++) update(0.1, 2000 + i * 100); document.title = 'view dawn2 ready'; });
+  if (shot === 'dawn2') go(3, 45, -14, -5.4, -1.25, 0.0).then((P) => { if (q.get('old')) { const n = byId('gran4'); n.z = -3.4; n.m.position.set(n.x, 0, n.z); }   /* &old=1 puts Gran back where she stood before the fix, for a before picture */
+    P.bus2.visible = true; P.bus2.position.x = q.get('old') ? -7.4 : -6; for (let i = 0; i < 8; i++) update(0.1, 2000 + i * 100); document.title = 'view dawn2 ready'; });
   /* ?shot=look&b=fireman&y=1.6&d=0.9&a=0.6 : one look close up, by day (y: height looked at, d: distance, a: angle round the body) */
   if (shot === 'look') (async () => { await go(0, 10); const k = q.get('b') || 'gran'; await loadBase(LOOKS[k].base); const m = makeBody({ ...LOOKS[k], x: -40, z: -3.6, ry: 0 }); SC.P.group.add(m); const y = +(q.get('y') || 1.5), d = +(q.get('d') || 0.9), a = +(q.get('a') || 0.5); fixedCam = { p: [-40 + Math.sin(a) * d, y + 0.1, -3.6 + Math.cos(a) * d], t: [-40, y, -3.6] }; for (let i = 0; i < 4; i++) update(0.1, 2000 + i * 100); document.title = 'view look ready'; })();
   if (shot === 'cast') (async () => { await go(0, 10); const ids = Object.keys(LOOKS); await Promise.all(ids.map((k) => loadBase(LOOKS[k].base))); ids.forEach((k, i) => { const m = makeBody({ ...LOOKS[k], x: -40 + (i % 11) * 1.0, z: -3.6 + ((i / 11) | 0) * 1.6, ry: 0 }); SC.P.group.add(m); }); fixedCam = { p: [-35, 1.5, 3.4], t: [-35, 0.9, -3] }; if (q.get('night')) setEnv(ENV.night); document.title = 'view cast ready'; })();

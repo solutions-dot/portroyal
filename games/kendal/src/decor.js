@@ -57,7 +57,7 @@ export const DECOR = {
   beach(g, P) {
     grassField(g, [-80, 12, 80, 40], 2600, { seed: 3, tint: 0xaecb88, h: 0.7 }); flowerField(g, [-60, 12, 60, 30], 220, { seed: 5 }); rockField(g, [-70, -19.3, 70, -17.9], 45, { seed: 4, size: 0.5, tone: 0x8a8070, clear: [[-8, -20, 8, -15]] });   /* on the sand just above the waterline, never in the sea */ rockField(g, [-60, -14, 60, 12], 26, { seed: 9, size: 0.2, tone: 0xb8a888 });
     for (const [x, z, s] of [[-40, 15, 1], [-10, 16, 2], [20, 15.6, 3], [46, 15, 4]]) { const o = bush(s, 2.2); o.position.set(x, 0, z); g.add(o); }
-    const c = dugOut(); c.position.set(-20, 0, -9); c.rotation.y = 0.5; g.add(c); const d = drift(); d.position.set(26, 0, -7); g.add(d); const d2 = drift(); d2.position.set(-30, 0, -3); d2.rotation.y = 2; g.add(d2);
+    const c = dugOut(); c.position.set(-20, 0, -9); c.rotation.y = 0.5; g.add(c); { c.updateMatrixWorld(true); const hull = c.children[0]; for (const k of [-1.6, -0.55, 0.55, 1.6]) { const p = hull.localToWorld(new THREE.Vector3(0, k, 0)); P.walls.push([p.x - 0.5, p.z - 0.5, p.x + 0.5, p.z + 0.5]); } }   /* the canoe is solid along its length: walkers and you go round it (?test=audit, auditBodies) */ const d = drift(); d.position.set(26, 0, -7); g.add(d); const d2 = drift(); d2.position.set(-30, 0, -3); d2.rotation.y = 2; g.add(d2);
     for (let i = 0; i < 4; i++) { const b = grp(g, -90 + i * 55, 0.0, -90 - i * 22); box(5.5, 0.6, 1.8, solid(0xe8e0d0, 0.8), 0, 0.3, 0, b); const sl = plane(3.4, 4.6, std(T.sign('', 8, 8, '#f4f0e4', '#f4f0e4', '10px serif', false), 0.8, { side: THREE.DoubleSide }), 0.3, 3, 0, b); box(0.06, 5, 0.06, solid(0x6a5238, 0.9), 0, 3, 0, b); }
     luggage(g, 6, [-30, 2, 30, 10], 3, [[-10, 6, -6, 11], [8, 4, 12, 9]], 0, P.keepOut);
   },

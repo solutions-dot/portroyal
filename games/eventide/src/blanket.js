@@ -12,7 +12,7 @@ function woolTex(color) {   /* a wool blanket: a soft weave, with a darker band 
   const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), base = new THREE.Color(color), dark = base.clone().multiplyScalar(0.62);
   x.fillStyle = '#' + base.getHexString(); x.fillRect(0, 0, 128, 128);
   for (let i = 0; i < 900; i++) { const v = Math.random() < 0.5 ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'; x.fillStyle = v; x.fillRect(Math.random() * 128, Math.random() * 128, 3, 1); }
-  x.fillStyle = '#' + dark.getHexString(); x.fillRect(0, 12, 128, 7); x.fillRect(0, 109, 128, 7);
+  x.fillStyle = '#' + dark.getHexString(); x.fillRect(0, 8, 128, 12); x.fillRect(0, 24, 128, 4); x.fillRect(0, 100, 128, 4); x.fillRect(0, 108, 128, 12);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; TEX.set(key, t); return t;
 }
 const MATS = new Map();
@@ -35,10 +35,10 @@ export function foldedBlanket(color = 0xb8a890, { w = 0.4, h = 0.1, d = 0.3, lay
 }
 
 /* round the shoulders of a person who has already been posed once (its mixer updated). Returns the blanket mesh (already on the body). */
-export function drapeBlanket(body, color = 0xb8a890, { gap = 0.75 } = {}) {
+export function drapeBlanket(body, color = 0xb8a890, { gap = 1.0 } = {}) {
   body.updateMatrixWorld(true); const bone = (n) => body.getObjectByName('mixamorig' + n), local = (o) => body.worldToLocal(o.getWorldPosition(new THREE.Vector3()));
   const hips = bone('Hips'), neck = bone('Neck'), la = bone('LeftArm'), ra = bone('RightArm'), back = bone('Spine2') || bone('Spine1') || hips; if (!hips || !neck || !la || !ra) return null;
-  const H = local(hips), N = local(neck), sh = (local(la).y + local(ra).y) / 2, top = Math.max(sh, N.y - 0.02), hem = H.y - 0.08 * (top - H.y) / 0.45;   /* hips to shoulders, in the body's own size */
+  const H = local(hips), N = local(neck), sh = (local(la).y + local(ra).y) / 2, top = Math.max(sh, N.y - 0.02), hem = H.y - 0.24 * (top - H.y) / 0.45;   /* hips to shoulders, in the body's own size */
   /* every point of the body's visible clothes and skin between the hem and the neck, in the body's own frame */
   const pts = [], v = new THREE.Vector3(), inv = new THREE.Matrix4().copy(body.matrixWorld).invert();
   body.traverse((o) => { if (!o.isSkinnedMesh || !o.visible || /low-poly|Eye|Teeth|Tongue|Lash|Brow/i.test(o.name + ' ' + (o.material.name || ''))) return; let vis = true; for (let q = o; q && q !== body; q = q.parent) if (!q.visible) vis = false; if (!vis) return;
@@ -57,9 +57,9 @@ export function drapeBlanket(body, color = 0xb8a890, { gap = 0.75 } = {}) {
   prof.push([S.x * 0.86, S.z * 0.95, top + 0.05], [S.x * 0.6, S.z * 0.85, top + 0.09], [neckR + 0.05, neckR + 0.04, top + 0.12]);
   /* a ring for each height, open at the front by `gap` radians; small waves in the lower part are the folds */
   const seg = 40, pos = [], uvs = [], idx = [], phi0 = gap / 2, span = Math.PI * 2 - gap;
-  prof.forEach(([rx, rz, y], i) => { const fall = Math.max(0, 1 - (y - hem) / (top - hem)); for (let s = 0; s <= seg; s++) { const a = phi0 + span * s / seg, wave = 1 + 0.045 * fall * Math.sin(a * 9 + 0.7) + 0.02 * fall * Math.sin(a * 17), fr = Math.min(1, Math.abs(a - Math.PI) / 2.2);
+  prof.forEach(([rx, rz, y], i) => { const fall = Math.max(0, 1 - (y - hem) / (top - hem)); for (let s = 0; s <= seg; s++) { const a = phi0 + span * s / seg, wave = 1 + 0.07 * fall * Math.sin(a * 9 + 0.7) + 0.025 * fall * Math.sin(a * 17), flare = 0.07 * fall * fall, fr = Math.min(1, Math.abs(a - Math.PI) / 2.2);
       const ry = y + (i === 0 ? -0.025 * Math.sin(a * 6) - 0.04 * (1 - fr) : 0);   /* the hem is uneven and hangs a little lower at the back */
-      pos.push(cx + rx * wave * Math.sin(a), ry, cz + rz * wave * Math.cos(a)); uvs.push(s / seg * 3, i / (prof.length - 1)); } });
+      pos.push(cx + (rx + flare) * wave * Math.sin(a), ry, cz + (rz + flare) * wave * Math.cos(a));   /* it flares out a little toward the hem, as heavy cloth does */ uvs.push(s / seg * 3, i / (prof.length - 1)); } });
   for (let i = 0; i < prof.length - 1; i++) for (let s = 0; s < seg; s++) { const a = i * (seg + 1) + s, b = a + seg + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geo.setIndex(idx); geo.computeVertexNormals();
   const m = new THREE.Mesh(geo, woolMaterial(color, THREE.DoubleSide)); m.name = 'Blanket'; m.castShadow = true; m.frustumCulled = false;

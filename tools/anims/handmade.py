@@ -516,7 +516,7 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
 
 
 def embrace_arm(rig, frames, T, turn_body=0.5, lean_in=0.06, upper=(0.35, 0.2, 0.90), fore=(0.80, 0.45, 0.25), ride=None,
-                look=(-0.35, 0.28), seated=False):
+                look=(-0.35, 0.28), seated=False, reach=None, hand=((-0.25, -0.2, -1.0), (0.5, -0.85, 0.0))):
     """An arm round someone a little in front and to the right: the whole body turns `turn_body` towards them and leans
     in, the upper arm angles down and back (`upper`: towards them, back, down, in the room's directions), the elbow bends about 95 degrees and the forearm
     runs forwards and out across their shoulder blades (`fore`: towards them, forwards, up) to the hand on their far upper arm.
@@ -531,13 +531,15 @@ def embrace_arm(rig, frames, T, turn_body=0.5, lean_in=0.06, upper=(0.35, 0.2, 0
         turn(rig, p, 'Spine', X, 0.07); turn(rig, p, 'Spine1', X, 0.03)          # stand up over the feet, not leaning back
         turn(rig, p, 'Spine', Y, -lean_in); turn(rig, p, 'Spine1', Z, -0.15)    # lean and turn into them
         steady_head(rig, p, yaw=look[0] - turn_body + 0.03 * math.sin(TAU * t / T), pitch=look[1] + 0.02 * math.sin(TAU * 2 * t / T + 1), roll=-0.06, neck=0.5)
-        M = rig.fk(p); S = M[P + 'RightArm'].translation
+    S0 = sum((rig.fk(p)[P + 'RightArm'].translation for p in frames), Vector()) / len(frames)   # the hand is set from his shoulder's average place, so his own breathing does not rub it about
+    for i, p in enumerate(frames):
+        t = i / FPS; pt = pat(t); M = rig.fk(p); S = S0
         d1 = V(-upper[0], upper[1], -upper[2]).normalized()                     # in the room, not the turned body: towards them, back, down
         d2 = V(-fore[0], -fore[1], fore[2] + 0.012 * pt).normalized()
         E = S + d1 * l1; W = E + d2 * l2
+        if reach: W = S + V(*reach); d1 = V(0, 1.0, -0.8).normalized(); d2 = V(0, 0, 0)   # given as the hand's place from the shoulder instead; the elbow drops back and down
         if ride: W = W + ride[i]
-        fingers = V(-0.25, -0.2, -1.0)                                          # down the outside of their upper arm
-        palm = V(0.5, -0.85, 0.0)
+        fingers = V(*hand[0]); palm = V(*hand[1])                              # fingers down the outside of their upper arm, palm on it
         arm(rig, p, 'Right', W, d1 - d2, fingers, palm, 0.5)
         curl(rig, p, 'Right', 0.25 - 0.1 * pt, thumb=0.1)
         if seated:
@@ -567,7 +569,7 @@ def stand_still(rig, T, seed):
 @clip('ComfortGive', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_give(rig):
     T = 8.0; frames = stand_still(rig, T, 31)
-    embrace_arm(rig, frames, T, ride=follow(rig, comfort_take(rig), 'RightArm', 0.0, 0.0, 0.0))
+    embrace_arm(rig, frames, T, ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0))
     return frames
 
 
@@ -609,7 +611,7 @@ def sit_base(rig, T):
 @clip('SitComfortGive', 'hand-made on the library SitIdle (Sitting_Idle.fbx)')
 def sit_comfort_give(rig):
     T = 8.0; frames = sit_base(rig, T); breathe(rig, frames, T, 2, amt=0.014)
-    comfort_arm(rig, frames, T, SIT_GAP, 0.08, lean=0.12, turn_to=0.35, ahead=0.16, nudge=(-0.03, 0.07, 0.055), elbow_dir=(-0.1, -1.0, 0.05))
+    embrace_arm(rig, frames, T, turn_body=0.3, ride=follow(rig, sit_comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0), seated=True, reach=(-0.32, -0.03, -0.07), hand=((-0.35, -0.2, -0.9), (0.8, -0.4, 0.1)))
     for p in frames: turn(rig, p, 'RightUpLeg', Z, 0.14)   # knees together, clear of hers
     return frames
 
@@ -625,7 +627,7 @@ def sit_comfort_take(rig):
 def take_upper(rig, frames, T, wipe_side='Left', lap=False):
     """Upright and quiet: the head bowed and tipped towards the giver on the left, slow breaths, the hands loose in front;
     once a loop she lifts one hand (`wipe_side`, the one away from the giver's resting hand) to wipe her eyes."""
-    wipe = lambda t: bump(t, 2.4, 5.0, 0.8, 0.9)
+    wipe = lambda t: bump(t, 2.2, 5.4, 1.3, 1.3)   # slow in and out
     for i, p in enumerate(frames):
         t = i / FPS; w = wipe(t); b = math.sin(TAU * 2 * t / T)
         turn(rig, p, 'Spine', Y, 0.02); turn(rig, p, 'Spine2', X, 0.03 - 0.01 * b)
@@ -638,6 +640,7 @@ def take_upper(rig, frames, T, wipe_side='Left', lap=False):
                 body_dir(rig, M, sd, -0.5, 0.3, -0.8).lerp(body_dir(rig, M, sd, -0.15, 0.35, 0.9), k),
                 body_dir(rig, M, sd, -1.0, 0.25, 0.0).lerp(body_dir(rig, M, sd, -0.5, -1.0, 0.1), k), 0.5)   # palm in, then to the face
             curl(rig, p, sd, 0.3 + 0.1 * k)
+    soften(frames, [sd + b for sd in ('Left', 'Right') for b in ('Arm', 'ForeArm', 'Hand')], 8.0)
 
 
 @clip('ComfortTake', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
