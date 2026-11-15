@@ -6,9 +6,15 @@
 <title>Jamaican History Games</title>
 <meta name="description" content="3D story games about Jamaica's past, for ages 6 and up.">
 <meta name="theme-color" content="#06283D">
+<script>
+  /* The intro (intro.js) plays once for each browser tab. ?intro=1 plays it again, ?intro=0 skips it. */
+  try { var q = new URLSearchParams(location.search).get('intro'); if (q === '1' || (q !== '0' && !sessionStorage.getItem('intro-seen'))) document.documentElement.classList.add('intro-on'); } catch (e) { /* no intro */ }
+</script>
+<noscript><style>#intro{display:none!important}</style></noscript>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="intro.css">
 <style>
   /* The game menu. One screen, no scrolling. Colours from the island: harbour blue, sea glass, mango, hibiscus.
      To add a game: copy a game <a class="game"> block, add its picture (menu/<game>.jpg), and give it its own class for the colours. */
@@ -150,6 +156,28 @@
 </style>
 </head>
 <body>
+<div id="intro" role="dialog" aria-modal="true" aria-label="Welcome">
+  <div class="in-stage">
+    <svg class="in-dial" viewBox="0 0 200 200" aria-hidden="true">
+      <circle class="in-ring2" cx="100" cy="100" r="99"/>
+      <circle class="in-ring" cx="100" cy="100" r="92"/>
+      <g class="in-ticks"></g>
+      <circle class="in-halo" cx="100" cy="100" r="92"/>
+      <path class="in-mark" d="M100 -2 L93 -14 L107 -14 Z"/>
+    </svg>
+    <p class="in-year" aria-hidden="true">2026</p>
+    <div class="in-title">
+      <p class="in-name">Longtime</p>
+      <p class="in-tag">Jamaican History Games</p>
+    </div>
+  </div>
+  <div class="in-gate">
+    <p class="in-line">Step back in time.</p>
+    <button type="button" class="in-go">Begin</button>
+    <button type="button" class="in-sound" aria-pressed="true">Sound on</button>
+  </div>
+  <button type="button" class="in-skip">Skip</button>
+</div>
 <main>
   <header>
     <h1><b class="jam">Jamaican<svg class="flag" viewBox="0 0 60 30" role="img" aria-label="Flag of Jamaica"><clipPath id="fl"><rect width="60" height="30"/></clipPath><g clip-path="url(#fl)"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></g></svg></b><span>History Games</span></h1>
@@ -260,6 +288,7 @@
   </div>
 </div>
 <script src="site.js"></script>
+<script src="intro.js"></script>
 <script>
   /* On the live site this page is the home page. In the repo it sits in menu/, one folder down, so the game links need "../". */
   if (/\/menu\/?(index\.html)?$/.test(location.pathname)) for (const a of document.querySelectorAll('a[data-game]')) a.href = '../games/' + a.dataset.game + '/site/';
