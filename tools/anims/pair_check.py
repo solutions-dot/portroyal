@@ -139,8 +139,8 @@ def run(name):
             d, i = signed(ttree, v, tp)
             if d is None: continue
             if lab in (REST[name] + 'Hand', REST[name] + 'Fingers', REST[name] + 'ForeArm'):   # the arm that rests on them may touch, never go in
-                near[lab] = min(near.get(lab, 9.0), d)
-                if lab == REST[name] + 'Hand':
+                if tp[i] != 'hat': near[lab] = min(near.get(lab, 9.0), d)   # how it rests on her body (a hat brim above is only a collision check)
+                if lab == REST[name] + 'Hand' and tp[i] != 'hat':
                     hand = min(hand, d)
                     if os.environ.get('DEBUG') and k == 0 and d < -0.02: print('DEBUG deep hand point', tuple(round(x, 3) for x in v), round(d, 3), tp[i], ttree.find_nearest(v)[0])
                 if d < (-SOFT if lab != REST[name] + 'ForeArm' else 0): note(('giver ' + lab, 'taker ' + tp[i]), -d)   # a hand pressing on cloth may sink SOFT metres in

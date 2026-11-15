@@ -60,7 +60,8 @@ button{font:inherit;color:inherit}
 #jcount{background:var(--brass);color:var(--brass-ink);font-family:var(--text);font-weight:700;font-size:.8rem;border-radius:999px;min-width:1.6em;height:1.6em;display:inline-grid;place-items:center}
 #jbtn.glow{box-shadow:0 0 0 3px rgba(232,184,74,.95),0 0 18px 6px rgba(243,194,90,.55);animation:jglow 1.4s ease-in-out infinite}   /* a new journal page: the button glows until you open the journal */
 #jbtn.glow #jcount{background:#c2412a;color:#fff}
-body:has(#nudge:not([hidden])) #place{opacity:0!important}   /* the place name steps aside when the helper arrow comes */
+body:has(#nudge:not([hidden])) #place{opacity:0!important}
+@media (max-width:520px){body:has(#talk:not([hidden])) #hint{visibility:hidden}}   /* on a phone the controls tip steps aside for a long action button */   /* the place name steps aside when the helper arrow comes */
 @keyframes jglow{50%{box-shadow:0 0 0 3px rgba(232,184,74,.95),0 0 26px 10px rgba(243,194,90,.8)}}
 @media (prefers-reduced-motion:reduce){#jbtn.glow{animation:none}}
 #hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(18,28,38,.72);padding:.3em .8em;border-radius:6px;font-size:.85rem;margin:0;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}

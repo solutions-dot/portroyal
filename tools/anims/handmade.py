@@ -878,7 +878,7 @@ def contact_pass(name, n_frames):
             near = {HAND: 9.0, FING: 9.0}
             for v, lab in zip(gv, labs):
                 if lab in near:
-                    hh = tree.find_nearest(v, 0.2)
+                    hh = body.find_nearest(v, 0.2)
                     if hh[0] is None: continue
                     dd = hh[3] if (v - hh[0]).dot(hh[1]) >= 0 else -hh[3]
                     if dd > -0.05: near[lab] = min(near[lab], dd)
