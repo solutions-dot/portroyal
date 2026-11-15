@@ -173,3 +173,11 @@ test('a follower keeps out of your personal space, steps aside when you walk bac
   p = drive({ from: p, route: [[0, 2.5]], move, step, people: [n], w, blocked });   /* straight back at them */
   assert.deepEqual(w.lines(n, 'follower'), []);
 });
+
+test('menu lists every game in Jamaica\'s timeline, oldest first', async () => {
+  const { readFileSync, existsSync } = await import('node:fs');
+  const page = readFileSync('menu/index.html', 'utf8'), html = page.slice(page.indexOf('<section class="games"'), page.indexOf('</section>', page.indexOf('<section class="games"'))), cards = [...html.matchAll(/<a class="game[^"]*"([^>]*)>/g)].map((m) => m[1]);
+  assert.ok(cards.length > 0);
+  const years = cards.map((a) => { const y = a.match(/data-year="(\d{3,4})"/), g = a.match(/data-game="([a-z0-9-]+)"/); assert.ok(y, 'a game card has no data-year: ' + a); assert.ok(g && existsSync('games/' + g[1]), 'a game card names no game folder: ' + a); return +y[1]; });
+  assert.deepEqual(years, [...years].sort((a, b) => a - b), 'menu cards out of order: ' + years.join(', '));
+});

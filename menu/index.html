@@ -19,7 +19,8 @@
 <link rel="stylesheet" href="contact.css">
 <style>
   /* The game menu. One screen, no scrolling. Colours from the island: harbour blue, sea glass, mango, hibiscus.
-     To add a game: copy a game <a class="game"> block, add its picture (menu/<game>.jpg), and give it its own class for the colours. */
+     To add a game: copy a game <a class="game"> block, add its picture (menu/<game>.jpg), give it its own class for the colours, and set data-year to the year it is set in.
+     The cards are listed in Jamaica's timeline, oldest first: site.js sorts them by data-year, and npm test fails if a card has no year or is out of order here. */
   :root{
     --harbour:#06283D; --deep:#041B2A; --sea:#1FB5A3; --mango:#FFB627; --hibiscus:#E8505B; --paper:#FFF7E8;
     --font:"Inter",system-ui,sans-serif;
@@ -207,6 +208,26 @@
         <span class="play">Go there</span>
       </div>
     </a>
+    <a class="game nanny" data-game="nanny" data-year="1734" href="games/nanny/site/">
+      <p class="tag">New</p>
+      <div class="text">
+        <div>
+          <h2>The Fall of Nanny Town, 1734</h2>
+          <p>In 1734 British soldiers took Nanny Town, and the Maroons escaped into the mountains.</p>
+        </div>
+        <span class="play">Go there</span>
+      </div>
+    </a>
+    <a class="game bogwalk" data-game="bog-walk" data-year="1904" href="games/bog-walk/site/">
+      <p class="tag">New</p>
+      <div class="text">
+        <div>
+          <h2>Bog Walk Tube Flood, 1904</h2>
+          <p>In June 1904 water rushed into a huge iron pipe while men were working inside.</p>
+        </div>
+        <span class="play">Go there</span>
+      </div>
+    </a>
     <a class="game garvey" data-game="garvey" data-year="1914" href="games/garvey/site/">
       <p class="tag">New</p>
       <div class="text">
@@ -227,26 +248,6 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game bogwalk" data-game="bog-walk" data-year="1904" href="games/bog-walk/site/">
-      <p class="tag">New</p>
-      <div class="text">
-        <div>
-          <h2>Bog Walk Tube Flood, 1904</h2>
-          <p>In June 1904 water rushed into a huge iron pipe while men were working inside.</p>
-        </div>
-        <span class="play">Go there</span>
-      </div>
-    </a>
-    <a class="game nanny" data-game="nanny" data-year="1734" href="games/nanny/site/">
-      <p class="tag">New</p>
-      <div class="text">
-        <div>
-          <h2>The Fall of Nanny Town, 1734</h2>
-          <p>In 1734 British soldiers took Nanny Town, and the Maroons escaped into the mountains.</p>
-        </div>
-        <span class="play">Go there</span>
-      </div>
-    </a>
     <a class="game eventide" data-game="eventide" data-year="1980" href="games/eventide/site/">
       <p class="tag">New</p>
       <div class="text">
@@ -257,22 +258,22 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game melissa" data-game="melissa" data-year="2025" href="games/melissa/site/">
-      <p class="tag">New</p>
-      <div class="text">
-        <div>
-          <h2>Hurricanes Charlie, Gilbert and Melissa</h2>
-          <p>Charlie in 1951, Gilbert in 1988 and Melissa in 2025 were three of the worst storms ever to hit Jamaica.</p>
-        </div>
-        <span class="play">Go there</span>
-      </div>
-    </a>
     <a class="game tivoli" data-game="tivoli" data-year="2010" href="games/tivoli/site/">
       <p class="tag">Early version</p>
       <div class="text">
         <div>
           <h2>Tivoli Incursion, 2010</h2>
           <p>In May 2010 soldiers and police entered Tivoli Gardens, and many people died.</p>
+        </div>
+        <span class="play">Go there</span>
+      </div>
+    </a>
+    <a class="game melissa" data-game="melissa" data-year="2025" href="games/melissa/site/">
+      <p class="tag">New</p>
+      <div class="text">
+        <div>
+          <h2>Hurricanes Charlie, Gilbert and Melissa</h2>
+          <p>Charlie in 1951, Gilbert in 1988 and Melissa in 2025 were three of the worst storms ever to hit Jamaica.</p>
         </div>
         <span class="play">Go there</span>
       </div>

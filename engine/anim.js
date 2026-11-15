@@ -60,14 +60,15 @@ export function strideOf(m, clip) {
 /* Seated skirt (tools/garvey/era.py, SkirtSeat): a later skirt body carries a second skirt cut close round both thighs. It shows only while a seated or kneeling
    clip plays, and the standing skirt is hidden then, so a lap is covered without the standing skirt's flare tearing. Checked after each mixer update. */
 export const LOW_SKIRT = /^(Kneel|Crawl|Pray)/;
+const LAP = new WeakMap(), SEAT = new WeakMap();   /* kept outside userData: a game that clones a body copies userData as plain data, and bone references there became empty objects */
 export function seatSkirt(m) {
-  if (m.userData.seatSkirt !== undefined) return m.userData.seatSkirt;
+  if (SEAT.has(m)) return SEAT.get(m);
   const seat = [], stand = []; m.traverse((o) => { if (!o.isMesh) return; if (/^SkirtSeat/.test(o.name)) seat.push(o); else if (/^Skirt(_|\d|$)/.test(o.name)) stand.push(o); });
-  if (!seat.length) return (m.userData.seatSkirt = null);
+  if (!seat.length) return (SEAT.set(m, null), null);
   for (const o of seat) o.visible = false;
-  return (m.userData.seatSkirt = { seat, stand, on: false });
+  { const S0 = { seat, stand, on: false }; SEAT.set(m, S0); return S0; }
 }
-export function skirtTick(m) { const S = m.userData.seatSkirt, a = m.userData.anim; if (!S || !a) return;
+export function skirtTick(m) { const S = SEAT.get(m), a = m.userData.anim; if (!S || !a) return;
   let best = null, bw = 0; for (const x of a.mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } }   /* the clip with the most weight now (a.cur lags while a clip fades in, and a tool may play one directly) */
   const c = (best || a.cur) && (best || a.cur).getClip(), n = c ? c.name : '', on = isSeated(n) || LOW_SKIRT.test(n);
   if (on === S.on) return; S.on = on; for (const o of S.seat) o.visible = on; for (const o of S.stand) o.visible = !on; }
@@ -75,11 +76,11 @@ export function skirtTick(m) { const S = m.userData.seatSkirt, a = m.userData.an
    and the fingers sank into the cloth. After each mixer update, while such a clip plays, each fingertip and wrist is kept outside the lap (the thigh's line plus
    the cloth's own thickness, measured once on this body) by turning the forearm at the elbow. */
 const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _v4 = new THREE.Vector3(), _hq = new THREE.Quaternion(), _hq2 = new THREE.Quaternion();
-function lapSetup(m) { if (m.userData.lap !== undefined) return m.userData.lap;
+function lapSetup(m) { if (LAP.has(m)) return LAP.get(m);
   const bone = (n) => { let b = null; m.traverse((o) => { if (!b && o.isBone && o.name.replace(/[^A-Za-z0-9]/g, '').endsWith(n)) b = o; }); return b; };
   const cloth = []; m.traverse((o) => { if (o.isSkinnedMesh && /^(SkirtSeat|Skirt|Breeches|Apron|JacketSkirt|CoatSkirt)/.test(o.name)) cloth.push(o); });
   const sides = []; for (const S of ['Left', 'Right']) { const up = bone(S + 'UpLeg'), kn = bone(S + 'Leg'), fa = bone(S + 'ForeArm'), hd = bone(S + 'Hand'), tip = bone(S + 'HandMiddle3') || bone(S + 'HandMiddle2') || hd; const tips = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'].map((f) => bone(S + 'Hand' + f + '3') || bone(S + 'Hand' + f + '2')).filter(Boolean); if (up && kn && fa && hd) sides.push({ S, up, kn, fa, hd, tip, tips, R: 0 }); }
-  if (!sides.length) return (m.userData.lap = null);
+  if (!sides.length) return (LAP.set(m, null), LAP.get(m));
   m.updateMatrixWorld(true); const v = new THREE.Vector3();
   for (const sd of sides) { const A = sd.up.getWorldPosition(new THREE.Vector3()), K = sd.kn.getWorldPosition(new THREE.Vector3()), ax = K.clone().sub(A), L2 = ax.lengthSq(); const ds = [];
     for (const o of cloth) { const n = o.geometry.attributes.position.count, step = Math.max(1, n >> 11); for (let i = 0; i < n; i += step) { o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld); const t = v.clone().sub(A).dot(ax) / L2; if (t < 0.25 || t > 0.9) continue; const c = A.clone().addScaledVector(ax, t), d = v.distanceTo(c); const other = sides.find((x) => x !== sd); if (other) { const A2 = other.up.getWorldPosition(new THREE.Vector3()); if (v.distanceTo(A2) < v.distanceTo(A) - 0.02) continue; } ds.push(d); } }
@@ -88,8 +89,8 @@ function lapSetup(m) { if (m.userData.lap !== undefined) return m.userData.lap;
       for (const o of waist) { const n = o.geometry.attributes.position.count, step = Math.max(1, n >> 11); for (let i = 0; i < n; i += step) { o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld); const t = v.clone().sub(A).dot(ax) / L2; if (t < 0.3 || t > 1.0) continue; ds.push(v.distanceTo(A.clone().addScaledVector(ax, t))); } }
       ds.sort((a, b) => a - b); const ws = m.getWorldScale(new THREE.Vector3()).x || 1; sides.waist = { hips, sp, R: (ds.length ? ds[Math.floor(ds.length * 0.6)] : 0.14) / ws }; } }   /* a hand on the hip rests on the belt and skirt top, not in them */
   sides.skirt = cloth.some((o) => /^(SkirtSeat|Skirt)/.test(o.name)); sides.jacket = cloth.some((o) => /^(JacketSkirt|CoatSkirt)/.test(o.name));
-  return (m.userData.lap = sides); }
-export function lapHands(m, name) { const L = m.userData.lap; if (!L) return; m.updateMatrixWorld(true);   /* every clip: standing, a hand hanging by a skirt or trousers is kept outside them too */
+  return (LAP.set(m, sides), LAP.get(m)); }
+export function lapHands(m, name) { const L = LAP.get(m); if (!L) return; m.updateMatrixWorld(true);   /* every clip: standing, a hand hanging by a skirt or trousers is kept outside them too */
   const sc = m.getWorldScale(_v4).x || 1;
   const push = (sd, T, P, R) => { const off = T.clone().sub(P), d = off.length(); if (d >= R || d < 1e-4) return; const E = sd.fa.getWorldPosition(new THREE.Vector3()), from = T.clone().sub(E), to = T.clone().addScaledVector(off.normalize(), R - d).sub(E);
     _hq.setFromUnitVectors(from.normalize(), to.normalize()); sd.fa.getWorldQuaternion(_hq2); const pq = sd.fa.parent.getWorldQuaternion(new THREE.Quaternion()).invert(); sd.fa.quaternion.copy(pq.multiply(_hq.multiply(_hq2))); sd.fa.updateMatrixWorld(true); };
@@ -110,7 +111,7 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
     tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } } };
-  lapSetup(m); if (m.userData.lap) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
+  lapSetup(m); if (LAP.get(m)) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
   if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
   m.userData.anim = ctl; return ctl; }
 export const grounded = [];
