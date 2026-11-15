@@ -511,7 +511,7 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
 
 
 def embrace_arm(rig, frames, T, turn_body=0.5, lean_in=0.06, upper=(0.35, 0.2, 0.90), fore=(0.80, 0.45, 0.25), ride=None,
-                look=(-0.35, 0.28), seated=False, reach=None, hand=((-0.25, -0.2, -1.0), (0.5, -0.85, 0.0))):
+                look=(-0.35, 0.28), seated=False, reach=None, hand=((-0.25, -0.2, -1.0), (0.5, -0.85, 0.0)), name=''):
     """An arm round someone a little in front and to the right: the whole body turns `turn_body` towards them and leans
     in, the upper arm angles down and back (`upper`: towards them, back, down, in the room's directions), the elbow bends about 95 degrees and the forearm
     runs forwards and out across their shoulder blades (`fore`: towards them, forwards, up) to the hand on their far upper arm.
@@ -534,13 +534,28 @@ def embrace_arm(rig, frames, T, turn_body=0.5, lean_in=0.06, upper=(0.35, 0.2, 0
         E = S + d1 * l1; W = E + d2 * l2
         if reach: W = S + V(*reach); d1 = V(0, 1.0, -0.8).normalized(); d2 = V(0, 0, 0)   # given as the hand's place from the shoulder instead; the elbow drops back and down
         if ride: W = W + ride[i]
-        rest_hand(rig, p, 'Right', W, d1 - d2, curl_by=0.35 - 0.1 * pt)         # palm down on the top of her shoulder, fingers forward over it
+        F = fit(name); W = W + F['w']
+        rest_hand(rig, p, 'Right', W, (d1 - d2).normalized() + F['pole'], down=F['down'], palm_dir=F['palm'], curl_by=F['curl'] - 0.1 * pt)   # palm flat on her shoulder, fingers forward over it
         if seated:
             M = rig.fk(p)
             arm(rig, p, 'Left', body_point(rig, M, 'Left', -0.02, 0.32, -0.33, bone='Hips'), body_dir(rig, M, 'Left', 0.6, -0.3, -0.6, bone='Hips'),
                 body_dir(rig, M, 'Left', -0.2, 0.9, -0.3, bone='Hips'), body_dir(rig, M, 'Left', -0.3, 0.0, -1, bone='Hips'), 0.5)   # the free hand on his knee
             curl(rig, p, 'Left', 0.35)
         else: relaxed_arm(rig, p, 'Left')
+
+
+FIT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'comfort_fit.json')
+
+
+def fit(name):
+    """Fine placement of a resting hand, found by fitting against the real bodies (tools/anims/pair_check.py --fit):
+    w moves the wrist, pole swings the elbow (and so the forearm onto their back), palm turns the palm, down tips the
+    fingers, curl bends them."""
+    try:
+        import json; d = json.load(open(FIT_FILE)).get(name, {})
+    except Exception: d = {}
+    return {'w': V(*d.get('w', (0, 0, 0))), 'pole': V(*d.get('pole', (0, 0, 0))), 'palm': V(*d.get('palm', (0, 0, -1))),
+            'down': d.get('down', 0.25), 'curl': d.get('curl', 0.35)}
 
 
 def rest_hand(rig, p, side, wrist, elbow, down=0.25, palm_dir=V(0, 0, -1), curl_by=0.35):
@@ -572,7 +587,7 @@ def stand_still(rig, T, seed):
 @clip('ComfortGive', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_give(rig):
     T = 8.0; frames = stand_still(rig, T, 31)
-    embrace_arm(rig, frames, T, ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0))
+    embrace_arm(rig, frames, T, ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0), name='ComfortGive')
     return frames
 
 
@@ -580,7 +595,7 @@ def comfort_give(rig):
 def comfort_child(rig):
     T = 8.0; frames = stand_still(rig, T, 33)
     embrace_arm(rig, frames, T, turn_body=0.25, lean_in=0.05, upper=(0.15, 0.1, 1.0), fore=(0.6, 0.75, -0.35), look=(-0.3, 0.6),
-                ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0, 0.6))   # upper arm hanging, forearm forward: the hand palm down on the child's shoulder
+                ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0, 0.6), name='ComfortChild')   # upper arm hanging, forearm forward: the hand palm down on the child's shoulder
     return frames
 
 
@@ -597,10 +612,9 @@ def comfort_hand(rig):
         turn(rig, p, 'Spine1', X, 0.04)
         steady_head(rig, p, yaw=0.05 + 0.03 * math.sin(TAU * t / T), pitch=0.25, roll=0.05, neck=0.5)
         M = rig.fk(p)
-        wrist = body_point(rig, Mfix, 'Left', FACE_OUT, FACE_GAP - 0.2 + FACE_FWD, FACE_UP + 0.008 * pt, bone='Hips') + ride[i]
-        arm(rig, p, 'Left', wrist, body_dir(rig, M, 'Left', 0.4, -0.2, -1, bone='Hips'), body_dir(rig, M, 'Left', -0.1, 0.8, -0.6, bone='Hips'),
-            body_dir(rig, M, 'Left', 0.0, 0.3, -1, bone='Hips'), 0.5)
-        curl(rig, p, 'Left', 0.25 - 0.1 * pt, thumb=0.1)
+        F = fit('ComfortHand')
+        wrist = body_point(rig, Mfix, 'Left', FACE_OUT, FACE_GAP - 0.2 + FACE_FWD, FACE_UP + 0.008 * pt, bone='Hips') + ride[i] + F['w']
+        rest_hand(rig, p, 'Left', wrist, body_dir(rig, M, 'Left', 0.4, -0.2, -1, bone='Hips') + F['pole'], down=F['down'], palm_dir=F['palm'], curl_by=F['curl'] - 0.1 * pt)
         relaxed_arm(rig, p, 'Right')
     return frames
 
@@ -615,7 +629,7 @@ def sit_base(rig, T):
 @clip('SitComfortGive', 'hand-made on the library SitIdle (Sitting_Idle.fbx)')
 def sit_comfort_give(rig):
     T = 8.0; frames = sit_base(rig, T); breathe(rig, frames, T, 2, amt=0.014)
-    embrace_arm(rig, frames, T, turn_body=0.3, ride=follow(rig, sit_comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0), seated=True, reach=(-0.32, -0.03, -0.07), hand=((-0.35, -0.2, -0.9), (0.8, -0.4, 0.1)))
+    embrace_arm(rig, frames, T, turn_body=0.3, ride=follow(rig, sit_comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0), seated=True, reach=(-0.32, -0.03, -0.07), hand=((-0.35, -0.2, -0.9), (0.8, -0.4, 0.1)), name='SitComfortGive')
     for p in frames: turn(rig, p, 'RightUpLeg', Z, 0.14)   # knees together, clear of hers
     return frames
 
