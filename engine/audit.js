@@ -20,13 +20,13 @@ import { groundFeet, strideOf } from './anim.js';
 const SHAPE = new WeakMap();
 export function snapMeshes(group) {
   group.updateMatrixWorld(true); const out = [], inst = [];
-  group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg);   /* top: the object it belongs to (the child of the place's group that holds it) */
+  group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg); e.card = isCard(o.material); e.name = o.name || (top !== o ? top.name : '') || '';   /* top: the object it belongs to (the child of the place's group that holds it) */
     if (o.geometry.type === 'BoxGeometry') { o.geometry.computeBoundingBox(); e.lb = o.geometry.boundingBox.clone(); e.inv = o.matrixWorld.clone().invert(); e.sc = Math.cbrt(Math.abs(o.matrixWorld.determinant())) || 1; }   /* the exact box, for seats */
     out.push(e); }
-    if (o.isInstancedMesh && o.visible && SOLID.has(o.geometry.type) && !o.isSkinnedMesh) {   /* each drawn copy of an instanced shape (tree trunks, huts) is kept aside, for the overlap check only: the other checks never saw them and still do not */
+    if (o.isInstancedMesh && o.visible && !o.isSkinnedMesh && (SOLID.has(o.geometry.type) || !isCard(o.material))) {   /* each drawn copy of an instanced shape (tree trunks, huts, whole trees, rocks) is kept aside, for the overlap check (solid shapes only) and the bodies check (auditBodies) */
       if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const m4 = new THREE.Matrix4(), mat = [].concat(o.material)[0];
       for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, m4); const mw = o.matrixWorld.clone().multiply(m4), b = o.geometry.boundingBox.clone().applyMatrix4(mw); if (!isFinite(b.min.x)) continue;
-        const e = { b, mat: mat.name || mat.type, geo: o.geometry.type, unlit: !!mat.isMeshBasicMaterial, flame: false, col: mat.color ? '#' + mat.color.getHexString() : '', top: o.uuid + '#' + k, inst: true }; SHAPE.set(e, { geo: o.geometry, mw }); inst.push(e); } } });
+        const e = { b, mat: mat.name || mat.type, geo: o.geometry.type, unlit: !!mat.isMeshBasicMaterial, flame: false, col: mat.color ? '#' + mat.color.getHexString() : '', top: o.uuid + '#' + k, inst: true, card: isCard(o.material), name: o.name || '' }; SHAPE.set(e, { geo: o.geometry, mw }); inst.push(e); } } });
   out.inst = inst; return out;
 }
 
@@ -64,6 +64,7 @@ export function auditPlace(place) {
   for(const p of place.npcs) if(p.path && !(p.ground>0)) { inside.push(...routeIssues(p.id,p.path,place.walls,.22)); inside.push(...furnitureRouteIssues(p.id,p.path,L,p.ground||0)); }
   floating.push(...auditRest(L, place.groundAt));
   const cut = auditOverlap(L.concat(L.inst || []));
+  inside.push(...auditBodies(L.concat(L.inst || []), bodySpots(place), { skip: place.bodySkip }));   /* people inside any solid shape, where they stand, along a walker's loop and along the routes a game gives (followers, leaders) */
   return { id: place.id, floating, inside: inside.concat(overlap, cut), stuck };
 }
 
@@ -98,6 +99,80 @@ export function auditOverlap(snap, { deep = 0.04 } = {}) {
   for (const k of pairs) { const i = Math.floor(k / 1e6), j = k % 1e6, A = snap[i], B = snap[j], key2 = A.top + B.top; if (seen.has(key2)) continue;
     let worst = 0, n = 0, at = null; for (const [P, Q] of [[A, B], [B, A]]) for (const p of worldPoints(P, 400)) { if (!Q.b.containsPoint(p)) continue; const d = depthIn(Q, p, v); if (d > deep) { n++; if (d > worst) { worst = d; at = p; } } }
     if (n >= 3) { seen.add(key2); out.push(`overlap@(${at.x.toFixed(2)},${at.y.toFixed(2)},${at.z.toFixed(2)}) a ${A.geo} ${A.col || ''} and a ${B.geo} ${B.col || ''} cut ${(worst * 100).toFixed(0)} cm into each other (${n} points)`); } }
+  return out;
+}
+
+/* bodies: a person inside a solid thing (a girl inside the roots of a tree, a man inside a hut wall, a child inside a rock, a guide walking through a trunk).
+   The inside check above sees only plain boxes and cylinders that were not merged or instanced. Here every solid shape counts, whatever it is made of: merged shapes
+   (a whole tree, a hut drawn as one shape), each drawn copy of an instanced shape (a forest of trees, rocks, far huts), spheres, lathes and rocks.
+   A person is an upright cylinder from the ground to about their height (radius r, 18 cm for a grown-up). It is cut by flat slices every 12 cm, and in each slice
+   the real triangles of every shape near it are cut too. The person is inside a shape where a cut line of its surface passes closer than r to their middle (the
+   surface goes through the body), or where they are enclosed by it (counted along four rays, which must agree, so an open strip never counts). A fault is two or
+   more slices more than 3 cm deep. Flat things you can see through or walk through are left out: leaf cards (anything drawn with alphaTest or see-through), planes,
+   unlit glows and flames, people, and anything wider than 40 m (the ground). skip(entry) leaves out more (bushes that hide someone on purpose).
+   people: [{ id, x, z, ground, h, r, what }] (what: "stands", "walks", "follows", put in the line). Lines name the thing and where it is. */
+const FLAT = new Set(['PlaneGeometry', 'CircleGeometry', 'RingGeometry', 'ShapeGeometry']);
+function isCard(material) { return [].concat(material).some((m) => m && (m.alphaTest > 0 || m.transparent || m.isMeshBasicMaterial || m.isSpriteMaterial)); }
+const TRIS = new WeakMap();
+function worldTris(e) {   /* the shape's triangles in world space: 9 numbers each, then its y range, its x and z range and the x and z of its normal */
+  let t = TRIS.get(e); if (t) return t; const s = SHAPE.get(e); if (!s || !s.geo.attributes.position) return null; const P = s.geo.attributes.position, I = s.geo.index, n = I ? I.count / 3 : P.count / 3;
+  t = new Float32Array(n * 17); const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), u = new THREE.Vector3(), w = new THREE.Vector3();
+  for (let i = 0; i < n; i++) { const ia = I ? I.getX(i * 3) : i * 3, ib = I ? I.getX(i * 3 + 1) : i * 3 + 1, ic = I ? I.getX(i * 3 + 2) : i * 3 + 2;
+    a.fromBufferAttribute(P, ia).applyMatrix4(s.mw); b.fromBufferAttribute(P, ib).applyMatrix4(s.mw); c.fromBufferAttribute(P, ic).applyMatrix4(s.mw); u.subVectors(b, a).cross(w.subVectors(c, a));
+    t.set([a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, Math.min(a.y, b.y, c.y), Math.max(a.y, b.y, c.y), Math.min(a.x, b.x, c.x), Math.max(a.x, b.x, c.x), Math.min(a.z, b.z, c.z), Math.max(a.z, b.z, c.z), u.x, u.z], i * 17); }
+  TRIS.set(e, t); return t;
+}
+const segDist = (px, pz, ax, az, bx, bz) => { const dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz, k = L > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L)) : 0; return Math.hypot(px - ax - dx * k, pz - az - dz * k); };
+function bodyDepth(t, px, pz, y0, y1, r) {   /* how many slices of the cylinder at (px, pz) from y0 to y1 a shape's triangles cut more than 3 cm into, and the worst depth */
+  const keep = []; for (let i = 0; i < t.length; i += 17) { if (t[i + 10] < y0 || t[i + 9] > y1) continue; const nearX = t[i + 11] <= px + r && t[i + 12] >= px - r, nearZ = t[i + 13] <= pz + r && t[i + 14] >= pz - r; if ((nearX && nearZ) || (t[i + 13] <= pz && t[i + 14] >= pz) || (t[i + 11] <= px && t[i + 12] >= px)) keep.push(i); }
+  if (!keep.length) return { hits: 0, worst: 0, inside: false }; let hits = 0, worst = 0, enclosed = false; const q = [0, 0, 0, 0];
+  for (let y = y0; y <= y1 + 1e-6; y += 0.12) { let near = 1e9; const W = [0, 0, 0, 0];
+    for (const i of keep) { if (t[i + 9] > y || t[i + 10] < y) continue; let m = 0;
+      for (const [j, k] of [[0, 3], [3, 6], [6, 0]]) { const ay = t[i + j + 1], by = t[i + k + 1]; if ((ay > y) === (by > y)) continue; const f = (y - ay) / (by - ay); q[m * 2] = t[i + j] + (t[i + k] - t[i + j]) * f; q[m * 2 + 1] = t[i + j + 2] + (t[i + k + 2] - t[i + j + 2]) * f; if (++m === 2) break; }
+      if (m < 2) continue; const [ax, az, bx, bz] = q, nx = t[i + 15], nz = t[i + 16]; near = Math.min(near, segDist(px, pz, ax, az, bx, bz));
+      if ((az > pz) !== (bz > pz)) { const xi = ax + (pz - az) / (bz - az) * (bx - ax); if (xi > px) W[0] += Math.sign(nx); else W[1] -= Math.sign(nx); }
+      if ((ax > px) !== (bx > px)) { const zi = az + (px - ax) / (bx - ax) * (bz - az); if (zi > pz) W[2] += Math.sign(nz); else W[3] -= Math.sign(nz); } }
+    const inside = W[0] !== 0 && W.every((v) => v === W[0]), d = inside ? r + (near < 1e8 ? near : 0) : r - near; if (inside) enclosed = true;
+    if (d > 0.03) { hits++; worst = Math.max(worst, d); } }
+  return { hits, worst, inside: enclosed };
+}
+/* standing inside a shape's outline at shin height (y): between the buttress roots of a big tree, among the legs of a stool or a frame. Nothing cuts the body,
+   but from almost every side the person looks as if they are inside the thing (found by eye in Nanny Town: a girl standing between the cotton tree's roots).
+   The outline is the convex hull of the shape's own cut line at that height; the person's middle must be more than `margin` inside it. */
+function outlineHas(t, px, pz, y, margin) {
+  const pts = [], q = [0, 0, 0, 0]; for (let i = 0; i < t.length; i += 17) { if (t[i + 9] > y || t[i + 10] < y) continue; let m = 0;
+    for (const [j, k] of [[0, 3], [3, 6], [6, 0]]) { const ay = t[i + j + 1], by = t[i + k + 1]; if ((ay > y) === (by > y)) continue; const f = (y - ay) / (by - ay); q[m * 2] = t[i + j] + (t[i + k] - t[i + j]) * f; q[m * 2 + 1] = t[i + j + 2] + (t[i + k + 2] - t[i + j + 2]) * f; if (++m === 2) break; }
+    if (m === 2) pts.push([q[0], q[1]], [q[2], q[3]]); }
+  if (pts.length < 6) return false; pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]); const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]), lo = [], hi = [];
+  for (const p of pts) { while (lo.length > 1 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); } for (let i = pts.length - 1; i >= 0; i--) { const p = pts[i]; while (hi.length > 1 && cr(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop(); hi.push(p); }
+  const H = lo.slice(0, -1).concat(hi.slice(0, -1)); if (H.length < 3) return false;
+  for (let i = 0; i < H.length; i++) { const a = H[i], b = H[(i + 1) % H.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; if (((b[0] - a[0]) * (pz - a[1]) - (b[1] - a[1]) * (px - a[0])) / L < margin) return false; }   /* counter-clockwise hull: inside is to the left of every edge */
+  return true;
+}
+export function auditBodies(snap, people, { skip = null } = {}) {
+  const out = [], sz = new THREE.Vector3(), cell = new Map(), key = (x, z) => ((x | 0) + 5000) * 20000 + ((z | 0) + 5000), C = 2, seen = new Set();
+  snap.forEach((e, i) => { if (e.skinned || e.unlit || e.flame || e.card || FLAT.has(e.geo) || !SHAPE.has(e)) return; e.b.getSize(sz); if (sz.x > 40 || sz.z > 40 || Math.max(sz.x, sz.y, sz.z) < 0.08) return; if (skip && skip(e)) return;
+    for (let x = Math.floor(e.b.min.x / C); x <= Math.floor(e.b.max.x / C); x++) for (let z = Math.floor(e.b.min.z / C); z <= Math.floor(e.b.max.z / C); z++) { const k = key(x, z); (cell.get(k) || cell.set(k, []).get(k)).push(i); } });
+  for (const p of people) { const g = p.ground || 0, h = p.h || 1.6, r = p.r || 0.18, y0 = g + 0.1, y1 = g + h * 0.92, list = cell.get(key(Math.floor(p.x / C), Math.floor(p.z / C))); if (!list) continue;
+    for (const i of list) { const e = snap[i], tag = p.id + '|' + e.top; if (seen.has(tag) || e.b.max.y < y0 || e.b.min.y > y1 || e.b.max.x < p.x - r || e.b.min.x > p.x + r || e.b.max.z < p.z - r || e.b.min.z > p.z + r) continue;
+      const t = worldTris(e); if (!t) continue; const d = bodyDepth(t, p.x, p.z, y0, y1, r); if (d.hits < 2) { if (outlineHas(t, p.x, p.z, g + 0.25, 0.05)) d.among = true; else continue; } seen.add(tag);
+      const c = e.b.getCenter(sz), what = (e.name || e.geo.replace('Geometry', '').toLowerCase()) + (e.col ? ' ' + e.col : '') + (e.inst ? ' (one of many drawn at once)' : '');
+      out.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) ${p.what || 'stands'} ` + (d.among ? `inside the outline of a ${what} at (${c.x.toFixed(1)},${c.z.toFixed(1)}), between its roots or legs` : `${d.inside ? 'inside' : 'cut by'} a ${what} at (${c.x.toFixed(1)},${c.z.toFixed(1)}), ${(d.worst * 100).toFixed(0)} cm deep`)); } }
+  return out;
+}
+/* the spots auditPlace checks for bodies: where each standing person stands (not people who sit: auditSeated judges them), every 30 cm along a walker's loop,
+   and every 30 cm along each route in place.routes ([{ id, pts, loop, what, h, r }]: followers, leaders, people sent somewhere). Heights come from place.groundAt where given. */
+export function routeSpots(id, pts, { loop = false, step = 0.3, ground = null, h, r, what = 'walks' } = {}) {
+  const out = []; for (let i = 0; i < pts.length - (loop ? 0 : 1); i++) { const a = pts[i], b = pts[(i + 1) % pts.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(L / step));
+    for (let k = 0; k < n; k++) { const x = a[0] + (b[0] - a[0]) * k / n, z = a[1] + (b[1] - a[1]) * k / n; out.push({ id, x, z, ground: ground ? ground(x, z) : 0, h, r, what }); } }
+  if (!loop && pts.length) { const e = pts[pts.length - 1]; out.push({ id, x: e[0], z: e[1], ground: ground ? ground(e[0], e[1]) : 0, h, r, what }); }
+  return out;
+}
+function bodySpots(place) {
+  const gAt = place.groundAt || null, out = [];
+  for (const p of place.npcs) { if (/^Sit/.test(p.anim || '')) continue; out.push({ id: p.id, x: p.x, z: p.z, ground: p.ground || 0, h: p.h, r: p.r });
+    if (p.path && p.path.length > 1) out.push(...routeSpots(p.id, p.path, { loop: true, ground: gAt && !p.fixedGround ? gAt : () => p.ground || 0, h: p.h, r: p.r })); }
+  for (const R of place.routes || []) out.push(...routeSpots(R.id, R.pts, { loop: !!R.loop, ground: gAt || (() => R.ground || 0), h: R.h, r: R.r, what: R.what || 'walks' }));
   return out;
 }
 
