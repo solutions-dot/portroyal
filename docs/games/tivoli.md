@@ -315,4 +315,16 @@ Real people in the game: none speak. Coke, politicians, commanders, officers and
 - **Facts used:** the US request (2009), the Government's agreement (18 May 2010, "last week" from 23 May), the state of emergency (23 May 2010), barricades at the entrances before the operation. Who built the barricades is not said: our sources do not say, so Mr Brown says people will argue about it. 23 May 2010 was a Sunday.
 - **Code:** `streetPlace()` in `street.js` reuses the street and makes its walls from the solid boxes. `WALKS[4]` in `ch1.js` (lower camera, 1.25 m, for a child). Words `CH4` in `content.js`; looks `dawn` (a borrowed Kendal body in 1957 clothes, to replace with a 2010 body) and `brown` (the Tivoli `civilian2010` body) in `cast.js`.
 - **Checks:** `?test=audit` 0 in all four places (street, Back-o-Wall, new Tivoli, street for chapter 4). The layout test now also shows the chapter title over the goal and buttons, the chapter end card, the journal and the chapters list; it found the chapter title touching the Journal button on phones (fixed: the title sits lower below 560 px). 0 at all five sizes. Scripted chapter 4 run (Mr Brown, Miss Dawn, then Gran Ivy): goals, end card, journal 4 of 7, no errors.
-- **Chapters now playable:** 1, 2, 4, 5. Still to build: 3 (politics and power, 1970s to 2009), 6 (after), 7 (the report), 8 (today).
+- **Chapters now playable:** 1, 2, 4, 5, 6. Still to build: 3 (politics and power, 1970s to 2009), 7 (the report), 8 (today).
+
+## Chapter 6, after (15 November 2026)
+
+- **Playable.** A few days after the operation, in the chapter 2 courtyard as it is in 2010 (older paint, grown trees). You talk to Gran Ivy, Mr Brown (his son was taken away for questioning) and Pastor Grant (families planning funerals and asking for answers), in any order, then go into the community centre. Unlocks "Monday 24 May 2010" and "After". Nobody is shown hurt.
+- **Facts used** (journal pages "Monday 24 May 2010" and "After"): about 70 civilians and one soldier died; many people were held for days; a Commission of Enquiry looked at it later. Gran Ivy, Mr Brown and Pastor Grant are fictional, and the end card says so.
+- **Code:** `buildNewTivoli({ year: 2010, cast })` in `newtivoli.js`; `WALKS[6]` in `ch1.js`; words `CH6`; look `pastor` (a borrowed Kendal body).
+
+## Feet on pavements and paths (15 November 2026)
+
+- **The bug:** story people were pinned to height 0 everywhere, so on the 16 cm pavement (chapter 4) their shoes sank out of sight, and on the 6 cm paths (chapters 2 and 6) by a little. Their feet were also not re-pinned every frame.
+- **The fix:** each walking place now has `groundAt(x, z)` (street: pavement 16 cm, kerb 20 cm; courtyard: paths 6 cm; Back-o-Wall: 0). `ch1.js` passes it to `addNpc` as `ground`, and `main.js` calls `groundFeet` on every story person every frame.
+- **New check, `sinkCheck` in `src/checks.js`,** run by `?test=audit` on every place and on the gunfight positions: it finds anyone whose `ground` is below the top of a low flat surface (pavement, kerb, path, step) under their feet. Proved by turning the pavement height off: it reported Gran Ivy, Miss Dawn and Mr Brown 16 cm under. With the fix, 0 everywhere. Close screenshots of the feet in chapters 1, 2, 4 and 6 show shoes resting on the ground. The lowest point of each body is 1 to 3 cm under the surface (the engine's `groundFeet` sets soles 8 mm low on purpose and the toes bend); not visible.

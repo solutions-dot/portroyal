@@ -9,7 +9,7 @@ export const CHAPTERS = [
   { id: 3, name: 'Politics and power', when: '1970s to 2009', line: 'How leaders, parties and gangs grew together.', playable: false },
   { id: 4, name: 'May 2010: before', when: 'Sunday 23 May 2010', line: 'Barricades, a state of emergency, and a family waiting.', playable: true },
   { id: 5, name: 'May 2010: the day', when: 'Monday 24 May 2010', line: 'A loud day. You watch from a window.', playable: true },
-  { id: 6, name: 'After', when: 'May 2010 and after', line: 'Finding people. Funerals. The inquiries.', playable: false },
+  { id: 6, name: 'After', when: 'May 2010 and after', line: 'Finding people. Funerals. The inquiries.', playable: true },
   { id: 7, name: 'The report', when: '2016 and 2017', line: 'What the Commission found, and the disagreement.', playable: false },
   { id: 8, name: 'Today', when: 'Now', line: 'The community now.', playable: false },
 ];
@@ -129,6 +129,46 @@ export const CH4 = {
   end: {
     title: 'May 2010: before',
     lines: ['On 23 May 2010 the Government declared a state of emergency.', 'Barricades blocked the roads into Tivoli Gardens.', 'The next day, soldiers and police went in.', 'Gran Ivy, Miss Dawn and Mr Brown are made up.'],
+  },
+};
+
+/* ---------- Chapter 6: after, a few days later, in the courtyard by the community centre (the chapter 2 place in 2010). Gran Ivy, Mr Brown and Pastor Grant are fictional.
+   Facts (journal pages "Monday 24 May 2010" and "After"): about 70 civilians and one soldier died; many people were held for days (the Public Defender said over 10,000,
+   some for up to a week); the Government later paid grants for burials and damage; a Commission of Enquiry looked at what happened. Told gently: nobody is shown hurt. ---------- */
+export const CH6 = {
+  start: ['A few days later.', 'Tivoli Gardens is quiet again.', 'Gran Ivy takes you to the community centre.'],
+  goals: ['Talk to Gran Ivy on the path.', 'Talk to Mr Brown by the flats.', 'Talk to Pastor Grant by the community centre.', 'Go into the community centre.'],
+  talk: {
+    gran: [
+      { who: 'Gran Ivy', text: 'The noise has stopped now.' },
+      { who: 'You', text: 'Is everyone all right, Gran?' },
+      { who: 'Gran Ivy', text: 'No, darling. Many people died.' },
+      { who: 'Gran Ivy', text: 'Some of them were our neighbours.', unlock: 'day' },
+      { who: 'Gran Ivy', text: 'We will remember them together.' },
+    ],
+    brown: [
+      { who: 'Mr Brown', text: 'My son was taken away for questioning.' },
+      { who: 'Mr Brown', text: 'Many people were held for days.' },
+      { who: 'You', text: 'Will he come home?' },
+      { who: 'Mr Brown', text: 'They say he will be let go soon.' },
+      { who: 'Mr Brown', text: 'I am waiting here for news.' },
+    ],
+    pastor: [
+      { who: 'Pastor Grant', text: 'Hello, child. We are helping families here.' },
+      { who: 'Pastor Grant', text: 'Some families are planning funerals.' },
+      { who: 'You', text: 'Will people find out what happened?' },
+      { who: 'Pastor Grant', text: 'Families are asking for answers.' },
+      { who: 'Pastor Grant', text: 'Finding the truth can take a long time.', unlock: 'after' },
+    ],
+  },
+  later: {
+    gran: ['Stay close, darling.', 'We look after each other.'],
+    brown: ['I will wait as long as it takes.', 'Thank you for asking, youngster.'],
+    pastor: ['Go in. There is food and water inside.', 'You are welcome here.'],
+  },
+  end: {
+    title: 'After',
+    lines: ['About 70 people died in Tivoli Gardens. One soldier died too.', 'Many people were held for days.', 'Families asked what happened. A Commission of Enquiry looked into it later.', 'Gran Ivy, Mr Brown and Pastor Grant are made up.'],
   },
 };
 

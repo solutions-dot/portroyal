@@ -164,5 +164,6 @@ export function streetPlace(opts = {}) {
   for (const n of npcs) st.solids.push({ kind: 'person', name: n.id, x0: n.x - 0.3, x1: n.x + 0.3, z0: n.z - 0.3, z1: n.z + 0.3, y0: 0, y1: 1.7 });
   const start = { x: 8, z: 6.4, yaw: Math.atan2(-(18.4 - 8), -(7.2 - 6.4)) };   /* facing Gran Ivy */
   st.solids.push({ kind: 'person', name: 'start', x0: start.x - 0.3, x1: start.x + 0.3, z0: start.z - 0.3, z1: start.z + 0.3, y0: 0, y1: 1.7 });
-  return { ...st, walls, npcs, start, endSpot: { x: 19.8, z: 7.9, r: 0.9 }, bounds: { x0: -44, x1: 40, z0: -8.2, z1: 8.3 } };
+  const groundAt = (x, z) => (Math.abs(z) > 4.64 && Math.abs(z) <= 8.1 ? 0.16 : Math.abs(z) >= 4.36 && Math.abs(z) <= 4.64 ? 0.2 : 0);   /* pavements 16 cm, kerbs 20 cm, road and grass 0 */
+  return { ...st, groundAt, walls, npcs, start, endSpot: { x: 19.8, z: 7.9, r: 0.9 }, bounds: { x0: -44, x1: 40, z0: -8.2, z1: 8.3 } };
 }

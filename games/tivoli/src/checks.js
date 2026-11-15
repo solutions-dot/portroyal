@@ -163,3 +163,15 @@ export function overlapSolids(solids, tol = 0.05) {
   }
   return out;
 }
+
+/* The sinking check: nobody stands below the surface under their feet. For each person, find the top of every low, flat box (a pavement, a kerb, a path, a step) under
+   where they stand; if that top is higher than the ground they are pinned to (person.ground), their shoes sink into it. Returns text lines (empty means 0). */
+export function sinkCheck(snap, people) {
+  const out = [];
+  for (const p of people) {
+    let top = -1e9, what = '';
+    for (const m of snap) { const b = m.b, h = b.max.y - b.min.y; if (h > 0.45 || b.min.y > 0.05 || b.max.x - b.min.x < 0.4 || b.max.z - b.min.z < 0.4) continue; if (p.x > b.min.x && p.x < b.max.x && p.z > b.min.z && p.z < b.max.z && b.max.y > top) { top = b.max.y; what = m.col || m.mat; } }
+    if (top > (p.ground || 0) + 0.02) out.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) stands ${((top - (p.ground || 0)) * 100).toFixed(0)} cm below the top of a ${what} surface under them (set its ground)`);
+  }
+  return out;
+}

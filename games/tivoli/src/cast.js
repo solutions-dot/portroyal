@@ -18,6 +18,7 @@ export const LOOKS = {
   ivyGran: { base: 'guide2020', tint: { Shirt: 0xc6603a, Skirt: 0x3a4a6a } },                                          /* Ivy as the grandmother in 2010 (a modern body; her hair is grey in the chapters that show her) */
   dawn: { base: 'woman_elder', hat: 'Wrap', tint: { Wrap: 0x2f6a8a, Shirt: 0xe6d8b8, Skirt: 0x7a3a3a, Shoes: 0x2a211b } },   /* Miss Dawn at the grocery, 2010 (fictional; a borrowed Kendal body until a 2010 one is built) */
   brown: { base: 'civilian2010', tint: { Shirt: 0x6a7a5a, Breeches: 0x3a3e48 } },                                          /* Mr Brown, a neighbour, 2010 (fictional) */
+  pastor: { base: 'man_elder', hat: 'Hat', tint: { Hat: 0x222226, Shirt: 0xf4f2ec, Waistcoat: 0x1e1e24, Breeches: 0x1e1e24, Shoes: 0x111111 } },   /* Pastor Grant, 2010 (fictional; a borrowed Kendal body) */
   soldier: { base: 'soldier2010', hide: ['ArmBandText'] },     /* Jamaica Defence Force, May 2010: woodland camouflage, covered helmet, olive vest and harness, yellow armband */
   policeCamo: { base: 'soldier2010' },  /* police attached to the army in May 2010: the same camouflage and kit, with POLICE on the yellow armband (Gleaner photographs) */
   gunman: { base: 'civilian2010' },     /* shown only far away behind the barricade and unidentified (docs/games/tivoli.md "The dispute"); plain clothes */
