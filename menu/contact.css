@@ -1,5 +1,7 @@
   .contact-pill{display:inline-flex;align-items:center;justify-content:center;gap:.3em;min-height:44px;max-width:100%;padding:.65rem 1rem;border:1px solid rgba(255,247,232,.4);border-radius:999px;background:rgba(255,247,232,.04);font:inherit;font-size:.95rem;white-space:normal;cursor:pointer}
-  .contact-pill:hover{border-color:var(--sea);background:rgba(31,181,163,.12)}
+  /* Keep the creator name in the same color as the rest of the button in every state. */
+  .links .contact-pill b{color:inherit}
+  .links .contact-pill:hover,.links .contact-pill:focus-visible{background:var(--paper);color:var(--deep);border-color:var(--paper)}
   .contact-pill:focus-visible,#contactpanel :focus-visible{outline:3px solid var(--mango);outline-offset:3px}
   #contactpanel{width:min(36rem,calc(100% - 2rem));max-height:calc(100dvh - 2rem);padding:1.5rem;border:1px solid rgba(31,181,163,.6);border-radius:24px;background:var(--harbour);color:var(--paper);overflow:auto}
   #contactpanel::backdrop{background:rgba(4,27,42,.85)}
