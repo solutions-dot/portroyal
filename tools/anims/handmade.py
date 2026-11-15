@@ -801,7 +801,7 @@ CONTACT = {   # clip: (pair in pair_check.py, the giver's resting hand, the othe
 PALM_OFF = 0.012   # the hand bone starts this far above the palm's skin (corrected each frame by measuring)
 PALM_AT = 0.055    # the middle of the palm is this far along the hand from the wrist
 FOREARM_CLEAR = 0.05   # the forearm's bone keeps at least this far from the other person
-CONTACT_ROUNDS = 6
+CONTACT_ROUNDS = 10
 
 
 def contact_pass(name, n_frames):
@@ -882,8 +882,8 @@ def contact_pass(name, n_frames):
                     if hh[0] is None: continue
                     dd = hh[3] if (v - hh[0]).dot(hh[1]) >= 0 else -hh[3]
                     if dd > -0.05: near[lab] = min(near[lab], dd)
-            if near[HAND] < 9: off_p = max(-0.02, min(0.08, off_p - (near[HAND] + 0.001)))   # palm just pressing on her
-            if near[FING] < 9: tilt = max(-0.6, min(0.6, tilt - (near[FING] + 0.001) / 0.09 * 0.8))
+            if near[HAND] < 9: off_p = max(-0.02, min(0.08, off_p - 0.6 * (near[HAND] + 0.001)))   # palm just pressing on her
+            if near[FING] < 9: tilt = max(-0.6, min(0.6, tilt - 0.5 * (near[FING] + 0.001) / 0.09))
         prev_ang = best[1]
         out.append((WU, WL, WH))
         if i % 40 == 0: print('contact', name, i, 'palm %.3f fingers %.3f wrist %.0f off %.3f tilt %.2f reach %.3f/%.3f' % (near[HAND], near[FING], math.degrees(d2.angle(fdir)), off_p, tilt, (palm_pt - fdir * PALM_AT - S).length, l1 + l2), flush=True)
