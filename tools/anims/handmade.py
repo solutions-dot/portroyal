@@ -450,9 +450,9 @@ def speech(rig):
     return frames
 
 
-SIDE_GAP = 0.40   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right and 0.10 m in front, facing the same way
+SIDE_GAP = 0.44   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right and 0.12 m in front, facing the same way
 CHILD_GAP = 0.32  # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right
-HAND_OUT, HAND_FWD, HAND_UP = 0.03, -0.01, -0.10   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
+HAND_OUT, HAND_FWD, HAND_UP = 0.065, -0.04, -0.10   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
 FACE_GAP = 0.58   # ComfortHand: the other person stands this far in front of the giver, facing them
 
 
@@ -471,11 +471,11 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
         M = rig.fk(p)
         far = gap - 0.16 + 0.12                                         # their far shoulder, from the giver's shoulder joint
         wrist = body_point(rig, M, 'Right', far - 0.05 + HAND_OUT, 0.04 + HAND_FWD, -drop + HAND_UP + 0.012 * pt, bone='Hips')   # over their far shoulder, from behind
-        fingers = body_dir(rig, M, 'Right', 0.1, 0.45, -0.9, bone='Hips')     # down the back and outside of their upper arm
+        fingers = body_dir(rig, M, 'Right', 0.25, 0.1, -1.0, bone='Hips')     # down the back and outside of their upper arm
         palm = body_dir(rig, M, 'Right', -0.4, 1.0, 0.1, bone='Hips')
-        elbow = body_dir(rig, M, 'Right', -0.15, -1.0, -0.8, bone='Hips')   # elbow down and back, behind them
+        elbow = body_dir(rig, M, 'Right', -0.15, -1.0, -0.55, bone='Hips')   # elbow down and back, behind them
         arm(rig, p, 'Right', wrist, elbow, fingers, palm, 0.5)
-        curl(rig, p, 'Right', 0.35 - 0.15 * pt, thumb=0.15)
+        curl(rig, p, 'Right', 0.2 - 0.1 * pt, thumb=0.1)
         relaxed_arm(rig, p, 'Left')
 
 
@@ -548,24 +548,22 @@ def sit_comfort_take(rig):
     return frames
 
 
-def take_upper(rig, frames, T):
+def take_upper(rig, frames, T, wipe_side='Left'):
     """Upright and quiet: the head bowed and tipped towards the giver on the left, slow breaths, the hands loose in front;
-    once a loop she lifts her right hand to wipe her eyes."""
+    once a loop she lifts one hand (`wipe_side`, the one away from the giver's resting hand) to wipe her eyes."""
     wipe = lambda t: bump(t, 2.4, 5.0, 0.8, 0.9)
     for i, p in enumerate(frames):
         t = i / FPS; w = wipe(t); b = math.sin(TAU * 2 * t / T)
-        turn(rig, p, 'Spine', Y, 0.03); turn(rig, p, 'Spine2', X, 0.03 - 0.01 * b)
+        turn(rig, p, 'Spine', Y, 0.02); turn(rig, p, 'Spine2', X, 0.03 - 0.01 * b)
         steady_head(rig, p, yaw=0.15 + 0.03 * math.sin(TAU * t / T), pitch=0.28 + 0.06 * w + 0.015 * b, roll=0.08, neck=0.5)
-        M = rig.fk(p)
-        lo_r = body_point(rig, M, 'Right', -0.05, 0.25, -0.40, bone='Hips')
-        face = body_point(rig, M, 'Right', 0.03, 0.13, 0.0, bone='Head', at='Head') + V(0, 0, -0.02)
-        arm(rig, p, 'Right', lo_r.lerp(face, w), body_dir(rig, M, 'Right', 0.5, -0.5, -0.8, bone='Hips'),
-            body_dir(rig, M, 'Right', -0.5, 0.3, -0.8).lerp(body_dir(rig, M, 'Right', -0.4, 0.2, 1.0), w),
-            body_dir(rig, M, 'Right', -0.3, 0.6, 0.2).lerp(body_dir(rig, M, 'Right', -0.3, -1.0, 0.0), w), 0.5)
-        lw = body_point(rig, M, 'Left', -0.03, 0.22, -0.42, bone='Hips')
-        arm(rig, p, 'Left', lw, body_dir(rig, M, 'Left', 0.5, -0.5, -0.8, bone='Hips'), body_dir(rig, M, 'Left', -0.4, 0.3, -0.9),
-            body_dir(rig, M, 'Left', -0.4, 0.5, 0.3), 0.5)
-        curl(rig, p, 'Right', 0.3 + 0.1 * w); curl(rig, p, 'Left', 0.3)
+        for sd in ('Right', 'Left'):
+            M = rig.fk(p); k = w if sd == wipe_side else 0.0
+            low = body_point(rig, M, sd, -0.03, 0.27, -0.40, bone='Hips')
+            face = body_point(rig, M, sd, 0.03, 0.16, 0.0, bone='Head', at='Head') + V(0, 0, -0.02)
+            arm(rig, p, sd, low.lerp(face, k), body_dir(rig, M, sd, 0.5, -0.5, -0.8, bone='Hips'),
+                body_dir(rig, M, sd, -0.5, 0.3, -0.8).lerp(body_dir(rig, M, sd, -0.4, 0.2, 1.0), k),
+                body_dir(rig, M, sd, -0.3, 0.6, 0.2).lerp(body_dir(rig, M, sd, -0.3, -1.0, 0.0), k), 0.5)
+            curl(rig, p, sd, 0.3 + 0.1 * k)
 
 
 @clip('ComfortTake', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')

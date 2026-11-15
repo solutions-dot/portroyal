@@ -22,10 +22,10 @@ PEOPLE = os.path.join(ROOT, 'build', 'people')
 N = 32
 # giver clip, taker clip, giver body, taker body, where the taker stands relative to the giver (x, y, turn, scale), seated
 PAIRS = {
-    'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.40, -0.10, 0.0, 1.0), False),
+    'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.44, -0.12, 0.0, 1.0), False),
     'ComfortHand': ('ComfortHand', 'ComfortTake', 'man_shirt', 'woman57', (0.0, -0.58, math.pi, 1.0), False),
     'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.32, -0.08, 0.0, 0.6), False),
-    'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.40, -0.10, 0.0, 1.0), True),
+    'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.44, -0.12, 0.0, 1.0), True),
 }
 REST = {'ComfortGive': 1, 'ComfortHand': 1, 'ComfortChild': 1, 'SitComfort': 1}   # pairs where the giver's right hand and forearm rest on the other person
 SKIP = ('Human.low-poly', 'Cap')   # the proxy mesh and the spare cap (each game shows one hat; the giver's hat is skipped too)
@@ -136,7 +136,9 @@ def run(name):
             d, i = signed(ttree, v, tp)
             if d is None: continue
             if lab in ('RightHand', 'RightForeArm') and REST.get(name):   # the arm that rests on them may touch, never go in
-                if lab == 'RightHand': hand = min(hand, d)
+                if lab == 'RightHand':
+                    hand = min(hand, d)
+                    if os.environ.get('DEBUG') and k == 0 and d < -0.02: print('DEBUG deep hand point', tuple(round(x, 3) for x in v), round(d, 3), tp[i], ttree.find_nearest(v)[0])
                 if d < 0: note(('giver ' + lab, 'taker ' + tp[i]), -d)
             elif d < 0.01: note(('giver ' + lab, 'taker ' + tp[i]), 0.01 - d)
         for v, lab in zip(tv, Tk['labels']):            # the taker against the giver
