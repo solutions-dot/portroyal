@@ -125,6 +125,7 @@ let modelsReady = false; const placeLoading = {};
 function buildPlace(id) {   /* the geometry only: quick, and enough for a title backdrop. People come later (ensurePlace). */
   if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.actions = []; P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; PL[id] = P;
   P.bounds = P.G.bounds; P.solidWalls = P.solids.map(([x, z, r]) => [x - r * 0.7, z - r * 0.7, x + r * 0.7, z + r * 0.7]); P.walls = P.G.walls(0.5).concat(P.solidWalls);
+  P.solidBoxes = P.solids.map(([x, z, r]) => [x - r - 0.05, z - r - 0.05, x + r + 0.05, z + r + 0.05]);   /* boxes that hold each round footprint whole: routes round them never cut into one (engine/follow.js goTo) */
   if (__DEV__) P.snap = snapMeshes(P.group); P.batch = batchStatic(P.group);
   P.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.alphaTest > 0) && o.name !== 'land' && !o.material.isMeshBasicMaterial) o.castShadow = o.receiveShadow = true; });
   if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); return P;
@@ -181,7 +182,7 @@ function pathS(d, x, z) { let b = 1e9, s = 0, out = 0; for (let i = 1; i < d.len
 /* where a person may not stand: off the ground you can walk on, or in the footprint of a solid thing (a hut, a fire, a rock, a tree's trunk and roots: P.solids) */
 function blockedAt(P, x, z, r = 0.25) { if (!P.G.walkable(x, z, Math.min(0.15, r * 0.5))) return true; for (const s of P.solids) if (Math.hypot(s[0] - x, s[1] - z) < s[2] + r * 0.4) return true; return false; }
 /* what engine/follow.js needs to know each frame: where you are, what is solid, who else is about, and how a person stands on the land */
-function followWorld() { const P = P_(); return { px: state.x, pz: state.z, blocked: (x, z, r) => blockedAt(P, x, z, r), walls: P.solidWalls, bounds: P.bounds, others: P.npcs.filter((o) => o.m && o.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw }, place: (n) => stand(n, P.G) }; }
+function followWorld() { const P = P_(); return { px: state.x, pz: state.z, blocked: (x, z, r) => blockedAt(P, x, z, r), walls: P.solidBoxes, bounds: P.bounds, others: P.npcs.filter((o) => o.m && o.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw }, place: (n) => stand(n, P.G) }; }
 function stand(n, G) { const m = n.m, g = G.h(n.x, n.z); m.position.x = n.x; m.position.z = n.z; m.position.y += g - (m.userData.ground || 0); m.userData.ground = g; }
 const setWalk = (n, on, clip = 'Walk') => { if (on && (!n.walking || n.clip !== clip)) { n.walking = true; n.clip = clip; n.ctl.play(clip); } else if (!on && n.walking) { n.walking = false; n.ctl.play(null); } };
 function npcTick(n, dt) {
@@ -445,8 +446,8 @@ const ACTIONS_FOR = {
 ON[10] = () => { if (cur === 'estate') { say(SAY.start, 4200); SFX.owl(); } };
 /* how each person walks with you (engine/follow.js): a guide keeps `ahead` metres in front along the trail and waits if you fall behind; a follower keeps `gap` metres
    behind (on the trail, or in your footsteps), never closer than `space`. The scenes and the place audit both read these numbers. */
-const FOLLOW = { quamin: { ahead: 4.6, side: 0.45 }, mama: { gap: 2.6, side: -0.4 }, quaminT: { ahead: 4.4 }, mamaT: { gap: 2.4 }, mama5: { ahead: 3.6, side: 0.3 }, flee: (i) => ({ ahead: 7 + i * 3.2, side: i % 2 ? 0.3 : -0.3, wait: Infinity, wave: false }), phibba: { gap: 1.4, side: 0.55, space: 0.8 } };
-ON[11] = () => { const P = PL.estate, S = P.spots, q = byId('quamin'), m = byId('mama'); lead(q, S.trail.dense, { ...FOLLOW.quamin, max: S.sRoadS - 1.2 }); follow(m, { ...FOLLOW.mama, path: S.trail.dense }); say(SAY.follow, 3800); SFX.owl(); };
+const FOLLOW = { quamin: { ahead: 4.6, side: 0.45 }, mama: { gap: 2.4, side: 0.5 }, quaminT: { ahead: 4.4 }, mamaT: { gap: 2.2, side: 0.5 }, mama5: { ahead: 3.6, side: 0.3 }, flee: (i) => ({ ahead: 7 + i * 3.2, side: i % 2 ? 0.3 : -0.3, wait: Infinity, wave: false }), phibba: { gap: 1.4, side: 0.55, space: 0.8 } };
+ON[11] = () => { const P = PL.estate, S = P.spots, q = byId('quamin'), m = byId('mama'); lead(q, S.trail.dense, { ...FOLLOW.quamin, max: S.sRoadS - 1.2 }); follow(m, FOLLOW.mama); say(SAY.follow, 3800); SFX.owl(); };
 ON[12] = () => { say(SAY.road, 3600); ctr.t = 0; };
 ON[13] = () => { const S = PL.estate.spots, q = byId('quamin'); if (q && q.fol) { q.fol.max = S.top - 2.2; q.fol.min = 0; } say(SAY.roadDone, 3200); $('glow').style.opacity = 0; SFX.whistle(); };
 function estateTick(dt) {
@@ -473,7 +474,7 @@ ON[14] = async () => {
 };
 
 /* ---------- chapter 2: the hill town ---------- */
-ON[20] = () => { const P = PL.town, S = P.spots, q = byId('quaminT'), m = byId('mamaT'); if (!q || !m) return; const [qx, qz] = pathAt(S.pathIn.dense, 5), [mx, mz] = pathAt(S.pathIn.dense, 0.4); q.x = qx; q.z = qz; m.x = mx; m.z = mz; lead(q, S.pathIn.dense, FOLLOW.quaminT); follow(m, { ...FOLLOW.mamaT, path: S.pathIn.dense }); say(SAY.pathUp, 4200); };
+ON[20] = () => { const P = PL.town, S = P.spots, q = byId('quaminT'), m = byId('mamaT'); if (!q || !m) return; const [qx, qz] = pathAt(S.pathIn.dense, 5); q.x = qx; q.z = qz; m.x = P.start.x + 0.7; m.z = P.start.z + 1.3; lead(q, S.pathIn.dense, FOLLOW.quaminT); follow(m, FOLLOW.mamaT);   /* Quamin starts ahead of you, Mama behind you */ say(SAY.pathUp, 4200); };
 ON[21] = () => { const q = byId('quaminT'), m = byId('mamaT'); for (const n of [q, m]) if (n && n.fol) goTo(n, n.hx, n.hz, { face: n.ry0 });   /* home round the fire and the stools, not through them */ if (cur === 'town') say(SAY.townIn, 4200); };
 function townTick(dt, t) {
   const P = P_(), S = P.spots; if (P.fire.userData.flame) P.fire.userData.flame.scale.set(0.9 + Math.sin(t * 11) * 0.08, 1.1 + Math.sin(t * 7.3) * 0.14, 1); if (S.hearth.intensity > 0) S.hearth.intensity = 2.2 + Math.sin(t * 13) * 0.3 + Math.sin(t * 5.1) * 0.3;
@@ -712,7 +713,7 @@ function auditRoutes(P) {   /* the routes people walk in each place, with the st
   if (P.id === 'estate') { const q = who('quamin'), m = who('mama'); R(q, 'leads you', pathSpots(S.trail.dense, sOf(S.trail.dense, q), S.top - 1, FOLLOW.quamin.side), [11, 14]); R(m, 'follows you', pathSpots(S.trail.dense, sOf(S.trail.dense, m), S.top - 1.9, FOLLOW.mama.side), [11, 14]); }
   if (P.id === 'town') { const end = S.pathIn.dense[S.pathIn.dense.length - 1];
     R(who('quaminT'), 'leads you', pathSpots(S.pathIn.dense, 5, S.sIn), [20, 21]); R(who('mamaT'), 'follows you', pathSpots(S.pathIn.dense, 0.4, S.sIn), [20, 21]);
-    for (const n of [who('quaminT'), who('mamaT')]) { const r = walkRoute([end[0], end[1]], [n.hx, n.hz], P.solidWalls, 0.22, P.bounds); R(n, 'walks home', [[end[0], end[1]], ...(r.length ? r : [[n.hx, n.hz]])], [21, 21]); }
+    for (const n of [who('quaminT'), who('mamaT')]) { const r = walkRoute([end[0], end[1]], [n.hx, n.hz], P.solidBoxes, 0.22, P.bounds); R(n, 'walks home', [[end[0], end[1]], ...(r.length ? r : [[n.hx, n.hz]])], [21, 21]); }
     const m5 = who('mama5'); R(m5, 'leads you', pathSpots(S.back.dense, sOf(S.back.dense, m5), S.sBack, FOLLOW.mama5.side), [54, 54]);
     P.extras.filter((e) => e.flee).forEach((e, i) => { R(e, 'runs up the trail', pathSpots(S.back.dense, 2 + i * 2.6, S.sBack, FOLLOW.flee(i).side), [54, 54]); out[out.length - 1].id += '#' + i; }); }
   if (P.id === 'watch') { const n = P.extras.find((e) => e.column === 3); R(n, 'marches', pathSpots(S.climb.dense, HALT, S.sClimb), [41, 42]); }
@@ -792,7 +793,7 @@ function devViews() {
   if (shot === 'swivel') go('town', 54, 0, 0, 0, 0, ENV.morning).then((P) => { const S = P.spots, k = S.knoll, gy = groundAt(k[0], k[1]); S.guns.forEach((g) => { g.visible = true; }); DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(k[0] + 1.9, gy + 1.5, k[1] - 0.6); DIR.b = DIR.a; DIR.la = new THREE.Vector3(k[0] - 0.9, gy + 1.0, k[1] - 0.5); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 50; FOV = 50; resize(); $('hud').hidden = true; });
   if (shot === 'poster') go('watch', 30, -0.4, -3.9, PI + 0.06, -0.03, ENV.dawn).then((P) => { $('hud').hidden = true; EYE = 1.75; P.spots.sticks.visible = false; });
   if (V[shot]) go(...V[shot]).then((P) => {
-    if (shot === 'est2' || shot === 'est3' || shot === 'est4') { const S = P.spots, qn = byId('quamin'), m = byId('mama'); lead(qn, S.trail.dense, FOLLOW.quamin); follow(m, { ...FOLLOW.mama, path: S.trail.dense }); for (let i = 0; i < 200; i++) update(0.05); state.yaw = V[shot][4]; }
+    if (shot === 'est2' || shot === 'est3' || shot === 'est4') { const S = P.spots, qn = byId('quamin'), m = byId('mama'); lead(qn, S.trail.dense, FOLLOW.quamin); follow(m, FOLLOW.mama); for (let i = 0; i < 200; i++) update(0.05); state.yaw = V[shot][4]; }
     if (shot === 'est2') { const w = byId('watchman'); w.x = 9; w.z = 8.2; w.m.position.set(9, groundAt(9, 8.2), 8.2); w.wait = 99; $('glow').style.opacity = 0.5; say(SAY.roadWait, 1e6); }
     if (shot === 'town6') { byId('nanny').cue = false; refreshCast(); }
     if (/^night|^ridge/.test(shot)) { /* the night scenes */ }
@@ -880,7 +881,7 @@ function devViews() {
         const back = pathSpots(S.trail.dense, S.top - 9, S.top - 4, 0, 1.0).reverse(); drive(P, back, [qn, ma], w); report(P, w, [[qn, 'Quamin leads you up the estate trail'], [ma, 'Mama follows you up the estate trail']]); }
       /* chapter 2: Quamin leads you up the narrow path, Mama follows; in the town they walk home */
       await beginChapter(1, 20); { const P = PL.town, S = P.spots, qn = byId('quaminT'), ma = byId('mamaT'), w = followWatch({ space: 0.9, behind: 9 });
-        drive(P, pathSpots(S.pathIn.dense, pathSE(S.pathIn.dense, state.x, state.z), S.sIn, 0, 1.0).concat([[2.5, 7.5], [0.5, 6.5]]), [qn, ma], w, { stops: [15, 45] }); for (let f = 0; f < 300; f++) { update(dt); for (const n of [qn, ma]) w.sample(n, state.x, state.z, (x, z) => blockedAt(P, x, z, 0), dt); }
+        drive(P, pathSpots(S.pathIn.dense, pathSE(S.pathIn.dense, state.x, state.z), S.sIn, 0, 1.0).concat([[2.5, 7.5], [0.5, 6.5]]), [qn, ma], w, { stops: [15, 45] }); for (let f = 0; f < 900; f++) { update(dt); for (const n of [qn, ma]) w.sample(n, state.x, state.z, (x, z) => blockedAt(P, x, z, 0), dt); }
         report(P, w, [[qn, 'Quamin leads you up the narrow path, then walks home'], [ma, 'Mama follows you up the narrow path, then walks home']]); if (qn.fol || Math.hypot(qn.x - qn.hx, qn.z - qn.hz) > 0.3) { out.push('  Quamin did not get home'); bad++; } }
       /* chapter 5: little Phibba comes with you round the clearing (you stop, you turn back into her), to the back trail and up it; Mama leads, the neighbours run ahead */
       await beginChapter(4, 53); { const P = PL.town, S = P.spots, ph = byId('phibba'); state.x = ph.x + 1.0; state.z = ph.z + 0.9; update(dt); setStage(54); const m5 = byId('mama5'), w = followWatch({ space: FOLLOW.phibba.space, behind: 6 });
