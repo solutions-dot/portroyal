@@ -121,6 +121,22 @@
   @media (max-width:760px){.game.garvey,.game.kendal,.game.bogwalk{background-size:cover;background-position:50% 30%}.game.garvey::after,.game.kendal::after,.game.bogwalk::after{background:linear-gradient(to top,rgba(4,27,42,.95) 0%,rgba(4,27,42,.7) 30%,rgba(4,27,42,0) 56%)}.game.garvey .text,.game.kendal .text,.game.bogwalk .text{grid-template-columns:1fr auto;align-items:end}.game.garvey .text p,.game.kendal .text p,.game.bogwalk .text p{display:none}.game.garvey .play,.game.kendal .play,.game.bogwalk .play{justify-self:end}}
   @media (max-width:760px) and (max-height:700px){.game .text{padding:.8rem 1rem}.play{min-height:44px;padding:0 1.2rem;font-size:1rem}}
   @media (prefers-reduced-motion:reduce){.play{animation:none}}
+
+  .contact-pill{display:inline-flex;align-items:center;justify-content:center;gap:.3em;min-height:44px;max-width:100%;padding:.65rem 1rem;border:1px solid rgba(255,247,232,.4);border-radius:999px;background:rgba(255,247,232,.04);font:inherit;font-size:.95rem;white-space:normal;cursor:pointer}
+  .contact-pill:hover{border-color:var(--sea);background:rgba(31,181,163,.12)}
+  .contact-pill:focus-visible,#contactpanel :focus-visible{outline:3px solid var(--mango);outline-offset:3px}
+  #contactpanel{width:min(36rem,calc(100% - 2rem));max-height:calc(100dvh - 2rem);padding:1.5rem;border:1px solid rgba(31,181,163,.6);border-radius:24px;background:var(--harbour);color:var(--paper);overflow:auto}
+  #contactpanel::backdrop{background:rgba(4,27,42,.85)}
+  #contactpanel h2{margin:0 2rem .5rem 0;font-size:1.7rem;color:var(--sea)}
+  #contactpanel p{line-height:1.5}
+  .contact-form{display:grid;gap:1rem;margin-top:1.2rem}
+  .contact-form label{display:grid;gap:.4rem;font-weight:600}
+  .contact-fields{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .contact-form input,.contact-form select,.contact-form textarea{width:100%;min-width:0;min-height:46px;padding:.7rem;border:1px solid rgba(255,247,232,.4);border-radius:10px;background:var(--deep);color:var(--paper);font:inherit;color-scheme:dark}
+  .contact-form textarea{resize:vertical;min-height:110px}
+  .contact-send{justify-self:start;min-height:48px;padding:.7rem 1.3rem;border:0;border-radius:999px;background:var(--mango);color:var(--deep);font:inherit;font-weight:800;cursor:pointer}
+  .contact-note{margin:0;color:rgba(255,247,232,.75);font-size:.85rem}
+  @media(max-width:480px){.contact-fields{grid-template-columns:1fr}#contactpanel{padding:1.1rem}.contact-pill{font-size:.85rem}}
 </style>
 </head>
 <body>
@@ -128,7 +144,7 @@
   <header>
     <h1><b class="jam">Jamaican<svg class="flag" viewBox="0 0 60 30" role="img" aria-label="Flag of Jamaica"><clipPath id="fl"><rect width="60" height="30"/></clipPath><g clip-path="url(#fl)"><rect width="60" height="30" fill="#009B3A"/><path d="M0 0 30 15 0 30ZM60 0 30 15 60 30Z" fill="#000"/><path d="M0 0 60 30M0 30 60 0" stroke="#FED100" stroke-width="6"/></g></svg></b><span>History Games</span></h1>
     <div class="side">
-      <p class="credit">Created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p>
+      <button type="button" class="credit contact-pill" id="contactopen" aria-haspopup="dialog" aria-controls="contactpanel">A world created by <b>Kellz 5.0</b><span aria-hidden="true"> ↗</span></button>
       <nav class="links" aria-label="More">
         <a href="about.html">About this platform</a>
         <button type="button" id="subopen" class="get">Get updates</button>
@@ -196,6 +212,23 @@
     <p class="sub-small">We use your email only to send these updates. <a href="about.html#privacy">Read how we handle privacy</a>.</p>
   </div>
 </div>
+<dialog id="contactpanel" aria-labelledby="contacttitle" aria-describedby="contactintro">
+  <button type="button" class="sub-close" id="contactclose" aria-label="Close contact form">&times;</button>
+  <h2 id="contacttitle">Get in touch</h2>
+  <p id="contactintro">Have a question or an idea? Send Kellz 5.0 a note.</p>
+  <form class="contact-form" id="contactform">
+    <div class="contact-fields">
+      <label>Your name<input name="name" autocomplete="name" maxlength="100" required></label>
+      <label>Email address<input name="email" type="email" autocomplete="email" maxlength="254" required></label>
+      <label>I’m a<select name="role" required><option value="">Choose your role</option><option>Teacher or educator</option><option>Parent or carer</option><option>Player</option><option>School or organisation</option><option>Creator or developer</option><option>Press or media</option><option>Other</option></select></label>
+      <label>Enquiry type<select name="enquiry" required><option value="">Choose an enquiry</option><option>General question</option><option>School or classroom use</option><option>Partnership or collaboration</option><option>Press or media</option><option>Feedback or suggestion</option><option>Historical correction</option><option>Technical issue</option><option>Other</option></select></label>
+    </div>
+    <label>Your message<textarea name="message" rows="4" maxlength="4000" placeholder="Tell me a little about your enquiry…" required></textarea></label>
+    <p class="contact-note">This opens your email app with your enquiry ready to send to miramoraiinteractive@gmail.com. Please press Send there. Don’t include sensitive information.</p>
+    <button class="contact-send" type="submit">Continue to email ↗</button>
+    <p class="contact-note" id="contactstatus" role="status"></p>
+  </form>
+</dialog>
 <script src="site.js"></script>
 <script>
   /* On the live site this page is the home page. In the repo it sits in menu/, one folder down, so the game links need "../". */

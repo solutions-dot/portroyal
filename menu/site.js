@@ -6,7 +6,7 @@
    While SUBSCRIBE_URL is empty the form says sign-ups are not open yet and sends nothing anywhere. */
 const SUBSCRIBE_URL = '';
 const SUBSCRIBE_FIELD = 'email';
-const CONTACT_EMAIL = '';
+const CONTACT_EMAIL = 'miramoraiinteractive@gmail.com';
 
 for (const f of document.querySelectorAll('form.subscribe')) {
   const msg = f.querySelector('.sub-msg'), email = f.querySelector('input[type=email]'), btn = f.querySelector('button[type=submit]');
@@ -38,4 +38,28 @@ if (panel && openBtn) {
   panel.querySelector('.sub-close').addEventListener('click', close);
   panel.addEventListener('click', (e) => { if (e.target === panel) close(); });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) close(); });
+}
+
+/* Native dialog keeps keyboard focus inside the form and supports Escape. */
+const contactPanel = document.getElementById('contactpanel');
+const contactOpen = document.getElementById('contactopen');
+if (contactPanel && contactOpen) {
+  const form = document.getElementById('contactform');
+  const status = document.getElementById('contactstatus');
+  contactOpen.addEventListener('click', () => { status.textContent = ''; contactPanel.showModal(); });
+  document.getElementById('contactclose').addEventListener('click', () => contactPanel.close());
+  contactPanel.addEventListener('click', (event) => {
+    const box = contactPanel.getBoundingClientRect();
+    if (event.target === contactPanel && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom)) contactPanel.close();
+  });
+  contactPanel.addEventListener('close', () => contactOpen.focus());
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+    const data = new FormData(form);
+    const subject = `[History Games] ${data.get('enquiry')}`;
+    const body = `Name: ${data.get('name')}\nEmail: ${data.get('email')}\nUser type: ${data.get('role')}\nEnquiry: ${data.get('enquiry')}\n\n${data.get('message')}`;
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    status.textContent = 'Your enquiry is ready in your email app. Press Send there to contact me. If nothing opened, email ' + CONTACT_EMAIL + ' directly. Your message is still here.';
+  });
 }
