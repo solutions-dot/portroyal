@@ -1,0 +1,86 @@
+{
+  "name": "sel_crowdwoman66",
+  "era": 1966,
+  "body": {
+    "gender": 0,
+    "age": 0.34,
+    "muscle": 0.4,
+    "weight": 0.5,
+    "height": 0.54,
+    "proportions": 0.56,
+    "african": 1.0,
+    "caucasian": 0.0,
+    "asian": 0.0,
+    "cupsize": 0.4,
+    "firmness": 0.55
+  },
+  "garments": {
+    "sleeve": 0.3,
+    "shoes": true,
+    "collar": "round",
+    "hairvol": 0.25,
+    "hat": [],
+    "woman": true,
+    "bun": true,
+    "skirt": true,
+    "hem": 0.68,
+    "flare": 1.85,
+    "pleats": 9
+  },
+  "colors": {
+    "Skin": [
+      138,
+      94,
+      68
+    ],
+    "Hair": [
+      24,
+      20,
+      17
+    ],
+    "Shirt": [
+      211,
+      136,
+      113
+    ],
+    "Collar": [
+      211,
+      136,
+      113
+    ],
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Skirt": [
+      211,
+      136,
+      113
+    ]
+  },
+  "targets": {
+    "head-oval": 0.4,
+    "lr-cheek-volume-incr": 0.2
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "name": "sel_emperor66",
+  "era": 1966,
+  "body": {
+    "gender": 1,
+    "age": 0.78,
+    "muscle": 0.25,
+    "weight": 0.27,
+    "height": 0.38,
+    "proportions": 0.54,
+    "african": 0.5,
+    "caucasian": 0.5,
+    "asian": 0.0
+  },
+  "garments": {
+    "sleeve": 0.96,
+    "shoes": true,
+    "collar": "turn",
+    "hairvol": 0.15,
+    "hat": [
+      [
+        "peaked",
+        "Cap"
+      ]
+    ],
+    "trousers": true,
+    "recede": 0.55,
+    "moustache": 0.01,
+    "jacket": true,
+    "jacketsleeve": 0.96,
+    "jackethem": 0.04,
+    "tie": true,
+    "moustachewidth": 1.02,
+    "moustachedroop": 0.4
+  },
+  "colors": {
+    "Skin": [
+      151,
+      103,
+      75
+    ],
+    "Hair": [
+      65,
+      61,
+      55
+    ],
+    "Shirt": [
+      227,
+      223,
+      209
+    ],
+    "Collar": [
+      181,
+      165,
+      134
+    ],
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      191,
+      153,
+      64
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Breeches": [
+      180,
+      165,
+      136
+    ],
+    "Cap": [
+      166,
+      151,
+      121
+    ],
+    "CapBand": [
+      141,
+      43,
+      37
+    ],
+    "Jacket": [
+      181,
+      165,
+      134
+    ],
+    "Tie": [
+      184,
+      182,
+      167
+    ]
+  },
+  "targets": {
+    "head-oval": 0.55,
+    "head-scale-horiz-decr": 0.16,
+    "head-fat-decr": 0.2,
+    "chin-width-decr": 0.28,
+    "nose-scale-depth-incr": 0.28,
+    "nose-scale-horiz-decr": 0.22,
+    "lr-cheek-volume-decr": 0.25
+  },
+  "kit": "emperor"
+}

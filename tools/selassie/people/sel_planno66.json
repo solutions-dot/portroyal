@@ -1,0 +1,81 @@
+{
+  "name": "sel_planno66",
+  "era": 1966,
+  "body": {
+    "gender": 1,
+    "age": 0.51,
+    "muscle": 0.4,
+    "weight": 0.6,
+    "height": 0.54,
+    "proportions": 0.56,
+    "african": 1.0,
+    "caucasian": 0.0,
+    "asian": 0.0
+  },
+  "garments": {
+    "sleeve": 0.75,
+    "shoes": true,
+    "collar": "camp",
+    "hairvol": 0.25,
+    "hat": [],
+    "trousers": true
+  },
+  "colors": {
+    "Skin": [
+      143,
+      97,
+      70
+    ],
+    "Hair": [
+      24,
+      20,
+      17
+    ],
+    "Shirt": [
+      229,
+      220,
+      192
+    ],
+    "Collar": [
+      229,
+      220,
+      192
+    ],
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Breeches": [
+      107,
+      92,
+      62
+    ]
+  },
+  "targets": {
+    "head-square": 0.3,
+    "lr-cheek-volume-incr": 0.25,
+    "nose-width2-incr": 0.2
+  },
+  "kit": "locks"
+}

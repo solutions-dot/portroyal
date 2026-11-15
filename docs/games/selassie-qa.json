@@ -1,0 +1,259 @@
+{
+  "date": "2026-11-15",
+  "shared": {
+    "errors": [],
+    "result": "ALL 0 in 12.0 s\n\ncheck       issues  time     status\njournal     0       0.0 s    ok\nlinks       0       0.3 s    ok\na11y        0       1.6 s    ok\nkeys        0       0.0 s    ok\nchapters    0       6.5 s    ok\nsteps       0       2.9 s    ok\nmap         0       0.7 s    ok (6018 probe points)\nsound       0       0.0 s    ok (sound never started)\ncontinuity  0       0.0 s    ok\nerrors      0       0.0 s    ok"
+  },
+  "browser": [
+    {
+      "name": "keyboard-and-held-resume",
+      "ok": true
+    },
+    {
+      "name": "partial-pack-and-water-resume",
+      "ok": true
+    },
+    {
+      "name": "every-step-resume",
+      "ok": true
+    },
+    {
+      "name": "teacher-access-and-native-menu",
+      "ok": true
+    },
+    {
+      "name": "arrival-salute-sound-and-read-route",
+      "ok": true
+    },
+    {
+      "name": "chapter-replay-clears-task-props",
+      "ok": true
+    },
+    {
+      "name": "phone-touch-controls",
+      "ok": true
+    }
+  ],
+  "cloth": {
+    "errors": [],
+    "result": [
+      "FLOW 0",
+      "LAYOUT yard 0",
+      "AMBIENT SETUP yard 0",
+      "LAYOUT memory 0",
+      "AMBIENT SETUP memory 0",
+      "LAYOUT road 0",
+      "AMBIENT SETUP road 0",
+      "LAYOUT airport 0",
+      "AMBIENT SETUP airport 0",
+      "CLOTH sel_mum66 0",
+      "CLOTH sel_adina66 0",
+      "CLOTH sel_levi66 0",
+      "CLOTH sel_vendor30 0",
+      "CLOTH sel_girl66 0",
+      "CLOTH sel_boy66 0",
+      "CLOTH sel_crowdman66 0",
+      "CLOTH sel_crowdwoman66 0",
+      "EXTERIOR TRIM 0 (390 samples)",
+      "CLOTH sel_emperor66 5",
+      "sel_emperor66 Idle@0.3: Beard shows through Collar: 7 points, worst 29.6 mm at x -0.003 y 1.506 z 0.000 (rest -0.368 -0.021 -0.426)",
+      "sel_emperor66 Walk@0.5: Beard shows through Collar: 6 points, worst 29.9 mm at x 0.045 y 1.505 z 0.063 (rest 0.362 -0.033 -0.433)",
+      "sel_emperor66 Talk1@0.4: Shoulder_strap edge is jagged: 1 points, worst 5.4 mm at x -0.116 y 1.469 z 0.079",
+      "sel_emperor66 Talk1@0.4: Beard shows through Collar: 6 points, worst 29.8 mm at x 0.040 y 1.505 z 0.036 (rest -0.362 -0.033 -0.433)",
+      "sel_emperor66 Salute@0.5: Beard shows through Collar: 5 points, worst 29.4 mm at x -0.008 y 1.507 z 0.057 (rest -0.362 -0.033 -0.433)",
+      "CLOTH sel_planno66 0",
+      "CLOTH sel_rastaelder66 0",
+      "CLOTH sel_rastaman66 0",
+      "CLOTH sel_rastawoman66 0",
+      "CLOTH sel_rastatam66 0",
+      "CLOTH sel_police66 1",
+      "sel_police66 Wave@0.5: Coat edge is jagged: 2 points, worst 5.1 mm at x -0.118 y 1.504 z 0.018",
+      "CARRY 0"
+    ]
+  },
+  "layouts": [
+    {
+      "width": 390,
+      "height": 800,
+      "errors": [],
+      "result": [
+        "FLOW 0",
+        "LAYOUT yard 0",
+        "AMBIENT SETUP yard 0",
+        "LAYOUT memory 0",
+        "AMBIENT SETUP memory 0",
+        "LAYOUT road 0",
+        "AMBIENT SETUP road 0",
+        "LAYOUT airport 0",
+        "AMBIENT SETUP airport 0",
+        "LAYOUT UI 0"
+      ]
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "errors": [],
+      "result": [
+        "FLOW 0",
+        "LAYOUT yard 0",
+        "AMBIENT SETUP yard 0",
+        "LAYOUT memory 0",
+        "AMBIENT SETUP memory 0",
+        "LAYOUT road 0",
+        "AMBIENT SETUP road 0",
+        "LAYOUT airport 0",
+        "AMBIENT SETUP airport 0",
+        "LAYOUT UI 0"
+      ]
+    },
+    {
+      "width": 800,
+      "height": 500,
+      "errors": [],
+      "result": [
+        "FLOW 0",
+        "LAYOUT yard 0",
+        "AMBIENT SETUP yard 0",
+        "LAYOUT memory 0",
+        "AMBIENT SETUP memory 0",
+        "LAYOUT road 0",
+        "AMBIENT SETUP road 0",
+        "LAYOUT airport 0",
+        "AMBIENT SETUP airport 0",
+        "LAYOUT UI 0"
+      ]
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "errors": [],
+      "result": [
+        "FLOW 0",
+        "LAYOUT yard 0",
+        "AMBIENT SETUP yard 0",
+        "LAYOUT memory 0",
+        "AMBIENT SETUP memory 0",
+        "LAYOUT road 0",
+        "AMBIENT SETUP road 0",
+        "LAYOUT airport 0",
+        "AMBIENT SETUP airport 0",
+        "LAYOUT UI 0"
+      ]
+    }
+  ],
+  "budgets": [
+    {
+      "mobile": true,
+      "result": [
+        "FLOW 0",
+        "LAYOUT yard 0",
+        "AMBIENT SETUP yard 0",
+        "LAYOUT memory 0",
+        "AMBIENT SETUP memory 0",
+        "LAYOUT road 0",
+        "AMBIENT SETUP road 0",
+        "LAYOUT airport 0",
+        "AMBIENT SETUP airport 0",
+        "BUDGET yard {\"frame\":49,\"calls\":41,\"triangles\":63903,\"points\":0,\"lines\":0}",
+        "BUDGET memory {\"frame\":50,\"calls\":48,\"triangles\":51754,\"points\":0,\"lines\":0}",
+        "BUDGET road {\"frame\":51,\"calls\":48,\"triangles\":102341,\"points\":0,\"lines\":0}",
+        "BUDGET airport {\"frame\":52,\"calls\":202,\"triangles\":260932,\"points\":0,\"lines\":73}"
+      ],
+      "counts": {
+        "yard": {
+          "people": 4,
+          "crowd": 8
+        },
+        "memory": {
+          "people": 1,
+          "crowd": 7
+        },
+        "road": {
+          "people": 3,
+          "crowd": 6
+        },
+        "airport": {
+          "people": 7,
+          "crowd": 50
+        }
+      }
+    },
+    {
+      "mobile": false,
+      "result": [
+        "FLOW 0",
+        "LAYOUT yard 0",
+        "AMBIENT SETUP yard 0",
+        "LAYOUT memory 0",
+        "AMBIENT SETUP memory 0",
+        "LAYOUT road 0",
+        "AMBIENT SETUP road 0",
+        "LAYOUT airport 0",
+        "AMBIENT SETUP airport 0",
+        "BUDGET yard {\"frame\":49,\"calls\":66,\"triangles\":113965,\"points\":0,\"lines\":0}",
+        "BUDGET memory {\"frame\":50,\"calls\":56,\"triangles\":74336,\"points\":0,\"lines\":0}",
+        "BUDGET road {\"frame\":51,\"calls\":52,\"triangles\":122178,\"points\":0,\"lines\":0}",
+        "BUDGET airport {\"frame\":52,\"calls\":549,\"triangles\":1257989,\"points\":0,\"lines\":77}"
+      ],
+      "counts": {
+        "yard": {
+          "people": 4,
+          "crowd": 8
+        },
+        "memory": {
+          "people": 1,
+          "crowd": 7
+        },
+        "road": {
+          "people": 3,
+          "crowd": 6
+        },
+        "airport": {
+          "people": 7,
+          "crowd": 210
+        }
+      }
+    }
+  ],
+  "unitTests": {
+    "repositoryPassed": 54,
+    "ownPassed": 5,
+    "ownContentLint": 0,
+    "repositoryContentLintNew": 4,
+    "repositoryContentLintScope": "pre-existing Tivoli content; unchanged by this branch"
+  },
+  "otherChecks": {
+    "storyEnding": 64,
+    "placeAudit": {
+      "yard": 0,
+      "memory": 0,
+      "road": 0,
+      "airport": 0
+    },
+    "ambientIssues": {
+      "yard": 0,
+      "memory": 0,
+      "road": 0,
+      "airport": 0
+    },
+    "carryIssues": 0
+  },
+  "remainingReview": [
+    "Emperor cloth: five diagnostic lines, including beard/collar relations in Idle, Walk, Talk1 and Salute, plus a small strap edge in Talk1. Do not assume they are false positives.",
+    "Police: one small coat edge finding in Wave, a pose the police currently do not use.",
+    "Boy: 4.8 cm foot drift per loop in shared Walk; Emperor: 5.2 cm in an unused walking pose. Shared WalkM and WalkM2 were worse on these shapes.",
+    "Likeness, moustache, collar, insignia, crowd composition and cinematic framing require independent visual review against the owner references."
+  ],
+  "productionBuild": {
+    "ok": true,
+    "cards": 9,
+    "errors": [],
+    "devHooks": false,
+    "allNineGamesBuilt": true,
+    "base": "57ad99ab23cd239c37415acd938fbea32c4414f7"
+  },
+  "deployment": "PR only; automatic Vercel builds disabled for feat/selassie-1966",
+  "fullSuiteBase": "84839f8b261705b36b564372542254d3e85e51b6",
+  "reviewBase": "57ad99ab23cd239c37415acd938fbea32c4414f7",
+  "latestIntegration": "PR #86 inspected and rebased; all-nine-game production build and production smoke pass again on 57ad99a. Repository unit suite passes 54 tests again; the same four pre-existing Tivoli content-lint findings remain."
+}

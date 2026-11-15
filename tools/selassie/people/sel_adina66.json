@@ -1,0 +1,86 @@
+{
+  "name": "sel_adina66",
+  "era": 1966,
+  "body": {
+    "gender": 0,
+    "age": 0.76,
+    "muscle": 0.4,
+    "weight": 0.53,
+    "height": 0.44,
+    "proportions": 0.56,
+    "african": 1.0,
+    "caucasian": 0.0,
+    "asian": 0.0,
+    "cupsize": 0.4,
+    "firmness": 0.55
+  },
+  "garments": {
+    "sleeve": 0.55,
+    "shoes": true,
+    "collar": "round",
+    "hairvol": 0.25,
+    "hat": [],
+    "woman": true,
+    "bun": true,
+    "skirt": true,
+    "hem": 0.75,
+    "flare": 1.85,
+    "pleats": 9
+  },
+  "colors": {
+    "Skin": [
+      142,
+      96,
+      70
+    ],
+    "Hair": [
+      120,
+      116,
+      104
+    ],
+    "Shirt": [
+      211,
+      184,
+      132
+    ],
+    "Collar": [
+      211,
+      184,
+      132
+    ],
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Skirt": [
+      93,
+      76,
+      58
+    ]
+  },
+  "targets": {
+    "head-round": 0.25,
+    "lr-cheek-volume-incr": 0.25
+  }
+}

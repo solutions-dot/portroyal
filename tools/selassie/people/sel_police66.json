@@ -1,0 +1,114 @@
+{
+  "name": "sel_police66",
+  "era": 1966,
+  "body": {
+    "gender": 1,
+    "age": 0.4,
+    "muscle": 0.5,
+    "weight": 0.4,
+    "height": 0.55,
+    "proportions": 0.56,
+    "african": 1.0,
+    "caucasian": 0.0,
+    "asian": 0.0
+  },
+  "garments": {
+    "sleeve": 0.96,
+    "shoes": true,
+    "collar": "stand",
+    "hairvol": 0.25,
+    "hat": [
+      [
+        "peaked",
+        "Cap"
+      ]
+    ],
+    "trousers": true,
+    "belt": true,
+    "coat": true,
+    "coatsleeves": true,
+    "coatsleeve": 0.96
+  },
+  "colors": {
+    "Skin": [
+      155,
+      107,
+      79
+    ],
+    "Hair": [
+      24,
+      20,
+      17
+    ],
+    "Shirt": [
+      182,
+      35,
+      36
+    ],
+    "Collar": [
+      182,
+      35,
+      36
+    ],
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      225,
+      222,
+      191
+    ],
+    "Belt": [
+      235,
+      232,
+      207
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Breeches": [
+      29,
+      34,
+      42
+    ],
+    "Hat": [
+      148,
+      122,
+      87
+    ],
+    "HatBand": [
+      63,
+      57,
+      43
+    ],
+    "Coat": [
+      182,
+      35,
+      36
+    ],
+    "Cap": [
+      27,
+      35,
+      39
+    ],
+    "CapBand": [
+      212,
+      183,
+      60
+    ]
+  },
+  "targets": {
+    "head-round": 0.4,
+    "nose-width2-incr": 0.25
+  },
+  "uniform": "police"
+}
