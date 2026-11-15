@@ -98,5 +98,9 @@
  "IdleSturdy": "Dwarf_Idle.fbx",
  "RifleIdle": "Rifle_Idle.fbx",
  "OldIdle": "Old_Man_Idle.fbx",
- "HappyIdle": "Happy_Idle.fbx"
+ "HappyIdle": "Happy_Idle.fbx",
+ "SitIdle2": "Seated_Idle.fbx",
+ "IdleTwist": "Catwalk_Idle_Twist_R.fbx",
+ "IdleGuard": "Warrior_Idle.fbx",
+ "BriefcaseIdle": "Standing_W_Briefcase_Idle.fbx"
 }
