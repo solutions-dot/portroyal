@@ -37,7 +37,7 @@ Women use the body macros `gender: 0.0`, `cupsize` and `firmness`.
 ## Known issues
 
 - A child must be a real child body built with `upscale` (`docs/PEOPLE.md`), as `student2020` is. Kendal's `boy.json` and `girl.json` are the models to start from.
-- A woman's apron does not fit over a skirt: `era.py` lays the apron on the body (or on trousers after 1800), not on the skirt.
+- A woman's apron lies on her skirt and hangs to near its hem (fixed 15 November 2026).
 - Still to make: the UNIA uniform (from chapter 6), the Black Cross Nurses' dress, women's hats for this game's women, and a teen body for the young hero.
 - The preview makes deep skin tones look darker than the game does. Check them in the game with `?test=skin` (`docs/PIPELINE.md`, "Skin").
 - `?test=cloth` printed 7 issues (49 points) on 14 November 2026: trousers through the jacket hem when sitting (`delegate1920`, `garvey1914`, `garvey1916`, `hl_critic`) and a few points at a shirt's waist (`nb_youth`, `student2020`).

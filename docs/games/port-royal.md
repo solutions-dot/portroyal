@@ -111,7 +111,7 @@ If you stand still or stall, the Goal tab opens and a gold arrow points at the n
 
 - `models/anims.js` is about 1 MB. It could be split by chapter.
 - Galdy's own walk has a slight heel flick. A male Mixamo walk would fix it.
-- Grace is Abba's body recoloured, and Abba herself cannot be rebuilt by the builder (see `docs/PIPELINE.md`, section 1). Rebuilding both as `era.py` women would give them soles, a neck yoke and a lining like the men.
+- Abba is a builder body (`tools/people/abba.json`), and Grace is her body in Grace's colours (see `docs/PIPELINE.md`, section 1). `?shot=grace` looks at Grace's stall.
 - Port Royal has `?test=held`, `?test=cloth` (34 lines, 390 points on 14 November 2026), `?test=skin`, `?test=walk` and `?test=collision` / `?test=seating`. The full place audit (`?test=audit`: floating things, people inside solids or each other) and the layout test (`?test=layout`) are not wired yet. See `docs/STANDARD.md`, "Where each game stands".
 - Talking, journal, chapters, saving, controls, strolling and the helper arrow still live in main.js. Move each into `engine/` when a second game needs it.
 - When adding a goal, add its `NUDGE_MAP` row, or the helper arrow cannot point the way (the goal still pops open).

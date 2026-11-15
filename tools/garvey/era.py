@@ -1028,10 +1028,12 @@ def build_hat(HK,HM):
         else: bb.free()
     if HK=='wrap':            # a head tie: cloth wound round the head and knotted, made from the scalp's own surface so it fits
         Jy=J('Head').y
-        o=piece(HM+'Wrap','body',lambda c:c.z>HEAD+0.06*s,lambda c:0.016+0.006*math.sin(c.z*90+c.x*40),HM,cuts=[((0,Jy,HEAD+0.118*s),Vector((0,-0.25,-0.2)).normalized(),None)],sub=True)
+        o=piece(HM+'Wrap','body',lambda c:c.z>HEAD+(0.06-0.035*G.get('wrapbrow',0)*sstep(Jy+0.02,Jy+0.07,c.y))*s,lambda c:0.016+0.006*math.sin(c.z*90+c.x*40),HM,cuts=[((0,Jy-0.05*G.get('wrapbrow',0),HEAD+(0.118-0.05*G.get('wrapbrow',0))*s),Vector((0,-0.25,-0.2)).normalized(),None)],sub=True,post=(lambda bm:smooth_edge(bm,8)) if G.get('wrapbrow') else None)      # wrapbrow (0 to 1): how far the front edge comes down toward the brow (1690 wraps covered the hair to the hairline; a 1950s head tie showed the front hair)
         md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}; md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
         with ov(o): bpy.ops.object.modifier_apply(modifier='wt')
         clothes.append(o); bm=bmesh.new()
+        if G.get('wrapbrow') and PART.get('hair'):      # under a wrap that comes down to the brow, the hair at the front and sides is hidden: removed, so no strands poke out by the ears (the nape keeps a little)
+            _hb=bmesh.new(); _hb.from_mesh(PART['hair'].data); bmesh.ops.delete(_hb,geom=[f for f in _hb.faces if cz(f).z>HEAD+0.01*s],context='FACES'); bmesh.ops.delete(_hb,geom=[v for v in _hb.verts if not v.link_faces],context='VERTS'); _hb.to_mesh(PART['hair'].data); _hb.free()
         # the knot: one smooth, flattened knot of cloth lying on the front of the wrap, half sunk into it (three round balls, two of them standing out at the sides, read as ears)
         WT=tree_of(o); c0=Vector((0,Jy,TOP-0.05*s)); d=Vector((0,-0.72,0.69)).normalized(); hit=WT.ray_cast(c0+d*0.3,-d)[0]; p=hit if hit is not None else c0+d*0.1
         R=d.to_track_quat('Z','Y').to_matrix().to_4x4()
@@ -1110,6 +1112,7 @@ if G.get('apron'):
     BRT=tree_of(PART['breeches']) if 'breeches' in PART else None
     bm=bmesh.new(); nu,nv=18,24; rows=[]; ZA,ZE=HIP+0.1,KNEE+0.02;      # finer rows, so it bends round the thighs when seated instead of folding into a stiff card
     SRC=BRT if (not OLD and BRT) else tree; yprev=None
+    if 'skirt' in PART: SRC=tree_of(PART['skirt']); ZE=SKB+0.10      # over a skirt the apron lies on the skirt, not on the body under it, and hangs to near the hem
     for jv in range(nv+1):      # the apron hangs as one sheet: each row lies across the fullest part of the front (never caught on a hand, never dipping between the legs), curves back a little at its sides, and never tucks in below a higher row
         t=jv/nv; z=ZA-t*(ZA-ZE); hw=0.15+0.03*t; ys=[]
         for iu in range(nu+1):
@@ -1137,7 +1140,7 @@ if G.get('skirt') and not OLD and G.get('seatskirt',True):      # a second skirt
     # weighted to the legs, the flare swung through wide arcs and tore. This one is cut close round both thighs as one piece (the outline of the two legs together, so it bridges
     # the gap between them), follows the thighs to the knee and the shins below it, so seated it lies over the lap and falls straight from the knees. The game shows it only
     # while a seated or kneeling clip plays, and hides the standing skirt then (engine/anim.js, seatSkirt)
-    if PART.get('shirt') and G.get('belt'):      # the blouse's tail below the waist (only under a belt or sash, which covers the cut edge) is always under one skirt or the other: cut it off, or seated it came through the back of the seated skirt
+    if PART.get('shirt') and (G.get('belt') or G.get('waistcoat')):      # the blouse's tail below the waist (only under a belt or sash, which covers the cut edge) is always under one skirt or the other: cut it off, or seated it came through the back of the seated skirt
         _o=PART['shirt']; _b=bmesh.new(); _b.from_mesh(_o.data); _zc=HIP+(0.10 if G.get('sash') else 0.085)      # one straight cut, then the edge is evened out: deleting whole faces left it in teeth
         _tor=[f for f in _b.faces if side_arm(cz(f)) is None]; _g=list(dict.fromkeys(v for f in _tor for v in f.verts))+list(dict.fromkeys(e for f in _tor for e in f.edges))+_tor
         bmesh.ops.bisect_plane(_b,geom=_g,plane_co=(0,0,_zc),plane_no=(0,0,1),clear_inner=True); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS')

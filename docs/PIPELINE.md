@@ -54,7 +54,7 @@ Built in, so nothing shows through when the body moves (all of it only for `era`
 - **Weights.** Shirt and coat bone weights are averaged across the cloth, so a sleeve and the chest bend as one piece. Each leg of the breeches follows its own leg only.
 - **Hair** grows from the body's own scalp line and fades into the skin at its edge.
 
-**Abba and Grace.** Abba was built by `tools/blender/abba.py` and then given her Idle clip by hand, so she cannot be rebuilt by `era.py`. Her source is `games/port-royal/assets/characters/abba_animated.glb`. `node tools/people/abba_fix.mjs` applies small fixes to that file (her apron stands a little further out from her skirt, so the skirt does not come through it when she walks) and writes `build/people/abba.glb`; pack it like the men. Grace is Abba recoloured in code, with a different shape and a basket on her head. A new 1690 woman should be built with `era.py` (`woman`, `skirt`, `hat: "wrap"`).
+**Abba and Grace.** Abba is a builder body now: `tools/people/abba.json` (15 November 2026). Her recipe sets `era: 1900`, as Nanny Town's 1734 women do: a woman's shift, bodice (`waistcoat`), skirt, apron and head wrap are the same pieces in either cut, and only the later cut has the seated skirt and the cloth ease. `wrapbrow: 1` brings the head wrap down to the hairline, as 1690 wraps were worn, and removes the hair under it. She has no clip of her own: the game gives her own mixer the shared Idle and Run (`games/port-royal/src/main.js`). Grace is Abba's body in her own colours. `tools/blender/abba.py`, `tools/people/abba_fix.mjs` and `assets/characters/abba_animated.glb` are kept only for reference.
 
 ## 2. Animations: `tools/anims/`
 
@@ -296,5 +296,5 @@ Marcus Garvey's face (`garvey1914.json`, `garvey1916.json`) was shaped against a
 
 **How to measure.** `?test=skin` in each game's dev build (`engine/skinprobe.js`) renders each face in that game's own light from four headings and prints the mean, darkest and lightest colour (Garvey prints indoor and outdoor light). Check new people against the target before calling them done.
 
-**Not yet covered.** Abba and Grace in Port Royal still come from `tools/blender/abba.py` and draw much darker and redder (about 63,18,9); they need rebuilding with `era.py`.
+Abba and Grace in Port Royal are builder bodies now (skin `[138, 93, 66]`, at the owner's request a little darker than most, still inside the range).
 
