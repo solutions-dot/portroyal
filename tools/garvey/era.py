@@ -836,26 +836,28 @@ if G.get('pocket'):      # a patch pocket on the chest: a slightly raised panel 
     quadstrip(bm,rows); soft('Pocket',bm,'Pocket',only=('Spine2','Spine1','Spine'),src=ON('shirt'))
 if G.get('skirt') and G.get('belt'):     # a narrow belt where the bodice meets the skirt (or, with sash, a deep smooth waistband over the top of the skirt and the bottom of the blouse)
     TT=tree_of(PART['skirt']); bm=bmesh.new(); seg=28; rows=[]
-    SA=G.get('sash'); seg=48 if SA else seg; zs=((HIP+0.078,0.001),(HIP+0.080,0.004),(HIP+0.100,0.005),(HIP+0.120,0.004),(HIP+0.122,0.001)) if SA else ((HIP+0.070,0.003),(HIP+0.071,0.007),(HIP+0.094,0.007),(HIP+0.095,0.003))
+    SA=G.get('sash'); seg=48 if SA else seg; zs=((HIP+0.078,0.0005),(HIP+0.080,0.003),(HIP+0.100,0.0035),(HIP+0.120,0.003),(HIP+0.122,0.0005)) if SA else ((HIP+0.070,0.001),(HIP+0.071,0.004),(HIP+0.094,0.004),(HIP+0.095,0.001))      # a flat band about 4 mm thick: thicker, it read as a roll
     RR=[]
     for z,e in zs:
         rr_=[]
         for k in range(seg):
-            a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z)); hit=TT.ray_cast(o,d)[0]; h2=SHT.ray_cast(o,d)[0] if SA else None; rr_.append(max((hit-o).length if hit else 0.0,(h2-o).length if h2 else 0.0) or 0.15)
+            a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z)); hit=TT.ray_cast(o,d)[0]; h2=SHT.ray_cast(o,d)[0]; rr_.append(max((hit-o).length if hit else 0.0,(h2-o).length if h2 else 0.0) or 0.15)
         RR.append(rr_)
-    if SA:      # the sash is a narrow band of cloth (about 5 cm, as a 1950s dress sash) lying snug on the join of bodice and skirt: at each angle it takes the widest of its rows (so the folds of the skirt beneath cannot wave its edge), then it is evened out round the body
-        col=[max(r_[k] for r_ in RR[1:-1]) for k in range(seg)]
-        for _ in range(4): col=[max(col[k],(col[(k-1)%seg]+col[k]*2+col[(k+1)%seg])/4) for k in range(seg)]
+    if True:      # a belt or sash is one straight band lying snug on the join of bodice and skirt: at each angle it takes the widest of its rows over both blouse and skirt (so the folds of the skirt beneath cannot wave its edge and it never tilts out into a lip), then it is evened out round the body
+        raw=[max(r_[k] for r_ in RR) for k in range(seg)]; col=raw[:]
+        for _ in range(8): col=[max(raw[k],(col[(k-1)%seg]+col[k]*2+col[(k+1)%seg])/4) for k in range(seg)]
         RR=[col for _ in RR]
     for (z,e),rr_ in zip(zs,RR):
         ring=[]
         for k in range(seg):
             a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z)); r=rr_[k]+e
-            if (z,e)==zs[-1]:      # the top edge closes in onto the blouse: no open gap shows between them, from behind or above
-                h2=SHT.ray_cast(o,d)[0]
-                if h2 is not None: r=min(r,(h2-o).length+0.0015)
             ring.append(bm.verts.new(o+d*r))
         rows.append(ring)
+    ring=[]      # a flat rim across the top of the band onto the blouse, so no gap shows behind it (the band itself stays straight)
+    for k in range(seg):
+        a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); z=zs[-1][0]; o=Vector((0,J('Hips').y,z)); h2=SHT.ray_cast(o,d)[0]
+        ring.append(bm.verts.new(o+d*min(RR[-1][k],((h2-o).length+0.0008) if h2 is not None else RR[-1][k])))
+    rows.append(ring)
     quadstrip(bm,rows,close=True); soft('Belt',bm,'Belt',src=ON('shirt'))      # with the blouse's own weights: seated, the waist bends forward, and a belt on the hips stood off it as a ring
 if G.get('shoes'):       # a sole under each shoe, a little wider than the upper, with a heel
     SO=PART['shoes']; bm=bmesh.new()
