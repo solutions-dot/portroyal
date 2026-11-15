@@ -133,7 +133,7 @@ def trim_seat(bm):
         if v.co.y>cap: v.co.y=cap+(v.co.y-cap)*0.3
     bm.normal_update()
 G=P['garments']; parts=[]; OLD=P.get('era',1915)<1800
-EASE_OLD=OLD and not G.get('coat') and not G.get('woman') and not os.environ.get('NOEASE')      # a 1690 man's shirt worn without a coat: drape_front alone left the chest as two mounds over a hollow, cut back in to the waistband, so it gets the ease too
+EASE_OLD=OLD and not G.get('coat') and not G.get('woman')      # a 1690 man's shirt worn without a coat: drape_front alone left the chest as two mounds over a hollow, cut back in to the waistband, so it gets the ease too
 if G.get('trousers'): G['breeches']=True; G['breechkind']='trousers'
 WAIST=HIP+0.13 if G.get('breeches') else HIP+0.02   # with breeches the shirt is tucked in under their waistband
 def arm_ok(c,upto):
@@ -170,7 +170,7 @@ def under_coat(c):   # the shirt sleeve between shoulder and cuff is hidden by t
     if not (G.get('coat') and G.get('coatsleeves',True)): return False
     t=side_arm(c); return t is not None and 0.1<t<G.get('coatsleeve',0.82)-0.1
 parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if OLD else (HIP+0.090 if P.get('era',1915)<1940 else HIP+0.100)) if G.get('breeches') else HIP-0.02) and arm_ok(c,sleeve) and not under_coat(c),lambda c:0.003 if OLD and G.get('breeches') and c.z<HIP+0.13 else (0.012 if abs(c.x)>SX*0.8 else 0.008),'Shirt',shape=(sleeve_tube(0.053,0.042,(sleeve-0.07,0.036) if sleeve>0.8 else None) if OLD else sleeve_tube(0.048,0.037,(sleeve-0.07,0.033) if sleeve>0.8 else None)) if not G.get('woman') else (puff_tube(sleeve) if G.get('puff') else sleeve_tube(0.050,0.038,(sleeve-0.06,0.032) if sleeve>0.8 else None)),post=((lambda bm:smooth_edge(bm,ok=lambda c:not (c.y<0 and c.z>VZ-0.012 and abs(c.x)<0.075*s))) if G.get('woman') and CK=='camp' else smooth_edge if G.get('woman') else ((smooth_edge if OLD else None) if G.get('coat') else ((lambda bm:(drape_front(bm),smooth_edge(bm))) if G.get('smooth') else (drape_front if OLD else neck_edge)))),
-   cuts=[((0,0,(NECK-0.006 if (not OLD and CK in ('stand','turn')) or (EASE_OLD and CK=='band') else NECK+0.005)-(0.062*s if G.get('coat') and G.get('coatsleeves',True) else 0)),(0,0,1),None),((0,-0.1,NCUT),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+([((0,0,VZ),Vector((-VK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,VZ),Vector((VK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if CK=='camp' else [])+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar; a camp collar opens the front in a narrow V; under a later standing or turn-down collar it stops just below the collar's band, so its cut edge cannot stand up above the band
+   cuts=[((0,0,(NECK-0.006 if not OLD and CK in ('stand','turn') else NECK+0.005)-(0.062*s if G.get('coat') and G.get('coatsleeves',True) else 0)),(0,0,1),None),((0,-0.1,NCUT),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+([((0,0,VZ),Vector((-VK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,VZ),Vector((VK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if CK=='camp' else [])+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar; a camp collar opens the front in a narrow V; under a later standing or turn-down collar it stops just below the collar's band, so its cut edge cannot stand up above the band
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
     sl=G.get('coatsleeves',True)
@@ -984,7 +984,10 @@ def build_hat(HK,HM):
         md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}; md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
         with ov(o): bpy.ops.object.modifier_apply(modifier='wt')
         clothes.append(o); bm=bmesh.new()
-        for dx,dz,r in ((0.0,0.0,0.03),(-0.035,0.012,0.024),(0.035,0.014,0.022)): bmesh.ops.create_uvsphere(bm,u_segments=8,v_segments=6,radius=r*s,matrix=Matrix.Translation((dx*s,J('Head').y-0.075*s,TOP-0.018*s+dz*s))@Matrix.Diagonal((1.2,0.8,0.8,1)))
+        # the knot: one smooth, flattened knot of cloth lying on the front of the wrap, half sunk into it (three round balls, two of them standing out at the sides, read as ears)
+        WT=tree_of(o); c0=Vector((0,Jy,TOP-0.05*s)); d=Vector((0,-0.72,0.69)).normalized(); hit=WT.ray_cast(c0+d*0.3,-d)[0]; p=hit if hit is not None else c0+d*0.1
+        R=d.to_track_quat('Z','Y').to_matrix().to_4x4()
+        bmesh.ops.create_uvsphere(bm,u_segments=16,v_segments=10,radius=0.025*s,matrix=Matrix.Translation(p+d*0.001)@R@Matrix.Diagonal((1.5,0.85,0.55,1)))
         rigid(HM+'Knot',bm,HM,'Head')
 
 for _k,_m in HATS:

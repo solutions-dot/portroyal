@@ -258,7 +258,7 @@ const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBas
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const mat = o.material, nm = mat.name || '';
-    if ((s.hide && s.hide.includes(nm)) || (s.hat === false && nm === 'Hat')) { o.visible = false; return; }
+    if ((s.hide && (s.hide.includes(nm) || (nm === 'WaistcoatButtons' && s.hide.includes('Waistcoat')))) || (s.hat === false && nm === 'Hat')) { o.visible = false; return; }
     o.material = mat.clone(); const t = s.tint && s.tint[nm]; if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; } else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT);
     o.castShadow = o.receiveShadow = true; });
   m.scale.setScalar(s.scale || 1); m.position.set(s.x, s.ground || 0, s.z); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
