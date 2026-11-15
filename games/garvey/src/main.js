@@ -1,5 +1,5 @@
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
-import { auditSeated, snapMeshes } from '../../../engine/audit.js';
+import { auditSeated, snapMeshes, auditRest } from '../../../engine/audit.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/garvey/src/main.js: Marcus Garvey. First test scene: a print shop in Kingston, Jamaica, about 1907.
    Built from games/_template. The movement, talking and talk-button code is still the template's small version;
@@ -173,7 +173,7 @@ for (const [x, z, n] of [[1.9, -3.0, 3], [-4.1, -0.9, 2], [-4.1, 0.1, 3]]) { for
 { const g = new THREE.Group(); g.position.set(2.6, 0, 2.55); room.add(g);
   box(2.2, 0.98, 0.6, woodDark, 0, 0.49, 0, g); box(2.4, 0.06, 0.74, wood, 0, 1.0, 0, g);
   box(0.34, 0.04, 0.44, solid(0x5a1f1c, 0.7), -0.5, 1.05, 0.0, g); box(0.3, 0.02, 0.4, paper, -0.5, 1.075, 0, g); cyl(0.04, 0.04, 0.07, solid(0x1b1b1d, 0.3, 0.3), 0.1, 1.07, 0.1, g);
-  cyl(0.05, 0.03, 0.06, brass, 0.6, 1.06, 0.0, g); cyl(0.035, 0.03, 0.09, solid(0x6c5436), 0.3, 1.09, -0.12, g, 8);
+  cyl(0.05, 0.03, 0.06, brass, 0.6, 1.06, 0.0, g); cyl(0.035, 0.03, 0.09, solid(0x6c5436), 0.3, 1.075, -0.12, g, 8);   /* a pen pot standing on the counter top (1.03); it hung 1.5 cm above it */
   WALLS.push([2.6 - 1.3, 2.55 - 0.45, 2.6 + 1.3, 2.55 + 0.45]);
   const bd = box(0.04, 0.9, 1.9, woodDark, 1.75, 1.8, 0, g); bd.position.x = X1 - 2.6 - 0.04; bd.position.y = 1.85; bd.position.z = 0;
   [['MEETING', -0.55], ['LOST', 0.0], ['TO LET', 0.55]].forEach(([word, dz]) => { const s = mesh(new THREE.PlaneGeometry(0.42, 0.56), std(sheetTex(word), 1), X1 - 2.6 - 0.07, 1.85, dz, g); s.rotation.y = -Math.PI / 2; }); }
@@ -1216,7 +1216,7 @@ function dShip(g, x, z, len, ry = 0, funnel = true) { const k = new THREE.Group(
     for (let i = 0; i < 16; i++) { const h = 7 + ((i * 37) % 17); box(7, h, 6, solid(0x7f8a92, 1), -60 + i * 8, h / 2 - 0.7, 78, g); }   /* a far shore of low buildings, in the haze */
   }; }
 { const b = buildLiberty; buildLiberty = () => { const first = !libBuilt; b(); if (!first) return; const g = libG;
-    dPlant(g, -5.5, -4.5, 1.6, 0.4); dPlant(g, 5.7, -4.5, 1.6, 0.4);
+    dPlant(g, -4.85, -4.5, 1.6, 0.4); dPlant(g, 4.85, -4.5, 1.6, 0.4);   /* on the platform (x -5.2 to 5.2, top 0.4); they stood past its ends, in the air (?test=collision, rest) */
     { const p = new THREE.Group(); p.position.set(-6.55, 0, 4.0); g.add(p); box(0.6, 1.25, 1.5, woodDark, 0, 0.62, 0, p); box(0.45, 0.05, 1.45, wood, 0.28, 0.9, 0, p); box(0.04, 0.05, 1.3, solid(0xf0ebd9, 0.5), 0.5, 0.94, 0, p); for (let i = 0; i < 8; i++) box(0.03, 0.03, 0.06, solid(0x15110d, 0.5), 0.52, 0.97, -0.55 + i * 0.16, p); cyl(0.17, 0.17, 0.05, wood, 0.9, 0.5, 0, p, 14); cyl(0.02, 0.02, 0.48, woodDark, 0.9, 0.25, 0, p, 6); LIB_WALLS.push([-7.0, 3.2, -6.2, 4.8]); }   /* a piano against the wall */
     for (const side of [-1, 1]) for (const z of [-3.2, 0, 3.0]) for (const dz of [-0.92, 0.92]) box(0.06, 2.3, 0.42, CLOTH, side * (LIB.x1 - 0.06), 2.55, z + dz, g);   /* curtains either side of every window */
     dClock(g, 0, 4.5, LIB.z1 - 0.03, Math.PI); dPegs(g, -3.4, 1.8, LIB.z1 - 0.04, Math.PI, 6);
@@ -1363,6 +1363,7 @@ function devViews() {
   const inLib = (st, x, z, yaw, pitch) => ensureLiberty().then(() => { stage = st; best = Math.max(best, st); enterPlace('liberty'); go(x, z, yaw, pitch); });
   if (shot === 'lib1') inLib(50, 0, 4.5, 0, 0.04);
   if (shot === 'lib2') inLib(50, -1.0, 1.0, -2.6, 0.02);
+  if (shot === 'libpots') inLib(50, -1.2, -3.1, 1.256, -0.12);   /* the potted palm at the left end of the platform, to check it stands on it */
   if (shot === 'lib3') { story.banner = true; story.helped = 'delegate'; inLib(53, 0, 1.2, 0, 0.12).then(showBanner); }
   if (shot === 'decl') inLib(52, 4.8, 3.0, 0, 0).then(() => openDecl());
   if (shot === 'decldone') inLib(52, 4.8, 3.0, 0, 0).then(() => { openDecl(); for (const c of RBG_ORDER) $('dccolors').querySelector('[data-c="' + c + '"]').click(); });
@@ -1421,6 +1422,7 @@ function devViews() {
         if(n.route)out.push(...routeIssues(name+':'+n.id,[[n.hx,n.hz],...n.route,[n.seat[0],n.seat[1]-.6]],P.walls,.22,false));
         for (const [what, x, z] of pts) { const w = hit(P.walls, x, z); if (w && !(n.ground>0)) out.push(name + ':' + n.id + ' ' + what + ' (' + x.toFixed(2) + ',' + z.toFixed(2) + ') in [' + w.map((v) => v.toFixed(2)).join(',') + ']'); }
       }
+      for (const [name, P] of Object.entries(PLACES)) out.push(...auditRest(snapMeshes(P.group)).map((l) => name + ': ' + l));   /* pots and other standing things with nothing under them (engine/audit.js) */
       const pre=document.createElement('pre');pre.id='autolog';pre.textContent=out.join('\n');document.body.append(pre);document.title='COLLISION '+out.length;
     })(); }
   if (q.get('test') === 'walk') {   /* step the world by hand and watch the customer walk her route */

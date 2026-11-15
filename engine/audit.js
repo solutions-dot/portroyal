@@ -16,13 +16,18 @@ import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
 import * as THREE from 'three';
 import { groundFeet, strideOf } from './anim.js';
 
-/* a list of the world-space box of every visible mesh under a group (instanced meshes are skipped) */
+/* a list of the world-space box of every visible mesh under a group (instanced meshes are skipped). The mesh's own shape and place are kept aside (SHAPE) for checks that need real contact. */
+const SHAPE = new WeakMap();
 export function snapMeshes(group) {
-  group.updateMatrixWorld(true); const out = [];
-  group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type };
+  group.updateMatrixWorld(true); const out = [], inst = [];
+  group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg);   /* top: the object it belongs to (the child of the place's group that holds it) */
     if (o.geometry.type === 'BoxGeometry') { o.geometry.computeBoundingBox(); e.lb = o.geometry.boundingBox.clone(); e.inv = o.matrixWorld.clone().invert(); e.sc = Math.cbrt(Math.abs(o.matrixWorld.determinant())) || 1; }   /* the exact box, for seats */
-    out.push(e); } });
-  return out;
+    out.push(e); }
+    if (o.isInstancedMesh && o.visible && SOLID.has(o.geometry.type) && !o.isSkinnedMesh) {   /* each drawn copy of an instanced shape (tree trunks, huts) is kept aside, for the overlap check only: the other checks never saw them and still do not */
+      if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const m4 = new THREE.Matrix4(), mat = [].concat(o.material)[0];
+      for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, m4); const mw = o.matrixWorld.clone().multiply(m4), b = o.geometry.boundingBox.clone().applyMatrix4(mw); if (!isFinite(b.min.x)) continue;
+        const e = { b, mat: mat.name || mat.type, geo: o.geometry.type, unlit: !!mat.isMeshBasicMaterial, flame: false, col: mat.color ? '#' + mat.color.getHexString() : '', top: o.uuid + '#' + k, inst: true }; SHAPE.set(e, { geo: o.geometry, mw }); inst.push(e); } } });
+  out.inst = inst; return out;
 }
 
 // A rotated bench's world AABB includes empty corners beside its backrest.
@@ -57,7 +62,75 @@ export function auditPlace(place) {
   for(const p of place.npcs)if(!/^Sit/.test(p.anim||''))inside.push(...furnitureRouteIssues(p.id,[[p.x,p.z]],L,p.ground||0,.16));
   const overlap = auditPeople(place.npcs, place.start);
   for(const p of place.npcs) if(p.path && !(p.ground>0)) { inside.push(...routeIssues(p.id,p.path,place.walls,.22)); inside.push(...furnitureRouteIssues(p.id,p.path,L,p.ground||0)); }
-  return { id: place.id, floating, inside: inside.concat(overlap), stuck };
+  floating.push(...auditRest(L, place.groundAt));
+  const cut = auditOverlap(L.concat(L.inst || []));
+  return { id: place.id, floating, inside: inside.concat(overlap, cut), stuck };
+}
+
+/* overlap: two separate solid things that cut into each other (a stool through a basket, a fence through a hut, a log through a rock, a pot sunk into a table).
+   How it decides:
+   - "Separate" means two different objects: the meshes hang under two different children of the place's group. The pieces of one thing (a hut's walls and roof,
+     a pot and its lid, the sticks of a wood pile, a pestle in its mortar) are built to meet and are never compared.
+     Meshes added straight to the place's group, not inside an object of their own, are the place's own fabric (walls, beams, floors, steps, built in place to
+     meet each other); two of those are not compared either, but each is compared with every object (a crate, a bench, a tree, a rock) that cuts into it.
+   - Each drawn copy of an instanced shape (tree trunks, huts drawn many times at once) counts as its own object.
+   - Only shapes with a real inside are judged: boxes, cylinders, spheres, lathe shapes and rocks. Flat shapes (planes, signs, paper), leafy shapes (cones,
+     icosahedra: tree crowns, bushes), unlit ones (flames, glows), people (skinned meshes) and anything over 40 m (the ground) are left out.
+   - Things that sit on or lean against each other touch only at the surface. A fault is a cut deeper than 4 cm: at least 3 points of one shape lie more than
+     4 cm inside the other, tested with the other's own shape (a box exactly, a cylinder by its radius, anything else as the ball that fits inside its box,
+     which never over-reports). A pot standing on a fire's stones, or a basket on the ground, is never that deep. */
+const SOLID = new Set(['BoxGeometry', 'CylinderGeometry', 'SphereGeometry', 'LatheGeometry', 'DodecahedronGeometry', 'CapsuleGeometry', 'ExtrudeGeometry']);
+function depthIn(e, p, v) {   /* how far point p lies inside e's shape, in metres (negative: outside) */
+  const s = shapeOf(e), bb = s.geo.boundingBox, el = s.mw.elements; v.copy(p).applyMatrix4(s.inv);
+  const kx = Math.hypot(el[0], el[1], el[2]), ky = Math.hypot(el[4], el[5], el[6]), kz = Math.hypot(el[8], el[9], el[10]);
+  const cx = (bb.min.x + bb.max.x) / 2, cy = (bb.min.y + bb.max.y) / 2, cz = (bb.min.z + bb.max.z) / 2, hx = (bb.max.x - bb.min.x) / 2, hy = (bb.max.y - bb.min.y) / 2, hz = (bb.max.z - bb.min.z) / 2;
+  const dx = (v.x - cx) * kx, dy = (v.y - cy) * ky, dz = (v.z - cz) * kz, Hx = hx * kx, Hy = hy * ky, Hz = hz * kz;
+  if (e.geo === 'BoxGeometry') return Math.min(Hx - Math.abs(dx), Hy - Math.abs(dy), Hz - Math.abs(dz));
+  if (e.geo === 'CylinderGeometry' || e.geo === 'LatheGeometry' || e.geo === 'CapsuleGeometry') { const pr = s.geo.parameters || {}, t = Math.max(0, Math.min(1, (v.y - bb.min.y) / ((bb.max.y - bb.min.y) || 1))), r = e.geo === 'CylinderGeometry' ? ((pr.radiusBottom ?? hx) * (1 - t) + (pr.radiusTop ?? hx) * t) : Math.min(hx, hz); const rr = Math.hypot((v.x - cx) / (r || 1e-6), (v.z - cz) / (r || 1e-6)); return Math.min(Hy - Math.abs(dy), (1 - rr) * r * Math.min(kx, kz)); }
+  const q = Math.hypot(dx / (Hx || 1e-6), dy / (Hy || 1e-6), dz / (Hz || 1e-6)); return (1 - q) * Math.min(Hx, Hy, Hz);   /* the ball (ellipsoid) inside its box */
+}
+export function auditOverlap(snap, { deep = 0.04 } = {}) {
+  const out = [], v = new THREE.Vector3(), sz = snap.map((m) => m.b.getSize(new THREE.Vector3()));
+  const ok = snap.map((m, i) => SOLID.has(m.geo) && !m.unlit && !m.skinned && m.top && SHAPE.has(m) && sz[i].x < 40 && sz[i].z < 40 && Math.min(sz[i].x, sz[i].y, sz[i].z) > deep);
+  const cell = new Map(), key = (x, z) => ((x | 0) + 5000) * 20000 + ((z | 0) + 5000), seen = new Set();
+  snap.forEach((m, i) => { if (!ok[i]) return; for (let x = Math.floor(m.b.min.x / 2); x <= Math.floor(m.b.max.x / 2); x++) for (let z = Math.floor(m.b.min.z / 2); z <= Math.floor(m.b.max.z / 2); z++) { const k = key(x, z); (cell.get(k) || cell.set(k, []).get(k)).push(i); } });
+  const pairs = new Set(); for (const [, l] of cell) for (let a = 0; a < l.length; a++) for (let b = a + 1; b < l.length; b++) { const i = l[a], j = l[b]; if (snap[i].top === snap[j].top || (snap[i].loose && snap[j].loose)) continue; const ib = snap[i].b.clone().intersect(snap[j].b), d = ib.isEmpty() ? null : ib.getSize(v); if (!d || d.x < deep || d.y < deep || d.z < deep) continue; pairs.add(i < j ? i * 1e6 + j : j * 1e6 + i); }
+  for (const k of pairs) { const i = Math.floor(k / 1e6), j = k % 1e6, A = snap[i], B = snap[j], key2 = A.top + B.top; if (seen.has(key2)) continue;
+    let worst = 0, n = 0, at = null; for (const [P, Q] of [[A, B], [B, A]]) for (const p of worldPoints(P, 400)) { if (!Q.b.containsPoint(p)) continue; const d = depthIn(Q, p, v); if (d > deep) { n++; if (d > worst) { worst = d; at = p; } } }
+    if (n >= 3) { seen.add(key2); out.push(`overlap@(${at.x.toFixed(2)},${at.y.toFixed(2)},${at.z.toFixed(2)}) a ${A.geo} ${A.col || ''} and a ${B.geo} ${B.col || ''} cut ${(worst * 100).toFixed(0)} cm into each other (${n} points)`); } }
+  return out;
+}
+
+/* rest: a small round thing that should stand on something (a pot, a jar, a bowl, a bucket, a gourd, a plant pot, a barrel, a lamp globe) but touches nothing that holds it.
+   The float check above cannot see this: it joins two meshes whose boxes come within 10 cm, and anything whose box overlaps the ground's box, so a pot in the air
+   just past the edge of a stage, or over a fire between two poles, counts as touching them. Here each such thing must sit on the ground, or really touch something
+   solid that reaches down to its lower part (a table, a stool, a shelf, the stones of a fire), be fixed at its top to a bar or bracket, or hang from a thin hook,
+   chain or rope that comes down into its top. Only things that stand are checked: upright cylinders and lathe shapes, and squashed balls (an iron pot, a gourd). Touching is tested with each mesh's own box turned with the mesh, not the world box, so a leaning pole does not count
+   for the space beside it. groundAt(x, z) gives the ground height for land with hills (default 0). Flames and see-through glows hold nothing up. */
+const VESSEL = new Set(['CylinderGeometry', 'LatheGeometry', 'SphereGeometry']);
+function shapeOf(e) { const s = SHAPE.get(e); if (!s) return null; if (!s.inv) { if (!s.geo.boundingBox) s.geo.computeBoundingBox(); s.inv = s.mw.clone().invert(); s.k = Math.cbrt(Math.abs(s.mw.determinant())) || 1; } return s; }
+function worldPoints(e, max = 300) { const s = shapeOf(e), out = []; if (!s || !s.geo.attributes.position) return out; const p = s.geo.attributes.position, step = Math.max(1, Math.floor(p.count / max)); for (let i = 0; i < p.count; i += step) out.push(new THREE.Vector3().fromBufferAttribute(p, i).applyMatrix4(s.mw)); return out; }
+const inShape = (e, pts, tol) => { const s = shapeOf(e); if (!s) return false; const bb = s.geo.boundingBox, t = tol / s.k, v = new THREE.Vector3(); return pts.some((p) => { v.copy(p).applyMatrix4(s.inv); return v.x >= bb.min.x - t && v.x <= bb.max.x + t && v.y >= bb.min.y - t && v.y <= bb.max.y + t && v.z >= bb.min.z - t && v.z <= bb.max.z + t; }); };
+export function auditRest(snap, groundAt = null) {
+  const out = [], sz = snap.map((m) => m.b.getSize(new THREE.Vector3()));
+  snap.forEach((m, i) => {
+    const s = sz[i], w = Math.max(s.x, s.z), sh = shapeOf(m); if (!VESSEL.has(m.geo) || m.unlit || !sh) return;
+    const e = sh.mw.elements, bb = sh.geo.boundingBox, lx = (bb.max.x - bb.min.x) * Math.hypot(e[0], e[1], e[2]), ly = (bb.max.y - bb.min.y) * Math.hypot(e[4], e[5], e[6]), lz = (bb.max.z - bb.min.z) * Math.hypot(e[8], e[9], e[10]);
+    if (Math.min(lx, lz) < 0.06 || Math.max(lx, lz) > 1.0 || ly < 0.03 || ly > 1.2) return;   /* its own size, not its box in the world: thin sticks and poles are not things that stand on a foot */
+    if (m.geo === 'SphereGeometry' ? ly > 0.97 * Math.max(lx, lz) : Math.abs(e[5]) / Math.hypot(e[4], e[5], e[6]) < 0.9) return;   /* a pot stands upright; a ball (fruit, a knob) or a lying wheel or log is another matter: only squashed balls (pots, gourds) and upright cylinders are checked */
+    const cx = (m.b.min.x + m.b.max.x) / 2, cz = (m.b.min.z + m.b.max.z) / 2, y0 = m.b.min.y, g = groundAt ? groundAt(cx, cz) : 0;
+    if (y0 <= g + 0.03 || y0 < g - 0.3) return;   /* on the ground (or sunk well into it) */
+    const near = m.b.clone().expandByScalar(0.02), mine = worldPoints(m);
+    /* touched by something solid that reaches down to its lower part */
+    const touches = (o) => o.b.intersectsBox(near) && (inShape(o, mine, 0.01) || inShape(m, worldPoints(o, 400), 0.01));
+    if (snap.some((o, j) => j !== i && !o.flame && sz[j].x <= 40 && sz[j].z <= 40 && o.b.min.y < y0 + s.y * 0.3 && touches(o))) return;
+    /* fixed at its top to a bar or a bracket (a tap's spout under its arm, a lamp under its bracket) */
+    if (snap.some((o, j) => j !== i && !o.flame && (o.geo === 'BoxGeometry' || o.geo === 'CylinderGeometry') && sz[j].x <= 40 && sz[j].z <= 40 && o.b.min.y >= y0 + s.y * 0.3 && touches(o))) return;
+    /* hung: a thin piece (a hook, a chain, a rope) that ends inside its top part, near its middle */
+    if (snap.some((o, j) => j !== i && Math.min(sz[j].x, sz[j].z) < 0.05 && o.b.min.y <= m.b.max.y + 0.02 && o.b.min.y >= y0 + s.y * 0.3 && o.b.max.y > m.b.max.y && Math.abs((o.b.min.x + o.b.max.x) / 2 - cx) < s.x * 0.3 && Math.abs((o.b.min.z + o.b.max.z) / 2 - cz) < s.z * 0.3)) return;
+    out.push(`rest@(${cx.toFixed(2)},${y0.toFixed(2)},${cz.toFixed(2)}) a ${m.geo} ${w.toFixed(2)} wide touches nothing that holds it up (${(y0 - g).toFixed(2)} m above the ground), ${m.mat} ${m.col || ''} ${s.y.toFixed(2)} tall`);
+  });
+  return out;
 }
 
 /* Leafy shapes (bushes, tree crowns, flowers: icosahedra, spheres, dodecahedra, cones) that cross a wall and show on both sides of it.
@@ -209,9 +282,9 @@ function clParts(body) { const parts = []; body.traverse((o) => { if (!o.isSkinn
     let rest = g.userData.clRest; if (!rest) { rest = new Float32Array(n * 3); const v = new THREE.Vector3(), inv = new THREE.Matrix4().copy(body.matrixWorld).invert(), keep = o.skeleton.bones.map((b) => [b.position.clone(), b.quaternion.clone(), b.scale.clone()]); o.skeleton.pose(); body.updateMatrixWorld(true); o.skeleton.update();   /* the rest shape: every bone in the pose the body was built in, in the body's own space; the bones go back to what they were afterwards */
       for (let i = 0; i < n; i++) { o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld).applyMatrix4(inv); rest[i * 3] = v.x; rest[i * 3 + 1] = v.y; rest[i * 3 + 2] = v.z; }
       o.skeleton.bones.forEach((b, k) => { b.position.copy(keep[k][0]); b.quaternion.copy(keep[k][1]); b.scale.copy(keep[k][2]); }); body.updateMatrixWorld(true); g.userData.clRest = rest; }
-    parts.push({ o, name: /^(Skin|Sock)$/.test(o.material.name || '') ? (o.material.name === 'Skin' ? 'Body' : 'Sock') : (o.name || o.material.name),   /* the skin and the socks are named by their material: a body mesh with two materials loads as two meshes with the mesh's own name */ mat: o.material.name || o.name, g, idx, samples, rest, pos: new Float32Array(n * 3) }); }); return parts; }
+    parts.push({ o, name: /^(Skin|Sock)$/.test(o.material.name || '') ? (o.material.name === 'Skin' ? 'Body' : 'Sock') : (o.parent && o.parent.name === 'Lining' ? 'Lining' : (o.name || o.material.name)),   /* a Lining in two colours (under the shirt and under the breeches) loads as a group of two meshes */   /* the skin and the socks are named by their material: a body mesh with two materials loads as two meshes with the mesh's own name */ mat: o.material.name || o.name, g, idx, samples, rest, pos: new Float32Array(n * 3) }); }); return parts; }
 /* which piece lies over which, innermost first. A piece is only tested as the under layer of a piece that comes later. Names not listed are judged from the rest shape alone. */
-const CL_ORDER = [/^(Body|Skin)$/, /^(Hair|Bun|Puffs|Plaits|Moustache)/, /^Sock/, /^Shirt$/, /^(Placket|Pocket)/, /^(Collar|Tie|Buttons)/, /^(Breeches|Skirt)$/, /^(Belt|Buckle|Sash)/, /^Waistcoat/, /^Apron/, /^(Jacket|JacketSkirt|Lapels|JButtons|Coat|CoatSkirt)/, /^(Shoes|Sole)/, /^(Ribbon|Hat|Cap|TopHat|Bonnet|Wrap|Scarf)/];
+const CL_ORDER = [/^(Body|Skin)$/, /^(Hair|Bun|Puffs|Plaits|Moustache)/, /^Sock/, /^Shirt$/, /^(Placket|Pocket)/, /^(Collar|Tie|Buttons)/, /^(Breeches|Skirt)$/, /^(Belt|Buckle|Sash|Waistband)/, /^Waistcoat/, /^Apron/, /^(Jacket|JacketSkirt|Lapels|JButtons|Coat|CoatSkirt)/, /^(Shoes|Sole)/, /^(Ribbon|Hat|Cap|TopHat|Bonnet|Wrap|Scarf)/];
 const clRank = (n) => CL_ORDER.findIndex((r) => r.test(n));
 function clEdge(B) {   /* the rest positions of the vertices on the open edges of a piece (hems, cuffs, necklines) */
   if (B.g.userData.clEdge) return B.g.userData.clEdge; const cnt = new Map(), idx = B.idx, R = B.rest, key = (a, b) => (a < b ? a * 1e6 + b : b * 1e6 + a); for (let t = 0; t < idx.length; t += 3) for (let e = 0; e < 3; e++) { const k = key(idx[t + e], idx[t + (e + 1) % 3]); cnt.set(k, (cnt.get(k) || 0) + 1); }
@@ -248,7 +321,7 @@ export function auditCloth(id, body, { poses = [['Idle', 0.3]], after = null, sk
     for (const A of parts) for (const B of parts) { if (A === B || /^(Body|Skin)$/.test(B.name) || A.mat === B.mat || (/Sole|Shoes/.test(A.name) && /Sole|Shoes/.test(B.name)) || (skip && skip(A.name, B.name))) continue;   /* cloth outside the skin is always right; two pieces of one cloth (jacket and lapels) cannot show through each other; a sole wraps its shoe on purpose */
       const rel = clRelation(A, B); if (!rel) continue; const G = grid(B); let n = 0, worst = 0, wi = 0;
       for (const i of rel) { clPoint(A.pos, A.samples, i, p); const h = clNear(p, B.pos, B.idx, G); if (!h || h.side > 0.004 * sc || h.along <= 0.0005 * sc) continue; const al = h.along; let hid = false;
-        for (const C of parts) { if (C === A || C === B || C.mat === A.mat) continue; const hc = clNear(p, C.pos, C.idx, grid(C)); if (hc && hc.side < 0.004 * sc && (hc.along < -0.0005 * sc || (/^(Belt|Buckle|Sash)/.test(C.name) && Math.abs(hc.along) < 0.012 * sc))) { hid = true; break; }   /* a belt is an open band whose faces may point either way: anything just under or inside it is hidden */ } if (hid) continue;   /* still under a third piece (a shirt through a waistcoat, under a jacket): nobody can see it */
+        for (const C of parts) { if (C === A || C === B || C.mat === A.mat) continue; const hc = clNear(p, C.pos, C.idx, grid(C)); if (hc && hc.side < 0.004 * sc && (hc.along < -0.0005 * sc || (/^(Belt|Buckle|Sash|Waistband)/.test(C.name) && Math.abs(hc.along) < 0.012 * sc))) { hid = true; break; }   /* a belt (or the waistband of 1690 breeches) is an open band whose faces may point either way: anything just under or inside it is hidden */ } if (hid) continue;   /* still under a third piece (a shirt through a waistcoat, under a jacket): nobody can see it */
         n++; if (marks) marks.push([p[0], p[1], p[2], A.name, B.name]); if (al > worst) { worst = al; wi = i; } }
       if (n) { clPoint(A.pos, A.samples, wi, p); const rp = [0, 0, 0]; clPoint(A.rest, A.samples, wi, rp); out.points += n; out.worst = Math.max(out.worst, worst / sc * 1000); out.lines.push(`${id} ${clipName}@${at}: ${A.name} shows through ${B.name}: ${n} points, worst ${(worst / sc * 1000).toFixed(1)} mm` + (where ? ` at x ${p[0].toFixed(3)} y ${p[1].toFixed(3)} z ${p[2].toFixed(3)} (rest ${rp.map((x) => x.toFixed(3)).join(' ')})` : '')); } } }
   ctl.mx.stopAllAction(); ctl.base.reset().play(); ctl.cur = ctl.base; ctl.mx.update(0); if (after) after(body);

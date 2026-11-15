@@ -10,7 +10,7 @@
 import * as THREE from 'three';
 import { T, std, solid, flat, mesh, box, cyl, grp, rng } from './gfx.js';
 import { makeGround, landMesh, ribbon, trailMat, streamMesh, fbm, smooth, pathLength, pathAt, PALETTE, ENV, smoothPath } from './land.js';
-import { forest, spotsOn, plant, treeGeo, plantPlantains, plantPalms, plantCane, plantGrass, plantGroundFerns, plantTreeFerns, cottonTree, rockGeo, offTrail } from './flora.js';
+import { forest, spotsOn, plant, treeGeo, plantPlantains, plantPalms, plantCane, plantGrass, plantGroundFerns, plantTreeFerns, cottonTree, rockGeo, offTrail, taken } from './flora.js';
 import { hut, hutGeo, cookFire, jerkFrame, yamHill, trench, forkStick, basket, basketOf, gourd, mortar, woodPile, stool, wattleFence, boulder, paperStone, swivelGun, steppingStones, PM } from './props.js';
 import { person, extra, villagers, fighter, LOOKS } from './cast.js';
 
@@ -18,16 +18,17 @@ const PI = Math.PI;
 const treeM = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 });
 const face = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
 /* put a thing on the ground at (x, z), turned by ry, sunk a little; returns it. solids: the place's list of round things you cannot walk through. */
-function put(g, G, o, x, z, ry = 0, { sink = 0, solids, r } = {}) { o.position.set(x, G.h(x, z) - sink, z); o.rotation.y = ry; g.add(o); if (solids) solids.push([x, z, r || o.userData.foot || 0.6]); return o; }
+function put(g, G, o, x, z, ry = 0, { sink = 0, solids, r } = {}) { o.position.set(x, G.h(x, z) - sink, z); o.rotation.y = ry; g.add(o); if (solids) solids.push([x, z, r || o.userData.foot || 0.6]); taken.add(x, z, r || o.userData.foot || 0.6); return o; }   /* every placed thing also takes its ground, so rocks and plants scattered later keep out of it (flora.js, taken) */
 const trails = (g, G) => { for (const t of G.trails) if (!t.plain) g.add(ribbon(t.dense, t.w + 0.4, G.h, trailMat(), { dy: 0.07, vrep: 2.6 })); };
 const sAt = (dense, test) => { let s = 0; for (let i = 1; i < dense.length; i++) { if (test(dense[i])) return s; s += Math.hypot(dense[i][0] - dense[i - 1][0], dense[i][1] - dense[i - 1][1]); } return s; };
 /* many plain huts across a hillside, as one drawn shape: each sits a little into the slope and faces downhill-ish */
-function farHuts(g, G, n, area, seed, ok) { const sp = spotsOn(G, n, area, seed, ok, { smin: 0.85, smax: 1.15, tries: 40 }); const im = plant(g, hutGeo(), new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 }), sp, { vary: 0.1, sink: 0.42 }); return { im, spots: sp }; }
+function farHuts(g, G, n, area, seed, ok) { const sp = spotsOn(G, n, area, seed, ok, { smin: 0.85, smax: 1.15, tries: 40, room: 2.5 }); const im = plant(g, hutGeo(), new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 }), sp, { vary: 0.1, sink: 0.42 }); return { im, spots: sp }; }
 /* a flame you can see from far away, and a warm light that flickers */
 function glowSprite(size = 3, color = 0xff8a30) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); s.scale.set(size, size * 1.2, 1); return s; }
 
 /* ============ chapter 1: a sugar estate at night, about 1730 ============ */
 export function buildEstate() {
+  taken.reset();
   const g = grp(), solids = [];
   const trail = { w: 1.25, pts: [[2, 40, 0], [0, 30, 0], [-3, 20, 0], [-2, 12.5, 0], [-2, 3.5, 0], [2, -4, -0.3], [4, -10.5, -1.0], [4.5, -13.5, -1.3], [5, -16.5, -1.0], [2, -26, 2.5], [-6, -36, 7.5], [-4, -48, 14], [4, -58, 18.6], [6, -63, 19.6]] };
   const streamZ = (x) => -13.5 + Math.sin(x * 0.05) * 3;
@@ -48,11 +49,11 @@ export function buildEstate() {
   const gh = grp(g, 56, G.h(56, 30), 30); box(15, 6, 9, solid(0x2a2a30, 1), 0, 3, 0, gh); const rf = mesh(new THREE.ConeGeometry(1, 3.2, 4), solid(0x1c1c22, 1), 0, 7.6, 0, gh); rf.rotation.y = PI / 4; rf.scale.set(8.4 * Math.SQRT2, 1, 5.3 * Math.SQRT2);
   for (let i = 0; i < 5; i++) mesh(new THREE.PlaneGeometry(0.9, 1.5), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffc870 : 0xe8a850 }), -7.51, 3.6, -3 + i * 1.5, gh).rotation.y = -PI / 2; gh.rotation.y = 0.25;
   /* palms and a few big trees on the low land; thick forest on the hill beyond the stream */
-  plantPalms(g, spotsOn(G, 16, [-60, -6, 60, 9.5], 12, (x, z) => !nearTrail(x, z) && Math.abs(z - 8) > 4.2, { smin: 0.8, smax: 1.2 }));
+  plantPalms(g, spotsOn(G, 16, [-60, -6, 60, 9.5], 12, (x, z) => !nearTrail(x, z) && Math.abs(z - 8) > 4.2, { smin: 0.8, smax: 1.2, room: 0.3 }));
   const shade = [{ x: -6.6, z: 14.6, s: 1.25, ry: 1, k: 0.4 }, { x: 3.4, z: 1.4, s: 1.3, ry: 2.2, k: 0.6 }, { x: -8.5, z: -3, s: 1.1, ry: 4, k: 0.5 }].map((p) => ({ ...p, y: G.h(p.x, p.z) })); plant(g, treeGeo('broad', 4), treeM, shade);
   forest(g, G, [-75, -110, 75, -19], { seed: 21, trees: 130, tall: 46, bushes: 110, ferns: 46, ground: 200, grass: 500, rocks: 50, near: [-34, -72, 40, -19], keepTrees: (x, z) => !(z < -63.5 && z > -116 && Math.abs(x - 6) < 34) });
   plantGrass(g, spotsOn(G, 700, [-40, -8, 40, 10], 8, (x, z) => G.trailness(x, z) < 0.4 && Math.abs(z - 8) > 3 && Math.abs(z - streamZ(x)) > 3.2), { tint: 0x6c8a52 });
-  plant(g, rockGeo(5), treeM, spotsOn(G, 34, [-50, -19, 50, -9], 14, (x, z) => Math.abs(z - streamZ(x)) < 4.2 && !nearTrail(x, z), { smin: 0.3, smax: 1.0 }), { sink: 0.2 });
+  plant(g, rockGeo(5), treeM, spotsOn(G, 34, [-50, -19, 50, -9], 14, (x, z) => Math.abs(z - streamZ(x)) < 4.2 && !nearTrail(x, z), { smin: 0.3, smax: 1.0, room: 1.15 }), { sink: 0.2 });
   const top = pathLength(trail.dense), sRoadS = sAt(trail.dense, (p) => p[1] < 12.6), sRoadN = sAt(trail.dense, (p) => p[1] < 3.4);
   const people = [person('mama', 'mama', 'Mama', 4.2, 42.6, face(4.2, 42.6, 2, 40)), person('quamin', 'quamin', 'Quamin', 0.2, 38.4, face(0.2, 38.4, 2, 41))];
   const extras = [extra('watchman', -24, 8, PI / 2, 'Idle', { id: 'watchman', path: [[-27, 8.2], [25, 8.2]], props: [['RightHand', 'lantern']], lampLight: true, speed: 1.15 })];
@@ -62,6 +63,7 @@ export function buildEstate() {
 
 /* ============ chapters 2 and 5: Nanny Town ============ */
 export function buildTown() {
+  taken.reset();
   const g = grp(), solids = [], r = rng(41);
   const pathIn = { w: 0.8, pts: [[36, 60, -24.5], [40, 50, -19.2], [47, 41, -17], [48, 31, -12.6], [40, 24, -7.4], [30, 20, -4.4], [20, 17, -3], [11, 14, -2], [6.5, 11, -0.6], [4.6, 9.6, 0]] };
   const back = { w: 1.05, pts: [[-9, -9.5, 0], [-16, -15, 2.4], [-24, -22, 4], [-34, -30, 7.5], [-46, -41, 16.5], [-56, -52, 28], [-61, -57.5, 34.5]] };
@@ -78,14 +80,14 @@ export function buildTown() {
   const ct = cottonTree(24, 3); put(g, G, ct, 7.5, -6, 0.6, { solids, r: 2.3 });
   const fire = put(g, G, cookFire(true), -3, 3, 0, { solids }); put(g, G, jerkFrame(), -5.6, 5.2, 0.5, { solids }); put(g, G, mortar(), 2.6, 6.2, 0, { solids, r: 0.5 }); put(g, G, woodPile(8), -9.6, 9.8, 0.7, { solids }); put(g, G, stool(), -1.2, 4.6, 0, { solids, r: 0.35 }); put(g, G, stool(), -4.4, 1.4, 0, { solids, r: 0.35 });
   put(g, G, basketOf('yam'), 3.6, 5.2, 0, { solids, r: 0.4 }); put(g, G, basketOf('plantain'), 1.4, 7.2, 1, { solids, r: 0.4 }); put(g, G, gourd(), -2.2, 5.6, 0); put(g, G, gourd(), 4.6, 6.6, 0);
-  for (const [x, z, s, sd] of [[3.2, 11.6, 1.2, 2], [6.9, 8.7, 0.95, 5]]) { const b = boulder(s, sd); put(g, G, b, x, z, sd, { sink: 0.2 }); }   /* two rocks where the path comes in */
+  for (const [x, z, s, sd] of [[3.2, 11.6, 1.2, 2], [6.9, 8.7, 0.95, 5]]) { const b = boulder(s, sd); put(g, G, b, x, z, sd, { sink: 0.2 }); taken.add(x, z, s * 1.1); }   /* two rocks where the path comes in */
   /* the high rock above the clearing, with a flat stone on top */
-  const rx = 3, rz = -24.5, ry0 = G.h(rx, rz), big = boulder(4.3, 9); big.position.set(rx, ry0 + 2.2, rz); g.add(big); const b2 = boulder(2.6, 3); b2.position.set(rx + 3.6, ry0 + 1.0, rz + 1.2); g.add(b2); const b3 = boulder(2.2, 6); b3.position.set(rx - 3.4, ry0 + 0.8, rz + 0.6); g.add(b3);
-  const slabY = ry0 + 5.35; cyl(1.25, 1.5, 0.5, PM.stone, rx, slabY - 0.25, rz, g, 9);
+  const rx = 3, rz = -24.5, ry0 = G.h(rx, rz), hr = grp(g), big = boulder(4.3, 9); big.position.set(rx, ry0 + 2.2, rz); hr.add(big); const b2 = boulder(2.6, 3); b2.position.set(rx + 3.6, ry0 + 1.0, rz + 1.2); hr.add(b2); const b3 = boulder(2.2, 6); b3.position.set(rx - 3.4, ry0 + 0.8, rz + 0.6); hr.add(b3);   /* the high rock is one thing made of three boulders and a flat slab that run into each other on purpose, so they share a group (the audit's overlap check compares separate things only) */ taken.add(rx, rz, 5.2); taken.add(rx + 3.6, rz + 1.2, 3.0); taken.add(rx - 3.4, rz + 0.6, 2.6);   /* the high rock keeps the forest off it */
+  const slabY = ry0 + 5.35; cyl(1.25, 1.5, 0.5, PM.stone, rx, slabY - 0.25, rz, hr, 9);
   /* the provision ground: yam hills (three bare ones for you to plant), plantains, a low fence on the downhill side */
   const yams = [[-21, 3], [-23.6, 5.6], [-21.4, 7.9]].map(([x, z], i) => put(g, G, yamHill(0, i + 1), x, z, i));
   for (const [x, z] of [[-26, 2.2], [-27.6, 5], [-26.4, 8], [-24.2, 9.8], [-24, 1.2], [-28.6, 7.4], [-21.6, 0.4], [-19.2, 9.6]]) put(g, G, yamHill(1, x * 3 | 0), x, z, x);
-  plantPlantains(g, spotsOn(G, 26, [-34, -4, -14, 15], 9, (x, z) => { const d = Math.hypot(x + 23, z - 5); return d > 8 && d < 12.5 && G.trailness(x, z) < 0.1; }, { smin: 0.8, smax: 1.25 }));
+  plantPlantains(g, spotsOn(G, 26, [-34, -4, -14, 15], 9, (x, z) => { const d = Math.hypot(x + 23, z - 5); return d > 8 && d < 12.5 && G.trailness(x, z) < 0.1; }, { smin: 0.8, smax: 1.25, room: 0.16 }));
   wattleFence(g, -30.4, 8.6, -25.2, 12.4, G.h(-28, 10.6) - 0.1); wattleFence(g, -25.2, 12.4, -18.6, 12.6, G.h(-22, 12.5) - 0.1);
   /* the forest all round, kept off the houses */
   const clearHuts = (x, z) => Math.hypot(x, z) > 24 && far.spots.every((p) => Math.hypot(p.x - x, p.z - z) > 4.2);
@@ -118,6 +120,7 @@ export function buildTown() {
 /* The rock stands at the top of a steep drop. The path winds up the slope below it in plain view, then climbs the west flank to the rock.
    South (+z) is downhill. The top of the path (the spur) is where you can walk, and where the trenches are. */
 export function buildWatch() {
+  taken.reset();
   const g = grp(), solids = [], r = rng(61), pick = (a) => a[(r() * a.length) | 0];
   const spur = { w: 1.0, pts: [[-3.4, 1.4, 0], [-12, 2, -0.4], [-22, 5, -0.8], [-30, 11, -1.2], [-34, 19, -5.5], [-31, 27, -11]] };
   const climb = { w: 0.85, nowalk: true, pts: [[-31, 27, -11], [-23, 32, -17], [-12, 31, -19.5], [0, 28, -20.5], [12, 27, -21.5], [22, 31, -23.5], [24, 40, -27], [14, 47, -29.5], [2, 52, -31.5], [-2, 62, -35], [8, 70, -38.5], [20, 76, -41.5], [32, 86, -46.5], [40, 100, -52.5]] };
@@ -126,7 +129,8 @@ export function buildWatch() {
   g.add(landMesh(G, { size: 380, seg: 170, seed: 14 })); trails(g, G);
   /* the rock: two boulders to hide between at the edge, one more beside, and the bare cliff under it */
   for (const [x, z, s, sd] of [[1.9, 4.5, 1.0, 2], [-1.7, 4.6, 0.9, 7], [3.7, 2.2, 0.9, 4]]) put(g, G, boulder(s, sd), x, z, sd * 1.3, { sink: 0.2, solids, r: s * 0.78 });
-  for (const [x, z, s, sd] of [[5.6, 7.2, 3.0, 8], [-5.2, 7.4, 2.6, 5], [0.4, 8.6, 3.4, 3], [10, 8.5, 2.6, 6], [-10, 9.5, 2.4, 9], [3, 12, 3.0, 11], [-4, 12.5, 2.6, 12]]) { const b = boulder(s, sd); b.position.set(x, G.h(x, z) - s * 0.25, z); g.add(b); }
+  const cliff = grp(g);   /* the face of the cliff below the rock: one thing made of boulders that run into each other on purpose */
+  for (const [x, z, s, sd] of [[5.6, 7.2, 3.0, 8], [-5.2, 7.4, 2.6, 5], [0.4, 8.6, 3.4, 3], [10, 8.5, 2.6, 6], [-10, 9.5, 2.4, 9], [3, 12, 3.0, 11], [-4, 12.5, 2.6, 12]]) { const b = boulder(s, sd); b.position.set(x, G.h(x, z) - s * 0.25, z); cliff.add(b); taken.add(x, z, s * 1.1); }
   /* trenches beside the top of the path, each with a forked stick to rest a gun on (Thicknesse and Dallas, on a Windward town in 1739) */
   const sp = pathLength(spur.dense), TR = [0.5, 0.68, 0.88].map((k) => { const [x, z, a] = pathAt(spur.dense, sp * k), nx = Math.cos(a), nz = -Math.sin(a), tx = x + nx * 1.75, tz = z + nz * 1.75, t = put(g, G, trench(false), tx, tz, a + PI / 2); return { x: tx, z: tz, ax: x + nx * 0.4, az: z + nz * 0.4, t, fx: tx + Math.sin(a) * 1.5, fz: tz + Math.cos(a) * 1.5 }; });
   const sticks = put(g, G, grp(), 2.7, -2.5, 0); for (let i = 0; i < 4; i++) { const f = forkStick(1.05); f.rotation.z = PI / 2 - 0.1; f.position.set(0, 0.06 + i * 0.05, i * 0.09 - 0.14); f.rotation.y = 0.2 * i; sticks.add(f); } sticks.userData.noBatch = true;
@@ -157,6 +161,7 @@ function nearestOn(d, x, z) { let b = 1e9, o = [x, z]; for (let i = 1; i < d.len
 
 /* ============ chapter 6: New Nanny Town, 5 August 1740 ============ */
 export function buildNewTown() {
+  taken.reset();
   const g = grp(), solids = [];
   const riverX = (z) => 27 + Math.sin(z * 0.06) * 4;
   const toRiver = { w: 1.3, pts: [[11, 3, 0], [16, 4.6, -0.3], [21, 6, -0.9]] };
@@ -164,7 +169,7 @@ export function buildNewTown() {
   const G = makeGround({ base: (x, z) => { const d = Math.hypot(x, z); return (fbm(x * 0.04, z * 0.04, 3, 81) - 0.5) * 2.4 + smooth(34, 120, d) * (16 + fbm(x * 0.02, z * 0.02, 4, 83) * 46) * (x > 16 ? 0.55 : 1) - 1.9 * Math.exp(-Math.pow((x - riverX(z)) / 4.2, 2)); }, trails: [toRiver], flats: [main, knoll] });
   g.add(landMesh(G, { size: 360, seg: 150, seed: 18 })); trails(g, G);
   const rd = []; for (let z = -120; z <= 120; z += 6) rd.push([riverX(z), z, 0]); const water = streamMesh(smoothPath(rd, 2), 4.4, -1.15, { speed: 1.1 }); g.add(water);
-  plant(g, rockGeo(4), treeM, spotsOn(G, 46, [16, -60, 38, 60], 15, (x, z) => Math.abs(x - riverX(z)) < 5.5 && G.trailness(x, z) < 0.05, { smin: 0.3, smax: 1.2 }), { sink: 0.2 });
+  plant(g, rockGeo(4), treeM, spotsOn(G, 46, [16, -60, 38, 60], 15, (x, z) => Math.abs(x - riverX(z)) < 5.5 && G.trailness(x, z) < 0.05, { smin: 0.3, smax: 1.2, room: 1.15 }), { sink: 0.2 });
   /* new houses round the clearing and across the valley floor */
   [35, 70, 105, 150, 205, 240, 300, 330].forEach((a, i) => { const t = a * PI / 180, x = Math.cos(t) * 16.6, z = Math.sin(t) * 16.6; put(g, G, hut(3.8 + (i % 2) * 0.4, 3.1, 2.05, i + 20), x, z, face(x, z, 0, 0), { sink: 0.18 }); });
   const far = farHuts(g, G, 46, [-70, -70, 20, 70], 27, (x, z, y) => { const d = Math.hypot(x, z); return d > 23 && d < 78 && G.trailness(x, z) < 0.01 && Math.abs(G.h(x + 2, z) - y) < 1.1 && Math.abs(G.h(x, z + 2) - y) < 1.1 && Math.hypot(x + 9, z + 37) > 11; });
@@ -176,7 +181,7 @@ export function buildNewTown() {
   const stone = put(g, G, paperStone(), 3.6, -4.6, 0.3, { solids, r: 0.95 });
   put(g, G, cookFire(true), -5, 5.4, 0, { solids }); put(g, G, stool(), -3.4, 6.6, 0, { solids, r: 0.35 }); put(g, G, mortar(), -7.2, 3.4, 0, { solids, r: 0.5 }); put(g, G, basketOf('plantain'), -6.4, 7.6, 0, { solids, r: 0.4 }); put(g, G, woodPile(7), 7.6, 8.6, 1.1, { solids });
   for (const [x, z] of [[-20, 12], [-22.4, 14.6], [-19.6, 16.4], [-24, 11], [-17.4, 13.6], [-21.8, 18]]) put(g, G, yamHill(1, x | 0), x, z, x);
-  plantPlantains(g, spotsOn(G, 30, [-34, 4, 18, 30], 9, (x, z) => { const d = Math.hypot(x, z); return d > 17 && d < 30 && G.trailness(x, z) < 0.05 && far.spots.every((p) => Math.hypot(p.x - x, p.z - z) > 4); }, { smin: 0.8, smax: 1.25 }));
+  plantPlantains(g, spotsOn(G, 30, [-34, 4, 18, 30], 9, (x, z) => { const d = Math.hypot(x, z); return d > 17 && d < 30 && G.trailness(x, z) < 0.05 && far.spots.every((p) => Math.hypot(p.x - x, p.z - z) > 4); }, { smin: 0.8, smax: 1.25, room: 0.16 }));
   forest(g, G, [-115, -115, 110, 115], { seed: 88, trees: 170, tall: 50, bushes: 130, ferns: 50, ground: 220, grass: 900, rocks: 40, keep: (x, z) => Math.hypot(x, z) > 21 && far.spots.every((p) => Math.hypot(p.x - x, p.z - z) > 4.2) && Math.abs(x - riverX(z)) > 5 && Math.hypot(x + 9, z + 37) > 8, near: [-45, -50, 40, 45] });
   plantGrass(g, spotsOn(G, 420, [-18, -18, 18, 18], 5, (x, z) => { const d = Math.hypot(x, z); return d > 11.5 && d < 18 && G.trailness(x, z) < 0.75; }));
   const hearth = new THREE.PointLight(0xffa050, 0, 14, 1.6); hearth.position.set(-5, 1.0, 5.4); g.add(hearth);

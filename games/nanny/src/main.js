@@ -12,13 +12,14 @@ import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditCloth } from '../../../engine/audit.js';
+import { skinProbe } from '../../../engine/skinprobe.js';   /* dev checks only (?test=skin), dropped from the public build */
 import { G as GFX, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
 import { ENV, mixEnv, makeRidges, makeMist, makeSun, makeFireflies, makeSmoke, pathLength, pathAt } from './land.js';
 import { buildEstate, buildTown, buildWatch, buildNewTown } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, SAY, CARDS, CHOICE_NAMES, CALLS } from './content.js';
 import * as SFX from './sfx.js';
-import { HATS, LOOKS } from './cast.js';
+import { HATS, LOOKS, KID } from './cast.js';
 import { musket, lantern, horn, leafCloak, beads, attach } from './props.js';
 
 const $ = (id) => document.getElementById(id);
@@ -90,18 +91,13 @@ function stickUI() {
   el.hidden = false; const rest = stick.id === null; el.classList.toggle('rest', rest); el.style.left = (rest ? 84 : stick.x0) + 'px'; el.style.top = (rest ? innerHeight - 150 : stick.y0) + 'px'; $('nub').style.transform = `translate(calc(-50% + ${stick.dx * 30}px), calc(-50% + ${stick.dy * 30}px))`;
 }
 
-/* ---------- people: borrowed bodies, recoloured per person (cast.js); places are built when a chapter needs them ---------- */
+/* ---------- people: this game's bodies (tools/nanny/people/), recoloured per person (cast.js); places are built when a chapter needs them ---------- */
 const BASES = {}, basePromises = {};
-/* the borrowed child bodies (from Kendal 1957) have white socks painted into the skin. Children in a Maroon town of the 1730s did not wear them, so they are repainted as skin. */
-function bareLegs(g) { g.scene.traverse((o) => { const c = o.isMesh && o.material.name === 'Skin' && o.geometry.attributes.color; if (!c) return; let r = 0, gr = 0, b = 0, n = 0;
-  for (let i = 0; i < c.count; i += 7) { const x = c.getX(i), y = c.getY(i), z = c.getZ(i); if (x < 0.6 && x > y && y > z) { r += x; gr += y; b += z; n++; } } if (!n) return; r /= n; gr /= n; b /= n;
-  for (let i = 0; i < c.count; i++) if (Math.min(c.getX(i), c.getY(i), c.getZ(i)) > 0.62) c.setXYZ(i, r, gr, b); c.needsUpdate = true; }); }
-function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePromises[id] = basePromises[id] || model(id).then((g) => { g.scene.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); if (/^(boy|girl)/.test(id)) bareLegs(g); BASES[id] = g; return g; })); }
+function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePromises[id] = basePromises[id] || model(id).then((g) => { g.scene.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); BASES[id] = g; return g; })); }
 const PROPS = { musket: (s) => musket(!s.fixed && !s.fine), lantern: () => lantern(), horn: () => horn() };   /* people far off carry the plain musket; the ones you can walk up to carry the full one */
 /* how each thing is carried (engine/grip.js): scale is its size, lift how far the arm is held out from the body. After changing these run ?test=held. */
 const GRIP = { musket: { scale: 1, lift: 0.3, straighten: 0.9 }, lantern: { scale: 1.1, lift: 0.5 }, horn: { scale: 1, lift: 0.32 } };
-const SKIN_LIGHT = 1.55;   /* the bodies' skin is built dark, so we lighten it (owner rule 9) so faces read in every light */
-const SKIN_BASE = { kofi: 1.0, turtler: 1.0, buc1: 1.0, ned: 1.0, soldier: 1.0, gunner: 1.0 };   /* per-body corrections, judged in game screenshots */
+const SKIN_LIGHT = 1.55;   /* owner rule 9: Skin is built inside Marcus Garvey's range, then lightened here so faces read in every light (as in Kendal). The British soldiers (pale: true) are drawn as built. Check with ?test=skin */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat);   /* a body carries several hats; show the one this person wears (s.hat), or none */
@@ -109,7 +105,7 @@ function makeBody(s) {
     if ((s.hide && s.hide.includes(nm)) || offHats.some((h) => nm === h || nm === h + 'Band')) { o.visible = false; return; }
     o.material = mat.clone(); const t = nm === 'Hair' ? undefined : s.tint && s.tint[nm];   /* hair keeps its own painted colours */
     if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
-    else if (nm === 'Skin' || nm === 'Hair') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT * (SKIN_BASE[s.base] || 1)); });
+    else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * (s.pale ? 1 : SKIN_LIGHT)); else if (nm === 'Hair') o.material.color.setScalar(1); });   /* hair keeps its own painted colour; only skin is lightened */
   m.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
   m.scale.setScalar(s.scale || 1); m.position.set(s.x, s.ground || 0, s.z); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
   const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.06; b.renderOrder = 1; m.add(b);
@@ -117,7 +113,7 @@ function makeBody(s) {
   for (const [bone, prop] of s.props || []) { const o = PROPS[prop](s), G = GRIP[prop]; grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.3, G.lift || 0), straighten: G.straighten ?? 0.8 }); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) m.userData.flame = o.userData.flame; }
   if (s.lampLight) { const L = new THREE.PointLight(0xffc878, 5.5, 15, 1.6); L.position.set(0.35, 0.95, 0.35); m.add(L); m.userData.lamp = L; }
   if (s.cloak) leafCloak(m, (s.x * 7 + s.z * 3) | 0); if (s.beads) attach(m, 'Neck', beads(), [0, 0.0, 0.015]);
-  spreadArms(m, /^(woman|girl)/.test(s.base) ? 0.15 : 0.06);   /* arms hang clear of skirts (engine/grip.js) */
+  spreadArms(m, /^maroon_(woman|elder_woman|girl|child)/.test(s.base) ? 0.15 : 0.06);   /* arms hang clear of skirts (engine/grip.js) */
   return m;
 }
 const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBasicMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.6, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
@@ -720,7 +716,7 @@ requestAnimationFrame(frame);
 function auditPlace(P) {
   const marks = [...new Set(P.npcs.filter((n) => n.when).map((n) => n.when[0]))].sort((a, b) => a - b), phases = marks.length ? marks : [0], out = { floating: [], inside: [], stuck: [] }, seen = new Set(), add = (k, l) => { if (!seen.has(l)) { seen.add(l); out[k].push(l); } };
   for (const st of phases) { const here = P.npcs.filter((n) => !n.when || (st >= n.when[0] && st <= n.when[1]));
-    const r = auditPlaceE({ id: P.id, snap: P.snap, npcs: here.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start, actions: P.actions, people: here.filter((n) => !n.extra).map((n) => ({ id: n.id, x: n.hx, z: n.hz, anim: n.anim })) });
+    const r = auditPlaceE({ id: P.id, snap: P.snap, groundAt: (x, z) => P.G.h(x, z), npcs: here.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start, actions: P.actions, people: here.filter((n) => !n.extra).map((n) => ({ id: n.id, x: n.hx, z: n.hz, anim: n.anim })) });
     /* The engine calls everywhere you may not walk a "walking wall". Here that is open hillside, and background figures stand on it on purpose (the Maroons beside the path).
        So that one line is kept only for people you talk to; they are also checked just below against the ground you can walk on. */
     const bg = new Set(here.filter((n) => n.extra).map((n) => n.id || n.base));
@@ -772,6 +768,9 @@ function devViews() {
       DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(at === 4 ? 10 : 22, h + (at === 4 ? 2 : 4), at === 4 ? 7 : 9); DIR.b = DIR.a; DIR.la = new THREE.Vector3(at === 4 ? 8 : 11, at === 4 ? -34 : -25, at === 4 ? 60 : 39); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 50; FOV = 50; resize(); for (let i = 0; i < 14; i++) update(0.05); }
   });
   if (shot === 'guns') go('town', 54, -22, -20.5, -2.3 + PI, 0.1).then((P) => { gunsRun(); for (let i = 0; i < 260; i++) update(0.05); state.x = -24; state.z = -22; state.yaw = 0.95; state.pitch = -0.1; const g = P.spots.guns[0], w = g.localToWorld(new THREE.Vector3(...g.userData.muzzle)); gunFlash(w.x, w.y, w.z, 3.2, 3); say(SAY.n4, 1e6); });
+  if (shot === 'gun') go('town', 54, -22, -20.5, 0, 0).then((P) => {   /* ?shot=gun&a=0.6: one swivel gun close up, from heading a (radians) round it, to check its legs and feet on the ground */
+    const g = P.spots.guns[0], a = +(q.get('a') || 0.6), c = g.position; for (const s of P.spots.guns) s.visible = true; DIR.on = true; DIR.t = 0; DIR.dur = 1e6;
+    DIR.a = new THREE.Vector3(c.x + Math.sin(a) * 2.6, c.y + 1.0, c.z + Math.cos(a) * 2.6); DIR.b = DIR.a; DIR.la = new THREE.Vector3(c.x, c.y + 0.5, c.z); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 50; FOV = 50; resize(); for (let i = 0; i < 6; i++) update(0.05, 6000); });
   if (shot === 'look') go('watch', 31, 0, 3.5, PI, -0.2).then((P) => { P.spots.redline.visible = true; const h = groundAt(0, 3.5) + EYE, fs = P.spots.far; DIR.on = true; DIR.t = 0; DIR.dur = 1e6; DIR.a = new THREE.Vector3(0.4, h + 0.6, 4.5); DIR.b = DIR.a; DIR.la = new THREE.Vector3(fs[0], fs[1] - 3, fs[2]); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 21; FOV = 21; resize(); bars(true); say(SAY.look2, 1e6); for (let i = 0; i < 6; i++) update(0.05, 6000); });
   /* the paths the autoplayer never takes: "Read what happened instead" for both set pieces, and being seen by the watchman */
   if (shot === 'skipfight') go('watch', 41, 0.2, 4.0, PI, -0.3).then(() => { fightIntro(); });
@@ -822,9 +821,30 @@ function devViews() {
     (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); count += r.floating.length + r.inside.length + r.stuck.length; out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + P.npcs.length + ' people, ' + P.walls.length + ' wall pieces)'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
       const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + count; })();
   }
+  /* pairs the cloth check does not judge, as in Port Royal (the same 1690 tailoring): a Lining is the hidden body kept in the colour of the cloth over it (tools/garvey/era.py), so it is never
+     a cover itself; and the Body beside knee breeches is the shin coming out of the hem, which is how they are worn. A Lining in the shirt's colour that pokes through the breeches IS judged. */
+  const CLOTH_SKIP = (a, b) => /^Lining/.test(b) || (/^Body/.test(a) && /^Breeches/.test(b));
+  if (q.get('test') === 'cloth') {   /* ?test=cloth : does an under layer show through its cover (skin through a shirt, a shirt through breeches or a coat, hair through a hat)? Every body, full and light copy, with and without its hat, standing, mid-stride, talking and sitting (as Kendal). &b=maroon_man,redcoat picks bodies, &full or &lo one kind, &where says where. */
+    go('newtown', 60, 0, 0, 0, 0).then(async (P) => { const out = []; let bad = 0, pts = 0; P.group.visible = false;
+      const POSES = [['Idle', 0.3], ['Walk', 0.25], ['Walk', 0.75], ['Talk1', 0.4], ['SitIdle', 0.3]], bases = (q.get('b') || 'maroon_man,maroon_scout,maroon_elder,maroon_woman,maroon_elder_woman,maroon_girl,maroon_child,maroon_boy,redcoat,militia').split(',');
+      for (const base of bases) for (const lo of [false, true]) { if ((lo && q.has('full')) || (!lo && q.has('lo'))) continue; const bodyId = base + (lo ? '_lo' : ''); await loadBase(bodyId);
+        for (const [i, hat] of [...(HATS[base] || []), false].entries()) { const b = makeBody({ base, bodyId, tint: {}, scale: KID[base] || 1, x: 0, z: 0, ry: 0, anim: 'Idle', hat }), name = bodyId + (hat ? ' +' + hat : ''); scene.add(b);
+          const r = auditCloth(name, b, { poses: i ? [['Idle', 0.3], ['Walk', 0.25]] : POSES, after: gripTick, where: q.has('where'), skip: CLOTH_SKIP }); out.push(name + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const l of r.lines) out.push('  ' + l); bad += r.lines.length; pts += r.points; scene.remove(b); await new Promise((res) => setTimeout(res, 0)); } }
+      out.unshift('cloth: ' + bad + ' issues (' + pts + ' points)'); const el = $('autolog'); el.textContent = out.join('\n'); document.title = 'CLOTH ' + bad; });
+  }
+  if (q.get('test') === 'skin') {   /* ?test=skin : how each face is drawn in the game's own light (engine/skinprobe.js), every look plus crowd people at the ends of their skin range. &env=day picks the light (day, morning, dawn, night, firenight). Compare with docs/PIPELINE.md, "Skin". */
+    go('newtown', 60, 0, 0, 0, 0).then(async (P) => { const out = []; setEnv(ENV[q.get('env') || 'day']);
+      const list = Object.keys(LOOKS).map((k) => [k, LOOKS[k]]); for (const sk of [0.9, 1.15]) list.push(['crowd maroon_woman skin ' + sk, { base: 'maroon_woman', tint: {}, skin: sk }], ['crowd maroon_man skin ' + sk, { base: 'maroon_man', tint: {}, skin: sk }]);
+      for (const [name, look] of list) { await loadBase(look.base); const b = makeBody({ ...look, x: 4000, z: 4000, ry: 0, anim: 'Idle', hat: false, props: [], cloak: false, beads: false }); scene.add(b); b.userData.anim.mx.update(0.3); const r = skinProbe(renderer, scene, b); scene.remove(b);
+        out.push(name + ' (' + look.base + ', skin ' + (look.skin || 1) + '): mean ' + r.rgb.join(',') + '  darkest ' + r.lo.join(',') + '  lightest ' + r.hi.join(',')); }
+      const el = $('autolog'); el.textContent = out.join('\n'); document.title = 'SKIN ' + out.length; });
+  }
   if (q.get('test') === 'walkers') {   /* ?test=walkers : people who walk must not bounce, float or sink. Quamin and Mama are led up the estate trail and the soldiers up the path, 30 steps a second;
-       each step the lowest toe must be on the ground (within 3 cm) and the body must not jump more than 2.5 cm against the ground from one step to the next. */
-    (async () => { const out = [], toe = new THREE.Vector3(), probe = (n, tag, st) => { const m = n.m; m.updateMatrixWorld(true); let low = 1e9; for (const sd of ['Left', 'Right']) { const b = m.getObjectByName('mixamorig' + sd + 'ToeBase'); if (b) low = Math.min(low, b.getWorldPosition(toe).y); } const g = m.userData.ground || 0, off = low - g - 0.035, ride = m.position.y - g;
+       each step the lowest point of the feet must be on the ground (within 3 cm; groundFeet sets it 8 mm in) and the body must not jump more than 2.5 cm against the ground from one step to the next. */
+    (async () => { const out = [], toe = new THREE.Vector3(), feet = new WeakMap(), footPts = (m) => { let f = feet.get(m); if (f) return f; f = []; m.traverse((o) => { if (!o.isSkinnedMesh || !o.visible || !/Skin|Shoes|Sole/.test(o.material.name || '')) return; const SI = o.geometry.attributes.skinIndex, SW = o.geometry.attributes.skinWeight, bones = o.skeleton.bones, idx = [];
+        for (let i = 0; i < SI.count; i++) { let k = 0; for (let c = 1; c < 4; c++) if (SW.getComponent(i, c) > SW.getComponent(i, k)) k = c; if (/mixamorig(Left|Right)(Foot|ToeBase|Toe_End)$/.test((bones[SI.getComponent(i, k)] || {}).name || '')) idx.push(i); } if (idx.length) f.push([o, idx]); }); feet.set(m, f); return f; },
+      probe = (n, tag, st) => { const m = n.m; m.updateMatrixWorld(true); let low = 1e9; for (const [o, idx] of footPts(m)) { o.skeleton.update(); for (let i = 0; i < idx.length; i += 3) low = Math.min(low, o.getVertexPosition(idx[i], toe).applyMatrix4(o.matrixWorld).y); }   /* the lowest point of the foot (bare or shod), not the toe bone: a bare foot has no shoe sole under the bone */
+        const g = m.userData.ground || 0, off = low - g + 0.008, ride = m.position.y - g;
         if (n.clip !== st.clip) { st.clip = n.clip; st.skip = 14; st.last = null; } if (st.skip > 0) { st.skip--; return; }   /* a change of step (standing to walking, walking to running) blends two poses for a third of a second: that is not judged */
         if (Math.abs(off) > 0.03) st.float = Math.max(st.float, Math.abs(off)); if (st.last !== null && Math.abs(ride - st.last) > (n.clip === 'Run' ? 0.08 : 0.025)   /* a run really does rise and fall */) st.jump = Math.max(st.jump, Math.abs(ride - st.last)); st.last = ride; st.n++; };
       let behind = 0; let starts = 0, was = false; const report = (name, st) => { out.push(name + ': ' + st.n + ' steps, worst toe gap ' + (st.float * 100).toFixed(1) + ' cm, worst jump ' + (st.jump * 100).toFixed(1) + ' cm' + (st.float || st.jump ? '  PROBLEM' : '')); return st.float || st.jump ? 1 : 0; }; let bad = 0;
