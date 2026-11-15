@@ -40,10 +40,5 @@
         }
       ]
     }
-  ],
-  "git": {
-    "deploymentEnabled": {
-      "feat/selassie-1966": false
-    }
-  }
+  ]
 }
