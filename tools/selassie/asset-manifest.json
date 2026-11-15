@@ -1,0 +1,687 @@
+{
+  "builderCommit": "aef17a8e2be3c7460a77797e7475ad2843c2d920",
+  "builderSHA256": "12b8cdb936c36c14eca2487e173560022d17dd6e601b545a69c44af308c0aee5",
+  "blender": "4.3.2",
+  "mpfbCommit": "9de0707fdc88438d7c53a1a2ac7937d9221e2431",
+  "makehumanCommit": "a8bc2d54ff0ac92e78ff71431b1023eda42bf482",
+  "finishingSHA256": "ab04fd89736080082f4de5a39a29e3d9511085626eee53520d3ab3d9c463f119",
+  "uniformSHA256": "0fec832561da2754bf627b360b967f105a80ae19eabbebc88e1f86edc6371fa6",
+  "faceSHA256": "1ecd02f88edce5386e2306cec90817c0ce4b06f8df18fbe7c71a0627b18ed3c5",
+  "models": [
+    {
+      "file": "sel_adina66.js",
+      "bytes": 320264,
+      "sha256": "8eafd57a3c5e0a171bec1dc11dd0a2306e51434aa6a4559967d4404703223678",
+      "recipeSHA256": "256dad04f7753a824b277f04f4b197f7ff76a6f8b1caae928b28536ddfb8d064",
+      "visibleTriangles": 27469,
+      "measurementTriangles": 4528,
+      "visibleDraws": 9
+    },
+    {
+      "file": "sel_adina66_crowd.js",
+      "bytes": 92264,
+      "sha256": "c7ea7afdae5e19d06bda8b97e63cb82682cb93564de867d9b451b7c4921e2901",
+      "recipeSHA256": "256dad04f7753a824b277f04f4b197f7ff76a6f8b1caae928b28536ddfb8d064",
+      "visibleTriangles": 5423,
+      "measurementTriangles": 774,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_adina66_focus.js",
+      "bytes": 283208,
+      "sha256": "0237610d63162e2e057c6a37540ddb81a4d52e810614af5ba71ca206a8354282",
+      "recipeSHA256": "256dad04f7753a824b277f04f4b197f7ff76a6f8b1caae928b28536ddfb8d064",
+      "visibleTriangles": 28461,
+      "measurementTriangles": 4176,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_adina66_lo.js",
+      "bytes": 129904,
+      "sha256": "a229fc240ee54b396592df800f974302883e9b3457ff79db29bf5d52c8437590",
+      "recipeSHA256": "256dad04f7753a824b277f04f4b197f7ff76a6f8b1caae928b28536ddfb8d064",
+      "visibleTriangles": 5683,
+      "measurementTriangles": 498,
+      "visibleDraws": 9
+    },
+    {
+      "file": "sel_adina66_phone.js",
+      "bytes": 66320,
+      "sha256": "ff67535c4b53571d50c7d041972a067fb5cd64d7dee7f248aada5c0531eaf1fa",
+      "recipeSHA256": "256dad04f7753a824b277f04f4b197f7ff76a6f8b1caae928b28536ddfb8d064",
+      "visibleTriangles": 2809,
+      "measurementTriangles": 388,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_boy66.js",
+      "bytes": 279568,
+      "sha256": "adc9e30f9a1a41b65a258f8ff87c2d23aa7e6e05210ae5c376b10cffc4f03e90",
+      "recipeSHA256": "d7ef674585fb9817d9f548c7f360782437a640b4dd9b62662d1c77c6ad11bcb5",
+      "visibleTriangles": 25672,
+      "measurementTriangles": 0,
+      "visibleDraws": 12
+    },
+    {
+      "file": "sel_boy66_crowd.js",
+      "bytes": 90864,
+      "sha256": "f4f56b05287cbe27eaf429fbd656c72da5f9225e502ff4f53adb1d19e671d7df",
+      "recipeSHA256": "d7ef674585fb9817d9f548c7f360782437a640b4dd9b62662d1c77c6ad11bcb5",
+      "visibleTriangles": 4972,
+      "measurementTriangles": 1228,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_boy66_focus.js",
+      "bytes": 241396,
+      "sha256": "343ffc6ddf478ee2ad8593b6f845a9c86cfb0d76e5c36f9666f999af559c9e1d",
+      "recipeSHA256": "d7ef674585fb9817d9f548c7f360782437a640b4dd9b62662d1c77c6ad11bcb5",
+      "visibleTriangles": 25672,
+      "measurementTriangles": 1228,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_boy66_lo.js",
+      "bytes": 120464,
+      "sha256": "67ff778db8f288211086ad7179e915f5d5f7858300f5cac829c68a370df7c6fb",
+      "recipeSHA256": "d7ef674585fb9817d9f548c7f360782437a640b4dd9b62662d1c77c6ad11bcb5",
+      "visibleTriangles": 5940,
+      "measurementTriangles": 0,
+      "visibleDraws": 9
+    },
+    {
+      "file": "sel_boy66_phone.js",
+      "bytes": 65788,
+      "sha256": "d6063a878cbea4234c7f9f1c5db0b5d7e749496c01f20d6bc046c4bf6d7dcf9b",
+      "recipeSHA256": "d7ef674585fb9817d9f548c7f360782437a640b4dd9b62662d1c77c6ad11bcb5",
+      "visibleTriangles": 1970,
+      "measurementTriangles": 1228,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_crowdman66.js",
+      "bytes": 292756,
+      "sha256": "be7042c965625b7030335fdc736e3e67300bec82acb7c5ece4a7f8b1ed0dbd44",
+      "recipeSHA256": "7fd61654bd468a9d968e1a966a79aa14664477159bb9cf010500182e1e7806ca",
+      "visibleTriangles": 25929,
+      "measurementTriangles": 0,
+      "visibleDraws": 14
+    },
+    {
+      "file": "sel_crowdman66_crowd.js",
+      "bytes": 90428,
+      "sha256": "95aed123ea3ede17c2f47b9dce3fb50eef3b1e31ae62570c097b5a64d00c04fd",
+      "recipeSHA256": "7fd61654bd468a9d968e1a966a79aa14664477159bb9cf010500182e1e7806ca",
+      "visibleTriangles": 5731,
+      "measurementTriangles": 468,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_crowdman66_focus.js",
+      "bytes": 252156,
+      "sha256": "77b452e7749ab3b369ff225e0872003807ffe39fb1bdc97e71a6dd34de066db6",
+      "recipeSHA256": "7fd61654bd468a9d968e1a966a79aa14664477159bb9cf010500182e1e7806ca",
+      "visibleTriangles": 25929,
+      "measurementTriangles": 2172,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_crowdman66_lo.js",
+      "bytes": 130684,
+      "sha256": "8dafc1124238f3a7e0a3df19f8a0847edfc4b86ed436837a7a9d311215a8febf",
+      "recipeSHA256": "7fd61654bd468a9d968e1a966a79aa14664477159bb9cf010500182e1e7806ca",
+      "visibleTriangles": 5961,
+      "measurementTriangles": 0,
+      "visibleDraws": 11
+    },
+    {
+      "file": "sel_crowdman66_phone.js",
+      "bytes": 65304,
+      "sha256": "b5fa45bb9a4c8915592c41373b9c27f4a4e3a3a1ef7357d3006d9df3aafa0073",
+      "recipeSHA256": "7fd61654bd468a9d968e1a966a79aa14664477159bb9cf010500182e1e7806ca",
+      "visibleTriangles": 2963,
+      "measurementTriangles": 234,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_crowdwoman66.js",
+      "bytes": 320188,
+      "sha256": "f5bbc35c48b867f94aeacdf51497b4f949730b16df79432fdb28ef8b1724bdae",
+      "recipeSHA256": "a0402541dc0a8b11f8ff09277f4abe274560732445759c5e4fd419cc0f21a548",
+      "visibleTriangles": 27559,
+      "measurementTriangles": 4438,
+      "visibleDraws": 9
+    },
+    {
+      "file": "sel_crowdwoman66_crowd.js",
+      "bytes": 91080,
+      "sha256": "68d171049e885b2c752bda7ab3a40663c730e6f5fc664c15893fbe7572a2d669",
+      "recipeSHA256": "a0402541dc0a8b11f8ff09277f4abe274560732445759c5e4fd419cc0f21a548",
+      "visibleTriangles": 5449,
+      "measurementTriangles": 748,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_crowdwoman66_focus.js",
+      "bytes": 282000,
+      "sha256": "532e1ed4a069a56b5ea81aa6c51ad9d16ed6c4a926639cbb9bdb4a1711aa0c89",
+      "recipeSHA256": "a0402541dc0a8b11f8ff09277f4abe274560732445759c5e4fd419cc0f21a548",
+      "visibleTriangles": 28539,
+      "measurementTriangles": 4030,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_crowdwoman66_lo.js",
+      "bytes": 129908,
+      "sha256": "84690bb3a4cbf79dce37c99e2545d2523f20675a87d4df335f4a1afb3317ab91",
+      "recipeSHA256": "a0402541dc0a8b11f8ff09277f4abe274560732445759c5e4fd419cc0f21a548",
+      "visibleTriangles": 5717,
+      "measurementTriangles": 474,
+      "visibleDraws": 9
+    },
+    {
+      "file": "sel_crowdwoman66_phone.js",
+      "bytes": 65788,
+      "sha256": "a7f14ae2ca256f8b0928805ba5815881a4d91feb8525c4616d8f17c19ac442fa",
+      "recipeSHA256": "a0402541dc0a8b11f8ff09277f4abe274560732445759c5e4fd419cc0f21a548",
+      "visibleTriangles": 2823,
+      "measurementTriangles": 376,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_emperor66.js",
+      "bytes": 420008,
+      "sha256": "6cc651603499a3ba8fa67231385755990fd97f8715985ef4ca5aa006eb546e07",
+      "recipeSHA256": "5d680d0d40bf4db3c12fccf95ced412ed9f429118bdd17f8c58717cae4748fc9",
+      "visibleTriangles": 31995,
+      "measurementTriangles": 0,
+      "visibleDraws": 27
+    },
+    {
+      "file": "sel_emperor66_crowd.js",
+      "bytes": 111804,
+      "sha256": "507670642d02a2be4fbdfcdde2f611d0d3654d3cd10a4fc6185e025c34c2790e",
+      "recipeSHA256": "5d680d0d40bf4db3c12fccf95ced412ed9f429118bdd17f8c58717cae4748fc9",
+      "visibleTriangles": 5425,
+      "measurementTriangles": 772,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_emperor66_focus.js",
+      "bytes": 305564,
+      "sha256": "b1a1649e0f3948791f5894521630f91af21d3b15a80eaf7401bcfec6eb75871a",
+      "recipeSHA256": "5d680d0d40bf4db3c12fccf95ced412ed9f429118bdd17f8c58717cae4748fc9",
+      "visibleTriangles": 29651,
+      "measurementTriangles": 2348,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_emperor66_lo.js",
+      "bytes": 225836,
+      "sha256": "31d1a71728b155b0f9d7927f64bf1066a0159c0d00cc81b58590ee7dffb9fe76",
+      "recipeSHA256": "5d680d0d40bf4db3c12fccf95ced412ed9f429118bdd17f8c58717cae4748fc9",
+      "visibleTriangles": 6889,
+      "measurementTriangles": 0,
+      "visibleDraws": 26
+    },
+    {
+      "file": "sel_emperor66_phone.js",
+      "bytes": 89612,
+      "sha256": "ce1b667fba4c4d6450979ba426571692b260d5d766e82f97f830ff6f9627e694",
+      "recipeSHA256": "5d680d0d40bf4db3c12fccf95ced412ed9f429118bdd17f8c58717cae4748fc9",
+      "visibleTriangles": 3169,
+      "measurementTriangles": 638,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_girl66.js",
+      "bytes": 329552,
+      "sha256": "a739b15be32c371814a3c450701145471d3fcdd1c0eafc289a1f20ce7982ac71",
+      "recipeSHA256": "644ddb6abefb94e7b1d10eb2b57fc32ce46cf8f12a683a26358d11551a380a98",
+      "visibleTriangles": 28086,
+      "measurementTriangles": 3910,
+      "visibleDraws": 10
+    },
+    {
+      "file": "sel_girl66_crowd.js",
+      "bytes": 92672,
+      "sha256": "e6e91feea0fba25f92ca4b19680735754238561a477a468bb1c4d8f5b3f1bbc0",
+      "recipeSHA256": "644ddb6abefb94e7b1d10eb2b57fc32ce46cf8f12a683a26358d11551a380a98",
+      "visibleTriangles": 5480,
+      "measurementTriangles": 718,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_girl66_focus.js",
+      "bytes": 282716,
+      "sha256": "16caced1f175459652cc3059d79c7da51649ecee350b4ab7406b0b0c5894941b",
+      "recipeSHA256": "644ddb6abefb94e7b1d10eb2b57fc32ce46cf8f12a683a26358d11551a380a98",
+      "visibleTriangles": 28206,
+      "measurementTriangles": 3792,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_girl66_lo.js",
+      "bytes": 135852,
+      "sha256": "6f116d4711c968cb6ac9566e64bf62a95dce3c844dc56eac7c574d2fa4e13fc0",
+      "recipeSHA256": "644ddb6abefb94e7b1d10eb2b57fc32ce46cf8f12a683a26358d11551a380a98",
+      "visibleTriangles": 5804,
+      "measurementTriangles": 394,
+      "visibleDraws": 10
+    },
+    {
+      "file": "sel_girl66_phone.js",
+      "bytes": 66868,
+      "sha256": "0790c44f74ff98a14073448cfa7392e20ac10ac45b1ae018dea15bf843692c50",
+      "recipeSHA256": "644ddb6abefb94e7b1d10eb2b57fc32ce46cf8f12a683a26358d11551a380a98",
+      "visibleTriangles": 2838,
+      "measurementTriangles": 360,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_levi66.js",
+      "bytes": 329108,
+      "sha256": "51d44b89a8c8e2b817e9512102eb423d4cbe843282f634563fe77b1678b50cbd",
+      "recipeSHA256": "44f76a702305c0dd0362d6153cd92abf7b6a6f6df449bb52d9f1475563783f21",
+      "visibleTriangles": 32544,
+      "measurementTriangles": 0,
+      "visibleDraws": 13
+    },
+    {
+      "file": "sel_levi66_crowd.js",
+      "bytes": 90652,
+      "sha256": "9a4e8ad3f38ac1909e689a42ad5375c457e8d62eb44103bd7b53d31380d65263",
+      "recipeSHA256": "44f76a702305c0dd0362d6153cd92abf7b6a6f6df449bb52d9f1475563783f21",
+      "visibleTriangles": 5822,
+      "measurementTriangles": 376,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_levi66_focus.js",
+      "bytes": 273112,
+      "sha256": "d9ef72ee3b98f6b8dae3e8184d654c281822e720a8bffb3293516378850ae338",
+      "recipeSHA256": "44f76a702305c0dd0362d6153cd92abf7b6a6f6df449bb52d9f1475563783f21",
+      "visibleTriangles": 30012,
+      "measurementTriangles": 1986,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_levi66_lo.js",
+      "bytes": 129272,
+      "sha256": "387c840d6c9884733b306a2be406ae78bf50787d28259ac222861e54fd8432d5",
+      "recipeSHA256": "44f76a702305c0dd0362d6153cd92abf7b6a6f6df449bb52d9f1475563783f21",
+      "visibleTriangles": 6244,
+      "measurementTriangles": 0,
+      "visibleDraws": 10
+    },
+    {
+      "file": "sel_levi66_phone.js",
+      "bytes": 66808,
+      "sha256": "d7dc6693f4a82d7d69feb2a5035ecb2d8ab44bd0a8929b1cef322c0712f8de23",
+      "recipeSHA256": "44f76a702305c0dd0362d6153cd92abf7b6a6f6df449bb52d9f1475563783f21",
+      "visibleTriangles": 3010,
+      "measurementTriangles": 244,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_mum66.js",
+      "bytes": 321600,
+      "sha256": "54a99f57e41f1f5b5a479895d939d96de0b68fe7ef73cfd7f12c2d1f55e298c9",
+      "recipeSHA256": "7deb257fd84af94e5802ec9449aa76724a5b09fd3e8962c52b6e9494e8d87c52",
+      "visibleTriangles": 27506,
+      "measurementTriangles": 4488,
+      "visibleDraws": 9
+    },
+    {
+      "file": "sel_mum66_crowd.js",
+      "bytes": 91712,
+      "sha256": "45fc37e676a7bba692b2147823e72700ad6d96ae23f391ac8490f002a0a4b654",
+      "recipeSHA256": "7deb257fd84af94e5802ec9449aa76724a5b09fd3e8962c52b6e9494e8d87c52",
+      "visibleTriangles": 5454,
+      "measurementTriangles": 744,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_mum66_focus.js",
+      "bytes": 280468,
+      "sha256": "9d06472b9e64130dcefa4a2f30fe3dc8f395ba72c30ad6c441642e043d4a8639",
+      "recipeSHA256": "7deb257fd84af94e5802ec9449aa76724a5b09fd3e8962c52b6e9494e8d87c52",
+      "visibleTriangles": 28064,
+      "measurementTriangles": 3934,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_mum66_lo.js",
+      "bytes": 130924,
+      "sha256": "8e4cbc3f1f5b7ab5bfc3f2b840ad07606434c90de748ee4b3dcc49e867d42ac9",
+      "recipeSHA256": "7deb257fd84af94e5802ec9449aa76724a5b09fd3e8962c52b6e9494e8d87c52",
+      "visibleTriangles": 5732,
+      "measurementTriangles": 480,
+      "visibleDraws": 9
+    },
+    {
+      "file": "sel_mum66_phone.js",
+      "bytes": 66336,
+      "sha256": "43acfa7118b9fc6c932f619acdc7733db872ee030a4569d57d9873856094050e",
+      "recipeSHA256": "7deb257fd84af94e5802ec9449aa76724a5b09fd3e8962c52b6e9494e8d87c52",
+      "visibleTriangles": 2824,
+      "measurementTriangles": 374,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_planno66.js",
+      "bytes": 317796,
+      "sha256": "5a607ac7b94eb2d28c142fb44c9ae2a6a9a8a1d29167468b77564b8fd6cde260",
+      "recipeSHA256": "84a19c1b7d1959a161eb855f017ca5ccca7e9e32a00c44b81ca07d0d171c6e0c",
+      "visibleTriangles": 32160,
+      "measurementTriangles": 0,
+      "visibleDraws": 11
+    },
+    {
+      "file": "sel_planno66_crowd.js",
+      "bytes": 90728,
+      "sha256": "b19384d289a0fe780099961c9bfae7844afa6ca0ffcd3b42f6c5803440ce7b2d",
+      "recipeSHA256": "84a19c1b7d1959a161eb855f017ca5ccca7e9e32a00c44b81ca07d0d171c6e0c",
+      "visibleTriangles": 5818,
+      "measurementTriangles": 380,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_planno66_focus.js",
+      "bytes": 273740,
+      "sha256": "c5ed7507b67b014c46a75ede9ff1bf4f1c1e91a913840eb883d62968900e3c32",
+      "recipeSHA256": "84a19c1b7d1959a161eb855f017ca5ccca7e9e32a00c44b81ca07d0d171c6e0c",
+      "visibleTriangles": 29990,
+      "measurementTriangles": 2008,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_planno66_lo.js",
+      "bytes": 129604,
+      "sha256": "117ab07eb02b5d43cfd429963e15a5d42554c0662ff5bcefff37dab794b3cdb5",
+      "recipeSHA256": "84a19c1b7d1959a161eb855f017ca5ccca7e9e32a00c44b81ca07d0d171c6e0c",
+      "visibleTriangles": 6300,
+      "measurementTriangles": 0,
+      "visibleDraws": 10
+    },
+    {
+      "file": "sel_planno66_phone.js",
+      "bytes": 66392,
+      "sha256": "c89c2fd5ea1c2b8f1dd9186e78f1aa923494478165bae3174202e81ddacaf4a9",
+      "recipeSHA256": "84a19c1b7d1959a161eb855f017ca5ccca7e9e32a00c44b81ca07d0d171c6e0c",
+      "visibleTriangles": 3008,
+      "measurementTriangles": 252,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_police66.js",
+      "bytes": 274892,
+      "sha256": "c14f2e4ef39f0e924c442ff0d17d8bdeefa6eeac6a65efe8f8224382ab270f5a",
+      "recipeSHA256": "e5384da33f44fc4880b107e15daa1c467aecf0dcec1e429b4bf0f1608cd31331",
+      "visibleTriangles": 24919,
+      "measurementTriangles": 0,
+      "visibleDraws": 12
+    },
+    {
+      "file": "sel_police66_crowd.js",
+      "bytes": 91096,
+      "sha256": "0090a2c5374674a16448c11274840d27e1c3940b313552642dde8037bb02da92",
+      "recipeSHA256": "e5384da33f44fc4880b107e15daa1c467aecf0dcec1e429b4bf0f1608cd31331",
+      "visibleTriangles": 5714,
+      "measurementTriangles": 484,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_police66_focus.js",
+      "bytes": 243812,
+      "sha256": "751d669addf8145e363d411d5c48b67b0725ecf0a8445db47944074880e0eab1",
+      "recipeSHA256": "e5384da33f44fc4880b107e15daa1c467aecf0dcec1e429b4bf0f1608cd31331",
+      "visibleTriangles": 24919,
+      "measurementTriangles": 2164,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_police66_lo.js",
+      "bytes": 135308,
+      "sha256": "9fa4f136561f9be1c6db3edbddc357e52197a0f2429eeb552652c1e539ab51b3",
+      "recipeSHA256": "e5384da33f44fc4880b107e15daa1c467aecf0dcec1e429b4bf0f1608cd31331",
+      "visibleTriangles": 5955,
+      "measurementTriangles": 0,
+      "visibleDraws": 12
+    },
+    {
+      "file": "sel_police66_phone.js",
+      "bytes": 66152,
+      "sha256": "a6dca2f84c0eccdbd8faac6bc2b2e51afaaaa65639c34814edfdbd992a8e8601",
+      "recipeSHA256": "e5384da33f44fc4880b107e15daa1c467aecf0dcec1e429b4bf0f1608cd31331",
+      "visibleTriangles": 2956,
+      "measurementTriangles": 242,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastaelder66.js",
+      "bytes": 322324,
+      "sha256": "86f540fc8f1e78f4ab8323fda83ed2a787e31832caaa2c9c5b2b7f17f0b8f383",
+      "recipeSHA256": "28fd9139716f1493a5e1805a60c47b124802b3705cf4aaebc2e4db708ab169b4",
+      "visibleTriangles": 32218,
+      "measurementTriangles": 0,
+      "visibleDraws": 11
+    },
+    {
+      "file": "sel_rastaelder66_crowd.js",
+      "bytes": 90952,
+      "sha256": "f0f658e5f2aa9bac2ca06d7464cbdb191d110d5fc1cc45a5011512e6f4515d9a",
+      "recipeSHA256": "28fd9139716f1493a5e1805a60c47b124802b3705cf4aaebc2e4db708ab169b4",
+      "visibleTriangles": 5820,
+      "measurementTriangles": 378,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastaelder66_focus.js",
+      "bytes": 277776,
+      "sha256": "4c420efd41de0cad0ff34ea37e2a3a933484f02c666f2aa69fe69bab78dbe62e",
+      "recipeSHA256": "28fd9139716f1493a5e1805a60c47b124802b3705cf4aaebc2e4db708ab169b4",
+      "visibleTriangles": 29992,
+      "measurementTriangles": 2006,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastaelder66_lo.js",
+      "bytes": 129736,
+      "sha256": "f2280385daa7c3e098808d47ee13cb2f543686171b76ab2a8427693fc8f25463",
+      "recipeSHA256": "28fd9139716f1493a5e1805a60c47b124802b3705cf4aaebc2e4db708ab169b4",
+      "visibleTriangles": 6198,
+      "measurementTriangles": 0,
+      "visibleDraws": 10
+    },
+    {
+      "file": "sel_rastaelder66_phone.js",
+      "bytes": 66636,
+      "sha256": "54ead83f99a67a5dfde2c693db08f580bcca6df058c96d81a14aed8fc19ba513",
+      "recipeSHA256": "28fd9139716f1493a5e1805a60c47b124802b3705cf4aaebc2e4db708ab169b4",
+      "visibleTriangles": 3008,
+      "measurementTriangles": 244,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastaman66.js",
+      "bytes": 316772,
+      "sha256": "01c150d63969c5f631cd96b173cfb6afddb665f12230add4c769e9ec470faf9d",
+      "recipeSHA256": "1d8bd997a03f116f49b0888577abce5e4bfd2f76ca08909e8027fa86886acb53",
+      "visibleTriangles": 32162,
+      "measurementTriangles": 0,
+      "visibleDraws": 11
+    },
+    {
+      "file": "sel_rastaman66_crowd.js",
+      "bytes": 90480,
+      "sha256": "90a3e14cfec10f72192db356bfe740616ce3f43a062965185455416f3aa34bc6",
+      "recipeSHA256": "1d8bd997a03f116f49b0888577abce5e4bfd2f76ca08909e8027fa86886acb53",
+      "visibleTriangles": 5818,
+      "measurementTriangles": 380,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastaman66_focus.js",
+      "bytes": 272484,
+      "sha256": "7bf4d9880d812baaa73f1e6c023e65c8e97dd728f1d0ef0c67e1495a3ae50e46",
+      "recipeSHA256": "1d8bd997a03f116f49b0888577abce5e4bfd2f76ca08909e8027fa86886acb53",
+      "visibleTriangles": 29990,
+      "measurementTriangles": 2008,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastaman66_lo.js",
+      "bytes": 129252,
+      "sha256": "c22e0078ba98b4970a222e3fbc8834a95364ecc0a8b6745db0bcbdbd1b7977de",
+      "recipeSHA256": "1d8bd997a03f116f49b0888577abce5e4bfd2f76ca08909e8027fa86886acb53",
+      "visibleTriangles": 6238,
+      "measurementTriangles": 0,
+      "visibleDraws": 10
+    },
+    {
+      "file": "sel_rastaman66_phone.js",
+      "bytes": 66500,
+      "sha256": "554ea62623e7117d95a15a6c889ffd02f9fbc5296fef3fd36fa8486f8dadcd9c",
+      "recipeSHA256": "1d8bd997a03f116f49b0888577abce5e4bfd2f76ca08909e8027fa86886acb53",
+      "visibleTriangles": 3008,
+      "measurementTriangles": 250,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastatam66.js",
+      "bytes": 318980,
+      "sha256": "eec0627c14884902263ed6175a7f4719b613919a02138745d297d33e98067739",
+      "recipeSHA256": "40e87a859dc209dde10bb4861388be27235c0770700de8b1d2d7ea239c9717a3",
+      "visibleTriangles": 30701,
+      "measurementTriangles": 0,
+      "visibleDraws": 13
+    },
+    {
+      "file": "sel_rastatam66_crowd.js",
+      "bytes": 92236,
+      "sha256": "cb9213e2b14d2c98e9daa3bd4c41511ef8e5d2f16e094fad2513b38704367481",
+      "recipeSHA256": "40e87a859dc209dde10bb4861388be27235c0770700de8b1d2d7ea239c9717a3",
+      "visibleTriangles": 5801,
+      "measurementTriangles": 396,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastatam66_focus.js",
+      "bytes": 274420,
+      "sha256": "f03ed27b532c5b28e309a47830d4f361d05d30a743cea939533a73200be86e9c",
+      "recipeSHA256": "40e87a859dc209dde10bb4861388be27235c0770700de8b1d2d7ea239c9717a3",
+      "visibleTriangles": 29899,
+      "measurementTriangles": 2098,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastatam66_lo.js",
+      "bytes": 132772,
+      "sha256": "c6b5f6b6562115fb755d7750c64e2d366c9c6728be1d8ba26412a993dd26bd00",
+      "recipeSHA256": "40e87a859dc209dde10bb4861388be27235c0770700de8b1d2d7ea239c9717a3",
+      "visibleTriangles": 6695,
+      "measurementTriangles": 0,
+      "visibleDraws": 10
+    },
+    {
+      "file": "sel_rastatam66_phone.js",
+      "bytes": 66948,
+      "sha256": "e87accbd5fc04c05e37d6f057ad17e498fec68bc6e5b33bb5dcc78c9bc3220cb",
+      "recipeSHA256": "40e87a859dc209dde10bb4861388be27235c0770700de8b1d2d7ea239c9717a3",
+      "visibleTriangles": 2999,
+      "measurementTriangles": 250,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastawoman66.js",
+      "bytes": 331580,
+      "sha256": "0a166d453478ce8fa70cded1add1837c780b925e0455e5bfecae11282db47790",
+      "recipeSHA256": "6986ed28190d65927b6c7b8e3e6a6b1f71a6e8ddb3ee09b69101ec877b45d47f",
+      "visibleTriangles": 27383,
+      "measurementTriangles": 4612,
+      "visibleDraws": 11
+    },
+    {
+      "file": "sel_rastawoman66_crowd.js",
+      "bytes": 91120,
+      "sha256": "53995ea817f44da2ee6cbde0ab237a44ae5a2f841dc7882a87d527c53e79ba3c",
+      "recipeSHA256": "6986ed28190d65927b6c7b8e3e6a6b1f71a6e8ddb3ee09b69101ec877b45d47f",
+      "visibleTriangles": 5467,
+      "measurementTriangles": 730,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastawoman66_focus.js",
+      "bytes": 278812,
+      "sha256": "e3766ee988ffca4db4b16d9d393adf23dd8b46a6854f7e376336bb7ad46c54fc",
+      "recipeSHA256": "6986ed28190d65927b6c7b8e3e6a6b1f71a6e8ddb3ee09b69101ec877b45d47f",
+      "visibleTriangles": 28135,
+      "measurementTriangles": 3862,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_rastawoman66_lo.js",
+      "bytes": 139996,
+      "sha256": "32e3e79af5581bf028d0f36a541961861b1c385886c368ca738067ac7ed268b0",
+      "recipeSHA256": "6986ed28190d65927b6c7b8e3e6a6b1f71a6e8ddb3ee09b69101ec877b45d47f",
+      "visibleTriangles": 6087,
+      "measurementTriangles": 248,
+      "visibleDraws": 11
+    },
+    {
+      "file": "sel_rastawoman66_phone.js",
+      "bytes": 65716,
+      "sha256": "a0b68c90b2f66bb21361fd46eb319b1081428abd59c570bd9a550fd222e52058",
+      "recipeSHA256": "6986ed28190d65927b6c7b8e3e6a6b1f71a6e8ddb3ee09b69101ec877b45d47f",
+      "visibleTriangles": 2831,
+      "measurementTriangles": 366,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_vendor30.js",
+      "bytes": 283956,
+      "sha256": "759e03750c6b23550a85dae05827679745c59d2ceef78769cf4c5e4060a4c1fb",
+      "recipeSHA256": "3c8a01db5f8fca56adc6a71c78550be5860ae495002ebe9c574af7ebcc830403",
+      "visibleTriangles": 25394,
+      "measurementTriangles": 0,
+      "visibleDraws": 13
+    },
+    {
+      "file": "sel_vendor30_crowd.js",
+      "bytes": 90172,
+      "sha256": "8debe511502b2cd59cde7f1931af5fb2c8b8566791dab2c8781545042d021b40",
+      "recipeSHA256": "3c8a01db5f8fca56adc6a71c78550be5860ae495002ebe9c574af7ebcc830403",
+      "visibleTriangles": 5724,
+      "measurementTriangles": 474,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_vendor30_focus.js",
+      "bytes": 247924,
+      "sha256": "25299d61d0bef2ca81cf8eeaa6c1e8cb0281d82670ffd40f1bfd3cd66cb29be3",
+      "recipeSHA256": "3c8a01db5f8fca56adc6a71c78550be5860ae495002ebe9c574af7ebcc830403",
+      "visibleTriangles": 25394,
+      "measurementTriangles": 2158,
+      "visibleDraws": 2
+    },
+    {
+      "file": "sel_vendor30_lo.js",
+      "bytes": 125800,
+      "sha256": "47a2d2e06012d33da8c1184ecce52943be5753ae75c59c1c6e79fb0337258c36",
+      "recipeSHA256": "3c8a01db5f8fca56adc6a71c78550be5860ae495002ebe9c574af7ebcc830403",
+      "visibleTriangles": 5990,
+      "measurementTriangles": 0,
+      "visibleDraws": 10
+    },
+    {
+      "file": "sel_vendor30_phone.js",
+      "bytes": 65100,
+      "sha256": "b4e0a7c7782372e5f65d6498c4fe46eee603d3cbfb615fd4a8c9aca427928e4d",
+      "recipeSHA256": "3c8a01db5f8fca56adc6a71c78550be5860ae495002ebe9c574af7ebcc830403",
+      "visibleTriangles": 2960,
+      "measurementTriangles": 246,
+      "visibleDraws": 2
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "name": "sel_crowdman66",
+  "era": 1966,
+  "body": {
+    "gender": 1,
+    "age": 0.33,
+    "muscle": 0.4,
+    "weight": 0.56,
+    "height": 0.55,
+    "proportions": 0.56,
+    "african": 1.0,
+    "caucasian": 0.0,
+    "asian": 0.0
+  },
+  "garments": {
+    "sleeve": 0.3,
+    "shoes": true,
+    "collar": "camp",
+    "hairvol": 0.25,
+    "hat": [
+      [
+        "trilby",
+        "Hat"
+      ]
+    ],
+    "trousers": true
+  },
+  "colors": {
+    "Skin": [
+      155,
+      107,
+      79
+    ],
+    "Hair": [
+      24,
+      20,
+      17
+    ],
+    "Shirt": [
+      177,
+      198,
+      168
+    ],
+    "Collar": [
+      177,
+      198,
+      168
+    ],
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Breeches": [
+      73,
+      79,
+      83
+    ],
+    "Hat": [
+      148,
+      122,
+      87
+    ],
+    "HatBand": [
+      63,
+      57,
+      43
+    ]
+  },
+  "targets": {
+    "head-round": 0.4,
+    "nose-width2-incr": 0.25
+  }
+}

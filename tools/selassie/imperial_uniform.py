@@ -1,0 +1,142 @@
+"""Uniform reconstruction from the owner's five arrival-day reference images.
+Full-size tunic, pale shirt/tie, red gorget tabs, ribbons, Sam Browne belt and
+braided gold cords. No photograph is embedded in the model.
+"""
+from mathutils import Matrix
+COL['Insignia']=srgb([180,151,81]);COL['Gorget']=srgb([157,41,36])
+# The uniform's fitted lapels replace the civilian suit's broad lapels.
+old_lapels=bpy.data.objects.get('Lapels')
+if old_lapels:bpy.data.objects.remove(old_lapels,do_unlink=True)
+tunic=PART['jacket'];jt=tree_of(tunic);st=tree_of(PART['shirt'])
+def front(x,z,off=.006):
+    origin=Vector((x,hy-.8,z));direction=Vector((0,1,0))
+    hits=[t.ray_cast(origin,direction)[0] for t in (jt,st,tree)]
+    hits=[p for p in hits if p is not None and p.y<hy]
+    return min((p.y for p in hits),default=hy-.14)-off
+
+def patch(name,x,z,w,h,material,off=.007,slant=0):
+    bm=bmesh.new();rows=[]
+    for j in range(3):
+        zz=z+(j/2-.5)*h;row=[]
+        for i in range(3):
+            xx=x+(i/2-.5)*w+slant*(zz-z);row.append(bm.verts.new((xx,front(xx,zz,off),zz)))
+        rows.append(row)
+    quadstrip(bm,rows);bm.normal_update()
+    if sum(f.normal.y for f in bm.faces)>0:bmesh.ops.reverse_faces(bm,faces=bm.faces[:])
+    o=soft(name,bm,material,src=tunic);paint(o);return o
+# The civilian suit template has a broad open V. This tunic has a much
+# narrower shirt opening, with khaki lapels reaching the neck on both sides.
+# Fit these inserts to the shirt surface before adding tabs or braid.
+for sx in [-1,1]:
+    bm=bmesh.new();rows=[]
+    for j in range(25):
+        t=j/24;z=NECK-.205+t*.185;rise=z-(NECK-.212)
+        inner=.23*rise;outer=.70*rise+.008
+        rows.append([bm.verts.new((sx*(inner+(outer-inner)*k/5),front(sx*(inner+(outer-inner)*k/5),z,.009),z)) for k in range(6)])
+    quadstrip(bm,rows);o=soft('Tunic lapel',bm,'Jacket',src=PART['shirt']);paint(o)
+
+# Lower, close-fitting crown, as in the arrival-day salute photograph.
+cap=bpy.data.objects.get('Cap')
+band=bpy.data.objects.get('CapBand')
+if cap:
+    floor=min(v.co.z for v in cap.data.vertices)
+    roof=max(v.co.z for v in cap.data.vertices)
+    ratio=max(.70,(TOP+.005-floor)/(roof-floor))
+    for v in cap.data.vertices:
+        v.co.x*=.93;v.co.y=hy+(v.co.y-hy)*.95;v.co.z=floor+(v.co.z-floor)*ratio
+if band:
+    for v in band.data.vertices:v.co.x*=.93;v.co.y=hy+(v.co.y-hy)*.95
+# Raised golden cap crest and a black polished peak beneath its red band.
+band=bpy.data.objects.get('CapBand')
+if band:
+    ca=band.data.color_attributes.get('Col');floor=min(v.co.z for v in band.data.vertices)
+    for f in band.data.polygons:
+        if sum(band.data.vertices[k].co.z for k in f.vertices)/len(f.vertices)<floor+.02:
+            for k in f.loop_indices:ca.data[k].color=(*srgb([24,22,20]),1)
+cap=bpy.data.objects.get('Cap')
+if cap:
+    hit=tree_of(cap).ray_cast(Vector((0,hy-.6,TOP-.05)),Vector((0,1,0)))[0]
+    if hit:
+        sphere('Cap crest',hit+Vector((0,-.007,0)),(.008,.0025,.012),'Insignia')
+        sphere('Cap crown',hit+Vector((0,-.008,.015)),(.005,.002,.004),'Insignia')
+# Red collar tabs follow the jacket's lapels, not the white shirt.
+for sx in [-1,1]:patch('Gorget',sx*.054,NECK-.055,.019,.044,'Gorget',.016,slant=sx*.3)
+# Compact coloured ribbon rows on the left breast. Colour and layout are a
+# visual reconstruction; the game does not identify or award individual orders.
+colours=[[172,42,39],[53,105,142],[222,188,79],[218,214,188],[50,113,79],[68,58,95]]
+for i,c in enumerate(colours):COL['Ribbon'+str(i)]=srgb(c)
+# Four columns of narrow ribbon bars, each made from three colour stripes.
+# The reference has ribbons, not a grid of large square tiles.
+for row in range(9):
+    for col in range(4):
+        for stripe in range(3):
+            x=.047+col*.018+stripe*.0053
+            patch('Ribbon',x,NECK-.14-row*.007,.0051,.0048,'Ribbon'+str((col+row*2+stripe)%6),.018)
+# Small flat service stars below the ribbon rack.
+for i in range(3):
+    x=.054+i*.022;z=NECK-.211;bm=bmesh.new();ring=[]
+    for k in range(10):
+        a=k/10*math.pi*2;r=.007 if k%2==0 else .0032
+        xx=x+math.sin(a)*r;zz=z+math.cos(a)*r
+        ring.append(bm.verts.new((xx,front(xx,zz,.016),zz)))
+    bm.faces.new(ring);o=soft('Service star',bm,'Insignia',src=tunic);paint(o)
+# Four pocket flaps and centre buttons give the long tunic its period outline.
+for sx in [-1,1]:
+    patch('Breast pocket',sx*.095,NECK-.24,.077,.024,'Jacket',.006)
+    patch('Hip pocket',sx*.12,HIP-.035,.092,.035,'Jacket',.006)
+for i in range(4):
+    z=NECK-.18-i*.082;sphere('Tunic button',(0,front(0,z,.010),z),(.006,.006,.006),'Insignia','Spine2',tunic)
+# Broad brown waist belt over the jacket and diagonal shoulder strap.
+bm=bmesh.new();rows=[]
+for z in [HIP+.035,HIP+.092]:
+    ring=[]
+    for i in range(49):
+        a=i/48*2*math.pi;center=Vector((0,J('Hips').y,z));d=Vector((math.sin(a),-math.cos(a),0));hit=jt.ray_cast(center,d)[0]
+        r=(hit-center).length if hit else .17;ring.append(bm.verts.new(center+d*(r+.010)))
+    rows.append(ring)
+quadstrip(bm,rows);o=soft('Sam Browne belt',bm,'Belt',src=tunic);paint(o)
+patch('Belt buckle',0,HIP+.064,.039,.043,'Insignia',.022)
+bm=bmesh.new();rows=[]
+for i in range(25):
+    t=i/24;x=-.145+.27*t;z=NECK-.055-(NECK-.055-HIP-.065)*t
+    rows.append([bm.verts.new((x+dx,front(x+dx,z,.014),z)) for dx in [-.017,.017]])
+quadstrip(bm,rows);o=soft('Shoulder strap',bm,'Belt',src=tunic);paint(o)
+# Loose, braided aiguillettes hang forward from the right shoulder.
+for strand in range(3):
+    bm=bmesh.new();rows=[]
+    for i in range(29):
+        t=i/28;x=-.16+.16*t;z=NECK-.055-(.23+strand*.035)*math.sin(t*math.pi*.9)
+        y=front(x,z,.012+.05*math.sin(t*math.pi));row=[]
+        for k in range(6):
+            a=k/6*math.pi*2;row.append(bm.verts.new((x+math.cos(a)*.0016,y+math.sin(a)*.0016,z)))
+        rows.append(row)
+    quadstrip(bm,rows,close=True);o=soft('Aiguillette',bm,'Insignia',src=tunic);paint(o)
+# Khaki shoulder boards sit on the tops of the shoulders. Narrow gold edges
+# replace the previous yellow rectangles on the front of the sleeves.
+for sx in [-1,1]:
+    bm=bmesh.new();rows=[]
+    for j in range(3):
+        y=hy-.025+j*.025;row=[]
+        for i in range(5):
+            x=sx*(.105+i*.019)
+            hit=jt.ray_cast(Vector((x,y,NECK+.2)),Vector((0,0,-1)))[0]
+            z=(hit.z if hit else NECK-.055)+.005
+            row.append(bm.verts.new((x,y,z)))
+        rows.append(row)
+    quadstrip(bm,rows);o=soft('Shoulder board',bm,'Jacket',src=tunic);paint(o)
+    ca=o.data.color_attributes.get('Col')
+    for f in o.data.polygons:
+        for li in f.loop_indices:
+            v=o.data.vertices[o.data.loops[li].vertex_index].co
+            if abs(v.y-hy)>.020:ca.data[li].color=(*COL['Insignia'],1)
+
+# The aiguillettes and medal drops hang in front of the tunic's eased cloth.
+# Keep their complete length clear when the shoulders rise for the salute.
+for o in list(bpy.context.scene.objects):
+    if o.type!='MESH':continue
+    if o.name.startswith('Aiguillette'):
+        for v in o.data.vertices:v.co.y-=.035
+    if o.name.startswith('Service star'):
+        for v in o.data.vertices:v.co.y-=.003
+    if o.name=='Shoulder strap':
+        for v in o.data.vertices:v.co.y-=.020
