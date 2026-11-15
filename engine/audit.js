@@ -474,6 +474,21 @@ function clEdges(P) { const g = P.o.geometry; if (g.userData.clEdges) return g.u
   for (const [k, c] of ec) { const [a, b] = k.split(',').map(Number); all.push(a, b); if (c !== 1) continue; (nb.get(a) || nb.set(a, []).get(a)).push(b); (nb.get(b) || nb.set(b, []).get(b)).push(a); }
   const rim = []; for (const [v, l] of nb) if (l.length === 2) rim.push(v, l[0], l[1]);
   return (g.userData.clEdges = { rim: Int32Array.from(rim), all: Int32Array.from(all) }); }
+/* Folds (part of auditCloth): cloth drawn from one side only shows a hole where it folds over on itself (you see the leg behind it). A triangle whose facing turns
+   against its neighbours' in a pose, when it agreed with them standing in Idle, is a fold. */
+function clAdj(P) { const g = P.o.geometry; if (g.userData.clAdj) return g.userData.clAdj; const E = clEdges(P), R = clBind(P), idx = P.idx, nt = idx.length / 3, canon = new Int32Array(R.length / 3), key = new Map();
+  for (let i = 0; i < canon.length; i++) { const k = Math.round(R[i * 3] * 1e4) + ',' + Math.round(R[i * 3 + 1] * 1e4) + ',' + Math.round(R[i * 3 + 2] * 1e4); if (!key.has(k)) key.set(k, i); canon[i] = key.get(k); }
+  const em = new Map(), nb = Array.from({ length: nt }, () => []);
+  for (let t = 0; t < nt; t++) for (let e = 0; e < 3; e++) { const a = canon[idx[t * 3 + e]], b = canon[idx[t * 3 + (e + 1) % 3]], k = a < b ? a + ',' + b : b + ',' + a; if (em.has(k)) { const o = em.get(k); nb[t].push(o); nb[o].push(t); } else em.set(k, t); }
+  return (g.userData.clAdj = nb); }
+function clNormals(X, idx) { const nt = idx.length / 3, N = new Float32Array(nt * 3);
+  for (let t = 0; t < nt; t++) { const a = idx[t * 3] * 3, b = idx[t * 3 + 1] * 3, c = idx[t * 3 + 2] * 3, ux = X[b] - X[a], uy = X[b + 1] - X[a + 1], uz = X[b + 2] - X[a + 2], vx = X[c] - X[a], vy = X[c + 1] - X[a + 1], vz = X[c + 2] - X[a + 2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; N[t * 3] = nx / l; N[t * 3 + 1] = ny / l; N[t * 3 + 2] = nz / l; } return N; }
+function clFolds(id, clipName, at, P, out, where) { if (!/^(CoatSkirt|JacketSkirt|Skirt|SkirtSeat|Apron)$/.test(P.name) || !P.ref) return;   /* outer hanging cloth, where a fold opens a hole onto the legs; breeches and shirts crease at the fork and the armpit as real cloth does */
+  const nb = clAdj(P), N = clNormals(P.pos, P.idx), N0 = P.o.geometry.userData.clRefN || (P.o.geometry.userData.clRefN = clNormals(P.ref, P.idx)); let n = 0, wt = -1;
+  const agree = (M, t) => { let x = 0, y = 0, z = 0; for (const o of nb[t]) { x += M[o * 3]; y += M[o * 3 + 1]; z += M[o * 3 + 2]; } return M[t * 3] * x + M[t * 3 + 1] * y + M[t * 3 + 2] * z; };
+  for (let t = 0; t < nb.length; t++) { if (nb[t].length < 2) continue; if (agree(N, t) < -0.5 * nb[t].length && agree(N0, t) > 0) { n++; wt = t; } }
+  if (n >= 2) { const v = P.idx[wt * 3] * 3; out.lines.push(`${id} ${clipName}@${at}: ${P.name} folds over itself: ${n} faces` + (where ? ` at x ${P.pos[v].toFixed(3)} y ${P.pos[v + 1].toFixed(3)} z ${P.pos[v + 2].toFixed(3)}` : '')); out.points += n; } }
 function clJagged(id, clipName, at, P, sc, out, where, covers) { if (/^(Body|Skin|Sock|Lining)$/.test(P.name) || /Hair|Eye|Brow|Lash|Teeth|Tongue|Bun|Puff|Sole/.test(P.name)) return;
   const E = clEdges(P), A = P.pos, L = (X, i, j) => Math.hypot(X[i * 3] - X[j * 3], X[i * 3 + 1] - X[j * 3 + 1], X[i * 3 + 2] - X[j * 3 + 2]);
   let n = 0, worst = 0, wi = -1;
@@ -497,6 +512,7 @@ export function auditCloth(id, body, { poses = [['Idle', 0.3]], after = null, sk
     if (clipName === 'Idle') for (const P of parts) { const g = P.o.geometry; if (!g.userData.clRef) g.userData.clRef = P.pos.slice(); }
     for (const P of parts) P.ref = P.o.geometry.userData.clRef || null;
     for (const P of parts) if (!belts.includes(P)) clJagged(id, clipName, at, P, sc, out, where, covers);
+    for (const P of parts) clFolds(id, clipName, at, P, out, where);
     { const skin = parts.find((X) => /^(Body|Skin)$/.test(X.name)); if (skin && skin.ref) { const hands = clHands(skin, 'hand'), E = clEdges(skin), A = skin.pos, R = skin.ref; let n = 0, ws = 1, wi = 0, wb = 0;   /* malformed hands: an edge of skin bound wholly to one hand bone (over 4 mm) stretched past 1.5 times or squashed under 0.67 times (creases over joints are left out), its length standing in Idle (weights torn between bones, a finger bent through itself) */
       const L = (X, i, j) => Math.hypot(X[i * 3] - X[j * 3], X[i * 3 + 1] - X[j * 3 + 1], X[i * 3 + 2] - X[j * 3 + 2]);
       const si = skin.g.attributes.skinIndex, sw = skin.g.attributes.skinWeight, bones = skin.o.skeleton.bones, rigid1 = (i) => { for (let k = 0; k < 4; k++) if (sw.getComponent(i, k) > 0.85) return si.getComponent(i, k) + 1; return 0; }, thumb = (i) => { let w = 0; for (let k = 0; k < 4; k++) { const bb = bones[si.getComponent(i, k)]; if (bb && /Thumb/.test(bb.name)) w += sw.getComponent(i, k); } return w; };

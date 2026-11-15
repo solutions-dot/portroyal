@@ -189,7 +189,7 @@ if G.get('coat'):
         op=G.get('coatopen',True)   # 1690 coats hang open at the front below the waist: an opening that widens to the hem, so the knees pass through instead of poking out
         front_gap=lambda c: op and c.y<-0.01 and abs(c.x)<0.018+0.075*max(0.0,min(1.0,(ZT-c.z)/(ZT-ZB)))
         back_vent=lambda c: op and c.y>0.01 and abs(c.x)<0.008+0.035*max(0.0,min(1.0,(ZT-c.z-0.08)/(ZT-ZB)))   # and a vent up the back, as 1690 coats had
-        sk=piece('CoatSkirt','helper-skirt',lambda c:ZB<c.z<ZT+0.02 and not front_gap(c) and not back_vent(c),lambda c:(0.028+0.017*sstep(ZT-0.01,ZT-0.13,c.z)) if c.y<-0.02 else 0.036,'Coat',cuts=[((0,0,ZB),(0,0,-1),None)],shape=flare,post=lambda bm:smooth_edge(bm,4,lambda c:c.z<ZT-0.06 and c.z>ZB+0.004))
+        sk=piece('CoatSkirt','helper-skirt',lambda c:ZB<c.z<ZT+0.02 and not front_gap(c) and not back_vent(c),lambda c:(0.028+(0.034 if G.get('breeches') else 0.017)*sstep(ZT-0.01,ZT-0.13,c.z)) if c.y<-0.02 else 0.036,'Coat',cuts=[((0,0,ZB),(0,0,-1),None)],shape=flare,post=lambda bm:smooth_edge(bm,4,lambda c:c.z<ZT-0.06 and c.z>ZB+0.004))
         parts.append(('coatskirt',sk))
 if G.get('breeches'):
     bk=G.get('breechkind','plain'); low=(ANK+(0.035 if not G.get('shorts') else 0)) if bk=='trousers' else KNEE-0.05*s
@@ -591,7 +591,8 @@ for k,o in parts:            # coat skirts follow both legs as one cloth, like A
         if g.name.startswith('mixamorig:'): g.remove(idx)
     for v in o.data.vertices:
         t=max(0.0,min(1.0,(HIP+0.06-v.co.z)/0.5)); leg=(0.3 if k=='jacketskirt' else (0.6 if (OLD or k=='coatskirt') else 0.9))*sstep(0.1,0.9,t); left=sstep(-1.0,1.0,v.co.x/0.15)      # a later skirt rides almost wholly on the legs, so a leg that swings forward carries the cloth with it instead of pushing through
-        if k=='coatskirt': front=sstep(0.06,-0.10,v.co.y); leg=front*0.95*sstep(-0.15,0.45,t)+(1-front)*0.25*sstep(0.1,0.9,t)   # the front panels ride on their own thigh (the knee carries them forward), the back hangs from the hips and opens at the vent
+        if k=='coatskirt': front=sstep(0.13,-0.02,v.co.y); leg=front*0.95*sstep(-0.15,0.45,t)+(1-front)*0.6*sstep(-0.05,0.7,t)      # the sides follow the thighs too (left with the hips, a striding thigh swung out through the side of the skirt); the back still hangs from the hips
+        if k=='coatskirt' and G.get('coatopen',True): left=sstep(-0.004,0.004,v.co.x)      # an open coat's panels (two in front, two either side of the back vent) are separate cloths: each follows its own leg only      # an open coat's two front panels are separate cloths: each follows its own leg only (blended across the middle, the striding thigh came through the other panel's edge)   # the front panels ride on their own thigh (the knee carries them forward), the back hangs from the hips and opens at the vent
         shin=0.0
         if k=='skirt' and not OLD:      # below the knee a later skirt passes in part to the shins, all round: seated, it falls over the knees and down instead of standing out from the thighs like a tray
             shin=0.7*sstep(KNEE+0.07,KNEE-0.08,v.co.z)
