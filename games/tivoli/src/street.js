@@ -102,7 +102,7 @@ export function buildStreet(opts = {}) {
   const car = sedan(0x4c6a5c); car.position.set(2, 0, 1.9); car.rotation.y = 0.04; g.add(car); spots.car = [[4.7, 2.9], [5.9, 1.7], [4.6, 0.5]];
   const van = minibus(0xb9d0de, 0xb9d0de); van.position.set(-17, 0, -2.6); van.rotation.y = 0.1; g.add(van); spots.van = [[-14.3, -2.6], [-14.4, -3.8]];
   const parked = sedan(0xb1b6ba); parked.position.set(-6, 0, 5.2); parked.rotation.y = Math.PI; g.add(parked);                       /* parked at the south kerb */
-  const parked2 = minibus(0xe2cf7a, 0xe2cf7a); parked2.position.set(14, 0, -3.4); parked2.rotation.y = Math.PI; g.add(parked2);         /* a second minibus at the north kerb */
+  const parked2 = minibus(0xe2cf7a, 0xe2cf7a); parked2.position.set(17.6, 0, -5.4); parked2.rotation.y = Math.PI; g.add(parked2);         /* a second minibus at the north kerb */
   const parked3 = sedan(0x8a2d2a); parked3.position.set(-34, 0, 5.4); parked3.rotation.y = Math.PI + 0.05; g.add(parked3);
   SO('shelter', -26, -22, 2.3, 4.2, 0, 2.7, 'busstop');
   box(X.zinc, 3.6, 0.1, 1.6, -24, 2.4, 3.2); for (const dx of [-1.7, 1.7]) box(X.pole, 0.1, 2.4, 0.1, -24 + dx, 0, 3.2); box(X.pole, 0.08, 2.7, 0.08, -24 + 2.2, 0, 3.2); box(X.frame, 0.06, 0.6, 0.5, -24 + 2.2, 2.1, 3.2);   /* bus shelter and a bus stop sign on its post */
