@@ -571,6 +571,8 @@ if OLD:
                 else:
                     for gi_,w in keep: o.vertex_groups[gi_].add([v.index],w/tot,'REPLACE')
             smooth_weights(o,lambda c:c.z<CROTCH+0.06,3)
+if not OLD and 'breeches' in dict(parts):      # later trousers: at the fork each point took weights from both thighs and the hips unevenly, and seated (legs apart) single points were pulled two ways into spikes. The fork's weights are evened out over a wide patch
+    _smooth_bones(dict(parts)['breeches'],lambda c:abs(c.x)<0.09 and CROTCH-0.07<c.z<CROTCH+0.10,14)
 for k,o in parts:            # coat skirts follow both legs as one cloth, like Abba's skirt
     if k not in ('coatskirt','skirt','jacketskirt'): continue
     B={n:o.vertex_groups['mixamorig:'+n] for n in ('Hips','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg')}; idx=list(range(len(o.data.vertices)))
@@ -1105,7 +1107,8 @@ if G.get('coat') and G.get('coatbuttons',OLD):      # a row of buttons down the 
     COL.setdefault('CoatButtons',COL['Coat']*0.5); soft('CoatButtons',bm,'CoatButtons')
 if G.get('apron'):
     BRT=tree_of(PART['breeches']) if 'breeches' in PART else None
-    bm=bmesh.new(); nu,nv=10,16; rows=[]; ZA,ZE=HIP+0.1,KNEE+0.02; SRC=BRT if (not OLD and BRT) else tree; yprev=None
+    bm=bmesh.new(); nu,nv=18,24; rows=[]; ZA,ZE=HIP+0.1,KNEE+0.02;      # finer rows, so it bends round the thighs when seated instead of folding into a stiff card
+    SRC=BRT if (not OLD and BRT) else tree; yprev=None
     for jv in range(nv+1):      # the apron hangs as one sheet: each row lies across the fullest part of the front (never caught on a hand, never dipping between the legs), curves back a little at its sides, and never tucks in below a higher row
         t=jv/nv; z=ZA-t*(ZA-ZE); hw=0.15+0.03*t; ys=[]
         for iu in range(nu+1):
@@ -1278,7 +1281,7 @@ bm.normal_update()
 def covered(f):
     c=cz(f); n=f.normal
     if CK=='camp' and c.y<0 and c.z>VZ-0.03*s+VK*0.55*abs(c.x): return False
-    if abs(c.x)>SX*1.05 or side_arm(c) is not None: return False      # never an arm or a hand: with the arms held out, the fingers' inner faces looked straight at the skirt (its test reaches 30 cm) and were deleted, leaving stumps
+    if c.z<HIP+0.10 and abs(c.x)>SX*0.85: return False      # never a hand: with the arms held out, the fingers' inner faces looked straight at the skirt (its test reaches 30 cm) and were deleted, leaving stumps
     for bt,kd,k,nb in _covs:
         loc,nrm,_i,dist=bt.ray_cast(c+n*0.0005,n,0.30 if k=='skirt' else 0.08)
         if loc is None or nrm.dot(n)<0.15: continue
@@ -1334,6 +1337,39 @@ for m in eyes.data.materials:
     for n in m.node_tree.nodes:
         if n.type=='TEX_IMAGE' and n.image: n.image.filepath=os.path.abspath('shared/rig/eye.png'); n.image.reload()
 # relaxed arms and curled fingers, the same pose Abba uses
+if 'breeches' in PART:      # the bottom of a jacket and the tucked part of a shirt move with the trousers under them: on the hips' weights alone, a seated thigh rose through the jacket's hem, and a tucked shirt slid out over the waistband
+    from mathutils.kdtree import KDTree
+    _br=PART['breeches']; _kd=KDTree(len(_br.data.vertices))
+    for _v in _br.data.vertices: _kd.insert(_v.co,_v.index)
+    _kd.balance(); _bn={g.index:g.name for g in _br.vertex_groups}; _btop=max(v.co.z for v in _br.data.vertices if abs(v.co.x)<0.12)
+    for _k,_z0,_z1 in (('jacket',HIP+0.03,HIP+0.12),('shirt',CROTCH,_btop)):
+        _o=PART.get(_k)
+        if _o is None: continue
+        for v in _o.data.vertices:
+            if side_arm(v.co) is not None and abs(v.co.x)>SX*0.8: continue
+            f=sstep(_z1,_z1-0.04,v.co.z) if _k=='shirt' else sstep(_z1,_z0,v.co.z)
+            if f<=0 or v.co.z<_z0-0.01: continue
+            _c,_i,_d=_kd.find(v.co)
+            if _d>0.06: continue
+            bw={_bn[g.group]:g.weight for g in _br.data.vertices[_i].groups if _bn[g.group].startswith('mixamorig:') and g.weight>0}; tb=sum(bw.values()) or 1
+            old={_o.vertex_groups[g.group].name:g.weight for g in v.groups if _o.vertex_groups[g.group].name.startswith('mixamorig:')}; to=sum(old.values()) or 1
+            for g in list(v.groups):
+                if _o.vertex_groups[g.group].name.startswith('mixamorig:'): _o.vertex_groups[g.group].remove([v.index])
+            for n in set(old)|set(bw):
+                w=old.get(n,0)/to*(1-f)+bw.get(n,0)/tb*f
+                if w>0.002: (_o.vertex_groups.get(n) or _o.vertex_groups.new(name=n)).add([v.index],w,'REPLACE')
+    if PART.get('shirt'):      # and a tucked shirt lies inside the breeches' waist, never over it
+        _bt=tree_of(_br); _sb=bmesh.new(); _sb.from_mesh(PART['shirt'].data)
+        for v in _sb.verts:
+            x,y,z=v.co
+            if not (CROTCH+0.04<z<_btop-0.004) or (side_arm(v.co) is not None and abs(x)>SX*0.8): continue
+            o_=Vector((0,YCz(z) if 'YCz' in globals() else J('Hips').y,z)); d=Vector((x,y-o_.y,0))
+            if d.length<1e-4: continue
+            d.normalize(); hit=_bt.ray_cast(o_,d,0.4)[0]
+            if hit is None: continue
+            rb=(hit-o_).length; rs=(v.co-o_).length
+            if rs>rb-0.003: v.co=o_+d*(rb-0.004)
+        _sb.to_mesh(PART['shirt'].data); _sb.free()
 def aim(n,t):
     pb=rig.pose.bones[n]; bpy.context.view_layer.update(); M=pb.matrix.copy()
     q=(M.to_3x3()@Vector((0,1,0))).normalized().rotation_difference(Vector(t).normalized()); hd=M.to_translation()
