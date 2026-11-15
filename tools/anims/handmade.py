@@ -452,7 +452,7 @@ def speech(rig):
 
 SIDE_GAP = 0.40   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right, facing the same way
 CHILD_GAP = 0.32  # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right
-FACE_GAP = 0.45   # ComfortHand: the other person stands this far in front of the giver, facing them
+FACE_GAP = 0.58   # ComfortHand: the other person stands this far in front of the giver, facing them
 
 
 def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0.25)):

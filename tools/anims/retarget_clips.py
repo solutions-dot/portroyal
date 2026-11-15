@@ -37,5 +37,9 @@ for name,path in clips.items():
     print('CLIP',name,f0,f1)
 for o in bpy.data.objects: o.select_set(o==ours)
 bpy.context.view_layer.objects.active=ours
-r=bpy.ops.export_scene.gltf(filepath=os.path.abspath(os.environ.get('ANIMS_OUT', 'build/anims.glb')),use_selection=True,export_skins=True,export_animations=True,export_animation_mode='NLA_TRACKS',export_frame_step=2,export_force_sampling=True,export_optimize_animation_size=True,export_def_bones=True)
+r=bpy.ops.export_scene.gltf(filepath=os.path.abspath(os.environ.get('ANIMS_OUT', 'build/anims.glb')),use_selection=True,export_skins=True,export_animations=True,export_animation_mode='NLA_TRACKS',export_frame_step=1,export_anim_slide_to_zero=True,export_force_sampling=True,export_optimize_animation_size=True,export_def_bones=True)
 print('EXPORT',r)
+# Every frame is exported, each clip starting at time 0 (its own first frame) and ending on its own last frame. Mixamo loops end on
+# their first pose, so a looping clip closes exactly. The packers (tools/anims/clean_clips.mjs) then keep every other frame plus the last.
+# (It used to export every other frame from frame 1 on a timeline that starts at 0: each clip began with its first pose held for a
+# frame, a small pause at every loop, and the last frame was skipped, which left a seam in the Walk.)
