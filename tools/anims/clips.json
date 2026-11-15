@@ -59,5 +59,10 @@
  "TalkM1": "Talking_M1.fbx",
  "TalkM2": "Talking_M2.fbx",
  "Kneel": "Kneeling.fbx",
- "KneelDown": "Kneeling_Down.fbx"
+ "KneelDown": "Kneeling_Down.fbx",
+ "SitPoseM": "Male_Sitting_Pose.fbx",
+ "SitPoseF": "Female_Sitting_Pose.fbx",
+ "Crawl": "Crawling.fbx",
+ "Pray2": "Praying_2.fbx",
+ "Pray3": "Praying_3.fbx"
 }
