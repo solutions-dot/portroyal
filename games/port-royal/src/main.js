@@ -468,7 +468,7 @@ function setPlace(p) {
   hemi.intensity = inside ? 0.5 : 2.3; sun.intensity = inside ? 1.5 : 2.6; if (p === 'in') sun.position.set(0.3, 0.75, 1); else if (p === 'ware') sun.position.set(1, 0.7, 0.2); else sun.position.set(-0.35, 1, 0.75);
   fireLight.intensity = p === 'in' ? 16 : 0; lamp.intensity = p === 'in' ? 9 : 0; if (wLamp) wLamp.intensity = p === 'ware' ? 14 : 0;
   if (p === 'in') { ABBA.x = -201; ABBA.z = -2.95; abba.position.set(ABBA.x, 0, ABBA.z); } else if (p === 'ware') { ABBA.x = 9999; ABBA.z = 0; } else { ABBA.x = -4.15; ABBA.z = -S + 1.45; abba.position.set(ABBA.x, 0.12, ABBA.z); }
-  abba.rotation.y = 0; if (ring) ring.visible = !inside && !state.talked;
+  abba.rotation.y = 0;
 }
 
 /* ---------- models ---------- */
@@ -535,7 +535,7 @@ function buildTown() {
   place('h6', X0 - 5.9, 8.0, Math.PI / 2); place('h3', X0 - 5.9, -10.5, Math.PI / 2);
   abba.position.set(ABBA.x, 0.12, ABBA.z); scene.add(abba);
   ring = new THREE.Mesh(new THREE.RingGeometry(0.75, 0.9, 40), new THREE.MeshBasicMaterial({ color: 0xd9a441, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
-  ring.rotation.x = -Math.PI / 2; ring.position.set(ABBA.x, 0.14, ABBA.z + 0.2); scene.add(ring);
+  ring.rotation.x = -Math.PI / 2; ring.position.set(ABBA.x, 0.14, ABBA.z + 0.2); ring.visible = false;   /* not added to the scene: the owner asked for no glow ring under Abba (the helper arrow points the way) */
 }
 
 /* ---------- movement ---------- */
@@ -790,7 +790,12 @@ TICKS.push((dt) => { const S0 = SOLDIER, m = S0.m; if (!m) return;
     else { if (!S0.walking) { S0.walking = true; if (ac) ac.play('Walk'); } const v = Math.min(d, 0.85 * dt); m.position.x += dx / d * v; m.position.z += dz / d * v;
       let e = Math.atan2(dx, dz) - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * 6); } }
   if (show && S0.pike && S0.hand) pikeAt(); });
-function pikeAt() { const S0 = SOLDIER, m = S0.m; S0.hand.getWorldPosition(_sh); S0.pike.position.copy(_sh); S0.pike.rotation.set(0.08 * Math.cos(m.rotation.y), 0, -0.08 * Math.sin(m.rotation.y)); }
+const _pk1 = new THREE.Vector3(), _pk2 = new THREE.Vector3(), _pkUp = new THREE.Vector3(0, 1, 0);
+function pikeAt() { const S0 = SOLDIER, m = S0.m; S0.hand.getWorldPosition(_sh); S0.pike.position.copy(_sh);   /* held in the right hand, its foot set out from the hip so it clears the wide coat skirt (hanging straight down, it swung through the skirt as he walked) */
+  if (!S0.hips) S0.hips = m.getObjectByName('mixamorigHips'); if (!S0.hips) return; S0.hips.getWorldPosition(_pk1);
+  _pk2.set(_sh.x - _pk1.x, 0, _sh.z - _pk1.z); if (_pk2.lengthSq() < 1e-6) _pk2.set(-Math.cos(m.rotation.y), 0, Math.sin(m.rotation.y)); _pk2.normalize();
+  const foot = _pk1.clone().addScaledVector(_pk2, 0.36); foot.y = _sh.y - 0.45;   /* where the shaft's lower end should be */
+  const dir = _sh.clone().sub(foot).normalize(); S0.pike.quaternion.setFromUnitVectors(_pkUp, dir); }
 /* ---------- the helper nudge: if the player stands still or the goal does not change for a while, the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE_MAP = [   /* goal words -> the action (or place) that moves the story on */
   [/pier and into the town/, [18, 0]], [/Walk to the harbour/, [21, 0]], [/Fort Charles/, [14.6, -23]],
@@ -1129,9 +1134,9 @@ function frame(now) {
     faceAmt += ((near ? 1 : 0) - faceAmt) * Math.min(1, dt * 3);                 // near you she stops looking around and faces you
     if (!restQ && nk && hd) { let sk = null; abba.traverse((o) => { if (!sk && o.isSkinnedMesh) sk = o.skeleton; }); if (sk) { restQ = {}; const W = (b) => new THREE.Matrix4().copy(sk.boneInverses[sk.bones.indexOf(b)]).invert();
         for (const b of [nk, hd]) { const m = new THREE.Matrix4().copy(W(b.parent)).invert().multiply(W(b)); restQ[b.name] = new THREE.Quaternion().setFromRotationMatrix(m); } } }
-    if (restQ) { nk.quaternion.slerp(restQ[nk.name], faceAmt * 0.5); hd.quaternion.slerp(restQ[hd.name], faceAmt * 0.5); }
+    /* (her old hand-made body's rest pose matched her idle, and the neck and head were eased toward it here; the builder body's rest pose does not, and that wrenched the neck and tore the shift at the neckline, so it is gone) */
     let yaw = Math.atan2(dxh, dzh) - abba.rotation.y; yaw = Math.max(-0.7, Math.min(0.7, Math.atan2(Math.sin(yaw), Math.cos(yaw)))) * faceAmt;
-    headYaw += (yaw - headYaw) * Math.min(1, dt * 4); add(nk, 0, headYaw * 0.4, 0); add(hd, Math.sin(t * 0.9) * 0.02, headYaw * 0.6, 0);
+    headYaw += (yaw - headYaw) * Math.min(1, dt * 4); add(nk, 0, headYaw * 0.15, 0); add(hd, Math.sin(t * 0.9) * 0.02, headYaw * 0.85, 0);   /* the turn is mostly at the head: the neck's own turn pulls the shift's neckline */
   }
   if (built) {
     const dx = state.x - ABBA.x, dz = state.z - ABBA.z, d = Math.hypot(dx, dz);
@@ -1213,6 +1218,11 @@ async function loadAll() {
     const seen = new Set(); setTimeout(() => { state.x = 10; state.z = 0.6; state.yaw = 0.4; state.pitch = 0; state.talked = true; state.ate = true; for (const id of [...FINDS.map((f) => f.id), 'harbour', 'morgan', 'panama', 'forts']) if (!state.unlocked.includes(id)) state.unlocked.push(id); setGoal(); }, 600);
     if (q.get('stay') !== '1') setTimeout(() => playChapter(CHAPTERS[2]), 2500);
     const iv = setInterval(() => { if (!$('card').hidden) seen.add($('ctitle').textContent); document.title = 'NAVCARD ' + (seen.size ? [...seen].join(' | ') : 'none'); }, 250); setTimeout(() => clearInterval(iv), 30000); }
+  if (__DEV__ && q.get('test') === 'pass') { const go0 = () => { if (!townReady || !people.kofi || $('start').disabled) { if (!state.started && !$('start').disabled) $('start').click(); setTimeout(go0, 1000); return; } setTimeout(() => {   /* ?test=pass: talk to Kofi where he stops on the pier, close the talk, then walk on past him toward the town. Title PASS ok|stuck with the distance walked (dev only) */
+    const n = NPCS[0]; KP.wait = 999; n.walking = false; n.x = 25; n.z = -0.3; people.kofi.position.set(n.x, 0.06, n.z); state.x = 27.2; state.z = 0; state.yaw = Math.PI / 2; state.pitch = 0;
+    setTimeout(() => { if (current) current.go(); setTimeout(() => { while (!$('dialogue').hidden) advance(); const x0 = state.x; state.yaw = Math.atan2(-(n.x - state.x), -(n.z - state.z)); keys.add('w');
+      setTimeout(() => { state.yaw = Math.PI / 2; }, 1500); setTimeout(() => { keys.delete('w'); const ok = state.x < n.x - 1.0; document.title = 'PASS ' + (ok ? 'ok' : 'stuck') + ' walked ' + (x0 - state.x).toFixed(2) + ' m, at x ' + state.x.toFixed(2) + ' z ' + state.z.toFixed(2) + ' (Kofi x ' + n.x.toFixed(2) + ')'; }, 7000); }, 1500); }, 1500); }, 2000); }; go0(); }
+  if (q.get('shot') === 'abba') { setTimeout(() => { state.x = ABBA.x + 0.4; state.z = ABBA.z - 1.3; state.yaw = Math.atan2(-(ABBA.x - state.x), -(ABBA.z - state.z)); state.pitch = -0.08; eyeY = 1.5; }, 9000); }   /* Abba close, face on (dev only) */
   if (q.get('shot') === 'grace') { setTimeout(() => { state.x = 9.6; state.z = 13.4; state.yaw = Math.atan2(-(9.6 - state.x), -(16.1 - state.z)); state.pitch = -0.05; }, 9000); }   /* Grace at her stall (dev only) */
   if (q.get('shot') === 'thumb') { setTimeout(() => { state.x = 30; state.z = 0.2; state.yaw = Math.PI / 2; state.pitch = 0.03; const st = document.createElement('style'); st.textContent = 'body > *:not(canvas){display:none!important}'; document.head.appendChild(st); }, 6500); } if (q.get('shot') === 'cratewalk' || q.get('shot') === 'pierwalk') { setTimeout(() => { window.requestAnimationFrame = () => 0; renderer.render = () => {}; let t = last; const pier = q.get('shot') === 'pierwalk', mid = q.get('mid'); state.x = pier ? (mid ? SHORE + 18 : SHORE + 6) : 19.4; state.z = pier ? (mid ? 0 : 1.3) : 4.6; state.yaw = pier ? Math.PI / 2 : 0; keys.add('w'); for (let i = 0; i < (q.get('mid') ? 300 : 60); i++) { t += 33; frame(t); } keys.delete('w'); const hit = (propC || []).filter((c) => c[0] < 20.3 && c[2] > 18.5 && c[1] < 3.8 && c[3] > 2.4).length; document.title = 'CRATE x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2) + ' boxes=' + hit + ' total=' + (propC ? propC.length : -1); }, 7000); } if (q.get('shot') === 'jhome') { setTimeout(() => openJournal(), 7000); } if (q.get('shot') === 'third') { setTimeout(() => { toggleView(); setTimeout(() => { const b = new THREE.Box3().setFromObject(galdy); document.title = 'THIRD vis=' + galdy.visible + ' third=' + third + ' pos=' + galdy.position.toArray().map((v) => v.toFixed(2)) + ' box=' + b.min.toArray().map((v) => v.toFixed(2)) + '/' + b.max.toArray().map((v) => v.toFixed(2)) + ' scale=' + galdy.scale.x.toFixed(2); }, 1500); }, 7000); } if (q.get('shot') === 'chap') { setTimeout(() => openChapters(), 7000); } if (q.get('shot') === 'nsthird') { setTimeout(() => { state.x = 6; state.z = 18.4; state.yaw = Math.PI / 2; toggleView(); }, 7000); } if (q.get('shot') === 'crawlpush') { setTimeout(() => { window.requestAnimationFrame = () => 0; renderer.render = () => {}; let t = last; state.x = 21.2; state.z = 11.4; state.yaw = -Math.PI / 2 + 0.3; keys.add('w'); for (let i = 0; i < 150; i++) { t += 33; frame(t); } keys.delete('w'); document.title = 'CRAWL x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2); }, 7000); } if (q.get('shot') === 'savewait') { setTimeout(() => { RESTORE.pos = [8, 18.6, 0]; const t0 = townReady; townReady = false; saveGame(); const d = loadGame(); townReady = t0; document.title = 'SAVEWAIT pos=' + JSON.stringify(d && d.pos); }, 7000); } if (q.get('shot') === 'meline') { setTimeout(() => startConvo([{ who: 'You', text: 'Do you work for someone?' }, { who: 'Peter', text: 'No. I am a free man.' }]), 6000); } if (q.get('shot') === 'credits') { $('credits').hidden = false; } if (q.get('shot') === 'resetc') { setTimeout(() => $('reset').click(), 4000); } if (q.get('shot') === 'camp3') { beginAfter(); state.x = -4.2; state.z = 3.4; state.yaw = Math.PI / 2 - 0.2; } if (q.get('shot') === 'npc4') { beginAfter(); state.x = -7.4; state.z = 3.2; state.yaw = Math.atan2(-(-9.65 + 7.4), -(1.75 - 3.2)); } if (q.get('shot') === 'street') { state.x = 17; state.z = 0.4; } if (q.get('shot') === 'ships') { state.x = SHORE + 1; state.z = 0.9; state.yaw = -Math.PI / 2 + 0.25; state.pitch = 0.22; } if (q.get('shot') === 'beach') { state.x = SHORE - 6; state.z = 1; state.yaw = -Math.PI / 2 - 0.9; state.pitch = -0.05; } if (q.get('shot') === 'beach2') { state.x = SHORE - 7; state.z = -2; state.yaw = -Math.PI / 2 + 0.8; state.pitch = 0.05; } if (q.get('shot') === 'in' || q.get('shot') === 'stew') { state.talked = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = 2.6; state.yaw = 0.25; state.pitch = -0.12; setGoal(); if (q.get('shot') === 'stew') { state.x = -200.6; state.z = -0.6; state.yaw = 0.1; setTimeout(() => { $('talk').click(); state.step = 1; advance(); }, 400); } } } }, 300);
 }

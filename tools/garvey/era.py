@@ -1234,10 +1234,10 @@ if G.get('jacket'):      # under a jacket only the shirt's front, collar zone an
     bmesh.ops.delete(bm,geom=[f for f in bm.faces if not seen(cz(f))],context='FACES'); bm.to_mesh(o.data); bm.free()
     if PART.get('waistcoat'):      # and of the waistcoat only its front shows, through the jacket's opening: the sides and the back are cut away, so they cannot come through the jacket
         o=PART['waistcoat']; bm=bmesh.new(); bm.from_mesh(o.data); _vz=NECK-0.012*s-0.20*s; bmesh.ops.delete(bm,geom=[f for f in bm.faces if cz(f).y>0.0 or abs(cz(f).x)>max(0.0,cz(f).z-_vz)/1.5+0.015*s or cz(f).z<_vz-0.05*s],context='FACES'); bm.to_mesh(o.data); bm.free()      # only the wedge in the jacket's V and a narrow margin round it: elsewhere a light copy's simplified jacket let it through
-if G.get('coat') and OLD and G.get('coatsleeves',True):      # under a coat only the shirt's cuffs can be seen (all of each sleeve, when the coat has none): cut the rest away
+if G.get('coat') and OLD:      # under a coat only the shirt's cuffs can be seen (all of each sleeve, when the coat has none): cut the rest away
     o=PART['shirt']; bm=bmesh.new(); bm.from_mesh(o.data); _sl=G.get('coatsleeves',True); _cs=G.get('coatsleeve',0.82)
     def seen(c):
-        if not _sl: return abs(c.x)>SX*0.55      # a coat with no sleeves: the shirt's shoulders and sleeves show
+        if not _sl: return side_arm(c) is not None or abs(c.x)>SX*0.78 or c.z>NECK-0.07*s      # (and the neck opening) a coat with no sleeves: the shirt's shoulders and sleeves show (from SX*0.55 in, bits of the shirt's chest were kept and showed through the coat as two white slivers)
         t=side_arm(c); return t is not None and t>_cs-0.14
     bmesh.ops.delete(bm,geom=[f for f in bm.faces if not seen(cz(f))],context='FACES'); bm.to_mesh(o.data); bm.free()
 # body: remove what the clothes fully hide, so nothing pokes through
@@ -1303,13 +1303,31 @@ def covered(f):
         return True
     return False
 bmesh.ops.delete(bm,geom=[f for f in bm.faces if not all(v[dl].get(gi,0)>0 for v in f.verts) or hidden(cz(f)) or (_covs and covered(f))],context='FACES'); bm.to_mesh(h.data); bm.free()
-if FLAT and CK=='round' and not OLD:      # under a round collar the slope of the shoulders rose just above the shirt's neckline and showed in flecks beside the collar: pull that band of skin in a little (the neck itself is left alone)
+if ((FLAT and CK=='round') or not CK) and not OLD and PART.get('shirt'):      # (also a plain neckline with no collar, as Abba's shift) under a round collar the slope of the shoulders rose just above the shirt's neckline and showed in flecks beside the collar: pull that band of skin in a little (the neck itself is left alone)
     _nc,_nw,_nd=neck_ring(NECK+0.01); h.data.update()
     for v in h.data.vertices:
         x,y,z=v.co
         if not (NECK-0.02<z<NECK+0.025): continue
         e=math.hypot(x/_nw,(y-_nc)/_nd)
         if e>1.15: v.co-=v.normal*0.006*sstep(1.15,1.35,e)*sstep(NECK+0.025,NECK+0.01,z)
+if not OLD and PART.get('shirt') and CK!='camp':      # the skin just under the shirt round the neck moves exactly as the shirt does: with its own weights it rose through the cloth beside the neck at some moments of the idle (the cloth check leaves necklines out, so only a close look found it)
+    from mathutils.kdtree import KDTree
+    _so=PART['shirt']; _kd=KDTree(len(_so.data.vertices))
+    for _v in _so.data.vertices: _kd.insert(_v.co,_v.index)
+    _kd.balance(); _sn={g.index:g.name for g in _so.vertex_groups}
+    for v in h.data.vertices:
+        x,y,z=v.co
+        if not (NECK-0.12*s<z<NECK+0.01) or side_arm(v.co) is not None: continue
+        _c,_i,_d=_kd.find(v.co)
+        if _d>0.03: continue
+        k=sstep(NECK+0.01,NECK-0.02,z)      # blended in just below the neckline, so the neck above keeps its own movement
+        sw={_sn[g.group]:g.weight for g in _so.data.vertices[_i].groups if _sn[g.group].startswith('mixamorig:') and g.weight>0}; ts=sum(sw.values()) or 1
+        old={h.vertex_groups[g.group].name:g.weight for g in v.groups if h.vertex_groups[g.group].name.startswith('mixamorig:')}; to=sum(old.values()) or 1
+        for g in list(v.groups):
+            if h.vertex_groups[g.group].name.startswith('mixamorig:'): h.vertex_groups[g.group].remove([v.index])
+        for n in set(old)|set(sw):
+            w=old.get(n,0)/to*(1-k)+sw.get(n,0)/ts*k
+            if w>0.002: (h.vertex_groups.get(n) or h.vertex_groups.new(name=n)).add([v.index],w,'REPLACE')
 if not OLD or EASE_OLD: neck_to_chest(h)      # the skin at the base of the neck follows the chest, like the shirt's neckline that lies on it
 h.data.materials.clear(); h.data.materials.append(colmat('Skin',0.68)); h.name='Body'
 if not OLD and G.get('socks'):
