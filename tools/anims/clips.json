@@ -68,5 +68,8 @@
  "RifleWalk": "Walk_With_Rifle.fbx",
  "RifleWalk2": "Walk_With_Rifle_1.fbx",
  "RifleCrouchWalk": "Rifle_Crouch_Walk.fbx",
- "RifleWalkStop": "Rifle_Walk_To_Stop.fbx"
+ "RifleWalkStop": "Rifle_Walk_To_Stop.fbx",
+ "PlayPiano": "Piano_Playing.fbx",
+ "PlayGuitar": "Guitar_Playing.fbx",
+ "PlayGuitar2": "Guitar_Playing_1.fbx"
 }
