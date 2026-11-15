@@ -80,5 +80,6 @@
  "HurtWaveIdle": "injured_pack/injured_wave_idle.fbx",
  "HurtWalk": "injured_pack/injured_walk.fbx",
  "HurtTurnL": "injured_pack/injured_turn_left.fbx",
- "HurtTurnR": "injured_pack/injured_turn_right.fbx"
+ "HurtTurnR": "injured_pack/injured_turn_right.fbx",
+ "WalkTurn180b": "Walking_Turn_180_1.fbx"
 }
