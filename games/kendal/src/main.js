@@ -7,7 +7,9 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    Layout of this file: setup, state and controls, people and places, interface, saving, chapters and goals, trains and rides, the crash, the other chapters' actions, the loop, test views. */
 import * as THREE from 'three';
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
-import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
+import { CL, loadClips, animate, groundFeet, isSeated } from '../../../engine/anim.js';
+import { createStory, createCarry, arrowPose, flowTest } from '../../../engine/story.js';   /* who moves the story, the hint arrow, the things you carry (docs/STANDARD.md, "Story flow") */
+import { createAmbient, ambientTest } from '../../../engine/ambient.js';   /* background people who walk, chat, work and play (docs/STANDARD.md, "Ambient life") */
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, gullCry, chirp } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
@@ -17,7 +19,9 @@ import { makeSmoke, spin } from './trains.js';
 import { lantern, hamper, bucket, bananaBunch, flowers, attach, hold, suitcase, PM } from './props.js';
 import { buildRoad, buildStation45, buildRide45, buildHill } from './places1.js';
 import { buildKingston57, buildCoach, buildBeach, buildCrash, buildMemorial } from './places2.js';
-import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL } from './content.js';
+import { CHAPTERS, CHAPTER_END, TALK, LATER, JOURNAL } from './content.js';
+import { STEPS, placeOfStage } from './steps.js';
+import { lifeFor, KEEP } from './life.js';
 import * as SFX from './sfx.js';
 import { HATS, LOOKS, KID } from './cast.js';
 import { DECOR } from './decor.js';
@@ -106,17 +110,18 @@ function makeBody(s) {
     else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); else if (nm === 'Hair') o.material.color.setScalar(1); });   /* hair keeps its own painted colour (dark, or grey for an elder); only skin is lightened. The hairline fade is a few millimetres wide, so its skin end being slightly darker than the face is not seen */
   m.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
   m.scale.setScalar(s.scale || 1); m.position.set(s.x, s.ground || 0, s.z); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
-  if (!/^Sit/.test(s.anim || '')) { const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.05; b.renderOrder = 1; m.add(b); }
+  const seated = isSeated(s.anim);
+  if (!seated) { const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.05; b.renderOrder = 1; m.add(b); }
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl;
   m.userData.held = []; ctl.mx.update(0);   /* pose the body once, so the grips below are measured on the real hand */
-  if (/^Sit/.test(s.anim || '')) m.userData.noGround = true;   /* a seated body is placed on its seat, so the per-frame foot grounding must leave it alone */
-  if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.userData.seatAnchor={top:s.seat}; m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
+  if (seated) m.userData.noGround = true;   /* a seated body is placed on its seat, so the per-frame foot grounding must leave it alone */
+  if (s.seat !== undefined && seated) { m.userData.seatAnchor={top:s.seat}; m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
       m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
       if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat (its top is s.seat): the hip joint rides 12 cm above it, whatever the body's size */
   const carry = (bone, o, G) => { if (/Hand$/.test(bone)) grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY || G.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.4, G.lift || 0), straighten: G.straighten ?? 0.8 }); else hold(m, bone, o, G); };   /* in a hand: a real grip (engine/grip.js); on the head: balanced there */
   for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); carry(bone, o, GRIP[prop]); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) s._flame = o.userData.flame; }
   if (s.lamp) { const o = lantern(); carry('RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
-  if (!/^Sit/.test(s.anim || '')) spreadArms(m, /^(woman|girl|guide)/.test(s.base) ? 0.15 : s.base === 'man_suit' ? 0.11 : 0.05);   /* arms hang clear of skirts and jackets (engine/grip.js) */
+  if (!seated && !s.noSpread) spreadArms(m, /^(woman|girl|guide)/.test(s.base) ? 0.15 : s.base === 'man_suit' ? 0.11 : 0.05);   /* arms hang clear of skirts and jackets (engine/grip.js) */
   return m;
 }
 const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBasicMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.6, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
@@ -132,7 +137,7 @@ function buildPlace(id) {   /* the geometry only: quick, and enough for a title 
 /* spreadOut: nobody stands inside anybody. Background figures that are too close to someone are moved to a free spot nearby (a walker's whole loop moves with them);
    a figure that cannot be placed, or a walk that would pass through someone standing still, is dropped. The audit (?test=audit) then checks the result. */
 function spreadOut(P) {
-  const r = rng(77), seated = (e) => /^Sit/.test(e.anim || ''), loop = (e) => { if (!e.path) return [[e.x, e.z]]; const pts = []; for (let i = 0; i < e.path.length; i++) { const a = e.path[i], b = e.path[(i + 1) % e.path.length], k = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.5)); for (let j = 0; j < k; j++) pts.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k]); } return pts; };
+  const r = rng(77), seated = (e) => isSeated(e.anim), loop = (e) => { if (!e.path) return [[e.x, e.z]]; const pts = []; for (let i = 0; i < e.path.length; i++) { const a = e.path[i], b = e.path[(i + 1) % e.path.length], k = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.5)); for (let j = 0; j < k; j++) pts.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k]); } return pts; };
   const fixed = [], paths = []; for (const p of P.specs.people) { if (p.path) loop(p).forEach((q) => paths.push([q[0], q[1], 0.7])); else fixed.push([p.x, p.z, seated(p) ? 0.4 : 0.7]); } for (const k of P.keepOut || []) fixed.push(k);
   const b = P.bounds, inWall = (x, z) => P.walls.some((w) => x > w[0] - 0.3 && x < w[2] + 0.3 && z > w[1] - 0.3 && z < w[3] + 0.3), keep = [];
   const free = (pts, walker) => (!walker||!routeIssues('crowd',pts,P.walls,.22).length)&&pts.every(([x, z]) => !inWall(x, z) && fixed.every((f) => Math.hypot(f[0] - x, f[1] - z) >= (f[2] < 0.6 ? Math.min(f[2] + 0.2, 0.72) : 0.72)) && (walker || paths.every((f) => Math.hypot(f[0] - x, f[1] - z) >= 0.72)) && Math.hypot(x - P.start.x, z - P.start.z) > 1.4);
@@ -187,7 +192,7 @@ const inWallR = (W, x, z, r) => W.some((w) => x > w[0] - r && x < w[2] + r && z 
 function followWorld() { const P = P_(), b = P.bounds; return { px: state.x, pz: state.z, blocked: (x, z, r = 0.22) => x < b.x0 + r || x > b.x1 - r || z < b.z0 + r || z > b.z1 - r || inWallR(P.walls, x, z, r * 0.8) || (P.keepOut || []).some((k) => Math.hypot(k[0] - x, k[1] - z) < k[2] + r * 0.3), walls: P.walls, bounds: b, others: P.npcs.filter((o) => o.m && o.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } }; }
 function npcTick(n, dt) {
   const m = n.m; if (!m || !m.visible) return; if (POSTER) { m.rotation.y = n.ry0; return; }
-  const ac = n.ctl, d = Math.hypot(state.x - n.x, state.z - n.z), seated = /^Sit/.test(n.anim || ''), isNear = !n.extra && !seated && ((d < 3.2 && !DEV_NOSTOP) || talkWith === n);
+  const ac = n.ctl, d = Math.hypot(state.x - n.x, state.z - n.z), seated = isSeated(n.anim), isNear = !n.extra && !seated && ((d < 3.2 && !DEV_NOSTOP) || talkWith === n);
   if (n.fol) { followTick(n, dt, followWorld()); return; }   /* someone who comes with you (engine/follow.js): behind you and to one side, never in your way; the height belongs to groundFeet */
   if (!n.path) { if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else if (!n.extra) faceTo(m, n.ry0, dt, 2); return; }
   if (isNear || n.wait > 0) { if (n.walking) { n.walking = false; ac.play(null); } if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else { n.wait -= dt; if (n.wait <= 0) { n.walking = true; ac.play('Walk'); } } return; }
@@ -637,7 +642,7 @@ const NORENDER = __DEV__ && /[?&]auto=/.test(location.search);   /* the scripted
 requestAnimationFrame(frame);
 
 /* ---------- the place audit (dev builds): the checks live in engine/audit.js. Run ?test=audit and expect 0 issues in every place. ---------- */
-const auditPlace = (P) => { const r = auditPlaceBase(P); for (const n of P.npcs) if (/^Sit/.test(n.anim || '') && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); if (!n.m.userData.noGround) groundFeet(n.m);   /* the same step the game runs every other frame */
+const auditPlace = (P) => { const r = auditPlaceBase(P); for (const n of P.npcs) if (isSeated(n.anim) && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); if (!n.m.userData.noGround) groundFeet(n.m);   /* the same step the game runs every other frame */
        for (const l of auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, SEATLOG)) r.inside.push(l); } return r; };
 const SEATLOG = [];   /* ?test=audit&seats=1 also prints how high each seated person's hips are above the seat */
 const auditPlaceBase = (P) => auditPlaceE({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start,

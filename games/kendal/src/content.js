@@ -13,51 +13,7 @@ export const CHAPTERS = [
   { year: 'Today', name: 'We remember Kendal', title: 'Today', sub: 'Kendal, Manchester.', caption: 'Kendal, today' },
 ];
 
-/* ---------- goals: one short sentence each. A function gets the live counters. ---------- */
-export const GOALS = {
-  10: () => 'Talk to Mass Dudley, Miss Cleo and the traveller on the road.',
-  11: (P) => `Help Mass Dudley load his mule: ${P.mule || 0} of 3.`,
-  12: () => 'Walk down the road to the men with the red and white poles.',
-  13: () => 'Talk to the surveyor.',
-  14: () => 'Well done! Next, the day of the first train.',
-  20: () => 'Look around the station. Talk to Mass Dudley, the boy and the clerk.',
-  21: () => 'Go and look at the engine, the Projector.',
-  22: () => 'Climb aboard the open carriage.',
-  23: () => 'Ride to Spanish Town. Look at the crowds!',
-  24: () => 'Hold on. The train is going home, fast.',
-  25: () => 'Well done! Next, the railway reaches the hills.',
-  30: () => 'Talk to Mr. Gordon, Mr. Abel, Ezra and Miss Ruby.',
-  31: (P) => `Carry banana bunches to the wagon: ${P.bun || 0} of 4.`,
-  32: () => 'Listen! A train is coming up the hill.',
-  33: () => 'Talk to Mr. Abel about the brakes.',
-  34: (P) => `Check the brakes along the train: ${P.brk || 0} of 3.`,
-  35: () => 'Well done! Next, a Sunday in 1957.',
-  40: () => 'Talk to Gran, Lloyd and Mass Ezra on the platform.',
-  41: () => 'Walk along the train to the last coach. Climb aboard.',
-  42: () => 'Enjoy the ride to Montego Bay. Look out of the windows.',
-  43: (P) => `Enjoy the beach: ${P.fun || 0} of 2 things done. Splash, build, or listen.`,
-  44: () => 'The sun is going down. Talk to Gran.',
-  45: () => 'Well done! Next, the train home.',
-  50: () => 'Talk to Gran, Lloyd and the mother with her baby.',
-  51: (P) => `The train is moving. Look out of the windows: ${P.win || 0} of 2.`,
-  52: () => 'Sit down with Gran and hold on.',
-  53: () => 'Hold on!',
-  60: () => 'Stay close to Gran. Then talk to Mr. Clive.',
-  61: (P) => `Fill the bucket and take it to the nurse: ${P.water || 0} of 2.`,
-  62: () => 'A little girl is lost. Talk to her.',
-  63: () => 'Take the girl to the calling place, by the lamp.',
-  64: () => 'Hold your lamp up, so the helpers can see the way.',
-  65: () => 'The night is long. Wait for the morning with Gran.',
-  66: () => 'The sun is up. Talk to Gran and Mr. Clive.',
-  67: () => 'You have finished the chapter. Read the next card.',
-  70: () => 'Meet Miss Joy and Andre at the memorial.',
-  71: (P) => `Look at the storyboard and the monument: ${P.look || 0} of 2.`,
-  72: () => 'Leave a flower at the monument.',
-  73: () => 'Andre has a question. Talk to Andre.',
-  74: () => 'You have finished the story. Thank you for playing! Your journey is in the Journal.',
-};
-export const TALK_TARGETS = { 10: ['dudley', 'cleo', 'traveller'], 13: ['surveyor'], 20: ['dudley2', 'boy', 'clerk'], 30: ['gordon', 'abel', 'ezraboy', 'ruby'], 33: ['abel'], 40: ['gran', 'lloyd', 'ezra'], 44: ['gran4'], 50: ['gran5', 'lloyd5', 'mother'], 60: ['gran6', 'clive'], 62: ['dawn'], 66: ['gran6', 'clive'], 70: ['joy', 'andre'], 73: ['andre'] };
-export const NEXT_AFTER_TALK = { 10: 11, 13: 14, 20: 21, 30: 31, 33: 34, 40: 41, 44: 45, 50: 51, 60: 61, 62: 63, 66: 67, 70: 71, 73: 74 };
+/* ---------- goals, who moves each step and what must be done: see steps.js (engine/story.js) ---------- */
 export const CHAPTER_END = { 14: 0, 25: 1, 35: 2, 45: 3 };   /* the last stage of each chapter but the final one, and the index of the chapter it ends */
 
 /* ---------- conversations: TALK[id](story) gives the first, full conversation; LATER[id](story) gives short lines for later visits ---------- */
@@ -350,7 +306,7 @@ export const LATER = {
   guardNight: () => [`Everything is fine.`, `Try to rest.`],
   gran6: () => [`Stay close to me.`, `Keep that lamp high, my dear.`],
   clive: () => [`Everyone is helping. Thank God.`, `The pipe is by the road.`],
-  nurse: () => [`Thank you, child. Keep it steady.`, `More water, if you can.`],
+  nurse: (S) => (S && S.stage === 61 && !(S.got && S.got.water) ? [`Water, please, child. The pipe is by the road.`] : [`Thank you, child. Keep it steady.`, `More water, if you can.`]),   /* S: the story (engine/story.js); she thanks you only once you have brought some */
   dawn: () => [`I want my mama.`],
   louise: () => [`Call the names! Loud and clear!`],
   clive2: () => [`Go well, child.`],

@@ -17,7 +17,7 @@ import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
      garment a small piece of clothing (buttons, a hat band, a buckle) that shows while its garment is hidden, or floats clear of every other piece (auditGarments)
    Nothing here runs in a public build unless a game imports it into code that is only reached when __DEV__ is true. */
 import * as THREE from 'three';
-import { groundFeet, strideOf } from './anim.js';
+import { groundFeet, strideOf, isSeated } from './anim.js';
 
 /* a list of the world-space box of every visible mesh under a group (instanced meshes are skipped). The mesh's own shape and place are kept aside (SHAPE) for checks that need real contact. */
 const SHAPE = new WeakMap();
@@ -53,16 +53,16 @@ export function auditPlace(place) {
   const floating = []; for (const idx of comps.values()) { const b = new THREE.Box3(); idx.forEach((i) => b.union(L[i].b)); const sz = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()); if (Math.max(sz.x, sz.y, sz.z) < 0.1) continue; floating.push(`float@(${c.x.toFixed(1)},${c.y.toFixed(1)},${c.z.toFixed(1)}) ${sz.x.toFixed(1)}x${sz.y.toFixed(1)}x${sz.z.toFixed(1)} ${idx.length} meshes, first is ${L[idx[0]].geo} ${L[idx[0]].mat}`); }
   /* people inside a solid box or cylinder, or inside a walking wall */
   const inside = [];
-  for (const p of place.npcs) { const g = p.ground || 0; for (let i = 0; i < n; i++) { const b = L[i].b, sz = size[i]; if (big.includes(i) || sz.y < 0.3 || b.max.y < g + (/^Sit/.test(p.anim || '') ? 0.62 : 0.3) || b.min.y > g + 1.3 || (L[i].geo !== 'BoxGeometry' && L[i].geo !== 'CylinderGeometry')) continue; const exact = insideBoxFootprint(L[i], p.x, Math.max(g + 0.7, b.min.y + 0.05), p.z); if (exact && p.x > b.min.x + 0.05 && p.x < b.max.x - 0.05 && p.z > b.min.z + 0.05 && p.z < b.max.z - 0.05) { inside.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) inside a ${L[i].geo} ${sz.x.toFixed(1)}x${sz.y.toFixed(1)}x${sz.z.toFixed(1)}, y ${b.min.y.toFixed(1)} to ${b.max.y.toFixed(1)}`); break; } } }
-  for (const p of place.npcs) if (!(p.ground > 0) && !/^Sit/.test(p.anim || '')) for (const w of place.walls) if (p.x > w[0] && p.x < w[2] && p.z > w[1] && p.z < w[3]) { inside.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) inside a walking wall`); break; }
+  for (const p of place.npcs) { const g = p.ground || 0; for (let i = 0; i < n; i++) { const b = L[i].b, sz = size[i]; if (big.includes(i) || sz.y < 0.3 || b.max.y < g + (isSeated(p.anim) ? 0.62 : 0.3) || b.min.y > g + 1.3 || (L[i].geo !== 'BoxGeometry' && L[i].geo !== 'CylinderGeometry')) continue; const exact = insideBoxFootprint(L[i], p.x, Math.max(g + 0.7, b.min.y + 0.05), p.z); if (exact && p.x > b.min.x + 0.05 && p.x < b.max.x - 0.05 && p.z > b.min.z + 0.05 && p.z < b.max.z - 0.05) { inside.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) inside a ${L[i].geo} ${sz.x.toFixed(1)}x${sz.y.toFixed(1)}x${sz.z.toFixed(1)}, y ${b.min.y.toFixed(1)} to ${b.max.y.toFixed(1)}`); break; } } }
+  for (const p of place.npcs) if (!(p.ground > 0) && !isSeated(p.anim)) for (const w of place.walls) if (p.x > w[0] && p.x < w[2] && p.z > w[1] && p.z < w[3]) { inside.push(`${p.id}@(${p.x.toFixed(1)},${p.z.toFixed(1)}) inside a walking wall`); break; }
   /* walk the floor on a 0.25 m grid from the start, then check that everything the player needs can be reached */
   const bd = place.bounds, st = 0.25, W = Math.round((bd.x1 - bd.x0) / st) + 1, D = Math.round((bd.z1 - bd.z0) / st) + 1, seen = new Uint8Array(W * D);
   const ok = (x, z) => x >= bd.x0 && x <= bd.x1 && z >= bd.z0 && z <= bd.z1 && !place.walls.some((w) => x > w[0] && x < w[2] && z > w[1] && z < w[3]);
   const q = [], sx = Math.round((place.start.x - bd.x0) / st), sz0 = Math.round((place.start.z - bd.z0) / st), startOK = ok(place.start.x, place.start.z); if (startOK) { q.push([sx, sz0]); seen[sz0 * W + sx] = 1; }
   while (q.length) { const [cx, cz] = q.pop(); for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = cx + dx, nz = cz + dz; if (nx < 0 || nz < 0 || nx >= W || nz >= D || seen[nz * W + nx] || !ok(bd.x0 + nx * st, bd.z0 + nz * st)) continue; seen[nz * W + nx] = 1; q.push([nx, nz]); } }
   const reach = (x, z, r) => { for (let cz = 0; cz < D; cz++) for (let cx = 0; cx < W; cx++) if (seen[cz * W + cx] && Math.hypot(bd.x0 + cx * st - x, bd.z0 + cz * st - z) <= r) return true; return false; };
-  const stuck = []; if (!startOK) stuck.push('the START is inside a wall or outside the bounds'); for (const a of place.actions) if (!reach(a.x, a.z, a.r * 0.9)) stuck.push('thing to do "' + a.label + '" cannot be reached'); for (const p of place.people) if (!/^Sit/.test(p.anim || '') && !reach(p.x, p.z, 2.3)) stuck.push('person ' + p.id + ' cannot be reached to talk to');
-  for(const p of place.npcs)if(!/^Sit/.test(p.anim||''))inside.push(...furnitureRouteIssues(p.id,[[p.x,p.z]],L,p.ground||0,.16));
+  const stuck = []; if (!startOK) stuck.push('the START is inside a wall or outside the bounds'); for (const a of place.actions) if (!reach(a.x, a.z, a.r * 0.9)) stuck.push('thing to do "' + a.label + '" cannot be reached'); for (const p of place.people) if (!isSeated(p.anim) && !reach(p.x, p.z, 2.3)) stuck.push('person ' + p.id + ' cannot be reached to talk to');
+  for(const p of place.npcs)if(!isSeated(p.anim))inside.push(...furnitureRouteIssues(p.id,[[p.x,p.z]],L,p.ground||0,.16));
   const overlap = auditPeople(place.npcs, place.start);
   for(const p of place.npcs) if(p.path && !(p.ground>0)) { inside.push(...routeIssues(p.id,p.path,place.walls,.22)); inside.push(...furnitureRouteIssues(p.id,p.path,L,p.ground||0)); }
   floating.push(...auditRest(L, place.groundAt));
@@ -174,7 +174,7 @@ export function routeSpots(id, pts, { loop = false, step = 0.3, ground = null, h
 }
 function bodySpots(place) {
   const gAt = place.groundAt || null, out = [];
-  for (const p of place.npcs) { if (/^Sit/.test(p.anim || '')) continue; out.push({ id: p.id, key: p.id + '@' + p.x.toFixed(1) + ',' + p.z.toFixed(1), x: p.x, z: p.z, ground: p.ground || 0, h: p.h, r: p.r });   /* key: two people with the same body name are reported apart */
+  for (const p of place.npcs) { if (isSeated(p.anim)) continue; out.push({ id: p.id, key: p.id + '@' + p.x.toFixed(1) + ',' + p.z.toFixed(1), x: p.x, z: p.z, ground: p.ground || 0, h: p.h, r: p.r });   /* key: two people with the same body name are reported apart */
     if (p.path && p.path.length > 1) out.push(...routeSpots(p.id, p.path, { loop: true, ground: gAt && !p.fixedGround ? gAt : () => p.ground || 0, h: p.h, r: p.r })); }
   for (const R of place.routes || []) out.push(...routeSpots(R.id, R.pts, { loop: !!R.loop, ground: gAt || (() => R.ground || 0), h: R.h, r: R.r, what: R.what || 'walks' }));
   return out;
@@ -247,7 +247,7 @@ export function auditHeld(id, body, items) {
 /* People: npcs [{ id, x, z, ground, anim, path }]. Standing people need 0.65 m between them, seated people 0.4 m. A walking person's loop (path) is sampled
    every half metre and checked against everyone who stands still. start {x, z} is where the player appears. */
 export function auditPeople(npcs, start) {
-  const out = [], sitting = (n) => /^Sit/.test(n.anim || ''), spots = (n) => { if (!n.path || n.path.length < 2) return [[n.x, n.z]]; const pts = []; for (let i = 0; i < n.path.length; i++) { const a = n.path[i], b = n.path[(i + 1) % n.path.length], len = Math.hypot(b[0] - a[0], b[1] - a[1]), k = Math.max(1, Math.ceil(len / 0.5)); for (let j = 0; j < k; j++) pts.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k]); } return pts; };
+  const out = [], sitting = (n) => isSeated(n.anim), spots = (n) => { if (!n.path || n.path.length < 2) return [[n.x, n.z]]; const pts = []; for (let i = 0; i < n.path.length; i++) { const a = n.path[i], b = n.path[(i + 1) % n.path.length], len = Math.hypot(b[0] - a[0], b[1] - a[1]), k = Math.max(1, Math.ceil(len / 0.5)); for (let j = 0; j < k; j++) pts.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k]); } return pts; };
   for (let i = 0; i < npcs.length; i++) for (let j = i + 1; j < npcs.length; j++) { const a = npcs[i], b = npcs[j]; if (Math.abs((a.ground || 0) - (b.ground || 0)) > 0.3) continue; const need = sitting(a) && sitting(b) ? 0.4 : 0.65; const moving = a.path || b.path; let worst = 1e9; if (!moving) worst = Math.hypot(a.x - b.x, a.z - b.z); else { const A = a.path ? spots(a) : [[a.x, a.z]], B = b.path ? spots(b) : [[b.x, b.z]]; if (a.path && b.path) continue; for (const p of A) for (const q of B) worst = Math.min(worst, Math.hypot(p[0] - q[0], p[1] - q[1])); } if (worst < need) out.push(`${a.id} and ${b.id} are ${(worst * 100).toFixed(0)} cm apart${moving ? ' (along a walk)' : ''} at (${a.x.toFixed(1)},${a.z.toFixed(1)})`); }
   if (start) for (const n of npcs) if (!sitting(n)) for (const p of spots(n)) if (Math.hypot(p[0] - start.x, p[1] - start.z) < 1.1 && !(n.ground > 0)) { out.push(`${n.id} stands on the player's start at (${p[0].toFixed(1)},${p[1].toFixed(1)})`); break; }
   return out;
