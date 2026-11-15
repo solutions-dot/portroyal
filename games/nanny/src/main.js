@@ -129,10 +129,10 @@ function buildPlace(id) {   /* the geometry only: quick, and enough for a title 
   P.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.alphaTest > 0) && o.name !== 'land' && !o.material.isMeshBasicMaterial) o.castShadow = o.receiveShadow = true; });
   if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); return P;
 }
-/* background people placed at random are moved until nobody stands in anybody, in a fire, or off the ground you can walk on */
+/* background people placed at random are moved until nobody stands in anybody, in a fire, in a tree's roots or off the ground you can walk on (e.wild: they may stand on open hillside, at the height of the land there) */
 function settle(P) {
   const r = rng(77), fixed = P.specs.people.map((p) => [p.x, p.z, p.when]), G = P.G, both = (a, b) => !a || !b || (a[0] <= b[1] && b[0] <= a[1]), keep = [];
-  const free = (e) => fixed.every((f) => !both(f[2], e.when) || Math.hypot(f[0] - e.x, f[1] - e.z) >= 0.95) && P.solids.every((s) => Math.hypot(s[0] - e.x, s[1] - e.z) >= s[2] + 0.45) && (e.ground !== undefined || G.walkable(e.x, e.z, 0.5)) && Math.hypot(e.x - P.start.x, e.z - P.start.z) > 1.6;
+  const free = (e) => fixed.every((f) => !both(f[2], e.when) || Math.hypot(f[0] - e.x, f[1] - e.z) >= 0.95) && P.solids.every((s) => Math.hypot(s[0] - e.x, s[1] - e.z) >= s[2] + 0.45) && (e.ground !== undefined || e.wild || G.walkable(e.x, e.z, 0.5)) && Math.hypot(e.x - P.start.x, e.z - P.start.z) > 1.6;
   for (const e of P.specs.extras) { if (e.id || e.column !== undefined || e.fighter !== undefined || e.path || e.fixed) { keep.push(e); fixed.push([e.x, e.z, e.when]); continue; }
     const x0 = e.x, z0 = e.z; let ok = free(e), tries = 0; while (!ok && tries++ < 50) { e.x = x0 + (r() - 0.5) * 2 * (1 + tries * 0.14); e.z = z0 + (r() - 0.5) * 2 * (1 + tries * 0.14); ok = free(e); }
     if (ok) { keep.push(e); fixed.push([e.x, e.z, e.when]); } }
@@ -734,6 +734,7 @@ function auditPlace(P) {
   /* all the ground you can walk on, every 50 cm, outside the footprints that keep you (and anyone following you) out of huts, fires, rocks and trees: nothing solid may stand there */
   const B = P.bounds, open = []; for (let x = B.x0; x <= B.x1; x += 0.5) for (let z = B.z0; z <= B.z1; z += 0.5) if (P.G.walkable(x, z, 0.1) && !P.solids.some((s) => Math.hypot(s[0] - x, s[1] - z) < s[2])) open.push({ id: 'open ground', x, z, ground: P.G.h(x, z), h: 1.6, r: 0.14, what: 'is' });
   for (const l of auditBodies(P.snap.concat(P.snap.inst || []), open, { skip: bodySkip })) add('inside', l);
+  if (P.id === 'town' && 8 + P.spots.farHuts <= 140) add('stuck', `the town shows ${8 + P.spots.farHuts} houses: the story says over 140 (Jamaica National Heritage Trust)`);
   return { id: P.id, ...out };
 }
 

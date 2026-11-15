@@ -19,10 +19,12 @@ const treeM = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: 
 const face = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
 /* put a thing on the ground at (x, z), turned by ry, sunk a little; returns it. solids: the place's list of round things you cannot walk through. */
 function put(g, G, o, x, z, ry = 0, { sink = 0, solids, r } = {}) { o.position.set(x, G.h(x, z) - sink, z); o.rotation.y = ry; g.add(o); if (solids) solids.push([x, z, r || o.userData.foot || 0.6]); taken.add(x, z, r || o.userData.foot || 0.6); return o; }   /* every placed thing also takes its ground, so rocks and plants scattered later keep out of it (flora.js, taken) */
+/* a fence is solid along its whole length: small round footprints every 45 cm */
+function fenceSolid(solids, x0, z0, x1, z1) { const L = Math.hypot(x1 - x0, z1 - z0), n = Math.ceil(L / 0.45); for (let i = 0; i <= n; i++) solids.push([x0 + (x1 - x0) * i / n, z0 + (z1 - z0) * i / n, 0.22]); }
 const trails = (g, G) => { for (const t of G.trails) if (!t.plain) g.add(ribbon(t.dense, t.w + 0.4, G.h, trailMat(), { dy: 0.07, vrep: 2.6 })); };
 const sAt = (dense, test) => { let s = 0; for (let i = 1; i < dense.length; i++) { if (test(dense[i])) return s; s += Math.hypot(dense[i][0] - dense[i - 1][0], dense[i][1] - dense[i - 1][1]); } return s; };
 /* many plain huts across a hillside, as one drawn shape: each sits a little into the slope and faces downhill-ish */
-function farHuts(g, G, n, area, seed, ok) { const sp = spotsOn(G, n, area, seed, ok, { smin: 0.85, smax: 1.15, tries: 40, room: 2.5 }); const im = plant(g, hutGeo(), new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 }), sp, { vary: 0.1, sink: 0.42 }); return { im, spots: sp }; }
+function farHuts(g, G, n, area, seed, ok) { const sp = spotsOn(G, n, area, seed, (x, z, y, r) => ok(x, z, y, r) && !G.walkable(x, z, -3.1), { smin: 0.85, smax: 1.15, tries: 40, room: 2.5 }); const im = plant(g, hutGeo(), new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 }), sp, { vary: 0.1, sink: 0.42, name: 'hut' }); return { im, spots: sp }; }   /* a hut is 4 m by 3.2 m (up to 15% bigger): it stands at least 3.1 m from any ground you can walk on, so nobody on a path walks through a wall */
 /* a flame you can see from far away, and a warm light that flickers */
 function glowSprite(size = 3, color = 0xff8a30) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); s.scale.set(size, size * 1.2, 1); return s; }
 
@@ -40,7 +42,11 @@ export function buildEstate() {
   const road = []; for (let x = -95; x <= 95; x += 5) road.push([x, 8 + Math.sin(x * 0.04) * 0.8, 0]); const rt = T.dirt([1, 1], [128, 86, 56]); g.add(ribbon(road, 2.7, G.h, new THREE.MeshStandardMaterial({ map: rt, roughness: 1, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }), { dy: 0.045, vrep: 6 }));
   /* the stream, and stones to step on */
   const sd = []; for (let x = -100; x <= 100; x += 6) sd.push([x, streamZ(x), 0]); const water = streamMesh(smoothPath(sd, 2), 3.1, -1.02, { speed: 0.9 }); g.add(water);
-  const ti = trail.dense.findIndex((p) => p[1] < -10.8), tj = trail.dense.findIndex((p) => p[1] < -16.2); g.add(steppingStones(trail.dense, -0.9, ti / trail.dense.length, tj / trail.dense.length));
+  const ti = trail.dense.findIndex((p) => p[1] < -10.8), tj = trail.dense.findIndex((p) => p[1] < -16.2); const stones = steppingStones(trail.dense, -0.9, ti / trail.dense.length, tj / trail.dense.length); g.add(stones);
+  /* you, and the people who walk with you, cross on the stepping stones, not through them: on the crossing the ground you stand on is the top of the nearest stone.
+     The land and the water keep their own heights; only where a person stands changes (G.h is read for people and the camera from here on). */
+  stones.updateMatrixWorld(true); const tops = stones.children.map((m) => { const b = new THREE.Box3().setFromObject(m); return [(b.min.x + b.max.x) / 2, (b.min.z + b.max.z) / 2, b.max.y - 0.03]; }), h0 = G.h;
+  G.h = (x, z) => { const y = h0(x, z); if (z > -10 || z < -18) return y; let best = 1e9, top = y; for (const t of tops) { const d = Math.hypot(t[0] - x, t[1] - z); if (d < best) { best = d; top = t[2]; } } return best < 0.9 ? Math.max(y, top) : y; };
   /* sugar cane on both sides of the first stretch, and the huts where you start */
   const nearTrail = (x, z) => G.trailness(x, z) > 0.01, cane = spotsOn(G, 1500, [-64, 10.8, 64, 66], 3, (x, z) => !nearTrail(x, z) && Math.hypot(x - 2, z - 41) > 10.5 && Math.abs(x - 54) > 13, { smin: 0.8, smax: 1.3 }); plantCane(g, cane);
   const HUTS = [[9.8, 44.5, -2.2], [-5.6, 46, 2.4], [10.2, 36, -1.4]]; HUTS.forEach(([x, z, ry], i) => put(g, G, hut(3.6, 3, 2, i + 2), x, z, ry, { sink: 0.05 }));
@@ -77,18 +83,18 @@ export function buildTown() {
   /* more than a hundred and thirty houses on the hillsides: with the eight above, over 140 (Jamaica National Heritage Trust) */
   const far = farHuts(g, G, 134, [-78, -84, 70, 44], 17, (x, z, y) => { const d = Math.hypot(x, z); return d > 25 && d < 92 && y > -17 && G.trailness(x, z) < 0.01 && Math.abs(G.h(x + 2, z) - y) < 1.4 && Math.abs(G.h(x, z + 2) - y) < 1.4 && Math.hypot(x + 64, z + 61) > 9; });
   /* the great cotton tree, and the things of a working town */
-  const ct = cottonTree(24, 3); put(g, G, ct, 7.5, -6, 0.6, { solids, r: 2.3 });
+  const ct = cottonTree(24, 3); put(g, G, ct, 7.5, -6, 0.6, { solids, r: ct.userData.reach });   /* the footprint is the whole spread of the buttress roots, so nobody stands between them */
   const fire = put(g, G, cookFire(true), -3, 3, 0, { solids }); put(g, G, jerkFrame(), -5.6, 5.2, 0.5, { solids }); put(g, G, mortar(), 2.6, 6.2, 0, { solids, r: 0.5 }); put(g, G, woodPile(8), -9.6, 9.8, 0.7, { solids }); put(g, G, stool(), -1.2, 4.6, 0, { solids, r: 0.35 }); put(g, G, stool(), -4.4, 1.4, 0, { solids, r: 0.35 });
-  put(g, G, basketOf('yam'), 3.6, 5.2, 0, { solids, r: 0.4 }); put(g, G, basketOf('plantain'), 1.4, 7.2, 1, { solids, r: 0.4 }); put(g, G, gourd(), -2.2, 5.6, 0); put(g, G, gourd(), 4.6, 6.6, 0);
-  for (const [x, z, s, sd] of [[3.2, 11.6, 1.2, 2], [6.9, 8.7, 0.95, 5]]) { const b = boulder(s, sd); put(g, G, b, x, z, sd, { sink: 0.2 }); taken.add(x, z, s * 1.1); }   /* two rocks where the path comes in */
+  put(g, G, basketOf('yam'), 3.6, 5.2, 0, { solids, r: 0.4 }); put(g, G, basketOf('plantain'), 1.4, 7.2, 1, { solids, r: 0.4 }); put(g, G, gourd(), -2.2, 5.6, 0, { solids, r: 0.3 }); put(g, G, gourd(), 4.6, 6.6, 0, { solids, r: 0.3 });
+  for (const [x, z, s, sd] of [[3.2, 11.6, 1.2, 2], [6.9, 8.7, 0.95, 5]]) { const b = boulder(s, sd); put(g, G, b, x, z, sd, { sink: 0.2, solids, r: s * 1.1 }); }   /* two rocks where the path comes in: solid, so you (and anyone with you) walk round them */
   /* the high rock above the clearing, with a flat stone on top */
   const rx = 3, rz = -24.5, ry0 = G.h(rx, rz), hr = grp(g), big = boulder(4.3, 9); big.position.set(rx, ry0 + 2.2, rz); hr.add(big); const b2 = boulder(2.6, 3); b2.position.set(rx + 3.6, ry0 + 1.0, rz + 1.2); hr.add(b2); const b3 = boulder(2.2, 6); b3.position.set(rx - 3.4, ry0 + 0.8, rz + 0.6); hr.add(b3);   /* the high rock is one thing made of three boulders and a flat slab that run into each other on purpose, so they share a group (the audit's overlap check compares separate things only) */ taken.add(rx, rz, 5.2); taken.add(rx + 3.6, rz + 1.2, 3.0); taken.add(rx - 3.4, rz + 0.6, 2.6);   /* the high rock keeps the forest off it */
   const slabY = ry0 + 5.35; cyl(1.25, 1.5, 0.5, PM.stone, rx, slabY - 0.25, rz, hr, 9);
   /* the provision ground: yam hills (three bare ones for you to plant), plantains, a low fence on the downhill side */
-  const yams = [[-21, 3], [-23.6, 5.6], [-21.4, 7.9]].map(([x, z], i) => put(g, G, yamHill(0, i + 1), x, z, i));
-  for (const [x, z] of [[-26, 2.2], [-27.6, 5], [-26.4, 8], [-24.2, 9.8], [-24, 1.2], [-28.6, 7.4], [-21.6, 0.4], [-19.2, 9.6]]) put(g, G, yamHill(1, x * 3 | 0), x, z, x);
+  const yams = [[-21, 3], [-23.6, 5.6], [-21.4, 7.9]].map(([x, z], i) => put(g, G, yamHill(0, i + 1), x, z, i, { solids, r: 0.55 }));
+  for (const [x, z] of [[-26, 2.2], [-27.6, 5], [-26.4, 8], [-24.2, 9.8], [-24, 1.2], [-28.6, 7.4], [-21.6, 0.4], [-19.2, 9.6]]) put(g, G, yamHill(1, x * 3 | 0), x, z, x, { solids, r: 0.55 });   /* the mounds are solid: people walk between them, not through them */
   plantPlantains(g, spotsOn(G, 26, [-34, -4, -14, 15], 9, (x, z) => { const d = Math.hypot(x + 23, z - 5); return d > 8 && d < 12.5 && G.trailness(x, z) < 0.1; }, { smin: 0.8, smax: 1.25, room: 0.16 }));
-  wattleFence(g, -30.4, 8.6, -25.2, 12.4, G.h(-28, 10.6) - 0.1); wattleFence(g, -25.2, 12.4, -18.6, 12.6, G.h(-22, 12.5) - 0.1);
+  wattleFence(g, -30.4, 8.6, -25.2, 12.4, G.h(-28, 10.6) - 0.1); wattleFence(g, -25.2, 12.4, -18.6, 12.6, G.h(-22, 12.5) - 0.1); fenceSolid(solids, -30.4, 8.6, -25.2, 12.4); fenceSolid(solids, -25.2, 12.4, -18.6, 12.6);
   /* the forest all round, kept off the houses */
   const clearHuts = (x, z) => Math.hypot(x, z) > 24 && far.spots.every((p) => Math.hypot(p.x - x, p.z - z) > 4.2);
   forest(g, G, [-110, -115, 95, 90], { seed: 44, trees: 170, tall: 60, bushes: 150, ferns: 60, ground: 260, grass: 900, rocks: 60, keep: clearHuts, near: [-50, -50, 56, 68] });
@@ -101,7 +107,7 @@ export function buildTown() {
   const sIn = pathLength(pathIn.dense), sBack = pathLength(back.dense);
   const people = [
     person('mimba', 'mimba', 'Auntie Mimba', -18.4, 4.2, face(-18.4, 4.2, -12, 3), { when: [20, 29] }), person('cubbenah', 'cubbenah', 'Cubbenah', 9.2, 1.6, face(9.2, 1.6, 0, 3), { when: [20, 29], props: [['RightHand', 'horn']] }), person('beneba', 'beneba', 'Beneba', -2.2, 8.2, face(-2.2, 8.2, 4, 9), { when: [20, 29] }),
-    person('mama5', 'mama', 'Mama', -6.2, 10.4, face(-6.2, 10.4, 0, 6), { when: [50, 54] }), person('beneba5', 'beneba', 'Beneba', 1.6, -1.4, face(1.6, -1.4, 0, 6), { when: [50, 54], scale: 0.86, h: 1.46 }), person('phibba', 'phibba', 'Phibba', 9.9, -7.6, face(9.9, -7.6, 4, -2), { when: [50, 54], anim: 'Sad1' }),
+    person('mama5', 'mama', 'Mama', -6.2, 10.4, face(-6.2, 10.4, 0, 6), { when: [50, 54] }), person('beneba5', 'beneba', 'Beneba', 1.6, -1.4, face(1.6, -1.4, 0, 6), { when: [50, 54], scale: 0.86, h: 1.46 }), person('phibba', 'phibba', 'Phibba', 2.9, -8.2, face(2.9, -8.2, 0, 0), { when: [50, 54], anim: 'Sad1' }),   /* by the cotton tree, on open ground in front of it: not between its roots */
     person('mama5b', 'mama', 'Mama', -65.4, -62.2, face(-65.4, -62.2, -62, -58), { when: [55, 59] }),
   ];
   const extras = [
@@ -113,7 +119,7 @@ export function buildTown() {
     ...[[-2, 2], [2.5, -1], [-4, -4], [5, 4], [0, 7], [-7, 1], [3, -6.5], [-1.5, -8]].map(([x, z], i) => extra(i === 0 ? 'officer' : 'soldier', x, z, i * 1.3, 'Idle', { when: [55, 59], props: [['RightHand', 'musket']], far: true })),
   ];
   return { id: 'town', group: g, G, solids, start: { x: 36, z: 61.2, yaw: 0.35 }, env: ENV.morning, backdrop: { lift: -14, mist: -30 }, people, extras, fire, smokers: [{ x: -3, y: 0.9, z: 3, rate: 1.2 }, { x: -5.6, y: 0.8, z: 5.2, rate: 0.8 }],
-    spots: { pathIn, back, sIn, sBack, yams, doors: doors.slice(0, 3), horn: [9.2, 1.6], rock: [rx, slabY, rz], backGate: [-9, -9.5], ridge: [ridge.x, ridge.y, ridge.z], knoll, guns, burn, fireLight, hearth, tree: [7.5, -6] } };
+    spots: { farHuts: far.spots.length, pathIn, back, sIn, sBack, yams, doors: doors.slice(0, 3), horn: [9.2, 1.6], rock: [rx, slabY, rz], backGate: [-9, -9.5], ridge: [ridge.x, ridge.y, ridge.z], knoll, guns, burn, fireLight, hearth, tree: [7.5, -6] } };
 }
 
 /* ============ chapters 3 and 4: the watch rock and the narrow path ============ */
@@ -128,7 +134,7 @@ export function buildWatch() {
   const G = makeGround({ base: (x, z) => { const d = Math.hypot(x, z), end = 14 + 22 * smooth(-12, -30, x); return -15 * smooth(4.5, end, z) - 0.4 * Math.max(0, z - 14) - 0.06 * x + 0.46 * Math.max(0, -z - 5) + (fbm(x * 0.04, z * 0.04, 4, 71) - 0.5) * 9 * smooth(14, 55, d) * (z > 0 && z < 90 && Math.abs(x - 6) < 40 ? 0.35 : 1); }, trails: [spur, climb], flats: [rock, nook] });
   g.add(landMesh(G, { size: 380, seg: 170, seed: 14 })); trails(g, G);
   /* the rock: two boulders to hide between at the edge, one more beside, and the bare cliff under it */
-  for (const [x, z, s, sd] of [[1.9, 4.5, 1.0, 2], [-1.7, 4.6, 0.9, 7], [3.7, 2.2, 0.9, 4]]) put(g, G, boulder(s, sd), x, z, sd * 1.3, { sink: 0.2, solids, r: s * 0.78 });
+  for (const [x, z, s, sd] of [[1.9, 4.5, 1.0, 2], [-1.7, 4.6, 0.9, 7], [3.7, 2.2, 0.9, 4]]) put(g, G, boulder(s, sd), x, z, sd * 1.3, { sink: 0.2, solids, r: s * 1.05 });
   const cliff = grp(g);   /* the face of the cliff below the rock: one thing made of boulders that run into each other on purpose */
   for (const [x, z, s, sd] of [[5.6, 7.2, 3.0, 8], [-5.2, 7.4, 2.6, 5], [0.4, 8.6, 3.4, 3], [10, 8.5, 2.6, 6], [-10, 9.5, 2.4, 9], [3, 12, 3.0, 11], [-4, 12.5, 2.6, 12]]) { const b = boulder(s, sd); b.position.set(x, G.h(x, z) - s * 0.25, z); cliff.add(b); taken.add(x, z, s * 1.1); }
   /* trenches beside the top of the path, each with a forked stick to rest a gun on (Thicknesse and Dallas, on a Windward town in 1739) */
@@ -177,7 +183,7 @@ export function buildNewTown() {
   const fx = -72, fz = 6, fy = G.h(fx, fz), fall = grp(g, fx, fy, fz); fall.userData.noBatch = true; fall.rotation.y = PI / 2;
   mesh(new THREE.PlaneGeometry(16, 30), flat(0x3c4038), 0, 12, -0.3, fall); const wt = T.water([1, 3]).clone(); wt.needsUpdate = true; const wm = mesh(new THREE.PlaneGeometry(4.2, 28), new THREE.MeshBasicMaterial({ map: wt, color: 0xf2fbff, transparent: true, opacity: 0.92 }), 0, 13, 0, fall);
   /* the meeting tree on its knoll, the paper on its stone, cook fire, gardens */
-  put(g, G, cottonTree(21, 8), -11.5, -39.5, 1.2);
+  const mt = cottonTree(21, 8); put(g, G, mt, -11.5, -39.5, 1.2, { solids, r: mt.userData.reach });   /* the meeting tree: its footprint is its whole root spread, so the people round Nanny stand clear of the roots */
   const stone = put(g, G, paperStone(), 3.6, -4.6, 0.3, { solids, r: 0.95 });
   put(g, G, cookFire(true), -5, 5.4, 0, { solids }); put(g, G, stool(), -3.4, 6.6, 0, { solids, r: 0.35 }); put(g, G, mortar(), -7.2, 3.4, 0, { solids, r: 0.5 }); put(g, G, basketOf('plantain'), -6.4, 7.6, 0, { solids, r: 0.4 }); put(g, G, woodPile(7), 7.6, 8.6, 1.1, { solids });
   for (const [x, z] of [[-20, 12], [-22.4, 14.6], [-19.6, 16.4], [-24, 11], [-17.4, 13.6], [-21.8, 18]]) put(g, G, yamHill(1, x | 0), x, z, x);
@@ -187,7 +193,8 @@ export function buildNewTown() {
   const hearth = new THREE.PointLight(0xffa050, 0, 14, 1.6); hearth.position.set(-5, 1.0, 5.4); g.add(hearth);
   const people = [person('mama6', 'mamaOld', 'Mama', -3.4, 3.2, face(-3.4, 3.2, 1, 0)), person('cub6', 'cubbenah', 'Cubbenah', 6.2, 4.4, face(6.2, 4.4, 1, 0), { props: [['RightHand', 'horn']] }), person('beneba6', 'benebaGrown', 'Beneba', 1.4, -3.2, face(1.4, -3.2, 2, 1))];
   const kx = -9, kz = -37, ky = 2.4;
-  const extras = [extra('nanny', kx - 0.6, kz - 0.4, face(kx, kz, kx - 12, kz - 30), 'Idle', { id: 'nanny6', ground: ky, far: true }), ...villagers(8, 31, [kx - 4.6, kz + 1.6, kx + 4.4, kz + 4.8], { face: [kx - 0.6, kz - 0.4], anims: ['Idle'] }).map((e) => ({ ...e, ground: ky, far: true })),
+  const nx = kx + 2.1, nz = kz + 1.5;   /* Nanny stands under the meeting tree's crown, in front of its roots, where you can see her from the clearing */
+  const extras = [extra('nanny', nx, nz, face(nx, nz, nx - 6, nz - 30), 'Idle', { id: 'nanny6', ground: G.h(nx, nz), far: true }), ...villagers(8, 31, [kx - 2.6, kz + 3.2, kx + 5.4, kz + 6.4], { face: [nx, nz], anims: ['Idle'] }).map((e) => ({ ...e, wild: true, far: true })),
     extra('phibbaGrown', 3.2, -1.6, face(3.2, -1.6, 3.6, -4.6), 'Idle'), ...villagers(12, 35, [-11, -11, 11, 11], { face: [3.6, -4.6] })];
   return { id: 'newtown', group: g, G, solids, start: { x: 0.5, z: 9.5, yaw: 0.1 }, env: ENV.morning, backdrop: { lift: -4, mist: -200 }, people, extras, waters: [water], smokers: [{ x: -5, y: 0.9, z: 5.4, rate: 1.1 }, { x: fx + 1.5, y: fy + 1.2, z: fz, rate: 2.2, mist: true }],
     tick: (dt) => { wt.offset.y += dt * 0.55; }, spots: { paper: [3.6, -4.6], stone, hearth, river: [21, 6] } };
