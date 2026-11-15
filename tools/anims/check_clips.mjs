@@ -2,7 +2,8 @@
 // For each clip it prints the length, the loop seam (the largest bone turn, in degrees, between the last pose and the first,
 // how far the hips travel over the ground, which the game removes for walkers, and how much their height changes, in cm) and whether the clip holds its first pose for a while at the start (a pause at the loop point).
 // A clip that loops should have a seam under about 2 degrees. With --vs it also compares each clip that both files hold, pose by pose,
-// lined up at their first frame, and prints the largest bone difference in degrees.
+// lined up at their first frame, and prints the largest bone difference in degrees. At the end it lists clips that are the same
+// movement as another clip (under 1 degree apart everywhere), which usually means the same Mixamo clip was downloaded twice.
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { MeshoptDecoder } from 'meshoptimizer';
@@ -39,7 +40,7 @@ function poseDiff(A, ta, B, tb) {
   return { worst, bone, dl, dy };
 }
 const args = process.argv.slice(2), vi = args.indexOf('--vs'), old = vi >= 0 ? await load(args[vi + 1]) : null;
-const file = args.find((a, i) => !a.startsWith('--') && i !== vi + 1) || 'shared/models/anims.js', clips = await load(file);
+const file = args.find((a, i) => !a.startsWith('--') && (vi < 0 || i !== vi + 1)) || 'shared/models/anims.js', clips = await load(file);
 for (const [name, c] of Object.entries(clips)) {
   const s = poseDiff(c, c.t1, c, c.t0);
   const hips = c.tr['Hips.rotation'], hold = hips && hips.t.length > 1 && hips.t[0] > 1e-4 ? `starts at ${hips.t[0].toFixed(3)} s (first pose held)` : '';
@@ -49,3 +50,10 @@ for (const [name, c] of Object.entries(clips)) {
     line += `  vs old: ${w.toFixed(2)} deg (${wb}), length ${(o.t1 - o.t0).toFixed(2)} s`; }
   console.log(line);
 }
+const names = Object.keys(clips), same = [];
+for (let i = 0; i < names.length; i++) for (let j = i + 1; j < names.length; j++) {
+  const A = clips[names[i]], B = clips[names[j]], len = A.t1 - A.t0; if (Math.abs(len - (B.t1 - B.t0)) > 0.05) continue;
+  let w = 0; for (let t = 0; t <= len && w < 1; t += 0.1) w = Math.max(w, poseDiff(A, A.t0 + t, B, B.t0 + t).worst);
+  if (w < 1) same.push(`${names[i]} = ${names[j]} (${w.toFixed(2)} deg)`);
+}
+console.log(same.length ? 'THE SAME MOVEMENT: ' + same.join(', ') : 'no two clips are the same movement');

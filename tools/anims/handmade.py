@@ -452,11 +452,20 @@ def speech(rig):
 
 SIDE_GAP = 0.44   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right and 0.12 m in front, facing the same way
 CHILD_GAP = 0.32  # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right
-HAND_OUT, HAND_FWD, HAND_UP = 0.069, -0.04, -0.10   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
+HAND_OUT, HAND_FWD, HAND_UP = 0.068, -0.04, -0.10   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
+FACE_OUT, FACE_FWD, FACE_UP = 0.06, 0.0, -0.075   # ComfortHand: fine placement of the resting hand
 FACE_GAP = 0.58   # ComfortHand: the other person stands this far in front of the giver, facing them
 
 
-def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0.25)):
+def follow(rig, take_frames, bone, x, y, rz):
+    """How the other person's joint moves (their weight shifts and breaths), as seen from the giver, frame by frame,
+    measured from its average. The giver's resting hand adds this so it rides along on their shoulder."""
+    R = rot(Z, rz); pts = [R @ rig.fk(p)[P + bone].translation + V(x, y, 0) for p in take_frames]
+    m = sum(pts, Vector()) / len(pts)
+    return [q - m for q in pts]
+
+
+def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0.25), ride=None):
     """An arm round the shoulders of someone standing (or sitting) `gap` metres to the right, facing the same way.
     The giver's body turns about 30 degrees towards them, the arm goes round their back and the hand rests on their far
     shoulder, with a few slow pats. `drop` is how far below the giver's own shoulder joint their shoulder top is; `lean`
@@ -471,6 +480,7 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
         M = rig.fk(p)
         far = gap - 0.16 + 0.12                                         # their far shoulder, from the giver's shoulder joint
         wrist = body_point(rig, M, 'Right', far - 0.05 + HAND_OUT, 0.04 + HAND_FWD, -drop + HAND_UP + 0.008 * pt, bone='Hips')   # over their far shoulder, from behind
+        if ride: wrist = wrist + ride[i]
         fingers = body_dir(rig, M, 'Right', 0.25, 0.1, -1.0, bone='Hips')     # down the back and outside of their upper arm
         palm = body_dir(rig, M, 'Right', -0.4, 1.0, 0.1, bone='Hips')
         elbow = body_dir(rig, M, 'Right', -0.15, -1.0, -0.55, bone='Hips')   # elbow down and back, behind them
@@ -482,7 +492,7 @@ def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.6, look=(-0.45, 0
 def relaxed_arm(rig, p, side):
     """The free arm hangs at the side, a little bent."""
     M = rig.fk(p)
-    arm(rig, p, side, body_point(rig, M, side, 0.09, 0.06, -0.43), body_dir(rig, M, side, 0.3, -1, -0.3),
+    arm(rig, p, side, body_point(rig, M, side, 0.13, 0.08, -0.42), body_dir(rig, M, side, 0.3, -1, -0.3),
         body_dir(rig, M, side, 0.0, 0.15, -1), body_dir(rig, M, side, -1, 0.1, 0), 0.5)
     curl(rig, p, side, 0.3)
 
@@ -511,19 +521,21 @@ def comfort_child(rig):
 
 @clip('ComfortHand', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_hand(rig):
-    """Facing the other person, who stands FACE_GAP in front: the right hand rests on their left shoulder, head bowed a little."""
+    """Facing the other person, who stands FACE_GAP in front: the left hand rests on their right shoulder, head bowed a
+    little. (They play ComfortTake, whose hand to the eyes is their left one, on the other side.)"""
     T = 8.0; frames = stand_still(rig, T, 37)
+    ride = follow(rig, comfort_take(rig), 'RightArm', 0.0, -FACE_GAP, math.pi)
     pat = lambda t: sum(bump(t, t0, t0 + 0.8, 0.3, 0.5) for t0 in (1.5, 5.2))
     for i, p in enumerate(frames):
         t = i / FPS; pt = pat(t)
         turn(rig, p, 'Spine1', X, 0.04)
-        steady_head(rig, p, yaw=-0.05 + 0.03 * math.sin(TAU * t / T), pitch=0.25, roll=-0.05, neck=0.5)
+        steady_head(rig, p, yaw=0.05 + 0.03 * math.sin(TAU * t / T), pitch=0.25, roll=0.05, neck=0.5)
         M = rig.fk(p)
-        wrist = body_point(rig, M, 'Right', -0.04, FACE_GAP - 0.2, -0.17 + 0.02 * pt, bone='Hips')
-        arm(rig, p, 'Right', wrist, body_dir(rig, M, 'Right', 0.4, -0.2, -1, bone='Hips'), body_dir(rig, M, 'Right', -0.1, 0.8, -0.6, bone='Hips'),
-            body_dir(rig, M, 'Right', 0.0, 0.3, -1, bone='Hips'), 0.5)
-        curl(rig, p, 'Right', 0.35 - 0.15 * pt, thumb=0.15)
-        relaxed_arm(rig, p, 'Left')
+        wrist = body_point(rig, M, 'Left', FACE_OUT, FACE_GAP - 0.2 + FACE_FWD, FACE_UP + 0.008 * pt, bone='Hips') + ride[i]
+        arm(rig, p, 'Left', wrist, body_dir(rig, M, 'Left', 0.4, -0.2, -1, bone='Hips'), body_dir(rig, M, 'Left', -0.1, 0.8, -0.6, bone='Hips'),
+            body_dir(rig, M, 'Left', 0.0, 0.3, -1, bone='Hips'), 0.5)
+        curl(rig, p, 'Left', 0.25 - 0.1 * pt, thumb=0.1)
+        relaxed_arm(rig, p, 'Right')
     return frames
 
 

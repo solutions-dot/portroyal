@@ -27,7 +27,7 @@ PAIRS = {
     'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.32, -0.08, 0.0, 0.6), False),
     'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.44, -0.12, 0.0, 1.0), True),
 }
-REST = {'ComfortGive': 1, 'ComfortHand': 1, 'ComfortChild': 1, 'SitComfort': 1}   # pairs where the giver's right hand and forearm rest on the other person
+REST = {'ComfortGive': 'Right', 'ComfortHand': 'Left', 'ComfortChild': 'Right', 'SitComfort': 'Right'}   # the giver's hand and forearm that rest on the other person
 SKIP = ('Human.low-poly', 'Cap')   # the proxy mesh and the spare cap (each game shows one hat; the giver's hat is skipped too)
 
 
@@ -135,8 +135,8 @@ def run(name):
         for v, lab in zip(gv, G['labels']):            # the giver against the taker
             d, i = signed(ttree, v, tp)
             if d is None: continue
-            if lab in ('RightHand', 'RightForeArm') and REST.get(name):   # the arm that rests on them may touch, never go in
-                if lab == 'RightHand':
+            if lab in (REST[name] + 'Hand', REST[name] + 'ForeArm'):   # the arm that rests on them may touch, never go in
+                if lab == REST[name] + 'Hand':
                     hand = min(hand, d)
                     if os.environ.get('DEBUG') and k == 0 and d < -0.02: print('DEBUG deep hand point', tuple(round(x, 3) for x in v), round(d, 3), tp[i], ttree.find_nearest(v)[0])
                 if d < 0: note(('giver ' + lab, 'taker ' + tp[i]), -d)
@@ -144,7 +144,7 @@ def run(name):
         for v, lab in zip(tv, Tk['labels']):            # the taker against the giver
             d, i = signed(gtree, v, gp)
             if d is None: continue
-            if gp[i] in ('RightHand', 'RightForeArm') and lab in ('shoulders', 'LeftUpperArm', 'RightUpperArm', 'body', 'head') and d >= 0: continue   # where the hand rests
+            if gp[i] in (REST[name] + 'Hand', REST[name] + 'ForeArm') and lab in ('shoulders', 'LeftUpperArm', 'RightUpperArm', 'body', 'head') and d >= 0: continue   # where the hand rests
             if d < 0.01: note(('taker ' + lab, 'giver ' + gp[i]), 0.01 - d)
         band.append(hand)
         for who, (vs, ts, ps, labs) in (('giver', (gv, gt, gp, G['labels'])), ('taker', (tv, tt, tp, Tk['labels']))):   # hands through one's own body
@@ -156,7 +156,8 @@ def run(name):
                 if d is not None and d < -0.004: selfhit[(who, lab + ' in ' + kp[i])] = max(selfhit.get((who, lab + ' in ' + kp[i]), 0), -d)
     print('PAIR', name, '(%s + %s, %s + %s)' % (gclip, tclip, gbody, tbody))
     rest = [b for b in band if b < 9]
-    if rest: print('  giver right hand above their surface: min %.3f m, max %.3f m (want 0.005 to 0.02, never over 0.03)' % (min(rest), max(rest)))
+    if os.environ.get('DEBUG'): print('DEBUG band', ' '.join('%.3f' % b for b in band))
+    if rest: print('  giver resting hand above their surface: min %.3f m, max %.3f m (want 0.005 to 0.02, never over 0.03)' % (min(rest), max(rest)))
     bad = {k: v for k, v in worst.items() if v > 0}
     print('  contacts or overlaps (depth past the 1 cm gap; the resting hand counts only if it goes in):', 'none' if not bad else '')
     for (a, b), d in sorted(bad.items(), key=lambda kv: -kv[1]): print('    %-22s vs %-22s %.3f m' % (a, b, d))

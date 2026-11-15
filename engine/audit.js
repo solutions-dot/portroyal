@@ -98,7 +98,7 @@ export function auditOverlap(snap, { deep = 0.04 } = {}) {
   const pairs = new Set(); for (const [, l] of cell) for (let a = 0; a < l.length; a++) for (let b = a + 1; b < l.length; b++) { const i = l[a], j = l[b]; if (snap[i].top === snap[j].top || (snap[i].loose && snap[j].loose)) continue; const ib = snap[i].b.clone().intersect(snap[j].b), d = ib.isEmpty() ? null : ib.getSize(v); if (!d || d.x < deep || d.y < deep || d.z < deep) continue; pairs.add(i < j ? i * 1e6 + j : j * 1e6 + i); }
   for (const k of pairs) { const i = Math.floor(k / 1e6), j = k % 1e6, A = snap[i], B = snap[j], key2 = A.top + B.top; if (seen.has(key2)) continue;
     let worst = 0, n = 0, at = null; for (const [P, Q] of [[A, B], [B, A]]) for (const p of worldPoints(P, 400)) { if (!Q.b.containsPoint(p)) continue; const d = depthIn(Q, p, v); if (d > deep) { n++; if (d > worst) { worst = d; at = p; } } }
-    if (n >= 3) { seen.add(key2); out.push(`overlap@(${at.x.toFixed(2)},${at.y.toFixed(2)},${at.z.toFixed(2)}) a ${A.geo} ${A.col || ''} and a ${B.geo} ${B.col || ''} cut ${(worst * 100).toFixed(0)} cm into each other (${n} points) DBG A ${[A.b.min.x,A.b.min.y,A.b.min.z,A.b.max.x,A.b.max.y,A.b.max.z].map(v=>v.toFixed(2))} loose ${A.loose} B ${[B.b.min.x,B.b.min.y,B.b.min.z,B.b.max.x,B.b.max.y,B.b.max.z].map(v=>v.toFixed(2))} loose ${B.loose}`); } }
+    if (n >= 3) { seen.add(key2); out.push(`overlap@(${at.x.toFixed(2)},${at.y.toFixed(2)},${at.z.toFixed(2)}) a ${A.geo} ${A.col || ''} and a ${B.geo} ${B.col || ''} cut ${(worst * 100).toFixed(0)} cm into each other (${n} points)`); } }
   return out;
 }
 

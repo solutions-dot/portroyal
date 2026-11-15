@@ -265,7 +265,7 @@ export function buildSlipe(g) {
   put(g, mensWard(), -15.5, -21, Math.PI / 2, out);
   put(g, oneStorey(16, 8), -13.5, -46, Math.PI / 2, out);
   /* the kitchen and laundry at the far end, with a water tank on a stand, a standpipe and the meal van (the Home had a meal van: JNHT) */
-  put(g, oneStorey(11, 5, { overhang: 0, H: 3.0 }), 12.5, -61.5, -Math.PI / 2, out);
+  put(g, oneStorey(9.4, 5, { overhang: 0, H: 3.0 }), 12.5, -61.0, -Math.PI / 2, out);   /* between the end of the Myers Ward and the back wall, touching neither */
   const tw = waterTower(); tw.position.set(21, 0, -61); g.add(tw); wall(19.1, -62.9, 22.9, -59.1); out.clear.push([18.8, -63.2, 23.2, -58.8]);
   const sp = standpipe(); sp.position.set(8.8, 0, -57.6); g.add(sp); wall(8.4, -58, 9.2, -57.2);
   const van = truck(0xe6e2d4); van.traverse((o) => { if (o.isMesh && o.geometry.type === 'ConeGeometry') o.visible = false; }); van.position.set(5.2, 0, -58.5); van.rotation.y = -Math.PI / 2; g.add(van);
@@ -276,15 +276,15 @@ export function buildSlipe(g) {
   const sheets = [0xf4f2ec, 0xe8eef4, 0xf2e4e4, 0xf4f2ec, 0xe4ecdc, 0xf4f2ec, 0xeae4f2];
   for (let i = 0; i < 7; i++) { const sh = plane(1.4, 1.0, solid(sheets[i], 0.95, 0, DS), 25 + i * 2.1, 1.44, -30 + (r() - 0.5) * 0.04, g); sh.rotation.y = (r() - 0.5) * 0.12; }
   /* trees: tall shade trees along both sides of the avenue with whitewashed trunks, a casuarina by the gate, flame trees in bloom (May), palms */
-  const trunkBand = (x, z, br) => { cyl(br, br + 0.03, 1.0, white, x, 0.5, z, g); wall(x - br - 0.15, z - br - 0.15, x + br + 0.15, z + br + 0.15); };
+  const trunkBand = (t, x, z, br) => { cyl(br, br + 0.03, 1.0, white, 0, 0.5, 0, t); wall(x - br - 0.15, z - br - 0.15, x + br + 0.15, z + br + 0.15); };   /* the whitewash is part of its tree, so it is one thing with the trunk */
   for (let z = -11, i = 0; z > AV1 + 2; z -= 7, i++) for (const sx of [-1, 1]) {
     const x = sx * 4.4;
-    if (sx > 0 && z < -17 && z > -59) continue;   /* the Myers Ward's veranda and beds are there */
+    if (sx > 0 && z < -17 && z > -61) continue;   /* the Myers Ward's veranda and beds are there, and the meal van stands at the far end */
     if (sx < 0 && z > -12 && i === 0) { const c = casuarina(14, 3); c.position.set(-4.6, 0, -9.6); g.add(c); wall(-4.95, -9.95, -4.25, -9.25); continue; }
-    const t = (i + (sx > 0 ? 1 : 0)) % 3 === 0 ? mangoTree(9 + r() * 2, 40 + i) : tree(10 + r() * 3, 70 + i); t.position.set(x, 0, z); g.add(t); trunkBand(x, z, 0.46);
+    const t = (i + (sx > 0 ? 1 : 0)) % 3 === 0 ? mangoTree(9 + r() * 2, 40 + i) : tree(10 + r() * 3, 70 + i); t.position.set(x, 0, z); g.add(t); trunkBand(t, x, z, 0.46);
   }
-  for (const [x, z, h] of [[24, -14, 7.5], [-30, -36, 7], [30, -48, 7.5]]) { const t = flameTree(h, (x * 7) | 0); t.position.set(x, 0, z); g.add(t); trunkBand(x, z, 0.44); }
-  for (const [x, z] of [[36, -12], [-40, -56], [40, -58], [-36, -12]]) { const t = mangoTree(7, (z * 3) | 0); t.position.set(x, 0, z); g.add(t); trunkBand(x, z, 0.47); }
+  for (const [x, z, h] of [[24, -14, 7.5], [-30, -36, 7], [30, -48, 7.5]]) { const t = flameTree(h, (x * 7) | 0); t.position.set(x, 0, z); g.add(t); trunkBand(t, x, z, 0.44); }
+  for (const [x, z] of [[36, -12], [-40, -56], [40, -58], [-36, -12]]) { const t = mangoTree(7, (z * 3) | 0); t.position.set(x, 0, z); g.add(t); trunkBand(t, x, z, 0.47); }
   for (const [x, z] of [[-44, -10], [-44, -30], [44, -10], [44, -40]]) { const p = palm(8 + r() * 2, (z * 5) | 0); p.position.set(x, 0, z); g.add(p); wall(x - 0.35, z - 0.35, x + 0.35, z + 0.35); }
   /* benches under the trees, facing the avenue; lamps along it */
   for (const [x, z, ry] of [[-5.6, -15, Math.PI / 2], [-5.6, -36, Math.PI / 2], [-5.6, -54, Math.PI / 2], [5.6, -13, -Math.PI / 2], [5.6, -62, -Math.PI / 2]]) { const b = bench(2.2, 0x5a4632); b.position.set(x, 0, z); b.rotation.y = ry; g.add(b); wall(x - 0.35, z - 1.2, x + 0.35, z + 1.2); }
