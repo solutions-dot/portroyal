@@ -111,5 +111,10 @@
  "Pray4": "Praying_4.fbx",
  "TalkM3": "Talking_M3.fbx",
  "ListenMusic": "Listening_To_Music.fbx",
- "Shrug": "Shrugging.fbx"
+ "Shrug": "Shrugging.fbx",
+ "SitIdle3": "Sitting_2.fbx",
+ "AskQuestion": "Asking_Question.fbx",
+ "Kneel2": "Kneeling_2.fbx",
+ "LookAround": "Looking_Around.fbx",
+ "WipeSweat": "Wiping_Sweat.fbx"
 }
