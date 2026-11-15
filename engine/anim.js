@@ -53,6 +53,19 @@ export function strideOf(m, clip) {
   let dist = 0, on = 0, lo = 1e9, hi = -1e9; for (const l of pos) for (const q of l) { lo = Math.min(lo, q[1]); hi = Math.max(hi, q[1]); } const band = /Run/.test(clip.name) ? lo + (hi - lo) * 0.2 : 1e9;   /* a run has moments with both feet in the air: count a foot only while it is down */
   for (let i = 0; i < N; i++) { const k = (pos[0][i][1] + pos[0][i + 1][1] < pos[1][i][1] + pos[1][i + 1][1]) ? 0 : 1; if (pos[k][i][1] > band || pos[k][i + 1][1] > band) continue; dist += Math.max(0, pos[k][i][0] - pos[k][i + 1][0]); on++; }
   return (per[key] = on ? dist * N / on : 0); }
+/* Seated skirt (tools/garvey/era.py, SkirtSeat): a later skirt body carries a second skirt cut close round both thighs. It shows only while a seated or kneeling
+   clip plays, and the standing skirt is hidden then, so a lap is covered without the standing skirt's flare tearing. Checked after each mixer update. */
+export const LOW_SKIRT = /^(Kneel|Crawl|Pray)/;
+export function seatSkirt(m) {
+  if (m.userData.seatSkirt !== undefined) return m.userData.seatSkirt;
+  const seat = [], stand = []; m.traverse((o) => { if (!o.isMesh) return; if (/^SkirtSeat/.test(o.name)) seat.push(o); else if (/^Skirt(_|\d|$)/.test(o.name)) stand.push(o); });
+  if (!seat.length) return (m.userData.seatSkirt = null);
+  for (const o of seat) o.visible = false;
+  return (m.userData.seatSkirt = { seat, stand, on: false });
+}
+export function skirtTick(m) { const S = m.userData.seatSkirt, a = m.userData.anim; if (!S || !a) return;
+  const c = a.cur && a.cur.getClip(), n = c ? c.name : '', on = isSeated(n) || LOW_SKIRT.test(n);
+  if (on === S.on) return; S.on = on; for (const o of S.seat) o.visible = on; for (const o of S.stand) o.visible = !on; }
 export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipFor(name)) || clipFor('Idle') || peopleClip; if (!clip && !baseAct) return;
   const mx = mixerIn || new THREE.AnimationMixer(m), base = baseAct || mx.clipAction(clip); if (!baseAct) { base.play(); base.time = Math.random() * clip.duration; } if (!mixerIn) mixers.push(mx);
   const acts = {}, ctl = { mx, base, cur: base, timer: 0,
@@ -61,6 +74,7 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
     tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } } };
+  if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
   m.userData.anim = ctl; return ctl; }
 export const grounded = [];
 const TOES = new WeakMap(), SOLES = new WeakMap();   /* not in userData: clones copy userData as plain JSON, which would break the bone references */
