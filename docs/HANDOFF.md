@@ -4,11 +4,18 @@ Read this first if you are picking up the big people, animation and gameplay sta
 
 ## How the work is organised
 
-- Everything is on branch `claude/affectionate-pasteur-xvhvlq`. It is **unchecked work in progress**: commits named "Work in progress ... (unchecked, do not merge)" are checkpoints, not reviewed work. Do not open or merge a PR from this branch until the to-do list below is reviewed; one combined PR goes to the owner at the end.
-- Vercel previews are switched off for this branch (`vercel.json`, `git.deploymentEnabled`). Remove that entry when the combined PR is ready for one preview.
+- Everything is on branch `claude/affectionate-pasteur-xvhvlq`. **Merged to main on 15 November 2026 at the owner's request (PR #83)**, so the owner can see it in the game. It still holds unchecked work: commits named "Work in progress ... (unchecked, do not merge)" are checkpoints, not reviewed work, and the list under "Unchecked, still to test" below must be checked in testing.
+- Vercel previews are on again for this branch (the `git.deploymentEnabled` entry was removed when it was merged).
 - The owner runs other game chats. They must push only to their own branches; the coordinating chat sweeps their branches into one combined PR ("sweep the branches"). Tivoli lives in `games/tivoli` (not `_tivoli`).
 - Commit as `Johnathon Kelly <msquared.mail@gmail.com>` (CLAUDE.md rule 7) with the session's attribution trailer.
 - Warning: PRs #72, #74 and #75 merged unchecked checkpoints from this branch into main, so main has half-finished character rebuilds. The combined PR fixes that.
+
+## Unchecked, still to test (merged to main 15 November 2026)
+
+- **The last chat's checkpoints**: the Kendal pass (`engine/story.js`, `engine/ambient.js`, `?test=all` wiring; its band, crash site, nurse, station crowd, bucket and Gran with Lloyd screenshots were never taken), the comfort clips (to-do 2, palm not yet flat), and the new `engine/checks.js` runner.
+- **Port Royal's 1690 men**: the breeches' inner hem is flagged when walking and sitting (each leg seems to have a seam up the inside that may pull apart; welding it and cutting the legs apart were tried and reverted, and it is not proven to be a real opening). Next: a close-up from low between the legs of a walking 1690 man; then Galdy's coat back tearing when he sits, the coat-skirt hems when walking, and the collar showing through the coat.
+- **Small leftovers**: fingertips over the raised knee when kneeling (Kendal), Garvey's lapels and the student's pocket edge reported jagged when talking, Nanny Town's maroon_scout shirt through his breeches standing, Tivoli's police and soldier kit (vest through belt straps).
+- Checked before the merge: `npm test` (54 pass), every game built, `npm run dist` built, and the menu and all eight games loaded and started from the production build with no errors.
 
 ## Shared engine pieces built in this work (all documented in `docs/ENGINE.md`)
 
