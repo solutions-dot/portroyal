@@ -450,65 +450,79 @@ def speech(rig):
     return frames
 
 
-SIDE_GAP = 0.36   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right, facing the same way
-CHILD_GAP = 0.30  # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right
+SIDE_GAP = 0.40   # ComfortGive and ComfortTake: the one being comforted stands this far to the giver's right, facing the same way
+CHILD_GAP = 0.32  # ComfortChild: the child (about 0.6 of an adult's height) stands this far to the adult's right
+FACE_GAP = 0.55   # ComfortHand: the other person stands this far in front of the giver, facing them
 
 
-def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.12, look=(-0.55, 0.3), seed=31):
+def comfort_arm(rig, frames, T, gap, drop, lean=0.0, turn_to=0.5, look=(-0.3, 0.22)):
     """An arm round the shoulders of someone standing (or sitting) `gap` metres to the right, facing the same way.
-    The upper arm runs low and slanting across their upper back, the forearm lies along their shoulders, the hand cups
-    their far shoulder and the elbow hangs relaxed behind them. `drop` is how far below the giver's own shoulder joint
-    their shoulder top is; `lean` bends the giver sideways towards them (for a child)."""
-    pat = lambda t: sum(bump(t, t0, t0 + 0.42, 0.14, 0.26) for t0 in (1.0, 1.55, 2.1, 6.3, 6.85))
-    rub = lambda t: bump(t, 3.4, 5.6, 0.6, 0.8) * math.sin(TAU * (t - 3.4) / 1.1)
+    The giver's body turns about 30 degrees towards them, the arm goes round their back and the hand rests on their far
+    shoulder, with a few slow pats. `drop` is how far below the giver's own shoulder joint their shoulder top is; `lean`
+    bends the giver sideways and down towards them (for a child). Positions are taken from the hips, so turning the
+    chest does not move the hand."""
+    pat = lambda t: sum(bump(t, t0, t0 + 0.7, 0.25, 0.45) for t0 in (1.2, 2.1, 5.6))
     for i, p in enumerate(frames):
-        t = i / FPS; pt = pat(t); rb = rub(t)
-        turn(rig, p, 'Spine', Y, -0.05 - lean); turn(rig, p, 'Spine1', Y, -0.5 * lean)        # leaning towards them
-        turn(rig, p, 'Spine1', Z, -turn_to); turn(rig, p, 'Spine2', Z, -0.5 * turn_to)         # turned a little to them
-        turn(rig, p, 'Spine1', X, 0.05 + 0.6 * lean)
-        steady_head(rig, p, yaw=look[0] + 0.04 * math.sin(TAU * t / T), pitch=look[1] + 0.03 * math.sin(TAU * 2 * t / T + 1), roll=-0.1, neck=0.5)
+        t = i / FPS; pt = pat(t)
+        turn(rig, p, 'Spine', Z, -0.45 * turn_to); turn(rig, p, 'Spine1', Z, -0.35 * turn_to); turn(rig, p, 'Spine2', Z, -0.2 * turn_to)
+        turn(rig, p, 'Spine', Y, -0.02 - lean); turn(rig, p, 'Spine1', X, 0.03 + 0.6 * lean)
+        steady_head(rig, p, yaw=look[0] - turn_to + 0.03 * math.sin(TAU * t / T), pitch=look[1] + 0.02 * math.sin(TAU * 2 * t / T + 1), roll=-0.04, neck=0.5)
         M = rig.fk(p)
-        far = gap - 0.16 + 0.13                                         # their far shoulder, measured from the giver's shoulder joint
-        wrist = body_point(rig, M, 'Right', far - 0.07 - 0.012 * rb, -0.07 + 0.025 * rb, -drop + 0.05 + 0.03 * pt, bone='Spine')
-        fingers = body_dir(rig, M, 'Right', 0.25, 0.75, -0.6, bone='Spine')     # over the top of the shoulder and down the front
-        palm = body_dir(rig, M, 'Right', 0.1, 0.35, -1.0, bone='Spine')
-        elbow = body_dir(rig, M, 'Right', -0.1, -0.6, -1.0, bone='Spine')       # elbow down and back, behind them
+        far = gap - 0.16 + 0.12                                         # their far shoulder, from the giver's shoulder joint
+        wrist = body_point(rig, M, 'Right', far - 0.08, 0.02, -drop + 0.03 + 0.025 * pt, bone='Hips')
+        fingers = body_dir(rig, M, 'Right', 0.35, 0.6, -0.7, bone='Hips')
+        palm = body_dir(rig, M, 'Right', 0.3, 0.2, -1.0, bone='Hips')
+        elbow = body_dir(rig, M, 'Right', -0.2, -0.7, -1.0, bone='Hips')
         arm(rig, p, 'Right', wrist, elbow, fingers, palm, 0.5)
-        curl(rig, p, 'Right', 0.45 - 0.2 * pt, thumb=0.15)
+        curl(rig, p, 'Right', 0.35 - 0.15 * pt, thumb=0.15)
+        relaxed_arm(rig, p, 'Left')
 
 
-def comfort_left_hand(rig, p, gap, drop):
-    """The other hand rests lightly on their near arm."""
+def relaxed_arm(rig, p, side):
+    """The free arm hangs at the side, a little bent."""
     M = rig.fk(p)
-    lw = body_point(rig, M, 'Left', -(gap + 0.02), 0.22, -min(0.38, drop + 0.25), bone='Spine')
-    arm(rig, p, 'Left', lw, body_dir(rig, M, 'Left', 0.6, -0.3, -0.6, bone='Spine'), body_dir(rig, M, 'Left', -1, 0.25, -0.3, bone='Spine'),
-        body_dir(rig, M, 'Left', -0.3, 0.6, -0.6, bone='Spine'), 0.5)
-    curl(rig, p, 'Left', 0.3)
+    arm(rig, p, side, body_point(rig, M, side, 0.04, 0.05, -0.44), body_dir(rig, M, side, 0.3, -1, -0.3),
+        body_dir(rig, M, side, 0.0, 0.15, -1), body_dir(rig, M, side, -1, 0.1, 0), 0.5)
+    curl(rig, p, side, 0.3)
+
+
+def stand_still(rig, T, seed):
+    frames = calm_idle(rig, T)
+    damp(frames, {'Spine': 0.5, 'Spine1': 0.5, 'Spine2': 0.5})
+    stand(rig, frames, T, lambda t: -0.4 + 0.3 * math.sin(TAU * t / T), sway=0.025, seed=seed)
+    breathe(rig, frames, T, 2, amt=0.012)
+    return frames
 
 
 @clip('ComfortGive', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_give(rig):
-    T = 8.0; frames = calm_idle(rig, T)
-    damp(frames, {'Spine': 0.5, 'Spine1': 0.5, 'Spine2': 0.5, 'LeftArm': 0.5, 'LeftForeArm': 0.5})
-    stand(rig, frames, T, lambda t: -0.5 + 0.35 * math.sin(TAU * t / T), sway=0.03, seed=31)   # weight towards them
-    breathe(rig, frames, T, 2, amt=0.014)
+    T = 8.0; frames = stand_still(rig, T, 31)
     comfort_arm(rig, frames, T, SIDE_GAP, 0.10)
-    for p in frames: comfort_left_hand(rig, p, SIDE_GAP, 0.10)
     return frames
 
 
 @clip('ComfortChild', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_child(rig):
-    T = 8.0; frames = calm_idle(rig, T)
-    damp(frames, {'Spine': 0.5, 'Spine1': 0.5, 'Spine2': 0.5, 'LeftArm': 0.5, 'LeftForeArm': 0.5})
-    stand(rig, frames, T, lambda t: -0.5 + 0.3 * math.sin(TAU * t / T), sway=0.03, seed=33)
-    breathe(rig, frames, T, 2, amt=0.014)
-    comfort_arm(rig, frames, T, CHILD_GAP, 0.42, lean=0.12, turn_to=0.15, look=(-0.6, 0.6), seed=33)
-    for p in frames:
-        M = rig.fk(p)   # the other hand hangs relaxed in front
-        arm(rig, p, 'Left', body_point(rig, M, 'Left', 0.0, 0.12, -0.44, bone='Spine'), body_dir(rig, M, 'Left', 0.6, -0.3, -0.6, bone='Spine'),
-            body_dir(rig, M, 'Left', 0.0, 0.3, -1, bone='Spine'), body_dir(rig, M, 'Left', -1, 0.1, 0, bone='Spine'), 0.5)
-        curl(rig, p, 'Left', 0.3)
+    T = 8.0; frames = stand_still(rig, T, 33)
+    comfort_arm(rig, frames, T, CHILD_GAP, 0.42, lean=0.12, turn_to=0.35, look=(-0.35, 0.55))
+    return frames
+
+
+@clip('ComfortHand', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
+def comfort_hand(rig):
+    """Facing the other person, who stands FACE_GAP in front: the right hand rests on their left shoulder, head bowed a little."""
+    T = 8.0; frames = stand_still(rig, T, 37)
+    pat = lambda t: sum(bump(t, t0, t0 + 0.8, 0.3, 0.5) for t0 in (1.5, 5.2))
+    for i, p in enumerate(frames):
+        t = i / FPS; pt = pat(t)
+        turn(rig, p, 'Spine1', X, 0.04)
+        steady_head(rig, p, yaw=-0.05 + 0.03 * math.sin(TAU * t / T), pitch=0.25, roll=-0.05, neck=0.5)
+        M = rig.fk(p)
+        wrist = body_point(rig, M, 'Right', -0.03, FACE_GAP - 0.17, -0.06 + 0.02 * pt, bone='Hips')
+        arm(rig, p, 'Right', wrist, body_dir(rig, M, 'Right', 0.4, -0.2, -1, bone='Hips'), body_dir(rig, M, 'Right', -0.1, 0.8, -0.6, bone='Hips'),
+            body_dir(rig, M, 'Right', 0.0, 0.3, -1, bone='Hips'), 0.5)
+        curl(rig, p, 'Right', 0.35 - 0.15 * pt, thumb=0.15)
+        relaxed_arm(rig, p, 'Left')
     return frames
 
 
@@ -522,8 +536,7 @@ def sit_base(rig, T):
 @clip('SitComfortGive', 'hand-made on the library SitIdle (Sitting_Idle.fbx)')
 def sit_comfort_give(rig):
     T = 8.0; frames = sit_base(rig, T); breathe(rig, frames, T, 2, amt=0.014)
-    comfort_arm(rig, frames, T, SIDE_GAP + 0.04, 0.08, seed=35)
-    for p in frames: comfort_left_hand(rig, p, SIDE_GAP + 0.04, 0.08)
+    comfort_arm(rig, frames, T, SIDE_GAP, 0.08, turn_to=0.35)
     return frames
 
 
@@ -535,34 +548,31 @@ def sit_comfort_take(rig):
 
 
 def take_upper(rig, frames, T):
-    """Head bowed, leaning into the giver on the left, shoulders curled forwards, hands held together low in front."""
-    sob = lambda t: bump(t, 1.2, 2.6, 0.4, 1.0) + 0.7 * bump(t, 5.0, 6.3, 0.4, 0.9)
+    """Upright and quiet: the head bowed and tipped towards the giver on the left, slow breaths, the hands loose in front;
+    once a loop she lifts her right hand to wipe her eyes."""
+    wipe = lambda t: bump(t, 2.4, 5.0, 0.8, 0.9)
     for i, p in enumerate(frames):
-        t = i / FPS; s = sob(t)
-        turn(rig, p, 'Spine', Y, 0.07)                                  # leaning into them
-        turn(rig, p, 'Spine1', X, 0.08 + 0.02 * s); turn(rig, p, 'Spine2', X, 0.07 + 0.03 * s)   # rounded, curled in
-        b = math.sin(TAU * 2 * t / T)
-        turn(rig, p, 'Spine2', X, -0.012 * b - 0.03 * s)
-        steady_head(rig, p, yaw=0.12 + 0.04 * math.sin(TAU * t / T), pitch=0.5 + 0.05 * s + 0.02 * b, roll=0.12, neck=0.55)   # head bowed, tipped to them
-        for sd in ('Left', 'Right'):
-            raise_shoulder(rig, p, sd, 0.03 + 0.07 * s)
-            M = rig.fk(p); turn(rig, p, sd + 'Shoulder', Z, (0.08 if sd == 'Right' else -0.08), M)   # shoulders come forwards
+        t = i / FPS; w = wipe(t); b = math.sin(TAU * 2 * t / T)
+        turn(rig, p, 'Spine', Y, 0.03); turn(rig, p, 'Spine2', X, 0.03 - 0.01 * b)
+        steady_head(rig, p, yaw=0.15 + 0.03 * math.sin(TAU * t / T), pitch=0.28 + 0.06 * w + 0.015 * b, roll=0.16, neck=0.5)
         M = rig.fk(p)
-        # hands held together low in front
-        rw = body_point(rig, M, 'Right', -0.13, 0.20, -0.47 + 0.01 * s, bone='Spine1')
-        lw = body_point(rig, M, 'Left', -0.10, 0.24, -0.44 + 0.01 * s, bone='Spine1')
-        arm(rig, p, 'Right', rw, body_dir(rig, M, 'Right', 0.6, -0.3, -0.5, bone='Spine1'), body_dir(rig, M, 'Right', -0.8, 0.35, -0.5, bone='Spine1'),
-            body_dir(rig, M, 'Right', -0.3, 0.6, 0.6, bone='Spine1'), 0.5)
-        arm(rig, p, 'Left', lw, body_dir(rig, M, 'Left', 0.6, -0.3, -0.5, bone='Spine1'), body_dir(rig, M, 'Left', -0.85, 0.35, -0.4, bone='Spine1'),
-            body_dir(rig, M, 'Left', 0.0, 0.5, -1.0, bone='Spine1'), 0.5)
-        curl(rig, p, 'Right', 0.45); curl(rig, p, 'Left', 0.3)
+        lo_r = body_point(rig, M, 'Right', -0.08, 0.16, -0.43, bone='Hips')
+        face = body_point(rig, M, 'Right', 0.03, 0.13, 0.0, bone='Head', at='Head') + V(0, 0, -0.02)
+        arm(rig, p, 'Right', lo_r.lerp(face, w), body_dir(rig, M, 'Right', 0.5, -0.5, -0.8, bone='Hips'),
+            body_dir(rig, M, 'Right', -0.5, 0.3, -0.8).lerp(body_dir(rig, M, 'Right', -0.4, 0.2, 1.0), w),
+            body_dir(rig, M, 'Right', -0.3, 0.6, 0.2).lerp(body_dir(rig, M, 'Right', -0.3, -1.0, 0.0), w), 0.5)
+        lw = body_point(rig, M, 'Left', -0.06, 0.13, -0.45, bone='Hips')
+        arm(rig, p, 'Left', lw, body_dir(rig, M, 'Left', 0.5, -0.5, -0.8, bone='Hips'), body_dir(rig, M, 'Left', -0.4, 0.3, -0.9),
+            body_dir(rig, M, 'Left', -0.4, 0.5, 0.3), 0.5)
+        curl(rig, p, 'Right', 0.3 + 0.1 * w); curl(rig, p, 'Left', 0.3)
 
 
 @clip('ComfortTake', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_take(rig):
     T = 8.0; frames = calm_idle(rig, T)
     damp(frames, {'Spine': 0.4, 'Spine1': 0.4, 'Spine2': 0.4})
-    stand(rig, frames, T, lambda t: 0.5 + 0.3 * math.sin(TAU * t / T + 2), sway=0.03, seed=41)   # weight towards the giver on her left
+    stand(rig, frames, T, lambda t: 0.4 + 0.25 * math.sin(TAU * t / T + 2), sway=0.025, seed=41)   # weight a little towards the giver on her left
+    breathe(rig, frames, T, 2, amt=0.016)
     take_upper(rig, frames, T)
     return frames
 
