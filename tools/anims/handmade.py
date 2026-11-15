@@ -473,9 +473,7 @@ def speech(rig):
 
 
 GIVE_AT = (-0.415, -0.205)   # ComfortGive and ComfortTake: where the one comforted stands from the giver (x to his left, y backwards), facing the same way
-CHILD_GAP, CHILD_AHEAD = 0.34, 0.24   # ComfortChild: where the hand is aimed (the child, about 0.6 of an adult's height, to her right and in front)
-CHILD_AT = (-0.31, -0.24)   # ComfortChild: where the game places the child from her (found with pair_check.py --search), clear of her skirt
-CHILD_NUDGE = (-0.08, 0.010, -0.036)
+CHILD_AT = (-0.25, -0.25)   # ComfortChild: where the game places the child from her (found with pair_check.py --search), clear of her skirt
 SIT_AT = (-0.465, -0.27)   # SitComfortGive and SitComfortTake: where she sits from him on the bench
 HAND_OUT, HAND_FWD, HAND_UP = 0.080, -0.04, -0.084   # fine placement of the resting hand (checked by tools/anims/pair_check.py)
 FACE_OUT, FACE_FWD, FACE_UP = 0.06, 0.0, -0.09   # ComfortHand: fine placement of the resting hand
@@ -581,7 +579,8 @@ def comfort_give(rig):
 @clip('ComfortChild', 'hand-made on the library Idle (abba_Idle_withoutskin.fbx)')
 def comfort_child(rig):
     T = 8.0; frames = stand_still(rig, T, 33)
-    comfort_arm(rig, frames, T, CHILD_GAP, 0.40, lean=0.3, turn_to=0.35, look=(-0.35, 0.55), ahead=CHILD_AHEAD, half=-0.06, nudge=CHILD_NUDGE, ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0, 0.6), elbow_dir=(0.6, -0.5, -1.0))   # the hand on the child's near shoulder, from behind
+    embrace_arm(rig, frames, T, turn_body=0.25, lean_in=0.05, upper=(0.15, 0.1, 1.0), fore=(0.6, 0.75, -0.35), look=(-0.3, 0.6),
+                ride=follow(rig, comfort_take(rig), 'Spine2', 0.0, 0.0, 0.0, 0.6))   # upper arm hanging, forearm forward: the hand palm down on the child's shoulder
     return frames
 
 

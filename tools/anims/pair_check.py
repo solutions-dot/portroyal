@@ -24,7 +24,7 @@ N = 32
 PAIRS = {
     'ComfortGive': ('ComfortGive', 'ComfortTake', 'man_shirt', 'woman57', (-0.415, -0.205, 0.0, 1.0), False),
     'ComfortHand': ('ComfortHand', 'ComfortTake', 'man_shirt', 'woman57', (0.0, -0.58, math.pi, 1.0), False),
-    'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.31, -0.24, 0.0, 0.6), False),
+    'ComfortChild': ('ComfortChild', 'ComfortTake', 'woman_elder', 'boy', (-0.25, -0.25, 0.0, 0.6), False),
     'SitComfort': ('SitComfortGive', 'SitComfortTake', 'man_shirt', 'woman57', (-0.465, -0.27, 0.0, 1.0), True),
 }
 REST = {'ComfortGive': 'Right', 'ComfortHand': 'Left', 'ComfortChild': 'Right', 'SitComfort': 'Right'}   # the giver's hand and forearm that rest on the other person
