@@ -104,6 +104,9 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None):
                     q = loc + nrm * (r0 + 0.012)
             # side locs end above the shoulder, so a raised arm never meets them
             if side > 0.55 and front > -0.75 and q.z < SH.z + 0.06: break
+            # below the base of the neck only a band down the middle of the back: the shirt over the shoulders and shoulder
+            # blades rises and moves with the arms (the cloth check found locs through the shirt there)
+            if q.z < NECK + 0.06 and abs(q.x) > 0.10: break
             pts.append(q); length += seg
         if len(pts) < 3: continue
         rings = _strand(bm, pts, r0)
