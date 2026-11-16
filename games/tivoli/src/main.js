@@ -269,8 +269,8 @@ function guideTick(now) {
   if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
   if (!quiet) { NUDGE.since = now; NUDGE.on = false; }
   const tgt = quiet ? guideTarget() : null;
-  if (!NUDGE.on && quiet && tgt && now - NUDGE.since >= 2500) NUDGE.on = true;
-  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; /* The nearby talk/action button takes over. */ }
+  if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) NUDGE.on = true;
+  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) NUDGE.on = false; /* Hide while the player is close enough to interact. */
   if (!NUDGE.on || !tgt) GUIDE.hide(now); else GUIDE.point(now, { x: tgt[0], z: tgt[1] });
 }
 requestAnimationFrame(frame);
