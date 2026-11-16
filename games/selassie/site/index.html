@@ -1344,7 +1344,6 @@
       </div>
     </div>
     <div id="hud" hidden>
-      <button id="goal" aria-expanded="true"></button>
       <div id="nudge" hidden aria-hidden="true">
         <svg viewBox="0 0 48 48" width="56" height="56">
           <path
@@ -1399,6 +1398,8 @@
           Journal <span id="jcount" hidden>0</span>
         </button>
       </div>
+      <!-- the goal comes after the top-right buttons in the page, so Tab never goes up the screen on a phone, where it sits below them -->
+      <button id="goal" aria-expanded="true"></button>
       <p id="toast" role="status" hidden></p>
       <button id="talk" class="btn" hidden>Talk</button>
       <p id="hint"></p>
