@@ -264,7 +264,7 @@ export function windrush() {
     cyl(0.5, 0.5, 0.1, black, X(0.95), sheer(0.95) - 2.4, z, g, 10).rotation.x = Math.PI / 2;
     box(0.3, 1.8, 0.12, black, X(0.95), sheer(0.95) - 3.4, z, g);
     box(1.4, 0.3, 0.12, black, X(0.95), sheer(0.95) - 4.3, z, g);
-    const name = plane(13, 1.15, nameplate("EMPIRE WINDRUSH", 13, 1.15), X(0.83), sheer(0.83) - 0.95, s * ((B / 2) * halfBeam(0.83) * (1 + 0.12 * 0.55 * 0.9) + 0.25), g);
+    const name = plane(13, 1.15, nameplate("EMPIRE WINDRUSH", 13, 1.15), X(0.83), sheer(0.83) - 0.95, s * ((B / 2) * halfBeam(0.83) * (1 + 0.12 * 0.55 * 0.9) + 0.7), g);
     name.rotation.y = s > 0 ? -0.1 : Math.PI + 0.1;
   }
   const stern = plane(11, 1.0, nameplate("EMPIRE WINDRUSH", 11, 1.0), X(0) - 0.12, sheer(0) - 1.4, 0, g);

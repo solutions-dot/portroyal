@@ -71,6 +71,14 @@ An independent review of the merged game, with the fixes made on this branch. Re
 - **Words**: Mr Gray's scene fixed; Mr Hart replaces Leon; Samuel speaks about his garage; Iris says she came on her mother's passport (a situation in many reported cases of people who came as children; to be checked against the Williams review's case studies); the scandal page adds the reporting that brought it to light, children on a parent's passport, the April 2018 apology and resignation, and the review's finding.
 - **Checks wired**: faces, budget, autoplay, camera and rule4 hooks in `checktables.js`; `anim` added to `?test=all`; the place audit now includes every background person and every pick-up and put-down spot.
 
+### Check results, 16 November 2026 (this branch)
+
+- `?test=all`: **ALL 0**, every check run (journal, links, a11y, keys, chapters, steps, map, faces, budget, autoplay, camera, rule4, sound, continuity, errors, and the new `anim`, 131 people sampled). Faces are measured on each person's raw body (the joined bodies have no Skin material to find).
+- `?test=audit`: 0 in all nine places. `?test=ambient`: AMBIENT 0 in all nine places. `?test=anim` (places and both scenes): 0. Layout: 0 at 1280x720 and 390x800. `?test=held`: CARRY 0 (the people's gripped cases, bags and head baskets are not yet in this check).
+- `?test=cloth`: **69 lines, not 0.** 40 are the seated skirt in `Kneel` and `SitTalk`, which the shared check adds for every skirt body because the game ships those clips (only Samuel kneels; seated women use `SitIdle`); the other 29 are a few points of collar or body through a jacket in Walk and Wave (the travellers, the conductor, Mr Gray's Londoners), shirt-edge jags of 4 to 8 mm, and two dresses (`wr_twoman48`, `wr_bwoman62`) showing skin in Wave. Head ties no longer cover a bun, the Londoner's scarf knot and the older traveller's felt hat were replaced, and Samuel's trousers widened (fingers no longer in the cloth).
+- `npm test`: 213 pass, 0 fail; content lint: Windrush 0.
+- Production build: loads, Start enabled, development hooks removed.
+
 ### The ship
 
 HMT Empire Windrush was built in 1930 by Blohm and Voss, Hamburg, as the motor ship Monte Rosa, 152.5 m long, 20.0 m in beam, 8.0 m draught, 14,414 tons after her 1947 refit, with four decks (the [Wikipedia](https://en.wikipedia.org/wiki/HMT_Empire_Windrush) infobox; [Royal Museums Greenwich](https://www.rmg.co.uk/stories/ocean/history-empire-windrush) for her German origin and the 1948 voyage). The model uses those dimensions, a raked stem, a cruiser stern, sheer rising fore and aft, a raised forecastle and poop with well decks, three tiers of superstructure with the bridge forward, two raked funnels close together amidships, a foremast and mainmast with derricks over the hatches, ten lifeboats on davits, two rows of portholes, anchors at the hawse pipes and the name on both bows and the stern (with LONDON as her port).
