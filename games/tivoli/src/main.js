@@ -69,6 +69,20 @@ function clampPos(x, z) {   // keep inside the map and out of buildings (slide a
 /* touch: left half of the screen is a joystick, right half drags to look; mouse drags to look */
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0 };
 releaseOnBlur(keys, [stick, look]);
+/* On-screen direction buttons share the keyboard controls and release safely. */
+for (const button of document.querySelectorAll('#dpad [data-key]')) {
+  const key = button.dataset.key;
+  const release = (e) => { if (e) e.preventDefault(); keys.delete(key); button.classList.remove('pressed'); };
+  button.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (busy || !state.started) return;
+    keys.add(key); button.classList.add('pressed');
+    button.setPointerCapture(e.pointerId);
+  });
+  button.addEventListener('pointerup', release);
+  button.addEventListener('pointercancel', release);
+  button.addEventListener('lostpointercapture', release);
+}
 canvas.addEventListener('pointerdown', (e) => {
   if (busy && Talk.open) { talkLeave(); return; }   // tapping the world while talking ends the talk
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }
