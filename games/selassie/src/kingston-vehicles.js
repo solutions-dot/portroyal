@@ -295,8 +295,8 @@ export function car(colour = 0x7d2f2a, reg = "P 2318") {
     r = 0.36,
     body = paint(colour, 1.0),
     roof = colour === 0xd8d2bc ? paint(0x6e2b28, 1.5) : paint(colour, 1.5);
-  // the body: a long bonnet, a rounded boot, wheel arches with a skirt over the back wheels
-  slab(g, [[-2.15, 0.3], [-2.22, 0.5], [-2.2, 0.72], { q: [-2.1, 0.9, -1.75, 0.92] }, [-1.2, 0.94], [1.0, 0.95], { q: [1.85, 0.93, 2.12, 0.8] }, [2.2, 0.6], [2.18, 0.3], [fa + 0.44, 0.3], { arc: [fa, 0.36, 0.44, 0, Math.PI] }, [ra + 0.44, 0.3], { arc: [ra, 0.36, 0.44, 0, Math.PI * 0.62] }, [ra - 0.3, 0.62], [-2.15, 0.3]], W, body, 0.09);
+  // the body: a long bonnet, a rounded boot, an open wheel arch over each wheel, ending at bumper height front and back
+  slab(g, [[-1.95, 0.4], { q: [-2.18, 0.4, -2.2, 0.56] }, [-2.2, 0.72], { q: [-2.1, 0.9, -1.75, 0.92] }, [-1.2, 0.94], [1.0, 0.95], { q: [1.85, 0.93, 2.12, 0.8] }, [2.2, 0.58], { q: [2.2, 0.4, 2.0, 0.4] }, [fa + 0.44, 0.4], { arc: [fa, 0.4, 0.44, 0, Math.PI] }, [ra + 0.44, 0.4], { arc: [ra, 0.4, 0.44, 0, Math.PI] }], W, body, 0.09);
   // the cabin: a raked windscreen, a curved roof, a sloping back
   const cab = [[-1.3, 0.94], { q: [-1.12, 1.36, -0.8, 1.44] }, [0.3, 1.46], { q: [0.55, 1.45, 0.98, 0.95] }];
   slab(g, cab, W - 0.22, roof, 0.07);
@@ -329,17 +329,17 @@ export function car(colour = 0x7d2f2a, reg = "P 2318") {
     cyl(g, LENS, 0.082, 0.082, 0.06, 2.18, 0.7, s * 0.6, "x");
     cyl(g, LENS, 0.03, 0.03, 0.04, 2.2, 0.5, s * 0.6, "x", 8);
     bx(g, TAIL, 0.04, 0.16, 0.1, -2.2, 0.72, s * 0.66);
-    bx(g, CHROME, 0.08, 0.16, 0.06, 2.3, 0.38, s * 0.38);
-    bx(g, CHROME, 0.08, 0.16, 0.06, -2.3, 0.38, s * 0.38);
+    bx(g, CHROME, 0.08, 0.16, 0.06, 2.29, 0.47, s * 0.38);
+    bx(g, CHROME, 0.08, 0.16, 0.06, -2.29, 0.47, s * 0.38);
   }
-  for (const x of [2.27, -2.27]) {
+  for (const x of [2.25, -2.25]) {
     const b = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, W - 0.15, 4, 8), CHROME);
     b.rotation.x = Math.PI / 2;
-    b.position.set(x, 0.33, 0);
+    b.position.set(x, 0.43, 0);
     g.add(b);
   }
-  plate(g, reg, 2.34, 0.33, 0, 1, 0.36, 0.1);
-  plate(g, reg, -2.34, 0.5, 0, -1, 0.36, 0.1);
+  plate(g, reg, 2.32, 0.43, 0, 1, 0.36, 0.1);
+  plate(g, reg, -2.3, 0.6, 0, -1, 0.36, 0.1);
   for (const s of [-1, 1]) {
     wheel(g, r, fa, s * (W / 2 - 0.12), s, 0.17, 0.6);
     wheel(g, r, ra, s * (W / 2 - 0.12), s, 0.17, 0.6);
