@@ -24,7 +24,7 @@ const watch = (id, x, z, look, at, b = {}, extra = {}) => ({
   x,
   z,
   look,
-  behaviour: { kind: "watch", at, react: ["Nod", "Point", "Clap"], every: [4, 8], idles: ["Idle", "HappyIdle", "LookAround"], ...b },
+  behaviour: { kind: "watch", at, react: ["Point", "Clap"], every: [4, 8], idles: ["Idle", "HappyIdle", "LookAround"], ...b },
   ...extra,
 });
 const stroll = (id, x, z, look, area, extra = {}) => ({ id, x, z, look, behaviour: { kind: "wander", area, min: 1.2, pause: [1.5, 4], idles: ["Idle", "LookAround"] }, ...extra });
@@ -48,7 +48,7 @@ const child = (id, x, z, look, area, girl = false) => ({
   tint: undefined,
   behaviour: { kind: "play", area },
 });
-const listen = (id, x, z, look, at) => watch(id, x, z, look, at, { idles: ["ListenMusic", "Idle", "ListenMusic"], react: ["Nod", "Clap", "Laugh"], every: [5, 9] });
+const listen = (id, x, z, look, at) => watch(id, x, z, look, at, { idles: ["ListenMusic", "Idle", "ListenMusic"], react: ["Clap", "Laugh"], every: [5, 9] });
 const RASTA = ["sel_rastaman66", "sel_rastaelder66", "sel_rastawoman66", "sel_rastatam66"];
 const rasta = (spec, k) => ({ ...spec, base: RASTA[k % 4], sex: k % 4 === 2 ? "f" : "m", rastafari: true, colors: null, tint: undefined });
 
@@ -272,7 +272,7 @@ export function downtown(K) {
     chat("dtA1", "dtA", -4.7, 16.0, 111),
     chat("dtB0", "dtB", 5.3, 6.0, 112),
     chat("dtB1", "dtB", 4.6, 6.6, 113),
-    chat("dtB2", "dtB", 5.4, 7.2, 114),
+    watch("dtB2", 5.5, 7.4, 114, [4.9, 6.3], { react: ["Laugh", "Point"] }),
     chat("dtC0", "dtC", -5.3, -13.6, 115),
     chat("dtC1", "dtC", -4.6, -13.1, 116),
     rasta(chat("dtD0", "dtD", 5.2, -9.4, 117), 0),
@@ -282,10 +282,10 @@ export function downtown(K) {
     listen("dtM1", 4.7, -2.7, 120, [6.3, -1.5]),
     listen("dtM2", 5.5, -3.4, 121, [6.3, -1.5]),
     // people at work: the newsboy, the baker, the higgler, the pharmacist at his door
-    watch("dtN0", 5.7, 13.5, 122, [0, 12], { react: ["Point", "Wave", "Nod"], idles: ["Idle", "LookAround"] }),
-    watch("dtK0", -6.0, -21.8, 123, [0, -20], { react: ["Nod", "Wave"] }),
-    watch("dtH0", 5.75, -19.0, 124, [0, -21], { react: ["Point", "Nod", "Wave"] }),
-    watch("dtP0", -5.7, -0.7, 125, [0, -1], { react: ["Nod", "Wave"] }),
+    watch("dtN0", 5.7, 13.5, 122, [0, 12], { react: ["Point", "Wave"], idles: ["Idle", "LookAround"] }),
+    watch("dtK0", -6.0, -21.8, 123, [0, -20], { react: ["Wave"] }),
+    watch("dtH0", 5.75, -19.0, 124, [0, -21], { react: ["Point", "Wave"] }),
+    watch("dtP0", -5.7, -0.7, 125, [0, -1], { react: ["Wave"] }),
     watch("dtS0", -5.8, 18.6, 126, [0, 18]),
     // children by the Parade
     child("dtK1", 2.4, -27.0, 127, [0.9, -30, 3.3, -24.5]),
@@ -389,24 +389,24 @@ export function parade(K) {
   ];
   Q.ambient.push(
     // the queue for the other bus, facing its door
-    ...[-11.6, -10.6, -9.6, -8.6, -7.6, -6.6].map((x, i) => watch("pq" + i, x, 6.95 - (i % 2) * 0.12, 201 + i, [-5.1, 8.2], { react: ["Nod", "Point", "Wave"], every: [5, 10] })),
-    ...[-9.9, -8.4, -7.0].map((x, i) => watch("pr" + i, x, 5.6, 207 + i, [-5.1, 8.2], { react: ["Nod", "Wave"], every: [5, 10] })),
+    ...[-11.6, -10.6, -9.6, -8.6, -7.6, -6.6].map((x, i) => watch("pq" + i, x, 6.95 - (i % 2) * 0.12, 201 + i, [-5.1, 8.2], { react: ["Point", "Wave"], every: [5, 10] })),
+    ...[-9.9, -8.4, -7.0].map((x, i) => watch("pr" + i, x, 5.6, 207 + i, [-5.1, 8.2], { react: ["Wave"], every: [5, 10] })),
     // the conductor at his rack, and people waiting by the family's bus
-    watch("pcon", 9.9, 6.3, 212, [6, 5], { react: ["Point", "Wave", "Nod"], idles: ["Idle", "LookAround"] }, { base: "sel_crowdman66", sex: "m", colors: { shirt: 0x9b9d97, legs: 0x39425c }, tint: { Shirt: 0x9b9d97, Collar: 0x9b9d97, Breeches: 0x39425c } }),
+    watch("pcon", 9.9, 6.3, 212, [6, 5], { react: ["Point", "Wave"], idles: ["Idle", "LookAround"] }, { base: "sel_crowdman66", sex: "m", colors: { shirt: 0x9b9d97, legs: 0x39425c }, tint: { Shirt: 0x9b9d97, Collar: 0x9b9d97, Breeches: 0x39425c } }),
     chat("pA0", "pA", 11.4, 5.4, 213),
     chat("pA1", "pA", 12.0, 6.1, 214),
     // Rastafari visitors with drums and the banner
     rasta(chat("pB0", "pB", -13.3, 5.2, 215), 0),
     rasta(chat("pB1", "pB", -12.6, 5.6, 216), 1),
-    rasta(watch("pB2", -13.1, 6.3, 217, [-12.9, 5.4], { react: ["Clap", "Nod", "Laugh"] }), 2),
-    rasta(watch("pB3", -8.0, 4.3, 218, [-9, 4], { react: ["Clap", "Nod", "Cheer"] }), 3),
+    rasta(watch("pB2", -13.1, 6.3, 217, [-12.9, 5.4], { react: ["Clap", "Laugh"] }), 2),
+    rasta(watch("pB3", -8.0, 4.3, 218, [-9, 4], { react: ["Clap", "Cheer"] }), 3),
     // the south sidewalk: higglers, friends meeting, people hurrying to the buses
-    watch("pH0", -4.2, 20.2, 220, [-2, 16], { react: ["Wave", "Point", "Nod"] }),
+    watch("pH0", -4.2, 20.2, 220, [-2, 16], { react: ["Wave", "Point"] }),
     chat("pC0", "pC", 6.0, 18.0, 221),
     chat("pC1", "pC", 6.7, 17.6, 222),
     chat("pD0", "pD", -10.6, 19.3, 223),
     chat("pD1", "pD", -11.2, 18.6, 224),
-    chat("pD2", "pD", -10.2, 18.5, 225),
+    watch("pD2", -10.0, 18.3, 225, [-10.9, 19.0], { react: ["Laugh", "Wave"] }),
     walker("pW0", [-12.5, 19.9], [-6.5, 19.9], 226),
     walker("pW1", [13.0, 17.4], [8.0, 17.4], 227),
     walker("pW2", [-12.8, 12.0], [-4.0, 12.0], 228),
@@ -544,11 +544,11 @@ export function road(K) {
     chat("rA1", "rA", 3.9, 12.8, 312),
     chat("rB0", "rB", 2.8, -26.5, 313),
     chat("rB1", "rB", 3.6, -27.0, 314),
-    watch("rB2", 3.2, -27.9, 315, [3.2, -26.7], { react: ["Laugh", "Nod", "Point"] }),
+    watch("rB2", 3.2, -27.9, 315, [3.2, -26.7], { react: ["Laugh", "Point"] }),
     watch("rC0", 4.6, 6.0, 316, [0, -40], { react: ["Point", "Wave", "Cheer"] }),
     watch("rC1", 4.7, -30.5, 317, [0, -40], { react: ["Point", "Wave", "Cheer"] }),
     child("rK0", 4.0, 3.0, 318, [3.0, 1.0, 5.0, 4.5], true),
-    watch("rD0", -1.0, 9.6, 319, [-2.6, 5.8], { react: ["Nod", "Wave"] }),
+    watch("rD0", -1.0, 9.6, 319, [-2.6, 5.8], { react: ["Wave"] }),
   );
   return Q;
 }
@@ -667,14 +667,14 @@ export function lane(K) {
     // talk in the lane about the day
     chat("lA0", "lA", 1.6, 5.2, 405),
     chat("lA1", "lA", 1.0, 4.5, 406),
-    rasta(chat("lA2", "lA", 1.9, 4.3, 407), 1),
+    rasta(watch("lA2", 2.0, 4.1, 407, [1.3, 4.9], { react: ["Laugh", "Clap"] }), 1),
     chat("lB0", "lB", 1.8, -12.2, 408),
     chat("lB1", "lB", 1.1, -12.8, 409),
     walker("lW0", [1.8, -14.8], [1.8, -1.0], 410),
     child("lK0", -0.8, 8.5, 411, [-1.9, 6.0, 1.4, 10.5]),
     child("lK1", 0.6, 9.4, 412, [-1.9, 6.0, 1.4, 10.5], true),
     child("lK2", -1.2, 7.0, 413, [-1.9, 6.0, 1.4, 10.5]),
-    watch("lE0", -1.9, -11.0, 414, [0, -5], { react: ["Nod", "Wave"], idles: ["OldIdle", "Idle"] }),
+    watch("lE0", -1.9, -11.0, 414, [0, -5], { react: ["Wave"], idles: ["OldIdle", "Idle"] }),
   );
   return Q;
 }
