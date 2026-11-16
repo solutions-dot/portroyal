@@ -1,7 +1,7 @@
 /* games/nanny/src/cast.js: who is in the game and how they look.
    The bodies are this game's own, built from the recipes in tools/nanny/people/ by tools/garvey/era.py (era 1734, the 1690 tailoring) and packed with tools/people/pack.mjs:
      maroon_man, maroon_scout, maroon_elder (a shirt and knee breeches, bare feet; the man and the elder have a knitted cap);  redcoat, militia (coat, felt hat, shoes)
-     maroon_woman, maroon_elder_woman (a blouse, a long skirt and a head wrap);  maroon_girl, maroon_child, maroon_boy (real child bodies, built big and shrunk here by 1 / upscale)
+     maroon_woman, maroon_elder_woman (a blouse, a long skirt and a head wrap); the soldiers wear a cocked hat made in the game (props.js cockedHat), not the builder's round felt hat;  maroon_girl, maroon_child, maroon_boy (real child bodies, built big and shrunk here by 1 / upscale)
    No description of Windward Maroon dress survives, apart from one line about a Leeward captain in 1738 (loose drawers to the knee, a small round hat, no shirt).
    So these clothes are a plain guess: undyed cloth, earth colours and indigo. Each look below recolours its body's clothes by material name. */
 import { rng } from './gfx.js';
@@ -24,9 +24,9 @@ export const LOOKS = {
   beneba: L('maroon_girl', { Shirt: 0xd8ccae, Skirt: 0xd8ccae }, { scale: 0.8, h: 1.36 }),
   phibba: L('maroon_child', { Shirt: 0xe2d8c0, Skirt: 0xe2d8c0 }, { scale: 0.62, h: 1.06 }),
   phibbaGrown: L('maroon_girl', { Shirt: 0xc9962e, Skirt: 0xc9962e }, { scale: 0.88, h: 1.5 }),
-  soldier: L('redcoat', { Coat: 0x9a2a22, Breeches: 0xd8ceb0, Hat: 0x16141a, Shirt: 0xe8e2d0, Bands: 0xe8e2d0, Shoes: 0x1a1612 }, { hat: 'Hat', h: 1.86, pale: true }),
-  officer: L('redcoat', { Coat: 0x8a2420, Breeches: 0xe2d8c0, Hat: 0x16141a, Shirt: 0xf0ece0, Bands: 0xf0ece0, Shoes: 0x1a1612 }, { hat: 'Hat', h: 1.86, pale: true }),
-  militia: L('militia', { Coat: 0x5a5244, Breeches: 0x8a7a5a, Hat: 0x3a3226, Shirt: 0xd8d0b8, Bands: 0xd8d0b8, Shoes: 0x2a2018 }, { hat: 'Hat', h: 1.86, pale: true }),
+  soldier: L('redcoat', { Coat: 0x9a2a22, Breeches: 0xd8ceb0, Hat: 0x16141a, Shirt: 0xe8e2d0, Bands: 0xe8e2d0, Shoes: 0x1a1612 }, { hat: false, cocked: true, h: 1.86, pale: true }),
+  officer: L('redcoat', { Coat: 0x8a2420, Breeches: 0xe2d8c0, Hat: 0x16141a, Shirt: 0xf0ece0, Bands: 0xf0ece0, Shoes: 0x1a1612 }, { hat: false, cocked: true, h: 1.86, pale: true }),
+  militia: L('militia', { Coat: 0x5a5244, Breeches: 0x8a7a5a, Hat: 0x3a3226, Shirt: 0xd8d0b8, Bands: 0xd8d0b8, Shoes: 0x2a2018 }, { hat: false, cocked: true, h: 1.86, pale: true }),
 };
 /* a villager of the hill town, for the background: a man, a woman or a child in plain cloth */
 export function villager(r, pick) {

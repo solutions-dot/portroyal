@@ -128,6 +128,7 @@ A research pass read the sources below. The full report was a working file and i
 
 | Fact | Used as | Source and caveat |
 |---|---|---|
+| The English took Jamaica from Spain in 1655; people the Spanish had enslaved went into the mountains, and so did some Taino people | Used in the journal ("Enslaved", Dig deeper) | Jamaica National Heritage Trust (Maroon heritage pages); Bilby (2005), *True-Born Maroons*. Scholars. |
 | Old Nanny Town was in Portland, high in the Blue Mountains, about 2,000 feet up, with over 140 houses at its biggest; built about 1723; found by the English in 1728; attacked in 1730, 1731, 1732 and several times in 1734 | Used. "In the 1720s" for the building date, because other sources say 1720. | Jamaica National Heritage Trust, Nanny Town site page. Scholars. |
 | Which river ran below it | Not named | Disputed: Stony River in some sources, between the Rio Grande and the Back River in the National Library of Jamaica's notes. |
 | "The only path", steep and rocky, "not wide enough to admit the passage of two persons abreast" | Used, with his words quoted in the journal | Bryan Edwards, printed 1793. Record, but hostile and 59 years late. Read in the 1801 edition. |
