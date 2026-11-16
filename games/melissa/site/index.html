@@ -64,9 +64,9 @@ button{font:inherit;color:inherit}
 @keyframes talkpulse{50%{box-shadow:0 0 0 9px rgba(243,194,90,.15),0 6px 22px rgba(0,0,0,.45)}}
 @media (prefers-reduced-motion:reduce){.tbub{animation:none}}
 #toast{position:absolute;left:50%;top:auto;bottom:128px;transform:translateX(-50%);background:var(--paper);color:var(--paper-ink);padding:.5em 1em;border-radius:6px;font-weight:700;font-size:.9rem;max-width:calc(100% - 32px);text-align:center;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(241,233,214,.55);background:rgba(18,28,38,.3);pointer-events:none}
-#nub{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;background:var(--brass);transform:translate(-50%,-50%)}
-#stick.rest{opacity:.45}#stick.rest #nub{opacity:.7}
+#stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(241,233,214,.38);background:rgba(18,28,38,.2);pointer-events:none}
+#nub{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;background:var(--brass);opacity:.78;transform:translate(-50%,-50%)}
+#stick.rest{opacity:.3}#stick.rest #nub{opacity:.55}
 
 #dialogue{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-height:calc(100% - 96px);overflow:auto;width:min(40rem,calc(100% - 32px));background:rgba(18,28,38,.95);border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.7rem}
 #who{font-family:var(--display);font-size:1.05rem;letter-spacing:.04em;color:var(--brass);margin:0}
@@ -156,6 +156,17 @@ body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){v
   #card{padding:10px}.cardin{gap:.45rem}.cardin h2{font-size:1.5rem}#cbody p{font-size:.95rem;margin:0 0 .35rem}#cbtns.col{flex-direction:row;align-items:center}}
 @media (prefers-reduced-motion:reduce){#bar{transition:none}#hold{animation:none}}
 .chfoot{flex-wrap:wrap}
+
+/* Keep the three chapter actions together on phone-sized screens. */
+#chapters .chfoot, #chapters .book > footer:has(#chteacher) {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:clamp(5px,1.4vw,12px); align-items:stretch;
+}
+#chapters footer:has(#chteacher) > .btn {
+  min-width:0; width:100%; margin:0; padding:.65em .25em;
+  font-size:clamp(.7rem,2.8vw,.95rem); line-height:1.2;
+  white-space:nowrap; text-align:center;
+}
 </style>
 <link rel="stylesheet" href="title.css">
 </head>
@@ -236,7 +247,7 @@ body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){v
     <p class="chnote">Each chapter opens when you finish the one before it.</p>
     <p id="chteachernote" class="chnote" hidden>All chapters are open for teaching.</p>
     <ol id="chlist" class="chlist"></ol>
-    <footer class="chfoot"><button id="chteacher" class="btn ghost" aria-pressed="false">Teacher unlock</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
+    <footer class="chfoot"><button id="chteacher" class="btn ghost" aria-pressed="false">Unlock All</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Restart</button></footer>
   </div>
 </section>
 <pre id="autolog" hidden></pre>
