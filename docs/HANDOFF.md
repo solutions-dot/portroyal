@@ -1,5 +1,16 @@
 # Handoff: where the work stands (15 November 2026)
 
+## Update: 16 November 2026, integration PR #101
+
+This section updates the original 15 November handoff without rewriting its historical test claims.
+
+- **Released:** PR #100 was squash-merged to `main`: Tivoli journal Main Menu link, Nanny mobile title background, Bog Walk mobile title actions and menu card borders.
+- **In draft PR #101, not released:** Kendal beach activity and saved-progress fixes; Windrush and Selassie chapter/journal/notification layout; chapter footer labels and single-row layout across all **ten** games; Tivoli chapter controls, journal notifications and touch D-pad.
+- **New regression coverage:** `tests/chapter-footer.mjs` checks ten-game chapter footer parity; `tests/final-two-ui.mjs` covers Windrush/Selassie; `tests/kendal.mjs` covers Kendal; `tests/tivoli-browser.mjs` adds mobile-sized interaction checks.
+- **Browser verification still open:** GitHub's regular PR workflow runs `npm test` but skips the general browser job. The focused Tivoli browser workflow was added, but results and screenshots must be reviewed before marking the D-pad, journal and 320/390px layout verified.
+- **Remaining backlog:** the full per-game screenshot/autoplayer checks, animation and clothing inspection, the story-flow hint-arrow timing and target rules in `docs/plans/flow_audit.md`, and `?test=all` integration. The Tivoli flow audit explicitly notes that it lacks a hint arrow; no change to that behaviour is claimed in PR #101.
+- **Release discipline:** continue related fixes in PR #101. Do not describe draft changes as live until merged and deployed.
+
 Read this first if you are picking up the big people, animation and gameplay standardisation work. Then read `CLAUDE.md`, `docs/STANDARD.md` and the plans in `docs/plans/`.
 
 ## How the work is organised
