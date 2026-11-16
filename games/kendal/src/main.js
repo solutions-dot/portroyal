@@ -124,27 +124,33 @@ function kPace(m, s, ctl) { const base = s.base; const play0 = ctl.play.bind(ctl
 const SKIN_LIGHT = 1.55;   /* owner rule 9: build Skin inside Marcus Garvey's range, then lighten it here so faces read in every light (docs/PIPELINE.md, "Skin"). Check with ?test=skin */
 /* Phones: a background figure was a dozen meshes (skin, shirt, skirt, shoes, hair, belt, collar...), so a crowd of forty cost over 600 draw calls (?test=all budget).
    joinBody makes one skinned mesh of a light copy's visible pieces, each piece's colour baked into its points, on the same skeleton: one draw call a person.
-   Only for standing background people: a seated or kneeling body swaps its skirt for the seated skirt (engine/anim.js), which needs the pieces apart.
+   A body swaps its skirt for the seated skirt when it sits or kneels (engine/anim.js), which needs the pieces apart, so it is joined only if it stays standing,
+   or stays seated (joined with the seated skirt showing).
    The pieces stay (hidden), so the engine's hand and skirt helpers still read them. A piece with a picture on it (a texture) or see-through stays apart. */
-const _jc = new THREE.Color();
+const _jc = new THREE.Color(), JOINFAIL = { n: 0 };
 function joinBody(m) {
   const parts = []; m.traverse((o) => { if (o.isSkinnedMesh && o.visible && o.parent && o.parent.visible !== false) parts.push(o); });
   const use = parts.filter((o) => !o.material.map && !o.material.transparent && o.geometry.attributes.skinIndex && o.geometry.attributes.normal);
   if (use.length < 3) return false; const skel = use[0].skeleton, bm = use[0].bindMatrix;
-  if (use.some((o) => o.skeleton.bones.length !== skel.bones.length || o.skeleton.bones.some((b, i) => b !== skel.bones[i]) || !o.bindMatrix.equals(bm))) return false;
+  if (use.some((o) => o.skeleton.bones.length !== skel.bones.length || o.skeleton.bones.some((b, i) => b !== skel.bones[i]) || !o.bindMatrix.equals(bm))) { JOINFAIL.n++; return false; }
+  /* each piece may carry its own inverse bind matrices (a packed piece keeps its own scale and offset in them): bring every piece onto the first piece's, D = inv0^-1 * inv, when one D fits every bone */
+  const Ds = use.map((o) => { const D = new THREE.Matrix4().copy(skel.boneInverses[0]).invert().multiply(o.skeleton.boneInverses[0]); for (let j = 1; j < skel.bones.length; j += 7) { const Dj = new THREE.Matrix4().copy(skel.boneInverses[j]).invert().multiply(o.skeleton.boneInverses[j]); if (!Dj.elements.every((v, k) => Math.abs(v - D.elements[k]) < 1e-4)) return null; } return D; });
+  if (Ds.some((D) => !D)) { JOINFAIL.n++; return false; }
   const geos = [], keep = ['position', 'normal', 'skinIndex', 'skinWeight'];
   for (const o of use) {
     const g0 = o.geometry, g = new THREE.BufferGeometry(); for (const k of keep) g.setAttribute(k, g0.attributes[k].clone()); if (g0.index) g.setIndex(g0.index.clone());
     const n = g0.attributes.position.count, col = new Float32Array(n * 3), vc = o.material.vertexColors && g0.attributes.color, mc = o.material.color;
     for (let i = 0; i < n; i++) { if (vc) _jc.fromBufferAttribute(vc, i); else _jc.setRGB(1, 1, 1); col[i * 3] = _jc.r * mc.r; col[i * 3 + 1] = _jc.g * mc.g; col[i * 3 + 2] = _jc.b * mc.b; }
-    g.setAttribute('color', new THREE.BufferAttribute(col, 3)); geos.push(g.index ? g.toNonIndexed() : g);
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3)); const gi = g.index ? g.toNonIndexed() : g; for (const k of ['position', 'normal']) { const a = gi.attributes[k]; if (a.normalized || !(a.array instanceof Float32Array)) { const f = new Float32Array(a.count * 3); for (let i = 0; i < a.count; i++) { f[i * 3] = a.getX(i); f[i * 3 + 1] = a.getY(i); f[i * 3 + 2] = a.getZ(i); } gi.setAttribute(k, new THREE.BufferAttribute(f, 3)); } }
+    gi.applyMatrix4(Ds[use.indexOf(o)]); geos.push(gi);
   }
   const g = mergeGeometries(geos, false); if (!g) return false;
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, emissive: new THREE.Color(SKIN_TONE).multiplyScalar(0.35), emissiveIntensity: SKIN_FILL.k * 0.5 }); mat.name = 'Joined'; SKIN_FILL.mats.add(mat);   /* a little of the night fill too, at half strength (it lights the clothes as well) */
   const sm = new THREE.SkinnedMesh(g, mat); sm.name = use.some((o) => /Skirt/.test(o.material.name || '')) ? 'Skirt_joined' : 'Body_joined'; sm.bind(skel, bm); sm.frustumCulled = false; sm.castShadow = sm.receiveShadow = true;
   use[0].parent.add(sm); for (const o of use) o.visible = false; m.userData.joined = sm; return true;
 }
-const JOINABLE = (s) => /_lo$/.test(s.bodyId || '') && !isSeated(s.anim) && !s.seat && !/Sit|Kneel|PlayPiano|Comfort/.test((s.anim || '') + ' ' + Object.values(s.life || {}).filter((v) => typeof v === 'string' || Array.isArray(v)).flat().join(' '));
+const JOINABLE = (s) => { if (!/_lo$/.test(s.bodyId || '')) return false; const clips = [s.anim || '', ...Object.values(s.life || {}).filter((v) => typeof v === 'string' || Array.isArray(v)).flat()].filter((c) => typeof c === 'string').join(' ');
+  if (/Kneel|PlayPiano|Comfort|Pray|Crawl/.test(clips)) return false; const sits = isSeated(s.anim); return sits ? (!s.life || s.life.kind === 'sit') : !/\bSit/.test(clips); };   /* stays standing, or stays seated */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat); if (/^man_(work|shirt|elder|suit)$/.test(s.base) && !(s.hide || []).includes('Waistcoat')) offHats.push('Belt', 'Buckle');   /* a waistcoat covers the belt */   /* a body carries several hats; show the one this person wears (s.hat), or none */
@@ -977,7 +983,7 @@ function devViews() {
     if (shot === 'crash5') { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; handLamp.intensity = 0; lampMesh.visible = false; P.torches.forEach((t) => { t.visible = false; }); }
     if (/^k\d/.test(shot)) SFX.initBeds;
     for (let i = 0; i < 6; i++) update(0.05);
-    if (q.has('stats')) setTimeout(() => { renderer.info.reset(); renderer.render(scene, camera); const i = renderer.info; let t = 'STATS calls=' + i.render.calls + ' tris=' + i.render.triangles + ' geo=' + i.memory.geometries + ' tex=' + i.memory.textures; if (q.has('calls')) { const by = {}; const walk = (o, tag) => { if (!o.visible) return; if (o.userData.anim) tag = 'people'; else if (P.rig && o === P.rig.group) tag = 'rig'; if (o.isMesh || o.isSprite || o.isPoints || o.isLine) by[tag] = (by[tag] || 0) + (Array.isArray(o.material) ? o.material.length : 1); for (const c of o.children) walk(c, tag === 'scene' && o === P.group ? 'place' : tag); }; for (const c of scene.children) walk(c, c === P.group ? 'place' : 'scene'); t += ' ' + JSON.stringify(by); }   /* &calls: meshes drawn, by kind */ document.title = t; console.log(t); }, 1500);
+    if (q.has('stats')) setTimeout(() => { renderer.info.reset(); renderer.render(scene, camera); const i = renderer.info; let t = 'STATS calls=' + i.render.calls + ' tris=' + i.render.triangles + ' geo=' + i.memory.geometries + ' tex=' + i.memory.textures; if (q.has('calls')) { const by = {}; const walk = (o, tag) => { if (!o.visible) return; if (o.userData.anim) tag = 'people'; else if (P.rig && o === P.rig.group) tag = 'rig'; if (o.isMesh || o.isSprite || o.isPoints || o.isLine) by[tag] = (by[tag] || 0) + (Array.isArray(o.material) ? o.material.length : 1); for (const c of o.children) walk(c, tag === 'scene' && o === P.group ? 'place' : tag); }; for (const c of scene.children) walk(c, c === P.group ? 'place' : 'scene'); t += ' ' + JSON.stringify(by) + ' joinfail=' + JOINFAIL.n; }   /* &calls: meshes drawn, by kind */ document.title = t; console.log(t); }, 1500);
   });
   if (q.get('test') === 'layout') {   /* ?test=layout : open each UI state and check that no two visible things overlap, nothing is cut off, and nothing is off the screen. Run at several window sizes. */
     (async () => { const out = [], W = innerWidth, Hh = innerHeight; const st = document.createElement('style'); st.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st);   /* headless Chrome draws few frames, so fades would be caught half way */
