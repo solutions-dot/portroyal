@@ -4,6 +4,8 @@ Read-only audit of `games/port-royal`, `garvey`, `kendal`, `bog-walk`, `nanny`, 
 
 **Unified delay follow-up (16 November):** all ten games now target **2.5 seconds** for both ordinary and exploration guidance. The shared `engine/story.js` default and exploration delay are both 2500 ms; Tivoli and the six legacy controllers use the same value, while Kendal, Windrush and Selassie use the shared story engine. `tests/guidance-delay.mjs` checks the ten integrations and the engine's timing. This is a source-level change; gameplay and visual verification remain pending.
 
+**Required-target selection follow-up (16 November):** Nanny, Melissa and Eventide now choose the nearest currently unfinished, stage-marked story conversation before considering available actions; Bog Walk was updated earlier. Existing special route overrides (Nanny climb, Melissa stage 51, Eventide gate/veranda) remain in place. This is not a full need-by-need migration: action-first story steps and all stage transitions require replay to check that the target remains correct. Other games still require the same audit.
+
 ### Follow-up: always-visible next task (16 November 2026)
 
 The owner selected **Bog Walk's guidance pattern as the target for all ten games**: a plainly written next task that stays readable, a gold world arrow to the current required destination, and a nearby talk/action control that takes over when the player arrives. The task should change immediately when a requirement is completed, and optional activities must not override a required step.
