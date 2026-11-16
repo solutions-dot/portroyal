@@ -59,9 +59,9 @@ scene.fog = new THREE.Fog(0xcfe2e6, 60, 240);
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w / h < 0.8 ? 76 : 66; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 /* owner rule 9, at night: a face turned away from the lamps went near black (?test=all faces: brightness 10 to 25 from one side at the crash site and in the coach at night).
-   Skin glows a little with its own colour, more the darker the scene: a soft fill light on faces only, as a film lights faces. Day 0.06, dusk about 0.2, night about 0.45. */
-const SKIN_TONE = 0x96664a, SKIN_FILL = { k: 0.06, mats: new Set() };
-const skinFill = (e) => 0.06 + 0.4 * Math.max(0, Math.min(1, (3.0 - (e.hemi[2] + e.sun[1] * 0.5)) / 2.1));
+   Skin glows a little with its own colour, more the darker the scene: a soft fill light on faces only, as a film lights faces. Day 0.1 (a face shaded by a hat brim read too dark at noon), dusk about 0.3, night about 0.55. */
+const SKIN_TONE = 0x96664a, SKIN_FILL = { k: 0.1, mats: new Set() };
+const skinFill = (e) => 0.1 + 0.45 * Math.max(0, Math.min(1, (3.0 - (e.hemi[2] + e.sun[1] * 0.5)) / 2.1));
 let envNow = ENV.morning;
 function setEnv(e) {   /* the time of day: sky, haze, sun and ambient light */
   envNow = e; sky.setSky(e.top, e.hor, e.stars, e.moon); scene.fog.color.setHex(e.fog); scene.fog.near = e.fogN; scene.fog.far = e.fogF; scene.background = scene.fog.color;
@@ -146,7 +146,7 @@ function joinBody(m) {
     gi.applyMatrix4(Ds[use.indexOf(o)]); geos.push(gi);
   }
   const g = mergeGeometries(geos, false); if (!g) return false;
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, emissive: new THREE.Color(SKIN_TONE).multiplyScalar(0.35), emissiveIntensity: SKIN_FILL.k * 0.5 }); mat.name = 'Joined'; SKIN_FILL.mats.add(mat);   /* a little of the night fill too, at half strength (it lights the clothes as well) */
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, emissive: new THREE.Color(0x8a8a8a).multiplyScalar(0.25), emissiveIntensity: SKIN_FILL.k * 0.5 }); mat.name = 'Joined'; SKIN_FILL.mats.add(mat);   /* a little of the night fill too, grey and weak (it lights the clothes as well, so it must not tint them skin colour) */
   const sm = new THREE.SkinnedMesh(g, mat); sm.name = use.some((o) => /Skirt/.test(o.material.name || '')) ? 'Skirt_joined' : 'Body_joined'; sm.bind(skel, bm); sm.frustumCulled = false; sm.castShadow = sm.receiveShadow = true;
   use[0].parent.add(sm); for (const o of use) o.visible = false; m.userData.joined = sm; return true;
 }
@@ -536,12 +536,12 @@ function startScene(i, st) {
 function chaptersOpen(i) { return i === 0 || best >= DONE[i - 1]; }
 let teacherMode=false;try{teacherMode=localStorage.getItem('kendal-teacher')==='1';}catch{}
 function renderChapters() {
-  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent=teacherMode?'Teacher unlock: on':'Teacher unlock';$('chteachernote').hidden=!teacherMode;
+  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent=teacherMode?'Unlock All: on':'Unlock All';$('chteachernote').hidden=!teacherMode;
   const ul = $('chlist'); ul.replaceChildren();
   CHAPTERS.forEach((c, i) => { const open = teacherMode || chaptersOpen(i), dn = best >= DONE[i], li = document.createElement('li'), b = document.createElement('button'); b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !modelsReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', c.name], ['st', !modelsReady ? 'Loading' : dn ? 'Done' : 'Play']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
     b.onclick = () => { $('chapters').hidden = true; busy = false; if (!state.started) startGame(true); beginChapter(i); }; li.appendChild(b); ul.appendChild(li); });
-  $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = '';
+  $('chreset').textContent = 'Restart'; $('chreset').dataset.armed = '';
 }
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = panelsOpen(); if (state.started) canvas.focus(); }
@@ -866,7 +866,7 @@ function checkHooks() {
     player: () => ({ x: state.x, z: state.z }),
     renderer, scene, camera,
     /* a person standing (Idle) where a story person is, in their clothes and hat, for the face probe: a seated, kneeling or comforting pose bows the head away from the probe's camera */
-    faceBody: (n) => { const b = makeBody({ base: n.base, bodyId: n.bodyId, tint: n.tint || {}, skin: n.skin, hat: n.hat, hide: n.hide, scale: n.scale, x: n.x, z: n.z, ground: n.m.userData.ground || 0, ry: n.m.rotation.y, anim: 'Idle' }); scene.add(b); b.userData.anim.mx.update(0.3); for (let i = 0; i < 20; i++) groundFeet(b); return b; },
+    faceBody: (n) => { const b = makeBody({ base: n.base, bodyId: n.bodyId, tint: n.tint || {}, skin: n.skin, hat: n.hat, hide: n.hide, scale: n.scale, x: n.x, z: P_().ride ? 0 : n.z, ground: n.m.userData.ground || 0, ry: n.m.rotation.y, anim: 'Idle' }); scene.add(b); b.userData.anim.mx.update(0.3); for (let i = 0; i < 20; i++) groundFeet(b); return b; },
     frame: (dt) => { motionNow += dt * 1000; update(dt, motionNow); renderer.render(scene, camera); },
     autoplay: async () => autoPlay(1, false),
     talkTo: (n) => { state.x = n.x + 1.1; state.z = n.z + 0.4; startTalk(n); }, leaveTalk,
