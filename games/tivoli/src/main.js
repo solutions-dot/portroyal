@@ -18,9 +18,10 @@ import { contentRects, contentsOverlap } from '../../../engine/ui-audit.js';   /
 import { buildBackOWall } from './backowall.js';
 import { buildNewTivoli } from './newtivoli.js';
 import { buildStreet, streetPlace } from './street.js';
-import { Talk, setupTalk, tapNpc, updateTalk, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
+import { Talk, setupTalk, tapNpc, updateTalk, after as talkAfter, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage } from './story.js';
-import { WALKS, CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip } from './ch1.js';
+import { WALKS, CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick } from './ch1.js';
+import { lifeTest } from './life.js';   // dev only: ?test=ambient
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
 import { clipInfo, sceneCheck } from './scenecheck.js';
 import { strideOf, WALKS as WALK_CLIPS } from './walk.js';   // dev only: the street scene checks (?test=scene, ?test=clipinfo)
@@ -108,7 +109,11 @@ function devLog(lines, title) { let el = $('autolog'); if (!el) { el = document.
 async function devViews() {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), test = q.get('test'), lo = q.has('lo') ? '_lo' : '';
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
-  if (['1', '2', '3', '4', '6', '7', '8'].includes(q.get('chapter'))) { await ch1Begin(+q.get('chapter')); if (q.get('at')) ch1Skip(q.get('at')); return; }
+  if (['1', '2', '3', '4', '6', '7', '8'].includes(q.get('chapter'))) {   /* ?chapter=N (&at=talked|end) (&cam=x,z,yaw,pitch,height: stand there for a picture) */
+    await ch1Begin(+q.get('chapter')); if (q.get('at')) ch1Skip(q.get('at'));
+    if (q.get('cam')) { const [x, z, yaw, pitch, h] = q.get('cam').split(',').map(Number); Object.assign(state, { x, z, yaw, pitch: pitch || 0 }); if (h) state.camY = h; $('scenetitle').hidden = true; setTimeout(() => { document.title = 'CAM'; }, +(q.get('wait') || 6000)); }
+    return;
+  }
   if (shot === 'poster') {   /* ?shot=poster&cx=&cy=&cz=&tx=&ty=&tz=: the quiet street with nobody in it, for the menu picture (menu/tivoli.jpg) */
     await fightBegin(); FIGHT.freeze = true; $('hud').hidden = true; for (const id of ['fightcard', 'readcard', 'scenetitle', 'windowframe']) { const e = $(id); if (e) e.hidden = true; }
     scene.traverse((o) => { if (o.isSkinnedMesh) { let p = o; while (p.parent && p.parent !== scene) p = p.parent; p.visible = false; } });
@@ -162,6 +167,9 @@ async function devViews() {
       for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) if (!els[i].contains(els[j]) && !els[j].contains(els[i]) && contentsOverlap(els[i], els[j])) out.push(`${W}x${Hh} ${name}: "${els[i].textContent.slice(0, 24)}" overlaps "${els[j].textContent.slice(0, 24)}"`);
     }
     devLog(out.length ? out : [W + 'x' + Hh + ': no layout problems'], 'LAYOUT ' + out.length);
+  }
+  if (test === 'ambient') {   /* ?test=ambient: every walking chapter's background people run for a minute while a player walks the story route (engine/ambient.js ambientTest). Expect 0. */
+    const r = await lifeTest(WALKS); devLog(['ambient: ' + r.total + ' issues', ...r.lines], 'AMBIENT ' + r.total);
   }
   if (test === 'scene') {   /* ?test=scene (&seeds=1,2,3): the street scene run start to end; everyone's aim, facing and feet (scenecheck.js). Expect 0. */
     const r = await sceneCheck({ FIGHT, begin: fightBegin, tick: fightTick, strideOf, WALKS: WALK_CLIPS, CONTACT, seeds: q.get('seeds') ? q.get('seeds').split(',').map(Number) : undefined });
@@ -228,7 +236,8 @@ function frame(t) {
       stepT -= dt * sp; if (stepT <= 0) { stepT = 1.4; stepSound('sand'); } }
   }
   if (CH.on) { updateTalk(dt, state, state.started && !busy); ch1Tick(dt); }
-  for (const mx of mixers) mx.update(dt); for (const n of Talk.npcs) { if (n.body.userData.anim) n.body.userData.anim.tick(dt); groundFeet(n.body); }   /* the story people: shoes pinned to the ground every frame, so feet never sink */
+  for (const mx of mixers) mx.update(dt); for (const n of Talk.npcs) { if (n.body.userData.anim) n.body.userData.anim.tick(dt); groundFeet(n.body); }
+  if (CH.on) { lifeTick(dt); talkAfter(dt, state); }   /* after the mixers: the background people (engine/ambient.js) and the story people's heads turn on top of their clips */   /* the story people: shoes pinned to the ground every frame, so feet never sink */
   if (__DEV__) for (const m of DEVG) groundFeet(m);
   for (const m of ARMED) weaponTick(m);   // after the mixer and the feet: weapons follow the hands
   if (FIGHT.on) fightAfter(t / 1000); else { camera.position.set(state.x, state.camY || 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); }
