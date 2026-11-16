@@ -195,13 +195,7 @@ body:has(#hornwrap:not([hidden])) :is(#talk,#hint,#toast,#nudge,#sub){visibility
     content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
     background:linear-gradient(180deg,rgba(16,34,43,.24),rgba(16,34,43,.94) 58%);
   }
-  #title .card { position:relative; z-index:1; width:100%; min-width:0; }
-  #title .title-actions { gap:clamp(6px,1.8vw,12px); }
-  #title .title-actions > .btn {
-    flex:1 1 0; min-width:0; white-space:nowrap;
-    padding:.65em .4em; font-size:clamp(.78rem,3.4vw,.98rem);
-  }
-  #title .title-actions > .track { flex:0 0 100%; min-width:0; }
+  #title .card { position:relative; z-index:1; }
 }
 @keyframes title-drift {
   from { transform:translate3d(-0.7%,0,0) scale(1.045); }
