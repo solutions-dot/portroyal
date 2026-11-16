@@ -8,6 +8,7 @@
 import * as THREE from "three";
 import { headAngles } from "./headcheck.js";
 import { closeAll } from "./ui.js";
+import { PLACE_STAGES } from "./steps.js";
 export const SYNC = { share: 0.12, min: 4, phase: 0.04 },
   STILL = { seconds: 6, deg: 4 };
 const _fr = new THREE.Frustum(),
@@ -97,13 +98,7 @@ export async function actionCheck(A, { seconds = 14 } = {}) {
       }
     }
   };
-  for (const [label, stage] of [
-    ["yard", 20],
-    ["memory", 15],
-    ["road", 30],
-    ["airport", 50],
-  ]) {
-    console.log('ACTIONS place', label, performance.now() | 0);
+  for (const [label, stage] of Object.entries(PLACE_STAGES)) {
     await A.go(stage);
     closeAll();
     A.S.started = true;
@@ -123,7 +118,6 @@ export async function actionCheck(A, { seconds = 14 } = {}) {
       if (i % 15 === 0) sample(label, i * dt);
     }
   }
-  console.log('ACTIONS cinematic', performance.now() | 0);
   await A.go(51);
   closeAll();
   const D = A.DIR;

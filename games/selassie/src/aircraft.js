@@ -321,10 +321,10 @@ export function dc6() {
   }
   finPts.push(LE1);
   // the rounded tip
-  for (const a of [0.25, 0.5, 0.75, 1]) {
+  for (const a of [0.3, 0.42, 0.54, 0.66, 0.78]) {
     const cx = -15.12,
       cy = DC6.FIN_TOP - 0.62,
-      ang = Math.PI * (0.78 - 0.62 * a);
+      ang = Math.PI * a; // from the front of the tip, over the top, to the back
     finPts.push([cx + Math.cos(ang) * 0.66, cy + Math.sin(ang) * 0.62]);
   }
   // the rudder's trailing edge, then back along the inside of the fuselage

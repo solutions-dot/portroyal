@@ -78,14 +78,14 @@ function stall() {
   return g;
 }
 /* What each background person does (owner's note, November 2026: "ensure persons have varied actions and no standing zombies").
-   Nobody stands in the plain Idle: every standing clip below moves (weight shifts, a look round, a turn of the head, wiping the brow
-   in the heat, an old man's stoop), the shared ambient system starts each one at its own moment and speed, and the reactions fit the
+   Nobody stands in the plain Idle: every standing clip below moves (weight shifts, a look round, a cheerful sway,
+   an old man's stoop; WipeSweat and HeadTurn turned heads faster than the head check allows, so only the police turn their heads), the shared ambient system starts each one at its own moment and speed, and the reactions fit the
    day (waving, a slow wave, clapping, cheering, pointing at the aircraft). Listeners in a chat nod and agree. Elders move like elders,
    children like children, and the ceremonial police stand at ease and only turn their heads. */
 export const IDLES = {
-  man: ["IdleM", "LookAround", "HeadTurn", "WipeSweat", "HappyIdle"],
-  woman: ["HappyIdle", "LookAround", "HeadTurn", "WipeSweat"],
-  elder: ["OldIdle", "HeadTurn", "IdleM"],
+  man: ["IdleM", "LookAround", "HappyIdle"],
+  woman: ["HappyIdle", "LookAround", "IdleM"],
+  elder: ["OldIdle", "IdleM"],
   kid: ["HappyIdle", "LookAround"],
   police: ["IdleM", "HeadTurn"],
 };
@@ -101,7 +101,10 @@ export function kindOf(n) {
 export function actions(n, spec, { welcome = false } = {}) {
   const k = kindOf(n),
     out = { walk: "Walk", ...spec };
-  if (!out.idles) out.idles = out.kind === "chat" ? (k === "kid" ? IDLES.kid : LISTEN) : IDLES[k];
+  const mine = out.kind === "chat" ? (k === "kid" ? IDLES.kid : LISTEN) : IDLES[k];
+  // a place's own list keeps its special clips (ListenMusic by a radio, an old man's stoop) but the plain Idle becomes this person's own
+  out.idles = out.idles ? [...new Set(out.idles.flatMap((c) => (c === "Idle" ? mine : [c])))] : mine;
+  if (out.sadIdles) out.sadIdles = out.sadIdles.filter((c) => c !== "Idle").concat("OldIdle");
   if (k === "police") out.react = [];
   else if (welcome) out.react = [...new Set([...(out.react || []), ...(k === "elder" ? ["WaveSlow", "Clap", "Agree"] : k === "kid" ? ["Cheer", "Clap", "Wave"] : WELCOME)])];
   else if (out.react) out.react = [...new Set([...out.react, k === "elder" ? "Nod" : "Clap"])];
