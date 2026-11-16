@@ -79,7 +79,7 @@ export function devRun(A) {
       return out; },
     autoplay: async () => { const stalls = []; for (const k of ['1', '2', '4', '5', '6', '7', '8', '9']) { closeAll(); if (k === '1') { await goPlace('shop'); A.stage = 0; A.refreshLife(); } const log = await A.runAuto(k); if (!log.includes('ALLDONE')) stalls.push('chapter ' + ({ 1: 1, 2: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8 })[k] + ': ' + log.slice(-4).join(' | ')); closeAll(); await wait(300); } return { ok: !stalls.length, why: stalls.join('; '), stalls }; },
     talks: () => (A.TALK_TARGETS[A.stage] || []).slice(0, 2),
-    talkTo: async (id) => { const n = A.byId(id); if (!n) return; const ry = n.m ? n.m.rotation.y : 0, B = P().bounds; A.state.x = Math.max(B.x0, Math.min(B.x1, n.x + Math.sin(ry) * 1.3)); A.state.z = Math.max(B.z0, Math.min(B.z1, n.z + Math.cos(ry) * 1.3)); A.update(0.016); A.startTalk(n); A.frame(0.016); },
+    talkTo: async (id) => { const n = A.byId(id); if (!n) return; const ry = n.m ? n.m.rotation.y : 0, B = P().bounds; A.state.x = Math.max(B.x0, Math.min(B.x1, n.x + Math.sin(ry) * 1.7)); A.state.z = Math.max(B.z0, Math.min(B.z1, n.z + Math.cos(ry) * 1.7)); A.update(0.016); A.startTalk(n); A.frame(0.016); },
     people: () => P().people.map((n) => ({ id: n.id, name: n.who, body: n.model })),
     screens: () => ({
       title: () => { closeAll(); $('title').hidden = false; $('hud').hidden = true; },
@@ -99,6 +99,11 @@ export function devRun(A) {
       const head = n.m.getObjectByName('mixamorigHead'), hp = new THREE.Vector3(); head.getWorldPosition(hp); hp.y += 0.07;
       const d = +(q.get('d') || 0.8), a = +(q.get('a') || 0), ry = n.m.rotation.y + a; A.state.x = hp.x + Math.sin(ry) * d; A.state.z = hp.z + Math.cos(ry) * d; A.state.eyeY = hp.y; A.state.yaw = Math.atan2(-(hp.x - A.state.x), -(hp.z - A.state.z)); A.state.pitch = 0;
       $('hud').hidden = true; window.__SHOT = true; document.title = 'SHOT face ' + id; })();
+    return;
+  }
+  /* ?shot=at&st=0&x=&z=&yaw=&pitch=&y= : any spot in any place at a stage (close looks at props, such as the hat racks) */
+  if (q.get('shot') === 'at') {
+    (async () => { await adapter.ready(); await goStep(+(q.get('st') || 0)); for (let i = 0; i < 10; i++) A.update(1 / 30); Object.assign(A.state, { x: +q.get('x'), z: +q.get('z'), yaw: +(q.get('yaw') || 0), pitch: +(q.get('pitch') || 0) }); if (q.get('y')) A.state.eyeY = +q.get('y'); $('hud').hidden = true; window.__SHOT = true; })();
     return;
   }
   if (test === 'all') {
