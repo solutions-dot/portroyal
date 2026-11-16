@@ -80,7 +80,7 @@ function locked() { return panelsOpen() || frozen || fading || !S.started || ['t
 
 /* ---------- words on the screen ---------- */
 let goalText = '', subTimer = 0, goalTimer = 0;
-function setGoal(t, quiet) { goalText = t; const el = $('goal'); el.hidden = !t; if (el.textContent !== t && t && !quiet) uiSound('goal'); el.textContent = t; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); if (t) goalTimer = setTimeout(() => { if (goalText) { el.textContent = 'Goal'; el.classList.add('folded'); el.setAttribute('aria-expanded', 'false'); } }, 6500); }
+function setGoal(t, quiet) { goalText = t; const el = $('goal'); el.hidden = !t; if (el.textContent !== t && t && !quiet) uiSound('goal'); el.textContent = t; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); /* Keep the next task visible until the player completes it. */ }
 $('goal').onclick = () => setGoal(goalText, true);
 function setClock(t) { $('clock').hidden = !t; $('clock').textContent = t || ''; }
 function say(who, text, ms = 4200) {   /* a line shown as a subtitle; in the Tube the speaker is heard, not seen, and in the water the voices come from the direction of the light */
