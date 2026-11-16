@@ -18,7 +18,7 @@
     "sleeve": 0.3,
     "shoes": true,
     "collar": "round",
-    "hairvol": 0.25,
+    "hairvol": 0.15,
     "hat": [
       [
         "wrap",
@@ -26,7 +26,7 @@
       ]
     ],
     "woman": true,
-    "bun": true,
+    "bun": false,
     "skirt": true,
     "hem": 0.66,
     "flare": 1.85,

@@ -15,10 +15,10 @@
   "garments": {
     "shoes": true,
     "trousers": true,
-    "hairvol": 0.25,
+    "hairvol": 0.15,
     "hat": [
       [
-        "felt",
+        "trilby",
         "Hat"
       ]
     ],

@@ -21,8 +21,8 @@
     "hem": 0.5,
     "flare": 1.8,
     "pleats": 9,
-    "hairvol": 0.25,
-    "bun": true,
+    "hairvol": 0.15,
+    "bun": false,
     "collar": "round",
     "hat": [
       [
