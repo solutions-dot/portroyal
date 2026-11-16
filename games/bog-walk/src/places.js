@@ -596,10 +596,21 @@ export function electricCar(wireY = 6.1) {
 /* the old mule car: smaller, with open sides and benches, no pole; its paint faded */
 function muleCar() {
   const g = grp(); const red = solid(0x8a4a32, 0.8), yel = solid(0xc8a860, 0.8), dark = solid(0x2a2420, 0.8), wood = solid(0x7a5a3c, 0.9), L = 4.2, W = 1.8, fl = 0.7;
-  for (const x of [-1.0, 1.0]) for (const z of [-0.7, 0.7]) { const w = cyl(0.34, 0.34, 0.08, dark, x, 0.34, z, g, 16); w.rotation.x = PI / 2; } box(2.6, 0.2, 1.3, dark, 0, 0.5, 0, g);
-  box(L + 1.4, 0.08, W, wood, 0, fl, 0, g); for (const s of [-1, 1]) { box(L, 0.5, 0.05, red, 0, fl + 0.3, s * W / 2, g); box(L, 0.04, 0.06, yel, 0, fl + 0.55, s * W / 2, g); for (let i = 0; i <= 5; i++) box(0.07, 1.4, 0.07, yel, -L / 2 + i * L / 5, fl + 1.25, s * W / 2, g); box(L, 0.24, 0.06, yel, 0, fl + 1.95, s * W / 2, g); }
-  for (const s of [-1, 1]) box(L - 0.2, 0.06, 0.34, wood, 0, fl + 0.42, s * 0.62, g);   /* benches along the sides */
-  box(L + 1.6, 0.08, W + 0.2, red, 0, fl + 2.1, 0, g); for (const s of [-1, 1]) { box(0.05, 0.7, W, red, s * (L / 2 + 0.7), fl + 0.4, 0, g); box(0.06, 0.06, 0.6, M.iron, s * (L / 2 + 0.9), 0.55, 0, g); }
+  /* the truck: four turned wheels with flanges like the railway's (engine/vehicles.js), two axles, an axle box and a leaf spring at each wheel, a brake block against each tread */
+  for (const x of [-1.0, 1.0]) { for (const z of [-0.7, 0.7]) { const w = wheel(0.34); w.position.set(x, 0.34, z); if (z < 0) w.rotation.y = PI; g.add(w); const s = Math.sign(z);
+      box(0.2, 0.2, 0.1, dark, x, 0.36, z + s * 0.13, g); box(0.74, 0.035, 0.07, M.iron, x, 0.5, z + s * 0.13, g); box(0.5, 0.03, 0.07, M.iron, x, 0.54, z + s * 0.13, g); box(0.06, 0.2, 0.1, wood, x - Math.sign(x) * 0.4, 0.36, z, g); }
+    cyl(0.04, 0.04, 1.5, M.iron, x, 0.34, 0, g, 8).rotation.x = PI / 2; }
+  box(2.9, 0.14, 0.1, dark, 0, 0.6, 0.83, g); box(2.9, 0.14, 0.1, dark, 0, 0.6, -0.83, g); for (const x of [-1.4, 0, 1.4]) box(0.1, 0.12, 1.6, dark, x, 0.6, 0, g);   /* the frame under the floor */
+  box(L + 1.4, 0.08, W, wood, 0, fl, 0, g); for (const s of [-1, 1]) { box(L, 0.5, 0.05, red, 0, fl + 0.3, s * W / 2, g); box(L, 0.04, 0.06, yel, 0, fl + 0.55, s * W / 2, g); box(L - 0.1, 0.025, 0.06, yel, 0, fl + 0.12, s * W / 2, g); for (let i = 0; i <= 5; i++) box(0.07, 1.4, 0.07, yel, -L / 2 + i * L / 5, fl + 1.25, s * W / 2, g); box(L, 0.24, 0.06, yel, 0, fl + 1.95, s * W / 2, g);
+    box(L, 0.05, 0.03, wood, 0, fl + 0.92, s * (W / 2 - 0.05), g); }   /* a rail at the passengers' backs */
+  for (const s of [-1, 1]) { box(L - 0.2, 0.06, 0.34, wood, 0, fl + 0.42, s * 0.62, g); for (let i = 0; i < 4; i++) box(0.05, 0.4, 0.3, wood, -L / 2 + 0.5 + i * (L - 1) / 3, fl + 0.22, s * 0.62, g); }   /* benches along the sides, on legs */
+  /* the roof: a low curve over the car and its two platforms, with a board along each edge */
+  { const R = 1.5, a = Math.asin((W / 2 + 0.1) / R), roof = mesh(new THREE.CylinderGeometry(R, R, L + 1.6, 14, 1, true, PI / 2 - a, 2 * a), solid(0x8a4a32, 0.8, 0, { side: THREE.DoubleSide }), 0, fl + 2.1 - R * Math.cos(a), 0, g); roof.rotation.z = PI / 2;
+    for (const s of [-1, 1]) box(L + 1.6, 0.09, 0.035, yel, 0, fl + 2.09, s * (W / 2 + 0.1), g); box(L + 1.6, 0.03, 0.2, yel, 0, fl + 2.1 + R * (1 - Math.cos(a)), 0, g); }
+  /* each platform: a dash panel with an iron rail on top, a brake staff with a crank, corner posts up to the roof, a step on each side, a draw hook */
+  for (const s of [-1, 1]) { const x = s * (L / 2 + 0.7); box(0.05, 0.7, W, red, x, fl + 0.4, 0, g); box(0.06, 0.04, W + 0.04, M.iron, x, fl + 0.77, 0, g); box(0.06, 0.06, 0.6, M.iron, s * (L / 2 + 0.9), 0.55, 0, g);
+    cyl(0.018, 0.018, 1.25, M.iron, x - s * 0.14, fl + 0.62, 0.6, g, 6); box(0.2, 0.03, 0.03, M.iron, x - s * 0.14, fl + 1.25, 0.6, g); cyl(0.02, 0.02, 0.1, wood, x - s * 0.24, fl + 1.3, 0.6, g, 6);
+    for (const z of [-1, 1]) { cyl(0.025, 0.025, 1.36, yel, x - s * 0.03, fl + 1.42, z * (W / 2 - 0.04), g, 6); box(0.5, 0.05, 0.26, wood, s * (L / 2 + 0.36), 0.38, z * (W / 2 + 0.12), g); for (const dx of [-0.2, 0.2]) box(0.035, 0.34, 0.035, M.iron, s * (L / 2 + 0.36) + dx, 0.54, z * (W / 2 + 0.02), g); } }
   /* the pole the mules are hitched either side of, and the swingletrees their traces pull on, at the front (+x) end */
   const pole = box(2.6, 0.08, 0.08, wood, L / 2 + 0.7 + 1.3, 0.95, 0, g); pole.rotation.z = 0.06; box(0.12, 0.3, 0.12, M.iron, L / 2 + 0.76, 0.8, 0, g);
   for (const z of [-0.5, 0.5]) { box(0.08, 0.06, 0.62, wood, L / 2 + 0.86, 0.8, z, g); } box(0.08, 0.06, 1.3, M.iron, L / 2 + 0.8, 0.8, 0, g);

@@ -161,194 +161,241 @@
  },
  "garvey": {
   "amy1914": {
-   "cloth": 1,
-   "torn": 27
+   "cloth": 2,
+   "torn": 12,
+   "hats": 0
   },
   "amyj1925": {
-   "cloth": 1,
-   "torn": 19
+   "cloth": 5,
+   "torn": 17,
+   "hats": 0
   },
   "clerk1919": {
-   "cloth": 14,
-   "torn": 36
+   "cloth": 12,
+   "torn": 36,
+   "hats": 0
   },
   "delegate1920": {
-   "cloth": 29,
-   "torn": 211
+   "cloth": 24,
+   "torn": 209,
+   "hats": 0
   },
   "engineer1919": {
-   "cloth": 17,
-   "torn": 27
+   "cloth": 20,
+   "torn": 27,
+   "hats": 0
   },
   "garvey1914": {
-   "cloth": 45,
-   "torn": 342
+   "cloth": 36,
+   "torn": 344,
+   "hats": 0
   },
   "garvey1916": {
-   "cloth": 45,
-   "torn": 342
+   "cloth": 36,
+   "torn": 344,
+   "hats": 0
   },
   "guide2020": {
-   "cloth": 3,
-   "torn": 75
+   "cloth": 1,
+   "torn": 68,
+   "hats": 0
   },
   "hl_critic": {
-   "cloth": 30,
-   "torn": 196
+   "cloth": 31,
+   "torn": 199,
+   "hats": 0
   },
   "hl_pressman": {
-   "cloth": 16,
-   "torn": 0
+   "cloth": 27,
+   "torn": 0,
+   "hats": 0
   },
   "hl_woman": {
-   "cloth": 3,
-   "torn": 55
+   "cloth": 4,
+   "torn": 47,
+   "hats": 0
   },
   "hl_worker": {
    "cloth": 12,
-   "torn": 28
+   "torn": 26,
+   "hats": 0
   },
   "nb_elder": {
    "cloth": 22,
-   "torn": 24
+   "torn": 24,
+   "hats": 0
   },
   "nb_seller": {
-   "cloth": 1,
-   "torn": 141
+   "cloth": 2,
+   "torn": 62,
+   "hats": 0
   },
   "nb_youth": {
-   "cloth": 21,
-   "torn": 8
+   "cloth": 13,
+   "torn": 7,
+   "hats": 0
   },
   "nurse1920": {
    "cloth": 4,
-   "torn": 60
+   "torn": 53,
+   "hats": 0
   },
   "printer1907": {
-   "cloth": 13,
-   "torn": 8
+   "cloth": 12,
+   "torn": 0,
+   "hats": 0
   },
   "seaman1919": {
-   "cloth": 15,
-   "torn": 14
+   "cloth": 24,
+   "torn": 14,
+   "hats": 0
   },
   "steward1920": {
-   "cloth": 13,
-   "torn": 52
+   "cloth": 15,
+   "torn": 52,
+   "hats": 0
   },
   "student2020": {
-   "cloth": 16,
-   "torn": 0
+   "cloth": 11,
+   "torn": 0,
+   "hats": 0
   },
   "woman1914": {
-   "cloth": 3,
-   "torn": 55
+   "cloth": 4,
+   "torn": 47,
+   "hats": 0
   }
  },
  "kendal": {
   "boy": {
-   "cloth": 71,
-   "torn": 3
+   "cloth": 61,
+   "torn": 5,
+   "hats": 0
   },
   "boy_lo": {
-   "cloth": 38,
-   "torn": 0
+   "cloth": 41,
+   "torn": 0,
+   "hats": 0
   },
   "girl": {
-   "cloth": 28,
-   "torn": 1
+   "cloth": 22,
+   "torn": 1,
+   "hats": 0
   },
   "girl_lo": {
    "cloth": 19,
-   "torn": 1
+   "torn": 1,
+   "hats": 0
   },
   "girl_small": {
-   "cloth": 45,
-   "torn": 0
+   "cloth": 39,
+   "torn": 0,
+   "hats": 0
   },
   "girl_small_lo": {
-   "cloth": 44,
-   "torn": 0
+   "cloth": 38,
+   "torn": 0,
+   "hats": 0
   },
   "guide2020": {
-   "cloth": 16,
-   "torn": 237
+   "cloth": 13,
+   "torn": 250,
+   "hats": 0
   },
   "guide2020_lo": {
-   "cloth": 16,
-   "torn": 54
+   "cloth": 12,
+   "torn": 55,
+   "hats": 0
   },
   "man_apron": {
-   "cloth": 79,
-   "torn": 63
+   "cloth": 81,
+   "torn": 65,
+   "hats": 0
   },
   "man_apron_lo": {
-   "cloth": 69,
-   "torn": 25
+   "cloth": 78,
+   "torn": 27,
+   "hats": 0
   },
   "man_elder": {
-   "cloth": 55,
-   "torn": 87
+   "cloth": 58,
+   "torn": 92,
+   "hats": 0
   },
   "man_elder_lo": {
-   "cloth": 47,
-   "torn": 25
+   "cloth": 56,
+   "torn": 25,
+   "hats": 0
   },
   "man_shirt": {
-   "cloth": 30,
-   "torn": 111
+   "cloth": 36,
+   "torn": 120,
+   "hats": 0
   },
   "man_shirt_lo": {
    "cloth": 28,
-   "torn": 52
+   "torn": 56,
+   "hats": 0
   },
   "man_suit": {
-   "cloth": 42,
-   "torn": 438
+   "cloth": 45,
+   "torn": 450,
+   "hats": 1
   },
   "man_suit_lo": {
    "cloth": 48,
-   "torn": 31
+   "torn": 32,
+   "hats": 1
   },
   "man_work": {
-   "cloth": 37,
-   "torn": 90
+   "cloth": 42,
+   "torn": 95,
+   "hats": 0
   },
   "man_work_lo": {
-   "cloth": 36,
-   "torn": 43
+   "cloth": 44,
+   "torn": 47,
+   "hats": 0
   },
   "student2020": {
-   "cloth": 57,
-   "torn": 2
+   "cloth": 50,
+   "torn": 2,
+   "hats": 0
   },
   "student2020_lo": {
-   "cloth": 37,
-   "torn": 0
+   "cloth": 35,
+   "torn": 0,
+   "hats": 0
   },
   "woman57": {
-   "cloth": 21,
-   "torn": 11
+   "cloth": 18,
+   "torn": 12,
+   "hats": 0
   },
   "woman57_lo": {
-   "cloth": 21,
-   "torn": 11
+   "cloth": 18,
+   "torn": 12,
+   "hats": 0
   },
   "woman_elder": {
-   "cloth": 147,
-   "torn": 378
+   "cloth": 141,
+   "torn": 398,
+   "hats": 0
   },
   "woman_elder_lo": {
-   "cloth": 145,
-   "torn": 62
+   "cloth": 139,
+   "torn": 65,
+   "hats": 0
   },
   "woman_long": {
-   "cloth": 20,
-   "torn": 233
+   "cloth": 17,
+   "torn": 248,
+   "hats": 1
   },
   "woman_long_lo": {
-   "cloth": 22,
-   "torn": 88
+   "cloth": 20,
+   "torn": 88,
+   "hats": 1
   }
  },
  "melissa": {
@@ -436,83 +483,103 @@
  "nanny": {
   "maroon_boy": {
    "cloth": 18,
-   "torn": 6
+   "torn": 6,
+   "hats": 0
   },
   "maroon_boy_lo": {
    "cloth": 16,
-   "torn": 4
+   "torn": 4,
+   "hats": 0
   },
   "maroon_child": {
    "cloth": 5,
-   "torn": 17
+   "torn": 17,
+   "hats": 0
   },
   "maroon_child_lo": {
    "cloth": 5,
-   "torn": 17
+   "torn": 17,
+   "hats": 0
   },
   "maroon_elder": {
    "cloth": 29,
-   "torn": 206
+   "torn": 206,
+   "hats": 0
   },
   "maroon_elder_lo": {
    "cloth": 29,
-   "torn": 19
+   "torn": 19,
+   "hats": 0
   },
   "maroon_elder_woman": {
    "cloth": 6,
-   "torn": 79
+   "torn": 79,
+   "hats": 1
   },
   "maroon_elder_woman_lo": {
    "cloth": 6,
-   "torn": 43
+   "torn": 43,
+   "hats": 1
   },
   "maroon_girl": {
    "cloth": 4,
-   "torn": 0
+   "torn": 0,
+   "hats": 0
   },
   "maroon_girl_lo": {
    "cloth": 3,
-   "torn": 0
+   "torn": 0,
+   "hats": 0
   },
   "maroon_man": {
    "cloth": 22,
-   "torn": 100
+   "torn": 100,
+   "hats": 0
   },
   "maroon_man_lo": {
    "cloth": 25,
-   "torn": 4
+   "torn": 4,
+   "hats": 0
   },
   "maroon_scout": {
    "cloth": 102,
-   "torn": 61
+   "torn": 61,
+   "hats": 0
   },
   "maroon_scout_lo": {
    "cloth": 106,
-   "torn": 6
+   "torn": 6,
+   "hats": 0
   },
   "maroon_woman": {
    "cloth": 5,
-   "torn": 74
+   "torn": 74,
+   "hats": 1
   },
   "maroon_woman_lo": {
    "cloth": 4,
-   "torn": 44
+   "torn": 44,
+   "hats": 1
   },
   "militia": {
    "cloth": 59,
-   "torn": 850
+   "torn": 850,
+   "hats": 0
   },
   "militia_lo": {
    "cloth": 49,
-   "torn": 36
+   "torn": 36,
+   "hats": 0
   },
   "redcoat": {
    "cloth": 38,
-   "torn": 769
+   "torn": 769,
+   "hats": 0
   },
   "redcoat_lo": {
    "cloth": 31,
-   "torn": 87
+   "torn": 87,
+   "hats": 0
   }
  },
  "port-royal": {
@@ -580,123 +647,153 @@
  "selassie": {
   "sel_adina66": {
    "cloth": 0,
-   "torn": 28
+   "torn": 28,
+   "hats": 0
   },
   "sel_adina66_lo": {
    "cloth": 2,
-   "torn": 8
+   "torn": 8,
+   "hats": 0
   },
   "sel_boy66": {
    "cloth": 6,
-   "torn": 2
+   "torn": 2,
+   "hats": 0
   },
   "sel_boy66_lo": {
    "cloth": 5,
-   "torn": 0
+   "torn": 0,
+   "hats": 0
   },
   "sel_crowdman66": {
    "cloth": 21,
-   "torn": 6
+   "torn": 6,
+   "hats": 0
   },
   "sel_crowdman66_lo": {
    "cloth": 23,
-   "torn": 4
+   "torn": 4,
+   "hats": 0
   },
   "sel_crowdwoman66": {
    "cloth": 1,
-   "torn": 23
+   "torn": 23,
+   "hats": 0
   },
   "sel_crowdwoman66_lo": {
    "cloth": 0,
-   "torn": 21
+   "torn": 21,
+   "hats": 0
   },
   "sel_emperor66": {
    "cloth": 103,
-   "torn": 49
+   "torn": 49,
+   "hats": 0
   },
   "sel_emperor66_lo": {
    "cloth": 249,
-   "torn": 6
+   "torn": 6,
+   "hats": 0
   },
   "sel_girl66": {
    "cloth": 0,
-   "torn": 0
+   "torn": 0,
+   "hats": 0
   },
   "sel_girl66_lo": {
    "cloth": 0,
-   "torn": 0
+   "torn": 0,
+   "hats": 0
   },
   "sel_levi66": {
    "cloth": 28,
-   "torn": 0
+   "torn": 0,
+   "hats": 0
   },
   "sel_levi66_lo": {
    "cloth": 14,
-   "torn": 0
+   "torn": 0,
+   "hats": 0
   },
   "sel_mum66": {
    "cloth": 1,
-   "torn": 24
+   "torn": 24,
+   "hats": 0
   },
   "sel_mum66_lo": {
    "cloth": 1,
-   "torn": 4
+   "torn": 4,
+   "hats": 0
   },
   "sel_planno66": {
    "cloth": 10,
-   "torn": 17
+   "torn": 17,
+   "hats": 0
   },
   "sel_planno66_lo": {
    "cloth": 6,
-   "torn": 16
+   "torn": 16,
+   "hats": 0
   },
   "sel_police66": {
    "cloth": 37,
-   "torn": 395
+   "torn": 395,
+   "hats": 0
   },
   "sel_police66_lo": {
    "cloth": 36,
-   "torn": 171
+   "torn": 171,
+   "hats": 0
   },
   "sel_rastaelder66": {
    "cloth": 11,
-   "torn": 9
+   "torn": 9,
+   "hats": 0
   },
   "sel_rastaelder66_lo": {
    "cloth": 7,
-   "torn": 9
+   "torn": 9,
+   "hats": 0
   },
   "sel_rastaman66": {
    "cloth": 8,
-   "torn": 8
+   "torn": 8,
+   "hats": 0
   },
   "sel_rastaman66_lo": {
    "cloth": 6,
-   "torn": 8
+   "torn": 8,
+   "hats": 0
   },
   "sel_rastatam66": {
    "cloth": 15,
-   "torn": 18
+   "torn": 18,
+   "hats": 0
   },
   "sel_rastatam66_lo": {
    "cloth": 17,
-   "torn": 16
+   "torn": 16,
+   "hats": 0
   },
   "sel_rastawoman66": {
    "cloth": 0,
-   "torn": 68
+   "torn": 68,
+   "hats": 0
   },
   "sel_rastawoman66_lo": {
    "cloth": 0,
-   "torn": 6
+   "torn": 6,
+   "hats": 0
   },
   "sel_vendor30": {
    "cloth": 22,
-   "torn": 49
+   "torn": 49,
+   "hats": 0
   },
   "sel_vendor30_lo": {
    "cloth": 20,
-   "torn": 18
+   "torn": 18,
+   "hats": 0
   }
  },
  "tivoli": {

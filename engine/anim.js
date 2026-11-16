@@ -34,8 +34,8 @@ export const BOW = { '^Kneel': { Neck: 0.35, Head: 0.8, Spine2: 0.7, LeftShoulde
    line; our bodies' spine is not (at rest the chest bone leans back about 25 degrees and the bone above it comes forward about 19, the natural curve of a back). So every clip
    straightened the spine, which tipped each person's ribcage back by about 20 degrees: lower ribs and belly pushed out, upper chest sunk, the whole body leaning back. On a man in a
    shirt that read as a bust, in every game. The three bones are turned back to the body's own curve here, once, for every clip: the chest bone's parent leans back 18 degrees more,
-   the chest comes forward again, and the neck undoes the rest so the head stays where the clip put it. POSTURE is degrees about the bone's parent's side-to-side axis. */
-export const POSTURE = { Spine1: -18, Spine2: 38, Neck: -20 };
+   the chest comes forward again, and the neck and the two shoulders undo the rest so the head and the arms stay as the clip put them. POSTURE is degrees about the bone's parent's side-to-side axis. */
+export const POSTURE = { Spine1: -18, Spine2: 38, Neck: -20 };   /* turning the shoulders back as well was tried: it helped four poses but made the full every-clip gate (tools/review/people-check.mjs) worse in Garvey and Nanny Town, so the arms are left as the clips have them */
 function posture(c) { const q = new THREE.Quaternion(), r = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0);
   for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const deg = m ? POSTURE[m[1]] : undefined; if (!deg) continue; r.setFromAxisAngle(X, deg * Math.PI / 180); const v = t.values;
     for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i).premultiply(r).toArray(v, i); } } }
@@ -43,7 +43,7 @@ export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() :
   c.tracks = c.tracks.filter((t) => { if (t.name.endsWith('.scale')) return false; if (!t.name.endsWith('.position')) return true; if (!keepHips || !/Hips/.test(t.name)) return false;
     const v = t.values; let x0 = v[0], z0 = v[2]; if (SEATED.test(name) && CL.Idle) { const it = CL.Idle.tracks.find((k) => k.name === t.name); if (it) { x0 = it.values[0]; z0 = it.values[2]; } }   /* seated clips: keep the hips over the spot we put him, not where the clip wandered to */
  for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } return true; });   /* running stays in place; the game moves her */
-  posture(c);
+  if (!SEATED.test(name)) posture(c);   /* seated clips keep the pose they were tuned in: their hands rest on the lap, and moving the chest pushed the fingers into the thighs (the cloth check, Garvey, 16 November 2026) */
   if (SEAM.test(name)) seamLoop(c);
   const damp = BOW[Object.keys(BOW).find((k) => new RegExp(k).test(name)) || ''];   /* clips whose neck bows so far that a collar stands off the nape: the neck and head turn only part of the way from standing */
   if (damp && CL.Idle) for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const k = m ? damp[m[1]] : undefined; if (k === undefined) continue; const it = CL.Idle.tracks.find((x) => x.name === t.name); if (!it) continue;

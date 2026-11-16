@@ -1,4 +1,4 @@
-/* The people gate: every body of a game, posed in every clip the game ships (three moments of each), through the shared cloth check and a torn-cloth check.
+/* The people gate: every body of a game, posed in every clip the game ships (three moments of each), through the shared cloth check and a torn-cloth check, and every hat measured against its wearer's skull (too tall, riding high, too wide).
      node tools/review/people-check.mjs <game|all> [--update] [--list] [only=Kneel,CarryHeadWalk] [ids=maroon_man,maroon_man_lo]
    Serve the repository root first (python3 -m http.server 8765) and build the game (node tools/build.mjs <game> --dev makes models/anims.js).
    It compares each body's numbers with tools/checks/people-baseline.json and fails (exit 1) if any body has more cloth lines or torn edges than recorded there.
@@ -21,17 +21,17 @@ for (const game of games) {
   const ids = (opts.ids ? opts.ids.split(',') : files.filter((f) => !/^(anims|tex_)/.test(f) && readFileSync(`games/${game}/site/models/${f}.js`, 'utf8').length < 900000 && !/_(crowd|phone|focus)$/.test(f)));   /* joined crowd copies are one piece: there are no layers to compare */
   const p = await b.newPage({ viewport: { width: 300, height: 200 } }); p.on('pageerror', (e) => console.log('ERR', e.message));
   const R = {}; for (let i = 0; i < ids.length; i += 6) {   /* a few bodies a page, so one page never holds every body of a big game */
-    await p.goto(`${process.env.REVIEW_BASE || 'http://localhost:8765'}/build/review/check.html?game=${game}&ids=${ids.slice(i, i + 6).join(',')}&clips=${clips.join(',')}${opts.only ? '&only=' + opts.only : ''}${args.includes('--where') ? '&where' : ''}`);
+    await p.goto(`${process.env.REVIEW_BASE || 'http://localhost:8765'}/build/review/check.html?game=${game}&ids=${ids.slice(i, i + 6).join(',')}&clips=${clips.join(',')}${opts.only ? '&only=' + opts.only : ''}${args.includes('--where') ? '&where' : ''}${opts.posture ? '&posture=' + opts.posture : ''}`);
     await p.waitForFunction(() => /^PEOPLE (done|error)/.test(document.title), null, { timeout: 1200000 });
     const r = await p.evaluate(() => window.__RESULT); if (r.lines) console.log(r.lines.join('\n')); if (r.error) { console.log(game, 'ERROR', r.error); failed++; break; } Object.assign(R, r.bodies); R._clips = r.clips; }
   await p.close();
-  const nClips = R._clips; delete R._clips; const old = baseline[game] || {}; let cloth = 0, torn = 0, worse = [];
+  const nClips = R._clips; delete R._clips; const old = baseline[game] || {}; let cloth = 0, torn = 0, nhat = 0, worse = [];
   for (const [id, v] of Object.entries(R)) { if (v.error) { console.log(`  ${id}: ${v.error}`); continue; } cloth += v.cloth; torn += v.torn; const o = old[id];
-    if (!opts.only && o && (v.cloth > o.cloth || v.torn > o.torn)) worse.push(`${id}: cloth ${o.cloth} -> ${v.cloth}, torn ${o.torn} -> ${v.torn}`);
+    if (!opts.only && o && (v.cloth > o.cloth || v.torn > o.torn || v.hats.length > (o.hats || 0))) worse.push(`${id}: cloth ${o.cloth} -> ${v.cloth}, torn ${o.torn} -> ${v.torn}, hats ${o.hats || 0} -> ${v.hats.length}`); nhat += v.hats.length; for (const hl of v.hats) console.log(`  HAT ${id}: ${hl}`);
     if (list || v.torn) console.log(`  ${id}: cloth ${v.cloth} lines (${v.points} points), torn ${v.torn}` + (v.torn ? ` (worst ${v.tornWorst} times, ${v.tornAt})` : '')); if (list) for (const [k, n] of Object.entries(v.kinds).sort((a, b) => b[1] - a[1])) console.log(`      ${n} x ${k}`); }
-  console.log(`PEOPLE ${game}: ${Object.keys(R).length} bodies, ${nClips} clips, cloth ${cloth} lines, torn ${torn}` + (worse.length ? `, WORSE than the baseline in ${worse.length}` : old && Object.keys(old).length ? ', no body worse than the baseline' : ', no baseline yet'));
+  console.log(`PEOPLE ${game}: ${Object.keys(R).length} bodies, ${nClips} clips, cloth ${cloth} lines, torn ${torn}, hat faults ${nhat}` + (worse.length ? `, WORSE than the baseline in ${worse.length}` : old && Object.keys(old).length ? ', no body worse than the baseline' : ', no baseline yet'));
   for (const w of worse) console.log('  WORSE ' + w); if (worse.length) failed++;
-  if (update && !opts.only && !opts.ids) baseline[game] = Object.fromEntries(Object.entries(R).filter(([, v]) => !v.error).map(([id, v]) => [id, { cloth: v.cloth, torn: v.torn }]));
+  if (update && !opts.only && !opts.ids) baseline[game] = Object.fromEntries(Object.entries(R).filter(([, v]) => !v.error).map(([id, v]) => [id, { cloth: v.cloth, torn: v.torn, hats: v.hats.length }]));
 }
 await b.close();
 if (update) { mkdirSync('tools/checks', { recursive: true }); writeFileSync(BASE, JSON.stringify(baseline, null, 1) + '\n'); console.log('baseline written: ' + BASE); }

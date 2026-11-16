@@ -108,7 +108,7 @@ export function dev(D) {
   const VIEWS = {   /* place, stage, x, z, yaw, pitch, env */
     st1: ['station', 10, -2, 13, 0.25, 0.02], st2: ['station', 11, -12, -2.5, 0.75, 0.04], hall: ['station', 12, 3.6, -6.4, 0.85, 0.05], hall2: ['station', 12, -5.5, -6.2, -0.8, 0.06], switch: ['station', 12, 3.6, -9.4, -1.5, 0.08],
     board: ['station', 13, 3.8, -2.3, 0, -0.06], valve: ['station', 15, -16.8, -6.4, 0.05, -0.12, 'night'], valve2: ['station', 15, -14.2, -5.6, 0.75, 0.0, 'night'], night: ['station', 15, -2, 12, 0.3, 0.06, 'night'],
-    k1: ['kingston', 20, -12, 3, Math.PI / 2 + 0.25, 0.02], k2: ['kingston', 20, -28, 1.0, 1.3, 0.0], tram: ['kingston', 22, -15.6, 2.6, 1.25, 0.1], tram2: ['kingston', 22, -25.5, -2.8, -2.4, 0.08], k3: ['kingston', 20, 20, 0.6, -Math.PI / 2 + 0.1, 0.05],
+    k1: ['kingston', 20, -12, 3, Math.PI / 2 + 0.25, 0.02], k2: ['kingston', 20, -28, 1.0, 1.3, 0.0], tram: ['kingston', 22, -15.6, 2.6, 1.25, 0.1], tram2: ['kingston', 22, -25.5, -2.8, -2.4, 0.08], mule: ['kingston', 20, -27.2, 0.2, 0.62, 0.06], cart: ['yard', 50, -15.3, 11.8, 2.5, 0.12],   /* the retired mule car; the handcart by the gate */ k3: ['kingston', 20, 20, 0.6, -Math.PI / 2 + 0.1, 0.05],
     yard1: ['yard', 50, -1, 0.5, Math.PI - 0.5, 0.0], yard2: ['yard', 51, 6.6, 3.2, -1.6, -0.05], yard3: ['yard', 53, 1.2, 11.5, Math.PI + 0.3, 0.0], yard4: ['yard', 52, -3.0, 6.0, 0.0, 0.03], gate: ['yard', 53, 0, 12, Math.PI, 0.02],
     ruins1: ['ruins', 60, 2, 15.5, 0, 0.04], ruins2: ['ruins', 61, 4.2, 0.4, 0.0, -0.05], ruins3: ['ruins', 62, -12, -4, 0.7, 0.04], ruins4: ['ruins', 62, -24, -3, 1.2, 0.0],
   };

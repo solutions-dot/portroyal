@@ -26,6 +26,22 @@ The owner's open list was: faces in The Emperor's Arrival, the Rastafari men in 
 - **The people gate**, `tools/review/people-check.mjs`: every body of a game in every clip it ships, through the cloth check and a torn-cloth check, against `tools/checks/people-baseline.json`. The rules are in `docs/PEOPLE.md`, section 5a. The baseline was recorded for all ten games on 16 November 2026. Its numbers are large because the old four-pose checks never looked at arms-up, kneeling or bending clips: cloth stretches at the armhole when an arm goes up to carry on the head or to cheer, and coats tear worst (Port Royal 16,224 torn edges, Tivoli 5,306 cloth lines). Bodies with several hats count each hat. Bringing those numbers down, game by game, is the open work; the gate now stops them going up.
 - Tivoli's street vehicles (four saloons, three minibuses) have wheel arches, proper wheels, window frames, lights, bumpers, door lines, mirrors and plates. There are no police or military vehicles in that scene and none were added: the game's sources do not show any (`docs/games/tivoli.md`).
 
+**Third round (16 November 2026, late)**
+
+- Garvey: 19 of 21 bodies rebuilt with the fixed builder (faces, brows, eyes, shirts). Garvey himself (`garvey1914`, `garvey1916`) is not rebuilt: his face was matched to photographs, and his recipes set `smile: 0` for when he is.
+- Felt hats: the crown stood 7 cm above the skull (a stovepipe). It now clears it by 2 to 3.5 cm. The flat cap has an underside (no gap of forehead under it) and a thick peak; a man's work apron is narrower at the waist.
+- The people gate also measures every hat against its wearer's skull (too tall, riding high, too wide). It reports Nanny Town's and Kendal's head wraps as riding high (about 1 cm down the head) and Kendal's top hat as tall: look at those before changing them.
+- Stance: `POSTURE` turns the spine only. Seated clips are left out (hands rest on the lap). Turning the shoulders too was tried and made the every-clip gate worse.
+- The menu intro's tag line is back to the owner's "An interactive storytelling platform" (a checkpoint commit had put the older line back).
+- Gate baseline after this round: Garvey 317 cloth lines and 1,588 torn edges, Nanny Town 562 and 2,422, The Emperor's Arrival 649 and 983, Kendal 1,199 and 2,146. Other games: the first baseline.
+
+**Open, reported by the owner and not yet fixed**
+
+- Nanny Town's soldiers on the path look sunk in the ground with one shoe showing. The bodies have both shoes (checked in `people-sheet`, walking); the column is placed on the slope by `columnPlace` in `games/nanny/src/main.js`, so the likely cause is the far foot below the path's surface. Check with `?shot=soldiers` and a closer camera.
+- The armhole stretch when an arm goes up (most of the torn edges). Fix it in the builder's sleeve weights, then rebuild and lower each game's baseline.
+- Rebuild the bodies of Kendal, Port Royal, Windrush, Tivoli, Bog Walk, Eventide and Melissa with the fixed builder, and run the gate for each.
+- Port Royal's rescue boat and the other games' vehicles: a helper was working on them; its files are in the checkpoint commit (`engine/boats.js`, `engine/roadcars.js`) and are not yet checked.
+
 **Still to do**
 
 1. **Rebuild the other games' bodies** with the fixed builder (Port Royal, Garvey, Kendal, Windrush, Tivoli, Eventide's own three). They already stand upright (the stance fix is in the engine) but keep the old dull eyes, thin brows, chin-hung shirts and face-less light copies until rebuilt. Garvey first needs his brows checked against the photograph: brows are now placed from the eyes, so `brows` and `browwide` in his recipes may need new values. Run each game's cloth, held and audit checks after, because the stance changed.

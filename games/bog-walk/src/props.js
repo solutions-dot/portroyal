@@ -181,10 +181,20 @@ export function bananaLoad() {   /* three bunches lying across the mule's back, 
   const g = grp(); [[-0.13, 0.17], [0.13, 0.17], [0, 0.36]].forEach(([x, y], i) => { const b = bananaBunch(0.66); b.rotation.order = 'ZXY'; b.rotation.set(PI2, i * 1.5, 0); b.position.set(x, y, -0.22); g.add(b); });
   const rope = mesh(new THREE.TorusGeometry(0.26, 0.012, 5, 18), solid(0xb8a070, 1), 0, 0.2, 0.0, g); rope.scale.y = 0.85; return g; }
 export function loadedMule() { return mule(); }
+/* a cart wheel: a wooden rim with an iron tyre shrunk on, a hub, and spokes (as in Kendal's props.js) */
+function cartWheel(r = 0.62, n = 10) {
+  const g = grp(); const rim = mesh(new THREE.TorusGeometry(r - 0.04, 0.04, 6, 22), M.wood, 0, 0, 0, g); rim.scale.z = 0.8; const ty = mesh(new THREE.TorusGeometry(r, 0.014, 4, 22), M.iron, 0, 0, 0, g); ty.scale.z = 2.6;
+  cyl(0.08, 0.08, 0.2, M.woodDark, 0, 0, 0, g, 10).rotation.x = Math.PI / 2; cyl(0.03, 0.03, 0.26, M.iron, 0, 0, 0, g, 6).rotation.x = Math.PI / 2;
+  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, sp = box(r - 0.1, 0.045, 0.035, M.wood, Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, 0, g); sp.rotation.z = a; } return g;
+}
+/* a two-wheeled country cart: a boarded bed with side rails on stakes, an axle, two shafts for the mule and a prop leg so it stands level when nobody pulls it */
 export function cart(L = 2.6, W = 1.4) {
-  const g = grp(); box(L, 0.1, W, M.wood, 0, 0.7, 0, g); for (const s of [-1, 1]) box(L, 0.4, 0.07, M.wood, 0, 0.95, s * W / 2, g); box(0.07, 0.4, W, M.wood, -L / 2, 0.95, 0, g);
-  for (const s of [-1, 1]) { const w = cyl(0.62, 0.62, 0.07, M.woodDark, -0.2, 0.62, s * (W / 2 + 0.08), g, 14); w.rotation.x = Math.PI / 2; for (let i = 0; i < 3; i++) { const sp = box(1.2, 0.06, 0.05, M.wood, -0.2, 0.62, s * (W / 2 + 0.12), g); sp.rotation.z = i * Math.PI / 3; } }
-  box(2.2, 0.05, 0.07, M.wood, L / 2 + 1.0, 0.8, 0.4, g); box(2.2, 0.05, 0.07, M.wood, L / 2 + 1.0, 0.8, -0.4, g);
+  const g = grp(), pl = std(T.plank([122, 90, 60], 5, [1, 1], true), 0.95); box(L, 0.08, W, pl, 0, 0.72, 0, g);
+  for (const s of [-1, 1]) { box(L, 0.06, 0.08, M.woodDark, 0, 0.66, s * (W / 2 - 0.2), g); for (const y of [0.9, 1.08]) box(L, 0.1, 0.035, M.wood, 0, y, s * (W / 2 - 0.02), g); for (let x = -L / 2 + 0.1; x <= L / 2; x += (L - 0.2) / 3) box(0.06, 0.44, 0.05, M.woodDark, x, 0.95, s * (W / 2 + 0.01), g); }
+  for (const y of [0.9, 1.08]) box(0.035, 0.1, W, M.wood, -L / 2 + 0.02, y, 0, g);
+  for (const s of [-1, 1]) { const w = cartWheel(); w.position.set(-0.2, 0.63, s * (W / 2 + 0.14)); g.add(w); }
+  cyl(0.035, 0.035, W + 0.36, M.iron, -0.2, 0.63, 0, g, 8).rotation.x = Math.PI / 2;
+  for (const s of [-1, 1]) { const sh = box(2.3, 0.06, 0.06, M.wood, L / 2 + 1.05, 0.72, s * 0.42, g); cyl(0.03, 0.03, 0.72, M.woodDark, L / 2 - 0.1, 0.36, s * 0.42, g, 6); }   /* the shafts, and a prop leg under the front of the bed on each side */
   return g;
 }
 export function surveyPole(c = 0xc03a2a) { const g = grp(); for (let i = 0; i < 6; i++) cyl(0.035, 0.035, 0.34, i % 2 ? M.white : solid(c, 0.8), 0, 0.17 + i * 0.34, 0, g, 6); return g; }

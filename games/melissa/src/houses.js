@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng } from './gfx.js';
 import { PM, pole } from './props.js';
+import { saloonCar, lorry } from '../../../engine/roadcars.js';
 
 const PI = Math.PI;
 const WOOD = solid(0x7a5a3c, 0.95), WOODD = solid(0x3d2d20, 0.95), RAW = solid(0xc8a874, 0.95), TRIM = solid(0xe8e0cc, 0.8), DARKM = solid(0x1c1a18, 0.9), IRON = solid(0x2b2d31, 0.6, 0.3);
@@ -78,14 +79,8 @@ export function bigDish(r = 1.15) {
   return g;
 }
 /* a family car of the 1980s: a boxy saloon (front toward +x) */
-export function car(c = 0x8a2a2a) {
-  const g = grp(), body = solid(c, 0.4, 0.3), dk = solid(0x1a1b1e, 0.8), glass = new THREE.MeshBasicMaterial({ color: 0x20303a });
-  box(4.3, 0.7, 1.7, body, 0, 0.68, 0, g); box(2.3, 0.62, 1.55, body, -0.2, 1.32, 0, g); box(0.05, 0.46, 1.4, glass, 0.96, 1.34, 0, g); box(0.05, 0.42, 1.4, glass, -1.36, 1.34, 0, g);
-  for (const z of [-0.79, 0.79]) box(2.0, 0.4, 0.04, glass, -0.2, 1.34, z, g);
-  box(0.12, 0.3, 1.6, solid(0xb8bcc0, 0.3, 0.8), 2.17, 0.5, 0, g); box(0.12, 0.3, 1.6, solid(0xb8bcc0, 0.3, 0.8), -2.17, 0.5, 0, g);
-  for (const x of [-1.35, 1.35]) for (const z of [-0.85, 0.85]) cyl(0.34, 0.34, 0.25, dk, x, 0.34, z, g, 14).rotation.x = PI / 2;
-  return g;
-}
+/* a 1980s saloon car, front toward +x: no make, no badge, a blank plate (engine/roadcars.js) */
+export function car(c = 0x8a2a2a) { return saloonCar({ era: '1980s', colour: c }); }
 /* a fence of zinc sheets standing on end, from (x0, z0) to (x1, z1) along x or z */
 export function zincFence(x0, z0, x1, z1, h = 1.9, seed = 1) {
   const g = grp(), r = rng(seed), alongX = Math.abs(x1 - x0) >= Math.abs(z1 - z0), L = alongX ? Math.abs(x1 - x0) : Math.abs(z1 - z0), n = Math.ceil(L / 0.8), m = zincMat([150, 150, 146]), m2 = zincMat([150, 110, 90]);
@@ -96,15 +91,7 @@ export function zincFence(x0, z0, x1, z1, h = 1.9, seed = 1) {
 }
 
 /* a modern water tanker: a white cab on a dark chassis with a blue tank, the front toward +x */
-export function waterTruck() {
-  const g = grp(), cab = solid(0xe8e8e4, 0.5, 0.2), tank = solid(0x2a6ab0, 0.45, 0.3), dk = solid(0x1a1b1e, 0.8), glass = new THREE.MeshBasicMaterial({ color: 0x1a2630 });
-  box(6.6, 0.3, 2.0, dk, 0, 0.75, 0, g); box(1.9, 1.7, 2.2, cab, 2.4, 1.75, 0, g); box(0.06, 0.75, 1.8, glass, 3.36, 2.05, 0, g); box(0.3, 0.3, 2.3, solid(0x8a8c90, 0.5, 0.5), 3.45, 0.7, 0, g);
-  for (const z of [-0.7, 0.7]) box(0.08, 0.2, 0.34, new THREE.MeshBasicMaterial({ color: 0xfff0c0 }), 3.38, 1.15, z, g);
-  const t = cyl(0.95, 0.95, 4.2, tank, -0.9, 1.9, 0, g, 18); t.rotation.z = PI / 2; for (const x of [-2.4, -0.9, 0.6]) { const ring = cyl(0.97, 0.97, 0.08, solid(0x1c4a7a, 0.5, 0.3), x, 1.9, 0, g, 18); ring.rotation.z = PI / 2; }
-  box(0.14, 0.5, 0.14, dk, -3.0, 1.1, 1.1, g); cyl(0.05, 0.05, 1.0, dk, -3.0, 0.7, 1.1, g, 8).rotation.z = PI / 2;
-  for (const x of [-2.6, -1.3, 2.5]) for (const z of [-1.05, 1.05]) cyl(0.55, 0.55, 0.4, dk, x, 0.55, z, g, 14).rotation.x = PI / 2;
-  return g;
-}
+export function waterTruck() { return lorry({ body: 'tank', colour: 0xe8e8e4, bodyColour: 0x2a6ab0, L: 6.8, W: 2.2 }); }   /* a white cab and a blue tank with bands, a hatch, a ladder, an outlet and a hose. It carries no name (engine/roadcars.js) */
 
 /* ---------- water: a black tank on a stand, a drum with a tap, a standpipe with a bucket under it ---------- */
 export function tankOnStand() {

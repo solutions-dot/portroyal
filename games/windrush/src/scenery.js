@@ -2,6 +2,7 @@
    facing +z unless it says otherwise. Shapes are reconstructions from period photographs and descriptions (docs/games/windrush.md). */
 import * as THREE from "three";
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
+import { saloonCar } from "../../../engine/roadcars.js";
 
 const M = {
   zinc: () => std(T.zinc([150, 152, 146], [1, 1]), 0.6),
@@ -444,26 +445,10 @@ export function busStop(text = "BUS STOP") {
   mesh(new THREE.CircleGeometry(0.28, 20), solid(0xb0302a, 0.6), 0, 2.45, -0.03, g).rotation.y = Math.PI;
   return g;
 }
-/* a small family car (period shape picked by `era`: rounded 1950s or flat 2010s), facing +x */
+/* a small family car (period shape picked by `era`: rounded for the 1940s to 1960s, modern for the 2010s), facing +x.
+   No make, no badge and a blank plate: tyres, hub caps, windows, door lines, lamps and bumpers come from engine/roadcars.js */
 export function car(c = 0x3c5a6a, era = 1962) {
-  const g = grp(),
-    m = solid(c, 0.35, 0.2),
-    L = era < 2000 ? 3.8 : 4.1,
-    W = 1.55;
-  box(L, 0.55, W, m, 0, 0.55, 0, g);
-  const cab = box(L * (era < 2000 ? 0.5 : 0.58), 0.5, W - 0.12, m, -0.15, 1.08, 0, g);
-  for (const s of [-1, 1]) plane(L * (era < 2000 ? 0.42 : 0.52), 0.38, M.glass, -0.15, 1.1, s * (W / 2 - 0.055), g).rotation.y = s > 0 ? 0 : Math.PI;
-  const ws = plane(W - 0.2, 0.42, M.glass, -0.15 + (L * (era < 2000 ? 0.5 : 0.58)) / 2 + 0.01, 1.1, 0, g);
-  ws.rotation.y = Math.PI / 2;
-  for (const x of [-L * 0.32, L * 0.32])
-    for (const s of [-1, 1]) {
-      const w = cyl(0.3, 0.3, 0.2, M.black, x, 0.3, s * (W / 2 - 0.05), g, 14);
-      w.rotation.x = Math.PI / 2;
-    }
-  for (const s of [-1, 1]) cyl(0.08, 0.08, 0.04, solid(0xf2ead2, 0.3), L / 2, 0.68, s * 0.5, g, 10).rotation.z = Math.PI / 2;
-  box(0.06, 0.12, W, M.steel, L / 2 + 0.03, 0.38, 0, g);
-  box(0.06, 0.12, W, M.steel, -L / 2 - 0.03, 0.38, 0, g);
-  return g;
+  return saloonCar({ era: era < 2000 ? "1960s" : "modern", colour: c, L: era < 2000 ? 3.8 : 4.1, W: 1.55 });
 }
 /* a London plane tree for a street: a mottled trunk and a rounded crown */
 export function planeTree(h = 7, seed = 2) {

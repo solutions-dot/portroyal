@@ -1015,11 +1015,11 @@ def build_hat(HK,HM):
         rigid(HM,bm,HM,'Head'); bb=bmesh.new(); lathe(bb,[(0.0045,0.005*s),(0.0045,0.024*s)],fit,seg=32,cap=False); COL[HM+'Band']=COL[HM]*0.55; rigid(HM+'Band',bb,HM+'Band','Head')
     elif HK=='felt' and not OLD:
         # a felt hat of 1800 to 1930, turned round the head like the others (see lathe): a ring of brim, a crown that clears the hair, a band on the crown. One closed shell, so no part of it lies inside another.
-        fit=head_fit(0.008); BR=G.get('brim',1.0); bm=bmesh.new(); bb=bmesh.new(); Hh=(TOP-fit[4])+(0.06*(0.35+0.65*min(BR,1.0))+0.012)*s
+        fit=head_fit(0.008); BR=G.get('brim',1.0); bm=bmesh.new(); bb=bmesh.new(); Hh=(TOP-fit[4])+(0.022+0.012*min(BR,1.0))*s      # the crown clears the skull by 2 to 3.5 cm (it stood 7 cm clear, a stovepipe on every felt hat: owner, 16 November 2026)
         def mod(a,i,d,z):
             if i in (3,4): return d,z+0.020*0.5*(0.5+0.5*math.sin(a*2+1.2))*max(0.0,(d-0.03*s)/(0.06*s))      # the brim turns up a little, unevenly
             return d,z
-        rr=lathe(bm,[(0.012,Hh-0.004),(0.021,Hh*0.5),(0.020,0.004),(0.085*s*BR,0.004),(0.085*s*BR,-0.004),(0.020,-0.004),(0.016,-0.004),(0.016,Hh*0.5),(0.008,Hh-0.012)],fit,seg=32,mod=mod,cap=False); quadstrip(bm,[rr[-1],rr[0]],close=True); bm.faces.new(rr[-1])      # a closed shell, from the crown's top down the outside, along the brim and back up the inside
+        rr=lathe(bm,[(0.004,Hh-0.006),(0.016,Hh*0.55),(0.020,0.004),(0.085*s*BR,0.004),(0.085*s*BR,-0.004),(0.020,-0.004),(0.016,-0.004),(0.016,Hh*0.5),(0.008,Hh-0.012)],fit,seg=32,mod=mod,cap=False); quadstrip(bm,[rr[-1],rr[0]],close=True); bm.faces.new(rr[-1])      # a closed shell, from the crown's top down the outside, along the brim and back up the inside
         lathe(bb,[(0.0235,0.028*s),(0.0235,0.006*s)],fit,seg=32,cap=False)
         rigid(HM,bm,HM,'Head'); rigid(HM+'Band',bb,HM+'Band','Head')
     elif HK=='felt':
@@ -1056,8 +1056,13 @@ def build_hat(HK,HM):
         dome=bmesh.ops.create_uvsphere(bm,u_segments=28,v_segments=10,radius=1,matrix=Matrix.Translation((cx,cy-0.010*s,zc)))
         for v in dome['verts']: d=v.co-Vector((cx,cy-0.010*s,zc)); v.co=Vector((cx+d.x*rx*1.22,cy-0.010*s+d.y*ry*1.22,zc+d.z*rv))
         bmesh.ops.delete(bm,geom=[f for f in bm.faces if f.calc_center_median().z<zc-0.001 and all(v in dome['verts'] for v in f.verts)],context='FACES')
-        pk=[bm.verts.new((cx+dx*rx,cy-ry*dy,BZ+dz)) for dx,dy,dz in ((-0.70,0.95,0.018),(0.70,0.95,0.018),(0.58,1.62,-0.010),(-0.58,1.62,-0.010))]
-        bm.faces.new(pk)
+        # the underside of the dome, from its rim in to the top of the band: left open, a strip of forehead and hair showed between the cap and its band (owner, 16 November 2026)
+        _n=28; _o=[bm.verts.new((cx+math.cos(2*math.pi*k/_n)*rx*1.22,cy-0.010*s+math.sin(2*math.pi*k/_n)*ry*1.22,zc)) for k in range(_n)]; _i=[bm.verts.new((cx+math.cos(2*math.pi*k/_n)*rx*0.99,cy+math.sin(2*math.pi*k/_n)*ry*0.99,BZ+0.022*s)) for k in range(_n)]
+        for k in range(_n): bm.faces.new((_o[k],_o[(k+1)%_n],_i[(k+1)%_n],_i[k]))
+        # the peak: a short stiff wedge with a top and an underside (a single sheet showed as a spike from the side), starting under the dome's front
+        pk=[bm.verts.new((cx+dx*rx,cy-ry*dy,BZ+dz)) for dx,dy,dz in ((-0.72,0.90,0.020),(0.72,0.90,0.020),(0.56,1.50,-0.004),(-0.56,1.50,-0.004))]; pu=[bm.verts.new(v.co+Vector((0,0,-0.007*s))) for v in pk]
+        bm.faces.new(pk); bm.faces.new(pu[::-1])
+        for k in range(4): bm.faces.new((pk[k],pu[k],pu[(k+1)%4],pk[(k+1)%4]))
         rigid(HM,bm,HM,'Head')
     if HK in ('trilby','straw','bowler','top','church','peaked','pillbox'):
         fit=head_fit(); bm=bmesh.new(); bb=bmesh.new(); BR=G.get('brim',1.0)
@@ -1183,7 +1188,7 @@ if G.get('apron'):
     SRC=BRT if (not OLD and BRT) else tree; yprev=None
     if 'skirt' in PART: SRC=tree_of(PART['skirt']); ZE=SKB+0.10      # over a skirt the apron lies on the skirt, not on the body under it, and hangs to near the hem
     for jv in range(nv+1):      # the apron hangs as one sheet: each row lies across the fullest part of the front (never caught on a hand, never dipping between the legs), curves back a little at its sides, and never tucks in below a higher row
-        t=jv/nv; z=ZA-t*(ZA-ZE); hw=0.15+0.03*t; ys=[]
+        t=jv/nv; z=ZA-t*(ZA-ZE); hw=(0.15+0.03*t) if (OLD or 'skirt' in PART) else (0.125+0.035*t); ys=[]      # a man's work apron over trousers is narrower at the waist: at 30 cm its top corners stood out past his hips
         for iu in range(nu+1):
             x=-hw+2*hw*iu/nu
             if abs(x)>0.13: continue
@@ -1193,7 +1198,7 @@ if G.get('apron'):
         if yprev is not None: yf=min(yf,yprev+0.004)
         yprev=yf; row=[]
         for iu in range(nu+1):
-            x=-hw+2*hw*iu/nu; row.append(bm.verts.new((x,yf+0.012*(x/hw)**2,z)))
+            x=-hw+2*hw*iu/nu; row.append(bm.verts.new((x,yf+(0.012+0.018*(1-t))*(x/hw)**2,z)))      # it curves round the hips at the top and hangs flatter below (flat all the way down, it stood off the body like a board)
         rows.append(row)
     for jv in range(nv):
         for iu in range(nu): bm.faces.new((rows[jv][iu],rows[jv][iu+1],rows[jv+1][iu+1],rows[jv+1][iu]))
