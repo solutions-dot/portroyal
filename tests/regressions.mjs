@@ -193,3 +193,5 @@ test('menu lists every game in Jamaica\'s timeline, oldest first', async () => {
 });
 
 import './chapter-guidance.mjs';
+
+import './tivoli-journal-parity.mjs';
