@@ -1,0 +1,86 @@
+{
+  "name": "wr_lwoman62",
+  "era": 1962,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 0,
+    "caucasian": 1,
+    "asian": 0,
+    "gender": 0,
+    "cupsize": 0.4,
+    "firmness": 0.55,
+    "age": 0.3,
+    "weight": 0.46,
+    "height": 0.52
+  },
+  "garments": {
+    "shoes": true,
+    "woman": true,
+    "skirt": true,
+    "hem": 0.7,
+    "flare": 1.4,
+    "pleats": 9,
+    "hairvol": 0.25,
+    "bun": true,
+    "collar": "round",
+    "hat": [],
+    "sleeve": 0.9
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      160,
+      120,
+      72
+    ],
+    "Skin": [
+      220,
+      180,
+      154
+    ],
+    "Shirt": [
+      96,
+      132,
+      120
+    ],
+    "Collar": [
+      236,
+      232,
+      222
+    ],
+    "Skirt": [
+      96,
+      132,
+      120
+    ]
+  },
+  "targets": {
+    "head-oval": 0.3
+  },
+  "crowd": true
+}

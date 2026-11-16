@@ -195,3 +195,10 @@ test('menu lists every game in Jamaica\'s timeline, oldest first', async () => {
 import './chapter-guidance.mjs';
 
 import './tivoli-journal-parity.mjs';
+
+test('menu: the first ten games carry no New or Early version badge (docs/PLATFORM.md)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const page = readFileSync('menu/index.html', 'utf8'), first = ['port-royal', 'nanny', 'bog-walk', 'garvey', 'kendal', 'eventide', 'tivoli', 'selassie', 'windrush', 'melissa'];
+  const cards = [...page.matchAll(/<a class="game ([\w-]+)[^"]*"[^>]*>([\s\S]*?)<\/a>/g)];
+  for (const [, cls, body] of cards) if (first.includes(cls)) assert.ok(!/class="tag"/.test(body) && !/Early version/i.test(body), cls + ' still has a badge');
+});

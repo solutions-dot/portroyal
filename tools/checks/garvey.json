@@ -1,6 +1,13 @@
 {
  "about": "Per-game settings for tools/lint_content.mjs and engine/checks.js (docs/TESTING.md, section 7). real: people who really lived and speak in the game (their lines are listed for checking, rule 3).",
- "real": ["Marcus Garvey", "Amy Ashwood", "Amy Jacques Garvey"],
+ "real": [
+  "Marcus Garvey",
+  "Amy Ashwood",
+  "Amy Jacques Garvey"
+ ],
  "allowLong": [],
- "factsIgnore": []
+ "factsIgnore": [],
+ "quotesOnly": [
+  "Marcus Garvey"
+ ]
 }

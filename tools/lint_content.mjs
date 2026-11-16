@@ -103,14 +103,14 @@ export function stripComments(src) {
 export async function readGame(game) {
   const dir = join(ROOT, 'games', game, 'src'), files = walk(dir).filter((f) => !/[\\/]dev\.js$|checks\.js$/.test(f)), raw = Object.fromEntries(files.map((f) => [relative(ROOT, f), read(f)])), srcs = Object.fromEntries(Object.entries(raw).map(([f, t]) => [f, stripComments(t)]));
   const lines = [], goals = [], pages = [], seenLine = new Set(), seenGoal = new Set();
-  const addLine = (who, text, at) => { if (typeof text !== 'string' || !text.trim() || (typeof who === 'string' && who.length === 1)) return;   /* one-letter speakers are layout-test fixtures */ const k = who + '|' + text; if (seenLine.has(k)) return; seenLine.add(k); lines.push({ who: typeof who === 'string' ? who : '', text, at }); };
+  const addLine = (who, text, at, sourced) => { if (typeof text !== 'string' || !text.trim() || (typeof who === 'string' && who.length === 1)) return;   /* one-letter speakers are layout-test fixtures */ const k = who + '|' + text; if (seenLine.has(k)) return; seenLine.add(k); lines.push({ who: typeof who === 'string' ? who : '', text, at, sourced: !!sourced }); };
   const addGoal = (text, at) => { if (typeof text !== 'string' || !text.trim() || seenGoal.has(text)) return; seenGoal.add(text); goals.push({ text, at }); };
   /* content.js: import it and walk what it exports */
   const content = join(dir, 'content.js');
   if (existsSync(content)) {
     let C = {}; try { C = await import(pathToFileURL(content).href + '?t=' + Date.now()); } catch (e) { console.error(`${game}: content.js does not import (${e.message}); reading it as text only`); }
     const at = 'games/' + game + '/src/content.js';
-    const talk = (v, where) => { v = call(v); if (Array.isArray(v)) for (const l of v) { if (typeof l === 'string') addLine('', l, where); else if (l && typeof l === 'object') { if (typeof l.text === 'string') addLine(l.who, l.text, where); for (const c of l.choices || []) if (c && typeof c.t === 'string') addLine('You', c.t, where + ' (choice)'); } } };
+    const talk = (v, where) => { v = call(v); if (Array.isArray(v)) for (const l of v) { if (typeof l === 'string') addLine('', l, where); else if (l && typeof l === 'object') { if (typeof l.text === 'string') addLine(l.who, l.text, where, l.sourced); for (const c of l.choices || []) if (c && typeof c.t === 'string') addLine('You', c.t, where + ' (choice)'); } } };
     for (const [name, v] of Object.entries(C)) {
       if (name === 'JOURNAL' && Array.isArray(v)) pages.push(...v);
       else if (name === 'GOALS' && v && typeof v === 'object') for (const [k, g] of Object.entries(v)) addGoal(call(g), `${at} GOALS[${k}]`);
@@ -124,7 +124,7 @@ export async function readGame(game) {
   /* every source file: dialogue objects, goals and journal literals */
   for (const [f, src] of Object.entries(srcs)) {
     const K = constants(src);
-    for (const m of src.matchAll(new RegExp(String.raw`\{\s*who:\s*([^,{}]+?)\s*,[^{}]*?\btext:\s*(${STR})`, 'g'))) { const w = m[1].trim(), who = /^['"`]/.test(w) ? strValue(w) : K[w] ?? '';   /* a name held in a variable we cannot follow counts as unknown */ addLine(who, strValue(m[2]), `${f}:${lineAt(src, m.index)}`); }
+    for (const m of src.matchAll(new RegExp(String.raw`\{\s*who:\s*([^,{}]+?)\s*,[^{}]*?\btext:\s*(${STR})`, 'g'))) { const w = m[1].trim(), who = /^['"`]/.test(w) ? strValue(w) : K[w] ?? '';   /* a name held in a variable we cannot follow counts as unknown */ const rest = src.slice(m.index, src.indexOf('}', m.index + m[0].length));   /* the whole { who, ..., text, ... } object */ addLine(who, strValue(m[2]), `${f}:${lineAt(src, m.index)}`, /\bsourced:\s*true\b/.test(rest)); }
     for (const m of src.matchAll(new RegExp(String.raw`\bchoices:\s*\[`, 'g'))) { const e = matchBracket(src, m.index + m[0].length - 1); if (e < 0) continue; for (const c of src.slice(m.index, e).matchAll(new RegExp(String.raw`\bt:\s*(${STR})`, 'g'))) addLine('You', strValue(c[1]), `${f}:${lineAt(src, m.index)} (choice)`); }
     for (const m of src.matchAll(new RegExp(String.raw`(?:\bgoalText\s*=\s*|\bsetGoal\(\s*|\bgoal:\s*)(${STR})`, 'g'))) addGoal(strValue(m[1]), `${f}:${lineAt(src, m.index)}`);
     if (!existsSync(content)) {
@@ -160,7 +160,13 @@ export async function lintGame(game, cfg = config(game)) {
     for (const [t, at] of texts) for (const f of factsIn(t)) if (!ignore.has(f) && !seenF.has(f) && !factFound(f, doc)) { seenF.add(f); add('fact', `"${f}" is not in the facts doc: "${t.slice(0, 80)}"`, at); }
   }
   /* rule 3: a real person's words must be real. Every real speaker is listed for a person to check against the sources */
-  for (const r of cfg.real || []) { const n = G.lines.filter((l) => l.who === r).length; if (n) add('real', `${r} is a real person and speaks ${n} line${n > 1 ? 's' : ''}: check each is sourced (rule 3: never invent quotes for real people)`, game); }
+  /* quotesOnly people may say only sourced words: every line is listed for a person to check. Other real people may say imagined everyday words (owner, 16 Nov 2026), but a journal page must say so */
+  const quotesOnly = new Set(cfg.quotesOnly || []), pageText = G.pages.map((p) => [p.title, ...(p.simple || []), ...(p.deeper || [])].filter((x) => typeof x === 'string').join(' ')).join(' \n ');
+  const bare = (t) => String(t).replace(/[\u201c\u201d"\u2026]/g, '').replace(/\.\.\./g, '').trim(), flat = (doc || '').replace(/\s+/g, ' ');
+  for (const l of G.lines) if (l.sourced && quotesOnly.has(l.who) && !flat.includes(bare(l.text))) add('real', `${l.who}: a line marked sourced is not written word for word in the facts doc with its source: "${l.text}"`, l.at);
+  for (const r of cfg.real || []) { const n = G.lines.filter((l) => l.who === r && !(l.sourced && quotesOnly.has(r) && flat.includes(bare(l.text)))).length; if (!n) continue;   /* sourced: true and found word for word in the facts doc (where its source is recorded) */
+    if (quotesOnly.has(r)) add('real', `${r} may only say sourced words and speaks ${n} line${n > 1 ? 's' : ''}: check each is sourced (rule 3)`, game);
+    else if (!new RegExp(r.split(' ').pop() + '[^.]*imagined|imagined[^.]*' + r.split(' ').pop(), 'i').test(pageText)) add('real', `${r} is a real person and speaks ${n} line${n > 1 ? 's' : ''}, but no journal page says their words in the game are imagined (rule 3)`, game); }
   for (const l of journalIssues({ pages: G.pages, unlocks: G.unlocks, refs: G.refs, speakers: G.lines.map((l) => l.who), real: cfg.real || [] })) add('journal', l, game);
   /* sounds the code asks for */
   const all = Object.values(G.srcs).join('\n'), refs = {};

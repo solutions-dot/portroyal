@@ -1,0 +1,118 @@
+{
+  "name": "wr_tman48b",
+  "era": 1948,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 1,
+    "caucasian": 0,
+    "asian": 0,
+    "gender": 1,
+    "age": 0.56,
+    "weight": 0.56,
+    "height": 0.5
+  },
+  "garments": {
+    "shoes": true,
+    "trousers": true,
+    "hairvol": 0.15,
+    "hat": [
+      [
+        "trilby",
+        "Hat"
+      ]
+    ],
+    "sleeve": 0.95,
+    "jacket": true,
+    "jacketsleeve": 0.92,
+    "waistcoat": true,
+    "vwaist": true,
+    "collar": "turn",
+    "tie": true,
+    "moustache": true,
+    "recede": 0.3
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      60,
+      56,
+      52
+    ],
+    "Skin": [
+      140,
+      95,
+      69
+    ],
+    "Shirt": [
+      228,
+      226,
+      218
+    ],
+    "Collar": [
+      228,
+      226,
+      218
+    ],
+    "Jacket": [
+      74,
+      78,
+      86
+    ],
+    "Waistcoat": [
+      74,
+      78,
+      86
+    ],
+    "Breeches": [
+      74,
+      78,
+      86
+    ],
+    "Tie": [
+      40,
+      52,
+      84
+    ],
+    "Hat": [
+      52,
+      50,
+      48
+    ],
+    "HatBand": [
+      26,
+      24,
+      22
+    ]
+  },
+  "targets": {
+    "head-square": 0.4,
+    "chin-width-incr": 0.3,
+    "nose-scale-horiz-incr": 0.2
+  },
+  "crowd": true
+}

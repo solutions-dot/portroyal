@@ -38,6 +38,9 @@ Same dramatic idea as the Port Royal earthquake: an opt-in card first ("It is lo
 | File | What it holds |
 |---|---|
 | `main.js` | renderer and sky, controls, people, the place registry (`buildPlace`, `ensurePlace`, `enterPlace`), the journal, cards, the cinematic layer (`bars`, `say`, `flash`, `fadeBlack`, the camera director `cut`), saving, chapters and stages (`setStage`, `ON[stage]`), rides (`RIDE`), actions (`ACTIONS_FOR`), the crash (`CR`, `crashRun`), the loop, test views and the autoplayer |
+| `storylife.js` | a little life for people who stay in one place (stance changes, a head that glances and looks at you) |
+| `motioncheck.js` | `?test=motion`: frozen, in-step, head, spin, walking in place and sliding checks (dev only) |
+| `checktables.js` | the hooks and tables for the shared `?test=all` runner (dev only) |
 | `content.js` | every word the player reads: `CHAPTERS`, `TALK` (first conversations), `LATER` (short later lines), `JOURNAL` |
 | `steps.js` | the story as step tables for `engine/story.js`: each stage's goal, who and what it needs (talk, do, go), and the stage after it; `placeOfStage` |
 | `life.js` | what every background person does, as data for `engine/ambient.js` (`lifeFor(P)`: crowds mixed into chats, errands, watchers and children at play; the mento band; the helpers at the crash site) |
@@ -128,7 +131,10 @@ None of this was checked against the Jamaica Railway Corporation's own records, 
 | The 1845 opening day: about an hour to Spanish Town with a stop for water at the new Rio Cobre bridge; about 40 minutes back at up to 30 mph; the 1st West India Regiment band | Used | The same 1845 account |
 | Old Harbour 1869; Porus 1885; Montego Bay 1894 or 1895 (sources differ); government took over in 1900; banana shipments by rail rose from about 330,000 stems (1880) to 24 million (1930); bananas had to reach a ship within two days | Used with "in the 1890s" | Wikipedia; Gleaner (2020) |
 | Passenger trains stopped in 1992; a short service ran 2011 to 2012 | Used | Wikipedia; Gleaner |
-| The 1938 Balaclava crash, 32 dead | Mentioned once in "Dig deeper", marked as one source | Wikipedia |
+| The Balaclava crash on 30 July 1938, 32 dead | Mentioned once in "Dig deeper", marked as one source | Wikipedia, Jamaica Railway Corporation ("30 July 1938 ... 32 people died and over 70 were injured"), checked 16 November 2026 |
+| The line from Bog Walk to Port Antonio, finished in 1896 | Used in the journal | Wikipedia, Jamaica Railway Corporation ("from Bog Walk to Port Antonio in 1896"), checked 16 November 2026 |
+| Slavery in the British Caribbean ended on 1 August 1834; apprenticeship ended in 1838; Kingston became the capital of Jamaica in 1872 (in place of Spanish Town) | Used in the journal | Standard dates: Slavery Abolition Act 1833 (in force 1834), apprenticeship ended 1 August 1838; Wikipedia, Spanish Town and Kingston, Jamaica |
+| A museum and memorial park planned for the 70th anniversary of the crash (2027) | Used in the journal | Observer (2026); 1957 + 70 = 2027 |
 | How people travelled in the 1840s (mule, cart, horse, on foot; poor roads) | General knowledge, stated simply. We did not find a source for journey times by road, so no figure is given beyond "most of a day". | Not found |
 | Mento (banjo, guitar, rumba box) in the 1950s; a band on a beach that day | The journal says this is general knowledge and that we have no source for a band at the beach | Not found |
 
@@ -136,6 +142,22 @@ Real people in the game: none speak. The Governor stands silently in 1845. Fathe
 
 Look and feel: the 1957 diesel follows a National Library of Jamaica photograph of one of the railway's English Electric hood engines (two four-wheel trucks). We do not know which engines pulled the train that night. Every colour, the whole shape of the wooden coaches, the 1845 engine and carriages, the truck and the 1950s clothes are still guesses; the code comments say so.
 
+## Season 1 finish (16 November 2026)
+
+What this pass checked and changed (branch `claude/kendal-par`):
+
+- **`?test=all`** is wired (`checktables.js` holds the hooks and tables; `checkHooks()` in `main.js` hands the game over). Run it with `&noshadow` at 390x800, because phones draw no shadow maps and the budget check counts draw calls. It also runs this game's own `motion` check.
+- **`?test=motion`** (`motioncheck.js`, new): every step of the story, played on the real frame loop while you walk to each thing the step needs. It fails on anyone in view frozen on an idle clip (over 12 s, 20 s in a calm or sad scene), three or more people in step on one clip, a head turned over 80 degrees from the chest, nodded over 60, or turning faster than 320 degrees a second and faster than the clip does on its own, a body spinning (over 240 degrees a second standing, 600 walking), walking in place, or sliding on a standing clip. `&st=40,61` picks steps. Its first run found 88 faults; the fixes below brought them down.
+- **Story people are alive** (`storylife.js`, new): while they wait for you they change stance now and then (another idle, a nod, a look round, another way of sitting) and their heads glance about and turn to you when you come near, eased and limited. A background person held still for their own step (Lloyd on the platform) changes stance too.
+- **Nobody spins:** `faceTo` turns at most about 170 degrees a second, and `turnLimit` caps every body's turn at 200 degrees a second standing and 315 walking (the shared ambient walk turned corners at up to 700).
+- **No loop starts in step:** every looping clip started through a body's controller starts at a random moment.
+- **Walk pace:** `STRIDE_K` in `main.js` corrects the engine's stride measure per body and clip (measured with `?test=walkers&tune`); WalkM2 and CarryBagWalk had been sliding 22 to 25 cm a loop. Background life uses the same stride through `createAmbient({ stride })`.
+- **Faces at night (rule 9):** Skin glows a little with its own colour, more the darker the light (`skinFill`: 0.1 by day, about 0.55 at night). Faces at the crash site and in the night coach were brightness 10 to 25 from their dark side; the faces check is now clean.
+- **Phones:** each standing (or always seated) background figure is joined into one skinned mesh at load (`joinBody`), and each strip of passing scenery on a ride is merged (`batchStatic`). Draw calls without shadows: Kingston station 693 to about 310, the coach 1,037 to 168, the 1845 ride 509 to 103, the beach 404 to about 150, the crash site 529 to about 290.
+- **Saving:** a game saved during the 1845 water stop (steps 23.5 and 23.6) now resumes at the station before boarding instead of at the station with the bucket task.
+- **Walls at the edge** no longer push you off the map (the hill station, `clampPos`).
+- **Tap targets:** the folded goal, the journal's tabs and "Dig deeper" are at least 44 px.
+- Gran's full body (`woman_elder`) never walks in this game and sinks 3.1 cm at one heel strike, so `?test=walkers` checks the light copy every walking elder uses; Eventide and Melissa, which also ship `woman_elder`, should check theirs.
 ## What is left (polish list)
 
 1. **Check facts in primary sources** (the Commission of Enquiry report, the 1957 Daily Gleaner, the railway's records) and remove the "one source" notes.
