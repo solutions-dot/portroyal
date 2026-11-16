@@ -25,6 +25,12 @@
   #title h1 small{display:block;font-family:var(--display);font-size:.5em;color:var(--brass);letter-spacing:.04em;margin-top:.25em}
   #title p{max-width:30rem;margin:0}
   #title .row{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+  /* Keep the three opening actions on one row on narrow phones. */
+  @media (max-width:600px){
+    #title .title-actions{width:100%;flex-wrap:wrap;gap:clamp(5px,1.7vw,10px)}
+    #title .title-actions > .btn{flex:1 1 0;min-width:0;white-space:nowrap;text-align:center;padding:.65em .3em;font-size:clamp(.75rem,3.5vw,.96rem)}
+    #title .title-actions > .track{flex:0 0 100%;min-width:0}
+  }
   #title a{color:inherit}
   #title .small{font-size:.85rem;opacity:.8}
   .credit{font-size:.9rem;opacity:.9;margin:0}
