@@ -248,8 +248,13 @@ function body(spec) {
     if (!o.isMesh) return;
     if (o.userData.measureOnly || /^SkirtSeat/.test(o.name)) o.visible = false;
     o.frustumCulled = true;
-    if (spec.colors && o.material.name === "Crowd" && o.geometry.attributes.color)
-      recolour(o, spec.colors);
+    // the face is its own piece in a crowd body (tools/people/pack.mjs keeps its detail): it is only ~25 cm tall, and the clothing bands are measured
+    // from a piece's own height, so a face would be painted as shirt and trousers. Only a whole-body piece is recoloured.
+    if (spec.colors && o.material.name === "Crowd" && o.geometry.attributes.color) {
+      if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+      const bb = o.geometry.boundingBox;
+      if (bb.max.y - bb.min.y > 0.8) recolour(o, spec.colors);
+    }
     o.material = o.material.clone();
     o.material.forceSinglePass = true;
     const nm = o.material.name;
