@@ -389,7 +389,7 @@ const TALK_TARGETS = { 70: ['guide', 'student'], 72: ['student'], 60: ['amyj'], 
 const NEXT_AFTER_TALK = { 70: 71, 72: 73, 60: 61, 62: 63, 50: 51, 51: 52, 53: 54, 40: 41, 42: 43, 43: 44, 30: 31, 32: 33, 33: 34, 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
 const wantsTalk = (n) => !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
 function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); if (!QUICK && s in CHAPTER_END) setTimeout(() => nextCard(CHAPTER_END[s], s), 900); }
-function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); }
+function onTalked() { const t = TALK_TARGETS[stage]; if (!t) return; if (t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); else setGoal(); }
 let goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) {
   const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer);
@@ -397,7 +397,13 @@ function showGoal(withControls) {
   if (withControls) showHint();
 }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
-function setGoal() { goalText = GOALS[stage]; showGoal(true); }
+function setGoal() {
+  const required = TALK_TARGETS[stage] || [];
+  const done = required.filter((id) => byId(id)?.talked).length;
+  // Show concrete progress on multi-person steps, including when resuming a saved chapter.
+  goalText = (GOALS[stage] || '') + (required.length > 1 ? ' (' + done + ' of ' + required.length + ')' : '');
+  showGoal(true);
+}
 $('goal').onclick = () => showGoal(true);
 function showSound() { const b = $('snd'); b.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); b.setAttribute('aria-label', AU.on ? 'Sound on. Tap to turn off.' : 'Sound off. Tap to turn on.'); $('sndon').style.display = AU.on ? '' : 'none'; $('sndoff').style.display = AU.on ? 'none' : ''; }
 $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
