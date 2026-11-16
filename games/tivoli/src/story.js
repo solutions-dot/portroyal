@@ -6,12 +6,14 @@ const KEY = 'tivoli-save', $ = (id) => document.getElementById(id);
 let SAVE = { unlocked: [], done: [] }; try { const t = JSON.parse(localStorage.getItem(KEY) || 'null'); if (t && t.unlocked && t.done) SAVE = t; } catch (e) { /* a fresh start */ }
 const store = () => { try { localStorage.setItem(KEY, JSON.stringify(SAVE)); } catch (e) { /* ignore */ } };
 let H = null;
+let unseen = 0;
+const notice = () => { const dot = $('jnew'), button = $('jhud'); if (dot) dot.hidden = !unseen; if (button) button.classList.toggle('notice', unseen > 0); };
 
 export const isUnlocked = (id) => SAVE.unlocked.includes(id), isDone = (ch) => SAVE.done.includes(ch);
 export function nextChapter() { const c = CHAPTERS.find((x) => x.playable && !isDone(x.id)); return (c || CHAPTERS.find((x) => x.playable)).id; }
 export function unlock(id, quiet) {
   if (isUnlocked(id)) return false; SAVE.unlocked.push(id); store(); const pg = JOURNAL.find((p) => p.id === id);
-  if (!quiet && pg) { toast('New journal page: ' + pg.title); if (H && H.uiSound) H.uiSound('page'); } refreshJournal(); return true;
+  if (!quiet && pg) { unseen++; notice(); toast('New journal page: ' + pg.title); if (H && H.uiSound) H.uiSound('page'); } refreshJournal(); return true;
 }
 export function finishChapter(ch) { if (!isDone(ch)) { SAVE.done.push(ch); store(); } for (const id of PAGES_FOR(ch)) unlock(id, true); refreshChapters(); refreshJournal(); }
 export function toast(t) { const e = $('toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => { e.hidden = true; }, 3200); }
@@ -35,7 +37,12 @@ function refreshChapters() {
 /* h: { startChapter(id), uiSound(kind) } */
 export function initStory(h) {
   H = h; refreshJournal(); refreshChapters();
-  const openCh = () => { refreshChapters(); $('chapters').hidden = false; }, openJ = () => { $('jpage').hidden = true; $('jlist').hidden = false; refreshJournal(); $('journal').hidden = false; };
+  const openCh = () => { refreshChapters(); $('chapters').hidden = false; }, openJ = () => { unseen = 0; notice(); $('jpage').hidden = true; $('jlist').hidden = false; refreshJournal(); $('journal').hidden = false; };
   $('chbtn').onclick = openCh; $('chclose').onclick = () => { $('chapters').hidden = true; }; $('jbtn').onclick = openJ; $('jhud').onclick = openJ;
   $('jclose').onclick = () => { $('journal').hidden = true; }; $('jback').onclick = () => { $('jpage').hidden = true; $('jlist').hidden = false; };
+  $('chteacher').onclick = () => { for (const p of JOURNAL) unlock(p.id, true); refreshJournal(); toast('All journal pages unlocked'); };
+  $('chcred').onclick = () => { $('chapters').hidden = true; $('credits').hidden = false; };
+  $('creditsclose').onclick = () => { $('credits').hidden = true; openCh(); };
+  $('chreset').onclick = () => { if (!confirm('Restart Tivoli and clear your saved chapters and journal pages?')) return; SAVE = { unlocked: [], done: [] }; store(); unseen = 0; notice(); location.reload(); };
+  notice();
 }
