@@ -1,5 +1,18 @@
 # Testing
 
+## Current UI regression coverage (16 November 2026, PR #101)
+
+The following checks are included in `npm test` on the integration branch:
+
+- `tests/chapter-footer.mjs`: all **ten** playable games must expose chapter actions in the order **Unlock All | Credits | Restart**, with the three-column layout rule.
+- `tests/final-two-ui.mjs`: Windrush and Selassie chapter cards, selected journal tab, notice treatment and mobile title controls.
+- `tests/kendal.mjs`: Kendal stage transitions, water tasks, beach activity guards and save/resume contracts.
+- `tests/regressions.mjs`: the menu includes exactly ten distinct playable games.
+
+A focused Chromium workflow is added in `.github/workflows/tivoli-mobile.yml`, running `tests/tivoli-browser.mjs` at 320px and 390px and uploading screenshots. It checks chapter action alignment, Credits navigation, Journal open/close, four touch arrows and uncaught script errors. **Presence of controls is not proof that held movement works**; manually test sustained press, release, turning, dialogue interruption and touch drag-to-look.
+
+**Verification status:** source regression checks and GitHub's `npm test` runs are separate from real browser interaction. Do not mark the Tivoli mobile flow or the full ten-game visual pass complete without a successful browser run and screenshot review. The older `docs/HANDOFF.md` list is a historical baseline; use its unchecked items as outstanding until verified.
+
 Always do these before saying something works.
 
 ## 1. Build and serve
