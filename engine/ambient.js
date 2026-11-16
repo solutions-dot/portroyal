@@ -326,6 +326,7 @@ export function createAmbient(opts = {}) {
   const _tq = new THREE.Quaternion();
   function headTick(n, dt) {
     const a = n.amb, b = bonesOf(n.m); if (!b.neck && !b.head) return; a.pT = Math.hypot(W.px - n.x, W.pz - n.z) < O.look ? a.pT + dt : 0; let [yaw, pitch] = lookWant(n);
+    if (!Number.isFinite(yaw)) yaw = 0; if (!Number.isFinite(pitch)) pitch = 0; if (!Number.isFinite(a.look)) a.look = 0; if (!Number.isFinite(a.lookP)) a.lookP = 0;   /* a look at a point that is not there (the player before the game sets them, a lone sitter with no mate) once gave NaN and the head vanished (Windrush) */
     if (Math.abs(yaw) > 1.9) yaw = 0; yaw = Math.max(-O.lookYaw, Math.min(O.lookYaw, yaw)); pitch = Math.max(-O.lookPitch, Math.min(O.lookPitch, pitch));
     const k = Math.min(1, dt * 3), lim = dt * 3.5; a.look += Math.max(-lim, Math.min(lim, (yaw - a.look) * k)); a.lookP += (pitch - a.lookP) * k;   /* at most 200 degrees a second: a look that swaps sides (the player passing behind) turned the head faster than a person does */
     let nod = 0; if (a.nod > 0) { a.nod = Math.max(0, a.nod - dt); nod = Math.sin((0.7 - a.nod) / 0.7 * Math.PI * 2) * 0.12 * (a.nod > 0 ? 1 : 0); }
