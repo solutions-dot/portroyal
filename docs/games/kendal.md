@@ -128,7 +128,10 @@ None of this was checked against the Jamaica Railway Corporation's own records, 
 | The 1845 opening day: about an hour to Spanish Town with a stop for water at the new Rio Cobre bridge; about 40 minutes back at up to 30 mph; the 1st West India Regiment band | Used | The same 1845 account |
 | Old Harbour 1869; Porus 1885; Montego Bay 1894 or 1895 (sources differ); government took over in 1900; banana shipments by rail rose from about 330,000 stems (1880) to 24 million (1930); bananas had to reach a ship within two days | Used with "in the 1890s" | Wikipedia; Gleaner (2020) |
 | Passenger trains stopped in 1992; a short service ran 2011 to 2012 | Used | Wikipedia; Gleaner |
-| The 1938 Balaclava crash, 32 dead | Mentioned once in "Dig deeper", marked as one source | Wikipedia |
+| The Balaclava crash on 30 July 1938, 32 dead | Mentioned once in "Dig deeper", marked as one source | Wikipedia, Jamaica Railway Corporation ("30 July 1938 ... 32 people died and over 70 were injured"), checked 16 November 2026 |
+| The line from Bog Walk to Port Antonio, finished in 1896 | Used in the journal | Wikipedia, Jamaica Railway Corporation ("from Bog Walk to Port Antonio in 1896"), checked 16 November 2026 |
+| Slavery in the British Caribbean ended on 1 August 1834; apprenticeship ended in 1838; Kingston became the capital of Jamaica in 1872 (in place of Spanish Town) | Used in the journal | Standard dates: Slavery Abolition Act 1833 (in force 1834), apprenticeship ended 1 August 1838; Wikipedia, Spanish Town and Kingston, Jamaica |
+| A museum and memorial park planned for the 70th anniversary of the crash (2027) | Used in the journal | Observer (2026); 1957 + 70 = 2027 |
 | How people travelled in the 1840s (mule, cart, horse, on foot; poor roads) | General knowledge, stated simply. We did not find a source for journey times by road, so no figure is given beyond "most of a day". | Not found |
 | Mento (banjo, guitar, rumba box) in the 1950s; a band on a beach that day | The journal says this is general knowledge and that we have no source for a band at the beach | Not found |
 
