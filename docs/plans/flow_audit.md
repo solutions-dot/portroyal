@@ -18,6 +18,8 @@ Read-only audit of `games/port-royal`, `garvey`, `kendal`, `bog-walk`, `nanny`, 
 
 **Chapter-by-chapter data checks (16 November):** `tests/chapter-guidance.mjs` now checks every declared stage in Kendal, Selassie and Windrush: visible goal, required IDs and counts, stage transition references, and simulated completion of all required tasks. It also checks the chapter goal tables, required-talk lists and declared talk-stage transitions in Nanny, Melissa, Eventide and Bog Walk. These checks cover seven games' data tables; they do not yet validate the dynamic stages of Port Royal, Garvey or Tivoli, or demonstrate browser/mobile playthroughs. Tests are committed but runner results are not confirmed.
 
+**Ten-game structural chapter coverage:** expanded `tests/chapter-guidance.mjs` to include Garvey's goal/required-talk/next-stage mappings, Tivoli's seven walking-chapter conversation orders, and Port Royal's goal-driven guidance controllers. All ten games now have at least structural coverage, but Port Royal and Tivoli are only lightly covered and no browser/mobile chapter walkthrough has been verified. Do not treat this as completion of the full playthrough request.
+
 ### Follow-up: always-visible next task (16 November 2026)
 
 The owner selected **Bog Walk's guidance pattern as the target for all ten games**: a plainly written next task that stays readable, a gold world arrow to the current required destination, and a nearby talk/action control that takes over when the player arrives. The task should change immediately when a requirement is completed, and optional activities must not override a required step.
