@@ -2,6 +2,8 @@
 
 **Unified hint delay:** `tests/guidance-delay.mjs` checks that all ten games use the same 2.5-second guidance delay, including shared-engine exploration stages. It is included in `npm test`. Browser interaction remains a separate verification requirement.
 
+**Story target priority:** `tests/guidance-target-priority.mjs` checks that the five stage-marked legacy controllers (Garvey, Bog Walk, Nanny, Melissa and Eventide) consider unfinished required people before optional action fallback. This is a source regression, not a chapter replay.
+
 ## Current UI regression coverage (16 November 2026, PR #101)
 
 The following checks are included in `npm test` on the integration branch:
