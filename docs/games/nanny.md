@@ -7,6 +7,10 @@ Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the story, the rules
 - Build: `node tools/build.mjs nanny --dev` (test views and the autoplayer) or without `--dev` (public).
 - Status: all six chapters are playable from start to end. It is new, so expect polish work (see "What is left").
 
+## People rebuilt (16 November 2026)
+
+All ten bodies and their light copies were rebuilt with the fixed shared builder (see `docs/HANDOFF.md`, "People pass"). Each recipe names a face shape (`face` in `tools/nanny/people/*.json`), so the Maroon man, the scout, the elder, the women and the children no longer share one face. Men's shirts hang plainly, light copies keep their eyes and brows, and children keep wide eyes and light brows. Checks after: audit 0, held 0, walkers 0, layout 0, cloth 45 lines (46 on main; the Maroon men are at 0). Look with `node tools/review/people-sheet.mjs nanny maroon_man,maroon_scout,maroon_elder,maroon_boy`.
+
 ## Rules that are special to this game
 
 These sit on top of the owner's rules in `CLAUDE.md`. They exist because Nanny is thinly documented and her people's heritage is living.

@@ -76,5 +76,6 @@
   "targets": {
     "chin-width-decr": 0.2
   },
-  "upscale": 1.26
+  "upscale": 1.26,
+  "face": "round"
 }

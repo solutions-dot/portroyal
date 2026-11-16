@@ -10,6 +10,10 @@ import { loader, onLoadFail, script, model, stage } from '../../../engine/loader
 
 The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `ambient.js` (background people who walk about, chat, work, sit, watch and play), `story.js` (who moves the story, the hint arrow, things the player carries), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies), `ui-audit.js` (text overlap) and `vehicles.js` (railway vehicles). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
 
+## Posture: `POSTURE` in `engine/anim.js` (16 November 2026)
+
+Every clip passes through `clipFor`, which now also turns three spine bones (`Spine1` -18, `Spine2` +38, `Neck` -20 degrees about the side-to-side axis). The clips were fitted bone by bone to a source skeleton whose spine is a straight line; our bodies' spine is curved at rest, so every clip tipped the ribcage back about 20 degrees (belly out, chest sunk, a lean back). The correction puts the ribcage back as the body was built and leaves the head where the clip put it. If a body is ever built on a different skeleton, measure its rest spine and change these numbers. After changing them, run every game's `?test=held` and `?test=cloth`: hands and cloth move with the chest.
+
 ## engine/loader.js: loading packed models
 
 Models ship as `site/models/<name>.js`, each defining `window.__models[name] = "<base64 glb>"`. This keeps everything as text, so any static host serves it, including claude.ai artifacts.

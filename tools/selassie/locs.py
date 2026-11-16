@@ -13,6 +13,7 @@ short hair) at every angle, so no scalp or hair cuts through. A few locs fall fr
 Run from finish_person.py with the shared builder's globals (h, rig, J, HEAD, NECK, SH, SX, TOP, tree, PART, colmat, srgb, sstep, paint).
 """
 import bmesh, math, random
+SIDES = 6
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
@@ -34,7 +35,7 @@ def _locs_weights(co):
     return {'Head': wh, 'Neck': rest * 0.35, 'Spine2': rest * 0.65}
 
 def _strand(bm, pts, r0):
-    """a tube along pts, five sides, thinner at the tip, closed at the end; returns the rings"""
+    """a tube along pts, six sides, thinner at the tip, closed at the end; returns the rings"""
     rings = []
     n = len(pts)
     for i, p in enumerate(pts):
@@ -42,20 +43,23 @@ def _strand(bm, pts, r0):
         a = Vector((1, 0, 0)) if abs(d.x) < 0.9 else Vector((0, 1, 0))
         u = d.cross(a).normalized(); w = d.cross(u).normalized()
         r = r0 * (1 - 0.35 * (i / (n - 1)) ** 2) * (1 + 0.12 * math.sin(i * 1.7 + r0 * 900))   # a little lumpy, like a rolled lock
-        rings.append([bm.verts.new(p + (u * math.cos(k / 5 * 2 * math.pi) + w * math.sin(k / 5 * 2 * math.pi)) * r) for k in range(5)])
+        rings.append([bm.verts.new(p + (u * math.cos(k / SIDES * 2 * math.pi) + w * math.sin(k / SIDES * 2 * math.pi)) * r) for k in range(SIDES)])
     for r0_, r1_ in zip(rings, rings[1:]):
-        for k in range(5):
-            bm.faces.new((r0_[k], r0_[(k + 1) % 5], r1_[(k + 1) % 5], r1_[k]))
+        for k in range(SIDES):
+            bm.faces.new((r0_[k], r0_[(k + 1) % SIDES], r1_[(k + 1) % SIDES], r1_[k]))
     tip = bm.verts.new(pts[-1] + (pts[-1] - pts[-2]).normalized() * r0 * 0.6)
-    for k in range(5): bm.faces.new((rings[-1][k], rings[-1][(k + 1) % 5], tip))
+    for k in range(SIDES): bm.faces.new((rings[-1][k], rings[-1][(k + 1) % SIDES], tip))
     return rings
 
-def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None):
+def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None, thick=1.0, light=False):
+    global SIDES
+    SIDES = 4 if light else 6      # a crowd copy's locs: four sides and longer steps
     rnd = random.Random(seed)
     hy = J('Head').y
     C = Vector((0, hy + 0.004, HEAD + 0.075))      # about the middle of the skull
     hair_obj = bpy.data.objects.get('Hair')
-    trees = [tree] + ([_tree(hair_obj)] if hair_obj else [])
+    skin = globals().get('SKIN') or tree      # the skin alone: the base mesh also holds helper shapes that stand clear of the skull, and locs measured against them floated above the head
+    trees = [skin] + ([_tree(hair_obj)] if hair_obj else [])
     shirt = PART.get('shirt'); ST = _tree(shirt) if shirt else None
     def surface(d):
         far = 0
@@ -74,34 +78,51 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None):
         else:
             k = len(strands) + tries
             a = (k * golden) % (2 * math.pi)                 # 0 = straight ahead (-y)
-            e = math.asin(rnd.uniform(-0.15, 0.97))         # elevation from the skull's middle
+            e = math.asin(rnd.uniform(-0.15, 1.0))          # elevation from the skull's middle: locs grow from the whole scalp, the top of the head too (owner, 16 November 2026)
         front = math.cos(a)                                  # 1 at the forehead, -1 at the nape
-        if front > 0.35 and e < 1.15: continue               # never over the forehead or the face
+        if front > 0.35 and e < 0.95: continue               # never over the forehead or the face; from the hairline back they do
         if front > -0.2 and e < 0.05: continue               # nor over the ears
         d = Vector((math.sin(a) * math.cos(e), -math.cos(a) * math.cos(e), math.sin(e)))
         R = surface(d)
         if R <= 0: continue
-        p = C + d * (R + 0.004)
+        p = C + d * (R - 0.002)      # rooted in the hair, not on top of it
         side = abs(math.sin(a))
         L = rnd.uniform(0.12, 0.22) if front > -0.45 else rnd.uniform(0.18, long_back)
-        r0 = rnd.uniform(0.0055, 0.0095)
+        r0 = rnd.uniform(0.0075, 0.0125) * thick      # locs are thick ropes of hair: at 5 to 9 mm they read as thin sticks
         # grow: first out from the scalp, then down under its weight; side locs drift back
         # start along the scalp, back and down (a lock lies on the head before it hangs), never up into the air
-        dirv = (d * 0.25 + Vector((0, 0.55, -0.8))).normalized()
-        pts = [p]; seg = 0.024; length = 0
+        dirv = Vector((0, 0.55, -0.8)); dirv = (dirv - d * max(0.0, dirv.dot(d)) - d * 0.05).normalized()      # along the scalp, never out from it: with a share of the outward direction, a lock on the crown stood up like a hook
+        pts = [p]; seg = 0.034 if light else 0.017; length = 0      # shorter steps: at 24 mm each bend showed as a kink
+        sgn = (1 if d.x >= 0 else -1) if abs(d.x) > 0.08 else rnd.choice((-1, 1))      # which side a lock from the top falls to
+        if e > 0.6: L += 0.16 * (e - 0.6) / 0.97 + 0.10      # a lock from the top first lies over the head, so it is longer
         while length < L:
-            dirv = (dirv + Vector((0, 0.06 * (1 - front) * 0.5, -0.45))).normalized()
+            dq0 = pts[-1] - C
+            if dq0.z > -0.01 and dq0.length < surface(dq0.normalized()) + r0 + 0.02:
+                # still on the head: lie on the scalp and run down it, back and to its own side, never forward over the face
+                n_ = dq0.normalized(); g_ = Vector((0.75 * sgn * max(0.0, front + 0.3), 0.9, -0.55)); t_ = g_ - n_ * g_.dot(n_)
+                if t_.length > 1e-4:
+                    q = pts[-1] + t_.normalized() * seg; dq = q - C; Rq = surface(dq.normalized())
+                    if Rq > 0: q = C + dq.normalized() * (Rq + r0 * 0.9)
+                    dirv = (q - pts[-1]).normalized(); pts.append(q); length += seg; continue
+            dirv = (dirv + Vector((0, 0.06 * (1 - front) * 0.5 + 0.22 * side * max(0.0, front + 0.8), -0.32))).normalized()      # locks at the side drift back behind the ear
             q = pts[-1] + dirv * seg
             # clear of the head and its short hair
             dq = q - C
             if dq.length > 1e-6:
                 Rq = surface(dq.normalized())
-                if Rq > 0 and dq.length < Rq + r0 + 0.005: q = C + dq.normalized() * (Rq + r0 + 0.005)
+                if Rq > 0 and dq.length < Rq + r0 + 0.002: q = C + dq.normalized() * (Rq + r0 + 0.002)
             # clear of the skin and the shirt below the head
-            for t in [tree] + ([ST] if ST else []):
-                loc, nrm, _i, dist = t.find_nearest(q, 0.06)
-                if loc is not None and (q - loc).dot(nrm) < r0 + 0.012:
-                    q = loc + nrm * (r0 + 0.012)
+            for t, clear in [(skin, 0.012)] + ([(ST, 0.032)] if ST else []):      # well clear of the shirt: it moves with the shoulders and the back, and locks lying 12 mm off it sank into it in the standing and waving clips
+                loc, nrm, _i, dist = t.find_nearest(q, 0.08)
+                if loc is not None and (q - loc).dot(nrm) < r0 + clear:
+                    q = loc + nrm * (r0 + clear)
+            # below the collar a lock is always outside the shirt: measured out from the spine, it lies beyond the shirt's outer face (the nearest-point test above let a
+            # lock slip down the nape inside the neck opening, and the cloth check found it under the shirt)
+            if ST and q.z < NECK + 0.05:
+                ax = Vector((0, globals()['YCz'](q.z) if 'YCz' in globals() else hy, q.z)); dd = Vector((q.x - ax.x, q.y - ax.y, 0)); L_ = dd.length
+                if L_ > 1e-5:
+                    out = ST.ray_cast(ax + dd / L_ * 0.4, -dd / L_, 0.4)[0]
+                    if out is not None and (out - ax).length + r0 + 0.02 > L_: q = ax + dd / L_ * ((out - ax).length + r0 + 0.02)
             # side locs end above the shoulder, so a raised arm never meets them
             if side > 0.55 and front > -0.75 and q.z < SH.z + 0.06: break
             # below the base of the neck only a band down the middle of the back: the shirt over the shoulders and shoulder
@@ -109,6 +130,9 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None):
             if q.z < NECK + 0.06 and abs(q.x) > 0.10: break
             pts.append(q); length += seg
         if len(pts) < 3: continue
+        # no lock may stand up from its root like a hook, or stick out sideways past the ear before it falls (both were seen on the rebuilt men, 16 November 2026)
+        if max(q.z for q in pts) > p.z + 0.02: continue
+        if any(q.z > NECK + 0.10 and (q - C).length > surface((q - C).normalized()) + r0 + 0.03 for q in pts[1:]): continue
         rings = _strand(bm, pts, r0)
         strands.append((rings, rnd.uniform(0.75, 1.15), rnd.random() < grey))
     me = bpy.data.meshes.new('Locks'); bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me)
@@ -121,9 +145,9 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None):
     base = srgb(hair_rgb)
     vi = 0; shade = []
     for rings, k, g in strands:
-        nv = len(rings) * 5 + 1
+        nv = len(rings) * SIDES + 1
         for j in range(nv):
-            t = min(1, (j // 5) / max(1, len(rings) - 1))
+            t = min(1, (j // SIDES) / max(1, len(rings) - 1))
             c = (srgb([150, 146, 138]) if g else base) * k * (1 + 0.25 * t)
             shade.append(c)
         vi += nv
@@ -140,7 +164,8 @@ def make_tam(seed):
     hy = J('Head').y
     C = Vector((0, hy + 0.004, HEAD + 0.075))
     hair_obj = bpy.data.objects.get('Hair')
-    trees = [tree] + ([_tree(hair_obj)] if hair_obj else [])
+    skin = globals().get('SKIN') or tree      # the skin alone: the base mesh also holds helper shapes that stand clear of the skull, and locs measured against them floated above the head
+    trees = [skin] + ([_tree(hair_obj)] if hair_obj else [])
     def surface_at(p, d):
         far = 0
         for t in trees:

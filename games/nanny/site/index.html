@@ -148,7 +148,7 @@ body.talking #goal,body.talking #hint{visibility:hidden}   /* while someone is s
 @media (min-width:900px){#card .cardin:has(#cbtns:not(.col) > :nth-child(4)){width:min(58rem,100%)}#cbtns:not(.col){flex-wrap:nowrap}}   /* a card with four or more buttons is wider on a desktop, and its buttons stay on one line */
 #place{position:absolute;left:50%;top:max(22%,152px);transform:translateX(-50%);font-family:var(--display);font-size:clamp(1.3rem,4.6vw,2.4rem);letter-spacing:.02em;text-align:center;text-shadow:0 2px 12px rgba(0,0,0,.8);pointer-events:none;transition:opacity 1.6s;margin:0;width:min(34rem,calc(100% - 24px))}
 @media (max-width:520px){.chbtn{grid-template-columns:1fr auto}.chbtn .yr{grid-column:1}.chbtn .nm{grid-column:1}.chbtn .st{grid-row:1 / span 2;grid-column:2}}
-@media (max-width:520px){#journal footer span{display:none}#jhome{margin-left:0}#journal footer{justify-content:flex-end}html,body{font-size:17px}#goal{font-size:.85rem}#hint{white-space:normal;text-align:center}}
+@media (max-width:520px){#journal footer span{display:none}#jhome{margin-left:0}#journal footer{justify-content:flex-end}html,body{font-size:17px}#goal{font-size:.85rem}#hint{white-space:normal;text-align:center}body:has(#hint:not([hidden])) #talk{bottom:104px}}   /* on a phone the hint wraps to two lines: the talk button moves up clear of it (the layout test caught them touching) */
 /* a card covers the whole screen, so everything under it steps aside */
 body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){visibility:hidden}
 /* short screens (a phone on its side): tighter cards, a lower toast, and no place caption while a toast shows */

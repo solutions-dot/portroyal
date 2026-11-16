@@ -82,7 +82,7 @@ for (const n of names) {
     const doc = await io().read(`${SRC}/${n}.glb`);
     if (light) for (const nd of doc.getRoot().listNodes()) if (/^(Buttons|JButtons|WaistcoatButtons|Placket|Buckle)/.test(nd.getName())) { nd.setMesh(null); nd.setSkin(null); }   /* too small to see in a crowd (lapels stay: they cover the edge of the jacket's opening) */
     for (const t of doc.getRoot().listTextures()) { t.setImage(new Uint8Array(eye)); t.setMimeType('image/jpeg'); }
-    for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const mat = p.getMaterial(); if (!mat || !mat.getBaseColorTexture()) p.setAttribute('TEXCOORD_0', null); }
+    for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const mat = p.getMaterial(); if (!mat || !mat.getBaseColorTexture()) p.setAttribute('TEXCOORD_0', null); else for (const k of p.listSemantics()) if (/^COLOR_/.test(k)) p.setAttribute(k, null); }   /* the eyes are drawn from their picture alone: joined into a crowd body they were given black, clear vertex colours, and every eye in the crowd vanished */
     await doc.transform(weld(), prune({ keepAttributes: true, keepLeaves: true }));
     const t0 = tris(doc), ratio = ratioOf(t0), goal = t0 * ratio;
     const faces = new Set(ratio < 0.98 ? splitFaces(doc, (nf) => goal > 20000 ? nf : Math.min(nf, Math.max(goal * 0.16, 720))) : []);   /* a full body keeps the whole face; a light copy gives it about a sixth of its triangles, and never fewer than 720 */

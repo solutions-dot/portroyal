@@ -1,6 +1,6 @@
 /* A character sheet for any game's packed bodies: node tools/review/people-sheet.mjs <game> <id,id,...> [out.png] [key=value ...]
    Serve the repository root first (python3 -m http.server 8765). Options: anim=Idle, hide=Hat,Cap (material names), skin=1.55,
-   views=front,side,back,face,face34,faceside (also torso, torso34, torsoside, torsoback for a closer look at the clothes), w=300, h=420, at=0.4 (seconds into the clip). An id may be a path to a packed file's folder
+   views=front,side,back,face,face34,faceside (also torso, torso34, torsoside, torsoback for a closer look at the clothes), w=300, h=420, at=0.4 (seconds into the clip), fs=0.36 (metres shown in a face view; 0.6 takes in the collar and shoulders). An id may be a path to a packed file's folder
    and name (build/exp/a reads build/exp/a.js). Writes build/review/<game>-<ids>.png unless out is given. See docs/TESTING.md. */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';

@@ -98,6 +98,7 @@ The rules every character must meet are in `docs/PEOPLE.md`; the checklist is in
 - `tools/garvey/preview.py` renders front and three-quarter views of bodies built by `era.py`, brighter than the two above: `NPC_OUT=build/people/ ~/venv/bin/python3 tools/garvey/preview.py -- printer1907,woman1914` (writes `build/garvey_front.png` and `build/garvey_34.png`).
 - Blender previews make dark skin look darker than the game does. Judge skin with `?test=skin` and game screenshots (`docs/PIPELINE.md`, "Skin").
 - In the game: Port Royal's `?shot=sheet&who=<name>`, and Kendal's and Melissa's `?shot=model&m=people&ids=...` line people up for a close look.
+- `node tools/review/people-sheet.mjs <game> <id,id,...> [out.png] [views=front,side,back,face,face34,faceside]` draws the same sheet for any game's packed bodies, in the game's own stance and skin lightening (serve the repository root first). Add `_lo`, `_crowd` or `_phone` to an id to look at a light copy: check that it still has eyes, brows and lips. `torso`, `torso34`, `torsoside` and `torsoback` views look closer at the clothes.
 - Look for hair poking through hats, cloth gaps, shirts showing through, and floating feet.
 
 ## 5. Automatic checks (required for every game)

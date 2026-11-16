@@ -89,5 +89,6 @@
   "targets": {
     "head-round": 0.18
   },
-  "upscale": 1.26
+  "upscale": 1.26,
+  "face": "heart"
 }

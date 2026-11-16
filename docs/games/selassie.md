@@ -2,6 +2,10 @@
 
 A six-chapter game about Haile Selassie I's arrival at Palisadoes Airport on 21 April 1966. The title follows the owner's chosen spelling. Folder and save namespace: `selassie`.
 
+## People rebuilt (16 November 2026)
+
+All fifteen recipes were rebuilt from main with the fixed shared builder (see `docs/HANDOFF.md`, "People pass"); draft PR #108's rejected bodies were not used. Each recipe names its own face shape. The Rastafari men have their own builds, beards (`beard` in the recipe) and locs that grow from the whole scalp, lie on the head and fall back. Crowd and phone copies keep eyes, brows and lips, use fewer and thicker locs, and have a hair-coloured scalp so a simplified cap never shows a bald patch. Haile Selassie I: a dark beard round the mouth and along the jaw, greying at the chin, a narrower face and a cap that sits at the brow, after the owner's April 1966 photographs. It is still a stylised likeness. The police cap sits lower and the tunic's collar no longer shows bare neck. Checks after: `?test=all` 0, placement and held 0, cloth 2 lines (a short sleeve's hem when waving).
+
 ## Integration boundary
 
 Rebased onto released main `57ad99a` after reviewing PRs #83, #85 and #86, the recent PR list and current `docs/HANDOFF.md`. The latest additional change was PR #86, covering 1690 knee clearance and builder lapel/pocket weights. It was inspected before the final rebase. Packed models retain their actual earlier builder hash in the asset manifest; a future rebuild uses the current shared builder. No open PRs remained at the earlier integration check on 15 November 2026. Main now includes the shared hand clearance, finger integrity, garment fixes, timeline menu and quality runner. Those shared changes are inherited normally, not copied into the game. The other games and shared engine, character builder, animation library have no changes in this feature diff. The only deployment setting is a branch-specific `git.deploymentEnabled` entry disabling Vercel builds for `feat/selassie-1966`, as the owner requested a PR only.

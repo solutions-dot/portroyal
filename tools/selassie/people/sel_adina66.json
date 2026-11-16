@@ -82,5 +82,6 @@
   "targets": {
     "head-round": 0.25,
     "lr-cheek-volume-incr": 0.25
-  }
+  },
+  "face": "elder"
 }

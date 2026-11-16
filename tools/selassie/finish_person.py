@@ -40,10 +40,12 @@ if kind:
     if kind=='locks':
         # Many separate locs from the scalp (tools/selassie/locs.py); a tam recipe gets its tam and a few locs below it further down.
         exec(compile(Path('tools/selassie/locs.py').read_text(),'locs.py','exec'),globals())
-        LOCS={'sel_rastaelder66':(78,.42,.45),'sel_rastaman66':(72,.34,0),'sel_planno66':(62,.30,.1),'sel_levi66':(56,.26,0)}
+        # how many locs, how far the longest fall down the back (metres), the share that are grey, and how thick: each man his own
+        LOCS={'sel_rastaelder66':(84,.46,.5,1.0),'sel_rastaman66':(90,.36,0,1.1),'sel_planno66':(70,.24,.1,1.15),'sel_levi66':(64,.20,0,.9)}
         if not P.get('tam'):
-            n_,lb_,gr_=LOCS.get(P['name'],(60,.3,0))
-            make_locs(sum(map(ord,P['name'])),n_,lb_,P['colors']['Hair'],gr_)
+            n_,lb_,gr_,th_=LOCS.get(P['name'],(70,.3,0,1.0))
+            make_locs(sum(map(ord,P['name'])),n_,lb_,P['colors']['Hair'],gr_,thick=th_)
+            for o in [o for o in bpy.data.objects if o.name.startswith('Locks')]:o.vertex_groups.new(name='_locs').add(list(range(len(o.data.vertices))),1.,'REPLACE')      # marked, so the crowd copy below can take them out of the joined hair again
     if kind=='emperor':
         from pathlib import Path
         exec(compile(Path('tools/selassie/imperial_uniform.py').read_text(),'imperial_uniform.py','exec'),globals())
@@ -71,16 +73,21 @@ if P.get('uniform')=='police':
         changed=True
 if P['name'] in ('sel_rastaman66','sel_rastatam66','sel_emperor66','sel_police66','sel_levi66','sel_rastawoman66'):
     limit=G.get('jacketsleeve',.96) if G.get('jacket') else G.get('coatsleeve',.96) if G.get('coat') else G.get('sleeve',.3)
+    # the arm is kept a little way up inside the sleeve: cut away to just past the hem, the sleeve's end stood open and its far inside wall showed as a pale flap
     bm=bmesh.new();bm.from_mesh(h.data)
     hide=[]
     for f in bm.faces:
         c=f.calc_center_median();t=side_arm(c)
-        if (t is not None and .08<t<limit+.015 and abs(c.x)>SX*.75) or (P['name'] in ('sel_emperor66','sel_police66') and HIP-.15<c.z<NECK-.025 and abs(c.x)<SX*1.08):hide.append(f)
+        if (t is not None and .08<t<limit-.035 and abs(c.x)>SX*.75) or (P['name'] in ('sel_emperor66','sel_police66') and HIP-.15<c.z<NECK-.025 and abs(c.x)<SX*1.08):hide.append(f)
     bmesh.ops.delete(bm,geom=hide,context='FACES');bm.to_mesh(h.data);bm.free();changed=True
 if P.get('uniform')=='police':
     # The red tunic is the outer garment. Its hidden shirt is unnecessary.
+    # The shirt under the tunic stays, in the tunic's own red: with it removed, bare skin showed in two gaps between the collar and the tunic at the back of the neck.
     shirt=bpy.data.objects.get('Shirt')
-    if shirt:bpy.data.objects.remove(shirt,do_unlink=True)
+    if shirt:
+        shirt.data.materials[0]=colmat('Coat');_c=shirt.data.color_attributes.get('Col')
+        if _c:
+            for c in _c.data:c.color=(*COL['Coat'],1)
     collar=bpy.data.objects.get('Collar')
     if collar:collar.data.materials[0]=colmat('Coat')
     coat=PART.get('coat');old=bpy.data.objects.get('Belt')
@@ -117,6 +124,16 @@ if P.get('uniform')=='police':
             v=breeches.data.vertices[breeches.data.loops[li].vertex_index].co
             axis=leg_axis(v.z,1 if v.x>=0 else -1)
             if ANK+.03<v.z<HIP+.05 and abs(v.y-axis.y)<.012 and abs(v.x)>abs(axis.x):ca.data[li].color=(*COL['Coat'],1)
+if P.get('uniform')=='police':
+    # The skin at the back and sides of the neck just under the tunic's collar is painted in the tunic's red (divided by the 1.55 the game lightens skin by): where the
+    # collar's seam opened in a pose, two patches of bare neck showed.
+    _c=h.data.color_attributes.get('Col');_ny=J('Neck').y
+    if _c:
+        for face in h.data.polygons:
+            for li in face.loop_indices:
+                v=h.data.vertices[h.data.loops[li].vertex_index].co
+                if NECK-.07<v.z<NECK+.014 and v.y>_ny-.02:_c.data[li].color=(COL['Coat'][0]/1.55,COL['Coat'][1]/1.55,COL['Coat'][2]/1.55,1)
+        changed=True
 # Hide only the covered armpit skin on these two fitted short-sleeve recipes.
 # The bare arm and every finger remain intact.
 if P['name'] in ('sel_levi66','sel_rastawoman66'):
@@ -136,7 +153,7 @@ for material,label in [('Hair','Hair'),('Insignia','Regalia')]+([('Jacket','Jack
         for o in meshes:o.select_set(True)
         bpy.context.view_layer.objects.active=meshes[0];bpy.ops.object.join();meshes[0].name=label;changed=True
 if changed:
-    kwargs=dict(export_extras=True,filepath=os.path.join(OUT,P['name']+'.glb'),export_image_format='JPEG',export_apply=False,export_skins=True,export_animations=False)
+    kwargs=dict(export_extras=True,filepath=os.path.join(OUT,P['name']+'.glb'),export_image_format='JPEG',export_apply=False,export_skins=True,export_animations=False,export_attributes=True)
     props=bpy.ops.export_scene.gltf.get_rna_type().properties
     if 'export_vertex_color_name' in props:kwargs.update(export_vertex_color='NAME',export_vertex_color_name='Col')
     else:kwargs['export_vertex_color']='ACTIVE'
@@ -155,6 +172,30 @@ mesh_objects=[o for o in bpy.context.scene.objects if o.type=='MESH']
 for o in mesh_objects:
     if o.name in ('Skirt','Breeches','Apron','JacketSkirt','CoatSkirt'):
         proxy=o.copy();proxy.data=o.data.copy();proxy.name=o.name+'Measure';proxy['measureOnly']=True;bpy.context.scene.collection.objects.link(proxy)
+# Crowd and phone copies (16 November 2026, after the owner's note that the Rastafari men in the crowd had lost their faces):
+# 1. Fewer, thicker, four-sided locs. Simplifying the full set to a tenth left shards and a bald crown.
+if kind=='locks' and not P.get('tam') and any(o.type=='MESH' and '_locs' in o.vertex_groups for o in bpy.data.objects):
+    for o in [o for o in bpy.data.objects if o.type=='MESH' and '_locs' in o.vertex_groups]:      # the full locs come out of the joined hair
+        gi_=o.vertex_groups['_locs'].index;b_=bmesh.new();b_.from_mesh(o.data);d_=b_.verts.layers.deform.verify()
+        bmesh.ops.delete(b_,geom=[v for v in b_.verts if v[d_].get(gi_,0)>.5],context='VERTS');b_.to_mesh(o.data);b_.free()
+    rig.data.pose_position='REST';bpy.context.view_layer.update()
+    n_,lb_,gr_,th_=LOCS.get(P['name'],(70,.3,0,1.0))
+    make_locs(sum(map(ord,P['name'])),int(n_*.5),lb_,P['colors']['Hair'],gr_,thick=th_*1.5,light=True)
+    rig.data.pose_position='POSE';bpy.context.view_layer.update()
+mesh_objects=[o for o in bpy.context.scene.objects if o.type=='MESH' and not o.get('measureOnly')]      # the measuring copies stay apart, as before
+# 2. The scalp under the hair is painted in the hair's colour: when a simplified cap of hair sinks, what shows is hair, not a bald patch.
+_hair=[o for o in mesh_objects if o.data.materials and o.data.materials[0].name=='Hair' and not o.name.startswith('Locks')]
+if _hair:
+    _b=bmesh.new()
+    for o in _hair:_b.from_mesh(o.data)
+    _ht=BVHTree.FromBMesh(_b);_b.free();_cl=h.data.color_attributes.get('Col');_hc=srgb(P['colors']['Hair'])
+    if _cl:
+        for face in h.data.polygons:
+            if h.data.materials[face.material_index].name!='Skin' or face.center.z<HEAD+.02:continue
+            if _ht.ray_cast(face.center+face.normal*.0005,face.normal,.03)[0] is None:continue
+            for loop in face.loop_indices:_cl.data[loop].color=(_hc[0]/1.55,_hc[1]/1.55,_hc[2]/1.55,1)      # the skin's colours are lightened by 1.55 just below
+# 3. The eyes keep their texture coordinates: joined under another layer name they lost them, and every eye was drawn in one flat colour.
+if h.data.uv_layers and eyes.data.uv_layers:eyes.data.uv_layers[0].name=h.data.uv_layers[0].name
 crowdmat=colmat('Crowd');COL['Crowd']=Vector((1,1,1))
 for o in mesh_objects:
     colours=o.data.color_attributes.get('Col')
@@ -171,7 +212,7 @@ bpy.ops.object.select_all(action='DESELECT')
 for o in mesh_objects:o.select_set(True)
 bpy.context.view_layer.objects.active=h
 bpy.ops.object.join();h.name='Crowd'
-kwargs=dict(export_extras=True,filepath=os.path.join(OUT,P['name']+'_crowd.glb'),export_image_format='JPEG',export_apply=False,export_skins=True,export_animations=False)
+kwargs=dict(export_extras=True,filepath=os.path.join(OUT,P['name']+'_crowd.glb'),export_image_format='JPEG',export_apply=False,export_skins=True,export_animations=False,export_attributes=True)
 props=bpy.ops.export_scene.gltf.get_rna_type().properties
 if 'export_vertex_color_name' in props:kwargs.update(export_vertex_color='NAME',export_vertex_color_name='Col')
 else:kwargs['export_vertex_color']='ACTIVE'

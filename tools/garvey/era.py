@@ -15,7 +15,13 @@ from bl_ext.user_default.mpfb.entities.objectproperties import HumanObjectProper
 h=HumanService.create_human()
 for k,v in P['body'].items(): HumanObjectProperties.set_value(k,v,entity_reference=h)
 TargetService.reapply_macro_details(h)
-for _n,_w in P.get('targets',{}).items():      # finer shaping of the face and body (MakeHuman's own targets), for a likeness
+# "face": a named face shape from tools/people/faces.json, so the people of one game do not all share one face; the recipe's own targets are added on top of it.
+# Every face also gets slightly lowered upper lids ("eyes", default 0.3; 0 leaves them wide): fully open, every person seemed to stare.
+_T=dict(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','people','faces.json'))).get(P.get('face'),{})) if P.get('face') else {}
+_ey=P.get('eyes',0.0 if P.get('upscale') else 0.3)      # a child keeps wide eyes: with lowered lids and full brows a small child wore a stern adult's frown
+if _ey>0: _T['lr-eye-height2-decr']=_ey
+_T.update(P.get('targets',{}))
+for _n,_w in _T.items():      # finer shaping of the face and body (MakeHuman's own targets), for a likeness
     for _nn in ([_n.replace('lr-','l-'),_n.replace('lr-','r-')] if _n.startswith('lr-') else [_n]): TargetService.load_target(h,TargetService.target_full_path(_nn),weight=_w,name=_nn)
 def ov(o): return bpy.context.temp_override(object=o,active_object=o,selected_objects=[o],selected_editable_objects=[o])
 with ov(h): bpy.ops.object.shape_key_remove(all=True,apply_mix=True)
@@ -40,7 +46,8 @@ def sstep(a,b,x): t=max(0.0,min(1.0,(x-a)/(b-a))); return t*t*(3-2*t)
 def flat_chest(k):
     # A man's chest must not read as a bust (owner, 16 November 2026). MakeHuman's male chest and ribs stand well forward of the belly; under a shirt, with the standing clip's
     # lean, that showed as a rounded dome from collar to belt. Before any cloth is cut from the skin, the front of his torso is brought back toward a nearly straight line from
-    # the belly (just above the belt) to the collarbones, with a slight outward curve left in it, k of the way. Women, and recipes that set garments.chest to 0, keep their shape.
+    # the belly (just above the belt) to the collarbones, with a slight outward curve left in it, k of the way (garments.chest, default 0.5; it was 0.9 until the standing
+    # posture itself was put right in engine/anim.js, POSTURE). Women, and recipes that set garments.chest to 0, keep their shape.
     bm=bmesh.new(); bm.from_mesh(h.data); dl=bm.verts.layers.deform.verify(); gi=GI['body']; za,zb=HIP+0.11*s,NECK-0.05*s
     _b=bm.copy(); _d=_b.verts.layers.deform.verify(); bmesh.ops.delete(_b,geom=[f for f in _b.faces if not all(v[_d].get(gi,0)>0 for v in f.verts)],context='FACES'); _t=BVHTree.FromBMesh(_b)      # the skin alone: the mesh also holds helper shapes that stand clear of the body
     def front(z):
@@ -53,12 +60,25 @@ def flat_chest(k):
         if v[dl].get(gi,0)<=0 or not za<c.z<zb or abs(c.x)>SX*0.97 or c.y>0: continue
         u=(c.z-za)/(zb-za); lim=ya+(yb-ya)*u-0.016*s*math.sin(math.pi*u)-0.10*abs(c.x)      # the line, a little fuller in the middle, falling away gently to the sides
         if c.y<lim: c.y=lim+(c.y-lim)*(1-k*(1-sstep(SX*0.80,SX*0.97,abs(c.x)))); vs.append(v)
-    print('CHEST',round(ya,3),round(yb,3),round(za,3),round(zb,3),len(vs),round(HIP,3),round(NECK,3))
+    # and the sides: from the waist up to just under the armpit his ribs may widen by no more than 2.5 cm a side. Wider, with the waist drawn in at the belt, the shirt's
+    # sides swelled under the arms and the shadow under them drew the outline of a bust (seen in the game's own stance, 16 November 2026)
+    zc=SH.z-0.115*s
+    def half(z):
+        hit=_t.ray_cast(Vector((0.6,(ya+0.10) if z<za+0.05 else NJ.y,z)),Vector((-1,0,0)))[0]; return hit.x if hit else None
+    xa=half(za)
+    if xa is not None and zc>za+0.05:
+        for v in bm.verts:
+            c=v.co
+            if v[dl].get(gi,0)<=0 or not za<c.z<zc+0.05*s or abs(c.x)>SX*0.99: continue
+            lim=xa+0.025*s*min(1.0,(c.z-za)/(zc-za))
+            if abs(c.x)>lim:
+                f=k*(1-sstep(zc,zc+0.05*s,c.z)); nx=lim+(abs(c.x)-lim)*(1-f); c.x=nx if c.x>0 else -nx
+                if v not in vs: vs.append(v)
     for _ in range(6):      # soften the line where the change begins and ends
         nw={v:sum((e.other_vert(v).co for e in v.link_edges),Vector())/len(v.link_edges) for v in vs}
         for v in vs: v.co=v.co.lerp(nw[v],0.5)
     _b.free(); bm.to_mesh(h.data); bm.free(); h.data.update()
-if not P['garments'].get('woman') and P['body'].get('gender',1)>0.5 and P['garments'].get('chest',0.9)>0: flat_chest(P['garments'].get('chest',0.9))
+if not P['garments'].get('woman') and P['body'].get('gender',1)>0.5 and P['garments'].get('chest',0.5)>0: flat_chest(P['garments'].get('chest',0.5))
 bh=bmesh.new(); bh.from_mesh(h.data); tree=BVHTree.FromBMesh(bh)
 LHIP,LKNEE,LANK=J('LeftUpLeg'),J('LeftLeg'),J('LeftFoot'); NJ=J('Neck')
 _c=tree.ray_cast(Vector((0,LHIP.y,0.3*s)),Vector((0,0,1)))[0]; CROTCH=_c.z if _c else HIP-0.09*s   # where the legs part
@@ -746,13 +766,13 @@ if FLAT:
     xw=(VD-0.012*s)/VK; a0=0.62 if camp else 0.10; nn=14 if OLD else 28; nv=6 if camp else 0      # a later round collar has twice the rows: with 14 a side its edge showed as steps
     def neck_row(a,wk=1.0):
         f=0.5+0.5*math.cos(a); back=(1-f)**1.2; S=collar_pt(a,NECK+0.004,NECK-0.030*s if camp else NECK-0.012*s,0.010); D=Vector((math.sin(a),-math.cos(a),0)); w=LW*((0.72+0.28*f) if camp else 1.0)*wk      # a round collar keeps its width all round: narrower at the back, it left the slope of the shoulders showing beside it
-        stand=(0.014*s*back if camp else 0.003*s)
+        stand=(0.006*s*back if camp else 0.003*s)      # a camp collar lies nearly flat at the nape too: standing 14 mm with its edge lifted 15 mm, its back rose like a fin over the shoulders when the back curved (16 November 2026)
         # the stand rises straight from the seam: set back from it, the two rows crossed at the nape and the cloth folded into teeth
-        base=on_shirt(S,0.004); top=base+Vector((0,0,max(stand,0.002)))+D*0.001; mid=on_shirt(S+D*w*0.5+Vector((0,0,-w*0.25)),(0.011+0.004*back) if camp else 0.006); out=on_shirt(S+D*w*0.9+Vector((0,0,-w*0.55)),0.015 if camp else 0.007)      # the outer edge of the leaf lifts a little, so light and shadow draw the collar even when it is cut from the shirt's own cloth
+        base=on_shirt(S,0.004); top=base+Vector((0,0,max(stand,0.002)))+D*0.001; mid=on_shirt(S+D*w*0.5+Vector((0,0,-w*0.25)),0.007 if camp else 0.006); out=on_shirt(S+D*w*0.9+Vector((0,0,-w*0.55)),0.009 if camp else 0.007)      # the outer edge of the leaf lifts a little, so light and shadow draw the collar even when it is cut from the shirt's own cloth
         return [base,top,mid,out]
     def v_row(t,sx):      # down the edge of the V: t 0 at its top corner, 1 at the notch
         x=sx*xw*(1-0.62*t); z=VZ+VK*abs(x)-0.002; S=Vector((x,shirt_front(z,x)-0.004,z)); D=Vector((sx*0.86,0,-0.5)); w=LW*(1.0+0.12*t)
-        base=on_shirt(S,0.004); mid=on_shirt(S+D*w*0.5,0.011); out=on_shirt(S+D*w,0.015)
+        base=on_shirt(S,0.004); mid=on_shirt(S+D*w*0.5,0.008); out=on_shirt(S+D*w,0.010)
         return [base,base.lerp(mid,0.3)+Vector((0,-0.002,0)),mid,out]
     side=[]
     for k in range(nn+1): side.append(math.pi-(math.pi-a0)*k/nn)
@@ -763,7 +783,7 @@ if FLAT:
         for _ in range(12):
             for j in range(0,4):      # a round collar's seam row too: left on the nearest shirt point, it zigzagged at the throat
                 for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
-        for j,off in ((0,0.003),(1,0.0035),(2,0.0065 if camp else 0.005),(3,0.011 if camp else 0.006)): ring_fix(rows,j,SHT,off,iters=2)      # a round collar lies close on the blouse: its edge lifted 1.5 cm stood up like a wing when the back curved      # the seam row too, on every flat collar: left on the nearest shirt point it showed as teeth at the nape
+        for j,off in ((0,0.003),(1,0.0035),(2,0.0055 if camp else 0.005),(3,0.0075 if camp else 0.006)): ring_fix(rows,j,SHT,off,iters=2)      # a round collar lies close on the blouse: its edge lifted 1.5 cm stood up like a wing when the back curved      # the seam row too, on every flat collar: left on the nearest shirt point it showed as teeth at the nape
         if not camp:
             for j,off in ((2,0.006),(3,0.008)): ring_fix(rows,j,SKIN,off,iters=1)      # and clear of the skin: at the top of the shoulder the skin rose above the shirt and came up through the collar
     if not camp and not OLD:      # a yoke under the seam, down onto the skin beneath the shirt, so no skin shows between the collar and the neck
@@ -952,7 +972,7 @@ def _radius(z,a):
     o=Vector((0,J('Neck').y,z)); d=Vector((math.sin(a),-math.cos(a),0)); hit=tree.ray_cast(o+d*0.3,-d)[0]
     return (hit-o).length if hit else 0.06
 def head_fit(grow=0.008):      # the head's outline at brow height, where a hat sits
-    BZ=TOP-0.085*s; xs=[];ys=[]
+    BZ=TOP-0.085*s-G.get('hatdrop',0)*s; xs=[];ys=[]      # hatdrop (metres): the hat sits this much lower on the head. TOP is measured on a helper shape about 13 mm above the real skull, so a stiff cap rode high (owner, 16 November 2026: the Emperor's and the police caps)
     for v in h.data.vertices:
         if abs(v.co.z-(BZ+0.012*s))<0.012*s and v.co.z>HEAD: xs.append(v.co.x); ys.append(v.co.y)
     return (max(xs)+min(xs))/2,(max(ys)+min(ys))/2,(max(xs)-min(xs))/2+grow,(max(ys)-min(ys))/2+grow,BZ
@@ -995,7 +1015,7 @@ def build_hat(HK,HM):
         rigid(HM,bm,HM,'Head'); rigid(HM+'Band',bb,HM+'Band','Head')
     elif HK=='felt':
         # fit the crown to this head: measure the skull's outline at brow height so the hat sits down over it
-        BZ=TOP-0.085*s; xs=[];ys=[]
+        BZ=TOP-0.085*s-G.get('hatdrop',0)*s; xs=[];ys=[]      # hatdrop (metres): the hat sits this much lower on the head. TOP is measured on a helper shape about 13 mm above the real skull, so a stiff cap rode high (owner, 16 November 2026: the Emperor's and the police caps)
         for v in h.data.vertices:
             if abs(v.co.z-(BZ+0.012*s))<0.012*s: xs.append(v.co.x); ys.append(v.co.y)
         cx=(max(xs)+min(xs))/2; cy=(max(ys)+min(ys))/2; rx=(max(xs)-min(xs))/2+0.008+(0.010 if not OLD else 0); ry=(max(ys)-min(ys))/2+0.008+(0.010 if not OLD else 0)      # later eras: room for the hair under the crown
@@ -1017,7 +1037,7 @@ def build_hat(HK,HM):
         rigid(HM,bm,HM,'Head')
     if HK=='flat':
         # a flat (newsboy) cap: a band at the brow, a low dome that puffs out past it, and a short stiff peak at the front
-        BZ=TOP-0.085*s; xs=[];ys=[]
+        BZ=TOP-0.085*s-G.get('hatdrop',0)*s; xs=[];ys=[]      # hatdrop (metres): the hat sits this much lower on the head. TOP is measured on a helper shape about 13 mm above the real skull, so a stiff cap rode high (owner, 16 November 2026: the Emperor's and the police caps)
         for v in h.data.vertices:
             if abs(v.co.z-(BZ+0.012*s))<0.012*s: xs.append(v.co.x); ys.append(v.co.y)
         cx=(max(xs)+min(xs))/2; cy=(max(ys)+min(ys))/2; rx=(max(xs)-min(xs))/2+0.010; ry=(max(ys)-min(ys))/2+0.010
@@ -1057,7 +1077,7 @@ def build_hat(HK,HM):
         if HK=='pillbox':
             f2=(fit[0],fit[1]+0.012*s,fit[2]*0.86,fit[3]*0.86,fit[4]+0.03*s); lathe(bm,[(0.0,0.0),(0.002,CRH+0.012*s-0.03*s),(-0.03*s,CRH+0.018*s-0.03*s)],f2)
         if HK=='peaked':      # a uniform cap: a stiff band, a wide flat top that tilts up at the front, a shiny peak
-            lathe(bm,[(0.001,0.0),(0.001,0.032*s),(0.026*s,CRH-0.006*s),(0.018*s,CRH+0.008*s),(-0.05*s,CRH+0.012*s)],fit,mod=lambda a,i,d,z:(d,z+(0.012*s*math.cos(a) if i>=2 else 0)))
+            _hd=G.get('hatdrop',0)*s; lathe(bm,[(0.001,0.0),(0.001,0.032*s),(0.026*s,CRH-0.006*s+_hd*0.3),(0.018*s,CRH+0.008*s+_hd*0.3),(-0.05*s,CRH+0.012*s+_hd*0.3)],fit,mod=lambda a,i,d,z:(d,z+(0.012*s*math.cos(a) if i>=2 else 0)))
             lathe(bb,[(0.003,0.004*s),(0.003,0.030*s)],fit,cap=False)
             cx,cy,rx,ry,BZ=fit; rows=[]
             for k in range(9):
@@ -1368,6 +1388,32 @@ if not OLD and G.get('socks'):
     bmesh.ops.triangulate(bm,faces=[f for f in bm.faces if len(f.verts)>4])
     for f in bm.faces: f.material_index=1 if cz(f).z<ZSK else 0
     bm.to_mesh(h.data); bm.free(); h.data.materials.append(colmat('Sock',0.85))
+def tuck_skin():
+    # Skin that is still there under the top of a shirt, jacket or coat (the slope of the shoulders and the base of the neck, kept because it is near the neck opening) came
+    # through the cloth as small patches when the shoulders moved (seen on every Nanny Town and Selassie man, 16 November 2026). Each such point of skin, more than 12 mm in
+    # from the garment's open edge, is set 8 mm deeper and takes the bone weights of the cloth right over it, so it moves exactly as the cloth does and cannot pass it.
+    from mathutils.kdtree import KDTree
+    o=PART.get('jacket') or PART.get('coat') or PART.get('shirt')
+    if o is None or not len(o.data.polygons): return
+    b=bmesh.new(); b.from_mesh(o.data); b.normal_update(); bt=BVHTree.FromBMesh(b); edge=[v.co.copy() for v in b.verts if v.is_boundary]; b.free()
+    ke=KDTree(max(1,len(edge)))
+    for i,c in enumerate(edge): ke.insert(c,i)
+    ke.balance(); kv=KDTree(len(o.data.vertices))
+    for v in o.data.vertices: kv.insert(v.co,v.index)
+    kv.balance(); on={g.index:g.name for g in o.vertex_groups}; h.data.update(); n=0
+    for v in h.data.vertices:
+        c=v.co
+        if not NECK-0.13*s<c.z<NECK+0.03*s or abs(c.x)>SX*1.12: continue
+        hit=bt.ray_cast(c+v.normal*0.0005,v.normal,0.03)[0]
+        if hit is None or (edge and ke.find(hit)[2]<0.012): continue
+        near=o.data.vertices[kv.find(hit)[1]]; bw={on[g.group]:g.weight for g in near.groups if on[g.group].startswith('mixamorig:') and g.weight>0}
+        if not bw: continue
+        for g in list(v.groups):
+            if h.vertex_groups[g.group].name.startswith('mixamorig:'): h.vertex_groups[g.group].remove([v.index])
+        for nm,w in bw.items(): (h.vertex_groups.get(nm) or h.vertex_groups.new(name=nm)).add([v.index],w,'REPLACE')
+        v.co=c-v.normal*0.008; n+=1
+    print('TUCKED SKIN',n)
+tuck_skin()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
 # Colours. The layer below is a float layer, so the linear colours made by srgb() above are exported as they are, and the scene is marked
 # vertexColorSpace: linear (engine/colours.js repairs older bodies without the mark). So a recipe colour means the same colour in every game (docs/PIPELINE.md, "Skin").
@@ -1384,7 +1430,7 @@ def paint(o):
                 col=col.lerp(col*0.62+Vector((0.05,0.0,0.0)),min(1,lip*1.2))
                 for sx in (-1,1):      # eyebrows, placed from the eyes themselves (a set height above the neck missed the brow on children, elders and shaped faces, and at 4.5 mm they hardly showed)
                     e=EYE[sx]; bx=(p.x-e.x*1.16)/(1.12*ER*G.get('browwide',1.0)); out=bx*sx      # out: -1 at the nose end, +1 at the temple
-                    bz=(p.z-(e.z+ER*0.56+ER*0.13*(1-(out-0.1)**2)))/(ER*0.235*G.get('brows',1.0)*(1.0-0.42*max(0.0,out)))      # a low arch, fuller toward the nose and thinning to the temple
+                    bz=(p.z-(e.z+ER*0.56+ER*0.13*(1-(out-0.1)**2)))/(ER*0.235*G.get('brows',0.5 if P.get('upscale') else 0.7 if G.get('woman') else 1.0)*(1.0-0.42*max(0.0,out)))      # a low arch, fuller toward the nose and thinning to the temple; finer on women and children unless the recipe sets brows
                     br=max(0,1-(bx*bx+bz*bz)) if p.y<e.y+ER*1.2 else 0
                     col=col.lerp(BROWCOL,min(1,br*2.6)*0.9)
                 k=0.94+noise.noise(p*9)*0.06

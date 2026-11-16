@@ -106,7 +106,7 @@ const BASES = {}, basePromises = {};
 function loadBase(id) { return BASES[id] ? Promise.resolve(BASES[id]) : (basePromises[id] = basePromises[id] || model(id).then((g) => { g.scene.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); BASES[id] = g; return g; })); }
 const PROPS = { musket: (s) => musket(!s.fixed && !s.fine), lantern: () => lantern(), horn: () => horn() };   /* people far off carry the plain musket; the ones you can walk up to carry the full one */
 /* how each thing is carried (engine/grip.js): scale is its size, lift how far the arm is held out from the body. After changing these run ?test=held. */
-const GRIP = { musket: { scale: 1, lift: 0.3, straighten: 0.9 }, lantern: { scale: 1.1, lift: 0.5 }, horn: { scale: 1, lift: 0.32 } };
+const GRIP = { musket: { scale: 1, lift: 0.3, straighten: 0.9 }, lantern: { scale: 1.1, lift: 0.5 }, horn: { scale: 1, lift: 0.45 } };
 const SKIN_LIGHT = 1.55;   /* owner rule 9: Skin is built inside Marcus Garvey's range, then lightened here so faces read in every light (as in Kendal). The British soldiers (pale: true) are drawn as built. Check with ?test=skin */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);

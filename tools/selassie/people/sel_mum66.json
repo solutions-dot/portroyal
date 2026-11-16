@@ -83,5 +83,6 @@
     "head-oval": 0.3,
     "chin-width-decr": 0.2,
     "nose-width2-incr": 0.15
-  }
+  },
+  "face": "soft"
 }

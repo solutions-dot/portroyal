@@ -23,7 +23,8 @@
         "Hat"
       ]
     ],
-    "trousers": true
+    "trousers": true,
+    "leaf": 0.07
   },
   "colors": {
     "Skin": [
@@ -90,5 +91,6 @@
   "targets": {
     "head-square": 0.35,
     "nose-scale-horiz-incr": 0.2
-  }
+  },
+  "face": "broad"
 }

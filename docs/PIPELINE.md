@@ -259,6 +259,11 @@ What it makes (keys in `garments` unless noted):
 | top-level `targets` | MakeHuman face and body targets by name (for a likeness), `lr-` for both sides. |
 | `apron` | An apron that lies on the trousers, a hand's breadth clear of them, and rides on the thighs. |
 | top-level `era` | The year the person is dressed for. Before 1800 uses the 1690 tailoring (section 1). Left out, it builds as 1915. |
+| top-level `face` | A named face shape from `tools/people/faces.json` (`broad`, `long`, `round`, `lean`, `strong`, `soft`, `elder`, `heart`, `wide`, `narrow`), so the people of one game do not share one face. The recipe's own `targets` are added on top. |
+| top-level `eyes` | How far the upper lids are lowered (default 0.3; children 0). Fully open, everyone stared. |
+| `chest` (in `garments`) | Men only: how far the chest and the sides of the ribs are eased toward a plain shirt front (default 0.5, 0 leaves the body's own shape). |
+| `hatdrop` (in `garments`) | Metres a hat sits lower on the head (the Emperor's and the police caps use 0.026). |
+| top-level `beard` | The Emperor's Arrival only (`tools/selassie/imperial_face.py`): `len`, `thick`, `under`, in metres. |
 | top-level `fbx` | `true` also writes `build/people/<name>_for_mixamo.fbx` in the rest pose, to upload to mixamo.com (section 2). |
 | top-level `body` | MakeHuman macros 0 to 1 (`gender`, `age`, `muscle`, `weight`, `height`, `proportions`, `african`, `caucasian`, `asian`; women may also set `cupsize`, `firmness`). |
 | top-level `upscale` | For a child: the body is built at a child's shape, then enlarged so animations fit. The game shrinks it back with `scale`. |

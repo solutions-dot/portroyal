@@ -1,5 +1,33 @@
 # Handoff: where the work stands (15 November 2026)
 
+## People pass: faces, chests, clothes and the crowd (16 November 2026, evening)
+
+The owner's open list was: faces in The Emperor's Arrival, the Rastafari men in its crowd, faces in Nanny Town, men's chests that read as a bust, and broken clothes. This pass started from main (not from the rejected draft #108) and found causes in shared code, so the fixes reach every game.
+
+**Root causes found**
+
+- **Stance (every game).** The clips straightened our bodies' naturally curved spine, tipping every ribcage back about 20 degrees: belly out, upper chest sunk, body leaning back. `engine/anim.js` `POSTURE` now turns three spine bones back, once, for every clip. This was the main reason men's chests read as a bust.
+- **Shirt hung from the chin (builder).** The cloth outline's top row reached the jaw, so a man's shirt front was stretched from chin to belt. Fixed in `tools/garvey/era.py`.
+- **Light, crowd and phone copies lost their faces (packer).** The face is now marked by the builder (`_FACE`) and `tools/people/pack.mjs` gives it its own triangles, simplified with its colours. Eyes joined into a crowd body had black, clear vertex colours and vanished: the packer drops vertex colours from textured eyes.
+- **Hats rode high.** The builder measures the top of the head on a helper shape about 13 mm above the skull. New recipe key `hatdrop`.
+- **Locs floated and stuck out.** They were measured against helper shapes, not the skin. They now grow from the whole scalp, lie on the head and fall back.
+
+**Also new**: eyebrows placed from the eyes and painted on finer skin; a brighter eye texture with a smaller iris; relaxed upper lids (`eyes`); ten named face shapes in `tools/people/faces.json` (`"face": "lean"`); a man's chest and rib sides eased (`garments.chest`, default 0.5); skin under the top of a shirt tucked in and bound to the cloth (no more patches at the shoulder); a flatter camp collar; `tools/review/people-sheet.mjs`, one six-view sheet for any game's bodies in the game's own stance.
+
+**Rebuilt with all of this**: Nanny Town (10 bodies and light copies) and The Emperor's Arrival (15 recipes, five copies each). Each recipe has its own face; the Rastafari men have their own builds, beards and locs; the Emperor's beard is dark and round the mouth and jaw as in the owner's 1966 photographs, his face narrower, his cap lower.
+
+**Checks after the rebuild** (dev builds, this machine): `npm test` 223 pass. Nanny: audit 0, held 0 (the horn is held a little further out), walkers 0, layout 0 at 390x800 and 1280x720 (the talk button now moves clear of a wrapped hint on phones), cloth 45 lines against 46 on main (the Maroon men are at 0; what is left is the seated skirt when kneeling and the two soldiers' coats, as before). Selassie: `?test=all` 0, placement and held 0, cloth 2 lines (one or two points of a short sleeve's hem 5 mm out when waving; main had 0). All ten games build (`npm run dist`).
+
+**Still to do**
+
+1. **Rebuild the other games' bodies** with the fixed builder (Port Royal, Garvey, Kendal, Windrush, Tivoli, Eventide's own three). They already stand upright (the stance fix is in the engine) but keep the old dull eyes, thin brows, chin-hung shirts and face-less light copies until rebuilt. Garvey first needs his brows checked against the photograph: brows are now placed from the eyes, so `brows` and `browwide` in his recipes may need new values. Run each game's cloth, held and audit checks after, because the stance changed.
+2. Knees are still a little bent in the standing clip (the same kind of fitting error, in the legs). Not touched.
+3. Selassie: the two sleeve-hem points above; the police trousers' red piping is blotchy; phone copies of the grey-haired elder have a spiky cap of hair.
+4. Nanny: cloth to 0 (seated skirt when kneeling, soldiers' coats).
+5. Neither game has had its independent or community review. Nothing here is deployed.
+
+Earlier entries below record past checkpoints.
+
 ## Latest checkpoint: menu and Chapters reconciliation, 16 November 2026
 
 - PR #107 merged the reviewed non-people consolidation into main. The separate people work is draft PR #108 and is not approved for merging.

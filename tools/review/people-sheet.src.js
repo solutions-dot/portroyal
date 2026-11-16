@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { repairLegacyVertexColours } from '../../engine/colours.js';
+import { loadClips, clipFor } from '../../engine/anim.js';   /* the game's own way of playing a clip (no bone positions, the posture correction), so the sheet shows the stance the game shows */
 
 const q = new URLSearchParams(location.search), game = q.get('game'), ids = q.get('ids').split(','), anim = q.get('anim') || 'Idle';
 const hide = (q.get('hide') || '').split(',').filter(Boolean), skinK = +(q.get('skin') || 1.55), views = (q.get('views') || 'front,side,back,face,face34,faceside').split(',');
@@ -24,7 +25,7 @@ const dir = (id) => id.includes('/') ? id.slice(0, id.lastIndexOf('/') + 1) : `.
 (async () => {
   const clips = (await model(`../../games/${game}/site/models/`, 'anims')).animations; let extra = [];
   if (q.get('clips')) extra = (await model(`../../games/${game}/site/models/`, q.get('clips'))).animations;
-  const clip = [...clips, ...extra].find((c) => c.name === anim);
+  loadClips({ animations: [...clips, ...extra] }); const clip = clipFor(anim);
   for (let r = 0; r < ids.length; r++) {
     const g = await model(dir(ids[r]), nameOf(ids[r])), m = g.scene; scene.add(m);
     m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const nm = o.material.name || ''; if (hide.includes(nm)) o.visible = false; if (nm === 'Skin') { o.material = o.material.clone(); o.material.color.multiplyScalar(skinK); } });
@@ -37,7 +38,7 @@ const dir = (id) => id.includes('/') ? id.slice(0, id.lastIndexOf('/') + 1) : `.
     const fc = head.clone().lerp(top, 0.52), bc = new THREE.Vector3(hips.x, (foot + top.y) / 2, hips.z), bh = top.y - foot + 0.12;
     views.forEach((v, c) => {
       const face = v.startsWith('face'), torso = v.startsWith('torso'), a = (face ? yaw : 0) + ({ front: 0, side: Math.PI / 2, back: Math.PI, face: 0, face34: 0.62, faceside: Math.PI / 2, torso: 0, torso34: 0.7, torsoside: Math.PI / 2, torsoback: Math.PI })[v];
-      const ctr = face ? fc : torso ? new THREE.Vector3(hips.x, (hips.y + head.y) / 2 + 0.02, hips.z) : bc, span = face ? 0.36 : torso ? head.y - hips.y + 0.34 : bh, d = span / 2 / Math.tan((cam.fov / 2) * Math.PI / 180);
+      const ctr = face ? fc : torso ? new THREE.Vector3(hips.x, (hips.y + head.y) / 2 + 0.02, hips.z) : bc, span = face ? +(q.get('fs') || 0.36) : torso ? head.y - hips.y + 0.34 : bh, d = span / 2 / Math.tan((cam.fov / 2) * Math.PI / 180);
       cam.position.set(ctr.x + Math.sin(a) * d, ctr.y, ctr.z + Math.cos(a) * d); cam.lookAt(ctr); sun.position.set(ctr.x + Math.sin(a + 0.7) * 5, ctr.y + 4, ctr.z + Math.cos(a + 0.7) * 5); sun.target.position.copy(ctr); sun.target.updateMatrixWorld();
       renderer.setScissorTest(true); renderer.setViewport(c * W, (ids.length - 1 - r) * H, W, H); renderer.setScissor(c * W, (ids.length - 1 - r) * H, W, H); renderer.render(scene, cam);
     });
