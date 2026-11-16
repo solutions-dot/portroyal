@@ -1358,7 +1358,18 @@
         #chlist .chbtn .nm { grid-column: 1; }
         #chlist .chbtn .st { grid-column: 2; grid-row: 1 / span 2; }
       }
-    </style>
+    
+/* Keep the three chapter actions together on phone-sized screens. */
+#chapters .chfoot, #chapters .book > footer:has(#chteacher) {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:clamp(5px,1.4vw,12px); align-items:stretch;
+}
+#chapters footer:has(#chteacher) > .btn {
+  min-width:0; width:100%; margin:0; padding:.65em .25em;
+  font-size:clamp(.7rem,2.8vw,.95rem); line-height:1.2;
+  white-space:nowrap; text-align:center;
+}
+</style>
     <link rel="stylesheet" href="title.css" />
   </head>
   <body>
@@ -1547,7 +1558,7 @@
           <button id="chteacher" class="btn ghost" aria-pressed="false">
             Teacher unlock</button
           ><button id="chcred" class="btn ghost">Credits</button
-          ><button id="chreset" class="btn ghost">Start again</button>
+          ><button id="chreset" class="btn ghost">Restart</button>
         </footer>
       </div>
     </section>
