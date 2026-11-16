@@ -323,6 +323,7 @@ export function createAmbient(opts = {}) {
     if (a.spec.at && a.kind === 'watch') return [rel(a.spec.at[0], a.spec.at[1]), 0];
     return [0, 0];
   }
+  const _tq = new THREE.Quaternion();
   function headTick(n, dt) {
     const a = n.amb, b = bonesOf(n.m); if (!b.neck && !b.head) return; a.pT = Math.hypot(W.px - n.x, W.pz - n.z) < O.look ? a.pT + dt : 0; let [yaw, pitch] = lookWant(n);
     if (Math.abs(yaw) > 1.9) yaw = 0; yaw = Math.max(-O.lookYaw, Math.min(O.lookYaw, yaw)); pitch = Math.max(-O.lookPitch, Math.min(O.lookPitch, pitch));
@@ -334,6 +335,10 @@ export function createAmbient(opts = {}) {
     const hq = a.hq || (a.hq = [b.neck, b.head].map(() => ({ base: new THREE.Quaternion(), after: new THREE.Quaternion(10, 0, 0, 0) })));
     [b.neck, b.head].forEach((bone, i) => { if (!bone) return; if (bone.quaternion.equals(hq[i].after)) bone.quaternion.copy(hq[i].base); hq[i].base.copy(bone.quaternion); });
     turnBone(b.neck, UP, a.look * 0.4); turnBone(b.head, UP, a.look * 0.6); turnBone(b.head, _ax, a.lookP + nod);
+    /* the clip and the look together: a fast clip (HeadTurn, Cheer, WipeSweat) or a clip change on top of a look snapped the head round at
+       300 to 1,400 degrees a second (Kendal, Selassie checks). Neck and head each move at most about 140 degrees a second, so the head never spins */
+    const maxA = Math.max(0.02, dt * 2.4);
+    [b.neck, b.head].forEach((bone, i) => { if (!bone) return; const h = hq[i]; if (h.shown && dt > 0 && dt < 0.5) { _tq.copy(bone.quaternion); if (h.shown.angleTo(_tq) > maxA) bone.quaternion.copy(h.shown).rotateTowards(_tq, maxA); } (h.shown || (h.shown = new THREE.Quaternion())).copy(bone.quaternion); });
     [b.neck, b.head].forEach((bone, i) => { if (bone) hq[i].after.copy(bone.quaternion); });
   }
 
