@@ -242,7 +242,7 @@ await run("arrival-salute-sound-and-read-route", async (p) => {
     };
   });
   assert(
-    info.visible && info.clip === "Salute" && info.distance < 0.4,
+    info.visible && info.clip === "SaluteHS" && info.distance < 0.4,
     JSON.stringify(info),
   );
   assert(info.audio === "running", "Audio was never exercised");

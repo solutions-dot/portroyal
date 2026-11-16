@@ -83,8 +83,14 @@ function cameraIssue(Q, camera) {
       if (l.y < below + 1.0) return "inside the boarding steps";
     }
   }
+  const _w = new THREE.Vector3();
   for (const n of [...Q.people, ...Q.extras]) {
     if (!n.m.visible) continue;
+    // a flag or a palm frond held up near the lens fills the picture
+    for (const h of n.m.userData.held || []) {
+      h.obj.getWorldPosition(_w);
+      if (Math.hypot(c.x - _w.x, c.z - _w.z) < 0.55 && c.y > _w.y - 0.2 && c.y < _w.y + 2.8) return "in " + (n.id || n.base) + "'s " + h.label;
+    }
     const m = n.m.position,
       h = 1.75 * (n.m.scale.y || 1);
     if (Math.hypot(c.x - m.x, c.z - m.z) < 0.38 && c.y > m.y && c.y < m.y + h + 0.1) return "inside " + (n.id || n.base);

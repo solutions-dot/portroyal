@@ -17,6 +17,7 @@ import {
 import { palm, tree, boardHouse, marketBasket } from "./period-props.js";
 import * as P from "./props.js";
 import { airportDetail } from "./airport-detail.js";
+import { enrichYard, enrichMemory, enrichRoad } from "./life.js";
 const palette = {
   yard: 0xd9cbae,
   memory: 0xc5ac83,
@@ -205,6 +206,7 @@ function yard() {
       r: 0.22,
     },
   ];
+  enrichYard(Q);
   return Q;
 }
 function memory() {
@@ -272,6 +274,7 @@ function memory() {
     },
     { at: [-3, -5], r: 1.2 },
   ];
+  enrichMemory(Q);
   return Q;
 }
 function road() {
@@ -336,6 +339,7 @@ function road() {
       look: i,
       behaviour: { kind: "watch", at: [2, -28], react: ["Point", "Wave"] },
     });
+  enrichRoad(Q);
   return Q;
 }
 function airport() {
@@ -357,8 +361,11 @@ function airport() {
   box(7, 1.8, 7, solid(0x526a68, 0.5), -30, 11, 30, Q.group);
   box(8, 0.22, 8, P.CREAM, -30, 12, 30, Q.group);
   wall(Q, -30, 30, 8, 8);
-  Q.props.plane = add(Q, P.aircraft(), 12, -32);
-  Q.props.stairs = add(Q, P.stairs(), 4.3, -30.7);
+  // The DC-6 stands nose west with its port side, and the rear passenger door, towards the crowd and the terminal.
+  Q.props.plane = add(Q, P.aircraft(), -4.7, -32);
+  Q.props.plane.rotation.y = Math.PI;
+  // The boarding steps stand at the rear door (world x 4.3, the door face at z -30.35); their treads are fitted to the descent (descend.js).
+  Q.props.stairs = add(Q, P.stairs(), STAIRS_TOP.x, STAIRS_TOP.z);
   P.dynamic(Q.props.stairs);
   Q.props.stairs.visible = false;
   // Keep the playable path clear of the taxiing aircraft and the historically crowded apron.
@@ -384,8 +391,11 @@ function airport() {
   person(Q, "levi", -10, 14, 0.6);
   person(Q, "boy", -10, 21, 0.4);
   person(Q, "visitor", 2, 16, -0.3);
-  person(Q, "emperor", 4.3, -28.8, 0.1, { ground: 2.45, historical: true });
-  person(Q, "planno", 4.3, -26.2, 0.15, { ground: 1.8, historical: true });
+  person(Q, "emperor", STAIRS_TOP.x, STAIRS_TOP.z, 0, {
+    ground: STAIRS_TOP.y,
+    historical: true,
+  });
+  person(Q, "planno", 2.75, -26.0, 0.35, { historical: true });
   worktable(Q, -2, 19, 1.5, 0.7);
   item(Q, "bottle", P.bottle(), -2, 19, 0.83);
   Q.props.mat = box(1.6, 0.016, 1.2, solid(0xb99b65), -5, 0.02, 20, Q.group);
@@ -400,7 +410,7 @@ function airport() {
   for (let row = 0; row < 7; row++)
     for (let col = 0; col < 16; col++) {
       const x = -31 + col * 4.4 + (row % 2) * 0.5 + Math.sin(i * 7.1) * 0.65,
-        z = -14 + row * 4 + Math.cos(i * 3.7) * 0.6;
+        z = -12 + row * 4 + Math.cos(i * 3.7) * 0.6; // clear of the wing tip's line (z -14) as the aircraft taxis in
       if (x > -13 && x < 6 && z > 6) continue;
       const chat = i % 7 === 0 || i % 7 === 1;
       Q.ambient.push({
@@ -414,7 +424,7 @@ function airport() {
               kind: i % 5 === 0 ? "wander" : "watch",
               area: [x - 1.35, z - 1.35, x + 1.35, z + 1.35],
               min: 0.75,
-              at: [19, -28],
+              at: [4.3, -29],
               react: ["Wave", "Clap", "Point"],
               every: [2, 4],
               pause: [1, 3],
@@ -454,6 +464,8 @@ function airport() {
   return Q;
 }
 export const BUILDERS = { yard, memory, road, airport };
+/* the top of the boarding steps, where Haile Selassie stands: just in front of the DC-6's rear door, level with its sill */
+export const STAIRS_TOP = { x: 4.3, z: -29.72, y: 2.56 };
 export function buildPlace(id) {
   const Q = BUILDERS[id]();
   Q.group.name = id;

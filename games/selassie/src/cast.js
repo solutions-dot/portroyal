@@ -42,44 +42,49 @@ export const CAST = {
     historical: true,
   },
 };
+/* Background people. A number gives each one a body, a height and everyday 1960s clothes in its own colours, from a hash, so neighbours in a
+   crowd differ (no repeating pattern along a row). Children and elders are mixed in everywhere. At the airport about half are Rastafari
+   visitors (four different recipes: an elder, a younger man, a woman and a man in a knitted tam); their clothes vary too.
+   `colors` recolours the shirt (or dress) and the trousers (or skirt) of a joined crowd body (main.js, recolour); full bodies use `tint`. */
+const hash = (i, k) => {
+  const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+const pick = (L, i, k) => L[Math.floor(hash(i, k) * L.length) % L.length];
+// no browns, tans or pinks near skin, so a shirt never reads as a bare chest
+export const SHIRTS = [0xe8e4d8, 0xdcd6c0, 0x9fb5c6, 0x9dbb97, 0xc8a24a, 0x9b9d97, 0x56805a, 0xb0362e, 0x46557a, 0xe0d48e, 0x7f6a8e, 0x6f9fa8, 0xf2efe6];
+export const LEGS = [0x3f4241, 0x6a5139, 0x9a8a62, 0x39425c, 0x76776f, 0x5e6449, 0x2f3433];
+export const SKIRTS = [0x3f5f7a, 0x7c3f3a, 0x5d7552, 0xb38a4a, 0x46454d, 0x8b6f9b, 0xc9b98f, 0x2f5a57];
 export function crowdLook(i, airport = false) {
-  if (airport && i % 3 !== 2) {
-    const base =
-      i % 5 === 0
-        ? "sel_rastawoman66"
-        : i % 4 === 0
-          ? "sel_rastaelder66"
-          : i % 2 === 0
-            ? "sel_rastatam66"
-            : "sel_rastaman66";
-    return {
-      base,
-      sex: base.includes("woman") ? "f" : "m",
-      scale: 0.93 + (i % 5) * 0.025,
-      rastafari: true,
-    };
-  }
-  const woman = i % 3 === 0,
-    kid = i % 13 === 0,
-    base = kid
-      ? i % 2
-        ? "sel_girl66"
-        : "sel_boy66"
-      : woman
-        ? "sel_crowdwoman66"
-        : "sel_crowdman66";
-  const shirts = [0xd9d0a9, 0x97b5af, 0xc38c70, 0x829f7b, 0xd5bb85, 0xdad3bd];
+  const r = hash(i, 1),
+    kid = hash(i, 5) < (airport ? 0.09 : 0.08);
+  let base;
+  if (kid) base = hash(i, 6) < 0.5 ? "sel_girl66" : "sel_boy66";
+  else if (airport && r < 0.56) {
+    const k = hash(i, 2);
+    base = k < 0.22 ? "sel_rastawoman66" : k < 0.42 ? "sel_rastaelder66" : k < 0.68 ? "sel_rastatam66" : "sel_rastaman66";
+  } else base = hash(i, 3) < 0.45 ? "sel_crowdwoman66" : "sel_crowdman66";
+  const woman = /woman|girl/.test(base),
+    elder = base === "sel_rastaelder66";
+  const scale = kid
+    ? KIDS[base] * (0.9 + hash(i, 7) * 0.16)
+    : (woman ? 0.9 : 0.93) + hash(i, 7) * (elder ? 0.07 : 0.13);
+  const keep = /rasta/.test(base) && hash(i, 8) < 0.3; // some keep their recipe's own clothes
+  const shirt = pick(SHIRTS, i, 9),
+    legs = woman ? pick(SKIRTS, i, 10) : pick(LEGS, i, 10);
   return {
     base,
-    sex: woman || base === "sel_girl66" ? "f" : "m",
-    scale: KIDS[base] || 0.94 + (i % 7) * 0.018,
-    hat: i % 4 === 0 ? "Hat" : false,
-    tint: {
-      Shirt: shirts[i % shirts.length],
-      Collar: shirts[i % shirts.length],
-      ...(woman
-        ? { Skirt: shirts[i % shirts.length] }
-        : { Breeches: [0x5a5f56, 0x755e45, 0x4a565a][i % 3] }),
-    },
+    sex: woman ? "f" : "m",
+    scale,
+    rastafari: /rasta/.test(base),
+    hat: base === "sel_crowdman66" ? hash(i, 4) < 0.4 && "Hat" : undefined,
+    colors: keep ? null : { shirt, legs },
+    tint: keep
+      ? undefined
+      : {
+          Shirt: shirt,
+          Collar: shirt,
+          ...(woman ? { Skirt: legs } : { Breeches: legs }),
+        },
   };
 }

@@ -164,8 +164,8 @@ export function airportDetail(Q) {
   // Taxi and parking guides lie flush with the apron, clear of the player.
   for (let x = -70; x < 24; x += 8)
     box(5, 0.008, 0.14, solid(0xd5b44e), x, 0.025, -32, g);
-  for (let z = -22; z < -14; z += 1.6)
-    box(0.12, 0.008, 0.8, solid(0xd5b44e), 12, 0.03, z, g);
+  // the stop bar under the nose wheels (the aircraft stands nose west)
+  box(0.18, 0.008, 3, solid(0xd5b44e), -17.4, 0.03, -32, g);
   // Tropical borders, low planters and a coastal skyline.
   for (const [x, z] of [
     [32, 25],
@@ -214,33 +214,42 @@ export function airportDetail(Q) {
         every: [2, 4],
       },
     });
+  /* The welcome on the apron: a loose crowd, not rows. Points are thrown at random (a fixed seed) and kept only when at least 0.8 m from
+     everyone already placed, so nobody stands inside anyone and no line of copies forms. They keep clear of the wing and the turning
+     propellers (x -11 to 0.6), the boarding steps and a space at their foot where Mortimo Planno stands. Denser near the steps. */
   Q.arrivalAmbient = [];
-  let count = 0;
-  for (let row = 0; row < 5; row++)
-    for (let col = 0; col < 26; col++) {
-      const x = -21 + col * 1.0 + Math.sin(count * 3.2) * 0.15,
-        z = -24.1 + row * 0.94 + Math.cos(count * 5.1) * 0.15;
-      if (x > 4.7 && x < 16 && z < -16.5) continue;
-      Q.arrivalAmbient.push({
-        id: "welcome" + count,
-        x,
-        z,
-        look: count + 301,
-        behaviour: {
-          kind: "watch",
-          at: [4.3, -28.8],
-          react: ["Wave", "Clap", "Cheer"],
-          every: [1.8, 3.6],
-        },
-      });
-      count++;
-    }
+  let seed = 6604;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const clear = (x, z) =>
+    !(x > -11 && x < 0.6) &&
+    !(x > 3.1 && x < 5.5 && z < -25.3) &&
+    Math.hypot(x - 2.75, z + 26.0) > 1.3 &&
+    !Q.arrivalAmbient.some((p) => Math.hypot(p.x - x, p.z - z) < 0.8);
+  for (let tries = 0, count = 0; tries < 6000 && count < 132; tries++) {
+    const near = rnd() < 0.45,
+      x = near ? 0.8 + rnd() * 13 : -24 + rnd() * 40,
+      z = -25.6 + rnd() * (near ? 7.5 : 6.5);
+    if (!clear(x, z)) continue;
+    Q.arrivalAmbient.push({
+      id: "welcome" + count,
+      x,
+      z,
+      look: count + 301,
+      behaviour: {
+        kind: "watch",
+        at: [4.3, -29.3],
+        react: ["Wave", "Clap", "Cheer", "Point"],
+        every: [2.2, 4.4],
+      },
+    });
+    count++;
+  }
   Q.policeAmbient = [];
   for (let i = 0; i < 8; i++)
     Q.policeAmbient.push({
       id: "police" + i,
-      x: i < 4 ? -21 + i * 6 : [-4, -1, 18, 23][i - 4],
-      z: i < 4 ? -14.4 : -24.8,
+      x: i < 4 ? -21 + i * 6 : [1.6, 6.6, 18, 23][i - 4],
+      z: i < 4 ? -12.9 : i < 6 ? -26.2 : -24.8, // the front line stands clear of the wing's sweep (z -13.5)
       base: "sel_police66",
       police: true,
       behaviour: { kind: "watch", at: [0, -9], every: [3, 5] },
