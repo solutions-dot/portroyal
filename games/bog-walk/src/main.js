@@ -7,6 +7,8 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    Layout of this file: setup; the Tube and its night (phases work, boots, intro, trickle, rise, dark, out, end); the world outside (places, people, talking);
    the interface (goal, journal, cards, puzzles, chapters, credits, reset); saving; the chapters and their scenes; the frame loop; dev test views and checks. */
 import * as THREE from 'three';
+import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, crackle, chirp, setG, AU } from '../../../engine/audio.js';
@@ -352,15 +354,15 @@ const TALK_SVG = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" st
 const EYE_SVG = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const TB = { el: null, v: new THREE.Vector3(), rects: [], rectT: 0 };
 function addMark(n) { n.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); n.mark.renderOrder = 5; n.mark.visible = false; scene.add(n.mark); }
-const headTop = (n) => (n.m.userData.ground || 0) + (/^Sit/.test(n.anim || '') ? (n.h || 1.3) : (n.h || 1.8)) - 0.03;
+const headTop = (n) => { const y = n.m ? realHeadTop(n.m) : null; return y !== null ? y : (n.m.userData.ground || 0) + (/^Sit/.test(n.anim || '') ? (n.h || 1.3) : (n.h || 1.8)) - 0.03; };   /* the real top of the head or hat (engine/marks.js), or the old guess */
 const markWanted = (n) => wantsTalk(n) || (n.see && stage === 51 && !ctr['seen_' + SEEN_GROUP[n.id]]);
 function bubbleTick(now) {
   const P = P_(), show = MODE === 'world' && S.started && !locked() && !POSTER;
   for (const Q of Object.values(PL)) for (const n of Q.people) { const m = n.mark; if (!m) continue; if (!show || Q !== P || !n.m.visible || !markWanted(n)) { m.visible = false; continue; } const d = Math.hypot(S.x - n.x, S.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, headTop(n) + 0.17 + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
+    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.id = 'tbub'; TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !locked()) activate(near); }); }
   const on = show && near && !near.go; if (!on) { TB.el.hidden = true; return; }
-  TB.v.set(near.x, headTop(near) + 0.08, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
+  TB.v.set(near.x, headTop(near) + NEAR_GAP, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const x = (TB.v.x + 1) / 2 * innerWidth, y = (1 - TB.v.y) / 2 * innerHeight;
   if (now - TB.rectT > 0.25) { TB.rectT = now; TB.rects = ['goal', 'icons', 'clock', 'act', 'skip', 'exit', 'holdbox', 'toast', 'way', 'sub', 'pick', 'hint'].map($).filter((e) => e && !e.closest('[hidden]') && !(e.id === 'sub' && e.classList.contains('dim')) && e.textContent.trim() !== '' && getComputedStyle(e).visibility !== 'hidden').map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0); }
   const bw = 120, bh = 86, r = { left: x - bw / 2, right: x + bw / 2, top: y - bh, bottom: y };   /* the bubble and the name over it: hidden where it would cover a word or button, or leave the screen */
@@ -487,7 +489,7 @@ function placeNudge(x, y, cls, label, fresh) {   /* show the arrow near (x, y) o
   el.hidden = true; return false;
 }
 function nudgeTick(now) {
-  const el = $('nudge'); if (MODE !== 'world') { el.hidden = true; return; } if (!$('way').hidden) $('way').hidden = true;
+  const el = $('nudge'); if (MODE !== 'world') { el.hidden = true; if (GUIDE) GUIDE.hide(performance.now()); return; } if (!$('way').hidden) $('way').hidden = true;
   const quiet = S.started && !locked() && !RIDE.on && goalText && $('holdbox').hidden && $('dialogue').hidden && !fading;
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(S.x - NUDGE.lx, S.z - NUDGE.lz) > 0.6) { NUDGE.lx = S.x; NUDGE.lz = S.z; NUDGE.still = now; }
@@ -495,13 +497,13 @@ function nudgeTick(now) {
   const tgt = quiet ? nudgeTarget() : null;
   if (!NUDGE.on && quiet && tgt && (now - NUDGE.still > 15 || now - NUDGE.since > 50)) { NUDGE.on = true; setGoal(goalText, true); }
   if (NUDGE.on && tgt && Math.hypot(S.x - tgt[0], S.z - tgt[1]) < 2.4) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
-  if (!NUDGE.on || !tgt) { if (!el.hidden) el.hidden = true; return; }
+  if (!NUDGE.on || !tgt) { if (!el.hidden) el.hidden = true; if (GUIDE) GUIDE.hide(performance.now()); return; }
   showNudgeAt(tgt);
 }
-function showNudgeAt(tgt, fresh) {   /* the arrow for a target [x, z, height]: over it when it is in view, at the side of the screen when it is not */
-  const W = innerWidth, H = innerHeight, rel = bearingTo(tgt[0], tgt[1]); _nv.set(tgt[0], tgt[2] || 1.8, tgt[1]).project(camera);
-  if (Math.abs(rel) < 0.55 && _nv.z < 1 && Math.abs(_nv.x) < 0.95) { const sy = (1 - _nv.y) / 2 * H; return placeNudge((_nv.x + 1) / 2 * W, Math.max(70, Math.min(H * 0.7, sy)), 'down', sy > H * 0.8 ? 'Look down' : 'Here!', fresh); }
-  const left = rel > 0, behind = Math.abs(rel) > 2.2; return placeNudge(left ? 60 : W - 60, H * 0.45, left ? 'left' : 'right', behind ? 'Turn around' : 'This way', fresh);
+let GUIDE = null;
+function showNudgeAt(tgt) {   /* a gold arrow on the ground points the way to a target [x, z, height], and a gold ring marks the place (engine/guide.js) */
+  $('nudge').hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: () => S.eye - 1.5 });
+  GUIDE.point(performance.now(), { x: tgt[0], z: tgt[1] }); return true;
 }
 
 /* ---------- saving: kept in this browser only ---------- */
