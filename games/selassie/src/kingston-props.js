@@ -420,10 +420,9 @@ export function car(colour = 0x7d2f2a) {
   for (const s of [-1, 1]) {
     box(1.9, 0.38, 0.02, GLASS, -0.35, 1.38, s * (W / 2 - 0.12), g);
   }
-  const ws = box(0.03, 0.46, W - 0.35, GLASS, 0.77, 1.35, 0, g);
-  ws.rotation.z = -0.5;
-  const rw = box(0.03, 0.42, W - 0.35, GLASS, -1.47, 1.35, 0, g);
-  rw.rotation.z = 0.5;
+  // windscreen and rear window: glass panels just proud of the cabin's front and back faces
+  box(0.03, 0.4, W - 0.4, GLASS, 0.76, 1.38, 0, g);
+  box(0.03, 0.38, W - 0.4, GLASS, -1.46, 1.38, 0, g);
   for (const x of [L / 2 + 0.03, -L / 2 - 0.03]) box(0.1, 0.13, W + 0.06, CHROME, x, 0.45, 0, g);
   box(0.03, 0.22, 0.9, solid(0x8d9294, 0.3, 0.7), L / 2 + 0.01, 0.7, 0, g);
   for (const s of [-1, 1]) mesh(new THREE.SphereGeometry(0.09, 10, 8), glow(0xf6eccc), L / 2 - 0.02, 0.78, s * 0.62, g);

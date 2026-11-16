@@ -162,7 +162,7 @@ export function downtown(K) {
   // parked cars, a bicycle against a column, crates and sacks outside the shops
   put(Q, K6.car(0x6e2b28), -2.6, -12.8, Math.PI / 2, rect(-2.6, -12.8, 2.0, 4.8));
   put(Q, K6.car(0x2f4f6a), 2.6, 3.4, -Math.PI / 2, rect(2.6, 3.4, 2.0, 4.8));
-  put(Q, K6.car(0xd8d2bc), -2.6, 10.8, Math.PI / 2, rect(-2.6, 10.8, 2.0, 4.8));
+  put(Q, K6.car(0xd8d2bc), -2.6, 16.2, Math.PI / 2, rect(-2.6, 16.2, 2.0, 4.8));
   put(Q, K6.bicycle(0x1f3f5f), 3.3, 15.4, Math.PI / 2, rect(3.3, 15.4, 0.4, 1.3));
   put(Q, crate(0.55), -5.9, -9.2, 0.2, rect(-5.9, -9.2, 0.6, 0.6));
   put(Q, crate(0.5, 0x7a5c3a), -5.95, -11.6, -0.3, rect(-5.95, -11.6, 0.55, 0.55));
@@ -258,9 +258,9 @@ export function downtown(K) {
   Q.thin = 2;
   Q.ambient.push(
     // shoppers in the piazzas, and people walking up and down the street
-    stroll("dtW0", -5.2, 14.5, 101, [-6.0, -30, -4.4, 18.5]),
-    stroll("dtW1", -5.1, -6.5, 102, [-6.0, -30, -4.4, 18.5]),
-    stroll("dtW2", -5.3, -26.5, 103, [-6.0, -30, -4.4, 18.5]),
+    stroll("dtW0", -5.2, 14.5, 101, [-6.0, 12.6, -4.4, 18.5]),
+    stroll("dtW1", -5.1, -6.5, 102, [-6.0, -17, -4.4, 2.5]),
+    stroll("dtW2", -5.3, -26.5, 103, [-6.0, -30, -4.4, -22.5]),
     stroll("dtE0", 5.2, 18.0, 104, [4.4, -30, 6.0, 19]),
     stroll("dtE1", 5.0, -12.5, 105, [4.4, -30, 6.0, 19]),
     stroll("dtE2", 5.3, -25.5, 106, [4.4, -30, 6.0, 19]),
@@ -398,7 +398,7 @@ export function parade(K) {
     // Rastafari visitors with drums and the banner
     rasta(chat("pB0", "pB", -13.3, 5.2, 215), 0),
     rasta(chat("pB1", "pB", -12.6, 5.6, 216), 1),
-    rasta(chat("pB2", "pB", -13.1, 6.1, 217), 2),
+    rasta(watch("pB2", -13.1, 6.3, 217, [-12.9, 5.4], { react: ["Clap", "Nod", "Laugh"] }), 2),
     rasta(watch("pB3", -8.0, 4.3, 218, [-9, 4], { react: ["Clap", "Nod", "Cheer"] }), 3),
     // the south sidewalk: higglers, friends meeting, people hurrying to the buses
     watch("pH0", -4.2, 20.2, 220, [-2, 16], { react: ["Wave", "Point", "Nod"] }),
@@ -411,8 +411,8 @@ export function parade(K) {
     walker("pW1", [13.0, 17.4], [8.0, 17.4], 227),
     walker("pW2", [-12.8, 12.0], [-4.0, 12.0], 228),
     stroll("pS0", 11.5, 11.8, 229, [9.8, 10.9, 13.6, 12.7]),
-    child("pK0", 4.2, 17.4, 230, [2.2, 16.8, 7.8, 18.35]),
-    child("pK1", 6.8, 17.4, 231, [2.2, 16.8, 7.8, 18.35], true),
+    child("pK0", 1.8, 17.4, 230, [1.0, 16.8, 2.6, 18.35]),
+    child("pK1", 4.2, 17.6, 231, [3.4, 16.8, 5.0, 18.35], true),
     watch("pT0", 13.3, 15.6, 232, [11.6, 14.1], { react: ["Wave", "Point"] }),
   );
   return Q;
@@ -489,7 +489,7 @@ export function road(K) {
   K.person(Q, "levi", -3.9, -8.5, 0.6);
   K.action(Q, "roadWater", -4.6, 13.9, "Pick up the water", "bottle");
   K.action(Q, "lookout", -4.7, -14.5, "Look over the harbour");
-  K.action(Q, "roadEnd", -1.2, -38, "On to the airport");
+  K.action(Q, "roadEnd", -0.6, -38, "On to the airport");
   Q.carryTo = ["roadWater"];
   Q.where = (id, S) => (id === "roadWater" && S.hand === "bottle" ? [-4.0, 3.6] : null);
   Q.act = {
@@ -517,8 +517,8 @@ export function road(K) {
     [-4.3, 3.6],
     [-4.6, -14.5],
     [-4.6, -24],
-    [-1.2, -28],
-    [-1.2, -38],
+    [-0.6, -27],
+    [-0.6, -38],
   ];
   Q.routes = [{ id: "along the road", pts: path, what: "player", h: 1.3, r: 0.22 }];
   Q.keepOff = [
@@ -544,7 +544,7 @@ export function road(K) {
     chat("rA1", "rA", 3.9, 12.8, 312),
     chat("rB0", "rB", 2.8, -26.5, 313),
     chat("rB1", "rB", 3.6, -27.0, 314),
-    chat("rB2", "rB", 3.2, -27.8, 315),
+    watch("rB2", 3.2, -27.9, 315, [3.2, -26.7], { react: ["Laugh", "Nod", "Point"] }),
     watch("rC0", 4.6, 6.0, 316, [0, -40], { react: ["Point", "Wave", "Cheer"] }),
     watch("rC1", 4.7, -30.5, 317, [0, -40], { react: ["Point", "Wave", "Cheer"] }),
     child("rK0", 4.0, 3.0, 318, [3.0, 1.0, 5.0, 4.5], true),
@@ -600,7 +600,7 @@ export function lane(K) {
     [2.75, -1.6, 8.2, 5],
   ]) {
     const f = K6.zincFence(z1 - z0, 1.9, seed);
-    put(Q, f, x, (z0 + z1) / 2, Math.PI / 2);
+    put(Q, f, x, (z0 + z1) / 2, x > 0 ? -Math.PI / 2 : Math.PI / 2); // posts and rails on the far side of the lane
     Q.walls.push([x - 0.15, z0, x + 0.15, z1]);
   }
   put(Q, K6.louvreHouse(7, 5, { colour: [236, 222, 196], trim: 0x6a3b2a, veranda: 2, lit: true }), -9.6, 9.5, Math.PI / 2);
