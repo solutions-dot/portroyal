@@ -61,7 +61,7 @@
 import { grip as engineGrip } from './grip.js';
 
 const DEF = { delay: 2500, exploreDelay: 2500, near: 2.2 };
-export const ARROW_LIMIT = 3000, ARROW_LIMIT_EXPLORE = 2500;
+export const ARROW_LIMIT = 2500, ARROW_LIMIT_EXPLORE = 2500;
 /* words that send a child somewhere else. A flavour line must not use them (rule 1). */
 export const REDIRECT_WORDS = ['first', 'come back', 'go and', 'go to', 'talk to', 'then', 'go back'];
 export const REDIRECT = new RegExp(REDIRECT_WORDS.map((w) => '\\b' + w + '\\b').join('|'), 'i');
