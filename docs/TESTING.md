@@ -12,6 +12,8 @@
 
 **Timing units:** Bog Walk passes elapsed seconds to its nudge tick (`2.5`); other legacy controllers use milliseconds (`2500`). The guidance-delay test accounts for the difference and checks both shared delay constants.
 
+**Chapter-by-chapter stage data:** `tests/chapter-guidance.mjs` enumerates all stages of Kendal, Selassie and Windrush and checks goal/needs/next references and simulated requirement completion; it also checks goal and talk transition tables for Nanny, Melissa, Eventide and Bog Walk. This is a structural data check, not a substitute for walking each chapter in browser and checking arrow targets, interaction controls and physical reachability.
+
 ## Current UI regression coverage (16 November 2026, PR #101)
 
 The following checks are included in `npm test` on the integration branch:
