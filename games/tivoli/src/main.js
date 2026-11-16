@@ -20,7 +20,8 @@ import { buildNewTivoli } from './newtivoli.js';
 import { buildStreet, streetPlace } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, after as talkAfter, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage } from './story.js';
-import { WALKS, CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick } from './ch1.js';
+import { WALKS, CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget } from './ch1.js';
+import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { lifeTest } from './life.js';   // dev only: ?test=ambient
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
 import { clipInfo, sceneCheck } from './scenecheck.js';
@@ -68,6 +69,20 @@ function clampPos(x, z) {   // keep inside the map and out of buildings (slide a
 /* touch: left half of the screen is a joystick, right half drags to look; mouse drags to look */
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0 };
 releaseOnBlur(keys, [stick, look]);
+/* On-screen direction buttons share the keyboard controls and release safely. */
+for (const button of document.querySelectorAll('#dpad [data-key]')) {
+  const key = button.dataset.key;
+  const release = (e) => { if (e) e.preventDefault(); keys.delete(key); button.classList.remove('pressed'); };
+  button.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (busy || !state.started) return;
+    keys.add(key); button.classList.add('pressed');
+    button.setPointerCapture(e.pointerId);
+  });
+  button.addEventListener('pointerup', release);
+  button.addEventListener('pointercancel', release);
+  button.addEventListener('lostpointercapture', release);
+}
 canvas.addEventListener('pointerdown', (e) => {
   if (busy && Talk.open) { talkLeave(); return; }   // tapping the world while talking ends the talk
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }
@@ -241,7 +256,22 @@ function frame(t) {
   if (__DEV__) for (const m of DEVG) groundFeet(m);
   for (const m of ARMED) weaponTick(m);   // after the mixer and the feet: weapons follow the hands
   if (FIGHT.on) fightAfter(t / 1000); else { camera.position.set(state.x, state.camY || 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); }
+  guideTick(t);
   renderer.render(scene, camera);
+}
+/* The next-task helper: after 2.5 seconds of play, a gold arrow on the ground points the way,
+   with a gold ring round the person or the place. Near them the Talk button takes over. */
+const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }; let GUIDE = null;
+function guideTick(now) {
+  if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: () => state.camY || 1.6 });
+  const goal = $('goal').textContent, quiet = CH.on && state.started && !busy && !FIGHT.on && !Talk.open && $('chcard').hidden;
+  if (goal !== NUDGE.goal) { NUDGE.goal = goal; NUDGE.since = now; NUDGE.on = false; }
+  if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
+  if (!quiet) { NUDGE.since = now; NUDGE.on = false; }
+  const tgt = quiet ? guideTarget() : null;
+  if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) NUDGE.on = true;
+  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) NUDGE.on = false; /* Hide while the player is close enough to interact. */
+  if (!NUDGE.on || !tgt) GUIDE.hide(now); else GUIDE.point(now, { x: tgt[0], z: tgt[1] });
 }
 requestAnimationFrame(frame);
 

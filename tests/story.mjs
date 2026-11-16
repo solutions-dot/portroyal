@@ -66,14 +66,14 @@ test('rule 1: any order works and the goal counts; an ordered step marks only th
   assert.equal(goalWithCount('Talk to Gran.', 0, 1), 'Talk to Gran.', 'one thing to do needs no count');
 });
 
-test('rule 2: the arrow shows 2.5 s after a new goal even while walking, 5 s for explore, and only quiet time counts', () => {
+test('rule 2: the arrow shows 2.5 s after a new goal even while walking, 2.5 s for explore, and only quiet time counts', () => {
   const G = fakeGame(); G.go(10); const S = G.S; let t = 0, a;
   for (; t <= 2400; t += 100) { G.pos = [Math.cos(t / 300), Math.sin(t / 300)]; a = S.tick(t, true); assert.equal(a.show, false); }
   for (; t <= 2600; t += 100) { G.pos = [Math.cos(t / 300), Math.sin(t / 300)]; a = S.tick(t, true); }
   assert.equal(a.show, true, 'shown by 2.6 s while the child keeps moving');
   assert.equal(G.log.filter((l) => l.startsWith('arrow')).length, 1, 'onArrow once a step (pop the goal open)');
-  G.pos = [10, -20]; G.go(13); t = 10000; S.tick(t, true); for (let k = 0; k < 45; k++) { t += 100; a = S.tick(t, true); } assert.equal(a.show, false, 'explore: not yet at 4.5 s');
-  for (let k = 0; k < 6; k++) { t += 100; a = S.tick(t, true); } assert.equal(a.show, true, 'explore: shown by 5.1 s');
+  G.pos = [10, -20]; G.go(13); t = 10000; S.tick(t, true); for (let k = 0; k < 24; k++) { t += 100; a = S.tick(t, true); } assert.equal(a.show, false, 'explore: not yet at 2.4 s');
+  for (let k = 0; k < 2; k++) { t += 100; a = S.tick(t, true); } assert.equal(a.show, true, 'explore: shown by 2.6 s');
   G.go(14); t = 20000; S.tick(t, true); for (let k = 0; k < 40; k++) { t += 100; a = S.tick(t, false); } assert.equal(a.show, false, 'a talk or card does not count');
   for (let k = 0; k < 26; k++) { t += 100; a = S.tick(t, true); } assert.equal(a.show, true);
 });
@@ -154,7 +154,7 @@ test('?test=flow passes a good table and catches each kind of mistake', () => {
   const t = checkFlow(B.S, { start: () => [0, 0] }).text;
   for (const want of [/flow 30: goal "Pass the bucket: 0\." has 3 things to do but no count/, /flow 30: do "bucket" has no visible change/,
     /flow 31: the arrow points at "tree", which is not needed now/, /flow 32: story person "ivy" is not in the place/, /flow 32: the arrow has no target/,
-    /flow 33: has needs but no next step/, /flow 34: has nothing to do/, /flow 33: do "plate" carries "plate" but no such item/, /the arrow shows after 4\.\d s \(at most 3 s\)/,
+    /flow 33: has needs but no next step/, /flow 34: has nothing to do/, /flow 33: do "plate" carries "plate" but no such item/, /the arrow shows after 4\.\d s \(at most 2.5 s\)/,
     /boy says "Talk to Gran first\.": a flavour line must not send you on/, /boy says "Mr\. Clive is nice\.": a flavour line names Mr\. Clive/,
     /clive says "Come back later\."/, /no em dashes/]) assert.match(t, want);
   assert.ok(!/flow 35/.test(t), 'a timed scene marked wait is fine');

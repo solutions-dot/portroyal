@@ -7,6 +7,8 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    hiding from a lantern, the horn game, and the fight as a set piece seen from the watch rock.
    Layout of this file: setup, state and controls, people and places, interface, saving, talking, chapters, the horn, each chapter's scenes, the loop, test views. */
 import * as THREE from 'three';
+import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle } from '../../../engine/audio.js';
@@ -267,15 +269,15 @@ const BUBBLE = (() => { const c = document.createElement('canvas'); c.width = c.
 const TALK_SVG = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12c0 4-4 7-9 7-1.2 0-2.4-.2-3.4-.5L3 20l1.5-4.2C3.6 14.7 3 13.4 3 12c0-4 4-7 9-7s9 3 9 7z"/><circle cx="8" cy="12" r=".6" fill="currentColor"/><circle cx="12" cy="12" r=".6" fill="currentColor"/><circle cx="16" cy="12" r=".6" fill="currentColor"/></svg>';
 const TB = { el: null, v: new THREE.Vector3() };
 function addMark(n) { n.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); n.mark.renderOrder = 5; n.mark.visible = false; scene.add(n.mark); }
-const headTop = (n) => (n.m.userData.ground || 0) + (n.h || 1.8) - 0.03;
+const headTop = (n) => { const y = n.m ? realHeadTop(n.m) : null; return y !== null ? y : (n.m.userData.ground || 0) + (n.h || 1.8) - 0.03; };   /* the real top of the head or hat (engine/marks.js), or the old guess */
 const POSTER = __DEV__ && /[?&]shot=poster/.test(location.search);   /* the menu poster is rendered from this view with no marks or bubbles */
 function bubbleTick(now) {
   const show = state.started && !busy && !frozen && $('card').hidden && !POSTER && !DIR.on && !HORN.on;
   for (const n of P_() ? P_().people : []) { const m = n.mark; if (!m) continue; if (!show || !n.m || !n.m.visible) { m.visible = false; continue; } const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, headTop(n) + 0.17 + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
+    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !busy) activate(near); }); }
   const on = show && near && !near.go; TB.el.hidden = !on; if (!on) return;
-  TB.v.set(near.x, headTop(near) + 0.08, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
+  TB.v.set(near.x, headTop(near) + NEAR_GAP, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
   if (TB.el.dataset.label !== near.who) { TB.el.dataset.label = near.who; TB.el.innerHTML = TALK_SVG + '<span class="who">' + near.who + '</span>'; TB.el.setAttribute('aria-label', near.label); }
 }
@@ -331,7 +333,7 @@ const eyeNow = () => [state.x, groundAt(state.x, state.z) + EYE, state.z];
 
 /* ---------- goal, hint, sound ---------- */
 let stage = 0, best = 0, goalText = '', goalTimer = 0, hintTimer = 0;
-function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); goalTimer = setTimeout(() => { el.textContent = 'Goal'; el.classList.add('folded'); el.setAttribute('aria-expanded', 'false'); }, 6500); if (withControls) showHint(); }
+function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); /* Keep the next task visible until the player completes it. */ if (withControls) showHint(); }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
 function refreshGoal(quiet) { const g = GOALS[stage]; goalText = ctr.goal || (g ? g(ctr) : ''); if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
 $('goal').onclick = () => showGoal(true);
@@ -684,23 +686,22 @@ const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = n
 const ahead = (dense, d = 9) => { const [x, z] = pathAt(dense, Math.min(pathLength(dense), pathS(dense, state.x, state.z) + d)); return [x, z]; };
 const NUDGE_EXTRA = { 11: () => ahead(PL.estate.spots.trail.dense), 12: () => ahead(PL.estate.spots.trail.dense), 13: () => ahead(PL.estate.spots.trail.dense), 20: () => ahead(PL.town.spots.pathIn.dense), 53: () => [PL.town.spots.tree[0] + 2, PL.town.spots.tree[1] - 1.4] };
 function nudgeTarget() {
-  const P = P_(); if (!P) return null; if (ctr.climb && cur === 'town') return ahead(P.spots.back.dense); if (NUDGE_EXTRA[stage]) return NUDGE_EXTRA[stage](); const a = P.actions.find((x) => x.on()); if (a) return [a.x, a.z];
-  let bestT = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; bestT = [n.x, n.z]; } } return bestT;
+  const P = P_(); if (!P) return null; if (ctr.climb && cur === 'town') return ahead(P.spots.back.dense); if (NUDGE_EXTRA[stage]) return NUDGE_EXTRA[stage](); let bestT = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; bestT = [n.x, n.z]; } } if (bestT) return bestT;
+  const a = P.actions.find((x) => x.on()); return a ? [a.x, a.z] : null;
 }
 function nudgeTick(now) {
   const el = $('nudge'); if (!el) return; const quiet = state.started && !busy && !frozen && !DIR.on && !FIGHT.on && !HORN.on && $('holdwrap').hidden && $('dialogue').hidden && $('card').hidden && $('place').style.opacity !== '1' && !document.body.classList.contains('subbing') && goalText && !fading;
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
-  if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30000); NUDGE.still = now; }
+  if (!quiet) { NUDGE.since = now; NUDGE.on = false; } /* Never display guidance over a panel or dialogue. */
   const tgt = quiet ? nudgeTarget() : null;
-  if (!NUDGE.on && quiet && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
-  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
-  if (!NUDGE.on || !tgt) { el.hidden = true; return; } el.hidden = false;
-  const W = innerWidth, H = innerHeight, dx = tgt[0] - state.x, dz = tgt[1] - state.z, rel = Math.atan2(-dx, -dz) - state.yaw, a = Math.atan2(Math.sin(rel), Math.cos(rel));
-  _nv.set(tgt[0], groundAt(tgt[0], tgt[1]) + 2.0, tgt[1]).project(camera); const lab = el.querySelector('span');
-  if (Math.abs(a) < 0.55 && _nv.z < 1) { el.style.left = Math.max(60, Math.min(W - 60, (_nv.x + 1) / 2 * W)) + 'px'; el.style.top = Math.max(110, Math.min(H * 0.62, (1 - _nv.y) / 2 * H)) + 'px'; el.className = 'down'; const sy = (1 - _nv.y) / 2 * H; lab.textContent = sy > H * 0.75 ? 'Look down' : sy < 90 ? 'Look up' : 'Here!'; }
-  else { const left = a > 0; el.style.left = (left ? 58 : W - 58) + 'px'; el.style.top = (H * 0.45) + 'px'; el.className = left ? 'left' : 'right'; lab.textContent = 'This way'; }
+  if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
+  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) NUDGE.on = false; /* Hide while the player is close enough to interact. */
+  el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: (x, z) => groundAt(x, z) });
+  if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
+  GUIDE.point(now, { x: tgt[0], z: tgt[1] });   /* a gold arrow on the ground points the way, a gold ring marks the place */
 }
+let GUIDE = null;
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
 let auNext = 0, onceAt = 6; const AMB = 0.42;
@@ -729,7 +730,9 @@ function prepareTitleScene() {
   TITLE.s = TITLE.from; TITLE.t = 0; columnPlace(P, TITLE.s, true, 'Walk', MARCH, 0);
   camera.position.set(4, groundAt(0.2, 2.3) + EYE + 1.6, 6); camera.lookAt(9, -39, 65); camera.rotation.reorder('YXZ');
   P.titleView = { x: camera.position.x, y: camera.position.y, z: camera.position.z, pitch: camera.rotation.x, yaw: camera.rotation.y };
-  FOV = 20; resize(); $('title').classList.add('live-scene');
+  FOV = 20; resize();
+  // On touch devices the static title image avoids iOS WebGL sky artifacts.
+  if (!isTouch) $('title').classList.add('live-scene');
 }
 async function backgroundLoad() { for (const id of ['town', 'watch', 'newtown', 'estate']) { await ensurePlace(id); await wait(500); } }
 function startGame(quiet) {
@@ -778,7 +781,8 @@ function frame(t) {
   sky.dome.position.copy(cp); sky.stars.position.copy(cp); sky.clouds.position.copy(cp); sky.moon.position.set(cp.x - 190, cp.y + 230, cp.z - 380); sunDisc.position.copy(cp).addScaledVector(sunDir, 430);
   ridges.group.position.x = cp.x; ridges.group.position.z = cp.z; mist.group.position.x = cp.x; mist.group.position.z = cp.z; flies.tick(s, envNow.stars > 0.5 && !!P && !!P.night, cp.x, cp.y - 1.4, cp.z);
   if (__DEV__ && MV) { MV(); return; }
-  if (!NORENDER) renderer.render(scene, camera);
+  // Leave the phone title on its stable image until gameplay begins.
+  if (!NORENDER && (state.started || !isTouch)) renderer.render(scene, camera);
 }
 let MV = null;   /* dev only: the model viewer (?shot=model) draws the picture itself */
 const STEPPED = { on: false };   /* dev only: a check that steps the frame loop itself pauses the browser's own frames */
