@@ -113,7 +113,6 @@ function farTown(Q, x0, x1, z, y, seed, colour = 0x8a8f8a, spire = true) {
     box(4, 18, 4, m2, (x0 + x1) / 2, y + 9, z, g);
     mesh(new THREE.ConeGeometry(2.6, 14, 4), m2, (x0 + x1) / 2, y + 25, z, g);
   }
-  g.traverse((o) => (o.userData.noBatch = true));
   Q.group.add(g);
   return g;
 }
@@ -310,7 +309,7 @@ function harbour(id, { phone = false, reduced = false } = {}) {
   for (const [x, z] of [[-18.5, 14.5], [3.5, 19.5], [18, 16]]) solid1(Q, P.caseStack(), x, z, 1.6, 0.8);
   for (const [x, z, r] of [[-2, 5.6, 0.3], [21.5, 5.6, -0.4]]) solid1(Q, S.barrow(2), x, z, 0.8, 0.6, r);
   for (const [x, z] of [[-22, 3.5], [14.5, 4.0]]) add(Q, S.ropeCoil(0.4), x, z);
-  Q.tickers.push(gulls(Q.group, k ? 7 : 9, [0, -4], 14, 22, k ? 2 : 5));
+  Q.tickers.push(gulls(Q.group, 5, [0, -4], 14, 22, k ? 2 : 5));
   return Q;
 }
 function kingstonQuay(Q) {
@@ -342,9 +341,9 @@ function kingstonQuay(Q) {
     crowd(Q, look, x, z, face(x, z, 10.8, 6.5), { kind: "watch", at: [10.8, 6.5], idles: ["BriefcaseIdle"], react: ["HeadTurn", "Nod"], every: [4, 8] }, { held: "case" });
   crowd(Q, "wr_tman48b", -9, 9.5, 0, { kind: "chat", group: "k1", at: [-8.4, 10.2] });
   crowd(Q, "wr_lman48", -7.8, 10.7, 0, { kind: "chat", group: "k1" });
-  railCrowd(Q, ["wr_tman48a", "wr_twoman48", "wr_tman48c", "wr_tman48b"], 9, SHIP.deck + 3.02, -(SHIP.B / 2 - 1.4), -30, 22, ["Wave", "WaveSlow"]);
+  railCrowd(Q, ["wr_tman48a", "wr_twoman48", "wr_tman48c", "wr_tman48b"], 9, SHIP.deck + 3.02, -(SHIP.B / 2 - 1.4), -30, 22, ["Wave", "LookAround", "HeadTurn", "Clap"]);
   // May and Samuel have gone aboard: they wave to Pearl from the rail above the gangway
-  for (const [look, x] of [["wr_may48t", -10.0], ["wr_sam48t", -11.0]]) Q.ambient.push({ id: Q.id + "-" + look, look, x, z: -(SHIP.B / 2 - 1.4), ry: 0, zone: "ship", deckY: SHIP.deck + 3.02, behaviour: { kind: "watch", at: [x + 2, -20], react: ["WaveSlow", "Wave"], every: [2.5, 4.5], idles: ["Idle"] } });
+  for (const [look, x] of [["wr_may48t", -10.0], ["wr_sam48t", -11.0]]) Q.ambient.push({ id: Q.id + "-" + look, look, x, z: -(SHIP.B / 2 - 1.4), ry: 0, zone: "ship", deckY: SHIP.deck + 3.02, behaviour: { kind: "watch", at: [x + 2, -20], react: look === "wr_may48t" ? ["WaveSlow"] : ["Wave", "Nod"], every: look === "wr_may48t" ? [2.5, 4] : [3.5, 6], idles: ["Idle"] } });
 }
 function tilburyStage(Q) {
   // Tilbury Riverside: the landing stage (a timber deck with white railings and a long canopy), the station and baggage hall behind,

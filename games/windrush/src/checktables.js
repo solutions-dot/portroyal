@@ -1,5 +1,6 @@
 /* Shared-runner hooks expose the actual game handlers and save state. */
 import { STEPS, TASKS } from "./steps.js";
+import { CAST } from "./cast.js";
 import { CHAPTERS, JOURNAL, TALK } from "./content.js";
 import { PLACE_IDS } from "./places.js";
 import { needList } from "../../../engine/story.js";
@@ -40,6 +41,11 @@ export const CHECK_TABLES = {
 };
 export function makeAdapter(A) {
   const { S, world, story } = A;
+  const probes = [],
+    CAST_BASE = (n) => CAST[n.cast]?.base || n.base,
+    clearProbes = () => {
+      for (const m of probes.splice(0)) m.parent?.remove(m);
+    };
   return {
     chapters: () => CHAPTERS,
     openChapter: async (i) => {
@@ -68,6 +74,7 @@ export function makeAdapter(A) {
       })),
     places: () => PLACE_IDS,
     goPlace: async (id) => {
+      clearProbes();
       A.begin();
       const n = +Object.keys(STEPS).find((n) => STEPS[n].place === id);
       A.chapterState(n);
@@ -144,10 +151,22 @@ export function makeAdapter(A) {
       ],
     }),
     /* faces: everyone in the place (story people and the people around them), each measured in the place's own light */
-    faces: () =>
-      [...world().people, ...world().extras]
-        .filter((n) => n.m.visible)
-        .map((n) => ({ id: n.id, body: n.m })),
+    /* the game draws joined bodies (one painted material, skin lightened 1.55 when built), where the probe cannot find the Skin material,
+       so each person is measured on their raw body (Skin lightened 1.55 in the game), stood in the same place's light at the start */
+    faces: async () => {
+      clearProbes();
+      const Q = world(),
+        out = [];
+      for (const n of [...Q.people, ...Q.extras].filter((n) => n.m.visible)) {
+        const raw = n.look || CAST_BASE(n);
+        await A.loadBase(raw);
+        const { m } = A.body({ base: raw, sex: n.sex, scale: n.scale, x: Q.start.x + out.length * 3, z: Q.start.z, ground: 80 });
+        Q.group.add(m);
+        probes.push(m);
+        out.push({ id: n.id, body: m });
+      }
+      return out;
+    },
     frame: async (dt) => {
       A.tick(dt);
     },
@@ -159,8 +178,7 @@ export function makeAdapter(A) {
     talkTo: async (id) => {
       const n = world().people.find((p) => p.id === id);
       if (!n) return;
-      S.x = n.x + Math.sin(n.m.rotation.y) * 1.3;
-      S.z = n.z + Math.cos(n.m.rotation.y) * 1.3;
+      A.standNear(n);
       A.talk(n);
       A.tick(0.05);
       await new Promise((r) => setTimeout(r, 200));

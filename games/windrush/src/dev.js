@@ -31,6 +31,23 @@ export async function dev(A) {
     $("autolog").textContent = lines.join("\n");
     window.__RESULT = lines;
   };
+  /* a free spot in front of (or else beside) a person, clear of walls, furniture and other people, for the autoplayer and the camera check */
+  A.standNear = (n) => {
+    const Q = world(),
+      ry = n.m.rotation.y,
+      others = [...Q.people, ...Q.extras].filter((o) => o !== n);
+    for (const r of [1.3, 1.6, 1.0, 2.0])
+      for (let k = 0; k < 12; k++) {
+        const a = ry + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * (Math.PI / 6),
+          x = n.x + Math.sin(a) * r,
+          z = n.z + Math.cos(a) * r;
+        if (!A.blocked(Q, x, z, 0.4) && !others.some((o) => Math.hypot(o.x - x, o.z - z) < 0.7)) {
+          S.x = x;
+          S.z = z;
+          return;
+        }
+      }
+  };
   /* the scripted playthrough: cards and dialogue clicked through, each need done where it is, Iris walked to the gate. Used by ?auto and the shared runner. */
   A.autoplay = async ({ first = 1, last = 85, log = [] } = {}) => {
     A.begin();
@@ -72,8 +89,7 @@ export async function dev(A) {
       S.z = p[1];
       if (n.kind === "talk") {
         const who = world().people.find((x) => x.id === n.id);
-        S.x = who.x + Math.sin(who.m.rotation.y) * 1.3;
-        S.z = who.z + Math.cos(who.m.rotation.y) * 1.3;
+        A.standNear(who);
         A.talk(who);
         for (let i = 0; i < 30 && !$("dialogue").hidden; i++) {
           await wait(40);

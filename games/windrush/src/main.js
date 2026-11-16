@@ -838,7 +838,8 @@ function talk(n) {
     },
     () => {
       world().familyLife.hold(n, !!n.fol);
-      n.ctl.rest();
+      if (n.m.userData.seatAnchor) n.ctl.play("SitIdle");
+      else n.ctl.rest();
       talking = null;
     },
   );
