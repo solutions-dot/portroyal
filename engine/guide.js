@@ -23,8 +23,8 @@ function flat(geo) { geo.rotateX(-Math.PI / 2); return geo; }   /* lying on the 
 export function createGuide({ scene, camera, ground = null, eye = 1.6, color = GOLD } = {}) {
   const mat = (c, o, depth) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, depthWrite: false, depthTest: depth, side: THREE.DoubleSide, fog: false, toneMapped: false });
   const root = new THREE.Group(); root.name = 'GuideArrow'; root.renderOrder = 20; root.visible = false;
-  const body = new THREE.Mesh(flat(new THREE.ShapeGeometry(arrowShape(0.62, 0.3, 0.4))), mat(color, 0.92, false));
-  const edge = new THREE.Mesh(flat(new THREE.ShapeGeometry(arrowShape(0.7, 0.38, 0.5))), mat(EDGE, 0.45, false));
+  const body = new THREE.Mesh(flat(new THREE.ShapeGeometry(arrowShape(0.62, 0.3, 0.4))), mat(color, 0.92, true));
+  const edge = new THREE.Mesh(flat(new THREE.ShapeGeometry(arrowShape(0.7, 0.38, 0.5))), mat(EDGE, 0.45, true));
   edge.position.x = -0.015; edge.position.y = -0.004; body.renderOrder = 22; edge.renderOrder = 21;
   root.add(edge, body); root.userData.noAudit = true;
   const ring = new THREE.Group(); ring.name = 'GuideRing'; ring.visible = false; ring.userData.noAudit = true;
@@ -61,7 +61,7 @@ export function createGuide({ scene, camera, ground = null, eye = 1.6, color = G
       let D = Math.max(1.6, Math.min(6, eyeH / Math.tan(drop)));
       const wide = Math.atan(Math.tan(half) * camera.aspect) * 0.38, side = Math.max(-wide, Math.min(wide, rel)), at = look + side;   /* in front, leaning toward the way to go, never off the side of a narrow phone screen */
       if (Math.abs(rel) < wide) D = Math.min(D, dist - 1.1);   /* never past the place it points to */
-      if (Math.abs(rel) <= wide) D = Math.min(D, clear(px, pz, at, groundAt(px, pz), now) - 0.55);   /* the way ahead: keep it on open floor; to turn round it stays in view even by a wall */
+      D = Math.min(D, Math.max(Math.abs(rel) <= wide ? 0 : 1.6, clear(px, pz, at, groundAt(px, pz), now) - 0.55));   /* keep it on open floor in front of any wall or counter (it is hidden behind things like everything else); to turn round it never comes closer than 1.6 m */
       const showArrow = Math.abs(rel) > wide || (D > 1.2 && dist > 4.2);   /* near and in view: the ring is enough; near but out of view: still point the way to turn */
       root.visible = showArrow && fade > 0.02;
       if (showArrow) {
