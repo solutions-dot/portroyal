@@ -14,22 +14,22 @@ export const CHAPTERS = [
   {
     id: "reasons",
     name: "Everyone has a reason",
-    year: "April 1966",
+    year: "20 April 1966",
     first: 20,
     last: 26,
-    place: "yard",
-    caption: "Kingston, before the visit",
-    intro: "Help at home. Hear why the visit matters.",
+    place: "downtown",
+    caption: "Downtown Kingston, the day before",
+    intro: "The city gets ready. Hear why the visit matters.",
   },
   {
     id: "road",
     name: "The road to Palisadoes",
     year: "21 April 1966",
     first: 30,
-    last: 35,
-    place: "road",
-    caption: "The road toward Palisadoes",
-    intro: "Travel with your family toward the airport.",
+    last: 38,
+    place: "parade",
+    caption: "The Parade bus park",
+    intro: "Take the bus, then walk with the crowd to the airport.",
   },
   {
     id: "waiting",
@@ -57,11 +57,21 @@ export const CHAPTERS = [
     year: "That evening",
     first: 60,
     last: 64,
-    place: "yard",
-    caption: "Back in the family yard",
+    place: "lane",
+    caption: "The family's lane, that evening",
     intro: "Share what you saw, and what you will remember.",
   },
 ];
+/* the name shown for each place (the corner of the screen and the fade between places) */
+export const PLACE_NAMES = {
+  yard: "Kingston, Jamaica",
+  memory: "Kingston, 1930",
+  downtown: "Downtown Kingston, the day before",
+  parade: "The Parade bus park, Kingston",
+  road: "The Palisadoes road",
+  airport: "Palisadoes Airport, Kingston",
+  lane: "The family's lane, that evening",
+};
 export const chapterOf = (stage) =>
   Math.max(
     0,
@@ -96,30 +106,31 @@ export const TALK = {
   },
   20: {
     mum: [
+      L("Mum", "The whole street is getting ready for tomorrow."),
       L("Mum", "This visit means different things to different people."),
-      L("Ruth", "Are we all going?"),
-      L("Mum", "Yes. We will travel together."),
+      L("Ruth", "What does it mean to you?"),
+      L("Mum", "An emperor from Africa is coming here. I feel proud."),
+      L("Mum", "I sewed these little flags for the welcome."),
     ],
     levi: [
       L("Uncle Levi", "I have waited a long time for this day."),
       L("Ruth", "Why does he matter to you?"),
       L("Uncle Levi", "To me, he is holy."),
       L("Uncle Levi", "Africa is part of who I am."),
+      L("Uncle Levi", "These palm fronds are for the welcome."),
     ],
   },
   24: {
     adina: [
+      L("Grandma Adina", "Thank you, child. Look, the visit is in the paper."),
       L("Ruth", "Did you always keep that picture?"),
       L("Grandma Adina", "Through moves, hard years, and good years."),
-      L(
-        "Grandma Adina",
-        "It helped me imagine a different place in the world.",
-      ),
+      L("Grandma Adina", "Tomorrow is a holiday, so everyone can go."),
       L("Ruth", "Now you will see him here."),
-      L("Grandma Adina", "Yes. Now he is coming here."),
+      L("Grandma Adina", "Yes. We need food and water for the day."),
     ],
   },
-  35: {
+  38: {
     mum: [
       L("Mum", "Remember this meeting place, by the striped post."),
       L("Ruth", "We can find each other here."),
@@ -157,9 +168,11 @@ export const TALK = {
   60: {
     mum: [
       L("Mum", "What a day we have had."),
+      L("Ruth", "The whole lane is talking about it."),
       L("Ruth", "You do not believe everything Uncle Levi believes."),
       L("Mum", "No. But I can listen."),
       L("Mum", "Today I understood why this mattered to him."),
+      L("Mum", "Your bus ticket is on the veranda rail."),
     ],
   },
   62: {
@@ -177,12 +190,12 @@ export const TALK = {
   },
 };
 export const FLAVOUR = {
-  adina: ["This shade is lovely.", "I remember so many journeys."],
-  mum: ["The cloth feels soft.", "This is a busy day."],
-  levi: ["Wood has its own grain.", "I like the quiet before a busy day."],
+  adina: ["I remember so many journeys.", "My feet are old, but my heart is glad."],
+  mum: ["Stay close to the family.", "What a busy few days."],
+  levi: ["Many people share this hope.", "I like the quiet before a busy day."],
   vendor: ["The morning is bright.", "There is plenty to read."],
-  boy: ["That cloud looks like a boat.", "I can hear the sea."],
-  visitor: ["The breeze feels good.", "I brought some water."],
+  boy: ["That cloud looks like a boat.", "I can hear drums somewhere."],
+  visitor: ["The breeze feels good.", "What a day for our lane."],
 };
 export const CARDS = {
   memory: {
@@ -200,11 +213,19 @@ export const CARDS = {
       "Grandma still holds the picture. Ruth has more questions.",
     ],
   },
-  road: {
-    title: "On the road",
+  ready: {
+    title: "Ready for tomorrow",
     lines: [
-      "You travel beside your family.",
-      "The city gives way to the road toward Palisadoes.",
+      "The flags are made. Grandma has the paper.",
+      "Water, bread and oranges are packed for the day.",
+    ],
+  },
+  road: {
+    title: "On the bus",
+    lines: [
+      "The bus leaves the Parade for Palisadoes.",
+      "The road fills up. People walk, cycle and ride.",
+      "The bus stops in the traffic, so the family walks on.",
       "The bus and this family journey are a general reconstruction.",
     ],
   },
@@ -251,6 +272,7 @@ export const JOURNAL = [
       "You are Ruth, a fictional child from Kingston.",
       "Grandma Adina, Mum, Uncle Levi, Mr. Brown, Teddy and Miss Pearl are fictional too.",
       "Their conversations were written for this game.",
+      "The shops, the newsboy and the bus conductor are made up too.",
     ],
     deeper: [
       "This family gives one possible view of the visit. It does not speak for every Jamaican or every Rastafari.",
@@ -284,6 +306,60 @@ export const JOURNAL = [
     source: "nlj",
   },
   {
+    id: "ready",
+    title: "Getting ready",
+    simple: [
+      "21 April 1966 was made a public holiday for the visit.",
+      "People waved red, gold and green flags and palm fronds.",
+      "Some people began to gather at the airport the day before.",
+    ],
+    deeper: [
+      "The Gleaner reported people arriving at Palisadoes from the night of Wednesday 20 April.",
+      "Our street, Ivy's dressmaking shop and Mum's flags are a general picture, not a record of one street. The shop names are made up.",
+    ],
+    source: "gleaner1966",
+  },
+  {
+    id: "gleaner",
+    title: "The newspaper",
+    simple: [
+      "The Daily Gleaner was a Kingston newspaper.",
+      "It wrote about the visit, and still remembers it.",
+    ],
+    deeper: [
+      "The paper in this game shows only the name and the date. We did not make up a headline.",
+      "Newspaper reports and photographs from 1966 are one way historians know what happened.",
+    ],
+    source: "gleaner1966",
+  },
+  {
+    id: "buses",
+    title: "The Parade bus park",
+    simple: [
+      "Many Kingston buses started at the Parade, downtown.",
+      "Conductors took tickets from wooden racks.",
+    ],
+    deeper: [
+      "The Jamaica Omnibus Service ran Kingston's buses from 1953. A report from 1954 says about 15 routes left from the Parade.",
+      "A Gleaner feature remembers the buses as grey and dark green; colours changed over the years. Our bus is a general picture of one.",
+    ],
+    source: "jos",
+  },
+  {
+    id: "evening",
+    title: "That evening",
+    simple: [
+      "In 1966 people could hear the news on the radio.",
+      "The visit went on after the arrival day.",
+    ],
+    deeper: [
+      "Jamaica had two radio stations: RJR, from 1950, and JBC, from 1959.",
+      "That afternoon there was a civic reception at the National Stadium. During the visit he spoke to Parliament at Gordon House and received an honorary degree from the University of the West Indies.",
+      "The family's lane is a general picture of a Kingston lane, not a real address.",
+    ],
+    source: "gleaner1966",
+  },
+  {
     id: "faith",
     title: "Different reasons",
     simple: [
@@ -315,11 +391,12 @@ export const JOURNAL = [
     title: "The journey",
     simple: [
       "Palisadoes is the long strip of land leading toward the airport.",
+      "It has the harbour on one side and the sea on the other.",
       "Our bus journey and its passengers are fictional.",
     ],
     deeper: [
-      "People travelled from across Jamaica to welcome the Emperor. The Gleaner records people gathering from 20 April.",
-      "Our street, yard and road are general pictures, not exact street plans.",
+      "People came on foot, in cars, drays, carts and trucks, in hired buses and on bicycles, as the Gleaner reported.",
+      "Our street, yard, bus park and road are general pictures, not exact street plans.",
     ],
     source: "gleaner",
   },
@@ -410,6 +487,14 @@ export const SOURCES = {
   fairness: {
     name: "Jamaica Information Service: Coral Gardens apology",
     url: "https://jis.gov.jm/government-apologises-victims-coral-gardens/",
+  },
+  gleaner1966: {
+    name: "The Gleaner: the 1966 report of the arrival",
+    url: "https://jamaica-gleaner.com/article/news/20241030/haile-selassie-i-cries-pandemonium-erupts-palisadoes-airport",
+  },
+  jos: {
+    name: "The Gleaner: memories of the JOS buses",
+    url: "https://jamaica-gleaner.com/article/art-leisure/20180218/jolly-joseph-kingston",
   },
   jis: {
     name: "Jamaica Information Service: Grounation Day",

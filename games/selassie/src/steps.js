@@ -1,4 +1,5 @@
-/* Step data uses the shared story API. Every required task has a visible change. */
+/* Step data uses the shared story API. Every required task has a visible change.
+   Places, chapter by chapter: yard and memory (1), downtown (2), parade and road (3), airport (4, 5), lane (6). */
 const talk = (place, goal, ids, next, journal) => ({
   place,
   goal,
@@ -6,11 +7,12 @@ const talk = (place, goal, ids, next, journal) => ({
   next,
   journal,
 });
-const task = (place, goal, id, next, carry) => ({
+const task = (place, goal, id, next, carry, journal) => ({
   place,
   goal,
   needs: { do: [{ id, ...(carry ? { carry } : {}) }] },
   next,
+  ...(journal ? { journal } : {}),
 });
 const go = (place, goal, id, next) => ({
   place,
@@ -27,36 +29,35 @@ export const STEPS = {
   14: task("memory", "Put the newspaper beside the map.", "map", 15),
   15: talk("memory", "Talk to Mr. Brown.", ["vendor"], 16, "coronation"),
   16: wait("yard", "Remember the picture together."),
-  20: talk("yard", "Hear why the visit matters.", ["mum", "levi"], 21, "faith"),
-  21: task(
-    "yard",
-    "Carry the thread to the sewing table.",
-    "thread",
-    22,
-    "thread",
-  ),
-  22: task("yard", "Set the thread beside the machine.", "sewing", 23),
-  23: task("yard", "Help finish the chair.", "chair", 24),
-  24: talk("yard", "Talk to Grandma Adina.", ["adina"], 25, "picture"),
+  // chapter 2: downtown Kingston, the day before the visit
+  20: talk("downtown", "Hear why the visit matters.", ["mum", "levi"], 21, "faith"),
+  21: task("downtown", "Carry the flags to Uncle Levi's cart.", "flags", 22, "flags", "ready"),
+  22: task("downtown", "Buy a newspaper from the newsboy.", "gleaner", 23, "gleaner"),
+  23: task("downtown", "Give Grandma the newspaper.", "paperGran", 24, "gleaner", "gleaner"),
+  24: talk("downtown", "Talk to Grandma Adina.", ["adina"], 25, "picture"),
   25: {
-    place: "yard",
-    goal: "Pack water, lunch and the picture.",
+    place: "downtown",
+    goal: "Get water, bread and oranges for tomorrow.",
     needs: {
       do: [
         { id: "water", carry: "bottle" },
         { id: "lunch", carry: "lunch" },
-        { id: "photo", carry: "photo" },
+        { id: "fruit", carry: "fruit" },
       ],
     },
     next: 26,
   },
-  26: wait("yard", "The family is ready to leave."),
-  30: go("road", "Follow Mum to the bus stop.", "busStop", 31),
-  31: task("road", "Bring Grandma some water.", "roadWater", 32, "bottle"),
-  32: go("road", "Look out over the harbour.", "lookout", 33),
-  33: task("road", "Join your family on the bus.", "bus", 34),
-  34: go("airport", "Find the family meeting place.", "meeting", 35),
-  35: talk("airport", "Talk to Mum.", ["mum"], 40, "road"),
+  26: wait("downtown", "The family is ready for tomorrow."),
+  // chapter 3: the Parade bus park, then the Palisadoes road
+  30: go("parade", "Follow Mum to the bus.", "busStop", 31),
+  31: task("parade", "Buy the tickets from the conductor.", "buyTicket", 32, "ticket"),
+  32: task("parade", "Give the tickets to Mum.", "giveTicket", 33, "ticket"),
+  33: task("parade", "Climb on the bus with your family.", "bus", 34, null, "buses"),
+  34: task("road", "Bring Grandma some water.", "roadWater", 35, "bottle"),
+  35: go("road", "Look out over the harbour.", "lookout", 36),
+  36: go("road", "Walk on toward the airport.", "roadEnd", 37),
+  37: go("airport", "Find the family meeting place.", "meeting", 38),
+  38: talk("airport", "Talk to Mum.", ["mum"], 40, "road"),
   40: talk(
     "airport",
     "Find out how everyone is feeling.",
@@ -86,18 +87,20 @@ export const STEPS = {
   55: talk("airport", "Speak to Grandma beside you.", ["adina"], 56, "arrival"),
   56: wait("airport", "Choose what you will remember."),
   57: wait("airport", "Take this memory home."),
-  60: talk("yard", "Talk to Mum about the day.", ["mum"], 61),
+  // chapter 6: that evening, in the family's lane
+  60: talk("lane", "Talk to Mum about the day.", ["mum"], 61),
   61: task(
-    "yard",
+    "lane",
     "Put the bus ticket beside the picture.",
     "ticket",
     62,
     "ticket",
+    "evening",
   ),
-  62: talk("yard", "Share your memories together.", ["adina", "levi"], 63),
-  63: wait("yard", "Write one memory in your journal."),
+  62: talk("lane", "Share your memories together.", ["adina", "levi"], 63),
+  63: wait("lane", "Write one memory in your journal."),
   64: {
-    place: "yard",
+    place: "lane",
     goal: "Your journey is in the journal.",
     wait: true,
     end: true,
@@ -106,12 +109,15 @@ export const STEPS = {
 export const ITEMS = [
   "tin",
   "paper",
-  "thread",
+  "flags",
+  "gleaner",
   "bottle",
   "lunch",
-  "photo",
+  "fruit",
   "ticket",
 ];
+/* the stage that shows each place (dev checks and the heads check walk through these) */
+export const PLACE_STAGES = { yard: 10, memory: 15, downtown: 20, parade: 30, road: 34, airport: 50, lane: 60 };
 export const TASK_IDS = [
   ...new Set(
     Object.values(STEPS).flatMap((s) =>

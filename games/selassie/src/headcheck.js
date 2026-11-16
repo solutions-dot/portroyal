@@ -9,6 +9,7 @@
 import * as THREE from "three";
 import { DC6, radiusAt } from "./aircraft.js";
 import { closeAll } from "./ui.js";
+import { PLACE_STAGES } from "./steps.js";
 export const LIMIT = { yaw: 80, pitch: 60, speed: 320 };
 const D2R = Math.PI / 180;
 const AXES = new WeakMap();
@@ -150,12 +151,7 @@ export async function headCheck(A, { seconds = 16, cine = true } = {}) {
     }
   };
   /* the four places, with the player walking a circle round the first story person so heads turn to follow */
-  for (const [label, stage] of [
-    ["yard", 20],
-    ["memory", 15],
-    ["road", 30],
-    ["airport", 50],
-  ]) {
+  for (const [label, stage] of Object.entries(PLACE_STAGES)) {
     await A.go(stage);
     closeAll();
     A.S.started = true;
