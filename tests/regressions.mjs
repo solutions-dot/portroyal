@@ -191,3 +191,5 @@ test('menu lists every game in Jamaica\'s timeline, oldest first', async () => {
   assert.equal(playableGames.length, 10, 'expected all ten history games to be present');
   assert.deepEqual([...menuGames].sort(), playableGames, 'every playable game must have exactly one main menu card');
 });
+
+import './chapter-guidance.mjs';
