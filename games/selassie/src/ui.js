@@ -404,8 +404,8 @@ export function chapters({ best, done, teacher, choose, toggle, erase }) {
       b.disabled = !teacher && i > best;
       for (const [cls, txt] of [
         ["yr", c.year],
-        ["nm", c.name],
-        ["st", dn ? "Done" : "Play"],
+        ["nm", `${i + 1}. ${c.name}`],
+        ["st", dn ? "Done" : b.disabled ? "Locked" : "Play"],
       ]) {
         const sp = document.createElement("span");
         sp.className = cls;
