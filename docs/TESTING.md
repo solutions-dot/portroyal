@@ -10,6 +10,8 @@
 
 **Near-target arrow stability:** `tests/guidance-delay.mjs` also checks that seven legacy guidance controllers do not reactivate the arrow every frame while the player is already within interaction range. Verify the objective does not flash or replay sounds at the destination.
 
+**Timing units:** Bog Walk passes elapsed seconds to its nudge tick (`2.5`); other legacy controllers use milliseconds (`2500`). The guidance-delay test accounts for the difference and checks both shared delay constants.
+
 ## Current UI regression coverage (16 November 2026, PR #101)
 
 The following checks are included in `npm test` on the integration branch:
