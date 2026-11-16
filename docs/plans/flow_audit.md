@@ -2,6 +2,16 @@
 
 Read-only audit of `games/port-royal`, `garvey`, `kendal`, `bog-walk`, `nanny`, `eventide`, `melissa` and `tivoli`, against the owner's three new rules. Done on 15 November 2026 from the code on the working tree (branch as checked out, commit `7a62fdf`). No repo file was edited. Line numbers are `file:line` in each game's `src/`.
 
+## Implementation checkpoint: 16 November 2026 (draft PR #101)
+
+This is a follow-up to the read-only audit below, not a replacement for its findings.
+
+- **Guidance timing changed in six legacy game controllers:** Port Royal, Garvey, Bog Walk, Nanny, Eventide and Melissa now start the hint after 2.5 seconds of eligible gameplay rather than waiting 15 seconds motionless or 50 seconds since the goal changed. Movement no longer restarts that timer. The hint remains suppressed during blocked UI states such as dialogue and cards. Existing route/placement callbacks were left intact.
+- **Bog Walk objective priority:** required marked conversations are selected before currently available actions. This specifically addresses the ruins information board stealing the arrow from Kemar/Miss Grant at stages 62-65. It needs an in-browser replay to confirm the stage progression and that action-first stages still behave correctly.
+- **Kendal:** already migrated to the shared story guidance machinery; its existing implementation was not changed in this pass. **Tivoli:** no targetable hint arrow was added. **Windrush and Selassie:** their guidance implementations were not changed in this pass.
+- **Remaining work:** source-based stage need mapping (not simply "any marked person"), immediate retargeting after each completed need, exploration-specific 5-second timing, stage count text, Tivoli's arrow and speech marks, and the wrong-direction dialogue lines in the audit. Avoid describing these as resolved.
+- **Verification:** source edits committed; full game builds, visual checks, per-chapter autoplay and mobile arrow placement remain pending. Re-run the documented Bog Walk ruins reproduction before closing its mis-target issue. The legacy audit below records its original 15/50-second behaviour and is historical.
+
 ## How I checked
 
 - Read every game's goal table, stage machine, talk code (first talk and later lines), actions, speech marks and helper arrow.
