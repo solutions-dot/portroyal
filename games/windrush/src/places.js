@@ -124,7 +124,7 @@ function yard(id) {
      breadfruit and ackee trees, a dry-stone bank holding up the hillside, a croton hedge along the road, the district shop and its piazza.
      In 1962 time has passed: the house is painted, the wires have come, a radio plays, and it is late afternoon. */
   const is48 = id === "yard48",
-    Q = base(id, [-14.6, -10.2, 14.6, 15.0], [0, 12.6, 0]);
+    Q = base(id, [-14.6, -10.2, 14.6, 15.0], [0, 11.6, 0]);
   Q.tod = is48 ? "morning" : "afternoon";
   ground(Q, std(T.dirt([14, 14], is48 ? [164, 132, 92] : [156, 126, 88])));
   // the hill behind and to the sides, the road and the valley below
@@ -139,7 +139,7 @@ function yard(id) {
     const h = S.stiltHouse(5, 3.6, { wall: [[190, 170, 140], [170, 190, 170], [200, 180, 150]][i % 3], seed: 300 + i });
     add(Q, h, (i - 3) * 11 + (i % 2) * 3, 30 + (i % 3) * 5, -1.5 - (i % 3), Math.PI + (i % 2) * 0.3);
   }
-  for (let i = 0; i < 10; i++) add(Q, tree(6 + (i % 3), i + 130), (i - 5) * 8 + 3, 24 + (i % 4) * 3, -1);
+  for (let i = 0; i < 10; i++) add(Q, tree(6 + (i % 3), i + 130), (i - 5) * 8 + 3, 20.5 + (i % 2) * 1.5, -1);
   // the house on its posts, the outdoor kitchen, the drum of water
   const house = S.stiltHouse(7, 4.5, is48 ? { wall: [190, 172, 138], trim: 0xd8d0bc, shut: 0x3f6a4a, roof: [140, 132, 120] } : { wall: [226, 178, 164], trim: 0xf2eee4, shut: 0x2f5a7a, roof: [176, 180, 176] });
   add(Q, house, -7.5, -6.6);
@@ -186,8 +186,8 @@ function yard(id) {
   solid1(Q, bench(1.8), -11.5, 6.6, 1.9, 0.7, Math.PI / 2);
   if (!is48) {
     for (const x of [-1.8, 13.8]) solid1(Q, S.powerPole(7), x, 13.7, 0.4, 0.4);
-    P.line(Q.group, [-1.8, 6.7, 13.7], [-6.0, 4.0, -4.3], S.SM.black, 0.012);
-    P.line(Q.group, [-1.8, 6.7, 13.7], [13.8, 6.7, 13.7], S.SM.black, 0.012);
+    P.line(Q.group, [-2.35, 6.84, 13.7], [-6.0, 4.0, -4.25], S.SM.black, 0.012);
+    P.line(Q.group, [-1.25, 6.84, 13.7], [13.25, 6.84, 13.7], S.SM.black, 0.012);
   }
   const lorry = truck(is48 ? 0x46604a : 0x7a3a2a);
   add(Q, lorry, -7.5, 17.4, 0, 0.02);
@@ -200,7 +200,7 @@ function yard(id) {
     person(Q, "pearl", "pearl62", 7.9, 5.4, face(7.9, 5.4, 7.5, 3.5), { kind: "watch", at: [5, 7], idles: ["HappyIdle", "Idle", "ListenMusic"], react: ["Laugh", "Nod"], every: [5, 9] });
   }
   // neighbours: a woman bringing a basket in on her head, an old woman resting under the breadfruit tree, dominoes on the piazza, children at play
-  crowd(Q, "wr_kwoman48", 0.4, 13.6, Math.PI, { kind: "errand", from: [0.4, 13.6], to: [6.6, -4.4], walk: "CarryHeadWalk", idle: "CarryHeadIdle", wait: [5, 9] }, { held: "headload" });
+  crowd(Q, "wr_kwoman48", 14.0, 14.0, Math.PI, { kind: "errand", from: [14.0, 14.0], to: [13.6, -3.2], walk: "CarryHeadWalk", idle: "CarryHeadIdle", wait: [5, 9] }, { held: "headload" });
   crowd(Q, "wr_kelder48", -11.5, 6.6, Math.PI / 2, { kind: "sit", seat: { top: 0.485, x: -11.5, z: 6.6, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] }, { raw: true });
   crowd(Q, "wr_kman48", 8.35, 11.6, Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 8.35, z: 11.6, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitTalk"], group: "dom" });
   crowd(Q, "wr_tman48b", 9.65, 11.6, -Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 9.65, z: 11.6, ry: -Math.PI / 2 }, clips: ["SitIdle", "SitTalk"], group: "dom" });
@@ -505,7 +505,7 @@ function brixton48() {
       for (const [x, z, r] of [[cx - 0.6, -9.85, 0], [cx - 1.55, -9, Math.PI / 2], [cx + 0.35, -9, -Math.PI / 2]]) add(Q, S.chair(), x, z, 0, r);
       wall(Q, cx - 0.6, -9, 2.4, 2);
       solid1(Q, S.bed1948(), cx + 1.75, -10.4, 1.0, 2.0);
-      solid1(Q, S.wardrobe(), cx - 1.9, -11.15, 1.0, 0.6);
+      solid1(Q, S.wardrobe(), cx - 1.75, -11.1, 1.0, 0.6);
       solid1(Q, S.paraffinHeater(), cx + 1.9, -7.4, 0.45, 0.45);
       solid1(Q, P.table(0.9, 0.5, 0.75), cx - 1.95, -7.3, 0.6, 1.0, Math.PI / 2);
       add(Q, S.gasRing(), cx - 1.95, -7.3, 0.785);
@@ -536,7 +536,7 @@ function brixton48() {
   const old = S.car(0x2a2c2e, 1948);
   add(Q, old, -6, 4.0, 0, Math.PI);
   wall(Q, -6, 4.0, 4.2, 1.8);
-  for (const [x, s] of [[3.4, 1], [-15.6, 2]]) {
+  for (const [x, s] of [[15.8, 1], [-12.9, 2]]) {
     add(Q, S.planeTree(7, s), x, 6.2);
     wall(Q, x, 6.2, 0.6, 0.6);
   }
@@ -586,7 +586,7 @@ function brixton62() {
   add(Q, bus, -22, 1.6, 0, -Math.PI / 2);
   Q.props.bus = bus;
   wall(Q, -22, 1.6, 8.4, 2.6);
-  for (const [x, s] of [[3.4, 1], [-15.6, 2]]) {
+  for (const [x, s] of [[15.8, 1], [-12.9, 2]]) {
     add(Q, S.planeTree(7, s), x, 6.2);
     wall(Q, x, 6.2, 0.6, 0.6);
   }
