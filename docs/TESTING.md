@@ -14,6 +14,8 @@
 
 **Chapter-by-chapter stage data:** `tests/chapter-guidance.mjs` enumerates all stages of Kendal, Selassie and Windrush and checks goal/needs/next references and simulated requirement completion; it also checks goal and talk transition tables for Nanny, Melissa, Eventide and Bog Walk. This is a structural data check, not a substitute for walking each chapter in browser and checking arrow targets, interaction controls and physical reachability.
 
+**Ten-game structural chapter coverage:** `tests/chapter-guidance.mjs` now includes Garvey, Tivoli and Port Royal in addition to the seven previously covered games. Port Royal checks goal controllers and hint mapping, Tivoli checks walking-chapter conversation orders, and Garvey checks talk transitions. Execute the suite and browser/mobile autoplay before claiming the chapter-by-chapter audit passes.
+
 ## Current UI regression coverage (16 November 2026, PR #101)
 
 The following checks are included in `npm test` on the integration branch:
