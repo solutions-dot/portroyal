@@ -64,3 +64,29 @@ test('Kendal beach activity guards use the same completed flag as each action re
     assert.ok(action[0].includes("fun('" + flag + "')"), id + ' must record ' + flag + ' as completed');
   }
 });
+
+
+test('Kendal saved beach progress restores the count and remembers the selected activity', () => {
+  const source = readFileSync('games/kendal/src/main.js', 'utf8');
+  assert.match(source, /story\.beachDone\s*=\s*Object\.keys\(done\(\)\)/, 'completed beach choices must be saved to story');
+  assert.match(source, /savedFlow\s*&&\s*savedFlow\.stage\s*===\s*43/, 'the return to the beach must identify a saved step');
+  assert.match(source, /story\.beachDone\s*\|\|\s*\(story\.beach\s*\?\s*\[story\.beach\]/, 'saved choices are applied to beach activity guards');
+
+  let original;
+  original = createStory({ steps: STEPS, advance: (next) => original.enter(next) });
+  original.enter(43);
+  assert.equal(original.done('fun'), true);
+  const save = original.save(), storedStory = { beach: 'splash', beachDone: ['splash'] };
+  assert.deepEqual(save.got, { fun: 1 });
+
+  let restored;
+  restored = createStory({ steps: STEPS, advance: (next) => restored.enter(next) });
+  restored.restore(save);
+  const restoredDone = Object.fromEntries(storedStory.beachDone.map((id) => [id, true]));
+  assert.equal(restored.stage, 43);
+  assert.deepEqual(restored.count(), { n: 1, of: 2 });
+  assert.equal(restoredDone.splash, true, 'splash is unavailable after reloading');
+  assert.equal(restoredDone.band, undefined, 'the band remains available');
+  assert.equal(restored.done('fun'), true);
+  assert.equal(restored.stage, 44, 'a distinct second activity completes the goal');
+});
