@@ -659,7 +659,9 @@ function prepareTitleScene() {
   columnPlace(P, 86, true, 'Idle');
   camera.position.set(4, groundAt(0.2, 2.3) + EYE + 1.6, 6); camera.lookAt(9, -39, 65); camera.rotation.reorder('YXZ');
   P.titleView = { x: camera.position.x, y: camera.position.y, z: camera.position.z, pitch: camera.rotation.x, yaw: camera.rotation.y };
-  FOV = 20; resize(); $('title').classList.add('live-scene');
+  FOV = 20; resize();
+  // On touch devices the static title image avoids iOS WebGL sky artifacts.
+  if (!isTouch) $('title').classList.add('live-scene');
 }
 async function backgroundLoad() { for (const id of ['town', 'watch', 'newtown', 'estate']) { await ensurePlace(id); await wait(500); } }
 function startGame(quiet) {
@@ -704,7 +706,8 @@ function frame(t) {
   sky.dome.position.copy(cp); sky.stars.position.copy(cp); sky.clouds.position.copy(cp); sky.moon.position.set(cp.x - 190, cp.y + 230, cp.z - 380); sunDisc.position.copy(cp).addScaledVector(sunDir, 430);
   ridges.group.position.x = cp.x; ridges.group.position.z = cp.z; mist.group.position.x = cp.x; mist.group.position.z = cp.z; flies.tick(s, envNow.stars > 0.5 && !!P && !!P.night, cp.x, cp.y - 1.4, cp.z);
   if (__DEV__ && MV) { MV(); return; }
-  if (!NORENDER) renderer.render(scene, camera);
+  // Leave the phone title on its stable image until gameplay begins.
+  if (!NORENDER && (state.started || !isTouch)) renderer.render(scene, camera);
 }
 let MV = null;   /* dev only: the model viewer (?shot=model) draws the picture itself */
 const NORENDER = __DEV__ && /[?&]auto=/.test(location.search);   /* the scripted playthrough does not need pictures, and software drawing is slow */
