@@ -14,7 +14,8 @@
 import * as THREE from 'three';
 import { T, cv, std, solid, flat, box, cyl, plane, grp, rng, mesh } from './gfx.js';
 import { woolMaterial } from './blanket.js';
-import { palm, tree, bench, standpipe, waterTower, truck, boardHouse, hillRing, flowers, signBoard } from './props.js';
+import { saloonCar, bus as townBus, van as panelVan, lorry } from '../../../engine/roadcars.js';
+import { palm, tree, bench, standpipe, waterTower, boardHouse, hillRing, flowers, signBoard } from './props.js';
 import { grassField, flowerField, flameTree, mangoTree, hibiscus, croton } from './detail.js';
 
 const DS = { side: THREE.DoubleSide };
@@ -143,14 +144,7 @@ function oneStorey(L, D, { overhang = 2.2, H = 3.2 } = {}) {
 }
 
 /* ---------- small builders for the street and the grounds ---------- */
-function car(col) {   /* a 1970s saloon car, front toward +x */
-  const g = grp(), m = solid(col, 0.5, 0.2), glass = solid(0x22303a, 0.3, 0.1), tyre = solid(0x161616, 0.9), chrome = solid(0xcfd2d4, 0.3, 0.8);
-  box(4.2, 0.62, 1.66, m, 0, 0.62, 0, g); box(2.1, 0.55, 1.5, m, -0.25, 1.2, 0, g); box(1.9, 0.4, 1.53, glass, -0.25, 1.22, 0, g);
-  for (const x of [-2.12, 2.12]) box(0.06, 0.16, 1.5, chrome, x, 0.55, 0, g);
-  for (const z of [-0.55, 0.55]) box(0.04, 0.14, 0.26, solid(0xf4f0dc, 0.3), 2.11, 0.74, z, g);
-  for (const x of [-1.35, 1.35]) for (const z of [-0.78, 0.78]) { const w = cyl(0.32, 0.32, 0.22, tyre, x, 0.32, z, g, 12); w.rotation.x = Math.PI / 2; }
-  return g;
-}
+function car(col) { return saloonCar({ era: '1970s', colour: col }); }   /* a 1970s saloon car, front toward +x: no make, no badge, a blank plate (engine/roadcars.js) */
 function streetLamp(h = 5) {   /* an electric lamp on a pole with a short arm toward +x */
   const g = grp(), m = solid(0x6e7072, 0.5, 0.5); cyl(0.07, 0.1, h, m, 0, h / 2, 0, g, 8); box(0.9, 0.06, 0.06, m, 0.45, h - 0.1, 0, g); box(0.4, 0.12, 0.22, solid(0xf2efe6, 0.4), 0.95, h - 0.16, 0, g); return g;
 }
@@ -249,13 +243,16 @@ export function buildSlipe(g) {
   /* ---- the three buildings: the Myers Ward on the east of the avenue, the men's ward and the children's ward on the west ---- */
   const myers = myersWard(); myers.group.userData.noBatch = true; const toMy = put(g, myers, -12, -38, -Math.PI / 2, out);
   /* a bus at the stop, and one that drives by at dawn (the colours are a guess) */
-  const bus = (x, z) => { const b = grp(g, x, 0, z); box(9, 2.5, 2.4, solid(0xe8e4d6, 0.6), 0, 1.75, 0, b); box(9.02, 0.5, 2.42, solid(0x2f6a4a, 0.6), 0, 1.0, 0, b); box(8.4, 0.8, 2.44, solid(0x22303a, 0.3), 0, 2.3, 0, b); for (const wx of [-3, 3]) for (const wz of [-1.1, 1.1]) { const w = cyl(0.45, 0.45, 0.3, solid(0x161616, 0.9), wx, 0.45, wz, b, 12); w.rotation.x = Math.PI / 2; } box(1.0, 0.4, 0.05, std(T.sign('43', 128, 64, '#f3ecd8', '#1a1a1a', '700 44px Arial, sans-serif')), 3.6, 2.75, 1.24, b); return b; };
-  bus(-37, 2.3); wall(-41.7, 1.0, -32.3, 3.6);
+  /* a single-deck town bus of the time with its door on the left (engine/roadcars.js). It carries no company name; the route number is on the box over the windscreen and on the door side */
+  const sign43 = std(T.sign('43', 128, 64, '#f3ecd8', '#1a1a1a', '700 44px Arial, sans-serif'));
+  const bus = (x, z, ry = 0) => { const b = townBus({ colour: 0xe8e4d6, band: 0x2f6a4a, L: 9, W: 2.4 }); b.position.set(x, 0, z); b.rotation.y = ry; g.add(b); const sg = b.userData.sign;
+    const f = plane(0.9, 0.26, sign43, sg.front[0] + 0.02, sg.front[1], 0, b); f.rotation.set(0, Math.PI / 2, 0); f.rotation.order = 'YXZ'; f.rotation.x = -sg.rake; const sd = plane(0.6, 0.24, sign43, sg.side[0], sg.side[1], sg.side[2], b); sd.rotation.y = Math.PI; return b; };
+  bus(-37, 2.3, Math.PI); wall(-41.7, 1.0, -32.3, 3.6);   /* at the stop it faces west, so its door is on the pavement side */
   const bus2 = bus(-70, -2.3); bus2.userData.noBatch = true; bus2.visible = false;
   /* the night of the fire: a rope inside the gate, a fire engine, the fire itself, and what is left at dawn. All hidden until chapter 4. */
   const night = grp(g); night.userData.noBatch = true; night.visible = false;
   for (const x of [-3, 0, 3]) cyl(0.04, 0.05, 1.0, solid(0xd8d2c0, 0.8), x, 0.5, -9.4, night); { const rp = cyl(0.02, 0.02, 6, solid(0xe8d8a0, 0.8), 0, 0.92, -9.4, night); rp.rotation.z = Math.PI / 2; }
-  const eng = truck(0xb8281e); eng.traverse((o) => { if (o.isMesh && o.geometry.type === 'ConeGeometry') o.visible = false; }); eng.position.set(-0.6, 0, -17); eng.rotation.y = Math.PI / 2; night.add(eng); box(1.9, 0.5, 2.2, solid(0xb8281e, 0.6), -0.6, 1.6, -16.4, night);
+  const eng = lorry({ body: 'fire', colour: 0xb8281e, bodyColour: 0xb8281e, L: 5.4, W: 2.1, axles: 1 }); eng.position.set(-0.6, 0, -17.6); eng.rotation.y = Math.PI / 2; night.add(eng);   /* a fire engine: lockers, a ladder, a hose reel, a red lamp. No crest or lettering (engine/roadcars.js) */
   { const hose = cyl(0.05, 0.05, 9, solid(0xc9c0a0, 0.9), 2.4, 0.05, -21, night); hose.rotation.x = Math.PI / 2; hose.rotation.z = 0.5; }
   const fire = makeFire(night, toMy, myers);
   const ruin = grp(g); ruin.userData.noBatch = true; ruin.visible = false;   /* after the photograph "Myers Ward after fire": fallen zinc sheets and timbers on the low foundation */
@@ -269,8 +266,8 @@ export function buildSlipe(g) {
   put(g, oneStorey(9.4, 5, { overhang: 0, H: 3.0 }), 12.5, -61.0, -Math.PI / 2, out);   /* between the end of the Myers Ward and the back wall, touching neither */
   const tw = waterTower(); tw.position.set(21, 0, -61); g.add(tw); wall(19.1, -62.9, 22.9, -59.1); out.clear.push([18.8, -63.2, 23.2, -58.8]);
   const sp = standpipe(); sp.position.set(8.8, 0, -57.6); g.add(sp); wall(8.4, -58, 9.2, -57.2);
-  const van = truck(0xe6e2d4); van.traverse((o) => { if (o.isMesh && o.geometry.type === 'ConeGeometry') o.visible = false; }); van.position.set(5.2, 0, -58.5); van.rotation.y = -Math.PI / 2; g.add(van);
-  box(1.92, 0.05, 2.4, solid(0x2f6a3f, 0.7), 5.2, 1.385, -58.1, g); wall(4.1, -60.4, 6.3, -56.8); out.clear.push([3.8, -60.8, 6.6, -56.4]);
+  const van = panelVan({ colour: 0xe6e2d4, stripe: 0x2f6a3f, L: 3.4, W: 1.6 }); van.position.set(5.2, 0, -58.6); van.rotation.y = -Math.PI / 2; g.add(van);   /* the meal van: a small panel van, cream with a green stripe (the colours are a guess) */
+  wall(4.1, -60.4, 6.3, -56.8); out.clear.push([3.8, -60.8, 6.6, -56.4]);
   /* clotheslines on the east side, with sheets drying */
   for (const x of [24, 29, 34, 39]) { cyl(0.05, 0.05, 2.0, solid(0x8a8a86, 0.5, 0.4), x, 1.0, -30, g); wall(x - 0.2, -30.2, x + 0.2, -29.8); }
   const line = cyl(0.01, 0.01, 15, solid(0x6a6a66), 31.5, 1.95, -30, g); line.rotation.z = Math.PI / 2;

@@ -5,6 +5,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import * as THREE from 'three';
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { mergeGeometries as mergeG } from 'three/addons/utils/BufferGeometryUtils.js';
+import { rowBoat, rowStroke } from '../../../engine/boats.js';
 import { CL, mixers, grounded, HIPS_Y, setFallbackClip, loadClips, seamLoop, clipFor, animate, groundFeet, strideOf } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, chirp, cue, setG, tone, noiseHit, shipCreak, hammer, clink, uiSound } from '../../../engine/audio.js';
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
@@ -271,7 +272,7 @@ const indoor = new THREE.Group(); indoor.visible = false; scene.add(indoor); let
 function mk(geo, mat, x, y, z, parent) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); (parent || cur).add(m); return m; }
 
 /* ---------- harbour: pier, moored ships, cargo, beached boat, nets ---------- */
-let seaN = null, waves = null; const streetProps = []; const shipsM = {};
+let seaN = null, waves = null; const streetProps = []; const shipsM = {}; const DEVBOATS = {};   /* the boats, for the dev screenshot script */
 function buildHarbour() {
   const std = (map, r) => new THREE.MeshStandardMaterial({ map, roughness: r === undefined ? 0.9 : r });
   const B = (w, h, d, m, x, y, z, p) => mk(new THREE.BoxGeometry(w, h, d), m, x, y, z, p);
@@ -308,11 +309,8 @@ function buildHarbour() {
   for (const [x, z, k] of [[18.55, 21.15, 0], [19.45, 21.2, 1], [20.35, 21.1, 0], [18.6, 20.4, 3], [21.2, 21.05, 0], [19.45, 21.2, 4]]) { if (k === 0) cask(x, 0, z); else if (k === 1) crate(x, 0, z, 0.72, x); else if (k === 3) sack(x, 0, z, 1); else sack(x, 0.72, z, 0.8); }   /* barrels in front of the beached boat, closing the gap between the boat and the wall (the street mouth stays clear); none cut into the boat or each other (?test=audit) */
   streetProps.push(...scene.children.slice(nStreet));
   // a boat drawn up on the sand, with oars, and nets drying on a rack
-  { const L = 4.6, Bm = 1.5, sh = new THREE.Shape(); sh.moveTo(-L / 2, -Bm * 0.36); sh.quadraticCurveTo(0, -Bm * 0.56, L * 0.3, -Bm * 0.4); sh.quadraticCurveTo(L * 0.45, -Bm * 0.2, L / 2, 0); sh.quadraticCurveTo(L * 0.45, Bm * 0.2, L * 0.3, Bm * 0.4); sh.quadraticCurveTo(0, Bm * 0.56, -L / 2, Bm * 0.36); sh.closePath();
-    const hg = new THREE.ExtrudeGeometry(sh, { depth: 0.62, bevelEnabled: false, curveSegments: 8 }); hg.rotateX(-Math.PI / 2); const p = hg.attributes.position; for (let i = 0; i < p.count; i++) { const h = p.getY(i); if (h < 0.3) { p.setZ(i, p.getZ(i) * 0.45); p.setX(i, p.getX(i) * 0.9); } } hg.computeVertexNormals();
-    const boat = new THREE.Group(); boat.position.set(SHORE - 2.6, 0.0, 22.4); boat.rotation.set(0, 0.08, 0.12);   /* drawn up across the end of the beach strip: the edge of the town */ scene.add(boat); const hm = std(plankTex([96, 80, 62], 6, 3, 1)); hm.side = THREE.DoubleSide; mk(hg, hm, 0, 0, 0, boat);
-    B(L * 0.86, 0.03, Bm * 0.78, new THREE.MeshStandardMaterial({ color: 0x3a2c20, roughness: 1 }), -0.1, 0.34, 0, boat); for (const x of [-1.2, -0.2, 0.9]) B(0.22, 0.04, Bm * 0.86, timber, x, 0.5, 0, boat);
-    for (const z of [-0.2, 0.15]) { const o = mk(new THREE.CylinderGeometry(0.025, 0.025, 3.2, 6), timber, -0.2, 0.56, z, boat); o.rotation.z = Math.PI / 2 + 0.03; B(0.6, 0.02, 0.14, timber, 1.5, 0.52, z, boat); } }
+  { const boat = rowBoat({ L: 4.6, beam: 1.5, depth: 0.62, wood: std(plankTex([112, 92, 70], 6, 1, 1)), timber: std(plankTex([92, 72, 52], 1, 1, 1)), oars: 'shipped', rudder: false });   /* a clinker-built harbour boat (engine/boats.js): the rudder is unshipped while she is on the sand */
+    boat.position.set(SHORE - 2.6, 0.07, 22.4); boat.rotation.set(0, 0.08, 0.12);   /* drawn up across the end of the beach strip: the edge of the town */ scene.add(boat); DEVBOATS.beached = boat; }
   { const netT = cv(128, 128, (x) => { x.clearRect(0, 0, 128, 128); x.strokeStyle = 'rgba(96,84,60,0.95)'; x.lineWidth = 1.4; for (let i = -128; i < 256; i += 12) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + 128, 128); x.stroke(); x.beginPath(); x.moveTo(i, 0); x.lineTo(i - 128, 128); x.stroke(); } }); netT.repeat.set(3, 1.4);
     const rack = new THREE.Group(); rack.position.set(SHORE - 0.7, 0, 8.2); rack.rotation.y = Math.PI / 2; scene.add(rack); const nx = 0, nz = 0;   /* by the water's edge, along the shore (it stood across the way to the sand spit, and you walked through the net) */ for (const dx of [-2, 2]) mk(new THREE.CylinderGeometry(0.05, 0.06, 2.3, 6), timber, nx + dx, 1.15, nz, rack); const bar = mk(new THREE.CylinderGeometry(0.04, 0.04, 4.3, 6), timber, nx, 2.2, nz, rack); bar.rotation.z = Math.PI / 2;
     const net = mk(new THREE.PlaneGeometry(3.9, 1.9, 8, 1), new THREE.MeshBasicMaterial({ map: netT, transparent: true, side: THREE.DoubleSide, alphaTest: 0.3 }), nx, 1.25, nz, rack); const np = net.geometry.attributes.position; for (let i = 0; i < np.count; i++) np.setZ(i, Math.sin(np.getX(i) * 2.2) * 0.12 * (1 - (np.getY(i) + 0.95) / 1.9)); }
@@ -904,16 +902,18 @@ function resetWorld() { Q.abbaHit = Q.abbaTrip = false; if (abba) delete abba.us
   const m = shipsM.merchant, sl = shipsM.sloop; m.position.set(SHORE + 17.5, -0.35, -5.9); m.rotation.set(0, 0, 0); sl.position.set(SHORE + 17.5, -0.35, 4.9); sl.rotation.set(0, Math.PI, 0);
   if (afterG) afterG.visible = false; if (yardG) yardG.visible = false; for (const p of streetProps) p.visible = true; npcShow(true); for (const o of townObjs) o.m.visible = true; shipsM.merchant.visible = shipsM.sloop.visible = true; Q.aTalk = false;
   if (Q.boat) Q.boat.visible = false; for (const d of Q.debris) d.visible = false; ABBA.x = -4.15; ABBA.z = -S + 1.45; abba.position.set(ABBA.x, 0.12, ABBA.z); abba.visible = true; if (Q.gain) Q.gain.gain.value = 0; }
-function buildSeaProps() { if (Q.boat) return; const wood = new THREE.MeshStandardMaterial({ map: plankTex([96, 80, 62], 6, 3, 1), roughness: 0.9, side: THREE.DoubleSide }), tim = new THREE.MeshStandardMaterial({ map: plankTex([110, 86, 60], 3, 1, 1), roughness: 0.9 });
-  const L = 5.2, Bm = 1.7, sh = new THREE.Shape(); sh.moveTo(-L / 2, -Bm * 0.36); sh.quadraticCurveTo(0, -Bm * 0.56, L * 0.3, -Bm * 0.4); sh.quadraticCurveTo(L * 0.45, -Bm * 0.2, L / 2, 0); sh.quadraticCurveTo(L * 0.45, Bm * 0.2, L * 0.3, Bm * 0.4); sh.quadraticCurveTo(0, Bm * 0.56, -L / 2, Bm * 0.36); sh.closePath();
-  const hg = new THREE.ExtrudeGeometry(sh, { depth: 0.7, bevelEnabled: false, curveSegments: 8 }); hg.rotateX(-Math.PI / 2); const p = hg.attributes.position; for (let i = 0; i < p.count; i++) if (p.getY(i) < 0.3) { p.setZ(i, p.getZ(i) * 0.45); p.setX(i, p.getX(i) * 0.9); } hg.computeVertexNormals();
-  const b = new THREE.Group(); b.userData.hollow = true; scene.add(b); mk(hg, wood, 0, -0.3, 0, b);   /* hollow: Abba stands inside it (engine/audit.js) */ mk(new THREE.BoxGeometry(L * 0.86, 0.03, Bm * 0.78), tim, -0.1, 0.02, 0, b); for (const x of [-1.5, 1.2]) mk(new THREE.BoxGeometry(0.24, 0.04, Bm * 0.86), tim, x, 0.2, 0, b);
+const BOAT_SEAT = 0.52;   /* where Abba sits in the rescue boat, in metres toward the bow from the middle */
+function buildSeaProps() { if (Q.boat) return; const wood = new THREE.MeshStandardMaterial({ map: plankTex([132, 106, 78], 6, 1, 1), roughness: 0.9, side: THREE.DoubleSide }), tim = new THREE.MeshStandardMaterial({ map: plankTex([110, 86, 60], 3, 1, 1), roughness: 0.9 });
+  /* the boat that takes Galdy up: a plain clinker-built harbour boat of the time (engine/boats.js), with ribs, thwarts, thole pins, oars, a rudder, rope and a bailer.
+     The tombstone says only "a Boat", so nothing on it is named. Its keel is 0.3 under the group, as the old hull was; the mask keeps the sea out of the inside */
+  const b = new THREE.Group(); b.userData.hollow = true; scene.add(b);   /* hollow: Abba sits inside it (engine/audit.js) */
+  const rb = rowBoat({ L: 5.2, beam: 1.7, depth: 0.7, seatTop: 0.52, wood, timber: new THREE.MeshStandardMaterial({ map: plankTex([104, 80, 56], 1, 1, 1), roughness: 0.9 }), oars: 'rowing', rowAt: BOAT_SEAT, rowFace: 1, mask: true }); rb.position.y = -0.3; b.add(rb); b.userData.row = rb; waves.renderOrder = 2;
   const mark = mk(new THREE.OctahedronGeometry(0.28), new THREE.MeshBasicMaterial({ color: 0xd9a441 }), 0, 3.3, 0, b); b.userData.mark = mark; Q.boat = b;
   for (let i = 0; i < 12; i++) { const k = i % 3, d = mk(k === 0 ? new THREE.CylinderGeometry(0.3, 0.3, 0.9, 10) : k === 1 ? new THREE.BoxGeometry(0.7, 0.6, 0.7) : new THREE.BoxGeometry(2.6, 0.12, 0.3), tim, SHORE + 8 + ((i * 37) % 50), 0, 12 + ((i * 53) % 55)); if (k === 0) d.rotation.z = Math.PI / 2; d.rotation.y = i * 1.3; d.userData.ph = i * 1.7; Q.debris.push(d); } }
 function abbaIdle() { if (!abba || !idle) return; if (runA) runA.stop(); const ac = abba.userData.anim; if (ac) { for (const n of ['Scared', 'Terrified']) { const a = ac.get(n); if (a) a.stop(); } if (ac.cur !== idle) ac.cur.stop(); ac.cur = idle; ac.timer = 0; } idle.reset().setEffectiveWeight(1).fadeIn(0.2).play(); }
 function toSea() { hideCard(); buildSeaProps(); Q.ruin = true; sinkTown(0, 1); seaLevel = 0.2; moveSpeed = 2.3; $('vig').style.opacity = 0; scene.fog.color.copy(DUST); scene.fog.near = 25; scene.fog.far = 320; sky.material.color.set(0xd9cdb4);
   const m = shipsM.merchant, sl = shipsM.sloop; m.position.set(SHORE + 19, -1.2, -7); m.rotation.set(0.42, 0.15, 0.05); sl.position.set(SHORE - 6, 0.5, 13); sl.rotation.set(-0.5, 2.2, 0.08);                 // one ship heeled over, one driven up into the town
-  state.place = 'sea'; state.x = SHORE + 12; state.z = 22; Q.boat.position.set(SHORE + 20, seaLevel, 32); Q.boat.rotation.y = 0.6; Q.boat.visible = true; for (const d of Q.debris) d.visible = true;
+  state.place = 'sea'; state.x = SHORE + 12; state.z = 22; Q.boat.position.set(SHORE + 20, seaLevel, 32); Q.boat.rotation.y = 3.1;   /* three-quarters on to you at first, then the bow comes round */ Q.boat.visible = true; for (const d of Q.debris) d.visible = true;
   state.yaw = Math.atan2(-(Q.boat.position.x - state.x), -(Q.boat.position.z - state.z)); state.pitch = 0; ABBA.x = Q.boat.position.x; ABBA.z = Q.boat.position.z; abba.visible = true; Q.abbaRun = false; abbaIdle(); abba.rotation.y = Math.atan2(state.x - ABBA.x, state.z - ABBA.z); if (abba.userData.anim && CL.SitIdle) abba.userData.anim.play('SitIdle'); setPhase('sea');
   goalText = 'Swim to the boat with the gold marker!'; showGoal(); toast('A second shock throws you into the sea.'); }
 function finishQuake(skipped) { for (const id of ['quake', 'sand', 'watch', 'tomb']) unlock(id); Q.shake = 0; if (Q.gain) Q.gain.gain.value = 0; Q.phase = 'end';
@@ -930,9 +930,11 @@ function quakeTick(dt, time) { Q.t += dt; const t = Q.t;
   else if (Q.phase === 'swallow') { Q.shake = 1; Q.T += dt; sinkTown(Q.T); const k = ease(t / 3.6); eyeY = 1.62 - 1.25 * k; moveSpeed = 2.7 * (1 - 0.9 * k); $('vig').style.opacity = k;
     if (t > 4 && $('card').hidden) { Q.shake = 0.3; card('Swallowed', ['The wet sand has gone soft, like mud. You sink up to your neck.', 'You cannot move. Then the ground shakes again!'], [{ t: 'Next', go: toSea }]); } }
   else if (Q.phase === 'sea') { Q.shake = t < 1.5 ? 0.6 * (1 - t / 1.5) : (Math.sin(time * 0.5) > 0.96 ? 0.25 : 0); eyeY = seaLevel + 0.32 + Math.sin(time * 1.6) * 0.07;
-    const b = Q.boat; b.position.y = seaLevel + 0.12 + Math.sin(time * 1.2) * 0.06; b.rotation.z = Math.sin(time * 0.9) * 0.05; b.userData.mark.rotation.y = time * 1.5; { const c = Math.cos(b.rotation.y), sn = Math.sin(b.rotation.y), ax = b.position.x - 1.5 * c, az = b.position.z + 1.5 * sn; abba.userData.seatAnchor = { x: ax, z: az, top: b.position.y + 0.22, ry: Math.atan2(state.x - ax, state.z - az) }; }   /* Abba sits on the boat's back seat, facing you as she rows over */
+    const b = Q.boat; b.position.y = seaLevel + 0.12 + Math.sin(time * 1.2) * 0.06; b.rotation.z = Math.sin(time * 0.9) * 0.05; b.userData.mark.rotation.y = time * 1.5; { const c = Math.cos(b.rotation.y), sn = Math.sin(b.rotation.y), ax = b.position.x + BOAT_SEAT * c, az = b.position.z - BOAT_SEAT * sn; abba.userData.seatAnchor = { x: ax, z: az, top: b.position.y + 0.22, ry: b.rotation.y + Math.PI / 2 }; }   /* Abba sits on a thwart facing the bow and you, and pushes the oars to row over (rowing facing forward) */
     for (const d of Q.debris) { d.position.y = seaLevel + Math.sin(time * 1.1 + d.userData.ph) * 0.07; d.rotation.x = Math.sin(time * 0.7 + d.userData.ph) * 0.12; }
-    { const dx = state.x - b.position.x, dz = state.z - b.position.z, d = Math.hypot(dx, dz); if (d > 2.6 && t > 1.5) { const v = Math.min(1.1, 0.25 + t * 0.05) * dt; b.position.x += dx / d * v; b.position.z += dz / d * v; b.rotation.y = Math.atan2(dx, dz) + Math.PI / 2; } }   /* Abba rows toward you, so you always get there */
+    { const dx = state.x - b.position.x, dz = state.z - b.position.z, d = Math.hypot(dx, dz); const go = d > 2.6 && t > 1.5; if (go) { const v = Math.min(1.1, 0.25 + t * 0.05) * dt; b.position.x += dx / d * v; b.position.z += dz / d * v; }
+      if (t > 1.5) { let da = Math.atan2(dx, dz) - Math.PI / 2 - b.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); b.rotation.y += Math.max(-1, Math.min(1, da / (0.6 * dt + 1e-6))) * 0.6 * dt; }   /* the bow swings round to you (no sudden turn) */
+      if (go) Q.rowT = (Q.rowT || 0) + dt * 2.6; rowStroke(b.userData.row, Q.rowT || 0, go); }   /* Abba rows toward you, bow first, so you always get there */
     if (Math.hypot(state.x - b.position.x, state.z - b.position.z) < 2.8 && $('card').hidden) finishQuake(false); }
   if (Q.gain) Q.gain.gain.value = Math.min(1, Q.shake) * 0.9;
 }
@@ -1743,7 +1745,9 @@ const LOAD = { pile: [SHORE - 0.6, 3.4], drop: [SHORE + 12.6, -1.15], n: 0, carr
 function loadBuild() { if (LOAD.g) return; const g = new THREE.Group(); FBG.group.add(g); LOAD.g = g; const prev = cur; cur = g;
   const crM = new THREE.MeshStandardMaterial({ map: plankTex([150, 118, 80], 3, 1, 2), roughness: 0.9 }); LOAD.crates = [];
   for (let i = 0; i < 6; i++) { const c = mk(new THREE.BoxGeometry(0.5, 0.36, 0.4), crM, LOAD.pile[0] + (i % 3) * 0.55 - 0.55, 0.18 + Math.floor(i / 3) * 0.37, LOAD.pile[1] + (i % 2) * 0.08); c.rotation.y = (i * 0.37) % 0.3; LOAD.crates.push(c); }
-  const boatM = new THREE.MeshStandardMaterial({ map: plankTex([96, 72, 50], 4, 1, 2), roughness: 0.9 }); const boat = mk(new THREE.BoxGeometry(3.6, 0.5, 1.4), boatM, LOAD.drop[0], -0.35, LOAD.drop[1] - 1.6); LOAD.boat = boat; LOAD.inBoat = [];
+  /* the ship's boat lying at the pier: a small clinker-built boat (engine/boats.js) with the middle clear for the crates */
+  const boatM = new THREE.MeshStandardMaterial({ map: plankTex([112, 88, 62], 6, 1, 1), roughness: 0.9 }), boatT = new THREE.MeshStandardMaterial({ map: plankTex([100, 78, 54], 1, 1, 1), roughness: 0.9 });
+  const boat = rowBoat({ L: 3.6, beam: 1.4, depth: 0.62, wood: boatM, timber: boatT, thwarts: [-1.1, 1.05], oars: 'shipped', mask: true }); boat.position.set(LOAD.drop[0], -0.6, LOAD.drop[1] - 1.6); boat.userData.hollow = true; g.add(boat); waves.renderOrder = 2; LOAD.boat = boat; LOAD.inBoat = []; DEVBOATS.load = boat;
   const ring = (x, z) => { const r = mk(new THREE.RingGeometry(0.75, 0.88, 40), new THREE.MeshBasicMaterial({ color: 0xd9a441, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }), x, 0.08, z); r.rotation.x = -Math.PI / 2; return r; };
   LOAD.r1 = ring(LOAD.pile[0], LOAD.pile[1] - 0.9); LOAD.r2 = ring(LOAD.drop[0], LOAD.drop[1]);
   LOAD.held = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.36, 0.4), crM); LOAD.held.visible = false; if (!camera.parent) scene.add(camera); camera.add(LOAD.held); LOAD.held.position.set(0, -0.55, -0.75);
@@ -1752,7 +1756,7 @@ function loadReset() { if (!LOAD.g) return; LOAD.n = 0; LOAD.carrying = false; L
 TICKS.push(() => { if (!LOAD.g) return; const on = FB.on && FB.step === 2; LOAD.r1.visible = on && !LOAD.carrying; LOAD.r2.visible = on && LOAD.carrying; if (!FB.on) LOAD.held.visible = false; });
 ACTIONS.push(
   { fb: true, label: 'Pick up a crate', r: 1.6, where: () => FB.on && FB.step === 2 && !LOAD.carrying && [LOAD.pile[0], LOAD.pile[1] - 0.9], go: () => { const c = LOAD.crates.filter((k) => k.visible).pop(); if (c) c.visible = false; LOAD.carrying = true; LOAD.held.visible = true; goalText = 'Carry it to the boat at the gold ring, loaded: ' + LOAD.n + ' of ' + LOAD.need + '.'; showGoal(); } },
-  { fb: true, label: 'Put the crate in the boat', r: 1.8, where: () => FB.on && FB.step === 2 && LOAD.carrying && LOAD.drop, go: () => { LOAD.carrying = false; LOAD.held.visible = false; LOAD.n++; const c = LOAD.held.clone(); c.position.set(LOAD.drop[0] - 1 + LOAD.n * 0.55, -0.0, LOAD.drop[1] - 1.6); LOAD.g.add(c); LOAD.inBoat.push(c);
+  { fb: true, label: 'Put the crate in the boat', r: 1.8, where: () => FB.on && FB.step === 2 && LOAD.carrying && LOAD.drop, go: () => { LOAD.carrying = false; LOAD.held.visible = false; LOAD.n++; const c = LOAD.held.clone(); c.position.set(LOAD.drop[0] - 1.05 + LOAD.n * 0.52, -0.6 + LOAD.boat.userData.boards + 0.18, LOAD.drop[1] - 1.6 + (LOAD.n === 2 ? 0.12 : -0.1));   /* on the bottom boards, between the thwarts */ LOAD.g.add(c); LOAD.inBoat.push(c);
       if (LOAD.n >= LOAD.need) { startConvo([{ who: 'Sailor', text: 'Good lad! That is the last one.' }, { who: 'Sailor', text: 'Quick now, the Admiral is calling everyone to the pier!' }], fbMuster); }
       else { goalText = 'Good! Get another crate, loaded: ' + LOAD.n + ' of ' + LOAD.need + '.'; showGoal(); toast('Crate loaded!'); } } });
 for (let i = ACTIONS.length - 1; i >= 0; i--) if (ACTIONS[i].fb && ACTIONS[i].label === 'Help load the ships') ACTIONS.splice(i, 1);
@@ -1881,7 +1885,7 @@ function dressSpit(g, stone, wood, dark) {
   const driftM = new THREE.MeshStandardMaterial({ color: 0x9c907e, roughness: 1 });
   for (const [x, z] of pick(6, (x, z) => free(x, z) && edgeD(x, z) < 2.2 && edgeD(x, z) > 0.8)) { const d = mk(new THREE.CylinderGeometry(0.07, 0.11, 1.6 + rnd() * 1.6, 7), driftM, x, 0.07, z, g); d.rotation.set(Math.PI / 2, 0, rnd() * 6); }
   /* a fishing canoe drawn up on the inner shore, nets drying on a pole rack beside it */
-  const hull = new THREE.Group(); hull.position.set(24.2, 0.02, -24.5); hull.rotation.y = 1.15; g.add(hull);
+  const hull = new THREE.Group(); hull.position.set(24.2, 0.02, -24.5); hull.rotation.y = 1.15; g.add(hull); DEVBOATS.canoe = hull;
   const hm = new THREE.MeshStandardMaterial({ map: plankTex([92, 70, 50], 5, 2, 1), roughness: 0.95, side: THREE.DoubleSide }), hg = new THREE.SphereGeometry(1, 20, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2); hg.scale(2.4, 0.42, 0.55);
   const hp = hg.attributes.position; for (let i = 0; i < hp.count; i++) hp.setY(i, hp.getY(i) + 0.05 * (hp.getX(i) / 2.4) ** 2); hg.computeVertexNormals(); const hl = mk(hg, hm, 0, 0.42, 0, hull);
   for (const x of [-0.9, 0.5]) mk(new THREE.BoxGeometry(0.12, 0.04, 1.0), wood, x, 0.36, 0, hull);
@@ -2053,6 +2057,7 @@ TICKS.push((dt) => { if (!built) return;
     turnBone(m.getObjectByName('mixamorigNeck'), a * 0.3); turnBone(m.getObjectByName('mixamorigHead'), a * 0.7); } });
 
 /* ---------- dev checks: ?test=audit, layout, walkers, life and all (games/port-royal/src/checks.js; never in a public build) ---------- */
+if (__DEV__) { window.__prBoats = DEVBOATS; DEVBOATS.buildLoad = () => loadBuild(); }
 if (__DEV__) wireChecks({
   renderer, scene, camera, canvas, state, Q, FB, NS, FORT, FBG, KP, SOLDIER, NPCS, NS_PEOPLE, STROLL, people, survivors, JOURNAL, CHAPTERS, ACTIONS, IN, X0, X1, S, SHORE, WX0, WX1, YX, YZ,
   CONVOS: [TALK, STEW, AFTER, COINS, WARE1, NPCS, SAM_AFTER, KOFI_AFTER, BENNING_AFTER, HEATH_TALK, AFTER1, AFTER2, NS_TALK, BUCS, NED, NED_AGAIN, GUNNER, FB_TALK, MORGAN_TOPICS, QM_TALK, EXQ_TALK, MUSTER],
