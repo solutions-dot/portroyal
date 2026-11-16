@@ -727,7 +727,7 @@ function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidde
 function playChapter(c) { navGen++; $('chapters').hidden = true; busy = false; fbReset(); if (!state.started) startGame(); c.go(); }
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
 $('chteacher').onclick = () => { state.ch.all = !state.ch.all; saveGame(); renderChapters();$('chteacher').focus(); };
-$('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } try { localStorage.removeItem(SAVE_KEY); sessionStorage.setItem('pr-fresh', '1'); } catch (e) { /* ignore */ } location.reload(); };
+$('chreset').onclick = () => { if (!confirm('Restart and erase all saved progress?')) return; try { localStorage.removeItem(SAVE_KEY); sessionStorage.setItem('pr-fresh', '1'); } catch (e) { /* ignore */ } location.reload(); };
 
 /* ---------- sound: made in the browser, no audio files ---------- */
 let stepDist = 0, lastStep = 0, camLift = 0;

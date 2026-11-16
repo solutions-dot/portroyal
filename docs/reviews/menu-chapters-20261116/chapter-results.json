@@ -1,0 +1,3782 @@
+[
+  {
+    "game": "bog-walk",
+    "width": 1280,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 69.953125,
+        "width": 936,
+        "height": 660.09375,
+        "top": 69.953125,
+        "right": 1108,
+        "bottom": 730.046875,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 484,
+            "bottom": 714.046875,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 784,
+            "bottom": 714.046875,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 1084,
+            "bottom": 714.046875,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 48.90625,
+        "width": 936,
+        "height": 702.1875,
+        "top": 48.90625,
+        "right": 1108,
+        "bottom": 751.09375,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 484,
+            "bottom": 735.09375,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 784,
+            "bottom": 735.09375,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 1084,
+            "bottom": 735.09375,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "eventide",
+    "width": 1280,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 484,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 784,
+            "bottom": 760,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 484,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 784,
+            "bottom": 760,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "garvey",
+    "width": 1280,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 484,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 784,
+            "bottom": 760,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 484,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 784,
+            "bottom": 760,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "kendal",
+    "width": 1280,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 484,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 784,
+            "bottom": 760,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 484,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 784,
+            "bottom": 760,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "melissa",
+    "width": 1280,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 484,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 784,
+            "bottom": 760,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 484,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 784,
+            "bottom": 760,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "nanny",
+    "width": 1280,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 69.953125,
+        "width": 936,
+        "height": 660.09375,
+        "top": 69.953125,
+        "right": 1108,
+        "bottom": 730.046875,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 484,
+            "bottom": 714.046875,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 784,
+            "bottom": 714.046875,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 1084,
+            "bottom": 714.046875,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 48.90625,
+        "width": 936,
+        "height": 702.1875,
+        "top": 48.90625,
+        "right": 1108,
+        "bottom": 751.09375,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 484,
+            "bottom": 735.09375,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 784,
+            "bottom": 735.09375,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 1084,
+            "bottom": 735.09375,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "port-royal",
+    "width": 1280,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 69.953125,
+        "width": 936,
+        "height": 660.09375,
+        "top": 69.953125,
+        "right": 1108,
+        "bottom": 730.046875,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 484,
+            "bottom": 714.046875,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 784,
+            "bottom": 714.046875,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 1084,
+            "bottom": 714.046875,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 48.90625,
+        "width": 936,
+        "height": 702.1875,
+        "top": 48.90625,
+        "right": 1108,
+        "bottom": 751.09375,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 484,
+            "bottom": 735.09375,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 784,
+            "bottom": 735.09375,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 1084,
+            "bottom": 735.09375,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "selassie",
+    "width": 1280,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 69.953125,
+        "width": 936,
+        "height": 660.09375,
+        "top": 69.953125,
+        "right": 1108,
+        "bottom": 730.046875,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 484,
+            "bottom": 714.046875,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 784,
+            "bottom": 714.046875,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 666.046875,
+            "width": 288,
+            "height": 48,
+            "top": 666.046875,
+            "right": 1084,
+            "bottom": 714.046875,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 48.90625,
+        "width": 936,
+        "height": 702.1875,
+        "top": 48.90625,
+        "right": 1108,
+        "bottom": 751.09375,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 484,
+            "bottom": 735.09375,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 784,
+            "bottom": 735.09375,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 687.09375,
+            "width": 288,
+            "height": 48,
+            "top": 687.09375,
+            "right": 1084,
+            "bottom": 735.09375,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "tivoli",
+    "width": 1280,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 289.328125,
+            "height": 48,
+            "top": 712,
+            "right": 485.328125,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 495.328125,
+            "y": 712,
+            "width": 289.328125,
+            "height": 48,
+            "top": 712,
+            "right": 784.65625,
+            "bottom": 760,
+            "left": 495.328125
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 794.65625,
+            "y": 712,
+            "width": 289.34375,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 794.65625
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 289.328125,
+            "height": 48,
+            "top": 712,
+            "right": 485.328125,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 495.328125,
+            "y": 712,
+            "width": 289.328125,
+            "height": 48,
+            "top": 712,
+            "right": 784.65625,
+            "bottom": 760,
+            "left": 495.328125
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 794.65625,
+            "y": 712,
+            "width": 289.34375,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 794.65625
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "windrush",
+    "width": 1280,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 484,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 784,
+            "bottom": 760,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 172,
+        "y": 24,
+        "width": 936,
+        "height": 752,
+        "top": 24,
+        "right": 1108,
+        "bottom": 776,
+        "left": 172
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 196,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 484,
+            "bottom": 760,
+            "left": 196
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 496,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 784,
+            "bottom": 760,
+            "left": 496
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 796,
+            "y": 712,
+            "width": 288,
+            "height": 48,
+            "top": 712,
+            "right": 1084,
+            "bottom": 760,
+            "left": 796
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "bog-walk",
+    "width": 390,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 16.296875,
+        "width": 366.625,
+        "height": 767.390625,
+        "top": 16.296875,
+        "right": 378.3125,
+        "bottom": 783.6875,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 723.6875,
+            "width": 111.90625,
+            "height": 48,
+            "top": 723.6875,
+            "right": 133.59375,
+            "bottom": 771.6875,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 723.6875,
+            "width": 111.90625,
+            "height": 48,
+            "top": 723.6875,
+            "right": 250.953125,
+            "bottom": 771.6875,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 723.6875,
+            "width": 111.90625,
+            "height": 48,
+            "top": 723.6875,
+            "right": 368.3125,
+            "bottom": 771.6875,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "eventide",
+    "width": 390,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "garvey",
+    "width": 390,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "kendal",
+    "width": 390,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "melissa",
+    "width": 390,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "nanny",
+    "width": 390,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 27.390625,
+        "width": 366.625,
+        "height": 745.21875,
+        "top": 27.390625,
+        "right": 378.3125,
+        "bottom": 772.609375,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 712.609375,
+            "width": 111.90625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 133.59375,
+            "bottom": 760.609375,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 712.609375,
+            "width": 111.90625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 250.953125,
+            "bottom": 760.609375,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 712.609375,
+            "width": 111.90625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 368.3125,
+            "bottom": 760.609375,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "port-royal",
+    "width": 390,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 27.390625,
+        "width": 366.625,
+        "height": 745.21875,
+        "top": 27.390625,
+        "right": 378.3125,
+        "bottom": 772.609375,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 712.609375,
+            "width": 111.90625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 133.59375,
+            "bottom": 760.609375,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 712.609375,
+            "width": 111.90625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 250.953125,
+            "bottom": 760.609375,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 712.609375,
+            "width": 111.90625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 368.3125,
+            "bottom": 760.609375,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "selassie",
+    "width": 390,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 27.390625,
+        "width": 366.625,
+        "height": 745.21875,
+        "top": 27.390625,
+        "right": 378.3125,
+        "bottom": 772.609375,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 712.609375,
+            "width": 111.90625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 133.59375,
+            "bottom": 760.609375,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 712.609375,
+            "width": 111.90625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 250.953125,
+            "bottom": 760.609375,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 712.609375,
+            "width": 111.90625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 368.3125,
+            "bottom": 760.609375,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "tivoli",
+    "width": 390,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.53125,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.21875,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.21875,
+            "y": 728.3125,
+            "width": 111.546875,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.765625,
+            "bottom": 776.3125,
+            "left": 139.21875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.765625,
+            "y": 728.3125,
+            "width": 111.53125,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.296875,
+            "bottom": 776.3125,
+            "left": 256.765625
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.53125,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.21875,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.21875,
+            "y": 728.3125,
+            "width": 111.546875,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.765625,
+            "bottom": 776.3125,
+            "left": 139.21875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.765625,
+            "y": 728.3125,
+            "width": 111.53125,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.296875,
+            "bottom": 776.3125,
+            "left": 256.765625
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "windrush",
+    "width": 390,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 11.6875,
+        "y": 11.6875,
+        "width": 366.625,
+        "height": 776.625,
+        "top": 11.6875,
+        "right": 378.3125,
+        "bottom": 788.3125,
+        "left": 11.6875
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 21.6875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 133.59375,
+            "bottom": 776.3125,
+            "left": 21.6875
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 139.046875,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 250.953125,
+            "bottom": 776.3125,
+            "left": 139.046875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 256.40625,
+            "y": 728.3125,
+            "width": 111.90625,
+            "height": 48,
+            "top": 728.3125,
+            "right": 368.3125,
+            "bottom": 776.3125,
+            "left": 256.40625
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "bog-walk",
+    "width": 320,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "eventide",
+    "width": 320,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "garvey",
+    "width": 320,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "kendal",
+    "width": 320,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "melissa",
+    "width": 320,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 7,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "nanny",
+    "width": 320,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 27.390625,
+        "width": 300.8125,
+        "height": 745.21875,
+        "top": 27.390625,
+        "right": 310.40625,
+        "bottom": 772.609375,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 712.609375,
+            "width": 90.265625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 109.859375,
+            "bottom": 760.609375,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 712.609375,
+            "width": 90.265625,
+            "height": 48,
+            "top": 712.609375,
+            "right": 205.125,
+            "bottom": 760.609375,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 712.609375,
+            "width": 90.28125,
+            "height": 48,
+            "top": 712.609375,
+            "right": 300.40625,
+            "bottom": 760.609375,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 10.296875,
+        "width": 300.8125,
+        "height": 779.390625,
+        "top": 10.296875,
+        "right": 310.40625,
+        "bottom": 789.6875,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 729.6875,
+            "width": 90.265625,
+            "height": 48,
+            "top": 729.6875,
+            "right": 109.859375,
+            "bottom": 777.6875,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 729.6875,
+            "width": 90.265625,
+            "height": 48,
+            "top": 729.6875,
+            "right": 205.125,
+            "bottom": 777.6875,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 729.6875,
+            "width": 90.28125,
+            "height": 48,
+            "top": 729.6875,
+            "right": 300.40625,
+            "bottom": 777.6875,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "port-royal",
+    "width": 320,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 15.921875,
+        "width": 300.8125,
+        "height": 768.15625,
+        "top": 15.921875,
+        "right": 310.40625,
+        "bottom": 784.078125,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 724.078125,
+            "width": 90.265625,
+            "height": 48,
+            "top": 724.078125,
+            "right": 109.859375,
+            "bottom": 772.078125,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 724.078125,
+            "width": 90.265625,
+            "height": 48,
+            "top": 724.078125,
+            "right": 205.125,
+            "bottom": 772.078125,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 724.078125,
+            "width": 90.28125,
+            "height": 48,
+            "top": 724.078125,
+            "right": 300.40625,
+            "bottom": 772.078125,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "selassie",
+    "width": 320,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 10.296875,
+        "width": 300.8125,
+        "height": 779.390625,
+        "top": 10.296875,
+        "right": 310.40625,
+        "bottom": 789.6875,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 729.6875,
+            "width": 90.265625,
+            "height": 48,
+            "top": 729.6875,
+            "right": 109.859375,
+            "bottom": 777.6875,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 729.6875,
+            "width": 90.265625,
+            "height": 48,
+            "top": 729.6875,
+            "right": 205.125,
+            "bottom": 777.6875,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 729.6875,
+            "width": 90.28125,
+            "height": 48,
+            "top": 729.6875,
+            "right": 300.40625,
+            "bottom": 777.6875,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 6,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "tivoli",
+    "width": 320,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 89.59375,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.1875,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 115.1875,
+            "y": 730.40625,
+            "width": 89.609375,
+            "height": 48,
+            "top": 730.40625,
+            "right": 204.796875,
+            "bottom": 778.40625,
+            "left": 115.1875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.796875,
+            "y": 730.40625,
+            "width": 89.59375,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.390625,
+            "bottom": 778.40625,
+            "left": 210.796875
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 89.59375,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.1875,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 115.1875,
+            "y": 730.40625,
+            "width": 89.609375,
+            "height": 48,
+            "top": 730.40625,
+            "right": 204.796875,
+            "bottom": 778.40625,
+            "left": 115.1875
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.796875,
+            "y": 730.40625,
+            "width": 89.59375,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.390625,
+            "bottom": 778.40625,
+            "left": 210.796875
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ok": true
+  },
+  {
+    "game": "windrush",
+    "width": 320,
+    "errors": [],
+    "title": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ingame": {
+      "paper": "rgb(242, 233, 213)",
+      "ink": "rgb(37, 34, 27)",
+      "bounds": {
+        "x": 9.59375,
+        "y": 9.59375,
+        "width": 300.8125,
+        "height": 780.8125,
+        "top": 9.59375,
+        "right": 310.40625,
+        "bottom": 790.40625,
+        "left": 9.59375
+      },
+      "footer": [
+        {
+          "id": "chteacher",
+          "text": "Unlock All",
+          "rect": {
+            "x": 19.59375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 109.859375,
+            "bottom": 778.40625,
+            "left": 19.59375
+          }
+        },
+        {
+          "id": "chreset",
+          "text": "Restart",
+          "rect": {
+            "x": 114.859375,
+            "y": 730.40625,
+            "width": 90.265625,
+            "height": 48,
+            "top": 730.40625,
+            "right": 205.125,
+            "bottom": 778.40625,
+            "left": 114.859375
+          }
+        },
+        {
+          "id": "chcred",
+          "text": "Credits",
+          "rect": {
+            "x": 210.125,
+            "y": 730.40625,
+            "width": 90.28125,
+            "height": 48,
+            "top": 730.40625,
+            "right": 300.40625,
+            "bottom": 778.40625,
+            "left": 210.125
+          }
+        }
+      ],
+      "rows": 8,
+      "overlaps": []
+    },
+    "ok": true
+  }
+]

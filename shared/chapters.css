@@ -1,0 +1,27 @@
+/* One chapter book for every game and every route into Chapters. */
+#chapters{--chapter-paper:#f2e9d5;--chapter-ink:#25221b;position:fixed;inset:0;z-index:60;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);place-items:center;padding:clamp(8px,3vw,24px);background:rgba(15,25,31,.78);overflow:hidden;touch-action:pan-y}
+#chapters>.book{display:flex;flex-direction:column;width:min(52rem,100%);max-height:100%;min-height:0;overflow:hidden;border-radius:5px;background:var(--chapter-paper);color:var(--chapter-ink);box-shadow:0 20px 60px #0007;font-family:var(--body,var(--text,system-ui))}
+#chapters .book>header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:clamp(14px,2vw,24px);border-bottom:2px solid var(--chapter-ink);flex-shrink:0}
+#chapters #chtitle{margin:0;font:700 clamp(1.65rem,4vw,2.2rem)/1.1 "Alfa Slab One","Rockwell",Georgia,serif;letter-spacing:0;color:var(--chapter-ink)}
+#chapters #chclose{min-height:48px;padding:.6rem 1rem;border:2px solid var(--chapter-ink);border-radius:6px;background:var(--chapter-ink);color:var(--chapter-paper);font:700 1rem/1.2 var(--body,var(--text,system-ui));cursor:pointer}
+#chapters .chnote{margin:16px 24px 0;max-width:none;color:var(--chapter-ink);font-size:1rem;line-height:1.45;flex-shrink:0}
+#chapters #chlist{display:flex;flex-direction:column;gap:10px;list-style:none;margin:0;padding:20px 24px;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
+#chapters #chlist>li{display:block;padding:0;margin:0;border:0;max-width:none}
+#chapters #chlist .chbtn{display:grid;grid-template-columns:minmax(7rem,9rem) minmax(0,1fr) max-content;gap:8px 16px;align-items:center;width:100%;min-height:58px;margin:0;padding:14px 16px;border:2px solid var(--chapter-ink);border-radius:6px;background:transparent;color:var(--chapter-ink);font:400 1rem/1.4 var(--body,var(--text,system-ui));text-align:left;cursor:pointer}
+#chapters .chbtn .yr{grid-column:1;grid-row:1;font:700 1rem/1.3 "Alfa Slab One","Rockwell",Georgia,serif;overflow-wrap:anywhere}
+#chapters .chbtn .nm{grid-column:2;grid-row:1;font-size:1rem;opacity:1;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+#chapters .chbtn .st{grid-column:3;grid-row:1;font-size:.9rem;white-space:nowrap}
+#chapters .chbtn.done .st::before{content:"\2713\00a0"}
+#chapters .chbtn .summary{grid-column:1/-1;font-size:.9rem;line-height:1.4}
+#chapters #chlist .chbtn:disabled{opacity:.62;border-style:dashed;cursor:default}
+#chapters #chlist .chbtn:hover:not(:disabled){background:rgba(37,34,27,.08)}
+#chapters .book>footer.chfoot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:16px 24px;border-top:2px solid var(--chapter-ink);flex-shrink:0;margin:0;letter-spacing:0}
+#chapters .chfoot>.btn{display:flex;align-items:center;justify-content:center;width:100%;min-width:0;min-height:48px;margin:0;padding:10px 4px;border:2px solid var(--chapter-ink);border-radius:6px;background:transparent;color:var(--chapter-ink);font:700 1rem/1.2 var(--body,var(--text,system-ui));white-space:nowrap;cursor:pointer}
+#chapters .chfoot>.btn:hover,#chapters .chfoot>.btn[aria-pressed=true]{background:rgba(37,34,27,.08)}
+#chapters button:focus-visible{outline:3px solid var(--chapter-ink);outline-offset:3px}
+body:has(#chapters:not([hidden])) #title{visibility:hidden}
+@media(max-width:560px){#chapters .book>header{padding:14px}#chapters .chnote{margin:12px 14px 0;font-size:.9rem}#chapters #chlist{padding:16px 14px}#chapters #chlist .chbtn{grid-template-columns:minmax(0,1fr) max-content;gap:5px 10px;padding:12px}#chapters .chbtn .yr{grid-column:1;grid-row:1;font-size:.9rem}#chapters .chbtn .nm{grid-column:1;grid-row:2}#chapters .chbtn .st{grid-column:2;grid-row:1/3}#chapters .book>footer.chfoot{padding:12px 10px;gap:6px}#chapters .chfoot>.btn{font-size:clamp(.75rem,3vw,.95rem)}}
+@media(max-height:460px){#chapters{padding:6px}#chapters .book>header{padding:6px 12px}#chapters .chnote{margin-top:6px;font-size:.85rem}#chapters #chlist{padding-top:10px;padding-bottom:10px}#chapters .book>footer.chfoot{padding-top:6px;padding-bottom:6px}}
+
+/* Port Royal keeps Chapters mounted while Credits is open. */
+body:has(#chapters:not([hidden])) #credits{z-index:61}

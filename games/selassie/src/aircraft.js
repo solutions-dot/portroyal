@@ -1,9 +1,8 @@
 /* Douglas DC-6B: the type of airliner that brought Haile Selassie I to Palisadoes (LIFE called it "the emperor's DC-6";
    Ethiopian Air Lines flew three DC-6Bs in the 1960s). Built to the published size: about 32.2 m long, 35.8 m span,
    8.7 m to the top of the fin, a 3.3 m fuselage, four radial engines with 4 m three-blade propellers, tricycle gear and
-   the passenger door at the back on the left (port) side, as in the arrival photographs. Which of the three aircraft
-   flew that day, and its exact paint, are not confirmed: there is no registration and no aircraft name, and the
-   cheatline and tail bands are a general reconstruction (docs/games/selassie.md). No archive image textures.
+   the passenger door at the back on the left (port) side, as in the arrival photographs. The exact airframe and paint remain a reconstruction. No unverified aircraft name or registration
+   is assigned (docs/games/selassie.md). No archive image textures.
    Local axes: the nose points along +x, the left (port) side is -z, the wheels stand on y = 0. */
 import * as THREE from "three";
 import { grp, mesh, box, cyl, solid, cv, std, batchStatic } from "./gfx.js";
@@ -420,13 +419,13 @@ export function dc6() {
   };
   hinge.userData.open(0);
   g.userData.door = hinge;
-  /* titles on both sides, wrapped onto the body: the airline's name and the lion on the nose (no registration or aircraft name: not confirmed) */
-  const text = cv(1024, 96, (x, W) => {
-    x.clearRect(0, 0, W, 96);
+  /* Painted lettering follows the owner's references; the rounded tail geometry is unchanged. */
+  const text = cv(2048, 128, (x, W) => {
+    x.clearRect(0, 0, W, 128);
     x.fillStyle = "#9d3a2e";
-    x.font = "bold 64px Georgia";
+    x.font = "bold italic 92px Georgia";
     x.textAlign = "center";
-    x.fillText("ETHIOPIAN", W / 2, 72);
+    x.fillText("ETHIOPIAN AIRLINES", W / 2, 96);
   });
   const lion = lionBadge();
   function wrapped(tex, cx, cy, w, h, side) {
@@ -451,7 +450,7 @@ export function dc6() {
     g.add(new THREE.Mesh(geo, mat));
   }
   for (const side of [-1, 1]) {
-    wrapped(text, 2.2, Y0 + 1.08, 8.4, 0.78, side);
+    wrapped(text, 2.2, Y0 + 1.08, 13.0, 0.78, side);
     wrapped(lion, 12.35, Y0 + 0.02, 0.95, 0.95, side);
   }
   /* aerial mast and wire */

@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Tivoli (work in progress)</title>
+<title>Tivoli</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Alfa+Slab+One&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
   /* The same look as Port Royal: dark teal panels, one brass accent for things you can press, big touch targets (48px). */
   :root{--ink:#10222b;--paper:#f2e8d0;--brass:#d9a441;--brass-ink:#2a1f08;--display:"IM Fell English SC","IM Fell English",Georgia,serif;--body:"Atkinson Hyperlegible",system-ui,sans-serif}
@@ -102,14 +102,23 @@ body:has(.card:not([hidden])) #toast,body:has(#dialogue:not([hidden])) #toast{vi
 #journal .book>footer .btn.ghost{color:var(--ink);border-color:var(--ink)}
 #journal .book>footer a{text-decoration:none}
 @media(max-width:560px){#journal .book{height:calc(100dvh - 16px)}#journal .book>footer span{display:none}#journal .book>footer .btn{font-size:.85rem;padding:.55rem .65rem}#journal #jpage{padding:.85rem 1rem}}
+/* The quiet street introduces the story before any opted-in May 2010 scene. */
+#title{isolation:isolate;background:none}
+#title::before{content:"";position:absolute;inset:-3%;z-index:-2;background:url(../../../menu/tivoli.jpg) center/cover no-repeat;animation:tivoli-title-drift 26s ease-in-out infinite alternate;pointer-events:none}
+#title::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,24,31,.92),rgba(6,24,31,.48)),linear-gradient(0deg,rgba(6,24,31,.55),transparent 60%);pointer-events:none}
+@keyframes tivoli-title-drift{from{transform:scale(1) translateX(-.4%)}to{transform:scale(1.045) translateX(.4%)}}
+@media(prefers-reduced-motion:reduce){#title::before{animation:none}}
 </style>
 <link rel="stylesheet" href="title.css">
+<link rel="stylesheet" href="chapters.css">
 </head>
 <body>
 <canvas id="c" tabindex="0" aria-label="The game world"></canvas>
 <section id="title">
   <h1>Tivoli</h1>
-  <p>The story of Tivoli Gardens, West Kingston. Work in progress. Walk with the arrow keys or WASD, or the left side of the screen on a phone. Drag to look.</p>
+  <p>From Back-o-Wall to Tivoli Gardens, meet neighbours and hear their stories.</p>
+  <p>Learn about May 2010, its aftermath, and life today.</p>
+  <p>The family is fictional. The history is real.</p>
   <div class="row title-actions">
     <button id="start" class="btn" disabled>Loading</button>
     <button id="chbtn" class="btn ghost">Chapters</button>
@@ -131,7 +140,14 @@ body:has(.card:not([hidden])) #toast,body:has(#dialogue:not([hidden])) #toast{vi
     <button id="next" class="btn">Next</button>
   </div>
 </div>
-<div id="chapters" class="card" hidden><div class="panel-head"><h2>Chapters</h2><button id="chclose" class="btn ghost">Close</button></div><div id="chlist"></div><div class="row chfoot"><button id="chteacher" class="btn ghost">Unlock All</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Restart</button></div></div>
+<section id="chapters" class="card" role="dialog" aria-labelledby="chtitle" hidden>
+  <div class="book">
+    <header><h2 id="chtitle">Chapters</h2><button id="chclose">Close</button></header>
+    <p class="chnote">All chapters are available. Unlock All also opens the journal pages.</p>
+    <ol id="chlist" class="chlist"></ol>
+    <footer class="chfoot"><button id="chteacher" class="btn ghost">Unlock All</button><button id="chreset" class="btn ghost">Restart</button><button id="chcred" class="btn ghost">Credits</button></footer>
+  </div>
+</section>
 <div id="credits" class="card" hidden><h2>Credits</h2><p>Tivoli Gardens · PastPort Jamaica</p><button id="creditsclose" class="btn ghost">Back to Chapters</button></div>
 <section id="journal" role="dialog" aria-modal="true" aria-labelledby="jtitle" hidden><div class="book">
   <header><h2 id="jtitle">Journal</h2><button id="jclose">Close</button></header>

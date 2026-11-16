@@ -1230,8 +1230,9 @@ function tick(dt, now = performance.now()) {
     camera.lookAt(...S.view.look);
   } else if (!S.started) {
     const k = reduced ? 0 : now * 0.00004;
-    camera.position.set(22 + Math.sin(k) * 4, 3.0 + Math.sin(k * 1.7) * 0.4, 21 + Math.cos(k) * 1.5);
-    camera.lookAt(-10, 7.5, -13);
+    // The agreed Kingston quay view: cargo, passengers, the gangway and the ship.
+    camera.position.set(-12 + Math.sin(k) * .6, 1.6 + Math.sin(k * 1.7) * .06, 18 + Math.sin(k * .8) * .35);
+    camera.lookAt(6, 3, -6);
   } else {
     const adult =
       CHAPTERS[chapterOf(S.stage)].age > 16 &&

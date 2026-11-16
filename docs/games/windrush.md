@@ -139,3 +139,7 @@ The results are in [windrush-qa.json](windrush-qa.json). The public collection b
 This is a first playable version for independent review. The places are compressed outdoor tableaus; furnished interiors, denser lived-in scenery, and a specialist/community review of the family treatment remain useful next work. The ship and clothes are stylised reconstructions, not exact archival models. Dedicated sweeping, hammering, hoeing, washing, selling, child skipping and additional natural idle clips remain asset work, as listed in the animation plan. No unrelated clip is presented as one of those actions.
 
 The menu thumbnail uses `menu/windrush-ship.jpg`, captured from the game with `?shot=thumbnail` at 1600x900. Its separate image area keeps the ship above the words, including 320px-wide phones; the Windrush card has extra height on phones to preserve room for both. The new filename also avoids reusing an older cached poster.
+
+### Kingston quay artwork correction, 16 November 2026
+
+The current menu artwork is `menu/windrush-kingston-quay.jpg`, captured from `?shot=quay`. It replaces the distant offshore ship view mentioned above. The opening camera uses the same quay composition and moves gently while the title is open. Reduced motion holds the camera still. Ship geometry, people and saved progress are unchanged.

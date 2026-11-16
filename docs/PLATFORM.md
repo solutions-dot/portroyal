@@ -49,13 +49,13 @@ Tone for hard history:
 
 ## The credit
 
-"A world created by Kellz 5.0" is on the **menu** (the header) and the About page footer. It is **not** on the intro screen. That was the owner's choice.
+"Created by Kellz 5.0" is the final **menu** header pill, after About this platform and Get updates. It opens the contact form. The About page keeps its creator credit. No creator credit appears on the intro screen.
 
 ## Game opening screens
 
 All game opening screens have a Main Menu button linking to `../../../menu/`. It is a normal link styled like Chapters and is available while models load, without a network probe or a check for the platform's name. Journal and reset links use the same destination.
 
-The standard order is Start (or Continue when a saved game is available), Chapters, Main Menu, then the loading bar while the game loads. The bar hides automatically as soon as Start or Continue is enabled. Tivoli keeps its extra Journal button after Main Menu. Games without chapter support omit Chapters. The saved-progress note appears only when saving is supported. Creator credits are removed from the opening screens; existing Credits panels remain available through Chapters.
+The standard order is Start (or Continue when a saved game is available), Chapters, Main Menu, then the loading bar while the game loads. The bar hides automatically as soon as Start or Continue is enabled. Tivoli uses the same three opening actions; its journal opens in game. Games without chapter support omit Chapters. The saved-progress note appears only when saving is supported. Creator credits are removed from the opening screens; existing Credits panels remain available through Chapters.
 
 `shared/title.css` owns the shared control styles and is copied to each game's `site/title.css` by `tools/build.mjs`. The template uses it too. Keep every opening screen usable on narrow phones and short landscape screens.
 
@@ -104,3 +104,11 @@ Checking it (done for this version, repeat after changes):
 - **Continue your trip.** Each game already saves progress. The menu can show "Continue: chapter 3" on that game's card.
 - **More traveller wording.** The cards say "Go there" (the owner chose it). Chapters could become "stops" inside the games if the owner wants.
 - **Rows.** With about twelve games or more, group the menu into rows ("Storms and floods", "Freedom and leaders", "Everyday life"), or by era.
+
+## Shared Chapters book (16 November 2026)
+
+All ten games use the same cream book with dark borders, a Close button, a scrolling chapter list, and a fixed footer. The footer order and exact labels are **Unlock All | Restart | Credits**, from left to right. Teaching access is indicated with `aria-pressed` and the note above the list, while the button stays labelled Unlock All. Restart asks before deleting saved progress and keeps its label. This applies when Chapters opens from the title or the in-game journal.
+
+`shared/chapters.css` owns this appearance and `tools/build.mjs` copies it into each game's site. Chapter dates, names, completion, access rules and save keys remain game-specific. Tivoli keeps its existing all-chapters access and journal unlock behavior.
+
+Windrush uses `menu/windrush-kingston-quay.jpg`, captured from its actual Kingston quay scene. Its opening camera frames the cargo, passengers, gangway and ship, with gentle movement. Tivoli's opening uses its quiet-street artwork with background-only movement. Both respect reduced motion. `menu/selassie-arrival.jpg` shows the current corrected aircraft without importing the separate people work.
