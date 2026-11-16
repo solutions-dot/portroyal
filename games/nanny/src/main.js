@@ -268,7 +268,7 @@ const eyeNow = () => [state.x, groundAt(state.x, state.z) + EYE, state.z];
 
 /* ---------- goal, hint, sound ---------- */
 let stage = 0, best = 0, goalText = '', goalTimer = 0, hintTimer = 0;
-function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); goalTimer = setTimeout(() => { el.textContent = 'Goal'; el.classList.add('folded'); el.setAttribute('aria-expanded', 'false'); }, 6500); if (withControls) showHint(); }
+function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); /* Keep the next task visible until the player completes it. */ if (withControls) showHint(); }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
 function refreshGoal(quiet) { const g = GOALS[stage]; goalText = ctr.goal || (g ? g(ctr) : ''); if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
 $('goal').onclick = () => showGoal(true);
