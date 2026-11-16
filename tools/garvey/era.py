@@ -20,6 +20,11 @@ TargetService.reapply_macro_details(h)
 _T=dict(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','people','faces.json'))).get(P.get('face'),{})) if P.get('face') else {}
 _ey=P.get('eyes',0.0 if P.get('upscale') else 0.3)      # a child keeps wide eyes: with lowered lids and full brows a small child wore a stern adult's frown
 if _ey>0: _T['lr-eye-height2-decr']=_ey
+# A friendly look (owner, 16 November 2026: "everyone has a serious face"): the corners of the mouth lifted a little and the cheeks a touch fuller, more on a child.
+# "smile" in the recipe sets it (0 for a grave face; default 0.45, a child 0.8).
+_sm=P.get('smile',0.8 if P.get('upscale') else 0.45)
+if _sm>0: _T['mouth-angles-up']=min(1.0,_sm); _T['lr-cheek-trans-up']=min(1.0,_sm*0.5); _T['eyebrows-trans-up']=min(1.0,_sm*0.5)
+if P.get('upscale'): _T.setdefault('lr-cheek-volume-incr',0.3)
 _T.update(P.get('targets',{}))
 for _n,_w in _T.items():      # finer shaping of the face and body (MakeHuman's own targets), for a likeness
     for _nn in ([_n.replace('lr-','l-'),_n.replace('lr-','r-')] if _n.startswith('lr-') else [_n]): TargetService.load_target(h,TargetService.target_full_path(_nn),weight=_w,name=_nn)
@@ -53,13 +58,17 @@ def flat_chest(k):
     def front(z):
         hit=_t.ray_cast(Vector((0,-0.6,z)),Vector((0,1,0)))[0]; return hit.y if hit else None
     ya,yb=front(za),front(zb)
+    zp=NECK-0.17*s      # the height of the chest's fullest point
     if ya is None or yb is None: bm.free(); return
     vs=[]
     for v in bm.verts:
         c=v.co
         if v[dl].get(gi,0)<=0 or not za<c.z<zb or abs(c.x)>SX*0.97 or c.y>0: continue
-        u=(c.z-za)/(zb-za); lim=ya+(yb-ya)*u-0.016*s*math.sin(math.pi*u)-0.10*abs(c.x)      # the line, a little fuller in the middle, falling away gently to the sides
-        if c.y<lim: c.y=lim+(c.y-lim)*(1-k*(1-sstep(SX*0.80,SX*0.97,abs(c.x)))); vs.append(v)
+        # the line: straight up from the belly at the belt to the chest, which may stand 1 cm proud of it, then back to the collarbones. (It ran from the belly to the
+        # collarbone with a curve in the middle, so the fullest point was below the chest: flat at the top, then a bulge. Owner, 16 November 2026.)
+        if c.z<zp: lim=ya-0.010*s*sstep(za,zp,c.z)
+        else: u=(c.z-zp)/(zb-zp); lim=(ya-0.010*s)+(yb-(ya-0.010*s))*u-0.006*s*math.sin(math.pi*u)
+        if c.y<lim: c.y=lim+(c.y-lim)*(1-min(1.0,k*1.9)*(1-sstep(SX*0.80,SX*0.97,abs(c.x)))); vs.append(v)
     # and the sides: from the waist up to just under the armpit his ribs may widen by no more than 2.5 cm a side. Wider, with the waist drawn in at the belt, the shirt's
     # sides swelled under the arms and the shadow under them drew the outline of a bust (seen in the game's own stance, 16 November 2026)
     zc=SH.z-0.115*s
@@ -1430,7 +1439,7 @@ def paint(o):
                 col=col.lerp(col*0.62+Vector((0.05,0.0,0.0)),min(1,lip*1.2))
                 for sx in (-1,1):      # eyebrows, placed from the eyes themselves (a set height above the neck missed the brow on children, elders and shaped faces, and at 4.5 mm they hardly showed)
                     e=EYE[sx]; bx=(p.x-e.x*1.16)/(1.12*ER*G.get('browwide',1.0)); out=bx*sx      # out: -1 at the nose end, +1 at the temple
-                    bz=(p.z-(e.z+ER*0.56+ER*0.13*(1-(out-0.1)**2)))/(ER*0.235*G.get('brows',0.5 if P.get('upscale') else 0.7 if G.get('woman') else 1.0)*(1.0-0.42*max(0.0,out)))      # a low arch, fuller toward the nose and thinning to the temple; finer on women and children unless the recipe sets brows
+                    bz=(p.z-(e.z+ER*0.62+ER*0.13*(1-(out-0.1)**2)-ER*0.05*out))/(ER*0.235*G.get('brows',0.5 if P.get('upscale') else 0.7 if G.get('woman') else 1.0)*(1.0-0.42*max(0.0,out)))      # a low arch, its inner end a little the higher (level or lower, it read as a frown), fuller toward the nose and thinning to the temple; finer on women and children unless the recipe sets brows
                     br=max(0,1-(bx*bx+bz*bz)) if p.y<e.y+ER*1.2 else 0
                     col=col.lerp(BROWCOL,min(1,br*2.6)*0.9)
                 k=0.94+noise.noise(p*9)*0.06

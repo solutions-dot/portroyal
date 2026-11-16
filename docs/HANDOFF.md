@@ -18,6 +18,14 @@ The owner's open list was: faces in The Emperor's Arrival, the Rastafari men in 
 
 **Checks after the rebuild** (dev builds, this machine): `npm test` 223 pass. Nanny: audit 0, held 0 (the horn is held a little further out), walkers 0, layout 0 at 390x800 and 1280x720 (the talk button now moves clear of a wrapped hint on phones), cloth 45 lines against 46 on main (the Maroon men are at 0; what is left is the seated skirt when kneeling and the two soldiers' coats, as before). Selassie: `?test=all` 0, placement and held 0, cloth 2 lines (one or two points of a short sleeve's hem 5 mm out when waving; main had 0). All ten games build (`npm run dist`).
 
+**Second round the same evening (owner's notes on the first sheets)**
+
+- A man's fullest point is now his chest, not his belly: the builder's front line runs straight up from the belt to the chest and then back to the collarbones.
+- Faces are friendlier: a slight smile and lifted cheeks by default (`smile`, more on a child), brows a little higher with the inner end up.
+- Locs cover the top and the sides of the head (110 to 140 a man), part to their own side and fall beside and behind the head. Beards are one soft mass with a feathered edge and reach a little under the chin.
+- **The people gate**, `tools/review/people-check.mjs`: every body of a game in every clip it ships, through the cloth check and a torn-cloth check, against `tools/checks/people-baseline.json`. The rules are in `docs/PEOPLE.md`, section 5a. The baseline was recorded for all ten games on 16 November 2026. Its numbers are large because the old four-pose checks never looked at arms-up, kneeling or bending clips: cloth stretches at the armhole when an arm goes up to carry on the head or to cheer, and coats tear worst (Port Royal 16,224 torn edges, Tivoli 5,306 cloth lines). Bodies with several hats count each hat. Bringing those numbers down, game by game, is the open work; the gate now stops them going up.
+- Tivoli's street vehicles (four saloons, three minibuses) have wheel arches, proper wheels, window frames, lights, bumpers, door lines, mirrors and plates. There are no police or military vehicles in that scene and none were added: the game's sources do not show any (`docs/games/tivoli.md`).
+
 **Still to do**
 
 1. **Rebuild the other games' bodies** with the fixed builder (Port Royal, Garvey, Kendal, Windrush, Tivoli, Eventide's own three). They already stand upright (the stance fix is in the engine) but keep the old dull eyes, thin brows, chin-hung shirts and face-less light copies until rebuilt. Garvey first needs his brows checked against the photograph: brows are now placed from the eyes, so `brows` and `browwide` in his recipes may need new values. Run each game's cloth, held and audit checks after, because the stance changed.

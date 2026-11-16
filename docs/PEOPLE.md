@@ -65,6 +65,24 @@ Wire these into the dev build before the first pull request; each must report 0 
 
 Copy the Kendal blocks for each (search its `main.js` for `q.get('test')`). Then look yourself: close screenshots of every body, front and three-quarter, standing and mid-stride, full and light copy. Look for jagged necklines and hems, collars that float, hands in bodies, and wrong skin tone. See `docs/TESTING.md`.
 
+## 5a. Before a body is done: the people gate (16 November 2026)
+
+The owner asked for the character engine to be settled, so new people do not go round the same faults again. These are the rules. They apply to every new or rebuilt body in every game.
+
+1. **Build it from a recipe with the shared builder** (`tools/garvey/era.py`), with a `face` from `tools/people/faces.json`. No hand edits to a packed body.
+2. **Look at it in the game's own stance**, not in Blender: `node tools/review/people-sheet.mjs <game> <id>,<id>_lo`. Check the face from three sides, the chest from the side (a man's fullest point is his chest, never below it), and the light copy's eyes, brows and lips. Look again in the hard clips the game uses: `anim=CarryHeadIdle`, `anim=Kneel`, `anim=Cheer`, a seated clip.
+3. **Run the gate**: `node tools/review/people-check.mjs <game>`. It poses every body in every clip the game ships, at three moments each, and runs the shared cloth check (`auditCloth`) and a torn-cloth check (an edge of cloth stretched to more than 2.6 times its length). The game's own `?test=cloth` only tries four or five poses; the gate tries them all, which is where cloth breaks (arms up to carry on the head, kneeling, bending to pick up).
+4. **No body may be worse than its line in `tools/checks/people-baseline.json`.** The gate fails if one is. Lower numbers are the aim; after a real improvement, look at the body, then record the new numbers with `--update`. Never use `--update` to hide a fault.
+5. **Then the game's own checks** (section 5): `?test=cloth`, `?test=held`, `?test=audit`, `?test=walkers`, and `?test=all` where wired.
+
+Things that are true of every body and must stay true:
+
+- **Stance** comes from `engine/anim.js` `POSTURE`. Do not fix a leaning or bulging body in its recipe.
+- **A man's chest** is eased by the builder (`garments.chest`). If it bulges, look from the side in the game's stance first.
+- **Faces**: brows are placed from the eyes; lids are relaxed (`eyes`); mouths have a slight smile (`smile`, more on a child). A grave person sets `smile: 0`.
+- **Light, crowd and phone copies** keep their faces because the builder marks the face and the packer protects it. Do not simplify a body any other way.
+- **Hats** that ride high use `hatdrop`. Hair that must hang over clothes (locs, plaits) is its own piece and stays clear of the shirt.
+
 ## 6. History
 
 Clothes must fit the year and place: check them against period photographs or sources. Fictional people are fine, but their journal page says so.

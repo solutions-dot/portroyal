@@ -10,7 +10,7 @@ front of the throat, so the tunic collar never has beard inside it (the cloth
 check reported "Beard shows through Collar" up to 30 mm).
 """
 from mathutils import noise
-BEARD_UNDER=.035   # metres behind the chin tip that the beard may reach under the chin
+BEARD_UNDER=.05   # metres behind the chin tip that the beard may reach under the chin
 lip_group=GI['lips']
 lips=[v.co for v in h.data.vertices if any(g.group==lip_group and g.weight>0 for g in v.groups)]
 lower_lip=min(v.z for v in lips)
@@ -48,13 +48,14 @@ for f in bm.faces:
         # The Rastafari men (16 November 2026, after the owner's note): the beard follows the jaw and the chin and stops in front of the throat.
         # It reached 35 mm down the neck and 78 mm out, and read as a black bib with a ragged edge.
         top=lower_lip-.006+.040*sstep(lip_width*.6,lip_width*1.55,abs(c.x))
-        under=c.z<lower_lip-.030 and c.y>front+BEARD.get('under',.040)
-        if c.z>top or c.z<HEAD-.016 or abs(c.x)>.072 or under:remove.append(f)
+        under=c.z<lower_lip-.030 and c.y>front+BEARD.get('under',.060)      # it goes a little way under the chin (owner, 16 November 2026), and stops before the throat
+        if c.z>top or c.z<HEAD-.030 or abs(c.x)>.072 or under:remove.append(f)
 bmesh.ops.delete(bm,geom=remove,context='FACES')
 bmesh.ops.delete(bm,geom=[v for v in bm.verts if not v.link_faces],context='VERTS')
 bm.normal_update()
-smooth_edge(bm,iters=10)      # a clean outline: cut face by face, the edge ran in steps
-EDGE={v.index:(0. if v.is_boundary else .55 if any(e.other_vert(v).is_boundary for e in v.link_edges) else 1.) for v in bm.verts}      # 0 on the outline, 1 well inside: the colour feathers into the skin
+smooth_edge(bm,iters=24)      # a clean outline: cut face by face, the edge ran in steps
+_r1={v for v in bm.verts if not v.is_boundary and any(e.other_vert(v).is_boundary for e in v.link_edges)};_r2={v for v in bm.verts if not v.is_boundary and v not in _r1 and any(e.other_vert(v) in _r1 for e in v.link_edges)}
+EDGE={v.index:(0. if v.is_boundary else .4 if v in _r1 else .75 if v in _r2 else 1.) for v in bm.verts}      # 0 on the outline, 1 well inside: the colour feathers into the skin over three rows
 for v in bm.verts:
     # a short full beard: a little thicker over the chin than on the cheeks
     if kind=='emperor':v.co+=v.normal*(.0036+.0034*sstep(lip_width*1.3,lip_width*.2,abs(v.co.x)))*(.45+.55*EDGE[v.index])
@@ -66,6 +67,7 @@ for v in bm.verts:
 dl=bm.verts.layers.deform.active
 if dl:
     for v in bm.verts:v[dl].clear()
+for _ in range(2):bmesh.ops.smooth_vert(bm,verts=[v for v in bm.verts if not v.is_boundary],factor=.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)      # one soft mass, no ridges
 beard=rigid('Beard',bm,'Beard','Head');paint(beard)
 _fa=beard.data.attributes.get('_FACE')      # the beard is cut from the face's skin and carried its face mark: only the skin itself is the face (tools/people/pack.mjs)
 if _fa:beard.data.attributes.remove(_fa)
@@ -74,7 +76,7 @@ colours=beard.data.color_attributes.get('Col')
 for f in beard.data.polygons:
     for li in f.loop_indices:
         v=beard.data.vertices[beard.data.loops[li].vertex_index].co
-        grain=.85+.25*noise.noise(v*420)
+        grain=.92+.12*noise.noise(v*260)
         c=COL['Beard']*grain
         if kind=='emperor':c=c*(1-.5*sstep(lip_width*.7,lip_width*1.5,abs(v.x)))   # darker at the sides, greyest at the chin
         c=(COL['Skin']*1.55).lerp(c,.25+.75*EDGE.get(beard.data.loops[li].vertex_index,1.))   # the outline feathers into the skin (drawn 1.55 times lighter in the game)

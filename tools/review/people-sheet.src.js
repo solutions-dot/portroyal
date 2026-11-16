@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { repairLegacyVertexColours } from '../../engine/colours.js';
-import { loadClips, clipFor } from '../../engine/anim.js';   /* the game's own way of playing a clip (no bone positions, the posture correction), so the sheet shows the stance the game shows */
+import { loadClips, clipFor, animate } from '../../engine/anim.js';   /* the game's own way of playing a clip (no bone positions, the posture correction), so the sheet shows the stance the game shows */
 
 const q = new URLSearchParams(location.search), game = q.get('game'), ids = q.get('ids').split(','), anim = q.get('anim') || 'Idle';
 const hide = (q.get('hide') || '').split(',').filter(Boolean), skinK = +(q.get('skin') || 1.55), views = (q.get('views') || 'front,side,back,face,face34,faceside').split(',');
@@ -29,7 +29,7 @@ const dir = (id) => id.includes('/') ? id.slice(0, id.lastIndexOf('/') + 1) : `.
   for (let r = 0; r < ids.length; r++) {
     const g = await model(dir(ids[r]), nameOf(ids[r])), m = g.scene; scene.add(m);
     m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const nm = o.material.name || ''; if (hide.includes(nm)) o.visible = false; if (nm === 'Skin') { o.material = o.material.clone(); o.material.color.multiplyScalar(skinK); } });
-    if (clip) { const mx = new THREE.AnimationMixer(m); mx.clipAction(clip).play(); mx.update(+(q.get('at') || 0.4)); }
+    if (clip) { const ctl = animate(m, anim); ctl.base.time = 0; ctl.mx.update(+(q.get('at') || 0.4)); }   /* the engine's own player, so a seated skirt and hands kept clear of the lap show as they do in the game */
     m.updateMatrixWorld(true);
     const bone = (n) => { let b = null; m.traverse((o) => { if (o.isBone && o.name.replace(/[:_]/g, '').toLowerCase() === 'mixamorig' + n) b = o; }); return b; };
     const head = bone('head').getWorldPosition(new THREE.Vector3()), hips = bone('hips').getWorldPosition(new THREE.Vector3()), top = bone('headtopend') ? bone('headtopend').getWorldPosition(new THREE.Vector3()) : head.clone().setY(head.y + 0.2);

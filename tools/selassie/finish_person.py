@@ -41,9 +41,9 @@ if kind:
         # Many separate locs from the scalp (tools/selassie/locs.py); a tam recipe gets its tam and a few locs below it further down.
         exec(compile(Path('tools/selassie/locs.py').read_text(),'locs.py','exec'),globals())
         # how many locs, how far the longest fall down the back (metres), the share that are grey, and how thick: each man his own
-        LOCS={'sel_rastaelder66':(84,.46,.5,1.0),'sel_rastaman66':(90,.36,0,1.1),'sel_planno66':(70,.24,.1,1.15),'sel_levi66':(64,.20,0,.9)}
+        LOCS={'sel_rastaelder66':(130,.46,.5,1.0),'sel_rastaman66':(140,.36,0,1.1),'sel_planno66':(120,.26,.1,1.15),'sel_levi66':(110,.22,0,.95)}
         if not P.get('tam'):
-            n_,lb_,gr_,th_=LOCS.get(P['name'],(70,.3,0,1.0))
+            n_,lb_,gr_,th_=LOCS.get(P['name'],(120,.3,0,1.0))
             make_locs(sum(map(ord,P['name'])),n_,lb_,P['colors']['Hair'],gr_,thick=th_)
             for o in [o for o in bpy.data.objects if o.name.startswith('Locks')]:o.vertex_groups.new(name='_locs').add(list(range(len(o.data.vertices))),1.,'REPLACE')      # marked, so the crowd copy below can take them out of the joined hair again
     if kind=='emperor':
@@ -179,7 +179,7 @@ if kind=='locks' and not P.get('tam') and any(o.type=='MESH' and '_locs' in o.ve
         gi_=o.vertex_groups['_locs'].index;b_=bmesh.new();b_.from_mesh(o.data);d_=b_.verts.layers.deform.verify()
         bmesh.ops.delete(b_,geom=[v for v in b_.verts if v[d_].get(gi_,0)>.5],context='VERTS');b_.to_mesh(o.data);b_.free()
     rig.data.pose_position='REST';bpy.context.view_layer.update()
-    n_,lb_,gr_,th_=LOCS.get(P['name'],(70,.3,0,1.0))
+    n_,lb_,gr_,th_=LOCS.get(P['name'],(120,.3,0,1.0))
     make_locs(sum(map(ord,P['name'])),int(n_*.5),lb_,P['colors']['Hair'],gr_,thick=th_*1.5,light=True)
     rig.data.pose_position='POSE';bpy.context.view_layer.update()
 mesh_objects=[o for o in bpy.context.scene.objects if o.type=='MESH' and not o.get('measureOnly')]      # the measuring copies stay apart, as before

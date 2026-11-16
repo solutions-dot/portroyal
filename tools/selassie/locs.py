@@ -80,14 +80,14 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None, thick=1.0,
             a = (k * golden) % (2 * math.pi)                 # 0 = straight ahead (-y)
             e = math.asin(rnd.uniform(-0.15, 1.0))          # elevation from the skull's middle: locs grow from the whole scalp, the top of the head too (owner, 16 November 2026)
         front = math.cos(a)                                  # 1 at the forehead, -1 at the nape
-        if front > 0.35 and e < 0.95: continue               # never over the forehead or the face; from the hairline back they do
-        if front > -0.2 and e < 0.05: continue               # nor over the ears
+        if front > 0.35 and e < 0.62: continue               # never over the forehead or the face; from the hairline back they do
+        if front > 0.1 and e < 0.3: continue                 # nor in front of the ears (the temples); over and behind the ears they do, so the head is full at the sides (owner, 16 November 2026)
         d = Vector((math.sin(a) * math.cos(e), -math.cos(a) * math.cos(e), math.sin(e)))
         R = surface(d)
         if R <= 0: continue
         p = C + d * (R - 0.002)      # rooted in the hair, not on top of it
         side = abs(math.sin(a))
-        L = rnd.uniform(0.12, 0.22) if front > -0.45 else rnd.uniform(0.18, long_back)
+        L = rnd.uniform(0.16, 0.26) if front > -0.45 else rnd.uniform(0.18, long_back)
         r0 = rnd.uniform(0.0075, 0.0125) * thick      # locs are thick ropes of hair: at 5 to 9 mm they read as thin sticks
         # grow: first out from the scalp, then down under its weight; side locs drift back
         # start along the scalp, back and down (a lock lies on the head before it hangs), never up into the air
@@ -99,12 +99,12 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None, thick=1.0,
             dq0 = pts[-1] - C
             if dq0.z > -0.01 and dq0.length < surface(dq0.normalized()) + r0 + 0.02:
                 # still on the head: lie on the scalp and run down it, back and to its own side, never forward over the face
-                n_ = dq0.normalized(); g_ = Vector((0.75 * sgn * max(0.0, front + 0.3), 0.9, -0.55)); t_ = g_ - n_ * g_.dot(n_)
+                n_ = dq0.normalized(); g_ = Vector((1.0 * sgn * max(0.15, front + 0.55), 0.55 + 0.4 * max(0.0, -front), -0.6)); t_ = g_ - n_ * g_.dot(n_)      # locks from the front and the top part to their own side and fall beside the head; those further back run back
                 if t_.length > 1e-4:
                     q = pts[-1] + t_.normalized() * seg; dq = q - C; Rq = surface(dq.normalized())
                     if Rq > 0: q = C + dq.normalized() * (Rq + r0 * 0.9)
                     dirv = (q - pts[-1]).normalized(); pts.append(q); length += seg; continue
-            dirv = (dirv + Vector((0, 0.06 * (1 - front) * 0.5 + 0.22 * side * max(0.0, front + 0.8), -0.32))).normalized()      # locks at the side drift back behind the ear
+            dirv = (dirv + Vector((0, 0.06 * (1 - front) * 0.5 + 0.07 * side * max(0.0, front + 0.8), -0.32))).normalized()      # locks at the side drift back behind the ear
             q = pts[-1] + dirv * seg
             # clear of the head and its short hair
             dq = q - C
@@ -132,7 +132,7 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None, thick=1.0,
         if len(pts) < 3: continue
         # no lock may stand up from its root like a hook, or stick out sideways past the ear before it falls (both were seen on the rebuilt men, 16 November 2026)
         if max(q.z for q in pts) > p.z + 0.02: continue
-        if any(q.z > NECK + 0.10 and (q - C).length > surface((q - C).normalized()) + r0 + 0.03 for q in pts[1:]): continue
+        if any(q.z > NECK + 0.10 and (q - C).length > surface((q - C).normalized()) + r0 + 0.05 for q in pts[1:]): continue
         rings = _strand(bm, pts, r0)
         strands.append((rings, rnd.uniform(0.75, 1.15), rnd.random() < grey))
     me = bpy.data.meshes.new('Locks'); bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me)
