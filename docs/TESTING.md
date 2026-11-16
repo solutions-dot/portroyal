@@ -4,6 +4,8 @@
 
 **Story target priority:** `tests/guidance-target-priority.mjs` checks that the five stage-marked legacy controllers (Garvey, Bog Walk, Nanny, Melissa and Eventide) consider unfinished required people before optional action fallback. This is a source regression, not a chapter replay.
 
+**Garvey multi-person progress:** `tests/garvey-goal-progress.mjs` checks the source-level counter and refresh wiring. Confirm in browser that each conversation increments the visible goal and that a saved mid-stage goal restores the count.
+
 ## Current UI regression coverage (16 November 2026, PR #101)
 
 The following checks are included in `npm test` on the integration branch:
