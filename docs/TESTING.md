@@ -6,6 +6,8 @@
 
 **Garvey multi-person progress:** `tests/garvey-goal-progress.mjs` checks the source-level counter and refresh wiring. Confirm in browser that each conversation increments the visible goal and that a saved mid-stage goal restores the count.
 
+**Behavioral guidance tests:** `tests/guidance-target-priority.mjs` now also exercises the shared story engine with synthetic ordered and unordered tasks, optional actions and immediate retargeting. These checks do not prove the ten games' real stage maps or UI rendering.
+
 ## Current UI regression coverage (16 November 2026, PR #101)
 
 The following checks are included in `npm test` on the integration branch:
