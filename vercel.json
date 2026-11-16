@@ -40,5 +40,10 @@
         }
       ]
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "feat/windrush-family": false
+    }
+  }
 }

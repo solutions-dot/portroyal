@@ -1,0 +1,90 @@
+{
+  "name": "wr_iris79",
+  "era": 2018,
+  "body": {
+    "gender": 0,
+    "age": 0.94,
+    "muscle": 0.4,
+    "weight": 0.44,
+    "height": 0.47,
+    "proportions": 0.56,
+    "african": 1.0,
+    "caucasian": 0.0,
+    "asian": 0.0,
+    "cupsize": 0.4,
+    "firmness": 0.55
+  },
+  "garments": {
+    "sleeve": 0.9,
+    "shoes": true,
+    "collar": "round",
+    "hairvol": 0.25,
+    "hat": [],
+    "woman": true,
+    "bun": true,
+    "skirt": true,
+    "hem": 0.66,
+    "flare": 1.85,
+    "pleats": 9,
+    "lowshoes": false
+  },
+  "colors": {
+    "Skin": [
+      151,
+      104,
+      76
+    ],
+    "Hair": [
+      151,
+      148,
+      137
+    ],
+    "Shirt": [
+      151,
+      171,
+      162
+    ],
+    "Collar": [
+      151,
+      171,
+      162
+    ],
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Skirt": [
+      75,
+      91,
+      106
+    ]
+  },
+  "targets": {
+    "head-oval": 0.3,
+    "chin-width-decr": 0.2,
+    "nose-width2-incr": 0.15,
+    "l-foot-scale-vert-decr": 0.4,
+    "r-foot-scale-vert-decr": 0.4
+  }
+}
