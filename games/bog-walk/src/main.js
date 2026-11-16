@@ -477,8 +477,11 @@ function showHint() { $('hint').textContent = TOUCH ? (MODE === 'tube' ? 'Left t
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false, rectT: -1, rects: [] }, _nv = new THREE.Vector3();
 const NUDGE_AVOID = ['goal', 'icons', 'clock', 'sub', 'toast', 'way', 'pick', 'act', 'holdbox', 'skip', 'exit', 'hint', 'barT', 'barB', 'dialogue', 'tbub'];
 function nudgeTarget() {
-  const P = P_(); if (!P) return null; const a = P.actions.find((x) => x.on()); if (a) return [a.x, a.z, 1.7];
-  let bt = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && markWanted(n)) { const d = Math.hypot(S.x - n.x, S.z - n.z); if (d < bd) { bd = d; bt = [n.x, n.z, headTop(n) + 0.75]; } } return bt;
+  const P = P_(); if (!P) return null;
+  // Required conversations take precedence over optional leftover actions (ruins stages 62-65).
+  let bt = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && markWanted(n)) { const d = Math.hypot(S.x - n.x, S.z - n.z); if (d < bd) { bd = d; bt = [n.x, n.z, headTop(n) + 0.75]; } }
+  if (bt) return bt;
+  const a = P.actions.find((x) => x.on()); return a ? [a.x, a.z, 1.7] : null;
 }
 function placeNudge(x, y, cls, label, fresh) {   /* show the arrow near (x, y) on the screen, moved to the nearest spot that covers no word or button */
   const el = $('nudge'), W = innerWidth, H = innerHeight, lab = el.querySelector('span'); if (el.className !== cls) el.className = cls; if (lab.textContent !== label) lab.textContent = label; el.hidden = false;
