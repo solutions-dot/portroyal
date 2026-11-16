@@ -478,8 +478,10 @@ ON[54] = () => { if (QUICK || !SC || SC.i !== 4) return; (async () => { const ep
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
 function nudgeTarget() {
-  if (!SC) return null; const a = SC.actions.find((x) => x.on()); let t = a ? [a.x, a.z] : null;
-  if (!t) { let bd = 1e9; for (const n of SC.people) if (wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; t = [n.x, n.z]; } } }
+  if (!SC) return null; let t = null, bd = 1e9;
+  // An unfinished story conversation takes precedence over an optional action.
+  for (const n of SC.people) if (wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; t = [n.x, n.z]; } }
+  if (!t) { const a = SC.actions.find((x) => x.on()); if (a) t = [a.x, a.z]; }
   if (t && cur === 'slipe' && SC.i !== 3) { if (state.z > -6.4 && t[1] < -7.6) return [0, -7.4];   /* from the road, the way in is through the gate */
     if (t[0] > 5.9 && SC.P.groundAt(state.x, state.z) < 0.3) return [4.2, -38]; }   /* and the way onto the veranda is up the steps */
   return t;
