@@ -383,7 +383,7 @@ export const CHECKS = [
   { id: 'autoplay', needs: ['autoplay'], async run(g, T, ctx) {
     /* one scripted playthrough; while it runs, sample the camera, the clips in view, lines shown, the light and the sound levels every 250 ms */
     const sample = async (what) => {
-      if (g.camera) { const c = await g.camera(); if (c) ctx.run.camera.push({ ...c, what: what || ('step ' + (g.step ? await g.step() : '?')) }); }
+      if (g.camera) { const c = await g.camera(); if (c) ctx.run.camera.push({ ...c, what: what || ('step ' + (g.step ? await g.step() : '?')), at: g.place ? await g.place() : null }); }   /* at: the place the spot was taken in, so it is judged against that place's walls */
       if (g.clips) for (const c of await g.clips()) ctx.run.clips.push({ ...c, stage: g.step ? await g.step() : undefined });
       if (g.line && g.light) { const l = await g.line(); if (l && T.tagged && T.tagged[l]) ctx.run.lines.push({ text: l, tag: T.tagged[l], light: await g.light() }); }
       if (g.audio && g.talking) { const AU = g.audio(); if (AU && AU.ch) ctx.run.levels.push({ where: 'step ' + (g.step ? await g.step() : '?'), talking: !!(await g.talking()), levels: Object.fromEntries(Object.entries(AU.ch).map(([k, n]) => [k, n.gain.value])) }); }
@@ -394,8 +394,10 @@ export const CHECKS = [
     const out = []; if (r && r.ok === false) out.push(`the autoplayer did not finish: ${r.why || 'stalled'}`); if (r && r.stalls) for (const s of r.stalls) out.push(`stall: ${s}`);
     return { lines: out, note: ctx.run.camera.length + ' camera spots, ' + ctx.run.clips.length + ' clip samples' }; } },
   { id: 'camera', needs: ['camera'], after: ['autoplay'], async run(g, T, ctx) {
-    if (g.talks) for (const t of await g.talks()) { await g.talkTo(t); await sleep(400); const c = await g.camera(); if (c) ctx.run.camera.push({ ...c, what: 'talk ' + t }); }
-    const P = g.place ? await g.place() : {}; return cameraIssues(ctx.run.camera, { walls: (P && P.walls) || [], groundAt: (P && P.groundAt) || (() => 0), solid: P && P.solid, wallTop: T.wallTop || 3 }); } },
+    if (g.talks) for (const t of await g.talks()) { await g.talkTo(t); await sleep(400); const c = await g.camera(); if (c) ctx.run.camera.push({ ...c, what: 'talk ' + t, at: g.place ? await g.place() : null }); }
+    const now = g.place ? await g.place() : null, groups = new Map();   /* each spot against the walls of the place it was taken in (not the place the run ends in) */
+    for (const c of ctx.run.camera) { const P = c.at === undefined ? now : c.at; if (!groups.has(P)) groups.set(P, []); groups.get(P).push(c); }
+    const out = []; for (const [P, cs] of groups) out.push(...cameraIssues(cs, { walls: (P && P.walls) || [], groundAt: (P && P.groundAt) || (() => 0), solid: P && P.solid, wallTop: T.wallTop || 3 })); return out; } },
   { id: 'rule4', needs: ['clips'], after: ['autoplay'], async run(g, T, ctx) { return [...clipIssues(ctx.run.clips, { near: T.fightNear || 12, allow: T.allowClips || {} }), ...intenseIssues(ctx.run.entered, T.intense || {})]; } },
   { id: 'errors', needs: [], last: true, async run(g, T, ctx) { return ctx.errors.lines.slice(); } },
 ];
