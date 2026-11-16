@@ -1434,6 +1434,32 @@ def tuck_skin():
         for nm,w in bw.items(): (h.vertex_groups.get(nm) or h.vertex_groups.new(name=nm)).add([v.index],w,'REPLACE')
         v.co=c-v.normal*0.008; n+=1
     print('TUCKED SKIN',n)
+def fit_waist():
+    # The top of the trousers or breeches fits the shirt above it (owner, 16 November 2026: "ensure the pants fit the new chest size"). With the slimmer male chest the
+    # shirt narrowed into the waist and the waistband stood out past it, front, sides and back. Each point of the band, round the body at its own angle, is drawn in to
+    # 6 mm outside the shirt just above the band (never inside the body), fading out 9 cm below the top. A jacket or coat over it is left alone.
+    br=PART.get('breeches'); sh=PART.get('shirt')
+    if br is None or sh is None or G.get('jacket') or G.get('coat') or G.get('skirt'): return
+    top=max(v.co.z for v in br.data.vertices if abs(v.co.x)<0.12)
+    b=bmesh.new(); b.from_mesh(sh.data); st=BVHTree.FromBMesh(b); b.free()
+    ys=[v.co.y for v in sh.data.vertices if abs(v.co.z-(top+0.03))<0.01]
+    if len(ys)<10: return
+    cy=(max(ys)+min(ys))/2; zr=top+0.025
+    def rad(o,a):
+        d=Vector((math.sin(a),-math.cos(a),0)); hit=o.ray_cast(Vector((0,cy,zr))+d*0.5,-d,0.5)[0]; return (hit-Vector((0,cy,zr))).length if hit else None
+    n=0
+    for v in br.data.vertices:
+        c=v.co
+        if c.z<top-0.09 or abs(c.x)>0.30: continue
+        dx,dy=c.x,c.y-cy; r=math.hypot(dx,dy)
+        if r<1e-4: continue
+        rs=rad(st,math.atan2(dx,-dy)); rb=rad(tree,math.atan2(dx,-dy))
+        if rs is None: continue
+        lim=max(rs+0.006,(rb or 0)+0.008)
+        if r>lim:
+            f=sstep(top-0.09,top-0.03,c.z); r2=r+(lim-r)*f; c.x=dx*r2/r; c.y=cy+dy*r2/r; n+=1
+    br.data.update(); print('FITTED WAIST',n)
+fit_waist()
 tuck_skin()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
 # Colours. The layer below is a float layer, so the linear colours made by srgb() above are exported as they are, and the scene is marked
