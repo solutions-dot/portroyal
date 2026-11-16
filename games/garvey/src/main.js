@@ -31,7 +31,7 @@ const maxAniso = renderer.capabilities.getMaxAnisotropy();
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2118);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 100);
 const hemi = new THREE.HemisphereLight(0xfff4e0, 0x7a6048, 1.25); scene.add(hemi);
-const SKIN_K = 1.8;   /* the one skin factor for this game (owner rule 9, docs/PIPELINE.md "Skin"): Skin only, a little above Kendal's 1.55 because these rooms are lit softly, so faces still read indoors, by lamplight and in shade. Measured with ?test=skin and the faces check in ?test=all */
+const SKIN_K = 1.9;   /* the one skin factor for this game (owner rule 9, docs/PIPELINE.md "Skin"): Skin only, a little above Kendal's 1.55 because these rooms are lit softly, so faces still read indoors, by lamplight and in shade. Measured with ?test=skin and the faces check in ?test=all */
 const sun = new THREE.DirectionalLight(0xfff0d0, 1.7); sun.position.set(6, 7, 5); scene.add(sun);
 const lampLight = new THREE.PointLight(0xffcf8a, 7, 9, 2); lampLight.position.set(0.2, 2.9, -0.3); scene.add(lampLight);
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -673,9 +673,14 @@ function nurseCap(m, top) {
   const at = new THREE.Vector3(hp.x, top - 0.045, hp.z + 0.005); head.add(cap); cap.position.copy(head.worldToLocal(at.clone()));
   const q = new THREE.Quaternion(); head.getWorldQuaternion(q); cap.quaternion.copy(q.invert().multiply(m.getWorldQuaternion(new THREE.Quaternion())));
 }
+/* the walk's pace on a body whose real step is longer or shorter than the engine's stride estimate (engine/anim.js strideOf): the older man's
+   bent, short-legged walk covers about 9 % more ground than the estimate, so his feet slid 13.6 cm a loop (?test=walkers). The clip is played that
+   much faster for the same ground speed. */
+const PACE_K = { nb_elder: 1.09 };
+function fitPace(m, model, k) { const f = k ? +k : PACE_K[model]; const c = m.userData.anim; if (!f || !c || c._fit) return; const p0 = c.pace.bind(c); c.pace = (v, lo, hi) => p0(v * f, lo, hi); c._fit = true; }
 function loadPerson(n) {
   if (n.loading) return n.loading;
-  n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K * ({ garvey1914: 1.5, garvey1916: 1.5, nurse1920: 1.12 }[n.model] || 1)); if (n.noHat && /^Hat/.test(o.material.name)) o.visible = false; } });   /* noHat: indoors a man takes his hat off */ m.position.set(n.x, 0, n.z); m.rotation.y = n.ry;   /* Garvey's face sits deeper in shade (heavy brows and moustache), so his skin is drawn a little lighter (owner rule 9: judged in game) */ if (n.scale) m.scale.setScalar(n.scale);   /* a child's body is stored enlarged and shrunk here (see docs/PEOPLE.md, children) */ m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); if (n.model === 'nurse1920') nurseCap(m, bb.max.y); n.h = Math.max(1.1, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
+  n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K * ({ garvey1914: 1.65, garvey1916: 1.65, nurse1920: 1.18, hl_worker: 1.08 }[n.model] || 1)); if (n.noHat && /^Hat/.test(o.material.name)) o.visible = false; } });   /* noHat: indoors a man takes his hat off */ m.position.set(n.x, 0, n.z); m.rotation.y = n.ry;   /* Garvey's face sits deeper in shade (heavy brows and moustache), so his skin is drawn a little lighter (owner rule 9: judged in game) */ if (n.scale) m.scale.setScalar(n.scale);   /* a child's body is stored enlarged and shrunk here (see docs/PEOPLE.md, children) */ m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; fitPace(m, n.model); m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); if (n.model === 'nurse1920') nurseCap(m, bb.max.y); n.h = Math.max(1.1, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
   return n.loading;
 }
 let shopLoading = null;
@@ -1308,7 +1313,7 @@ function enterPlace(name, keepPos) {
   if (name === 'liberty') showBanner();   /* a saved game that was past the Declaration shows the finished banner */
   curWalls = P.walls; curBounds = P.bounds; PEOPLE = P.people; ACTIONS = P.actions; near = null; refreshLife(); loadExtras(name);
   scene.background = new THREE.Color(P.sky || 0x2a2118); scene.fog = P.sky ? new THREE.Fog(0xcbd9de, 28, 90) : null;   /* outdoor places have sky and haze; rooms do not */
-  hemi.intensity = P.sky ? 2.3 : 1.45;   /* rooms a little brighter in the shade, so the dark side of a face still reads (faces check) */ sun.intensity = P.sky ? 2.2 : 1.7; sun.position.set(P.sky ? -5 : 6, P.sky ? 9 : 7, P.sky ? 4 : 5);   /* daylight outside is brighter, so dark skin still shows */
+  hemi.intensity = P.sky ? 2.3 : 1.6;   /* rooms a little brighter in the shade, so the dark side of a face still reads (faces check) */ sun.intensity = P.sky ? 2.2 : 1.7; sun.position.set(P.sky ? -5 : 6, P.sky ? 9 : 7, P.sky ? 4 : 5);   /* daylight outside is brighter, so dark skin still shows */
   if (!keepPos) { state.x = P.start.x; state.z = P.start.z; state.yaw = P.start.yaw; state.pitch = 0; }
 }
 function showPlace() { if (!QUICK && state.started) INTRO.t = 0; const el = $('place'); el.textContent = PLACES[place].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(placeT); placeT = setTimeout(() => { el.style.opacity = 0; }, 4500); }
@@ -1392,6 +1397,10 @@ function titleCam(dt) {
 requestAnimationFrame(frame);
 
 /* ---------- test views and scripted playthroughs: dev builds only (node tools/build.mjs garvey --dev) ---------- */
+/* where a player would stand to talk to n: in front of them if that is free floor, else the nearest free spot round them (dev: autoplayer and checks) */
+function talkSpot(n) { const ry = n.m ? n.m.rotation.y : 0, B = curBounds, free = (x, z) => x > B.x0 && x < B.x1 && z > B.z0 && z < B.z1 && !curWalls.some((w) => x > w[0] - 0.3 && x < w[2] + 0.3 && z > w[1] - 0.3 && z < w[3] + 0.3);
+  for (const d of [1.4, 1.8, 1.1, 2.3]) for (const a of [0, 0.6, -0.6, 1.2, -1.2, 1.9, -1.9, Math.PI]) { const x = n.x + Math.sin(ry + a) * d, z = n.z + Math.cos(ry + a) * d; if (free(x, z)) return [x, z]; }
+  return [Math.max(B.x0, Math.min(B.x1, n.x + Math.sin(ry) * 1.4)), Math.max(B.z0, Math.min(B.z1, n.z + Math.cos(ry) * 1.4))]; }
 let runAuto = null;   /* the scripted playthrough of one chapter (dev builds), set up in devViews */
 function devViews() {
   const q = new URLSearchParams(location.search); const shot = q.get('shot');
@@ -1508,7 +1517,7 @@ function devViews() {
   {   /* ?auto=1 plays chapter 1 and opens every menu; ?auto=2 plays chapter 2 from its start. runAuto(k) is also the ?test=all autoplayer (dev.js) */
     const log = []; const L = (m) => { log.push(m); if (q.has('auto')) document.title = log.join(' | '); }; if (q.has('auto')) addEventListener('error', (e) => L('ERROR ' + e.message));
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const talkTo = async (n) => { { const ry = n.m ? n.m.rotation.y : 0, [x, z] = [n.x + Math.sin(ry) * 1.7, n.z + Math.cos(ry) * 1.7], B = curBounds; state.x = Math.max(B.x0, Math.min(B.x1, x)); state.z = Math.max(B.z0, Math.min(B.z1, z)); }   /* (1.3 m) stand in front of them, inside the place (not on a platform) */ update(0.016); startTalk(n); let c = 0; while (!$('dialogue').hidden && c < 40) { const ch = $('choices').firstChild; if (ch) ch.click(); else $('next').click(); c++; await sleep(40); } return c; };
+    const talkTo = async (n) => { { const [x, z] = talkSpot(n); state.x = x; state.z = z; }   /* (1.3 m) stand in front of them, inside the place (not on a platform) */ update(0.016); startTalk(n); let c = 0; while (!$('dialogue').hidden && c < 40) { const ch = $('choices').firstChild; if (ch) ch.click(); else $('next').click(); c++; await sleep(40); } return c; };
     const typeIt = () => { for (const ch of typeWord) { const t = $('tcase').querySelector('[data-l="' + ch + '"]'); if (t) t.click(); } $('tpress').click(); $('tdone').click(); };
     runAuto = async (k) => { log.length = 0;
       if (k === '3') {   /* old saves, and replaying a choice (run with a version 1 save already in localStorage) */
@@ -1601,5 +1610,5 @@ function devChecks(q) {
   devRun({ q, PLACES, PLACE_ORDER, ENSURE, RESET, enterPlace, update, state, scene, camera, renderer, hemi, sun, $, story, unlocked, JOURNAL, GOALS, TALK_TARGETS, CHAPTERS, SAVE_KEY, SKIN_K, CL, model, mixers,
     get stage() { return stage; }, set stage(v) { stage = v; }, get best() { return best; }, set best(v) { best = v; }, get place() { return place; }, get talkWith() { return talkWith; }, get busy() { return busy; },
     setStage, setGoal, refreshLife, startTalk, endTalk, leaveTalk, allPeople, byId, wantsTalk, clampPos, startGame, showGoal, showHint, toast, showPlace, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeCredits,
-    card, hideCard, nextCard, saveGame, loadGame, applySave, runAuto, AU, setSound, nudge: NUDGE, frame: (dt) => { update(dt); camera.position.set(state.x, EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); renderer.render(scene, camera); }, EYE });
+    card, hideCard, nextCard, fitPace, talkSpot, saveGame, loadGame, applySave, runAuto, AU, setSound, nudge: NUDGE, frame: (dt) => { update(dt); camera.position.set(state.x, EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); renderer.render(scene, camera); }, EYE });
 }

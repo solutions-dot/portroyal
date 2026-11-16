@@ -79,7 +79,7 @@ export function devRun(A) {
       return out; },
     autoplay: async () => { const stalls = []; for (const k of ['1', '2', '4', '5', '6', '7', '8', '9']) { closeAll(); if (k === '1') { await goPlace('shop'); A.stage = 0; A.refreshLife(); } const log = await A.runAuto(k); if (!log.includes('ALLDONE')) stalls.push('chapter ' + ({ 1: 1, 2: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8 })[k] + ': ' + log.slice(-4).join(' | ')); closeAll(); await wait(300); } return { ok: !stalls.length, why: stalls.join('; '), stalls }; },
     talks: () => (A.TALK_TARGETS[A.stage] || []).slice(0, 2),
-    talkTo: async (id) => { const n = A.byId(id); if (!n) return; const ry = n.m ? n.m.rotation.y : 0, B = P().bounds; A.state.x = Math.max(B.x0, Math.min(B.x1, n.x + Math.sin(ry) * 1.7)); A.state.z = Math.max(B.z0, Math.min(B.z1, n.z + Math.cos(ry) * 1.7)); A.update(0.016); A.startTalk(n); A.frame(0.016); },
+    talkTo: async (id) => { const n = A.byId(id); if (!n) return; [A.state.x, A.state.z] = A.talkSpot(n); A.update(0.016); A.startTalk(n); A.frame(0.016); },
     people: () => P().people.map((n) => ({ id: n.id, name: n.who, body: n.model })),
     screens: () => ({
       title: () => { closeAll(); $('title').hidden = false; $('hud').hidden = true; },
@@ -98,6 +98,7 @@ export function devRun(A) {
       if (n.amb) A.PLACES[A.place].life.hold(n, true); n.m.userData.anim.play(null); for (let i = 0; i < 10; i++) A.update(1 / 30);
       const head = n.m.getObjectByName('mixamorigHead'), hp = new THREE.Vector3(); head.getWorldPosition(hp); hp.y += 0.07;
       const d = +(q.get('d') || 0.8), a = +(q.get('a') || 0), ry = n.m.rotation.y + a; A.state.x = hp.x + Math.sin(ry) * d; A.state.z = hp.z + Math.cos(ry) * d; A.state.eyeY = hp.y; A.state.yaw = Math.atan2(-(hp.x - A.state.x), -(hp.z - A.state.z)); A.state.pitch = 0;
+      A.scene.traverse((o) => { if (o.isSprite) o.visible = false; }); setInterval(() => A.scene.traverse((o) => { if (o.isSprite) o.visible = false; }), 200);   /* no talk marks over the face */ const st = document.createElement('style'); st.textContent = 'body > :not(#stage){visibility:hidden!important}'; document.head.appendChild(st);
       $('hud').hidden = true; window.__SHOT = true; document.title = 'SHOT face ' + id; })();
     return;
   }
@@ -187,7 +188,8 @@ export function devRun(A) {
           const gl = await A.model(n.model), b = skClone(gl.scene);
           b.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); b.position.set(300, 0, 300); b.rotation.y = Math.PI / 2; if (n.scale) b.scale.setScalar(n.scale); A.scene.add(b);
           const clip = (n.amb && n.amb.spec.walk) || (n.amb && /wander|errand/.test(n.amb.kind) && n.sex === 'm' ? 'WalkM' : 'Walk');   /* the clip each walker really uses: ambient men walk WalkM, people sent somewhere Walk */
-          animate(b, clip); b.userData.ground = 0;
+          animate(b, clip); b.userData.ground = 0; A.fitPace(b, n.model, q.get('k'));
+          if (q.has('try')) for (const c2 of q.get('try').split(',')) { animate(b, c2); const r2 = auditWalk(n.id + ' ' + c2, b, n.walkSpeed || 1.0, { after: gripTick }); out.push(`  try ${n.id} (${n.model}) ${c2}: stride ${(r2.stride * 100).toFixed(0)} cm, clip speed ${r2.pace.toFixed(2)}, slide ${r2.slide.toFixed(1)} cm, shoes ${r2.sink.toFixed(1)} to ${r2.float.toFixed(1)} cm`); }
           for (const v of [n.route ? (n.walkSpeed || 1.25) : 1.05 * (n.amb && n.amb.spec.speed || 1)]) { const r = auditWalk(n.id + ' (' + n.model + ')', b, v, { after: gripTick });
             out.push(`${n.id} (${n.model}, ${clip}): stride ${(r.stride * 100).toFixed(0)} cm, ${v.toFixed(2)} m/s, clip speed ${r.pace.toFixed(2)}, slide ${r.slide.toFixed(1)} cm a loop, shoes ${r.sink.toFixed(1)} to ${r.float.toFixed(1)} cm, biggest jump ${r.pop.toFixed(1)}x`);
             for (const l of r.lines) { out.push('  ' + l); bad++; } }
