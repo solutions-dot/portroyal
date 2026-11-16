@@ -157,6 +157,8 @@ Results for the new places (branch `claude/selassie-places`, 16 November 2026, p
 - The heads check found a radio listener's head turning 371 degrees a second in the Nod reaction; the new places no longer use Nod.
 - Screenshots of each new place were taken at 844x390 and 390x844 and checked by eye. The shared guide ring shows through the bus at the Parade, as it is drawn through solids by design.
 
+Results from 16 November 2026 (branch `claude/selassie-likeness`, merged with the new Kingston places): `?test=audit` 0 in all seven places, with the action check 0 (no one in step, no one frozen in Idle; 0% of the people in view in the plain Idle) and the head check 0 over 569 people and the cinematic; `?test=all` ALL 0 at 1280x720 and at 390x800 on a touch screen; `?test=ambient` 0 everywhere; `?test=held` 0; `?test=layout` 0 at 390x800, 667x375, 800x500 and 1280x720; `?auto=1` reaches the ending (64); `node tools/selassie/test.mjs` 5 pass; `node tools/test.mjs` 216 pass; the production build has no dev hooks. `?test=cloth` reports 2 single points: Haile Selassie's tunic edge at the shoulder jagged 4.4 mm (limit 4 mm) in `Talk1`, a clip he never plays, and Mr. Brown's (`sel_vendor30`) shirt edge 5.6 mm in `Wave`, which came with rebuilding every body on the current shared builder for the eye fix.
+
 ### Remaining findings for independent review
 
 - The descending-stairs clip does not fit his body (above); his walk down the steps is implied by a cut, not shown.
