@@ -1,5 +1,34 @@
 # Testing
 
+**Unified hint delay:** `tests/guidance-delay.mjs` checks that all ten games use the same 2.5-second guidance delay, including shared-engine exploration stages. It is included in `npm test`. Browser interaction remains a separate verification requirement.
+
+**Story target priority:** `tests/guidance-target-priority.mjs` checks that the five stage-marked legacy controllers (Garvey, Bog Walk, Nanny, Melissa and Eventide) consider unfinished required people before optional action fallback. This is a source regression, not a chapter replay.
+
+**Garvey multi-person progress:** `tests/garvey-goal-progress.mjs` checks the source-level counter and refresh wiring. Confirm in browser that each conversation increments the visible goal and that a saved mid-stage goal restores the count.
+
+**Behavioral guidance tests:** `tests/guidance-target-priority.mjs` now also exercises the shared story engine with synthetic ordered and unordered tasks, optional actions and immediate retargeting. These checks do not prove the ten games' real stage maps or UI rendering.
+
+**Near-target arrow stability:** `tests/guidance-delay.mjs` also checks that seven legacy guidance controllers do not reactivate the arrow every frame while the player is already within interaction range. Verify the objective does not flash or replay sounds at the destination.
+
+**Timing units:** Bog Walk passes elapsed seconds to its nudge tick (`2.5`); other legacy controllers use milliseconds (`2500`). The guidance-delay test accounts for the difference and checks both shared delay constants.
+
+**Chapter-by-chapter stage data:** `tests/chapter-guidance.mjs` enumerates all stages of Kendal, Selassie and Windrush and checks goal/needs/next references and simulated requirement completion; it also checks goal and talk transition tables for Nanny, Melissa, Eventide and Bog Walk. This is a structural data check, not a substitute for walking each chapter in browser and checking arrow targets, interaction controls and physical reachability.
+
+**Ten-game structural chapter coverage:** `tests/chapter-guidance.mjs` now includes Garvey, Tivoli and Port Royal in addition to the seven previously covered games. Port Royal checks goal controllers and hint mapping, Tivoli checks walking-chapter conversation orders, and Garvey checks talk transitions. Execute the suite and browser/mobile autoplay before claiming the chapter-by-chapter audit passes.
+
+## Current UI regression coverage (16 November 2026, PR #101)
+
+The following checks are included in `npm test` on the integration branch:
+
+- `tests/chapter-footer.mjs`: all **ten** playable games must expose chapter actions in the order **Unlock All | Credits | Restart**, with the three-column layout rule.
+- `tests/final-two-ui.mjs`: Windrush and Selassie chapter cards, selected journal tab, notice treatment and mobile title controls.
+- `tests/kendal.mjs`: Kendal stage transitions, water tasks, beach activity guards and save/resume contracts.
+- `tests/regressions.mjs`: the menu includes exactly ten distinct playable games.
+
+A focused Chromium workflow is added in `.github/workflows/tivoli-mobile.yml`, running `tests/tivoli-browser.mjs` at 320px and 390px and uploading screenshots. It checks chapter action alignment, Credits navigation, Journal open/close, four touch arrows and uncaught script errors. **Presence of controls is not proof that held movement works**; manually test sustained press, release, turning, dialogue interruption and touch drag-to-look.
+
+**Verification status:** source regression checks and GitHub's `npm test` runs are separate from real browser interaction. Do not mark the Tivoli mobile flow or the full ten-game visual pass complete without a successful browser run and screenshot review. The older `docs/HANDOFF.md` list is a historical baseline; use its unchecked items as outstanding until verified.
+
 Always do these before saying something works.
 
 ## 1. Build and serve

@@ -41,6 +41,7 @@ export async function dev(A) {
         {
           yard: 10,
           poster: 24,
+          thumbnail: 24,
           ship: 24,
           deck: 30,
           london: 50,
@@ -54,6 +55,7 @@ export async function dev(A) {
     closeAll();
     const views = {
       yard: { pos: [7, 3.2, 15], look: [-3, 1, 0] },
+      thumbnail: { pos: [-125, 20, -110], look: [-25, 0, -29] },
       poster: { pos: [-62, 9, 45], look: [-5, 9, -25] },
       ship: { pos: [-35, 8, 22], look: [0, 11, -25] },
       deck: { pos: [0, 2.4, 16], look: [0, 4, -20] },
@@ -64,6 +66,10 @@ export async function dev(A) {
       advice: { pos: [-5, 2, 10], look: [1, 1.1, -1] },
     };
     S.view = views[id] || views.yard;
+    if (id === "thumbnail") {
+      A.camera.fov = 32;
+      A.camera.updateProjectionMatrix();
+    }
     if (id === "people") {
       world().group.visible = false;
       for (let i = 0; i < BASES.length; i++) {

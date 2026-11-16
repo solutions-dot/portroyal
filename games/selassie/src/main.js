@@ -13,9 +13,9 @@ import {
 import {
   createStory,
   createCarry,
-  arrowPose,
   needList,
 } from "../../../engine/story.js";
+import { createGuide } from "../../../engine/guide.js"; /* the gold arrow on the ground that shows the way (every game) */
 import { slideWalls, walkRoute } from "../../../engine/placement.js";
 import { releaseOnBlur, useInteractionKey } from "../../../engine/input.js";
 import {
@@ -1278,26 +1278,16 @@ function findNear() {
     }
   }
 }
+let GUIDE = null;
 function hint(now) {
   const quiet = S.started && !busy && !openPanel() && !DIR.on,
     h = story.tick(now, quiet);
-  $("nudge").hidden = !h.show || !quiet;
-  if (h.show && quiet) {
-    const v = new THREE.Vector3(h.x, 1, h.z).project(camera),
-      p = arrowPose({
-        dx: h.x - S.x,
-        dz: h.z - S.z,
-        yaw: S.yaw,
-        ndc: [v.x, v.y, v.z],
-        W: innerWidth,
-        H: innerHeight,
-        final: h.final,
-      });
-    $("nudge").className = p.cls;
-    $("nudge").style.left = p.x + "px";
-    $("nudge").style.top = p.y + "px";
-    $("nudge").querySelector("span").textContent = p.label;
-  }
+  $("nudge").hidden = true;
+  if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: () => 0 });
+  /* a gold arrow on the ground points the way, a gold ring marks the place */
+  if (h.show && quiet)
+    GUIDE.point(now, { x: h.x, z: h.z, tx: h.target[0], tz: h.target[1], final: h.final });
+  else GUIDE.hide(now);
   $("talk").hidden = !near || !quiet;
   if (near) $("talk").textContent = near.label;
   $("hint").textContent = quiet
