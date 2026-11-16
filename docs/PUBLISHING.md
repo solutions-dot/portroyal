@@ -18,6 +18,7 @@ dist/games/<game>/site/...    each game: index.html, app.js, models/*.js
 
 `vercel.json` tells Vercel what to do, so there is nothing to set by hand:
 - install: `npm install`; build: `npm run dist`; output folder: `dist`;
+- `git.deploymentEnabled.main` stays `true`, so every merge to `main` creates the production deployment;
 - `/port-royal` redirects to the game;
 - models are cached for a year (`immutable`), which is safe because the game asks for each one as `models/<name>.js?v=<fingerprint>`: a changed model has a new address. `app.js` is always checked for a newer copy, so a new build is picked up at once.
 

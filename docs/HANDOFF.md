@@ -7,7 +7,7 @@
 - The owner's latest Chapters standard applies to all ten games, from the title and in-game journal: cream book, dark borders, Close, separate date/name/status, scrolling rows and fixed footer. Exact button text and order: **Unlock All | Restart | Credits**. `shared/chapters.css` is copied by the build. Teaching mode does not rename the button; Restart asks before clearing progress.
 - Use Windrush's Kingston quay artwork and opening camera, not the offshore ship view. The Melissa menu heading is Hurricane Melissa; keep its description. Existing games have no New badge.
 - Preserve the corrected Selassie tail. Its lettering is ETHIOPIAN AIRLINES; the owner removed the unverified White Nile name. Do not import the rejected people from draft #108.
-- The owner has not authorized a Vercel deployment. Automatic main deployment remains disabled. Merged source and the live site can differ.
+- The owner expects every merge to `main` to update Vercel production. `vercel.json` keeps `git.deploymentEnabled.main` true. Do not turn it off. Review branches may stay disabled.
 
 Earlier entries below record past checkpoints.
 
@@ -108,4 +108,4 @@ Still to do: par wave 2 (Bog Walk, Eventide, Melissa, Tivoli), re-run ?test=all 
 
 ## Main consolidation: 16 November 2026
 
-The owner approved the non-people changes for main. Selassie people revisions and their updated thumbnail are held for a separate PR. Main keeps its existing character models and character-building recipes/scripts; previous people checklists above are historical. The current consolidation review and branch inventory are in `docs/reviews/outstanding-branches-20261116.md`. Automatic Vercel deployments for main are disabled under the owner's earlier no-deploy instruction.
+The owner approved the non-people changes for main. Selassie people revisions and their updated thumbnail are held for a separate PR. Main keeps its existing character models and character-building recipes/scripts; previous people checklists above are historical. The current consolidation review and branch inventory are in `docs/reviews/outstanding-branches-20261116.md`. Automatic Vercel deployments for main are enabled. The earlier no-deploy instruction applied to manual deployment, not to the normal production build after a merge to `main`.
