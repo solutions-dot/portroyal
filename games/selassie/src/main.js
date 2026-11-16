@@ -41,6 +41,7 @@ import {
   TALK,
   FLAVOUR,
   CARDS,
+  PLACE_NAMES,
 } from "./content.js";
 import {
   $,
@@ -50,6 +51,15 @@ import {
   journal,
   chapters,
   closeAll,
+  toast,
+  showCount,
+  newPage,
+  goalSetup,
+  setGoal,
+  nudgeGoal,
+  startHint,
+  hintTick,
+  createMarks,
 } from "./ui.js";
 import { createDirector } from "./director.js";
 const KEY = "selassie-save-v1",
@@ -89,6 +99,13 @@ const hemi = new THREE.HemisphereLight(0xfff3d3, 0x827356, 2.3),
   sun = new THREE.DirectionalLight(0xffe1ac, 2.2);
 sun.position.set(-22, 45, 18);
 scene.add(hemi, sun);
+/* the gold talk marks over the step's story people, and the talk button with a name over the nearest person (ui.js) */
+const MARKS = createMarks({
+  scene,
+  camera,
+  canvas: $("stage"),
+  onTap: (n) => talk(n),
+});
 function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
   camera.aspect = innerWidth / innerHeight;
@@ -129,7 +146,6 @@ let current = null,
   talking = null,
   epoch = 0,
   ready = false,
-  toastTimer = null,
   skipIntro = false;
 const worlds = {},
   bases = {},
@@ -333,15 +349,15 @@ async function buildWorld(id) {
   const extras = Q.ambient
     .filter(
       (s, i) =>
-        !(Q.id === "airport" && i % (phone ? 14 : 2) !== 0) &&
+        !(Q.id === "airport" ? i % (phone ? 14 : 2) !== 0 : phone && Q.thin && i % Q.thin !== 0) &&
         !blocked(Q, s.x, s.z, 0.3) &&
         !onKeepOff(Q.keepOff, s.x, s.z, 0.3) &&
         !specs.some((n) => Math.hypot(s.x - n.x, s.z - n.z) < 1.3),
     )
     .map((s) => ({
-      ...crowdLook(s.look || 0, Q.id === "airport"),
+      ...crowdLook(s.look || 0, Q.id === "airport" || Q.mixed),
       ...s,
-      base: (s.base || crowdLook(s.look || 0, Q.id === "airport").base) + tier,
+      base: (s.base || crowdLook(s.look || 0, Q.id === "airport" || Q.mixed).base) + tier,
     }));
   // A lone end of a filtered chat group becomes a watcher, never a conversation with nobody.
   for (const n of extras)
@@ -361,15 +377,8 @@ async function buildWorld(id) {
     const n = { ...s, ...body(s) };
     Q.group.add(n.m);
     Q.people.push(n);
-    if (!n.historical) {
-      const mark = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: markTexture(), depthTest: false }),
-      );
-      mark.scale.set(0.28, 0.28, 1);
-      mark.position.set(0, 2.05 / (s.scale || 1), 0);
-      n.m.add(mark);
-      n.mark = mark;
-    } else n.m.visible = false;
+    if (!n.historical) MARKS.add(n);
+    else n.m.visible = false;
   }
   Q.familyLife = createAmbient({
     walls: Q.walls,
@@ -479,27 +488,6 @@ async function buildWorld(id) {
   addShadows(Q);
   return Q;
 }
-let MARK = null;
-function markTexture() {
-  if (MARK) return MARK;
-  const c = document.createElement("canvas");
-  c.width = c.height = 64;
-  const x = c.getContext("2d");
-  x.fillStyle = "#f0b23a";
-  x.beginPath();
-  x.arc(32, 29, 24, 0, 7);
-  x.fill();
-  x.beginPath();
-  x.moveTo(20, 44);
-  x.lineTo(15, 60);
-  x.lineTo(36, 48);
-  x.fill();
-  x.fillStyle = "#183b32";
-  x.font = "bold 34px sans-serif";
-  x.textAlign = "center";
-  x.fillText("!", 32, 41);
-  return (MARK = new THREE.CanvasTexture(c));
-}
 function addShadows(Q) {
   const people = [...Q.people, ...Q.extras],
     tex = P.shadowTexture(),
@@ -536,12 +524,8 @@ function where(id, kind) {
   const n = Q.people.find((n) => n.id === id);
   if (kind === "talk" && n) return [n.x, n.z];
   if (S.hand === "tin" && id === "tin") return [-5, 0];
-  if (S.hand && ["water", "lunch", "photo"].includes(id)) return [0, -3.6];
-  if (S.hand === "bottle" && id === "roadWater") {
-    const a = Q.people.find((n) => n.id === "adina");
-    return [a.x, a.z + 1];
-  }
-  if (S.hand === "ticket" && id === "ticket") return [-5, 0];
+  const own = Q.where?.(id, S); // a place's own carried tasks (kingston.js)
+  if (own) return own;
   if (id === "share") return S.share === 0 ? [2, 17.5] : [-10, 22.3];
   const p = Q.points[id];
   return p ? [p.x, p.z] : null;
@@ -553,7 +537,8 @@ const story = createStory({
   route: (target, from) =>
     walkRoute(from, target, world().walls, 0.24, world().bounds)[0] || target,
   advance: (next) => advance(next),
-  onGoal: (t) => ($("goal").textContent = t),
+  onGoal: (t) => setGoal(t),
+  onArrow: () => nudgeGoal(), /* when the arrow first shows in a step, the goal pops open */
   flavour: FLAVOUR,
   names: PEOPLE,
   items: Object.fromEntries(ITEMS.map((id) => [id, true])),
@@ -563,10 +548,9 @@ function unlock(id) {
   if (!id || S.journal.includes(id)) return;
   S.journal.push(id);
   S.newPages++;
-  $("jcount").hidden = false;
-  $("jcount").textContent = S.newPages;
-  $("jbtn").classList.add("new");
+  showCount(S.newPages);
   uiSound("page");
+  newPage(id);
   save();
 }
 function save() {
@@ -590,11 +574,7 @@ function save() {
   }
 }
 function notice(text) {
-  if (openPanel()) return;
-  clearTimeout(toastTimer);
-  $("toast").textContent = text;
-  $("toast").hidden = false;
-  toastTimer = setTimeout(() => ($("toast").hidden = true), 3500);
+  toast(text, 3200);
 }
 function setHeld(id, obj) {
   S.hand = id;
@@ -624,6 +604,16 @@ function giveCup(n) {
   gripTick(n.m);
   return cup;
 }
+/* what a place's own tasks may do (kingston.js: Q.act, Q.show) */
+const taskApi = (Q) => ({
+  S,
+  Q,
+  hold: (id) => setHeld(id, getItem(id)),
+  place: (at) => putHeld(at),
+  give: (id) => giveCup(Q.people.find((n) => n.id === id)),
+  notice,
+  sound: uiSound,
+});
 function getItem(id) {
   const o = world().items[id];
   if (o) return o;
@@ -640,17 +630,6 @@ function visuals() {
   const Q = world();
   if (!Q) return;
   if (Q.id === "yard") {
-    Q.items.ticket.visible = S.stage >= 60;
-    for (const id of ["photo", "bottle", "lunch"]) {
-      const o = Q.items[id],
-        key = id === "bottle" ? "water" : id;
-      if (S.packed.includes(key) && S.hand !== id) {
-        if (o.parent !== Q.group) Q.group.add(o);
-        o.position.set(0.2 + S.packed.indexOf(key) * 0.08, 1.11, -5);
-        o.visible = true;
-      }
-    }
-    Q.props.chair.userData.slat.rotation.z = S.stage > 23 ? 0 : 0.13;
     const t = Q.items.tin;
     if (S.hand !== "tin" && S.stage >= 12) {
       if (t.parent !== Q.group) Q.group.add(t);
@@ -658,23 +637,8 @@ function visuals() {
       t.visible = true;
     }
     t.userData.lid.rotation.x = S.stage >= 13 ? -1.9 : 0;
-    if (S.stage > 22 && S.hand !== "thread") {
-      const o = Q.items.thread;
-      if (o.parent !== Q.group) Q.group.add(o);
-      o.position.set(5.5, 0.83, -3);
-      o.visible = true;
-    }
-    if (S.stage >= 60 && S.hand !== "photo") {
-      const photo = Q.items.photo;
-      if (photo.parent !== Q.group) Q.group.add(photo);
-      photo.position.set(-5.08, 1, -2);
-      photo.visible = true;
-    }
-    if (S.stage >= 62 && S.hand !== "ticket") {
-      Q.items.ticket.position.set(-4.9, 1, -2);
-      Q.items.ticket.visible = true;
-    }
   }
+  Q.show?.(taskApi(Q));
   if (Q.id === "airport") {
     const count = S.stage >= 44 ? 2 : S.share;
     for (let i = 0; i < count; i++)
@@ -698,7 +662,8 @@ async function go(stage, { restore = null, keep = false } = {}) {
   const old = current,
     change = old !== STEPS[stage].place;
   if (change && S.started && !QUICK) {
-    $("fadeT").textContent = CHAPTERS[chapterOf(stage)].caption;
+    $("fadeT").textContent =
+      PLACE_NAMES[STEPS[stage].place] || CHAPTERS[chapterOf(stage)].caption;
     $("fadeS").textContent =
       STEPS[stage].place === "memory"
         ? "A memory, 1930"
@@ -753,16 +718,13 @@ async function go(stage, { restore = null, keep = false } = {}) {
   } else story.sync(stage);
   if (S.hand && !carry.holding()) setHeld(S.hand, getItem(S.hand));
   visuals();
-  $("jcount").hidden = !S.newPages;
-  $("jcount").textContent = S.newPages;
-  $("jbtn").classList.toggle("new", !!S.newPages);
-  if (stage === 30) {
+  showCount(S.newPages);
+  if (Q.lead && stage === Q.lead.stage) {
     const n = Q.people.find((n) => n.id === "mum");
-    n.x = 0;
-    n.z = 18;
+    [n.x, n.z] = Q.lead.path[0];
     n.m.position.set(n.x, 0, n.z);
     Q.familyLife.hold(n, true);
-    lead(n, Q.leadPath, { walk: 1.2, run: false, wait: 6, resume: 4 });
+    lead(n, Q.lead.path, { walk: 1.2, run: false, wait: 6, resume: 4 });
   }
   if (restore?.followers)
     for (const p of restore.followers) {
@@ -775,10 +737,10 @@ async function go(stage, { restore = null, keep = false } = {}) {
         n.m.position.z = p.z;
       }
     }
-  const evening = stage >= 60;
+  const evening = !!Q.evening;
   sky.setSky(evening ? 0x667f8b : 0x6ca9bb, evening ? 0xe0aa78 : 0xe1d4ac);
   sun.intensity = evening ? 1.45 : 2.2;
-  $("place").textContent = CHAPTERS[chapterOf(stage)].caption;
+  $("place").textContent = PLACE_NAMES[Q.id] || CHAPTERS[chapterOf(stage)].caption;
   busy = false;
   save();
   await waits(stage, generation);
@@ -804,16 +766,31 @@ async function advance(next) {
   }
   await go(next, { keep: true });
 }
+/* a finished chapter: offer the next one on screen, as every game does. "Stay here" lets you look round; tapping the goal brings the card back */
+let nextPending = null;
 function finishChapter(next) {
   S.best = Math.max(S.best, chapterOf(next));
   save();
-  const c = CHAPTERS[chapterOf(S.stage)];
+  nextPending = next;
+  nextCard();
+}
+function nextCard() {
+  const next = nextPending,
+    i = chapterOf(S.stage),
+    nx = CHAPTERS[chapterOf(next)];
+  uiSound("goal");
   card(
-    c.name,
-    ["This chapter is in your journal."],
+    "Chapter " + (i + 1) + " is finished!",
+    ["Well done. Next is " + nx.name + " (" + nx.year + ")."],
     [
-      ["Continue", () => go(next)],
-      ["Chapters", showChapters],
+      [
+        "Next chapter",
+        () => {
+          nextPending = null;
+          go(next);
+        },
+      ],
+      ["Stay here", () => setGoal("Well done! Tap here for the next chapter.")],
     ],
   );
 }
@@ -825,13 +802,7 @@ async function waits(st, generation) {
   if (st === 16) {
     cardData(CARDS.return, [["Continue", () => finishChapter(20)]]);
   }
-  if (st === 26) {
-    card(
-      "Ready to travel",
-      ["The water, lunch and picture are packed."],
-      [["Continue", () => finishChapter(30)]],
-    );
-  }
+  if (st === 26) cardData(CARDS.ready, [["Continue", () => finishChapter(30)]]);
   if (st === 46) {
     card(
       "A sound across the sky",
@@ -874,6 +845,7 @@ async function waits(st, generation) {
           () => memory("Our family listening, even with different beliefs."),
         ],
       ],
+      { col: true },
     );
   }
   if (st === 57) {
@@ -983,33 +955,12 @@ function action(id) {
     }
     putHeld([-5, 0.83, -2]);
   } else if (id === "openTin") Q.items.tin.userData.lid.rotation.x = -1.9;
-  else if (id === "paper" || id === "thread") {
+  else if (Q.act?.[id]) {
+    if (Q.act[id](taskApi(Q)) === false) return;
+  } else if (id === "paper") {
     setHeld(id, getItem(id));
   } else if (id === "map") {
     putHeld([3.65, 0.89, -8]);
-  } else if (id === "sewing") {
-    putHeld([5.5, 0.83, -3]);
-  } else if (id === "chair") {
-    Q.props.chair.userData.slat.rotation.z = 0;
-    uiSound("goal");
-  } else if (["water", "lunch", "photo"].includes(id)) {
-    const item = id === "water" ? "bottle" : id;
-    if (S.hand !== item) {
-      setHeld(item, getItem(item));
-      notice("Place it in the bag.");
-      return;
-    }
-    putHeld([-0.2 + S.packed.length * 0.18, 0.91, -5]);
-    S.packed.push(id);
-  } else if (id === "roadWater") {
-    if (S.hand !== "bottle") {
-      setHeld("bottle", getItem("bottle"));
-      notice("Bring the water to Grandma.");
-      return;
-    }
-    putHeld([-2, 0, -14.8]);
-    giveCup(Q.people.find((n) => n.id === "adina"));
-    notice("Grandma has some water.");
   } else if (id === "mat") Q.props.mat.visible = true;
   else if (id === "airportWater") setHeld("bottle", getItem("bottle"));
   else if (id === "share") {
@@ -1020,15 +971,6 @@ function action(id) {
     S.share++;
     if (S.share === 2) putHeld([-2, 0.83, 19]);
     notice("A neighbour has some water.");
-  } else if (id === "bus") {
-    uiSound("goal");
-  } else if (id === "ticket") {
-    if (S.hand !== "ticket") {
-      setHeld("ticket", getItem("ticket"));
-      notice("Place it beside the picture in the tin.");
-      return;
-    }
-    putHeld([-4.9, 1, -2]);
   }
   complete(id);
   if (stage === S.stage) visuals();
@@ -1040,8 +982,7 @@ function interact(n = near) {
 function showJournal() {
   journal(S.journal, S.memory, () => {
     S.newPages = 0;
-    $("jcount").hidden = true;
-    $("jbtn").classList.remove("new");
+    showCount(0);
     save();
   });
 }
@@ -1066,25 +1007,30 @@ function resetSceneTasks() {
     }
     delete Q.props.shared0;
     delete Q.props.shared1;
+    delete Q.props.cupGiven;
   }
 }
+function playChapter(c) {
+  if (!S.started) startHint(phone);
+  S.started = true;
+  $("title").hidden = true;
+  $("hud").hidden = false;
+  nextPending = null;
+  S.hand = null;
+  carry.drop();
+  resetSceneTasks();
+  S.completed = {};
+  S.share = c.first >= 44 ? 2 : 0;
+  S.packed = c.first > 25 ? ["water", "lunch", "fruit"] : [];
+  go(c.first);
+}
 function showChapters() {
-  chapters(
-    S.best,
-    S.teacher,
-    (c) => {
-      S.started = true;
-      $("title").hidden = true;
-      $("hud").hidden = false;
-      S.hand = null;
-      carry.drop();
-      resetSceneTasks();
-      S.completed = {};
-      S.share = c.first >= 44 ? 2 : 0;
-      S.packed = c.first > 25 ? ["water", "lunch", "photo"] : [];
-      go(c.first);
-    },
-    () => {
+  chapters({
+    best: S.best,
+    done: (i) => i < S.best || (i === CHAPTERS.length - 1 && S.stage === 64),
+    teacher: S.teacher,
+    choose: playChapter,
+    toggle: () => {
       S.teacher = !S.teacher;
       try {
         localStorage.setItem("selassie-teacher", S.teacher ? "on" : "off");
@@ -1092,22 +1038,45 @@ function showChapters() {
       save();
       showChapters();
     },
-    resetPrompt,
-  );
+    erase: eraseAll,
+  });
 }
+function eraseAll() {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {}
+  S.started = false; /* nothing more is saved before the page reloads */
+  location.reload();
+}
+/* the reset button: start this chapter again, or the whole story (as in every game) */
 function resetPrompt() {
+  if (DIR.on) return;
+  const c = CHAPTERS[chapterOf(S.stage)];
   card(
-    "Start again?",
-    ["This clears only this game’s saved journey."],
+    "Reset",
+    ["Start this chapter again, or start the whole story again."],
     [
+      ["Restart \u201c" + c.name + "\u201d", () => playChapter(c)],
       [
-        "Start again",
+        "Start the whole story again",
+        () =>
+          card(
+            "Start again?",
+            ["This wipes everything, even your journal."],
+            [
+              ["Yes, start again", eraseAll],
+              ["No, keep playing", () => {}],
+            ],
+          ),
+      ],
+      ["Cancel", () => {}],
+      [
+        "Main Menu",
         () => {
-          localStorage.removeItem(KEY);
-          location.reload();
+          save();
+          location.href = "../../../menu/";
         },
       ],
-      ["Keep playing", () => {}],
     ],
   );
 }
@@ -1115,13 +1084,14 @@ $("jbtn").onclick = showJournal;
 $("jchap").onclick = showChapters;
 $("tchap").onclick = showChapters;
 $("reset").onclick = resetPrompt;
-$("goal").onclick = () => {
-  $("goal").classList.toggle("folded");
-  $("goal").setAttribute(
-    "aria-expanded",
-    !$("goal").classList.contains("folded"),
-  );
-};
+goalSetup({
+  started: () => S.started,
+  tap: () => {
+    if (nextPending === null || openPanel()) return false;
+    nextCard();
+    return true;
+  },
+});
 function soundButton() {
   $("snd").setAttribute("aria-pressed", AU.on);
   $("snd").setAttribute(
@@ -1163,7 +1133,7 @@ releaseOnBlur(keys, [stick, look]);
 const canvas = $("stage");
 canvas.addEventListener("pointerdown", (e) => {
   if (!S.started || openPanel() || DIR.on) return;
-  if (e.pointerType === "touch" && e.clientX < innerWidth * 0.45) {
+  if (e.pointerType === "touch" && e.clientX < innerWidth / 2 && stick.id === null) {
     stick.id = e.pointerId;
     stick.x = e.clientX;
     stick.y = e.clientY;
@@ -1179,8 +1149,8 @@ canvas.addEventListener("pointerdown", (e) => {
 });
 canvas.addEventListener("pointermove", (e) => {
   if (e.pointerId === stick.id) {
-    stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x) / 45));
-    stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y) / 45));
+    stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x) / 50));
+    stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y) / 50));
   } else if (e.pointerId === look.id) {
     const dx = e.clientX - look.x,
       dy = e.clientY - look.y;
@@ -1197,7 +1167,14 @@ function endPointer(e) {
     stick.dx = stick.dy = 0;
   }
   if (e.pointerId === look.id) {
-    if (look.moved < 8 && near) interact();
+    if (look.moved < 8) {
+      /* a tap on a person talks to them */
+      const n =
+        S.started && !busy && !openPanel() && !DIR.on
+          ? MARKS.tap(e.clientX, e.clientY, world().people.filter((p) => !p.historical), S.x, S.z)
+          : null;
+      if (n) talk(n);
+    }
     look.id = null;
   }
 }
@@ -1221,7 +1198,7 @@ function move(dt) {
     rt /= l;
   }
   if (l > 0.04) {
-    const speed = 2.6,
+    const speed = keys.has("shift") ? 3.6 : 2.6,
       dx = (-Math.sin(S.yaw) * fw + Math.cos(S.yaw) * rt) * speed * dt,
       dz = (-Math.cos(S.yaw) * fw - Math.sin(S.yaw) * rt) * speed * dt,
       p = slideWalls([S.x, S.z], [S.x + dx, S.z + dz], Q.walls, 0.23);
@@ -1240,7 +1217,7 @@ function move(dt) {
     stepT += dt;
     if (stepT > 0.48) {
       stepT = 0;
-      stepSound(Q.id === "yard" || Q.id === "memory" ? "sand" : "stone");
+      stepSound(Q.surface || (Q.id === "yard" || Q.id === "memory" ? "sand" : "stone"));
     }
   }
   for (const e of needList(STEPS[S.stage]).filter(
@@ -1277,9 +1254,7 @@ function findNear() {
         id: need.id,
         label:
           S.hand &&
-          ["tin", "ticket", "water", "lunch", "photo", "roadWater"].includes(
-            need.id,
-          )
+          (need.id === "tin" || world().carryTo?.includes(need.id))
             ? "Place " + S.hand
             : world().points[need.id]?.label || "Continue",
       };
@@ -1296,20 +1271,29 @@ function hint(now) {
   if (h.show && quiet)
     GUIDE.point(now, { x: h.x, z: h.z, tx: h.target[0], tz: h.target[1], final: h.final });
   else GUIDE.hide(now);
-  $("talk").hidden = !near || !quiet;
-  if (near) $("talk").textContent = near.label;
-  $("hint").textContent = quiet
-    ? phone
-      ? "Drag left to walk. Drag right to look."
-      : "WASD to walk · Drag to look · E to interact"
-    : "";
-  $("stick").hidden = !phone || !quiet;
+  /* the Talk button is for things to do; a person you can talk to gets the gold talk button over their head */
+  hintTick(quiet);
+  const act = quiet && near?.kind === "do";
+  $("talk").hidden = !act;
+  if (act) $("talk").textContent = near.label;
+  MARKS.tick(now / 1000, {
+    people: world().people,
+    show: quiet,
+    marked: (n) => !!story.marked(n.id),
+    near: quiet && near?.kind === "talk" ? near.n : null,
+    px: S.x,
+    pz: S.z,
+  });
+  /* the joystick: faint at rest, under the left thumb when it moves */
+  const el = $("stick");
+  el.hidden = !phone || !quiet;
   if (phone && quiet) {
-    $("stick").style.left = (stick.id === null ? 72 : stick.x) + "px";
-    $("stick").style.top =
-      (stick.id === null ? innerHeight - 150 : stick.y) + "px";
+    const rest = stick.id === null;
+    el.classList.toggle("rest", rest);
+    el.style.left = (rest ? 84 : stick.x) + "px";
+    el.style.top = (rest ? innerHeight - 150 : stick.y) + "px";
     $("nub").style.transform =
-      `translate(calc(-50% + ${stick.dx * 26}px),calc(-50% + ${stick.dy * 26}px))`;
+      `translate(calc(-50% + ${stick.dx * 30}px), calc(-50% + ${stick.dy * 30}px))`;
   }
 }
 /* the title's scene: the arrival as the cinematic shows it at the salute, then left to live (the crowd keeps moving, he salutes again now and then) */
@@ -1405,7 +1389,6 @@ function frame(now) {
       gripTick(n.m);
       groundFeet(n.m);
     }
-    if (n.mark) n.mark.visible = !!story.marked(n.id) && S.started && !DIR.on;
   }
   if (DIR.on) DIR.tick(dt);
   else if (__DEV__ && S.view) {
@@ -1440,6 +1423,7 @@ async function start() {
   S.started = true;
   $("title").hidden = true;
   $("hud").hidden = false;
+  startHint(phone); /* the controls tip, for a few seconds at the start of play */
   if (saved) {
     Object.assign(S, saved, { started: true, teacher: S.teacher });
     restoreArrival = S.stage === 51;

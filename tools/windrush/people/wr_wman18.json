@@ -1,0 +1,80 @@
+{
+  "name": "wr_wman18",
+  "era": 2018,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 0,
+    "caucasian": 0.2,
+    "asian": 0.8,
+    "gender": 1,
+    "age": 0.45,
+    "weight": 0.5,
+    "height": 0.52
+  },
+  "garments": {
+    "shoes": true,
+    "trousers": true,
+    "hairvol": 0.25,
+    "hat": [],
+    "sleeve": 0.95,
+    "collar": "turn",
+    "legwidth": 0.95
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      24,
+      22,
+      20
+    ],
+    "Skin": [
+      196,
+      150,
+      112
+    ],
+    "Shirt": [
+      214,
+      222,
+      232
+    ],
+    "Collar": [
+      214,
+      222,
+      232
+    ],
+    "Breeches": [
+      60,
+      64,
+      70
+    ]
+  },
+  "targets": {
+    "head-oval": 0.3
+  },
+  "crowd": true
+}

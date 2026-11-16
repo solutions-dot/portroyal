@@ -1,6 +1,7 @@
 {
- "about": "Per-game settings for tools/lint_content.mjs and engine/checks.js (docs/TESTING.md, section 7). real: people who really lived and speak in the game (their lines are listed for checking, rule 3).",
+ "about": "Per-game settings for tools/lint_content.mjs and engine/checks.js (docs/TESTING.md, section 7). real: people who really lived and speak in the game (their lines are listed for checking, rule 3). rule4Reviewed: Sword1 is the sword drill in Ned's story (practice, no one hurt; its partner plays Sword2 cut before the fall, main.js drillClip), reviewed November 2026.",
  "real": ["Henry Morgan", "Exquemelin", "Emmanuel Heath", "Symon Benning"],
  "allowLong": [],
- "factsIgnore": []
+ "factsIgnore": ["20"],
+ "rule4Reviewed": ["Sword1"]
 }

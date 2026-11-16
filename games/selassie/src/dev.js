@@ -8,7 +8,8 @@ import { ambientCheck } from "../../../engine/ambient.js";
 import { exteriorTrim, outsideTrimRelation } from "./trim-audit.js";
 import { makeAdapter, CHECK_TABLES } from "./checktables.js";
 import { CHAPTERS, TALK, FLAVOUR } from "./content.js";
-import { STEPS } from "./steps.js";
+import { STEPS, PLACE_STAGES } from "./steps.js";
+import { BUILDERS } from "./places.js";
 import {
   auditPlace,
   auditHeld,
@@ -72,13 +73,28 @@ export async function dev(A) {
     A.begin();
     const shot = q.get("shot");
     await go(
-      ["poster", "emperor", "terminal", "face", "salute", "plane"].includes(shot)
-        ? 55
-        : shot === "memory"
-          ? 15
-          : 20,
+      q.has("st")
+        ? Number(q.get("st"))
+        : ["poster", "emperor", "terminal", "face", "salute", "plane"].includes(shot)
+          ? 55
+          : shot === "memory"
+            ? 15
+            : 20,
     );
     closeAll();
+    if (shot === "at") {
+      // a place as the player sees it: ?shot=at&st=20&x=0&z=10&yaw=0&pitch=0 (&hud keeps the interface; &t= seconds of life first)
+      const n = (k, d) => (q.has(k) ? Number(q.get(k)) : d);
+      Object.assign(S, { x: n("x", S.x), z: n("z", S.z), yaw: n("yaw", S.yaw), pitch: n("pitch", 0) });
+      if (q.has("eye")) S.view = { pos: [S.x, n("eye", 1.28), S.z], look: [S.x - Math.sin(S.yaw) * 10, n("eye", 1.28) - 10 * Math.tan(-S.pitch), S.z - Math.cos(S.yaw) * 10] };
+      const Q = world(),
+        T = n("t", 3);
+      for (let i = 0; i < T * 30; i++)
+        for (const L of [Q.life, Q.familyLife]) L.tick(1 / 30, { px: S.x, pz: S.z, story: [], view: { x: S.x, z: S.z, yaw: S.yaw } });
+      if (!q.has("hud")) $("hud").hidden = true;
+      window.__SHOT = true;
+      return;
+    }
     if (shot === "locs") {
       // locs and tams close up: the five recipes facing us, then from behind (&back) or the side (&side), standing or mid-stride (&walk)
       world().group.visible = false;
@@ -186,7 +202,7 @@ export async function dev(A) {
   }
   if (!q.has("test") && !q.has("auto")) return;
   A.begin();
-  for (const id of ["yard", "memory", "road", "airport"]) await ensure(id);
+  for (const id of Object.keys(BUILDERS)) await ensure(id);
   await go(10);
   closeAll();
   const results = [];
@@ -260,7 +276,7 @@ export async function dev(A) {
     }
   }
   if (q.get("test") === "budget") {
-    for (const stage of [20, 15, 30, 55]) {
+    for (const stage of Object.values({ ...PLACE_STAGES, airport: 55 })) {
       await go(stage);
       closeAll();
       const Q = world();
