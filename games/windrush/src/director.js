@@ -21,7 +21,7 @@ function sampleKeys(keys, t) {
   return keys[keys.length - 1].slice(1);
 }
 export function createDirector({ camera, world, finish, read, fast = false, reduced = false }) {
-  const D = { on: false, paused: false, time: 0, key: null };
+  const D = { on: false, paused: false, time: 0, key: null, fast };
   let rumble = null,
     curve = null,
     lookCurve = null,
@@ -132,7 +132,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     if (!D.on || D.paused) return;
     const F = FILMS[D.key],
       before = D.time;
-    D.time += dt * (fast ? 30 : 1);
+    D.time += dt * (D.fast ? 30 : 1);
     const t = D.time;
     D.apply(Math.min(t, F.duration));
     if (AU.ctx && AU.on && AU.ctx.state === "running") {

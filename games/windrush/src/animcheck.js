@@ -134,10 +134,11 @@ export async function animCheck(A, { seconds = 20, films = true, only = null } =
       if (!ctl) continue;
       const act = dominant(ctl),
         clip = act.getClip().name,
-        wp = n.m.getWorldPosition(new THREE.Vector3()),
+        world = n.m.getWorldPosition(new THREE.Vector3()),
+        wp = n.zone === "ship" ? n.m.position.clone() : world, // people standing on the ship are judged in the ship's frame: she moves, they do not slide
         ry = n.m.rotation.y,
         g = headAngles(n.m),
-        inView = fr.containsPoint(wp.clone().setY(wp.y + 1.1)) && wp.distanceTo(A.camera.position) < 30;
+        inView = fr.containsPoint(world.clone().setY(world.y + 1.1)) && world.distanceTo(A.camera.position) < 30;
       const L = s.last;
       if (L) {
         const v = Math.hypot(wp.x - L.x, wp.z - L.z) / dt,
@@ -231,12 +232,14 @@ export async function animCheck(A, { seconds = 20, films = true, only = null } =
       sample(label, i * dt, Q);
     }
   }
-  if (films && !only)
+  if (films && (!only || only.includes("films")))
     for (const [key, stage] of [["departure", 25], ["arrival", 35]]) {
       await A.go(stage);
       closeAll();
       A.S.view = null;
       A.DIR.start(key);
+      const quick = A.DIR.fast;
+      A.DIR.fast = false; // real time: the test build plays scenes 30 times faster
       const Q = A.world();
       let empty = 0,
         t = 0;
@@ -255,6 +258,7 @@ export async function animCheck(A, { seconds = 20, films = true, only = null } =
       }
       for (const [c, at] of cams) lines.push(`scene ${key}: camera ${c} at ${at.toFixed(1)} s`);
       if (A.DIR.on) A.DIR.stop();
+      A.DIR.fast = quick;
     }
   stats.push(`ANIM sampled ${[...seen.values()].filter((s) => s.id).length} people`);
   A.renderer.render = render;

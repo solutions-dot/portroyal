@@ -157,7 +157,7 @@ export async function dev(A) {
       yard: { pos: [7, 2.2, 14.5], look: [-2, 1, 0] },
       yard2: { pos: [-1, 1.3, 10], look: [4, 1.0, 2] },
       quay: { pos: [-12, 1.6, 18], look: [6, 3, -6] },
-      thumbnail: { pos: [-118, 16, -96], look: [-6, 7, -18] },
+      thumbnail: { pos: [-112, 14, -92], look: [14, 6, -16] },
       poster: { pos: [-62, 9, 45], look: [-5, 9, -25] },
       ship: { pos: [-35, 5, 24], look: [0, 9, -16] },
       deck: { pos: [0, 1.4, 18.6], look: [0, 1.2, 0] },

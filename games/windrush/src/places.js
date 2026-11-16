@@ -185,9 +185,9 @@ function yard(id) {
   }
   solid1(Q, bench(1.8), -11.5, 6.6, 1.9, 0.7, Math.PI / 2);
   if (!is48) {
-    for (const x of [-1.8, 13.8]) solid1(Q, S.powerPole(7), x, 13.7, 0.4, 0.4);
+    for (const x of [-1.8, 12.4]) solid1(Q, S.powerPole(7), x, 13.7, 0.4, 0.4);
     P.line(Q.group, [-2.35, 6.84, 13.7], [-6.0, 4.0, -4.25], S.SM.black, 0.012);
-    P.line(Q.group, [-1.25, 6.84, 13.7], [13.25, 6.84, 13.7], S.SM.black, 0.012);
+    P.line(Q.group, [-1.25, 6.84, 13.7], [11.85, 6.84, 13.7], S.SM.black, 0.012);
   }
   const lorry = truck(is48 ? 0x46604a : 0x7a3a2a);
   add(Q, lorry, -7.5, 17.4, 0, 0.02);
