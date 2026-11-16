@@ -12,12 +12,15 @@ test('Tivoli journal uses the same book, tabs and footer navigation as other gam
   assert.match(story,/\$\('jchap'\)\.onclick = openCh/);
   assert.match(story,/aria-selected/);
 });
-test('Tivoli start card excludes Journal and animates gently with reduced-motion support',()=>{
+test('Tivoli start card excludes Journal; home-page artwork moves, not the menu',()=>{
   const title=html.match(/<section id="title">([\s\S]*?)<\/section>/)?.[1];
   assert.ok(title);
   assert.doesNotMatch(title,/>Journal</);
   for(const id of ['start','chbtn','allgames']) assert.match(title,new RegExp('id="'+id+'"'));
-  assert.match(html,/@keyframes tivoli-menu-enter/);
-  assert.match(html,/@media\(prefers-reduced-motion:reduce\)/);
+  assert.doesNotMatch(html,/@keyframes tivoli-menu-enter/);
+  const menu=readFileSync('menu/index.html','utf8');
+  assert.match(menu, /\.game\.tivoli::before/);
+  assert.match(menu, /@keyframes tivoli-scene-drift/);
+  assert.match(menu, /prefers-reduced-motion:reduce/);
   assert.match(html,/id="jhud"[^>]*>Journal/);
 });
