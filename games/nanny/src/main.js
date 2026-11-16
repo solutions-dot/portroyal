@@ -18,13 +18,18 @@ import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditCloth, auditBodi
 import { walkRoute } from '../../../engine/placement.js';
 import { follow, lead, goTo, stop as stopFollow, tick as followTick, isFollowing, pathSpots, pathS as pathSE, watch as followWatch } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev checks only (?test=skin), dropped from the public build */
+import { createAmbient, ambientTest, onKeepOff } from '../../../engine/ambient.js';   /* background people who work, carry, chat, walk about and play (docs/STANDARD.md, "Ambient life") */
 import { G as GFX, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
 import { ENV, mixEnv, makeRidges, makeMist, makeSun, makeFireflies, makeSmoke, pathLength, pathAt } from './land.js';
 import { buildEstate, buildTown, buildWatch, buildNewTown } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, SAY, CARDS, CHOICE_NAMES, CALLS } from './content.js';
 import * as SFX from './sfx.js';
 import { HATS, LOOKS, KID } from './cast.js';
-import { musket, lantern, horn, leafCloak, beads, attach } from './props.js';
+import { musket, lantern, horn, leafCloak, beads, attach, basketOf, cockedHat } from './props.js';
+import { lifeFor, lifeKey, MOOD } from './life.js';
+import { animCheck } from './animcheck.js';   /* dev check only (?test=anim), dropped from the public build */
+import { checkAll, CHECKS } from '../../../engine/checks.js';   /* dev only: every shared check at once (?test=all) */
+import { makeAdapter, CHECK_TABLES } from './checktables.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -117,10 +122,13 @@ function makeBody(s) {
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl; m.userData.held = []; ctl.mx.update(0);   /* pose the body once, so the grips below are measured on the real hand */
   for (const [bone, prop] of s.props || []) { const o = PROPS[prop](s), G = GRIP[prop]; grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.3, G.lift || 0), straighten: G.straighten ?? 0.8 }); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) m.userData.flame = o.userData.flame; }
   if (s.lampLight) { const L = new THREE.PointLight(0xffc878, 5.5, 15, 1.6); L.position.set(0.35, 0.95, 0.35); m.add(L); m.userData.lamp = L; }
+  if (s.cocked) cockedHat(m, (s.tint && s.tint.Hat) || 0x16141a, (s.tint && s.tint.Bands) || 0xd8d0b8);   /* the 1730s soldiers' three-cornered hat, in place of the builder's round felt hat (props.js) */
   if (s.cloak) leafCloak(m, (s.x * 7 + s.z * 3) | 0); if (s.beads) attach(m, 'Neck', beads(), [0, 0.0, 0.015]);
+  if (s.life && s.life.load === 'basket') { const o = basketOf('yam'); o.scale.set(1.15, 0.8, 1.15); attach(m, 'Head', o, [0, HEAD_LOAD[s.base] || 0.2, 0.01]); o.visible = false; s.load = o; s.life.show = (n, on) => { if (n.load) n.load.visible = on; }; }   /* a basket of yams carried on the head (engine/ambient.js shows it on the way there) */
   spreadArms(m, /^maroon_(woman|elder_woman|girl|child)/.test(s.base) ? 0.15 : 0.06);   /* arms hang clear of skirts (engine/grip.js) */
   return m;
 }
+const HEAD_LOAD = { maroon_woman: 0.215, maroon_elder_woman: 0.215, maroon_man: 0.21, maroon_scout: 0.19, maroon_elder: 0.21 };   /* how far above the head bone a load sits: on the wrap or the cap */
 const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBasicMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.6, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
 const PL = {}; let cur = null;
 const BUILD = { estate: buildEstate, town: buildTown, watch: buildWatch, newtown: buildNewTown };
@@ -137,7 +145,7 @@ function buildPlace(id) {   /* the geometry only: quick, and enough for a title 
 function settle(P) {
   const r = rng(77), fixed = P.specs.people.map((p) => [p.x, p.z, p.when]), G = P.G, both = (a, b) => !a || !b || (a[0] <= b[1] && b[0] <= a[1]), keep = [];
   const free = (e) => fixed.every((f) => !both(f[2], e.when) || Math.hypot(f[0] - e.x, f[1] - e.z) >= 0.95) && P.solids.every((s) => Math.hypot(s[0] - e.x, s[1] - e.z) >= s[2] + 0.45) && (e.ground !== undefined || e.wild || G.walkable(e.x, e.z, 0.5)) && Math.hypot(e.x - P.start.x, e.z - P.start.z) > 1.6;
-  for (const e of P.specs.extras) { if (e.id || e.column !== undefined || e.fighter !== undefined || e.path || e.fixed) { keep.push(e); fixed.push([e.x, e.z, e.when]); continue; }
+  for (const e of P.specs.extras) { if (e.id || e.column !== undefined || e.fighter !== undefined || e.path || e.fixed || e.placed) { keep.push(e); fixed.push([e.x, e.z, e.when]); continue; }
     const x0 = e.x, z0 = e.z; let ok = free(e), tries = 0; while (!ok && tries++ < 50) { e.x = x0 + (r() - 0.5) * 2 * (1 + tries * 0.14); e.z = z0 + (r() - 0.5) * 2 * (1 + tries * 0.14); ok = free(e); }
     if (ok) { keep.push(e); fixed.push([e.x, e.z, e.when]); } }
   P.specs.extras = keep;
@@ -145,11 +153,11 @@ function settle(P) {
 function ensurePlace(id) {   /* the place with its people: loads the bodies it needs */
   const P = buildPlace(id); if (P.populated) return Promise.resolve(P); if (placeLoading[id]) return placeLoading[id];
   return (placeLoading[id] = (async () => {
-    settle(P);
+    lifeFor(P); settle(P);   /* life.js: what each person does when the story does not need them (engine/ambient.js) */
     for (const e of P.specs.extras) e.bodyId = e.base + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
     const mk = (s, talk) => { if (s.ground === undefined) s.ground = P.G.h(s.x, s.z); else s.fixedGround = true; const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk, cue: !!s.hiddenNow }); n.m = makeBody(s); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
-    P.people = P.specs.people.map((s) => mk(s, true)); P.extras = P.specs.extras.map((s) => mk(s, false)); P.people.forEach(addMark);
+    P.people = P.specs.people.map((s) => mk(s, true)); P.extras = P.specs.extras.map((s) => mk(s, false)); P.people.forEach(addMark); makeLife(P);
     P.populated = true; delete placeLoading[id]; refreshCast(); return P;
   })());
 }
@@ -187,11 +195,68 @@ function blockedAt(P, x, z, r = 0.25) { if (!P.G.walkable(x, z, Math.min(0.15, r
 /* what engine/follow.js needs to know each frame: where you are, what is solid, who else is about, and how a person stands on the land */
 function followWorld() { const P = P_(); return { px: state.x, pz: state.z, blocked: (x, z, r) => blockedAt(P, x, z, r), walls: P.solidBoxes, bounds: P.bounds, others: P.npcs.filter((o) => o.m && o.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw }, place: (n) => stand(n, P.G) }; }
 function stand(n, G) { const m = n.m, g = G.h(n.x, n.z); m.position.x = n.x; m.position.z = n.z; m.position.y += g - (m.userData.ground || 0); m.userData.ground = g; }
+/* ---------- background life (engine/ambient.js; who does what is in life.js). One life for each set of people who are in a place together (their `when`),
+   one for the story people of that set, and one for far figures on open hillside. A life runs only while its people are in the scene. It moves, turns, animates
+   and grounds the people it owns; npcTick and the loops in update() leave them alone. Whoever the story takes (a guide, a follower, a runner: n.fol) is taken
+   out of it, and given back when the story lets them go. ---------- */
+function makeLife(P) {
+  P.lives = new Map();
+  for (const n of P.npcs) { if (!n.life) continue; const k = lifeKey(n); n.lifeKey = k; n.home = P.id;
+    if (!P.lives.has(k)) { const far = k.startsWith('far:'), storyL = k.startsWith('story:'), w = k.replace(/^(far|story):/, ''), when = w === 'all' ? null : w.split('-').map(Number), keep = far || storyL ? [] : placeKeep(P, when);
+      P.lives.set(k, { when, on: false, keep, life: createAmbient({ walls: far ? [] : P.solidBoxes, bounds: far ? null : P.bounds, blocked: far ? null : (x, z, r) => blockedAt(P, x, z, r), keepOff: keep, seed: P.id.length * 7 + P.lives.size * 13 + 3, phone: isTouch, place: (q) => stand(q, P.G), mood: MOOD(when ? when[0] : 0) }) }); } }
+  offPaths(P);
+}
+/* the story's ways through a place for the stages in `when`: the trails, the spot round each person you talk to and each thing you do, and a straight way from where
+   you come into the clearing to each of them. Background people never stop on these, and never pick a spot on them. */
+function placeKeep(P, when) {
+  const S = P.spots, out = [], inW = (st) => !when || (st >= when[0] && st <= when[1]), xz = (d) => d.map((p) => [p[0], p[1]]), hubs = [], overlap = (w) => !w || !when || (w[0] <= when[1] && when[0] <= w[1]);
+  if (P.id === 'town') { if (inW(20)) { out.push({ pts: xz(S.pathIn.dense), w: 1.0 }); hubs.push(S.pathIn.dense[S.pathIn.dense.length - 1]); } if (inW(50)) { out.push({ pts: xz(S.back.dense), w: 1.0 }); hubs.push([-4.6, 8.8]); } }
+  if (P.id === 'newtown' || P.id === 'watch') hubs.push([P.start.x, P.start.z]);
+  const spots = P.npcs.filter((n) => !n.extra && overlap(n.when)).map((n) => [n.hx, n.hz]).concat(P.actions.filter((a) => a.st === undefined || inW(a.st)).map((a) => [a.x, a.z]));
+  for (const p of spots) { out.push({ at: p, r: 1.1 }); for (const h of hubs) out.push({ pts: [[h[0], h[1]], p], w: 0.45 }); }
+  return out;
+}
+/* anyone whose spot (or a carry's two ends) is on one of those ways, in a solid, off the ground or on top of someone else moves to a free spot close by (a chat group moves together) */
+function offPaths(P) {
+  const all = P.npcs, both = (a, b) => !a.when || !b.when || (a.when[0] <= b.when[1] && b.when[0] <= a.when[1]);
+  for (const L of P.lives.values()) {
+    const mine = all.filter((n) => n.life && P.lives.get(n.lifeKey) === L); if (!mine.length || mine[0].life.far || mine[0].story) continue;
+    const okAt = (x, z, self) => !blockedAt(P, x, z, 0.6) && !P.solidBoxes.some((w) => x > w[0] - 0.3 && x < w[2] + 0.3 && z > w[1] - 0.3 && z < w[3] + 0.3) && !onKeepOff(L.keep, x, z, 0.3) && all.every((o) => self.includes(o) || !both(o, self[0]) || Math.hypot(o.x - x, o.z - z) > 0.85);
+    const groups = new Map(); for (const n of mine) { const g = n.life.kind === 'chat' ? 'c:' + n.life.group : n; (groups.get(g) || groups.set(g, []).get(g)).push(n); }
+    for (const ms of groups.values()) {
+      const ends = (n) => (n.life.between || (n.life.kind === 'errand' ? [n.life.from, n.life.to] : [])).filter(Boolean);
+      const bad = (dx, dz) => ms.some((n) => !okAt(n.x + dx, n.z + dz, ms) || ends(n).some((e) => !okAt(e[0] + dx, e[1] + dz, ms)));
+      if (!bad(0, 0)) continue; let done = false;
+      for (let r = 0.4; r <= 6 && !done; r += 0.3) for (let k = 0; k < 16 && !done; k++) { const a = k / 16 * PI * 2 + r, dx = Math.cos(a) * r, dz = Math.sin(a) * r; if (bad(dx, dz)) continue; done = true;
+        for (const n of ms) { n.x += dx; n.z += dz; n.hx = n.x; n.hz = n.z; n.m.userData.ground = P.G.h(n.x, n.z); n.m.position.set(n.x, n.m.userData.ground, n.z); for (const e of ends(n)) { e[0] += dx; e[1] += dz; } } }
+    }
+  }
+}
+const lifeOf = (n) => (n.lifeKey && PL[n.home] && PL[n.home].lives ? PL[n.home].lives.get(n.lifeKey) : null);
+function lifeIn(n) { const L = lifeOf(n); if (!L || n.amb) return; L.life.add(n, n.life); n.m.userData.amb = true; }
+function lifeOut(n) { const L = lifeOf(n); if (!n.amb) return; if (L) L.life.remove(n); n.amb = null; n.m.userData.amb = false; }
+function lifeClear() { for (const P of Object.values(PL)) if (P.lives) for (const L of P.lives.values()) { for (const n of L.life.people.slice()) lifeOut(n); L.life.clear(); L.on = false; } }
+/* once a frame, for the place you are in: start the lives whose people are in the scene now, stop the others, and hand people to and from the story */
+function lifeSync(P) {
+  if (!P.lives) return;
+  for (const L of P.lives.values()) { const on = !L.when || (stage >= L.when[0] && stage <= L.when[1]);
+    if (on && !L.on) { L.on = true; L.life.mood(MOOD(stage)); } else if (!on && L.on) { for (const n of L.life.people.slice()) lifeOut(n); L.life.clear(); L.on = false; } else if (on) L.life.mood(MOOD(stage)); }
+  for (const n of P.npcs) { if (!n.life) continue; const L = P.lives.get(n.lifeKey); if (!L || !L.on) continue; const takenNow = !!(n.fol || n.scripted || n.hidden || n.cue); if (takenNow) lifeOut(n); else if (!n.amb) lifeIn(n); }
+}
+function lifeTick(P, dt) {
+  if (!P.lives || POSTER) return; lifeSync(P); const view = { x: state.x, z: state.z, yaw: state.yaw };
+  for (const L of P.lives.values()) if (L.on) L.life.tick(dt, { px: state.x, pz: state.z, story: storyFor(P, L), talking: talkWith, view });
+}
+/* who the people of one life keep clear of: everyone else in the scene (the story people, the guide and the followers, the people of the other lives) */
+const storyFor = (P, L) => P.npcs.filter((n) => n.m && n.m.visible && !n.far && !(n.amb && lifeOf(n) === L));
+/* a scene takes everyone for a moment (they stop where they are and look where the scene turns them), then lets them go */
+function lifeHold(P, on) { if (P.lives) for (const L of P.lives.values()) for (const n of L.life.people) L.life.hold(n, on); }
 const setWalk = (n, on, clip = 'Walk') => { if (on && (!n.walking || n.clip !== clip)) { n.walking = true; n.clip = clip; n.ctl.play(clip); } else if (!on && n.walking) { n.walking = false; n.ctl.play(null); } };
 function npcTick(n, dt) {
   const m = n.m; if (!m || !m.visible) return; if (POSTER) { m.rotation.y = n.ry0; return; } if (n.scripted) return;
   const G = P_().G, d = Math.hypot(state.x - n.x, state.z - n.z), isNear = !n.extra && (d < 3.2 || talkWith === n);
   if (n.fol) { followTick(n, dt, followWorld()); return; }   /* someone who leads you, follows you or was sent somewhere (engine/follow.js) */
+  if (n.amb) return;   /* engine/ambient.js moves this person (life.js) */
   if (!n.path) { if (isNear) faceTo(m, Math.atan2(state.x - n.x, state.z - n.z), dt); else if (!n.extra) faceTo(m, n.ry0, dt, 2); return; }
   if (n.wait > 0) { setWalk(n, false); n.wait -= dt; return; }
   setWalk(n, true); const to = n.path[(n.i + 1) % n.path.length], dx = to[0] - n.x, dz = to[1] - n.z, dist = Math.hypot(dx, dz), sp = (n.speed || 1.1) * dt; faceTo(m, Math.atan2(dx, dz), dt);
@@ -336,7 +401,7 @@ function nextCard(i, s, tries = 0) {
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetTransient() {   /* leave anything running: scripted scenes, the horn, the fight, the camera director */
   EP++; endCut(); frozen = false; moveLock = false; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; hornClose(); flash(0, 0); $('vig').style.opacity = 0; $('glow').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.low = 0; FIGHT.on = false; GUNS.on = false;
-  SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); for (const k of Object.keys(PL)) for (const n of PL[k].npcs) { n.fol = null; n.scripted = false; n.cue = !!n.hiddenNow; if (n.walking) { n.walking = false; n.ctl.play(null); } n.x = n.hx; n.z = n.hz; if (n.m) { n.m.rotation.y = n.ry0; if (!n.fixedGround) n.m.userData.ground = PL[k].G.h(n.x, n.z); n.m.position.set(n.x, n.m.userData.ground, n.z); } }
+  SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); lifeClear(); for (const k of Object.keys(PL)) for (const n of PL[k].npcs) { n.fol = null; n.scripted = false; n.cue = !!n.hiddenNow; if (n.walking) { n.walking = false; n.ctl.play(null); } n.x = n.hx; n.z = n.hz; if (n.m) { n.m.rotation.y = n.ry0; if (!n.fixedGround) n.m.userData.ground = PL[k].G.h(n.x, n.z); n.m.position.set(n.x, n.m.userData.ground, n.z); } }
 }
 async function beginChapter(i, st) {
   if (fading) return; resetTransient(); st = st || CH_FIRST[i]; const C = CHAPTERS[i]; hideCard(); closeJournal(); closeChapters(); $('dialogue').hidden = true; busy = false; talkWith = null;
@@ -428,18 +493,18 @@ addEventListener('keydown', (e) => { if ($('holdwrap').hidden) return; if (e.key
 const ACTIONS_FOR = {
   estate: () => [],
   town: (P) => [
-    ...P.spots.yams.map((y, i) => ({ label: 'Plant a yam', x: y.position.x + 1.1, z: y.position.z + 0.4, r: 2.1, on: () => stage === 22 && !ctr['y' + i], go: () => { ctr['y' + i] = 1; const n = ctr.yam = (ctr.yam || 0) + 1; y.userData.vine.visible = true; y.userData.vine.scale.y = 0.35; SFX.dig(); toast(SAY.yam[n - 1], 3000); refreshGoal(true); const mi = byId('mimba'); if (mi && mi.ctl) mi.ctl.play('Clap', true); if (n >= 3) convo(TALK.mimbaYam(story), () => setStage(23), byId('mimba')); } })),
-    { label: 'Learn the horn', x: P.spots.horn[0] - 1.2, z: P.spots.horn[1] + 0.6, r: 2.6, on: () => stage === 23 && !HORN.on, go: () => hornLesson() },
-    ...P.spots.doors.map((d, i) => ({ label: 'Knock on the door', x: d[0], z: d[1], r: 2.3, on: () => stage === 51 && !ctr['d' + i], go: () => { ctr['d' + i] = 1; const n = ctr.door = (ctr.door || 0) + 1; SFX.knock(); toast(SAY.door[n - 1], 3000); refreshGoal(true); if (n >= 3) setStage(52); } })),
-    { label: 'Go up the back trail', x: P.spots.backGate[0] + 1.4, z: P.spots.backGate[1] + 1.4, r: 3.0, on: () => stage === 54 && !GUNS.on && !ctr.climb, go: () => gunsIntro() },
+    ...P.spots.yams.map((y, i) => ({ label: 'Plant a yam', st: 22, x: y.position.x + 1.1, z: y.position.z + 0.4, r: 2.1, on: () => stage === 22 && !ctr['y' + i], go: () => { ctr['y' + i] = 1; const n = ctr.yam = (ctr.yam || 0) + 1; y.userData.vine.visible = true; y.userData.vine.scale.y = 0.35; SFX.dig(); toast(SAY.yam[n - 1], 3000); refreshGoal(true); const mi = byId('mimba'); if (mi && mi.ctl) mi.ctl.play('Clap', true); if (n >= 3) convo(TALK.mimbaYam(story), () => setStage(23), byId('mimba')); } })),
+    { label: 'Learn the horn', st: 23, x: P.spots.horn[0] - 1.2, z: P.spots.horn[1] + 0.6, r: 2.6, on: () => stage === 23 && !HORN.on, go: () => hornLesson() },
+    ...P.spots.doors.map((d, i) => ({ label: 'Knock on the door', st: 51, x: d[0], z: d[1], r: 2.3, on: () => stage === 51 && !ctr['d' + i], go: () => { ctr['d' + i] = 1; const n = ctr.door = (ctr.door || 0) + 1; SFX.knock(); toast(SAY.door[n - 1], 3000); refreshGoal(true); if (n >= 3) setStage(52); } })),
+    { label: 'Go up the back trail', st: 54, x: P.spots.backGate[0] + 1.4, z: P.spots.backGate[1] + 1.4, r: 3.0, on: () => stage === 54 && !GUNS.on && !ctr.climb, go: () => gunsIntro() },
   ],
   watch: (P) => [
-    { label: 'Look out over the valley', x: P.spots.look[0], z: P.spots.look[1], r: 2.0, on: () => stage === 31, go: () => lookOut() },
-    ...P.spots.trenches.map((t, i) => ({ label: 'Set a forked stick', x: t.ax, z: t.az, r: 2.2, on: () => stage === 33 && !ctr['f' + i], go: () => { ctr['f' + i] = 1; const n = ctr.fork = (ctr.fork || 0) + 1; t.t.userData.stick.visible = true; P.spots.sticks.visible = n < 3; SFX.dig(0.14); toast(SAY.fork[n - 1], 3000); refreshGoal(true); if (n >= 3) setStage(34); } })),
-    { label: 'Take your place', x: P.spots.place[0], z: P.spots.place[1], r: 2.0, on: () => stage === 41 && !FIGHT.on, go: () => fightIntro() },
+    { label: 'Look out over the valley', st: 31, x: P.spots.look[0], z: P.spots.look[1], r: 2.0, on: () => stage === 31, go: () => lookOut() },
+    ...P.spots.trenches.map((t, i) => ({ label: 'Set a forked stick', st: 33, x: t.ax, z: t.az, r: 2.2, on: () => stage === 33 && !ctr['f' + i], go: () => { ctr['f' + i] = 1; const n = ctr.fork = (ctr.fork || 0) + 1; t.t.userData.stick.visible = true; P.spots.sticks.visible = n < 3; SFX.dig(0.14); toast(SAY.fork[n - 1], 3000); refreshGoal(true); if (n >= 3) setStage(34); } })),
+    { label: 'Take your place', st: 41, x: P.spots.place[0], z: P.spots.place[1], r: 2.0, on: () => stage === 41 && !FIGHT.on, go: () => fightIntro() },
   ],
   newtown: (P) => [
-    { label: 'Look at the paper', x: P.spots.paper[0] - 0.9, z: P.spots.paper[1] + 1.1, r: 2.4, on: () => stage === 61, go: () => { unlock('patent'); const c = CARDS.paper; card(c.title, c.paras, [{ t: c.go, go: () => { hideCard(); setStage(62); } }], { col: true }); } },
+    { label: 'Look at the paper', st: 61, x: P.spots.paper[0] - 0.9, z: P.spots.paper[1] + 1.1, r: 2.4, on: () => stage === 61, go: () => { unlock('patent'); const c = CARDS.paper; card(c.title, c.paras, [{ t: c.go, go: () => { hideCard(); setStage(62); } }], { col: true }); } },
   ],
 };
 
@@ -490,11 +555,11 @@ async function hornLesson() {
 }
 async function nannyScene() {   /* Nanny is seen once, far off on the high rock, against the sky. She does not speak. */
   const ep = EP, P = PL.town, S = P.spots, n = byId('nanny'); stage = 24; best = Math.max(best, 24); refreshCast(); frozen = true; bars(true); goalText = ''; $('goal').textContent = '';
-  for (const e of P.extras) if (!e.hidden && !e.far && e.m) e.ry0 = Math.atan2(S.rock[0] - e.x, S.rock[2] - e.z); for (const e of P.npcs) if (e.m && !e.far) e.m.rotation.y = Math.atan2(S.rock[0] - e.x, S.rock[2] - e.z);
+  lifeTick(P, 0); lifeHold(P, true); for (const e of P.extras) if (!e.hidden && !e.far && e.m) e.ry0 = Math.atan2(S.rock[0] - e.x, S.rock[2] - e.z); for (const e of P.npcs) if (e.m && !e.far) e.m.rotation.y = Math.atan2(S.rock[0] - e.x, S.rock[2] - e.z);   /* everyone stops and looks up at the rock */
   say(SAY.nanny1, 3600); const a = eyeNow(), rk = [S.rock[0], S.rock[1] + 1.2, S.rock[2]];
   await cut(a, [1, 1.5, 9], [0, 2, 0], rk, 3.5); if (ep !== EP) return; say(SAY.nanny2, 4200);
   await cut([1, 1.5, 9], [-1.5, 1.7, 6.5], rk, rk, 5, 40); if (ep !== EP) return; say(SAY.nanny3, 4600); await wait(4200); if (ep !== EP) return;
-  endCut(); frozen = false; bars(false); state.x = 0.5; state.z = 6.5; state.yaw = 0; state.pitch = 0.12; setStage(24);
+  endCut(); frozen = false; bars(false); lifeHold(P, false); state.x = 0.5; state.z = 6.5; state.yaw = 0; state.pitch = 0.12; setStage(24);
 }
 
 /* ---------- chapter 3: the watchers ---------- */
@@ -516,18 +581,23 @@ ON[35] = () => { leavesUI(); };
 /* ---------- chapter 4: the narrow path. The fight is a set piece seen from the watch rock: horns, smoke and noise, then the hillside full of people.
    Nobody is shown hurt and nobody falls. The soldiers turn and go back down. This fight is fictional (the journal says so): it shows the methods
    written down in 1739 for a Windward town (horns answering unseen, trenches with forked sticks, the bush cut away to show the hillside full of people). ---------- */
-const FIGHT = { on: false, hold: false, sHead: 118, mode: 'idle', t: 0, next: 0, firing: 0 }, HALT = 40;   /* HALT: how far down the path (metres from its top) the first soldier stops, in plain view below the rock */
-function fightIntro() { const c = CARDS.fight; card(c.title, c.paras, [{ t: c.go, go: () => { hideCard(); fightRun(); } }, { t: c.skip, go: () => { hideCard(); fightSkip(); } }], { col: true }); }
+const FIGHT = { on: false, hold: false, sHead: 104, mode: 'idle', t: 0, next: 0, firing: 0 }, HALT = 40, MARCH = 1.75, FLEE = 3.4, START = 104;   /* HALT: how far down the path (metres from its top) the first soldier stops, in plain view below the rock. MARCH and FLEE: metres a second (a steady march, and a run), each played at the pace of the body's own stride so the feet do not slide */
+const HALT_IDLES = ['IdleM', 'LookAround', 'Idle', 'IdleM'];   /* the soldiers stopped on the path: each shifts his weight and looks about in his own time */
+const CARDSEEN = new Set();   /* the opt-in cards answered (the shared rule 4 check asks) */
+function fightIntro() { const c = CARDS.fight; card(c.title, c.paras, [{ t: c.go, go: () => { CARDSEEN.add('fight'); hideCard(); fightRun(); } }, { t: c.skip, go: () => { hideCard(); fightSkip(); } }], { col: true }); }
 async function fightSkip() { const c = CARDS.fightRead; unlock('trenches'); unlock('attacks'); await infoCard(c); fightAfter(); }
-function columnPlace(P, sHead, up, clip) {   /* the soldiers stand in single file on the path: the first at sHead, the others behind, 2.3 m apart */
+function columnPlace(P, sHead, up, clip, speed = 0, t = FIGHT.t) {   /* the soldiers stand in single file on the path: the first at sHead, the others behind, 2.3 m apart. clip 'Idle': stopped, each with his own idles in turn */
   const S = P.spots; for (const n of P.extras) { if (n.column === undefined) continue; const s = sHead + n.column * 2.3, vis = s < S.sClimb - 1; n.scripted = true; n.cue = !vis; n.m.visible = vis && cur === 'watch'; if (!vis) continue;
-    const [x, z, a] = pathAt(S.climb.dense, s); n.x = x; n.z = z; stand(n, P.G); n.m.rotation.y = up ? a + PI : a; if (n.clip !== clip) { n.clip = clip; n.ctl.play(clip === 'Idle' ? null : clip); } }
+    const [x, z, a] = pathAt(S.climb.dense, s); n.x = x; n.z = z; stand(n, P.G); n.m.rotation.y = up ? a + PI : a;
+    let want = clip; if (clip === 'Idle') { if (n.look && t < n.lookT) want = n.look; else { n.look = null; if (!(t < n.idleT) || !HALT_IDLES.includes(n.clip)) { n.idleI = ((n.idleI ?? n.column) + 1) % HALT_IDLES.length; n.idleT = t + 4 + ((n.column * 7) % 5); } want = HALT_IDLES[n.idleI]; } }
+    if (n.clip !== want) { n.clip = want; n.ctl.play(want === 'Idle' ? null : want); const act = n.ctl.cur; if (want !== 'Idle' && act) { act.time = ((n.column * 0.37) % 1) * act.getClip().duration; act.timeScale = 0.92 + (n.column % 5) * 0.04; } }   /* never in step with the man in front */
+    if (speed > 0 && n.ctl.cur && n.ctl.cur.getClip().name === want) n.ctl.pace(speed, 0.5, 2.2); }
 }
 function fightTick(dt, t) {
   const P = PL.watch, S = P.spots, F = FIGHT; F.t += dt;
-  if (F.mode === 'march') { F.sHead = Math.max(HALT, F.sHead - 2.6 * dt); columnPlace(P, F.sHead, true, F.sHead > HALT + 0.01 ? 'Walk' : 'Idle'); }
+  if (F.mode === 'march') { F.sHead = Math.max(HALT, F.sHead - MARCH * dt); const going = F.sHead > HALT + 0.01; columnPlace(P, F.sHead, true, going ? 'Walk' : 'Idle', going ? MARCH : 0); }
   else if (F.mode === 'halt') columnPlace(P, F.sHead, true, 'Idle');
-  else if (F.mode === 'flee') { F.sHead += 3.4 * dt; columnPlace(P, F.sHead, false, 'Run'); }
+  else if (F.mode === 'flee') { F.sHead += FLEE * dt; columnPlace(P, F.sHead, false, 'Run', FLEE); }
   if (F.firing > 0 && F.t > F.next) {   /* guns from the bush (the Maroons stay unseen), and the soldiers firing back blind */
     F.next = F.t + 0.25 + Math.random() * 0.7 / F.firing; const fromBush = Math.random() < 0.6;
     if (fromBush) { const p = S.posts[(Math.random() * S.posts.length) | 0]; gunFlash(p[0], P.G.h(p[0], p[1]) + 1.3, p[1], 1.5); SFX.musket(0.35 + Math.random() * 0.3, clamp01(p[0] / 30) * 2 - 1); }
@@ -537,7 +607,7 @@ function fightTick(dt, t) {
   F.hold = !$('holdwrap').hidden; if (F.hold) { FX.low += ((HOLD.on ? 1 : 0) - FX.low) * Math.min(1, dt * 6); $('holdbar').firstElementChild.style.width = (FX.low * 100) + '%'; leavesUI(); }
 }
 async function fightRun() {
-  const ep = EP, P = PL.watch, S = P.spots, F = FIGHT, live = () => ep === EP && F.on; setStage(42); F.on = true; F.sHead = 118; F.mode = 'march'; F.firing = 0; F.t = 0; F.next = 0; frozen = false; moveLock = true; busy = false; talkWith = null; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
+  const ep = EP, P = PL.watch, S = P.spots, F = FIGHT, live = () => ep === EP && F.on; setStage(42); F.on = true; F.sHead = START; F.mode = 'march'; F.firing = 0; F.t = 0; F.next = 0; frozen = false; moveLock = true; busy = false; talkWith = null; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
   const VIEW = () => { state.yaw = PI - 0.3; state.pitch = -0.62; }; state.x = S.place[0]; state.z = S.place[1]; VIEW(); unlock('trenches');
   say(SAY.f1, 4200); const eye = eyeNow(), h = eye[1]; await wait(3600); if (!live()) return;
   /* shot 1: down the path, as the red coats come out of the mist in single file */
@@ -548,7 +618,7 @@ async function fightRun() {
   say(SAY.f4, 2800); const cb = byId('cubbenah3'); if (cb && cb.ctl) cb.ctl.play('Point', true); await wait(2400); if (!live()) return;
   frozen = true; if (!(await hornGame(['now']))) return; frozen = false; if (!live()) return;
   say(SAY.f5, 5200); SFX.hornsAnswer(CALLS.now.notes, 6); await wait(4600); if (!live()) return;
-  say(SAY.f6, 3800); for (const n of P.extras) if (n.column !== undefined && n.m.visible && n.column % 3 === 1 && CL.Terrified) { n.clip = 'Terrified'; n.ctl.play('Terrified'); } await wait(3400); if (!live()) return;
+  say(SAY.f6, 3800); for (const n of P.extras) if (n.column !== undefined && n.m.visible) { n.look = 'LookAround'; n.lookT = F.t + 5 + (n.column % 4) * 0.6; }   /* they look up into the trees, each a moment after the next */ await wait(3400); if (!live()) return;
   /* smoke and thunder: guns from the bush, the soldiers fire back at nothing. You may stay low behind the rock. */
   say(SAY.f7, 4600); F.firing = 1; $('holdwrap').hidden = false; $('hold').textContent = 'Stay low!'; ctr.goal = 'Stay low behind the rock.'; refreshGoal(); await wait(5200); if (!live()) return;
   F.firing = 1.8; SFX.rustle(0.14, -0.4); await cut(eyeNow(), [10, h + 3.5, 7], [8, -22, 32], [18, -26, 40], 7, 50); if (!live()) return; endCut(); VIEW();
@@ -574,7 +644,7 @@ function fightAfter() { FIGHT.on = false; moveLock = false; frozen = false; bars
 const GUNS = { on: false, t: 0, next: 0, n: 0 };
 ON[50] = () => { if (cur !== 'town') return; say(SAY.n1, 3600); SFX.hornCall('SSS', { far: 0.35, pan: -0.3, pitch: 330 }); setTimeout(() => SFX.hornCall('SSS', { far: 0.6, pan: 0.5, pitch: 300 }), 2200 * TS); };
 ON[54] = () => { const p = byId('phibba'); if (!p) return; p.ctl.base = p.ctl.get('Idle') || p.ctl.base; p.ctl.play(null); follow(p, FOLLOW.phibba); };   /* she stops crying and comes with you: a step behind and to one side, never pressed against you (engine/follow.js) */
-function gunsIntro() { const c = CARDS.guns; card(c.title, c.paras, [{ t: c.go, go: () => { hideCard(); gunsRun(); } }, { t: c.skip, go: () => { hideCard(); infoCard(CARDS.gunsRead).then(() => ridgeDawn(true)); } }], { col: true }); }
+function gunsIntro() { const c = CARDS.guns; card(c.title, c.paras, [{ t: c.go, go: () => { CARDSEEN.add('guns'); hideCard(); gunsRun(); } }, { t: c.skip, go: () => { hideCard(); infoCard(CARDS.gunsRead).then(() => ridgeDawn(true)); } }], { col: true }); }
 function gunsRun() {
   const P = PL.town, S = P.spots; GUNS.on = true; GUNS.t = 0; GUNS.next = 1.2; GUNS.n = 0; ctr.climb = 1; ctr.goal = 'Climb the back trail. Do not stop.'; refreshGoal(); unlock('fall'); S.guns.forEach((g) => { g.visible = true; }); say(SAY.n2, 3800);
   P.extras.filter((e) => e.flee && e.m).forEach((e, i) => { const [x, z] = pathAt(S.back.dense, 2 + i * 2.6); e.x = x; e.z = z; lead(e, S.back.dense, FOLLOW.flee(i)); });
@@ -653,10 +723,11 @@ applySave(loadGame());
   const first = CH_PLACE[hasSave && stage >= 10 ? chapterOf(stage) : 0];
   model('anims').then((an) => { loadClips(an); tick(); return Promise.all([ensurePlace(first), ensurePlace('watch')]); }).then(() => { prepareTitleScene(); tick(); modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick();
     if (__DEV__) devViews(); }); }
-/* The title borrows the watch scene without starting a chapter or changing the save. */
+/* The title borrows the watch scene without starting a chapter or changing the save: the red coats come up out of the mist in single file, stop, and look about. */
+const TITLE = { from: 100, to: 86, s: 100, t: 0 };
 function prepareTitleScene() {
   const P = PL.watch; enterPlace('watch', { keepPos: true, env: ENV.haze });
-  columnPlace(P, 86, true, 'Idle');
+  TITLE.s = TITLE.from; TITLE.t = 0; columnPlace(P, TITLE.s, true, 'Walk', MARCH, 0);
   camera.position.set(4, groundAt(0.2, 2.3) + EYE + 1.6, 6); camera.lookAt(9, -39, 65); camera.rotation.reorder('YXZ');
   P.titleView = { x: camera.position.x, y: camera.position.y, z: camera.position.z, pitch: camera.rotation.x, yaw: camera.rotation.y };
   FOV = 20; resize();
@@ -685,10 +756,13 @@ function update(dt, now) {
   }
   if ((frameN & 7) === 0) for (const n of P.extras) { if (n.scripted) continue; const d = Math.hypot(state.x - n.x, state.z - n.z); n.m.visible = (n.far || d < 70) && !n.hidden && !n.cue; }
   for (const n of P.npcs) npcTick(n, dt);
+  lifeTick(P, dt);
   near = null; if (state.started && !busy && !frozen && !DIR.on && !HORN.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
-  for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
-  frameN++; for (const m of P.bodies) if (m.visible) groundFeet(m);   /* every frame: on a slope, every other frame shows as a bounce */
+  for (const n of P.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
+  frameN++; for (const m of P.bodies) if (m.visible && !m.userData.amb) groundFeet(m);
+  for (const n of P.npcs) if (n.fol && n.m.visible) { const y = n.m.position.y; groundFeet(n.m); if (n.m.position.y > y) n.m.position.y = (y + n.m.position.y) / 2; }   /* walkers on a slope: half a second pass closes most of the eased gap when the other foot lands, without a jump (?test=walkers) */   /* every frame: on a slope, every other frame shows as a bounce */
+  if (!state.started && P.titleView && cur === 'watch' && !FIGHT.on) { TITLE.t += dt; TITLE.s = Math.max(TITLE.to, TITLE.s - MARCH * 0.8 * dt); const going = TITLE.s > TITLE.to + 0.01; columnPlace(P, TITLE.s, true, going ? 'Walk' : 'Idle', going ? MARCH * 0.8 : 0, TITLE.t); }   /* the title's live scene */
   if (P.tick) P.tick(dt, t); if (P.waters) for (const w of P.waters) w.userData.flow(dt); mist.tick(dt); smoke.tick(dt); fxTick(dt);
   if (P.smokers && (frameN & 15) === 0 && !envNow.stars) for (const s of P.smokers) if (Math.random() < s.rate * 0.3) smoke.emit(_p.set(s.x, groundAt(s.x, s.z) + s.y, s.z), new THREE.Vector3(0.25 + Math.random() * 0.2, s.mist ? 0.4 : 0.9, 0.1), { size: s.mist ? 2.2 : 0.5, grow: s.mist ? 5 : 2.6, life: s.mist ? 4 : 5, color: s.mist ? 0xffffff : 0xcfcfc8, opacity: s.mist ? 0.3 : 0.32 });
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
@@ -697,7 +771,8 @@ function update(dt, now) {
 }
 let last = performance.now();
 function frame(t) {
-  requestAnimationFrame(frame); const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t); const P = P_(), s = t / 1000;
+  requestAnimationFrame(frame); if (__DEV__ && STEPPED.on) { last = t; return; }   /* a dev check is stepping the clock itself */
+  const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t); const P = P_(), s = t / 1000;
   if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); const f = lerp(DIR.f0, DIR.f1, k); if (Math.abs(f - FOV) > 0.05) { FOV = f; resize(); } }
   else if (!state.started && P && P.titleView) { const tv = P.titleView, time = titleMotion.matches ? 0 : s; camera.position.set(tv.x - Math.sin(time * 0.08) * 1.6, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(time * 0.05) * 0.05, 0, 'YXZ'); }
   else { const gy = groundAt(state.x, state.z); camY += (gy - camY) * Math.min(1, dt * 14); if (Math.abs(gy - camY) > 1.5) camY = gy; camera.position.set(state.x, camY + EYE - FX.low * 0.55, state.z); camera.rotation.set(state.pitch, state.yaw, FX.roll, 'YXZ'); }
@@ -710,7 +785,8 @@ function frame(t) {
   if (!NORENDER && (state.started || !isTouch)) renderer.render(scene, camera);
 }
 let MV = null;   /* dev only: the model viewer (?shot=model) draws the picture itself */
-const NORENDER = __DEV__ && /[?&]auto=/.test(location.search);   /* the scripted playthrough does not need pictures, and software drawing is slow */
+const STEPPED = { on: false };   /* dev only: a check that steps the frame loop itself pauses the browser's own frames */
+let NORENDER = __DEV__ && /[?&]auto=/.test(location.search);   /* the scripted playthrough does not need pictures, and software drawing is slow */
 requestAnimationFrame(frame);
 
 /* ---------- the place audit (dev builds): the checks live in engine/audit.js. Run ?test=audit and expect 0 issues in every place.
@@ -912,6 +988,38 @@ function devViews() {
         report(P, w, [[ph, 'Phibba comes with you round the town and up the back trail'], [m5, 'Mama leads you up the back trail']]); GUNS.on = false; }
       out.unshift('follow and lead: ' + bad + ' problems'); document.title = 'FOLLOW ' + bad; const el = $('autolog'); if (el) el.textContent = out.join('\n'); })();
   }
+  if (q.get('test') === 'ambient') {   /* ?test=ambient : every scene's background life runs for a minute while you walk the story's way through it (engine/ambient.js ambientCheck): nobody inside a solid or
+       another person, no sliding, nobody standing still too long in a lively scene, nobody on a story path. Each life is run in turn; expect AMBIENT 0 in every scene. &p=town picks places, &s= seconds. */
+    (async () => { const out = []; let total = 0; startGame(true); STEPPED.on = true;
+      const SC = [['estate', 10], ['town', 21], ['town', 51], ['town', 55], ['watch', 34], ['watch', 43], ['newtown', 60]].filter(([id]) => !q.get('p') || q.get('p').split(',').includes(id));
+      for (const [id, st] of SC) { const P = await go(id, st, 0, 0, 0, 0); const A = P.actions.filter((a) => a.st === undefined || Math.floor(a.st / 10) === Math.floor(st / 10));
+        const hub = id === 'town' ? (st >= 50 && st < 55 ? [-4.6, 8.8] : st >= 55 ? [P.spots.ridge[0] + 1.6, P.spots.ridge[2] + 1.4] : [4.6, 9.6]) : [P.start.x, P.start.z]; state.x = hub[0]; state.z = hub[1];
+        const targets = P.people.filter((n) => shown(n)).map((n) => [n.hx, n.hz]).concat(A.map((a) => [a.x, a.z])), route = [hub];
+        for (const t of targets) { const to = P.G.clamp(t[0] + 0.9, t[1] + 0.5), r = walkRoute(route[route.length - 1], to, P.solidBoxes, 0.3, P.bounds); route.push(...(r.length ? r : [to])); }
+        for (let i = 0; i < 3; i++) update(1 / 30); refreshCast(); lifeSync(P);
+        for (const [k, L] of P.lives) { if (!L.on || !L.life.people.length) continue; const txt = ambientTest(L.life, { route, stops: route.map((_, i) => i), story: () => storyFor(P, L), seconds: +(q.get('s') || 60), view: (pp) => ({ x: pp[0], z: pp[1], yaw: state.yaw }) }), n = +txt.split('\n')[0].split(' ')[1];
+          total += n; out.push(id + '@' + st + ' ' + k + ' (' + L.life.people.length + ' people, ' + L.life.mood() + '): ' + txt.split('\n').filter((l, i) => i === 0 || (l && !/^\S+: (wander|chat|work|sit|watch|errand|play),/.test(l)) || q.has('stats')).join('\n  ')); await new Promise((r) => setTimeout(r, 0)); } }
+      out.unshift('AMBIENT ' + total); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AMBIENT ' + total; })();
+  }
+  /* ?test=anim : every scene with people in it, run on a stepped clock with you walking the story's way (games/nanny/src/animcheck.js): nobody frozen on an idle near you,
+     no crowd in step, no head turned or turning further or faster than a person can, nobody running in place or sliding. Expect ANIM 0. &sc=town2,fight picks scenes. */
+  const walkAlong = (dense, s0, v = 2.3) => (t) => { const [x, z] = pathAt(dense, Math.min(pathLength(dense) - 1, s0 + t * v)); state.x = x; state.z = z; };
+  const roam = (pts, v = 1.6) => { let i = 0; return (t, dt) => { const to = pts[i % pts.length], d = Math.hypot(to[0] - state.x, to[1] - state.z); if (d < 0.2) { i++; return; } const k = Math.min(1, v * dt / d); [state.x, state.z] = clampPos(state.x + (to[0] - state.x) * k, state.z + (to[1] - state.z) * k); state.yaw = Math.atan2(-(to[0] - state.x), -(to[1] - state.z)); }; };
+  const ANIM_SCENES = () => [
+    { name: 'estate at night', setup: () => go('estate', 10, 2, 40.6, 0.25, 0), seconds: 25 },
+    { name: 'the estate trail', setup: async () => { await go('estate', 11, 2, 40.6, 0.25, 0); ON[11](); }, step: (t) => walkAlong(PL.estate.spots.trail.dense, 1, 1.6)(t), seconds: 30 },
+    { name: 'the town, morning', setup: () => go('town', 21, 4.6, 9.6, 0.6, 0), step: roam([[-2, 7], [-12, 4], [-18, 5.6], [-8, -2], [6, -3], [8, 3.2], [2, 8]]), seconds: 70 },
+    { name: 'the town, Nanny on the rock', setup: async () => { await go('town', 24, 0.5, 6.5, 0, 0.12); }, step: roam([[-3, 6], [3, 4], [0.5, 6.5]], 0.8), seconds: 30 },
+    { name: 'the town at night', setup: () => go('town', 51, -4.6, 8.8, 1.0, 0), step: roam([[-8, 12], [-3, 12.5], [3, -6], [-4, 2]]), seconds: 45 },
+    { name: 'the back trail', setup: async () => { await go('town', 53, -7.6, -8.1, 0.8, 0); setStage(54); state.x = -8.2; state.z = -8.4; gunsRun(); }, step: (t) => walkAlong(PL.town.spots.back.dense, 1, 2.3)(t), seconds: 32 },
+    { name: 'the ridge at dawn', setup: async () => { await go('town', 55, -62.4, -59.6, -2.2, -0.2, ENV.dawn); arriveRidge(true); }, step: roam([[-63, -61], [-61.5, -60], [-62.4, -59.6]], 0.6), seconds: 35 },
+    { name: 'the watch rock', setup: () => go('watch', 34, -1.2, -2.6, PI, 0), step: roam([[-6, 1], [-12, 0.5], [-3, -2], [0.2, 3.6]]), seconds: 40 },
+    { name: 'the fight', setup: async () => { const P = await go('watch', 42, 0.2, 4.0, PI - 0.3, -0.62); FIGHT.on = true; FIGHT.mode = 'march'; FIGHT.sHead = START; FIGHT.t = 0; moveLock = true; for (const n of P.extras) if (n.fighter !== undefined) { n.cue = true; n.m.visible = false; } },
+      step: (t) => { const P = PL.watch; if (t > 44 && !FIGHT.shown) { FIGHT.shown = true; for (const n of P.extras) if (n.fighter !== undefined) { n.cue = false; n.hidden = false; n.m.visible = true; n.ctl.play(n.fighter % 2 ? 'Cheer' : 'Wave'); } } if (t > 50 && FIGHT.mode !== 'flee') FIGHT.mode = 'flee'; }, seconds: 62 },
+    { name: 'New Nanny Town', setup: () => go('newtown', 60, 0.5, 9.5, 0.1, 0), step: roam([[-3, 4.4], [6, 4.6], [2.4, -2.4], [-6, -2], [0.5, 9.5]]), seconds: 70 },
+  ];
+  async function runAnim(only) { STEPPED.on = true; const r = await animCheck({ scenes: ANIM_SCENES().filter((sc) => !only || only.some((w) => sc.name.replace(/\W/g, '').toLowerCase().includes(w))), update: (dt) => update(dt, performance.now()), player: () => [state.x, state.z], people: () => (P_() ? P_().npcs : []) }); FIGHT.on = false; FIGHT.shown = false; moveLock = false; GUNS.on = false; STEPPED.on = false; return r; }
+  if (q.get('test') === 'anim') (async () => { startGame(true); const r = await runAnim(q.get('sc') ? q.get('sc').split(',') : null); const el = $('autolog'); if (el) el.textContent = ['ANIM ' + r.lines.length, ...r.lines, '', ...r.stats].join('\n'); document.title = 'ANIM ' + r.lines.length; })();
   if (q.get('test') === 'resume') {   /* saved games resume in the right place, and closing a finishing conversation still moves the story on */
     (async () => { const out = []; startGame(true); const at = () => 'place=' + cur + ' stage=' + stage + ' at ' + state.x.toFixed(0) + ',' + state.z.toFixed(0);
       await beginChapter(0, 11); out.push('ch1@11 ' + at() + ' lead=' + !!byId('quamin').fol); await beginChapter(1, 23); out.push('ch2@23 ' + at() + ' vines=' + PL.town.spots.yams[0].userData.vine.visible);
@@ -923,21 +1031,20 @@ function devViews() {
       document.title = 'RESUME ' + out.join(' | '); const el = $('autolog'); if (el) el.textContent = out.join('\n'); })();
   }
   if (q.has('clickstart')) setTimeout(() => $('start').click(), 300);   /* the real start, with real fades (the other test views skip them) */
-  if (q.has('auto')) {   /* ?auto=N plays chapter N (1 to 6) and the ones after it; add &one to stop after N. It logs every change to the page title and #autolog, and says STALL if nothing changes for a while. */
-    const N = +q.get('auto'), one = q.has('one'), log = [], sleep = (ms) => new Promise((r) => setTimeout(r, ms)); const L = (m) => { log.push(m); document.title = log.join(' | '); const el = $('autolog'); if (el) el.textContent = log.join('\n'); };
-    (async () => {
+  /* the autoplayer: autoRun(N, one, L) plays chapter N (1 to 6) and the ones after it (only N with one), logging every change through L. It resolves { ok, why, stalls }. */
+  async function autoRun(N, one, L) { const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       await waitFor(() => modelsReady); startGame(true); let ch = N - 1; L('start ch' + (ch + 1)); await beginChapter(ch); const finished = () => stage >= DONE[ch];
       let lastKey = '', lastT = performance.now(); const nap = () => { for (let i = 0; i < 8; i++) update(0.05); }, walkTo = (dense, d = 5) => { const [x, z] = ahead(dense, d); state.x = x; state.z = z; };
       for (;;) {
         await sleep(120); nap(); const now = performance.now();
         const key = stage + '|' + cur + '|' + unlocked.length + '|' + ($('card').hidden ? '' : $('ctitle').textContent) + '|' + (DIR.on ? 'cut' : '') + (HORN.on ? 'horn' + HORN.notes + HORN.pos : '') + (FIGHT.on ? FIGHT.mode : '') + (GUNS.on ? 'guns' + GUNS.n : '') + '|' + Math.round(state.x / 4) + ',' + Math.round(state.z / 4);
         if (key !== lastKey) { lastKey = key; lastT = now; L('s' + stage + ' ' + cur + ' pages=' + unlocked.length + (HORN.on ? ' horn' : '') + (FIGHT.on ? ' fight:' + FIGHT.mode : '') + (GUNS.on ? ' guns' : '') + ($('card').hidden ? '' : ' card="' + $('ctitle').textContent + '"') + ' goal="' + $('goal').textContent + '"'); }
-        if (now - lastT > 30000) { L('STALL at stage ' + stage + ' in ' + cur + ' busy=' + busy + ' frozen=' + frozen + ' fading=' + fading + ' horn=' + HORN.on + ' fight=' + FIGHT.on); break; }
+        if (now - lastT > 30000) { const why = 'STALL at stage ' + stage + ' in ' + cur + ' busy=' + busy + ' frozen=' + frozen + ' fading=' + fading + ' horn=' + HORN.on + ' fight=' + FIGHT.on; L(why); return { ok: false, why, stalls: [why] }; }
         if (!$('card').hidden) { const b = $('cbtns').querySelector('button'); if (b) b.click(); continue; }
         if (!$('dialogue').hidden) { const c = [...$('choices').children].find((b) => !b.disabled); if (c) c.click(); else $('next').click(); continue; }
         if (HORN.on) { if (HORN.ready) hornTap(HORN.notes[HORN.pos]); continue; }
         if (!$('holdwrap').hidden) HOLD.on = true;
-        if (finished()) { L('chapter ' + (ch + 1) + ' DONE at stage ' + stage); if (one || ch >= 5) { L('ALLDONE'); break; } ch++; L('next ch' + (ch + 1)); await beginChapter(ch); lastT = performance.now(); continue; }
+        if (finished()) { L('chapter ' + (ch + 1) + ' DONE at stage ' + stage); if (one || ch >= 5) { L('ALLDONE'); return { ok: true, stalls: [] }; } ch++; L('next ch' + (ch + 1)); await beginChapter(ch); lastT = performance.now(); continue; }
         if (busy || frozen || DIR.on || fading || FIGHT.on) continue;
         const P = P_(); if (!P) continue;
         if (cur === 'estate' && (stage === 11 || stage === 13)) { walkTo(P.spots.trail.dense, 5); continue; }
@@ -948,6 +1055,47 @@ function devViews() {
         if (a) { state.x = a.x; state.z = a.z; update(0.016); a.go(); continue; }
         const n = P.people.find((p) => wantsTalk(p) && p.m.visible); if (n) { const [x, z] = P.G.clamp(n.x + 1.1, n.z + 0.4); state.x = x; state.z = z; update(0.016); startTalk(n); continue; }
       }
-    })();
   }
+  if (q.has('auto')) {   /* ?auto=N plays chapter N (1 to 6) and the ones after it; add &one to stop after N. It logs every change to the page title and #autolog, and says STALL if nothing changes for a while. */
+    const log = [], L = (m) => { log.push(m); document.title = log.join(' | '); const el = $('autolog'); if (el) el.textContent = log.join('\n'); };
+    autoRun(+q.get('auto'), q.has('one'), L);
+  }
+  /* ?test=all : the shared runner (engine/checks.js) with this game's hooks (checktables.js), plus this game's animation check (animcheck.js). Expect ALL 0. */
+  if (q.get('test') === 'all') (async () => {
+    const PLACE_CH = { estate: 0, town: 1, watch: 2, newtown: 5 }, closeAll = () => { hideCard(); closeJournal(); closeChapters(); closeCredits(); leaveTalk(); };
+    const begin = async (i, st) => { closeAll(); await beginChapter(i, st); for (let k = 0; k < 4; k++) update(1 / 30); closeAll(); endCut(); bars(false); frozen = false; };
+    const A = {
+      ready: () => new Promise((res) => { const iv = setInterval(() => { if (modelsReady) { clearInterval(iv); res(); } }, 200); }),
+      place: P_, places: () => PL, stage: () => stage, chapterOf, SAFE, scripted: [63, 64], started: () => state.started, begin,
+      envName: () => Object.keys(ENV).find((k) => ENV[k] === envNow) || null,
+      blocked: blockedAt,
+      targets: () => { const P = P_(); return P.people.filter((n) => n.m.visible && wantsTalk(n)).map((n) => ({ id: n.id, x: n.x, z: n.z, r: 2.3 })).concat(P.actions.filter((a) => a.on()).map((a) => ({ id: a.label, x: a.x, z: a.z, r: a.r }))); },
+      snapshot: () => ({ stage, goal: goalText, place: cur, people: P_().people.filter((n) => n.m.visible).map((n) => n.id), pos: [state.x, state.z] }),
+      save: () => { saveGame(); return loadGame(); },
+      restore: async (d) => { applySave(d); await begin(chapterOf(stage), SAFE[stage] || stage); },
+      goPlace: async (id, light) => { await begin(PLACE_CH[id]); if (light && ENV[light]) setEnv(ENV[light]); },
+      move: (from, to) => clampPos(to[0], to[1]),
+      faces: () => P_().people.filter((n) => n.m.visible && Math.hypot(n.x - state.x, n.z - state.z) < 30).slice(0, 4).map((n) => ({ id: n.id, body: n.m })),
+      renderer, scene, camera, AU, setSound: (on) => { setSound(on); showSound(); }, talking: () => !$('dialogue').hidden, cardSeen: (id) => CARDSEEN.has(id),
+      frame: (dt) => { update(dt, performance.now()); const sh = renderer.shadowMap.enabled; renderer.shadowMap.enabled = false; renderer.render(scene, camera); renderer.shadowMap.enabled = sh; },   /* phones draw no shadows */
+      autoplay: async () => { const keep = NORENDER; NORENDER = true; try { return await autoRun(1, false, () => {}); } finally { NORENDER = keep; } },
+      clips: () => { const P = P_(), out = [], fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)), hp = new THREE.Vector3();
+        for (const n of P.npcs) { if (!n.m || !n.m.visible || !n.ctl) continue; const d = Math.hypot(n.x - state.x, n.z - state.z); if (d > 60) continue; let best = n.ctl.cur, bw = 0; for (const x of n.ctl.mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } }
+          const hips = n.m.getObjectByName('mixamorigHips'); if (n.hip0 === undefined && hips) n.hip0 = 0.53 * tallOf(n); const hy = hips ? hips.getWorldPosition(hp).y - (n.m.userData.ground || 0) : 1;
+          out.push({ id: n.id || n.base, clip: best.getClip().name, t: (best.time / best.getClip().duration) % 1, dist: d, inView: fr.containsPoint(hp.set(n.x, (n.m.userData.ground || 0) + 1, n.z)), hips: n.hip0 ? hy / n.hip0 : undefined }); }
+        return out; },
+      screens: () => ({
+        play: async () => { closeAll(); await begin(1, 21); },
+        dialogue: async () => { closeAll(); await begin(1, 21); startTalk(byId('mimba')); },
+        journal: () => { closeAll(); openJournal(); },
+        chapters: () => { closeAll(); openChapters(); },
+        credits: () => { closeAll(); openCredits(); },
+        card: () => { closeAll(); fightIntro(); },
+      }),
+      keyMove: async () => { closeAll(); await begin(1, 21); const x0 = state.x, z0 = state.z; window.dispatchEvent(new KeyboardEvent('keydown', { key: 'w' })); for (let k = 0; k < 20; k++) update(1 / 30); window.dispatchEvent(new KeyboardEvent('keyup', { key: 'w' })); const moved = Math.hypot(state.x - x0, state.z - z0) > 0.3;
+        const n = byId('mimba'); state.x = n.x + 1.1; state.z = n.z + 0.4; update(1 / 30); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter' })); const talk = !$('dialogue').hidden; closeAll(); return { moved, talk }; },
+    };
+    if (!CHECKS.some((c) => c.id === 'anim')) CHECKS.push({ id: 'anim', needs: [], run: async () => { closeAll(); const r = await runAnim(); return { lines: r.lines, note: r.stats.length + ' scenes' }; } });
+    await checkAll(makeAdapter(A), CHECK_TABLES);
+  })();
 }

@@ -114,7 +114,7 @@ export function buildTown() {
     extra('nanny', rx, rz, face(rx, rz, 30, 60), 'Idle', { id: 'nanny', ground: slabY, when: [24, 29], far: true }),
     extra('mama', -7.4, -3.6, face(-7.4, -3.6, 0, 0), 'Idle', { id: 'mamaT', when: [20, 29] }), extra('quamin', 4.2, -10.2, face(4.2, -10.2, 0, 0), 'Idle', { id: 'quaminT', when: [20, 29] }),
     ...villagers(11, 5, [-11, -11.5, 11.5, 11], { face: [-3, 3] }).map((e) => ({ ...e, when: [20, 29] })), ...villagers(3, 9, [-27.5, 1, -19.5, 9.5]).map((e) => ({ ...e, when: [20, 29], anim: 'Idle' })),
-    ...villagers(7, 13, [-10, -10, 9, 9], { anims: ['Idle', 'Terrified', 'Idle', 'Talk1'] }).map((e) => ({ ...e, when: [50, 54], flee: true })),
+    ...villagers(7, 13, [-10, -10, 9, 9], { anims: ['Idle', 'LookAround', 'Idle', 'IdleM'] }).map((e) => ({ ...e, when: [50, 54], flee: true })),
     extra('beneba', -62.2, -63.4, face(-62.2, -63.4, 0, 0), 'Idle', { when: [55, 59], scale: 0.86 }), extra('phibba', -61.4, -62.2, face(-61.4, -62.2, 0, 0), 'Idle', { when: [55, 59] }), ...villagers(4, 23, [-67.6, -64.2, -60.6, -58.2], { face: [0, 0] }).map((e) => ({ ...e, when: [55, 59] })),
     ...[[-2, 2], [2.5, -1], [-4, -4], [5, 4], [0, 7], [-7, 1], [3, -6.5], [-1.5, -8]].map(([x, z], i) => extra(i === 0 ? 'officer' : 'soldier', x, z, i * 1.3, 'Idle', { when: [55, 59], props: [['RightHand', 'musket']], far: true })),
   ];

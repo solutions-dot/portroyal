@@ -194,3 +194,28 @@ export function attach(model, boneName, obj, pos = [0, 0, 0], rot = [0, 0, 0], s
   const b = model.getObjectByName('mixamorig' + boneName); if (!b) return null; model.updateMatrixWorld(true); const k = b.getWorldScale(new THREE.Vector3()).x || 1, wrap = new THREE.Group();
   wrap.position.set(pos[0] / k, pos[1] / k, pos[2] / k); wrap.rotation.set(...rot); wrap.scale.setScalar(scale / k); wrap.add(obj); b.add(wrap); return wrap;
 }
+/* a cocked hat (three-cornered), as British soldiers and militia wore in the 1730s. The character builder only makes a round felt hat, so the game makes this one
+   and hides the felt hat. It is sized from the body's own felt hat in the head bone's space (crown and brim), so it covers the hair just as that hat did:
+   a felt crown, and a brim turned up on three sides, with its corners at the front and the two back sides, edged with a narrow light tape. */
+const _tv = new THREE.Vector3();
+export function cockedHat(model, color = 0x16141a, lace = 0xd8d0b8) {
+  let felt = null; model.traverse((o) => { if (o.isSkinnedMesh && (o.material.name || '') === 'Hat') felt = o; });
+  const head = model.getObjectByName('mixamorigHead'); if (!felt || !head) return null;
+  const sk = felt.skeleton, bi = sk.bones.findIndex((b) => b.name === 'mixamorigHead'); if (bi < 0) return null;
+  const P = felt.geometry.attributes.position, pts = []; let y0 = 1e9, y1 = -1e9, cx = 0, cz = 0;
+  for (let i = 0; i < P.count; i++) { _tv.fromBufferAttribute(P, i).applyMatrix4(felt.bindMatrix).applyMatrix4(sk.boneInverses[bi]); pts.push(_tv.clone()); y0 = Math.min(y0, _tv.y); y1 = Math.max(y1, _tv.y); cx += _tv.x; cz += _tv.z; }
+  cx /= pts.length; cz /= pts.length; const H = y1 - y0; let rc = 0, R = 0;
+  for (const p of pts) { const d = Math.hypot(p.x - cx, p.z - cz); if (p.y > y0 + H * 0.45) rc = Math.max(rc, d); R = Math.max(R, d); }
+  const g = new THREE.Group(), felt2 = new THREE.MeshStandardMaterial({ color, roughness: 0.95, side: THREE.DoubleSide }), tape = new THREE.MeshStandardMaterial({ color: lace, roughness: 0.8, side: THREE.DoubleSide });
+  g.position.set(cx, 0, cz);
+  const crown = new THREE.Mesh(new THREE.CylinderGeometry(rc * 0.94, rc * 1.03, H * 0.95, 18, 1), felt2); crown.position.y = y0 + H * 0.5; g.add(crown);
+  const top = new THREE.Mesh(new THREE.CircleGeometry(rc * 0.94, 18), felt2); top.rotation.x = -PI / 2; top.position.y = y0 + H * 0.975; g.add(top);
+  /* the brim: rings from the crown out to the edge; the outer part is turned up, least at the three corners, and the corners reach further out */
+  const N = 48, M = 6, Rb = Math.max(R * 1.05, rc * 1.9), up = H * 0.9, pos = [], idx = [], edge = [];
+  for (let j = 0; j <= M; j++) for (let i = 0; i <= N; i++) { const a = i / N * PI * 2, t = j / M, c = Math.pow((Math.cos(3 * a) + 1) / 2, 2), rr = rc * 0.98 + (Rb * (0.78 + 0.3 * c) - rc * 0.98) * t, y = y0 + 0.004 + Math.pow(t, 1.6) * up * (1 - 0.7 * c);
+    pos.push(Math.sin(a) * rr, y, Math.cos(a) * rr); if (j === M && i < N) edge.push(new THREE.Vector3(Math.sin(a) * rr, y, Math.cos(a) * rr)); }
+  for (let j = 0; j < M; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i, b = a + 1, c = a + N + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); bg.setIndex(idx); bg.computeVertexNormals(); g.add(new THREE.Mesh(bg, felt2));
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(edge, true), N, 0.0045, 4, true), tape));
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } }); head.add(g); return g;
+}
