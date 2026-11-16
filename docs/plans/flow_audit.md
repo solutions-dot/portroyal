@@ -16,6 +16,8 @@ Read-only audit of `games/port-royal`, `garvey`, `kendal`, `bog-walk`, `nanny`, 
 
 **Timing unit audit (16 November):** Bog Walk's `nudgeTick` receives elapsed seconds and correctly uses `2.5`; the other six legacy controllers receive milliseconds and use `2500`. The earlier guidance-delay regression incorrectly expected milliseconds for Bog Walk and has been corrected. Shared `ARROW_LIMIT` and `ARROW_LIMIT_EXPLORE` are both 2500 ms. Browser timing verification remains pending.
 
+**Chapter-by-chapter data checks (16 November):** `tests/chapter-guidance.mjs` now checks every declared stage in Kendal, Selassie and Windrush: visible goal, required IDs and counts, stage transition references, and simulated completion of all required tasks. It also checks the chapter goal tables, required-talk lists and declared talk-stage transitions in Nanny, Melissa, Eventide and Bog Walk. These checks cover seven games' data tables; they do not yet validate the dynamic stages of Port Royal, Garvey or Tivoli, or demonstrate browser/mobile playthroughs. Tests are committed but runner results are not confirmed.
+
 ### Follow-up: always-visible next task (16 November 2026)
 
 The owner selected **Bog Walk's guidance pattern as the target for all ten games**: a plainly written next task that stays readable, a gold world arrow to the current required destination, and a nearby talk/action control that takes over when the player arrives. The task should change immediately when a requirement is completed, and optional activities must not override a required step.
