@@ -192,7 +192,17 @@ export function makeAdapter(A) {
         out = [];
       for (const n of [...world().people, ...world().extras, ...(world().shipExtras || [])]) {
         if (!n.m.visible) continue;
-        const a = n.ctl.cur,
+        // the clip with the most weight now: while Samuel stands up from kneeling, Kneel still holds his hips low as IdleM fades in
+        let a = n.ctl.cur,
+          bw = 0;
+        for (const x of n.ctl.mx._actions) {
+          const w = x.isRunning() ? x.getEffectiveWeight() : 0;
+          if (w > bw) {
+            bw = w;
+            a = x;
+          }
+        }
+        const
           c = a ? a.getClip() : null,
           p = n.m.getWorldPosition(new THREE.Vector3()),
           hips = n.m.getObjectByName("mixamorigHips"),

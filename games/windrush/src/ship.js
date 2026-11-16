@@ -186,6 +186,39 @@ function nameplate(text, w, h) {
   });
   return new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
 }
+/* the hull's half width at s (0 stern, 1 bow) and height y above the waterline, as the hull is built */
+function hullW(s, y) {
+  let w = (SHIP.B / 2) * halfBeam(s);
+  if (s > 0.62 && y > 0) w *= 1 + 0.12 * ((s - 0.62) / 0.38) * (y / sheer(s));
+  return w;
+}
+/* a name painted on the bow: a strip that follows the curve of the hull a few centimetres out, so the whole name reads */
+function nameBand(text, s0, s1, h, side) {
+  const N = 16,
+    pos = [],
+    uv = [],
+    idx = [];
+  for (let i = 0; i <= N; i++) {
+    const u = i / N,
+      s = side > 0 ? s0 + (s1 - s0) * u : s1 - (s1 - s0) * u, // read from outside: aft to bow on the starboard side, bow to aft on the port side
+      yc = sheer(s) - 1.0;
+    for (const [k, y] of [[0, yc - h / 2], [1, yc + h / 2]]) {
+      pos.push(-SHIP.L / 2 + s * SHIP.L, y, side * (hullW(s, y) + 0.04));
+      uv.push(u, k);
+    }
+  }
+  for (let i = 0; i < N; i++) {
+    const a = i * 2;
+    idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx);
+  const m = new THREE.Mesh(geo, nameplate(text, 13, h));
+  m.material.side = THREE.DoubleSide;
+  return m;
+}
 export function windrush() {
   const g = grp(),
     white = solid(0xece9df, 0.7),
@@ -264,8 +297,7 @@ export function windrush() {
     cyl(0.5, 0.5, 0.1, black, X(0.95), sheer(0.95) - 2.4, z, g, 10).rotation.x = Math.PI / 2;
     box(0.3, 1.8, 0.12, black, X(0.95), sheer(0.95) - 3.4, z, g);
     box(1.4, 0.3, 0.12, black, X(0.95), sheer(0.95) - 4.3, z, g);
-    const name = plane(13, 1.15, nameplate("EMPIRE WINDRUSH", 13, 1.15), X(0.83), sheer(0.83) - 0.95, s * ((B / 2) * halfBeam(0.83) * (1 + 0.12 * 0.55 * 0.9) + 0.7), g);
-    name.rotation.y = s > 0 ? -0.1 : Math.PI + 0.1;
+    g.add(nameBand("EMPIRE WINDRUSH", 0.79, 0.9, 1.25, s));
   }
   const stern = plane(11, 1.0, nameplate("EMPIRE WINDRUSH", 11, 1.0), X(0) - 0.12, sheer(0) - 1.4, 0, g);
   stern.rotation.y = -Math.PI / 2;

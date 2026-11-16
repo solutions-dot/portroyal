@@ -19,7 +19,8 @@
     "hat": [],
     "sleeve": 0.95,
     "collar": "turn",
-    "legwidth": 0.95
+    "legwidth": 0.95,
+    "belt": true
   },
   "colors": {
     "Shoes": [

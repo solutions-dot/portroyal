@@ -8,10 +8,10 @@
     "caucasian": 0,
     "asian": 0,
     "gender": 0,
-    "cupsize": 0.4,
+    "cupsize": 0.3,
     "firmness": 0.55,
     "age": 0.33,
-    "weight": 0.5,
+    "weight": 0.46,
     "height": 0.54
   },
   "garments": {
@@ -30,7 +30,7 @@
         "Hat"
       ]
     ],
-    "sleeve": 0.6,
+    "sleeve": 0.9,
     "sash": true,
     "belt": true
   },
@@ -66,9 +66,9 @@
       18
     ],
     "Skin": [
-      145,
-      98,
-      72
+      153,
+      105,
+      78
     ],
     "Shirt": [
       70,

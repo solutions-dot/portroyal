@@ -20,7 +20,8 @@
     "hat": [],
     "trousers": true,
     "legwidth": 1.1,
-    "buttons": false
+    "buttons": false,
+    "belt": true
   },
   "colors": {
     "Skin": [
