@@ -523,7 +523,7 @@ function light(Q) {
   sun.intensity = english ? 1.5 : late ? 1.9 : 2.1;
   sun.color.set(late ? 0xffc890 : 0xffe2b6);
   sun.position.set(late ? -40 : -20, late ? 18 : 42, late ? 8 : 20);
-  hemi.intensity = english ? 2.7 : late ? 2.3 : 2.5;
+  hemi.intensity = english ? 2.95 : late ? 2.3 : 2.5;
   hemi.color.set(late ? 0xffe2c0 : 0xfff1d4);
 }
 async function go(stage, { restore = null, keep = false } = {}) {
