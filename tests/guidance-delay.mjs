@@ -24,9 +24,9 @@ for (const explore of [false,true]) {
     const story=createStory({dry:true,steps:{1:{goal:'Talk to Gran',needs:{talk:['gran']},explore}},where:()=>[12,0],player:()=>[0,0]});
     story.enter(1);
     assert.equal(story.tick(0,true).show,false);
-    assert.equal(story.tick(2499,true).show,false);
     // The engine caps large frame gaps to 500 ms; simulate normal animation frames.
-    for(let t=16;t<=2512;t+=16)story.tick(t,true);
+    for(let t=16;t<=2496;t+=16)story.tick(t,true);
+    assert.equal(story.tick(2496,true).show,false);
     assert.equal(story.tick(2512,true).show,true);
   });
 }
