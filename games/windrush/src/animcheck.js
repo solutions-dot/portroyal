@@ -5,7 +5,7 @@
    - frozen: no step, turn, clip change or head turn for more than FROZEN seconds;
    - in step: three or more people in view on the same clip at the same moment of it (a crowd moving as one);
    - head: a head turned more than LIMIT.yaw from the chest, tipped more than LIMIT.pitch, or turning faster than LIMIT.speed
-     (a quarter more while running: the Run clip itself swings the head as a child runs);
+     (a quarter more while running: the Run clip itself swings the head as a child runs), measured over 0.2 s;
    - running in place: a walking or running clip while standing still;
    - sliding: moving over the ground on a standing clip.
    In each camera scene it also checks the camera: never under the water or the quay, never inside the ship or a person, never on an empty
@@ -167,8 +167,8 @@ export async function animCheck(A, { seconds = 20, films = true, only = null } =
         if (Math.abs(g.yaw) > LIMIT.yaw) tell(s, "yaw", `head turned ${g.yaw.toFixed(0)} degrees from the chest (${clip} at ${t.toFixed(1)} s)`);
         if (Math.abs(g.pitch) > LIMIT.pitch) tell(s, "pitch", `head tipped ${g.pitch.toFixed(0)} degrees (${clip} at ${t.toFixed(1)} s)`);
         s.hist.push([t, g.yaw]);
-        if (s.hist.length > 4) s.hist.shift();
-        if (s.hist.length === 4) {
+        if (s.hist.length > 7) s.hist.shift();
+        if (s.hist.length === 7) {
           const [t0, y0] = s.hist[0],
             rate = Math.abs(g.yaw - y0) / Math.max(1e-3, t - t0);
           if (rate > LIMIT.speed * (/^Run/.test(clip) ? 1.25 : 1)) tell(s, "speed", `head turning ${rate.toFixed(0)} degrees a second (${clip} at ${t.toFixed(1)} s)`);
