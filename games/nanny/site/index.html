@@ -184,14 +184,18 @@ body:has(#hornwrap:not([hidden])) :is(#talk,#hint,#toast,#nudge,#sub){visibility
 @media(max-width:760px){#title{background-image:linear-gradient(180deg,rgba(16,34,43,.25),rgba(16,34,43,.94) 58%),url(title-scene.jpg)}#title.live-scene{background-image:linear-gradient(180deg,rgba(16,34,43,.25),rgba(16,34,43,.94) 58%)}}
 /* Animated mobile poster: gentle parallax without the WebGL sky artifacts. */
 @media (pointer:coarse) {
-  #title:not(.live-scene) { isolation:isolate; background-image:linear-gradient(180deg,rgba(16,34,43,.24),rgba(16,34,43,.94) 58%); }
+  #title:not(.live-scene) { isolation:isolate; background:#10222b; overflow:hidden; }
   #title:not(.live-scene)::before {
-    content:""; position:absolute; inset:-4%; pointer-events:none; z-index:-1;
+    content:""; position:absolute; inset:-4%; pointer-events:none; z-index:0;
     background:url(title-scene.jpg) 65% center/cover no-repeat;
     animation:title-drift 22s ease-in-out infinite alternate;
     transform-origin:60% 48%;
   }
-  #title .card { width:100%; min-width:0; }
+  #title:not(.live-scene)::after {
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
+    background:linear-gradient(180deg,rgba(16,34,43,.24),rgba(16,34,43,.94) 58%);
+  }
+  #title .card { position:relative; z-index:1; width:100%; min-width:0; }
   #title .title-actions { gap:clamp(6px,1.8vw,12px); }
   #title .title-actions > .btn {
     flex:1 1 0; min-width:0; white-space:nowrap;
