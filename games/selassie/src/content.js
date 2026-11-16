@@ -1,5 +1,5 @@
 /* Every family member is fictional. Real public figures have no invented dialogue. */
-export const TITLE = "The Emporer’s Arrival";
+export const TITLE = "The Emperor’s Arrival";
 export const CHAPTERS = [
   {
     id: "picture",

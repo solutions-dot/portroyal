@@ -1,5 +1,5 @@
 {
-  "about": "The Emporer's Arrival: fictional family, silent historical public figures. Game-specific runtime hooks are in games/selassie/src/checktables.js.",
+  "about": "The Emperor's Arrival: fictional family, silent historical public figures. Game-specific runtime hooks are in games/selassie/src/checktables.js.",
   "real": [],
   "allowLong": [],
   "factsIgnore": []
