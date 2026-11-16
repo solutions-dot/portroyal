@@ -1,1 +1,1 @@
-["Idle", "Walk", "Talk1", "Talk2", "Talk3", "SitIdle", "SitTalk"]
+["Idle", "IdleM", "OldIdle", "Walk", "Talk1", "Talk2", "Talk3", "TalkM1", "TalkM2", "Speech", "Nod", "LookAround", "HeadTurn", "WipeSweat", "ReachOut", "PickUp", "WaveSlow", "Clap", "Point", "Laugh", "SitIdle", "SitIdle2", "SitIdle3", "SitTalk"]

@@ -5,154 +5,159 @@
      - the burial vault is terrazzo, inset with marble;
      - behind the tomb a peaked and angled wall holds a bronze bust of him by T. Alvin Marriott, put up elsewhere in the park in 1956
        and moved into the monument.
-   What we could not confirm, so it is kept general (see docs/games/garvey.md): the real size of the star and the wall, the colour and finish
-   of the wall, the exact shape of its peak and angles, how the bust is set into it, the pose and dress of the bust (shown here as head and
-   shoulders in a jacket, collar and tie, as in his photographs), and any words on the tomb (the game's plaque shows only his name and years).
-   Everything here is built from a few hundred to a few thousand triangles, fine for phones. */
+   What the photograph shows (November 2026; the photograph is in docs/games/garvey.md, "The shrine against a photograph"):
+     - the star is a raised bed about knee high, its sides faced with pale cut limestone in an irregular pattern, a dark grey coping
+       round its edge and dark grey river pebbles filling it; two of its points face the visitor and one points back under the wall;
+     - in the middle a dark grey base carries the white marble top of the tomb, with a small dark cross lying on it, and at its head a
+       dark stone frame round a white plate cut with MARCUS MOSIAH GARVEY / JAMAICAS FIRST NATIONAL HERO / 1887 - 1940 (as the
+       photograph reads; no apostrophe can be seen);
+     - the wall behind is a gable: straight sides and a peak, faced with the same pale stone and capped in white; the bronze bust (head,
+       shoulders and upper arms, jacket, shirt and tie) stands on a dark ledge on its face, a small plate under the ledge;
+     - low stone walls with the same coping run off to either side; sago palms stand by the wall; red flowers in red earth along the
+       star's front; flagpoles behind.
+   Sizes are judged from the photograph (the tomb top about 1.1 m wide), not measured: the star about 7 m point to point, its sides
+   0.6 m high, the wall about 5 m wide, 1.3 m high at the sides and 2.4 m at the peak.
+   The bust is cast from the game's own Marcus Garvey (garvey1914, whose face was shaped against a photograph, docs/PEOPLE.md): his
+   posed body is cut under the chest and turned to bronze (castBust). Until that body has loaded, nothing stands on the ledge. */
 import * as THREE from 'three';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const PI = Math.PI;
 const mat = (color, rough, metal = 0, extra) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, ...(extra || {}) });
 function add(geo, m, x, y, z, parent) { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); parent.add(o); return o; }
+const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; };
+let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
 
-/* a speckled stone picture (terrazzo, concrete): small chips of several colours on a base */
-function speckle(base, chips, n, size = 256) {
-  const c = document.createElement('canvas'); c.width = c.height = size; const x = c.getContext('2d');
-  x.fillStyle = base; x.fillRect(0, 0, size, size);
-  for (let i = 0; i < n; i++) { x.fillStyle = chips[i % chips.length]; const r = 0.6 + Math.random() * 1.8; x.beginPath(); x.ellipse(Math.random() * size, Math.random() * size, r, r * (0.6 + Math.random() * 0.4), Math.random() * 3, 0, 7); x.fill(); }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+/* pale limestone in an irregular cut pattern: courses of stones of different widths, each a little different in tone, with grey joints */
+function limestoneTex() {
+  return canvasTex(512, 512, (x, w, h) => {
+    x.fillStyle = '#a49c8a'; x.fillRect(0, 0, w, h);
+    let y = 0; while (y < h) { const ch = 34 + rnd() * 40; let px = -rnd() * 60; while (px < w) { const cw = 40 + rnd() * 90, tone = 214 + rnd() * 26 | 0, sk = (rnd() - 0.5) * 10;
+      x.fillStyle = `rgb(${tone},${tone - 6 | 0},${tone - 20 | 0})`; x.beginPath(); x.moveTo(px + 3, y + 3); x.lineTo(px + cw - 3 + sk, y + 3 + rnd() * 3); x.lineTo(px + cw - 3 - sk, y + ch - 3); x.lineTo(px + 3, y + ch - 3 - rnd() * 3); x.closePath(); x.fill();
+      for (let k = 0; k < 6; k++) { x.fillStyle = `rgba(150,140,120,${0.08 + rnd() * 0.1})`; x.fillRect(px + rnd() * cw, y + rnd() * ch, 2 + rnd() * 8, 1 + rnd() * 3); }
+      px += cw; } y += ch; }
+  });
 }
-/* white marble with soft grey veins */
-function marbleTex() {
-  const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); x.fillStyle = '#ecebe6'; x.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 9; i++) { x.strokeStyle = `rgba(120,120,125,${0.12 + Math.random() * 0.18})`; x.lineWidth = 0.6 + Math.random() * 1.6; x.beginPath(); let px = Math.random() * 256, py = 0; x.moveTo(px, py); while (py < 256) { px += (Math.random() - 0.5) * 30; py += 12 + Math.random() * 20; x.lineTo(px, py); } x.stroke(); }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+/* dark grey river pebbles packed close */
+function pebbleTex() {
+  return canvasTex(256, 256, (x, w, h) => { x.fillStyle = '#3c3d3f'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 900; i++) { const t = 70 + rnd() * 70 | 0, r = 3 + rnd() * 5; x.fillStyle = `rgb(${t},${t},${t + 4})`; x.beginPath(); x.ellipse(rnd() * w, rnd() * h, r, r * (0.6 + rnd() * 0.4), rnd() * 3, 0, 7); x.fill(); x.fillStyle = 'rgba(255,255,255,0.12)'; x.beginPath(); x.ellipse(rnd() * w, rnd() * h, r * 0.4, r * 0.25, 0, 0, 7); x.fill(); } });
 }
-/* a five-pointed star in x, y, one point toward +y */
+/* red earth with small green plants and red flowers (ixora) */
+function bedTex() {
+  return canvasTex(256, 64, (x, w, h) => { x.fillStyle = '#6e2f22'; x.fillRect(0, 0, w, h); for (let i = 0; i < 400; i++) { x.fillStyle = `rgba(${90 + rnd() * 40 | 0},${40 + rnd() * 20 | 0},30,0.6)`; x.fillRect(rnd() * w, rnd() * h, 2, 2); } });
+}
+/* the plate at the head of the tomb, with the words the photograph shows */
+function tabletTex() {
+  return canvasTex(512, 220, (x, w, h) => { x.fillStyle = '#3a3b3e'; x.fillRect(0, 0, w, h); x.fillStyle = '#dfe2e3'; x.fillRect(40, 34, w - 80, h - 68);
+    x.fillStyle = '#20252b'; x.textAlign = 'center'; x.font = '600 30px Georgia, serif'; x.fillText('MARCUS MOSIAH GARVEY', w / 2, 82); x.fillText('JAMAICAS FIRST NATIONAL HERO', w / 2, 124); x.font = '600 32px Georgia, serif'; x.fillText('1887 - 1940', w / 2, 168); });
+}
+/* a five-pointed star in the ground plane (x, z), one point toward -z (the wall) */
 function starShape(R, r) { const s = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = PI / 2 + i * PI / 5, k = i % 2 ? r : R; if (i) s.lineTo(Math.cos(a) * k, Math.sin(a) * k); else s.moveTo(Math.cos(a) * k, Math.sin(a) * k); } s.closePath(); return s; }
-function flatStar(R, r, h, bevel = 0) {   /* a star slab lying on the ground, one point toward +z, top at y = h */
-  const g = new THREE.ExtrudeGeometry(starShape(R, r), { depth: h - bevel, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 1 });
-  g.rotateX(-PI / 2); g.rotateY(PI); return g;   /* the shape's +y becomes -z; turning it half round points it at +z (toward the visitor) */
+function starGeo(R, r, y0, y1, holeR) {   /* a star prism from y0 to y1; with holeR, a ring (the coping) round a star hole */
+  const sh = starShape(R, r); if (holeR) sh.holes.push(new THREE.Path(starShape(holeR, holeR * r / R).getPoints().reverse()));
+  const g = new THREE.ExtrudeGeometry(sh, { depth: y1 - y0, bevelEnabled: false }); g.rotateX(-PI / 2); g.translate(0, y0, 0); return g;   /* the shape's +y becomes -z: one point toward the wall */
+}
+/* side walls of a star with their own texture coordinates (u along the outline, v up), so the stone pattern keeps one size */
+function starSides(R, r, h, scale) {
+  const pts = starShape(R, r).getPoints(), pos = [], uv = [], idx = []; let u = 0;
+  for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length], L = Math.hypot(b.x - a.x, b.y - a.y), k = pos.length / 3;
+    pos.push(a.x, 0, -a.y, b.x, 0, -b.y, b.x, h, -b.y, a.x, h, -a.y); uv.push(u / scale, 0, (u + L) / scale, 0, (u + L) / scale, h / scale, u / scale, h / scale); idx.push(k, k + 1, k + 2, k, k + 2, k + 3); u += L; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
 }
 
-/* ---------- the bronze bust: a head shaped from a sphere (brow, eye sockets, nose, moustache, lips, chin, cheekbones, ears, short hair),
-   a neck, and shoulders in a jacket with lapels, a shirt collar and a tie. It faces +z. Life size; the monument shows it at 1.6 times, so it reads from the path.
-   Light and shade are painted into the vertices (deeper hollows darker, raised parts lighter) so the face reads from a distance. ---------- */
-const g2 = (x, y, cx, cy, sx, sy) => Math.exp(-(((x - cx) / sx) ** 2) - (((y - cy) / sy) ** 2));
-function headGeo() {
-  const geo = new THREE.SphereGeometry(1, 48, 40), p = geo.attributes.position, n = p.count, col = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) {
-    let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-    const face = THREE.MathUtils.smoothstep(z, 0.15, 0.6);   /* features only on the front */
-    let X = x * 0.074, Y = y * 0.118, Z = z * (z < 0 ? 0.104 : 0.094);
-    if (y < -0.15) { const k = Math.min(1, (-y - 0.15) / 0.85); X *= 1 - 0.38 * k * k; if (z < 0) Z *= 1 - 0.45 * k; }   /* the jaw narrows to the chin; no skull below the back of the jaw */
-    if (y > 0.55) X *= 1 - 0.12 * (y - 0.55);   /* a slightly narrower crown */
-    let d = 0, shade = 0;
-    if (face > 0) {
-      const nose = g2(x, y, 0, -0.1, 0.085, 0.2) * 0.021 + g2(x, y, 0, -0.27, 0.13, 0.075) * 0.013;
-      const wings = (g2(x, y, 0.12, -0.3, 0.06, 0.05) + g2(x, y, -0.12, -0.3, 0.06, 0.05)) * 0.006;
-      const brow = (g2(x, y, 0.3, 0.13, 0.24, 0.07) + g2(x, y, -0.3, 0.13, 0.24, 0.07)) * 0.008;
-      const sock = (g2(x, y, 0.32, 0.0, 0.15, 0.09) + g2(x, y, -0.32, 0.0, 0.15, 0.09)) * 0.013;
-      const lid = (g2(x, y, 0.32, -0.005, 0.075, 0.045) + g2(x, y, -0.32, -0.005, 0.075, 0.045)) * 0.0075;
-      const cheek = (g2(x, y, 0.5, -0.17, 0.17, 0.12) + g2(x, y, -0.5, -0.17, 0.17, 0.12)) * 0.006;
-      const tache = g2(x, y, 0, -0.39, 0.25, 0.05) * 0.0085;   /* he wore a moustache */
-      const lips = g2(x, y, 0, -0.5, 0.19, 0.045) * 0.006, line = g2(x, y, 0, -0.465, 0.2, 0.014) * 0.004;
-      const chin = g2(x, y, 0, -0.74, 0.17, 0.12) * 0.012, under = g2(x, y, 0, -0.62, 0.18, 0.04) * 0.004;
-      d = (nose + wings + brow - sock + lid + cheek + tache + lips - line + chin - under) * face;
-      shade = (-sock * 60 - line * 80 - under * 60 + nose * 8 + brow * 10 + chin * 6) * face;
-    }
-    const hair = y > 0.42 - 0.5 * Math.max(0, -z) || (z < -0.2 && y > -0.1);   /* close-cut hair over the crown and the back */
-    if (hair) { d += 0.003; shade -= 0.12; }
-    const len = Math.hypot(x, y, z) || 1; X += (x / len) * d; Y += (y / len) * d; Z += (z / len) * d;
-    p.setXYZ(i, X, Y, Z);
-    const v = Math.max(0.55, Math.min(1.25, 1 + shade)); col[i * 3] = v; col[i * 3 + 1] = v; col[i * 3 + 2] = v;
-  }
-  geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals(); return geo;
-}
-function earGeo(side) {   /* a flattened shell with a rim */
-  const g = new THREE.SphereGeometry(1, 12, 10); g.scale(0.012, 0.03, 0.02); g.translate(0, 0, -0.004);
-  const c = new Float32Array(g.attributes.position.count * 3).fill(0.9); g.setAttribute('color', new THREE.BufferAttribute(c, 3)); g.rotateY(side * 0.35); return g;
-}
-function torsoGeo() {   /* head-and-shoulders, cut flat under the chest in the usual way of a bust: rings of rounded-square section, from the cut up over the shoulders to the neck */
-  const rings = [[0.0, 0.165, 0.098], [0.08, 0.188, 0.112], [0.17, 0.2, 0.118], [0.235, 0.205, 0.112], [0.27, 0.196, 0.1], [0.295, 0.165, 0.088], [0.315, 0.12, 0.074], [0.33, 0.08, 0.062], [0.34, 0.056, 0.054]];
-  const seg = 32, pos = [], col = [], idx = [], sp = (v, e) => Math.sign(v) * Math.pow(Math.abs(v), e);
-  rings.forEach(([y, hw, hd], r) => { for (let i = 0; i < seg; i++) { const a = i / seg * PI * 2, c = Math.cos(a), sn = Math.sin(a); const front = sn > 0 ? 1 + 0.08 * sn * (r < 5 ? 1 : 0) : 1; pos.push(sp(c, 0.7) * hw, y, sp(sn, 0.7) * hd * front); const v = 0.78 + 0.22 * Math.min(1, y / 0.25); col.push(v, v, v); } });
-  for (let r = 0; r < rings.length - 1; r++) for (let i = 0; i < seg; i++) { const a = r * seg + i, b2 = r * seg + (i + 1) % seg, c = a + seg, d = b2 + seg; idx.push(a, c, b2, b2, c, d); }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
-}
-function bust(bronze, plain) {   /* bronze: the shaded material for the sculpted parts; plain: the same bronze for the simple parts (no painted shade) */
-  const b = new THREE.Group(), dark = plain.clone(); dark.color = plain.color.clone().multiplyScalar(0.6);
-  add(torsoGeo(), bronze, 0, 0, 0, b);   /* the cut under the chest is at y = 0 */
-  const cap = add(new THREE.CircleGeometry(1, 32), dark, 0, 0.001, 0, b); cap.rotation.x = PI / 2; cap.scale.set(0.165, 0.098, 1);
-  add(new THREE.CylinderGeometry(0.05, 0.056, 0.14, 16), plain, 0, 0.385, -0.004, b);   /* the neck */
-  const head = add(headGeo(), bronze, 0, 0.505, 0.004, b); head.rotation.x = -0.04; head.scale.setScalar(1.08);
-  for (const s of [-1, 1]) add(earGeo(s), bronze, s * 0.079, 0.495, -0.006, b);
-  /* the shirt collar, the tie and its knot, and the jacket's lapels, lying on the chest */
-  for (const s of [-1, 1]) { const c = add(new THREE.BoxGeometry(0.05, 0.04, 0.01), plain, s * 0.03, 0.335, 0.064, b); c.rotation.set(-0.5, 0, s * 0.6); }
-  add(new THREE.BoxGeometry(0.03, 0.03, 0.02), dark, 0, 0.318, 0.078, b);
-  const tie = add(new THREE.BoxGeometry(0.034, 0.17, 0.008), dark, 0, 0.225, 0.126, b); tie.rotation.x = -0.12;
-  for (const s of [-1, 1]) {
-    const l = add(new THREE.BoxGeometry(0.07, 0.24, 0.008), plain, s * 0.066, 0.19, 0.127, b); l.rotation.set(-0.06, 0, s * 0.32);   /* a lapel, from the collar down to the cut */
-    const e = add(new THREE.BoxGeometry(0.006, 0.22, 0.01), dark, s * 0.03, 0.2, 0.129, b); e.rotation.set(-0.06, 0, s * 0.32);   /* the shadowed line where the jacket opens */
-  }
-  return b;
+/* ---------- the bust: the game's own Marcus Garvey, posed, cut under the chest and cast in bronze ----------
+   body: a loaded body (garvey1914). Returns a Group with one static mesh, its cut at y = 0, facing +z, at the body's own size. */
+const BRONZE = (vc) => mat(0x7a5434, 0.5, 0.5, vc ? { vertexColors: true } : undefined);
+/* bronze is one metal, but cast clothes read by their edges and their wear: shirt, collar and lapel faces are rubbed brighter, the tie and hair darker */
+const PATINA = { Skin: 1.0, Hair: 0.5, Jacket: 0.78, Waistcoat: 0.62, Shirt: 1.35, Collar: 1.45, Tie: 0.45, Buttons: 0.5, Breeches: 0.7 };
+export function castBust(body, { cut = 0.715 } = {}) {
+  const src = body; src.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(src), H = box.max.y - box.min.y, cutY = box.min.y + H * cut, v = new THREE.Vector3(), out = [], cols = [];
+  src.traverse((o) => {
+    if (!o.isSkinnedMesh || !o.visible) return; if (o.skeleton) o.skeleton.update();
+    const g = o.geometry, idx = g.index, n = g.attributes.position.count, P = new Float32Array(n * 3), k0 = PATINA[o.material.name] ?? 0.85;
+    for (let i = 0; i < n; i++) { o.getVertexPosition(i, v); v.applyMatrix4(o.matrixWorld); P[i * 3] = v.x; P[i * 3 + 1] = v.y; P[i * 3 + 2] = v.z; }
+    const tri = idx ? idx.array : Array.from({ length: n }, (_, i) => i);
+    for (let t = 0; t < tri.length; t += 3) { const a = tri[t], b = tri[t + 1], c = tri[t + 2];
+      if (P[a * 3 + 1] < cutY && P[b * 3 + 1] < cutY && P[c * 3 + 1] < cutY) continue;   /* below the cut: not part of the bust */
+      for (const k of [a, b, c]) { out.push(P[k * 3], Math.max(cutY, P[k * 3 + 1]), P[k * 3 + 2]); cols.push(k0, k0, k0); } }   /* points of a cut triangle are pressed up to the cut, so the bottom is one clean plane */
+  });
+  const cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2;
+  for (let i = 0; i < out.length; i += 3) { out[i] -= cx; out[i + 1] -= cutY; out[i + 2] -= cz; }
+  let geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(out, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3)); geo = mergeVertices(geo, 2e-4); geo.computeVertexNormals();   /* joined again, so the bronze is smooth, not faceted */
+  const grp = new THREE.Group(), m = new THREE.Mesh(geo, BRONZE(true)); m.name = 'bust'; grp.add(m);
+  /* a bronze plate closing the cut */
+  const w = (box.max.x - box.min.x) * 0.5, d = (box.max.z - box.min.z) * 0.5, cap = add(new THREE.CircleGeometry(1, 28), BRONZE(), 0, 0.004, 0, grp); cap.rotation.x = PI / 2; cap.scale.set(w * 0.9, d * 0.8, 1);
+  return grp;
 }
 
-/* ---------- the monument. Origin: the middle of the star, on the ground. +z is toward the visitor. Returns the rectangles people cannot walk into. ---------- */
-export function buildShrine(parent, { x = 0, z = -4.0, signTex } = {}) {
+/* ---------- the monument. Origin: the middle of the star, on the ground. +z is toward the visitor. Returns the rectangles people cannot walk into,
+   and placeBust(group), which puts a cast bust on the ledge. ---------- */
+export function buildShrine(parent, { x = 0, z = -4.0 } = {}) {
   const g = new THREE.Group(); g.position.set(x, 0, z); parent.add(g); const walls = [];
-  const paving = mat(0xbdb4a0, 0.95, 0, { map: speckle('#bdb4a0', ['#a99f8a', '#cfc7b4', '#9c937f'], 900) }); paving.map.repeat.set(4, 4);
-  const terrazzo = mat(0xffffff, 0.45, 0, { map: speckle('#d8d3c8', ['#8f8a80', '#b9a98e', '#f2efe8', '#6f6a62', '#c9b28a'], 2400) });
-  const marble = mat(0xffffff, 0.3, 0, { map: marbleTex() });
-  const black = mat(0x141518, 0.32, 0.05), edge = mat(0x2a2b30, 0.5);
-  const wallM = mat(0xffffff, 0.9, 0, { map: speckle('#cfcabd', ['#bdb7a8', '#dcd8cc', '#aaa496'], 1600) }); wallM.map.repeat.set(3, 2);
-  const nicheM = mat(0x8f8a7e, 0.95), coping = mat(0xb8b2a4, 0.85);
-  const bronze = mat(0x9a6d3c, 0.42, 0.35, { vertexColors: true }), bronzePlain = mat(0x8c6335, 0.42, 0.35);
+  const lime = limestoneTex();
+  const coping = mat(0x55585c, 0.75), pebbles = mat(0xffffff, 0.95, 0, { map: pebbleTex() }); pebbles.map.repeat.set(5, 5);
+  const marble = mat(0xf1f0eb, 0.32), dark = mat(0x45474b, 0.6), cream = mat(0xf2efe6, 0.6), paving = mat(0xb9b4a8, 0.95);
+  /* the paved apron in front, and the grey path edge */
+  const ring = add(new THREE.CircleGeometry(5.6, 48), paving, 0, 0.012, -0.4, g); ring.rotation.x = -PI / 2;
+  /* the star: limestone sides 0.6 m high, a dark coping round the edge, pebbles inside */
+  const R = 3.6, r = 1.45, HS = 0.6;
+  const sl = lime.clone(); sl.needsUpdate = true; g.add(new THREE.Mesh(starSides(R, r, HS, 1.4), mat(0xffffff, 0.92, 0, { map: sl, side: THREE.DoubleSide })));
+  add(starGeo(R + 0.04, r + 0.016, HS, HS + 0.07, R - 0.42), coping, 0, 0, 0, g);   /* the coping band */
+  add(starGeo(R - 0.4, (R - 0.4) * r / R, 0, HS - 0.03), pebbles, 0, 0, 0, g);       /* the pebble fill */
+  /* the tomb: a dark grey base, the white marble top with a small dark cross lying on it, and the plate at its head (toward the wall) */
+  const TB = HS - 0.03;
+  add(new THREE.BoxGeometry(1.7, 0.16, 2.5), dark, 0, TB + 0.08, 0.15, g);
+  add(new THREE.BoxGeometry(1.15, 0.12, 1.95), marble, 0, TB + 0.22, 0.2, g);
+  add(new THREE.BoxGeometry(0.08, 0.035, 0.5), dark, 0, TB + 0.3, 0.32, g); add(new THREE.BoxGeometry(0.3, 0.035, 0.08), dark, 0, TB + 0.3, 0.44, g);
+  const tab = add(new THREE.BoxGeometry(1.0, 0.42, 0.12), dark, 0, TB + 0.37, -0.95, g); tab.rotation.x = -0.12;
+  const plate = add(new THREE.PlaneGeometry(0.98, 0.42), mat(0xffffff, 0.5, 0, { map: tabletTex() }), 0, 0, 0.062, tab); plate.position.z = 0.0605;
+  walls.push([-2.4, -2.9, 2.4, 1.0], [-3.5, -1.8, 3.5, -0.2]);   /* the star's body and its side points: nobody walks on the tomb (the front points are low enough to see over) */
 
-  /* the paved circle round the monument */
-  const ring = add(new THREE.CircleGeometry(5.2, 48), paving, 0, 0.012, -0.9, g); ring.rotation.x = -PI / 2;
-  /* the raised black star: a dark edge course, then the polished black top. The star is 4.9 m point to point here (its real size was not found). */
-  add(flatStar(2.55, 1.07, 0.16), edge, 0, 0.0, 0, g);
-  add(flatStar(2.45, 1.02, 0.3, 0.02), black, 0, 0.0, 0, g);
-  /* the vault at the centre: terrazzo, with a marble top set into it and a marble band round its foot */
-  const VL = 2.2, VW = 1.0, VH = 0.5, top = 0.3;
-  add(new THREE.BoxGeometry(VW + 0.16, 0.06, VL + 0.16), marble, 0, top + 0.03, 0, g);
-  add(new THREE.BoxGeometry(VW, VH, VL), terrazzo, 0, top + 0.06 + VH / 2, 0, g);
-  add(new THREE.BoxGeometry(VW - 0.18, 0.025, VL - 0.18), marble, 0, top + 0.06 + VH + 0.0125, 0, g);
-  if (signTex) add(new THREE.PlaneGeometry(0.62, 0.2), new THREE.MeshStandardMaterial({ map: signTex([['MARCUS MOSIAH GARVEY', 30], ['1887 to 1940', 26]], 512, 160), roughness: 0.6 }), 0, top + 0.06 + VH / 2, VL / 2 + 0.003, g);
-  walls.push([-1.4, -2.5, 1.4, 1.6]);   /* the star and the vault: the tips of the star are low enough to see, but nobody walks on the tomb */
+  /* the gable wall behind: straight sides and a peak, the same limestone, capped in white; 5 m wide, 1.3 m at the sides, 2.4 m at the peak */
+  const WZ = -3.1, WW = 5.0, HE = 1.3, HP = 2.4, TH = 0.4;
+  const sh = new THREE.Shape(); sh.moveTo(-WW / 2, 0); sh.lineTo(WW / 2, 0); sh.lineTo(WW / 2, HE); sh.lineTo(0, HP); sh.lineTo(-WW / 2, HE); sh.closePath();
+  const wg = new THREE.ExtrudeGeometry(sh, { depth: TH, bevelEnabled: false }); wg.translate(0, 0, -TH);
+  { const uv = wg.attributes.uv, p = wg.attributes.position; for (let i = 0; i < uv.count; i++) { const nz = Math.abs(p.getZ(i)) < 1e-3 || Math.abs(p.getZ(i) + TH) < 1e-3; uv.setXY(i, (nz ? p.getX(i) : p.getZ(i) + p.getX(i)) / 1.4, p.getY(i) / 1.4); } }
+  const wl = lime.clone(); wl.needsUpdate = true; add(wg, mat(0xffffff, 0.92, 0, { map: wl }), 0, 0, WZ + TH / 2, g);
+  const slope = Math.hypot(WW / 2, HP - HE), ang = Math.atan2(HP - HE, WW / 2);
+  for (const s of [-1, 1]) { const c = add(new THREE.BoxGeometry(slope + 0.08, 0.07, TH + 0.08), cream, s * WW / 4, (HE + HP) / 2 + 0.035, WZ, g); c.rotation.z = -s * ang;
+    add(new THREE.BoxGeometry(0.08, HE, TH + 0.08), cream, s * (WW / 2 + 0.02), HE / 2, WZ, g); }   /* white edges on the sides */
+  walls.push([-WW / 2 - 0.3, WZ - TH / 2 - 0.3, WW / 2 + 0.3, WZ + TH / 2 + 0.3]);
+  /* the dark ledge for the bust, and the small plate under it */
+  const LY = 1.42; add(new THREE.BoxGeometry(1.05, 0.06, 0.28), mat(0x222326, 0.5), 0, LY, WZ + TH / 2 + 0.14, g);
+  add(new THREE.BoxGeometry(0.22, 0.26, 0.015), mat(0xc9c9c4, 0.4, 0.4), 0, LY - 0.3, WZ + TH / 2 + 0.008, g);
+  const bustAt = new THREE.Group(); bustAt.position.set(0, LY + 0.03, WZ + TH / 2 + 0.17); g.add(bustAt);
 
-  /* the peaked and angled wall behind: two wings that meet in a point at the back and lean their tops up to a peak there, with a niche
-     in the middle for the bust. Each wing is 3.3 m long, 4.4 m high at the peak and 2.3 m at its outer end. */
-  const WZ = -3.35, WA = 0.42, LEN = 3.3, HP = 4.4, HE = 2.3, TH = 0.35;
-  for (const s of [-1, 1]) {
-    const sh = new THREE.Shape(); sh.moveTo(0, 0); sh.lineTo(s * LEN, 0); sh.lineTo(s * LEN, HE); sh.lineTo(0, HP); sh.closePath();
-    const wg = new THREE.ExtrudeGeometry(sh, { depth: TH, bevelEnabled: false }); wg.translate(0, 0, -TH);
-    const w = add(wg, wallM, 0, 0, WZ, g); w.rotation.y = -s * WA;   /* the outer ends come forward, so the wall opens toward the visitor */
-    const cl = Math.hypot(LEN, HP - HE), cp = add(new THREE.BoxGeometry(cl + 0.04, 0.08, TH + 0.08), coping, 0, 0, 0, w);   /* a coping strip along the sloping top */
-    cp.position.set(s * LEN / 2, (HP + HE) / 2 + 0.04, -TH / 2); cp.rotation.z = -s * Math.atan2(HP - HE, LEN);
-    const ex = s * Math.cos(WA) * LEN, ez = WZ + Math.sin(WA) * LEN;
-    walls.push([Math.min(0, ex) - 0.3, WZ - TH - 0.3, Math.max(0, ex) + 0.3, ez + 0.3]);
-  }
-  /* the middle: a pier in front of the point where the wings meet, with a niche, a ledge and a stone block under the bust */
-  const PW = 1.5, PD = 0.5, PH = 3.7, pz = WZ + 0.2;
-  add(new THREE.BoxGeometry(PW, PH, PD), wallM, 0, PH / 2, pz, g);
-  add(new THREE.BoxGeometry(PW + 0.1, 0.08, PD + 0.1), coping, 0, PH + 0.04, pz, g);
-  add(new THREE.BoxGeometry(1.05, 1.6, 0.02), nicheM, 0, 2.35, pz + PD / 2 + 0.001, g);   /* the shadowed back of the niche */
-  for (const s of [-1, 1]) add(new THREE.BoxGeometry(0.1, 1.7, 0.18), wallM, s * 0.575, 2.35, pz + PD / 2 + 0.09, g);   /* its sides */
-  add(new THREE.BoxGeometry(1.25, 0.1, 0.22), wallM, 0, 3.25, pz + PD / 2 + 0.1, g);   /* its head */
-  add(new THREE.BoxGeometry(1.2, 0.1, 0.42), coping, 0, 1.5, pz + PD / 2 + 0.2, g);   /* the ledge */
-  add(new THREE.BoxGeometry(0.6, 0.22, 0.38), black, 0, 1.66, pz + PD / 2 + 0.22, g);   /* a dark stone block the bust stands on */
-  const b = bust(bronze, bronzePlain); b.scale.setScalar(1.6); b.position.set(0, 1.77, pz + PD / 2 + 0.23); g.add(b);
-  walls.push([-0.9, pz - 0.4, 0.9, pz + PD / 2 + 0.45]);
+  /* the low walls off to either side, the same stone and coping as the star */
+  for (const s of [-1, 1]) { const lw = add(new THREE.BoxGeometry(3.4, 0.6, 0.35), mat(0xffffff, 0.92, 0, { map: (() => { const t = lime.clone(); t.needsUpdate = true; t.repeat.set(2.4, 0.43); return t; })() }), s * (WW / 2 + 1.7), 0.3, WZ + 0.2, g);
+    add(new THREE.BoxGeometry(3.4, 0.06, 0.45), coping, 0, 0.33, 0, lw); walls.push([s > 0 ? WW / 2 : -WW / 2 - 3.5, WZ, s > 0 ? WW / 2 + 3.5 : -WW / 2, WZ + 0.5]); }
+  /* red earth and red flowers along the two front faces of the star, and the paving slabs in the notch between the front points */
+  const bm = mat(0xffffff, 0.95, 0, { map: bedTex() });
+  const vtx = (i) => { const a = PI / 2 + i * PI / 5, k = i % 2 ? r : R; return [Math.cos(a) * k, -Math.sin(a) * k]; };   /* star corners in the ground plane (x, z) */
+  for (const i of [3, 4, 5, 6]) { const A = vtx(i), B = vtx(i + 1), dx = B[0] - A[0], dz = B[1] - A[1], L = Math.hypot(dx, dz), mx = (A[0] + B[0]) / 2, mz = (A[1] + B[1]) / 2;
+    let nx = -dz / L, nz = dx / L; if (nx * mx + nz * mz < 0) { nx = -nx; nz = -nz; }   /* the outward side */
+    const bed = add(new THREE.PlaneGeometry(L, 0.45), bm, mx + nx * 0.24, 0.02, mz + nz * 0.24, g); bed.rotation.order = 'YXZ'; bed.rotation.set(-PI / 2, Math.atan2(-dz, dx), 0);
+    for (let k = 0; k < 5; k++) { const t = (k + 0.5) / 5, fx = A[0] + dx * t + nx * 0.22, fz = A[1] + dz * t + nz * 0.22; add(new THREE.SphereGeometry(0.13, 8, 6), mat(0x2f6a2a, 0.85), fx, 0.12, fz, g).scale.y = 0.8; for (let j = 0; j < 3; j++) add(new THREE.SphereGeometry(0.035, 6, 4), mat(0xd23b2c, 0.6), fx + (j - 1) * 0.06, 0.24, fz + (j % 2) * 0.04, g); } }
+  for (const dz of [0, 0.62]) add(new THREE.BoxGeometry(0.6, 0.03, 0.55), mat(0xcfc9bb, 0.8), 0, 0.03, R * 0.38 + 0.35 + dz, g);
+  /* sago palms by the wall, and flagpoles behind it */
+  const frond = new THREE.MeshStandardMaterial({ color: 0x2f5f2b, roughness: 0.8, side: THREE.DoubleSide });
+  for (const s of [-1, 1]) { const px = s * (WW / 2 + 0.9), pz = WZ + 0.9; add(new THREE.CylinderGeometry(0.16, 0.2, 0.5, 8), mat(0x6b5a44, 0.95), px, 0.25, pz, g);
+    for (let i = 0; i < 12; i++) { const f = add(new THREE.PlaneGeometry(0.22, 1.15), frond, px, 0.55, pz, g); f.geometry.translate(0, 0.55, 0); f.rotation.set(0, i * PI / 6, 0); f.rotateX(0.95); }
+    walls.push([px - 0.6, pz - 0.6, px + 0.6, pz + 0.6]); }
+  const pole = mat(0xe8e8e4, 0.5, 0.3);
+  for (const px of [-3.4, -1.2, 1.2, 3.4]) { add(new THREE.CylinderGeometry(0.04, 0.07, 9, 8), pole, px, 4.5, WZ - 2.6, g); add(new THREE.CylinderGeometry(0.2, 0.25, 0.25, 10), mat(0x9a958a, 0.9), px, 0.12, WZ - 2.6, g); }
 
-  /* a wreath on a stand beside the tomb: wreaths are laid here every 17 August, his birthday */
-  const ws = new THREE.Group(); ws.position.set(0.68, 0.3, 0.05); ws.rotation.y = 0.7; ws.scale.setScalar(0.85); g.add(ws);
+  /* a wreath on a stand at the foot of the star: wreaths are laid here every 17 August, his birthday */
+  const ws = new THREE.Group(); ws.position.set(1.15, 0, 2.55); ws.rotation.y = -0.35; ws.scale.setScalar(0.85); g.add(ws);
   const easel = mat(0x3a2a1d, 0.8);
   for (const s of [-1, 1]) { const l = add(new THREE.CylinderGeometry(0.015, 0.015, 1.25, 6), easel, s * 0.22, 0.6, 0, ws); l.rotation.z = s * 0.16; l.rotation.x = 0.12; }
   const back = add(new THREE.CylinderGeometry(0.015, 0.015, 1.2, 6), easel, 0, 0.58, -0.17, ws); back.rotation.x = -0.25;
   const wr = add(new THREE.TorusGeometry(0.3, 0.075, 10, 28), mat(0x2f5e2c, 0.85), 0, 1.0, 0.04, ws); wr.rotation.x = -0.12;
   for (let i = 0; i < 14; i++) { const a = i / 14 * PI * 2; add(new THREE.IcosahedronGeometry(0.045, 0), mat(i % 3 ? 0xd9453a : 0xf2c53d, 0.7), Math.cos(a) * 0.3, 1.0 + Math.sin(a) * 0.3, 0.1, ws); }
   const sash = add(new THREE.BoxGeometry(0.1, 0.36, 0.01), mat(0x1d1d1d, 0.7), 0, 0.72, 0.1, ws); sash.rotation.x = -0.12;
-  return { group: g, walls: walls.map(([x0, z0, x1, z1]) => [x0 + x, z0 + z, x1 + x, z1 + z]) };
+
+  const placeBust = (b, size = 1.12) => { bustAt.clear(); b.scale.setScalar(size); bustAt.add(b); };
+  return { group: g, bustAt, placeBust, walls: walls.map(([x0, z0, x1, z1]) => [x0 + x, z0 + z, x1 + x, z1 + z]) };
 }
