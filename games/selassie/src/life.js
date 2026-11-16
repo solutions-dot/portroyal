@@ -117,13 +117,13 @@ export function enrichYard(Q) {
 export function enrichMemory(Q) {
   // the 1930 street: half the passers-by keep the period recipe, the rest vary
   for (const s of Q.ambient) if (Number(s.id.replace("memory", "")) % 2) delete s.base;
-  put(Q, cart(2.2, 1.2), -3.4, 19.4, Math.PI, 3.4, 1.4);
-  put(Q, marketBasket(), -6.1, 1.3, 0, 0.5, 0.5);
-  put(Q, yamBasket(), -6.2, 2.1, 0.4, 0.55, 0.55);
-  put(Q, marketBasket(0x9a7a40), -6.0, 2.9, 0.7, 0.5, 0.5);
-  put(Q, sack(), -2.6, 17.9, 0.2, 0.55, 0.55);
-  put(Q, sack(0xa08a5a), -3.3, 17.8, -0.4, 0.55, 0.55);
-  put(Q, crate(0.55), -4.1, 17.9, 0.1, 0.6, 0.6);
+  put(Q, cart(2.2, 1.2), -2.6, 19.4, Math.PI, 3.4, 1.4);
+  put(Q, marketBasket(), -5.55, 1.3, 0, 0.5, 0.5);
+  put(Q, yamBasket(), -5.55, 2.1, 0.4, 0.55, 0.55);
+  put(Q, marketBasket(0x9a7a40), -5.5, 2.9, 0.7, 0.5, 0.5);
+  put(Q, sack(), -2.0, 17.9, 0.2, 0.55, 0.55);
+  put(Q, sack(0xa08a5a), -2.7, 17.8, -0.4, 0.55, 0.55);
+  put(Q, crate(0.55), -3.5, 17.9, 0.1, 0.6, 0.6);
   put(Q, bench(1.6), -6.2, -9.0, Math.PI / 2, 0.45, 1.7);
   const bunch = bananaBunch(0.8);
   bunch.position.y = 0.83;
