@@ -145,6 +145,19 @@ Port Royal's conversation, journal, chapter and save systems are copied into `ga
 - Sources to start from: the Marcus Garvey and UNIA Papers (UCLA), the US National Archives, the New York Public Library's UNIA collection, PBS American Experience, the Library of Congress picture collection, the National Library of Jamaica. Public-domain photographs are reference only, never textures.
 - The red, black and green flag must not appear before August 1920.
 
+### Marcus Garvey's real words in the game (owner, 16 November 2026)
+
+Marcus Garvey says only these words, exactly, in quotation marks (lines marked `sourced: true`; `tools/lint_content.mjs` checks that each is written here word for word). Nothing is paraphrased or added. Amy Ashwood and Amy Jacques Garvey still have no words: no sourced lines that fit their scenes were found.
+
+| Words in the game | Where and when | Source |
+|---|---|---|
+| If anything praiseworthy is to be done, | New York, July 1921: his gramophone record "Explanation of the Objects of the Universal Negro Improvement Association" (the full sentence: "If anything praiseworthy is to be done, it must be done through unity, and it is for that reason that the Universal Negro Improvement Association calls upon every Negro in the United States to rally to this standard.") | Transcript by the Marcus Garvey and UNIA Papers Project, UCLA, via History Matters (historymatters.gmu.edu/d/5124) and The American Yawp Reader; the recording is listed in the UCLA project's Sound Library |
+| it must be done through unity | the same sentence, shown in a second box | the same |
+| what other men have done, Negroes can do. | the same record ("... then you must acknowledge that what other men have done, Negroes can do.") | the same |
+| none but ourselves can free the mind. | Menelik Hall, Sydney, Nova Scotia, October 1937 (quoted by the fictional guide in chapter 8). Reports give the whole sentence slightly differently ("whilst others might free the body, none but ourselves can free the mind"); only the part every report shares is used | The Canadian Encyclopedia, "Black Pride: from Garvey to Marley"; Jamaica Gleaner, "The Marcus Garvey Story, part IV", 7 October 2023 |
+
+In chapter 7 the record plays on a gramophone at Amy Jacques Garvey's desk in 1925, four years after it was made, so no words come before the date he said them. Checked and not used: "Up, you mighty race, you can accomplish what you will" (often linked to the 1921 record, but no transcript with that wording was found), "A people without the knowledge of their past history, origin and culture is like a tree without roots" (not reliably sourced), "One God! One Aim! One Destiny!" (the UNIA motto, but the year it was adopted was not found).
+
 ### Checked in a first research pass (13 Nov 2026)
 
 | Fact | Status |
