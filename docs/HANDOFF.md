@@ -52,3 +52,15 @@ Read this first if you are picking up the big people, animation and gameplay sta
 9. **Last**: richer, lusher visuals within budget with quality tiers (people, plants, buildings), realistic period vehicles researched (Eventide 1980 buses, the owner's "jolly bus"; Tivoli 2010 cars and military and police vehicles), measured with the budget check.
 
 Animation clips still wanted (owner downloads from Mixamo or ActionForge; ActionForge exports with the Mixamo skeleton, CC0): a standing prayer, arms crossed, hands behind back, sweeping, hammering, hoeing, carrying a bucket, child hops and skips, washing, a seller calling out. Several owner downloads were exact duplicates (see `docs/PIPELINE.md`).
+
+## Session 16 Nov 2026: where things stand (written when usage ran low)
+
+On main (PR #95): engine/guide.js ground arrow in every game (Tivoli too), engine/marks.js talk mark height (all but Selassie and Windrush), fainter joystick.
+
+Helper branches still being worked on, none merged yet. Check each for screenshots and 0 audit issues, then merge:
+- `claude/sw-ui-parity`: Selassie and Windrush interface like the other games (tip only at start, journal, options, talk mark not "!", marks.js height, fainter stick).
+- `claude/selassie-places`: varied chapter places for the visit day (yard was reused for chapters 1, 2, 6).
+- `claude/selassie-likeness`: face, beard, DC-6 tail, varied actions, menu image.
+- `claude/windrush-review`: full review, ship, docks, animated water, its own Jamaican home (it copied Selassie's yard; owner says no shared places).
+- `claude/kendal-par`, `claude/garvey-par` (also: hats must hang over pegs, add an audit check), `claude/nanny-par`, `claude/port-royal-par`.
+Still to do: par wave 2 (Bog Walk, Eventide, Melissa, Tivoli), re-run ?test=all for Garvey, Nanny, Bog Walk (timed out on a busy machine), then the full 10-game suite and one PR to main.
