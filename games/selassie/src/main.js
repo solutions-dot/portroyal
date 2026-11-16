@@ -31,6 +31,7 @@ import { snapMeshes } from "../../../engine/audit.js";
 import { makeSky, G, batchStatic, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
 import { CAST, crowdLook } from "./cast.js";
+import { actions } from "./life.js";
 import * as P from "./props.js";
 import { STEPS, ITEMS, TASK_IDS } from "./steps.js";
 import {
@@ -382,6 +383,7 @@ async function buildWorld(id) {
     keepOff: Q.keepOff,
     phone,
     seed: 1966,
+    ...(Q.id === "airport" ? CROWD_DETAIL : {}),
   });
   for (const s of extras) {
     if (s.behaviour.kind === "watch" && s.behaviour.at)
@@ -402,20 +404,24 @@ async function buildWorld(id) {
       });
       n.m.userData.held = [{ obj, bone: "RightHand", label: "welcome" }];
     }
-    Q.life.add(n, { walk: "Walk", ...s.behaviour });
+    Q.life.add(n, actions(n, s.behaviour, { welcome: Q.id === "airport" }));
   }
   for (const n of Q.people.filter((n) => !n.historical))
-    Q.familyLife.add(n, {
-      kind: "watch",
-      at: [n.x + 1, n.z + 3],
-      react: ["Point", "Wave"],
-      stay: true,
-    });
+    Q.familyLife.add(
+      n,
+      actions(n, {
+        kind: "watch",
+        at: [n.x + 1, n.z + 3],
+        react: ["Point", "Wave"],
+        stay: true,
+      }),
+    );
   Q.roofLife = createAmbient({
     walls: [],
     bounds: { x0: -31, z0: 35, x1: 31, z1: 43 },
     phone,
     seed: 2121,
+    ...CROWD_DETAIL,
   });
   Q.arrivalLife = createAmbient({
     walls: [
@@ -425,6 +431,7 @@ async function buildWorld(id) {
     bounds: { x0: -35, z0: -27, x1: 40, z1: -12 },
     phone,
     seed: 6604,
+    ...CROWD_DETAIL,
   });
   for (const s of rooftops) {
     if (s.behaviour.at)
@@ -457,11 +464,12 @@ async function buildWorld(id) {
       });
       n.m.userData.held = [{ obj, bone: "RightHand", label: "welcome" }];
     }
-    (s.zone === "roof" ? Q.roofLife : Q.arrivalLife).add(n, {
-      walk: "Walk",
-      ...s.behaviour,
-    });
+    (s.zone === "roof" ? Q.roofLife : Q.arrivalLife).add(n, actions(n, s.behaviour, { welcome: true }));
   }
+  // children who play chase one another: the friend is named in the place, and found here
+  for (const n of Q.extras) if (n.amb?.spec.chaseId) n.amb.spec.chase = Q.extras.find((o) => o.id === n.amb.spec.chaseId);
+  // everyone who watches the aircraft keeps the spot they were given, so the cinematic can turn them to it and back
+  for (const n of Q.extras) if (n.amb?.spec.at) n.at0 = n.amb.spec.at;
   Q.roofLife.ready();
   Q.arrivalLife.ready();
   Q.life.ready();
@@ -1333,6 +1341,19 @@ function titleCamera(now, dt) {
   camera.position.set(9.9 + Math.sin(t * 1.3) * 1.5, 2.45 + Math.sin(t * 0.9) * 0.18, -19.4 + Math.cos(t * 1.3) * 0.9);
   camera.lookAt(tall ? 3.6 : 1.9, tall ? 3.2 : 3.75, -29.4);
 }
+/* the welcome on the apron is lively at full detail: more people get moving heads and an update every frame (phones keep fewer) */
+const CROWD_DETAIL = phone ? { full: 14, maxFull: 12, mid: 34 } : { full: 40, maxFull: 40, mid: 60 };
+/* during the arrival everyone who watches looks at the aircraft as it lands and taxis in, then at the steps once it stands there */
+const _pw = new THREE.Vector3();
+function aimCrowd(Q) {
+  const p = Q.props.plane,
+    moving = DIR.on && DIR.time < 32 && p?.visible;
+  if (moving) p.getWorldPosition(_pw);
+  for (const n of Q.extras) {
+    if (!n.amb || !n.at0 || n.amb.kind !== "watch") continue;
+    n.amb.spec.at = moving ? [_pw.x, _pw.z] : n.at0;
+  }
+}
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
@@ -1342,22 +1363,28 @@ function frame(now) {
   if (!Q) return;
   move(dt);
   const frozen = busy || (openPanel() && $("dialogue").hidden) || DIR.paused;
+  // In the cinematic and behind the title the crowd is seen from the camera, not from Ruth: detail (moving heads, every frame
+  // animated) goes to the people near the camera, and the welcome turns to follow the aircraft until it stands at the steps.
+  const show = Q.id === "airport" && (DIR.on || !S.started),
+    cx = show ? camera.position.x : S.x,
+    cz = show ? camera.position.z : S.z;
+  if (Q.id === "airport") aimCrowd(Q);
   Q.life.tick(frozen ? 0 : dt, {
-    px: S.x,
-    pz: S.z,
+    px: show ? cx : S.x,
+    pz: show ? cz : S.z,
     talking,
     story: Q.people.filter((n) => story.marked(n.id)),
     view: { x: camera.position.x, z: camera.position.z, yaw: S.yaw },
   });
   Q.arrivalLife?.tick(frozen ? 0 : dt, {
-    px: S.x,
-    pz: S.z,
+    px: cx,
+    pz: cz,
     story: [],
     view: { x: camera.position.x, z: camera.position.z, yaw: S.yaw },
   });
   Q.roofLife?.tick(frozen ? 0 : dt, {
-    px: S.x,
-    pz: S.z,
+    px: cx,
+    pz: cz,
     story: [],
     view: { x: camera.position.x, z: camera.position.z, yaw: S.yaw },
   });
