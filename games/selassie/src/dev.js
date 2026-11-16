@@ -306,6 +306,11 @@ export async function dev(A) {
     await go(10);
     closeAll();
   }
+  if (q.get("test") === "audit") {
+    const { vehicleTrimCheck } = await import("./kingston-vehicles.js");
+    const v = vehicleTrimCheck();
+    results.push(`VEHICLES ${v.length}`, ...v);
+  }
   if (q.get("test") === "audit")
     for (const Q of Object.values(worlds)) {
       const npcs = [...Q.people, ...Q.extras].map((n) => ({

@@ -65,6 +65,7 @@ function slab(g, pts, width, mat, bevel = 0.06, z = 0) {
 }
 function bx(g, mat, w, h, d, x, y, z, rz = 0, ry = 0) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.userData.trim = true;
   m.position.set(x, y, z);
   m.rotation.set(0, ry, rz);
   g.add(m);
@@ -80,6 +81,7 @@ function cyl(g, mat, r0, r1, h, x, y, z, axis = "z", seg = 14) {
 }
 /* a wheel: a rounded tyre, a dark wheel, a chrome hubcap; axle along z, outer face toward side s */
 function wheel(g, r, x, z, s, wide = 0.2, cap = 0.55) {
+  (g.userData.wheels = g.userData.wheels || []).push({ x, y: r, z, r, w: wide * 1.2 });
   const t = new THREE.Mesh(new THREE.TorusGeometry(r - wide * 0.45, wide * 0.5, 8, 20), TYRE);
   t.scale.z = 1.2;
   t.position.set(x, r, z);
@@ -110,6 +112,49 @@ function plate(g, text, x, y, z, face = 1, w = 0.42, h = 0.12) {
   g.add(p);
   bx(g, DARK, 0.02, h + 0.02, w + 0.02, x - face * 0.012, y, z);
 }
+function strip(g, mat, x0, x1, y, z, arches, h = 0.03, d = 0.012) {
+  let cuts = arches
+    .filter(([cx, ar, cy = 0.36]) => Math.abs(y - cy) < ar)
+    .map(([cx, ar, cy = 0.36]) => {
+      const half = Math.sqrt(ar * ar - (y - cy) ** 2) + 0.04;
+      return [cx - half, cx + half];
+    })
+    .sort((a, b) => a[0] - b[0]);
+  let a = x0;
+  for (const [c0, c1] of [...cuts, [x1, x1]]) {
+    const b = Math.min(c0, x1);
+    if (b - a > 0.05) bx(g, mat, b - a, h, d, (a + b) / 2, y, z);
+    a = Math.max(a, c1);
+  }
+}
+/* dev: every trim piece (strips, lines, bumpers, steps, rails) that cuts into a wheel. Returns lines like "car: a trim piece crosses a wheel at (1.4, 0.7)". */
+export function vehicleTrimCheck() {
+  const out = [],
+    v = new THREE.Vector3(),
+    b = new THREE.Box3();
+  for (const [name, g] of [
+    ["bus", cityBus()],
+    ["car", car()],
+    ["truck", truck()],
+  ]) {
+    g.updateMatrixWorld(true);
+    g.traverse((m) => {
+      if (!m.isMesh || !m.userData.trim) return;
+      b.setFromObject(m);
+      for (const w of g.userData.wheels || []) {
+        const inX = b.max.x > w.x - w.r * 0.92 && b.min.x < w.x + w.r * 0.92,
+          inY = b.max.y > 0.04 && b.min.y < w.y + w.r * 0.92,
+          inZ = b.max.z > w.z - w.w / 2 && b.min.z < w.z + w.w / 2;
+        if (inX && inY && inZ) {
+          b.getCenter(v);
+          out.push(`${name}: a trim piece crosses a wheel at (${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)})`);
+          break;
+        }
+      }
+    });
+  }
+  return out;
+}
 /* a flat pane along a sloped line of the profile (windscreen, rear window), `w` wide, a hair outside it */
 function slopePane(g, mat, x0, y0, x1, y1, w, off = 0.015) {
   const L = Math.hypot(x1 - x0, y1 - y0),
@@ -139,7 +184,7 @@ export function cityBus(dest = "PALISADOES", route = "SP", reg = "J 4127") {
   slab(g, [[-X + 0.15, 0.36], [-X, 0.55], [-X, sill], [X - 0.05, sill], [X, 1.2], [X, 0.55], [X - 0.15, 0.36], [fa + r + 0.1, 0.36], { arc: [fa, 0.5, r + 0.1, 0, Math.PI] }, [ra + r + 0.1, 0.36], { arc: [ra, 0.5, r + 0.1, 0, Math.PI] }], W, green, 0.08);
   // a chrome strip at the waist, and a moulding along the skirt
   bx(g, CHROME, L - 0.1, 0.05, W + 0.02, 0, sill + 0.02, 0);
-  bx(g, CHROME, L - 0.4, 0.03, W + 0.02, 0, 0.62, 0).scale.x = 1;
+  for (const s of [-1, 1]) strip(g, CHROME, -X + 0.2, X - 0.2, 0.62, s * (W / 2 + 0.005), [[fa, r + 0.1, 0.5], [ra, r + 0.1, 0.5]]);
   // the roof: rounded edges, a gentle dome at the front
   slab(g, [[-X + 0.02, eave], [X - 0.02, eave], [X - 0.05, eave + 0.22], { q: [X - 0.3, eave + 0.48, X - 1.0, eave + 0.5] }, [-X + 0.7, eave + 0.5], { q: [-X + 0.05, eave + 0.46, -X + 0.02, eave + 0.2] }], W, grey, 0.14);
   bx(g, DARK, L - 0.3, 0.03, W + 0.03, 0, eave + 0.06, 0); // rain gutters along the eaves
@@ -148,18 +193,25 @@ export function cityBus(dest = "PALISADOES", route = "SP", reg = "J 4127") {
   for (const s of [-1, 1]) {
     for (let i = 0; i <= 8; i++) {
       const x = -X + 0.45 + i * bay;
-      if (s < 0 && x > X - 2.1 && x < X - 0.6) continue;
+      if (s < 0 && x > X - 1.2 && x < X - 0.15) continue; // the entrance
       bx(g, grey, 0.11, eave - sill, 0.1, x, (sill + eave) / 2, s * (W / 2 - 0.05));
     }
     for (let i = 0; i < 8; i++) {
       const x = -X + 0.45 + (i + 0.5) * bay;
-      if (s < 0 && x > X - 2.2) continue;
+      if (s < 0 && x + bay / 2 > X - 1.12) continue;
       bx(g, see, bay - 0.1, eave - sill - 0.08, 0.012, x, (sill + eave) / 2, s * (W / 2 - 0.06));
       bx(g, DARK, bay - 0.1, 0.03, 0.015, x, eave - 0.32, s * (W / 2 - 0.055)); // the sliding vent's frame
     }
   }
+  // on the left, a narrow window between the last full window and the entrance, and the pillar behind the door
+  {
+    const x0 = -X + 0.45 + 7 * bay + 0.05,
+      x1 = X - 1.16;
+    bx(g, see, x1 - x0, eave - sill - 0.08, 0.012, (x0 + x1) / 2, (sill + eave) / 2, -(W / 2 - 0.06));
+    bx(g, grey, 0.1, eave - sill, 0.1, x1 + 0.03, (sill + eave) / 2, -(W / 2 - 0.05));
+  }
   // the entrance: a two-leaf glazed folding door, its frame and a step (front, left side)
-  const dx = X - 1.35;
+  const dx = X - 0.68; // the entrance is ahead of the front wheel, as on underfloor-engined buses
   for (const k of [-0.22, 0.22]) {
     bx(g, see, 0.4, eave - 0.58, 0.012, dx + k, (eave + 0.5) / 2 + 0.04, -W / 2 - 0.012);
     bx(g, CHROME, 0.03, eave - 0.5, 0.02, dx + k + 0.2, (eave + 0.5) / 2 + 0.04, -W / 2 - 0.015);
@@ -220,7 +272,7 @@ export function cityBus(dest = "PALISADOES", route = "SP", reg = "J 4127") {
   for (let i = 0; i < 7; i++) {
     const x = -X + 1.0 + i * 1.0;
     for (const s of [-1, 1]) {
-      if (s < 0 && x > X - 2.4) continue;
+      if (s < 0 && x > X - 1.6) continue;
       bx(g, SEAT, 0.12, 0.62, 0.86, x - 0.2, sill + 0.28, s * 0.66);
       bx(g, CHROME, 0.04, 0.04, 0.86, x - 0.2, sill + 0.6, s * 0.66);
     }
@@ -262,9 +314,9 @@ export function car(colour = 0x7d2f2a, reg = "P 2318") {
     }
     bx(g, CHROME, 2.1, 0.025, 0.02, -0.15, 0.985, s * ((W - 0.22) / 2 + 0.02));
     // door lines, handles, a chrome side strip
-    for (const x of [0.92, -0.29, -1.2]) bx(g, DARK, 0.012, 0.56, 0.01, x, 0.66, s * (W / 2 + 0.003));
+    for (const x of [0.86, -0.29, -0.82]) bx(g, DARK, 0.012, 0.52, 0.01, x, 0.68, s * (W / 2 + 0.003));
     for (const x of [0.62, -0.5]) bx(g, CHROME, 0.12, 0.025, 0.03, x, 0.86, s * (W / 2 + 0.01));
-    bx(g, CHROME, 3.6, 0.025, 0.012, -0.1, 0.72, s * (W / 2 + 0.004));
+    strip(g, CHROME, -2.0, 2.0, 0.72, s * (W / 2 + 0.004), [[fa, 0.44], [ra, 0.44]], 0.025);
     // a mirror on the front wing
     cyl(g, CHROME, 0.012, 0.012, 0.12, 1.7, 0.98, s * 0.6, "y", 6);
     cyl(g, CHROME, 0.045, 0.045, 0.02, 1.7, 1.06, s * 0.6, "x", 10);
@@ -306,7 +358,7 @@ export function truck(colour = 0x5a3f2a, reg = "M 7752") {
     wood = solid(0x86643f, 0.95),
     woodDk = solid(0x5d4127, 0.95);
   // chassis rails
-  for (const s of [-1, 1]) bx(g, DARK, 4.9, 0.18, 0.12, -0.2, 0.62, s * 0.45);
+  for (const s of [-1, 1]) bx(g, DARK, 4.9, 0.18, 0.12, -0.2, 0.62, s * 0.34);
   // the cab: rounded roof and back, a flat windscreen in two panes
   slab(g, [[0.35, 0.95], [0.35, 2.15], { q: [0.38, 2.32, 0.6, 2.33] }, [1.45, 2.33], { q: [1.6, 2.32, 1.62, 2.2] }, [1.66, 1.5], [1.66, 0.95]], 1.9, body, 0.1);
   for (const s of [-1, 1]) {
@@ -333,15 +385,17 @@ export function truck(colour = 0x5a3f2a, reg = "M 7752") {
   plate(g, reg, 2.8, 0.62, 0, 1, 0.38, 0.11);
   // the body: a plank deck on cross-bearers, stake sides with three rails, a tailboard
   bx(g, wood, 3.3, 0.1, W, -1.25, 1.02, 0);
+  for (let i = 0; i < 5; i++) bx(g, woodDk, 0.1, 0.26, 0.8, -2.75 + i * 0.75, 0.84, 0); // cross-bearers on the chassis, between the rear wheels
+  bx(g, DARK, 0.1, 0.16, W - 0.04, -2.84, 0.85, 0); // the rear crossmember that carries the lamps and the plate
   for (const s of [-1, 1]) {
     for (let i = 0; i < 5; i++) bx(g, woodDk, 0.08, 0.9, 0.08, -2.82 + i * 0.78, 1.5, s * (W / 2 - 0.04));
     for (const y of [1.25, 1.55, 1.85]) bx(g, wood, 3.3, 0.12, 0.04, -1.25, y, s * (W / 2 - 0.01));
   }
   for (const y of [1.25, 1.55, 1.85]) bx(g, wood, 0.04, 0.12, W, -2.89, y, 0);
   bx(g, wood, 0.04, 0.9, W - 0.2, 0.37, 1.5, 0);
-  plate(g, reg, -2.93, 0.95, 0, -1, 0.38, 0.11);
+  plate(g, reg, -2.92, 0.83, 0, -1, 0.34, 0.1);
   for (const s of [-1, 1]) {
-    cyl(g, TAIL, 0.06, 0.06, 0.04, -2.9, 0.85, s * 0.85, "x");
+    cyl(g, TAIL, 0.06, 0.06, 0.04, -2.9, 0.85, s * 0.8, "x");
     wheel(g, r, fa, s * (W / 2 - 0.2), s, 0.22);
     wheel(g, r, ra, s * (W / 2 - 0.2), s, 0.22);
     wheel(g, r, ra, s * (W / 2 - 0.44), s, 0.22, 0.3);
