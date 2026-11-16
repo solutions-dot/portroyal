@@ -599,7 +599,7 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = fals
 function unlock(id) { if (state.unlocked.includes(id)) return; state.unlocked.push(id); uiSound('page'); saveGame(); const j = JOURNAL.find((p) => p.id === id); $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; toast('Journal: ' + j.title); }
 let goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer);
-  goalTimer = setTimeout(() => { el.textContent = 'Goal'; el.classList.add('folded'); el.setAttribute('aria-expanded', 'false'); }, 6500);
+  /* Keep the next task visible until the player completes it. */
   if (withControls) showHint(); }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
 $('goal').onclick = () => showGoal(true);
