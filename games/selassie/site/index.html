@@ -1211,6 +1211,17 @@
       body:has(#journal:not([hidden])) :is(#goal, #topr, #hint, #nudge, #talk) {
         visibility: hidden;
       }
+      /* the narration bar lives outside the HUD and above it (48): with no words it is not drawn at all, and an open
+         panel (journal, chapters, credits, a card) hides it, so its dark bar never lies across the panel's footer */
+      #sub:empty {
+        display: none;
+      }
+      body:has(
+          :is(#journal, #chapters, #credits, #card):not([hidden])
+        )
+        :is(#sub, #holdwrap) {
+        visibility: hidden;
+      }
       body:has(#dialogue:not([hidden])) :is(#hint, #goal, #nudge) {
         visibility: hidden;
       }
