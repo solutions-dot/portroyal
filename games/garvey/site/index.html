@@ -60,9 +60,9 @@ button{font:inherit;color:inherit}
 #talk{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);box-shadow:0 6px 22px rgba(0,0,0,.45);font-size:1.1rem}#talk.icon{width:76px;height:76px;min-height:76px;border-radius:50%;padding:0;display:grid;place-items:center;box-shadow:0 0 0 4px rgba(243,194,90,.35),0 6px 22px rgba(0,0,0,.45);animation:talkpulse 1.6s ease-in-out infinite}#talk.icon .who{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:6px;white-space:nowrap;font-size:.85rem;font-weight:700;color:var(--paper);text-shadow:0 1px 3px rgba(0,0,0,.8);text-transform:capitalize}.tbub{position:fixed;transform:translate(-50%,-100%);width:56px;height:56px;border-radius:50%;border:0;background:var(--brass);color:var(--brass-ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 0 0 4px rgba(243,194,90,.35),0 0 26px 8px rgba(255,205,110,.45),0 6px 18px rgba(0,0,0,.4);animation:talkpulse 1.6s ease-in-out infinite;z-index:5;padding:0}.tbub[hidden]{display:none}.tbub .who{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;white-space:nowrap;font-size:.85rem;font-weight:700;color:var(--paper);text-shadow:0 1px 3px rgba(0,0,0,.85);text-transform:capitalize}@media (prefers-reduced-motion:reduce){.tbub{animation:none}}
 @keyframes talkpulse{50%{box-shadow:0 0 0 9px rgba(243,194,90,.15),0 6px 22px rgba(0,0,0,.45)}}@media (prefers-reduced-motion:reduce){#talk.icon{animation:none}}
 #toast{position:absolute;left:50%;top:auto;bottom:128px;transform:translateX(-50%);background:var(--paper);color:var(--paper-ink);padding:.5em 1em;border-radius:6px;font-weight:700;font-size:.9rem;max-width:calc(100% - 32px);text-align:center;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(239,231,211,.55);background:rgba(16,34,43,.3);pointer-events:none}
-#nub{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;background:var(--brass);transform:translate(-50%,-50%)}
-#stick.rest{opacity:.45}#stick.rest #nub{opacity:.7}
+#stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(239,231,211,.38);background:rgba(16,34,43,.2);pointer-events:none}
+#nub{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;background:var(--brass);opacity:.78;transform:translate(-50%,-50%)}
+#stick.rest{opacity:.3}#stick.rest #nub{opacity:.55}
 
 #dialogue{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(40rem,calc(100% - 32px));background:rgba(16,34,43,.95);border-top:4px solid var(--brass);border-radius:6px;padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.7rem}
 #who{font-family:var(--display);font-size:1.25rem;letter-spacing:.08em;color:var(--brass);margin:0}
@@ -70,7 +70,7 @@ button{font:inherit;color:inherit}
 #line{margin:0;font-size:1.1rem;max-width:65ch}
 #dialogue.narr #line{font-style:italic}
 body.talking #goal,body.talking #hint,body.talking #toast,body.carding #goal,body.carding #hint{display:none}   /* nothing covers a dialogue box or a card */
-@media (max-height:500px){body.talking #topr{display:none}#place{top:55%}}#who[hidden]{display:none}
+@media (max-height:500px){body.talking #topr{display:none}body #place{top:55%}}#who[hidden]{display:none}
 #choices{display:flex;flex-direction:column;gap:.5rem}
 #next{align-self:flex-end}
 
@@ -172,6 +172,17 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 .pc[data-c=red]{background:#b3262b;color:#fff;box-shadow:0 3px 0 #6e1519}.pc[data-c=black]{background:#14141a;color:#fff;box-shadow:0 3px 0 #000;outline:1px solid #5a5a62}.pc[data-c=green]{background:#1f7a3d;color:#fff;box-shadow:0 3px 0 #124a25}
 #inrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .chfoot{flex-wrap:wrap}
+
+/* Keep the three chapter actions together on phone-sized screens. */
+#chapters .chfoot, #chapters .book > footer:has(#chteacher) {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:clamp(5px,1.4vw,12px); align-items:stretch;
+}
+#chapters footer:has(#chteacher) > .btn {
+  min-width:0; width:100%; margin:0; padding:.65em .25em;
+  font-size:clamp(.7rem,2.8vw,.95rem); line-height:1.2;
+  white-space:nowrap; text-align:center;
+}
 </style>
 <link rel="stylesheet" href="title.css">
 </head>
@@ -323,7 +334,7 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
     <p class="chnote">Each chapter opens when you finish the one before it.</p>
     <p id="chteachernote" class="chnote" hidden>All chapters are open for teaching.</p>
     <ol id="chlist" class="chlist"></ol>
-    <footer class="chfoot"><button id="chteacher" class="btn ghost" aria-pressed="false">Teacher unlock</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
+    <footer class="chfoot"><button id="chteacher" class="btn ghost" aria-pressed="false">Unlock All</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Restart</button></footer>
   </div>
 </section>
 <script src="app.js"></script>

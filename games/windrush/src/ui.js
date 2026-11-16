@@ -95,11 +95,19 @@ export function journal(ids, memory, read) {
       const b = document.createElement("button");
       b.className = "tab";
       b.textContent = p.title;
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
       b.onclick = () => page(p);
       return b;
     }),
   );
   function page(p) {
+    for (const tab of $("jtabs").querySelectorAll(".tab")) {
+      const selected = tab.textContent === p.title;
+      tab.classList.toggle("on", selected);
+      tab.setAttribute("aria-pressed", String(selected));
+    }
+    $("jpage").scrollTop = 0;
     $("jpage").replaceChildren();
     const h = document.createElement("h3");
     h.textContent = p.title;
@@ -142,7 +150,13 @@ export function chapters(best, teacher, choose, toggle, reset) {
       const el = document.createElement("li"),
         b = document.createElement("button");
       b.className = "chbtn";
-      b.textContent = `${i + 1}. ${c.name} · ${c.year}`;
+      const year = document.createElement("span"), name = document.createElement("span"), status = document.createElement("span");
+      year.className = "yr"; year.textContent = c.year;
+      name.className = "nm"; name.textContent = `${i + 1}. ${c.name}`;
+      status.className = "st"; status.textContent = i < best ? "Done" : i === best ? "Play" : "Locked";
+      if (teacher && i > best) status.textContent = "Play";
+      b.classList.toggle("done", i < best);
+      b.append(year, name, status);
       b.disabled = !teacher && i > best;
       b.onclick = () => {
         hide("chapters");

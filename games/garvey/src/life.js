@@ -53,7 +53,7 @@ export function actFor(n, stage) {
     engineer: { kind: 'work', clips: ['WipeSweat', 'LookAround', 'PickUp'], work: [3, 6], rest: [2, 4], face: at(5, 5), idles },
     friend: { kind: 'watch', at: at(0, 6), react: ['LookAround'], idles },
     docker1: { kind: 'work', clips: ['PickUp', 'WipeSweat', 'LookAround'], work: [3, 6], rest: [2, 4], idles },
-    docker2: { kind: 'wander', walk: 'Walk', area: [-8.5, -3.2, -5.5, 0], pause: [3, 7], idles },
+    docker2: { kind: 'work', clips: ['PickUp', 'LookAround', 'WipeSweat'], work: [3, 6], rest: [2, 4], face: at(-6.8, -3.05), idles },   /* by the sacks (seaman1919's Walk slid 6.7 cm a loop) */
     /* chapter 6: Liberty Hall, August 1920 */
     garvey6: stage >= 53 ? { kind: 'work', clips: ['Speech', 'TalkM1', 'TalkM2'], work: [5, 9], rest: [0.6, 1.4], idles }
       : { kind: 'watch', at: at(0, 3), react: ['WaveSlow', 'Nod'], idles },

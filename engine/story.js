@@ -4,7 +4,7 @@
      1. Only the people who push the story forward are the point of focus. In each step only that step's story people get the gold talk mark
         and the arrow. Anyone else can be talked to for a short flavour line, but never moves the story on and never sends you to someone else.
         A person needed later is flavour until their step. Where order does not matter, any order works and the goal shows a count ("2 of 3").
-     2. The hint arrow shows 2.5 s after a new goal (5 s for an explore step), even while the child walks. It points only at the step's
+     2. The hint arrow shows 2.5 s after a new goal, including explore steps, even while the child walks. It points only at the step's
         unfinished needs (never at optional actions), nearest first, and moves to the next need at once when one is done.
      3. Every required task shows on screen: carry() draws the thing in the player's hand, place() leaves it where it goes, a "do" need has a
         visible change registered, and counts show in the goal.
@@ -16,7 +16,7 @@
                 go: ['lamp'] },                   places to walk to (arriving is the visible change)
        story: ['gran6', 'clive'],                 who moves this step (default: needs.talk). Everyone else is flavour in this step.
        any: true,                                 any order (the default). false: the needs are done in the listed order, one at a time.
-       explore: false,                            true: a look-around step, so the arrow waits 5 s instead of 2.5 s
+       explore: false,                            true: a look-around step (same 2.5 s guidance delay)
        optional: ['tree'],                        things that can be done but are never needed and never get the arrow
        at: { lamp: [12, -4] },                    where a need is, when the game's where() does not know it (a point, or a function)
        shows: { water: (n, of) => ... },          the visible change for each "do" need (or register it with story.shows(id, fn))
@@ -48,7 +48,7 @@
               route(target, player, stage) -> [x, z] or [x, z, final] (Port Royal's nudgeStep, Eventide's gate and steps),
               advance(next), onStep(id, step), onGoal(text), onArrow(id) (once a step, when the arrow first shows: pop the goal open),
               flavour: { id: [lines] or () => [lines] } (a game's LATER, wrapped), meet: { id: [lines] }, names: { id: 'Mass Dudley' } (for the redirect check), items: { bucket: obj },
-              delay: 2500, exploreDelay: 5000, near: 2.2 (the arrow hides within this many metres of its target) }
+              delay: 2500, exploreDelay: 2500, near: 2.2 (the arrow hides within this many metres of its target) }
 
    createCarry(options) is the player's hand (rule 3):
      carry(item, o)         shows the item in the hand: on the camera slot in first person, in the grip of the player's body in third person
@@ -60,8 +60,8 @@
    checkFlow(story, opts) is the engine side of ?test=flow. See its comment. */
 import { grip as engineGrip } from './grip.js';
 
-const DEF = { delay: 2500, exploreDelay: 5000, near: 2.2 };
-export const ARROW_LIMIT = 3000, ARROW_LIMIT_EXPLORE = 5000;
+const DEF = { delay: 2500, exploreDelay: 2500, near: 2.2 };
+export const ARROW_LIMIT = 2500, ARROW_LIMIT_EXPLORE = 2500;
 /* words that send a child somewhere else. A flavour line must not use them (rule 1). */
 export const REDIRECT_WORDS = ['first', 'come back', 'go and', 'go to', 'talk to', 'then', 'go back'];
 export const REDIRECT = new RegExp(REDIRECT_WORDS.map((w) => '\\b' + w + '\\b').join('|'), 'i');

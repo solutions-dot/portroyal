@@ -79,7 +79,7 @@ export function devRun(A) {
       return out; },
     autoplay: async () => { const stalls = []; for (const k of ['1', '2', '4', '5', '6', '7', '8', '9']) { closeAll(); if (k === '1') { await goPlace('shop'); A.stage = 0; A.refreshLife(); } const log = await A.runAuto(k); if (!log.includes('ALLDONE')) stalls.push('chapter ' + ({ 1: 1, 2: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8 })[k] + ': ' + log.slice(-4).join(' | ')); closeAll(); await wait(300); } return { ok: !stalls.length, why: stalls.join('; '), stalls }; },
     talks: () => (A.TALK_TARGETS[A.stage] || []).slice(0, 2),
-    talkTo: async (id) => { const n = A.byId(id); if (!n) return; A.state.x = n.x + 1.1; A.state.z = n.z + 0.5; A.update(0.016); A.startTalk(n); A.frame(0.016); },
+    talkTo: async (id) => { const n = A.byId(id); if (!n) return; const ry = n.m ? n.m.rotation.y : 0, B = P().bounds; A.state.x = Math.max(B.x0, Math.min(B.x1, n.x + Math.sin(ry) * 1.3)); A.state.z = Math.max(B.z0, Math.min(B.z1, n.z + Math.cos(ry) * 1.3)); A.update(0.016); A.startTalk(n); A.frame(0.016); },
     people: () => P().people.map((n) => ({ id: n.id, name: n.who, body: n.model })),
     screens: () => ({
       title: () => { closeAll(); $('title').hidden = false; $('hud').hidden = true; },
