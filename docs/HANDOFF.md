@@ -52,6 +52,18 @@ The owner's open list was: faces in The Emperor's Arrival, the Rastafari men in 
 
 Earlier entries below record past checkpoints.
 
+## Next step for the people (16 November 2026, end of session)
+
+The builder now has: flatter male chests by default (`malechest`), the shoulder cap and elbow evened out on every sleeve (arms-up tearing fell to 0 on test bodies), and trousers fitted to the shirt above (`fit_waist`). A full rebuild was running when the session ended; the first 16 recipes it built came before `fit_waist`. Finish it like this, then check and commit:
+
+```bash
+BLENDER_BIN=/path/to/blender-or-stub MAKEHUMAN=/tmp/mh/makehuman node tools/people/rebuild.mjs --jobs 4
+for g in nanny selassie garvey kendal melissa bog-walk eventide port-royal tivoli windrush; do node tools/build.mjs $g --dev; done
+node tools/review/people-check.mjs all          # then look: node tools/review/people-sheet.mjs <game> <ids>
+```
+
+Lower numbers than `tools/checks/people-baseline.json` are expected; after looking at the sheets, record them with `--update`. Still open: Nanny Town's soldiers on the path (sunk, one shoe showing), Melissa's own recipes are not built (it uses Kendal and Garvey bodies), the rescue boat and remaining vehicles (in the checkpoint commit `b4c0371`, unchecked).
+
 ## Latest checkpoint: menu and Chapters reconciliation, 16 November 2026
 
 - PR #107 merged the reviewed non-people consolidation into main. The separate people work is draft PR #108 and is not approved for merging.
