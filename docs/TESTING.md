@@ -8,6 +8,8 @@
 
 **Behavioral guidance tests:** `tests/guidance-target-priority.mjs` now also exercises the shared story engine with synthetic ordered and unordered tasks, optional actions and immediate retargeting. These checks do not prove the ten games' real stage maps or UI rendering.
 
+**Near-target arrow stability:** `tests/guidance-delay.mjs` also checks that seven legacy guidance controllers do not reactivate the arrow every frame while the player is already within interaction range. Verify the objective does not flash or replay sounds at the destination.
+
 ## Current UI regression coverage (16 November 2026, PR #101)
 
 The following checks are included in `npm test` on the integration branch:
