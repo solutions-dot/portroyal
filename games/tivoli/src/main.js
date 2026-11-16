@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { CL, mixers, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, AU } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
-import { pose, standIns, POSES } from './clips.js';
+import { pose, standIns, POSES, deriveClips } from './clips.js';
 import { LOOKS, BODIES, loadBase, makeBody } from './cast.js';
 import { arm, weaponTick, heldReport, ARMED, modeOf } from './weapons.js';
 import { snapMeshes, auditPlace } from '../../../engine/audit.js';   // dev only: the place audit (CLAUDE.md rule 8)
@@ -21,8 +21,10 @@ import { buildStreet, streetPlace } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage } from './story.js';
 import { WALKS, CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip } from './ch1.js';
-import { FIGHT, positions as fightPositions, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
-import { auditCloth, auditWalk, skinProbe, overlapSolids, sinkCheck } from './checks.js';   // dev only: local copies until the engine has them (see checks.js)   // gunfight poses: real clips when the library has them, stand-ins until then
+import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
+import { clipInfo, sceneCheck } from './scenecheck.js';
+import { strideOf, WALKS as WALK_CLIPS } from './walk.js';   // dev only: the street scene checks (?test=scene, ?test=clipinfo)
+import { auditCloth, auditWalk, skinProbe, overlapSolids, sinkCheck, CLOTH_SKIP } from './checks.js';   // dev only: the shared cloth, walk and skin checks (re-exported) and Tivoli's place checks
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -86,7 +88,7 @@ let busyBy = 0; const setBusy = (b) => { busy = b; if (b) keys.clear(); };
 
 /* ---------- loading ---------- */
 Promise.all(['anims', 'anims_tivoli'].map((name) => model(name).then((asset) => { const bar = $('bar'); bar.dataset.done = +(bar.dataset.done || 0) + 1; bar.style.width = (+bar.dataset.done / 2 * 100) + '%'; return asset; }))).then(([anims, own]) => {
-  loadClips(anims); loadClips(own);   // the shared library, then Tivoli's own clips (tools/tivoli/pack_clips.mjs)
+  loadClips(anims); loadClips(own); deriveClips();   // the shared library, then Tivoli's own clips (tools/tivoli/pack_clips.mjs)
   $('start').disabled = false; $('start').textContent = 'Start'; $('loadnote').textContent = '';
   if (__DEV__) devViews();
 });
@@ -136,7 +138,7 @@ async function devViews() {
     cam(0, 2.6, 0, -0.15); document.title = 'slung';
   }
   if (test === 'audit') {   /* ?test=audit: the street (built unmerged): floating signs, lamps, tanks, roofs, and anyone standing or running through a solid. Expect 0 issues. */
-    const st = buildStreet({}), snap = snapMeshes(st.raw), r = auditPlace({ id: 'street', snap, npcs: fightPositions(), walls: [], bounds: { x0: -45, x1: 40, z0: -4.4, z1: 4.4 }, start: { x: -10, z: 0 }, actions: [], people: [] });
+    const st = buildStreet({}), snap = snapMeshes(st.raw), r = auditPlace({ id: 'street', snap, npcs: fightPositions(), routes: fightRoutes(), walls: [], bounds: { x0: -45, x1: 40, z0: -4.4, z1: 4.4 }, start: { x: -10, z: 0 }, actions: [], people: [] });
     const lines = ['street: ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + r.floating.length + ' floating, ' + r.inside.length + ' inside solids, ' + r.stuck.length + ' unreachable)', ...r.floating.map((l) => '  floating: ' + l), ...r.inside.map((l) => '  inside: ' + l), ...r.stuck.map((l) => '  stuck: ' + l)];
     const ov = overlapSolids(st.solids).concat(sinkCheck(snap, fightPositions())); lines.push('overlaps: ' + ov.length); for (const l of ov) lines.push('  ' + l);
     let extra = 0;
@@ -161,6 +163,14 @@ async function devViews() {
     }
     devLog(out.length ? out : [W + 'x' + Hh + ': no layout problems'], 'LAYOUT ' + out.length);
   }
+  if (test === 'scene') {   /* ?test=scene (&seeds=1,2,3): the street scene run start to end; everyone's aim, facing and feet (scenecheck.js). Expect 0. */
+    const r = await sceneCheck({ FIGHT, begin: fightBegin, tick: fightTick, strideOf, WALKS: WALK_CLIPS, CONTACT, seeds: q.get('seeds') ? q.get('seeds').split(',').map(Number) : undefined });
+    devLog(['scene: ' + r.lines.length + ' issues (' + r.stats.samples + ' person-frames, ' + r.stats.aims + ' aims checked)', ...r.lines], 'SCENE ' + r.lines.length); $('windowframe').hidden = true; $('fade').hidden = true;
+  }
+  if (test === 'clipinfo') {   /* ?test=clipinfo (&clips=A,B &b=police2010 &kind=pistol): each clip's length, built-in aim turn, swing, foot travel and hip height */
+    const names = q.get('clips') ? q.get('clips').split(',') : Object.keys(CL).filter((n) => !n.startsWith('_'));
+    devLog(clipInfo(names, { bodyId: q.get('b') || 'soldier2010', kind: q.has('kind') ? (q.get('kind') || null) : 'rifle' }), 'CLIPINFO');
+  }
   if (test === 'measure') {   /* ?test=measure: in each rifle clip, the distance from the right palm to the right shoulder joint and to the left palm (cm), to size the rifle to the clips */
     const out = []; const P = (b, n) => b.getObjectByName('mixamorig' + n).getWorldPosition(new THREE.Vector3());
     for (const clip of ['ShootRifle', 'PeekAim', 'ProneFire', 'ProneTurnR']) { const b = makeBody({ ...LOOKS.soldier, anim: clip }); scene.add(b); const c = b.userData.anim.cur, D = c.getClip().duration, rows = [];
@@ -172,7 +182,7 @@ async function devViews() {
   }
   if (test === 'held') {   /* ?test=held: in every weapon clip, through the whole clip, the right palm is on the grip and (rifle) the left palm on the handguard, with the fingers closed round them. Faults: a palm more than 4 cm off, or fingertips more than 3 cm beyond the weapon. */
     const out = []; let bad = 0;
-    for (const [look, clip, kind, carry] of [['soldier', 'Walk', 'rifle', 'ready'], ['soldier', 'Run', 'rifle', 'ready'], ['soldier', 'RunForward', 'rifle', 'ready'], ['soldier', 'RunLeft', 'rifle', 'ready'], ['soldier', 'RunRight', 'rifle', 'ready'], ['soldier', 'RunBackward', 'rifle', 'ready'], ['soldier', 'RunLow', 'rifle', 'ready'], ['soldier', 'RunLow2', 'rifle', 'ready'], ['soldier', 'WalkCrouchR', 'rifle', 'ready'], ['soldier', 'CrouchIdle', 'rifle', 'ready'], ['soldier', 'Ducking', 'rifle', 'ready'], ['police', 'Idle', 'rifle', 'ready'], ['soldier', 'ShootRifle', 'rifle'], ['police', 'PeekAim', 'pistol'], ['soldier', 'ProneFire', 'rifle'], ['soldier', 'ProneTurnR', 'rifle'], ['police', 'ShootRifle', 'rifle'], ['police', 'ShootPistol', 'pistol'], ['police', 'Gunplay', 'pistol']]) {
+    for (const [look, clip, kind, carry] of [['soldier', 'Walk', 'rifle', 'ready'], ['soldier', 'Run', 'rifle', 'ready'], ['soldier', 'RunForward', 'rifle', 'ready'], ['soldier', 'RunLeft', 'rifle', 'ready'], ['soldier', 'RunRight', 'rifle', 'ready'], ['soldier', 'RunBackward', 'rifle', 'ready'], ['soldier', 'RunLow', 'rifle', 'ready'], ['soldier', 'RunLow2', 'rifle', 'ready'], ['soldier', 'WalkCrouchR', 'rifle', 'ready'], ['soldier', 'CrouchIdle', 'rifle', 'ready'], ['soldier', 'Ducking', 'rifle', 'ready'], ['police', 'Idle', 'rifle', 'ready'], ['soldier', 'ShootRifle', 'rifle'], ['police', 'PeekAim', 'pistol'], ['soldier', 'ProneFire', 'rifle'], ['soldier', 'ProneTurnR', 'rifle'], ['police', 'ShootRifle', 'rifle'], ['police', 'ShootPistol', 'pistol'], ['police', 'Gunplay', 'pistol'], ['soldier', 'FireStand', 'rifle'], ['soldier', 'FireKneel', 'rifle'], ['police', 'FireStand', 'rifle'], ['police', 'PistolKneelIdle', 'pistol'], ['police', 'PistolStand', 'pistol'], ['soldier', 'RifleWalk', 'rifle', 'ready'], ['soldier', 'RifleIdle', 'rifle', 'ready'], ['soldier', 'PistolKneelIdle', 'rifle', 'ready']]) {
       const b = makeBody({ ...LOOKS[look], anim: clip }); scene.add(b); arm(b, kind, scene); if (carry) b.userData.weapon.carry = carry; const ctl = b.userData.anim, D = ctl.cur.getClip().duration; let worstR = 0, worstL = 0, tipR = 0, tipL = 0, atL = 0;
       for (let k = 0; k < 12; k++) { ctl.cur.time = D * k / 12; ctl.mx.update(0); groundFeet(b); const r = heldReport(b); if (b.userData.weapon.dbg && k === (clip === 'Run' ? 6 : 4)) out.push('   dbg ' + look + ' ' + clip + ' k' + k + ': ' + Object.entries(b.userData.weapon.dbg).map(([n, v]) => n + ' ' + (v * 100).toFixed(1)).join(', ')); worstR = Math.max(worstR, r.right); if (r.left > worstL) atL = k; worstL = Math.max(worstL, r.left); tipR = Math.max(tipR, r.rightTip); tipL = Math.max(tipL, r.leftTip); }
       const f = worstR > 4 || worstL > 4 || tipR > 3 || tipL > 3; if (f) bad++; out.push(`${f ? 'FAULT ' : ''}${look} ${clip} (${kind}): right hand ${worstR.toFixed(1)} cm from the grip, left hand ${worstL.toFixed(1)} cm from the handguard; fingertips ${tipR.toFixed(1)} cm (right) and ${tipL.toFixed(1)} cm (left) beyond them (worst of 12 moments, left worst at moment ${atL})`);
@@ -184,9 +194,9 @@ async function devViews() {
     cam(0, 3.6, 0, -0.1); document.title = 'uniforms' + lo;
   }
   if (test === 'cloth') {   /* ?test=cloth (&b=soldier2010 &full or &lo &idle &where): does an under layer show through its cover (skin through a sleeve, shirt through the vest, hair through the helmet)? Both bodies, full and light copy, in the poses the game uses. */
-    const out = []; let bad = 0, pts = 0; const POSE_LIST = [['Idle', 0.3], ['Walk', 0.25], ['Walk', 0.75], ['Run', 0.3], ['Talk1', 0.4], ['Point', 0.5], ['Block', 0.5]];
+    const out = []; let bad = 0, pts = 0; const POSE_LIST = [['Idle', 0.3], ['Walk', 0.25], ['Walk', 0.75], ['Run', 0.3], ['Talk1', 0.4], ['Point', 0.5], ['Block', 0.5], ['RifleWalk', 0.3], ['RunLow', 0.3], ['CrouchIdle', 0.5], ['FireStand', 0.5], ['FireKneel', 0.5], ['PistolKneelIdle', 0.5]];   /* the last six: the poses the street scene uses */
     for (const base of (q.get('b') ? q.get('b').split(',') : BODIES)) for (const l of ['', '_lo']) { if ((l && q.has('full')) || (!l && q.has('lo'))) continue; const b = makeBody({ base, bodyId: base + l, anim: 'Idle' }); scene.add(b);
-      const r = auditCloth(base + l, b, { poses: q.has('idle') ? [['Idle', 0.3]] : POSE_LIST, where: q.has('where') }); out.push(base + l + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const x of r.lines) out.push('  ' + x); bad += r.lines.length; pts += r.points; scene.remove(b); await waitTick(); }
+      const r = auditCloth(base + l, b, { poses: q.has('idle') ? [['Idle', 0.3]] : POSE_LIST, where: q.has('where'), skip: CLOTH_SKIP }); out.push(base + l + ': ' + r.lines.length + ' faults, ' + r.points + ' points, worst ' + r.worst.toFixed(1) + ' mm'); for (const x of r.lines) out.push('  ' + x); bad += r.lines.length; pts += r.points; scene.remove(b); await waitTick(); }
     out.unshift('cloth: ' + bad + ' issues (' + pts + ' points)'); devLog(out, 'CLOTH ' + bad);
   }
   if (test === 'skin') {   /* ?test=skin: how dark each face really looks in this game's light (the copied engine skin probe) */

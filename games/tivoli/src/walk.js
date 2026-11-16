@@ -19,5 +19,5 @@ export function strideOf(m, clip) {
   let dist = 0, on = 0, lo = 1e9, hi = -1e9; for (const l of pos) for (const q of l) { lo = Math.min(lo, q[1]); hi = Math.max(hi, q[1]); } const band = /Run/.test(clip.name) ? lo + (hi - lo) * 0.2 : 1e9;   /* a run has moments with both feet in the air: count a foot only while it is down */
   for (let i = 0; i < N; i++) { const k = (pos[0][i][1] + pos[0][i + 1][1] < pos[1][i][1] + pos[1][i + 1][1]) ? 0 : 1; if (pos[k][i][1] > band || pos[k][i + 1][1] > band) continue; dist += Math.max(0, pos[k][i][0] - pos[k][i + 1][0]); on++; }
   return (per[key] = on ? dist * N / on : 0); }
-export const WALKS = /^(Walk|WalkM|Run|RunLow|RunLow2|RunForward|RunBackward|RunLeft|RunRight|WalkCrouchR|Carry|SadWalk)$/;
+export const WALKS = /^(Walk|WalkM|Run|RunLow|RunLow2|RunForward|RunBackward|RunLeft|RunRight|WalkCrouchR|Carry|SadWalk|RifleWalk|RifleWalk2|RifleCrouchWalk|CarryBagWalk|CarryHeadWalk|CarryHeadWalk2|HoldWalk)$/;
 export function pace(m, ctl, v, lo = 0.55, hi = 1.9) { const a = ctl.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; }
