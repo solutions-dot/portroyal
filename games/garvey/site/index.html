@@ -34,7 +34,8 @@ button{font:inherit;color:inherit}
 :focus-visible{outline:3px solid #fff;outline-offset:3px}
 
 /* title card */
-#title{position:fixed;inset:0;display:flex;align-items:flex-end;padding:clamp(16px,4vw,48px);background:linear-gradient(180deg,rgba(16,34,43,0) 30%,rgba(16,34,43,.93) 72%)}
+#title{position:fixed;inset:0;display:flex;align-items:flex-end;padding:clamp(16px,4vw,48px);background:linear-gradient(90deg,rgba(16,34,43,.82) 0%,rgba(16,34,43,.55) 38%,rgba(16,34,43,0) 68%),linear-gradient(180deg,rgba(16,34,43,0) 30%,rgba(16,34,43,.93) 72%)}
+#title h1{text-shadow:0 2px 14px rgba(0,0,0,.55)}
 #title .card{max-width:34rem;display:flex;flex-direction:column;gap:.7rem}
 #title .place{font-family:var(--display);letter-spacing:.14em;font-size:.95rem;color:var(--brass);margin:0}
 #title h1{font-family:var(--display);font-weight:400;font-size:clamp(2.6rem,9vw,5rem);line-height:.95;margin:0;text-wrap:balance}
@@ -67,6 +68,7 @@ button{font:inherit;color:inherit}
 #who{font-family:var(--display);font-size:1.25rem;letter-spacing:.08em;color:var(--brass);margin:0}
 #dialogue.me{background:rgba(242,232,208,.97);border-top-color:#2f6f8f}#dialogue.me #who{color:#2f6f8f}#dialogue.me #line{color:#1c2a30}#dialogue.me .btn.ghost{color:#1c2a30;border-color:#2f6f8f}
 #line{margin:0;font-size:1.1rem;max-width:65ch}
+#dialogue.narr #line{font-style:italic}#who[hidden]{display:none}
 #choices{display:flex;flex-direction:column;gap:.5rem}
 #next{align-self:flex-end}
 
