@@ -69,6 +69,7 @@ test('Kendal beach activity guards use the same completed flag as each action re
 test('Kendal saved beach progress restores the count and remembers the selected activity', () => {
   const source = readFileSync('games/kendal/src/main.js', 'utf8');
   assert.match(source, /story\.beachDone\s*=\s*Object\.keys\(done\(\)\)/, 'completed beach choices must be saved to story');
+  assert.match(source, /story\.beach\s*=\s*story\.beach\s*\|\|\s*k;\s*STORY\.done\('fun'\);\s*saveGame\(\)/, 'save after STORY.done so the completed count is persisted');
   assert.match(source, /savedFlow\s*&&\s*savedFlow\.stage\s*===\s*43/, 'the return to the beach must identify a saved step');
   assert.match(source, /story\.beachDone\s*\|\|\s*\(story\.beach\s*\?\s*\[story\.beach\]/, 'saved choices are applied to beach activity guards');
 
