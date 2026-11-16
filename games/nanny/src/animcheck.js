@@ -27,14 +27,14 @@ export function headAngles(m) {
 function dominant(ctl) { let best = null, bw = 0; for (const x of ctl.mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } return best || ctl.cur; }
 
 /* scenes: [{ name, setup: async () => {}, seconds, step(t, dt) (moves you, if you walk), people: () => [n...] }]; update(dt) is the game's frame; player() gives [x, z] */
-export async function animCheck({ scenes, update, player, dt = 1 / 30 }) {
+export async function animCheck({ scenes, update, player, people: everyone, dt = 1 / 30 }) {
   const lines = [], stats = [];
   for (const sc of scenes) {
-    await sc.setup(); const S = new Map(), seen = new Set(), add = (n, kind, text) => { const k = (n.id || n.base) + '|' + kind; if (seen.has(k)) return; seen.add(k); lines.push(`${sc.name}: ${n.id || n.base} ${text}`); };
+    await sc.setup(); const who = sc.people || everyone; const S = new Map(), seen = new Set(), add = (n, kind, text) => { const k = (n.id || n.base) + '|' + kind; if (seen.has(k)) return; seen.add(k); lines.push(`${sc.name}: ${n.id || n.base} ${text}`); };
     const steps = Math.round((sc.seconds || 30) / dt); let samples = 0, lastSync = new Set();
     for (let f = 0; f < steps; f++) {
       const t = f * dt; if (sc.step) sc.step(t, dt); update(dt); const [px, pz] = player(), syncs = new Map();
-      for (const n of sc.people()) {
+      for (const n of who()) {
         const m = n.m; if (!m || !m.visible || !n.ctl) continue; m.updateMatrixWorld(true);
         const p = m.position, d = Math.hypot(p.x - px, p.z - pz), act = dominant(n.ctl), clip = act.getClip().name, ha = headAngles(m);
         let s = S.get(n); if (!s) { s = { x: p.x, z: p.z, ry: m.rotation.y, clip, yaw: ha ? ha.yaw : 0, still: 0, worst: 0, runT: 0, slideT: 0, paceT: 0 }; S.set(n, s); continue; }
@@ -55,7 +55,7 @@ export async function animCheck({ scenes, update, player, dt = 1 / 30 }) {
       }
       if (f % 15 === 0) { const now = new Set();   /* three or more on the same clip at the same speed, within 3 % of the clip of each other, in two samples running: they move in step */
         for (const [k, ns] of syncs) { if (ns.length < 3) continue; ns.sort((a, b) => a[1] - b[1]); const ring = ns.concat(ns.map(([n, ph]) => [n, ph + 1]));
-          for (let i = 0; i < ns.length; i++) if (ring[i + 2][1] - ring[i][1] < 0.03) { const ids = ring.slice(i, i + 3).map(([n]) => n.id || n.base + '#' + sc.people().indexOf(n)).sort().join(', '), key = k.split('@')[0] + ': ' + ids; now.add(key);
+          for (let i = 0; i < ns.length; i++) if (ring[i + 2][1] - ring[i][1] < 0.03) { const ids = ring.slice(i, i + 3).map(([n]) => n.id || n.base + '#' + who().indexOf(n)).sort().join(', '), key = k.split('@')[0] + ': ' + ids; now.add(key);
             if (lastSync.has(key) && !seen.has('sync|' + key)) { seen.add('sync|' + key); lines.push(`${sc.name}: three people play ${key.replace(':', ' in step:')}`); } } }
         lastSync = now; }
     }
