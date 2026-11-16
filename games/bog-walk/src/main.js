@@ -493,10 +493,10 @@ function nudgeTick(now) {
   const quiet = S.started && !locked() && !RIDE.on && goalText && $('holdbox').hidden && $('dialogue').hidden && !fading;
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(S.x - NUDGE.lx, S.z - NUDGE.lz) > 0.6) { NUDGE.lx = S.x; NUDGE.lz = S.z; NUDGE.still = now; }
-  if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30); NUDGE.still = now; }
+  if (!quiet) { NUDGE.since = now; NUDGE.on = false; } /* Never display guidance over a panel or dialogue. */
   const tgt = quiet ? nudgeTarget() : null;
-  if (!NUDGE.on && quiet && tgt && (now - NUDGE.still > 15 || now - NUDGE.since > 50)) { NUDGE.on = true; setGoal(goalText, true); }
-  if (NUDGE.on && tgt && Math.hypot(S.x - tgt[0], S.z - tgt[1]) < 2.4) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
+  if (!NUDGE.on && quiet && tgt && now - NUDGE.since >= 2.5) { NUDGE.on = true; setGoal(goalText, true); }
+  if (NUDGE.on && tgt && Math.hypot(S.x - tgt[0], S.z - tgt[1]) < 2.4) { NUDGE.on = false; /* Nearby interaction takes over; do not restart the hint delay. */ }
   if (!NUDGE.on || !tgt) { if (!el.hidden) el.hidden = true; if (GUIDE) GUIDE.hide(performance.now()); return; }
   showNudgeAt(tgt);
 }
