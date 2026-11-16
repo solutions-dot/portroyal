@@ -56,6 +56,7 @@ import {
   setGoal,
   nudgeGoal,
   startHint,
+  hintTick,
   createMarks,
 } from "./ui.js";
 import { createDirector } from "./director.js";
@@ -1319,6 +1320,7 @@ function hint(now) {
     GUIDE.point(now, { x: h.x, z: h.z, tx: h.target[0], tz: h.target[1], final: h.final });
   else GUIDE.hide(now);
   /* the Talk button is for things to do; a person you can talk to gets the gold talk button over their head */
+  hintTick(quiet);
   const act = quiet && near?.kind === "do";
   $("talk").hidden = !act;
   if (act) $("talk").textContent = near.label;

@@ -129,11 +129,19 @@ export function showHint() {
     $("hint").hidden = true;
   }, 6000);
 }
-/* the controls tip: shown at the start of play for a few seconds, then it goes away */
+/* the controls tip: shown at the start of play for a few seconds, then it goes away. It waits for the first moment you can
+   really play (no welcome card, no loading, no scene), so it is seen: the game calls hintTick(quiet) every frame */
+let hintWaits = false;
 export function startHint(touch) {
   $("hint").textContent = touch
     ? "Left thumb walks. Drag to look. Tap a person to talk."
     : "W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.";
+  $("hint").hidden = true;
+  hintWaits = true;
+}
+export function hintTick(quiet) {
+  if (!hintWaits || !quiet) return;
+  hintWaits = false;
   showHint();
 }
 
