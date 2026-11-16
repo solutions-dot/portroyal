@@ -13,7 +13,7 @@
    api = { S, Q, hold(id), place([x, y, z]), give(personId), notice(text), sound(name) } from main.js. */
 import * as THREE from "three";
 import { T, std, solid, flat, glow, box, cyl, plane, grp, mesh, rng } from "./gfx.js";
-import { tree, crate, bench, marketBasket, yamBasket, hamper, suitcase, flowers, bush, sack, truck, cart as countryCart } from "./period-props.js";
+import { tree, crate, bench, marketBasket, yamBasket, hamper, suitcase, flowers, bush, sack, cart as countryCart } from "./period-props.js";
 import * as P from "./props.js";
 import * as K6 from "./kingston-props.js";
 
@@ -160,9 +160,9 @@ export function downtown(K) {
   put(Q, bench(2), -3.0, -34.6, 0, rect(-3.0, -34.6, 2.05, 0.6));
   Q.props.bag = K.item(Q, "bag", P.bag(), -3.0, -34.55, 0.485);
   // parked cars, a bicycle against a column, crates and sacks outside the shops
-  put(Q, K6.car(0x6e2b28), -2.6, -12.8, Math.PI / 2, rect(-2.6, -12.8, 2.0, 4.8));
-  put(Q, K6.car(0x2f4f6a), 2.6, 3.4, -Math.PI / 2, rect(2.6, 3.4, 2.0, 4.8));
-  put(Q, K6.car(0xd8d2bc), -2.6, 16.2, Math.PI / 2, rect(-2.6, 16.2, 2.0, 4.8));
+  put(Q, K6.car(0x6e2b28, "P 2318"), -2.6, -12.8, Math.PI / 2, rect(-2.6, -12.8, 2.0, 4.8));
+  put(Q, K6.car(0x2f4f6a, "P 5106"), 2.6, 3.4, -Math.PI / 2, rect(2.6, 3.4, 2.0, 4.8));
+  put(Q, K6.car(0xd8d2bc, "P 1784"), -2.6, 16.2, Math.PI / 2, rect(-2.6, 16.2, 2.0, 4.8));
   put(Q, K6.bicycle(0x1f3f5f), 3.3, 15.4, Math.PI / 2, rect(3.3, 15.4, 0.4, 1.3));
   put(Q, crate(0.55), -5.9, -9.2, 0.2, rect(-5.9, -9.2, 0.6, 0.6));
   put(Q, crate(0.5, 0x7a5c3a), -5.95, -11.6, -0.3, rect(-5.95, -11.6, 0.55, 0.55));
@@ -318,9 +318,9 @@ export function parade(K) {
   for (const s of [-1, 1]) put(Q, K6.farBlock(10, 7, 9, 0xd8cfb4), s * 19.5, 21.5);
   // the buses: the family's bus at the front, another loading behind; a hired truck and a car on the street
   const bus = put(Q, K6.cityBus("PALISADOES"), 4.6, 9.1, 0, [-0.3, 7.75, 9.5, 10.45]);
-  put(Q, K6.cityBus("SPECIAL"), -8.6, 9.1, 0, [-13.5, 7.75, -3.7, 10.45]);
-  put(Q, truck(0x5a3f2a), 11.6, 14.1, Math.PI, [9.0, 13.1, 14.3, 15.1]);
-  put(Q, K6.car(0x3a5a3a), -10.4, 14.4, Math.PI, rect(-10.4, 14.4, 4.8, 2.0));
+  put(Q, K6.cityBus("SPECIAL", "SP", "J 4093"), -8.6, 9.1, 0, [-13.5, 7.75, -3.7, 10.45]);
+  put(Q, K6.truck(0x5a3f2a, "M 7752"), 11.6, 14.1, Math.PI, [8.7, 13.0, 14.6, 15.2]);
+  put(Q, K6.car(0x3a5a3a, "P 6620"), -10.4, 14.4, Math.PI, rect(-10.4, 14.4, 4.8, 2.0));
   // the bus bay: queue rails, the conductor's ticket rack, the family's hamper and a suitcase
   put(Q, K6.queueRail(4.5), -8.6, 6.3, 0, rect(-8.6, 6.3, 4.6, 0.15));
   put(Q, K6.ticketRack(), 9.4, 5.25, 0, rect(9.4, 5.25, 0.45, 0.45));
@@ -474,11 +474,11 @@ export function road(K) {
   put(Q, s, 5.2, -22, 0);
   // the traffic: the family's bus has stopped, with a truck, cars and a dray ahead of it in the line
   put(Q, K6.cityBus("PALISADOES"), -2.6, 17.4, Math.PI / 2, [-3.9, 12.5, -1.3, 22.3]);
-  put(Q, truck(0x2f5f6a), -2.6, 5.8, Math.PI / 2, [-3.75, 3.2, -1.45, 8.6]);
-  put(Q, K6.car(0x7d2f2a), -2.6, -5.4, Math.PI / 2, rect(-2.6, -5.4, 2.0, 4.8));
-  put(Q, K6.car(0xd8d2bc), -2.6, -12.6, Math.PI / 2, rect(-2.6, -12.6, 2.0, 4.8));
+  put(Q, K6.truck(0x2f5f6a, "M 3069"), -2.6, 5.8, Math.PI / 2, [-3.75, 2.95, -1.45, 8.85]);
+  put(Q, K6.car(0x7d2f2a, "P 3051"), -2.6, -5.4, Math.PI / 2, rect(-2.6, -5.4, 2.0, 4.8));
+  put(Q, K6.car(0xd8d2bc, "P 4427"), -2.6, -12.6, Math.PI / 2, rect(-2.6, -12.6, 2.0, 4.8));
   put(Q, countryCart(2.2, 1.2), -2.6, -21.0, -Math.PI / 2, [-3.4, -22.3, -1.8, -17.6]);
-  put(Q, K6.car(0x2f4f6a), -2.6, -30.4, Math.PI / 2, rect(-2.6, -30.4, 2.0, 4.8));
+  put(Q, K6.car(0x2f4f6a, "P 7193"), -2.6, -30.4, Math.PI / 2, rect(-2.6, -30.4, 2.0, 4.8));
   put(Q, K6.bicycle(0x6a2a2a), 4.4, -16.0, Math.PI / 2, rect(4.4, -16.0, 0.4, 1.3));
   put(Q, bench(1.8), -5.25, 0.6, Math.PI / 2, rect(-5.25, 0.6, 0.6, 1.85));
   K.item(Q, "bottle", P.bottle(), -4.85, 13.6, 0);
