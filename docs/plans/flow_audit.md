@@ -2,6 +2,44 @@
 
 Read-only audit of `games/port-royal`, `garvey`, `kendal`, `bog-walk`, `nanny`, `eventide`, `melissa` and `tivoli`, against the owner's three new rules. Done on 15 November 2026 from the code on the working tree (branch as checked out, commit `7a62fdf`). No repo file was edited. Line numbers are `file:line` in each game's `src/`.
 
+**Unified delay follow-up (16 November):** all ten games now target **2.5 seconds** for both ordinary and exploration guidance. The shared `engine/story.js` default and exploration delay are both 2500 ms; Tivoli and the six legacy controllers use the same value, while Kendal, Windrush and Selassie use the shared story engine. `tests/guidance-delay.mjs` checks the ten integrations and the engine's timing. This is a source-level change; gameplay and visual verification remain pending.
+
+**Required-target selection follow-up (16 November):** Nanny, Melissa and Eventide now choose the nearest currently unfinished, stage-marked story conversation before considering available actions; Bog Walk was updated earlier. Existing special route overrides (Nanny climb, Melissa stage 51, Eventide gate/veranda) remain in place. This is not a full need-by-need migration: action-first story steps and all stage transitions require replay to check that the target remains correct. Other games still require the same audit.
+
+**Required-person targeting checkpoint (16 November):** Garvey now selects the nearest unfinished person from its stage-specific `TALK_TARGETS` before considering other available actions. With the earlier Bog Walk, Nanny, Melissa and Eventide changes, five legacy controllers now use required-conversation-first targeting. `tests/guidance-target-priority.mjs` guards their source ordering. This is not a substitute for testing each stage's true action/conversation dependencies.
+
+**Garvey objective progress follow-up (16 November):** multi-person story goals now display live `(n of total)` completion counts, refreshed after each finished required conversation and reconstructed when loading a saved stage. The target continues to select only unfinished required people. Source regression `tests/garvey-goal-progress.mjs` added; real chapter playback remains unverified.
+
+**Guidance logic test checkpoint:** added behavioral tests for the shared story engine: nearest unfinished required need, exclusion of optional actions, immediate retargeting after completion without another 2.5-second wait, and ordered needs overriding proximity. These tests exercise the engine in isolation, not the per-game stage tables or rendered arrows. Full browser walkthroughs remain necessary.
+
+**Near-target stability fix:** seven legacy guidance controllers (Port Royal, Garvey, Bog Walk, Nanny, Melissa, Eventide and Tivoli) now check that the player is outside the interaction radius *before* activating an arrow. Previously they could reopen the goal and restart the arrow animation on every frame while standing at the target. Added a source regression to `tests/guidance-delay.mjs`. Browser verification still pending.
+
+**Timing unit audit (16 November):** Bog Walk's `nudgeTick` receives elapsed seconds and correctly uses `2.5`; the other six legacy controllers receive milliseconds and use `2500`. The earlier guidance-delay regression incorrectly expected milliseconds for Bog Walk and has been corrected. Shared `ARROW_LIMIT` and `ARROW_LIMIT_EXPLORE` are both 2500 ms. Browser timing verification remains pending.
+
+**Chapter-by-chapter data checks (16 November):** `tests/chapter-guidance.mjs` now checks every declared stage in Kendal, Selassie and Windrush: visible goal, required IDs and counts, stage transition references, and simulated completion of all required tasks. It also checks the chapter goal tables, required-talk lists and declared talk-stage transitions in Nanny, Melissa, Eventide and Bog Walk. These checks cover seven games' data tables; they do not yet validate the dynamic stages of Port Royal, Garvey or Tivoli, or demonstrate browser/mobile playthroughs. Tests are committed but runner results are not confirmed.
+
+**Ten-game structural chapter coverage:** expanded `tests/chapter-guidance.mjs` to include Garvey's goal/required-talk/next-stage mappings, Tivoli's seven walking-chapter conversation orders, and Port Royal's goal-driven guidance controllers. All ten games now have at least structural coverage, but Port Royal and Tivoli are only lightly covered and no browser/mobile chapter walkthrough has been verified. Do not treat this as completion of the full playthrough request.
+
+### Follow-up: always-visible next task (16 November 2026)
+
+The owner selected **Bog Walk's guidance pattern as the target for all ten games**: a plainly written next task that stays readable, a gold world arrow to the current required destination, and a nearby talk/action control that takes over when the player arrives. The task should change immediately when a requirement is completed, and optional activities must not override a required step.
+
+**Implemented on draft PR #101:** Port Royal, Garvey, Kendal, Bog Walk, Nanny, Eventide and Melissa no longer auto-collapse the current goal into the word "Goal" after 6.5 seconds. Tivoli now uses the same 2.5-second movement-independent world-arrow delay as the other legacy games; the previous pass did this for Port Royal, Garvey, Bog Walk, Nanny, Eventide and Melissa. Bog Walk now prioritizes marked required story people over optional actions.
+
+**Not yet equivalent:** Kendal uses the shared story engine's target timing; Windrush and Selassie have their own hint implementations and still require comparison to Bog Walk's positioning and task selection. Across the series, the target selector must be validated against **unfinished required needs**, not merely the first available action or any NPC. Bog Walk's `placeNudge` avoids text/button collisions, but that exact placement algorithm has **not** been ported into all games. Tivoli's stage-specific target coverage and all chapter transitions need a browser walkthrough.
+
+**Acceptance checks before closing this request:** (1) the current task remains visible during play; (2) 2.5 seconds after a new ordinary task, a correctly routed arrow appears without requiring the child to stop moving; (3) completing a task immediately selects the next required task; (4) optional people/actions cannot steal guidance; (5) the arrow hides for dialogue and panels and does not cover on-screen controls; (6) arrival exposes a usable talk/action control; (7) all chapters of all ten games are replayed on desktop and mobile. These checks are not yet verified.
+
+## Implementation checkpoint: 16 November 2026 (draft PR #101)
+
+This is a follow-up to the read-only audit below, not a replacement for its findings.
+
+- **Guidance timing changed in six legacy game controllers:** Port Royal, Garvey, Bog Walk, Nanny, Eventide and Melissa now start the hint after 2.5 seconds of eligible gameplay rather than waiting 15 seconds motionless or 50 seconds since the goal changed. Movement no longer restarts that timer. The hint remains suppressed during blocked UI states such as dialogue and cards. Existing route/placement callbacks were left intact.
+- **Bog Walk objective priority:** required marked conversations are selected before currently available actions. This specifically addresses the ruins information board stealing the arrow from Kemar/Miss Grant at stages 62-65. It needs an in-browser replay to confirm the stage progression and that action-first stages still behave correctly.
+- **Kendal:** already migrated to the shared story guidance machinery; its existing implementation was not changed in this pass. **Tivoli:** no targetable hint arrow was added. **Windrush and Selassie:** their guidance implementations were not changed in this pass.
+- **Remaining work:** source-based stage need mapping (not simply "any marked person"), immediate retargeting after each completed need, exploration-specific 5-second timing, stage count text, Tivoli's arrow and speech marks, and the wrong-direction dialogue lines in the audit. Avoid describing these as resolved.
+- **Verification:** source edits committed; full game builds, visual checks, per-chapter autoplay and mobile arrow placement remain pending. Re-run the documented Bog Walk ruins reproduction before closing its mis-target issue. The legacy audit below records its original 15/50-second behaviour and is historical.
+
 ## How I checked
 
 - Read every game's goal table, stage machine, talk code (first talk and later lines), actions, speech marks and helper arrow.
