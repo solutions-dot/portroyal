@@ -6,6 +6,10 @@ import { STEPS as KENDAL } from '../games/kendal/src/steps.js';
 import { STEPS as SELASSIE, TASK_IDS as SELASSIE_TASKS } from '../games/selassie/src/steps.js';
 import { STEPS as WINDRUSH, TASK_IDS as WINDRUSH_TASKS } from '../games/windrush/src/steps.js';
 import { needList, createStory } from '../engine/story.js';
+import * as NANNY from '../games/nanny/src/content.js';
+import * as MELISSA from '../games/melissa/src/content.js';
+import * as EVENTIDE from '../games/eventide/src/content.js';
+import * as BOG from '../games/bog-walk/src/content.js';
 
 for (const [game, steps, taskIds] of [
   ['kendal', KENDAL, null],
@@ -40,4 +44,26 @@ for (const [game, steps, taskIds] of [
       }
     });
   }
+}
+
+for (const [game, content] of [['nanny',NANNY],['melissa',MELISSA],['eventide',EVENTIDE],['bog-walk',BOG]]) {
+  test(game + ': chapter goal table is complete and talk targets have goals', () => {
+    assert.ok(content.CHAPTERS.length >= 5, 'missing chapters');
+    for (const [stage, goal] of Object.entries(content.GOALS)) {
+      assert.equal(typeof goal,'function', 'stage '+stage+' goal is not callable');
+    }
+    for (const [stage, people] of Object.entries(content.TALK_TARGETS)) {
+      assert.ok(Object.hasOwn(content.GOALS,stage),'talk stage '+stage+' missing goal');
+      assert.ok(people.length>0 && new Set(people).size===people.length,'duplicate or empty required talk list at '+stage);
+    }
+    if (content.NEXT_AFTER_TALK) {
+      for (const [stage,next] of Object.entries(content.NEXT_AFTER_TALK)) {
+        assert.ok(content.TALK_TARGETS[stage]?.length,'transition '+stage+' has no required talk');
+        assert.ok(Object.hasOwn(content.GOALS,next),'talk stage '+stage+' advances to missing '+next);
+      }
+      for (const stage of Object.keys(content.TALK_TARGETS)) {
+        assert.ok(Object.hasOwn(content.NEXT_AFTER_TALK,stage),'required talk stage '+stage+' has no transition');
+      }
+    }
+  });
 }
