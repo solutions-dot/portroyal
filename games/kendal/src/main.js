@@ -110,7 +110,7 @@ const PROPS = { suitcase: () => suitcase(), basket: () => { const h = hamper(0xb
 /* how each thing is carried (see hold() in props.js): handleY is the height of its handle, out is how far the hand's item sits from the body. After changing these run ?test=held. */
 const SIT_HIPS = 0.12;   /* metres from the seat to the hip joint of a seated person at full size (the audit checks it) */
 /* scale: the item's size. lift: how far (radians) the arm is held out from the body, so the item clears the hip, thigh and skirt. The handle height comes from each prop (userData.handleY). */
-let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.46 }, suitcase: { handleY: 0.5, scale: 0.8, lift: 0.4, straighten: 0.8, yaw: Math.PI / 2 }, lantern: { handleY: 0.32, scale: 0.85, lift: 0.26 }, bucket: { handleY: 0.49, scale: 0.9, lift: 0.34 }, basket: { dy: 0.12, scale: 0.62 } };   /* a smaller basket, so the hand that steadies it (CarryHeadIdle) rests at its rim, not in it */
+let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.56 }, suitcase: { handleY: 0.5, scale: 0.8, lift: 0.4, straighten: 0.8, yaw: Math.PI / 2 }, lantern: { handleY: 0.32, scale: 0.85, lift: 0.26 }, bucket: { handleY: 0.49, scale: 0.9, lift: 0.34 }, basket: { dy: 0.12, scale: 0.62 } };   /* a smaller basket, so the hand that steadies it (CarryHeadIdle) rests at its rim, not in it */
 /* Walk pace. The engine measures a clip's stride from its joints (engine/anim.js strideOf) and plays the walk at the speed that fits; for some clips and bodies that
    measure is off by a few per cent, which ?test=walkers shows as feet sliding (WalkM2 and CarryBagWalk by 8 to 13 per cent after the November 2026 clip rebuild).
    STRIDE_K corrects it per body and clip ('base|clip', or 'base|clip|scale' for a child), measured with ?test=walkers&tune (the clip speed at which the feet slide least).
@@ -126,11 +126,12 @@ const SKIN_LIGHT = 1.55;   /* owner rule 9: build Skin inside Marcus Garvey's ra
    joinBody makes one skinned mesh of a light copy's visible pieces, each piece's colour baked into its points, on the same skeleton: one draw call a person.
    A body swaps its skirt for the seated skirt when it sits or kneels (engine/anim.js), which needs the pieces apart, so it is joined only if it stays standing,
    or stays seated (joined with the seated skirt showing).
-   The pieces stay (hidden), so the engine's hand and skirt helpers still read them. A piece with a picture on it (a texture) or see-through stays apart. */
+   The pieces stay (hidden), so the engine's hand and skirt helpers still read them. A piece with a picture on it (a texture) or see-through stays apart, and so do the shoes:
+   joined, a seated man's shoes sat 5 cm lower than his own (the audit saw them cut the coach floor), and the feet are what the ground and seat checks measure. */
 const _jc = new THREE.Color(), JOINFAIL = { n: 0 };
 function joinBody(m) {
   const parts = []; m.traverse((o) => { if (o.isSkinnedMesh && o.visible && o.parent && o.parent.visible !== false) parts.push(o); });
-  const use = parts.filter((o) => !o.material.map && !o.material.transparent && o.geometry.attributes.skinIndex && o.geometry.attributes.normal);
+  const use = parts.filter((o) => !/Shoes|Sole/.test(o.material.name || '') && !o.material.map && !o.material.transparent && o.geometry.attributes.skinIndex && o.geometry.attributes.normal);
   if (use.length < 3) return false; const skel = use[0].skeleton, bm = use[0].bindMatrix;
   if (use.some((o) => o.skeleton.bones.length !== skel.bones.length || o.skeleton.bones.some((b, i) => b !== skel.bones[i]) || !o.bindMatrix.equals(bm))) { JOINFAIL.n++; return false; }
   /* each piece may carry its own inverse bind matrices (a packed piece keeps its own scale and offset in them): bring every piece onto the first piece's, D = inv0^-1 * inv, when one D fits every bone */
@@ -149,7 +150,7 @@ function joinBody(m) {
   const sm = new THREE.SkinnedMesh(g, mat); sm.name = use.some((o) => /Skirt/.test(o.material.name || '')) ? 'Skirt_joined' : 'Body_joined'; sm.bind(skel, bm); sm.frustumCulled = false; sm.castShadow = sm.receiveShadow = true;
   use[0].parent.add(sm); for (const o of use) o.visible = false; m.userData.joined = sm; return true;
 }
-const JOINABLE = (s) => { if (!/_lo$/.test(s.bodyId || '')) return false; const clips = [s.anim || '', ...Object.values(s.life || {}).filter((v) => typeof v === 'string' || Array.isArray(v)).flat()].filter((c) => typeof c === 'string').join(' ');
+const JOINABLE = (s) => { if (!/_lo$/.test(s.bodyId || '') || (__DEV__ && /[?&]nojoin/.test(location.search))) return false; const clips = [s.anim || '', ...Object.values(s.life || {}).filter((v) => typeof v === 'string' || Array.isArray(v)).flat()].filter((c) => typeof c === 'string').join(' ');
   if (/Kneel|PlayPiano|Comfort|Pray|Crawl/.test(clips)) return false; const sits = isSeated(s.anim); return sits ? (!s.life || s.life.kind === 'sit') : !/\bSit/.test(clips); };   /* stays standing, or stays seated */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);

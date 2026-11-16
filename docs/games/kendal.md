@@ -38,6 +38,9 @@ Same dramatic idea as the Port Royal earthquake: an opt-in card first ("It is lo
 | File | What it holds |
 |---|---|
 | `main.js` | renderer and sky, controls, people, the place registry (`buildPlace`, `ensurePlace`, `enterPlace`), the journal, cards, the cinematic layer (`bars`, `say`, `flash`, `fadeBlack`, the camera director `cut`), saving, chapters and stages (`setStage`, `ON[stage]`), rides (`RIDE`), actions (`ACTIONS_FOR`), the crash (`CR`, `crashRun`), the loop, test views and the autoplayer |
+| `storylife.js` | a little life for people who stay in one place (stance changes, a head that glances and looks at you) |
+| `motioncheck.js` | `?test=motion`: frozen, in-step, head, spin, walking in place and sliding checks (dev only) |
+| `checktables.js` | the hooks and tables for the shared `?test=all` runner (dev only) |
 | `content.js` | every word the player reads: `CHAPTERS`, `TALK` (first conversations), `LATER` (short later lines), `JOURNAL` |
 | `steps.js` | the story as step tables for `engine/story.js`: each stage's goal, who and what it needs (talk, do, go), and the stage after it; `placeOfStage` |
 | `life.js` | what every background person does, as data for `engine/ambient.js` (`lifeFor(P)`: crowds mixed into chats, errands, watchers and children at play; the mento band; the helpers at the crash site) |
@@ -139,6 +142,22 @@ Real people in the game: none speak. The Governor stands silently in 1845. Fathe
 
 Look and feel: the 1957 diesel follows a National Library of Jamaica photograph of one of the railway's English Electric hood engines (two four-wheel trucks). We do not know which engines pulled the train that night. Every colour, the whole shape of the wooden coaches, the 1845 engine and carriages, the truck and the 1950s clothes are still guesses; the code comments say so.
 
+## Season 1 finish (16 November 2026)
+
+What this pass checked and changed (branch `claude/kendal-par`):
+
+- **`?test=all`** is wired (`checktables.js` holds the hooks and tables; `checkHooks()` in `main.js` hands the game over). Run it with `&noshadow` at 390x800, because phones draw no shadow maps and the budget check counts draw calls. It also runs this game's own `motion` check.
+- **`?test=motion`** (`motioncheck.js`, new): every step of the story, played on the real frame loop while you walk to each thing the step needs. It fails on anyone in view frozen on an idle clip (over 12 s, 20 s in a calm or sad scene), three or more people in step on one clip, a head turned over 80 degrees from the chest, nodded over 60, or turning faster than 320 degrees a second and faster than the clip does on its own, a body spinning (over 240 degrees a second standing, 600 walking), walking in place, or sliding on a standing clip. `&st=40,61` picks steps. Its first run found 88 faults; the fixes below brought them down.
+- **Story people are alive** (`storylife.js`, new): while they wait for you they change stance now and then (another idle, a nod, a look round, another way of sitting) and their heads glance about and turn to you when you come near, eased and limited. A background person held still for their own step (Lloyd on the platform) changes stance too.
+- **Nobody spins:** `faceTo` turns at most about 170 degrees a second, and `turnLimit` caps every body's turn at 200 degrees a second standing and 315 walking (the shared ambient walk turned corners at up to 700).
+- **No loop starts in step:** every looping clip started through a body's controller starts at a random moment.
+- **Walk pace:** `STRIDE_K` in `main.js` corrects the engine's stride measure per body and clip (measured with `?test=walkers&tune`); WalkM2 and CarryBagWalk had been sliding 22 to 25 cm a loop. Background life uses the same stride through `createAmbient({ stride })`.
+- **Faces at night (rule 9):** Skin glows a little with its own colour, more the darker the light (`skinFill`: 0.06 by day, about 0.45 at night). Faces at the crash site and in the night coach were brightness 10 to 25 from their dark side; the faces check is now clean.
+- **Phones:** each standing (or always seated) background figure is joined into one skinned mesh at load (`joinBody`), and each strip of passing scenery on a ride is merged (`batchStatic`). Draw calls without shadows: Kingston station 693 to about 310, the coach 1,037 to 168, the 1845 ride 509 to 103, the beach 404 to about 150, the crash site 529 to about 290.
+- **Saving:** a game saved during the 1845 water stop (steps 23.5 and 23.6) now resumes at the station before boarding instead of at the station with the bucket task.
+- **Walls at the edge** no longer push you off the map (the hill station, `clampPos`).
+- **Tap targets:** the folded goal, the journal's tabs and "Dig deeper" are at least 44 px.
+- Gran's full body (`woman_elder`) never walks in this game and sinks 3.1 cm at one heel strike, so `?test=walkers` checks the light copy every walking elder uses; Eventide and Melissa, which also ship `woman_elder`, should check theirs.
 ## What is left (polish list)
 
 1. **Check facts in primary sources** (the Commission of Enquiry report, the 1957 Daily Gleaner, the railway's records) and remove the "one source" notes.
