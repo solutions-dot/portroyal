@@ -479,6 +479,21 @@ async function buildWorld(id) {
   for (const n of Q.extras) if (n.amb?.spec.chaseId) n.amb.spec.chase = Q.extras.find((o) => o.id === n.amb.spec.chaseId);
   // everyone who watches the aircraft keeps the spot they were given, so the cinematic can turn them to it and back
   for (const n of Q.extras) if (n.amb?.spec.at) n.at0 = n.amb.spec.at;
+  // Everyone starts on one of their own idles at once, at its own moment: a cross-fade out of the plain Idle in the first second
+  // swung heads round faster than a person turns (the head check), and a watcher could stand in the plain Idle until its first change.
+  for (const n of [...Q.extras, ...Q.people.filter((p) => !p.historical)]) {
+    const L = n.amb?.spec.idles?.filter((c) => n.ctl.get(c));
+    if (!L?.length || n.amb.kind === "work" || n.amb.kind === "sit") continue;
+    let h = (n.id || "").split("").reduce((s, c) => Math.imul(s ^ c.charCodeAt(0), 2654435761) >>> 0, 2166136261);
+    const r = () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0) % 10007) / 10007,
+      act = n.ctl.get(L[Math.floor(r() * L.length)]);
+    n.ctl.cur.stop();
+    act.reset().play();
+    act.time = r() * act.getClip().duration;
+    act.timeScale = 0.88 + r() * 0.24; // as the ambient system does: never in step
+    n.ctl.cur = act;
+    n.ctl.mx.update(0);
+  }
   Q.roofLife.ready();
   Q.arrivalLife.ready();
   Q.life.ready();
@@ -1324,8 +1339,31 @@ function aimCrowd(Q) {
     moving = DIR.on && DIR.time < 32 && p?.visible;
   if (moving) p.getWorldPosition(_pw);
   for (const n of Q.extras) {
-    if (!n.amb || !n.at0 || n.amb.kind !== "watch") continue;
+    if (!n.amb || !n.at0 || n.amb.kind !== "watch" || n.zone === "roof") continue; // the roof faces the apron: the plane is behind some
     n.amb.spec.at = moving ? [_pw.x, _pw.z] : n.at0;
+  }
+}
+/* A person turns the head at most so fast: the background crowd's own looks (engine/ambient.js) are eased, but a cross-fade between two
+   standing clips, or a look starting as a clip turns the head, could add up to a flick past 320 degrees a second (the head check).
+   After everything has moved, the neck and the head each turn at most HEAD_RATE from where they were last frame. The ambient system's
+   own record of the head is kept in step, so its guard against a look piling up frame on frame still works. */
+const HEAD_RATE = (140 * Math.PI) / 180,
+  _hq = new THREE.Quaternion();
+function steadyHeads(Q, dt) {
+  if (!(dt > 0)) return;
+  const step = HEAD_RATE * dt;
+  for (const n of Q.extras) {
+    if (!n.m.visible || !n.amb) continue;
+    const b = n.m.userData.steady || (n.m.userData.steady = ["mixamorigNeck", "mixamorigHead"].map((k) => ({ bone: n.m.getObjectByName(k), last: null })));
+    b.forEach((s, i) => {
+      if (!s.bone) return;
+      if (s.last) {
+        _hq.copy(s.last).rotateTowards(s.bone.quaternion, step);
+        s.bone.quaternion.copy(_hq);
+        n.amb.hq?.[i]?.after.copy(_hq);
+      }
+      (s.last || (s.last = new THREE.Quaternion())).copy(s.bone.quaternion);
+    });
   }
 }
 let last = performance.now();
@@ -1411,6 +1449,7 @@ function frame(now) {
   }
   findNear();
   hint(now);
+  steadyHeads(Q, dt);
   renderer.render(scene, camera);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;

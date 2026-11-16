@@ -21,7 +21,7 @@ up to 30 mm before).
 """
 from mathutils import noise
 from mathutils.kdtree import KDTree
-BEARD_UNDER=.035   # metres behind the chin tip that the beard may reach under the chin
+BEARD_UNDER=.028   # metres behind the chin tip that the beard may reach under the chin
 lip_group=GI['lips']
 lips=[v.co for v in h.data.vertices if any(g.group==lip_group and g.weight>0 for g in v.groups)]
 lower_lip=min(v.z for v in lips)
@@ -86,8 +86,14 @@ if kind=='emperor':
         d=min(d,ear_front+.004+.022*sstep(ear_low,ear_low-.02,c.z)-c.y)                    # in front of the ear; below it, round the jaw
         if c.z<lower_lip-.02:d=min(d,chin_y+BEARD_UNDER-c.y)                                 # under the chin, never back to the throat
         d=min(d,(w-.42)*.06)                                                                 # off the head onto the neck (the jaw line)
+        if band_top is not None:d=min(d,c.z-band_top-.005-.008*sstep(chin_y+.004,chin_y+.02,c.y))   # under the chin, clear of the tie and collar: on his short neck the chin comes down to them as he bows his head (the cloth check)
         if c.y<yc-.04:d=min(d,kd.find(c)[2]-.0018)                                           # the lips
         return d
+    # the front of the tie (its knot under the chin), not the band that goes up round the back of the neck under the collar
+    tie=bpy.data.objects.get('Tie');tf=[v.co for v in tie.data.vertices if v.co.y<hy-.04] if tie else []
+    tie_top=max(c.z for c in tf) if tf else None
+    tie_front=min(c.y for c in tf if c.z>tie_top-.03) if tf else 0
+    band_top=max(v.co.z for v in tie.data.vertices) if tie else None
     bm=bmesh.new();bm.from_mesh(h.data)
     dl=bm.verts.layers.deform.active
     remove=[f for f in bm.faces if not (HEAD-.05<f.calc_center_median().z<eye_z+.04 and f.calc_center_median().y<ear_front+.03 and abs(f.calc_center_median().x)<.1)]
@@ -102,7 +108,7 @@ if kind=='emperor':
         c=v.co;a=ang(c)
         chin=sstep(a_corner*1.5,a_corner*.3,a)*sstep(lower_lip+.004,lower_lip-.012,c.z)       # the middle of the chin, below the lip
         must=sstep(mouth_z,mouth_z+.004,c.z)*sstep(a_corner*1.25,a_corner*.9,a)              # the moustache
-        T=.0018+.0022*sstep(lower_lip+.008,lower_lip-.02,c.z)+.0052*chin*(1-.3*sstep(a_corner*.4,a_corner*1.4,a))+.0040*must
+        T=.0018+.0022*sstep(lower_lip+.008,lower_lip-.02,c.z)+.0036*chin*(1-.3*sstep(a_corner*.4,a_corner*1.4,a))+.0040*must
         moved[v]=(-.0028+(T+.0028)*sstep(-.001,.0025+.0015*(1-must),D[v]),v.normal.copy())
     # faces wholly under the skin never show
     hidden=[f for f in bm.faces if all(moved[v][0]<=0 for v in f.verts)]
@@ -125,7 +131,7 @@ if kind=='emperor':
         a=ang(v.co)
         if D[v]>0 and v.co.z<lower_lip-.006:
             k=sstep(a_corner*1.6,a_corner*.2,a)*sstep(lower_lip-.006,lower_lip-.02,v.co.z)*sstep(0,.004,D[v])
-            moved[v]=moved[v]+Vector((0,-.0025,-.004))*k
+            moved[v]=moved[v]+Vector((0,-.002,-.0015))*k
     for v,p in moved.items():v.co=p
     if dl:
         for v in bm.verts:v[dl].clear()
@@ -141,7 +147,7 @@ if kind=='emperor':
             c=grey.lerp(dark,side**.8).lerp(mid,mo)
             grain=.82+.3*noise.noise(v*520)+.06*noise.noise(v*90)
             colours.data[li].color=(*(c*grain),1)
-    print('FITTED FACIAL HAIR emperor: one shell, chin',round(chin_y,4),'under nose',round(sub_z,4),len(beard.data.vertices),'points')
+    print('FITTED FACIAL HAIR emperor: one shell, tie front',round(tie_front,4),'tie top',tie_top and round(tie_top,4),'chin',round(chin_y,4),'under nose',round(sub_z,4),len(beard.data.vertices),'points')
 else:
     # Take the beard surface from the actual face. Every vertex stays attached to
     # the jaw; there are no fallback points or free tips projecting off the cheek.

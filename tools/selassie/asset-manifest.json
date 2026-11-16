@@ -5,8 +5,8 @@
   "mpfbCommit": null,
   "makehumanCommit": null,
   "finishingSHA256": "f057519ee0dd69e0b68f5245d268f413865f2e34d76889240c61b9797c83f56b",
-  "uniformSHA256": "134278d5ba6ddd76b97aadc95c2b2757c25a44ea2136f9a02272ecf81c490448",
-  "faceSHA256": "5350214dbb860fc7b3e612fefa60035fada20fd55e0fdae42fdbeff43cb4a1f4",
+  "uniformSHA256": "1730b0febbf289dd61af7009829a66fe3f19b9e8870bde98ed7256cd520163bb",
+  "faceSHA256": "4f4e13859ce26f22e59b05f940aede038f71361918c5cd557bf9578ce0b78769",
   "models": [
     {
       "file": "sel_adina66.js",
@@ -190,46 +190,46 @@
     },
     {
       "file": "sel_emperor66.js",
-      "bytes": 423608,
-      "sha256": "2be3373ad774d84262e5324b8681c2318d9709d099fa05e8fb3fee2eae54d737",
+      "bytes": 431364,
+      "sha256": "7f6600a3bff6d599c04776c910c480d8df3ef37af453821779331153655a6f42",
       "recipeSHA256": "477315671dd6ecbd999221b9ffe780a3341ca0029d37bb666c7f8282ccecd6ef",
       "visibleTriangles": 31994,
       "measurementTriangles": 0,
-      "visibleDraws": 26
+      "visibleDraws": 28
     },
     {
       "file": "sel_emperor66_crowd.js",
-      "bytes": 114092,
-      "sha256": "9429e0a50f41792594026eb2c47b455faa47517118205296a1dbf70f7f92418b",
+      "bytes": 113956,
+      "sha256": "4cbc5c20cc300c5c1a9b280bd43bd57bec431f869e2308d940a6e0c12c656ff6",
       "recipeSHA256": "477315671dd6ecbd999221b9ffe780a3341ca0029d37bb666c7f8282ccecd6ef",
-      "visibleTriangles": 5450,
-      "measurementTriangles": 748,
+      "visibleTriangles": 5432,
+      "measurementTriangles": 766,
       "visibleDraws": 2
     },
     {
       "file": "sel_emperor66_focus.js",
-      "bytes": 311756,
-      "sha256": "47ddd7cf86f047b5a7cb7a2e261fa2d979fe06f0dab0781c494e702dcb745a3a",
+      "bytes": 311100,
+      "sha256": "5409f56a41fb57c5800c3439e5c0528fe880225e2a83241e3d790f2477bf33ce",
       "recipeSHA256": "477315671dd6ecbd999221b9ffe780a3341ca0029d37bb666c7f8282ccecd6ef",
-      "visibleTriangles": 29840,
-      "measurementTriangles": 2158,
+      "visibleTriangles": 29744,
+      "measurementTriangles": 2254,
       "visibleDraws": 2
     },
     {
       "file": "sel_emperor66_lo.js",
-      "bytes": 228472,
-      "sha256": "21a28c8f57f5ce4a5cecfba8e54158034ad89d594c6416e33f1be77d30e24305",
+      "bytes": 237656,
+      "sha256": "b1a7dcfcef8f9efd273c6d3a9475ba9ee551568017e934a482a7fcafddb5a2ca",
       "recipeSHA256": "477315671dd6ecbd999221b9ffe780a3341ca0029d37bb666c7f8282ccecd6ef",
-      "visibleTriangles": 7282,
+      "visibleTriangles": 7274,
       "measurementTriangles": 0,
-      "visibleDraws": 25
+      "visibleDraws": 27
     },
     {
       "file": "sel_emperor66_phone.js",
-      "bytes": 96784,
-      "sha256": "994c4580dbc1c7099193ec1c296f06a74e80fa5402695a2b16bb0fedbf71c911",
+      "bytes": 97044,
+      "sha256": "a5c71bd333f6f7f3c70ea5f878daa3de3fcc660b20b3266f7088dcf6d4492169",
       "recipeSHA256": "477315671dd6ecbd999221b9ffe780a3341ca0029d37bb666c7f8282ccecd6ef",
-      "visibleTriangles": 3666,
+      "visibleTriangles": 3692,
       "measurementTriangles": 666,
       "visibleDraws": 2
     },
