@@ -546,8 +546,15 @@ function bubbleTick(now) {
 /* ---------- the helper arrow (as in Port Royal): stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }; let GUIDE = null;
 function nudgeTarget() {   /* where the next thing to do is, as [x, z] */
-  const a = ACTIONS.find((x) => x.on()); if (a) return [a.x, a.z];
-  let best = null, bd = 1e9; for (const n of PEOPLE) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; best = [n.x, n.z]; } } return best;
+  // TALK_TARGETS is the explicit list of required people for this stage.
+  // Only fall back to an available action when no required conversation remains.
+  let best = null, bd = 1e9;
+  for (const n of PEOPLE) if (n.m && n.m.visible && wantsTalk(n)) {
+    const d = Math.hypot(state.x - n.x, state.z - n.z);
+    if (d < bd) { bd = d; best = [n.x, n.z]; }
+  }
+  if (best) return best;
+  const a = ACTIONS.find((x) => x.on()); return a ? [a.x, a.z] : null;
 }
 function nudgeTick(now) {
   const el = $('nudge'); if (!el) return;
