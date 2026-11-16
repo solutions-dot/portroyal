@@ -36,8 +36,30 @@ HIP,KNEE,ANK,NECK,HEAD=J('Hips').z,J('LeftLeg').z,J('LeftFoot').z,J('Neck').z,J(
 SH=J('LeftArm'); EL=J('LeftForeArm'); HA=J('LeftHand'); SX=SH.x; s=HEAD/1.449
 print('LANDMARKS',round(HIP,3),round(KNEE,3),round(ANK,3),round(NECK,3),round(HEAD,3),[round(x,3) for x in SH],[round(x,3) for x in HA])
 GI={g.name:g.index for g in h.vertex_groups}
-bh=bmesh.new(); bh.from_mesh(h.data); tree=BVHTree.FromBMesh(bh)
 def sstep(a,b,x): t=max(0.0,min(1.0,(x-a)/(b-a))); return t*t*(3-2*t)
+def flat_chest(k):
+    # A man's chest must not read as a bust (owner, 16 November 2026). MakeHuman's male chest and ribs stand well forward of the belly; under a shirt, with the standing clip's
+    # lean, that showed as a rounded dome from collar to belt. Before any cloth is cut from the skin, the front of his torso is brought back toward a nearly straight line from
+    # the belly (just above the belt) to the collarbones, with a slight outward curve left in it, k of the way. Women, and recipes that set garments.chest to 0, keep their shape.
+    bm=bmesh.new(); bm.from_mesh(h.data); dl=bm.verts.layers.deform.verify(); gi=GI['body']; za,zb=HIP+0.11*s,NECK-0.05*s
+    _b=bm.copy(); _d=_b.verts.layers.deform.verify(); bmesh.ops.delete(_b,geom=[f for f in _b.faces if not all(v[_d].get(gi,0)>0 for v in f.verts)],context='FACES'); _t=BVHTree.FromBMesh(_b)      # the skin alone: the mesh also holds helper shapes that stand clear of the body
+    def front(z):
+        hit=_t.ray_cast(Vector((0,-0.6,z)),Vector((0,1,0)))[0]; return hit.y if hit else None
+    ya,yb=front(za),front(zb)
+    if ya is None or yb is None: bm.free(); return
+    vs=[]
+    for v in bm.verts:
+        c=v.co
+        if v[dl].get(gi,0)<=0 or not za<c.z<zb or abs(c.x)>SX*0.97 or c.y>0: continue
+        u=(c.z-za)/(zb-za); lim=ya+(yb-ya)*u-0.016*s*math.sin(math.pi*u)-0.10*abs(c.x)      # the line, a little fuller in the middle, falling away gently to the sides
+        if c.y<lim: c.y=lim+(c.y-lim)*(1-k*(1-sstep(SX*0.80,SX*0.97,abs(c.x)))); vs.append(v)
+    print('CHEST',round(ya,3),round(yb,3),round(za,3),round(zb,3),len(vs),round(HIP,3),round(NECK,3))
+    for _ in range(6):      # soften the line where the change begins and ends
+        nw={v:sum((e.other_vert(v).co for e in v.link_edges),Vector())/len(v.link_edges) for v in vs}
+        for v in vs: v.co=v.co.lerp(nw[v],0.5)
+    _b.free(); bm.to_mesh(h.data); bm.free(); h.data.update()
+if not P['garments'].get('woman') and P['body'].get('gender',1)>0.5 and P['garments'].get('chest',0.9)>0: flat_chest(P['garments'].get('chest',0.9))
+bh=bmesh.new(); bh.from_mesh(h.data); tree=BVHTree.FromBMesh(bh)
 LHIP,LKNEE,LANK=J('LeftUpLeg'),J('LeftLeg'),J('LeftFoot'); NJ=J('Neck')
 _c=tree.ray_cast(Vector((0,LHIP.y,0.3*s)),Vector((0,0,1)))[0]; CROTCH=_c.z if _c else HIP-0.09*s   # where the legs part
 def leg_axis(z,sx):      # the point on a leg's own centre line at height z
@@ -318,7 +340,10 @@ if not OLD or EASE_OLD:
     # how steeply loose cloth falls back in below the chest. A man's shirt or coat falls almost straight from the chest to the waist (it must not show the chest as two mounds
     # with a hollow under them), so at his front it falls in only 3.5 cm in a metre; a blouse follows the figure more (22 cm in a metre)
     _slope=[(0.22/max(0.2,G.get('hang',1.0))) if (G.get('woman') or math.cos(2*math.pi*k/ENA)<0.1) else 0.035/G.get('hang',1.0) for k in range(ENA)]
-    EVR=[_evrow(EZ0+i*EDZ) for i in range(ENZ)]; _eh=[_evhull(r) for r in EVR]; _hd=[r[:] for r in _eh]; _hu=[r[:] for r in _eh]; HANG=G.get('hang',1.0)
+    EVR=[_evrow(EZ0+i*EDZ) for i in range(ENZ)]
+    for i in range(max(1,int((NECK-0.03*s-EZ0)/EDZ)),ENZ):      # the top rows reach the jaw: left in, the chin stood 5 cm proud of the throat and the cloth was stretched from it down to the belt like a tent,
+        for k in range(ENA): EVR[i][k]=min(EVR[i][k],EVR[i-1][k]+0.002)      # which gave every man a rounded bust (found 16 November 2026). Above the base of the neck the outline may not widen again
+    _eh=[_evhull(r) for r in EVR]; _hd=[r[:] for r in _eh]; _hu=[r[:] for r in _eh]; HANG=G.get('hang',1.0)
     for i in range(ENZ-2,-1,-1):
         for k in range(ENA): _hd[i][k]=max(_eh[i][k],_hd[i+1][k]-_slope[k]*EDZ)      # falling from the chest and the shoulder blades
     for i in range(1,ENZ):
@@ -339,6 +364,8 @@ if not OLD or EASE_OLD:
                 for i in range(a_,b_+1): EVH[i][k]=col[a_]+(col[b_]-col[a_])*(zs[i]-zs[a_])/(zs[b_]-zs[a_])
     for _ in range(2 if G.get('woman') else 4): EVH=[[(EVH[max(0,i-1)][k]+EVH[min(ENZ-1,i+1)][k]+EVH[i][(k-1)%ENA]+EVH[i][(k+1)%ENA]+2*EVH[i][k])/6 for k in range(ENA)] for i in range(ENZ)]
     EVH=[[max(EVH[i][k],_eh[i][k]) for k in range(ENA)] for i in range(ENZ)]
+    if os.environ.get('EASE_DEBUG'):
+        for i in list(range(0,ENZ,3))+[ENZ-3,ENZ-2,ENZ-1]: print('EASE z=%.3f'%(EZ0+i*EDZ),' '.join('%s raw %.3f hull %.3f out %.3f |'%(n,EVR[i][k],_eh[i][k],EVH[i][k]) for n,k in (('front',0),('f30',6),('side',18),('back',36))))
     def env(z,a):
         fi=(z-EZ0)/EDZ; i=max(0,min(ENZ-2,int(fi))); t=max(0.0,min(1.0,fi-i)); fk=(a%(2*math.pi))/(2*math.pi)*ENA; k=int(fk)%ENA; u=fk-int(fk); k2=(k+1)%ENA
         f=lambda M:(M[i][k]*(1-u)+M[i][k2]*u)*(1-t)+(M[i+1][k]*(1-u)+M[i+1][k2]*u)*t
@@ -1355,10 +1382,11 @@ def paint(o):
                 if G.get('socks') and OLD and p.z<ANK+G['socks']*(KNEE-ANK): col=COL['Sock'].copy()      # later eras: socks are their own material (see above)
                 lip=max(0,1-((p.x/0.026)**2+((p.z-LIPZ)/0.010)**2)) if p.y<J('Head').y-0.09 else 0
                 col=col.lerp(col*0.62+Vector((0.05,0.0,0.0)),min(1,lip*1.2))
-                for sx in (-1,1):
-                    bx=(p.x-sx*0.034*s)/(0.022*G.get('browwide',1.0)); bz=(p.z-BROWZ-0.003*(1-abs(bx)))/(0.0045*G.get('brows',1.0))
-                    br=max(0,1-(bx*bx+bz*bz)) if p.y<J('Head').y-0.07 else 0
-                    col=col.lerp(COL['Hair'],min(1,br*1.6))
+                for sx in (-1,1):      # eyebrows, placed from the eyes themselves (a set height above the neck missed the brow on children, elders and shaped faces, and at 4.5 mm they hardly showed)
+                    e=EYE[sx]; bx=(p.x-e.x*1.16)/(1.12*ER*G.get('browwide',1.0)); out=bx*sx      # out: -1 at the nose end, +1 at the temple
+                    bz=(p.z-(e.z+ER*0.56+ER*0.13*(1-(out-0.1)**2)))/(ER*0.235*G.get('brows',1.0)*(1.0-0.42*max(0.0,out)))      # a low arch, fuller toward the nose and thinning to the temple
+                    br=max(0,1-(bx*bx+bz*bz)) if p.y<e.y+ER*1.2 else 0
+                    col=col.lerp(BROWCOL,min(1,br*2.6)*0.9)
                 k=0.94+noise.noise(p*9)*0.06
             else:
                 k=0.88+noise.noise(p*14)*0.1+noise.noise(p*3)*0.08
@@ -1367,6 +1395,16 @@ def paint(o):
             l[cl]=(col.x*k,col.y*k,col.z*k,1)
     bm.to_mesh(me); bm.free(); ca=me.color_attributes; ca.active_color=ca['Col']; ca.render_color_index=list(ca.keys()).index('Col')
     for p in me.polygons: p.use_smooth=True
+_ew=[eyes.matrix_world@v.co for v in eyes.data.vertices]; EYE={sx:sum((c for c in _ew if c.x*sx>0),Vector())/max(1,sum(1 for c in _ew if c.x*sx>0)) for sx in (-1,1)}
+ER=max((c-EYE[1]).length for c in _ew if c.x>0)      # the eyeball's radius: the scale of the face (a child's is smaller)
+_hc=COL['Hair']; BROWCOL=_hc if max(_hc)<0.25 else _hc.lerp(COL['Skin']*0.55,0.5)      # grey or white hair: a soft grey brow, not a white bar across the forehead
+def brow_mesh():      # the brow is painted on the skin's own points; where it lies they are made four times finer, so its edge is a clean line and not a few big triangles
+    bm=bmesh.new(); bm.from_mesh(h.data)
+    for _ in range(2):
+        es=[e for e in bm.edges if all(any(abs(v.co.x-EYE[sx].x*1.16)<ER*1.35 and EYE[sx].z+ER*0.2<v.co.z<EYE[sx].z+ER*1.15 and v.co.y<EYE[sx].y+ER*1.2 for sx in (-1,1)) for v in e.verts)]
+        bmesh.ops.subdivide_edges(bm,edges=es,cuts=1,use_grid_fill=True)
+    bmesh.ops.triangulate(bm,faces=[f for f in bm.faces if len(f.verts)>4]); bm.to_mesh(h.data); bm.free()
+brow_mesh()
 for o in clothes+[h]: paint(o)
 for m in eyes.data.materials:
     for n in m.node_tree.nodes:
@@ -1464,10 +1502,15 @@ if os.environ.get('FOLDS'):      # how many faces of each piece face the wrong w
             if ad and f.normal.dot(sum((g.normal for g in ad),Vector((0,0,0))))<0: nf+=1
         if nf: print('FOLDS',o.name,nf,'of',len(b.faces))
         b.free()
+# The face is marked on the skin (1 on every point from the brow to the chin, cheek to cheek), and carried into the .glb as the attribute _FACE. tools/people/pack.mjs gives the
+# marked part its own share of triangles when it makes a light, crowd or phone copy, so eyes, brows and lips survive (simplified with the rest of the skin, a face in a crowd lost them).
+_fa=h.data.attributes.new('_FACE','FLOAT','POINT')
+for v in h.data.vertices:
+    c=v.co; _fa.data[v.index].value=1.0 if (c.y<EYE[1].y+ER*2.4 and EYE[1].z-ER*4.4<c.z<EYE[1].z+ER*1.7 and abs(c.x)<EYE[1].x+ER*2.3) else 0.0
 print('TRIS',sum(len(p.vertices)-2 for o in bpy.data.objects if o.type=='MESH' for p in o.data.polygons))
 os.makedirs('build/people',exist_ok=True); bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath('build/people/'+P['name']+'.blend'))
 bpy.context.scene['vertexColorSpace'] = 'linear'
-bpy.ops.export_scene.gltf(export_extras=True,filepath=OUT+P['name']+'.glb',export_image_format='JPEG',export_apply=False,export_vertex_color='NAME',export_vertex_color_name='Col',export_skins=True,export_animations=False,export_rest_position_armature=False)
+bpy.ops.export_scene.gltf(export_extras=True,filepath=OUT+P['name']+'.glb',export_image_format='JPEG',export_apply=False,export_vertex_color='NAME',export_vertex_color_name='Col',export_skins=True,export_animations=False,export_rest_position_armature=False,export_attributes=True)
 # a copy for Mixamo: rest pose, with skin, so the user can pick animations for it
 if P.get('fbx'):
     rig.data.pose_position='REST'; bpy.context.view_layer.update()

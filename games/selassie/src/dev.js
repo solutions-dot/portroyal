@@ -196,6 +196,11 @@ export async function dev(A) {
         S.view = { pos: L(...V[0]), look: L(...V[1]) };
       } else S.view = { pos: [9.9, 2.45, -19.4], look: [1.9, 3.75, -29.4] };
     }
+    // &cam=x,y,z,lx,ly,lz moves the camera of any view above (a closer look at one face in the line-up)
+    if (q.has("cam")) {
+      const c = q.get("cam").split(",").map(Number);
+      S.view = { pos: c.slice(0, 3), look: c.slice(3, 6) };
+    }
     $("hud").hidden = true;
     window.__SHOT = true;
     return;
