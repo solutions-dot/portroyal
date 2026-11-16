@@ -5,6 +5,7 @@
    Rules that shape the code: the fire is only ever seen from behind the rope and nobody is shown in it or hurt (docs/games/eventide.md, "How the fire is told");
    nothing the player does changes what happened; skin is lightened so faces read in every light (owner rule 9). */
 import * as THREE from 'three';
+import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -238,14 +239,14 @@ const BUBBLE = (() => { const c = document.createElement('canvas'); c.width = c.
 const TALK_SVG = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12c0 4-4 7-9 7-1.2 0-2.4-.2-3.4-.5L3 20l1.5-4.2C3.6 14.7 3 13.4 3 12c0-4 4-7 9-7s9 3 9 7z"/><circle cx="8" cy="12" r=".6" fill="currentColor"/><circle cx="12" cy="12" r=".6" fill="currentColor"/><circle cx="16" cy="12" r=".6" fill="currentColor"/></svg>';
 const TB = { el: null, v: new THREE.Vector3() };
 function addMark(n) { n.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, fog: false })); n.mark.renderOrder = 5; n.mark.visible = false; scene.add(n.mark); }
-const headTop = (n) => (n.ground || 0) + n.h - 0.03;
+const headTop = (n) => { const y = n.m ? realHeadTop(n.m) : null; return y !== null ? y : (n.ground || 0) + n.h - 0.03; };   /* the real top of the head or hat (engine/marks.js), or the old guess */
 function bubbleTick(now) {
   const show = state.started && !busy && !frozen && !DIR.on && $('card').hidden;
   for (const n of SC ? SC.people : []) { const m = n.mark; if (!m) continue; if (!show || !n.m.visible) { m.visible = false; continue; } const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, headTop(n) + 0.17 + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
+    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !busy) activate(near); }); }
   const on = show && near && !near.go; TB.el.hidden = !on; if (!on) return;
-  TB.v.set(near.x, headTop(near) + 0.08, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
+  TB.v.set(near.x, headTop(near) + NEAR_GAP, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
   if (TB.el.dataset.label !== near.who) { TB.el.dataset.label = near.who; TB.el.innerHTML = TALK_SVG + '<span class="who"></span>'; TB.el.querySelector('.who').textContent = near.who; TB.el.setAttribute('aria-label', near.label); }
 }

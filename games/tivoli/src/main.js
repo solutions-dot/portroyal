@@ -20,7 +20,8 @@ import { buildNewTivoli } from './newtivoli.js';
 import { buildStreet, streetPlace } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, after as talkAfter, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage } from './story.js';
-import { WALKS, CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick } from './ch1.js';
+import { WALKS, CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget } from './ch1.js';
+import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { lifeTest } from './life.js';   // dev only: ?test=ambient
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
 import { clipInfo, sceneCheck } from './scenecheck.js';
@@ -241,7 +242,22 @@ function frame(t) {
   if (__DEV__) for (const m of DEVG) groundFeet(m);
   for (const m of ARMED) weaponTick(m);   // after the mixer and the feet: weapons follow the hands
   if (FIGHT.on) fightAfter(t / 1000); else { camera.position.set(state.x, state.camY || 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); }
+  guideTick(t);
   renderer.render(scene, camera);
+}
+/* the helper (the same rules as the other games): stand still for 15 s, or take 50 s over one goal, and a gold arrow on the ground points the way,
+   with a gold ring round the person or the place. Near them the Talk button takes over. */
+const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }; let GUIDE = null;
+function guideTick(now) {
+  if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: () => state.camY || 1.6 });
+  const goal = $('goal').textContent, quiet = CH.on && state.started && !busy && !FIGHT.on && !Talk.open && $('chcard').hidden;
+  if (goal !== NUDGE.goal) { NUDGE.goal = goal; NUDGE.since = now; NUDGE.on = false; }
+  if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
+  if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30000); NUDGE.still = now; }
+  const tgt = quiet ? guideTarget() : null;
+  if (!NUDGE.on && quiet && tgt && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) NUDGE.on = true;
+  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
+  if (!NUDGE.on || !tgt) GUIDE.hide(now); else GUIDE.point(now, { x: tgt[0], z: tgt[1] });
 }
 requestAnimationFrame(frame);
 

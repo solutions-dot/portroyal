@@ -10,6 +10,7 @@ import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, c
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 import { auditHeld, auditCloth } from '../../../engine/audit.js';   /* used only by the dev tests ?test=held and ?test=cloth */
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev only: ?test=skin */
+import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 soundPref('portroyal-sound');
 onLoadFail((n) => { $('loadnote').hidden = false; $('loadnote').textContent = 'Part of the game did not load (' + n + '). Reload the page to try again.'; });
@@ -1912,21 +1913,22 @@ const MARKS = []; let markN = 0;
 function markSprite() { if (markN < MARKS.length) return MARKS[markN++]; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); sp.renderOrder = 5; scene.add(sp); MARKS.push(sp); markN++; return sp; }
 const isTalk = (a) => /^Talk to /.test(a.label);
 const markY = (a, w) => {   /* how high above their feet the speech mark floats: just over the head or hat, measured from the person's own model */
-  const fall = /old Ned|surgeon/.test(a.label) ? 1.7 : 2.15; if (!w) return fall;
+  const fall = /old Ned|surgeon/.test(a.label) ? 1.5 : 1.85; if (!w) return fall;   /* the top of the head or hat above the feet; the mark floats markAt() over it */
   const cands = [abba, ...Object.values(people), ...Object.values(survivors), FBG.qm, FBG.exq, FBG.carrier, ...(FBG.d || [])]; let best = null, bd = 1.6; const p = new THREE.Vector3();
   for (const m of cands) { if (!m || !m.parent || !m.visible) continue; m.getWorldPosition(p); const d = Math.hypot(p.x - w[0], p.z - w[1]); if (d < bd) { bd = d; best = m; } }
-  if (!best) return fall; const now = performance.now(), u = best.userData;
+  if (!best) return fall; best.getWorldPosition(p); const top = realHeadTop(best); if (top !== null) return top - p.y;   /* the real head or hat (engine/marks.js) */
+  const now = performance.now(), u = best.userData;
   if (!u.hgt || now - (u.hgtT || 0) > 1500) { best.updateMatrixWorld(true); best.traverse((o) => { if (o.isSkinnedMesh) { o.skeleton.update(); o.computeBoundingBox(); } });   /* a skinned mesh keeps its first bounding box, so refresh it from the pose it is in now */
     const bb = new THREE.Box3().setFromObject(best), h = bb.max.y - bb.min.y; u.hgt = Math.max(1.0, Math.min(2.3, h)); u.hgtT = now; }
-  return u.hgt + 0.26; };
+  return u.hgt; };
 const TB = { el: null, world: new THREE.Vector3(), a: null };
 TICKS.push(() => { markN = 0; TB.a = null; const now = performance.now() / 1000;
   if (state.started && !busy && $('card').hidden) for (const a of ACTIONS) { if (!isTalk(a) || !!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const d = Math.hypot(state.x - w[0], state.z - w[1]); if (d > 16) continue;
     const sp = markSprite(), near = a === current, home = state.place === 'in' ? indoor : state.place === 'ware' ? wareG : state.place === 'after' ? afterG : state.place === 'yard' ? yardG : scene;
     if (sp.parent !== home && home) home.add(sp);
     const base = state.place === 'sea' ? seaLevel + 1.6 : (state.place === 'out' ? groundYAt(w[0], w[1]) : 0) + markY(a, w);
-    sp.position.set(w[0], base + Math.sin(now * 2.4 + w[0]) * 0.06, w[1]); const k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + w[0]) * 0.1); sp.scale.set(k, k, k); sp.material.opacity = Math.max(0.6, 1 - d / 20); sp.visible = !near;
-    if (near) { TB.world.set(w[0], base + 0.03, w[1]); if (home !== scene) TB.world.applyMatrix4(home.matrixWorld); TB.a = a; } }
+    const k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + w[0]) * 0.1); sp.position.set(w[0], markAt(base, k) + Math.sin(now * 2.4 + w[0]) * 0.03, w[1]); sp.scale.set(k, k, k); sp.material.opacity = Math.max(0.6, 1 - d / 20); sp.visible = !near;
+    if (near) { TB.world.set(w[0], base + NEAR_GAP, w[1]); if (home !== scene) TB.world.applyMatrix4(home.matrixWorld); TB.a = a; } }
   for (let i = markN; i < MARKS.length; i++) MARKS[i].visible = false;
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (TB.a && !busy) TB.a.go(); }); }
   const show = TB.a && TB.a === current && !busy; TB.el.hidden = !show; if (!show) return;

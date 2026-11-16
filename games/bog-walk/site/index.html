@@ -75,8 +75,8 @@
   @keyframes nbdown{50%{transform:rotate(180deg) translateY(-8px)}}@keyframes nbleft{50%{transform:rotate(-90deg) translateY(-8px)}}@keyframes nbright{50%{transform:rotate(90deg) translateY(-8px)}}
   @media (prefers-reduced-motion:reduce){#nudge svg{animation:none!important}}
   body.talk #nudge,body:has(#card:not([hidden])) #nudge,body:has(#journal:not([hidden])) #nudge,body:has(#puzzle:not([hidden])) #nudge{visibility:hidden}
-  #stick{position:fixed;width:96px;height:96px;margin:-48px 0 0 -48px;border:2px solid rgba(242,232,208,.45);border-radius:50%;pointer-events:none;z-index:2}
-  #stick i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(217,164,65,.55)}
+  #stick{position:fixed;width:96px;height:96px;margin:-48px 0 0 -48px;border:2px solid rgba(242,232,208,.32);border-radius:50%;pointer-events:none;z-index:2}
+  #stick i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(217,164,65,.4)}
   /* the tap bubble over the nearest person */
   .tbub{position:fixed;z-index:2;transform:translate(-50%,-100%);width:54px;height:54px;border-radius:50%;border:0;background:var(--brass);color:var(--brass-ink);display:grid;place-items:center;cursor:pointer;padding:0;box-shadow:0 0 0 4px rgba(217,164,65,.35),0 0 24px 8px rgba(255,205,110,.4),0 6px 18px rgba(0,0,0,.4);animation:talkpulse 1.6s ease-in-out infinite}
   .tbub .who{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;white-space:nowrap;font-size:.85rem;font-weight:700;color:var(--paper);text-shadow:0 1px 3px rgba(0,0,0,.9)}

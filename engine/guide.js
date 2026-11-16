@@ -23,13 +23,13 @@ function flat(geo) { geo.rotateX(-Math.PI / 2); return geo; }   /* lying on the 
 export function createGuide({ scene, camera, ground = null, eye = 1.6, color = GOLD } = {}) {
   const mat = (c, o, depth) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, depthWrite: false, depthTest: depth, side: THREE.DoubleSide, fog: false, toneMapped: false });
   const root = new THREE.Group(); root.name = 'GuideArrow'; root.renderOrder = 20; root.visible = false;
-  const body = new THREE.Mesh(flat(new THREE.ShapeGeometry(arrowShape(0.95, 0.5, 0.62))), mat(color, 0.92, false));
-  const edge = new THREE.Mesh(flat(new THREE.ShapeGeometry(arrowShape(1.08, 0.62, 0.78))), mat(EDGE, 0.45, false));
-  edge.position.x = -0.02; edge.position.y = -0.004; body.renderOrder = 22; edge.renderOrder = 21;
+  const body = new THREE.Mesh(flat(new THREE.ShapeGeometry(arrowShape(0.62, 0.3, 0.4))), mat(color, 0.92, false));
+  const edge = new THREE.Mesh(flat(new THREE.ShapeGeometry(arrowShape(0.7, 0.38, 0.5))), mat(EDGE, 0.45, false));
+  edge.position.x = -0.015; edge.position.y = -0.004; body.renderOrder = 22; edge.renderOrder = 21;
   root.add(edge, body); root.userData.noAudit = true;
   const ring = new THREE.Group(); ring.name = 'GuideRing'; ring.visible = false; ring.userData.noAudit = true;
-  const band = new THREE.Mesh(flat(new THREE.RingGeometry(0.62, 0.74, 48)), mat(color, 0.85, true));
-  const halo = new THREE.Mesh(flat(new THREE.RingGeometry(0.58, 0.80, 48)), mat(EDGE, 0.28, true));
+  const band = new THREE.Mesh(flat(new THREE.RingGeometry(0.46, 0.52, 48)), mat(color, 0.85, true));
+  const halo = new THREE.Mesh(flat(new THREE.RingGeometry(0.43, 0.55, 48)), mat(EDGE, 0.28, true));
   band.renderOrder = 19; halo.renderOrder = 18; halo.position.y = -0.003; ring.add(halo, band);
   for (const m of [body, edge, band, halo]) { m.material.polygonOffset = true; m.material.polygonOffsetFactor = -2; m.material.polygonOffsetUnits = -2; m.raycast = () => {}; m.frustumCulled = false; }
   scene.add(root, ring);
@@ -47,7 +47,7 @@ export function createGuide({ scene, camera, ground = null, eye = 1.6, color = G
   const groundAt = (x, z) => { const y = ground ? ground(x, z) : null; return Number.isFinite(y) ? y : camera.position.y - (typeof eye === 'function' ? eye() : eye); };
 
   function tick(now) { const dt = last === null ? 0 : Math.max(0, Math.min(0.1, (now - last) / 1000)); last = now; fade += ((shown ? 1 : 0) - fade) * Math.min(1, dt * 6); return dt; }
-  function setFade(f) { body.material.opacity = 0.92 * f; edge.material.opacity = 0.45 * f; band.material.opacity = 0.85 * f; halo.material.opacity = 0.28 * f; }
+  function setFade(f) { body.material.opacity = 0.78 * f; edge.material.opacity = 0.32 * f; band.material.opacity = 0.7 * f; halo.material.opacity = 0.2 * f; }
 
   const G = {
     root, ring,
@@ -62,18 +62,18 @@ export function createGuide({ scene, camera, ground = null, eye = 1.6, color = G
       const wide = Math.atan(Math.tan(half) * camera.aspect) * 0.38, side = Math.max(-wide, Math.min(wide, rel)), at = look + side;   /* in front, leaning toward the way to go, never off the side of a narrow phone screen */
       if (Math.abs(rel) < wide) D = Math.min(D, dist - 1.1);   /* never past the place it points to */
       if (Math.abs(rel) <= wide) D = Math.min(D, clear(px, pz, at, groundAt(px, pz), now) - 0.55);   /* the way ahead: keep it on open floor; to turn round it stays in view even by a wall */
-      const showArrow = Math.abs(rel) > wide || (D > 1.2 && dist > 2.4);   /* near and in view: the ring is enough; near but out of view: still point the way to turn */
+      const showArrow = Math.abs(rel) > wide || (D > 1.2 && dist > 4.2);   /* near and in view: the ring is enough; near but out of view: still point the way to turn */
       root.visible = showArrow && fade > 0.02;
       if (showArrow) {
         const ax = px + Math.sin(at) * D, az = pz + Math.cos(at) * D, slide = (t * 0.9) % 1;
-        const push = Math.sin(slide * Math.PI) * 0.22;   /* a gentle push toward the way to go */
+        const push = Math.sin(slide * Math.PI) * 0.14;   /* a gentle push toward the way to go */
         root.position.set(ax + Math.sin(want) * push, groundAt(ax, az) + 0.04, az + Math.cos(want) * push);
         root.rotation.set(0, want - Math.PI / 2, 0);   /* the arrow's +x along the way to go */
-        const s = 0.85 + 0.25 * Math.min(1, D / 4); root.scale.setScalar(s);
+        const s = 0.9 + 0.2 * Math.min(1, D / 4); root.scale.setScalar(s);
       }
       const tdist = Math.hypot(tx - px, tz - pz);
       ring.visible = fade > 0.02 && tdist < 40;
-      if (ring.visible) { const p = 1 + 0.12 * Math.sin(t * 4); ring.position.set(tx, groundAt(tx, tz) + 0.03, tz); ring.scale.setScalar(p); }
+      if (ring.visible) { const p = 1 + 0.08 * Math.sin(t * 3); ring.position.set(tx, groundAt(tx, tz) + 0.03, tz); ring.scale.setScalar(p); }
       setFade(fade);
       info = { show: true, arrow: showArrow, ring: ring.visible, D: +D.toFixed(2), rel: +rel.toFixed(2), final, x, z, tx, tz };
       return info;
