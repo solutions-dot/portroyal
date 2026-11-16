@@ -2,6 +2,16 @@
 
 Read-only audit of `games/port-royal`, `garvey`, `kendal`, `bog-walk`, `nanny`, `eventide`, `melissa` and `tivoli`, against the owner's three new rules. Done on 15 November 2026 from the code on the working tree (branch as checked out, commit `7a62fdf`). No repo file was edited. Line numbers are `file:line` in each game's `src/`.
 
+### Follow-up: always-visible next task (16 November 2026)
+
+The owner selected **Bog Walk's guidance pattern as the target for all ten games**: a plainly written next task that stays readable, a gold world arrow to the current required destination, and a nearby talk/action control that takes over when the player arrives. The task should change immediately when a requirement is completed, and optional activities must not override a required step.
+
+**Implemented on draft PR #101:** Port Royal, Garvey, Kendal, Bog Walk, Nanny, Eventide and Melissa no longer auto-collapse the current goal into the word "Goal" after 6.5 seconds. Tivoli now uses the same 2.5-second movement-independent world-arrow delay as the other legacy games; the previous pass did this for Port Royal, Garvey, Bog Walk, Nanny, Eventide and Melissa. Bog Walk now prioritizes marked required story people over optional actions.
+
+**Not yet equivalent:** Kendal uses the shared story engine's target timing; Windrush and Selassie have their own hint implementations and still require comparison to Bog Walk's positioning and task selection. Across the series, the target selector must be validated against **unfinished required needs**, not merely the first available action or any NPC. Bog Walk's `placeNudge` avoids text/button collisions, but that exact placement algorithm has **not** been ported into all games. Tivoli's stage-specific target coverage and all chapter transitions need a browser walkthrough.
+
+**Acceptance checks before closing this request:** (1) the current task remains visible during play; (2) 2.5 seconds after a new ordinary task, a correctly routed arrow appears without requiring the child to stop moving; (3) completing a task immediately selects the next required task; (4) optional people/actions cannot steal guidance; (5) the arrow hides for dialogue and panels and does not cover on-screen controls; (6) arrival exposes a usable talk/action control; (7) all chapters of all ten games are replayed on desktop and mobile. These checks are not yet verified.
+
 ## Implementation checkpoint: 16 November 2026 (draft PR #101)
 
 This is a follow-up to the read-only audit below, not a replacement for its findings.
