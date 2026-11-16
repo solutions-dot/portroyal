@@ -115,3 +115,20 @@ If you stand still or stall, the Goal tab opens and a gold arrow points at the n
 - Port Royal has `?test=held`, `?test=cloth` (34 lines, 390 points on 14 November 2026), `?test=skin`, `?test=walk` and `?test=collision` / `?test=seating`. The full place audit (`?test=audit`: floating things, people inside solids or each other) and the layout test (`?test=layout`) are not wired yet. See `docs/STANDARD.md`, "Where each game stands".
 - Talking, journal, chapters, saving, controls, strolling and the helper arrow still live in main.js. Move each into `engine/` when a second game needs it.
 - When adding a goal, add its `NUDGE_MAP` row, or the helper arrow cannot point the way (the goal still pops open).
+
+## Facts the player reads, with sources (checked November 2026)
+
+The content lint (`node tools/lint_content.mjs --game port-royal`) asks for every year and number the player reads to be written here with its source.
+
+- Lewis Galdy: born in France in 1659; died at Port Royal on 22 December 1739, aged 80, so he lived 47 years after the 1692 earthquake. His tombstone (wording shown in the game) first stood at Green Bay across the harbour and was moved to St Peter's churchyard in 1953. As churchwarden he oversaw the new St Peter's Church, finished in 1725 to 1726. Sources: the tombstone; Jamaica Gleaner, "Lewis Galdy cheated death twice" (25 October 2024); Jamaican Ancestral Records, St Peter's Anglican, Port Royal; The Appendix, "The Man who was Buried Twice" (2014).
+- The town in 1692: about 6,500 people, about 2,500 of them enslaved Africans (Pawson and Buisseret, *Port Royal, Jamaica*). In 1688, 213 ships called at Port Royal, against 226 for all of New England (Zahedieh; quoted by the Port Royal Project, Texas A&M).
+- Archaeology: Donny Hamilton's Port Royal Project dug under water from 1981 to 1990. Onion bottles came up sealed after more than 250 years. In one building about 25 pewter plates lay stacked; Port Royal holds the largest collection of late 1600s pewter. Simon Benning was working as a pewterer in Jamaica by the 1660s, followed by his son Symon (Gotelipe-Miller, *Pewter and Pewterers from Port Royal*, 1990).
+- The watch: found by divers in 1959 (Edwin Link's expedition), made in Amsterdam about 1686 (Paul Blondel), stopped at 11:43.
+- Slavery and law: the Royal African Company held the English slave trade to itself until 1698. Laws against free Black people grew harsher in the 1700s.
+- Morgan: Portobelo 1668, Maracaibo 1669, Panama taken in January 1671; arrested and sent to England in 1672, knighted in 1674, back in 1675 as Lieutenant Governor; died 25 August 1688, and the ships fired 22 guns (Exquemelin; Pawson and Buisseret). By the 1680s the government hanged pirates. Exquemelin's book came out in English in 1684; Morgan sued the publishers and won 200 pounds. The articles paid 600 pieces of eight for a lost right arm (Exquemelin, *The Buccaneers of America*, 1678).
+- Fort Charles: begun in 1655; its guns were raised from 10 to 36 in 1667 (the gunner says 36 big guns); the only Port Royal fort to survive 1692 (Jamaica National Heritage Trust).
+- Prices and the quizzes are puzzles, not records (the cocoa sale for 20 reales is a sum to work out); see the "prices" journal page.
+
+## Owner rule 3 and the real people who speak
+
+Henry Morgan, Alexandre Exquemelin, the Reverend Emmanuel Heath and Symon Benning speak in the game. Their lines are short paraphrases of facts from the sources above (Morgan's papers from the governor, the vote that made him leader, the fire ship at Maracaibo, Panama; Exquemelin as surgeon and writer; Heath's letters about sleeping on a ship and caring for the sick; Benning's trade and mark). None is a real quotation, and the credits say so ("their words in this game are fictional"). Rule 3 says never invent quotes for real people: whether these paraphrased lines may stay is for the owner to decide (see the November 2026 review in the report). Fictional people: Abba, Kofi, Sam, Ned, Grace, Peter, Daniel Mendes, Constable Hart, Will and Jack (the tavern), Tom and Dick (the drill), the quartermaster, the gunner; each has a "fictional" note in the journal.
