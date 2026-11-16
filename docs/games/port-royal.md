@@ -93,7 +93,7 @@ Open `games/port-royal/site/index.html?shot=<name>`. Useful ones: `ns1` to `ns9`
 
 ## The helper arrow
 
-If you stand still or stall, the Goal tab opens and a gold arrow points at the next thing to do (`nudgeTarget`, `NUDGE_MAP`). Outside, the main street and the new street are walled off from each other by houses and both open only onto the harbour strip at the east end, so `nudgeStep` first points the arrow along the way out ("This way") and only says "Here!" when there is a clear way to the goal. Dev check: `window.__nudgeTest(playerX, playerZ, goalX, goalZ)` returns `[x, z, isGoal]`. If you add a place with walls inside it, give it a rule in `nudgeStep`.
+If you stand still or stall, the Goal tab opens and a gold arrow points at the next thing to do (`nudgeTarget`, `NUDGE_MAP`). Outside, the main street and the new street are walled off from each other by houses and both open only onto the harbour strip at the east end, so `nudgeStep` first points the arrow along the way out and only points at the goal itself when there is a clear way to it. The arrow is the shared gold arrow on the ground with a ring round the goal (`engine/guide.js`). Dev check: `window.__nudgeTest(playerX, playerZ, goalX, goalZ)` returns `[x, z, isGoal]`. If you add a place with walls inside it, give it a rule in `nudgeStep`.
 
 ## History sources used
 

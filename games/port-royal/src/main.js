@@ -10,6 +10,7 @@ import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, c
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 import { auditHeld, auditCloth } from '../../../engine/audit.js';   /* used only by the dev tests ?test=held and ?test=cloth */
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev only: ?test=skin */
+import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 soundPref('portroyal-sound');
 onLoadFail((n) => { $('loadnote').hidden = false; $('loadnote').textContent = 'Part of the game did not load (' + n + '). Reload the page to try again.'; });
 
@@ -838,15 +839,12 @@ TICKS.push((dt) => {
   let tgt = quiet ? nudgeTarget() : null;
   if (!NUDGE.on && quiet && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
   if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }   /* there: the talk button takes over */
-  if (!NUDGE.on || !tgt) { el.hidden = true; return; }
-  el.hidden = false;
-  const st = nudgeStep(tgt), fin = st[2]; tgt = st;   /* point at the next step on the way, which is the goal itself when there is a clear way to it */
-  const W = innerWidth, H = innerHeight, dx = tgt[0] - state.x, dz = tgt[1] - state.z, rel = Math.atan2(-dx, -dz) - state.yaw, a = Math.atan2(Math.sin(rel), Math.cos(rel));   /* a: 0 straight ahead, plus to the left */
-  _nv.set(tgt[0], 2.2, tgt[1]).project(camera); const lab = el.querySelector('span');
-  if (Math.abs(a) < 0.55 && _nv.z < 1) {   /* in front: a bouncing arrow points down at it (kept on screen even when you look up or down) */
-    el.style.left = Math.max(60, Math.min(W - 60, (_nv.x + 1) / 2 * W)) + 'px'; el.style.top = Math.max(110, Math.min(H * 0.62, (1 - _nv.y) / 2 * H)) + 'px'; el.className = 'down'; const sy = (1 - _nv.y) / 2 * H; lab.textContent = sy > H * 0.75 ? 'Look down' : sy < 90 ? 'Look up' : fin ? 'Here!' : 'This way'; }
-  else { const left = a > 0; el.style.left = (left ? 58 : W - 58) + 'px'; el.style.top = (H * 0.45) + 'px'; el.className = left ? 'left' : 'right'; lab.textContent = 'This way'; }   /* to the side or behind: a big arrow at the edge says which way to turn */
+  el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: () => eyeY });
+  if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
+  const st = nudgeStep(tgt);   /* point at the next step on the way, which is the goal itself when there is a clear way to it */
+  GUIDE.point(now, { x: st[0], z: st[1], tx: tgt[0], tz: tgt[1], final: st[2] });   /* a gold arrow on the ground points the way, a gold ring marks the place */
 });
+let GUIDE = null;
 TICKS.push((dt) => { if (!GULLS.length) { if (state.started) gullsInit(); return; } const show = state.place === 'out' && !Q.ruin && !(Q.on && Q.phase !== 'calm'); const t = performance.now() / 1000;
   for (const g of GULLS) { g.visible = show; if (!show) continue; const u = g.userData; u.a += u.sp * dt; const x = u.cx + Math.cos(u.a) * u.rad, z = u.cz + Math.sin(u.a) * u.rad; g.position.set(x, u.h + Math.sin(t * 0.7 + u.ph) * 0.6, z); g.rotation.y = -u.a + (u.sp > 0 ? 0 : Math.PI); g.rotation.z = -Math.sign(u.sp) * 0.25;
     const glide = Math.sin(t * 0.4 + u.ph) > 0.3, f = glide ? 0.08 : Math.sin(t * 9 + u.ph) * 0.55; u.l.rotation.z = f; u.r.rotation.z = -f; } });

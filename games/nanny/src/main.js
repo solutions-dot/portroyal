@@ -7,6 +7,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    hiding from a lantern, the horn game, and the fight as a set piece seen from the watch rock.
    Layout of this file: setup, state and controls, people and places, interface, saving, talking, chapters, the horn, each chapter's scenes, the loop, test views. */
 import * as THREE from 'three';
+import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle } from '../../../engine/audio.js';
@@ -625,12 +626,11 @@ function nudgeTick(now) {
   const tgt = quiet ? nudgeTarget() : null;
   if (!NUDGE.on && quiet && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
   if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
-  if (!NUDGE.on || !tgt) { el.hidden = true; return; } el.hidden = false;
-  const W = innerWidth, H = innerHeight, dx = tgt[0] - state.x, dz = tgt[1] - state.z, rel = Math.atan2(-dx, -dz) - state.yaw, a = Math.atan2(Math.sin(rel), Math.cos(rel));
-  _nv.set(tgt[0], groundAt(tgt[0], tgt[1]) + 2.0, tgt[1]).project(camera); const lab = el.querySelector('span');
-  if (Math.abs(a) < 0.55 && _nv.z < 1) { el.style.left = Math.max(60, Math.min(W - 60, (_nv.x + 1) / 2 * W)) + 'px'; el.style.top = Math.max(110, Math.min(H * 0.62, (1 - _nv.y) / 2 * H)) + 'px'; el.className = 'down'; const sy = (1 - _nv.y) / 2 * H; lab.textContent = sy > H * 0.75 ? 'Look down' : sy < 90 ? 'Look up' : 'Here!'; }
-  else { const left = a > 0; el.style.left = (left ? 58 : W - 58) + 'px'; el.style.top = (H * 0.45) + 'px'; el.className = left ? 'left' : 'right'; lab.textContent = 'This way'; }
+  el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: (x, z) => groundAt(x, z) });
+  if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
+  GUIDE.point(now, { x: tgt[0], z: tgt[1] });   /* a gold arrow on the ground points the way, a gold ring marks the place */
 }
+let GUIDE = null;
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
 let auNext = 0, onceAt = 6; const AMB = 0.42;

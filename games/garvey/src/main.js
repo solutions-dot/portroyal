@@ -14,6 +14,7 @@ import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone
 import { model, prefetch, onLoadFail } from '../../../engine/loader.js';
 import { auditCloth } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
+import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -542,7 +543,8 @@ function bubbleTick(now) {
 }
 
 /* ---------- the helper arrow (as in Port Royal): stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
-const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
+const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }; let GUIDE = null;
+if (__DEV__) window.__guide = (yaw) => (yaw !== undefined && (state.yaw = yaw), { on: NUDGE.on, tgt: nudgeTarget(), g: GUIDE && GUIDE.state(), quiet: state.started && !busy && goalText });
 function nudgeTarget() {   /* where the next thing to do is, as [x, z] */
   const a = ACTIONS.find((x) => x.on()); if (a) return [a.x, a.z];
   let best = null, bd = 1e9; for (const n of PEOPLE) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; best = [n.x, n.z]; } } return best;
@@ -556,13 +558,9 @@ function nudgeTick(now) {
   const tgt = quiet ? nudgeTarget() : null;
   if (!NUDGE.on && quiet && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
   if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }   /* there: the Talk bubble or button takes over */
-  if (!NUDGE.on || !tgt) { el.hidden = true; return; }
-  el.hidden = false;
-  const W = innerWidth, H = innerHeight, dx = tgt[0] - state.x, dz = tgt[1] - state.z, rel = Math.atan2(-dx, -dz) - state.yaw, a = Math.atan2(Math.sin(rel), Math.cos(rel));   /* a: 0 straight ahead, plus to the left */
-  _nv.set(tgt[0], 2.1, tgt[1]).project(camera); const lab = el.querySelector('span');
-  if (Math.abs(a) < 0.55 && _nv.z < 1) {   /* in front: a bouncing arrow points down at it */
-    el.style.left = Math.max(60, Math.min(W - 60, (_nv.x + 1) / 2 * W)) + 'px'; el.style.top = Math.max(110, Math.min(H * 0.62, (1 - _nv.y) / 2 * H)) + 'px'; el.className = 'down'; const sy = (1 - _nv.y) / 2 * H; lab.textContent = sy > H * 0.75 ? 'Look down' : sy < 90 ? 'Look up' : 'Here!'; }
-  else { const left = a > 0; el.style.left = (left ? 58 : W - 58) + 'px'; el.style.top = (H * 0.45) + 'px'; el.className = left ? 'left' : 'right'; lab.textContent = 'This way'; }   /* to the side or behind: a big arrow at the edge says which way to turn */
+  el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: EYE });
+  if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
+  GUIDE.point(now, { x: tgt[0], z: tgt[1] });   /* a gold arrow on the ground points the way, a gold ring marks the place */
 }
 
 /* ---------- sound: each place has its own mix of the engine's beds, and now and then one small sound ---------- */

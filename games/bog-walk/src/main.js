@@ -7,6 +7,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    Layout of this file: setup; the Tube and its night (phases work, boots, intro, trickle, rise, dark, out, end); the world outside (places, people, talking);
    the interface (goal, journal, cards, puzzles, chapters, credits, reset); saving; the chapters and their scenes; the frame loop; dev test views and checks. */
 import * as THREE from 'three';
+import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, crackle, chirp, setG, AU } from '../../../engine/audio.js';
@@ -487,7 +488,7 @@ function placeNudge(x, y, cls, label, fresh) {   /* show the arrow near (x, y) o
   el.hidden = true; return false;
 }
 function nudgeTick(now) {
-  const el = $('nudge'); if (MODE !== 'world') { el.hidden = true; return; } if (!$('way').hidden) $('way').hidden = true;
+  const el = $('nudge'); if (MODE !== 'world') { el.hidden = true; if (GUIDE) GUIDE.hide(performance.now()); return; } if (!$('way').hidden) $('way').hidden = true;
   const quiet = S.started && !locked() && !RIDE.on && goalText && $('holdbox').hidden && $('dialogue').hidden && !fading;
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(S.x - NUDGE.lx, S.z - NUDGE.lz) > 0.6) { NUDGE.lx = S.x; NUDGE.lz = S.z; NUDGE.still = now; }
@@ -495,13 +496,13 @@ function nudgeTick(now) {
   const tgt = quiet ? nudgeTarget() : null;
   if (!NUDGE.on && quiet && tgt && (now - NUDGE.still > 15 || now - NUDGE.since > 50)) { NUDGE.on = true; setGoal(goalText, true); }
   if (NUDGE.on && tgt && Math.hypot(S.x - tgt[0], S.z - tgt[1]) < 2.4) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
-  if (!NUDGE.on || !tgt) { if (!el.hidden) el.hidden = true; return; }
+  if (!NUDGE.on || !tgt) { if (!el.hidden) el.hidden = true; if (GUIDE) GUIDE.hide(performance.now()); return; }
   showNudgeAt(tgt);
 }
-function showNudgeAt(tgt, fresh) {   /* the arrow for a target [x, z, height]: over it when it is in view, at the side of the screen when it is not */
-  const W = innerWidth, H = innerHeight, rel = bearingTo(tgt[0], tgt[1]); _nv.set(tgt[0], tgt[2] || 1.8, tgt[1]).project(camera);
-  if (Math.abs(rel) < 0.55 && _nv.z < 1 && Math.abs(_nv.x) < 0.95) { const sy = (1 - _nv.y) / 2 * H; return placeNudge((_nv.x + 1) / 2 * W, Math.max(70, Math.min(H * 0.7, sy)), 'down', sy > H * 0.8 ? 'Look down' : 'Here!', fresh); }
-  const left = rel > 0, behind = Math.abs(rel) > 2.2; return placeNudge(left ? 60 : W - 60, H * 0.45, left ? 'left' : 'right', behind ? 'Turn around' : 'This way', fresh);
+let GUIDE = null;
+function showNudgeAt(tgt) {   /* a gold arrow on the ground points the way to a target [x, z, height], and a gold ring marks the place (engine/guide.js) */
+  $('nudge').hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: () => S.eye - 1.5 });
+  GUIDE.point(performance.now(), { x: tgt[0], z: tgt[1] }); return true;
 }
 
 /* ---------- saving: kept in this browser only ---------- */

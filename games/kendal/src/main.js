@@ -8,7 +8,8 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import * as THREE from 'three';
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet, isSeated } from '../../../engine/anim.js';
-import { createStory, createCarry, arrowPose, flowTest } from '../../../engine/story.js';   /* who moves the story, the hint arrow, the things you carry (docs/STANDARD.md, "Story flow") */
+import { createStory, createCarry, flowTest } from '../../../engine/story.js';   /* who moves the story, the hint arrow, the things you carry (docs/STANDARD.md, "Story flow") */
+import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { createAmbient, ambientTest, onKeepOff } from '../../../engine/ambient.js';   /* background people who walk, chat, work and play (docs/STANDARD.md, "Ambient life") */
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, gullCry, chirp } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
@@ -698,10 +699,11 @@ ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTi
 const _nv = new THREE.Vector3();
 function nudgeTick(now) {
   const el = $('nudge'); if (!el) return; const quiet = state.started && !busy && !frozen && !DIR.on && !CR.on && $('holdwrap').hidden && $('dialogue').hidden && $('card').hidden && !fading && !POSTER;
-  const a = STORY.tick(now, quiet); if (!a.show) { el.hidden = true; return; }
-  _nv.set(a.x, 2.0, a.z).project(camera); const p = arrowPose({ dx: a.x - state.x, dz: a.z - state.z, yaw: state.yaw, ndc: [_nv.x, _nv.y, _nv.z], W: innerWidth, H: innerHeight, final: a.final });
-  el.hidden = false; el.className = p.cls; el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; const lab = el.querySelector('span'); if (lab.textContent !== p.label) lab.textContent = p.label;
+  el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: () => 1.32 - (sitting ? 0.35 : 0) });
+  const a = STORY.tick(now, quiet); if (!a.show) { GUIDE.hide(now); return; }
+  GUIDE.point(now, { x: a.x, z: a.z, tx: a.target[0], tz: a.target[1], final: a.final });   /* a gold arrow on the ground points the way, a gold ring marks the place */
 }
+let GUIDE = null;
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
 let auNext = 0, onceAt = 6; const AMB = 0.4;   /* the ambient beds are kept low so voices, whistles and the story stay clear */
