@@ -1,0 +1,93 @@
+{
+  "name": "wr_kgirl48",
+  "era": 1948,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 1,
+    "caucasian": 0,
+    "asian": 0,
+    "gender": 0,
+    "cupsize": 0.4,
+    "firmness": 0.55,
+    "age": 0.17,
+    "weight": 0.42,
+    "height": 0.48
+  },
+  "garments": {
+    "shoes": true,
+    "woman": true,
+    "skirt": true,
+    "hem": 0.95,
+    "flare": 2,
+    "pleats": 9,
+    "hairvol": 0.22,
+    "bun": false,
+    "collar": "round",
+    "hat": [],
+    "sleeve": 0.3,
+    "hair": "plaits"
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      25,
+      21,
+      18
+    ],
+    "Skin": [
+      149,
+      102,
+      75
+    ],
+    "Shirt": [
+      232,
+      204,
+      120
+    ],
+    "Collar": [
+      232,
+      204,
+      120
+    ],
+    "Skirt": [
+      166,
+      70,
+      66
+    ],
+    "Ribbon": [
+      236,
+      232,
+      220
+    ]
+  },
+  "targets": {
+    "head-oval": 0.2
+  },
+  "upscale": 1.26,
+  "crowd": true
+}
