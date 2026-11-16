@@ -22,7 +22,7 @@ export const CAST = {
 export const CROWD = {
   wr_kman48: { sex: "m", idle: "IdleM" },
   wr_kwoman48: { sex: "f" },
-  wr_kelder48: { sex: "f", idle: "OldIdle" },
+  wr_kelder48: { sex: "f" },
   wr_kboy48: { sex: "m", scale: 0.8 },
   wr_kgirl48: { sex: "f", scale: 0.8 },
   wr_tman48a: { sex: "m", idle: "IdleM" },

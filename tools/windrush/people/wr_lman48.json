@@ -23,9 +23,8 @@
       ]
     ],
     "sleeve": 0.95,
-    "jacket": true,
-    "jacketsleeve": 0.92,
-    "collar": "turn"
+    "collar": "turn",
+    "waistcoat": true
   },
   "colors": {
     "Shoes": [
@@ -73,11 +72,6 @@
       196,
       184
     ],
-    "Jacket": [
-      86,
-      80,
-      70
-    ],
     "Breeches": [
       70,
       66,
@@ -87,6 +81,11 @@
       96,
       88,
       76
+    ],
+    "Waistcoat": [
+      86,
+      80,
+      70
     ]
   },
   "targets": {

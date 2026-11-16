@@ -823,7 +823,7 @@ function talk(n) {
         ? "Talk2"
         : n.sex === "m"
           ? ["TalkM2", "TalkM1"][S.stage % 2]
-          : ["Talk1", "Talk3", "Talk2"][S.stage % 3],
+          : ["Talk1", "Talk3"][S.stage % 2],
   );
   dialogue(
     n.who,

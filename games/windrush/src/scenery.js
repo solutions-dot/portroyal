@@ -137,6 +137,7 @@ export function hen(seed = 1) {
   const tail = mesh(new THREE.ConeGeometry(0.07, 0.16, 5), flat(c), 0, 0.27, -0.14, g);
   tail.rotation.x = -0.9;
   for (const s of [-1, 1]) box(0.012, 0.11, 0.012, flat(0xd9a030), s * 0.04, 0.055, 0, g);
+  g.scale.setScalar(0.88); // about 0.35 m to the top of the comb
   g.userData.noBatch = true;
   g.userData.tick = (t) => {
     const k = Math.max(0, Math.sin(t * 1.3 + seed * 2.1)) ** 6;
@@ -1009,5 +1010,159 @@ export function hillside(w = 70, depth = 50, rise = 18, seed = 6) {
       s = 0.8 + r() * 1.6;
     mesh(new THREE.IcosahedronGeometry(s, 0), flat([0x2f6a35, 0x3a7a3a, 0x285d30, 0x4a7a3a][i % 4]), x, y + s * 0.5, z, g);
   }
+  return g;
+}
+
+/* a 1940s electric portal crane on a quay, as at Kingston and Tilbury: four legs braced into a portal that straddles the quay rails on
+   wheeled bogies, a slewing house with a cab and its windows, a counterweight at the back, and a lattice jib out over the water (-z) with
+   its cable and hook. Legs stand at x = +-2.6, z = +-2.5. */
+function strut(parent, a, b, m, r) {
+  const p = new THREE.Vector3(...a),
+    q = new THREE.Vector3(...b),
+    d = q.clone().sub(p),
+    o = box(r, d.length(), r, m, ...p.clone().add(q).multiplyScalar(0.5).toArray(), parent);
+  o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+  return o;
+}
+export function portalCrane() {
+  const g = grp(),
+    steel = solid(0x4e4a44, 0.7, 0.3),
+    paint = solid(0x6a5a46, 0.75),
+    glassM = solid(0x2b3a40, 0.25, 0.2),
+    H = 8.6;
+  // the portal: legs, bogies with wheels on the rails, top girders, cross bracing in each frame
+  for (const dx of [-2.6, 2.6])
+    for (const dz of [-2.5, 2.5]) {
+      strut(g, [dx, 0.55, dz], [dx * 0.9, H, dz * 0.9], steel, 0.32);
+      box(0.6, 0.45, 1.2, steel, dx, 0.32, dz, g);
+      for (const w of [-0.38, 0.38]) cyl(0.22, 0.22, 0.16, M.black, dx, 0.22, dz + w, g, 12).rotation.z = Math.PI / 2;
+    }
+  for (const dz of [-2.25, 2.25]) box(5.2, 0.5, 0.4, steel, 0, H, dz, g);
+  for (const dx of [-2.35, 2.35]) box(0.4, 0.5, 4.9, steel, dx, H, 0, g);
+  for (const dx of [-2.5, 2.5]) {
+    strut(g, [dx, 1.2, -2.4], [dx * 0.92, H - 0.4, 2.3], steel, 0.12);
+    strut(g, [dx, 1.2, 2.4], [dx * 0.92, H - 0.4, -2.3], steel, 0.12);
+  }
+  for (const dz of [-2.45, 2.45]) {
+    strut(g, [-2.5, H - 2.6, dz], [0, H - 0.3, dz], steel, 0.12);
+    strut(g, [2.5, H - 2.6, dz], [0, H - 0.3, dz], steel, 0.12);
+  }
+  // the slewing house: a turntable, the machinery house, the cab at the front with windows, the counterweight behind
+  cyl(1.6, 1.6, 0.4, steel, 0, H + 0.45, 0, g, 18);
+  box(3.0, 2.4, 3.6, paint, 0, H + 1.85, 0.6, g);
+  const roof = box(3.2, 0.15, 3.8, M.slate, 0, H + 3.12, 0.6, g);
+  box(2.2, 2.0, 1.4, paint, 0, H + 1.65, -1.75, g);
+  box(2.0, 0.8, 0.06, glassM, 0, H + 2.0, -2.46, g);
+  for (const s of [-1, 1]) box(0.06, 0.8, 1.0, glassM, s * 1.11, H + 2.0, -1.75, g);
+  box(2.4, 1.6, 1.1, solid(0x3a3834, 0.8), 0, H + 1.6, 2.95, g);
+  // the lattice jib: two top chords and a bottom chord, laced, from a heel by the cab out over the water
+  const heel = [0, H + 1.2, -2.2],
+    len = 12,
+    ang = 0.75,
+    tip = [0, heel[1] + Math.sin(ang) * len, heel[2] - Math.cos(ang) * len];
+  const at = (u, dx, dy) => [dx * (1 - u * 0.75), heel[1] + (tip[1] - heel[1]) * u + dy * (1 - u * 0.6), heel[2] + (tip[2] - heel[2]) * u];
+  for (const dx of [-0.55, 0.55]) strut(g, at(0, dx, 0.5), at(1, dx, 0.5), steel, 0.12);
+  strut(g, at(0, 0, -0.4), at(1, 0, -0.4), steel, 0.12);
+  for (let i = 0; i < 12; i++) {
+    const u0 = i / 12,
+      u1 = (i + 1) / 12;
+    for (const dx of [-0.55, 0.55]) strut(g, at(u0, dx, 0.5), at(u1, 0, -0.4), steel, 0.05);
+    strut(g, at(u1, -0.55, 0.5), at(u1, 0.55, 0.5), steel, 0.05);
+  }
+  // the jib's luffing rope from the house top to the tip, the hoist cable down, the hook block and hook
+  const rope = solid(0x2b2d31, 0.6);
+  strut(g, [0, H + 3.2, 0.2], tip, rope, 0.035);
+  const hookY = 3.2;
+  strut(g, tip, [0, hookY + 0.5, tip[2]], rope, 0.025);
+  box(0.35, 0.5, 0.25, solid(0xb0872a, 0.6), 0, hookY + 0.25, tip[2], g);
+  const hook = mesh(new THREE.TorusGeometry(0.14, 0.03, 5, 10, Math.PI * 1.4), steel, 0, hookY - 0.1, tip[2], g);
+  hook.rotation.z = Math.PI * 0.8;
+  return g;
+}
+/* a stack of cargo on a quay (about 2.8 by 2 m): slatted crates with stencilled marks, rope-bound bales and sacks */
+export function cargoStack(seed = 1, marks = ["KINGSTON", "JAMAICA", "LONDON"]) {
+  const g = grp(),
+    r = rng(seed),
+    wood = [0x8a6a42, 0x9a7a4c, 0x7a5c3a];
+  const crate = (x, y, z, s, k) => {
+    const c = grp(g, x, y, z),
+      m = solid(wood[k % 3], 0.95),
+      dk = solid(0x5a4228, 0.95);
+    box(s * 0.96, s * 0.96, s * 0.96, dk, 0, s / 2, 0, c);
+    for (let i = 0; i < 4; i++) {
+      const yy = s * (0.12 + i * 0.25);
+      for (const sg of [-1, 1]) {
+        box(s, s * 0.18, 0.025, m, 0, yy, (sg * s) / 2, c);
+        box(0.025, s * 0.18, s, m, (sg * s) / 2, yy, 0, c);
+      }
+    }
+    for (const a of [-1, 1]) for (const b of [-1, 1]) box(0.06, s, 0.06, m, (a * s) / 2, s / 2, (b * s) / 2, c);
+    box(s, 0.025, s, m, 0, s, 0, c);
+    const lab = textPlane(marks[k % marks.length], s * 0.7, s * 0.16, "#b28a58", "#2a2018");
+    lab.position.set(0, s * 0.55, s / 2 + 0.02);
+    c.add(lab);
+  };
+  const bale = (x, y, z, k) => {
+    const b = grp(g, x, y, z);
+    box(0.9, 0.55, 0.6, solid([0xc8b48a, 0xb8a47a][k % 2], 1), 0, 0.275, 0, b);
+    for (const dx of [-0.28, 0.28]) box(0.035, 0.57, 0.62, M.rope, dx, 0.275, 0, b);
+  };
+  const sack = (x, z, k) => {
+    const s = mesh(new THREE.SphereGeometry(0.3, 10, 7), solid([0xb09a6a, 0xa48e60][k % 2], 1), x, 0.16, z, g);
+    s.scale.set(1.25, 0.55, 0.85);
+    s.rotation.y = r() * 2;
+  };
+  crate(-0.75, 0, -0.45, 0.9, seed);
+  crate(0.25, 0, -0.45, 0.9, seed + 1);
+  crate(-0.3, 0.9, -0.45, 0.8, seed + 2);
+  bale(0.95, 0, 0.45, seed);
+  bale(0.95, 0.55, 0.45, seed + 1);
+  for (let i = 0; i < 2; i++) sack(-0.9 + i * 0.62, 0.55, i + seed);
+  return g;
+}
+
+/* ---------- a 2018 community centre ---------- */
+const coolerBlue = () => new THREE.MeshStandardMaterial({ color: 0x6aa0d0, roughness: 0.15, transparent: true, opacity: 0.75 });
+/* a water cooler: a white stand with a blue bottle upside down on top */
+export function waterCooler() {
+  const g = grp(),
+    b = coolerBlue();
+  box(0.32, 0.95, 0.32, solid(0xe8e8e4, 0.5), 0, 0.475, 0, g);
+  box(0.26, 0.04, 0.05, M.steel, 0, 0.62, 0.17, g);
+  cyl(0.13, 0.13, 0.36, b, 0, 1.17, 0, g, 14);
+  cyl(0.05, 0.13, 0.04, b, 0, 0.97, 0, g, 14);
+  return g;
+}
+/* a wall rack of leaflets: three tiers of pockets, each with bright leaflets; it hangs on a wall, facing +z */
+export function leafletRack(seed = 1) {
+  const g = grp(),
+    r = rng(seed);
+  box(0.9, 0.95, 0.04, solid(0xd8dcd8, 0.4), 0, 0, 0, g);
+  const cols = ["#d8423a", "#f2c14a", "#3a8ac8", "#5aa860", "#e88ab0", "#f2efe2"],
+    words = ["HELP", "RIGHTS", "HOUSING", "BENEFITS", "HEALTH", "CLUBS"];
+  for (let row = 0; row < 3; row++)
+    for (let i = 0; i < 3; i++) {
+      const p = notice(words[(row * 3 + i + seed) % 6], 0.24, 0.3, cols[(r() * cols.length) | 0], "#1f2a2e");
+      p.position.set(-0.29 + i * 0.29, 0.28 - row * 0.3, 0.04);
+      g.add(p);
+      box(0.27, 0.12, 0.03, solid(0xc8d4d4, 0.2), -0.29 + i * 0.29, 0.18 - row * 0.3, 0.06, g);
+    }
+  return g;
+}
+/* a printed poster in a clip frame, facing +z */
+export function poster(title, w = 0.6, h = 0.85, bg = "#2f5a6a", fg = "#f2efe2") {
+  const g = grp();
+  box(w + 0.03, h + 0.03, 0.015, solid(0xc8ccc8, 0.3, 0.4), 0, 0, 0, g);
+  const p = notice(title, w, h, bg, fg);
+  p.position.z = 0.01;
+  g.add(p);
+  return g;
+}
+export function wallClock() {
+  const g = grp();
+  cyl(0.18, 0.18, 0.05, M.black, 0, 0, 0, g, 20).rotation.x = Math.PI / 2;
+  mesh(new THREE.CircleGeometry(0.16, 20), solid(0xf2efe2, 0.6), 0, 0, 0.027, g);
+  box(0.012, 0.11, 0.005, M.black, 0, 0.045, 0.032, g);
+  box(0.012, 0.08, 0.005, M.black, 0.03, -0.01, 0.033, g).rotation.z = -1.2;
   return g;
 }

@@ -203,8 +203,8 @@ function yard(id) {
   crowd(Q, "wr_kelder48", -11.5, 6.6, Math.PI / 2, { kind: "sit", seat: { top: 0.485, x: -11.5, z: 6.6, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] }, { raw: true });
   crowd(Q, "wr_kman48", 8.35, 11.6, Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 8.35, z: 11.6, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitTalk"], group: "dom" });
   crowd(Q, "wr_tman48b", 9.65, 11.6, -Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 9.65, z: 11.6, ry: -Math.PI / 2 }, clips: ["SitIdle", "SitTalk"], group: "dom" });
-  crowd(Q, "wr_kboy48", -4, 11, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run" }, { kid: true });
-  crowd(Q, "wr_kgirl48", -2, 12, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run" }, { kid: true });
+  crowd(Q, "wr_kboy48", -4, 11, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
+  crowd(Q, "wr_kgirl48", -2, 12, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   Q.ambient[Q.ambient.length - 1].behaviour.chase = Q.ambient[Q.ambient.length - 2].id;
   Q.keepOff = [{ at: [-4, 5], r: 1.2 }, { at: [3, 4], r: 1 }, { at: [7, 5], r: 1 }, { at: [0, -3], r: 1 }, { at: [-6, -2], r: 1 }];
   return Q;
@@ -246,22 +246,9 @@ function quay(Q, x0, x1, z, tex, depth = 40) {
   for (const rz of [z + 4.2, z + 9.2, z + 10.6]) box(x1 - x0, 0.03, 0.08, solid(0x55524c, 0.5, 0.5), (x0 + x1) / 2, 0.015, rz, Q.group);
 }
 function portalCrane(Q, x, z, ry = 0) {
-  const g = grp(),
-    m = solid(0x5a5048, 0.7, 0.2);
-  for (const dx of [-2.6, 2.6]) for (const dz of [-2.5, 2.5]) {
-    const l = box(0.35, 9, 0.35, m, dx, 4.5, dz, g);
-    l.rotation.z = dx > 0 ? 0.04 : -0.04;
-  }
-  box(6.2, 0.6, 6, m, 0, 9.2, 0, g);
-  box(3.6, 3, 3.6, solid(0x6a5e54, 0.8), 0, 11, 0.3, g);
-  box(2, 0.6, 2, m, 0, 12.8, 0.3, g);
-  const jib = grp(g, 0, 11.5, -1.5);
-  const arm = box(0.6, 0.6, 22, m, 0, 0, -11, jib);
-  jib.rotation.x = 0.45;
-  P.line(g, [0, 13, 1.5], [0, 11.5 + Math.sin(0.45) * 22, -1.5 - Math.cos(0.45) * 22], m, 0.06);
-  P.line(g, [0, 11.5 + Math.sin(0.45) * 21.5, -1.5 - Math.cos(0.45) * 21.5], [0, 2, -1.5 - Math.cos(0.45) * 21.5], solid(0x2b2d31, 0.6), 0.02);
+  const g = S.portalCrane();
   add(Q, g, x, z, 0, ry);
-  for (const dx of [-2.6, 2.6]) for (const dz of [-2.5, 2.5]) wall(Q, x + dx, z + dz, 0.6, 0.6);
+  for (const dx of [-2.6, 2.6]) for (const dz of [-2.5, 2.5]) wall(Q, x + dx, z + dz, 0.8, 1.4);
   return g;
 }
 function shipOnWater(Q, kind, phone, reduced) {
@@ -284,7 +271,7 @@ function shipOnWater(Q, kind, phone, reduced) {
 function railCrowd(Q, looks, n, deckY, z, x0, x1, react) {
   for (let i = 0; i < n; i++) {
     const x = x0 + ((x1 - x0) * (i + 0.5)) / n;
-    Q.ambient.push({ id: Q.id + "-rail" + i, look: looks[i % looks.length], x, z, ry: 0, zone: "ship", deckY, behaviour: { kind: "watch", at: [x, z - 12], react, every: [3, 6], idles: ["Idle", "HappyIdle"] } });
+    Q.ambient.push({ id: Q.id + "-rail" + i, look: looks[i % looks.length], x, z, ry: 0, zone: "ship", deckY, behaviour: { kind: "watch", at: [x, z - 12], react: /tman48[ac]/.test(looks[i % looks.length]) ? ["LookAround", "HeadTurn", "Nod"] : react, every: [3, 6], idles: ["Idle", "HappyIdle"] } });
   }
 }
 function harbour(id, { phone = false, reduced = false } = {}) {
@@ -300,12 +287,12 @@ function harbour(id, { phone = false, reduced = false } = {}) {
   Q.group.add(gw);
   Q.props.gangway = gw;
   wall(Q, 10.8, 4.2, 2.2, 4.4);
-  portalCrane(Q, -16, 6.9);
-  portalCrane(Q, 30, 6.9);
+  portalCrane(Q, -16, 7.7);
+  portalCrane(Q, 30, 7.7);
   if (k) kingstonQuay(Q);
   else tilburyStage(Q);
   // luggage and cargo waiting on the quay
-  for (const [x, z, s] of [[-12, 12, 1], [-6.5, 18.5, 2], [16, 20, 3], [20, 11.8, 4]]) solid1(Q, S.crateStack(s), x, z, 2.9, 2.1);
+  for (const [x, z, s] of [[-12, 12, 1], [-6.5, 18.5, 2], [16, 20, 3], [20, 11.8, 4]]) solid1(Q, S.cargoStack(s, k ? ["KINGSTON", "JAMAICA", "CARGO"] : ["LONDON", "TILBURY", "CARGO"]), x, z, 2.9, 2.1);
   for (const [x, z] of [[-18.5, 14.5], [3.5, 19.5], [18, 16]]) solid1(Q, P.caseStack(), x, z, 1.6, 0.8);
   for (const [x, z, r] of [[-2, 5.6, 0.3], [21.5, 5.6, -0.4]]) solid1(Q, S.barrow(2), x, z, 0.8, 0.6, r);
   for (const [x, z] of [[-22, 3.5], [14.5, 4.0]]) add(Q, S.ropeCoil(0.4), x, z);
@@ -343,7 +330,7 @@ function kingstonQuay(Q) {
   crowd(Q, "wr_lman48", -7.8, 10.7, 0, { kind: "chat", group: "k1" });
   railCrowd(Q, ["wr_tman48a", "wr_twoman48", "wr_tman48c", "wr_tman48b"], 9, SHIP.deck + 3.02, -(SHIP.B / 2 - 1.4), -30, 22, ["Wave", "LookAround", "HeadTurn", "Clap"]);
   // May and Samuel have gone aboard: they wave to Pearl from the rail above the gangway
-  for (const [look, x] of [["wr_may48t", -10.0], ["wr_sam48t", -11.0]]) Q.ambient.push({ id: Q.id + "-" + look, look, x, z: -(SHIP.B / 2 - 1.4), ry: 0, zone: "ship", deckY: SHIP.deck + 3.02, behaviour: { kind: "watch", at: [x + 2, -20], react: look === "wr_may48t" ? ["WaveSlow"] : ["Wave", "Nod"], every: look === "wr_may48t" ? [2.5, 4] : [3.5, 6], idles: ["Idle"] } });
+  for (const [look, x] of [["wr_may48t", -10.0], ["wr_sam48t", -11.0]]) Q.ambient.push({ id: Q.id + "-" + look, look, x, z: -(SHIP.B / 2 - 1.4), ry: 0, zone: "ship", deckY: SHIP.deck + 3.02, behaviour: { kind: "watch", at: [x + 2, -20], react: look === "wr_may48t" ? ["WaveSlow"] : ["Nod", "LookAround"], every: look === "wr_may48t" ? [2.5, 4] : [3.5, 6], idles: ["Idle"] } });
 }
 function tilburyStage(Q) {
   // Tilbury Riverside: the landing stage (a timber deck with white railings and a long canopy), the station and baggage hall behind,
@@ -453,10 +440,10 @@ function deck({ phone = false, reduced = false } = {}) {
   // passengers: a chat at the rail, people sitting out, children at play, a man reading, a couple looking at the sea
   crowd(Q, "wr_tman48a", -4.8, -1.2, 0, { kind: "chat", group: "d1", at: [-4.2, -0.4] });
   crowd(Q, "wr_tman48c", -3.6, 0.2, 0, { kind: "chat", group: "d1" });
-  crowd(Q, "wr_twoman48", -4.6, 14, Math.PI / 2, { kind: "sit", seat: { top: 0.485, x: -4.6, z: 14, ry: Math.PI / 2 }, clips: ["SitIdle", "SitTalk"], group: "s1" }, { raw: true });
+  crowd(Q, "wr_twoman48", -4.6, 14, Math.PI / 2, { kind: "sit", seat: { top: 0.485, x: -4.6, z: 14, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] }, { raw: true });
   crowd(Q, "wr_tman48b", -4.6, -6.5, Math.PI / 2, { kind: "sit", seat: { top: 0.485, x: -4.6, z: -6.5, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitPoseM"] });
-  crowd(Q, "wr_kboy48", 1, 10, 0, { kind: "play", area: [-2.6, 7.5, 2.6, 17], run: "Run" }, { kid: true });
-  crowd(Q, "wr_kgirl48", -1, 12, 0, { kind: "play", area: [-2.6, 7.5, 2.6, 17], run: "Run" }, { kid: true });
+  crowd(Q, "wr_kboy48", 1, 10, 0, { kind: "play", area: [-2.6, 7.5, 2.6, 17], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
+  crowd(Q, "wr_kgirl48", -1, 12, 0, { kind: "play", area: [-2.6, 7.5, 2.6, 17], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   Q.ambient[Q.ambient.length - 1].behaviour.chase = Q.ambient[Q.ambient.length - 2].id;
   crowd(Q, "wr_kman48", 5.6, 4, -Math.PI / 2, { kind: "watch", at: [16, 4], idles: ["IdleM", "ListenMusic"], react: ["LookAround", "WipeSweat"], every: [5, 9] });
   crowd(Q, "wr_kwoman48", 5.4, 2.6, -Math.PI / 2, { kind: "watch", at: [16, 2], idles: ["Idle", "HappyIdle"], react: ["Point", "Laugh"], every: [5, 9] });
@@ -593,10 +580,10 @@ function brixton62() {
   person(Q, "may", "may62", 1.5, -3.9, face(1.5, -3.9, 3, -4.9), { kind: "watch", at: [3, -4.9], idles: ["HappyIdle", "Idle"], react: ["Laugh", "Nod"], every: [4, 8] });
   crowd(Q, "wr_bwoman62", 3.0, -4.9, face(3, -4.9, 1.5, -3.9), { kind: "watch", at: [1.5, -3.9], idles: ["Idle"], react: ["Talk1", "Laugh"], every: [3, 6] });
   person(Q, "sam", "sam62", -6.4, -4.4, face(-6.4, -4.4, -6.4, -6.5), { kind: "work", clips: ["PickUp", "IdleM", "WipeSweat"], work: [5, 9], face: [-6.6, -6.4] });
-  crowd(Q, "wr_conductor62", -16.6, 4.6, Math.PI / 2, { kind: "watch", at: [-10, 4.6], idles: ["IdleM"], react: ["LookAround", "WipeSweat"], every: [5, 9] });
+  crowd(Q, "wr_conductor62", -16.6, 4.6, Math.PI / 2, { kind: "watch", at: [-10, 4.6], idles: ["IdleM"], react: ["LookAround", "HeadTurn"], every: [5, 9] });
   crowd(Q, "wr_bman62", 9, 6.4, -Math.PI / 2, { kind: "wander", pts: [[14, 6.5], [6, 6.4], [-4, 6.5]], pause: [3, 6] });
   crowd(Q, "wr_lwoman62", -2, 6.4, Math.PI / 2, { kind: "errand", from: [-12, 6.4], to: [10.8, 6.3], walk: "CarryBagWalk", idle: "Idle", wait: [4, 8] }, { held: "bag" });
-  crowd(Q, "wr_bboy62", -12, -4.5, 0, { kind: "play", area: [-16, -5.2, -8, -3.6], run: "Run" }, { kid: true });
+  crowd(Q, "wr_bboy62", -12, -4.5, 0, { kind: "play", area: [-16, -5.2, -8, -3.6], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   Q.keepOff = [{ at: [-5, -2.3], r: 1 }, { at: [8, -2.6], r: 1 }];
   return Q;
 }
@@ -762,6 +749,31 @@ function centre18() {
   add(Q, S.mugs(3), 5.8, 5.5, 0.795);
   for (const [x, z] of [[-6.9, -5.9], [6.9, -5.9], [6.9, 2.6]]) solid1(Q, S.pottedPlant(1.4, x * 3), x, z, 0.4, 0.4);
   for (const x of [-4.8, 0.2, 5.2]) solid1(Q, S.radiator(1.4), x, -6.55, 1.4, 0.2);
+  // a lived-in community room of 2018: posters, leaflet racks, a water cooler, a clock, more chairs and a children's corner
+  for (const [x, z, ry, t, bg] of [[-2.4, -6.72, 0, "FREE ADVICE HERE", "#2f5a6a"], [2.7, -6.72, 0, "KNOW YOUR RIGHTS", "#a8423a"], [-4.2, 7.72, Math.PI, "COMMUNITY LUNCH", "#3a7a4a"], [4.0, 7.72, Math.PI, "CHOIR PRACTICE", "#6a4a8a"]]) {
+    const p = S.poster(t, 0.6, 0.85, bg);
+    p.position.set(x, 1.6, z);
+    p.rotation.y = ry;
+    Q.group.add(p);
+  }
+  for (const [x, z, ry, s] of [[7.72, 1.2, -Math.PI / 2, 1], [-7.72, -2.6, Math.PI / 2, 2]]) {
+    const rk = S.leafletRack(s);
+    rk.position.set(x, 1.35, z);
+    rk.rotation.y = ry;
+    Q.group.add(rk);
+  }
+  solid1(Q, S.waterCooler(), 7.3, 4.2, 0.4, 0.4);
+  const clock = S.wallClock();
+  clock.position.set(0, 2.6, 7.72);
+  clock.rotation.y = Math.PI;
+  Q.group.add(clock);
+  solid1(Q, S.lowTable(1.0, 0.6, 0.5, 0xd8a040), 5.2, -4.4, 1.1, 0.7);
+  add(Q, S.mugs(1), 5.0, -4.4, 0.5);
+  for (const x of [4.5, 5.9]) add(Q, S.plasticChair(0xe0603a), x, -3.6, 0, Math.PI);
+  wall(Q, 5.2, -3.6, 2.0, 0.6);
+  for (let i = 0; i < 3; i++) add(Q, S.plasticChair(0x3a6a5a), 2.4 + i * 0.6, 7.1, 0, Math.PI);
+  wall(Q, 3.0, 7.1, 1.9, 0.6);
+  solid1(Q, S.pottedPlant(1.6, 9), -6.9, 6.9, 0.45, 0.45);
   // the advice table with Asha, Iris and Anita
   solid1(Q, S.desk(1.8, 0.8), 2, -2.5, 1.9, 0.9);
   add(Q, S.laptop(), 2.5, -2.6, 0.76);

@@ -2,6 +2,7 @@
 import { createStory, checkFlow, needList } from "../../../engine/story.js";
 import { checkAll, reachIssues, CHECKS } from "../../../engine/checks.js";
 import { animCheck } from "./animcheck.js";
+import ANIM_CLIPS from "../anim-clips.json";
 import {
   auditPlace,
   auditCloth,
@@ -296,6 +297,27 @@ export async function dev(A) {
     results.push("AMBIENT SETUP " + Q.id + " " + issues.length, ...issues);
   }
   const test = q.get("test");
+  /* every clip a body plays anywhere in the game: idles, work, reactions, walks, chats, seats, and the talk clips the story uses */
+  const SHIPPED = new Set(ANIM_CLIPS);
+  function playedClips(base) {
+    const out = new Set();
+    for (const Q of Object.values(worlds))
+      for (const n of [...Q.people, ...Q.extras, ...(Q.shipExtras || [])]) {
+        const raw = n.look || CAST[n.cast]?.base;
+        if (raw !== base) continue;
+        const s = n.amb?.spec || {},
+          male = n.sex === "m";
+        for (const k of ["clips", "idles", "react", "sadClips"]) for (const c of s[k] || []) out.add(c);
+        for (const k of ["walk", "idle", "run", "clip"]) if (s[k]) out.add(s[k]);
+        if (n.idle) out.add(n.idle);
+        out.add(s.kind === "sit" ? "SitIdle" : male ? "IdleM" : "Idle");
+        if (["wander", "errand", "chat", "play"].includes(s.kind) || s.between) out.add("Walk");
+        if (s.kind === "chat" || s.group) for (const c of s.kind === "sit" ? ["SitTalk"] : male ? ["TalkM1", "TalkM2", "Talk2", "Nod", "Laugh"] : ["Talk1", "Talk2", "Talk3", "Nod", "Laugh"]) out.add(c);
+        if (s.kind === "play") for (const c of s.joy || ["Run", "Cheer", "Clap", "Laugh"]) out.add(c);
+        if (Q.people.includes(n)) for (const c of n.life?.seat ? ["SitTalk"] : n.id === "iris" ? ["Talk2", "OldIdle", "Walk"] : male ? ["TalkM1", "TalkM2"] : ["Talk1", "Talk3"]) out.add(c);
+      }
+    return new Set([...out].filter((c) => SHIPPED.has(c) && c !== "WalkM"));
+  }
   if (["audit", "collision", "seating"].includes(test))
     for (const Q of Object.values(worlds)) {
       const pp = (n) => ({ id: n.id, x: n.x, z: n.z, m: n.m, anim: n.m.userData.seatAnchor ? "SitIdle" : "Idle", h: 1.75 * (n.scale || 1), r: (n.scale || 1) < 0.9 ? 0.2 : 0.25, path: n.amb?.spec?.pts || (n.amb?.spec?.from ? [n.amb.spec.from, n.amb.spec.to] : null) });
@@ -339,15 +361,11 @@ export async function dev(A) {
       ctl.mx.update(0.3);
       m.updateMatrixWorld(true);
       if (test === "cloth") {
-        const poses = [
-          ["Idle", 0.3],
-          ["Walk", 0.5],
-          ["Talk1", 0.4],
-          ["TalkM2", 0.4],
-          ["Wave", 0.5],
-          ...(base === "wr_iris79" ? [["OldIdle", 0.4]] : []),
-        ];
-        const r = auditCloth(base, m, { poses, after: gripTick, where: true });
+        /* the clips the game really plays on this body, read from every place's people (their behaviours, their talk clips) */
+        const played = playedClips(base),
+          poses = [...played].filter((c) => !/^Sit|^Kneel/.test(c) || played.has(c)).map((c) => [c, /Walk|Run/.test(c) ? 0.5 : 0.4]);
+        if (!poses.length) poses.push(["Idle", 0.3]);
+        const r = auditCloth(base, m, { poses, after: gripTick, where: true, played: [...played] });
         results.push("CLOTH " + base + " " + r.lines.length, ...r.lines);
       }
       if (test === "walkers") {

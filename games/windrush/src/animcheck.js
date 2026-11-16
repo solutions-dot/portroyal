@@ -140,6 +140,15 @@ export async function animCheck(A, { seconds = 20, films = true, only = null } =
         ry = n.m.rotation.y,
         g = headAngles(n.m),
         inView = fr.containsPoint(world.clone().setY(world.y + 1.1)) && world.distanceTo(A.camera.position) < 30;
+      // a head that is lost: its bone not at a real place, or not above the hips (a lone sitter's head turn once went to NaN and the head vanished)
+      const hb = n.m.getObjectByName("mixamorigHead"),
+        hp = n.m.getObjectByName("mixamorigHips");
+      if (hb && hp) {
+        const a = hb.getWorldPosition(new THREE.Vector3()),
+          b = hp.getWorldPosition(new THREE.Vector3());
+        if (!Number.isFinite(a.x + a.y + a.z)) tell(s, "nohead", `has no head (the head bone is not at a real place; ${clip} at ${t.toFixed(1)} s)`);
+        else if (a.y < b.y + 0.2 * (n.m.scale.y || 1)) tell(s, "lowhead", `head is not above the hips (${clip} at ${t.toFixed(1)} s)`);
+      }
       const L = s.last;
       if (L) {
         const v = Math.hypot(wp.x - L.x, wp.z - L.z) / dt,
