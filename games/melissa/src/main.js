@@ -612,8 +612,8 @@ function nudgeTick(now) {
   if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
   if (!quiet) { NUDGE.since = now; NUDGE.on = false; } /* Never display guidance over a panel or dialogue. */
   const tgt = quiet ? nudgeTarget() : null;
-  if (!NUDGE.on && quiet && tgt && now - NUDGE.since >= 2500) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
-  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; /* Nearby interaction takes over; do not restart the hint delay. */ }
+  if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
+  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) NUDGE.on = false; /* Hide while the player is close enough to interact. */
   el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: () => 1.32 - (sitting ? 0.35 : 0) });
   if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
   GUIDE.point(now, { x: tgt[0], z: tgt[1] });   /* a gold arrow on the ground points the way, a gold ring marks the place */
