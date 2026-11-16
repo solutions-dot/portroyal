@@ -616,8 +616,8 @@ const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = n
 const ahead = (dense, d = 9) => { const [x, z] = pathAt(dense, Math.min(pathLength(dense), pathS(dense, state.x, state.z) + d)); return [x, z]; };
 const NUDGE_EXTRA = { 11: () => ahead(PL.estate.spots.trail.dense), 12: () => ahead(PL.estate.spots.trail.dense), 13: () => ahead(PL.estate.spots.trail.dense), 20: () => ahead(PL.town.spots.pathIn.dense), 53: () => [PL.town.spots.tree[0] + 2, PL.town.spots.tree[1] - 1.4] };
 function nudgeTarget() {
-  const P = P_(); if (!P) return null; if (ctr.climb && cur === 'town') return ahead(P.spots.back.dense); if (NUDGE_EXTRA[stage]) return NUDGE_EXTRA[stage](); const a = P.actions.find((x) => x.on()); if (a) return [a.x, a.z];
-  let bestT = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; bestT = [n.x, n.z]; } } return bestT;
+  const P = P_(); if (!P) return null; if (ctr.climb && cur === 'town') return ahead(P.spots.back.dense); if (NUDGE_EXTRA[stage]) return NUDGE_EXTRA[stage](); let bestT = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; bestT = [n.x, n.z]; } } if (bestT) return bestT;
+  const a = P.actions.find((x) => x.on()); return a ? [a.x, a.z] : null;
 }
 function nudgeTick(now) {
   const el = $('nudge'); if (!el) return; const quiet = state.started && !busy && !frozen && !DIR.on && !FIGHT.on && !HORN.on && $('holdwrap').hidden && $('dialogue').hidden && $('card').hidden && $('place').style.opacity !== '1' && !document.body.classList.contains('subbing') && goalText && !fading;
