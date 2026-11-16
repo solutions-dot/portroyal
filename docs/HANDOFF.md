@@ -73,3 +73,11 @@ Read this first if you are picking up the big people, animation and gameplay sta
 9. **Last**: richer, lusher visuals within budget with quality tiers (people, plants, buildings), realistic period vehicles researched (Eventide 1980 buses, the owner's "jolly bus"; Tivoli 2010 cars and military and police vehicles), measured with the budget check.
 
 Animation clips still wanted (owner downloads from Mixamo or ActionForge; ActionForge exports with the Mixamo skeleton, CC0): a standing prayer, arms crossed, hands behind back, sweeping, hammering, hoeing, carrying a bucket, child hops and skips, washing, a seller calling out. Several owner downloads were exact duplicates (see `docs/PIPELINE.md`).
+
+
+## 2026-11-16 — Tivoli / Windrush outstanding release
+- Tivoli: journal redesigned as a book with horizontally scrollable page tabs, a reading panel, and persistent **Main Menu / Chapters** footer. The opening Tivoli screen no longer has a Journal button; the in-game Journal button remains. Chapter footer remains **Unlock All / Credits / Restart**.
+- Main game-selection menu: Tivoli card **artwork alone** gently drifts and zooms. Neither the card text/buttons nor the Tivoli opening menu animates. Reduced-motion preference disables artwork motion.
+- Windrush: iOS WebGL sky cloud sprites are disabled to avoid the multicoloured stipple shown in the user's iPhone screenshot. The sky dome and world geometry remain intact. Needs real-iPhone visual QA.
+- Windrush thumbnail: PR #92 replaces the old card background with a ship-focused image and responsive framing; it also changes the asset path and Vercel config. Validate the asset and mobile cropping in production.
+- Release QA: run the complete `checks` suite and `Tivoli mobile browser` workflow on the integrated main commit. Specifically test 320px/390px journal, chapter buttons, title card, and iPhone Windrush sky. Git merge is not proof that the production Vercel deployment is current.
