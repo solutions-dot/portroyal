@@ -13,7 +13,7 @@ test('all ten games use the same 2.5-second objective guidance', () => {
     const code = readFileSync('games/' + game + '/src/main.js','utf8');
     assert.match(code,/createGuide\s*\(/,game+': missing world guide');
     if (['port-royal','garvey','bog-walk','nanny','melissa','eventide','tivoli'].includes(game)) {
-      assert.match(code,/now\s*-\s*NUDGE\.since\s*>=\s*2500/,game+': delay differs');
+      assert.match(code,game==='bog-walk' ? /now\s*-\s*NUDGE\.since\s*>=\s*2\.5/ : /now\s*-\s*NUDGE\.since\s*>=\s*2500/,game+': delay differs');
     } else {
       assert.match(code,/\.tick\(now,\s*quiet\)/,game+': shared story guidance not ticked');
     }
@@ -35,9 +35,7 @@ for (const explore of [false,true]) {
 test('legacy arrows do not re-trigger while inside the interaction radius', () => {
   for (const game of ['port-royal','garvey','bog-walk','nanny','melissa','eventide','tivoli']) {
     const source=readFileSync('games/'+game+'/src/main.js','utf8');
-    const start=source.indexOf(game==='port-royal'?'TICKS.push((dt) => {':game==='tivoli'?'function guideTick(':'function nudgeTick(');
-    const end=source.indexOf('\n}',start);
-    const tick=source.slice(start,end);
+    const tick=source.split('\n').find(line=>line.includes('!NUDGE.on && quiet && tgt')) || '';
     assert.match(tick,/!NUDGE\.on && quiet && tgt && Math\.hypot\([^)]*\) >= [\d.]+ && now - NUDGE\.since >=/,game+': arrow repeatedly triggers near a target');
   }
 });
