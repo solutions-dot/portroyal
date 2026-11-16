@@ -14,6 +14,8 @@ Read-only audit of `games/port-royal`, `garvey`, `kendal`, `bog-walk`, `nanny`, 
 
 **Near-target stability fix:** seven legacy guidance controllers (Port Royal, Garvey, Bog Walk, Nanny, Melissa, Eventide and Tivoli) now check that the player is outside the interaction radius *before* activating an arrow. Previously they could reopen the goal and restart the arrow animation on every frame while standing at the target. Added a source regression to `tests/guidance-delay.mjs`. Browser verification still pending.
 
+**Timing unit audit (16 November):** Bog Walk's `nudgeTick` receives elapsed seconds and correctly uses `2.5`; the other six legacy controllers receive milliseconds and use `2500`. The earlier guidance-delay regression incorrectly expected milliseconds for Bog Walk and has been corrected. Shared `ARROW_LIMIT` and `ARROW_LIMIT_EXPLORE` are both 2500 ms. Browser timing verification remains pending.
+
 ### Follow-up: always-visible next task (16 November 2026)
 
 The owner selected **Bog Walk's guidance pattern as the target for all ten games**: a plainly written next task that stays readable, a gold world arrow to the current required destination, and a nearby talk/action control that takes over when the player arrives. The task should change immediately when a requirement is completed, and optional activities must not override a required step.
