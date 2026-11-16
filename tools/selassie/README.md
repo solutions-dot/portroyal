@@ -16,6 +16,8 @@ node tools/selassie/build-people.mjs sel_emperor66 sel_rastaman66
 
 This environment used Blender 4.3.2 with official `makehumancommunity/mpfb2` and `makehumancommunity/makehuman` checkouts. `build_person.py` runs the current `tools/garvey/era.py` with an exporter-option bridge for Blender 4.3. It does not copy or patch garment generation. Blender 5 uses the newer exporter options unchanged.
 
+`locs.py` fits roots against visible skin and hair, rather than MakeHuman helper geometry; the root rings follow the head. Crowd beards retain the skin's bone weights, and narrow neckbands replace oversized camp collars on the Rastafari recipes.
+
 `finish_person.py` adds this game's beards, locs and uniform details. `imperial_face.py` fits Selassie's moustache and grey beard; `imperial_uniform.py` constructs his arrival uniform from the uploaded references. It fits Adina's shoulder and the Emperor's tucked tunic. The normal full body and low copy preserve separate garment materials for close inspection. It also exports a joined crowd body before packing. Crowd skin receives the established 1.55 multiplier in its vertex colours; one painted material and the original eyes reduce draw calls. Named bone weights, the skeleton and shared clips are preserved.
 
 `build-people.mjs` calls the current shared `tools/people/pack.mjs` for full, low and crowd versions. GLBs and build logs stay in ignored `build/selassie-people/`. Only packed model JS and recipes are committed. Normal website builds do not need Blender.

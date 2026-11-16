@@ -12,7 +12,7 @@ const out = process.env.REVIEW_OUT || 'build/integration-review';
 mkdirSync(out, { recursive: true });
 const core = ['garvey', 'kendal', 'nanny', 'port-royal', 'selassie', 'windrush'];
 const all = ['bog-walk', 'eventide', 'garvey', 'kendal', 'melissa', 'nanny', 'port-royal', 'selassie', 'tivoli', 'windrush'];
-const games = chosen.length ? chosen : mode === 'tivoli' ? ['tivoli'] : mode === 'menu' ? ['desktop', 'mobile'] : mode === 'legacy' ? ['bog-walk', 'eventide', 'melissa'] : ['core', 'play'].includes(mode) ? core : all;
+const games = chosen.length ? chosen : mode === 'cloth' ? ['selassie'] : mode === 'tivoli' ? ['tivoli'] : mode === 'menu' ? ['desktop', 'mobile'] : mode === 'legacy' ? ['bog-walk', 'eventide', 'melissa'] : ['core', 'play'].includes(mode) ? core : all;
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 let failures = 0;
 try {
@@ -25,8 +25,8 @@ try {
     const report = { game, mode, errors };
     try {
       const checks = mode === 'core' ? 'journal,links,a11y,keys,chapters,steps,map,sound,continuity,errors' : 'autoplay,camera,rule4,errors';
-      const suffix = mode === 'legacy' ? '?auto=' + (game === 'bog-walk' ? 'all' : '1') : ['core', 'play'].includes(mode) ? '?test=all&checks=' + checks : '';
-      await page.goto(mode === 'menu' ? base + '/menu/' : base + '/games/' + game + '/site/' + suffix, { timeout: 120000 });
+      const suffix = mode === 'cloth' ? '?test=cloth&b=' + ['sel_levi66','sel_planno66','sel_rastaman66','sel_rastaelder66','sel_rastatam66'].flatMap(b => [b,b+'_lo']).join(',') : mode === 'legacy' ? '?auto=' + (game === 'bog-walk' ? 'all' : '1') : ['core', 'play'].includes(mode) ? '?test=all&checks=' + checks : '';
+      await page.goto(mode === 'menu' ? base + '/menu/?intro=0' : base + '/games/' + game + '/site/' + suffix, { timeout: 120000 });
       if (mode === 'menu') {
         await page.emulateMedia({ reducedMotion: 'reduce' });
         await page.locator('#contactopen').waitFor({ state: 'visible' });
@@ -48,6 +48,11 @@ try {
         await page.screenshot({ path: resolve(out, 'contact-' + game + '.png') });
         await page.locator('#contactclose').click();
         report.ok = !errors.length;
+      } else if (mode === 'cloth') {
+        await page.waitForFunction(() => window.__RESULT, null, { timeout: 900000 });
+        report.results = await page.evaluate(() => window.__RESULT);
+        const counts = report.results.filter(x => /^CLOTH /.test(x));
+        report.ok = counts.length === 10 && counts.every(x => / 0$/.test(x)) && !errors.length;
       } else if (mode === 'tivoli') {
         await page.waitForFunction(() => window.__T, null, { timeout: 120000 });
         report.chapters = [];
@@ -90,6 +95,7 @@ try {
         report.ok = report.checks.n === 0 && !errors.length && report.checks.rows.every(r => r.status !== 'error');
       } else {
         await page.waitForFunction(() => document.getElementById('start') && !document.getElementById('start').disabled, null, { timeout: 120000 });
+        await page.screenshot({ path: resolve(out, game + '-title.png') });
         const chapters = page.getByRole('button', { name: 'Chapters', exact: true }).first();
         await chapters.click();
         await page.locator('#chapters').waitFor({ state: 'visible' });

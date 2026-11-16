@@ -39,7 +39,7 @@ if moustache:
     if colours:
         for c in colours.data:
             c.color=(*COL['Moustache'],1)
-if kind=='emperor':
+if kind in ('emperor','locks'):
     # ---- landmarks, measured on this head ----
     head_group=GI['mixamorig:Head'];ear_group=GI['ears']
     def wt(v,g):
@@ -50,7 +50,7 @@ if kind=='emperor':
     ears_=[v.co for v in h.data.vertices if wt(v,ear_group)>.5]
     ear_front=min(c.y for c in ears_);ear_low=min(c.z for c in ears_);ear_top=max(c.z for c in ears_)
     def profile(z,x=0.):
-        hit=tree.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0];return hit.y if hit else 0.
+        hit=(tree if kind=='emperor' else SKIN).ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0];return hit.y if hit else 0.
     zs=[upper_lip+i*.001 for i in range(int((eye_z-upper_lip)/.001))]
     tip_z=min(zs,key=profile)                                        # the tip of the nose
     sub_z=max([z for z in zs if z<tip_z],key=profile)                # under the nose, where the moustache starts
@@ -67,6 +67,13 @@ if kind=='emperor':
     def top_line(a):
         # the upper edge: under the nose, then the moustache's outer edge beside the nostril, then the neat cheek line rising to the ear,
         # then the hair in front of the ear (it reaches up under the cap)
+        if kind=='locks':
+            # A lower cheek line and a rounded jaw, rather than a dark face mask.
+            z=sub_z+.003-.009*sstep(a_nose*.45,a_nose*.95,a)
+            z-=.012*sstep(a_nose*1.1,a_corner*1.2,a)
+            z+=.032*sstep(a_corner*1.2,a_ear,a)
+            z+=.012*sstep(a_ear*.98,a_ear*1.1,a)
+            return z
         z=sub_z+.0045
         z-= .009*sstep(a_nose*.45,a_nose*.95,a)                       # under each nostril's wing, never up its side
         z+=(tip_z-sub_z+.042)*sstep(a_nose*1.1,a_ear*.98,a)**.6
@@ -109,6 +116,7 @@ if kind=='emperor':
         chin=sstep(a_corner*1.5,a_corner*.3,a)*sstep(lower_lip+.004,lower_lip-.012,c.z)       # the middle of the chin, below the lip
         must=sstep(mouth_z,mouth_z+.004,c.z)*sstep(a_corner*1.25,a_corner*.9,a)              # the moustache
         T=.0018+.0022*sstep(lower_lip+.008,lower_lip-.02,c.z)+.0036*chin*(1-.3*sstep(a_corner*.4,a_corner*1.4,a))+.0040*must
+        if kind=='locks':T*=1.7  # visible short hair volume, fuller at the chin
         moved[v]=(-.0028+(T+.0028)*sstep(-.001,.0025+.0015*(1-must),D[v]),v.normal.copy())
     # faces wholly under the skin never show
     hidden=[f for f in bm.faces if all(moved[v][0]<=0 for v in f.verts)]
@@ -136,9 +144,16 @@ if kind=='emperor':
     if dl:
         for v in bm.verts:v[dl].clear()
     bm.normal_update()
-    beard=rigid('Beard',bm,'Beard','Head');paint(beard)
+    if kind=='emperor':beard=rigid('Beard',bm,'Beard','Head')
+    else:
+        beard=soft('Beard',bm,'Beard',src=h)
+        for group in list(beard.vertex_groups):
+            if not group.name.startswith('mixamorig:'):beard.vertex_groups.remove(group)
+    paint(beard)
     colours=beard.data.color_attributes.get('Col')
-    grey=srgb([156,154,148]);dark=srgb([66,64,61]);mid=srgb([92,90,86])
+    if kind=='emperor':grey=srgb([156,154,148]);dark=srgb([66,64,61]);mid=srgb([92,90,86])
+    else:
+        hair=[max(c,n) for c,n in zip(P['colors']['Hair'],[42,36,30])];grey=srgb([min(255,c+12) for c in hair]);dark=srgb(hair);mid=srgb([min(255,c+6) for c in hair])
     for f in beard.data.polygons:
         for li in f.loop_indices:
             v=beard.data.vertices[beard.data.loops[li].vertex_index].co;a=ang(v)
@@ -147,38 +162,4 @@ if kind=='emperor':
             c=grey.lerp(dark,side**.8).lerp(mid,mo)
             grain=.82+.3*noise.noise(v*520)+.06*noise.noise(v*90)
             colours.data[li].color=(*(c*grain),1)
-    print('FITTED FACIAL HAIR emperor: one shell, tie front',round(tie_front,4),'tie top',tie_top and round(tie_top,4),'chin',round(chin_y,4),'under nose',round(sub_z,4),len(beard.data.vertices),'points')
-else:
-    # Take the beard surface from the actual face. Every vertex stays attached to
-    # the jaw; there are no fallback points or free tips projecting off the cheek.
-    bm=bmesh.new();bm.from_mesh(h.data)
-    remove=[]
-    for f in bm.faces:
-        c=f.calc_center_median()
-        if not (HEAD-.045<c.z<lower_lip+.052 and abs(c.x)<.085 and c.y<hy-.040):remove.append(f)
-    bmesh.ops.delete(bm,geom=remove,context='FACES')
-    bmesh.ops.subdivide_edges(bm,edges=bm.edges[:],cuts=2,use_grid_fill=True)
-    remove=[]
-    for f in bm.faces:
-        c=f.calc_center_median()
-        top=lower_lip-.005+.043*sstep(lip_width*.55,lip_width*1.6,abs(c.x))
-        if c.z>top or c.z<HEAD-.035 or abs(c.x)>.078:remove.append(f)
-    bmesh.ops.delete(bm,geom=remove,context='FACES')
-    bmesh.ops.delete(bm,geom=[v for v in bm.verts if not v.link_faces],context='VERTS')
-    bm.normal_update()
-    for v in bm.verts:
-        v.co+=v.normal*.0025
-    # A copied skin surface still carries deform weights. Clear them before
-    # binding the hair to Head, so no hidden helper group can move the beard.
-    dl=bm.verts.layers.deform.active
-    if dl:
-        for v in bm.verts:v[dl].clear()
-    beard=rigid('Beard',bm,'Beard','Head');paint(beard)
-    # Fine salt-and-pepper variation stays in vertex colours, with no image texture.
-    colours=beard.data.color_attributes.get('Col')
-    for f in beard.data.polygons:
-        for li in f.loop_indices:
-            v=beard.data.vertices[beard.data.loops[li].vertex_index].co
-            grain=.85+.25*noise.noise(v*420)
-            colours.data[li].color=(*(COL['Beard']*grain),1)
-    print('FITTED FACIAL HAIR',round(lower_lip,4),round(lip_width,4),'beard below mouth, moustache separate')
+    print('FITTED FACIAL HAIR',P['name'],': one shell, tie front',round(tie_front,4),'tie top',tie_top and round(tie_top,4),'chin',round(chin_y,4),'under nose',round(sub_z,4),len(beard.data.vertices),'points')
