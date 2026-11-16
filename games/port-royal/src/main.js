@@ -838,7 +838,7 @@ TICKS.push((dt) => {
   const moved = Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz); if (moved > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
   if (!quiet) { NUDGE.since = now; NUDGE.on = false; } /* Never display guidance over a panel or dialogue. */
   let tgt = quiet ? nudgeTarget() : null;
-  if (!NUDGE.on && quiet && tgt && now - NUDGE.since >= 2500) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
+  if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
   if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; /* Nearby interaction takes over; do not restart the hint delay. */ }   /* there: the talk button takes over */
   el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: () => eyeY });
   if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
