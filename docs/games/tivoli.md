@@ -34,6 +34,12 @@ It is the hardest subject in the family. The usual rules hold (CLAUDE.md rules 2
 - Fair telling of the disputed parts: say who found what, and who disagreed (see "The dispute").
 - Settings to turn off screen shake and to turn down loud sounds. (Kendal still lacks the shake setting.)
 
+**Settled by the owner on 16 November 2026 (the street scene as redirected that day)**
+- Gunmen fire back from behind the barricade.
+- At the first shots, the two leading soldiers fire from where they stand at the same moment the gunmen open fire, so neither side is shown firing first.
+- Prone firing clips (`ProneFire`, `ProneTurnR`, `RifleProneToKneel`) are not used: a person flat on the road could look hurt to a child.
+- No civilians appear in the gunfight scene.
+
 **Open (waiting for the owner)**
 1. A reviewer from West Kingston before anything is published (Claude recommends yes).
 
