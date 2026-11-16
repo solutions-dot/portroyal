@@ -40,5 +40,10 @@
         }
       ]
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "fix/windrush-ship-thumbnail": false
+    }
+  }
 }
