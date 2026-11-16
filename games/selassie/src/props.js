@@ -203,31 +203,50 @@ export function bus() {
   return g;
 }
 export { dc6 as aircraft } from "./aircraft.js";
-export function stairs() {
+/* Boarding steps rolled to the aircraft's rear door: a top platform level with the door sill (`sill`), then `n` equal steps down to the
+   apron, about 21 cm high and 26 cm deep, with stringers, handrails and wheels. Local axes: the platform starts at z = -0.62 (the door)
+   and ends at z = 0.3; the steps go down towards +z; y = 0 is the apron. userData.plan has the treads (for the camera check). */
+export function stairs(sill = 2.56, n = 12) {
   const g = grp(),
-    W = 1.3,
-    N = 12;
-  for (let i = 0; i < N; i++) {
-    const y = 0.12 + i * 0.2,
-      z = 5.1 - i * 0.31;
-    box(W, 0.11, 0.34, METAL, 0, y, z, g);
-    for (const x of [-0.7, 0.7]) {
-      box(0.035, 0.85, 0.035, METAL, x, y + 0.4, z, g);
+    W = 1.1,
+    rise = sill / n,
+    tread = 0.26,
+    back = -0.62,
+    front0 = 0.3,
+    grey = solid(0x9aa29e, 0.5, 0.45),
+    deck = solid(0x5b625f, 0.8, 0.2);
+  box(W + 0.2, 0.08, front0 - back, deck, 0, sill - 0.04, (back + front0) / 2, g);
+  const steps = [{ y: sill, z0: back, z1: front0 }];
+  for (let k = 1; k < n; k++) {
+    const y = sill - k * rise,
+      z0 = front0 + (k - 1) * tread,
+      z1 = z0 + tread;
+    steps.push({ y, z0, z1 });
+    box(W, 0.05, tread + 0.02, deck, 0, y - 0.025, (z0 + z1) / 2, g);
+    box(W, rise - 0.05, 0.012, grey, 0, y + rise / 2 - 0.02, z0 + 0.006, g);
+  }
+  const zEnd = front0 + (n - 1) * tread,
+    len = Math.hypot(zEnd - front0, sill),
+    ang = Math.atan2(sill, zEnd - front0);
+  for (const x of [-(W / 2 + 0.05), W / 2 + 0.05]) {
+    const st = box(0.07, 0.26, len + 0.1, grey, x, sill / 2 - 0.12, (front0 + zEnd) / 2, g);
+    st.rotation.x = ang;
+    const rail = box(0.05, 0.05, len + 0.05, grey, x, sill / 2 + 0.9, (front0 + zEnd) / 2, g);
+    rail.rotation.x = ang;
+    for (let i = 0; i <= 4; i++) {
+      const z = front0 + ((zEnd - front0) * i) / 4,
+        y = sill - (sill * i) / 4;
+      box(0.035, 0.9, 0.035, grey, x, y + 0.45, z, g);
     }
-  }
-  for (const x of [-0.7, 0.7]) {
-    const rail = box(0.05, 0.05, 4.7, METAL, x, 2, 3.4, g);
-    rail.rotation.x = 0.57;
-    const beam = box(0.13, 0.13, 4.7, METAL, x, 1.15, 3.4, g);
-    beam.rotation.x = 0.57;
-    box(0.1, 1.8, 0.1, METAL, x, 0.9, 1.8, g);
-  }
-  box(W, 0.12, 1.5, METAL, 0, 2.42, 1.5, g);
-  for (const z of [1.3, 4.8])
-    for (const x of [-0.7, 0.7]) {
-      const w = cyl(0.19, 0.19, 0.12, DARK, x, 0.2, z, g, 10);
+    box(0.05, 0.05, front0 - back, grey, x, sill + 0.9, (back + front0) / 2, g);
+    box(0.035, 0.9, 0.035, grey, x, sill + 0.45, back + 0.05, g);
+    box(0.09, sill - 0.3, 0.09, grey, x, (sill - 0.3) / 2 + 0.3, back + 0.2, g);
+    for (const z of [back + 0.2, zEnd - 0.3]) {
+      const w = cyl(0.17, 0.17, 0.1, DARK, x, 0.17, z, g, 12);
       w.rotation.z = Math.PI / 2;
     }
+  }
+  g.userData.plan = { sill, steps, rise, tread, end: zEnd };
   return g;
 }
 

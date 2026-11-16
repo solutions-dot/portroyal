@@ -1,427 +1,423 @@
-/* DC-6 reconstruction: four piston engines, tapered wings, round cabin windows,
-   tricycle gear and Ethiopian Air Lines period livery. No archive image textures. */
+/* Douglas DC-6B: the type of airliner that brought Haile Selassie I to Palisadoes (LIFE called it "the emperor's DC-6";
+   Ethiopian Air Lines flew three DC-6Bs in the 1960s). Built to the published size: about 32.2 m long, 35.8 m span,
+   8.7 m to the top of the fin, a 3.3 m fuselage, four radial engines with 4 m three-blade propellers, tricycle gear and
+   the passenger door at the back on the left (port) side, as in the arrival photographs. Which of the three aircraft
+   flew that day, and its exact paint, are not confirmed: there is no registration and no aircraft name, and the
+   cheatline and tail bands are a general reconstruction (docs/games/selassie.md). No archive image textures.
+   Local axes: the nose points along +x, the left (port) side is -z, the wheels stand on y = 0. */
 import * as THREE from "three";
 import { grp, mesh, box, cyl, solid, cv, std, batchStatic } from "./gfx.js";
-const metal = solid(0xa9b2af, 0.36, 0.6),
-  cream = solid(0xe8e4d5, 0.48, 0.18),
-  dark = solid(0x27312e, 0.5),
-  red = solid(0x963f34, 0.6),
-  glass = solid(0x345660, 0.27, 0.25),
-  gold = solid(0xd8b34c),
-  green = solid(0x3e7c50);
-function shape(points, depth, mat, parent, x = 0, y = 0, z = 0) {
+export const DC6 = {
+  R: 1.65, // fuselage radius
+  Y0: 3.5, // height of the fuselage centre line
+  door: { x: -9.0, w: 0.86, h: 1.68, sill: 2.56 }, // the rear passenger door on the port side
+};
+const metal = solid(0xb4bab6, 0.34, 0.65),
+  dark = solid(0x262d2b, 0.55),
+  tyre = solid(0x1f2221, 0.9),
+  glass = solid(0x2c4650, 0.22, 0.3),
+  cream = solid(0xeeece2, 0.45, 0.1),
+  yellowTip = solid(0xe1b53f, 0.6);
+const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
+/* the fuselage outline: [x along the body, radius] */
+const PROFILE = [
+  [-16.2, 0.06],
+  [-15.4, 0.34],
+  [-13.2, 0.82],
+  [-10.5, 1.28],
+  [-7.2, 1.6],
+  [-5.5, 1.65],
+  [7.5, 1.65],
+  [10.4, 1.6],
+  [12.4, 1.45],
+  [14.0, 1.12],
+  [15.2, 0.72],
+  [15.85, 0.32],
+  [16.05, 0.04],
+];
+export function radiusAt(x) {
+  for (let j = 1; j < PROFILE.length; j++)
+    if (x <= PROFILE[j][0]) {
+      const a = PROFILE[j - 1],
+        b = PROFILE[j];
+      return lerp(a[1], b[1], (x - a[0]) / (b[0] - a[0]));
+    }
+  return 0;
+}
+function extrude(points, depth, mat, parent, bevel = 0) {
   const s = new THREE.Shape();
   points.forEach(([a, b], i) => (i ? s.lineTo(a, b) : s.moveTo(a, b)));
   s.closePath();
-  return mesh(
-    new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: false }),
-    mat,
-    x,
-    y,
-    z,
-    parent,
-  );
+  const geo = new THREE.ExtrudeGeometry(s, {
+    depth,
+    bevelEnabled: bevel > 0,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelSegments: 2,
+  });
+  return mesh(geo, mat, 0, 0, 0, parent);
 }
-function line(points, mat, parent) {
-  const g = new THREE.BufferGeometry().setFromPoints(
-    points.map((p) => new THREE.Vector3(...p)),
-  );
-  const o = new THREE.Line(g, new THREE.LineBasicMaterial({ color: mat }));
-  parent.add(o);
-  return o;
-}
-function ball(r, mat, x, y, z, parent, scale = [1, 1, 1]) {
-  const o = mesh(new THREE.SphereGeometry(r, 16, 10), mat, x, y, z, parent);
-  o.scale.set(...scale);
-  return o;
+/* a stylised lion's head in a gold ring: the Gleaner described "the insignia of a roaring lion on the front" */
+function lionBadge() {
+  return cv(256, 256, (x, W) => {
+    x.clearRect(0, 0, W, W);
+    const c = W / 2;
+    x.fillStyle = "#d9b24a";
+    x.beginPath();
+    x.arc(c, c, 120, 0, 7);
+    x.fill();
+    x.fillStyle = "#2f6b45";
+    x.beginPath();
+    x.arc(c, c, 104, 0, 7);
+    x.fill();
+    x.fillStyle = "#d9b24a";
+    x.beginPath();
+    for (let i = 0; i < 28; i++) {
+      const a = (i / 28) * Math.PI * 2,
+        r = i % 2 ? 62 : 92;
+      x.lineTo(c + Math.cos(a) * r, c + Math.sin(a) * r);
+    }
+    x.closePath();
+    x.fill();
+    x.fillStyle = "#b5862d";
+    x.beginPath();
+    x.ellipse(c, c + 6, 46, 54, 0, 0, 7);
+    x.fill();
+    x.fillStyle = "#e8cf86";
+    x.beginPath();
+    x.ellipse(c, c + 30, 24, 20, 0, 0, 7);
+    x.fill();
+    x.fillStyle = "#3a2a16";
+    for (const s of [-1, 1]) {
+      x.beginPath();
+      x.ellipse(c + s * 18, c - 8, 7, 5, 0, 0, 7);
+      x.fill();
+    }
+    x.beginPath();
+    x.moveTo(c - 10, c + 16);
+    x.lineTo(c + 10, c + 16);
+    x.lineTo(c, c + 28);
+    x.closePath();
+    x.fill();
+    x.fillRect(c - 16, c + 40, 32, 5);
+  });
 }
 export function dc6() {
+  const { R, Y0, door: D } = DC6;
   const g = grp();
-  const paint = cv(1024, 16, (ctx, W, H) => {
+  g.userData.noBatch = true;
+  /* paint by height on the body: polished metal below, a gold cheatline with red and green lines through the windows, white above */
+  const paint = cv(1024, 8, (ctx, W, H) => {
     for (let i = 0; i < W; i++) {
-      const y = 3.05 - 1.26 * Math.sin((i / W) * Math.PI * 2);
+      const s = -Math.sin((i / W) * Math.PI * 2); // -1 underneath, +1 on top
       ctx.fillStyle =
-        y > 3.52
-          ? "#edece1"
-          : y > 3.48
-            ? "#a74132"
-            : y > 3.12
-              ? "#dccb72"
-              : y > 3.08
-                ? "#477d58"
-                : y > 2.85
-                  ? "#dccb72"
-                  : y > 2.81
-                    ? "#a74132"
-                    : "#dcded6";
+        s > 0.52
+          ? "#f1efe6"
+          : s > 0.47
+            ? "#a33f31"
+            : s > 0.43
+              ? "#f1efe6"
+              : s > -0.04
+                ? "#dcc56c"
+                : s > -0.08
+                  ? "#3f7a52"
+                  : s > -0.16
+                    ? "#dcc56c"
+                    : s > -0.2
+                      ? "#a33f31"
+                      : "#c7ccc8";
       ctx.fillRect(i, 0, 1, H);
     }
   });
-  const painted = std(paint, 0.46, { metalness: 0.22 });
-  g.userData.noBatch = true;
-  const profile = [
-    [-15.8, 0.02],
-    [-14.8, 0.3],
-    [-12.4, 0.7],
-    [-9.5, 1.05],
-    [-6, 1.22],
-    [7.5, 1.26],
-    [10.6, 1.16],
-    [12, 0.95],
-    [13.5, 0.65],
-    [14.5, 0.28],
-    [14.8, 0.02],
-  ];
-  const fuselage = mesh(
-    new THREE.LatheGeometry(
-      profile.map(([x, r]) => new THREE.Vector2(r, x)),
-      48,
-    ),
-    painted,
-    0,
-    3.05,
-    0,
-    g,
-  );
-  fuselage.rotation.z = -Math.PI / 2;
-  // Polished underside follows the same profile, just below the painted body.
-  const belly = mesh(
-    new THREE.LatheGeometry(
-      profile.map(([x, r]) => new THREE.Vector2(r + 0.005, x)),
-      32,
-      0.2,
-      Math.PI - 0.4,
-    ),
-    metal,
-    0,
-    3.05,
-    0,
-    g,
-  );
-  belly.rotation.z = -Math.PI / 2;
+  const painted = std(paint, 0.42, { metalness: 0.18 });
+  const lathe = (pts, mat, segs) => {
+    const o = mesh(
+      new THREE.LatheGeometry(
+        pts.map(([x, r]) => new THREE.Vector2(r, x)),
+        segs,
+      ),
+      mat,
+      0,
+      Y0,
+      0,
+      g,
+    );
+    o.rotation.z = -Math.PI / 2;
+    return o;
+  };
+  lathe(PROFILE, painted, 56);
+  /* wings: tapered, thinner and higher towards the tips (dihedral) */
+  const xLE = (s) => lerp(2.0, -0.9, (s - 1) / 16.9),
+    xTE = (s) => lerp(-4.0, -2.5, (s - 1) / 16.9),
+    WY = 2.05;
   for (const side of [-1, 1]) {
-    const wing = shape(
+    const pts = [
+      [2.0, 0.6],
+      [-0.9, 17.7],
+      [-1.5, 17.9],
+      [-2.5, 17.7],
+      [-4.0, 0.6],
+    ].map(([x, s]) => [x, -side * s]);
+    const w = extrude(pts, 0.34, metal, g, 0.04);
+    w.geometry.rotateX(-Math.PI / 2);
+    const P = w.geometry.attributes.position;
+    for (let i = 0; i < P.count; i++) {
+      const s = Math.abs(P.getZ(i)),
+        y = P.getY(i);
+      P.setY(i, WY + y * (1 - 0.55 * (s / 17.9)) + s * 0.065);
+    }
+    w.geometry.computeVertexNormals();
+    /* horizontal tail */
+    const tp = extrude(
       [
-        [-6.8, 0.9],
-        [2.1, 0.9],
-        [-0.4, 9.5],
-        [-3, 16.8],
-        [-5, 17.1],
-        [-6.8, 8.6],
-      ],
-      0.18,
+        [-12.0, 0.4],
+        [-13.7, 6.6],
+        [-14.9, 6.7],
+        [-16.0, 0.4],
+      ].map(([x, s]) => [x, -side * s]),
+      0.16,
       metal,
       g,
-      0,
-      2.0,
-      0,
+      0.03,
     );
-    wing.rotation.x = (side * Math.PI) / 2;
-    // Panel and flap divisions use lines rather than extra solid meshes.
-    line(
-      [
-        [-6.5, 2.04, side * 2],
-        [-5.1, 2.04, side * 8.5],
-        [-4.1, 2.04, side * 16.3],
-      ],
-      0x788783,
+    tp.geometry.rotateX(-Math.PI / 2);
+    tp.geometry.translate(0, Y0 + 0.55, 0);
+    /* navigation lights: red on the left wing tip, green on the right */
+    mesh(
+      new THREE.SphereGeometry(0.11, 10, 6),
+      solid(side < 0 ? 0xc0392b : 0x3e9a5a, 0.3),
+      -1.4,
+      WY + 17.9 * 0.065 + 0.08,
+      side * 17.85,
       g,
     );
-    for (const z of [4, 7.5, 11, 14.5])
-      line(
-        [
-          [-5.8, 2.04, side * z],
-          [-1.4 - (z - 4) * 0.23, 2.04, side * z],
-        ],
-        0x87918c,
-        g,
-      );
-    const tail = shape(
-      [
-        [-14.3, 0.4],
-        [-10.5, 0.4],
-        [-11.8, 6],
-        [-13.6, 6.3],
-      ],
-      0.12,
-      metal,
-      g,
-      0,
-      3.1,
-      0,
-    );
-    tail.rotation.x = (side * Math.PI) / 2;
-    ball(
-      0.105,
-      solid(side > 0 ? 0x569d69 : 0xbb4639, 0.2),
-      -4.1,
-      2.02,
-      side * 17,
-      g,
-    );
-    // Round-corner cabin windows and separate polished rims.
-    for (let i = 0; i < 12; i++) {
-      const x = -8 + i * 1.38,
-        y = 3.45,
-        z = side * 1.245;
-      const rim = mesh(
-        new THREE.TorusGeometry(0.235, 0.025, 5, 12),
+  }
+  /* engines: radial-engine nacelles with cowl rings, spinners and three-blade propellers (about 4 m across) */
+  g.userData.props = [];
+  for (const side of [-1, 1])
+    for (const span of [4.9, 9.6]) {
+      const z = side * span,
+        y = WY + span * 0.065 + 0.5,
+        front = xLE(span) + 2.3,
+        back = xTE(span) + 0.2;
+      const nac = mesh(
+        new THREE.LatheGeometry(
+          [
+            [back, 0.08],
+            [back + 1.2, 0.42],
+            [front - 1.6, 0.66],
+            [front - 0.25, 0.64],
+            [front, 0.6],
+          ].map(([x, r]) => new THREE.Vector2(r, x)),
+          22,
+        ),
         metal,
-        x,
+        0,
         y,
         z,
         g,
       );
-      rim.scale.set(0.78, 1, 1);
-      ball(0.215, glass, x, y, z + side * 0.012, g, [0.76, 1, 0.09]);
-    }
-    // Flight-deck glazing sits on the taper, not on the cabin cylinder.
-    for (const [x, z, w] of [
-      [11.3, 0.82, 0.78],
-      [12.1, 0.6, 0.65],
-      [12.7, 0.33, 0.5],
-    ]) {
-      const pane = box(w, 0.47, 0.045, glass, x, 3.57, side * z, g);
-      pane.rotation.y = side * 0.28;
-    }
-    line(
-      [
-        [10.8, 3.57, side * 0.92],
-        [12, 3.62, side * 0.68],
-        [13.3, 3.38, side * 0.15],
-      ],
-      0xaaa99b,
-      g,
-    );
-  }
-  const fin = shape(
-    [
-      [-15.1, 3.1],
-      [-15.35, 6.8],
-      [-13.4, 7.15],
-      [-10.4, 3.1],
-    ],
-    0.18,
-    cream,
-    g,
-    0,
-    0,
-    -0.09,
-  );
-  for (const side of [-1, 1])
-    for (let i = 0; i < 3; i++) {
-      const low = 3.45 + i * 1.02,
-        high = low + 1.02;
-      shape(
-        [
-          [-11.1, 3.4],
-          [-14.95, low],
-          [-14.95, high],
-        ],
-        0.006,
-        [red, gold, green][i],
-        g,
-        0,
-        0,
-        side * 0.108,
-      );
-      for (let j = 0; j < 4; j++) {
-        const yy = low + ((high - low) * j) / 4;
-        line(
-          [
-            [-11.1, 3.4, side * 0.12],
-            [-14.95, yy, side * 0.12],
-          ],
-          0x4a5b43,
-          g,
-        );
-      }
-    }
-  // Four radial engines, nacelles, cooling rings, exhausts and three-blade propellers.
-  g.userData.props = [];
-  for (const side of [-1, 1])
-    for (const span of [4.3, 9]) {
-      const z = side * span;
-      const nacelle = cyl(0.55, 0.43, 3.3, metal, 0.15, 2.08, z, g, 20);
-      nacelle.rotation.z = Math.PI / 2;
-      const cowl = mesh(
-        new THREE.TorusGeometry(0.48, 0.065, 6, 20),
-        cream,
-        1.84,
-        2.08,
-        z,
-        g,
-      );
-      cowl.rotation.y = Math.PI / 2;
-      const core = cyl(0.42, 0.42, 0.07, dark, 1.86, 2.08, z, g, 16);
-      core.rotation.z = Math.PI / 2;
-      for (let i = 0; i < 9; i++) {
-        const a = (i / 9) * Math.PI * 2;
-        line(
-          [
-            [1.91, 2.08 + Math.cos(a) * 0.12, z + Math.sin(a) * 0.12],
-            [1.91, 2.08 + Math.cos(a) * 0.38, z + Math.sin(a) * 0.38],
-          ],
-          0x77807b,
-          g,
-        );
-      }
+      nac.rotation.z = -Math.PI / 2;
+      const intake = cyl(0.5, 0.5, 0.06, dark, front + 0.01, y, z, g, 20);
+      intake.rotation.z = Math.PI / 2;
       const spinner = mesh(
-        new THREE.ConeGeometry(0.17, 0.48, 14),
+        new THREE.ConeGeometry(0.26, 0.62, 16),
         metal,
-        2.12,
-        2.08,
+        front + 0.38,
+        y,
         z,
         g,
       );
       spinner.rotation.z = -Math.PI / 2;
-      const prop = grp(g, 2.07, 2.08, z);
+      const prop = grp(g, front + 0.18, y, z);
       prop.userData.noBatch = true;
       for (let i = 0; i < 3; i++) {
         const pivot = grp(prop);
-        pivot.rotation.x = (i * Math.PI * 2) / 3;
-        box(0.07, 1.02, 0.17, dark, 0, 0.75, 0, pivot);
-        box(0.075, 0.13, 0.18, gold, 0, 1.22, 0, pivot);
+        pivot.rotation.x = (i * Math.PI * 2) / 3 + 0.35;
+        const blade = box(0.07, 1.7, 0.3, dark, 0, 1.05, 0, pivot);
+        blade.rotation.y = 0.35;
+        box(0.072, 0.22, 0.3, yellowTip, 0, 1.92, 0, pivot).rotation.y = 0.35;
       }
       prop.userData.noBatch = false;
       batchStatic(prop);
       prop.userData.noBatch = true;
       g.userData.props.push(prop);
-      const exhaust = cyl(0.07, 0.07, 0.6, dark, -1.3, 1.64, z + 0.35, g, 7);
-      exhaust.rotation.z = 0.8;
+      for (const dz of [-0.36, 0.36]) {
+        const ex = cyl(0.06, 0.06, 0.5, dark, back + 1.4, y - 0.42, z + dz, g, 7);
+        ex.rotation.z = Math.PI / 2;
+      }
     }
-  // Main wheel pairs and the smaller nose pair. Every tyre touches the apron.
+  /* main gear under the inner engines, nose gear under the cockpit: every tyre touches y = 0 */
   for (const side of [-1, 1]) {
-    box(0.09, 1.3, 0.1, metal, -2.4, 1.1, side * 3.3, g);
-    const brace = box(0.07, 1.4, 0.07, metal, -2.6, 1.14, side * 3.55, g);
-    brace.rotation.z = 0.25;
-    for (const dz of [-0.2, 0.2]) {
-      const w = cyl(0.4, 0.4, 0.2, dark, -2.4, 0.4, side * 3.3 + dz, g, 18);
+    const z = side * 4.9;
+    box(0.16, 1.55, 0.16, metal, 0.3, 1.28, z, g);
+    const drag = box(0.08, 1.5, 0.08, metal, -0.15, 1.3, z, g);
+    drag.rotation.z = -0.35;
+    box(0.12, 0.12, 0.75, metal, 0.3, 0.55, z, g);
+    for (const dz of [-0.34, 0.34]) {
+      const w = cyl(0.55, 0.55, 0.26, tyre, 0.3, 0.55, z + dz, g, 20);
       w.rotation.x = Math.PI / 2;
-      const hub = cyl(
-        0.19,
-        0.19,
-        0.205,
-        metal,
-        -2.4,
-        0.4,
-        side * 3.3 + dz,
-        g,
-        12,
-      );
+      const hub = cyl(0.25, 0.25, 0.27, metal, 0.3, 0.55, z + dz, g, 12);
       hub.rotation.x = Math.PI / 2;
     }
   }
-  box(0.1, 2, 0.1, metal, 10.4, 1.3, 0, g);
-  for (const z of [-0.16, 0.16]) {
-    const w = cyl(0.3, 0.3, 0.17, dark, 10.4, 0.3, z, g, 16);
+  const noseX = 12.6,
+    noseBottom = Y0 - radiusAt(noseX);
+  box(0.12, noseBottom - 0.38 + 0.1, 0.12, metal, noseX, (noseBottom + 0.38) / 2, 0, g);
+  for (const dz of [-0.2, 0.2]) {
+    const w = cyl(0.38, 0.38, 0.2, tyre, noseX, 0.38, dz, g, 18);
     w.rotation.x = Math.PI / 2;
   }
-  const door = box(0.98, 1.9, 0.035, dark, -7.7, 3.38, 1.265, g);
-  door.userData.noBatch = true;
-  g.userData.door = door;
-  for (const x of [-8.22, -7.18])
-    box(0.025, 1.94, 0.04, metal, x, 3.38, 1.3, g);
-  box(1.06, 0.025, 0.04, metal, -7.7, 4.35, 1.3, g);
-  const text = cv(1024, 80, (x, W, H) => {
-    x.clearRect(0, 0, W, H);
-    x.fillStyle = "#923c31";
-    x.font = "bold 57px Georgia";
-    x.textAlign = "center";
-    x.fillText("ETHIOPIAN", W / 2, 61);
+  /* fin and rudder, painted with three bands in the Ethiopian colours fanning back from the root */
+  const finTex = cv(512, 512, (x, W, H) => {
+    x.fillStyle = "#f1efe6";
+    x.fillRect(0, 0, W, H);
+    const P = (fx, fy) => [((fx + 16.6) / 6) * W, H - ((fy - 4.3) / 4.6) * H];
+    const fan = (col, a, b) => {
+      x.fillStyle = col;
+      x.beginPath();
+      x.moveTo(...P(-11.0, 4.9));
+      x.lineTo(...P(-16.6, a));
+      x.lineTo(...P(-16.6, b));
+      x.closePath();
+      x.fill();
+    };
+    fan("#a33f31", 5.15, 6.25);
+    fan("#dcc56c", 6.25, 7.35);
+    fan("#3f7a52", 7.35, 8.45);
   });
-  function paintedText(tex, cx, cy, w, h, side) {
+  finTex.repeat.set(1 / 6, 1 / 4.6);
+  finTex.offset.set(16.6 / 6, -4.3 / 4.6);
+  const finMat = std(finTex, 0.45, { metalness: 0.1 });
+  const fin = extrude(
+    [
+      [-10.6, Y0 + 1.0],
+      [-14.5, 8.75],
+      [-15.95, 8.75],
+      [-16.35, Y0 + 1.6],
+      [-15.6, Y0 + 0.5],
+    ],
+    0.24,
+    finMat,
+    g,
+    0.03,
+  );
+  fin.geometry.translate(0, 0, -0.12);
+  const fillet = extrude(
+    [
+      [-7.8, Y0 + R - 0.02],
+      [-10.8, Y0 + 1.42],
+      [-11.8, Y0 + 1.0],
+      [-9.5, Y0 + 1.2],
+    ],
+    0.2,
+    cream,
+    g,
+  );
+  fillet.geometry.translate(0, 0, -0.1);
+  /* windows: rounded oblongs in the cheatline, both sides; the flight deck panes at the front */
+  const win = new THREE.ShapeGeometry(
+    (() => {
+      const s = new THREE.Shape(),
+        w = 0.36,
+        h = 0.44,
+        r = 0.1;
+      s.moveTo(-w / 2 + r, -h / 2);
+      s.lineTo(w / 2 - r, -h / 2);
+      s.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
+      s.lineTo(w / 2, h / 2 - r);
+      s.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
+      s.lineTo(-w / 2 + r, h / 2);
+      s.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r);
+      s.lineTo(-w / 2, -h / 2 + r);
+      s.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
+      return s;
+    })(),
+    4,
+  );
+  const winMat = solid(0x223941, 0.25, 0.3, {
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    side: THREE.DoubleSide,
+  });
+  const wy = 0.3,
+    wz = Math.sqrt(R * R - wy * wy) + 0.006;
+  for (const side of [-1, 1])
+    for (let i = 0; i < 12; i++) {
+      const x = -7.6 + i * 1.3;
+      if (side < 0 && Math.abs(x - D.x) < 0.8) continue;
+      const o = mesh(win, winMat, x, Y0 + wy, side * wz, g);
+      o.rotation.x = side * -Math.asin(wy / R);
+    }
+  for (const side of [-1, 1])
+    for (const [x, h, w, tilt] of [
+      [13.55, 0.62, 0.7, 0.42],
+      [14.25, 0.52, 0.55, 0.62],
+    ]) {
+      const r = radiusAt(x),
+        yy = 0.66;
+      const pane = box(w, 0.42, 0.04, glass, x, Y0 + yy, side * Math.sqrt(Math.max(0.05, r * r - yy * yy)), g);
+      pane.rotation.y = side * -tilt;
+      pane.rotation.x = side * 0.35;
+    }
+  box(1.1, 0.03, 0.9, dark, 14.6, Y0 + 0.92, 0, g).rotation.z = -0.45;
+  /* the rear passenger door: a dark opening on the port side, and a door that swings out and forward (userData.door.open(0..1)) */
+  const dz = -(Math.sqrt(R * R - (D.sill + D.h / 2 - Y0) ** 2) + 0.004);
+  box(D.w, D.h, 0.05, solid(0x1d2321, 0.8), D.x, D.sill + D.h / 2, dz + 0.012, g);
+  for (const xx of [D.x - D.w / 2 - 0.03, D.x + D.w / 2 + 0.03])
+    box(0.04, D.h + 0.06, 0.05, metal, xx, D.sill + D.h / 2, dz - 0.004, g);
+  box(D.w + 0.1, 0.04, 0.05, metal, D.x, D.sill + D.h + 0.02, dz - 0.004, g);
+  box(D.w + 0.1, 0.04, 0.05, metal, D.x, D.sill - 0.02, dz - 0.004, g);
+  const hinge = grp(g, D.x + D.w / 2 + 0.03, D.sill + D.h / 2, dz - 0.03);
+  hinge.userData.noBatch = true;
+  const leaf = box(D.w, D.h - 0.04, 0.06, cream, -D.w / 2, 0, 0, hinge);
+  box(D.w * 0.9, 0.12, 0.065, solid(0xdcc56c, 0.5), -D.w / 2, 0.3, 0, hinge);
+  leaf.userData.noBatch = true;
+  hinge.userData.open = (k) => {
+    hinge.rotation.y = -k * 1.75;
+  };
+  hinge.userData.open(0);
+  g.userData.door = hinge;
+  /* titles on both sides, wrapped onto the body: the airline's name and the lion on the nose (no registration or aircraft name: not confirmed) */
+  const text = cv(1024, 96, (x, W) => {
+    x.clearRect(0, 0, W, 96);
+    x.fillStyle = "#9d3a2e";
+    x.font = "bold 64px Georgia";
+    x.textAlign = "center";
+    x.fillText("ETHIOPIAN", W / 2, 72);
+  });
+  const lion = lionBadge();
+  function wrapped(tex, cx, cy, w, h, side) {
     const geo = new THREE.PlaneGeometry(w, h, 32, 6),
       p = geo.attributes.position,
       uv = geo.attributes.uv;
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i) + cx,
-        y = p.getY(i) + cy;
-      let r = 1.25;
-      for (let j = 1; j < profile.length; j++)
-        if (x <= profile[j][0]) {
-          const a = profile[j - 1],
-            b = profile[j],
-            t = (x - a[0]) / (b[0] - a[0]);
-          r = a[1] + (b[1] - a[1]) * t;
-          break;
-        }
-      p.setXYZ(
-        i,
-        x,
-        y,
-        side * (Math.sqrt(Math.max(0.006, r * r - (y - 3.05) ** 2)) + 0.012),
-      );
+        y = p.getY(i) + cy,
+        r = radiusAt(x);
+      p.setXYZ(i, x, y, side * (Math.sqrt(Math.max(0.006, r * r - (y - Y0) ** 2)) + 0.014));
       if (side < 0) uv.setX(i, 1 - uv.getX(i));
     }
     geo.computeVertexNormals();
-    const mat = std(tex, 1, {
+    const mat = std(tex, 0.6, {
       transparent: true,
       side: THREE.DoubleSide,
       polygonOffset: true,
-      polygonOffsetFactor: -1,
+      polygonOffsetFactor: -3,
     });
     mat.forceSinglePass = true;
-    const o = new THREE.Mesh(geo, mat);
-    g.add(o);
+    g.add(new THREE.Mesh(geo, mat));
   }
-  const name = cv(768, 96, (x, W, H) => {
-    x.clearRect(0, 0, W, H);
-    x.fillStyle = "#4b594d";
-    x.font = "italic 62px Georgia";
-    x.textAlign = "center";
-    x.fillText("The White Nile", W / 2, 72);
-  });
-  const reg = cv(512, 96, (x, W, H) => {
-    x.clearRect(0, 0, W, H);
-    x.fillStyle = "#263b38";
-    x.font = "700 64px sans-serif";
-    x.textAlign = "center";
-    x.fillText("ET-AAZ", W / 2, 75);
-  });
   for (const side of [-1, 1]) {
-    paintedText(text, 3, 3.96, 11, 0.55, side);
-    paintedText(name, -4, 3.88, 4.6, 0.42, side);
-    paintedText(reg, -9.5, 2.53, 3, 0.45, side);
+    wrapped(text, 2.2, Y0 + 1.08, 8.4, 0.78, side);
+    wrapped(lion, 12.35, Y0 + 0.02, 0.95, 0.95, side);
   }
-  // Small aerials and a dark anti-glare panel help the silhouette at close range.
-  box(2.5, 0.035, 1.35, dark, 11.9, 3.67, 0, g);
-  box(0.035, 0.45, 0.035, metal, 2.5, 4.08, 0, g);
-  line(
-    [
-      [2.5, 4.3, 0],
-      [-13.6, 6.4, 0],
-    ],
-    0x686e67,
-    g,
-  );
-  const groups = new Map(),
-    remove = [];
-  g.traverse((o) => {
-    if (o.isLine && !o.isLineSegments) {
-      const key = o.material.color.getHex();
-      if (!groups.has(key)) groups.set(key, []);
-      const a = o.geometry.attributes.position;
-      for (let i = 1; i < a.count; i++) {
-        groups
-          .get(key)
-          .push(
-            a.getX(i - 1),
-            a.getY(i - 1),
-            a.getZ(i - 1),
-            a.getX(i),
-            a.getY(i),
-            a.getZ(i),
-          );
-      }
-      remove.push(o);
-    }
-  });
-  for (const o of remove) o.parent.remove(o);
-  for (const [color, points] of groups) {
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.Float32BufferAttribute(points, 3));
-    g.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color })));
-  }
+  /* aerial mast and wire */
+  box(0.04, 0.5, 0.04, metal, 3.5, Y0 + R + 0.24, 0, g);
+  const wire = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(3.5, Y0 + R + 0.48, 0),
+    new THREE.Vector3(-14.8, 8.5, 0),
+  ]);
+  g.add(new THREE.LineSegments(wire, new THREE.LineBasicMaterial({ color: 0x656b66 })));
   return g;
 }

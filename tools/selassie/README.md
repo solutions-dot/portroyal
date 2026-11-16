@@ -20,6 +20,19 @@ This environment used Blender 4.3.2 with official `makehumancommunity/mpfb2` and
 
 `build-people.mjs` calls the current shared `tools/people/pack.mjs` for full, low and crowd versions. GLBs and build logs stay in ignored `build/selassie-people/`. Only packed model JS and recipes are committed. Normal website builds do not need Blender.
 
+## The game's own animation clips
+
+The owner's salute for Haile Selassie (`shared/anim-sources/owner/Salute_selassie.fbx`) is packed into this game's own `games/selassie/site/models/anims_selassie.js`, so the shared library and the other games are unchanged:
+
+```bash
+ANIMS_OUT=build/anims_selassie.glb ~/venv/bin/python3 tools/anims/retarget_clips.py tools/selassie/clips.json   # about 20 seconds
+node tools/selassie/pack_clips.mjs build/anims_selassie.glb
+```
+
+The game loads it after the shared library (`main.js`). The owner's `Descending_Stairs.fbx` was measured and does not fit his body (see `docs/games/selassie.md`), so it is not in `clips.json`.
+
+To rebuild people on a machine where `bpy` is a Python module rather than a Blender program, a stand-in that drops Blender's own arguments works: `BLENDER_BIN` pointing at a script that runs `~/venv/bin/python3 "$5" "$6" "$7"`.
+
 ## Checks
 
 ```bash

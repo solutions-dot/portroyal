@@ -1,7 +1,7 @@
 /* A self-contained game on the established shared engine APIs. */
 import * as THREE from "three";
 import { clone as cloneBody } from "three/addons/utils/SkeletonUtils.js";
-import { loadClips, animate, groundFeet } from "../../../engine/anim.js";
+import { loadClips, animate, groundFeet, CL } from "../../../engine/anim.js";
 import { model, onLoadFail } from "../../../engine/loader.js";
 import { grip, gripTick, spreadArms } from "../../../engine/grip.js";
 import { createAmbient, onKeepOff } from "../../../engine/ambient.js";
@@ -157,12 +157,82 @@ function loadBase(id) {
             throw error;
           }));
 }
+/* A joined crowd body has one painted material, so its clothes cannot be tinted by material. Recolour its vertex colours instead.
+   The commonest colours of the chest (the shirt or dress), the thighs (trousers or skirt) and the face (skin) are found on the body
+   itself; every vertex below the neck whose colour is nearest the shirt's (or, below the hips, the trousers') takes the new colour,
+   keeping its own light and dark grain. Skin, hair, hats and shoes keep theirs. One copy of the geometry per body and colours. */
+const VARIANTS = new Map(),
+  _c = new THREE.Color();
+function recolour(o, colors) {
+  const key = o.geometry.uuid + "|" + colors.shirt + "|" + colors.legs;
+  let g = VARIANTS.get(key);
+  if (!g) {
+    g = o.geometry.clone();
+    const C = g.attributes.color,
+      P = g.attributes.position;
+    if (!C) return;
+    g.computeBoundingBox();
+    const bb = g.boundingBox,
+      H = bb.max.y - bb.min.y,
+      cx = (bb.max.x + bb.min.x) / 2,
+      cz = (bb.max.z + bb.min.z) / 2,
+      half = (bb.max.x - bb.min.x) / 2;
+    // the commonest colour in a band of height, near the middle and on the front (locs hang down the back)
+    const mode = (y0, y1, wx, front = true, wx0 = 0) => {
+      const n = new Map();
+      for (let i = 0; i < P.count; i++) {
+        const y = (P.getY(i) - bb.min.y) / H,
+          ax = Math.abs(P.getX(i) - cx);
+        if (y < y0 || y > y1 || ax > half * wx || ax < half * wx0 || (front && P.getZ(i) < cz)) continue;
+        const k = [C.getX(i), C.getY(i), C.getZ(i)].map((v) => Math.round(v * 16)).join(",");
+        n.set(k, (n.get(k) || 0) + 1);
+      }
+      let best = null,
+        bn = 0;
+      for (const [k, c] of n) if (c > bn) ((bn = c), (best = k));
+      return best && best.split(",").map((v) => v / 16);
+    };
+    // the other colours that must stay: skin (the hands, as a beard can cover the face), hair or hat (the top of the head, the
+    // colour of any locs down the back) and shoes
+    const shirt = mode(0.6, 0.74, 0.16),
+      legs = mode(0.3, 0.42, 0.12),
+      keep = [mode(0.4, 0.5, 1, false, 0.72), mode(0.935, 0.955, 0.04), mode(0.96, 1, 0.3, false), mode(0, 0.035, 0.4, false)].filter(Boolean);
+    // warm brown with red above green above blue is skin (the joined body's skin is baked lighter): never cloth, whatever it is nearest
+    const skinish = (c) => c[0] > c[1] * 1.2 && c[1] > c[2] * 1.12;
+    const d2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
+    for (const [from, to, y0, y1] of [
+      [shirt, colors.shirt, 0.4, 0.8],
+      [legs, colors.legs, 0.02, 0.56],
+    ]) {
+      if (!from || to === undefined) continue;
+      const reps = [shirt, legs, ...keep].filter((r) => r && (r === from || d2(r, from) > 0.03)); // a shade of the same cloth is not a colour that stays
+      _c.setHex(to);
+      const tc = [_c.r, _c.g, _c.b],
+        lum = (c) => 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2] + 1e-3;
+      for (let i = 0; i < P.count; i++) {
+        const y = (P.getY(i) - bb.min.y) / H;
+        if (y < y0 || y > y1) continue;
+        const v = [C.getX(i), C.getY(i), C.getZ(i)];
+        // a print's other colours go with the cloth too, unless they are nearer a colour that stays
+        if (d2(v, from) > 0.12 || (skinish(v) && !skinish(from))) continue;
+        if (reps.some((r) => r !== from && d2(v, r) < d2(v, from))) continue;
+        const k = lum(v) / lum(from); // keep the grain as light and shade
+        C.setXYZ(i, ...tc.map((x) => Math.min(1, x * k)));
+      }
+    }
+    C.needsUpdate = true;
+    VARIANTS.set(key, g);
+  }
+  o.geometry = g;
+}
 function body(spec) {
   const m = cloneBody(bases[spec.bodyId || spec.base].scene);
   m.traverse((o) => {
     if (!o.isMesh) return;
     if (o.userData.measureOnly || /^SkirtSeat/.test(o.name)) o.visible = false;
     o.frustumCulled = true;
+    if (spec.colors && o.material.name === "Crowd" && o.geometry.attributes.color)
+      recolour(o, spec.colors);
     o.material = o.material.clone();
     o.material.forceSinglePass = true;
     const nm = o.material.name;
@@ -349,8 +419,8 @@ async function buildWorld(id) {
   });
   Q.arrivalLife = createAmbient({
     walls: [
-      [3.5, -31.5, 5.1, -25],
-      [4.7, -50, 16, -16.5],
+      [3.5, -30.4, 5.1, -25.6], // the boarding steps
+      [-11, -50, 0.6, -13.5], // the wing and the propellers
     ],
     bounds: { x0: -35, z0: -27, x1: 40, z1: -12 },
     phone,
@@ -1244,10 +1314,29 @@ function hint(now) {
       `translate(calc(-50% + ${stick.dx * 26}px),calc(-50% + ${stick.dy * 26}px))`;
   }
 }
+/* the title's scene: the arrival as the cinematic shows it at the salute, then left to live (the crowd keeps moving, he salutes again now and then) */
+let titleT = 0;
+function titleScene(Q) {
+  for (let t = 0; t <= 64; t += 0.25) DIR.pose(t, 0.25);
+  $("sub").textContent = "";
+  for (const n of Q.people) if (n.historical) n.m.visible = true;
+  Q.props.plane.visible = Q.props.stairs.visible = true;
+}
+function titleCamera(now, dt) {
+  const em = world()?.people.find((n) => n.id === "emperor");
+  if ((titleT += dt) > 13 && em) {
+    titleT = 0;
+    em.ctl.play("SaluteHS", true);
+  }
+  const t = reduced ? 0 : now * 0.00011,
+    tall = innerWidth / innerHeight < 0.8; // a phone held upright: keep the steps and the Emperor in the middle
+  camera.position.set(9.9 + Math.sin(t * 1.3) * 1.5, 2.45 + Math.sin(t * 0.9) * 0.18, -19.4 + Math.cos(t * 1.3) * 0.9);
+  camera.lookAt(tall ? 3.6 : 1.9, tall ? 3.2 : 3.75, -29.4);
+}
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)); // never backwards (a dev check steps its own clock)
   last = now;
   const Q = world();
   if (!Q) return;
@@ -1305,9 +1394,12 @@ function frame(now) {
     camera.position.set(...S.view.pos);
     camera.lookAt(...S.view.look);
   } else if (!S.started) {
-    const t = reduced ? 0 : now * 0.00012;
-    camera.position.set(3 + Math.sin(t) * 1.3, 2.2, 12);
-    camera.lookAt(-2, 1, -2);
+    if (current === "airport") titleCamera(now, dt);
+    else {
+      const t = reduced ? 0 : now * 0.00012;
+      camera.position.set(3 + Math.sin(t) * 1.3, 2.2, 12);
+      camera.lookAt(-2, 1, -2);
+    }
   } else {
     camera.position.set(
       S.x,
@@ -1360,10 +1452,19 @@ onLoadFail((name) => {
 (async () => {
   try {
     loadClips(await model("anims"));
+    // This game's own clips (the owner's salute and descending-stairs clips), packed apart from the shared library.
+    loadClips(await model("anims_selassie"));
+    // The salute's right hand stays as flat as it starts: as the arm came down, a curl of the fingers pinched the palm (cloth check).
+    for (const t of CL.SaluteHS?.tracks || [])
+      if (/RightHand(Index|Middle|Ring|Pinky|Thumb)\d\.quaternion$/.test(t.name))
+        for (let i = 4; i < t.values.length; i++) t.values[i] = t.values[i % 4];
     $("bar").style.width = "25%";
-    const Q = await ensure("yard");
-    current = "yard";
+    // Behind the title: the arrival at Palisadoes, the DC-6 at the steps, Haile Selassie I at the top and the welcome around them
+    // (owner's request, November 2026). The story itself begins in the yard when Start is pressed.
+    const Q = await ensure("airport");
+    current = "airport";
     Q.group.visible = true;
+    titleScene(Q);
     $("bar").style.width = "100%";
     ready = true;
     $("start").disabled = false;
@@ -1401,6 +1502,7 @@ onLoadFail((name) => {
         scene,
         body,
         loadBase,
+        frame,
       });
     }
   } catch (e) {

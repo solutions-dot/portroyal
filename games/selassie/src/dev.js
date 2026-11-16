@@ -1,5 +1,6 @@
 /* Development-only checks use the real scene and gameplay handlers. */
-import { checkAll } from "../../../engine/checks.js";
+import { checkAll, CHECKS } from "../../../engine/checks.js";
+import { headCheck } from "./headcheck.js";
 import { checkFlow, needList } from "../../../engine/story.js";
 import { routeIssues, walkRoute } from "../../../engine/placement.js";
 import { ambientCheck } from "../../../engine/ambient.js";
@@ -16,6 +17,7 @@ import {
 } from "../../../engine/audit.js";
 import { skinProbe } from "../../../engine/skinprobe.js";
 import { gripTick } from "../../../engine/grip.js";
+import { CL } from "../../../engine/anim.js";
 import { BASES } from "./cast.js";
 import {
   lead,
@@ -29,11 +31,23 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 export async function dev(A) {
   const { q, S, ensure, world, worlds, go, story, where, blocked } = A;
   window.__SEL = A;
+  window.__CL = CL;
   A.checkAdapter = makeAdapter(A);
   A.checkTables = CHECK_TABLES;
   window.__adapter = A.checkAdapter;
   window.__tables = CHECK_TABLES;
   if (q.get("test") === "all") {
+    // this game's own check, run after the shared ones: heads and necks, the cinematic's camera and the walk down the steps
+    if (!CHECKS.some((c) => c.id === "heads"))
+      CHECKS.push({
+        id: "heads",
+        needs: [],
+        run: async () => {
+          closeAll();
+          const r = await headCheck(A, { seconds: 10 });
+          return { lines: r.lines, note: r.stats.join("; ") };
+        },
+      });
     await checkAll(A.checkAdapter, CHECK_TABLES);
     return;
   }
@@ -46,14 +60,28 @@ export async function dev(A) {
     A.begin();
     const shot = q.get("shot");
     await go(
-      ["poster", "emperor", "terminal", "face"].includes(shot)
+      ["poster", "emperor", "terminal", "face", "salute"].includes(shot)
         ? 55
         : shot === "memory"
           ? 15
           : 20,
     );
     closeAll();
-    if (shot === "people") {
+    if (shot === "locs") {
+      // locs and tams close up: the five recipes facing us, then from behind (&back) or the side (&side), standing or mid-stride (&walk)
+      world().group.visible = false;
+      const L = ["sel_rastaman66", "sel_rastaelder66", "sel_rastatam66", "sel_planno66", "sel_levi66"].map((b) => b + (q.get("tier") || ""));
+      for (let i = 0; i < L.length; i++) {
+        await A.loadBase(L[i]);
+        const { m, ctl } = A.body({ base: L[i], x: (i - 2) * 0.75, z: 0, sex: "m", ry: q.has("back") ? Math.PI : q.has("side") ? Math.PI / 2 : 0 });
+        if (q.has("walk")) {
+          ctl.play("Walk");
+          ctl.mx.update(0.6);
+        }
+        A.scene.add(m);
+      }
+      S.view = { pos: [0, 1.62, 2.5], look: [0, 1.45, 0] };
+    } else if (shot === "people") {
       world().group.visible = false;
       for (let i = 0; i < BASES.length; i++) {
         const base = BASES[i];
@@ -72,24 +100,37 @@ export async function dev(A) {
         A.scene.add(m);
       }
       S.view = { pos: [0, 2, 11.8], look: [0, 0.9, 0] };
-    } else if (shot === "face")
-      S.view = { pos: [4.5, 4.06, -28.02], look: [4.3, 4.02, -28.8] };
-    else if (shot === "emperor")
-      S.view = { pos: [5.1, 4.1, -26.3], look: [4.3, 4.04, -28.8] };
-    else if (shot === "terminal")
+    } else if (shot === "terminal")
       S.view = { pos: [25, 6, 12], look: [-4, 4, 34] };
-    else if (shot === "poster")
-      S.view = { pos: [0.5, 2.6, -16.7], look: [0.5, 3.55, -28.8] };
     else if (shot === "adina")
       S.view = { pos: [-3, 1.45, 2.6], look: [-3, 1.35, 0] };
-    if (shot === "emperor" || shot === "poster") {
+    if (["emperor", "poster", "face", "salute"].includes(shot)) {
+      // the arrival as the cinematic shows it at the salute: aircraft at the stand, steps at the door, the welcome around them
+      A.DIR.start();
+      A.DIR.fast = false;
+      for (let t = 0; t <= 64; t += 0.25) A.DIR.pose(t, 0.25);
+      A.DIR.on = false; // keep the scene as posed; the test view's camera takes over
+      $("cineControls").hidden = true;
+      document.body.classList.remove("cine");
+      $("sub").textContent = "";
       const n = world().people.find((n) => n.id === "emperor");
-      n.ctl.play("Salute", true);
+      n.m.visible = true;
+      n.ctl.play("SaluteHS", true);
       n.ctl.mx.update(0.4);
-      n.ctl.cur.time = n.ctl.cur.getClip().duration * 0.5;
+      n.ctl.cur.time = n.ctl.cur.getClip().duration * Number(q.get("at") || 0.42);
       n.ctl.cur.paused = true;
       n.ctl.timer = 0;
       n.ctl.mx.update(0);
+      n.m.updateMatrixWorld(true);
+      const head = n.m.getObjectByName("mixamorigHead").getWorldPosition(n.m.position.clone());
+      // framed on his real head, so a change of body height cannot leave the face out of the picture
+      if (shot === "face")
+        S.view = { pos: [head.x + 0.18, head.y + 0.03, head.z + 0.78], look: [head.x, head.y + 0.05, head.z] };
+      else if (shot === "salute")
+        S.view = { pos: [head.x + 0.9, head.y - 0.35, head.z + 2.3], look: [head.x, head.y - 0.45, head.z] };
+      else if (shot === "emperor")
+        S.view = { pos: [head.x + 2.2, head.y - 0.9, head.z + 4.4], look: [head.x - 0.4, head.y - 0.7, head.z] };
+      else S.view = { pos: [9.9, 2.45, -19.4], look: [1.9, 3.75, -29.4] };
     }
     $("hud").hidden = true;
     window.__SHOT = true;
@@ -187,6 +228,13 @@ export async function dev(A) {
       );
     }
   }
+  if (q.get("test") === "heads" || q.get("test") === "audit") {
+    closeAll();
+    const r = await headCheck(A, { seconds: q.get("test") === "heads" ? 16 : 8 });
+    results.push(`HEADS ${r.lines.length}`, ...r.lines, ...r.stats);
+    await go(10);
+    closeAll();
+  }
   if (q.get("test") === "audit")
     for (const Q of Object.values(worlds)) {
       const npcs = [...Q.people, ...Q.extras].map((n) => ({
@@ -225,12 +273,23 @@ export async function dev(A) {
       ctl.mx.update(0.3);
       m.updateMatrixWorld(true);
       if (test === "cloth") {
-        const poses = [
+        // every body in the poses it can be seen in; the ceremonial police only stand and walk (no reactions: airport-detail.js)
+        const poses = base === "sel_police66" ? [["Idle", 0.3], ["Walk", 0.5]] : [
           ["Idle", 0.3],
           ["Walk", 0.5],
           ["Talk1", 0.4],
           ["Wave", 0.5],
-          ...(base === "sel_emperor66" ? [["Salute", 0.5]] : []),
+          // what Haile Selassie does in the cinematic: the owner's salute and the walk down the steps
+          ...(base === "sel_emperor66"
+            ? [
+                ["SaluteHS", 0.3],
+                ["SaluteHS", 0.5],
+                ["SaluteHS", 0.75],
+                ["StairsDown", 0.25],
+                ["StairsDown", 0.5],
+                ["StairsDown", 0.75],
+              ]
+            : []),
         ];
         const trim = base === "sel_emperor66" ? exteriorTrim(m, poses) : null;
         if (trim)
@@ -352,6 +411,28 @@ export async function dev(A) {
           );
       }
     };
+    /* an open panel must be on top of everything: every button, link, heading and footer line in it, and a grid of points over the
+       whole panel, must be the panel itself when touched there (the owner saw the empty narration bar lying across the journal footer) */
+    const covered = (label, panelId) => {
+      const panel = $(panelId),
+        book = panel.querySelector(".book, .cardin") || panel,
+        targets = [...book.querySelectorAll("button,a,h2,footer span,footer")].filter(visible);
+      const r = book.getBoundingClientRect(),
+        pts = targets.map((e) => {
+          const q = e.getBoundingClientRect();
+          return [q.left + q.width / 2, q.top + q.height / 2, e.id || e.tagName.toLowerCase() + ":" + e.textContent.trim().slice(0, 18)];
+        });
+      for (let i = 1; i < 6; i++) for (let j = 1; j < 6; j++) pts.push([r.left + (r.width * i) / 6, r.top + (r.height * j) / 6, "panel point"]);
+      for (const [x, y, what] of pts) {
+        if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;
+        const t = document.elementFromPoint(x, y);
+        if (t && !panel.contains(t))
+          bad.push(`${label}: ${what} is covered by ${t.id || t.className || t.tagName}`);
+      }
+    };
+    const st = document.createElement("style");
+    st.textContent = "*{transition:none!important;animation:none!important}";
+    document.head.appendChild(st);
     closeAll();
     scan("play");
     A.talk(world().people.find((n) => n.id === "adina"));
@@ -359,12 +440,29 @@ export async function dev(A) {
     closeAll();
     $("jbtn").click();
     scan("journal");
+    covered("journal", "journal");
     closeAll();
+    // after the arrival cinematic the narration bar used to stay drawn, empty, above the journal
+    A.DIR.start();
+    A.DIR.stop();
+    $("hud").hidden = false;
+    $("jbtn").click();
+    covered("journal after the cinematic", "journal");
+    closeAll();
+    $("sub").classList.remove("dim");
+    $("sub").textContent = "A line of narration.";
+    $("jbtn").click();
+    covered("journal over narration", "journal");
+    closeAll();
+    $("sub").textContent = "";
     $("tchap").click();
     scan("chapters");
+    covered("chapters", "chapters");
     $("chcred").click();
     scan("credits");
+    covered("credits", "credits");
     closeAll();
+    st.remove();
     results.push("LAYOUT UI " + bad.length, ...bad);
   }
   if (q.has("auto")) {

@@ -326,10 +326,15 @@ export function createAmbient(opts = {}) {
   function headTick(n, dt) {
     const a = n.amb, b = bonesOf(n.m); if (!b.neck && !b.head) return; a.pT = Math.hypot(W.px - n.x, W.pz - n.z) < O.look ? a.pT + dt : 0; let [yaw, pitch] = lookWant(n);
     if (Math.abs(yaw) > 1.9) yaw = 0; yaw = Math.max(-O.lookYaw, Math.min(O.lookYaw, yaw)); pitch = Math.max(-O.lookPitch, Math.min(O.lookPitch, pitch));
-    const k = Math.min(1, dt * 3); a.look += (yaw - a.look) * k; a.lookP += (pitch - a.lookP) * k;
+    const k = Math.min(1, dt * 3), lim = dt * 3.5; a.look += Math.max(-lim, Math.min(lim, (yaw - a.look) * k)); a.lookP += (pitch - a.lookP) * k;   /* at most 200 degrees a second: a look that swaps sides (the player passing behind) turned the head faster than a person does */
     let nod = 0; if (a.nod > 0) { a.nod = Math.max(0, a.nod - dt); nod = Math.sin((0.7 - a.nod) / 0.7 * Math.PI * 2) * 0.12 * (a.nod > 0 ? 1 : 0); }
     const ry = n.m.rotation.y; _ax.set(Math.cos(ry), 0, -Math.sin(ry));   /* the body's side axis: a turn about it nods */
+    /* the mixer only writes a bone whose clip value changed since its last update, and a still head track (Idle) is written once:
+       start from the clip's pose again, or each frame's turn adds to the last one and the head spins round (Selassie, November 2026) */
+    const hq = a.hq || (a.hq = [b.neck, b.head].map(() => ({ base: new THREE.Quaternion(), after: new THREE.Quaternion(10, 0, 0, 0) })));
+    [b.neck, b.head].forEach((bone, i) => { if (!bone) return; if (bone.quaternion.equals(hq[i].after)) bone.quaternion.copy(hq[i].base); hq[i].base.copy(bone.quaternion); });
     turnBone(b.neck, UP, a.look * 0.4); turnBone(b.head, UP, a.look * 0.6); turnBone(b.head, _ax, a.lookP + nod);
+    [b.neck, b.head].forEach((bone, i) => { if (bone) hq[i].after.copy(bone.quaternion); });
   }
 
   /* ---------- detail by distance (phones) ---------- */
