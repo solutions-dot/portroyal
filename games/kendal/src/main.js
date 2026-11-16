@@ -546,7 +546,7 @@ const ACTIONS_FOR = {   /* each thing has an id; `need` is the step need it coun
   beach: (P) => {
     const done = () => { P.done = P.done || {}; return P.done; }, fun = (k) => { done()[k] = true; uiSound('goal'); story.beach = story.beach || k; saveGame(); STORY.done('fun'); };
     return [
-      { id: 'sea', need: 'fun', label: 'Splash in the sea', x: P.spots.sea[0], z: P.spots.sea[1], r: 2.6, on: () => STORY.needs('fun') && !done().sea, go: () => { stepSound('water'); setTimeout(() => stepSound('water'), 300); splash(P); toast('Splash! The water is warm.'); fun('splash'); } },
+      { id: 'sea', need: 'fun', label: 'Splash in the sea', x: P.spots.sea[0], z: P.spots.sea[1], r: 2.6, on: () => STORY.needs('fun') && !done().splash, go: () => { stepSound('water'); setTimeout(() => stepSound('water'), 300); splash(P); toast('Splash! The water is warm.'); fun('splash'); } },
       { id: 'castle', need: 'fun', label: 'Build a sandcastle', x: P.spots.castle[0], z: P.spots.castle[1], r: 2.6, on: () => STORY.needs('fun') && !done().castle, go: () => { ctr.cp = (ctr.cp || 0) + 1; const m = P.castle.userData.mound; m.scale.setScalar(0.01 + ctr.cp / 3); uiSound('tap'); toast(ctr.cp < 3 ? 'Pat the sand... ' + ctr.cp + ' of 3' : 'A sandcastle!'); if (ctr.cp >= 3) { done().castle = true; fun('castle'); } } },
       { id: 'band', need: 'fun', label: 'Listen to the band', x: P.spots.band[0], z: P.spots.band[1], r: 3.4, on: () => STORY.needs('fun') && !done().band, go: () => { unlock('mento'); sitting = true; state.yaw = Math.atan2(-(14.2 - state.x), -(3.6 - state.z)); state.pitch = -0.05; toast('A mento band! Banjo, guitar and a rumba box.'); fun('band'); } } ];   /* you sit down on the sand to listen */
   },
