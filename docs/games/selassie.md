@@ -118,10 +118,21 @@ Results from 16 November 2026 (branch `claude/selassie-review`, review of the ow
 - Phone budget (`?test=budget` with a touch screen at 390x800): yard 65 draw calls and 80,000 triangles, 1930 street 64 and 66,000, road 73 and 123,000, airport 197 and 240,000, inside the shared 220-call / 450,000-triangle budget. A desktop window keeps the full airport crowd (about 530 calls).
 - Review images (game renders): [face](selassie-face.jpg), [salute](selassie-salute.jpg), [menu card](../../menu/selassie.jpg).
 
+Results for the new places (branch `claude/selassie-places`, 16 November 2026, phone size 390x800 unless said):
+
+- `?test=audit`: every place 0 (yard, memory, downtown, parade, road, airport, lane), heads 0 over about 570 people.
+- `?test=ambient`: 0 in every place. `?test=held`: 0. `?test=layout`: 0 at 390x800 and 667x375 (UI and every place's routes).
+- `?auto=1`: the story plays through all seven places to the ending (64) with no errors.
+- `?test=all`: journal, links, a11y, keys, chapters, steps, map (7,316 probe points), sound, continuity, errors and heads all 0.
+- `npm test`: 216 pass; content lint 0 findings for this game. `node tools/selassie/test.mjs`: 5 pass.
+- The heads check found a radio listener's head turning 371 degrees a second in the Nod reaction; the new places no longer use Nod.
+- Screenshots of each new place were taken at 844x390 and 390x844 and checked by eye. The shared guide ring shows through the bus at the Parade, as it is drawn through solids by design.
+
 ### Remaining findings for independent review
 
 - The descending-stairs clip does not fit his body (above); his walk down the steps is implied by a cut, not shown.
 - The face is still a stylised likeness; the eyes read narrow under the cap in close-ups. Compare with the photographs before calling it final.
 - The aircraft's exact registration, paint and lion badge on 21 April 1966 are not confirmed (above).
 - Recoloured crowd clothes keep the recipe's light and dark grain, so a few shirts and dresses show a lighter collar or a second tone.
+- Not confirmed and so not shown: official street decorations downtown, the exact bus livery and blind wording in 1966, any real newspaper headline.
 - The earlier walking diagnostics (child and Selassie loops in the shared `Walk`) are unchanged; Selassie does not walk in the cinematic.
