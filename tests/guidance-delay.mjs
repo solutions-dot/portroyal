@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createStory, ARROW_LIMIT_EXPLORE } from '../engine/story.js';
+import { createStory, ARROW_LIMIT, ARROW_LIMIT_EXPLORE } from '../engine/story.js';
 
 const DELAY = 2500;
 const games = ['port-royal','garvey','kendal','bog-walk','nanny','tivoli','melissa','eventide','selassie','windrush'];
 
 test('all ten games use the same 2.5-second objective guidance', () => {
+  assert.equal(ARROW_LIMIT, DELAY);
   assert.equal(ARROW_LIMIT_EXPLORE, DELAY);
   for (const game of games) {
     const code = readFileSync('games/' + game + '/src/main.js','utf8');
