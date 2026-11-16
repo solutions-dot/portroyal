@@ -40,5 +40,10 @@
         }
       ]
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "review/consolidate-outstanding-branches-20261116": false
+    }
+  }
 }

@@ -123,3 +123,58 @@ test('content lint pieces: words, one-sentence goals, em dashes, names, facts an
   const raw = "a /* unlock: 'x' */ b // c\nd 'e // f'", bare = stripComments(raw);
   assert.equal(bare.length, raw.length); assert.ok(!/unlock|\/\/ c/.test(bare)); assert.ok(bare.endsWith("\nd 'e // f'"));
 });
+
+
+test('camera samples use their own place, while actual collisions are still reported', async () => {
+  const { CHECKS } = await import('../engine/checks.js');
+  const check = CHECKS.find(c => c.id === 'camera');
+  const courtyard = { walls: [] }, room = { walls: [[3, 4, 5, 6]] };
+  const ctx = { run: { camera: [
+    { x: 4, y: 1.6, z: 5, what: 'courtyard', at: courtyard },
+    { x: 1, y: 1.6, z: 1, what: 'room', at: room },
+  ] } };
+  const game = { place: () => room };
+  assert.deepEqual(await check.run(game, {}, ctx), [], 'a later room cannot create a false collision in an earlier courtyard');
+  ctx.run.camera.push({ x: 4, y: 1.6, z: 5, what: 'actual wall', at: room });
+  const issues = await check.run(game, {}, ctx);
+  assert.equal(issues.length, 1);
+  assert.match(issues[0], /actual wall/);
+});
+
+
+test('continuity probes restart between chapter and step passes without hiding changes within a pass', async () => {
+  const run = CHECKS.find(c => c.id === 'continuity').run;
+  const tables = { changes: [{ id: 'mama', step: 60, field: 'body' }] };
+  const ctx = { cast: [
+    { samplePass: 'chapters', id: 'mama', step: 10, body: 'young' },
+    { samplePass: 'chapters', id: 'mama', step: 60, body: 'older' },
+    { samplePass: 'steps', id: 'mama', step: 10, body: 'young' },
+    { samplePass: 'steps', id: 'mama', step: 60, body: 'older' },
+  ], items: [], run: { lines: [] } };
+  assert.deepEqual(await run({}, tables, ctx), []);
+  ctx.cast.splice(3, 0, { samplePass: 'steps', id: 'mama', step: 20, body: 'unexpected' });
+  const findings = await run({}, tables, ctx);
+  assert.equal(findings.length, 1);
+  assert.match(findings[0], /step 20/);
+});
+
+
+test('map bounds probe valid floor points and still catch an escape from the reachable start', () => {
+  const bounds = { x0: 0, z0: 0, x1: 10, z1: 10 };
+  const blocked = (x, z) => z > 5;
+  const move = (from, to) => from[1] > 5 ? to : [Math.max(0, Math.min(10, to[0])), Math.max(0, Math.min(5, to[1]))];
+  assert.ok(boundsIssues({ bounds, start: [2, 2], move }).length > 0, 'unreachable border poses are not meaningful walking starts');
+  assert.deepEqual(boundsIssues({ bounds, start: [2, 2], move, blocked }), []);
+  assert.ok(boundsIssues({ bounds, start: [2, 2], move: (a, b) => b, blocked }).length > 0, 'actual escapes remain visible');
+});
+
+test('camera probes retain the rendered place while story state changes chapters between frames', async () => {
+  const drawn = { id: 'old-yard', walls: [] }, loading = { id: 'new-room', walls: [[3, 4, 5, 6]] };
+  const game = {
+    camera: () => ({ x: 4, y: 1.6, z: 5, at: drawn }),
+    place: () => loading,
+    autoplay: async ({ sample }) => { await sample(); return { ok: true }; },
+  };
+  const r = await checkAll(game, {}, { only: ['autoplay', 'camera'] });
+  assert.equal(r.n, 0, 'the still-drawn yard is not judged against the next room');
+});

@@ -466,13 +466,13 @@ const CHAPTERS = [
 ];
 let teacherMode=false;try{teacherMode=localStorage.getItem('garvey-teacher')==='1';}catch{}
 function renderChapters() {
-  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent=teacherMode?'Teacher unlock: on':'Teacher unlock';$('chteachernote').hidden=!teacherMode;
+  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent='Unlock All';$('chteachernote').hidden=!teacherMode;
   const ul = $('chlist'); ul.replaceChildren();
   CHAPTERS.forEach((c, i) => { const open = !!c.ready && (teacherMode || i === 0 || CHAPTERS[i - 1].done() || stage >= 10 * i), dn = c.done ? c.done() : false, li = document.createElement('li'), b = document.createElement('button');
     b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !modelsReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', c.name], ['st', !c.ready ? 'Coming soon' : !modelsReady ? 'Loading' : dn ? 'Done' : 'Play']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
     b.onclick = () => playChapter(c); li.appendChild(b); ul.appendChild(li); });
-  $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = '';
+  $('chreset').textContent = 'Restart'; $('chreset').dataset.armed = '';
 }
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = panelsOpen(); if (state.started) canvas.focus(); }

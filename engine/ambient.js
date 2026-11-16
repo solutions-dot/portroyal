@@ -363,7 +363,7 @@ export function createAmbient(opts = {}) {
   }
   /* ---------- the tick ---------- */
   life.tick = (dt, world = {}) => {
-    const pp = W; W = { px: 1e6, pz: 1e6, ...world }; if (pp.px !== undefined && pp.px < 1e5 && dt > 0) { W.vx = (W.px - pp.px) / dt; W.vz = (W.pz - pp.pz) / dt; } life.t += dt; life.ready(); frame++; lodT -= dt; if (lodT <= 0) { lodT = 0.25; levels(); for (const n of people) moodShow(n); }
+    const pp = W; W = { px: 1e6, pz: 1e6, ...world }; if (!Number.isFinite(W.px)) W.px = 1e6; if (!Number.isFinite(W.pz)) W.pz = 1e6;   /* loading callers may explicitly pass undefined; never turn a body toward NaN */ if (pp.px !== undefined && pp.px < 1e5 && dt > 0) { W.vx = (W.px - pp.px) / dt; W.vz = (W.pz - pp.pz) / dt; } life.t += dt; life.ready(); frame++; lodT -= dt; if (lodT <= 0) { lodT = 0.25; levels(); for (const n of people) moodShow(n); }
     for (const n of people) {
       const a = n.amb; if (a.gone) continue;
       a.t -= dt; a.clipT += dt; if (a.glance && (a.glance.t -= dt) <= 0) a.glance = null;

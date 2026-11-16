@@ -721,7 +721,7 @@ function renderChapters() { const ul = $('chlist'); ul.replaceChildren();
     b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !tavernReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', c.name], ['st', !tavernReady ? 'Loading' : dn ? 'Done' : open ? 'Play' : 'Locked']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
     b.onclick = () => playChapter(c); li.appendChild(b); ul.appendChild(li); });
-  $('chteacher').setAttribute('aria-pressed',String(!!state.ch.all));$('chteacher').textContent=state.ch.all?'Teacher unlock: on':'Teacher unlock';$('chteachernote').hidden=!state.ch.all; $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = ''; }
+  $('chteacher').setAttribute('aria-pressed',String(!!state.ch.all));$('chteacher').textContent='Unlock All';$('chteachernote').hidden=!state.ch.all; $('chreset').textContent = 'Restart'; $('chreset').dataset.armed = ''; }
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = !$('card').hidden; if (state.started) canvas.focus(); }
 function playChapter(c) { navGen++; $('chapters').hidden = true; busy = false; fbReset(); if (!state.started) startGame(); c.go(); }

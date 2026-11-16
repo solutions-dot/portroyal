@@ -171,8 +171,9 @@ export function makeAdapter(A) {
       A.tick(dt);
     },
     camera: () => {
-      const c = A.camera.position;
-      return { x: c.x, y: c.y, z: c.z };
+      const c = A.camera.position, Q = A.camera.userData.checkPlace;
+      if (!Q) return null;
+      return { x: c.x, y: c.y, z: c.z, at: { id: Q.id, walls: Q.walls, bounds: Q.bounds } };
     },
     talks: () => needList(STEPS[S.stage]).filter((n) => n.kind === "talk" && story.needs(n.id)).map((n) => n.id),
     talkTo: async (id) => {

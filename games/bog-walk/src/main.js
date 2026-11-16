@@ -533,12 +533,12 @@ function setStage(s) {
 let teacherMode=false;try{teacherMode=localStorage.getItem('bogwalk-teacher')==='1';}catch{}
 function chapterOpen(i) { return teacherMode || i === 0 || ((i === 1 || i === 2) ? doneCh[0] : doneCh[i - 1]); }   /* Zeke's story (1) is a side path: both it and the Tube (2) open after the station (0) */
 function renderChapters() {
-  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent=teacherMode?'Teacher unlock: on':'Teacher unlock';$('chteachernote').hidden=!teacherMode;
+  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent='Unlock All';$('chteachernote').hidden=!teacherMode;
   const ul = $('chlist'); ul.replaceChildren();
   CHAPTERS.forEach((c, i) => { const open = chapterOpen(i), dn = doneCh[i], li = document.createElement('li'), b = document.createElement('button'); b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !modelsReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', (i + 1) + '. ' + c.name], ['st', !modelsReady ? 'Loading' : dn ? 'Done' : open ? 'Play' : 'Locked']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
     b.onclick = () => { closeChapters(); if (!S.started) startGame(); beginChapter(i); }; li.appendChild(b); ul.appendChild(li); });
-  $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = '';
+  $('chreset').textContent = 'Restart'; $('chreset').dataset.armed = '';
 }
 function openChapters() { closeJournal(); closeCredits(); keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; if (S.started) canvas.focus(); }

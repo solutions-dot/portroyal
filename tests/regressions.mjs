@@ -199,6 +199,7 @@ import './tivoli-journal-parity.mjs';
 test('menu: the first ten games carry no New or Early version badge (docs/PLATFORM.md)', async () => {
   const { readFileSync } = await import('node:fs');
   const page = readFileSync('menu/index.html', 'utf8'), first = ['port-royal', 'nanny', 'bog-walk', 'garvey', 'kendal', 'eventide', 'tivoli', 'selassie', 'windrush', 'melissa'];
-  const cards = [...page.matchAll(/<a class="game ([\w-]+)[^"]*"[^>]*>([\s\S]*?)<\/a>/g)];
-  for (const [, cls, body] of cards) if (first.includes(cls)) assert.ok(!/class="tag"/.test(body) && !/Early version/i.test(body), cls + ' still has a badge');
+  const cards = [...page.matchAll(/<a class="game[^"]*"[^>]*data-game="([\w-]+)"[^>]*>([\s\S]*?)<\/a>/g)];
+  assert.deepEqual(cards.map(([, id]) => id).filter(id => first.includes(id)).sort(), first.slice().sort());
+  for (const [, id, body] of cards) if (first.includes(id)) assert.ok(!/class="tag"/.test(body) && !/Early version/i.test(body), id + ' still has a badge');
 });

@@ -8,7 +8,7 @@ export const CHECK_TABLES = {
   settle: 150,
   cast: { mama: ['mama', 'mama3', 'mama4', 'mama5', 'mama5b', 'mama6'], quamin: ['quamin', 'quamin3'], cubbenah: ['cubbenah', 'cubbenah3', 'cub6'], beneba: ['beneba', 'beneba5', 'beneba6'] },
   /* in 1740 Mama is ten years older (an elder's body), and Beneba is grown (a woman's body and her own clothes) */
-  changes: [{ id: 'mama', chapter: 6, field: 'body' }, { id: 'mama', step: 60, field: 'body' }, { id: 'beneba', chapter: 6, field: 'body' }, { id: 'beneba', step: 60, field: 'body' }, { id: 'beneba', chapter: 6, field: 'colours' }, { id: 'beneba', step: 60, field: 'colours' }],
+  changes: [{ id: 'mama', chapter: 6, field: 'body' }, { id: 'mama', step: 60, field: 'body' }, { id: 'beneba', chapter: 6, field: 'body' }, { id: 'beneba', step: 60, field: 'body' }, { id: 'beneba', chapter: 6, field: 'colours' }, { id: 'beneba', step: 60, field: 'colours' }, { id: 'beneba', chapter: 6, field: 'hat' }, { id: 'beneba', step: 60, field: 'hat' }],
   lights: { estate: ['night'], town: ['morning', 'firenight', 'dawn'], watch: ['haze', 'day'], newtown: ['morning', 'gold'] },
   intense: { 42: 'fight' },   /* the fight starts only after its opt-in card ("Read what happened instead" is the other choice) */
   /* phones draw no shadows, so the budget is measured without them (frame() below). Headless software drawing is many times slower than a phone, so frameMs is loose here; a real phone with ?stats is the judge of time. */

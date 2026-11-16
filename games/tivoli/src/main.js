@@ -1,7 +1,7 @@
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/tivoli/src/main.js: Tivoli (West Kingston, from the 1960s to today, with May 2010 at the centre). Read docs/games/tivoli.md first.
    Started from games/_template/. It is on the menu (the owner's choice, 14 November 2026) while it is still being made.
-   Story: chapter 1 (Back-o-Wall) and chapter 5 (the May 2010 street scene) are playable; see content.js, story.js, ch1.js, fight.js. The walking, looking and touch controls below are the
+   Story: seven walking chapters and chapter 5 (the May 2010 street scene) are playable; see content.js, story.js, ch1.js, fight.js. The walking, looking and touch controls below are the
    template's. Test views are dev only (docs/games/tivoli.md).
    RULE for every game (CLAUDE.md rule 8): before the first PR, wire the automatic audits from engine/audit.js (floating objects, people in solids,
    unreachable spots, held items, overlapping people) and a layout test into the dev build, and fix everything they report.
@@ -20,7 +20,7 @@ import { buildNewTivoli } from './newtivoli.js';
 import { buildStreet, streetPlace } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, after as talkAfter, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage } from './story.js';
-import { WALKS, CH, setupCh1, begin as ch1Begin, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget } from './ch1.js';
+import { WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget } from './ch1.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { lifeTest } from './life.js';   // dev only: ?test=ambient
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
@@ -110,7 +110,7 @@ Promise.all(['anims', 'anims_tivoli'].map((name) => model(name).then((asset) => 
 });
 
 const uiS = (k) => uiSound(k);
-function startChapter(id) { if ([1, 2, 3, 4, 6, 7, 8].includes(id)) ch1Begin(id); else if (id === 5) fightOpen(); }
+function startChapter(id) { if ([1, 2, 3, 4, 6, 7, 8].includes(id)) ch1Begin(id); else if (id === 5) { ch1Leave(); fightOpen(); } }
 $('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
 const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n) };
 setupTalk(talkEnv); setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS }); initStory({ startChapter, uiSound: uiS });

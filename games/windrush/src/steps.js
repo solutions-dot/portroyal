@@ -185,7 +185,7 @@ export const TASKS = {
   packCloth: { place: "yard48", item: "packCloth", start: [4.15, 0.56, 1.95], from: [4.7, 3.1], to: [0, -3.3], at: [0.28, 0.88, -4.5], label: "Pack the folded cloth", put: "Put the cloth in the suitcase" },
   address: { place: "yard48", item: "address", start: [-3.2, 0.835, 3.3], from: [-3.2, 4.7], to: [6.6, 4.6], at: [6.5, 0.835, 3.6], label: "Pick up the address card", put: "Leave the address for Pearl" },
   shipWater: { place: "deck48", item: "cup", start: [-3.3, 0.835, 9], from: [-3.0, 10.2], to: [3.6, -5.0], at: [4.6, 0.52, -5.2], label: "Pick up the water cup", put: "Set the cup by the family" },
-  route: { place: "deck48", item: "route", start: [-3.9, 0.835, 9], from: [-3.9, 10.2], to: [2.3, -10.6], at: [3.8, 0.835, -10.4], label: "Pick up the route card", put: "Lay the card beside the map" },
+  route: { place: "deck48", item: "route", start: [-3.9, 0.835, 9], from: [-3.9, 10.2], to: [3.6, -9.2], at: [3.8, 0.835, -10.4], label: "Pick up the route card", put: "Lay the card beside the map" },
   dockCase: { place: "tilbury48", item: "case", start: [12.8, 0.04, 7.4], from: [12.8, 8.7], to: [-6.6, 12.3], at: [-6.7, 0.04, 11.2], label: "Pick up the suitcase", put: "Set the suitcase by the family" },
   roomCase: { place: "brixton48", item: "case", start: [10.8, 0, 3.0], from: [10.8, 4.2], to: [-14.6, -7.1], at: [-15.2, 0, -7.85], label: "Pick up the suitcase", put: "Set the suitcase by the family table" },
   homeLetter: { place: "brixton62", item: "letter", start: [-5.3, 0.795, -3.45], from: [-5.2, -2.3], to: [-4.6, -2.3], at: [-4.6, 0.81, -3.35], label: "Pick up the letter", put: "Place the letter in the envelope" },

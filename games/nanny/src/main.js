@@ -423,12 +423,12 @@ const id0 = (P) => P.id;
 function chaptersOpen(i) { return i === 0 || best >= DONE[i - 1]; }
 let teacherMode = false; try { teacherMode = localStorage.getItem('nanny-teacher') === '1'; } catch { /* storage may be blocked */ }
 function renderChapters() {
-  $('chteacher').setAttribute('aria-pressed', String(teacherMode)); $('chteacher').textContent = teacherMode ? 'Teacher unlock: on' : 'Teacher unlock'; $('chteachernote').hidden = !teacherMode;
+  $('chteacher').setAttribute('aria-pressed', String(teacherMode)); $('chteacher').textContent ='Unlock All'; $('chteachernote').hidden = !teacherMode;
   const ul = $('chlist'); ul.replaceChildren();
   CHAPTERS.forEach((c, i) => { const open = teacherMode || chaptersOpen(i), dn = best >= DONE[i], li = document.createElement('li'), b = document.createElement('button'); b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !modelsReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', c.name], ['st', !modelsReady ? 'Loading' : dn ? 'Done' : 'Play']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
     b.onclick = () => { $('chapters').hidden = true; busy = false; if (!state.started) startGame(true); beginChapter(i); }; li.appendChild(b); ul.appendChild(li); });
-  $('chreset').textContent = 'Start again'; $('chreset').dataset.armed = '';
+  $('chreset').textContent = 'Restart'; $('chreset').dataset.armed = '';
 }
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = panelsOpen(); if (state.started) canvas.focus(); }
@@ -775,7 +775,7 @@ function frame(t) {
   const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t); const P = P_(), s = t / 1000;
   if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); const f = lerp(DIR.f0, DIR.f1, k); if (Math.abs(f - FOV) > 0.05) { FOV = f; resize(); } }
   else if (!state.started && P && P.titleView) { const tv = P.titleView, time = titleMotion.matches ? 0 : s; camera.position.set(tv.x - Math.sin(time * 0.08) * 1.6, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(time * 0.05) * 0.05, 0, 'YXZ'); }
-  else { const gy = groundAt(state.x, state.z); camY += (gy - camY) * Math.min(1, dt * 14); if (Math.abs(gy - camY) > 1.5) camY = gy; camera.position.set(state.x, camY + EYE - FX.low * 0.55, state.z); camera.rotation.set(state.pitch, state.yaw, FX.roll, 'YXZ'); }
+  else { const gy = groundAt(state.x, state.z); camY += (gy - camY) * Math.min(1, dt * 14); if (Math.abs(gy - camY) > 1.5) camY = gy; camY = Math.max(camY, gy - EYE + FX.low * 0.55 + 0.2); camera.position.set(state.x, camY + EYE - FX.low * 0.55, state.z); camera.rotation.set(state.pitch, state.yaw, FX.roll, 'YXZ'); }
   if (FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.03; }
   const cp = camera.position; sun.target.position.set(cp.x, cp.y - 1.3, cp.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 120);
   sky.dome.position.copy(cp); sky.stars.position.copy(cp); sky.clouds.position.copy(cp); sky.moon.position.set(cp.x - 190, cp.y + 230, cp.z - 380); sunDisc.position.copy(cp).addScaledVector(sunDir, 430);

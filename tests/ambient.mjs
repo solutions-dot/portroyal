@@ -160,3 +160,18 @@ test('a walker who would slide is caught: a walk clip played at the wrong pace',
   const n = life.add(person(2, 10, { id: 'skater' }), { kind: 'errand', from: [2, 10], to: [18, 10] }); const tick = life.tick; life.tick = (dt, w) => { tick(dt, w); if (n.amb.walking) n.ctl.cur.timeScale = 0.4; };
   const r = ambientCheck(life, { seconds: 20 }); assert.ok(r.lines.some((l) => /^slide: skater walks at .* paced for/.test(l)), r.lines.join('\n'));
 });
+
+test('a speaker remains finite while the player position is unavailable, then resumes looking normally', () => {
+  const life = createAmbient({ seed: 17, ground: false });
+  const n = person(0, 0);
+  life.add(n, { kind: 'watch', at: [0, 2] });
+  life.tick(1 / 60, { px: 0, pz: 2, talking: n });
+  for (const point of [{ px: undefined, pz: undefined }, { px: NaN, pz: NaN }, { px: 1, pz: 2 }]) {
+    life.tick(1 / 60, { ...point, talking: n });
+    n.m.updateMatrixWorld(true);
+    for (const part of [n.m, n.m.getObjectByName('mixamorigNeck'), n.m.getObjectByName('mixamorigHead')]) {
+      assert.ok(part.quaternion.toArray().every(Number.isFinite), 'body and head rotations stay finite');
+      assert.ok(part.matrixWorld.elements.every(Number.isFinite), 'the head cannot disappear through a NaN world transform');
+    }
+  }
+});

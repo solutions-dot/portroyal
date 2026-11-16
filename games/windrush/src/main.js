@@ -1244,6 +1244,7 @@ function tick(dt, now = performance.now()) {
   findNear();
   hint(now);
   if (S.started) audioTick(Q, dt);
+  if (__DEV__) camera.userData.checkPlace = Q; // Match camera probes to the scene actually drawn, including chapter transitions.
   renderer.render(scene, camera);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;

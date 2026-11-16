@@ -146,9 +146,9 @@ export function reachIssues({ start, targets, walls = [], bounds, blocked, r = 0
 }
 
 /* push the player out of the map from every edge and in every direction: move(from, to) is the game's own clamp and must keep them inside */
-export function boundsIssues({ move, bounds, start, step = 1, push = 4, tol = 0.05, label = '' }) {
+export function boundsIssues({ move, bounds, start, step = 1, push = 4, tol = 0.05, label = '', blocked = null, r = 0.25 }) {
   const b = normBounds(bounds), out = [], seen = new Set();
-  const test = (from, to) => { const p = move(from, to); if (!p) return; const [x, z] = p; if (x < b.x0 - tol || x > b.x1 + tol || z < b.z0 - tol || z > b.z1 + tol) { const k = Math.round(x) + ',' + Math.round(z); if (!seen.has(k)) { seen.add(k); out.push(`${label}the player leaves the map at (${fix(x)},${fix(z)}) walking from (${fix(from[0])},${fix(from[1])})`); } } };
+  const test = (from, to) => { if (blocked && blocked(from[0], from[1], r)) return; const p = move(from, to); if (!p) return; const [x, z] = p; if (x < b.x0 - tol || x > b.x1 + tol || z < b.z0 - tol || z > b.z1 + tol) { const k = Math.round(x) + ',' + Math.round(z); if (!seen.has(k)) { seen.add(k); out.push(`${label}the player leaves the map at (${fix(x)},${fix(z)}) walking from (${fix(from[0])},${fix(from[1])})`); } } };
   for (let x = b.x0 + 0.3; x <= b.x1 - 0.3; x += step) { test([x, b.z0 + 0.3], [x, b.z0 - push]); test([x, b.z1 - 0.3], [x, b.z1 + push]); }
   for (let z = b.z0 + 0.3; z <= b.z1 - 0.3; z += step) { test([b.x0 + 0.3, z], [b.x0 - push, z]); test([b.x1 - 0.3, z], [b.x1 + push, z]); }
   if (start) for (let a = 0; a < 16; a++) test(start, [start[0] + Math.sin(a * Math.PI / 8) * 500, start[1] + Math.cos(a * Math.PI / 8) * 500]);
@@ -321,12 +321,14 @@ export const CHECKS = [
       try { await g.openChapter(i); } catch (e) { out.push(`chapter ${i + 1} (${list[i].name || list[i]}) does not open: ${e.message}`); continue; }
       await sleep(T.settle ?? 300);
       if (g.step) { const s = await g.step(); ctx.chapterSteps.push(s); if (s === undefined || s === null) out.push(`chapter ${i + 1} opened with no step`); }
-      if (g.people) for (const p of await g.people()) ctx.cast.push({ chapter: i + 1, step: g.step ? await g.step() : undefined, ...p });
+      if (g.people) for (const p of await g.people()) ctx.cast.push({ samplePass: 'chapters', chapter: i + 1, step: g.step ? await g.step() : undefined, ...p });
       if (g.light) ctx.chapterLight.push({ chapter: i + 1, light: await g.light() });
     }
     return out; } },
   { id: 'continuity', needs: ['people'], after: ['chapters', 'steps'], async run(g, T, ctx) {
-    const out = continuityIssues(ctx.cast, { cast: T.cast || {}, changes: T.changes || [] });
+    /* Chapter and step probes each restart the story; a probe rewind is not an in-story costume change. */
+    const passes = new Map(); for (const s of ctx.cast) { const pass = s.samplePass || 'default'; if (!passes.has(pass)) passes.set(pass, []); passes.get(pass).push(s); }
+    const out = [...passes.values()].flatMap(samples => continuityIssues(samples, { cast: T.cast || {}, changes: T.changes || [] }));
     out.push(...ageIssues(T.ages || {}));
     if (ctx.items.length) out.push(...itemIssues(ctx.items, { drops: T.drops || [] }));
     out.push(...lightIssues(ctx.run.lines));
@@ -338,7 +340,7 @@ export const CHECKS = [
       try { await g.goStep(s); } catch (e) { out.push(`step ${s} does not start: ${e.message}`); continue; }
       await sleep(T.settle ?? 200);
       if (g.place && g.targets) { const P = await g.place(), t = await g.targets(); if (P && P.bounds && t.length) out.push(...reachIssues({ start: P.start, targets: t, walls: P.walls || [], bounds: P.bounds, blocked: P.blocked, r: P.r || 0.25, label: `step ${s}: ` })); }
-      if (g.people) for (const p of await g.people()) ctx.cast.push({ step: s, ...p });
+      if (g.people) for (const p of await g.people()) ctx.cast.push({ samplePass: 'steps', step: s, ...p });
       if (g.held) ctx.items.push({ step: s, held: await g.held(), given: (T.given || {})[s] || [] });
       if (g.snapshot && g.save && g.restore) {
         const before = await g.snapshot(), data = await g.save(); await g.restore(data); await sleep(T.settle ?? 200);
@@ -351,7 +353,7 @@ export const CHECKS = [
     for (const id of await g.places()) {
       await g.goPlace(id); await sleep(T.settle ?? 200); const P = await g.place(); if (!P || !P.bounds) { out.push(`${id}: no bounds`); continue; }
       const move = (a, b) => g.move(a, b, P);
-      out.push(...boundsIssues({ move, bounds: P.bounds, start: P.start, label: id + ': ' }));
+      out.push(...boundsIssues({ move, bounds: P.bounds, start: P.start, blocked: P.blocked, r: P.r || 0.25, label: id + ': ' }));
       const s = stuckIssues({ move, start: P.start, walls: P.walls || [], bounds: P.bounds, blocked: P.blocked, r: P.r || 0.25, every: T.probe || 1, label: id + ': ' }); probes += s.probes; out.push(...s.lines.slice(0, 40));
       if (s.lines.length > 40) out.push(`${id}: ${s.lines.length - 40} more stuck spots`);
     }
@@ -383,7 +385,7 @@ export const CHECKS = [
   { id: 'autoplay', needs: ['autoplay'], async run(g, T, ctx) {
     /* one scripted playthrough; while it runs, sample the camera, the clips in view, lines shown, the light and the sound levels every 250 ms */
     const sample = async (what) => {
-      if (g.camera) { const c = await g.camera(); if (c) ctx.run.camera.push({ ...c, what: what || ('step ' + (g.step ? await g.step() : '?')), at: g.place ? await g.place() : null }); }   /* at: the place the spot was taken in, so it is judged against that place's walls */
+      if (g.camera) { const c = await g.camera(); if (c) ctx.run.camera.push({ ...c, what: what || ('step ' + (g.step ? await g.step() : '?')), at: c.at === undefined ? (g.place ? await g.place() : null) : c.at }); }   /* at: the place the spot was taken in, so it is judged against that place's walls */
       if (g.clips) for (const c of await g.clips()) ctx.run.clips.push({ ...c, stage: g.step ? await g.step() : undefined });
       if (g.line && g.light) { const l = await g.line(); if (l && T.tagged && T.tagged[l]) ctx.run.lines.push({ text: l, tag: T.tagged[l], light: await g.light() }); }
       if (g.audio && g.talking) { const AU = g.audio(); if (AU && AU.ch) ctx.run.levels.push({ where: 'step ' + (g.step ? await g.step() : '?'), talking: !!(await g.talking()), levels: Object.fromEntries(Object.entries(AU.ch).map(([k, n]) => [k, n.gain.value])) }); }
@@ -394,7 +396,7 @@ export const CHECKS = [
     const out = []; if (r && r.ok === false) out.push(`the autoplayer did not finish: ${r.why || 'stalled'}`); if (r && r.stalls) for (const s of r.stalls) out.push(`stall: ${s}`);
     return { lines: out, note: ctx.run.camera.length + ' camera spots, ' + ctx.run.clips.length + ' clip samples' }; } },
   { id: 'camera', needs: ['camera'], after: ['autoplay'], async run(g, T, ctx) {
-    if (g.talks) for (const t of await g.talks()) { await g.talkTo(t); await sleep(400); const c = await g.camera(); if (c) ctx.run.camera.push({ ...c, what: 'talk ' + t, at: g.place ? await g.place() : null }); }
+    if (g.talks) for (const t of await g.talks()) { await g.talkTo(t); await sleep(400); const c = await g.camera(); if (c) ctx.run.camera.push({ ...c, what: 'talk ' + t, at: c.at === undefined ? (g.place ? await g.place() : null) : c.at }); }
     const now = g.place ? await g.place() : null, groups = new Map();   /* each spot against the walls of the place it was taken in (not the place the run ends in) */
     for (const c of ctx.run.camera) { const P = c.at === undefined ? now : c.at; if (!groups.has(P)) groups.set(P, []); groups.get(P).push(c); }
     const out = []; for (const [P, cs] of groups) out.push(...cameraIssues(cs, { walls: (P && P.walls) || [], groundAt: (P && P.groundAt) || (() => 0), solid: P && P.solid, wallTop: T.wallTop || 3 })); return out; } },
