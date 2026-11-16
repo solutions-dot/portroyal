@@ -160,7 +160,11 @@ export async function lintGame(game, cfg = config(game)) {
     for (const [t, at] of texts) for (const f of factsIn(t)) if (!ignore.has(f) && !seenF.has(f) && !factFound(f, doc)) { seenF.add(f); add('fact', `"${f}" is not in the facts doc: "${t.slice(0, 80)}"`, at); }
   }
   /* rule 3: a real person's words must be real. Every real speaker is listed for a person to check against the sources */
-  for (const r of cfg.real || []) { const n = G.lines.filter((l) => l.who === r).length; if (n) add('real', `${r} is a real person and speaks ${n} line${n > 1 ? 's' : ''}: check each is sourced (rule 3: never invent quotes for real people)`, game); }
+  /* quotesOnly people may say only sourced words: every line is listed for a person to check. Other real people may say imagined everyday words (owner, 16 Nov 2026), but a journal page must say so */
+  const quotesOnly = new Set(cfg.quotesOnly || []), pageText = G.pages.map((p) => [p.title, ...(p.simple || []), ...(p.deeper || [])].filter((x) => typeof x === 'string').join(' ')).join(' \n ');
+  for (const r of cfg.real || []) { const n = G.lines.filter((l) => l.who === r).length; if (!n) continue;
+    if (quotesOnly.has(r)) add('real', `${r} may only say sourced words and speaks ${n} line${n > 1 ? 's' : ''}: check each is sourced (rule 3)`, game);
+    else if (!new RegExp(r.split(' ').pop() + '[^.]*imagined|imagined[^.]*' + r.split(' ').pop(), 'i').test(pageText)) add('real', `${r} is a real person and speaks ${n} line${n > 1 ? 's' : ''}, but no journal page says their words in the game are imagined (rule 3)`, game); }
   for (const l of journalIssues({ pages: G.pages, unlocks: G.unlocks, refs: G.refs, speakers: G.lines.map((l) => l.who), real: cfg.real || [] })) add('journal', l, game);
   /* sounds the code asks for */
   const all = Object.values(G.srcs).join('\n'), refs = {};

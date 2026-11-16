@@ -6,7 +6,7 @@
 - **Main path in plain words. Detail in "Dig deeper".** Journal pages have `simple` lines for everyone and `deeper` lines for older readers and teachers.
 - **Accurate.** Check every fact against a source before writing it, and note the source in the commit or the game's doc.
   - Fictional people are fine, but their journal page must say so ("Grace in this game is fictional").
-  - Real people only say things they could have said; never invent famous quotes.
+  - Real people only say things they could have said; never invent famous quotes. Imagined everyday words that complete a scene are fine (owner, 16 Nov 2026) when they fit the facts and the person, and the person's journal page says "The words X says in this game are imagined" (and names any real quote). Marcus Garvey says only his real, sourced words; Nanny never speaks; Haile Selassie I and Mortimo Planno have no invented words. In `tools/checks/<game>.json`, `real` lists every real speaker and `quotesOnly` lists those who may only say sourced words.
   - Real objects use their real words (the Port Royal tombstone shows its actual 1739 inscription).
 - **Hard history, told gently.** Slavery is named plainly ("enslaved: forced to work, unpaid, not free to leave"). Violence stays in the background. No one is shown dying.
 - **No em dashes**, anywhere.

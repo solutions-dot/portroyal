@@ -1,6 +1,13 @@
 {
-  "about": "The Emperor's Arrival: fictional family, silent historical public figures. Game-specific runtime hooks are in games/selassie/src/checktables.js.",
-  "real": [],
-  "allowLong": [],
-  "factsIgnore": []
+ "about": "The Emperor's Arrival: fictional family, silent historical public figures. Game-specific runtime hooks are in games/selassie/src/checktables.js.",
+ "real": [
+  "Haile Selassie I",
+  "Mortimo Planno"
+ ],
+ "allowLong": [],
+ "factsIgnore": [],
+ "quotesOnly": [
+  "Haile Selassie I",
+  "Mortimo Planno"
+ ]
 }
