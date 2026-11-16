@@ -1296,6 +1296,68 @@
         max-height: 22vh;
         overflow: auto;
       }
+    
+      /* Shared menu, journal and notification polish for the final two games. */
+      #title .title-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: stretch;
+        gap: clamp(6px, 1.6vw, 12px);
+        width: min(100%, 34rem);
+      }
+      #title .title-actions > :is(button, a) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-width: 0;
+        min-height: 48px;
+        padding: .7em .35em;
+        font-size: clamp(.76rem, 2.8vw, 1rem);
+        white-space: nowrap;
+      }
+      #title .title-actions > .track,
+      #title .title-actions > #loadnote {
+        grid-column: 1 / -1;
+        min-width: 0;
+        width: 100%;
+      }
+      #title .title-actions > .track { margin-top: .3rem; }
+      #journal .book, #chapters .book { min-height: 0; max-height: min(92dvh, 850px); }
+      #journal .book { overflow: hidden; }
+      #journal #jtabs { border-bottom: 1px solid rgba(40,30,20,.2); }
+      #journal .tab.on { box-shadow: inset 0 0 0 1px var(--paper-ink); }
+      #journal #jpage { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+      #journal footer { background: var(--paper); }
+      #chlist .chbtn .nm { min-width: 0; overflow-wrap: anywhere; }
+      #chlist .chbtn:focus-visible, #jtabs .tab:focus-visible {
+        outline: 3px solid var(--brass);
+        outline-offset: 2px;
+      }
+      #jbtn.new { animation: journal-notice-pulse 1.8s ease-in-out infinite; }
+      @keyframes journal-notice-pulse {
+        50% { box-shadow: 0 0 0 3px #f0b23a, 0 0 22px 6px #f0b23a88; }
+      }
+      body:has(:is(#dialogue, #card, #journal, #chapters, #credits):not([hidden]))
+        #toast { visibility: hidden; pointer-events: none; }
+      @media (prefers-reduced-motion: reduce) { #jbtn.new { animation: none; } }
+      @media (max-width: 520px) {
+        #title .title-actions { gap: 6px; }
+        #title .title-actions > :is(button, a) {
+          padding: .65em .2em;
+          font-size: clamp(.73rem, 3.25vw, .92rem);
+        }
+        #journal, #chapters { padding: 8px; }
+        #journal .book, #chapters .book { max-height: calc(100dvh - 16px); }
+        #journal #jtabs { padding: .6rem .7rem; gap: .35rem; }
+        #journal #jpage { padding: .8rem .85rem 1rem; }
+        #journal footer { padding: .65rem .75rem; gap: .5rem; }
+        #journal footer .btn { min-height: 44px; padding: .5em .65em; }
+        #chlist .chbtn { grid-template-columns: 1fr auto; gap: .2rem .6rem; }
+        #chlist .chbtn .yr { grid-column: 1; }
+        #chlist .chbtn .nm { grid-column: 1; }
+        #chlist .chbtn .st { grid-column: 2; grid-row: 1 / span 2; }
+      }
     </style>
     <link rel="stylesheet" href="title.css" />
   </head>
