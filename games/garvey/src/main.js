@@ -393,7 +393,7 @@ function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => by
 let goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) {
   const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer);
-  goalTimer = setTimeout(() => { el.textContent = 'Goal'; el.classList.add('folded'); el.setAttribute('aria-expanded', 'false'); }, 6500);
+  /* Keep the next task visible until the player completes it. */
   if (withControls) showHint();
 }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
