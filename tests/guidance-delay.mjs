@@ -32,9 +32,9 @@ for (const explore of [false,true]) {
 }
 
 test('legacy arrows do not re-trigger while inside the interaction radius', () => {
-  for (const game of ['garvey','bog-walk','nanny','melissa','eventide','tivoli']) {
+  for (const game of ['port-royal','garvey','bog-walk','nanny','melissa','eventide','tivoli']) {
     const source=readFileSync('games/'+game+'/src/main.js','utf8');
-    const start=source.indexOf(game==='tivoli'?'function guideTick(':'function nudgeTick(');
+    const start=source.indexOf(game==='port-royal'?'TICKS.push((dt) => {':game==='tivoli'?'function guideTick(':'function nudgeTick(');
     const end=source.indexOf('\n}',start);
     const tick=source.slice(start,end);
     assert.match(tick,/!NUDGE\.on && quiet && tgt && Math\.hypot\([^)]*\) >= [\d.]+ && now - NUDGE\.since >=/,game+': arrow repeatedly triggers near a target');
