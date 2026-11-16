@@ -8,8 +8,13 @@ import * as THREE from 'three';
    A walker whose ground speed is v must play the clip at v * duration / stride, or the feet slide. pace() below does that. */
 const STRIDES = new WeakMap(), _q = [0, 1, 2, 3].map(() => new THREE.Quaternion()), _qb = new THREE.Quaternion(), _p = new THREE.Vector3(), _m3 = new THREE.Matrix3(), _fw = new THREE.Vector3(), _wq = new THREE.Quaternion();
 function sampleQ(track, t, out) { const tm = track.times, v = track.values; let i = 1; while (i < tm.length - 1 && tm[i] < t) i++; const a = (t - tm[i - 1]) / ((tm[i] - tm[i - 1]) || 1); out.fromArray(v, (i - 1) * 4); _qb.fromArray(v, i * 4); return out.slerp(_qb, Math.max(0, Math.min(1, a))); }
+/* Crouched runs: the method below reads 1.29 m a loop for RunLow, but the feet really cover about 0.91 m (soldier 0.93, police 0.89): ?test=walkers&walk=RunLow:1.2 shows
+   the planted foot sliding under 3 cm a loop only at 1.15 to 1.2 m/s at clip speed 1 (16 November 2026). Both feet stay low in a crouched run, so the "lower foot" swaps
+   back and forth and swing moves were counted. engine/anim.js strideOf has the same method; it is not changed here (engine/ is shared). */
+const MEASURED = { RunLow: 0.91, RunLow2: 0.91, RifleWalk: 1.28 };   /* RifleWalk: the method reads 1.30 m; the feet slide least at 1.16 m/s at clip speed 1 (1.10 s a loop), so 1.28 m */
 export function strideOf(m, clip) {
   let per = STRIDES.get(m); if (!per) STRIDES.set(m, per = {}); const key = clip.name + '|' + m.scale.y.toFixed(3); if (per[key] !== undefined) return per[key];
+  if (MEASURED[clip.name]) return (per[key] = MEASURED[clip.name] * m.scale.y);   /* measured, not worked out (below) */
   const B = (n) => m.getObjectByName('mixamorig' + n), T = (n) => clip.tracks.find((t) => t.name === 'mixamorig' + n + '.quaternion'), hips = B('Hips'), tH = T('Hips'); if (!hips || !tH) return (per[key] = 0);
   m.updateMatrixWorld(true); _m3.setFromMatrix4(hips.parent.matrixWorld); _fw.set(0, 0, 1).applyQuaternion(m.getWorldQuaternion(_wq)).normalize();
   const legs = ['Left', 'Right'].map((s) => ({ b: [B(s + 'UpLeg'), B(s + 'Leg'), B(s + 'Foot')], t: [T(s + 'UpLeg'), T(s + 'Leg')] })); if (legs.some((l) => l.b.some((b) => !b) || l.t.some((t) => !t))) return (per[key] = 0);
