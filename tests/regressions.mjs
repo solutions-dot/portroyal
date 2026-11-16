@@ -165,6 +165,7 @@ import './checks.mjs';
 import './kendal.mjs';
 import './final-two-ui.mjs';
 import './chapter-footer.mjs';
+import './guidance-delay.mjs';
 
 test('a follower keeps out of your personal space, steps aside when you walk back into them, and never stands in a wall', async () => {
   const { follow, tick, watch, drive } = await import('../engine/follow.js');
