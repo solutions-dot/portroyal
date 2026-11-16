@@ -162,6 +162,12 @@ test('the wall rectangles made for the audits cover the ground you may not walk 
 import './story.mjs';
 import './ambient.mjs';
 import './checks.mjs';
+import './kendal.mjs';
+import './final-two-ui.mjs';
+import './chapter-footer.mjs';
+import './guidance-delay.mjs';
+import './guidance-target-priority.mjs';
+import './garvey-goal-progress.mjs';
 
 test('a follower keeps out of your personal space, steps aside when you walk back into them, and never stands in a wall', async () => {
   const { follow, tick, watch, drive } = await import('../engine/follow.js');
@@ -175,9 +181,15 @@ test('a follower keeps out of your personal space, steps aside when you walk bac
 });
 
 test('menu lists every game in Jamaica\'s timeline, oldest first', async () => {
-  const { readFileSync, existsSync } = await import('node:fs');
+  const { readFileSync, existsSync, readdirSync } = await import('node:fs');
   const page = readFileSync('menu/index.html', 'utf8'), html = page.slice(page.indexOf('<section class="games"'), page.indexOf('</section>', page.indexOf('<section class="games"'))), cards = [...html.matchAll(/<a class="game[^"]*"([^>]*)>/g)].map((m) => m[1]);
   assert.ok(cards.length > 0);
   const years = cards.map((a) => { const y = a.match(/data-year="(\d{3,4})"/), g = a.match(/data-game="([a-z0-9-]+)"/); assert.ok(y, 'a game card has no data-year: ' + a); assert.ok(g && existsSync('games/' + g[1]), 'a game card names no game folder: ' + a); return +y[1]; });
   assert.deepEqual(years, [...years].sort((a, b) => a - b), 'menu cards out of order: ' + years.join(', '));
+  const menuGames = cards.map((a) => a.match(/data-game="([a-z0-9-]+)"/)[1]);
+  const playableGames = readdirSync('games').filter((g) => !g.startsWith('_') && existsSync('games/' + g + '/site/index.html')).sort();
+  assert.equal(playableGames.length, 10, 'expected all ten history games to be present');
+  assert.deepEqual([...menuGames].sort(), playableGames, 'every playable game must have exactly one main menu card');
 });
+
+import './chapter-guidance.mjs';

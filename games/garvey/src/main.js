@@ -389,15 +389,21 @@ const TALK_TARGETS = { 70: ['guide', 'student'], 72: ['student'], 60: ['amyj'], 
 const NEXT_AFTER_TALK = { 70: 71, 72: 73, 60: 61, 62: 63, 50: 51, 51: 52, 53: 54, 40: 41, 42: 43, 43: 44, 30: 31, 32: 33, 33: 34, 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
 const wantsTalk = (n) => !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
 function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); if (!QUICK && s in CHAPTER_END) setTimeout(() => nextCard(CHAPTER_END[s], s), 900); }
-function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); }
+function onTalked() { const t = TALK_TARGETS[stage]; if (!t) return; if (t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); else setGoal(); }
 let goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) {
   const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer);
-  goalTimer = setTimeout(() => { el.textContent = 'Goal'; el.classList.add('folded'); el.setAttribute('aria-expanded', 'false'); }, 6500);
+  /* Keep the next task visible until the player completes it. */
   if (withControls) showHint();
 }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
-function setGoal() { goalText = GOALS[stage]; showGoal(true); }
+function setGoal() {
+  const required = TALK_TARGETS[stage] || [];
+  const done = required.filter((id) => byId(id)?.talked).length;
+  // Show concrete progress on multi-person steps, including when resuming a saved chapter.
+  goalText = (GOALS[stage] || '') + (required.length > 1 ? ' (' + done + ' of ' + required.length + ')' : '');
+  showGoal(true);
+}
 $('goal').onclick = () => showGoal(true);
 function showSound() { const b = $('snd'); b.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); b.setAttribute('aria-label', AU.on ? 'Sound on. Tap to turn off.' : 'Sound off. Tap to turn on.'); $('sndon').style.display = AU.on ? '' : 'none'; $('sndoff').style.display = AU.on ? 'none' : ''; }
 $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
@@ -546,18 +552,25 @@ function bubbleTick(now) {
 /* ---------- the helper arrow (as in Port Royal): stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }; let GUIDE = null;
 function nudgeTarget() {   /* where the next thing to do is, as [x, z] */
-  const a = ACTIONS.find((x) => x.on()); if (a) return [a.x, a.z];
-  let best = null, bd = 1e9; for (const n of PEOPLE) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; best = [n.x, n.z]; } } return best;
+  // TALK_TARGETS is the explicit list of required people for this stage.
+  // Only fall back to an available action when no required conversation remains.
+  let best = null, bd = 1e9;
+  for (const n of PEOPLE) if (n.m && n.m.visible && wantsTalk(n)) {
+    const d = Math.hypot(state.x - n.x, state.z - n.z);
+    if (d < bd) { bd = d; best = [n.x, n.z]; }
+  }
+  if (best) return best;
+  const a = ACTIONS.find((x) => x.on()); return a ? [a.x, a.z] : null;
 }
 function nudgeTick(now) {
   const el = $('nudge'); if (!el) return;
   const quiet = state.started && !busy && $('dialogue').hidden && $('card').hidden && goalText && !fading;
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
-  if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30000); NUDGE.still = now; }   /* time spent reading does not count */
+  if (!quiet) { NUDGE.since = now; NUDGE.on = false; } /* Never display guidance over a panel or dialogue. */
   const tgt = quiet ? nudgeTarget() : null;
-  if (!NUDGE.on && quiet && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
-  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }   /* there: the Talk bubble or button takes over */
+  if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
+  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) NUDGE.on = false; /* Hide while the player is close enough to interact. */   /* there: the Talk bubble or button takes over */
   el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: EYE });
   if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
   GUIDE.point(now, { x: tgt[0], z: tgt[1] });   /* a gold arrow on the ground points the way, a gold ring marks the place */

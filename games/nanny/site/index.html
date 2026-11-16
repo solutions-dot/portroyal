@@ -205,6 +205,17 @@ body:has(#hornwrap:not([hidden])) :is(#talk,#hint,#toast,#nudge,#sub){visibility
   #title:not(.live-scene)::before { animation:none; transform:none; }
 }
 
+
+/* Keep the three chapter actions together on phone-sized screens. */
+#chapters .chfoot, #chapters .book > footer:has(#chteacher) {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:clamp(5px,1.4vw,12px); align-items:stretch;
+}
+#chapters footer:has(#chteacher) > .btn {
+  min-width:0; width:100%; margin:0; padding:.65em .25em;
+  font-size:clamp(.7rem,2.8vw,.95rem); line-height:1.2;
+  white-space:nowrap; text-align:center;
+}
 </style>
 <link rel="stylesheet" href="title.css">
 </head>
@@ -290,7 +301,7 @@ body:has(#hornwrap:not([hidden])) :is(#talk,#hint,#toast,#nudge,#sub){visibility
     <p class="chnote">Each chapter opens when you finish the one before it.</p>
     <p id="chteachernote" class="chnote" hidden>All chapters are open for teaching.</p>
     <ol id="chlist" class="chlist"></ol>
-    <footer class="chfoot"><button id="chteacher" class="btn ghost" aria-pressed="false">Teacher unlock</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
+    <footer class="chfoot"><button id="chteacher" class="btn ghost" aria-pressed="false">Unlock All</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Restart</button></footer>
   </div>
 </section>
 <pre id="autolog" hidden></pre>

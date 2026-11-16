@@ -55,6 +55,33 @@
   #jpdeeper p,#jpsimple p{max-width:36rem}details#jdig{max-width:36rem;margin:.4rem 0}details#jdig summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700;color:var(--brass)}
   #toast{position:fixed;left:50%;bottom:8%;transform:translateX(-50%);background:rgba(16,34,43,.95);border-left:4px solid var(--brass);padding:.7rem 1rem;border-radius:6px;z-index:25;max-width:90vw}
   #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:15}
+
+/* Tivoli: chapter, journal, notice and mobile control parity. */
+#title .title-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:38rem}
+#title .title-actions>.btn{min-width:0;padding:.7rem .25rem;font-size:clamp(.75rem,2.9vw,1rem);white-space:nowrap}
+#title .title-actions>#jbtn{grid-column:1/-1;justify-self:start}
+#title .title-actions>.track{grid-column:1/-1;width:100%}
+#chapters,#journal{justify-content:flex-start;padding:clamp(12px,4vw,28px);gap:.6rem}
+#chapters .panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+#chapters #chlist,#journal #jlist,#journal #jpage{overflow-y:auto;min-height:0;flex:1;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#chapters .chfoot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;flex-shrink:0}
+#chapters .chfoot .btn{min-width:0;width:100%;padding:.7rem .1rem;font-size:clamp(.73rem,2.9vw,.95rem);white-space:nowrap}
+#chapters .chrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem;max-width:none}
+#chapters .chrow .btn{font-size:.88rem;padding:.5rem .7rem}
+#journal>.row:last-child{flex-shrink:0}
+#jnew{color:var(--brass);font-size:1rem}
+#jhud.notice{box-shadow:0 0 0 2px var(--brass),0 0 15px rgba(217,164,65,.4)}
+#toast{pointer-events:none}
+body:has(.card:not([hidden])) #toast,body:has(#dialogue:not([hidden])) #toast{visibility:hidden}
+#dpad{position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:12px;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,52px);gap:5px;touch-action:none}
+#dpad button{border:2px solid var(--brass);border-radius:12px;background:rgba(16,34,43,.82);color:var(--paper);font:700 1.25rem var(--body);touch-action:none}
+#dpad [data-key=arrowup]{grid-column:2;grid-row:1}
+#dpad [data-key=arrowleft]{grid-column:1;grid-row:2}
+#dpad [data-key=arrowdown]{grid-column:2;grid-row:2}
+#dpad [data-key=arrowright]{grid-column:3;grid-row:2}
+@media (pointer:fine){#dpad{display:none}}
+@media(max-width:560px){#goal{max-width:calc(100% - 130px);font-size:.84rem}#sound,#jhud{right:8px;font-size:.8rem;padding:.5rem}#jhud{top:70px}#talk{bottom:15px;right:12px}#chapters .chrow{font-size:.88rem}#chapters .chrow b{font-size:1rem}}
+@media(prefers-reduced-motion:reduce){#jhud.notice{animation:none}}
 </style>
 <link rel="stylesheet" href="title.css">
 </head>
@@ -73,9 +100,10 @@
   <p id="loadnote">Loading people.</p>
 </section>
 <div id="hud" hidden>
+  <div id="dpad" aria-label="Movement controls"><button type="button" data-key="arrowup" aria-label="Move forward">▲</button><button type="button" data-key="arrowleft" aria-label="Turn left">◀</button><button type="button" data-key="arrowdown" aria-label="Move backward">▼</button><button type="button" data-key="arrowright" aria-label="Turn right">▶</button></div>
   <p id="goal"></p>
   <button id="sound" class="btn ghost">Sound on</button>
-  <button id="jhud" class="btn ghost">Journal</button>
+  <button id="jhud" class="btn ghost">Journal <span id="jnew" hidden aria-label="New journal pages">●</span></button>
   <button id="talk" class="btn" hidden>Talk</button>
   <div id="dialogue" role="dialog" aria-labelledby="who" hidden>
     <button id="dclose" aria-label="Stop talking">&times;</button>
@@ -84,7 +112,8 @@
     <button id="next" class="btn">Next</button>
   </div>
 </div>
-<div id="chapters" class="card" hidden><h2>Chapters</h2><div id="chlist"></div><div class="row"><button id="chclose" class="btn ghost">Close</button></div></div>
+<div id="chapters" class="card" hidden><div class="panel-head"><h2>Chapters</h2><button id="chclose" class="btn ghost">Close</button></div><div id="chlist"></div><div class="row chfoot"><button id="chteacher" class="btn ghost">Unlock All</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Restart</button></div></div>
+<div id="credits" class="card" hidden><h2>Credits</h2><p>Tivoli Gardens · PastPort Jamaica</p><button id="creditsclose" class="btn ghost">Back to Chapters</button></div>
 <div id="journal" class="card" hidden>
   <h2>Journal</h2><p id="jcount"></p>
   <div id="jlist"></div>

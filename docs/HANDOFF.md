@@ -1,5 +1,26 @@
 # Handoff: where the work stands (15 November 2026)
 
+## Update: 16 November 2026, integration PR #101
+
+This section updates the original 15 November handoff without rewriting its historical test claims.
+
+- **Released:** PR #100 was squash-merged to `main`: Tivoli journal Main Menu link, Nanny mobile title background, Bog Walk mobile title actions and menu card borders.
+- **In draft PR #101, not released:** Kendal beach activity and saved-progress fixes; Windrush and Selassie chapter/journal/notification layout; chapter footer labels and single-row layout across all **ten** games; Tivoli chapter controls, journal notifications and touch D-pad.
+- **New regression coverage:** `tests/chapter-footer.mjs` checks ten-game chapter footer parity; `tests/final-two-ui.mjs` covers Windrush/Selassie; `tests/kendal.mjs` covers Kendal; `tests/tivoli-browser.mjs` adds mobile-sized interaction checks.
+- **Browser verification still open:** GitHub's regular PR workflow runs `npm test` but skips the general browser job. The focused Tivoli browser workflow was added, but results and screenshots must be reviewed before marking the D-pad, journal and 320/390px layout verified.
+- **Unified delay follow-up (16 November):** all ten games now target 2.5 seconds for ordinary and exploration hint arrows; shared engine defaults updated and `tests/guidance-delay.mjs` added to `npm test`. Browser validation is pending.
+- **Targeting checkpoint (16 November):** Garvey now prioritizes stage-required conversations, joining Bog Walk, Nanny, Melissa and Eventide. Added `tests/guidance-target-priority.mjs` to `npm test`. Stage-by-stage gameplay verification remains outstanding.
+- **Garvey progress (16 November):** multi-person story goals now show live `(n of total)` progress, updated after each required conversation and on saved-stage load. Regression added; browser replay pending.
+- **Guidance behavior tests:** shared story engine now has test cases for unfinished required targets, optional-action exclusion, immediate retargeting and ordered objectives. Per-game stage maps and browser gameplay still need validation.
+- **Near-target stability:** seven legacy game guides now avoid reactivating the hint every frame when already within interaction range; added source regression. Browser validation remains pending.
+- **Guidance timing audit:** fixed a test that incorrectly expected millisecond timing in Bog Walk, which uses seconds. Both shared story arrow constants now read 2500 ms. Tests not yet executed in a verified runner.
+- **Chapter audit expansion:** added `tests/chapter-guidance.mjs` to the regression suite. It checks all declared shared-engine stages (Kendal, Selassie, Windrush) and the goal/required-talk tables of Nanny, Melissa, Eventide and Bog Walk. Port Royal, Garvey and Tivoli need dynamic chapter coverage; no confirmed browser/mobile runs yet.
+- **Ten-game structural audit:** extended `tests/chapter-guidance.mjs` to Garvey, Tivoli and Port Royal. This covers source declarations in all ten games but is not yet a complete physical walkthrough, especially for Port Royal's dynamic chapters and Tivoli's special chapter. Tests have not been confirmed passing.
+- **Owner guidance standard (16 November):** Bog Walk is the reference for all ten games. Seven games now keep the current task visible instead of folding it after 6.5 seconds; Tivoli now uses the 2.5-second world-arrow delay. Still open: target selection based on unfinished required tasks, text-safe arrow placement across games, Windrush/Selassie parity and per-chapter browser checks. See `docs/plans/flow_audit.md`.
+- **Story guidance checkpoint (16 November):** 2.5-second movement-independent hints added to Port Royal, Garvey, Bog Walk, Nanny, Eventide and Melissa; Bog Walk prioritizes required conversations over optional actions. Browser replay is still needed, and the deeper stage-needs migration, Tivoli arrow, Kendal review and remaining flow issues are not complete. Details in `docs/plans/flow_audit.md`.
+- **Remaining backlog:** the full per-game screenshot/autoplayer checks, animation and clothing inspection, the story-flow hint-arrow timing and target rules in `docs/plans/flow_audit.md`, and `?test=all` integration. The Tivoli flow audit explicitly notes that it lacks a hint arrow; no change to that behaviour is claimed in PR #101.
+- **Release discipline:** continue related fixes in PR #101. Do not describe draft changes as live until merged and deployed.
+
 Read this first if you are picking up the big people, animation and gameplay standardisation work. Then read `CLAUDE.md`, `docs/STANDARD.md` and the plans in `docs/plans/`.
 
 ## How the work is organised
