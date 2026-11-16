@@ -1,13 +1,15 @@
 /* Development-only checks use the real scene and gameplay handlers. */
 import { checkAll, CHECKS } from "../../../engine/checks.js";
 import { headCheck } from "./headcheck.js";
+import { actionCheck } from "./actioncheck.js";
 import { checkFlow, needList } from "../../../engine/story.js";
 import { routeIssues, walkRoute } from "../../../engine/placement.js";
 import { ambientCheck } from "../../../engine/ambient.js";
 import { exteriorTrim, outsideTrimRelation } from "./trim-audit.js";
 import { makeAdapter, CHECK_TABLES } from "./checktables.js";
 import { CHAPTERS, TALK, FLAVOUR } from "./content.js";
-import { STEPS } from "./steps.js";
+import { STEPS, PLACE_STAGES } from "./steps.js";
+import { BUILDERS } from "./places.js";
 import {
   auditPlace,
   auditHeld,
@@ -48,6 +50,17 @@ export async function dev(A) {
           return { lines: r.lines, note: r.stats.join("; ") };
         },
       });
+    // and no standing zombies: varied actions, nobody in step with their neighbours, nobody frozen in the plain Idle
+    if (!CHECKS.some((c) => c.id === "actions"))
+      CHECKS.push({
+        id: "actions",
+        needs: [],
+        run: async () => {
+          closeAll();
+          const r = await actionCheck(A, { seconds: 8 });
+          return { lines: r.lines, note: r.stats.join("; ") };
+        },
+      });
     await checkAll(A.checkAdapter, CHECK_TABLES);
     return;
   }
@@ -60,13 +73,28 @@ export async function dev(A) {
     A.begin();
     const shot = q.get("shot");
     await go(
-      ["poster", "emperor", "terminal", "face", "salute"].includes(shot)
-        ? 55
-        : shot === "memory"
-          ? 15
-          : 20,
+      q.has("st")
+        ? Number(q.get("st"))
+        : ["poster", "emperor", "terminal", "face", "salute", "plane"].includes(shot)
+          ? 55
+          : shot === "memory"
+            ? 15
+            : 20,
     );
     closeAll();
+    if (shot === "at") {
+      // a place as the player sees it: ?shot=at&st=20&x=0&z=10&yaw=0&pitch=0 (&hud keeps the interface; &t= seconds of life first)
+      const n = (k, d) => (q.has(k) ? Number(q.get(k)) : d);
+      Object.assign(S, { x: n("x", S.x), z: n("z", S.z), yaw: n("yaw", S.yaw), pitch: n("pitch", 0) });
+      if (q.has("eye")) S.view = { pos: [S.x, n("eye", 1.28), S.z], look: [S.x - Math.sin(S.yaw) * 10, n("eye", 1.28) - 10 * Math.tan(-S.pitch), S.z - Math.cos(S.yaw) * 10] };
+      const Q = world(),
+        T = n("t", 3);
+      for (let i = 0; i < T * 30; i++)
+        for (const L of [Q.life, Q.familyLife]) L.tick(1 / 30, { px: S.x, pz: S.z, story: [], view: { x: S.x, z: S.z, yaw: S.yaw } });
+      if (!q.has("hud")) $("hud").hidden = true;
+      window.__SHOT = true;
+      return;
+    }
     if (shot === "locs") {
       // locs and tams close up: the five recipes facing us, then from behind (&back) or the side (&side), standing or mid-stride (&walk)
       world().group.visible = false;
@@ -100,11 +128,34 @@ export async function dev(A) {
         A.scene.add(m);
       }
       S.view = { pos: [0, 2, 11.8], look: [0, 0.9, 0] };
+    } else if (shot === "likeness") {
+      // Haile Selassie's head alone under even light, to set beside a photograph at the same angle and scale:
+      // &ang=0 front, 35 three-quarter, 90 profile (degrees, turned to his left); &cap=0 hides the cap; &tier=_focus or "" (full)
+      for (const o of A.scene.children) if (o !== A.camera && !o.isLight) o.visible = false;
+      A.scene.background = A.bg || (A.bg = new (A.scene.fog?.color.constructor)(0x9a9890));
+      A.scene.fog = null;
+      const base = "sel_emperor66" + (q.get("tier") ?? "_focus");
+      await A.loadBase(base);
+      const { m, ctl } = A.body({ base, x: 0, z: 0, sex: "m", ry: 0, hat: q.get("cap") !== "0" });
+      ctl.mx.update(0);
+      if (q.get("cap") === "0") m.traverse((o) => o.isMesh && /Cap|Hat|Brim|Peak|Insignia|Regalia/.test(o.material.name) && (o.visible = false));
+      A.scene.add(m);
+      m.updateMatrixWorld(true);
+      const head = m.getObjectByName("mixamorigHead").getWorldPosition(m.position.clone());
+      const a = (Number(q.get("ang") || 0) * Math.PI) / 180,
+        d = Number(q.get("dist") || 2.6),
+        cy = head.y + Number(q.get("dy") || 0.06);
+      A.camera.fov = Number(q.get("fov") || 9);
+      A.camera.updateProjectionMatrix();
+      A.camera.fov0 = A.camera.fov;
+      S.view = { pos: [head.x + Math.sin(a) * d, cy, head.z + Math.cos(a) * d], look: [head.x, cy, head.z] };
+      for (const o of A.scene.children) if (o.isDirectionalLight) o.position.set(Math.sin(a) * 20 + 6, 22, Math.cos(a) * 20);
+      A.likeness = { m, ctl, head };
     } else if (shot === "terminal")
       S.view = { pos: [25, 6, 12], look: [-4, 4, 34] };
     else if (shot === "adina")
       S.view = { pos: [-3, 1.45, 2.6], look: [-3, 1.35, 0] };
-    if (["emperor", "poster", "face", "salute"].includes(shot)) {
+    if (["emperor", "poster", "face", "salute", "plane"].includes(shot)) {
       // the arrival as the cinematic shows it at the salute: aircraft at the stand, steps at the door, the welcome around them
       A.DIR.start();
       A.DIR.fast = false;
@@ -130,7 +181,20 @@ export async function dev(A) {
         S.view = { pos: [head.x + 0.9, head.y - 0.35, head.z + 2.3], look: [head.x, head.y - 0.45, head.z] };
       else if (shot === "emperor")
         S.view = { pos: [head.x + 2.2, head.y - 0.9, head.z + 4.4], look: [head.x - 0.4, head.y - 0.7, head.z] };
-      else S.view = { pos: [9.9, 2.45, -19.4], look: [1.9, 3.75, -29.4] };
+      else if (shot === "plane") {
+        // the DC-6 at the stand, from its own frame: &view=side (port, from the crowd), rear (behind the tail), tail (close on the
+        // fin and tailplane, port side), rear3q (rear three-quarter from the port side, high), top (the tailplane from above)
+        const p = world().props.plane,
+          L = (x, y, z) => p.localToWorld(head.clone().set(x, y, z)).toArray();
+        const V = {
+          side: [[-1, 4.2, -44], [-1, 4.4, 0]],
+          rear: [[-46, 5.2, 0], [-10, 4.8, 0]],
+          tail: [[-13.4, 6.2, -15], [-13.8, 6.0, 0]],
+          rear3q: [[-36, 11, -20], [-11, 4.5, 0]],
+          top: [[-22, 22, -8], [-13, 4, 0]],
+        }[q.get("view") || "side"];
+        S.view = { pos: L(...V[0]), look: L(...V[1]) };
+      } else S.view = { pos: [9.9, 2.45, -19.4], look: [1.9, 3.75, -29.4] };
     }
     $("hud").hidden = true;
     window.__SHOT = true;
@@ -138,7 +202,7 @@ export async function dev(A) {
   }
   if (!q.has("test") && !q.has("auto")) return;
   A.begin();
-  for (const id of ["yard", "memory", "road", "airport"]) await ensure(id);
+  for (const id of Object.keys(BUILDERS)) await ensure(id);
   await go(10);
   closeAll();
   const results = [];
@@ -212,7 +276,7 @@ export async function dev(A) {
     }
   }
   if (q.get("test") === "budget") {
-    for (const stage of [20, 15, 30, 55]) {
+    for (const stage of Object.values({ ...PLACE_STAGES, airport: 55 })) {
       await go(stage);
       closeAll();
       const Q = world();
@@ -227,6 +291,13 @@ export async function dev(A) {
         "BUDGET " + Q.id + " " + JSON.stringify(A.renderer.info.render),
       );
     }
+  }
+  if (q.get("test") === "actions" || q.get("test") === "audit") {
+    closeAll();
+    const r = await actionCheck(A, { seconds: q.get("test") === "actions" ? 14 : 8 });
+    results.push(`ACTIONS ${r.lines.length}`, ...r.lines, ...r.stats);
+    await go(10);
+    closeAll();
   }
   if (q.get("test") === "heads" || q.get("test") === "audit") {
     closeAll();

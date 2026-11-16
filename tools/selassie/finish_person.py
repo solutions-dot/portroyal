@@ -156,6 +156,12 @@ for o in mesh_objects:
     if o.name in ('Skirt','Breeches','Apron','JacketSkirt','CoatSkirt'):
         proxy=o.copy();proxy.data=o.data.copy();proxy.name=o.name+'Measure';proxy['measureOnly']=True;bpy.context.scene.collection.objects.link(proxy)
 crowdmat=colmat('Crowd');COL['Crowd']=Vector((1,1,1))
+# The eyes have no painted colours. Joined to painted meshes, they would take a black, fully transparent 'Col' (alpha 0), and the game
+# draws the eye material see-through: every joined body looked out of empty, pale sockets. Give them white, opaque colours first.
+for o in mesh_objects:
+    if o.data.color_attributes.get('Col') is None:
+        ca=o.data.color_attributes.new('Col','FLOAT_COLOR','CORNER')
+        for c in ca.data:c.color=(1,1,1,1)
 for o in mesh_objects:
     colours=o.data.color_attributes.get('Col')
     if colours:

@@ -1,0 +1,97 @@
+{
+  "name": "wr_kman48",
+  "era": 1948,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 1,
+    "caucasian": 0,
+    "asian": 0,
+    "gender": 1,
+    "age": 0.48,
+    "weight": 0.5,
+    "height": 0.52
+  },
+  "garments": {
+    "shoes": true,
+    "trousers": true,
+    "hairvol": 0.25,
+    "hat": [
+      [
+        "straw",
+        "Hat"
+      ]
+    ],
+    "sleeve": 0.55,
+    "collar": "camp",
+    "legwidth": 1.05
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      25,
+      21,
+      18
+    ],
+    "Skin": [
+      146,
+      99,
+      72
+    ],
+    "Shirt": [
+      205,
+      196,
+      170
+    ],
+    "Collar": [
+      205,
+      196,
+      170
+    ],
+    "Breeches": [
+      96,
+      84,
+      66
+    ],
+    "Hat": [
+      206,
+      184,
+      132
+    ],
+    "HatBand": [
+      70,
+      52,
+      36
+    ]
+  },
+  "targets": {
+    "head-oval": 0.35,
+    "nose-width2-decr": 0.2,
+    "lr-cheek-bones-incr": 0.3
+  },
+  "crowd": true
+}

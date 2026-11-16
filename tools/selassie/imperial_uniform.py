@@ -46,6 +46,23 @@ if cap:
         v.co.x*=.93;v.co.y=hy+(v.co.y-hy)*.95;v.co.z=floor+(v.co.z-floor)*ratio
 if band:
     for v in band.data.vertices:v.co.x*=.93;v.co.y=hy+(v.co.y-hy)*.95
+# In the photographs the peak sits just above the eyebrows. The cap goes down onto the brow (CAP_DROP), opened out just enough
+# to stay clear of the wider brow below, and the hair under it is kept inside it (the cloth check tests hair through the cap).
+CAP_DROP=.012
+if cap:
+    floor=min(v.co.z for v in cap.data.vertices);roof=max(v.co.z for v in cap.data.vertices)
+    for o in (cap,band):
+        if not o:continue
+        for v in o.data.vertices:
+            # the bottom comes down, the crown's top stays where it was (the skull must stay inside it)
+            k=1-max(0.,min(1.,(v.co.z-floor)/(roof-floor)))
+            v.co.z-=CAP_DROP*k;v.co.x*=1+.035*k;v.co.y=hy+(v.co.y-hy)*(1+.03*k)
+    # the 1963 and 1967 profiles show the crown standing up high at the front, over the badge, and lower at the back
+    ry=max(abs(v.co.y-hy) for v in cap.data.vertices)
+    for v in cap.data.vertices:
+        up=max(0.,min(1.,(v.co.z-floor)/(roof-floor)-.45)/.55)
+        fwd=max(0.,-(v.co.y-hy)/ry)
+        v.co.z+=.024*up*fwd**1.5
 # Raised golden cap crest and a black polished peak beneath its red band.
 band=bpy.data.objects.get('CapBand')
 if band:

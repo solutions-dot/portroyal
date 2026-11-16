@@ -77,9 +77,40 @@ function stall() {
   }
   return g;
 }
+/* What each background person does (owner's note, November 2026: "ensure persons have varied actions and no standing zombies").
+   Nobody stands in the plain Idle: every standing clip below moves (weight shifts, a look round, a turn of the head, wiping the brow
+   in the heat, an old man's stoop), the shared ambient system starts each one at its own moment and speed, and the reactions fit the
+   day (waving, a slow wave, clapping, cheering, pointing at the aircraft). Listeners in a chat nod and agree. Elders move like elders,
+   children like children, and the ceremonial police stand at ease and only turn their heads. */
+export const IDLES = {
+  man: ["IdleM", "LookAround", "HeadTurn", "WipeSweat", "HappyIdle"],
+  woman: ["HappyIdle", "LookAround", "HeadTurn", "WipeSweat"],
+  elder: ["OldIdle", "HeadTurn", "IdleM"],
+  kid: ["HappyIdle", "LookAround"],
+  police: ["IdleM", "HeadTurn"],
+};
+export const LISTEN = ["Agree", "Nod", "HappyIdle", "IdleM"];
+export const WELCOME = ["Wave", "WaveSlow", "Clap", "Cheer", "Point"];
+export function kindOf(n) {
+  if (n.police || /police/.test(n.base || "")) return "police";
+  if ((n.scale || 1) < 0.88 || /girl|boy/.test(n.base || "")) return "kid";
+  if (/elder|adina/.test(n.base || "")) return "elder";
+  return n.sex === "f" ? "woman" : "man";
+}
+/* fill in a behaviour's clips for this person (a spec's own lists are kept) */
+export function actions(n, spec, { welcome = false } = {}) {
+  const k = kindOf(n),
+    out = { walk: "Walk", ...spec };
+  if (!out.idles) out.idles = out.kind === "chat" ? (k === "kid" ? IDLES.kid : LISTEN) : IDLES[k];
+  if (k === "police") out.react = [];
+  else if (welcome) out.react = [...new Set([...(out.react || []), ...(k === "elder" ? ["WaveSlow", "Clap", "Agree"] : k === "kid" ? ["Cheer", "Clap", "Wave"] : WELCOME)])];
+  else if (out.react) out.react = [...new Set([...out.react, k === "elder" ? "Nod" : "Clap"])];
+  return out;
+}
 const chat = (id, group, x, z, look, extra = {}) => ({ id, x, z, look, behaviour: { kind: "chat", group }, ...extra });
 const watcher = (id, x, z, look, at, extra = {}) => ({ id, x, z, look, behaviour: { kind: "watch", at, react: ["Wave", "Point", "Clap"], every: [3, 6] }, ...extra });
-const play = (id, x, z, look, area) => ({ id, x, z, look, behaviour: { kind: "wander", area, min: 0.8, pause: [0.5, 1.5] } });
+// children at play: a real child's body (not whatever the crowd hash gives), running between spots, stopping to cheer or clap, chasing a friend
+const play = (id, x, z, look, area, girl, chaseId) => ({ id, x, z, look, base: girl ? "sel_girl66" : "sel_boy66", sex: girl ? "f" : "m", scale: 0.8 * (0.92 + (look % 5) * 0.03), behaviour: { kind: "play", area, chaseId, min: 0.8, pause: [0.5, 1.5] } });
 
 export function enrichYard(Q) {
   put(Q, washingLine(6), 6, 12.5, 0, 6.2, 0.3);
@@ -106,8 +137,8 @@ export function enrichYard(Q) {
     watcher("yardA2", 12.3, -1.5, 23, [0, 0]),
     chat("yardB0", "yardB", -6.4, 13.4, 24),
     chat("yardB1", "yardB", -5.6, 14.1, 25),
-    play("yardK0", 2.6, 6.2, 26, [1.6, 5.2, 7.4, 7.6]),
-    play("yardK1", 6.8, 6.6, 39, [1.6, 5.2, 7.4, 7.6]),
+    play("yardK0", 2.6, 6.2, 26, [1.6, 5.2, 7.4, 7.6], true, "yardK1"),
+    play("yardK1", 6.8, 6.6, 39, [1.6, 5.2, 7.4, 7.6], false, "yardK0"),
     watcher("yardW0", -15.0, 12.0, 27, [0, 0]),
     chat("yardC0", "yardC", -2.2, -10.6, 28),
     chat("yardC1", "yardC", -1.3, -11.2, 29),
@@ -148,6 +179,8 @@ export function enrichRoad(Q) {
     watcher("roadW0", 3.9, -15.2, 54, [2, -28]),
     watcher("roadW1", 3.6, -20.6, 55, [2, -28]),
     watcher("roadW2", 3.9, 15.0, 56, [0, 12]),
-    play("roadK0", -3.6, 0.5, 57, [-4.6, -2.5, -2.6, 3.5]),
+    play("roadK0", -3.6, 0.5, 57, [-4.6, -2.5, -2.6, 3.5], false),
+    // the fruit seller beside her stall, calling to the people going by and pointing at her fruit
+    { id: "roadSeller", x: 4.3, z: 14.1, look: 58, base: "sel_crowdwoman66", sex: "f", behaviour: { kind: "work", clips: ["Talk1", "Point", "Wave", "Talk3"], work: [3, 6], rest: [1, 2.5], face: -Math.PI / 2 } },
   );
 }

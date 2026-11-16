@@ -59,6 +59,10 @@ The standard order is Start (or Continue when a saved game is available), Chapte
 
 `shared/title.css` owns the shared control styles and is copied to each game's `site/title.css` by `tools/build.mjs`. The template uses it too. Keep every opening screen usable on narrow phones and short landscape screens.
 
+## The New badge
+
+The first ten games (Port Royal, Nanny Town, Bog Walk, Marcus Garvey, Kendal, Eventide, Tivoli, The Emperor's Arrival, Windrush and Hurricane Melissa) carry no badge: no "New" and no "Early version" (owner, 16 Nov 2026). Only a game added after them gets `<p class="tag">New</p>` on its menu card, and only for its first season. The test "menu: the first ten games carry no New or Early version badge" in `tests/regressions.mjs` keeps it that way.
+
 ## The intro
 
 Files: `menu/intro.js`, `menu/intro.css`, the `#intro` markup and a few lines in the head of `menu/index.html`.

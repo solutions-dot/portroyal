@@ -18,20 +18,21 @@
     "sleeve": 0.9,
     "shoes": true,
     "collar": "round",
-    "hairvol": 0.25,
+    "hairvol": 0.3,
     "hat": [],
     "woman": true,
-    "bun": true,
+    "bun": false,
     "skirt": true,
     "hem": 0.66,
     "flare": 1.85,
-    "pleats": 9
+    "pleats": 9,
+    "hair": "afro"
   },
   "colors": {
     "Skin": [
-      151,
-      104,
-      76
+      156,
+      108,
+      80
     ],
     "Hair": [
       25,
@@ -80,8 +81,9 @@
     ]
   },
   "targets": {
-    "head-oval": 0.3,
-    "chin-width-decr": 0.2,
-    "nose-width2-incr": 0.15
+    "head-oval": 0.45,
+    "nose-scale-vert-decr": 0.2,
+    "forehead-nubian-incr": 0.3,
+    "mouth-upperlip-volume-incr": 0.2
   }
 }

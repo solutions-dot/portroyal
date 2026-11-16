@@ -1,0 +1,110 @@
+{
+  "name": "wr_tman48a",
+  "era": 1948,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 1,
+    "caucasian": 0,
+    "asian": 0,
+    "gender": 1,
+    "age": 0.36,
+    "weight": 0.46,
+    "height": 0.57
+  },
+  "garments": {
+    "shoes": true,
+    "trousers": true,
+    "hairvol": 0.25,
+    "hat": [
+      [
+        "trilby",
+        "Hat"
+      ]
+    ],
+    "sleeve": 0.95,
+    "jacket": true,
+    "jacketsleeve": 0.92,
+    "collar": "turn",
+    "tie": true,
+    "legwidth": 1.2
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      25,
+      21,
+      18
+    ],
+    "Skin": [
+      152,
+      104,
+      77
+    ],
+    "Shirt": [
+      236,
+      232,
+      220
+    ],
+    "Collar": [
+      236,
+      232,
+      220
+    ],
+    "Jacket": [
+      118,
+      92,
+      64
+    ],
+    "Breeches": [
+      118,
+      92,
+      64
+    ],
+    "Tie": [
+      140,
+      52,
+      44
+    ],
+    "Hat": [
+      92,
+      76,
+      58
+    ],
+    "HatBand": [
+      40,
+      32,
+      26
+    ]
+  },
+  "targets": {
+    "head-oval": 0.45,
+    "nose-flaring-incr": 0.2,
+    "head-scale-horiz-decr": 0.15
+  },
+  "crowd": true
+}

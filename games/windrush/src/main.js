@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";
 import { model, onLoadFail } from "../../../engine/loader.js";
 import { animate, loadClips, groundFeet } from "../../../engine/anim.js";
-import { spreadArms, gripTick } from "../../../engine/grip.js";
+import { spreadArms, gripTick, grip } from "../../../engine/grip.js";
 import { createAmbient } from "../../../engine/ambient.js";
 import {
   lead,
@@ -26,11 +26,19 @@ import {
   stepSound,
   uiSound,
   cue,
+  setG,
+  gullCry,
+  chirp,
+  shipCreak,
 } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
 import { makeSky, G, cv } from "./gfx.js";
 import { buildPlace, mergePlace, PLACE_IDS } from "./places.js";
-import { CAST, extraLook } from "./cast.js";
+import { CAST, CROWD } from "./cast.js";
+import { hold, suitcase, marketBasket } from "./period-props.js";
+import { rideShip } from "./sea.js";
+import { SHIP } from "./ship.js";
+import { shoppingBag, headBasket } from "./scenery.js";
 import { STEPS, TASKS, ITEMS, TASK_IDS } from "./steps.js";
 import {
   CHAPTERS,
@@ -49,6 +57,15 @@ import {
   journal,
   chapters,
   closeAll,
+  toast,
+  showCount,
+  newPage,
+  goalSetup,
+  setGoal,
+  nudgeGoal,
+  startHint,
+  hintTick,
+  createMarks,
 } from "./ui.js";
 import { createDirector } from "./director.js";
 import * as P from "./props.js";
@@ -81,6 +98,13 @@ const hemi = new THREE.HemisphereLight(0xfff1d4, 0x819183, 2.5),
   sun = new THREE.DirectionalLight(0xffe2b6, 2.1);
 sun.position.set(-20, 42, 20);
 scene.add(hemi, sun);
+/* the gold talk marks over the step's story people, and the talk button with a name over the nearest person (ui.js) */
+const MARKS = createMarks({
+  scene,
+  camera,
+  canvas: $("stage"),
+  onTap: (n) => talk(n),
+});
 const env = cv(256, 128, (x, W, H) => {
   const g = x.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, "#83a9bd");
@@ -132,7 +156,6 @@ let current = null,
   near = null,
   epoch = 0,
   ready = false,
-  noticeTimer,
   skipIntro = false,
   last = performance.now(),
   saveT = 0,
@@ -184,6 +207,12 @@ function body(spec) {
   ctl.mx.update(0);
   spreadArms(m, spec.sex === "f" ? 0.16 : 0.08);
   groundFeet(m);
+  if (spec.held) holdThing(m, spec.held);
+  const hips = m.getObjectByName("mixamorigHips");
+  if (hips) {
+    m.updateMatrixWorld(true);
+    m.userData.hip0 = hips.getWorldPosition(new THREE.Vector3()).y - m.position.y;
+  }
   m.traverse((o) => {
     if (o.isSkinnedMesh) {
       o.computeBoundingSphere();
@@ -191,6 +220,28 @@ function body(spec) {
     }
   });
   return { m, ctl };
+}
+/* something a person holds: a suitcase or a shopping bag in the right hand (engine/grip.js), a basket on the head */
+function holdThing(m, kind) {
+  m.updateMatrixWorld(true);
+  let obj, label;
+  if (kind === "headload") {
+    obj = headBasket();
+    hold(m, "Head", obj, { dy: 0.13 });
+    label = "basket on the head";
+    m.userData.held = [{ obj, bone: "Head", label, head: true }];
+    return;
+  }
+  if (kind === "case") {
+    obj = suitcase([0x6b4a30, 0x3e4a56, 0x7a5a3a][(m.id || 0) % 3]);
+    grip(m, "Right", obj, { handleY: 0.5, scale: 0.8, lift: 0.38, straighten: 0.85 });
+    label = "suitcase";
+  } else {
+    obj = shoppingBag();
+    grip(m, "Right", obj, { handleY: obj.userData.handleY, scale: 1, lift: 0.3, straighten: 0.8 });
+    label = "shopping bag";
+  }
+  m.userData.held = [{ obj, bone: "RightHand", label }];
 }
 function ensure(id) {
   return worlds[id]
@@ -204,7 +255,7 @@ function ensure(id) {
         }));
 }
 async function buildWorld(id) {
-  const Q = buildPlace(id);
+  const Q = buildPlace(id, { phone, reduced });
   Q.group.name = id;
   Q.group.visible = false;
   scene.add(Q.group);
@@ -215,26 +266,27 @@ async function buildWorld(id) {
   const specs = Q.specs.map((s) => ({
     ...CAST[s.cast],
     ...s,
-    bodyId: CAST[s.cast].base + "_focus",
+    bodyId: CAST[s.cast].base + (s.raw ? "" : "_focus"),
   }));
-  const extras = Q.ambient
-    .filter((s, i) => !phone || i % 2 === 0)
-    .map((s, i) => ({
-      ...extraLook(i, Q.era),
-      ...s,
-      base: extraLook(i, Q.era).base + (phone ? "_phone" : "_crowd"),
-    }));
+  const extras = Q.ambient.map((s) => ({
+    ...CROWD[s.look],
+    ...s,
+    base: s.look + (s.raw ? "" : phone ? "_phone" : "_crowd"),
+  }));
   await Promise.all(
     [...new Set([...specs, ...extras].map((n) => n.bodyId || n.base))].map(
       loadBase,
     ),
   );
+  const keepOff = Q.keepOff;
   Q.life = createAmbient({
     walls: Q.walls,
     bounds: Q.bounds,
+    blocked: (x, z, r) => blocked(Q, x, z, r),
+    keepOff,
     phone,
     seed: id.length * 91,
-    mood: "calm",
+    mood: "lively",
   });
   Q.familyLife = createAmbient({
     walls: Q.walls,
@@ -243,63 +295,54 @@ async function buildWorld(id) {
     seed: id.length * 137,
     mood: "calm",
   });
+  if (Q.props.ship && Q.ambient.some((s) => s.zone === "ship"))
+    Q.shipLife = createAmbient({
+      walls: [],
+      bounds: { x0: -45, z0: -9.4, x1: 45, z1: 9.4 },
+      phone,
+      seed: 1948,
+      mood: "lively",
+    });
   for (const s of specs) {
     const n = { ...s, ...body(s) };
     Q.group.add(n.m);
     Q.people.push(n);
-    const mark = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map: markTexture(), depthTest: false }),
+    MARKS.add(n);
+    n.home = { x: s.x, z: s.z, ry: s.ry || 0 };
+    Q.familyLife.add(
+      n,
+      s.life || {
+        kind: "watch",
+        idles: [s.idle || "Idle"],
+        at: [n.x + Math.sin(s.ry || 0) * 4, n.z + Math.cos(s.ry || 0) * 4],
+        react: ["Nod", "HeadTurn"],
+        every: [4, 8],
+      },
     );
-    const bounds = new THREE.Box3().setFromObject(n.m);
-    mark.position.y = (bounds.max.y - n.m.position.y) / (s.scale || 1) + 0.18;
-    mark.scale.set(0.26, 0.26, 1);
-    n.m.add(mark);
-    n.mark = mark;
-    Q.familyLife.add(n, {
-      kind: "watch",
-      idles: [s.idle || "Idle"],
-      at: [n.x + 1, n.z + 4],
-      react: ["Nod", "HeadTurn"],
-      every: [4, 8],
-    });
   }
   for (const s of extras) {
-    if (
-      blocked(Q, s.x, s.z, 0.3) ||
-      Q.people.some((n) => Math.hypot(n.x - s.x, n.z - s.z) < 1.25)
-    )
-      continue;
     const n = { ...s, ...body(s) };
+    if (s.zone === "ship") {
+      Q.props.ship.add(n.m);
+      n.m.position.set(n.x, 0, n.z);
+      Q.shipExtras = Q.shipExtras || [];
+      Q.shipExtras.push(n);
+      Q.shipLife.add(n, { walk: "Walk", idles: [n.idle || "Idle"], ...s.behaviour });
+      continue;
+    }
     Q.group.add(n.m);
     Q.extras.push(n);
-    Q.life.add(n, { walk: "Walk", idles: [n.idle || "Idle"], ...s.behaviour });
+    Q.life.add(n, { walk: n.sex === "m" ? "WalkM" : "Walk", idles: [n.idle || "Idle"], ...s.behaviour });
   }
+  for (const n of [...Q.extras, ...(Q.shipExtras || [])])
+    if (typeof n.amb?.spec?.chase === "string")
+      n.amb.spec.chase = Q.extras.find((o) => o.id === n.amb.spec.chase);
+  if (Q.shipLife) Q.shipLife.ready();
   Q.life.ready();
   Q.familyLife.ready();
   worlds[id] = Q;
   addShadows(Q);
   return Q;
-}
-let markTex;
-function markTexture() {
-  return (
-    markTex ||
-    (markTex = cv(64, 64, (x) => {
-      x.fillStyle = "#e8b84a";
-      x.beginPath();
-      x.arc(32, 27, 23, 0, 7);
-      x.fill();
-      x.beginPath();
-      x.moveTo(18, 40);
-      x.lineTo(16, 59);
-      x.lineTo(39, 43);
-      x.fill();
-      x.fillStyle = "#173c43";
-      x.font = "bold 34px sans-serif";
-      x.textAlign = "center";
-      x.fillText("!", 32, 40);
-    }))
-  );
 }
 function addShadows(Q) {
   const people = [...Q.people, ...Q.extras],
@@ -337,8 +380,10 @@ function where(id, kind) {
   const task = TASKS[id];
   if (task) {
     if (S.hand) return S.hand === task.item ? task.to : null;
-    const item = Q.items[task.item];
-    return item ? [item.position.x, item.position.z + 1.5] : task.from;
+    const item = Q.items[task.item],
+      st = Q.itemStarts[task.item];
+    if (!item || (st && item.parent === Q.group && item.position.distanceTo(new THREE.Vector3(...st.at)) < 0.05)) return task.from;
+    return [item.position.x, item.position.z + 1.5];
   }
   if (id === "frontGate" && S.stage === 75) {
     const elder = Q.people.find((n) => n.id === "iris");
@@ -355,7 +400,8 @@ const story = createStory({
   route: (to, from) =>
     walkRoute(from, to, world().walls, 0.24, world().bounds)[0] || to,
   advance: (next) => advance(next),
-  onGoal: (t) => ($("goal").textContent = t),
+  onGoal: (t) => setGoal(t),
+  onArrow: () => nudgeGoal(), /* when the arrow first shows in a step, the goal pops open */
   flavour: FLAVOUR,
   names: PEOPLE,
   items: Object.fromEntries(ITEMS.map((id) => [id, true])),
@@ -365,10 +411,9 @@ function unlock(id) {
   if (!id || S.journal.includes(id)) return;
   S.journal.push(id);
   S.newPages++;
-  $("jcount").hidden = false;
-  $("jcount").textContent = S.newPages;
-  $("jbtn").classList.add("new");
+  showCount(S.newPages);
   uiSound("page");
+  newPage(id);
   save();
 }
 function save() {
@@ -391,11 +436,7 @@ function save() {
   }
 }
 function notice(text) {
-  if (openPanel()) return;
-  clearTimeout(noticeTimer);
-  $("toast").textContent = text;
-  $("toast").hidden = false;
-  noticeTimer = setTimeout(() => ($("toast").hidden = true), 3200);
+  toast(text, 3200);
 }
 function bundle(Q) {
   const envelope = Q.items.envelope;
@@ -439,10 +480,12 @@ function resetSceneTasks() {
     }
     for (const n of Q.people) {
       stopFollow(n);
-      Q.familyLife.hold(n, false);
-      n.x = Q.specs.find((s) => s.id === n.id).x;
-      n.z = Q.specs.find((s) => s.id === n.id).z;
+      n.x = n.home.x;
+      n.z = n.home.z;
       n.m.position.set(n.x, 0, n.z);
+      n.m.rotation.y = n.home.ry;
+      if (n.life?.seat) n.m.userData.seatAnchor = { ...n.life.seat };
+      Q.familyLife.hold(n, false);
     }
   }
 }
@@ -456,15 +499,15 @@ function chapterState(first) {
 }
 function light(Q) {
   const english = Q.weather === "england",
-    sea = Q.weather === "sea";
-  sky.setSky(english ? 0x8dabb9 : 0x71a7bf, english ? 0xd8d9cd : 0xe4d1a7);
-  scene.fog = new THREE.Fog(
-    english ? 0xc7cfc9 : 0xc7d7d1,
-    100,
-    english ? 360 : 550,
-  );
-  sun.intensity = english ? 1.5 : 2.1;
-  hemi.intensity = english ? 2.7 : 2.5;
+    sea = Q.weather === "sea",
+    late = Q.tod === "afternoon";
+  sky.setSky(english ? 0x8dabb9 : late ? 0x7a9fb8 : 0x71a7bf, english ? 0xd8d9cd : late ? 0xf0c890 : 0xe4d1a7);
+  scene.fog = new THREE.Fog(english ? 0xc7cfc9 : late ? 0xe0d2b4 : 0xc7d7d1, 100, english ? 360 : 550);
+  sun.intensity = english ? 1.5 : late ? 1.9 : 2.1;
+  sun.color.set(late ? 0xffc890 : 0xffe2b6);
+  sun.position.set(late ? -40 : -20, late ? 18 : 42, late ? 8 : 20);
+  hemi.intensity = english ? 2.95 : late ? 2.3 : 2.5;
+  hemi.color.set(late ? 0xffe2c0 : 0xfff1d4);
 }
 async function go(stage, { restore = null, keep = false } = {}) {
   const generation = ++epoch;
@@ -543,12 +586,13 @@ async function go(stage, { restore = null, keep = false } = {}) {
     "aria-label",
     $("place").textContent + ". Use movement controls to explore.",
   );
-  $("jcount").hidden = !S.newPages;
-  $("jcount").textContent = S.newPages;
-  $("jbtn").classList.toggle("new", !!S.newPages);
+  showCount(S.newPages);
   if (stage === 75) {
     const n = Q.people.find((n) => n.id === "iris");
     Q.familyLife.hold(n, true);
+    delete n.m.userData.seatAnchor;
+    n.m.position.y = 0;
+    n.ctl.play("OldIdle");
     lead(n, Q.leadPath, {
       walk: 0.85,
       run: false,
@@ -579,15 +623,31 @@ async function advance(next) {
   if (chapterOf(next) !== chapterOf(S.stage)) {
     S.best = Math.max(S.best, chapterOf(next));
     save();
-    card(
-      CHAPTERS[chapterOf(S.stage)].name,
-      ["This chapter is in your journal."],
-      [
-        ["Continue", () => go(next)],
-        ["Chapters", showChapters],
-      ],
-    );
+    nextPending = next;
+    nextCard();
   } else await go(next, { keep: true });
+}
+/* a finished chapter: offer the next one on screen, as every game does. "Stay here" lets you look round; tapping the goal brings the card back */
+let nextPending = null;
+function nextCard() {
+  const next = nextPending,
+    i = chapterOf(S.stage),
+    nx = CHAPTERS[chapterOf(next)];
+  uiSound("goal");
+  card(
+    "Chapter " + (i + 1) + " is finished!",
+    ["Well done. Next is " + nx.name + " (" + nx.year + ")."],
+    [
+      [
+        "Next chapter",
+        () => {
+          nextPending = null;
+          go(next);
+        },
+      ],
+      ["Stay here", () => setGoal("Well done! Tap here for the next chapter.")],
+    ],
+  );
 }
 function filmRead(key) {
   DIR.stop();
@@ -604,6 +664,7 @@ function filmRead(key) {
 }
 const DIR = createDirector({
   camera,
+  world: () => world(),
   fast: QUICK,
   reduced,
   finish: (key) => {
@@ -657,6 +718,7 @@ async function waits(st) {
           advance(row.next);
         },
       ]),
+      { col: true },
     );
   else if (kind === "train")
     card(
@@ -732,6 +794,7 @@ async function waits(st) {
           go(85);
         },
       ]),
+      { col: true },
     );
   else if (kind === "end") {
     card(CARDS.end.title, CARDS.end.lines, [
@@ -754,11 +817,13 @@ function talk(n) {
   S.pitch = Math.atan2(0.15, Math.hypot(S.x - n.x, S.z - n.z));
   world().familyLife.hold(n, true);
   n.ctl.play(
-    n.id === "iris" && current.endsWith("18")
-      ? "Talk2"
-      : n.sex === "m"
-        ? "TalkM2"
-        : "Talk1",
+    n.m.userData.seatAnchor
+      ? "SitTalk"
+      : n.id === "iris" && current.endsWith("18")
+        ? "Talk2"
+        : n.sex === "m"
+          ? ["TalkM2", "TalkM1"][S.stage % 2]
+          : ["Talk1", "Talk3", "Talk2"][S.stage % 3],
   );
   dialogue(
     n.who,
@@ -772,7 +837,8 @@ function talk(n) {
     },
     () => {
       world().familyLife.hold(n, !!n.fol);
-      n.ctl.rest();
+      if (n.m.userData.seatAnchor) n.ctl.play("SitIdle");
+      else n.ctl.rest();
       talking = null;
     },
   );
@@ -817,26 +883,29 @@ function interact(n) {
 function showJournal() {
   journal(S.journal, S.memory || S.firstMemory, () => {
     S.newPages = 0;
-    $("jcount").hidden = true;
-    $("jbtn").classList.remove("new");
+    showCount(0);
     save();
   });
 }
 function begin() {
+  if (!S.started) startHint(phone); /* the controls tip, for a few seconds at the start of play */
   S.started = true;
   $("title").hidden = true;
   $("hud").hidden = false;
 }
+function playChapter(c) {
+  begin();
+  nextPending = null;
+  chapterState(c.first);
+  go(c.first);
+}
 function showChapters() {
-  chapters(
-    S.best,
-    S.teacher,
-    (c) => {
-      begin();
-      chapterState(c.first);
-      go(c.first);
-    },
-    () => {
+  chapters({
+    best: S.best,
+    done: (i) => i < S.best || (i === CHAPTERS.length - 1 && S.stage === 85),
+    teacher: S.teacher,
+    choose: playChapter,
+    toggle: () => {
       S.teacher = !S.teacher;
       try {
         localStorage.setItem("windrush-teacher", S.teacher ? "on" : "off");
@@ -844,22 +913,45 @@ function showChapters() {
       save();
       showChapters();
     },
-    resetPrompt,
-  );
+    erase: eraseAll,
+  });
 }
+function eraseAll() {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {}
+  S.started = false; /* nothing more is saved before the page reloads */
+  location.reload();
+}
+/* the reset button: start this chapter again, or the whole story (as in every game) */
 function resetPrompt() {
+  if (DIR.on) return;
+  const c = CHAPTERS[chapterOf(S.stage)];
   card(
-    "Start again?",
-    ["This clears only this game’s saved journey."],
+    "Reset",
+    ["Start this chapter again, or start the whole story again."],
     [
+      ["Restart \u201c" + c.name + "\u201d", () => playChapter(c)],
       [
-        "Start again",
+        "Start the whole story again",
+        () =>
+          card(
+            "Start again?",
+            ["This wipes everything, even your journal."],
+            [
+              ["Yes, start again", eraseAll],
+              ["No, keep playing", () => {}],
+            ],
+          ),
+      ],
+      ["Cancel", () => {}],
+      [
+        "Main Menu",
         () => {
-          localStorage.removeItem(KEY);
-          location.reload();
+          save();
+          location.href = "../../../menu/";
         },
       ],
-      ["Keep playing", () => {}],
     ],
   );
 }
@@ -867,13 +959,14 @@ $("jbtn").onclick = showJournal;
 $("jchap").onclick = showChapters;
 $("tchap").onclick = showChapters;
 $("reset").onclick = resetPrompt;
-$("goal").onclick = () => {
-  $("goal").classList.toggle("folded");
-  $("goal").setAttribute(
-    "aria-expanded",
-    !$("goal").classList.contains("folded"),
-  );
-};
+goalSetup({
+  started: () => S.started,
+  tap: () => {
+    if (nextPending === null || openPanel()) return false;
+    nextCard();
+    return true;
+  },
+});
 function soundButton() {
   $("snd").setAttribute("aria-pressed", AU.on);
   $("snd").setAttribute(
@@ -913,7 +1006,7 @@ releaseOnBlur(keys, [stick, look]);
 const canvas = $("stage");
 canvas.addEventListener("pointerdown", (e) => {
   if (!S.started || openPanel() || DIR.on) return;
-  if (e.pointerType === "touch" && e.clientX < innerWidth * 0.45) {
+  if (e.pointerType === "touch" && e.clientX < innerWidth / 2 && stick.id === null) {
     stick.id = e.pointerId;
     stick.x = e.clientX;
     stick.y = e.clientY;
@@ -929,8 +1022,8 @@ canvas.addEventListener("pointerdown", (e) => {
 });
 canvas.addEventListener("pointermove", (e) => {
   if (e.pointerId === stick.id) {
-    stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x) / 45));
-    stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y) / 45));
+    stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x) / 50));
+    stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y) / 50));
   } else if (e.pointerId === look.id) {
     const dx = e.clientX - look.x,
       dy = e.clientY - look.y;
@@ -947,7 +1040,14 @@ function endPointer(e) {
     stick.dx = stick.dy = 0;
   }
   if (e.pointerId === look.id) {
-    if (look.moved < 8 && near) interact();
+    if (look.moved < 8) {
+      /* a tap on a person talks to them */
+      const n =
+        S.started && !busy && !openPanel() && !DIR.on
+          ? MARKS.tap(e.clientX, e.clientY, world().people, S.x, S.z)
+          : null;
+      if (n) talk(n);
+    }
     look.id = null;
   }
 }
@@ -969,7 +1069,7 @@ function move(dt) {
     rt /= length;
   }
   if (length > 0.04) {
-    const speed = 2.6,
+    const speed = keys.has("shift") ? 3.6 : 2.6,
       p = slideWalls(
         [S.x, S.z],
         [
@@ -1060,20 +1160,29 @@ function hint(now) {
   if (h.show && quiet)
     GUIDE.point(now, { x: h.x, z: h.z, tx: h.target[0], tz: h.target[1], final: h.final });
   else GUIDE.hide(now);
-  $("talk").hidden = !near || !quiet;
-  if (near) $("talk").textContent = near.label;
-  $("hint").textContent = quiet
-    ? phone
-      ? "Drag left to walk. Drag right to look."
-      : "WASD to walk · Drag to look · E to interact"
-    : "";
-  $("stick").hidden = !phone || !quiet;
+  /* the Talk button is for things to do; a person you can talk to gets the gold talk button over their head */
+  hintTick(quiet);
+  const act = quiet && near?.kind === "do";
+  $("talk").hidden = !act;
+  if (act) $("talk").textContent = near.label;
+  MARKS.tick(now / 1000, {
+    people: world().people,
+    show: quiet,
+    marked: (n) => !!story.marked(n.id),
+    near: quiet && near?.kind === "talk" ? near.n : null,
+    px: S.x,
+    pz: S.z,
+  });
+  /* the joystick: faint at rest, under the left thumb when it moves */
+  const el = $("stick");
+  el.hidden = !phone || !quiet;
   if (phone && quiet) {
-    $("stick").style.left = (stick.id === null ? 72 : stick.x) + "px";
-    $("stick").style.top =
-      (stick.id === null ? innerHeight - 150 : stick.y) + "px";
+    const rest = stick.id === null;
+    el.classList.toggle("rest", rest);
+    el.style.left = (rest ? 84 : stick.x) + "px";
+    el.style.top = (rest ? innerHeight - 150 : stick.y) + "px";
     $("nub").style.transform =
-      `translate(calc(-50% + ${stick.dx * 26}px),calc(-50% + ${stick.dy * 26}px))`;
+      `translate(calc(-50% + ${stick.dx * 30}px), calc(-50% + ${stick.dy * 30}px))`;
   }
 }
 function tick(dt, now = performance.now()) {
@@ -1088,6 +1197,18 @@ function tick(dt, now = performance.now()) {
     story: Q.people.filter((n) => story.marked(n.id)),
     view: { x: camera.position.x, z: camera.position.z, yaw: S.yaw },
   };
+  const t = now / 1000;
+  if (!frozen) {
+    for (const f of Q.tickers) f(t, dt);
+    if (Q.sea) Q.sea.tick(t);
+    const ship = Q.props.ship;
+    if (ship && !Q.deckShip && !(DIR.on && DIR.moves(Q))) rideShip(ship, Q.sea ? Q.sea.level : -2.1, reduced ? 0 : t);
+    if (Q.props.wake && Q.id === "deck48") Q.props.wake.userData.tick(t, 1);
+  }
+  if (Q.shipLife) {
+    for (const n of Q.shipExtras) n.m.userData.ground = Q.props.ship.position.y + n.deckY;
+    Q.shipLife.tick(frozen ? 0 : dt, { px: 1e4, pz: 1e4, story: [], view: W.view });
+  }
   Q.life.tick(frozen ? 0 : dt, W);
   Q.familyLife.tick(frozen ? 0 : dt, { ...W, story: [] });
   for (const n of Q.people) {
@@ -1101,7 +1222,6 @@ function tick(dt, now = performance.now()) {
         others: Q.people,
         talking,
       });
-    n.mark.visible = !!story.marked(n.id) && S.started && !DIR.on;
   }
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
@@ -1109,23 +1229,50 @@ function tick(dt, now = performance.now()) {
     camera.position.set(...S.view.pos);
     camera.lookAt(...S.view.look);
   } else if (!S.started) {
-    const t = reduced ? 0 : now * 0.00012;
-    camera.position.set(2 + Math.sin(t) * 1.3, 2.3, 12);
-    camera.lookAt(-1, 1, -2);
+    const k = reduced ? 0 : now * 0.00004;
+    camera.position.set(22 + Math.sin(k) * 4, 3.0 + Math.sin(k * 1.7) * 0.4, 21 + Math.cos(k) * 1.5);
+    camera.lookAt(-10, 7.5, -13);
   } else {
     const adult =
       CHAPTERS[chapterOf(S.stage)].age > 16 &&
       !(S.stage >= 64 && S.stage <= 68);
-    camera.position.set(S.x, adult ? 1.55 : 1.28, S.z);
-    camera.rotation.set(S.pitch, S.yaw, 0, "YXZ");
+    const sea = Q.id === "deck48" && !reduced,
+      tt = now / 1000;
+    camera.position.set(S.x, (adult ? 1.55 : 1.28) + (sea ? Math.sin(tt * 0.7) * 0.05 : 0), S.z);
+    camera.rotation.set(S.pitch + (sea ? Math.sin(tt * 0.52) * 0.006 : 0), S.yaw, sea ? Math.sin(tt * 0.41) * 0.018 : 0, "YXZ");
   }
   findNear();
   hint(now);
+  if (S.started) audioTick(Q, dt);
   renderer.render(scene, camera);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;
     save();
   }
+}
+/* the sound of each place: the sea and gulls at the docks, wind and the ship's timbers on deck, birds in the yard, a street's hum, a quiet room */
+const BEDS = {
+  harbour48: { sea: 0.1, surf: 0.05, crowd: 0.09, wind: 0.03, gull: 0.25 },
+  tilbury48: { sea: 0.08, surf: 0.04, crowd: 0.08, wind: 0.05, gull: 0.15 },
+  deck48: { sea: 0.16, wind: 0.1, creak: 0.12 },
+  yard48: { wind: 0.025, crowd: 0.03, bird: 0.2 },
+  yard62: { wind: 0.025, crowd: 0.03, bird: 0.2 },
+  brixton48: { crowd: 0.06, wind: 0.04 },
+  brixton62: { crowd: 0.08, wind: 0.03 },
+  home18: { room: 0.05, crowd: 0.015 },
+  centre18: { room: 0.06, crowd: 0.04 },
+};
+let bedT = 0;
+function audioTick(Q, dt) {
+  if (!AU.ctx || !AU.on || AU.ctx.state !== "running" || (bedT += dt) < 0.1) return;
+  const B = BEDS[Q.id] || {},
+    k = talking ? 0.6 : 1,
+    t = bedT;
+  bedT = 0;
+  for (const ch of ["sea", "surf", "wind", "crowd", "room"]) if (AU.ch[ch]) setG(AU.ch[ch], (B[ch] || 0) * k, 0.8);
+  if (B.gull && Math.random() < B.gull * t * 0.5) gullCry();
+  if (B.bird && Math.random() < B.bird * t * 0.6) chirp();
+  if (B.creak && Math.random() < B.creak * t * 0.4) shipCreak();
 }
 function frame(now) {
   requestAnimationFrame(frame);
@@ -1165,8 +1312,8 @@ onLoadFail(() => {
   try {
     loadClips(await model("anims"));
     $("bar").style.width = "25%";
-    const Q = await ensure("yard48");
-    current = "yard48";
+    const Q = await ensure("harbour48");
+    current = "harbour48";
     Q.group.visible = true;
     light(Q);
     $("bar").style.width = "100%";
@@ -1203,6 +1350,7 @@ onLoadFail(() => {
         body,
         loadBase,
         tick,
+        frame,
         chapterState,
         resetSceneTasks,
       });
