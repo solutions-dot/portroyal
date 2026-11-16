@@ -6,6 +6,8 @@ Read-only audit of `games/port-royal`, `garvey`, `kendal`, `bog-walk`, `nanny`, 
 
 **Required-target selection follow-up (16 November):** Nanny, Melissa and Eventide now choose the nearest currently unfinished, stage-marked story conversation before considering available actions; Bog Walk was updated earlier. Existing special route overrides (Nanny climb, Melissa stage 51, Eventide gate/veranda) remain in place. This is not a full need-by-need migration: action-first story steps and all stage transitions require replay to check that the target remains correct. Other games still require the same audit.
 
+**Required-person targeting checkpoint (16 November):** Garvey now selects the nearest unfinished person from its stage-specific `TALK_TARGETS` before considering other available actions. With the earlier Bog Walk, Nanny, Melissa and Eventide changes, five legacy controllers now use required-conversation-first targeting. `tests/guidance-target-priority.mjs` guards their source ordering. This is not a substitute for testing each stage's true action/conversation dependencies.
+
 ### Follow-up: always-visible next task (16 November 2026)
 
 The owner selected **Bog Walk's guidance pattern as the target for all ten games**: a plainly written next task that stays readable, a gold world arrow to the current required destination, and a nearby talk/action control that takes over when the player arrives. The task should change immediately when a requirement is completed, and optional activities must not override a required step.
