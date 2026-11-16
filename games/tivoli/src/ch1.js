@@ -36,12 +36,13 @@ export const WALKS = {
 };
 const $ = (id) => document.getElementById(id);
 let ORDER = WALKS[1].order, TXT = CH1;
-let E = null, saved = null;
+let E = null, saved = null, titleTimer = null;
 
 export function setupCh1(env) { E = env; $('chdone').onclick = leaveChapter; }
 const goalNow = () => { const i = ORDER.findIndex((id) => !CH.talked[id]); return TXT.goals[i < 0 ? 3 : i]; };
 
 export async function begin(id = 1) {
+  leaveChapter();   // Chapter selection can interrupt a walk; remove its people and scenery first.
   const W = WALKS[id]; CH.id = id; ORDER = W.order; TXT = W.text;
   const { scene, state, WALLS, renderer } = E; E.audioInit(); $('title').hidden = true; $('fightload').firstElementChild.textContent = W.loading; $('fightload').hidden = false;
   const shadows = !matchMedia('(pointer: coarse)').matches, pl = W.build({ shadows });
@@ -57,7 +58,7 @@ export async function begin(id = 1) {
   state.x = pl.start.x; state.z = pl.start.z; state.yaw = pl.start.yaw; state.pitch = 0; state.camY = W.camY || 1.3; state.started = true; E.setBusy(false);
   $('hud').hidden = false; E.setGoal(goalNow());
   const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = TXT.start[0]; t.append(b); for (const l of TXT.start.slice(1)) { const p = document.createElement('p'); p.textContent = l; t.append(p); }
-  t.hidden = false; setTimeout(() => { t.hidden = true; }, 5200);
+  t.hidden = false; titleTimer = setTimeout(() => { t.hidden = true; }, 5200);
   CH.on = true;
 }
 export function guideTarget() {   /* where the helper arrow points: the next person to talk to, then the place where the walk ends */
@@ -75,7 +76,9 @@ function endChapter() {
   CH.ended = true; E.setBusy(true); finishChapter(CH.id); E.uiSound('goal');
   const c = $('chcard'); $('chcardt').textContent = TXT.end.title; $('chcardl').replaceChildren(...TXT.end.lines.map((t) => { const p = document.createElement('p'); p.textContent = t; return p; })); c.hidden = false;
 }
-function leaveChapter() {
+export function leaveChapter() {
+  if (!CH.on) return;
+  clearTimeout(titleTimer); titleTimer = null; $('scenetitle').hidden = true;
   const { scene, state, WALLS, renderer } = E; $('chcard').hidden = true; clearNpcs(); if (CH.life) CH.life.clear(); CH.life = null; scene.remove(CH.place.group); CH.on = false; CH.place = null;
   saved.hidden.forEach((c) => (c.visible = true)); saved.lights.forEach(([l, v]) => (l.intensity = v)); scene.fog = saved.fog; scene.background = saved.bg; renderer.shadowMap.enabled = saved.shadow; WALLS.length = 0; WALLS.push(...saved.wasWalls);
   state.started = false; state.camY = 0; E.setBusy(false); $('hud').hidden = true; $('title').hidden = false;

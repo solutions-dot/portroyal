@@ -323,8 +323,10 @@ export function createAmbient(opts = {}) {
     if (a.spec.at && a.kind === 'watch') return [rel(a.spec.at[0], a.spec.at[1]), 0];
     return [0, 0];
   }
+  const _tq = new THREE.Quaternion();
   function headTick(n, dt) {
     const a = n.amb, b = bonesOf(n.m); if (!b.neck && !b.head) return; a.pT = Math.hypot(W.px - n.x, W.pz - n.z) < O.look ? a.pT + dt : 0; let [yaw, pitch] = lookWant(n);
+    if (!Number.isFinite(yaw)) yaw = 0; if (!Number.isFinite(pitch)) pitch = 0; if (!Number.isFinite(a.look)) a.look = 0; if (!Number.isFinite(a.lookP)) a.lookP = 0;   /* a look at a point that is not there (the player before the game sets them, a lone sitter with no mate) once gave NaN and the head vanished (Windrush) */
     if (Math.abs(yaw) > 1.9) yaw = 0; yaw = Math.max(-O.lookYaw, Math.min(O.lookYaw, yaw)); pitch = Math.max(-O.lookPitch, Math.min(O.lookPitch, pitch));
     const k = Math.min(1, dt * 3), lim = dt * 3.5; a.look += Math.max(-lim, Math.min(lim, (yaw - a.look) * k)); a.lookP += (pitch - a.lookP) * k;   /* at most 200 degrees a second: a look that swaps sides (the player passing behind) turned the head faster than a person does */
     let nod = 0; if (a.nod > 0) { a.nod = Math.max(0, a.nod - dt); nod = Math.sin((0.7 - a.nod) / 0.7 * Math.PI * 2) * 0.12 * (a.nod > 0 ? 1 : 0); }
@@ -334,6 +336,10 @@ export function createAmbient(opts = {}) {
     const hq = a.hq || (a.hq = [b.neck, b.head].map(() => ({ base: new THREE.Quaternion(), after: new THREE.Quaternion(10, 0, 0, 0) })));
     [b.neck, b.head].forEach((bone, i) => { if (!bone) return; if (bone.quaternion.equals(hq[i].after)) bone.quaternion.copy(hq[i].base); hq[i].base.copy(bone.quaternion); });
     turnBone(b.neck, UP, a.look * 0.4); turnBone(b.head, UP, a.look * 0.6); turnBone(b.head, _ax, a.lookP + nod);
+    /* the clip and the look together: a fast clip (HeadTurn, Cheer, WipeSweat) or a clip change on top of a look snapped the head round at
+       300 to 1,400 degrees a second (Kendal, Selassie checks). Neck and head each move at most about 140 degrees a second, so the head never spins */
+    const maxA = Math.max(0.02, dt * 2.4);
+    [b.neck, b.head].forEach((bone, i) => { if (!bone) return; const h = hq[i]; if (h.shown && dt > 0 && dt < 0.5) { _tq.copy(bone.quaternion); if (h.shown.angleTo(_tq) > maxA) bone.quaternion.copy(h.shown).rotateTowards(_tq, maxA); } (h.shown || (h.shown = new THREE.Quaternion())).copy(bone.quaternion); });
     [b.neck, b.head].forEach((bone, i) => { if (bone) hq[i].after.copy(bone.quaternion); });
   }
 
@@ -357,7 +363,7 @@ export function createAmbient(opts = {}) {
   }
   /* ---------- the tick ---------- */
   life.tick = (dt, world = {}) => {
-    const pp = W; W = { px: 1e6, pz: 1e6, ...world }; if (pp.px !== undefined && pp.px < 1e5 && dt > 0) { W.vx = (W.px - pp.px) / dt; W.vz = (W.pz - pp.pz) / dt; } life.t += dt; life.ready(); frame++; lodT -= dt; if (lodT <= 0) { lodT = 0.25; levels(); for (const n of people) moodShow(n); }
+    const pp = W; W = { px: 1e6, pz: 1e6, ...world }; if (!Number.isFinite(W.px)) W.px = 1e6; if (!Number.isFinite(W.pz)) W.pz = 1e6;   /* loading callers may explicitly pass undefined; never turn a body toward NaN */ if (pp.px !== undefined && pp.px < 1e5 && dt > 0) { W.vx = (W.px - pp.px) / dt; W.vz = (W.pz - pp.pz) / dt; } life.t += dt; life.ready(); frame++; lodT -= dt; if (lodT <= 0) { lodT = 0.25; levels(); for (const n of people) moodShow(n); }
     for (const n of people) {
       const a = n.amb; if (a.gone) continue;
       a.t -= dt; a.clipT += dt; if (a.glance && (a.glance.t -= dt) <= 0) a.glance = null;

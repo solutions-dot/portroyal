@@ -17,12 +17,17 @@ import {
 import { palm, tree, boardHouse, marketBasket } from "./period-props.js";
 import * as P from "./props.js";
 import { airportDetail } from "./airport-detail.js";
-import { enrichYard, enrichMemory, enrichRoad } from "./life.js";
+import { enrichYard, enrichMemory } from "./life.js";
+import { downtown, parade, road as palisadoesRoad, lane, dressYard } from "./kingston.js";
+import { louvreHouse } from "./kingston-props.js";
 const palette = {
   yard: 0xd9cbae,
   memory: 0xc5ac83,
   road: 0x99b6ad,
   airport: 0xb8c0b7,
+  downtown: 0xd5ccb6,
+  parade: 0xcfcab4,
+  lane: 0x8a8070,
 };
 function base(id, bounds, start) {
   return {
@@ -118,45 +123,24 @@ function ground(Q, mat) {
 function yard() {
   const Q = base("yard", [-17, -14, 17, 19], [0, 13, 0]);
   ground(Q, std(T.dirt([12, 12], [171, 140, 94])));
-  house(Q, -12, -7, 8, 6, [175, 197, 174]);
+  // the family's house: plastered, glass louvre windows, a narrow veranda (chapter 1 only: the evening of chapter 6 is in the lane)
+  add(Q, louvreHouse(8, 6, { colour: [214, 228, 214], trim: 0x3f6f62, veranda: 1.4 }), -12, -7);
+  Q.walls.push([-16.1, -10.1, -7.9, -3.9], [-16, -2.85, -13, -2.6], [-11, -2.85, -8, -2.6]);
   house(Q, 11, -8, 9, 5, [222, 195, 143]);
   house(Q, -12, 15, 8, 5, [192, 159, 124]);
-  for (let x = -18; x <= 18; x += 1.2) {
-    box(0.11, 1.1, 0.1, P.WOOD, x, 0.55, -14, Q.group);
-    box(0.11, 1.1, 0.1, P.WOOD, x, 0.55, 19.5, Q.group);
-  }
-  for (const z of [-14, 19.5])
-    for (const y of [0.45, 0.9]) box(37, 0.08, 0.08, P.WOOD, 0, y, z, Q.group);
   plant(Q, -13, 5, "tree", 23);
   plant(Q, 13, 12, "palm", 8);
   plant(Q, 15, -2, "palm", 11);
   worktable(Q, -5, -2);
   worktable(Q, 6, -3);
   worktable(Q, 0, -5, 2.5, 1.15);
-  const sewing = add(Q, P.sewingMachine(), 6, -3, 0.83);
-  Q.props.sewing = sewing;
-  Q.props.chair = add(Q, P.chair(), 8, 4);
-  wall(Q, 8, 4, 0.6, 0.65);
   item(Q, "tin", P.tin(), -6, -2, 0.83);
-  item(Q, "thread", P.thread(), 6.7, -3, 0.83);
-  item(Q, "bottle", P.bottle(), -0.75, -5, 0.83);
-  item(Q, "lunch", P.lunch(), -0.4, -5, 0.83);
-  item(Q, "photo", P.card("photo"), 0.7, -5, 0.83);
-  item(Q, "ticket", P.card("ticket"), -4.4, -2, 0.83);
-  Q.props.bag = item(Q, "bag", P.bag(), 0.35, -5, 0.83);
   person(Q, "adina", -3, 0, 0.2);
   person(Q, "mum", 5, 0, -0.3);
   person(Q, "levi", 9, 5, -1.4);
   person(Q, "boy", -8, 9, 0.3);
   action(Q, "tin", -6, 0, "Pick up the tin", "tin");
   action(Q, "openTin", -5, 0, "Open the tin");
-  action(Q, "thread", 6.7, -1, "Pick up the thread", "thread");
-  action(Q, "sewing", 6, -1, "Set down the thread");
-  action(Q, "chair", 8, 5.2, "Fit the wooden slat");
-  action(Q, "water", -0.75, -3.6, "Pack the water", "bottle");
-  action(Q, "lunch", 0, -3.6, "Pack the lunch", "lunch");
-  action(Q, "photo", 0.75, -3.6, "Pack the picture", "photo");
-  action(Q, "ticket", -4.4, 0, "Put the ticket in the tin", "ticket");
   for (let i = 0; i < 8; i++) {
     const x = i % 2 ? -7 : 12,
       z = 2 + i * 1.8;
@@ -207,6 +191,7 @@ function yard() {
     },
   ];
   enrichYard(Q);
+  dressYard(Q);
   return Q;
 }
 function memory() {
@@ -275,71 +260,6 @@ function memory() {
     { at: [-3, -5], r: 1.2 },
   ];
   enrichMemory(Q);
-  return Q;
-}
-function road() {
-  const Q = base("road", [-5, -45, 5, 27], [0, 23, 0]);
-  const shore = plane(18, 150, std(T.sand([2, 20])), 0, -0.025, -15, Q.group);
-  shore.rotation.x = -Math.PI / 2;
-  const sea = plane(
-    600,
-    700,
-    std(T.water([40, 40]), 0.25, 0.15),
-    0,
-    -0.12,
-    -50,
-    Q.group,
-  );
-  sea.rotation.x = -Math.PI / 2;
-  Q.props.sea = sea;
-  box(10, 0.05, 110, solid(0x9f9e8c), 0, 0.01, -15, Q.group);
-  box(0.12, 0.1, 110, P.CREAM, -4.8, 0.05, -15, Q.group);
-  box(0.12, 0.1, 110, P.CREAM, 4.8, 0.05, -15, Q.group);
-  for (let i = 0; i < 12; i++)
-    box(0.1, 0.01, 2.3, P.CREAM, 0, 0.04, 24 - i * 7, Q.group);
-  for (let i = 0; i < 6; i++) {
-    plant(Q, 9, -20 + i * 12, "palm", i + 1);
-    plant(Q, -9, -24 + i * 13, "palm", i + 23);
-  }
-  Q.props.bus = add(Q, P.bus(), 2, -28);
-  wall(Q, 2, -28, 2.6, 8.1);
-  sign(Q, "BUS STOP", -4, -17, 1.1);
-  person(Q, "mum", 0, 18, Math.PI);
-  person(Q, "adina", -2, -15, 1);
-  person(Q, "boy", 2, -10, -1);
-  item(Q, "bottle", P.bottle(), -2, -14, 0);
-  action(Q, "busStop", 0, -12, "The bus stop");
-  action(Q, "roadWater", -2, -13, "Give Grandma some water", "bottle");
-  action(Q, "lookout", -4, -5, "Look over the harbour");
-  action(Q, "bus", -0.1, -26, "Join the family on the bus");
-  Q.leadPath = [
-    [0, 18],
-    [0, 8],
-    [0, -3],
-    [0, -12],
-  ];
-  Q.routes = [
-    {
-      id: "Mum leads to the bus",
-      pts: Q.leadPath,
-      what: "guide",
-      h: 1.7,
-      r: 0.25,
-    },
-  ];
-  Q.keepOff = [
-    { pts: Q.leadPath, w: 1.15 },
-    { at: [-2, -15], r: 1.1 },
-  ];
-  for (let i = 0; i < 6; i++)
-    Q.ambient.push({
-      id: "road" + i,
-      x: i % 2 ? -3.7 : 3.8,
-      z: 4 + i * 3,
-      look: i,
-      behaviour: { kind: "watch", at: [2, -28], react: ["Point", "Wave"] },
-    });
-  enrichRoad(Q);
   return Q;
 }
 function airport() {
@@ -463,7 +383,18 @@ function airport() {
   ];
   return Q;
 }
-export const BUILDERS = { yard, memory, road, airport };
+/* the kit the Kingston places (kingston.js) build with */
+const KIT = { base, add, wall, person, plant, action, item, sign };
+/* chapter by chapter: yard and memory (1), downtown (2), parade then road (3), airport (4 and 5), lane (6) */
+export const BUILDERS = {
+  yard,
+  memory,
+  downtown: () => downtown(KIT),
+  parade: () => parade(KIT),
+  road: () => palisadoesRoad(KIT),
+  airport,
+  lane: () => lane(KIT),
+};
 /* the top of the boarding steps, where Haile Selassie stands: just in front of the DC-6's rear door, level with its sill */
 export const STAIRS_TOP = { x: 4.3, z: -29.72, y: 2.56 };
 export function buildPlace(id) {

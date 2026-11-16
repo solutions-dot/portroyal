@@ -1,28 +1,47 @@
-/* Each era has its own recipe. Family identities stay explicit across time. */
+/* Each era has its own recipe (tools/windrush/people). Family identities stay explicit across time: the same face targets and skin for
+   one person in every year (Iris at 23 and 79; May and Samuel at home and dressed for the voyage). */
 export const CAST = {
   may48: { base: "wr_may48", sex: "f", who: "May" },
+  may48t: { base: "wr_may48t", sex: "f", who: "May" },
   sam48: { base: "wr_sam48", sex: "m", who: "Samuel", idle: "IdleM" },
+  sam48t: { base: "wr_sam48t", sex: "m", who: "Samuel", idle: "IdleM" },
   pearl48: { base: "wr_pearl48", sex: "f", who: "Pearl" },
-  iris9: { base: "wr_iris9", sex: "f", who: "Iris", scale: 0.8 },
   lionel48: { base: "wr_lionel48", sex: "m", who: "Lionel", idle: "IdleM" },
   celia48: { base: "wr_celia48", sex: "f", who: "Celia" },
   gray48: { base: "wr_gray48", sex: "m", who: "Mr Gray", idle: "IdleM" },
+  porter48: { base: "wr_porter48", sex: "m", who: "Mr Hart", idle: "IdleM" },
   iris23: { base: "wr_iris23", sex: "f", who: "Iris" },
   may62: { base: "wr_may62", sex: "f", who: "May" },
   sam62: { base: "wr_sam62", sex: "m", who: "Samuel", idle: "IdleM" },
   pearl62: { base: "wr_pearl62", sex: "f", who: "Pearl" },
   iris79: { base: "wr_iris79", sex: "f", who: "Iris", idle: "OldIdle" },
   anita18: { base: "wr_anita18", sex: "f", who: "Anita" },
-  maya12: { base: "wr_maya12", sex: "f", who: "Maya", scale: 0.8 },
   asha18: { base: "wr_asha18", sex: "f", who: "Asha" },
 };
-export const BASES = [...new Set(Object.values(CAST).map((x) => x.base))];
-export function extraLook(i, era = "1948") {
-  const ids =
-    era === "2018"
-      ? ["anita18", "asha18", "iris79", "maya12"]
-      : era === "1962"
-        ? ["may62", "sam62", "iris23", "pearl62"]
-        : ["may48", "sam48", "celia48", "lionel48", "iris9"];
-  return { ...CAST[ids[i % ids.length]], cast: ids[i % ids.length] };
-}
+/* background people: one body per kind of person, made for their year and place. kid: a real child body built at upscale 1.26, shown at 0.8 */
+export const CROWD = {
+  wr_kman48: { sex: "m", idle: "IdleM" },
+  wr_kwoman48: { sex: "f" },
+  wr_kelder48: { sex: "f" },
+  wr_kboy48: { sex: "m", scale: 0.8 },
+  wr_kgirl48: { sex: "f", scale: 0.8 },
+  wr_tman48a: { sex: "m", idle: "IdleM" },
+  wr_tman48b: { sex: "m", idle: "IdleM" },
+  wr_tman48c: { sex: "m", idle: "IdleM" },
+  wr_twoman48: { sex: "f" },
+  wr_lman48: { sex: "m", idle: "IdleM" },
+  wr_lwoman48: { sex: "f" },
+  wr_bman62: { sex: "m", idle: "IdleM" },
+  wr_bwoman62: { sex: "f" },
+  wr_conductor62: { sex: "m", idle: "IdleM" },
+  wr_lwoman62: { sex: "f" },
+  wr_bboy62: { sex: "m", scale: 0.8 },
+  wr_man18: { sex: "m", idle: "IdleM" },
+  wr_woman18: { sex: "f" },
+  wr_elder18: { sex: "m", idle: "OldIdle" },
+  wr_wman18: { sex: "m", idle: "IdleM" },
+  wr_girl18: { sex: "f", scale: 0.8 },
+  wr_may48t: { sex: "f" },
+  wr_sam48t: { sex: "m", idle: "IdleM" },
+};
+export const BASES = [...new Set([...Object.values(CAST).map((x) => x.base), ...Object.keys(CROWD)])];

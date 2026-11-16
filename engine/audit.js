@@ -499,9 +499,11 @@ function clJagged(id, clipName, at, P, sc, out, where, covers) { if (/^(Body|Ski
     if (e - e0 > 0.004 * sc && e > 0.6 * L(A, j, k) && !covers(A, i)) { n++; if (e - e0 > worst) { worst = e - e0; wi = i; } } }   /* a smooth edge passes close to the line between a point's neighbours; a tooth stands out by more than half the gap between them */
   if (n) { out.lines.push(`${id} ${clipName}@${at}: ${P.name} edge is jagged: ${n} points, worst ${(worst / sc * 1000).toFixed(1)} mm` + (where ? ` at x ${A[wi * 3].toFixed(3)} y ${A[wi * 3 + 1].toFixed(3)} z ${A[wi * 3 + 2].toFixed(3)}` : '')); out.points += n; out.worst = Math.max(out.worst, worst / sc * 1000); }
 }
-export function auditCloth(id, body, { poses = [['Idle', 0.3]], after = null, skip = null, where = false, marks = null } = {}) {
+export function auditCloth(id, body, { poses = [['Idle', 0.3]], after = null, skip = null, where = false, marks = null, played = null } = {}) {   /* played: the clips the game really plays on this body; the extra seated, kneeling and walk poses added below are only checked when listed (null: all) */
+  const given = poses;
   if (['Skirt', 'CoatSkirt', 'JacketSkirt', 'Apron'].some((n) => body.getObjectByName(n))) poses = [...poses, ...[0.125, 0.375, 0.625, 0.875].map((f) => ['Walk', f]).filter((p) => !poses.some((q) => q[0] === p[0] && q[1] === p[1]))];   /* a coat skirt, skirt or apron is checked through the whole stride, not only at two moments: a leg came through at a third of the way */
   if (body.getObjectByName('Skirt')) poses = [...poses, ...[['SitTalk', 0.4], ['Kneel', 0.5], ['PlayPiano', 0.4], ['TalkM3', 0.4], ['AskQuestion', 0.4]].filter((p) => !poses.some((q) => q[0] === p[0]))];   /* a skirt is also checked seated and kneeling (when the game has those clips), where knees push through and hems flip */
+  if (played) { const ok = new Set(played); poses = poses.filter((q) => given.includes(q) || ok.has(q[0])); }
   const ctl = body.userData.anim, out = { lines: [], points: 0, worst: 0 }, parts0 = clParts(body), sc = body.getWorldScale(new THREE.Vector3()).x || 1, v = new THREE.Vector3(), p = [0, 0, 0]; if (!ctl || parts0.length < 2) return out;
   for (const [clipName, at] of poses) { const act = ctl.get(clipName); if (!act) continue; ctl.mx.stopAllAction(); act.reset().play(); act.time = at * act.getClip().duration; ctl.mx.update(0); if (after) after(body); body.updateMatrixWorld(true);
     const parts = clParts(body);   /* per pose: a seated skirt shows only while seated, and the standing one is hidden then */

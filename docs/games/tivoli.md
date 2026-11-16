@@ -5,7 +5,7 @@ Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the plan, the rules 
 - Code: `games/tivoli/` (started from `games/_template/`; see "Code map").
 - **On the menu since 14 November 2026** (the owner's choice), in `games/tivoli/`. The folder used to start with an underscore so `tools/dist.mjs` skipped it.
 - Build: `node tools/build.mjs tivoli --dev`, then open `http://localhost:8765/games/tivoli/site/` (see "Test it").
-- Status (14 November 2026): **two playable parts**: chapter 1 (Back-o-Wall, with Ivy, journal and chapters list) and the May 2010 street scene (from the Chapters list), with 2010 uniforms, weapons, the owner's clips and research. Chapters 2 to 4 and 6 to 8 are not built yet. There is a placeholder pose layer (`src/clips.js`) and a staging view for it.
+- Status (14 November 2026): **two playable parts**: chapter 1 (Back-o-Wall, with Ivy, journal and chapters list) and the May 2010 street scene (from the Chapters list), with 2010 uniforms, weapons, the owner's clips and research. As of 16 Nov 2026, all eight chapters are playable in code: seven walking chapters and the May 2010 scene. Historical, community and visual review remain separate work. There is a placeholder pose layer (`src/clips.js`) and a staging view for it.
 
 ## What this game is, and why it needs care
 

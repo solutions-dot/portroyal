@@ -1,5 +1,5 @@
 /* Hooks for the shared gameplay and quality runner. */
-import { STEPS } from "./steps.js";
+import { STEPS, PLACE_STAGES } from "./steps.js";
 import { CHAPTERS, JOURNAL, TALK } from "./content.js";
 import { needList } from "../../../engine/story.js";
 import { slideWalls } from "../../../engine/placement.js";
@@ -10,7 +10,7 @@ export const CHECK_TABLES = {
   settle: 0,
   ages: { ruth: { born: 1956, seen: [[1966, 10]] } },
   cast: { adina: ["adina"], mum: ["mum"], levi: ["levi"] },
-  lights: { yard: ["day", "dusk"] },
+  lights: { yard: ["day"], lane: ["dusk"] },
 };
 export function makeAdapter(A) {
   const { S, world, story } = A;
@@ -56,10 +56,10 @@ export function makeAdapter(A) {
         hat: n.hat || null,
         colours: n.tint || {},
       })),
-    places: () => ["yard", "memory", "road", "airport"],
+    places: () => Object.keys(PLACE_STAGES),
     goPlace: async (id) => {
       A.begin();
-      await A.go({ yard: 20, memory: 15, road: 30, airport: 55 }[id]);
+      await A.go({ ...PLACE_STAGES, airport: 55 }[id]);
       closeAll();
       A.DIR.stop();
     },

@@ -74,7 +74,7 @@
 
   /* Port Royal: the poster. Full-bleed scene, the title set big across the bottom. */
   .game[hidden]{display:none}
-  .game{position:relative;display:block;min-height:0;border-radius:28px;overflow:hidden;color:var(--paper);text-decoration:none;isolation:isolate;
+  .game{position:relative;display:block;min-height:0;border-radius:28px;overflow:hidden;box-shadow:0 0 0 1.5px rgba(232,184,74,.32),0 12px 28px rgba(0,0,0,.40),inset 0 0 0 1px rgba(255,255,255,.06);color:var(--paper);text-decoration:none;isolation:isolate;
     background:#0c3348 url(port-royal.jpg) center 40%/cover no-repeat}
   .game::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,rgba(4,27,42,.92) 0%,rgba(4,27,42,.55) 34%,rgba(4,27,42,0) 62%)}
   .game .text{position:absolute;left:0;right:0;bottom:0;padding:clamp(1rem,2.6vw,2rem);display:grid;grid-template-columns:1fr auto;align-items:end;gap:1rem}
@@ -92,6 +92,7 @@
   .game.garvey .year{color:#ff8a93}
   .game.garvey .play{background:var(--hibiscus);color:var(--paper)}
   .game.garvey:hover .play,.game.garvey:focus-visible .play{background:var(--paper);color:var(--deep)}
+  .game .tag{position:absolute;top:clamp(.8rem,1.6vw,1.2rem);left:clamp(.8rem,1.6vw,1.2rem);margin:0;background:var(--hibiscus);color:var(--paper);font-weight:800;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;padding:.35rem .8rem;border-radius:999px}   /* the New badge: only on games added after the first ten (docs/PLATFORM.md) */
   .game.garvey .tag{position:absolute;top:clamp(.8rem,1.6vw,1.2rem);left:clamp(.8rem,1.6vw,1.2rem);margin:0;background:var(--hibiscus);color:var(--paper);font-weight:800;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;padding:.35rem .8rem;border-radius:999px}
 
   /* Kendal 1957: a poster as well. The long train waiting at Kingston in the evening light; the year is in amber. */
@@ -167,8 +168,9 @@
     .play{justify-self:start}
     .game{border-radius:22px}
     header{align-items:flex-start;flex-direction:column;gap:.35rem}
-    .side{align-items:flex-start;gap:.4rem}.links{justify-content:flex-start}.links a,.links button{min-height:40px;padding:0 .9rem;font-size:.9rem}
+    .side{align-items:flex-start;gap:.4rem;width:100%}.links{justify-content:flex-start;flex-wrap:nowrap;gap:.35rem;width:100%}.links a,.links button{min-height:40px;padding:0 .7rem;font-size:clamp(.74rem,3.5vw,.9rem);white-space:nowrap;flex:0 1 auto;min-width:0}   /* the three pills stay on one line on a phone (owner) */
   }
+  @media (max-width:370px){.links{gap:.25rem}.links a,.links button{padding:0 .5rem;font-size:.72rem}.links .contact-pill span[aria-hidden]{display:none}}   /* the smallest phones: tighter, and the arrow goes */
   @media (max-width:760px){.game:not([data-game="port-royal"]){background-size:cover;background-position:50% 30%} .game.tivoli::before{background-position:50% 30%}.game:not([data-game="port-royal"])::after{background:linear-gradient(to top,rgba(4,27,42,.96) 0%,rgba(4,27,42,.78) 40%,rgba(4,27,42,0) 70%)}}   /* phones: every card shows its title, what happened, and Go there, one under the other */
   @media (max-width:760px){.game.windrush{min-height:400px}}   /* keep the ship above the title and controls */
   @media (max-width:760px) and (max-height:700px){.game .text{padding:.8rem 1rem}.play{min-height:44px;padding:0 1.2rem;font-size:1rem}}
@@ -205,7 +207,7 @@
     <div class="side">
       <p id="testingnote" hidden>Testing menu.</p>
       <nav class="links" aria-label="More">
-        <a href="about.html">About this platform</a>
+        <a href="about.html" aria-label="About this platform">About</a>
         <button type="button" id="subopen" class="get">Get updates</button>
         <button type="button" class="credit contact-pill" id="contactopen" aria-haspopup="dialog" aria-controls="contactpanel">Created by <b>Kellz 5.0</b><span aria-hidden="true"> ↗</span></button>
       </nav>
@@ -222,7 +224,6 @@
       </div>
     </a>
     <a class="game nanny" data-game="nanny" data-year="1734" href="games/nanny/site/">
-      <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>The Fall of Nanny Town, 1734</h2>
@@ -232,7 +233,6 @@
       </div>
     </a>
     <a class="game bogwalk" data-game="bog-walk" data-year="1904" href="games/bog-walk/site/">
-      <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>Bog Walk Tube Flood, 1904</h2>
@@ -242,7 +242,6 @@
       </div>
     </a>
     <a class="game garvey" data-game="garvey" data-year="1914" href="games/garvey/site/">
-      <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>Marcus Garvey and the UNIA, 1914</h2>
@@ -252,14 +251,12 @@
       </div>
     </a>
     <a class="game windrush" data-game="windrush" data-year="1948" href="games/windrush/site/">
-      <p class="tag">New</p>
       <div class="text"><div>
         <h2>Windrush: Two Places Called Home</h2>
         <p>Follow a fictional family from Jamaica to England, and stand beside them when their right to stay is questioned.</p>
       </div><span class="play">Go there</span></div>
     </a>
     <a class="game kendal" data-game="kendal" data-year="1957" href="games/kendal/site/">
-      <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>Kendal Train Crash, 1957</h2>
@@ -278,7 +275,6 @@
       </div>
     </a>
     <a class="game eventide" data-game="eventide" data-year="1980" href="games/eventide/site/">
-      <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>Eventide Home Fire, 1980</h2>
@@ -288,7 +284,6 @@
       </div>
     </a>
     <a class="game tivoli" data-game="tivoli" data-year="2010" href="games/tivoli/site/">
-      <p class="tag">Early version</p>
       <div class="text">
         <div>
           <h2>Tivoli Incursion, 2010</h2>
@@ -298,7 +293,6 @@
       </div>
     </a>
     <a class="game melissa" data-game="melissa" data-year="2025" href="games/melissa/site/">
-      <p class="tag">New</p>
       <div class="text">
         <div>
           <h2>Hurricanes Charlie, Gilbert and Melissa</h2>

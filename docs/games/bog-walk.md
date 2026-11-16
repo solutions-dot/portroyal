@@ -1,6 +1,6 @@
 # Bog Walk 1904: the story plan
 
-Status: **story agreed with the owner (13 Nov 2026). The first slice is built** (see "Where things are now"); the rest of the story is not. Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/CONTENT.md` first. This file is the game guide: the story, the facts we can and cannot use, the decisions, the build rules and the code map.
+Status (16 Nov 2026): **all six chapter entries are playable in code**. The story was agreed with the owner on 13 Nov 2026. The older "Where things are now" section records an earlier build stage. Read `CLAUDE.md`, `docs/NEW_GAME.md` and `docs/CONTENT.md` first. This file is the game guide: the story, the facts we can and cannot use, the decisions, the build rules and the code map.
 
 Title: **Bog Walk 1904: The Tube**. The game is in `games/bog-walk/`, started from `games/_template/`.
 
