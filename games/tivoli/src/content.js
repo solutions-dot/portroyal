@@ -239,7 +239,8 @@ export const CH7 = {
     pastor: [
       { who: 'Pastor Grant', text: 'In December 2017 there was more news.' },
       { who: 'Pastor Grant', text: 'The Prime Minister said sorry in Parliament.' },
-      { who: 'Pastor Grant', text: 'He said: “We are truly sorry for the pain and loss that occurred.”' },
+      { who: 'Pastor Grant', text: 'His words were these.' },
+      { who: 'Pastor Grant', text: '“We are truly sorry for the pain and loss that occurred.”' },
       { who: 'You', text: 'Does sorry help?' },
       { who: 'Pastor Grant', text: 'A little. Many families still want justice.', unlock: 'after' },
     ],
@@ -321,7 +322,7 @@ export const JOURNAL = [
     deeper: ['Some people say civilians were killed after the soldiers had control. The commanders said they knew of none.', 'The army fired 37 mortar rounds into three open spaces. The Commission called that “a serious error of judgement”. A former army chief disagreed.', 'The Public Defender looked at 44 deaths as possible unlawful killings.', 'The Commission found strong evidence that some police took part in unlawful killings. The police’s own review in 2017 cleared the five officers it had criticised.'] },
   { id: 'after', title: 'After', from: 5,
     simple: ['A Commission of Enquiry looked at what happened.', 'It said the people of Tivoli Gardens should get an apology and money.', 'In 2017 the Prime Minister said sorry in Parliament.'],
-    deeper: ['The Commission was led by Sir David Simmons. Its report came out on 15 June 2016.', 'It made 51 recommendations, including counselling for people who suffered.', 'The Government paid grants for burials and damage, and over J$300 million by 2020.', 'The Public Defender said in 2020 that nobody in the police or the army had been held to account.'] },
+    deeper: ['The Commission was led by Sir David Simmons. Its report came out on 15 June 2016.', 'It made 51 recommendations, including counselling for people who suffered.', 'The Government paid grants for burials and damage, and over J$300 million by 2020.', 'The Public Defender said in 2020 that nobody in the police or the army had been held to account.', 'Miss Dawn, Mr Brown and Pastor Grant in this game are fictional.'] },
   { id: 'today', title: 'Tivoli Gardens today', from: 8,
     simple: ['Tivoli Gardens is still home to many families.', 'Since 2022 artists have painted big murals on its walls.', 'The Tivoli Dance Troupe started in 1976.', 'Tivoli Gardens Football Club started in 1970.'],
     deeper: ['The murals are about hope and new beginnings. Some walls still show marks from 2010.', 'The dance troupe is linked to Tivoli Gardens High School.', 'The football club has won Jamaica’s top league several times.', 'In 2020 the Public Defender said nobody in the police or the army had been held to account.', 'The murals in this game are our own designs, not copies of the real ones.', 'Gran Ivy, Andre and Kemesha in this game are fictional.'] },
