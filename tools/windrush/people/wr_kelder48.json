@@ -1,0 +1,99 @@
+{
+  "name": "wr_kelder48",
+  "era": 1948,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 1,
+    "caucasian": 0,
+    "asian": 0,
+    "gender": 0,
+    "cupsize": 0.4,
+    "firmness": 0.55,
+    "age": 0.82,
+    "weight": 0.6,
+    "height": 0.47
+  },
+  "garments": {
+    "shoes": true,
+    "woman": true,
+    "skirt": true,
+    "hem": 0.3,
+    "flare": 1.8,
+    "pleats": 9,
+    "hairvol": 0.25,
+    "bun": true,
+    "collar": "round",
+    "hat": [
+      [
+        "wrap",
+        "Wrap"
+      ]
+    ],
+    "sleeve": 0.85,
+    "sash": true,
+    "belt": true
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      160,
+      156,
+      148
+    ],
+    "Skin": [
+      142,
+      96,
+      70
+    ],
+    "Shirt": [
+      232,
+      228,
+      214
+    ],
+    "Collar": [
+      232,
+      228,
+      214
+    ],
+    "Skirt": [
+      54,
+      66,
+      84
+    ],
+    "Wrap": [
+      120,
+      54,
+      60
+    ]
+  },
+  "targets": {
+    "head-oval": 0.2,
+    "chin-prominent-decr": 0.2
+  },
+  "crowd": true
+}

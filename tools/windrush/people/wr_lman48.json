@@ -1,0 +1,103 @@
+{
+  "name": "wr_lman48",
+  "era": 1948,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 0,
+    "caucasian": 1,
+    "asian": 0,
+    "gender": 1,
+    "age": 0.42,
+    "weight": 0.48,
+    "height": 0.53
+  },
+  "garments": {
+    "shoes": true,
+    "trousers": true,
+    "hairvol": 0.25,
+    "hat": [
+      [
+        "flat",
+        "Hat"
+      ]
+    ],
+    "sleeve": 0.95,
+    "jacket": true,
+    "jacketsleeve": 0.92,
+    "collar": "turn",
+    "scarf": true
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      70,
+      56,
+      44
+    ],
+    "Skin": [
+      206,
+      160,
+      130
+    ],
+    "Shirt": [
+      200,
+      196,
+      184
+    ],
+    "Collar": [
+      200,
+      196,
+      184
+    ],
+    "Jacket": [
+      86,
+      80,
+      70
+    ],
+    "Breeches": [
+      70,
+      66,
+      60
+    ],
+    "Scarf": [
+      150,
+      60,
+      50
+    ],
+    "Hat": [
+      96,
+      88,
+      76
+    ]
+  },
+  "targets": {
+    "head-oval": 0.3,
+    "chin-prominent-incr": 0.2
+  },
+  "crowd": true
+}

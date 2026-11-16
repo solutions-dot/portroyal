@@ -6,9 +6,13 @@ import { needList } from "../../../engine/story.js";
 import { slideWalls } from "../../../engine/placement.js";
 import { AU, setSound } from "../../../engine/audio.js";
 import { $, closeAll } from "./ui.js";
+import * as THREE from "three";
 export const CHECK_TABLES = {
   real: [],
   settle: 0,
+  /* software drawing in the headless browser is several times slower than a phone: the frame time is not judged here (a real phone run with
+     ?stats is), but the draw calls and triangles are the phone budget */
+  budget: { frameMs: 5000, calls: 220, triangles: 450000, bytes: 30e6 },
   ages: {
     iris: [
       [1948, 9],
@@ -139,6 +143,53 @@ export function makeAdapter(A) {
         ),
       ],
     }),
+    /* faces: everyone in the place (story people and the people around them), each measured in the place's own light */
+    faces: () =>
+      [...world().people, ...world().extras]
+        .filter((n) => n.m.visible)
+        .map((n) => ({ id: n.id, body: n.m })),
+    frame: async (dt) => {
+      A.tick(dt);
+    },
+    camera: () => {
+      const c = A.camera.position;
+      return { x: c.x, y: c.y, z: c.z };
+    },
+    talks: () => needList(STEPS[S.stage]).filter((n) => n.kind === "talk" && story.needs(n.id)).map((n) => n.id),
+    talkTo: async (id) => {
+      const n = world().people.find((p) => p.id === id);
+      if (!n) return;
+      S.x = n.x + Math.sin(n.m.rotation.y) * 1.3;
+      S.z = n.z + Math.cos(n.m.rotation.y) * 1.3;
+      A.talk(n);
+      A.tick(0.05);
+      await new Promise((r) => setTimeout(r, 200));
+      closeAll();
+    },
+    light: () => ({ tod: "day" }),
+    /* what each person in the place is playing, how far, in view or not, and how low their hips are (rule 4: nobody looks fallen) */
+    clips: () => {
+      const cam = A.camera,
+        fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse)),
+        out = [];
+      for (const n of [...world().people, ...world().extras, ...(world().shipExtras || [])]) {
+        if (!n.m.visible) continue;
+        const a = n.ctl.cur,
+          c = a ? a.getClip() : null,
+          p = n.m.getWorldPosition(new THREE.Vector3()),
+          hips = n.m.getObjectByName("mixamorigHips"),
+          hy = hips ? hips.getWorldPosition(new THREE.Vector3()).y - p.y : 1;
+        out.push({
+          id: n.id,
+          clip: c ? c.name : "none",
+          t: c && c.duration ? (a.time % c.duration) / c.duration : 0,
+          dist: Math.hypot(p.x - cam.position.x, p.z - cam.position.z),
+          inView: fr.containsPoint(p.clone().setY(p.y + 1)),
+          hips: n.m.userData.hip0 ? hy / n.m.userData.hip0 : 1,
+        });
+      }
+      return out;
+    },
     audio: () => AU,
     setSound,
     renderer: () => A.renderer,

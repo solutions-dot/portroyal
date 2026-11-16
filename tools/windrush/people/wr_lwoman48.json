@@ -1,0 +1,101 @@
+{
+  "name": "wr_lwoman48",
+  "era": 1948,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 0,
+    "caucasian": 1,
+    "asian": 0,
+    "gender": 0,
+    "cupsize": 0.4,
+    "firmness": 0.55,
+    "age": 0.4,
+    "weight": 0.5,
+    "height": 0.5
+  },
+  "garments": {
+    "shoes": true,
+    "woman": true,
+    "skirt": true,
+    "hem": 0.6,
+    "flare": 1.8,
+    "pleats": 9,
+    "hairvol": 0.25,
+    "bun": true,
+    "collar": "round",
+    "hat": [
+      [
+        "church",
+        "Hat"
+      ]
+    ],
+    "sleeve": 0.9
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      96,
+      72,
+      52
+    ],
+    "Skin": [
+      218,
+      178,
+      152
+    ],
+    "Shirt": [
+      118,
+      64,
+      60
+    ],
+    "Collar": [
+      226,
+      220,
+      204
+    ],
+    "Skirt": [
+      118,
+      64,
+      60
+    ],
+    "Hat": [
+      70,
+      60,
+      56
+    ],
+    "HatBand": [
+      118,
+      64,
+      60
+    ]
+  },
+  "targets": {
+    "head-round": 0.2
+  },
+  "crowd": true
+}

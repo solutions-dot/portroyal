@@ -1,6 +1,7 @@
 /* Development checks are stripped from public builds. */
 import { createStory, checkFlow, needList } from "../../../engine/story.js";
-import { checkAll, reachIssues } from "../../../engine/checks.js";
+import { checkAll, reachIssues, CHECKS } from "../../../engine/checks.js";
+import { animCheck } from "./animcheck.js";
 import {
   auditPlace,
   auditCloth,
@@ -11,7 +12,7 @@ import { ambientCheck } from "../../../engine/ambient.js";
 import { gripTick } from "../../../engine/grip.js";
 import { skinProbe } from "../../../engine/skinprobe.js";
 import { walkRoute, routeIssues } from "../../../engine/placement.js";
-import { CAST, BASES } from "./cast.js";
+import { CAST, BASES, CROWD } from "./cast.js";
 import { STEPS, TASKS, ITEMS } from "./steps.js";
 import { CHAPTERS, TALK } from "./content.js";
 import { PLACE_IDS } from "./places.js";
@@ -30,61 +31,183 @@ export async function dev(A) {
     $("autolog").textContent = lines.join("\n");
     window.__RESULT = lines;
   };
+  /* the scripted playthrough: cards and dialogue clicked through, each need done where it is, Iris walked to the gate. Used by ?auto and the shared runner. */
+  A.autoplay = async ({ first = 1, last = 85, log = [] } = {}) => {
+    A.begin();
+    A.chapterState(CHAPTERS[first - 1].first);
+    await go(CHAPTERS[first - 1].first);
+    closeAll();
+    let lastStage = -1,
+      same = 0;
+    for (let guard = 0; guard < 400 && S.stage <= last; guard++) {
+      const st = S.stage,
+        row = STEPS[st];
+      if (st !== lastStage) {
+        log.push("STEP " + st + " " + story.goal());
+        lastStage = st;
+        same = 0;
+      } else if (++same > 40) return { ok: false, why: "stalled at step " + st, stalls: ["step " + st] };
+      if (st === 85 || (q.has("one") && st > last)) {
+        closeAll();
+        break;
+      }
+      if (A.DIR.on) {
+        for (let i = 0; i < 80 && A.DIR.on; i++) A.DIR.tick(0.2);
+        await wait(25);
+        continue;
+      }
+      if (!$("card").hidden) {
+        $("cbtns").querySelector("button")?.click();
+        await wait(60);
+        continue;
+      }
+      const n = needList(row).find((n) => story.needs(n.id));
+      if (!n) {
+        await wait(60);
+        continue;
+      }
+      const p = A.where(n.id, n.kind);
+      if (!p) return { ok: false, why: "no location at step " + st };
+      S.x = p[0];
+      S.z = p[1];
+      if (n.kind === "talk") {
+        const who = world().people.find((x) => x.id === n.id);
+        S.x = who.x + Math.sin(who.m.rotation.y) * 1.3;
+        S.z = who.z + Math.cos(who.m.rotation.y) * 1.3;
+        A.talk(who);
+        for (let i = 0; i < 30 && !$("dialogue").hidden; i++) {
+          await wait(40);
+          $("next").click();
+        }
+      } else if (n.kind === "do") A.action(n.id);
+      else {
+        if (st === 75) {
+          const Q = world();
+          for (const point of Q.leadPath) {
+            S.x = point[0];
+            S.z = point[1] + 0.8;
+            for (let i = 0; i < 90; i++) A.tick(1 / 30);
+            await wait(5);
+          }
+          S.x = 2.5;
+          S.z = 6.6;
+          for (let i = 0; i < 120 && story.needs(n.id); i++) A.tick(1 / 30);
+        }
+        if (story.needs(n.id)) story.done(n.id);
+      }
+      log.push(...A.carry.issues());
+      await wait(60);
+    }
+    return { ok: S.stage === 85 || S.stage > last, why: "ended at step " + S.stage };
+  };
+  A.checkAdapter.autoplay = async () => {
+    const r = await A.autoplay({});
+    closeAll();
+    return r;
+  };
   if (q.get("test") === "all") {
+    // this game's own check, run after the shared ones: everyone in view alive, in step only by chance, heads within a person's reach, feet on the ground
+    if (!CHECKS.some((c) => c.id === "anim"))
+      CHECKS.push({
+        id: "anim",
+        needs: [],
+        run: async () => {
+          closeAll();
+          const r = await animCheck(A, { seconds: 16 });
+          return { lines: r.lines, note: r.stats.join("; ") };
+        },
+      });
     await checkAll(A.checkAdapter, CHECK_TABLES);
     return;
   }
   if (q.has("shot")) {
+    /* ?shot=<view>: a repeatable picture of a place. &t=<seconds> runs the place's life that long first (stepped, nothing drawn).
+       ?shot=film&key=departure&at=15 poses a camera scene at that moment. ?shot=title shows the title screen as a visitor sees it. */
+    const id = q.get("shot");
+    if (id === "title") {
+      window.__SHOT = true;
+      return;
+    }
     A.begin();
-    const id = q.get("shot"),
-      st =
+    const st =
         {
           yard: 10,
+          yard2: 20,
+          quay: 24,
           poster: 24,
           thumbnail: 24,
           ship: 24,
           deck: 30,
+          deck2: 30,
+          tilbury: 40,
+          tilbury2: 40,
           london: 50,
+          room: 55,
           work: 60,
           jamaica: 64,
           elder: 72,
+          home: 75,
           advice: 80,
           people: 10,
+          film: q.get("key") === "arrival" ? 35 : 25,
         }[id] || 10;
     await go(st);
     closeAll();
     const views = {
-      yard: { pos: [7, 3.2, 15], look: [-3, 1, 0] },
-      thumbnail: { pos: [-125, 20, -110], look: [-25, 0, -29] },
+      yard: { pos: [7, 2.2, 14.5], look: [-2, 1, 0] },
+      yard2: { pos: [-1, 1.3, 10], look: [4, 1.0, 2] },
+      quay: { pos: [-12, 1.6, 18], look: [6, 3, -6] },
+      thumbnail: { pos: [-118, 16, -96], look: [-6, 7, -18] },
       poster: { pos: [-62, 9, 45], look: [-5, 9, -25] },
-      ship: { pos: [-35, 8, 22], look: [0, 11, -25] },
-      deck: { pos: [0, 2.4, 16], look: [0, 4, -20] },
-      london: { pos: [4, 2.6, 16], look: [-5, 2, -6] },
-      work: { pos: [-4, 2.7, 15], look: [3, 2, 20] },
-      jamaica: { pos: [4, 2.8, 14], look: [1, 1, -1] },
-      elder: { pos: [-2.4, 1.65, 4], look: [-4, 1.35, 2] },
-      advice: { pos: [-5, 2, 10], look: [1, 1.1, -1] },
+      ship: { pos: [-35, 5, 24], look: [0, 9, -16] },
+      deck: { pos: [0, 1.4, 18.6], look: [0, 1.2, 0] },
+      deck2: { pos: [-5.4, 1.4, -4], look: [5, 0.8, 8] },
+      tilbury: { pos: [9, 1.55, 14], look: [-4, 2, 6] },
+      tilbury2: { pos: [-14, 3, 26], look: [6, 4, -8] },
+      london: { pos: [15.5, 1.55, 3.5], look: [0, 1.6, -2] },
+      room: { pos: [-12.9, 1.28, -6.6], look: [-15, 1.0, -9.5] },
+      work: { pos: [12, 1.55, 3], look: [-4, 1.6, -4] },
+      jamaica: { pos: [4, 1.3, 12], look: [1, 1, 0] },
+      elder: { pos: [-1.6, 1.28, -0.4], look: [-4.6, 0.9, -1.6] },
+      home: { pos: [2.5, 1.28, 9], look: [2.5, 1.4, 0] },
+      advice: { pos: [0, 1.28, 6], look: [1.5, 0.9, -2] },
     };
     S.view = views[id] || views.yard;
+    if (q.has("t")) {
+      const draw = A.renderer.render;
+      A.renderer.render = () => {};
+      for (let i = 0, n = Number(q.get("t")) * 30; i < n; i++) A.tick(1 / 30, performance.now() + i * 33);
+      A.renderer.render = draw;
+    }
     if (id === "thumbnail") {
-      A.camera.fov = 32;
+      A.camera.fov = 30;
       A.camera.updateProjectionMatrix();
+    }
+    if (id === "film") {
+      S.view = null;
+      A.DIR.start(q.get("key") || "departure");
+      A.DIR.paused = true;
+      A.DIR.time = Number(q.get("at") || 0);
+      for (let t = 0; t <= A.DIR.time; t += 0.25) A.DIR.apply(t);
+      $("cineControls").hidden = !q.has("ui");
+      if (!q.has("ui")) document.body.classList.remove("cine");
     }
     if (id === "people") {
       world().group.visible = false;
-      for (let i = 0; i < BASES.length; i++) {
-        const base = BASES[i];
+      const list = q.has("b") ? q.get("b").split(",") : BASES;
+      for (let i = 0; i < list.length; i++) {
+        const base = list[i];
         await A.loadBase(base);
-        const spec = Object.values(CAST).find((x) => x.base === base),
+        const spec = Object.values(CAST).find((x) => x.base === base) || CROWD[base] || {},
           { m } = A.body({
             ...spec,
             base,
-            x: ((i % 5) - 2) * 2.2,
-            z: -Math.floor(i / 5) * 3,
+            x: ((i % 6) - 2.5) * 1.3,
+            z: -Math.floor(i / 6) * 2.2,
           });
         A.scene.add(m);
       }
-      S.view = { pos: [0, 7.5, 14], look: [0, 1, -3] };
+      S.view = { pos: [0, 2.2, 6.5], look: [0, 1, -2] };
     }
     $("hud").hidden = true;
     window.__SHOT = true;
@@ -126,7 +249,7 @@ export async function dev(A) {
   for (const Q of Object.values(worlds)) {
     const bad = [];
     for (const n of Q.people)
-      if (A.blocked(Q, n.x, n.z, 0.23)) bad.push(n.id + " inside a solid");
+      if (!n.m.userData.seatAnchor && A.blocked(Q, n.x, n.z, 0.23)) bad.push(n.id + " inside a solid");
     const targets = Object.entries(TASKS)
       .filter(([, t]) => t.place === Q.id)
       .flatMap(([id, t]) =>
@@ -159,15 +282,19 @@ export async function dev(A) {
   const test = q.get("test");
   if (["audit", "collision", "seating"].includes(test))
     for (const Q of Object.values(worlds)) {
+      const pp = (n) => ({ id: n.id, x: n.x, z: n.z, m: n.m, anim: n.m.userData.seatAnchor ? "SitIdle" : "Idle", h: 1.75 * (n.scale || 1), r: (n.scale || 1) < 0.9 ? 0.2 : 0.25, path: n.amb?.spec?.pts || (n.amb?.spec?.from ? [n.amb.spec.from, n.amb.spec.to] : null) });
       const r = auditPlace({
         id: Q.id,
         snap: Q.snap,
-        npcs: Q.people,
+        npcs: [...Q.people, ...Q.extras].map(pp),
         walls: Q.walls,
         bounds: Q.bounds,
         start: Q.start,
-        actions: Object.values(Q.points).map((p) => ({ ...p, r: 2.3 })),
-        people: Q.people,
+        actions: [
+          ...Object.values(Q.points).map((p) => ({ ...p, r: 2.3 })),
+          ...Object.entries(TASKS).filter(([, t]) => t.place === Q.id).flatMap(([id, t]) => [{ label: id + " pick", x: t.from[0], z: t.from[1], r: 1 }, { label: id + " place", x: t.to[0], z: t.to[1], r: 1 }]),
+        ],
+        people: Q.people.map(pp),
         routes: Q.routes,
       });
       const errors = [...r.floating, ...r.inside, ...r.stuck];
@@ -313,67 +440,16 @@ export async function dev(A) {
     closeAll();
     results.push("LAYOUT UI " + bad.length, ...bad);
   }
+  if (test === "anim") {
+    const r = await animCheck(A, { seconds: Number(q.get("s") || 20), only: q.has("p") ? q.get("p").split(",") : null, films: !q.has("nofilms") });
+    results.push("ANIM " + r.lines.length, ...r.lines, ...r.stats);
+  }
   if (q.has("auto")) {
     const first = Math.max(1, Number(q.get("auto")) || 1),
       last = q.has("one") ? CHAPTERS[first - 1].last : 85;
-    A.chapterState(CHAPTERS[first - 1].first);
-    await go(CHAPTERS[first - 1].first);
-    closeAll();
-    for (let guard = 0; guard < 360 && S.stage <= last; guard++) {
-      const st = S.stage,
-        row = STEPS[st];
-      results.push("STEP " + st + " " + story.goal());
-      if (st === 85) {
-        closeAll();
-        break;
-      }
-      if (A.DIR.on) {
-        for (let i = 0; i < 80 && A.DIR.on; i++) A.DIR.tick(0.2);
-        await wait(25);
-        continue;
-      }
-      if (!$("card").hidden) {
-        $("cbtns").querySelector("button")?.click();
-        await wait(30);
-        continue;
-      }
-      const n = needList(row).find((n) => story.needs(n.id));
-      if (!n) {
-        results.push("FAIL no task " + st);
-        break;
-      }
-      const p = A.where(n.id, n.kind);
-      if (!p) {
-        results.push("FAIL no location " + st);
-        break;
-      }
-      S.x = p[0];
-      S.z = p[1];
-      if (n.kind === "talk") {
-        A.talk(world().people.find((x) => x.id === n.id));
-        for (let i = 0; i < 30 && !$("dialogue").hidden; i++) $("next").click();
-      } else if (n.kind === "do") A.action(n.id);
-      else {
-        if (st === 75) {
-          const draw = A.renderer.render;
-          A.renderer.render = () => {};
-          const Q = world();
-          for (const point of Q.leadPath) {
-            S.x = point[0];
-            S.z = point[1];
-            for (let i = 0; i < 180; i++) A.tick(1 / 30);
-          }
-          S.x = 0;
-          S.z = -6;
-          A.renderer.render = draw;
-        }
-        story.done(n.id);
-      }
-      results.push(...A.carry.issues());
-      await wait(30);
-    }
+    const r = await A.autoplay({ first, last, log: results });
     results.push("AUTO END " + S.stage);
-    if (S.stage !== 85 && !q.has("one")) results.push("FAIL incomplete story");
+    if (!r.ok) results.push("FAIL " + r.why);
   }
   emit(results);
 }
