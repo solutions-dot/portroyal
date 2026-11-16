@@ -162,6 +162,7 @@ test('the wall rectangles made for the audits cover the ground you may not walk 
 import './story.mjs';
 import './ambient.mjs';
 import './checks.mjs';
+import './kendal.mjs';
 
 test('a follower keeps out of your personal space, steps aside when you walk back into them, and never stands in a wall', async () => {
   const { follow, tick, watch, drive } = await import('../engine/follow.js');
