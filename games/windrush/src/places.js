@@ -201,8 +201,8 @@ function yard(id) {
   // neighbours: a woman bringing a basket in on her head, an old woman resting under the breadfruit tree, dominoes on the piazza, children at play
   crowd(Q, "wr_kwoman48", 14.0, 14.0, Math.PI, { kind: "errand", from: [14.0, 14.0], to: [13.6, -3.2], walk: "CarryHeadWalk", idle: "CarryHeadIdle", wait: [5, 9] }, { held: "headload" });
   crowd(Q, "wr_kelder48", -11.5, 6.6, Math.PI / 2, { kind: "sit", seat: { top: 0.485, x: -11.5, z: 6.6, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] }, { raw: true });
-  crowd(Q, "wr_kman48", 8.35, 11.6, Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 8.35, z: 11.6, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitTalk"], group: "dom" });
-  crowd(Q, "wr_tman48b", 9.65, 11.6, -Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 9.65, z: 11.6, ry: -Math.PI / 2 }, clips: ["SitIdle", "SitTalk"], group: "dom" });
+  crowd(Q, "wr_kman48", 8.35, 11.6, Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 8.35, z: 11.6, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitIdle"] });
+  crowd(Q, "wr_tman48b", 9.65, 11.6, -Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 9.65, z: 11.6, ry: -Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] });
   crowd(Q, "wr_kboy48", -4, 11, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   crowd(Q, "wr_kgirl48", -2, 12, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   Q.ambient[Q.ambient.length - 1].behaviour.chase = Q.ambient[Q.ambient.length - 2].id;
@@ -792,8 +792,8 @@ function centre18() {
   person(Q, "asha", "asha18", 2.2, -3.4, 0, { kind: "sit", seat: { top: 0.455, x: 2.2, z: -3.4, ry: 0 }, clips: ["SitIdle2", "SitIdle"] }, { raw: true });
   person(Q, "iris", "iris79", 1.4, -1.6, Math.PI, { kind: "sit", seat: { top: 0.455, x: 1.4, z: -1.6, ry: Math.PI }, clips: ["SitIdle", "SitIdle2"] }, { raw: true });
   person(Q, "anita", "anita18", 3.3, -0.7, face(3.3, -0.7, 1.4, -1.6), { kind: "watch", at: [1.6, -2.4], idles: ["Idle"], react: ["Nod", "Agree"], every: [4, 8] });
-  crowd(Q, "wr_elder18", -7.1, 3.8, Math.PI / 2, { kind: "sit", seat: { top: 0.455, x: -7.1, z: 3.8, ry: Math.PI / 2 }, clips: ["SitIdle", "SitTalk"], group: "w1" });
-  crowd(Q, "wr_man18", -7.1, 3.2, Math.PI / 2, { kind: "sit", seat: { top: 0.455, x: -7.1, z: 3.2, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitTalk"], group: "w1" });
+  crowd(Q, "wr_elder18", -7.1, 3.8, Math.PI / 2, { kind: "sit", seat: { top: 0.455, x: -7.1, z: 3.8, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] });
+  crowd(Q, "wr_man18", -7.1, 3.2, Math.PI / 2, { kind: "sit", seat: { top: 0.455, x: -7.1, z: 3.2, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitIdle"] });
   crowd(Q, "wr_woman18", -5.2, 6.45, Math.PI, { kind: "work", clips: ["Idle", "LookAround", "Nod"], work: [4, 8], face: [-5.2, 3] });
   crowd(Q, "wr_wman18", 4.8, 4.2, face(4.8, 4.2, 5.4, 5.6), { kind: "chat", group: "t1", at: [5.2, 3.8] });
   crowd(Q, "wr_girl18", 5.8, 3.6, 0, { kind: "chat", group: "t1" }, { kid: true });
