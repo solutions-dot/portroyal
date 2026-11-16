@@ -93,3 +93,8 @@ Helper branches still being worked on (`claude/selassie-places` is merged into t
 - `claude/windrush-review`: full review, ship, docks, animated water, its own Jamaican home (it copied Selassie's yard; owner says no shared places).
 - `claude/kendal-par`, `claude/garvey-par` (also: hats must hang over pegs, add an audit check), `claude/nanny-par`, `claude/port-royal-par`.
 Still to do: par wave 2 (Bog Walk, Eventide, Melissa, Tivoli), re-run ?test=all for Garvey, Nanny, Bog Walk (timed out on a busy machine), then the full 10-game suite and one PR to main.
+
+
+## Main consolidation: 16 November 2026
+
+The owner approved the non-people changes for main. Selassie people revisions and their updated thumbnail are held for a separate PR. Main keeps its existing character models and character-building recipes/scripts; previous people checklists above are historical. The current consolidation review and branch inventory are in `docs/reviews/outstanding-branches-20261116.md`. Automatic Vercel deployments for main are disabled under the owner's earlier no-deploy instruction.

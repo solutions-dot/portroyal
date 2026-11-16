@@ -43,7 +43,9 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "review/consolidate-outstanding-branches-20261116": false
+      "review/consolidate-outstanding-branches-20261116": false,
+      "review/consolidated-game-updates-20261116": false,
+      "main": false
     }
   }
 }

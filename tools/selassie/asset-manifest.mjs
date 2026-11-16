@@ -38,7 +38,6 @@ const report = {
   finishingSHA256: hash("tools/selassie/finish_person.py"),
   uniformSHA256: hash("tools/selassie/imperial_uniform.py"),
   faceSHA256: hash("tools/selassie/imperial_face.py"),
-  locsSHA256: hash("tools/selassie/locs.py"),
   models: [],
 };
 for (const f of readdirSync("games/selassie/site/models")

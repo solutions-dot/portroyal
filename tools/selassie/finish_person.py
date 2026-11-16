@@ -18,34 +18,6 @@ if P['name']=='sel_adina66':
         if NECK-.10<v.co.z<NECK+.02 and abs(v.co.x)<SX*.8:
             v.co+=v.normal*.006
     changed=True
-if kind=='locks' and P['body'].get('gender',0)>.9:
-    # These male crowd shirts were inflated into a rounded chest by the loose
-    # torso envelope. Fit a plain shirt front over the actual skin, with one
-    # straight drape across the chest, keeping sleeves and shoulders unchanged.
-    shirt=PART['shirt']; z0=HIP+.12; z1=SH.z+.025
-    samples=[]
-    for i in range(65):
-        z=z0+(z1-z0)*i/64; hits=[]
-        for j in range(13):
-            x=SX*.72*(j/6-1)
-            hit=SKIN.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]
-            if hit:hits.append(hit.y)
-        samples.append(min(hits)-.012 if hits else None)
-    moved=0; biggest=0
-    for obj,gap in [(shirt,0),(bpy.data.objects.get('Collar'),.003)]:
-        if not obj:continue
-        for v in obj.data.vertices:
-            x,y,z=v.co
-            if not (z0<z<z1 and abs(x)<SX*.98 and y<J('Head').y):continue
-            k=(1-sstep(SX*.64,SX*.98,abs(x)))*sstep(z0,z0+.04,z)*(1-sstep(z1-.055,z1,z))
-            fi=(z-z0)/(z1-z0)*64; i=min(63,max(0,int(fi))); t=fi-i
-            if samples[i] is None or samples[i+1] is None:continue
-            front=samples[i]*(1-t)+samples[i+1]*t-gap
-            delta=min(.06,max(0,front-y))*k
-            if delta>1e-5:v.co.y+=delta;moved+=1;biggest=max(biggest,delta)
-        obj.data.update()
-    print('MALE CROWD SHIRT FIT',P['name'],moved,'points, max correction',round(biggest,4))
-    changed=True
 if kind:
     changed=True
     hy=J('Head').y
@@ -184,12 +156,6 @@ for o in mesh_objects:
     if o.name in ('Skirt','Breeches','Apron','JacketSkirt','CoatSkirt'):
         proxy=o.copy();proxy.data=o.data.copy();proxy.name=o.name+'Measure';proxy['measureOnly']=True;bpy.context.scene.collection.objects.link(proxy)
 crowdmat=colmat('Crowd');COL['Crowd']=Vector((1,1,1))
-# The eyes have no painted colours. Joined to painted meshes, they would take a black, fully transparent 'Col' (alpha 0), and the game
-# draws the eye material see-through: every joined body looked out of empty, pale sockets. Give them white, opaque colours first.
-for o in mesh_objects:
-    if o.data.color_attributes.get('Col') is None:
-        ca=o.data.color_attributes.new('Col','FLOAT_COLOR','CORNER')
-        for c in ca.data:c.color=(1,1,1,1)
 for o in mesh_objects:
     colours=o.data.color_attributes.get('Col')
     if colours:

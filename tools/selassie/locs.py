@@ -19,12 +19,12 @@ from mathutils.bvhtree import BVHTree
 def _tree(o):
     b = bmesh.new(); b.from_mesh(o.data); t = BVHTree.FromBMesh(b); b.free(); return t
 
-def _bind(o, wfun, anchored=None):
+def _bind(o, wfun):
     """weights per vertex from wfun(v.co) -> {bone: weight}"""
     for g in h.vertex_groups:
         if g.name not in o.vertex_groups: o.vertex_groups.new(name=g.name)
     for v in o.data.vertices:
-        for bone, w in ({'Head': 1.0} if anchored and v.index in anchored else wfun(v.co)).items():
+        for bone, w in wfun(v.co).items():
             if w > 1e-4: o.vertex_groups['mixamorig:' + bone].add([v.index], w, 'REPLACE')
     o.parent = rig; o.modifiers.new('Armature', 'ARMATURE').object = rig; clothes.append(o)
 
@@ -55,7 +55,7 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None):
     hy = J('Head').y
     C = Vector((0, hy + 0.004, HEAD + 0.075))      # about the middle of the skull
     hair_obj = bpy.data.objects.get('Hair')
-    trees = [SKIN] + ([_tree(hair_obj)] if hair_obj else [])
+    trees = [tree] + ([_tree(hair_obj)] if hair_obj else [])
     shirt = PART.get('shirt'); ST = _tree(shirt) if shirt else None
     def surface(d):
         far = 0
@@ -81,10 +81,10 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None):
         d = Vector((math.sin(a) * math.cos(e), -math.cos(a) * math.cos(e), math.sin(e)))
         R = surface(d)
         if R <= 0: continue
+        p = C + d * (R + 0.004)
         side = abs(math.sin(a))
         L = rnd.uniform(0.12, 0.22) if front > -0.45 else rnd.uniform(0.18, long_back)
         r0 = rnd.uniform(0.0055, 0.0095)
-        p = C + d * (R - r0 * .65)  # embed the root in visible hair, not a hidden body helper
         # grow: first out from the scalp, then down under its weight; side locs drift back
         # start along the scalp, back and down (a lock lies on the head before it hangs), never up into the air
         dirv = (d * 0.25 + Vector((0, 0.55, -0.8))).normalized()
@@ -98,11 +98,10 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None):
                 Rq = surface(dq.normalized())
                 if Rq > 0 and dq.length < Rq + r0 + 0.005: q = C + dq.normalized() * (Rq + r0 + 0.005)
             # clear of the skin and the shirt below the head
-            for t in [SKIN] + ([ST] if ST else []):
+            for t in [tree] + ([ST] if ST else []):
                 loc, nrm, _i, dist = t.find_nearest(q, 0.06)
-                clearance = .055 if t is ST else .012
-                if loc is not None and (q - loc).dot(nrm) < r0 + clearance:
-                    q = loc + nrm * (r0 + clearance)
+                if loc is not None and (q - loc).dot(nrm) < r0 + 0.012:
+                    q = loc + nrm * (r0 + 0.012)
             # side locs end above the shoulder, so a raised arm never meets them
             if side > 0.55 and front > -0.75 and q.z < SH.z + 0.06: break
             # below the base of the neck only a band down the middle of the back: the shirt over the shoulders and shoulder
@@ -112,12 +111,10 @@ def make_locs(seed, count, long_back, hair_rgb, grey=0.0, roots=None):
         if len(pts) < 3: continue
         rings = _strand(bm, pts, r0)
         strands.append((rings, rnd.uniform(0.75, 1.15), rnd.random() < grey))
-    bm.verts.index_update()
-    anchored = {v.index for rings, _, _ in strands for ring in rings[:2] for v in ring}
     me = bpy.data.meshes.new('Locks'); bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me)
     o = bpy.data.objects.new('Locks', me); bpy.context.scene.collection.objects.link(o)
     me.materials.append(colmat('Hair'))
-    _bind(o, _locs_weights, anchored)
+    _bind(o, _locs_weights)
     paint(o)
     # each lock its own shade (and some grey on an elder), tips a little lighter
     ca = o.data.color_attributes.get('Col')
@@ -143,7 +140,7 @@ def make_tam(seed):
     hy = J('Head').y
     C = Vector((0, hy + 0.004, HEAD + 0.075))
     hair_obj = bpy.data.objects.get('Hair')
-    trees = [SKIN] + ([_tree(hair_obj)] if hair_obj else [])
+    trees = [tree] + ([_tree(hair_obj)] if hair_obj else [])
     def surface_at(p, d):
         far = 0
         for t in trees:

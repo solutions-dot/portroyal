@@ -3,7 +3,7 @@ Full-size tunic, pale shirt/tie, red gorget tabs, ribbons, Sam Browne belt and
 braided gold cords. No photograph is embedded in the model.
 """
 from mathutils import Matrix
-COL['Insignia']=srgb([180,151,81]);COL['Star']=COL['Insignia'];COL['Gorget']=srgb([157,41,36])
+COL['Insignia']=srgb([180,151,81]);COL['Gorget']=srgb([157,41,36])
 # The uniform's fitted lapels replace the civilian suit's broad lapels.
 old_lapels=bpy.data.objects.get('Lapels')
 if old_lapels:bpy.data.objects.remove(old_lapels,do_unlink=True)
@@ -35,12 +35,6 @@ for sx in [-1,1]:
         rows.append([bm.verts.new((sx*(inner+(outer-inner)*k/5),front(sx*(inner+(outer-inner)*k/5),z,.009),z)) for k in range(6)])
     quadstrip(bm,rows);o=soft('Tunic lapel',bm,'Jacket',src=PART['shirt']);paint(o)
 
-# The shirt collar sits just inside the tunic's collar at the sides of the neck (on his slighter neck a point of it came through)
-collar=bpy.data.objects.get('Collar')
-if collar:
-    nc=J('Neck')
-    for v in collar.data.vertices:
-        if abs(v.co.x)>.05:v.co.x=v.co.x*.97;v.co.y=nc.y+(v.co.y-nc.y)*.97
 # Lower, close-fitting crown, as in the arrival-day salute photograph.
 cap=bpy.data.objects.get('Cap')
 band=bpy.data.objects.get('CapBand')
@@ -52,23 +46,6 @@ if cap:
         v.co.x*=.93;v.co.y=hy+(v.co.y-hy)*.95;v.co.z=floor+(v.co.z-floor)*ratio
 if band:
     for v in band.data.vertices:v.co.x*=.93;v.co.y=hy+(v.co.y-hy)*.95
-# In the photographs the peak sits just above the eyebrows. The cap goes down onto the brow (CAP_DROP), opened out just enough
-# to stay clear of the wider brow below, and the hair under it is kept inside it (the cloth check tests hair through the cap).
-CAP_DROP=.012
-if cap:
-    floor=min(v.co.z for v in cap.data.vertices);roof=max(v.co.z for v in cap.data.vertices)
-    for o in (cap,band):
-        if not o:continue
-        for v in o.data.vertices:
-            # the bottom comes down, the crown's top stays where it was (the skull must stay inside it)
-            k=1-max(0.,min(1.,(v.co.z-floor)/(roof-floor)))
-            v.co.z-=CAP_DROP*k;v.co.x*=1+.035*k;v.co.y=hy+(v.co.y-hy)*(1+.03*k)
-    # the 1963 and 1967 profiles show the crown standing up high at the front, over the badge, and lower at the back
-    ry=max(abs(v.co.y-hy) for v in cap.data.vertices)
-    for v in cap.data.vertices:
-        up=max(0.,min(1.,(v.co.z-floor)/(roof-floor)-.45)/.55)
-        fwd=max(0.,-(v.co.y-hy)/ry)
-        v.co.z+=.024*up*fwd**1.5
 # Raised golden cap crest and a black polished peak beneath its red band.
 band=bpy.data.objects.get('CapBand')
 if band:
@@ -96,22 +73,19 @@ for row in range(9):
             x=.047+col*.018+stripe*.0053
             patch('Ribbon',x,NECK-.14-row*.007,.0051,.0048,'Ribbon'+str((col+row*2+stripe)%6),.018)
 # Small flat service stars below the ribbon rack.
-for i in (0,2):   # two stars: a third, between them, sat where the tunic's front dips and read as under the cloth
+for i in range(3):
     x=.054+i*.022;z=NECK-.211;bm=bmesh.new();ring=[]
     for k in range(10):
         a=k/10*math.pi*2;r=.007 if k%2==0 else .0032
         xx=x+math.sin(a)*r;zz=z+math.cos(a)*r
         ring.append(bm.verts.new((xx,front(xx,zz,.016),zz)))
-    f=bm.faces.new(ring);bm.normal_update()
-    if f.normal.y>0:bmesh.ops.reverse_faces(bm,faces=[f])   # facing out from the chest, as patch() does: a star facing in reads as cloth under the tunic
-    o=soft('Service star',bm,'Star',src=tunic);paint(o)
+    bm.faces.new(ring);o=soft('Service star',bm,'Insignia',src=tunic);paint(o)
 # Four pocket flaps and centre buttons give the long tunic its period outline.
 for sx in [-1,1]:
     patch('Breast pocket',sx*.095,NECK-.24,.077,.024,'Jacket',.006)
     patch('Hip pocket',sx*.12,HIP-.035,.092,.035,'Jacket',.006)
 for i in range(4):
-    z=NECK-.18-i*(NECK-.18-HIP-.22)/3   # spaced down to just above the belt: on his shorter body fixed steps put the lowest over the trousers
-    sphere('Tunic button',(0,front(0,z,.010),z),(.006,.006,.006),'Insignia','Spine2',tunic)
+    z=NECK-.18-i*.082;sphere('Tunic button',(0,front(0,z,.010),z),(.006,.006,.006),'Insignia','Spine2',tunic)
 # Broad brown waist belt over the jacket and diagonal shoulder strap.
 bm=bmesh.new();rows=[]
 for z in [HIP+.035,HIP+.092]:
@@ -161,12 +135,12 @@ for sx in [-1,1]:
     for j in range(3):
         y=hy-.025+j*.025;row=[]
         for i in range(5):
-            x=sx*(.100+i*.016)*SX/.183   # to the shoulder joint, on any body (it was built on a wider one)
+            x=sx*(.105+i*.019)
             hit=jt.ray_cast(Vector((x,y,NECK+.2)),Vector((0,0,-1)))[0]
             z=(hit.z if hit else NECK-.055)+.005
             row.append(bm.verts.new((x,y,z)))
         rows.append(row)
-    quadstrip(bm,rows);o=soft('Shoulder board',bm,'Jacket',src=tunic);smooth_rows(o,per=15,win=0);paint(o)   # every point of the board shares one set of weights, so its outer end cannot jut as the arm moves
+    quadstrip(bm,rows);o=soft('Shoulder board',bm,'Jacket',src=tunic);paint(o)
     ca=o.data.color_attributes.get('Col')
     for f in o.data.polygons:
         for li in f.loop_indices:

@@ -2,11 +2,11 @@
 
 Review date: 16 November 2026 (America/Jamaica).
 
-Base: `main` at `3aa66d351de005891ecb5e9d0c6703ee468f8aab`. The remote was fetched again before publishing. This PR combines branch work for review; it does not merge main or deploy.
+Base: `main` at `3aa66d351de005891ecb5e9d0c6703ee468f8aab`. The remote was fetched again before publishing. The non-people changes are approved for main. Selassie character revisions are withheld for a separate PR. Automatic Vercel deployments for main remain disabled to preserve the owner's no-deploy instruction.
 
 ## Coverage
 
-Reviewed all 44 non-main remote branch heads and ten local branches. Fifteen remote heads contained commits outside main; the other 29 were already ancestors of main. All reviewed heads are ancestors of this integration branch. Source branches are retained.
+Reviewed all 44 non-main remote branch heads and ten local branches. Fifteen remote heads contained commits outside main; the other 29 were already ancestors of main. All reviewed heads are ancestors of this integration branch. The final separation commit deliberately restores Selassie character assets and their builder to main's existing versions; those changes will be proposed separately. Source branches are retained.
 
 The largest source branch is `claude/affectionate-pasteur-xvhvlq`. It includes the Garvey, Kendal, Selassie, Windrush and shared UI review branches. Other helper branches were compared against this newer combined implementation before resolving overlaps.
 
@@ -32,7 +32,6 @@ The largest source branch is `claude/affectionate-pasteur-xvhvlq`. It includes t
 - The Windrush route-card task now points at the clear approach in front of the map table, outside the new ship cabin footprint. Camera probes retain the drawn scene while chapter state is changing.
 - Six older games keep the standard Unlock All and Restart chapter labels at runtime, instead of overwriting the HTML labels.
 - Switching Tivoli chapters now removes the old walking scene and story people first. The browser reproduced six people in chapter 2 before this fix. The read-instead route also stops the old walk, and stale title timers are cancelled.
-- Selassie crowd locs now root in visible scalp/hair geometry, with the first two rings following the head. The previous root fit included hidden MakeHuman helper shapes. Beards follow the skin bone weights and use a full jaw contour. The five Rastafari recipes use narrow neckbands; male shirt fronts receive a skin-clearance fit. Updated the airport thumbnail from the actual game render.
 - The menu badge regression now checks all ten cards by game identifier, including Port Royal and Bog Walk.
 
 ## Substantive source changes to review
@@ -40,6 +39,8 @@ The largest source branch is `claude/affectionate-pasteur-xvhvlq`. It includes t
 The incoming contributor rule allows clearly labelled imagined everyday words for some real people, as recorded in the source branch. Garvey still uses only sourced words; Nanny never speaks; Selassie and Planno have no invented words. This is a content-policy change as well as a visual/gameplay integration.
 
 ## Verification
+
+The original combined candidate passed the checks below. After separating the Selassie people work, `npm test`, the ten-game public build and the Selassie public UI flow were repeated against the preserved main assets.
 
 - `npm test`: 222 tests pass, zero failures; content lint has 45 known findings and zero new findings.
 - `node tools/selassie/test.mjs`: five story tests pass.
@@ -50,29 +51,16 @@ The incoming contributor rule allows clearly labelled imagined everyday words fo
 - Tivoli native chapter switching, all seven walking chapters' conversations and endings, and chapter 5's read-instead route pass. The pre-fix browser run reproduced six story people in chapter 2; the fixed run keeps three.
 - Public build: all ten games pass native Chapters -> Start -> Journal -> Main Menu flow at 390px. Chapter footer actions fit in one row, in the correct order, with at least 44px height. Tivoli and Nanny also pass at 320px.
 - Public menu: desktop and mobile contact dialogs open and close; all ten card destinations return HTTP 200; the creator pill is last and shares the desktop row. Hover text remains dark against the cream background.
-- Selassie: all five revised crowd recipes and their light copies report `CLOTH 0` in Idle, Walk, Talk1 and Wave poses. All 75 packed models decode in the asset manifest. Close-up renders include head turns and the updated airport poster.
 
-Browser report JSON and screenshots are generated under ignored `build/integration-review/` by `tools/review/integration-browser.mjs` and `tools/review/selassie-crowd.mjs`. They run one Chromium instance at a time. Set `PW_MODULE`, `CHROME` and `REVIEW_BASE` for the local environment. Use a dev build served from the repository root for `core`, `play`, `legacy`, `tivoli` and `cloth`; use the public dist server for `ui` and `menu`.
+Browser report JSON and screenshots are generated under ignored `build/integration-review/` by `tools/review/integration-browser.mjs`. They run one Chromium instance at a time. Set `PW_MODULE`, `CHROME` and `REVIEW_BASE` for the local environment. Use a dev build served from the repository root for `core`, `play`, `legacy`, `tivoli` ; use the public dist server for `ui` and `menu`.
 
 ## Known review limits
 
-This is a draft for the requested second review. The roughly 3,200-triangle phone background crowd models remain visibly coarse in extreme close-ups, particularly faces. The full detail models and roughly 6,200-triangle light copies are separate assets. Passing cloth checks does not certify facial likeness or every visual detail. The screenshots below make that distinction visible.
+Selassie packed people models, generation scripts and recipes, the airport thumbnail and character close-up proof are unchanged from the original main. Their unfinished revisions are being developed in a separate people PR. They are not accepted by this consolidation.
 
 The existing contact form opens an email draft addressed to `miramoraiinteractive@gmail.com`; the visitor must send it from their email app.
 
 Content lint retains 45 explicitly baselined findings across Bog Walk, Eventide, Melissa and Tivoli. It reports zero new findings. This integration does not claim to clear that existing writing debt or every existing clothing/held-item visual audit. Software Chromium checks are not a substitute for physical iOS/Android performance testing or historical/community review.
-
-## Visual review samples
-
-Full detail recipe after the fit and attachment corrections:
-
-![Full detail crowd recipe](images/selassie-crowd-full.png)
-
-Phone background version in an extreme close-up, retained as a review limitation:
-
-![Phone background crowd close-up](images/selassie-crowd-phone.png)
-
-The refreshed airport thumbnail is [menu/selassie.jpg](../../menu/selassie.jpg).
 
 ## Remote branch snapshot
 
