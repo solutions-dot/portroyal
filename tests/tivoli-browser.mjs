@@ -27,8 +27,15 @@ try {
   await page.locator('#creditsclose').click();
   check(await page.locator('#chapters').isVisible(),width+': credits returns to chapters');
   await page.locator('#chclose').click();
-  await page.locator('#jbtn').click();
+  await page.locator('#hud').evaluate(el=>{el.hidden=false});
+  await page.locator('#jhud').click();
   check(await page.locator('#journal').isVisible(),width+': journal opens');
+  check(await page.locator('#journal .book').isVisible(),width+': book-style journal visible');
+  check(await page.locator('#jchap').isVisible(),width+': journal Chapters footer visible');
+  await page.locator('#jchap').click();
+  check(await page.locator('#chapters').isVisible(),width+': journal Chapters navigation works');
+  await page.locator('#chclose').click();
+  await page.locator('#jhud').click();
   await page.locator('#jclose').click();
   check(!(await page.locator('#journal').isVisible()),width+': journal closes');
   check(await page.locator('#dpad button').count()===4,width+': four touch arrows exist');
