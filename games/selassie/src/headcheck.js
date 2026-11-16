@@ -7,7 +7,7 @@
    (over 0.1 s). In the cinematic it also tests the camera: never inside the aircraft, the steps or a person, never under the ground,
    and never on an empty view (nothing of the event in the frame) for more than 2 seconds. */
 import * as THREE from "three";
-import { DC6, radiusAt } from "./aircraft.js";
+import { DC6, radiusAt, centreY } from "./aircraft.js";
 import { closeAll } from "./ui.js";
 export const LIMIT = { yaw: 80, pitch: 60, speed: 320 };
 const D2R = Math.PI / 180;
@@ -63,7 +63,7 @@ function cameraIssue(Q, camera) {
   if (p) {
     const l = p.worldToLocal(c.clone());
     const r = radiusAt(l.x);
-    if (r > 0 && Math.hypot(l.y - DC6.Y0, l.z) < r + 0.3) return "inside the aircraft's body";
+    if (r > 0 && Math.hypot(l.y - centreY(l.x), l.z) < r + 0.3) return "inside the aircraft's body";
     const s = Math.abs(l.z),
       le = 2.0 + (-0.9 - 2.0) * Math.min(1, Math.max(0, (s - 1) / 16.9)),
       te = -4.0 + (-2.5 + 4.0) * Math.min(1, Math.max(0, (s - 1) / 16.9)),
