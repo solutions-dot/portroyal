@@ -138,7 +138,11 @@
   .game.melissa:hover .play,.game.melissa:focus-visible .play{background:var(--paper)}
   .game.melissa .tag{position:absolute;top:clamp(.8rem,1.6vw,1.2rem);left:clamp(.8rem,1.6vw,1.2rem);margin:0;background:#d6c8f5;color:var(--deep);font-weight:800;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;padding:.35rem .8rem;border-radius:999px}
   /* Tivoli: the quiet street from the game (?shot=poster), with nobody in it. */
-  .game.tivoli{background:#0b5d36 url(tivoli.jpg) center 40%/cover no-repeat}
+  .game.tivoli{background:#0b5d36;overflow:hidden}
+  /* Animate the scene photograph, not the card or its controls. */
+  .game.tivoli::before{content:"";position:absolute;inset:-4%;z-index:-2;background:url(tivoli.jpg) center 40%/cover no-repeat;animation:tivoli-scene-drift 24s ease-in-out infinite alternate;pointer-events:none}
+  @keyframes tivoli-scene-drift{from{transform:scale(1) translate3d(-.6%,0,0)}to{transform:scale(1.055) translate3d(.6%,-.6%,0)}}
+  @media(prefers-reduced-motion:reduce){.game.tivoli::before{animation:none;transform:none}}
   .game.tivoli .year{color:#fed100}
   .game.tivoli .play{background:#fed100;color:var(--deep)}
   .game.tivoli:hover .play,.game.tivoli:focus-visible .play{background:var(--paper)}
@@ -165,7 +169,7 @@
     header{align-items:flex-start;flex-direction:column;gap:.35rem}
     .side{align-items:flex-start;gap:.4rem}.links{justify-content:flex-start}.links a,.links button{min-height:40px;padding:0 .9rem;font-size:.9rem}
   }
-  @media (max-width:760px){.game:not([data-game="port-royal"]){background-size:cover;background-position:50% 30%}.game:not([data-game="port-royal"])::after{background:linear-gradient(to top,rgba(4,27,42,.96) 0%,rgba(4,27,42,.78) 40%,rgba(4,27,42,0) 70%)}}   /* phones: every card shows its title, what happened, and Go there, one under the other */
+  @media (max-width:760px){.game:not([data-game="port-royal"]){background-size:cover;background-position:50% 30%} .game.tivoli::before{background-position:50% 30%}.game:not([data-game="port-royal"])::after{background:linear-gradient(to top,rgba(4,27,42,.96) 0%,rgba(4,27,42,.78) 40%,rgba(4,27,42,0) 70%)}}   /* phones: every card shows its title, what happened, and Go there, one under the other */
   @media (max-width:760px){.game.windrush{min-height:400px}}   /* keep the ship above the title and controls */
   @media (max-width:760px) and (max-height:700px){.game .text{padding:.8rem 1rem}.play{min-height:44px;padding:0 1.2rem;font-size:1rem}}
   @media (prefers-reduced-motion:reduce){.play{animation:none}}

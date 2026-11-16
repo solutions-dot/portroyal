@@ -60,6 +60,10 @@ export async function begin(id = 1) {
   t.hidden = false; setTimeout(() => { t.hidden = true; }, 5200);
   CH.on = true;
 }
+export function guideTarget() {   /* where the helper arrow points: the next person to talk to, then the place where the walk ends */
+  if (!CH.on || CH.ended) return null; const id = ORDER.find((k) => !CH.talked[k]);
+  if (!id) { const e = CH.place.endSpot; return [e.x, e.z]; } const n = Talk.npcs.find((x) => x.id === id); return n ? [n.x, n.z] : null;
+}
 export function onTalked(npc) {   /* each finished talk moves the goal on */
   CH.talked[npc.id] = true; E.setGoal(goalNow()); E.uiSound('goal');
 }
