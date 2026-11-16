@@ -1,0 +1,93 @@
+{
+  "name": "wr_iris9",
+  "era": 1948,
+  "body": {
+    "gender": 0,
+    "age": 0.19,
+    "muscle": 0.4,
+    "weight": 0.42,
+    "height": 0.48,
+    "proportions": 0.56,
+    "african": 1.0,
+    "caucasian": 0.0,
+    "asian": 0.0,
+    "cupsize": 0.4,
+    "firmness": 0.55
+  },
+  "garments": {
+    "sleeve": 0.3,
+    "shoes": true,
+    "collar": "round",
+    "hairvol": 0.22,
+    "hat": [],
+    "woman": true,
+    "bun": false,
+    "skirt": true,
+    "hem": 0.95,
+    "flare": 2.0,
+    "pleats": 9,
+    "hair": "puffs",
+    "puff": 0.5
+  },
+  "colors": {
+    "Skin": [
+      153,
+      106,
+      78
+    ],
+    "Hair": [
+      25,
+      21,
+      18
+    ],
+    "Shirt": [
+      214,
+      167,
+      94
+    ],
+    "Collar": [
+      214,
+      167,
+      94
+    ],
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Skirt": [
+      96,
+      129,
+      144
+    ],
+    "Ribbon": [
+      63,
+      116,
+      109
+    ]
+  },
+  "targets": {
+    "head-round": 0.18
+  },
+  "upscale": 1.26
+}

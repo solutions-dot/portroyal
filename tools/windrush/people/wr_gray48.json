@@ -1,0 +1,89 @@
+{
+  "name": "wr_gray48",
+  "era": 1948,
+  "body": {
+    "gender": 1,
+    "age": 0.55,
+    "muscle": 0.4,
+    "weight": 0.56,
+    "height": 0.55,
+    "proportions": 0.56,
+    "african": 0,
+    "caucasian": 1,
+    "asian": 0.0
+  },
+  "garments": {
+    "sleeve": 0.96,
+    "shoes": true,
+    "collar": "turn",
+    "hairvol": 0.25,
+    "hat": [],
+    "trousers": true
+  },
+  "colors": {
+    "Skin": [
+      201,
+      163,
+      132
+    ],
+    "Hair": [
+      25,
+      21,
+      18
+    ],
+    "Shirt": [
+      159,
+      155,
+      144
+    ],
+    "Collar": [
+      159,
+      155,
+      144
+    ],
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Breeches": [
+      73,
+      79,
+      83
+    ],
+    "Hat": [
+      148,
+      122,
+      87
+    ],
+    "HatBand": [
+      63,
+      57,
+      43
+    ]
+  },
+  "targets": {
+    "head-round": 0.4,
+    "nose-width2-incr": 0.25
+  }
+}
