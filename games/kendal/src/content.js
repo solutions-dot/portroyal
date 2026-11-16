@@ -105,7 +105,7 @@ export const TALK = {
   /* ===== chapter 3: a hill station, the 1890s ===== */
   gordon: () => [
     { who: 'Mr. Gordon', text: `Welcome to the hill station, child.` },
-    { who: 'Mr. Gordon', text: `The railway has climbed high. Soon it reaches Montego Bay.` },
+    { who: 'Mr. Gordon', text: `The railway has climbed high. Soon it reaches Montego Bay.`, unlock: 'hills' },
     { who: 'Mr. Gordon', text: `Trains carry people, letters, and bananas.` },
     { who: 'Mr. Gordon', text: `Bananas must reach the ship within two days, or they spoil.` },
     { who: 'Mr. Gordon', text: `So the banana train never waits.`, unlock: 'bananas' },
@@ -248,7 +248,7 @@ export const TALK = {
     { who: 'Sister Louise', text: `A girl in a pink dress? Wait here, dear.` },
     { who: 'Sister Louise', text: `There! Someone is calling for a little girl. Go to her, dear.` },
     { who: 'Dawn', text: `Mama! Mama!` },
-    { who: 'Sister Louise', text: `Good work, child. A lamp and a kind heart are what we need.` },
+    { who: 'Sister Louise', text: `Good work, child. A lamp and a kind heart help most.` },
   ],
   clive2: () => [
     { who: 'Mr. Clive', text: `Thank you, child. Kendal will not forget this night.` },
