@@ -66,6 +66,23 @@ All eight chapters are built, so what remains is quality work, roughly in this o
 7. **Window views.** Most rooms show the same leafy yard through the windows.
 8. **Menu and phone checks** after any change: `?test=all`, the autoplayers and one phone screenshot per chapter.
 
+## Checks (16 November 2026)
+
+All in the dev build (`node tools/build.mjs garvey --dev`), run headless at the sizes shown. `games/garvey/src/dev.js` holds the new ones.
+
+| Check | Result | Notes |
+|---|---|---|
+| `node tools/lint_content.mjs --game garvey` | 0 | was 26 (long lines, two-sentence goals, two facts, three real people speaking) |
+| `?test=audit` (every place, at its busiest stage) | CHECKS_AUDIT | floating lamps and a drying line given cords and hooks; a paper stack, a clock, a news stand and a handcart that cut into other things moved; the customer's loop and the messenger kept off the player's start |
+| `?test=ambient` (a minute per place, walking through) | CHECKS_AMBIENT | |
+| `?test=anim` (this game's own: frozen poses in view, people in step, heads past a neck's turn or snapping, walk clips while still, sliding) | CHECKS_ANIM | |
+| `?test=walkers` | CHECKS_WALKERS | |
+| `?test=held` | 0 | nobody carries anything yet |
+| `?test=layout` at 390x800, 667x375, 800x500, 1280x720 | CHECKS_LAYOUT | journal notes wait until a dialogue closes; the goal, hint and toast hide during a talk or a card; on short screens the place name sits lower and the top buttons hide during a talk |
+| `?test=cloth` | 2 lines | clerk1919's fingers 4.6 mm into the trousers in Idle, nb_youth 0.6 mm of skin at the shirt when talking: both too small to see in close shots |
+| `?test=skin` | every face inside the target at 1.55 | |
+| `?test=all` (390x800) | CHECKS_ALL | |
+
 ## Decisions (agreed with the owner)
 
 | Question | Decision |

@@ -21,16 +21,16 @@ export function actFor(n, stage) {
   if (n.seated) return stage === 13 ? { kind: 'sit', clips: ['SitIdle', 'SitIdle2'], every: [5, 9] } : { kind: 'sit', group: 'bench', clips: ['SitIdle', 'SitIdle2', 'SitIdle3'] };
   const A = {
     /* chapter 1: the print shop, Kingston, about 1908 */
-    printer: { kind: 'work', clips: ['ReachOut', 'ReachOut', 'IdleM', 'LookAround'], work: [3, 6], rest: [1.5, 3], idles },   /* picks letters from the case at his stand */
-    customer: { kind: 'wander', pts: n.path, pause: [3, 6], speed: 0.85, idles },   /* looks round the shop while her notices dry */
-    apprentice: { kind: 'work', clips: ['PickUp', 'WipeSweat', 'IdleM'], work: [3, 6], rest: [2, 4], idles },
+    printer: { kind: 'work', clips: ['ReachOut', 'ReachOut', 'HeadTurn', 'LookAround'], work: [3, 6], rest: [1.5, 3], idles },   /* picks letters from the case at his stand */
+    customer: { kind: 'wander', walk: 'Walk', pts: n.path, pause: [3, 6], speed: 0.85, idles },   /* looks round the shop while her notices dry */
+    apprentice: { kind: 'work', clips: ['PickUp', 'WipeSweat', 'LookAround'], work: [3, 6], rest: [2, 4], idles },
     /* chapter 2: the hall, Kingston, July 1914 */
     amy: stage === 12 ? { kind: 'watch', at: at(-0.5, 3.6), react: ['WaveSlow', 'Nod'], every: [3, 6], idles }
       : stage === 13 ? { kind: 'watch', at: at(0, -2.6), react: ['Nod', 'Clap'], idles }
       : { kind: 'work', clips: ['ReachOut', 'Nod', 'LookAround'], work: [3, 6], rest: [2, 4], idles },
     garvey: stage === 13 ? { kind: 'work', clips: ['Speech', 'TalkM1', 'TalkM2', 'Speech'], work: [5, 9], rest: [0.6, 1.4], idles }
       : stage >= 14 ? { kind: 'watch', at: at(0, 1), react: ['Nod', 'WaveSlow'], idles }
-      : { kind: 'work', clips: ['IdleM', 'LookAround', 'Nod'], work: [4, 7], rest: [2, 4], idles },   /* reads over his notes for the meeting */
+      : { kind: 'work', clips: ['Nod', 'LookAround', 'HeadTurn'], work: [3, 5], rest: [2, 3.5], idles },   /* reads over his notes for the meeting */
     early1: { kind: 'sit', group: 'front', clips: ['SitIdle', 'SitIdle2', 'SitIdle3'] },
     early2: { kind: 'sit', group: 'front', clips: ['SitIdle', 'SitIdle3'] },
     /* chapter 3: a Harlem street corner, 1916 */
@@ -39,21 +39,21 @@ export function actFor(n, stage) {
     worker: { kind: 'watch', at: at(0, 0.4), react: stage >= 22 ? ['Nod', 'Clap'] : ['LookAround', 'WipeSweat'], idles },
     woman: { kind: 'watch', at: at(0, 0.4), react: stage >= 22 ? ['Nod', 'Clap'] : ['LookAround'], idles },
     critic: { kind: 'watch', at: at(0, 0.4), react: ['HeadTurn', 'LookAround'], idles },
-    passer1: { kind: 'wander', area: [-11, -3.9, -4, -2.7], pause: [3, 7], idles },
-    passer2: { kind: 'wander', area: [4, -3.9, 11, -2.7], pause: [3, 7], idles },
+    passer1: { kind: 'wander', walk: 'Walk', area: [-11, -4.0, -4, -2.3], pause: [3, 7], idles },
+    passer2: { kind: 'wander', walk: 'Walk', area: [4, -4.0, 11, -2.3], pause: [3, 7], idles },
     stoop: { kind: 'watch', at: at(0, 0.4), react: ['Nod', 'HeadTurn'], every: [5, 9], idles },
     /* chapter 4: the press room, Harlem, 1918 */
     pressman: { kind: 'work', clips: ['PickUp', 'ReachOut', 'WipeSweat'], work: [3, 6], rest: [1.5, 3], face: at(2.6, -1.6), idles },
-    garvey4: { kind: 'work', clips: ['IdleM', 'Nod', 'LookAround'], work: [4, 7], rest: [2, 4], idles },
+    garvey4: { kind: 'work', clips: ['Nod', 'LookAround', 'ReachOut'], work: [3, 5], rest: [2, 3.5], idles },
     sailor: { kind: 'watch', at: at(0, 0), react: ['LookAround', 'Nod'], idles },
-    compositor: { kind: 'work', clips: ['ReachOut', 'ReachOut', 'IdleM'], work: [3, 6], rest: [1.5, 3], idles },
+    compositor: { kind: 'work', clips: ['ReachOut', 'ReachOut', 'HeadTurn'], work: [3, 6], rest: [1.5, 3], idles },
     /* chapter 5: a New York dock, 1919 */
     garvey5: { kind: 'watch', at: at(0, 6), react: ['Point', 'Nod'], idles },
-    clerk: { kind: 'work', clips: ['ReachOut', 'Nod', 'IdleM'], work: [3, 6], rest: [2, 4], idles },
+    clerk: { kind: 'work', clips: ['ReachOut', 'Nod', 'HeadTurn'], work: [3, 6], rest: [2, 4], idles },
     engineer: { kind: 'work', clips: ['WipeSweat', 'LookAround', 'PickUp'], work: [3, 6], rest: [2, 4], face: at(5, 5), idles },
     friend: { kind: 'watch', at: at(0, 6), react: ['LookAround'], idles },
-    docker1: { kind: 'work', clips: ['PickUp', 'WipeSweat', 'IdleM'], work: [3, 6], rest: [2, 4], idles },
-    docker2: { kind: 'wander', area: [-8.5, -3.2, -5.5, 0], pause: [3, 7], idles },
+    docker1: { kind: 'work', clips: ['PickUp', 'WipeSweat', 'LookAround'], work: [3, 6], rest: [2, 4], idles },
+    docker2: { kind: 'wander', walk: 'Walk', area: [-8.5, -3.2, -5.5, 0], pause: [3, 7], idles },
     /* chapter 6: Liberty Hall, August 1920 */
     garvey6: stage >= 53 ? { kind: 'work', clips: ['Speech', 'TalkM1', 'TalkM2'], work: [5, 9], rest: [0.6, 1.4], idles }
       : { kind: 'watch', at: at(0, 3), react: ['WaveSlow', 'Nod'], idles },
@@ -63,19 +63,24 @@ export function actFor(n, stage) {
     steward: { kind: 'work', clips: ['Point', 'Nod', 'LookAround'], work: [2.5, 5], rest: [2, 4], idles },
     /* chapter 7: Amy Jacques Garvey's office, Harlem, 1925 */
     amyj: { kind: 'work', clips: ['ReachOut', 'Nod', 'LookAround'], work: [3, 6], rest: [2, 4], idles },   /* reads the letters on her desk */
-    typist: { kind: 'work', clips: ['ReachOut', 'IdleM', 'PickUp'], work: [3, 6], rest: [2, 4], idles },
+    typist: { kind: 'work', clips: ['ReachOut', 'HeadTurn', 'PickUp'], work: [3, 6], rest: [2, 4], idles },
     /* chapter 8: National Heroes Park, today */
     guide: { kind: 'watch', at: at(0, -6.8), react: ['Point', 'Nod'], idles },
     student: { kind: 'watch', at: at(0, -6.8), react: ['LookAround', 'HeadTurn'], idles },
-    visitor: { kind: 'wander', area: [-8.5, 3.6, 8.5, 5.6], pause: [4, 8], speed: 0.85, idles },
+    visitor: { kind: 'wander', walk: 'Walk', area: [-8.5, 3.6, 8.5, 5.6], pause: [4, 8], speed: 0.85, idles },
   };
   return A[n.id] || { kind: 'watch', idles };
 }
 
 /* one ambient system per place, made the first time the place is lived in */
 export function lifeFor(P, opts) {
-  if (!P.life) P.life = createAmbient({ walls: P.walls, bounds: P.bounds, seed: 7 + Object.keys(opts.PLACES).indexOf(P.key || ''), phone: opts.phone,
-    keepOff: () => (P.actions || []).map((a) => ({ at: [a.x, a.z], r: Math.min(0.9, a.r * 0.7) })) });
+  if (!P.life) {
+    /* a platform or a speaker's box is a wall for walkers, but someone stands on top of it: leave those rectangles out (nobody in this game wanders near them) */
+    const up = P.people.filter((n) => (n.ground || 0) > 0), walls = P.walls.filter((w) => !up.some((n) => n.x > w[0] && n.x < w[2] && n.z > w[1] && n.z < w[3]));
+    const B = { ...P.bounds }; for (const n of up) { B.x0 = Math.min(B.x0, n.x - 0.5); B.x1 = Math.max(B.x1, n.x + 0.5); B.z0 = Math.min(B.z0, n.z - 0.5); B.z1 = Math.max(B.z1, n.z + 0.5); }   /* and the bounds reach them */
+    P.life = createAmbient({ walls, bounds: B, seed: 7 + Object.keys(opts.PLACES).indexOf(P.key || ''), phone: opts.phone,
+      keepOff: () => (P.actions || []).map((a) => ({ at: [a.x, a.z], r: 0.4 })) });
+  }
   return P.life;
 }
 
@@ -99,7 +104,7 @@ export function refresh(P, stage, opts) {
 export const EXTRAS = {
   shop: [{ id: 'apprentice', model: 'nb_youth', x: 2.75, z: -1.3, ry: Math.PI, tint: { Shirt: [0.9, 0.95, 1], Breeches: [1.3, 1.2, 1.0] } }],
   hall: [{ id: 'early1', model: 'woman1914', seat: [2.75, 0.2], tint: { Shirt: [0.75, 0.85, 1.0], Skirt: [0.7, 0.75, 0.95] } },
-    { id: 'early2', model: 'hl_worker', seat: [1.9, 1.4], tint: { Shirt: [1.1, 1.0, 0.85], Breeches: [0.8, 0.8, 0.8] } }],
+    { id: 'early2', model: 'hl_worker', seat: [3.2, -1.2], tint: { Shirt: [1.1, 1.0, 0.85], Breeches: [0.8, 0.8, 0.8] } }],
   street: [{ id: 'passer1', model: 'nb_seller', x: -8, z: -3.3, ry: Math.PI / 2, tint: { Shirt: [0.7, 0.8, 1.0], Skirt: [0.6, 0.55, 0.6] } },
     { id: 'passer2', model: 'clerk1919', x: 7.5, z: -3.3, ry: -Math.PI / 2, tint: { Jacket: [1.4, 1.3, 1.1], Breeches: [1.4, 1.3, 1.1], Hat: [1.3, 1.2, 1.0] } },
     { id: 'stoop', model: 'nb_elder', x: -4.6, z: 3.2, ry: 2.4, tint: { Jacket: [0.8, 0.9, 1.1] } }],

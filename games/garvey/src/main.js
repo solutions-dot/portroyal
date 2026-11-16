@@ -29,7 +29,7 @@ const maxAniso = renderer.capabilities.getMaxAnisotropy();
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2118);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 100);
 const hemi = new THREE.HemisphereLight(0xfff4e0, 0x7a6048, 1.25); scene.add(hemi);
-const SKIN_K = 1.55;   /* the one skin factor for this game (owner rule 9, docs/PIPELINE.md "Skin"): Skin only, the same as Kendal, so faces still read indoors, by lamplight and in shade. Measured with ?test=skin and the faces check in ?test=all */
+const SKIN_K = 1.7;   /* the one skin factor for this game (owner rule 9, docs/PIPELINE.md "Skin"): Skin only, a little above Kendal's 1.55 because these rooms are lit softly, so faces still read indoors, by lamplight and in shade. Measured with ?test=skin and the faces check in ?test=all */
 const sun = new THREE.DirectionalLight(0xfff0d0, 1.7); sun.position.set(6, 7, 5); scene.add(sun);
 const lampLight = new THREE.PointLight(0xffcf8a, 7, 9, 2); lampLight.position.set(0.2, 2.9, -0.3); scene.add(lampLight);
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -169,7 +169,7 @@ typeStand(-3.4, -2.95); typeStand(-1.9, -2.95);
   for (const [y, n] of [[0.3, 4], [1.0, 3], [1.7, 4]]) for (let i = 0; i < n; i++) { const w = 0.42 + Math.random() * 0.1; box(w, 0.1 + Math.random() * 0.2, 0.32, i % 2 ? paper : std(null, 0.95, { color: 0xcfc3a2 }), -0.9 + i * 0.55, y + 0.13, 0, g); }
   WALLS.push([0.9 - 1.2, Z0, 0.9 + 1.2, Z0 + 0.5]); }
 /* bundles of paper tied with string, on the floor */
-for (const [x, z, n] of [[1.9, -3.0, 3], [-4.1, -0.9, 2], [-4.1, 0.1, 3]]) { for (let i = 0; i < n; i++) { const b = box(0.5, 0.2, 0.36, paper, x, 0.1 + i * 0.2, z + (i % 2) * 0.03, room); box(0.52, 0.02, 0.04, solid(0x8b6c3a), 0, 0, 0, b); } WALLS.push([x - 0.4, z - 0.3, x + 0.4, z + 0.3]); }
+for (const [x, z, n] of [[-4.1, -0.9, 2], [-4.1, 0.1, 3]]) { for (let i = 0; i < n; i++) { const b = box(0.5, 0.2, 0.36, paper, x, 0.1 + i * 0.2, z + (i % 2) * 0.03, room); box(0.52, 0.02, 0.04, solid(0x8b6c3a), 0, 0, 0, b); } WALLS.push([x - 0.4, z - 0.3, x + 0.4, z + 0.3]); }
 /* a rope with printed sheets drying on it, above head height */
 { cyl(0.012, 0.012, W - 0.2, solid(0x8b7a55), 0, 2.62, 0.8, room, 6).rotation.z = Math.PI / 2;
   [['NOTICE'], ['FOR SALE'], ['TO LET'], ['NOTICE'], ['SALE'], ['TO LET'], ['NOTICE']].forEach(([word], i) => { const s = mesh(new THREE.PlaneGeometry(0.36, 0.48), new THREE.MeshStandardMaterial({ map: sheetTex(word), side: THREE.DoubleSide, roughness: 1 }), -3.4 + i * 1.1 + Math.random() * 0.2, 2.35, 0.8); s.rotation.set(0.05 * (Math.random() - 0.5), 0.2 * (Math.random() - 0.5), 0.06 * (Math.random() - 0.5)); }); }
@@ -259,7 +259,7 @@ const SHOP_PEOPLE = [
       { who: 'Printer', text: 'Marcus Garvey learned this trade, too.', unlock: 'garvey-printer' }],
     later: () => stage >= 3 ? [({ speak: 'You spoke up. I will remember that.', wait: 'You waited and listened. That was wise.', ask: 'You asked the others. That was fair.' })[story.strike] || 'The printers are in your thoughts.', 'I hope the strike ends well for everyone.'] : ['Mind the type!', 'I have work to do. Come back soon.'] },
   { id: 'customer', model: 'woman1914', who: 'Customer', label: 'Talk to the customer', x: 1.3, z: 1.6, ry: Math.PI, base: 'Idle',
-    path: [[1.3, 1.6], [2.2, 1.55], [1.0, 0.6], [-1.9, 0.7], [-0.5, 1.9]],
+    path: [[1.3, 1.6], [2.2, 1.55], [1.0, 0.6], [-1.9, 0.7], [-1.3, 1.5]],
     lines: [
       { who: 'Customer', text: 'Good morning! Are my printed notices ready?' },
       { who: 'You', text: 'Nearly. The ink is still wet.' },
@@ -285,7 +285,7 @@ function npcTick(n, dt) {
   const m = n.m; if (!m) return; if (m.userData.amb) return;   /* engine/ambient.js moves this person (life.js) */
   if (POSTER) { m.rotation.y = n.ry; return; }   /* the menu poster: everyone keeps the pose they were given */
   const ac = m.userData.anim, d = Math.hypot(state.x - n.x, state.z - n.z), isNear = (d < 3.2 && !DEV_NOSTOP) || talkWith === n;
-  if (n.delay > 0) { n.delay -= dt; if (n.delay <= 0) { n.hidden = false; m.visible = place === 'hall'; const L = n.legs; if (L && L.length) goTo(n, L[L.length - 1][0], L[L.length - 1][1], { route: L, speed: 1.25, done: arrive }); } return; }
+  if (n.delay > 0) { n.delay -= dt; if (n.delay <= 0) { n.hidden = false; m.visible = place === 'hall'; const L = n.legs; if (L && L.length) goTo(n, L[L.length - 1][0], L[L.length - 1][1], { route: L, speed: n.walkSpeed || 1.25, done: arrive }); } return; }
   if (n.fol) { followTick(n, dt, { px: state.x, pz: state.z, talking: talkWith, place: (p) => { if (!p.seated) p.m.position.set(p.x, 0, p.z); } }); return; }   /* walking to a seat along a checked route (engine/follow.js goTo); they wait and look at you while you talk to them */
   const toPlayer = Math.atan2(state.x - n.x, state.z - n.z);
   if (n.seated) { anchorSeat(m); return; }
@@ -355,12 +355,13 @@ const JOURNAL = [
     deeper: ['Some of them also want the US Congress to exonerate him, which would clear his name completely.', 'People still disagree about how fair his trial was. This game does not decide it for you.'] },
   { id: 'journey', title: 'Your journey', simple: ['You finished the story.'], deeper: ['Your choices did not change what really happened. They show how you took part in it.'] },
   { id: 'unia', title: 'The UNIA begins', simple: ['UNIA stands for Universal Negro Improvement Association.', 'It was founded in Kingston, Jamaica, in July 1914.', 'It wanted to help people in need, build pride, and open a trade school.'],
-    deeper: ['Many sources give the first meeting as 20 July 1914. Others point to 1 August, Emancipation Day. Where it met is also uncertain.', 'In 1914 Garvey wrote to Booker T. Washington about a trade school like Tuskegee. Washington died in 1915.', 'Garvey sailed for the United States in March 1916.'] },
+    deeper: ['The older man, the market seller and the young man in this game are fictional.', 'Many sources give the first meeting as 20 July 1914. Others point to 1 August, Emancipation Day. Where it met is also uncertain.', 'In 1914 Garvey wrote to Booker T. Washington about a trade school like Tuskegee. Washington died in 1915.', 'Garvey sailed for the United States in March 1916.'] },
 ];
 const unlocked = []; let toastTimer = 0;
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600); }
 function showCount() { $('jcount').textContent = unlocked.length; $('jcount').hidden = !unlocked.length; }
-function unlock(id, quiet) { if (unlocked.includes(id)) return; unlocked.push(id); showCount(); saveGame(); if (!quiet) { uiSound('page'); toast('Journal: ' + JOURNAL.find((p) => p.id === id).title); } }
+let laterToast = null;   /* a journal page found while someone is talking: the count shows at once, the note waits until the dialogue box closes (it never covers it) */
+function unlock(id, quiet) { if (unlocked.includes(id)) return; unlocked.push(id); showCount(); saveGame(); if (!quiet) { uiSound('page'); const msg = 'Journal: ' + JOURNAL.find((p) => p.id === id).title; if (!$('dialogue').hidden) laterToast = msg; else toast(msg); } }
 function renderJournal(sel) {
   refreshJourney();   /* "Your journey" always shows the choices as they are now, even after a chapter is replayed */
   const tabs = $('jtabs'); tabs.replaceChildren(); const open = sel || unlocked[unlocked.length - 1];
@@ -390,7 +391,7 @@ const GOALS = { 0: 'Talk to the printer and the customer.', 1: 'Set the type for
 const TALK_TARGETS = { 70: ['guide', 'student'], 72: ['student'], 60: ['amyj'], 62: ['amyj'], 50: ['nurse', 'delegate', 'messenger'], 51: ['steward'], 53: ['garvey6'], 40: ['garvey5', 'clerk', 'engineer'], 42: ['garvey5'], 43: ['friend'], 30: ['pressman', 'garvey4'], 32: ['sailor'], 33: ['sailor', 'pressman'], 20: ['worker', 'woman', 'critic'], 21: ['garvey3'], 22: ['critic'], 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
 const NEXT_AFTER_TALK = { 70: 71, 72: 73, 60: 61, 62: 63, 50: 51, 51: 52, 53: 54, 40: 41, 42: 43, 43: 44, 30: 31, 32: 33, 33: 34, 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
 const wantsTalk = (n) => !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
-function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); refreshLife(); if (s === 12) startArrivals(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); if (!QUICK && s in CHAPTER_END) setTimeout(() => nextCard(CHAPTER_END[s], s), 900); }
+function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); refreshLife(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); if (!QUICK && s in CHAPTER_END) setTimeout(() => nextCard(CHAPTER_END[s], s), 900); }
 function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); }
 let goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) {
@@ -423,9 +424,9 @@ addEventListener('visibilitychange', () => { if (document.visibilityState === 'h
 function card(title, paras, btns) {
   $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const t of paras) { const p = document.createElement('p'); p.textContent = t; b.appendChild(p); }
   const bb = $('cbtns'); bb.replaceChildren(); btns.forEach((x, i) => { const el = document.createElement('button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; el.onclick = x.go; bb.appendChild(el); });
-  $('card').hidden = false; busy = true; keys.clear(); const f = bb.querySelector('button'); if (f) f.focus();
+  $('card').hidden = false; document.body.classList.add('carding'); busy = true; keys.clear(); const f = bb.querySelector('button'); if (f) f.focus();
 }
-function hideCard() { $('card').hidden = true; busy = panelsOpen(); }
+function hideCard() { $('card').hidden = true; document.body.classList.remove('carding'); busy = panelsOpen(); }
 const QUICK = __DEV__ && /[?&](shot|auto|test)=/.test(location.search);   /* test views skip the fade */
 function chapterFade(title, sub, fn) {
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
@@ -483,7 +484,7 @@ let step = 0, lines = [], talkN = 0, talkFull = false; const TALKS = ['Talk1', '
 function activate(t) { if (t.go) t.go(); else startTalk(t); }
 function startTalk(n) {
   if (n.amb && n.m && n.m.userData.amb) lifeFor(PLACES[place], LIFE_OPTS).hold(n, true);   /* the game takes them while you talk */
-  busy = true; talkWith = n; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true;
+  busy = true; talkWith = n; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; document.body.classList.add('talking'); $('talk').hidden = true; $('hint').hidden = true;
   talkFull = wantsTalk(n);
   if (talkFull) lines = [...(typeof n.lines === 'function' ? n.lines() : n.lines)]; else { const later = typeof n.later === 'function' ? n.later() : n.later; lines = [{ who: n.real ? NAR : n.who, text: later[n.heard++ % later.length] }]; }
   showLine();
@@ -500,7 +501,7 @@ function choose(s, c) {   /* a choice: remember it, add the lines that answer it
 }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  const n = talkWith; talkWith = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.m) n.m.userData.anim.play(n.seated ? sitClip(false) : null); if (n && n.amb && n.m && n.m.userData.amb) lifeFor(PLACES[place], LIFE_OPTS).hold(n, false);
+  const n = talkWith; talkWith = null; $('dialogue').hidden = true; document.body.classList.remove('talking'); busy = panelsOpen(); if (laterToast) { toast(laterToast); laterToast = null; } if (n && n.m) n.m.userData.anim.play(n.seated ? sitClip(false) : null); if (n && n.amb && n.m && n.m.userData.amb) lifeFor(PLACES[place], LIFE_OPTS).hold(n, false);
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); }
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
@@ -634,7 +635,7 @@ const HALL_PEOPLE = [
       : [{ who: NAR, text: 'This is Marcus Garvey. He has just come home from London.', unlock: 'garvey-home' }, { who: 'You', text: 'What will happen here?' }, { who: NAR, text: 'He plans an association to help people in need.' }, { who: NAR, text: 'It will also build pride, and open a trade school.' },
         { who: NAR, text: 'The first poster needs one big word. Which word?', choices: [word('LEARN'), word('WORK'), word('UNITY')] }],
     later: () => ({ 10: ['Marcus Garvey is reading his notes.'], 11: ['Marcus Garvey is reading his notes.'], 12: ['Marcus Garvey watches the door as people arrive.'], 14: ['Marcus Garvey shakes hands with the neighbours.'] })[stage] || ['Marcus Garvey is busy getting ready.'] },
-  { id: 'elder', model: 'nb_elder', who: 'Older man', label: 'Talk to the older man', x: -0.6, z: 6.5, ry: Math.PI, base: 'Idle', seat: [-1.9, 0.2], route: [[0, 3.4], [0, -0.5], [-1.9, -0.5]], lines: () => neighbourLines('elder'), later: () => ['I am glad I came.', 'Will Mr Garvey speak soon?'] },
+  { id: 'elder', model: 'nb_elder', who: 'Older man', label: 'Talk to the older man', x: -0.6, z: 6.5, ry: Math.PI, base: 'Idle', walkSpeed: 1.0, seat: [-1.9, 0.2], route: [[0, 3.4], [0, -0.5], [-1.9, -0.5]], lines: () => neighbourLines('elder'), later: () => ['I am glad I came.', 'Will Mr Garvey speak soon?'] },
   { id: 'seller', model: 'nb_seller', who: 'Market seller', label: 'Talk to the market seller', x: 0.6, z: 6.5, ry: Math.PI, base: 'Idle', seat: [1.9, 0.2], route: [[0, 3.4], [0, -0.5], [1.9, -0.5]], lines: () => neighbourLines('seller'), later: () => ['I closed my stall early to come.', 'What a good idea.'] },
   { id: 'youth', model: 'nb_youth', who: 'Young man', label: 'Talk to the young man', x: 0, z: 7.2, ry: Math.PI, base: 'Idle', seat: [-1.9, 1.4], route: [[0, 3.4], [0, 0.83], [-1.9, 0.83]], lines: () => neighbourLines('youth'), later: () => ['I told my friends too.', 'Can I help next time?'] },
 ];
@@ -659,7 +660,7 @@ function nurseCap(m, top) {
 }
 function loadPerson(n) {
   if (n.loading) return n.loading;
-  n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K); } }); m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; if (n.scale) m.scale.setScalar(n.scale);   /* a child's body is stored enlarged and shrunk here (see docs/PEOPLE.md, children) */ m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); if (n.model === 'nurse1920') nurseCap(m, bb.max.y); n.h = Math.max(1.1, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
+  n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K * (/^garvey/.test(n.model) ? 1.25 : 1)); } }); m.position.set(n.x, 0, n.z); m.rotation.y = n.ry;   /* Garvey's face sits deeper in shade (heavy brows and moustache), so his skin is drawn a little lighter (owner rule 9: judged in game) */ if (n.scale) m.scale.setScalar(n.scale);   /* a child's body is stored enlarged and shrunk here (see docs/PEOPLE.md, children) */ m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); if (n.model === 'nurse1920') nurseCap(m, bb.max.y); n.h = Math.max(1.1, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
   return n.loading;
 }
 let shopLoading = null;
@@ -698,7 +699,7 @@ function buildStreet() {
   for (const lx of [-9, -3, 3, 9]) for (const sz of [-1, 1]) { cyl(0.05, 0.07, 3.6, solid(0x202428, 0.6), lx, 1.8, sz * 4.7, g, 8); const lamp = cyl(0.22, 0.16, 0.34, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffd48a, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }), lx, 3.7, sz * 4.7, g, 8); lamp.name = 'lamp'; }
   box(1.3, 0.5, 1.0, wood, 0, 0.25, 0.5, g); box(1.38, 0.05, 1.08, woodDark, 0, 0.525, 0.5, g); STREET_WALLS.push([-0.75, -0.05, 0.75, 1.05]);   /* the speaker's box: big enough to stand on with both feet well inside the edge, with a darker lid and a wall so nobody walks through it */
   for (const [bx, bz] of [[-0.6, -0.02], [0.6, -0.02], [-0.6, 1.02], [0.6, 1.02]]) box(0.08, 0.5, 0.08, woodDark, bx, 0.25, bz, g);
-  for (const [x, z] of [[-10, 5.7], [8, -5.7], [-5, -5.9]]) { box(0.7, 0.5, 0.7, wood, x, 0.4, z, g); }
+  for (const [x, z] of [[-11.4, 5.7], [-5, -5.9]]) { box(0.7, 0.5, 0.7, wood, x, 0.4, z, g); }
   mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: cv(64, 128, (x, w, h) => { const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#9ec8e6'); gr.addColorStop(0.7, '#e9eee4'); gr.addColorStop(1, '#d9d3c0'); x.fillStyle = gr; x.fillRect(0, 0, w, h); }) }), 0, 20, -34, g);
   mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ color: 0xc9d8de }), 0, 20, 34, g).rotation.y = Math.PI;
 }
@@ -774,7 +775,7 @@ function buildPress() {
   /* type cases along the left wall */
   for (const z of [-2.6, -1.3, 0.0]) { box(0.7, 0.95, 1.1, woodDark, -4.55, 0.475, z, g); mesh(new THREE.PlaneGeometry(0.62, 1.0), std(caseTex(), 0.6), -4.55, 0.97, z, g).rotation.x = -Math.PI / 2; } PRESS_WALLS.push([-4.95, -3.2, -4.15, 0.6]);
   /* printed sheets hung up to dry along the back wall */
-  cyl(0.01, 0.01, 8.4, solid(0x222222), 0, 2.75, -3.55, g, 4).rotation.z = Math.PI / 2; const dry = new THREE.MeshStandardMaterial({ map: sheetTex('NEWS'), roughness: 1, side: THREE.DoubleSide });
+  cyl(0.01, 0.01, 8.4, solid(0x222222), 0, 2.75, -3.55, g, 4).rotation.z = Math.PI / 2; for (const sx of [-1, 1]) box(0.03, 0.03, 0.47, iron, sx * 4.2, 2.75, -3.77, g);   /* a drying line on two hooks from the back wall */ const dry = new THREE.MeshStandardMaterial({ map: sheetTex('NEWS'), roughness: 1, side: THREE.DoubleSide });
   for (let i = 0; i < 9; i++) mesh(new THREE.PlaneGeometry(0.4, 0.55), dry, -3.6 + i * 0.9, 2.45, -3.55, g).rotation.z = (i % 3 - 1) * 0.04;
   /* the printed copies in bundles by the door */
   const cord = solid(0x3a2a1d, 0.9); [[3.0, 0.14, 3.2], [3.5, 0.14, 3.2], [4.0, 0.14, 3.2], [3.25, 0.4, 3.2], [3.75, 0.4, 3.2], [3.5, 0.66, 3.2]].forEach(([x, y, z]) => { const b = new THREE.Group(); b.position.set(x, y, z); g.add(b); box(0.44, 0.26, 0.34, paper, 0, 0, 0, b); box(0.46, 0.27, 0.04, cord, 0, 0, 0, b); box(0.04, 0.27, 0.36, cord, 0, 0, 0, b); b.visible = false; bundles.push(b); }); PRESS_WALLS.push([2.7, 2.9, 4.3, 3.55]);
@@ -945,7 +946,7 @@ function buildLiberty() {
   LIB_WALLS.push([-6.5, -2.7, -1.45, 2.95], [1.45, -2.7, 6.5, 2.95]);
   /* a table for the Declaration, near the door */
   box(1.6, 0.74, 0.8, woodDark, 4.8, 0.37, 4.0, g); box(1.7, 0.06, 0.9, wood, 4.8, 0.77, 4.0, g); box(0.6, 0.02, 0.8, paper, 4.8, 0.81, 4.0, g); LIB_WALLS.push([3.95, 3.55, 5.65, 4.45]);
-  for (const lx of [-3.5, 0, 3.5]) { cyl(0.008, 0.008, 1.0, solid(0x222222), lx, H2 - 0.65, 0, g, 6); cyl(0.07, 0.2, 0.14, brass, lx, 4.15, 0, g); cyl(0.13, 0.13, 0.3, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.8, transparent: true, opacity: 0.75 }), lx, 3.95, 0, g); }
+  for (const lx of [-3.5, 0, 3.5]) { cyl(0.008, 0.008, H2 - 4.2, solid(0x222222), lx, (H2 + 4.2) / 2, 0, g, 6);   /* the cord runs from the ceiling to the brass cap */ cyl(0.07, 0.2, 0.14, brass, lx, 4.15, 0, g); cyl(0.13, 0.13, 0.3, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.8, transparent: true, opacity: 0.75 }), lx, 3.95, 0, g); }
 }
 function showBanner() { if (!bannerMesh) return; bannerMesh.material.map = bannerTex(!!story.banner); bannerMesh.material.needsUpdate = true; }
 /* the Declaration: read one real line, then colour the banner in the order the line gives */
@@ -972,7 +973,7 @@ const LIB_PEOPLE = [
   { id: 'delegate', model: 'delegate1920', who: 'Traveller', label: 'Talk to the traveller', x: 3.0, z: 3.5, ry: faceToward(3.0, 3.5, 0, 0), base: 'Idle',
     lines: () => [{ who: 'Traveller', text: 'I came by ship from far away. The trip took many days.' }, { who: 'You', text: 'You must be tired.' }, { who: 'Traveller', text: 'I am. I need a seat before the meeting.' }],
     later: () => thanks('delegate', 'The steward found me a seat soon after. Thank you.')() || ['My legs are tired from the journey.'] },
-  { id: 'messenger', model: 'nb_youth', who: 'Messenger', label: 'Talk to the messenger', x: 0.2, z: 4.4, ry: faceToward(0.2, 4.4, 0, 0), base: 'Idle',
+  { id: 'messenger', model: 'nb_youth', who: 'Messenger', label: 'Talk to the messenger', x: 1.4, z: 4.6, ry: faceToward(1.4, 4.6, 0, 0), base: 'Idle',
     lines: () => [{ who: 'Messenger', text: 'I carry messages around the hall.' }, { who: 'Messenger', text: 'But I have lost the programme sheets!' }, { who: 'You', text: 'When does the meeting start?' }, { who: 'Messenger', text: 'Very soon. What shall I do?' }],
     later: () => thanks('messenger', 'The steward helped me find them soon after. Thank you.')() || ['Where could those sheets be?'] },
   { id: 'steward', model: 'steward1920', who: 'Steward', label: 'Talk to the steward', x: -0.9, z: 2.3, ry: faceToward(-0.9, 2.3, 0, 4), base: 'Idle',
@@ -1178,9 +1179,12 @@ function dBarrel(g, x, y, z, sc = 1, mat = woodDark) { cyl(0.27 * sc, 0.27 * sc,
 function dCrate(g, x, y, z, s = 0.6, ry = 0) { const b = box(s, s, s, wood, x, y + s / 2, z, g); b.rotation.y = ry; box(s + 0.02, 0.05, s + 0.02, woodDark, x, y + s * 0.2, z, g).rotation.y = ry; box(s + 0.02, 0.05, s + 0.02, woodDark, x, y + s * 0.8, z, g).rotation.y = ry; }
 function dClock(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k);   /* the face sits clear of the wooden back (0.03) and gets a depth offset, so it never flickers (z-fights) as you walk about */
   mesh(new THREE.CircleGeometry(0.21, 28), new THREE.MeshStandardMaterial({ map: clockTex(), roughness: 0.5, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 0, 0, 0.045, k); mesh(new THREE.TorusGeometry(0.215, 0.025, 8, 28), brass, 0, 0, 0.04, k); cyl(0.23, 0.23, 0.05, woodDark, 0, 0, 0.005, k, 20).rotation.x = Math.PI / 2; }
-function dPegs(g, x, y, z, ry, n = 4) {   /* a coat board with pegs, and two hats hung on it */
+function dPegs(g, x, y, z, ry, n = 4) {   /* a coat board with pegs, and two hats hung on them: each peg goes up inside the crown, the brim close to the board, the hat tipped a little (owner, 16 November 2026: hats floated beside the rack) */
   const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k); box(0.2 + n * 0.22, 0.12, 0.03, woodDark, 0, 0, 0.015, k);
-  for (let i = 0; i < n; i++) { const px = (i - (n - 1) / 2) * 0.22; cyl(0.012, 0.012, 0.08, brass, px, 0, 0.07, k, 6).rotation.x = Math.PI / 2; if (i === 0 || i === n - 2) { const hc = i === 0 ? 0x2c2a2a : 0x6b5a45; cyl(0.12, 0.12, 0.012, solid(hc, 0.9), px, -0.12, 0.1, k, 16).rotation.x = Math.PI / 2; cyl(0.075, 0.085, 0.09, solid(hc, 0.9), px, -0.12, 0.14, k, 14).rotation.x = Math.PI / 2; } } }
+  for (let i = 0; i < n; i++) { const px = (i - (n - 1) / 2) * 0.22, peg = cyl(0.012, 0.012, 0.08, brass, px, 0, 0.07, k, 6); peg.rotation.x = Math.PI / 2; peg.userData.peg = true;
+    if (i === 0 || i === n - 2) { const hc = solid(i === 0 ? 0x2c2a2a : 0x6b5a45, 0.9), hat = new THREE.Group(); hat.position.set(px, 0, 0); hat.rotation.z = i === 0 ? 0.12 : -0.1; k.add(hat);
+      const brim = cyl(0.12, 0.12, 0.012, hc, 0, -0.055, 0.042, hat, 16); brim.rotation.x = Math.PI / 2; brim.userData.hung = 'hat';
+      const crown = cyl(0.075, 0.085, 0.09, hc, 0, -0.055, 0.093, hat, 14); crown.rotation.x = Math.PI / 2; crown.userData.hung = 'hat'; } } }   /* the peg (y 0) lies inside the crown (centre 5.5 cm lower, radius 7.5 cm), touching its top */
 function dStove(g, x, z, h) { box(0.7, 0.06, 0.7, iron, x, 0.03, z, g); cyl(0.27, 0.3, 0.8, solid(0x25262a, 0.6, 0.2), x, 0.46, z, g, 16); cyl(0.2, 0.27, 0.12, solid(0x25262a, 0.6, 0.2), x, 0.92, z, g, 16); cyl(0.055, 0.055, h - 1.0, solid(0x2a2b2f, 0.6, 0.2), x, 1.0 + (h - 1.0) / 2, z, g, 10); box(0.18, 0.2, 0.02, solid(0x3a1a12, 0.5), x, 0.5, z + 0.3, g); }
 function dWallLamp(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k); box(0.05, 0.22, 0.04, iron, 0, 0, 0.02, k); box(0.04, 0.04, 0.2, iron, 0, -0.05, 0.1, k); cyl(0.07, 0.06, 0.2, GLOWM, 0, 0.02, 0.2, k, 10); cyl(0.09, 0.05, 0.04, brass, 0, 0.14, 0.2, k, 10); }
 function dHydrant(g, x, z) { cyl(0.11, 0.13, 0.6, solid(0xb02a24, 0.6), x, 0.3, z, g, 10); mesh(new THREE.SphereGeometry(0.115, 10, 6, 0, 7, 0, Math.PI / 2), solid(0xb02a24, 0.6), x, 0.6, z, g); for (const sx of [-1, 1]) cyl(0.05, 0.05, 0.12, solid(0xd2d0c8, 0.4, 0.4), x + sx * 0.14, 0.38, z, g, 8).rotation.z = Math.PI / 2; }
@@ -1208,10 +1212,10 @@ function dShip(g, x, z, len, ry = 0, funnel = true) { const k = new THREE.Group(
 { const b = buildStreet; buildStreet = () => { const first = !streetBuilt; b(); if (!first) return; const g = streetG;
     for (let i = -4; i <= 4; i++) for (const sz of [-1, 1]) if (i !== 0) dTree(g, i * 6 + sz * 1.5, sz * 5.1, 3.0 + ((i + 9) % 3) * 0.35, 1.0);   /* trees along the kerb */
     dHydrant(g, -12, 4.7); dHydrant(g, 15, -4.7); dBin(g, -15.6, 6.9); dBin(g, -2.8, -6.9); dBin(g, 10.2, 6.9);
-    { const m = box(0.5, 1.2, 0.5, solid(0x2c3e66, 0.5, 0.2), -6, 0.6, 5.2, g); box(0.56, 0.1, 0.56, solid(0x2c3e66, 0.5, 0.2), -6, 1.25, 5.2, g); box(0.3, 0.05, 0.02, solid(0xe6dcc2, 0.9), -6, 0.95, 4.93, g); }   /* a post box */
+    { const m = box(0.5, 1.2, 0.5, solid(0x2c3e66, 0.5, 0.2), -6, 0.75, 5.2, g); box(0.56, 0.1, 0.56, solid(0x2c3e66, 0.5, 0.2), -6, 1.4, 5.2, g); box(0.3, 0.05, 0.02, solid(0xe6dcc2, 0.9), -6, 1.1, 4.93, g); }   /* a post box */
     { const st = stripeTex('#b8453d', '#efe3c5'); for (let i = 0; i < 13; i++) for (const sz of [-1, 1]) if ((i + (sz > 0 ? 1 : 0)) % 3 === 0) { const a = box(1.7, 0.04, 1.0, std(st, 0.9), -27 + i * 4.5 - 0.5, 3.45, sz * 7.0, g); a.rotation.x = -sz * 0.28; } }   /* striped awnings over some doors */
-    { const c = new THREE.Group(); c.position.set(7.5, 0, -5.7); c.rotation.y = 0.2; g.add(c); box(1.7, 0.1, 0.9, wood, 0, 0.62, 0, c); for (const sz of [-1, 1]) mesh(new THREE.TorusGeometry(0.32, 0.04, 8, 20), iron, 0, 0.34, sz * 0.5, c); dBarrel(c, -0.4, 0.67, 0, 0.8); dBarrel(c, 0.2, 0.67, 0.1, 0.8); dCrate(c, 0.6, 0.67, -0.1, 0.4); for (const sz of [-1, 1]) box(1.1, 0.05, 0.05, wood, 1.2, 0.58, sz * 0.35, c); }   /* a handcart with barrels */
-    { const n = new THREE.Group(); n.position.set(-9.5, 0, 5.8); g.add(n); box(1.1, 1.0, 0.7, woodDark, 0, 0.5, 0, n); const roof = box(1.3, 0.06, 0.95, std(stripeTex('#2f5f7a', '#efe3c5'), 0.9), 0, 1.65, 0, n); roof.rotation.x = 0.12; for (const [dx, dz] of [[-0.55, -0.3], [0.55, -0.3], [-0.55, 0.3], [0.55, 0.3]]) box(0.05, 0.65, 0.05, wood, dx, 1.32, dz, n); for (let i = 0; i < 4; i++) { const p = mesh(new THREE.PlaneGeometry(0.28, 0.38), std(sheetTex('NEWS'), 1), -0.4 + i * 0.27, 1.12, 0.36, n); p.rotation.x = -0.25; } }   /* a news stand */
+    { const c = new THREE.Group(); c.position.set(7.5, 0.15, -5.7);   /* on the pavement, which is 15 cm up */ c.rotation.y = 0.2; g.add(c); box(1.7, 0.1, 0.9, wood, 0, 0.62, 0, c); for (const sz of [-1, 1]) mesh(new THREE.TorusGeometry(0.32, 0.04, 8, 20), iron, 0, 0.34, sz * 0.5, c); dBarrel(c, -0.4, 0.67, 0, 0.8); dBarrel(c, 0.2, 0.67, 0.1, 0.8); dCrate(c, 0.6, 0.67, -0.1, 0.4); for (const sz of [-1, 1]) box(0.9, 0.05, 0.05, wood, 1.3, 0.6, sz * 0.35, c); }   /* a handcart with barrels: the handles run on from the end of the bed */
+    { const n = new THREE.Group(); n.position.set(-9.5, 0.15, 5.8); g.add(n); box(1.1, 1.0, 0.7, woodDark, 0, 0.5, 0, n); const roof = box(1.3, 0.06, 0.95, std(stripeTex('#2f5f7a', '#efe3c5'), 0.9), 0, 1.66, 0, n); roof.rotation.x = 0.06; for (const [dx, dz] of [[-0.5, -0.28], [0.5, -0.28], [-0.5, 0.28], [0.5, 0.28]]) box(0.05, 0.55, 0.05, wood, dx, 1.285, dz, n); for (let i = 0; i < 4; i++) { const p = mesh(new THREE.PlaneGeometry(0.28, 0.38), std(sheetTex('NEWS'), 1), -0.4 + i * 0.27, 1.12, 0.36, n); p.rotation.x = -0.25; } }   /* a news stand */
     for (const sx of [-1, 1]) { const e = box(14, 14, 3, solid(0x6a4034, 1), sx * 32.5, 7, 0, g); mesh(new THREE.PlaneGeometry(14, 14), std(facadeTex(sx > 0 ? 2 : 3), 0.95), sx * 30.98, 7, 0, g).rotation.y = -sx * Math.PI / 2; }   /* a cross street closes each end */
   }; }
 { const b = buildPress; buildPress = () => { const first = !pressBuilt; b(); if (!first) return; const g = pressG;
@@ -1235,13 +1239,13 @@ function dShip(g, x, z, len, ry = 0, funnel = true) { const k = new THREE.Group(
     dPlant(g, -4.85, -4.5, 1.6, 0.4); dPlant(g, 4.85, -4.5, 1.6, 0.4);   /* on the platform (x -5.2 to 5.2, top 0.4); they stood past its ends, in the air (?test=collision, rest) */
     { const p = new THREE.Group(); p.position.set(-6.55, 0, 4.0); g.add(p); box(0.6, 1.25, 1.5, woodDark, 0, 0.62, 0, p); box(0.45, 0.05, 1.45, wood, 0.28, 0.9, 0, p); box(0.04, 0.05, 1.3, solid(0xf0ebd9, 0.5), 0.5, 0.94, 0, p); for (let i = 0; i < 8; i++) box(0.03, 0.03, 0.06, solid(0x15110d, 0.5), 0.52, 0.97, -0.55 + i * 0.16, p); cyl(0.17, 0.17, 0.05, wood, 0.9, 0.5, 0, p, 14); cyl(0.02, 0.02, 0.48, woodDark, 0.9, 0.25, 0, p, 6); LIB_WALLS.push([-7.0, 3.2, -6.2, 4.8]); }   /* a piano against the wall */
     for (const side of [-1, 1]) for (const z of [-3.2, 0, 3.0]) for (const dz of [-0.92, 0.92]) box(0.06, 2.3, 0.42, CLOTH, side * (LIB.x1 - 0.06), 2.55, z + dz, g);   /* curtains either side of every window */
-    dClock(g, 0, 4.5, LIB.z1 - 0.03, Math.PI); dPegs(g, -3.4, 1.8, LIB.z1 - 0.04, Math.PI, 6);
+    dClock(g, 0, 4.5, LIB.z1 - 0.15, Math.PI);   /* in front of the board over the door */ dPegs(g, -3.4, 1.8, LIB.z1 - 0.04, Math.PI, 6);
     for (const side of [-1, 1]) for (const z of [-1.6, 1.5]) dWallLamp(g, side * (LIB.x1 - 0.02), 3.1, z, side > 0 ? -Math.PI / 2 : Math.PI / 2);
   }; }
 { const b = buildOffice; buildOffice = () => { const first = !offBuilt; b(); if (!first) return; const g = offG;
     mesh(new THREE.PlaneGeometry(2.8, 2.0), std(rugTex(), 1), -0.5, 0.012, -0.8, g).rotation.x = -Math.PI / 2;
     { const f = new THREE.Group(); f.position.set(3.5, 0, -2.8); g.add(f); box(0.6, 1.3, 0.55, solid(0x4a4f56, 0.6, 0.3), 0, 0.65, 0, f); for (const y of [0.25, 0.65, 1.05]) { box(0.5, 0.3, 0.02, solid(0x585e66, 0.6, 0.3), 0, y, 0.285, f); box(0.14, 0.03, 0.03, brass, 0, y, 0.31, f); } cyl(0.02, 0.02, 0.1, brass, 0, 1.37, 0, f, 6); mesh(new THREE.SphereGeometry(0.15, 16, 12), solid(0x4a6fa0, 0.5), 0, 1.55, 0, f); mesh(new THREE.TorusGeometry(0.17, 0.012, 6, 24), brass, 0, 1.55, 0, f).rotation.x = Math.PI / 2 - 0.4; OFF_WALLS.push([3.15, -3.15, 3.9, -2.5]); }   /* a filing cabinet with a globe on it */
-    { const h = new THREE.Group(); h.position.set(-3.0, 0, 2.8); g.add(h); cyl(0.03, 0.03, 1.7, woodDark, 0, 0.85, 0, h, 8); cyl(0.2, 0.22, 0.05, woodDark, 0, 0.03, 0, h, 12); for (let i = 0; i < 4; i++) { const a = box(0.22, 0.03, 0.03, woodDark, Math.cos(i * 1.57) * 0.1, 1.68, Math.sin(i * 1.57) * 0.1, h); a.rotation.y = -i * 1.57; } cyl(0.11, 0.11, 0.012, solid(0x2c2a2a, 0.9), 0, 1.75, 0, h, 14); cyl(0.07, 0.08, 0.08, solid(0x2c2a2a, 0.9), 0, 1.8, 0, h, 12); OFF_WALLS.push([-3.3, 2.5, -2.7, 3.1]); }   /* a hat stand */
+    { const h = new THREE.Group(); h.position.set(-3.0, 0, 2.8); g.add(h); cyl(0.03, 0.03, 1.7, woodDark, 0, 0.85, 0, h, 8); cyl(0.2, 0.22, 0.05, woodDark, 0, 0.03, 0, h, 12); for (let i = 0; i < 4; i++) { const a = box(0.22, 0.03, 0.03, woodDark, Math.cos(i * 1.57) * 0.1, 1.68, Math.sin(i * 1.57) * 0.1, h); a.rotation.y = -i * 1.57; } h.children[0].userData.peg = true; { const b1 = cyl(0.11, 0.11, 0.012, solid(0x2c2a2a, 0.9), 0, 1.706, 0, h, 14), c1 = cyl(0.07, 0.08, 0.08, solid(0x2c2a2a, 0.9), 0, 1.752, 0, h, 12); b1.userData.hung = 'hat'; }   /* the hat sits on the top of the pole (it floated 4 cm above it) */ OFF_WALLS.push([-3.3, 2.5, -2.7, 3.1]); }   /* a hat stand */
     dClock(g, 0, 2.7, OFF.z0 + 0.03, 0); dPlant(g, -3.2, -2.9, 1.2); OFF_WALLS.push([-3.5, -3.2, -2.9, -2.6]);
     cyl(0.1, 0.12, 0.04, iron, -0.15, 0.86, -1.65, g, 12); cyl(0.012, 0.012, 0.22, iron, -0.15, 0.97, -1.65, g, 6); cyl(0.035, 0.035, 0.03, iron, -0.15, 1.1, -1.65, g, 8); box(0.05, 0.1, 0.05, iron, -0.05, 0.99, -1.65, g);   /* a telephone */
     cyl(0.14, 0.11, 0.3, TIN, -1.7, 0.15, -2.3, g, 12); dWallLamp(g, OFF.x0 + 0.02, 2.4, 2.3, Math.PI / 2);
@@ -1409,7 +1413,7 @@ function devViews() {
   if (shot === 'soapbox2') inStreet(21, 2.2, 0.5, Math.PI / 2, -0.38);
   for (const k of [1, 2, 3]) if (shot === 'soapboxT' + k) inStreet(21, 0, 2.6, 0, -0.3).then(() => { const t = setInterval(() => { if (CL['Talk' + k]) { byId('garvey3').m.userData.anim.play('Talk' + k); clearInterval(t); } }, 100); });
   if (shot === 'soapbox3') inStreet(21, 0, -1.3, Math.PI, -0.38);
-  if (shot === 'poster') { story.banner = true; story.helped = 'nurse'; inLib(53, -2.2, 4.3, -0.32, 0.06).then(showBanner); }   /* the menu card: the 1920 convention, Garvey speaking under the new banner, delegates in their seats */
+  if (shot === 'poster') { story.banner = true; story.helped = 'nurse'; inLib(53, -2.2, 4.3, -0.32, 0.06).then(() => { showBanner(); $('hud').hidden = true; setTimeout(() => { window.__SHOT = true; }, 4000); }); }   /* the menu card: the 1920 convention, Garvey speaking under the new banner, delegates in their seats */
   if (shot === 'poster2') inStreet(21, -3.7, 0.5, -Math.PI / 2, 0.0).then(() => {   /* looking down the street at Garvey on the soapbox, speaking, with his listeners seen from behind */
     const put = (id, x, z, tx, tz) => { const n = byId(id); n.x = x; n.z = z; n.ry = faceToward(x, z, tx, tz); n.m.position.set(x, 0, z); n.m.rotation.y = n.ry; n.m.visible = true; };
     put('garvey3', 0, 0.45, -3.7, 0.5); put('worker', -1.3, 1.5, 0, 0.5); put('woman', -1.1, -0.6, 0, 0.5); byId('critic').m.visible = false;

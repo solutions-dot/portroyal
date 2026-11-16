@@ -19,6 +19,7 @@ import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import * as THREE from 'three';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _v = new THREE.Vector3();
 /* the stage each place is checked at (its first, or its busiest) */
 export const FIRST = { shop: 0, hall: 10, street: 20, press: 30, dock: 40, liberty: 50, office: 60, park: 70 };
 export const BUSY = { shop: 0, hall: 13, street: 22, press: 32, dock: 40, liberty: 53, office: 60, park: 70 };
@@ -68,7 +69,7 @@ export function devRun(A) {
     },
     renderer: () => A.renderer, scene: () => A.scene, audio: () => A.AU, setSound: A.setSound,
     talking: () => !!A.talkWith,
-    faces: () => P().people.filter((n) => n.m && n.m.visible).map((n) => ({ id: n.id, body: n.m })),
+    faces: () => P().people.filter((n) => n.m && n.m.visible && !n.seated).map((n) => ({ id: n.id, body: n.m })),   /* seated people are measured where they stand (the probe needs a standing head) */
     frame: async (dt) => { A.frame(dt); },
     camera: () => ({ x: A.camera.position.x, y: A.camera.position.y, z: A.camera.position.z }),
     clips: () => { const out = [], cam = A.camera.position, fw = new THREE.Vector3(); A.camera.getWorldDirection(fw);
@@ -76,7 +77,7 @@ export function devRun(A) {
         const hips = n.m.getObjectByName('mixamorigHips'); let hy = 1; if (hips) { const v = new THREE.Vector3(); hips.getWorldPosition(v); hy = (v.y - (n.m.userData.ground || 0)) / (0.95 * n.m.scale.y); }
         out.push({ id: n.id, clip: name, t: act ? act.time : 0, dist: d, inView: (dx * fw.x + dz * fw.z) / (d || 1) > 0.3, hips: isSeated(name) ? 1 : hy }); }
       return out; },
-    autoplay: async () => { const stalls = []; for (const k of ['1', '2', '4', '5', '6', '7', '8', '9']) { const log = await A.runAuto(k); if (!log.includes('ALLDONE')) stalls.push('chapter ' + ({ 1: 1, 2: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8 })[k] + ': ' + log.slice(-4).join(' | ')); closeAll(); await wait(300); } return { ok: !stalls.length, why: stalls.join('; '), stalls }; },
+    autoplay: async () => { const stalls = []; for (const k of ['1', '2', '4', '5', '6', '7', '8', '9']) { closeAll(); if (k === '1') { await goPlace('shop'); A.stage = 0; A.refreshLife(); } const log = await A.runAuto(k); if (!log.includes('ALLDONE')) stalls.push('chapter ' + ({ 1: 1, 2: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8 })[k] + ': ' + log.slice(-4).join(' | ')); closeAll(); await wait(300); } return { ok: !stalls.length, why: stalls.join('; '), stalls }; },
     talks: () => (A.TALK_TARGETS[A.stage] || []).slice(0, 2),
     talkTo: async (id) => { const n = A.byId(id); if (!n) return; A.state.x = n.x + 1.1; A.state.z = n.z + 0.5; A.update(0.016); A.startTalk(n); A.frame(0.016); },
     people: () => P().people.map((n) => ({ id: n.id, name: n.who, body: n.model })),
@@ -110,7 +111,6 @@ export function devRun(A) {
   }
 
   /* ---------- the anim check ---------- */
-  const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _v = new THREE.Vector3();
   function headYaw(m) { const h = m.getObjectByName('mixamorigHead'), c = m.getObjectByName('mixamorigSpine2'); if (!h || !c) return 0; h.getWorldQuaternion(_q1); c.getWorldQuaternion(_q2); _q2.invert().multiply(_q1); _v.set(0, 0, 1).applyQuaternion(_q2); return Math.atan2(_v.x, _v.z); }
   async function animCheck(ids, seconds) {
     const lines = [], stats = [];
@@ -162,7 +162,11 @@ export function devRun(A) {
     (async () => { await adapter.ready(); const out = []; let count = 0;
       for (const id of placesWanted()) { const Q = await goPlace(id, BUSY[id]); for (let i = 0; i < 4; i++) A.update(1 / 30);
         const r = auditPlace({ id, snap: snapMeshes(Q.group), npcs: npcsOf(Q), walls: Q.walls, bounds: Q.bounds, start: Q.start, actions: Q.actions.map((a) => ({ ...a })), people: npcsOf(Q).filter((p) => p.anim !== 'SitIdle') });
-        const all = [...r.floating, ...r.inside, ...r.stuck]; count += all.length; out.push(id + ': ' + all.length + ' issues'); for (const l of all) out.push('  ' + l); await wait(0); }
+        /* hung: every hat or coat hung on a wall rack or stand (userData.hung) must touch a peg or the stand's top (userData.peg). Proposed for engine/audit.js */
+        const pegs = [], hung = []; Q.group.updateMatrixWorld(true); Q.group.traverse((o) => { if (!o.isMesh) return; if (o.userData.peg) pegs.push(new THREE.Box3().setFromObject(o).expandByScalar(0.005)); if (o.userData.hung) hung.push(o); });
+        for (const o of hung) { const b = new THREE.Box3().setFromObject(o); if (!pegs.some((p) => p.intersectsBox(b))) { const c = b.getCenter(new THREE.Vector3()); r.floating.push(`hung@(${c.x.toFixed(2)},${c.y.toFixed(2)},${c.z.toFixed(2)}): a ${o.userData.hung} touches no peg`); } }
+        const all = [...r.floating, ...r.inside, ...r.stuck];
+        if (q.get('dbg')) { const [dx, dy, dz] = q.get('dbg').split(',').map(Number), pt = new THREE.Vector3(dx, dy, dz); Q.group.traverse((o) => { if (o.isMesh && new THREE.Box3().setFromObject(o).expandByScalar(0.02).containsPoint(pt)) { let t = o; while (t.parent && t.parent !== Q.group) t = t.parent; all.push('dbg: ' + o.geometry.type + ' ' + JSON.stringify(o.geometry.parameters || {}) + ' top ' + (t === o ? 'self' : t.type) + ' at ' + o.getWorldPosition(new THREE.Vector3()).toArray().map((v) => v.toFixed(2))); } }); } count += all.length; out.push(id + ': ' + all.length + ' issues'); for (const l of all) out.push('  ' + l); await wait(0); }
       out.unshift('AUDIT ' + count); emit(out, 'AUDIT ' + count); })();
   }
   if (test === 'held') {
@@ -173,13 +177,14 @@ export function devRun(A) {
   if (test === 'walkers') {
     (async () => { await adapter.ready(); const out = []; let bad = 0; const seen = new Set();
       for (const id of placesWanted()) { const Q = await goPlace(id, BUSY[id]);
-        const walkers = Q.people.filter((n) => n.m && (n.route || n.path || (n.amb && /wander|errand/.test(n.amb.kind))));
+        const walkers = [...Q.people, ...(Q.extras || [])].filter((n) => n.m && (n.route || n.path || (n.amb && /wander|errand/.test(n.amb.kind))));
         for (const n of walkers) { if (seen.has(n.model)) continue; seen.add(n.model);
           const gl = await A.model(n.model), b = skClone(gl.scene);
           b.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); b.position.set(300, 0, 300); b.rotation.y = Math.PI / 2; if (n.scale) b.scale.setScalar(n.scale); A.scene.add(b);
-          animate(b, 'Walk'); b.userData.ground = 0;
-          for (const v of [n.route ? 1.25 : 1.05]) { const r = auditWalk(n.id + ' (' + n.model + ')', b, v, { after: gripTick });
-            out.push(`${n.id} (${n.model}): stride ${(r.stride * 100).toFixed(0)} cm, ${v.toFixed(2)} m/s, clip speed ${r.pace.toFixed(2)}, slide ${r.slide.toFixed(1)} cm a loop, shoes ${r.sink.toFixed(1)} to ${r.float.toFixed(1)} cm, biggest jump ${r.pop.toFixed(1)}x`);
+          const clip = (n.amb && n.amb.spec.walk) || (n.amb && /wander|errand/.test(n.amb.kind) && n.sex === 'm' ? 'WalkM' : 'Walk');   /* the clip each walker really uses: ambient men walk WalkM, people sent somewhere Walk */
+          animate(b, clip); b.userData.ground = 0;
+          for (const v of [n.route ? (n.walkSpeed || 1.25) : 1.05 * (n.amb && n.amb.spec.speed || 1)]) { const r = auditWalk(n.id + ' (' + n.model + ')', b, v, { after: gripTick });
+            out.push(`${n.id} (${n.model}, ${clip}): stride ${(r.stride * 100).toFixed(0)} cm, ${v.toFixed(2)} m/s, clip speed ${r.pace.toFixed(2)}, slide ${r.slide.toFixed(1)} cm a loop, shoes ${r.sink.toFixed(1)} to ${r.float.toFixed(1)} cm, biggest jump ${r.pop.toFixed(1)}x`);
             for (const l of r.lines) { out.push('  ' + l); bad++; } }
           A.scene.remove(b); await wait(0); } }
       out.unshift('walkers: ' + bad + ' issues'); emit(out, 'WALKERS ' + bad); })();
@@ -201,11 +206,11 @@ export function devRun(A) {
       const IDS = ['goal', 'topr', 'talk', 'hint', 'toast', 'dialogue', 'cinner', 'place', 'nudge'], rect = (id) => { const e = id === 'cinner' ? document.querySelector('#card .cardin') : $(id); if (!e || e.hidden || (id === 'cinner' && $('card').hidden)) return null; const cs = getComputedStyle(e); if (cs.display === 'none' || +cs.opacity < 0.05 || cs.visibility === 'hidden') return null; const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1 ? { id, r, e } : null; };
       const check = (name) => { const L = IDS.map(rect).filter(Boolean); for (const a of L) { if (a.r.left < -1 || a.r.top < -1 || a.r.right > W + 1 || a.r.bottom > Hh + 1) out.push(`${W}x${Hh} ${name}: ${a.id} is off the screen (${a.r.left | 0},${a.r.top | 0},${a.r.right | 0},${a.r.bottom | 0})`); if (a.e.scrollWidth > a.e.clientWidth + 2 && getComputedStyle(a.e).overflow !== 'visible' && a.id !== 'dialogue') out.push(`${W}x${Hh} ${name}: ${a.id} text is cut off`); }
         for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i].r, b = L[j].r, ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top); if (ox > 4 && oy > 4) out.push(`${W}x${Hh} ${name}: ${L[i].id} overlaps ${L[j].id} by ${ox | 0}x${oy | 0}`); } };
-      const reset = () => { closeAll(); for (const id of ['talk', 'toast', 'nudge']) $(id).hidden = true; $('hint').hidden = true; $('place').hidden = true; $('place').style.opacity = 0; };
+      const reset = () => { closeAll(); document.body.classList.remove('talking', 'carding'); for (const id of ['talk', 'toast', 'nudge']) $(id).hidden = true; $('hint').hidden = true; $('place').hidden = true; $('place').style.opacity = 0; };
       const settle = () => wait(700);
       reset(); A.showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Print the poster'; A.showHint(); A.toast('Journal: The UNIA begins'); A.showPlace(); await settle(); check('play: goal, talk, hint, toast, place');
       reset(); A.showGoal(true); A.startTalk(A.byId('garvey')); await settle(); check('dialogue told by the story');
-      reset(); A.showGoal(true); $('dialogue').hidden = false; $('who').hidden = false; $('who').textContent = 'Market seller'; $('line').textContent = 'UNITY? My neighbours and I help each other already, every day.'; $('choices').innerHTML = '<button class="btn ghost">Pride in who we are</button><button class="btn ghost">Good schools</button><button class="btn ghost">Fair work</button>'; $('next').hidden = true; await settle(); check('dialogue with three choices'); $('choices').innerHTML = ''; $('next').hidden = false;
+      reset(); A.showGoal(true); $('dialogue').hidden = false; document.body.classList.add('talking'); $('who').hidden = false; $('who').textContent = 'Market seller'; $('line').textContent = 'UNITY? My neighbours and I help each other already, every day.'; $('choices').innerHTML = '<button class="btn ghost">Pride in who we are</button><button class="btn ghost">Good schools</button><button class="btn ghost">Fair work</button>'; $('next').hidden = true; await settle(); check('dialogue with three choices'); $('choices').innerHTML = ''; $('next').hidden = false;
       reset(); A.card('Chapter 2 is finished!', ['Well done. Next is The streets of Harlem (1916).'], [{ t: 'Next chapter', go: () => {} }, { t: 'Stay here', go: () => {} }]); await settle(); check('next chapter card');
       reset(); $('nudge').hidden = false; $('nudge').style.left = (W * 0.75 | 0) + 'px'; $('nudge').style.top = (Hh * 0.45 | 0) + 'px'; A.showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Print the poster'; await settle(); check('helper arrow with talk button');
       const covered = (name, panel, ids) => { for (const id of ids) { const e = $(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (!t || !$(panel).contains(t)) out.push(`${W}x${Hh} ${name}: ${id} is covered by ${t ? (t.id || t.className || t.tagName) : 'nothing'}`); } };
@@ -223,7 +228,7 @@ export const TABLES = {
   settle: 150,
   cast: { garvey: ['garvey', 'garvey3', 'garvey4', 'garvey5', 'garvey6'] },
   /* Garvey's two bodies (1914 bare-headed, 1916 on with a felt hat) are a declared change between chapters 2 and 3 */
-  changes: [{ id: 'garvey', chapter: 3, field: 'body' }, { id: 'garvey', chapter: 3, field: 'hat' }],
+  changes: [{ id: 'garvey', chapter: 3, field: 'body' }, { id: 'garvey', chapter: 3, field: 'hat' }, ...[10, 20, 30, 40, 50].flatMap((step) => [{ id: 'garvey', step, field: 'body' }, { id: 'garvey', step, field: 'hat' }])],
   ages: {},
   budget: { frameMs: 400, calls: 260, triangles: 450000, bytes: 30e6 },   /* software drawing in headless Chrome is several times slower than a phone: frame time is judged loosely there */
 };
