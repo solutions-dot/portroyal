@@ -134,7 +134,7 @@ export async function dev(A) {
       for (const o of A.scene.children) if (o !== A.camera && !o.isLight) o.visible = false;
       A.scene.background = A.bg || (A.bg = new (A.scene.fog?.color.constructor)(0x9a9890));
       A.scene.fog = null;
-      const base = "sel_emperor66" + (q.get("tier") ?? "_focus");
+      const base = (q.get("base") || "sel_emperor66") + (q.get("tier") ?? "_focus");
       await A.loadBase(base);
       const { m, ctl } = A.body({ base, x: 0, z: 0, sex: "m", ry: 0, hat: q.get("cap") !== "0" });
       ctl.mx.update(0);
