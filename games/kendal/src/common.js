@@ -1,7 +1,7 @@
 /* games/kendal/src/common.js: pieces shared by the places: times of day, the station base (a sunk track beside a raised platform),
    and the scrolling scenery that passes the windows of a moving train. */
 import * as THREE from 'three';
-import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng, clamp01 } from './gfx.js';
+import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng, clamp01, batchStatic } from './gfx.js';
 import { rails, RAIL_TOP } from './trains.js';
 import { palm, tree, banana, bush, boardHouse, pole, hillRing, scatter, lampPost } from './props.js';
 
@@ -54,7 +54,7 @@ function stripSide(theme, side, seed) {   /* one strip of roadside things, on on
 }
 export function makeRig(theme, { far = 0x3e6a44, farTop = 0x5d8a58 } = {}) {   /* returns { group, update(dt, speed) } to place under the train, at the track's ground level */
   const group = grp(), strips = []; group.userData.noBatch = true;
-  for (const side of [-1, 1]) for (let k = 0; k < 2; k++) { const s = stripSide(theme, side, 11 + side * 3); s.position.x = -k * S; group.add(s); strips.push(s); }
+  for (const side of [-1, 1]) for (let k = 0; k < 2; k++) { const s = stripSide(theme, side, 11 + side * 3); batchStatic(s); s.position.x = -k * S;   /* each strip moves as one: its trees, bushes and houses merged into a few meshes (about 800 draw calls down to a few dozen) */ group.add(s); strips.push(s); }
   const gt = T.grass([60, 8], theme === 'night' ? [34, 52, 36] : theme === 'coast' ? [96, 130, 62] : [74, 112, 52]).clone(); gt.needsUpdate = true; const ground = mesh(new THREE.PlaneGeometry(S * 3, 120), std(gt, 1), 0, 0, 0, group); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02;
   const farG = hillRing(210, 14, 70, { seed: 9, base: theme === 'night' ? [0.07, 0.11, 0.1] : [0.2, 0.42, 0.22] }); group.add(farG);
   const track = rails(S * 3); group.add(track);
