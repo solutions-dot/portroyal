@@ -1353,9 +1353,10 @@ function frame(now) {
   if (!Q) return;
   move(dt);
   const frozen = busy || (openPanel() && $("dialogue").hidden) || DIR.paused;
-  // In the cinematic and behind the title the crowd is seen from the camera, not from Ruth: detail (moving heads, every frame
-  // animated) goes to the people near the camera, and the welcome turns to follow the aircraft until it stands at the steps.
-  const show = Q.id === "airport" && (DIR.on || !S.started),
+  // Behind the title the crowd is seen from the slowly drifting camera, not from Ruth, so detail (moving heads, every frame animated)
+  // goes to the people near the camera. Not in the cinematic: its cuts would hand detail from one group to another in a frame, and
+  // their heads would snap (the head check found it). There the welcome turns to follow the aircraft until it stands at the steps.
+  const show = Q.id === "airport" && !S.started && !DIR.on,
     cx = show ? camera.position.x : S.x,
     cz = show ? camera.position.z : S.z;
   if (Q.id === "airport") aimCrowd(Q);
