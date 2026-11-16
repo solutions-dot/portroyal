@@ -192,6 +192,19 @@ test('menu lists every game in Jamaica\'s timeline, oldest first', async () => {
   assert.deepEqual([...menuGames].sort(), playableGames, 'every playable game must have exactly one main menu card');
 });
 
+test('production main deploys and the menu header uses the three approved pills in order', async () => {
+  const { readFileSync } = await import('node:fs');
+  const vercel = JSON.parse(readFileSync('vercel.json', 'utf8'));
+  assert.equal(vercel.git?.deploymentEnabled?.main, true, 'main must trigger the production Vercel deployment');
+  const page = readFileSync('menu/index.html', 'utf8');
+  const navStart = page.indexOf('<nav class="links"');
+  const nav = page.slice(navStart, page.indexOf('</nav>', navStart));
+  const about = nav.indexOf('>About</a>');
+  const updates = nav.indexOf('>Get updates</button>');
+  const creator = nav.indexOf('>Created by <b>Kellz 5.0</b>');
+  assert.ok(about >= 0 && updates > about && creator > updates, 'header pills must be About, Get updates, Created by Kellz 5.0');
+});
+
 import './chapter-guidance.mjs';
 
 import './tivoli-journal-parity.mjs';

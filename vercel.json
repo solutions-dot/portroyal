@@ -45,7 +45,8 @@
     "deploymentEnabled": {
       "review/consolidate-outstanding-branches-20261116": false,
       "review/consolidated-game-updates-20261116": false,
-      "main": false,
+      "main": true,
+      "fix/restore-main-deployments-20261116": false,
       "fix/menu-and-opening-scenes-20261116": false
     }
   }
