@@ -10,6 +10,8 @@ Read-only audit of `games/port-royal`, `garvey`, `kendal`, `bog-walk`, `nanny`, 
 
 **Garvey objective progress follow-up (16 November):** multi-person story goals now display live `(n of total)` completion counts, refreshed after each finished required conversation and reconstructed when loading a saved stage. The target continues to select only unfinished required people. Source regression `tests/garvey-goal-progress.mjs` added; real chapter playback remains unverified.
 
+**Guidance logic test checkpoint:** added behavioral tests for the shared story engine: nearest unfinished required need, exclusion of optional actions, immediate retargeting after completion without another 2.5-second wait, and ordered needs overriding proximity. These tests exercise the engine in isolation, not the per-game stage tables or rendered arrows. Full browser walkthroughs remain necessary.
+
 ### Follow-up: always-visible next task (16 November 2026)
 
 The owner selected **Bog Walk's guidance pattern as the target for all ten games**: a plainly written next task that stays readable, a gold world arrow to the current required destination, and a nearby talk/action control that takes over when the player arrives. The task should change immediately when a requirement is completed, and optional activities must not override a required step.
