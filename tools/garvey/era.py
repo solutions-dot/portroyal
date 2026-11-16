@@ -508,6 +508,8 @@ def shirt_weights(_sh):      # the shirt's front and back, well inside the armho
         for gi,w in _new:
             if w/_tot>0.002: _sh.vertex_groups[gi].add([_v.index],w/_tot,'REPLACE')
     _smooth_bones(_sh,lambda c:abs(c.x)<SX*0.95 and HIP+0.02<c.z<NECK-0.01,10)      # and the torso's weights are evened out, so the cloth bends as one piece and its edges stay straight
+    if G.get('elbow',1)>0: _smooth_bones(_sh,lambda c:side_arm(c) is not None and 0.36<side_arm(c)<0.74 and abs(c.x)>SX*0.9,int(8*G.get('elbow',1)))      # and the sleeve round the elbow, so a bent arm folds the cloth softly instead of ballooning the upper sleeve and stretching the inside of the bend
+    if G.get('shoulder',1)>0: _smooth_bones(_sh,lambda c:SX*0.55<abs(c.x)<SX*1.25 and SH.z-0.145*s<c.z<NECK+0.02 and (side_arm(c) is None or side_arm(c)<0.22),int(12*G.get('shoulder',1)))      # the shoulder cap, from the chest across to the top of the sleeve, is evened out as one piece: with the arm's weights stopping short, the cloth folded into a notch at the back of the shoulder and the sleeve top stood boxy when the arm went up (owner, 16 November 2026)
     neck_to_chest(_sh)
 if not OLD:
     # A last clearance pass. Whatever the shapes above did, no point of a garment may lie inside, or closer than MIN to, the layer under it: the skin, then the shirt, then the waistcoat.
@@ -567,6 +569,7 @@ if not OLD:
             _lo=_P[_q]; _md=_lo.modifiers.new('wt2','DATA_TRANSFER'); _md.object=_sh; _md.use_vert_data=True; _md.data_types_verts={'VGROUP_WEIGHTS'}
             _md.vert_mapping='POLYINTERP_NEAREST'; _md.layers_vgroup_select_src='ALL'; _md.layers_vgroup_select_dst='NAME'
             with ov(_lo): bpy.ops.object.modifier_move_to_index(modifier='wt2',index=0); bpy.ops.object.modifier_apply(modifier='wt2')
+            if _q=='jacket' and G.get('shoulder',1)>0: _smooth_bones(_lo,lambda c:SX*0.55<abs(c.x)<SX*1.45 and SH.z-0.145*s<c.z<NECK+0.04 and (side_arm(c) is None or side_arm(c)<0.25),int(12*G.get('shoulder',1)))      # a jacket's shoulder stands further out than the shirt's: its own shoulder cap is evened out too, or it tore when the arms went up
     if 'shirt' in _P and 'breeches' in _P:
         # the tucked-in tail of the shirt moves with the trousers' waist, not with the spine: when a person sits, the waistband and the shirt under it then fold together
         from mathutils.kdtree import KDTree as _KD

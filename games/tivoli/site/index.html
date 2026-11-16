@@ -17,10 +17,12 @@
   .btn:disabled{opacity:.6;cursor:default}
   .btn.ghost{background:transparent;color:var(--paper);border:2px solid var(--brass)}
   #allgames{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
-  #title{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;gap:.8rem;padding:2rem max(1.5rem,6vw);background:linear-gradient(90deg,rgba(16,34,43,.95),rgba(16,34,43,.6))}
-  #title h1{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(2.4rem,8vw,4.2rem);margin:0;line-height:1.05}
-  #title p{max-width:30rem;margin:0}
-  #title .row{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+  /* the title screen: the same layout as Kendal, Nanny Town and Windrush. The date line on top, then the name and the words low on the screen, so the street shows above them. */
+  #title{position:fixed;inset:0;display:flex;align-items:flex-end;padding:clamp(16px,4vw,48px);line-height:1.5}
+  #title .tcard{flex-shrink:0;width:100%;max-width:36rem;min-width:0;display:flex;flex-direction:column;gap:.7rem}
+  #title .place{font-family:var(--body);font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:.8rem;color:var(--brass);margin:0}
+  #title h1{font-family:"Alfa Slab One","Rockwell",Georgia,serif;font-weight:400;font-size:clamp(2.6rem,10vw,5.4rem);line-height:1.1;margin:0;text-wrap:balance}   /* one word, so a little more line height than Kendal keeps its letters clear of the date line and the words below */
+  #title p{margin:0;max-width:32rem}
   #title a{color:inherit}
   #hud{position:fixed;inset:0;pointer-events:none}
   #hud > *{pointer-events:auto}
@@ -57,10 +59,6 @@
   #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:15}
 
 /* Tivoli: chapter, journal, notice and mobile control parity. */
-#title .title-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:38rem}
-#title .title-actions>.btn{min-width:0;padding:.7rem .25rem;font-size:clamp(.75rem,2.9vw,1rem);white-space:nowrap}
-
-#title .title-actions>.track{grid-column:1/-1;width:100%}
 #chapters,#journal{justify-content:flex-start;padding:clamp(12px,4vw,28px);gap:.6rem}
 #chapters .panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
 #chapters #chlist,#journal #jlist,#journal #jpage{overflow-y:auto;min-height:0;flex:1;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
@@ -104,8 +102,9 @@ body:has(.card:not([hidden])) #toast,body:has(#dialogue:not([hidden])) #toast{vi
 @media(max-width:560px){#journal .book{height:calc(100dvh - 16px)}#journal .book>footer span{display:none}#journal .book>footer .btn{font-size:.85rem;padding:.55rem .65rem}#journal #jpage{padding:.85rem 1rem}}
 /* The quiet street introduces the story before any opted-in May 2010 scene. */
 #title{isolation:isolate;background:none}
-#title::before{content:"";position:absolute;inset:-3%;z-index:-2;background:url(../../../menu/tivoli.jpg) center/cover no-repeat;animation:tivoli-title-drift 26s ease-in-out infinite alternate;pointer-events:none}
-#title::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,24,31,.92),rgba(6,24,31,.48)),linear-gradient(0deg,rgba(6,24,31,.55),transparent 60%);pointer-events:none}
+#title::before{content:"";position:fixed;inset:-3%;z-index:-2;background:url(../../../menu/tivoli.jpg) center/cover no-repeat;animation:tivoli-title-drift 26s ease-in-out infinite alternate;pointer-events:none}
+#title::after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(16,34,43,0) 22%,rgba(16,34,43,.94) 70%);pointer-events:none}   /* clear at the top, dark under the words, as in the other games */
+@media(max-height:600px){#title::after{background:linear-gradient(180deg,rgba(16,34,43,.62),rgba(16,34,43,.94) 58%)}}   /* a short screen: the words start at the top over the bright sky, so the shade starts there too */
 @keyframes tivoli-title-drift{from{transform:scale(1) translateX(-.4%)}to{transform:scale(1.045) translateX(.4%)}}
 @media(prefers-reduced-motion:reduce){#title::before{animation:none}}
 </style>
@@ -115,17 +114,20 @@ body:has(.card:not([hidden])) #toast,body:has(#dialogue:not([hidden])) #toast{vi
 <body>
 <canvas id="c" tabindex="0" aria-label="The game world"></canvas>
 <section id="title">
-  <h1>Tivoli</h1>
-  <p>From Back-o-Wall to Tivoli Gardens, meet neighbours and hear their stories.</p>
-  <p>Learn about May 2010, its aftermath, and life today.</p>
-  <p>The family is fictional. The history is real.</p>
-  <div class="row title-actions">
-    <button id="start" class="btn" disabled>Loading</button>
-    <button id="chbtn" class="btn ghost">Chapters</button>
-    <a id="allgames" class="btn ghost" href="../../../menu/">Main Menu</a>
-    <div class="track" aria-hidden="true"><div id="bar"></div></div>
+  <div class="tcard">
+    <p class="place">Jamaica &middot; West Kingston &middot; 1960s to today</p>
+    <h1>Tivoli</h1>
+    <p class="intro">From Back-o-Wall to Tivoli Gardens, meet neighbours and hear their stories.</p>
+    <p class="intro">Learn about May 2010, its aftermath, and life today.</p>
+    <p class="intro">The family is fictional. The history is real.</p>
+    <div class="loading title-actions">
+      <button id="start" class="btn" disabled>Loading</button>
+      <button id="chbtn" class="btn ghost">Chapters</button>
+      <a id="allgames" class="btn ghost" href="../../../menu/">Main Menu</a>
+      <div class="track" aria-hidden="true"><div id="bar"></div></div>
+      <p id="loadnote">Loading people.</p>
+    </div>
   </div>
-  <p id="loadnote">Loading people.</p>
 </section>
 <div id="hud" hidden>
   <div id="dpad" aria-label="Movement controls"><button type="button" data-key="arrowup" aria-label="Move forward">▲</button><button type="button" data-key="arrowleft" aria-label="Turn left">◀</button><button type="button" data-key="arrowdown" aria-label="Move backward">▼</button><button type="button" data-key="arrowright" aria-label="Turn right">▶</button></div>

@@ -87,6 +87,21 @@ Every man is built from his recipe in `tools/people/<name>.json` by `tools/garve
 
 Check a body in the game's own light with `?shot=sheet&who=galdy&clip=Walk&zoom=full|top|legs` (standing and three moments of the clip, each from the front, side, back and three-quarter; `&it=0.25,0.75` shows the standing clip at those moments instead). Then run `?test=cloth` (no layer shows through another) and `?test=held` (carried things are at the hand and clear of the body).
 
+## The boats (16 November 2026)
+
+The owner asked for more detail on the boat that rescues Lewis Galdy. All three small boats are now built by `rowBoat` in `engine/boats.js` (see `docs/ENGINE.md`):
+
+- **The rescue boat** (`buildSeaProps` in `main.js`, 5.2 m long, 1.7 m wide): a plain clinker-built harbour boat, the kind a ship's boat or a wherry was. It has overlapping planks, a keel, stem and stern posts, a transom, ribs, a gunwale and rubbing strake, four thwarts, bottom boards, thole pins, two oars, a rudder with a tiller, a coil of rope and a bailer. It was a flat-topped slab before. The tombstone says only "a Boat", so it has no name and nothing fancy.
+  - The boat now comes to you **bow first** (it used to slide stern first), and turns toward you smoothly.
+  - Abba sits on a thwart facing the bow (`BOAT_SEAT`), with the oars in thole pins in front of her. The oars swing while the boat moves (`rowStroke`). She has no rowing animation yet: her hands rest in her lap.
+  - The sea no longer shows inside the boat: the boat has a depth-only mask and `waves.renderOrder = 2`.
+  - Cost: the sea scene went from 41 to 43 draw calls and from about 37,000 to 43,500 triangles.
+- **The boat on the beach** (harbour section): the same builder, oars lying in it, rudder unshipped. It went from 9 meshes to 3.
+- **The ship's boat in Ned's story** (`loadBuild`): it was a plain box, and it sat inside the merchant ship's hull where only a sliver showed. It is now a real boat in the open water on the other side of the pier (`LOAD.drop` moved to `[SHORE + 9.2, 1.15]`), and the crates go on its bottom boards.
+- Sources for the look: Port Royal had wherries (John Taylor names the Wherry Bridge, 1688); small English working boats of the time were commonly clinker-built and rowed with oars in thole pins. The boat is a general picture, not a copy of a recorded boat.
+- **To view:** Chapters, "The earthquake", or `?shot=swim` in a dev build. `node build/vehicles/pr_shot.mjs after` saves close-up pictures of all three boats to `build/vehicles/port-royal/`.
+- Not done: the fishing canoe on the spit and the two packed ship models are unchanged.
+
 ## Test views (dev build only)
 
 Open `games/port-royal/site/index.html?shot=<name>`. Useful ones: `ns1` to `ns9` (new street), `nsst1`, `nsst2` (stalls), `nsmen` (Mendes), `nsback` (harbour corner), `sold1`, `sold2` (the soldier), `nudge`, `nudge2` (helper arrow), `meline` (a "You" line), `leave` (ending a talk early), `thumb` (a clean picture for the menu card), `walkcheck`, `pad`, `move`, `fbquit`. The autoplayer: `?auto=0&one` plays chapter 0 and logs to the page title. See `docs/TESTING.md`.

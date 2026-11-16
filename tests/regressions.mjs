@@ -206,6 +206,7 @@ test('production main deploys and the menu header uses the three approved pills 
 });
 
 import './chapter-guidance.mjs';
+import './vehicle-kit.mjs';
 
 import './tivoli-journal-parity.mjs';
 

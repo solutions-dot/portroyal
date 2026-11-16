@@ -4,6 +4,8 @@ Status (16 Nov 2026): **all six chapter entries are playable in code**. The stor
 
 Title: **Bog Walk 1904: The Tube**. The game is in `games/bog-walk/`, started from `games/_template/`.
 
+Vehicles (16 November 2026): the retired mule car in Kingston has turned wheels with flanges, axle boxes and springs, brake blocks, a curved roof, steps, corner posts and a brake staff at each end (`muleCar` in `places.js`); its colours are unchanged. The handcart by the yard gate has spoked wheels with iron tyres, side rails and an axle (`cart` in `props.js`, the same cart as Kendal's). The electric car was left alone: it already had this detail. To view: `?shot=mule` and `?shot=cart`.
+
 ## Decisions (agreed with the owner)
 
 | Question | Decision |

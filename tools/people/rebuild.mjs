@@ -1,0 +1,32 @@
+/* Rebuild every game's people with the shared builder, and put each body wherever a game uses it (16 November 2026).
+     node tools/people/rebuild.mjs [recipe ...] [--jobs 3] [--skip garvey1914,garvey1916]
+   With no recipe names it rebuilds them all. A body is written to every games/<game>/site/models/ that already has <name>.js, with a light copy
+   (<name>_lo.js) where that game has one. Recipes from tools/people (Port Royal), garvey, kendal, nanny and tivoli go through tools/garvey/era.py and
+   tools/people/pack.mjs (Tivoli's uniformed recipes also through tools/tivoli/kit.py). The Emperor's Arrival and Windrush have their own build scripts
+   (tools/selassie/build-people.mjs, tools/windrush/build-people.mjs), which this runs too. Then run tools/review/people-check.mjs all and look at the sheets. */
+import { readdirSync, existsSync, readFileSync, mkdirSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
+const JOBS = +opt('--jobs', 3), skip = new Set((opt('--skip', '') || '').split(',').filter(Boolean)), wanted = args.filter((a, i) => !a.startsWith('--') && !['--jobs', '--skip'].includes(args[i - 1]));
+const PY = process.env.PYTHON || 'python3', OUT = 'build/people-all/';
+mkdirSync(OUT, { recursive: true });
+const DIRS = ['tools/people', 'tools/garvey/people', 'tools/kendal/people', 'tools/nanny/people', 'tools/tivoli/people'];
+const games = readdirSync('games').filter((g) => !g.startsWith('_') && existsSync(`games/${g}/site/models`));
+const recipes = [];
+for (const d of DIRS) for (const f of readdirSync(d)) { if (!f.endsWith('.json') || f === 'faces.json') continue; const P = JSON.parse(readFileSync(`${d}/${f}`, 'utf8')); if (!P.name || !P.body) continue;
+  if ((wanted.length && !wanted.includes(P.name)) || skip.has(P.name)) continue; const uses = games.filter((g) => existsSync(`games/${g}/site/models/${P.name}.js`) || existsSync(`games/${g}/site/models/${P.name}_lo.js`)); if (uses.length) recipes.push({ P, file: `${d}/${f}`, uses, kit: d.includes('tivoli') && P.kit }); }
+const run = (cmd, a, env) => new Promise((res) => { const p = spawn(cmd, a, { env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] }); let log = ''; p.stdout.on('data', (b) => (log += b)); p.stderr.on('data', (b) => (log += b)); p.on('close', (c) => res({ c, log })); });
+let i = 0, failed = [];
+async function worker() { while (i < recipes.length) { const r = recipes[i++], env = { NPC_OUT: OUT, MAKEHUMAN: process.env.MAKEHUMAN || '/tmp/mh/makehuman' };
+  let x = await run(PY, ['tools/garvey/era.py', JSON.stringify(r.P)], env); if (x.c === 0 && r.kit) x = await run(PY, ['tools/tivoli/kit.py', JSON.stringify(r.P)], env);
+  if (x.c !== 0) { failed.push(r.P.name); console.log('FAILED', r.P.name, x.log.slice(-800)); continue; }
+  for (const g of r.uses) { const lo = existsSync(`games/${g}/site/models/${r.P.name}_lo.js`), full = existsSync(`games/${g}/site/models/${r.P.name}.js`);
+    const p = spawnSync(process.execPath, ['tools/people/pack.mjs', '--src', OUT, '--out', `games/${g}/site/models`, ...(lo ? ['--lo'] : []), r.P.name], { encoding: 'utf8' });
+    if (p.status) { failed.push(r.P.name + '@' + g); console.log(p.stderr.slice(-400)); continue; }
+    if (!full) spawnSync('rm', ['-f', `games/${g}/site/models/${r.P.name}.js`]);   /* this game ships only the light copy */
+    console.log(`${r.P.name} -> ${g}${lo ? ' (+lo)' : ''}${full ? '' : ' (light copy only)'}`); } } }
+await Promise.all(Array.from({ length: JOBS }, worker));
+if (!wanted.length || wanted.some((n) => n.startsWith('sel_'))) { const s = spawnSync(process.execPath, ['tools/selassie/build-people.mjs', ...wanted.filter((n) => n.startsWith('sel_'))], { encoding: 'utf8', env: process.env }); console.log('selassie:', s.status === 0 ? 'built' : 'FAILED ' + (s.stderr || '').slice(-400)); if (s.status) failed.push('selassie'); }
+if (!wanted.length || wanted.some((n) => n.startsWith('wr_'))) { const s = spawnSync(process.execPath, ['tools/windrush/build-people.mjs', ...wanted.filter((n) => n.startsWith('wr_'))], { encoding: 'utf8', env: process.env }); console.log('windrush:', s.status === 0 ? 'built' : 'FAILED ' + (s.stderr || '').slice(-400)); if (s.status) failed.push('windrush'); }
+console.log(`REBUILT ${recipes.length} recipes` + (failed.length ? `, FAILED: ${failed.join(', ')}` : ''));
+process.exit(failed.length ? 1 : 0);

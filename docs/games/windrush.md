@@ -95,6 +95,10 @@ Livery: the Ministry of Transport troopship scheme, a white hull with a broad bl
 - The April 2018 apology by the Prime Minister to Caribbean leaders (17 April) and the Home Secretary's resignation (29 April): widely reported at the time (BBC News, The Guardian).
 - Ship dimensions and history: [HMT Empire Windrush](https://en.wikipedia.org/wiki/HMT_Empire_Windrush), [Royal Museums Greenwich](https://www.rmg.co.uk/stories/ocean/history-empire-windrush). Troopship livery: [Queen's Royal Surreys, Troopships](https://queensroyalsurreys.org.uk/troopships/ts005.html), [Shipping Wonders of the World, Troopships](https://shippingwondersoftheworld.com/troopships.html).
 
+## Cars, 16 November 2026
+
+`car()` in `scenery.js` now builds its cars with `engine/roadcars.js` (`docs/ENGINE.md`): a small round saloon for 1948 and 1962, a modern car for 2018, each with tyres, hub caps, windows, door lines, lamps and bumpers, in two meshes. Colours, sizes and places are unchanged, and no car has a make or a number. The ship, its name, the double-decker bus and the lorry were not touched. To view any spot: `?shot=london&c=x,y,z&l=x,y,z` (the new `c` and `l` set the camera and where it looks).
+
 ## Characters, animation and performance (first version)
 
 The notes below describe the first version and are kept for history; the review above replaces them where they differ.

@@ -284,6 +284,32 @@ Trains run along x and face -x; every vehicle has its floor at y = 0 (platform h
 
 The shapes and colours are general pictures, not copies of a photographed engine (see `docs/games/kendal.md`). Kendal's dev model viewer (`?shot=model&m=late`, and `diesel`, `coach`, `early`, `first`, `third`, `wagon`) shows each one on a piece of track.
 
+## engine/boats.js: a wooden rowing boat (16 November 2026)
+
+`rowBoat(o)` builds an open clinker-built boat in code: overlapping planks with a real step at each lap, a keel, stem and stern posts, a transom, ribs, a gunwale with a rubbing strake under it, risers, thwarts with knees, bottom boards, thole pins (wooden pegs: metal rowlocks came later), two oars, a rudder with a tiller, a coil of rope and a bailer. It fits a harbour boat from the 1600s to the 1900s and carries no name or number.
+
+- The bow is at +x and the bottom of the keel is at y = 0. Give it `L`, `beam`, `depth`, a `wood` material for the planking (its texture runs keel to gunwale on u, so a plank texture with one plank per strake fits) and a `timber` material.
+- Cost: three meshes (planking, timber, small things), about 6,500 triangles. `oars: 'rowing'` adds one mesh for each oar so they can swing: call `rowStroke(boat, phase, pulling)` each frame. `oars: 'shipped'` lays them in the boat at no extra cost.
+- `mask: true` adds an unseen lid at the gunwale that writes depth only. Set `renderOrder = 2` on the sea mesh and the sea is never drawn inside the boat, however low the boat sits or the waves rise. The boat can then have a real, deep inside instead of a false floor.
+- `userData` gives `seatTop`, `thwarts`, `boards` (the height of the bottom boards, for putting loads in) and `halfAt(x, y)` (half the inside width there).
+- Port Royal uses it three times: the boat that rescues Galdy, the boat on the beach and the ship's boat in Ned's story.
+
+## engine/roadcars.js: cars, a bus, a van and lorries (16 November 2026)
+
+Road vehicles with a detailed look at a low cost. Each is drawn from its side outline (the wheel arches cut out of it), pushed out to its width with rounded edges, and leaned in above the waist. Then come wheels with a tyre, a rim and a hub cap, glass, bumpers, a grille, lamps, door lines, handles, mirrors and wipers.
+
+| Builder | What it is |
+|---|---|
+| `saloonCar({ colour, era })` | a four-door car. `era`: `'1960s'` (small and round, chrome), `'1970s'` (three boxes, chrome bumpers), `'1980s'` (the same with dark bumpers), `'modern'`. `L` and `W` may be given |
+| `bus({ colour, band, L })` | a single-deck town bus of the 1960s to 1980s with a front door on the left. `userData.sign` says where a game may put its own route sign |
+| `van({ colour, stripe, L })` | a small forward-control panel van |
+| `lorry({ colour, body, bodyColour, L, axles })` | a forward-control lorry. `body`: `'tank'` (bands, a hatch, a ladder, an outlet, a hose), `'fire'` (lockers with shutters, a pump panel, a ladder, a hose reel, a red lamp) or `'flat'` |
+
+- **Cost: two draw calls a vehicle**, however much detail it has: everything painted is one mesh with vertex colours (`PAINT`), all the glass is a second mesh (`GLASS`). Both materials are shared by every vehicle, so a game's `batchStatic` merges all the parked vehicles in a place into the same two meshes. A car is about 2,900 triangles, the bus 3,100, a lorry 4,600.
+- **Rule 3:** nothing carries a maker's badge, a name, a number or a livery. Number plates are blank. The caller gives the colours and adds any sign it has a source for.
+- Vehicles face +x and stand on y = 0. Jamaica and Britain drive on the left, so the driver sits on the right (+z) and the bus door is on the left (-z).
+- Used by Eventide (cars, the No. 43 bus, the fire engine, the meal van), Hurricane Melissa (the car, the water truck) and Windrush (the cars). To look at them alone: `node build/vehicles/viewer/shoot.mjs` (a small viewer page kept in the git-ignored `build/` folder) writes pictures to `build/vehicles/kit/`.
+
 ## Still inside Port Royal, ready to move next
 
 These systems are general but still live in `games/port-royal/src/main.js`, because they read Port Royal's UI and state directly. When a second game needs one, move it into `engine/` and pass the game's details in as options:
