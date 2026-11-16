@@ -70,6 +70,12 @@ const scene = new THREE.Scene(),
 scene.add(camera);
 camera.rotation.order = "YXZ";
 const sky = makeSky();
+// On mobile Safari, the layered translucent cloud sprites can render as
+// multicoloured stipple/noise against the sky. Keep the smooth sky dome but
+// disable only those cloud sprites on affected iOS WebGL devices.
+const iosWebGL = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+if (iosWebGL) sky.clouds.visible = false;
 sky.objects.forEach((o) => scene.add(o));
 const hemi = new THREE.HemisphereLight(0xfff1d4, 0x819183, 2.5),
   sun = new THREE.DirectionalLight(0xffe2b6, 2.1);
