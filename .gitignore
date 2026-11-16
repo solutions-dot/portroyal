@@ -44,3 +44,6 @@ __pycache__/
 
 # Shared title controls are copied into every game by the build.
 games/*/site/title.css
+
+# Shared chapter panels are copied into every game by the build.
+games/*/site/chapters.css

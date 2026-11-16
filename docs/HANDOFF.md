@@ -1,5 +1,16 @@
 # Handoff: where the work stands (15 November 2026)
 
+## Latest checkpoint: menu and Chapters reconciliation, 16 November 2026
+
+- PR #107 merged the reviewed non-people consolidation into main. The separate people work is draft PR #108 and is not approved for merging.
+- The current follow-up is `fix/menu-and-opening-scenes-20261116`. See `docs/reviews/menu-chapters-20261116.md` for scope, preservation checks and browser evidence.
+- The owner's latest Chapters standard applies to all ten games, from the title and in-game journal: cream book, dark borders, Close, separate date/name/status, scrolling rows and fixed footer. Exact button text and order: **Unlock All | Restart | Credits**. `shared/chapters.css` is copied by the build. Teaching mode does not rename the button; Restart asks before clearing progress.
+- Use Windrush's Kingston quay artwork and opening camera, not the offshore ship view. The Melissa menu heading is Hurricane Melissa; keep its description. Existing games have no New badge.
+- Preserve the corrected Selassie tail. Its lettering is ETHIOPIAN AIRLINES; the owner removed the unverified White Nile name. Do not import the rejected people from draft #108.
+- The owner has not authorized a Vercel deployment. Automatic main deployment remains disabled. Merged source and the live site can differ.
+
+Earlier entries below record past checkpoints.
+
 ## Update: 16 November 2026, integration PR #101
 
 This section updates the original 15 November handoff without rewriting its historical test claims.

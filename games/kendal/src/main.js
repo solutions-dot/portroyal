@@ -536,7 +536,7 @@ function startScene(i, st) {
 function chaptersOpen(i) { return i === 0 || best >= DONE[i - 1]; }
 let teacherMode=false;try{teacherMode=localStorage.getItem('kendal-teacher')==='1';}catch{}
 function renderChapters() {
-  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent=teacherMode?'Unlock All: on':'Unlock All';$('chteachernote').hidden=!teacherMode;
+  $('chteacher').setAttribute('aria-pressed',String(teacherMode));$('chteacher').textContent='Unlock All';$('chteachernote').hidden=!teacherMode;
   const ul = $('chlist'); ul.replaceChildren();
   CHAPTERS.forEach((c, i) => { const open = teacherMode || chaptersOpen(i), dn = best >= DONE[i], li = document.createElement('li'), b = document.createElement('button'); b.className = 'chbtn' + (dn ? ' done' : ''); b.disabled = !open || !modelsReady;
     for (const [cls, txt] of [['yr', c.year], ['nm', c.name], ['st', !modelsReady ? 'Loading' : dn ? 'Done' : 'Play']]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; b.appendChild(sp); }
@@ -548,7 +548,7 @@ function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidde
 $('chteacher').onclick=()=>{teacherMode=!teacherMode;try{localStorage.setItem('kendal-teacher',teacherMode?'1':'0');}catch{}renderChapters();$('chteacher').focus();};
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
 function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } location.reload(); }
-$('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
+$('chreset').onclick = () => { if (!confirm('Restart and erase all saved progress?')) return; eraseAll(); };
 function openCredits() { if (state.started) { closeJournal(); busy = true; keys.clear(); } $('credits').hidden = false; $('crclose').focus(); }
 function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = panelsOpen(); }
 $('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;

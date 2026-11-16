@@ -36,10 +36,15 @@ function refreshJournal() {
   else { selectedPage = null; $('jptitle').textContent = 'Your journal'; $('jpsimple').textContent = 'Pages open as you play.'; $('jdig').hidden = true; }
 }
 function refreshChapters() {
-  const list = $('chlist'); list.replaceChildren(...CHAPTERS.map((c) => { const row = document.createElement('div'); row.className = 'chrow';
-    const t = document.createElement('div'); t.innerHTML = ''; const h = document.createElement('b'); h.textContent = c.id + '. ' + c.name; const w = document.createElement('span'); w.textContent = c.when + (isDone(c.id) ? ' (done)' : ''); const l = document.createElement('p'); l.textContent = c.line; t.append(h, w, l);
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn' + (c.playable ? '' : ' ghost'); b.textContent = c.playable ? (isDone(c.id) ? 'Play again' : 'Play') : 'Coming soon'; b.disabled = !c.playable;
-    if (c.playable) b.onclick = () => { $('chapters').hidden = true; H.startChapter(c.id); }; row.append(t, b); return row; }));
+  const list = $('chlist'); list.replaceChildren(...CHAPTERS.map((c) => {
+    const row = document.createElement('li'); row.className = 'chrow';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chbtn' + (isDone(c.id) ? ' done' : ''); b.disabled = !c.playable;
+    for (const [cls, text] of [['yr', c.when], ['nm', c.id + '. ' + c.name], ['st', !c.playable ? 'Coming soon' : isDone(c.id) ? 'Done' : 'Play'], ['summary', c.line]]) {
+      const span = document.createElement('span'); span.className = cls; span.textContent = text; b.append(span);
+    }
+    if (c.playable) b.onclick = () => { $('chapters').hidden = true; H.startChapter(c.id); };
+    row.append(b); return row;
+  }));
 }
 /* h: { startChapter(id), uiSound(kind) } */
 export function initStory(h) {

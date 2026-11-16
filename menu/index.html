@@ -97,11 +97,13 @@
 
   /* Kendal 1957: a poster as well. The long train waiting at Kingston in the evening light; the year is in amber. */
   .game.windrush{background:#0c3348}
-  .game.windrush::before{content:"";position:absolute;inset:0 0 auto;aspect-ratio:16/9;background:url(windrush-ship.jpg) center/cover no-repeat;mask-image:linear-gradient(#000 75%,transparent);z-index:-2}
+  .game.windrush::before{content:"";position:absolute;inset:0 0 auto;aspect-ratio:16/9;background:url(windrush-kingston-quay.jpg) center/cover no-repeat;mask-image:linear-gradient(#000 75%,transparent);z-index:-2;animation:windrush-quay-drift 24s ease-in-out infinite alternate}
   .game.windrush .tag{position:absolute;top:clamp(.8rem,1.6vw,1.2rem);left:clamp(.8rem,1.6vw,1.2rem);margin:0;background:#efbd60;color:var(--deep);font-weight:800;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase;padding:.35rem .8rem;border-radius:999px}
   .game.windrush .play{background:#efbd60;color:var(--deep)}
   .game.windrush:hover .play,.game.windrush:focus-visible .play{background:var(--paper)}
-  .game.selassie{background:#24483d url(selassie.jpg) center 35%/cover no-repeat}
+  @keyframes windrush-quay-drift{from{transform:scale(1)}to{transform:scale(1.035)}}
+  @media(prefers-reduced-motion:reduce){.game.windrush::before{animation:none}}
+  .game.selassie{background:#24483d url(selassie-arrival.jpg) center 35%/cover no-repeat}
   .game.selassie .play{background:#edc25f;color:var(--deep)}
   .game.selassie:hover .play,.game.selassie:focus-visible .play{background:var(--paper)}
   .game.kendal{background:#1c1a22 url(kendal.jpg) 70% 0/auto 76% no-repeat}
@@ -295,7 +297,7 @@
     <a class="game melissa" data-game="melissa" data-year="2025" href="games/melissa/site/">
       <div class="text">
         <div>
-          <h2>Hurricanes Charlie, Gilbert and Melissa</h2>
+          <h2>Hurricane Melissa</h2>
           <p>Charlie in 1951, Gilbert in 1988 and Melissa in 2025 were three of the worst storms ever to hit Jamaica.</p>
         </div>
         <span class="play">Go there</span>

@@ -1,0 +1,287 @@
+{
+  "base": "a65e2a464d7f85fc8b2944a791c864682c6871bf",
+  "branchHeadsChecked": 54,
+  "allHistoricalHeadsRetained": true,
+  "unchangedOwnerPhotoReferences": [
+    "140716-haile-selassie-05-1024x669.jpg",
+    "21April_Haile-Selassie-in-Jamaica.jpg",
+    "HGdreYxXwAAgTp0.jpg",
+    "images (1).jpeg",
+    "images.jpeg"
+  ],
+  "branches": [
+    {
+      "ref": "feat/contact-pill",
+      "sha": "73e53b3a7a973ffa2f029372e6d5c64da2c9bce9",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "feat/selassie-1966",
+      "sha": "eb8129bce7414b909797d157c5853341ec207848",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "feat/windrush-family",
+      "sha": "de630cafc4b4c0348e6447ce5813b9eaf7b0ce8d",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "fix/contact-pill-hover",
+      "sha": "c02cd34f1c9a98b287ce6fde2bc2fca36b3502a6",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "fix/game-main-menu",
+      "sha": "bdf22af17817b60f24a75886f427caec4aaed2a2",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "fix/game-quality-and-continuity",
+      "sha": "a1723f9183100001de6dce5af68030e3b191fe0a",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "fix/nanny-live-title",
+      "sha": "45a6dcf174a4024097cb818db7a008a39cdbe7ef",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "fix/stack-nanny-pr80",
+      "sha": "cf2256cd701e0ce00a23eecf2a5dddd691a80983",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "fix/windrush-ship-thumbnail",
+      "sha": "9eb849823e3792ac86ef5ab8fe362d99c9950321",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "work",
+      "sha": "10f0f184ced687f997dd94bddbea6a2678e055de",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/barrels-by-boat",
+      "sha": "c1d688fa4595ca1c5181b25b2750775f7baae37f",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/chatgpt/bog-walk-mobile-title-buttons-20261116",
+      "sha": "6dd250c599844d416ad7dc944af99aca77aa8bb1",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/chatgpt/combined-history-polish-20261116",
+      "sha": "be9b57a1edb40f4a8b011736c9e21cfb5c9d7b41",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/chatgpt/full-ten-game-menu-coverage-20261116",
+      "sha": "513004e9686bd09b86def23a9e33776fcef76900",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/chatgpt/menu-card-definition-20261116",
+      "sha": "86dafe4aca3bff66374f1fbb116d94cb474491a6",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/chatgpt/nanny-mobile-title-sky-20261116",
+      "sha": "bd6e899467f7f9f0a7fa379679fc74c6f6481173",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/chatgpt/tivoli-journal-menu-20261115",
+      "sha": "b2c2f31b3792cd54056ef2f95a6653b4314df86b",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/affectionate-mayer-mx0emt",
+      "sha": "b26825a6e8a52661a8d194c06ab136e6d636d0e8",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/affectionate-pasteur-xvhvlq",
+      "sha": "610039439bfb87038fff76d42371af330cce32a9",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/beautiful-hamilton-5mtlr3",
+      "sha": "f99a9043b5c64a7386dd4e0592f31947009d7217",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/clever-volta-2hzwp3",
+      "sha": "ccc92986f759bf6a8325ea55cd3783f8b7cec1b8",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/garvey-par",
+      "sha": "c3a7223711f635de1f228adb734f2316bf571ef0",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/keen-albattani-bg070w",
+      "sha": "06633cb9a40f639536dd829e9738e7d60c49288b",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/kendal-par",
+      "sha": "d0836dff4159635730436afcaed3c9bc536b2bb0",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/nanny-par",
+      "sha": "d00edd336613c1efe92ae704166f793e7342eaed",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/port-royal-par",
+      "sha": "b98c14aaab120afca195f6ee0f8373b23b8290a4",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/quirky-newton-oaiv1k",
+      "sha": "ac3aacb7ccbe5619921598abc8d00771cd5e1f74",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/relaxed-wright-7wk7rx",
+      "sha": "bc625e81bc2d9434973fefbb54e518bc15e37810",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/selassie-likeness",
+      "sha": "b063d32134f3a11a49ab860dedfe7f68ab6166fe",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/selassie-places",
+      "sha": "069b4708ba98bca53615874936c5350943a0d6ca",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/selassie-review",
+      "sha": "4788b73d4c5a2a6887a0b5b305e0b48e184cbc35",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/sw-ui-parity",
+      "sha": "ba10d3f4a6e14da2ef23c10dafe17b063e135f19",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/tivoli-scenes",
+      "sha": "9696f3bba6612f1c181d3ac25e7bed36875bfd9f",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/todo-list-continuation-dcqnvx",
+      "sha": "8f119cdbef8330d15995472c83443c7d66303271",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/vibrant-faraday-op8d2a",
+      "sha": "fb3e841da2f79ff29b80b10e1e4d16bafba0d915",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/vibrant-keller-58cgdr",
+      "sha": "42b8773bdc146f71cbcfe6b7a5f0e7307fa9928d",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/claude/windrush-review",
+      "sha": "cb911287d3f91ae52157d7d52ed1d4c6fed46ae7",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/coat-skirts",
+      "sha": "1a861a6857e65e28aca4b724c2776db94e00a106",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/engine-split",
+      "sha": "deed65c5a9226b84721caea9ea30314045d0bc53",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/feat/contact-pill",
+      "sha": "73e53b3a7a973ffa2f029372e6d5c64da2c9bce9",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/feat/selassie-1966",
+      "sha": "eb8129bce7414b909797d157c5853341ec207848",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/feat/windrush-family",
+      "sha": "de630cafc4b4c0348e6447ce5813b9eaf7b0ce8d",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/fitted-clothes-and-spit",
+      "sha": "e17ff767e390670addd2ae378da591e51b23b41f",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/fix-restore",
+      "sha": "ff2bc6afbabb5a987ea133878d436e0d45983ff5",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/fix/contact-pill-hover",
+      "sha": "c02cd34f1c9a98b287ce6fde2bc2fca36b3502a6",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/fix/eventide-menu-visible",
+      "sha": "05fc99b11142bda404523add9f3a0ba283e15c91",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/fix/game-main-menu",
+      "sha": "bdf22af17817b60f24a75886f427caec4aaed2a2",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/fix/game-quality-and-continuity",
+      "sha": "903dfdd3f20be175af1354ce0ca0ce7c8872c2b8",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/fix/tivoli-journal-menu-parity-20261116",
+      "sha": "6b14c28f4b6369caa51b8109cbb64940a2a734c0",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/fix/windrush-mobile-sky-cloud-noise-20261116",
+      "sha": "93ce03d4617d166ff8f29c0772e09a4f12fc579c",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/fix/windrush-ship-thumbnail",
+      "sha": "9eb849823e3792ac86ef5ab8fe362d99c9950321",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/game-first-build",
+      "sha": "a93aa268b73a3a7908c52af50d05838c50b5986a",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/keep-pending-save",
+      "sha": "f94388ed48ad2321e793b1ec8b1cc8c5a8e620c7",
+      "retainedInMainHistory": true
+    },
+    {
+      "ref": "origin/release/outstanding-tivoli-windrush-20261116",
+      "sha": "6d3592d0edef8fdaac71beb2b591a934dcb7a7ec",
+      "retainedInMainHistory": true
+    }
+  ],
+  "unchangedPackedModelFilesIncludingPeople": 369,
+  "changedPackedModelFiles": [],
+  "airframeAndTailGeometryUnchanged": true
+}

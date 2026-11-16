@@ -1,0 +1,44 @@
+{
+  "game": "tivoli",
+  "mode": "tivoli",
+  "errors": [],
+  "chapters": [
+    {
+      "chapter": 1,
+      "switchedWhilePlaying": true
+    },
+    {
+      "chapter": 2,
+      "completed": true
+    },
+    {
+      "chapter": 3,
+      "completed": true
+    },
+    {
+      "chapter": 4,
+      "completed": true
+    },
+    {
+      "chapter": 5,
+      "route": "read instead"
+    },
+    {
+      "chapter": 6,
+      "completed": true
+    },
+    {
+      "chapter": 7,
+      "completed": true
+    },
+    {
+      "chapter": 8,
+      "completed": true
+    },
+    {
+      "chapter": 1,
+      "completed": true
+    }
+  ],
+  "ok": true
+}

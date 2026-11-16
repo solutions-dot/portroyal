@@ -391,7 +391,7 @@ function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidde
 $('chteacher').onclick = () => { teacherMode = !teacherMode; try { localStorage.setItem('eventide-teacher', teacherMode ? '1' : '0'); } catch (e) { /* ignore */ } renderChapters(); $('chteacher').focus(); };
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
 function eraseAll() { erasing = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } location.reload(); }
-$('chreset').onclick = () => { const b = $('chreset'); if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to erase all progress'; return; } eraseAll(); };
+$('chreset').onclick = () => { if (!confirm('Restart and erase all saved progress?')) return; eraseAll(); };
 function openCredits() { if (state.started) { closeJournal(); busy = true; keys.clear(); } $('credits').hidden = false; $('crclose').focus(); }
 function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = panelsOpen(); }
 $('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;

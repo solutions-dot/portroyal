@@ -393,7 +393,7 @@ export function journal(ids, memory, read, sel) {
 export function chapters({ best, done, teacher, choose, toggle, erase }) {
   show("chapters");
   $("chteacher").setAttribute("aria-pressed", String(teacher));
-  $("chteacher").textContent = teacher ? "Unlock All: on" : "Unlock All";
+  $("chteacher").textContent = "Unlock All";
   $("chteachernote").hidden = !teacher;
   $("chlist").replaceChildren(
     ...CHAPTERS.map((c, i) => {
@@ -428,11 +428,7 @@ export function chapters({ best, done, teacher, choose, toggle, erase }) {
   r.textContent = "Restart";
   r.dataset.armed = "";
   r.onclick = () => {
-    if (!r.dataset.armed) {
-      r.dataset.armed = "1";
-      r.textContent = "Tap again to erase all progress";
-      return;
-    }
+    if (!confirm("Restart and erase all saved progress?")) return;
     erase();
   };
   requestAnimationFrame(() =>

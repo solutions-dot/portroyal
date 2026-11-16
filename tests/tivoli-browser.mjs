@@ -19,7 +19,7 @@ try {
   await page.waitForTimeout(2000);
   await page.locator('#chbtn').click();
   const footer=await page.locator('#chapters .chfoot button').evaluateAll(bs=>bs.map(b=>({text:b.textContent.trim(),r:b.getBoundingClientRect().toJSON()})));
-  check(footer.map(b=>b.text).join('|')==='Unlock All|Credits|Restart',width+': chapter action labels');
+  check(footer.map(b=>b.text).join('|')==='Unlock All|Restart|Credits',width+': chapter action labels');
   check(footer.length===3&&footer.every(b=>Math.abs(b.r.y-footer[0].r.y)<3),width+': chapter actions in one row');
   check(footer.every(b=>b.r.x>=0&&b.r.right<=width),width+': chapter actions fit viewport');
   await page.locator('#chcred').click();

@@ -192,7 +192,8 @@ body:has(:is(#journal,#chapters,#credits,#card):not([hidden])) :is(#sub,#holdwra
 @media (max-width:600px){#cineControls{top:12px;right:12px}#cineControls .btn{padding:.5em .7em}#sub{font-size:1rem}}
 </style>
 <link rel="stylesheet" href="title.css" />
-  </head>
+  <link rel="stylesheet" href="chapters.css">
+</head>
   <body>
     <canvas
       id="stage"
@@ -376,8 +377,8 @@ body:has(:is(#journal,#chapters,#credits,#card):not([hidden])) :is(#sub,#holdwra
         <ol id="chlist" class="chlist"></ol>
         <footer class="chfoot">
           <button id="chteacher" class="btn ghost" aria-pressed="false">Unlock All</button
-          ><button id="chcred" class="btn ghost">Credits</button
-          ><button id="chreset" class="btn ghost">Restart</button>
+          ><button id="chreset" class="btn ghost">Restart</button><button id="chcred" class="btn ghost">Credits</button
+          >
         </footer>
       </div>
     </section>
