@@ -266,7 +266,7 @@ let sitting = false;
 
 /* ---------- goal, hint, sound ---------- */
 let stage = 0, best = 0, goalText = '', goalTimer = 0, hintTimer = 0;
-function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); goalTimer = setTimeout(() => { el.textContent = 'Goal'; el.classList.add('folded'); el.setAttribute('aria-expanded', 'false'); }, 6500); if (withControls) showHint(); }
+function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); /* Keep the next task visible until the player completes it. */ if (withControls) showHint(); }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
 function refreshGoal(quiet) { const g = GOALS[stage]; goalText = g ? g(ctr) : ''; if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
 $('goal').onclick = () => showGoal(true);
@@ -603,17 +603,17 @@ ON[74] = () => { unlock('journey'); setTimeout(() => card('The end', LINES.end, 
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
 const NUDGE_EXTRA = { 51: () => [-26, -3.4] };
 function nudgeTarget() {
-  const P = P_(); if (!P) return null; if (NUDGE_EXTRA[stage]) return NUDGE_EXTRA[stage](); const a = P.actions.find((x) => x.on()); if (a) return [a.x, a.z];
-  let bestT = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; bestT = [n.x, n.z]; } } return bestT;
+  const P = P_(); if (!P) return null; if (NUDGE_EXTRA[stage]) return NUDGE_EXTRA[stage](); let bestT = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && wantsTalk(n)) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < bd) { bd = d; bestT = [n.x, n.z]; } } if (bestT) return bestT;
+  const a = P.actions.find((x) => x.on()); return a ? [a.x, a.z] : null;
 }
 function nudgeTick(now) {
   const el = $('nudge'); if (!el) return; const quiet = state.started && !busy && !frozen && !DIR.on && !ST.on && $('holdwrap').hidden && $('dialogue').hidden && $('card').hidden && $('place').style.opacity !== '1' && !document.body.classList.contains('subbing') && goalText && !fading;
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
-  if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30000); NUDGE.still = now; }
+  if (!quiet) { NUDGE.since = now; NUDGE.on = false; } /* Never display guidance over a panel or dialogue. */
   const tgt = quiet ? nudgeTarget() : null;
-  if (!NUDGE.on && quiet && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
-  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
+  if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
+  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) NUDGE.on = false; /* Hide while the player is close enough to interact. */
   el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: () => 1.32 - (sitting ? 0.35 : 0) });
   if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
   GUIDE.point(now, { x: tgt[0], z: tgt[1] });   /* a gold arrow on the ground points the way, a gold ring marks the place */

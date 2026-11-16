@@ -182,6 +182,40 @@ body:has(#hornwrap:not([hidden])) :is(#talk,#hint,#toast,#nudge,#sub){visibility
 #title{background:linear-gradient(90deg,rgba(16,34,43,.94),rgba(16,34,43,.72) 42%,rgba(16,34,43,.1) 80%),url(title-scene.jpg) 65% center/cover no-repeat}
 #title.live-scene{background-image:linear-gradient(90deg,rgba(16,34,43,.94),rgba(16,34,43,.72) 42%,rgba(16,34,43,.1) 80%)}
 @media(max-width:760px){#title{background-image:linear-gradient(180deg,rgba(16,34,43,.25),rgba(16,34,43,.94) 58%),url(title-scene.jpg)}#title.live-scene{background-image:linear-gradient(180deg,rgba(16,34,43,.25),rgba(16,34,43,.94) 58%)}}
+/* Animated mobile poster: gentle parallax without the WebGL sky artifacts. */
+@media (pointer:coarse) {
+  #title:not(.live-scene) { isolation:isolate; background:#10222b; overflow:hidden; }
+  #title:not(.live-scene)::before {
+    content:""; position:absolute; inset:-4%; pointer-events:none; z-index:0;
+    background:url(title-scene.jpg) 65% center/cover no-repeat;
+    animation:title-drift 22s ease-in-out infinite alternate;
+    transform-origin:60% 48%;
+  }
+  #title:not(.live-scene)::after {
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
+    background:linear-gradient(180deg,rgba(16,34,43,.24),rgba(16,34,43,.94) 58%);
+  }
+  #title .card { position:relative; z-index:1; }
+}
+@keyframes title-drift {
+  from { transform:translate3d(-0.7%,0,0) scale(1.045); }
+  to { transform:translate3d(0.7%,-0.5%,0) scale(1.085); }
+}
+@media (prefers-reduced-motion:reduce) {
+  #title:not(.live-scene)::before { animation:none; transform:none; }
+}
+
+
+/* Keep the three chapter actions together on phone-sized screens. */
+#chapters .chfoot, #chapters .book > footer:has(#chteacher) {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:clamp(5px,1.4vw,12px); align-items:stretch;
+}
+#chapters footer:has(#chteacher) > .btn {
+  min-width:0; width:100%; margin:0; padding:.65em .25em;
+  font-size:clamp(.7rem,2.8vw,.95rem); line-height:1.2;
+  white-space:nowrap; text-align:center;
+}
 </style>
 <link rel="stylesheet" href="title.css">
 </head>
@@ -267,7 +301,7 @@ body:has(#hornwrap:not([hidden])) :is(#talk,#hint,#toast,#nudge,#sub){visibility
     <p class="chnote">Each chapter opens when you finish the one before it.</p>
     <p id="chteachernote" class="chnote" hidden>All chapters are open for teaching.</p>
     <ol id="chlist" class="chlist"></ol>
-    <footer class="chfoot"><button id="chteacher" class="btn ghost" aria-pressed="false">Teacher unlock</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
+    <footer class="chfoot"><button id="chteacher" class="btn ghost" aria-pressed="false">Unlock All</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Restart</button></footer>
   </div>
 </section>
 <pre id="autolog" hidden></pre>

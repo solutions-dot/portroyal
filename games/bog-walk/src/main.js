@@ -80,7 +80,7 @@ function locked() { return panelsOpen() || frozen || fading || !S.started || ['t
 
 /* ---------- words on the screen ---------- */
 let goalText = '', subTimer = 0, goalTimer = 0;
-function setGoal(t, quiet) { goalText = t; const el = $('goal'); el.hidden = !t; if (el.textContent !== t && t && !quiet) uiSound('goal'); el.textContent = t; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); if (t) goalTimer = setTimeout(() => { if (goalText) { el.textContent = 'Goal'; el.classList.add('folded'); el.setAttribute('aria-expanded', 'false'); } }, 6500); }
+function setGoal(t, quiet) { goalText = t; const el = $('goal'); el.hidden = !t; if (el.textContent !== t && t && !quiet) uiSound('goal'); el.textContent = t; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); /* Keep the next task visible until the player completes it. */ }
 $('goal').onclick = () => setGoal(goalText, true);
 function setClock(t) { $('clock').hidden = !t; $('clock').textContent = t || ''; }
 function say(who, text, ms = 4200) {   /* a line shown as a subtitle; in the Tube the speaker is heard, not seen, and in the water the voices come from the direction of the light */
@@ -477,8 +477,11 @@ function showHint() { $('hint').textContent = TOUCH ? (MODE === 'tube' ? 'Left t
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false, rectT: -1, rects: [] }, _nv = new THREE.Vector3();
 const NUDGE_AVOID = ['goal', 'icons', 'clock', 'sub', 'toast', 'way', 'pick', 'act', 'holdbox', 'skip', 'exit', 'hint', 'barT', 'barB', 'dialogue', 'tbub'];
 function nudgeTarget() {
-  const P = P_(); if (!P) return null; const a = P.actions.find((x) => x.on()); if (a) return [a.x, a.z, 1.7];
-  let bt = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && markWanted(n)) { const d = Math.hypot(S.x - n.x, S.z - n.z); if (d < bd) { bd = d; bt = [n.x, n.z, headTop(n) + 0.75]; } } return bt;
+  const P = P_(); if (!P) return null;
+  // Required conversations take precedence over optional leftover actions (ruins stages 62-65).
+  let bt = null, bd = 1e9; for (const n of P.people) if (n.m && n.m.visible && markWanted(n)) { const d = Math.hypot(S.x - n.x, S.z - n.z); if (d < bd) { bd = d; bt = [n.x, n.z, headTop(n) + 0.75]; } }
+  if (bt) return bt;
+  const a = P.actions.find((x) => x.on()); return a ? [a.x, a.z, 1.7] : null;
 }
 function placeNudge(x, y, cls, label, fresh) {   /* show the arrow near (x, y) on the screen, moved to the nearest spot that covers no word or button */
   const el = $('nudge'), W = innerWidth, H = innerHeight, lab = el.querySelector('span'); if (el.className !== cls) el.className = cls; if (lab.textContent !== label) lab.textContent = label; el.hidden = false;
@@ -493,10 +496,10 @@ function nudgeTick(now) {
   const quiet = S.started && !locked() && !RIDE.on && goalText && $('holdbox').hidden && $('dialogue').hidden && !fading;
   if (goalText !== NUDGE.goal) { NUDGE.goal = goalText; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(S.x - NUDGE.lx, S.z - NUDGE.lz) > 0.6) { NUDGE.lx = S.x; NUDGE.lz = S.z; NUDGE.still = now; }
-  if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30); NUDGE.still = now; }
+  if (!quiet) { NUDGE.since = now; NUDGE.on = false; } /* Never display guidance over a panel or dialogue. */
   const tgt = quiet ? nudgeTarget() : null;
-  if (!NUDGE.on && quiet && tgt && (now - NUDGE.still > 15 || now - NUDGE.since > 50)) { NUDGE.on = true; setGoal(goalText, true); }
-  if (NUDGE.on && tgt && Math.hypot(S.x - tgt[0], S.z - tgt[1]) < 2.4) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
+  if (!NUDGE.on && quiet && tgt && Math.hypot(S.x - tgt[0], S.z - tgt[1]) >= 2.4 && now - NUDGE.since >= 2.5) { NUDGE.on = true; setGoal(goalText, true); }
+  if (NUDGE.on && tgt && Math.hypot(S.x - tgt[0], S.z - tgt[1]) < 2.4) NUDGE.on = false; /* Hide while the player is close enough to interact. */
   if (!NUDGE.on || !tgt) { if (!el.hidden) el.hidden = true; if (GUIDE) GUIDE.hide(performance.now()); return; }
   showNudgeAt(tgt);
 }

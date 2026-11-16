@@ -167,6 +167,17 @@ body:has(#card:not([hidden])) :is(#goal,#topr,#hint,#toast,#place,#sub,#nudge){v
 @media (prefers-reduced-motion:reduce){#bar{transition:none}#hold{animation:none}}
 .chfoot{flex-wrap:wrap}
 
+/* Keep the three chapter actions together on phone-sized screens. */
+#chapters .chfoot, #chapters .book > footer:has(#chteacher) {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:clamp(5px,1.4vw,12px); align-items:stretch;
+}
+#chapters footer:has(#chteacher) > .btn {
+  min-width:0; width:100%; margin:0; padding:.65em .25em;
+  font-size:clamp(.7rem,2.8vw,.95rem); line-height:1.2;
+  white-space:nowrap; text-align:center;
+}
+
 /* ---------- this game's own ---------- */
 .tab{min-height:44px}#goal{min-width:44px}   /* every tap target is at least 44 px (the accessibility check) */
 #cineControls{position:fixed;right:24px;top:24px;z-index:60;display:flex;gap:10px}   /* Pause, Sound and Read instead during a cinematic */
@@ -363,10 +374,9 @@ body:has(:is(#journal,#chapters,#credits,#card):not([hidden])) :is(#sub,#holdwra
         </p>
         <ol id="chlist" class="chlist"></ol>
         <footer class="chfoot">
-          <button id="chteacher" class="btn ghost" aria-pressed="false">
-            Teacher unlock</button
+          <button id="chteacher" class="btn ghost" aria-pressed="false">Unlock All</button
           ><button id="chcred" class="btn ghost">Credits</button
-          ><button id="chreset" class="btn ghost">Start again</button>
+          ><button id="chreset" class="btn ghost">Restart</button>
         </footer>
       </div>
     </section>

@@ -69,6 +69,20 @@ function clampPos(x, z) {   // keep inside the map and out of buildings (slide a
 /* touch: left half of the screen is a joystick, right half drags to look; mouse drags to look */
 const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0 };
 releaseOnBlur(keys, [stick, look]);
+/* On-screen direction buttons share the keyboard controls and release safely. */
+for (const button of document.querySelectorAll('#dpad [data-key]')) {
+  const key = button.dataset.key;
+  const release = (e) => { if (e) e.preventDefault(); keys.delete(key); button.classList.remove('pressed'); };
+  button.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (busy || !state.started) return;
+    keys.add(key); button.classList.add('pressed');
+    button.setPointerCapture(e.pointerId);
+  });
+  button.addEventListener('pointerup', release);
+  button.addEventListener('pointercancel', release);
+  button.addEventListener('lostpointercapture', release);
+}
 canvas.addEventListener('pointerdown', (e) => {
   if (busy && Talk.open) { talkLeave(); return; }   // tapping the world while talking ends the talk
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }
@@ -245,7 +259,7 @@ function frame(t) {
   guideTick(t);
   renderer.render(scene, camera);
 }
-/* the helper (the same rules as the other games): stand still for 15 s, or take 50 s over one goal, and a gold arrow on the ground points the way,
+/* The next-task helper: after 2.5 seconds of play, a gold arrow on the ground points the way,
    with a gold ring round the person or the place. Near them the Talk button takes over. */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }; let GUIDE = null;
 function guideTick(now) {
@@ -253,10 +267,10 @@ function guideTick(now) {
   const goal = $('goal').textContent, quiet = CH.on && state.started && !busy && !FIGHT.on && !Talk.open && $('chcard').hidden;
   if (goal !== NUDGE.goal) { NUDGE.goal = goal; NUDGE.since = now; NUDGE.on = false; }
   if (Math.hypot(state.x - NUDGE.lx, state.z - NUDGE.lz) > 0.6) { NUDGE.lx = state.x; NUDGE.lz = state.z; NUDGE.still = now; }
-  if (!quiet) { NUDGE.since = Math.max(NUDGE.since, now - 30000); NUDGE.still = now; }
+  if (!quiet) { NUDGE.since = now; NUDGE.on = false; }
   const tgt = quiet ? guideTarget() : null;
-  if (!NUDGE.on && quiet && tgt && (now - NUDGE.still > 15000 || now - NUDGE.since > 50000)) NUDGE.on = true;
-  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; NUDGE.since = NUDGE.still = now; }
+  if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) NUDGE.on = true;
+  if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) NUDGE.on = false; /* Hide while the player is close enough to interact. */
   if (!NUDGE.on || !tgt) GUIDE.hide(now); else GUIDE.point(now, { x: tgt[0], z: tgt[1] });
 }
 requestAnimationFrame(frame);

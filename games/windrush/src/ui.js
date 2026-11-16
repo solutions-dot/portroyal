@@ -1,4 +1,4 @@
-/* The interface, the same as Kendal 1957, Melissa, Garvey and Nanny Town: the goal box that folds to "Goal", the controls tip that shows
+/* The interface, the same as Kendal 1957, Melissa, Garvey and Nanny Town: the goal box, the controls tip that shows
    for a few seconds at the start of play, toasts that wait while someone is talking, the Journal button that glows with a count of new
    pages, the gold talk mark over the step's story people and the talk button with the name of the nearest person, the dialogue box, cards,
    the journal with its tabs, the chapter list and the credits. */
@@ -87,9 +87,8 @@ export function newPage(id) {
   if (p) toast("New journal page: " + p.title, 3200);
 }
 
-/* ---------- the goal box (folds to "Goal" after a few seconds; tap to open it again) and the controls tip ---------- */
+/* ---------- the goal box (it stays open until the task is done, as in every game) and the controls tip ---------- */
 let goalText = "",
-  goalTimer = 0,
   hintTimer = 0,
   goalTap = null,
   playing = () => true;
@@ -103,12 +102,6 @@ export function showGoal(withControls) {
   el.textContent = goalText;
   el.classList.remove("folded");
   el.setAttribute("aria-expanded", "true");
-  clearTimeout(goalTimer);
-  goalTimer = setTimeout(() => {
-    el.textContent = "Goal";
-    el.classList.add("folded");
-    el.setAttribute("aria-expanded", "false");
-  }, 6500);
   if (withControls) showHint();
 }
 export function setGoal(text) {
@@ -324,8 +317,12 @@ export function journal(ids, memory, read, sel) {
     const tabs = $("jtabs");
     tabs.replaceChildren();
     for (const p of JOURNAL.filter((q) => ids.includes(q.id))) {
-      const b = document.createElement("button");
-      b.className = "tab" + (p.id === open ? " on" : "");
+      const b = document.createElement("button"),
+        selected = p.id === open;
+      b.type = "button";
+      b.className = "tab";
+      b.classList.toggle("on", selected);
+      b.setAttribute("aria-pressed", String(selected));
       b.textContent = p.title;
       b.onclick = () => render(p.id);
       tabs.appendChild(b);
@@ -339,6 +336,7 @@ export function journal(ids, memory, read, sel) {
       tabs.appendChild(m);
     }
     const page = $("jpage");
+    $("jpage").scrollTop = 0;
     page.replaceChildren();
     const p = JOURNAL.find((q) => q.id === open);
     if (!p) {
@@ -387,7 +385,7 @@ export function journal(ids, memory, read, sel) {
 export function chapters({ best, done, teacher, choose, toggle, erase }) {
   show("chapters");
   $("chteacher").setAttribute("aria-pressed", String(teacher));
-  $("chteacher").textContent = teacher ? "Teacher unlock: on" : "Teacher unlock";
+  $("chteacher").textContent = teacher ? "Unlock All: on" : "Unlock All";
   $("chteachernote").hidden = !teacher;
   $("chlist").replaceChildren(
     ...CHAPTERS.map((c, i) => {
@@ -419,7 +417,7 @@ export function chapters({ best, done, teacher, choose, toggle, erase }) {
     $("chteacher").focus();
   };
   const r = $("chreset");
-  r.textContent = "Start again";
+  r.textContent = "Restart";
   r.dataset.armed = "";
   r.onclick = () => {
     if (!r.dataset.armed) {

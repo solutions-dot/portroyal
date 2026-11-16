@@ -127,6 +127,17 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
 @media (max-width:520px){#journal footer span{display:none}#jhome{margin-left:0}#journal footer{justify-content:flex-end}html,body{font-size:17px}#goal{font-size:.85rem}#hint{white-space:normal;text-align:center}}
 @media (prefers-reduced-motion:reduce){#bar{transition:none}}
 .chfoot{flex-wrap:wrap}
+
+/* Keep the three chapter actions together on phone-sized screens. */
+#chapters .chfoot, #chapters .book > footer:has(#chteacher) {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:clamp(5px,1.4vw,12px); align-items:stretch;
+}
+#chapters footer:has(#chteacher) > .btn {
+  min-width:0; width:100%; margin:0; padding:.65em .25em;
+  font-size:clamp(.7rem,2.8vw,.95rem); line-height:1.2;
+  white-space:nowrap; text-align:center;
+}
 </style>
 <link rel="stylesheet" href="title.css">
 </head>
@@ -202,7 +213,7 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
     <p class="chnote">Each chapter opens when you finish the one before it.</p>
     <p id="chteachernote" class="chnote" hidden>All chapters are open for teaching.</p>
     <ol id="chlist" class="chlist"></ol>
-    <footer class="chfoot"><button id="chteacher" aria-pressed="false" class="btn ghost">Teacher unlock</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Start again</button></footer>
+    <footer class="chfoot"><button id="chteacher" aria-pressed="false" class="btn ghost">Unlock All</button><button id="chcred" class="btn ghost">Credits</button><button id="chreset" class="btn ghost">Restart</button></footer>
   </div>
 </section>
 <script src="app.js"></script>
