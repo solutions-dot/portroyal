@@ -451,7 +451,8 @@ function clRelation(A, B) {   /* which sample points of piece A are meant to lie
   const bodyA = /^(Body|Skin)$/.test(A.name); if (bodyA && /^(Shirt|Jacket|Coat)$/.test(B.name)) arm = clHands(A, true); if (/^Shirt$/.test(A.name) && /^(Collar|Placket|Pocket|Buttons|Tie)$/.test(B.name)) { m.set(B.g, null); return null; }
   if (/^(Hair|Bun|Puffs|Plaits)/.test(A.name) && /Band$/.test(B.name)) { m.set(B.g, null); return null; }
   if (/^(Body|Sock)$/.test(A.name) && /^(Body|Sock)$/.test(B.name)) { m.set(B.g, null); return null; }   /* socks are a part of the skin's own mesh: the two meet edge to edge */   /* a hat band is a ribbon on the crown: hair cannot reach it except through the crown, which is tested */
-  if (bodyA && /^(Tie|Buttons|Placket|Pocket|Collar)/.test(B.name)) { m.set(B.g, null); return null; }   /* a tie, a front band, a pocket or a collar lies on the shirt, never on bare skin */   /* a shirt seen through its own collar, front band or pocket is the same cloth */
+  if (bodyA && /^(Tie|Buttons|Placket|Pocket|Collar)/.test(B.name)) { m.set(B.g, null); return null; }
+  if (/^(Belt|Buckle)$/.test(A.name) && /^(Vest|Waistcoat)$/.test(B.name)) { m.set(B.g, null); return null; }   /* a body-armour vest or waistcoat ending above the belt meets it edge to edge; the belt is never under it */   /* a tie, a front band, a pocket or a collar lies on the shirt, never on bare skin */   /* a shirt seen through its own collar, front band or pocket is the same cloth */
   edge = clEdge(B);
   const neck = /^(Shirt|Collar)$/.test(A.name) && /^(Jacket|Waistcoat|JacketSkirt)$/.test(B.name) ? clNeck(A) : null;
   for (let i = 0; i < A.samples.length / 3; i++) { if ((hand && hand[A.samples[i * 3]]) || (neck && neck[A.samples[i * 3]])) continue; clPoint(A.rest, A.samples, i, p);
@@ -488,7 +489,7 @@ function clFolds(id, clipName, at, P, out, where) { if (!/^(CoatSkirt|JacketSkir
   const nb = clAdj(P), N = clNormals(P.pos, P.idx), N0 = P.o.geometry.userData.clRefN || (P.o.geometry.userData.clRefN = clNormals(P.ref, P.idx)); let n = 0, wt = -1;
   const agree = (M, t) => { let x = 0, y = 0, z = 0; for (const o of nb[t]) { x += M[o * 3]; y += M[o * 3 + 1]; z += M[o * 3 + 2]; } return M[t * 3] * x + M[t * 3 + 1] * y + M[t * 3 + 2] * z; };
   for (let t = 0; t < nb.length; t++) { if (nb[t].length < 2) continue; if (agree(N, t) < -0.5 * nb[t].length && agree(N0, t) > 0) { n++; wt = t; } }
-  if (n >= 2) { const v = P.idx[wt * 3] * 3; out.lines.push(`${id} ${clipName}@${at}: ${P.name} folds over itself: ${n} faces` + (where ? ` at x ${P.pos[v].toFixed(3)} y ${P.pos[v + 1].toFixed(3)} z ${P.pos[v + 2].toFixed(3)}` : '')); out.points += n; } }
+  if (n >= 3) { const v = P.idx[wt * 3] * 3; out.lines.push(`${id} ${clipName}@${at}: ${P.name} folds over itself: ${n} faces` + (where ? ` at x ${P.pos[v].toFixed(3)} y ${P.pos[v + 1].toFixed(3)} z ${P.pos[v + 2].toFixed(3)}` : '')); out.points += n; } }
 function clJagged(id, clipName, at, P, sc, out, where, covers) { if (/^(Body|Skin|Sock|Lining)$/.test(P.name) || /Hair|Eye|Brow|Lash|Teeth|Tongue|Bun|Puff|Sole/.test(P.name)) return;
   const E = clEdges(P), A = P.pos, L = (X, i, j) => Math.hypot(X[i * 3] - X[j * 3], X[i * 3 + 1] - X[j * 3 + 1], X[i * 3 + 2] - X[j * 3 + 2]);
   let n = 0, worst = 0, wi = -1;

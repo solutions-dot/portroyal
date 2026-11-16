@@ -10,7 +10,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
-export const RIFLE_CLIPS = /^(ShootRifle|ProneFire|ProneTurnR)$/, PISTOL_CLIPS = /^(ShootPistol|Gunplay|PeekAim)$/;   /* PeekAim holds a pistol: the hands are 13 to 22 cm apart and the arms stretched out (?test=measure) */
+export const RIFLE_CLIPS = /^(ShootRifle|FireStand|FireKneel|ProneFire|ProneTurnR)$/, PISTOL_CLIPS = /^(ShootPistol|Gunplay|PeekAim|PistolKneelIdle|PistolStand)$/;   /* PeekAim holds a pistol: the hands are 13 to 22 cm apart and the arms stretched out (?test=measure) */
 const MAT = new THREE.MeshStandardMaterial({ color: 0x1d1e1f, roughness: 0.55, metalness: 0.35 });
 const SUPPORT = new THREE.Vector3(0, 0.062, 0.3);   /* the handguard's middle, in the rifle's own frame (origin: the right hand on the grip) */
 const BUTT = new THREE.Vector3(0, 0.02, -0.33);      /* the middle of the butt plate, which sits in the shoulder pocket */

@@ -366,8 +366,8 @@ for o in clothes:
     md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}
     md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
     with ov(o): bpy.ops.object.modifier_move_to_index(modifier='wt',index=0); bpy.ops.object.modifier_apply(modifier='wt')
-if EASE_OLD and G.get('breeches'):      # the shirt's tail inside the breeches is always hidden: trimmed below HIP+0.04 (seated, it bunched out through the front of the breeches); the shirt still overlaps the breeches up to the waistband
-    _o=dict(parts)['shirt']; _b=bmesh.new(); _b.from_mesh(_o.data); bmesh.ops.delete(_b,geom=[f for f in _b.faces if cz(f).z<HIP+0.04 and side_arm(cz(f)) is None],context='FACES'); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS'); _b.to_mesh(_o.data); _b.free()
+if EASE_OLD and G.get('breeches'):      # the shirt's tail inside the breeches is always hidden: trimmed below HIP+0.10, inside the waistband (seated, it bunched out through the front of the breeches); the shirt still overlaps the breeches up to the waistband
+    _o=dict(parts)['shirt']; _b=bmesh.new(); _b.from_mesh(_o.data); bmesh.ops.delete(_b,geom=[f for f in _b.faces if cz(f).z<HIP+0.10 and side_arm(cz(f)) is None],context='FACES'); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS'); _b.to_mesh(_o.data); _b.free()
 if EASE_OLD:      # 1690: only the shirt; it blouses out above the breeches' waistband (TUCK is above the band) and falls nearly straight from the chest
     ease(dict(parts)['shirt'],0.009,tuck=0.006 if G.get('breeches') else 0.003)      # tucked into breeches it fills the band (tucked tight, it left an open lip of breeches round it)
 if not OLD:      # the ease comes after the bone weights are copied: each point of cloth keeps the weights of the skin it started on, so loose cloth by the armpit does not follow the arm
@@ -582,6 +582,8 @@ if OLD:
                 else:
                     for gi_,w in keep: o.vertex_groups[gi_].add([v.index],w/tot,'REPLACE')
             smooth_weights(o,lambda c:c.z<CROTCH+0.06 and (c.z>CROTCH-0.03 or abs(c.x)>0.01),3)      # (not across the inside seams below the fork, which would mix the two legs again)
+if OLD and 'breeches' in dict(parts):      # 1690 breeches: the fork above the split legs is evened out too (seated, it crumpled into spikes); below CROTCH-0.02 each leg keeps its own weights
+    _smooth_bones(dict(parts)['breeches'],lambda c:(abs(c.x)<0.10 and CROTCH-0.02<c.z<CROTCH+0.10) or (abs(c.x)<0.035 and CROTCH-0.08<c.z<=CROTCH-0.02),14)
 if not OLD and 'breeches' in dict(parts):      # later trousers: at the fork each point took weights from both thighs and the hips unevenly, and seated (legs apart) single points were pulled two ways into spikes. The fork's weights are evened out over a wide patch
     _smooth_bones(dict(parts)['breeches'],lambda c:abs(c.x)<0.09 and CROTCH-0.07<c.z<CROTCH+0.10,14)
 for k,o in parts:            # coat skirts follow both legs as one cloth, like Abba's skirt
@@ -1087,7 +1089,7 @@ if G.get('bands'):
         for dz in (0.085,0.045):
             zz=b0.z-dz*s*(0.25+0.75*f)*sstep(0.80,0.55,abs(math.atan2(math.sin(a),math.cos(a)))); rr=rad_out(zz,a)+0.004;      # the yoke fills the coat's low front only: round the sides and back the coat's own neck facing covers the join
             col.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
-        col+=[b0,collar_pt(a,NECK-0.004+hs*0.5,NECK-0.012*s+hs*0.5,0.014+0.0012*math.sin(a*3+0.5)),collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,0.009),collar_pt(a,NECK-0.004+hs-0.005,NECK-0.012*s+hs-0.005,0.002)]
+        col+=[b0,collar_pt(a,NECK-0.004+hs*0.5,NECK-0.012*s+hs*0.5,0.010+0.0012*math.sin(a*3+0.5)),collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,0.006),collar_pt(a,NECK-0.004+hs-0.005,NECK-0.012*s+hs-0.005,0.0015)]      # (3 to 4 mm closer to the neck: further out it touched the coat's neck when walking)
         cols.append([bm.verts.new(q) for q in col])
     rings=[list(r) for r in zip(*cols)]; quadstrip(bm,rings[2:],close=True); by=bmesh.new(); quadstrip(by,[[by.verts.new(v.co) for v in r] for r in rings[:3]],close=True)
     for v in rings[0]+rings[1]: bm.verts.remove(v)
@@ -1391,6 +1393,8 @@ if 'breeches' in PART:      # the bottom of a jacket and the tucked part of a sh
             for n in set(old)|set(bw):
                 w=old.get(n,0)/to*(1-f)+bw.get(n,0)/tb*f
                 if w>0.002: (_o.vertex_groups.get(n) or _o.vertex_groups.new(name=n)).add([v.index],w,'REPLACE')
+    if PART.get('shirt') and not OLD and G.get('trousers') and not G.get('skirt'):      # later trousers: the shirt tail more than 3 cm inside the waistband is never seen; seated, it pushed out at the fork
+        _sb=bmesh.new(); _sb.from_mesh(PART['shirt'].data); bmesh.ops.delete(_sb,geom=[f for f in _sb.faces if cz(f).z<_btop-0.03 and side_arm(cz(f)) is None],context='FACES'); bmesh.ops.delete(_sb,geom=[v for v in _sb.verts if not v.link_faces],context='VERTS'); _sb.to_mesh(PART['shirt'].data); _sb.free()
     if PART.get('shirt'):      # and a tucked shirt lies inside the breeches' waist, never over it
         _bt=tree_of(_br); _sb=bmesh.new(); _sb.from_mesh(PART['shirt'].data)
         for v in _sb.verts:

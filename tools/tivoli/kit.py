@@ -123,6 +123,21 @@ if K.get('boots') and trousers:
     bm.normal_update()
     for v in bm.verts: v.co += v.normal * 0.016
     o = new_obj('Boots', bm, 'Boots', weights_from=trousers); solidify(o, 0.004); paint(o, COL['Boots']); made.append(o)
+    fg = {}                                                  # the boot's lower edge moves with the foot (on the shin alone it cut through the shoe when the ankle bent)
+    for side in ('Left', 'Right'): fg[side] = (o.vertex_groups.get('mixamorig:' + side + 'Foot') or o.vertex_groups.new(name='mixamorig:' + side + 'Foot'))
+    for v in o.data.vertices:
+        k = max(0.0, min(1.0, (ANK + 0.05 - v.co.z) / 0.06)); k = k * k * (3 - 2 * k)
+        if k <= 0: continue
+        side = 'Left' if v.co.x > 0 else 'Right'
+        for g in list(v.groups):
+            if o.vertex_groups[g.group].name.startswith('mixamorig:'): o.vertex_groups[g.group].add([v.index], g.weight * (1 - k), 'REPLACE')
+        cur = next((g.weight for g in v.groups if g.group == fg[side].index), 0.0); fg[side].add([v.index], cur + k, 'REPLACE')
+    tb = bmesh.new(); tb.from_mesh(trousers.data)            # the trouser leg inside the boot is never seen: removed, so it cannot come through the boot
+    bmesh.ops.bisect_plane(tb, geom=tb.verts[:] + tb.edges[:] + tb.faces[:], plane_co=(0, 0, BT - 0.08), plane_no=(0, 0, 1), clear_inner=True)   # one straight cut 8 cm inside the boot, so a bent knee opening the boot top shows trouser, not a hole (cutting by whole faces left a ragged edge that showed above the boot top)
+    bmesh.ops.delete(tb, geom=[v for v in tb.verts if not v.link_faces], context='VERTS'); tb.to_mesh(trousers.data); tb.free()
+    kb = bmesh.new(); kb.from_mesh(body.data)               # and the skin inside the boot is never seen: removed (it showed in flecks between the boot and the shoe when walking)
+    kd_ = kb.verts.layers.deform.verify(); leg = {i for n, i in ((g.name, g.index) for g in body.vertex_groups) if n in ('mixamorig:LeftLeg', 'mixamorig:RightLeg', 'mixamorig:LeftFoot', 'mixamorig:RightFoot')}
+    bmesh.ops.delete(kb, geom=[f for f in kb.faces if ANK - 0.02 < f.calc_center_median().z < BT - 0.09 and all(sum(w for gi, w in v[kd_].items() if gi in leg) > 0.5 for v in f.verts)], context='FACES'); kb.to_mesh(body.data); kb.free()      # (only the lower legs: by height alone it also took helper shapes of the head, and the skin then showed through the helmet)
     for nm in ('Shoes',):
         if nm in OB: paint(OB[nm], COL['Boots'])
 
@@ -153,7 +168,21 @@ if K.get('vest'):
         for v, c in new.items(): v.co = c
     bm.normal_update()
     for v in bm.verts: v.co += v.normal * 0.028
+    if belt:      # its lower edge stands clear of the belt under it (where they overlap, the belt came through when he leaned)
+        btr = tree(belt)
+        for v in bm.verts:
+            if v.co.z > hem + 0.06: continue
+            for d in (v.normal, Vector((v.co.x, v.co.y - J('Spine').y, 0)).normalized()):
+                loc, _, _, dd = btr.ray_cast(v.co - d * 0.05, d, 0.12)
+                if loc is not None and (loc - v.co).dot(d) > -0.012: v.co = loc + d * 0.012
     vest = new_obj('Vest', bm, 'Vest', weights_from=shirt, only=TORSO); solidify(vest, 0.012); paint(vest, COL['Vest']); made.append(vest)
+    hg = vest.vertex_groups.get('mixamorig:Hips') or vest.vertex_groups.new(name='mixamorig:Hips')      # its lower edge moves with the hips, like the belt under it: on the spine alone it sank into the belt when he leaned
+    for v in vest.data.vertices:
+        k = max(0.0, min(1.0, (hem + 0.14 - v.co.z) / 0.10)); k = k * k * (3 - 2 * k)      # (the lower 4 cm wholly on the hips, blended out over the next 10)
+        if k <= 0: continue
+        for g in list(v.groups):
+            if vest.vertex_groups[g.group].name.startswith('mixamorig:') and g.group != hg.index: vest.vertex_groups[g.group].add([v.index], g.weight * (1 - k), 'REPLACE')
+        cur = next((g.weight for g in v.groups if g.group == hg.index), 0.0); hg.add([v.index], cur * (1 - k) + k, 'REPLACE')
 
 surf = [o for o in (vest, shirt) if o]
 def hit(origin, d, objs):
@@ -216,7 +245,7 @@ if K.get('straps') and surf:
             o0 = Vector((x, sp2.y, z)) + d * 0.6; ray = -d; r = hit(o0, ray, surf)    # start OUTSIDE the side this point belongs to (front, back, or above and around the shoulder)
             if not r: continue
             nn = r[1] if r[1].dot(-ray) > 0 else -r[1]
-            p = r[0] + nn * (0.06 if (r[3] is not vest and z < BELT_TOP + 0.09) else 0.02); t = Vector((1, 0, 0))   # below the vest's hem the strap hangs straight down at the vest's thickness, not tucked under it; everywhere else it lies on the vest
+            p = r[0] + nn * (0.06 if (r[3] is not vest and z < BELT_TOP + 0.09) else 0.026); t = Vector((1, 0, 0))   # (26 mm out: at 20 the vest came through over the shoulder)   # below the vest's hem the strap hangs straight down at the vest's thickness, not tucked under it; everywhere else it lies on the vest
             pair = (bm.verts.new(p - t * W), bm.verts.new(p + t * W))
             if prev: bm.faces.new((prev[0], prev[1], pair[1], pair[0]))
             prev = pair
@@ -354,9 +383,9 @@ if 'epaulettes' in D:      # shoulder straps on the shirt
         s0 = J('LeftArm' if sx > 0 else 'RightArm'); n0 = NECK
         for i in range(2):
             pass
-        r0 = hit(Vector((sx * 0.19, s0.y, s0.z + 0.4)), Vector((0, 0, -1)), [shirt])
+        r0 = hit(Vector((sx * 0.20, s0.y, s0.z + 0.4)), Vector((0, 0, -1)), [shirt])      # (its inner end clear of the collar: closer in, the collar came through it when the arms rose)
         if r0:
-            p = r0[0] + Vector((0, 0, 0.004)); box(bm, p, Vector((1, 0, 0)), Vector((0, 1, 0)), 0.08, 0.008, 0.045)
+            p = r0[0] + Vector((0, 0, 0.004)); box(bm, p, Vector((1, 0, 0)), Vector((0, 1, 0)), 0.065, 0.008, 0.045)
     o = new_obj('Epaulette', bm, 'Shirt', weights_from=shirt, only=('LeftShoulder', 'RightShoulder', 'Spine2')); paint(o, COL['Shirt']); made.append(o)
 if 'chevrons' in D:      # rank chevrons on both upper sleeves (two stripes, as on the corporal in the photographs)
     bm = bmesh.new()

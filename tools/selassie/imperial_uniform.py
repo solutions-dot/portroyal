@@ -100,7 +100,24 @@ bm=bmesh.new();rows=[]
 for i in range(25):
     t=i/24;x=-.145+.27*t;z=NECK-.055-(NECK-.055-HIP-.065)*t
     rows.append([bm.verts.new((x+dx,front(x+dx,z,.014),z)) for dx in [-.017,.017]])
-quadstrip(bm,rows);o=soft('Shoulder strap',bm,'Belt',src=tunic);paint(o)
+quadstrip(bm,rows);o=soft('Shoulder strap',bm,'Belt',src=tunic)
+# Each row across the strap takes the mean weights of its neighbours along it (two rows each way), and both edges of a row share them:
+# where the strap crosses the shoulder, the cloth weights change fast and one edge point used to jut 5 to 7 mm in walking.
+def smooth_rows(o,per=2,win=2):
+    me=o.data;n=len(me.vertices)//per
+    rows=[[{g.group:g.weight for g in me.vertices[r*per+k].groups} for k in range(per)] for r in range(n)]
+    for r in range(n):
+        acc={};cnt=0
+        for rr in range(max(0,r-win),min(n,r+win+1)):
+            for d in rows[rr]:
+                cnt+=1
+                for g,w in d.items():acc[g]=acc.get(g,0)+w
+        for k in range(per):
+            v=me.vertices[r*per+k]
+            for gi in [g.group for g in v.groups]:o.vertex_groups[gi].remove([v.index])
+            for g,w in acc.items():
+                if w/cnt>1e-4:o.vertex_groups[g].add([v.index],w/cnt,'REPLACE')
+smooth_rows(o);paint(o)
 # Loose, braided aiguillettes hang forward from the right shoulder.
 for strand in range(3):
     bm=bmesh.new();rows=[]

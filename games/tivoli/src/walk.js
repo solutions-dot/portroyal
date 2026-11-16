@@ -8,8 +8,13 @@ import * as THREE from 'three';
    A walker whose ground speed is v must play the clip at v * duration / stride, or the feet slide. pace() below does that. */
 const STRIDES = new WeakMap(), _q = [0, 1, 2, 3].map(() => new THREE.Quaternion()), _qb = new THREE.Quaternion(), _p = new THREE.Vector3(), _m3 = new THREE.Matrix3(), _fw = new THREE.Vector3(), _wq = new THREE.Quaternion();
 function sampleQ(track, t, out) { const tm = track.times, v = track.values; let i = 1; while (i < tm.length - 1 && tm[i] < t) i++; const a = (t - tm[i - 1]) / ((tm[i] - tm[i - 1]) || 1); out.fromArray(v, (i - 1) * 4); _qb.fromArray(v, i * 4); return out.slerp(_qb, Math.max(0, Math.min(1, a))); }
+/* Crouched runs: the method below reads 1.29 m a loop for RunLow, but the feet really cover about 0.91 m (soldier 0.93, police 0.89): ?test=walkers&walk=RunLow:1.2 shows
+   the planted foot sliding under 3 cm a loop only at 1.15 to 1.2 m/s at clip speed 1 (16 November 2026). Both feet stay low in a crouched run, so the "lower foot" swaps
+   back and forth and swing moves were counted. engine/anim.js strideOf has the same method; it is not changed here (engine/ is shared). */
+const MEASURED = { RunLow: 0.91, RunLow2: 0.91, RifleWalk: 1.28 };   /* RifleWalk: the method reads 1.30 m; the feet slide least at 1.16 m/s at clip speed 1 (1.10 s a loop), so 1.28 m */
 export function strideOf(m, clip) {
   let per = STRIDES.get(m); if (!per) STRIDES.set(m, per = {}); const key = clip.name + '|' + m.scale.y.toFixed(3); if (per[key] !== undefined) return per[key];
+  if (MEASURED[clip.name]) return (per[key] = MEASURED[clip.name] * m.scale.y);   /* measured, not worked out (below) */
   const B = (n) => m.getObjectByName('mixamorig' + n), T = (n) => clip.tracks.find((t) => t.name === 'mixamorig' + n + '.quaternion'), hips = B('Hips'), tH = T('Hips'); if (!hips || !tH) return (per[key] = 0);
   m.updateMatrixWorld(true); _m3.setFromMatrix4(hips.parent.matrixWorld); _fw.set(0, 0, 1).applyQuaternion(m.getWorldQuaternion(_wq)).normalize();
   const legs = ['Left', 'Right'].map((s) => ({ b: [B(s + 'UpLeg'), B(s + 'Leg'), B(s + 'Foot')], t: [T(s + 'UpLeg'), T(s + 'Leg')] })); if (legs.some((l) => l.b.some((b) => !b) || l.t.some((t) => !t))) return (per[key] = 0);
@@ -19,5 +24,5 @@ export function strideOf(m, clip) {
   let dist = 0, on = 0, lo = 1e9, hi = -1e9; for (const l of pos) for (const q of l) { lo = Math.min(lo, q[1]); hi = Math.max(hi, q[1]); } const band = /Run/.test(clip.name) ? lo + (hi - lo) * 0.2 : 1e9;   /* a run has moments with both feet in the air: count a foot only while it is down */
   for (let i = 0; i < N; i++) { const k = (pos[0][i][1] + pos[0][i + 1][1] < pos[1][i][1] + pos[1][i + 1][1]) ? 0 : 1; if (pos[k][i][1] > band || pos[k][i + 1][1] > band) continue; dist += Math.max(0, pos[k][i][0] - pos[k][i + 1][0]); on++; }
   return (per[key] = on ? dist * N / on : 0); }
-export const WALKS = /^(Walk|WalkM|Run|RunLow|RunLow2|RunForward|RunBackward|RunLeft|RunRight|WalkCrouchR|Carry|SadWalk)$/;
+export const WALKS = /^(Walk|WalkM|Run|RunLow|RunLow2|RunForward|RunBackward|RunLeft|RunRight|WalkCrouchR|Carry|SadWalk|RifleWalk|RifleWalk2|RifleCrouchWalk|CarryBagWalk|CarryHeadWalk|CarryHeadWalk2|HoldWalk)$/;
 export function pace(m, ctl, v, lo = 0.55, hi = 1.9) { const a = ctl.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; }

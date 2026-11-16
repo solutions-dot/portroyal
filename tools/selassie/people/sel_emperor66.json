@@ -25,7 +25,7 @@
     ],
     "trousers": true,
     "recede": 0.55,
-    "moustache": 0.01,
+    "moustache": 0.012,
     "jacket": true,
     "jacketsleeve": 0.96,
     "jackethem": 0.04,
@@ -106,13 +106,16 @@
     ]
   },
   "targets": {
-    "head-oval": 0.55,
-    "head-scale-horiz-decr": 0.16,
+    "head-oval": 0.6,
+    "head-scale-horiz-decr": 0.18,
     "head-fat-decr": 0.2,
-    "chin-width-decr": 0.28,
-    "nose-scale-depth-incr": 0.28,
-    "nose-scale-horiz-decr": 0.22,
-    "lr-cheek-volume-decr": 0.25
+    "chin-width-decr": 0.3,
+    "nose-scale-depth-incr": 0.32,
+    "nose-scale-horiz-decr": 0.24,
+    "nose-hump-incr": 0.25,
+    "nose-point-down": 0.15,
+    "lr-cheek-volume-decr": 0.35,
+    "forehead-scale-vert-incr": 0.25
   },
   "kit": "emperor"
 }

@@ -38,27 +38,26 @@ if kind:
             group=o.vertex_groups.new(name='mixamorig:'+bone);group.add(list(range(len(o.data.vertices))),1.,'REPLACE')
         o.modifiers.new('Armature','ARMATURE').object=rig;o.parent=rig;paint(o);return o
     if kind=='locks':
-        # Locks grow at the sides and back, never through the face or beard.
-        for i in range(11):
-            angle=.08+i*(math.pi-.16)/10
-            x=math.cos(angle)*.096;y=hy+math.sin(angle)*.108
-            sphere('Locks',(x,y,HEAD+.055),(.012,.014,.096),'Hair')
+        # Many separate locs from the scalp (tools/selassie/locs.py); a tam recipe gets its tam and a few locs below it further down.
+        exec(compile(Path('tools/selassie/locs.py').read_text(),'locs.py','exec'),globals())
+        LOCS={'sel_rastaelder66':(78,.42,.45),'sel_rastaman66':(72,.34,0),'sel_planno66':(62,.30,.1),'sel_levi66':(56,.26,0)}
+        if not P.get('tam'):
+            n_,lb_,gr_=LOCS.get(P['name'],(60,.3,0))
+            make_locs(sum(map(ord,P['name'])),n_,lb_,P['colors']['Hair'],gr_)
     if kind=='emperor':
         from pathlib import Path
         exec(compile(Path('tools/selassie/imperial_uniform.py').read_text(),'imperial_uniform.py','exec'),globals())
 if P.get('tam'):
-    tam=next((o for o in bpy.data.objects if o.type=='MESH' and any(m.name=='Tam' for m in o.data.materials)),None)
-    if tam:
-        for v in tam.data.vertices:
-            f=sstep(HEAD+.07,HEAD+.20,v.co.z);v.co.x*=1+.30*f;v.co.y=hy+(v.co.y-hy)*(1+.25*f)+.025*f;v.co.z+=.012*f
-        # Locs bundled inside a tam are covered completely; the beard stays visible.
-        for hair in [o for o in bpy.data.objects if o.type=='MESH' and (o.name=='Hair' or o.name.startswith('Locks'))]:bpy.data.objects.remove(hair,do_unlink=True)
-        ca=tam.data.color_attributes.get('Col')
-        for f in tam.data.polygons:
-            z=sum(tam.data.vertices[k].co.z for k in f.vertices)/len(f.vertices)
-            col=[39,51,40] if z<HEAD+.11 else [184,147,57] if z<HEAD+.135 else [137,45,37] if z<HEAD+.155 else [46,92,61]
-            for k in f.loop_indices:ca.data[k].color=(*srgb(col),1)
-        changed=True
+    # The builder's cap is replaced by a knitted tam fitted to this head and its short hair (tools/selassie/locs.py): a ribbed band,
+    # a soft body slouching back, bands of red, gold and green. The locs are gathered inside it; a few fall from under its back edge.
+    from pathlib import Path
+    exec(compile(Path('tools/selassie/locs.py').read_text(),'locs.py','exec'),globals())
+    for old in [o for o in bpy.data.objects if o.type=='MESH' and (o.name.startswith('Locks') or any(m.name=='Tam' for m in o.data.materials))]:
+        if old in clothes:clothes.remove(old)
+        bpy.data.objects.remove(old,do_unlink=True)
+    make_tam(sum(map(ord,P['name'])))
+    make_locs(sum(map(ord,P['name']))+7,8,.26,P['colors']['Hair'],0,roots=[(math.pi+o,-.3) for o in (-.9,-.6,-.3,0,.3,.6,.9,.15)])
+    changed=True
 if P.get('uniform')=='police':
     band=bpy.data.objects.get('CapBand')
     if band:

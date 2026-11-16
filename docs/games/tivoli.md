@@ -34,6 +34,12 @@ It is the hardest subject in the family. The usual rules hold (CLAUDE.md rules 2
 - Fair telling of the disputed parts: say who found what, and who disagreed (see "The dispute").
 - Settings to turn off screen shake and to turn down loud sounds. (Kendal still lacks the shake setting.)
 
+**Settled by the owner on 16 November 2026 (the street scene as redirected that day)**
+- Gunmen fire back from behind the barricade.
+- At the first shots, the two leading soldiers fire from where they stand at the same moment the gunmen open fire, so neither side is shown firing first.
+- Prone firing clips (`ProneFire`, `ProneTurnR`, `RifleProneToKneel`) are not used: a person flat on the road could look hurt to a child.
+- No civilians appear in the gunfight scene.
+
 **Open (waiting for the owner)**
 1. A reviewer from West Kingston before anything is published (Claude recommends yes).
 
@@ -152,7 +158,7 @@ Start it from the title screen: "May 2010 street scene (work in progress)". In t
 **How it runs** (`games/tivoli/src/fight.js`; the scene lasts about 50 seconds):
 1. An opt-in card: "Next is a loud scene with gunfire. You watch from a window. No one is shown hurt. It may feel scary." Buttons: Begin, **Read what happened instead** (a plain-words card with the facts and the disagreement), Not now. A **Calm mode** tick box (saved in the browser) makes it quieter, with no bright flashes and no shaking.
 2. Title: "Monday 24 May 2010. A street in West Kingston. It is made up. The day was real." Then a quiet street, soldiers and police walking in file.
-3. At 9 seconds both sides open fire together (the scene never says who fired first). Soldiers and police run to cover (a parked car, low walls, a minibus), kneel, fire and duck. Gunmen are tiny, far away behind the barricade, in plain clothes, and unidentified. Flashes, dust on walls and ground, gunshot sounds made in code, a little shake. **Nobody is hit.** Dust never lands on a person. No blood.
+3. At 9 seconds both sides open fire together (the scene never says who fired first): the two leading soldiers fire a short burst from where they stand while the gunmen open fire from behind the barricade. Then the soldiers and police run to cover (a parked car, low wall A, then later wall B and a van further up), crouch, rise and fire short bursts, and drop back. Gunmen are tiny, far away behind the barricade, in plain clothes, and unidentified. Flashes, dust on walls and ground, gunshot sounds made in code, a little shake. **Nobody is hit.** Dust never lands on a person. No blood. How they are directed, and the check for it, is in "The street scene directed again" below.
 4. Fade to black with a thin ringing, then the **after card**: "This street is made up. The day was real. About 70 civilians died. Civilians are people who are not soldiers or police. One soldier died too. Soldiers and police said armed men fought them. Many neighbours said they never saw armed men inside. People still disagree. Later chapters look at what was found."
 - You watch from the balcony of a second-floor flat (all shots are from there, with different lenses). You never hold or fire a weapon (rule 4).
 - Everything the people do is general (take cover, fire, duck, move up), not a record of a real event. The street is made up. Every number and claim on the cards comes from the Research tables below.
@@ -189,12 +195,15 @@ Start it from the title screen: "May 2010 street scene (work in progress)". In t
 | `src/backowall.js` | Chapter 1's place (imagined Back-o-Wall) |
 | `src/newtivoli.js` | The courtyard of flats, community centre and clinic, by year: 1965 (chapter 2), 1980 (3), 2010 (6), 2016 (7), today with murals (8) |
 | `src/street.js` | The 2010 street (chapter 5's scene) and `streetPlace()` for chapter 4 |
-| `src/fight.js` | Chapter 5, the directed street scene behind the opt-in card |
-| `src/talk.js`, `src/story.js` | Talking to people; saving, the journal and the chapters list |
+| `src/fight.js` | Chapter 5, the directed street scene behind the opt-in card: each person's plan (walk in, stand ready, run to cover, rest, fire, move up) |
+| `src/aim.js` | Where an armed person really points (`aimDir`), the turn each clip builds in (`clipTurn`), and the body turn that points the weapon, not the hips, at a target (`faceFor`) |
+| `src/scenecheck.js` | Dev only: `?test=scene` (aim, facing and feet of everyone in the street scene) and `?test=clipinfo` |
+| `src/life.js` | The neighbours who are not in the story, in every walking chapter (`LIFE`), on the shared `engine/ambient.js`; `?test=ambient` |
+| `src/talk.js`, `src/story.js` | Talking to people (each story person's idles, talk gestures and head turn); saving, the journal and the chapters list |
 | `src/cast.js` | Bodies, looks (`LOOKS`) and `makeBody`; `SKIN_LIGHT` on Skin only |
 | `src/weapons.js`, `src/clips.js` | The rifle and pistol with the two-handed hold; the pose names and their stand-ins |
 | `src/textures.js`, `src/bake.js`, `src/sky.js` | Canvas textures (including `fresh` paint and the `mural` designs), merging by material, the sky |
-| `src/checks.js` | `overlapSolids` (solid boxes), `sinkCheck` (feet below a surface), and local copies of `auditCloth`, `auditWalk`, `skinProbe` |
+| `src/checks.js` | `overlapSolids` (solid boxes), `sinkCheck` (feet below a surface), and `CLOTH_SKIP` (the order the 2010 kit is worn in, for the shared `auditCloth`); re-exports the engine's `auditCloth`, `auditWalk` and `skinProbe` |
 
 ## Test it
 
@@ -353,3 +362,35 @@ All eight chapters are now playable.
 - **Polish:** each courtyard chapter opens facing its first person; the end card has space between its lines; murals sit in front of the wall bands and are square panels, not stretched; the audit now runs every walking chapter with its own cast (`WALKS` is exported).
 - **Checks (15 November 2026):** `?test=audit` 0 in the street and in all seven walking chapters. Layout test 0 at 390x800, 320x568, 667x375, 800x500, 1280x720. A scripted run of all seven walking chapters from a fresh save (talking in reverse order each time) reached every end card, unlocked 9 of 9 journal pages, with no errors. The public build has no test code.
 - **Still to do:** own bodies for everyone (Ivy, Pearl, Roy, Clarke, Dawn, Pastor Grant and Kemesha use Kendal and Garvey bodies, so faces repeat); wire in the new clips (Talk, Comfort, Kneel and others) and `engine/story.js` and `engine/follow.js` when they land; the West Kingston reviewer; read the Commission's report itself.
+
+## The street scene directed again, and background life (16 November 2026)
+
+The owner played the May 2010 chapters and reported three things. What was wrong and what changed:
+
+**1. "At one time the police turn to shoot at their own men."** The owner's Mixamo firing clips turn the body inside the clip. `?test=clipinfo` measures each clip on the real body: `ShootPistol` builds in a 121 degree turn of the pistol and swings it 83 degrees round during the clip; `PeekAim` swings 109 degrees, `PeekCorner` turns 155. The game turned the body to face the gunmen and let the clip add its own turn, so a police officer with a pistol ended up pointing back up the street at a soldier 1.3 m away (the check found exactly that on the old code). Now:
+- `aim.js` measures, once per clip, body and weapon, how far the clip turns the weapon from the body's facing, and `faceFor()` turns the body by the difference, so the **weapon** points at the target.
+- Pistols use the arm-out aim of `PistolKneelIdle` (kneeling) or `PistolStand` (the same arms on standing legs, made in `clips.js`); `ShootPistol`, `PeekAim` and `PeekCorner` are no longer used here.
+- Every burst first picks a target on the other side with a clear line: nobody of the shooter's own side within 13 degrees of it and nearer than it. If no target is clear (someone ran forward), the shooter stays down. During a burst, if a friend comes into that cone, the burst stops at once. A crouched person already faces the clearest target, so the weapon never sweeps across a friend when they rise.
+
+**2. "They are running in place and shooting."** `ShootRifle` (the owner's Shoot_Rifle) is a run-and-shoot clip: its feet travel 3.7 m a second. It played for every standing and crouched shot. There is no standing or kneeling rifle-firing clip among the downloads, so `clips.js` makes two from the owner's clips: `FireStand` (ShootRifle's upper body, aim and recoil on the still legs and hips of `RifleIdle`) and `FireKneel` (the same on the legs of `PistolKneelIdle`, on one knee). Their feet never move. The scene's steps now keep moving and firing apart: people move only in `RifleWalk` (walking in, the real clip that replaced the `Walk` stand-in for `AdvanceReady`) or `RunLow`, at the ground speed the clip's own stride gives at the pace it can play (`walk.js`), and they stop and change to a still clip before they fire. The stride the game worked out for the crouched run was wrong (1.29 m a loop; the feet really cover 0.91 m, so runners' feet slid 30 cm a loop), and RifleWalk's a little (1.30 against 1.28): `walk.js` now uses the measured strides (`MEASURED`), found with `?test=walkers&walk=RunLow:1.2` (the shared `auditWalk` at a chosen speed, clip speed 1). Runners now move at about 2.25 m/s.
+
+**3. "It doesn't just look like zombies standing around."**
+- The street scene: before the shooting the soldiers and police stand with their rifles ready (`RifleIdle`, looking about); afterwards they crouch behind cover, rise to fire, drop back, and some move up to cover further on; a guard kneels at the back watching a side street. Timings are random per person, so nobody is in step.
+- The walking chapters now have neighbours who are not in the story (`life.js`, on the shared `engine/ambient.js`): children playing chase, people talking in twos and threes with gestures and the odd laugh or nod, elders on the benches, someone walking by, someone watching the children, a man at a handcart wiping his brow. The mood follows the chapter: lively in chapters 1, 2, 3 and 8 (in 8 people stop to look at the murals and point); calm and few in chapter 4 (Sunday 23 May 2010: two neighbours talk low, two others look down the street toward the barricade); sad in chapter 6 (no games; one woman comforts another, people sit and talk quietly, a child stands by them); calm in chapter 7. Everyone is fictional and general, like the rest of the everyday life in these chapters.
+- The story people: each has idles that suit them (Ivy as a girl `HappyIdle`, the elders `OldIdle`, the men `IdleM`, `LookAround`, `WipeSweat`), changed every few seconds; quieter idles in the calm chapters and `Sad1`, `Sad2` in chapter 6. While talking they use a talk clip that changes with each line (men and women have their own; quieter ones when sad) and nod while you speak. Their heads turn toward you when you come near.
+- `anim-clips.json` now ships 31 clips (the talk, idle, sit, comfort and reaction clips above, `RifleIdle` and `RifleWalk`); the game's copy of the library went from 211 KB to about 770 KB.
+
+**Checks (dev build):**
+- `?test=scene` (new, `scenecheck.js`): runs the whole street scene with six random seeds and checks everyone. Every quarter second from the first shots: a raised weapon must point within 12 degrees of someone on the other side and never within 8 degrees of anyone on its own side in front of it; someone still and not aiming must face within 75 degrees of the other side (the guard 135). Every frame: a walking or running clip while standing still (running in place), moving in a still clip (sliding), or moving more than 25 % off the speed the clip's stride gives. **0 issues** (6 seeds, about 108,000 person-frames, 3,600 aims). Proved on the old clip choice: 21 issues, among them "police 6 aims 2.0 degrees from soldier 5, 1.3 m in front" and "plays the moving clip ShootRifle while standing still".
+- `?test=ambient` (new): every walking chapter's background people run for a minute while a player walks the story route (the engine's `ambientTest`): **0** in all seven chapters.
+- `?test=audit`: the place audit now checks every walk and run route in the street scene every 30 cm, not just the end points: **0** (street and all seven walking chapters).
+- `?test=walkers` now tests the uniform bodies in the clips the street scene gives them (Walk, RifleWalk, RunLow), with the shared `auditWalk`: **0** (it was 6 before the measured strides).
+- `?test=held`: the new clips are in it (`FireStand`, `FireKneel`, `PistolKneelIdle`, `PistolStand`, `RifleWalk`, `RifleIdle`): **0**.
+- `?test=cloth` now uses the shared `auditCloth` (engine/audit.js) with the 2010 kit's order as its `skip` rule, and also poses the bodies in the clips the street scene uses (RifleWalk, RunLow, CrouchIdle, FireStand, FireKneel, PistolKneelIdle). After merging the new kit (16 November 2026): **39 issues on 209 points**, all in the bodies, not the game: the tucked shirt shows through the trousers when crouched or kneeling (CrouchIdle 42 to 47 points, FireKneel 10 to 15, RunLow 5 to 9), the police vest pouches' edges are jagged in some poses (up to 27 mm on the light copy), the shirt hem is jagged in the light copies (5 to 8 mm), 1 to 3 points of shoe through the boot in the soldier's light copy kneeling, 4 points of shirt through the vest in the soldier's light copy in RifleWalk, 1 point of vest through the armband walking. They need `tools/tivoli/kit.py` and the builder, not this branch. Without the kit order (the shared check alone) it reported 366, nearly all of them pieces it read the wrong way round ("Boots shows through Shoes" 480 points a pose).
+- `?test=layout` 0 at 390x800, 320x568, 667x375, 800x500, 1280x720; `?test=clips` no stand-ins; scripted run of all seven walking chapters (every line of every talk, then the end spot): every end card, no errors.
+
+**What needs the owner (how the operation is shown):**
+- The scene still shows gunmen firing back from the barricade, as the owner decided; nothing in this change adds to or takes away from that. The two leading soldiers now fire a short burst from where they stand at the first shots, at the same moment the gunmen open fire, so neither side is shown firing first.
+- No one lies down: the owner's prone clips (`ProneFire`, `ProneTurnR`, `RifleProneToKneel`) are not used, because a person flat on the road could read to a child as someone hurt.
+- No civilians are in the street scene (they are indoors; the child watches from the balcony).
+

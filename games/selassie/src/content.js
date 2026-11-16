@@ -418,10 +418,12 @@ export const SOURCES = {
 };
 export const ARRIVAL_CAPTIONS = [
   ["A sound reaches you before the aircraft appears.", 0],
-  ["People turn toward the same patch of sky.", 12],
-  ["The aircraft reaches Palisadoes.", 25],
-  ["A great welcome gathers around it.", 40],
-  ["Mortimo Planno helps the arrival proceed.", 55],
-  ["The Emperor appears at the aircraft steps.", 70],
+  ["People turn toward the same patch of sky.", 5],
+  ["The aircraft reaches Palisadoes.", 10],
+  ["A great welcome gathers around it.", 24],
+  ["Steps are rolled up to the door.", 40],
+  ["Mortimo Planno helps the arrival proceed.", 48],
+  ["The Emperor appears at the aircraft steps.", 60],
+  ["He comes down the steps.", 73],
   ["Grandma tightens her hand around yours.", 88],
 ];
