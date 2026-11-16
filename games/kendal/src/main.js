@@ -544,7 +544,7 @@ const ACTIONS_FOR = {   /* each thing has an id; `need` is the step need it coun
     ...P.spots.windows.map((w, i) => ({ id: 'w' + i, need: 'w' + i, label: 'Look out of the window', x: w[0], z: w[1], r: 1.6, on: () => STORY.needs('w' + i), go: () => { state.yaw = w[2] > 0 ? PI : 0; state.pitch = 0; say(i === 0 ? 'A little station slips by. A lamp, a bell, a dog barking.' : 'Stars over the dark hills. Somewhere, a lamp in a window.', 4200); STORY.done('w' + i); } })),
     { id: 'seat', need: 'seat', label: 'Sit down with Gran', x: P.spots.seat[0], z: P.spots.seat[1], r: 1.5, on: () => STORY.needs('seat') && !CR.on, go: () => { sitting = true; crashIntro(); } } ],
   beach: (P) => {
-    const done = () => { P.done = P.done || {}; return P.done; }, fun = (k) => { done()[k] = true; uiSound('goal'); story.beach = story.beach || k; saveGame(); STORY.done('fun'); };
+    const done = () => { P.done = P.done || {}; return P.done; }, fun = (k) => { done()[k] = true; story.beachDone = Object.keys(done()).filter((id) => done()[id] === true); uiSound('goal'); story.beach = story.beach || k; saveGame(); STORY.done('fun'); };
     return [
       { id: 'sea', need: 'fun', label: 'Splash in the sea', x: P.spots.sea[0], z: P.spots.sea[1], r: 2.6, on: () => STORY.needs('fun') && !done().splash, go: () => { stepSound('water'); setTimeout(() => stepSound('water'), 300); splash(P); toast('Splash! The water is warm.'); fun('splash'); } },
       { id: 'castle', need: 'fun', label: 'Build a sandcastle', x: P.spots.castle[0], z: P.spots.castle[1], r: 2.6, on: () => STORY.needs('fun') && !done().castle, go: () => { ctr.cp = (ctr.cp || 0) + 1; const m = P.castle.userData.mound; m.scale.setScalar(0.01 + ctr.cp / 3); uiSound('tap'); toast(ctr.cp < 3 ? 'Pat the sand... ' + ctr.cp + ' of 3' : 'A sandcastle!'); if (ctr.cp >= 3) { done().castle = true; fun('castle'); } } },
@@ -620,7 +620,7 @@ ON[42] = async () => {
   await run([[7000, () => { setRigTheme(P, 'hills'); say('Now the hills. The engines work hard.', 3600); RIDE.target = 9; }], [7000, () => { say('Greenvale, the highest station on the line.', 3600); unlock('greenvale'); }], [6500, () => { setRigTheme(P, 'coast'); RIDE.target = 14; say('Down toward the sea, in the bright afternoon.', 3600); }], [6500, () => { RIDE.target = 4; say('Montego Bay! The sea!', 3200); SFX.hornDiesel(1.0); }]]);
   bars(true); await wait(1600); await ensurePlace('beach'); if (!(await transition('beach', { env: ENV.day, after: () => { RIDE.on = false; bars(false); } }))) return; story.beach = null; showPlace('Montego Bay, afternoon'); setStage(43);
 };
-ON[43] = () => { const P = PL.beach; if (P) { P.done = {}; P.castle.userData.mound.scale.setScalar(0.01); } };
+ON[43] = () => { const P = PL.beach; const resuming = savedFlow && savedFlow.stage === 43; if (P) { P.done = {}; P.castle.userData.mound.scale.setScalar(0.01); if (resuming) for (const id of story.beachDone || (story.beach ? [story.beach] : [])) if (['splash', 'castle', 'band'].includes(id)) P.done[id] = true; } if (!resuming) story.beachDone = []; };
 ON[44] = () => { if (cur !== 'beach') return; const a = envNow; tween(6, (k) => setEnv(mixEnv(a, ENV.gold, k))); say('The sun is going down over the sea.', 3600); };
 ON[45] = () => { /* the chapter's end card comes from setStage */ };
 
