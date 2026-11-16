@@ -400,3 +400,15 @@ The owner played the May 2010 chapters and reported three things. What was wrong
 - No one lies down: the owner's prone clips (`ProneFire`, `ProneTurnR`, `RifleProneToKneel`) are not used, because a person flat on the road could read to a child as someone hurt.
 - No civilians are in the street scene (they are indoors; the child watches from the balcony).
 
+
+## The title screen matches the other games (16 November 2026)
+
+The owner said Tivoli's start screen did not look like the others. It now uses the same layout as Kendal, Nanny Town, Windrush, Melissa and The Emperor's Arrival (only `games/tivoli/site/index.html` changed):
+- A date line on top in small brass capitals: "Jamaica · West Kingston · 1960s to today".
+- The name and the three lines of words sit low on the screen, inside `<div class="tcard">` (not `card`, because `.card` is the full-screen overlay class in this game). The street shows above them.
+- The name uses Alfa Slab One at the same size as Kendal. Its line height is 1.1, not 0.95, so the layout test does not find its letters touching the date line or the words below.
+- The shade is clear at the top and dark under the words (the same gradient as Kendal). On short screens (600 px tall or less) the words start at the top, so the shade starts darker there to keep them easy to read over the bright sky.
+- The buttons use the shared `title.css` row (Start, Chapters, Main Menu, in that order, then the loading bar); the old Tivoli grid that squeezed them is gone. The loading note moved inside the button row, as in Kendal.
+- Kept: the quiet-street picture `menu/tivoli.jpg` behind the title with its slow drift, and no drift with reduced motion. The picture and the shade are now `position:fixed`, so they still cover the screen when a short screen scrolls the title.
+
+Checks: `?test=layout` 0 at 390x800, 320x568, 667x375, 800x500 and 1280x720; `npm test` 225 of 225; `tests/tivoli-browser.mjs` 24 of 24 passes. Before and after pictures at 1280x720, 390x844, 320x568 and 667x375 are in `build/title-parity/` (not in git).

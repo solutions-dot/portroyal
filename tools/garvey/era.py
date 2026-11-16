@@ -25,6 +25,10 @@ if _ey>0: _T['lr-eye-height2-decr']=_ey
 _sm=P.get('smile',0.8 if P.get('upscale') else 0.45)
 if _sm>0: _T['mouth-angles-up']=min(1.0,_sm); _T['lr-cheek-trans-up']=min(1.0,_sm*0.5); _T['eyebrows-trans-up']=min(1.0,_sm*0.5)
 if P.get('upscale'): _T.setdefault('lr-cheek-volume-incr',0.3)
+# a man's chest (owner, 16 November 2026: "these look like breasts on the men"): MakeHuman's male chest keeps rounded pectoral mounds with a fold under each at the side.
+# Every man gets a flatter chest unless his recipe sets these targets itself (or "malechest": 0).
+if P['body'].get('gender',1)>0.5 and not P['garments'].get('woman') and P.get('malechest',1):
+    for _k,_w in (('torso-muscle-pectoral-decr',1.0),('breast-point-decr',1.0),('breast-volume-vert-up',0.6),('measure-bust-circ-decr',0.7)): _T.setdefault(_k,_w*P.get('malechest',1))
 _T.update(P.get('targets',{}))
 for _n,_w in _T.items():      # finer shaping of the face and body (MakeHuman's own targets), for a likeness
     for _nn in ([_n.replace('lr-','l-'),_n.replace('lr-','r-')] if _n.startswith('lr-') else [_n]): TargetService.load_target(h,TargetService.target_full_path(_nn),weight=_w,name=_nn)
@@ -87,7 +91,7 @@ def flat_chest(k):
         nw={v:sum((e.other_vert(v).co for e in v.link_edges),Vector())/len(v.link_edges) for v in vs}
         for v in vs: v.co=v.co.lerp(nw[v],0.5)
     _b.free(); bm.to_mesh(h.data); bm.free(); h.data.update()
-if not P['garments'].get('woman') and P['body'].get('gender',1)>0.5 and P['garments'].get('chest',0.5)>0: flat_chest(P['garments'].get('chest',0.5))
+if not P['garments'].get('woman') and P['body'].get('gender',1)>0.5 and P['garments'].get('chest',1.0)>0: flat_chest(P['garments'].get('chest',1.0))
 bh=bmesh.new(); bh.from_mesh(h.data); tree=BVHTree.FromBMesh(bh)
 LHIP,LKNEE,LANK=J('LeftUpLeg'),J('LeftLeg'),J('LeftFoot'); NJ=J('Neck')
 _c=tree.ray_cast(Vector((0,LHIP.y,0.3*s)),Vector((0,0,1)))[0]; CROTCH=_c.z if _c else HIP-0.09*s   # where the legs part
