@@ -3,7 +3,7 @@
    zinc fences, a single-deck bus in grey and dark green (the colours a Gleaner feature gives for JOS buses), 1960s cars, flags of Jamaica
    (1962) and of Ethiopia. Every builder returns a group standing on y = 0. Shop names are made up; no real business or brand is shown. */
 import * as THREE from "three";
-import { makeDoor } from "../../../engine/door.js";
+import { louvreDoor } from "./doors.js";
 import { T, cv, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 
 const IRON = solid(0x2b2d31, 0.6, 0.3),
@@ -297,10 +297,9 @@ export function louvreHouse(w = 8, d = 6, opts = {}) {
   for (const x of [-w * 0.3, w * 0.3]) win(x, d / 2, 0);
   win(-w / 2, 0, -Math.PI / 2);
   win(w / 2, 0, Math.PI / 2);
-  // the front door (engine/door.js), on the veranda floor: a framed louvre door, or, where the house is lit, a half-glazed door with the room's light in its glass
-  const door = makeDoor({ w: 0.95, h: 2.05, kind: o.lit ? "glazed" : "louvre", color: 0x6a3e26, frame: 0xf0ece2, handle: "knob" });
+  // the front door (doors.js), on the veranda floor: glass louvre blades over two panels, like the windows; painted in the house's trim colour
+  const door = louvreDoor({ color: o.door ?? o.trim, lit: o.lit });
   door.position.set(0, o.veranda ? 0.06 : 0, d / 2);
-  if (o.lit) door.traverse((m) => m.isMesh && m.material.name === "DoorGlass" && (m.material = glow(0xf4c77a)));
   g.add(door);
   // veranda: a tiled floor slab, square posts, a low rail of patterned blocks either side of the steps
   if (o.veranda) {

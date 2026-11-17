@@ -5,7 +5,6 @@ import { JOURNEY } from './content.js';
    Coordinates are metres; x runs east, yaw 0 looks toward -z (north, where the river and the hills are).
    The turbine house, the valve wheel, the switchboard and the trams are a general picture: the record does not say how they looked or where the valve was. */
 import * as THREE from 'three';
-import { makeDoor } from '../../../engine/door.js';
 import { T, cv, grain, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng } from './wgfx.js';
 import { palm, tree, banana, bush, boardHouse, hillRing, scatter, mule, bench, lampPost, crate, barrel, bucket, sack, lantern, cart } from './props.js';
 import { grassField, flowerField, rockField, blotches, fence, mangoTree, bamboo, flameTree, hibiscus, croton, stump } from './detail.js';
@@ -248,6 +247,28 @@ function ruinSupport(g, x, z, seed) {   /* an old concrete support: a wide footi
   for (const sz of [-1, 1]) for (let i = 0; i < 3; i++) { const w = 0.05 + r() * 0.1, h = 0.4 + r() * (top1 - 0.6); box(w, h, 0.014, stain, (r() - 0.5) * 0.5, top1 - h / 2 - 0.05, sz * 1.006, grp1); }
   { const ck = box(0.016, 0.3, 0.03, solid(0x2e2c28, 1), 0.357, top1 - 0.3, 0.3, grp1); ck.rotation.x = 0.35; }
 }
+/* a works door of 1904, for the turbine house and the tram depot: a pair of ledged and braced leaves of upright boards. Seen from outside: the boards and
+   long black strap hinges; on the back face the three ledges and the diagonal braces between them (as such doors are built, the braces rising away from the
+   hinge). glaze > 0 puts a band of small panes of that height at the top of each leaf, as tall shed doors had for light. open is the angle (radians) each leaf
+   is swung out. The origin is the middle of the foot of the opening on the wall face; the doors face +z. They were flat boards (owner, 17 November 2026:
+   "the doors should fit their purpose, not one shared one"). */
+function worksDoor(w, h, { color = 0x3a4a3a, frame = 0x4a3a2c, glaze = 0, open = 0 } = {}) {
+  const g = grp(), c = new THREE.Color(color), lf = solid(color, 0.85), lf2 = solid(c.clone().multiplyScalar(0.78).getHex(), 0.85), fr = solid(frame, 0.85), strap = solid(0x1a1a1c, 0.5, 0.4), glass = solid(0x2a3438, 0.15, 0.3), t = 0.05;
+  box(0.14, h + 0.14, 0.08, fr, -w / 2 - 0.07, (h + 0.14) / 2, 0.04, g); box(0.14, h + 0.14, 0.08, fr, w / 2 + 0.07, (h + 0.14) / 2, 0.04, g); box(w + 0.28, 0.14, 0.1, fr, 0, h + 0.07, 0.05, g);   /* the frame */
+  const lw = w / 2 - 0.01, gy = h - glaze;
+  for (const side of [1, -1]) {
+    const L = grp(g, -side * (w / 2 - 0.005), 0.02, 0.09); L.rotation.y = -side * open; const at = (u) => side * u, lh = h - 0.03;
+    const n = Math.max(4, Math.round(lw / 0.16)), bw = lw / n, top = glaze > 0 ? gy : lh;
+    for (let i = 0; i < n; i++) box(bw - 0.008, top, t, i % 2 ? lf : lf2, at((i + 0.5) * bw), top / 2, -t / 2, L);   /* the boards */
+    if (glaze > 0) { box(lw, 0.12, t + 0.02, lf, at(lw / 2), gy, -t / 2, L); box(lw, 0.1, t + 0.02, lf, at(lw / 2), lh - 0.05, -t / 2, L); for (const u of [0.04, lw - 0.04]) box(0.08, glaze, t + 0.02, lf, at(u), gy + glaze / 2, -t / 2, L);
+      box(lw - 0.1, glaze - 0.2, 0.01, glass, at(lw / 2), gy + glaze / 2, -t / 2, L); const cols = Math.max(2, Math.round(lw / 0.45)), rows = Math.max(2, Math.round(glaze / 0.45));
+      for (let k = 1; k < cols; k++) box(0.035, glaze - 0.2, t, lf, at(0.05 + k * (lw - 0.1) / cols), gy + glaze / 2, -t / 2, L); for (let k = 1; k < rows; k++) box(lw - 0.1, 0.035, t, lf, at(lw / 2), gy + 0.1 + k * (glaze - 0.2) / rows, -t / 2, L); }   /* the glazed band, with its bars */
+    const ly = [0.3, top / 2, top - 0.3];
+    for (const y of ly) { box(lw - 0.08, 0.16, 0.03, lf2, at(lw / 2), y, -t - 0.015, L); box(Math.min(lw * 0.8, 1.6), 0.06, 0.012, strap, at(Math.min(lw * 0.8, 1.6) / 2), y, 0.006, L); }   /* ledges behind, strap hinges in front */
+    for (let k = 0; k < 2; k++) { const y0 = ly[k], y1 = ly[k + 1], run = lw - 0.3, len = Math.hypot(run, y1 - y0), b = box(len, 0.13, 0.03, lf2, at(lw / 2), (y0 + y1) / 2, -t - 0.015, L); b.rotation.z = Math.atan2(y1 - y0, side * run); }   /* braces, rising away from the hinge */
+    box(0.03, 0.3, 0.03, strap, at(lw - 0.1), 1.1, 0.02, L); }   /* an iron handle on the meeting edge */
+  return g;
+}
 function turbineHouse(g, kind, P) {
   /* the brick house: 14 m by 10 m, walls 0.4 m thick and 6.5 m high, a door in the south wall. Inside: the turbine casing, the shaft, the spinning wheel,
      the generator and the switchboard. In the ruins, the walls are broken, there is no roof, and only the bases of the machines are left. */
@@ -275,7 +296,7 @@ function turbineHouse(g, kind, P) {
     for (const x of [-3.5, 0, 3.5]) wallWindow(g, 1.3, 2.6, x, 3.2, z0 - th / 2 - 0.01, PI, P.glass);
     /* the door frame and an open door, and a sign over it */
     box(0.14, 3.2, th, M.woodDark, -1.25, 1.6, z1, g); box(0.14, 3.2, th, M.woodDark, 1.25, 1.6, z1, g); box(2.64, 0.18, th, M.woodDark, 0, 3.25, z1, g);   /* timber lining the reveal */
-    { const dr = makeDoor({ w: 2.4, h: 3.2, kind: 'plank', leaves: 2, color: 0x3a4a3a, frame: 0x4a3a2c, open: 1.94 / 1.4 }); dr.position.set(0, 0, z1 + th / 2); g.add(dr); }   /* a pair of ledged board doors (engine/door.js), both swung right back: it was one flat board (owner, 17 November 2026) */
+    { const dr = worksDoor(2.4, 3.2, { color: 0x3a4a3a, frame: 0x4a3a2c, open: 1.94 }); dr.position.set(0, 0, z1 + th / 2); g.add(dr); }   /* the power house's pair of ledged and braced works doors, green, swung right back (it was one flat board) */
     const sg = mesh(new THREE.PlaneGeometry(3.4, 0.62), std(signTex([['TURBINE HOUSE', '700 58px Georgia, serif']], 512, 96), 0.8), 0, 4.1, z1 + th / 2 + 0.03, g);
     walls.push([x0 - 0.3, z0 - 0.3, x1 + 0.3, z0 + 0.3], [x0 - 0.3, z0, x0 + 0.3, z1], [x1 - 0.3, z0, x1 + 0.3, z1], [x0 - 0.3, z1 - 0.3, -1.25, z1 + 0.3], [1.25, z1 - 0.3, x1 + 0.3, z1 + 0.3], [-1.9, z1, -1.15, z1 + 1.0], [1.15, z1, 1.9, z1 + 1.0]);
     /* ----- the machines. The water comes in through the west wall into a spiral casing (the turbine), which turns a shaft; the shaft turns the big wheel and the generator. ----- */
@@ -394,7 +415,7 @@ function noticeBoard(g, P) {   /* the notice board by the turbine house door */
   P.notice = face; P.walls.push([x - 1.05, z - 0.25, x + 1.05, z + 0.15]); P.spots.notice = [x, z + 1.3];
 }
 function superHouse(g, P, kind) {   /* the superintendent's house: wooden, with a veranda facing the yard */
-  const h = boardHouse(8, 6, 3.0, { wall: [214, 200, 170], roof: [140, 96, 76], seed: 5 }); h.position.set(16.2, 0, 4.5); h.rotation.y = -PI / 2; g.add(h);
+  const h = boardHouse(8, 6, 3.0, { wall: [214, 200, 170], roof: [140, 96, 76], seed: 5, door: { kind: 'panel', color: 0x2f5a44, frame: 0xf0eadc, metal: 0xb08a40, handle: 'knob', step: 0 } });   /* the superintendent's house: a good four-panel front door, painted green, a brass knob */ h.position.set(16.2, 0, 4.5); h.rotation.y = -PI / 2; g.add(h);
   P.walls.push([12.9, 0.2, 19.6, 8.8], [11.0, 0.1, 13.0, 8.9]);
 }
 function yardBits(g, P, kind) {
@@ -643,7 +664,8 @@ export function buildKingston() {
   /* shops of board and zinc with verandas, both sides */
   const walls = ['#c8b080', '#a8c0a8', '#d8c0a0', '#c0a088', '#e0d4b8', '#b8b8c8'].map((h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
   const names = [['DRY GOODS', 0], ['BAKERY', 1], ['HARDWARE', 0], ['PROVISIONS', 1], ['DRUG STORE', 0], ['TAILOR', 1], ['GROCERY', 0], ['SHOES', 1]];
-  let k = 0; for (const side of [-1, 1]) for (let x = -30; x < 100; x += 8.6) { if (side < 0 && x < -25) continue; const h = boardHouse(7.6, 5, 3.2 + r() * 0.8, { wall: walls[k % walls.length], roof: [[150, 154, 150], [140, 96, 76], [120, 124, 120]][k % 3], seed: k + 3, door: { w: 1.3, h: 2.2, leaves: 2 } });   /* a shop: a pair of panelled doors */ h.position.set(x, 0, side * 10); h.rotation.y = side < 0 ? 0 : PI; g.add(h);
+  let k = 0; for (const side of [-1, 1]) for (let x = -30; x < 100; x += 8.6) { if (side < 0 && x < -25) continue; const h = boardHouse(7.6, 5, 3.2 + r() * 0.8, { wall: walls[k % walls.length], roof: [[150, 154, 150], [140, 96, 76], [120, 124, 120]][k % 3], seed: k + 3, door: { w: 1.3, h: 2.2, leaves: 2, kind: 'plank', handle: 'latch', color: [0x3a5a44, 0x6a4a2e, 0x2f4a5a, 0x7a3a2a][k % 4], open: 3.0 / 1.4 } });   /* a Kingston shop open for the day: its pair of tall board doors folded right back against the front, the dark shop inside */
+    box(1.3, 2.2, 0.01, solid(0x1a1612, 1), 0, 0.27 + 1.1, 2.505, h); h.position.set(x, 0, side * 10); h.rotation.y = side < 0 ? 0 : PI; g.add(h);
     const nm = names[k % names.length]; const sg = mesh(new THREE.PlaneGeometry(3.4, 0.42), std(signTex([[nm[0], '700 60px Georgia, serif']], 512, 64), 0.8), x, 2.3, side * (10 - 4.1), g); if (side > 0) sg.rotation.y = PI; k++; }
   P.walls.push([-60, -40, 120, -5.5], [-60, 5.5, 120, 40]);
   /* the depot: a long shed with wide doors opening on to the street */
@@ -653,7 +675,7 @@ export function buildKingston() {
   const zt = T.zinc([150, 154, 150]).clone(); zt.needsUpdate = true; zt.repeat.set(5, 3); for (const s of [-1, 1]) { const rf = box(17, 0.1, 9, std(zt, 0.7), dx - 8, 7.8, s * 4.1, dep); rf.rotation.x = s * 0.28; }
   for (const s of [-1, 1]) { const gab = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-8.2, 0), new THREE.Vector2(8.2, 0), new THREE.Vector2(0, 2.4)])), std(dwt, 0.9, { side: THREE.DoubleSide }), s < 0 ? dx - 16 : dx, 7, 0, dep); gab.rotation.y = PI / 2; }
   box(15.6, 0.04, 15.6, solid(0x2a2622, 0.95), dx - 8, 0.02, 0, dep); box(15.6, 0.05, 15.6, solid(0x2a2622, 0.95), dx - 8, 6.95, 0, dep);
-  { const dr = makeDoor({ w: 5.6, h: 6.3, kind: 'plank', leaves: 2, color: 0x2a4a36, frame: 0x3a2e24, open: (PI / 2) / 1.4 }); dr.position.set(dx + 0.2, 0, 0); dr.rotation.y = PI / 2; dep.add(dr); }   /* the wide ledged doors (engine/door.js), swung open flat to the street: they were two flat boards (owner, 17 November 2026) */
+  { const dr = worksDoor(5.6, 6.3, { color: 0x2a4a36, frame: 0x3a2e24, glaze: 1.5, open: PI / 2 }); dr.position.set(dx + 0.2, 0, 0); dr.rotation.y = PI / 2; dep.add(dr); }   /* the depot's tall pair of ledged and braced shed doors, glazed along the top for light, swung open to the street (they were two flat boards) */
   mesh(new THREE.PlaneGeometry(4.6, 0.5), std(signTex([['TRAM DEPOT', '700 62px Georgia, serif']], 512, 72, '#2a4a36', '#ece0c0'), 0.8), dx + 0.22, 6.7, 0, dep).rotation.y = PI / 2;
   P.walls.push([dx - 16.5, -8.5, dx + 0.3, -2.7], [dx - 16.5, 2.7, dx + 0.3, 8.5], [dx - 16.5, -8.5, dx - 15.5, 8.5], [dx - 0.1, -2.9, dx + 2.9, -2.6], [dx - 0.1, 2.6, dx + 2.9, 2.9], [-60, -2.8, dx - 0.2, 2.8]);
   /* a street sign at the corner */

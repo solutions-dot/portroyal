@@ -14,9 +14,8 @@
 import * as THREE from 'three';
 import { T, cv, std, solid, flat, box, cyl, plane, grp, rng, mesh } from './gfx.js';
 import { woolMaterial } from './blanket.js';
-import { makeDoor } from '../../../engine/door.js';
 import { saloonCar, bus as townBus, van as panelVan, lorry } from '../../../engine/roadcars.js';
-import { palm, tree, bench, standpipe, waterTower, boardHouse, hillRing, flowers, signBoard } from './props.js';
+import { palm, tree, bench, standpipe, waterTower, boardHouse, hillRing, flowers, signBoard, evDoor } from './props.js';
 import { grassField, flowerField, flameTree, mangoTree, hibiscus, croton } from './detail.js';
 
 const DS = { side: THREE.DoubleSide };
@@ -30,8 +29,8 @@ function hipRoof(W, D, H, mat) {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
   return new THREE.Mesh(g, mat);
 }
-/* a door on a wall face (engine/door.js): framed, panelled or slatted, with a handle. The green and cream are the Home's paint. */
-const door = (g, o, x, y, z, ry) => { const d = makeDoor({ color: 0x356246, frame: 0xe8e0cc, metal: 0x8a8a84, ...o }); d.position.set(x, y, z); d.rotation.y = ry; g.add(d); return d; };
+/* a door on a wall face, made for its building (props.js evDoor). The green and cream are the Home's paint. */
+const door = (g, kind, o, x, y, z, ry) => { const d = evDoor(kind, o); d.position.set(x, y, z); d.rotation.y = ry; g.add(d); return d; };
 /* textures drawn once */
 const louvre = () => cv(64, 96, (x, w, h) => { x.fillStyle = '#2f5a3e'; x.fillRect(0, 0, w, h); for (let y = 8; y < h - 6; y += 6) { x.fillStyle = '#4f8a62'; x.fillRect(6, y, w - 12, 3); x.fillStyle = '#1e3a28'; x.fillRect(6, y + 3, w - 12, 2); } x.strokeStyle = '#e8e0cc'; x.lineWidth = 5; x.strokeRect(2, 2, w - 4, h - 4); x.beginPath(); x.moveTo(w / 2, 4); x.lineTo(w / 2, h - 4); x.stroke(); });
 const slats = () => cv(128, 64, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = '#eae2cc'; for (let i = 0; i < 8; i++) x.fillRect(i * 16 + 5, 0, 6, h); });   /* veranda balusters, on a see-through card */
@@ -67,7 +66,7 @@ function myersWard() {
   wall(-L / 2 - 0.1, Z1 - 0.1, L / 2 + 0.1, Z0 + 0.05);
   const win = std(louvre(), 0.8);
   for (let k = 0; k < 12; k++) { const x = -L / 2 + 1.5 + k * 3; for (const fy of [F1, F2]) { if ((k === 5 || k === 6) && fy === F1) continue; box(1.0, 1.5, 0.05, win, x, fy + 1.55, Z0 + 0.03, g); box(1.0, 1.5, 0.05, win, x, fy + 1.55, Z1 - 0.03, g); } }
-  for (const fy of [F1, F2]) door(g, { w: 1.74, h: 2.3, kind: 'panel', leaves: 2 }, 0, fy, Z0, 0);   /* a pair of panelled doors onto each floor of the veranda */
+  for (const fy of [F1, F2]) door(g, 'jalousie', { w: 1.7, h: 2.3 }, 0, fy, Z0, 0);   /* a pair of louvred timber doors onto each floor of the veranda */
   for (const sx of [-1, 1]) for (const fy of [F1, F2]) for (const zz of [Z0 - 2.4, Z1 + 2.4]) box(0.05, 1.5, 1.0, win, sx * (L / 2 + 0.025), fy + 1.55, zz, g);
   /* the veranda: a raised floor, posts up to the roof, an upper floor and see-through balustrades */
   box(L, F1, Z0 - VZ, std(T.plank([150, 120, 90], 6, [L / 1.2, 2], true)), 0, F1 / 2, (Z0 + VZ) / 2, g);
@@ -111,7 +110,7 @@ function mensWard() {
   /* the gabled porch: two storeys, standing out from the front at the left */
   const PX = -6.5, PW = 6, PD = 2.2;
   box(PW, H1 + H2, PD, lime(1.5, 1.5), PX, (H1 + H2) / 2, D / 2 + PD / 2, g);
-  box(1.6, 2.6, 0.04, arch, PX, 1.3, D / 2 + PD + 0.025, g); door(g, { w: 1.2, h: 2.2, kind: 'panel' }, PX + 1.2, H1, D / 2 + PD, 0); box(1.0, 1.4, 0.05, win, PX - 1.4, H1 + 1.6, D / 2 + PD + 0.03, g);
+  box(1.6, 2.6, 0.04, arch, PX, 1.3, D / 2 + PD + 0.025, g); door(g, 'panel', { w: 1.0, h: 2.2, color: 0x2e5a40 }, PX + 1.2, H1, D / 2 + PD, 0); box(1.0, 1.4, 0.05, win, PX - 1.4, H1 + 1.6, D / 2 + PD + 0.03, g);
   const ped = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-PW / 2 - 0.3, 0), new THREE.Vector2(PW / 2 + 0.3, 0), new THREE.Vector2(0, 1.7)])), solid(0xf0ece2, 0.9, 0, DS), PX, H1 + H2, D / 2 + PD + 0.01, g);
   box(PW + 0.6, 0.12, PD + 0.6, solid(0xf0ece2, 0.9), PX, H1 + H2 + 0.06, D / 2 + PD / 2, g);
   const pr = hipRoof(PW + 0.8, PD + 2.4, 1.6, zincRoof()); pr.position.set(PX, H1 + H2 + 0.12, D / 2 + PD / 2 - 0.4); g.add(pr); void ped;
@@ -133,7 +132,7 @@ function oneStorey(L, D, { overhang = 2.2, H = 3.2 } = {}) {
   const g = grp(), walls = [], win = std(louvre(), 0.8);
   box(L, H, D, lime(L / 4, 1), 0, H / 2, 0, g);
   const n = Math.max(2, Math.round(L / 3.2));
-  for (let k = 0; k < n; k++) { const x = -L / 2 + (k + 0.5) * L / n; if (k === (n >> 1)) door(g, { w: 1.3, h: 2.3 - (overhang ? 0.12 : 0), kind: 'louvre', leaves: 2, handle: 'lever' }, x, overhang ? 0.12 : 0, D / 2, 0);   /* a pair of louvred doors, to let air through */ else box(1.1, 1.4, 0.05, win, x, 1.8, D / 2 + 0.03, g); box(1.1, 1.4, 0.05, win, x, 1.8, -D / 2 - 0.03, g); }
+  for (let k = 0; k < n; k++) { const x = -L / 2 + (k + 0.5) * L / n; if (k === (n >> 1)) door(g, 'naco', { w: 1.3, h: 2.3 - (overhang ? 0.12 : 0), color: 0x4a6e58 }, x, overhang ? 0.12 : 0, D / 2, 0);   /* a pair of flush doors under a glass-louvre fanlight */ else box(1.1, 1.4, 0.05, win, x, 1.8, D / 2 + 0.03, g); box(1.1, 1.4, 0.05, win, x, 1.8, -D / 2 - 0.03, g); }
   if (overhang) {
     box(L, 0.12, overhang, std(T.concrete([L / 3, 1], [170, 166, 156])), 0, 0.06, D / 2 + overhang / 2, g);
     for (let k = 0; k <= n; k++) box(0.34, H, 0.34, lime(0.2, 1), -L / 2 + 0.17 + k * (L - 0.34) / n, H / 2, D / 2 + overhang - 0.17, g);
@@ -209,7 +208,7 @@ export function buildSlipe(g) {
     box(w + 0.6, 0.08, 2.2, std(T.zinc(ZINC, [w / 2, 1])), x, 3.3, 6.5, g);
     for (const px of [x - w / 2 + 0.2, x + w / 2 - 0.2]) { cyl(0.07, 0.07, 3.3, solid(0x6a5a46), px, 1.65, 5.6, g); wall(px - 0.2, 5.4, px + 0.2, 5.8); }
     box(w * 0.7, 0.6, 0.06, std(T.sign(name, 512, 96, '#f3ecd8', '#3a2a1e', '700 58px Georgia, serif')), x, 3.85, 7.57, g);
-    door(g, { w: 1.4, h: 2.4, kind: 'glazed', leaves: 2, glass: 0x34424c }, x, 0, 7.6, Math.PI);   /* a pair of half-glazed shop doors */
+    door(g, 'shutter', { w: 1.6, h: 2.3 }, x, 0, 7.6, Math.PI);   /* the shop's steel roller shutter, rolled up for the day */
   };
   shop(-38, 9, [214, 196, 160], 'GROCERY'); shop(-26, 8, [222, 214, 196], 'FURNITURE'); shop(-14, 11, [196, 214, 200], 'DRY GOODS'); shop(10, 10, [222, 200, 176], 'HARDWARE');
   shop(27, 9, [200, 206, 226], 'BAR'); shop(40, 7, [226, 210, 190], 'BARBER');
@@ -340,7 +339,7 @@ export function buildWard(g) {
   box(2 * HX, H, 0.12, inside, 0, H / 2, -HZ - 0.06, g); box(2 * HX, H, 0.12, inside, 0, H / 2, HZ + 0.06, g); box(0.12, H, 2 * HZ, inside, -HX - 0.06, H / 2, 0, g); box(0.12, H, 2 * HZ, inside, HX + 0.06, H / 2, 0, g);
   const ceil = plane(2 * HX, 2 * HZ, solid(0xd8ceb4, 1, 0, DS)); ceil.rotation.x = Math.PI / 2; ceil.position.y = H; g.add(ceil);
   for (let x = -12.75; x < 13; x += 3) for (const s of [-1, 1]) { box(1.0, 1.3, 0.03, glow, x, 1.95, s * (HZ - 0.02), g); box(0.44, 1.3, 0.05, win, x - 0.74, 1.95, s * (HZ - 0.03), g); box(0.44, 1.3, 0.05, win, x + 0.74, 1.95, s * (HZ - 0.03), g); }
-  door(g, { w: 1.6, h: 2.3, kind: 'panel', leaves: 2 }, -HX, 0, 0, Math.PI / 2);
+  door(g, 'jalousie', { w: 1.6, h: 2.3 }, -HX, 0, 0, Math.PI / 2);   /* the same louvred pair, seen from inside the ward */
   for (let x = -12; x <= 12; x += 6) { cyl(0.012, 0.012, 0.7, solid(0x2a2a2a), x, H - 0.35, 0, g); mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff0c8 }), x, H - 0.75, 0, g); }
   /* the beds: iron frames, thin mattresses, white sheets. They stand closer than they should: more women than the ward was built for. */
   const iron = solid(0x3a3d40, 0.6, 0.4), sheet = solid(0xf2f0ea, 0.95), blank = [0x8aa0b8, 0xb89a8a, 0x9ab08a, 0xb8a8c8], pillow = solid(0xfaf8f2, 0.9);

@@ -54,7 +54,8 @@ export function buildStation45() {
   const kinds = ['first', 'third', 'third', 'first']; const cars = kinds.map((k, i) => { const c = carriage1845(k); c.position.x = i * 6; train.add(c); return c; });
   train.userData.wheels = [loco, ...cars].flatMap((v) => v.userData.wheels);
   walls.push([-13.5, -4.6, 21, -1.2]);   /* the train is a wall: you stand on the platform side */
-  const shedH = boardHouse(34, 6, 3.4, { wall: [196, 168, 118], roof: [130, 96, 80], porch: false, seed: 6, door: { w: 1.4, h: 2.4, leaves: 2 } }); shedH.position.set(10, 0, 15.2); shedH.rotation.y = PI; g.add(shedH); walls.push([-7.5, 12, 27.5, 18.4]);
+  const shedH = boardHouse(34, 6, 3.4, { wall: [196, 168, 118], roof: [130, 96, 80], porch: false, seed: 6, door: { w: 1.4, h: 2.4, leaves: 2, kind: 'six', color: 0x2f4a3a, metal: 0xb08a40, handle: 'knob' } }); shedH.position.set(10, 0, 15.2); shedH.rotation.y = PI; g.add(shedH); walls.push([-7.5, 12, 27.5, 18.4]);
+  box(1.62, 0.44, 0.04, solid(0xe8e0cc, 0.8), 0, 2.73, 3.02, shedH); box(1.4, 0.3, 0.02, solid(0x24323a, 0.2, 0.3), 0, 2.73, 3.045, shedH); for (const x of [-0.35, 0, 0.35]) box(0.03, 0.3, 0.03, solid(0xe8e0cc, 0.8), x, 2.73, 3.05, shedH);   /* a glazed transom light over the station's Georgian pair of six-panel doors (a stand-in: docs/games/kendal.md) */
   const sg = signBoard('JAMAICA RAILWAY', 6, 0.8, { bg: '#2a3a52', fg: '#f3e6b8', font: '700 62px Georgia, serif' }); sg.position.set(10, 3.6, 11.7); g.add(sg);
   /* bunting between poles along the platform edge, and flags */
   const bt = T.bunting().clone(); bt.needsUpdate = true; bt.repeat.set(3, 1);

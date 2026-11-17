@@ -628,7 +628,7 @@ function home18() {
   horizon(Q, { r: 240, h: 22, colour: 0x9aa4a4, gap: 0, width: 0, low: 1, seed: 12, y: 0 });
   // Iris's terrace house and her neighbours': front walls at z = 2, front gardens to the low wall at z = 7.6
   for (const x of [-10, 10]) {
-    add(Q, S.terraceHouse({ door: x < 0 ? 0x2f3f5a : 0x6a2a2a }), x, 2);
+    add(Q, S.terraceHouse(x < 0 ? { door: 0x2f3f5a } : { upvc: true }), x, 2);   /* by 2018 one neighbour keeps a painted Victorian door, the other has a white uPVC one */
   }
   const br = S.brickMat("yellow", [2.5, 3]),
     trim = solid(0xcfc6b0, 0.9);
@@ -643,7 +643,14 @@ function home18() {
     box(1.15, 1.45, 0.06, trim, x, 4.3, fw + 0.16, Q.group);
     plane(0.95, 1.25, S.SM.glass, x, 4.3, fw + 0.2, Q.group);
   }
-  box(1.0, 2.05, 0.06, solid(0x2f4f6a, 0.6), 2.5 + 0.48, 1.03, fw + 0.45, Q.group).rotation.y = 1.2;
+  // Iris's front door (doors.js): her painted Victorian four-panel door, standing open into the hall, hinged on the east side of the doorway
+  {
+    const leaf = S.DR.terraceLeaf({ w: 0.9, h: 2.0, color: 0x2f4f6a });
+    leaf.position.set(2.96, 0, fw - 0.16);
+    leaf.rotation.y = Math.PI / 2 + 0.06;
+    leaf.children.forEach((c) => (c.position.x += 0.45));
+    Q.group.add(leaf);
+  }
   box(15.2, 0.25, 12, solid(0x4f5354, 0.8), 0, 6.5, -3.7, Q.group);
   box(15, 6.4, 0.3, br, 0, 3.2, -9.75, Q.group);
   for (const x of [-7.65, 7.65]) box(0.3, 6.4, 12, br, x, 3.2, -3.75, Q.group);

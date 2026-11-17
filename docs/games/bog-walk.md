@@ -344,3 +344,14 @@ The yard, the station, Kingston and the ruins had the same face side by side: th
 - The governor's rod ends on the turbine casing (it ran 37 cm into it). The terminal box stands on the generator's copper band. The fence ends beside each gate post.
 - A crate under its tarpaulin is one thing. Sand drifts in the Tube are marked `userData.soft` (new in `engine/audit.js`): sand lies over the pipe's bolts.
 - The old pipe supports in the ruins are saddles now: a low pedestal with a cheek of concrete either side, so a pipe lies in the support and not through it. The broken piece of pipe lies clear of the nearest support.
+
+## Doors (17 November 2026)
+
+The owner: "the doors should fit their purpose, not one shared one". Each door is now built for its building:
+
+- **The turbine house** (`worksDoor` in `places.js`): a pair of ledged and braced works doors of upright boards, green, with long black strap hinges on the outside and the ledges and diagonal braces on the back, swung right back against the brick wall.
+- **The tram depot, Kingston, 1899** (`worksDoor`): a tall pair of the same works doors, glazed in a band of small panes along the top for light, swung open flat to the street.
+- **The Kingston shops** (`boardHouse`): each shop's pair of tall board doors folded right back against its front, the dark shop inside, open for the day.
+- **The superintendent's house**: a four-panel front door, painted green, with a brass knob.
+
+These are general pictures of the kinds of door such buildings had in 1899 to 1904, not copies of the real doors. Work to do: find a photograph of the Bog Walk power house and of the West India Electric Company's depot and match their doors.

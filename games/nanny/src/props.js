@@ -5,7 +5,6 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { cv, grain, rng, T, std, solid, flat, mesh, box, cyl, grp } from './gfx.js';
 import { rockGeo } from './flora.js';
-import { makeDoor } from '../../../engine/door.js';
 
 const PI = Math.PI;
 const memo = {}, once = (k, fn) => memo[k] || (memo[k] = fn());
@@ -54,12 +53,29 @@ export function hut(w = 4, d = 3.2, h = 2.1, seed = 1) {
   const ed = solid(0x5a4a2c, 1); for (const [x, z, lx, lz] of [[0, d / 2 + 0.66, w + 1.36, 0.1], [0, -d / 2 - 0.66, w + 1.36, 0.1], [w / 2 + 0.66, 0, 0.1, d + 1.36], [-w / 2 - 0.66, 0, 0.1, d + 1.36]]) box(lx, 0.2, lz, ed, x, h - 0.04, z, g);   /* the dark ragged edge of the eaves */
   for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { cyl(0.075, 0.09, h + 0.1, PM.woodDark, x * (w / 2 - 0.02), h / 2, z * (d / 2 - 0.02), g, 6); const rf = cyl(0.035, 0.045, 1.5, PM.wood, x * (w / 2 + 0.2), h + 0.2, z * (d / 2 + 0.2), g, 5); rf.rotation.set(z * 0.95, 0, -x * 0.95); }   /* corner posts, and the rafter ends under the eaves */
   box(0.9, 1.66, 0.12, PM.dark, 0, 0.83, d / 2 - 0.02, g);   /* the dark of the doorway behind the door */
-  { /* the door (engine/door.js): upright boards held by two ledges in a hewn frame, no iron, no glass; it stands a little ajar, swung out on its hinge side */
-    const dr = makeDoor({ w: 0.9, h: 1.66, kind: 'plank', handle: 'none', color: 0x7a5a3a, frame: 0x4a3524, rough: 0.95 }); dr.position.set(0, 0, d / 2 + 0.04); g.add(dr);
-    const ajar = 0.25 + r() * 0.55; for (const L of dr.children) if (L.userData.side) L.rotation.y = -L.userData.side * ajar; }
+  for (const sx of [-1, 1]) cyl(0.06, 0.07, 1.8, PM.woodDark, sx * 0.52, 0.9, d / 2 + 0.06, g, 6); { const li = cyl(0.06, 0.065, 1.26, PM.woodDark, 0, 1.76, d / 2 + 0.06, g, 6); li.rotation.z = PI / 2; }   /* a frame of rough poles */
+  const dg = grp(g, -0.45, 0, d / 2 + 0.1); dg.rotation.y = -0.4 - r() * 0.7; hutDoor(seed, dg);   /* the door, standing ajar on its hinge side */
   mesh(rockGeo(seed + 4), PM.stone, 0, 0.02, d / 2 + 0.5, g).scale.set(0.5, 0.08, 0.3);   /* a flat stone at the threshold */
   if (seed % 2) { const sx = seed % 4 === 1 ? 1 : -1; box(0.06, 0.5, 0.56, PM.dark, sx * (w / 2 + 0.005), 1.3, -0.2, g); const sh = box(0.04, 0.5, 0.56, std(TX.planks(), 0.95), sx * (w / 2 + 0.2), 1.52, -0.2, g); sh.rotation.z = sx * 0.9; const st = cyl(0.012, 0.012, 0.42, PM.woodPale, sx * (w / 2 + 0.2), 1.22, -0.2, g, 4); st.rotation.z = -sx * 0.5; }   /* a small window with its shutter propped open */
   lo.rotation.z = (r() - 0.5) * 0.04; g.userData.foot = Math.max(w, d) / 2 + 0.5; return g;
+}
+/* ---------- a hut's door, built for a Maroon house of the 1730s (owner, 17 November 2026: "the doors should fit their purpose"). Nothing here is bought: no iron,
+   no nails, no glass. Two kinds, as the huts differ (docs/games/nanny.md says which is a stand-in):
+     woven: a hurdle of upright sticks with withies woven through them, the way the wattle of the wall is made, only lighter;
+     boards: a few hand-split boards of uneven width and length, lashed with vine to two cross sticks.
+   Either hangs on loops of vine on its hinge side. The leaf lies along +x from its hinge (x = 0), its face toward +z. ---------- */
+const DOORM = new Map(); const dm = (name, c) => { const k = name + c; if (!DOORM.has(k)) { const m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.95 }); m.name = name; DOORM.set(k, m); } return DOORM.get(k); };
+export function hutDoor(seed = 1, g = grp()) {
+  const r = rng(seed * 13 + 5), W = 0.84, H = 1.6, stick = dm('Door', 0x8a6a44), withy = dm('Door', 0x6a5232), vine = dm('DoorMetal', 0x3e4a2a);
+  if (seed % 2) {   /* woven */
+    const n = 8; for (let i = 0; i < n; i++) { const x = 0.05 + i * (W - 0.1) / (n - 1); cyl(0.018, 0.022, H + r() * 0.06, stick, x, H / 2 + 0.02, 0, g, 5); }
+    for (let k = 0, y = 0.12; y < H - 0.05; y += 0.075, k++) for (let i = 0; i < n - 1; i++) { const x = 0.05 + (i + 0.5) * (W - 0.1) / (n - 1); box((W - 0.1) / (n - 1) + 0.02, 0.05, 0.012, withy, x, y, ((i + k) % 2 ? 1 : -1) * 0.018, g); }
+  } else {   /* split boards */
+    let x = 0; while (x < W - 0.06) { const bw = Math.min(W - x, 0.16 + r() * 0.1), bh = H - r() * 0.1; box(bw - 0.012, bh, 0.035, r() < 0.5 ? stick : withy, x + bw / 2, bh / 2 + 0.02, 0, g); x += bw; }
+    for (const y of [0.3, H - 0.25]) { const c = cyl(0.025, 0.025, W + 0.04, withy, W / 2, y, -0.04, g, 5); c.rotation.z = PI / 2; for (const lx of [0.08, W / 2, W - 0.08]) box(0.03, 0.08, 0.1, vine, lx, y, -0.02, g); }   /* the cross sticks behind, lashed */
+  }
+  for (const y of [0.3, H - 0.25]) { const l = mesh(new THREE.TorusGeometry(0.04, 0.012, 4, 8), vine, 0.0, y, 0, g); l.rotation.y = PI / 2; }   /* vine loops on the hinge side */
+  return g;
 }
 /* the same hut as one plain shape, for the many houses seen across the hillside: wall, clay foot, two layers of thatch, door */
 export function hutGeo() {

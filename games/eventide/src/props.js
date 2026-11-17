@@ -2,7 +2,6 @@
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from 'three';
 import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv } from './gfx.js';
-import { makeDoor } from '../../../engine/door.js';
 
 const M = {
   trunk: solid(0x6a4c33, 1), palmTrunk: solid(0x8a7156, 1), wood: solid(0x7a5a3c, 0.95), woodDark: solid(0x3d2d20, 0.95), iron: solid(0x2b2d31, 0.6, 0.3), steel: solid(0x8c8f93, 0.4, 0.6),
@@ -106,7 +105,7 @@ export function boardHouse(w = 5, d = 4, h = 2.8, { wall = [188, 160, 110], roof
   for (const s of [-1, 1]) { const p = box(w + 0.7, 0.08, Ls, std(zt, 0.75), 0, h + rise / 2 + 0.04, s * (d / 4 + 0.2), g); p.rotation.x = s * th; }
   for (const s of [-1, 1]) { const gable = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-d / 2, 0), new THREE.Vector2(d / 2, 0), new THREE.Vector2(0, rise)])), std(wt, 0.9), s * (w / 2 + 0.005), h, 0, g); gable.rotation.y = s * Math.PI / 2; gable.material.side = THREE.DoubleSide; }
   const shut = solid(0x2f6a3f, 0.9); for (const x of [-w * 0.28, w * 0.28]) { box(0.9, 0.9, 0.06, M.woodDark, x, h * 0.62, d / 2 + 0.02, g); box(0.4, 0.8, 0.07, shut, x - 0.62, h * 0.62, d / 2 + 0.04, g); box(0.4, 0.8, 0.07, shut, x + 0.62, h * 0.62, d / 2 + 0.04, g); }
-  { const y0 = porch ? 0.27 : 0, dr = makeDoor({ w: 0.86, h: 2.08 - y0, kind: 'plank', color: 0x5a3a24, frame: 0xe8e0cc, metal: 0x3a3a3a }); dr.position.set(0, y0, d / 2); g.add(dr); }   /* a ledged board door with a latch (engine/door.js), standing on the veranda floor */
+  { const y0 = porch ? 0.27 : 0, dr = evDoor('board', { w: 0.86, h: 2.08 - y0, color: [0x5a3a24, 0x2f5a6a, 0x7a3a2a, 0x4a5a2a][seed % 4] }); dr.position.set(0, y0, d / 2); g.add(dr); }   /* a board door with a hasp, standing on the veranda floor */
   const wf = solid(0xe8e0cc, 0.8); for (const x of [-w * 0.28, w * 0.28]) { box(1.14, 0.06, 0.07, wf, x, h * 0.62 + 0.47, d / 2 + 0.05, g); box(1.14, 0.06, 0.07, wf, x, h * 0.62 - 0.47, d / 2 + 0.05, g); box(1.2, 0.05, 0.14, wf, x, h * 0.62 - 0.52, d / 2 + 0.1, g); for (const s of [-0.54, 0, 0.54]) box(0.05, 0.94, 0.07, wf, x + s, h * 0.62, d / 2 + 0.05, g); }
   for (const [x, z] of [[-w / 2 + 0.2, -d / 2 + 0.2], [w / 2 - 0.2, -d / 2 + 0.2], [-w / 2 + 0.2, d / 2 - 0.2], [w / 2 - 0.2, d / 2 - 0.2], [0, d / 2 - 0.2], [0, -d / 2 + 0.2]]) cyl(0.13, 0.16, 0.3, solid(0x9a968a, 1), x, 0.1, z, g, 8);
   box(w + 0.8, 0.1, 0.2, TM2, 0, h + rise + 0.04, 0, g); box(0.5, 0.16, 0.12, wf, 0, h + 0.5, d / 2 + 0.02, g);
@@ -115,6 +114,63 @@ export function boardHouse(w = 5, d = 4, h = 2.8, { wall = [188, 160, 110], roof
   return g;
 }
 export function shed(w = 6, d = 3, h = 2.6, wall = [150, 120, 84]) { return boardHouse(w, d, h, { wall, porch: true }); }
+
+/* ---------- the doors, each made for its building (owner, 17 November 2026: "the doors should fit their purpose, not one shared one"). Kingston, 1980.
+   evDoor(kind, o): the origin is the middle of the foot of the opening on the wall's face; the door faces +z. o: w, h, color, frame.
+     jalousie  the old wooden Myers Ward: a pair of timber doors, fixed wooden louvres in the top half for air and a raised panel below, as on Jamaican
+               timber buildings of the early 1900s; a small knob and a bolt.
+     panel     the plastered men's ward: one four-panel timber door, painted, in a plain board architrave.
+     naco      the concrete-block wards of the 1960s and 70s: a pair of plain flush doors with a fanlight of glass louvre blades in a metal frame
+               over them (the "Naco" louvre window found on Jamaican block buildings of the time) and a lever handle.
+     shutter   a shop across the road: a ribbed steel roller shutter, rolled up into its box for the day, the dark shop behind it.
+     board     a board house: boards laid upright with V joints, painted, with a hasp and staple and a padlock.
+   Which parts are an impression is in docs/games/eventide.md. ---------- */
+const EVD = new Map(); const edm = (name, c, rough = 0.8, metal = 0) => { const k = name + c + rough + metal; if (!EVD.has(k)) { const m = new THREE.MeshStandardMaterial({ color: c, roughness: rough, metalness: metal }); m.name = name; EVD.set(k, m); } return EVD.get(k); };
+export function evDoor(kind, o = {}) {
+  const g = grp(); g.name = 'Door'; const w = o.w || 0.9, h = o.h || 2.1, c = new THREE.Color(o.color ?? 0x356246);
+  const L1 = edm('Door', c.getHex()), L2 = edm('Door', c.clone().multiplyScalar(0.72).getHex()), SH = edm('Door', c.clone().multiplyScalar(0.4).getHex(), 0.95), FR = edm('DoorFrame', o.frame ?? 0xe8e0cc, 0.85), DK = edm('DoorFrame', 0x141210, 1);
+  const BR = edm('DoorMetal', 0xb08a3a, 0.4, 0.7), ST = edm('DoorMetal', 0x8a8c8e, 0.45, 0.7), B = (bw, bh, bd, m, x, y, z, rx = 0) => { const b = box(bw, bh, bd, m, x, y, z, g); b.rotation.x = rx; return b; };
+  const arch = (fw = 0.1) => { for (const s of [-1, 1]) B(fw, h + fw, 0.04, FR, s * (w / 2 + fw / 2), (h + fw) / 2, 0.02); B(w + 2 * fw + 0.04, fw + 0.02, 0.05, FR, 0, h + fw / 2, 0.025); };   /* a board architrave */
+  if (kind === 'shutter') {   /* steel roller shutter, rolled up */
+    B(w, h, 0.02, DK, 0, h / 2, 0.01); for (const s of [-1, 1]) B(0.07, h, 0.08, ST, s * (w / 2 + 0.035), h / 2, 0.04);   /* the dark shop, the guide channels */
+    const bh = 0.36; B(w + 0.2, bh, 0.3, edm('DoorMetal', 0x6e7276, 0.5, 0.6), 0, h + bh / 2, 0.15);   /* the box the shutter rolls into */
+    for (let k = 0; k < 5; k++) B(w, 0.075, 0.03, k % 2 ? ST : edm('DoorMetal', 0x7a7c7e, 0.5, 0.6), 0, h - 0.04 - k * 0.075, 0.04);   /* the last few ribs hanging below it */
+    B(w, 0.05, 0.04, edm('DoorMetal', 0x55585a, 0.5, 0.6), 0, h - 0.4, 0.045); for (const s of [-0.3, 0.3]) B(0.08, 0.03, 0.05, ST, s * w, h - 0.44, 0.05);   /* the bottom bar and its handles */
+    B(w + 0.14, 0.04, 0.2, edm('DoorFrame', 0xa8a49a, 0.95), 0, 0.02, 0.1); return g;
+  }
+  if (kind === 'board') {
+    arch(0.09); const n = Math.round(w / 0.11), bw = w / n;
+    B(w, h - 0.02, 0.02, SH, 0, h / 2, 0.01); for (let i = 0; i < n; i++) B(bw - 0.01, h - 0.03, 0.03, i % 2 ? L1 : L2, -w / 2 + (i + 0.5) * bw, h / 2, 0.025);
+    for (const y of [0.25, h - 0.3]) B(0.012, 0.09, 0.008, SH, -w / 2 + 0.02, y, 0.042);   /* butt hinges, barely seen */
+    B(0.2, 0.035, 0.01, ST, w / 2 - 0.12, 1.0, 0.045); B(0.04, 0.05, 0.03, ST, w / 2 - 0.02, 1.0, 0.055);   /* hasp and staple */
+    B(0.05, 0.06, 0.02, BR, w / 2 - 0.02, 0.95, 0.075); return g;   /* a padlock */
+  }
+  if (kind === 'naco') {
+    arch(0.08); const th = Math.min(0.32, h * 0.15), lh = h - th - 0.04, tY = lh + 0.04;
+    B(w, 0.04, 0.05, FR, 0, lh + 0.02, 0.03);   /* the transom bar */
+    B(w - 0.04, th - 0.02, 0.01, DK, 0, tY + th / 2, 0.01); const AL = edm('DoorMetal', 0xb4b8bc, 0.35, 0.8), GL = edm('DoorGlass', 0x8aa0a6, 0.12, 0.3);
+    for (const s of [-1, 1]) B(0.025, th, 0.03, AL, s * (w / 2 - 0.0125), tY + th / 2, 0.025);
+    for (let y = tY + 0.05; y < tY + th - 0.02; y += 0.075) B(w - 0.06, 0.07, 0.006, GL, 0, y, 0.03, -0.45);   /* glass blades, tilted open */
+    for (let i = 0; i < 2; i++) { const s = i ? -1 : 1, lw = w / 2, cx = -s * w / 4; B(lw - 0.008, lh - 0.02, 0.04, L1, cx, lh / 2 + 0.01, 0.022); B(lw - 0.05, lh - 0.06, 0.003, L2, cx, lh / 2 + 0.01, 0.043);   /* flush leaf, a thin lipping line round it */
+      B(0.1, 0.018, 0.018, ST, cx + s * (lw / 2 - 0.12), 1.0, 0.06); B(0.03, 0.12, 0.008, ST, cx + s * (lw / 2 - 0.08), 1.0, 0.046); }   /* lever handles */
+    B(w + 0.1, 0.03, 0.12, edm('DoorFrame', 0xb8b4aa, 0.95), 0, 0.015, 0.06); return g;
+  }
+  /* jalousie (a pair) or panel (one) */
+  arch(kind === 'panel' ? 0.11 : 0.12); const n = kind === 'jalousie' ? 2 : 1, lw = w / n, rail = 0.1;
+  for (let i = 0; i < n; i++) {
+    const s = i ? -1 : 1, cx = n === 2 ? -s * w / 4 : 0; B(lw - 0.008, h - 0.02, 0.045, L1, cx, h / 2 + 0.01, 0.023);
+    const field = (y0, y1) => { B(lw - 2 * rail, y1 - y0, 0.006, SH, cx, (y0 + y1) / 2, 0.047); B(lw - 2 * rail - 0.05, y1 - y0 - 0.05, 0.012, L2, cx, (y0 + y1) / 2, 0.052); B(lw - 2 * rail - 0.12, y1 - y0 - 0.12, 0.01, L1, cx, (y0 + y1) / 2, 0.058); };
+    if (kind === 'jalousie') {
+      field(0.12, h * 0.4); const y0 = h * 0.46, y1 = h - rail; B(lw - 2 * rail, y1 - y0, 0.01, SH, cx, (y0 + y1) / 2, 0.02);
+      for (let y = y0 + 0.04; y < y1 - 0.02; y += 0.065) B(lw - 2 * rail, 0.06, 0.012, L2, cx, y, 0.04, -0.7);   /* fixed slats, sloped to shed rain */
+    } else { const pw = (lw - 3 * rail) / 2; for (const [a, b] of [[0.12, h * 0.42], [h * 0.48, h - rail]]) for (const k of [-1, 1]) { B(pw, b - a, 0.006, SH, cx + k * (pw / 2 + rail / 2), (a + b) / 2, 0.047); B(pw - 0.05, b - a - 0.05, 0.014, L2, cx + k * (pw / 2 + rail / 2), (a + b) / 2, 0.053); } }
+    if (i === 0) { const k = mesh(new THREE.SphereGeometry(0.028, 10, 8), BR, cx + s * (lw / 2 - 0.08), 1.0, 0.08, g); B(0.045, 0.1, 0.006, BR, cx + s * (lw / 2 - 0.08), 1.0, 0.048); B(0.012, 0.012, 0.035, BR, cx + s * (lw / 2 - 0.08), 1.0, 0.063); void k; }   /* a brass knob */
+    else B(0.02, 0.3, 0.015, ST, cx - s * (lw / 2 - 0.05), h - 0.35, 0.055);   /* a bolt on the other leaf */
+    for (const y of [0.25, h - 0.3]) B(0.012, 0.1, 0.008, SH, cx - s * (lw / 2 - 0.006), y, 0.048);
+  }
+  B(w + 0.12, 0.03, 0.12, edm('DoorFrame', 0xa8a49a, 0.95), 0, 0.015, 0.06);   /* the sill */
+  return g;
+}
 
 /* ---------- small things ---------- */
 export function crate(s = 0.6, c = 0x8a6a42) { return box(s, s * 0.8, s, solid(c, 0.95), 0, s * 0.4, 0, grp()); }

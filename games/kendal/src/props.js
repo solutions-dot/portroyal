@@ -108,14 +108,29 @@ export function boardHouse(w = 5, d = 4, h = 2.8, { wall = [188, 160, 110], roof
   for (const s of [-1, 1]) { const gable = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-d / 2, 0), new THREE.Vector2(d / 2, 0), new THREE.Vector2(0, rise)])), std(wt, 0.9), s * (w / 2 + 0.005), h, 0, g); gable.rotation.y = s * Math.PI / 2; gable.material.side = THREE.DoubleSide; }
   const shut = solid(0x2f6a3f, 0.9); for (const x of [-w * 0.28, w * 0.28]) { box(0.9, 0.9, 0.06, M.woodDark, x, h * 0.62, d / 2 + 0.02, g); box(0.4, 0.8, 0.07, shut, x - 0.62, h * 0.62, d / 2 + 0.04, g); box(0.4, 0.8, 0.07, shut, x + 0.62, h * 0.62, d / 2 + 0.04, g); }
   const wf = solid(0xe8e0cc, 0.8); for (const x of [-w * 0.28, w * 0.28]) { box(1.14, 0.06, 0.07, wf, x, h * 0.62 + 0.47, d / 2 + 0.05, g); box(1.14, 0.06, 0.07, wf, x, h * 0.62 - 0.47, d / 2 + 0.05, g); box(1.2, 0.05, 0.14, wf, x, h * 0.62 - 0.52, d / 2 + 0.1, g); for (const s of [-0.54, 0, 0.54]) box(0.05, 0.94, 0.07, wf, x + s, h * 0.62, d / 2 + 0.05, g); }
-  { const dr = makeDoor({ w: 0.9, h: 1.95, kind: 'panel', color: 0x5a3a24, frame: 0xe8e0cc, ...door }); dr.position.set(0, porch ? 0.27 : 0, d / 2); g.add(dr); }   /* a panelled timber door, its foot on the veranda boards (0.27 m up); it was a flat brown board (owner, 17 November 2026) */
+  if (door) { const dr = makeDoor({ w: 0.9, h: 1.95, kind: ['plank', 'panel', 'plank'][seed % 3], color: [0x5a3a24, 0x2f5a6a, 0x3a6a46, 0x7a3a2a][seed % 4], frame: 0xe8e0cc, ...door }); dr.position.set(0, porch ? 0.27 : 0, d / 2); g.add(dr); }   /* a country board house's own door: most were ledged boards, some panelled, painted blue, green or red-brown, set in a white frame, its foot on the veranda boards (0.27 m up). It was a flat brown board (owner, 17 November 2026). door: false leaves the wall for a door of another kind */
   for (const [x, z] of [[-w / 2 + 0.2, -d / 2 + 0.2], [w / 2 - 0.2, -d / 2 + 0.2], [-w / 2 + 0.2, d / 2 - 0.2], [w / 2 - 0.2, d / 2 - 0.2], [0, d / 2 - 0.2], [0, -d / 2 + 0.2]]) cyl(0.13, 0.16, 0.3, solid(0x9a968a, 1), x, 0.1, z, g, 8);
   box(w + 0.8, 0.1, 0.2, TM2, 0, h + rise + 0.04, 0, g); box(0.5, 0.16, 0.12, wf, 0, h + 0.5, d / 2 + 0.02, g);
   if (porch) { box(1.5, 0.18, 0.5, M.woodDark, 0, 0.09, d / 2 + 1.85, g); box(1.2, 0.18, 0.4, M.woodDark, 0, 0.24, d / 2 + 1.6, g); for (let x = -w / 2 + 0.2; x < w / 2; x += 0.28) box(0.04, 0.22, 0.04, wf, x, 2.44, d / 2 + 1.5, g); }
   if (porch) { box(w + 0.4, 0.14, 1.6, M.woodDark, 0, 0.2, d / 2 + 0.8, g); for (const x of [-w / 2, 0, w / 2]) box(0.12, 2.4, 0.12, M.wood, x, 1.4, d / 2 + 1.5, g); const pz = box(w + 0.6, 0.06, 1.9, std(zt, 0.75), 0, 2.65, d / 2 + 0.9, g); pz.rotation.x = 0.12; }
   return g;
 }
-export function shed(w = 6, d = 3, h = 2.6, wall = [150, 120, 84], door = { kind: 'louvre' }) { return boardHouse(w, d, h, { wall, porch: true, door }); }   /* a small station or store: a louvred (jalousie) door, to let the air through */
+export function shed(w = 6, d = 3, h = 2.6, wall = [150, 120, 84]) { const g = boardHouse(w, d, h, { wall, porch: true, door: false }); const s = slidingDoor(1.8, 2.3, 0x6a4a2e); s.position.set(0, 0.27, d / 2); g.add(s); return g; }   /* a country station's goods shed: a wide sliding door of boards */
+/* a goods-shed sliding door, as railway goods sheds and banana sheds had: one wide leaf of upright boards, ledged and braced, hung from wheels on an iron
+   track above the opening, slid half open so the dark shed shows behind. The origin is the middle of the foot of the opening on the wall face; it faces +z. */
+export function slidingDoor(w = 1.8, h = 2.3, color = 0x6a4a2e, open = 0.42) {
+  const g = grp(), dark = solid(0x16120e, 1), lf = solid(color, 0.9), lf2 = solid(new THREE.Color(color).multiplyScalar(0.7).getHex(), 0.9), iron = M.iron;
+  box(w, h, 0.01, dark, 0, h / 2, 0.005, g);   /* the dark inside of the shed, seen through the opening */
+  box(0.1, h + 0.1, 0.06, M.white, -w / 2 - 0.05, (h + 0.1) / 2, 0.03, g); box(0.1, h + 0.1, 0.06, M.white, w / 2 + 0.05, (h + 0.1) / 2, 0.03, g); box(w + 0.2, 0.1, 0.06, M.white, 0, h + 0.05, 0.03, g);   /* the white-painted frame */
+  const lw = w + 0.1, L = grp(g, open * w, 0, 0.11); const n = Math.round(lw / 0.15);
+  for (let i = 0; i < n; i++) box(lw / n - 0.01, h, 0.03, i % 2 ? lf : lf2, -lw / 2 + (i + 0.5) * lw / n, h / 2 + 0.02, 0, L);   /* upright boards */
+  for (const y of [0.25, h / 2, h - 0.2]) box(lw - 0.04, 0.12, 0.03, lf2, 0, y, 0.03, L);   /* ledges */
+  for (const [y0, y1] of [[0.25, h / 2], [h / 2, h - 0.2]]) { const len = Math.hypot(lw - 0.2, y1 - y0), b = box(len, 0.1, 0.025, lf2, 0, (y0 + y1) / 2, 0.03, L); b.rotation.z = Math.atan2(y1 - y0, lw - 0.2); }   /* braces */
+  box(0.04, 0.24, 0.03, iron, -lw / 2 + 0.12, 1.05, 0.05, L); box(0.18, 0.025, 0.025, iron, -lw / 2 + 0.12, 1.2, 0.06, L);   /* a pull handle */
+  box(w * 2.2, 0.06, 0.05, iron, w * 0.5, h + 0.2, 0.13, g); for (const x of [-lw / 2 + 0.15, lw / 2 - 0.15]) { cyl(0.05, 0.05, 0.03, iron, x, h + 0.14, 0.1, L, 10).rotation.x = Math.PI / 2; box(0.03, 0.16, 0.02, iron, x, h + 0.04, 0.1, L); }   /* the track, and the hanger wheels */
+  for (const x of [-w / 2 - 0.2, w * 1.55]) box(0.06, 0.2, 0.08, iron, x, h + 0.16, 0.06, g);   /* track brackets */
+  return g;
+}
 
 /* ---------- small things ---------- */
 /* skin(): a smooth skin over a row of rings, for bodies, legs, necks and handles. Each ring is [x, y, z, w, h, colour, colour underneath]:

@@ -172,3 +172,12 @@ What this pass checked and changed (branch `claude/kendal-par`):
 ## Look-alikes (17 November 2026)
 
 No two people with one face stand or walk side by side (`docs/PEOPLE.md`, section 5b). `ensurePlace` in `main.js` calls `spreadBodies` (`engine/faces.js`) after `lifeFor`, so each background person's whole walk is counted, not only where they start. Three fallbacks when a body's three faces run out: a girl becomes the smaller girl's body (`girl` and `girl_small` wear the same pieces), a wanderer or someone on an errand stays and watches instead (`settle` in `life.js`), and children chase only the nearest child within 12 m (a chaser used to cross the whole platform after a far partner and meet every child on the way). `?test=audit` now also runs the look-alike check on the story people and extras of every place (`placeFaces`). `?test=ambient`: 4 look-alike lines before (8 with the check counting the nearest two people came in the whole run), 0 now. `?test=audit`: 0. `?faces=woman57` on any dev URL prints who got which face and the box each one stays in.
+
+## Doors (17 November 2026)
+
+The owner: "the doors should fit their purpose, not one shared one". The flat boards on the buildings were replaced, each by the door of its own kind of building:
+
+- **Country board houses** (`boardHouse` in `props.js`, used for the houses along the road, the villages and the beach cabin): a door in a white frame, its foot on the veranda boards, most of ledged boards and some panelled, painted blue, green, red-brown or brown (the house's seed picks). After the board houses of rural Jamaica; a general picture.
+- **Hill station goods shed** (`shed` and `slidingDoor` in `props.js`): a wide sliding door of upright boards, ledged and braced, hung from wheels on an iron track and slid half open, the dark shed behind. Goods and banana sheds on the railway had sliding or ledged board doors; this one is a general picture.
+- **The 1845 station** (`places1.js`): a Georgian pair of six-panel doors, painted green, with a glazed transom light. **Stand-in:** no picture of the 1845 Kingston station building's doors has been found yet.
+- **Kingston station, 1957** (`places2.js`): in each arch a pair of half-glazed timber doors, a glass fanlight and a moulded arch. **Stand-in:** modelled on the arched openings already in the scene, not on a photograph of the station's doors. Work to do: find a photograph of Kingston Railway Station of the 1950s and match its doors.

@@ -194,3 +194,16 @@ Also: the name and talk button over a person now stay below the goal's words (th
 ## The way out waits (17 November 2026)
 
 "Go back to the street" came up the moment you stepped into the tavern, because you arrive at the door. It and "Go out to the wharf" are marked `exit: true` and use the engine's `exitReady` (`docs/ENGINE.md`): the button appears once you have walked into the room, or after 7 seconds. The head-turn guard is the engine's `lookBegin` and `lookEnd` now.
+
+## Doors (17 November 2026)
+
+The owner: "this doesn't look like a door", then "the doors should fit their purpose, not one shared one". Every door made in code is now `prDoor` in `main.js`, set for its building. It follows English joinery of the later 1600s: an outer door of upright boards on ledges and braces, hung on long iron strap hinges, or, for a better building, a panelled door (stiles and rails round a low panel, a short frieze panel and a tall top panel). No photograph or plan of these particular Port Royal doors survives, so each is a reasonable stand-in for its kind, not a copy of a known door.
+
+| Building | Door | Why |
+|---|---|---|
+| The Marshalsea (prison), new street | one leaf of boards and braces, rows of nail heads, a barred spy-hole, a box lock, an iron ring | a lock-up door of the time was made to be hard to break |
+| The synagogue, new street | a pair of panelled doors on the step, ring handles | a public building in brick, the better kind of door |
+| The powder magazine in Fort Charles | boards and braces with copper fittings and a box lock, no ring | magazines used copper fittings so nothing could strike a spark |
+| St Peter's Church, churchyard | a pair of boarded doors under a boarded arch head, long scrolled strap hinges, rings | the church of 1725; its real west door has not been checked against a photograph (work to do) |
+
+The town houses (the packed `h1` to `h6`, `tools/blender/street.py`) already have their own modelled doors (cut into the wall, frame, strap hinges, latch, step) and were not changed. The tavern's street door (inside) and the warehouse's wharf doors were already boarded with straps and were not changed. The two open gate leaves of Fort Charles are still plain boards: work to do.

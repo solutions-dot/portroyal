@@ -2,7 +2,7 @@ import { loftSkin as skin } from "../../../engine/loft.js";
 /* games/kendal/src/props.js: plants, hills, houses, animals and the many small things that fill a scene.
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from "three";
-import { makeDoor } from "../../../engine/door.js";
+import { yardBoardDoor } from "./doors.js";
 import {
   T,
   std,
@@ -468,8 +468,8 @@ export function boardHouse(
     box(0.4, 0.8, 0.07, shut, x - 0.62, h * 0.62, d / 2 + 0.04, g);
     box(0.4, 0.8, 0.07, shut, x + 0.62, h * 0.62, d / 2 + 0.04, g);
   }
-  // the front door (engine/door.js): a framed board door with a latch, on the veranda floor
-  const door = makeDoor({ w: 0.9, h: 1.95, kind: "plank", color: 0x5a3c26, frame: 0xe8e0cc });
+  // the front door (doors.js): painted boards, a padlocked hasp, on the veranda floor
+  const door = yardBoardDoor({ color: [0x4f6e4e, 0x6a4a34, 0x4a5e70][Math.abs(seed) % 3] });
   door.position.set(0, porch ? 0.27 : 0, d / 2);
   g.add(door);
   const wf = solid(0xe8e0cc, 0.8);

@@ -350,3 +350,17 @@ Chapter 5 now takes you onto the ship (owner: "a new dimension"). The step that 
 - The deck aft of the second boat is roped off. A seaman works at a bucket (a background person with no words).
 
 **Checks**: `?test=audit` and `?test=ambient` include `deck` (0 and 0), held 0, phone layout 0, `?auto=6` ends ALLDONE, `npm test` 232 pass. Dev: `FIRST.deck`, `BUSY.deck`, `RESET.deck` and `ENSURE.deck` put the checks on the deck.
+
+## Doors (17 November 2026)
+
+The owner: "the doors should fit their purpose, not one shared one". Each building now has its own door, built from `makeDoor` (`engine/door.js`) with the kind, size, leaves and colour of that building, plus the pieces the building needs around it:
+
+- **Kingston print shop, 1908 (chapter 1).** A pair of tall jalousie (louvred) shop doors, painted green, folded back against the inside of the front wall by day (`roomDoors`). Jalousie doors and shutters are the usual Kingston shop front of the time; the colour is a general choice.
+- **Kingston hall, 1914 (chapter 2).** A Georgian pair of six-panel doors, varnished, folded back.
+- **Harlem street, 1916 (chapter 3).** Each row house has its own entrance: stone pilasters and a hood, a glass transom light, a pair of heavy timber doors (raised panels, or glass in the upper half) in one of three dark colours, brass knobs, and iron railings down a three-step stoop (the stoop used to run back into the house, its top step floating). After the brownstones and brick row houses of the Mount Morris Park and Strivers' Row districts. Real Harlem stoops are taller (six to ten steps); ours are short because the houses stand on the pavement edge.
+- **Harlem print room, 1918 (chapter 4).** A New York shop front's pair of glazed doors, dark painted, with brass push bars.
+- **The Yarmouth (chapter 5).** Each low deckhouse has a varnished teak door in a teak frame over a raised sill (the coaming), with a brass knob, as ships' deckhouse doors were. They were painted pictures on a flat card.
+- **Liberty Hall, 1920 (chapter 6).** A plain pair of painted panelled doors. **Stand-in:** no clear photograph of Liberty Hall's own doors was found. Work to do: find one (the Schomburg Center's photographs of the hall) and model the doors on it.
+- **Amy Jacques Garvey's office, 1925 (chapter 7).** Oak doors with frosted (obscure) glass, as 1920s offices had. A general picture, not a copy of the real office.
+
+The doorways of the rooms stay open: the leaves fold right back so you still look out through them.
