@@ -133,3 +133,7 @@ The storm levels (`SB_GROAN`, `SB_LIGHT`, `SB_PEAK`) live in `main.js` and the t
 ## Look-alikes (17 November 2026)
 
 `?test=audit` now runs the look-alike check (`placeFaces`, `engine/faces.js`) in every place: 3 lines before (two workmen in the 1951 yard, Simone beside a helper on her own body in the hall, two elder women after the storm), 0 now. `ensurePlace` in `main.js` calls `spreadBodies`, which gives each background person one of the body's three faces (the light copies were already in `site/models`). The other 17 lines of `?test=audit` are scenery that overlaps, from before this change.
+
+## Audit 0 (17 November 2026)
+
+`?test=audit` went from 17 lines to 0, held 0. Scattered stones keep apart and stay out of the houses along the far side and away from the post. In Kingston 1988 the third hibiscus stands beside the drive, and the drive stops at the front of the house. The cut logs that take the fallen mango's place are marked `userData.soft`, so the audit does not compare them with the tree they replace.

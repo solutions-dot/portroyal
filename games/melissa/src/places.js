@@ -29,7 +29,7 @@ function village({ id, year, phase }) {
   lane(g, -70, 70, 0, 5.2, old ? 'dirt' : 'tar');
   if (after) { blotches(g, [-46, -13, 52, 13], 46, { seed: 3, colors: [0x6a5a3a, 0x7a6a44, 0x5a4a30, 0x6a6040] }); for (const [x, z, s] of [[-18, 0.6, 3], [22, -1.2, 2.6], [36, 1.4, 3.2], [-34, -0.4, 2.4]]) { const m = mesh(new THREE.CircleGeometry(s * 0.6, 16), solid(0x6a5036, 0.4, 0, { transparent: true, opacity: 0.8 }), x, 0.03, z, g); m.rotation.x = -PI / 2; m.scale.y = 0.55; } }
   else { grassField(g, [-46, -13, 52, 13], 1600, { seed: 2, clear: [[-70, -2.8, 70, 2.8], [-29.8, -11, -22, -4.5], [13, -11, 19, -4.5], [-6.8, 4.8, -1.2, 10.7]], h: today ? 0.35 : 0.6 }); flowerField(g, [-44, -12, 50, 12], today ? 120 : 220, { seed: 5, clear: [[-70, -2.8, 70, 2.8]] }); }
-  rockField(g, [-46, -13, 52, 13], 22, { seed: 6, clear: [[-70, -2.4, 70, 2.4]], size: 0.3 });
+  rockField(g, [-46, -13, 52, 13], 22, { seed: 6, clear: [[-70, -2.4, 70, 2.4], [34, -12, 54, -6], [24.8, -4.8, 27.2, -2.6]], size: 0.3 });   /* no stones in the road, in the houses along the far side or at the post (the audit found stones inside them) */
   { const hr = hillRing(150, 16, 52, { seed: 4, base: after ? [0.27, 0.34, 0.2] : [0.2, 0.42, 0.22] }); if (y51) hr.children.filter((c) => c.position.z > -20).forEach((c) => hr.remove(c)); g.add(hr); }
   if (y51) {   /* the sea to the south: a strip of sand, then water */
     const sand = mesh(new THREE.PlaneGeometry(160, 5.5), std(T.sand([32, 1]), 1), 3, 0.015, 14.6, g); sand.rotation.x = -PI / 2;
@@ -63,7 +63,7 @@ function village({ id, year, phase }) {
 
   /* ---- trees and plants ---- */
   const mango = after ? fallenTree({ len: 8.5, seed: 4 }) : mangoTree(6.6, 3);
-  if (after) { mango.rotation.y = PI / 2; mango.position.set(SPOT.mango[0], 0, SPOT.mango[1] + 1.0); mango.userData.noBatch = true; g.add(mango); wall(-13.2, -5.3, -10.8, 4.4); g.userData.fallen = mango; g.userData.treeWall = walls[walls.length - 1]; const lg = cutLogs({ seed: 3 }); lg.position.set(-12, 0, 4.6); lg.visible = false; lg.userData.noBatch = true; g.add(lg); g.userData.logs = lg; }
+  if (after) { mango.rotation.y = PI / 2; mango.position.set(SPOT.mango[0], 0, SPOT.mango[1] + 1.0); mango.userData.noBatch = true; g.add(mango); wall(-13.2, -5.3, -10.8, 4.4); g.userData.fallen = mango; g.userData.treeWall = walls[walls.length - 1]; const lg = cutLogs({ seed: 3 }); lg.position.set(-12, 0, 4.6); lg.visible = false; lg.userData.noBatch = true; lg.userData.soft = true;   /* the logs take the fallen tree's place: the two are never seen together (engine/audit.js) */ g.add(lg); g.userData.logs = lg; }
   else { sw(put(mango, SPOT.mango[0], SPOT.mango[1] - 3.2), swayAmp); trunk(SPOT.mango[0], SPOT.mango[1] - 3.2, 0.5); }
   if (today && !after) { const st = stump(); put(st, -12, -0.5); }
   const veg = [[-34, -9, 'palm'], [-33, 9, 'palm'], [8, -9, 'tree'], [22, 10, 'palm'], [-14, 10, 'tree'], [26, -9, 'palm'], [-40, 4, 'tree'], [35, -4.8, 'palm'], [47, 7, 'palm'], [2, 11, 'banana'], [3, -9, 'banana'], [-18, -9, 'banana'], [-20, 8, 'banana'], [11, 10, 'banana'], [-37, -8.5, 'banana'], [-38, -6.5, 'banana'], [34, -9, 'banana'], [49, -2, 'tree']];
@@ -229,7 +229,7 @@ export function buildKingston88() {
   g.add(hillRing(160, 16, 60, { seed: 7, base: [0.2, 0.42, 0.22] }));
   /* ---- uptown ---- */
   const lawn = mesh(new THREE.PlaneGeometry(33, 15), std(T.grass([14, 6], [112, 150, 70]), 1), -14, 0.03, -12.3, g); lawn.rotation.x = -PI / 2;
-  const drive = box(4.2, 0.05, 7.4, std(T.concrete([2, 3]), 0.95), -14, 0.03, -8.3, g);
+  const drive = box(4.2, 0.05, 6.0, std(T.concrete([2, 3]), 0.95), -14, 0.03, -7.6, g);   /* the drive stops at the front of the house (it ran 1.3 m under it) */
   const WL = std(T.plaster([240, 236, 224], [1, 1]), 0.9);
   for (const [cx, w] of [[-24.4, 13.4], [-3.6, 13.4]]) { box(w, 2.3, 0.35, WL, cx, 1.15, -4.6, g); wall(cx - w / 2, -4.8, cx + w / 2, -4.4); }
   for (const x of [-17.5, -10.5]) { box(0.75, 2.9, 0.75, WL, x, 1.45, -4.6, g); box(0.95, 0.12, 0.95, WL, x, 2.95, -4.6, g); }
@@ -237,7 +237,7 @@ export function buildKingston88() {
   const villa = house({ w: 12, d: 7, h: 3.4, style: 'block', wall: [244, 236, 214], roofRgb: [176, 84, 64], roof: 'on', shutters: 'open', seed: 21, shutCol: 0x2a5a8a }); put(villa, -14, -14.2); wall(-20.2, -17.9, -7.8, -10.3);
   const cr = car(); cr.userData.noBatch = false; put(cr, -9.3, -7.0, 0.25); wall(-11.8, -8.3, -6.8, -5.7);
   for (const [x, z, s] of [[-27, -9, 1], [-27.5, -16, 2], [-1.5, -10, 3], [-1, -16.5, 4]]) { const o = palm(6.5 + s * 0.3, s); o.userData.noBatch = true; swayable(o, 0.02); put(o, x, z); wall(x - 0.4, z - 0.4, x + 0.4, z + 0.4); }
-  for (const [x, z, s] of [[-22.5, -7.2, 1], [-5.8, -8.2, 2], [-14, -9.4, 3]]) put(hibiscus(s), x, z);
+  for (const [x, z, s] of [[-22.5, -7.2, 1], [-5.8, -8.2, 2], [-17.2, -9.6, 3]]) put(hibiscus(s), x, z);   /* the third bush stands beside the drive, not on it */
   const dish = bigDish(); dish.userData.noBatch = true; put(dish, -24.5, -10.2, 0); wall(-25.5, -11.2, -23.5, -9.2); g.userData.dish = dish;   /* the one dish */
   /* ---- downtown ---- */
   g.add(Object.assign(zincFence(-34, 4.6, 30, 4.6, 1.9, 5), {}));

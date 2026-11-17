@@ -26,8 +26,8 @@ export function flowerField(parent, area, n, { seed = 2, clear = [], colors = [0
 /* stones and boulders: lumpy rocks of a few greys */
 let _rock;
 export function rockField(parent, area, n, { seed = 3, clear = [], size = 0.5, tone = 0x8a867a, y = 0 } = {}) {
-  _rock = _rock || new THREE.DodecahedronGeometry(1, 0); const r = rng(seed), im = new THREE.InstancedMesh(_rock, new THREE.MeshStandardMaterial({ roughness: 1, flatShading: true }), n); let k = 0, tries = 0;
-  while (k < n && tries++ < n * 6) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]); if (inClear(x, z, clear)) continue; const sc = size * (0.3 + r() * r() * 1.6); M4.compose(V.set(x, y + sc * 0.35, z), Q.setFromEuler(E.set(r() * 3, r() * 6, r() * 3)), S.set(sc * (1 + r() * 0.6), sc * (0.5 + r() * 0.4), sc * (1 + r() * 0.5))); im.setMatrixAt(k, M4); im.setColorAt(k, C.set(tone).offsetHSL(0, 0, (r() - 0.5) * 0.18)); k++; }
+  _rock = _rock || new THREE.DodecahedronGeometry(1, 0); const r = rng(seed), im = new THREE.InstancedMesh(_rock, new THREE.MeshStandardMaterial({ roughness: 1, flatShading: true }), n); let k = 0, tries = 0; const put = [];
+  while (k < n && tries++ < n * 6) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]); if (inClear(x, z, clear)) continue; const sc = size * (0.3 + r() * r() * 1.6); if (put.some((q) => Math.hypot(q[0] - x, q[1] - z) < (q[2] + sc) * 1.75)) continue; put.push([x, z, sc]);   /* stones lie apart */ M4.compose(V.set(x, y + sc * 0.35, z), Q.setFromEuler(E.set(r() * 3, r() * 6, r() * 3)), S.set(sc * (1 + r() * 0.6), sc * (0.5 + r() * 0.4), sc * (1 + r() * 0.5))); im.setMatrixAt(k, M4); im.setColorAt(k, C.set(tone).offsetHSL(0, 0, (r() - 0.5) * 0.18)); k++; }
   im.count = k; im.userData.noBatch = true; im.frustumCulled = false; parent.add(im); return im;
 }
 /* big soft patches of lighter and darker ground, to break up the repeating texture */
