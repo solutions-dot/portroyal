@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { hudTidy } from '../../../engine/hud.js';
+import { createAmbient, ambientTest } from '../../../engine/ambient.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -139,7 +140,7 @@ const lady = (i, at) => ({ base: 'woman_elder', hat: 'Wrap', tint: { Wrap: DRESS
 function crowd(n, seed, areas, { mood = 'day', face = null, carry = 0 } = {}) {
   const r = rng(seed), out = [], pick = (a) => a[(r() * a.length) | 0];
   for (let i = 0; i < n; i++) { const a = areas[i % areas.length], x = a[0] + r() * (a[2] - a[0]), z = a[1] + r() * (a[3] - a[1]), ry = face ? Math.atan2(face[0] - x, face[1] - z) + (r() - 0.5) * 0.5 : r() * 6.28, k = r(), dark = mood === 'black', c = dark ? pick(BLACKS) : pick(DRESS);
-    const at = { x, z, ry, anim: mood === 'day' ? pick(['Idle', 'Talk1', 'Idle', 'Talk2']) : pick(['Idle', 'Idle', 'Sad1', 'Sad2']), skin: 0.9 + r() * 0.3 };
+    const at = { crowd: true, mood, lookAt: face, x, z, ry, anim: mood === 'day' ? pick(['Idle', 'Talk1', 'Idle', 'Talk2']) : pick(['Idle', 'Idle', 'Sad1', 'Sad2']), skin: 0.9 + r() * 0.3 };
     if (k < 0.45) { const elder = r() < 0.4; out.push({ base: elder ? 'woman_elder' : 'woman57', hat: mood === 'night' ? (elder ? 'Wrap' : false) : (r() < 0.6 ? 'Hat' : false), props: r() < carry ? [['RightHand', 'basket']] : undefined, tint: { Shirt: dark ? pick([0xe8e4dc, c]) : c, Skirt: dark ? c : pick([c, ...DARK]), Hat: dark ? pick(BLACKS) : pick([0xf0e8d8, 0x2a3a5a, 0x8a4a5a]), HatBand: pick(DARK), Wrap: pick(DRESS), Belt: pick(DARK), Shoes: 0x1c1816 }, ...at }); }
     else if (k < 0.8) { const suit = dark && r() < 0.6, tr = dark ? pick(BLACKS) : pick(TROUS); out.push(suit ? { base: 'man_suit', hat: false, tint: { Shirt: 0xf0ece0, Jacket: c, Waistcoat: c, Breeches: c, Tie: 0x16161a, Shoes: 0x15110e }, ...at } : { base: pick(['man_shirt', 'man_work', 'man_elder']), hat: false, hide: ['Waistcoat'], props: r() < carry ? [['RightHand', 'case']] : undefined, tint: { Shirt: dark ? 0xf0ece0 : pick([0xf4f0e6, 0xc8d8e8, 0xd8d0b8]), Breeches: tr, Tie: 0x16161a, Shoes: 0x15110e }, ...at }); }
     else { const girl = r() < 0.5, s = 0.68 + r() * 0.16; out.push(girl ? { base: 'girl', scale: s, tint: { Shirt: dark ? 0xf0ece0 : c, Skirt: dark ? pick(BLACKS) : c, Belt: pick(DARK), Ribbon: 0xf0ece0, Shoes: 0x1c1816 }, ...at } : { base: 'boy', hat: false, scale: s, tint: { Shirt: 0xf4f0e6, Breeches: dark ? pick(BLACKS) : pick(TROUS), Shoes: 0x1c1816 }, ...at }); }
@@ -236,9 +237,27 @@ function enterScene(i, specs) {
   clearScene(); for (const k in PL) PL[k].group.visible = false; const S = SCENES[i], P = PL[S.place]; cur = S.place; P.group.visible = true; setEnv(S.env);
   const st = S.start || P.start, mk = (s, talk) => { if (!s.ground) s.ground = P.groundAt(s.x, s.z); const n = Object.assign(s, { talked: false, heard: 0, extra: !talk }); n.m = makeBody(s); n.m.visible = !s.hidden; P.group.add(n.m); n.ctl = n.m.userData.anim; n.m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(n.m); n.h = Math.max(0.9, Math.min(2.1, bb.max.y - (s.ground || 0))); return n; };
   SC = { i, P, walls: S.walls || null, people: specs.people.map((s) => mk(s, true)), extras: specs.extras.map((s) => mk(s, false)), actions: [] }; SC.npcs = SC.people.concat(SC.extras); SC.people.filter((n) => !n.kid).forEach(addMark);
-  SC.actions = ACTIONS[i] ? ACTIONS[i](P) : []; state.x = st.x; state.z = st.z; state.yaw = st.yaw || 0; state.pitch = 0; EYE_NOW = S.adult ? EYE_ADULT : EYE;
+  startLife(i, S, P); SC.actions = ACTIONS[i] ? ACTIONS[i](P) : []; state.x = st.x; state.z = st.z; state.yaw = st.yaw || 0; state.pitch = 0; EYE_NOW = S.adult ? EYE_ADULT : EYE;
 }
 const byId = (id) => (SC ? SC.people.find((n) => n.id === id) : null);
+/* ---------- the crowd's life: the engine's background life (engine/ambient.js, owner's rule 10), as every other game has. The people of a crowd (crowd()) used to play
+   one clip each for good and stood like statues (owner, 17 November 2026: "people standing around like zombies"). Now neighbours stand in twos and threes and talk
+   or comfort each other, some walk a little and stop, and the rest watch what the scene is about, shifting and looking round. At the burial (mood 'black') the
+   scene is sad: fewer people move, slower and quieter, but nobody freezes. Story people, walkers and anyone carrying something keep their own ways. ---------- */
+function startLife(i, S, P) {
+  const C = SC.extras.filter((n) => n.crowd && !n.walker && !n.hidden && !n.props); SC.life = null; if (!C.length) return;
+  const sad = C.some((n) => n.mood === 'black'), keep = SC.people.filter((p) => !p.hidden).map((p) => ({ at: [p.x, p.z], r: 1.4 }));
+  const B = { ...P.bounds }; for (const n of C) { B.x0 = Math.min(B.x0, n.x - 3); B.x1 = Math.max(B.x1, n.x + 3); B.z0 = Math.min(B.z0, n.z - 3); B.z1 = Math.max(B.z1, n.z + 3); }   /* the crowd may stand beyond where you walk (the burial field past the rail): its own bounds take in everyone, with room to move */
+  const life = createAmbient({ walls: wallsNow(), bounds: B, keepOff: keep, seed: 31 + i * 7, phone: isTouch, mood: sad ? 'sad' : 'lively', place: (q) => { q.m.position.x = q.x; q.m.position.z = q.z; } });
+  const idles = sad ? ['Idle', 'Sad1', 'Sad2', 'OldIdle', 'LookAround'] : ['Idle', 'LookAround', 'HeadTurn', 'OldIdle'], react = sad ? ['Nod', 'HeadTurn'] : ['Nod', 'Talk1'], done = new Set();
+  let g = 0;
+  for (const n of C) { if (done.has(n)) continue; const near = C.filter((o) => o !== n && !done.has(o) && Math.hypot(o.x - n.x, o.z - n.z) < 2.6).sort((a, b) => Math.hypot(a.x - n.x, a.z - n.z) - Math.hypot(b.x - n.x, b.z - n.z)).slice(0, (g % 3 === 2) ? 2 : 1);
+    if (near.length && (g % 4) !== 3) { const id = 'g' + g++; for (const o of [n, ...near]) { done.add(o); life.add(o, sad && (g % 2) ? { kind: 'chat', group: id, talks: ['ComfortGive', 'ComfortTake', 'Talk2'], idles, sadIdles: idles } : { kind: 'chat', group: id, idles, sadIdles: idles }); } continue; }   /* two or three neighbours together: talking, or comforting each other at the burial */
+    done.add(n); g++;
+    if (g % 3 === 0) life.add(n, { kind: 'wander', walk: 'Walk', area: [n.x - 3, n.z - 3, n.x + 3, n.z + 3], pause: sad ? [6, 12] : [3, 7], speed: sad ? 0.7 : 0.9, idles, sadIdles: idles });   /* a few walk a little and stop */
+    else life.add(n, { kind: 'watch', at: n.lookAt || [n.x - Math.sin(n.ry) * 5, n.z - Math.cos(n.ry) * 5], idles, sadIdles: idles, react, every: sad ? [6, 11] : [4, 8] }); }   /* the rest watch what the scene is about */
+  life.ready && life.ready(); SC.life = life;
+}
 
 /* ---------- a glowing speech mark over each person, and a bubble on the nearest ---------- */
 const BUBBLE = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 8, 64, 64, 62); g.addColorStop(0, 'rgba(255,190,70,0.9)'); g.addColorStop(0.35, 'rgba(255,180,60,0.45)'); g.addColorStop(1, 'rgba(255,170,50,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); x.fillStyle = '#f6c45c'; x.strokeStyle = 'rgba(70,45,10,0.85)'; x.lineWidth = 3; x.beginPath(); x.arc(64, 64, 15, 0, PI * 2); x.fill(); x.stroke(); x.fillStyle = '#fff3d0'; x.beginPath(); x.arc(59, 59, 5, 0, PI * 2); x.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
@@ -550,8 +569,9 @@ function update(dt, now) {
   for (const n of SC.people) if (!n.kid && n.m.visible && !n.walking) { const d = Math.hypot(state.x - n.x, state.z - n.z); if ((d < 3.4 && !DIR.on) || talkWith === n) { const want = Math.atan2(state.x - n.x, state.z - n.z); let e = want - n.m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); n.m.rotation.y += e * Math.min(1, dt * 4); } }
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of SC.people) { if (n.kid || !n.m.visible) continue; const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < b) { b = d; near = n; } } for (const a of SC.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
-  for (const n of SC.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
-  const even = (frameN++ & 1) === 0; for (const n of SC.npcs) if (n.m.visible && (even || n.walker || n.walking)) groundFeet(n.m);   /* people on the move every frame, so their feet stay planted without a bob */
+  if (SC.life) SC.life.tick(dt, { px: state.x, pz: state.z, story: SC.people.filter((n) => n.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } });   /* the crowd: engine/ambient.js moves, animates and grounds the people it owns */
+  for (const n of SC.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
+  const even = (frameN++ & 1) === 0; for (const n of SC.npcs) if (n.m.visible && !n.amb && (even || n.walker || n.walking)) groundFeet(n.m);   /* people on the move every frame, so their feet stay planted without a bob */
   if (P.fire && P.night.visible) P.fire.tick(dt, (now || 0) / 1000);
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
   if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
@@ -636,6 +656,11 @@ function devViews() {
     { const m = makeBody({ ...LOOKS.gateman, x: 0, z: 0 }); m.traverse((o) => { if (o.isMesh && o.material.name === 'WaistcoatButtons') o.visible = true; }); const caught = auditGarments('self-test gateman', m);   /* the garment check must see buttons left showing on a hidden waistcoat */
       if (caught.length) linesOut.push('self-test (not counted): the garment check sees buttons left on a hidden waistcoat: ' + caught[0]); else { total++; linesOut.push('self-test FAILED: the garment check missed waistcoat buttons left showing'); } }
     out('AUDIT ' + total, linesOut); })();
+  if (q.get('test') === 'ambient') (async () => {   /* ?test=ambient : the crowd of each chapter, run by engine/ambient.js, checked for anyone inside a solid or another person, sliding, frozen, or on a story path */
+    const o = []; let bad = 0; startGame(true);
+    const only = q.has('ch') ? +q.get('ch') - 1 : -1;   /* &ch=5 checks one chapter and leaves it on the screen */
+    for (let i = 0; i < SCENES.length; i++) { if (only >= 0 && i !== only) continue; await beginChapter(i); resetTransient(); if (!SC.life) { o.push('chapter ' + (i + 1) + ': no crowd'); continue; } const r = ambientTest(SC.life, { story: () => SC.people.filter((n) => n.m.visible) }), n = +(r.match(/^AMBIENT (\d+)/) || [0, 0])[1]; bad += n; o.push('chapter ' + (i + 1) + ': ' + r.split('\n').filter(Boolean).slice(0, 8).join('\n  ')); }
+    const el = $('autolog') || document.body.appendChild(Object.assign(document.createElement('pre'), { id: 'autolog' })); el.textContent = ['AMBIENT ' + bad, ...o].join('\n'); document.title = 'AMBIENT ' + bad; })();
   if (q.get('test') === 'held') (async () => {   /* every carried thing, in every chapter: at the hand, upright, clear of the body, in twelve poses */
     const o = []; let n0 = 0; startGame(true);
     for (let i = 0; i < SCENES.length; i++) { await beginChapter(i); resetTransient(); for (const n of SC.npcs) if (n.m.userData.held && n.m.userData.held.length) { n0++; const ac = n.m.userData.anim, found = new Set(); for (let pose = 0; pose < 12; pose++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) found.add(l); } for (const l of found) o.push('chapter ' + (i + 1) + ': ' + l); } }

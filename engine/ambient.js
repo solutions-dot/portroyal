@@ -135,6 +135,7 @@ export function createAmbient(opts = {}) {
   /* ---------- adding people ---------- */
   life.add = (n, spec = {}) => {
     if (typeof spec === 'string') spec = { kind: spec };
+    if (n.m) { n.m.userData.ambOwned = true; if (isOld(n)) n.m.userData.elder = true; }   /* the crowd code runs this person's idles (engine/anim.js fidget leaves them alone) */
     const id = n.id || n.base || people.length, r0 = rng(hash(id) ^ (O.seed || 1) ^ Math.imul(people.length + 1, 2654435761));
     const kid = spec.kid !== undefined ? spec.kid : !!(n.kid || (n.m && n.m.scale.y < 0.88));
     n.amb = { kind: spec.kind || 'wander', spec, rnd: r0, kid, r: spec.r || (kid ? O.kidR : O.r), sk: Math.sqrt((n.m && n.m.scale.y) || 1) * span(r0, [0.9, 1.1]),
@@ -161,10 +162,11 @@ export function createAmbient(opts = {}) {
     g.at = at;
   }
 
+  const isOld = (n) => n.old !== undefined ? n.old : /elder|old|gran|Old|Gran/.test((n.base || '') + ' ' + (n.bodyId || '') + ' ' + (n.model || ''));
   /* ---------- states ---------- */
   function stand(n, clip) { const a = n.amb; a.walking = false; a.route = null; a.goal = null; if (clip) play(n, clip); else if (a.clip && !IDLE.test(a.clip) && /Walk|Run|Carry$/.test(a.clip)) play(n, idleFor(n)); }
   function idleFor(n) {
-    const a = n.amb, s = a.spec; let list = mood === 'sad' ? avail(n, s.sadIdles || ['Sad1', 'Sad2', 'Idle']) : avail(n, s.idles || ['Idle']);
+    const a = n.amb, s = a.spec, old = isOld(n); let list = mood === 'sad' ? avail(n, s.sadIdles || (old ? ['Sad1', 'OldIdle', 'Sad2', 'Idle'] : ['Sad1', 'Sad2', 'Idle'])) : avail(n, s.idles || (old ? ['OldIdle', 'Idle', 'LookAround', 'HeadTurn'] : ['Idle', 'LookAround', 'HeadTurn', 'HappyIdle']));   /* with no idles named, a mix (one Idle for ever looked like a statue; owner, 17 November 2026), and an old person's own idle for the old */
     if (a.carrying || (a.carrying === undefined && s.carrying)) { const c = avail(n, [s.idle || 'CarryIdle']); if (c.length) list = c; }   /* hands full: the carrying idle */
     if (!list.length) list = avail(n, ['Idle']); if (!list.length) return null;
     a.iv = ((a.iv === undefined ? (a.rnd() * list.length) | 0 : a.iv + 1)) % list.length; return list[a.iv];   /* in turn, so two pauses in a row look different */

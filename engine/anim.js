@@ -124,10 +124,21 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
     play(n, once, hold) { const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
-    tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } } };
+    tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } else fidget(this, m, dt); } };
   lapSetup(m); if (LAP.get(m)) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
   if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
   m.userData.anim = ctl; return ctl; }
+/* Anyone standing on a plain idle now and then looks round or turns the head, once, and goes back to the idle (owner, 17 November 2026: "ensure variety in idle animation,
+   across all games ... they have this zombie look ... including old people"). Every game gets it from here (rule 10). Not for people the crowd code runs (it has its own
+   idles, engine/ambient.js), people holding something (the item must stay in the hand), or a body marked userData.still. An old person (userData.elder, set by the crowd
+   code from the body's name) uses the old idle too. The clips must be in the game's anim-clips.json; a missing one is skipped. */
+const FIDGET_BASE = /^(Idle|IdleM|OldIdle|Sad1|Sad2|HappyIdle)$/;
+function fidget(c, m, dt) {
+  if (c.cur !== c.base || m.userData.ambOwned || m.userData.still || m.userData.grips || m.userData.seatAnchor) return;
+  if (c.idleT === undefined) c.idleT = 5 + Math.random() * 12; c.idleT -= dt; if (c.idleT > 0) return; c.idleT = 9 + Math.random() * 12;
+  const bn = c.base.getClip().name; if (!FIDGET_BASE.test(bn)) return;
+  const list = (m.userData.elder ? ['OldIdle', 'LookAround'] : ['LookAround', 'HeadTurn']).filter((k) => k !== bn && CL[k]); if (list.length) c.play(list[(Math.random() * list.length) | 0], true);
+}
 export const grounded = [];
 const TOES = new WeakMap(), SOLES = new WeakMap();   /* not in userData: clones copy userData as plain JSON, which would break the bone references */
 /* Where a foot touches the ground: the real lowest points of the shoe (or the bare foot), found once per body shape from its own vertices: the back of the heel, the ball of the foot and the tip of the toe.
