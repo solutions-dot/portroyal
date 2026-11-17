@@ -248,7 +248,7 @@ if G.get('coat'):
         parts.append(('coatskirt',sk))
 if G.get('breeches'):
     bk=G.get('breechkind','plain'); low=(ANK+(0.035 if not G.get('shorts') else 0)) if bk=='trousers' else KNEE-0.05*s
-    if G.get('shorts'): low=KNEE+0.05*s
+    if G.get('shorts'): low=KNEE+0.05*s-G.get('shortslen',0)*s      # shortslen (metres, at a normal height): how far below that the hem comes; Tivoli's 2010 cut-offs reach just below the knee
     wide=0.012 if bk in ('trousers','slops') else 0.013
     if OLD: wide=lambda c,_w=wide:_w+0.004*sstep(HIP+0.04,HIP+0.09,c.z)      # the waistband stands a little off the tucked shirt
     def breech_leg(v):
@@ -1414,7 +1414,7 @@ def hidden(c):
     if t is not None and 0.08<t<cov_arm-0.06 and abs(c.x)>SX*0.75: return True
     if OLD and G.get('breeches') and KNEE<c.z<HIP+0.05 and abs(c.x)<0.12: return True      # the cleft of the seat, between the two legs of the breeches: left bare, skin showed in flecks there
     if OLD and abs(c.x)>SX*0.75 and HIP+0.05<c.z<NECK-0.03*s and arm_axis(c)[1]<cov_arm-0.09: return True      # the armpit, the side of the chest and the shoulder under a shirt or coat: left in, the skin showed through at the back of the armpit when the arm swung
-    if G.get('breeches') and ((KNEE+0.08*s if G.get('shorts') else ANK+0.03) if G.get('trousers') else (KNEE-0.05*s+0.012 if OLD else KNEE))<c.z<HIP+0.05 and math.hypot(c.x-leg_axis(c.z,1 if c.x>0 else -1).x,c.y-LHIP.y)<0.16*s: return True
+    if G.get('breeches') and ((KNEE+0.08*s-G.get('shortslen',0)*s if G.get('shorts') else ANK+0.03) if G.get('trousers') else (KNEE-0.05*s+0.012 if OLD else KNEE))<c.z<HIP+0.05 and math.hypot(c.x-leg_axis(c.z,1 if c.x>0 else -1).x,c.y-LHIP.y)<0.16*s: return True
     if G.get('skirt') and SKB+(0.10 if OLD else 0.035)<c.z<HIP+0.05 and side_arm(c) is None and abs(c.x)<0.30: return True      # (the legs only: with the arms held out, the fingers hang at this height and were cut off as 'leg under the skirt') later eras keep only 3.5 cm of leg above the hem (seated, a taller band lay under the lap and came through the seated skirt)
     if G.get('shoes') and c.z<(ANK*0.5 if LOWCUT else ANK+0.02): return True
     return False

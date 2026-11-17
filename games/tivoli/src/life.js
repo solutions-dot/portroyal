@@ -20,6 +20,9 @@ const P = {
   woman60: (Shirt, Skirt, Wrap = 0xc84a3a) => ({ base: 'woman_elder', sex: 'f', hat: 'Wrap', tint: { Wrap, Shirt, Skirt, Shoes: 0x2a211b } }),
   child: (Shirt, Skirt, scale = 0.76) => ({ base: 'girl', sex: 'f', scale, tint: { Shirt, Skirt, Shoes: 0x2a211b } }),
   man: (Shirt, Breeches) => ({ base: 'civilian2010', sex: 'm', tint: { Shirt, Breeches } }),
+  /* 2010 onward: a T-shirt, cut-off jeans just below the knee and suede crepe-soled shoes (the 'Clarks' Vybz Kartel sang about in 2010; no brand mark is drawn) */
+  youth: (Shirt, Breeches = 0x46608c) => ({ base: 'youth2010', sex: 'm', tint: { Shirt, Breeches } }),
+  man10: (Shirt, Breeches = 0x60708c) => ({ base: 'man2010', sex: 'm', tint: { Shirt, Breeches } }),
   woman: (Shirt, Skirt) => ({ base: 'guide2020', sex: 'f', tint: { Shirt, Skirt } }),
 };
 const BENCH = (x, z, side, ry) => ({ top: 0.5, x: x + side * 0.45, z, ry });   /* newtivoli.js benches: 1.8 m long, seat top 50 cm; two people sit 90 cm apart */
@@ -58,11 +61,11 @@ export const LIFE = {
     { id: 'walker', look: P.woman(0xc84a6a, 0x3a3a3a), at: [24, -0.8], spec: { kind: 'wander', pts: [[24, -0.8], [8, -0.9], [-14, -0.9], [-30, -0.8]], pause: [3, 7], idles: IDL_F } },
   ] },
   4: { mood: 'calm', people: [   /* the street, Sunday 23 May 2010, the day before: few people out, talking low, looking down the street toward the barricade (west) */
-    { id: 'look1', look: P.man(0x4a5a7a, 0x2e2e34), at: [-4, -6.2], spec: { kind: 'watch', at: [-27, 0], every: [5, 9], idles: ['IdleM', 'LookAround', 'Idle'] } },
+    { id: 'look1', look: P.youth(0x4a5a7a, 0x2e2e34), at: [-4, -6.2], spec: { kind: 'watch', at: [-27, 0], every: [5, 9], idles: ['IdleM', 'LookAround', 'Idle'] } },
     { id: 'look2', look: P.woman(0x8a6a4a, 0x3a3a4a), at: [-2.6, -6.6], spec: { kind: 'watch', at: [-27, 0], every: [5, 9], idles: ['Idle', 'LookAround', 'HeadTurn'] } },
     { id: 'chat1', look: P.woman(0xd8c8a8, 0x5a3a3a), at: [6.4, 6.9], spec: { kind: 'chat', group: 'c1', at: [5.8, 6.9], idles: ['Idle', 'LookAround'], talks: ['Talk3', 'Talk2'] } },
-    { id: 'chat2', look: P.man(0x6a7a8a, 0x3a3e48), at: [5.2, 6.9], spec: { kind: 'chat', group: 'c1', idles: ['IdleM', 'Idle'], talks: ['TalkM2', 'Talk2'] } },
-    { id: 'walker', look: P.man(0x3a3a40, 0x4a4a52), at: [26, -6.4], spec: { kind: 'wander', pts: [[26, -6.4], [10, -6.4], [-8, -6.4]], pause: [4, 8], idles: ['IdleM', 'LookAround'] } },
+    { id: 'chat2', look: P.man10(0x6a7a8a, 0x3a3e48), at: [5.2, 6.9], spec: { kind: 'chat', group: 'c1', idles: ['IdleM', 'Idle'], talks: ['TalkM2', 'Talk2'] } },
+    { id: 'walker', look: P.youth(0x3a3a40, 0x4a4a52), at: [26, -6.4], spec: { kind: 'wander', pts: [[26, -6.4], [10, -6.4], [-8, -6.4]], pause: [4, 8], idles: ['IdleM', 'LookAround'] } },
   ] },
   6: { mood: 'sad', people: [   /* the courtyard a few days after: no games; people comfort each other, sit and talk low (nobody is shown hurt) */
     { id: 'comfort1', look: P.woman(0x3a3a4a, 0x2a2a30), at: [10.0, -4.7], ry: Math.PI / 2, spec: { kind: 'work', clips: ['ComfortHand'], face: Math.PI / 2, work: [8, 14], rest: [2, 4], stay: true, sadIdles: ['Sad1', 'Idle'] } },
@@ -78,7 +81,7 @@ export const LIFE = {
     { id: 'bench2', look: P.man(0xd8d0c0, 0x3a3e48), at: [20.45, -3.4], spec: { kind: 'sit', group: 'b1', seat: BENCH(20, -3.4, 1, 0), clips: ['SitIdle', 'SitIdle2'] } },
     { id: 'chat1', look: P.woman(0x8a4a3a, 0x2e2e3a), at: [-13.6, 4.4], spec: { kind: 'chat', group: 'c1', at: [-13, 4.6], idles: IDL_F } },
     { id: 'chat2', look: P.woman60(0xe6d8b8, 0x3a4a6a, 0x2f6a8a), at: [-12.4, 4.4], spec: { kind: 'chat', group: 'c1', idles: IDL_OLD } },
-    { id: 'chat3', look: P.man(0x3a5a3a, 0x3a3a40), at: [-13, 3.7], spec: { kind: 'chat', group: 'c1', idles: IDL_M } },
+    { id: 'chat3', look: P.man10(0x3a5a3a, 0x3a3a40), at: [-13, 3.7], spec: { kind: 'chat', group: 'c1', idles: IDL_M } },
     { id: 'kid1', look: P.child(0xf0ece2, 0x3a4a6a, 0.78), at: [-26, -1.0], spec: { kind: 'wander', pts: [[-26, -1.0], [-6, -1.0], [8, -0.9]], pause: [2, 5], idles: IDL_KID } },
   ] },
   8: { mood: 'lively', people: [   /* today: murals on the walls, children play, people stop to look at the murals */
@@ -86,10 +89,10 @@ export const LIFE = {
     { id: 'kid2', look: P.child(0x2a6ad0, 0xf0ece2, 0.72), at: [-8, 5.6], spec: { kind: 'play', area: [-15, 3, -5, 7.6], chase: 'kid3' } },
     { id: 'kid3', look: P.child(0xf0c040, 0x3a3a3a, 0.7), at: [-10, 6.6], spec: { kind: 'play', area: [-15, 3, -5, 7.6], chase: 'kid1' } },
     { id: 'mural1', look: P.woman(0x3aa07a, 0x2e2e3a), at: [5.6, -6.2], spec: { kind: 'watch', at: [2.5, -9], react: ['Point', 'Nod'], idles: IDL_F } },
-    { id: 'mural2', look: P.man(0xe8e4d8, 0x3a3e48), at: [6.6, -5.6], spec: { kind: 'watch', at: [2.5, -9], react: ['Point', 'Agree'], idles: IDL_M } },
+    { id: 'mural2', look: P.youth(0xe8e4d8, 0x3a3e48), at: [6.6, -5.6], spec: { kind: 'watch', at: [2.5, -9], react: ['Point', 'Agree'], idles: IDL_M } },
     { id: 'bench1', look: P.woman60(0xe9e2d2, 0x5a4a6a, 0xd8b04a), at: [19.55, -3.4], spec: { kind: 'sit', group: 'b1', seat: BENCH(20, -3.4, -1, 0), clips: ['SitIdle', 'SitIdle2'] } },
     { id: 'bench2', look: P.man(0x8a3a2a, 0x2e2e34), at: [20.45, -3.4], spec: { kind: 'sit', group: 'b1', seat: BENCH(20, -3.4, 1, 0), clips: ['SitIdle', 'SitIdle2'] } },
-    { id: 'walker', look: P.man(0x2a2a2a, 0x4a5a7c), at: [-30, -0.8], spec: { kind: 'wander', pts: [[-30, -0.8], [-14, -0.9], [8, -0.9], [24, -0.8]], pause: [3, 7], idles: IDL_M } },
+    { id: 'walker', look: P.man10(0x2a2a2a, 0x4a5a7c), at: [-30, -0.8], spec: { kind: 'wander', pts: [[-30, -0.8], [-14, -0.9], [8, -0.9], [24, -0.8]], pause: [3, 7], idles: IDL_M } },
   ] },
 };
 

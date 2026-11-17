@@ -460,3 +460,8 @@ The owner said Tivoli "does not play like the other games, has a different contr
 - Tivoli has no `#place` caption or fade title: the chapter start shows the date and words over the scene (`#scenetitle`), as before.
 - `tests/tivoli-browser.mjs` still clicks `#jhud` and counts four `#dpad` arrows, the old controller. It needs `#jhud` changed to `#jbtn` and the arrow count replaced by a check for `#stick`; a scratch copy with those two changes passes (see the check results).
 - The bodies are still the borrowed Kendal and Garvey stand-ins (see "Characters").
+
+
+## Modern clothes (17 November 2026)
+
+The owner asked for more modern clothes for some men in the present-day chapters. Two new bodies, `youth2010` and `man2010` (`tools/tivoli/people/`), wear a T-shirt, cut-off jeans to just below the knee (`shortslen` in the builder) and suede crepe-soled shoes of the Clarks Wallabee and Desert Boot kind, which Vybz Kartel's 2010 song "Clarks" made the fashion in Kingston that year (the owner's "bank robbers"). No brand mark is drawn. Andre the painter and six background men in chapters 4, 7 and 8 use them. Checks after: audit 0, ambient 0, held 0.
