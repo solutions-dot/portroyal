@@ -128,5 +128,8 @@
  "Angry": "Angry.fbx",
  "LookOverShoulder": "Look_Over_Shoulder.fbx",
  "Thankful": "Thankful.fbx",
- "HappyIdle2": "Happy_Idle_2.fbx"
+ "HappyIdle2": "Happy_Idle_2.fbx",
+ "StandPoseM": "Male_Standing_Pose.fbx",
+ "Greet": "Standing_Greeting.fbx",
+ "SitIdle5": "Sitting.fbx"
 }
