@@ -183,3 +183,10 @@ The owner saw the pewterer's head on backwards on a phone. People near you turn 
 New check: `?test=heads` (`checks.js`, `runHeads`) stands you in front of and beside each person in every place and watches every head with `engine/audit.js` `headWatch`. `&p=tavern` runs one place. The town takes several minutes.
 
 Also: the name and talk button over a person now stay below the goal's words (they sat on top of them when you looked up at someone from close by).
+
+## Toast and goal on a phone (17 November 2026)
+
+- The toast sits just above the action button, however tall the button is (`placeToast`), and wraps its words; a long line also stays up longer. On a phone, Abba's "Not in my tavern, boys! Take it outside!" was cut short and then covered by the two-line "Go back to the street" button.
+- The goal is hidden while a card is open (at 320 px wide it lay across the card's top edge).
+- The layout test has a case for a long toast over a two-line button. It passes at 320x640, 390x800 and 1280x720.
+- Publishing: Vercel builds every push to `main` with `npm run dist`. To see whether the live site has a change, fetch its `games/<game>/site/app.js` and compare it with `dist/` after `npm run dist`. A phone may show the old page until it is reloaded.

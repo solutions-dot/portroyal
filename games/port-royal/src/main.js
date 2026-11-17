@@ -604,7 +604,11 @@ function clampPos(nx, nz) {
 
 /* ---------- interface ---------- */
 let toastTimer = 0;
-function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600); }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; placeToast(); clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600 + Math.max(0, msg.length - 30) * 45); }   /* a longer line stays a little longer, so a child can read it */
+/* the toast sits just above the action button, however tall the button is: with a two-line label ("Go back to the street") the button covered Abba's words on a phone (owner, 17 November 2026) */
+function placeToast() { const t = $('toast'), k = $('talk'); if (!t || t.hidden) return; const r = k && !k.hidden ? k.getBoundingClientRect() : null; t.style.bottom = (r && r.height > 1 ? Math.max(128, innerHeight - r.top + 10) : 128) + 'px'; }
+TICKS.push(placeToast);
+TICKS.push(() => { const g = $('goal'), c = $('card'); if (g && c) { const v = c.hidden ? '' : 'hidden'; if (g.style.visibility !== v) g.style.visibility = v; } });   /* a card covers the middle of the screen and tells you what happens next: the goal steps aside while it is open (on a small phone the goal lay across the card's top edge) */
 function unlock(id) { if (state.unlocked.includes(id)) return; state.unlocked.push(id); uiSound('page'); saveGame(); const j = JOURNAL.find((p) => p.id === id); $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; toast('Journal: ' + j.title); }
 let goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer);
@@ -873,9 +877,9 @@ addEventListener('pointerdown', () => { if (AU.ctx && AU.ctx.state !== 'running'
 let moveSpeed = 2.7, eyeY = 1.62, seaLevel = -0.35;
 const Q = { on: false, phase: '', t: 0, shake: 0, ruin: false, boat: null, debris: [], T: 0, ac: null, gain: null };
 const DUST = new THREE.Color(0xb9a888), ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
-function card(title, paras, buttons) { busy = true; keys.clear(); $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const p of paras) { const e = document.createElement('p'); e.textContent = p; b.appendChild(e); }
+function card(title, paras, buttons) { busy = true; keys.clear(); $('goal').style.visibility = 'hidden'; $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const p of paras) { const e = document.createElement('p'); e.textContent = p; b.appendChild(e); }
   const bt = $('cbtns'); bt.replaceChildren(); buttons.forEach((o, i) => { const e = document.createElement('button'); e.className = 'btn' + (i ? ' ghost' : ''); e.textContent = o.t; e.onclick = o.go; bt.appendChild(e); }); $('card').hidden = false; $('talk').hidden = true; bt.firstChild.focus(); }
-function hideCard() { $('card').hidden = true; busy = false; canvas.focus(); }
+function hideCard() { $('card').hidden = true; $('goal').style.visibility = ''; busy = false; canvas.focus(); }
 /* When a part of the story is finished, offer the next one on screen, so nobody has to dig through Chapters. Waits for anything open to be closed, and gives up rather than take over a panel the player is reading. */
 function nextChapterCard(i, tries = 0, gen = navGen) {
   if (gen !== navGen || !state.started || Q.on || FB.on) return;   /* the player has already gone somewhere else, or to another chapter */
