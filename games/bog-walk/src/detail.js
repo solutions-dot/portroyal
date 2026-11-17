@@ -16,7 +16,7 @@ export function grassField(parent, area, n, { seed = 1, clear = [], h = 0.34, w 
     for (let k = 0; k < 3; k++) { const a = new THREE.PlaneGeometry(1, 1); a.translate(0, 0.5, 0); a.rotateY(k * Math.PI / 3); for (let i = 0; i < a.attributes.position.count; i++) { pos.push(a.attributes.position.getX(i), a.attributes.position.getY(i), a.attributes.position.getZ(i)); nor.push(0, 1, 0); uv.push(a.attributes.uv.getX(i), a.attributes.uv.getY(i)); } for (const i of a.index.array) idx.push(i + off); off += a.attributes.position.count; }
     _tuftGeo = new THREE.BufferGeometry(); _tuftGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); _tuftGeo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); _tuftGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); _tuftGeo.setIndex(idx);
     _tuftMat = new THREE.MeshLambertMaterial({ map: T.tuft(), alphaTest: 0.5, side: THREE.DoubleSide }); _tuftMat.map.generateMipmaps = true; }
-  const r = rng(seed), im = new THREE.InstancedMesh(_tuftGeo, _tuftMat, n); let k = 0, tries = 0;
+  const r = rng(seed), im = new THREE.InstancedMesh(_tuftGeo, _tuftMat, n); let k = 0, tries = 0; const put = [];
   while (k < n && tries++ < n * 6) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]); if (inClear(x, z, clear)) continue; const sc = 0.6 + r() * 0.8; M4.compose(V.set(x, y, z), Q.setFromEuler(E.set(0, r() * 6.28, 0)), S.set(w * sc * (0.8 + r() * 0.5), h * sc, w * sc)); im.setMatrixAt(k, M4); C.set(tint).offsetHSL((r() - 0.5) * 0.05, (r() - 0.5) * 0.16, (r() - 0.5) * vary); im.setColorAt(k, C); k++; }
   im.count = k; im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.userData.noBatch = true; im.userData.veg = true; im.frustumCulled = false; parent.add(im); return im;
 }
@@ -24,15 +24,15 @@ export function grassField(parent, area, n, { seed = 1, clear = [], h = 0.34, w 
 let _stalk, _head;
 export function flowerField(parent, area, n, { seed = 2, clear = [], colors = [0xe8505b, 0xf5c542, 0xffffff, 0xe27ad8, 0xff8a3a], y = 0 } = {}) {
   _stalk = _stalk || new THREE.ConeGeometry(0.008, 0.3, 3).translate(0, 0.15, 0); _head = _head || new THREE.IcosahedronGeometry(0.035, 0).translate(0, 0.31, 0);
-  const r = rng(seed), a = new THREE.InstancedMesh(_stalk, new THREE.MeshLambertMaterial({ color: 0x4a7a30 }), n), b = new THREE.InstancedMesh(_head, new THREE.MeshLambertMaterial({ color: 0xffffff }), n); let k = 0, tries = 0;
+  const r = rng(seed), a = new THREE.InstancedMesh(_stalk, new THREE.MeshLambertMaterial({ color: 0x4a7a30 }), n), b = new THREE.InstancedMesh(_head, new THREE.MeshLambertMaterial({ color: 0xffffff }), n); let k = 0, tries = 0; const put = [];
   while (k < n && tries++ < n * 6) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]); if (inClear(x, z, clear)) continue; const sc = 0.7 + r() * 0.9; M4.compose(V.set(x, y, z), Q.identity(), S.set(sc, sc, sc)); a.setMatrixAt(k, M4); b.setMatrixAt(k, M4); b.setColorAt(k, C.set(colors[(r() * colors.length) | 0])); k++; }
   a.count = b.count = k; for (const o of [a, b]) { o.userData.noBatch = true; o.userData.veg = true; o.frustumCulled = false; parent.add(o); } return [a, b];
 }
 /* stones and boulders: lumpy rocks of a few greys */
 let _rock;
 export function rockField(parent, area, n, { seed = 3, clear = [], size = 0.5, tone = 0x8a867a, y = 0 } = {}) {
-  _rock = _rock || new THREE.DodecahedronGeometry(1, 0); const r = rng(seed), im = new THREE.InstancedMesh(_rock, new THREE.MeshStandardMaterial({ roughness: 1, flatShading: true }), n); let k = 0, tries = 0;
-  while (k < n && tries++ < n * 6) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]); if (inClear(x, z, clear)) continue; const sc = size * (0.3 + r() * r() * 1.6); M4.compose(V.set(x, y + sc * 0.35, z), Q.setFromEuler(E.set(r() * 3, r() * 6, r() * 3)), S.set(sc * (1 + r() * 0.6), sc * (0.5 + r() * 0.4), sc * (1 + r() * 0.5))); im.setMatrixAt(k, M4); im.setColorAt(k, C.set(tone).offsetHSL(0, 0, (r() - 0.5) * 0.18)); k++; }
+  _rock = _rock || new THREE.DodecahedronGeometry(1, 0); const r = rng(seed), im = new THREE.InstancedMesh(_rock, new THREE.MeshStandardMaterial({ roughness: 1, flatShading: true }), n); let k = 0, tries = 0; const put = [];
+  while (k < n && tries++ < n * 6) { const x = area[0] + r() * (area[2] - area[0]), z = area[1] + r() * (area[3] - area[1]); if (inClear(x, z, clear)) continue; const sc = size * (0.3 + r() * r() * 1.6); if (put.some((q) => Math.hypot(q[0] - x, q[1] - z) < (q[2] + sc) * 1.75)) continue; put.push([x, z, sc]);   /* stones lie apart: scattered blind, some sat inside each other (the audit, 17 November 2026) */ M4.compose(V.set(x, y + sc * 0.35, z), Q.setFromEuler(E.set(r() * 3, r() * 6, r() * 3)), S.set(sc * (1 + r() * 0.6), sc * (0.5 + r() * 0.4), sc * (1 + r() * 0.5))); im.setMatrixAt(k, M4); im.setColorAt(k, C.set(tone).offsetHSL(0, 0, (r() - 0.5) * 0.18)); k++; }
   im.count = k; im.userData.noBatch = true; im.frustumCulled = false; parent.add(im); return im;
 }
 /* big soft patches of lighter and darker ground, to break up the repeating texture */

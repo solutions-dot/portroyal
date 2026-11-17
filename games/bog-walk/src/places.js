@@ -278,7 +278,7 @@ function turbineHouse(g, kind, P) {
     const sg = mesh(new THREE.PlaneGeometry(3.4, 0.62), std(signTex([['TURBINE HOUSE', '700 58px Georgia, serif']], 512, 96), 0.8), 0, 4.1, z1 + th / 2 + 0.03, g);
     walls.push([x0 - 0.3, z0 - 0.3, x1 + 0.3, z0 + 0.3], [x0 - 0.3, z0, x0 + 0.3, z1], [x1 - 0.3, z0, x1 + 0.3, z1], [x0 - 0.3, z1 - 0.3, -1.25, z1 + 0.3], [1.25, z1 - 0.3, x1 + 0.3, z1 + 0.3], [-1.9, z1, -1.15, z1 + 1.0]);
     /* ----- the machines. The water comes in through the west wall into a spiral casing (the turbine), which turns a shaft; the shaft turns the big wheel and the generator. ----- */
-    const mg = grp(g); const green = solid(0x2a4a3a, 0.55, 0.3), cream = solid(0xd8ccae, 0.6), MZ = PZ, SY = 1.6;
+    const mg = grp(g); mg.userData.noBatch = true;   /* one machine: the shaft runs through the casing, the bearings and the wheel on purpose, so its parts stay together as one object (the audit compared them as separate things) */ const green = solid(0x2a4a3a, 0.55, 0.3), cream = solid(0xd8ccae, 0.6), MZ = PZ, SY = 1.6;
     tubePipe(mg, [[-6.8, PY - 0.7, MZ], [-6.0, PY - 0.68, MZ], [-5.2, SY - 0.1, MZ], [-4.3, SY, MZ]], new THREE.MeshStandardMaterial({ map: TX.rivets([4, 2], [40, 70, 56]), roughness: 0.55, metalness: 0.3 }), 0.62, 16);   /* the pipe's end, narrowing inside the wall and rising to the turbine */
     const casing = cyl(1.25, 1.25, 1.0, green, -3.6, SY, MZ, mg, 40); casing.rotation.z = PI / 2; for (const dx of [0.5, -0.5]) { const ring = mesh(new THREE.TorusGeometry(1.25, 0.08, 8, 40), M.iron, -3.6 + dx, SY, MZ, mg); ring.rotation.y = PI / 2; }
     for (let i = 0; i < 16; i++) { const a = i / 16 * PI * 2, bolt = cyl(0.04, 0.04, 0.08, M.brass, -3.05, SY + Math.sin(a) * 1.17, MZ + Math.cos(a) * 1.17, mg, 6); bolt.rotation.z = PI / 2; }
@@ -286,7 +286,7 @@ function turbineHouse(g, kind, P) {
     const shaft = cyl(0.11, 0.11, 6.6, M.steel, 0, SY, MZ, mg, 14); shaft.rotation.z = PI / 2;
     for (const x of [-1.9, 1.3, 4.3]) { box(0.5, 1.3, 0.6, green, x, 0.65, MZ, mg); box(0.66, 0.2, 0.7, M.iron, x, 1.42, MZ, mg); }   /* bearings on pedestals */
     /* the spinning wheel: a flywheel with eight spokes, painted green; it turns (P.spin) and a pale mark on its rim shows it */
-    const fw = grp(g, -0.3, SY, MZ); fw.userData.noBatch = true; const rimM = solid(0x2f5a44, 0.5, 0.35);
+    const fw = grp(mg, -0.3, SY, MZ); fw.userData.noBatch = true; const rimM = solid(0x2f5a44, 0.5, 0.35);
     const rim = mesh(new THREE.TorusGeometry(1.42, 0.12, 10, 48), rimM, 0, 0, 0, fw); rim.rotation.y = PI / 2; rim.scale.set(1, 1, 1.6);
     for (let i = 0; i < 8; i++) { const a = i / 8 * PI * 2, sp = cyl(0.05, 0.08, 1.36, rimM, 0, Math.sin(a) * 0.7, Math.cos(a) * 0.7, fw, 8); sp.rotation.x = PI / 2 - a; }
     const hub = cyl(0.3, 0.3, 0.4, M.iron, 0, 0, 0, fw, 20); hub.rotation.z = PI / 2; box(0.4, 0.16, 0.06, cream, 0, 1.4, 0, fw);
