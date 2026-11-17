@@ -50,7 +50,7 @@ function bedTex() {
 /* the plate at the head of the tomb, with the words the photograph shows */
 function tabletTex() {
   return canvasTex(512, 220, (x, w, h) => { x.fillStyle = '#3a3b3e'; x.fillRect(0, 0, w, h); x.fillStyle = '#dfe2e3'; x.fillRect(40, 34, w - 80, h - 68);
-    x.fillStyle = '#20252b'; x.textAlign = 'center'; x.font = '600 30px Georgia, serif'; x.fillText('MARCUS MOSIAH GARVEY', w / 2, 82); x.fillText('JAMAICAS FIRST NATIONAL HERO', w / 2, 124); x.font = '600 32px Georgia, serif'; x.fillText('1887 - 1940', w / 2, 168); });
+    x.fillStyle = '#20252b'; x.textAlign = 'center'; x.font = '600 30px Georgia, serif'; x.fillText('MARCUS MOSIAH GARVEY', w / 2, 82); x.font = '600 25px Georgia, serif'; x.fillText('JAMAICAS FIRST NATIONAL HERO', w / 2, 124); x.font = '600 32px Georgia, serif'; x.fillText('1887 - 1940', w / 2, 168); });
 }
 /* a five-pointed star in the ground plane (x, z), one point toward -z (the wall) */
 function starShape(R, r) { const s = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = PI / 2 + i * PI / 5, k = i % 2 ? r : R; if (i) s.lineTo(Math.cos(a) * k, Math.sin(a) * k); else s.moveTo(Math.cos(a) * k, Math.sin(a) * k); } s.closePath(); return s; }

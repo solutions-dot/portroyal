@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng } from './gfx.js';
 import { PM, pole } from './props.js';
 import { saloonCar, lorry } from '../../../engine/roadcars.js';
+import * as DOORS from './doors.js';
 
 const PI = Math.PI;
 const WOOD = solid(0x7a5a3c, 0.95), WOODD = solid(0x3d2d20, 0.95), RAW = solid(0xc8a874, 0.95), TRIM = solid(0xe8e0cc, 0.8), DARKM = solid(0x1c1a18, 0.9), IRON = solid(0x2b2d31, 0.6, 0.3);
@@ -30,7 +31,7 @@ export function roofOf(w, d, h, { rise = 1.25, rgb = [150, 154, 150], state = 'o
 /* ---------- a house ----------
    style: 'board' (timber walls) or 'block' (painted concrete block, with window grills)
    roof: 'on' | 'half' | 'off'. shutters: 'open' | 'closed' | 'boarded' (plywood nailed across). tank: a black water tank on a stand. tarp: a blue tarpaulin over bare rafters. */
-export function house({ w = 6, d = 4.4, h = 2.7, style = 'board', wall = [188, 160, 110], roofRgb = [150, 154, 150], roof = 'on', shutters = 'open', porch = true, seed = 1, tank = false, tarp = false, shutCol = 0x2f6a3f, doorCol = 0x4a2f1e, damaged = 0 } = {}) {
+export function house({ w = 6, d = 4.4, h = 2.7, style = 'board', wall = [188, 160, 110], roofRgb = [150, 154, 150], roof = 'on', shutters = 'open', porch = true, seed = 1, tank = false, tarp = false, shutCol = 0x2f6a3f, doorCol = null, damaged = 0, door = null } = {}) {
   const g = grp(), r = rng(seed), block = style === 'block';
   const wt = block ? tex(T.plaster(wall, [1, 1], 'rgba(120,100,80,0.18)'), w / 3, 1) : tex(T.plank(wall, 8, [w / 2, 1]), w / 2, 1), dt = block ? tex(T.plaster(wall, [1, 1], 'rgba(120,100,80,0.18)'), d / 3, 1) : tex(T.plank(wall, 8, [d / 2, 1]), d / 2, 1);
   const wm = std(wt, 0.92), dm = std(dt, 0.92);
@@ -48,7 +49,8 @@ export function house({ w = 6, d = 4.4, h = 2.7, style = 'board', wall = [188, 1
   const wy = h * 0.6;
   for (const x of [-w * 0.3, w * 0.3]) win(x, wy, d / 2 + 0.02, 0);
   win(0, wy, -d / 2 - 0.02, PI); win(w / 2 + 0.02, wy, 0, PI / 2); win(-w / 2 - 0.02, wy, 0, -PI / 2);
-  box(0.95, 1.9, 0.07, solid(doorCol, 0.9), 0, 0.95, d / 2 + 0.03, g); for (const s of [-0.5, 0.5]) box(0.06, 1.94, 0.08, fr, s, 0.97, d / 2 + 0.05, g); box(1.06, 0.06, 0.08, fr, 0, 1.94, d / 2 + 0.05, g);
+  /* the front door (doors.js): each house names its own, made for its building and year: door: [builder name, options]. With no veranda it stands on a step. */
+  { const [kind, o] = door || [block ? 'panelGrille88' : 'boardDoor51', {}], dr = DOORS[kind]({ ...(doorCol ? { color: doorCol } : {}), step: porch ? 0 : 0.16, ...o }); dr.position.set(0, porch ? 0.27 : 0, d / 2); g.add(dr); }
   for (const [x, z] of [[-w / 2 + 0.2, -d / 2 + 0.2], [w / 2 - 0.2, -d / 2 + 0.2], [-w / 2 + 0.2, d / 2 - 0.2], [w / 2 - 0.2, d / 2 - 0.2]]) cyl(0.13, 0.16, 0.3, solid(0x9a968a, 1), x, 0.1, z, g, 8);   /* concrete piers */
   if (block) box(w + 0.06, 0.1, d + 0.06, solid(0xb6b2a6, 0.9), 0, 0.05, 0, g);
   if (porch) {
@@ -114,9 +116,10 @@ export function candle() { const g = grp(); cyl(0.02, 0.02, 0.14, solid(0xf0e8d0
 
 /* ---------- the shop: a small block building with a counter hatch, goods and a sign ---------- */
 export function shop({ name = "BEV'S SHOP", roof = 'on', seed = 5 } = {}) {
-  const g = house({ w: 5.4, d: 4, h: 2.7, style: 'block', wall: [236, 214, 150], roofRgb: [160, 80, 70], roof, shutters: roof === 'on' ? 'open' : 'closed', seed, porch: false });
+  const g = house({ w: 5.4, d: 4, h: 2.7, style: 'block', wall: [236, 214, 150], roofRgb: [160, 80, 70], roof, shutters: roof === 'on' ? 'open' : 'closed', seed, porch: false, door: ['shopDoor', { step: 0 }] });   /* a board door barred for the night, behind the counter (no step: the counter stands in front of it) */
   box(5.0, 0.1, 1.0, solid(0x5a4a3a, 0.9), 0, 1.06, 2.5, g); for (const x of [-2.3, 0, 2.3]) box(0.1, 1.0, 0.9, WOOD, x, 0.5, 2.5, g);   /* the counter on the street side */
-  const sg = plane(2.6, 0.62, std(T.sign(name, 512, 128, '#f2c43a', '#3a1a10', '700 78px Georgia, serif'), 0.9), 0, 2.4, 2.05, g); sg.material = sg.material.clone(); sg.material.side = THREE.DoubleSide;
+  const sw = Math.max(2.6, Math.min(4.2, 0.25 * name.length));   /* the board is as long as its name needs (MISS ADA'S SHOP ran off a board made for BEV'S SHOP) */
+  const sg = plane(sw, 0.62, std(T.sign(name, 512, Math.round(512 * 0.62 / sw), '#f2c43a', '#3a1a10', `700 ${Math.round(78 * 2.6 / sw)}px Georgia, serif`), 0.9), 0, 2.4, 2.05, g); sg.material = sg.material.clone(); sg.material.side = THREE.DoubleSide;
   for (const x of [-1.2, 1.2]) box(0.07, 0.4, 0.07, WOODD, x, 2.2, 2.05, g);   /* the sign's two posts, standing on the counter's front */
   box(0.07, 1.4, 0.07, WOODD, -1.2, 1.7, 2.05, g); box(0.07, 1.4, 0.07, WOODD, 1.2, 1.7, 2.05, g);
   return g;

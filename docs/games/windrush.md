@@ -166,3 +166,25 @@ The current menu artwork is `menu/windrush-kingston-quay.jpg`, captured from `?s
 ## No deck chairs on the 1948 deck (17 November 2026)
 
 The owner asked whether deck chairs were right, since she was not a cruise ship. In 1948 she sailed as a troopship (HMT Empire Windrush), and no source found shows deck chairs on that voyage; the photographs of her arrival show passengers crowding the rails and reading newspapers on the open deck (Getty Images, "Windrush Arrives From Jamaica"; Science Museum Group, "Photograph of people reading a newspaper aboard the Empire Windrush"). The three deck chairs are removed. The plain wooden benches stay. `deckChair` is still in `scenery.js` for any later scene that has a source for it.
+
+## Doors (17 November 2026)
+
+Each door is now made for its building (`games/windrush/src/doors.js`), not a flat board or one shared door:
+
+- **The family's house on posts and the harbour houses** (`stiltHouse`): `fretDoor`, a painted door of upright boards under a fretwork vent board (cut crosses), butt hinges and a thumb latch, the colour taken from the house's shutters. Fretwork vents over doors are a mark of Jamaican houses of the time.
+- **The district shop**: `shopDoors`, a pair of wide board doors with iron keepers for the drop bar, the bar itself standing beside the door because the shop is open, and a hasp for the night.
+- **Brixton terraces, 1948 and 1962, and the 2018 neighbour on the left**: `terraceDoor`, a painted Victorian four-panel door (two long panels above the lock rail, two short below, a muntin between) with a brass letter plate in the lock rail, a knocker on the muntin, a knob and a night latch, under a three-light fanlight, set back in the door hole behind plain linings.
+- **The 2018 neighbour on the right**: `upvcDoor`, a white uPVC replacement door with a frosted glass top, chrome lever and letter plate, as many London terraces have now.
+- **Iris's own front door, 2018**: her Victorian four-panel door (`terraceLeaf`), painted blue, standing open into the hall (it used to stand open outward, which a London front door does not do).
+- **The Kingston transit shed, 1948**: `shedDoors`, sliding doors of corrugated iron on steel frames, hung on rollers from a track over each opening, every other one slid part open on the dark shed.
+
+**Still stand-ins (work to do):** the Brixton doors follow the usual London Victorian terrace door; the Jamaican doors and the transit shed's doors are built from general knowledge, not from one photograph. Find photographs of a Kingston transit shed of the 1940s and of rural Jamaican board houses with fretwork, and match them.
+
+### Photographs checked (17 November 2026)
+
+- **The Kingston transit shed (`shedDoors`).** Royal Museums Greenwich, glass negatives of Kingston's waterfront, 1929 to 1939: "Wharves and storage sheds at Kingston, Jamaica" (https://www.rmg.co.uk/collections/objects/rmgc-object-1149728 and https://www.rmg.co.uk/collections/objects/rmgc-object-1149717), "Finger piers at Kingston, Jamaica" (https://www.rmg.co.uk/collections/objects/rmgc-object-1149684) and "Frederick Leyland & Co Ltd finger pier at the western end of the docks at Kingston" (https://www.rmg.co.uk/collections/objects/rmgc-object-1149701). They show gabled sheds of timber and corrugated iron on the finger piers, with wide, tall door openings in the gable ends, some shut by large plain doors and some standing open on a dark inside. How those doors hang (sliding or hinged) cannot be made out. **Kept**: the corrugated iron doors in wide openings agree with them; the rollers and track are still from general knowledge.
+- **The house on posts (`fretDoor`).** National Library of Jamaica, "Rural Housing Scheme with sanitary convenience set apart from main structure" (https://nljdigital.nlj.gov.jm/items/show/1978): small houses raised on posts, one plain door each, no fretwork over it. A Gleaner photograph of Manchioneal, Portland, 1988 (https://past.jamaica-gleaner.com/article/esponsored/20230922/photo-flashback-hurricane-gilbert-september-1988) shows a board door that is plain outside, as `fretDoor` is. **Kept**; no 1940s photograph of a fretwork vent over a door in a rural district was found, so the fretwork remains to check.
+- **The district shop (`shopDoors`).** Not found; **kept**.
+- **Brixton terraces (`terraceDoor`, `terraceLeaf`).** No 1948 or 1962 photograph of a Brixton house door was found online (Lambeth Archives' Landmark site, https://boroughphotos.org/lambeth/, has Brixton street scenes of 1950 to 1952 but none that shows a house door closely). The four-panel door is the usual London Victorian door: the Bloomsbury Conservation Areas' doors and windows specification (https://test.bloomsburyconservation.org.uk/specifications/doors-and-windows/) notes that Victorian front doors usually have four panels. **Kept.**
+- **The 2018 uPVC door (`upvcDoor`).** A present-day replacement door; **kept**.
+

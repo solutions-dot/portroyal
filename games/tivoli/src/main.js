@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { hudTidy } from '../../../engine/hud.js';
 /* games/tivoli/src/main.js: Tivoli (West Kingston, from the 1960s to today, with May 2010 at the centre). Read docs/games/tivoli.md first.

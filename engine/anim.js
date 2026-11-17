@@ -39,7 +39,7 @@ export const POSTURE = { Spine1: -18, Spine2: 38, Neck: -20 };
 /* Standing clips (idles, talking, gestures) were made with the hips back and the knees bent about 30 degrees, so everyone stood in a slump, like a zombie (owner, 17 November 2026).
    For those clips the thigh is turned back, the knee straightened and the foot set flat again. Walking, running, carrying, kneeling and seated clips are left as they are: they do not have the slump. */
 export const STANCE = { LeftUpLeg: 14, RightUpLeg: 14, LeftLeg: 28, RightLeg: 28, LeftFoot: -14, RightFoot: -14 };
-const STANDING = /^(Agree|Argue|BriefcaseIdle|Cheer|Clap|Comfort\w*|Cry|Drink|HappyIdle|HeadTurn|HurtIdle|Idle|IdleM|Laugh|ListenMusic|LookAround|Nod|OldIdle|Point|ReachOut|Sad\d|Salute|Scared|Shrug|Speech|Talk\d|TalkM\d|Wave|WaveSlow|Write|Yell|TorchIdle|RifleIdle|CarryIdle|CarryHeadIdle)$/;   /* turning the shoulders back as well was tried: it helped four poses but made the full every-clip gate (tools/review/people-check.mjs) worse in Garvey and Nanny Town, so the arms are left as the clips have them */
+const STANDING = /^(Angry|Thankful|Greet|LookOverShoulder|HappyIdle2|StandPoseM|Agree|Argue|BriefcaseIdle|Cheer|Clap|Comfort\w*|Cry|Drink|HappyIdle|HeadTurn|HurtIdle|Idle|IdleM|Laugh|ListenMusic|LookAround|Nod|OldIdle|Point|ReachOut|Sad\d|Salute|Scared|Shrug|Speech|Talk\d|TalkM\d|Wave|WaveSlow|Write|Yell|TorchIdle|RifleIdle|CarryIdle|CarryHeadIdle)$/;   /* turning the shoulders back as well was tried: it helped four poses but made the full every-clip gate (tools/review/people-check.mjs) worse in Garvey and Nanny Town, so the arms are left as the clips have them */
 function posture(c, name) { const q = new THREE.Quaternion(), r = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0), st = STANDING.test(name || '');
   for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const deg = m ? (POSTURE[m[1]] || (st ? STANCE[m[1]] : undefined)) : undefined; if (!deg) continue; r.setFromAxisAngle(X, deg * Math.PI / 180); const v = t.values;
     for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i).premultiply(r).toArray(v, i); } } }
@@ -47,7 +47,9 @@ export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() :
   c.tracks = c.tracks.filter((t) => { if (t.name.endsWith('.scale')) return false; if (!t.name.endsWith('.position')) return true; if (!keepHips || !/Hips/.test(t.name)) return false;
     const v = t.values; let x0 = v[0], z0 = v[2]; if (SEATED.test(name) && CL.Idle) { const it = CL.Idle.tracks.find((k) => k.name === t.name); if (it) { x0 = it.values[0]; z0 = it.values[2]; } }   /* seated clips: keep the hips over the spot we put him, not where the clip wandered to */
  for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } return true; });   /* running stays in place; the game moves her */
-  if (!SEATED.test(name)) posture(c, name);   /* seated clips keep the pose they were tuned in: their hands rest on the lap, and moving the chest pushed the fingers into the thighs (the cloth check, Garvey, 16 November 2026) */
+  if (!SEATED.test(name)) posture(c, name);
+  if (STANDING.test(name) && name !== 'Idle' && !GRIPS.test(name)) relaxHands(c);
+  if (!GRIPS.test(name) && !SEATED.test(name)) restFingers(c);   /* the knuckles gently bent and the fingers together (below) */   /* seated clips keep the pose they were tuned in: their hands rest on the lap, and moving the chest pushed the fingers into the thighs (the cloth check, Garvey, 16 November 2026) */
   if (SEAM.test(name)) seamLoop(c);
   const damp = BOW[Object.keys(BOW).find((k) => new RegExp(k).test(name)) || ''];   /* clips whose neck bows so far that a collar stands off the nape: the neck and head turn only part of the way from standing */
   if (damp && CL.Idle) for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const k = m ? damp[m[1]] : undefined; if (k === undefined) continue; const it = CL.Idle.tracks.find((x) => x.name === t.name); if (!it) continue;
@@ -121,13 +123,33 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
   const mx = mixerIn || new THREE.AnimationMixer(m), base = baseAct || mx.clipAction(clip); if (!baseAct) { base.play(); base.time = Math.random() * clip.duration; } if (!mixerIn) mixers.push(mx);
   const acts = {}, ctl = { mx, base, cur: base, timer: 0,
     get(n) { if (!acts[n]) { const c = clipFor(n); if (!c) return null; acts[n] = mx.clipAction(c); } return acts[n]; },
-    play(n, once, hold) { const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
+    play(n, once, hold) { if (n && HAND_TALK.test(n) && holdsInHand(m) && clipFor('Idle')) n = 'Idle';   /* a hand that holds a case or a basket does not wave it about */
+      const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
     tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } else fidget(this, m, dt); } };
   lapSetup(m); if (LAP.get(m)) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
   if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
-  m.userData.anim = ctl; return ctl; }
+  curlFingers(m); m.userData.anim = ctl; return ctl; }
+/* Fingers at rest (owner, 17 November 2026: spiky, claw-like fingers). The clips keep only each finger's knuckle (tools/anims/clean_clips.mjs drops joints 2 to 4 to
+   save space), so the knuckle bent with the clip while the rest of the finger stayed dead straight. No clip moves those joints, so each body gets a gentle curl in
+   them once, here, for every game. FINGER_AXIS and FINGER_CURL are the bend (checked by eye on a hand close up). */
+export const FINGER_CURL = { 2: 0.32, 3: 0.24 }, FINGER_AXIS = new THREE.Vector3(+(globalThis.__fingerAxis || 'z') === 'x' ? 1 : 0, 0, 0);
+const CURLED = new WeakSet();
+function curlFingers(m) { if (CURLED.has(m)) return; CURLED.add(m); const ax = (globalThis.__fingerAxisV || null), q = new THREE.Quaternion();
+  m.traverse((b) => { if (!b.isBone) return; const k = /Hand(Index|Middle|Ring|Pinky)([23])$/.exec(b.name); if (!k || b.userData.curled) return; b.userData.curled = true;   /* the mark is on the bone, which a clone copies: a clone of an animated body was curled a second time */
+    const a = FINGER_CURL[k[2]] * (globalThis.__fingerSign || 1);
+    q.setFromAxisAngle(ax || new THREE.Vector3(0, 0, 1), /Left/.test(b.name) ? -a : a); b.quaternion.multiply(q); }); }
+/* A hand that holds something does not gesture (17 November 2026). A man in Eventide's crowd stood on Talk2 with a suitcase in his hand, and the gesture swung the case into
+   his thigh. Eventide already kept people with a thing in the hand off the talking clips when you spoke to them; the rule now lives here for every game (rule 10):
+   - play() gives the plain Idle when it is asked for a clip that waves the hands (HAND_TALK) and the body holds something by engine/grip.js;
+   - calmHands(m), which grip() calls, moves a body whose standing clip is one of those onto the Idle.
+   Only for a thing that hangs below the hand (grip() works that out from the handle's height, or takes hangs: true or false). A flag or a palm frond held up by its stick is
+   waved on purpose (The Emperor's Arrival). Walking, carrying, sitting and weapon clips are not touched. */
+const HAND_TALK = /^(Talk|SitTalk|Wave|Clap|Cheer|Point|Yell|Laugh|Greet|Angry|Thankful|Argue)/;
+export const holdsInHand = (m) => !!(m.userData.grips && m.userData.grips.some((g) => g.wrap && g.hangs));   /* a thing that hangs from the hand (a case, a basket, a bucket, a lamp, a bag); a flag, a palm frond or a cup held upright may be waved */
+export function calmHands(m) { const c = m.userData.anim; if (!c || !c.base || !HAND_TALK.test(c.base.getClip().name)) return; const a = c.get('Idle'); if (!a || a === c.base) return;
+  a.reset().play(); a.time = Math.random() * a.getClip().duration; c.base.stop(); if (c.cur === c.base) c.cur = a; c.base = a; c.mx.update(0); }
 /* Anyone standing on a plain idle now and then looks round or turns the head, once, and goes back to the idle (owner, 17 November 2026: "ensure variety in idle animation,
    across all games ... they have this zombie look ... including old people"). Every game gets it from here (rule 10). Not for people the crowd code runs (it has its own
    idles, engine/ambient.js), people holding something (the item must stay in the hand), or a body marked userData.still. An old person (userData.elder, set by the crowd
@@ -137,8 +159,26 @@ function fidget(c, m, dt) {
   if (c.cur !== c.base || m.userData.ambOwned || m.userData.still || m.userData.grips || m.userData.seatAnchor) return;
   if (c.idleT === undefined) c.idleT = 5 + Math.random() * 12; c.idleT -= dt; if (c.idleT > 0) return; c.idleT = 9 + Math.random() * 12;
   const bn = c.base.getClip().name; if (!FIDGET_BASE.test(bn)) return;
-  const list = (m.userData.elder ? ['OldIdle', 'LookAround'] : ['LookAround', 'HeadTurn']).filter((k) => k !== bn && CL[k]); if (list.length) c.play(list[(Math.random() * list.length) | 0], true);
+  const list = (m.userData.elder ? ['OldIdle', 'LookAround', 'LookOverShoulder'] : ['LookAround', 'HeadTurn', 'LookOverShoulder']).filter((k) => k !== bn && CL[k]); if (list.length) c.play(list[(Math.random() * list.length) | 0], true);
 }
+/* Hands at rest (owner, 17 November 2026: hands like claws on a talking woman). Mixamo's talking and gesture clips curl and spread the fingers hard; the plain Idle's hand
+   hangs relaxed. Each finger of a standing clip is eased 60 per cent of the way to the Idle's hand, so a gesture still moves the hand but never makes a claw.
+   Clips that hold something (GRIPS) keep their own fingers. One place for every game. */
+const GRIPS = /Carry|Briefcase|Torch|Rifle|Pistol|Shoot|Drink|Write|Guitar|Piano|Sword|Box|Pray|Clap/;
+const HAND_REST = 0.6;
+function relaxHands(c) { const idle = CL.Idle; if (!idle) return; const q = new THREE.Quaternion(), r = new THREE.Quaternion();
+  for (const t of c.tracks) { const m = t.name.match(/mixamorig:?((Left|Right)Hand(Thumb|Index|Middle|Ring|Pinky)\d)\.quaternion$/); if (!m) continue;
+    const it = idle.tracks.find((k) => k.name === t.name); if (!it) continue; r.fromArray(it.values, 0); const v = t.values;
+    for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i).slerp(r, HAND_REST).toArray(v, i); } } }
+/* Fingers together and gently bent at the knuckle (owner, 17 November 2026: the hands still looked ragged: the fingers hung straight, stiff and spread like a rake).
+   A relaxed hand's fingers are held together and bend a little at every joint, a little more toward the little finger. The clips drive only the knuckle (joint 1), so the
+   bend and the closing-up are put into those tracks once, when a clip is made; curlFingers bends joints 2 and 3. KNUCKLE: radians of bend; CLOSE: radians each finger
+   turns toward the middle finger (index one way, ring and pinky the other). */
+export const KNUCKLE = { Index: 0.18, Middle: 0.24, Ring: 0.3, Pinky: 0.36 }, CLOSE = { Index: -0.2, Middle: 0.0, Ring: 0.16, Pinky: 0.3 };   /* (about local x; minus brings the index toward the middle finger: checked by eye, 17 November 2026) */
+function restFingers(c) { const g = globalThis, k1 = g.__k1 ?? 1, sp = g.__sp ?? 1, cax = new THREE.Vector3(0, 0, 1), sax = (g.__spax || 'x') === 'y' ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0), q = new THREE.Quaternion(), a = new THREE.Quaternion(), b = new THREE.Quaternion();
+  for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(Left|Right)Hand(Index|Middle|Ring|Pinky)1\.quaternion$/); if (!m) continue; const side = m[1] === 'Left' ? -1 : 1;
+    a.setFromAxisAngle(cax, side * KNUCKLE[m[2]] * k1 * (g.__fingerSign || 1)); b.setFromAxisAngle(sax, side * CLOSE[m[2]] * sp); const v = t.values;
+    for (let i = 0; i < v.length; i += 4) q.fromArray(v, i).multiply(a).multiply(b).toArray(v, i); } }
 export const grounded = [];
 const TOES = new WeakMap(), SOLES = new WeakMap();   /* not in userData: clones copy userData as plain JSON, which would break the bone references */
 /* Where a foot touches the ground: the real lowest points of the shoe (or the bare foot), found once per body shape from its own vertices: the back of the heel, the ball of the foot and the tip of the toe.

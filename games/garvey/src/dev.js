@@ -10,7 +10,7 @@
                      sliding on a standing clip. Expect ANIM 0.
    &p=hall,street picks places. Results go to #autolog and the page title. */
 import { checkAll, CHECKS } from '../../../engine/checks.js';
-import { auditPlace, auditHeld, auditWalk, snapMeshes } from '../../../engine/audit.js';
+import { auditPlace, auditHeld, auditHeldClip, auditWalk, snapMeshes } from '../../../engine/audit.js';
 import { faceCheck } from '../../../engine/faces.js';
 import { ambientTest } from '../../../engine/ambient.js';
 import { slideWalls, walkRoute } from '../../../engine/placement.js';
@@ -181,7 +181,7 @@ export function devRun(A) {
   }
   if (test === 'held') {
     (async () => { await adapter.ready(); const out = []; let carriers = 0;
-      for (const id of placesWanted()) { const Q = await goPlace(id, BUSY[id]); for (const n of Q.people) { const held = n.m && n.m.userData.held; if (!held || !held.length) continue; carriers++; const ac = n.m.userData.anim, found = new Set(); for (let k = 0; k < 12; k++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id, n.m, held)) found.add(l); } for (const l of found) out.push(id + ': ' + l); } }
+      for (const id of placesWanted()) { const Q = await goPlace(id, BUSY[id]); for (const n of Q.people) { const held = n.m && n.m.userData.held; if (!held || !held.length) continue; carriers++; const found = auditHeldClip(n.id, n.m, held, { after: gripTick }); for (const l of found) out.push(id + ': ' + l); } }
       const n = out.length; out.unshift('held items: ' + n + ' issues (' + carriers + ' people carry something' + (carriers ? '' : ': nobody in this game holds a thing yet') + ')'); emit(out, 'HELD ' + n); })();
   }
   if (test === 'walkers') {

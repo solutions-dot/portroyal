@@ -1,6 +1,7 @@
 /* General 1960s airport detail, built as static batches. No claim of an exact
    surveyed terminal plan. Repeated frames and paving add detail cheaply. */
 import * as THREE from "three";
+import { terminalDoors, serviceDoor } from "./doors.js";
 import { createSea } from "../../../engine/sea.js";
 import {
   grp,
@@ -71,11 +72,18 @@ export function airportDetail(Q) {
   box(63, 0.36, 0.14, trim, 0, 3.76, 31.35, g);
   Q.walls.push([-31, 32.5, 31, 34.1]);
   for (let x = -28; x <= 28; x += 3.5) {
+    // three of the bays hold a pair of aluminium-framed glass doors (doors.js) standing in front of the glazing, which shows either side as side lights
+    const doorBay = x === -14 || x === 0 || x === 14;
     box(0.18, 3.7, 0.2, CREAM, x, 1.85, 32, g);
     box(2.9, 2.35, 0.055, glass, x + 1.5, 1.75, 34.85, g);
-    for (const dx of [0.1, 1.5, 2.9])
+    for (const dx of doorBay ? [0.1, 2.9] : [0.1, 1.5, 2.9])
       box(0.04, 2.4, 0.06, trim, x + dx, 1.75, 34.8, g);
-    box(2.9, 0.04, 0.06, trim, x + 1.5, 1.45, 34.8, g);
+    if (doorBay) {
+      const d = terminalDoors({ w: 1.9, h: 2.4 });
+      d.position.set(x + 1.5, 0.15, 34.82);
+      d.rotation.y = Math.PI;
+      g.add(d);
+    } else box(2.9, 0.04, 0.06, trim, x + 1.5, 1.45, 34.8, g);
     for (let i = 0; i < 4; i++)
       box(2.8, 0.07, 0.12, stone, x + 1.5, 3.05 + i * 0.13, 34.7, g);
   }
@@ -83,7 +91,13 @@ export function airportDetail(Q) {
   name.position.set(1, 4.6, 33.7);
   name.rotation.y = Math.PI;
   g.add(name);
-  // Control tower glazing, roof rails, instrument aerials and a service door.
+  // Control tower glazing, roof rails, instrument aerials and a service door (doors.js: a painted steel door on a step at the foot of the tower, facing the apron).
+  {
+    const d = serviceDoor();
+    d.position.set(-30, 0, 27.5);
+    d.rotation.y = Math.PI;
+    g.add(d);
+  }
   for (const sx of [-1, 1])
     for (let j = 0; j < 5; j++) {
       box(0.04, 1.65, 0.08, CREAM, -30 + sx * 3.51, 11, 27.2 + j * 1.4, g);

@@ -194,3 +194,31 @@ Also: the name and talk button over a person now stay below the goal's words (th
 ## The way out waits (17 November 2026)
 
 "Go back to the street" came up the moment you stepped into the tavern, because you arrive at the door. It and "Go out to the wharf" are marked `exit: true` and use the engine's `exitReady` (`docs/ENGINE.md`): the button appears once you have walked into the room, or after 7 seconds. The head-turn guard is the engine's `lookBegin` and `lookEnd` now.
+
+## Doors (17 November 2026)
+
+The owner: "this doesn't look like a door", then "the doors should fit their purpose, not one shared one". Every door made in code is now `prDoor` in `main.js`, set for its building. It follows English joinery of the later 1600s: an outer door of upright boards on ledges and braces, hung on long iron strap hinges, or, for a better building, a panelled door (stiles and rails round a low panel, a short frieze panel and a tall top panel). No photograph or plan of these particular Port Royal doors survives, so each is a reasonable stand-in for its kind, not a copy of a known door.
+
+| Building | Door | Why |
+|---|---|---|
+| The Marshalsea (prison), new street | one leaf of boards and braces, rows of nail heads, a barred spy-hole, a box lock, an iron ring | a lock-up door of the time was made to be hard to break |
+| The synagogue, new street | a pair of panelled doors on the step, ring handles | a public building in brick, the better kind of door |
+| The powder magazine in Fort Charles | boards and braces with copper fittings and a box lock, no ring | magazines used copper fittings so nothing could strike a spark |
+| St Peter's Church, churchyard | a pair of ledged and braced doors under a white transom bar, long scrolled strap hinges, a ring; over them a **glazed fanlight** fills the round head of the arch (white glazing bars radiating round a small half-round); the arch surround stands out past the stone base band | the fanlight follows the church as it stands today (see Sources below). The leaves stand open inward in every photograph found, so their face is still a stand-in |
+
+The town houses (the packed `h1` to `h6`, `tools/blender/street.py`) already have their own modelled doors (cut into the wall, frame, strap hinges, latch, step) and were not changed. The tavern's street door (inside) and the warehouse's wharf doors were already boarded with straps and were not changed.
+
+**Fort Charles gate** (`buildFort`, `main.js`): the two open leaves are now nine upright boards each, with three ledges and strap hinges on the back, folded flat against the sides of the gate passage just inside the outer arch. Before, each was one plain block set mostly inside the masonry, so it could hardly be seen. Same size (1.4 by 2.0 m), and they stay outside the walking strip of the gate.
+
+### Sources checked for the doors (17 November 2026)
+
+The owner asked for the doors to be checked against photographs of the time. For Port Royal before 1692 there are none, and no drawing, plan or written account of these particular doors was found. What was found:
+
+| Door | Source | What it shows | What was done |
+|---|---|---|---|
+| St Peter's west door | Photographs of the church today, *Jamaica: Port Royal, St Peter's Anglican Church*, travel2unlimited.com, March 2024 (https://travel2unlimited.com/?p=320648), outside and inside | a round-headed doorway in a white moulded surround; the head of the arch is a glazed fanlight with white glazing bars radiating round a small half-round, over a transom; the doors open inward and are not seen face on | the boarded arch head became a glazed fanlight. The fanlight may be later than 1725 (not dated) |
+| St Peter's | Daily News photograph, September 1973, National Library of Jamaica (https://nljdigital.nlj.gov.jm/items/show/10524) | the church from the street; the door is not seen | nothing to change. Note: the church today is plastered and painted, and the same page says it has no tower (the game has a red brick church with a west tower; not part of this door work, worth checking) |
+| Fort Charles gate | Photograph *Fort Charles, Port Royal 1955*, National Library of Jamaica (https://nljdigital.nlj.gov.jm/items/show/8215); also https://nljdigital.nlj.gov.jm/items/show/8214 | a round brick arch; a pair of tall leaves of upright boards stands open, folded back in the arch | the leaves became upright boards and were moved flat against the passage sides. The 1955 gate is not proven to be the 1690s one; it is the best evidence found |
+| Powder magazine | *Gunpowder magazine*, Wikipedia (https://en.wikipedia.org/wiki/Gunpowder_magazine); no Port Royal source | magazines avoided iron fittings so nothing would strike a spark; copper and bronze were used | kept (copper fittings, no ring) |
+| Marshalsea, synagogue | Port Royal underwater excavations (Institute of Nautical Archaeology and Texas A&M, 1981 to 1990, https://nauticalarch.org/projects/port-royal-harbor-excavation/) | no published door or door hardware was found in what could be searched | kept as stand-ins of English joinery of the later 1600s (work to do: the excavation building reports) |
+

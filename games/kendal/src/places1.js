@@ -54,7 +54,16 @@ export function buildStation45() {
   const kinds = ['first', 'third', 'third', 'first']; const cars = kinds.map((k, i) => { const c = carriage1845(k); c.position.x = i * 6; train.add(c); return c; });
   train.userData.wheels = [loco, ...cars].flatMap((v) => v.userData.wheels);
   walls.push([-13.5, -4.6, 21, -1.2]);   /* the train is a wall: you stand on the platform side */
-  const shedH = boardHouse(34, 6, 3.4, { wall: [196, 168, 118], roof: [130, 96, 80], porch: false, seed: 6 }); shedH.position.set(10, 0, 15.2); shedH.rotation.y = PI; g.add(shedH); walls.push([-7.5, 12, 27.5, 18.4]);
+  const shedH = boardHouse(34, 6, 3.4, { wall: [196, 168, 118], roof: [130, 96, 80], porch: false, seed: 6, door: false }); shedH.position.set(10, 0, 15.2); shedH.rotation.y = PI; g.add(shedH); walls.push([-7.5, 12, 27.5, 18.4]);
+  { /* the way in: an open round-headed arch between plastered piers, no door in it. The Illustrated London News engraving of the opening ("Opening of the
+       Jamaica Railway, Kingston Terminus", 31 January 1846; NLJ Print Collection) shows the terminus as a row of open round arches between pilasters, the
+       carriages and flags seen through them, and the gate lodge with an open arch too. It was a pair of six-panel doors under a transom (docs/games/kendal.md, Doors). */
+    const aw = 1.4, ah = 2.4, r0 = aw / 2, sp = ah - r0, z = 3.0, pier = solid(0xe4dcc6, 0.9), dark = solid(0x1a1612, 1);
+    const sh = new THREE.Shape(); sh.moveTo(-r0, 0); sh.lineTo(-r0, sp); sh.absarc(0, sp, r0, PI, 0, true); sh.lineTo(r0, 0); sh.lineTo(-r0, 0);
+    mesh(new THREE.ShapeGeometry(sh, 16), dark, 0, 0, z + 0.006, shedH);   /* the dark inside, seen through the arch */
+    for (const s of [-1, 1]) { box(0.22, sp, 0.1, pier, s * (r0 + 0.11), sp / 2, z + 0.05, shedH); box(0.3, 0.1, 0.14, pier, s * (r0 + 0.11), sp + 0.02, z + 0.07, shedH); }   /* the piers, with a plain impost at the spring of the arch */
+    const ring = mesh(new THREE.TorusGeometry(r0 + 0.11, 0.11, 6, 20, PI), pier, 0, sp, z + 0.05, shedH); ring.scale.z = 0.45;   /* the arch */
+    box(0.16, 0.24, 0.14, pier, 0, ah + 0.1, z + 0.07, shedH); }   /* its keystone */
   const sg = signBoard('JAMAICA RAILWAY', 6, 0.8, { bg: '#2a3a52', fg: '#f3e6b8', font: '700 62px Georgia, serif' }); sg.position.set(10, 3.6, 11.7); g.add(sg);
   /* bunting between poles along the platform edge, and flags */
   const bt = T.bunting().clone(); bt.needsUpdate = true; bt.repeat.set(3, 1);
@@ -94,7 +103,7 @@ export function buildHill() {
   stationBase(g, { x0: -34, x1: 44, zc: -3, zBack: 15, wood: true, ground: [66, 104, 48] });
   g.add(hillRing(160, 14, 85, { seed: 12, base: [0.18, 0.4, 0.2] }));
   const hut = shed(9, 4.5, 2.9, [176, 140, 96]); hut.position.set(2, 0, 11.5); hut.rotation.y = PI; g.add(hut); walls.push([-2.6, 9, 6.6, 14]);
-  const sg = signBoard('HILL STATION', 3.2, 0.55, { bg: '#2a3a52', fg: '#f3e6b8', font: '700 46px Georgia, serif' }); sg.position.set(2, 3.1, 9.1); g.add(sg);
+  const sg = signBoard('HILL STATION', 3.2, 0.55, { bg: '#2a3a52', fg: '#f3e6b8', font: '700 46px Georgia, serif' }); sg.position.set(2, 2.85, 7.6); g.add(sg);   /* on the front edge of the veranda roof: behind it, the roof hid the words */
   const wt = waterTower(); wt.position.set(34, TRACK_Y, 4); g.add(wt); wt.position.y = 0; walls.push([32, 2, 36, 6]);
   scatter(g, (i) => banana(i, i % 4 === 0), 40, [-34, 18, 44, 60], [[-6, 16, 10, 22]], 5); scatter(g, (i) => tree(5 + (i % 3), i), 16, [-30, 24, 40, 70], [], 8); scatter(g, (i) => bush(i, 1.4), 24, [-34, 15, 44, 40], [[-6, 15, 10, 22]], 3);
   /* two goods wagons waiting on the track, and the pile of banana bunches the farmer has cut */

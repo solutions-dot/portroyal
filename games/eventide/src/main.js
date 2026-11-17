@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 /* games/eventide/src/main.js: Eventide 1980, The Home on Slipe Pen Road (the plan is docs/games/eventide.md).
    Seven chapters, from a visit to the Eventide Home in May 1980, through the night of the fire of 20 May, to the monument today.
    Built on the shared engine. Controls, journal, chapters, saving and tests follow Kendal 1957 (games/kendal/src/main.js), which this file is modelled on.
@@ -19,7 +20,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { boy: 2, girl: 2, man_elder: 2, man_shirt: 2, man_suit: 2, man_work: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough, auditBodies, auditVehicles, auditGarments, auditHanging, hiddenWith } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditThrough, auditBodies, auditVehicles, auditGarments, auditHanging, hiddenWith } from '../../../engine/audit.js';
 import { G, makeSky, ease, rng, batchStatic } from './gfx.js';
 import { hamper, bucket, suitcase } from './props.js';
 import { foldedBlanket, drapeBlanket } from './blanket.js';
@@ -361,7 +362,7 @@ function showLine() {
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(c); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
-  const ac = talkWith && talkWith.ctl; if (ac && !(talkWith.m.userData.held || []).length) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
+  const ac = talkWith && talkWith.ctl; if (ac) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
 }
 function choose(c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
@@ -647,6 +648,8 @@ function devViews() {
   /* ?shot=veh&v=bus|busdoor|car|van|engine|dawnbus : the vehicles close up (engine/roadcars.js) */
   if (shot === 'veh') { const v = q.get('v') || 'bus', W = { bus: [0, 10, [-29.5, 2.6, -3.2], [-37, 1.5, 2.3]], busdoor: [0, 10, [-30, 1.7, 6.4], [-36, 1.5, 2.3]], car: [0, 10, [22.6, 1.7, -1.6], [18, 0.7, 2.6]], van: [0, 12, [8.4, 1.8, -53.4], [5.2, 0.9, -58.5]], engine: [3, 41, [3.6, 2.2, -11.2], [-0.6, 1.2, -17]], dawnbus: [3, 45, [1.5, 1.7, 3.4], [-6, 1.5, -2.3]] }[v];
     go(W[0], W[1]).then((P) => { fixedCam = { p: W[2], t: W[3] }; if (v === 'dawnbus') { P.bus2.visible = true; P.bus2.position.x = -6; } for (let i = 0; i < 6; i++) update(0.1, 2000 + i * 100); document.title = 'view veh ready'; }); }
+  /* ?shot=cam&ch=0&st=12&p=x,y,z&t=x,y,z : any view, from p looking at t (for checking a building close up, such as its doors) */
+  if (shot === 'cam') { const V3 = (k) => (q.get(k) || '0,1.6,0').split(',').map(Number); go(+(q.get('ch') || 0), +(q.get('st') || 12)).then(() => { fixedCam = { p: V3('p'), t: V3('t') }; for (let i = 0; i < 6; i++) update(0.1, 2000 + i * 100); document.title = 'view cam ready'; }); }
   /* ?shot=look&b=fireman&y=1.6&d=0.9&a=0.6 : one look close up, by day (y: height looked at, d: distance, a: angle round the body) */
   if (shot === 'look') (async () => { await go(0, 10); const k = q.get('b') || 'gran'; await loadBase(LOOKS[k].base); const m = makeBody({ ...LOOKS[k], x: -40, z: -3.6, ry: 0 }); SC.P.group.add(m); const y = +(q.get('y') || 1.5), d = +(q.get('d') || 0.9), a = +(q.get('a') || 0.5); fixedCam = { p: [-40 + Math.sin(a) * d, y + 0.1, -3.6 + Math.cos(a) * d], t: [-40, y, -3.6] }; for (let i = 0; i < 4; i++) update(0.1, 2000 + i * 100); document.title = 'view look ready'; })();
   if (shot === 'cast') (async () => { await go(0, 10); const ids = Object.keys(LOOKS); await Promise.all(ids.map((k) => loadBase(LOOKS[k].base))); ids.forEach((k, i) => { const m = makeBody({ ...LOOKS[k], x: -40 + (i % 11) * 1.0, z: -3.6 + ((i / 11) | 0) * 1.6, ry: 0 }); SC.P.group.add(m); }); fixedCam = { p: [-35, 1.5, 3.4], t: [-35, 0.9, -3] }; if (q.get('night')) setEnv(ENV.night); document.title = 'view cast ready'; })();
@@ -668,9 +671,9 @@ function devViews() {
     const only = q.has('ch') ? +q.get('ch') - 1 : -1;   /* &ch=5 checks one chapter and leaves it on the screen */
     for (let i = 0; i < SCENES.length; i++) { if (only >= 0 && i !== only) continue; await beginChapter(i); resetTransient(); if (!SC.life) { o.push('chapter ' + (i + 1) + ': no crowd'); continue; } const r = ambientTest(SC.life, { story: () => SC.people.filter((n) => n.m.visible) }), n = +(r.match(/^AMBIENT (\d+)/) || [0, 0])[1]; bad += n; o.push('chapter ' + (i + 1) + ': ' + r.split('\n').filter(Boolean).slice(0, 8).join('\n  ')); }
     const el = $('autolog') || document.body.appendChild(Object.assign(document.createElement('pre'), { id: 'autolog' })); el.textContent = ['AMBIENT ' + bad, ...o].join('\n'); document.title = 'AMBIENT ' + bad; })();
-  if (q.get('test') === 'held') (async () => {   /* every carried thing, in every chapter: at the hand, upright, clear of the body, in twelve poses */
+  if (q.get('test') === 'held') (async () => {   /* every carried thing, in every chapter: at the hand, upright, clear of the body, through the whole clip (engine/audit.js auditHeldClip) */
     const o = []; let n0 = 0; startGame(true);
-    for (let i = 0; i < SCENES.length; i++) { await beginChapter(i); resetTransient(); for (const n of SC.npcs) if (n.m.userData.held && n.m.userData.held.length) { n0++; const ac = n.m.userData.anim, found = new Set(); for (let pose = 0; pose < 12; pose++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) found.add(l); } for (const l of found) o.push('chapter ' + (i + 1) + ': ' + l); } }
+    for (let i = 0; i < SCENES.length; i++) { await beginChapter(i); resetTransient(); for (const n of SC.npcs) if (n.m.userData.held && n.m.userData.held.length) { n0++; const found = auditHeldClip(n.id || n.base, n.m, n.m.userData.held, { after: gripTick }); for (const l of found) o.push('chapter ' + (i + 1) + ': ' + l); } }
     const c = o.length; o.unshift('held items: ' + c + ' issues, ' + n0 + ' people carry something'); out('HELD ' + c, o); })();
   if (q.get('test') === 'follow') {   /* ?test=follow : you walk the real route with Gran, with stops and a turn back into her, and her is watched (engine/follow.js, watch): too close (inside the
        personal space), inside a wall or a solid shape (engine/audit.js auditBodies), or left far behind. Expect 0. */

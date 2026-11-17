@@ -2,6 +2,7 @@ import { loftSkin as skin } from "../../../engine/loft.js";
 /* games/kendal/src/props.js: plants, hills, houses, animals and the many small things that fill a scene.
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from "three";
+import { yardBoardDoor } from "./doors.js";
 import {
   T,
   std,
@@ -467,7 +468,10 @@ export function boardHouse(
     box(0.4, 0.8, 0.07, shut, x - 0.62, h * 0.62, d / 2 + 0.04, g);
     box(0.4, 0.8, 0.07, shut, x + 0.62, h * 0.62, d / 2 + 0.04, g);
   }
-  box(0.9, 1.9, 0.07, solid(0x4a2f1e, 0.9), 0, 0.95, d / 2 + 0.03, g);
+  // the front door (doors.js): painted boards, a padlocked hasp, on the veranda floor
+  const door = yardBoardDoor({ color: [0x4f6e4e, 0x6a4a34, 0x4a5e70][Math.abs(seed) % 3] });
+  door.position.set(0, porch ? 0.27 : 0, d / 2);
+  g.add(door);
   const wf = solid(0xe8e0cc, 0.8);
   for (const x of [-w * 0.28, w * 0.28]) {
     box(1.14, 0.06, 0.07, wf, x, h * 0.62 + 0.47, d / 2 + 0.05, g);
@@ -476,9 +480,6 @@ export function boardHouse(
     for (const s of [-0.54, 0, 0.54])
       box(0.05, 0.94, 0.07, wf, x + s, h * 0.62, d / 2 + 0.05, g);
   }
-  box(1.06, 0.06, 0.08, wf, 0, 1.94, d / 2 + 0.05, g);
-  for (const s of [-0.5, 0.5])
-    box(0.06, 1.9, 0.08, wf, s, 0.95, d / 2 + 0.05, g);
   for (const [x, z] of [
     [-w / 2 + 0.2, -d / 2 + 0.2],
     [w / 2 - 0.2, -d / 2 + 0.2],

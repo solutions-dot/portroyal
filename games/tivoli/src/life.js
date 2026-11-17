@@ -27,7 +27,7 @@ const P = {
   man10: (Shirt, Breeches = 0x60708c) => ({ base: 'man2010', sex: 'm', tint: { Shirt, Breeches } }),
   woman: (Shirt, Skirt) => ({ base: 'guide2020', sex: 'f', tint: { Shirt, Skirt } }),
 };
-const BENCH = (x, z, side, ry) => ({ top: 0.5, x: x + side * 0.45, z, ry });   /* newtivoli.js benches: 1.8 m long, seat top 50 cm; two people sit 90 cm apart */
+const BENCH = (x, z, side, ry) => ({ top: 0.45, x: x + side * 0.45, z, ry });   /* newtivoli.js benches: 1.8 m long, seat top 45 cm; two people sit 90 cm apart */
 const IDL_M = ['IdleM', 'Idle', 'LookAround'], IDL_F = ['Idle', 'HappyIdle', 'LookAround'], IDL_OLD = ['OldIdle', 'Idle', 'LookAround'], IDL_KID = ['HappyIdle', 'Idle'];
 
 /* who is in each chapter, and what they do. at: [x, z]; spec: the engine behaviour (docs/ENGINE.md, engine/ambient.js) */
@@ -140,7 +140,7 @@ export async function lifeTest(WALKS) {
   const out = []; let total = 0;
   for (const id of Object.keys(LIFE).map(Number)) {
     const place = WALKS[id].build({}), r = await addLife(id, place, null); if (!r) continue;
-    const story = place.npcs.map((n) => ({ x: n.x, z: n.z })); const txt = ambientTest(r.life, { route: routeOf(place), story, seconds: 60 }); const n = +txt.split('\n')[0].split(' ')[1];
+    const story = place.npcs.map((n) => ({ x: n.x, z: n.z })); const txt = ambientTest(r.life, { route: routeOf(place), story, seconds: 60, place: place.raw }); const n = +txt.split('\n')[0].split(' ')[1];
     total += n; out.push('chapter ' + id + ' (' + r.mood + ', ' + r.people.length + ' people): ' + txt.split('\n').filter(Boolean).join('\n  ')); r.clear();
   }
   return { total, lines: out };

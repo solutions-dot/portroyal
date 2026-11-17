@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
 import { goTo, tick as followTick } from '../../../engine/follow.js';   /* people sent somewhere walk the same way in every game */
@@ -12,6 +13,7 @@ import { refresh as refreshLifeOf, lifeFor, EXTRAS } from './life.js';   /* what
    The two people and their lines are placeholders for testing the pipeline. Both are fictional. */
 import * as THREE from 'three';
 import { steamer, schooner } from '../../../engine/boats.js';
+import { makeDoor } from '../../../engine/door.js';   /* a framed, panelled door for every building (owner, 17 November 2026) */
 import { gripTick, spreadArms } from '../../../engine/grip.js';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
@@ -101,6 +103,10 @@ function boxGeo(w, h, d, textured) {   /* a textured box gets its UVs scaled by 
   if (textured) { const uv = g.attributes.uv, T = 1.2, dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]]; for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const i = f * 4 + v; uv.setXY(i, uv.getX(i) * dims[f][0] / T, uv.getY(i) * dims[f][1] / T); } }
   BOXGEO.set(key, g); return g; }
 const box = (w, h, d, m, x, y, z, parent) => mesh(boxGeo(w, h, d, !!m.map), m, x, y, z, parent);
+/* the pair of doors in the front of a room you stand in, folded right back against the inside of the front wall, so the doorway stays open and you look out
+   through it. zIn is the inner face of the door posts. Each room passes the kind of door its own building had (owner, 17 November 2026: "the doors should fit
+   their purpose, not one shared one"): jalousie shop doors in Kingston, a Georgian six-panel pair in the Kingston hall, a glazed shop door in Harlem, and so on. */
+function roomDoors(parent, x, zIn, w, h, o) { const d = makeDoor({ w, h, leaves: 2, open: -3.0 / 1.4, ...o }); d.position.set(x, 0, zIn); d.children.filter((c) => c.isMesh && c.material.name === 'DoorFrame').forEach((c) => d.remove(c)); (parent || room).add(d); return d; }   /* the door is set facing out of the room and the leaves swung in and right round, so their panels or louvres face you; the room's own timber posts are its frame, so the kit's frame and sill are left out */
 const cyl = (r0, r1, h, m, x, y, z, parent, seg = 18) => mesh(new THREE.CylinderGeometry(r0, r1, h, seg), m, x, y, z, parent);
 
 /* ---------- the room: 9 m wide, 7 m deep, high ceiling for the heat ---------- */
@@ -117,6 +123,7 @@ wall(dl - X0, (X0 + dl) / 2, Z1, Math.PI); wall(X1 - dr, (dr + X1) / 2, Z1, Math
 box(DOOR.w + 0.3, H - DOOR.h, 0.14, solid(0xdccfb0, 1), DOOR.x, (DOOR.h + H) / 2, Z1 - 0.07);
 for (const x of [dl - 0.06, dr + 0.06]) box(0.14, DOOR.h, 0.18, beam, x, DOOR.h / 2, Z1 - 0.09);
 box(DOOR.w + 0.34, 0.16, 0.18, beam, DOOR.x, DOOR.h + 0.08, Z1 - 0.09);
+roomDoors(room, DOOR.x, Z1 - 0.18, DOOR.w - 0.02, DOOR.h - 0.01, { kind: 'louvre', color: 0x3a6a46, frame: 0xe6dcc0, handle: 'latch', metal: 0x3a3a3a });   /* Kingston, 1908: a pair of tall jalousie (louvred) shop doors, painted green, folded back by day to let in the light and the breeze */
 for (let z = Z0 + 0.5; z < Z1; z += 0.95) box(0.14, 0.2, W, beam, 0, H - 0.1, z).rotation.y = Math.PI / 2;   /* ceiling joists */
 box(0.3, 0.34, D, beam, -2.2, H - 0.3, 0); box(0.3, 0.34, D, beam, 2.2, H - 0.3, 0);
 for (const [w, cx, cz, ry] of [[W, 0, Z0, 0], [D, X0, 0, Math.PI / 2], [D, X1, 0, -Math.PI / 2]]) { const c = Math.cos(ry), s = Math.sin(ry); box(w, 0.1, 0.05, beam, cx + s * 0.03, 0.05, cz + c * 0.03).rotation.y = ry; }   /* skirting boards */
@@ -618,6 +625,7 @@ function buildHall() {
   const dw = 2.2, dh = 3.0, sw = (W2 - dw) / 2; wallP(sw, HALL.x0 + sw / 2, HALL.z1, Math.PI); wallP(sw, HALL.x1 - sw / 2, HALL.z1, Math.PI);
   box(dw + 0.3, H2 - dh, 0.14, solid(0xdccfb0, 1), 0, (dh + H2) / 2, HALL.z1 - 0.07, g);
   for (const x of [-dw / 2 - 0.07, dw / 2 + 0.07]) box(0.16, dh, 0.2, beam, x, dh / 2, HALL.z1 - 0.1, g); box(dw + 0.36, 0.18, 0.2, beam, 0, dh + 0.09, HALL.z1 - 0.1, g);
+  roomDoors(g, 0, HALL.z1 - 0.2, dw - 0.02, dh - 0.01, { kind: 'six', color: 0x5a3a22, frame: 0xe6dcc0, metal: 0xb08a40 });   /* Kingston, 1914: a Georgian pair of six-panel doors, varnished, as the town's older halls and lodges had */
   mesh(new THREE.PlaneGeometry(16, 6), new THREE.MeshBasicMaterial({ map: streetTex() }), 0, 2.4, HALL.z1 + 3.6, g).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(16, 3.4), new THREE.MeshBasicMaterial({ color: 0xcdb98a }), 0, 0.01, HALL.z1 + 1.7, g).rotation.x = -Math.PI / 2;
   mesh(new THREE.PlaneGeometry(2.6, 3.2), patchM, 0, 0.013, HALL.z1 - 1.6, g).rotation.x = -Math.PI / 2;
@@ -719,8 +727,16 @@ function buildStreet() {
   for (let i = 0; i < 13; i++) for (const sz of [-1, 1]) {   /* a row of tall brick houses on each side, each with a stoop and a door */
     const x = -27 + i * 4.5, z = sz * 10.6, v = i + (sz > 0 ? 2 : 0), f = mesh(new THREE.PlaneGeometry(4.5, 11), std(facadeTex(v), 0.95), x, 5.5, sz * 7.58, g); f.rotation.y = sz > 0 ? Math.PI : 0;
     box(4.5, 11, 6, solid([0x6a4034, 0x5c4034, 0x70483a][v % 3], 1), x, 5.5, z, g); box(4.7, 0.5, 0.7, solid(0xcfc2a8, 0.9), x, 11.1, sz * 7.35, g);
-    for (let k = 0; k < 3; k++) box(1.3, 0.2, 0.42, solid(0x9a9486, 0.9), x - 0.5, 0.1 + k * 0.2, sz * (7.35 - 0.2 - k * 0.4 + 1.2), g);
-    box(0.95, 2.1, 0.12, solid(0x2a1d16, 0.8), x - 0.5, 1.9, sz * 7.5, g); box(1.1, 0.14, 0.18, solid(0xcfc2a8, 0.9), x - 0.5, 3.0, sz * 7.47, g); }
+    for (let k = 0; k < 3; k++) { const top = 0.3 + k * 0.15; box(1.5, top, 0.4, solid(0x9a9486, 0.9), x - 0.5, top / 2, sz * (7.58 - 0.2 - (2 - k) * 0.4), g); }   /* the stoop: three stone steps up from the pavement, each standing on the ground (they ran back into the house, the top one floating) */
+    { /* a Harlem row house entrance, after the brownstones and brick houses of Harlem's 1880s and 1890s streets (the Mount Morris Park and Strivers' Row
+         historic district reports): a stone surround of two pilasters and a hood, a glass transom light over a pair of heavy timber doors (raised panels,
+         or glass in the upper half behind a grille), brass knobs, and iron railings down the stoop. It was a flat dark board (owner, 17 November 2026). */
+      const e = new THREE.Group(); e.position.set(x - 0.5, 0, sz * 7.58); e.rotation.y = sz > 0 ? Math.PI : 0; g.add(e); const stone = solid(0xcfc2a8, 0.9), ironR = solid(0x1e1e20, 0.5, 0.4);
+      const d = makeDoor({ w: 1.1, h: 2.0, kind: v % 2 ? 'glazed' : 'panel', leaves: 2, color: [0x4a3020, 0x3a2418, 0x2a2a26][v % 3], frame: 0x5a4030, glass: 0x26323a, metal: 0xb08a40, handle: 'knob' }); d.position.y = 0.6; e.add(d);
+      box(1.3, 0.34, 0.06, solid(0x5a4030, 0.8), 0, 2.81, 0.03, e); box(1.1, 0.24, 0.02, solid(0x2a3640, 0.2, 0.3), 0, 2.81, 0.065, e); box(0.03, 0.24, 0.03, solid(0x5a4030, 0.8), 0, 2.81, 0.08, e);   /* the transom light */
+      for (const s of [-1, 1]) box(0.16, 2.5, 0.1, stone, s * 0.74, 0.6 + 1.25, 0.05, e);   /* the stone pilasters */
+      box(1.6, 0.18, 0.26, stone, 0, 3.08, 0.13, e); box(1.7, 0.06, 0.3, stone, 0, 3.2, 0.15, e);   /* the hood */
+      for (const s of [-1, 1]) { const r = mesh(new THREE.CylinderGeometry(0.018, 0.018, Math.hypot(1.1, 0.3), 6), ironR, s * 0.68, 1.35, 0.6, e); r.rotation.x = Math.atan2(1.1, -0.3); for (let k = 0; k < 3; k++) box(0.022, 0.9, 0.022, ironR, s * 0.68, 0.6 - k * 0.15 + 0.45, 0.2 + k * 0.4, e); } }   /* iron railings down each side of the stoop */ }
   for (const lx of [-9, -3, 3, 9]) for (const sz of [-1, 1]) { cyl(0.05, 0.07, 3.6, solid(0x202428, 0.6), lx, 1.8, sz * 4.7, g, 8); const lamp = cyl(0.22, 0.16, 0.34, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffd48a, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }), lx, 3.7, sz * 4.7, g, 8); lamp.name = 'lamp'; }
   box(1.3, 0.5, 1.0, wood, 0, 0.25, 0.5, g); box(1.38, 0.05, 1.08, woodDark, 0, 0.525, 0.5, g); STREET_WALLS.push([-0.75, -0.05, 0.75, 1.05]);   /* the speaker's box: big enough to stand on with both feet well inside the edge, with a darker lid and a wall so nobody walks through it */
   for (const [bx, bz] of [[-0.6, -0.02], [0.6, -0.02], [-0.6, 1.02], [0.6, 1.02]]) box(0.08, 0.5, 0.08, woodDark, bx, 0.25, bz, g);
@@ -768,7 +784,7 @@ const HEADLINES = { pride: 'Be Proud of Who You Are', learn: 'Read, Learn and Gr
 function brickTex() { return cv(256, 256, (x, w, h) => { x.fillStyle = '#3c2a22'; x.fillRect(0, 0, w, h); const bh = 16, bw = 42; for (let r = 0; r * bh < h; r++) for (let c = -1; c * bw < w; c++) { const v = 0.82 + Math.random() * 0.3; x.fillStyle = `rgb(${128 * v | 0},${74 * v | 0},${58 * v | 0})`; x.fillRect(c * bw + (r % 2) * bw / 2 + 1, r * bh + 1, bw - 2, bh - 2); } grain(x, w, h, 10); }); }
 brickTex = memo(brickTex);
 function frontPageTex(head) {   /* the finished front page, as a picture for the wall */
-  return cv(256, 340, (x, w, h) => { x.fillStyle = '#efe7d2'; x.fillRect(0, 0, w, h); x.fillStyle = '#1d1a16'; x.textAlign = 'center'; x.font = '700 27px Georgia, serif'; x.fillText('THE NEGRO WORLD', w / 2, 40); x.fillRect(14, 50, w - 28, 3); x.fillRect(14, 56, w - 28, 1);
+  return cv(256, 340, (x, w, h) => { x.fillStyle = '#efe7d2'; x.fillRect(0, 0, w, h); x.fillStyle = '#1d1a16'; x.textAlign = 'center'; x.font = '700 22px Georgia, serif'; x.fillText('THE NEGRO WORLD', w / 2, 40); x.fillRect(14, 50, w - 28, 3); x.fillRect(14, 56, w - 28, 1);
     x.font = '700 20px Georgia, serif'; const rows = []; let cur = ''; for (const wd of head.split(' ')) { if ((cur + ' ' + wd).trim().length > 16) { rows.push(cur); cur = wd; } else cur = (cur + ' ' + wd).trim(); } rows.push(cur); rows.forEach((r, i) => x.fillText(r, w / 2, 86 + i * 24));
     const top = 96 + rows.length * 24; x.fillStyle = '#8a8272'; x.fillRect(16, top, 100, 84); x.fillStyle = '#1d1a16'; for (let i = 0; i < 14; i++) x.fillRect(126, top + i * 6, 100 + (i % 3) * 4, 3);
     for (let i = 0; i < 8; i++) x.fillRect(16, top + 98 + i * 14, w - 32, 3); x.font = '700 14px Georgia, serif'; x.fillText('5 cents', w - 44, h - 12); grain(x, w, h, 10); });
@@ -782,6 +798,7 @@ function buildPress() {
   const dw = 2.2, dh = 3.0, sw = (W2 - dw) / 2; wallP(sw, PRESS.x0 + sw / 2, PRESS.z1, Math.PI); wallP(sw, PRESS.x1 - sw / 2, PRESS.z1, Math.PI);
   box(dw + 0.3, H2 - dh, 0.14, solid(0x6a4a3a, 1), 0, (dh + H2) / 2, PRESS.z1 - 0.07, g);
   for (const x of [-dw / 2 - 0.07, dw / 2 + 0.07]) box(0.16, dh, 0.2, beam, x, dh / 2, PRESS.z1 - 0.1, g); box(dw + 0.36, 0.18, 0.2, beam, 0, dh + 0.09, PRESS.z1 - 0.1, g);
+  roomDoors(g, 0, PRESS.z1 - 0.2, dw - 0.02, dh - 0.01, { kind: 'glazed', color: 0x2a2620, frame: 0x3a2a1d, glass: 0x3a4a52, metal: 0xb08a40 });   /* Harlem, 1918: a New York shop front's pair of glazed doors, dark painted, with brass push bars */
   for (let i = 0; i < 4; i++) mesh(new THREE.PlaneGeometry(4.5, 9), new THREE.MeshBasicMaterial({ map: facadeTex(i + 1) }), -6.75 + i * 4.5, 4.5, PRESS.z1 + 3.4, g).rotation.y = Math.PI;   /* the houses across the street, seen through the door */
   mesh(new THREE.PlaneGeometry(18, 3.4), new THREE.MeshBasicMaterial({ color: 0xa9a291 }), 0, 0.01, PRESS.z1 + 1.7, g).rotation.x = -Math.PI / 2;
   mesh(new THREE.PlaneGeometry(2.6, 3.2), patchM, 0, 0.013, PRESS.z1 - 1.6, g).rotation.x = -Math.PI / 2;
@@ -988,8 +1005,8 @@ function buildDeck() {
   { const lbT = cv(64, 16, (x, w, h) => { x.fillStyle = '#f2eee2'; x.fillRect(0, 0, w, h); x.fillStyle = '#b3261e'; for (let k = 0; k < 4; k++) x.fillRect(k * 16 + 5, 0, 6, h); }), lbM = std(lbT, 0.8);
     for (const [bx, sd] of [[12.3, -1], [3.4, 1], [-4.4, -1], [-4.4, 1]]) { const lb = mesh(new THREE.TorusGeometry(0.27, 0.065, 8, 20), lbM, bx, 0.62, sd * 3.31, g); lb.rotation.y = 0; }
     const grT = cv(64, 64, (x, w, h) => { x.fillStyle = '#6a4f34'; x.fillRect(0, 0, w, h); x.fillStyle = '#17120c'; for (let a = 0; a < 8; a++) for (let b2 = 0; b2 < 8; b2++) x.fillRect(a * 8 + 2, b2 * 8 + 2, 4, 4); }); const gr = mesh(new THREE.PlaneGeometry(1.1, 1.1), std(grT, 0.9), 15.55, 0.012, 0, g); gr.rotation.x = -Math.PI / 2;
-    const doorT = cv(64, 128, (x, w, h) => { x.fillStyle = '#7a5a3a'; x.fillRect(0, 0, w, h); x.strokeStyle = '#4a3420'; x.lineWidth = 3; x.strokeRect(6, 8, w - 12, 50); x.strokeRect(6, 66, w - 12, 54); x.fillStyle = '#c9a24a'; x.beginPath(); x.arc(w - 10, 64, 3, 0, 7); x.fill(); for (let n = 0; n < 40; n++) { x.fillStyle = 'rgba(40,28,16,0.2)'; x.fillRect(Math.random() * w, 0, 1, h); } }), doorM = std(doorT, 0.8);
-    for (const [dx, dz, ry] of [[4.59, 0, Math.PI / 2], [-9.99, 0, -Math.PI / 2 + Math.PI]]) { const d = mesh(new THREE.PlaneGeometry(0.62, 1.1), doorM, dx, 0.57, dz, g); d.rotation.y = dx > 0 ? -Math.PI / 2 : Math.PI / 2; }
+    for (const dx of [4.6, -10.1]) { const s = dx > 0 ? -1 : 1, d = makeDoor({ w: 0.62, h: 0.95, kind: 'panel', color: 0x8a5e34, frame: 0x6a4626, metal: 0xc9a24a, handle: 'knob', rough: 0.45 }); d.position.set(dx, 0.14, 0); d.rotation.y = s * Math.PI / 2; g.add(d);
+      box(0.08, 0.14, 0.84, solid(0x6a4626, 0.5), dx + s * 0.04, 0.07, 0, g); }   /* a ship's deckhouse door: varnished teak in a teak frame, over a raised sill (the coaming) that keeps sea water out, a brass knob. They were painted pictures on a flat card (owner, 17 November 2026) */
     const ropeT = cv(64, 16, (x, w, h) => { x.fillStyle = '#9a875a'; x.fillRect(0, 0, w, h); x.strokeStyle = 'rgba(70,58,34,0.7)'; x.lineWidth = 2; for (let k = -2; k < 12; k++) { x.beginPath(); x.moveTo(k * 8, h); x.lineTo(k * 8 + 8, 0); x.stroke(); } }, [10, 1]), ropeM = std(ropeT, 1);
     for (const [rx, rz] of [[2.6, 2.5], [18.6, -2.2], [-8.6, -0.2]]) for (let k = 0; k < 3; k++) mesh(new THREE.TorusGeometry(0.34 - k * 0.09, 0.045, 6, 18), ropeM, rx, 0.05 + k * 0.035, rz, g).rotation.x = Math.PI / 2; }
   /* an anchor windlass and bitts on the forecastle, a deck bucket */
@@ -1061,6 +1078,7 @@ function buildLiberty() {
   wallP(W2, 0, LIB.z0, 0); wallP(D2, LIB.x0, 0, Math.PI / 2); wallP(D2, LIB.x1, 0, -Math.PI / 2);
   const dw = 2.4, dh = 3.2, sw = (W2 - dw) / 2; wallP(sw, LIB.x0 + sw / 2, LIB.z1, Math.PI); wallP(sw, LIB.x1 - sw / 2, LIB.z1, Math.PI);
   box(dw + 0.3, H2 - dh, 0.14, solid(0xdccfb0, 1), 0, (dh + H2) / 2, LIB.z1 - 0.07, g); for (const x of [-dw / 2 - 0.07, dw / 2 + 0.07]) box(0.16, dh, 0.2, beam, x, dh / 2, LIB.z1 - 0.1, g); box(dw + 0.36, 0.18, 0.2, beam, 0, dh + 0.09, LIB.z1 - 0.1, g);
+  roomDoors(g, 0, LIB.z1 - 0.2, dw - 0.02, dh - 0.01, { kind: 'panel', color: 0x5a2a22, frame: 0xd8ccb0, metal: 0xb08a40, handle: 'lever' });   /* Liberty Hall, 1920: a plain pair of panelled doors, painted. A stand-in: no clear photograph of the doors themselves was found (docs/games/garvey.md) */
   for (let i = 0; i < 4; i++) mesh(new THREE.PlaneGeometry(4.5, 9), new THREE.MeshBasicMaterial({ map: facadeTex(i + 2) }), -6.75 + i * 4.5, 4.5, LIB.z1 + 3.4, g).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(18, 3.4), new THREE.MeshBasicMaterial({ color: 0xa9a291 }), 0, 0.01, LIB.z1 + 1.7, g).rotation.x = -Math.PI / 2;
   for (const z of [-4.5, -1.5, 1.5, 4.5]) box(W2, 0.3, 0.3, beam, 0, H2 - 0.15, z, g);
@@ -1139,6 +1157,7 @@ function buildOffice() {
   wallP(W2, 0, OFF.z0, 0); wallP(D2, OFF.x0, 0, Math.PI / 2); wallP(D2, OFF.x1, 0, -Math.PI / 2);
   const dw = 2.0, dh = 2.7, sw = (W2 - dw) / 2; wallP(sw, OFF.x0 + sw / 2, OFF.z1, Math.PI); wallP(sw, OFF.x1 - sw / 2, OFF.z1, Math.PI);
   box(dw + 0.3, H2 - dh, 0.14, solid(0xdccfb0, 1), 0, (dh + H2) / 2, OFF.z1 - 0.07, g); for (const x of [-dw / 2 - 0.07, dw / 2 + 0.07]) box(0.16, dh, 0.2, beam, x, dh / 2, OFF.z1 - 0.1, g); box(dw + 0.36, 0.18, 0.2, beam, 0, dh + 0.09, OFF.z1 - 0.1, g);
+  roomDoors(g, 0, OFF.z1 - 0.2, dw - 0.02, dh - 0.01, { kind: 'glazed', color: 0x7a5634, frame: 0x5a3e26, glass: 0xc9ccc2, metal: 0x9a8a5a, handle: 'knob' });   /* a Harlem office, 1925: oak doors with frosted (obscure) glass, as 1920s offices had */
   for (let i = 0; i < 4; i++) mesh(new THREE.PlaneGeometry(4.5, 9), new THREE.MeshBasicMaterial({ map: facadeTex(i) }), -6.75 + i * 4.5, 4.5, OFF.z1 + 3.2, g).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(14, 3.0), new THREE.MeshBasicMaterial({ color: 0xa9a291 }), 0, 0.01, OFF.z1 + 1.5, g).rotation.x = -Math.PI / 2;
   for (const z of [-2, 0, 2]) box(W2, 0.2, 0.2, beam, 0, H2 - 0.1, z, g);
@@ -1586,6 +1605,8 @@ function devViews() {
   if (shot === 'presschat') inPress(32, 2.4, 0.5, -2.98, 0.05).then(() => startTalk(byId('sailor')));
   if (shot === 'street1') inStreet(20, -7, 2.6, -1.25, 0.02);
   if (shot === 'street2') inStreet(21, 4.5, 1.2, 1.35, 0.03);
+  if (shot === 'at') { const n = (k, d) => +(q.get(k) ?? d), [x, z, yaw, pitch] = [n('x', 0), n('z', 0), n('yaw', 0), n('pitch', 0)];   /* any spot in the street or on the deck: ?shot=at&p=street|deck&x=&z=&yaw=&pitch= (used to look at the doors) */
+    const pl = q.get('p'); if (pl === 'deck') inDock(41, 0, 3.0, 0, 0).then(() => { buildDeck(); enterPlace('deck'); go(x, z, yaw, pitch); }); else if (pl === 'shop') go(x, z, yaw, pitch); else if (pl === 'hall') inHall(10, x, z, yaw, pitch); else if (pl === 'press') inPress(30, x, z, yaw, pitch); else if (pl === 'liberty') inLib(50, x, z, yaw, pitch); else if (pl === 'office') inOff(60, x, z, yaw, pitch); else inStreet(20, x, z, yaw, pitch); }
   if (shot === 'streetchat') inStreet(21, 0.3, 2.9, 0.1, 0.05).then(() => startTalk(byId('garvey3')));
   if (shot === 'hall1') inHall(10, 0, 3.1, 0, 0);
   if (shot === 'hall2') inHall(11, 1.2, 0.6, -1.0, -0.08, 'WORK');

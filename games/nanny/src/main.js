@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { maroon_man: 2, maroon_scout: 2, maroon_woman: 2, maroon_girl: 2, maroon_boy: 2, redcoat: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
@@ -17,7 +18,7 @@ import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditCloth, auditBodies, hiddenWith } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditCloth, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { walkRoute } from '../../../engine/placement.js';
 import { follow, lead, goTo, stop as stopFollow, tick as followTick, isFollowing, pathSpots, pathS as pathSE, watch as followWatch } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev checks only (?test=skin), dropped from the public build */
@@ -933,7 +934,7 @@ function devViews() {
       document.title = 'LAYOUT ' + out.length; const el = $('autolog'); if (el) el.textContent = (out.length ? out : [W + 'x' + Hh + ': no layout problems']).join('\n'); })();
   }
   if (q.get('test') === 'held') {   /* ?test=held : every carried thing, in every place: at the hand, upright, clear of the body */
-    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { const ac = n.m.userData.anim, found = new Set(); for (const clip of [null, 'Walk']) { if (clip && !n.path && n.column === undefined) continue; ac.play(clip); for (let pose = 0; pose < 12; pose++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) found.add(l + (clip ? ' (walking)' : '')); } } ac.play(null); for (const l of found) out.push(id + ': ' + l); } }
+    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { const ac = n.m.userData.anim, found = new Set(); for (const clip of [null, 'Walk']) { if (clip && !n.path && n.column === undefined) continue; ac.play(clip); for (const l of auditHeldClip(n.id || n.base, n.m, n.m.userData.held, { after: gripTick })) found.add(l); } ac.play(null); for (const l of found) out.push(id + ': ' + l); } }
       const count = out.length; out.unshift('held items: ' + count + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + count; })();
   }
   if (['audit', 'collision', 'seating'].includes(q.get('test'))) {   /* ?test=audit&p=town,watch : floating objects, people inside solids or off the ground, unreachable spots */
@@ -1004,7 +1005,7 @@ function devViews() {
         const targets = P.people.filter((n) => shown(n)).map((n) => [n.hx, n.hz]).concat(A.map((a) => [a.x, a.z])), route = [hub];
         for (const t of targets) { const to = P.G.clamp(t[0] + 0.9, t[1] + 0.5), r = walkRoute(route[route.length - 1], to, P.solidBoxes, 0.3, P.bounds); route.push(...(r.length ? r : [to])); }
         for (let i = 0; i < 3; i++) update(1 / 30); refreshCast(); lifeSync(P);
-        for (const [k, L] of P.lives) { if (!L.on || !L.life.people.length) continue; const txt = ambientTest(L.life, { route, stops: route.map((_, i) => i), story: () => storyFor(P, L), seconds: +(q.get('s') || 60), view: (pp) => ({ x: pp[0], z: pp[1], yaw: state.yaw }) }), n = +txt.split('\n')[0].split(' ')[1];
+        for (const [k, L] of P.lives) { if (!L.on || !L.life.people.length) continue; const txt = ambientTest(L.life, { route, stops: route.map((_, i) => i), snap: P.snap, story: () => storyFor(P, L), seconds: +(q.get('s') || 60), view: (pp) => ({ x: pp[0], z: pp[1], yaw: state.yaw }) }), n = +txt.split('\n')[0].split(' ')[1];
           total += n; out.push(id + '@' + st + ' ' + k + ' (' + L.life.people.length + ' people, ' + L.life.mood() + '): ' + txt.split('\n').filter((l, i) => i === 0 || (l && !/^\S+: (wander|chat|work|sit|watch|errand|play),/.test(l)) || q.has('stats')).join('\n  ')); await new Promise((r) => setTimeout(r, 0)); } }
       out.unshift('AMBIENT ' + total); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AMBIENT ' + total; })();
   }

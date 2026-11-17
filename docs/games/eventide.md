@@ -286,3 +286,24 @@ Eventide was the one game whose crowds did not use the engine's background life:
 ## The children's way out (17 November 2026)
 
 On the night of the fire the children went straight through the rope and through the fire engine, and walked. They now run (`KID_RUN` 2.6 m/s, the Run clip) down the avenue beside the engine, round the end of the rope and out through the open gate (`KID_ROUTE`). The chapter 4 audit tests that route against the walls, the rope and the engine's footprint (`kidRoute`, `engineBox`). Crowd groups never pair two copies of one face, and a person with a same-face copy within 9 m does not wander. Audit 0.
+
+## Doors (17 November 2026)
+
+The owner asked for doors that fit their buildings, not one shared door. They are `evDoor(kind)` in `props.js`; each is an impression of the kind of door such a building had in Kingston about 1980 (no photograph of these doors was found: work to do).
+
+| Building | Door | Why |
+|---|---|---|
+| The Myers Ward (old two-storey timber), both floors, and the same door seen inside | a pair of timber doors, fixed wooden louvres in the top half, a raised panel below, brass knob and a bolt, Home green in a cream architrave | louvred timber doors let the air through on Jamaican wooden buildings of the early 1900s |
+| The men's ward (plastered), the porch's upper door | one four-panel timber door in a board architrave | a plain door for a masonry building of the same age |
+| The one-storey block wards | a pair of flush doors under a fanlight of glass louvre blades in an aluminium frame, lever handles | the glass louvre ("Naco") window was everywhere on block buildings of the 1960s and 70s |
+| The shops across the road | a ribbed steel roller shutter rolled up into its box, the dark shop behind | many Kingston shops were closed with steel shutters or grilles (an impression) |
+| The board houses | upright boards with V joints, painted one of four colours, hasp, staple and padlock | a simple board house door |
+
+**Sources checked (17 November 2026).** The owner asked for the doors to be checked against photographs of the time. None of the Eventide doors could be checked, and nothing was changed:
+
+- *Eventide Home fire*, Wikipedia (https://en.wikipedia.org/wiki/Eventide_Home_fire) and *Eventide Home fire kills 153 old women*, Gleaner, 20 November 2024 (https://jamaica-gleaner.com/article/news/20241120/eventide-home-fire-kills-153-old-women): the Myers Ward was a two-storey wooden building. No description of its doors.
+- *PICTURE THIS: Eventide Home disaster*, Gleaner video page (https://videos.jamaica-gleaner.com/videos/video.php?id=3794): "mainly wooden buildings". No photograph of a door.
+- *Eventide memories still raw*, Gleaner, 20 May 2020 (https://past.jamaica-gleaner.com/article/lead-stories/20200520/eventide-memories-still-raw): one file photograph of the gate and onlookers; the ward doors are not seen.
+- The National Library of Jamaica digital collection (https://nljdigital.nlj.gov.jm/) has no Eventide Home photograph online.
+
+All five doors stay stand-ins. Work to do: the Gleaner's May 1980 photographs of the fire and of the Home before it (Gleaner archive or National Library of Jamaica reading room).

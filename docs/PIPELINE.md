@@ -313,3 +313,17 @@ Abba and Grace in Port Royal are builder bodies now (skin `[138, 93, 66]`, at th
 ## Flat collars sit clean at the throat (17 November 2026)
 
 The owner saw jagged collars. On a round collar the saw-tooth was the line where the neck skin dips under the blouse: `tuck_under_collar` pushed skin under the collar 8 mm point by point and left out the points right at its edge, so the skin's edge went in and out. The push is now feathered (1.5 mm at the collar's top edge, the full 8 mm 1.8 cm below it), and a round collar's two ends nearly meet at the throat (`a0` 0.05), so the blouse's neckline no longer shows between them as a notch. Applies to every round and camp collar (45 recipes, rebuilt the same day).
+
+## Hands keep their fingers when packed (17 November 2026)
+
+The owner saw spiky, claw-like fingers again. The cause was the packer: when the face was given its own share of triangles (`splitFaces`), the rest of the skin was cut harder and every finger collapsed into a long thin spike. `splitHands` in `tools/people/pack.mjs` now keeps the hands out of the general simplification too (80 per cent of their triangles on a full body, 35 per cent on a light copy), so fingers keep their shape. To bring a packer change to every game without Blender: `node tools/people/rebuild.mjs --repack` packs again from the bodies already built in `build/people-all/`. The sheet tool has a close-up hand view (`views=hand,handfront,handback`). `--repack` reaches every game: it is passed on to `tools/selassie/build-people.mjs` and `tools/windrush/build-people.mjs`, which then pack from the bodies in `build/selassie-people` and `build/windrush-people` and run no Blender. It stops with a clear message if a body was never built on this machine (`build/` is not in git), and it does not change how a body is built: see `docs/HANDOFF.md`, "Read this before any body is rebuilt".
+
+In `engine/anim.js` the fingers of talking and gesture clips are also eased toward the Idle's relaxed hand (`relaxHands`), and the finger joints no clip moves get a slight curl (`curlFingers`).
+
+## Collars flush, no skin at the waist (17 November 2026, later)
+
+The owner sent a picture of a proper shirt collar and pointed out gaps with skin showing under the collar and below the belt.
+- The flat round collar's inner edge read as torn at the throat. Every round-collar recipe now wears the turn-down shirt collar (a band round the neck and a folded leaf with points, like the owner's picture), with shorter points on a blouse or a child (`small` in the turn collar).
+- `tuck_under_collar` now runs for every collar, not only flat ones: neck skin under the leaf is sunk and bound to the collar, so no wedge of skin shows when the head turns.
+- `tuck_under_skirt` (new): loose patches of the body's own skin left at the waist under the blouse or skirt are removed. They came out between the belt and the skirt when the body bent.
+Bodies are rebuilt in a later commit.

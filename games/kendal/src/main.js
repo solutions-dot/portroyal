@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { man_suit: 2, man_work: 2, man_shirt: 2, man_elder: 2, woman57: 2, woman_long: 2, woman_elder: 2, girl: 2, boy: 2, girl_small: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
@@ -32,7 +33,7 @@ import * as SFX from './sfx.js';
 import { HATS, LOOKS, KID } from './cast.js';
 import { DECOR } from './decor.js';
 import * as TRN from './trains.js'; import * as PRP from './props.js';   /* whole modules, for the dev model viewer only */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditWalk, auditCloth, auditBodies, hiddenWith } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditSeated, auditWalk, auditCloth, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
 import { motionCheck } from './motioncheck.js';
 import { storyLifeTick } from './storylife.js';
@@ -974,6 +975,7 @@ function devViews() {
   if (shot === 'card1') go('coach', 52, 2, 0, -PI / 2, 0).then(() => { crashIntro(); });
   if (shot === 'journal1') go('road', 10, -27, 4.2, 0, 0).then(() => { for (const id of ['slowroad', 'higglers', 'free', 'cause']) unlock(id, true); openJournal('cause'); });
   if (shot === 'chap1') go('road', 10, -27, 4.2, 0, 0).then(() => { best = 35; modelsReady = true; openChapters(); });
+  if (shot === 'at') { const n = (k, d) => +(q.get(k) ?? d); go(q.get('p') || 'road', n('st', 10), n('x', 0), n('z', 0), n('yaw', 0), n('pitch', 0)); }   /* any spot in any place: ?shot=at&p=<place>&st=&x=&z=&yaw=&pitch= (used to look at the doors) */
   if (V[shot]) go(...V[shot]).then((P) => {
     if (shot === 'st3') { /* the governor's end */ }
     if (shot === 'hill2' || /^loco/.test(shot)) { P.train.visible = true; P.train.position.x = 0; }
@@ -1057,7 +1059,7 @@ function devViews() {
   }
   if (q.get('test') === 'held') {
     if (q.get('hs')) for (const k of ['hamper', 'suitcase', 'bucket']) { GRIP[k] = { ...GRIP[k], scale: +q.get('hs') * (k === 'suitcase' ? 1.4 : 1), out: +q.get('ho') }; } if (q.get('ls')) GRIP.lantern = { ...GRIP.lantern, scale: +q.get('ls'), out: +q.get('lo') };   /* ?test=held : every carried thing, in every place: at the hand, upright, clear of the body */
-    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { const ac = n.m.userData.anim, found = new Set(); for (let pose = 0; pose < 12; pose++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) found.add(l); } for (const l of found) out.push(id + ': ' + l); } }
+    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { const found = auditHeldClip(n.id || n.base, n.m, n.m.userData.held, { after: gripTick }); for (const l of found) out.push(id + ': ' + l); } }
       const count = out.length; out.unshift('held items: ' + count + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + count; })();
   }
   if (['audit','collision','seating'].includes(q.get('test'))) {   /* ?test=audit&p=road,hill : floating objects, people inside solids, unreachable spots */
@@ -1072,7 +1074,7 @@ function devViews() {
     (async () => { const out = []; let total = 0; startGame(true); const ST = { road: 10, station45: 20, ride45: 23, hill: 31, kingston57: 40, coach: 50, beach: 43, crash: 61, memorial: 70 };
       for (const id of (q.get('p') || Object.keys(BUILD).join(',')).split(',')) { const P = await ensurePlace(id); enterPlace(id); stage = ST[id]; STORY.enter(ST[id]); P.life.mood(MOOD(stage)); for (const k of Object.keys(KEEPC)) delete KEEPC[k];
         const route = [[P.start.x, P.start.z]]; for (const [k, sp] of Object.entries(STEPS)) { if (placeOfStage(+k) !== id || !sp.needs) continue; for (const kind of ['talk', 'do', 'go']) for (const e of sp.needs[kind] || []) { const p = (sp.at && sp.at[typeof e === 'string' ? e : e.id]) || storyWhere(typeof e === 'string' ? e : e.id, P); if (p && !Array.isArray(p[0]) && typeof p !== 'function') { const w = walkRoute(route[route.length - 1], [p[0] + 0.9, p[1] + 0.5], P.walls, 0.3, P.bounds); route.push(...(w.length ? w : [[p[0] + 0.9, p[1] + 0.5]])); } } }
-        const story = () => P.people.filter((n) => STORY.isStory(n.id) && !n.amb), txt = ambientTest(P.life, { route, stops: route.map((_, i) => i), story, seconds: +(q.get('s') || 60), view: (pp) => ({ x: pp[0], z: pp[1], yaw: state.yaw }) }), n = +txt.split('\n')[0].split(' ')[1];
+        const story = () => P.people.filter((n) => STORY.isStory(n.id) && !n.amb), txt = ambientTest(P.life, { route, stops: route.map((_, i) => i), story, seconds: +(q.get('s') || 60), place: P.group, snap: P.snap, view: (pp) => ({ x: pp[0], z: pp[1], yaw: state.yaw }) }), n = +txt.split('\n')[0].split(' ')[1];
         total += n; out.push(id + ': ' + txt.split('\n').filter((l, i) => i === 0 || (l && !/^\S+: (wander|chat|work|sit|watch|errand|play),/.test(l)) || q.has('stats')).join('\n  ')); await new Promise((r) => setTimeout(r, 0)); }
       out.unshift('AMBIENT ' + total); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AMBIENT ' + total; })();
   }

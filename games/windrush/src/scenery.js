@@ -1,6 +1,8 @@
 /* Lived-in scenery for Windrush, built in code (no image files). Each builder returns a group standing on y = 0 at its own origin,
    facing +z unless it says otherwise. Shapes are reconstructions from period photographs and descriptions (docs/games/windrush.md). */
 import * as THREE from "three";
+import * as DR from "./doors.js";
+export { DR };
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 import { saloonCar } from "../../../engine/roadcars.js";
 import { shipLifeboat, paintKit } from "../../../engine/boats.js";
@@ -325,7 +327,13 @@ export function dockShed(w = 24, d = 10, h = 6, c = [148, 150, 144], door = 0x2d
   z.repeat.set(w / 3, h / 3);
   box(w, h, d, std(z, 0.6), 0, h / 2, 0, g);
   const roof = box(w + 0.6, 0.2, d + 0.6, M.slate, 0, h + 0.1, 0, g);
-  for (let x = -w / 2 + 3; x < w / 2 - 1; x += 6) box(3.4, 3.6, 0.06, solid(door, 0.8), x, 1.8, d / 2 + 0.03, g);
+  // sliding doors of corrugated iron on a track along the front (doors.js), every other one slid part open
+  let k = 0;
+  for (let x = -w / 2 + 3; x < w / 2 - 1; x += 6) {
+    const dr = DR.shedDoors({ w: 3.4, h: 3.6, color: door, open: k++ % 2 ? 0.6 : 0 });
+    dr.position.set(x, 0, d / 2);
+    g.add(dr);
+  }
   return g;
 }
 
@@ -380,10 +388,14 @@ export function terraceHouse(opts = {}) {
   for (const x of [-0.18, 0, 0.18]) cyl(0.07, 0.07, 0.35, solid(0x9a5a3a, 0.9), W / 2 - 0.4 + x, H + 1.55, -D / 2, g, 6);
   box(W + 0.05, 0.22, 0.12, trim, 0, H - 0.2, 0.06, g);
   // door, step and fanlight
-  if (!opts.open) box(1.0, 2.1, 0.06, solid(opts.door || 0x2f4f46, 0.6), dx, 1.12, -0.2, g);
+  // the front door (doors.js), set back in the door hole: a painted Victorian four-panel door with its brass, or a 2018 uPVC one; open houses keep the hole and the fanlight
+  if (!opts.open) {
+    const dr = opts.upvc ? DR.upvcDoor() : DR.terraceDoor({ color: opts.door || 0x2f4f46 });
+    dr.position.set(dx, 0.12, 0);
+    g.add(dr);
+  } else plane(0.9, 0.18, M.glass, dx, 2.1, 0.02, g);
   box(1.3, 0.12, 0.5, trim, dx, 0.06, 0.25, g);
   box(1.2, 0.12, 0.08, trim, dx, 2.3, 0.04, g);
-  plane(0.9, 0.18, M.glass, dx, 2.1, 0.02, g);
   // upstairs sash windows
   for (const x of [-1.2, dx]) sash(g, x, 4.4);
   if (opts.shop) {
@@ -844,6 +856,7 @@ export function headBasket() {
 /* a board house raised on posts and stones, as country houses were (air under the floor, off the wet ground), with a veranda along its
    front, a rail, steps down to the yard, shutters, and a zinc roof. Its front faces +z; it stands from z = -d/2 to the foot of its steps at
    z = d/2 + 2.45. wall and trim are colours [r, g, b]. */
+const darker = (hex) => new THREE.Color(hex).multiplyScalar(0.85).getHex();
 export function stiltHouse(w = 7, d = 4.5, { wall = [196, 176, 140], trim = 0xe8e0cc, shut = 0x2f6a3f, roof = [150, 154, 150], seed = 1 } = {}) {
   const g = grp(),
     lift = 0.85,
@@ -875,7 +888,9 @@ export function stiltHouse(w = 7, d = 4.5, { wall = [196, 176, 140], trim = 0xe8
     st.rotation.x = Math.atan2(lift, 1.1);
   }
   // the front: a door and two windows with board shutters swung open
-  box(0.95, 2.0, 0.06, solid(0x5a3a26, 0.9), 0, lift + 1.12, d / 2 + 0.03, g);
+  const dr = DR.fretDoor({ color: shut === 0x2f6a3f ? 0x5a3a26 : darker(shut), trim });
+  dr.position.set(0, lift + 0.1, d / 2);
+  g.add(dr);
   for (const x of [-w * 0.3, w * 0.3]) {
     box(0.95, 1.0, 0.05, M.black, x, lift + 1.5, d / 2 + 0.02, g);
     for (const s of [-1, 1]) box(0.45, 1.0, 0.05, sm, x + s * 0.72, lift + 1.5, d / 2 + 0.05, g);
@@ -974,7 +989,9 @@ export function districtShop(name = "DISTRICT SHOP", { wall = [214, 196, 150], r
   const rf = box(6.6, 0.06, 4.6, std(zt, 0.7), 0, 3.35, 0, g);
   rf.rotation.x = 0.1;
   box(2.2, 1.6, 0.06, M.black, -1.3, 1.6, 2.02, g);
-  box(1.0, 2.1, 0.06, solid(0x2f4a5a, 0.8), 1.6, 1.05, 2.02, g);
+  const dr = DR.shopDoors({ w: 1.2, color: 0x2f4a5a });
+  dr.position.set(1.6, 0.15, 2);
+  g.add(dr);
   box(2.4, 0.1, 0.4, M.woodPale, -1.3, 0.9, 2.2, g);
   const sign = textPlane(name, 3.6, 0.45, "#e8dcb4", "#2a3a2a");
   sign.position.set(0, 2.55, 2.06);

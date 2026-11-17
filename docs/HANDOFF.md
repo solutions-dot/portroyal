@@ -228,3 +228,39 @@ After the full rebuild `people-check` reported many bodies WORSE (Kendal `woman_
 - Next kinds, by count: shirt through waistcoat (1,398), skin through shirt (1,021), breeches through coat and coat skirt (1,555, Port Royal's 1690 coats), shirt through jacket (909), shirt through breeches (638), skirt through belt (588).
 - Before fixing a kind, look at its pictures (`--shots`): a shirt or tie seen in the front opening of a jacket is how it is worn, and may need a rule in the check, not a change to the body. Most patches are in clips a body seldom plays (kneeling, picking up, sitting).
 - Port Royal has a `?test=heads` check now; the head-turn guard is in every game that turns heads.
+
+## State at the end of 17 November 2026 (for the next session)
+
+Branch `claude/beautiful-faraday-rc8sek` is ahead of `main` and not yet merged. Before merging: a public build of every game, then `?test=audit`, `layout` and `ambient` at 0 in every game.
+
+**Done on the branch:** Tivoli police vest spike, soldier vest, "Tivoli Incursion"; seated people sit on their seats with knees bent (`engine/placement.js`), and the seat check covers crowds; a door made for each building in all ten games, checked against period sources (each game's doc, "Doors"); sign words always fit (`engine/textfit.js`); relaxed hands (`engine/anim.js` `restFingers`).
+
+**Approved by the owner, not yet built into the games:** the waistcoat that goes over the shoulders. The fix is in `tools/garvey/era.py` (the waistcoat's top cut). Bodies with a waistcoat need a rebuild; show sheets from several angles and in movement first.
+
+**Stopped by the owner:** collars and ties ("the collars look awful"). The tries are not in the tree: the test copy of the builder that held them is in the branch history (`git show 76afcce:tools/garvey/_era_bis.py`), for reference only. `tools/garvey/era.py` has main's collar code, plus the approved waistcoat fix and the skirt waist fix (`tuck_under_skirt`, not yet built into any body). What was learned: the jagged edge was the neck's flat facets cutting through the collar band, not the collar's own shape; and two collar-edge changes tried earlier (a clamp on the leaf's outer edge, a turned-under row for `turn` collars) made a turn-down collar's edge zigzag.
+
+**Needs more work (owner):** the hands and the ties. The crowd-copy hand fix (`splitHands` in `tools/people/pack.mjs`) needs every body packed again.
+
+**Buildings that period photographs show are wrong** (ask the owner which to rebuild): Port Royal church (plastered, no tower); Kendal 1845 station (masonry, open arches); Kingston station (brick, arches at one end only); Bog Walk turbine house (plastered); Liberty Hall (main door under a shallow brick arch).
+
+**Signs that had to be fitted by a lot** (`engine/textfit.js` draws them in smaller letters; better to widen the board or shorten the words): Melissa "BREADNUT CORNER COMMUNITY CHURCH" (1.7 times too wide), "BREADNUT CORNER READY PLAN", "MISS ADA'S SHOP", "DORRIT'S SHOP"; Kendal "KINGSTON", "JAMAICA RAILWAY"; Bog Walk "OPEN SHUT"; Garvey "THE NEGRO WORLD", "JAMAICAS FIRST NATIONAL HERO"; Eventide "BUS STOP"; Windrush "WELCOME". Nanny, Selassie and Tivoli have none. To list them again: `window.__TEXTFIT` after `?test=audit` in a dev build.
+
+**Open at the end of the session:** PR solutions-dot/portroyal#112 (this branch into main) waits on the full checks (`?test=audit`, `held`, `layout`, `ambient` in every game, then a public build) before merging. Garvey and Bog Walk audits were 0. Bog Walk's shop name boards (DRY GOODS, BAKERY and others) have letters slightly taller than their boards: `engine/textfit.js` fits them, but the boards could be made taller. A review bot noted that `tools/people/rebuild.mjs --repack` still runs Blender for Selassie and Windrush (their own `build-people.mjs`): fix that before repacking every body for the hand fix.
+
+## PR #112 merged: what the full checks found (17 November 2026, night)
+
+The four checks ran in every game on the code that was merged: `?test=audit`, `held`, `ambient` (the seven games that have background life) and `layout` at 390x800, 667x375, 800x500 and 1280x720. All report 0. `npm test` passes (232 tests, no new lint findings). A public build of every game was made before the merge.
+
+The first full run was not at 0. What it found, and where each fix lives:
+
+- **Eventide, held: a crowd man's suitcase touched his thigh**, on some runs only. He stood on Talk2, and the gesture swung the case. Two fixes in the engine (rule 10). `engine/anim.js`: a hand that holds a thing hanging from it (a case, a basket, a bucket, a lamp, a bag) does not gesture; `play()` gives the Idle for a hand-waving clip and `grip()` calls `calmHands()`. A flag or a palm frond held up may still be waved (The Emperor's Arrival). Eventide's own copy of the rule is gone. `engine/audit.js`: `auditHeldClip` looks at 48 moments of the whole clip from its start, so the count is the same on every run; Kendal, Garvey, Melissa, Nanny Town and Eventide use it in place of their copied loop of 12 moments.
+- **Garvey, ambient: 12 issues in Liberty Hall** from the new seat check for crowds. Both were faults in the check. It took the shapes of every place in the scene, hidden ones too (`snapMeshes(root, { shown: true })` now leaves hidden parts out), and it did not count rows of chairs drawn as instanced boxes as seats (`auditSeated` now does).
+- **Kendal and Eventide, layout: the toast lay across the action button** on some runs. `engine/hud.js` moved the toast only on the next drawn frame; it now also moves it at once when the toast or the button changes.
+- **Port Royal, layout at 667x375: the corner buttons lay over a dialogue with three choices and over a card with three buttons.** This was on main too. On a phone held sideways the choices now sit side by side and the corner buttons step aside while a card is open (`games/port-royal/site/index.html`).
+- **Bog Walk's shop name boards** are 50 cm high (they were 42), so their letters are drawn at full size.
+- `tools/people/rebuild.mjs --repack` now passes `--repack` on to `tools/selassie/build-people.mjs` and `tools/windrush/build-people.mjs`, which pack from the bodies already built and run no Blender. `BPY_PYTHON` works for Selassie as it did for Windrush.
+
+Not part of the four checks, still open: Port Royal's own `?test=life` reports 9 people who stand with nothing changing for over 12 seconds (the 1670 buccaneers on Idle, the camp on Sad and Cry, Abba on SitIdle). It reports the same on main.
+
+**Read this before any body is rebuilt.** The bodies in the games were last built at commit `e00ffc1` (17 November, 11:19), three Port Royal men at `7b1c677` and Tivoli's police and soldier on this branch. `tools/garvey/era.py` on main changed after that with no rebuild: the belt under a waistcoat (`9cb0c78`), and two collar changes in `7e07bbb` (a round collar's ends nearly meet; the skin under a collar is sunk less near its top edge). So a rebuild of any body with today's builder also brings those in. The owner has stopped collar work: to repack a body without changing its collar, build it with the builder as it was at `e00ffc1` (`git show e00ffc1:tools/garvey/era.py`), or check neck close-ups first. `build/` is not in git, so a fresh machine has no built bodies and `--repack` has nothing to pack until they are built once. Blender as a module (`pip install bpy==5.3.0`), MPFB 2.0.18 from extensions.blender.org and the MakeHuman data all install in a cloud session in a few minutes; a body builds in about 5 seconds.
+

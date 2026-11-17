@@ -7,6 +7,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { repairLegacyVertexColours } from '../../engine/colours.js';
 import { loadClips, clipFor, animate } from '../../engine/anim.js';   /* the game's own way of playing a clip (no bone positions, the posture correction), so the sheet shows the stance the game shows */
 
+{ const fq = new URLSearchParams(location.search); if (fq.get('fax')) globalThis.__fingerAxisV = new THREE.Vector3(...fq.get('fax').split(',').map(Number)); if (fq.get('fsign')) globalThis.__fingerSign = +fq.get('fsign'); for (const [k, v] of fq) if (k.startsWith('g_')) globalThis['__' + k.slice(2)] = isNaN(+v) ? v : +v; }   /* dev: try a finger bend axis */
 const q = new URLSearchParams(location.search), game = q.get('game'), ids = q.get('ids').split(','), anim = q.get('anim') || 'Idle';
 const hide = (q.get('hide') || '').split(',').filter(Boolean), skinK = +(q.get('skin') || 1.55), views = (q.get('views') || 'front,side,back,face,face34,faceside').split(',');
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
@@ -37,9 +38,11 @@ const dir = (id) => id.includes('/') ? id.slice(0, id.lastIndexOf('/') + 1) : `.
     const fq = bone('head').getWorldQuaternion(new THREE.Quaternion()), fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(fq).setY(0).normalize(), yaw = Math.atan2(fwd.x, fwd.z);
     const fc = head.clone().lerp(top, 0.52), bc = new THREE.Vector3(hips.x, (foot + top.y) / 2, hips.z), bh = top.y - foot + 0.12;
     views.forEach((v, c) => {
-      const nk = v.startsWith('neck'), face = v.startsWith('face') || nk, torso = v.startsWith('torso'), a = (face ? yaw : 0) + ({ front: 0, side: Math.PI / 2, back: Math.PI, face: 0, face34: 0.62, faceside: Math.PI / 2, torso: 0, torso34: 0.7, torsoside: Math.PI / 2, torsoback: Math.PI, neck: 0, neck34: 0.7, neckside: Math.PI / 2, neckback: Math.PI })[v];
-      const ctr = nk ? bone('neck').getWorldPosition(new THREE.Vector3()) : face ? fc : torso ? new THREE.Vector3(hips.x, (hips.y + head.y) / 2 + 0.02, hips.z) : bc, span = nk ? 0.2 : face ? +(q.get('fs') || 0.36) : torso ? head.y - hips.y + 0.34 : bh, d = span / 2 / Math.tan((cam.fov / 2) * Math.PI / 180);
-      cam.position.set(ctr.x + Math.sin(a) * d, ctr.y, ctr.z + Math.cos(a) * d); cam.lookAt(ctr); sun.position.set(ctr.x + Math.sin(a + 0.7) * 5, ctr.y + 4, ctr.z + Math.cos(a + 0.7) * 5); sun.target.position.copy(ctr); sun.target.updateMatrixWorld();
+      const hd = v.startsWith('hand'), nk = v.startsWith('neck'), face = v.startsWith('face') || nk, torso = v.startsWith('torso'), a = (face ? yaw : 0) + ({ front: 0, side: Math.PI / 2, back: Math.PI, face: 0, face34: 0.62, faceside: Math.PI / 2, torso: 0, torso34: 0.7, torsoside: Math.PI / 2, torsoback: Math.PI, neck: 0, neck34: 0.7, neckside: Math.PI / 2, neckback: Math.PI, hand: Math.PI / 2, handfront: 0, handback: -Math.PI / 2 })[v];
+      const hw = hd ? (m.getObjectByName('mixamorigRightHand') || m.getObjectByName('mixamorig:RightHand')).getWorldPosition(new THREE.Vector3()) : null, ht = hd ? (m.getObjectByName('mixamorigRightHandMiddle3') || m.getObjectByName('mixamorigRightHandMiddle1')).getWorldPosition(new THREE.Vector3()) : null;
+      const ctr = hd ? hw.clone().lerp(ht, 0.6) : nk ? bone('neck').getWorldPosition(new THREE.Vector3()) : face ? fc : torso ? new THREE.Vector3(hips.x, (hips.y + head.y) / 2 + 0.02, hips.z) : bc, span = hd ? 0.26 : nk ? 0.2 : face ? +(q.get('fs') || 0.36) : torso ? head.y - hips.y + 0.34 : bh, d = span / 2 / Math.tan((cam.fov / 2) * Math.PI / 180);
+      const aa = hd ? Math.atan2(ctr.x - hips.x, ctr.z - hips.z) + ({ hand: 0, handfront: -1.2, handback: 1.2 })[v] : a;   /* a hand is looked at from outside the body */
+      cam.position.set(ctr.x + Math.sin(aa) * d, ctr.y, ctr.z + Math.cos(aa) * d); cam.lookAt(ctr); sun.position.set(ctr.x + Math.sin(a + 0.7) * 5, ctr.y + 4, ctr.z + Math.cos(a + 0.7) * 5); sun.target.position.copy(ctr); sun.target.updateMatrixWorld();
       renderer.setScissorTest(true); renderer.setViewport(c * W, (ids.length - 1 - r) * H, W, H); renderer.setScissor(c * W, (ids.length - 1 - r) * H, W, H); renderer.render(scene, cam);
     });
     scene.remove(m);

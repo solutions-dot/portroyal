@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { grip, gripTick } from '../../../engine/grip.js';
 import { hudTidy } from '../../../engine/hud.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';

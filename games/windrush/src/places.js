@@ -201,8 +201,8 @@ function yard(id) {
   // neighbours: a woman bringing a basket in on her head, an old woman resting under the breadfruit tree, dominoes on the piazza, children at play
   crowd(Q, "wr_kwoman48", 14.0, 14.0, Math.PI, { kind: "errand", from: [14.0, 14.0], to: [13.6, -3.2], walk: "CarryHeadWalk", idle: "CarryHeadIdle", wait: [5, 9] }, { held: "headload" });
   crowd(Q, "wr_kelder48", -11.5, 6.6, Math.PI / 2, { kind: "sit", seat: { top: 0.485, x: -11.5, z: 6.6, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] }, { raw: true });
-  crowd(Q, "wr_kman48", 8.35, 11.6, Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 8.35, z: 11.6, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitIdle"] });
-  crowd(Q, "wr_tman48b", 9.65, 11.6, -Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 9.65, z: 11.6, ry: -Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] });
+  crowd(Q, "wr_kman48", 8.35, 11.6, Math.PI / 2, { kind: "sit", seat: { top: 0.45, floor: 0.15, x: 8.35, z: 11.6, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitIdle"] });
+  crowd(Q, "wr_tman48b", 9.65, 11.6, -Math.PI / 2, { kind: "sit", seat: { top: 0.45, floor: 0.15, x: 9.65, z: 11.6, ry: -Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] });
   crowd(Q, "wr_kboy48", -4, 11, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   crowd(Q, "wr_kgirl48", -2, 12, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   Q.ambient[Q.ambient.length - 1].behaviour.chase = Q.ambient[Q.ambient.length - 2].id;
@@ -628,7 +628,7 @@ function home18() {
   horizon(Q, { r: 240, h: 22, colour: 0x9aa4a4, gap: 0, width: 0, low: 1, seed: 12, y: 0 });
   // Iris's terrace house and her neighbours': front walls at z = 2, front gardens to the low wall at z = 7.6
   for (const x of [-10, 10]) {
-    add(Q, S.terraceHouse({ door: x < 0 ? 0x2f3f5a : 0x6a2a2a }), x, 2);
+    add(Q, S.terraceHouse(x < 0 ? { door: 0x2f3f5a } : { upvc: true }), x, 2);   /* by 2018 one neighbour keeps a painted Victorian door, the other has a white uPVC one */
   }
   const br = S.brickMat("yellow", [2.5, 3]),
     trim = solid(0xcfc6b0, 0.9);
@@ -643,7 +643,14 @@ function home18() {
     box(1.15, 1.45, 0.06, trim, x, 4.3, fw + 0.16, Q.group);
     plane(0.95, 1.25, S.SM.glass, x, 4.3, fw + 0.2, Q.group);
   }
-  box(1.0, 2.05, 0.06, solid(0x2f4f6a, 0.6), 2.5 + 0.48, 1.03, fw + 0.45, Q.group).rotation.y = 1.2;
+  // Iris's front door (doors.js): her painted Victorian four-panel door, standing open into the hall, hinged on the east side of the doorway
+  {
+    const leaf = S.DR.terraceLeaf({ w: 0.9, h: 2.0, color: 0x2f4f6a });
+    leaf.position.set(2.96, 0, fw - 0.16);
+    leaf.rotation.y = Math.PI / 2 + 0.06;
+    leaf.children.forEach((c) => (c.position.x += 0.45));
+    Q.group.add(leaf);
+  }
   box(15.2, 0.25, 12, solid(0x4f5354, 0.8), 0, 6.5, -3.7, Q.group);
   box(15, 6.4, 0.3, br, 0, 3.2, -9.75, Q.group);
   for (const x of [-7.65, 7.65]) box(0.3, 6.4, 12, br, x, 3.2, -3.75, Q.group);
@@ -709,7 +716,7 @@ function home18() {
   Q.walls.push([-6, 7.4, 1.9, 7.8], [3.1, 7.4, 6, 7.8]);
   Q.walls.push([-6, 2.3, 1.9, 3.3], [3.1, 2.3, 6, 3.3]);
   solid1(Q, S.oilDrum(0x2a4a3a), 4.6, 6.6, 0.7, 0.7);
-  const mat = plane(1.0, 0.6, std(cv(128, 64, (x) => { x.fillStyle = "#8a6d4d"; x.fillRect(0, 0, 128, 64); x.fillStyle = "#3a2d22"; x.font = "bold 22px serif"; x.fillText("WELCOME", 14, 40); })), 2.5, 0.016, 1.3, Q.group);
+  const mat = plane(1.0, 0.6, std(cv(128, 64, (x) => { x.fillStyle = "#8a6d4d"; x.fillRect(0, 0, 128, 64); x.fillStyle = "#3a2d22"; x.font = "bold 19px serif"; x.textAlign = "center"; x.fillText("WELCOME", 64, 39); })), 2.5, 0.016, 1.3, Q.group);
   mat.rotation.x = -Math.PI / 2;
   // people: Iris in her chair, Anita in the hall; outside, a neighbour going by
   person(Q, "iris", "iris79", -4.55, -1.2, Math.PI / 2, { kind: "sit", seat: { top: 0.46, x: -4.55, z: -1.2, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] }, { raw: true, seatStill: true });

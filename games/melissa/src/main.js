@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
@@ -25,7 +26,7 @@ import { makeStorm, collectSway, swayTick } from './storm.js';
 import * as PRP from './props.js'; import * as HSE from './houses.js';   /* whole modules, for the dev model viewer only */
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { boy: 2, girl: 2, girl_small: 2, guide2020: 2, man_elder: 2, man_shirt: 2, man_work: 2, student2020: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditBodies, hiddenWith } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditSeated, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
 
 const $ = (id) => document.getElementById(id);
@@ -791,7 +792,7 @@ function devViews() {
       document.title = 'LAYOUT ' + out.length; const el = $('autolog'); if (el) el.textContent = (out.length ? out : [W + 'x' + Hh + ': no layout problems']).join('\n'); })();
   }
   if (q.get('test') === 'held') {   /* ?test=held : every carried thing, in every place: at the hand, upright, clear of the body */
-    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { const ac = n.m.userData.anim, found = new Set(); for (let pose = 0; pose < 12; pose++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) found.add(l); } for (const l of found) out.push(id + ': ' + l); } }
+    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { const found = auditHeldClip(n.id || n.base, n.m, n.m.userData.held, { after: gripTick }); for (const l of found) out.push(id + ': ' + l); } }
       const count = out.length; out.unshift('held items: ' + count + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + count; })();
   }
   if (['audit', 'collision', 'seating'].includes(q.get('test'))) {   /* ?test=audit&p=hall,after : floating objects, people inside solids, unreachable spots, seated people */
