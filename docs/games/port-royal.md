@@ -160,7 +160,13 @@ Henry Morgan, Alexandre Exquemelin, the Reverend Emmanuel Heath and Symon Bennin
 - `?test=audit` is wired (`checks.js`, `placeAudit`) and reports **0** in all seven places. (An older line above says it is not wired; that is out of date.) Kofi now starts 30 cm clear of his crates, so his route no longer touches them. A person counts as "inside a walking wall" only when there is no walkable ground within 40 cm (`offWall`): the walking walls here are half-metre grid rows that include the player's own margin round every prop, so a seller right behind her stall was flagged without touching anything.
 - Fruit floated over the basket floors. `heap` now builds a real pile, ring by ring and layer by layer, resting on the floor; the pineapples stand on the floor and the watermelons sit on the cloth.
 - The plantains hanging from the stall frame were a row of thick sticks. Each hook now holds two hands of plantains on a cord, after a photograph the owner supplied: six or seven long curved fingers joined at a crown, hanging down and fanning out, with a thin neck and a tight narrow tip, a ripe yellow hand over a green one.
-- To check against a source: the fruit on Grace's stall (plantains, pineapples, oranges, limes, watermelons). Hans Sloane, who was in Jamaica from 1687 to 1689, is the source to check each one against.
+- The fruit on Grace's stall, checked on 17 November 2026 against period writers as quoted on piratesurgeon.com (pages "prov_jamaica2" and "prov_jamaica3", which cite the printed editions):
+  - Watermelons: John Taylor, 1687, says they were "sold at Port Royall for a royall apeice".
+  - Pineapples: Taylor calls the pineapple "the king of all fruites yet known"; Richard Blome (1672) lists "Pines".
+  - Oranges and limes: Blome (1672) lists both; Taylor says limes were valued for their juice, to make punch.
+  - Plantains: Blome (1672) lists them; Hans Sloane (in Jamaica 1687 to 1689) calls them the "most general support of Life in the Island".
+  - Carrots (on the herb stall): Taylor says carrots grew small and were sold very dear at Port Royal market.
+  These are quotations seen on a secondary page, not in the books themselves. Before any of them goes into the journal as a quotation, read it in the edition (Taylor: *Jamaica in 1687*, ed. David Buisseret; Sloane: *A Voyage to the Islands*, 1707).
 - The audit does not yet catch small things floating inside a basket. A check for this is work to do.
 
 ## The tavern (17 November 2026)

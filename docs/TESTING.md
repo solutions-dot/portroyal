@@ -262,3 +262,17 @@ Use `?test=collision` or `?test=seating` for seating and furniture checks. Port 
 ### The cloth check measures in true units (17 November 2026)
 
 `auditCloth` (`engine/audit.js`) used to take each piece's rest shape in the squeezed box a packed body stores it in, so most skin-under-cloth pairs were never tested. It now measures every piece from the hips bone in true units. Counts from before this date are not comparable. See `docs/HANDOFF.md`.
+
+### What the eye sees: `people-seen` (17 November 2026)
+
+```bash
+node tools/review/people-seen.mjs <game|all> [--list] [--shots] [--update] [ids=boy,boy_lo] [only=Idle,Walk]
+```
+
+Every body of a game, in every clip the game ships, is drawn from six sides (front, right, back, left, and front and back from above) with each piece in one flat colour. A small patch of an under layer wholly inside the piece that should cover it is a fault you can see: skin in a shirt, a shirt in a waistcoat or a belt, trousers in a jacket. Hands, and arms in front of the body, are left out. Hats are hidden (a packed body carries several; `people-check` measures them).
+
+- `--list` prints the kinds of fault for each body.
+- `--shots` saves pictures of the first faults to `build/review/seen/`, with the patch drawn magenta. Look at them before fixing anything.
+- `--update` records the numbers in `tools/checks/people-seen.json`. Without it the tool fails when a body shows more than is recorded.
+
+Use this as the work list for clothes. `people-check` measures surfaces, so it also reports points nobody can see (an armpit, a point under a fold); use it to find where a seen fault comes from, with `--where`. A patch is 3 to 150 pixels at 6 mm a pixel, so a speck under about 1 cm across is not counted.

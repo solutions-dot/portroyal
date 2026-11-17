@@ -603,3 +603,5 @@ export function headWatch({ limit = HEAD_LIMIT, own = null } = {}) {
     stats: () => ({ people: S.size, samples }),
   };
 }
+/* for tools/review/people-seen: the pieces of a body as the cloth check names them, and their layer (0 skin ... 12 hats; -1 not listed) */
+export { clParts as clothParts, clRank as clothRank };
