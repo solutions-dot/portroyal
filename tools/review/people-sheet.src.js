@@ -37,8 +37,8 @@ const dir = (id) => id.includes('/') ? id.slice(0, id.lastIndexOf('/') + 1) : `.
     const fq = bone('head').getWorldQuaternion(new THREE.Quaternion()), fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(fq).setY(0).normalize(), yaw = Math.atan2(fwd.x, fwd.z);
     const fc = head.clone().lerp(top, 0.52), bc = new THREE.Vector3(hips.x, (foot + top.y) / 2, hips.z), bh = top.y - foot + 0.12;
     views.forEach((v, c) => {
-      const face = v.startsWith('face'), torso = v.startsWith('torso'), a = (face ? yaw : 0) + ({ front: 0, side: Math.PI / 2, back: Math.PI, face: 0, face34: 0.62, faceside: Math.PI / 2, torso: 0, torso34: 0.7, torsoside: Math.PI / 2, torsoback: Math.PI })[v];
-      const ctr = face ? fc : torso ? new THREE.Vector3(hips.x, (hips.y + head.y) / 2 + 0.02, hips.z) : bc, span = face ? +(q.get('fs') || 0.36) : torso ? head.y - hips.y + 0.34 : bh, d = span / 2 / Math.tan((cam.fov / 2) * Math.PI / 180);
+      const nk = v.startsWith('neck'), face = v.startsWith('face') || nk, torso = v.startsWith('torso'), a = (face ? yaw : 0) + ({ front: 0, side: Math.PI / 2, back: Math.PI, face: 0, face34: 0.62, faceside: Math.PI / 2, torso: 0, torso34: 0.7, torsoside: Math.PI / 2, torsoback: Math.PI, neck: 0, neck34: 0.7, neckside: Math.PI / 2, neckback: Math.PI })[v];
+      const ctr = nk ? bone('neck').getWorldPosition(new THREE.Vector3()) : face ? fc : torso ? new THREE.Vector3(hips.x, (hips.y + head.y) / 2 + 0.02, hips.z) : bc, span = nk ? 0.2 : face ? +(q.get('fs') || 0.36) : torso ? head.y - hips.y + 0.34 : bh, d = span / 2 / Math.tan((cam.fov / 2) * Math.PI / 180);
       cam.position.set(ctr.x + Math.sin(a) * d, ctr.y, ctr.z + Math.cos(a) * d); cam.lookAt(ctr); sun.position.set(ctr.x + Math.sin(a + 0.7) * 5, ctr.y + 4, ctr.z + Math.cos(a + 0.7) * 5); sun.target.position.copy(ctr); sun.target.updateMatrixWorld();
       renderer.setScissorTest(true); renderer.setViewport(c * W, (ids.length - 1 - r) * H, W, H); renderer.setScissor(c * W, (ids.length - 1 - r) * H, W, H); renderer.render(scene, cam);
     });

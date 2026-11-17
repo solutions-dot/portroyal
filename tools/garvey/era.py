@@ -799,15 +799,23 @@ if FLAT:
         for _ in range(12):
             for j in range(0,4):      # a round collar's seam row too: left on the nearest shirt point, it zigzagged at the throat
                 for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
-        for j,off in ((0,0.003),(1,0.0035),(2,0.0055 if camp else 0.005),(3,0.0075 if camp else 0.006)): ring_fix(rows,j,SHT,off,iters=2)      # a round collar lies close on the blouse: its edge lifted 1.5 cm stood up like a wing when the back curved      # the seam row too, on every flat collar: left on the nearest shirt point it showed as teeth at the nape
+        for j,off in ((0,0.003),(1,0.0035),(2,0.0055 if camp else 0.0042),(3,0.0075 if camp else 0.0028)): ring_fix(rows,j,SHT,off,iters=3)      # a round collar's edge lies right on the blouse: 6 mm off it, the gap under the edge showed as a dark line and slivers on an older, rounder back (owner, 17 November 2026)      # a round collar lies close on the blouse: its edge lifted 1.5 cm stood up like a wing when the back curved      # the seam row too, on every flat collar: left on the nearest shirt point it showed as teeth at the nape
         if not camp:
-            for j,off in ((2,0.006),(3,0.008)): ring_fix(rows,j,SKIN,off,iters=1)      # and clear of the skin: at the top of the shoulder the skin rose above the shirt and came up through the collar
-    if not camp and not OLD:      # a yoke under the seam, down onto the skin beneath the shirt, so no skin shows between the collar and the neck
+            for j,off in ((2,0.006),(3,0.006)): ring_fix(rows,j,SKIN,off,iters=1)
+            for _ in range(3):      # a round collar lies on the blouse: its leaf is laid back onto the cloth after the smoothing, which left it standing off a sloping shoulder with a gap under it
+                for i in range(len(rows)):
+                    for j,off in ((1,0.0032),(2,0.0036),(3,0.0026)): rows[i][j]=on_shirt(rows[i][j],off)
+                for j in (2,3):
+                    for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4      # and clear of the skin: at the top of the shoulder the skin rose above the shirt and came up through the collar
+    if not camp and not OLD and G.get('yoke',0 if CK=='round' else 1):      # (not under a round collar: its yoke crumpled the collar's ends at the throat, 17 November 2026) a yoke under the seam, down onto the skin beneath the shirt, so no skin shows between the collar and the neck
         for row in rows:
             q=row[0]; loc,nrm,_i,_d=SKIN.find_nearest(q-Vector((0,0,0.018*s))); row.insert(0,(loc+nrm*0.002) if loc is not None else q-Vector((0,0,0.018*s)))
         ring_fix(rows,0,SKIN,0.002,SHT,0.002)
     quadstrip(bm,[[bm.verts.new(q) for q in row] for row in rows]); _co=soft('Collar',bm,'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD: ring_weights(_co,len(rows),len(rows[0]),flat=True)
+    if not OLD and not camp and G.get('collarshirt',1) and PART.get('shirt'):      # a round collar lies flat on the blouse: it takes the blouse's own weights under it (smoothed at the shoulder now), so in every pose it moves exactly as the cloth beneath and its edge cannot stand off the shoulder as dark slivers (17 November 2026)
+        _md=_co.modifiers.new('wtc','DATA_TRANSFER'); _md.object=PART['shirt']; _md.use_vert_data=True; _md.data_types_verts={'VGROUP_WEIGHTS'}; _md.vert_mapping='POLYINTERP_NEAREST'; _md.layers_vgroup_select_src='ALL'; _md.layers_vgroup_select_dst='NAME'
+        with ov(_co): bpy.ops.object.modifier_move_to_index(modifier='wtc',index=0); bpy.ops.object.modifier_apply(modifier='wtc')
 if CK and not FLAT:
     # a shirt collar built round the neck itself: a band that stands up from the shirt's neck opening and, for a turn-down collar, a leaf folded over it that ends in two points at the front
     bm=bmesh.new(); seg=32; gap={'stand':0.05,'turn':0.07,'open':0.42,'band':0.16}[CK]; rows=[]; hs=(0.046 if CK=='stand' else (0.014 if CK=='band' else 0.034))*s
@@ -1108,8 +1116,13 @@ def build_hat(HK,HM):
         if len(bb.verts): rigid(HM+'Band',bb,HM+'Band','Head')
         else: bb.free()
     if HK=='wrap':            # a head tie: cloth wound round the head and knotted, made from the scalp's own surface so it fits
+        def wrap_edge(bm):      # the wrap's edge is drawn in onto the head, so it does not stand out from the temples and nape as fins, and its line is smoothed (owner, 17 November 2026)
+            bm.normal_update(); rim={v for v in bm.verts if v.is_boundary}; r1={e.other_vert(v) for v in rim for e in v.link_edges}-rim; r2={e.other_vert(v) for v in r1 for e in v.link_edges}-rim-r1
+            for vs,k in ((rim,0.013),(r1,0.008),(r2,0.004)):
+                for v in vs: v.co-=v.normal*k
+            smooth_edge(bm,10)
         Jy=J('Head').y
-        o=piece(HM+'Wrap','body',lambda c:c.z>HEAD+(0.06-0.035*G.get('wrapbrow',0)*sstep(Jy+0.02,Jy+0.07,c.y))*s,lambda c:0.016+0.006*math.sin(c.z*90+c.x*40),HM,cuts=[((0,Jy-0.05*G.get('wrapbrow',0),HEAD+(0.118-0.05*G.get('wrapbrow',0))*s),Vector((0,-0.25,-0.2)).normalized(),None)],sub=True,post=(lambda bm:smooth_edge(bm,8)) if G.get('wrapbrow') else None)      # wrapbrow (0 to 1): how far the front edge comes down toward the brow (1690 wraps covered the hair to the hairline; a 1950s head tie showed the front hair)
+        o=piece(HM+'Wrap','body',lambda c:c.z>HEAD+(0.06-0.035*G.get('wrapbrow',0)*sstep(Jy+0.02,Jy+0.07,c.y)-(0.075 if G.get('bun') else 0.0)*sstep(Jy+0.03,Jy+0.09,c.y))*s,lambda c:0.016+0.006*math.sin(c.z*90+c.x*40),HM,cuts=[((0,Jy-0.05*G.get('wrapbrow',0),HEAD+(0.118-0.05*G.get('wrapbrow',0))*s),Vector((0,-0.25,-0.2)).normalized(),None)],sub=True,post=wrap_edge)      # (with a bun, the wrap comes down the back of the head over it, to the nape) wrapbrow (0 to 1): how far the front edge comes down toward the brow (1690 wraps covered the hair to the hairline; a 1950s head tie showed the front hair)
         md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}; md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
         with ov(o): bpy.ops.object.modifier_apply(modifier='wt')
         clothes.append(o); bm=bmesh.new()
@@ -1137,10 +1150,22 @@ if HS in ('puffs','plaits'):      # a girl's hair: two puffs, or two plaits, eac
     for v in bm.verts: v.co+=Vector((noise.noise(v.co*60),noise.noise(v.co*60+Vector((5,0,0))),noise.noise(v.co*60+Vector((0,5,0)))))*0.004
     rigid('Puffs',bm,'Hair','Head'); rigid('Ribbons',bb,'Ribbon','Head')
 if G.get('bun'):         # hair gathered into a bun at the back of the head
-    _wr=any(k=='wrap' for k,_m in HATS) if HATS else False      # under a head wrap the hair is tucked in: the bun sits lower still, at the nape below the wrap's edge (it came through the wrap: the people check, 17 November 2026)
-    _lowbun=bool(HATS) and not OLD; zb=TOP-(0.205 if _wr else 0.15 if _lowbun else 0.07)*s; hit=tree.ray_cast(Vector((0,1,zb)),Vector((0,-1,0)))[0]; yb=(hit.y if hit else 0.09)+(0.016 if _lowbun else 0.022)      # under a hat the bun sits low on the nape, clear of the brim
-    bm=bmesh.new(); bmesh.ops.create_uvsphere(bm,u_segments=12,v_segments=8,radius=(0.034 if _wr else 0.040 if _lowbun else 0.048)*s,matrix=Matrix.Translation((0,yb,zb))@Matrix.Diagonal((1.15,0.85,0.9,1)))
+    # Under a hat the bun sits low on the back of the head, clear of the brim. It is half sunk into the skull, so it is part of the head and never floats behind the neck
+    # (lowered further for a head wrap, it hung off the nape as a separate ball: owner, 17 November 2026). A head wrap is then shaped round it, so the wrap covers the bun.
+    _lowbun=bool(HATS) and not OLD; zb=TOP-(0.135 if _lowbun else 0.07)*s; _br=(0.038 if _lowbun else 0.048)*s
+    _sk=globals().get('SKIN') or tree; hit=_sk.ray_cast(Vector((0,0.6,zb)),Vector((0,-1,0)))[0]; yb=(hit.y if hit else 0.09)+_br*0.35
+    bm=bmesh.new(); bmesh.ops.create_uvsphere(bm,u_segments=14,v_segments=9,radius=_br,matrix=Matrix.Translation((0,yb,zb))@Matrix.Diagonal((1.15,0.85,0.9,1)))
     rigid('Bun',bm,'Hair','Head')
+    for _w in [o for o in bpy.data.objects if o.type=='MESH' and o.name.endswith('Wrap') and o.data.materials]:      # the wrap goes over the bun: each point of it inside the bun (and a little round it) is pushed out
+        _c=Vector((0,yb,zb)); _sc=Vector((1.15,0.85,0.9))*_br; _moved=[]
+        for _v in _w.data.vertices:
+            _d=Vector(((_v.co.x-_c.x)/_sc.x,(_v.co.y-_c.y)/_sc.y,(_v.co.z-_c.z)/_sc.z)); _L=_d.length; _lim=1+0.012/_br
+            if 1e-6<_L<_lim: _k=_lim/_L; _v.co=Vector((_c.x+(_v.co.x-_c.x)*_k,_c.y+(_v.co.y-_c.y)*_k,_c.z+(_v.co.z-_c.z)*_k)); _moved.append(_v.index)
+        if _moved:
+            _b=bmesh.new(); _b.from_mesh(_w.data); _b.verts.ensure_lookup_table(); _ring=set(_moved)
+            for _ in range(2): _ring|={e.other_vert(_b.verts[i]).index for i in list(_ring) for e in _b.verts[i].link_edges}
+            for _ in range(4): bmesh.ops.smooth_vert(_b,verts=[_b.verts[i] for i in _ring if not _b.verts[i].is_boundary],factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+            _b.to_mesh(_w.data); _b.free()
 if G.get('scarf'):          # the knot at the throat
     z=NECK-0.05*s; hit=tree.ray_cast(Vector((0,-1,z)),Vector((0,1,0)))[0]; y=(hit.y if hit else -0.07)-0.03; bm=bmesh.new()
     k=[bm.verts.new((dx,y,z+dz)) for dx,dz in ((-0.02,0.0),(0.02,0.0),(0.012,-0.06),(-0.014,-0.056))]; bm.faces.new(k)
@@ -1461,7 +1486,33 @@ def fit_waist():
             f=sstep(top-0.09,top-0.03,c.z); r2=r+(lim-r)*f; c.x=dx*r2/r; c.y=cy+dy*r2/r; n+=1
     br.data.update(); print('FITTED WAIST',n)
 fit_waist()
-tuck_skin()
+if G.get('tuckskin',1): tuck_skin()
+def tuck_under_collar():
+    # The same for a flat collar (round or camp): skin of the neck and shoulders lying under the collar's leaf, below its seam, is set 8 mm deeper and bound to the collar,
+    # so it cannot come through at the nape when the head bows (it showed as a streak of skin across the back of the collar: owner, 17 November 2026).
+    co=bpy.data.objects.get('Collar')
+    if co is None or not FLAT or not len(co.data.polygons): return
+    from mathutils.kdtree import KDTree
+    b=bmesh.new(); b.from_mesh(co.data); b.normal_update(); bt=BVHTree.FromBMesh(b); top=[v.co.copy() for v in b.verts if v.is_boundary and v.co.z>NECK-0.02*s]; b.free()
+    kt=KDTree(max(1,len(top)))
+    for i,c in enumerate(top): kt.insert(c,i)
+    kt.balance(); kv=KDTree(len(co.data.vertices))
+    for v in co.data.vertices: kv.insert(v.co,v.index)
+    kv.balance(); on={g.index:g.name for g in co.vertex_groups}; n=0
+    for v in h.data.vertices:
+        c=v.co
+        if not NECK-0.10*s<c.z<NECK+0.04*s: continue
+        hit=bt.ray_cast(c+v.normal*0.0005,v.normal,0.03)[0]
+        if hit is None: hit=bt.ray_cast(c-v.normal*0.0005,-v.normal,0.01)[0]
+        if hit is None or (top and kt.find(c)[2]<0.006): continue
+        near=co.data.vertices[kv.find(hit)[1]]; bw={on[g.group]:g.weight for g in near.groups if on[g.group].startswith('mixamorig:') and g.weight>0}
+        if not bw: continue
+        for g in list(v.groups):
+            if h.vertex_groups[g.group].name.startswith('mixamorig:'): h.vertex_groups[g.group].remove([v.index])
+        for nm,w in bw.items(): (h.vertex_groups.get(nm) or h.vertex_groups.new(name=nm)).add([v.index],w,'REPLACE')
+        v.co=c-v.normal*0.008; n+=1
+    print('TUCKED UNDER COLLAR',n)
+if G.get('tuckskin',1): tuck_under_collar()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
 # Colours. The layer below is a float layer, so the linear colours made by srgb() above are exported as they are, and the scene is marked
 # vertexColorSpace: linear (engine/colours.js repairs older bodies without the mark). So a recipe colour means the same colour in every game (docs/PIPELINE.md, "Skin").
