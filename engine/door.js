@@ -1,4 +1,6 @@
-/* engine/door.js: one door for every game (owner, 17 November 2026: "this doesn't look like a door", a flat brown board on a wall).
+/* engine/door.js: the parts of a door (owner, 17 November 2026: "this doesn't look like a door", a flat brown board on a wall).
+   NOT one door for everything: "the doors should fit their purpose, not one shared one" (owner, same day). Each building's door is chosen and sized
+   for that building, its use, its time and place, from sources where they exist (CLAUDE.md rule 3); this file only saves drawing frames, panels and handles again.
    A door reads as a door from a few things, all here: a frame that stands out from the wall, a leaf set back into the opening, panels or boards
    that catch the light, a handle at hand height, and a step or sill at the foot. Each game picks the kind that fits its time and place.
 

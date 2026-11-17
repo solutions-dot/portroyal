@@ -53,7 +53,7 @@ export function buildNewTivoli(opts = {}) {
         if (f && rnd() < 0.25) for (let k = 0; k < 3; k++) box(X.cloth[(rnd() * 4) | 0], 0.4, 0.5, 0.02, wx - 0.5 + k * 0.5, y0 + 0.3, fz + facing * 1.25);   /* washing on the balcony rail */
       }
     }
-    door({ w: 1.0, h: 2.15, kind: 'flush', color: 0x6a4a30, frame: 0xf0ece2, handle: 'lever' }, x, z + facing * d / 2, facing > 0 ? 0 : Math.PI);   /* a plain flush timber door at the foot of the stair, as 1960s flats had */
+    door({ w: 1.0, h: 2.15, kind: 'flush', color: 0x6a4a30, frame: 0xf0ece2, handle: 'lever' }, x, z + facing * d / 2, facing > 0 ? 0 : Math.PI);   /* the door at the foot of a block's stair: a plain flush timber door (a stand-in: docs/games/tivoli.md) */
     { const zEnd = facing > 0 ? -1.6 : 1.6, len = Math.abs(zEnd - fz); box(X.paving, 1.6, 0.05, len, x, 0, (zEnd + fz) / 2); }   /* a paved path from the door to the main path */
     SO('building', 'block@' + x + ',' + z, x - w / 2 - 0.15, x + w / 2 + 0.15, z - d / 2 - 0.15, z + d / 2 + 0.15, 0, h + 0.3); SO('building', 'balconies@' + x + ',' + z, x - w / 2, x + w / 2, facing > 0 ? z + d / 2 : z - d / 2 - 1.35, facing > 0 ? z + d / 2 + 1.35 : z - d / 2, 2.8, h);
     wall(x - w / 2 - 0.3, z - d / 2 - 0.3, x + w / 2 + 0.3, z + d / 2 + 0.3);
@@ -65,7 +65,7 @@ export function buildNewTivoli(opts = {}) {
   /* the community centre at the east end: a wide hall with a flat roof, open louvres, a covered porch on posts, and a sign. The door faces west (-x). */
   const cx = 38, cw = 10, cd = 16;
   box(X.white, cw, 5.4, cd, cx, 0, 0); box(X.plinth, cw + 0.05, 0.6, cd + 0.05, cx, 0, 0); box(X.roofc, cw + 0.6, 0.3, cd + 0.6, cx, 5.4, 0); box(X.band, cw + 0.06, 0.2, cd + 0.06, cx, 3.6, 0);
-  const fx = cx - cw / 2 - 0.02; door({ w: 2.0, h: 2.4, kind: 'glazed', leaves: 2, color: 0x5a3e28, frame: 0xf0ece2, glass: 0x34424c }, cx - cw / 2, 0, -Math.PI / 2);   /* a pair of half-glazed doors into the hall */
+  const fx = cx - cw / 2 - 0.02; door({ w: 2.0, h: 2.4, kind: 'louvre', leaves: 2, color: 0x6a5038, frame: 0xf0ece2, handle: 'pull' }, cx - cw / 2, 0, -Math.PI / 2);   /* a public hall: a wide pair of louvred timber doors that let the air through, matching its open louvres (a stand-in: docs/games/tivoli.md) */
   for (const zz of [-5.5, -3, 3, 5.5]) { box(X.frame, 0.08, 1.6, 1.8, fx, 1.2, zz); for (let s = 0; s < 5; s++) box(X.slat, 0.06, 0.05, 1.7, fx - 0.04, 1.35 + s * 0.28, zz); }
   box(X.roofc, 2.4, 0.2, 6, fx - 1.2, 3.2, 0); for (const zz of [-2.85, 2.85]) box(X.frame, 0.22, 3.2, 0.22, fx - 2.25, 0, zz);   /* the porch roof on two posts */
   sign('COMMUNITY CENTRE', 6.4, fx - 0.01, 4.55, 0, -Math.PI / 2);
@@ -76,7 +76,7 @@ export function buildNewTivoli(opts = {}) {
   /* the clinic at the west end: a smaller building with a sign. The door faces east (+x). */
   const kx = -40, kw = 7, kd = 10;
   box(X.white, kw, 3.6, kd, kx, 0, 0); box(X.plinth, kw + 0.05, 0.6, kd + 0.05, kx, 0, 0); box(X.roofc, kw + 0.5, 0.25, kd + 0.5, kx, 3.6, 0);
-  const kf = kx + kw / 2 + 0.02; door({ w: 1.4, h: 2.2, kind: 'glazed', leaves: 2, color: 0xe8e4da, frame: 0xd8d4ca, glass: 0x34424c, metal: 0x9a9a96 }, kx + kw / 2, 0, Math.PI / 2); for (const zz of [-3, 3]) { box(X.frame, 0.08, 1.4, 1.6, kf, 1.1, zz); box(X.win, 0.1, 1.2, 1.4, kf + 0.01, 1.2, zz); }
+  const kf = kx + kw / 2 + 0.02; door({ w: 0.95, h: 2.1, kind: 'glazed', leaves: 1, color: 0xe8e4da, frame: 0xd8d4ca, glass: 0x34424c, metal: 0x9a9a96, handle: 'lever', step: 0.12 }, kx + kw / 2, 0, Math.PI / 2);   /* a clinic: one white half-glazed door, so staff can see who is waiting, up one step (a stand-in: docs/games/tivoli.md) */ for (const zz of [-3, 3]) { box(X.frame, 0.08, 1.4, 1.6, kf, 1.1, zz); box(X.win, 0.1, 1.2, 1.4, kf + 0.01, 1.2, zz); }
   sign('CLINIC', 3, kf + 0.01, 2.9, 0, Math.PI / 2);
   SO('building', 'clinic', kx - kw / 2 - 0.25, kx + kw / 2 + 0.25, -kd / 2 - 0.25, kd / 2 + 0.25, 0, 3.9); wall(kx - kw / 2 - 0.3, -kd / 2 - 0.3, kx + kw / 2 + 0.3, kd / 2 + 0.3);
 

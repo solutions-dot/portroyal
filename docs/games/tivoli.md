@@ -478,3 +478,11 @@ No two people with one face stand or walk side by side (`docs/PEOPLE.md`, sectio
 ## Journal like the other games (17 November 2026)
 
 The journal's tabs were one sideways-scrolling row with a fixed width, so long titles ran out of their buttons and the last tabs were cut off. They now wrap onto more rows, as in every other game. "Dig deeper" lost its open arrow (its summary is a flex box); it has one again and opens to the extra text. Layout 0 at 390x800.
+
+## Doors, benches and uniforms (17 November 2026)
+
+- **Doors fit their building** (owner: "the doors should fit their purpose, not one shared one"; a flat brown board on the hall had not read as a door). The community hall has a wide pair of louvred timber doors, like its open louvres; the clinic has one white half-glazed door up a step; each block of flats has a plain flush door at the foot of its stair. They are drawn with the parts in `engine/door.js`. **All three are stand-ins**: no photograph of these doors in the 1960s has been found yet. Wikipedia says the large community centre was built in the 1980s, so the 1965 hall may have been smaller. Work to do: find photographs (Gleaner archive, National Library of Jamaica) and model the real doors and hall.
+- **Benches** are 45 cm high, as park benches are. At 50 cm older people's feet hung off the ground, and the seat anchor lifted them 12 cm off the seat (fixed in `engine/placement.js` for every game).
+- **The police vest** had one point thrown 1.5 m out when it was thickened; it looked like a sword in his hand. `tools/tivoli/kit.py` now stops it, and `tools/checks/stray-points.mjs` finds any such point in any body.
+- **The soldier's vest** has wider shoulder pieces and a darker olive, so it reads as worn over the shoulders on the camouflage.
+- The title page and the menu name the event **the Tivoli Incursion**.
