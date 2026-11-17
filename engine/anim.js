@@ -39,7 +39,7 @@ export const POSTURE = { Spine1: -18, Spine2: 38, Neck: -20 };
 /* Standing clips (idles, talking, gestures) were made with the hips back and the knees bent about 30 degrees, so everyone stood in a slump, like a zombie (owner, 17 November 2026).
    For those clips the thigh is turned back, the knee straightened and the foot set flat again. Walking, running, carrying, kneeling and seated clips are left as they are: they do not have the slump. */
 export const STANCE = { LeftUpLeg: 14, RightUpLeg: 14, LeftLeg: 28, RightLeg: 28, LeftFoot: -14, RightFoot: -14 };
-const STANDING = /^(Agree|Argue|BriefcaseIdle|Cheer|Clap|Comfort\w*|Cry|Drink|HappyIdle|HeadTurn|HurtIdle|Idle|IdleM|Laugh|ListenMusic|LookAround|Nod|OldIdle|Point|ReachOut|Sad\d|Salute|Scared|Shrug|Speech|Talk\d|TalkM\d|Wave|WaveSlow|Write|Yell|TorchIdle|RifleIdle|CarryIdle|CarryHeadIdle)$/;   /* turning the shoulders back as well was tried: it helped four poses but made the full every-clip gate (tools/review/people-check.mjs) worse in Garvey and Nanny Town, so the arms are left as the clips have them */
+const STANDING = /^(Angry|Thankful|Greet|LookOverShoulder|HappyIdle2|StandPoseM|Agree|Argue|BriefcaseIdle|Cheer|Clap|Comfort\w*|Cry|Drink|HappyIdle|HeadTurn|HurtIdle|Idle|IdleM|Laugh|ListenMusic|LookAround|Nod|OldIdle|Point|ReachOut|Sad\d|Salute|Scared|Shrug|Speech|Talk\d|TalkM\d|Wave|WaveSlow|Write|Yell|TorchIdle|RifleIdle|CarryIdle|CarryHeadIdle)$/;   /* turning the shoulders back as well was tried: it helped four poses but made the full every-clip gate (tools/review/people-check.mjs) worse in Garvey and Nanny Town, so the arms are left as the clips have them */
 function posture(c, name) { const q = new THREE.Quaternion(), r = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0), st = STANDING.test(name || '');
   for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const deg = m ? (POSTURE[m[1]] || (st ? STANCE[m[1]] : undefined)) : undefined; if (!deg) continue; r.setFromAxisAngle(X, deg * Math.PI / 180); const v = t.values;
     for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i).premultiply(r).toArray(v, i); } } }
@@ -146,7 +146,7 @@ function fidget(c, m, dt) {
   if (c.cur !== c.base || m.userData.ambOwned || m.userData.still || m.userData.grips || m.userData.seatAnchor) return;
   if (c.idleT === undefined) c.idleT = 5 + Math.random() * 12; c.idleT -= dt; if (c.idleT > 0) return; c.idleT = 9 + Math.random() * 12;
   const bn = c.base.getClip().name; if (!FIDGET_BASE.test(bn)) return;
-  const list = (m.userData.elder ? ['OldIdle', 'LookAround'] : ['LookAround', 'HeadTurn']).filter((k) => k !== bn && CL[k]); if (list.length) c.play(list[(Math.random() * list.length) | 0], true);
+  const list = (m.userData.elder ? ['OldIdle', 'LookAround', 'LookOverShoulder'] : ['LookAround', 'HeadTurn', 'LookOverShoulder']).filter((k) => k !== bn && CL[k]); if (list.length) c.play(list[(Math.random() * list.length) | 0], true);
 }
 /* Hands at rest (owner, 17 November 2026: hands like claws on a talking woman). Mixamo's talking and gesture clips curl and spread the fingers hard; the plain Idle's hand
    hangs relaxed. Each finger of a standing clip is eased 60 per cent of the way to the Idle's hand, so a gesture still moves the hand but never makes a claw.

@@ -885,9 +885,14 @@ if CK and not FLAT:
             for j in range(ny+(3 if G.get('collarfit',1) else 2),len(row)):      # the folded leaf lies on the shirt, never in it: each of its points at least 4 mm over the shirt (measured from the skin, the leaf sank into an eased shirt and the shirt showed through it in patches)
                 loc,nrm,_i,_d=SHT.find_nearest(row[j])
                 if loc is not None and (row[j]-loc).dot(nrm)<0.004: row[j]=loc+nrm*0.004
+                if loc is not None and j==len(row)-1 and (row[j]-loc).dot(nrm)>0.006: row[j]=loc+nrm*0.005      # and its outer edge lies down on the shirt: standing off the shoulder, it showed its dark underside and the skin beneath (owner, 17 November 2026)
             if CK!='open':      # the band's lowest row goes just under the shirt's neck edge, so no slit of skin opens between them (with no yoke under it)
                 loc,nrm,_i,_d=SHT.find_nearest(row[ny])
                 if loc is not None: row[ny]=loc+nrm*(0.0012 if ny else -0.004)
+    if CK=='turn':      # the leaf's outer edge turns under onto the shirt, so its underside never shows (as the flat collars' edge does)
+        for row in rows:
+            q=row[-1]; d=(q-row[-2]); d=d.normalized() if d.length>1e-6 else Vector((0,0,-1)); loc,nrm,_i,_dd=SHT.find_nearest(q+d*0.003)
+            if loc is not None: row.append(loc-nrm*0.0012)
     rows=[[bm.verts.new(q) for q in row] for row in rows]
     quadstrip(bm,[list(r) for r in zip(*rows)]); _co=soft('Collar',bm,'Shirt' if CK=='band' else 'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD or EASE_OLD: ring_weights(_co,len(rows),len(rows[0]))
