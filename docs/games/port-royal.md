@@ -154,3 +154,11 @@ Henry Morgan, Alexandre Exquemelin, the Reverend Emmanuel Heath and Symon Bennin
 ## Look-alikes (17 November 2026)
 
 `?test=audit` (`checks.js`, `placeAudit`) now runs the look-alike check (`faceCheck`, `engine/faces.js`) on everyone shown in a place: two people with one body and face within 2.5 m. It reports 0 in all seven places, before and after, so nothing was changed. The townsfolk, the 1670 buccaneers and the camp's survivors are recoloured copies of story bodies placed by hand, and the nearest two of one body are 2.9 m apart (two men on Kofi's body in the camp) and 3.7 m (two buccaneers on the sailor's body). Keep copies of one body at least that far apart; if one must stand closer, give that recipe `"variants"` (`docs/PEOPLE.md`, section 5b). `?test=audit&faces` lists each person's body. The other 5 lines of `?test=audit` (Grace and a camp person at a walking wall, Kofi's route past furniture) are from before this change.
+
+## Audit 0, the market stall (17 November 2026)
+
+- `?test=audit` is wired (`checks.js`, `placeAudit`) and reports **0** in all seven places. (An older line above says it is not wired; that is out of date.) Kofi now starts 30 cm clear of his crates, so his route no longer touches them. A person counts as "inside a walking wall" only when there is no walkable ground within 40 cm (`offWall`): the walking walls here are half-metre grid rows that include the player's own margin round every prop, so a seller right behind her stall was flagged without touching anything.
+- Fruit floated over the basket floors. `heap` now builds a real pile, ring by ring and layer by layer, resting on the floor; the pineapples stand on the floor and the watermelons sit on the cloth.
+- The plantains hanging from the stall frame were a row of thick sticks. Each hook now holds two hands of plantains on a cord, after a photograph the owner supplied: six or seven long curved fingers joined at a crown, hanging down and fanning out, with a thin neck and a tight narrow tip, a ripe yellow hand over a green one.
+- To check against a source: the fruit on Grace's stall (plantains, pineapples, oranges, limes, watermelons). Hans Sloane, who was in Jamaica from 1687 to 1689, is the source to check each one against.
+- The audit does not yet catch small things floating inside a basket. A check for this is work to do.

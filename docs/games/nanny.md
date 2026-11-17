@@ -211,3 +211,10 @@ Skin (owner rule 9): recipes sit inside Marcus Garvey's range; `SKIN_LIGHT = 1.5
 7. **Sound.** The horn is synthesised. A recording of a real abeng, given with permission, would be far better.
 8. **Screen shake.** The guns and the fight shake the camera, and there is no setting to turn that off.
 9. **Chapter 6 "today".** It is a card and two journal pages. A walk in Moore Town today would be better, and should only be made with the town's help.
+
+## Slopes, huts and the crowd (17 November 2026)
+
+- **Walking on slopes** (`engine/anim.js`, `groundFeet` with `userData.groundAt`): the body stands on one smooth floor, the lower of the two grounds under the feet while that foot is down, rising to the higher ground as it lifts. The foot over higher ground bends its knee, and a lifted foot clears the ground under its toe. `?test=walkers` now judges each foot on the ground under it and reports the worst gap, the average and the frames over 5 cm. It still reports a few frames (worst 7 to 9 cm, average under 2 cm; it was 13 to 23 cm). Work to do.
+- **Huts** (`putHut`, `props.js`): each near hut stands level on a battered earth platform with stone steps to the door; plants and people keep off them. Far huts are cut a little into the hill (`seat(..., 0.45)`) and not stood on tall blocks.
+- **Crowd**: a child whose game ended on a story path could stand there for good. Children now run on off the path (`offPath` in `engine/ambient.js`). `?test=ambient` 0.
+- **Look-alikes**: `?test=audit` runs `placeFaces`. Audit 0 in all four places.

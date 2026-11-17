@@ -186,3 +186,14 @@ Still to do: par wave 2 (Bog Walk, Eventide, Melissa, Tivoli), re-run ?test=all 
 ## Main consolidation: 16 November 2026
 
 The owner approved the non-people changes for main. Selassie people revisions and their updated thumbnail are held for a separate PR. Main keeps its existing character models and character-building recipes/scripts; previous people checklists above are historical. The current consolidation review and branch inventory are in `docs/reviews/outstanding-branches-20261116.md`. Automatic Vercel deployments for main are enabled. The earlier no-deploy instruction applied to manual deployment, not to the normal production build after a merge to `main`.
+
+## 17 November 2026, later: slopes, collars, look-alikes, real ships
+
+- Look-alikes are 0 in every game and the check is in every audit (`engine/faces.js`, `docs/PEOPLE.md` 5b). Squads in uniform are exempt.
+- Slope walking rewritten (`docs/games/nanny.md`). Nanny's `?test=walkers` still reports a few frames.
+- Band collars fitted to the neck; untucked T-shirts hang straight (`docs/PIPELINE.md`).
+- Port Royal audit 0; fruit rests in its baskets; plantains are bunches (`docs/games/port-royal.md`).
+- The Yarmouth is modelled on photographs of the ship (`docs/games/garvey.md`). **Owner's rule: no stand-ins.** Things are modelled on sources for the real thing (CLAUDE.md rule 3).
+- Known stand-ins to replace: *Shadyside* and *Kanawha* in Garvey chapter 5; stand-in bodies and poses named at the top of CLAUDE.md (Nanny, Tivoli, Melissa).
+- Audits not yet at 0: Bog Walk 30 and Melissa 17 scenery overlaps.
+- Still to do, last: portrait camera framing for the cinematic scenes in all ten games.

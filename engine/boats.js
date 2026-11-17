@@ -297,7 +297,8 @@ export function steamer(o = {}) {
   const xOf = (s) => (s - 0.5) * L;
   const half = (s) => B / 2 * Math.max(0.06, s > 0.62 ? 1 - Math.pow((s - 0.62) / 0.38, 1.35) : s < 0.2 ? 0.3 + 0.7 * Math.sin(Math.PI / 2 * s / 0.2) : 1);
   const deck = (s) => sc * (3.4 + 2.6 * Math.pow(Math.max(0, s - 0.5) / 0.5, 2) + 1.4 * Math.pow(Math.max(0, 0.5 - s) / 0.5, 2));
-  const isl = (s) => smooth(0.865, 0.875, s) + smooth(0.415, 0.425, s) * (1 - smooth(0.615, 0.625, s)) + (1 - smooth(0.125, 0.135, s));   /* forecastle, bridge deck, poop */
+  const PK = o.style === 'packet';   /* a coastal passenger steamer of the 1880s, after photographs of the Yarmouth (built 1887): a black hull with a plumb stem and a high forecastle that runs about a third of her length, a small white wheelhouse on it with the foremast just behind, big dark cowl ventilators fore and aft of the funnel, three boats a side, a derrick on each mast, one tall thin funnel amidships, and a long white deckhouse aft with a boat deck over it */
+  const isl = (s) => PK ? smooth(0.685, 0.695, s) : smooth(0.865, 0.875, s) + smooth(0.415, 0.425, s) * (1 - smooth(0.615, 0.625, s)) + (1 - smooth(0.125, 0.135, s));   /* forecastle, bridge deck, poop */
   const floor = (s) => deck(s) + 2.4 * sc * isl(s), top = (s) => floor(s) + 1.0 * sc;
   const bot = (s) => s < 0.06 ? -1.2 * sc + 2.4 * sc * Math.pow(1 - s / 0.06, 1.5) : -1.2 * sc;   /* the counter stern overhangs the water */
   const R = 1.0 * sc, WL = 0.45 * sc;
@@ -318,38 +319,49 @@ export function steamer(o = {}) {
       for (const [z, y] of ring) { b.pos.push(x, y, z); b.col.push(hc.r, hc.g, hc.b); } for (let j = 0; j < ring.length; j++) { const p = base + 1 + j, q = base + 1 + (j + 1) % ring.length; if (s) b.idx.push(base, p, q); else b.idx.push(base, q, p); } } }
   K.add(geoOf(b));
   /* portholes along the forecastle, the bridge deck and the poop */
-  for (const sd of [1, -1]) for (const [s0, s1, n] of [[0.88, 0.95, 4], [0.43, 0.61, 9], [0.03, 0.12, 4]]) for (let k = 0; k < n; k++) { const s = s0 + (s1 - s0) * (k + 0.5) / n; K.cyl(0.18 * sc, 0.18 * sc, 0.08 * sc, xOf(s), floor(s) - 1.1 * sc, sd * half(s), DARK, 6, Math.PI / 2); }
+  for (const sd of [1, -1]) for (const [s0, s1, n] of PK ? [[0.14, 0.66, 18], [0.72, 0.93, 7]] : [[0.88, 0.95, 4], [0.43, 0.61, 9], [0.03, 0.12, 4]]) for (let k = 0; k < n; k++) { const s = s0 + (s1 - s0) * (k + 0.5) / n; K.cyl(0.18 * sc, 0.18 * sc, 0.08 * sc, xOf(s), floor(s) - 1.1 * sc, sd * half(s), DARK, 6, Math.PI / 2); }
   /* anchors in the hawse pipes */
   for (const sd of [1, -1]) { const s = 0.955, x = xOf(s), y = deck(s) + 0.4 * sc, z = sd * (half(s) + 0.05 * sc); K.box(0.35 * sc, 2.2 * sc, 0.2 * sc, x, y - 1.2 * sc, z, DARK); K.box(1.5 * sc, 0.35 * sc, 0.2 * sc, x, y - 2.3 * sc, z, DARK); }
   /* hatches in the well decks */
-  for (const s of [0.72, 0.8, 0.2, 0.3]) K.box(0.055 * L, 1.0 * sc, B * 0.42, xOf(s), deck(s) + 0.5 * sc, 0, HATCH);
+  for (const s of PK ? [] : [0.72, 0.8, 0.2, 0.3]) K.box(0.055 * L, 1.0 * sc, B * 0.42, xOf(s), deck(s) + 0.5 * sc, 0, HATCH);
   /* the midships house, the boat deck over it, the wheelhouse on top and the open bridge with its wings */
-  const fl = floor(0.52), hb = B * 0.36, h1 = 2.5 * sc;
+  const fl = floor(PK ? 0.36 : 0.52), hb = B * (PK ? 0.34 : 0.36), h1 = (PK ? 2.4 : 2.5) * sc;
+  if (!PK) {
   K.box(0.15 * L, h1, hb * 2, xOf(0.51), fl + h1 / 2, 0, HOUSE); K.box(0.16 * L, 0.2 * sc, hb * 2 + 0.6 * sc, xOf(0.51), fl + h1 + 0.1 * sc, 0, DECK);
   for (const sd of [1, -1]) for (let k = 0; k < 7; k++) K.box(0.6 * sc, 0.7 * sc, 0.1 * sc, xOf(0.445 + k * 0.02), fl + h1 * 0.6, sd * hb, DARK);
   const f2 = fl + h1 + 0.2 * sc, h2 = 2.3 * sc; K.box(0.045 * L, h2, hb * 1.3, xOf(0.575), f2 + h2 / 2, 0, HOUSE);
   K.box(0.12 * sc, 0.8 * sc, hb * 1.25, xOf(0.575) + 0.0225 * L + 0.04 * sc, f2 + h2 * 0.62, 0, DARK);   /* the wheelhouse windows */
   K.box(0.03 * L, 0.18 * sc, B + 0.6 * sc, xOf(0.585), f2 + h2 + 0.09 * sc, 0, DECK); K.box(0.03 * L, 0.9 * sc, 0.06 * sc, xOf(0.585), f2 + h2 + 0.6 * sc, B / 2 + 0.3 * sc, HOUSE); K.box(0.03 * L, 0.9 * sc, 0.06 * sc, xOf(0.585), f2 + h2 + 0.6 * sc, -B / 2 - 0.3 * sc, HOUSE);
   K.box(0.12 * sc, 0.9 * sc, B + 0.6 * sc, xOf(0.6), f2 + h2 + 0.6 * sc, 0, HOUSE);   /* the canvas dodger along the front of the bridge */
+  } else {
+    K.box(0.61 * L, h1, hb * 2, xOf(0.385), fl + h1 / 2, 0, HOUSE); K.box(0.63 * L, 0.2 * sc, hb * 2 + 1.2 * sc, xOf(0.375), fl + h1 + 0.1 * sc, 0, DECK);   /* the long deckhouse from the forecastle to the stern, and the boat deck over it, level with the forecastle deck and wider than the house: a covered walk along each side */
+    for (const sd of [1, -1]) { for (let k = 0; k < 24; k++) K.box(0.5 * sc, 0.8 * sc, 0.1 * sc, xOf(0.1 + k * 0.0245), fl + h1 * 0.58, sd * hb, DARK);
+      K.box(0.63 * L, 0.07 * sc, 0.07 * sc, xOf(0.375), fl + h1 + 1.1 * sc, sd * (hb + 0.55 * sc), HOUSE); for (let k = 0; k <= 16; k++) K.box(0.07 * sc, 1.0 * sc, 0.07 * sc, xOf(0.06 + k * 0.0394), fl + h1 + 0.6 * sc, sd * (hb + 0.55 * sc), HOUSE);   /* the boat deck rail */
+      for (let k = 0; k <= 11; k++) K.box(0.09 * sc, h1, 0.09 * sc, xOf(0.07 + k * 0.0555), fl + h1 / 2, sd * (hb + 0.5 * sc), HOUSE); }   /* posts under the boat deck */
+    const u = 2.0 * sc, ud = fl + h1 + 0.2 * sc; for (const [sc0, len] of [[0.255, 0.15], [0.635, 0.16]]) { K.box(len * L, u, hb * 0.9, xOf(sc0), ud + u / 2, 0, HOUSE); K.box((len + 0.01) * L, 0.15 * sc, hb * 0.9 + 0.4 * sc, xOf(sc0), ud + u + 0.07 * sc, 0, DECK); for (const sd of [1, -1]) for (let k = 0; k < 5; k++) K.box(0.45 * sc, 0.6 * sc, 0.08 * sc, xOf(sc0 + (k - 2) * len * 0.19), ud + u * 0.6, sd * hb * 0.45, DARK); }   /* two low houses on the boat deck, one aft of the funnel and one forward of it */
+    const wf = floor(0.755), h2 = 2.5 * sc, wb = B * 0.17; K.box(0.045 * L, h2, wb * 2, xOf(0.755), wf + h2 / 2, 0, HOUSE); K.box(0.052 * L, 0.16 * sc, wb * 2 + 0.5 * sc, xOf(0.755), wf + h2 + 0.08 * sc, 0, DECK);   /* the wheelhouse on the forecastle deck */
+    K.box(0.1 * sc, 0.8 * sc, wb * 1.8, xOf(0.755) + 0.0225 * L + 0.03 * sc, wf + h2 * 0.64, 0, DARK); for (const sd of [1, -1]) K.box(0.032 * L, 0.8 * sc, 0.1 * sc, xOf(0.758), wf + h2 * 0.64, sd * wb, DARK);
+  }
   /* the funnel, raked a little, with a rim at the top and a steam pipe in front; a mast house on the poop */
-  { const fx = xOf(0.495), fy = fl + h1 + 0.2 * sc, fh = 9.5 * sc, r = 1.5 * sc, g = new THREE.CylinderGeometry(r, r * 1.05, fh, 16, 1, true); g.scale(1.25, 1, 1); g.translate(0, fh / 2, 0); g.rotateZ(0.09); g.translate(fx, fy, 0); K.add(g, FUNNEL);
+  { const fx = xOf(PK ? 0.47 : 0.495), fy = fl + h1 + 0.2 * sc, fh = (PK ? 12.5 : 9.5) * sc, r = (PK ? 1.15 : 1.5) * sc, g = new THREE.CylinderGeometry(r, r * 1.05, fh, 16, 1, true); g.scale(1.25, 1, 1); g.translate(0, fh / 2, 0); g.rotateZ(0.09); g.translate(fx, fy, 0); K.add(g, FUNNEL);
     const rim = new THREE.TorusGeometry(r * 1.0, 0.1 * sc, 4, 16); rim.rotateX(Math.PI / 2); rim.scale(1.25, 1, 1); rim.translate(0, fh, 0); rim.rotateZ(0.09); rim.translate(fx, fy, 0); K.add(rim, FUNNEL);
     const cap = new THREE.CircleGeometry(r * 0.98, 16); cap.rotateX(-Math.PI / 2); cap.scale(1.25, 1, 1); cap.translate(0, fh - 0.6 * sc, 0); cap.rotateZ(0.09); cap.translate(fx, fy, 0); K.add(cap, 0x0b0b0c);
     K.cyl(0.18 * sc, 0.18 * sc, fh + 0.6 * sc, fx + r * 1.4 + Math.sin(0.09) * fh / 2 * -1, fy + (fh + 0.6 * sc) / 2, 0, 0x8a8c88, 6, 0, 0.09);
     /* cowl ventilators either side of the funnel: a pipe and a turned mouth */
-    for (const [dx, sd] of [[-2.4, 1], [-2.4, -1], [2.6, 1], [2.6, -1]]) { const x = fx + dx * sc, z = sd * hb * 0.6, y0 = fy, vh = 2.6 * sc; K.cyl(0.32 * sc, 0.32 * sc, vh, x, y0 + vh / 2, z, HOUSE, 8);
-      const m = new THREE.CylinderGeometry(0.55 * sc, 0.38 * sc, 0.8 * sc, 10, 1, true); m.rotateZ(Math.PI / 2 * (dx < 0 ? -1 : 1)); m.translate(x + (dx < 0 ? -0.3 : 0.3) * sc, y0 + vh + 0.25 * sc, z); K.add(m, HOUSE); K.cyl(0.5 * sc, 0.5 * sc, 0.05 * sc, x + (dx < 0 ? -0.68 : 0.68) * sc, y0 + vh + 0.25 * sc, z, 0x6a2a22, 10, 0, Math.PI / 2); } }
-  K.box(0.06 * L, 2.0 * sc, B * 0.45, xOf(0.07), floor(0.07) + 1.0 * sc, 0, HOUSE);
+    for (const [dx, sd] of (PK ? [[8, 1], [8, -1], [-2.4, 1], [-2.4, -1]] : [[-2.4, 1], [-2.4, -1], [2.6, 1], [2.6, -1]])) { const x = fx + dx * sc, z = sd * hb * 0.6, y0 = fy, vh = 2.6 * sc; K.cyl(0.32 * sc, 0.32 * sc, vh, x, y0 + vh / 2, z, (PK ? FUNNEL : HOUSE), 8);
+      const m = new THREE.CylinderGeometry(0.55 * sc, 0.38 * sc, 0.8 * sc, 10, 1, true); m.rotateZ(Math.PI / 2 * (dx < 0 ? -1 : 1)); m.translate(x + (dx < 0 ? -0.3 : 0.3) * sc, y0 + vh + 0.25 * sc, z); K.add(m, (PK ? FUNNEL : HOUSE)); K.cyl(0.5 * sc, 0.5 * sc, 0.05 * sc, x + (dx < 0 ? -0.68 : 0.68) * sc, y0 + vh + 0.25 * sc, z, 0x6a2a22, 10, 0, Math.PI / 2); } }
+  if (!PK) K.box(0.06 * L, 2.0 * sc, B * 0.45, xOf(0.07), floor(0.07) + 1.0 * sc, 0, HOUSE);
   /* lifeboats on the boat deck, two a side */
-  for (const sd of [1, -1]) for (const s of [0.455, 0.54]) { const g = new THREE.SphereGeometry(1, 10, 5, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2); g.scale(3.2 * sc, 0.9 * sc, 0.9 * sc); g.translate(xOf(s), fl + h1 + 1.2 * sc, sd * (hb - 0.6 * sc)); K.add(g, 0xece8dc);
+  for (const sd of [1, -1]) for (const s of PK ? [0.5, 0.36, 0.14] : [0.455, 0.54]) { const g = new THREE.SphereGeometry(1, 10, 5, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2); g.scale(3.2 * sc, 0.9 * sc, 0.9 * sc); g.translate(xOf(s), fl + h1 + 1.2 * sc, sd * (hb - 0.6 * sc)); K.add(g, 0xece8dc);
     K.box(6.2 * sc, 0.12 * sc, 1.8 * sc, xOf(s), fl + h1 + 1.2 * sc, sd * (hb - 0.6 * sc), 0xc8bfa8);
     for (const dx of [-2.4, 2.4]) K.tube([V(xOf(s) + dx * sc, fl + h1 + 0.2 * sc, sd * (hb - 1.6 * sc)), V(xOf(s) + dx * sc, fl + h1 + 2.6 * sc, sd * (hb - 1.4 * sc)), V(xOf(s) + dx * sc, fl + h1 + 2.8 * sc, sd * (hb - 0.6 * sc))], 0.1 * sc, HOUSE, 5, 4); }
   /* two masts with a topmast and crosstrees, derrick booms resting toward the hatches, and the standing rigging */
   const masts = [];
-  for (const [s, toward] of [[0.765, 1], [0.255, -1]]) { const x = xOf(s), y0 = deck(s), mh = 24 * sc, tp = y0 + mh;
+  for (const [s, toward] of PK ? [[0.725, 1], [0.255, -1]] : [[0.765, 1], [0.255, -1]]) { const x = xOf(s), y0 = deck(s), mh = 24 * sc, tp = y0 + mh;
     K.cyl(0.42 * sc, 0.3 * sc, mh * 0.7, x, y0 + mh * 0.35, 0, MAST, 8); K.cyl(0.24 * sc, 0.14 * sc, mh * 0.34, x, y0 + mh * 0.83, 0, MAST, 6); K.box(0.25 * sc, 0.25 * sc, 3.2 * sc, x, y0 + mh * 0.68, 0, MAST);
     K.box(1.4 * sc, 0.9 * sc, 1.4 * sc, x, y0 + 0.45 * sc, 0, HOUSE);   /* the winch house at the foot */
-    for (const sd of [1, -1]) K.rod(V(x, y0 + 1.2 * sc, sd * 0.6 * sc), V(x + toward * 0.085 * L, y0 + 4.2 * sc, sd * 1.4 * sc), 0.16 * sc, MAST, 5);
+    if (PK) K.rod(V(x, floor(0.5) + h1 + 1.4 * sc, 0), V(x + toward * 0.075 * L, floor(0.5) + h1 + 8 * sc, 0), 0.16 * sc, MAST, 5);   /* one derrick boom on each mast, topped up */
+    else for (const sd of [1, -1]) K.rod(V(x, y0 + 1.2 * sc, sd * 0.6 * sc), V(x + toward * 0.085 * L, y0 + 4.2 * sc, sd * 1.4 * sc), 0.16 * sc, MAST, 5);
     for (const sd of [1, -1]) for (const dx of [-1.6, 0, 1.6]) K.rod(V(x, y0 + mh * 0.68, sd * 0.3 * sc), V(x + dx * sc, top(s), sd * (half(s) - 0.1 * sc)), 0.04 * sc, RIG, 3);
     masts.push(V(x, tp, 0)); }
   K.rod(masts[0], V(xOf(1) - 0.2 * sc, top(1), 0), 0.05 * sc, RIG, 3); K.rod(masts[0], masts[1], 0.05 * sc, RIG, 3); K.rod(masts[1], V(xOf(0.01), top(0.01), 0), 0.05 * sc, RIG, 3);

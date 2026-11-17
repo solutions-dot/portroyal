@@ -304,3 +304,8 @@ Marcus Garvey's face (`garvey1914.json`, `garvey1916.json`) was shaped against a
 
 Abba and Grace in Port Royal are builder bodies now (skin `[138, 93, 66]`, at the owner's request a little darker than most, still inside the range).
 
+
+## Collars and untucked shirts (17 November 2026)
+
+- **Band collars** (`stand`, `turn`): the band's top edge and the fold are fitted to the neck itself (`ring_fix` against the skin, 5 mm and 8 mm clear; `collarfit`, on by default). Measured from an ellipse, the neck came through the band in a ragged line and two teeth stood up at the back.
+- **Untucked shirts** (`untucked`): after the shirt is cleared over the shorts it is drawn into one straight line from the waist to the widest thing under it, then the hem is set level. It still flares a little over baggy shorts.
