@@ -9,6 +9,7 @@ import { T, cv, grain, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng }
 import { palm, tree, banana, bush, boardHouse, hillRing, scatter, mule, bench, lampPost, crate, barrel, bucket, sack, lantern, cart } from './props.js';
 import { grassField, flowerField, rockField, blotches, fence, mangoTree, bamboo, flameTree, hibiscus, croton, stump } from './detail.js';
 import { rails, steamLoco, wagon, wheel } from './trains.js';
+import { makeDoor } from '../../../engine/door.js';
 import { person, extra, crowd04, crowd99, crowdNow } from './cast.js';
 
 const PI = Math.PI;
@@ -268,6 +269,17 @@ function worksDoor(w, h, { color = 0x3a4a3a, frame = 0x4a3a2c, glaze = 0, open =
     for (let k = 0; k < 2; k++) { const y0 = ly[k], y1 = ly[k + 1], run = lw - 0.3, len = Math.hypot(run, y1 - y0), b = box(len, 0.13, 0.03, lf2, at(lw / 2), (y0 + y1) / 2, -t - 0.015, L); b.rotation.z = Math.atan2(y1 - y0, side * run); }   /* braces, rising away from the hinge */
     box(0.03, 0.3, 0.03, strap, at(lw - 0.1), 1.1, 0.02, L); }   /* an iron handle on the meeting edge */
   return g;
+}
+/* a Kingston shop's front doors, 1904: a tall pair of panelled leaves, three panels each, folded right back against the front for the day. After the LOC
+   stereographs "Harbor Street looking east, Kingston" (1904: a tall panelled street door, the shops open under their piazzas) and "Distributing supplies ...
+   Kingston disaster" (1907: a tall pair of panelled leaves, three panels each, folded back into the reveal); no ledged board doors show on the town's streets (docs/games/bog-walk.md, Doors). The kit's door (engine/door.js)
+   is set facing into the shop and swung out and right round, so its panels face the street; its own frame and sill are left out and a deeper frame stands
+   round the opening instead, as the works door had. The origin is the middle of the foot of the opening on the wall face; the doors face +z. */
+function shopDoors(w, h, color, frame = 0xe8e0cc) {
+  const g = grp(), fr = solid(frame, 0.85);
+  box(0.14, h + 0.14, 0.1, fr, -w / 2 - 0.07, (h + 0.14) / 2, 0.05, g); box(0.14, h + 0.14, 0.1, fr, w / 2 + 0.07, (h + 0.14) / 2, 0.05, g); box(w + 0.28, 0.14, 0.12, fr, 0, h + 0.07, 0.06, g);   /* the frame */
+  const d = makeDoor({ w, h, kind: 'six', leaves: 2, color, frame, metal: 0x2a2a2a, handle: 'knob', open: -2.95 / 1.4 }); d.children.filter((c) => c.isMesh && c.material.name === 'DoorFrame').forEach((c) => d.remove(c));
+  d.position.z = 0.137; d.rotation.y = PI; g.add(d); return g;   /* its hinges stand 9 cm out from the wall, inside the frame */
 }
 function turbineHouse(g, kind, P) {
   /* the brick house: 14 m by 10 m, walls 0.4 m thick and 6.5 m high, a door in the south wall. Inside: the turbine casing, the shaft, the spinning wheel,
@@ -665,7 +677,7 @@ export function buildKingston() {
   const walls = ['#c8b080', '#a8c0a8', '#d8c0a0', '#c0a088', '#e0d4b8', '#b8b8c8'].map((h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
   const names = [['DRY GOODS', 0], ['BAKERY', 1], ['HARDWARE', 0], ['PROVISIONS', 1], ['DRUG STORE', 0], ['TAILOR', 1], ['GROCERY', 0], ['SHOES', 1]];
   let k = 0; for (const side of [-1, 1]) for (let x = -30; x < 100; x += 8.6) { if (side < 0 && x < -25) continue; const h = boardHouse(7.6, 5, 3.2 + r() * 0.8, { wall: walls[k % walls.length], roof: [[150, 154, 150], [140, 96, 76], [120, 124, 120]][k % 3], seed: k + 3, door: false });
-    { const sd = worksDoor(1.3, 2.2, { color: [0x3a5a44, 0x6a4a2e, 0x2f4a5a, 0x7a3a2a][k % 4], frame: 0xe8e0cc, open: 2.95 }); sd.position.set(0, 0.27, 2.5); h.add(sd); box(1.3, 2.2, 0.01, solid(0x1a1612, 1), 0, 0.27 + 1.1, 2.505, h); }   /* a Kingston shop open for the day: its pair of tall ledged board doors folded right back against the front, the dark shop inside */ h.position.set(x, 0, side * 10); h.rotation.y = side < 0 ? 0 : PI; g.add(h);
+    { const sd = shopDoors(1.3, 2.2, [0x3a5a44, 0x6a4a2e, 0x2f4a5a, 0x7a3a2a][k % 4]); sd.position.set(0, 0.27, 2.5); h.add(sd); box(1.3, 2.2, 0.01, solid(0x1a1612, 1), 0, 0.27 + 1.1, 2.505, h); }   /* a Kingston shop open for the day: its tall pair of panelled doors folded right back against the front, the dark shop inside (they were ledged boards; photographs of Kingston, 1904 and 1907, show panelled pairs) */ h.position.set(x, 0, side * 10); h.rotation.y = side < 0 ? 0 : PI; g.add(h);
     const nm = names[k % names.length]; const sg = mesh(new THREE.PlaneGeometry(3.4, 0.42), std(signTex([[nm[0], '700 60px Georgia, serif']], 512, 64), 0.8), x, 2.3, side * (10 - 4.1), g); if (side > 0) sg.rotation.y = PI; k++; }
   P.walls.push([-60, -40, 120, -5.5], [-60, 5.5, 120, 40]);
   /* the depot: a long shed with wide doors opening on to the street */
