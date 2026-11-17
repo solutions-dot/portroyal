@@ -41,7 +41,12 @@ const THATCH_TINT = [0xffffff, 0xd9d2c4, 0xc4bca8, 0xe8dcc0];
 export function hut(w = 4, d = 3.2, h = 2.1, seed = 1) {
   const g = grp(), r = rng(seed * 7 + 3), wt = TX.wattle().clone(); wt.needsUpdate = true; wt.repeat.set(w / 3.4, 1); const wall = std(wt, 1), tm = std(TX.thatch(), 1, { color: THATCH_TINT[seed % 4] });
   box(w, h, d, wall, 0, h / 2, 0, g); box(w + 0.16, 0.34, d + 0.16, flat(0x5e4430), 0, 0.17, 0, g);   /* the wall, and its foot of packed clay */
-  box(w + 0.3, 2.2, d + 0.3, flat(0x4e4034), 0, -1.1, 0, g);   /* a platform of packed earth and stone under the house, down into the hill: on a slope the house stands level on it (places.js seats the floor at the highest ground under it), instead of half buried uphill and hanging in the air downhill (owner, 17 November 2026) */
+  { /* a platform of packed earth faced with stone under the house, down into the hill: on a slope the house stands level on it (places.js seats the floor at the highest
+       ground under it), instead of half buried uphill and hanging in the air downhill (owner, 17 November 2026). It leans in toward the top like a real retaining bank
+       and has a paler course along its top edge; places.js adds the steps to the door. */
+    const pg = new THREE.BoxGeometry(w + 0.3, 2.2, d + 0.3, 1, 1, 1), pp = pg.attributes.position; for (let i = 0; i < pp.count; i++) if (pp.getY(i) < 0) { pp.setX(i, pp.getX(i) * 1.16); pp.setZ(i, pp.getZ(i) * 1.2); }
+    pg.translate(0, -1.1, 0); pg.computeVertexNormals(); const pm = mesh(pg, flat(0x6e5d4a), 0, 0, 0, g); pm.name = 'platform';
+    box(w + 0.42, 0.1, d + 0.42, flat(0x8a7a62), 0, -0.05, 0, g); }
   const rh = 1.25 + r() * 0.3, lo = mesh(new THREE.ConeGeometry(1, rh, 4, 1), tm, 0, h + rh / 2 - 0.05, 0, g); lo.rotation.y = PI / 4; lo.scale.set((w / 2 + 0.7) * Math.SQRT2, 1, (d / 2 + 0.7) * Math.SQRT2);
   const uh = 1.0 + r() * 0.25, up = mesh(new THREE.ConeGeometry(1, uh, 4, 1), tm, 0, h + rh * 0.62 + uh / 2, 0, g); up.rotation.y = PI / 4; up.scale.set((w / 2 + 0.1) * 0.74 * Math.SQRT2, 1, (d / 2 + 0.1) * 0.74 * Math.SQRT2);
   cyl(0.11, 0.17, 0.3, PM.straw, 0, h + rh * 0.62 + uh + 0.08, 0, g, 6); cyl(0.19, 0.19, 0.05, PM.woodDark, 0, h + rh * 0.62 + uh - 0.04, 0, g, 6);   /* the tied bundle at the peak */
@@ -60,7 +65,8 @@ export function hutGeo() {
   const r1 = new THREE.ConeGeometry(1, 1.35, 4, 1).toNonIndexed(); r1.rotateY(PI / 4); r1.scale(2.7 * Math.SQRT2, 1, 2.3 * Math.SQRT2); r1.translate(0, 2.72, 0); col(r1, (x, y, z) => { const k = nz(x, y, z) * (0.72 + (y - 2) * 0.22); return [0.56 * k, 0.48 * k, 0.29 * k]; });
   const r2 = new THREE.ConeGeometry(1, 1.15, 4, 1).toNonIndexed(); r2.rotateY(PI / 4); r2.scale(1.55 * Math.SQRT2, 1, 1.3 * Math.SQRT2); r2.translate(0, 3.42, 0); col(r2, (x, y, z) => { const k = nz(x, y, z) * 0.95; return [0.6 * k, 0.52 * k, 0.32 * k]; });
   const door = col(new THREE.BoxGeometry(0.86, 1.6, 0.06).toNonIndexed().translate(0, 0.8, 1.61), () => [0.05, 0.04, 0.03]);
-  const base = col(new THREE.BoxGeometry(4.5, 2.2, 3.7).toNonIndexed().translate(0, -1.1, 0), (x, y, z) => { const k = nz(x, y, z); return [0.30 * k, 0.25 * k, 0.20 * k]; });   /* the earth platform the house stands level on (see hut above) */
+  const bg = new THREE.BoxGeometry(4.3, 2.2, 3.5).toNonIndexed(), bp = bg.attributes.position; for (let i = 0; i < bp.count; i++) if (bp.getY(i) < 0) { bp.setX(i, bp.getX(i) * 1.16); bp.setZ(i, bp.getZ(i) * 1.2); } bg.translate(0, -1.1, 0);
+  const base = col(bg, (x, y, z) => { const k = nz(x, y, z) * (y > -0.12 ? 1.25 : 1); return [0.42 * k, 0.35 * k, 0.27 * k]; });   /* the earth platform the house stands level on (see hut above) */
   const geo = mergeGeometries([wall, r1, r2, door, base], false); geo.computeVertexNormals(); return geo;
 }
 

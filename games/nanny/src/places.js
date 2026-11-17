@@ -20,7 +20,13 @@ const face = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
 /* put a thing on the ground at (x, z), turned by ry, sunk a little; returns it. solids: the place's list of round things you cannot walk through. */
 /* a house stands level: its floor is at the highest ground under its four corners (its earth platform, props.js hut, goes down into the hill on the low side) */
 const seat = (G, x, z, ry, w, d) => { let y = G.h(x, z); const c = Math.cos(ry), s = Math.sin(ry); for (const [dx, dz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) y = Math.max(y, G.h(x + (dx * w / 2) * c + (dz * d / 2) * s, z - (dx * w / 2) * s + (dz * d / 2) * c)); return y; };
-function putHut(g, G, w, d, hh, seed, x, z, ry, o = {}) { const hu = put(g, G, hut(w, d, hh, seed), x, z, ry, { ...o, sink: 0 }); hu.position.y = seat(G, x, z, ry, w, d) - 0.04; return hu; }
+function putHut(g, G, w, d, hh, seed, x, z, ry, o = {}) { const hu = put(g, G, hut(w, d, hh, seed), x, z, ry, { ...o, sink: 0 }); hu.position.y = seat(G, x, z, ry, w, d) - 0.04;
+  /* stone steps from the door down to the ground in front of it: as many as the drop needs, each 17 cm high and 30 cm deep, the lowest sunk a little into the land */
+  const c = Math.cos(ry), s = Math.sin(ry), at = (dz) => [x + dz * s, z + dz * c], [fx, fz] = at(d / 2 + 0.6), drop = hu.position.y - G.h(fx, fz), n = Math.max(0, Math.min(9, Math.ceil((drop - 0.05) / 0.17)));
+  taken.add(x, z, Math.max(w, d) * 0.62 + 0.7); if (n) { const [sx, sz] = at(d / 2 + 0.2 + 0.15 * (n + 1)); taken.add(sx, sz, 0.3 * n / 2 + 0.7); if (o.solids) o.solids.push([sx, sz, Math.max(0.7, 0.3 * n / 2 + 0.35)]); }   /* plants keep off the platform and the steps; nobody stands in the steps */
+  for (let i = 1; i <= n; i++) { const st = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.17 * (n - i + 1) + 0.3, 0.32), STEP_MAT); st.position.set(0, -0.17 * i - (0.17 * (n - i + 1) + 0.3) / 2 + 0.17, d / 2 + 0.2 + 0.3 * i); st.castShadow = st.receiveShadow = true; hu.add(st); }
+  return hu; }
+const STEP_MAT = new THREE.MeshStandardMaterial({ color: 0x8a7f70, roughness: 1, flatShading: true });
 function put(g, G, o, x, z, ry = 0, { sink = 0, solids, r } = {}) { o.position.set(x, G.h(x, z) - sink, z); o.rotation.y = ry; g.add(o); if (solids) solids.push([x, z, r || o.userData.foot || 0.6]); taken.add(x, z, r || o.userData.foot || 0.6); return o; }   /* every placed thing also takes its ground, so rocks and plants scattered later keep out of it (flora.js, taken) */
 /* a fence is solid along its whole length: small round footprints every 45 cm */
 function fenceSolid(solids, x0, z0, x1, z1) { const L = Math.hypot(x1 - x0, z1 - z0), n = Math.ceil(L / 0.45); for (let i = 0; i <= n; i++) solids.push([x0 + (x1 - x0) * i / n, z0 + (z1 - z0) * i / n, 0.22]); }
@@ -52,7 +58,7 @@ export function buildEstate() {
   G.h = (x, z) => { const y = h0(x, z); if (z > -10 || z < -18) return y; let sw = 0, sy = 0; for (const t of tops) { const d = Math.hypot(t[0] - x, t[1] - z); if (d < 0.9) { const w = 0.9 - d; sw += w; sy += w * t[2]; } } return sw > 0 ? Math.max(y, y + (sy / sw - y) * Math.min(1, sw / 0.6)) : y; };   /* a smooth mean of the stone tops near you, so feet do not float over a lower stone, eased in at the first and last stone */
   /* sugar cane on both sides of the first stretch, and the huts where you start */
   const nearTrail = (x, z) => G.trailness(x, z) > 0.01, cane = spotsOn(G, 1500, [-64, 10.8, 64, 66], 3, (x, z) => !nearTrail(x, z) && Math.hypot(x - 2, z - 41) > 10.5 && Math.abs(x - 54) > 13, { smin: 0.8, smax: 1.3 }); plantCane(g, cane);
-  const HUTS = [[9.8, 44.5, -2.2], [-5.6, 46, 2.4], [10.2, 36, -1.4]]; HUTS.forEach(([x, z, ry], i) => putHut(g, G, 3.6, 3, 2, i + 2, x, z, ry));
+  const HUTS = [[9.8, 44.5, -2.2], [-5.6, 46, 2.4], [10.2, 36, -1.4]]; HUTS.forEach(([x, z, ry], i) => putHut(g, G, 3.6, 3, 2, i + 2, x, z, ry, { solids }));
   put(g, G, woodPile(6), 5.6, 45.2, 0.4, { solids }); put(g, G, basketOf('yam'), -0.6, 44.6, 0, { solids, r: 0.4 }); put(g, G, cookFire(false), 3.2, 43.6, 0, { solids });
   /* the great house, far off on its rise, with lamps in the windows */
   const gh = grp(g, 56, G.h(56, 30), 30); box(15, 6, 9, solid(0x2a2a30, 1), 0, 3, 0, gh); const rf = mesh(new THREE.ConeGeometry(1, 3.2, 4), solid(0x1c1c22, 1), 0, 7.6, 0, gh); rf.rotation.y = PI / 4; rf.scale.set(8.4 * Math.SQRT2, 1, 5.3 * Math.SQRT2);
@@ -82,7 +88,7 @@ export function buildTown() {
   g.add(landMesh(G, { size: 360, seg: 160, seed: 12 })); trails(g, G);
   /* the houses near you, round the clearing, with their doors toward the middle. The first three are "your row". */
   const ANG = [100, 122, 144, 20, 345, 198, 250, 304], doors = [];
-  ANG.forEach((a, i) => { const t = a * PI / 180, x = Math.cos(t) * 18, z = Math.sin(t) * 18, h = putHut(g, G, 3.8 + (i % 3) * 0.3, 3.1, 2.05, i + 5, x, z, face(x, z, 0, 0)); h.userData.noBatch = false; doors.push([Math.cos(t) * 15.2, Math.sin(t) * 15.2]); });
+  ANG.forEach((a, i) => { const t = a * PI / 180, x = Math.cos(t) * 18, z = Math.sin(t) * 18, h = putHut(g, G, 3.8 + (i % 3) * 0.3, 3.1, 2.05, i + 5, x, z, face(x, z, 0, 0), { solids }); h.userData.noBatch = false; doors.push([Math.cos(t) * 15.2, Math.sin(t) * 15.2]); });
   /* more than a hundred and thirty houses on the hillsides: with the eight above, over 140 (Jamaica National Heritage Trust) */
   const far = farHuts(g, G, 134, [-78, -84, 70, 44], 17, (x, z, y) => { const d = Math.hypot(x, z); return d > 25 && d < 92 && y > -17 && G.trailness(x, z) < 0.01 && Math.abs(G.h(x + 2, z) - y) < 1.4 && Math.abs(G.h(x, z + 2) - y) < 1.4 && Math.hypot(x + 64, z + 61) > 9; });
   /* the great cotton tree, and the things of a working town */
@@ -180,7 +186,7 @@ export function buildNewTown() {
   const rd = []; for (let z = -120; z <= 120; z += 6) rd.push([riverX(z), z, 0]); const water = streamMesh(smoothPath(rd, 2), 4.4, -1.15, { speed: 1.1 }); g.add(water);
   plant(g, rockGeo(4), treeM, spotsOn(G, 46, [16, -60, 38, 60], 15, (x, z) => Math.abs(x - riverX(z)) < 5.5 && G.trailness(x, z) < 0.05, { smin: 0.3, smax: 1.2, room: 1.15 }), { sink: 0.2 });
   /* new houses round the clearing and across the valley floor */
-  [35, 70, 105, 150, 205, 240, 300, 330].forEach((a, i) => { const t = a * PI / 180, x = Math.cos(t) * 16.6, z = Math.sin(t) * 16.6; putHut(g, G, 3.8 + (i % 2) * 0.4, 3.1, 2.05, i + 20, x, z, face(x, z, 0, 0)); });
+  [35, 70, 105, 150, 205, 240, 300, 330].forEach((a, i) => { const t = a * PI / 180, x = Math.cos(t) * 16.6, z = Math.sin(t) * 16.6; putHut(g, G, 3.8 + (i % 2) * 0.4, 3.1, 2.05, i + 20, x, z, face(x, z, 0, 0), { solids }); });
   const far = farHuts(g, G, 46, [-70, -70, 20, 70], 27, (x, z, y) => { const d = Math.hypot(x, z); return d > 23 && d < 78 && G.trailness(x, z) < 0.01 && Math.abs(G.h(x + 2, z) - y) < 1.1 && Math.abs(G.h(x, z + 2) - y) < 1.1 && Math.hypot(x + 9, z + 37) > 11; });
   /* a waterfall on the western hill (there are falls near Moore Town): white water down a dark rock face */
   const fx = -72, fz = 6, fy = G.h(fx, fz), fall = grp(g, fx, fy, fz); fall.userData.noBatch = true; fall.rotation.y = PI / 2;
