@@ -867,9 +867,7 @@ if CK and not FLAT:
             r0=math.hypot(e.x,e.y-NJ.y); r1=rad_out(e.z,a)+(0.013 if not (G.get('jacket') or G.get('waistcoat')) else 0.011)
             if r1>r0: e.x*=r1/r0; e.y=NJ.y+(e.y-NJ.y)*r1/r0
             if fr>0:      # the points: longer, lying on the shirt front, spread a little apart
-                # a blouse's or a child's points are shorter (owner, 17 November 2026: the points looked large)
-                sx=1 if math.sin(a)>=0 else -1; small=G.get('woman') or P['body'].get('age',0.5)<0.25; zp=NECK-(0.046 if small else 0.058)*s; xp=sx*(0.028 if small else 0.034)*s
-                tip=Vector((xp,shirt_front(zp,xp)-0.008,zp)); e=e.lerp(tip,fr**0.8)
+                sx=1 if math.sin(a)>=0 else -1; zp=NECK-0.058*s; xp=sx*0.034*s; tip=Vector((xp,shirt_front(zp,xp)-0.008,zp)); e=e.lerp(tip,fr**0.8)
             row+=[q,e]
         rows.append(row)
     if not OLD or EASE_OLD:      # every line of the collar is evened out along the ring (see ring_fix); the yoke stays on the skin and under the shirt, the band and the leaf stay clear of the shirt (the 1690 neckband had the same teeth)
@@ -885,14 +883,9 @@ if CK and not FLAT:
             for j in range(ny+(3 if G.get('collarfit',1) else 2),len(row)):      # the folded leaf lies on the shirt, never in it: each of its points at least 4 mm over the shirt (measured from the skin, the leaf sank into an eased shirt and the shirt showed through it in patches)
                 loc,nrm,_i,_d=SHT.find_nearest(row[j])
                 if loc is not None and (row[j]-loc).dot(nrm)<0.004: row[j]=loc+nrm*0.004
-                if loc is not None and j==len(row)-1 and (row[j]-loc).dot(nrm)>0.006: row[j]=loc+nrm*0.005      # and its outer edge lies down on the shirt: standing off the shoulder, it showed its dark underside and the skin beneath (owner, 17 November 2026)
             if CK!='open':      # the band's lowest row goes just under the shirt's neck edge, so no slit of skin opens between them (with no yoke under it)
                 loc,nrm,_i,_d=SHT.find_nearest(row[ny])
                 if loc is not None: row[ny]=loc+nrm*(0.0012 if ny else -0.004)
-    if CK=='turn':      # the leaf's outer edge turns under onto the shirt, so its underside never shows (as the flat collars' edge does)
-        for row in rows:
-            q=row[-1]; d=(q-row[-2]); d=d.normalized() if d.length>1e-6 else Vector((0,0,-1)); loc,nrm,_i,_dd=SHT.find_nearest(q+d*0.003)
-            if loc is not None: row.append(loc-nrm*0.0012)
     rows=[[bm.verts.new(q) for q in row] for row in rows]
     quadstrip(bm,[list(r) for r in zip(*rows)]); _co=soft('Collar',bm,'Shirt' if CK=='band' else 'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD or EASE_OLD: ring_weights(_co,len(rows),len(rows[0]))
@@ -1606,7 +1599,7 @@ def tuck_under_collar():
     # The same for a flat collar (round or camp): skin of the neck and shoulders lying under the collar's leaf, below its seam, is set 8 mm deeper and bound to the collar,
     # so it cannot come through at the nape when the head bows (it showed as a streak of skin across the back of the collar: owner, 17 November 2026).
     co=bpy.data.objects.get('Collar')
-    if co is None or not len(co.data.polygons): return      # every collar, flat or turned down (owner, 17 November 2026: gaps with skin showing under a turn-down collar's leaf)
+    if co is None or not FLAT or not len(co.data.polygons): return
     from mathutils.kdtree import KDTree
     b=bmesh.new(); b.from_mesh(co.data); b.normal_update(); bt=BVHTree.FromBMesh(b); top=[v.co.copy() for v in b.verts if v.is_boundary and v.co.z>NECK-0.02*s]; b.free()
     kt=KDTree(max(1,len(top)))
