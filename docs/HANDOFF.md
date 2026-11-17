@@ -228,3 +228,19 @@ After the full rebuild `people-check` reported many bodies WORSE (Kendal `woman_
 - Next kinds, by count: shirt through waistcoat (1,398), skin through shirt (1,021), breeches through coat and coat skirt (1,555, Port Royal's 1690 coats), shirt through jacket (909), shirt through breeches (638), skirt through belt (588).
 - Before fixing a kind, look at its pictures (`--shots`): a shirt or tie seen in the front opening of a jacket is how it is worn, and may need a rule in the check, not a change to the body. Most patches are in clips a body seldom plays (kneeling, picking up, sitting).
 - Port Royal has a `?test=heads` check now; the head-turn guard is in every game that turns heads.
+
+## State at the end of 17 November 2026 (for the next session)
+
+Branch `claude/beautiful-faraday-rc8sek` is ahead of `main` and not yet merged. Before merging: a public build of every game, then `?test=audit`, `layout` and `ambient` at 0 in every game.
+
+**Done on the branch:** Tivoli police vest spike, soldier vest, "Tivoli Incursion"; seated people sit on their seats with knees bent (`engine/placement.js`), and the seat check covers crowds; a door made for each building in all ten games, checked against period sources (each game's doc, "Doors"); sign words always fit (`engine/textfit.js`); relaxed hands (`engine/anim.js` `restFingers`).
+
+**Approved by the owner, not yet built into the games:** the waistcoat that goes over the shoulders. The fix is in `tools/garvey/era.py` (the waistcoat's top cut). Bodies with a waistcoat need a rebuild; show sheets from several angles and in movement first.
+
+**Stopped by the owner:** collars and ties ("the collars look awful"). `tools/garvey/_era_bis.py` is a test copy holding those tries: do not build from it. `tools/garvey/era.py` on this branch also holds two collar-edge changes (the leaf edge clamp and the turned-under row for `turn` collars) that make a turn-down collar's edge zigzag: take them out before any rebuild. What was learned: the jagged edge was the neck's flat facets cutting through the collar band, not the collar's own shape.
+
+**Needs more work (owner):** the hands and the ties. The crowd-copy hand fix (`splitHands` in `tools/people/pack.mjs`) needs every body packed again.
+
+**Buildings that period photographs show are wrong** (ask the owner which to rebuild): Port Royal church (plastered, no tower); Kendal 1845 station (masonry, open arches); Kingston station (brick, arches at one end only); Bog Walk turbine house (plastered); Liberty Hall (main door under a shallow brick arch).
+
+**Signs squeezed hard** (widen the board or shorten the words): Bog Walk "OPEN SHUT", Garvey "THE NEGRO WORLD" and "JAMAICAS FIRST NATIONAL HERO". Nanny, Melissa, Selassie, Eventide and Windrush are not yet listed (`window.__TEXTFIT` after `?test=audit`).

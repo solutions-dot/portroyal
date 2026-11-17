@@ -277,10 +277,10 @@ if G.get('breeches'):
         if t>0.9: v.co.y-=0.012*s*(t-0.9)/0.1   # the hem breaks forward over the shoe
     parts.append(('breeches',piece('Breeches','helper-tights',lambda c:low-0.03<c.z<HIP+0.13 and side_arm(c) is None,wide,'Breeches',post=((lambda bm:(trim_seat(bm),smooth_edge(bm,8,lambda c:c.z>HIP+0.08))) if OLD else trim_seat),shape=trouser_leg if bk=='trousers' else breech_leg,cuts=[((0,0,low),(0,0,-1),None),((0,0,HIP+0.12),(0,0,1),None)])))
 if G.get('waistcoat'):
-    wcol=NECK-(0.075 if FLAT else 0.02)*s      # under a flat collar the waistcoat's neckline lies lower, so the collar's leaf lies over it
+    wcol=NECK-(0.075 if FLAT else 0.02)*s      # under a flat collar the waistcoat's neckline lies lower, so the collar's leaf lies over it   Only the front opening: cut straight across at this height, the waistcoat lost both shoulders and looked unfinished (owner, 17 November 2026, approved); its shoulders reach the neck as a real waistcoat's do.
     WVZ,WVK=(wcol-0.17*s,1.1) if OLD else (NECK-0.20*s,(wcol-NECK+0.20*s)/(0.085*s))      # the V's point and how steep its sides are: later eras meet at the top button, about a hand below the collarbone, in two straight edges that open to about a hand's width at the top
     parts.append(('waistcoat',piece('Waistcoat','helper-tights',lambda c:c.z>HIP+0.03 and abs(c.x)<SX*0.9,lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Waistcoat',post=lambda bm:(drape_front(bm),smooth_edge(bm)),
-        cuts=[((0,0,wcol),(0,0,1),None)]+([((0,0,WVZ),Vector((-WVK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,WVZ),Vector((WVK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if G.get('vwaist') else [((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)])+[((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)])))
+        cuts=[((0,0,NECK-0.02*s),(0,0,1),None)]+([((0,0,WVZ),Vector((-WVK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,WVZ),Vector((WVK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if G.get('vwaist') else [((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)])+[((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)])))
 if G.get('jacket'):   # a plain suit jacket: waist-length hem, sleeves to the wrist, a V opening over the waistcoat
     jcol=NECK-0.012*s; jcs=G.get('jacketsleeve',0.9)
     vz=jcol-0.20*s   # the V opening: two angled cuts, one each side of the middle, so only a narrow wedge is removed and the shoulders stay covered
