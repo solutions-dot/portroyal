@@ -136,7 +136,8 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
 export const FINGER_CURL = { 2: 0.32, 3: 0.24 }, FINGER_AXIS = new THREE.Vector3(+(globalThis.__fingerAxis || 'z') === 'x' ? 1 : 0, 0, 0);
 const CURLED = new WeakSet();
 function curlFingers(m) { if (CURLED.has(m)) return; CURLED.add(m); const ax = (globalThis.__fingerAxisV || null), q = new THREE.Quaternion();
-  m.traverse((b) => { if (!b.isBone) return; const k = /Hand(Index|Middle|Ring|Pinky)([23])$/.exec(b.name); if (!k) return; const a = FINGER_CURL[k[2]] * (globalThis.__fingerSign || 1);
+  m.traverse((b) => { if (!b.isBone) return; const k = /Hand(Index|Middle|Ring|Pinky)([23])$/.exec(b.name); if (!k || b.userData.curled) return; b.userData.curled = true;   /* the mark is on the bone, which a clone copies: a clone of an animated body was curled a second time */
+    const a = FINGER_CURL[k[2]] * (globalThis.__fingerSign || 1);
     q.setFromAxisAngle(ax || new THREE.Vector3(0, 0, 1), /Left/.test(b.name) ? -a : a); b.quaternion.multiply(q); }); }
 /* Anyone standing on a plain idle now and then looks round or turns the head, once, and goes back to the idle (owner, 17 November 2026: "ensure variety in idle animation,
    across all games ... they have this zombie look ... including old people"). Every game gets it from here (rule 10). Not for people the crowd code runs (it has its own
