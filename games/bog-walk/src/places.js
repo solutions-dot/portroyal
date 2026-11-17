@@ -414,7 +414,7 @@ function valveStand(g, P, kind) {   /* the valve wheel on its stand by the Tube 
   const rod = cyl(0.045, 0.045, 1.5, M.iron, 0, 1.36, -0.9, s, 8); rod.rotation.x = PI / 2;   /* the rod to the valve on the pipe */
   const vb = grp(s, 0, 0, PZ + PR + 0.1 - z);   /* the valve is part of the stand's own machine: the rod runs into it on purpose */ const vbody = cyl(0.36, 0.36, 0.55, M.ironPaint, 0, 1.36, 0, vb, 18); vbody.rotation.x = PI / 2; for (let i = 0; i < 8; i++) { const a = i / 8 * PI * 2; cyl(0.03, 0.03, 0.06, M.brass, Math.cos(a) * 0.3, 1.36 + Math.sin(a) * 0.3, 0.29, vb, 6).rotation.x = PI / 2; }
   box(0.2, 0.9, 0.3, M.ironPaint, 0, 0.45, 0.05, vb);
-  const plate = mesh(new THREE.PlaneGeometry(0.34, 0.14), std(signTex([['OPEN  SHUT', '700 50px Georgia, serif']], 256, 96, '#c29a45', '#2a1d05'), 0.4, { metalness: 0.5 }), 0, 0.9, 0.215, s);
+  const plate = mesh(new THREE.PlaneGeometry(0.34, 0.14), std(signTex([['OPEN  SHUT', '700 36px Georgia, serif']], 256, 96, '#c29a45', '#2a1d05'), 0.4, { metalness: 0.5 }), 0, 0.9, 0.215, s);
   const wheel = handWheel(0.5, 6); wheel.position.set(x, 1.36, z + 0.42); wheel.userData.noBatch = true; g.add(wheel); P.valve = wheel;
   P.walls.push([x - 0.5, z - 0.5, x + 0.5, z + 0.75], [x - 0.42, PZ + PR - 0.2, x + 0.42, z - 0.3]);
   P.spots.valve = [x, z + 1.45];

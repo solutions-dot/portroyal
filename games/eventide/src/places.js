@@ -201,7 +201,7 @@ export function buildSlipe(g) {
   for (const [a, b] of [[-50, -25], [-25, 25], [25, 50]]) for (const dz of [-0.05, 0, 0.05]) { const w = cyl(0.012, 0.012, b - a, solid(0x1a1a1a), (a + b) / 2, 8.7, -5.6 + dz, g); w.rotation.z = Math.PI / 2; }
   /* the bus stop, about 30 m along from the entrance (Gleaner, 2020) */
   cyl(0.04, 0.04, 2.6, solid(0x8a8a86, 0.5, 0.5), -26, 1.3, 5.5, g);
-  box(0.62, 0.36, 0.03, std(T.sign('BUS STOP', 256, 128, '#f2c230', '#1a1a1a', '700 52px Arial, sans-serif')), -26, 2.45, 5.47, g); wall(-26.2, 5.3, -25.8, 5.7);
+  box(0.62, 0.36, 0.03, std(T.sign('BUS STOP', 256, 128, '#f2c230', '#1a1a1a', '700 43px Arial, sans-serif')), -26, 2.45, 5.47, g); wall(-26.2, 5.3, -25.8, 5.7);
   /* shops across the road (impressions, not real shops), zinc fences in the gaps, board houses behind */
   const shop = (x, w, col, name) => {
     box(w, 4.2, 6, std(T.plaster(col, [w / 4, 1])), x, 2.1, 10.6, g); wall(x - w / 2, 7.6, x + w / 2, 13.6);

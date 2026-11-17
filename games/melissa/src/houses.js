@@ -118,7 +118,8 @@ export function candle() { const g = grp(); cyl(0.02, 0.02, 0.14, solid(0xf0e8d0
 export function shop({ name = "BEV'S SHOP", roof = 'on', seed = 5 } = {}) {
   const g = house({ w: 5.4, d: 4, h: 2.7, style: 'block', wall: [236, 214, 150], roofRgb: [160, 80, 70], roof, shutters: roof === 'on' ? 'open' : 'closed', seed, porch: false, door: ['shopDoor', { step: 0 }] });   /* a board door barred for the night, behind the counter (no step: the counter stands in front of it) */
   box(5.0, 0.1, 1.0, solid(0x5a4a3a, 0.9), 0, 1.06, 2.5, g); for (const x of [-2.3, 0, 2.3]) box(0.1, 1.0, 0.9, WOOD, x, 0.5, 2.5, g);   /* the counter on the street side */
-  const sg = plane(2.6, 0.62, std(T.sign(name, 512, 128, '#f2c43a', '#3a1a10', '700 78px Georgia, serif'), 0.9), 0, 2.4, 2.05, g); sg.material = sg.material.clone(); sg.material.side = THREE.DoubleSide;
+  const sw = Math.max(2.6, Math.min(4.2, 0.25 * name.length));   /* the board is as long as its name needs (MISS ADA'S SHOP ran off a board made for BEV'S SHOP) */
+  const sg = plane(sw, 0.62, std(T.sign(name, 512, Math.round(512 * 0.62 / sw), '#f2c43a', '#3a1a10', `700 ${Math.round(78 * 2.6 / sw)}px Georgia, serif`), 0.9), 0, 2.4, 2.05, g); sg.material = sg.material.clone(); sg.material.side = THREE.DoubleSide;
   for (const x of [-1.2, 1.2]) box(0.07, 0.4, 0.07, WOODD, x, 2.2, 2.05, g);   /* the sign's two posts, standing on the counter's front */
   box(0.07, 1.4, 0.07, WOODD, -1.2, 1.7, 2.05, g); box(0.07, 1.4, 0.07, WOODD, 1.2, 1.7, 2.05, g);
   return g;

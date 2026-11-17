@@ -31,7 +31,8 @@ export function buildKingston57() {
     const dr = makeDoor({ w: 2.2, h: 3.0, kind: 'glazed', leaves: 2, color: 0x4a3626, frame: 0xe8dcc0, glass: 0x24323a }); dr.position.set(x, 0, 14.0); dr.rotation.y = PI; g.add(dr);
     const a = mesh(new THREE.CircleGeometry(1.1, 18, 0, PI), fan, x, 3.1, 13.99, g); a.rotation.y = PI;
     const ar = mesh(new THREE.TorusGeometry(1.15, 0.07, 6, 18, PI), archF, x, 3.1, 13.97, g); ar.rotation.y = PI; box(2.4, 0.18, 0.3, arch, x, 3.1, 13.95, g); box(1.6, 1.1, 0.12, new THREE.MeshBasicMaterial({ color: 0x24323a }), x + 3.5, 5.3, 14.0, g); }
-  const sg = signBoard('KINGSTON', 9, 1.3, { bg: '#244a3a', fg: '#f4ecd0', font: '700 112px Georgia, serif' }); sg.position.set(0, 6.4, 13.9); g.add(sg);
+  const sg = signBoard('KINGSTON', 9, 1.3, { bg: '#244a3a', fg: '#f4ecd0', font: '700 58px Georgia, serif' }); sg.position.set(0, 6.4, 13.9); g.add(sg);
+  { const s2 = signBoard('KINGSTON', 5.2, 0.75, { bg: '#244a3a', fg: '#f4ecd0', font: '700 58px Georgia, serif' }); s2.position.set(0, 4.3, 13.9); g.add(s2); }   /* and a name board under the platform roof, where travellers can read it: the high one is hidden by the roof from most of the platform */
   const ck = mesh(new THREE.CircleGeometry(0.7, 24), new THREE.MeshBasicMaterial({ map: T.clock(), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 14, 5.8, 13.8, g);
   for (let x = -30; x <= 40; x += 14) { const lp = lampPost(3.4, false); lp.position.set(x, 0, 10.4); g.add(lp); }
   for (const [x, z] of [[-14, 10.5], [26, 10.5]]) { const b = bench(2.4); b.position.set(x, 0, z); b.rotation.y = PI; g.add(b); }

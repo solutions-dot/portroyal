@@ -716,7 +716,7 @@ function home18() {
   Q.walls.push([-6, 7.4, 1.9, 7.8], [3.1, 7.4, 6, 7.8]);
   Q.walls.push([-6, 2.3, 1.9, 3.3], [3.1, 2.3, 6, 3.3]);
   solid1(Q, S.oilDrum(0x2a4a3a), 4.6, 6.6, 0.7, 0.7);
-  const mat = plane(1.0, 0.6, std(cv(128, 64, (x) => { x.fillStyle = "#8a6d4d"; x.fillRect(0, 0, 128, 64); x.fillStyle = "#3a2d22"; x.font = "bold 22px serif"; x.fillText("WELCOME", 14, 40); })), 2.5, 0.016, 1.3, Q.group);
+  const mat = plane(1.0, 0.6, std(cv(128, 64, (x) => { x.fillStyle = "#8a6d4d"; x.fillRect(0, 0, 128, 64); x.fillStyle = "#3a2d22"; x.font = "bold 19px serif"; x.textAlign = "center"; x.fillText("WELCOME", 64, 39); })), 2.5, 0.016, 1.3, Q.group);
   mat.rotation.x = -Math.PI / 2;
   // people: Iris in her chair, Anita in the hall; outside, a neighbour going by
   person(Q, "iris", "iris79", -4.55, -1.2, Math.PI / 2, { kind: "sit", seat: { top: 0.46, x: -4.55, z: -1.2, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] }, { raw: true, seatStill: true });

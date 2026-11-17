@@ -54,7 +54,7 @@ function village({ id, year, phase }) {
   const ch = house({ w: 11, d: 7, h: 3.5, style: 'block', wall: [238, 232, 214], roofRgb: after ? [140, 146, 148] : today ? [196, 200, 198] : [138, 146, 150], roof: after ? 'half' : 'on', shutters: after ? 'closed' : 'open', seed: 15, porch: true, shutCol: 0x3a5a7a, door: ['churchDoors', { w: 1.5, h: 2.2, step: 0 }] });   /* the church: a pair of board doors under a pointed arch */
   put(ch, SPOT.church[0], SPOT.church[1]); wall(38.3, -13.7, 49.7, -4.3);
   { const bt = grp(g, 40.2, 0, -5.5); box(1.2, 3.2, 1.2, std(T.plaster([236, 230, 214], [1, 1]), 0.9), 0, 1.6, 0, bt); const rf = box(1.5, 0.12, 1.5, solid(0x8a8e90, 0.6, 0.3), 0, 3.3, 0, bt); box(0.1, 0.8, 0.1, WOODD, 0, 3.8, 0, bt); box(0.5, 0.1, 0.1, WOODD, 0, 3.95, 0, bt); wall(39.5, -6.3, 40.9, -4.7); }
-  { const s = plane(2.4, 0.5, std(T.sign(y51 ? 'BAY CHURCH' : 'BREADNUT CORNER COMMUNITY CHURCH', 1024, 160, '#f3ecd8', '#1c2a40', '700 70px Georgia, serif'), 0.9), 44, 3.9, -6.45, g); s.rotation.y = 0; s.material = s.material.clone(); s.material.side = THREE.DoubleSide; box(0.06, 0.4, 0.06, WOODD, 43, 3.6, -6.5, g); box(0.06, 0.4, 0.06, WOODD, 45, 3.6, -6.5, g); }
+  { const s = plane(3.4, 0.95, std(T.sign(y51 ? 'BAY CHURCH' : 'BREADNUT CORNER\nCOMMUNITY CHURCH', 1024, 286, '#f3ecd8', '#1c2a40', '700 84px Georgia, serif'), 0.9), 44, 4.13, -6.45, g);   /* the long name on two lines (on one line it ran off both ends of the board) */ s.rotation.y = 0; s.material = s.material.clone(); s.material.side = THREE.DoubleSide; box(0.06, 0.4, 0.06, WOODD, 43, 3.6, -6.5, g); box(0.06, 0.4, 0.06, WOODD, 45, 3.6, -6.5, g); }
 
   /* ---- the standpipe at the lane's edge, and the poles with wires ---- */
   { const sp = standpipeTap(); put(sp, SPOT.standpipe[0], SPOT.standpipe[1], 0); wall(SPOT.standpipe[0] - 0.4, SPOT.standpipe[1] - 0.35, SPOT.standpipe[0] + 0.4, SPOT.standpipe[1] + 0.35); }
@@ -114,7 +114,7 @@ function village({ id, year, phase }) {
     { const hl = new THREE.PointLight(0xffd08a, 0, 9, 1.7); hl.position.set(SPOT.home[0], 2.0, SPOT.home[1] + 3.6); hl.visible = false; g.add(hl); g.userData.homeLamp = hl; }
     { const tk = waterTruck(); tk.position.set(26, 0, 1.1); g.add(tk); wall(22.5, -0.1, 29.5, 2.3); }
   }
-  if (today) { const bd = grp(g, 36, 0, 3.4); box(0.12, 1.6, 0.12, WOODD, -0.9, 0.8, 0, bd); box(0.12, 1.6, 0.12, WOODD, 0.9, 0.8, 0, bd); const s = plane(1.9, 1.0, std(T.sign('BREADNUT CORNER READY PLAN', 512, 270, '#f3ecd8', '#1c2a40', '700 44px Georgia, serif', true), 0.9), 0, 1.35, 0.08, bd); s.material = s.material.clone(); s.material.side = THREE.DoubleSide; wall(34.9, 3.0, 37.1, 3.9); g.userData.planBoard = [36, 3.4]; for (const [x, z] of [[-31, -1.5], [30, -1]]) { const lg = cutLogs({ seed: x }); put(lg, x, z, 0.3); } }
+  if (today) { const bd = grp(g, 36, 0, 3.4); box(0.12, 1.6, 0.12, WOODD, -0.9, 0.8, 0, bd); box(0.12, 1.6, 0.12, WOODD, 0.9, 0.8, 0, bd); const s = plane(1.9, 1.0, std(T.sign('BREADNUT CORNER\nREADY PLAN', 512, 270, '#f3ecd8', '#1c2a40', '700 52px Georgia, serif', true), 0.9), 0, 1.35, 0.08, bd); s.material = s.material.clone(); s.material.side = THREE.DoubleSide; wall(34.9, 3.0, 37.1, 3.9); g.userData.planBoard = [36, 3.4]; for (const [x, z] of [[-31, -1.5], [30, -1]]) { const lg = cutLogs({ seed: x }); put(lg, x, z, 0.3); } }
 
   /* ---- people ---- */
   const A = { people, extras };
