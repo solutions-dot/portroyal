@@ -53,7 +53,7 @@ export async function begin(id = 1, opts = {}) {
   CH.talked = {}; CH.ended = false; for (const k of (opts.talked || savedTalked(id))) if (ORDER.includes(k)) CH.talked[k] = true;   /* a saved game: the people you had talked to stay talked to */
   for (const n of pl.npcs) { const npc = await addNpc({ ...n, ground: pl.groundAt ? pl.groundAt(n.x, n.z) : 0, lines: TXT.talk[n.id], later: TXT.later[n.id], mood: W.mood }); if (CH.talked[n.id]) npc.talked = 1; }
   saveProgress(id, Object.keys(CH.talked));
-  CH.life = await addLife(id, pl, scene, { phone: matchMedia('(pointer: coarse)').matches });   /* the neighbours who are not in the story (life.js) */
+  CH.life = await addLife(id, pl, scene, { phone: matchMedia('(pointer: coarse)').matches || /[?&]noshadow/.test(location.search) });   /* &noshadow: measure as a phone (?test=all budget) */   /* the neighbours who are not in the story (life.js) */
   CH.story = Talk.npcs.map((n) => ({ x: n.x, z: n.z, m: n.body }));
   $('fightload').hidden = true;
   state.x = pl.start.x; state.z = pl.start.z; state.yaw = pl.start.yaw; state.pitch = 0; state.camY = W.camY || 1.3; state.started = true; E.setBusy(false);

@@ -36,10 +36,9 @@ export const LIFE = {
     { id: 'walker', look: P.man60(0xc8c0a8, 0x3a3a34, 0x2e2e2e), at: [-18, 2.0], spec: { kind: 'wander', pts: [[-18, 2.0], [-12.5, -1.0], [-8.6, -1.0], [-6.8, -0.2], [12, -0.6], [15.5, 1.8]], pause: [3, 7], idles: IDL_M } },   /* round Mass Roy (-8.6, 0.9), not past his elbow: ?test=ambient once found the walker waiting by him */
     { id: 'gran2', look: P.woman60(0xf0ece2, 0x4a3a5a, 0x7a3a8a), at: [-16.4, -1.3], spec: { kind: 'watch', at: [-13, 0.6], react: ['Clap', 'Laugh'], idles: IDL_OLD } },
   ] },
-  2: { mood: 'lively', people: [   /* the new Tivoli Gardens, about 1965: the courtyard (main path along x at z 0), grass both sides, benches */
+  2: { mood: 'lively', people: [   /* the new Tivoli Gardens, about 1965: the courtyard (main path along x at z 0), grass both sides, benches. Two children, not three: the third took the view over the phone budget of 220 draw calls (?test=all) */
     { id: 'kid1', look: P.child(0xf0d050, 0x3a6ac0, 0.74), at: [-12, 4.6], spec: { kind: 'play', area: [-15, 3, -5, 7.6], chase: 'kid2' } },
-    { id: 'kid2', look: P.child(0xd04a3a, 0x2a2a3a, 0.7), at: [-8, 5.6], spec: { kind: 'play', area: [-15, 3, -5, 7.6], chase: 'kid3' } },
-    { id: 'kid3', look: P.child(0x6ab0e0, 0x7a3a3a, 0.78), at: [-10, 6.6], spec: { kind: 'play', area: [-15, 3, -5, 7.6], chase: 'kid1' } },
+    { id: 'kid2', look: P.child(0xd04a3a, 0x2a2a3a, 0.7), at: [-8, 5.6], spec: { kind: 'play', area: [-15, 3, -5, 7.6], chase: 'kid1' } },
     { id: 'mum1', look: P.woman60(0xf0e6c8, 0x5a7a4a, 0xd8b04a), at: [-16, 2.6], spec: { kind: 'watch', at: [-10, 5.5], react: ['Clap', 'Laugh'], idles: IDL_F } },
     { id: 'bench1', look: P.man60(0xe0dccc, 0x3a3a3e), at: [19.55, -3.4], spec: { kind: 'sit', group: 'b1', seat: BENCH(20, -3.4, -1, 0), clips: ['SitIdle', 'SitIdle2'] } },
     { id: 'bench2', look: P.woman60(0xe6d8b8, 0x6a3a5a, 0x2f6a8a), at: [20.45, -3.4], spec: { kind: 'sit', group: 'b1', seat: BENCH(20, -3.4, 1, 0), clips: ['SitIdle', 'SitIdle2'] } },

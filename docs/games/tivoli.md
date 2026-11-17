@@ -439,6 +439,22 @@ The owner said Tivoli "does not play like the other games, has a different contr
 - `?test=all`: the shared runner with `src/checktables.js` (journal, links, a11y, keys, chapters, steps with save and reload, map, faces, budget, autoplay, camera, rule 4 with the street scene tagged intense behind its card, sound, continuity, errors) plus `heads`. A walking chapter N has steps N*10 to N*10+3 (people talked to); the street scene is step 50.
 - `?test=resume`: saves at six steps, reloads, and checks the chapter, the people talked to and the pages come back.
 
+**Found and fixed by the newly wired checks**
+- `?test=all` map: in chapter 1 the open lane end let you walk on to x -35, and in chapter 4 gaps between the street's buildings let you walk out to z 12. The game now keeps you inside each place's bounds, as Kendal does (Back-o-Wall has bounds now).
+- `?test=all` faces: Mr Brown's face read too dark in the 2016 courtyard (brightness 70, needs 75), so his skin is lightened a little more (`skin: 1.15`, rule 9).
+- `?test=all` a11y: the Calm mode tick box was 24 px; it is 44 px now.
+- `?test=all` budget (with `&noshadow`, measured as a phone draws): chapter 2 had 229 draw calls against 220; it has two playing children instead of three.
+- `?test=ambient` once found chapter 1's walker waiting by Mass Roy; the walker now goes round him.
+- The talk mark: `engine/marks.js` `headTop` looks for a bone named ":Head" or "_Head", and three.js loads these bodies' bone as "mixamorigHead", so it finds none; the game's old 1.75 m fallback floated the mark a metre above Ivy as a girl. Tivoli now uses the Head bone's height plus 24 cm (scaled). The engine function was not changed (other games use it); it is worth a look in its own pull request.
+
+**Checks (17 November 2026, dev build, headless)**
+- `?test=all&noshadow`: ALL 0 after the fixes above (the last full run gave ALL 1, the budget line, then fixed and re-run as `&checks=budget,errors`: 0). Journal 0, links 0, a11y 0, keys 0, chapters 0, steps 0 (28 steps with save and reload), map 0 (12,251 probe points), faces 0, budget 0, autoplay 0, camera 0, rule4 0, sound 0, continuity 0, errors 0, heads 0 (8 scenes).
+- `?test=heads`: 0 in all seven walking chapters and the street scene (about 200,000 head samples).
+- `?auto=1`: all eight chapters to ALLDONE, through the opt-in card and the street scene.
+- `?test=resume` 0, `?test=audit` 0 (street and seven chapters), `?test=layout` 0 at 390x800, 320x568, 667x375, 800x500 and 1280x720, `?test=scene` 0, `?test=held` 0, `?test=ambient` 0.
+- `npm test` 227 of 227, lint 0 new. Kendal `?test=audit` still 0 after the `engine/audit.js` addition.
+- Pictures before and after (Tivoli and Kendal, 390x800 and 1280x720) are in `build/tivoli-audit/` (not in git).
+
 **Still different, or not done**
 - The journal uses Tivoli's book with page tabs (the shared book layout), not Kendal's ruled paper page; it reads the same way, and opens from the same Journal button.
 - Tivoli has no `#place` caption or fade title: the chapter start shows the date and words over the scene (`#scenetitle`), as before.
