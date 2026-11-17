@@ -13,7 +13,7 @@ import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, tone, crackle } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
-import { slideWalls, walkRoute } from '../../../engine/placement.js';
+import { slideWalls, walkRoute, segmentHitsWall } from '../../../engine/placement.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
@@ -240,6 +240,10 @@ function enterScene(i, specs) {
   startLife(i, S, P); SC.actions = ACTIONS[i] ? ACTIONS[i](P) : []; state.x = st.x; state.z = st.z; state.yaw = st.yaw || 0; state.pitch = 0; EYE_NOW = S.adult ? EYE_ADULT : EYE;
 }
 const byId = (id) => (SC ? SC.people.find((n) => n.id === id) : null);
+/* the audit: the children's way out on the night of the fire must not cross the rope, a wall or the fire engine (with a child's half width) */
+function kidRoute(st0, P, S) { if (!(st0 >= 40 && st0 < 45)) return []; const W = P.walls.concat(S.walls || []), eng = P.engineBox ? [P.engineBox] : [], out = [], pts = KID_ROUTE.concat([[-5, -5.2]]);
+  for (let s = 0; s < pts.length - 1; s++) for (const w of W.concat(eng)) if (segmentHitsWall(pts[s], pts[s + 1], w, 0.2)) out.push(`the children's way out, leg ${s + 1} (${pts[s].join(',')} to ${pts[s + 1].join(',')}), goes through ${w === eng[0] ? 'the fire engine' : 'a wall or the rope [' + w.map((v) => v.toFixed(1)).join(',') + ']'}`);
+  return out; }
 /* ---------- the crowd's life: the engine's background life (engine/ambient.js, owner's rule 10), as every other game has. The people of a crowd (crowd()) used to play
    one clip each for good and stood like statues (owner, 17 November 2026: "people standing around like zombies"). Now neighbours stand in twos and threes and talk
    or comfort each other, some walk a little and stop, and the rest watch what the scene is about, shifting and looking round. At the burial (mood 'black') the
@@ -251,10 +255,10 @@ function startLife(i, S, P) {
   const life = createAmbient({ walls: wallsNow(), bounds: B, keepOff: keep, seed: 31 + i * 7, phone: isTouch, mood: sad ? 'sad' : 'lively', place: (q) => { q.m.position.x = q.x; q.m.position.z = q.z; } });
   const idles = sad ? ['Idle', 'Sad1', 'Sad2', 'OldIdle', 'LookAround'] : ['Idle', 'LookAround', 'HeadTurn', 'OldIdle'], react = sad ? ['Nod', 'HeadTurn'] : ['Nod', 'Talk1'], done = new Set();
   let g = 0;
-  for (const n of C) { if (done.has(n)) continue; const near = C.filter((o) => o !== n && !done.has(o) && Math.hypot(o.x - n.x, o.z - n.z) < 2.6).sort((a, b) => Math.hypot(a.x - n.x, a.z - n.z) - Math.hypot(b.x - n.x, b.z - n.z)).slice(0, (g % 3 === 2) ? 2 : 1);
+  for (const n of C) { if (done.has(n)) continue; const same = (a, b) => a.bodyId && b.bodyId && a.bodyId.replace(/_lo$/, '') === b.bodyId.replace(/_lo$/, ''), near = C.filter((o) => o !== n && !done.has(o) && !same(o, n) && Math.hypot(o.x - n.x, o.z - n.z) < 2.6)   /* never two copies of one face in a group (engine/faces.js) */.sort((a, b) => Math.hypot(a.x - n.x, a.z - n.z) - Math.hypot(b.x - n.x, b.z - n.z)).slice(0, (g % 3 === 2) ? 2 : 1);
     if (near.length && (g % 4) !== 3) { const id = 'g' + g++; for (const o of [n, ...near]) { done.add(o); life.add(o, sad && (g % 2) ? { kind: 'chat', group: id, talks: ['ComfortGive', 'ComfortTake', 'Talk2'], idles, sadIdles: idles } : { kind: 'chat', group: id, idles, sadIdles: idles }); } continue; }   /* two or three neighbours together: talking, or comforting each other at the burial */
     done.add(n); g++;
-    if (g % 3 === 0) life.add(n, { kind: 'wander', walk: 'Walk', area: [n.x - 3, n.z - 3, n.x + 3, n.z + 3], pause: sad ? [6, 12] : [3, 7], speed: sad ? 0.7 : 0.9, idles, sadIdles: idles });   /* a few walk a little and stop */
+    if (g % 3 === 0 && !C.some((o) => o !== n && same(o, n) && Math.hypot(o.x - n.x, o.z - n.z) < 9)) life.add(n, { kind: 'wander', walk: 'Walk', area: [n.x - 3, n.z - 3, n.x + 3, n.z + 3], pause: sad ? [6, 12] : [3, 7], speed: sad ? 0.7 : 0.9, idles, sadIdles: idles });   /* a few walk a little and stop */
     else life.add(n, { kind: 'watch', at: n.lookAt || [n.x - Math.sin(n.ry) * 5, n.z - Math.cos(n.ry) * 5], idles, sadIdles: idles, react, every: sad ? [6, 11] : [4, 8] }); }   /* the rest watch what the scene is about */
   life.ready && life.ready(); SC.life = life;
 }
@@ -470,12 +474,15 @@ function nightSetup(P, st) {
     await cut([-16, 1.5, 3.2], [-9, 1.4, -2.5], [-6, 3, -8], [6, 7, -34], 7); if (ep !== EP) return; endCut(); frozen = false; })();
 }
 function kidTo(n, x, z) { n.x = x; n.z = z; n.ground = SC.P.groundAt(x, z); n.m.position.set(x, n.ground, z); n.m.userData.ground = n.ground; n.m.rotation.y = 0; }   /* on the pavement, not sunk into it */
+/* the children's way out on the night of the fire: down the avenue beside the fire engine, round the end of the rope and out through the open gate. It went straight through
+   the rope and the fire engine (owner, 17 November 2026: "the children run through the barrier"); the audit now tests it (KID_ROUTE in the chapter 4 audit). */
+const KID_ROUTE = [[-3, -44], [1.4, -34], [1.4, -13], [-3.9, -10.4], [-3.8, -8.6], [-2.4, -7.9], [-2.0, -6.8]], KID_RUN = 2.6;   /* metres a second: children running */
 async function holdGate(P) {
-  if (frozen) return; frozen = true; const ep = EP, kids = [0, 1, 2].map((i) => byId('kid' + i)), path = [[-3, -44], [0, -34], [0, -12], [-1.2, -7.4]];
+  if (frozen) return; frozen = true; const ep = EP, kids = [0, 1, 2].map((i) => byId('kid' + i)), path = KID_ROUTE;
   bars(true); say('You hold the gate. Firefighters lead the children out, one by one.', 7000);
   cut([-2.3, 1.3, -7.2], [-3.4, 1.35, -5.4], [0, 1.2, -20], [-0.5, 1.0, -12], 9);   /* from the gate: the children come down the avenue, the fire behind them */
-  await Promise.all(kids.map((n, i) => (async () => { await wait(i * 1100); if (ep !== EP) return; n.m.visible = true; n.walking = true; walkOn(n, 1.7); const end = [-5 - i * 1.25, -5.2], pts = path.concat([end]);
-    for (let s = 0; s < pts.length - 1; s++) { const a = pts[s], b = pts[s + 1]; n.m.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]); await tween(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1.7,   /* a quick walk, holding hands, not a run */ (k) => { n.x = a[0] + (b[0] - a[0]) * k; n.z = a[1] + (b[1] - a[1]) * k; n.m.position.set(n.x, P.groundAt(n.x, n.z), n.z); }); if (ep !== EP) return; }
+  await Promise.all(kids.map((n, i) => (async () => { await wait(i * 1100); if (ep !== EP) return; n.m.visible = true; n.walking = true; if (n.ctl.get('Run')) { n.ctl.play('Run'); n.ctl.pace(KID_RUN, 0.6, 1.6); } else walkOn(n, KID_RUN); const end = [-5 - i * 1.25, -5.2], pts = path.concat([end]);   /* they run (owner, 17 November 2026: "the children aren't running, they are walking") */
+    for (let s = 0; s < pts.length - 1; s++) { const a = pts[s], b = pts[s + 1]; n.m.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]); await tween(Math.hypot(b[0] - a[0], b[1] - a[1]) / KID_RUN, (k) => { n.x = a[0] + (b[0] - a[0]) * k; n.z = a[1] + (b[1] - a[1]) * k; n.m.position.set(n.x, P.groundAt(n.x, n.z), n.z); }); if (ep !== EP) return; }
     n.ctl.play(null); n.walking = false; kidTo(n, end[0], end[1]); })()));
   if (ep !== EP) return; endCut(); state.x = -3.4; state.z = -5.6; state.yaw = 1.2; state.pitch = 0; frozen = false; setStage(43);
 }
@@ -652,7 +659,7 @@ function devViews() {
       const moving = st0 === 45 ? P.vehicles : [];   /* the vehicles that drive in this part of the chapter */
       const r = auditPlaceE({ id: P.id, snap: P.snap, npcs: vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, anim: n.anim, ground: n.walker ? 0 : (n.ground || 0), path: n.path }))   /* walkers' routes too, so the audit sees anyone they would walk through */, walls: P.walls.concat(S.walls || []), bounds: P.bounds, start: st,
         actions: SC.actions.filter((a) => !('get' in (Object.getOwnPropertyDescriptor(a, 'x') || {}))).map((a) => ({ label: a.label, x: a.x, z: a.z, r: a.r })), people: SC.people.filter((n) => !n.hidden && !n.kid).map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
-      const all = [...r.floating, ...r.inside, ...r.stuck, ...auditThrough(P.snap), ...auditHanging(P.snap, P.groundAt), ...auditVehicles(moving, vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, path: n.path })), { start: st, walls: P.walls.concat(S.walls || []) }), ...garments(vis), ...placeFaces(vis.map((n) => ({ ...n, hidden: false, extra: !SC.people.includes(n) })))   /* look-alikes: two people with one body and face within 2.5 m (engine/faces.js) */]; total += all.length; linesOut.push((name || 'chapter ' + (i + 1)) + ' (' + P.id + '): ' + all.length + ' issues, ' + vis.length + ' people', ...all.map((l) => '  ' + l)); }
+      const all = [...r.floating, ...r.inside, ...r.stuck, ...auditThrough(P.snap), ...auditHanging(P.snap, P.groundAt), ...auditVehicles(moving, vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, path: n.path })), { start: st, walls: P.walls.concat(S.walls || []) }), ...kidRoute(st0, P, S), ...garments(vis), ...placeFaces(vis.map((n) => ({ ...n, hidden: false, extra: !SC.people.includes(n) })))   /* look-alikes: two people with one body and face within 2.5 m (engine/faces.js) */]; total += all.length; linesOut.push((name || 'chapter ' + (i + 1)) + ' (' + P.id + '): ' + all.length + ' issues, ' + vis.length + ' people', ...all.map((l) => '  ' + l)); }
     { const m = makeBody({ ...LOOKS.gateman, x: 0, z: 0 }); m.traverse((o) => { if (o.isMesh && o.material.name === 'WaistcoatButtons') o.visible = true; }); const caught = auditGarments('self-test gateman', m);   /* the garment check must see buttons left showing on a hidden waistcoat */
       if (caught.length) linesOut.push('self-test (not counted): the garment check sees buttons left on a hidden waistcoat: ' + caught[0]); else { total++; linesOut.push('self-test FAILED: the garment check missed waistcoat buttons left showing'); } }
     out('AUDIT ' + total, linesOut); })();

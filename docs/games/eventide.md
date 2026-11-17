@@ -282,3 +282,7 @@ Decided by the owner on 13 Nov 2026: items 1 to 3, and the storyline as a whole,
 ## The crowds have life (17 November 2026)
 
 Eventide was the one game whose crowds did not use the engine's background life: each person played one clip for good (the owner: "people standing around like zombies", at the burial). `startLife` in `main.js` now hands every crowd (`crowd()`) to `engine/ambient.js`: neighbours stand in twos and threes and talk, or comfort each other at the burial; some walk a little and stop; the rest watch what the scene is about, shifting and looking round. The burial is a sad scene (fewer people move, slower) but nobody freezes. Story people, walkers and anyone carrying something keep their own ways. New clips: LookAround, Nod, HeadTurn, ComfortGive, ComfortTake, OldIdle. New check: `?test=ambient` (`&ch=5` for one chapter): 0 in every chapter with a crowd. Held 0.
+
+## The children's way out (17 November 2026)
+
+On the night of the fire the children went straight through the rope and through the fire engine, and walked. They now run (`KID_RUN` 2.6 m/s, the Run clip) down the avenue beside the engine, round the end of the rope and out through the open gate (`KID_ROUTE`). The chapter 4 audit tests that route against the walls, the rope and the engine's footprint (`kidRoute`, `engineBox`). Crowd groups never pair two copies of one face, and a person with a same-face copy within 9 m does not wander. Audit 0.
