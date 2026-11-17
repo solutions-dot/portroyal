@@ -1137,8 +1137,9 @@ if HS in ('puffs','plaits'):      # a girl's hair: two puffs, or two plaits, eac
     for v in bm.verts: v.co+=Vector((noise.noise(v.co*60),noise.noise(v.co*60+Vector((5,0,0))),noise.noise(v.co*60+Vector((0,5,0)))))*0.004
     rigid('Puffs',bm,'Hair','Head'); rigid('Ribbons',bb,'Ribbon','Head')
 if G.get('bun'):         # hair gathered into a bun at the back of the head
-    _lowbun=bool(HATS) and not OLD; zb=TOP-(0.15 if _lowbun else 0.07)*s; hit=tree.ray_cast(Vector((0,1,zb)),Vector((0,-1,0)))[0]; yb=(hit.y if hit else 0.09)+(0.016 if _lowbun else 0.022)      # under a hat the bun sits low on the nape, clear of the brim
-    bm=bmesh.new(); bmesh.ops.create_uvsphere(bm,u_segments=12,v_segments=8,radius=(0.040 if _lowbun else 0.048)*s,matrix=Matrix.Translation((0,yb,zb))@Matrix.Diagonal((1.15,0.85,0.9,1)))
+    _wr=any(k=='wrap' for k,_m in HATS) if HATS else False      # under a head wrap the hair is tucked in: the bun sits lower still, at the nape below the wrap's edge (it came through the wrap: the people check, 17 November 2026)
+    _lowbun=bool(HATS) and not OLD; zb=TOP-(0.205 if _wr else 0.15 if _lowbun else 0.07)*s; hit=tree.ray_cast(Vector((0,1,zb)),Vector((0,-1,0)))[0]; yb=(hit.y if hit else 0.09)+(0.016 if _lowbun else 0.022)      # under a hat the bun sits low on the nape, clear of the brim
+    bm=bmesh.new(); bmesh.ops.create_uvsphere(bm,u_segments=12,v_segments=8,radius=(0.034 if _wr else 0.040 if _lowbun else 0.048)*s,matrix=Matrix.Translation((0,yb,zb))@Matrix.Diagonal((1.15,0.85,0.9,1)))
     rigid('Bun',bm,'Hair','Head')
 if G.get('scarf'):          # the knot at the throat
     z=NECK-0.05*s; hit=tree.ray_cast(Vector((0,-1,z)),Vector((0,1,0)))[0]; y=(hit.y if hit else -0.07)-0.03; bm=bmesh.new()

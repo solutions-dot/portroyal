@@ -188,12 +188,12 @@
    "hats": 1
   },
   "woman_elder": {
-   "cloth": 25,
+   "cloth": 0,
    "torn": 0,
    "hats": 0
   },
   "woman_elder_lo": {
-   "cloth": 25,
+   "cloth": 0,
    "torn": 0,
    "hats": 0
   }
@@ -417,12 +417,12 @@
    "hats": 1
   },
   "woman_elder": {
-   "cloth": 140,
+   "cloth": 4,
    "torn": 0,
    "hats": 0
   },
   "woman_elder_lo": {
-   "cloth": 140,
+   "cloth": 4,
    "torn": 0,
    "hats": 0
   },
@@ -529,12 +529,12 @@
    "hats": 1
   },
   "woman_elder": {
-   "cloth": 70,
+   "cloth": 3,
    "torn": 0,
    "hats": 0
   },
   "woman_elder_lo": {
-   "cloth": 69,
+   "cloth": 2,
    "torn": 0,
    "hats": 0
   }
@@ -907,32 +907,32 @@
    "hats": 0
   },
   "police2010": {
-   "cloth": 951,
+   "cloth": 402,
    "torn": 1526,
    "hats": 0
   },
   "police2010_lo": {
-   "cloth": 840,
+   "cloth": 391,
    "torn": 24,
    "hats": 0
   },
   "soldier2010": {
-   "cloth": 1704,
+   "cloth": 1213,
    "torn": 2,
    "hats": 0
   },
   "soldier2010_lo": {
-   "cloth": 1512,
+   "cloth": 1012,
    "torn": 2,
    "hats": 0
   },
   "woman_elder": {
-   "cloth": 170,
+   "cloth": 7,
    "torn": 12,
    "hats": 0
   },
   "woman_elder_lo": {
-   "cloth": 170,
+   "cloth": 7,
    "torn": 2,
    "hats": 0
   }
