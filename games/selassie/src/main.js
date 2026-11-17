@@ -1,7 +1,8 @@
 /* A self-contained game on the established shared engine APIs. */
 import * as THREE from "three";
 import { clone as cloneBody } from "three/addons/utils/SkeletonUtils.js";
-import { loadClips, animate, groundFeet, CL } from "../../../engine/anim.js";
+import { loadClips, animate, groundFeet, CL, lookEnd } from "../../../engine/anim.js";
+import { hudTidy } from "../../../engine/hud.js";
 import { model, onLoadFail } from "../../../engine/loader.js";
 import { grip, gripTick, spreadArms } from "../../../engine/grip.js";
 import { createAmbient, onKeepOff } from "../../../engine/ambient.js";
@@ -1399,10 +1400,10 @@ function steadyHeads(Q, dt) {
       if (s.last) {
         _hq.copy(s.last).rotateTowards(s.bone.quaternion, step);
         s.bone.quaternion.copy(_hq);
-        n.amb.hq?.[i]?.after.copy(_hq);
       }
       (s.last || (s.last = new THREE.Quaternion())).copy(s.bone.quaternion);
     });
+    lookEnd(b.map((s) => s.bone));   /* tell the engine's guard what the head was left as (engine/anim.js), so a look still cannot pile up */
   }
 }
 let last = performance.now();
@@ -1590,3 +1591,4 @@ onLoadFail((name) => {
     $("loadnote").textContent = "The game could not load. Please reload.";
   }
 })();
+hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */

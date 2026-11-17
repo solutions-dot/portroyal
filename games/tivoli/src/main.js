@@ -1,4 +1,5 @@
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
+import { hudTidy } from '../../../engine/hud.js';
 /* games/tivoli/src/main.js: Tivoli (West Kingston, from the 1960s to today, with May 2010 at the centre). Read docs/games/tivoli.md first.
    Started from games/_template/. It is on the menu (the owner's choice, 14 November 2026) while it is still being made.
    Story: seven walking chapters and chapter 5 (the May 2010 street scene) are playable; see content.js, story.js, ch1.js, fight.js. The controls, the HUD, the talk marks
@@ -469,3 +470,4 @@ function guideTick(now) {
 requestAnimationFrame(frame);
 
 if (__DEV__) window.__T = { state, Talk, CH, talkStart, talkNext };   // dev only: the test scripts drive the chapter through this
+hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */

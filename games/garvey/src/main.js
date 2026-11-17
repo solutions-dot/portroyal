@@ -1,4 +1,5 @@
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
+import { hudTidy } from '../../../engine/hud.js';
 import { goTo, tick as followTick } from '../../../engine/follow.js';   /* people sent somewhere walk the same way in every game */
 import { auditSeated, snapMeshes, auditRest } from '../../../engine/audit.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
@@ -1730,3 +1731,4 @@ function devChecks(q) {
     setStage, setGoal, refreshLife, startTalk, endTalk, leaveTalk, allPeople, byId, wantsTalk, clampPos, startGame, showGoal, showHint, toast, showPlace, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeCredits,
     card, hideCard, nextCard, fitPace, talkSpot, saveGame, loadGame, applySave, runAuto, AU, setSound, nudge: NUDGE, frame: (dt) => { update(dt); camera.position.set(state.x, EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); renderer.render(scene, camera); }, EYE });
 }
+hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */

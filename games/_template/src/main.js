@@ -1,4 +1,5 @@
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
+import { hudTidy } from '../../../engine/hud.js';
 /* games/_template/src/main.js: the smallest working game on the shared engine.
    Copy this folder to games/<your-game>/ and grow it (see docs/NEW_GAME.md).
    It shows: a scene, first-person movement (keys, touch joystick, drag to look, gamepad-free),
@@ -117,3 +118,4 @@ function frame(t) {
   renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);
+hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */

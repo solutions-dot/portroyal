@@ -6,6 +6,7 @@
    nothing the player does changes what happened; skin is lightened so faces read in every light (owner rule 9). */
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { hudTidy } from '../../../engine/hud.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -704,3 +705,4 @@ function devViews() {
     })();
   }
 }
+hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */

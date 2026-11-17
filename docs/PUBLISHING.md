@@ -81,3 +81,15 @@ The menu lists every game in `games/` whose folder does not start with an unders
 For a testing build, run `npm run dist:testing` and serve `dist-testing/`. It builds every game with its test parameters available.
 
 All four released games offer a **Teacher unlock** toggle in Chapters. The choice stays in that browser. The toggle changes access; selecting a chapter still advances the current story position normally. Eventide is an exploration prototype and does not yet have a chapter sequence.
+
+## Caches: a phone must never keep an old build (17 November 2026)
+
+The owner played an old build on a phone after a new one was live. Three things now stop that, all in `tools/dist.mjs` and `vercel.json`, for the menu and every game at once:
+
+1. **A build id.** Each `npm run dist` makes an id (the commit and the time), writes it to `dist/version.json` and into every page as `window.__BUILD`.
+2. **The game code is asked for by that id**: `<script src="app.js?v=<id>">`. A new build has a new address, so no cache can hand back an old copy. (Models already work this way.)
+3. **The page checks for a newer build** (`engine/freshen.js`, put into each page by the build): when it loads, when you come back to it after 20 seconds away, and when the browser brings it back from its back-and-forward store. If `/version.json` has a different id, the page loads itself again, once for each new build. A game saves your place as you play, so nothing is lost.
+
+`vercel.json` serves `/version.json` with `no-store` and the pages with `max-age=0, must-revalidate`.
+
+To check what is live: `curl https://<site>/version.json` shows the build id; its first ten characters are the commit on `main`.

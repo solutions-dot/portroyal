@@ -1,4 +1,5 @@
 import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
+import { hudTidy } from '../../../engine/hud.js';
 import { snapMeshes, auditSeated, auditRest } from '../../../engine/audit.js';
 import { updateWalk } from '../../../engine/locomotion.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
@@ -605,10 +606,7 @@ function clampPos(nx, nz) {
 
 /* ---------- interface ---------- */
 let toastTimer = 0;
-function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; placeToast(); clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600 + Math.max(0, msg.length - 30) * 45); }   /* a longer line stays a little longer, so a child can read it */
-/* the toast sits just above the action button, however tall the button is: with a two-line label ("Go back to the street") the button covered Abba's words on a phone (owner, 17 November 2026) */
-function placeToast() { const t = $('toast'), k = $('talk'); if (!t || t.hidden) return; const r = k && !k.hidden ? k.getBoundingClientRect() : null; t.style.bottom = (r && r.height > 1 ? Math.max(128, innerHeight - r.top + 10) : 128) + 'px'; }
-TICKS.push(placeToast);
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600 + Math.max(0, msg.length - 30) * 45); }   /* a longer line stays a little longer, so a child can read it */
 TICKS.push(() => { const g = $('goal'), c = $('card'); if (g && c) { const v = c.hidden ? '' : 'hidden'; if (g.style.visibility !== v) g.style.visibility = v; } });   /* a card covers the middle of the screen and tells you what happens next: the goal steps aside while it is open (on a small phone the goal lay across the card's top edge) */
 function unlock(id) { if (state.unlocked.includes(id)) return; state.unlocked.push(id); uiSound('page'); saveGame(); const j = JOURNAL.find((p) => p.id === id); $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; toast('Journal: ' + j.title); }
 let goalText = '', goalTimer = 0, hintTimer = 0;
@@ -673,7 +671,7 @@ const ACTIONS = [
   { label: 'Talk to the minister', r: 2.6, where: () => state.place === 'after' && people.heath && people.heath.parent && [HEATH.x, HEATH.z], go: () => startConvo(state.unlocked.includes('heath') ? [{ who: 'Emmanuel Heath', text: 'God keep you, Mr Galdy.' }] : HEATH_TALK) },
   { label: 'Reach for the boat', r: 3.6, where: () => state.place === 'sea' && Q.boat && [Q.boat.position.x, Q.boat.position.z], go: () => finishQuake(false) },
   { label: 'Talk to Abba', r: 3.4, where: () => townReady && !Q.on && !FB.on && state.place === 'out' && [ABBA.x, ABBA.z], go: () => startConvo(state.talked ? AFTER : TALK, () => { state.talked = true; if (ring) ring.visible = false; }) },
-  { label: 'Go into the tavern', r: 2.0, where: () => tavernReady && !Q.on && state.place === 'out' && state.talked && [-6.18, -4.5], go: () => { setPlace('in'); state.x = -203; state.z = 2.3; state.yaw = 0; state.pitch = 0; setGoal(); } },
+  { label: 'Go into the tavern', exit: true, r: 2.0, where: () => tavernReady && !Q.on && state.place === 'out' && state.talked && [-6.18, -4.5], go: () => { setPlace('in'); state.x = -203; state.z = 2.3; state.yaw = 0; state.pitch = 0; setGoal(); } },
   { label: 'Go back to the street', r: 1.3, exit: true, where: () => state.place === 'in' && [-203, 3.3], go: () => { setPlace('out'); state.x = -6.18; state.z = -3.4; state.yaw = Math.PI; state.pitch = 0; setGoal(); } },
   { label: 'Talk to Abba', r: 2.3, where: () => state.place === 'in' && [-201, -1.9], go: () => startConvo(state.ate ? AFTER : STEW, () => { if (!state.ate) { state.ate = true; stew.visible = true; } }) },
   ...FINDS.map((f) => ({ label: f.label, r: 1.9, where: () => state.place === 'in' && !state.unlocked.includes(f.id) && [f.x, f.z], go: () => { unlock(f.id); finds[f.id].visible = false; setGoal(); } })),
@@ -2092,3 +2090,4 @@ if (__DEV__) wireChecks({
   tick(dt) { const raf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0; try { frame(last + dt * 1000); } finally { window.requestAnimationFrame = raf; } },
   autoRun, prep, model, animate, skClone, GULLS,
 });
+hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */

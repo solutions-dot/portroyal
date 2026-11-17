@@ -1,4 +1,5 @@
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
+import { hudTidy } from '../../../engine/hud.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/melissa/src/main.js: Melissa 2025, The Wind and the Morning After.
@@ -882,4 +883,4 @@ function devViews() {
     })();
   }
 }
-
+hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */

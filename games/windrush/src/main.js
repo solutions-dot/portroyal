@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";
 import { model, onLoadFail } from "../../../engine/loader.js";
+import { hudTidy } from "../../../engine/hud.js";
 import { animate, loadClips, groundFeet } from "../../../engine/anim.js";
 import { spreadArms, gripTick, grip } from "../../../engine/grip.js";
 import { createAmbient } from "../../../engine/ambient.js";
@@ -1362,3 +1363,4 @@ onLoadFail(() => {
     $("loadnote").textContent = "The game could not load. Please reload.";
   }
 })();
+hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */

@@ -1,4 +1,5 @@
 import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
+import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { man_suit: 2, man_work: 2, man_shirt: 2, man_elder: 2, woman57: 2, woman_long: 2, woman_elder: 2, girl: 2, boy: 2, girl_small: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
@@ -1110,3 +1111,4 @@ function devViews() {
     autoPlay(+q.get('auto'), q.has('one'), L);
   }
 }
+hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */

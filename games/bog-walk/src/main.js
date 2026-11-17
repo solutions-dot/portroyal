@@ -1,4 +1,5 @@
 import { grip, gripTick } from '../../../engine/grip.js';
+import { hudTidy } from '../../../engine/hud.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/bog-walk/src/main.js: Bog Walk 1904: The Tube. The script is docs/games/bog-walk.md, "The build script (agreed with the owner, 13 Nov 2026)".
    Six chapters: the station on Sunday evening (0), Zeke's story of the first electric tram in 1899 (1), inside the Tube (2), the water (3),
@@ -797,3 +798,4 @@ const DEV = __DEV__ ? { THREE, q, $, S, N, T, PL, hand, keys, camera, scene, ren
   tick, render, begin, startGame, startWork, startIntro, skipIntro, startRise, startDark, startTrickle, startBoots, skipNight, setPhase, resetNight, setGoal, setClock, say, toast, bars, hideHud, caption, captionOff, fadeTo, calcLift, nearPatch, act, showEnd, showPick,
   ensurePlace, enterPlace, enterTube, showNudgeAt, placeNudge, NUDGE, beginChapter, setStage, setEnv, showPerson, byId, startTalk, convo, leaveTalk, activate, look, openOrder, openSort, closePuzzle, card, hideCard, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeChapters2: closeChapters, closeCredits, unlock, saveGame, loadGame, applySave, panelsOpen, locked,
   auditPlace, auditHeld, auditSeated, snapMeshes, placeFaces, groundFeet, LANE, ZM, ZMIN, ZMAX, R, SAND, ENV, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), wantsTalk, get modelsReady() { return modelsReady; }, ON, noticeTex } : null;
+hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
