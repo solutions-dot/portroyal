@@ -7,7 +7,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { repairLegacyVertexColours } from '../../engine/colours.js';
 import { loadClips, clipFor, animate } from '../../engine/anim.js';   /* the game's own way of playing a clip (no bone positions, the posture correction), so the sheet shows the stance the game shows */
 
-{ const fq = new URLSearchParams(location.search); if (fq.get('fax')) globalThis.__fingerAxisV = new THREE.Vector3(...fq.get('fax').split(',').map(Number)); if (fq.get('fsign')) globalThis.__fingerSign = +fq.get('fsign'); }   /* dev: try a finger bend axis */
+{ const fq = new URLSearchParams(location.search); if (fq.get('fax')) globalThis.__fingerAxisV = new THREE.Vector3(...fq.get('fax').split(',').map(Number)); if (fq.get('fsign')) globalThis.__fingerSign = +fq.get('fsign'); for (const [k, v] of fq) if (k.startsWith('g_')) globalThis['__' + k.slice(2)] = isNaN(+v) ? v : +v; }   /* dev: try a finger bend axis */
 const q = new URLSearchParams(location.search), game = q.get('game'), ids = q.get('ids').split(','), anim = q.get('anim') || 'Idle';
 const hide = (q.get('hide') || '').split(',').filter(Boolean), skinK = +(q.get('skin') || 1.55), views = (q.get('views') || 'front,side,back,face,face34,faceside').split(',');
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);

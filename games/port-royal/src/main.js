@@ -1015,9 +1015,9 @@ function buildYard() { if (yardG) return; yardG = new THREE.Group(); scene.add(y
   const cup = new THREE.Group(); cup.position.set(cx, th + 0.26, tz); cur.add(cup); for (let i = 0; i < 8; i++) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.3, 0.12), white); const an = i / 8 * Math.PI * 2; p.position.set(Math.cos(an) * 0.75, 0.65, Math.sin(an) * 0.75); cup.add(p); }
   const dome = new THREE.Mesh(new THREE.SphereGeometry(0.95, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x5f6a66, roughness: 0.6, metalness: 0.4 })); dome.position.y = 1.3; cup.add(dome);
   const vane = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 6), dark); vane.position.y = 2.6; cup.add(vane); const cr = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.05), dark); cr.position.y = 2.75; cup.add(cr);
-  const dg = new THREE.Group(); dg.position.set(cx, 0, tz + tw / 2 + 0.03); cur.add(dg); const dsur = archShape(2.0, 3.0); dsur.holes.push(archShape(1.5, 2.75)); dg.add(new THREE.Mesh(new THREE.ExtrudeGeometry(dsur, { depth: 0.1, bevelEnabled: false, curveSegments: 14 }), white));
-  const door = new THREE.Mesh(new THREE.ShapeGeometry(archShape(1.5, 2.75), 14), tim); door.position.z = -0.01; dg.add(door);   /* the boarded head of the arch, over the doors */
-  dg.add(prDoor({ w: 1.5, h: 2.0, leaves: 2, wood: 0x54402c, frame: 0xefeae0, open: 'frameless', fancy: true }));   /* a pair of boarded doors in the arch, on long scrolled strap hinges */
+  const dg = new THREE.Group(); dg.position.set(cx, 0, tz + tw / 2 + 0.01); cur.add(dg); const dsur = archShape(2.0, 3.0); dsur.holes.push(archShape(1.5, 2.75)); dg.add(new THREE.Mesh(new THREE.ExtrudeGeometry(dsur, { depth: 0.2, bevelEnabled: false, curveSegments: 14 }), white));
+  const door = new THREE.Mesh(new THREE.ShapeGeometry(archShape(1.5, 2.75), 14), tim); door.position.z = 0.09; dg.add(door);   /* the surround stands out past the stone base band, so the doors sit in front of it, not behind it. The boarded head of the arch, over the doors */
+  { const d = prDoor({ w: 1.5, h: 2.0, leaves: 2, wood: 0x5e4630, frame: 0xefeae0, iron: 0x1a1a1c, open: 'frameless', fancy: true }); d.position.z = 0.1; dg.add(d); } mk(new THREE.BoxGeometry(1.5, 0.08, 0.06), white, 0, 2.04, 0.13, dg);   /* a pair of boarded doors in the arch, on long scrolled strap hinges, and a white transom under the boarded head */
   const tx = YX + 6, tzz = YZ - 2; mk(new THREE.BoxGeometry(1.2, 0.2, 2.5), stone, tx, 0.1, tzz); mk(new THREE.BoxGeometry(1.0, 0.7, 2.3), brickM(2.3, 0.7), tx, 0.55, tzz);
   const ins = cv(512, 1024, (x) => { x.fillStyle = '#c9c5b8'; x.fillRect(0, 0, 512, 1024); for (let i = 0; i < 2500; i++) { x.fillStyle = `rgba(${90 + Math.random() * 60 | 0},${88 + Math.random() * 50 | 0},80,${Math.random() * 0.12})`; x.fillRect(Math.random() * 512, Math.random() * 1024, 2 + Math.random() * 6, 2 + Math.random() * 6); }
     x.strokeStyle = 'rgba(70,66,58,0.7)'; x.lineWidth = 3; x.strokeRect(22, 22, 468, 980);
@@ -1343,7 +1343,7 @@ function prDoor(o) {
     }
     /* strap hinges from the hinge edge, nailed on, ending in a round or a scroll */
     for (const y of panels ? [y0 + 0.2 * lh, y0 + 0.82 * lh] : [y0 + 0.14 * lh, y0 + 0.86 * lh]) {
-      const L = panels ? 0.22 : fancy ? 0.82 : 0.66; B(L * lw, 0.045, 0.012, IR, at(L / 2), y, panels ? 0.062 : 0.088);
+      const L = panels ? 0.22 : fancy ? 0.82 : 0.66; B(L * lw, fancy ? 0.06 : 0.045, 0.012, IR, at(L / 2), y, panels ? 0.062 : 0.088);
       const e = mk(new THREE.CylinderGeometry(0.035, 0.035, 0.012, 10), IR, at(L), y, panels ? 0.062 : 0.088, g); e.rotation.x = Math.PI / 2;
       if (fancy) for (const d of [-1, 1]) B(0.12, 0.03, 0.012, IR, at(L - 0.06), y + d * 0.05, 0.088, 0, d * s * 0.6);   /* the scroll: two curls off the end */
       B(0.05, 0.08, 0.04, IR, x0 + s * 0.005, y, 0.03);   /* the pin it turns on */

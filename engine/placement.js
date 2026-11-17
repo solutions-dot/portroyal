@@ -38,7 +38,8 @@ function bendKnees(model){
       model.traverse(o=>{if(!o.isSkinnedMesh||!o.visible||!/Shoes|Sole/.test(o.material.name||''))return;o.skeleton.update();const a=o.geometry.attributes.position,step=Math.max(1,Math.floor(a.count/500));for(let i=0;i<a.count;i+=step){o.getVertexPosition(i,kV);kV.applyMatrix4(o.matrixWorld);const sd=kV.distanceToSquared(ank.Left)<kV.distanceToSquared(ank.Right)?'Left':'Right';lo[sd]=Math.min(lo[sd],kV.y);}});
       for(const sd of['Left','Right'])if(isFinite(lo[sd])&&ank[sd].y-lo[sd]>0&&ank[sd].y-lo[sd]<.3)d[sd]=ank[sd].y-lo[sd];}
     if(model.userData.seatAnchor?.lift!==undefined)U.soleDrop=d;drop=d;}
-  const floor=model.parent?model.parent.localToWorld(kV.set(0,U.ground||0,0)).y:(U.ground||0);
+  const fy=U.seatAnchor?.floor??(U.ground||0);   /* seat.floor: the height of a raised floor under the feet (a veranda slab), where it is not the ground */
+  const floor=model.parent?model.parent.localToWorld(kV.set(0,fy,0)).y:fy;
   kF.set(0,0,1).transformDirection(model.matrixWorld);kF.y=0;kF.normalize();kAx.set(kF.z,0,-kF.x);   /* the axis across the body (to its left) */
   for(const side of['Left','Right']){
     const knee=model.getObjectByName('mixamorig'+side+'Leg'),foot=model.getObjectByName('mixamorig'+side+'Foot');if(!knee||!foot)continue;

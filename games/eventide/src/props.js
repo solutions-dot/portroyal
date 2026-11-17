@@ -148,7 +148,7 @@ export function evDoor(kind, o = {}) {
   if (kind === 'naco') {
     arch(0.08); const th = Math.min(0.32, h * 0.15), lh = h - th - 0.04, tY = lh + 0.04;
     B(w, 0.04, 0.05, FR, 0, lh + 0.02, 0.03);   /* the transom bar */
-    B(w - 0.04, th - 0.02, 0.01, DK, 0, tY + th / 2, 0.01); const AL = edm('DoorMetal', 0xb4b8bc, 0.35, 0.8), GL = edm('DoorGlass', 0x8aa0a6, 0.12, 0.3);
+    B(w - 0.04, th - 0.02, 0.01, DK, 0, tY + th / 2, 0.01); const AL = edm('DoorMetal', 0xd4d8dc, 0.4, 0.25), GL = edm('DoorGlass', 0x8aa0a6, 0.12, 0.3);
     for (const s of [-1, 1]) B(0.025, th, 0.03, AL, s * (w / 2 - 0.0125), tY + th / 2, 0.025);
     for (let y = tY + 0.05; y < tY + th - 0.02; y += 0.075) B(w - 0.06, 0.07, 0.006, GL, 0, y, 0.03, -0.45);   /* glass blades, tilted open */
     for (let i = 0; i < 2; i++) { const s = i ? -1 : 1, lw = w / 2, cx = -s * w / 4; B(lw - 0.008, lh - 0.02, 0.04, L1, cx, lh / 2 + 0.01, 0.022); B(lw - 0.05, lh - 0.06, 0.003, L2, cx, lh / 2 + 0.01, 0.043);   /* flush leaf, a thin lipping line round it */

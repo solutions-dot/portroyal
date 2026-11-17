@@ -201,8 +201,8 @@ function yard(id) {
   // neighbours: a woman bringing a basket in on her head, an old woman resting under the breadfruit tree, dominoes on the piazza, children at play
   crowd(Q, "wr_kwoman48", 14.0, 14.0, Math.PI, { kind: "errand", from: [14.0, 14.0], to: [13.6, -3.2], walk: "CarryHeadWalk", idle: "CarryHeadIdle", wait: [5, 9] }, { held: "headload" });
   crowd(Q, "wr_kelder48", -11.5, 6.6, Math.PI / 2, { kind: "sit", seat: { top: 0.485, x: -11.5, z: 6.6, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] }, { raw: true });
-  crowd(Q, "wr_kman48", 8.35, 11.6, Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 8.35, z: 11.6, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitIdle"] });
-  crowd(Q, "wr_tman48b", 9.65, 11.6, -Math.PI / 2, { kind: "sit", seat: { top: 0.45, x: 9.65, z: 11.6, ry: -Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] });
+  crowd(Q, "wr_kman48", 8.35, 11.6, Math.PI / 2, { kind: "sit", seat: { top: 0.45, floor: 0.15, x: 8.35, z: 11.6, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitIdle"] });
+  crowd(Q, "wr_tman48b", 9.65, 11.6, -Math.PI / 2, { kind: "sit", seat: { top: 0.45, floor: 0.15, x: 9.65, z: 11.6, ry: -Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] });
   crowd(Q, "wr_kboy48", -4, 11, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   crowd(Q, "wr_kgirl48", -2, 12, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   Q.ambient[Q.ambient.length - 1].behaviour.chase = Q.ambient[Q.ambient.length - 2].id;

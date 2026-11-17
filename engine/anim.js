@@ -48,7 +48,8 @@ export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() :
     const v = t.values; let x0 = v[0], z0 = v[2]; if (SEATED.test(name) && CL.Idle) { const it = CL.Idle.tracks.find((k) => k.name === t.name); if (it) { x0 = it.values[0]; z0 = it.values[2]; } }   /* seated clips: keep the hips over the spot we put him, not where the clip wandered to */
  for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } return true; });   /* running stays in place; the game moves her */
   if (!SEATED.test(name)) posture(c, name);
-  if (STANDING.test(name) && name !== 'Idle' && !GRIPS.test(name)) relaxHands(c);   /* seated clips keep the pose they were tuned in: their hands rest on the lap, and moving the chest pushed the fingers into the thighs (the cloth check, Garvey, 16 November 2026) */
+  if (STANDING.test(name) && name !== 'Idle' && !GRIPS.test(name)) relaxHands(c);
+  if (!GRIPS.test(name) && !SEATED.test(name)) restFingers(c);   /* the knuckles gently bent and the fingers together (below) */   /* seated clips keep the pose they were tuned in: their hands rest on the lap, and moving the chest pushed the fingers into the thighs (the cloth check, Garvey, 16 November 2026) */
   if (SEAM.test(name)) seamLoop(c);
   const damp = BOW[Object.keys(BOW).find((k) => new RegExp(k).test(name)) || ''];   /* clips whose neck bows so far that a collar stands off the nape: the neck and head turn only part of the way from standing */
   if (damp && CL.Idle) for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const k = m ? damp[m[1]] : undefined; if (k === undefined) continue; const it = CL.Idle.tracks.find((x) => x.name === t.name); if (!it) continue;
@@ -157,6 +158,15 @@ function relaxHands(c) { const idle = CL.Idle; if (!idle) return; const q = new 
   for (const t of c.tracks) { const m = t.name.match(/mixamorig:?((Left|Right)Hand(Thumb|Index|Middle|Ring|Pinky)\d)\.quaternion$/); if (!m) continue;
     const it = idle.tracks.find((k) => k.name === t.name); if (!it) continue; r.fromArray(it.values, 0); const v = t.values;
     for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i).slerp(r, HAND_REST).toArray(v, i); } } }
+/* Fingers together and gently bent at the knuckle (owner, 17 November 2026: the hands still looked ragged: the fingers hung straight, stiff and spread like a rake).
+   A relaxed hand's fingers are held together and bend a little at every joint, a little more toward the little finger. The clips drive only the knuckle (joint 1), so the
+   bend and the closing-up are put into those tracks once, when a clip is made; curlFingers bends joints 2 and 3. KNUCKLE: radians of bend; CLOSE: radians each finger
+   turns toward the middle finger (index one way, ring and pinky the other). */
+export const KNUCKLE = { Index: 0.18, Middle: 0.24, Ring: 0.3, Pinky: 0.36 }, CLOSE = { Index: -0.2, Middle: 0.0, Ring: 0.16, Pinky: 0.3 };   /* (about local x; minus brings the index toward the middle finger: checked by eye, 17 November 2026) */
+function restFingers(c) { const g = globalThis, k1 = g.__k1 ?? 1, sp = g.__sp ?? 1, cax = new THREE.Vector3(0, 0, 1), sax = (g.__spax || 'x') === 'y' ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0), q = new THREE.Quaternion(), a = new THREE.Quaternion(), b = new THREE.Quaternion();
+  for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(Left|Right)Hand(Index|Middle|Ring|Pinky)1\.quaternion$/); if (!m) continue; const side = m[1] === 'Left' ? -1 : 1;
+    a.setFromAxisAngle(cax, side * KNUCKLE[m[2]] * k1 * (g.__fingerSign || 1)); b.setFromAxisAngle(sax, side * CLOSE[m[2]] * sp); const v = t.values;
+    for (let i = 0; i < v.length; i += 4) q.fromArray(v, i).multiply(a).multiply(b).toArray(v, i); } }
 export const grounded = [];
 const TOES = new WeakMap(), SOLES = new WeakMap();   /* not in userData: clones copy userData as plain JSON, which would break the bone references */
 /* Where a foot touches the ground: the real lowest points of the shoe (or the bare foot), found once per body shape from its own vertices: the back of the heel, the ball of the foot and the tip of the toe.

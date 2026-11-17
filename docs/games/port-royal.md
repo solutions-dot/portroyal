@@ -204,6 +204,6 @@ The owner: "this doesn't look like a door", then "the doors should fit their pur
 | The Marshalsea (prison), new street | one leaf of boards and braces, rows of nail heads, a barred spy-hole, a box lock, an iron ring | a lock-up door of the time was made to be hard to break |
 | The synagogue, new street | a pair of panelled doors on the step, ring handles | a public building in brick, the better kind of door |
 | The powder magazine in Fort Charles | boards and braces with copper fittings and a box lock, no ring | magazines used copper fittings so nothing could strike a spark |
-| St Peter's Church, churchyard | a pair of boarded doors under a boarded arch head, long scrolled strap hinges, rings | the church of 1725; its real west door has not been checked against a photograph (work to do) |
+| St Peter's Church, churchyard | a pair of ledged and braced doors under a boarded arch head and a white transom, long scrolled strap hinges, a ring; the arch surround now stands out past the stone base band, which used to hide the foot of the door | the church of 1725; its real west door has not been checked against a photograph (work to do) |
 
 The town houses (the packed `h1` to `h6`, `tools/blender/street.py`) already have their own modelled doors (cut into the wall, frame, strap hinges, latch, step) and were not changed. The tavern's street door (inside) and the warehouse's wharf doors were already boarded with straps and were not changed. The two open gate leaves of Fort Charles are still plain boards: work to do.
