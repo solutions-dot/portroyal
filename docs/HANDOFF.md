@@ -219,3 +219,12 @@ After the full rebuild `people-check` reported many bodies WORSE (Kendal `woman_
 - The check still reports things nobody can see. Example: Tivoli's `woman_elder` in `Agree` has 35 lines of "Body shows through Shirt" and the picture shows a whole blouse. So the list is a guide, not a count of visible faults. The honest next step is a test that asks what the eye sees: draw the body from a few sides with each piece in a flat colour and count skin-coloured pixels inside a garment's outline.
 - The biggest kinds after that: "Skirt shows through Belt" (a belt or sash sinking into a skirt when the body bends), "fingers go into Breeches", "Shirt shows through Breeches", jagged shirt and skirt hems. The bodies with most lines: `woman_elder`, `man_elder`, `guide2020`, `student2020`, `woman57`, `boy`, `girl` and their light copies.
 - Place audits are 0 in every game (Bog Walk and Melissa were the last two). Held items are 0 in the eight games that have that view.
+
+## The seen check is the clothes work list (17 November 2026, late)
+
+`node tools/review/people-seen.mjs all --list` (see `docs/TESTING.md`). First full run: 15,033 visible patches over the ten games, recorded in `tools/checks/people-seen.json`.
+
+- 5,705 of them were one fault: a belt coming through the back of a waistcoat. Fixed in the builder (the part of a belt under a waistcoat is not made) and `man_shirt`, `man_elder`, `man_work` are rebuilt: in Kendal those six files went from 1,341 patches to 334.
+- Next kinds, by count: shirt through waistcoat (1,398), skin through shirt (1,021), breeches through coat and coat skirt (1,555, Port Royal's 1690 coats), shirt through jacket (909), shirt through breeches (638), skirt through belt (588).
+- Before fixing a kind, look at its pictures (`--shots`): a shirt or tie seen in the front opening of a jacket is how it is worn, and may need a rule in the check, not a change to the body. Most patches are in clips a body seldom plays (kneeling, picking up, sitting).
+- Port Royal has a `?test=heads` check now; the head-turn guard is in every game that turns heads.
