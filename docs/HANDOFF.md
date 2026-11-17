@@ -202,14 +202,13 @@ The owner approved the non-people changes for main. Selassie people revisions an
 
 Garvey chapter 5 lets you walk the ship's deck (`docs/games/garvey.md`, "On board the Yarmouth"). No other game has a place like it yet: a second place inside a chapter, with close looks that move your eyes to the thing (`lookPart`). People stand upright in every game (`engine/anim.js` `STANCE`, `docs/ENGINE.md`). Garvey's dock is busy. Port Royal's tavern and market were tidied (`docs/games/port-royal.md`).
 
-## Open: the every-clip gate after the full rebuild (17 November 2026)
+## The cloth check was comparing pieces in different units (found and fixed 17 November 2026)
 
-`node tools/review/people-check.mjs all` reports many bodies WORSE than the baseline after the full rebuild (for example Kendal `woman_long` 18 to 291, `boy` 47 to 173; Nanny `maroon_woman` 5 to 164; Garvey `printer1907` 28 to 111, `nb_youth` 17 to 75). The baseline was not updated. What is known:
+After the full rebuild `people-check` reported many bodies WORSE (Kendal `woman_long` 18 to 291, Garvey `nb_youth` 17 to 75). The cause was the check, not the bodies.
 
-- It is not the builder: `nb_youth` built with the builder as it was when the baseline was recorded gives the same 75 lines.
-- It is not `engine/anim.js`: the same count with the old file.
-- It follows the recipe's `"face"`. Without it `nb_youth` gives 13 lines. Of the preset's targets only the ones that make the head taller matter (`forehead-scale-vert-incr`, `head-oval`); `head-diamond`, cheeks, nose and chin do not.
-- Yet the two built files are the same below the neck: same points, same weights, same bones (only the Head bone's angle differs a little), and the full copy is hardly simplified. So the check finds different faults on the same body. Why is not yet known. The faults it names are real but small (skin 15 to 22 mm through the shirt at the front of the shoulder in Idle; an ear tip through a head wrap).
-- Tried and dropped: putting the ear tops under the wrap (it made `woman_elder` worse, 4 to 142).
+- Packed bodies store every piece (skin, shirt, hat) squeezed into its own box. The true size is folded into the bones' bind matrices.
+- `auditCloth` took each piece's rest shape by posing the skeleton, which left each piece in its own squeezed box. So "which skin points lie under the shirt" compared skin and shirt in different units. For most pairs it found nothing and the pair was never tested. For a few it found a handful of chance points, and which ones depended on the size of the head. That is why a new face changed the count on a body that was the same below the neck.
+- Fix (`clParts` in `engine/audit.js`): the rest shape is each point through the hips bone's bind matrix, which is true units in one frame for every piece. Two test bodies that are the same below the neck now report the same faults.
+- Also fixed: an arm inside its sleeve beside the shirt's side panel is covered (`clUnder`), and buttons on the front band are not a fault.
 
-Next: find what in `auditCloth` (`engine/audit.js`) depends on the head (a height, a bound, a piece order), then fix the real faults, then record the baseline.
+**What this means**: every earlier cloth count, and the old baseline, came from a check that skipped most skin-under-cloth pairs. The numbers are much higher now because the check finally looks. `?test=cloth` in every game uses the same code. The faults it lists are the real work list for clothes. The baseline has to be recorded again from the corrected check, and the docs that quote old counts are out of date.

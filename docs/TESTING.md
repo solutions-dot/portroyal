@@ -258,3 +258,7 @@ Teacher access: in a fresh browser, open Chapters, check the normal locks, turn 
 The Pipe's ordering challenge shares its journey data with the physical notice board and the picture buttons. Its board guide remains in the panel; the full board can be expanded. Check a wrong pick, all six correct picks, Done, and keyboard activation at 390x800 and 667x375.
 
 Use `?test=collision` or `?test=seating` for seating and furniture checks. Port Royal includes the dock and new street routes, Ned in the tavern, Benning after the earthquake, and Exquemelin at his desk. Garvey includes all places, complete route segments and bench approaches. Kendal and Bog Walk include these checks in their place audits. A missing walking wall must also be checked against the actual furniture boxes.
+
+### The cloth check measures in true units (17 November 2026)
+
+`auditCloth` (`engine/audit.js`) used to take each piece's rest shape in the squeezed box a packed body stores it in, so most skin-under-cloth pairs were never tested. It now measures every piece from the hips bone in true units. Counts from before this date are not comparable. See `docs/HANDOFF.md`.
