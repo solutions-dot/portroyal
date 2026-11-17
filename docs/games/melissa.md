@@ -66,7 +66,7 @@ python3 -m http.server 8765                 # then open http://localhost:8765/ga
 - Autoplayer: `?auto=N&one` plays chapter N (1 to 6). Without `&one` it carries on. Read it from `#autolog` and the page title (`--dump-dom`; the title can hold several lines).
 - Automatic checks (owner rule 8): `?test=audit` (0 in all nine places on 14 Nov 2026), `?test=held`, `?test=layout` (run at 390x800, 667x375, 800x500 and 1280x720; all four clean on 14 Nov 2026), `?test=resume`, and `?test=sound` (see below). `PEOPLE.md` also asks for `?test=cloth`, `?test=walkers` and `?test=skin`; those arrive with `engine/skinprobe.js` in PR 50 and are not wired here yet.
 
-**Vehicles, 16 November 2026:** the car in Kingston 1988 and the water truck in "after" were plain boxes. They now come from `engine/roadcars.js` (`docs/ENGINE.md`): `car()` is a 1980s saloon and `waterTruck()` is a lorry with a banded tank, a hatch, a ladder, an outlet and a hose. Same colours, place and footprint; no names or numbers. To view: `?shot=cam&p=after&c=31.5,2.4,6.8&l=26,1.3,1.1` and `?shot=cam&p=kingston88&c=-4.4,1.9,-10.6&l=-9.3,0.7,-7`.
+**Vehicles, 17 November 2026:** the car in Kingston 1988 and the water truck in "after" were plain boxes. They now come from `engine/roadcars.js` (`docs/ENGINE.md`): `car()` is a 1980s saloon and `waterTruck()` is a lorry with a banded tank, a hatch, a ladder, an outlet and a hose. Same colours, place and footprint; no names or numbers. To view: `?shot=cam&p=after&c=31.5,2.4,6.8&l=26,1.3,1.1` and `?shot=cam&p=kingston88&c=-4.4,1.9,-10.6&l=-9.3,0.7,-7`.
 
 ## People (follow `docs/PEOPLE.md`)
 

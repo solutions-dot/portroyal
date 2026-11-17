@@ -119,7 +119,7 @@ Read this first if you are picking up the big people, animation and gameplay sta
 - `engine/ambient.js`: background people wander, chat, work, sit, watch, run errands, children play; no sync, head turns, personal space, story paths kept clear, mood, phone budget, `?test=ambient`.
 - `engine/follow.js`: followers and guides for every game, `?test=follow`. Wired in Nanny, Kendal, Melissa, Eventide, Garvey.
 - `engine/vehicles.js`: shared trains and vehicles (Kendal and Bog Walk use it).
-- `engine/boats.js`: a detailed wooden rowing boat (Port Royal). `engine/roadcars.js`: cars, a bus, a van and lorries at two draw calls each (Eventide, Melissa, Windrush). Both 16 November 2026; see `docs/ENGINE.md`.
+- `engine/boats.js`: a detailed wooden rowing boat (Port Royal). `engine/roadcars.js`: cars, a bus, a van and lorries at two draw calls each (Eventide, Melissa, Windrush). Both 17 November 2026; see `docs/ENGINE.md`.
 - `engine/checks.js`: one `?test=all` runner (journal, links, accessibility, reach and resume at every step, map, camera, faces, budget, rule 4, sound, continuity, errors); `tools/lint_content.mjs` runs in `npm test` with a baseline; `tools/checks_browser.mjs`; `.github/workflows/checks.yml`.
 - `engine/audit.js`: new checks for people against real merged and instanced shapes along routes, object overlaps, things resting or floating, vehicles near people, hidden-garment pieces, hanging leaves.
 - `engine/skinprobe.js`, `engine/colours.js` (skin and colour pipeline, owner rule 9).

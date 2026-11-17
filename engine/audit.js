@@ -15,6 +15,7 @@ import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
      vehicle a bus, cart, truck or train whose path passes through or close to a person, the player's spot or a walking wall (auditVehicles)
      hang    a loose clump of leaves or flowers high up that touches nothing: no stem, no wall, no ground (auditHanging)
      garment a small piece of clothing (buttons, a hat band, a buckle) that shows while its garment is hidden, or floats clear of every other piece (auditGarments)
+     head    a head turned further from the chest than a person can, or turning faster than a person turns it: a spin (headWatch, sampled over time)
    Nothing here runs in a public build unless a game imports it into code that is only reached when __DEV__ is true. */
 import * as THREE from 'three';
 import { groundFeet, strideOf, isSeated } from './anim.js';
@@ -429,7 +430,8 @@ function clParts(body) { const parts = []; body.traverse((o) => { if (!o.isSkinn
       o.skeleton.bones.forEach((b, k) => { b.position.copy(keep[k][0]); b.quaternion.copy(keep[k][1]); b.scale.copy(keep[k][2]); }); body.updateMatrixWorld(true); g.userData.clRest = rest; }
     parts.push({ o, name: /^(Skin|Sock)$/.test(o.material.name || '') ? (o.material.name === 'Skin' ? 'Body' : 'Sock') : (o.parent && o.parent.name === 'Lining' ? 'Lining' : (o.name || o.material.name)),   /* a Lining in two colours (under the shirt and under the breeches) loads as a group of two meshes */   /* the skin and the socks are named by their material: a body mesh with two materials loads as two meshes with the mesh's own name */ mat: o.material.name || o.name, g, idx, samples, rest, pos: new Float32Array(n * 3) }); }); return parts; }
 /* which piece lies over which, innermost first. A piece is only tested as the under layer of a piece that comes later. Names not listed are judged from the rest shape alone. */
-const CL_ORDER = [/^(Body|Skin)$/, /^(Hair|Bun|Puffs|Plaits|Moustache)/, /^Sock/, /^Shirt$/, /^(Placket|Pocket)/, /^(Collar|Tie|Buttons)/, /^(Breeches|Skirt|SkirtSeat)$/, /^(Belt|Buckle|Sash|Waistband)/, /^Waistcoat/, /^Apron/, /^(Jacket|JacketSkirt|Lapels|JButtons|Coat|CoatSkirt)/, /^(Shoes|Sole)/, /^(Ribbon|Hat|Cap|TopHat|Bonnet|Wrap|Scarf)/];
+/* layers from the skin out. A body-armour vest is worn over the shirt like a waistcoat, and boots are shoes (17 November 2026: 'Vest shows through Shirt' and 'Boots shows through Shoes' were the check reading the layers the wrong way round) */
+const CL_ORDER = [/^(Body|Skin)$/, /^(Hair|Bun|Puffs|Plaits|Moustache)/, /^Sock/, /^Shirt$/, /^(Placket|Pocket)/, /^(Collar|Tie|Buttons)/, /^(Breeches|Skirt|SkirtSeat)$/, /^(Belt|Buckle|Sash|Waistband)/, /^(Waistcoat|Vest)/, /^Apron/, /^(Jacket|JacketSkirt|Lapels|JButtons|Coat|CoatSkirt)/, /^(Shoes|Sole|Boots)/, /^(Ribbon|Hat|Cap|TopHat|Bonnet|Wrap|Scarf)/];
 const clRank = (n) => CL_ORDER.findIndex((r) => r.test(n));
 function clEdge(B) {   /* the rest positions of the vertices on the open edges of a piece (hems, cuffs, necklines) */
   if (B.g.userData.clEdge) return B.g.userData.clEdge; const cnt = new Map(), idx = B.idx, R = B.rest, key = (a, b) => (a < b ? a * 1e6 + b : b * 1e6 + a); for (let t = 0; t < idx.length; t += 3) for (let e = 0; e < 3; e++) { const k = key(idx[t + e], idx[t + (e + 1) % 3]); cnt.set(k, (cnt.get(k) || 0) + 1); }
@@ -538,4 +540,49 @@ export function auditCloth(id, body, { poses = [['Idle', 0.3]], after = null, sk
       if (n) { clPoint(A.pos, A.samples, wi, p); const rp = [0, 0, 0]; clPoint(A.rest, A.samples, wi, rp); out.points += n; out.worst = Math.max(out.worst, worst / sc * 1000); out.lines.push(`${id} ${clipName}@${at}: ${A.name} shows through ${B.name}: ${n} points, worst ${(worst / sc * 1000).toFixed(1)} mm` + (where ? ` at x ${p[0].toFixed(3)} y ${p[1].toFixed(3)} z ${p[2].toFixed(3)} (rest ${rp.map((x) => x.toFixed(3)).join(' ')})` : '')); } } }
   ctl.mx.stopAllAction(); ctl.base.reset().play(); ctl.cur = ctl.base; ctl.mx.update(0); if (after) after(body);
   return out;
+}
+
+/* ---------- heads: a head turned further or faster than a person can (every game; first wired in Tivoli, 17 November 2026) ----------
+   A head turn added after the mixer piles up when the clip writes the neck and head only once (a still Idle track), and the head goes round
+   and round (Selassie, Tivoli). The angles are measured as games/selassie/src/headcheck.js and games/kendal/src/motioncheck.js do: the head's
+   forward against the chest's own forward, up and side, from the bind pose. headAngles(body) gives { yaw, pitch } in degrees.
+   const w = headWatch({ own });   own(person, clip) -> how fast that clip turns the head on its own, degrees a second (optional)
+   every frame (after the head turns): w.sample(t, [{ id, m, clip, blend }])   t in seconds; blend: true while one clip fades into the next
+   w.lines() -> one line per person and kind of fault, with the worst value; w.stats() -> how many people and samples. */
+export const HEAD_LIMIT = { yaw: 80, pitch: 60, speed: 320, over: 0.1 };
+const HEAD_AXES = new WeakMap();
+function headAxes(m) {
+  let a = HEAD_AXES.get(m); if (a !== undefined) return a; let s = null; m.traverse((o) => { if (!s && o.isSkinnedMesh) s = o.skeleton; });
+  const get = (name) => { if (!s) return null; const i = s.bones.findIndex((b) => b.name === 'mixamorig' + name); if (i < 0) return null; const q = new THREE.Quaternion(); new THREE.Matrix4().copy(s.boneInverses[i]).invert().decompose(new THREE.Vector3(), q, new THREE.Vector3()); q.invert(); return { bone: s.bones[i], f: new THREE.Vector3(0, 0, 1).applyQuaternion(q), u: new THREE.Vector3(0, 1, 0).applyQuaternion(q) }; };
+  a = { chest: get('Spine2'), head: get('Head') }; if (!a.chest || !a.head) a = null; HEAD_AXES.set(m, a); return a;
+}
+const _hq = new THREE.Quaternion(), _hf = new THREE.Vector3(), _hu = new THREE.Vector3(), _hr = new THREE.Vector3(), _hh = new THREE.Vector3();
+export function headAngles(m) {
+  const a = m && headAxes(m); if (!a) return null; m.updateMatrixWorld(true);
+  a.chest.bone.getWorldQuaternion(_hq); _hf.copy(a.chest.f).applyQuaternion(_hq); _hu.copy(a.chest.u).applyQuaternion(_hq); _hr.crossVectors(_hu, _hf);
+  a.head.bone.getWorldQuaternion(_hq); _hh.copy(a.head.f).applyQuaternion(_hq);
+  return { yaw: Math.atan2(_hh.dot(_hr), _hh.dot(_hf)) * 180 / Math.PI, pitch: Math.asin(Math.max(-1, Math.min(1, _hh.dot(_hu)))) * 180 / Math.PI };
+}
+export function headWatch({ limit = HEAD_LIMIT, own = null } = {}) {
+  const L = { ...HEAD_LIMIT, ...limit }, S = new Map(), worst = new Map(); let samples = 0;
+  const add = (key, val, text) => { const w = worst.get(key); if (!w || val > w.val) worst.set(key, { val, text }); };
+  const wrapD = (d) => ((d + 540) % 360) - 180;
+  return {
+    sample(t, people) {
+      for (const p of people) {
+        if (!p.m || p.m.visible === false) continue; const g = headAngles(p.m); if (!g || !Number.isFinite(g.yaw)) continue; samples++;
+        const id = p.id, clip = p.clip || '';
+        if (Math.abs(g.yaw) > L.yaw) add('y' + id, Math.abs(g.yaw), `head: ${id} turns the head ${g.yaw.toFixed(0)} degrees from the chest on ${clip} (limit ${L.yaw})`);
+        if (Math.abs(g.pitch) > L.pitch) add('p' + id, Math.abs(g.pitch), `head: ${id} tips the head ${g.pitch.toFixed(0)} degrees on ${clip} (limit ${L.pitch})`);
+        let s = S.get(id); if (!s || s.clip !== clip || t < s.t) { S.set(id, { t, g, clip, spin: 0, last: g.yaw }); continue; }
+        s.spin += wrapD(g.yaw - s.last); s.last = g.yaw; if (Math.abs(s.spin) > 360) add('s' + id, Math.abs(s.spin), `head: ${id}'s head goes right round (${Math.abs(s.spin).toFixed(0)} degrees one way) on ${clip}`);
+        const dt = t - s.t; if (dt < L.over) continue;
+        const sp = Math.hypot(wrapD(g.yaw - s.g.yaw), wrapD(g.pitch - s.g.pitch)) / dt;
+        if (sp > L.speed && !p.blend) { const o = own ? own(p, clip) : 0; if (sp > o * 1.25 + 60) add('v' + id, sp, `head: ${id}'s head turns ${sp.toFixed(0)} degrees a second on ${clip} (the clip alone: ${o.toFixed(0)}; limit ${L.speed})`); }
+        s.t = t; s.g = g;
+      }
+    },
+    lines: () => [...worst.values()].map((w) => w.text),
+    stats: () => ({ people: S.size, samples }),
+  };
 }

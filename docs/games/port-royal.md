@@ -87,7 +87,7 @@ Every man is built from his recipe in `tools/people/<name>.json` by `tools/garve
 
 Check a body in the game's own light with `?shot=sheet&who=galdy&clip=Walk&zoom=full|top|legs` (standing and three moments of the clip, each from the front, side, back and three-quarter; `&it=0.25,0.75` shows the standing clip at those moments instead). Then run `?test=cloth` (no layer shows through another) and `?test=held` (carried things are at the hand and clear of the body).
 
-## The boats (16 November 2026)
+## The boats (17 November 2026)
 
 The owner asked for more detail on the boat that rescues Lewis Galdy. All three small boats are now built by `rowBoat` in `engine/boats.js` (see `docs/ENGINE.md`):
 
@@ -101,6 +101,7 @@ The owner asked for more detail on the boat that rescues Lewis Galdy. All three 
 - Sources for the look: Port Royal had wherries (John Taylor names the Wherry Bridge, 1688); small English working boats of the time were commonly clinker-built and rowed with oars in thole pins. The boat is a general picture, not a copy of a recorded boat.
 - **To view:** Chapters, "The earthquake", or `?shot=swim` in a dev build. `node build/vehicles/pr_shot.mjs after` saves close-up pictures of all three boats to `build/vehicles/port-royal/`.
 - Not done: the fishing canoe on the spit and the two packed ship models are unchanged.
+- Layout fix, same day: at 390 x 800 the round talk button sat on top of the controls hint when the hint wrapped to two lines (`?test=layout`). On narrow screens the hint now gives way while the talk button shows (`index.html`, the `max-width:520px` rule). At 667 x 375 the layout test still reports 4 overlaps (the top-right buttons and the goal over dialogue choices and cards); they were there before this change and are not fixed yet.
 
 ## Test views (dev build only)
 

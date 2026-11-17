@@ -22,5 +22,5 @@ test('Tivoli start card excludes Journal; home-page artwork moves, not the menu'
   assert.match(menu, /\.game\.tivoli::before/);
   assert.match(menu, /@keyframes tivoli-scene-drift/);
   assert.match(menu, /prefers-reduced-motion:reduce/);
-  assert.match(html,/id="jhud"[^>]*>Journal/);
+  assert.match(html,/id="jbtn"[^>]*>Journal/);   // the shared Journal button (17 Nov 2026: Tivoli's own #jhud replaced)
 });

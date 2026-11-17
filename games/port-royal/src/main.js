@@ -1741,7 +1741,7 @@ function fbMuster() { FB.step = 3; const mo = people.morgan; mo.position.set(SHO
   startConvo(MUSTER, () => { FBG.cast.forEach((m, i) => { if (m === FBG.exq || !m.userData.anim) return; m.userData.anim.play(CL.Cheer ? (i % 3 === 0 ? 'Clap' : 'Cheer') : (i % 2 ? 'Wave' : 'Laugh'), true); }); toast('The men cheer!'); setTimeout(fbEnd, 2600); }); }
 
 /* ---------- loading the fleet: carry three crates from the pile to the ship's boat ---------- */
-const LOAD = { pile: [SHORE - 0.6, 3.4], drop: [SHORE + 9.2, 1.15], n: 0, carrying: false, need: 3 };   /* the boat lies in the open water on the sloop's side of the pier. It used to sit on the other side, inside the merchant ship's hull, where only a sliver of it showed (16 Nov 2026) */
+const LOAD = { pile: [SHORE - 0.6, 3.4], drop: [SHORE + 9.2, 1.15], n: 0, carrying: false, need: 3 };   /* the boat lies in the open water on the sloop's side of the pier. It used to sit on the other side, inside the merchant ship's hull, where only a sliver of it showed (17 Nov 2026) */
 function loadBuild() { if (LOAD.g) return; const g = new THREE.Group(); FBG.group.add(g); LOAD.g = g; const prev = cur; cur = g;
   const crM = new THREE.MeshStandardMaterial({ map: plankTex([150, 118, 80], 3, 1, 2), roughness: 0.9 }); LOAD.crates = [];
   for (let i = 0; i < 6; i++) { const c = mk(new THREE.BoxGeometry(0.5, 0.36, 0.4), crM, LOAD.pile[0] + (i % 3) * 0.55 - 0.55, 0.18 + Math.floor(i / 3) * 0.37, LOAD.pile[1] + (i % 2) * 0.08); c.rotation.y = (i * 0.37) % 0.3; LOAD.crates.push(c); }

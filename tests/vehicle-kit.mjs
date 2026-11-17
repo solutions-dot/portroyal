@@ -1,5 +1,5 @@
 /* engine/boats.js and engine/roadcars.js: every shape is whole (no NaN), each vehicle stays within its draw-call budget, and nothing drifts in size.
-   (16 Nov 2026: a rounding slip at the bow once gave the rowing boat NaN points, which drew as a black patch.) */
+   (17 Nov 2026: a rounding slip at the bow once gave the rowing boat NaN points, which drew as a black patch.) */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MeshStandardMaterial, Box3 } from 'three';

@@ -284,7 +284,7 @@ Trains run along x and face -x; every vehicle has its floor at y = 0 (platform h
 
 The shapes and colours are general pictures, not copies of a photographed engine (see `docs/games/kendal.md`). Kendal's dev model viewer (`?shot=model&m=late`, and `diesel`, `coach`, `early`, `first`, `third`, `wagon`) shows each one on a piece of track.
 
-## engine/boats.js: a wooden rowing boat (16 November 2026)
+## engine/boats.js: a wooden rowing boat (17 November 2026)
 
 `rowBoat(o)` builds an open clinker-built boat in code: overlapping planks with a real step at each lap, a keel, stem and stern posts, a transom, ribs, a gunwale with a rubbing strake under it, risers, thwarts with knees, bottom boards, thole pins (wooden pegs: metal rowlocks came later), two oars, a rudder with a tiller, a coil of rope and a bailer. It fits a harbour boat from the 1600s to the 1900s and carries no name or number.
 
@@ -294,7 +294,7 @@ The shapes and colours are general pictures, not copies of a photographed engine
 - `userData` gives `seatTop`, `thwarts`, `boards` (the height of the bottom boards, for putting loads in) and `halfAt(x, y)` (half the inside width there).
 - Port Royal uses it three times: the boat that rescues Galdy, the boat on the beach and the ship's boat in Ned's story.
 
-## engine/roadcars.js: cars, a bus, a van and lorries (16 November 2026)
+## engine/roadcars.js: cars, a bus, a van and lorries (17 November 2026)
 
 Road vehicles with a detailed look at a low cost. Each is drawn from its side outline (the wheel arches cut out of it), pushed out to its width with rounded edges, and leaned in above the waist. Then come wheels with a tyre, a rim and a hub cap, glass, bumpers, a grille, lamps, door lines, handles, mirrors and wipers.
 
