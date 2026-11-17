@@ -191,7 +191,7 @@ G=P['garments']; parts=[]; OLD=P.get('era',1915)<1800
 if G.get('skirt') and not OLD and not G.get('belt') and G.get('waistband',True):      # a later skirt without a belt gets its own waistband, in the skirt's cloth: it covers the join of blouse and skirt, which otherwise flickered and showed ragged when seated
     G['belt']=True
     if 'Belt' not in P['colors'] and 'Skirt' in COL: COL['Belt']=COL['Skirt']*0.88      # the skirt's own cloth, a shade deeper at the seam
-EASE_OLD=OLD and not G.get('coat') and not G.get('woman')      # a 1690 man's shirt worn without a coat: drape_front alone left the chest as two mounds over a hollow, cut back in to the waistband, so it gets the ease too
+EASE_OLD=OLD and not G.get('woman') and (not G.get('coat') or not G.get('coatsleeves',True))      # (and under a sleeveless coat, whose shirt sleeves are seen whole: without the ease they folded into dark patches, owner 17 November 2026)      # a 1690 man's shirt worn without a coat: drape_front alone left the chest as two mounds over a hollow, cut back in to the waistband, so it gets the ease too
 if G.get('trousers'): G['breeches']=True; G['breechkind']='trousers'
 WAIST=HIP+0.13 if G.get('breeches') else HIP+0.02   # with breeches the shirt is tucked in under their waistband
 def arm_ok(c,upto):
@@ -1345,9 +1345,26 @@ if G.get('jacket'):      # under a jacket only the shirt's front, collar zone an
 if G.get('coat') and OLD:      # under a coat only the shirt's cuffs can be seen (all of each sleeve, when the coat has none): cut the rest away
     o=PART['shirt']; bm=bmesh.new(); bm.from_mesh(o.data); _sl=G.get('coatsleeves',True); _cs=G.get('coatsleeve',0.82)
     def seen(c):
-        if not _sl: return (side_arm(c) is not None and abs(c.x)>SX*0.80) or c.z>NECK-0.07*s      # (only the sleeves past the coat's armhole, and the neck: the shirt's shoulders under the coat came through it in patches, 17 November 2026)      # (and the neck opening) a coat with no sleeves: the shirt's shoulders and sleeves show (from SX*0.55 in, bits of the shirt's chest were kept and showed through the coat as two white slivers)
+        if not _sl: return side_arm(c) is not None or abs(c.x)>SX*0.80 or c.z>NECK-0.07*s      # the whole sleeve stays (cut back to the coat's armhole, the back of each sleeve had holes in it: owner, 17 November 2026)      # (only the sleeves past the coat's armhole, and the neck: the shirt's shoulders under the coat came through it in patches, 17 November 2026)      # (and the neck opening) a coat with no sleeves: the shirt's shoulders and sleeves show (from SX*0.55 in, bits of the shirt's chest were kept and showed through the coat as two white slivers)
         t=side_arm(c); return t is not None and t>_cs-0.14
     bmesh.ops.delete(bm,geom=[f for f in bm.faces if not seen(cz(f))],context='FACES'); bm.to_mesh(o.data); bm.free()
+    if not _sl:      # a sleeve that folds over itself: any face of it lying under another face of the same sleeve (seen from the arm's line outward) is an inner fold, and is removed (it drew as dark speckled patches on the back of the arm)
+        bm=bmesh.new(); bm.from_mesh(o.data); bm.normal_update(); _bt=BVHTree.FromBMesh(bm); _in=[]
+        for f in bm.faces:
+            c=cz(f)
+            if side_arm(c) is None: continue
+            ax=arm_axis(c)[0]; d=c-ax
+            if d.length<1e-5: continue
+            d.normalize(); hit,_n,_i,_dd=_bt.ray_cast(c+d*0.0015,d,0.04)
+            if hit is not None and _i!=f.index: _in.append(f)
+        bmesh.ops.delete(bm,geom=_in,context='FACES'); bmesh.ops.delete(bm,geom=[v for v in bm.verts if not v.link_faces],context='VERTS'); print('SLEEVE FOLDS REMOVED',len(_in))
+        bm.to_mesh(o.data); bm.free(); o.data.update()
+    if not _sl:      # the shirt's sleeves are seen whole under a sleeveless coat: cut from the coarse helper body, their big faces showed as dark flat patches (owner, 17 November 2026). They are made finer and relaxed
+        bm=bmesh.new(); bm.from_mesh(o.data); bmesh.ops.remove_doubles(bm,verts=bm.verts[:],dist=0.0015)
+        for _ in range(2): bmesh.ops.subdivide_edges(bm,edges=bm.edges[:],cuts=1,use_grid_fill=True,smooth=1.0)
+        bmesh.ops.smooth_vert(bm,verts=[v for v in bm.verts if not v.is_boundary],factor=0.4,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+        smooth_edge(bm,14)      # and its cut edges (seen through the coat's open sides) run clean, not in steps
+        bm.to_mesh(o.data); bm.free(); o.data.update()
 # body: remove what the clothes fully hide, so nothing pokes through
 bm=bmesh.new(); bm.from_mesh(h.data); dl=bm.verts.layers.deform.verify(); gi=GI['body']
 cov_arm=max(sleeve, G.get('coatsleeve',0) if G.get('coat') and G.get('coatsleeves',True) else 0, G.get('jacketsleeve',0.9) if G.get('jacket') else 0)
@@ -1658,6 +1675,21 @@ if os.environ.get('FOLDS'):      # how many faces of each piece face the wrong w
             if ad and f.normal.dot(sum((g.normal for g in ad),Vector((0,0,0))))<0: nf+=1
         if nf: print('FOLDS',o.name,nf,'of',len(b.faces))
         b.free()
+def face_out():
+    # Every face of the body's own clothes looks outward, the way the skin under it looks (the nearest point of the skin gives the direction). Cut, eased and pushed cloth
+    # left some faces turned inward, and with two-sided cloth they drew as dark speckled patches, on the backs of the sleeves above all (Port Royal's pewterer, owner, 17 November 2026).
+    sk=globals().get('SKIN') or tree
+    for k in ('shirt','coat','waistcoat','jacket','breeches','skirt','apron'):
+        o=PART.get(k)
+        if o is None or not len(o.data.polygons): continue
+        b=bmesh.new(); b.from_mesh(o.data); b.normal_update(); fl=[]
+        for f in b.faces:
+            c=cz(f); loc,nrm,_i,_d=sk.find_nearest(c)
+            if loc is None: continue
+            if f.normal.dot(nrm)<0: fl.append(f)
+        if fl: bmesh.ops.reverse_faces(b,faces=fl); print('TURNED OUT',k,len(fl))
+        b.to_mesh(o.data); b.free(); o.data.update()
+face_out()
 # The face is marked on the skin (1 on every point from the brow to the chin, cheek to cheek), and carried into the .glb as the attribute _FACE. tools/people/pack.mjs gives the
 # marked part its own share of triangles when it makes a light, crowd or phone copy, so eyes, brows and lips survive (simplified with the rest of the skin, a face in a crowd lost them).
 _fa=h.data.attributes.new('_FACE','FLOAT','POINT')
