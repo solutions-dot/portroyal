@@ -3,6 +3,7 @@
 import * as THREE from "three";
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 import { saloonCar } from "../../../engine/roadcars.js";
+import { shipLifeboat, paintKit } from "../../../engine/boats.js";
 
 const M = {
   zinc: () => std(T.zinc([150, 152, 146], [1, 1]), 0.6),
@@ -216,21 +217,13 @@ export function hatch(w = 3, d = 2.4) {
   for (const s of [-1, 1]) box(w + 0.1, 0.07, 0.06, M.wood, 0, 0.46, s * (d / 2 + 0.03), g);
   return g;
 }
-/* a lifeboat hung from two davits; the boat's keel is `y` above the deck, outboard toward +x */
+/* a lifeboat hung from two davits; the boat's keel is `y` above the deck, outboard toward +x (engine/boats.js shipLifeboat: one mesh) */
 export function lifeboat(L = 6.5, y = 2.4) {
   const g = grp(),
-    white = solid(0xece8dc, 0.8);
-  const hull = mesh(new THREE.SphereGeometry(1, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), white, 0, y + 0.75, 0, g);
-  hull.scale.set(0.95, 0.75, L / 2);
-  hull.material.side = THREE.DoubleSide;
-  box(1.8, 0.05, L * 0.92, solid(0xb69b6a, 0.9), 0, y + 0.72, 0, g);
-  box(1.92, 0.08, L * 0.96, solid(0x8a6a44, 0.9), 0, y + 0.76, 0, g);
-  for (const z of [-L * 0.36, L * 0.36]) {
-    const d = grp(g, -1.1, 0, z);
-    box(0.14, y + 1.9, 0.14, M.steel, 0, (y + 1.9) / 2, 0, d);
-    box(1.25, 0.12, 0.12, M.steel, 0.6, y + 1.84, 0, d);
-    cyl(0.012, 0.012, 1.0, M.rope, 1.1, y + 1.3, 0, d, 4);
-  }
+    b = shipLifeboat({ L, beam: 1.9, depth: 0.75, deck: -y, davitX: [-L * 0.36, L * 0.36], side: 1 });
+  b.rotation.y = Math.PI / 2; /* the boat runs along z, its ship's side toward +x */
+  b.position.y = y;
+  g.add(b);
   return g;
 }
 export function deckChair(c = 0x3a6a7a) {
@@ -245,18 +238,57 @@ export function deckChair(c = 0x3a6a7a) {
   seat.rotation.x = 0.55;
   return g;
 }
-/* a porter's barrow: two wheels, an upright frame and a nose plate, with cases stacked on it */
+/* a porter's barrow: two wooden rails with iron fittings bending back into handles, cross bars, an iron nose plate, two spoked wheels with
+   rubber tyres under iron guards, and cases stacked on it (one strapped, all with handles and corner caps). One mesh (engine/boats.js paintKit). */
 export function barrow(cases = 2) {
-  const g = grp();
+  const K = paintKit(),
+    V = (x, y, z) => new THREE.Vector3(x, y, z),
+    WOOD = 0x7a5a3a,
+    IRON = 0x2b2d31,
+    TYRE = 0x161616;
   for (const s of [-1, 1]) {
-    const w = cyl(0.2, 0.2, 0.06, M.black, s * 0.3, 0.2, 0, g, 12);
-    w.rotation.z = Math.PI / 2;
-    const r = box(0.04, 1.3, 0.04, M.iron, s * 0.22, 0.75, -0.12, g);
-    r.rotation.x = -0.12;
+    const x = s * 0.22;
+    K.tube([V(x, 0.06, 0.04), V(x, 0.7, -0.03), V(x, 1.22, -0.1), V(x * 0.95, 1.36, -0.17), V(x * 0.9, 1.41, -0.23)], 0.024, WOOD, 10, 5);
+    K.cyl(0.03, 0.03, 0.1, x * 0.9, 1.42, -0.25, 0x5a4028, 6, Math.PI / 2 - 0.4); /* the grip */
+    /* the wheel: a rubber tyre on an iron rim, six spokes, a hub; an iron guard over it */
+    const wx = s * 0.3, wy = 0.2, wz = -0.02;
+    const tyre = new THREE.TorusGeometry(0.18, 0.028, 6, 18);
+    tyre.rotateY(Math.PI / 2);
+    tyre.translate(wx, wy, wz);
+    K.add(tyre, TYRE);
+    const rim = new THREE.TorusGeometry(0.155, 0.012, 4, 18);
+    rim.rotateY(Math.PI / 2);
+    rim.translate(wx, wy, wz);
+    K.add(rim, IRON);
+    for (let k = 0; k < 3; k++) {
+      const a = (k / 3) * Math.PI;
+      const sp = new THREE.BoxGeometry(0.014, 0.3, 0.02);
+      sp.rotateX(a);
+      sp.translate(wx, wy, wz);
+      K.add(sp, IRON);
+    }
+    K.cyl(0.035, 0.035, 0.07, wx, wy, wz, IRON, 8, 0, Math.PI / 2);
+    K.tube([V(wx - s * 0.02, 0.1, 0.14), V(wx, 0.36, 0.09), V(wx, 0.42, -0.07), V(wx - s * 0.03, 0.3, -0.18)], 0.008, IRON, 8, 3);
+    K.box(0.03, 0.18, 0.03, x, 0.12, 0.0, IRON); /* the iron foot of the rail */
   }
-  box(0.52, 0.03, 0.3, M.iron, 0, 0.08, 0.08, g);
+  K.cyl(0.014, 0.014, 0.64, 0, 0.2, -0.02, IRON, 6, 0, Math.PI / 2); /* the axle */
+  for (const [y, z] of [[0.45, 0.0], [0.85, -0.05], [1.2, -0.11]]) K.box(0.44, 0.04, 0.03, 0, y, z, WOOD);
+  K.box(0.52, 0.02, 0.24, 0, 0.06, 0.13, IRON);
+  K.box(0.52, 0.04, 0.02, 0, 0.08, 0.245, IRON); /* the nose plate and its lip */
+  for (const s of [-1, 1]) K.box(0.03, 0.06, 0.18, s * 0.2, 0.09, 0.07, IRON);
   const cols = [0x6b4a30, 0x3e4a56, 0x8a6a44];
-  for (let i = 0; i < cases; i++) box(0.5, 0.18, 0.36, solid(cols[i % 3], 0.75), 0, 0.2 + i * 0.19, 0.0, g);
+  for (let i = 0; i < cases; i++) {
+    const c = cols[i % 3],
+      y = 0.2 + i * 0.19,
+      z = 0.05 - i * 0.025;
+    K.box(0.5, 0.18, 0.34, 0, y, z, c);
+    K.box(0.505, 0.012, 0.345, 0, y + 0.005, z, 0x2a2420); /* the lid line */
+    for (const sx of [-1, 1]) for (const sy of [-1, 1]) K.box(0.04, 0.04, 0.35, sx * 0.235, y + sy * 0.075, z, 0x2a2420); /* leather corner caps */
+    K.tube([V(-0.06, y + 0.09, z + 0.17), V(0, y + 0.13, z + 0.18), V(0.06, y + 0.09, z + 0.17)], 0.01, 0x2a2420, 6, 3); /* the handle */
+    if (i % 2 === 1) K.box(0.03, 0.185, 0.35, 0.12, y, z, 0x5a4632); /* a strap round it */
+  }
+  const g = grp();
+  g.add(K.mesh("barrow"));
   return g;
 }
 /* a long trestle table with a cloth, for papers on the landing stage or an advice centre */

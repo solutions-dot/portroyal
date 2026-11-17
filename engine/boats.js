@@ -140,8 +140,9 @@ export function rowStroke(boat, phase, pulling = true, dir = 1) {
   for (const m of oars) { const side = m.userData.side; m.rotation.set(dip, side > 0 ? sw : Math.PI - sw, 0); }
 }
 
-/* ---------- small helpers for the boats below: everything painted is one mesh with vertex colours on a shared material ---------- */
-function paintKit() {
+/* ---------- small helpers for the boats below: everything painted is one mesh with vertex colours on a shared material.
+   paintKit() is exported for other small code-built things (a porter's barrow) that want the same one-mesh look. ---------- */
+export function paintKit() {
   const parts = [], tint = new THREE.Color();
   const plain = (g) => { const n = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(n.attributes)) if (k !== 'position' && k !== 'normal' && k !== 'color') n.deleteAttribute(k); if (!n.attributes.normal) n.computeVertexNormals(); return n; };
   const K = {
@@ -294,7 +295,7 @@ export function steamer(o = {}) {
   const L = o.L || 100, sc = L / 100, B = o.beam || 0.14 * L, NS = 40, K = paintKit(), V = (x, y, z) => new THREE.Vector3(x, y, z);
   const HULL = 0x1d1f22, BOOT = 0x7a2e24, HOUSE = 0xddd6c2, DECK = 0x9c8462, HATCH = 0x4c5044, FUNNEL = 0x17181b, MAST = 0x9a7a4c, RIG = 0x2a2826, DARK = 0x22282c;
   const xOf = (s) => (s - 0.5) * L;
-  const half = (s) => B / 2 * Math.max(0.06, s > 0.68 ? 1 - Math.pow((s - 0.68) / 0.32, 1.7) : s < 0.2 ? 0.3 + 0.7 * Math.sin(Math.PI / 2 * s / 0.2) : 1);
+  const half = (s) => B / 2 * Math.max(0.06, s > 0.62 ? 1 - Math.pow((s - 0.62) / 0.38, 1.35) : s < 0.2 ? 0.3 + 0.7 * Math.sin(Math.PI / 2 * s / 0.2) : 1);
   const deck = (s) => sc * (3.4 + 2.6 * Math.pow(Math.max(0, s - 0.5) / 0.5, 2) + 1.4 * Math.pow(Math.max(0, 0.5 - s) / 0.5, 2));
   const isl = (s) => smooth(0.865, 0.875, s) + smooth(0.415, 0.425, s) * (1 - smooth(0.615, 0.625, s)) + (1 - smooth(0.125, 0.135, s));   /* forecastle, bridge deck, poop */
   const floor = (s) => deck(s) + 2.4 * sc * isl(s), top = (s) => floor(s) + 1.0 * sc;

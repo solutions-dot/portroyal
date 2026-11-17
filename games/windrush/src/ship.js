@@ -7,6 +7,7 @@
    Frame: the bow points to +x, the starboard side is +z, the still waterline is y = 0. The main deck amidships is 7 m above it. */
 import * as THREE from "three";
 import { cv, std, solid, mesh, box, cyl, plane, grp } from "./gfx.js";
+import { shipLifeboat } from "../../../engine/boats.js";
 
 export const SHIP = { L: 152.5, B: 20, keel: -8, deck: 7 };
 const C = {
@@ -163,17 +164,11 @@ function derrick(g, x, y, toward, m) {
   box(0.3, 0.3, 6.6, m, x, y + 8.6, 0, g);
   for (const s of [-1, 1]) line(g, [x, y + 1.2, s * 3.2], [x + toward * 8, y + 5.5, s * 1.4], m, 0.12);
 }
-function lifeboat(g, x, y, z, white, wood, steel) {
-  const b = grp(g, x, y, z);
-  const hull = mesh(new THREE.SphereGeometry(1, 14, 6, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), white, 0, 0.75, 0, b);
-  hull.scale.set(3.6, 0.8, 1.05);
-  box(7, 0.08, 2, wood, 0, 0.76, 0, b);
-  const s = Math.sign(z);
-  for (const dx of [-2.9, 2.9]) {
-    box(0.16, 2.8, 0.16, steel, dx, 1.4 - 0.4, -s * 0.9, b);
-    const arm = box(0.14, 0.14, 1.5, steel, dx, 2.5, -s * 0.25, b);
-    line(b, [dx, 2.5, s * 0.4], [dx, 1.3, 0], solid(0xb59a6a, 1), 0.015);
-  }
+/* a lifeboat in its davits (engine/boats.js shipLifeboat): one mesh on a shared material, so batchStatic merges all ten into one */
+function lifeboat(g, x, y, z) {
+  const b = shipLifeboat({ L: 7.2, beam: 2.1, depth: 0.78, deck: -0.4, davitX: [-2.9, 2.9], side: Math.sign(z), white: 0xece9df, wood: 0x8a6a44, steel: 0xd8d6cc });
+  b.position.set(x, y, z);
+  g.add(b);
 }
 function nameplate(text, w, h) {
   const t = cv(1024, Math.round((1024 * h) / w), (x, W, H) => {
@@ -290,7 +285,7 @@ export function windrush() {
   derrick(g, X(0.2), SHIP.deck, -1, steel);
   for (const s of [0.78, 0.2]) box(6, 0.7, 5, solid(0x55624f, 1), X(s) + (s > 0.5 ? 4 : -4), SHIP.deck + 0.35, 0, g);
   // lifeboats on davits along the boat deck, both sides
-  for (const s of [-1, 1]) for (const sx of [0.33, 0.39, 0.46, 0.53, 0.6]) lifeboat(g, X(sx), SHIP.deck + 5.8, s * 7.6, white, wood, steel);
+  for (const s of [-1, 1]) for (const sx of [0.33, 0.39, 0.46, 0.53, 0.6]) lifeboat(g, X(sx), SHIP.deck + 5.8, s * 7.6);
   // anchors at the hawse pipes, and the name on the bow and the stern
   for (const s of [-1, 1]) {
     const z = s * ((B / 2) * halfBeam(0.95) + 0.06);

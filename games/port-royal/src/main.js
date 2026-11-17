@@ -5,7 +5,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import * as THREE from 'three';
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { mergeGeometries as mergeG } from 'three/addons/utils/BufferGeometryUtils.js';
-import { rowBoat, rowStroke } from '../../../engine/boats.js';
+import { rowBoat, rowStroke, dugOut } from '../../../engine/boats.js';
 import { CL, mixers, grounded, HIPS_Y, setFallbackClip, loadClips, seamLoop, clipFor, animate, groundFeet, strideOf } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, chirp, cue, setG, tone, noiseHit, shipCreak, hammer, clink, uiSound } from '../../../engine/audio.js';
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
@@ -1886,10 +1886,8 @@ function dressSpit(g, stone, wood, dark) {
   for (const [x, z] of pick(6, (x, z) => free(x, z) && edgeD(x, z) < 2.2 && edgeD(x, z) > 0.8)) { const d = mk(new THREE.CylinderGeometry(0.07, 0.11, 1.6 + rnd() * 1.6, 7), driftM, x, 0.07, z, g); d.rotation.set(Math.PI / 2, 0, rnd() * 6); }
   /* a fishing canoe drawn up on the inner shore, nets drying on a pole rack beside it */
   const hull = new THREE.Group(); hull.position.set(24.2, 0.02, -24.5); hull.rotation.y = 1.15; g.add(hull); DEVBOATS.canoe = hull;
-  const hm = new THREE.MeshStandardMaterial({ map: plankTex([92, 70, 50], 5, 2, 1), roughness: 0.95, side: THREE.DoubleSide }), hg = new THREE.SphereGeometry(1, 20, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2); hg.scale(2.4, 0.42, 0.55);
-  const hp = hg.attributes.position; for (let i = 0; i < hp.count; i++) hp.setY(i, hp.getY(i) + 0.05 * (hp.getX(i) / 2.4) ** 2); hg.computeVertexNormals(); const hl = mk(hg, hm, 0, 0.42, 0, hull);
-  for (const x of [-0.9, 0.5]) mk(new THREE.BoxGeometry(0.12, 0.04, 1.0), wood, x, 0.36, 0, hull);
-  const pad = mk(new THREE.CylinderGeometry(0.025, 0.025, 2.4, 6), wood, 0.2, 0.48, 0.3, hull); pad.rotation.z = Math.PI / 2 + 0.05;
+  /* a dug-out canoe, cut from one log (engine/boats.js dugOut): solid end decks, adze marks inside, a seat board, two paddles, a calabash bailer and a painter */
+  hull.add(dugOut({ L: 4.8, beam: 1.1, depth: 0.42, wood: new THREE.MeshStandardMaterial({ color: 0xc8b49c, map: noiseTex([118, 92, 66], 26, 2), roughness: 0.95 }) }));
   SPITC.push([24.2, -24.5, 1.4], [25.7, -23.9, 1.0], [22.7, -25.1, 1.0]);
   const netT = cv(128, 128, (c) => { c.clearRect(0, 0, 128, 128); c.strokeStyle = 'rgba(70,60,45,0.95)'; c.lineWidth = 1.4; for (let k = -128; k < 256; k += 10) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k + 128, 128); c.stroke(); c.beginPath(); c.moveTo(k + 128, 0); c.lineTo(k, 128); c.stroke(); } });
   const netM = new THREE.MeshStandardMaterial({ map: netT, transparent: true, alphaTest: 0.2, side: THREE.DoubleSide, roughness: 1 }); netT.repeat.set(2, 1);

@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng, cv } from './wgfx.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { dugOut as dugOutCanoe } from '../../../engine/boats.js';
 
 const inClear = (x, z, clear) => clear.some((c) => x > c[0] && x < c[2] && z > c[1] && z < c[3]);
 const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), S = new THREE.Vector3(), C = new THREE.Color();
@@ -85,7 +86,8 @@ export function bamboo(seed = 1) { const r = rng(seed), g = grp(), m = solid(0x8
 export function hibiscus(seed = 1) { const r = rng(seed), g = grp(); for (let i = 0; i < 3; i++) mesh(new THREE.IcosahedronGeometry(0.55, 1), flat(0x2f6f36), (r() - 0.5) * 0.7, 0.55, (r() - 0.5) * 0.7, g); for (let i = 0; i < 6; i++) mesh(new THREE.SphereGeometry(0.1, 6, 5), flat(i % 2 ? 0xe2232a : 0xf2a0b0), (r() - 0.5) * 1.0, 0.5 + r() * 0.5, (r() - 0.5) * 1.0, g); return g; }
 export function croton(seed = 1) { const r = rng(seed), g = grp(), cs = [0xd8a020, 0xc8402a, 0x5a8a30, 0xe8c040]; for (let i = 0; i < 4; i++) mesh(new THREE.IcosahedronGeometry(0.35, 0), flat(cs[(r() * 4) | 0]), (r() - 0.5) * 0.5, 0.35 + r() * 0.2, (r() - 0.5) * 0.5, g); return g; }
 export function stump() { const g = grp(); cyl(0.3, 0.36, 0.5, solid(0x6a5238, 1), 0, 0.25, 0, g, 8); return g; }
-export function dugOut() { const g = grp(); const h = mesh(new THREE.CylinderGeometry(0.35, 0.28, 4.4, 8, 1, true, 0, Math.PI), solid(0x7a5a38, 0.95, 0, { side: THREE.DoubleSide }), 0, 0.3, 0, g); h.rotation.z = Math.PI / 2; h.rotation.x = Math.PI / 2; h.rotation.y = 0; return g; }
+/* a river canoe dug out of one log (engine/boats.js dugOut): 4.4 m along x, bow at +x, two meshes. Not placed in any scene yet. */
+export function dugOut() { const g = grp(); g.add(dugOutCanoe({ L: 4.4, beam: 0.78, depth: 0.42 })); return g; }
 export function drift() { const g = grp(); const r = rng(5); for (let i = 0; i < 3; i++) { const c = cyl(0.07, 0.09, 1.2 + r(), solid(0xb8a888, 1), 0, 0.08, i * 0.4, g, 6); c.rotation.z = Math.PI / 2; c.rotation.y = r(); } return g; }
 
 /* a flock of birds, far up: little dark Vs that flap. tick(t, on) */

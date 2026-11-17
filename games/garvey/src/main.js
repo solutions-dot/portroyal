@@ -10,6 +10,7 @@ import { refresh as refreshLifeOf, lifeFor, EXTRAS } from './life.js';   /* what
    it moves into engine/ after the Port Royal work has merged (see docs/games/garvey.md, "Working alongside the Port Royal chat").
    The two people and their lines are placeholders for testing the pipeline. Both are fictional. */
 import * as THREE from 'three';
+import { steamer, schooner } from '../../../engine/boats.js';
 import { gripTick, spreadArms } from '../../../engine/grip.js';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
@@ -1210,7 +1211,9 @@ function dWallLamp(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set
 function dHydrant(g, x, z) { cyl(0.11, 0.13, 0.6, solid(0xb02a24, 0.6), x, 0.3, z, g, 10); mesh(new THREE.SphereGeometry(0.115, 10, 6, 0, 7, 0, Math.PI / 2), solid(0xb02a24, 0.6), x, 0.6, z, g); for (const sx of [-1, 1]) cyl(0.05, 0.05, 0.12, solid(0xd2d0c8, 0.4, 0.4), x + sx * 0.14, 0.38, z, g, 8).rotation.z = Math.PI / 2; }
 function dBin(g, x, z) { cyl(0.2, 0.17, 0.5, TIN, x, 0.25, z, g, 12); cyl(0.215, 0.215, 0.03, TIN, x, 0.52, z, g, 12); cyl(0.03, 0.03, 0.04, iron, x, 0.56, z, g, 6); }
 function dGull(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k); const w = solid(0xf2f1ea, 0.8); const body = mesh(BLOB, w, 0, 0.1, 0, k); body.scale.set(0.09, 0.08, 0.15); mesh(BLOB, w, 0, 0.2, 0.12, k).scale.set(0.05, 0.05, 0.05); const beak = cyl(0.01, 0.025, 0.06, solid(0xe0a830, 0.6), 0, 0.2, 0.19, k, 6); beak.rotation.x = Math.PI / 2; const wing = box(0.16, 0.02, 0.18, solid(0x9aa0a6, 0.8), 0, 0.15, -0.02, k); wing.rotation.z = 0.0; }
-function dShip(g, x, z, len, ry = 0, funnel = true) { const k = new THREE.Group(); k.position.set(x, 0, z); k.rotation.y = ry; g.add(k); const hull = solid(0x2a2d33, 0.8); box(len, 1.8, len * 0.25, hull, 0, 0.1, 0, k); box(len * 0.98, 0.15, len * 0.25 + 0.02, solid(0x7a2e24, 0.8), 0, -0.7, 0, k); box(len * 0.5, 1.1, len * 0.2, solid(0xdcd6c4, 0.8), -len * 0.05, 1.5, 0, k); if (funnel) cyl(len * 0.045, len * 0.05, 1.6, solid(0x16181b, 0.7), -len * 0.1, 2.5, 0, k, 12); cyl(0.05, 0.07, len * 0.4, woodDark, len * 0.22, 2.5, 0, k, 6); }
+/* ships out in the harbour (engine/boats.js): a three-island cargo steamer, or with funnel = false a two-masted schooner with her sails furled.
+   One mesh each, no names or company colours. The water is at y = -0.7. */
+function dShip(g, x, z, len, ry = 0, funnel = true) { const k = new THREE.Group(); k.position.set(x, 0, z); k.rotation.y = ry; g.add(k); const s = funnel ? steamer({ L: len, beam: len * 0.15 }) : schooner({ L: len / 1.2 }); s.position.y = -0.7; k.add(s); }
 
 /* the print shop (built when the page loads) */
 { const g = room;

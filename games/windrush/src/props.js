@@ -16,6 +16,7 @@ import {
   bucket as oldBucket,
   boardHouse,
 } from "./period-props.js";
+import { deckerBus } from "../../../engine/roadcars.js";
 export const WOOD = solid(0x826247),
   PAPER = solid(0xe7dcc2),
   DARK = solid(0x344340),
@@ -221,23 +222,16 @@ export function line(parent, a, b, material = METAL, r = 0.012) {
   o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
   return o;
 }
+/* a London double-deck bus of about 1950 (engine/roadcars.js deckerBus: a half cab, an open platform at the back, two draw calls) with its
+   destination blind. It faces +z, 8 m long and 2.3 m wide, as before. */
 export function doubleDecker() {
-  const g = grp();
-  const red = solid(0x96362e);
-  box(2.35, 3.9, 8, red, 0, 2.35, 0, g);
-  const glass = solid(0x6f9296, 0.35);
-  for (const side of [-1, 1])
-    for (const y of [2, 3.7])
-      for (let i = 0; i < 6; i++)
-        box(0.025, 0.85, 0.92, glass, side * 1.19, y, -2.7 + i * 1.08, g);
-  for (const y of [2, 3.7]) box(1.8, 0.85, 0.025, glass, 0, y, 4.03, g);
-  for (const x of [-1.12, 1.12])
-    for (const z of [-2.6, 2.7]) {
-      const w = cyl(0.47, 0.47, 0.24, DARK, x, 0.48, z, g, 16);
-      w.rotation.z = Math.PI / 2;
-    }
-  const sign = label("BRIXTON", 1.8, 0.28, "#222b2b", "#e6ddbe");
-  sign.position.set(0, 4.33, 4.04);
+  const g = grp(),
+    bus = deckerBus({ colour: 0x96362e, band: 0xe2d9bc });
+  bus.rotation.y = -Math.PI / 2;
+  g.add(bus);
+  const S = bus.userData.sign,
+    sign = label("BRIXTON", S.width - 0.05, S.height - 0.04, "#151a1a", "#e6ddbe");
+  sign.position.set(0, S.front[1], S.front[0] + 0.005);
   g.add(sign);
   return g;
 }

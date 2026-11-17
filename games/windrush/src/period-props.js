@@ -1,4 +1,5 @@
 import { loftSkin as skin } from "../../../engine/loft.js";
+import { bonnetLorry } from "../../../engine/roadcars.js";
 /* games/kendal/src/props.js: plants, hills, houses, animals and the many small things that fill a scene.
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from "three";
@@ -1446,134 +1447,13 @@ export function surveyPole(c = 0xc03a2a) {
   return g;
 }
 
-/* ---------- a country truck of the early 1950s, for the road above the crash site: a rounded bonnet, a cab with a split windscreen, mudguards,
-   round head lamps and a wooden stake bed. It faces +x. A general picture of trucks of that time, not a copy of one make. ---------- */
+/* ---------- a country lorry of the late 1940s (engine/roadcars.js bonnetLorry: a long bonnet, rounded wings, a split windscreen, a wooden
+   stake body; two draw calls). It faces +x and keeps the old one's place and size: about 5.3 m long, from x = -2.9 to 2.35. ---------- */
 export function truck(c = 0x2f5f6a) {
   const g = grp(),
-    m = solid(c, 0.5, 0.25),
-    dk = solid(0x17181a, 0.8),
-    glassM = new THREE.MeshBasicMaterial({ color: 0x1a2630 }),
-    chrome = solid(0xb8bcc0, 0.3, 0.8),
-    pl = std(T.plank([118, 88, 60], 5, [1, 1], true), 0.95);
-  box(4.6, 0.16, 0.9, dk, -0.1, 0.62, 0, g); /* the chassis */
-  /* the bonnet: a rounded top over the engine, a grille, a bumper */
-  box(1.15, 0.5, 1.2, m, 1.55, 1.0, 0, g);
-  const arch = (r, len, alongX) => {
-    const ge = alongX
-      ? new THREE.CylinderGeometry(r, r, len, 14, 1, false, 0, Math.PI)
-      : new THREE.CylinderGeometry(
-          r,
-          r,
-          len,
-          14,
-          1,
-          false,
-          Math.PI / 2,
-          Math.PI,
-        );
-    if (alongX) ge.rotateZ(Math.PI / 2);
-    else ge.rotateX(Math.PI / 2);
-    return ge;
-  }; /* half a drum, round side up */
-  mesh(arch(0.6, 1.15, true), m, 1.55, 1.24, 0, g).scale.y = 0.5;
-  box(0.05, 0.56, 0.8, dk, 2.13, 1.02, 0, g);
-  for (let i = 0; i < 6; i++)
-    box(0.03, 0.5, 0.03, chrome, 2.16, 1.02, -0.3 + i * 0.12, g);
-  box(0.1, 0.12, 1.9, chrome, 2.3, 0.62, 0, g);
-  for (const z of [-0.4, 0.4]) box(0.2, 0.08, 0.06, dk, 2.2, 0.62, z, g);
-  for (const s of [-1, 1]) {
-    /* front mudguards with the head lamps on them */
-    mesh(arch(0.54, 0.34, false), m, 1.5, 0.5, s * 0.82, g).scale.y = 0.95;
-    box(0.5, 0.04, 0.34, m, 0.82, 0.56, s * 0.82, g).rotation.z = 0.2;
-    const hl = cyl(0.11, 0.09, 0.14, chrome, 1.98, 1.02, s * 0.74, g, 12);
-    hl.rotation.z = -Math.PI / 2;
-    const ln = cyl(
-      0.095,
-      0.095,
-      0.02,
-      M.lanternGlass,
-      2.06,
-      1.02,
-      s * 0.74,
-      g,
-      12,
-    );
-    ln.rotation.z = Math.PI / 2;
-    box(0.06, 0.2, 0.06, m, 1.95, 0.9, s * 0.74, g);
-  }
-  /* the cab: doors, a split windscreen, side windows, a rounded roof */
-  box(1.15, 0.75, 1.75, m, 0.42, 1.08, 0, g);
-  box(1.0, 0.62, 1.7, m, 0.38, 1.76, 0, g);
-  mesh(arch(0.87, 1.04, true), m, 0.38, 2.06, 0, g).scale.y = 0.16;
-  for (const z of [-0.41, 0.41])
-    box(0.02, 0.44, 0.74, glassM, 0.89, 1.76, z, g);
-  box(0.03, 0.5, 0.05, m, 0.895, 1.76, 0, g);
-  for (const s of [-1, 1]) {
-    box(0.6, 0.42, 0.02, glassM, 0.42, 1.77, s * 0.855, g);
-    box(0.1, 0.03, 0.03, chrome, 0.05, 1.28, s * 0.885, g);
-    box(0.5, 0.05, 0.3, dk, 0.42, 0.6, s * 0.95, g);
-  }
-  box(0.02, 0.36, 0.9, glassM, -0.125, 1.8, 0, g);
-  /* the bed: a boarded floor on cross beams, stake sides, a tail board */
-  box(2.7, 0.08, 1.9, pl, -1.55, 0.98, 0, g);
-  for (const x of [-2.6, -1.55, -0.5]) box(0.1, 0.16, 1.8, dk, x, 0.86, 0, g);
-  for (const s of [-1, 1]) {
-    for (const y of [1.2, 1.46, 1.72])
-      box(2.7, 0.16, 0.035, pl, -1.55, y, s * 0.93, g);
-    for (const x of [-2.8, -1.95, -1.1, -0.28])
-      box(0.07, 0.9, 0.05, dk, x, 1.44, s * 0.96, g);
-  }
-  for (const y of [1.2, 1.46, 1.72]) {
-    box(0.035, 0.16, 1.9, pl, -0.22, y, 0, g);
-  }
-  for (const y of [1.2, 1.46]) box(0.035, 0.16, 1.9, pl, -2.88, y, 0, g);
-  /* wheels with pale hubs; two at the front, two at the back; rear mudflaps and a red tail lamp */
-  for (const [x, z] of [
-    [1.5, -0.84],
-    [1.5, 0.84],
-    [-1.75, -0.8],
-    [-1.75, 0.8],
-  ]) {
-    const w = cyl(0.42, 0.42, 0.26, M.black, x, 0.42, z, g, 14);
-    w.rotation.x = Math.PI / 2;
-    const hb = cyl(
-      0.2,
-      0.2,
-      0.28,
-      solid(0x8a8c88, 0.5, 0.4),
-      x,
-      0.42,
-      z,
-      g,
-      10,
-    );
-    hb.rotation.x = Math.PI / 2;
-  }
-  for (const s of [-1, 1]) box(0.03, 0.34, 0.3, dk, -2.3, 0.72, s * 0.8, g);
-  box(
-    0.04,
-    0.08,
-    0.1,
-    new THREE.MeshBasicMaterial({ color: 0xc8261e }),
-    -2.9,
-    0.86,
-    -0.7,
-    g,
-  );
-  const beam = new THREE.Mesh(
-    new THREE.ConeGeometry(2.2, 9, 16, 1, true),
-    new THREE.MeshBasicMaterial({
-      color: 0xfff0c0,
-      transparent: true,
-      opacity: 0.05,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    }),
-  );
-  beam.rotation.z = -Math.PI / 2;
-  beam.position.set(6.6, 1.0, 0);
-  g.add(beam);
+    l = bonnetLorry({ colour: c });
+  l.position.x = -0.28;
+  g.add(l);
   return g;
 }
 

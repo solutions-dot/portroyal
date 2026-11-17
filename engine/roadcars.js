@@ -17,6 +17,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
      bus({ colour, band, L })        a single-deck town bus with a front door, 1960s to 1980s
      van({ colour, stripe, L })      a small forward-control panel van
      lorry({ colour, body, bodyColour, L })   a forward-control lorry; body: 'tank' (water or fuel), 'fire' (a fire engine: lockers, ladder, hose reel) or 'flat'
+     deckerBus({ colour, band, L })  a half-cab double-deck bus of the late 1940s and 1950s with an open platform at the back
+     bonnetLorry({ colour, L })      a bonneted lorry of the 1940s and early 1950s with a wooden stake body
 
    Each returns a Group; userData.size = [length, height, width]. */
 
@@ -148,6 +150,102 @@ export function bus(o = {}) {
   for (const x of [-L * 0.28, 0, L * 0.28]) K.box(0.7, 0.06, 0.9, x, H - 0.0, 0, STEEL);   /* roof ventilators */
   for (const s of [1, -1]) { K.wheel(r, 0.26, xf, s * (W / 2 - 0.16), s, 0x9a9d9f, 0x8a8d8f); K.wheel(r, 0.26, xr, s * (W / 2 - 0.16), s, 0x9a9d9f, 0x8a8d8f); }
   const g = K.done(L, H, W); g.userData.sign = { front: [F + 0.01 - (2.7 - waist) * rake, 2.7, 0], rake, side: [dx - 1.5, top + 0.2, -(zs(top + 0.2) + 0.012)] }; return g;   /* where a game may put its own route sign: on the box over the windscreen, and on the left side */
+}
+
+/* ---------- a half-cab double-deck bus of the late 1940s and 1950s ----------
+   The driver sits in a small cab on the right beside the engine, with the radiator in front of the engine and an open wing over the left
+   front wheel; the upper deck runs forward over the cab to a rounded front dome. The way on is an open platform at the back on the left,
+   with the stairs inside it and a pole to hold. Two colours: the body and a band between the decks. No fleet name, number or advert. */
+const ext = (sh, depth, z0, segs = 6) => { const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: false, curveSegments: segs }); g.translate(0, 0, z0); return g; };
+export function deckerBus(o = {}) {
+  const L = o.L || 8, W = o.W || 2.32, H = o.H || 4.35, K = kit(), c = o.colour !== undefined ? o.colour : 0x9e2a22, band = o.band !== undefined ? o.band : 0xe2d9bc, bev = 0.07, F = L / 2, h = F - bev, r = 0.5, yb = 0.48;
+  const xb = h - 1.5, xf = F - 0.82, xr = -F + 2.3, fl2 = 2.24, roof = H - bev, dark = 0x2a2624, wz = W / 2 + 0.006;
+  /* the body: both decks in one piece, the upper deck reaching forward over the cab */
+  shell(K, { x0: xb, x1: -h + 0.1, yb, W, hex: c, bevel: bev, arches: [[xr, r]], archGap: 0.08, lean: () => 1,
+    top(s) { s.lineTo(-h, 0.62); s.lineTo(-h, roof - 1.0); s.quadraticCurveTo(-h + 0.04, roof, -h + 0.75, roof); s.lineTo(h - 0.7, roof); s.quadraticCurveTo(h, roof, h, roof - 0.62); s.lineTo(h, fl2); s.lineTo(xb, fl2); } });
+  /* the cab on the right, its side cut round the front wheel */
+  { const sh = new THREE.Shape(), R = r + 0.07, phi = Math.asin(Math.min(0.99, (0.62 - r) / R)); sh.moveTo(xb + bev, fl2 - bev); sh.lineTo(F - 0.03, fl2 - bev); sh.lineTo(F - 0.03, 0.62); sh.lineTo(xf + R * Math.cos(phi), 0.62); sh.absarc(xf, r, R, phi, Math.PI - phi, false); sh.lineTo(xb + bev, 0.62); sh.closePath();
+    K.add(ext(sh, W / 2 - 0.1, 0.1), c); }
+  /* the wing over the left front wheel, the bonnet with its louvres, the radiator in front */
+  { const sh = new THREE.Shape(), R0 = r + 0.06, R1 = r + 0.12; sh.absarc(xf, r, R1, 0.12, Math.PI - 0.05, false); sh.absarc(xf, r, R0, Math.PI - 0.05, 0.12, true); sh.closePath(); K.add(ext(sh, 0.4, -W / 2 + 0.02, 10), c);
+    K.box(0.5, 0.03, 0.38, xf - 0.62, 0.62, -W / 2 + 0.21, c); }
+  K.box(F - 0.2 - xb - bev, 0.48, 0.82, (xb + bev + F - 0.2) / 2, 1.16, -0.31, c); K.cylX(0.2, F - 0.2 - xb - bev, (xb + bev + F - 0.2) / 2, 1.38, -0.31, c, 12); K.box(F - 0.25 - xb - bev, 0.5, 0.78, (xb + bev + F - 0.25) / 2, 0.68, -0.31, DARK);
+  for (let i = 0; i < 5; i++) K.box(0.05, 0.22, 0.012, xb + 0.3 + i * 0.13, 1.2, -0.73, 0x3a1a16);
+  K.box(0.08, 0.72, 0.66, F - 0.16, 1.1, -0.31, CHROME); K.box(0.02, 0.6, 0.54, F - 0.115, 1.1, -0.31, 0x17181a); for (let i = 0; i < 9; i++) K.box(0.025, 0.012, 0.54, F - 0.11, 0.84 + i * 0.065, -0.31, STEEL); K.cylY(0.04, 0.06, F - 0.22, 1.6, -0.31, CHROME, 8);
+  for (const z of [-W / 2 + 0.2, W / 2 - 0.2]) { K.cylX(0.1, 0.05, F - 0.04, 0.98, z, LAMP, 12); K.cylX(0.12, 0.06, F - 0.08, 0.98, z, CHROME, 12); }
+  K.box(0.016, 0.12, 0.42, F - 0.12, 0.58, -0.31, PLATE);
+  /* the cab's windscreen and side window, its door, a mirror on an arm */
+  K.pane([F - 0.024, 1.42, 0.2], [F - 0.024, 1.42, W / 2 - 0.08], [F - 0.024, 2.08, W / 2 - 0.08], [F - 0.024, 2.08, 0.2]); K.box(0.02, 0.05, W / 2 - 0.2, F - 0.02, 1.4, W / 4 + 0.07, DARK);
+  K.pane([xb + 0.18, 1.42, wz], [F - 0.14, 1.42, wz], [F - 0.14, 2.06, wz], [xb + 0.18, 2.06, wz]); K.box(0.014, 1.4, 0.012, xb + 0.14, 1.36, wz, 0x101114); K.box(0.12, 0.03, 0.03, xb + 0.3, 1.3, wz + 0.01, DARK);
+  K.pane([xb + 0.18, 1.48, 0.094], [F - 0.14, 1.48, 0.094], [F - 0.14, 2.06, 0.094], [xb + 0.18, 2.06, 0.094]);
+  K.box(0.04, 0.04, 0.3, F - 0.05, 2.0, W / 2 + 0.14, DARK); K.box(0.03, 0.26, 0.15, F - 0.05, 1.85, W / 2 + 0.3, DARK);
+  /* the band between the decks all the way round, a dark moulding under the lower windows */
+  for (const s of [1, -1]) { K.box(L - 0.3, 0.36, 0.016, 0, 2.27, s * (W / 2 + 0.003), band); const mx = s > 0 ? F - 0.15 : xb; K.box(mx + F - 0.15, 0.04, 0.02, (mx - F + 0.15) / 2, 1.08, s * (W / 2 + 0.005), 0x1a1210); K.box(0.016, 0.36, W - 0.2, s * (F + 0.003), 2.27, 0, band); }
+  /* windows: four bays below (the platform takes the back of the left side), six above, two across the front of the upper deck */
+  const bays = (x0, x1, n, y0, y1, s) => { const bay = (x1 - x0) / n; for (let i = 0; i < n; i++) { const a = x0 + i * bay + 0.05, b = x0 + (i + 1) * bay - 0.05; K.pane([a, y0, s * wz], [b, y0, s * wz], [b, y1, s * wz], [a, y1, s * wz]); if (i % 2 === 0) K.box(b - a, 0.025, 0.02, (a + b) / 2, y1 - 0.2, s * (wz + 0.004), STEEL); } };
+  for (const s of [1, -1]) { bays(s > 0 ? -h + 0.35 : -h + 1.25, xb - 0.05, s > 0 ? 5 : 4, 1.16, 1.98, s); bays(-h + 0.45, h - 0.35, 6, 2.64, 3.48, s); }
+  for (const s of [1, -1]) K.pane([F + 0.006, 2.64, s * 0.05], [F + 0.006, 2.64, s * (W / 2 - 0.2)], [F + 0.006, 3.44, s * (W / 2 - 0.22)], [F + 0.006, 3.44, s * 0.05]);
+  K.pane([xb + bev + 0.006, 1.3, -W / 2 + 0.16], [xb + bev + 0.006, 1.3, -0.02], [xb + bev + 0.006, 1.98, -0.02], [xb + bev + 0.006, 1.98, -W / 2 + 0.16]);   /* the front window of the lower saloon, over the bonnet */
+  K.box(0.03, 0.3, 1.3, F + 0.012, 2.27, 0, 0x101114);   /* the box for the destination blind, between the decks */
+  /* the platform: the open back corner on the left, the stairs going up inside it, the step and the pole */
+  K.box(1.05, 1.5, 0.012, -h + 0.55, 1.26, -(W / 2 + 0.006), dark); K.box(0.012, 1.5, 1.02, -F - 0.006, 1.26, -W / 2 + 0.55, dark);
+  for (let i = 0; i < 5; i++) K.box(0.22, 0.03, 0.012, -h + 0.92 - i * 0.16, 0.7 + i * 0.27, -(W / 2 + 0.012), 0x8a857c);
+  K.box(1.12, 0.07, 1.1, -h + 0.5, 0.44, -W / 2 + 0.52, 0x4a4844); K.box(1.1, 0.03, 0.02, -h + 0.52, 0.48, -(W / 2 + 0.03), STEEL);
+  K.cylY(0.022, 1.62, -h + 0.06, 1.28, -(W / 2 - 0.04), band, 8);
+  /* the back: windows up and down, lamps, a blank plate */
+  K.pane([-F - 0.006, 2.7, -0.62], [-F - 0.006, 2.7, 0.62], [-F - 0.006, 3.3, 0.58], [-F - 0.006, 3.3, -0.58]); K.pane([-F - 0.006, 1.3, 0.12], [-F - 0.006, 1.3, W / 2 - 0.2], [-F - 0.006, 1.95, W / 2 - 0.2], [-F - 0.006, 1.95, 0.12]);
+  K.box(0.03, 0.14, 0.1, -F - 0.004, 0.86, W / 2 - 0.22, RED); K.box(0.03, 0.14, 0.1, -F - 0.004, 0.86, 0.08, RED); K.box(0.016, 0.12, 0.4, -F - 0.012, 0.68, W / 4, PLATE);
+  /* wheels: single at the front, twin at the back */
+  for (const s of [1, -1]) { K.wheel(r, 0.26, xf, s * (W / 2 - 0.17), s, c, 0xb9bcc0); K.wheel(r, 0.44, xr, s * (W / 2 - 0.24), s, c, 0xb9bcc0); }
+  const g = K.done(L, H, W); g.userData.sign = { front: [F + 0.03, 2.27, 0], width: 1.25, height: 0.26 }; return g;   /* where a game may put its own destination blind */
+}
+
+/* ---------- a bonneted lorry of the 1940s and early 1950s with a stake body ----------
+   A long bonnet with louvres and an upright grille, separate rounded front wings with the lamps beside the grille, running boards, a cab
+   with a split windscreen, and a wooden stake body with a headboard and a tailboard on hinges. No maker's badge, name or number. */
+export function bonnetLorry(o = {}) {
+  const L = o.L || 5.27, W = o.W || 1.94, K = kit(), c = o.colour !== undefined ? o.colour : 0x46604a, F = L / 2, r = 0.42, xf = F - 0.86, xr = -F + 1.17, bev = 0.05;
+  const xc1 = F - 1.55, xc0 = xc1 - 1.12, roof = 2.12 - bev, waist = 1.42, Wc = 1.78, chassis = 0x18191b, hub = o.hub !== undefined ? o.hub : 0x9a9c96;
+  const wood = [0x8a6a48, 0x7c5e3e, 0x93734f], wd = (i) => wood[i % 3];
+  /* chassis rails and a fuel tank under the cab */
+  for (const z of [-0.42, 0.42]) K.box(L - 0.25, 0.16, 0.08, -0.05, 0.6, z, chassis); K.cylX(0.16, 0.7, xc0 + 0.5, 0.6, -0.68, chassis, 10);
+  /* the bonnet: a rounded top, louvres down the sides */
+  { const sh = new THREE.Shape(), hw = 0.46, y0 = 0.72, y1 = 1.3, rr = 0.2; sh.moveTo(-hw, y0); sh.lineTo(hw, y0); sh.lineTo(hw, y1 - rr); sh.quadraticCurveTo(hw, y1, hw - rr, y1); sh.lineTo(-hw + rr, y1); sh.quadraticCurveTo(-hw, y1, -hw, y1 - rr); sh.closePath();
+    const g = ext(sh, F - 0.3 - xc1, 0, 6); g.rotateY(Math.PI / 2); g.translate(xc1, 0, 0); K.add(g, c);
+    for (const s of [1, -1]) for (let i = 0; i < 6; i++) K.box(0.045, 0.24, 0.012, xc1 + 0.25 + i * 0.12, 1.02, s * 0.465, 0x1d2420, 0.25); }
+  /* the grille in its shell, the lamps on stalks beside it, the bumper and a blank plate */
+  K.box(0.09, 0.66, 0.78, F - 0.3, 1.02, 0, c); K.box(0.02, 0.56, 0.62, F - 0.25, 1.0, 0, 0x141516); for (let i = 0; i < 8; i++) K.box(0.03, 0.54, 0.018, F - 0.245, 1.0, -0.28 + i * 0.08, CHROME); K.cylY(0.035, 0.07, F - 0.4, 1.33, 0, CHROME, 8);
+  for (const s of [1, -1]) { K.cylX(0.11, 0.16, F - 0.32, 1.12, s * 0.62, c, 12); K.cylX(0.095, 0.02, F - 0.235, 1.12, s * 0.62, LAMP, 12); K.cylY(0.025, 0.25, F - 0.36, 0.94, s * 0.62, chassis, 6); }
+  K.box(0.1, 0.12, W + 0.02, F - 0.06, 0.6, 0, DARK); K.box(0.016, 0.12, 0.36, F - 0.004, 0.76, 0.3, PLATE);
+  /* the front wings: each sweeps over its wheel and down to the running board */
+  for (const s of [1, -1]) { const sh = new THREE.Shape(); sh.moveTo(F - 0.14, 0.72); sh.quadraticCurveTo(F - 0.22, 0.98, xf, 1.0); sh.quadraticCurveTo(xf - 0.5, 1.0, xc1 - 0.02, 0.66); sh.lineTo(xc1 - 0.02, 0.6); sh.quadraticCurveTo(xf - 0.48, 0.92, xf, 0.92); sh.quadraticCurveTo(F - 0.3, 0.92, F - 0.22, 0.7); sh.closePath();
+    K.add(ext(sh, 0.38, s > 0 ? 0.6 : -0.98, 8), c); K.box(xf - xc1 + 0.1, 0.03, 0.16, (xf + xc1) / 2 + 0.05, 0.8, s * 0.53, c);
+    K.box(xc1 - xc0 + 0.3, 0.04, 0.34, (xc1 + xc0) / 2 + 0.05, 0.6, s * 0.8, DARK); }   /* the running board */
+  /* the cab */
+  shell(K, { x0: xc1, x1: xc0, yb: 0.62, W: Wc, hex: c, bevel: bev, arches: [], lean: (y) => y > waist ? 1 - 0.07 * (y - waist) / (roof - waist) : 1,
+    top(s) { s.lineTo(xc0, waist); s.lineTo(xc1, waist); },
+    house(s) { s.moveTo(xc0, waist); s.lineTo(xc0, roof - 0.16); s.quadraticCurveTo(xc0, roof, xc0 + 0.18, roof); s.lineTo(xc1 - 0.32, roof); s.quadraticCurveTo(xc1 - 0.14, roof, xc1 - 0.1, roof - 0.12); s.lineTo(xc1, waist); } });
+  const zs = (y) => Wc / 2 * (y > waist ? 1 - 0.07 * (y - waist) / (roof - waist) : 1), fx = (y) => xc1 + bev + 0.006 - 0.1 * (y - waist) / (roof - 0.12 - waist);
+  for (const s of [1, -1]) { const y0 = waist + 0.08, y1 = roof - 0.16; K.pane([fx(y0), y0, s * 0.04], [fx(y0), y0, s * (zs(y0) - 0.1)], [fx(y1), y1, s * (zs(y1) - 0.12)], [fx(y1), y1, s * 0.04]);
+    const zA = s * (zs(y0) + 0.006), zB = s * (zs(y1) + 0.006); K.pane([xc0 + 0.42, y0, zA], [xc1 - 0.18, y0, zA], [xc1 - 0.22, y1, zB], [xc0 + 0.42, y1, zB]); K.pane([xc0 + 0.1, y0, zA], [xc0 + 0.32, y0, zA], [xc0 + 0.32, y1, zB], [xc0 + 0.1, y1, zB]);
+    K.box(0.014, 0.85, 0.012, xc0 + 0.37, 1.1, s * (Wc / 2 + 0.002), 0x101114); K.box(0.014, 0.8, 0.012, xc1 - 0.06, 1.05, s * (Wc / 2 + 0.002), 0x101114); K.box(0.12, 0.03, 0.03, xc0 + 0.52, waist - 0.12, s * (Wc / 2 + 0.014), CHROME);
+    K.box(0.03, 0.03, 0.3, xc1 - 0.1, 1.72, s * (Wc / 2 + 0.14), DARK); K.box(0.02, 0.2, 0.13, xc1 - 0.1, 1.72, s * (Wc / 2 + 0.3), DARK); }
+  K.box(0.03, roof - waist - 0.22, 0.05, fx(1.75) + 0.01, 1.75, 0, c); K.pane([xc0 - bev - 0.006, 1.6, -0.35], [xc0 - bev - 0.006, 1.6, 0.35], [xc0 - bev - 0.006, 1.9, 0.33], [xc0 - bev - 0.006, 1.9, -0.33]);
+  /* the stake body: a planked floor on bearers, three boards a side between stakes, a headboard and a tailboard */
+  const bx0 = -F + 0.02, bx1 = xc0 - bev - 0.12, bl = bx1 - bx0, bm = (bx0 + bx1) / 2, bw = W - 0.04, fy = 0.98;
+  K.box(bl, 0.08, bw, bm, fy, 0, wd(0)); for (const x of [bx0 + 0.15, bm, bx1 - 0.15]) K.box(0.1, 0.14, bw - 0.1, x, fy - 0.11, 0, chassis);
+  for (let i = 0; i < 9; i++) K.box(bl - 0.02, 0.006, 0.012, bm, fy + 0.042, -bw / 2 + (i + 0.5) * bw / 9, 0x4a3828);
+  for (const s of [1, -1]) { for (let i = 0; i < 3; i++) K.box(bl, 0.17, 0.035, bm, fy + 0.18 + i * 0.25, s * (bw / 2 - 0.02), wd(i + (s > 0 ? 0 : 1)));
+    for (let k = 0; k <= 4; k++) { const x = bx0 + 0.08 + k * (bl - 0.16) / 4; K.box(0.07, 0.86, 0.05, x, fy + 0.35, s * (bw / 2 + 0.01), chassis); } }
+  for (let i = 0; i < 4; i++) K.box(0.04, 0.17, bw, bx1 - 0.02, fy + 0.18 + i * 0.25, 0, wd(i)); K.box(0.06, 0.06, bw + 0.04, bx1 - 0.02, fy + 1.04, 0, chassis);
+  for (let i = 0; i < 2; i++) K.box(0.04, 0.17, bw - 0.08, bx0 - 0.01, fy + 0.18 + i * 0.25, 0, wd(i + 2)); for (const s of [1, -1]) { K.box(0.05, 0.42, 0.06, bx0 - 0.03, fy + 0.3, s * (bw / 2 - 0.12), chassis); K.box(0.06, 0.06, 0.08, bx0 - 0.02, fy + 0.04, s * (bw / 2 - 0.3), chassis); }
+  /* rear wings, mud flaps, a tail lamp */
+  for (const s of [1, -1]) { const sh = new THREE.Shape(), R0 = r + 0.05, R1 = r + 0.1; sh.absarc(xr, r, R1, 0.25, Math.PI - 0.25, false); sh.absarc(xr, r, R0, Math.PI - 0.25, 0.25, true); sh.closePath(); K.add(ext(sh, 0.5, s > 0 ? W / 2 - 0.52 : -W / 2 + 0.02, 8), chassis);
+    K.box(0.02, 0.34, 0.42, xr - 0.58, 0.42, s * (W / 2 - 0.25), chassis); }
+  K.box(0.04, 0.1, 0.1, -F + 0.0, 0.86, -W / 2 + 0.2, RED); K.box(0.016, 0.12, 0.34, -F - 0.02, 0.74, 0, PLATE);
+  /* wheels: single at the front, twin at the back */
+  for (const s of [1, -1]) { K.wheel(r, 0.24, xf, s * (W / 2 - 0.13), s, hub, hub); K.wheel(r, 0.42, xr, s * (W / 2 - 0.22), s, hub, hub); }
+  return K.done(L, 2.12, W);
 }
 
 /* ---------- a small forward-control panel van ---------- */
