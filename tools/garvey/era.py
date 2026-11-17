@@ -807,7 +807,8 @@ if FLAT:
     # A flat collar that lies on the shirt. Each row runs from the seam at the neckline out to the collar's edge. 'camp': the leaf carries on down each side of the V and ends in a long point
     # that angles outward and down (a notch where it meets the front edge); it stands a little at the nape. 'round': a flat band with rounded ends that meet at the throat.
     bm=bmesh.new(); rows=[]; LW=G.get('leaf',(0.066 if CK=='camp' else 0.062) if G.get('woman') else 0.088)*s; camp=CK=='camp'
-    xw=(VD-0.012*s)/VK; a0=0.62 if camp else 0.05;   # a round collar's two ends nearly meet at the throat: with a wider gap the blouse's neckline showed between them as a notch nn=14 if OLD else 28; nv=6 if camp else 0      # a later round collar has twice the rows: with 14 a side its edge showed as steps
+    # a round collar's two ends nearly meet at the throat (a0): with a wider gap the blouse's neckline showed between them as a notch
+    xw=(VD-0.012*s)/VK; a0=0.62 if camp else 0.05; nn=14 if OLD else 28; nv=6 if camp else 0      # a later round collar has twice the rows: with 14 a side its edge showed as steps
     def neck_row(a,wk=1.0):
         f=0.5+0.5*math.cos(a); back=(1-f)**1.2; S=collar_pt(a,NECK+0.004,NECK-0.030*s if camp else NECK-0.012*s,0.010); D=Vector((math.sin(a),-math.cos(a),0)); w=LW*((0.72+0.28*f) if camp else 1.0)*wk      # a round collar keeps its width all round: narrower at the back, it left the slope of the shoulders showing beside it
         stand=(0.006*s*back if camp else 0.003*s)      # a camp collar lies nearly flat at the nape too: standing 14 mm with its edge lifted 15 mm, its back rose like a fin over the shoulders when the back curved (16 November 2026)
