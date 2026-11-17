@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 /* games/eventide/src/main.js: Eventide 1980, The Home on Slipe Pen Road (the plan is docs/games/eventide.md).
    Seven chapters, from a visit to the Eventide Home in May 1980, through the night of the fire of 20 May, to the monument today.
    Built on the shared engine. Controls, journal, chapters, saving and tests follow Kendal 1957 (games/kendal/src/main.js), which this file is modelled on.

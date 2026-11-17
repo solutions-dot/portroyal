@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
 import { snapMeshes, auditSeated, auditRest } from '../../../engine/audit.js';

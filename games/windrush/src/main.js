@@ -1,3 +1,4 @@
+import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A family story built on the existing engine, with no shared-module changes. */
 import * as THREE from "three";
 import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";

@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { maroon_man: 2, maroon_scout: 2, maroon_woman: 2, maroon_girl: 2, maroon_boy: 2, redcoat: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */

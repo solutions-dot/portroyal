@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */

@@ -1,3 +1,4 @@
+import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { hudTidy } from '../../../engine/hud.js';
 /* games/_template/src/main.js: the smallest working game on the shared engine.
