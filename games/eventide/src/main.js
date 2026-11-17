@@ -15,6 +15,8 @@ import { slideWalls, walkRoute } from '../../../engine/placement.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
+import { spreadBodies, placeFaces } from '../../../engine/faces.js';
+const FACE_VARIANTS = { boy: 2, girl: 2, man_elder: 2, man_shirt: 2, man_suit: 2, man_work: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough, auditBodies, auditVehicles, auditGarments, auditHanging } from '../../../engine/audit.js';
 import { G, makeSky, ease, rng, batchStatic } from './gfx.js';
 import { hamper, bucket, suitcase } from './props.js';
@@ -222,7 +224,10 @@ function spreadOut(specs, P, S) {
 function clearScene() { if (!SC) return; for (const n of SC.npcs) { if (n.mark) scene.remove(n.mark); if (n.m.parent) n.m.parent.remove(n.m); } SC = null; }
 async function loadScene(i) {   /* build the place and load the bodies this chapter needs */
   const S = SCENES[i], P = buildPlace(S.place), specs = { people: S.people(P), extras: S.extras ? S.extras(P) : [] }; spreadOut(specs, P, S);
-  for (const e of specs.extras) e.bodyId = /^(woman_|man_|girl$|boy$)/.test(e.base) && !e.props ? e.base + '_lo' : e.base; for (const e of specs.people) e.bodyId = e.base;   /* background figures get a light copy */
+  const light = (e) => /^(woman_|woman57$|man_|girl$|boy$)/.test(e.base) && !e.props;
+  const MEN = ['man_shirt', 'man_work', 'man_elder'];   /* the crowd's men in shirtsleeves wear the same pieces, so one with no face left (he carries a case: a full body, one face) takes another body */
+  spreadBodies(specs.extras, (b, e) => (light(e) && FACE_VARIANTS[b]) || 0, { near: 4, fixed: specs.people, alts: (e) => (MEN.includes(e.base) && (e.hide || []).includes('Waistcoat') && e.hat === false ? MEN : null) });   /* engine/faces.js: no two copies of one body with the same face within 4 m of each other */
+  for (const e of specs.extras) e.bodyId = light(e) ? e.base + (e.variant || '') + '_lo' : e.base; for (const e of specs.people) e.bodyId = e.base;   /* background figures get a light copy */
   await Promise.all([...new Set([...specs.people, ...specs.extras].map((s) => s.bodyId))].map(loadBase)); return specs;
 }
 let EYE_NOW = EYE;
@@ -626,7 +631,7 @@ function devViews() {
       const moving = st0 === 45 ? P.vehicles : [];   /* the vehicles that drive in this part of the chapter */
       const r = auditPlaceE({ id: P.id, snap: P.snap, npcs: vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, anim: n.anim, ground: n.walker ? 0 : (n.ground || 0), path: n.path }))   /* walkers' routes too, so the audit sees anyone they would walk through */, walls: P.walls.concat(S.walls || []), bounds: P.bounds, start: st,
         actions: SC.actions.filter((a) => !('get' in (Object.getOwnPropertyDescriptor(a, 'x') || {}))).map((a) => ({ label: a.label, x: a.x, z: a.z, r: a.r })), people: SC.people.filter((n) => !n.hidden && !n.kid).map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
-      const all = [...r.floating, ...r.inside, ...r.stuck, ...auditThrough(P.snap), ...auditHanging(P.snap, P.groundAt), ...auditVehicles(moving, vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, path: n.path })), { start: st, walls: P.walls.concat(S.walls || []) }), ...garments(vis)]; total += all.length; linesOut.push((name || 'chapter ' + (i + 1)) + ' (' + P.id + '): ' + all.length + ' issues, ' + vis.length + ' people', ...all.map((l) => '  ' + l)); }
+      const all = [...r.floating, ...r.inside, ...r.stuck, ...auditThrough(P.snap), ...auditHanging(P.snap, P.groundAt), ...auditVehicles(moving, vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, path: n.path })), { start: st, walls: P.walls.concat(S.walls || []) }), ...garments(vis), ...placeFaces(vis.map((n) => ({ ...n, hidden: false, extra: !SC.people.includes(n) })))   /* look-alikes: two people with one body and face within 2.5 m (engine/faces.js) */]; total += all.length; linesOut.push((name || 'chapter ' + (i + 1)) + ' (' + P.id + '): ' + all.length + ' issues, ' + vis.length + ' people', ...all.map((l) => '  ' + l)); }
     { const m = makeBody({ ...LOOKS.gateman, x: 0, z: 0 }); m.traverse((o) => { if (o.isMesh && o.material.name === 'WaistcoatButtons') o.visible = true; }); const caught = auditGarments('self-test gateman', m);   /* the garment check must see buttons left showing on a hidden waistcoat */
       if (caught.length) linesOut.push('self-test (not counted): the garment check sees buttons left on a hidden waistcoat: ' + caught[0]); else { total++; linesOut.push('self-test FAILED: the garment check missed waistcoat buttons left showing'); } }
     out('AUDIT ' + total, linesOut); })();

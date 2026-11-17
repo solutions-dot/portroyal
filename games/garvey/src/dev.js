@@ -11,6 +11,7 @@
    &p=hall,street picks places. Results go to #autolog and the page title. */
 import { checkAll, CHECKS } from '../../../engine/checks.js';
 import { auditPlace, auditHeld, auditWalk, snapMeshes } from '../../../engine/audit.js';
+import { faceCheck } from '../../../engine/faces.js';
 import { ambientTest } from '../../../engine/ambient.js';
 import { slideWalls, walkRoute } from '../../../engine/placement.js';
 import { gripTick } from '../../../engine/grip.js';
@@ -171,7 +172,10 @@ export function devRun(A) {
         /* hung: every hat or coat hung on a wall rack or stand (userData.hung) must touch a peg or the stand's top (userData.peg). Proposed for engine/audit.js */
         const pegs = [], hung = []; Q.group.updateMatrixWorld(true); Q.group.traverse((o) => { if (!o.isMesh) return; if (o.userData.peg) pegs.push(new THREE.Box3().setFromObject(o).expandByScalar(0.005)); if (o.userData.hung) hung.push(o); });
         for (const o of hung) { const b = new THREE.Box3().setFromObject(o); if (!pegs.some((p) => p.intersectsBox(b))) { const c = b.getCenter(new THREE.Vector3()); r.floating.push(`hung@(${c.x.toFixed(2)},${c.y.toFixed(2)},${c.z.toFixed(2)}): a ${o.userData.hung} touches no peg`); } }
-        const all = [...r.floating, ...r.inside, ...r.stuck];
+        /* look-alikes (engine/faces.js faceCheck): the story people and the background people of the place, each with the body it is drawn with. Marcus Garvey in two
+           suits is one man (who) */
+        const twins = faceCheck([...Q.people, ...(Q.extras || [])].filter((n) => n.m && n.m.visible).map((n) => ({ id: n.id, face: n.model, m: n.m, x: n.x, z: n.z, who: /^garvey/.test(n.id) ? 'garvey' : n.who2, life: n.amb && n.amb.spec, path: n.path, story: !n.bg })));
+        const all = [...r.floating, ...r.inside, ...r.stuck, ...twins];
         if (q.get('dbg')) { const [dx, dy, dz] = q.get('dbg').split(',').map(Number), pt = new THREE.Vector3(dx, dy, dz); Q.group.traverse((o) => { if (o.isMesh && new THREE.Box3().setFromObject(o).expandByScalar(0.02).containsPoint(pt)) { let t = o; while (t.parent && t.parent !== Q.group) t = t.parent; all.push('dbg: ' + o.geometry.type + ' ' + JSON.stringify(o.geometry.parameters || {}) + ' top ' + (t === o ? 'self' : t.type) + ' at ' + o.getWorldPosition(new THREE.Vector3()).toArray().map((v) => v.toFixed(2))); } }); } count += all.length; out.push(id + ': ' + all.length + ' issues'); for (const l of all) out.push('  ' + l); await wait(0); }
       out.unshift('AUDIT ' + count); emit(out, 'AUDIT ' + count); })();
   }

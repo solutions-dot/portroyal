@@ -678,7 +678,7 @@ function nurseCap(m, top) {
    bent, short-legged walk covers about 9 % more ground than the estimate, so his feet slid 13.6 cm a loop (?test=walkers). The clip is played that
    much faster for the same ground speed. */
 const PACE_K = { nb_elder: 1.09 };
-function fitPace(m, model, k) { const f = k ? +k : PACE_K[model]; const c = m.userData.anim; if (!f || !c || c._fit) return; const p0 = c.pace.bind(c); c.pace = (v, lo, hi) => p0(v * f, lo, hi); c._fit = true; }
+function fitPace(m, model, k) { const f = k ? +k : PACE_K[model] || PACE_K[model.replace(/_[bc]$/, '')];   /* a face variant (guide2020_b) walks as its body does */ const c = m.userData.anim; if (!f || !c || c._fit) return; const p0 = c.pace.bind(c); c.pace = (v, lo, hi) => p0(v * f, lo, hi); c._fit = true; }
 function loadPerson(n) {
   if (n.loading) return n.loading;
   n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K * ({ garvey1914: 1.65, garvey1916: 1.65, nurse1920: 1.18, hl_worker: 1.08 }[n.model] || 1)); if (n.noHat && /^Hat/.test(o.material.name)) o.visible = false; } });   /* noHat: indoors a man takes his hat off */ m.position.set(n.x, 0, n.z); m.rotation.y = n.ry;   /* Garvey's face sits deeper in shade (heavy brows and moustache), so his skin is drawn a little lighter (owner rule 9: judged in game) */ if (n.scale) m.scale.setScalar(n.scale);   /* a child's body is stored enlarged and shrunk here (see docs/PEOPLE.md, children) */ m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; fitPace(m, n.model); m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); if (n.model === 'nurse1920') nurseCap(m, bb.max.y); n.h = Math.max(1.1, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
@@ -872,16 +872,9 @@ function buildDock() {
   for (const bx of [-6.5, -2, 2.5, 7]) { cyl(0.18, 0.26, 0.5, iron, bx, 0.25, 4.0, g, 12); }   /* bollards */
   for (let i = 0; i < 5; i++) mesh(new THREE.PlaneGeometry(4.5, 9), std(facadeTex(i + 3), 0.95), -9 + i * 4.5, 4.5, -4.5, g);   /* warehouses behind the dock */
   /* the old ship, moored on the far side of a gap of water */
-  const hullM = solid(0x23262b, 0.7), white = solid(0xdcd6c4, 0.8), rust = solid(0x6b3a2a, 0.9);
-  box(13, 2.6, 3.4, hullM, 0, 0.6, 8.4, g); box(13.05, 0.22, 3.45, solid(0x7a2e24, 0.8), 0, -0.55, 8.4, g);
-  const bow = new THREE.ExtrudeGeometry((() => { const sh = new THREE.Shape(); sh.moveTo(0, -1.7); sh.lineTo(2.8, 0); sh.lineTo(0, 1.7); sh.closePath(); return sh; })(), { depth: 2.6, bevelEnabled: false }); bow.rotateX(-Math.PI / 2); const bw = mesh(bow, hullM, 6.5, -0.7, 8.4, g); bw.rotation.y = 0;
-  box(12.9, 0.1, 0.1, white, 0, 1.75, 6.68, g); box(8.6, 1.5, 2.2, white, -1.0, 2.9, 8.4, g); box(3.2, 1.0, 1.8, white, -0.6, 4.2, 8.4, g);
-  cyl(0.38, 0.42, 2.0, solid(0x16181b, 0.7), -2.6, 4.2, 8.4, g, 16); cyl(0.4, 0.4, 0.4, solid(0x16181b, 0.7), -2.6, 5.3, 8.4, g, 16);
-  for (const mx of [3.8, -5.2]) { cyl(0.07, 0.1, 6.2, woodDark, mx, 4.5, 8.4, g, 8); box(0.05, 0.05, 2.4, woodDark, mx, 6.0, 8.4, g); }
-  for (const lx of [-3.8, 1.6, 3.2]) box(1.4, 0.5, 0.7, rust, lx, 2.2, 6.9, g);
-  for (let i = 0; i < 12; i++) cyl(0.025, 0.025, 0.7, white, -6 + i * 1.1, 2.1, 6.72, g, 5);
+  { const ship = steamer({ L: 60, beam: 8.4 }); ship.position.set(12, -0.7, 10.92); g.add(ship); }   /* the shared steamer (engine/boats.js) in place of a box hull: 60 m, her well deck beside the gangway. The real Yarmouth was about 67 m long. */
   box(0.9, 0.06, 3.1, wood, 0, 1.1, 5.4, g).rotation.x = -0.62;   /* a gangway from the dock to the deck */
-  mesh(new THREE.PlaneGeometry(2.8, 0.7), new THREE.MeshBasicMaterial({ map: signTex([['YARMOUTH', 60]], 512, 128) }), -4.2, 1.3, 6.69, g).rotation.y = Math.PI;
+  mesh(new THREE.PlaneGeometry(2.8, 0.7), new THREE.MeshBasicMaterial({ map: signTex([['YARMOUTH', 60]], 512, 128) }), -4.2, 1.0, 6.69, g).rotation.y = Math.PI;
   /* the share table, with a sign */
   box(2.3, 0.9, 0.9, woodDark, -4.5, 0.45, -0.9, g); box(2.4, 0.06, 1.0, wood, -4.5, 0.93, -0.9, g); box(0.34, 0.02, 0.45, paper, -5.1, 0.97, -0.9, g); box(0.34, 0.02, 0.45, paper, -4.7, 0.97, -0.85, g); cyl(0.05, 0.07, 0.2, brass, -3.8, 1.05, -0.9, g, 10);
   mesh(new THREE.PlaneGeometry(2.6, 0.82), new THREE.MeshBasicMaterial({ map: signTex([['BLACK STAR LINE', 52], ['SHARES FIVE DOLLARS EACH', 30]], 512, 160) }), -4.5, 2.5, -2.4, g); box(0.07, 2.4, 0.07, beam, -5.75, 1.2, -2.4, g); box(0.07, 2.4, 0.07, beam, -3.25, 1.2, -2.4, g); DOCK_WALLS.push([-5.7,-1.4,-3.3,-0.4],[-5.80,-2.45,-5.70,-2.35],[-3.30,-2.45,-3.20,-2.35]);   /* the sign stands well behind the clerk, who stands behind the table */

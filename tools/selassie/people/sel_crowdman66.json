@@ -92,5 +92,5 @@
     "head-round": 0.4,
     "nose-width2-incr": 0.25
   },
-  "face": "wide"
+  "face": "wide", "variants": ["lean", "strong", "narrow"]
 }

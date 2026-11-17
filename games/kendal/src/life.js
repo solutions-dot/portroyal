@@ -28,7 +28,10 @@ function crowd(list, o) {
   for (let i = 0; i < kids.length; i++) { const k = kids[i];
     if (o.sad || o.calm) { at(k, 'watch', { at: typeof o.watch === 'function' ? o.watch(k) : o.watch, idles: ['Idle'], react: o.sad ? [] : ['Point'], every: [5, 9] }); continue; }
     const a = o.playArea || o.area; at(k, 'play', { area: [clampTo(k.x - 5, a[0], a[2] - 2), clampTo(k.z - 3, a[1], a[3] - 2), clampTo(k.x + 5, a[0] + 2, a[2]), clampTo(k.z + 3, a[1] + 2, a[3])], joy: ['Cheer', 'Clap', 'Laugh'], idles: ['Idle'] });
-    if (i % 2 === 1) { k.life.chase = kids[i - 1]; } }
+  }
+  /* chasing in pairs: each child with the nearest child who has no partner yet, within 12 m (a chaser runs right up to the other, so a far partner crossed the whole place
+     and met every other child of the same body on the way: engine/faces.js) */
+  { const lone = kids.filter((k) => k.life && k.life.kind === 'play'); while (lone.length > 1) { const k = lone.shift(); let best = -1, bd = 12; lone.forEach((q, j) => { const d = Math.hypot(q.x - k.x, q.z - k.z); if (d < bd) { bd = d; best = j; } }); if (best >= 0) lone.splice(best, 1)[0].life.chase = k; } }
   /* holders: an errand along the place and back, the bag in the right hand */
   for (const e of grown) { if (!holds(e) || !o.errand) continue; const to = o.errand(e, r); if (!to) continue; at(e, 'errand', { from: [e.x, e.z], to, walk: e.props ? 'CarryBagWalk' : walkOf(e), back: e.props ? 'CarryBagWalk' : walkOf(e), idle: e.props ? 'BriefcaseIdle' : idlesOf(e)[0], wait: [4, 9] }); }
   /* chat groups: neighbours within 1.6 m who hold nothing, in twos and threes */
@@ -103,5 +106,8 @@ const PLACES = {
   },
 };
 
+/* a wanderer or someone on an errand who would meet someone with the same face stays where they are and watches instead (engine/faces.js spreadBodies, opts.settle) */
+const LOOK_AT = { station45: (e) => [clampTo(e.x, -12, 18), -3], kingston57: (e) => [e.x + 2, -3], beach: () => [0, -22] };
+export function settle(P, e) { if (!e.life || !/^(wander|errand)$/.test(e.life.kind) || e.life.pts || e.life.load) return false; at(e, 'watch', { at: (LOOK_AT[P.id] || ((q) => [q.x, q.z - 6]))(e), idles: holds(e) ? ['Idle'] : idlesOf(e), react: holds(e) ? ['Nod'] : ['Nod', 'Point'], every: [4, 8] }); return true; }
 export function lifeFor(P) { const f = PLACES[P.id]; if (f) f(P, P.specs.people, P.specs.extras); for (const e of [...P.specs.extras, ...P.specs.people]) e.sex = isMan(e) ? 'm' : 'f'; }
 export const KEEP = {};

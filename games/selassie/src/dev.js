@@ -5,6 +5,7 @@ import { actionCheck } from "./actioncheck.js";
 import { checkFlow, needList } from "../../../engine/story.js";
 import { routeIssues, walkRoute } from "../../../engine/placement.js";
 import { ambientCheck } from "../../../engine/ambient.js";
+import { faceCheck } from "../../../engine/faces.js";
 import { exteriorTrim, outsideTrimRelation } from "./trim-audit.js";
 import { makeAdapter, CHECK_TABLES } from "./checktables.js";
 import { CHAPTERS, TALK, FLAVOUR } from "./content.js";
@@ -335,8 +336,12 @@ export async function dev(A) {
         people: Q.people.filter((n) => !n.historical),
         routes: Q.routes,
       });
+      // look-alikes: two people with one body and face within 2.5 m, the family and the crowd (engine/faces.js)
+      const twins = faceCheck(
+        [...Q.people, ...Q.extras].filter((n) => n.m && !n.historical).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, story: Q.people.includes(n), uniform: /police/.test(n.base) && "police", ...(n.colors ? { cols: [n.colors.shirt, n.colors.legs] } : {}) })),
+      );
       const errors = [...r.floating, ...r.inside, ...r.stuck];
-      results.push(`AUDIT ${Q.id} ${errors.length}`, ...errors);
+      results.push(`AUDIT ${Q.id} ${errors.length}`, ...errors, `FACES ${Q.id} ${twins.length}`, ...twins.slice(0, 40));
     }
   if (["held", "cloth", "walkers", "skin"].includes(q.get("test"))) {
     const test = q.get("test"),

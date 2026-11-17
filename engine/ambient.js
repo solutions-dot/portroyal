@@ -31,6 +31,7 @@ import * as THREE from 'three';
 import { walkRoute, segmentHitsWall } from './placement.js';
 import { groundFeet, strideOf } from './anim.js';
 import { gripTick } from './grip.js';
+import { faceCheck } from './faces.js';
 
 /* ---------- settings ---------- */
 const DEF = {
@@ -304,9 +305,14 @@ export function createAmbient(opts = {}) {
     if (a.t > 0) return;
     const run = dp > 6 && has(n, s.run || 'Run') && a.rnd() < 0.75;
     if (t && visible(t) && Math.hypot(t.x - n.x, t.z - n.z) > 1.6 && a.rnd() < 0.5) { const r = routeTo(n, [t.x, t.z]); if (r) { a.chasing = true; a.aimT = 0; go(n, [t.x, t.z], r, { run }); a.goal = null; return; } }
-    const p = pickGoal(n); if (p) go(n, p.g, p.r, { run }); else joy(n);
+    const p = pickGoal(n) || offPath(n); if (p) go(n, p.g, p.r, { run }); else joy(n);
   };
-  function joy(n) { const a = n.amb, l = M().play ? avail(n, a.spec.joy || ['Cheer', 'Clap', 'Laugh']) : []; a.st = 'pause'; a.walking = false; a.route = null; a.goal = null; a.t = 1.4 + a.rnd() * 2.2;
+  /* a child left on a story path with nowhere picked to run to (Nanny Town, 17 November 2026: a girl stood on the way to Cubbenah): the nearest free ground off the path, or home */
+  function offPath(n) { const a = n.amb; if (!onKeepOff(keepOff(), n.x, n.z, a.r)) return null;
+    for (const L of [1.2, 1.8, 2.6, 3.6]) for (let i = 0; i < 12; i++) { const th = i * Math.PI / 6 + L, g = [n.x + Math.sin(th) * L, n.z + Math.cos(th) * L]; if (!solidFree(g[0], g[1], a.r) || onKeepOff(keepOff(), g[0], g[1], a.r) || !lineFree([n.x, n.z], g, a.r * 0.8 - 0.04)) continue; return { g, r: [g] }; }
+    const r = routeTo(n, a.home); return r ? { g: a.home.slice(), r } : null; }
+  function joy(n) { const a = n.amb, l = M().play ? avail(n, a.spec.joy || ['Cheer', 'Clap', 'Laugh']) : []; if (onKeepOff(keepOff(), n.x, n.z, a.r)) { a.st = 'pause'; a.walking = false; a.route = null; a.goal = null; a.t = 0.2; play(n, idleFor(n)); return; }   /* a game that ends on a story path does not stop to cheer there: the child runs on at once */
+    a.st = 'pause'; a.walking = false; a.route = null; a.goal = null; a.t = 1.4 + a.rnd() * 2.2;
     if (l.length && a.rnd() < 0.7) play(n, l[(a.rnd() * l.length) | 0]); else play(n, idleFor(n)); if (a.rnd() < 0.5) glance(n, [W.px, W.pz]); }
 
   /* ---------- the head: a look toward the player or a nearby person, limited and eased (after the mixer, which resets the bones) ---------- */
@@ -426,6 +432,7 @@ export function ambientCheck(life, opts = {}) {
   for (const l of life.issues()) lines.add(l);
   for (const n of life.people) S.set(n, { x: n.x, z: n.z, ry: n.m ? n.m.rotation.y : 0, clip: n.amb.clip, stillT: 0, stillWorst: 0, slideT: 0, slideWorst: 0, slideWhy: '', keepT: 0, moved: 0, walkT: 0, seen: 0 });
   const steps = Math.round(seconds / dt);
+  const NEAR = new Map();   /* the nearest each two people came (for the look-alike check) */
   for (let f = 0; f < steps; f++) {
     if (route && ri < route.length) {   /* the player walks the route at 2 m/s, and stops at people (the game's collision) */
       if (wait > 0) wait -= dt; else { const t = route[ri], d = Math.hypot(t[0] - P[0], t[1] - P[1]), sp = Math.min(d, 2 * dt), x = P[0] + (t[0] - P[0]) / (d || 1) * sp, z = P[1] + (t[1] - P[1]) / (d || 1) * sp;
@@ -449,11 +456,11 @@ export function ambientCheck(life, opts = {}) {
       if (changed) s.stillT = 0; else { s.stillT += dt; s.stillWorst = Math.max(s.stillWorst, lively ? s.stillT : 0); }
       /* story: standing on a story path or next to a story person */
       const onPath = v < 0.05 && (onKeepOff(K(), n.x, n.z, 0) || storyP().some((o) => o && Math.hypot(o.x - n.x, o.z - n.z) < 1.0));
-      if (onPath) { s.keepT += dt; if (s.keepT > 1) lines.add(`story: ${name(n)} stands on a story path or by a story person at ${fmt(n.x, n.z)}`); } else s.keepT = 0;
+      if (onPath) { s.keepT += dt; if (s.keepT > 1) lines.add(`story: ${name(n)} (${a.kind}${a.st ? ', ' + a.st : ''}) stands on a story path or by a story person at ${fmt(n.x, n.z)}`); } else s.keepT = 0;
       s.x = n.x; s.z = n.z; s.ry = ry; s.clip = cn;
     }
     for (let i = 0; i < live.length; i++) { const p = live[i], pa = p.amb, sitA = pa.kind === 'sit';
-      for (let j = i + 1; j < live.length; j++) { const q = live[j], need = (pa.r + q.amb.r) * (sitA && q.amb.kind === 'sit' ? 0.8 : 1), d = Math.hypot(p.x - q.x, p.z - q.z); if (d < need - 0.02) lines.add(`overlap: ${name(p)} and ${name(q)} are ${(d * 100).toFixed(0)} cm apart at ${fmt(p.x, p.z)}`); }
+      for (let j = i + 1; j < live.length; j++) { const q = live[j], need = (pa.r + q.amb.r) * (sitA && q.amb.kind === 'sit' ? 0.8 : 1), d = Math.hypot(p.x - q.x, p.z - q.z); { let M = NEAR.get(p); if (!M) NEAR.set(p, (M = new Map())); if (!(M.get(q) <= d)) M.set(q, d); } if (d < need - 0.02) lines.add(`overlap: ${name(p)} and ${name(q)} are ${(d * 100).toFixed(0)} cm apart at ${fmt(p.x, p.z)}`); }
       const dp = Math.hypot(P[0] - p.x, P[1] - p.z); if (dp < pa.r + 0.2) lines.add(`overlap: ${name(p)} walked into the player at ${fmt(p.x, p.z)}`); }
   }
   const stats = [];
@@ -461,14 +468,9 @@ export function ambientCheck(life, opts = {}) {
     if (s.slideWorst > 0.3) lines.add(`slide: ${id} ${s.slideWhy} for ${s.slideWorst.toFixed(1)} s`);
     if (s.stillWorst > still) lines.add(`still: ${id} (${n.amb.kind}) stood with nothing changing for ${s.stillWorst.toFixed(1)} s`);
     stats.push(`${id}: ${n.amb.kind}, walked ${s.moved.toFixed(1)} m (${s.walkT.toFixed(0)} s), longest still ${s.stillWorst.toFixed(1)} s, seen ${s.seen} frames`); }
-  /* look-alikes (17 November 2026): two people of one body share one face. Two of them standing within 2.5 m of each other read as twins, and with nearly the same
-     clothes colours as the same person twice. Faces are told apart by the skin's geometry (one body, one face); clothes by their colours. Checked where people start. */
-  { const faceOf = (n) => { let g = null; n.m && n.m.traverse((o) => { if (!g && o.isSkinnedMesh && /^(Skin|Body|Crowd)$/.test(o.material && o.material.name)) g = o.geometry.uuid; }); return g; };
-    const cols = (n) => { const c = []; n.m && n.m.traverse((o) => { if (o.isMesh && o.material && o.material.color && !/^(Skin|Body|Hair|Human)/.test(o.material.name)) c.push(o.material.color.getHex()); }); return c.sort(); };
-    const near = (a, b) => { if (a.length !== b.length) return false; for (let i = 0; i < a.length; i++) { const x = a[i], y = b[i], d = Math.abs((x >> 16) - (y >> 16)) + Math.abs(((x >> 8) & 255) - ((y >> 8) & 255)) + Math.abs((x & 255) - (y & 255)); if (d > 60) return false; } return true; };
-    const ps = life.people.filter((n) => n.m && n.m.visible !== false), F = ps.map(faceOf), C = ps.map(cols);
-    for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) { if (!F[i] || F[i] !== F[j]) continue; const d = Math.hypot(ps[i].x - ps[j].x, ps[i].z - ps[j].z); if (d > 2.5) continue;
-      lines.add(near(C[i], C[j]) ? `lookalike: ${name(ps[i])} and ${name(ps[j])} look like the same person, ${d.toFixed(1)} m apart (same face and nearly the same clothes)` : `twins: ${name(ps[i])} and ${name(ps[j])} have the same face, ${d.toFixed(1)} m apart`); } }
+  /* look-alikes (17 November 2026): two people of one body share one face. Two of them within 2.5 m of each other read as twins, and with nearly the same clothes
+     colours as the same person twice (engine/faces.js faceCheck). Measured at the nearest the two came in the whole run, so people who walk about and meet count. */
+  for (const l of faceCheck(life.people.filter((n) => n.m && n.m.visible !== false), { dist: (p, q) => { const a = NEAR.get(p), b = NEAR.get(q), d = a && a.has(q) ? a.get(q) : b && b.has(p) ? b.get(p) : undefined; return d === undefined ? Math.hypot(p.x - q.x, p.z - q.z) : d; } })) lines.add(l);
   return { lines: [...lines], stats };
 }
 export function ambientTest(life, opts = {}) { const r = ambientCheck(life, opts); return [`AMBIENT ${r.lines.length}`, ...r.lines, '', ...r.stats].join('\n'); }

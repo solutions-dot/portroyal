@@ -99,7 +99,7 @@ export function refresh(P, stage, opts) {
 }
 
 /* ---------- people in the background: nobody to talk to, each busy with something (actFor above). Bodies are other chapters' people of the
-   same years, recoloured (tint multiplies the cloth colours) so a face is not seen twice in one place. Seated people sit on a real bench or
+   same years, recoloured (tint multiplies the cloth colours) so a face is not seen twice in one place. The park visitor is the guide's body with another face (guide2020_b: tools/people/rebuild.mjs, engine/faces.js). Seated people sit on a real bench or
    chair (seat), facing the platform. ---------- */
 export const EXTRAS = {
   shop: [{ id: 'apprentice', model: 'nb_youth', x: 2.75, z: -1.3, ry: Math.PI, tint: { Shirt: [0.9, 0.95, 1], Breeches: [1.3, 1.2, 1.0] } }],
@@ -114,5 +114,5 @@ export const EXTRAS = {
   liberty: [{ id: 'del1', model: 'hl_critic', seat: [-2.8, -2.2] }, { id: 'del2', model: 'hl_woman', seat: [-1.9, -1.25], tint: { Shirt: [0.8, 0.9, 1.1], Skirt: [0.8, 0.8, 0.9] } },
     { id: 'del3', model: 'woman1914', seat: [2.8, -2.2], tint: { Shirt: [1.0, 0.85, 0.85] } }, { id: 'del4', model: 'nb_elder', seat: [3.7, -1.25] }, { id: 'del5', model: 'hl_worker', seat: [1.9, 0.65], tint: { Shirt: [0.9, 1.0, 1.1] } }],
   office: [{ id: 'typist', model: 'hl_pressman', x: 3.2, z: 1.5, ry: Math.PI, tint: { Shirt: [1.05, 1.05, 1.1] } }],
-  park: [{ id: 'visitor', model: 'guide2020', x: 6.5, z: 5.0, ry: -Math.PI / 2, tint: { Shirt: [0.6, 0.8, 1.1], Skirt: [0.5, 0.5, 0.6] } }],
+  park: [{ id: 'visitor', model: 'guide2020_b', x: 6.5, z: 5.0, ry: -Math.PI / 2, tint: { Shirt: [0.6, 0.8, 1.1], Skirt: [0.5, 0.5, 0.6] } }],
 };

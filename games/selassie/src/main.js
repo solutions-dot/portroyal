@@ -31,6 +31,10 @@ import { snapMeshes } from "../../../engine/audit.js";
 import { makeSky, G, batchStatic, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
 import { CAST, crowdLook } from "./cast.js";
+import { spreadBodies } from "../../../engine/faces.js";
+const FACE_VARIANTS = { sel_crowdman66: 3, sel_crowdwoman66: 3, sel_rastaman66: 2, sel_rastatam66: 2, sel_rastaelder66: 2, sel_rastawoman66: 3, sel_boy66: 2, sel_girl66: 2 }; // how many more faces each crowd body has
+const CROWD_MEN = ["sel_crowdman66", "sel_rastaman66", "sel_rastatam66", "sel_rastaelder66"],
+  CROWD_WOMEN = ["sel_crowdwoman66", "sel_rastawoman66"];
 import { actions } from "./life.js";
 import * as P from "./props.js";
 import { STEPS, ITEMS, TASK_IDS } from "./steps.js";
@@ -371,6 +375,36 @@ async function buildWorld(id) {
       extras.filter((e) => e.behaviour.group === n.behaviour.group).length < 2
     )
       n.behaviour = { kind: "watch", at: [19, -28], react: ["Point", "Wave"] };
+  /* engine/faces.js (17 November 2026): no two copies of one body with the same face come within 3 m of each other, measured over where each one walks.
+     The crowd bodies have three faces (<base>_b, <base>_c: tools/selassie/build-people.mjs, "variants"). At the airport and in mixed crowds a person with
+     no face left takes another body of the same sex; the clothes' colours stay. The police line is one squad in uniform and is left as it is. */
+  {
+    const crowd = [...extras, ...rooftops].filter((s) => !s.police && !/police/.test(s.base)),
+      strip = (b) => b.slice(0, -tier.length),
+      pool = Q.id === "airport" || Q.mixed;
+    const SP = crowd.map((s) => ({ base: strip(s.base), x: s.x, z: s.z, life: s.behaviour }));
+    Q.facesLeft = spreadBodies(SP, (b) => FACE_VARIANTS[b] || 0, {
+      near: 3,
+      fixed: specs.map((s) => ({ base: s.base, x: s.x, z: s.z })),
+      alts: (s) => (!pool ? null : CROWD_MEN.includes(s.base) ? CROWD_MEN : CROWD_WOMEN.includes(s.base) ? CROWD_WOMEN : null),
+      // a stroller with no face left stays where they are and watches the road instead
+      settle: (p) => {
+        if (!p.life || p.life.kind !== "wander") return false;
+        p.life = crowd[SP.indexOf(p)].behaviour = { kind: "watch", at: [p.x + 1, p.z + 3], react: ["Point", "Wave"] };
+        return true;
+      },
+    });
+    SP.forEach((p, i) => {
+      const s = crowd[i];
+      if (p.base !== strip(s.base)) {
+        s.rastafari = /rasta/.test(p.base);
+        if (p.base !== "sel_crowdman66") s.hat = undefined;
+      }
+      s.base = p.base + (p.variant || "") + tier;
+    });
+    if (__DEV__ && /[?&]faces/.test(location.search))
+      console.log("FACES " + Q.id + " left " + Q.facesLeft + " of " + SP.length + ": " + SP.map((p, i) => (p.faceLeft ? crowd[i].id + "=" + p.base + p.variant + " " + (p.life?.kind || "") : "")).filter(Boolean).join(" | ") + " ; bodies " + JSON.stringify(SP.reduce((o, p) => ((o[p.base] = (o[p.base] || 0) + 1), o), {})));
+  }
   await Promise.all(
     [
       ...new Set(

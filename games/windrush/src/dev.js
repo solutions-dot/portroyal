@@ -10,6 +10,7 @@ import {
   auditHeld,
 } from "../../../engine/audit.js";
 import { ambientCheck } from "../../../engine/ambient.js";
+import { faceCheck } from "../../../engine/faces.js";
 import { gripTick } from "../../../engine/grip.js";
 import { skinProbe } from "../../../engine/skinprobe.js";
 import { walkRoute, routeIssues } from "../../../engine/placement.js";
@@ -336,8 +337,12 @@ export async function dev(A) {
         people: Q.people.map(pp),
         routes: Q.routes,
       });
+      // look-alikes: two people with one body and face within 2.5 m, the family and the crowd (engine/faces.js)
+      const twins = faceCheck(
+        [...Q.people, ...Q.extras].filter((n) => n.m).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, who: n.who, story: Q.people.includes(n) })),
+      );
       const errors = [...r.floating, ...r.inside, ...r.stuck];
-      results.push("AUDIT " + Q.id + " " + errors.length, ...errors);
+      results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));
     }
   if (test === "ambient")
     for (const Q of Object.values(worlds)) {

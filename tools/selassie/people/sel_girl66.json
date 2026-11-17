@@ -90,5 +90,5 @@
     "head-round": 0.18
   },
   "upscale": 1.26,
-  "face": "heart"
+  "face": "heart", "variants": ["soft", "round"]
 }

@@ -80,7 +80,7 @@
     "head-age-incr": 0.7
   },
   "kit": "locks",
-  "face": "elder",
+  "face": "elder", "variants": ["long", "broad"],
   "beard": {
     "len": 0.05,
     "thick": 0.006

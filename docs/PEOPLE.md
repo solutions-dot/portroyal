@@ -83,6 +83,18 @@ Things that are true of every body and must stay true:
 - **Light, crowd and phone copies** keep their faces because the builder marks the face and the packer protects it. Do not simplify a body any other way.
 - **Hats** that ride high use `hatdrop`. Hair that must hang over clothes (locs, plaits) is its own piece and stays clear of the shirt.
 
+## 5b. No two people with one face side by side (17 November 2026)
+
+The owner's rule, for every game: nobody stands or walks beside a person who looks the same. A game has a few bodies and many people, so this needs care.
+
+1. **Every recipe has a `face`**, and a body that fills a crowd also lists `"variants": ["<face>", "<face>"]` (names from `tools/people/faces.json`, different from its own `face`). `tools/people/rebuild.mjs <recipe>` then builds `<name>_b` and `<name>_c` with those faces and a slightly different build and hair. Light copies (`<name>_b_lo.js`) go to every game that has `<name>_lo.js`; full copies only to games named in `FULL_VARIANTS` in `rebuild.mjs`. The Emperor's Arrival builds its variants in `tools/selassie/build-people.mjs` (joined `_crowd` and `_phone` copies only; `VARIANTS_ONLY=1` builds just those). Add variants only for bodies that really repeat side by side: each is a download.
+2. **The game spreads the faces**: `spreadBodies(extras, count, opts)` in `engine/faces.js`, called once per place before the bodies are loaded. It gives each background person `variant` ('' , '_b' or '_c') so that no two copies of one body with one face come within `near` metres (4; the check uses 2.5). A person who moves is measured over the whole box they walk in. Story people are passed as `fixed`: they keep the body's own face, or the `variant` their look names.
+3. **When three faces are not enough** the game gives fallbacks: `alts(spec)` names other bodies of the same sex and age that wear the same pieces (Kendal: `girl` and `girl_small`; Tivoli: the three young men's bodies; Eventide: the crowd's men in shirtsleeves; The Emperor's Arrival at the airport: the four men's and the two women's crowd bodies), with `rebase` to fix size or clothes; and `settle(spec)` makes a walker stay where they are and watch (Kendal). Check the game's `LOOKS` and `HATS` tables before naming a body as an alternative: the tint keys and hats must exist on it.
+4. **Story people who borrow one body get their own faces.** In Tivoli a look may name `variant: '_b'` (Mr Clarke, Pastor Grant, Miss Dawn, Coach Davis, Kemesha), so Mass Roy, Mr Clarke and Pastor Grant are three men. One person at two ages keeps one face (Ivy).
+5. **The check** is `faceCheck` (`docs/TESTING.md`, section 5, "Look-alikes"): part of every game's `?test=audit`, and of `?test=ambient`. It must report 0.
+
+Left out on purpose: a squad in one uniform and helmet (Tivoli's soldiers and police in the May 2010 street scene, The Emperor's Arrival's police line). They are meant to look alike and their faces are not read at that distance.
+
 ## 6. History
 
 Clothes must fit the year and place: check them against period photographs or sources. Fictional people are fine, but their journal page says so.

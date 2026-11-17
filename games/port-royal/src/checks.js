@@ -10,6 +10,7 @@
    Every check prints into #autolog and puts its count in the page title (docs/TESTING.md, section 5). */
 import * as THREE from 'three';
 import { snapMeshes, auditPlace, auditWalk } from '../../../engine/audit.js';
+import { faceCheck, skinShape } from '../../../engine/faces.js';
 import { checkAll } from '../../../engine/checks.js';
 import { CL, isSeated, strideOf, WALKS } from '../../../engine/anim.js';
 import { AU, setSound } from '../../../engine/audio.js';
@@ -115,6 +116,10 @@ function placeAudit(A, P) {
   const acts = A.ACTIONS.filter((a) => !!A.FB.on === !!a.fb).map((a) => [a, a.where()]).filter(([, w]) => w).map(([a, w]) => ({ label: a.label, x: w[0], z: w[1], r: a.r }));
   const talk = acts.filter((a) => /^Talk|^Reach/.test(a.label)).map((a) => ({ id: a.label, x: a.x, z: a.z, anim: '' }));
   const r = auditPlace({ id: P.id, snap, npcs, walls: grid.walls, bounds: P.bounds, start: { x: P.start[0], z: P.start[1] }, actions: acts, people: talk, groundAt: (x, z) => A.groundYAt(x, z) });
+  /* look-alikes (engine/faces.js faceCheck): two people with one body and face within 2.5 m of each other, story people and townsfolk alike */
+  const twins = faceCheck(peopleHere(A).map((m) => { const p = m.getWorldPosition(new THREE.Vector3()), id = idOf(A, m); return { id, m, face: m.userData.face, x: p.x, z: p.z, path: paths[id] || paths[id.replace(/ \(.*$/, '')] }; }));
+  r.inside.push(...twins);
+  if (/[?&]faces/.test(location.search)) r.inside.push('faces: ' + peopleHere(A).map((m) => { const p = m.getWorldPosition(new THREE.Vector3()); return idOf(A, m) + '=' + (m.userData.face || skinShape(m)) + '@' + p.x.toFixed(1) + ',' + p.z.toFixed(1); }).join(' | '));
   return { ...r, grid, npcs: npcs.length, meshes: snap.length };
 }
 

@@ -98,6 +98,7 @@ export function dev(D) {
       P.group.traverse((o) => { if (!o.isSprite || !o.visible || o.material.blending !== THREE.AdditiveBlending || held(o)) return; o.getWorldPosition(v); const near = P.snap.some((m) => m.b.distanceToPoint(v) < 0.12);
         if (!near) r.floating.push(`a light with nothing holding it at (${v.x.toFixed(1)},${v.y.toFixed(1)},${v.z.toFixed(1)})`); }); }
     /* our own rule for this game: nobody stands on the tram track or the siding where something will run */
+    r.inside.push(...D.placeFaces(P.npcs));   /* look-alikes: two people with one body and face within 2.5 m (engine/faces.js) */
     if (P.id === 'kingston') for (const n of P.npcs) if (Math.abs(n.hz) < 1.6 && n.hx > -46 && n.hx < 82) r.inside.push((n.id || n.base) + ' stands on the tram track at (' + n.hx.toFixed(1) + ',' + n.hz.toFixed(1) + ')');
     return r;
   }

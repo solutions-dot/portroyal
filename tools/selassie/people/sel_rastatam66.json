@@ -91,7 +91,7 @@
   },
   "kit": "locks",
   "tam": true,
-  "face": "wide",
+  "face": "wide", "variants": ["round", "lean"],
   "beard": {
     "len": 0.015,
     "thick": 0.004

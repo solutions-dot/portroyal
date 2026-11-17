@@ -1,4 +1,4 @@
-import { spreadBodies } from '../../../engine/faces.js';
+import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { man_suit: 2, man_work: 2, man_shirt: 2, man_elder: 2, woman57: 2, woman_long: 2, woman_elder: 2, girl: 2, boy: 2, girl_small: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
@@ -26,7 +26,7 @@ import { buildRoad, buildStation45, buildRide45, buildHill } from './places1.js'
 import { buildKingston57, buildCoach, buildBeach, buildCrash, buildMemorial } from './places2.js';
 import { CHAPTERS, CHAPTER_END, TALK, LATER, JOURNAL } from './content.js';
 import { STEPS, placeOfStage } from './steps.js';
-import { lifeFor, KEEP } from './life.js';
+import { lifeFor, KEEP, settle } from './life.js';
 import * as SFX from './sfx.js';
 import { HATS, LOOKS, KID } from './cast.js';
 import { DECOR } from './decor.js';
@@ -246,7 +246,10 @@ function ensurePlace(id) {   /* the place with its people: loads the bodies it n
   return (placeLoading[id] = (async () => {
     P.specs.extras = P.specs.extras.filter((e) => Math.hypot(e.x - P.start.x, e.z - P.start.z) > 2.6 || e.seated);
     spreadOut(P); lifeFor(P);   /* life.js: what each background person does (engine/ambient.js) */
-    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, { near: 9, fixed: P.specs.people });   /* 9 m: people walk about and meet */   /* engine/faces.js: no two copies of one body with the same face within 4 m */
+    /* engine/faces.js: no two copies of one body with the same face come within 4 m of each other, measured over everywhere each one walks. A girl with too many
+       girls about becomes a smaller girl (the same clothes, the smaller body); a wanderer with no face left stays and watches (life.js settle) */
+    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, { near: 4, fixed: P.specs.people, alts: (e) => (/^girl/.test(e.base) && !e.props ? ['girl', 'girl_small'] : null), rebase: (e, b, was) => { e.scale = (e.scale || KID[was]) * KID[b] / KID[was]; }, settle: (e) => settle(P, e) });
+    if (__DEV__ && /[?&]faces/.test(location.search)) console.log('FACES ' + P.id + ' ' + [...P.specs.people, ...P.specs.extras].filter((e) => new RegExp(new URLSearchParams(location.search).get('faces') || '.').test(e.base)).map((e) => `${e.id || e.name || ''}:${e.base}${e.variant || ''}${e.props ? '+props' : ''} ${e.life ? e.life.kind : ''}[${reachOf(e).map((v) => v.toFixed(0))}]`).join(' | '));   /* ?faces=woman57 : who got which face, and the box each one stays in */
     for (const e of P.specs.extras) e.bodyId = e.base + (e.variant || '') + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
     const mk = (s, talk) => { const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk }); n.m = makeBody(s); if (!talk && JOINABLE(s)) joinBody(n.m); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
@@ -841,7 +844,9 @@ requestAnimationFrame(frame);
 
 /* ---------- the place audit (dev builds): the checks live in engine/audit.js. Run ?test=audit and expect 0 issues in every place. ---------- */
 const auditPlace = (P) => { const r = auditPlaceBase(P); for (const n of P.npcs) if (isSeated(n.anim) && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); if (!n.m.userData.noGround) groundFeet(n.m);   /* the same step the game runs every other frame */
-       for (const l of auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, SEATLOG)) r.inside.push(l); } return r; };
+       for (const l of auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, SEATLOG)) r.inside.push(l); }
+  r.inside.push(...placeFaces(P.npcs));   /* look-alikes: two people with one body and face within 2.5 m, story people and extras (engine/faces.js) */
+  return r; };
 const SEATLOG = [];   /* ?test=audit&seats=1 also prints how high each seated person's hips are above the seat */
 const auditPlaceBase = (P) => auditPlaceE({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path, with: n.with })), walls: P.walls, bounds: P.bounds, start: P.start,
   actions: P.actions, people: P.people.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });

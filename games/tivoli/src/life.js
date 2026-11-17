@@ -110,10 +110,19 @@ function keepOffOf(place) {
 }
 export function routeOf(place) { return [[place.start.x, place.start.z], ...place.npcs.map((n) => [n.x - Math.sign(n.x - place.start.x) * 1.2 || n.x, n.z]), [place.endSpot.x, place.endSpot.z]]; }
 
+/* which body and face each background person of a chapter gets (d.bodyId). engine/faces.js: no two copies of one body with the same face come within 4 m, measured
+   over each person's whole walk. A young man with no face left takes another young man's body (the three wear the same pieces: Shirt, Breeches) */
+export function lifeBodies(id, place) {
+  const L = LIFE[id]; if (!L) return [];
+  const MEN = ['youth2010', 'man2010', 'civilian2010'], SP = L.people.map((d) => ({ base: d.look.base, x: d.at[0], z: d.at[1], life: d.spec }));
+  spreadBodies(SP, (b) => FACE_VARIANTS[b] || 0, { near: 4, alts: (s) => (MEN.includes(s.base) ? MEN : null), fixed: (place.npcs || []).map((n) => ({ base: (LOOKS[n.look] || {}).base || n.base, x: n.x, z: n.z, variant: (LOOKS[n.look] || {}).variant })) });
+  L.people.forEach((d, i) => { if (SP[i].base !== d.look.base) d.look = { ...d.look, base: SP[i].base }; d.bodyId = d.look.base + (SP[i].variant || ''); });
+  return L.people;
+}
 /* build the background people for a chapter's place; returns { life, people, tick, clear } or null when the chapter has none */
 export async function addLife(id, place, scene, opts = {}) {
   const L = LIFE[id]; if (!L) return null;
-  const SP = L.people.map((d) => ({ base: d.look.base, x: d.at[0], z: d.at[1] })); spreadBodies(SP, (b) => FACE_VARIANTS[b] || 0, { near: 9, fixed: (place.npcs || []).map((n) => ({ base: (LOOKS[n.look] || {}).base || n.base, x: n.x, z: n.z })) }); L.people.forEach((d, i) => { d.bodyId = d.look.base + (SP[i].variant || ''); });   /* engine/faces.js: no two copies of one body with the same face within 4 m */
+  lifeBodies(id, place);
   await Promise.all([...new Set(L.people.map((p) => p.bodyId))].map((b) => loadBase(b)));
   const life = createAmbient({ walls: place.walls, bounds: place.bounds || { x0: -23, x1: 17.5, z0: -13.6, z1: 14.2 }, blocked: blockerOf(place), keepOff: keepOffOf(place), seed: 2010 + id, mood: L.mood, phone: !!opts.phone,
     place: (n) => { n.m.position.x = n.x; n.m.position.z = n.z; n.m.userData.ground = place.groundAt ? place.groundAt(n.x, n.z) : 0; } });

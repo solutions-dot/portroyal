@@ -11,7 +11,8 @@ import { CL, mixers, loadClips, animate, groundFeet } from '../../../engine/anim
 import { soundPref, setSound, audioInit, stepSound, uiSound, AU } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { pose, standIns, POSES, deriveClips } from './clips.js';
-import { LOOKS, BODIES, loadBase, makeBody } from './cast.js';
+import { LOOKS, BODIES, loadBase, makeBody, bodyOf } from './cast.js';
+import { faceCheck } from '../../../engine/faces.js';   // dev only: look-alikes (two people with one face side by side)
 import { arm, weaponTick, heldReport, ARMED, modeOf } from './weapons.js';
 import { snapMeshes, auditPlace } from '../../../engine/audit.js';   // dev only: the place audit (CLAUDE.md rule 8)
 import { contentRects, contentsOverlap } from '../../../engine/ui-audit.js';   // dev only: the layout test
@@ -25,7 +26,7 @@ import { headTop, markAt, NEAR_GAP } from '../../../engine/marks.js';
 import { walkRoute } from '../../../engine/placement.js';
 import { WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget, talkedNow, orderNow } from './ch1.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
-import { lifeTest } from './life.js';   // dev only: ?test=ambient
+import { lifeTest, lifeBodies } from './life.js';   // dev only: ?test=ambient
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
 import { clipInfo, sceneCheck } from './scenecheck.js';
 import { strideOf, WALKS as WALK_CLIPS } from './walk.js';   // dev only: the street scene checks (?test=scene, ?test=clipinfo)
@@ -342,7 +343,11 @@ async function devViews() {
     for (const [id, pl] of [...Object.entries(WALKS).map(([n, w]) => ['chapter ' + n, w.build({})])]) {   /* every walking chapter, with its own place and people */   /* the walking places: the engine's place audit, and the solid-box overlap check */
       const ov2 = overlapSolids(pl.solids), npc = pl.npcs.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: 'Idle', ground: pl.groundAt ? pl.groundAt(n.x, n.z) : 0 })), bd = pl.bounds || { x0: -23, x1: 17.5, z0: -13.6, z1: 14.2 };
       const r2 = auditPlace({ id, snap: snapMeshes(pl.raw), npcs: npc, walls: pl.walls, bounds: bd, start: pl.start, actions: [{ label: 'end spot', ...pl.endSpot }], people: npc });
-      ov2.push(...sinkCheck(snapMeshes(pl.raw), npc)); const n2 = r2.floating.length + r2.inside.length + r2.stuck.length + ov2.length; extra += n2;
+      ov2.push(...sinkCheck(snapMeshes(pl.raw), npc));
+      /* look-alikes (engine/faces.js faceCheck): the story people and the background people of the chapter, each with the body and face they are given */
+      const cols = (l) => Object.values(l.tint || {}).sort(), nn = +id.split(' ')[1];
+      ov2.push(...faceCheck([...pl.npcs.map((n) => ({ id: n.id, face: bodyOf(LOOKS[n.look]), x: n.x, z: n.z, scale: LOOKS[n.look].scale, cols: cols(LOOKS[n.look]), story: true })), ...lifeBodies(nn, pl).map((d) => ({ id: d.id, face: d.bodyId, x: d.at[0], z: d.at[1], life: d.spec, scale: d.look.scale, cols: cols(d.look) }))]));
+      const n2 = r2.floating.length + r2.inside.length + r2.stuck.length + ov2.length; extra += n2;
       lines.push(id + ': ' + n2 + ' issues (' + r2.floating.length + ' floating, ' + r2.inside.length + ' inside solids, ' + r2.stuck.length + ' unreachable, ' + ov2.length + ' overlaps)', ...r2.floating.map((l) => '  floating: ' + l), ...r2.inside.map((l) => '  inside: ' + l), ...r2.stuck.map((l) => '  unreachable: ' + l), ...ov2.map((l) => '  ' + l));
     }
     devLog(lines, 'AUDIT ' + (r.floating.length + r.inside.length + r.stuck.length + ov.length + extra));

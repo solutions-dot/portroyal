@@ -22,6 +22,8 @@ import * as SFX from './sfx.js';
 import { HATS, LOOKS } from './cast.js';
 import { makeStorm, collectSway, swayTick } from './storm.js';
 import * as PRP from './props.js'; import * as HSE from './houses.js';   /* whole modules, for the dev model viewer only */
+import { spreadBodies, placeFaces } from '../../../engine/faces.js';
+const FACE_VARIANTS = { boy: 2, girl: 2, girl_small: 2, guide2020: 2, man_elder: 2, man_shirt: 2, man_work: 2, student2020: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditBodies } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
 
@@ -152,7 +154,8 @@ function ensurePlace(id) {   /* the place with its people: loads the bodies it n
   return (placeLoading[id] = (async () => {
     P.specs.extras = P.specs.extras.filter((e) => Math.hypot(e.x - P.start.x, e.z - P.start.z) > 2.6 || e.seated);
     spreadOut(P);
-    for (const e of P.specs.extras) e.bodyId = e.base + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
+    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, { near: 4, fixed: P.specs.people });   /* engine/faces.js: no two copies of one body with the same face within 4 m of each other */
+    for (const e of P.specs.extras) e.bodyId = e.base + (e.variant || '') + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
     const mk = (s, talk) => { const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk }); n.m = makeBody(s); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
     P.people = P.specs.people.map((s) => mk(s, true)); P.extras = P.specs.extras.map((s) => mk(s, false)); P.people.forEach(addMark);
@@ -689,7 +692,9 @@ function lightTick(P, dt, t) { const Ls = P.lights || (P.lampLight ? [P.lampLigh
 
 /* ---------- the place audit (dev builds): the checks live in engine/audit.js. Run ?test=audit and expect 0 issues in every place. ---------- */
 const auditPlace = (P) => { const r = auditPlaceBase(P); for (const n of P.npcs) if (/^Sit/.test(n.anim || '') && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); if (!n.m.userData.noGround) groundFeet(n.m);   /* the same step the game runs every other frame */
-       for (const l of auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, SEATLOG)) r.inside.push(l); } return r; };
+       for (const l of auditSeated(n.id || n.base, n.m, P.snap, n.m.userData.ground || 0, SEATLOG)) r.inside.push(l); }
+  r.inside.push(...placeFaces(P.npcs));   /* look-alikes: two people with one body and face within 2.5 m, story people and extras (engine/faces.js) */
+  return r; };
 const SEATLOG = [];   /* ?test=audit&seats=1 also prints how high each seated person's hips are above the seat */
 const auditPlaceBase = (P) => auditPlaceE({ id: P.id, snap: P.snap, npcs: P.npcs.map((n) => ({ id: n.id || n.base, x: n.hx, z: n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path })), walls: P.walls, bounds: P.bounds, start: P.start,
   actions: P.actions, people: P.people.map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });

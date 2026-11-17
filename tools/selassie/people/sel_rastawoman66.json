@@ -93,5 +93,5 @@
     "head-oval": 0.45,
     "nose-width2-incr": 0.18
   },
-  "face": "lean"
+  "face": "lean", "variants": ["soft", "wide", "heart"]
 }

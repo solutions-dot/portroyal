@@ -161,6 +161,7 @@ test('the wall rectangles made for the audits cover the ground you may not walk 
 /* engine/story.js: who moves the story, the hint arrow, carried items */
 import './story.mjs';
 import './ambient.mjs';
+import './faces.mjs';
 import './checks.mjs';
 import './kendal.mjs';
 import './final-two-ui.mjs';

@@ -83,5 +83,5 @@
     "head-oval": 0.4,
     "lr-cheek-volume-incr": 0.2
   },
-  "face": "round"
+  "face": "round", "variants": ["heart", "long", "wide"]
 }

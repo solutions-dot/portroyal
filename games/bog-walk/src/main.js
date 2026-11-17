@@ -13,6 +13,8 @@ import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, crackle, chirp, setG, AU } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
+import { spreadBodies, placeFaces } from '../../../engine/faces.js';
+const FACE_VARIANTS = { hl_worker: 2, nb_youth: 2, woman1914: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { snapMeshes, auditPlace, auditHeld, auditSeated } from '../../../engine/audit.js';   /* dev checks only: reached only from __DEV__ code, so dropped from the public build */
 import { setAniso } from './gfx.js';
 import { G as WG, makeSky, batchStatic } from './wgfx.js';
@@ -309,7 +311,8 @@ function ensurePlace(id) {   /* the place with its people: loads the bodies it n
   const P = buildPlace(id); if (P.populated) return Promise.resolve(P); if (placeLoading[id]) return placeLoading[id];
   return (placeLoading[id] = (async () => {
     spreadOut(P);
-    for (const e of P.specs.extras) e.bodyId = e.base + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
+    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, { near: 4, fixed: P.specs.people });   /* engine/faces.js: no two copies of one body with the same face within 4 m of each other */
+    for (const e of P.specs.extras) e.bodyId = e.base + (e.variant || '') + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     await Promise.all([...new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId))].map(loadBase));
     const mk = (s, talk) => { const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, extra: !talk }); n.m = makeBody(s); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
     P.people = P.specs.people.map((s) => mk(s, true)); P.extras = P.specs.extras.map((s) => mk(s, false)); P.people.forEach(addMark);
@@ -793,4 +796,4 @@ const DEV = __DEV__ ? { THREE, q, $, S, N, T, PL, hand, keys, camera, scene, ren
   get cur() { return cur; }, get stage() { return stage; }, set stage(v) { stage = v; }, get MODE() { return MODE; }, get near() { return near; }, get frozen() { return frozen; }, get fading() { return fading; }, get envNow() { return envNow; }, set manual(v) { manual = v; }, set poster(v) { POSTER = v; }, RIDE, HOLD, TB,
   tick, render, begin, startGame, startWork, startIntro, skipIntro, startRise, startDark, startTrickle, startBoots, skipNight, setPhase, resetNight, setGoal, setClock, say, toast, bars, hideHud, caption, captionOff, fadeTo, calcLift, nearPatch, act, showEnd, showPick,
   ensurePlace, enterPlace, enterTube, showNudgeAt, placeNudge, NUDGE, beginChapter, setStage, setEnv, showPerson, byId, startTalk, convo, leaveTalk, activate, look, openOrder, openSort, closePuzzle, card, hideCard, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeChapters2: closeChapters, closeCredits, unlock, saveGame, loadGame, applySave, panelsOpen, locked,
-  auditPlace, auditHeld, auditSeated, snapMeshes, groundFeet, LANE, ZM, ZMIN, ZMAX, R, SAND, ENV, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), wantsTalk, get modelsReady() { return modelsReady; }, ON, noticeTex } : null;
+  auditPlace, auditHeld, auditSeated, snapMeshes, placeFaces, groundFeet, LANE, ZM, ZMIN, ZMAX, R, SAND, ENV, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), wantsTalk, get modelsReady() { return modelsReady; }, ON, noticeTex } : null;

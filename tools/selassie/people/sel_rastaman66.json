@@ -80,7 +80,7 @@
     "head-age-decr": 0.3
   },
   "kit": "locks",
-  "face": "long",
+  "face": "long", "variants": ["broad", "narrow"],
   "beard": {
     "len": 0.02,
     "thick": 0.005

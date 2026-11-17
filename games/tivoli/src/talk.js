@@ -3,7 +3,7 @@
    A line may carry unlock: 'page-id', which opens a journal page with a chime and a toast. Nobody here is real: every person you can talk to is fictional. */
 import * as THREE from 'three';
 import { animate } from '../../../engine/anim.js';
-import { loadBase, makeBody, LOOKS } from './cast.js';
+import { loadBase, makeBody, bodyOf, LOOKS } from './cast.js';
 
 export const Talk = { npcs: [], near: null, open: null };
 /* What the story people do while you are not talking to them, and how they talk (owner, 16 November 2026: no "zombies standing around").
@@ -28,7 +28,7 @@ const $ = (id) => document.getElementById(id), ray = new THREE.Raycaster(), ndc 
 export function setupTalk(env) { E = env; $('next').onclick = next; $('dclose').onclick = leave; }
 
 export async function addNpc(def) {   /* def: { id, name, look, x, z, ry, anim, lines, later } */
-  await loadBase(LOOKS[def.look].base); const body = makeBody({ ...LOOKS[def.look], x: def.x, z: def.z, ry: def.ry, anim: def.anim || 'Idle' });
+  await loadBase(bodyOf(LOOKS[def.look])); const body = makeBody({ ...LOOKS[def.look], x: def.x, z: def.z, ry: def.ry, anim: def.anim || 'Idle' });
   body.userData.ground = def.ground || 0;   /* the height of the surface they stand on (a pavement, a path), so groundFeet keeps their shoes on it */
   body.traverse((o) => { if (o.isMesh) o.castShadow = true; }); E.scene.add(body); const npc = { ...def, body, home: def.ry, talked: 0, sex: SEX[def.look] || 'f', headYaw: 0 };
   npc.idles = (def.mood && MOOD_IDLES[def.mood] && def.look !== 'ivyGirl') ? MOOD_IDLES[def.mood] : (IDLES[def.look] || ['Idle']); npc.idleT = Math.random() * 3; Talk.npcs.push(npc); return npc;
