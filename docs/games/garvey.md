@@ -342,6 +342,7 @@ Chapter 5 now takes you onto the ship (owner: "a new dimension"). The step that 
 
 **What is from a source and what is not**
 - The layout is from the owner's two photographs of the ship: from the bow, the forecastle deck with the wheelhouse and the foremast just behind it, a low house, cowl ventilators, the tall thin funnel, more ventilators, boats in davits on both sides, a second low house and the mainmast aft, and the long deckhouse with its covered walk under the boat deck. The ship lies as she does at the dock, with the dock and its warehouses below on one side.
+- The surfaces are drawn textures: planked white paintwork with a little rust, riveted iron plates on the funnel and ventilators, clinker-built boats under laced canvas covers, framed windows, and lifebuoys on the rails (the side photograph shows one by the wheelhouse).
 - A wheel, a bell and a steam whistle are things every steamer of her kind had; where exactly they were on the Yarmouth is not known to us. The engine room skylight and the engine under it are a plain three-cylinder steam engine, not copied from her plans. These are marked here as not from a source.
 - The three things you find (rust under fresh paint, an old engine, worn planks and a loose rail) are the fictional inspection the chapter always had. The sourced fact behind them is that the ship was old and in poor condition.
 - The words on the three toasts are general facts about ships: the wheel steers, bells tell the time on board, the whistle warns other ships.
