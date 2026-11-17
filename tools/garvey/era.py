@@ -799,19 +799,25 @@ if FLAT:
         for _ in range(12):
             for j in range(0,4):      # a round collar's seam row too: left on the nearest shirt point, it zigzagged at the throat
                 for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
-        for j,off in ((0,0.003),(1,0.0035),(2,0.0055 if camp else 0.0042),(3,0.0075 if camp else 0.0028)): ring_fix(rows,j,SHT,off,iters=3)      # a round collar's edge lies right on the blouse: 6 mm off it, the gap under the edge showed as a dark line and slivers on an older, rounder back (owner, 17 November 2026)      # a round collar lies close on the blouse: its edge lifted 1.5 cm stood up like a wing when the back curved      # the seam row too, on every flat collar: left on the nearest shirt point it showed as teeth at the nape
+        for j,off in ((0,0.003),(1,0.0040),(2,0.0055 if camp else 0.0050),(3,0.0075 if camp else 0.0042)): ring_fix(rows,j,SHT,off,iters=3)      # a round collar's edge lies right on the blouse: 6 mm off it, the gap under the edge showed as a dark line and slivers on an older, rounder back (owner, 17 November 2026)      # a round collar lies close on the blouse: its edge lifted 1.5 cm stood up like a wing when the back curved      # the seam row too, on every flat collar: left on the nearest shirt point it showed as teeth at the nape
         if not camp:
             for j,off in ((2,0.006),(3,0.006)): ring_fix(rows,j,SKIN,off,iters=1)
         if True:
             for _ in range(3):      # a round collar lies on the blouse: its leaf is laid back onto the cloth after the smoothing, which left it standing off a sloping shoulder with a gap under it
                 for i in range(len(rows)):
-                    for j,off in (((1,0.0032),(2,0.0036),(3,0.0026)) if not camp else ((2,0.0045),(3,0.0035))): rows[i][j]=on_shirt(rows[i][j],off)      # a camp collar too (its leaf curled off the back of the shoulder); its stand row keeps its little rise at the nape
+                    for j,off in (((1,0.0040),(2,0.0050),(3,0.0042)) if not camp else ((2,0.0045),(3,0.0035))): rows[i][j]=on_shirt(rows[i][j],off)      # 4 to 5 mm over the blouse: closer, the blouse came through the collar in patches; it moves with the blouse, so the gap never opens      # a camp collar too (its leaf curled off the back of the shoulder); its stand row keeps its little rise at the nape
                 for j in (2,3):
-                    for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4      # and clear of the skin: at the top of the shoulder the skin rose above the shirt and came up through the collar
+                    for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
+            for i in range(len(rows)):      # and the last word is the blouse's surface: smoothing a curve over a rounded shoulder pulled the collar's edge inside the blouse
+                for j,off in (((1,0.0040),(2,0.0050),(3,0.0042)) if not camp else ((2,0.0045),(3,0.0035))): rows[i][j]=on_shirt(rows[i][j],off)      # and clear of the skin: at the top of the shoulder the skin rose above the shirt and came up through the collar
     if not camp and not OLD and G.get('yoke',0 if CK=='round' else 1):      # (not under a round collar: its yoke crumpled the collar's ends at the throat, 17 November 2026) a yoke under the seam, down onto the skin beneath the shirt, so no skin shows between the collar and the neck
         for row in rows:
             q=row[0]; loc,nrm,_i,_d=SKIN.find_nearest(q-Vector((0,0,0.018*s))); row.insert(0,(loc+nrm*0.002) if loc is not None else q-Vector((0,0,0.018*s)))
         ring_fix(rows,0,SKIN,0.002,SHT,0.002)
+    if not OLD:      # the collar's outer edge turns under onto the cloth beneath, so its underside never shows as a dark sliver at the shoulder (owner, 17 November 2026)
+        for row in rows:
+            q=row[-1]; d=(q-row[-2]); d=d.normalized() if d.length>1e-6 else Vector((0,0,-1)); loc,nrm,_i,_dd=SHT.find_nearest(q+d*0.003)
+            if loc is not None: row.append(loc-nrm*0.0012)
     quadstrip(bm,[[bm.verts.new(q) for q in row] for row in rows]); _co=soft('Collar',bm,'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD: ring_weights(_co,len(rows),len(rows[0]),flat=True)
     if not OLD and G.get('collarshirt',1) and PART.get('shirt'):      # a round collar lies flat on the blouse: it takes the blouse's own weights under it (smoothed at the shoulder now), so in every pose it moves exactly as the cloth beneath and its edge cannot stand off the shoulder as dark slivers (17 November 2026)
