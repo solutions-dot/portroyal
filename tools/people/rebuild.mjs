@@ -3,7 +3,8 @@
    With no recipe names it rebuilds them all. A body is written to every games/<game>/site/models/ that already has <name>.js, with a light copy
    (<name>_lo.js) where that game has one. Recipes from tools/people (Port Royal), garvey, kendal, nanny and tivoli go through tools/garvey/era.py and
    tools/people/pack.mjs (Tivoli's uniformed recipes also through tools/tivoli/kit.py). The Emperor's Arrival and Windrush have their own build scripts
-   (tools/selassie/build-people.mjs, tools/windrush/build-people.mjs), which this runs too. Then run tools/review/people-check.mjs all and look at the sheets. */
+   (tools/selassie/build-people.mjs, tools/windrush/build-people.mjs), which this runs too. --repack is passed on to them, so a repack runs no Blender in any game;
+   it stops with a clear message if a body was never built on this machine (build/ is not in git). Then run tools/review/people-check.mjs all and look at the sheets. */
 import { readdirSync, existsSync, readFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
@@ -37,7 +38,7 @@ async function worker() { while (i < recipes.length) { const r = recipes[i++], e
     if (!full) spawnSync('rm', ['-f', `games/${g}/site/models/${r.P.name}.js`]);   /* this game ships only the light copy */
     console.log(`${r.P.name} -> ${g}${lo ? ' (+lo)' : ''}${full ? '' : ' (light copy only)'}`); } } }
 await Promise.all(Array.from({ length: JOBS }, worker));
-if (!wanted.length || wanted.some((n) => n.startsWith('sel_'))) { const s = spawnSync(process.execPath, ['tools/selassie/build-people.mjs', ...wanted.filter((n) => n.startsWith('sel_'))], { encoding: 'utf8', env: process.env }); console.log('selassie:', s.status === 0 ? 'built' : 'FAILED ' + (s.stderr || '').slice(-400)); if (s.status) failed.push('selassie'); }
-if (!wanted.length || wanted.some((n) => n.startsWith('wr_'))) { const s = spawnSync(process.execPath, ['tools/windrush/build-people.mjs', ...wanted.filter((n) => n.startsWith('wr_'))], { encoding: 'utf8', env: process.env }); console.log('windrush:', s.status === 0 ? 'built' : 'FAILED ' + (s.stderr || '').slice(-400)); if (s.status) failed.push('windrush'); }
+if (!wanted.length || wanted.some((n) => n.startsWith('sel_'))) { const s = spawnSync(process.execPath, ['tools/selassie/build-people.mjs', ...(REPACK ? ['--repack'] : []), ...wanted.filter((n) => n.startsWith('sel_'))], { encoding: 'utf8', env: process.env }); console.log('selassie:', s.status === 0 ? 'built' : 'FAILED ' + (s.stderr || '').slice(-400)); if (s.status) failed.push('selassie'); }
+if (!wanted.length || wanted.some((n) => n.startsWith('wr_'))) { const s = spawnSync(process.execPath, ['tools/windrush/build-people.mjs', ...(REPACK ? ['--repack'] : []), ...wanted.filter((n) => n.startsWith('wr_'))], { encoding: 'utf8', env: process.env }); console.log('windrush:', s.status === 0 ? 'built' : 'FAILED ' + (s.stderr || '').slice(-400)); if (s.status) failed.push('windrush'); }
 console.log(`REBUILT ${recipes.length} recipes` + (failed.length ? `, FAILED: ${failed.join(', ')}` : ''));
 process.exit(failed.length ? 1 : 0);

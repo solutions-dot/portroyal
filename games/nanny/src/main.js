@@ -18,7 +18,7 @@ import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditCloth, auditBodies, hiddenWith } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditCloth, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { walkRoute } from '../../../engine/placement.js';
 import { follow, lead, goTo, stop as stopFollow, tick as followTick, isFollowing, pathSpots, pathS as pathSE, watch as followWatch } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev checks only (?test=skin), dropped from the public build */
@@ -934,7 +934,7 @@ function devViews() {
       document.title = 'LAYOUT ' + out.length; const el = $('autolog'); if (el) el.textContent = (out.length ? out : [W + 'x' + Hh + ': no layout problems']).join('\n'); })();
   }
   if (q.get('test') === 'held') {   /* ?test=held : every carried thing, in every place: at the hand, upright, clear of the body */
-    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { const ac = n.m.userData.anim, found = new Set(); for (const clip of [null, 'Walk']) { if (clip && !n.path && n.column === undefined) continue; ac.play(clip); for (let pose = 0; pose < 12; pose++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) found.add(l + (clip ? ' (walking)' : '')); } } ac.play(null); for (const l of found) out.push(id + ': ' + l); } }
+    (async () => { const out = []; startGame(true); for (const id of Object.keys(BUILD)) { const P = await ensurePlace(id); for (const n of P.npcs) if (n.m.userData.held && n.m.userData.held.length) { const ac = n.m.userData.anim, found = new Set(); for (const clip of [null, 'Walk']) { if (clip && !n.path && n.column === undefined) continue; ac.play(clip); for (const l of auditHeldClip(n.id || n.base, n.m, n.m.userData.held, { after: gripTick })) found.add(l); } ac.play(null); for (const l of found) out.push(id + ': ' + l); } }
       const count = out.length; out.unshift('held items: ' + count + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + count; })();
   }
   if (['audit', 'collision', 'seating'].includes(q.get('test'))) {   /* ?test=audit&p=town,watch : floating objects, people inside solids or off the ground, unreachable spots */

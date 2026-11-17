@@ -123,7 +123,8 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
   const mx = mixerIn || new THREE.AnimationMixer(m), base = baseAct || mx.clipAction(clip); if (!baseAct) { base.play(); base.time = Math.random() * clip.duration; } if (!mixerIn) mixers.push(mx);
   const acts = {}, ctl = { mx, base, cur: base, timer: 0,
     get(n) { if (!acts[n]) { const c = clipFor(n); if (!c) return null; acts[n] = mx.clipAction(c); } return acts[n]; },
-    play(n, once, hold) { const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
+    play(n, once, hold) { if (n && HAND_TALK.test(n) && holdsInHand(m) && clipFor('Idle')) n = 'Idle';   /* a hand that holds a case or a basket does not wave it about */
+      const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
     tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } else fidget(this, m, dt); } };
@@ -139,6 +140,16 @@ function curlFingers(m) { if (CURLED.has(m)) return; CURLED.add(m); const ax = (
   m.traverse((b) => { if (!b.isBone) return; const k = /Hand(Index|Middle|Ring|Pinky)([23])$/.exec(b.name); if (!k || b.userData.curled) return; b.userData.curled = true;   /* the mark is on the bone, which a clone copies: a clone of an animated body was curled a second time */
     const a = FINGER_CURL[k[2]] * (globalThis.__fingerSign || 1);
     q.setFromAxisAngle(ax || new THREE.Vector3(0, 0, 1), /Left/.test(b.name) ? -a : a); b.quaternion.multiply(q); }); }
+/* A hand that holds something does not gesture (17 November 2026). A man in Eventide's crowd stood on Talk2 with a suitcase in his hand, and the gesture swung the case into
+   his thigh. Eventide already kept people with a thing in the hand off the talking clips when you spoke to them; the rule now lives here for every game (rule 10):
+   - play() gives the plain Idle when it is asked for a clip that waves the hands (HAND_TALK) and the body holds something by engine/grip.js;
+   - calmHands(m), which grip() calls, moves a body whose standing clip is one of those onto the Idle.
+   Only for a thing that hangs below the hand (grip() works that out from the handle's height, or takes hangs: true or false). A flag or a palm frond held up by its stick is
+   waved on purpose (The Emperor's Arrival). Walking, carrying, sitting and weapon clips are not touched. */
+const HAND_TALK = /^(Talk|SitTalk|Wave|Clap|Cheer|Point|Yell|Laugh|Greet|Angry|Thankful|Argue)/;
+export const holdsInHand = (m) => !!(m.userData.grips && m.userData.grips.some((g) => g.wrap && g.hangs));   /* a thing that hangs from the hand (a case, a basket, a bucket, a lamp, a bag); a flag, a palm frond or a cup held upright may be waved */
+export function calmHands(m) { const c = m.userData.anim; if (!c || !c.base || !HAND_TALK.test(c.base.getClip().name)) return; const a = c.get('Idle'); if (!a || a === c.base) return;
+  a.reset().play(); a.time = Math.random() * a.getClip().duration; c.base.stop(); if (c.cur === c.base) c.cur = a; c.base = a; c.mx.update(0); }
 /* Anyone standing on a plain idle now and then looks round or turns the head, once, and goes back to the idle (owner, 17 November 2026: "ensure variety in idle animation,
    across all games ... they have this zombie look ... including old people"). Every game gets it from here (rule 10). Not for people the crowd code runs (it has its own
    idles, engine/ambient.js), people holding something (the item must stay in the hand), or a body marked userData.still. An old person (userData.elder, set by the crowd

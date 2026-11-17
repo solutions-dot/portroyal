@@ -22,15 +22,18 @@ import { groundFeet, strideOf, isSeated } from './anim.js';
 
 /* a list of the world-space box of every visible mesh under a group (instanced meshes are skipped). The mesh's own shape and place are kept aside (SHAPE) for checks that need real contact. */
 const SHAPE = new WeakMap();
-export function snapMeshes(group) {
+export function snapMeshes(group, { shown = false } = {}) {   /* shown: leave out anything inside a hidden part of the group (a game that keeps every place in one scene and hides all but one) */
   group.updateMatrixWorld(true); const out = [], inst = [];
-  group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg); e.card = isCard(o.material); e.name = o.name || (top !== o ? top.name : '') || ''; for (let a = o; a && a !== group; a = a.parent) { if (a.userData.hollow) e.hollow = true; if (a.userData.soft) e.soft = true; }   /* soft (on a mesh or the object it is part of): left out of the overlap check. Loose stuff that lies over things (a drift of sand), or a thing that takes another's place and is never seen with it (the cut logs that appear when the fallen tree is cleared) */   /* hollow: a vehicle or room people stand inside on purpose (a cab, a carriage): no outline test (auditBodies) */   /* top: the object it belongs to (the child of the place's group that holds it) */
+  const hid = (o) => { for (let a = o.parent; a && a !== group; a = a.parent) if (!a.visible) return true; return false; };
+  group.traverse((o) => { if (shown && hid(o)) return; if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg); e.card = isCard(o.material); e.name = o.name || (top !== o ? top.name : '') || ''; for (let a = o; a && a !== group; a = a.parent) { if (a.userData.hollow) e.hollow = true; if (a.userData.soft) e.soft = true; }   /* soft (on a mesh or the object it is part of): left out of the overlap check. Loose stuff that lies over things (a drift of sand), or a thing that takes another's place and is never seen with it (the cut logs that appear when the fallen tree is cleared) */   /* hollow: a vehicle or room people stand inside on purpose (a cab, a carriage): no outline test (auditBodies) */   /* top: the object it belongs to (the child of the place's group that holds it) */
     if (o.geometry.type === 'BoxGeometry') { o.geometry.computeBoundingBox(); e.lb = o.geometry.boundingBox.clone(); e.inv = o.matrixWorld.clone().invert(); e.sc = Math.cbrt(Math.abs(o.matrixWorld.determinant())) || 1; }   /* the exact box, for seats */
     out.push(e); }
     if (o.isInstancedMesh && o.visible && !o.isSkinnedMesh && (SOLID.has(o.geometry.type) || !isCard(o.material))) {   /* each drawn copy of an instanced shape (tree trunks, huts, whole trees, rocks) is kept aside, for the overlap check (solid shapes only) and the bodies check (auditBodies) */
       if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const m4 = new THREE.Matrix4(), mat = [].concat(o.material)[0];
       for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, m4); const mw = o.matrixWorld.clone().multiply(m4), b = o.geometry.boundingBox.clone().applyMatrix4(mw); if (!isFinite(b.min.x)) continue;
-        const e = { b, mat: mat.name || mat.type, geo: o.geometry.type, unlit: !!mat.isMeshBasicMaterial, flame: false, col: mat.color ? '#' + mat.color.getHexString() : '', top: o.uuid + '#' + k, inst: true, card: isCard(o.material), name: o.name || '', soft: !!o.userData.soft }; SHAPE.set(e, { geo: o.geometry, mw }); inst.push(e); } } });
+        const e = { b, mat: mat.name || mat.type, geo: o.geometry.type, unlit: !!mat.isMeshBasicMaterial, flame: false, col: mat.color ? '#' + mat.color.getHexString() : '', top: o.uuid + '#' + k, inst: true, card: isCard(o.material), name: o.name || '', soft: !!o.userData.soft }; SHAPE.set(e, { geo: o.geometry, mw });
+        if (o.geometry.type === 'BoxGeometry') { e.lb = o.geometry.boundingBox.clone(); e.inv = mw.clone().invert(); e.sc = Math.cbrt(Math.abs(mw.determinant())) || 1; }   /* the exact box, for seats: a hall's rows of chairs are instanced copies */
+        inst.push(e); } } });
   out.inst = inst; return out;
 }
 
@@ -247,6 +250,19 @@ export function auditHeld(id, body, items) {
   return out;
 }
 
+/* The same check through the whole of the clip a person is playing: auditHeldClip(id, body, items, { poses, after }). It starts at the clip's first moment and looks at
+   `poses` evenly spaced moments (48: about every 5 cm of a swinging hand), so the answer is the same on every run. Five games used to copy a loop of 12 moments that
+   started wherever the clip happened to be, and a case that brushed a thigh for a twentieth of a gesture was found on some runs and not on others (Eventide,
+   17 November 2026). after(body) is what the game does after each animation step (gripTick). Each line names the clip. */
+export function auditHeldClip(id, body, items, { poses = 48, after = null } = {}) {
+  const ac = body.userData.anim, found = new Set(); if (!ac || !ac.cur || !ac.mx) return auditHeld(id, body, items);
+  ac.mx.update(0.6);   /* let a cross-fade from the last clip finish first, or every moment would be a blend of two clips */
+  const clip = ac.cur.getClip(), t0 = ac.cur.time;
+  for (let k = 0; k < poses; k++) { ac.cur.time = clip.duration * k / poses; ac.mx.update(0); if (after) after(body); for (const l of auditHeld(id, body, items)) found.add(l + ' (in ' + clip.name + ')'); }
+  ac.cur.time = t0; ac.mx.update(0); if (after) after(body);
+  return [...found];
+}
+
 /* People: npcs [{ id, x, z, ground, anim, path }]. Standing people need 0.65 m between them, seated people 0.4 m. A walking person's loop (path) is sampled
    every half metre and checked against everyone who stands still. start {x, z} is where the player appears. */
 export function auditPeople(npcs, start) {
@@ -334,6 +350,7 @@ export function auditGarments(id, body) {
      - faces the back of a seat (a thin, tall board close in front of them).
    stats (optional array) collects one line per person, for tuning. */
 export function auditSeated(id, body, snap, ground = 0, stats) {
+  if (snap.inst && snap.inst.some((m) => m.lb)) snap = snap.concat(snap.inst.filter((m) => m.lb));   /* rows of chairs drawn as instanced boxes are seats too (Garvey's Liberty Hall: people on them were reported as sitting on nothing) */
   anchorSeat(body); body.updateMatrixWorld(true); const out = [], pts = [], v = new THREE.Vector3(), hb = body.getObjectByName('mixamorigHips'); if (!hb) return out;
   body.traverse((o) => { if (!o.isSkinnedMesh || !o.visible || !o.geometry.attributes.position) return; o.skeleton.update(); const n = o.geometry.attributes.position.count, step = Math.max(1, Math.floor(n / 500)); for (let i = 0; i < n; i += step) { o.getVertexPosition(i, v); pts.push(v.clone().applyMatrix4(o.matrixWorld)); } });
   if (!pts.length) return out;

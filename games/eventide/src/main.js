@@ -20,7 +20,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { boy: 2, girl: 2, man_elder: 2, man_shirt: 2, man_suit: 2, man_work: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough, auditBodies, auditVehicles, auditGarments, auditHanging, hiddenWith } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditThrough, auditBodies, auditVehicles, auditGarments, auditHanging, hiddenWith } from '../../../engine/audit.js';
 import { G, makeSky, ease, rng, batchStatic } from './gfx.js';
 import { hamper, bucket, suitcase } from './props.js';
 import { foldedBlanket, drapeBlanket } from './blanket.js';
@@ -362,7 +362,7 @@ function showLine() {
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(c); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
-  const ac = talkWith && talkWith.ctl; if (ac && !(talkWith.m.userData.held || []).length) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
+  const ac = talkWith && talkWith.ctl; if (ac) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
 }
 function choose(c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
@@ -671,9 +671,9 @@ function devViews() {
     const only = q.has('ch') ? +q.get('ch') - 1 : -1;   /* &ch=5 checks one chapter and leaves it on the screen */
     for (let i = 0; i < SCENES.length; i++) { if (only >= 0 && i !== only) continue; await beginChapter(i); resetTransient(); if (!SC.life) { o.push('chapter ' + (i + 1) + ': no crowd'); continue; } const r = ambientTest(SC.life, { story: () => SC.people.filter((n) => n.m.visible) }), n = +(r.match(/^AMBIENT (\d+)/) || [0, 0])[1]; bad += n; o.push('chapter ' + (i + 1) + ': ' + r.split('\n').filter(Boolean).slice(0, 8).join('\n  ')); }
     const el = $('autolog') || document.body.appendChild(Object.assign(document.createElement('pre'), { id: 'autolog' })); el.textContent = ['AMBIENT ' + bad, ...o].join('\n'); document.title = 'AMBIENT ' + bad; })();
-  if (q.get('test') === 'held') (async () => {   /* every carried thing, in every chapter: at the hand, upright, clear of the body, in twelve poses */
+  if (q.get('test') === 'held') (async () => {   /* every carried thing, in every chapter: at the hand, upright, clear of the body, through the whole clip (engine/audit.js auditHeldClip) */
     const o = []; let n0 = 0; startGame(true);
-    for (let i = 0; i < SCENES.length; i++) { await beginChapter(i); resetTransient(); for (const n of SC.npcs) if (n.m.userData.held && n.m.userData.held.length) { n0++; const ac = n.m.userData.anim, found = new Set(); for (let pose = 0; pose < 12; pose++) { ac.mx.update(ac.cur.getClip().duration / 12); gripTick(n.m); for (const l of auditHeld(n.id || n.base, n.m, n.m.userData.held)) found.add(l); } for (const l of found) o.push('chapter ' + (i + 1) + ': ' + l); } }
+    for (let i = 0; i < SCENES.length; i++) { await beginChapter(i); resetTransient(); for (const n of SC.npcs) if (n.m.userData.held && n.m.userData.held.length) { n0++; const found = auditHeldClip(n.id || n.base, n.m, n.m.userData.held, { after: gripTick }); for (const l of found) o.push('chapter ' + (i + 1) + ': ' + l); } }
     const c = o.length; o.unshift('held items: ' + c + ' issues, ' + n0 + ' people carry something'); out('HELD ' + c, o); })();
   if (q.get('test') === 'follow') {   /* ?test=follow : you walk the real route with Gran, with stops and a turn back into her, and her is watched (engine/follow.js, watch): too close (inside the
        personal space), inside a wall or a solid shape (engine/audit.js auditBodies), or left far behind. Expect 0. */

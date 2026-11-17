@@ -13,7 +13,10 @@ const root = process.cwd(),
   out = path.resolve("build/selassie-people");
 mkdirSync(out, { recursive: true });
 mkdirSync("games/selassie/site/models", { recursive: true });
-const wanted = process.argv.slice(2),
+/* --repack (or REPACK=1): pack again from the bodies already built in build/selassie-people, with no Blender (after a change to tools/people/pack.mjs).
+   BPY_PYTHON=~/venv/bin/python3 runs the builder through the bpy module instead of a Blender binary (BLENDER_BIN, default "blender"). */
+const REPACK = process.argv.includes("--repack") || process.env.REPACK === "1";
+const wanted = process.argv.slice(2).filter((a) => !a.startsWith("--")),
   recipes = readdirSync("tools/selassie/people").filter(
     (n) =>
       n.endsWith(".json") &&
@@ -23,10 +26,15 @@ const wanted = process.argv.slice(2),
    (17 November 2026), so a crowd need not put one face side by side (engine/faces.js). Only the joined crowd and phone copies are kept: variants are
    background people. VARIANTS_ONLY=1 builds just the variants and leaves the recipe's own five copies as they are; VARIANTS_ONLY=new builds only variants that have no file yet. */
 function buildOne(recipe) {
-  const log = path.join(out, recipe.name + ".log");
+  if (REPACK) {
+    const missing = ["", "_crowd"].map((t) => path.join(out, recipe.name + t + ".glb")).filter((f) => !existsSync(f));
+    if (missing.length) { console.error("--repack: no built body to pack for " + recipe.name + " (" + missing.join(", ") + "). Build it once with Blender first."); process.exit(1); }
+    return;
+  }
+  const log = path.join(out, recipe.name + ".log"), script = path.resolve("tools/selassie/build_person.py"), bpy = process.env.BPY_PYTHON;
   const r = spawnSync(
-    process.env.BLENDER_BIN || "blender",
-    ["--background", "--python-exit-code", "1", "--python", path.resolve("tools/selassie/build_person.py"), "--", JSON.stringify(recipe)],
+    bpy || process.env.BLENDER_BIN || "blender",
+    bpy ? [script, "--", JSON.stringify(recipe)] : ["--background", "--python-exit-code", "1", "--python", script, "--", JSON.stringify(recipe)],
     { env: { ...process.env, NPC_OUT: out + "/" }, encoding: "utf8", maxBuffer: 16e6 },
   );
   writeFileSync(log, (r.stdout || "") + (r.stderr || ""));
@@ -66,29 +74,7 @@ for (const name of recipes) {
     buildVariants(recipe);
     continue;
   }
-  const log = path.join(out, recipe.name + ".log");
-  const r = spawnSync(
-    process.env.BLENDER_BIN || "blender",
-    [
-      "--background",
-      "--python-exit-code",
-      "1",
-      "--python",
-      path.resolve("tools/selassie/build_person.py"),
-      "--",
-      JSON.stringify(recipe),
-    ],
-    {
-      env: { ...process.env, NPC_OUT: out + "/" },
-      encoding: "utf8",
-      maxBuffer: 16e6,
-    },
-  );
-  writeFileSync(log, (r.stdout || "") + (r.stderr || ""));
-  if (r.status !== 0) {
-    console.error(readFileSync(log, "utf8").slice(-6000));
-    process.exit(r.status || 1);
-  }
+  buildOne(recipe);
   const p = spawnSync(
     process.execPath,
     [

@@ -5,6 +5,7 @@
    The character must already be posed (its mixer updated once). The item's origin is its bottom centre; handleY is the height of its handle above that.
    engine/audit.js (auditHeld) checks the result: at the hand, upright, clear of the body. */
 import * as THREE from 'three';
+import { calmHands } from './anim.js';
 
 const wp = (b) => b.getWorldPosition(new THREE.Vector3()), wq = (o) => o.getWorldQuaternion(new THREE.Quaternion());
 function turnWorld(bone, axis, angle) {   /* turn a bone about an axis given in world space */
@@ -23,7 +24,7 @@ function bindQuaternion(model, bone) {
   });
   return result;
 }
-export function grip(model, side, obj, { handleY = 0.4, scale = 1, yaw = 0, lift = 0.2, curl = 1, straighten = 0 } = {}) {
+export function grip(model, side, obj, { handleY = 0.4, scale = 1, yaw = 0, lift = 0.2, curl = 1, straighten = 0, hangs = null } = {}) {
   const B = (n) => model.getObjectByName('mixamorig' + side + n), hand = B('Hand'), arm = B('Arm'); if (!hand) return null;
   model.updateMatrixWorld(true);
   const idx = B('HandIndex1'), mid = B('HandMiddle1'), pky = B('HandPinky1'), th = B('HandThumb2') || B('HandThumb1'), g = { side, hand, arm, lift: 0, fingers: [], wrap: null, armQ: new THREE.Quaternion(10, 0, 0, 0) };
@@ -49,8 +50,11 @@ export function grip(model, side, obj, { handleY = 0.4, scale = 1, yaw = 0, lift
   /* the handle sits inside the closed fingers: half way between the knuckle and the fingertip of the middle finger */
   const tip = B('HandMiddle3'), gp = mid && tip ? wp(mid).lerp(wp(tip), 0.5) : wp(hand), bs = hand.getWorldScale(new THREE.Vector3()).x || 1;
   const wrap = new THREE.Group(); hand.add(wrap); wrap.position.copy(hand.worldToLocal(gp.clone())); wrap.scale.setScalar(scale / bs); wrap.quaternion.copy(wq(hand)).invert().multiply(wq(model));
+  { const bx = new THREE.Box3().setFromObject(obj); g.hangs = hangs !== null ? !!hangs : (bx.isEmpty() ? false : handleY - bx.min.y > bx.max.y - handleY); }   /* more of it below the handle than above: it hangs from the hand */
   obj.userData.gripHandle=[0,handleY,0]; obj.position.set(0, -handleY, 0); obj.rotation.y = yaw; wrap.add(obj); g.wrap = wrap; g.armQ.copy(arm ? arm.quaternion : g.armQ);
-  (model.userData.grips = model.userData.grips || []).push(g); model.updateMatrixWorld(true); return wrap;
+  (model.userData.grips = model.userData.grips || []).push(g); model.updateMatrixWorld(true);
+  calmHands(model);   /* someone who stood on a talking clip stands on the Idle now: the hand that holds this does not gesture (engine/anim.js) */
+  return wrap;
 }
 /* spreadArms(model, angle): hold both arms a little further from the body than the animation does, so hands do not sink into a wide skirt or a jacket.
    Uses the same per-frame gripTick. */

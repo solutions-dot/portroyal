@@ -17,7 +17,9 @@ const out = path.resolve("build/windrush-people"),
   models = "games/windrush/site/models";
 mkdirSync(out, { recursive: true });
 mkdirSync(models, { recursive: true });
-const wanted = process.argv.slice(2),
+/* --repack (or REPACK=1): pack again from the bodies already built in build/windrush-people, with no Blender (after a change to tools/people/pack.mjs). */
+const REPACK = process.argv.includes("--repack") || process.env.REPACK === "1";
+const wanted = process.argv.slice(2).filter((a) => !a.startsWith("--")),
   recipes = readdirSync("tools/windrush/people").filter(
     (n) =>
       n.endsWith(".json") &&
@@ -38,7 +40,9 @@ for (const name of recipes) {
   const log = path.join(out, recipe.name + ".log"),
     script = path.resolve("tools/windrush/build_person.py"),
     bpy = process.env.BPY_PYTHON;
-  const r = spawnSync(
+  const built = ["", "_crowd"].map((t) => path.join(out, recipe.name + t + ".glb"));
+  if (REPACK && !built.every((f) => existsSync(f))) { console.error("--repack: no built body to pack for " + recipe.name + " (" + built.filter((f) => !existsSync(f)).join(", ") + "). Build it once with Blender first."); process.exit(1); }
+  const r = REPACK ? { status: 0, stdout: "repacked from the built body, no Blender\n", stderr: "" } : spawnSync(
     bpy || process.env.BLENDER_BIN || "blender",
     bpy
       ? [script, "--", JSON.stringify(recipe)]
