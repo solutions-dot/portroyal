@@ -171,3 +171,12 @@ Results from 16 November 2026 (branch `claude/selassie-likeness`, merged with th
 - Recoloured crowd clothes keep the recipe's light and dark grain, so a few shirts and dresses show a lighter collar or a second tone.
 - Not confirmed and so not shown: official street decorations downtown, the exact bus livery and blind wording in 1966, any real newspaper headline.
 - The earlier walking diagnostics (child and Selassie loops in the shared `Walk`) are unchanged; Selassie does not walk in the cinematic.
+
+## Look-alikes in the crowd (17 November 2026)
+
+The crowd had two bodies outside the airport (one man, one woman) and six at it, so the same face stood beside itself everywhere: `?test=audit` now prints `FACES <place> <count>` (`faceCheck`, `engine/faces.js`), and it found 142 pairs (airport 102, memory 12, yard 10, downtown 10, parade 4, road 3, lane 1).
+
+- **More faces.** Nine recipes list `"variants"`: the crowd man and woman and the Rastafari woman have three more faces each, the Rastafari elder, younger man and man in the tam, the girl, the boy and the 1930 vendor two more each (21 bodies). `tools/selassie/build-people.mjs` builds them as joined crowd and phone copies only (`<name>_b_crowd.js`, `<name>_b_phone.js`): about 2.6 MB of crowd copies or 1.9 MB of phone copies in all, and a place fetches only the ones it uses. `VARIANTS_ONLY=1` builds just the variants; `VARIANTS_ONLY=new` only those with no file yet.
+- **The spread.** `buildWorld` in `main.js` calls `spreadBodies` before the bodies load: no two copies of one body and face within 3 m, measured over where each one strolls. At the airport and in mixed crowds a person with no face left takes another crowd body of the same sex (the clothes' colours stay); a stroller with no face left stays and watches. The family keeps its own bodies, and nobody in the crowd uses them.
+- **Memory (1930).** Each stroller keeps to its own stretch of the lane.
+- **Left out on purpose**: the police line (one squad in uniform).

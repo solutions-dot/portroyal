@@ -129,3 +129,7 @@ The storm levels (`SB_GROAN`, `SB_LIGHT`, `SB_PEAK`) live in `main.js` and the t
 8. **Sound** is measured (`?test=sound`, 0 problems) but still not heard. A person needs to play it once with speakers and a phone and say what is wrong: the helicopter and the chainsaw are the likeliest to need a nudge, and the levels were set by numbers, not by ear.
 9. **`docs/ARCHITECTURE.md`**: the menu card (with its picture) and the `CLAUDE.md` index line are done; the ARCHITECTURE.md mention is left. The menu picture shows the village road at dusk and does not yet show Charlie or the Kingston street.
 10. **Phones.** Rain and sway cost little (one set of lines, one set of points), but measure with `?shot=y25a&stats` and on a real phone.
+
+## Look-alikes (17 November 2026)
+
+`?test=audit` now runs the look-alike check (`placeFaces`, `engine/faces.js`) in every place: 3 lines before (two workmen in the 1951 yard, Simone beside a helper on her own body in the hall, two elder women after the storm), 0 now. `ensurePlace` in `main.js` calls `spreadBodies`, which gives each background person one of the body's three faces (the light copies were already in `site/models`). The other 17 lines of `?test=audit` are scenery that overlaps, from before this change.

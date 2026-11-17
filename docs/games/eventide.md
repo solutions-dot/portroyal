@@ -274,3 +274,7 @@ Decided by the owner on 13 Nov 2026: items 1 to 3, and the storyline as a whole,
 ## Checks before shipping
 
 `docs/TESTING.md`: screenshots of every place, the autoplayer for every chapter, the phone layout, a reading-level pass, a facts check against this file, and the review step in "How the fire is told", rule 11.
+
+## Look-alikes (17 November 2026)
+
+`?test=audit` now runs the look-alike check (`placeFaces`, `engine/faces.js`) in every chapter: 27 lines before (the guard of honour of women in navy, mourners in the park, people on Slipe Road), 0 now. `loadScene` in `main.js` calls `spreadBodies`, which gives each background person one of the body's three faces (the light copies `<base>_b_lo`, `<base>_c_lo` were already in `site/models`, so nothing new is downloaded). Background women on the `woman57` body now use the light copy like everyone else (the pattern in `loadScene` had left that body out, so they were full bodies with one face). A man in shirtsleeves who carries a case is a full body with one face; if another stands beside him he takes another of the crowd's three men's bodies. `?test=held` reports 4 lines (5 before this change; all are a case or basket against a thigh in chapter 1, an older fault).

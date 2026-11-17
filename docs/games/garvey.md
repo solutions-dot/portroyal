@@ -309,3 +309,7 @@ The three ships out in the water in chapter 5 (`dShip` in `main.js`) were boxes 
 ## Checks before shipping
 
 Follow `docs/TESTING.md`: screenshots of every new place next to a reference photograph, the autoplayer for every chapter, the phone layout, a reading-level pass, and a facts check against this file.
+
+## Look-alikes (17 November 2026)
+
+`?test=audit` now runs the look-alike check (`faceCheck`, `engine/faces.js`) on the story people and the background people of every place: two people with one body and face within 2.5 m. Marcus Garvey in his two suits counts as one man. It found one pair, the park guide and the visitor who strolls past her (both `guide2020`): 1 before, 0 now. The visitor uses `guide2020_b`, the guide's body with another face (the full copy built by `tools/people/rebuild.mjs`, `FULL_VARIANTS.garvey`; about 410 KB, fetched only in the park). `fitPace` reads a variant's pace from its body. The other background people already use other chapters' bodies, placed apart.

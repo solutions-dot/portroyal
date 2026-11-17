@@ -244,7 +244,8 @@ function memory() {
       look: i,
       behaviour: {
         kind: "wander",
-        area: i % 2 ? [-5.5, -14, -3.7, 12] : [4, -14, 5.5, 12],
+        // each strolls its own stretch of the lane, so two people with one face do not walk through each other (engine/faces.js)
+        area: i % 2 ? [-5.5, Math.max(-14, -16.2 + i * 3.5), -3.7, Math.min(12, -9.8 + i * 3.5)] : [4, Math.max(-14, -16.2 + i * 3.5), 5.5, Math.min(12, -9.8 + i * 3.5)],
         pause: [1, 3],
       },
     });

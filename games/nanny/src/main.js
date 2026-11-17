@@ -1,4 +1,4 @@
-import { spreadBodies } from '../../../engine/faces.js';
+import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { maroon_man: 2, maroon_scout: 2, maroon_woman: 2, maroon_girl: 2, maroon_boy: 2, redcoat: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/nanny/src/main.js: Nanny Town 1734, The Narrow Path.
@@ -815,6 +815,7 @@ function auditPlace(P) {
   const hides = new Set(((P.spots && P.spots.cover) || []).map((c) => c.uuid)), bodySkip = (e) => hides.has(e.top);   /* the bushes the Maroons hide in on purpose (chapter 4) */
   for (const st of phases) { const here = P.npcs.filter((n) => !n.when || (st >= n.when[0] && st <= n.when[1])), routes = auditRoutes(P).filter((r) => st >= r.when[0] && st <= r.when[1]);
     const r = auditPlaceE({ id: P.id, snap: P.snap, groundAt: (x, z) => P.G.h(x, z), npcs: here.map((n) => ({ id: n.id || n.base, x: n.column !== undefined ? n.x : n.hx, z: n.column !== undefined ? n.z : n.hz, anim: n.anim, ground: n.m.userData.ground || 0, path: n.path, fixedGround: n.fixedGround, h: tallOf(n), r: bodyR(n) })), routes, bodySkip, walls: P.walls, bounds: P.bounds, start: P.start, actions: P.actions, people: here.filter((n) => !n.extra).map((n) => ({ id: n.id, x: n.hx, z: n.hz, anim: n.anim })) });
+    r.inside.push(...placeFaces(here));   /* look-alikes: two people with one body and face close together (engine/faces.js) */
     /* The engine calls everywhere you may not walk a "walking wall". Here that is open hillside, and background figures stand on it on purpose (the Maroons beside the path).
        So that one line is kept only for people you talk to; they are also checked just below against the ground you can walk on. */
     const bg = new Set(here.filter((n) => n.extra).map((n) => n.id || n.base));

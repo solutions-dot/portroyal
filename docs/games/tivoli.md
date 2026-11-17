@@ -465,3 +465,12 @@ The owner said Tivoli "does not play like the other games, has a different contr
 ## Modern clothes (17 November 2026)
 
 The owner asked for more modern clothes for some men in the present-day chapters. Two new bodies, `youth2010` and `man2010` (`tools/tivoli/people/`), wear a long, loose T-shirt worn untucked over cut-off jeans that end at the knee (`untucked` and `shortslen` in the builder; the owner found the first, tucked version not modern enough) and suede crepe-soled shoes of the Clarks Wallabee and Desert Boot kind, which Vybz Kartel's 2010 song "Clarks" made the fashion in Kingston that year (the owner's "bank robbers"). No brand mark is drawn. Andre the painter and six background men in chapters 4, 7 and 8 use them. Checks after: audit 0, ambient 0, held 0.
+
+## Look-alikes (17 November 2026)
+
+No two people with one face stand or walk side by side (`docs/PEOPLE.md`, section 5b).
+
+- **Story people who borrowed one body now have their own faces.** A look in `cast.js` may name `variant` (`_b`, `_c`): Mr Clarke and Pastor Grant are no longer Mass Roy's face, Miss Dawn is not Miss Pearl's, Coach Davis is not Mr Brown's, and Kemesha is not young Ivy's. The bodies are the full face variants already in `site/models` (`man_elder_b`, `man_elder_c`, `woman_elder_b`, `civilian2010_b`, `girl_b`), so nothing new is downloaded. Ivy keeps one face at every age. `bodyOf(look)` gives the file a look uses.
+- **Background people** (`life.js`, `lifeBodies`): `spreadBodies` now counts each person's whole walk (the walker who crosses the lane past the man at the cart), and a young man with no face left takes another young man's body (`youth2010`, `man2010`, `civilian2010` wear the same pieces).
+- **The check**: `?test=audit` runs `faceCheck` on the story people and the background people of every walking chapter. `?test=ambient` look-alike lines: 1 before (2 with the check counting the nearest two people came), 0 now. `?test=audit`: 0.
+- **Left out on purpose**: the soldiers and police of the May 2010 street scene. They are squads in one uniform and helmet, seen from across the street, and are meant to look alike. Giving them faces would need variants of `soldier2010` and `police2010` (four more full bodies and four light copies). Ask the owner before adding them.

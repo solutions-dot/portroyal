@@ -32,7 +32,7 @@ import { makeSky, G, batchStatic, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
 import { CAST, crowdLook } from "./cast.js";
 import { spreadBodies } from "../../../engine/faces.js";
-const FACE_VARIANTS = { sel_crowdman66: 3, sel_crowdwoman66: 3, sel_rastaman66: 2, sel_rastatam66: 2, sel_rastaelder66: 2, sel_rastawoman66: 3, sel_boy66: 2, sel_girl66: 2 }; // how many more faces each crowd body has
+const FACE_VARIANTS = { sel_crowdman66: 3, sel_crowdwoman66: 3, sel_rastaman66: 2, sel_rastatam66: 2, sel_rastaelder66: 2, sel_rastawoman66: 3, sel_boy66: 2, sel_girl66: 2, sel_vendor30: 2 }; // how many more faces each crowd body has
 const CROWD_MEN = ["sel_crowdman66", "sel_rastaman66", "sel_rastatam66", "sel_rastaelder66"],
   CROWD_WOMEN = ["sel_crowdwoman66", "sel_rastawoman66"];
 import { actions } from "./life.js";

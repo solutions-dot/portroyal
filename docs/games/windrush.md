@@ -158,3 +158,7 @@ The menu thumbnail uses `menu/windrush-ship.jpg`, captured from the game with `?
 ### Kingston quay artwork correction, 16 November 2026
 
 The current menu artwork is `menu/windrush-kingston-quay.jpg`, captured from `?shot=quay`. It replaces the distant offshore ship view mentioned above. The opening camera uses the same quay composition and moves gently while the title is open. Reduced motion holds the camera still. Ship geometry, people and saved progress are unchanged.
+
+## Look-alikes (17 November 2026)
+
+`?test=audit` now prints `FACES <place> <count>` for every place (`faceCheck`, `engine/faces.js`: two people with one body and face within 2.5 m, the family and the background people together). It reports 0 in all nine places, before and after: every place gives each of its background people a different body (at most eleven people, eleven bodies), so no face spreading was needed and no variants were built. If a place gets a second person on one body, add `"variants"` to that recipe and a variants step to `tools/windrush/build-people.mjs` as in `tools/selassie/build-people.mjs`, and call `spreadBodies` in `buildWorld`.

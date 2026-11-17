@@ -331,3 +331,7 @@ Fictional people get first names or nicknames only, so no one can be mistaken fo
 3. Chapter 4 (the morning), then 5 (today).
 4. Chapter 1 (the 1899 flashback), which needs the Kingston street and the tram.
 5. Polish: reading level, facts check, phone layout, sound, menu card, all the autoplayers.
+
+## Look-alikes (17 November 2026)
+
+The yard, the station, Kingston and the ruins had the same face side by side: the workmen (`hl_worker`), the youths (`nb_youth`) and the women (`woman1914`), and Rudy beside workmen on his own body. `?test=audit` now runs the look-alike check (`placeFaces`, `engine/faces.js`): 13 lines before, 0 now. The three recipes list `"variants"`, so `tools/people/rebuild.mjs` built two more faces of each as light copies (`<name>_b_lo.js`, `<name>_c_lo.js`, six files, about 1.0 MB together, each fetched only where it is used), and `ensurePlace` in `main.js` calls `spreadBodies` so no two copies with one face are within 4 m; story people keep the body's own face. The workmen still wear the same work clothes, as they should.

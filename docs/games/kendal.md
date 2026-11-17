@@ -168,3 +168,7 @@ What this pass checked and changed (branch `claude/kendal-par`):
 6. **Memory on phones.** The first load fetches about 3 MB of characters; later chapters load in the background. Consider splitting `anims.js`.
 7. **The 1957 train's coach count in the station** is 12, but each coach is 11 m (real ones were longer). The platform is shorter than the real one.
 8. **Accessibility.** The crash can be skipped, but there is no setting to turn off screen shake. Add one.
+
+## Look-alikes (17 November 2026)
+
+No two people with one face stand or walk side by side (`docs/PEOPLE.md`, section 5b). `ensurePlace` in `main.js` calls `spreadBodies` (`engine/faces.js`) after `lifeFor`, so each background person's whole walk is counted, not only where they start. Three fallbacks when a body's three faces run out: a girl becomes the smaller girl's body (`girl` and `girl_small` wear the same pieces), a wanderer or someone on an errand stays and watches instead (`settle` in `life.js`), and children chase only the nearest child within 12 m (a chaser used to cross the whole platform after a far partner and meet every child on the way). `?test=audit` now also runs the look-alike check on the story people and extras of every place (`placeFaces`). `?test=ambient`: 4 look-alike lines before (8 with the check counting the nearest two people came in the whole run), 0 now. `?test=audit`: 0. `?faces=woman57` on any dev URL prints who got which face and the box each one stays in.
