@@ -47,7 +47,8 @@ export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() :
   c.tracks = c.tracks.filter((t) => { if (t.name.endsWith('.scale')) return false; if (!t.name.endsWith('.position')) return true; if (!keepHips || !/Hips/.test(t.name)) return false;
     const v = t.values; let x0 = v[0], z0 = v[2]; if (SEATED.test(name) && CL.Idle) { const it = CL.Idle.tracks.find((k) => k.name === t.name); if (it) { x0 = it.values[0]; z0 = it.values[2]; } }   /* seated clips: keep the hips over the spot we put him, not where the clip wandered to */
  for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } return true; });   /* running stays in place; the game moves her */
-  if (!SEATED.test(name)) posture(c, name);   /* seated clips keep the pose they were tuned in: their hands rest on the lap, and moving the chest pushed the fingers into the thighs (the cloth check, Garvey, 16 November 2026) */
+  if (!SEATED.test(name)) posture(c, name);
+  if (STANDING.test(name) && name !== 'Idle' && !GRIPS.test(name)) relaxHands(c);   /* seated clips keep the pose they were tuned in: their hands rest on the lap, and moving the chest pushed the fingers into the thighs (the cloth check, Garvey, 16 November 2026) */
   if (SEAM.test(name)) seamLoop(c);
   const damp = BOW[Object.keys(BOW).find((k) => new RegExp(k).test(name)) || ''];   /* clips whose neck bows so far that a collar stands off the nape: the neck and head turn only part of the way from standing */
   if (damp && CL.Idle) for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const k = m ? damp[m[1]] : undefined; if (k === undefined) continue; const it = CL.Idle.tracks.find((x) => x.name === t.name); if (!it) continue;
@@ -127,7 +128,15 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
     tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } else fidget(this, m, dt); } };
   lapSetup(m); if (LAP.get(m)) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
   if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
-  m.userData.anim = ctl; return ctl; }
+  curlFingers(m); m.userData.anim = ctl; return ctl; }
+/* Fingers at rest (owner, 17 November 2026: spiky, claw-like fingers). The clips keep only each finger's knuckle (tools/anims/clean_clips.mjs drops joints 2 to 4 to
+   save space), so the knuckle bent with the clip while the rest of the finger stayed dead straight. No clip moves those joints, so each body gets a gentle curl in
+   them once, here, for every game. FINGER_AXIS and FINGER_CURL are the bend (checked by eye on a hand close up). */
+export const FINGER_CURL = { 2: 0.32, 3: 0.24 }, FINGER_AXIS = new THREE.Vector3(+(globalThis.__fingerAxis || 'z') === 'x' ? 1 : 0, 0, 0);
+const CURLED = new WeakSet();
+function curlFingers(m) { if (CURLED.has(m)) return; CURLED.add(m); const ax = (globalThis.__fingerAxisV || null), q = new THREE.Quaternion();
+  m.traverse((b) => { if (!b.isBone) return; const k = /Hand(Index|Middle|Ring|Pinky)([23])$/.exec(b.name); if (!k) return; const a = FINGER_CURL[k[2]] * (globalThis.__fingerSign || 1);
+    q.setFromAxisAngle(ax || new THREE.Vector3(0, 0, 1), /Left/.test(b.name) ? -a : a); b.quaternion.multiply(q); }); }
 /* Anyone standing on a plain idle now and then looks round or turns the head, once, and goes back to the idle (owner, 17 November 2026: "ensure variety in idle animation,
    across all games ... they have this zombie look ... including old people"). Every game gets it from here (rule 10). Not for people the crowd code runs (it has its own
    idles, engine/ambient.js), people holding something (the item must stay in the hand), or a body marked userData.still. An old person (userData.elder, set by the crowd
@@ -139,6 +148,15 @@ function fidget(c, m, dt) {
   const bn = c.base.getClip().name; if (!FIDGET_BASE.test(bn)) return;
   const list = (m.userData.elder ? ['OldIdle', 'LookAround'] : ['LookAround', 'HeadTurn']).filter((k) => k !== bn && CL[k]); if (list.length) c.play(list[(Math.random() * list.length) | 0], true);
 }
+/* Hands at rest (owner, 17 November 2026: hands like claws on a talking woman). Mixamo's talking and gesture clips curl and spread the fingers hard; the plain Idle's hand
+   hangs relaxed. Each finger of a standing clip is eased 60 per cent of the way to the Idle's hand, so a gesture still moves the hand but never makes a claw.
+   Clips that hold something (GRIPS) keep their own fingers. One place for every game. */
+const GRIPS = /Carry|Briefcase|Torch|Rifle|Pistol|Shoot|Drink|Write|Guitar|Piano|Sword|Box|Pray|Clap/;
+const HAND_REST = 0.6;
+function relaxHands(c) { const idle = CL.Idle; if (!idle) return; const q = new THREE.Quaternion(), r = new THREE.Quaternion();
+  for (const t of c.tracks) { const m = t.name.match(/mixamorig:?((Left|Right)Hand(Thumb|Index|Middle|Ring|Pinky)\d)\.quaternion$/); if (!m) continue;
+    const it = idle.tracks.find((k) => k.name === t.name); if (!it) continue; r.fromArray(it.values, 0); const v = t.values;
+    for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i).slerp(r, HAND_REST).toArray(v, i); } } }
 export const grounded = [];
 const TOES = new WeakMap(), SOLES = new WeakMap();   /* not in userData: clones copy userData as plain JSON, which would break the bone references */
 /* Where a foot touches the ground: the real lowest points of the shoe (or the bare foot), found once per body shape from its own vertices: the back of the heel, the ball of the foot and the tip of the toe.

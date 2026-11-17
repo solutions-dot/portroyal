@@ -313,3 +313,9 @@ Abba and Grace in Port Royal are builder bodies now (skin `[138, 93, 66]`, at th
 ## Flat collars sit clean at the throat (17 November 2026)
 
 The owner saw jagged collars. On a round collar the saw-tooth was the line where the neck skin dips under the blouse: `tuck_under_collar` pushed skin under the collar 8 mm point by point and left out the points right at its edge, so the skin's edge went in and out. The push is now feathered (1.5 mm at the collar's top edge, the full 8 mm 1.8 cm below it), and a round collar's two ends nearly meet at the throat (`a0` 0.05), so the blouse's neckline no longer shows between them as a notch. Applies to every round and camp collar (45 recipes, rebuilt the same day).
+
+## Hands keep their fingers when packed (17 November 2026)
+
+The owner saw spiky, claw-like fingers again. The cause was the packer: when the face was given its own share of triangles (`splitFaces`), the rest of the skin was cut harder and every finger collapsed into a long thin spike. `splitHands` in `tools/people/pack.mjs` now keeps the hands out of the general simplification too (80 per cent of their triangles on a full body, 35 per cent on a light copy), so fingers keep their shape. To bring a packer change to every game without Blender: `node tools/people/rebuild.mjs --repack` packs again from the bodies already built in `build/people-all/`. The sheet tool has a close-up hand view (`views=hand,handfront,handback`).
+
+In `engine/anim.js` the fingers of talking and gesture clips are also eased toward the Idle's relaxed hand (`relaxHands`), and the finger joints no clip moves get a slight curl (`curlFingers`).

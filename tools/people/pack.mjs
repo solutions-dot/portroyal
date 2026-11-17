@@ -77,6 +77,27 @@ function splitFaces(doc, keep) {
   }
   return made;
 }
+/* the hands, like the face, are kept out of the general simplification (owner, 17 November 2026: "fingers ... we did it before ... this regression"). Since the face
+   got its own share of triangles (splitFaces), the rest of the skin was cut harder and every finger collapsed into a long spike. Triangles bound wholly to hand and finger
+   bones become their own piece, simplified gently (keep(n) triangles, never below 60 per cent on a full body), so fingers keep their shape in every game. */
+function splitHands(doc, keepFrac) {
+  const made = [];
+  for (const node of doc.getRoot().listNodes()) { const mesh = node.getMesh(), skin = node.getSkin(); if (!mesh || !skin) continue; const names = skin.listJoints().map((j) => j.getName());
+    const isHand = names.map((nm) => /Hand(Thumb|Index|Middle|Ring|Pinky)?\d?$/.test(nm || '') && /Hand/.test(nm || ''));
+    for (const p of mesh.listPrimitives()) { const mat = p.getMaterial(); if (!mat || !/^(Skin|Body)$/.test(mat.getName() || '')) continue; const J = p.getAttribute('JOINTS_0'), Wt = p.getAttribute('WEIGHTS_0'); if (!J || !Wt) continue;
+      const nV = J.getCount(), hand = new Uint8Array(nV), ej = [0, 0, 0, 0], ew = [0, 0, 0, 0];
+      for (let i = 0; i < nV; i++) { J.getElement(i, ej); Wt.getElement(i, ew); let w = 0; for (let k = 0; k < 4; k++) if (isHand[ej[k]]) w += ew[k]; hand[i] = w > 0.5 ? 1 : 0; }
+      const idx = p.getIndices().getArray(), inH = [], rest = []; for (let i = 0; i < idx.length; i += 3) (hand[idx[i]] && hand[idx[i + 1]] && hand[idx[i + 2]] ? inH : rest).push(idx[i], idx[i + 1], idx[i + 2]);
+      if (inH.length < 60 || !rest.length) continue;
+      let out = Uint32Array.from(inH); const target = Math.max(240, Math.floor(inH.length / 3 * keepFrac)) * 3;
+      if (target < out.length) { const pos = p.getAttribute('POSITION').getArray(); out = MeshoptSimplifier.simplify(out, pos instanceof Float32Array ? pos : Float32Array.from(pos), 3, target, 0.01, ['LockBorder'])[0]; }
+      const used = new Map(); for (const i of out) if (!used.has(i)) used.set(i, used.size);
+      const q = doc.createPrimitive().setMaterial(mat).setMode(p.getMode());
+      for (const sem of p.listSemantics()) { const A = p.getAttribute(sem), B = A.clone(), size = A.getElementSize(), src = A.getArray(), dst = new src.constructor(used.size * size); for (const [i, k] of used) for (let c = 0; c < size; c++) dst[k * size + c] = src[i * size + c]; q.setAttribute(sem, B.setArray(dst)); }
+      q.setIndices(doc.createAccessor().setType('SCALAR').setArray(Uint32Array.from(out, (i) => used.get(i))).setBuffer(p.getIndices().getBuffer()));
+      p.setIndices(p.getIndices().clone().setArray(Uint32Array.from(rest))); mesh.addPrimitive(q); made.push(q); } }
+  return made;
+}
 for (const n of names) {
   const make = async (ratioOf, light) => {
     const doc = await io().read(`${SRC}/${n}.glb`);
@@ -85,7 +106,7 @@ for (const n of names) {
     for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const mat = p.getMaterial(); if (!mat || !mat.getBaseColorTexture()) p.setAttribute('TEXCOORD_0', null); else for (const k of p.listSemantics()) if (/^COLOR_/.test(k)) p.setAttribute(k, null); }   /* the eyes are drawn from their picture alone: joined into a crowd body they were given black, clear vertex colours, and every eye in the crowd vanished */
     await doc.transform(weld(), prune({ keepAttributes: true, keepLeaves: true }));
     const t0 = tris(doc), ratio = ratioOf(t0), goal = t0 * ratio;
-    const faces = new Set(ratio < 0.98 ? splitFaces(doc, (nf) => goal > 20000 ? nf : Math.min(nf, Math.max(goal * 0.16, 720))) : []);   /* a full body keeps the whole face; a light copy gives it about a sixth of its triangles, and never fewer than 720 */
+    const faces = new Set(ratio < 0.98 ? [...splitFaces(doc, (nf) => goal > 20000 ? nf : Math.min(nf, Math.max(goal * 0.16, 720))), ...splitHands(doc, goal > 20000 ? 0.8 : 0.35)] : []);   /* the face and the hands keep their shape */   /* a full body keeps the whole face; a light copy gives it about a sixth of its triangles, and never fewer than 720 */
     for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) p.setAttribute('_FACE', null);
     await doc.transform(prune({ keepAttributes: false, keepLeaves: true }));
     if (ratio < 0.98) {   /* trim only the big pieces (skin, shirt, trousers, skirt): small ones such as a collar, a belt or a hat band fall apart if they are simplified, so they are kept whole */
