@@ -1,8 +1,8 @@
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/tivoli/src/main.js: Tivoli (West Kingston, from the 1960s to today, with May 2010 at the centre). Read docs/games/tivoli.md first.
    Started from games/_template/. It is on the menu (the owner's choice, 14 November 2026) while it is still being made.
-   Story: seven walking chapters and chapter 5 (the May 2010 street scene) are playable; see content.js, story.js, ch1.js, fight.js. The walking, looking and touch controls below are the
-   template's. Test views are dev only (docs/games/tivoli.md).
+   Story: seven walking chapters and chapter 5 (the May 2010 street scene) are playable; see content.js, story.js, ch1.js, fight.js. The controls, the HUD, the talk marks
+   and the helper arrow are the same as the other games' (17 November 2026, docs/games/tivoli.md). Test views are dev only.
    RULE for every game (CLAUDE.md rule 8): before the first PR, wire the automatic audits from engine/audit.js (floating objects, people in solids,
    unreachable spots, held items, overlapping people) and a layout test into the dev build, and fix everything they report.
    See docs/TESTING.md section 5 and games/kendal/src/main.js ("the place audit"). */
@@ -19,14 +19,20 @@ import { buildBackOWall } from './backowall.js';
 import { buildNewTivoli } from './newtivoli.js';
 import { buildStreet, streetPlace } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, after as talkAfter, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
-import { initStory, nextChapter, unlock as unlockPage } from './story.js';
-import { WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget } from './ch1.js';
+import { initStory, nextChapter, unlock as unlockPage, hasSave, saveProgress, openChapters, closeChapters, openJournal, closeJournal, closeCredits, panelOpen, eraseAll, flushToasts, saveData, loadData, isUnlocked } from './story.js';
+import { CHAPTERS, JOURNAL } from './content.js';
+import { headTop, markAt, NEAR_GAP } from '../../../engine/marks.js';
+import { walkRoute } from '../../../engine/placement.js';
+import { WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget, talkedNow, orderNow } from './ch1.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { lifeTest } from './life.js';   // dev only: ?test=ambient
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
 import { clipInfo, sceneCheck } from './scenecheck.js';
 import { strideOf, WALKS as WALK_CLIPS } from './walk.js';   // dev only: the street scene checks (?test=scene, ?test=clipinfo)
-import { auditCloth, auditWalk, skinProbe, overlapSolids, sinkCheck, CLOTH_SKIP } from './checks.js';   // dev only: the shared cloth, walk and skin checks (re-exported) and Tivoli's place checks
+import { auditCloth, auditWalk, skinProbe, overlapSolids, sinkCheck, CLOTH_SKIP } from './checks.js';
+import { checkAll, CHECKS } from '../../../engine/checks.js';   // dev only: ?test=all
+import { CHECK_TABLES, makeAdapter } from './checktables.js';   // dev only: Tivoli's hooks for ?test=all
+import { headCheck } from './headcheck.js';   // dev only: ?test=heads   // dev only: the shared cloth, walk and skin checks (re-exported) and Tivoli's place checks
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -56,35 +62,30 @@ function building(x, z, w, d, h, color) {
 }
 if (__DEV__) { building(-6, -8, 5, 4, 4, 0xb86a4a); building(1, -8, 5, 4, 5, 0xe0d4b8); building(8, -8, 5, 4, 4, 0x9a6a4a); building(-6, 8, 5, 4, 4, 0xe0d4b8); building(6, 8, 6, 4, 4.5, 0xb86a4a); }
 
-/* ---------- player state and movement ---------- */
+/* ---------- player state and movement: the same controls as every game (Kendal, Nanny Town, Windrush...) ----------
+   Keyboard: W A S D or the arrow keys walk (left and right arrows turn), Shift hurries, Space, Enter or E talks, Escape closes.
+   Touch: the left half of the screen is a joystick (a faint ring shows where it is), the right half drags to look, a tap on a person talks.
+   Mouse: drag to look, click a person to talk. (Until 17 November 2026 Tivoli had its own four-arrow pad instead of the joystick.) */
 const state = { x: 0, z: 4, yaw: 0, pitch: 0, started: false };   // yaw 0 looks toward -z
-const keys = new Set(); let busy = false;   // busy: a talk is open, so do not move
-addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys.add(k); if (k === 'escape') talkLeave(); useInteractionKey(e, () => { if (!$('dialogue').hidden) { talkNext(); return; } if (CH.on && state.started && !busy && Talk.near) { talkStart(Talk.near); return; } return false; }); });
+const isTouch = matchMedia('(pointer: coarse)').matches;
+const keys = new Set(); let busy = false;   // busy: a talk, a card or a panel is open, so do not move
+addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && state.started) e.preventDefault();
+  keys.add(k);
+  if (k === 'escape') { if (!$('dialogue').hidden) { talkLeave(); return; } closeJournal(); closeChapters(); closeCredits(); if (!$('chcard').hidden && CARD.dismiss) CARD.dismiss(); return; }
+  if (!state.started) return;
+  useInteractionKey(e, () => { if (!$('dialogue').hidden) { talkNext(); return; } if (CH.on && !busy && Talk.near) { talkStart(Talk.near); return; } return false; });
+});
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
-function clampPos(x, z) {   // keep inside the map and out of buildings (slide along walls)
-  x = Math.max(-35, Math.min(35, x)); z = Math.max(-35, Math.min(35, z));
+function clampPos(x, z) {   // keep inside the place's bounds (as Kendal) and out of buildings (slide along walls); ?test=all's map check found gaps out of chapters 1 and 4
+  const b = CH.on && CH.place && CH.place.bounds; if (b) { x = Math.max(b.x0 + 0.3, Math.min(b.x1 - 0.3, x)); z = Math.max(b.z0 + 0.3, Math.min(b.z1 - 0.3, z)); } else { x = Math.max(-35, Math.min(35, x)); z = Math.max(-35, Math.min(35, z)); }
   for (const [x0, z0, x1, z1] of WALLS) if (x > x0 && x < x1 && z > z0 && z < z1) { const dl = x - x0, dr = x1 - x, dt = z - z0, db = z1 - z, m = Math.min(dl, dr, dt, db); if (m === dl) x = x0; else if (m === dr) x = x1; else if (m === dt) z = z0; else z = z1; }
   return [x, z];
 }
-/* touch: left half of the screen is a joystick, right half drags to look; mouse drags to look */
-const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0 };
+const stick = { id: null, x0: 0, y0: 0, dx: 0, dy: 0 }, look = { id: null, x: 0, y: 0, moved: 0 };
 releaseOnBlur(keys, [stick, look]);
-/* On-screen direction buttons share the keyboard controls and release safely. */
-for (const button of document.querySelectorAll('#dpad [data-key]')) {
-  const key = button.dataset.key;
-  const release = (e) => { if (e) e.preventDefault(); keys.delete(key); button.classList.remove('pressed'); };
-  button.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    if (busy || !state.started) return;
-    keys.add(key); button.classList.add('pressed');
-    button.setPointerCapture(e.pointerId);
-  });
-  button.addEventListener('pointerup', release);
-  button.addEventListener('pointercancel', release);
-  button.addEventListener('lostpointercapture', release);
-}
 canvas.addEventListener('pointerdown', (e) => {
-  if (busy && Talk.open) { talkLeave(); return; }   // tapping the world while talking ends the talk
+  if (busy || FIGHT.on) return;
   if (e.pointerType === 'touch' && e.clientX < innerWidth / 2 && stick.id === null) { stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.dx = stick.dy = 0; }
   else { look.id = e.pointerId; look.x = e.clientX; look.y = e.clientY; look.moved = 0; }
   canvas.setPointerCapture(e.pointerId);
@@ -95,27 +96,185 @@ canvas.addEventListener('pointermove', (e) => {
 });
 const endPointer = (e) => {
   if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; }
-  if (e.pointerId === look.id) { if (look.moved < 8 && CH.on) { const n = tapNpc(e.clientX, e.clientY, state); if (n) talkStart(n); } look.id = null; }   // a tap (not a drag) on a person starts a talk
+  if (e.pointerId === look.id) { if (look.moved < 8 && CH.on && !busy) { const n = tapNpc(e.clientX, e.clientY, state); if (n) talkStart(n); } look.id = null; }   // a tap (not a drag) on a person starts a talk
 };
 canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
+function stickUI() {   /* the joystick ring: faint where your thumb rests, under your thumb while you walk */
+  const el = $('stick'); if (!isTouch || !state.started || busy || FIGHT.on || !CH.on) { el.hidden = true; return; }
+  el.hidden = false; const rest = stick.id === null; el.classList.toggle('rest', rest); el.style.left = (rest ? 84 : stick.x0) + 'px'; el.style.top = (rest ? innerHeight - 150 : stick.y0) + 'px'; $('nub').style.transform = `translate(calc(-50% + ${stick.dx * 30}px), calc(-50% + ${stick.dy * 30}px))`;
+}
 
-function setGoal(t) { $('goal').textContent = t; }
-let busyBy = 0; const setBusy = (b) => { busy = b; if (b) keys.clear(); };
+/* ---------- goal, controls tip, sound, cards ---------- */
+function setGoal(t) { const el = $('goal'); if (t && t !== el.textContent && state.started) uiSound('goal'); el.textContent = t || ''; }
+let hintTimer = 0;
+function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
+$('goal').onclick = () => showHint();
+function showSound() { const b = $('snd'); b.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); b.setAttribute('aria-label', AU.on ? 'Sound on. Tap to turn off.' : 'Sound off. Tap to turn on.'); $('sndon').style.display = AU.on ? '' : 'none'; $('sndoff').style.display = AU.on ? 'none' : ''; }
+$('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
+const setBusy = (b) => { busy = !!b || panelOpen() || !$('chcard').hidden || !$('dialogue').hidden; if (busy) keys.clear(); };
+/* a card over the whole screen (the end of a chapter, the reset choices), with a row of buttons; the first is the main one */
+const CARD = { dismiss: null }, MENU_URL = '../../../menu/';
+function card(title, paras, btns, { dismiss } = {}) {
+  $('chcardt').textContent = title; $('chcardl').replaceChildren(...paras.map((t) => { const p = document.createElement('p'); p.textContent = t; return p; }));
+  $('chcardb').replaceChildren(...btns.map((x, i) => { const el = document.createElement(x.href ? 'a' : 'button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; if (x.href) { el.href = x.href; el.style.textDecoration = 'none'; el.style.display = 'inline-flex'; el.style.alignItems = 'center'; } else el.onclick = x.go; return el; }));
+  CARD.dismiss = dismiss || null; $('chcard').hidden = false; setBusy(true); const f = $('chcardb').querySelector('button,a'); if (f) f.focus();
+}
+function hideCard() { $('chcard').hidden = true; CARD.dismiss = null; setBusy(false); }
+function chapterEnd(id, end) {   /* the end of a walking chapter: what happened, then Next chapter (as in every game) */
+  const nx = CHAPTERS.find((c) => c.id === id + 1 && c.playable);
+  card(end.title, end.lines, nx ? [{ t: 'Next chapter', go: () => { hideCard(); startChapter(nx.id); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Stay here', go: hideCard }]
+    : [{ t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Main Menu', href: MENU_URL }, { t: 'Stay here', go: hideCard }], { dismiss: hideCard });
+}
+$('reset').onclick = () => {
+  if (FIGHT.on || !CH.on) return; closeJournal(); const C = CHAPTERS.find((c) => c.id === CH.id);
+  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + C.name + '”', go: () => { hideCard(); startChapter(CH.id, { talked: [] }); } },
+    { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }], { dismiss: hideCard }) },
+    { t: 'Cancel', go: hideCard }, { t: 'Main Menu', href: MENU_URL }], { dismiss: hideCard });
+};
+
+/* ---------- a glowing speech mark over each person you can talk to, and a talk bubble over the nearest (as in Kendal) ---------- */
+const BUBBLE = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 8, 64, 64, 62); g.addColorStop(0, 'rgba(255,190,70,0.9)'); g.addColorStop(0.35, 'rgba(255,180,60,0.45)'); g.addColorStop(1, 'rgba(255,170,50,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); x.fillStyle = '#f6c45c'; x.strokeStyle = 'rgba(70,45,10,0.85)'; x.lineWidth = 3; x.beginPath(); x.arc(64, 64, 15, 0, Math.PI * 2); x.fill(); x.stroke(); x.fillStyle = '#fff3d0'; x.beginPath(); x.arc(59, 59, 5, 0, Math.PI * 2); x.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+const TALK_SVG = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12c0 4-4 7-9 7-1.2 0-2.4-.2-3.4-.5L3 20l1.5-4.2C3.6 14.7 3 13.4 3 12c0-4 4-7 9-7s9 3 9 7z"/><circle cx="8" cy="12" r=".6" fill="currentColor"/><circle cx="12" cy="12" r=".6" fill="currentColor"/><circle cx="16" cy="12" r=".6" fill="currentColor"/></svg>';
+const TB = { el: null, v: new THREE.Vector3() };
+const POSTER = __DEV__ && /[?&]shot=poster/.test(location.search);   /* the menu picture is taken with no marks */
+/* the top of the head: engine/marks.js headTop when it finds the head bone; it looks for a name ending ":Head" or "_Head", and three.js loads these
+   bodies' bone as "mixamorigHead", so it finds none and the old fallback (1.75 m) floated the mark a metre over Ivy as a girl. Then the Head bone's
+   own height plus 24 cm (scaled with the body), measured on these bodies with their hair. */
+const HEADS = new WeakMap();
+const topOf = (n) => { const y = headTop(n.body); if (y !== null) return y; let h = HEADS.get(n.body); if (h === undefined) { h = n.body.getObjectByName('mixamorigHead') || null; HEADS.set(n.body, h); } if (!h) return (n.body.userData.ground || 0) + 1.75 * n.body.scale.y; h.getWorldPosition(TB.v); return TB.v.y + 0.24 * n.body.scale.y; };
+function bubbleTick(now) {
+  const show = CH.on && state.started && !busy && !FIGHT.on && $('chcard').hidden && !POSTER;
+  for (const n of Talk.npcs) {
+    if (!n.mark) { n.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); n.mark.renderOrder = 5; n.mark.visible = false; scene.add(n.mark); }
+    const m = n.mark; if (!show || !n.body.visible) { m.visible = false; continue; }
+    const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
+    m.position.set(n.x, markAt(topOf(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = Talk.near !== n && d < 40;
+  }
+  if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (Talk.near && !busy) talkStart(Talk.near); }); }
+  const on = show && Talk.near && !Talk.open; TB.el.hidden = !on; if (!on) return;
+  TB.v.set(Talk.near.x, topOf(Talk.near) + NEAR_GAP, Talk.near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
+  const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
+  if (TB.el.dataset.label !== Talk.near.name) { TB.el.dataset.label = Talk.near.name; TB.el.innerHTML = TALK_SVG + '<span class="who">' + Talk.near.name + '</span>'; TB.el.setAttribute('aria-label', 'Talk to ' + Talk.near.name); }
+}
 
 /* ---------- loading ---------- */
+let modelsReady = false;
 Promise.all(['anims', 'anims_tivoli'].map((name) => model(name).then((asset) => { const bar = $('bar'); bar.dataset.done = +(bar.dataset.done || 0) + 1; bar.style.width = (+bar.dataset.done / 2 * 100) + '%'; return asset; }))).then(([anims, own]) => {
   loadClips(anims); loadClips(own); deriveClips();   // the shared library, then Tivoli's own clips (tools/tivoli/pack_clips.mjs)
-  $('start').disabled = false; $('start').textContent = 'Start'; $('loadnote').textContent = '';
+  modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave() ? 'Continue' : 'Start'; $('savenote').hidden = !hasSave(); $('loadnote').textContent = '';
   if (__DEV__) devViews();
 });
 
 const uiS = (k) => uiSound(k);
-function startChapter(id) { if ([1, 2, 3, 4, 6, 7, 8].includes(id)) ch1Begin(id); else if (id === 5) { ch1Leave(); fightOpen(); } }
+function startChapter(id, opts) { closeChapters(); closeJournal(); if ($('chcard').hidden === false) hideCard(); if (!FIGHT.on) for (const c of ['fightcard', 'readcard', 'aftercard']) $(c).hidden = true;   /* a walking chapter never opens under a card of the street scene */
+  if ([1, 2, 3, 4, 6, 7, 8].includes(id)) return ch1Begin(id, opts); if (id === 5) { ch1Leave(); saveProgress(5, []); fightOpen(); } return Promise.resolve(); }
 $('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
-const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n) };
-setupTalk(talkEnv); setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS }); initStory({ startChapter, uiSound: uiS });
-wireFight({ scene, camera, renderer, audioInit });
-$('sound').onclick = () => { setSound(!AU.on); $('sound').textContent = AU.on ? 'Sound on' : 'Sound off'; };
+const FOOT = { 1: 'sand' };   /* Back-o-Wall's lanes are earth; everywhere else is paving */
+const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n), onClose: () => flushToasts() };
+setupTalk(talkEnv);
+setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS, chapterEnd, onStart: () => { $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'; showHint(); canvas.focus(); } });
+initStory({ startChapter, uiSound: uiS, setBusy });
+wireFight({ scene, camera, renderer, audioInit, next: () => startChapter(6) });
+const SEEN = { fightcard: false };   /* dev only: the autoplayer and ?test=all ask whether the opt-in card was answered before the street scene */
+$('fbegin').addEventListener('click', () => { SEEN.fightcard = true; });
+
+/* ---------- dev only: the scripted playthrough, the stepped clock and the hooks for ?test=all, ?test=heads and ?test=resume ---------- */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const waitFor = async (fn, ms = 60000) => { const t0 = performance.now(); while (!fn()) { if (performance.now() - t0 > ms) return false; await sleep(50); } return true; };
+let stepNow = 0;
+function stepClock(dt) { STEPPED.on = true; stepNow += dt * 1000; update(dt, stepNow); place(stepNow); }
+/* the step you are on: N*10 + how many of chapter N's people you have talked to; 50 for the street scene and its cards */
+function stepNow_() { if (FIGHT.on || !$('fightcard').hidden || !$('readcard').hidden || !$('aftercard').hidden || !$('fightload').hidden) return 50; if (CH.on) return CH.id * 10 + Math.min(3, talkedNow().length); return null; }
+const WALK_IDS = [1, 2, 3, 4, 6, 7, 8];
+async function beginStep(s) {   /* start the chapter of step s with the first k people already talked to */
+  const ch = Math.floor(s / 10), k = s % 10; if (FIGHT.on) fightFinish();
+  if (ch === 5) { await startChapter(5); return; }
+  await startChapter(ch, { talked: WALKS[ch].order.slice(0, k) });
+}
+function fightFinish() { if (!$('aftercard').hidden || FIGHT.on) { const b = $('fdone'); if (FIGHT.on) { FIGHT.ended = true; } b.click(); } for (const id of ['fightcard', 'readcard', 'aftercard', 'fightload']) $(id).hidden = true; }
+/* ?auto=N (&one): play from chapter N to the end, as a player would: talk to each person through every line, walk to the end spot, press Next chapter;
+   in chapter 5 answer the opt-in card with Begin and watch the street scene to its after card. Logs each change; says STALL if nothing changes for 30 s. */
+async function autoPlay(N = 1, one = false, L = () => {}) {
+  await waitFor(() => modelsReady); audioInit(); let lastKey = '', lastT = performance.now(); const finished = [];
+  await startChapter(N); L('start ch' + N);
+  for (;;) {
+    await sleep(120); const now = performance.now(), st = stepNow_();
+    const key = st + '|' + ($('chcard').hidden ? '' : $('chcardt').textContent) + '|' + ($('dialogue').hidden ? '' : $('line').textContent) + '|' + (FIGHT.on ? Math.floor(FIGHT.T / 5) : '') + ['fightcard', 'readcard', 'aftercard'].map((i) => +!$(i).hidden).join('');
+    if (key !== lastKey) { lastKey = key; lastT = now; L('step ' + st + ($('chcard').hidden ? '' : ' card="' + $('chcardt').textContent + '"') + ' goal="' + $('goal').textContent + '"' + (FIGHT.on ? ' scene ' + FIGHT.T.toFixed(0) + ' s' : '')); }
+    if (now - lastT > 30000) { L('STALL at step ' + st); return { ok: false, why: 'stalled at step ' + st }; }
+    if (!$('aftercard').hidden) { finished.push(5); L('chapter 5 DONE'); if (one) { L('ALLDONE'); return { ok: true }; } $('fnext').click(); await waitFor(() => CH.on && CH.id === 6); continue; }
+    if (!$('fightcard').hidden) { $('fbegin').click(); continue; }
+    if (FIGHT.on) { if (!FIGHT.ended) fightSkip(FIGHT.T + 4); continue; }
+    if (!$('chcard').hidden && CH.ended) { const id = CH.id; finished.push(id); L('chapter ' + id + ' DONE'); if (one || id === 8) { L('ALLDONE'); return { ok: true }; } const b = [...$('chcardb').children].find((x) => x.textContent === 'Next chapter'); if (!b) return { ok: false, why: 'no Next chapter button after chapter ' + id }; b.click(); await waitFor(() => (CH.on && CH.id === id + 1) || !$('fightcard').hidden); continue; }
+    if (!$('dialogue').hidden) { talkNext(); continue; }
+    if (!CH.on || busy || CH.ended) continue;
+    const id = orderNow().find((k) => !CH.talked[k]);
+    if (id) { const n = Talk.npcs.find((x) => x.id === id); state.x = n.x + 1.1; state.z = n.z + 0.4; [state.x, state.z] = clampPos(state.x, state.z); update(0.016); talkStart(n); continue; }
+    const e = CH.place.endSpot; state.x = e.x; state.z = e.z; update(0.016);
+  }
+}
+/* the hooks checktables.js reads the game through (?test=all) */
+function checkHooks() {
+  const closeAll = () => { hideCard(); talkLeave(); closeJournal(); closeChapters(); closeCredits(); setBusy(false); };
+  const settle = async () => { await waitFor(() => $('fightload').hidden); for (let i = 0; i < 20 && (!$('chcard').hidden || !$('dialogue').hidden); i++) { hideCard(); talkLeave(); await sleep(40); } setBusy(false); for (let i = 0; i < 4; i++) stepClock(1 / 30); };
+  const npcs = () => Talk.npcs.map((n) => ({ id: n.id, name: n.name, base: LOOKS[n.look].base, tint: LOOKS[n.look].tint, n }));
+  return {
+    ready: async () => { await waitFor(() => modelsReady); audioInit(); },
+    settle, closeAll, renderer, scene, camera,
+    begin: beginStep,
+    open: (id) => startChapter(id),
+    chapter: () => (FIGHT.on || stepNow_() === 50 ? 5 : CH.on ? CH.id : null),
+    step: stepNow_,
+    steps: () => WALK_IDS.flatMap((c) => [0, 1, 2, 3].map((k) => c * 10 + k)),
+    npcs,
+    place: () => CH.place, bounds: { x0: -23, x1: 17.5, z0: -13.6, z1: 14.2 },
+    target: () => { const t = guideTarget(); if (!t) return null; const id = orderNow().find((k) => !CH.talked[k]); return { id: id || 'end spot', x: t[0], z: t[1], r: id ? 2.3 : CH.place.endSpot.r }; },
+    unlocks: () => JOURNAL.filter((p) => isUnlocked(p.id)).map((p) => p.id),
+    save: () => saveData(),
+    resume: async (d) => { loadData(d); await startChapter(nextChapter()); },   /* what the Continue button does with a saved game */
+    places: () => WALK_IDS.map(String),
+    move: (a, b) => { let p = a.slice(); const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.05) || 1; for (let i = 1; i <= n; i++) p = clampPos(p[0] + (b[0] - a[0]) / n, p[1] + (b[1] - a[1]) / n); return p; },
+    faceBody: (n) => { const look = LOOKS[Talk.npcs.find((x) => x.id === n.id).look], src = n.n.body; const b = makeBody({ ...look, x: src.position.x, z: src.position.z, ground: src.userData.ground || 0, ry: src.rotation.y, anim: 'Idle' }); scene.add(b); b.userData.anim.mx.update(0.3); for (let i = 0; i < 10; i++) groundFeet(b); src.visible = false; setTimeout(() => { src.visible = true; }, 0); return b; },
+    frame: (dt) => { stepClock(dt); renderer.render(scene, camera); },
+    autoplay: async () => { const r = await autoPlay(1, false); STEPPED.on = false; return r; },
+    talkTo: (id) => { const n = Talk.npcs.find((x) => x.id === id); if (!n) return; state.x = n.x + 1.1; state.z = n.z + 0.4; talkStart(n); }, leaveTalk: () => talkLeave(),
+    clips: () => { const L = [...Talk.npcs.map((n) => [n.id, n.body]), ...(CH.life ? CH.life.people.map((n) => [n.id, n.m]) : []), ...(FIGHT.on ? FIGHT.actors.map((a, i) => [a.side + i, a.b]) : [])];
+      return L.filter(([, m]) => m.visible && m.userData.anim && m.userData.anim.cur).map(([id, m]) => { const c = m.userData.anim.cur, d = c.getClip().duration || 1; return { id, clip: c.getClip().name, t: (c.time % d) / d, dist: Math.hypot(m.position.x - state.x, m.position.z - state.z) }; }); },
+    line: () => (!$('dialogue').hidden ? $('line').textContent : ''),
+    talking: () => !$('dialogue').hidden,
+    audio: () => AU, setSound: (on) => { if (AU.on !== on) $('snd').click(); },
+    keyMove: async () => { await beginStep(20); await settle(); const x0 = state.x, z0 = state.z; keys.add('w'); for (let i = 0; i < 20; i++) stepClock(1 / 30); keys.delete('w'); const moved = Math.hypot(state.x - x0, state.z - z0) > 0.3;
+      const n = Talk.npcs[0]; let talk; if (n) { state.x = n.x + 1.0; state.z = n.z + 0.4; stepClock(1 / 30); dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter' })); await sleep(100); talk = !$('dialogue').hidden; talkLeave(); } return { moved, talk }; },
+    cardSeen: (id) => (id === 'fightcard' ? SEEN.fightcard : true),
+    openJournal, openChapters,
+  };
+}
+/* ?test=heads: the hooks for headcheck.js (every walking chapter walked and talked through, then the street scene) */
+function headHooks(only) {
+  const lookOf = (n) => LOOKS[n.look], made = [];
+  const people = () => {
+    const L = [];
+    for (const n of Talk.npcs) L.push({ id: n.name, m: n.body, key: lookOf(n).base, make: (clip) => { const b = makeBody({ ...lookOf(n), x: 900, z: 900, anim: clip }); made.push(b); return b; } });
+    if (CH.life) for (const n of CH.life.people) L.push({ id: 'neighbour ' + n.id, m: n.m, key: n.look.base + (n.look.scale || ''), make: (clip) => { const b = makeBody({ ...n.look, x: 900, z: 900, anim: clip }); made.push(b); return b; } });
+    if (FIGHT.on) FIGHT.actors.forEach((a, i) => L.push({ id: a.side + ' ' + i, m: a.b, key: a.bodyId, make: null }));
+    for (const p of L) { const c = p.m.userData.anim && p.m.userData.anim.cur; p.clip = c ? c.getClip().name : ''; p.blend = !!(c && c.getEffectiveWeight() < 0.98); }
+    return L.filter((p) => p.m.visible);
+  };
+  return {
+    cases: () => [...WALK_IDS.filter((id) => !only || only.includes(String(id))).map((id) => ({ label: 'chapter ' + id, stops: {}, async enter() {
+      await startChapter(id, { talked: [] }); STEPPED.on = true; this.stops = {}; const pl = CH.place, route = [[pl.start.x, pl.start.z]];
+      for (const k of orderNow()) { const n = Talk.npcs.find((x) => x.id === k), to = clampPos(n.x + 1.1, n.z + 0.4), w = walkRoute(route[route.length - 1], to, WALLS, 0.3, pl.bounds); route.push(...(w.length ? w : [to])); this.stops[route.length - 1] = k; }
+      const e = pl.endSpot, w = walkRoute(route[route.length - 1], [e.x, e.z], WALLS, 0.3, pl.bounds); route.push(...(w.length ? w : [[e.x, e.z]])); return route; } })),
+      ...(!only || only.includes('5') ? [{ label: 'chapter 5 (the street scene)', stops: {}, async enter() { await startChapter(5); $('fbegin').click(); await waitFor(() => FIGHT.on); STEPPED.on = true; return []; } }] : [])],
+    step: (dt) => stepClock(dt),
+    people,
+    move: (x, z, yaw) => { [state.x, state.z] = clampPos(x, z); if (yaw !== undefined) state.yaw = yaw; },
+    player: () => ({ x: state.x, z: state.z }),
+    talk: (id) => { const n = Talk.npcs.find((x) => x.id === id); if (!n) return false; talkStart(n); return !$('dialogue').hidden; },
+    next: () => { talkNext(); return !$('dialogue').hidden; },
+    done: () => (CH.on && CH.ended) || (FIGHT.on && FIGHT.ended) || (!CH.on && !FIGHT.on && stepNow_() === 50 && !$('aftercard').hidden),
+  };
+}
 
 /* ---------- dev only: test views. This whole block is left out of the public build. ---------- */
 const DEVG = [];   // models whose feet are pinned to the ground each frame
@@ -123,6 +282,24 @@ const waitTick = () => new Promise((r) => setTimeout(r, 0));
 function devLog(lines, title) { let el = $('autolog'); if (!el) { el = document.createElement('pre'); el.id = 'autolog'; el.style.cssText = 'position:fixed;left:0;bottom:0;max-height:45%;overflow:auto;margin:0;padding:6px;background:#000c;color:#cfc;font:11px monospace;z-index:9'; document.body.appendChild(el); } el.textContent = lines.join('\n'); document.title = title; }
 async function devViews() {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), test = q.get('test'), lo = q.has('lo') ? '_lo' : '';
+  addEventListener('error', (e) => { document.title = 'ERROR ' + e.message; });
+  if (test === 'all') {   /* ?test=all: the shared runner (engine/checks.js, docs/TESTING.md section 7) with Tivoli's hooks (checktables.js), plus the head check. &checks=journal,heads runs some. Expect ALL 0. */
+    if (!CHECKS.some((c) => c.id === 'heads')) CHECKS.push({ id: 'heads', needs: [], async run() { const r = await headCheck(headHooks(null)); STEPPED.on = false; return { lines: r.lines, note: r.stats.length + ' scenes watched' }; } });
+    checkAll(makeAdapter(checkHooks()), CHECK_TABLES); return;
+  }
+  if (test === 'heads') {   /* ?test=heads (&ch=1,5): every person's head and body through every chapter (headcheck.js): no head past 80 degrees, none going round, no snap or spin. Expect HEADS 0. */
+    const r = await headCheck(headHooks(q.get('ch') ? q.get('ch').split(',') : null)); STEPPED.on = false; devLog(['heads: ' + r.lines.length + ' issues', ...r.lines, '', ...r.stats], 'HEADS ' + r.lines.length); return;
+  }
+  if (test === 'resume') {   /* ?test=resume: a saved game reloads in the right chapter with the right people talked to, and Continue on the title says so. Expect RESUME 0. */
+    const out = [], hk = checkHooks();
+    for (const s of [12, 23, 41, 63, 50, 80]) { await beginStep(s); await hk.settle(); const before = { step: stepNow_(), pages: hk.unlocks().join() }, d = saveData();
+      ch1Leave(); fightFinish(); loadData({ unlocked: [], done: [], cur: null }); loadData(d); await startChapter(nextChapter()); await hk.settle(); const after = { step: stepNow_(), pages: hk.unlocks().join() };
+      if (before.step !== after.step) out.push(`step ${s}: saved at step ${before.step}, came back at step ${after.step}`); if (before.pages !== after.pages) out.push(`step ${s}: journal pages changed`); if (!hasSave()) out.push(`step ${s}: no saved game, so the title would say Start`); }
+    devLog(['resume: ' + out.length + ' issues', ...out], 'RESUME ' + out.length); return;
+  }
+  if (q.has('auto')) {   /* ?auto=N plays chapter N (1 to 8) and the ones after it; &one stops after N. Every change goes to the page title and #autolog. */
+    const log = [], L = (m) => { log.push(m); document.title = log.slice(-3).join(' | '); devLog(log, document.title); }; const r = await autoPlay(+q.get('auto') || 1, q.has('one'), L); if (!r.ok) L('FAILED: ' + r.why); return;
+  }
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
   if (['1', '2', '3', '4', '6', '7', '8'].includes(q.get('chapter'))) {   /* ?chapter=N (&at=talked|end) (&cam=x,z,yaw,pitch,height: stand there for a picture) */
     await ch1Begin(+q.get('chapter')); if (q.get('at')) ch1Skip(q.get('at'));
@@ -172,12 +349,16 @@ async function devViews() {
   }
   if (test === 'layout') {   /* ?test=layout: show each card and title state and check that no two bits of text overlap, nothing is off the sides of the screen, and every button is big enough to touch (44 px). Run at 390x800, 320x568, 667x375, 800x500, 1280x720. */
     const out = [], W = innerWidth, Hh = innerHeight, st2 = document.createElement('style'); st2.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st2);
-    const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'windowframe', 'hud', 'chcard', 'journal', 'chapters'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['scenetitle', 'windowframe']], ['chapter title over the goal and buttons', ['scenetitle', 'hud']], ['chapter end card', ['chcard']], ['journal', ['journal']], ['chapters', ['chapters']]]) {
+    const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'windowframe', 'hud', 'chcard', 'journal', 'chapters', 'toast'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['scenetitle', 'windowframe']], ['chapter title over the goal and buttons', ['scenetitle', 'hud']], ['chapter end card', ['chcard']], ['reset card', ['chcard']], ['play: goal, buttons, tip, toast', ['hud', 'toast']], ['play: talking', ['hud', 'dialogue']], ['journal', ['journal']], ['chapters', ['chapters']]]) {
+      if (name === 'reset card') { $('chcardt').textContent = 'Reset'; $('chcardl').replaceChildren(Object.assign(document.createElement('p'), { textContent: 'Start this chapter again, or start the whole story again.' })); $('chcardb').replaceChildren(...['Restart “May 2010: before”', 'Start the whole story again', 'Cancel', 'Main Menu'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
+      if (name.startsWith('play')) { $('scenetitle').hidden = true; $('goal').textContent = 'Talk to Pastor Grant by the clinic.'; $('hint').hidden = false; $('hint').textContent = innerWidth < 700 ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'; $('jcount').hidden = false; $('jcount').textContent = '2'; $('jbtn').classList.add('glow'); $('toast').textContent = 'New journal page: What people disagree about'; $('dialogue').hidden = true;
+        if (show.includes('dialogue')) { document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Pastor Grant'; $('line').textContent = 'Finding the truth can take a long time.'; } else document.body.classList.remove('talking'); }
       if (show.includes('hud')) { const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = 'Sunday 23 May 2010.'; t.append(b); for (const l of ['You live in Tivoli Gardens with Gran Ivy.', 'The girl from Back-o-Wall is a grandmother now.']) { const p = document.createElement('p'); p.textContent = l; t.append(p); } $('goal').textContent = 'Talk to Mr Clarke by the community centre.'; }
-      if (show.includes('chcard')) { $('chcardt').textContent = 'May 2010: before'; $('chcardl').replaceChildren(...['On 23 May 2010 the Government declared a state of emergency.', 'Barricades blocked the roads into Tivoli Gardens.', 'The next day, soldiers and police went in.', 'Gran Ivy, Miss Dawn and Mr Brown are made up.'].map((x) => { const p = document.createElement('p'); p.textContent = x; return p; })); }
+      if (name === 'chapter end card') { $('chcardb').replaceChildren(...['Next chapter', 'Chapters', 'Stay here'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
+      if (name === 'chapter end card') { $('chcardt').textContent = 'May 2010: before'; $('chcardl').replaceChildren(...['On 23 May 2010 the Government declared a state of emergency.', 'Barricades blocked the roads into Tivoli Gardens.', 'The next day, soldiers and police went in.', 'Gran Ivy, Miss Dawn and Mr Brown are made up.'].map((x) => { const p = document.createElement('p'); p.textContent = x; return p; })); }
       for (const id of ALL) $(id).hidden = !show.includes(id); await frames();
-      const els = show.flatMap((id) => [...$(id).querySelectorAll('h1,h2,p,label,button,a,b')]).filter((e) => contentRects(e).length);
+      const els = show.flatMap((id) => [$(id), ...$(id).querySelectorAll('h1,h2,p,label,button,a,b')]).filter((e) => e.matches('h1,h2,p,label,button,a,b') && !e.closest('[hidden]') && getComputedStyle(e).visibility !== 'hidden' && contentRects(e).length);
       for (const e of els) { for (const r of contentRects(e)) if (r.left < -1 || r.right > W + 1) out.push(`${W}x${Hh} ${name}: "${(e.textContent || '').slice(0, 30)}" is off the side of the screen`); if (e.matches('button,a.btn') && e.getBoundingClientRect().height < 44) out.push(`${W}x${Hh} ${name}: button "${e.textContent.slice(0, 24)}" is under 44 px tall`); }
       for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) if (!els[i].contains(els[j]) && !els[j].contains(els[i]) && contentsOverlap(els[i], els[j])) out.push(`${W}x${Hh} ${name}: "${els[i].textContent.slice(0, 24)}" overlaps "${els[j].textContent.slice(0, 24)}"`);
     }
@@ -235,32 +416,36 @@ async function devViews() {
   }
 }
 
-/* ---------- the frame loop ---------- */
+/* ---------- the frame loop: update(dt, now) moves everything; frame() also places the camera and draws. The tests step update() with their own clock. ---------- */
 let last = performance.now(), stepT = 0;
-function frame(t) {
-  requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (t - last) / 1000); last = t;
+function update(dt, now) {
   if (FIGHT.on) fightTick(dt);   // the street scene moves its own people and takes over the camera
   if (state.started && !busy && !FIGHT.on) {
     if (keys.has('arrowleft')) state.yaw += 1.8 * dt; if (keys.has('arrowright')) state.yaw -= 1.8 * dt;
     let f = stick.id !== null ? -stick.dy : 0, r = stick.id !== null ? stick.dx : 0;
     if (keys.has('w') || keys.has('arrowup')) f += 1; if (keys.has('s') || keys.has('arrowdown')) f -= 1; if (keys.has('d')) r += 1; if (keys.has('a')) r -= 1;
     const len = Math.hypot(f, r);
-    if (len > 0.05) { const sp = (keys.has('shift') ? 4.2 : 2.6) * Math.min(1, len), fx = -Math.sin(state.yaw), fz = -Math.cos(state.yaw);
+    if (len > 0.05) { const sp = (keys.has('shift') ? 3.6 : 2.3) * Math.min(1, len), fx = -Math.sin(state.yaw), fz = -Math.cos(state.yaw);   /* Kendal's walking speeds */
       [state.x, state.z] = clampPos(state.x + (fx * f - fz * r) / Math.max(1, len) * sp * dt, state.z + (fz * f + fx * r) / Math.max(1, len) * sp * dt);
-      stepT -= dt * sp; if (stepT <= 0) { stepT = 1.4; stepSound('sand'); } }
+      stepT -= dt * sp; if (stepT <= 0) { stepT = 1.35; stepSound(FOOT[CH.id] || 'stone'); } }
   }
   if (CH.on) { updateTalk(dt, state, state.started && !busy); ch1Tick(dt); }
-  for (const mx of mixers) mx.update(dt); for (const n of Talk.npcs) { if (n.body.userData.anim) n.body.userData.anim.tick(dt); groundFeet(n.body); }
-  if (CH.on) { lifeTick(dt); talkAfter(dt, state); }   /* after the mixers: the background people (engine/ambient.js) and the story people's heads turn on top of their clips */   /* the story people: shoes pinned to the ground every frame, so feet never sink */
+  for (const mx of mixers) mx.update(dt); for (const n of Talk.npcs) { if (n.body.userData.anim) n.body.userData.anim.tick(dt); groundFeet(n.body); }   /* the story people: shoes pinned to the ground every frame, so feet never sink */
+  if (CH.on) { lifeTick(dt); talkAfter(dt, state); }   /* after the mixers: the background people (engine/ambient.js) and the story people's heads turn on top of their clips */
   if (__DEV__) for (const m of DEVG) groundFeet(m);
   for (const m of ARMED) weaponTick(m);   // after the mixer and the feet: weapons follow the hands
-  if (FIGHT.on) fightAfter(t / 1000); else { camera.position.set(state.x, state.camY || 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); }
-  guideTick(t);
+  if (now !== undefined) { bubbleTick(now / 1000); stickUI(); guideTick(now); }
+}
+function frame(t) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (t - last) / 1000); last = t; if (STEPPED.on) return;   /* a test is stepping the clock itself */
+  update(dt, t); place(t);
   renderer.render(scene, camera);
 }
-/* The next-task helper: after 2.5 seconds of play, a gold arrow on the ground points the way,
-   with a gold ring round the person or the place. Near them the Talk button takes over. */
+const STEPPED = { on: false };
+function place(t) { if (FIGHT.on) fightAfter(t / 1000); else { camera.position.set(state.x, state.camY || 1.6, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); } }
+/* The next-task helper: after 2.5 seconds of play, a gold arrow on the ground points the way (round the buildings, by engine/placement.js walkRoute),
+   with a gold ring round the person or the place. Near them the talk bubble takes over. */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }; let GUIDE = null;
 function guideTick(now) {
   if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: () => state.camY || 1.6 });
@@ -271,7 +456,10 @@ function guideTick(now) {
   const tgt = quiet ? guideTarget() : null;
   if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) NUDGE.on = true;
   if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) NUDGE.on = false; /* Hide while the player is close enough to interact. */
-  if (!NUDGE.on || !tgt) GUIDE.hide(now); else GUIDE.point(now, { x: tgt[0], z: tgt[1] });
+  if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
+  if (!NUDGE.way || NUDGE.way.key !== tgt.join() || Math.hypot(state.x - NUDGE.way.x, state.z - NUDGE.way.z) > 0.5) {   /* the next corner on the way, worked out again when you move */
+    const pl = CH.place, r = walkRoute([state.x, state.z], tgt, WALLS, 0.3, pl && pl.bounds); NUDGE.way = { key: tgt.join(), x: state.x, z: state.z, next: r.length ? r[0] : tgt }; }
+  GUIDE.point(now, { x: NUDGE.way.next[0], z: NUDGE.way.next[1], tx: tgt[0], tz: tgt[1], final: NUDGE.way.next === tgt || Math.hypot(NUDGE.way.next[0] - tgt[0], NUDGE.way.next[1] - tgt[1]) < 0.1 });
 }
 requestAnimationFrame(frame);
 

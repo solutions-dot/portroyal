@@ -77,7 +77,7 @@ export function buildBackOWall(opts = {}) {
   const out = bake(g, [X.dirt, X.grass]);
   const sun = addSky(out, rnd, { shadows: opts.shadows, target: [-2, 0, 2], extent: [34, 26] });
   const NP = [['ivy', 3.4, 5.6], ['pearl', 6.5, 8.3], ['roy', -8.6, 0.9]]; for (const [n, x, z] of NP) SC('person', n, x, z, 0.3, 1.7); SC('person', 'start', 2.2, 1.0, 0.3, 1.7);
-  return { group: out, walls, sun, raw: g, solids,
+  return { group: out, walls, sun, raw: g, solids, bounds: { x0: -23, x1: 17.5, z0: -13.6, z1: 14.2 },   /* the fences; the open lane end stops at x -23 (the chapter ends at -20.6) */
     start: { x: 2.2, z: 1.0, yaw: Math.atan2(-(3.4 - 2.2), -(5.6 - 1.0)) },   /* facing Ivy in her yard */
     npcs: [
       { id: 'ivy', name: 'Ivy', look: 'ivyGirl', x: 3.4, z: 5.6, ry: Math.PI, anim: 'Idle' },

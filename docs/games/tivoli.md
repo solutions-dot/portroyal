@@ -195,7 +195,7 @@ Start it from the title screen: "May 2010 street scene (work in progress)". In t
 
 | File | What it holds |
 |---|---|
-| `src/main.js` | Scene, movement and touch controls, the frame loop, `startChapter`, and the dev-only block `devViews` (all `?shot=` and `?test=` views, `?chapter=N`) |
+| `src/main.js` | Scene, the shared controls (joystick, drag to look, tap or Space to talk), the HUD (goal, reset, sound, Journal with its glow and count, talk marks and bubble, controls tip), the cards, the frame loop (`update`, `frame`), `startChapter`, the autoplayer (`?auto=N`), the hooks for `?test=all`, and the dev-only block `devViews` (all `?shot=` and `?test=` views, `?chapter=N`) |
 | `src/content.js` | Every word the player reads: `CHAPTERS`, the words for each walking chapter (`CH1` to `CH8`), the journal pages (`JOURNAL`) |
 | `src/ch1.js` | The walking chapters (1, 2, 3, 4, 6, 7, 8) from one `WALKS` table: place, words, goal order, sky, camera height |
 | `src/backowall.js` | Chapter 1's place (imagined Back-o-Wall) |
@@ -209,6 +209,8 @@ Start it from the title screen: "May 2010 street scene (work in progress)". In t
 | `src/cast.js` | Bodies, looks (`LOOKS`) and `makeBody`; `SKIN_LIGHT` on Skin only |
 | `src/weapons.js`, `src/clips.js` | The rifle and pistol with the two-handed hold; the pose names and their stand-ins |
 | `src/textures.js`, `src/bake.js`, `src/sky.js` | Canvas textures (including `fresh` paint and the `mural` designs), merging by material, the sky |
+| `src/checktables.js` | Dev only: Tivoli's hooks and tables for the shared `?test=all` runner (`engine/checks.js`), as Kendal's |
+| `src/headcheck.js` | Dev only: `?test=heads` (heads and body turns of everyone, through every chapter and the street scene) |
 | `src/checks.js` | `overlapSolids` (solid boxes), `sinkCheck` (feet below a surface), and `CLOTH_SKIP` (the order the 2010 kit is worn in, for the shared `auditCloth`); re-exports the engine's `auditCloth`, `auditWalk` and `skinProbe` |
 
 ## Test it
@@ -219,7 +221,7 @@ node tools/build.mjs tivoli --dev          # dev build
 python3 -m http.server 8765                 # then open http://localhost:8765/games/tivoli/site/
 ```
 
-Views: `?shot=fight`, `?test=clips` and the others in the code map. `?test=held`, `?test=cloth`, `?test=walkers` and `?test=skin` are wired. The place audit and the layout test are **not wired yet** because there are no places. CLAUDE.md rule 8 says to wire them before the first PR that contains a place (copy the blocks from `games/kendal/src/main.js`, see `docs/TESTING.md` section 5).
+Views: `?shot=fight`, `?test=clips` and the others in the code map. Wired checks (17 November 2026): `?test=all` (the shared runner plus `heads`), `?test=heads`, `?test=resume`, `?auto=N` (`&one`), `?test=audit`, `?test=layout`, `?test=scene`, `?test=held`, `?test=ambient`, `?test=cloth`, `?test=walkers`, `?test=skin`. See "Playing like the other games" below.
 
 ## Research (14 November 2026: second pass, from primary documents and newspaper archives)
 
@@ -412,3 +414,33 @@ The owner said Tivoli's start screen did not look like the others. It now uses t
 - Kept: the quiet-street picture `menu/tivoli.jpg` behind the title with its slow drift, and no drift with reduced motion. The picture and the shade are now `position:fixed`, so they still cover the screen when a short screen scrolls the title.
 
 Checks: `?test=layout` 0 at 390x800, 320x568, 667x375, 800x500 and 1280x720; `npm test` 225 of 225; `tests/tivoli-browser.mjs` 24 of 24 passes. Before and after pictures at 1280x720, 390x844, 320x568 and 667x375 are in `build/title-parity/` (not in git).
+
+
+## Playing like the other games (17 November 2026)
+
+The owner said Tivoli "does not play like the other games, has a different controller, top menu doesn't look the same, characters' heads are spinning 360". A side by side audit against Kendal, Nanny Town, Windrush and Hurricane Melissa found these differences, and each is now the same as in those games.
+
+**What was different, and what it is now**
+- **Controller.** Tivoli had its own four-arrow pad (`#dpad`) on touch screens. It now has the shared joystick: the left half of the screen walks, with the faint ring and gold nub of the other games (`#stick`, `#nub`, `stickUI`), the right half drags to look, a tap on a person talks. Walking speed is Kendal's (2.3 m/s, 3.6 with Shift; it was 2.6 and 4.2). Escape closes the journal, chapters, credits and cards; tapping the world no longer ends a talk (the x and Escape do, as elsewhere). Footsteps sound like earth in Back-o-Wall and paving elsewhere (they were sand everywhere).
+- **Top of the screen.** Tivoli had text buttons "Sound on" and "Journal" stacked on the right and the goal in the corner. It now has the shared row: a reset button, a sound button with the speaker icon, and the paper Journal button that glows and shows a red count of new pages until you open the journal; the goal box sits under that row and plays the goal sound when it changes; a controls tip shows at the bottom for six seconds at the start of each chapter (and when you tap the goal). Toasts are the shared paper toast, and one that comes while someone is talking waits for the dialogue box to close.
+- **Talking.** There was a "Talk to ..." button in the corner. Now, as in Kendal, a glowing speech mark floats over each person you can talk to (`engine/marks.js` places it just over the head), and the nearest gets the round gold talk bubble with their name. Space, Enter or E talks; the goal and tip step aside while someone speaks.
+- **Reset.** The reset button opens the same card as the other games: restart this chapter, start the whole story again, cancel, or go to the main menu.
+- **End of a chapter.** The end card had only "Back to the start". It now offers **Next chapter**, Chapters and Stay here (the last chapter offers Chapters, Main Menu and Stay here). The street scene's after card and the "Read what happened" card also offer Next chapter. Going on to chapter 5 always opens its opt-in card first (rule 4): Begin, Read what happened instead, Not now.
+- **Save and resume.** Only finished chapters and pages were saved, and Start always began a chapter from the top. Now the chapter you are in and who you have talked to are saved too, the title says **Continue** with "Your progress is saved on this device." when there is a saved game, and Continue brings you back to the same chapter with the same people talked to.
+- **Helper arrow.** It pointed in a straight line, through buildings. It now points to the next corner on a walking route round the walls (`engine/placement.js` `walkRoute`), with the ring on the person or the end spot, after the same 2.5 seconds.
+- **Heads spinning round** (see below), and **bodies spinning**: the story people turned to face you at up to 900 degrees a second; sitters on the benches swung round in one frame when they sat; runners in the street scene turned at 516 degrees a second at corners.
+
+**The heads: cause and fix.** `src/talk.js` turned each story person's neck and head toward you after the mixer, by adding a turn to the bone. The mixer only writes a bone when its clip value changes, and a clip whose neck and head tracks stay still (Idle, OldIdle, HappyIdle) writes them once, so every frame's turn was added to the last one and the head went round and round. It is the bug `engine/ambient.js` and Kendal's `storylife.js` had already fixed for their people. Now each frame starts from the clip's own pose again, the turn eases at most 150 degrees a second, and the whole turn (the clip's plus ours) stays inside 70 degrees from the chest (`HEAD_MAX`; if the clip already looks round, only what is left is added). Bodies turn the short way round, at most 200 degrees a second (`TURN_RATE`), with angles kept in -PI..PI. Background people get Kendal's turn limit (`turnLimit` in `src/ch1.js`) and sitters start facing their seat (`src/life.js`). Street-scene runners turn at most 315 degrees a second (`src/fight.js`).
+
+**The new check, so it cannot come back.** `engine/audit.js` has a new shared `headWatch` (and `headAngles`), added without changing anything already there: sample people over time and it reports a head turned more than 80 degrees from the chest or tipped more than 60, a head that goes right round (more than 360 degrees one way on one clip), and a head turning faster than 320 degrees a second and faster than its clip turns it alone. `?test=heads` (`src/headcheck.js`) runs the game's real update loop with a stepped clock through every walking chapter (walking to each person, talking through every line, then to the end spot) and the whole street scene, samples everyone on screen every frame, and also reports a body turning faster than 240 degrees a second on the spot or 600 moving. On the old talk code it reported 13 issues in chapter 2 alone, among them "Ivy's head goes right round (2198 degrees one way) on HappyIdle". It is also part of `?test=all` as `heads`.
+
+**Story flow and checks wired like Kendal's**
+- `?auto=N` (`&one`): plays from chapter N to the end as a player would, pressing Next chapter, answering the opt-in card with Begin and watching the street scene to its after card. Logs every change; says STALL if nothing changes for 30 s.
+- `?test=all`: the shared runner with `src/checktables.js` (journal, links, a11y, keys, chapters, steps with save and reload, map, faces, budget, autoplay, camera, rule 4 with the street scene tagged intense behind its card, sound, continuity, errors) plus `heads`. A walking chapter N has steps N*10 to N*10+3 (people talked to); the street scene is step 50.
+- `?test=resume`: saves at six steps, reloads, and checks the chapter, the people talked to and the pages come back.
+
+**Still different, or not done**
+- The journal uses Tivoli's book with page tabs (the shared book layout), not Kendal's ruled paper page; it reads the same way, and opens from the same Journal button.
+- Tivoli has no `#place` caption or fade title: the chapter start shows the date and words over the scene (`#scenetitle`), as before.
+- `tests/tivoli-browser.mjs` still clicks `#jhud` and counts four `#dpad` arrows, the old controller. It needs `#jhud` changed to `#jbtn` and the arrow count replaced by a check for `#stick`; a scratch copy with those two changes passes (see the check results).
+- The bodies are still the borrowed Kendal and Garvey stand-ins (see "Characters").

@@ -8,7 +8,7 @@ import { buildNewTivoli } from './newtivoli.js';
 import { streetPlace } from './street.js';
 import { addNpc, clearNpcs, Talk } from './talk.js';
 import { CH1, CH2, CH3, CH4, CH6, CH7, CH8 } from './content.js';
-import { unlock, finishChapter } from './story.js';
+import { unlock, finishChapter, saveProgress, savedTalked } from './story.js';
 import { FX } from './fx.js';
 import { addLife } from './life.js';
 
@@ -38,20 +38,21 @@ const $ = (id) => document.getElementById(id);
 let ORDER = WALKS[1].order, TXT = CH1;
 let E = null, saved = null, titleTimer = null;
 
-export function setupCh1(env) { E = env; $('chdone').onclick = leaveChapter; }
+export function setupCh1(env) { E = env; }
 const goalNow = () => { const i = ORDER.findIndex((id) => !CH.talked[id]); return TXT.goals[i < 0 ? 3 : i]; };
 
-export async function begin(id = 1) {
+export async function begin(id = 1, opts = {}) {
   leaveChapter();   // Chapter selection can interrupt a walk; remove its people and scenery first.
   const W = WALKS[id]; CH.id = id; ORDER = W.order; TXT = W.text;
   const { scene, state, WALLS, renderer } = E; E.audioInit(); $('title').hidden = true; $('fightload').firstElementChild.textContent = W.loading; $('fightload').hidden = false;
-  const shadows = !matchMedia('(pointer: coarse)').matches, pl = W.build({ shadows });
+  const shadows = !matchMedia('(pointer: coarse)').matches && !/[?&]noshadow/.test(location.search), pl = W.build({ shadows });   /* phones draw no shadows; &noshadow measures a computer as a phone draws (?test=all budget) */
   saved = { hidden: scene.children.filter((c) => c.visible && !c.isLight), fog: scene.fog, bg: scene.background, lights: scene.children.filter((c) => c.isLight).map((l) => [l, l.intensity]), shadow: renderer.shadowMap.enabled, wasWalls: WALLS.slice() };
   saved.hidden.forEach((c) => (c.visible = false)); saved.lights.forEach(([l]) => (l.intensity = l.isDirectionalLight ? 0 : 1.9));
   scene.background = new THREE.Color(W.sky[0]); scene.fog = new THREE.Fog(W.sky[1], 30, 190); if (shadows) { renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; }
   scene.add(pl.group); CH.place = pl; WALLS.length = 0; WALLS.push(...pl.walls);
-  CH.talked = {}; CH.ended = false;
-  for (const n of pl.npcs) await addNpc({ ...n, ground: pl.groundAt ? pl.groundAt(n.x, n.z) : 0, lines: TXT.talk[n.id], later: TXT.later[n.id], mood: W.mood });
+  CH.talked = {}; CH.ended = false; for (const k of (opts.talked || savedTalked(id))) if (ORDER.includes(k)) CH.talked[k] = true;   /* a saved game: the people you had talked to stay talked to */
+  for (const n of pl.npcs) { const npc = await addNpc({ ...n, ground: pl.groundAt ? pl.groundAt(n.x, n.z) : 0, lines: TXT.talk[n.id], later: TXT.later[n.id], mood: W.mood }); if (CH.talked[n.id]) npc.talked = 1; }
+  saveProgress(id, Object.keys(CH.talked));
   CH.life = await addLife(id, pl, scene, { phone: matchMedia('(pointer: coarse)').matches });   /* the neighbours who are not in the story (life.js) */
   CH.story = Talk.npcs.map((n) => ({ x: n.x, z: n.z, m: n.body }));
   $('fightload').hidden = true;
@@ -59,22 +60,22 @@ export async function begin(id = 1) {
   $('hud').hidden = false; E.setGoal(goalNow());
   const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = TXT.start[0]; t.append(b); for (const l of TXT.start.slice(1)) { const p = document.createElement('p'); p.textContent = l; t.append(p); }
   t.hidden = false; titleTimer = setTimeout(() => { t.hidden = true; }, 5200);
-  CH.on = true;
+  CH.on = true; if (E.onStart) E.onStart(id);
 }
 export function guideTarget() {   /* where the helper arrow points: the next person to talk to, then the place where the walk ends */
   if (!CH.on || CH.ended) return null; const id = ORDER.find((k) => !CH.talked[k]);
   if (!id) { const e = CH.place.endSpot; return [e.x, e.z]; } const n = Talk.npcs.find((x) => x.id === id); return n ? [n.x, n.z] : null;
 }
 export function onTalked(npc) {   /* each finished talk moves the goal on */
-  CH.talked[npc.id] = true; E.setGoal(goalNow()); E.uiSound('goal');
+  CH.talked[npc.id] = true; saveProgress(CH.id, Object.keys(CH.talked)); E.setGoal(goalNow());
 }
 export function tick(dt) {
   if (!CH.on || CH.ended || Talk.open) return; const { state } = E, e = CH.place.endSpot;
   if (ORDER.every((id) => CH.talked[id]) && Math.hypot(state.x - e.x, state.z - e.z) < e.r) endChapter();
 }
 function endChapter() {
-  CH.ended = true; E.setBusy(true); finishChapter(CH.id); E.uiSound('goal');
-  const c = $('chcard'); $('chcardt').textContent = TXT.end.title; $('chcardl').replaceChildren(...TXT.end.lines.map((t) => { const p = document.createElement('p'); p.textContent = t; return p; })); c.hidden = false;
+  CH.ended = true; finishChapter(CH.id); E.uiSound('goal'); E.setGoal('');
+  E.chapterEnd(CH.id, TXT.end);   /* the end card with Next chapter (main.js), as in every game */
 }
 export function leaveChapter() {
   if (!CH.on) return;
@@ -87,6 +88,16 @@ export function leaveChapter() {
 export function lifeTick(dt) {
   if (!CH.on || !CH.life) return; const { state } = E;
   CH.life.life.tick(dt, { px: state.x, pz: state.z, story: CH.story, talking: null, view: { x: state.x, z: state.z, yaw: state.yaw } });
+  turnLimit(CH.life.people, dt);
 }
+/* nobody spins: a body turns at most 200 degrees a second standing and 315 walking, whatever turned it (Kendal's turnLimit, games/kendal/src/main.js); a seated person keeps the seat's facing */
+const WALKING = /^(Walk|WalkM|WalkM2|Run|RunM2|SadWalk|Carry)/;
+function turnLimit(people, dt) {
+  for (const n of people) { const m = n.m; if (!m.visible || m.userData.seatAnchor || !(dt > 0)) { n._ry = undefined; continue; } if (n._ry === undefined) { n._ry = m.rotation.y; continue; }
+    const c = n.ctl || m.userData.anim, walk = c && c.cur && WALKING.test(c.cur.getClip().name), lim = (walk ? 5.5 : 3.5) * dt; let e = m.rotation.y - n._ry; e = Math.atan2(Math.sin(e), Math.cos(e));
+    if (Math.abs(e) > lim) m.rotation.y = n._ry + Math.sign(e) * lim; n._ry = m.rotation.y; }
+}
+/* who you have talked to in this chapter, and the order of the people (for the test hooks and the save) */
+export const talkedNow = () => ORDER.filter((k) => CH.talked[k]), orderNow = () => ORDER.slice();
 /* dev only (?chapter=1 or 2, &at=talked): start the chapter; &at=end jumps to the end card */
 export function devSkip(what) { if (what === 'talked') for (const id of ORDER) CH.talked[id] = true; if (what === 'end') { for (const id of ORDER) CH.talked[id] = true; endChapter(); } }

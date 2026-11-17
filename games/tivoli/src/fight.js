@@ -85,6 +85,8 @@ export function wire(env) {
   $('fcancel').onclick = () => { $('fightcard').hidden = true; $('title').hidden = false; };
   $('fdone').onclick = finish;
   $('freadexit').onclick = () => { $('readcard').hidden = true; $('title').hidden = false; };
+  $('fnext').onclick = () => { finish(); if (env.next) env.next(); };   /* Next chapter, as at the end of every other chapter */
+  $('freadnext').onclick = () => { $('readcard').hidden = true; if (env.next) env.next(); };
 }
 export async function begin() {
   const { scene, audioInit, renderer } = FIGHT.env; audioInit(); show('none'); $('title').hidden = true; $('fightcard').hidden = true; $('fightload').hidden = false; await load(); $('fightload').hidden = true;
@@ -143,7 +145,7 @@ function moveAlong(a, pts, clipName, v, dt, camera) {
   if (dist < 0.05) { a.wp++; return a.wp >= pts.length; }
   const clip = play(a, clipName), ctl = b.userData.anim, ts = pace(b, ctl, v), c = ctl.cur.getClip(), stride = strideOf(b, c), sp = stride > 0.05 ? ts * stride / c.duration : v;   /* the ground speed the clip's own stride gives at the pace it can play */
   a.speed = sp; const step = Math.min(dist, sp * dt); b.position.x += dx / dist * step; b.position.z += dz / dist * step;
-  turnTo(a, Math.atan2(dx, dz), dt, 9);
+  turnTo(a, Math.atan2(dx, dz), dt, 5.5);   /* at most 315 degrees a second while moving (Kendal's turn limit; it was 516, a spin at a corner: ?test=heads) */
   a.stepT = (a.stepT || 0) - dt; if (a.stepT <= 0 && camera) { a.stepT = clip === pose('AdvanceReady') ? 0.5 : 0.22; const dc = b.position.distanceTo(camera.position); if (dc < 40) SFX.step(Math.max(-0.9, Math.min(0.9, (b.position.clone().project(camera).x) * 0.8)), 0.16 * (1 - dc / 40), FX.calm); }   /* footsteps, louder when near */
   return false;
 }

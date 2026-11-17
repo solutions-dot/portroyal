@@ -17,7 +17,7 @@ export const LOOKS = {
   clarke: { base: 'man_elder', hat: 'Hat', tint: { Hat: 0x3a3a3a, Shirt: 0xf0ece2, Waistcoat: 0x3a4a5a, Breeches: 0x2e2e34, Shoes: 0x1c1816 } },   /* Mr Clarke at the community centre, 1960s (fictional) */
   ivyGran: { base: 'guide2020', tint: { Shirt: 0xc6603a, Skirt: 0x3a4a6a } },                                          /* Ivy as the grandmother in 2010 (a modern body; her hair is grey in the chapters that show her) */
   dawn: { base: 'woman_elder', hat: 'Wrap', tint: { Wrap: 0x2f6a8a, Shirt: 0xe6d8b8, Skirt: 0x7a3a3a, Shoes: 0x2a211b } },   /* Miss Dawn at the grocery, 2010 (fictional; a borrowed Kendal body until a 2010 one is built) */
-  brown: { base: 'civilian2010', tint: { Shirt: 0x6a7a5a, Breeches: 0x3a3e48 } },                                          /* Mr Brown, a neighbour, 2010 (fictional) */
+  brown: { base: 'civilian2010', skin: 1.15, tint: { Shirt: 0x6a7a5a, Breeches: 0x3a3e48 } },   /* skin 1.15: ?test=all found his face too dark in the 2016 courtyard light (rule 9) */                                          /* Mr Brown, a neighbour, 2010 (fictional) */
   pastor: { base: 'man_elder', hat: 'Hat', tint: { Hat: 0x222226, Shirt: 0xf4f2ec, Waistcoat: 0x1e1e24, Breeches: 0x1e1e24, Shoes: 0x111111 } },   /* Pastor Grant, 2010 (fictional; a borrowed Kendal body) */
   ivyMum: { base: 'guide2020', tint: { Shirt: 0xe8b84a, Skirt: 0x3a5a7a } },                                         /* Ivy grown up, about 1980 (fictional; the same body as Gran Ivy) */
   coach: { base: 'civilian2010', tint: { Shirt: 0x1f7a3a, Breeches: 0xf0ece2, Shoes: 0x111111 } },                     /* Coach Davis, about 1980 (fictional) */

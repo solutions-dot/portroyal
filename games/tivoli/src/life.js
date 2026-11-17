@@ -33,7 +33,7 @@ export const LIFE = {
     { id: 'lane1', look: P.woman60(0xe9e2d2, 0x3a6a5a, 0x3a6ac0), at: [-4.6, -1.2], spec: { kind: 'chat', group: 'door', at: [-5.3, -1.2], idles: IDL_F } },
     { id: 'lane2', look: P.woman60(0xd8c8a8, 0x7a3a3a, 0xe0c030), at: [-6.0, -1.2], spec: { kind: 'chat', group: 'door', idles: IDL_OLD } },
     { id: 'cart', look: P.man60(0xd9d2bc, 0x4a4a42), at: [11.9, 0.4], spec: { kind: 'work', clips: ['WipeSweat', 'LookAround', 'IdleM'], face: [10.5, 1.6], idles: IDL_M } },
-    { id: 'walker', look: P.man60(0xc8c0a8, 0x3a3a34, 0x2e2e2e), at: [-18, 2.0], spec: { kind: 'wander', pts: [[-18, 2.0], [-12.5, -0.2], [12, -0.6], [15.5, 1.8]], pause: [3, 7], idles: IDL_M } },
+    { id: 'walker', look: P.man60(0xc8c0a8, 0x3a3a34, 0x2e2e2e), at: [-18, 2.0], spec: { kind: 'wander', pts: [[-18, 2.0], [-12.5, -1.0], [-8.6, -1.0], [-6.8, -0.2], [12, -0.6], [15.5, 1.8]], pause: [3, 7], idles: IDL_M } },   /* round Mass Roy (-8.6, 0.9), not past his elbow: ?test=ambient once found the walker waiting by him */
     { id: 'gran2', look: P.woman60(0xf0ece2, 0x4a3a5a, 0x7a3a8a), at: [-16.4, -1.3], spec: { kind: 'watch', at: [-13, 0.6], react: ['Clap', 'Laugh'], idles: IDL_OLD } },
   ] },
   2: { mood: 'lively', people: [   /* the new Tivoli Gardens, about 1965: the courtyard (main path along x at z 0), grass both sides, benches */
@@ -114,10 +114,10 @@ export async function addLife(id, place, scene, opts = {}) {
     place: (n) => { n.m.position.x = n.x; n.m.position.z = n.z; n.m.userData.ground = place.groundAt ? place.groundAt(n.x, n.z) : 0; } });
   const people = [];
   for (const d of L.people) {
-    const g = place.groundAt ? place.groundAt(d.at[0], d.at[1]) : 0, m = makeBody({ ...d.look, x: d.at[0], z: d.at[1], ry: d.ry !== undefined ? d.ry : Math.random() * 6.28, ground: g, anim: 'Idle' });
+    const g = place.groundAt ? place.groundAt(d.at[0], d.at[1]) : 0, m = makeBody({ ...d.look, x: d.at[0], z: d.at[1], ry: d.ry !== undefined ? d.ry : d.spec.seat ? d.spec.seat.ry : Math.random() * 6.28, ground: g, anim: 'Idle' });   /* a sitter starts facing the way the seat faces, or the seat swung them round in one frame */
     const k = mixers.indexOf(m.userData.anim.mx); if (k >= 0) mixers.splice(k, 1);   /* the engine updates this mixer, not the game's loop */
     m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); if (scene) scene.add(m);
-    const n = { id: d.id, x: d.at[0], z: d.at[1], m, ctl: m.userData.anim, sex: d.look.sex }; life.add(n, d.spec); people.push(n);
+    const n = { id: d.id, x: d.at[0], z: d.at[1], m, ctl: m.userData.anim, sex: d.look.sex, look: d.look }; life.add(n, d.spec); people.push(n);
   }
   return { life, people, mood: L.mood, clear() { for (const n of people) if (n.m.parent) n.m.parent.remove(n.m); life.clear(); } };
 }
