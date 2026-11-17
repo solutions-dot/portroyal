@@ -8,7 +8,7 @@ import { readdirSync, existsSync, readFileSync, mkdirSync, copyFileSync } from '
 import { spawn, spawnSync } from 'node:child_process';
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const JOBS = +opt('--jobs', 3), skip = new Set((opt('--skip', '') || '').split(',').filter(Boolean)), wanted = args.filter((a, i) => !a.startsWith('--') && !['--jobs', '--skip'].includes(args[i - 1]));
-const FULL_VARIANTS = { tivoli: ['woman_elder', 'girl', 'man_elder', 'civilian2010'] };   /* games whose background people use full bodies */
+const FULL_VARIANTS = { tivoli: ['woman_elder', 'girl', 'man_elder', 'civilian2010', 'guide2020'] };   /* games whose background people use full bodies */
 const PY = process.env.PYTHON || 'python3', OUT = 'build/people-all/';
 mkdirSync(OUT, { recursive: true });
 const DIRS = ['tools/people', 'tools/garvey/people', 'tools/kendal/people', 'tools/nanny/people', 'tools/tivoli/people'];

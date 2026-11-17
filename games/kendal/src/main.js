@@ -246,7 +246,7 @@ function ensurePlace(id) {   /* the place with its people: loads the bodies it n
   return (placeLoading[id] = (async () => {
     P.specs.extras = P.specs.extras.filter((e) => Math.hypot(e.x - P.start.x, e.z - P.start.z) > 2.6 || e.seated);
     spreadOut(P); lifeFor(P);   /* life.js: what each background person does (engine/ambient.js) */
-    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, { fixed: P.specs.people });   /* engine/faces.js: no two copies of one body with the same face within 4 m */
+    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, { near: 9, fixed: P.specs.people });   /* 9 m: people walk about and meet */   /* engine/faces.js: no two copies of one body with the same face within 4 m */
     for (const e of P.specs.extras) e.bodyId = e.base + (e.variant || '') + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
     const mk = (s, talk) => { const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk }); n.m = makeBody(s); if (!talk && JOINABLE(s)) joinBody(n.m); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };

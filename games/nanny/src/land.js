@@ -104,7 +104,7 @@ export function landMesh(G, { size = 320, seg = 150, pow = 1.55, palette = PALET
 }
 
 /* a strip that follows a dense path over the land: w is half its width; the texture runs along it */
-export function ribbon(dense, w, hfn, mat, { dy = 0.05, vrep = 3, wAt } = {}) {
+export function ribbon(dense, w, hfn, mat, { dy = 0.015, vrep = 3, wAt } = {}) {
   const n = dense.length, pos = new Float32Array(n * 6), uv = new Float32Array(n * 4), idx = []; let dist = 0;
   for (let i = 0; i < n; i++) { const p = dense[i], a = dense[Math.max(0, i - 1)], b = dense[Math.min(n - 1, i + 1)]; let tx = b[0] - a[0], tz = b[1] - a[1]; const L = Math.hypot(tx, tz) || 1; tx /= L; tz /= L; const ww = wAt ? wAt(i / (n - 1)) * w : w;
     if (i) dist += Math.hypot(p[0] - dense[i - 1][0], p[1] - dense[i - 1][1]);

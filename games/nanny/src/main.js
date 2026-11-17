@@ -156,10 +156,10 @@ function ensurePlace(id) {   /* the place with its people: loads the bodies it n
   const P = buildPlace(id); if (P.populated) return Promise.resolve(P); if (placeLoading[id]) return placeLoading[id];
   return (placeLoading[id] = (async () => {
     lifeFor(P); settle(P);   /* life.js: what each person does when the story does not need them (engine/ambient.js) */
-    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, { fixed: P.specs.people });   /* engine/faces.js: no two copies of one body with the same face within 4 m */
+    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, { near: 9, fixed: P.specs.people });   /* 9 m: people walk about and meet */   /* engine/faces.js: no two copies of one body with the same face within 4 m */
     for (const e of P.specs.extras) e.bodyId = e.base + (e.variant || '') + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
-    const mk = (s, talk) => { if (s.ground === undefined) s.ground = P.G.h(s.x, s.z); else s.fixedGround = true; const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk, cue: !!s.hiddenNow }); n.m = makeBody(s); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
+    const mk = (s, talk) => { if (s.ground === undefined) s.ground = P.G.h(s.x, s.z); else s.fixedGround = true; const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk, cue: !!s.hiddenNow }); n.m = makeBody(s); if (!s.fixedGround) n.m.userData.groundAt = (gx, gz) => P.G.h(gx, gz);   /* everyone on the land stands on the ground under each foot (engine/anim.js groundFeet): on a slope a foot no longer sinks into the hill (owner, 17 November 2026) */ n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
     P.people = P.specs.people.map((s) => mk(s, true)); P.extras = P.specs.extras.map((s) => mk(s, false)); P.people.forEach(addMark); makeLife(P);
     P.populated = true; delete placeLoading[id]; refreshCast(); return P;
   })());
@@ -764,7 +764,7 @@ function update(dt, now) {
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
   for (const n of P.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   frameN++; for (const m of P.bodies) if (m.visible && !m.userData.amb) groundFeet(m);
-  for (const n of P.npcs) if (n.fol && n.m.visible) { const y = n.m.position.y; groundFeet(n.m); if (n.m.position.y > y) n.m.position.y = (y + n.m.position.y) / 2; }   /* walkers on a slope: half a second pass closes most of the eased gap when the other foot lands, without a jump (?test=walkers) */   /* every frame: on a slope, every other frame shows as a bounce */
+  for (const n of P.npcs) if (n.fol && n.m.visible) groundFeet(n.m);   /* walkers on a slope: half a second pass closes most of the eased gap when the other foot lands, without a jump (?test=walkers) */   /* every frame: on a slope, every other frame shows as a bounce */
   if (!state.started && P.titleView && cur === 'watch' && !FIGHT.on) { TITLE.t += dt; TITLE.s = Math.max(TITLE.to, TITLE.s - MARCH * 0.8 * dt); const going = TITLE.s > TITLE.to + 0.01; columnPlace(P, TITLE.s, true, going ? 'Walk' : 'Idle', going ? MARCH * 0.8 : 0, TITLE.t); }   /* the title's live scene */
   if (P.tick) P.tick(dt, t); if (P.waters) for (const w of P.waters) w.userData.flow(dt); mist.tick(dt); smoke.tick(dt); fxTick(dt);
   if (P.smokers && (frameN & 15) === 0 && !envNow.stars) for (const s of P.smokers) if (Math.random() < s.rate * 0.3) smoke.emit(_p.set(s.x, groundAt(s.x, s.z) + s.y, s.z), new THREE.Vector3(0.25 + Math.random() * 0.2, s.mist ? 0.4 : 0.9, 0.1), { size: s.mist ? 2.2 : 0.5, grow: s.mist ? 5 : 2.6, life: s.mist ? 4 : 5, color: s.mist ? 0xffffff : 0xcfcfc8, opacity: s.mist ? 0.3 : 0.32 });
@@ -890,6 +890,7 @@ function devViews() {
     DIR.on = true; DIR.t = 0; DIR.dur = 1e6;
     DIR.a = new THREE.Vector3(4, groundAt(0.2, 2.3) + EYE + 1.6, 6); DIR.b = DIR.a;
     DIR.la = new THREE.Vector3(9, -39, 65); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 20; FOV = 20; resize();
+    if (q.has('march')) { FIGHT.mode = 'march'; FIGHT.sHead = 100; for (let i = 0; i < +(q.get('march') || 200); i++) update(1 / 30); FIGHT.on = false; }   /* &march=N: the column marching, N frames in, then frozen */
     if (q.has('near')) { const n = P.extras.find((e) => e.column === +(q.get('near') || 3)); if (n) { const gy = P.G.h(n.x, n.z); DIR.a = new THREE.Vector3(n.x + 3.2, gy + 1.1, n.z + 2.2); DIR.b = DIR.a; DIR.la = new THREE.Vector3(n.x, gy + 0.5, n.z); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 32; FOV = 32; resize(); } }   /* &near=N: close on the Nth man's feet */
     $('hud').hidden = true; document.title = 'SOLDIERS READY';
   });

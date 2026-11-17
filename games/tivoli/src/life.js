@@ -11,7 +11,7 @@
 
    The engine owns these people's bodies: their mixers are taken out of the game's shared list (engine/anim.js `mixers`) so they are not updated twice. */
 import { spreadBodies } from '../../../engine/faces.js';
-const FACE_VARIANTS = { woman_elder: 2, girl: 2, man_elder: 2, civilian2010: 2 };   /* full bodies <base>_b and <base>_c (tools/people/rebuild.mjs FULL_VARIANTS) */
+const FACE_VARIANTS = { woman_elder: 2, girl: 2, man_elder: 2, civilian2010: 2, guide2020: 2 };   /* full bodies <base>_b and <base>_c (tools/people/rebuild.mjs FULL_VARIANTS) */
 import { mixers } from '../../../engine/anim.js';
 import { createAmbient, ambientTest } from '../../../engine/ambient.js';
 import { loadBase, makeBody, LOOKS } from './cast.js';
@@ -113,7 +113,7 @@ export function routeOf(place) { return [[place.start.x, place.start.z], ...plac
 /* build the background people for a chapter's place; returns { life, people, tick, clear } or null when the chapter has none */
 export async function addLife(id, place, scene, opts = {}) {
   const L = LIFE[id]; if (!L) return null;
-  const SP = L.people.map((d) => ({ base: d.look.base, x: d.at[0], z: d.at[1] })); spreadBodies(SP, (b) => FACE_VARIANTS[b] || 0, { fixed: (place.npcs || []).map((n) => ({ base: (LOOKS[n.look] || {}).base || n.base, x: n.x, z: n.z })) }); L.people.forEach((d, i) => { d.bodyId = d.look.base + (SP[i].variant || ''); });   /* engine/faces.js: no two copies of one body with the same face within 4 m */
+  const SP = L.people.map((d) => ({ base: d.look.base, x: d.at[0], z: d.at[1] })); spreadBodies(SP, (b) => FACE_VARIANTS[b] || 0, { near: 9, fixed: (place.npcs || []).map((n) => ({ base: (LOOKS[n.look] || {}).base || n.base, x: n.x, z: n.z })) }); L.people.forEach((d, i) => { d.bodyId = d.look.base + (SP[i].variant || ''); });   /* engine/faces.js: no two copies of one body with the same face within 4 m */
   await Promise.all([...new Set(L.people.map((p) => p.bodyId))].map((b) => loadBase(b)));
   const life = createAmbient({ walls: place.walls, bounds: place.bounds || { x0: -23, x1: 17.5, z0: -13.6, z1: 14.2 }, blocked: blockerOf(place), keepOff: keepOffOf(place), seed: 2010 + id, mood: L.mood, phone: !!opts.phone,
     place: (n) => { n.m.position.x = n.x; n.m.position.z = n.z; n.m.userData.ground = place.groundAt ? place.groundAt(n.x, n.z) : 0; } });

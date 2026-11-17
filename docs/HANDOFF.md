@@ -52,6 +52,13 @@ The owner's open list was: faces in The Emperor's Arrival, the Rastafari men in 
 
 Earlier entries below record past checkpoints.
 
+## Faces, slopes and houses (17 November 2026, later)
+
+- **A face for every recipe, and three faces for crowd bodies.** Every recipe names a `face`. Crowd bodies also list `"variants"`: `tools/people/rebuild.mjs` builds `<name>_b` and `<name>_c` with other faces and a slightly different build (light copies everywhere; full copies where `FULL_VARIANTS` says). `engine/faces.js` `spreadBodies` gives each background person a variant so no two copies of one body within 9 m share a face (wired in Kendal, Nanny Town and Tivoli). The ambient check reports `twins` and `lookalike`: Kendal 33 to 4, Nanny Town 7 to 0, Tivoli 4 to 1; what is left are people who walk across the scene and meet. Other games still need the wiring.
+- **Slopes.** `engine/anim.js` `groundFeet` with `userData.groundAt`: the body stands on the foot with the lower ground, the other knee bends (two-bone IK) as a person climbing does, the body moves at most 3.5 cm a frame and feet tip to the slope. Every Nanny Town person on the land uses it. The drawn trail was 7 cm above the land people stand on (feet stood 7 cm deep in every path); it is 1.5 cm now. Nanny's walking check still reports up to 16 cm under a toe at the steepest moments and is not at 0; by eye the soldiers and guides now climb with their feet on the path.
+- **Houses on hills.** Nanny Town's huts stand level on an earth platform, the floor at the highest ground under the four corners (they were half buried uphill and hanging downhill). Audit 0.
+- Nanny Town's ambient check has one line that is not a look-alike (a girl standing on a story path in the new town); not looked into.
+
 ## To do last: portrait framing for cinematic scenes (owner, 17 November 2026)
 
 Every cinematic scene in all ten games needs a camera angle that keeps the action centred on portrait (phone upright) screens. The owner asked for this to be the last item. Each game's director or cinematic code sets the camera; a portrait screen narrows the view, so the subject must be framed for the narrow width (or the field of view widened) when the screen is taller than it is wide.

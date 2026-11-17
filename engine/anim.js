@@ -154,13 +154,22 @@ function legIK(m, k, d) { const up = m.getObjectByName('mixamorig' + k + 'UpLeg'
   ft.getWorldQuaternion(_iq2); }
 export function groundFeet(m) { if (m.userData.seatAnchor) { anchorSeat(m); return; }   /* a seated person stays on the seat (engine/placement.js) */
   let t = TOES.get(m); if (!t) { t = { soles: solePoints(m), toes: ['Left', 'Right'].map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean) }; TOES.set(m, t); }
-  if (t.soles.length) { m.updateMatrixWorld(true); const gAt = m.userData.groundAt; let low = 1e9; const side = { Left: -1e9, Right: -1e9 }, sy = { Left: 1e9, Right: 1e9 };
-    for (const s of t.soles) { _gp.copy(s.p).applyMatrix4(s.bone.matrixWorld); low = Math.min(low, _gp.y); if (gAt) { const k = /Left/.test(s.bone.name) ? 'Left' : 'Right'; if (_gp.y < sy[k]) sy[k] = _gp.y; side[k] = Math.max(side[k], gAt(_gp.x, _gp.z) - 0.008 - _gp.y); } }
-    if (gAt) {   /* userData.groundAt(x, z): on a slope each foot meets the ground under it (Nanny Town's soldiers sank into the path, 17 November 2026). The body stands on the foot
-      with the lower ground and the other leg bends at the knee to lift its foot onto the higher ground (legIK), as a person on a slope does. Choosing the planted foot from the
-      pose instead was tried and was worse in the walking check */
-      const e = Math.min(side.Left, side.Right); m.position.y += t.set ? e * (e > 0 ? 0.85 : 0.6) : e; t.set = true; m.updateMatrixWorld(true);   /* the body stands on the foot with the lower ground */
-      for (const k of ['Left', 'Right']) { const lift = side[k] - e; if (lift > 0.004) legIK(m, k, Math.min(lift, 0.3)); } return; }
+  if (t.soles.length) { m.updateMatrixWorld(true); const gAt = m.userData.groundAt; let low = 1e9; const fy = { Left: 1e9, Right: 1e9 };
+    for (const s of t.soles) { _gp.copy(s.p).applyMatrix4(s.bone.matrixWorld); low = Math.min(low, _gp.y); if (gAt) { const k = /Left/.test(s.bone.name) ? 'Left' : 'Right'; if (_gp.y < fy[k]) fy[k] = _gp.y; } }
+    if (gAt) {   /* userData.groundAt(x, z): standing and walking on a slope (Nanny Town, 17 November 2026: soldiers, then Quamin and Mama, sank into the path).
+      Each foot has a need: how far the body must rise for that foot to stand on the ground under its ankle. With one foot in the air the body stands on the other.
+      With both down, the body comes down onto the foot with the lower ground and the other knee bends (legIK) to keep its foot on the higher ground. Each foot on the
+      ground also tips to the slope along its own length, so toe and heel both meet the hill. */
+      if (!t.ft) t.ft = { Left: m.getObjectByName('mixamorigLeftFoot'), Right: m.getObjectByName('mixamorigRightFoot'), LeftT: m.getObjectByName('mixamorigLeftToeBase'), RightT: m.getObjectByName('mixamorigRightToeBase') };
+      const need = {}, w = {}; for (const k of ['Left', 'Right']) { const a = t.ft[k] ? t.ft[k].getWorldPosition(_ik[0]) : m.position; need[k] = gAt(a.x, a.z) - 0.008 - fy[k]; w[k] = 1 - Math.min(1, Math.max(0, (fy[k] - low - 0.03) / 0.09)); }   /* need: how far the body must rise for that foot to stand on its ground; w: 1 for a foot on the ground in the clip, 0 for one in the air */
+      const hi = need.Left >= need.Right ? 'Left' : 'Right', lo = hi === 'Left' ? 'Right' : 'Left', c = Math.min(0.32, Math.max(0, need[hi] - need[lo])) * w[lo];   /* both feet down on a slope: the body comes down onto the lower foot and the upper knee bends by as much, as a person climbing does (a flat walk's rear foot cannot reach 30 cm down a steep path) */
+      const e = need[hi] - c, st = t.set ? Math.max(-0.035, Math.min(0.035, e * 0.5)) : e; m.position.y += st; t.set = true; m.updateMatrixWorld(true);   /* the body moves at most 3.5 cm a frame, so it rises and settles instead of jumping */
+      const cl = Math.min(0.32, Math.max(0, c + (e - st)));   /* what the body has not yet done, the knee does */
+      if (cl > 0.004) legIK(m, hi, cl);
+      for (const k of ['Left', 'Right']) { if (w[k] <= 0.05) continue;
+        const F = t.ft[k], T = t.ft[k + 'T']; if (F && T) { const a = F.getWorldPosition(_ik[0]), b = T.getWorldPosition(_ik[1]), dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz);
+          if (L > 0.03) { const s = (gAt(b.x, b.z) - gAt(a.x, a.z)) / L, th = Math.max(-0.6, Math.min(0.6, Math.atan(s))) * w[k]; if (Math.abs(th) > 0.01) worldRotate(F, _iq.setFromAxisAngle(_ik[2].set(-dz / L, 0, dx / L), th)); } } }   /* axis = the foot's direction x up: a turn about it lifts the toe */
+      return; }
     const e = (m.userData.ground || 0) - 0.008 - low;
     m.position.y += (t.set && Math.abs(e) < 0.06) ? e * (e > 0 ? 0.7 : 0.4) : e; t.set = true; return; }   /* small corrections are eased in over a few frames, so the body never jerks when the other heel lands; a big one (a new place to stand) is made at once */
   if (!t.toes.length) return; m.updateMatrixWorld(true); let low = 1e9; for (const b of t.toes) low = Math.min(low, b.getWorldPosition(_gp).y); m.position.y += ((m.userData.ground || 0) + 0.035 - low); }
