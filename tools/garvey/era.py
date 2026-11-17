@@ -606,7 +606,33 @@ if not OLD:
                 loc,nrm,_i,dd=t.find_nearest(v.co,0.03)
                 if loc is not None and (v.co-loc).dot(nrm)<0.007: v.co+=nrm*(0.007-(v.co-loc).dot(nrm))
         bm.normal_update(); bm.to_mesh(_P['breeches'].data); bm.free()
-    if G.get('untucked') and 'shirt' in _P and 'breeches' in _P: clear_layer(_P['shirt'],_skin+[_tr(_P['breeches'])],0.006,reach=0.05); _sh=[_tr(_P['shirt'])]      # an untucked shirt lies over the trousers
+    if G.get('untucked') and 'shirt' in _P and 'breeches' in _P:
+        # an untucked shirt hangs straight from the waist to a level hem: eased over the body alone it ballooned at the belly, curled in underneath and ended in a ragged edge with a notch at the back (owner, 17 November 2026)
+        clear_layer(_P['shirt'],_skin+[_tr(_P['breeches'])],0.006,reach=0.05)
+        _o=_P['shirt']; _bm=bmesh.new(); _bm.from_mesh(_o.data); _z1=HIP+0.16; _z0=HIP-0.075; _nb=36; _bin=lambda c,cy:(math.atan2(c.x,-(c.y-cy))+math.pi)/(2*math.pi)*_nb
+        _ring=[v for v in _bm.verts if abs(v.co.z-_z1)<0.02 and abs(v.co.x)<SX*0.8]
+        if _ring:
+            _cy=sum(v.co.y for v in _ring)/len(_ring); _rw=[0.0]*_nb; _rm=[0.0]*_nb
+            for v in _bm.verts:
+                if abs(v.co.x)>SX*0.8 or v.co.z>_z1+0.02: continue
+                k=int(_bin(v.co,_cy))%_nb; r=math.hypot(v.co.x,v.co.y-_cy); _rm[k]=max(_rm[k],r)
+                if v.co.z>_z1-0.02: _rw[k]=max(_rw[k],r)
+            for L in (_rw,_rm):
+                for _ in range(_nb):
+                    for k in range(_nb):
+                        if L[k]==0: L[k]=max(L[k-1],L[(k+1)%_nb])
+                L[:]=[max(L[k-1],L[k],L[(k+1)%_nb]) for k in range(_nb)]
+                for _ in range(2): L[:]=[(L[k-1]+2*L[k]+L[(k+1)%_nb])/4 for k in range(_nb)]
+            for v in _bm.verts:      # one straight line from the waist out to the widest thing under the shirt (the hips, the shorts' waistband) and down to the hem
+                if v.co.z>=_z1 or abs(v.co.x)>SX*0.8: continue
+                a=_bin(v.co,_cy); k=int(a)%_nb; fr=a-int(a); r=math.hypot(v.co.x,v.co.y-_cy); rw=_rw[k]*(1-fr)+_rw[(k+1)%_nb]*fr; rm=max(rw,_rm[k]*(1-fr)+_rm[(k+1)%_nb]*fr)+0.002
+                tr=rw+(rm-rw)*min(1.0,(_z1-v.co.z)/(_z1-_z0))
+                if r>1e-4: q=tr/r; v.co.x*=q; v.co.y=_cy+(v.co.y-_cy)*q
+            _bm.to_mesh(_o.data); _bm.free(); _o.data.update(); clear_layer(_o,_skin+[_tr(_P['breeches'])],0.006,reach=0.05); _bm=bmesh.new(); _bm.from_mesh(_o.data)
+            for v in _bm.verts:
+                if v.is_boundary and v.co.z<_z0+0.06 and abs(v.co.x)<SX*0.8: v.co.z=_z0
+            _bm.to_mesh(_o.data)
+        _bm.free(); _o.data.update(); _sh=[_tr(_P['shirt'])]      # an untucked shirt lies over the trousers
     if 'skirt' in _P: clear_layer(_P['skirt'],_skin+_sh,0.004)
     _lay=_sh+([_tr(_P['breeches'])] if 'breeches' in _P else [])
     if 'waistcoat' in _P: clear_layer(_P['waistcoat'],_skin+_lay,0.008)
