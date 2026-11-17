@@ -850,6 +850,9 @@ if CK and not FLAT:
             for j in range(ny):
                 loc,nrm,_i,_d=SHT.find_nearest(row[j])
                 if loc is not None and (row[j]-loc).dot(nrm)>-0.0045: row[j]=loc-nrm*0.0045
+            for j in range(ny+2,len(row)):      # the folded leaf lies on the shirt, never in it: each of its points at least 4 mm over the shirt (measured from the skin, the leaf sank into an eased shirt and the shirt showed through it in patches)
+                loc,nrm,_i,_d=SHT.find_nearest(row[j])
+                if loc is not None and (row[j]-loc).dot(nrm)<0.004: row[j]=loc+nrm*0.004
             if CK!='open':      # the band's lowest row goes just under the shirt's neck edge, so no slit of skin opens between them (with no yoke under it)
                 loc,nrm,_i,_d=SHT.find_nearest(row[ny])
                 if loc is not None: row[ny]=loc+nrm*(0.0012 if ny else -0.004)
