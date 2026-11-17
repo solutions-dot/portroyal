@@ -301,6 +301,11 @@ export function auditVehicles(vehicles, people, { start = null, walls = [], safe
      - by shape: a small visible piece (under 45 cm across) that hardly touches any other visible piece (under 3 in 100 of its points within 1.5 cm), in the pose it stands in.
    Returns lines in words; expect none. */
 const PIECE_OF = [[/^WaistcoatButtons$/, 'Waistcoat'], [/^(Hat)Band$/, 'Hat'], [/^CapBand$/, 'Cap'], [/^TopHatBand$/, 'TopHat'], [/^(JButtons|Lapels)$/, 'Jacket'], [/^Buckle$/, 'Belt'], [/^WrapKnot$/, 'Wrap'], [/^(Placket|Pocket|Buttons|Collar)$/, 'Shirt']];
+/* garmentOf(name): the garment a piece belongs to ('HatBand' -> 'Hat', 'WrapKnot' -> 'Wrap', 'WaistcoatButtons' -> 'Waistcoat'), or the name itself.
+   hiddenWith(name, garments): is this piece hidden when those garments are? Every game hides a garment it does not show (a hat not worn, a waistcoat left off) with
+   all its pieces through this, so a band never floats round a head (Tivoli, 17 November 2026: a hidden hat's white band floated round a head wrap). */
+export function garmentOf(n) { const p = PIECE_OF.find(([r]) => r.test(n)); if (p) return p[1]; const m = /^([A-Z][a-z]+)(Band|Knot|Ribbon|Badge|Peak|Pin|Bow)$/.exec(n || ''); return m ? m[1] : n; }
+export function hiddenWith(n, garments) { if (!garments || !garments.length) return false; const g = garmentOf(n); return garments.some((h) => h === n || h === g); }
 export function auditGarments(id, body) {
   const out = [], all = [], shown = (o) => { for (let q = o; q && q !== body.parent; q = q.parent) if (!q.visible) return false; return true; };
   body.updateMatrixWorld(true); body.traverse((o) => { if (o.isMesh && (o.isSkinnedMesh || o.userData.garment)) all.push({ o, mesh: o.name, mat: (o.material && o.material.name) || '', on: shown(o) }); });

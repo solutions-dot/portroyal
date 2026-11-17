@@ -19,7 +19,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { boy: 2, girl: 2, man_elder: 2, man_shirt: 2, man_suit: 2, man_work: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough, auditBodies, auditVehicles, auditGarments, auditHanging } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditThrough, auditBodies, auditVehicles, auditGarments, auditHanging, hiddenWith } from '../../../engine/audit.js';
 import { G, makeSky, ease, rng, batchStatic } from './gfx.js';
 import { hamper, bucket, suitcase } from './props.js';
 import { foldedBlanket, drapeBlanket } from './blanket.js';
@@ -157,7 +157,7 @@ const BLOB_GEO = new THREE.PlaneGeometry(1.0, 1.0), BLOB_MAT = new THREE.MeshBas
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene), offHats = (HATS[s.base] || []).filter((h) => h !== s.hat); if (/^man_(work|shirt|elder|suit)$/.test(s.base) && !(s.hide || []).includes('Waistcoat')) offHats.push('Belt', 'Buckle');
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const mat = o.material, nm = mat.name || '';
-    if ((s.hide && (s.hide.includes(nm) || (nm === 'WaistcoatButtons' && s.hide.includes('Waistcoat')))) || offHats.some((h) => nm === h || nm === h + 'Band')) { o.visible = false; return; }
+    if ((s.hide && (s.hide.includes(nm) || (nm === 'WaistcoatButtons' && s.hide.includes('Waistcoat')))) || hiddenWith(nm, offHats)) { o.visible = false; return; }
     o.material = mat.clone(); const t = nm === 'Hair' ? undefined : s.tint && s.tint[nm];
     if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; } else if (nm === 'Skin' || nm === 'Hair') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT);
     o.castShadow = o.receiveShadow = true; });

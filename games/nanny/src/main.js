@@ -17,7 +17,7 @@ import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditCloth, auditBodies } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditCloth, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { walkRoute } from '../../../engine/placement.js';
 import { follow, lead, goTo, stop as stopFollow, tick as followTick, isFollowing, pathSpots, pathS as pathSE, watch as followWatch } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev checks only (?test=skin), dropped from the public build */
@@ -115,7 +115,7 @@ function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat);   /* a body carries several hats; show the one this person wears (s.hat), or none */
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const mat = o.material, nm = mat.name || '';
-    if ((s.hide && s.hide.includes(nm)) || offHats.some((h) => nm === h || nm === h + 'Band')) { o.visible = false; return; }
+    if ((s.hide && s.hide.includes(nm)) || hiddenWith(nm, offHats)) { o.visible = false; return; }
     o.material = mat.clone(); const t = nm === 'Hair' ? undefined : s.tint && s.tint[nm];   /* hair keeps its own painted colours */
     if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
     else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * (s.pale ? 1 : SKIN_LIGHT)); else if (nm === 'Hair') o.material.color.setScalar(1); });   /* hair keeps its own painted colour; only skin is lightened */

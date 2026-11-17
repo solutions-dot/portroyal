@@ -807,7 +807,7 @@ if FLAT:
     # A flat collar that lies on the shirt. Each row runs from the seam at the neckline out to the collar's edge. 'camp': the leaf carries on down each side of the V and ends in a long point
     # that angles outward and down (a notch where it meets the front edge); it stands a little at the nape. 'round': a flat band with rounded ends that meet at the throat.
     bm=bmesh.new(); rows=[]; LW=G.get('leaf',(0.066 if CK=='camp' else 0.062) if G.get('woman') else 0.088)*s; camp=CK=='camp'
-    xw=(VD-0.012*s)/VK; a0=0.62 if camp else 0.10; nn=14 if OLD else 28; nv=6 if camp else 0      # a later round collar has twice the rows: with 14 a side its edge showed as steps
+    xw=(VD-0.012*s)/VK; a0=0.62 if camp else 0.05;   # a round collar's two ends nearly meet at the throat: with a wider gap the blouse's neckline showed between them as a notch nn=14 if OLD else 28; nv=6 if camp else 0      # a later round collar has twice the rows: with 14 a side its edge showed as steps
     def neck_row(a,wk=1.0):
         f=0.5+0.5*math.cos(a); back=(1-f)**1.2; S=collar_pt(a,NECK+0.004,NECK-0.030*s if camp else NECK-0.012*s,0.010); D=Vector((math.sin(a),-math.cos(a),0)); w=LW*((0.72+0.28*f) if camp else 1.0)*wk      # a round collar keeps its width all round: narrower at the back, it left the slope of the shoulders showing beside it
         stand=(0.006*s*back if camp else 0.003*s)      # a camp collar lies nearly flat at the nape too: standing 14 mm with its edge lifted 15 mm, its back rose like a fin over the shoulders when the back curved (16 November 2026)
@@ -1611,13 +1611,14 @@ def tuck_under_collar():
         if not NECK-0.10*s<c.z<NECK+0.04*s: continue
         hit=bt.ray_cast(c+v.normal*0.0005,v.normal,0.03)[0]
         if hit is None: hit=bt.ray_cast(c-v.normal*0.0005,-v.normal,0.01)[0]
-        if hit is None or (top and kt.find(c)[2]<0.006): continue
+        if hit is None: continue
+        dtop=kt.find(c)[2] if top else 1.0; feather=min(1.0,max(0.0,(dtop-0.002)/0.016))      # sunk less near the collar's top edge, fully 1.8 cm below it: the skin's edge under the collar is then one smooth line, not a saw-tooth where some points were pushed in and their neighbours left out (owner, 17 November 2026: jagged collars)
         near=co.data.vertices[kv.find(hit)[1]]; bw={on[g.group]:g.weight for g in near.groups if on[g.group].startswith('mixamorig:') and g.weight>0}
         if not bw: continue
         for g in list(v.groups):
             if h.vertex_groups[g.group].name.startswith('mixamorig:'): h.vertex_groups[g.group].remove([v.index])
         for nm,w in bw.items(): (h.vertex_groups.get(nm) or h.vertex_groups.new(name=nm)).add([v.index],w,'REPLACE')
-        v.co=c-v.normal*0.008; n+=1
+        v.co=c-v.normal*(0.0015+0.0065*feather); n+=1
     print('TUCKED UNDER COLLAR',n)
 if G.get('tuckskin',1): tuck_under_collar()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s

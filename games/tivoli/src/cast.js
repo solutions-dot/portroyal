@@ -3,6 +3,7 @@
    recolour by material name in one place, lighten the skin so faces read in every light (CLAUDE.md rule 9).
    Bodies come from recipes in tools/tivoli/people/ (era.py, then tools/tivoli/kit.py for the 2010 uniforms, then pack.mjs); see docs/games/tivoli.md "Uniforms". */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
+import { hiddenWith } from '../../../engine/audit.js';
 import { animate } from '../../../engine/anim.js';
 import { model } from '../../../engine/loader.js';
 
@@ -41,7 +42,7 @@ export const bodyOf = (look) => look.base + (look.variant || '');   /* the body 
 export function makeBody(s) {
   const m = skClone(BASES[s.bodyId || bodyOf(s)].scene), off = (HATS[s.base] || []).filter((h) => h !== s.hat);
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const nm = o.material.name || '';
-    if ((s.hide && (s.hide.includes(nm) || (nm === 'WaistcoatButtons' && s.hide.includes('Waistcoat')))) || off.includes(nm)) { o.visible = false; return; }
+    if ((s.hide && (s.hide.includes(nm) || (nm === 'WaistcoatButtons' && s.hide.includes('Waistcoat')))) || hiddenWith(nm, off)) { o.visible = false; return; }   /* a hat not worn goes with its band (engine/audit.js) */
     o.material = o.material.clone(); const t = nm === 'Hair' ? undefined : s.tint && s.tint[nm];
     if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
     else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); else if (nm === 'Hair') o.material.color.setScalar(1); });

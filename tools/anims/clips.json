@@ -124,5 +124,9 @@
  "HoldWalk": "Holding_Walk.fbx",
  "RunM2": "Running_M.fbx",
  "WalkM2": "Walking_M.fbx",
- "StopWalkM2": "Walk_To_Stop_M.fbx"
+ "StopWalkM2": "Walk_To_Stop_M.fbx",
+ "Angry": "Angry.fbx",
+ "LookOverShoulder": "Look_Over_Shoulder.fbx",
+ "Thankful": "Thankful.fbx",
+ "HappyIdle2": "Happy_Idle_2.fbx"
 }

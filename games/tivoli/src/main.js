@@ -15,7 +15,7 @@ import { pose, standIns, POSES, deriveClips } from './clips.js';
 import { LOOKS, BODIES, loadBase, makeBody, bodyOf } from './cast.js';
 import { faceCheck } from '../../../engine/faces.js';   // dev only: look-alikes (two people with one face side by side)
 import { arm, weaponTick, heldReport, ARMED, modeOf } from './weapons.js';
-import { snapMeshes, auditPlace } from '../../../engine/audit.js';   // dev only: the place audit (CLAUDE.md rule 8)
+import { snapMeshes, auditPlace, auditGarments } from '../../../engine/audit.js';   // dev only: the place audit (CLAUDE.md rule 8)
 import { contentRects, contentsOverlap } from '../../../engine/ui-audit.js';   // dev only: the layout test
 import { buildBackOWall } from './backowall.js';
 import { buildNewTivoli } from './newtivoli.js';
@@ -351,7 +351,9 @@ async function devViews() {
       const n2 = r2.floating.length + r2.inside.length + r2.stuck.length + ov2.length; extra += n2;
       lines.push(id + ': ' + n2 + ' issues (' + r2.floating.length + ' floating, ' + r2.inside.length + ' inside solids, ' + r2.stuck.length + ' unreachable, ' + ov2.length + ' overlaps)', ...r2.floating.map((l) => '  floating: ' + l), ...r2.inside.map((l) => '  inside: ' + l), ...r2.stuck.map((l) => '  unreachable: ' + l), ...ov2.map((l) => '  ' + l));
     }
-    devLog(lines, 'AUDIT ' + (r.floating.length + r.inside.length + r.stuck.length + ov.length + extra));
+    (async () => { const gl = []; for (const [k, look] of Object.entries(LOOKS)) { try { await loadBase(bodyOf(look)); const m = makeBody({ ...look, x: 0, z: 0, ry: 0 }); gl.push(...auditGarments(k, m)); } catch (e) { gl.push(k + ': could not be made (' + (e.message || e) + ')'); } }   /* every look as it is drawn: no band, buttons or knot left showing when its garment is hidden (engine/audit.js) */
+      extra += gl.length; lines.push('garments: ' + gl.length); for (const l of gl) lines.push('  ' + l);
+      devLog(lines, 'AUDIT ' + (r.floating.length + r.inside.length + r.stuck.length + ov.length + extra)); })();
   }
   if (test === 'layout') {   /* ?test=layout: show each card and title state and check that no two bits of text overlap, nothing is off the sides of the screen, and every button is big enough to touch (44 px). Run at 390x800, 320x568, 667x375, 800x500, 1280x720. */
     const out = [], W = innerWidth, Hh = innerHeight, st2 = document.createElement('style'); st2.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st2);

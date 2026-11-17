@@ -32,7 +32,7 @@ import * as SFX from './sfx.js';
 import { HATS, LOOKS, KID } from './cast.js';
 import { DECOR } from './decor.js';
 import * as TRN from './trains.js'; import * as PRP from './props.js';   /* whole modules, for the dev model viewer only */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditWalk, auditCloth, auditBodies } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditWalk, auditCloth, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
 import { motionCheck } from './motioncheck.js';
 import { storyLifeTick } from './storylife.js';
@@ -159,7 +159,7 @@ function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat); if (/^man_(work|shirt|elder|suit)$/.test(s.base) && !(s.hide || []).includes('Waistcoat')) offHats.push('Belt', 'Buckle');   /* a waistcoat covers the belt */   /* a body carries several hats; show the one this person wears (s.hat), or none */
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const mat = o.material, nm = mat.name || '';
-    if ((s.hat === 'Wrap' && o.name === 'Bun') || (s.hide && (s.hide.includes(nm) || (nm === 'WaistcoatButtons' && s.hide.includes('Waistcoat')))) || offHats.some((h) => nm === h || nm === h + 'Band')) { o.visible = false; return; }
+    if ((s.hat === 'Wrap' && o.name === 'Bun') || (s.hide && (s.hide.includes(nm) || (nm === 'WaistcoatButtons' && s.hide.includes('Waistcoat')))) || hiddenWith(nm, offHats)) { o.visible = false; return; }
     o.material = mat.clone(); const T = s.tint || {}, t = nm === 'Hair' ? undefined : T[nm] !== undefined ? T[nm] : nm === 'Collar' ? T.Shirt : nm === 'Pocket' && T.Shirt !== undefined ? new THREE.Color(T.Shirt).multiplyScalar(0.9).getHex() : (nm === 'Sash' ? T.Belt : undefined);   /* a collar is the shirt's own cloth unless it is given a colour; a patch pocket is a shade darker than its shirt */   /* hair keeps its own painted colours: they fade into the skin at the hairline */
     if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
     else if (nm === 'Skin') { o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); o.material.emissive = new THREE.Color(SKIN_TONE).multiplyScalar(Math.min(1.1, s.skin || 1)); o.material.emissiveIntensity = SKIN_FILL.k; SKIN_FILL.mats.add(o.material); } else if (nm === 'Hair') o.material.color.setScalar(1); });   /* hair keeps its own painted colour (dark, or grey for an elder); only skin is lightened. The hairline fade is a few millimetres wide, so its skin end being slightly darker than the face is not seen */

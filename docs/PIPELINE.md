@@ -309,3 +309,7 @@ Abba and Grace in Port Royal are builder bodies now (skin `[138, 93, 66]`, at th
 
 - **Band collars** (`stand`, `turn`): the band's top edge and the fold are fitted to the neck itself (`ring_fix` against the skin, 5 mm and 8 mm clear; `collarfit`, on by default). Measured from an ellipse, the neck came through the band in a ragged line and two teeth stood up at the back.
 - **Untucked shirts** (`untucked`): after the shirt is cleared over the shorts it is drawn into one straight line from the waist to the widest thing under it, then the hem is set level. It still flares a little over baggy shorts.
+
+## Flat collars sit clean at the throat (17 November 2026)
+
+The owner saw jagged collars. On a round collar the saw-tooth was the line where the neck skin dips under the blouse: `tuck_under_collar` pushed skin under the collar 8 mm point by point and left out the points right at its edge, so the skin's edge went in and out. The push is now feathered (1.5 mm at the collar's top edge, the full 8 mm 1.8 cm below it), and a round collar's two ends nearly meet at the throat (`a0` 0.05), so the blouse's neckline no longer shows between them as a notch. Applies to every round and camp collar (45 recipes, rebuilt the same day).

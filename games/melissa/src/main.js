@@ -25,7 +25,7 @@ import { makeStorm, collectSway, swayTick } from './storm.js';
 import * as PRP from './props.js'; import * as HSE from './houses.js';   /* whole modules, for the dev model viewer only */
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { boy: 2, girl: 2, girl_small: 2, guide2020: 2, man_elder: 2, man_shirt: 2, man_work: 2, student2020: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
-import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditBodies } from '../../../engine/audit.js';
+import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditSeated, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
 
 const $ = (id) => document.getElementById(id);
@@ -103,7 +103,7 @@ function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat); if (/^man_(work|shirt|elder|suit)$/.test(s.base) && !(s.hide || []).includes('Waistcoat')) offHats.push('Belt', 'Buckle');   /* a waistcoat covers the belt */   /* a body carries several hats; show the one this person wears (s.hat), or none */
   m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const mat = o.material, nm = mat.name || '';
-    if ((s.hide && (s.hide.includes(nm) || (nm === 'WaistcoatButtons' && s.hide.includes('Waistcoat')))) || offHats.some((h) => nm === h || nm === h + 'Band')) { o.visible = false; return; }
+    if ((s.hide && (s.hide.includes(nm) || (nm === 'WaistcoatButtons' && s.hide.includes('Waistcoat')))) || hiddenWith(nm, offHats)) { o.visible = false; return; }
     o.material = mat.clone(); const t = nm === 'Hair' ? undefined : s.tint && s.tint[nm];   /* hair keeps its own painted colours: they fade into the skin at the hairline */
     if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
     else if (nm === 'Skin' || nm === 'Hair') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); });
