@@ -1167,16 +1167,46 @@ if G.get('bun'):         # hair gathered into a bun at the back of the head
     _sk=globals().get('SKIN') or tree; hit=_sk.ray_cast(Vector((0,0.6,zb)),Vector((0,-1,0)))[0]; yb=(hit.y if hit else 0.09)+_br*0.35
     bm=bmesh.new(); bmesh.ops.create_uvsphere(bm,u_segments=14,v_segments=9,radius=_br,matrix=Matrix.Translation((0,yb,zb))@Matrix.Diagonal((1.15,0.85,0.9,1)))
     rigid('Bun',bm,'Hair','Head')
-    for _w in [o for o in bpy.data.objects if o.type=='MESH' and o.name.endswith('Wrap') and o.data.materials]:      # the wrap goes over the bun: each point of it inside the bun (and a little round it) is pushed out
-        _c=Vector((0,yb,zb)); _sc=Vector((1.15,0.85,0.9))*_br; _moved=[]
-        for _v in _w.data.vertices:
-            _d=Vector(((_v.co.x-_c.x)/_sc.x,(_v.co.y-_c.y)/_sc.y,(_v.co.z-_c.z)/_sc.z)); _L=_d.length; _lim=1+0.012/_br
-            if 1e-6<_L<_lim: _k=_lim/_L; _v.co=Vector((_c.x+(_v.co.x-_c.x)*_k,_c.y+(_v.co.y-_c.y)*_k,_c.z+(_v.co.z-_c.z)*_k)); _moved.append(_v.index)
-        if _moved:
-            _b=bmesh.new(); _b.from_mesh(_w.data); _b.verts.ensure_lookup_table(); _ring=set(_moved)
-            for _ in range(2): _ring|={e.other_vert(_b.verts[i]).index for i in list(_ring) for e in _b.verts[i].link_edges}
-            for _ in range(4): bmesh.ops.smooth_vert(_b,verts=[_b.verts[i] for i in _ring if not _b.verts[i].is_boundary],factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
-            _b.to_mesh(_w.data); _b.free()
+def smooth_wrap():
+    # A head wrap is one smooth shell of cloth over the whole top and back of the head, the hair and the bun (owner, 17 November 2026: the wrap cut from the scalp was
+    # lumpy, the bun bulged out under it, hair poked out at the sides and the knot sat on top like a second bun). It is the convex hull of the skull, the hair and the bun
+    # above the wrap's lower edge, made fine and relaxed, set 5 mm clear, with its edge drawn onto the head; the knot lies flat on the front.
+    sk=globals().get('SKIN') or tree; Jy=J('Head').y
+    for w in [o for o in bpy.data.objects if o.type=='MESH' and o.name.endswith('Wrap') and o.data.materials]:
+        HMn=w.name[:-4]; edge=lambda c:HEAD+(0.125-0.022*G.get('wrapbrow',0)-(0.105-0.022*G.get('wrapbrow',0))*sstep(Jy-0.03,Jy+0.07,c.y))*s      # wrapbrow brings the front edge down to the brow      # the edge: across the forehead at the hairline, down behind the ears to the nape
+        pts=[]
+        for o in [h]+[x for x in bpy.data.objects if x.type=='MESH' and x.data.materials and x.data.materials[0].name=='Hair']:
+            mw=o.matrix_world
+            for v in o.data.vertices:
+                c=mw@v.co
+                if o is h and not (abs(c.x)<0.12 and c.z>HEAD-0.05*s): continue
+                if c.z>edge(c)-0.006: pts.append(c)
+        if len(pts)<50: continue
+        b=bmesh.new()
+        for c in pts: b.verts.new(c)
+        bmesh.ops.convex_hull(b,input=b.verts[:]); bmesh.ops.delete(b,geom=[v for v in b.verts if not v.link_faces],context='VERTS')
+        bmesh.ops.delete(b,geom=[f for f in b.faces if all(v.co.z<edge(v.co)+0.002 for v in f.verts)],context='FACES')
+        for _ in range(3): bmesh.ops.subdivide_edges(b,edges=b.edges[:],cuts=1,use_grid_fill=True,smooth=0.0)
+        for _ in range(6): bmesh.ops.smooth_vert(b,verts=[v for v in b.verts if not v.is_boundary],factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+        bmesh.ops.delete(b,geom=[f for f in b.faces if cz(f).z<edge(cz(f))],context='FACES'); bmesh.ops.delete(b,geom=[v for v in b.verts if not v.link_faces],context='VERTS')
+        smooth_edge(b,12); b.normal_update()
+        for v in b.verts:      # 5 mm clear of skin and hair everywhere, a soft fold or two in the cloth, and the edge drawn onto the head
+            v.co+=v.normal*(0.005+0.0010*math.sin(v.co.z*140+v.co.x*60)*sstep(edge(v.co),edge(v.co)+0.03,v.co.z))
+            if v.is_boundary:
+                loc,nrm,_i,_d=sk.find_nearest(v.co)
+                if loc is not None: v.co=loc+nrm*0.004
+        bmesh.ops.recalc_face_normals(b,faces=b.faces[:]); me=w.data; b.to_mesh(me); b.free()
+        for g in list(w.vertex_groups): w.vertex_groups.remove(g)
+        for g in h.vertex_groups: w.vertex_groups.new(name=g.name)
+        w.vertex_groups['mixamorig:Head'].add(list(range(len(me.vertices))),1.0,'REPLACE')      # all of it moves with the head
+        k=bpy.data.objects.get(HMn+'Knot')
+        if k:      # the knot: a flat twist on the front of the wrap, sunk into it, not a ball on top
+            WT=tree_of(w); c0=Vector((0,Jy,TOP-0.07*s)); d=Vector((0,-0.80,0.60)).normalized(); hit=WT.ray_cast(c0,d,0.4)[0]      # from inside the head out to the wrap, so it always lands on it
+            if hit is None: bpy.data.objects.remove(k,do_unlink=True); continue
+            p=hit; bk=bmesh.new(); R=d.to_track_quat('Z','Y').to_matrix().to_4x4(); bmesh.ops.create_uvsphere(bk,u_segments=16,v_segments=10,radius=0.022*s,matrix=Matrix.Translation(p-d*0.002)@R@Matrix.Diagonal((1.7,0.7,0.38,1)))
+            bk.to_mesh(k.data); bk.free(); kg=k.vertex_groups.get('mixamorig:Head') or k.vertex_groups.new(name='mixamorig:Head'); kg.add(list(range(len(k.data.vertices))),1.0,'REPLACE')      # new points need their weight again, or they are left behind when the head moves
+    print('SMOOTH WRAP')      # (painted with every other piece further on)
+if any(k=='wrap' for k,_m in HATS) and G.get('wrapstyle','smooth')=='smooth': smooth_wrap()
 if G.get('scarf'):          # the knot at the throat
     z=NECK-0.05*s; hit=tree.ray_cast(Vector((0,-1,z)),Vector((0,1,0)))[0]; y=(hit.y if hit else -0.07)-0.03; bm=bmesh.new()
     k=[bm.verts.new((dx,y,z+dz)) for dx,dz in ((-0.02,0.0),(0.02,0.0),(0.012,-0.06),(-0.014,-0.056))]; bm.faces.new(k)
