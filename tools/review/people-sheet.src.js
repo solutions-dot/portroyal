@@ -28,7 +28,7 @@ const dir = (id) => id.includes('/') ? id.slice(0, id.lastIndexOf('/') + 1) : `.
   loadClips({ animations: [...clips, ...extra] }); const clip = clipFor(anim);
   for (let r = 0; r < ids.length; r++) {
     const g = await model(dir(ids[r]), nameOf(ids[r])), m = g.scene; scene.add(m);
-    m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const nm = o.material.name || ''; if (hide.includes(nm)) o.visible = false; if (nm === 'Skin') { o.material = o.material.clone(); o.material.color.multiplyScalar(skinK); } });
+    m.traverse((o) => { if (!o.isMesh) return; o.frustumCulled = false; const nm = o.material.name || ''; if (hide.includes(nm) || hide.includes(o.name)) o.visible = false; if (nm === 'Skin') { o.material = o.material.clone(); o.material.color.multiplyScalar(skinK); } });
     if (clip) { const ctl = animate(m, anim); ctl.base.time = 0; ctl.mx.update(+(q.get('at') || 0.4)); }   /* the engine's own player, so a seated skirt and hands kept clear of the lap show as they do in the game */
     m.updateMatrixWorld(true);
     const bone = (n) => { let b = null; m.traverse((o) => { if (o.isBone && o.name.replace(/[:_]/g, '').toLowerCase() === 'mixamorig' + n) b = o; }); return b; };

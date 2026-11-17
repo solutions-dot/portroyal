@@ -802,9 +802,10 @@ if FLAT:
         for j,off in ((0,0.003),(1,0.0035),(2,0.0055 if camp else 0.0042),(3,0.0075 if camp else 0.0028)): ring_fix(rows,j,SHT,off,iters=3)      # a round collar's edge lies right on the blouse: 6 mm off it, the gap under the edge showed as a dark line and slivers on an older, rounder back (owner, 17 November 2026)      # a round collar lies close on the blouse: its edge lifted 1.5 cm stood up like a wing when the back curved      # the seam row too, on every flat collar: left on the nearest shirt point it showed as teeth at the nape
         if not camp:
             for j,off in ((2,0.006),(3,0.006)): ring_fix(rows,j,SKIN,off,iters=1)
+        if True:
             for _ in range(3):      # a round collar lies on the blouse: its leaf is laid back onto the cloth after the smoothing, which left it standing off a sloping shoulder with a gap under it
                 for i in range(len(rows)):
-                    for j,off in ((1,0.0032),(2,0.0036),(3,0.0026)): rows[i][j]=on_shirt(rows[i][j],off)
+                    for j,off in (((1,0.0032),(2,0.0036),(3,0.0026)) if not camp else ((2,0.0045),(3,0.0035))): rows[i][j]=on_shirt(rows[i][j],off)      # a camp collar too (its leaf curled off the back of the shoulder); its stand row keeps its little rise at the nape
                 for j in (2,3):
                     for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4      # and clear of the skin: at the top of the shoulder the skin rose above the shirt and came up through the collar
     if not camp and not OLD and G.get('yoke',0 if CK=='round' else 1):      # (not under a round collar: its yoke crumpled the collar's ends at the throat, 17 November 2026) a yoke under the seam, down onto the skin beneath the shirt, so no skin shows between the collar and the neck
@@ -813,7 +814,7 @@ if FLAT:
         ring_fix(rows,0,SKIN,0.002,SHT,0.002)
     quadstrip(bm,[[bm.verts.new(q) for q in row] for row in rows]); _co=soft('Collar',bm,'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD: ring_weights(_co,len(rows),len(rows[0]),flat=True)
-    if not OLD and not camp and G.get('collarshirt',1) and PART.get('shirt'):      # a round collar lies flat on the blouse: it takes the blouse's own weights under it (smoothed at the shoulder now), so in every pose it moves exactly as the cloth beneath and its edge cannot stand off the shoulder as dark slivers (17 November 2026)
+    if not OLD and G.get('collarshirt',1) and PART.get('shirt'):      # a round collar lies flat on the blouse: it takes the blouse's own weights under it (smoothed at the shoulder now), so in every pose it moves exactly as the cloth beneath and its edge cannot stand off the shoulder as dark slivers (17 November 2026)
         _md=_co.modifiers.new('wtc','DATA_TRANSFER'); _md.object=PART['shirt']; _md.use_vert_data=True; _md.data_types_verts={'VGROUP_WEIGHTS'}; _md.vert_mapping='POLYINTERP_NEAREST'; _md.layers_vgroup_select_src='ALL'; _md.layers_vgroup_select_dst='NAME'
         with ov(_co): bpy.ops.object.modifier_move_to_index(modifier='wtc',index=0); bpy.ops.object.modifier_apply(modifier='wtc')
 if CK and not FLAT:
@@ -823,8 +824,8 @@ if CK and not FLAT:
         a=gap+(2*math.pi-2*gap)*k/seg; f=0.5+0.5*math.cos(a)
         b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.016); row=[]
         if CK!='open':      # under the seam the collar carries on down as a yoke that lies on the skin beneath the shirt, so no skin shows between collar and shirt when the body moves
-            for dz in (0.085,0.045):
-                zz=b0.z-dz*s*(0.45+0.55*f); rr=rad_out(zz,a)+0.0055; row.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
+            for dz in (0.034,0.017):      # a short yoke, close on the skin: 8.5 cm deep and 5.5 mm off the skin, it ran up against the shirt and came through it in ragged patches (owner, 17 November 2026)
+                zz=b0.z-dz*s*(0.45+0.55*f); rr=rad_out(zz,a)+0.0025; row.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
         row+=[b0,collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,0.007)]
         if CK not in ('stand','band'):
             fr=max(0.0,(f-0.80)/0.20); q=collar_pt(a,NECK-0.004+hs+0.002,NECK-0.012*s+hs+0.002,0.013); e=collar_pt(a,NECK-0.008*s,NECK-0.02*s,0.030) if not (G.get('jacket') or G.get('waistcoat')) else collar_pt(a,NECK+0.004*s,NECK-0.012*s,0.022)
@@ -837,11 +838,21 @@ if CK and not FLAT:
     if not OLD or EASE_OLD:      # every line of the collar is evened out along the ring (see ring_fix); the yoke stays on the skin and under the shirt, the band and the leaf stay clear of the shirt (the 1690 neckband had the same teeth)
         ny=0 if CK=='open' else 2
         for j in range(len(rows[0])):
-            if j<ny: ring_fix(rows,j,SKIN,0.003,SHT,0.002)
+            if j<ny: ring_fix(rows,j,SKIN,0.003,SHT,0.0045)      # the yoke 4.5 mm inside the shirt: at 2 mm the two surfaces fought for the same pixels and showed as ragged patches under the collar (owner, 17 November 2026)
             else: ring_fix(rows,j,SHT,0.003 if j==ny else 0.004)
+        for row in rows:      # and then hard: each yoke point well inside the shirt and the seam just on it, so the band meets the shirt in one clean line (smoothed, the yoke crossed the shirt and showed as ragged patches: owner, 17 November 2026)
+            for j in range(ny):
+                loc,nrm,_i,_d=SHT.find_nearest(row[j])
+                if loc is not None and (row[j]-loc).dot(nrm)>-0.0045: row[j]=loc-nrm*0.0045
+            if ny:
+                loc,nrm,_i,_d=SHT.find_nearest(row[ny])
+                if loc is not None: row[ny]=loc+nrm*0.0012
     rows=[[bm.verts.new(q) for q in row] for row in rows]
     quadstrip(bm,[list(r) for r in zip(*rows)]); _co=soft('Collar',bm,'Shirt' if CK=='band' else 'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD or EASE_OLD: ring_weights(_co,len(rows),len(rows[0]))
+    _cb=bmesh.new(); _cb.from_mesh(_co.data); _cb.normal_update(); _fl=[f for f in _cb.faces if f.normal.dot(Vector((cz(f).x,cz(f).y-NJ.y,0)))<0]      # every face of the band and its folded leaf looks outward from the neck: the automatic normals of a strip that folds back on itself flipped some faces, which drew as grey blocks on the collar (owner, 17 November 2026)
+    if _fl: bmesh.ops.reverse_faces(_cb,faces=_fl)
+    _cb.to_mesh(_co.data); _cb.free(); _co.data.update()
 if G.get('tie'):         # a tie: a knot in the collar's opening and a blade that lies on the shirt, wider toward its tip
     bm=bmesh.new(); zk=collar_base(0)+0.016*s; n=8; L=(0.30 if not (G.get('waistcoat') or G.get('jacket')) else 0.24)*s; rows=[]
     for t in range(n+1):
