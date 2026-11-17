@@ -142,8 +142,25 @@ function solePoints(m) {
   for (const nm in best) { const b = best[nm], seen = new Set(); for (let a = -70; a <= 70; a += 14) { const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180); let top = null, d = -1e9; for (const c of b.list) { const k = -c[2] * ca + c[3] * sa; if (k > d) { d = k; top = c; } }
       if (top && !seen.has(top)) { seen.add(top); out.push({ bone: top[4].skeleton.bones[top[0]], p: new THREE.Vector3(top[1], top[2], top[3]).applyMatrix4(top[4].skeleton.boneInverses[top[0]]) }); } } }
   return out; }
+/* legIK(model, 'Left' | 'Right', d): raise that foot by d metres by bending the knee and turning the thigh (two-bone IK), keeping the knee in the plane it already bends in. */
+const _ik = [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector3()), _iq = new THREE.Quaternion(), _iq2 = new THREE.Quaternion();
+function worldRotate(b, q) { b.getWorldQuaternion(_iq2); const pq = b.parent.getWorldQuaternion(new THREE.Quaternion()).invert(); b.quaternion.copy(pq.multiply(q.clone().multiply(_iq2))); b.updateMatrixWorld(true); }
+function legIK(m, k, d) { const up = m.getObjectByName('mixamorig' + k + 'UpLeg'), kn = m.getObjectByName('mixamorig' + k + 'Leg'), ft = m.getObjectByName('mixamorig' + k + 'Foot'); if (!up || !kn || !ft) return;
+  const H = up.getWorldPosition(_ik[0]), K = kn.getWorldPosition(_ik[1]), A = ft.getWorldPosition(_ik[2]), T = _ik[3].copy(A).add(_ik[4].set(0, d, 0)), a = H.distanceTo(K), b = K.distanceTo(A), c0 = H.distanceTo(A), c1 = Math.min(a + b - 1e-4, H.distanceTo(T));
+  const ang = (c) => Math.acos(Math.min(1, Math.max(-1, (a * a + b * b - c * c) / (2 * a * b)))), bend = ang(c1) - ang(c0);
+  const axis = _ik[5].copy(K).sub(H).cross(_ik[4].copy(A).sub(K)); if (axis.lengthSq() < 1e-10) axis.set(1, 0, 0).applyQuaternion(up.getWorldQuaternion(_iq)); axis.normalize();
+  worldRotate(kn, _iq.setFromAxisAngle(axis, -bend));   /* a straighter or more bent knee, so hip to ankle is as long as hip to target */
+  const A2 = ft.getWorldPosition(_ik[2]); worldRotate(up, _iq.setFromUnitVectors(A2.sub(H).normalize(), _ik[4].copy(T).sub(H).normalize()));   /* then the thigh swings the ankle onto the target */
+  ft.getWorldQuaternion(_iq2); }
 export function groundFeet(m) { if (m.userData.seatAnchor) { anchorSeat(m); return; }   /* a seated person stays on the seat (engine/placement.js) */
   let t = TOES.get(m); if (!t) { t = { soles: solePoints(m), toes: ['Left', 'Right'].map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean) }; TOES.set(m, t); }
-  if (t.soles.length) { m.updateMatrixWorld(true); const gAt = m.userData.groundAt; let low = 1e9, e = -1e9; for (const s of t.soles) { _gp.copy(s.p).applyMatrix4(s.bone.matrixWorld); if (gAt) e = Math.max(e, gAt(_gp.x, _gp.z) - 0.008 - _gp.y); else low = Math.min(low, _gp.y); } if (!gAt) e = (m.userData.ground || 0) - 0.008 - low;   /* userData.groundAt(x, z): the ground under each sole, so on a slope the uphill foot stands on the hill instead of sinking into it (Nanny Town's soldiers, 17 November 2026) */   /* the sole rests a hair into the ground, so no gap ever shows under a shoe */
+  if (t.soles.length) { m.updateMatrixWorld(true); const gAt = m.userData.groundAt; let low = 1e9; const side = { Left: -1e9, Right: -1e9 }, sy = { Left: 1e9, Right: 1e9 };
+    for (const s of t.soles) { _gp.copy(s.p).applyMatrix4(s.bone.matrixWorld); low = Math.min(low, _gp.y); if (gAt) { const k = /Left/.test(s.bone.name) ? 'Left' : 'Right'; if (_gp.y < sy[k]) sy[k] = _gp.y; side[k] = Math.max(side[k], gAt(_gp.x, _gp.z) - 0.008 - _gp.y); } }
+    if (gAt) {   /* userData.groundAt(x, z): on a slope each foot meets the ground under it (Nanny Town's soldiers sank into the path, 17 November 2026). The body stands on the foot
+      with the lower ground and the other leg bends at the knee to lift its foot onto the higher ground (legIK), as a person on a slope does. Choosing the planted foot from the
+      pose instead was tried and was worse in the walking check */
+      const e = Math.min(side.Left, side.Right); m.position.y += t.set ? e * (e > 0 ? 0.85 : 0.6) : e; t.set = true; m.updateMatrixWorld(true);   /* the body stands on the foot with the lower ground */
+      for (const k of ['Left', 'Right']) { const lift = side[k] - e; if (lift > 0.004) legIK(m, k, Math.min(lift, 0.3)); } return; }
+    const e = (m.userData.ground || 0) - 0.008 - low;
     m.position.y += (t.set && Math.abs(e) < 0.06) ? e * (e > 0 ? 0.7 : 0.4) : e; t.set = true; return; }   /* small corrections are eased in over a few frames, so the body never jerks when the other heel lands; a big one (a new place to stand) is made at once */
   if (!t.toes.length) return; m.updateMatrixWorld(true); let low = 1e9; for (const b of t.toes) low = Math.min(low, b.getWorldPosition(_gp).y); m.position.y += ((m.userData.ground || 0) + 0.035 - low); }
