@@ -10,9 +10,11 @@
    Bodies are the ones the game already ships (the borrowed Kendal and Garvey bodies and civilian2010), recoloured, so no new downloads.
 
    The engine owns these people's bodies: their mixers are taken out of the game's shared list (engine/anim.js `mixers`) so they are not updated twice. */
+import { spreadBodies } from '../../../engine/faces.js';
+const FACE_VARIANTS = { woman_elder: 2, girl: 2, man_elder: 2, civilian2010: 2 };   /* full bodies <base>_b and <base>_c (tools/people/rebuild.mjs FULL_VARIANTS) */
 import { mixers } from '../../../engine/anim.js';
 import { createAmbient, ambientTest } from '../../../engine/ambient.js';
-import { loadBase, makeBody } from './cast.js';
+import { loadBase, makeBody, LOOKS } from './cast.js';
 
 /* a look for a background person: a body, a sex (for the engine's walk and talk clips), colours, and a size (children use the girl body, small) */
 const P = {
@@ -111,12 +113,13 @@ export function routeOf(place) { return [[place.start.x, place.start.z], ...plac
 /* build the background people for a chapter's place; returns { life, people, tick, clear } or null when the chapter has none */
 export async function addLife(id, place, scene, opts = {}) {
   const L = LIFE[id]; if (!L) return null;
-  await Promise.all([...new Set(L.people.map((p) => p.look.base))].map((b) => loadBase(b)));
+  const SP = L.people.map((d) => ({ base: d.look.base, x: d.at[0], z: d.at[1] })); spreadBodies(SP, (b) => FACE_VARIANTS[b] || 0, { fixed: (place.npcs || []).map((n) => ({ base: (LOOKS[n.look] || {}).base || n.base, x: n.x, z: n.z })) }); L.people.forEach((d, i) => { d.bodyId = d.look.base + (SP[i].variant || ''); });   /* engine/faces.js: no two copies of one body with the same face within 4 m */
+  await Promise.all([...new Set(L.people.map((p) => p.bodyId))].map((b) => loadBase(b)));
   const life = createAmbient({ walls: place.walls, bounds: place.bounds || { x0: -23, x1: 17.5, z0: -13.6, z1: 14.2 }, blocked: blockerOf(place), keepOff: keepOffOf(place), seed: 2010 + id, mood: L.mood, phone: !!opts.phone,
     place: (n) => { n.m.position.x = n.x; n.m.position.z = n.z; n.m.userData.ground = place.groundAt ? place.groundAt(n.x, n.z) : 0; } });
   const people = [];
   for (const d of L.people) {
-    const g = place.groundAt ? place.groundAt(d.at[0], d.at[1]) : 0, m = makeBody({ ...d.look, x: d.at[0], z: d.at[1], ry: d.ry !== undefined ? d.ry : d.spec.seat ? d.spec.seat.ry : Math.random() * 6.28, ground: g, anim: 'Idle' });   /* a sitter starts facing the way the seat faces, or the seat swung them round in one frame */
+    const g = place.groundAt ? place.groundAt(d.at[0], d.at[1]) : 0, m = makeBody({ ...d.look, bodyId: d.bodyId, x: d.at[0], z: d.at[1], ry: d.ry !== undefined ? d.ry : d.spec.seat ? d.spec.seat.ry : Math.random() * 6.28, ground: g, anim: 'Idle' });   /* a sitter starts facing the way the seat faces, or the seat swung them round in one frame */
     const k = mixers.indexOf(m.userData.anim.mx); if (k >= 0) mixers.splice(k, 1);   /* the engine updates this mixer, not the game's loop */
     m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); if (scene) scene.add(m);
     const n = { id: d.id, x: d.at[0], z: d.at[1], m, ctl: m.userData.anim, sex: d.look.sex, look: d.look }; life.add(n, d.spec); people.push(n);

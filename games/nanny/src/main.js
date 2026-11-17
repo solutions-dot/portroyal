@@ -1,3 +1,5 @@
+import { spreadBodies } from '../../../engine/faces.js';
+const FACE_VARIANTS = { maroon_man: 2, maroon_scout: 2, maroon_woman: 2, maroon_girl: 2, maroon_boy: 2, redcoat: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/nanny/src/main.js: Nanny Town 1734, The Narrow Path.
    The story of Nanny of the Windward Maroons and her town in the Blue Mountains: the walk to freedom, the town, the watch, a fight on the narrow path,
@@ -154,7 +156,8 @@ function ensurePlace(id) {   /* the place with its people: loads the bodies it n
   const P = buildPlace(id); if (P.populated) return Promise.resolve(P); if (placeLoading[id]) return placeLoading[id];
   return (placeLoading[id] = (async () => {
     lifeFor(P); settle(P);   /* life.js: what each person does when the story does not need them (engine/ambient.js) */
-    for (const e of P.specs.extras) e.bodyId = e.base + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
+    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, { fixed: P.specs.people });   /* engine/faces.js: no two copies of one body with the same face within 4 m */
+    for (const e of P.specs.extras) e.bodyId = e.base + (e.variant || '') + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
     const mk = (s, talk) => { if (s.ground === undefined) s.ground = P.G.h(s.x, s.z); else s.fixedGround = true; const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk, cue: !!s.hiddenNow }); n.m = makeBody(s); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
     P.people = P.specs.people.map((s) => mk(s, true)); P.extras = P.specs.extras.map((s) => mk(s, false)); P.people.forEach(addMark); makeLife(P);
