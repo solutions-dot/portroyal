@@ -17,7 +17,7 @@
      color      the leaf (default a varnished brown); frame: the frame (default off-white); glass: the glass colour
      handle     'knob' | 'lever' | 'ring' | 'latch' | 'pull' | 'none'   (default: knob, latch for plank, pull for glazed)
      recess     how far the leaf is set back into a real opening in the wall (default 0: the wall is solid, the leaf stands on its face, framed)
-     step       height of a step at the foot (default 0: only a sill); open: 0 to 1, how far the leaf (or both) is swung in
+     step       height of a step at the foot (default 0: only a sill); open: how far the leaf (or both) is swung: 0 to 1 swings it OUT, towards +z (negative swings it in; Garvey's room doors rely on this)
      rough      material roughness for the leaf (default 0.7)
    The materials are MeshStandardMaterial, named Door, DoorFrame, DoorGlass, DoorMetal (the audit and tint code can find them by name). */
 import * as THREE from 'three';
