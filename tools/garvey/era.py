@@ -823,12 +823,12 @@ if CK and not FLAT:
     for k in range(seg+1):
         a=gap+(2*math.pi-2*gap)*k/seg; f=0.5+0.5*math.cos(a)
         b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.016); row=[]
-        if CK!='open':      # under the seam the collar carries on down as a yoke that lies on the skin beneath the shirt, so no skin shows between collar and shirt when the body moves
-            for dz in (0.034,0.017):      # a short yoke, close on the skin: 8.5 cm deep and 5.5 mm off the skin, it ran up against the shirt and came through it in ragged patches (owner, 17 November 2026)
+        if CK!='open' and G.get('yoke',0):      # (off by default since 17 November 2026: the skin under the shirt is tucked in and bound to it, and the yoke showed through the shirt's neck as a ragged band at the back) under the seam the collar carries on down as a yoke that lies on the skin beneath the shirt, so no skin shows between collar and shirt when the body moves
+            for dz in ((0.022,) if G.get('yoke',0)==1 else (0.034,0.017)):      # one short row of yoke, close on the skin: 8.5 cm deep and 5.5 mm off the skin, it ran up against the shirt and came through it in ragged patches (owner, 17 November 2026)
                 zz=b0.z-dz*s*(0.45+0.55*f); rr=rad_out(zz,a)+0.0025; row.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
         row+=[b0,collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,0.007)]
         if CK not in ('stand','band'):
-            fr=max(0.0,(f-0.80)/0.20); q=collar_pt(a,NECK-0.004+hs+0.002,NECK-0.012*s+hs+0.002,0.013); e=collar_pt(a,NECK-0.008*s,NECK-0.02*s,0.030) if not (G.get('jacket') or G.get('waistcoat')) else collar_pt(a,NECK+0.004*s,NECK-0.012*s,0.022)
+            fr=max(0.0,(f-0.80)/0.20); q=collar_pt(a,NECK-0.004+hs+0.0045,NECK-0.012*s+hs+0.0045,0.010); e=collar_pt(a,NECK-0.008*s,NECK-0.02*s,0.030) if not (G.get('jacket') or G.get('waistcoat')) else collar_pt(a,NECK+0.004*s,NECK-0.012*s,0.022)      # q: the fold sits just over the band's top edge, so the edge does not show as a dark rim at the back
             r0=math.hypot(e.x,e.y-NJ.y); r1=rad_out(e.z,a)+(0.013 if not (G.get('jacket') or G.get('waistcoat')) else 0.011)
             if r1>r0: e.x*=r1/r0; e.y=NJ.y+(e.y-NJ.y)*r1/r0
             if fr>0:      # the points: longer, lying on the shirt front, spread a little apart
@@ -836,7 +836,7 @@ if CK and not FLAT:
             row+=[q,e]
         rows.append(row)
     if not OLD or EASE_OLD:      # every line of the collar is evened out along the ring (see ring_fix); the yoke stays on the skin and under the shirt, the band and the leaf stay clear of the shirt (the 1690 neckband had the same teeth)
-        ny=0 if CK=='open' else 2
+        ny=0 if (CK=='open' or not G.get('yoke',0)) else (1 if G.get('yoke',0)==1 else 2)
         for j in range(len(rows[0])):
             if j<ny: ring_fix(rows,j,SKIN,0.003,SHT,0.0045)      # the yoke 4.5 mm inside the shirt: at 2 mm the two surfaces fought for the same pixels and showed as ragged patches under the collar (owner, 17 November 2026)
             else: ring_fix(rows,j,SHT,0.003 if j==ny else 0.004)
@@ -844,9 +844,9 @@ if CK and not FLAT:
             for j in range(ny):
                 loc,nrm,_i,_d=SHT.find_nearest(row[j])
                 if loc is not None and (row[j]-loc).dot(nrm)>-0.0045: row[j]=loc-nrm*0.0045
-            if ny:
+            if CK!='open':      # the band's lowest row goes just under the shirt's neck edge, so no slit of skin opens between them (with no yoke under it)
                 loc,nrm,_i,_d=SHT.find_nearest(row[ny])
-                if loc is not None: row[ny]=loc+nrm*0.0012
+                if loc is not None: row[ny]=loc+nrm*(0.0012 if ny else -0.004)
     rows=[[bm.verts.new(q) for q in row] for row in rows]
     quadstrip(bm,[list(r) for r in zip(*rows)]); _co=soft('Collar',bm,'Shirt' if CK=='band' else 'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD or EASE_OLD: ring_weights(_co,len(rows),len(rows[0]))
@@ -859,8 +859,8 @@ if G.get('tie'):         # a tie: a knot in the collar's opening and a blade tha
         f=t/n; z=zk-0.014*s-L*f; w=(0.013+0.022*f)*s if f<0.9 else 0.035*s*(1-f)/0.1+0.002; y=shirt_front(z)-0.007
         rows.append([bm.verts.new((-w,y,z)),bm.verts.new((0,y-0.004,z)),bm.verts.new((w,y,z))])
     quadstrip(bm,rows)
-    yk=shirt_front(zk-0.01*s)-0.014; kv=[bm.verts.new((dx*s,yk+dy,zk+dz*s)) for dx,dy,dz in ((-0.019,0.004,0.012),(0.019,0.004,0.012),(0.012,0.004,-0.018),(-0.012,0.004,-0.018),(-0.012,-0.008,0.010),(0.012,-0.008,0.010),(0.008,-0.008,-0.014),(-0.008,-0.008,-0.014))]
-    for q in ((4,5,6,7),(0,4,7,3),(5,1,2,6),(7,6,2,3),(0,1,5,4)): bm.faces.new([kv[i] for i in q])
+    zq=zk-0.010*s; yk=min(shirt_front(zq-0.01*s),NJ.y-rad_out(zq,0.0)-0.008)-0.004; kv=[bm.verts.new((dx*s*0.72,yk+dy*0.7,zq+dz*s*0.72)) for dx,dy,dz in ((-0.019,0.004,0.012),(0.019,0.004,0.012),(0.012,0.004,-0.018),(-0.012,0.004,-0.018),(-0.012,-0.008,0.010),(0.012,-0.008,0.010),(0.008,-0.008,-0.014),(-0.008,-0.008,-0.014))]
+    for q in ((4,5,6,7),(0,4,7,3),(5,1,2,6),(7,6,2,3),(0,1,5,4),(3,2,1,0)): bm.faces.new([kv[i] for i in q])      # (its depth is taken from the front of the neck too: above the shirt's neckline the shirt ray missed the front and found the back, and the knot sat behind the neck, showing as a dark frame at the nape) a closed knot (open at the back, its inside drew as a dark frame seen through the back of the collar)
     soft('Tie',bm,'Tie',only=('Spine2','Spine1','Spine','Neck'),src=ON('shirt'))
 if G.get('buttons',not G.get('woman') and not OLD) and not G.get('coat'):      # the shirt's front band and its buttons
     bm=bmesh.new(); z1=(VZ-0.004*s) if CK=='camp' else collar_base(0)-0.012*s; z0=WAIST+0.01
