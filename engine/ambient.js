@@ -461,6 +461,14 @@ export function ambientCheck(life, opts = {}) {
     if (s.slideWorst > 0.3) lines.add(`slide: ${id} ${s.slideWhy} for ${s.slideWorst.toFixed(1)} s`);
     if (s.stillWorst > still) lines.add(`still: ${id} (${n.amb.kind}) stood with nothing changing for ${s.stillWorst.toFixed(1)} s`);
     stats.push(`${id}: ${n.amb.kind}, walked ${s.moved.toFixed(1)} m (${s.walkT.toFixed(0)} s), longest still ${s.stillWorst.toFixed(1)} s, seen ${s.seen} frames`); }
+  /* look-alikes (17 November 2026): two people of one body share one face. Two of them standing within 2.5 m of each other read as twins, and with nearly the same
+     clothes colours as the same person twice. Faces are told apart by the skin's geometry (one body, one face); clothes by their colours. Checked where people start. */
+  { const faceOf = (n) => { let g = null; n.m && n.m.traverse((o) => { if (!g && o.isSkinnedMesh && /^(Skin|Body|Crowd)$/.test(o.material && o.material.name)) g = o.geometry.uuid; }); return g; };
+    const cols = (n) => { const c = []; n.m && n.m.traverse((o) => { if (o.isMesh && o.material && o.material.color && !/^(Skin|Body|Hair|Human)/.test(o.material.name)) c.push(o.material.color.getHex()); }); return c.sort(); };
+    const near = (a, b) => { if (a.length !== b.length) return false; for (let i = 0; i < a.length; i++) { const x = a[i], y = b[i], d = Math.abs((x >> 16) - (y >> 16)) + Math.abs(((x >> 8) & 255) - ((y >> 8) & 255)) + Math.abs((x & 255) - (y & 255)); if (d > 60) return false; } return true; };
+    const ps = life.people.filter((n) => n.m && n.m.visible !== false), F = ps.map(faceOf), C = ps.map(cols);
+    for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) { if (!F[i] || F[i] !== F[j]) continue; const d = Math.hypot(ps[i].x - ps[j].x, ps[i].z - ps[j].z); if (d > 2.5) continue;
+      lines.add(near(C[i], C[j]) ? `lookalike: ${name(ps[i])} and ${name(ps[j])} look like the same person, ${d.toFixed(1)} m apart (same face and nearly the same clothes)` : `twins: ${name(ps[i])} and ${name(ps[j])} have the same face, ${d.toFixed(1)} m apart`); } }
   return { lines: [...lines], stats };
 }
 export function ambientTest(life, opts = {}) { const r = ambientCheck(life, opts); return [`AMBIENT ${r.lines.length}`, ...r.lines, '', ...r.stats].join('\n'); }
