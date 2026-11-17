@@ -197,3 +197,7 @@ The owner approved the non-people changes for main. Selassie people revisions an
 - Known stand-ins to replace: *Shadyside* and *Kanawha* in Garvey chapter 5; stand-in bodies and poses named at the top of CLAUDE.md (Nanny, Tivoli, Melissa).
 - Audits not yet at 0: Bog Walk 30 and Melissa 17 scenery overlaps.
 - Still to do, last: portrait camera framing for the cinematic scenes in all ten games.
+
+## 17 November 2026, evening: on board the Yarmouth
+
+Garvey chapter 5 lets you walk the ship's deck (`docs/games/garvey.md`, "On board the Yarmouth"). No other game has a place like it yet: a second place inside a chapter, with close looks that move your eyes to the thing (`lookPart`). People stand upright in every game (`engine/anim.js` `STANCE`, `docs/ENGINE.md`). Garvey's dock is busy. Port Royal's tavern and market were tidied (`docs/games/port-royal.md`).

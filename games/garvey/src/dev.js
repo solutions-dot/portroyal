@@ -22,8 +22,8 @@ import * as THREE from 'three';
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _v = new THREE.Vector3();
 /* the stage each place is checked at (its first, or its busiest) */
-export const FIRST = { shop: 0, hall: 10, street: 20, press: 30, dock: 40, liberty: 50, office: 60, park: 70 };
-export const BUSY = { shop: 0, hall: 13, street: 22, press: 32, dock: 40, liberty: 53, office: 60, park: 70 };
+export const FIRST = { shop: 0, hall: 10, street: 20, press: 30, dock: 40, liberty: 50, office: 60, park: 70, deck: 41 };   /* deck: the Yarmouth's deck, a second place inside chapter 5 */
+export const BUSY = { shop: 0, hall: 13, street: 22, press: 32, dock: 40, liberty: 53, office: 60, park: 70, deck: 41 };
 const placeOf = (s) => (s >= 70 ? 'park' : s >= 60 ? 'office' : s >= 50 ? 'liberty' : s >= 40 ? 'dock' : s >= 30 ? 'press' : s >= 20 ? 'street' : s >= 10 ? 'hall' : 'shop');
 export const STEPS = [0, 1, 2, 3, 10, 11, 12, 13, 14, 20, 21, 22, 23, 30, 31, 32, 33, 34, 40, 41, 42, 43, 44, 50, 51, 52, 53, 54, 60, 61, 62, 63, 64, 70, 71, 72, 73, 74];
 
@@ -43,7 +43,7 @@ export function devRun(A) {
   }
   const P = () => A.PLACES[A.place];
   const blocked = (Q) => (x, z, r) => Q.walls.some((w) => x > w[0] - r && x < w[2] + r && z > w[1] - r && z < w[3] + r);
-  const placesWanted = () => (q.get('p') ? q.get('p').split(',') : A.PLACE_ORDER);
+  const placesWanted = () => (q.get('p') ? q.get('p').split(',') : [...A.PLACE_ORDER, 'deck']);
 
   /* ---------- hooks for engine/checks.js ---------- */
   const adapter = {
@@ -103,9 +103,9 @@ export function devRun(A) {
       $('hud').hidden = true; window.__SHOT = true; document.title = 'SHOT face ' + id; })();
     return;
   }
-  /* ?shot=at&st=0&x=&z=&yaw=&pitch=&y= : any spot in any place at a stage (close looks at props, such as the hat racks) */
+  /* ?shot=at&st=0&x=&z=&yaw=&pitch=&y= : any spot in any place at a stage (close looks at props, such as the hat racks). &p=deck goes to a place by name (the ship's deck); &do=hull runs one of its actions first */
   if (q.get('shot') === 'at') {
-    (async () => { await adapter.ready(); await goStep(+(q.get('st') || 0)); for (let i = 0; i < 10; i++) A.update(1 / 30); Object.assign(A.state, { x: +q.get('x'), z: +q.get('z'), yaw: +(q.get('yaw') || 0), pitch: +(q.get('pitch') || 0) }); if (q.get('y')) A.state.eyeY = +q.get('y'); $('hud').hidden = true; window.__SHOT = true; })();
+    (async () => { await adapter.ready(); if (q.get('p')) await goPlace(q.get('p')); else await goStep(+(q.get('st') || 0)); for (let i = 0; i < 10; i++) A.update(1 / 30); if (q.get('do')) { const a = A.PLACES[A.place].actions.find((k) => k.id === q.get('do')); if (a) a.go(); for (let i = 0; i < 20; i++) A.update(1 / 30); } if (q.has('x')) Object.assign(A.state, { x: +q.get('x'), z: +q.get('z'), yaw: +(q.get('yaw') || 0), pitch: +(q.get('pitch') || 0) }); if (q.get('y')) A.state.eyeY = +q.get('y'); $('hud').hidden = true; window.__SHOT = true; })();
     return;
   }
   if (test === 'all') {

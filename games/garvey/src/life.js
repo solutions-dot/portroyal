@@ -57,6 +57,7 @@ export function actFor(n, stage) {
     looker1: { kind: 'chat', group: 'dockchat', idles }, looker2: { kind: 'chat', group: 'dockchat', idles },   /* two people who have come to see the ship, talking */
     stroller: { kind: 'wander', walk: 'Walk', area: [-9, 0.6, 9, 3.0], pause: [3, 7], speed: 0.85, idles },   /* walks along the dock, stopping to look at the ship */
     docker2: { kind: 'work', clips: ['PickUp', 'LookAround', 'WipeSweat'], work: [3, 6], rest: [2, 4], face: at(-6.8, -3.05), idles },   /* by the sacks (seaman1919's Walk slid 6.7 cm a loop) */
+    deckhand: { kind: 'work', clips: ['PickUp', 'WipeSweat', 'LookAround'], work: [3, 6], rest: [2, 4], face: at(-5.2, 1.75), idles },   /* on the Yarmouth's deck: a seaman at his bucket */
     /* chapter 6: Liberty Hall, August 1920 */
     garvey6: stage >= 53 ? { kind: 'work', clips: ['Speech', 'TalkM1', 'TalkM2'], work: [5, 9], rest: [0.6, 1.4], idles }
       : { kind: 'watch', at: at(0, 3), react: ['WaveSlow', 'Nod'], idles },
@@ -117,6 +118,7 @@ export const EXTRAS = {
     { id: 'docker3', model: 'nb_youth', x: 6.6, z: 1.0, ry: 1.6, tint: { Shirt: [0.8, 0.8, 0.75], Breeches: [0.75, 0.75, 0.8] } },
     { id: 'looker1', model: 'woman1914', x: 4.6, z: 2.3, ry: 0.6, tint: { Shirt: [0.95, 0.9, 0.8], Skirt: [0.6, 0.7, 0.9] } }, { id: 'looker2', model: 'hl_woman', x: 5.4, z: 2.7, ry: -2.2, tint: { Shirt: [1.0, 0.85, 0.85], Skirt: [0.75, 0.65, 0.6] } },
     { id: 'stroller', model: 'nb_elder', x: -4, z: 1.6, ry: Math.PI / 2, tint: { Jacket: [1.2, 1.15, 1.0] } }],
+  deck: [{ id: 'deckhand', model: 'seaman1919', x: -5.2, z: 2.5, ry: Math.PI, tint: { Shirt: [0.9, 0.95, 1.05] } }],
   liberty: [{ id: 'del1', model: 'hl_critic', seat: [-2.8, -2.2] }, { id: 'del2', model: 'hl_woman', seat: [-1.9, -1.25], tint: { Shirt: [0.8, 0.9, 1.1], Skirt: [0.8, 0.8, 0.9] } },
     { id: 'del3', model: 'woman1914', seat: [2.8, -2.2], tint: { Shirt: [1.0, 0.85, 0.85] } }, { id: 'del4', model: 'nb_elder', seat: [3.7, -1.25] }, { id: 'del5', model: 'hl_worker', seat: [1.9, 0.65], tint: { Shirt: [0.9, 1.0, 1.1] } }],
   office: [{ id: 'typist', model: 'hl_pressman', x: 3.2, z: 1.5, ry: Math.PI, tint: { Shirt: [1.05, 1.05, 1.1] } }],

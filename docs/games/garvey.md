@@ -21,7 +21,7 @@ Test it:
 node tools/build.mjs garvey --dev          # dev build: test views and the scripted playthrough
 python3 -m http.server 8765                # then open http://localhost:8765/games/garvey/site/
 # ?shot=shop1 ... shop7, talk, strike, type, typedone, journal, chapters, reset, credits, bubble, nudge, hall1 ... hall4, hallchat, hallseat, hallseat2, hallseat3, hallamy, hallwalk (add &t=seconds), street1, street2, streetchat and the press views are views;
-# ?test=walk steps the customer's route; ?auto=1 plays chapter 1 and opens every menu; ?auto=2 plays chapter 2; ?auto=3 checks old saves and replayed choices; ?auto=4 plays chapter 3; ?auto=5 plays chapter 4 (press1 to press3, pagebuild, pagedone, pressback and presschat are its views); ?auto=6 plays chapter 5 (dock1 to dock3, inspect and dockchat are its views); ?auto=7 plays chapter 6 (lib1 to lib3, decl, decldone and libchat are its views); ?auto=8 plays chapter 7 (off1, off2, sort, sortdone, letter and offchat are its views); ?auto=9 plays chapter 8 (park1, park2, time, timedone, answer, journey and parkchat are its views).
+# ?test=walk steps the customer's route; ?auto=1 plays chapter 1 and opens every menu; ?auto=2 plays chapter 2; ?auto=3 checks old saves and replayed choices; ?auto=4 plays chapter 3; ?auto=5 plays chapter 4 (press1 to press3, pagebuild, pagedone, pressback and presschat are its views); ?auto=6 plays chapter 5, on the dock and on the ship's deck (`?shot=at&p=deck&x=&z=&yaw=` looks anywhere on the deck; `&do=hull`, `engine` or `planks` shows a close look); ?auto=7 plays chapter 6 (lib1 to lib3, decl, decldone and libchat are its views); ?auto=8 plays chapter 7 (off1, off2, sort, sortdone, letter and offchat are its views); ?auto=9 plays chapter 8 (park1, park2, time, timedone, answer, journey and parkchat are its views).
 # The result of ?test=walk and ?auto=1 is written to the page title.
 # Checks (games/garvey/src/dev.js): ?test=all (the shared runner, with this game's anim check), audit (also seating), held, layout, walkers, ambient, anim,
 # plus cloth (&b=garvey1914 picks bodies), skin and overlap (also collision: people against furniture) in main.js. &p=hall,street picks places.
@@ -316,7 +316,7 @@ Follow `docs/TESTING.md`: screenshots of every new place next to a reference pho
 
 ## The Yarmouth at the dock (17 November 2026)
 
-The ship moored in chapter 5 was a box hull with a box house. It is now `steamer({ L: 60, beam: 8.4, style: 'packet' })` from `engine/boats.js`, shaped after two photographs of the *Yarmouth* herself that the owner supplied (a bow view at anchor and a side view under way, the second marked "Yarmouth" on the print): a coastal passenger steamer built in 1887, with a black hull and a plumb stem, a high forecastle that runs about a third of her length, a small white wheelhouse on it with the foremast just behind, one tall thin black funnel amidships with big dark cowl ventilators fore and aft of it, a long white deckhouse from the forecastle to the stern with a railed boat deck over it, two low houses on the boat deck, three boats a side, a mainmast aft and a derrick on each mast. The real ship was about 67 m long; ours is 60 m so she fits the dock. Her name is in pale letters on the bow, where a ship carries it. A notice board on the dock by the gangway ("S.S. YARMOUTH") lets you read the name from where you stand; that board is a game aid, not from a source. Things still not from a source: the number and spacing of windows, and the deck fittings. You cannot go on board yet: the inspection is three cards read from the dock. A deck you can walk on, built from the same photographs, is a good next step for this chapter. No company colours or flag are shown, because we have no source for them. Audit 0.
+The ship moored in chapter 5 was a box hull with a box house. It is now `steamer({ L: 60, beam: 8.4, style: 'packet' })` from `engine/boats.js`, shaped after two photographs of the *Yarmouth* herself that the owner supplied (a bow view at anchor and a side view under way, the second marked "Yarmouth" on the print): a coastal passenger steamer built in 1887, with a black hull and a plumb stem, a high forecastle that runs about a third of her length, a small white wheelhouse on it with the foremast just behind, one tall thin black funnel amidships with big dark cowl ventilators fore and aft of it, a long white deckhouse from the forecastle to the stern with a railed boat deck over it, two low houses on the boat deck, three boats a side, a mainmast aft and a derrick on each mast. The real ship was about 67 m long; ours is 60 m so she fits the dock. Her name is in pale letters on the bow, where a ship carries it. A notice board on the dock by the gangway ("S.S. YARMOUTH") lets you read the name from where you stand; that board is a game aid, not from a source. Things still not from a source: the number and spacing of windows, and the deck fittings. You can go on board: see "On board the Yarmouth" below. No company colours or flag are shown, because we have no source for them. Audit 0.
 
 The owner's rule (17 November 2026): things in the game are modelled on the real thing, not on a stand-in. The other two ships out in the water are still the generic cargo steamer and a schooner. *Shadyside* was a river excursion boat and *Kanawha* a steam yacht, so they are stand-ins and need their own shapes from photographs. This is work to do.
 
@@ -325,3 +325,26 @@ The handbill the owner shared also shows the "S.S. Phyllis Wheatley". The game d
 ## The dock is busy (17 November 2026)
 
 Nobody on the dock moved from their spot. Now one docker goes between the sacks and the crates, another works at the barrels, two women who have come to see the ship talk together, and a man strolls along the dock (`life.js`, `EXTRAS.dock`). All are background people with no words. Ambient 0, audit 0.
+
+## On board the Yarmouth (17 November 2026)
+
+Chapter 5 now takes you onto the ship (owner: "a new dimension"). The step that used to be three cards read from the dock is a place you walk: `deck` in `PLACES` (`buildDeck`, `DECK_ACTIONS` in `main.js`). It is a second place inside chapter 5, not a chapter of its own: stage 41 covers the dock and the deck, and a saved game at stage 41 starts on the dock.
+
+**How it plays**
+1. Stage 41, on the dock: "Go up the gangway and look the old ship over." The gangway action fades to the deck.
+2. On deck the goal counts three close looks: "Look at the hull, the engine and the deck. (1 of 3)".
+   - *Look over the rail at the hull*: your eyes go out over the dock side and you see the plates, rusty under the paint.
+   - *Look down the engine room hatch*: you look down the skylight at the old engine, three cylinders with brass bands.
+   - *Look at the deck and the rail*: you look down at worn grey planks and a loose rail.
+   Each look shows the same words as before (`INSPECT`) in the small panel while you see the thing itself (`lookPart`, `DECK_VIEW`).
+3. Three things to try, for fun, with no task attached: stand at the wheel in the wheelhouse and turn it, ring the ship's bell on the foremast, pull the cord of the steam whistle (steam puffs from the pipe on the funnel).
+4. *Go back down to the dock*: when all three looks are done this opens the "shares" page and moves to stage 42. You may go down early and come back up.
+
+**What is from a source and what is not**
+- The layout is from the owner's two photographs of the ship: from the bow, the forecastle deck with the wheelhouse and the foremast just behind it, a low house, cowl ventilators, the tall thin funnel, more ventilators, boats in davits on both sides, a second low house and the mainmast aft, and the long deckhouse with its covered walk under the boat deck. The ship lies as she does at the dock, with the dock and its warehouses below on one side.
+- A wheel, a bell and a steam whistle are things every steamer of her kind had; where exactly they were on the Yarmouth is not known to us. The engine room skylight and the engine under it are a plain three-cylinder steam engine, not copied from her plans. These are marked here as not from a source.
+- The three things you find (rust under fresh paint, an old engine, worn planks and a loose rail) are the fictional inspection the chapter always had. The sourced fact behind them is that the ship was old and in poor condition.
+- The words on the three toasts are general facts about ships: the wheel steers, bells tell the time on board, the whistle warns other ships.
+- The deck aft of the second boat is roped off. A seaman works at a bucket (a background person with no words).
+
+**Checks**: `?test=audit` and `?test=ambient` include `deck` (0 and 0), held 0, phone layout 0, `?auto=6` ends ALLDONE, `npm test` 232 pass. Dev: `FIRST.deck`, `BUSY.deck`, `RESET.deck` and `ENSURE.deck` put the checks on the deck.

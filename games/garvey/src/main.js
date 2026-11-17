@@ -391,7 +391,7 @@ const GOALS = { 0: 'Talk to the printer and the customer.', 1: 'Set the type for
   70: 'Meet the park guide and the student at the shrine.', 71: 'Put the events of his later life in order at the board.', 72: 'Talk to the student, who has a big question.', 73: 'Answer the question at the shrine, in your own words.', 74: 'Well done! You finished the story, and your journey is in the Journal.',
   60: 'Talk to Amy Jacques Garvey at her desk.', 61: 'Sort the news cards on the desk: fact or rumour?', 62: 'Talk to Amy about the rumour.', 63: 'Read the letter from your friend, and write back.', 64: 'Well done! Chapter 7 is finished.',
   50: 'Welcome the three visitors in Liberty Hall.', 51: 'Three people need help: talk to the steward.', 52: 'Read the Declaration on the table.', 53: 'Talk to Marcus Garvey on the platform.', 54: 'Well done! Chapter 6 is finished.',
-  40: 'Meet Marcus Garvey, the share clerk and the engineer.', 41: 'Look the old ship over, at the edge of the dock.', 42: 'Talk to Marcus Garvey about the ship.', 43: 'Talk to your friend, who wants to buy shares.', 44: 'Well done! Chapter 5 is finished.',
+  40: 'Meet Marcus Garvey, the share clerk and the engineer.', 41: 'Go up the gangway and look the old ship over.', 42: 'Talk to Marcus Garvey about the ship.', 43: 'Talk to your friend, who wants to buy shares.', 44: 'Well done! Chapter 5 is finished.',
   30: 'Talk to the pressman and Marcus Garvey.', 31: 'Lay out the front page on the stone table.', 32: 'Talk to the sailor by the door.', 33: 'The sailor is back: talk to him and the pressman.', 34: 'Well done! Chapter 4 is finished.',
   20: 'Listen to the three people at the corner.', 21: 'Talk to Marcus Garvey.', 22: 'Talk to the older man, who has a question.', 23: 'Well done! Chapter 3 is finished.',
   10: 'Talk to Amy Ashwood and Marcus Garvey.', 11: 'Print the poster at the press table.', 12: 'Welcome the three neighbours as they arrive.', 13: 'Listen to Marcus Garvey.', 14: 'Well done! Chapter 2 is finished.' };
@@ -412,6 +412,7 @@ function setGoal() {
   const done = required.filter((id) => byId(id)?.talked).length;
   // Show concrete progress on multi-person steps, including when resuming a saved chapter.
   goalText = (GOALS[stage] || '') + (required.length > 1 ? ' (' + done + ' of ' + required.length + ')' : '');
+  if (place === 'deck') goalText = deckGoal();   /* on board the ship the goal counts what you have looked at */
   showGoal(true);
 }
 $('goal').onclick = () => showGoal(true);
@@ -592,7 +593,7 @@ let auNext = 0, thumpAt = 7;
 function pressThump() { if (!AU.ctx || !AU.on) return; for (let i = 0; i < 3; i++) { noiseHit(220, 1.2, 0.16, 0.1, 0.5, i * 0.55); tone(90, 55, 0.2, 'triangle', 0.04, 0.5, i * 0.55); } }
 const SOUNDSCAPE = {   /* bed levels (room hum, crowd murmur, wind, sea, surf) and the small sound heard every few seconds */
   shop: { room: 0.28, crowd: 0.04, once: pressThump }, hall: { room: 0.22, crowd: 0.05 }, street: { crowd: 0.1, wind: 0.05 }, press: { room: 0.26, crowd: 0.03, once: pressThump },
-  dock: { sea: 0.2, surf: 0.05, wind: 0.07, crowd: 0.04, once: () => (Math.random() < 0.5 ? gullCry() : shipCreak()) }, liberty: { room: 0.22, crowd: 0.12 }, office: { room: 0.18, crowd: 0.02 }, park: { wind: 0.05, crowd: 0.03, once: chirp } };
+  dock: { sea: 0.2, surf: 0.05, wind: 0.07, crowd: 0.04, once: () => (Math.random() < 0.5 ? gullCry() : shipCreak()) }, deck: { sea: 0.22, surf: 0.04, wind: 0.1, crowd: 0.02, once: () => (Math.random() < 0.5 ? gullCry() : shipCreak()) }, liberty: { room: 0.22, crowd: 0.12 }, office: { room: 0.18, crowd: 0.02 }, park: { wind: 0.05, crowd: 0.03, once: chirp } };
 function audioTick(t) {
   if (!AU.ctx || !state.started || t < auNext) return; auNext = t + 0.1; const S = SOUNDSCAPE[place] || SOUNDSCAPE.shop;
   for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], S[k] || 0);
@@ -872,9 +873,9 @@ function buildDock() {
   for (const bx of [-6.5, -2, 2.5, 7]) { cyl(0.18, 0.26, 0.5, iron, bx, 0.25, 4.0, g, 12); }   /* bollards */
   for (let i = 0; i < 5; i++) mesh(new THREE.PlaneGeometry(4.5, 9), std(facadeTex(i + 3), 0.95), -9 + i * 4.5, 4.5, -4.5, g);   /* warehouses behind the dock */
   /* the old ship, moored on the far side of a gap of water */
-  { const ship = steamer({ L: 60, beam: 8.4, style: 'packet' }); ship.position.set(6, -0.7, 10.92); g.add(ship); }   /* the shared steamer (engine/boats.js) in her passenger form, after photographs of the Yarmouth herself (a coastal passenger steamer built in 1887): 60 m, the gangway to her fore deck. The real Yarmouth was about 67 m long. */
+  { const ship = steamer({ L: 60, beam: 8.4, style: 'packet' }); ship.position.set(-5, -0.7, 10.92); g.add(ship); }   /* the shared steamer (engine/boats.js) in her passenger form, after photographs of the Yarmouth herself (a coastal passenger steamer built in 1887): 60 m, the gangway to her fore deck. The real Yarmouth was about 67 m long. */
   box(0.9, 0.06, 3.1, wood, 0, 1.1, 5.4, g).rotation.x = -0.62;   /* a gangway from the dock to the deck */
-  { const c = document.createElement('canvas'); c.width = 512; c.height = 96; const x = c.getContext('2d'); x.fillStyle = '#e8e2d0'; x.font = 'bold 64px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('YARMOUTH', 256, 50); const nm = mesh(new THREE.PlaneGeometry(3.4, 0.64), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true }), 32.2, 2.5, 9.72, g); nm.rotation.y = Math.PI + 0.3; }   /* her name in pale letters on the bow, where a ship carries it */
+  { const c = document.createElement('canvas'); c.width = 512; c.height = 96; const x = c.getContext('2d'); x.fillStyle = '#e8e2d0'; x.font = 'bold 64px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('YARMOUTH', 256, 50); const nm = mesh(new THREE.PlaneGeometry(3.4, 0.64), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true }), 21.2, 2.5, 9.72, g); nm.rotation.y = Math.PI + 0.3; }   /* her name in pale letters on the bow, where a ship carries it */
   mesh(new THREE.PlaneGeometry(2.2, 0.55), new THREE.MeshBasicMaterial({ map: signTex([['S.S. YARMOUTH', 54]], 512, 128) }), -2.6, 1.75, 3.9, g).rotation.y = Math.PI; box(0.07, 2.05, 0.07, beam, -3.6, 1.02, 3.92, g); box(0.07, 2.05, 0.07, beam, -1.6, 1.02, 3.92, g); DOCK_WALLS.push([-3.75, 3.7, -1.45, 4.1]);   /* a notice board on the dock by the gangway, so the name can be read from where you stand (a game aid: the ship herself carries her name at the bow) */
   /* the share table, with a sign */
   box(2.3, 0.9, 0.9, woodDark, -4.5, 0.45, -0.9, g); box(2.4, 0.06, 1.0, wood, -4.5, 0.93, -0.9, g); box(0.34, 0.02, 0.45, paper, -5.1, 0.97, -0.9, g); box(0.34, 0.02, 0.45, paper, -4.7, 0.97, -0.85, g); cyl(0.05, 0.07, 0.2, brass, -3.8, 1.05, -0.9, g, 10);
@@ -890,17 +891,101 @@ const DOCK_SPOTS = { garvey5: [1.4, -0.4], clerk: [-4.5, -1.8], engineer: [5.0, 
 let inspected = 0;
 const INSPECT = { hull: ['Hull', 'The paint looks fresh. Under it, the plates are rusty.'], engine: ['Engine', 'The engineer says it runs, but it is very old and will need many repairs.'], deck: ['Deck', 'The planks are worn, and some of the rails are loose.'] };
 let inspectDone = null, inspectSeen = {};
-function openInspect(done) {
-  if (busy) return; busy = true; keys.clear(); inspectDone = done; inspectSeen = {}; state.yaw = Math.PI; state.pitch = 0.12; $('inspect').hidden = false; $('indone').hidden = true; $('inmsg').textContent = 'Tap each part of the ship to look at it.';
-  const row = $('inrow'); row.replaceChildren(); for (const [k, [t]] of Object.entries(INSPECT)) { const b = document.createElement('button'); b.className = 'pc'; b.dataset.k = k; b.textContent = t; b.onclick = () => lookAt(b, k); row.appendChild(b); }
-}
-function lookAt(b, k) {
-  uiSound('tap'); inspectSeen[k] = true; b.classList.add('sel'); $('inmsg').textContent = INSPECT[k][1];
-  if (Object.keys(INSPECT).every((x) => inspectSeen[x])) { $('indone').hidden = false; $('indone').focus({ preventScroll: true }); $('inmsg').textContent += ' You have looked at everything. The ship is old.'; }
-}
-function closeInspect(done) { if ($('inspect').hidden) return; $('inspect').hidden = true; busy = panelsOpen(); if (done && inspectDone) { const f = inspectDone; inspectDone = null; f(); } }
+function closeInspect(done) { if ($('inspect').hidden) return; $('inspect').hidden = true; busy = panelsOpen(); if (inspectDone) { const f = inspectDone; inspectDone = null; f(done); } }
 $('inclose').onclick = () => closeInspect(false); $('indone').onclick = () => closeInspect(true);
-const DOCK_ACTIONS = [{ id: 'inspect', label: 'Look the old ship over', x: 0, z: 3.0, r: 1.6, on: () => stage === 41, go: () => openInspect(() => { unlock('shares'); setStage(42); uiSound('goal'); }) }];
+/* ---------- chapter 5, on board: the deck of the Yarmouth. You go up the gangway and walk her boat deck: look over the rail at the hull, down the engine room hatch and at the worn deck,
+   and try the wheel, the bell and the steam whistle. The deck is laid out after the owner's two photographs of the ship (17 November 2026): from the bow, the forecastle deck with the
+   wheelhouse and the foremast just behind it, a low house, a cowl ventilator pair, the tall thin funnel, more ventilators, a skylight, boats on both sides, and the long deckhouse under
+   your feet with its covered walk. The ship lies as she does at the dock: bow at +x, the dock on the -z side, 2.9 m below this deck. The three things you find (rust under fresh paint, an
+   old engine, worn planks and loose rails) are the same fictional inspection as before, told in the journal as fiction. ---------- */
+const deckG = new THREE.Group(); deckG.visible = false; scene.add(deckG);
+const DECK_WALLS = [], DECK_BOUNDS = { x0: -9.2, x1: 17.4, z0: -3.05, z1: 3.05 }, DECK = { wheel: null, bell: null, puff: null, spin: 0, ring: 0, steam: 0 };
+let deckBuilt = false;
+function buildDeck() {
+  if (deckBuilt) return; deckBuilt = true; const g = deckG, W = (a, b, c, d) => DECK_WALLS.push([a, b, c, d]);
+  const hullM = solid(0x1d1f22, 0.75), white = solid(0xddd6c2, 0.85), deckM = std(plankTex([150, 126, 94], 7, [60 / 1.05, 8.4 / 2]), 0.9), ironD = solid(0x22262a, 0.6, 0.3), mastM = solid(0x9a7a4c, 0.8), rig = solid(0x2a2826, 0.9), brassM = solid(0xc9a24a, 0.35, 0.8);
+  mesh(new THREE.PlaneGeometry(600, 600), solid(0x4c6f7c, 0.35), 0, -3.6, 0, g).rotation.x = -Math.PI / 2;   /* the harbour */
+  /* the dock below, where you came from, and its warehouses */
+  box(20.4, 0.7, 8.6, woodDark, 5, -3.25, -10.92, g); mesh(new THREE.PlaneGeometry(20.4, 8.6), std(plankTex([118, 90, 62], 7, [20.4 / 1.05, 8.6 / 2]), 0.9), 5, -2.895, -10.92, g).rotation.x = -Math.PI / 2;
+  for (let i = 0; i < 5; i++) mesh(new THREE.PlaneGeometry(4.5, 9), std(facadeTex(i + 3), 0.95), -4 + i * 4.5, 1.6, -15.42, g);
+  box(0.9, 0.06, 3.3, wood, 5, -2.2, -5.5, g).rotation.x = 0.5;   /* the gangway you came up */
+  /* the hull: black, with rust showing through the fresh paint; a white bulwark round the forecastle */
+  const rustT = cv(256, 128, (x, w, h) => { x.fillStyle = '#1d1f22'; x.fillRect(0, 0, w, h); for (let i = 0; i < 60; i++) { const px = Math.random() * w, py = Math.random() * h, r = 3 + Math.random() * 8; const gr = x.createRadialGradient(px, py, 1, px, py, r); gr.addColorStop(0, 'rgba(112,58,32,0.85)'); gr.addColorStop(0.6, 'rgba(86,44,26,0.5)'); gr.addColorStop(1, 'rgba(50,28,20,0)'); x.fillStyle = gr; x.fillRect(px - r, py - r, r * 2, r * 2); x.fillStyle = 'rgba(96,50,28,0.3)'; x.fillRect(px - 1, py - 10 - Math.random() * 26, 2, 36); } x.strokeStyle = 'rgba(0,0,0,0.5)'; for (let k = 0; k < 4; k++) { x.beginPath(); x.moveTo(0, 20 + k * 30); x.lineTo(w, 20 + k * 30); x.stroke(); } for (let px = 0; px < w; px += 6) for (let k = 0; k < 4; k++) { x.fillStyle = 'rgba(70,74,78,0.8)'; x.fillRect(px, 18 + k * 30, 1.5, 1.5); } }, [8, 1]);
+  const rustM = std(rustT, 0.8);
+  for (const sd of [1, -1]) { const lo = mesh(new THREE.PlaneGeometry(41.4, 2.64), rustM, -9.3, -2.28, sd * 4.2, g); lo.rotation.y = sd > 0 ? 0 : Math.PI; const hi = mesh(new THREE.PlaneGeometry(18.6, 4.2), rustM, 20.7, -1.5, sd * 4.2, g); hi.rotation.y = sd > 0 ? 0 : Math.PI;
+    box(18.6, 0.3, 0.12, white, 20.7, 0.45, sd * 4.14, g); box(18.6, 0.6, 0.1, hullM, 20.7, 0.3, sd * 4.1, g);   /* the forecastle bulwark */
+    box(41.4, 0.1, 1.34, deckM, -9.3, -1.56, sd * 3.53, g); box(41.4, 0.6, 0.1, hullM, -9.3, -1.26, sd * 4.15, g);   /* the covered walk on the main deck below, and its bulwark */
+    for (let k = 0; k < 14; k++) box(0.09, 1.5, 0.09, white, -29 + k * 3.1, -0.8, sd * 3.4, g);   /* posts under the boat deck */
+    for (let k = 0; k < 20; k++) box(0.5, 0.7, 0.06, ironD, -28 + k * 2.05, -0.7, sd * 2.87, g); }   /* the deckhouse windows */
+  for (const sd of [1, -1]) box(41.4, 1.46, 0.1, white, -9.3, -0.83, sd * 2.81, g); box(0.1, 1.46, 5.72, white, -30, -0.83, 0, g);   /* the long deckhouse under the boat deck: its side walls (no top, so the skylight can look down into it) */
+  box(0.12, 3.6, 8.4, hullM, 11.4, -1.8, 0, g);   /* the break of the forecastle */
+  /* the deck you walk on, bow to stern */
+  { const sh = new THREE.Shape(); sh.moveTo(-30, -3.46); sh.lineTo(19, -4.2); sh.lineTo(25, -3.2); sh.lineTo(30, 0); sh.lineTo(25, 3.2); sh.lineTo(19, 4.2); sh.lineTo(-30, 3.46); sh.lineTo(-31.5, 2.2); sh.lineTo(-31.5, -2.2); sh.closePath(); { const hole = new THREE.Path(); hole.moveTo(-7.0, -0.6); hole.lineTo(-7.0, 0.6); hole.lineTo(-5.4, 0.6); hole.lineTo(-5.4, -0.6); hole.closePath(); sh.holes.push(hole); }   /* the skylight opening */ const dg = new THREE.ShapeGeometry(sh); dg.rotateX(Math.PI / 2); const uv = dg.attributes.uv, ps = dg.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, ps.getZ(i) / 60, ps.getX(i) / 8.4);   /* deck planks run fore and aft */ const dm = mesh(dg, deckM, 0, 0, 0, g); dm.material.side = THREE.DoubleSide; }
+  { const wt = cv(128, 128, (x, w, h) => { x.fillStyle = '#8f8473'; x.fillRect(0, 0, w, h); for (let i = 0; i < 7; i++) { x.fillStyle = i % 2 ? '#857a69' : '#9a8f7c'; x.fillRect(i * 18.3, 0, 17, h); x.fillStyle = '#3a342c'; x.fillRect(i * 18.3 + 17, 0, 1.6, h); } for (let i = 0; i < 60; i++) { x.fillStyle = 'rgba(60,52,44,' + (0.2 + Math.random() * 0.4) + ')'; x.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 6 + Math.random() * 20); } x.fillStyle = '#2a2622'; x.fillRect(40, 30, 14, 5); x.fillRect(84, 88, 18, 4); });
+    const wp = mesh(new THREE.PlaneGeometry(3.0, 1.9), std(wt, 1), 9, 0.006, 2.1, g); wp.rotation.x = -Math.PI / 2; wp.rotation.z = Math.PI / 2; }   /* worn, grey planks with gaps on the sea side */
+  /* rails round the boat deck: two wires on posts; one length on the sea side hangs loose */
+  for (const sd of [1, -1]) for (let k = 0; k <= 20; k++) { const x = -29 + k * 2.02; if (sd < 0 && Math.abs(x - 5) < 0.9) continue; const post = box(0.06, 1.0, 0.06, white, x, 0.5, sd * 3.38, g); if (sd > 0 && Math.abs(x - 9.4) < 1.1) post.rotation.x = 0.22; }
+  for (const sd of [1, -1]) for (const y of [0.55, 0.98]) { if (sd > 0) { box(37.4, 0.035, 0.035, white, -10.3, y, 3.38, g); box(1.9, 0.035, 0.035, white, 11.35 - 0.95 - 0.02, y, 3.38, g); const loose = box(2.05, 0.035, 0.035, white, 9.4, y - 0.12, 3.45, g); loose.rotation.z = 0.1; loose.rotation.x = 0.2; } else { box(33.1, 0.035, 0.035, white, -12.45, y, -3.38, g); box(5.5, 0.035, 0.035, white, 8.65, y, -3.38, g); } }
+  W(-31, -3.6, 31, -3.22); W(-31, 3.22, 31, 3.6);
+  /* the wheelhouse on the forecastle deck: a door on each side, the wheel inside */
+  { const wx = 15.95, wl = 2.7, wb = 1.45, hh = 2.3; box(wl, 0.12, wb * 2 + 0.5, deckM, wx, hh + 0.06, 0, g); box(0.08, hh, wb * 2, white, wx + wl / 2, hh / 2, 0, g); box(0.08, hh, wb * 2, white, wx - wl / 2, hh / 2, 0, g); box(0.06, 0.75, wb * 1.9, ironD, wx + wl / 2 + 0.03, 1.55, 0, g);
+    for (const sd of [1, -1]) { box(0.85, hh, 0.08, white, wx - wl / 2 + 0.425, hh / 2, sd * wb, g); box(0.85, hh, 0.08, white, wx + wl / 2 - 0.425, hh / 2, sd * wb, g); box(1.0, 0.4, 0.08, white, wx, hh - 0.2, sd * wb, g); box(0.5, 0.6, 0.05, ironD, wx + 0.9, 1.5, sd * (wb + 0.03), g); }
+    W(wx - wl / 2 - 0.1, -wb - 0.1, wx - wl / 2 + 0.1, wb + 0.1); W(wx + wl / 2 - 0.1, -wb - 0.1, wx + wl / 2 + 0.1, wb + 0.1); W(wx - wl / 2, wb - 0.1, wx + wl / 2, wb + 0.1); W(wx - wl / 2, -wb - 0.1, wx - 0.5, -wb + 0.1); W(wx + 0.5, -wb - 0.1, wx + wl / 2, -wb + 0.1); W(wx + 0.15, -0.55, wx + 1.2, 0.55);   /* you can step in through the dock-side door and stand at the wheel */
+    const wh = new THREE.Group(); wh.position.set(wx + 0.35, 1.05, 0); wh.rotation.y = Math.PI / 2; g.add(wh); mesh(new THREE.TorusGeometry(0.46, 0.035, 8, 24), wood, 0, 0, 0, wh); mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 12), brassM, 0, 0, 0, wh).rotation.x = Math.PI / 2; for (let k = 0; k < 8; k++) { const sp = mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.24, 6), wood, 0, 0, 0, wh); sp.rotation.z = k * Math.PI / 8; } DECK.wheel = wh;
+    box(0.2, 1.0, 0.2, woodDark, wx + 0.5, 0.5, 0, g); cyl(0.13, 0.13, 0.16, brassM, wx + 1.0, 1.12, 0, g, 12); box(0.14, 1.05, 0.14, woodDark, wx + 1.0, 0.52, 0, g); for (const sd of [1, -1]) box(0.5, 0.6, 0.05, ironD, wx - 0.9, 1.5, sd * (wb + 0.03), g); box(0.06, 0.75, wb * 1.9, ironD, wx - wl / 2 - 0.03, 1.55, 0, g); }   /* the wheel on its stand, and the compass on a post */
+  /* the foremast with its shrouds and a derrick, and the ship's bell on it */
+  { const mx = 13.4; cyl(0.13, 0.19, 12, mastM, mx, 6, 0, g, 10); cyl(0.07, 0.1, 5, mastM, mx, 13.5, 0, g, 8); box(0.1, 0.1, 1.6, mastM, mx, 10.4, 0, g); W(mx - 0.3, -0.3, mx + 0.3, 0.3);
+    for (const sd of [1, -1]) for (const dx of [-1.1, 0, 1.1]) { const a = new THREE.Vector3(mx, 10.2, sd * 0.15), b = new THREE.Vector3(mx + dx, 0.6, sd * 4.1), r = mesh(new THREE.CylinderGeometry(0.014, 0.014, a.distanceTo(b), 4), rig, (a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2, g); r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); }
+    const bm = mesh(new THREE.CylinderGeometry(0.06, 0.08, 6.4, 8), mastM, mx + 2.3, 4.4, 0, g); bm.rotation.z = -0.78;
+    box(0.3, 0.04, 0.04, ironD, mx - 0.28, 1.72, 0, g); const bell = new THREE.Group(); bell.position.set(mx - 0.4, 1.7, 0); g.add(bell); mesh(new THREE.CylinderGeometry(0.05, 0.13, 0.2, 16, 1, true), brassM, 0, -0.12, 0, bell).material.side = THREE.DoubleSide; mesh(new THREE.SphereGeometry(0.055, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), brassM, 0, -0.02, 0, bell); mesh(new THREE.SphereGeometry(0.025, 8, 6), ironD, 0, -0.22, 0, bell); mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.3, 4), rig, 0, -0.37, 0, bell); DECK.bell = bell; }
+  /* a low house forward of the funnel, and the front of another aft; the boats; the mainmast */
+  box(7.4, 1.2, 2.6, white, 8.3, 0.6, 0, g); box(7.6, 0.09, 2.9, deckM, 8.3, 1.245, 0, g); for (const sd of [1, -1]) for (let k = 0; k < 5; k++) box(0.45, 0.4, 0.05, ironD, 5.6 + k * 1.35, 0.78, sd * 1.31, g); W(4.6, -1.3, 12.0, 1.3);
+  box(9, 1.2, 2.6, white, -14.6, 0.6, 0, g); box(9.2, 0.09, 2.9, deckM, -14.6, 1.245, 0, g); for (const sd of [1, -1]) for (let k = 0; k < 5; k++) box(0.45, 0.4, 0.05, ironD, -18 + k * 1.6, 0.78, sd * 1.31, g); W(-19.2, -1.4, -10.0, 1.4); W(-10.2, -3.6, -9.6, -1.3); W(-10.2, 1.3, -9.6, 3.6);
+  box(0.06, 0.9, 1.9, rig, -9.9, 0.45, -2.35, g).material.transparent = false; box(0.06, 0.9, 1.9, rig, -9.9, 0.45, 2.35, g);   /* a rope across each walk: the deck aft of here is not open to visitors */
+  cyl(0.11, 0.16, 11, mastM, -15, 6.7, 0, g, 10);
+  for (const [bx, sd] of [[0, 1], [0, -1], [-8.4, 1], [-8.4, -1], [-21.6, 1], [-21.6, -1]]) { const boatM = solid(0xece8dc, 0.8), bg = new THREE.SphereGeometry(1, 14, 6, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2); bg.scale(1.95, 0.62, 0.55); mesh(bg, boatM, bx, 1.0, sd * 2.6, g); const cg = new THREE.SphereGeometry(1, 14, 5, 0, Math.PI * 2, 0, Math.PI / 2); cg.scale(1.96, 0.16, 0.56); mesh(cg, solid(0xd9d2bf, 0.95), bx, 1.0, sd * 2.6, g);   /* a boat under its canvas cover, on chocks, with a davit at each end */
+    for (const dx of [-1.3, 1.3]) { box(0.14, 0.4, 1.0, woodDark, bx + dx, 0.2, sd * 2.6, g); box(0.07, 1.55, 0.07, white, bx + dx * 1.35, 0.775, sd * 3.25, g); const dv = mesh(new THREE.TorusGeometry(0.5, 0.035, 5, 8, Math.PI / 2), white, bx + dx * 1.35, 1.55, sd * 2.75, g); dv.rotation.y = sd > 0 ? -Math.PI / 2 : Math.PI / 2; } if (bx > -9.5) W(bx - 2.0, sd > 0 ? 2.0 : -3.3, bx + 2.0, sd > 0 ? 3.3 : -2.0); }
+  /* the funnel, raked a little, with its steam whistle and stays; cowl ventilators fore and aft of it */
+  { const fx = -1.8, fg = new THREE.CylinderGeometry(0.68, 0.72, 7.6, 20, 1, true); fg.translate(0, 3.8, 0); fg.rotateZ(0.07); const fn = mesh(fg, solid(0x17181b, 0.7), fx, 0, 0, g); fn.material.side = THREE.DoubleSide; cyl(0.8, 0.8, 0.25, solid(0x17181b, 0.7), fx, 0.125, 0, g, 20); W(fx - 0.85, -0.85, fx + 0.85, 0.85);
+    cyl(0.03, 0.03, 4.4, brassM, fx + 0.82, 2.2, -0.3, g, 6); cyl(0.07, 0.05, 0.3, brassM, fx + 0.82, 4.5, -0.3, g, 8); mesh(new THREE.CylinderGeometry(0.005, 0.005, 3.2, 4), rig, fx + 0.6, 2.9, -0.62, g).rotation.x = 0.1; mesh(new THREE.SphereGeometry(0.035, 8, 6), wood, fx + 0.6, 1.3, -0.78, g);   /* the whistle on its pipe, and the cord with a wooden toggle */
+    const pt = cv(64, 64, (x) => { x.clearRect(0, 0, 64, 64); const gr = x.createRadialGradient(32, 32, 2, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); }); const puff = new THREE.Sprite(new THREE.SpriteMaterial({ map: pt, transparent: true, opacity: 0, depthWrite: false, fog: false })); puff.position.set(fx + 0.8, 4.9, -0.3); g.add(puff); DECK.puff = puff;
+    for (const [dx, sd] of [[4.8, 1], [4.8, -1], [-2.4, 1], [-2.4, -1]]) { const x = fx + dx, z = sd * 0.95; cyl(0.2, 0.2, 1.7, ironD, x, 0.85, z, g, 10); const m = mesh(new THREE.CylinderGeometry(0.36, 0.24, 0.5, 12, 1, true), ironD, x + 0.2, 1.85, z, g); m.rotation.z = -Math.PI / 2; m.material.side = THREE.DoubleSide; cyl(0.33, 0.33, 0.03, solid(0x6a2a22, 0.8), x + 0.42, 1.85, z, g, 12).rotation.z = Math.PI / 2; W(x - 0.28, z - 0.28, x + 0.5, z + 0.28); } }
+  /* the engine room skylight, one leaf propped open: look down and you see the old engine */
+  { const sx = -6.2; box(1.7, 0.45, 0.08, woodDark, sx, 0.225, -0.65, g); box(1.7, 0.45, 0.08, woodDark, sx, 0.225, 0.65, g); box(0.08, 0.45, 1.3, woodDark, sx - 0.85, 0.225, 0, g); box(0.08, 0.45, 1.3, woodDark, sx + 0.85, 0.225, 0, g); const leaf = box(1.7, 0.05, 0.7, woodDark, sx, 0.78, 0.5, g); leaf.rotation.x = 1.0; W(sx - 0.95, -0.75, sx + 0.95, 0.75);
+    const well = solid(0x24282a, 1); well.side = THREE.BackSide; box(1.6, 2.3, 1.2, well, sx, -1.15, 0, g); const eng = solid(0x3f5a4c, 0.5, 0.4), steel = solid(0xb8bcc0, 0.3, 0.9), oil = solid(0x101214, 0.3, 0.2);
+    for (const dx of [-0.46, 0, 0.46]) { cyl(0.2, 0.2, 0.7, eng, sx + dx, -1.35, -0.12, g, 16); cyl(0.215, 0.215, 0.05, brassM, sx + dx, -0.99, -0.12, g, 16); cyl(0.215, 0.215, 0.04, brassM, sx + dx, -1.5, -0.12, g, 16); cyl(0.035, 0.035, 0.5, steel, sx + dx, -1.9, -0.12, g, 8); cyl(0.05, 0.05, 0.12, brassM, sx + dx, -0.93, -0.12, g, 8); }   /* three cylinders with brass bands, piston rods below */
+    box(1.5, 0.1, 0.46, eng, sx, -1.72, -0.12, g); const shaft = cyl(0.05, 0.05, 1.5, steel, sx, -2.12, -0.12, g, 8); shaft.rotation.z = Math.PI / 2; const fw = mesh(new THREE.TorusGeometry(0.3, 0.05, 6, 18), eng, sx + 0.7, -1.9, 0.3, g); fw.rotation.y = Math.PI / 2; const pipe = cyl(0.04, 0.04, 1.5, brassM, sx, -1.15, 0.36, g, 8); pipe.rotation.z = Math.PI / 2; cyl(0.04, 0.04, 0.8, brassM, sx - 0.6, -1.55, 0.36, g, 8);
+    mesh(new THREE.CircleGeometry(0.36, 12), oil, sx - 0.15, -2.27, 0.25, g).rotation.x = -Math.PI / 2; box(1.6, 0.04, 1.2, solid(0x3a3c3e, 0.9), sx, -2.3, 0, g);
+    const el = new THREE.PointLight(0xffd9a0, 3.2, 5, 1.4); el.position.set(sx, -0.5, 0.3); g.add(el); }
+  /* the head of the stair you came up, with a handrail */
+  { const sx = 5; box(1.2, 0.02, 0.9, solid(0x0e0f10, 1), sx, 0.012, -2.75, g); for (const dx of [-0.62, 0.62]) { box(0.05, 0.95, 0.05, white, sx + dx, 0.475, -2.3, g); box(0.05, 0.95, 0.05, white, sx + dx, 0.475, -3.2, g); box(0.04, 0.04, 0.95, white, sx + dx, 0.95, -2.75, g); } for (let k = 0; k < 3; k++) box(1.1, 0.04, 0.26, wood, sx, -0.2 - k * 0.24, -2.95 - k * 0.2, g); }
+  /* an anchor windlass and bitts on the forecastle, a coil of rope, a deck bucket */
+  cyl(0.28, 0.28, 1.5, ironD, 23, 0.45, 0, g, 14).rotation.x = Math.PI / 2; box(0.5, 0.5, 1.9, ironD, 23, 0.25, 0, g); for (const z of [-1.2, 1.2]) cyl(0.11, 0.13, 0.5, ironD, 20, 0.25, z, g, 10);
+  mesh(new THREE.TorusGeometry(0.34, 0.09, 8, 18), solid(0x8c7a52, 1), 2.6, 0.1, 2.5, g).rotation.x = Math.PI / 2; cyl(0.16, 0.13, 0.28, wood, -5.2, 0.14, 1.75, g, 12); W(-5.4, 1.55, -5.0, 1.95);
+}
+const DECK_VIEW = { hull: [8.2, 0.2, -8.6, Math.PI, -0.3], engine: [-6.2, 1.15, -0.62, Math.PI, -1.12], deck: [9.0, 0.75, 1.0, Math.PI, -0.5] };   /* where your eyes go for each close look: x, height, z, yaw, pitch */
+const deckGoal = () => { const n = Object.keys(INSPECT).filter((k) => inspectSeen[k]).length; return n < 3 ? 'Look at the hull, the engine and the deck. (' + n + ' of 3)' : 'You have seen the ship. Go back down to the dock.'; };
+function lookPart(k) {   /* a close look: your eyes go to the thing itself (over the rail, down the hatch, down to the planks) while the words are on the screen */
+  if (busy) return; busy = true; keys.clear(); uiSound('tap'); const keep = [state.x, state.z, state.yaw, state.pitch], v = DECK_VIEW[k]; state.x = v[0]; state.eyeY = v[1]; state.z = v[2]; state.yaw = v[3]; state.pitch = v[4];
+  $('intitle').textContent = INSPECT[k][0]; $('inrow').replaceChildren(); $('inmsg').textContent = INSPECT[k][1]; $('indone').hidden = false; $('inspect').hidden = false; $('indone').focus({ preventScroll: true });
+  inspectDone = () => { [state.x, state.z, state.yaw, state.pitch] = keep; delete state.eyeY; const first = !inspectSeen[k]; inspectSeen[k] = true; setGoal(); if (first && Object.keys(INSPECT).every((x) => inspectSeen[x])) { uiSound('goal'); toast('You have looked at everything. The ship is old.'); } };
+}
+function boardShip() { chapterFade('On board', 'The deck of the Yarmouth', () => { buildDeck(); enterPlace('deck'); const s = PLACES.deck.start; state.x = s.x; state.z = s.z; state.yaw = s.yaw; state.pitch = 0; setGoal(); showPlace(); }); }
+function leaveShip() { const done = Object.keys(INSPECT).every((x) => inspectSeen[x]); chapterFade('Back on the dock', 'New York, 1919', () => { enterPlace('dock'); state.x = 0; state.z = 2.0; state.yaw = 0; state.pitch = 0; if (done && stage === 41) { unlock('shares'); setStage(42); uiSound('goal'); } else setGoal(); showPlace(); }); }
+function deckTick(dt) {
+  if (DECK.spin > 0 && DECK.wheel) { DECK.spin = Math.max(0, DECK.spin - dt); DECK.wheel.rotation.z += dt * 3.2 * Math.min(1, DECK.spin * 2); }
+  if (DECK.bell) { DECK.ring = Math.max(0, DECK.ring - dt); DECK.bell.rotation.x = Math.sin(DECK.ring * 14) * 0.35 * Math.min(1, DECK.ring); }
+  if (DECK.puff) { DECK.steam = Math.max(0, DECK.steam - dt); const k = DECK.steam / 1.8; DECK.puff.material.opacity = Math.min(1, k * 2.2) * 0.85; const s = 0.5 + (1 - k) * 2.6; DECK.puff.scale.set(s, s, 1); DECK.puff.position.y = 4.9 + (1 - k) * 1.6; }
+}
+const DECK_ACTIONS = [
+  { id: 'hull', label: 'Look over the rail at the hull', x: 8.2, z: -2.7, r: 1.3, on: () => true, go: () => lookPart('hull') },
+  { id: 'engine', label: 'Look down the engine room hatch', x: -6.2, z: -1.5, r: 1.3, on: () => true, go: () => lookPart('engine') },
+  { id: 'planks', label: 'Look at the deck and the rail', x: 9.0, z: 2.2, r: 1.3, on: () => true, go: () => lookPart('deck') },
+  { id: 'wheel', label: 'Turn the ship’s wheel', x: 15.75, z: 0, r: 0.9, on: () => true, go: () => { DECK.spin = 2.2; if (AU.ctx && AU.on) shipCreak(); toast('You turn the big wheel. It steers the ship.'); } },
+  { id: 'bell', label: 'Ring the ship’s bell', x: 12.6, z: -1.9, r: 1.2, on: () => true, go: () => { DECK.ring = 2.4; if (AU.ctx && AU.on) for (const d of [0, 0.5]) { tone(1320, 1300, 1.3, 'sine', 0.2, 0.2, d); tone(2640, 2600, 0.5, 'sine', 0.06, 0.2, d); } toast('Ding, ding! On a ship, bells tell the time.'); } },
+  { id: 'whistle', label: 'Pull the whistle cord', x: -1.2, z: -1.6, r: 1.2, on: () => true, go: () => { DECK.steam = 1.8; if (AU.ctx && AU.on) { tone(196, 190, 1.6, 'sawtooth', 0.12, 0, 0); tone(294, 288, 1.6, 'triangle', 0.1, 0, 0); noiseHit(1800, 0.7, 1.5, 0.05, 0, 0); } toast('The steam whistle is loud! It warns other ships.'); } },
+  { id: 'ashore', label: 'Go back down to the dock', x: 5, z: -2.5, r: 1.1, on: () => true, go: leaveShip }];
+const DOCK_ACTIONS = [{ id: 'inspect', label: 'Go up the gangway', x: 0, z: 3.0, r: 1.6, on: () => stage === 41, go: boardShip }];
 const plan = (id, t, reply) => ({ t, set: { plan: id }, then: [{ who: NAR, text: reply }, { who: NAR, text: 'But people have paid their money. They want to see a ship.' }, { who: NAR, text: 'So the old ship is bought, as really happened.' }] });
 const advice = (id, t, reply) => ({ t, set: { advice: id }, then: [{ who: 'Friend', text: reply }] });
 const DOCK_PEOPLE = [
@@ -912,7 +997,7 @@ const DOCK_PEOPLE = [
     lines: () => [{ who: 'Share clerk', text: 'Shares in the Black Star Line! Five dollars each.', unlock: 'shares' }, { who: 'You', text: 'What is a share?' }, { who: 'Share clerk', text: 'A small part of the company. Many people can afford one.' }, { who: 'Share clerk', text: 'If the company does well, the owners do well too.' }],
     later: () => ['Shares, five dollars each!', 'Come and join us.'] },
   { id: 'engineer', model: 'engineer1919', who: 'Engineer', label: 'Talk to the engineer', x: DOCK_SPOTS.engineer[0], z: DOCK_SPOTS.engineer[1], ry: faceToward(5.0, 2.0, 0, 5), base: 'Idle',
-    lines: () => [{ who: 'Engineer', text: 'I look after the engine of this ship.' }, { who: 'You', text: 'Is she a good ship?' }, { who: 'Engineer', text: 'She is old. She has carried coal for years.' }, { who: 'Engineer', text: 'Look her over yourself. Start at the dock edge.' }],
+    lines: () => [{ who: 'Engineer', text: 'I look after the engine of this ship.' }, { who: 'You', text: 'Is she a good ship?' }, { who: 'Engineer', text: 'She is old. She has carried coal for years.' }, { who: 'Engineer', text: 'Look her over yourself. Go up the gangway.' }],
     later: () => ['Mind the ropes.', 'She is old, but she floats.'] },
   { id: 'friend', model: 'hl_woman', who: 'Friend', label: 'Talk to your friend', x: DOCK_SPOTS.friend[0], z: DOCK_SPOTS.friend[1], ry: faceToward(-1.6, 1.4, -4.5, -0.9), base: 'Idle',
     lines: () => stage === 43 ? [{ who: 'Friend', text: 'I have saved a little money. I want to buy shares.' }, { who: 'Friend', text: 'You have seen the ship. What should I do?', choices: [advice('truth', 'Tell the truth: the ship is old', 'Thank you for telling me. I will buy just one share.'), advice('cheer', 'Say it will surely succeed', 'Then I will buy five shares! Thank you!'), advice('wait', 'Say wait and see', 'Good idea. I will wait and look again next month.')] }]
@@ -923,7 +1008,7 @@ for (const n of DOCK_PEOPLE) initPerson(n);
 let dockLoading = null;
 function ensureDock() { if (!dockLoading) { buildDock(); dockLoading = Promise.all(DOCK_PEOPLE.map(loadPerson)); } return dockLoading; }
 function resetChapter5() {   /* the dock again: your choices here are cleared, the journal is kept */
-  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); stage = 40; delete story.plan; delete story.advice;
+  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); delete state.eyeY; inspectSeen = {}; stage = 40; delete story.plan; delete story.advice;
   for (const n of DOCK_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('dock'); setStage(40); showPlace();
 }
@@ -1286,6 +1371,7 @@ const PLACES = {
   office: { group: offG, lamp: offLamp, walls: OFF_WALLS, bounds: OFF_BOUNDS, people: OFF_PEOPLE, actions: OFF_ACTIONS, start: { x: 0, z: 2.5, yaw: 0 }, caption: 'Harlem, New York, 1925' },
   liberty: { group: libG, lamp: libLamp, walls: LIB_WALLS, bounds: LIB_BOUNDS, people: LIB_PEOPLE, actions: LIB_ACTIONS, start: { x: 0, z: 4.5, yaw: 0 }, caption: 'Liberty Hall, Harlem, August 1920' },
   dock: { group: dockG, lamp: new THREE.Object3D(), walls: DOCK_WALLS, bounds: DOCK_BOUNDS, people: DOCK_PEOPLE, actions: DOCK_ACTIONS, start: { x: 0, z: -2.6, yaw: Math.PI }, caption: 'New York, 1919', sky: 0x9fc6dc },
+  deck: { group: deckG, lamp: new THREE.Object3D(), walls: DECK_WALLS, bounds: DECK_BOUNDS, people: [], actions: DECK_ACTIONS, start: { x: 5, z: -1.6, yaw: 0.0 }, caption: 'On board the Yarmouth', sky: 0x9fc6dc },   /* part of chapter 5: you come here up the gangway (boardShip) and go back down it */
   press: { group: pressG, lamp: pressLamp, walls: PRESS_WALLS, bounds: PRESS_BOUNDS, people: PRESS_PEOPLE, actions: PRESS_ACTIONS, start: { x: 0, z: 3.1, yaw: 0 }, caption: 'Harlem, New York, 1918' } };
 for (const k of Object.keys(PLACES)) { PLACES[k].key = k; PLACES[k].extras = (EXTRAS[k] || []).map((e) => { const n = { ...e, bg: true, base: 'Idle', who: '' }; if (n.seat) { n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; } initPerson(n); return n; }); }
 /* the background people of a place (life.js EXTRAS): loaded the first time you are there, recoloured, seated where they have a seat */
@@ -1361,6 +1447,7 @@ function update(dt, now) {
   const talkBtn = $('talk'); talkBtn.hidden = !(near && near.go); if (near && near.go) talkBtn.textContent = near.label;   /* people get the bubble; things to do get this button */
   for (const mx of mixers) { const r = mx.getRoot(); if (r.visible && !r.userData.amb) mx.update(dt); } for (const n of PEOPLE) if (n.m && n.m.userData.anim && !n.m.userData.amb) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   for (const m of grounded) if (m.visible && !m.userData.amb) groundFeet(m);
+  if (place === 'deck') deckTick(dt);
   const PL = PLACES[place]; if (PL && PL.life) PL.life.tick(dt, { px: state.x, pz: state.z, talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } });   /* everyone else: engine/ambient.js (life.js) */
   if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }
@@ -1553,7 +1640,10 @@ function devViews() {
       } else if (k === '6') {
         $('start').click(); best = 34; stage = 34; CHAPTERS[4].go(); for (let i = 0; i < 300 && place !== 'dock'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '" people=' + PEOPLE.map((n) => n.id).join(','));
         for (const id of ['garvey5', 'clerk', 'engineer']) L(id + ' lines=' + await talkTo(byId(id))); L('stage=' + stage);
-        const act = ACTIONS.find((a) => a.on()); L('action=' + (act && act.label)); act.go(); $('inrow').querySelector('[data-k="hull"]').click(); L('done shown early=' + !$('indone').hidden); for (const k of ['engine', 'deck']) $('inrow').querySelector('[data-k="' + k + '"]').click(); L('msg="' + $('inmsg').textContent + '" done shown=' + !$('indone').hidden); $('indone').click(); L('stage=' + stage + ' busy=' + busy);
+        const act = ACTIONS.find((a) => a.on()); L('action=' + (act && act.label)); act.go(); for (let i = 0; i < 80 && (place !== 'deck' || fading); i++) await sleep(100); L('place=' + place + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '"');
+        const da = (id) => ACTIONS.find((a) => a.id === id), look = async (id) => { const a = da(id); state.x = a.x; state.z = a.z; update(0.016); a.go(); const shown = !$('inspect').hidden, msg = $('inmsg').textContent; $('indone').click(); await sleep(30); return shown && !!msg && state.eyeY === undefined && !busy; };
+        L('hull look ok=' + await look('hull') + ' goal="' + $('goal').textContent + '"'); for (const id of ['wheel', 'bell', 'whistle']) { const a = da(id); state.x = a.x; state.z = a.z; update(0.016); a.go(); for (let i = 0; i < 20; i++) update(0.05); } L('wheel, bell, whistle tried; toast="' + $('toast').textContent + '"');
+        L('engine look ok=' + await look('engine') + ' deck look ok=' + await look('planks') + ' goal="' + $('goal').textContent + '"'); da('ashore').go(); for (let i = 0; i < 80 && (place !== 'dock' || fading); i++) await sleep(100); L('place=' + place + ' stage=' + stage + ' busy=' + busy);
         L('garvey lines=' + await talkTo(byId('garvey5')) + ' plan=' + story.plan + ' stage=' + stage); L('friend lines=' + await talkTo(byId('friend')) + ' advice=' + story.advice + ' stage=' + stage + ' goal="' + $('goal').textContent + '" pages=' + unlocked.join(','));
         L(stage === 44 && story.plan === 'now' && story.advice === 'truth' && place === 'dock' && CHAPTERS[4].done() && unlocked.includes('bsl') && unlocked.includes('shares') ? 'ALLDONE' : 'STALL'); L('DONE');
       } else if (k === '7') {
@@ -1601,9 +1691,9 @@ function devViews() {
 
 /* ---------- the shared checks and this game's own (dev builds only): see dev.js ---------- */
 function devChecks(q) {
-  const E0 = { shop: ensureShop, hall: ensureHall, street: ensureStreet, press: ensurePress, dock: ensureDock, liberty: ensureLiberty, office: ensureOffice, park: ensurePark }, ENSURE = {};
+  const E0 = { shop: ensureShop, hall: ensureHall, street: ensureStreet, press: ensurePress, dock: ensureDock, liberty: ensureLiberty, office: ensureOffice, park: ensurePark, deck: () => ensureDock().then(buildDeck) }, ENSURE = {};
   for (const [k, f] of Object.entries(E0)) ENSURE[k] = () => f().then(() => loadExtras(k));
-  const RESET = { shop: resetChapter, hall: resetChapter2, street: resetChapter3, press: resetChapter4, dock: resetChapter5, liberty: resetChapter6, office: resetChapter7, park: resetChapter8 };
+  const RESET = { shop: resetChapter, hall: resetChapter2, street: resetChapter3, press: resetChapter4, dock: resetChapter5, liberty: resetChapter6, office: resetChapter7, park: resetChapter8, deck: () => { resetChapter5(); stage = 41; best = Math.max(best, 41); buildDeck(); enterPlace('deck'); const s = PLACES.deck.start; state.x = s.x; state.z = s.z; state.yaw = s.yaw; setGoal(); } };   /* deck: dev checks only, the ship's deck as it is in the middle of chapter 5 */
   devRun({ q, PLACES, PLACE_ORDER, ENSURE, RESET, enterPlace, update, state, scene, camera, renderer, hemi, sun, $, story, unlocked, JOURNAL, GOALS, TALK_TARGETS, CHAPTERS, SAVE_KEY, SKIN_K, CL, model, mixers,
     get stage() { return stage; }, set stage(v) { stage = v; }, get best() { return best; }, set best(v) { best = v; }, get place() { return place; }, get talkWith() { return talkWith; }, get busy() { return busy; },
     setStage, setGoal, refreshLife, startTalk, endTalk, leaveTalk, allPeople, byId, wantsTalk, clampPos, startGame, showGoal, showHint, toast, showPlace, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeCredits,
