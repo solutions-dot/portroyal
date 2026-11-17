@@ -21,7 +21,7 @@ function plane(size, map) { const g = new THREE.PlaneGeometry(size, size); g.rot
 export function createGuide({ scene, camera, ground = null, eye = 1.6 } = {}) {
   /* two thin chevrons (pointing along +x) and a thin ring, soft gold, half see-through */
   const chev = softTex((x) => { x.lineWidth = 9; for (const o of [-22, 18]) { x.globalAlpha = o < 0 ? 0.55 : 1; x.beginPath(); x.moveTo(44 + o, 30); x.lineTo(78 + o, 64); x.lineTo(44 + o, 98); x.stroke(); } });
-  const loop = softTex((x) => { x.lineWidth = 5; x.beginPath(); x.arc(64, 64, 50, 0, Math.PI * 2); x.stroke(); });
+  const loop = softTex((x) => { x.lineWidth = 7; x.shadowBlur = 14; x.beginPath(); x.arc(64, 64, 50, 0, Math.PI * 2); x.stroke(); x.stroke(); });   /* a little brighter and fuller than at first (owner, 17 November 2026: the ring had become too dull) */
   const root = new THREE.Group(); root.name = 'GuideArrow'; root.visible = false;
   const body = plane(0.62, chev); body.renderOrder = 22; root.add(body); root.userData.noAudit = true;
   const ring = new THREE.Group(); ring.name = 'GuideRing'; ring.visible = false; ring.userData.noAudit = true;
@@ -44,7 +44,7 @@ export function createGuide({ scene, camera, ground = null, eye = 1.6 } = {}) {
   let want = 1, lx = null, lz = null, speed = 0;
   function tick(now) { const dt = last === null ? 0 : Math.max(0, Math.min(0.1, (now - last) / 1000)); last = now; fade += ((shown ? want : 0) - fade) * Math.min(1, dt * 3); return dt; }
   /* soft and quiet: at most half see-through, a slow gentle glow, and it fades right down while you walk the right way */
-  function setFade(f, t) { const glow = 0.85 + 0.15 * Math.sin(t * 2.2); body.material.opacity = 0.55 * f * glow; band.material.opacity = 0.45 * f * glow; }
+  function setFade(f, t) { const glow = 0.85 + 0.15 * Math.sin(t * 2.2); body.material.opacity = 0.55 * f * glow; band.material.opacity = Math.min(1, 0.72 * f * glow); }
 
   const G = {
     root, ring,

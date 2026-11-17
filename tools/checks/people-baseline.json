@@ -367,12 +367,12 @@
    "hats": 0
   },
   "man_shirt": {
-   "cloth": 39,
+   "cloth": 38,
    "torn": 0,
    "hats": 0
   },
   "man_shirt_lo": {
-   "cloth": 45,
+   "cloth": 42,
    "torn": 0,
    "hats": 0
   },
@@ -621,12 +621,12 @@
    "hats": 1
   },
   "militia": {
-   "cloth": 75,
+   "cloth": 60,
    "torn": 24,
    "hats": 0
   },
   "militia_lo": {
-   "cloth": 60,
+   "cloth": 55,
    "torn": 1,
    "hats": 0
   },
@@ -648,17 +648,17 @@
    "hats": 1
   },
   "benning": {
-   "cloth": 574,
-   "torn": 1367,
+   "cloth": 570,
+   "torn": 1631,
    "hats": 0
   },
   "buc1": {
-   "cloth": 82,
+   "cloth": 78,
    "torn": 14,
    "hats": 0
   },
   "buc2": {
-   "cloth": 265,
+   "cloth": 275,
    "torn": 3,
    "hats": 0
   },
@@ -668,27 +668,27 @@
    "hats": 0
   },
   "galdy": {
-   "cloth": 278,
+   "cloth": 276,
    "torn": 18,
    "hats": 0
   },
   "gunner": {
-   "cloth": 185,
+   "cloth": 197,
    "torn": 12,
    "hats": 0
   },
   "heath": {
-   "cloth": 245,
+   "cloth": 246,
    "torn": 9,
    "hats": 0
   },
   "kofi": {
-   "cloth": 36,
+   "cloth": 32,
    "torn": 2,
    "hats": 0
   },
   "mendes": {
-   "cloth": 184,
+   "cloth": 183,
    "torn": 12,
    "hats": 0
   },
@@ -698,12 +698,12 @@
    "hats": 0
   },
   "ned": {
-   "cloth": 53,
+   "cloth": 49,
    "torn": 2,
    "hats": 0
   },
   "sailor": {
-   "cloth": 31,
+   "cloth": 41,
    "torn": 2,
    "hats": 0
   },
@@ -713,7 +713,7 @@
    "hats": 0
   },
   "turtler": {
-   "cloth": 46,
+   "cloth": 42,
    "torn": 3,
    "hats": 0
   }
@@ -765,7 +765,7 @@
    "hats": 0
   },
   "sel_emperor66_lo": {
-   "cloth": 117,
+   "cloth": 234,
    "torn": 0,
    "hats": 0
   },
