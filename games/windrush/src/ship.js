@@ -222,7 +222,6 @@ export function windrush() {
     black = solid(0x26292b, 0.7),
     steel = solid(0x9a9c98, 0.5, 0.4),
     rig = solid(0x3a3a38, 0.8),
-    wood = solid(0x8a6a44, 0.9),
     glass = solid(0x2b3a40, 0.25, 0.2);
   const { L, B } = SHIP,
     X = (s) => -L / 2 + s * L;
