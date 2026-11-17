@@ -105,7 +105,7 @@ const box = (w, h, d, m, x, y, z, parent) => mesh(boxGeo(w, h, d, !!m.map), m, x
 /* the pair of doors in the front of a room you stand in, folded right back against the inside of the front wall, so the doorway stays open and you look out
    through it. zIn is the inner face of the door posts. Each room passes the kind of door its own building had (owner, 17 November 2026: "the doors should fit
    their purpose, not one shared one"): jalousie shop doors in Kingston, a Georgian six-panel pair in the Kingston hall, a glazed shop door in Harlem, and so on. */
-function roomDoors(parent, x, zIn, w, h, o) { const d = makeDoor({ w, h, leaves: 2, open: 3.0 / 1.4, ...o }); d.position.set(x, 0, zIn); d.rotation.y = Math.PI; (parent || room).add(d); return d; }
+function roomDoors(parent, x, zIn, w, h, o) { const d = makeDoor({ w, h, leaves: 2, open: -3.0 / 1.4, ...o }); d.position.set(x, 0, zIn); d.children.filter((c) => c.isMesh && c.material.name === 'DoorFrame').forEach((c) => d.remove(c)); (parent || room).add(d); return d; }   /* the door is set facing out of the room and the leaves swung in and right round, so their panels or louvres face you; the room's own timber posts are its frame, so the kit's frame and sill are left out */
 const cyl = (r0, r1, h, m, x, y, z, parent, seg = 18) => mesh(new THREE.CylinderGeometry(r0, r1, h, seg), m, x, y, z, parent);
 
 /* ---------- the room: 9 m wide, 7 m deep, high ceiling for the heat ---------- */

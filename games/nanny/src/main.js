@@ -1004,7 +1004,7 @@ function devViews() {
         const targets = P.people.filter((n) => shown(n)).map((n) => [n.hx, n.hz]).concat(A.map((a) => [a.x, a.z])), route = [hub];
         for (const t of targets) { const to = P.G.clamp(t[0] + 0.9, t[1] + 0.5), r = walkRoute(route[route.length - 1], to, P.solidBoxes, 0.3, P.bounds); route.push(...(r.length ? r : [to])); }
         for (let i = 0; i < 3; i++) update(1 / 30); refreshCast(); lifeSync(P);
-        for (const [k, L] of P.lives) { if (!L.on || !L.life.people.length) continue; const txt = ambientTest(L.life, { route, stops: route.map((_, i) => i), story: () => storyFor(P, L), seconds: +(q.get('s') || 60), view: (pp) => ({ x: pp[0], z: pp[1], yaw: state.yaw }) }), n = +txt.split('\n')[0].split(' ')[1];
+        for (const [k, L] of P.lives) { if (!L.on || !L.life.people.length) continue; const txt = ambientTest(L.life, { route, stops: route.map((_, i) => i), snap: P.snap, story: () => storyFor(P, L), seconds: +(q.get('s') || 60), view: (pp) => ({ x: pp[0], z: pp[1], yaw: state.yaw }) }), n = +txt.split('\n')[0].split(' ')[1];
           total += n; out.push(id + '@' + st + ' ' + k + ' (' + L.life.people.length + ' people, ' + L.life.mood() + '): ' + txt.split('\n').filter((l, i) => i === 0 || (l && !/^\S+: (wander|chat|work|sit|watch|errand|play),/.test(l)) || q.has('stats')).join('\n  ')); await new Promise((r) => setTimeout(r, 0)); } }
       out.unshift('AMBIENT ' + total); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AMBIENT ' + total; })();
   }

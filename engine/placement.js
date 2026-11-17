@@ -30,21 +30,25 @@ export function anchorSeat(model) {
 const kq=new Quaternion(),kA=new Vector3(),kK=new Vector3(),kAx=new Vector3(),kF=new Vector3(),kV=new Vector3();
 function bendKnees(model){
   const U=model.userData;if(U.noKneeBend)return;
+  /* how far each foot's lowest point (toe or heel) lies below its ankle, measured once the sit has fully taken over (the seat lift is kept then):
+     a standing foot gave 8 cm, but a sitting foot with its toes pointed lies lower, and the shoes went 5 cm into a carriage floor (17 November 2026) */
   let drop=U.soleDrop;
-  if(drop===undefined){drop=null;const fb=[model.getObjectByName('mixamorigLeftFoot'),model.getObjectByName('mixamorigRightFoot')];if(fb[0]&&fb[1]){let lo=Infinity;
-    model.traverse(o=>{if(!o.isSkinnedMesh||!o.visible||!/Shoes|Sole/.test(o.material.name||''))return;o.skeleton.update();const a=o.geometry.attributes.position,step=Math.max(1,Math.floor(a.count/400));for(let i=0;i<a.count;i+=step){o.getVertexPosition(i,kV);kV.applyMatrix4(o.matrixWorld);lo=Math.min(lo,kV.y);}});
-    if(isFinite(lo))drop=Math.min(fb[0].getWorldPosition(kA).y,fb[1].getWorldPosition(kK).y)-lo;}
-    if(drop===null||!(drop>0&&drop<.3))drop=.08*model.scale.y;U.soleDrop=drop;}
+  if(!drop){const fb={Left:model.getObjectByName('mixamorigLeftFoot'),Right:model.getObjectByName('mixamorigRightFoot')},d={Left:.08*model.scale.y,Right:.08*model.scale.y};
+    if(fb.Left&&fb.Right){const ank={Left:fb.Left.getWorldPosition(new Vector3()),Right:fb.Right.getWorldPosition(new Vector3())},lo={Left:Infinity,Right:Infinity};
+      model.traverse(o=>{if(!o.isSkinnedMesh||!o.visible||!/Shoes|Sole/.test(o.material.name||''))return;o.skeleton.update();const a=o.geometry.attributes.position,step=Math.max(1,Math.floor(a.count/500));for(let i=0;i<a.count;i+=step){o.getVertexPosition(i,kV);kV.applyMatrix4(o.matrixWorld);const sd=kV.distanceToSquared(ank.Left)<kV.distanceToSquared(ank.Right)?'Left':'Right';lo[sd]=Math.min(lo[sd],kV.y);}});
+      for(const sd of['Left','Right'])if(isFinite(lo[sd])&&ank[sd].y-lo[sd]>0&&ank[sd].y-lo[sd]<.3)d[sd]=ank[sd].y-lo[sd];}
+    if(model.userData.seatAnchor?.lift!==undefined)U.soleDrop=d;drop=d;}
   const floor=model.parent?model.parent.localToWorld(kV.set(0,U.ground||0,0)).y:(U.ground||0);
   kF.set(0,0,1).transformDirection(model.matrixWorld);kF.y=0;kF.normalize();kAx.set(kF.z,0,-kF.x);   /* the axis across the body (to its left) */
   for(const side of['Left','Right']){
     const knee=model.getObjectByName('mixamorig'+side+'Leg'),foot=model.getObjectByName('mixamorig'+side+'Foot');if(!knee||!foot)continue;
-    knee.getWorldPosition(kK);foot.getWorldPosition(kA);const want=floor+drop+.005;if(kA.y>=want)continue;
+    knee.getWorldPosition(kK);foot.getWorldPosition(kA);const want=floor+drop[side]+.005;if(kA.y>=want)continue;
     const v=kA.clone().sub(kK),len=v.length();if(kK.y-want>len-.01)continue;   /* the floor is out of reach even with the shin straight down */
     /* turn the shin about the axis across the body, the way that draws the foot back, by the angle that brings the ankle up to the floor */
     let best=0;for(const sg of[1,-1]){kq.setFromAxisAngle(kAx,sg*.3);const t=v.clone().applyQuaternion(kq);if(t.dot(kF)<v.dot(kF)){let a=0,b=1.6;for(let i=0;i<18;i++){const m=(a+b)/2;kq.setFromAxisAngle(kAx,sg*m);if(kK.y+v.clone().applyQuaternion(kq).y<want)a=m;else b=m;}best=sg*b;break;}}
     if(!best)continue;
     const pq=knee.parent.getWorldQuaternion(new Quaternion());kq.setFromAxisAngle(kAx,best);knee.quaternion.premultiply(pq.clone().invert().multiply(kq).multiply(pq));knee.updateMatrixWorld(true);
+    const fq=foot.parent.getWorldQuaternion(new Quaternion()),kqi=kq.clone().invert();foot.quaternion.premultiply(fq.clone().invert().multiply(kqi).multiply(fq));foot.updateMatrixWorld(true);   /* the foot keeps its angle to the floor: turned with the shin, its toes went 5 cm through a carriage floor */
   }
 }
 

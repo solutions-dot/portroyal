@@ -274,6 +274,7 @@ export async function dev(A) {
       const r = ambientCheck(Q.life, {
         seconds: 60,
         dt: 1 / 30,
+        snap: Q.snap, // the place before its scenery was merged: a merged mesh of many seats is no seat to measure
         start: [Q.start.x, Q.start.z],
         story: () => Q.people,
         blocked: (x, z, r) => blocked(Q, x, z, r),

@@ -152,7 +152,7 @@ export function evDoor(kind, o = {}) {
     for (const s of [-1, 1]) B(0.025, th, 0.03, AL, s * (w / 2 - 0.0125), tY + th / 2, 0.025);
     for (let y = tY + 0.05; y < tY + th - 0.02; y += 0.075) B(w - 0.06, 0.07, 0.006, GL, 0, y, 0.03, -0.45);   /* glass blades, tilted open */
     for (let i = 0; i < 2; i++) { const s = i ? -1 : 1, lw = w / 2, cx = -s * w / 4; B(lw - 0.008, lh - 0.02, 0.04, L1, cx, lh / 2 + 0.01, 0.022); B(lw - 0.05, lh - 0.06, 0.003, L2, cx, lh / 2 + 0.01, 0.043);   /* flush leaf, a thin lipping line round it */
-      B(0.1, 0.018, 0.018, ST, cx + s * (lw / 2 - 0.12), 1.0, 0.06); B(0.03, 0.12, 0.008, ST, cx + s * (lw / 2 - 0.08), 1.0, 0.046); }   /* lever handles */
+      B(0.14, 0.024, 0.024, AL, cx + s * (lw / 2 - 0.14), 1.0, 0.07); B(0.016, 0.016, 0.03, AL, cx + s * (lw / 2 - 0.08), 1.0, 0.055); B(0.045, 0.16, 0.008, AL, cx + s * (lw / 2 - 0.08), 0.98, 0.046); }   /* aluminium lever handles on plates */
     B(w + 0.1, 0.03, 0.12, edm('DoorFrame', 0xb8b4aa, 0.95), 0, 0.015, 0.06); return g;
   }
   /* jalousie (a pair) or panel (one) */

@@ -180,3 +180,14 @@ The crowd had two bodies outside the airport (one man, one woman) and six at it,
 - **The spread.** `buildWorld` in `main.js` calls `spreadBodies` before the bodies load: no two copies of one body and face within 3 m, measured over where each one strolls. At the airport and in mixed crowds a person with no face left takes another crowd body of the same sex (the clothes' colours stay); a stroller with no face left stays and watches. The family keeps its own bodies, and nobody in the crowd uses them.
 - **Memory (1930).** Each stroller keeps to its own stretch of the lane.
 - **Left out on purpose**: the police line (one squad in uniform).
+
+## Doors (17 November 2026)
+
+Each door is now made for its building (`games/selassie/src/doors.js`), not one flat board or one shared door:
+
+- **Kingston concrete houses** (`louvreHouse` in `kingston-props.js`): `louvreDoor`, a timber door painted in the house's trim colour, its top half glass louvre blades in aluminium clips (like the house's own windows) over two flat panels, a brass knob. On a lit evening house the lamplight shows through the blades. Glass louvre windows and doors were usual in Kingston houses of the 1950s and 1960s.
+- **Yard board houses** (`boardHouse` in `period-props.js`): `yardBoardDoor`, painted tongue-and-groove boards as they show from outside (the ledges are inside), butt hinges, a padlocked hasp; three paints.
+- **Palisadoes terminal**: `terminalDoors` in three of the glazed bays, a pair of aluminium-framed glass doors with push bars and kick plates under a glass transom, the plain modern doors of a 1960s terminal.
+- **Control tower**: `serviceDoor`, a painted steel door on a step with a pressed vent low down and a lever handle.
+
+**Still stand-ins (work to do):** the terminal itself is a general reconstruction (see "Historical basis"), and so are its doors: find a photograph of the Palisadoes terminal's doors about 1966 and match their number, frames and handles. The house doors follow the house types, not a photographed street.

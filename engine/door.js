@@ -83,7 +83,7 @@ export function makeDoor(opts = {}) {
   B(g, M.frame, fw, o.h + fw, o.out, -o.w / 2 - fw / 2, (o.h + fw) / 2, o.out / 2); B(g, M.frame, fw, o.h + fw, o.out, o.w / 2 + fw / 2, (o.h + fw) / 2, o.out / 2);
   B(g, M.frame, o.w + 2 * fw + 0.06, fw + 0.02, o.out + 0.015, 0, o.h + fw / 2 + 0.01, (o.out + 0.015) / 2);
   /* the sill or step */
-  if (o.step > 0) B(g, M.frame, o.w + 2 * fw + 0.2, o.step, 0.32, 0, o.step / 2, 0.12); else B(g, M.frame, o.w + 0.04, 0.03, 0.1, 0, 0.015, 0.0);
+  if (o.step > 0) B(g, M.frame, o.w + 2 * fw + 0.2, o.step, 0.32, 0, o.step / 2, 0.165); else B(g, M.frame, o.w + 0.04, 0.03, 0.08, 0, 0.015, 0.045);   /* in front of the wall face, never into the wall (the audit found a step 7 cm into one) */
   /* the leaves, hung at the back of the reveal */
   const y0 = o.step > 0 ? o.step : 0.03, lh = o.h - y0 - 0.005, n = o.leaves === 2 ? 2 : 1, lw = (o.w - 0.01) / n;
   for (let i = 0; i < n; i++) {

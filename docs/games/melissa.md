@@ -137,3 +137,22 @@ The storm levels (`SB_GROAN`, `SB_LIGHT`, `SB_PEAK`) live in `main.js` and the t
 ## Audit 0 (17 November 2026)
 
 `?test=audit` went from 17 lines to 0, held 0. Scattered stones keep apart and stay out of the houses along the far side and away from the post. In Kingston 1988 the third hibiscus stands beside the drive, and the drive stops at the front of the house. The cut logs that take the fallen mango's place are marked `userData.soft`, so the audit does not compare them with the tree they replace.
+
+## Doors (17 November 2026)
+
+The owner sent a picture of a door that was only a flat brown box and said each door should fit its building, not be one shared door. Each house now names its own front door, built in `games/melissa/src/doors.js` and chosen in `places.js` (`house({ door: [builder, options] })` in `houses.js`).
+
+| House | Door | Why |
+|---|---|---|
+| The family's board house, 1951 | `boardDoor51`: upright boards, three ledges and two Z braces, black strap hinges, a hasp and a wooden turn button, bare timber | the plain batten door of a Jamaican board house of the time |
+| The same house, 1988 | `jalousieBoard88`: the board door painted green, a wooden jalousie let into its top half, a cheap knob set | families kept and mended the old door, adding air and a lock |
+| The family's block house, 2025 | `scrollGrille25`: a moulded door with a small half-moon light behind a white scrolled iron grille gate with a padlock | burglar-bar gates on front doors are usual on Jamaican houses today |
+| Miss Hyacinth's old board house | `pairBoard`: a pair of narrow board leaves, the top third a fixed wooden jalousie, painted to match her shutters, strap hinges and a bolt | the double doors of older Jamaican cottages, opening onto the veranda |
+| Miss Ivy's block house, 1951 | `jalousiePair51`: a pair of full-height wooden jalousie doors with a middle rail, painted green, brass knobs | block houses of the 1950s let air through their doors as their windows did |
+| Mass Clifford's block house, 1988, and Raymond's, 2025 | `panelGrille88`: a varnished hardwood door of six raised panels, brass lever, behind a flat-bar burglar-bar gate with a padlock | the grille came in with the 1970s and 1980s; Raymond's is the same door, darker, with a darker gate |
+| The church | `churchDoors`: a pair of tall board doors under a pointed arch, strap hinges, iron ring handles | the Gothic arch of a Jamaican village church |
+| The shops | `shopDoor`: a board door with an iron bar across in staples and a padlocked hasp, behind the counter | shops were barred at night |
+| Uptown house, Kingston 1988 | `villaDoors`: a pair of carved hardwood doors with a diamond on each tall panel, brass levers, behind a white scrolled grille | an uptown house of the 1980s |
+| Downtown yards, Kingston 1988 | `boardDoor51` in five paints, some braced, some padlocked | old board doors, painted over the years |
+
+**Still stand-ins (work to do):** these are built from general knowledge of Jamaican houses, not from one photograph of each kind. Find and cite photographs (National Library of Jamaica, the Jamaica National Heritage Trust's vernacular architecture work, Gleaner archives for 1951 and 1988) for: the 1951 batten door (and whether its ledges faced out), the 1950s jalousie doors, the 1980s grilles, and the church's door, and adjust shapes and colours to match.
