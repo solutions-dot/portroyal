@@ -321,3 +321,7 @@ The ship moored in chapter 5 was a box hull with a box house. It is now `steamer
 The owner's rule (17 November 2026): things in the game are modelled on the real thing, not on a stand-in. The other two ships out in the water are still the generic cargo steamer and a schooner. *Shadyside* was a river excursion boat and *Kanawha* a steam yacht, so they are stand-ins and need their own shapes from photographs. This is work to do.
 
 The handbill the owner shared also shows the "S.S. Phyllis Wheatley". The game does not show or name that ship.
+
+## The dock is busy (17 November 2026)
+
+Nobody on the dock moved from their spot. Now one docker goes between the sacks and the crates, another works at the barrels, two women who have come to see the ship talk together, and a man strolls along the dock (`life.js`, `EXTRAS.dock`). All are background people with no words. Ambient 0, audit 0.

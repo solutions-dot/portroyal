@@ -52,7 +52,10 @@ export function actFor(n, stage) {
     clerk: { kind: 'work', clips: ['ReachOut', 'Nod', 'HeadTurn'], work: [3, 6], rest: [2, 4], idles },
     engineer: { kind: 'work', clips: ['WipeSweat', 'LookAround', 'PickUp'], work: [3, 6], rest: [2, 4], face: at(5, 5), idles },
     friend: { kind: 'watch', at: at(0, 6), react: ['LookAround'], idles },
-    docker1: { kind: 'work', clips: ['PickUp', 'WipeSweat', 'LookAround'], work: [3, 6], rest: [2, 4], idles },
+    docker1: { kind: 'wander', walk: 'Walk', pts: [[-6.0, -2.25], [-6.4, 0.6], [-7.6, -2.6]], pause: [2, 5], idles: ['WipeSweat', 'LookAround', 'Idle'] },   /* goes between the sacks and the crates, checking the cargo (owner, 17 November 2026: nobody on the dock moved from their spot) */
+    docker3: { kind: 'work', clips: ['PickUp', 'WipeSweat', 'LookAround'], work: [3, 6], rest: [2, 4], face: at(7.7, 0.9), idles },   /* at the barrels */
+    looker1: { kind: 'chat', group: 'dockchat', idles }, looker2: { kind: 'chat', group: 'dockchat', idles },   /* two people who have come to see the ship, talking */
+    stroller: { kind: 'wander', walk: 'Walk', area: [-9, 0.6, 9, 3.0], pause: [3, 7], speed: 0.85, idles },   /* walks along the dock, stopping to look at the ship */
     docker2: { kind: 'work', clips: ['PickUp', 'LookAround', 'WipeSweat'], work: [3, 6], rest: [2, 4], face: at(-6.8, -3.05), idles },   /* by the sacks (seaman1919's Walk slid 6.7 cm a loop) */
     /* chapter 6: Liberty Hall, August 1920 */
     garvey6: stage >= 53 ? { kind: 'work', clips: ['Speech', 'TalkM1', 'TalkM2'], work: [5, 9], rest: [0.6, 1.4], idles }
@@ -110,7 +113,10 @@ export const EXTRAS = {
     { id: 'stoop', model: 'nb_elder', x: -4.6, z: 3.2, ry: 2.4, tint: { Jacket: [0.8, 0.9, 1.1] } }],
   press: [{ id: 'compositor', model: 'nb_youth', x: -3.75, z: -1.3, ry: -Math.PI / 2, tint: { Shirt: [1.0, 0.92, 0.8], Breeches: [0.7, 0.7, 0.75] } }],
   dock: [{ id: 'docker1', model: 'hl_worker', x: -6.0, z: -2.25, ry: Math.PI, tint: { Shirt: [0.75, 0.85, 1.05] } },
-    { id: 'docker2', model: 'seaman1919', x: -7.0, z: -1.2, ry: 0.4, tint: { Shirt: [1.1, 1.05, 0.95] } }],
+    { id: 'docker2', model: 'seaman1919', x: -7.0, z: -1.2, ry: 0.4, tint: { Shirt: [1.1, 1.05, 0.95] } },
+    { id: 'docker3', model: 'nb_youth', x: 6.6, z: 1.0, ry: 1.6, tint: { Shirt: [0.8, 0.8, 0.75], Breeches: [0.75, 0.75, 0.8] } },
+    { id: 'looker1', model: 'woman1914', x: 4.6, z: 2.3, ry: 0.6, tint: { Shirt: [0.95, 0.9, 0.8], Skirt: [0.6, 0.7, 0.9] } }, { id: 'looker2', model: 'hl_woman', x: 5.4, z: 2.7, ry: -2.2, tint: { Shirt: [1.0, 0.85, 0.85], Skirt: [0.75, 0.65, 0.6] } },
+    { id: 'stroller', model: 'nb_elder', x: -4, z: 1.6, ry: Math.PI / 2, tint: { Jacket: [1.2, 1.15, 1.0] } }],
   liberty: [{ id: 'del1', model: 'hl_critic', seat: [-2.8, -2.2] }, { id: 'del2', model: 'hl_woman', seat: [-1.9, -1.25], tint: { Shirt: [0.8, 0.9, 1.1], Skirt: [0.8, 0.8, 0.9] } },
     { id: 'del3', model: 'woman1914', seat: [2.8, -2.2], tint: { Shirt: [1.0, 0.85, 0.85] } }, { id: 'del4', model: 'nb_elder', seat: [3.7, -1.25] }, { id: 'del5', model: 'hl_worker', seat: [1.9, 0.65], tint: { Shirt: [0.9, 1.0, 1.1] } }],
   office: [{ id: 'typist', model: 'hl_pressman', x: 3.2, z: 1.5, ry: Math.PI, tint: { Shirt: [1.05, 1.05, 1.1] } }],

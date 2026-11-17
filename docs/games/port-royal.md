@@ -162,3 +162,10 @@ Henry Morgan, Alexandre Exquemelin, the Reverend Emmanuel Heath and Symon Bennin
 - The plantains hanging from the stall frame were a row of thick sticks. Each hook now holds two hands of plantains on a cord, after a photograph the owner supplied: six or seven long curved fingers joined at a crown, hanging down and fanning out, with a thin neck and a tight narrow tip, a ripe yellow hand over a green one.
 - To check against a source: the fruit on Grace's stall (plantains, pineapples, oranges, limes, watermelons). Hans Sloane, who was in Jamaica from 1687 to 1689, is the source to check each one against.
 - The audit does not yet catch small things floating inside a basket. A check for this is work to do.
+
+## The tavern (17 November 2026)
+
+- Old Ned sat facing the table and his hands went through it when he talked. He now sits on the near bench with his back to the table, facing the room and the fire (`TAV.ned`). Held 0, audit 0.
+- The hearth fire was two plain cones. It is now seven tongues of flame (soft painted teardrops, two crossed sheets each, flickering on their own) over red embers, charred logs and ash.
+- The dust motes were hard white squares; they are soft and round now.
+- The pineapples are barrel-shaped with diamond eyes and a crown of long arching leaves.

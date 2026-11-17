@@ -35,15 +35,19 @@ export const BOW = { '^Kneel': { Neck: 0.35, Head: 0.8, Spine2: 0.7, LeftShoulde
    straightened the spine, which tipped each person's ribcage back by about 20 degrees: lower ribs and belly pushed out, upper chest sunk, the whole body leaning back. On a man in a
    shirt that read as a bust, in every game. The three bones are turned back to the body's own curve here, once, for every clip: the chest bone's parent leans back 18 degrees more,
    the chest comes forward again, and the neck and the two shoulders undo the rest so the head and the arms stay as the clip put them. POSTURE is degrees about the bone's parent's side-to-side axis. */
-export const POSTURE = { Spine1: -18, Spine2: 38, Neck: -20 };   /* turning the shoulders back as well was tried: it helped four poses but made the full every-clip gate (tools/review/people-check.mjs) worse in Garvey and Nanny Town, so the arms are left as the clips have them */
-function posture(c) { const q = new THREE.Quaternion(), r = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0);
-  for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const deg = m ? POSTURE[m[1]] : undefined; if (!deg) continue; r.setFromAxisAngle(X, deg * Math.PI / 180); const v = t.values;
+export const POSTURE = { Spine1: -18, Spine2: 38, Neck: -20 };
+/* Standing clips (idles, talking, gestures) were made with the hips back and the knees bent about 30 degrees, so everyone stood in a slump, like a zombie (owner, 17 November 2026).
+   For those clips the thigh is turned back, the knee straightened and the foot set flat again. Walking, running, carrying, kneeling and seated clips are left as they are: they do not have the slump. */
+export const STANCE = { LeftUpLeg: 14, RightUpLeg: 14, LeftLeg: 28, RightLeg: 28, LeftFoot: -14, RightFoot: -14 };
+const STANDING = /^(Agree|Argue|BriefcaseIdle|Cheer|Clap|Comfort\w*|Cry|Drink|HappyIdle|HeadTurn|HurtIdle|Idle|IdleM|Laugh|ListenMusic|LookAround|Nod|OldIdle|Point|ReachOut|Sad\d|Salute|Scared|Shrug|Speech|Talk\d|TalkM\d|Wave|WaveSlow|Write|Yell|TorchIdle|RifleIdle|CarryIdle|CarryHeadIdle)$/;   /* turning the shoulders back as well was tried: it helped four poses but made the full every-clip gate (tools/review/people-check.mjs) worse in Garvey and Nanny Town, so the arms are left as the clips have them */
+function posture(c, name) { const q = new THREE.Quaternion(), r = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0), st = STANDING.test(name || '');
+  for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const deg = m ? (POSTURE[m[1]] || (st ? STANCE[m[1]] : undefined)) : undefined; if (!deg) continue; r.setFromAxisAngle(X, deg * Math.PI / 180); const v = t.values;
     for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i).premultiply(r).toArray(v, i); } } }
 export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() : CL[name]; if (!src) return null; if (name === 'SitDrink' && !CL._sd) { CL._sd = THREE.AnimationUtils.subclip(src, 'SitDrink', 140, 455, 30); } if (name === 'SitDrink') src = CL._sd; const c = src.clone(); keepHips = keepHips || HIPS_Y.test(name);
   c.tracks = c.tracks.filter((t) => { if (t.name.endsWith('.scale')) return false; if (!t.name.endsWith('.position')) return true; if (!keepHips || !/Hips/.test(t.name)) return false;
     const v = t.values; let x0 = v[0], z0 = v[2]; if (SEATED.test(name) && CL.Idle) { const it = CL.Idle.tracks.find((k) => k.name === t.name); if (it) { x0 = it.values[0]; z0 = it.values[2]; } }   /* seated clips: keep the hips over the spot we put him, not where the clip wandered to */
  for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } return true; });   /* running stays in place; the game moves her */
-  if (!SEATED.test(name)) posture(c);   /* seated clips keep the pose they were tuned in: their hands rest on the lap, and moving the chest pushed the fingers into the thighs (the cloth check, Garvey, 16 November 2026) */
+  if (!SEATED.test(name)) posture(c, name);   /* seated clips keep the pose they were tuned in: their hands rest on the lap, and moving the chest pushed the fingers into the thighs (the cloth check, Garvey, 16 November 2026) */
   if (SEAM.test(name)) seamLoop(c);
   const damp = BOW[Object.keys(BOW).find((k) => new RegExp(k).test(name)) || ''];   /* clips whose neck bows so far that a collar stands off the nape: the neck and head turn only part of the way from standing */
   if (damp && CL.Idle) for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const k = m ? damp[m[1]] : undefined; if (k === undefined) continue; const it = CL.Idle.tracks.find((x) => x.name === t.name); if (!it) continue;

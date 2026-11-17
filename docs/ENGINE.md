@@ -355,3 +355,7 @@ These systems are general but still live in `games/port-royal/src/main.js`, beca
 | `gripTick(model)` | Call every frame after the mixer update for any model with `userData.grips`. |
 
 Imported by Kendal, Marcus Garvey (`spreadArms` and `gripTick` only), Bog Walk (`grip` and `gripTick`), Eventide, Hurricane Melissa and Nanny Town. Port Royal still uses the older way (items placed on or parented to the hand bone in `main.js`), which new code must not copy, and Tivoli's two-handed weapon hold is its own code in `games/tivoli/src/weapons.js` (same method, `engine/grip.js` left unchanged). Check the result with `?test=held`.
+
+## Standing upright (17 November 2026)
+
+`engine/anim.js`, `STANCE`: the standing clips (idles, talking, gestures; the list is `STANDING`) were made with the hips back and the knees bent about 30 degrees, so everyone stood in a slump. For those clips `clipFor` turns the thigh back 14 degrees, straightens the knee 28 degrees and sets the foot flat again. Walking, running, carrying, kneeling and seated clips are not changed. A new standing clip must be added to `STANDING`, then looked at from the side with `tools/review/people-sheet.mjs <game> <id> out.png views=side anim=<Clip>`.
