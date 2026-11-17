@@ -418,9 +418,9 @@ function deck({ phone = false, reduced = false } = {}) {
   // the boat deck's planking, laid fore and aft, over the plating
   const planks = plane(14.4, 40, std(T.plank([168, 140, 100], 14, [3, 10]), 0.95), 0, 0.012, 1, Q.group);
   planks.rotation.x = -Math.PI / 2;
-  // deck furniture: benches and deck chairs, ventilators, life rings on the rail, coils of rope, the tables for water and the crossing map
+  // deck furniture: benches, ventilators,   (no deck chairs: she sailed as a troopship, and no source shows deck chairs on the 1948 voyage; the photographs show people standing along the rails. Owner, 17 November 2026)
+  // life rings on the rail, coils of rope, the tables for water and the crossing map
   for (const [x, z, ry] of [[-4.6, 14, Math.PI / 2], [4.6, -6, -Math.PI / 2], [-4.6, -6.5, Math.PI / 2]]) solid1(Q, bench(1.8), x, z, 1.9, 0.7, ry);
-  for (const [x, z, c] of [[3.6, 14.6, 0x3a6a7a], [3.8, 12.4, 0x8a4a3a], [-3.8, 6.2, 0x5a7a4a]]) solid1(Q, S.deckChair(c), x, z, 0.7, 1.2, -Math.PI / 2 * Math.sign(x));
   for (const [x, z] of [[-2.2, -15.6], [2.2, -15.6], [0, 6]]) solid1(Q, S.ventilator(1.5, 0.32), x, z, 0.9, 0.9);
   for (const [x, z] of [[-1.9, 16.4], [2.6, 9.3]]) add(Q, S.ropeCoil(0.35), x, z);
   solid1(Q, P.table(1.6, 0.8, 0.8), -3.6, 9, 1.7, 0.9);

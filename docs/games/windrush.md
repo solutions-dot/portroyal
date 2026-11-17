@@ -162,3 +162,7 @@ The current menu artwork is `menu/windrush-kingston-quay.jpg`, captured from `?s
 ## Look-alikes (17 November 2026)
 
 `?test=audit` now prints `FACES <place> <count>` for every place (`faceCheck`, `engine/faces.js`: two people with one body and face within 2.5 m, the family and the background people together). It reports 0 in all nine places, before and after: every place gives each of its background people a different body (at most eleven people, eleven bodies), so no face spreading was needed and no variants were built. If a place gets a second person on one body, add `"variants"` to that recipe and a variants step to `tools/windrush/build-people.mjs` as in `tools/selassie/build-people.mjs`, and call `spreadBodies` in `buildWorld`.
+
+## No deck chairs on the 1948 deck (17 November 2026)
+
+The owner asked whether deck chairs were right, since she was not a cruise ship. In 1948 she sailed as a troopship (HMT Empire Windrush), and no source found shows deck chairs on that voyage; the photographs of her arrival show passengers crowding the rails and reading newspapers on the open deck (Getty Images, "Windrush Arrives From Jamaica"; Science Museum Group, "Photograph of people reading a newspaper aboard the Empire Windrush"). The three deck chairs are removed. The plain wooden benches stay. `deckChair` is still in `scenery.js` for any later scene that has a source for it.

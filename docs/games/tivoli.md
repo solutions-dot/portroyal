@@ -474,3 +474,7 @@ No two people with one face stand or walk side by side (`docs/PEOPLE.md`, sectio
 - **Background people** (`life.js`, `lifeBodies`): `spreadBodies` now counts each person's whole walk (the walker who crosses the lane past the man at the cart), and a young man with no face left takes another young man's body (`youth2010`, `man2010`, `civilian2010` wear the same pieces).
 - **The check**: `?test=audit` runs `faceCheck` on the story people and the background people of every walking chapter. `?test=ambient` look-alike lines: 1 before (2 with the check counting the nearest two people came), 0 now. `?test=audit`: 0.
 - **Left out on purpose**: the soldiers and police of the May 2010 street scene. They are squads in one uniform and helmet, seen from across the street, and are meant to look alike. Giving them faces would need variants of `soldier2010` and `police2010` (four more full bodies and four light copies). Ask the owner before adding them.
+
+## Journal like the other games (17 November 2026)
+
+The journal's tabs were one sideways-scrolling row with a fixed width, so long titles ran out of their buttons and the last tabs were cut off. They now wrap onto more rows, as in every other game. "Dig deeper" lost its open arrow (its summary is a flex box); it has one again and opens to the extra text. Layout 0 at 390x800.
