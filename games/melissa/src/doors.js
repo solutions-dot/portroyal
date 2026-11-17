@@ -1,7 +1,7 @@
 /* games/melissa/src/doors.js: the front doors of Hurricane Melissa's houses, each made for its own building and year (owner, 17 November 2026: "the doors
    should fit their purpose, not one shared one"). Every builder returns a THREE.Group whose origin is the middle of the foot of the opening, on the
    wall's outer face, facing +z, so a house turns it with the rest of its front. Nothing stands more than 0.2 m off the wall (a grille gate's lugs).
-     boardDoor51     a 1951 board house: a ledged and braced door of upright boards, black strap hinges, a hasp and staple (Jamaican vernacular)
+     boardDoor51     a 1951 board house: a door of upright boards, plain outside (ledges and braces inside), butt hinges, a hasp and staple
      pairBoard       an old board house: a pair of narrow board leaves, the top third a fixed wooden jalousie to let air in, painted
      jalousieBoard88 a board house in 1988: the old board door with a wooden jalousie put in its top half, painted, and a cheap knob set
      jalousiePair51  a 1951 block house: a pair of full-height wooden jalousie doors with a middle rail, painted green, brass knob
@@ -53,14 +53,20 @@ function grille(g, w, h, y0, gz, col, kind) { const m = mat('DoorMetal', col, 0.
   hasp(g, w / 2 - 0.05, y0 + h * 0.5, gz + 0.01); }
 
 /* ---- the doors ---- */
-export function boardDoor51({ w = 0.9, h = 1.95, color = 0x6e5236, casingCol = 0xd8ccb0, step = 0, braced = true, lock = false } = {}) {
+/* boardDoor51: photographs of Jamaican board houses (NLJ, 1940s to 1988; docs/games/melissa.md, "Doors") show the outer face of a closed board door
+   as plain upright boards: the ledges and braces are on the inside, where the door swings, and only small hinge leaves show at the jamb. `ledgesOut`
+   puts the ledges, Z braces and strap hinges on the outer face again (no photograph of the kind has been found yet). */
+export function boardDoor51({ w = 0.9, h = 1.95, color = 0x6e5236, casingCol = 0xd8ccb0, step = 0, braced = true, lock = false, ledgesOut = false } = {}) {
   const g = new THREE.Group(), y0 = step > 0 ? step : 0.035; g.name = 'Door'; sill(g, w, casingCol, step); casing(g, w, h, casingCol);
   boards(g, -w / 2, w / 2, y0, h, 0.03, color, Math.max(5, Math.round(w / 0.15)));
   const L = mat('Door', tone(color, 0.8)); const ys = [y0 + 0.18, y0 + (h - y0) / 2, h - 0.2];
-  for (const y of ys) B(g, L, w - 0.08, 0.11, 0.025, 0, y, 0.0425);   /* ledges */
-  if (braced) for (let i = 0; i < 2; i++) { const a = ys[i], b = ys[i + 1], len = Math.hypot(w - 0.2, b - a); B(g, L, 0.1, len, 0.022, 0, (a + b) / 2, 0.041, Math.atan2(w - 0.2, b - a)); }   /* Z braces, rising away from the hinges */
-  for (const y of [ys[0], ys[2]]) strap(g, -w / 2 + 0.03, y, w * 0.6, 1, 0.055);
-  hasp(g, w / 2 - 0.1, ys[1] + 0.12, 0.055, lock); B(g, mat('Door', tone(color, 0.7)), 0.035, 0.09, 0.02, w / 2 - 0.08, ys[1] - 0.05, 0.06);   /* the hasp, and a wooden turn button below it */
+  if (ledgesOut) {
+    for (const y of ys) B(g, L, w - 0.08, 0.11, 0.025, 0, y, 0.0425);   /* ledges */
+    if (braced) for (let i = 0; i < 2; i++) { const a = ys[i], b = ys[i + 1], len = Math.hypot(w - 0.2, b - a); B(g, L, 0.1, len, 0.022, 0, (a + b) / 2, 0.041, Math.atan2(w - 0.2, b - a)); }   /* Z braces, rising away from the hinges */
+    for (const y of [ys[0], ys[2]]) strap(g, -w / 2 + 0.03, y, w * 0.6, 1, 0.055);
+  } else for (const y of [ys[0], ys[2]]) { B(g, IRON(), 0.035, 0.1, 0.006, -w / 2 + 0.012, y, 0.034); C(g, IRON(), 0.009, 0.1, -w / 2, y, 0.034, 'y', 8); }   /* butt hinges: a leaf and the knuckle at the jamb */
+  const zf = ledgesOut ? 0.055 : 0.03;
+  hasp(g, w / 2 - 0.1, ys[1] + 0.12, zf, lock); B(g, mat('Door', tone(color, 0.7)), 0.035, 0.09, 0.02, w / 2 - 0.08, ys[1] - 0.05, zf + 0.005);   /* the hasp, and a wooden turn button below it */
   return g;
 }
 export function pairBoard({ w = 1.1, h = 1.95, color = 0x4e7a8a, casingCol = 0xe0d8c0, step = 0 } = {}) {
