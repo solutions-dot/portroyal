@@ -112,7 +112,7 @@ function placeSnap(A, P) {
 function placeAudit(A, P) {
   const grid = walkGrid(A, P), snap = placeSnap(A, P), paths = P.paths ? P.paths() : {};
   const npcs = peopleHere(A).map((m) => { const p = m.getWorldPosition(new THREE.Vector3()), id = idOf(A, m), base = id.replace(/ \(.*$/, '');
-    return { id, x: p.x, z: p.z, anim: m.userData.sits ? 'SitIdle' : clipOf(m), ground: Math.max(p.y, m.userData.ground || 0, A.groundYAt(p.x, p.z)), path: paths[id] || paths[base], h: 1.75 * (m.scale.y || 1), r: 0.22 }; });
+    return { id, x: p.x, z: p.z, anim: m.userData.sits ? 'SitIdle' : clipOf(m), ground: Math.max(p.y, m.userData.ground || 0, A.groundYAt(p.x, p.z)), path: paths[id] || paths[base], h: 1.75 * (m.scale.y || 1), r: 0.22, offWall: [[0, 0], [0.4, 0], [-0.4, 0], [0, 0.4], [0, -0.4]].some(([dx, dz]) => grid.free(p.x + dx, p.z + dz)) }; });   /* offWall: the walking walls here are half-metre grid rows that include the player's own 32 cm margin round every prop, so a seller right behind her stall is "in" one without touching anything. A person counts as inside a walking wall only when there is no walkable ground within 40 cm. */
   const acts = A.ACTIONS.filter((a) => !!A.FB.on === !!a.fb).map((a) => [a, a.where()]).filter(([, w]) => w).map(([a, w]) => ({ label: a.label, x: w[0], z: w[1], r: a.r }));
   const talk = acts.filter((a) => /^Talk|^Reach/.test(a.label)).map((a) => ({ id: a.label, x: a.x, z: a.z, anim: '' }));
   const r = auditPlace({ id: P.id, snap, npcs, walls: grid.walls, bounds: P.bounds, start: { x: P.start[0], z: P.start[1] }, actions: acts, people: talk, groundAt: (x, z) => A.groundYAt(x, z) });

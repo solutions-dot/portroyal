@@ -147,7 +147,7 @@ const WARE1 = [
   { who: 'Abba', text: 'Good day, Lewis.' },
 ];
 const NPCS = [
-  { id: 'kofi', label: 'Talk to the dockworker', who: 'Kofi', x: 19.95, z: 2.25, ry: Math.PI + 0.5, route: [[19.95, 2.25], [19.95, -0.85], [31, -0.85]], talk: [
+  { id: 'kofi', label: 'Talk to the dockworker', who: 'Kofi', x: 19.95, z: 1.95, ry: Math.PI + 0.5, route: [[19.95, 1.95], [19.95, -0.85], [31, -0.85]], talk: [
     { who: 'Kofi', text: 'Mind the casks. They are heavy!' },
     { who: 'You', text: 'Do you work for the captain?' },
     { who: 'Kofi', text: 'No. I am enslaved. A man says he owns me.' }, { who: 'Kofi', text: 'I work, but I am not paid.' },
