@@ -847,12 +847,13 @@ if CK and not FLAT:
         ny=0 if (CK=='open' or not G.get('yoke',0)) else (1 if G.get('yoke',0)==1 else 2)
         for j in range(len(rows[0])):
             if j<ny: ring_fix(rows,j,SKIN,0.003,SHT,0.0045)      # the yoke 4.5 mm inside the shirt: at 2 mm the two surfaces fought for the same pixels and showed as ragged patches under the collar (owner, 17 November 2026)
+            elif j in (ny+1,ny+2) and G.get('collarfit',1): ring_fix(rows,j,SKIN,0.005 if j==ny+1 else 0.008)      # the band's top edge and the fold stand clear of the neck itself all the way round (measured from an ellipse, the neck came through the band in a ragged line at the throat, and lifted over the shirt it stood up in two teeth at the back: owner, 17 November 2026)
             else: ring_fix(rows,j,SHT,0.003 if j==ny else 0.004)
         for row in rows:      # and then hard: each yoke point well inside the shirt and the seam just on it, so the band meets the shirt in one clean line (smoothed, the yoke crossed the shirt and showed as ragged patches: owner, 17 November 2026)
             for j in range(ny):
                 loc,nrm,_i,_d=SHT.find_nearest(row[j])
                 if loc is not None and (row[j]-loc).dot(nrm)>-0.0045: row[j]=loc-nrm*0.0045
-            for j in range(ny+2,len(row)):      # the folded leaf lies on the shirt, never in it: each of its points at least 4 mm over the shirt (measured from the skin, the leaf sank into an eased shirt and the shirt showed through it in patches)
+            for j in range(ny+(3 if G.get('collarfit',1) else 2),len(row)):      # the folded leaf lies on the shirt, never in it: each of its points at least 4 mm over the shirt (measured from the skin, the leaf sank into an eased shirt and the shirt showed through it in patches)
                 loc,nrm,_i,_d=SHT.find_nearest(row[j])
                 if loc is not None and (row[j]-loc).dot(nrm)<0.004: row[j]=loc+nrm*0.004
             if CK!='open':      # the band's lowest row goes just under the shirt's neck edge, so no slit of skin opens between them (with no yoke under it)
