@@ -914,13 +914,24 @@ if G.get('buttons',not G.get('woman') and not OLD) and not G.get('coat'):      #
             bmesh.ops.create_circle(bm,cap_ends=True,segments=6,radius=0.0055*s,matrix=Matrix.Translation((0,y,z))@Matrix.Rotation(math.pi/2,4,'X'))
         soft('Buttons',bm,'Buttons',src=ON('shirt'))
 if G.get('trousers') and G.get('belt',True) and (not G.get('waistcoat') or G.get('belt')=='always') and not G.get('apron') and not G.get('jacket'):     # a belt round the waistband, with a buckle
-    TT=tree_of(PART['breeches']); bm=bmesh.new(); seg=28; rows=[]
+    TT=tree_of(PART['breeches']); bm=bmesh.new(); seg=28; rows=[]; WCT=tree_of(PART['waistcoat']) if PART.get('waistcoat') else None; cov={}
     for z,e in ((HIP+0.082,0.004),(HIP+0.083,0.009),(HIP+0.113,0.009),(HIP+0.114,0.004)):
         ring=[]
         for k in range(seg):
-            a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z)); hit=TT.ray_cast(o,d)[0]; r=((hit-o).length if hit else 0.15)+e; ring.append(bm.verts.new(o+d*r))
+            a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z)); hit=TT.ray_cast(o,d)[0]; r0=(hit-o).length if hit else 0.15; r=r0+e
+            if WCT is not None:      # under a waistcoat the belt lies flat on the trousers, 4 mm inside the waistcoat: standing its full 9 mm off them it came through the waistcoat's back as a strip (the seen check, 17 November 2026)
+                hw=WCT.ray_cast(o,d)[0]
+                if hw is not None: r=max(r0+0.002,min(r,(hw-o).length-0.004)); cov[k]=cov.get(k,0)+1
+            ring.append(bm.verts.new(o+d*r))
         rows.append(ring)
-    quadstrip(bm,rows,close=True); soft('Belt',bm,'Belt',only=('Hips','Spine'))
+    quadstrip(bm,rows,close=True)
+    if WCT is not None:      # and the part of the belt that lies wholly under the waistcoat is left out: nobody sees it, and it moves with the hips while the waistcoat moves with the chest, so it came through the waistcoat's back whenever the body bent
+        hid=[k for k in range(seg) if cov.get(k,0)==4 and cov.get((k-1)%seg,0)==4 and cov.get((k+1)%seg,0)==4]; dead=set()
+        for k in hid:
+            for row in rows: dead.add(row[k])
+        bmesh.ops.delete(bm,geom=list(dead),context='VERTS')
+    if len(bm.faces): soft('Belt',bm,'Belt',only=('Hips','Spine'))      # a belt wholly under the waistcoat is not made at all
+    else: bm.free()
     bm=bmesh.new(); o=Vector((0,J('Hips').y,HIP+0.098)); hit=TT.ray_cast(o,Vector((0,-1,0)))[0]; yb=(hit.y if hit else -0.12)-0.012
     if not G.get('waistcoat'): bmesh.ops.create_cube(bm,size=1,matrix=Matrix.Translation((0,yb,HIP+0.098))@Matrix.Diagonal((0.044*s,0.006,0.038*s,1))); soft('Buckle',bm,'Buckle',only=('Hips','Spine'))
 if OLD and G.get('breeches') and not G.get('coat'):      # a waistband: a narrow band of the breeches' own cloth round their top edge, so that edge (cut across a curved body) reads as a clean seam
