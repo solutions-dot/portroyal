@@ -226,26 +226,26 @@ function pipeAndSaddles(g, kind) {   /* the Tube coming down from the dam, on co
       for (let i = 1; i < Math.floor(len / 2.4); i++) { const rb = new THREE.TorusGeometry(PR + 0.02, 0.035, 5, 30, arc); rb.rotateZ(-PI / 2 - arc / 2); rb.rotateY(PI / 2); mesh(rb, rm, -len / 2 + i * len / Math.floor(len / 2.4), 0, 0, sh); }   /* the seams where the plates were riveted together, ridged ribs round the pipe */
       return sh; };
     half(9.6, PI, -8.2, -1.2, 0.35, 0.0, PR - 0.1);   /* the big piece: a whole length of the pipe, split, lying open side up where you can walk up to it */
-    half(3.4, PI * 0.7, -42, PZ + 0.2, -0.5, 1.0, PR - 0.03);   /* a smaller broken piece, tipped on its side against the old supports */
+    half(3.4, PI * 0.7, -42.3, PZ + 0.2, -0.5, 1.0, PR - 0.03);   /* a smaller broken piece, tipped on its side against the old supports */
     half(5.2, PI * 0.8, -31, PZ + 3.6, 0.15, 0.1, PR - 0.1);
   }
 }
 function ruinSupport(g, x, z, seed) {   /* an old concrete support: a wide footing, a pedestal with a chipped, broken top, rusty rebar stubs sticking out, and moss at the foot */
   const r = rng(seed * 13 + 5), grp1 = grp(g, x, 0, z), cm = M.concOld, rust = solid(0x6a3a22, 0.9, 0.3), lean = (r() - 0.5) * 0.08;
-  box(1.2, 0.22, 2.6, cm, 0, 0.11, 0, grp1); const ped = box(0.7, 0.9, 1.9, cm, 0, 0.67, 0, grp1); ped.rotation.z = lean;
-  const top = PY - PR + 0.25, hh = top - 1.12 - (r() < 0.4 ? 0.35 : 0);
-  const up = box(0.7, hh, 2.0, cm, 0, 1.12 + hh / 2, 0, grp1); up.rotation.z = lean;
-  for (let i = 0; i < 3; i++) { const bk = box(0.3 + r() * 0.25, 0.18 + r() * 0.16, 0.5 + r() * 0.5, cm, (r() - 0.5) * 0.4, 1.12 + hh + 0.06, (r() - 0.5) * 1.3, grp1); bk.rotation.set(r() - 0.5, r() * 2, r() * 0.4); }   /* chipped, broken lumps at the top */
-  for (const dz of [-0.7, -0.25, 0.25, 0.7]) { const rb = cyl(0.012, 0.012, 0.3 + r() * 0.35, rust, (r() - 0.5) * 0.4, 1.12 + hh + 0.22, dz, grp1, 5); rb.rotation.set((r() - 0.5) * 0.7, 0, (r() - 0.5) * 0.7); }   /* rebar stubs */
+  /* a saddle: a low pedestal under the pipe and a cheek of concrete either side of it, so the pipe lies in the support and not through it (the audit: the old pedestal stood 30 cm up into the pipe). One cheek is sometimes broken off. */
+  box(1.2, 0.22, 2.6, cm, 0, 0.11, 0, grp1); const ped = box(0.7, 0.26, 2.3, cm, 0, 0.35, 0, grp1); ped.rotation.z = lean;
+  const gone = r() < 0.4 ? (r() < 0.5 ? -1 : 1) : 0;
+  for (const sd of [-1, 1]) { const hh = sd === gone ? 0.12 : 0.3, ck = box(0.7, hh, 0.34, cm, 0, 0.48 + hh / 2, sd * 0.98, grp1); ck.rotation.z = lean;
+    const bk = box(0.3 + r() * 0.2, 0.14 + r() * 0.1, 0.3 + r() * 0.2, cm, (r() - 0.5) * 0.3, 0.48 + hh + 0.03, sd * (1.0 + r() * 0.1), grp1); bk.rotation.set(r() - 0.5, r() * 2, r() * 0.4);   /* a chipped, broken lump on top */
+    for (const dz of [-0.08, 0.1]) { const rb = cyl(0.012, 0.012, 0.25 + r() * 0.3, rust, (r() - 0.5) * 0.4, 0.48 + hh + 0.16, sd * 0.98 + dz, grp1, 5); rb.rotation.set((r() - 0.5) * 0.7, 0, (r() - 0.5) * 0.7); } }   /* rebar stubs */
   for (const dz of [-0.8, 0.8]) { const rb = cyl(0.012, 0.012, 0.28, rust, 0.35, 0.34, dz, grp1, 5); rb.rotation.z = -0.6; }
   const moss = mesh(new THREE.CircleGeometry(0.9, 10), solid(0x3a5a2a, 1), 0, 0.235, 0, grp1); moss.rotation.x = -PI / 2; moss.scale.set(0.9, 1.4, 1);
   /* weathering: rain streaks down the faces, green moss creeping up the foot, a crack, a darker band where the formwork joined, and bevelled corners */
-  const stain = solid(0x5e5a50, 1), mossy = solid(0x4a6a34, 1), top1 = 1.12 + hh;
+  const stain = solid(0x5e5a50, 1), mossy = solid(0x4a6a34, 1), top1 = 0.78;   /* the top of the cheeks */
   for (const sx of [-1, 1]) { for (let i = 0; i < 5; i++) { const w = 0.05 + r() * 0.1, h = 0.4 + r() * (top1 - 0.6); box(w, h, 0.012, stain, sx * 0.356, top1 - h / 2 - 0.05, (r() - 0.5) * 1.7, grp1).rotation.y = PI / 2;
       } for (let i = 0; i < 4; i++) { const w = 0.15 + r() * 0.3, h = 0.12 + r() * 0.3; box(0.014, h, w, mossy, sx * 0.357, 0.3 + h / 2, (r() - 0.5) * 1.7, grp1); } box(0.014, 0.05, 1.96, solid(0x66625a, 1), sx * 0.357, 1.12, 0, grp1); }
   for (const sz of [-1, 1]) for (let i = 0; i < 3; i++) { const w = 0.05 + r() * 0.1, h = 0.4 + r() * (top1 - 0.6); box(w, h, 0.014, stain, (r() - 0.5) * 0.5, top1 - h / 2 - 0.05, sz * 1.006, grp1); }
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const ch = box(0.05, top1 - 0.9, 0.05, cm, sx * 0.35, 0.9 + (top1 - 0.9) / 2, sz * 1.0, grp1); ch.rotation.y = PI / 4; }   /* the corner bevels */
-  { const ck = box(0.016, 0.7, 0.03, solid(0x2e2c28, 1), 0.357, top1 - 0.55, 0.3, grp1); ck.rotation.x = 0.35; }
+  { const ck = box(0.016, 0.3, 0.03, solid(0x2e2c28, 1), 0.357, top1 - 0.3, 0.3, grp1); ck.rotation.x = 0.35; }
 }
 function turbineHouse(g, kind, P) {
   /* the brick house: 14 m by 10 m, walls 0.4 m thick and 6.5 m high, a door in the south wall. Inside: the turbine casing, the shaft, the spinning wheel,
@@ -351,10 +351,10 @@ function hallFittings(g, P, { x0, x1, z0, z1, th, H, MZ, SY, green, cream }) {
   /* the turbine's governor: a column with spinning balls, behind the casing, and the gate rod to the turbine */
   const gx = -3.6, gz = MZ - 2.0; box(0.6, 0.12, 0.6, M.conc, gx, 0.06, gz, g); cyl(0.12, 0.16, 1.5, green, gx, 0.87, gz, g, 12); cyl(0.2, 0.2, 0.18, M.iron, gx, 1.7, gz, g, 14); cyl(0.025, 0.025, 0.5, M.steel, gx, 2.04, gz, g, 6);
   for (const s of [-1, 1]) { const arm = cyl(0.012, 0.012, 0.3, M.steel, gx + s * 0.1, 2.08, gz, g, 4); arm.rotation.z = s * 0.7; mesh(new THREE.SphereGeometry(0.07, 10, 8), M.brass, gx + s * 0.2, 2.0, gz, g); }
-  const rod = cyl(0.025, 0.025, 1.0, M.steel, gx, 1.5, gz + 0.62, g, 6); rod.rotation.x = PI / 2; walls.push([gx - 0.45, gz - 0.45, gx + 0.45, gz + 0.45]);
+  const rod = cyl(0.025, 0.025, 0.66, M.steel, gx, 1.5, gz + 0.43, g, 6); rod.rotation.x = PI / 2;   /* the governor's rod ends on the turbine casing (it ran 37 cm into it) */ walls.push([gx - 0.45, gz - 0.45, gx + 0.45, gz + 0.45]);
   /* the exciter on the end of the generator shaft, and a terminal box with a brass name plate */
   const ex = cyl(0.34, 0.34, 0.36, cream, 3.78, SY, MZ, g, 24); ex.rotation.z = PI / 2; for (const dx of [-0.13, 0.13]) { const b = cyl(0.36, 0.36, 0.05, M.copper, 3.78 + dx, SY, MZ, g, 24); b.rotation.z = PI / 2; }
-  box(0.6, 0.3, 0.45, green, 2.6, SY + 1.12, MZ, g); box(0.44, 0.18, 0.02, M.brass, 2.9, SY - 0.2, MZ + 1.0, g);
+  box(0.6, 0.3, 0.45, green, 2.6, SY + 1.19, MZ, g);   /* the terminal box stands on the copper band, not in it */ box(0.44, 0.18, 0.02, M.brass, 2.9, SY - 0.2, MZ + 1.0, g);
   for (const dz of [-1, 1]) box(1.5, 0.12, 0.12, M.iron, 2.6, 0.72, MZ + dz * 1.05, g);   /* holding-down rails */
   /* the workbench along the north wall: top, legs, a vice, oil cans, a tool board on the wall above */
   const bx = 1.75, bz = wn + 0.45; box(2.6, 0.08, 0.7, M.wood, bx, 0.9, bz, g); for (const dx of [-1.2, 1.2]) for (const dz of [-0.28, 0.28]) box(0.08, 0.86, 0.08, M.woodDark, bx + dx, 0.43, bz + dz, g); box(2.5, 0.04, 0.6, M.woodDark, bx, 0.25, bz, g);
@@ -378,7 +378,7 @@ function valveStand(g, P, kind) {   /* the valve wheel on its stand by the Tube 
   const spindle = cyl(0.04, 0.04, 0.55, M.steel || M.iron, 0, 1.36, 0.0, s, 8); spindle.rotation.x = PI / 2; spindle.position.z = 0.1;
   const boss = cyl(0.1, 0.12, 0.2, M.ironPaint, 0, 1.36, -0.15, s, 12); boss.rotation.x = PI / 2;
   const rod = cyl(0.045, 0.045, 1.5, M.iron, 0, 1.36, -0.9, s, 8); rod.rotation.x = PI / 2;   /* the rod to the valve on the pipe */
-  const vb = grp(g, x, 0, PZ + PR + 0.1); const vbody = cyl(0.36, 0.36, 0.55, M.ironPaint, 0, 1.36, 0, vb, 18); vbody.rotation.x = PI / 2; for (let i = 0; i < 8; i++) { const a = i / 8 * PI * 2; cyl(0.03, 0.03, 0.06, M.brass, Math.cos(a) * 0.3, 1.36 + Math.sin(a) * 0.3, 0.29, vb, 6).rotation.x = PI / 2; }
+  const vb = grp(s, 0, 0, PZ + PR + 0.1 - z);   /* the valve is part of the stand's own machine: the rod runs into it on purpose */ const vbody = cyl(0.36, 0.36, 0.55, M.ironPaint, 0, 1.36, 0, vb, 18); vbody.rotation.x = PI / 2; for (let i = 0; i < 8; i++) { const a = i / 8 * PI * 2; cyl(0.03, 0.03, 0.06, M.brass, Math.cos(a) * 0.3, 1.36 + Math.sin(a) * 0.3, 0.29, vb, 6).rotation.x = PI / 2; }
   box(0.2, 0.9, 0.3, M.ironPaint, 0, 0.45, 0.05, vb);
   const plate = mesh(new THREE.PlaneGeometry(0.34, 0.14), std(signTex([['OPEN  SHUT', '700 50px Georgia, serif']], 256, 96, '#c29a45', '#2a1d05'), 0.4, { metalness: 0.5 }), 0, 0.9, 0.215, s);
   const wheel = handWheel(0.5, 6); wheel.position.set(x, 1.36, z + 0.42); wheel.userData.noBatch = true; g.add(wheel); P.valve = wheel;
@@ -399,7 +399,7 @@ function superHouse(g, P, kind) {   /* the superintendent's house: wooden, with 
 function yardBits(g, P, kind) {
   /* the fence and gate at the road, the east fence, lamps on posts, and the siding beyond the east fence */
   const XE = kind === 'morn' ? 36 : 22;   /* in the morning the fence takes in the siding, so the special train stands inside it */
-  fence(g, -22, 17, -2.2, 17, { h: 1.2 }); fence(g, 2.2, 17, XE, 17, { h: 1.2 }); fence(g, XE, kind === 'morn' ? -24 : -6, XE, 17, { h: 1.2 }); fence(g, -22, -6, -22, 17, { h: 1.2 });
+  fence(g, -22, 17, -2.56, 17, { h: 1.2 }); fence(g, 2.56, 17, XE, 17, { h: 1.2 });   /* the fence ends beside each gate post, not inside it */ fence(g, XE, kind === 'morn' ? -24 : -6, XE, 17, { h: 1.2 }); fence(g, -22, -6, -22, 17, { h: 1.2 });
   for (const s of [-1, 1]) { box(0.3, 1.8, 0.3, M.woodDark, s * 2.3, 0.9, 17, g); const gt = grp(g, s * 2.15, 0, 17); for (const y of [0.35, 0.95]) box(1.9, 0.1, 0.06, M.wood, -s * 0.95, y, 0, gt).position.x = -s * 0; gt.rotation.y = s * 1.25; gt.children.forEach((c) => { c.position.x = -s * 0.98; }); box(0.08, 1.0, 0.06, M.wood, -s * 1.9, 0.65, 0, gt); }
   const road = mesh(new THREE.PlaneGeometry(120, 6), std(T.dirt([24, 1], [150, 110, 76]), 1), 0, 0.02, 21, g); road.rotation.x = -PI / 2;
   const tr = rails(110); tr.rotation.y = PI / 2; tr.position.set(28, 0, 0); g.add(tr); if (kind === 'morn') P.walls.push([22.6, -4.2, 25.9, 12.2], [26.0, -40, 30, 60]); else P.walls.push([22, -40, 40, 60]);
@@ -473,7 +473,7 @@ function yardLife(g, P) {
   /* a handcart left near the gate, planks on trestles, and a tarpaulin over a heap of stores */
   { const c = cart(2.0, 1.1); c.position.set(-17.4, 0, 14.6); c.rotation.y = 0.5; g.add(c); P.walls.push([-19.0, 13.2, -15.8, 16.0]); }
   { const t = grp(g, -3.4, 0, -3.8); for (const dx of [-0.9, 0.9]) { box(0.08, 0.7, 0.5, M.woodDark, dx, 0.35, 0, t); } for (let i = 0; i < 3; i++) box(2.2, 0.05, 0.22, M.wood, 0, 0.72 + i * 0.0, (i - 1) * 0.25, t); P.walls.push([-4.7, -4.4, -2.1, -3.2]); }
-  { const tp = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 1.6, 12, 1, true, 0, PI), solid(0x5a6a58, 1, 0, { side: THREE.DoubleSide })); tp.rotation.z = PI / 2; tp.rotation.y = 0.3; tp.position.set(17.8, 0.05, -2.0); tp.scale.set(1, 1, 0.7); g.add(tp); const crt = crate(0.6, 0x8a6a42); crt.position.set(17.8, 0, -2.0); g.add(crt); P.walls.push([16.6, -3.2, 19.0, -0.8]); }
+  { const tp = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 1.6, 12, 1, true, 0, PI), solid(0x5a6a58, 1, 0, { side: THREE.DoubleSide })); tp.rotation.z = PI / 2; tp.rotation.y = 0.3; tp.position.set(0, 0.05, 0); tp.scale.set(1, 1, 0.7); const crt = crate(0.6, 0x8a6a42), pile = grp(g, 17.8, 0, -2.0); pile.add(tp); pile.add(crt);   /* a crate under its tarpaulin: one thing */ P.walls.push([16.6, -3.2, 19.0, -0.8]); }
   /* trees inside the fence, so the corners are not bare */
   for (const [x, z, k] of [[-20.2, 0.5, 0], [-20.4, 12.8, 1], [20.6, 14.8, 2], [33.5, -10, 0], [33.5, 12, 1]]) { const o = k === 0 ? mangoTree(6.2, 3 + (x | 0)) : k === 1 ? flameTree(6, 4) : mangoTree(5.6, 8); o.position.set(x, 0, z); g.add(o); P.walls.push([x - 0.5, z - 0.5, x + 0.5, z + 0.5]); }
   /* the middle of the yard: short trampled grass, pebbles, mud puddles, and the things people dropped. Kept off houses and anything solid. */

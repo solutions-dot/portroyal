@@ -335,3 +335,12 @@ Fictional people get first names or nicknames only, so no one can be mistaken fo
 ## Look-alikes (17 November 2026)
 
 The yard, the station, Kingston and the ruins had the same face side by side: the workmen (`hl_worker`), the youths (`nb_youth`) and the women (`woman1914`), and Rudy beside workmen on his own body. `?test=audit` now runs the look-alike check (`placeFaces`, `engine/faces.js`): 13 lines before, 0 now. The three recipes list `"variants"`, so `tools/people/rebuild.mjs` built two more faces of each as light copies (`<name>_b_lo.js`, `<name>_c_lo.js`, six files, about 1.0 MB together, each fetched only where it is used), and `ensurePlace` in `main.js` calls `spreadBodies` so no two copies with one face are within 4 m; story people keep the body's own face. The workmen still wear the same work clothes, as they should.
+
+## Audit 0 (17 November 2026)
+
+`?test=audit` went from 30 lines to 0, held 0.
+- Scattered stones (`rockField`) keep apart; some sat inside each other.
+- The generator, its shaft, bearings and flywheel are one machine (`mg`, `noBatch`), and the valve is part of its stand: the parts run into each other on purpose.
+- The governor's rod ends on the turbine casing (it ran 37 cm into it). The terminal box stands on the generator's copper band. The fence ends beside each gate post.
+- A crate under its tarpaulin is one thing. Sand drifts in the Tube are marked `userData.soft` (new in `engine/audit.js`): sand lies over the pipe's bolts.
+- The old pipe supports in the ruins are saddles now: a low pedestal with a cheek of concrete either side, so a pipe lies in the support and not through it. The broken piece of pipe lies clear of the nearest support.

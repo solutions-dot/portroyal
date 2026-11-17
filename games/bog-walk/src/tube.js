@@ -113,7 +113,7 @@ export function buildTube(scene) {
     const dg = new THREE.SphereGeometry(0.5, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), pa = dg.attributes.position;   /* a lumpy hump, not a smooth ball */
     for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), y = pa.getY(i), z = pa.getZ(i), k = 1 + 0.1 * Math.sin(x * 13 + 1.3) + 0.08 * Math.sin(z * 17 + 0.4) + 0.05 * Math.sin((x + z) * 29); pa.setXYZ(i, x * k, y * (0.9 + 0.2 * Math.sin(x * 11 + z * 7)), z * k); } dg.computeVertexNormals();
     const driftMat = new THREE.MeshStandardMaterial({ color: 0x7a6d58, roughness: 1 }); T.driftMat = driftMat; T.drifts = drifts.map(([x, z, w, h, l]) => ({ x, z, w, l }));   /* footprints, for the dev overlap check */
-    const dm = new THREE.InstancedMesh(dg, driftMat, drifts.length);
+    const dm = new THREE.InstancedMesh(dg, driftMat, drifts.length); dm.userData.soft = true;   /* sand lies over the bolts and joints of the pipe wall (engine/audit.js) */
     drifts.forEach(([x, z, w, h, l], i) => { v.set(x, SAND - 0.01, z); q.identity(); sc.set(w, h, l); m4.compose(v, q, sc); dm.setMatrixAt(i, m4); }); group.add(dm); }
 
   /* ----- patches of rust to scrape. Each has a rust picture over a picture of bare steel; scraping fades the rust out and the steel in. ----- */
