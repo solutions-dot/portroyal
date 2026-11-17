@@ -275,6 +275,12 @@ export function createAmbient(opts = {}) {
     if (g.ms !== life.t) {   /* the group's own clock, once a frame: whose turn is it to talk */
       g.ms = life.t; g.t -= dt; const live = g.members.filter((o) => visible(o) && !o.amb.held);
       if (g.t <= 0 && live.length) {
+        /* people who meet greet each other first (owner, 17 November 2026: use the Greet clip where people meet): the first turn of a ring of two or more is one
+           raised hand from one of them and a nod from the others, where the game ships Greet and the scene is not a sad one. Someone with a thing hanging from the
+           hand keeps it still (engine/anim.js gives them the Idle). Angry is for arguments only and is in no mix here. */
+        if (!g.greeted && Math.hypot(W.px - n.x, W.pz - n.z) < 16) { g.greeted = true; const first = live[(a.rnd() * live.length) | 0];   /* once, when you are near enough to see it */
+          if (live.length > 1 && mood !== 'sad' && has(first, 'Greet') && play(first, 'Greet', { once: true, speed: 1 })) { const d = ctlOf(first).get('Greet').getClip().duration;
+            g.speaker = first; first.amb.quiet = 0; g.t = Math.max(1.5, d - 0.4); for (const o of live) if (o !== first) { play(o, idleFor(o)); o.amb.nod = 0.7; } return; } }
         const prev = g.speaker; for (const o of live) o.amb.quiet += 1; let next = live[(a.rnd() * live.length) | 0];
         if (live.length > 1) { const others = live.filter((o) => o !== prev); next = a.rnd() < 0.6 ? others.reduce((p, q) => (q.amb.quiet > p.amb.quiet ? q : p)) : others[(a.rnd() * others.length) | 0]; }   /* mostly the one who has been quiet longest */
         next.amb.quiet = 0;

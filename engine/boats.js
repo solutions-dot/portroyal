@@ -398,3 +398,114 @@ export function schooner(o = {}) {
   K.rod(tops[0], bs, 0.04 * sc, RIG, 3); K.rod(tops[0], tops[1], 0.04 * sc, RIG, 3); K.rod(V(bs.x, bs.y, 0), V(xOf(0.98), 0.2 * sc, 0), 0.04 * sc, RIG, 3);
   const g = new THREE.Group(), m = K.mesh('schooner'); g.add(m); g.userData.size = [L * 1.2, tops[1].y + 6 * sc, B]; return g;
 }
+
+/* sideWheeler(o): the Shady Side, a wooden side-wheel passenger steamboat of New York Harbor (built at Bulls Ferry in 1873; the Black Star Line
+   ran her as an excursion boat from 1920). Shaped after James Bard's watercolour of her (a true side view, as all his ship portraits are) and the
+   figures in her record: 168 ft 1 in (51.2 m) long and 27 ft 5 in (8.4 m) in the hull. From the painting, measured against that length: a low white
+   hull; a main deck carried out over the water on guards; a long white cabin on it with a row of windows; an open fore deck under an awning; a
+   saloon deck above with a shorter cabin and a rail all round; a small pilot house forward on that deck; one tall black funnel just behind it
+   (about 16 m above the water); a half-round paddle box each side a little aft of the middle (7.2 m across), the wheel showing red under it; the
+   A-frame and diamond-shaped walking beam of her engine standing above the paddle boxes; a flagstaff at the bow and the stern.
+   Not from a source: how she looked in 1920 (the painting shows her new), so no name, flags or company colours are drawn; the window count.
+   The bow is at +x and the still waterline is at y = 0. o.L is the length (default 51.2). ONE mesh with vertex colours. */
+export function sideWheeler(o = {}) {
+  const L = o.L || 51.2, sc = L / 51.2, B = (o.beam || 8.36 * sc), NS = 32, K = paintKit(), V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const WHITE = 0xe9e6dc, BOOT = 0x7a2e24, LINE = 0x23262a, DECK = 0xa89472, WIN = 0x5c3a30, FUNNEL = 0x17181b, IRON = 0x4f6258, AWN = 0xcfd6dc, WHEEL = 0x9a3226, SPAR = 0xd8d2c0;
+  const xOf = (s) => (s - 0.5) * L, cl = (v) => Math.max(0, Math.min(1, v));
+  const half = (s) => B / 2 * Math.max(0.04, s > 0.68 ? 1 - Math.pow((s - 0.68) / 0.32, 1.7) : s < 0.14 ? 0.55 + 0.45 * Math.sin(Math.PI / 2 * s / 0.14) : 1);
+  const guard = (s) => half(s) + 1.5 * sc * Math.pow(Math.sin(Math.PI * cl((s - 0.02) / 0.9)), 0.7);   /* the main deck is wider than the hull: it runs out to the paddle boxes */
+  const D = 1.7 * sc, U = D + 2.8 * sc, keel = -1.0 * sc;   /* main deck and saloon deck above the water */
+  const b = { pos: [], col: [], idx: [] }, tint = new THREE.Color();
+  const sect = (s) => { const h = half(s), k = s < 0.05 ? keel + (0.3 * sc - keel) * (1 - s / 0.05) : keel; return [[0, k, BOOT], [h * 0.8, k, BOOT], [h, k + 0.5 * sc, BOOT], [h, 0.02 * sc, BOOT], [h, 0.03 * sc, WHITE], [h, D, WHITE]]; };
+  for (const sd of [1, -1]) skin(b, NS, 5, (i, j) => { const s = i / NS, [z, y, c] = sect(s)[j]; tint.set(c); return [xOf(s), y, sd * z, tint.r, tint.g, tint.b]; }, (x, y, z) => new THREE.Vector3(0, -0.2, z));
+  const flat = (y, s0, s1, w, hex, n = 24) => { tint.set(hex); const r = tint.r, g = tint.g, bl = tint.b; skin(b, n, 2, (i, j) => { const s = s0 + (s1 - s0) * i / n; return [xOf(s), y, (j - 1) * w(s), r, g, bl]; }, () => new THREE.Vector3(0, 1, 0)); };
+  const wall = (y0, y1, s0, s1, w, hex, n = 24) => { tint.set(hex); const r = tint.r, g = tint.g, bl = tint.b; for (const sd of [1, -1]) skin(b, n, 1, (i, j) => { const s = s0 + (s1 - s0) * i / n; return [xOf(s), j ? y1 : y0, sd * w(s), r, g, bl]; }, (x, y, z) => new THREE.Vector3(0, 0, z)); };
+  flat(D, 0, 1, guard, DECK, NS); wall(D - 0.22 * sc, D + 0.02 * sc, 0, 1, guard, LINE, NS);   /* the main deck and the dark line of its edge */
+  flat(D - 0.22 * sc, 0, 1, guard, WHITE, NS);   /* the underside of the guards */
+  /* the main cabin, the saloon deck over it and the saloon */
+  const cab = (s) => guard(s) - 0.9 * sc, M0 = 0.03, M1 = 0.69;
+  wall(D, U, M0, M1, cab, WHITE); K.box(0.1 * sc, U - D, cab(M1) * 2, xOf(M1), (D + U) / 2, 0, WHITE); K.box(0.1 * sc, U - D, cab(M0) * 2, xOf(M0), (D + U) / 2, 0, WHITE);
+  const up = (s) => guard(s) - 0.25 * sc; flat(U, 0.015, 0.8, up, DECK); wall(U - 0.14 * sc, U + 0.02 * sc, 0.015, 0.8, up, WHITE); flat(U - 0.14 * sc, 0.015, 0.8, up, WHITE);
+  const S0 = 0.25, S1 = 0.77, sal = (s) => Math.min(cab(s) - 0.9 * sc, B * 0.42), T = U + 2.3 * sc;
+  wall(U, T, S0, S1, sal, WHITE); K.box(0.1 * sc, T - U, sal(S1) * 2, xOf(S1), (U + T) / 2, 0, WHITE); K.box(0.1 * sc, T - U, sal(S0) * 2, xOf(S0), (U + T) / 2, 0, WHITE);
+  flat(T, S0 - 0.01, S1 + 0.01, (s) => sal(s) + 0.35 * sc, WHITE); wall(T - 0.1 * sc, T + 0.02 * sc, S0 - 0.01, S1 + 0.01, (s) => sal(s) + 0.35 * sc, WHITE);
+  K.add(geoOf(b));
+  /* windows along both cabins (the paddle box covers the middle of the main cabin) */
+  for (const sd of [1, -1]) { for (let k = 0; k < 34; k++) { const s = M0 + 0.02 + (M1 - M0 - 0.04) * k / 33; if (Math.abs(s - 0.42) < 0.075) continue; K.box(0.62 * sc, 0.95 * sc, 0.08 * sc, xOf(s), D + 1.55 * sc, sd * cab(s), WIN); }
+    for (let k = 0; k < 22; k++) { const s = S0 + 0.02 + (S1 - S0 - 0.04) * k / 21; K.box(0.62 * sc, 0.85 * sc, 0.08 * sc, xOf(s), U + 1.3 * sc, sd * sal(s), WIN); } }
+  /* the rail round the saloon deck, and the awning over the fore deck on its posts */
+  for (const sd of [1, -1]) { for (let k = 0; k < 26; k++) { const s0 = 0.02 + 0.775 * k / 26, s1 = 0.02 + 0.775 * (k + 1) / 26; for (const y of [U + 1.0 * sc, U + 0.5 * sc]) K.rod(V(xOf(s0), y, sd * up(s0)), V(xOf(s1), y, sd * up(s1)), 0.035 * sc, WHITE, 3); K.box(0.07 * sc, 1.0 * sc, 0.07 * sc, xOf(s0), U + 0.5 * sc, sd * up(s0), WHITE); }
+    for (let k = 0; k <= 5; k++) { const s = 0.71 + 0.25 * k / 5; K.box(0.1 * sc, U - D, 0.1 * sc, xOf(s), (D + U) / 2, sd * (guard(s) - 0.3 * sc), WHITE); } }
+  K.rod(V(xOf(0.02), U + 1.0 * sc, -up(0.02)), V(xOf(0.02), U + 1.0 * sc, up(0.02)), 0.035 * sc, WHITE, 3);
+  for (let k = 0; k < 12; k++) { const s0 = 0.7 + 0.275 * k / 12, s1 = 0.7 + 0.275 * (k + 1) / 12, sm = (s0 + s1) / 2; K.box((s1 - s0) * L, 0.06 * sc, (guard(sm) - 0.2 * sc) * 2, xOf(sm), U - 0.05 * sc, 0, k % 2 ? AWN : WHITE); }
+  /* the pilot house forward on the saloon deck */
+  { const x = xOf(0.715), ph = 2.5 * sc; K.box(3.2 * sc, ph, 3.0 * sc, x, T + ph / 2 - 0.9 * sc, 0, WHITE); K.box(3.3 * sc, 0.8 * sc, 3.1 * sc, x, T + ph * 0.62 - 0.9 * sc, 0, WIN); K.box(3.7 * sc, 0.14 * sc, 3.5 * sc, x, T + ph - 0.83 * sc, 0, WHITE); }
+  /* the funnel, straight and tall, with its stays */
+  { const fx = xOf(0.645), r = 0.62 * sc, top = 16.4 * sc, fh = top - T; K.cyl(r * 1.04, r, fh, fx, T + fh / 2, 0, FUNNEL, 14); K.cyl(r * 1.12, r * 1.12, 0.18 * sc, fx, top - 0.3 * sc, 0, FUNNEL, 14);
+    for (const sd of [1, -1]) for (const dx of [-5, 5]) K.rod(V(fx, top - 3 * sc, 0), V(fx + dx * sc, T, sd * 1.6 * sc), 0.03 * sc, LINE, 3); }
+  /* the paddle boxes and the wheels under them */
+  const px = xOf(0.42), pr = 3.6 * sc, pc = 6.6 * sc - pr;
+  for (const sd of [1, -1]) { const z = sd * (guard(0.42) - 0.75 * sc); const g = new THREE.CylinderGeometry(pr, pr, 1.5 * sc, 20, 1, false, 0, Math.PI); g.rotateY(Math.PI / 2); g.rotateX(Math.PI / 2); g.translate(px, pc, z); K.add(g, WHITE);
+    K.box(pr * 2, pc - D, 1.5 * sc, px, (pc + D) / 2, z, WHITE);
+    const rim = new THREE.TorusGeometry(pr * 0.98, 0.09 * sc, 4, 20, Math.PI); rim.translate(px, pc, z + sd * 0.76 * sc); K.add(rim, LINE);
+    for (let k = 1; k < 8; k++) { const a = Math.PI * k / 8; K.rod(V(px + Math.cos(a) * pr * 0.25, pc + Math.sin(a) * pr * 0.25, z + sd * 0.77 * sc), V(px + Math.cos(a) * pr * 0.92, pc + Math.sin(a) * pr * 0.92, z + sd * 0.77 * sc), 0.045 * sc, LINE, 3); }   /* the fan of slats on its face */
+    const w = new THREE.CylinderGeometry(pr * 0.9, pr * 0.9, 1.1 * sc, 16, 1, false, 0, Math.PI); w.rotateY(Math.PI / 2); w.rotateX(-Math.PI / 2); w.translate(px, D + 0.6 * sc, z); K.add(w, WHEEL);   /* the lower half of the wheel, below the guard */ }
+  /* the walking beam of her engine: an A-frame through the saloon roof and the diamond-shaped beam rocking on top of it */
+  { const wx = xOf(0.48), ay = 9.6 * sc; for (const sd of [1, -1]) for (const dx of [-2.3, 2.3]) K.rod(V(wx + dx * sc, T, sd * 0.9 * sc), V(wx, ay, sd * 0.35 * sc), 0.14 * sc, IRON, 5);
+    const tip = (d, h) => V(wx + d * Math.cos(0.16) * sc - h * Math.sin(0.16) * sc, ay + d * Math.sin(0.16) * sc + h * sc, 0), E = [tip(-3.1, 0), tip(0, 0.85), tip(3.1, 0), tip(0, -0.85)];
+    for (let k = 0; k < 4; k++) K.rod(E[k], E[(k + 1) % 4], 0.12 * sc, IRON, 5); K.rod(E[0], E[2], 0.1 * sc, IRON, 5); K.rod(E[1], E[3], 0.1 * sc, IRON, 5);
+    K.rod(E[0], V(E[0].x, T, 0), 0.08 * sc, IRON, 4); K.rod(E[2], V(E[2].x, D + 1 * sc, 0), 0.08 * sc, IRON, 4); }
+  /* flagstaffs at the bow and the stern (no flags: we have no source for the ones she flew in 1920) */
+  K.cyl(0.07 * sc, 0.04 * sc, 11 * sc, xOf(0.985), D + 5.5 * sc, 0, SPAR, 5); K.cyl(0.07 * sc, 0.04 * sc, 10.5 * sc, xOf(0.03), U + 5.25 * sc, 0, SPAR, 5);
+  const g = new THREE.Group(), m = K.mesh('sideWheeler'); g.add(m); g.userData.size = [L, 16.4 * sc - keel, guard(0.42) * 2]; return g;
+}
+
+/* steamYacht(o): the Kanawha, a twin-screw steam yacht built in 1899 at Morris Heights, New York (the Black Star Line bought her in 1920 and
+   called her Antonio Maceo). Shaped after a photograph of her under way as a private yacht before 1917 (US Naval History and Heritage Command
+   NH 102128) and her registered size: 208.4 ft (63.5 m) long, 24.4 ft (7.4 m) beam. From the photograph, measured against that length: a white
+   hull with a clipper bow and a long bowsprit, a strong sheer and an overhanging counter stern; a row of portholes; a long low dark deckhouse;
+   one funnel a little aft of the middle; an open bridge with an awning just ahead of it; boats on davits aft of the funnel; three thin pole
+   masts raked aft (the fore and main about 23 m above the deck, the mizzen 17 m), with one yard on the foremast.
+   Not from a source: her colours (the photograph is black and white: the funnel is drawn buff with a black top, as most yachts of her day
+   carried, and the deckhouse as varnished wood), and how the Black Star Line painted her. No name or flags.
+   The bow is at +x and the still waterline is at y = 0. o.L is the length on deck (default 63.5). ONE mesh with vertex colours. */
+export function steamYacht(o = {}) {
+  const L = o.L || 63.5, sc = L / 63.5, B = (o.beam || 7.44 * sc), NS = 36, K = paintKit(), V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const WHITE = 0xe8e6de, BOOT = 0x7a2e24, DECK = 0xb09a72, HOUSE = 0x4a3626, DARK = 0x22282c, BUFF = 0xc9a86a, BLACK = 0x17181b, SPAR = 0xb89a66, RIG = 0x2a2826, AWN = 0xdad6c8, BOAT = 0xece8dc;
+  const half = (s) => B / 2 * Math.max(0.03, s > 0.48 ? 1 - Math.pow((s - 0.48) / 0.52, 1.9) : 0.34 + 0.66 * Math.pow(Math.sin(Math.PI / 2 * s / 0.48), 0.8));
+  const sheer = (s) => sc * (3.2 + 1.7 * Math.pow(Math.max(0, s - 0.4) / 0.6, 2) + 0.5 * Math.pow(Math.max(0, 0.4 - s) / 0.4, 2)), keel = -2.6 * sc;
+  /* the stem rakes forward and the counter aft as they rise: x moves out with height at each end */
+  const xAt = (s, y) => (s - 0.5) * L * 0.8 + (0.05 * L + 0.062 * L * Math.max(0, y) / sheer(1)) * smooth(0.8, 1, s) * (s > 0.5 ? 1 : 0) - (0.05 * L + 0.045 * L * Math.max(0, y) / sheer(0)) * (1 - smooth(0, 0.16, s)) * (s < 0.5 ? 1 : 0);
+  const xD = (s) => xAt(s, sheer(s));   /* where the deck is at station s */
+  const b = { pos: [], col: [], idx: [] }, tint = new THREE.Color();
+  const sect = (s) => { const h = half(s), top = sheer(s) + 0.5 * sc, k = s < 0.14 ? keel + (0.6 * sc - keel) * Math.pow(1 - s / 0.14, 1.4) : s > 0.9 ? keel + (-0.4 * sc - keel) * Math.pow((s - 0.9) / 0.1, 2) : keel;
+    return [[0, k, BOOT], [h * 0.45, k + 0.5 * sc, BOOT], [h * 0.86, Math.min(-0.1 * sc, k + 1.6 * sc), BOOT], [h * 0.96, 0.02 * sc, BOOT], [h * 0.965, 0.04 * sc, WHITE], [h, top * 0.6, WHITE], [h, top, WHITE]]; };
+  for (const sd of [1, -1]) skin(b, NS, 6, (i, j) => { const s = i / NS, [z, y, c] = sect(s)[j]; tint.set(c); return [xAt(s, y), y, sd * z, tint.r, tint.g, tint.b]; }, (x, y, z) => new THREE.Vector3(0, -0.15, z));
+  { const dc = new THREE.Color(DECK); skin(b, NS, 2, (i, j) => { const s = i / NS; return [xD(s), sheer(s), (j - 1) * half(s) * 0.94, dc.r, dc.g, dc.b]; }, () => new THREE.Vector3(0, 1, 0));
+    const wc = new THREE.Color(WHITE); for (const sd of [1, -1]) skin(b, NS, 1, (i, j) => { const s = i / NS; return [xAt(s, sheer(s) + (j ? 0 : 0.5 * sc)), sheer(s) + (j ? 0 : 0.5 * sc), sd * half(s) * 0.95, wc.r * 0.86, wc.g * 0.86, wc.b * 0.86]; }, (x, y, z) => new THREE.Vector3(0, 0, -z)); }
+  K.add(geoOf(b));
+  for (const sd of [1, -1]) for (let k = 0; k < 16; k++) { const s = 0.2 + 0.62 * k / 15, y = sheer(s) - 1.25 * sc; K.cyl(0.13 * sc, 0.13 * sc, 0.06 * sc, xAt(s, y), y, sd * half(s) * 0.995, DARK, 6, Math.PI / 2); }   /* portholes */
+  /* the long low deckhouse, in three lengths that follow the sheer, with its windows; the skylight roofs */
+  for (const [s0, s1] of [[0.16, 0.36], [0.37, 0.58], [0.59, 0.76]]) { const sm = (s0 + s1) / 2, len = xD(s1) - xD(s0), w = Math.min(half(s0), half(s1)) * 1.25, y = sheer(sm), hh = 1.9 * sc; K.box(len, hh, w, xD(sm), y + hh / 2, 0, HOUSE, 0, Math.atan2(sheer(s1) - sheer(s0), len)); K.box(len + 0.3 * sc, 0.1 * sc, w + 0.4 * sc, xD(sm), y + hh + 0.05 * sc, 0, AWN, 0, Math.atan2(sheer(s1) - sheer(s0), len));
+    for (const sd of [1, -1]) for (let k = 0; k < 7; k++) K.box(0.75 * sc, 0.7 * sc, 0.06 * sc, xD(s0) + len * (k + 0.5) / 7, y + hh * 0.62, sd * w / 2, DARK); }
+  /* the funnel: one, raked a little, buff with a black top */
+  { const fx = xD(0.46), fy = sheer(0.46) + 1.9 * sc, fh = 5.9 * sc, r = 1.3 * sc, rk = -0.08; const g1 = new THREE.CylinderGeometry(r, r * 1.03, fh * 0.8, 14); g1.translate(0, fh * 0.4, 0); g1.rotateZ(rk); g1.translate(fx, fy, 0); K.add(g1, BUFF);
+    const g2 = new THREE.CylinderGeometry(r * 1.02, r * 1.02, fh * 0.2, 14); g2.translate(0, fh * 0.9, 0); g2.rotateZ(rk); g2.translate(fx, fy, 0); K.add(g2, BLACK); }
+  /* the open bridge ahead of the funnel, under an awning, and the awning over the after deck */
+  { const s = 0.535, x = xD(s), y = sheer(s) + 1.95 * sc; K.box(4.6 * sc, 0.12 * sc, B * 0.8, x, y + 0.06 * sc, 0, DECK); for (const sd of [1, -1]) { K.box(4.6 * sc, 0.9 * sc, 0.06 * sc, x, y + 0.55 * sc, sd * B * 0.4, AWN); for (const dx of [-2.2, 2.2]) K.box(0.07 * sc, 2.1 * sc, 0.07 * sc, x + dx * sc, y + 1.05 * sc, sd * B * 0.38, SPAR); }
+    K.box(5.2 * sc, 0.07 * sc, B * 0.86, x, y + 2.13 * sc, 0, AWN); K.box(1.3 * sc, 1.2 * sc, 1.3 * sc, x + 0.6 * sc, y + 0.7 * sc, 0, HOUSE); }
+  { const s0 = 0.03, s1 = 0.14, sm = 0.085, w = half(sm) * 1.5, y = sheer(sm) + 2.3 * sc; K.box(xD(s1) - xD(s0), 0.07 * sc, w, xD(sm), y, 0, AWN); for (const sd of [1, -1]) for (const s of [s0 + 0.005, s1 - 0.005]) K.box(0.06 * sc, 2.3 * sc, 0.06 * sc, xD(s), sheer(s) + 1.15 * sc, sd * w * 0.47, SPAR); }
+  /* boats on davits, two a side, aft of the funnel */
+  for (const sd of [1, -1]) for (const s of [0.4, 0.3]) { const x = xD(s), y = sheer(s) + 2.5 * sc, z = sd * (half(s) * 0.98); const g = new THREE.SphereGeometry(1, 10, 5, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2); g.scale(2.9 * sc, 0.75 * sc, 0.8 * sc); g.translate(x, y, z); K.add(g, BOAT); K.box(5.6 * sc, 0.08 * sc, 1.5 * sc, x, y, z, 0xc8bfa8);
+    for (const dx of [-2.1, 2.1]) K.tube([V(x + dx * sc, sheer(s), z - sd * 0.7 * sc), V(x + dx * sc, y + 1.0 * sc, z - sd * 0.6 * sc), V(x + dx * sc, y + 1.25 * sc, z)], 0.07 * sc, WHITE, 5, 4); }
+  /* the bowsprit and the three pole masts, raked aft, with one yard on the foremast and the stays */
+  const stem = V(xD(1), sheer(1) + 0.5 * sc, 0), bs = V(xD(1) + 8.9 * sc, sheer(1) + 1.3 * sc, 0); K.rod(V(xD(0.97), sheer(0.97) + 0.4 * sc, 0), bs, 0.16 * sc, SPAR, 6); K.rod(bs, V(xAt(1, 0.4 * sc), 0.4 * sc, 0), 0.03 * sc, RIG, 3);
+  const tops = [];
+  for (const [s, mh] of [[0.73, 23.5], [0.36, 23.4], [0.155, 17]]) { const x = xD(s), y0 = sheer(s), top = V(x - 0.137 * mh * sc, y0 + mh * sc, 0); K.rod(V(x, y0, 0), top, 0.16 * sc, SPAR, 6);
+    for (const sd of [1, -1]) for (const dx of [-0.9, -2.2]) K.rod(V(x - 0.137 * mh * 0.7 * sc, y0 + mh * 0.7 * sc, 0), V(x + dx * sc, y0 + 0.5 * sc, sd * half(s) * 0.95), 0.025 * sc, RIG, 3);
+    tops.push(top); }
+  { const x = xD(0.73), y0 = sheer(0.73), yy = y0 + 7.6 * sc; K.rod(V(x - 1.05 * sc, yy - 0.3 * sc, -3.2 * sc), V(x - 1.05 * sc, yy + 0.3 * sc, 3.2 * sc), 0.08 * sc, SPAR, 5); }
+  K.rod(tops[0], bs, 0.03 * sc, RIG, 3); K.rod(tops[0], stem, 0.03 * sc, RIG, 3); K.rod(tops[0], tops[1], 0.03 * sc, RIG, 3); K.rod(tops[1], tops[2], 0.03 * sc, RIG, 3); K.rod(tops[2], V(xD(0), sheer(0) + 0.5 * sc, 0), 0.03 * sc, RIG, 3);
+  K.cyl(0.04 * sc, 0.03 * sc, 2.4 * sc, xD(0.005), sheer(0) + 1.6 * sc, 0, SPAR, 4);   /* the ensign staff at the stern, bare */
+  const g = new THREE.Group(), m = K.mesh('steamYacht'); g.add(m); g.userData.size = [L + 9 * sc, tops[0].y - keel, B]; return g;
+}
