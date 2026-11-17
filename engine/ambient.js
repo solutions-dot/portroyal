@@ -29,7 +29,7 @@
    person, sliding, standing still too long in a lively scene, or blocking a story path. */
 import * as THREE from 'three';
 import { walkRoute, segmentHitsWall } from './placement.js';
-import { groundFeet, strideOf } from './anim.js';
+import { groundFeet, strideOf, lookBegin, lookEnd } from './anim.js';
 import { gripTick } from './grip.js';
 import { faceCheck } from './faces.js';
 
@@ -340,13 +340,13 @@ export function createAmbient(opts = {}) {
     /* the mixer only writes a bone whose clip value changed since its last update, and a still head track (Idle) is written once:
        start from the clip's pose again, or each frame's turn adds to the last one and the head spins round (Selassie, November 2026) */
     const hq = a.hq || (a.hq = [b.neck, b.head].map(() => ({ base: new THREE.Quaternion(), after: new THREE.Quaternion(10, 0, 0, 0) })));
-    [b.neck, b.head].forEach((bone, i) => { if (!bone) return; if (bone.quaternion.equals(hq[i].after)) bone.quaternion.copy(hq[i].base); hq[i].base.copy(bone.quaternion); });
+    lookBegin([b.neck, b.head]);   /* start from the clip's own pose (engine/anim.js) */
     turnBone(b.neck, UP, a.look * 0.4); turnBone(b.head, UP, a.look * 0.6); turnBone(b.head, _ax, a.lookP + nod);
     /* the clip and the look together: a fast clip (HeadTurn, Cheer, WipeSweat) or a clip change on top of a look snapped the head round at
        300 to 1,400 degrees a second (Kendal, Selassie checks). Neck and head each move at most about 140 degrees a second, so the head never spins */
     const maxA = Math.max(0.02, dt * 2.4);
     [b.neck, b.head].forEach((bone, i) => { if (!bone) return; const h = hq[i]; if (h.shown && dt > 0 && dt < 0.5) { _tq.copy(bone.quaternion); if (h.shown.angleTo(_tq) > maxA) bone.quaternion.copy(h.shown).rotateTowards(_tq, maxA); } (h.shown || (h.shown = new THREE.Quaternion())).copy(bone.quaternion); });
-    [b.neck, b.head].forEach((bone, i) => { if (bone) hq[i].after.copy(bone.quaternion); });
+    lookEnd([b.neck, b.head]);
   }
 
   /* ---------- detail by distance (phones) ---------- */

@@ -14,6 +14,7 @@ import { steamer, schooner } from '../../../engine/boats.js';
 import { gripTick, spreadArms } from '../../../engine/grip.js';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
+import { exitReady, exitsReset } from '../../../engine/story.js';
 import { model, prefetch, onLoadFail } from '../../../engine/loader.js';
 import { auditCloth } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
@@ -1010,8 +1011,8 @@ const DECK_ACTIONS = [
   { id: 'wheel', label: 'Turn the ship’s wheel', x: 15.75, z: 0, r: 0.9, on: () => true, go: () => { DECK.spin = 2.2; if (AU.ctx && AU.on) shipCreak(); toast('You turn the big wheel. It steers the ship.'); } },
   { id: 'bell', label: 'Ring the ship’s bell', x: 12.6, z: -1.9, r: 1.2, on: () => true, go: () => { DECK.ring = 2.4; if (AU.ctx && AU.on) for (const d of [0, 0.5]) { tone(1320, 1300, 1.3, 'sine', 0.2, 0.2, d); tone(2640, 2600, 0.5, 'sine', 0.06, 0.2, d); } toast('Ding, ding! On a ship, bells tell the time.'); } },
   { id: 'whistle', label: 'Pull the whistle cord', x: -1.2, z: -1.6, r: 1.2, on: () => true, go: () => { DECK.steam = 1.8; if (AU.ctx && AU.on) { tone(196, 190, 1.6, 'sawtooth', 0.12, 0, 0); tone(294, 288, 1.6, 'triangle', 0.1, 0, 0); noiseHit(1800, 0.7, 1.5, 0.05, 0, 0); } toast('The steam whistle is loud! It warns other ships.'); } },
-  { id: 'ashore', label: 'Go back down to the dock', x: 5, z: -2.5, r: 1.1, on: () => true, go: leaveShip }];
-const DOCK_ACTIONS = [{ id: 'inspect', label: 'Go up the gangway', x: 0, z: 3.0, r: 1.6, on: () => stage === 41, go: boardShip }];
+  { id: 'ashore', label: 'Go back down to the dock', x: 5, z: -2.5, r: 1.1, exit: true, on: () => true, go: leaveShip }];
+const DOCK_ACTIONS = [{ id: 'inspect', label: 'Go up the gangway', x: 0, z: 3.0, r: 1.6, exit: true, on: () => stage === 41, go: boardShip }];
 const plan = (id, t, reply) => ({ t, set: { plan: id }, then: [{ who: NAR, text: reply }, { who: NAR, text: 'But people have paid their money. They want to see a ship.' }, { who: NAR, text: 'So the old ship is bought, as really happened.' }] });
 const advice = (id, t, reply) => ({ t, set: { advice: id }, then: [{ who: 'Friend', text: reply }] });
 const DOCK_PEOPLE = [
@@ -1415,7 +1416,7 @@ function prefetchNext(name) {   /* a few seconds after arriving, quietly fetch t
   clearTimeout(pfT); const nx = PLACES[PLACE_ORDER[PLACE_ORDER.indexOf(name) + 1]]; if (!nx) return;
   pfT = setTimeout(() => prefetch([...new Set([...nx.people, ...(nx.extras || [])].map((n) => n.model))]), 4000); }
 function enterPlace(name, keepPos) {
-  place = name; const P = PLACES[name]; prefetchNext(name);
+  exitsReset(); place = name; const P = PLACES[name]; prefetchNext(name);
   for (const k of Object.keys(PLACES)) { const Q = PLACES[k]; Q.group.visible = k === name; Q.lamp.visible = k === name; for (const n of Q.people) { if (n.mark) n.mark.visible = false; if (n.m) n.m.visible = k === name && !n.hidden; } for (const n of Q.extras || []) if (n.m) n.m.visible = k === name; }
   if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.fol) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; if (n.seat) sitDown(n); }
   if (name === 'press') arrangePress();
@@ -1469,7 +1470,7 @@ function update(dt, now) {
     let e = Math.atan2(-dx, -dz) - state.yaw; e = Math.atan2(Math.sin(e), Math.cos(e)); const k = Math.min(1, dt * 3.2);
     state.yaw += e * k; state.pitch += (Math.atan2(hy - 0.22 - EYE, d) - state.pitch) * k; }
   near = null; if (state.started && !busy) { let best = 2.6; for (const n of PEOPLE) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < best) { best = d; near = n; } }
-    for (const a of ACTIONS) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }   /* standing at a thing to do beats a person nearby */
+    for (const a of ACTIONS) { const ad = Math.hypot(state.x - a.x, state.z - a.z); if (a.exit && !exitReady(a.id, ad, a.r, performance.now() / 1000)) continue;   /* a way out waits until you have walked off its spot (engine/story.js) */ if (a.on() && ad < a.r) near = a; } }   /* standing at a thing to do beats a person nearby */
   const talkBtn = $('talk'); talkBtn.hidden = !(near && near.go); if (near && near.go) talkBtn.textContent = near.label;   /* people get the bubble; things to do get this button */
   for (const mx of mixers) { const r = mx.getRoot(); if (r.visible && !r.userData.amb) mx.update(dt); } for (const n of PEOPLE) if (n.m && n.m.userData.anim && !n.m.userData.amb) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   for (const m of grounded) if (m.visible && !m.userData.amb) groundFeet(m);

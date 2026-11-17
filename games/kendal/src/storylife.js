@@ -6,6 +6,7 @@
    - Someone in a held pose (kneeling by a hurt man, a hand on Lloyd's shoulder, playing, carrying a basket on the head) keeps it and only glances.
    storyLifeTick(n, dt, W, { head }) runs after the person's mixer each frame; W: { px, pz, talking }; head: false leaves the head to engine/ambient.js. */
 import * as THREE from 'three';
+import { lookBegin, lookEnd } from '../../../engine/anim.js';
 
 const KEEP = /^(Kneel|Comfort|PlayPiano|PlayGuitar|Sad|Cry|Hurt|CarryHead|TorchIdle|BriefcaseIdle|SitScared|Talk|Yell)/;
 const SITS = /^Sit/;
@@ -50,8 +51,8 @@ export function storyLifeTick(n, dt, W, { head = true } = {}) {
   s.look += Math.max(-lim, Math.min(lim, (yaw - s.look) * Math.min(1, dt * 3))); s.lookP += Math.max(-lim, Math.min(lim, (s.wantP - s.lookP) * Math.min(1, dt * 3)));
   /* the mixer writes a bone only when its clip value changes, and a still head track is written once: start each frame from the clip's pose, or the turns add up */
   const hq = s.hq || (s.hq = [b.neck, b.head].map(() => ({ base: new THREE.Quaternion(), after: new THREE.Quaternion(10, 0, 0, 0) })));
-  [b.neck, b.head].forEach((bone, i) => { if (!bone) return; if (bone.quaternion.equals(hq[i].after)) bone.quaternion.copy(hq[i].base); hq[i].base.copy(bone.quaternion); });
+  lookBegin([b.neck, b.head]);   /* start from the clip's own pose (engine/anim.js) */
   _ax.set(Math.cos(ry), 0, -Math.sin(ry));
   turnBone(b.neck, UP, s.look * 0.4); turnBone(b.head, UP, s.look * 0.6); turnBone(b.head, _ax, s.lookP);
-  [b.neck, b.head].forEach((bone, i) => { if (bone) hq[i].after.copy(bone.quaternion); });
+  lookEnd([b.neck, b.head]);
 }

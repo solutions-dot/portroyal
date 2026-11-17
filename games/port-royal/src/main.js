@@ -6,8 +6,9 @@ import * as THREE from 'three';
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { mergeGeometries as mergeG } from 'three/addons/utils/BufferGeometryUtils.js';
 import { rowBoat, rowStroke, dugOut } from '../../../engine/boats.js';
-import { CL, mixers, grounded, HIPS_Y, setFallbackClip, loadClips, seamLoop, clipFor, animate, groundFeet, strideOf } from '../../../engine/anim.js';
+import { CL, mixers, grounded, HIPS_Y, setFallbackClip, loadClips, seamLoop, clipFor, animate, groundFeet, strideOf, lookBegin, lookEnd } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, chirp, cue, setG, tone, noiseHit, shipCreak, hammer, clink, uiSound } from '../../../engine/audio.js';
+import { exitReady, exitsReset } from '../../../engine/story.js';
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 import { auditHeld, auditCloth } from '../../../engine/audit.js';   /* used only by the dev tests ?test=held and ?test=cloth */
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev only: ?test=skin */
@@ -470,7 +471,7 @@ function buildTavern() {
   mk(new THREE.CylinderGeometry(0.11, 0.06, 0.07, 16), pewM, 0, 0.035, 0, stew); mk(new THREE.CylinderGeometry(0.1, 0.1, 0.01, 16), new THREE.MeshStandardMaterial({ color: 0x7a4a22, roughness: 0.6 }), 0, 0.066, 0, stew); B(0.012, 0.01, 0.16, pewM, 0.16, 0.006, 0.02, stew);
   cur = scene;
 }
-function setPlace(p) {
+function setPlace(p) { exitsReset();
   state.place = p; const inside = p !== 'out', home = p === 'in' ? indoor : p === 'ware' ? wareG : scene;
   for (const c of scene.children) { if (c.isLight) continue; if (c === indoor) c.visible = p === 'in'; else if (c === wareG) c.visible = p === 'ware'; else if (c === afterG || c === yardG) c.visible = false; else c.visible = !inside || (p === 'ware' && c.userData.far === true); }
   home.add(abba); abba.visible = p !== 'ware'; if (galdy) home.add(galdy);
@@ -659,7 +660,7 @@ const ACTIONS = [
   ...['sugar', 'cocoa', 'logwood'].map((id, i) => ({ label: ['Look at the casks', 'Look at the sacks', 'Look at the red wood'][i], r: 2.6, where: () => state.place === 'ware' && !state.unlocked.includes(id) && WGOODS[id], go: () => { unlock(id); wareMark[id].visible = false; wareGoal(); } })),
   { label: 'Sit at the desk', r: 2.4, where: () => state.place === 'ware' && wareSeen() && !W.coins && [-258.6, 2.9], go: () => startConvo(COINS, () => { W.coins = true; abba.visible = true; ABBA.x = -250.2; ABBA.z = 0.4; abba.position.set(ABBA.x, 0, ABBA.z); toast('Abba has come in.'); wareGoal(); }) },
   { label: 'Talk to Abba', r: 3.0, where: () => state.place === 'ware' && W.coins && !W.talked && [ABBA.x, ABBA.z], go: () => startConvo(WARE1, () => { W.talked = true; const ac = abba.userData.anim; if (ac && CL.WaveSlow) ac.play('WaveSlow', true); setTimeout(() => { if (state.place === 'ware') { abba.visible = false; ABBA.x = 9999; toast('Abba goes out to the wharf.'); } }, 2600); wareGoal(); }) },
-  { label: 'Go out to the wharf', r: 1.8, where: () => state.place === 'ware' && [WX1 - 0.7, 0.8], go: () => card('Leave the warehouse?', ['You can come back any time from the Chapters menu.'], [{ t: 'Back to the town', go: leaveWare }, { t: 'Stay', go: hideCard }]) },
+  { label: 'Go out to the wharf', r: 1.8, exit: true, where: () => state.place === 'ware' && [WX1 - 0.7, 0.8], go: () => card('Leave the warehouse?', ['You can come back any time from the Chapters menu.'], [{ t: 'Back to the town', go: leaveWare }, { t: 'Stay', go: hideCard }]) },
   { label: 'Read the letter', r: 2.4, where: () => state.place === 'ware' && W.talked && [-258.6, 2.9], go: readLetter },
   { label: 'Talk to Abba', r: 3.2, where: () => state.place === 'after' && [ABBA.x, ABBA.z], go: () => { if (afterDone() && Q.aTalk) startConvo(AFTER2, stayOrGo); else startConvo(AFTER1, () => { Q.aTalk = true; afterGoal(); }); } },
   { label: 'Look at the big tent', r: 3.6, where: () => state.place === 'after' && !state.unlocked.includes('tentp') && [-12.5, 0.8], go: () => { unlock('tentp'); afterGoal(); } },
@@ -673,7 +674,7 @@ const ACTIONS = [
   { label: 'Reach for the boat', r: 3.6, where: () => state.place === 'sea' && Q.boat && [Q.boat.position.x, Q.boat.position.z], go: () => finishQuake(false) },
   { label: 'Talk to Abba', r: 3.4, where: () => townReady && !Q.on && !FB.on && state.place === 'out' && [ABBA.x, ABBA.z], go: () => startConvo(state.talked ? AFTER : TALK, () => { state.talked = true; if (ring) ring.visible = false; }) },
   { label: 'Go into the tavern', r: 2.0, where: () => tavernReady && !Q.on && state.place === 'out' && state.talked && [-6.18, -4.5], go: () => { setPlace('in'); state.x = -203; state.z = 2.3; state.yaw = 0; state.pitch = 0; setGoal(); } },
-  { label: 'Go back to the street', r: 1.3, where: () => state.place === 'in' && [-203, 3.3], go: () => { setPlace('out'); state.x = -6.18; state.z = -3.4; state.yaw = Math.PI; state.pitch = 0; setGoal(); } },
+  { label: 'Go back to the street', r: 1.3, exit: true, where: () => state.place === 'in' && [-203, 3.3], go: () => { setPlace('out'); state.x = -6.18; state.z = -3.4; state.yaw = Math.PI; state.pitch = 0; setGoal(); } },
   { label: 'Talk to Abba', r: 2.3, where: () => state.place === 'in' && [-201, -1.9], go: () => startConvo(state.ate ? AFTER : STEW, () => { if (!state.ate) { state.ate = true; stew.visible = true; } }) },
   ...FINDS.map((f) => ({ label: f.label, r: 1.9, where: () => state.place === 'in' && !state.unlocked.includes(f.id) && [f.x, f.z], go: () => { unlock(f.id); finds[f.id].visible = false; setGoal(); } })),
 ];
@@ -1158,7 +1159,7 @@ function frame(now) {
     const dx = state.x - ABBA.x, dz = state.z - ABBA.z, d = Math.hypot(dx, dz);
     const want = state.place === 'sea' ? Math.atan2(dx, dz) : d < 9 ? Math.max(-1.1, Math.min(1.1, Math.atan2(dx, dz))) : (state.place === 'in' ? 0 : 0.25); if (!Q.abbaRun) { const ea = want - abba.rotation.y; abba.rotation.y += ea * Math.min(1, dt * 3); const ac = abba.userData.anim; if (ac && CL.TurnLW && Math.abs(ea) > 0.8 && ac.cur === ac.base && abba.visible && !Q.on) ac.play(ea > 0 ? 'TurnLW' : 'TurnRW', true); }
     if (ring && ring.visible) { const s = 1 + (reduceMotion ? 0 : Math.sin(now / 420) * 0.08); ring.scale.set(s, s, s); }
-    if (state.started) { current = null; let best = 1e9; if (!busy) for (const a of ACTIONS) { if (!!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const dd = Math.hypot(state.x - w[0], state.z - w[1]); if (dd < a.r && dd < best) { best = dd; current = a; } }
+    if (state.started) { current = null; let best = 1e9; if (!busy) for (const a of ACTIONS) { if (!!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const dd = Math.hypot(state.x - w[0], state.z - w[1]); if (a.exit && !exitReady(a.label, dd, a.r, performance.now() / 1000)) continue;   /* a way out waits until you have walked off its spot (engine/story.js) */ if (dd < a.r && dd < best) { best = dd; current = a; } }
       $('talk').hidden = !current || isTalk(current); if (current && !isTalk(current) && $('talk').dataset.label !== current.label) setActionButton(current);
       if (!state.unlocked.includes('harbour') && state.x < SHORE - 2) { unlock('harbour'); setGoal(); } }
     if (state.place === 'in' && fire && !reduceMotion) { const f = 0.85 + Math.sin(now / 90) * 0.08 + Math.sin(now / 37) * 0.07; fireLight.intensity = 16 * f; for (let i = 0; i < fire.userData.tongues.length; i++) { const tn = fire.userData.tongues[i], [w, h] = tn.userData.wh, a = now / 1000 * (5 + i * 0.9) + i * 1.7, k2 = 0.82 + 0.16 * Math.sin(a) + 0.1 * Math.sin(a * 2.3 + i); tn.scale.set(w * (1.05 - (k2 - 0.82) * 0.5), h * k2, w * (1.05 - (k2 - 0.82) * 0.5)); tn.rotation.z = Math.sin(a * 0.7) * 0.07; tn.rotation.y = Math.sin(a * 0.31) * 0.4; } for (let i = 0; i < flames.length; i++) { const k = 1.75 + Math.sin(now / 70 + i * 2.1) * 0.25; flames[i].scale.y = flames[i].geometry.type === 'SphereGeometry' ? k : 0.9 + (k - 1.75); } }
@@ -2066,12 +2067,7 @@ if (__DEV__ && ['collision','seating'].includes(new URLSearchParams(location.sea
    nobody stands frozen and no two people move in step. Within 5 m, whoever is not walking turns the head toward you (up to 65 degrees from the chest). Checked by ?test=life. */
 const IDLES = { sailor: ['Point', 'Laugh', 'LookAround'], benning: ['WipeSweat', 'LookAround', 'WaveSlow'], gunner: ['LookAround', 'Salute', 'Point'], morgan: ['Point', 'Talk1', 'Laugh', 'LookAround'], ned: ['SitIdle2', 'SitTalk'] };
 const _lq = new THREE.Quaternion(), _lq2 = new THREE.Quaternion(), _lv = new THREE.Vector3(), _ly = new THREE.Vector3(0, 1, 0);
-/* A look is a turn added on top of the clip's own pose, once a frame. If the clip does not set the bone again before the next frame (a clip with no track for it, a mixer that
-   did not run), the turns pile up and the head spins right round (owner, 17 November 2026: "the heads are spinning like they did in Tivoli"). So the bone remembers what it was
-   before our turn and what we left it as: found untouched next time, it is first put back. */
-const TURNED = new WeakMap();
-function turnBone(b, a) { if (!b || !b.parent) return; const t = TURNED.get(b); if (t && b.quaternion.equals(t.after)) b.quaternion.copy(t.before); const rec = t || { before: new THREE.Quaternion(), after: new THREE.Quaternion() }; rec.before.copy(b.quaternion);
-  b.parent.getWorldQuaternion(_lq2); _lq.setFromAxisAngle(_ly, a); b.quaternion.premultiply(_lq2.clone().invert().multiply(_lq).multiply(_lq2)); rec.after.copy(b.quaternion); TURNED.set(b, rec); }
+function turnBone(b, a) { if (!b || !b.parent) return; b.parent.getWorldQuaternion(_lq2); _lq.setFromAxisAngle(_ly, a); b.quaternion.premultiply(_lq2.clone().invert().multiply(_lq).multiply(_lq2)); }   /* always between lookBegin and lookEnd (engine/anim.js), or the turns pile up and the head spins */
 TICKS.push((dt) => { if (!built) return;
   const list = [...Object.entries(IDLES).map(([k]) => people[k]), ...Object.values(survivors), ...(afterG ? afterG.children.filter((c) => c.userData.idles) : []), people.heath, ...(FB.on ? FBG.cast.concat([FBG.qm]) : []), state.place === 'out' || state.place === 'in' || state.place === 'after' || state.place === 'sea' ? abba : null];
   for (const m of list) { if (!m || !m.userData.anim) continue; let v = m.visible; for (let o = m.parent; v && o; o = o.parent) v = o.visible; if (!v) continue;
@@ -2081,7 +2077,7 @@ TICKS.push((dt) => { if (!built) return;
     m.getWorldPosition(_lv); const dx = state.x - _lv.x, dz = state.z - _lv.z, near = Math.hypot(dx, dz) < 5 && state.started; let want = 0;
     if (near) { const ch = m.getObjectByName('mixamorigSpine2'); let f = m.rotation.y; if (ch) { const q = ch.getWorldQuaternion(_lq2), fw = new THREE.Vector3(0, 0, 1).applyQuaternion(q); f = Math.atan2(fw.x, fw.z); } let d = Math.atan2(dx, dz) - f; d = Math.atan2(Math.sin(d), Math.cos(d)); want = Math.abs(d) < 2.2 ? Math.max(-1.13, Math.min(1.13, d)) : 0; }
     m.userData.look = (m.userData.look || 0) + (want - (m.userData.look || 0)) * Math.min(1, dt * 3); const a = Math.abs(m.userData.look) < 0.005 ? 0 : m.userData.look;   /* a look of nothing is still applied, so a bone left turned is put back */
-    turnBone(m.getObjectByName('mixamorigNeck'), a * 0.3); turnBone(m.getObjectByName('mixamorigHead'), a * 0.7); } });
+    const lk = m.userData.lookBones || (m.userData.lookBones = [m.getObjectByName('mixamorigNeck'), m.getObjectByName('mixamorigHead')]); lookBegin(lk); turnBone(lk[0], a * 0.3); turnBone(lk[1], a * 0.7); lookEnd(lk); } });
 
 /* ---------- dev checks: ?test=audit, layout, walkers, life and all (games/port-royal/src/checks.js; never in a public build) ---------- */
 if (__DEV__) { window.__prBoats = DEVBOATS; DEVBOATS.buildLoad = () => loadBuild(); }

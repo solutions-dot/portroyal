@@ -359,3 +359,11 @@ Imported by Kendal, Marcus Garvey (`spreadArms` and `gripTick` only), Bog Walk (
 ## Standing upright (17 November 2026)
 
 `engine/anim.js`, `STANCE`: the standing clips (idles, talking, gestures; the list is `STANDING`) were made with the hips back and the knees bent about 30 degrees, so everyone stood in a slump. For those clips `clipFor` turns the thigh back 14 degrees, straightens the knee 28 degrees and sets the foot flat again. Walking, running, carrying, kneeling and seated clips are not changed. A new standing clip must be added to `STANDING`, then looked at from the side with `tools/review/people-sheet.mjs <game> <id> out.png views=side anim=<Clip>`.
+
+## One place for shared guards (17 November 2026)
+
+The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game is fixed here, once.
+
+- **A look on top of a clip**: `lookBegin(bones)` and `lookEnd(bones)` in `engine/anim.js`. Any code that turns a bone after the mixer has run (a head that looks at you) makes its turns between these two calls. Without them the turns pile up on a still track and the head goes right round. Used by `engine/ambient.js`, Kendal (`storylife.js`), Tivoli (`talk.js`) and Port Royal (`main.js`); each used to carry its own copy, and Port Royal had none. Selassie's `steady` code in `games/selassie/src/main.js` is still its own and should move over when it is next touched.
+- **A way out waits**: `exitReady(id, distance, radius, nowSeconds)` and `exitsReset()` in `engine/story.js`. You arrive standing on the spot where the way out is, so its button came up at once and read as the next thing to do. An action marked `exit: true` is offered once you have walked off its spot, or after 7 seconds. Call `exitsReset()` when the place changes. Used by Port Royal (the tavern and warehouse doors) and Garvey (the gangway and the stair on the Yarmouth). Other games' doors and gates should be marked the same way when they are touched.
+- **Audit flags**: `userData.soft` (left out of the overlap check: loose stuff lying over things, or a thing that replaces another and is never seen with it) and `userData.hollow` (a room or vehicle people stand in) are read by `engine/audit.js` for every game.

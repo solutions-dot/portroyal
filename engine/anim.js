@@ -176,3 +176,14 @@ export function groundFeet(m) { if (m.userData.seatAnchor) { anchorSeat(m); retu
     const e = (m.userData.ground || 0) - 0.008 - low;
     m.position.y += (t.set && Math.abs(e) < 0.06) ? e * (e > 0 ? 0.7 : 0.4) : e; t.set = true; return; }   /* small corrections are eased in over a few frames, so the body never jerks when the other heel lands; a big one (a new place to stand) is made at once */
   if (!t.toes.length) return; m.updateMatrixWorld(true); let low = 1e9; for (const b of t.toes) low = Math.min(low, b.getWorldPosition(_gp).y); m.position.y += ((m.userData.ground || 0) + 0.035 - low); }
+
+/* ---------- a look added on top of a clip (shared by every game: owner, 17 November 2026, "always defer to the master engine") ----------
+   A head that turns toward you is a turn added to the clip's pose after the mixer has run. The mixer only writes a bone again when its clip value changes, so on a
+   still track (an Idle head) the pose is not set again, each frame's turn adds to the last, and the head goes right round (Selassie, Tivoli, then Port Royal).
+   Every game that turns a bone on top of a clip does it between these two calls:
+     lookBegin(bones)   before the turns: a bone found exactly as we left it is first put back to the clip's own pose
+     lookEnd(bones)     after the turns: remember what we left
+   bones is an array (null entries are skipped). One guard, in one place: do not copy it into a game. */
+const LOOKED = new WeakMap();
+export function lookBegin(bones) { for (const b of bones) { if (!b) continue; let t = LOOKED.get(b); if (!t) LOOKED.set(b, t = { base: new THREE.Quaternion(), after: new THREE.Quaternion(), on: false }); if (t.on && b.quaternion.equals(t.after)) b.quaternion.copy(t.base); t.base.copy(b.quaternion); } }
+export function lookEnd(bones) { for (const b of bones) { if (!b) continue; const t = LOOKED.get(b); if (t) { t.after.copy(b.quaternion); t.on = true; } } }

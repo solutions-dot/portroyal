@@ -2,7 +2,7 @@
    the x, Escape or a tap outside ends the talk. The first talk tells the story; after that each person says one short line from their "later" list, in turn (docs/CONTENT.md).
    A line may carry unlock: 'page-id', which opens a journal page with a chime and a toast. Nobody here is real: every person you can talk to is fictional. */
 import * as THREE from 'three';
-import { animate } from '../../../engine/anim.js';
+import { animate, lookBegin, lookEnd } from '../../../engine/anim.js';
 import { loadBase, makeBody, bodyOf, LOOKS } from './cast.js';
 
 export const Talk = { npcs: [], near: null, open: null };
@@ -73,11 +73,11 @@ export function after(dt, player) {
     if (!Number.isFinite(n.headYaw)) n.headYaw = 0; const lim = HEAD_RATE * dt; n.headYaw += Math.max(-lim, Math.min(lim, (want - n.headYaw) * Math.min(1, dt * 3)));
     const b = n.bones || (n.bones = { neck: m.getObjectByName('mixamorigNeck'), head: m.getObjectByName('mixamorigHead') });
     const hq = n.hq || (n.hq = [b.neck, b.head].map(() => ({ base: new THREE.Quaternion(), after: new THREE.Quaternion(10, 0, 0, 0) })));
-    [b.neck, b.head].forEach((bone, i) => { if (!bone) return; if (bone.quaternion.equals(hq[i].after)) bone.quaternion.copy(hq[i].base); hq[i].base.copy(bone.quaternion); });   /* start from the clip's pose */
+    lookBegin([b.neck, b.head]);   /* start from the clip's own pose (engine/anim.js) */   /* start from the clip's pose */
     /* the clip may already turn the head (LookAround): add only what keeps the whole turn inside HEAD_MAX */
     let add = n.headYaw; if (Math.abs(add) > 1e-3) { const c = clipYaw(m); if (c !== null) add = add > 0 ? Math.min(add, Math.max(0, HEAD_MAX - c)) : Math.max(add, Math.min(0, -HEAD_MAX - c)); }
     turnBone(b.neck, UP, add * 0.4); turnBone(b.head, UP, add * 0.6);
-    [b.neck, b.head].forEach((bone, i) => { if (bone) hq[i].after.copy(bone.quaternion); });
+    lookEnd([b.neck, b.head]);
   }
 }
 export function start(npc) {

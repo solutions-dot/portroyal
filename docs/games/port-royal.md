@@ -190,3 +190,7 @@ Also: the name and talk button over a person now stay below the goal's words (th
 - The goal is hidden while a card is open (at 320 px wide it lay across the card's top edge).
 - The layout test has a case for a long toast over a two-line button. It passes at 320x640, 390x800 and 1280x720.
 - Publishing: Vercel builds every push to `main` with `npm run dist`. To see whether the live site has a change, fetch its `games/<game>/site/app.js` and compare it with `dist/` after `npm run dist`. A phone may show the old page until it is reloaded.
+
+## The way out waits (17 November 2026)
+
+"Go back to the street" came up the moment you stepped into the tavern, because you arrive at the door. It and "Go out to the wharf" are marked `exit: true` and use the engine's `exitReady` (`docs/ENGINE.md`): the button appears once you have walked into the room, or after 7 seconds. The head-turn guard is the engine's `lookBegin` and `lookEnd` now.

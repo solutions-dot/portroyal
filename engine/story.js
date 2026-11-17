@@ -282,3 +282,11 @@ export function flowTest(story, opts = {}) {
   if (typeof console !== 'undefined') console.log(r.text);
   return r;
 }
+
+/* A way out is not offered the moment you come in. You arrive standing on the spot where the way out is (a door, the head of a stair), so its button ("Go back to the
+   street") came up at once and read as the next thing to do (owner, 17 November 2026). An exit is ready once you have walked off its spot, or after `wait` seconds for
+   someone who came in by mistake. Shared by every game: mark the action `exit: true`, ask exitReady(id, distance, radius, nowSeconds) where the game picks the action
+   to offer, and call exitsReset() whenever the place changes. */
+const EXITS = new Map();
+export function exitReady(id, d, r, now, { wait = 7 } = {}) { let e = EXITS.get(id); if (!e) EXITS.set(id, e = { t: now, off: false }); if (d > r + 0.5) e.off = true; return e.off || now - e.t > wait; }
+export function exitsReset() { EXITS.clear(); }
