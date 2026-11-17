@@ -175,3 +175,11 @@ Henry Morgan, Alexandre Exquemelin, the Reverend Emmanuel Heath and Symon Bennin
 - The hearth fire was two plain cones. It is now seven tongues of flame (soft painted teardrops, two crossed sheets each, flickering on their own) over red embers, charred logs and ash.
 - The dust motes were hard white squares; they are soft and round now.
 - The pineapples are barrel-shaped with diamond eyes and a crown of long arching leaves.
+
+## Heads do not spin (17 November 2026)
+
+The owner saw the pewterer's head on backwards on a phone. People near you turn their heads toward you: a turn added on top of the clip's pose each frame. The animation mixer only writes a bone again when its clip value changes, so on a still head track the turns piled up and the head went right round (measured: the pewterer and the sailor reached 171 and 179 degrees from the chest). `turnBone` in `main.js` now remembers what the bone was before its turn and puts it back if it finds the bone untouched (now 35 degrees at most). The shared crowd code (`engine/ambient.js`), Kendal, Tivoli and Selassie already had this guard; Port Royal's own look code did not.
+
+New check: `?test=heads` (`checks.js`, `runHeads`) stands you in front of and beside each person in every place and watches every head with `engine/audit.js` `headWatch`. `&p=tavern` runs one place. The town takes several minutes.
+
+Also: the name and talk button over a person now stay below the goal's words (they sat on top of them when you looked up at someone from close by).

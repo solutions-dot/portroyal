@@ -1964,7 +1964,7 @@ TICKS.push(() => { markN = 0; TB.a = null; const now = performance.now() / 1000;
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (TB.a && !busy) TB.a.go(); }); }
   const show = TB.a && TB.a === current && !busy; TB.el.hidden = !show; if (!show) return;
   const p = TB.world.clone().project(camera); if (p.z > 1) { TB.el.hidden = true; return; }
-  const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (p.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - p.y) / 2 * r.height) + 'px';
+  const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (p.x + 1) / 2 * r.width) + 'px'; { let ty = r.top + (1 - p.y) / 2 * r.height; const gl = $('goal'), gr = gl && !gl.hidden ? gl.getBoundingClientRect() : null, hh = (TB.el.offsetHeight || 56) + 28; if (gr && gr.height > 1 && ty - hh < gr.bottom + 6) ty = gr.bottom + 6 + hh; TB.el.style.top = ty + 'px'; }   /* the name and the talk button stay below the goal: looking up at a tall person from close by put the name on top of the goal's words (owner's phone, 17 November 2026) */
   if (TB.el.dataset.label !== TB.a.label) { TB.el.dataset.label = TB.a.label; TB.el.innerHTML = TALK_SVG + '<span class="who">' + TB.a.label.replace(/^Talk to (the )?/, '').replace(/\b\w/g, (c) => c.toUpperCase()) + '</span>'; TB.el.setAttribute('aria-label', TB.a.label); } });
 /* a quick tap on the person you can talk to also starts the conversation */
 let tapRing = null;
@@ -2062,7 +2062,12 @@ if (__DEV__ && ['collision','seating'].includes(new URLSearchParams(location.sea
    nobody stands frozen and no two people move in step. Within 5 m, whoever is not walking turns the head toward you (up to 65 degrees from the chest). Checked by ?test=life. */
 const IDLES = { sailor: ['Point', 'Laugh', 'LookAround'], benning: ['WipeSweat', 'LookAround', 'WaveSlow'], gunner: ['LookAround', 'Salute', 'Point'], morgan: ['Point', 'Talk1', 'Laugh', 'LookAround'], ned: ['SitIdle2', 'SitTalk'] };
 const _lq = new THREE.Quaternion(), _lq2 = new THREE.Quaternion(), _lv = new THREE.Vector3(), _ly = new THREE.Vector3(0, 1, 0);
-function turnBone(b, a) { if (!b || !b.parent) return; b.parent.getWorldQuaternion(_lq2); _lq.setFromAxisAngle(_ly, a); b.quaternion.premultiply(_lq2.clone().invert().multiply(_lq).multiply(_lq2)); }
+/* A look is a turn added on top of the clip's own pose, once a frame. If the clip does not set the bone again before the next frame (a clip with no track for it, a mixer that
+   did not run), the turns pile up and the head spins right round (owner, 17 November 2026: "the heads are spinning like they did in Tivoli"). So the bone remembers what it was
+   before our turn and what we left it as: found untouched next time, it is first put back. */
+const TURNED = new WeakMap();
+function turnBone(b, a) { if (!b || !b.parent) return; const t = TURNED.get(b); if (t && b.quaternion.equals(t.after)) b.quaternion.copy(t.before); const rec = t || { before: new THREE.Quaternion(), after: new THREE.Quaternion() }; rec.before.copy(b.quaternion);
+  b.parent.getWorldQuaternion(_lq2); _lq.setFromAxisAngle(_ly, a); b.quaternion.premultiply(_lq2.clone().invert().multiply(_lq).multiply(_lq2)); rec.after.copy(b.quaternion); TURNED.set(b, rec); }
 TICKS.push((dt) => { if (!built) return;
   const list = [...Object.entries(IDLES).map(([k]) => people[k]), ...Object.values(survivors), ...(afterG ? afterG.children.filter((c) => c.userData.idles) : []), people.heath, ...(FB.on ? FBG.cast.concat([FBG.qm]) : []), state.place === 'out' || state.place === 'in' || state.place === 'after' || state.place === 'sea' ? abba : null];
   for (const m of list) { if (!m || !m.userData.anim) continue; let v = m.visible; for (let o = m.parent; v && o; o = o.parent) v = o.visible; if (!v) continue;
@@ -2071,7 +2076,7 @@ TICKS.push((dt) => { if (!built) return;
     if (m === abba || m === people.kofi) continue;   /* Abba has her own look (frame), Kofi watches his load */
     m.getWorldPosition(_lv); const dx = state.x - _lv.x, dz = state.z - _lv.z, near = Math.hypot(dx, dz) < 5 && state.started; let want = 0;
     if (near) { const ch = m.getObjectByName('mixamorigSpine2'); let f = m.rotation.y; if (ch) { const q = ch.getWorldQuaternion(_lq2), fw = new THREE.Vector3(0, 0, 1).applyQuaternion(q); f = Math.atan2(fw.x, fw.z); } let d = Math.atan2(dx, dz) - f; d = Math.atan2(Math.sin(d), Math.cos(d)); want = Math.abs(d) < 2.2 ? Math.max(-1.13, Math.min(1.13, d)) : 0; }
-    m.userData.look = (m.userData.look || 0) + (want - (m.userData.look || 0)) * Math.min(1, dt * 3); const a = m.userData.look; if (Math.abs(a) < 0.005) continue;
+    m.userData.look = (m.userData.look || 0) + (want - (m.userData.look || 0)) * Math.min(1, dt * 3); const a = Math.abs(m.userData.look) < 0.005 ? 0 : m.userData.look;   /* a look of nothing is still applied, so a bone left turned is put back */
     turnBone(m.getObjectByName('mixamorigNeck'), a * 0.3); turnBone(m.getObjectByName('mixamorigHead'), a * 0.7); } });
 
 /* ---------- dev checks: ?test=audit, layout, walkers, life and all (games/port-royal/src/checks.js; never in a public build) ---------- */
