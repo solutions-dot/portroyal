@@ -1309,7 +1309,7 @@ if G.get('jacket'):      # under a jacket only the shirt's front, collar zone an
 if G.get('coat') and OLD:      # under a coat only the shirt's cuffs can be seen (all of each sleeve, when the coat has none): cut the rest away
     o=PART['shirt']; bm=bmesh.new(); bm.from_mesh(o.data); _sl=G.get('coatsleeves',True); _cs=G.get('coatsleeve',0.82)
     def seen(c):
-        if not _sl: return side_arm(c) is not None or abs(c.x)>SX*0.78 or c.z>NECK-0.07*s      # (and the neck opening) a coat with no sleeves: the shirt's shoulders and sleeves show (from SX*0.55 in, bits of the shirt's chest were kept and showed through the coat as two white slivers)
+        if not _sl: return (side_arm(c) is not None and abs(c.x)>SX*0.80) or c.z>NECK-0.07*s      # (only the sleeves past the coat's armhole, and the neck: the shirt's shoulders under the coat came through it in patches, 17 November 2026)      # (and the neck opening) a coat with no sleeves: the shirt's shoulders and sleeves show (from SX*0.55 in, bits of the shirt's chest were kept and showed through the coat as two white slivers)
         t=side_arm(c); return t is not None and t>_cs-0.14
     bmesh.ops.delete(bm,geom=[f for f in bm.faces if not seen(cz(f))],context='FACES'); bm.to_mesh(o.data); bm.free()
 # body: remove what the clothes fully hide, so nothing pokes through
