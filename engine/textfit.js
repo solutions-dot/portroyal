@@ -2,7 +2,7 @@
    Every game draws its sign text onto a canvas with fillText, in its own copy of a sign helper, and none checked that the words fit: "JAMAICA RAILWAY"
    ran off both ends of its board in Kendal. This module, imported FIRST by every game's main.js, wraps the canvas fillText and strokeText once for
    all games: when a text drawn without its own maxWidth would reach past the canvas edges (less a margin of 6 per cent each side, inside a sign's
-   border), it is given the maxWidth that fits, so the browser narrows it to fit instead of cutting it off. Text that already fits is untouched.
+   border), it is fitted: a text up to a tenth too wide is narrowed a little (maxWidth), and a wider one is drawn in smaller letters, never cut off. Text that already fits is untouched.
    In dev builds each narrowed text is listed in window.__TEXTFIT (the text, the canvas size and how much it was narrowed), for the checks. */
 const P = typeof CanvasRenderingContext2D !== 'undefined' ? CanvasRenderingContext2D.prototype : null;
 if (P && !P.__fit) {
@@ -23,6 +23,10 @@ if (P && !P.__fit) {
         const r = room(text, this, x), w = this.measureText(String(text)).width;
         if (isFinite(r) && r > 8 && w > r) {
           if (typeof window !== 'undefined' && window.__TEXTFIT) window.__TEXTFIT.push({ text: String(text), canvas: this.canvas.width + 'x' + this.canvas.height, by: +(w / r).toFixed(2) });
+          if (w / r > 1.1) {   /* far too wide: smaller letters, not squashed ones (squeezed by a third, KINGSTON looked cramped) */
+            const f = this.font, m = /(\d+(?:\.\d+)?)px/.exec(f);
+            if (m) { this.font = f.replace(m[0], (+m[1] * r / w * 0.98).toFixed(1) + 'px'); try { return orig.call(this, text, x, y); } finally { this.font = f; } }
+          }
           return orig.call(this, text, x, y, r);
         }
       }
