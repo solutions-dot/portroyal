@@ -869,7 +869,7 @@ if CK and not FLAT:
             r0=math.hypot(e.x,e.y-NJ.y); r1=rad_out(e.z,a)+(0.013 if not (G.get('jacket') or G.get('waistcoat')) else 0.011)
             if r1>r0: e.x*=r1/r0; e.y=NJ.y+(e.y-NJ.y)*r1/r0
             if fr>0:      # the points: longer, lying on the shirt front, spread a little apart
-                sx=1 if math.sin(a)>=0 else -1; zp=NECK-0.058*s; xp=sx*(0.025 if G.get('tie') else 0.034)*s;      # with a tie the points come down close either side of the knot, as a four-in-hand is worn
+                sx=1 if math.sin(a)>=0 else -1; zp=NECK-0.058*s; xp=sx*(0.040 if G.get('tie') else 0.034)*s; zp=NECK-(0.068 if G.get('tie') else 0.058)*s;      # with a tie the points come down close either side of the knot, as a four-in-hand is worn
                 tip=Vector((xp,shirt_front(zp,xp)-0.008,zp)); e=e.lerp(tip,fr**0.8)
             row+=[q,e]
         rows.append(row)
@@ -877,7 +877,7 @@ if CK and not FLAT:
         ny=0 if (CK=='open' or not G.get('yoke',0)) else (1 if G.get('yoke',0)==1 else 2)
         for j in range(len(rows[0])):
             if j<ny: ring_fix(rows,j,SKIN,0.003,SHT,0.0045)      # the yoke 4.5 mm inside the shirt: at 2 mm the two surfaces fought for the same pixels and showed as ragged patches under the collar (owner, 17 November 2026)
-            elif j in (ny+1,ny+2) and G.get('collarfit',1): ring_fix(rows,j,SKIN,(0.008 if CK=='stand' else 0.005) if j==ny+1 else 0.008)      # (a stand collar's top edge 8 mm off: at 5 mm the neck's facets reached it in movement and cut it into a saw-tooth, owner, 17 November 2026)      # the band's top edge and the fold stand clear of the neck itself all the way round (measured from an ellipse, the neck came through the band in a ragged line at the throat, and lifted over the shirt it stood up in two teeth at the back: owner, 17 November 2026)
+            elif j in (ny+1,ny+2) and G.get('collarfit',1): ring_fix(rows,j,SKIN,(0.008 if CK=='stand' else 0.005) if j==ny+1 else 0.009)      # (a stand collar's top edge 8 mm off: at 5 mm the neck's facets reached it in movement and cut it into a saw-tooth, owner, 17 November 2026)      # the band's top edge and the fold stand clear of the neck itself all the way round (measured from an ellipse, the neck came through the band in a ragged line at the throat, and lifted over the shirt it stood up in two teeth at the back: owner, 17 November 2026)
             else: ring_fix(rows,j,SHT,0.003 if j==ny else 0.004)
         for row in rows:      # and then hard: each yoke point well inside the shirt and the seam just on it, so the band meets the shirt in one clean line (smoothed, the yoke crossed the shirt and showed as ragged patches: owner, 17 November 2026)
             for j in range(ny):
@@ -901,11 +901,11 @@ if G.get('tie'):         # a tie: a four-in-hand knot that fills the collar's op
     # a dimple and then widens, rounded across, to about 7 cm (1910s to 1950s ties were 2 to 3 inches wide) and its point.
     stand=CK=='stand'; hsz=(0.046 if stand else 0.034)*s
     bandF=min(collar_pt(0,NECK-0.004,NECK-0.004-0.008*s,0.016).y,collar_pt(0,NECK-0.004+hsz,NECK-0.012*s+hsz,0.007).y)      # the front of the closed band
-    zt=(collar_base(0)+0.008*s) if stand else (NECK-0.012*s+hsz-0.010*s); KH=(0.028 if stand else 0.031)*s; zb=zt-KH
+    zt=(collar_base(0)+0.008*s) if stand else (NECK-0.012*s+hsz-0.008*s); KH=(0.036 if stand else 0.040)*s; zb=zt-KH
     yback=(NJ.y-rad_out(zt,0.0)-0.002) if stand else bandF-0.0015
     bm=bmesh.new(); NR=9; NA=13; rings=[]
     for t in range(NR):
-        v=t/(NR-1); z=zt-KH*v; hw=(0.0185-0.0070*v**1.3)*s; dd=(0.011+0.005*math.sin(math.pi*min(1,v*1.1)))*(1-0.75*max(0,(v-0.7)/0.3))      # half width and depth: full at the top, narrowing down, deepest a third of the way down
+        v=t/(NR-1); z=zt-KH*v; hw=((0.0160-0.0075*v**1.2) if stand else (0.0195-0.0100*v**1.2))*s;      # under a tall stand collar a narrower knot (wider, it flared out like a cap) dd=(0.011+0.005*math.sin(math.pi*min(1,v*1.1)))*(1-0.75*max(0,(v-0.7)/0.3))      # half width and depth: full at the top, narrowing down, deepest a third of the way down
         if t==0: hw*=0.94; dd*=0.8      # the top edge tucks in under the band
         yb=min(yback,shirt_front(z)-0.003) if z<collar_base(0) else yback; ring=[]
         for k in range(NA):
@@ -919,17 +919,18 @@ if G.get('tie'):         # a tie: a four-in-hand knot that fills the collar's op
         for k in range(m): bm.faces.new([a[k],a[(k+1)%m],b[(k+1)%m],b[k]])
     bm.faces.new(list(reversed(rings[0]))); bm.faces.new(rings[-1])
     # the blade: 7 points across, rounded; it starts inside the knot, pinches into the dimple just below it, then widens to its point
-    L=(0.30 if not (G.get('waistcoat') or G.get('jacket')) else 0.24)*s; n=22; rows=[]; z0=zb+0.010*s
+    L=(0.30 if not (G.get('waistcoat') or G.get('jacket')) else 0.24)*s; n=22; z0=zb+0.010*s; ZS=[]; WS=[]; YS=[]; DS=[]; FLOOR=[]
     for t in range(n+1):
         f=t/n; z=z0-(L+0.010*s)*f
-        w=((0.012+0.008*min(1,f/0.10)) if f<0.10 else (0.020+0.015*(f-0.10)/0.80))*s if f<0.9 else 0.035*s*(1-f)/0.1+0.002      # narrow in the dimple, then wider to 7 cm
-        y=shirt_front(z)-0.006
-        if z>zb-0.004*s: y=min(y,yback-0.006)      # inside the knot
-        dimple=0.0018*math.sin(math.pi*min(1,f/0.10)) if f<0.10 else 0.0      # the dimple: a small fold pressed in at the middle
-        row=[]
-        for k in range(7):
-            u=-1+2*k/6; row.append(bm.verts.new((u*w,y-0.0035*math.cos(u*math.pi/2)+dimple*(1-abs(u))*1.4,z)))
-        rows.append(row)
+        w=((0.010+0.007*min(1,f/0.10)) if f<0.10 else (0.017+0.020*(f-0.10)/0.80))*s if f<0.9 else 0.035*s*(1-f)/0.1+0.002      # narrow in the dimple, then wider to 7 cm
+        sf=min(shirt_front(z,-w),shirt_front(z),shirt_front(z,w))-0.006      # clear of the shirt across the blade's whole width
+        yk=yback-0.006; tz=max(0.0,min(1.0,(z-(zb-0.024*s))/(0.020*s)))      # inside the knot, then easing down onto the shirt over 2 cm
+        ZS.append(z); WS.append(w); FLOOR.append(sf); YS.append(sf+(min(sf,yk)-sf)*tz); DS.append(0.0018*math.sin(math.pi*min(1,f/0.10)) if f<0.10 else 0.0)
+    for _ in range(12):      # a tie is stiff cloth: it lies straight across a dip in the shirt instead of following it (following it bent the blade into a kink under the knot)
+        YS=[YS[0]]+[min(YS[k],(YS[k-1]+YS[k+1])/2) for k in range(1,n)]+[YS[n]]
+    rows=[]
+    for z,w,y,dimple in zip(ZS,WS,YS,DS):
+        rows.append([bm.verts.new(((-1+2*k/6)*w,y-0.0035*math.cos((-1+2*k/6)*math.pi/2)+dimple*(1-abs(-1+2*k/6))*1.4,z)) for k in range(7)])
     quadstrip(bm,rows)
     bmesh.ops.recalc_face_normals(bm,faces=bm.faces[:])
     soft('Tie',bm,'Tie',only=('Spine2','Spine1','Spine','Neck'),src=ON('shirt'))
