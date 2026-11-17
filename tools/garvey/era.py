@@ -2,7 +2,7 @@
 #   trousers, waistcoat, collar, tie, flat cap (hat:'flat'), and for women a long skirt, a high-necked blouse (highneck) and a bun.
 # It also builds Port Royal's people (recipes in tools/people/, top-level "era": 1690): tools/people/npc.py is the old builder, kept only for reference.
 # Everything that is new for 1690 sits behind OLD (era before 1800) or behind garments no later recipe uses (coat, bands, cap, slops), so later eras build the same as before.
-import bpy, bmesh, math, sys, json, mathutils
+import bpy, re, bmesh, math, sys, json, mathutils
 from mathutils import Vector, Matrix, noise
 from mathutils.bvhtree import BVHTree
 import os
@@ -867,7 +867,9 @@ if CK and not FLAT:
             r0=math.hypot(e.x,e.y-NJ.y); r1=rad_out(e.z,a)+(0.013 if not (G.get('jacket') or G.get('waistcoat')) else 0.011)
             if r1>r0: e.x*=r1/r0; e.y=NJ.y+(e.y-NJ.y)*r1/r0
             if fr>0:      # the points: longer, lying on the shirt front, spread a little apart
-                sx=1 if math.sin(a)>=0 else -1; zp=NECK-0.058*s; xp=sx*0.034*s; tip=Vector((xp,shirt_front(zp,xp)-0.008,zp)); e=e.lerp(tip,fr**0.8)
+                # a blouse's or a child's points are shorter (owner, 17 November 2026: the points looked large)
+                sx=1 if math.sin(a)>=0 else -1; small=G.get('woman') or P['body'].get('age',0.5)<0.25; zp=NECK-(0.046 if small else 0.058)*s; xp=sx*(0.028 if small else 0.034)*s
+                tip=Vector((xp,shirt_front(zp,xp)-0.008,zp)); e=e.lerp(tip,fr**0.8)
             row+=[q,e]
         rows.append(row)
     if not OLD or EASE_OLD:      # every line of the collar is evened out along the ring (see ring_fix); the yoke stays on the skin and under the shirt, the band and the leaf stay clear of the shirt (the 1690 neckband had the same teeth)
@@ -1599,7 +1601,7 @@ def tuck_under_collar():
     # The same for a flat collar (round or camp): skin of the neck and shoulders lying under the collar's leaf, below its seam, is set 8 mm deeper and bound to the collar,
     # so it cannot come through at the nape when the head bows (it showed as a streak of skin across the back of the collar: owner, 17 November 2026).
     co=bpy.data.objects.get('Collar')
-    if co is None or not FLAT or not len(co.data.polygons): return
+    if co is None or not len(co.data.polygons): return      # every collar, flat or turned down (owner, 17 November 2026: gaps with skin showing under a turn-down collar's leaf)
     from mathutils.kdtree import KDTree
     b=bmesh.new(); b.from_mesh(co.data); b.normal_update(); bt=BVHTree.FromBMesh(b); top=[v.co.copy() for v in b.verts if v.is_boundary and v.co.z>NECK-0.02*s]; b.free()
     kt=KDTree(max(1,len(top)))
@@ -1622,6 +1624,36 @@ def tuck_under_collar():
         v.co=c-v.normal*(0.0015+0.0065*feather); n+=1
     print('TUCKED UNDER COLLAR',n)
 if G.get('tuckskin',1): tuck_under_collar()
+def tuck_under_skirt():
+    # Skin at the waist under the top of a skirt (the band the belt covers and a hand's width below it) came through the skirt just under the belt when the body bent
+    # forward to talk or walk (owner, 17 November 2026: "the belt also is exposing something underneath"). Each such point of skin is set 8 mm deeper and takes the bone
+    # weights of the skirt right over it, so it moves exactly as the skirt does and cannot pass it. One rule for every body with a skirt.
+    sk=PART.get('skirt')
+    if sk is None or not len(sk.data.polygons): return
+    from mathutils.kdtree import KDTree
+    b=bmesh.new(); b.from_mesh(sk.data); b.normal_update(); bt=BVHTree.FromBMesh(b); b.free()
+    kv=KDTree(len(sk.data.vertices))
+    for v in sk.data.vertices: kv.insert(v.co,v.index)
+    kv.balance(); on={g.index:g.name for g in sk.vertex_groups}; n=0
+    Jy=J('Hips').y; covers=[x for x in (PART.get('shirt'),sk) if x is not None and len(x.data.polygons)]; trees=[]
+    for x in covers:
+        bb=bmesh.new(); bb.from_mesh(x.data); bb.normal_update(); trees.append(BVHTree.FromBMesh(bb)); bb.free()
+    dead=set()
+    for v in h.data.vertices:      # loose patches of the body's own skin at the waist, under the blouse or the skirt, came out between the belt and the skirt when the body bent
+        c=v.co
+        if not HIP-0.06<c.z<HIP+0.16: continue
+        ws={h.vertex_groups[g.group].name:g.weight for g in v.groups if h.vertex_groups[g.group].name.startswith('mixamorig:')}
+        if not ws: continue
+        top=max(ws,key=ws.get)
+        if not re.match(r'mixamorig:(Hips|Spine\d?|LeftUpLeg|RightUpLeg)$',top): continue      # the body's own skin (a hand resting on the hip keeps its skin)
+        o=Vector((0,Jy,c.z)); d=Vector((c.x,c.y-Jy,0)); r=d.length
+        if r<1e-4: continue
+        d/=r
+        if any((lambda hh:hh is not None and (hh-o).length>=r-0.004)(T.ray_cast(o,d,0.6)[0]) for T in trees): dead.add(v.index)
+    if dead:
+        b=bmesh.new(); b.from_mesh(h.data); b.verts.ensure_lookup_table(); bmesh.ops.delete(b,geom=[b.verts[k] for k in dead],context='VERTS'); b.to_mesh(h.data); b.free(); h.data.update(); n=len(dead)
+    print('TUCKED UNDER SKIRT',n)
+if G.get('tuckskin',1) and G.get('skirt'): tuck_under_skirt()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
 # Colours. The layer below is a float layer, so the linear colours made by srgb() above are exported as they are, and the scene is marked
 # vertexColorSpace: linear (engine/colours.js repairs older bodies without the mark). So a recipe colour means the same colour in every game (docs/PIPELINE.md, "Skin").
