@@ -588,7 +588,7 @@ function fightIntro() { const c = CARDS.fight; card(c.title, c.paras, [{ t: c.go
 async function fightSkip() { const c = CARDS.fightRead; unlock('trenches'); unlock('attacks'); await infoCard(c); fightAfter(); }
 function columnPlace(P, sHead, up, clip, speed = 0, t = FIGHT.t) {   /* the soldiers stand in single file on the path: the first at sHead, the others behind, 2.3 m apart. clip 'Idle': stopped, each with his own idles in turn */
   const S = P.spots; for (const n of P.extras) { if (n.column === undefined) continue; const s = sHead + n.column * 2.3, vis = s < S.sClimb - 1; n.scripted = true; n.cue = !vis; n.m.visible = vis && cur === 'watch'; if (!vis) continue;
-    const [x, z, a] = pathAt(S.climb.dense, s); n.x = x; n.z = z; stand(n, P.G); n.m.rotation.y = up ? a + PI : a;
+    const [x, z, a] = pathAt(S.climb.dense, s); n.x = x; n.z = z; stand(n, P.G); if (!n.m.userData.groundAt) n.m.userData.groundAt = (gx, gz) => P.G.h(gx, gz);   /* on the steep path each foot is grounded on the hill under it */ n.m.rotation.y = up ? a + PI : a;
     let want = clip; if (clip === 'Idle') { if (n.look && t < n.lookT) want = n.look; else { n.look = null; if (!(t < n.idleT) || !HALT_IDLES.includes(n.clip)) { n.idleI = ((n.idleI ?? n.column) + 1) % HALT_IDLES.length; n.idleT = t + 4 + ((n.column * 7) % 5); } want = HALT_IDLES[n.idleI]; } }
     if (n.clip !== want) { n.clip = want; n.ctl.play(want === 'Idle' ? null : want); const act = n.ctl.cur; if (want !== 'Idle' && act) { act.time = ((n.column * 0.37) % 1) * act.getClip().duration; act.timeScale = 0.92 + (n.column % 5) * 0.04; } }   /* never in step with the man in front */
     if (speed > 0 && n.ctl.cur && n.ctl.cur.getClip().name === want) n.ctl.pace(speed, 0.5, 2.2); }
@@ -887,6 +887,7 @@ function devViews() {
     DIR.on = true; DIR.t = 0; DIR.dur = 1e6;
     DIR.a = new THREE.Vector3(4, groundAt(0.2, 2.3) + EYE + 1.6, 6); DIR.b = DIR.a;
     DIR.la = new THREE.Vector3(9, -39, 65); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 20; FOV = 20; resize();
+    if (q.has('near')) { const n = P.extras.find((e) => e.column === +(q.get('near') || 3)); if (n) { const gy = P.G.h(n.x, n.z); DIR.a = new THREE.Vector3(n.x + 3.2, gy + 1.1, n.z + 2.2); DIR.b = DIR.a; DIR.la = new THREE.Vector3(n.x, gy + 0.5, n.z); DIR.lb = DIR.la; DIR.f0 = DIR.f1 = 32; FOV = 32; resize(); } }   /* &near=N: close on the Nth man's feet */
     $('hud').hidden = true; document.title = 'SOLDIERS READY';
   });
   if (shot === 'poster') go('watch', 30, -0.4, -3.9, PI + 0.06, -0.03, ENV.dawn).then((P) => { $('hud').hidden = true; EYE = 1.75; P.spots.sticks.visible = false; });
