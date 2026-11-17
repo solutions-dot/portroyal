@@ -10,6 +10,7 @@ import { rowBoat, rowStroke, dugOut } from '../../../engine/boats.js';
 import { CL, mixers, grounded, HIPS_Y, setFallbackClip, loadClips, seamLoop, clipFor, animate, groundFeet, strideOf, lookBegin, lookEnd } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, chirp, cue, setG, tone, noiseHit, shipCreak, hammer, clink, uiSound } from '../../../engine/audio.js';
 import { exitReady, exitsReset } from '../../../engine/story.js';
+import { createSea } from '../../../engine/sea.js';
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 import { auditHeld, auditCloth } from '../../../engine/audit.js';   /* used only by the dev tests ?test=held and ?test=cloth */
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev only: ?test=skin */
@@ -258,8 +259,6 @@ const S = 5.2, X0 = -17.9, X1 = 17.9, SHORE = 23; const seaMat = new THREE.MeshS
 { // sand, sea, far hills
   const sand = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), new THREE.MeshStandardMaterial({ map: noiseTex([203, 180, 138], 34, 60), roughness: 1 }));
   sand.rotation.x = -Math.PI / 2; sand.position.set(SHORE - 80, 0, 0); scene.add(sand);
-  const sea = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), seaMat);
-  sea.rotation.x = -Math.PI / 2; sea.position.y = -0.62; scene.add(sea);
   for (const [r, h, colr, seed] of [[1500, 230, 0x7fa3a6, 1], [1150, 120, 0x5f8f86, 2]]) {
     const pos = [], n = 160;
     for (let i = 0; i <= n; i++) { const a = -Math.PI + 2 * Math.PI * i / n, da = Math.abs(Math.atan2(Math.sin(a - 1.45), Math.cos(a - 1.45))), fade = Math.max(0, Math.min(1, (da - 0.95) / 0.7)), hh = fade * h * (0.45 + 0.3 * Math.sin(i * 0.21 + seed) + 0.18 * Math.sin(i * 0.63 + seed * 3) + 0.07 * Math.sin(i * 1.7)); pos.push(Math.cos(a) * r, -2, Math.sin(a) * r, Math.cos(a) * r, Math.max(0, hh) - 1, Math.sin(a) * r); }
@@ -274,7 +273,7 @@ const indoor = new THREE.Group(); indoor.visible = false; scene.add(indoor); let
 function mk(geo, mat, x, y, z, parent) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); (parent || cur).add(m); return m; }
 
 /* ---------- harbour: pier, moored ships, cargo, beached boat, nets ---------- */
-let seaN = null, waves = null; const streetProps = []; const shipsM = {}; const DEVBOATS = {};   /* the boats, for the dev screenshot script */
+let seaN = null, waves = null, SEA = null; const streetProps = []; const shipsM = {}; const DEVBOATS = {};   /* the boats, for the dev screenshot script */
 function buildHarbour() {
   const std = (map, r) => new THREE.MeshStandardMaterial({ map, roughness: r === undefined ? 0.9 : r });
   const B = (w, h, d, m, x, y, z, p) => mk(new THREE.BoxGeometry(w, h, d), m, x, y, z, p);
@@ -321,10 +320,7 @@ function buildHarbour() {
   const foamT = cv(64, 256, (x) => { x.clearRect(0, 0, 64, 256); for (let y = 0; y < 256; y += 2) { const w = 14 + Math.sin(y * 0.11) * 8 + Math.sin(y * 0.37) * 5 + Math.random() * 6; const g = x.createLinearGradient(32 - w, 0, 32 + w, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.6, 'rgba(255,255,255,0.75)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(32 - w, y, w * 2, 2); } }); foamT.repeat.set(1, 6);
   const foam = mk(new THREE.PlaneGeometry(1.6, 160), new THREE.MeshBasicMaterial({ map: foamT, transparent: true, depthWrite: false }), SHORE + 0.2, -0.33, 0); foam.rotation.x = -Math.PI / 2;
   const sandEdge = mk(new THREE.PlaneGeometry(1.2, 160), new THREE.MeshStandardMaterial({ map: noiseTex([176, 152, 112], 30, 30), roughness: 1 }), SHORE + 0.45, -0.19, 0); sandEdge.rotation.set(-Math.PI / 2 + 0.0, 0, 0); sandEdge.rotation.y = 0.33;
-  seaN = cv(128, 128, (x) => { const d = x.createImageData(128, 128), h = new Float32Array(128 * 128); for (let i = 0; i < h.length; i++) { const u = i % 128, v = i / 128 | 0; h[i] = Math.sin(u * 0.196 + Math.sin(v * 0.147) * 2) + Math.sin(v * 0.245 + Math.sin(u * 0.098) * 1.5) * 0.7 + Math.sin((u + v) * 0.393) * 0.3; }
-    for (let v = 0; v < 128; v++) for (let u = 0; u < 128; u++) { const i = v * 128 + u, dx = h[v * 128 + (u + 1) % 128] - h[i], dy = h[((v + 1) % 128) * 128 + u] - h[i]; d.data[i * 4] = 128 + dx * 150; d.data[i * 4 + 1] = 128 + dy * 150; d.data[i * 4 + 2] = 255; d.data[i * 4 + 3] = 255; } x.putImageData(d, 0, 0); });
-  const wg = new THREE.PlaneGeometry(300, 300, 60, 60); wg.rotateX(-Math.PI / 2); waves = mk(wg, seaMat, SHORE + 60, -0.35, 0); waves.userData.base = wg.attributes.position.array.slice();
-  seaN.colorSpace = THREE.NoColorSpace; seaN.repeat.set(160, 160); seaMat.normalMap = seaN; seaMat.normalScale.set(0.55, 0.55); seaMat.needsUpdate = true;
+  SEA = createSea(scene, { kind: 'caribbean', y: -0.35, at: [SHORE + 60, 0], size: 300, material: seaMat, farDrop: 0.27 }); waves = SEA.near; seaN = true;   /* the engine's sea (engine/sea.js): it moves itself; the earthquake moves its level (SEA.setLevel). seaMat is shared with the flood and the lagoon. */
 }
 
 /* ---------- inside The Turtle ---------- */
@@ -1129,9 +1125,8 @@ function frame(now) {
       else if (CL.Walk) updateWalk(galdy, walkedX, walkedZ, dt); } }
   camera.position.set(state.x + Math.sin(tt * 31) * 0.06 * sh, eyeY + camLift + (reduceMotion ? 0 : Math.sin(bob) * 0.035) + Math.sin(tt * 37) * 0.05 * sh, state.z + Math.sin(tt * 27) * 0.05 * sh); camera.rotation.set(state.pitch + Math.sin(tt * 29) * 0.015 * sh, state.yaw, Math.sin(tt * 23) * 0.03 * sh); if (galdy && galdy.visible) { const back = state.place === 'out' ? 2.6 : 1.9, wx = camera.position.x + Math.sin(state.yaw) * back, wz = camera.position.z + Math.cos(state.yaw) * back, sx = state.x, sz = state.z; const [cx2, cz2] = camBounds(wx, wz); camera.position.x = cx2; camera.position.z = cz2; state.x = sx; state.z = sz; camera.position.y += 0.35; camera.rotation.x -= 0.12; }
   for (const [b, q] of animQ) b.quaternion.copy(q);            // put back the animation's own pose before adding ours
-  if (seaN && state.place !== 'in' && state.place !== 'ware') { const t = now / 1000; seaN.offset.x = t * 0.02; seaN.offset.y = t * 0.013;
-    const p = waves.geometry.attributes.position, b = waves.userData.base; if (!PHONE || (frameN & 1) === 0) for (let i = 0; i < p.count; i++) { const x = b[i * 3], z = b[i * 3 + 2]; p.setY(i, Math.sin(x * 0.42 + t * 1.3) * 0.07 + Math.sin(z * 0.31 + t * 0.9) * 0.06 + Math.sin((x + z) * 0.9 + t * 2.1) * 0.025); } p.needsUpdate = true; if ((frameN++ & (PHONE ? 7 : 3)) === 0) waves.geometry.computeVertexNormals();
-    waves.position.y = seaLevel; const m = Q.ruin ? null : shipsM.merchant, sl = Q.ruin ? null : shipsM.sloop; if (m) { m.position.y = -0.35 + Math.sin(t * 0.8) * 0.05; m.rotation.x = Math.sin(t * 0.6) * 0.012; m.rotation.z = Math.sin(t * 0.45) * 0.004; } if (sl) { sl.position.y = -0.35 + Math.sin(t * 1.0 + 1) * 0.07; sl.rotation.x = Math.sin(t * 0.75 + 2) * 0.025; }
+  if (seaN && state.place !== 'in' && state.place !== 'ware') { const t = now / 1000;
+    SEA.setLevel(seaLevel); const m = Q.ruin ? null : shipsM.merchant, sl = Q.ruin ? null : shipsM.sloop; if (m) { m.position.y = -0.35 + Math.sin(t * 0.8) * 0.05; m.rotation.x = Math.sin(t * 0.6) * 0.012; m.rotation.z = Math.sin(t * 0.45) * 0.004; } if (sl) { sl.position.y = -0.35 + Math.sin(t * 1.0 + 1) * 0.07; sl.rotation.x = Math.sin(t * 0.75 + 2) * 0.025; }
     for (const f of flagsM) { for (let i = 0; i < f.p.count; i++) { const d = f.uv.getX(i); /* 0 at the staff, 1 at the free end, so the hoist edge never leaves the pole */ f.p.setZ(i, f.base[i * 3 + 2] + (Math.sin(d * 5.5 - t * 5.2) * 0.2 + Math.sin(d * 11 - t * 8.3) * 0.05) * d * (f.k || 1)); f.p.setY(i, f.base[i * 3 + 1] + Math.sin(d * 4 - t * 3.1) * 0.05 * d * (f.ky || 1)); } f.p.needsUpdate = true; } }
   audioTick(now / 1000); if (state.started && now - lastSave > 5000) { lastSave = now; saveGame(); }
   if (mixer) mixer.update(dt); for (const mx of mixers) { const r = mx.getRoot(); let v = r.visible, o = r.parent; while (v && o) { v = o.visible; o = o.parent; } if (v) mx.update(dt); } for (const m of [abba, ...Object.values(people), ...Object.values(survivors)]) if (m && m.userData.anim) m.userData.anim.tick(dt);

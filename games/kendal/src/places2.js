@@ -1,6 +1,7 @@
 /* games/kendal/src/places2.js: the 1957 places: Kingston Railway Station, the inside of a wooden coach, a beach at Montego Bay,
    the crash site at night and at dawn, and the memorial at Kendal today. */
 import * as THREE from 'three';
+import { createSea } from '../../../engine/sea.js';
 import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv, grain } from './gfx.js';
 import { rails, railsCurve, woodCoach, dieselLoco, platform, TM } from './trains.js';
 import { palm, tree, banana, bush, flowers, boardHouse, hillRing, scatter, crate, hamper, suitcase, sack, bucket, bench, pole, lampPost, torch, lantern, signBoard, standpipe, truck, PM } from './props.js';
@@ -82,7 +83,7 @@ export function buildCoach() {
 export function buildBeach() {
   const g = grp(), walls = [], people = [], extras = [];
   const sandM = mesh(new THREE.PlaneGeometry(900, 460), std(T.sand([90, 46]), 1), 0, 0, 210, g); sandM.rotation.x = -PI / 2;
-  const sea = mesh(new THREE.PlaneGeometry(800, 500), std(T.water([60, 40]).clone(), 0.35, { metalness: 0.1, transparent: true, opacity: 0.92 }), 0, -0.08, -270, g); sea.rotation.x = -PI / 2; sea.material.map.needsUpdate = true; sea.userData.noBatch = true;
+  const sea = createSea(g, { kind: 'caribbean', y: -0.08, at: [0, -172], size: 300, farAt: [0, -3020], farDrop: 0.3 }).near;   /* the engine's sea (engine/sea.js): it moves itself. The moving patch starts at the water's edge (z -22); the flat sea beyond runs out to the horizon and never under the beach. */
   const foam = mesh(new THREE.PlaneGeometry(400, 3), new THREE.MeshBasicMaterial({ map: cv(256, 64, (x, w, h) => { const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.85)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, w, h); }, [60, 1], true), transparent: true, depthWrite: false }), 0, -0.04, -20.5, g); foam.rotation.x = -PI / 2; foam.userData.noBatch = true;
   const wet = mesh(new THREE.PlaneGeometry(400, 3.5), new THREE.MeshBasicMaterial({ color: 0x9a8a68, transparent: true, opacity: 0.45, depthWrite: false }), 0, 0.01, -18.2, g); wet.rotation.x = -PI / 2;
   scatter(g, (i, r) => palm(6 + r() * 3, i), 22, [-60, 14, 60, 30], [], 6); scatter(g, (i) => bush(i, 1.2), 14, [-60, 12, 60, 24], [], 9); { const hr = hillRing(260, 18, 70, { seed: 5 }); hr.children.forEach((c) => { if (c.position.z < 90) c.visible = false; }); g.add(hr); }
@@ -98,7 +99,7 @@ export function buildBeach() {
   extras.push(...walkers(crowd57(10, 17, [-30, 2, 30, 12], { anims: ['Idle', 'Talk1', 'Laugh'], faceZ: PI * 0.5 }).filter(free(walls)), 6, [-34, -15.5, 34, 11], 0.7, 10));
   /* the mento band (a guitar, a banjo and a rumba box, its player sitting on it) is added in life.js with the clips they play */
   return { id: 'beach', group: g, walls, bounds: { x0: -38, x1: 38, z0: -17, z1: 13 }, start: { x: 0, z: 9.5, yaw: PI * 0.04 }, people, extras, env: ENV.day, sea, castle, bandPos: [14, 4.2], seaTex: sea.material.map,
-    spots: { sea: [0, -16], castle: [-12, -2.6], band: [11.6, 4.2] }, tick: (dt, t) => { sea.material.map.offset.set(t * 0.004, t * 0.01); sea.position.y = -0.08 + Math.sin(t * 0.9) * 0.03; foam.position.z = -20.5 + Math.sin(t * 0.7) * 0.6; foam.material.opacity = 0.6 + Math.sin(t * 0.7) * 0.3; } };
+    spots: { sea: [0, -16], castle: [-12, -2.6], band: [11.6, 4.2] }, tick: (dt, t) => { /* the sea moves itself (engine/sea.js) */ foam.position.z = -20.5 + Math.sin(t * 0.7) * 0.6; foam.material.opacity = 0.6 + Math.sin(t * 0.7) * 0.3; } };
 }
 
 /* ============ the crash site: the embankment, two coaches that stayed on the rails, and the wreck in the gully ============ */

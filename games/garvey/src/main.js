@@ -16,7 +16,7 @@ import { gripTick, spreadArms } from '../../../engine/grip.js';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
 import { exitReady, exitsReset } from '../../../engine/story.js';
-import { makeSea } from '../../../engine/water.js';
+import { createSea } from '../../../engine/sea.js';
 import { model, prefetch, onLoadFail } from '../../../engine/loader.js';
 import { auditCloth } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
@@ -865,13 +865,12 @@ function resetChapter4() {   /* the press room again: the page comes down, the j
 
 /* ---------- chapter 5: a dock in New York, 1919 ---------- */
 const dockG = new THREE.Group(); dockG.visible = false; scene.add(dockG);
-const SEAS = [];   /* every sea in the game (the dock's and the one round the ship): moved each frame while it is on the screen */
 const DOCK_WALLS = [], DOCK_BOUNDS = { x0: -9.2, x1: 9.2, z0: -3.6, z1: 3.4 };
 let dockBuilt = false;
 function signTex(lines, w = 512, h = 160) { return cv(w, h, (x) => { x.fillStyle = '#2b2118'; x.fillRect(0, 0, w, h); x.strokeStyle = '#d6b45c'; x.lineWidth = 6; x.strokeRect(8, 8, w - 16, h - 16); x.fillStyle = '#efe3c0'; x.textAlign = 'center'; let y = 16; for (const [t, size] of lines) { y += size; x.font = '700 ' + size + 'px Georgia, serif'; x.fillText(t, w / 2, y); y += 12; } }); }
 function buildDock() {
   if (dockBuilt) return; dockBuilt = true; const g = dockG;
-  { const sea = makeSea({ color: 0x4c7a86, y: -0.7, x: 0, z: 60, size: 220, swell: 0.7 }); g.add(sea); SEAS.push(sea); }   /* the harbour: the engine's sea (engine/water.js), greyer than the Caribbean and with a lower swell. It was a flat, still sheet. */
+  createSea(g, { kind: 'harbour', y: -0.7, at: [0, 60], size: 220, swell: 0.7, farDrop: 0.3 });   /* the harbour: the engine's sea (engine/sea.js), greyer than the Caribbean and with a lower swell. It was a flat, still sheet. */
   box(20.4, 0.7, 8.6, woodDark, 0, -0.35, 0, g); mesh(new THREE.PlaneGeometry(20.4, 8.6), std(plankTex([118, 90, 62], 7, [20.4 / 1.05, 8.6 / 2]), 0.9), 0, 0.005, 0, g).rotation.x = -Math.PI / 2;
   for (let i = 0; i < 14; i++) cyl(0.16, 0.18, 1.4, woodDark, -9.6 + i * 1.5, -0.7, 4.4, g, 8);   /* pilings along the edge */
   for (const bx of [-6.5, -2, 2.5, 7]) { cyl(0.18, 0.26, 0.5, iron, bx, 0.25, 4.0, g, 12); }   /* bollards */
@@ -917,7 +916,7 @@ function buildDeck() {
   const mastT = cv(32, 128, (x, w, h) => { x.fillStyle = '#9a7a4c'; x.fillRect(0, 0, w, h); for (let n = 0; n < 60; n++) { x.fillStyle = 'rgba(' + (Math.random() < 0.5 ? '60,42,22' : '200,170,120') + ',' + (0.1 + Math.random() * 0.15) + ')'; x.fillRect(Math.random() * w, 0, 1 + Math.random() * 1.5, h); } for (let k = 0; k < 3; k++) { x.fillStyle = 'rgba(40,30,20,0.55)'; x.fillRect(0, 20 + k * 40, w, 3); } }, [2, 6]);
   const glassM = new THREE.MeshStandardMaterial({ map: winT, roughness: 0.25, metalness: 0.2 }), win = (w, h, d, x, y, z) => mesh(new THREE.BoxGeometry(w, h, d), glassM, x, y, z, g);
   const hullM = solid(0x1d1f22, 0.75), white = std(panelT, 0.85), paint = solid(0xe6e0cf, 0.6, 0.15),   /* paint: white-painted iron (rails, stanchions, davits); the planked 'white' is for wooden walls only */ ironP = std(ironT, 0.6, { metalness: 0.3 }), deckM = std(plankTex([150, 126, 94], 7, [60 / 1.05, 8.4 / 2]), 0.9), ironD = solid(0x22262a, 0.6, 0.3), mastM = std(mastT, 0.8), rig = solid(0x2a2826, 0.9), brassM = solid(0xc9a24a, 0.35, 0.8);
-  { const sea = makeSea({ color: 0x4c7a86, y: -3.6, x: 0, z: 40, size: 260, swell: 0.7 }); g.add(sea); SEAS.push(sea); }   /* the harbour, moving (engine/water.js) */
+  createSea(g, { kind: 'harbour', y: -3.6, at: [0, 40], size: 260, swell: 0.7, farDrop: 0.3 });   /* the harbour round the ship (engine/sea.js) */
   /* the dock below, where you came from, and its warehouses */
   box(20.4, 0.7, 8.6, woodDark, 5, -3.25, -10.92, g); mesh(new THREE.PlaneGeometry(20.4, 8.6), std(plankTex([118, 90, 62], 7, [20.4 / 1.05, 8.6 / 2]), 0.9), 5, -2.895, -10.92, g).rotation.x = -Math.PI / 2;
   for (let i = 0; i < 5; i++) mesh(new THREE.PlaneGeometry(4.5, 9), std(facadeTex(i + 3), 0.95), -4 + i * 4.5, 1.6, -15.42, g);
@@ -1482,7 +1481,6 @@ function update(dt, now) {
   for (const mx of mixers) { const r = mx.getRoot(); if (r.visible && !r.userData.amb) mx.update(dt); } for (const n of PEOPLE) if (n.m && n.m.userData.anim && !n.m.userData.amb) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   for (const m of grounded) if (m.visible && !m.userData.amb) groundFeet(m);
   if (place === 'deck') deckTick(dt);
-  if (place === 'dock' || place === 'deck') for (const s of SEAS) { let v = true; for (let o = s; o; o = o.parent) if (!o.visible) v = false; if (v) s.userData.tick(performance.now() / 1000, { phone: isTouch }); }
   const PL = PLACES[place]; if (PL && PL.life) PL.life.tick(dt, { px: state.x, pz: state.z, talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } });   /* everyone else: engine/ambient.js (life.js) */
   if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }

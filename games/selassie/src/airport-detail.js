@@ -1,6 +1,7 @@
 /* General 1960s airport detail, built as static batches. No claim of an exact
    surveyed terminal plan. Repeated frames and paving add detail cheaply. */
 import * as THREE from "three";
+import { createSea } from "../../../engine/sea.js";
 import {
   grp,
   box,
@@ -53,16 +54,7 @@ export function airportDetail(Q) {
     puddle.rotation.x = -Math.PI / 2;
     puddle.rotation.z = r() * 3;
   }
-  const sea = plane(
-    1500,
-    1500,
-    std(T.water([85, 85]), 0.35, 0.15),
-    0,
-    -0.14,
-    0,
-    g,
-  );
-  sea.rotation.x = -Math.PI / 2;
+  const sea = createSea(g, { kind: "caribbean", y: -0.14, at: [0, 0], size: 300, far: 3000, farDrop: 0.15, swell: 0.5 }).near;   /* the engine's sea (engine/sea.js), with a low swell: the land lies only 10 cm above it */
   const land = plane(
     600,
     110,

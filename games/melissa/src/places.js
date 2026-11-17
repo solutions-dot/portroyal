@@ -7,6 +7,7 @@
    plus two rooms: room88 (Mass Clifford's block house, where the family shelters from Gilbert) and hall (the church hall used as a shelter in 2025).
    Each builder returns the group, walking bounds, walls, people, background figures and the spots the game's actions use. */
 import * as THREE from 'three';
+import { createSea } from '../../../engine/sea.js';
 import { T, std, solid, mesh, box, cyl, plane, grp, rng } from './gfx.js';
 import { palm, tree, banana, bush, hillRing, scatter, pole, lantern, bucket, crate, barrel, sack } from './props.js';
 import { house, shop, shopGoods, zincSheet, plank, branch, mattress, bareTree, snappedPalm, fallenTree, cutLogs, leaningPole, tarpOnGround, clothes, kerosene, tankOnStand, waterDrum, jug, standpipeTap, plywood, goBag, radio, roofOf, bread, tarpMesh, bigDish, waterTruck, car, zincFence } from './houses.js';
@@ -33,7 +34,7 @@ function village({ id, year, phase }) {
   { const hr = hillRing(150, 16, 52, { seed: 4, base: after ? [0.27, 0.34, 0.2] : [0.2, 0.42, 0.22] }); if (y51) hr.children.filter((c) => c.position.z > -20).forEach((c) => hr.remove(c)); g.add(hr); }
   if (y51) {   /* the sea to the south: a strip of sand, then water */
     const sand = mesh(new THREE.PlaneGeometry(160, 5.5), std(T.sand([32, 1]), 1), 3, 0.015, 14.6, g); sand.rotation.x = -PI / 2;
-    const sea = mesh(new THREE.PlaneGeometry(500, 300), std(T.water([70, 40]), 0.35), 0, 0.03, 17.4 + 150, g); sea.rotation.x = -PI / 2; }
+    createSea(g, { kind: 'caribbean', y: 0.06, at: [0, 17.4 + 150], size: 300, farAt: [0, 17.4 + 3000], farDrop: 0.05, swell: 0.3 }); }   /* the engine's sea (engine/sea.js): moving, and out to the horizon. The yard's ground runs on under it at 0, so the swell is kept low enough that no trough reaches the grass */
   const sw = (o, a) => swayable(o, a * 0.018), put = (o, x, z, ry = 0) => { o.position.set(x, 0, z); o.rotation.y = ry; g.add(o); return o; };
   const tone = [[226, 196, 150], [200, 228, 214], [244, 226, 176], [212, 182, 206]];
 

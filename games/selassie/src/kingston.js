@@ -12,6 +12,7 @@
      Q.carryTo        tasks whose button reads "Place ..." while carrying
    api = { S, Q, hold(id), place([x, y, z]), give(personId), notice(text), sound(name) } from main.js. */
 import * as THREE from "three";
+import { createSea } from "../../../engine/sea.js";
 import { T, std, solid, flat, glow, box, cyl, plane, grp, mesh, rng } from "./gfx.js";
 import { tree, crate, bench, marketBasket, yamBasket, hamper, suitcase, flowers, bush, sack, cart as countryCart } from "./period-props.js";
 import * as P from "./props.js";
@@ -427,8 +428,7 @@ export function road(K) {
   Q.mixed = true;
   const shore = plane(30, 200, std(T.sand([3, 24])), 0, -0.025, -20, Q.group);
   shore.rotation.x = -Math.PI / 2;
-  const sea = plane(900, 900, std(T.water([60, 60]), 0.25, 0.15), 0, -0.12, -50, Q.group);
-  sea.rotation.x = -Math.PI / 2;
+  const sea = createSea(Q.group, { kind: "caribbean", y: -0.12, at: [-60, -50], size: 300, far: 2000, farAt: [0, -50], farDrop: 0.1, swell: 0.5 }).near;   /* the harbour to the west (engine/sea.js), with a low swell: the shore lies only 10 cm above it */
   Q.props.sea = sea;
   box(10, 0.04, 120, solid(0x8f8e80), 0, 0.01, -18, Q.group);
   for (const s of [-1, 1]) box(0.12, 0.08, 120, P.CREAM, s * 4.85, 0.04, -18, Q.group);
