@@ -185,5 +185,5 @@ export function groundFeet(m) { if (m.userData.seatAnchor) { anchorSeat(m); retu
      lookEnd(bones)     after the turns: remember what we left
    bones is an array (null entries are skipped). One guard, in one place: do not copy it into a game. */
 const LOOKED = new WeakMap();
-export function lookBegin(bones) { for (const b of bones) { if (!b) continue; let t = LOOKED.get(b); if (!t) LOOKED.set(b, t = { base: new THREE.Quaternion(), after: new THREE.Quaternion(), on: false }); if (t.on && b.quaternion.equals(t.after)) b.quaternion.copy(t.base); t.base.copy(b.quaternion); } }
-export function lookEnd(bones) { for (const b of bones) { if (!b) continue; const t = LOOKED.get(b); if (t) { t.after.copy(b.quaternion); t.on = true; } } }
+export function lookBegin(bones) { for (const b of bones) { if (!b || !b.isObject3D) continue;   /* a real bone only: something stored in userData and copied with a body is a dead copy */ let t = LOOKED.get(b); if (!t) LOOKED.set(b, t = { base: new THREE.Quaternion(), after: new THREE.Quaternion(), on: false }); if (t.on && b.quaternion.equals(t.after)) b.quaternion.copy(t.base); t.base.copy(b.quaternion); } }
+export function lookEnd(bones) { for (const b of bones) { if (!b || !b.isObject3D) continue; const t = LOOKED.get(b); if (t) { t.after.copy(b.quaternion); t.on = true; } } }

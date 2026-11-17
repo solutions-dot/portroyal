@@ -2065,6 +2065,7 @@ if (__DEV__ && ['collision','seating'].includes(new URLSearchParams(location.sea
    nobody stands frozen and no two people move in step. Within 5 m, whoever is not walking turns the head toward you (up to 65 degrees from the chest). Checked by ?test=life. */
 const IDLES = { sailor: ['Point', 'Laugh', 'LookAround'], benning: ['WipeSweat', 'LookAround', 'WaveSlow'], gunner: ['LookAround', 'Salute', 'Point'], morgan: ['Point', 'Talk1', 'Laugh', 'LookAround'], ned: ['SitIdle2', 'SitTalk'] };
 const _lq = new THREE.Quaternion(), _lq2 = new THREE.Quaternion(), _lv = new THREE.Vector3(), _ly = new THREE.Vector3(0, 1, 0);
+const LOOK_BONES = new WeakMap();
 function turnBone(b, a) { if (!b || !b.parent) return; b.parent.getWorldQuaternion(_lq2); _lq.setFromAxisAngle(_ly, a); b.quaternion.premultiply(_lq2.clone().invert().multiply(_lq).multiply(_lq2)); }   /* always between lookBegin and lookEnd (engine/anim.js), or the turns pile up and the head spins */
 TICKS.push((dt) => { if (!built) return;
   const list = [...Object.entries(IDLES).map(([k]) => people[k]), ...Object.values(survivors), ...(afterG ? afterG.children.filter((c) => c.userData.idles) : []), people.heath, ...(FB.on ? FBG.cast.concat([FBG.qm]) : []), state.place === 'out' || state.place === 'in' || state.place === 'after' || state.place === 'sea' ? abba : null];
@@ -2075,7 +2076,7 @@ TICKS.push((dt) => { if (!built) return;
     m.getWorldPosition(_lv); const dx = state.x - _lv.x, dz = state.z - _lv.z, near = Math.hypot(dx, dz) < 5 && state.started; let want = 0;
     if (near) { const ch = m.getObjectByName('mixamorigSpine2'); let f = m.rotation.y; if (ch) { const q = ch.getWorldQuaternion(_lq2), fw = new THREE.Vector3(0, 0, 1).applyQuaternion(q); f = Math.atan2(fw.x, fw.z); } let d = Math.atan2(dx, dz) - f; d = Math.atan2(Math.sin(d), Math.cos(d)); want = Math.abs(d) < 2.2 ? Math.max(-1.13, Math.min(1.13, d)) : 0; }
     m.userData.look = (m.userData.look || 0) + (want - (m.userData.look || 0)) * Math.min(1, dt * 3); const a = Math.abs(m.userData.look) < 0.005 ? 0 : m.userData.look;   /* a look of nothing is still applied, so a bone left turned is put back */
-    const lk = m.userData.lookBones || (m.userData.lookBones = [m.getObjectByName('mixamorigNeck'), m.getObjectByName('mixamorigHead')]); lookBegin(lk); turnBone(lk[0], a * 0.3); turnBone(lk[1], a * 0.7); lookEnd(lk); } });
+    let lk = LOOK_BONES.get(m); if (!lk) LOOK_BONES.set(m, lk = [m.getObjectByName('mixamorigNeck'), m.getObjectByName('mixamorigHead')]);   /* kept beside the body, not in its userData: a body made as a copy of another gets a copy of userData, with dead copies of the bones in it */ lookBegin(lk); turnBone(lk[0], a * 0.3); turnBone(lk[1], a * 0.7); lookEnd(lk); } });
 
 /* ---------- dev checks: ?test=audit, layout, walkers, life and all (games/port-royal/src/checks.js; never in a public build) ---------- */
 if (__DEV__) { window.__prBoats = DEVBOATS; DEVBOATS.buildLoad = () => loadBuild(); }
