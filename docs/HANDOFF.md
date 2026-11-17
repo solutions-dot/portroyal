@@ -201,3 +201,15 @@ The owner approved the non-people changes for main. Selassie people revisions an
 ## 17 November 2026, evening: on board the Yarmouth
 
 Garvey chapter 5 lets you walk the ship's deck (`docs/games/garvey.md`, "On board the Yarmouth"). No other game has a place like it yet: a second place inside a chapter, with close looks that move your eyes to the thing (`lookPart`). People stand upright in every game (`engine/anim.js` `STANCE`, `docs/ENGINE.md`). Garvey's dock is busy. Port Royal's tavern and market were tidied (`docs/games/port-royal.md`).
+
+## Open: the every-clip gate after the full rebuild (17 November 2026)
+
+`node tools/review/people-check.mjs all` reports many bodies WORSE than the baseline after the full rebuild (for example Kendal `woman_long` 18 to 291, `boy` 47 to 173; Nanny `maroon_woman` 5 to 164; Garvey `printer1907` 28 to 111, `nb_youth` 17 to 75). The baseline was not updated. What is known:
+
+- It is not the builder: `nb_youth` built with the builder as it was when the baseline was recorded gives the same 75 lines.
+- It is not `engine/anim.js`: the same count with the old file.
+- It follows the recipe's `"face"`. Without it `nb_youth` gives 13 lines. Of the preset's targets only the ones that make the head taller matter (`forehead-scale-vert-incr`, `head-oval`); `head-diamond`, cheeks, nose and chin do not.
+- Yet the two built files are the same below the neck: same points, same weights, same bones (only the Head bone's angle differs a little), and the full copy is hardly simplified. So the check finds different faults on the same body. Why is not yet known. The faults it names are real but small (skin 15 to 22 mm through the shirt at the front of the shoulder in Idle; an ear tip through a head wrap).
+- Tried and dropped: putting the ear tops under the wrap (it made `woman_elder` worse, 4 to 142).
+
+Next: find what in `auditCloth` (`engine/audit.js`) depends on the head (a height, a bound, a piece order), then fix the real faults, then record the baseline.
