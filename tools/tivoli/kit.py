@@ -69,7 +69,14 @@ def new_obj(name, bm, mat, weights_from=None, only=None, bone=None):
 def solidify(o, t):
     md = o.modifiers.new('solid', 'SOLIDIFY'); md.thickness = t; md.offset = -1; md.use_even_offset = True
     o.modifiers.move(len(o.modifiers) - 1, 0)   # before the armature
+    from mathutils.kdtree import KDTree
+    kd = KDTree(len(o.data.vertices)); [kd.insert(v.co, i) for i, v in enumerate(o.data.vertices)]; kd.balance(); orig = [v.co.copy() for v in o.data.vertices]
     with bpy.context.temp_override(object=o, active_object=o, selected_objects=[o]): bpy.ops.object.modifier_apply(modifier='solid')
+    # even thickness can throw a sharp corner's point far out (a police vest had one 1.5 m out, which looked like a sword in his hand):
+    # no point may end up further from the cloth it came from than a few times the thickness
+    for v in o.data.vertices:
+        co, i, d = kd.find(v.co)
+        if d > 3 * t + 0.005: v.co = orig[i] + (v.co - orig[i]).normalized() * t
 
 # ---------- colour ----------
 TAN, GREEN, BROWN, BLACK = srgb((146, 128, 92)), srgb((84, 96, 56)), srgb((98, 72, 46)), srgb((34, 32, 28))
@@ -145,14 +152,14 @@ if K.get('boots') and trousers:
 vest = None
 if K.get('vest'):
     bm = bmesh.new(); bm.from_mesh(shirt.data); arm = group_ids(shirt, ARMS)
-    sp2 = J('Spine2')
+    sp2 = J('Spine2'); S0, S1 = K.get('shoulders', (0.075, 0.115))   # the shoulder pieces run from S0 to S1 out from the middle (the soldier's are wider: narrow, they were lost on the camouflage)
     def cut(f):
         c = f.calc_center_median()
         if c.z < BELT_TOP + 0.045: return True                                                                    # stops clear above the belt and its pouches
         if sum(weight_of(bm, v, arm) for v in f.verts) / len(f.verts) > 0.2: return True                         # armholes, roomy so the arm and armband clear the edge
-        if c.z > NECK.z - 0.02 and not (0.075 <= abs(c.x) <= 0.115): return True                                   # well below the collar, except the shoulder pieces, which run over the top
-        if abs(c.x) < 0.075 and c.z > NECK.z - (0.10 if (c.y - sp2.y) * FRONT > 0 else 0.055): return True        # round neck, lower in front
-        if abs(c.x) > 0.115 and c.z > NECK.z - 0.075: return True                                                  # narrow shoulder straps, not the whole shoulder
+        if c.z > NECK.z - 0.02 and not (S0 <= abs(c.x) <= S1): return True                                   # well below the collar, except the shoulder pieces, which run over the top
+        if abs(c.x) < S0 and c.z > NECK.z - (0.10 if (c.y - sp2.y) * FRONT > 0 else 0.055): return True        # round neck, lower in front
+        if abs(c.x) > S1 and c.z > NECK.z - 0.075: return True                                                  # narrow shoulder straps, not the whole shoulder
         return False
     bmesh.ops.delete(bm, geom=[f for f in bm.faces if cut(f)], context='FACES')
     # clean edges: cutting by whole faces leaves a stepped outline, so level the hem and smooth the armholes and neckline along the edge

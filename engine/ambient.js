@@ -32,6 +32,7 @@ import { walkRoute, segmentHitsWall } from './placement.js';
 import { groundFeet, strideOf, lookBegin, lookEnd } from './anim.js';
 import { gripTick } from './grip.js';
 import { faceCheck } from './faces.js';
+import { snapMeshes, auditSeated } from './audit.js';   /* dev checks only (ambientCheck): the public builds never call it, so the bundler leaves it out */
 
 /* ---------- settings ---------- */
 const DEF = {
@@ -472,6 +473,11 @@ export function ambientCheck(life, opts = {}) {
     stats.push(`${id}: ${n.amb.kind}, walked ${s.moved.toFixed(1)} m (${s.walkT.toFixed(0)} s), longest still ${s.stillWorst.toFixed(1)} s, seen ${s.seen} frames`); }
   /* look-alikes (17 November 2026): two people of one body share one face. Two of them within 2.5 m of each other read as twins, and with nearly the same clothes
      colours as the same person twice (engine/faces.js faceCheck). Measured at the nearest the two came in the whole run, so people who walk about and meet count. */
+  /* seated people (owner, 17 November 2026: elders on a bench looked as if they floated): each sitter is judged against the seat under them, with the
+     place's solid shapes and no people in them (engine/audit.js auditSeated: height, cutting in, the front and back edges) */
+  const sitters = life.people.filter((n) => n.m && n.m.visible !== false && !n.amb.gone && n.amb.kind === 'sit'), root = sitters.length && (opts.place || sitters[0].m.parent);   /* opts.place: the place's own group, when the people are not in it */
+  if (root) { const shown = life.people.filter((n) => n.m && n.m.visible !== false); shown.forEach((n) => (n.m.visible = false)); for (const n of sitters) n.m.updateMatrixWorld(true); const snap = snapMeshes(root).filter((e) => !e.inst); shown.forEach((n) => (n.m.visible = true));
+    for (const n of sitters) for (const l of auditSeated(name(n), n.m, snap, n.m.userData.ground || 0, stats)) lines.add('seat: ' + l); }
   for (const l of faceCheck(life.people.filter((n) => n.m && n.m.visible !== false), { dist: (p, q) => { const a = NEAR.get(p), b = NEAR.get(q), d = a && a.has(q) ? a.get(q) : b && b.has(p) ? b.get(p) : undefined; return d === undefined ? Math.hypot(p.x - q.x, p.z - q.z) : d; } })) lines.add(l);
   return { lines: [...lines], stats };
 }

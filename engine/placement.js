@@ -1,4 +1,4 @@
-import { Vector3 } from 'three';
+import { Vector3, Quaternion } from 'three';
 
 // A seated animation is anchored by its pelvis, rather than by its toes.
 // Coordinates belong to the model's parent, so a seat can travel with a train.
@@ -11,15 +11,41 @@ export function anchorSeat(model) {
   if(model.parent)model.parent.worldToLocal(hip);
   let lift=seat.lift;
   if(lift===undefined){
-    lift=.12*model.scale.y; const fwd=new Vector3(0,0,1).applyQuaternion(model.quaternion),pos=new Vector3();let pelvis=Infinity,feet=Infinity;
-    model.traverse(o=>{if(!o.isSkinnedMesh||!o.visible)return;const mat=o.material.name||'';if(!/Skin|Breeches|Skirt|Shoes|Sole/.test(mat))return;o.skeleton.update();const a=o.geometry.attributes.position,step=Math.max(1,Math.floor(a.count/600));for(let i=0;i<a.count;i+=step){o.getVertexPosition(i,pos);pos.applyMatrix4(o.matrixWorld);if(model.parent)model.parent.worldToLocal(pos);const dx=pos.x-hip.x,dz=pos.z-hip.z,ahead=dx*fwd.x+dz*fwd.z,side=Math.abs(dx*fwd.z-dz*fwd.x);if(side<.22*model.scale.x&&ahead>-.18&&ahead<.04&&pos.y>hip.y-.3*model.scale.y&&pos.y<hip.y-.04)pelvis=Math.min(pelvis,pos.y);if(/Shoes|Sole/.test(mat))feet=Math.min(feet,pos.y);}});
+    lift=.12*model.scale.y; const fwd=new Vector3(0,0,1).applyQuaternion(model.quaternion),pos=new Vector3();let pelvis=Infinity,feet=Infinity,cloth=Infinity;
+    model.traverse(o=>{if(!o.isSkinnedMesh||!o.visible)return;const mat=o.material.name||'';if(!/Skin|Breeches|Skirt|Shoes|Sole/.test(mat))return;o.skeleton.update();const a=o.geometry.attributes.position,step=Math.max(1,Math.floor(a.count/600));for(let i=0;i<a.count;i+=step){o.getVertexPosition(i,pos);pos.applyMatrix4(o.matrixWorld);if(model.parent)model.parent.worldToLocal(pos);const dx=pos.x-hip.x,dz=pos.z-hip.z,ahead=dx*fwd.x+dz*fwd.z,side=Math.abs(dx*fwd.z-dz*fwd.x);if(side<.22*model.scale.x&&ahead>-.18&&ahead<-.03&&pos.y>hip.y-.3*model.scale.y&&pos.y<hip.y-.04){if(/Breeches|Skirt/.test(mat))cloth=Math.min(cloth,pos.y);else pelvis=Math.min(pelvis,pos.y);}if(/Shoes|Sole/.test(mat))feet=Math.min(feet,pos.y);}});
+    if(isFinite(cloth))pelvis=cloth;   /* the seat of the trousers or skirt: bare skin here was often a hand hanging beside the hips, which lifted people 30 cm (17 November 2026) */
     if(isFinite(pelvis))lift=Math.max(lift,hip.y-pelvis-.005);
-    if(isFinite(feet))lift=Math.max(lift,(model.userData.ground||0)-seat.top+hip.y-feet+.005);
+    /* The pelvis rests on the seat. The feet used to lift the whole body too, when the clip's legs hang longer than the seat is high, and then people
+       floated 12 cm over a bench (owner, 17 November 2026). Now the knees bend instead (bendKnees, below). */
     lift=Math.min(.29*model.scale.y,lift);
-    const ac=model.userData.anim;if(ac?.cur?.time>.5)seat.lift=lift;
+    const ac=model.userData.anim,cur=ac?.cur;if(cur?.time>.5&&!(cur.getEffectiveWeight&&cur.getEffectiveWeight()<.999)&&!ac.mx?._actions?.some(a=>a!==cur&&a.isRunning()&&a.getEffectiveWeight()>.001))seat.lift=lift;   /* kept only once the sit has fully taken over: measured in the middle of the blend from standing, it held people 30 cm up (17 November 2026) */
   }
   delta.set(seat.x===undefined?0:seat.x-hip.x,seat.top+lift-hip.y,seat.z===undefined?0:seat.z-hip.z);
   model.position.add(delta);model.updateMatrixWorld(true);
+  bendKnees(model);
+}
+
+/* A seated person whose clip hangs the feet below the floor bends each knee (feet drawn back under the seat) until the sole just reaches the floor.
+   The clip sets the knee again every frame, so this runs every frame after the seat anchor. The ankle-to-sole height is measured once per body. */
+const kq=new Quaternion(),kA=new Vector3(),kK=new Vector3(),kAx=new Vector3(),kF=new Vector3(),kV=new Vector3();
+function bendKnees(model){
+  const U=model.userData;if(U.noKneeBend)return;
+  let drop=U.soleDrop;
+  if(drop===undefined){drop=null;const fb=[model.getObjectByName('mixamorigLeftFoot'),model.getObjectByName('mixamorigRightFoot')];if(fb[0]&&fb[1]){let lo=Infinity;
+    model.traverse(o=>{if(!o.isSkinnedMesh||!o.visible||!/Shoes|Sole/.test(o.material.name||''))return;o.skeleton.update();const a=o.geometry.attributes.position,step=Math.max(1,Math.floor(a.count/400));for(let i=0;i<a.count;i+=step){o.getVertexPosition(i,kV);kV.applyMatrix4(o.matrixWorld);lo=Math.min(lo,kV.y);}});
+    if(isFinite(lo))drop=Math.min(fb[0].getWorldPosition(kA).y,fb[1].getWorldPosition(kK).y)-lo;}
+    if(drop===null||!(drop>0&&drop<.3))drop=.08*model.scale.y;U.soleDrop=drop;}
+  const floor=model.parent?model.parent.localToWorld(kV.set(0,U.ground||0,0)).y:(U.ground||0);
+  kF.set(0,0,1).transformDirection(model.matrixWorld);kF.y=0;kF.normalize();kAx.set(kF.z,0,-kF.x);   /* the axis across the body (to its left) */
+  for(const side of['Left','Right']){
+    const knee=model.getObjectByName('mixamorig'+side+'Leg'),foot=model.getObjectByName('mixamorig'+side+'Foot');if(!knee||!foot)continue;
+    knee.getWorldPosition(kK);foot.getWorldPosition(kA);const want=floor+drop+.005;if(kA.y>=want)continue;
+    const v=kA.clone().sub(kK),len=v.length();if(kK.y-want>len-.01)continue;   /* the floor is out of reach even with the shin straight down */
+    /* turn the shin about the axis across the body, the way that draws the foot back, by the angle that brings the ankle up to the floor */
+    let best=0;for(const sg of[1,-1]){kq.setFromAxisAngle(kAx,sg*.3);const t=v.clone().applyQuaternion(kq);if(t.dot(kF)<v.dot(kF)){let a=0,b=1.6;for(let i=0;i<18;i++){const m=(a+b)/2;kq.setFromAxisAngle(kAx,sg*m);if(kK.y+v.clone().applyQuaternion(kq).y<want)a=m;else b=m;}best=sg*b;break;}}
+    if(!best)continue;
+    const pq=knee.parent.getWorldQuaternion(new Quaternion());kq.setFromAxisAngle(kAx,best);knee.quaternion.premultiply(pq.clone().invert().multiply(kq).multiply(pq));knee.updateMatrixWorld(true);
+  }
 }
 
 // Test a swept disc against furniture rectangles, including segment interiors.

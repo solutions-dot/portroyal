@@ -357,7 +357,13 @@ export function auditSeated(id, body, snap, ground = 0, stats) {
   const want = 0.12 * (body.scale.x || 1);   /* the hip joint of a seated person is about 12 cm above the seat (the pelvis is below it) */
   if (under && lift < want - 0.07) out.push(`${id} sits ${((want - lift) * 100).toFixed(0)} cm too low: the seat passes through the pelvis and thighs`);
   else if (under && lift > 0.3) out.push(`${id} hangs ${(lift * 100).toFixed(0)} cm above its seat`);
+  else if (under && isFinite(lowBack) && hips.y - lowBack < lift - 0.04) out.push(`${id} floats ${((lift - (hips.y - lowBack)) * 100).toFixed(0)} cm above its seat (the lowest of the seat of the trousers or skirt does not reach it)`);
   else if (!under && lift > 0.3 && lift < 0.7) out.push(`${id} sits on nothing (hips ${(lift * 100).toFixed(0)} cm above the floor)`);
+  /* where on the seat (owner, 17 November 2026: two elders on a bench looked as if they floated, from the side): the seat must run at least 8 cm
+     in front of the hip joint, so the buttocks and the backs of the thighs rest on it, and at least 6 cm behind it. Not for a seat narrower than 20 cm (a rail, a log). */
+  if (under) { const b = under.b, cs = [[b.min.x, b.min.z], [b.min.x, b.max.z], [b.max.x, b.min.z], [b.max.x, b.max.z]].map(([x, z]) => (x - hips.x) * fwd.x + (z - hips.z) * fwd.z), front = Math.max(...cs), back = -Math.min(...cs);
+    if (stats) stats.push(`${id}: seat runs ${(front * 100).toFixed(0)} cm in front of the hips and ${(back * 100).toFixed(0)} cm behind`);
+    if (front + back > 0.2) { if (front < 0.08) out.push(`${id} sits on the front edge of the seat (it ends ${(front * 100).toFixed(0)} cm in front of the hips)`); else if (back < 0.06) out.push(`${id} sits on the back edge of the seat (it ends ${(back * 100).toFixed(0)} cm behind the hips)`); } }
   return out;
 }
 

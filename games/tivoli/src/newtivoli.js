@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import * as TX from './textures.js';
 import { bake } from './bake.js';
 import { addSky } from './sky.js';
+import { makeDoor } from '../../../engine/door.js';
 
 const rngOf = (seed) => { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
 const M = (c, r = 0.9, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
@@ -24,6 +25,7 @@ export function buildNewTivoli(opts = {}) {
     trunk: M(0x5d4a35), leaf1: M(0x5a8a40), leaf2: M(0x6c9a48), leaf3: M(0x4a7a3a), hill: M(0x5d7a5a, 1), bench: M(0x7a5a3a), post: M(0x5a5a5a, 0.6, 0.4), rope: M(0x2a2a2a),
     cloth: [M(0xd04a3a), M(0x3a6ac0), M(0xf0ece0), M(0xe0c030)],
   };
+  const door = (o, x, z, ry) => { const d = makeDoor(o); d.position.set(x, 0.05, z); d.rotation.y = ry; g.add(d); return d; };   /* engine/door.js: framed, panelled, with a handle */
   const box = (mat, w, h, d, x, y, z, ry = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y + h / 2, z); m.rotation.y = ry; g.add(m); return m; };
   const cyl = (mat, r, h, x, y, z, seg = 10, r2 = r) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r2, r, h, seg), mat); m.position.set(x, y + h / 2, z); g.add(m); return m; };
   const wall = (x0, z0, x1, z1) => walls.push([x0, z0, x1, z1]);
@@ -51,7 +53,7 @@ export function buildNewTivoli(opts = {}) {
         if (f && rnd() < 0.25) for (let k = 0; k < 3; k++) box(X.cloth[(rnd() * 4) | 0], 0.4, 0.5, 0.02, wx - 0.5 + k * 0.5, y0 + 0.3, fz + facing * 1.25);   /* washing on the balcony rail */
       }
     }
-    box(X.door, 1.2, 2.2, 0.08, x, 0.05, fz); box(X.frame, 1.4, 0.12, 0.12, x, 2.3, fz);
+    door({ w: 1.0, h: 2.15, kind: 'flush', color: 0x6a4a30, frame: 0xf0ece2, handle: 'lever' }, x, z + facing * d / 2, facing > 0 ? 0 : Math.PI);   /* a plain flush timber door at the foot of the stair, as 1960s flats had */
     { const zEnd = facing > 0 ? -1.6 : 1.6, len = Math.abs(zEnd - fz); box(X.paving, 1.6, 0.05, len, x, 0, (zEnd + fz) / 2); }   /* a paved path from the door to the main path */
     SO('building', 'block@' + x + ',' + z, x - w / 2 - 0.15, x + w / 2 + 0.15, z - d / 2 - 0.15, z + d / 2 + 0.15, 0, h + 0.3); SO('building', 'balconies@' + x + ',' + z, x - w / 2, x + w / 2, facing > 0 ? z + d / 2 : z - d / 2 - 1.35, facing > 0 ? z + d / 2 + 1.35 : z - d / 2, 2.8, h);
     wall(x - w / 2 - 0.3, z - d / 2 - 0.3, x + w / 2 + 0.3, z + d / 2 + 0.3);
@@ -63,7 +65,7 @@ export function buildNewTivoli(opts = {}) {
   /* the community centre at the east end: a wide hall with a flat roof, open louvres, a covered porch on posts, and a sign. The door faces west (-x). */
   const cx = 38, cw = 10, cd = 16;
   box(X.white, cw, 5.4, cd, cx, 0, 0); box(X.plinth, cw + 0.05, 0.6, cd + 0.05, cx, 0, 0); box(X.roofc, cw + 0.6, 0.3, cd + 0.6, cx, 5.4, 0); box(X.band, cw + 0.06, 0.2, cd + 0.06, cx, 3.6, 0);
-  const fx = cx - cw / 2 - 0.02; box(X.door, 0.08, 2.4, 2.2, fx, 0.05, 0); box(X.frame, 0.12, 0.14, 2.4, fx, 2.45, 0);
+  const fx = cx - cw / 2 - 0.02; door({ w: 2.0, h: 2.4, kind: 'glazed', leaves: 2, color: 0x5a3e28, frame: 0xf0ece2, glass: 0x34424c }, cx - cw / 2, 0, -Math.PI / 2);   /* a pair of half-glazed doors into the hall */
   for (const zz of [-5.5, -3, 3, 5.5]) { box(X.frame, 0.08, 1.6, 1.8, fx, 1.2, zz); for (let s = 0; s < 5; s++) box(X.slat, 0.06, 0.05, 1.7, fx - 0.04, 1.35 + s * 0.28, zz); }
   box(X.roofc, 2.4, 0.2, 6, fx - 1.2, 3.2, 0); for (const zz of [-2.85, 2.85]) box(X.frame, 0.22, 3.2, 0.22, fx - 2.25, 0, zz);   /* the porch roof on two posts */
   sign('COMMUNITY CENTRE', 6.4, fx - 0.01, 4.55, 0, -Math.PI / 2);
@@ -74,7 +76,7 @@ export function buildNewTivoli(opts = {}) {
   /* the clinic at the west end: a smaller building with a sign. The door faces east (+x). */
   const kx = -40, kw = 7, kd = 10;
   box(X.white, kw, 3.6, kd, kx, 0, 0); box(X.plinth, kw + 0.05, 0.6, kd + 0.05, kx, 0, 0); box(X.roofc, kw + 0.5, 0.25, kd + 0.5, kx, 3.6, 0);
-  const kf = kx + kw / 2 + 0.02; box(X.door, 0.08, 2.2, 1.4, kf, 0.05, 0); for (const zz of [-3, 3]) { box(X.frame, 0.08, 1.4, 1.6, kf, 1.1, zz); box(X.win, 0.1, 1.2, 1.4, kf + 0.01, 1.2, zz); }
+  const kf = kx + kw / 2 + 0.02; door({ w: 1.4, h: 2.2, kind: 'glazed', leaves: 2, color: 0xe8e4da, frame: 0xd8d4ca, glass: 0x34424c, metal: 0x9a9a96 }, kx + kw / 2, 0, Math.PI / 2); for (const zz of [-3, 3]) { box(X.frame, 0.08, 1.4, 1.6, kf, 1.1, zz); box(X.win, 0.1, 1.2, 1.4, kf + 0.01, 1.2, zz); }
   sign('CLINIC', 3, kf + 0.01, 2.9, 0, Math.PI / 2);
   SO('building', 'clinic', kx - kw / 2 - 0.25, kx + kw / 2 + 0.25, -kd / 2 - 0.25, kd / 2 + 0.25, 0, 3.9); wall(kx - kw / 2 - 0.3, -kd / 2 - 0.3, kx + kw / 2 + 0.3, kd / 2 + 0.3);
 
@@ -82,7 +84,7 @@ export function buildNewTivoli(opts = {}) {
   const tree = (x, z, s) => { cyl(X.trunk, 0.12 * s, 2.4 * s, x, 0, z, 8, 0.15 * s); [[0, 3.0, 0, 1.3, X.leaf1], [0.7, 2.7, 0.3, 0.9, X.leaf2], [-0.7, 2.7, -0.2, 1.0, X.leaf3]].forEach(([dx, dy, dz, r, mm]) => { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(r * s, 1), mm); l.position.set(x + dx * s, dy * s, z + dz * s); g.add(l); });
     wall(x - 0.3, z - 0.3, x + 0.3, z + 0.3); SO('tree', 'tree@' + x + ',' + z, x - 1.8 * s, x + 1.8 * s, z - 1.6 * s, z + 1.6 * s, 1.6 * s, 4.4 * s); SO('tree', 'trunk@' + x + ',' + z, x - 0.25, x + 0.25, z - 0.25, z + 0.25, 0, 2.4 * s); };
   for (const [x, z, s] of [[-28, -5.5, 1], [-17, 5.5, 0.9], [-12, -5.6, 1], [6, 5.6, 1.1], [18, -5.5, 0.9], [24, 5.6, 1]]) tree(x, z, year >= 2010 ? Math.min(s * 1.3, 1.25) : old ? s * 1.15 : s);   /* young trees in the 1960s, grown by 2010 */
-  const bench = (x, z) => { box(X.bench, 1.8, 0.08, 0.45, x, 0.42, z); for (const dx of [-0.75, 0.75]) box(X.bench, 0.08, 0.42, 0.4, x + dx, 0, z); wall(x - 1, z - 0.3, x + 1, z + 0.3); SO('prop', 'bench@' + x, x - 0.95, x + 0.95, z - 0.25, z + 0.25, 0, 0.5); };
+  const bench = (x, z) => { box(X.bench, 1.8, 0.08, 0.45, x, 0.37, z); for (const dx of [-0.75, 0.75]) box(X.bench, 0.08, 0.37, 0.4, x + dx, 0, z);   /* seat 45 cm high, as a park bench is (at 50 cm older people's feet hung off the ground) */ wall(x - 1, z - 0.3, x + 1, z + 0.3); SO('prop', 'bench@' + x, x - 0.95, x + 0.95, z - 0.25, z + 0.25, 0, 0.45); };
   bench(-20, -3.4); bench(2, 3.4); bench(20, -3.4);
   for (const x of [-30, -22]) box(X.post, 0.08, 2.2, 0.08, x, 0, 6.5); box(X.rope, 8, 0.02, 0.02, -26, 2.0, 6.5); for (let k = 0; k < 6; k++) box(X.cloth[k % 4], 0.45, 0.65, 0.02, -29.2 + k * 1.2, 1.35, 6.5);
   SO('prop', 'line', -30.1, -21.9, 6.4, 6.6, 1.3, 2.2); wall(-30.2, 6.3, -29.8, 6.7); wall(-22.2, 6.3, -21.8, 6.7);
