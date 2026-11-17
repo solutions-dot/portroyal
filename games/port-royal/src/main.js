@@ -1887,7 +1887,7 @@ function dressSpit(g, stone, wood, dark) {
   /* a fishing canoe drawn up on the inner shore, nets drying on a pole rack beside it */
   const hull = new THREE.Group(); hull.position.set(24.2, 0.02, -24.5); hull.rotation.y = 1.15; g.add(hull); DEVBOATS.canoe = hull;
   /* a dug-out canoe, cut from one log (engine/boats.js dugOut): solid end decks, adze marks inside, a seat board, two paddles, a calabash bailer and a painter */
-  hull.add(dugOut({ L: 4.8, beam: 1.1, depth: 0.42, wood: new THREE.MeshStandardMaterial({ color: 0xc8b49c, map: noiseTex([118, 92, 66], 26, 2), roughness: 0.95 }) }));
+  hull.add(dugOut({ L: 4.8, beam: 1.1, depth: 0.42, wood: new THREE.MeshStandardMaterial({ color: 0xf2e6d2, map: noiseTex([128, 100, 72], 24, 2), roughness: 0.95 }) }));
   SPITC.push([24.2, -24.5, 1.4], [25.7, -23.9, 1.0], [22.7, -25.1, 1.0]);
   const netT = cv(128, 128, (c) => { c.clearRect(0, 0, 128, 128); c.strokeStyle = 'rgba(70,60,45,0.95)'; c.lineWidth = 1.4; for (let k = -128; k < 256; k += 10) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k + 128, 128); c.stroke(); c.beginPath(); c.moveTo(k + 128, 0); c.lineTo(k, 128); c.stroke(); } });
   const netM = new THREE.MeshStandardMaterial({ map: netT, transparent: true, alphaTest: 0.2, side: THREE.DoubleSide, roughness: 1 }); netT.repeat.set(2, 1);

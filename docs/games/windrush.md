@@ -99,6 +99,17 @@ Livery: the Ministry of Transport troopship scheme, a white hull with a broad bl
 
 `car()` in `scenery.js` now builds its cars with `engine/roadcars.js` (`docs/ENGINE.md`): a small round saloon for 1948 and 1962, a modern car for 2018, each with tyres, hub caps, windows, door lines, lamps and bumpers, in two meshes. Colours, sizes and places are unchanged, and no car has a make or a number. The ship, its name, the double-decker bus and the lorry were not touched. To view any spot: `?shot=london&c=x,y,z&l=x,y,z` (the new `c` and `l` set the camera and where it looks).
 
+## Vehicles, 17 November 2026
+
+The last plain vehicles now come from the shared kits (`docs/ENGINE.md`). Places, sizes, collision boxes and the ship's name and livery are unchanged; nothing has a fleet name, a number or a maker's badge.
+
+- **The double-decker in Brixton, 1962** (`doubleDecker` in `props.js`): `deckerBus` from `engine/roadcars.js`, a half-cab bus of about 1950: the driver's cab on the right beside the bonnet and radiator, an open wing over the left front wheel, the upper deck over the cab, the open platform at the back on the left with the stairs and the pole, a cream band between the decks, twin rear wheels. The "BRIXTON" blind moved to the destination box between the decks. Before: 32 meshes, about 580 triangles. After: 3 meshes (the body, the glass, the blind), about 3,100.
+- **The lorry in the Kingston yard and on the quay, 1948** (`truck` in `period-props.js`): `bonnetLorry` from `engine/roadcars.js`: a long louvred bonnet, an upright grille, rounded wings with the lamps beside it, running boards, a split windscreen, a wooden stake body. Same 5.3 m footprint. Before: 71 meshes, about 1,460 triangles, and a faint headlamp beam left over from Kendal's night scene (dropped: these are daytime scenes). After: 2 meshes, about 3,600.
+- **The porters' barrows** (`barrow` in `scenery.js`): wooden rails bending back into handles, cross bars, an iron nose plate, spoked wheels with rubber tyres under iron guards, cases with corner caps, handles and a strap. It fits its 0.8 by 0.6 m collision box. Before: 7 meshes, about 160 triangles. After: 1 mesh, about 1,560.
+- **The ten lifeboats on the ship** (`lifeboat` in `ship.js`, and the unused `lifeboat` in `scenery.js`): `shipLifeboat` from `engine/boats.js`: double-ended white hulls with seam lines, varnished gunwales, grab lines in loops, laced canvas covers, radial davits with falls and blocks. Before: 8 meshes each (80 in all) on the ship's materials. After: 1 mesh each on one shared material, so `batchStatic` merges all ten into one draw call; about 3,500 triangles each.
+
+Views: `?shot=work&c=-12,2.2,-1.8&l=-22,1.9,2` (the bus), `?shot=yard&c=-2,1.7,14.2&l=-7.5,1,17.4` and `?shot=quay&c=-3,2.2,21&l=-8,1,26` (the lorry), `?shot=quay&c=1.2,1.5,8.6&l=-2,0.6,5.6` (a barrow), `?shot=deck&c=1,1.7,3&l=7.6,0.6,-5` (the lifeboats).
+
 ## Characters, animation and performance (first version)
 
 The notes below describe the first version and are kept for history; the review above replaces them where they differ.

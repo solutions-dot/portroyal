@@ -102,6 +102,8 @@ The owner asked for more detail on the boat that rescues Lewis Galdy. All three 
 - **To view:** Chapters, "The earthquake", or `?shot=swim` in a dev build. `node build/vehicles/pr_shot.mjs after` saves close-up pictures of all three boats to `build/vehicles/port-royal/`.
 - Not done: the fishing canoe on the spit and the two packed ship models are unchanged.
 - Layout fix, same day: at 390 x 800 the round talk button sat on top of the controls hint when the hint wrapped to two lines (`?test=layout`). On narrow screens the hint now gives way while the talk button shows (`index.html`, the `max-width:520px` rule). At 667 x 375 the layout test still reports 4 overlaps (the top-right buttons and the goal over dialogue choices and cards); they were there before this change and are not fixed yet.
+- **The fishing canoe on the spit** (17 November 2026, the last plain boat): a dug-out canoe cut from one log (`dugOut` in `engine/boats.js`), 4.8 m by 1.1 m as before, with ends that curve up, solid end decks, adze marks inside, a seat board, two paddles, a calabash bailer and a painter coiled on the bow deck. Canoes like this were the island's fishing boats from Taino times. It was half a squashed sphere with two boards and a pole: 4 meshes, about 350 triangles; now 2 meshes, about 3,800. Same place, turn, collision circles and `DEVBOATS.canoe`. Pictures: `node build/vehicles/pr_canoe.mjs <tag>`.
+- **The packed ships** (the merchant ship and the sloop in `site/models`) were left alone: they are made in Blender, and adding loose code-built parts round a packed model would not line up with its hull.
 
 ## Test views (dev build only)
 

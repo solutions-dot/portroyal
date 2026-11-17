@@ -284,7 +284,7 @@ Trains run along x and face -x; every vehicle has its floor at y = 0 (platform h
 
 The shapes and colours are general pictures, not copies of a photographed engine (see `docs/games/kendal.md`). Kendal's dev model viewer (`?shot=model&m=late`, and `diesel`, `coach`, `early`, `first`, `third`, `wagon`) shows each one on a piece of track.
 
-## engine/boats.js: a wooden rowing boat (17 November 2026)
+## engine/boats.js: boats and ships (17 November 2026)
 
 `rowBoat(o)` builds an open clinker-built boat in code: overlapping planks with a real step at each lap, a keel, stem and stern posts, a transom, ribs, a gunwale with a rubbing strake under it, risers, thwarts with knees, bottom boards, thole pins (wooden pegs: metal rowlocks came later), two oars, a rudder with a tiller, a coil of rope and a bailer. It fits a harbour boat from the 1600s to the 1900s and carries no name or number.
 
@@ -293,6 +293,20 @@ The shapes and colours are general pictures, not copies of a photographed engine
 - `mask: true` adds an unseen lid at the gunwale that writes depth only. Set `renderOrder = 2` on the sea mesh and the sea is never drawn inside the boat, however low the boat sits or the waves rise. The boat can then have a real, deep inside instead of a false floor.
 - `userData` gives `seatTop`, `thwarts`, `boards` (the height of the bottom boards, for putting loads in) and `halfAt(x, y)` (half the inside width there).
 - Port Royal uses it three times: the boat that rescues Galdy, the boat on the beach and the ship's boat in Ned's story.
+
+**More boats (17 November 2026).** Four more builders share one vertex-colour material, so each is one or two draw calls and a row of them merges in `batchStatic`:
+
+| Builder | What it is | Cost |
+|---|---|---|
+| `dugOut({ L, beam, depth, wood, seats, gear })` | a canoe cut from one log: pointed ends that curve up, solid end decks, adze marks inside, a seat board, two paddles, a calabash bailer and a painter (rope) at the bow. Jamaican fishermen used these from Taino times into the twentieth century | 2 meshes (the log on `wood`, the gear), about 3,800 triangles |
+| `shipLifeboat({ L, beam, depth, side, deck, davitX, cover, davits })` | a ship's double-ended lifeboat of the 1920s to 1950s in radial davits: white hull with seam lines, varnished gunwale and rubbing band, grab lines in loops, a laced canvas cover (or thwarts when open), falls and blocks | 1 mesh, about 3,500 triangles |
+| `steamer({ L, beam })` | a three-island cargo steamer of about 1900 to 1925: forecastle, bridge deck and poop, hatches in the well decks, white house and wheelhouse, a plain black funnel with a steam pipe, cowl vents, two masts with derricks and rigging, lifeboats, portholes, anchors | 1 mesh, about 4,400 triangles |
+| `schooner({ L })` | a wooden two-masted trading schooner with her sails furled, bowsprit, deckhouse, hatch, a boat on deck and rigging | 1 mesh, about 1,500 triangles |
+
+- All face +x. The canoe lies on y = 0; the lifeboat's keel is at y = 0 with its davits standing at `deck` on the inboard side (`side` 1 means the ship's side is toward +z); the two ships float with the waterline at y = 0.
+- **Rule 3:** none of them carries a name, number, flag or company colours. The funnel is plain black.
+- `paintKit()` is the small helper they use (boxes, cylinders, rods, tubes, merged into one mesh with vertex colours). It is exported for other small code-built things: Windrush's porter's barrow uses it.
+- Used by Port Royal (the fishing canoe on the spit), Hurricane Melissa and Bog Walk (`dugOut` in `detail.js`), Windrush (the ten lifeboats on the ship, and `lifeboat` in `scenery.js`) and Marcus Garvey (the ships out in the harbour in chapter 5). To look at them alone: `node build/vehicles/viewer2/shoot.mjs <outdir> 'B.dugOut|front34,top'` (any `B.` builder from `engine/boats.js` or `R.` builder from `engine/roadcars.js`, with options as JSON after a second `|`).
 
 ## engine/roadcars.js: cars, a bus, a van and lorries (17 November 2026)
 
@@ -304,11 +318,13 @@ Road vehicles with a detailed look at a low cost. Each is drawn from its side ou
 | `bus({ colour, band, L })` | a single-deck town bus of the 1960s to 1980s with a front door on the left. `userData.sign` says where a game may put its own route sign |
 | `van({ colour, stripe, L })` | a small forward-control panel van |
 | `lorry({ colour, body, bodyColour, L, axles })` | a forward-control lorry. `body`: `'tank'` (bands, a hatch, a ladder, an outlet, a hose), `'fire'` (lockers with shutters, a pump panel, a ladder, a hose reel, a red lamp) or `'flat'` |
+| `deckerBus({ colour, band, L })` | (17 November 2026) a half-cab double-deck bus of the late 1940s and 1950s: the driver's cab on the right beside the bonnet and upright radiator, a wing over the left front wheel, the upper deck over the cab to a rounded dome, an open platform at the back on the left with the stairs and a pole, a band between the decks, twin rear wheels. `userData.sign` says where a game may put its destination blind. About 3,100 triangles |
+| `bonnetLorry({ colour, L })` | (17 November 2026) a bonneted lorry of the 1940s and early 1950s: a long louvred bonnet, an upright grille, rounded front wings with lamps beside the grille, running boards, a cab with a split windscreen, a wooden stake body with headboard and tailboard, twin rear wheels. About 3,600 triangles |
 
 - **Cost: two draw calls a vehicle**, however much detail it has: everything painted is one mesh with vertex colours (`PAINT`), all the glass is a second mesh (`GLASS`). Both materials are shared by every vehicle, so a game's `batchStatic` merges all the parked vehicles in a place into the same two meshes. A car is about 2,900 triangles, the bus 3,100, a lorry 4,600.
 - **Rule 3:** nothing carries a maker's badge, a name, a number or a livery. Number plates are blank. The caller gives the colours and adds any sign it has a source for.
 - Vehicles face +x and stand on y = 0. Jamaica and Britain drive on the left, so the driver sits on the right (+z) and the bus door is on the left (-z).
-- Used by Eventide (cars, the No. 43 bus, the fire engine, the meal van), Hurricane Melissa (the car, the water truck) and Windrush (the cars). To look at them alone: `node build/vehicles/viewer/shoot.mjs` (a small viewer page kept in the git-ignored `build/` folder) writes pictures to `build/vehicles/kit/`.
+- Used by Eventide (cars, the No. 43 bus, the fire engine, the meal van), Hurricane Melissa (the car, the water truck) and Windrush (the cars, and from 17 November 2026 the double-decker in Brixton and the lorry in Kingston). To look at them alone: `node build/vehicles/viewer/shoot.mjs` (a small viewer page kept in the git-ignored `build/` folder) writes pictures to `build/vehicles/kit/`.
 
 ## Still inside Port Royal, ready to move next
 

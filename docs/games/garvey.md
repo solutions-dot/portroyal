@@ -302,6 +302,10 @@ The Garvey and Port Royal work used to run in two chats. Port Royal's chat is cl
 - Edits to shared files (`menu/index.html`, `README.md`, `CLAUDE.md`) go in one small commit at the end of a milestone, on top of the latest `main`.
 - Fetch and rebase on `origin/main` before every push.
 
+## Ships in the harbour (17 November 2026)
+
+The three ships out in the water in chapter 5 (`dShip` in `main.js`) were boxes with a stick: 14 meshes, about 280 triangles. Two are now cargo steamers of the time (`steamer` in `engine/boats.js`: forecastle, bridge deck and poop, hatches, a white house and wheelhouse, a plain black funnel, cowl vents, two masts with derricks and rigging, lifeboats, portholes, anchors) and the small one without a funnel is a two-masted schooner with her sails furled (`schooner`). One mesh each, about 10,000 triangles for the three. Same places, lengths and turns, floating on the water at y = -0.7. No names, flags or company colours. The old ship by the dock (the *Yarmouth*) was not changed: its gangway, nameboard and rust patches are fitted to its box hull, so rebuilding it is a job of its own. To view: `?shot=dock1`.
+
 ## Checks before shipping
 
 Follow `docs/TESTING.md`: screenshots of every new place next to a reference photograph, the autoplayer for every chapter, the phone layout, a reading-level pass, and a facts check against this file.
