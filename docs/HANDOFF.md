@@ -211,4 +211,11 @@ After the full rebuild `people-check` reported many bodies WORSE (Kendal `woman_
 - Fix (`clParts` in `engine/audit.js`): the rest shape is each point through the hips bone's bind matrix, which is true units in one frame for every piece. Two test bodies that are the same below the neck now report the same faults.
 - Also fixed: an arm inside its sleeve beside the shirt's side panel is covered (`clUnder`), and buttons on the front band are not a fault.
 
-**What this means**: every earlier cloth count, and the old baseline, came from a check that skipped most skin-under-cloth pairs. The numbers are much higher now because the check finally looks. `?test=cloth` in every game uses the same code. The faults it lists are the real work list for clothes. The baseline has to be recorded again from the corrected check, and the docs that quote old counts are out of date.
+**What this means**: every earlier cloth count, and the old baseline, came from a check that skipped most skin-under-cloth pairs. The numbers are much higher now because the check finally looks. `?test=cloth` in every game uses the same code.
+
+**Where it stands** (end of 17 November 2026):
+- The baseline (`tools/checks/people-baseline.json`) is recorded again from the corrected check, so the gate again catches a body that gets worse. It is not a clean bill: about 30,000 lines across the ten games.
+- Three kinds of harmless report are left out now: cloth right beside a cover's open edge in any pose (`clRimNear`, the rule the rest shape already had), an arm inside its sleeve beside the side panel (`clUnder`), and under 8 mm of skin in an armpit (`clArmpit`).
+- The check still reports things nobody can see. Example: Tivoli's `woman_elder` in `Agree` has 35 lines of "Body shows through Shirt" and the picture shows a whole blouse. So the list is a guide, not a count of visible faults. The honest next step is a test that asks what the eye sees: draw the body from a few sides with each piece in a flat colour and count skin-coloured pixels inside a garment's outline.
+- The biggest kinds after that: "Skirt shows through Belt" (a belt or sash sinking into a skirt when the body bends), "fingers go into Breeches", "Shirt shows through Breeches", jagged shirt and skirt hems. The bodies with most lines: `woman_elder`, `man_elder`, `guide2020`, `student2020`, `woman57`, `boy`, `girl` and their light copies.
+- Place audits are 0 in every game (Bog Walk and Melissa were the last two). Held items are 0 in the eight games that have that view.
