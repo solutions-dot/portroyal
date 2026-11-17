@@ -877,7 +877,7 @@ if CK and not FLAT:
         ny=0 if (CK=='open' or not G.get('yoke',0)) else (1 if G.get('yoke',0)==1 else 2)
         for j in range(len(rows[0])):
             if j<ny: ring_fix(rows,j,SKIN,0.003,SHT,0.0045)      # the yoke 4.5 mm inside the shirt: at 2 mm the two surfaces fought for the same pixels and showed as ragged patches under the collar (owner, 17 November 2026)
-            elif j in (ny+1,ny+2) and G.get('collarfit',1): ring_fix(rows,j,SKIN,0.005 if j==ny+1 else 0.008)      # the band's top edge and the fold stand clear of the neck itself all the way round (measured from an ellipse, the neck came through the band in a ragged line at the throat, and lifted over the shirt it stood up in two teeth at the back: owner, 17 November 2026)
+            elif j in (ny+1,ny+2) and G.get('collarfit',1): ring_fix(rows,j,SKIN,(0.008 if CK=='stand' else 0.005) if j==ny+1 else 0.008)      # (a stand collar's top edge 8 mm off: at 5 mm the neck's facets reached it in movement and cut it into a saw-tooth, owner, 17 November 2026)      # the band's top edge and the fold stand clear of the neck itself all the way round (measured from an ellipse, the neck came through the band in a ragged line at the throat, and lifted over the shirt it stood up in two teeth at the back: owner, 17 November 2026)
             else: ring_fix(rows,j,SHT,0.003 if j==ny else 0.004)
         for row in rows:      # and then hard: each yoke point well inside the shirt and the seam just on it, so the band meets the shirt in one clean line (smoothed, the yoke crossed the shirt and showed as ragged patches: owner, 17 November 2026)
             for j in range(ny):
@@ -1632,7 +1632,7 @@ def tuck_under_collar():
     # The same for a flat collar (round or camp): skin of the neck and shoulders lying under the collar's leaf, below its seam, is set 8 mm deeper and bound to the collar,
     # so it cannot come through at the nape when the head bows (it showed as a streak of skin across the back of the collar: owner, 17 November 2026).
     co=bpy.data.objects.get('Collar')
-    if co is None or not FLAT or not len(co.data.polygons): return
+    if co is None or not len(co.data.polygons): return      # every collar, band and turn-down too: the neck's facets came through the front of a band collar and cut its edge into a saw-tooth (owner, 17 November 2026)
     from mathutils.kdtree import KDTree
     b=bmesh.new(); b.from_mesh(co.data); b.normal_update(); bt=BVHTree.FromBMesh(b); top=[v.co.copy() for v in b.verts if v.is_boundary and v.co.z>NECK-0.02*s]; b.free()
     kt=KDTree(max(1,len(top)))
