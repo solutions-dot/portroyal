@@ -52,6 +52,10 @@ The owner's open list was: faces in The Emperor's Arrival, the Rastafari men in 
 
 Earlier entries below record past checkpoints.
 
+## To do last: portrait framing for cinematic scenes (owner, 17 November 2026)
+
+Every cinematic scene in all ten games needs a camera angle that keeps the action centred on portrait (phone upright) screens. The owner asked for this to be the last item. Each game's director or cinematic code sets the camera; a portrait screen narrows the view, so the subject must be framed for the narrow width (or the field of view widened) when the screen is taller than it is wide.
+
 ## Next step for the people (16 November 2026, end of session)
 
 The builder now has: flatter male chests by default (`malechest`), the shoulder cap and elbow evened out on every sleeve (arms-up tearing fell to 0 on test bodies), and trousers fitted to the shirt above (`fit_waist`). A full rebuild was running when the session ended; the first 16 recipes it built came before `fit_waist`. Finish it like this, then check and commit:
