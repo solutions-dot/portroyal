@@ -5,6 +5,7 @@ import { JOURNEY } from './content.js';
    Coordinates are metres; x runs east, yaw 0 looks toward -z (north, where the river and the hills are).
    The turbine house, the valve wheel, the switchboard and the trams are a general picture: the record does not say how they looked or where the valve was. */
 import * as THREE from 'three';
+import { makeDoor } from '../../../engine/door.js';
 import { T, cv, grain, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng } from './wgfx.js';
 import { palm, tree, banana, bush, boardHouse, hillRing, scatter, mule, bench, lampPost, crate, barrel, bucket, sack, lantern, cart } from './props.js';
 import { grassField, flowerField, rockField, blotches, fence, mangoTree, bamboo, flameTree, hibiscus, croton, stump } from './detail.js';
@@ -273,10 +274,10 @@ function turbineHouse(g, kind, P) {
     for (const z of [-12.5, -8.5]) { wallWindow(g, 1.3, 2.6, x1 + th / 2 + 0.01, 2.9, z, PI / 2, P.glass); wallWindow(g, 1.3, 2.6, x0 - th / 2 - 0.01, 3.4, z, -PI / 2, P.glass); }
     for (const x of [-3.5, 0, 3.5]) wallWindow(g, 1.3, 2.6, x, 3.2, z0 - th / 2 - 0.01, PI, P.glass);
     /* the door frame and an open door, and a sign over it */
-    box(0.14, 3.2, 0.5, M.woodDark, -1.25, 1.6, z1, g); box(0.14, 3.2, 0.5, M.woodDark, 1.25, 1.6, z1, g); box(2.64, 0.18, 0.5, M.woodDark, 0, 3.25, z1, g);
-    const door = box(1.15, 3.0, 0.07, solid(0x3a4a3a, 0.9), -1.25 - 0.36 * 0.6, 1.52, z1 + th / 2 + 0.93 * 0.6, g); door.rotation.y = -1.94;   /* the door, swung open against the wall */
+    box(0.14, 3.2, th, M.woodDark, -1.25, 1.6, z1, g); box(0.14, 3.2, th, M.woodDark, 1.25, 1.6, z1, g); box(2.64, 0.18, th, M.woodDark, 0, 3.25, z1, g);   /* timber lining the reveal */
+    { const dr = makeDoor({ w: 2.4, h: 3.2, kind: 'plank', leaves: 2, color: 0x3a4a3a, frame: 0x4a3a2c, open: 1.94 / 1.4 }); dr.position.set(0, 0, z1 + th / 2); g.add(dr); }   /* a pair of ledged board doors (engine/door.js), both swung right back: it was one flat board (owner, 17 November 2026) */
     const sg = mesh(new THREE.PlaneGeometry(3.4, 0.62), std(signTex([['TURBINE HOUSE', '700 58px Georgia, serif']], 512, 96), 0.8), 0, 4.1, z1 + th / 2 + 0.03, g);
-    walls.push([x0 - 0.3, z0 - 0.3, x1 + 0.3, z0 + 0.3], [x0 - 0.3, z0, x0 + 0.3, z1], [x1 - 0.3, z0, x1 + 0.3, z1], [x0 - 0.3, z1 - 0.3, -1.25, z1 + 0.3], [1.25, z1 - 0.3, x1 + 0.3, z1 + 0.3], [-1.9, z1, -1.15, z1 + 1.0]);
+    walls.push([x0 - 0.3, z0 - 0.3, x1 + 0.3, z0 + 0.3], [x0 - 0.3, z0, x0 + 0.3, z1], [x1 - 0.3, z0, x1 + 0.3, z1], [x0 - 0.3, z1 - 0.3, -1.25, z1 + 0.3], [1.25, z1 - 0.3, x1 + 0.3, z1 + 0.3], [-1.9, z1, -1.15, z1 + 1.0], [1.15, z1, 1.9, z1 + 1.0]);
     /* ----- the machines. The water comes in through the west wall into a spiral casing (the turbine), which turns a shaft; the shaft turns the big wheel and the generator. ----- */
     const mg = grp(g); mg.userData.noBatch = true;   /* one machine: the shaft runs through the casing, the bearings and the wheel on purpose, so its parts stay together as one object (the audit compared them as separate things) */ const green = solid(0x2a4a3a, 0.55, 0.3), cream = solid(0xd8ccae, 0.6), MZ = PZ, SY = 1.6;
     tubePipe(mg, [[-6.8, PY - 0.7, MZ], [-6.0, PY - 0.68, MZ], [-5.2, SY - 0.1, MZ], [-4.3, SY, MZ]], new THREE.MeshStandardMaterial({ map: TX.rivets([4, 2], [40, 70, 56]), roughness: 0.55, metalness: 0.3 }), 0.62, 16);   /* the pipe's end, narrowing inside the wall and rising to the turbine */
@@ -642,7 +643,7 @@ export function buildKingston() {
   /* shops of board and zinc with verandas, both sides */
   const walls = ['#c8b080', '#a8c0a8', '#d8c0a0', '#c0a088', '#e0d4b8', '#b8b8c8'].map((h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
   const names = [['DRY GOODS', 0], ['BAKERY', 1], ['HARDWARE', 0], ['PROVISIONS', 1], ['DRUG STORE', 0], ['TAILOR', 1], ['GROCERY', 0], ['SHOES', 1]];
-  let k = 0; for (const side of [-1, 1]) for (let x = -30; x < 100; x += 8.6) { if (side < 0 && x < -25) continue; const h = boardHouse(7.6, 5, 3.2 + r() * 0.8, { wall: walls[k % walls.length], roof: [[150, 154, 150], [140, 96, 76], [120, 124, 120]][k % 3], seed: k + 3 }); h.position.set(x, 0, side * 10); h.rotation.y = side < 0 ? 0 : PI; g.add(h);
+  let k = 0; for (const side of [-1, 1]) for (let x = -30; x < 100; x += 8.6) { if (side < 0 && x < -25) continue; const h = boardHouse(7.6, 5, 3.2 + r() * 0.8, { wall: walls[k % walls.length], roof: [[150, 154, 150], [140, 96, 76], [120, 124, 120]][k % 3], seed: k + 3, door: { w: 1.3, h: 2.2, leaves: 2 } });   /* a shop: a pair of panelled doors */ h.position.set(x, 0, side * 10); h.rotation.y = side < 0 ? 0 : PI; g.add(h);
     const nm = names[k % names.length]; const sg = mesh(new THREE.PlaneGeometry(3.4, 0.42), std(signTex([[nm[0], '700 60px Georgia, serif']], 512, 64), 0.8), x, 2.3, side * (10 - 4.1), g); if (side > 0) sg.rotation.y = PI; k++; }
   P.walls.push([-60, -40, 120, -5.5], [-60, 5.5, 120, 40]);
   /* the depot: a long shed with wide doors opening on to the street */
@@ -652,7 +653,7 @@ export function buildKingston() {
   const zt = T.zinc([150, 154, 150]).clone(); zt.needsUpdate = true; zt.repeat.set(5, 3); for (const s of [-1, 1]) { const rf = box(17, 0.1, 9, std(zt, 0.7), dx - 8, 7.8, s * 4.1, dep); rf.rotation.x = s * 0.28; }
   for (const s of [-1, 1]) { const gab = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-8.2, 0), new THREE.Vector2(8.2, 0), new THREE.Vector2(0, 2.4)])), std(dwt, 0.9, { side: THREE.DoubleSide }), s < 0 ? dx - 16 : dx, 7, 0, dep); gab.rotation.y = PI / 2; }
   box(15.6, 0.04, 15.6, solid(0x2a2622, 0.95), dx - 8, 0.02, 0, dep); box(15.6, 0.05, 15.6, solid(0x2a2622, 0.95), dx - 8, 6.95, 0, dep);
-  for (const s of [-1, 1]) box(2.8, 5.2, 0.1, solid(0x2a4a36, 0.9), dx + 1.6, 2.6, s * 2.85, dep);   /* the doors, swung open */
+  { const dr = makeDoor({ w: 5.6, h: 6.3, kind: 'plank', leaves: 2, color: 0x2a4a36, frame: 0x3a2e24, open: (PI / 2) / 1.4 }); dr.position.set(dx + 0.2, 0, 0); dr.rotation.y = PI / 2; dep.add(dr); }   /* the wide ledged doors (engine/door.js), swung open flat to the street: they were two flat boards (owner, 17 November 2026) */
   mesh(new THREE.PlaneGeometry(4.6, 0.5), std(signTex([['TRAM DEPOT', '700 62px Georgia, serif']], 512, 72, '#2a4a36', '#ece0c0'), 0.8), dx + 0.22, 6.7, 0, dep).rotation.y = PI / 2;
   P.walls.push([dx - 16.5, -8.5, dx + 0.3, -2.7], [dx - 16.5, 2.7, dx + 0.3, 8.5], [dx - 16.5, -8.5, dx - 15.5, 8.5], [dx - 0.1, -2.9, dx + 2.9, -2.6], [dx - 0.1, 2.6, dx + 2.9, 2.9], [-60, -2.8, dx - 0.2, 2.8]);
   /* a street sign at the corner */

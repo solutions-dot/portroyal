@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { cv, grain, rng, T, std, solid, flat, mesh, box, cyl, grp } from './gfx.js';
 import { rockGeo } from './flora.js';
+import { makeDoor } from '../../../engine/door.js';
 
 const PI = Math.PI;
 const memo = {}, once = (k, fn) => memo[k] || (memo[k] = fn());
@@ -52,8 +53,10 @@ export function hut(w = 4, d = 3.2, h = 2.1, seed = 1) {
   cyl(0.11, 0.17, 0.3, PM.straw, 0, h + rh * 0.62 + uh + 0.08, 0, g, 6); cyl(0.19, 0.19, 0.05, PM.woodDark, 0, h + rh * 0.62 + uh - 0.04, 0, g, 6);   /* the tied bundle at the peak */
   const ed = solid(0x5a4a2c, 1); for (const [x, z, lx, lz] of [[0, d / 2 + 0.66, w + 1.36, 0.1], [0, -d / 2 - 0.66, w + 1.36, 0.1], [w / 2 + 0.66, 0, 0.1, d + 1.36], [-w / 2 - 0.66, 0, 0.1, d + 1.36]]) box(lx, 0.2, lz, ed, x, h - 0.04, z, g);   /* the dark ragged edge of the eaves */
   for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { cyl(0.075, 0.09, h + 0.1, PM.woodDark, x * (w / 2 - 0.02), h / 2, z * (d / 2 - 0.02), g, 6); const rf = cyl(0.035, 0.045, 1.5, PM.wood, x * (w / 2 + 0.2), h + 0.2, z * (d / 2 + 0.2), g, 5); rf.rotation.set(z * 0.95, 0, -x * 0.95); }   /* corner posts, and the rafter ends under the eaves */
-  box(0.9, 1.66, 0.12, PM.dark, 0, 0.83, d / 2 - 0.02, g); for (const sx of [-1, 1]) cyl(0.06, 0.07, 1.8, PM.woodDark, sx * 0.52, 0.9, d / 2 + 0.06, g, 6); box(1.24, 0.11, 0.14, PM.woodDark, 0, 1.76, d / 2 + 0.06, g);
-  const dg = grp(g, -0.45, 0, d / 2 + 0.1); dg.rotation.y = -0.5 - r() * 0.9; box(0.84, 1.6, 0.045, std(TX.planks(), 0.95), 0.42, 0.82, 0, dg);   /* the door, standing ajar */
+  box(0.9, 1.66, 0.12, PM.dark, 0, 0.83, d / 2 - 0.02, g);   /* the dark of the doorway behind the door */
+  { /* the door (engine/door.js): upright boards held by two ledges in a hewn frame, no iron, no glass; it stands a little ajar, swung out on its hinge side */
+    const dr = makeDoor({ w: 0.9, h: 1.66, kind: 'plank', handle: 'none', color: 0x7a5a3a, frame: 0x4a3524, rough: 0.95 }); dr.position.set(0, 0, d / 2 + 0.04); g.add(dr);
+    const ajar = 0.25 + r() * 0.55; for (const L of dr.children) if (L.userData.side) L.rotation.y = -L.userData.side * ajar; }
   mesh(rockGeo(seed + 4), PM.stone, 0, 0.02, d / 2 + 0.5, g).scale.set(0.5, 0.08, 0.3);   /* a flat stone at the threshold */
   if (seed % 2) { const sx = seed % 4 === 1 ? 1 : -1; box(0.06, 0.5, 0.56, PM.dark, sx * (w / 2 + 0.005), 1.3, -0.2, g); const sh = box(0.04, 0.5, 0.56, std(TX.planks(), 0.95), sx * (w / 2 + 0.2), 1.52, -0.2, g); sh.rotation.z = sx * 0.9; const st = cyl(0.012, 0.012, 0.42, PM.woodPale, sx * (w / 2 + 0.2), 1.22, -0.2, g, 4); st.rotation.z = -sx * 0.5; }   /* a small window with its shutter propped open */
   lo.rotation.z = (r() - 0.5) * 0.04; g.userData.foot = Math.max(w, d) / 2 + 0.5; return g;

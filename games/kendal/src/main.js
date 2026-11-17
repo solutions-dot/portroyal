@@ -974,6 +974,7 @@ function devViews() {
   if (shot === 'card1') go('coach', 52, 2, 0, -PI / 2, 0).then(() => { crashIntro(); });
   if (shot === 'journal1') go('road', 10, -27, 4.2, 0, 0).then(() => { for (const id of ['slowroad', 'higglers', 'free', 'cause']) unlock(id, true); openJournal('cause'); });
   if (shot === 'chap1') go('road', 10, -27, 4.2, 0, 0).then(() => { best = 35; modelsReady = true; openChapters(); });
+  if (shot === 'at') { const n = (k, d) => +(q.get(k) ?? d); go(q.get('p') || 'road', n('st', 10), n('x', 0), n('z', 0), n('yaw', 0), n('pitch', 0)); }   /* any spot in any place: ?shot=at&p=<place>&st=&x=&z=&yaw=&pitch= (used to look at the doors) */
   if (V[shot]) go(...V[shot]).then((P) => {
     if (shot === 'st3') { /* the governor's end */ }
     if (shot === 'hill2' || /^loco/.test(shot)) { P.train.visible = true; P.train.position.x = 0; }

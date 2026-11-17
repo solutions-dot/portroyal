@@ -1,6 +1,7 @@
 /* Lived-in scenery for Windrush, built in code (no image files). Each builder returns a group standing on y = 0 at its own origin,
    facing +z unless it says otherwise. Shapes are reconstructions from period photographs and descriptions (docs/games/windrush.md). */
 import * as THREE from "three";
+import { makeDoor } from "../../../engine/door.js";
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 import { saloonCar } from "../../../engine/roadcars.js";
 import { shipLifeboat, paintKit } from "../../../engine/boats.js";
@@ -325,7 +326,12 @@ export function dockShed(w = 24, d = 10, h = 6, c = [148, 150, 144], door = 0x2d
   z.repeat.set(w / 3, h / 3);
   box(w, h, d, std(z, 0.6), 0, h / 2, 0, g);
   const roof = box(w + 0.6, 0.2, d + 0.6, M.slate, 0, h + 0.1, 0, g);
-  for (let x = -w / 2 + 3; x < w / 2 - 1; x += 6) box(3.4, 3.6, 0.06, solid(door, 0.8), x, 1.8, d / 2 + 0.03, g);
+  // big boarded goods doors in pairs along the front (engine/door.js), shut
+  for (let x = -w / 2 + 3; x < w / 2 - 1; x += 6) {
+    const dr = makeDoor({ w: 3.4, h: 3.6, kind: "plank", leaves: 2, color: door, frame: 0x8a8c86, handle: "pull", metal: 0x4a4c4a });
+    dr.position.set(x, 0, d / 2);
+    g.add(dr);
+  }
   return g;
 }
 
@@ -380,10 +386,14 @@ export function terraceHouse(opts = {}) {
   for (const x of [-0.18, 0, 0.18]) cyl(0.07, 0.07, 0.35, solid(0x9a5a3a, 0.9), W / 2 - 0.4 + x, H + 1.55, -D / 2, g, 6);
   box(W + 0.05, 0.22, 0.12, trim, 0, H - 0.2, 0.06, g);
   // door, step and fanlight
-  if (!opts.open) box(1.0, 2.1, 0.06, solid(opts.door || 0x2f4f46, 0.6), dx, 1.12, -0.2, g);
+  // a painted four-panel door with a brass knob (engine/door.js), set back in the door hole behind its frame; open houses keep the hole and the fanlight
+  if (!opts.open) {
+    const dr = makeDoor({ w: 0.92, h: 2.0, kind: "panel", color: opts.door || 0x2f4f46, frame: 0xe6e0d0, recess: 0.2, metal: 0xb89a50, rough: 0.5 });
+    dr.position.set(dx, 0.12, 0);
+    g.add(dr);
+  } else plane(0.9, 0.18, M.glass, dx, 2.1, 0.02, g);
   box(1.3, 0.12, 0.5, trim, dx, 0.06, 0.25, g);
   box(1.2, 0.12, 0.08, trim, dx, 2.3, 0.04, g);
-  plane(0.9, 0.18, M.glass, dx, 2.1, 0.02, g);
   // upstairs sash windows
   for (const x of [-1.2, dx]) sash(g, x, 4.4);
   if (opts.shop) {
@@ -875,7 +885,9 @@ export function stiltHouse(w = 7, d = 4.5, { wall = [196, 176, 140], trim = 0xe8
     st.rotation.x = Math.atan2(lift, 1.1);
   }
   // the front: a door and two windows with board shutters swung open
-  box(0.95, 2.0, 0.06, solid(0x5a3a26, 0.9), 0, lift + 1.12, d / 2 + 0.03, g);
+  const dr = makeDoor({ w: 0.95, h: 2.0, kind: "louvre", color: 0x5a3a26, frame: trim });
+  dr.position.set(0, lift + 0.1, d / 2);
+  g.add(dr);
   for (const x of [-w * 0.3, w * 0.3]) {
     box(0.95, 1.0, 0.05, M.black, x, lift + 1.5, d / 2 + 0.02, g);
     for (const s of [-1, 1]) box(0.45, 1.0, 0.05, sm, x + s * 0.72, lift + 1.5, d / 2 + 0.05, g);
@@ -974,7 +986,9 @@ export function districtShop(name = "DISTRICT SHOP", { wall = [214, 196, 150], r
   const rf = box(6.6, 0.06, 4.6, std(zt, 0.7), 0, 3.35, 0, g);
   rf.rotation.x = 0.1;
   box(2.2, 1.6, 0.06, M.black, -1.3, 1.6, 2.02, g);
-  box(1.0, 2.1, 0.06, solid(0x2f4a5a, 0.8), 1.6, 1.05, 2.02, g);
+  const dr = makeDoor({ w: 0.95, h: 2.0, kind: "plank", color: 0x2f4a5a, frame: 0xe8dcb4 });
+  dr.position.set(1.6, 0.15, 2);
+  g.add(dr);
   box(2.4, 0.1, 0.4, M.woodPale, -1.3, 0.9, 2.2, g);
   const sign = textPlane(name, 3.6, 0.45, "#e8dcb4", "#2a3a2a");
   sign.position.set(0, 2.55, 2.06);

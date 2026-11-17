@@ -39,19 +39,19 @@ function village({ id, year, phase }) {
   const tone = [[226, 196, 150], [200, 228, 214], [244, 226, 176], [212, 182, 206]];
 
   /* ---- the family's house: a board house in 1988, painted block in 2025 ---- */
-  const home = house({ w: 6.4, d: 4.4, style: old ? 'board' : 'block', wall: old ? [186, 152, 104] : tone[0], roofRgb: old ? [150, 124, 108] : today ? [196, 200, 198] : [150, 154, 150], roof: after ? 'half' : 'on', shutters: after ? 'boarded' : 'open', seed: 11, tarp: false });
+  const home = house({ w: 6.4, d: 4.4, style: old ? 'board' : 'block', wall: old ? [186, 152, 104] : tone[0], roofRgb: old ? [150, 124, 108] : today ? [196, 200, 198] : [150, 154, 150], roof: after ? 'half' : 'on', shutters: after ? 'boarded' : 'open', seed: 11, tarp: false, door: { kind: y51 ? 'plank' : y88 ? 'louvre' : 'panel' }, doorCol: y51 ? 0x5a3c26 : y88 ? 0x5a3a24 : 0x6a4a30, grille: !old });   /* the door: boards in 1951, louvres in 1988, panels behind a grille gate in 2025 */
   put(home, SPOT.home[0], SPOT.home[1]); wall(-29.8, -10.8, -22.2, -4.55); g.userData.home = home;
   /* ---- Miss Hyacinth's old board house ---- */
-  const hy = house({ w: 5.2, d: 4, style: 'board', wall: [198, 176, 130], roofRgb: after ? [140, 140, 136] : [144, 120, 104], roof: after ? 'off' : 'on', shutters: after ? 'closed' : 'open', seed: 12, shutCol: 0x3a6a8a, damaged: after ? 1 : 0 });
+  const hy = house({ w: 5.2, d: 4, style: 'board', wall: [198, 176, 130], roofRgb: after ? [140, 140, 136] : [144, 120, 104], roof: after ? 'off' : 'on', shutters: after ? 'closed' : 'open', seed: 12, shutCol: 0x3a6a8a, damaged: after ? 1 : 0, door: { kind: 'plank' } });
   put(hy, SPOT.hyacinth[0], SPOT.hyacinth[1], PI); wall(-6.8, 4.75, -1.2, 10.7);
   /* ---- the block house of the neighbour (Mass Clifford in 1988, his son Raymond in 2025) ---- */
-  const bl = house({ w: 6, d: 4.4, style: 'block', wall: old ? [236, 224, 196] : tone[2], roofRgb: after ? [150, 154, 150] : [150, 154, 150], roof: after ? 'half' : 'on', shutters: after ? 'boarded' : 'open', seed: 13, tank: !old, tarp: after, shutCol: 0x2a5a8a });
+  const bl = house({ w: 6, d: 4.4, style: 'block', wall: old ? [236, 224, 196] : tone[2], roofRgb: after ? [150, 154, 150] : [150, 154, 150], roof: after ? 'half' : 'on', shutters: after ? 'boarded' : 'open', seed: 13, tank: !old, tarp: after, shutCol: 0x2a5a8a, door: { kind: y51 ? 'panel' : y88 ? 'louvre' : 'panel' }, doorCol: 0x5a3a24, grille: !old });
   put(bl, SPOT.raymond[0], SPOT.raymond[1]); wall(12.8, -11.1, 19.2, -4.55); if (!old) wall(20.6, -9.9, 22.3, -8.4);   /* the tank stand */
   /* ---- the shop ---- */
   const sh = shop({ name: y51 ? "MISS ADA'S SHOP" : y88 ? "DORRIT'S SHOP" : "BEV'S SHOP", roof: after ? 'off' : 'on', seed: 14 }); put(sh, SPOT.shop[0], SPOT.shop[1], PI); wall(27.2, 5.7, 32.8, 10.9);
   if (!after) { const gd = shopGoods(); gd.position.set(SPOT.shop[0], 0, SPOT.shop[1]); gd.rotation.y = PI; g.add(gd); }
   /* ---- the church and its hall, at the east end ---- */
-  const ch = house({ w: 11, d: 7, h: 3.5, style: 'block', wall: [238, 232, 214], roofRgb: after ? [140, 146, 148] : today ? [196, 200, 198] : [138, 146, 150], roof: after ? 'half' : 'on', shutters: after ? 'closed' : 'open', seed: 15, porch: true, shutCol: 0x3a5a7a });
+  const ch = house({ w: 11, d: 7, h: 3.5, style: 'block', wall: [238, 232, 214], roofRgb: after ? [140, 146, 148] : today ? [196, 200, 198] : [138, 146, 150], roof: after ? 'half' : 'on', shutters: after ? 'closed' : 'open', seed: 15, porch: true, shutCol: 0x3a5a7a, door: { kind: 'panel', w: 1.5, h: 2.25, leaves: 2 }, doorCol: 0x5a3a24 });   /* the church: a pair of panelled doors */
   put(ch, SPOT.church[0], SPOT.church[1]); wall(38.3, -13.7, 49.7, -4.3);
   { const bt = grp(g, 40.2, 0, -5.5); box(1.2, 3.2, 1.2, std(T.plaster([236, 230, 214], [1, 1]), 0.9), 0, 1.6, 0, bt); const rf = box(1.5, 0.12, 1.5, solid(0x8a8e90, 0.6, 0.3), 0, 3.3, 0, bt); box(0.1, 0.8, 0.1, WOODD, 0, 3.8, 0, bt); box(0.5, 0.1, 0.1, WOODD, 0, 3.95, 0, bt); wall(39.5, -6.3, 40.9, -4.7); }
   { const s = plane(2.4, 0.5, std(T.sign(y51 ? 'BAY CHURCH' : 'BREADNUT CORNER COMMUNITY CHURCH', 1024, 160, '#f3ecd8', '#1c2a40', '700 70px Georgia, serif'), 0.9), 44, 3.9, -6.45, g); s.rotation.y = 0; s.material = s.material.clone(); s.material.side = THREE.DoubleSide; box(0.06, 0.4, 0.06, WOODD, 43, 3.6, -6.5, g); box(0.06, 0.4, 0.06, WOODD, 45, 3.6, -6.5, g); }
@@ -235,7 +235,7 @@ export function buildKingston88() {
   for (const [cx, w] of [[-24.4, 13.4], [-3.6, 13.4]]) { box(w, 2.3, 0.35, WL, cx, 1.15, -4.6, g); wall(cx - w / 2, -4.8, cx + w / 2, -4.4); }
   for (const x of [-17.5, -10.5]) { box(0.75, 2.9, 0.75, WL, x, 1.45, -4.6, g); box(0.95, 0.12, 0.95, WL, x, 2.95, -4.6, g); }
   box(0.35, 2.3, 15.4, WL, -31.1, 1.15, -12.3, g); wall(-31.3, -20, -30.9, -4.6); box(0.35, 2.3, 15.4, WL, 3.1, 1.15, -12.3, g); wall(2.9, -20, 3.3, -4.6); box(34.2, 2.3, 0.35, WL, -14, 1.15, -19.9, g); wall(-31.2, -20.1, 3.2, -19.7);
-  const villa = house({ w: 12, d: 7, h: 3.4, style: 'block', wall: [244, 236, 214], roofRgb: [176, 84, 64], roof: 'on', shutters: 'open', seed: 21, shutCol: 0x2a5a8a }); put(villa, -14, -14.2); wall(-20.2, -17.9, -7.8, -10.3);
+  const villa = house({ w: 12, d: 7, h: 3.4, style: 'block', wall: [244, 236, 214], roofRgb: [176, 84, 64], roof: 'on', shutters: 'open', seed: 21, shutCol: 0x2a5a8a, door: { kind: 'panel', w: 1.5, h: 2.2, leaves: 2 }, doorCol: 0x6a4a30 });   /* the uptown house: a pair of panelled front doors */ put(villa, -14, -14.2); wall(-20.2, -17.9, -7.8, -10.3);
   const cr = car(); cr.userData.noBatch = false; put(cr, -9.3, -7.0, 0.25); wall(-11.8, -8.3, -6.8, -5.7);
   for (const [x, z, s] of [[-27, -9, 1], [-27.5, -16, 2], [-1.5, -10, 3], [-1, -16.5, 4]]) { const o = palm(6.5 + s * 0.3, s); o.userData.noBatch = true; swayable(o, 0.02); put(o, x, z); wall(x - 0.4, z - 0.4, x + 0.4, z + 0.4); }
   for (const [x, z, s] of [[-22.5, -7.2, 1], [-5.8, -8.2, 2], [-17.2, -9.6, 3]]) put(hibiscus(s), x, z);   /* the third bush stands beside the drive, not on it */
@@ -244,7 +244,7 @@ export function buildKingston88() {
   g.add(Object.assign(zincFence(-34, 4.6, 30, 4.6, 1.9, 5), {}));
   const tones = [[186, 152, 104], [198, 176, 130], [170, 150, 120], [200, 170, 140], [176, 160, 110]], roofs = [[150, 110, 90], [144, 142, 138], [160, 120, 96], [138, 112, 98]];
   [[8.4, [-26, -18.5, -11, -3.5, 4, 11.5, 19, 26]], [14.8, [-22, -14, -6, 2, 10, 18, 25]]].forEach(([z, xs], row) => xs.forEach((x, i) => {
-    const h = house({ w: 4.2, d: 3.2, h: 2.4, style: 'board', wall: tones[(i + row) % 5], roofRgb: roofs[(i * 3 + row) % 4], roof: 'on', shutters: i % 2 ? 'closed' : 'open', porch: false, seed: 40 + i + row * 9 }); put(h, x, z, PI); wall(x - 2.2, z - 1.8, x + 2.2, z + 1.8); }));
+    const h = house({ w: 4.2, d: 3.2, h: 2.4, style: 'board', wall: tones[(i + row) % 5], roofRgb: roofs[(i * 3 + row) % 4], roof: 'on', shutters: i % 2 ? 'closed' : 'open', porch: false, seed: 40 + i + row * 9, door: { kind: 'plank' } }); put(h, x, z, PI); wall(x - 2.2, z - 1.8, x + 2.2, z + 1.8); }));
   put(standpipeTap(), -1.6, 5.4); wall(-2.0, 5.0, -1.2, 5.8);
   const cl = grp(g, 12.5, 0, 5.8); for (const x of [-2, 2]) box(0.08, 1.9, 0.08, WOOD, x, 0.95, 0, cl); box(4, 0.02, 0.02, solid(0xd8d0b8, 1), 0, 1.8, 0, cl); for (let k = 0; k < 4; k++) box(0.5, 0.6, 0.03, solid([0xe8505b, 0x3ba0a0, 0xf0c040, 0xf0ece0][k], 1), -1.4 + k * 0.9, 1.45, 0, cl); wall(10.4, 5.6, 14.6, 6.0);
   return { id: 'kingston88', group: g, walls, bounds: { x0: -34, x1: 30, z0: -3.6, z1: 3.6 }, start: { x: 0, z: 0, yaw: 0 }, people, extras, env: ENV.gale, eye: 1.5, spots: {}, dish, tick: () => {} };

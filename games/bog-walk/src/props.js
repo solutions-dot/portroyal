@@ -1,6 +1,7 @@
 /* games/bog-walk/src/props.js (copied from games/kendal/src/props.js): plants, hills, houses, animals and the many small things that fill a scene.
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from 'three';
+import { makeDoor } from '../../../engine/door.js';
 import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv } from './wgfx.js';
 import { blob } from './detail.js';
 
@@ -106,7 +107,7 @@ export function hillRing(radius = 150, count = 18, hMax = 60, { seed = 3, base =
 
 /* ---------- houses and sheds ---------- */
 const TM2 = solid(0x4a4c50, 0.6, 0.3);
-export function boardHouse(w = 5, d = 4, h = 2.8, { wall = [188, 160, 110], roof = [140, 90, 70], porch = true, seed = 1 } = {}) {   /* a Jamaican board house: walls of boards, a zinc roof, a front veranda */
+export function boardHouse(w = 5, d = 4, h = 2.8, { wall = [188, 160, 110], roof = [140, 90, 70], porch = true, seed = 1, door = {} } = {}) {   /* a Jamaican board house: walls of boards, a zinc roof, a front veranda, a framed door (engine/door.js; `door` changes its kind or size) */
   const g = grp(), r = rng(seed); const wt = T.plank(wall, 8, [w / 2, 1]);   /* textures and materials are shared by every house of the same colour and size, so a street of them batches into a few draw calls */
   box(w, h, d, std(wt, 0.9), 0, h / 2, 0, g);
   const zt = T.zinc(roof, [2, d / 2]);
@@ -114,9 +115,8 @@ export function boardHouse(w = 5, d = 4, h = 2.8, { wall = [188, 160, 110], roof
   for (const s of [-1, 1]) { const p = box(w + 0.7, 0.08, Ls, std(zt, 0.75), 0, h + rise / 2 + 0.04, s * (d / 4 + 0.2), g); p.rotation.x = s * th; }
   for (const s of [-1, 1]) { const gable = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-d / 2, 0), new THREE.Vector2(d / 2, 0), new THREE.Vector2(0, rise)])), std(wt, 0.9, { side: THREE.DoubleSide }), s * (w / 2 + 0.005), h, 0, g); gable.rotation.y = s * Math.PI / 2; }
   const shut = solid(0x2f6a3f, 0.9); for (const x of [-w * 0.28, w * 0.28]) { box(0.9, 0.9, 0.06, M.woodDark, x, h * 0.62, d / 2 + 0.02, g); box(0.4, 0.8, 0.07, shut, x - 0.62, h * 0.62, d / 2 + 0.04, g); box(0.4, 0.8, 0.07, shut, x + 0.62, h * 0.62, d / 2 + 0.04, g); }
-  box(0.9, 1.9, 0.07, solid(0x4a2f1e, 0.9), 0, 0.95, d / 2 + 0.03, g);
   const wf = solid(0xe8e0cc, 0.8); for (const x of [-w * 0.28, w * 0.28]) { box(1.14, 0.06, 0.07, wf, x, h * 0.62 + 0.47, d / 2 + 0.05, g); box(1.14, 0.06, 0.07, wf, x, h * 0.62 - 0.47, d / 2 + 0.05, g); box(1.2, 0.05, 0.14, wf, x, h * 0.62 - 0.52, d / 2 + 0.1, g); for (const s of [-0.54, 0, 0.54]) box(0.05, 0.94, 0.07, wf, x + s, h * 0.62, d / 2 + 0.05, g); }
-  box(1.06, 0.06, 0.08, wf, 0, 1.94, d / 2 + 0.05, g); for (const s of [-0.5, 0.5]) box(0.06, 1.9, 0.08, wf, s, 0.95, d / 2 + 0.05, g);
+  { const dr = makeDoor({ w: 0.9, h: 1.95, kind: 'panel', color: 0x5a3a24, frame: 0xe8e0cc, ...door }); dr.position.set(0, porch ? 0.27 : 0, d / 2); g.add(dr); }   /* a panelled timber door, its foot on the veranda boards (0.27 m up); it was a flat brown board (owner, 17 November 2026) */
   for (const [x, z] of [[-w / 2 + 0.2, -d / 2 + 0.2], [w / 2 - 0.2, -d / 2 + 0.2], [-w / 2 + 0.2, d / 2 - 0.2], [w / 2 - 0.2, d / 2 - 0.2], [0, d / 2 - 0.2], [0, -d / 2 + 0.2]]) cyl(0.13, 0.16, 0.3, solid(0x9a968a, 1), x, 0.1, z, g, 8);
   box(w + 0.8, 0.1, 0.2, TM2, 0, h + rise + 0.04, 0, g); box(0.5, 0.16, 0.12, wf, 0, h + 0.5, d / 2 + 0.02, g);
   if (porch) { box(1.5, 0.18, 0.5, M.woodDark, 0, 0.09, d / 2 + 1.85, g); box(1.2, 0.18, 0.4, M.woodDark, 0, 0.24, d / 2 + 1.6, g); for (let x = -w / 2 + 0.2; x < w / 2; x += 0.28) box(0.04, 0.22, 0.04, wf, x, 2.44, d / 2 + 1.5, g); }

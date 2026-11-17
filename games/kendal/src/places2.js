@@ -2,6 +2,7 @@
    the crash site at night and at dawn, and the memorial at Kendal today. */
 import * as THREE from 'three';
 import { createSea } from '../../../engine/sea.js';
+import { makeDoor } from '../../../engine/door.js';
 import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv, grain } from './gfx.js';
 import { rails, railsCurve, woodCoach, dieselLoco, platform, TM } from './trains.js';
 import { palm, tree, banana, bush, flowers, boardHouse, hillRing, scatter, crate, hamper, suitcase, sack, bucket, bench, pole, lampPost, torch, lantern, signBoard, standpipe, truck, PM } from './props.js';
@@ -24,8 +25,12 @@ export function buildKingston57() {
   /* the station building: cream walls, a row of arched doorways, a sign and a clock */
   const wall = std(T.plaster([228, 216, 186], [1, 1], 'rgb(120,110,86)').clone(), 1); wall.map.repeat.set(10, 1); wall.map.needsUpdate = true;
   const hall = box(100, 7.5, 9, wall, 0, 3.75, 18.5, g); walls.push([-50, 14, 50, 23]);
-  const door = new THREE.MeshBasicMaterial({ color: 0x2a2018 }), arch = new THREE.MeshBasicMaterial({ color: 0x5a4a3a });
-  for (let x = -42; x <= 42; x += 7) { box(2.2, 3.1, 0.2, door, x, 1.55, 14.0, g); const a = cyl(1.1, 1.1, 0.2, door, x, 3.1, 14.0, g, 14); a.rotation.x = PI / 2; a.scale.set(1, 1, 1); box(2.4, 0.18, 0.3, arch, x, 3.1, 13.95, g); box(1.6, 1.1, 0.12, new THREE.MeshBasicMaterial({ color: 0x24323a }), x + 3.5, 5.3, 14.0, g); }
+  const arch = new THREE.MeshBasicMaterial({ color: 0x5a4a3a });
+  const fan = new THREE.MeshBasicMaterial({ color: 0x24323a }), archF = solid(0xe8dcc0, 0.8);
+  for (let x = -42; x <= 42; x += 7) {   /* in each arch a pair of half-glazed timber doors (engine/door.js), a glass fanlight above and a moulded arch round it: they were flat dark boxes (owner, 17 November 2026) */
+    const dr = makeDoor({ w: 2.2, h: 3.0, kind: 'glazed', leaves: 2, color: 0x4a3626, frame: 0xe8dcc0, glass: 0x24323a }); dr.position.set(x, 0, 14.0); dr.rotation.y = PI; g.add(dr);
+    const a = mesh(new THREE.CircleGeometry(1.1, 18, 0, PI), fan, x, 3.1, 13.99, g); a.rotation.y = PI;
+    const ar = mesh(new THREE.TorusGeometry(1.15, 0.07, 6, 18, PI), archF, x, 3.1, 13.97, g); ar.rotation.y = PI; box(2.4, 0.18, 0.3, arch, x, 3.1, 13.95, g); box(1.6, 1.1, 0.12, new THREE.MeshBasicMaterial({ color: 0x24323a }), x + 3.5, 5.3, 14.0, g); }
   const sg = signBoard('KINGSTON', 9, 1.3, { bg: '#244a3a', fg: '#f4ecd0', font: '700 112px Georgia, serif' }); sg.position.set(0, 6.4, 13.9); g.add(sg);
   const ck = mesh(new THREE.CircleGeometry(0.7, 24), new THREE.MeshBasicMaterial({ map: T.clock(), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 14, 5.8, 13.8, g);
   for (let x = -30; x <= 40; x += 14) { const lp = lampPost(3.4, false); lp.position.set(x, 0, 10.4); g.add(lp); }

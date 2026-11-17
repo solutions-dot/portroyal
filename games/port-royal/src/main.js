@@ -16,6 +16,7 @@ import { auditHeld, auditCloth } from '../../../engine/audit.js';   /* used only
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev only: ?test=skin */
 import { wireChecks } from './checks.js';   /* dev only: ?test=audit, layout, walkers, life, all */
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { makeDoor } from '../../../engine/door.js';   /* every door on a building: frame, boards or panels, a handle, a sill */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 soundPref('portroyal-sound');
 onLoadFail((n) => { $('loadnote').hidden = false; $('loadnote').textContent = 'Part of the game did not load (' + n + '). Reload the page to try again.'; });
@@ -1016,7 +1017,8 @@ function buildYard() { if (yardG) return; yardG = new THREE.Group(); scene.add(y
   const dome = new THREE.Mesh(new THREE.SphereGeometry(0.95, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x5f6a66, roughness: 0.6, metalness: 0.4 })); dome.position.y = 1.3; cup.add(dome);
   const vane = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 6), dark); vane.position.y = 2.6; cup.add(vane); const cr = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.05), dark); cr.position.y = 2.75; cup.add(cr);
   const dg = new THREE.Group(); dg.position.set(cx, 0, tz + tw / 2 + 0.03); cur.add(dg); const dsur = archShape(2.0, 3.0); dsur.holes.push(archShape(1.5, 2.75)); dg.add(new THREE.Mesh(new THREE.ExtrudeGeometry(dsur, { depth: 0.1, bevelEnabled: false, curveSegments: 14 }), white));
-  const door = new THREE.Mesh(new THREE.ShapeGeometry(archShape(1.5, 2.75), 14), tim); door.position.z = -0.01; dg.add(door);
+  const door = new THREE.Mesh(new THREE.ShapeGeometry(archShape(1.5, 2.75), 14), tim); door.position.z = -0.01; dg.add(door);   /* the boarded head of the arch, over the doors */
+  dg.add(makeDoor({ w: 1.5, h: 2.0, kind: 'plank', leaves: 2, handle: 'ring', color: 0x54402c, frame: 0xefeae0, metal: 0x2a2826 }));   /* a pair of boarded doors in the arch (engine/door.js); the frame's head is the transom under the arch */
   const tx = YX + 6, tzz = YZ - 2; mk(new THREE.BoxGeometry(1.2, 0.2, 2.5), stone, tx, 0.1, tzz); mk(new THREE.BoxGeometry(1.0, 0.7, 2.3), brickM(2.3, 0.7), tx, 0.55, tzz);
   const ins = cv(512, 1024, (x) => { x.fillStyle = '#c9c5b8'; x.fillRect(0, 0, 512, 1024); for (let i = 0; i < 2500; i++) { x.fillStyle = `rgba(${90 + Math.random() * 60 | 0},${88 + Math.random() * 50 | 0},80,${Math.random() * 0.12})`; x.fillRect(Math.random() * 512, Math.random() * 1024, 2 + Math.random() * 6, 2 + Math.random() * 6); }
     x.strokeStyle = 'rgba(70,66,58,0.7)'; x.lineWidth = 3; x.strokeRect(22, 22, 468, 980);
@@ -1342,10 +1344,10 @@ function buildNewStreet() { if (NS.g) return; const g = new THREE.Group(); NS.g 
   const laneX1 = SHORE - 3.0, laneX0 = NS.x0 - 1; const lane = mk(new THREE.PlaneGeometry(laneX1 - laneX0, 2 * S - 0.6), new THREE.MeshStandardMaterial({ map: noiseTex([178, 156, 118], 30, 12), roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), (laneX0 + laneX1) / 2, 0.016, Z, g); lane.rotation.x = -Math.PI / 2;   /* stops short of the quay's wet strip, and always draws on top of the sand: no flicker */
   /* south side, west to east: the Marshalsea, the synagogue, the goldsmith, a merchant's house */
   const mar = nsBuilding(NS.x0 + 3.2, SZ - 1.4, 6, 5.4, 4.2, [138, 132, 120], Math.PI, 'Stone');
-  const door = (gr, x, w, h, z) => mk(worldUV(new THREE.BoxGeometry(w, h, 0.12), 1.2), houseMat('Wood') || new THREE.MeshStandardMaterial({ map: plankTex([70, 46, 30], 4, 1, 1), roughness: 0.9 }), x, h / 2, z, gr);
-  door(mar, 0, 1.1, 2.0, 2.76); for (const bx of [-1.8, 1.8]) { mk(new THREE.BoxGeometry(0.9, 0.7, 0.1), new THREE.MeshStandardMaterial({ color: 0x1b1a18 }), bx, 2.6, 2.76, mar); for (let i = -2; i <= 2; i++) mk(new THREE.CylinderGeometry(0.025, 0.025, 0.72, 6), new THREE.MeshStandardMaterial({ color: 0x3a3836, metalness: 0.6, roughness: 0.5 }), bx + i * 0.17, 2.6, 2.82, mar); }   /* barred windows */
+  const door = (gr, o, x, y, z) => { const d = makeDoor({ color: 0x5a3c26, frame: 0x8a7e6a, metal: 0x2a2826, ...o }); d.position.set(x, y, z); gr.add(d); return d; };   /* on the face of the stone base, which stands 6 cm out from the wall */
+  door(mar, { w: 1.1, h: 2.0, kind: 'plank', handle: 'ring' }, 0, 0, 2.76);   /* the prison door: heavy ledged boards and an iron ring */ for (const bx of [-1.8, 1.8]) { mk(new THREE.BoxGeometry(0.9, 0.7, 0.1), new THREE.MeshStandardMaterial({ color: 0x1b1a18 }), bx, 2.6, 2.76, mar); for (let i = -2; i <= 2; i++) mk(new THREE.CylinderGeometry(0.025, 0.025, 0.72, 6), new THREE.MeshStandardMaterial({ color: 0x3a3836, metalness: 0.6, roughness: 0.5 }), bx + i * 0.17, 2.6, 2.82, mar); }   /* barred windows */
   const syn = nsBuilding(3.4, SZ - 1.2, 8.4, 6, 5.2, [170, 98, 72], Math.PI);
-  door(syn, 0, 1.4, 2.6, 3.06); const winM = houseMat('LeadedGlass') || new THREE.MeshStandardMaterial({ color: 0x24303a, roughness: 0.3, metalness: 0.2 });
+  door(syn, { w: 1.4, h: 2.42, kind: 'panel', leaves: 2, frame: 0xd8cfbc, metal: 0x6a5a3a }, 0, 0.18, 3.06);   /* a pair of panelled doors, standing on the step */ const winM = houseMat('LeadedGlass') || new THREE.MeshStandardMaterial({ color: 0x24303a, roughness: 0.3, metalness: 0.2 });
   for (const wx of [-3, -1.6, 1.6, 3]) { mk(new THREE.BoxGeometry(0.7, 2.0, 0.1), winM, wx, 2.9, 3.03, syn); mk(new THREE.CircleGeometry(0.35, 18), winM, wx, 3.9, 3.085, syn); }   /* round tops make the windows arched */
   const step = mk(new THREE.BoxGeometry(2.4, 0.18, 0.7), new THREE.MeshStandardMaterial({ map: noiseTex([150, 144, 130], 18, 2) }), 0, 0.09, 3.35, syn);
   const place = (k, x, ry) => { const m = models[k].clone(true); m.position.set(x, 0, SZ); m.rotation.y = ry; g.add(m); return m; };
@@ -1839,7 +1841,7 @@ buildFort = function buildFort2() { if (FORT.ready) return; const g = new THREE.
   const gx = OCT1[GATE][0] + (OCT1[GATE + 1][0] - OCT1[GATE][0]) * 0.5; for (const sz of [-1, 1]) { const d = mk(new THREE.BoxGeometry(0.12, 2.0, 1.4), wood, gx + 0.7, 1.0, FC.C[1] + sz * 2.0); d.rotation.y = sz * 0.35; }
   /* the old round tower in the middle, now the powder magazine */
   const towerM = new THREE.MeshStandardMaterial({ map: ashlar([156, 144, 120], 1), roughness: 0.95 }); towerM.map.repeat.set(4, 1.75); mk(new THREE.CylinderGeometry(2.5, 2.7, 5.6, 28), towerM, FC.C[0], 2.8, FC.C[1]); mk(new THREE.CylinderGeometry(2.75, 2.75, 0.3, 28), stoneL, FC.C[0], 5.6, FC.C[1]); const roof = mk(new THREE.ConeGeometry(2.8, 1.6, 28), new THREE.MeshStandardMaterial({ map: noiseTex([118, 76, 58], 30, 4), roughness: 0.9 }), FC.C[0], 6.55, FC.C[1]);
-  mk(new THREE.BoxGeometry(0.1, 1.9, 1.1), wood, FC.C[0] - 2.62, 0.95, FC.C[1]);
+  { const d = makeDoor({ w: 1.1, h: 1.9, kind: 'plank', handle: 'ring', color: 0x5a3c26, frame: 0x8a7e6a, metal: 0x2a2826 }); d.position.set(FC.C[0] - 2.66, 0, FC.C[1]); d.rotation.y = -Math.PI / 2; cur.add(d); }   /* the magazine's door, facing west */
   /* barracks and guardroom along the south side of the yard */
   mk(new THREE.BoxGeometry(BARR.x1 - BARR.x0, 2.6, BARR.z1 - BARR.z0), stoneL, (BARR.x0 + BARR.x1) / 2, 1.3, (BARR.z0 + BARR.z1) / 2); const br = mk(new THREE.BoxGeometry(BARR.x1 - BARR.x0 + 0.4, 0.12, 2.0), new THREE.MeshStandardMaterial({ map: noiseTex([118, 76, 58], 30, 4), roughness: 0.9 }), (BARR.x0 + BARR.x1) / 2, 3.0, (BARR.z0 + BARR.z1) / 2 - 0.55); br.rotation.x = -0.4; const br2 = br.clone(); br2.position.z += 1.1; br2.rotation.x = 0.4; g.add(br2);
   for (const x of [BARR.x0 + 1.0, BARR.x0 + 3.2]) mk(new THREE.BoxGeometry(0.9, 1.7, 0.08), wood, x, 0.85, BARR.z0 - 0.02);

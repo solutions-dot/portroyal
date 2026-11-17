@@ -12,6 +12,7 @@ import { refresh as refreshLifeOf, lifeFor, EXTRAS } from './life.js';   /* what
    The two people and their lines are placeholders for testing the pipeline. Both are fictional. */
 import * as THREE from 'three';
 import { steamer, schooner } from '../../../engine/boats.js';
+import { makeDoor } from '../../../engine/door.js';   /* a framed, panelled door for every building (owner, 17 November 2026) */
 import { gripTick, spreadArms } from '../../../engine/grip.js';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
@@ -719,8 +720,9 @@ function buildStreet() {
   for (let i = 0; i < 13; i++) for (const sz of [-1, 1]) {   /* a row of tall brick houses on each side, each with a stoop and a door */
     const x = -27 + i * 4.5, z = sz * 10.6, v = i + (sz > 0 ? 2 : 0), f = mesh(new THREE.PlaneGeometry(4.5, 11), std(facadeTex(v), 0.95), x, 5.5, sz * 7.58, g); f.rotation.y = sz > 0 ? Math.PI : 0;
     box(4.5, 11, 6, solid([0x6a4034, 0x5c4034, 0x70483a][v % 3], 1), x, 5.5, z, g); box(4.7, 0.5, 0.7, solid(0xcfc2a8, 0.9), x, 11.1, sz * 7.35, g);
-    for (let k = 0; k < 3; k++) box(1.3, 0.2, 0.42, solid(0x9a9486, 0.9), x - 0.5, 0.1 + k * 0.2, sz * (7.35 - 0.2 - k * 0.4 + 1.2), g);
-    box(0.95, 2.1, 0.12, solid(0x2a1d16, 0.8), x - 0.5, 1.9, sz * 7.5, g); box(1.1, 0.14, 0.18, solid(0xcfc2a8, 0.9), x - 0.5, 3.0, sz * 7.47, g); }
+    for (let k = 0; k < 3; k++) { const top = 0.3 + k * 0.15; box(1.5, top, 0.4, solid(0x9a9486, 0.9), x - 0.5, top / 2, sz * (7.58 - 0.2 - (2 - k) * 0.4), g); }   /* the stoop: three stone steps up from the pavement, each standing on the ground (they ran back into the house, the top one floating) */
+    { const d = makeDoor({ w: 1.1, h: 2.35, kind: 'panel', leaves: 2, color: 0x4a3020, frame: 0xcfc2a8, metal: 0xb08a40 }); d.position.set(x - 0.5, 0.6, sz * 7.58); d.rotation.y = sz > 0 ? Math.PI : 0; g.add(d); }   /* a pair of panelled doors (engine/door.js) at the top of the stoop: it was a flat dark board (owner, 17 November 2026) */
+    box(1.5, 0.16, 0.24, solid(0xcfc2a8, 0.9), x - 0.5, 3.13, sz * 7.5, g); }   /* a stone hood over the door */
   for (const lx of [-9, -3, 3, 9]) for (const sz of [-1, 1]) { cyl(0.05, 0.07, 3.6, solid(0x202428, 0.6), lx, 1.8, sz * 4.7, g, 8); const lamp = cyl(0.22, 0.16, 0.34, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffd48a, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }), lx, 3.7, sz * 4.7, g, 8); lamp.name = 'lamp'; }
   box(1.3, 0.5, 1.0, wood, 0, 0.25, 0.5, g); box(1.38, 0.05, 1.08, woodDark, 0, 0.525, 0.5, g); STREET_WALLS.push([-0.75, -0.05, 0.75, 1.05]);   /* the speaker's box: big enough to stand on with both feet well inside the edge, with a darker lid and a wall so nobody walks through it */
   for (const [bx, bz] of [[-0.6, -0.02], [0.6, -0.02], [-0.6, 1.02], [0.6, 1.02]]) box(0.08, 0.5, 0.08, woodDark, bx, 0.25, bz, g);
@@ -988,8 +990,7 @@ function buildDeck() {
   { const lbT = cv(64, 16, (x, w, h) => { x.fillStyle = '#f2eee2'; x.fillRect(0, 0, w, h); x.fillStyle = '#b3261e'; for (let k = 0; k < 4; k++) x.fillRect(k * 16 + 5, 0, 6, h); }), lbM = std(lbT, 0.8);
     for (const [bx, sd] of [[12.3, -1], [3.4, 1], [-4.4, -1], [-4.4, 1]]) { const lb = mesh(new THREE.TorusGeometry(0.27, 0.065, 8, 20), lbM, bx, 0.62, sd * 3.31, g); lb.rotation.y = 0; }
     const grT = cv(64, 64, (x, w, h) => { x.fillStyle = '#6a4f34'; x.fillRect(0, 0, w, h); x.fillStyle = '#17120c'; for (let a = 0; a < 8; a++) for (let b2 = 0; b2 < 8; b2++) x.fillRect(a * 8 + 2, b2 * 8 + 2, 4, 4); }); const gr = mesh(new THREE.PlaneGeometry(1.1, 1.1), std(grT, 0.9), 15.55, 0.012, 0, g); gr.rotation.x = -Math.PI / 2;
-    const doorT = cv(64, 128, (x, w, h) => { x.fillStyle = '#7a5a3a'; x.fillRect(0, 0, w, h); x.strokeStyle = '#4a3420'; x.lineWidth = 3; x.strokeRect(6, 8, w - 12, 50); x.strokeRect(6, 66, w - 12, 54); x.fillStyle = '#c9a24a'; x.beginPath(); x.arc(w - 10, 64, 3, 0, 7); x.fill(); for (let n = 0; n < 40; n++) { x.fillStyle = 'rgba(40,28,16,0.2)'; x.fillRect(Math.random() * w, 0, 1, h); } }), doorM = std(doorT, 0.8);
-    for (const [dx, dz, ry] of [[4.59, 0, Math.PI / 2], [-9.99, 0, -Math.PI / 2 + Math.PI]]) { const d = mesh(new THREE.PlaneGeometry(0.62, 1.1), doorM, dx, 0.57, dz, g); d.rotation.y = dx > 0 ? -Math.PI / 2 : Math.PI / 2; }
+    for (const dx of [4.6, -10.1]) { const d = makeDoor({ w: 0.62, h: 1.05, kind: 'panel', color: 0x7a5a3a, frame: 0xece8dc, metal: 0xc9a24a }); d.position.set(dx, 0, 0); d.rotation.y = dx > 0 ? -Math.PI / 2 : Math.PI / 2; g.add(d); }   /* a varnished panelled door (engine/door.js) in the end of each low house: they were painted pictures on a flat card (owner, 17 November 2026) */
     const ropeT = cv(64, 16, (x, w, h) => { x.fillStyle = '#9a875a'; x.fillRect(0, 0, w, h); x.strokeStyle = 'rgba(70,58,34,0.7)'; x.lineWidth = 2; for (let k = -2; k < 12; k++) { x.beginPath(); x.moveTo(k * 8, h); x.lineTo(k * 8 + 8, 0); x.stroke(); } }, [10, 1]), ropeM = std(ropeT, 1);
     for (const [rx, rz] of [[2.6, 2.5], [18.6, -2.2], [-8.6, -0.2]]) for (let k = 0; k < 3; k++) mesh(new THREE.TorusGeometry(0.34 - k * 0.09, 0.045, 6, 18), ropeM, rx, 0.05 + k * 0.035, rz, g).rotation.x = Math.PI / 2; }
   /* an anchor windlass and bitts on the forecastle, a deck bucket */
@@ -1586,6 +1587,8 @@ function devViews() {
   if (shot === 'presschat') inPress(32, 2.4, 0.5, -2.98, 0.05).then(() => startTalk(byId('sailor')));
   if (shot === 'street1') inStreet(20, -7, 2.6, -1.25, 0.02);
   if (shot === 'street2') inStreet(21, 4.5, 1.2, 1.35, 0.03);
+  if (shot === 'at') { const n = (k, d) => +(q.get(k) ?? d), [x, z, yaw, pitch] = [n('x', 0), n('z', 0), n('yaw', 0), n('pitch', 0)];   /* any spot in the street or on the deck: ?shot=at&p=street|deck&x=&z=&yaw=&pitch= (used to look at the doors) */
+    if (q.get('p') === 'deck') inDock(41, 0, 3.0, 0, 0).then(() => { buildDeck(); enterPlace('deck'); go(x, z, yaw, pitch); }); else inStreet(20, x, z, yaw, pitch); }
   if (shot === 'streetchat') inStreet(21, 0.3, 2.9, 0.1, 0.05).then(() => startTalk(byId('garvey3')));
   if (shot === 'hall1') inHall(10, 0, 3.1, 0, 0);
   if (shot === 'hall2') inHall(11, 1.2, 0.6, -1.0, -0.08, 'WORK');

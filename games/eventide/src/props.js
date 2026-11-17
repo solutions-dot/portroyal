@@ -2,6 +2,7 @@
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from 'three';
 import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv } from './gfx.js';
+import { makeDoor } from '../../../engine/door.js';
 
 const M = {
   trunk: solid(0x6a4c33, 1), palmTrunk: solid(0x8a7156, 1), wood: solid(0x7a5a3c, 0.95), woodDark: solid(0x3d2d20, 0.95), iron: solid(0x2b2d31, 0.6, 0.3), steel: solid(0x8c8f93, 0.4, 0.6),
@@ -105,9 +106,8 @@ export function boardHouse(w = 5, d = 4, h = 2.8, { wall = [188, 160, 110], roof
   for (const s of [-1, 1]) { const p = box(w + 0.7, 0.08, Ls, std(zt, 0.75), 0, h + rise / 2 + 0.04, s * (d / 4 + 0.2), g); p.rotation.x = s * th; }
   for (const s of [-1, 1]) { const gable = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-d / 2, 0), new THREE.Vector2(d / 2, 0), new THREE.Vector2(0, rise)])), std(wt, 0.9), s * (w / 2 + 0.005), h, 0, g); gable.rotation.y = s * Math.PI / 2; gable.material.side = THREE.DoubleSide; }
   const shut = solid(0x2f6a3f, 0.9); for (const x of [-w * 0.28, w * 0.28]) { box(0.9, 0.9, 0.06, M.woodDark, x, h * 0.62, d / 2 + 0.02, g); box(0.4, 0.8, 0.07, shut, x - 0.62, h * 0.62, d / 2 + 0.04, g); box(0.4, 0.8, 0.07, shut, x + 0.62, h * 0.62, d / 2 + 0.04, g); }
-  box(0.9, 1.9, 0.07, solid(0x4a2f1e, 0.9), 0, 0.95, d / 2 + 0.03, g);
+  { const y0 = porch ? 0.27 : 0, dr = makeDoor({ w: 0.86, h: 2.08 - y0, kind: 'plank', color: 0x5a3a24, frame: 0xe8e0cc, metal: 0x3a3a3a }); dr.position.set(0, y0, d / 2); g.add(dr); }   /* a ledged board door with a latch (engine/door.js), standing on the veranda floor */
   const wf = solid(0xe8e0cc, 0.8); for (const x of [-w * 0.28, w * 0.28]) { box(1.14, 0.06, 0.07, wf, x, h * 0.62 + 0.47, d / 2 + 0.05, g); box(1.14, 0.06, 0.07, wf, x, h * 0.62 - 0.47, d / 2 + 0.05, g); box(1.2, 0.05, 0.14, wf, x, h * 0.62 - 0.52, d / 2 + 0.1, g); for (const s of [-0.54, 0, 0.54]) box(0.05, 0.94, 0.07, wf, x + s, h * 0.62, d / 2 + 0.05, g); }
-  box(1.06, 0.06, 0.08, wf, 0, 1.94, d / 2 + 0.05, g); for (const s of [-0.5, 0.5]) box(0.06, 1.9, 0.08, wf, s, 0.95, d / 2 + 0.05, g);
   for (const [x, z] of [[-w / 2 + 0.2, -d / 2 + 0.2], [w / 2 - 0.2, -d / 2 + 0.2], [-w / 2 + 0.2, d / 2 - 0.2], [w / 2 - 0.2, d / 2 - 0.2], [0, d / 2 - 0.2], [0, -d / 2 + 0.2]]) cyl(0.13, 0.16, 0.3, solid(0x9a968a, 1), x, 0.1, z, g, 8);
   box(w + 0.8, 0.1, 0.2, TM2, 0, h + rise + 0.04, 0, g); box(0.5, 0.16, 0.12, wf, 0, h + 0.5, d / 2 + 0.02, g);
   if (porch) { box(1.5, 0.18, 0.5, M.woodDark, 0, 0.09, d / 2 + 1.85, g); box(1.2, 0.18, 0.4, M.woodDark, 0, 0.24, d / 2 + 1.6, g); for (let x = -w / 2 + 0.2; x < w / 2; x += 0.28) box(0.04, 0.22, 0.04, wf, x, 2.44, d / 2 + 1.5, g); }

@@ -2,7 +2,7 @@
 #   trousers, waistcoat, collar, tie, flat cap (hat:'flat'), and for women a long skirt, a high-necked blouse (highneck) and a bun.
 # It also builds Port Royal's people (recipes in tools/people/, top-level "era": 1690): tools/people/npc.py is the old builder, kept only for reference.
 # Everything that is new for 1690 sits behind OLD (era before 1800) or behind garments no later recipe uses (coat, bands, cap, slops), so later eras build the same as before.
-import bpy, re, bmesh, math, sys, json, mathutils
+import bpy, bmesh, math, sys, json, mathutils
 from mathutils import Vector, Matrix, noise
 from mathutils.bvhtree import BVHTree
 import os
@@ -867,9 +867,7 @@ if CK and not FLAT:
             r0=math.hypot(e.x,e.y-NJ.y); r1=rad_out(e.z,a)+(0.013 if not (G.get('jacket') or G.get('waistcoat')) else 0.011)
             if r1>r0: e.x*=r1/r0; e.y=NJ.y+(e.y-NJ.y)*r1/r0
             if fr>0:      # the points: longer, lying on the shirt front, spread a little apart
-                # a blouse's or a child's points are shorter (owner, 17 November 2026: the points looked large)
-                sx=1 if math.sin(a)>=0 else -1; small=G.get('woman') or P['body'].get('age',0.5)<0.25; zp=NECK-(0.046 if small else 0.058)*s; xp=sx*(0.028 if small else 0.034)*s
-                tip=Vector((xp,shirt_front(zp,xp)-0.008,zp)); e=e.lerp(tip,fr**0.8)
+                sx=1 if math.sin(a)>=0 else -1; zp=NECK-0.058*s; xp=sx*0.034*s; tip=Vector((xp,shirt_front(zp,xp)-0.008,zp)); e=e.lerp(tip,fr**0.8)
             row+=[q,e]
         rows.append(row)
     if not OLD or EASE_OLD:      # every line of the collar is evened out along the ring (see ring_fix); the yoke stays on the skin and under the shirt, the band and the leaf stay clear of the shirt (the 1690 neckband had the same teeth)
@@ -885,31 +883,42 @@ if CK and not FLAT:
             for j in range(ny+(3 if G.get('collarfit',1) else 2),len(row)):      # the folded leaf lies on the shirt, never in it: each of its points at least 4 mm over the shirt (measured from the skin, the leaf sank into an eased shirt and the shirt showed through it in patches)
                 loc,nrm,_i,_d=SHT.find_nearest(row[j])
                 if loc is not None and (row[j]-loc).dot(nrm)<0.004: row[j]=loc+nrm*0.004
-                if loc is not None and j==len(row)-1 and (row[j]-loc).dot(nrm)>0.006: row[j]=loc+nrm*0.005      # and its outer edge lies down on the shirt: standing off the shoulder, it showed its dark underside and the skin beneath (owner, 17 November 2026)
             if CK!='open':      # the band's lowest row goes just under the shirt's neck edge, so no slit of skin opens between them (with no yoke under it)
                 loc,nrm,_i,_d=SHT.find_nearest(row[ny])
                 if loc is not None: row[ny]=loc+nrm*(0.0012 if ny else -0.004)
-    if CK=='turn':      # the leaf's outer edge turns under onto the shirt, so its underside never shows (as the flat collars' edge does)
-        for row in rows:
-            q=row[-1]; d=(q-row[-2]); d=d.normalized() if d.length>1e-6 else Vector((0,0,-1)); loc,nrm,_i,_dd=SHT.find_nearest(q+d*0.003)
-            if loc is not None: row.append(loc-nrm*0.0012)
     rows=[[bm.verts.new(q) for q in row] for row in rows]
     quadstrip(bm,[list(r) for r in zip(*rows)]); _co=soft('Collar',bm,'Shirt' if CK=='band' else 'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
     if not OLD or EASE_OLD: ring_weights(_co,len(rows),len(rows[0]))
     _cb=bmesh.new(); _cb.from_mesh(_co.data); _cb.normal_update(); _fl=[f for f in _cb.faces if f.normal.dot(Vector((cz(f).x,cz(f).y-NJ.y,0)))<0]      # every face of the band and its folded leaf looks outward from the neck: the automatic normals of a strip that folds back on itself flipped some faces, which drew as grey blocks on the collar (owner, 17 November 2026)
     if _fl: bmesh.ops.reverse_faces(_cb,faces=_fl)
     _cb.to_mesh(_co.data); _cb.free(); _co.data.update()
-if G.get('tie'):         # a tie: a knot in the collar's opening and a blade that lies on the shirt, wider toward its tip
-    bm=bmesh.new(); zk=collar_base(0)+0.016*s; n=8; L=(0.30 if not (G.get('waistcoat') or G.get('jacket')) else 0.24)*s; rows=[]
+if G.get('tie'):         # a tie: a four-in-hand knot that fills the collar's opening, and a blade that starts inside the knot and lies on the shirt, wider toward its tip
+    # (owner, 17 November 2026: the tie collars looked awful. The knot was a small box floating in the opening with bare neck round it, the blade began
+    # below it with a gap, and the shirt's front strip crossed the top of the blade as a grey square.)
+    bm=bmesh.new(); zt=collar_base(0)+(0.008 if CK=='stand' else 0.022)*s; KH=(0.026 if CK=='stand' else 0.030)*s;      # (under a tall stand collar the knot sits at the foot of its opening: higher, it spread over the collar)
+    zb=zt-KH; n=10; L=(0.30 if not (G.get('waistcoat') or G.get('jacket')) else 0.24)*s; rows=[]
     for t in range(n+1):
-        f=t/n; z=zk-0.014*s-L*f; w=(0.013+0.022*f)*s if f<0.9 else 0.035*s*(1-f)/0.1+0.002; y=shirt_front(z)-0.007
-        rows.append([bm.verts.new((-w,y,z)),bm.verts.new((0,y-0.004,z)),bm.verts.new((w,y,z))])
+        f=t/n; z=zb+0.012*s-(L+0.012*s)*f; w=(0.011+0.024*f)*s if f<0.9 else 0.035*s*(1-f)/0.1+0.002; y=shirt_front(z)-0.007
+        if z>zb-0.012*s: y=min(y,NJ.y-rad_out(zt,0.0)-0.008)      # its top runs up inside the knot, in front of the collar's opening
+        rows.append([bm.verts.new((-w,y+0.002,z)),bm.verts.new((0,y-0.003,z)),bm.verts.new((w,y+0.002,z))])
     quadstrip(bm,rows)
-    zq=zk-0.010*s; yk=min(shirt_front(zq-0.01*s),NJ.y-rad_out(zq,0.0)-0.008)-0.004; kv=[bm.verts.new((dx*s*0.72,yk+dy*0.7,zq+dz*s*0.72)) for dx,dy,dz in ((-0.019,0.004,0.012),(0.019,0.004,0.012),(0.012,0.004,-0.018),(-0.012,0.004,-0.018),(-0.012,-0.008,0.010),(0.012,-0.008,0.010),(0.008,-0.008,-0.014),(-0.008,-0.008,-0.014))]
-    for q in ((4,5,6,7),(0,4,7,3),(5,1,2,6),(7,6,2,3),(0,1,5,4),(3,2,1,0)): bm.faces.new([kv[i] for i in q])      # (its depth is taken from the front of the neck too: above the shirt's neckline the shirt ray missed the front and found the back, and the knot sat behind the neck, showing as a dark frame at the nape) a closed knot (open at the back, its inside drew as a dark frame seen through the back of the collar)
+    # the knot: rings from top to bottom, each a rounded front (7 points across) closed at the back against the neck; wide at the top, narrow at the bottom
+    yb=NJ.y-rad_out(zt,0.0)-0.002; rings=[]
+    for t,(hw,dd) in enumerate(((0.019,0.010),(0.020,0.013),(0.017,0.013),(0.013,0.011),(0.009,0.008))):
+        z=zt-KH*t/4; yf=min(yb,shirt_front(z)-0.004 if z<collar_base(0) else yb)-dd; ring=[]
+        for k in range(7):
+            u=-1+2*k/6; ring.append(bm.verts.new((u*hw*s,yf+dd*(u*u)*0.75,z)))
+        ring.append(bm.verts.new((hw*s*0.55,yf+dd+0.004,z))); ring.append(bm.verts.new((-hw*s*0.55,yf+dd+0.004,z)))      # its back is narrower than its front, so no edge of it shows past the collar at the side
+        rings.append(ring)
+    m=len(rings[0])
+    for a,b in zip(rings,rings[1:]):
+        for k in range(m): bm.faces.new([a[k],a[(k+1)%m],b[(k+1)%m],b[k]])
+    bm.faces.new(list(reversed(rings[0]))); bm.faces.new(rings[-1])      # closed top and bottom, so no inside shows
+    bmesh.ops.recalc_face_normals(bm,faces=bm.faces[:])
     soft('Tie',bm,'Tie',only=('Spine2','Spine1','Spine','Neck'),src=ON('shirt'))
 if G.get('buttons',not G.get('woman') and not OLD) and not G.get('coat'):      # the shirt's front band and its buttons
     bm=bmesh.new(); z1=(VZ-0.004*s) if CK=='camp' else collar_base(0)-0.012*s; z0=WAIST+0.01
+    if G.get('tie'): z1=min(z1,collar_base(0)-(0.30 if not (G.get('waistcoat') or G.get('jacket')) else 0.24)*s-0.01*s); z1=max(z1,z0+0.02*s)      # with a tie the strip starts below its tip
     if G.get('skirt') and G.get('belt'): z0=max(z0,HIP+(0.118 if G.get('sash') else 0.092))      # the band stops where the belt or sash covers it, so it never lies on top of them
     n=10 if OLD else 24; rows=[]
     for t in range(n+1):
@@ -1606,7 +1615,7 @@ def tuck_under_collar():
     # The same for a flat collar (round or camp): skin of the neck and shoulders lying under the collar's leaf, below its seam, is set 8 mm deeper and bound to the collar,
     # so it cannot come through at the nape when the head bows (it showed as a streak of skin across the back of the collar: owner, 17 November 2026).
     co=bpy.data.objects.get('Collar')
-    if co is None or not len(co.data.polygons): return      # every collar, flat or turned down (owner, 17 November 2026: gaps with skin showing under a turn-down collar's leaf)
+    if co is None or not FLAT or not len(co.data.polygons): return
     from mathutils.kdtree import KDTree
     b=bmesh.new(); b.from_mesh(co.data); b.normal_update(); bt=BVHTree.FromBMesh(b); top=[v.co.copy() for v in b.verts if v.is_boundary and v.co.z>NECK-0.02*s]; b.free()
     kt=KDTree(max(1,len(top)))
@@ -1629,36 +1638,6 @@ def tuck_under_collar():
         v.co=c-v.normal*(0.0015+0.0065*feather); n+=1
     print('TUCKED UNDER COLLAR',n)
 if G.get('tuckskin',1): tuck_under_collar()
-def tuck_under_skirt():
-    # Skin at the waist under the top of a skirt (the band the belt covers and a hand's width below it) came through the skirt just under the belt when the body bent
-    # forward to talk or walk (owner, 17 November 2026: "the belt also is exposing something underneath"). Each such point of skin is set 8 mm deeper and takes the bone
-    # weights of the skirt right over it, so it moves exactly as the skirt does and cannot pass it. One rule for every body with a skirt.
-    sk=PART.get('skirt')
-    if sk is None or not len(sk.data.polygons): return
-    from mathutils.kdtree import KDTree
-    b=bmesh.new(); b.from_mesh(sk.data); b.normal_update(); bt=BVHTree.FromBMesh(b); b.free()
-    kv=KDTree(len(sk.data.vertices))
-    for v in sk.data.vertices: kv.insert(v.co,v.index)
-    kv.balance(); on={g.index:g.name for g in sk.vertex_groups}; n=0
-    Jy=J('Hips').y; covers=[x for x in (PART.get('shirt'),sk) if x is not None and len(x.data.polygons)]; trees=[]
-    for x in covers:
-        bb=bmesh.new(); bb.from_mesh(x.data); bb.normal_update(); trees.append(BVHTree.FromBMesh(bb)); bb.free()
-    dead=set()
-    for v in h.data.vertices:      # loose patches of the body's own skin at the waist, under the blouse or the skirt, came out between the belt and the skirt when the body bent
-        c=v.co
-        if not HIP-0.06<c.z<HIP+0.16: continue
-        ws={h.vertex_groups[g.group].name:g.weight for g in v.groups if h.vertex_groups[g.group].name.startswith('mixamorig:')}
-        if not ws: continue
-        top=max(ws,key=ws.get)
-        if not re.match(r'mixamorig:(Hips|Spine\d?|LeftUpLeg|RightUpLeg)$',top): continue      # the body's own skin (a hand resting on the hip keeps its skin)
-        o=Vector((0,Jy,c.z)); d=Vector((c.x,c.y-Jy,0)); r=d.length
-        if r<1e-4: continue
-        d/=r
-        if any((lambda hh:hh is not None and (hh-o).length>=r-0.004)(T.ray_cast(o,d,0.6)[0]) for T in trees): dead.add(v.index)
-    if dead:
-        b=bmesh.new(); b.from_mesh(h.data); b.verts.ensure_lookup_table(); bmesh.ops.delete(b,geom=[b.verts[k] for k in dead],context='VERTS'); b.to_mesh(h.data); b.free(); h.data.update(); n=len(dead)
-    print('TUCKED UNDER SKIRT',n)
-if G.get('tuckskin',1) and G.get('skirt'): tuck_under_skirt()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
 # Colours. The layer below is a float layer, so the linear colours made by srgb() above are exported as they are, and the scene is marked
 # vertexColorSpace: linear (engine/colours.js repairs older bodies without the mark). So a recipe colour means the same colour in every game (docs/PIPELINE.md, "Skin").
