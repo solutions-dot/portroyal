@@ -9,8 +9,8 @@
    "dur": 1.0
   },
   {
-   "clip": "selassie_land",
-   "from": 3.7,
+   "clip": "bogwalk",
+   "from": 3.0,
    "dur": 1.0
   },
   {
@@ -27,12 +27,12 @@
    "clip": "play_walk",
    "from": 1.0,
    "dur": 3.0,
+   "ui": true,
    "stamp": {
     "place": "The Emperor’s Arrival",
     "year": "1966",
     "colour": "#edc25f"
-   },
-   "ui": true
+   }
   },
   {
    "clip": "play_phone",
@@ -48,9 +48,10 @@
    }
   },
   {
-   "clip": "bogwalk",
-   "from": 2.5,
+   "clip": "tube",
+   "from": 0.5,
    "dur": 3.0,
+   "push": 0.12,
    "stamp": {
     "place": "Bog Walk Tube Flood",
     "year": "1904",
@@ -59,14 +60,13 @@
   },
   {
    "clip": "garvey",
-   "from": 1.0,
+   "from": 1.5,
    "dur": 3.0,
    "stamp": {
     "place": "Marcus Garvey and the UNIA",
     "year": "1914",
     "colour": "#E8505B"
-   },
-   "push": 0.1
+   }
   },
   {
    "clip": "nanny",
@@ -79,32 +79,36 @@
    }
   },
   {
-   "clip": "learn_journal",
-   "from": 0.5,
+   "clip": "nanny_march",
+   "from": 1.0,
    "dur": 3.0,
-   "ui": true
+   "stamp": {
+    "place": "The Fall of Nanny Town",
+    "year": "1734",
+    "colour": "#f0b860"
+   }
   },
   {
    "clip": "kendal",
    "from": 4.0,
    "dur": 3.0,
+   "push": 0.1,
    "stamp": {
     "place": "Kendal Train Crash",
     "year": "1957",
     "colour": "#1FB5A3"
-   },
-   "push": 0.1
+   }
   },
   {
    "clip": "eventide",
    "from": 1.0,
    "dur": 3.0,
+   "push": 0.1,
    "stamp": {
     "place": "Eventide Home Fire",
     "year": "1980",
     "colour": "#a9dcc2"
-   },
-   "push": 0.1
+   }
   },
   {
    "clip": "selassie_land",
@@ -119,7 +123,7 @@
   {
    "clip": "windrush",
    "from": 8.5,
-   "dur": 3.5,
+   "dur": 3.0,
    "stamp": {
     "place": "Windrush",
     "year": "1948",
@@ -129,18 +133,18 @@
   {
    "clip": "tivoli",
    "from": 1.0,
-   "dur": 3.0,
+   "dur": 2.0,
+   "push": 0.08,
    "stamp": {
     "place": "Tivoli Gardens",
     "year": "Today",
     "colour": "#fed100"
-   },
-   "push": 0.1
+   }
   },
   {
    "clip": "melissa",
-   "from": 3.0,
-   "dur": 3.0,
+   "from": 0.7,
+   "dur": 4.5,
    "stamp": {
     "place": "Hurricane Gilbert",
     "year": "1988",
@@ -184,28 +188,24 @@
    "t0": 9.15,
    "t1": 11.9,
    "text": "Play.",
-   "sub": "Walk the streets. Explore every corner.",
    "cls": "word"
   },
   {
    "t0": 12.2,
    "t1": 14.9,
    "text": "Tap people to talk.",
-   "sub": "On a phone or a computer",
    "cls": "small left"
   },
   {
    "t0": 21.15,
    "t1": 23.9,
    "text": "Learn.",
-   "sub": "Real history for ages 6 and up",
    "cls": "word"
   },
   {
    "t0": 33.15,
    "t1": 35.9,
    "text": "Discover.",
-   "sub": "The moments that shaped Jamaica",
    "cls": "word"
   },
   {
@@ -227,7 +227,7 @@
   "gap": 0.3,
   "emptyAt": 3.3,
   "empty": 5,
-  "say1": "Ten stories so far.",
+  "say1": "Created by Kellz 5.0",
   "say2": "Many more on the way.",
   "stamps": [
    {

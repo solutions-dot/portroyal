@@ -2,17 +2,18 @@
 
     python3 -I tools/trailer/music.py <intro.wav> <out.wav>
 
-80 beats a minute, so a bar of four is 3 seconds and every cut in the trailer lands on a bar. In D, calm and a little awed, with
-the plucked box bass of old mento music (an approximation, like the menu intro). intro.wav is the menu intro's own sound, rendered
-by record_intro_sound (tools/trailer/make.mjs); it plays under the first seven seconds, where the trailer shows the intro.
+A reggae one-drop riddim in D minor, 80 beats a minute, so a bar of four is 3 seconds and every cut lands on a bar. The parts are the
+ones a Kingston studio band would play: kick and rim together on beat three (the one drop), triplet hi-hats, a deep melodic bass that
+rests on the one, guitar skank chops on two and four, the organ "bubble", a melodica lead and dub echo. intro.wav is the
+menu intro's own sound (tools/trailer/intro_sound.mjs); it plays from 3 s, under the dial and the logo.
 
-   0 -  3   the hook: a low hit on each cut and a rising breath
+   0 -  3   the hook: a deep hit on each cut, a cymbal swelling into the dial
    3 -  9   the menu intro's sound (dial, stamps, logo)
-   9 - 21   pad and marimba, bass on the one             (Play)
-  21 - 45   adds the offbeat guitar chop, one-drop drums and shaker   (Learn, Discover)
-  45 - 51   fuller, the melody climbs
-  51 - 56   the passport page: a note for each stamp as it lands, then a swell
-  56 - 60   the bell (D, A, E, as the intro) over a held D, fading out
+   9 - 21   the riddim drops: drums, bass, skank, bubble                 (Play)
+  21 - 45   the melodica comes in over it                                (Learn, Discover)
+  45 - 51   dub breakdown: drums and bass with echo, a swell back in      (the Traveller's Rule)
+  51 - 56   the band back in, a melodica note for each stamp             (the passport page)
+  56 - 60   the last chord, the bell, dub echoes fading out              (the end card)
 """
 import sys
 import wave
@@ -23,223 +24,271 @@ DUR = 60.0
 N = int(SR * DUR)
 BEAT = 0.75
 BAR = 3.0
-T0 = 9.0                         # the bed starts after the intro
-INTRO_AT = 3.0                   # where the intro's sound starts
-GROOVE, FULL, PASS, END = 21.0, 45.0, 51.0, 56.0
+T0 = 9.0
+INTRO_AT = 3.0
+LEAD, BREAK, PASS, END = 21.0, 45.0, 51.0, 56.0
 STAMPS = [PASS + 0.25 + 0.3 * i for i in range(10)]   # must match the overlay's passport page
-rng = np.random.default_rng(7)
+rng = np.random.default_rng(1962)
 
 
-def hz(midi):
-    return 440.0 * 2 ** ((midi - 69) / 12)
+def hz(m):
+    return 440.0 * 2 ** ((m - 69) / 12)
 
 
-def place(buf, sig, t, gain=1.0):
-    i = int(t * SR)
+def t_(n):
+    return np.arange(n) / SR
+
+
+def add(buf, sig, t, g=1.0):
+    i = int(round(t * SR))
     if i >= len(buf) or i + len(sig) <= 0:
         return
+    a = max(0, -i)
     j = min(len(buf), i + len(sig))
-    buf[i:j] += sig[: j - i] * gain
+    buf[max(i, 0):j] += sig[a: j - i] * g
 
 
-def env(n, a, d):
-    t = np.arange(n) / SR
-    return np.minimum(1, t / max(a, 1e-4)) * np.exp(-t / d)
+def onepole(x, fc):
+    """a gentle low pass, vectorised through the FFT (a one-pole response)"""
+    n = len(x)
+    nf = 1 << (n - 1).bit_length()
+    f = np.fft.rfftfreq(nf, 1 / SR)
+    H = 1 / (1 + 1j * f / fc)
+    return np.fft.irfft(np.fft.rfft(x, nf) * H, nf)[:n]
 
 
-def pluck(f, dur, bright=0.5, decay=0.996):
-    """Karplus-Strong string: the box bass and the guitar chop"""
-    n = int(dur * SR)
-    p = max(2, int(SR / f))
-    buf = rng.uniform(-1, 1, p)
-    for _ in range(int(3 * (1 - bright)) + 1):
-        buf = 0.5 * (buf + np.roll(buf, 1))
-    out = np.zeros(n)
-    for i in range(0, n, p):
-        k = min(p, n - i)
-        out[i:i + k] = buf[:k]
-        buf = decay * 0.5 * (buf + np.roll(buf, 1))
-    return out
+def highpass(x, fc):
+    return x - onepole(x, fc)
 
 
-def marimba(f, dur=1.6):
-    n = int(dur * SR)
-    t = np.arange(n) / SR
-    s = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.55) + 0.25 * np.sin(2 * np.pi * f * 4.0 * t) * np.exp(-t / 0.08)
-    return s * np.minimum(1, t / 0.004)
-
-
-def bell(f, dur=6.0):
-    n = int(dur * SR)
-    t = np.arange(n) / SR
-    s = sum(a * np.sin(2 * np.pi * f * r * t) * np.exp(-t / (d)) for r, a, d in [(1, 1, 2.6), (2.0, 0.4, 1.4), (2.76, 0.25, 0.9), (5.4, 0.12, 0.4)])
-    return s * np.minimum(1, t / 0.003)
-
-
-def pad(notes, dur):
-    """a soft string pad: detuned saws, slow attack, darkened"""
-    n = int(dur * SR)
-    t = np.arange(n) / SR
-    s = np.zeros(n)
-    for m in notes:
-        for det in (-0.12, 0.0, 0.11):
-            f = hz(m + det)
-            ph = (f * t) % 1.0
-            s += (2 * ph - 1) * 0.33
-    s /= len(notes)
-    att = np.minimum(1, t / 0.9) * np.minimum(1, (dur - t) / 0.8)
-    return s * np.clip(att, 0, 1)
+# ---------- instruments ----------
+def bass(m, dur):
+    n = int((dur + 0.08) * SR)
+    t = t_(n)
+    f = hz(m)
+    s = np.sin(2 * np.pi * f * t) + 0.35 * np.sin(2 * np.pi * 2 * f * t) + 0.12 * np.sin(2 * np.pi * 3 * f * t)
+    env = np.minimum(1, t / 0.006) * np.where(t < dur, np.exp(-t / 0.9), np.exp(-dur / 0.9) * np.exp(-(t - dur) / 0.03))
+    return np.tanh(1.6 * s * env) * 0.8
 
 
 def kick():
-    n = int(0.4 * SR)
-    t = np.arange(n) / SR
-    f = 50 + 70 * np.exp(-t / 0.04)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.18)
+    n = int(0.45 * SR)
+    t = t_(n)
+    f = 48 + 90 * np.exp(-t / 0.03)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.22) + 0.15 * rng.uniform(-1, 1, n) * np.exp(-t / 0.004)
 
 
 def rim():
-    n = int(0.12 * SR)
-    t = np.arange(n) / SR
-    x = rng.uniform(-1, 1, n)
-    x = x - np.concatenate([[0], x[:-1]])          # brighter
-    return (0.6 * x + np.sin(2 * np.pi * 1700 * t)) * np.exp(-t / 0.025)
+    n = int(0.15 * SR)
+    t = t_(n)
+    body = np.sin(2 * np.pi * 420 * t) * np.exp(-t / 0.02)
+    click = highpass(rng.uniform(-1, 1, n), 1800) * np.exp(-t / 0.012)
+    return 0.7 * body + 1.2 * click
 
 
-def shaker():
-    n = int(0.09 * SR)
-    t = np.arange(n) / SR
-    x = rng.uniform(-1, 1, n)
-    x = x - np.concatenate([[0], x[:-1]])
-    return x * np.minimum(1, t / 0.02) * np.exp(-t / 0.03)
+def hat(open_=False):
+    n = int((0.25 if open_ else 0.06) * SR)
+    t = t_(n)
+    x = highpass(highpass(rng.uniform(-1, 1, n), 6000), 6000)
+    return x * np.exp(-t / (0.09 if open_ else 0.014))
 
 
-# I - vi - IV - V in D, one bar each
-CHORDS = [[62, 66, 69], [59, 62, 66], [55, 59, 62], [57, 61, 64]]
-ROOTS = [38, 35, 43, 45]          # D2 B1 G2 A2
-MEL = {  # (bar in the progression cycle, beat) -> note, a gentle line that answers itself
-    (0, 0): 78, (0, 2): 76, (0, 3): 74,
-    (1, 0): 71, (1, 2): 74,
-    (2, 0): 74, (2, 1): 71, (2, 2): 67,
-    (3, 0): 69, (3, 2): 73, (3, 3): 76,
-}
-MEL_HI = {(0, 0): 81, (0, 2): 78, (0, 3): 76, (1, 0): 78, (1, 2): 74, (2, 0): 79, (2, 2): 78, (2, 3): 74, (3, 0): 76, (3, 2): 73}
+def skank(ms):
+    """the guitar chop: a bright chord, choked almost at once, with a scrape of the strings"""
+    n = int(0.16 * SR)
+    t = t_(n)
+    s = np.zeros(n)
+    for m in ms:
+        f = hz(m)
+        s += sum((1 / k) * np.sin(2 * np.pi * f * k * t) for k in range(1, 9))
+    s = highpass(s / len(ms), 700) * np.exp(-t / 0.045)
+    scrape = highpass(rng.uniform(-1, 1, n), 2500) * np.exp(-t / 0.01) * 0.25
+    return s + scrape
 
-L = np.zeros(N)   # dry, centre
-WET = np.zeros(N)  # sent to the reverb
 
-bars = int((PASS - T0) / BAR)   # 14 bars to the passport page
+def organ(ms, dur=0.11):
+    n = int((dur + 0.03) * SR)
+    t = t_(n)
+    s = np.zeros(n)
+    for m in ms:
+        f = hz(m)
+        s += np.sin(2 * np.pi * f * t) + 0.6 * np.sin(2 * np.pi * 2 * f * t) + 0.35 * np.sin(2 * np.pi * 3 * f * t) + 0.2 * np.sin(2 * np.pi * 4 * f * t)
+    env = np.minimum(1, t / 0.004) * np.where(t < dur, 1, np.exp(-(t - dur) / 0.012))
+    return s / len(ms) * env * (1 + 0.15 * np.sin(2 * np.pi * 6.5 * t))   # a little Leslie wobble
+
+
+def melodica(m, dur):
+    """a reed: square and saw together, a breath at the start, vibrato coming in late"""
+    n = int((dur + 0.15) * SR)
+    t = t_(n)
+    vib = 1 + 0.006 * np.sin(2 * np.pi * 5.4 * t) * np.minimum(1, t / 0.35)
+    ph = np.cumsum(hz(m) * vib) / SR % 1.0
+    s = 0.55 * np.sign(np.sin(2 * np.pi * ph)) + 0.45 * (2 * ph - 1)
+    s = onepole(s, 2600)
+    env = np.minimum(1, t / 0.035) * np.where(t < dur, 1, np.exp(-(t - dur) / 0.06))
+    breath = highpass(rng.uniform(-1, 1, n), 3000) * np.exp(-t / 0.05) * 0.08
+    return (s + breath) * env
+
+
+def swell(dur):
+    """a cymbal played backwards: noise rising into the next section"""
+    n = int(dur * SR)
+    x = highpass(rng.uniform(-1, 1, n), 3500)
+    return x * np.linspace(0, 1, n) ** 3
+
+
+def bell(f, dur=5.0):
+    n = int(dur * SR)
+    t = t_(n)
+    s = sum(a * np.sin(2 * np.pi * f * r * t) * np.exp(-t / d) for r, a, d in [(1, 1, 2.6), (2.0, 0.4, 1.4), (2.76, 0.25, 0.9), (5.4, 0.12, 0.4)])
+    return s * np.minimum(1, t / 0.003)
+
+
+# ---------- the riddim: Dm | Dm | Gm | A, one bar each ----------
+CH = [[62, 65, 69], [62, 65, 69], [62, 67, 70], [61, 64, 69]]       # skank voicings (around middle C)
+OR_HI = [[65, 69, 74], [65, 69, 74], [67, 70, 74], [64, 69, 73]]    # organ, right hand
+ROOT = [38, 38, 43, 45]                                              # D2 D2 G2 A2
+BL = [  # the bass line (beat, interval from the root, length in beats): it rests on the one
+    [(0.5, 0, 0.45), (1.0, 0, 0.4), (1.5, 3, 0.45), (2.5, 7, 0.45), (3.0, 5, 0.4), (3.5, 3, 0.45)],
+    [(0.5, 0, 0.45), (1.0, 0, 0.4), (1.5, 3, 0.45), (2.5, 7, 0.95), (3.5, 10, 0.45)],
+    [(0.5, 0, 0.45), (1.0, 0, 0.4), (1.5, 3, 0.45), (2.5, 7, 0.45), (3.0, 5, 0.4), (3.5, 3, 0.45)],
+    [(0.5, 0, 0.45), (1.0, 0, 0.4), (1.5, 4, 0.45), (2.5, 7, 0.45), (3.0, -5, 0.4), (3.5, -3, 0.45)],
+]
+# the melodica: a lifting line in D minor, two four-bar phrases (bar, beat, note, beats)
+MEL = [
+    (0, 0.0, 74, 1.5), (0, 2.0, 77, 1.0), (0, 3.0, 76, 1.0), (1, 0.0, 74, 2.5), (1, 3.0, 72, 0.5), (1, 3.5, 74, 0.5),
+    (2, 0.0, 79, 1.5), (2, 2.0, 77, 0.5), (2, 2.5, 76, 0.5), (2, 3.0, 74, 1.0), (3, 0.0, 73, 2.0), (3, 2.5, 76, 1.5),
+    (4, 0.0, 81, 1.5), (4, 2.0, 79, 1.0), (4, 3.0, 77, 1.0), (5, 0.0, 76, 2.0), (5, 2.5, 74, 0.5), (5, 3.0, 76, 1.0),
+    (6, 0.0, 77, 1.0), (6, 1.0, 79, 1.0), (6, 2.0, 82, 2.0), (7, 0.0, 81, 2.5), (7, 3.0, 76, 1.0),
+]
+
+DRY = np.zeros(N)
+DUB = np.zeros(N)    # sent to the dub echo
+VERB = np.zeros(N)   # sent to the reverb
+
+bars = int(round((END - T0) / BAR))   # 9 .. 57: the last bar is cut off by the end card's hold
 for b in range(bars):
     t = T0 + b * BAR
+    if t >= END:
+        break
     k = b % 4
-    groove = t >= GROOVE - 1e-6
-    full = t >= FULL - 1e-6
-    # pad
-    p = pad(CHORDS[k], BAR + 0.4)
-    place(WET, p, t, 0.10 if not full else 0.13)
-    place(L, p, t, 0.05)
-    # box bass: the one and the "and of two" (mento), then three
-    for bt, g in [(0, 1.0), (1.5, 0.6), (2, 0.8)] if groove else [(0, 1.0), (2, 0.7)]:
-        place(L, pluck(hz(ROOTS[k] + (7 if bt == 2 and groove else 0)), 1.2, bright=0.2, decay=0.9985), t + bt * BEAT, 0.42 * g)
-    # melody
-    tune = MEL_HI if full else MEL
-    for (kb, bt), m in tune.items():
-        if kb == k:
-            s = marimba(hz(m))
-            place(L, s, t + bt * BEAT, 0.16)
-            place(WET, s, t + bt * BEAT, 0.12)
-    if groove:
-        # guitar chop on every offbeat
-        for bt in range(4):
-            ch = sum(pluck(hz(m + 12), 0.25, bright=0.9, decay=0.97) for m in CHORDS[k])
-            place(L, ch * np.exp(-np.arange(len(ch)) / SR / 0.07), t + (bt + 0.5) * BEAT, 0.07)
-            place(WET, ch, t + (bt + 0.5) * BEAT, 0.02)
-        # one drop: kick and rim together on beat three
-        place(L, kick(), t + 2 * BEAT, 0.55)
-        place(L, rim(), t + 2 * BEAT, 0.12)
-        place(WET, rim(), t + 2 * BEAT, 0.08)
-        if full:
-            place(L, kick(), t + 0 * BEAT, 0.35)
-        for e in range(8):
-            place(L, shaker(), t + e * BEAT / 2, 0.035 if e % 2 else 0.02)
+    brk = BREAK <= t < PASS
+    passport = t >= PASS
+    # drums: the one drop, triplet hats, an open hat on the "and" of four
+    add(DRY, kick(), t + 2 * BEAT, 0.9)
+    add(DRY, rim(), t + 2 * BEAT, 0.32)
+    add(VERB, rim(), t + 2 * BEAT, 0.12)
+    if brk:
+        add(DUB, rim(), t + 2 * BEAT, 0.35)
+    if b == 0:
+        add(VERB, highpass(rng.uniform(-1, 1, int(1.6 * SR)), 4000) * np.exp(-t_(int(1.6 * SR)) / 0.5), t, 0.25)   # a crash as the riddim drops
+        add(DRY, kick(), t, 0.9)
+    for i in range(12):
+        sw = (i % 3)
+        g = [0.10, 0.05, 0.13][sw]
+        add(DRY, hat(), t + i * BEAT / 3, g * (0.6 if brk else 1))
+    if not brk:
+        add(DRY, hat(True), t + 3.5 * BEAT, 0.06)
+    if k == 3 and not brk:   # a little rim fill into the next phrase
+        for j, dt in enumerate((3.0, 3.333, 3.667)):
+            add(DRY, rim(), t + dt * BEAT, 0.12 + 0.05 * j)
+    # bass
+    for bt, iv, ln in BL[k]:
+        add(DRY, bass(ROOT[k] + iv, ln * BEAT), t + bt * BEAT, 0.62)
+    if brk:
+        continue
+    # skank on two and four, with dub echo
+    for bt in (1, 3):
+        s = skank(CH[k])
+        add(DRY, s, t + bt * BEAT, 0.20)
+        add(DUB, s, t + bt * BEAT, 0.06)
+    # the bubble: right hand on the "and", left hand on the "e" and "a"
+    for bt in range(4):
+        add(DRY, organ(OR_HI[k]), t + (bt + 0.5) * BEAT, 0.075)
+        for e in (0.25, 0.75):
+            add(DRY, organ([ROOT[k] + 24, ROOT[k] + 31], 0.07), t + (bt + e) * BEAT, 0.04)
+    # melodica from 21 s (Learn and Discover), in phrases of eight bars
+    if LEAD <= t < BREAK:
+        mb = int(round((t - LEAD) / BAR)) % 8
+        for bb, bt, m, ln in MEL:
+            if bb == mb:
+                s = melodica(m, ln * BEAT)
+                add(DRY, s, t + bt * BEAT, 0.13)
+                add(DUB, s, t + bt * BEAT, 0.05)
+                add(VERB, s, t + bt * BEAT, 0.05)
 
-# the hook: a deep hit on each of the three cuts, and a breath of noise rising into the dial
+# the hook: a deep hit on each cut, and a swell into the dial
 for t in (0.0, 1.0, 2.0):
-    k = kick()
-    place(L, k, t, 0.8)
-    place(WET, k, t, 0.25)
-    place(WET, bell(hz(38 + 12), 2.0), t, 0.05)
-nz = rng.uniform(-1, 1, int(2.8 * SR))
-nz = np.convolve(nz, np.ones(24) / 24, mode='same') * np.linspace(0, 1, len(nz)) ** 3
-place(WET, nz, 0.2, 0.35)
-place(L, nz, 0.2, 0.08)
+    add(DRY, kick(), t, 1.0)
+    add(DUB, rim(), t, 0.3)
+w_ = swell(2.6)
+add(VERB, w_, 0.4, 0.35)
+add(DRY, w_, 0.4, 0.06)
+# the breakdown swelling back into the band
+w2 = swell(1.8)
+add(VERB, w2, PASS - 1.8, 0.3)
+add(DRY, w2, PASS - 1.8, 0.05)
+# the passport page: a melodica note for each stamp, climbing D minor
+for t, m in zip(STAMPS, [74, 76, 77, 79, 81, 82, 84, 86, 88, 89]):
+    s = melodica(m, 0.22)
+    add(DRY, s, t, 0.09)
+    add(DUB, s, t, 0.04)
+# the end: the band stops on the one, the last chord rings with the bell and fades in dub echo
+add(DRY, kick(), END, 0.9)
+add(DRY, bass(38, 2.6), END, 0.7)
+last = organ([62, 65, 69, 74], 2.2)
+add(DRY, last * np.exp(-t_(len(last)) / 1.4), END, 0.12)
+add(DUB, skank([62, 65, 69]), END, 0.25)
+for m, dt in [(74, 0.0), (81, 0.55), (88, 1.1)]:   # D, A, E like the intro's bell
+    b_ = bell(hz(m))
+    add(DRY, b_, END + dt, 0.08)
+    add(VERB, b_, END + dt, 0.10)
 
-# the passport page: the groove stops, the pad holds, and each stamp lands with a woody note climbing the D major scale
-pp = pad([50, 57, 62, 66], END - PASS + 0.5)
-place(WET, pp, PASS, 0.14)
-place(L, pluck(hz(38), 3.0, bright=0.2, decay=0.9993), PASS, 0.45)
-scale = [62, 64, 66, 67, 69, 71, 73, 74, 76, 78]
-for t, m in zip(STAMPS, scale):
-    place(L, kick()[: int(0.12 * SR)], t, 0.25)
-    s_ = marimba(hz(m), 1.2)
-    place(L, s_, t, 0.2)
-    place(WET, s_, t, 0.12)
-# the empty slots and "more on the way": a soft rising swell
-sw = pad([50, 57, 62, 66, 69], 2.0)
-place(WET, sw * np.linspace(0, 1, len(sw)) ** 2, END - 2.0, 0.2)
-for i, (m, dt) in enumerate([(74, 0.0), (81, 0.55), (88, 1.1)]):   # D, A, E like the intro's bell
-    s_ = bell(hz(m))
-    place(L, s_, END + dt, 0.13)
-    place(WET, s_, END + dt, 0.15)
-hold = pad([50, 57, 62, 69], 60.0 - END)
-hold *= np.linspace(1, 0, len(hold)) ** 1.5
-place(WET, hold, END, 0.16)
-place(L, hold, END, 0.06)
-place(L, pluck(hz(38), 3.0, bright=0.2, decay=0.9993), END, 0.5)
+# dub echo: dotted eighths, each repeat darker
+D = int(0.5625 * SR)
+echoL = np.zeros(N)
+echoR = np.zeros(N)
+x = DUB.copy()
+for r in range(1, 8):
+    x = onepole(x, 3200 / r ** 0.5) * 0.55
+    tgt = echoL if r % 2 else echoR
+    tgt[r * D:] += x[: N - r * D]
 
-# reverb: a decaying noise tail, convolved with the FFT
-ir_n = int(2.8 * SR)
-ti = np.arange(ir_n) / SR
-irL = rng.normal(0, 1, ir_n) * np.exp(-ti / 0.7)
-irR = rng.normal(0, 1, ir_n) * np.exp(-ti / 0.7)
+# reverb: a short dark room
+ir_n = int(1.4 * SR)
+ti = t_(ir_n)
 
 
-def conv(x, ir):
-    m = len(x) + len(ir)
+def conv(sig, ir):
+    m = len(sig) + len(ir)
     nf = 1 << (m - 1).bit_length()
-    y = np.fft.irfft(np.fft.rfft(x, nf) * np.fft.rfft(ir, nf), nf)[: len(x)]
-    return y / np.sqrt(np.sum(ir ** 2)) * 0.5
+    return np.fft.irfft(np.fft.rfft(sig, nf) * np.fft.rfft(ir, nf), nf)[: len(sig)] / np.sqrt(np.sum(ir ** 2)) * 0.5
 
 
-wl, wr = conv(WET, irL), conv(WET, irR)
-left = L + wl
-right = L + wr
+irL = onepole(rng.normal(0, 1, ir_n), 4000) * np.exp(-ti / 0.35)
+irR = onepole(rng.normal(0, 1, ir_n), 4000) * np.exp(-ti / 0.35)
+left = DRY + conv(VERB, irL) + echoL + 0.35 * echoR
+right = DRY + conv(VERB, irR) + echoR + 0.35 * echoL
 
-# the intro's own sound under the first seven seconds
+# the menu intro's own sound, 3 s to 9 s
 with wave.open(sys.argv[1]) as w:
-    ch, sw_, rate = w.getnchannels(), w.getsampwidth(), w.getframerate()
-    raw = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float64) / 32768
-    raw = raw.reshape(-1, ch)
-    assert rate == SR
-iL, iR = raw[:, 0], raw[:, -1]
+    ch, rate = w.getnchannels(), w.getframerate()
+    raw = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float64).reshape(-1, ch) / 32768
+assert rate == SR
 a0 = int(INTRO_AT * SR)
-n = min(len(iL), N - a0)
+n = min(len(raw), N - a0)
 fade = np.ones(n)
-f0, f1 = int((T0 - INTRO_AT - 0.4) * SR), int((T0 - INTRO_AT + 0.6) * SR)
-if n > f0:
-    fade[f0:min(n, f1)] = np.linspace(1, 0, min(n, f1) - f0)
-    fade[min(n, f1):] = 0
-left[a0:a0 + n] += iL[:n] * fade
-right[a0:a0 + n] += iR[:n] * fade
+f0, f1 = int((T0 - INTRO_AT - 0.3) * SR), int((T0 - INTRO_AT + 0.4) * SR)
+fade[f0:f1] = np.linspace(1, 0, f1 - f0)
+fade[f1:] = 0
+left[a0:a0 + n] += raw[:n, 0] * fade * 3.2
+right[a0:a0 + n] += raw[:n, -1] * fade * 3.2
 
-# gentle fade in of the bed and out at the end
-g = np.ones(N)
-a0 = int(T0 * SR)
-g[a0:a0 + int(0.6 * SR)] = np.linspace(0.3, 1, int(0.6 * SR))
-g[-int(1.5 * SR):] *= np.linspace(1, 0, int(1.5 * SR))
-st = np.stack([left * g, right * g], 1)
-st = np.tanh(st / (np.max(np.abs(st)) + 1e-9) * 1.2) * 0.85   # soft ceiling
-st *= 0.89 / np.max(np.abs(st))                                 # about -1 dBFS peak
+# master: a soft ceiling, then -1 dBFS peak, and a fade at the very end
+st = np.stack([left, right], 1)
+st = np.tanh(st / (np.percentile(np.abs(st), 99.9) + 1e-9) * 0.9)
+st[-int(1.2 * SR):] *= np.linspace(1, 0, int(1.2 * SR))[:, None]
+st *= 0.89 / np.max(np.abs(st))
 with wave.open(sys.argv[2], 'wb') as w:
     w.setnchannels(2)
     w.setsampwidth(2)
