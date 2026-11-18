@@ -1,5 +1,6 @@
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A family story built on the existing engine, with no shared-module changes. */
+import { renderFramed } from "../../../engine/cine.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import * as THREE from "three";
 import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";
 import { model, onLoadFail } from "../../../engine/loader.js";
@@ -1248,7 +1249,7 @@ function tick(dt, now = performance.now()) {
   hint(now);
   if (S.started) audioTick(Q, dt);
   if (__DEV__) camera.userData.checkPlace = Q; // Match camera probes to the scene actually drawn, including chapter transitions.
-  renderer.render(scene, camera);
+  renderFramed(renderer, scene, camera, DIR.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;
     save();

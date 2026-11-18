@@ -5,6 +5,7 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
    Layout: setup, state and controls, people, places and scenes, interface, saving, talking, chapters and stages, things to do, the night, the helper arrow, sound, loading, the loop, tests.
    Rules that shape the code: the fire is only ever seen from behind the rope and nobody is shown in it or hurt (docs/games/eventide.md, "How the fire is told");
    nothing the player does changes what happened; skin is lightened so faces read in every light (owner rule 9). */
+import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { hudTidy } from '../../../engine/hud.js';
@@ -610,7 +611,7 @@ function frame(t) {
   if (FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.06; camera.position.y += (Math.random() - 0.5) * k * 0.06; camera.rotation.z += (Math.random() - 0.5) * k * 0.02; }
   sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110);
   sky.dome.position.copy(camera.position); sky.stars.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380);
-  if (!NORENDER) renderer.render(scene, camera);
+  if (!NORENDER) renderFramed(renderer, scene, camera, document.body.classList.contains('cine'));
 }
 const NORENDER = __DEV__ && /[?&]auto=/.test(location.search);   /* the scripted playthrough does not need pictures */
 requestAnimationFrame(frame);

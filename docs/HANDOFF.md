@@ -290,3 +290,13 @@ Not part of the four checks, still open: Port Royal's own `?test=life` reports 9
 
 **Still open:** Nanny Town's `?test=walkers` reports 3 problems (toes up to 9 cm above the ground and 7 cm under it at the steepest moments); Port Royal's `?test=life` reports 9; portrait camera framing for the cinematic scenes in all ten games (the owner asked for this last); Bog Walk's first-person hand looks pale by torchlight (check it against rule 9).
 
+## 18 November 2026: playability pass, pushed to main
+
+The owner: "I will take your advice on the sheets. Let's push what we have to main for now ... I need to ensure playability."
+
+- **Waistcoat over the shoulders: built.** `man_elder` and his two crowd variants, in Kendal, Tivoli, Eventide and Melissa. His collar and neck look the same as before in close-ups. The other waistcoat bodies are unchanged (the fix only applies under a flat collar).
+- **Hands and ties: not built.** Packing every body again (the crowd copies' fingers) and the proposed tie (`"tie": "four"`, used by no recipe) wait until the owner points at things in the game.
+- **Port Royal `?test=life`: 0** (was 9). See ENGINE.md, idle variety.
+- **Camera scenes on an upright phone**: `engine/cine.js`, in the eight games that have camera scenes.
+- Still open: the buildings (owner to choose), the waistcoat man's crotch and Tivoli's headband (owner to point them out), Nanny Town's walking check (3), the Shady Side and Kanawha could be more detailed (owner, 18 November).
+
