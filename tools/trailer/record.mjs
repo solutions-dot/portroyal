@@ -39,15 +39,33 @@ await page.addInitScript(() => {
   window.__seekCss = false;
   /* wait for the graphics process to finish what has been drawn (read one pixel back), so steps never pile up ahead of the screenshot */
   window.__sync = () => { for (const c of document.querySelectorAll('canvas')) { const g = c.getContext('webgl2') || c.getContext('webgl'); if (g) g.readPixels(0, 0, 1, 1, g.RGBA, g.UNSIGNED_BYTE, new Uint8Array(4)); } };
+  /* once the clip is stepped by hand, the page's timers run on the same clock too, so a scene's wait(900) lasts 900 ms of the film */
+  const nativeST = window.setTimeout.bind(window), nativeCT = window.clearTimeout.bind(window), nativeSI = window.setInterval.bind(window), nativeCI = window.clearInterval.bind(window);
+  let manual = false, tid = 1e7;
+  const timers = new Map();
+  window.setTimeout = (fn, ms = 0, ...a) => { if (!manual) return nativeST(fn, ms, ...a); const id = ++tid; timers.set(id, { at: vt + Math.max(0, +ms || 0), fn, a }); return id; };
+  window.setInterval = (fn, ms = 0, ...a) => { if (!manual) return nativeSI(fn, ms, ...a); const id = ++tid; timers.set(id, { at: vt + Math.max(1, +ms || 0), fn, a, every: Math.max(1, +ms || 0) }); return id; };
+  window.clearTimeout = (id) => (id > 1e7 ? timers.delete(id) : nativeCT(id));
+  window.clearInterval = (id) => (id > 1e7 ? timers.delete(id) : nativeCI(id));
+  const runTimers = () => {
+    for (let guard = 0; guard < 1000; guard++) {
+      let next = null;
+      for (const [id, T] of timers) if (T.at <= vt && (!next || T.at < next[1].at)) next = [id, T];
+      if (!next) return;
+      const [id, T] = next;
+      if (T.every) T.at += T.every; else timers.delete(id);
+      try { typeof T.fn === 'function' ? T.fn(...T.a) : (0, eval)(T.fn); } catch (e) { console.error(e); }
+    }
+  };
   window.__step = (ms) => {
-    vt += ms; const c = q; q = []; for (const f of c) { try { f(vt); } catch (e) { console.error(e); } }
+    vt += ms; runTimers(); const c = q; q = []; for (const f of c) { try { f(vt); } catch (e) { console.error(e); } }
     if (window.__seekCss) for (const a of document.getAnimations()) {
       if (!seen.has(a)) { seen.set(a, vt - ms); a.pause(); }
       try { a.currentTime = vt - seen.get(a); } catch (e) { /* finished and removed */ }
     }
   };
-  if (!/[?&]nopump/.test(location.hash)) pump = setInterval(() => window.__step(33), 40);   /* the game runs while it loads, unless the clip asks it to wait */
-  window.__manual = () => clearInterval(pump);
+  if (location.hash !== '#nopump') pump = nativeSI(() => window.__step(33), 40);   /* the game runs while it loads, unless the clip asks it to wait */
+  window.__manual = () => { nativeCI(pump); manual = true; };
 });
 if (C.storage) await page.addInitScript((st) => { for (const k in st) localStorage.setItem(k, JSON.stringify(st[k])); }, C.storage);
 await page.goto('http://localhost:8765/' + C.url + (C.pump === false ? '#nopump' : ''));
