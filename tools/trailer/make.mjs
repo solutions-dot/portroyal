@@ -4,7 +4,8 @@
 
    edit.json: { fps, total, barsFrom, endAt, shots: [{ clip, from, dur, stamp? }], lines: [{ t0, t1, text, cls? }] }
      a shot takes dur seconds of <frames dir>/<clip>/ starting at second `from` of that recording; shots follow one another from 0,
-     and anything after the last shot (the end card) is black under the overlay. stamp: { place, year, colour, tilt? } */
+     and anything after the last shot (the end card) is black under the overlay. stamp: { place, year, colour, tilt? }
+     push: 0.08 slowly pushes in on a shot that hardly moves; ui: true shows the game's interface, so the letterbox bars stay off; phone: true puts a phone recording in a phone over a blurred `bg` clip */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -43,8 +44,9 @@ z.save('${dir}/bezel.png')`]);
   return { dir, files: fs.readdirSync(dir).filter((f) => /^f\d+\.jpg$/.test(f)).sort(), a: 0 };
 }
 let n = 0, t = 0;
-E.stamps = [];
+E.stamps = []; E.nobars = [];
 for (const [si, s] of E.shots.entries()) {
+  if (s.ui || s.phone) E.nobars.push([t, t + s.dur]);   /* gameplay with its interface: no letterbox over it */
   if (s.phone) {
     const P = phoneShot(s, si), k = Math.round(s.dur * fps);
     for (let i = 0; i < k; i++) fs.symlinkSync(path.resolve(`${P.dir}/${P.files[i]}`), `${work}/seq/${String(++n).padStart(5, '0')}.jpg`);
@@ -52,10 +54,17 @@ for (const [si, s] of E.shots.entries()) {
     t += s.dur;
     continue;
   }
-  const files = fs.readdirSync(`${FR}/${s.clip}`).filter((f) => f.endsWith('.jpg')).sort();
-  const a = Math.round(s.from * fps), k = Math.round(s.dur * fps);
+  let dir = `${FR}/${s.clip}`, files = fs.readdirSync(dir).filter((f) => f.endsWith('.jpg')).sort();
+  let a = Math.round(s.from * fps);
+  const k = Math.round(s.dur * fps);
   if (a + k > files.length) throw new Error(`${s.clip}: wants frames ${a}-${a + k}, has ${files.length}`);
-  for (let i = 0; i < k; i++) fs.symlinkSync(path.resolve(`${FR}/${s.clip}/${files[a + i]}`), `${work}/seq/${String(++n).padStart(5, '0')}.jpg`);
+  if (s.push) {   /* a slow push in on a shot that hardly moves: the picture grows by `push` over the shot */
+    const out = `${work}/push${si}`; fs.mkdirSync(out);
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-start_number', String(a + 1), '-framerate', String(fps), '-i', `${dir}/f%05d.jpg`,
+      '-vf', `scale=2560:1440,zoompan=z='1+${s.push}*on/${k}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1280x720:fps=${fps}`, '-frames:v', String(k), '-q:v', '2', `${out}/f%05d.jpg`]);
+    dir = out; files = fs.readdirSync(out).sort(); a = 0;
+  }
+  for (let i = 0; i < k; i++) fs.symlinkSync(path.resolve(`${dir}/${files[a + i]}`), `${work}/seq/${String(++n).padStart(5, '0')}.jpg`);
   if (s.stamp) E.stamps.push({ ...s.stamp, t0: t + 0.15, t1: t + s.dur - 0.1 });
   t += s.dur;
 }

@@ -10,12 +10,12 @@
   },
   {
    "clip": "selassie_land",
-   "from": 1.5,
+   "from": 3.7,
    "dur": 1.0
   },
   {
    "clip": "windrush",
-   "from": 4.0,
+   "from": 0.0,
    "dur": 1.0
   },
   {
@@ -31,19 +31,25 @@
     "place": "The Emperor’s Arrival",
     "year": "1966",
     "colour": "#edc25f"
-   }
+   },
+   "ui": true
   },
   {
    "clip": "play_phone",
    "phone": true,
-   "bg": "kendal",
-   "bgFrom": 1.0,
-   "from": 1.0,
-   "dur": 3.0
+   "bg": "nanny",
+   "bgFrom": 3.0,
+   "from": 0.5,
+   "dur": 3.0,
+   "stamp": {
+    "place": "The Fall of Nanny Town",
+    "year": "1734",
+    "colour": "#f0b860"
+   }
   },
   {
    "clip": "bogwalk",
-   "from": 3.0,
+   "from": 2.5,
    "dur": 3.0,
    "stamp": {
     "place": "Bog Walk Tube Flood",
@@ -59,22 +65,24 @@
     "place": "Marcus Garvey and the UNIA",
     "year": "1914",
     "colour": "#E8505B"
-   }
-  },
-  {
-   "clip": "learn_journal",
-   "from": 0.5,
-   "dur": 3.0
+   },
+   "push": 0.1
   },
   {
    "clip": "nanny",
-   "from": 2.0,
+   "from": 1.5,
    "dur": 3.0,
    "stamp": {
     "place": "The Fall of Nanny Town",
     "year": "1734",
     "colour": "#f0b860"
    }
+  },
+  {
+   "clip": "learn_journal",
+   "from": 0.5,
+   "dur": 3.0,
+   "ui": true
   },
   {
    "clip": "kendal",
@@ -84,22 +92,24 @@
     "place": "Kendal Train Crash",
     "year": "1957",
     "colour": "#1FB5A3"
-   }
+   },
+   "push": 0.1
   },
   {
    "clip": "eventide",
-   "from": 2.0,
+   "from": 1.0,
    "dur": 3.0,
    "stamp": {
     "place": "Eventide Home Fire",
     "year": "1980",
     "colour": "#a9dcc2"
-   }
+   },
+   "push": 0.1
   },
   {
    "clip": "selassie_land",
-   "from": 0.5,
-   "dur": 3.0,
+   "from": 3.5,
+   "dur": 2.5,
    "stamp": {
     "place": "The Emperor’s Arrival",
     "year": "1966",
@@ -108,8 +118,8 @@
   },
   {
    "clip": "windrush",
-   "from": 6.0,
-   "dur": 3.0,
+   "from": 8.5,
+   "dur": 3.5,
    "stamp": {
     "place": "Windrush",
     "year": "1948",
@@ -124,11 +134,12 @@
     "place": "Tivoli Gardens",
     "year": "Today",
     "colour": "#fed100"
-   }
+   },
+   "push": 0.1
   },
   {
    "clip": "melissa",
-   "from": 6.0,
+   "from": 3.0,
    "dur": 3.0,
    "stamp": {
     "place": "Hurricane Gilbert",
@@ -138,7 +149,7 @@
   },
   {
    "clip": "selassie_crowd",
-   "from": 1.0,
+   "from": 3.5,
    "dur": 1.5
   },
   {
@@ -158,7 +169,7 @@
   },
   {
    "clip": "windrush",
-   "from": 9.5,
+   "from": 2.5,
    "dur": 1.5
   }
  ],
