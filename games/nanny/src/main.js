@@ -36,6 +36,7 @@ import { animCheck } from './animcheck.js';   /* dev check only (?test=anim), dr
 import { checkAll, CHECKS } from '../../../engine/checks.js';   /* dev only: every shared check at once (?test=all) */
 import { makeAdapter, CHECK_TABLES } from './checktables.js';
 import { tunePixels } from '../../../engine/perf.js';
+import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -396,6 +397,12 @@ const CH_PLACE = ['estate', 'town', 'watch', 'watch', 'town', 'newtown'], CH_FIR
 const CH_ENV = [ENV.night, ENV.morning, ENV.haze, ENV.day, ENV.firenight, ENV.morning];
 const SAFE = { 12: 11, 13: 11, 14: 11, 31: 30, 32: 30, 41: 40, 42: 40 };   /* a saved game never resumes in the middle of a scripted scene */
 const chapterOf = (s) => Math.max(0, Math.min(5, Math.floor(s / 10) - 1));
+/* engine/preload.js: the player is not moving while a panel, a card or the chapter title is up; heavy loading waits for those moments (not the title screen: on a computer the red coats march there) */
+setQuiet(() => panelsOpen() || fading);
+const usedIn = (i) => (CH_PLACE[i] ? [CH_PLACE[i]] : []);   /* each chapter stays in its one place */
+const PLACES_KEEP = placeKeeper({ places: PL, ensure: ensurePlace, renderer, camera, scene, current: () => cur });   /* engine/preload.js: places readied in quiet moments, places left behind give back their graphics memory, the background load */
+function readyNext(i) { PLACES_KEEP.ready(usedIn(i + 1)); }   /* the places this chapter and the next go to, built, peopled and compiled before they are needed */
+function tidyPlaces(i) { PLACES_KEEP.tidy([...usedIn(i), ...usedIn(i + 1)]); }   /* every other place frees its graphics memory; it stays built and comes back by itself if shown again */
 const ON = {}, TICKS = [];   /* ON[stage]: what happens when a stage begins. TICKS: per-frame jobs from tween(). */
 function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const n of allPeople()) n.talked = false; saveGame(); refreshCast(); refreshGoal(); if (ON[s]) ON[s]();
@@ -416,7 +423,7 @@ async function beginChapter(i, st) {
   chapterFade(C.title, C.sub, () => startScene(i, st));
 }
 function startScene(i, st) {
-  const id = CH_PLACE[i], P = PL[id]; enterPlace(id, { env: CH_ENV[i] }); state.started = true; resetScenery(P, i, st); setStage(st); showPlace(); leavesUI();
+  const id = CH_PLACE[i], P = PL[id]; enterPlace(id, { env: CH_ENV[i] }); state.started = true; resetScenery(P, i, st); setStage(st); showPlace(); leavesUI(); tidyPlaces(i); readyNext(i);
 }
 /* put the place's moving things as they should be when a chapter (or a saved stage) starts */
 function resetScenery(P, i, st) {
@@ -741,7 +748,8 @@ function prepareTitleScene() {
   // On touch devices the static title image avoids iOS WebGL sky artifacts.
   if (!isTouch) $('title').classList.add('live-scene');
 }
-async function backgroundLoad() { for (const id of ['town', 'watch', 'newtown', 'estate']) { await ensurePlace(id); await wait(500); } }
+/* every place in the background, one at a time through engine/preload.js work(): the next chapter's place first, then the rest in the old order, each in a quiet moment */
+function backgroundLoad() { PLACES_KEEP.background(() => [...usedIn(chapterOf(stage) + 1), 'town', 'watch', 'newtown', 'estate'], 500); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
 function startGame(quiet) {
   if (state.started) return; FOV = 66; resize(); audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
   $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); if (!quiet) cue('begin');

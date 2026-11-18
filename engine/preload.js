@@ -25,12 +25,14 @@ function pump() {
   if (!quietFn() && now < job.by) { timer = setTimeout(pump, 250); return; }
   busy = true; idle(async () => { Q.shift(); try { await job.fn(); } catch (e) { console.warn('preload', e); } PRELOAD.ran++; busy = false; setTimeout(pump, 30); });
 }
-/* compile and upload a place before it is first drawn */
+/* compile and upload a place before it is first drawn. Its hidden parts (the place itself, people not yet in the scene) are shown only to the
+   compiler: if the game shows or hides one of them while the compile runs (the player arrives), the game's choice is what stays. */
 export async function warm(renderer, object, camera, scene) {
   if (!renderer || !object) return;
-  const was = object.visible; object.visible = true;
+  const hidden = []; object.traverse((o) => { if (!o.visible) hidden.push(o); });
+  const held = hidden.map((o) => { let v = false, set = false; Object.defineProperty(o, 'visible', { configurable: true, enumerable: true, get: () => (set ? v : true), set: (x) => { v = x; set = true; } }); return () => { const keep = set ? v : false; delete o.visible; o.visible = keep; }; });
   try { if (renderer.compileAsync) await renderer.compileAsync(object, camera, scene); else renderer.compile(object, camera, scene); } catch (e) { /* a context that cannot compile in parallel: the first frame will */ }
-  object.visible = was;
+  finally { for (const put of held) put(); }
   const seen = new Set(); object.traverse((o) => { for (const m of mats(o)) for (const t of texs(m)) if (!seen.has(t)) { seen.add(t); try { renderer.initTexture(t); } catch (e) { /* a texture still loading */ } } });
   PRELOAD.warmed++;
 }
@@ -44,5 +46,18 @@ export function release(object, scene) {
   object.traverse((o) => { if (o.geometry && !keep.has(o.geometry)) geos.add(o.geometry); for (const m of mats(o)) { if (!keep.has(m)) ms.add(m); for (const t of texs(m)) if (!keep.has(t)) ts.add(t); } });
   for (const g of geos) g.dispose(); for (const m of ms) m.dispose(); for (const t of ts) t.dispose();
   const n = geos.size + ms.size + ts.size; PRELOAD.released += n; return n;
+}
+/* placeKeeper: the glue for a game whose places are kept in a table (Kendal, Bog Walk, Melissa, Nanny): places = { id: { group, populated } },
+   ensure(id) builds and peoples a place (cached), current() is the place shown now. The game keeps only its own list of which places a chapter uses.
+   - ready(ids): each place built, peopled and warmed in a quiet moment, one at a time, once.
+   - tidy(keep): free the graphics memory of every place not in keep, not shown and not current (it stays built, and comes back if shown).
+   - background(order, gap): the old background load, one place at a time in quiet moments; order() is asked again before each place, so the next chapter's places can go first. */
+export function placeKeeper({ places, ensure, renderer, camera, scene, current = () => null }) {
+  const readied = new Set(); let bg = false;
+  return {
+    ready(ids) { for (const id of new Set(ids)) { if (readied.has(id)) continue; readied.add(id); work(async () => { const P = await ensure(id); if (P && P.group && !P.group.visible) await warm(renderer, P.group, camera, scene); }); } },
+    tidy(keepIds) { const keep = new Set(keepIds); for (const [id, P] of Object.entries(places)) if (P && P.group && !keep.has(id) && id !== current() && !P.group.visible) { release(P.group, scene); readied.delete(id); } },
+    background(order, gap = 400) { if (bg) return; bg = true; const step = () => { const id = order().find((k) => !places[k] || !places[k].populated); if (id) work(async () => { await ensure(id); await new Promise((r) => setTimeout(r, gap)); step(); }); }; step(); },
+  };
 }
 if (typeof window !== 'undefined') window.__preload = PRELOAD;

@@ -43,6 +43,7 @@ import { makeAdapter, CHECK_TABLES } from './checktables.js';   /* ?test=motion:
 import { makeBirds } from './detail.js';
 import { tunePixels } from '../../../engine/perf.js';
 import { JOIN_STATS } from '../../../engine/joinbody.js';
+import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -477,6 +478,12 @@ const lampMesh = lantern(); lampMesh.scale.setScalar(1.0); lampMesh.position.set
 /* ---------- chapters, stages and the story machine ---------- */
 const CH_PLACE = ['road', 'station45', 'hill', 'kingston57', 'coach', 'crash', 'memorial'], CH_FIRST = [10, 20, 30, 40, 50, 60, 70], DONE = [14, 25, 35, 45, 53, 67, 74];
 const PRELOAD = { 1: ['ride45'], 3: ['coach', 'beach'], 4: ['crash'], 5: [] };
+/* engine/preload.js: the player is not moving while a panel, a card or the chapter title is up, or on the title screen; heavy loading waits for those moments */
+setQuiet(() => !state.started || panelsOpen() || fading);
+const usedIn = (i) => (i in CH_PLACE ? [CH_PLACE[i], ...Object.keys(STEPS).map(Number).filter((s) => chapterOf(s) === i).map(placeOfStage)] : []);   /* every place a chapter goes to, the ride and the beach as well */
+const PLACES_KEEP = placeKeeper({ places: PL, ensure: ensurePlace, renderer, camera, scene, current: () => cur });   /* engine/preload.js: places readied in quiet moments, places left behind give back their graphics memory, the background load */
+function readyNext(i) { PLACES_KEEP.ready([...(PRELOAD[i] || []), ...usedIn(i), ...usedIn(i + 1)]); }   /* the places this chapter and the next go to, built, peopled and compiled before they are needed */
+function tidyPlaces(i) { PLACES_KEEP.tidy([...usedIn(i), ...usedIn(i + 1), ...(PRELOAD[i] || [])]); }   /* every other place frees its graphics memory; it stays built and comes back by itself if shown again */
 const SAFE = { 23: 22, 23.5: 22, 23.6: 22, 24: 22, 32: 31, 42: 41, 51: 50, 52: 50, 53: 50, 63: 62, 64: 62, 65: 62, 67: 66 };   /* a saved game never resumes in the middle of a scripted scene */
 const chapterOf = (s) => Math.max(0, Math.min(6, Math.floor(s / 10) - 1));
 const ON = {}, TICKS = [];   /* ON[stage]: what happens when a stage begins. TICKS: per-frame jobs from tween(). */
@@ -509,6 +516,7 @@ function startScene(i, st) {
   else if (i === 3 && st >= 43) enterPlace('beach', { env: st >= 44 ? ENV.gold : ENV.day });   /* a saved game from the beach resumes on the beach */
   else enterPlace(id);
   state.started = true; setStage(st); updateLamp(); showPlace();
+  tidyPlaces(i); readyNext(i);
   if (i === 1) setTimeout(() => { if (ep === EP) { SFX.fanfare(); SFX.stationGong(); } }, 900 * TS);
   if (i === 2) { const late = st >= 33; P.train.visible = late; P.train.position.x = late ? 0 : 90; resetBunches(P); if (st >= 32) { P.bunches.slice(0, 4).forEach((b) => { b.visible = false; }); P.inWagon.forEach((b) => { b.visible = true; }); } }   /* resuming after the train came in */
   if (savedFlow && savedFlow.stage === st) STORY.restore(savedFlow); savedFlow = null;   /* a saved game: the step's progress and what it changed in the scene */
@@ -760,7 +768,8 @@ registerShows(); applySave(loadGame());
   const first = CH_PLACE[hasSave && stage >= 10 ? chapterOf(stage) : 0];
   model('anims').then((an) => { loadClips(an); tick(); return ensurePlace(first); }).then(() => { tick(); modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick();
     if (__DEV__) devViews(); else setTimeout(backgroundLoad, 2500); }); }
-async function backgroundLoad() { for (const id of ['station45', 'hill', 'kingston57', 'ride45', 'coach', 'beach', 'crash', 'memorial']) { await ensurePlace(id); await wait(400); } }
+/* every place in the background, one at a time through engine/preload.js work(): the next chapter's places first, then the rest in story order, each in a quiet moment */
+function backgroundLoad() { PLACES_KEEP.background(() => { const i = state.started ? chapterOf(stage) : -1; return [...usedIn(i + 1), 'station45', 'hill', 'kingston57', 'ride45', 'coach', 'beach', 'crash', 'memorial']; }, 400); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
 function startGame(quiet) {
   if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
   $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); if (!quiet) cue('begin');
