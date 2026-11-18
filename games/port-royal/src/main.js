@@ -18,6 +18,7 @@ import { skinProbe } from '../../../engine/skinprobe.js';   /* dev only: ?test=s
 import { wireChecks } from './checks.js';   /* dev only: ?test=audit, layout, walkers, life, all */
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
+import { tunePixels } from '../../../engine/perf.js';
 soundPref('portroyal-sound');
 onLoadFail((n) => { $('loadnote').hidden = false; $('loadnote').textContent = 'Part of the game did not load (' + n + '). Reload the page to try again.'; });
 
@@ -232,8 +233,7 @@ const isTouch = matchMedia('(pointer: coarse)').matches;
 /* ---------- renderer and scene ---------- */
 const canvas = $('stage');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-const PHONE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600; let pxr = Math.min(devicePixelRatio || 1, PHONE ? 1.25 : 1.75); renderer.setPixelRatio(pxr);
-let ftAvg = 16, ftT = 0;   /* if frames run slow for a few seconds, draw fewer pixels */
+const PHONE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600; tunePixels(renderer, { phone: PHONE, phoneMax: 1.25, max: 1.75, floor: 0.8 });   /* pixel cap and slow-frame drop, moved to engine/perf.js */
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.12;
 const scene = new THREE.Scene();
 const HAZE = new THREE.Color(0xcfe3ea);
@@ -1130,7 +1130,6 @@ function frame(now) {
   } else if (!state.started) { state.yaw = Math.PI / 2 - 0.12 + Math.sin(now / 5200) * 0.14; padRead(dt); }
   if (busy) { MV.vx = MV.vz = MV.turn = 0; MV.tap = null; padRead(dt); }   /* no drifting off after a conversation */
   camLift += (groundY(state.x, state.z) - camLift) * Math.min(1, dt * 10);
-  ftAvg += (dt * 1000 - ftAvg) * 0.05; ftT += dt; if (ftT > 3 && state.started) { ftT = 0; if (ftAvg > 26 && pxr > 0.8) { pxr = Math.max(0.8, pxr - 0.2); renderer.setPixelRatio(pxr); } }
   if (Q.on) { quakeTick(dt, now / 1000); debrisTick(dt); } const sh = Q.shake * (reduceMotion ? 0.15 : 1), tt = now / 1000;
   if (galdy) { const show = third && state.started && !(Q.on && (Q.phase === 'swallow')); galdy.visible = show; if (show) { galdy.position.set(state.x, state.place === 'sea' ? seaLevel - 1.32 : groundY(state.x, state.z), state.z); const ac = galdy.userData.anim;
       if (ac && state.place === 'sea') { galdy.rotation.y = state.yaw + Math.PI; if (CL.Tread && ac.cur !== ac.get('Tread')) ac.play('Tread'); }

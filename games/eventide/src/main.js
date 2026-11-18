@@ -28,6 +28,7 @@ import { hamper, bucket, suitcase } from './props.js';
 import { foldedBlanket, drapeBlanket } from './blanket.js';
 import { buildSlipe, buildWard, buildPark80, buildGolden, buildMonument } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, LETTER, TIDY, RADIO, SORT, SORT_KINDS, TIMELINE, PLAQUE, CHOICE_NAMES } from './content.js';
+import { tunePixels } from '../../../engine/perf.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -39,7 +40,7 @@ const TS = QUICK ? 0.06 : 1;
 /* ---------- renderer, camera, light, sky ---------- */
 const canvas = $('stage');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; G.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+tunePixels(renderer);   /* pixel cap and slow-frame drop (engine/perf.js) */ renderer.outputColorSpace = THREE.SRGBColorSpace; G.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(66, 1, 0.1, 800); scene.add(camera);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x887766, 2); scene.add(hemi); const sun = new THREE.DirectionalLight(0xfff0d0, 2); scene.add(sun); scene.add(sun.target);
 const SHADOWS = !matchMedia('(pointer: coarse)').matches && !(__DEV__ && /[?&]noshadow/.test(location.search));   /* real shadows on computers; phones get soft blob shadows under people */

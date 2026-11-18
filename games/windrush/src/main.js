@@ -72,6 +72,7 @@ import {
 } from "./ui.js";
 import { createDirector } from "./director.js";
 import * as P from "./props.js";
+import { tunePixels } from '../../../engine/perf.js';
 const KEY = "windrush-save-v1",
   q = new URLSearchParams(location.search),
   QUICK = __DEV__ && (q.has("auto") || q.has("test"));
@@ -82,7 +83,7 @@ const renderer = new THREE.WebGLRenderer({
   canvas: $("stage"),
   antialias: true,
 });
-renderer.setPixelRatio(Math.min(devicePixelRatio, phone ? 1.4 : 2));
+tunePixels(renderer, { phone, phoneMax: 1.4 });   /* pixel cap and slow-frame drop (engine/perf.js) */
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 G.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene(),

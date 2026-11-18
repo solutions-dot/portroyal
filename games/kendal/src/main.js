@@ -41,6 +41,8 @@ import { storyLifeTick } from './storylife.js';
 import { checkAll, CHECKS } from '../../../engine/checks.js';   /* ?test=all (dev only) */
 import { makeAdapter, CHECK_TABLES } from './checktables.js';   /* ?test=motion: nobody frozen, in step, snapping their head, running in place or sliding (dev only) */
 import { makeBirds } from './detail.js';
+import { tunePixels } from '../../../engine/perf.js';
+import { JOIN_STATS } from '../../../engine/joinbody.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -52,7 +54,7 @@ const TS = QUICK ? 0.06 : 1;   /* time scale for scripted scenes in tests */
 /* ---------- renderer, camera, light, sky ---------- */
 const canvas = $('stage');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; G.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+tunePixels(renderer);   /* pixel cap and slow-frame drop (engine/perf.js) */ renderer.outputColorSpace = THREE.SRGBColorSpace; G.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(66, 1, 0.1, 800); scene.add(camera);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x887766, 2); scene.add(hemi); const sun = new THREE.DirectionalLight(0xfff0d0, 2); sun.position.set(10, 20, 10); scene.add(sun); scene.add(sun.target);
 const SHADOWS = !matchMedia('(pointer: coarse)').matches && !(__DEV__ && /[?&]noshadow/.test(location.search));   /* real shadows on computers; phones get soft blob shadows under people instead */
@@ -127,36 +129,7 @@ const kStride = (m, base, clip) => strideOf(m, clip) * strideK(base, m.scale.y, 
 let PACE_FORCE = 0;   /* dev: ?test=walkers&tune plays a walk at this clip speed */
 function kPace(m, s, ctl) { const base = s.base; const play0 = ctl.play.bind(ctl); ctl.play = (name, once, hold) => { const was = ctl.cur; play0(name, once, hold); const a = ctl.cur; if (!once && a !== was) { a.time = Math.random() * a.getClip().duration; } };   /* a loop never starts in step with anyone else's (?test=motion: sync) */ ctl.pace = (v, lo = 0.4, hi = 2.2) => { const a = ctl.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; if (PACE_FORCE) return (a.timeScale = PACE_FORCE); const st = kStride(m, base, c); if (st > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / st)); return a.timeScale; }; }
 const SKIN_LIGHT = 1.55;   /* owner rule 9: build Skin inside Marcus Garvey's range, then lighten it here so faces read in every light (docs/PIPELINE.md, "Skin"). Check with ?test=skin */
-/* Phones: a background figure was a dozen meshes (skin, shirt, skirt, shoes, hair, belt, collar...), so a crowd of forty cost over 600 draw calls (?test=all budget).
-   joinBody makes one skinned mesh of a light copy's visible pieces, each piece's colour baked into its points, on the same skeleton: one draw call a person.
-   A body swaps its skirt for the seated skirt when it sits or kneels (engine/anim.js), which needs the pieces apart, so it is joined only if it stays standing,
-   or stays seated (joined with the seated skirt showing).
-   The pieces stay (hidden), so the engine's hand and skirt helpers still read them. A piece with a picture on it (a texture) or see-through stays apart, and so do the shoes:
-   joined, a seated man's shoes sat 5 cm lower than his own (the audit saw them cut the coach floor), and the feet are what the ground and seat checks measure. */
-const _jc = new THREE.Color(), JOINFAIL = { n: 0 };
-function joinBody(m) {
-  const parts = []; m.traverse((o) => { if (o.isSkinnedMesh && o.visible && o.parent && o.parent.visible !== false) parts.push(o); });
-  const use = parts.filter((o) => !/Shoes|Sole/.test(o.material.name || '') && !o.material.map && !o.material.transparent && o.geometry.attributes.skinIndex && o.geometry.attributes.normal);
-  if (use.length < 3) return false; const skel = use[0].skeleton, bm = use[0].bindMatrix;
-  if (use.some((o) => o.skeleton.bones.length !== skel.bones.length || o.skeleton.bones.some((b, i) => b !== skel.bones[i]) || !o.bindMatrix.equals(bm))) { JOINFAIL.n++; return false; }
-  /* each piece may carry its own inverse bind matrices (a packed piece keeps its own scale and offset in them): bring every piece onto the first piece's, D = inv0^-1 * inv, when one D fits every bone */
-  const Ds = use.map((o) => { const D = new THREE.Matrix4().copy(skel.boneInverses[0]).invert().multiply(o.skeleton.boneInverses[0]); for (let j = 1; j < skel.bones.length; j += 7) { const Dj = new THREE.Matrix4().copy(skel.boneInverses[j]).invert().multiply(o.skeleton.boneInverses[j]); if (!Dj.elements.every((v, k) => Math.abs(v - D.elements[k]) < 1e-4)) return null; } return D; });
-  if (Ds.some((D) => !D)) { JOINFAIL.n++; return false; }
-  const geos = [], keep = ['position', 'normal', 'skinIndex', 'skinWeight'];
-  for (const o of use) {
-    const g0 = o.geometry, g = new THREE.BufferGeometry(); for (const k of keep) g.setAttribute(k, g0.attributes[k].clone()); if (g0.index) g.setIndex(g0.index.clone());
-    const n = g0.attributes.position.count, col = new Float32Array(n * 3), vc = o.material.vertexColors && g0.attributes.color, mc = o.material.color;
-    for (let i = 0; i < n; i++) { if (vc) _jc.fromBufferAttribute(vc, i); else _jc.setRGB(1, 1, 1); col[i * 3] = _jc.r * mc.r; col[i * 3 + 1] = _jc.g * mc.g; col[i * 3 + 2] = _jc.b * mc.b; }
-    g.setAttribute('color', new THREE.BufferAttribute(col, 3)); const gi = g.index ? g.toNonIndexed() : g; for (const k of ['position', 'normal']) { const a = gi.attributes[k]; if (a.normalized || !(a.array instanceof Float32Array)) { const f = new Float32Array(a.count * 3); for (let i = 0; i < a.count; i++) { f[i * 3] = a.getX(i); f[i * 3 + 1] = a.getY(i); f[i * 3 + 2] = a.getZ(i); } gi.setAttribute(k, new THREE.BufferAttribute(f, 3)); } }
-    gi.applyMatrix4(Ds[use.indexOf(o)]); geos.push(gi);
-  }
-  const g = mergeGeometries(geos, false); if (!g) return false;
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, emissive: new THREE.Color(0x8a8a8a).multiplyScalar(0.25), emissiveIntensity: SKIN_FILL.k * 0.5 }); mat.name = 'Joined'; SKIN_FILL.mats.add(mat);   /* a little of the night fill too, grey and weak (it lights the clothes as well, so it must not tint them skin colour) */
-  const sm = new THREE.SkinnedMesh(g, mat); sm.name = use.some((o) => /Skirt/.test(o.material.name || '')) ? 'Skirt_joined' : 'Body_joined'; sm.bind(skel, bm); sm.frustumCulled = false; sm.castShadow = sm.receiveShadow = true;
-  use[0].parent.add(sm); for (const o of use) o.visible = false; m.userData.joined = sm; return true;
-}
-const JOINABLE = (s) => { if (!/_lo$/.test(s.bodyId || '') || (__DEV__ && /[?&]nojoin/.test(location.search))) return false; const clips = [s.anim || '', ...Object.values(s.life || {}).filter((v) => typeof v === 'string' || Array.isArray(v)).flat()].filter((c) => typeof c === 'string').join(' ');
-  if (/Kneel|PlayPiano|Comfort|Pray|Crawl/.test(clips)) return false; const sits = isSeated(s.anim); return sits ? (!s.life || s.life.kind === 'sit') : !/\bSit/.test(clips); };   /* stays standing, or stays seated */
+/* Phones and computers: each body's pieces are drawn as a few joined meshes by the engine (engine/joinbody.js, through animate()), so this game no longer joins its own. */
 function makeBody(s) {
   const m = skClone(BASES[s.bodyId || s.base].scene);
   const offHats = (HATS[s.base] || []).filter((h) => h !== s.hat); if (/^man_(work|shirt|elder|suit)$/.test(s.base) && !(s.hide || []).includes('Waistcoat')) offHats.push('Belt', 'Buckle');   /* a waistcoat covers the belt */   /* a body carries several hats; show the one this person wears (s.hat), or none */
@@ -255,7 +228,7 @@ function ensurePlace(id) {   /* the place with its people: loads the bodies it n
     if (__DEV__ && /[?&]faces/.test(location.search)) console.log('FACES ' + P.id + ' ' + [...P.specs.people, ...P.specs.extras].filter((e) => new RegExp(new URLSearchParams(location.search).get('faces') || '.').test(e.base)).map((e) => `${e.id || e.name || ''}:${e.base}${e.variant || ''}${e.props ? '+props' : ''} ${e.life ? e.life.kind : ''}[${reachOf(e).map((v) => v.toFixed(0))}]`).join(' | '));   /* ?faces=woman57 : who got which face, and the box each one stays in */
     for (const e of P.specs.extras) e.bodyId = e.base + (e.variant || '') + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
-    const mk = (s, talk) => { const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk }); n.m = makeBody(s); if (!talk && JOINABLE(s)) joinBody(n.m); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
+    const mk = (s, talk) => { const n = Object.assign(s, { talked: false, heard: 0, hx: s.x, hz: s.z, ry0: s.ry || 0, walking: false, wait: 1 + Math.random() * 2, i: 0, extra: !talk }); n.m = makeBody(s); n.m.visible = false; P.group.add(n.m); n.ctl = n.m.userData.anim; P.bodies.push(n.m); P.npcs.push(n); return n; };
     P.specs.extras.forEach((e, i) => { e.id = e.id || e.base + '#' + i; });   /* every background person has a name of their own in the checks' reports */
     P.people = P.specs.people.map((s) => mk(s, true)); P.extras = P.specs.extras.map((s) => mk(s, false)); P.people.forEach(addMark);
     makeLife(P); meetPeople(P);
@@ -996,7 +969,7 @@ function devViews() {
     if (shot === 'crash5') { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; handLamp.intensity = 0; lampMesh.visible = false; P.torches.forEach((t) => { t.visible = false; }); }
     if (/^k\d/.test(shot)) SFX.initBeds;
     for (let i = 0; i < 6; i++) update(0.05);
-    if (q.has('stats')) setTimeout(() => { renderer.info.reset(); renderer.render(scene, camera); const i = renderer.info; let t = 'STATS calls=' + i.render.calls + ' tris=' + i.render.triangles + ' geo=' + i.memory.geometries + ' tex=' + i.memory.textures; if (q.has('calls')) { const by = {}; const walk = (o, tag) => { if (!o.visible) return; if (o.userData.anim) tag = 'people'; else if (P.rig && o === P.rig.group) tag = 'rig'; if (o.isMesh || o.isSprite || o.isPoints || o.isLine) by[tag] = (by[tag] || 0) + (Array.isArray(o.material) ? o.material.length : 1); for (const c of o.children) walk(c, tag === 'scene' && o === P.group ? 'place' : tag); }; for (const c of scene.children) walk(c, c === P.group ? 'place' : 'scene'); t += ' ' + JSON.stringify(by) + ' joinfail=' + JOINFAIL.n; }   /* &calls: meshes drawn, by kind */ document.title = t; console.log(t); }, 1500);
+    if (q.has('stats')) setTimeout(() => { renderer.info.reset(); renderer.render(scene, camera); const i = renderer.info; let t = 'STATS calls=' + i.render.calls + ' tris=' + i.render.triangles + ' geo=' + i.memory.geometries + ' tex=' + i.memory.textures; if (q.has('calls')) { const by = {}; const walk = (o, tag) => { if (!o.visible) return; if (o.userData.anim) tag = 'people'; else if (P.rig && o === P.rig.group) tag = 'rig'; if (o.isMesh || o.isSprite || o.isPoints || o.isLine) by[tag] = (by[tag] || 0) + (Array.isArray(o.material) ? o.material.length : 1); for (const c of o.children) walk(c, tag === 'scene' && o === P.group ? 'place' : tag); }; for (const c of scene.children) walk(c, c === P.group ? 'place' : 'scene'); t += ' ' + JSON.stringify(by) + ' joinfail=' + JOIN_STATS.fails; }   /* &calls: meshes drawn, by kind */ document.title = t; console.log(t); }, 1500);
   });
   if (q.get('test') === 'layout') {   /* ?test=layout : open each UI state and check that no two visible things overlap, nothing is cut off, and nothing is off the screen. Run at several window sizes. */
     (async () => { const out = [], W = innerWidth, Hh = innerHeight; const st = document.createElement('style'); st.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st);   /* headless Chrome draws few frames, so fades would be caught half way */

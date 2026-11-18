@@ -35,6 +35,7 @@ import { lifeFor, lifeKey, MOOD } from './life.js';
 import { animCheck } from './animcheck.js';   /* dev check only (?test=anim), dropped from the public build */
 import { checkAll, CHECKS } from '../../../engine/checks.js';   /* dev only: every shared check at once (?test=all) */
 import { makeAdapter, CHECK_TABLES } from './checktables.js';
+import { tunePixels } from '../../../engine/perf.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -46,7 +47,7 @@ const TS = QUICK ? 0.06 : 1;   /* time scale for scripted scenes in tests */
 /* ---------- renderer, camera, light, sky, the far ridges and the mist ---------- */
 const canvas = $('stage');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; GFX.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+tunePixels(renderer);   /* pixel cap and slow-frame drop (engine/perf.js) */ renderer.outputColorSpace = THREE.SRGBColorSpace; GFX.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(66, 1, 0.1, 900); scene.add(camera);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x887766, 2); scene.add(hemi); const sun = new THREE.DirectionalLight(0xfff0d0, 2); sun.position.set(10, 20, 10); scene.add(sun); scene.add(sun.target);
 const SHADOWS = !matchMedia('(pointer: coarse)').matches && !(__DEV__ && /[?&]noshadow/.test(location.search));   /* real shadows on computers; phones get soft blob shadows under people instead */

@@ -28,6 +28,7 @@ import { ENV, mixEnv, buildStation, buildYard, buildRuins, buildKingston, notice
 import { lantern, hold, bucket } from './props.js';
 import { makeSmoke } from './trains.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, TALK, LATER, SEEN, SEEN_GROUP, JOURNEY, REPORT, WHY, AFTER, CHOICE_NAMES, JOURNAL } from './content.js';
+import { tunePixels } from '../../../engine/perf.js';
 
 const $ = (id) => document.getElementById(id);
 const q = new URLSearchParams(location.search);
@@ -42,7 +43,7 @@ onLoadFail((name) => { $('loadnote').textContent = 'Could not load ' + name + '.
 /* ---------- renderer, camera ---------- */
 const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+tunePixels(renderer, { phone: MOBILE || TOUCH });   /* pixel cap and slow-frame drop (engine/perf.js) */ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.3;
 setAniso(renderer.capabilities.getMaxAnisotropy()); WG.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0806); scene.fog = new THREE.Fog(0x0a0806, 3, 36);

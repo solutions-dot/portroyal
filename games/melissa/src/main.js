@@ -29,6 +29,7 @@ import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { boy: 2, girl: 2, girl_small: 2, guide2020: 2, man_elder: 2, man_shirt: 2, man_work: 2, student2020: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditSeated, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
+import { tunePixels } from '../../../engine/perf.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -40,7 +41,7 @@ const TS = QUICK ? 0.06 : 1;   /* time scale for scripted scenes in tests */
 /* ---------- renderer, camera, light, sky ---------- */
 const canvas = $('stage');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; G.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+tunePixels(renderer);   /* pixel cap and slow-frame drop (engine/perf.js) */ renderer.outputColorSpace = THREE.SRGBColorSpace; G.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(66, 1, 0.1, 800); scene.add(camera);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x887766, 2); scene.add(hemi); const sun = new THREE.DirectionalLight(0xfff0d0, 2); sun.position.set(10, 20, 10); scene.add(sun); scene.add(sun.target);
 const SHADOWS = !matchMedia('(pointer: coarse)').matches && !(__DEV__ && /[?&]noshadow/.test(location.search));   /* real shadows on computers; phones get soft blob shadows under people instead */

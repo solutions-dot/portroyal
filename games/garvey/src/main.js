@@ -24,6 +24,7 @@ import { auditCloth } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
+import { tunePixels } from '../../../engine/perf.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -32,7 +33,7 @@ onLoadFail((name) => { $('loadnote').textContent = 'Could not load ' + name + '.
 /* ---------- renderer, camera, light ---------- */
 const canvas = $('stage');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+tunePixels(renderer);   /* pixel cap and slow-frame drop (engine/perf.js) */ renderer.outputColorSpace = THREE.SRGBColorSpace;
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2118);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 100);

@@ -37,6 +37,7 @@ import { auditCloth, auditWalk, skinProbe, overlapSolids, sinkCheck, CLOTH_SKIP 
 import { checkAll, CHECKS } from '../../../engine/checks.js';   // dev only: ?test=all
 import { CHECK_TABLES, makeAdapter } from './checktables.js';   // dev only: Tivoli's hooks for ?test=all
 import { headCheck } from './headcheck.js';   // dev only: ?test=heads   // dev only: the shared cloth, walk and skin checks (re-exported) and Tivoli's place checks
+import { tunePixels } from '../../../engine/perf.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -45,7 +46,7 @@ onLoadFail((name) => { $('loadnote').textContent = 'Could not load ' + name + '.
 /* ---------- renderer, camera, light ---------- */
 const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+tunePixels(renderer);   /* pixel cap and slow-frame drop (engine/perf.js) */ renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0xbcd6e0); scene.fog = new THREE.Fog(0xbcd6e0, 30, 90);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 500);
 scene.add(new THREE.HemisphereLight(0xeaf4ff, 0x8a7a5a, 1.6));

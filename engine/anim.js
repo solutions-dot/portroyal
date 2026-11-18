@@ -1,4 +1,5 @@
 import { anchorSeat } from './placement.js';
+import { joinTick } from './joinbody.js';
 /* engine/anim.js: one Mixamo clip library shared by every character (same skeleton).
    loadClips(gltf) fills CL; animate(model, clipName) gives each person a controller. See docs/ENGINE.md. */
 import * as THREE from 'three';
@@ -132,6 +133,7 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
       else fidget(this, m, dt); } };
   lapSetup(m); if (LAP.get(m)) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
   if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
+  if (!m.userData.noJoin) { (mx._joins || (mx._joins = [])).push(m); if (!mx._joinHook) { const up3 = mx.update.bind(mx); mx.update = (dt) => { const r = up3(dt); for (const s of mx._joins) joinTick(s); return r; }; mx._joinHook = true; } }   /* fewer draw calls, same look (engine/joinbody.js) */
   curlFingers(m); m.userData.anim = ctl; return ctl; }
 /* Fingers at rest (owner, 17 November 2026: spiky, claw-like fingers). The clips keep only each finger's knuckle (tools/anims/clean_clips.mjs drops joints 2 to 4 to
    save space), so the knuckle bent with the clip while the rest of the finger stayed dead straight. No clip moves those joints, so each body gets a gentle curl in
