@@ -68,12 +68,6 @@
    }
   },
   {
-   "clip": "learn_journal",
-   "from": 0.5,
-   "dur": 3.0,
-   "ui": true
-  },
-  {
    "clip": "nanny",
    "from": 2.0,
    "dur": 3.0,
@@ -82,6 +76,12 @@
     "year": "1734",
     "colour": "#f0b860"
    }
+  },
+  {
+   "clip": "learn_journal",
+   "from": 0.5,
+   "dur": 3.0,
+   "ui": true
   },
   {
    "clip": "kendal",
