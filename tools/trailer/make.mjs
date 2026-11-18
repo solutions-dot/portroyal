@@ -4,7 +4,8 @@
 
    edit.json: { fps, total, barsFrom, endAt, shots: [{ clip, from, dur, stamp? }], lines: [{ t0, t1, text, cls? }] }
      a shot takes dur seconds of <frames dir>/<clip>/ starting at second `from` of that recording; shots follow one another from 0,
-     and anything after the last shot (the end card) is black under the overlay. stamp: { place, year, colour, tilt? } */
+     and anything after the last shot (the end card) is black under the overlay. stamp: { place, year, colour, tilt? }
+     ui: true shows the game's interface, so the letterbox bars stay off; phone: true puts a phone recording in a phone over a blurred `bg` clip */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -43,8 +44,9 @@ z.save('${dir}/bezel.png')`]);
   return { dir, files: fs.readdirSync(dir).filter((f) => /^f\d+\.jpg$/.test(f)).sort(), a: 0 };
 }
 let n = 0, t = 0;
-E.stamps = [];
+E.stamps = []; E.nobars = [];
 for (const [si, s] of E.shots.entries()) {
+  if (s.ui || s.phone) E.nobars.push([t, t + s.dur]);   /* gameplay with its interface: no letterbox over it */
   if (s.phone) {
     const P = phoneShot(s, si), k = Math.round(s.dur * fps);
     for (let i = 0; i < k; i++) fs.symlinkSync(path.resolve(`${P.dir}/${P.files[i]}`), `${work}/seq/${String(++n).padStart(5, '0')}.jpg`);

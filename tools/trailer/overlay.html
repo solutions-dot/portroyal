@@ -73,7 +73,7 @@
     for (let i = 0; i < e.passport.empty; i++) g.insertAdjacentHTML('beforeend', '<div class="pst empty"><div class="in"><div class="y">?</div></div></div>');
   };
   window.render = (t) => {
-    const E = EDIT, bars = t >= E.barsFrom && t < E.passport.at;
+    const E = EDIT, bars = t >= E.barsFrom && t < E.passport.at && !(E.nobars || []).some((w) => t >= w[0] && t < w[1]);   /* gameplay shots keep their interface in view */
     for (const b of document.querySelectorAll('.bar')) b.style.opacity = bars ? 1 : 0;
     // the stamp for the shot on screen
     const st = $('stamp'); st.style.opacity = 0;
