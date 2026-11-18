@@ -233,7 +233,7 @@ const isTouch = matchMedia('(pointer: coarse)').matches;
 /* ---------- renderer and scene ---------- */
 const canvas = $('stage');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-const PHONE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600; tunePixels(renderer, { phone: PHONE, phoneMax: 1.25, max: 1.75, floor: 0.8 });   /* pixel cap and slow-frame drop, moved to engine/perf.js */
+const PHONE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600; tunePixels(renderer, { phone: PHONE, phoneMax: 1.5, max: 1.75, floor: 0.8 });   /* pixel cap and slow-frame drop, moved to engine/perf.js. Phones 1.5 (was 1.25, owner 18 Nov 2026: sharper now that people cost fewer draw calls; slow frames still lower it) */
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.12;
 const scene = new THREE.Scene();
 const HAZE = new THREE.Color(0xcfe3ea);
