@@ -170,12 +170,50 @@ const blocked = (Q, x, z, r = 0.24) =>
   Q.walls.some(
     (w) => x > w[0] - r && x < w[2] + r && z > w[1] - r && z < w[3] + r,
   );
+/* Haile Selassie's tunic sleeves flared wide at the wrist, which shows in the salute (owner, 18 Nov 2026). Until the body is rebuilt,
+   the sleeve's last part is drawn in toward the line from elbow to wrist, more toward the cuff. His bodies are joined (one painted mesh),
+   so the sleeve is told from the skin by colour: the palm gives his skin colour, and only points of another colour move. CUFF is how much
+   narrower the cuff ends. */
+const CUFF = 0.5;
+function narrowCuffs(root) {
+  const v = new THREE.Vector3(), E = new THREE.Vector3(), W = new THREE.Vector3(), m = new THREE.Matrix4(), axis = new THREE.Vector3(), foot = new THREE.Vector3(), c = new THREE.Color();
+  root.traverse((o) => {
+    if (!o.isSkinnedMesh || /Measure/.test(o.name)) return;
+    const g = o.geometry, P = g.attributes.position, SI = g.attributes.skinIndex, SW = g.attributes.skinWeight, C = g.attributes.color, bones = o.skeleton.bones;
+    if (!SI || !SW) return;
+    const named = /^(Jacket|Sleeve)/.test(o.material?.name || "");
+    if (!named && !C) return;
+    for (const side of ["Right", "Left"]) {
+      const fi = bones.findIndex((b) => b.name.endsWith(side + "ForeArm")), hi = bones.findIndex((b) => b.name.endsWith(side + "Hand"));
+      if (fi < 0 || hi < 0) continue;
+      const at = (i, out) => out.setFromMatrixPosition(m.copy(o.skeleton.boneInverses[i]).invert()).applyMatrix4(o.bindMatrixInverse);
+      at(fi, E); at(hi, W); axis.subVectors(W, E); const L2 = axis.lengthSq();
+      const armW = (i) => { let w = 0; for (let k = 0; k < 4; k++) { const b = SI.getComponent(i, k); if (b === fi || b === hi) w += SW.getComponent(i, k); } return w; };
+      const tOf = (i) => v.fromBufferAttribute(P, i).sub(E).dot(axis) / L2;
+      let skin = null;
+      if (C) {   /* the palm's colour: points well past the wrist */
+        let r = 0, gg = 0, bb = 0, n = 0;
+        for (let i = 0; i < P.count; i++) if (armW(i) > 0.5 && tOf(i) > 1.25) { c.fromBufferAttribute(C, i); r += c.r; gg += c.g; bb += c.b; n++; }
+        if (n) skin = new THREE.Color(r / n, gg / n, bb / n);
+      }
+      for (let i = 0; i < P.count; i++) {
+        if (armW(i) < 0.5) continue;
+        const t = tOf(i);
+        if (t < 0.45 || t > 1.12) continue;
+        if (!named && skin) { c.fromBufferAttribute(C, i); if (Math.abs(c.r - skin.r) + Math.abs(c.g - skin.g) + Math.abs(c.b - skin.b) < 0.12) continue; }
+        const k = Math.min(1, (t - 0.45) / 0.5), f = 1 - CUFF * k * k * (3 - 2 * k);
+        v.fromBufferAttribute(P, i); foot.copy(axis).multiplyScalar(t).add(E); v.sub(foot).multiplyScalar(f).add(foot); P.setXYZ(i, v.x, v.y, v.z);
+      }
+    }
+    P.needsUpdate = true; g.computeBoundingSphere();
+  });
+}
 function loadBase(id) {
   return bases[id]
     ? Promise.resolve(bases[id])
     : pending[id] ||
         (pending[id] = model(id)
-          .then((g) => (bases[id] = g))
+          .then((g) => (/^sel_emperor66/.test(id) && narrowCuffs(g.scene || g), (bases[id] = g)))
           .catch((error) => {
             delete pending[id];
             throw error;
