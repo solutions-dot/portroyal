@@ -41,7 +41,7 @@ const DEF = {
   r: 0.24, kidR: 0.19,                          /* body radius for personal space */
   space: 0.8, storySpace: 1.0,                  /* how close a walker comes to the player and to a story person */
   walk: 1.05, run: 2.5,                         /* metres a second for a grown-up; a child is scaled by the square root of its size */
-  look: 5, lookYaw: 1.05, lookPitch: 0.3,       /* head turns: how far away a person is noticed, the largest turn (radians) */
+  look: 5, lookYaw: 1.05, lookPitch: 0.3, headMax: 1.35,   /* headMax: the head's whole turn from the hips, clip and look together (77 degrees) */       /* head turns: how far away a person is noticed, the largest turn (radians) */
   still: 12,                                    /* the check: seconds a person may stand without any visible change in a lively scene */
   ground: true, mixers: true,                   /* the tick grounds the feet and updates the mixers of the people it owns */
 };
@@ -338,7 +338,18 @@ export function createAmbient(opts = {}) {
     if (a.spec.at && a.kind === 'watch') return [rel(a.spec.at[0], a.spec.at[1]), 0];
     return [0, 0];
   }
-  const _tq = new THREE.Quaternion();
+  const _tq = new THREE.Quaternion(), _hw = new THREE.Quaternion(), _fv = new THREE.Vector3(), FWD = new WeakMap();
+  /* each bone's own forward, from the bind pose (every body is built facing +z): read once per body */
+  function fwdOf(m, bone) {
+    let f = FWD.get(bone); if (f !== undefined) return f; f = null;
+    m.traverse((o) => { if (f || !o.isSkinnedMesh) return; const i = o.skeleton.bones.indexOf(bone); if (i < 0) return; const q = new THREE.Quaternion(); new THREE.Matrix4().copy(o.skeleton.boneInverses[i]).invert().decompose(new THREE.Vector3(), q, new THREE.Vector3()); f = new THREE.Vector3(0, 0, 1).applyQuaternion(q.invert()); });
+    FWD.set(bone, f); return f;
+  }
+  function yawOf(m, bone) { const f = fwdOf(m, bone); if (!f) return null; bone.getWorldQuaternion(_hw); _fv.copy(f).applyQuaternion(_hw); return Math.atan2(_fv.x, _fv.z); }
+  function clipYaw(m, head) {   /* how far the clip alone has turned the head from the hips */
+    const hips = head && (m.getObjectByName('mixamorigHips') || m.getObjectByName('mixamorig:Hips')); if (!hips) return 0;
+    head.updateWorldMatrix(true, false); const h = yawOf(m, head), p = yawOf(m, hips); return h === null || p === null ? 0 : wrap(h - p);
+  }
   function headTick(n, dt) {
     const a = n.amb, b = bonesOf(n.m); if (!b.neck && !b.head) return; a.pT = Math.hypot(W.px - n.x, W.pz - n.z) < O.look ? a.pT + dt : 0; let [yaw, pitch] = lookWant(n);
     if (!Number.isFinite(yaw)) yaw = 0; if (!Number.isFinite(pitch)) pitch = 0; if (!Number.isFinite(a.look)) a.look = 0; if (!Number.isFinite(a.lookP)) a.lookP = 0;   /* a look at a point that is not there (the player before the game sets them, a lone sitter with no mate) once gave NaN and the head vanished (Windrush) */
@@ -350,7 +361,10 @@ export function createAmbient(opts = {}) {
        start from the clip's pose again, or each frame's turn adds to the last one and the head spins round (Selassie, November 2026) */
     const hq = a.hq || (a.hq = [b.neck, b.head].map(() => ({ base: new THREE.Quaternion(), after: new THREE.Quaternion(10, 0, 0, 0) })));
     lookBegin([b.neck, b.head]);   /* start from the clip's own pose (engine/anim.js) */
-    turnBone(b.neck, UP, a.look * 0.4); turnBone(b.head, UP, a.look * 0.6); turnBone(b.head, _ax, a.lookP + nod);
+    /* the look and the clip's own head turn together stay within a person's reach (owner, 18 November 2026: a neighbour in Selassie's lane looked back
+       at you over a shoulder the clip had already turned, the head right round): the clip's turn from the hips is measured and the look is cut to fit */
+    const cy = clipYaw(n.m, b.head), L = O.headMax; const look = Math.max(-L - cy, Math.min(L - cy, a.look));
+    turnBone(b.neck, UP, look * 0.4); turnBone(b.head, UP, look * 0.6); turnBone(b.head, _ax, a.lookP + nod);
     /* the clip and the look together: a fast clip (HeadTurn, Cheer, WipeSweat) or a clip change on top of a look snapped the head round at
        300 to 1,400 degrees a second (Kendal, Selassie checks). Neck and head each move at most about 140 degrees a second, so the head never spins */
     const maxA = Math.max(0.02, dt * 2.4);
