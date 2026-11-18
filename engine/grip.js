@@ -69,6 +69,7 @@ const _f = new THREE.Vector3();
 export function gripTick(model) {
   const gs = model.userData.grips; if (!gs) return; const mq = wq(model);
   for (const g of gs) {
+    if (g.steady) continue;   /* after everything else below, so an arm lift cannot pull the hand off the load again */
     if (g.elbowRest && !g.elbow.quaternion.equals(g.elbowQ)) {
       g.elbow.quaternion.slerp(g.elbowRest, g.straighten); g.elbowQ.copy(g.elbow.quaternion);
     }
@@ -76,4 +77,31 @@ export function gripTick(model) {
     for (const f of g.fingers) f.b.quaternion.copy(f.q);
     if (g.wrap) { g.hand.updateWorldMatrix(true, false); g.wrap.quaternion.copy(wq(g.hand)).invert().multiply(mq); }
   }
+  for (const g of gs) if (g.steady) steadyTick(model, g);
+}
+
+/* steadyLoad(model, item): a hand that steadies a load carried on the head (owner, 18 November 2026: "her hand is not touching the basket", Miss Cleo in Kendal).
+   The carry-on-the-head clips (CarryHeadIdle, CarryHeadWalk) raise one hand to where their own load was; our baskets sit lower and nearer, so the hand
+   waved in the air beside the basket. Each frame (gripTick), when a hand is up near the load, the arm is bent and turned (two bones, like a knee on a slope)
+   so the palm rests on the load's rim on that side, a little below the top. A hand that is down (walking back empty, talking) is left alone.
+   engine/audit.js (auditHeld) checks it: on a head-carry clip a raised hand must touch the load. */
+const _s = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], _sq = new THREE.Quaternion(), _sb = new THREE.Box3();
+function rotW(bone, q) { const pq = wq(bone.parent); bone.quaternion.premultiply(pq.clone().invert().multiply(q).multiply(pq)); bone.updateMatrixWorld(true); }
+export function reachTo(model, side, T) {   /* two-bone reach: shoulder, elbow, wrist; bends the elbow so the wrist can reach T, then swings the upper arm onto it */
+  const B = (n) => model.getObjectByName('mixamorig' + side + n), up = B('Arm'), el = B('ForeArm'), wr = B('Hand'); if (!up || !el || !wr) return false;
+  model.updateMatrixWorld(true); const S = up.getWorldPosition(_s[0]), E = el.getWorldPosition(_s[1]), W = wr.getWorldPosition(_s[2]), a = S.distanceTo(E), b = E.distanceTo(W), c0 = S.distanceTo(W), c1 = Math.min(a + b - 1e-3, Math.max(Math.abs(a - b) + 1e-3, S.distanceTo(T)));
+  const ang = (c) => Math.acos(Math.min(1, Math.max(-1, (a * a + b * b - c * c) / (2 * a * b))));
+  const ax = _s[3].copy(E).sub(S).cross(_s[4].copy(W).sub(E)); if (ax.lengthSq() > 1e-10) { ax.normalize(); rotW(el, _sq.setFromAxisAngle(ax, -(ang(c1) - ang(c0)))); }
+  const W2 = wr.getWorldPosition(_s[2]); rotW(up, _sq.setFromUnitVectors(W2.sub(S).normalize(), _s[4].copy(T).sub(S).normalize())); return true;
+}
+export function steadyLoad(model, item) { (model.userData.grips = model.userData.grips || []).push({ steady: item, fingers: [], wrap: null }); }
+function steadyTick(model, g) {
+  const c = model.userData.anim, clip = c && c.cur ? c.cur.getClip().name : ''; if (!/^CarryHead/.test(clip) || !g.steady.parent) return;
+  model.updateMatrixWorld(true); _sb.setFromObject(g.steady); if (_sb.isEmpty()) return; const ctr = _sb.getCenter(new THREE.Vector3()), size = _sb.getSize(new THREE.Vector3());
+  for (const side of ['Left', 'Right']) { const h = model.getObjectByName('mixamorig' + side + 'Hand'), head = model.getObjectByName('mixamorigHead'); if (!h || !head) continue;
+    const hp = h.getWorldPosition(new THREE.Vector3()); if (hp.y < head.getWorldPosition(new THREE.Vector3()).y - 0.05) continue;   /* only a raised hand */
+    const d = new THREE.Vector3(hp.x - ctr.x, 0, hp.z - ctr.z); if (d.lengthSq() < 1e-6) continue; d.normalize();
+    const r = Math.max(size.x, size.z) / 2, P = ctr.clone().addScaledVector(d, r + 0.03); P.y = _sb.max.y - Math.min(0.05, size.y * 0.25);   /* where the palm goes: on the rim, just below the top */
+    const k = model.getObjectByName('mixamorig' + side + 'HandMiddle1'), palm = k ? hp.clone().lerp(k.getWorldPosition(new THREE.Vector3()), 0.6) : hp;
+    for (let it = 0; it < 2; it++) { const w = h.getWorldPosition(new THREE.Vector3()), pm = k ? w.clone().lerp(k.getWorldPosition(new THREE.Vector3()), 0.6) : w; reachTo(model, side, P.clone().sub(pm.sub(w))); } }   /* the wrist goes where it puts the palm on that spot (twice, as the hand turns with the arm) */
 }

@@ -15,7 +15,7 @@ import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, gullCry } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
-import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
+import { grip, gripTick, steadyLoad, spreadArms } from '../../../engine/grip.js';
 import { G, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
 import { ENV, mixEnv } from './common.js';
 import { lantern, hamper, bucket, attach, hold, PM } from './props.js';
@@ -118,7 +118,7 @@ function makeBody(s) {
   if (s.seat !== undefined && /^Sit/.test(s.anim || '')) { m.userData.seatAnchor={top:s.seat}; m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
       m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
       if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat (its top is s.seat): the hip joint rides 12 cm above it, whatever the body's size */
-  const carry = (bone, o, G) => { if (/Hand$/.test(bone)) grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY || G.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.4, G.lift || 0), straighten: G.straighten ?? 0.8 }); else hold(m, bone, o, G); };   /* in a hand: a real grip (engine/grip.js); on the head: balanced there */
+  const carry = (bone, o, G) => { if (/Hand$/.test(bone)) grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY || G.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.4, G.lift || 0), straighten: G.straighten ?? 0.8 }); else { hold(m, bone, o, G); if (bone === 'Head') steadyLoad(m, o); } };   /* a hand steadies a load on the head (engine/grip.js) */   /* in a hand: a real grip (engine/grip.js); on the head: balanced there */
   for (const [bone, prop] of s.props || []) { const o = PROPS[prop](); carry(bone, o, GRIP[prop]); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) s._flame = o.userData.flame; }
   if (s.lamp) { const o = lantern(); carry('RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
   if (!/^Sit/.test(s.anim || '')) spreadArms(m, /^(woman|girl|guide)/.test(s.base) ? 0.15 : s.base === 'man_suit' ? 0.11 : 0.05);   /* arms hang clear of skirts and jackets (engine/grip.js) */
