@@ -120,15 +120,15 @@ export function lapHands(m, name) { const L = LAP.get(m); if (!L) return; m.upda
       _hq.setFromUnitVectors(from.normalize(), to.normalize()); sd.fa.getWorldQuaternion(_hq2); const pq = sd.fa.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
       sd.fa.quaternion.copy(pq.multiply(_hq.multiply(_hq2))); sd.fa.updateMatrixWorld(true); } } }
 export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipFor(name)) || clipFor('Idle') || peopleClip; if (!clip && !baseAct) return;
-  const mx = mixerIn || new THREE.AnimationMixer(m), base = baseAct || mx.clipAction(clip); if (!baseAct) { base.play(); base.time = Math.random() * clip.duration; } if (!mixerIn) mixers.push(mx);
+  const mx = mixerIn || new THREE.AnimationMixer(m), base = baseAct || mx.clipAction(clip); if (!baseAct) { base.play(); base.time = Math.random() * clip.duration; base.timeScale = 0.92 + Math.random() * 0.16; }   /* each body at its own pace: two people on one clip never move in step */ if (!mixerIn) mixers.push(mx);
   const acts = {}, ctl = { mx, base, cur: base, timer: 0,
     get(n) { if (!acts[n]) { const c = clipFor(n); if (!c) return null; acts[n] = mx.clipAction(c); } return acts[n]; },
     play(n, once, hold) { if (n && HAND_TALK.test(n) && holdsInHand(m) && clipFor('Idle')) n = 'Idle';   /* a hand that holds a case or a basket does not wave it about */
-      const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
+      const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); if (!n) { a.time = Math.random() * a.getClip().duration; a.timeScale = 0.9 + Math.random() * 0.2; }   /* back to the resting clip at a random moment and pace, never from its start (two people put back together moved in step) */ a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
     tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) { const h = this.home; this.home = null;
-        if (h) this.play(h); else this.rest(); if (this.fid) { this.fid = false; const a = this.cur, d = a.getClip().duration; a.time = Math.random() * d; } } }   /* back from a moment of variety: to the clip they were on, at a random moment, so two people never fall into step */
+        if (h) this.play(h); else this.rest(); if (this.fid) { this.fid = false; const a = this.cur, d = a.getClip().duration; a.time = Math.random() * d; a.timeScale = 0.9 + Math.random() * 0.2; } } }   /* back from a moment of variety: to the clip they were on, at a random moment, so two people never fall into step */
       else fidget(this, m, dt); } };
   lapSetup(m); if (LAP.get(m)) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
   if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
@@ -156,19 +156,23 @@ export function calmHands(m) { const c = m.userData.anim; if (!c || !c.base || !
    across all games ... they have this zombie look ... including old people"). Every game gets it from here (rule 10). Not for people the crowd code runs (it has its own
    idles, engine/ambient.js), people holding something (the item must stay in the hand), or a body marked userData.still. An old person (userData.elder, set by the crowd
    code from the body's name) uses the old idle too. The clips must be in the game's anim-clips.json; a missing one is skipped. */
-const FIDGET_BASE = /^(Idle|IdleM|OldIdle|Sad1|Sad2|Cry|HappyIdle|SitIdle\d?)$/;
+const FIDGET_BASE = /^(Idle|IdleM|OldIdle|Sad1|Sad2|Cry|HappyIdle|SitIdle\d?|SitDisbelief)$/;
 /* a sad person stays sad and a seated person stays seated (Port Royal's ?test=life, 17 November 2026: the camp after the earthquake and Abba in the boat stood
    with nothing changing): their variety is another sad clip, or another way of sitting, never a look round on a standing clip */
 const SAD = ['Sad1', 'Sad2', 'Cry'], SITS = ['SitIdle', 'SitIdle2', 'SitIdle3', 'SitIdle5'];
 function fidget(c, m, dt) {
   if (m.userData.ambOwned || m.userData.still || m.userData.grips) return;
-  const on = c.cur !== c.base ? c.cur : null; if (on && (on.loop === THREE.LoopOnce || !FIDGET_BASE.test(on.getClip().name))) return;   /* a looping rest clip the game put them on (Abba sitting in the boat) counts as their base */
-  if (c.idleT === undefined) c.idleT = 3 + Math.random() * 8; c.idleT -= dt; if (c.idleT > 0) return; c.idleT = 5 + Math.random() * 6;   /* never more than about 11 s on one clip: the life checks call 12 s with nothing changing frozen */
-  const bn = (on || c.base).getClip().name; if (!FIDGET_BASE.test(bn)) return;
-  const sit = /^SitIdle/.test(bn); if (m.userData.seatAnchor && !sit) return;   /* LookOverShoulder is left out: it turns the head about 85 degrees, past what the head check allows */   /* a seated person on another clip (a talk) is left alone */
-  const list = (sit ? SITS : SAD.includes(bn) ? SAD : m.userData.elder ? ['OldIdle', 'LookAround'] : ['LookAround', 'HeadTurn']).filter((k) => k !== bn && CL[k]);
+  const own = Array.isArray(m.userData.idles) ? m.userData.idles : null;   /* a game may give a body its own list (a gesture that fits who they are: Port Royal's sailor points and laughs) */
+  const on = c.cur !== c.base ? c.cur : null; if (on && (on.loop === THREE.LoopOnce || (!own && !FIDGET_BASE.test(on.getClip().name)))) return;   /* a looping rest clip the game put them on (Abba sitting in the boat) counts as their base */
+  if (c.idleT === undefined) c.idleT = 3 + Math.random() * 8; c.idleT -= dt; if (c.idleT > 0) return; c.idleT = 4 + Math.random() * 5;   /* never more than about 9 s on one clip: the life checks call 12 s with nothing changing frozen */
+  const bn = (on || c.base).getClip().name; if (!own && !FIDGET_BASE.test(bn)) return;
+  const sit = /^Sit(Idle|Disbelief)/.test(bn); if (m.userData.seatAnchor && !sit) return;   /* a seated person only ever gets another sitting clip, even from a game's own list (Abba in the boat was given a standing wave as the place changed) */   /* LookOverShoulder is left out: it turns the head about 85 degrees, past what the head check allows */   /* a seated person on another clip (a talk) is left alone */
+  const ownSit = own && (sit || m.userData.seatAnchor) ? own.filter((k) => /^Sit/.test(k)) : null;
+  const list = (own ? (ownSit ? (ownSit.length ? ownSit : SITS) : own) : sit ? SITS : SAD.includes(bn) ? SAD : m.userData.elder ? ['OldIdle', 'LookAround'] : ['LookAround', 'HeadTurn']).filter((k) => k !== bn && CL[k]);
   if (!list.length) return; const k = list[(Math.random() * list.length) | 0];
-  c.fid = true; if (sit || SAD.includes(bn)) c.play(k, false, 5 + Math.random() * 5); else c.play(k, true); if (on) c.home = bn; }   /* a sad or seated variant is held a few seconds (it loops), then back to the base clip */
+  c.fid = true; const loop = !own && (sit || SAD.includes(bn)); if (loop) c.play(k, false, 5 + Math.random() * 5); else c.play(k, true); if (on) c.home = bn;
+  c.timer = Math.min(c.timer || 99, 4 + Math.random() * 4);   /* a moment, not the whole clip: Mixamo's SitTalk runs 42 s */
+  const a = c.cur; if (a && a.getClip().name === k) { a.timeScale = loop ? 0.8 + Math.random() * 0.4 : 0.9 + Math.random() * 0.15; if (loop) a.time = Math.random() * a.getClip().duration; } }   /* a look round plays from its start and no faster than 1.05: sped up, a head turned faster than a person can (Selassie's head check) */   /* each at its own speed, and a looping one from its own moment: two people side by side never move in step (Port Royal's camp) */   /* a sad or seated variant is held a few seconds (it loops), then back to the base clip */
 /* tickVisible(dt): one call a frame for a game that lets the engine run its people. It updates every mixer whose body is shown and ticks that body's controller
    (idle variety, seats, one-shot clips ending), so nobody is left out because the game's own list missed them (Port Royal's 1670 buccaneers were never ticked). */
 export function tickVisible(dt) { for (const mx of mixers) { const r = mx.getRoot(); let v = r.visible, o = r.parent; while (v && o) { v = o.visible; o = o.parent; } if (!v) continue; mx.update(dt); const c = r.userData && r.userData.anim; if (c && c.mx === mx && c.tick) c.tick(dt); } }

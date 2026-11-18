@@ -6,7 +6,7 @@ import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";
 import { model, onLoadFail } from "../../../engine/loader.js";
 import { hudTidy } from "../../../engine/hud.js";
 import { animate, loadClips, groundFeet } from "../../../engine/anim.js";
-import { spreadArms, gripTick, grip } from "../../../engine/grip.js";
+import { steadyLoad, spreadArms, gripTick, grip } from "../../../engine/grip.js";
 import { createAmbient } from "../../../engine/ambient.js";
 import {
   lead,
@@ -231,6 +231,7 @@ function holdThing(m, kind) {
   if (kind === "headload") {
     obj = headBasket();
     hold(m, "Head", obj, { dy: 0.13 });
+    steadyLoad(m, obj); // a hand steadies the load on the head (engine/grip.js)
     label = "basket on the head";
     m.userData.held = [{ obj, bone: "Head", label, head: true }];
     return;

@@ -246,6 +246,11 @@ export function auditHeld(id, body, items) {
     const pts = []; it.obj.updateMatrixWorld(true); it.obj.traverse((o) => { if (!o.isMesh || !o.geometry.attributes.position) return; const a = o.geometry.attributes.position, step = Math.max(1, Math.floor(a.count / 120)); for (let i = 0; i < a.count; i += step) pts.push(new THREE.Vector3().fromBufferAttribute(a, i).applyMatrix4(o.matrixWorld)); });   /* the item's real surface, not its box */
     const hit = new Set(); for (const p of pts) for (const sg of segs) { if (it.bone === 'Head' && (sg.name === 'neck' || sg.name === 'chest')) continue; if (dist(p, sg.A, sg.B) < sg.r) hit.add(sg.name); }
     if (hit.size) out.push(name + ' cuts into the ' + [...hit].join(', '));
+    /* a load on the head with a carry-on-the-head clip: the raised hand must rest on it (owner, 18 November 2026: Miss Cleo's hand waved beside her basket; engine/grip.js steadyLoad) */
+    const ac = body.userData.anim, clip = ac && ac.cur ? ac.cur.getClip().name : '';
+    if (it.bone === 'Head' && /^CarryHead/.test(clip)) { const head = P('Head'); let best = 9;
+      for (const side of ['Left', 'Right']) { const hd = P(side + 'Hand'), k = P(side + 'HandMiddle1'); if (!hd || !head || hd.y < head.y - 0.05) continue; const palm = k ? hd.clone().lerp(k, 0.6) : hd; best = Math.min(best, box.distanceToPoint(palm)); }
+      if (best < 9 && best > 0.05 * sc) out.push(name + ': the raised hand is ' + (best * 100).toFixed(0) + ' cm from the load'); }
   }
   return out;
 }

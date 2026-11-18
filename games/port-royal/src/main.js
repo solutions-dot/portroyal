@@ -1603,7 +1603,7 @@ function pirateReady(n) { buildFort(); const m = people[n]; if (!m) return;
 const TV = { t: 0, n: 0 };
 const BRAWL = [[0, 'Talk3', 'Laugh'], [4.5, 'Talk1', 'Laugh'], [8.1, 'Argue', 'Yell'], [9.6, 'Yell', 'Argue'], [11.1, 'Laugh', 'Laugh'], [15.5, 'Talk2', 'Talk3'], [20, null, null]];   /* a loud argument that ends in a laugh, never a fight (owner rule 4: no fighting in the foreground) */
 TICKS.push((dt) => { const a = people.buc1, b = people.buc2; if (!a || !b || state.place !== 'in' || !a.userData.anim) return; if (speaker === a || speaker === b) return;
-  { const A1 = a.userData.anim, B1 = b.userData.anim; if (A1.cur === A1.base && B1.cur === B1.base && Math.abs(A1.cur.time - B1.cur.time) < 0.15) B1.cur.time = (B1.cur.time + 0.7) % B1.cur.getClip().duration; }   /* back on their idle together: never in step */
+  { const A1 = a.userData.anim, B1 = b.userData.anim; if (A1.cur === A1.base && B1.cur === B1.base) { const d = B1.cur.getClip().duration, gap = Math.abs(A1.cur.time - B1.cur.time) % d; if (Math.min(gap, d - gap) < 0.1 * d) B1.cur.time = (A1.cur.time + 0.35 * d) % d; if (Math.abs(A1.cur.timeScale - B1.cur.timeScale) < 0.05) B1.cur.timeScale = A1.cur.timeScale + 0.08; } }   /* back on their idle together: never in step */
   const pt = TV.t; TV.t += dt; for (const [at, c1, c2] of BRAWL) if (pt < at && TV.t >= at) { const once = (c) => c && !/Talk|Laugh/.test(c);
       if (c1) a.userData.anim.play(c1, once(c1), 3.5); else a.userData.anim.rest(); if (c2) b.userData.anim.play(c2, once(c2), 3.5); else b.userData.anim.rest(); { const ca = a.userData.anim.cur, cb = b.userData.anim.cur; if (ca && cb && ca.getClip().name === cb.getClip().name) cb.time = (cb.time + 0.45 + Math.random() * 0.5) % cb.getClip().duration; }   /* never both in step */
       if (c1 === 'Argue' && TV.n++ % 2 === 0 && Math.hypot(state.x + 199, state.z) < 6) setTimeout(() => toast('Abba: “Not in my tavern, boys! Take it outside!”'), 700); }
@@ -2117,7 +2117,7 @@ if (__DEV__ && ['collision','seating'].includes(new URLSearchParams(location.sea
 }
 
 /* ---------- life for people who stand: now and then a gesture that fits who they are, and a look at you as you pass ---------- */
-/* Anyone on their resting clip (ac.base) with a list in userData.idles plays one of those clips once every 5 to 10 seconds, each on their own clock, so
+/* Anyone on their resting clip with a list in userData.idles plays one of those clips now and then (engine/anim.js, idle variety, which every game shares), so
    nobody stands frozen and no two people move in step. Within 5 m, whoever is not walking turns the head toward you (up to 65 degrees from the chest). Checked by ?test=life. */
 const IDLES = { sailor: ['Point', 'Laugh', 'LookAround'], benning: ['WipeSweat', 'LookAround', 'WaveSlow'], gunner: ['LookAround', 'Salute', 'Point'], morgan: ['Point', 'Talk1', 'Laugh', 'LookAround'], ned: ['SitIdle2', 'SitTalk'] };
 const _lq = new THREE.Quaternion(), _lq2 = new THREE.Quaternion(), _lv = new THREE.Vector3(), _ly = new THREE.Vector3(0, 1, 0);
@@ -2127,7 +2127,7 @@ TICKS.push((dt) => { if (!built) return;
   const list = [...Object.entries(IDLES).map(([k]) => people[k]), ...Object.values(survivors), ...(afterG ? afterG.children.filter((c) => c.userData.idles) : []), people.heath, ...(FB.on ? FBG.cast.concat([FBG.qm]) : []), state.place === 'out' || state.place === 'in' || state.place === 'after' || state.place === 'sea' ? abba : null];
   for (const m of list) { if (!m || !m.userData.anim) continue; let v = m.visible; for (let o = m.parent; v && o; o = o.parent) v = o.visible; if (!v) continue;
     const ac = m.userData.anim, idles = m === abba ? (state.place === 'after' ? ['Sad1', 'LookAround'] : state.place === 'sea' ? ['SitTalk', 'SitIdle2'] : Q.on ? null : ['WaveSlow', 'LookAround', 'WipeSweat']) : m.userData.idles || IDLES[Object.keys(people).find((k) => people[k] === m)];
-    if (idles && speaker !== m && ac.cur === ac.base && !(m === abba && (Q.abbaRun || Q.on && state.place !== 'after' && state.place !== 'sea'))) { m.userData.idleT = (m.userData.idleT ?? 2 + Math.random() * 6) - dt; if (m.userData.idleT <= 0) { m.userData.idleT = 5 + Math.random() * 5; const c = idles[Math.random() * idles.length | 0]; if (CL[c]) ac.play(c, true); } }
+    m.userData.idles = idles || undefined; m.userData.still = speaker === m || (m === abba && (Q.abbaRun || Q.on && state.place !== 'after' && state.place !== 'sea'));   /* the engine plays them, each at its own speed and moment (engine/anim.js idle variety); this game's own copy of that loop moved there */
     if (m === abba || m === people.kofi) continue;   /* Abba has her own look (frame), Kofi watches his load */
     m.getWorldPosition(_lv); const dx = state.x - _lv.x, dz = state.z - _lv.z, near = Math.hypot(dx, dz) < 5 && state.started; let want = 0;
     if (near) { const ch = m.getObjectByName('mixamorigSpine2'); let f = m.rotation.y; if (ch) { const q = ch.getWorldQuaternion(_lq2), fw = new THREE.Vector3(0, 0, 1).applyQuaternion(q); f = Math.atan2(fw.x, fw.z); } let d = Math.atan2(dx, dz) - f; d = Math.atan2(Math.sin(d), Math.cos(d)); want = Math.abs(d) < 2.2 ? Math.max(-1.13, Math.min(1.13, d)) : 0; }

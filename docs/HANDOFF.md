@@ -300,3 +300,9 @@ The owner: "I will take your advice on the sheets. Let's push what we have to ma
 - **Camera scenes on an upright phone**: `engine/cine.js`, in the eight games that have camera scenes.
 - Still open: the buildings (owner to choose), the waistcoat man's crotch and Tivoli's headband (owner to point them out), Nanny Town's walking check (3), the Shady Side and Kanawha could be more detailed (owner, 18 November).
 
+## 18 November 2026, later: the checks finished
+
+- Port Royal `?test=life`: 0. Its own idle loop moved into the engine (`userData.idles`); seated people only get sitting clips; each moment of variety lasts a few seconds (SitTalk runs 42 s); everyone rests at their own pace, so nobody moves in step.
+- Miss Cleo's hand rests on her basket (`steadyLoad` in `engine/grip.js`), and the held check now measures it (it found her hand 9 to 12 cm off before the fix).
+- The full round (audit, held, ambient, layout at four sizes, Port Royal life) is 0 in every game on the merged code.
+
