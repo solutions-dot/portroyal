@@ -65,7 +65,8 @@
     "place": "Marcus Garvey and the UNIA",
     "year": "1914",
     "colour": "#E8505B"
-   }
+   },
+   "push": 0.1
   },
   {
    "clip": "nanny",
@@ -91,17 +92,19 @@
     "place": "Kendal Train Crash",
     "year": "1957",
     "colour": "#1FB5A3"
-   }
+   },
+   "push": 0.1
   },
   {
    "clip": "eventide",
-   "from": 2.0,
+   "from": 1.0,
    "dur": 3.0,
    "stamp": {
     "place": "Eventide Home Fire",
     "year": "1980",
     "colour": "#a9dcc2"
-   }
+   },
+   "push": 0.1
   },
   {
    "clip": "selassie_land",
