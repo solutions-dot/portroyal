@@ -61,7 +61,13 @@
     "place": "The Emperor’s Arrival",
     "year": "1966",
     "colour": "#edc25f"
-   }
+   },
+   "crop": [
+    0.55,
+    0.47,
+    1.6
+   ],
+   "push": 0.06
   },
   {
    "clip": "nanny",
