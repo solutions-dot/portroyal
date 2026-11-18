@@ -1,4 +1,5 @@
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
+import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { grip, gripTick } from '../../../engine/grip.js';
 import { hudTidy } from '../../../engine/hud.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
@@ -784,7 +785,7 @@ function cullBodies() {
   for (const n of P.npcs) { const m = n.m; if (!m.visible) continue; if (!m.userData.cullList) { const l = []; m.traverse((o) => { if (o.isMesh && o.visible) l.push(o); }); m.userData.cullList = l; m.userData.inView = true; }
     const on = _fr.intersectsSphere(_sp.set(_sv.set(m.position.x, m.position.y + 0.9, m.position.z), 1.7)); if (m.userData.inView !== on) { m.userData.inView = on; for (const o of m.userData.cullList) o.visible = on; } }
 }
-function render() { hand.setPanelOpen(!$('pick').hidden); cullBodies(); renderer.render(scene, camera); }
+function render() { hand.setPanelOpen(!$('pick').hidden); cullBodies(); renderFramed(renderer, scene, camera, N.cine); }
 function frame(t) { if (!manual) requestAnimationFrame(frame); const elapsed = Math.max(0, (t - last) / 1000), dt = Math.min(0.05, elapsed); last = t;
   // Keep walking and water simulation bounded, but do not stretch chapter fades
   // on slower phones. Bound long pauses too, so returning to a tab stays gentle.

@@ -127,7 +127,9 @@ export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipF
       const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
-    tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) this.rest(); } else fidget(this, m, dt); } };
+    tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) { const h = this.home; this.home = null;
+        if (h) this.play(h); else this.rest(); if (this.fid) { this.fid = false; const a = this.cur, d = a.getClip().duration; a.time = Math.random() * d; } } }   /* back from a moment of variety: to the clip they were on, at a random moment, so two people never fall into step */
+      else fidget(this, m, dt); } };
   lapSetup(m); if (LAP.get(m)) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
   if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
   curlFingers(m); m.userData.anim = ctl; return ctl; }
@@ -154,13 +156,22 @@ export function calmHands(m) { const c = m.userData.anim; if (!c || !c.base || !
    across all games ... they have this zombie look ... including old people"). Every game gets it from here (rule 10). Not for people the crowd code runs (it has its own
    idles, engine/ambient.js), people holding something (the item must stay in the hand), or a body marked userData.still. An old person (userData.elder, set by the crowd
    code from the body's name) uses the old idle too. The clips must be in the game's anim-clips.json; a missing one is skipped. */
-const FIDGET_BASE = /^(Idle|IdleM|OldIdle|Sad1|Sad2|HappyIdle)$/;
+const FIDGET_BASE = /^(Idle|IdleM|OldIdle|Sad1|Sad2|Cry|HappyIdle|SitIdle\d?)$/;
+/* a sad person stays sad and a seated person stays seated (Port Royal's ?test=life, 17 November 2026: the camp after the earthquake and Abba in the boat stood
+   with nothing changing): their variety is another sad clip, or another way of sitting, never a look round on a standing clip */
+const SAD = ['Sad1', 'Sad2', 'Cry'], SITS = ['SitIdle', 'SitIdle2', 'SitIdle3', 'SitIdle5'];
 function fidget(c, m, dt) {
-  if (c.cur !== c.base || m.userData.ambOwned || m.userData.still || m.userData.grips || m.userData.seatAnchor) return;
-  if (c.idleT === undefined) c.idleT = 5 + Math.random() * 12; c.idleT -= dt; if (c.idleT > 0) return; c.idleT = 9 + Math.random() * 12;
-  const bn = c.base.getClip().name; if (!FIDGET_BASE.test(bn)) return;
-  const list = (m.userData.elder ? ['OldIdle', 'LookAround', 'LookOverShoulder'] : ['LookAround', 'HeadTurn', 'LookOverShoulder']).filter((k) => k !== bn && CL[k]); if (list.length) c.play(list[(Math.random() * list.length) | 0], true);
-}
+  if (m.userData.ambOwned || m.userData.still || m.userData.grips) return;
+  const on = c.cur !== c.base ? c.cur : null; if (on && (on.loop === THREE.LoopOnce || !FIDGET_BASE.test(on.getClip().name))) return;   /* a looping rest clip the game put them on (Abba sitting in the boat) counts as their base */
+  if (c.idleT === undefined) c.idleT = 3 + Math.random() * 8; c.idleT -= dt; if (c.idleT > 0) return; c.idleT = 5 + Math.random() * 6;   /* never more than about 11 s on one clip: the life checks call 12 s with nothing changing frozen */
+  const bn = (on || c.base).getClip().name; if (!FIDGET_BASE.test(bn)) return;
+  const sit = /^SitIdle/.test(bn); if (m.userData.seatAnchor && !sit) return;   /* LookOverShoulder is left out: it turns the head about 85 degrees, past what the head check allows */   /* a seated person on another clip (a talk) is left alone */
+  const list = (sit ? SITS : SAD.includes(bn) ? SAD : m.userData.elder ? ['OldIdle', 'LookAround'] : ['LookAround', 'HeadTurn']).filter((k) => k !== bn && CL[k]);
+  if (!list.length) return; const k = list[(Math.random() * list.length) | 0];
+  c.fid = true; if (sit || SAD.includes(bn)) c.play(k, false, 5 + Math.random() * 5); else c.play(k, true); if (on) c.home = bn; }   /* a sad or seated variant is held a few seconds (it loops), then back to the base clip */
+/* tickVisible(dt): one call a frame for a game that lets the engine run its people. It updates every mixer whose body is shown and ticks that body's controller
+   (idle variety, seats, one-shot clips ending), so nobody is left out because the game's own list missed them (Port Royal's 1670 buccaneers were never ticked). */
+export function tickVisible(dt) { for (const mx of mixers) { const r = mx.getRoot(); let v = r.visible, o = r.parent; while (v && o) { v = o.visible; o = o.parent; } if (!v) continue; mx.update(dt); const c = r.userData && r.userData.anim; if (c && c.mx === mx && c.tick) c.tick(dt); } }
 /* Hands at rest (owner, 17 November 2026: hands like claws on a talking woman). Mixamo's talking and gesture clips curl and spread the fingers hard; the plain Idle's hand
    hangs relaxed. Each finger of a standing clip is eased 60 per cent of the way to the Idle's hand, so a gesture still moves the hand but never makes a claw.
    Clips that hold something (GRIPS) keep their own fingers. One place for every game. */

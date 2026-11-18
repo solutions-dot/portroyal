@@ -1,4 +1,5 @@
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
+import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { maroon_man: 2, maroon_scout: 2, maroon_woman: 2, maroon_girl: 2, maroon_boy: 2, redcoat: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
@@ -787,7 +788,7 @@ function frame(t) {
   ridges.group.position.x = cp.x; ridges.group.position.z = cp.z; mist.group.position.x = cp.x; mist.group.position.z = cp.z; flies.tick(s, envNow.stars > 0.5 && !!P && !!P.night, cp.x, cp.y - 1.4, cp.z);
   if (__DEV__ && MV) { MV(); return; }
   // Leave the phone title on its stable image until gameplay begins.
-  if (!NORENDER && (state.started || !isTouch)) renderer.render(scene, camera);
+  if (!NORENDER && (state.started || !isTouch)) renderFramed(renderer, scene, camera, document.body.classList.contains('cine'));
 }
 let MV = null;   /* dev only: the model viewer (?shot=model) draws the picture itself */
 const STEPPED = { on: false };   /* dev only: a check that steps the frame loop itself pauses the browser's own frames */

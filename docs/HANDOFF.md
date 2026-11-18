@@ -264,3 +264,39 @@ Not part of the four checks, still open: Port Royal's own `?test=life` reports 9
 
 **Read this before any body is rebuilt.** The bodies in the games were last built at commit `e00ffc1` (17 November, 11:19), three Port Royal men at `7b1c677` and Tivoli's police and soldier on this branch. `tools/garvey/era.py` on main changed after that with no rebuild: the belt under a waistcoat (`9cb0c78`), and two collar changes in `7e07bbb` (a round collar's ends nearly meet; the skin under a collar is sunk less near its top edge). So a rebuild of any body with today's builder also brings those in. The owner has stopped collar work: to repack a body without changing its collar, build it with the builder as it was at `e00ffc1` (`git show e00ffc1:tools/garvey/era.py`), or check neck close-ups first. `build/` is not in git, so a fresh machine has no built bodies and `--repack` has nothing to pack until they are built once. Blender as a module (`pip install bpy==5.3.0`), MPFB 2.0.18 from extensions.blender.org and the MakeHuman data all install in a cloud session in a few minutes; a body builds in about 5 seconds.
 
+## After the merge: work waiting on the owner (17 November 2026, late night)
+
+`main` has PR #112 (merge `a988677`) and the live site serves it. This branch (`claude/fervent-sagan-7m0ju4`) holds the follow-up work. Nothing here changes a body in any game.
+
+**Sheets the owner has, with no answer yet.** Do not rebuild or push bodies until the owner says.
+
+- **Waistcoat over the shoulders.** Only one waistcoat recipe has a flat collar, `man_elder` (the fix is behind `FLAT`), so only he and his two crowd variants change; the other fifteen waistcoat bodies would come out the same. To rebuild him: `PYTHON=~/venv/bin/python3 MAKEHUMAN=/tmp/mh/makehuman node tools/people/rebuild.mjs man_elder` (writes Kendal, Tivoli, Eventide and Melissa, about a minute). His neck and collar look the same before and after in close-ups. The rebuild also brings main's belt fix (`9cb0c78`), and his crowd copies get the packer's hand fix. Variant `_b` shows a strip of belt in the waistcoat's armhole when he walks; it is in the games now too.
+- **Hands.** Full bodies look right in close-ups. The light crowd copies still have spiky fingers until every body is packed again (`splitHands`). The sheet shows a crowd copy before and after. Repacking every body needs the built bodies first: see "Read this before any body is rebuilt" above.
+- **Ties.** A proposed tie is in `tools/garvey/era.py` behind `"tie": "four"` in a recipe. No recipe asks for it, so every body builds as before. It is one piece (a four-in-hand knot and a blade that starts inside it), where today's tie is a small box and a strip that come apart when the man moves. The collar code is not changed. It also puts right a knot setting that a comment had swallowed in the earlier try. If the owner approves: set `"tie": "four"` in the recipes that wear a tie and rebuild them. If not: take the block out.
+- **Collars**: stopped, not touched.
+
+**Done on this branch, for the owner to look at** (screenshots sent):
+
+- **The Shady Side and the Kanawha** (Garvey chapter 5): `sideWheeler()` and `steamYacht()` in `engine/boats.js`, each from a picture of that ship (`docs/games/garvey.md`). They lie off the Yarmouth's stern and bow, where the dock can see them. The stand-ins lay behind her, where nobody could see them.
+- **Greet**: the first turn of every ring of chatting background people is a raised hand and a nod (`engine/ambient.js`), once, when you are within 16 m. `Angry` is used nowhere. The one argument in the games (Port Royal's tavern) uses `Argue` and `Yell`.
+- `tools/review/people-sheet.mjs` has close-ups of the seat and fork of the trousers (`views=hips,hips34,hipsside,hipsback`).
+
+**Questions for the owner:**
+
+1. Which buildings to rebuild from the photographs: Port Royal church (plastered, no tower), Kendal 1845 station (masonry, open arches), Kingston station (brick, arches at one end only), Bog Walk turbine house (plastered), Liberty Hall (main door under a shallow brick arch).
+2. The waistcoat man's crotch: what looks wrong? A try at a flatter trouser front made almost no difference, so the fault is something else (the sheet of the fork as it is now was sent).
+3. Tivoli's Back-o-Wall headband: who wears it and what is wrong? Hidden hats already take their bands with them.
+4. Should a story person also greet you the first time you talk to them?
+
+**Still open:** Nanny Town's `?test=walkers` reports 3 problems (toes up to 9 cm above the ground and 7 cm under it at the steepest moments); Port Royal's `?test=life` reports 9; portrait camera framing for the cinematic scenes in all ten games (the owner asked for this last); Bog Walk's first-person hand looks pale by torchlight (check it against rule 9).
+
+## 18 November 2026: playability pass, pushed to main
+
+The owner: "I will take your advice on the sheets. Let's push what we have to main for now ... I need to ensure playability."
+
+- **Waistcoat over the shoulders: built.** `man_elder` and his two crowd variants, in Kendal, Tivoli, Eventide and Melissa. His collar and neck look the same as before in close-ups. The other waistcoat bodies are unchanged (the fix only applies under a flat collar).
+- **Hands and ties: not built.** Packing every body again (the crowd copies' fingers) and the proposed tie (`"tie": "four"`, used by no recipe) wait until the owner points at things in the game.
+- **Port Royal `?test=life`: 0** (was 9). See ENGINE.md, idle variety.
+- **Camera scenes on an upright phone**: `engine/cine.js`, in the eight games that have camera scenes.
+- Still open: the buildings (owner to choose), the waistcoat man's crotch and Tivoli's headband (owner to point them out), Nanny Town's walking check (3), the Shady Side and Kanawha could be more detailed (owner, 18 November).
+

@@ -12,7 +12,7 @@ import { refresh as refreshLifeOf, lifeFor, EXTRAS } from './life.js';   /* what
    it moves into engine/ after the Port Royal work has merged (see docs/games/garvey.md, "Working alongside the Port Royal chat").
    The two people and their lines are placeholders for testing the pipeline. Both are fictional. */
 import * as THREE from 'three';
-import { steamer, schooner } from '../../../engine/boats.js';
+import { steamer, sideWheeler, steamYacht } from '../../../engine/boats.js';
 import { makeDoor } from '../../../engine/door.js';   /* a framed, panelled door for every building (owner, 17 November 2026) */
 import { gripTick, spreadArms } from '../../../engine/grip.js';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -1342,9 +1342,13 @@ function dWallLamp(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set
 function dHydrant(g, x, z) { cyl(0.11, 0.13, 0.6, solid(0xb02a24, 0.6), x, 0.3, z, g, 10); mesh(new THREE.SphereGeometry(0.115, 10, 6, 0, 7, 0, Math.PI / 2), solid(0xb02a24, 0.6), x, 0.6, z, g); for (const sx of [-1, 1]) cyl(0.05, 0.05, 0.12, solid(0xd2d0c8, 0.4, 0.4), x + sx * 0.14, 0.38, z, g, 8).rotation.z = Math.PI / 2; }
 function dBin(g, x, z) { cyl(0.2, 0.17, 0.5, TIN, x, 0.25, z, g, 12); cyl(0.215, 0.215, 0.03, TIN, x, 0.52, z, g, 12); cyl(0.03, 0.03, 0.04, iron, x, 0.56, z, g, 6); }
 function dGull(g, x, y, z, ry) { const k = new THREE.Group(); k.position.set(x, y, z); k.rotation.y = ry; g.add(k); const w = solid(0xf2f1ea, 0.8); const body = mesh(BLOB, w, 0, 0.1, 0, k); body.scale.set(0.09, 0.08, 0.15); mesh(BLOB, w, 0, 0.2, 0.12, k).scale.set(0.05, 0.05, 0.05); const beak = cyl(0.01, 0.025, 0.06, solid(0xe0a830, 0.6), 0, 0.2, 0.19, k, 6); beak.rotation.x = Math.PI / 2; const wing = box(0.16, 0.02, 0.18, solid(0x9aa0a6, 0.8), 0, 0.15, -0.02, k); wing.rotation.z = 0.0; }
-/* ships out in the harbour (engine/boats.js): a three-island cargo steamer, or with funnel = false a two-masted schooner with her sails furled.
-   One mesh each, no names or company colours. The water is at y = -0.7. */
-function dShip(g, x, z, len, ry = 0, funnel = true) { const k = new THREE.Group(); k.position.set(x, 0, z); k.rotation.y = ry; g.add(k); const s = funnel ? steamer({ L: len, beam: len * 0.15 }) : schooner({ L: len / 1.2 }); s.position.y = -0.7; k.add(s); }
+/* ships out in the harbour (engine/boats.js), one mesh each, no names, flags or company colours. The water is at y = -0.7.
+   The Black Star Line's other two ships are drawn as themselves (owner's rule, 17 November 2026: the real thing, not a stand-in): the Shady Side, a white
+   side-wheel excursion steamer, after James Bard's painting of her, and the Kanawha, a white three-masted steam yacht, after a photograph of her before
+   1917 (docs/games/garvey.md, "The Shady Side and the Kanawha"). They were a generic cargo steamer and a schooner. The third ship, far off, is harbour
+   traffic and stands for no ship in particular: a three-island cargo steamer. */
+function dShip(g, x, z, len, ry = 0, kind = 'steamer') { const k = new THREE.Group(); k.position.set(x, 0, z); k.rotation.y = ry; g.add(k);
+  const s = kind === 'shadyside' ? sideWheeler({ L: len }) : kind === 'kanawha' ? steamYacht({ L: len }) : steamer({ L: len, beam: len * 0.15 }); s.position.y = -0.7; k.add(s); }
 
 /* the print shop (built when the page loads) */
 { const g = room;
@@ -1386,7 +1390,7 @@ function dShip(g, x, z, len, ry = 0, funnel = true) { const k = new THREE.Group(
     for (let i = 0; i < 6; i++) { const s = box(0.55, 0.22, 0.34, solid(0xc9b48a, 0.95), -6.8 + (i % 3) * 0.58, 0.11 + Math.floor(i / 3) * 0.22, -3.05, g); s.rotation.y = (i % 2) * 0.1; } DOCK_WALLS.push([-7.1, -3.4, -5.0, -2.7]);   /* sacks */
     dBarrel(g, -2.2, 0, -3.2, 1); dBarrel(g, -1.6, 0, -3.35, 1); dBarrel(g, -1.9, 0.78, -3.25, 1); DOCK_WALLS.push([-2.6, -3.7, -1.2, -2.8]);
     for (const x of [-7, 0, 7]) { const l = mesh(BLOB, GLOWM, x, 3.7, -3.9, g); l.scale.set(0.12, 0.12, 0.12); }
-    dShip(g, -26, 34, 18, 0.15); dShip(g, 30, 26, 11, -0.2, false); dShip(g, 8, 52, 24, 0.05);
+    dShip(g, -64, 14, 19, 0.5, 'shadyside'); dShip(g, 60, 15, 19, 0.6, 'kanawha'); dShip(g, 8, 52, 24, 0.05);   /* the two Black Star Line ships lie off the Yarmouth's stern and bow, where you can see them from the dock (behind her, nobody could) */
     for (let i = 0; i < 16; i++) { const h = 7 + ((i * 37) % 17); box(7, h, 6, solid(0x7f8a92, 1), -60 + i * 8, h / 2 - 0.7, 78, g); }   /* a far shore of low buildings, in the haze */
   }; }
 { const b = buildLiberty; buildLiberty = () => { const first = !libBuilt; b(); if (!first) return; const g = libG;
@@ -1605,8 +1609,8 @@ function devViews() {
   if (shot === 'presschat') inPress(32, 2.4, 0.5, -2.98, 0.05).then(() => startTalk(byId('sailor')));
   if (shot === 'street1') inStreet(20, -7, 2.6, -1.25, 0.02);
   if (shot === 'street2') inStreet(21, 4.5, 1.2, 1.35, 0.03);
-  if (shot === 'at') { const n = (k, d) => +(q.get(k) ?? d), [x, z, yaw, pitch] = [n('x', 0), n('z', 0), n('yaw', 0), n('pitch', 0)];   /* any spot in the street or on the deck: ?shot=at&p=street|deck&x=&z=&yaw=&pitch= (used to look at the doors) */
-    const pl = q.get('p'); if (pl === 'deck') inDock(41, 0, 3.0, 0, 0).then(() => { buildDeck(); enterPlace('deck'); go(x, z, yaw, pitch); }); else if (pl === 'shop') go(x, z, yaw, pitch); else if (pl === 'hall') inHall(10, x, z, yaw, pitch); else if (pl === 'press') inPress(30, x, z, yaw, pitch); else if (pl === 'liberty') inLib(50, x, z, yaw, pitch); else if (pl === 'office') inOff(60, x, z, yaw, pitch); else inStreet(20, x, z, yaw, pitch); }
+  if (shot === 'at') { const n = (k, d) => +(q.get(k) ?? d), [x, z, yaw, pitch] = [n('x', 0), n('z', 0), n('yaw', 0), n('pitch', 0)];   /* any spot in the street, on the dock or on the deck: ?shot=at&p=street|dock|deck&x=&z=&yaw=&pitch= (used to look at the doors) */
+    const pl = q.get('p'); if (pl === 'deck') inDock(41, 0, 3.0, 0, 0).then(() => { buildDeck(); enterPlace('deck'); go(x, z, yaw, pitch); }); else if (pl === 'dock') inDock(40, x, z, yaw, pitch); else if (pl === 'shop') go(x, z, yaw, pitch); else if (pl === 'hall') inHall(10, x, z, yaw, pitch); else if (pl === 'press') inPress(30, x, z, yaw, pitch); else if (pl === 'liberty') inLib(50, x, z, yaw, pitch); else if (pl === 'office') inOff(60, x, z, yaw, pitch); else inStreet(20, x, z, yaw, pitch); }
   if (shot === 'streetchat') inStreet(21, 0.3, 2.9, 0.1, 0.05).then(() => startTalk(byId('garvey3')));
   if (shot === 'hall1') inHall(10, 0, 3.1, 0, 0);
   if (shot === 'hall2') inHall(11, 1.2, 0.6, -1.0, -0.08, 'WORK');
