@@ -12,8 +12,10 @@ function sampleQ(track, t, out) { const tm = track.times, v = track.values; let 
    the planted foot sliding under 3 cm a loop only at 1.15 to 1.2 m/s at clip speed 1 (16 November 2026). Both feet stay low in a crouched run, so the "lower foot" swaps
    back and forth and swing moves were counted. engine/anim.js strideOf has the same method; it is not changed here (engine/ is shared). */
 const MEASURED = { RunLow: 0.91, RunLow2: 0.91, RifleWalk: 1.28 };   /* RifleWalk: the method reads 1.30 m; the feet slide least at 1.16 m/s at clip speed 1 (1.10 s a loop), so 1.28 m */
+const MEASURED_BODY = { police2010: { RifleWalk: 1.26 } };   /* the police body's own rifle walk: at 1.28 m its feet slid 2.1 cm a loop, at 1.26 m almost none (?test=walkers, 18 November 2026) */
 export function strideOf(m, clip) {
   let per = STRIDES.get(m); if (!per) STRIDES.set(m, per = {}); const key = clip.name + '|' + m.scale.y.toFixed(3); if (per[key] !== undefined) return per[key];
+  const own = (MEASURED_BODY[m.userData.base] || {})[clip.name]; if (own) return (per[key] = own * m.scale.y);
   if (MEASURED[clip.name]) return (per[key] = MEASURED[clip.name] * m.scale.y);   /* measured, not worked out (below) */
   const B = (n) => m.getObjectByName('mixamorig' + n), T = (n) => clip.tracks.find((t) => t.name === 'mixamorig' + n + '.quaternion'), hips = B('Hips'), tH = T('Hips'); if (!hips || !tH) return (per[key] = 0);
   m.updateMatrixWorld(true); _m3.setFromMatrix4(hips.parent.matrixWorld); _fw.set(0, 0, 1).applyQuaternion(m.getWorldQuaternion(_wq)).normalize();

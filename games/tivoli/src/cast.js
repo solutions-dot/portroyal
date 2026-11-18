@@ -46,7 +46,7 @@ export function makeBody(s) {
     o.material = o.material.clone(); const t = nm === 'Hair' ? undefined : s.tint && s.tint[nm];
     if (t !== undefined) { o.material.vertexColors = false; o.material.color.setHex(t); o.material.needsUpdate = true; }
     else if (nm === 'Skin') o.material.color.setScalar((s.skin || 1) * SKIN_LIGHT); else if (nm === 'Hair') o.material.color.setScalar(1); });
-  m.scale.setScalar(s.scale || 1); m.position.set(s.x || 0, s.ground || 0, s.z || 0); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
+  m.scale.setScalar(s.scale || 1); m.position.set(s.x || 0, s.ground || 0, s.z || 0); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0; m.userData.base = s.base || bodyOf(s);   /* which body this is (walk.js reads it for a stride measured on that body) */
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl; ctl.mx.update(0);
   return m;
 }
