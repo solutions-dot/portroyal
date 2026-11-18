@@ -325,3 +325,9 @@ The owner said "fix what is broken ... use all available sources", so the five b
 
 Audits 0 in each place. Still not drawn: St Peter's side wing, the 1845 gate lodge, Kingston's iron train-shed roof.
 
+## 18 November 2026, early morning: final pass
+
+- Full round on the merged code (audit, held, ambient, layout at four sizes, Port Royal life): 0 in every game, after two engine fixes found by it. A short look round now plays to its end (cut short, the head swung back too fast for Selassie's head check), and a looping clip starts from a random moment (two Port Royal strollers set walking together stepped in time).
+- The autoplayer played the chapters with rebuilt buildings to the end.
+- Known and not from today: Tivoli's `?test=walkers` reports the police RifleWalk sliding 4 cm a loop (3 cm allowed); the same on main before today. Nanny Town's walking check 3 (see above).
+
