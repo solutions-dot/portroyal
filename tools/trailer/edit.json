@@ -38,7 +38,7 @@
    "clip": "play_phone",
    "phone": true,
    "bg": "nanny",
-   "bgFrom": 0.5,
+   "bgFrom": 3.0,
    "from": 0.5,
    "dur": 3.0,
    "stamp": {
@@ -69,7 +69,7 @@
   },
   {
    "clip": "nanny",
-   "from": 2.0,
+   "from": 1.5,
    "dur": 3.0,
    "stamp": {
     "place": "The Fall of Nanny Town",
