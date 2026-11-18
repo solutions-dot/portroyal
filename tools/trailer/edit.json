@@ -91,7 +91,7 @@
   },
   {
    "clip": "kendal_crash",
-   "from": 5.5,
+   "from": 0.0,
    "dur": 3.0,
    "stamp": {
     "place": "Kendal Train Crash",
@@ -128,7 +128,7 @@
   {
    "clip": "tivoli",
    "from": 1.0,
-   "dur": 4.0,
+   "dur": 6.0,
    "stamp": {
     "place": "Tivoli Incursion",
     "year": "2010",
@@ -142,8 +142,8 @@
   },
   {
    "clip": "melissa",
-   "from": 0.2,
-   "dur": 5.0,
+   "from": 2.0,
+   "dur": 3.0,
    "stamp": {
     "place": "Hurricane Melissa",
     "year": "2025",
