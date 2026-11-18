@@ -162,6 +162,7 @@ test('the wall rectangles made for the audits cover the ground you may not walk 
 import './story.mjs';
 import './ambient.mjs';
 import './faces.mjs';
+import './perf.mjs';
 import './checks.mjs';
 import './kendal.mjs';
 import './final-two-ui.mjs';

@@ -101,14 +101,14 @@ function shapeOf(group) {
 }
 /* the joined geometry for these pieces in their present colours (shared with every body that has the same) */
 function geoOf(S, group, bake) {
-  let ck = S.key; if (bake) for (const o of group) { const m = o.material; ck += '|' + m.color.getHexString() + (m.vertexColors && o.geometry.attributes.color ? 'v' : ''); }
+  let ck = S.key; if (bake) for (const o of group) { const m = o.material; ck += '|' + m.color.r.toFixed(5) + ',' + m.color.g.toFixed(5) + ',' + m.color.b.toFixed(5) + (m.vertexColors && o.geometry.attributes.color ? 'v' : '');   /* the real channels: a colour lightened past 1 (hair at 1.55) must not share a key with plain white */ }
   const hit = GEO.get(ck); if (hit) return hit;
   const g = new THREE.BufferGeometry(); g.setAttribute('position', S.pos); g.setAttribute('normal', S.nor); g.setAttribute('skinIndex', S.si); g.setAttribute('skinWeight', S.sw); g.setIndex(S.idx);
-  if (bake) { const col = new Uint16Array(S.nv * 3);
+  if (bake) { const col = new Float32Array(S.nv * 3);   /* full range: a colour lightened past 1 stays as bright as it was */
     group.forEach((o, p) => { const [v0, n] = S.ranges[p], m = o.material, vc = m.vertexColors && o.geometry.attributes.color;
       for (let i = 0; i < n; i++) { if (vc) _c.fromBufferAttribute(vc, i); else _c.setRGB(1, 1, 1); const k = (v0 + i) * 3;
-        col[k] = Math.round(Math.min(1, _c.r * m.color.r) * 65535); col[k + 1] = Math.round(Math.min(1, _c.g * m.color.g) * 65535); col[k + 2] = Math.round(Math.min(1, _c.b * m.color.b) * 65535); } });
-    g.setAttribute('color', new THREE.BufferAttribute(col, 3, true)); }
+        col[k] = _c.r * m.color.r; col[k + 1] = _c.g * m.color.g; col[k + 2] = _c.b * m.color.b; } });
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3)); }
   else if (group[0].material.vertexColors && group.every((o) => o.geometry.attributes.color)) {   /* one colour for all: keep the pieces' own vertex colours */
     const col = new Float32Array(S.nv * 3); group.forEach((o, p) => { const [v0, n] = S.ranges[p], a = o.geometry.attributes.color; for (let i = 0; i < n; i++) { _c.fromBufferAttribute(a, i); col.set([_c.r, _c.g, _c.b], (v0 + i) * 3); } });
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); }
@@ -119,7 +119,7 @@ function syncMat(mat) { const s = FROM.get(mat); if (!s) return;
   if (mat.emissive && s.emissive) mat.emissive.copy(s.emissive); for (const k of ['emissiveIntensity', 'roughness', 'metalness', 'opacity', 'envMapIntensity']) if (s[k] !== undefined) mat[k] = s[k];
   if (mat.visible !== s.visible) mat.visible = s.visible; }
 
-function unjoin(m, w) { if (!w) return; for (const j of w.meshes) { if (j.parent) j.parent.remove(j); } for (const o of w.pieces) if (o.userData._jmask !== undefined) { o.layers.mask = o.userData._jmask; delete o.userData._jmask; } w.meshes = []; }
+function unjoin(m, w) { if (!w) return; for (const j of w.meshes) { if (j.parent) j.parent.remove(j); j.skeleton.dispose(); if (FROM.has(j.material)) j.material.dispose(); }   /* free what this joined mesh owns (its bone texture, a baked material); the cached geometry and the pieces' own materials stay */ for (const o of w.pieces) if (o.userData._jmask !== undefined) { o.layers.mask = o.userData._jmask; delete o.userData._jmask; } w.meshes = []; }
 
 /* draw this body's pieces as few meshes as the materials allow. Returns how many draw calls it saved. */
 export function joinBody(m) {
