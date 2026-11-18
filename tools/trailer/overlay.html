@@ -46,6 +46,27 @@
   .pst.empty .in{border:4px dashed rgba(122,90,42,.55);box-shadow:none;color:rgba(122,90,42,.6)}
   .pst.empty .y{font-size:54px}
   #black{position:absolute;inset:0;background:#000;opacity:0}
+  /* the portrait cut (1080x1920, Instagram and TikTok): the picture is the band from 240 to 1680, words kept clear of the apps' buttons and captions */
+  html.portrait,html.portrait body{width:1080px;height:1920px}
+  .portrait .bar{display:none}
+  .portrait .stamp{left:48px;top:290px;bottom:auto;padding:14px 24px}
+  .portrait .stamp .place{font-size:25px}
+  .portrait .stamp .year{font-size:60px}
+  .portrait .line{font-size:68px;padding:0 70px;line-height:1.15}
+  .portrait .line.small{font-size:62px}
+  .portrait .line.word{font-size:150px}
+  .portrait #pass .head{top:190px;font-size:22px}
+  .portrait #grid{top:260px;width:930px;margin-left:-465px;grid-template-columns:repeat(3,1fr);gap:14px 20px}
+  .portrait .pst{height:226px}
+  .portrait .pst .in{width:212px;height:212px}
+  .portrait .pst .y{font-size:56px}
+  .portrait .pst .n{font-size:16px;max-width:160px}
+  .portrait .pst.empty .y{font-size:76px}
+  .portrait #pass .say{bottom:auto;top:1530px;font-size:62px;padding:0 60px}
+  .portrait #logo{top:42%;width:880px;height:615px;margin:-307px 0 0 -440px}
+  .portrait .ring{top:42%;width:420px;height:420px;margin:-210px 0 0 -210px}
+  .portrait #tag{top:61%;font-size:50px;padding:0 90px;line-height:1.2}
+  .portrait #sub{top:70%;font-size:27px}
 </style></head>
 <body>
   <div class="bar top"></div><div class="bar bot"></div>
@@ -69,6 +90,7 @@
   let EDIT = null;
   window.setEdit = (e) => {
     EDIT = e;
+    if (e.portrait) document.documentElement.classList.add('portrait');
     const g = $('grid');
     for (const p of e.passport.stamps) g.insertAdjacentHTML('beforeend', `<div class="pst"><div class="in" style="color:${p.colour}"><div class="y">${p.year}</div><div class="n">${p.name}</div></div></div>`);
     for (let i = 0; i < e.passport.empty; i++) g.insertAdjacentHTML('beforeend', '<div class="pst empty"><div class="in"><div class="y">?</div></div></div>');
