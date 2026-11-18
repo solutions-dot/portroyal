@@ -6,11 +6,13 @@
 the plucked box bass of old mento music (an approximation, like the menu intro). intro.wav is the menu intro's own sound, rendered
 by record_intro_sound (tools/trailer/make.mjs); it plays under the first seven seconds, where the trailer shows the intro.
 
-   0 -  7   the menu intro's sound (dial, stamps, logo)
-   7 - 19   pad and marimba, bass on the one             (calm: the first places)
-  19 - 43   adds the offbeat guitar chop, one-drop drums and shaker
-  43 - 52   fuller, the melody climbs; a breath at 51.5
-  52 - 60   the bell (D, A, E, as the intro) over a held D, fading out
+   0 -  3   the hook: a low hit on each cut and a rising breath
+   3 -  9   the menu intro's sound (dial, stamps, logo)
+   9 - 21   pad and marimba, bass on the one             (Play)
+  21 - 45   adds the offbeat guitar chop, one-drop drums and shaker   (Learn, Discover)
+  45 - 51   fuller, the melody climbs
+  51 - 56   the passport page: a note for each stamp as it lands, then a swell
+  56 - 60   the bell (D, A, E, as the intro) over a held D, fading out
 """
 import sys
 import wave
@@ -21,7 +23,10 @@ DUR = 60.0
 N = int(SR * DUR)
 BEAT = 0.75
 BAR = 3.0
-T0 = 7.0                         # the bed starts after the intro
+T0 = 9.0                         # the bed starts after the intro
+INTRO_AT = 3.0                   # where the intro's sound starts
+GROOVE, FULL, PASS, END = 21.0, 45.0, 51.0, 56.0
+STAMPS = [PASS + 0.25 + 0.3 * i for i in range(10)]   # must match the overlay's passport page
 rng = np.random.default_rng(7)
 
 
@@ -123,12 +128,12 @@ MEL_HI = {(0, 0): 81, (0, 2): 78, (0, 3): 76, (1, 0): 78, (1, 2): 74, (2, 0): 79
 L = np.zeros(N)   # dry, centre
 WET = np.zeros(N)  # sent to the reverb
 
-bars = int((52 - T0) / BAR)   # 15 bars to 52 s
+bars = int((PASS - T0) / BAR)   # 14 bars to the passport page
 for b in range(bars):
     t = T0 + b * BAR
     k = b % 4
-    groove = t >= 19 - 1e-6
-    full = t >= 43 - 1e-6
+    groove = t >= GROOVE - 1e-6
+    full = t >= FULL - 1e-6
     # pad
     p = pad(CHORDS[k], BAR + 0.4)
     place(WET, p, t, 0.10 if not full else 0.13)
@@ -158,18 +163,39 @@ for b in range(bars):
         for e in range(8):
             place(L, shaker(), t + e * BEAT / 2, 0.035 if e % 2 else 0.02)
 
-# a rising swell into the end, a breath, then the bell over a held D
-sw = pad([50, 57, 62, 66], 1.6)
-place(WET, sw * np.linspace(0, 1, len(sw)) ** 2, 50.0, 0.18)
+# the hook: a deep hit on each of the three cuts, and a breath of noise rising into the dial
+for t in (0.0, 1.0, 2.0):
+    k = kick()
+    place(L, k, t, 0.8)
+    place(WET, k, t, 0.25)
+    place(WET, bell(hz(38 + 12), 2.0), t, 0.05)
+nz = rng.uniform(-1, 1, int(2.8 * SR))
+nz = np.convolve(nz, np.ones(24) / 24, mode='same') * np.linspace(0, 1, len(nz)) ** 3
+place(WET, nz, 0.2, 0.35)
+place(L, nz, 0.2, 0.08)
+
+# the passport page: the groove stops, the pad holds, and each stamp lands with a woody note climbing the D major scale
+pp = pad([50, 57, 62, 66], END - PASS + 0.5)
+place(WET, pp, PASS, 0.14)
+place(L, pluck(hz(38), 3.0, bright=0.2, decay=0.9993), PASS, 0.45)
+scale = [62, 64, 66, 67, 69, 71, 73, 74, 76, 78]
+for t, m in zip(STAMPS, scale):
+    place(L, kick()[: int(0.12 * SR)], t, 0.25)
+    s_ = marimba(hz(m), 1.2)
+    place(L, s_, t, 0.2)
+    place(WET, s_, t, 0.12)
+# the empty slots and "more on the way": a soft rising swell
+sw = pad([50, 57, 62, 66, 69], 2.0)
+place(WET, sw * np.linspace(0, 1, len(sw)) ** 2, END - 2.0, 0.2)
 for i, (m, dt) in enumerate([(74, 0.0), (81, 0.55), (88, 1.1)]):   # D, A, E like the intro's bell
-    s = bell(hz(m))
-    place(L, s, 52.0 + dt, 0.13)
-    place(WET, s, 52.0 + dt, 0.15)
-hold = pad([50, 57, 62, 69], 8.0)
+    s_ = bell(hz(m))
+    place(L, s_, END + dt, 0.13)
+    place(WET, s_, END + dt, 0.15)
+hold = pad([50, 57, 62, 69], 60.0 - END)
 hold *= np.linspace(1, 0, len(hold)) ** 1.5
-place(WET, hold, 52.0, 0.16)
-place(L, hold, 52.0, 0.06)
-place(L, pluck(hz(38), 3.0, bright=0.2, decay=0.9993), 52.0, 0.5)
+place(WET, hold, END, 0.16)
+place(L, hold, END, 0.06)
+place(L, pluck(hz(38), 3.0, bright=0.2, decay=0.9993), END, 0.5)
 
 # reverb: a decaying noise tail, convolved with the FFT
 ir_n = int(2.8 * SR)
@@ -196,14 +222,15 @@ with wave.open(sys.argv[1]) as w:
     raw = raw.reshape(-1, ch)
     assert rate == SR
 iL, iR = raw[:, 0], raw[:, -1]
-n = min(len(iL), N)
+a0 = int(INTRO_AT * SR)
+n = min(len(iL), N - a0)
 fade = np.ones(n)
-f0, f1 = int(6.6 * SR), int(7.6 * SR)
+f0, f1 = int((T0 - INTRO_AT - 0.4) * SR), int((T0 - INTRO_AT + 0.6) * SR)
 if n > f0:
     fade[f0:min(n, f1)] = np.linspace(1, 0, min(n, f1) - f0)
     fade[min(n, f1):] = 0
-left[:n] += iL[:n] * fade * 1.0
-right[:n] += iR[:n] * fade * 1.0
+left[a0:a0 + n] += iL[:n] * fade
+right[a0:a0 + n] += iR[:n] * fade
 
 # gentle fade in of the bed and out at the end
 g = np.ones(N)

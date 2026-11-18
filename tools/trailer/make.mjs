@@ -20,9 +20,38 @@ fs.mkdirSync(`${work}/seq`, { recursive: true }); fs.mkdirSync(`${work}/ov`, { r
 /* 1. the picture: the chosen frames of each shot, linked in order */
 const black = `${work}/black.jpg`;
 execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'color=black:s=1280x720', '-frames:v', '1', black]);
+/* a phone shot: the phone's screen in a phone, standing right of centre over a blurred, darkened shot of the same game */
+function phoneShot(s, i) {
+  const dir = `${work}/phone${i}`, PH = 600, x = 760, y = 60;
+  fs.mkdirSync(dir);
+  const pf = fs.readdirSync(`${FR}/${s.clip}`).filter((f) => f.endsWith('.jpg')).sort()[0];
+  const [pw0, ph0] = execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', `${FR}/${s.clip}/${pf}`]).toString().trim().split(',').map(Number);
+  const pw = Math.round((pw0 * PH) / ph0 / 2) * 2;
+  execFileSync('python3', ['-I', '-c', `
+from PIL import Image, ImageDraw
+pw, ph, b = ${pw}, ${PH}, 14
+m = Image.new('L', (pw, ph), 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, pw - 1, ph - 1), 34, fill=255); m.save('${dir}/mask.png')
+z = Image.new('RGBA', (pw + 2 * b, ph + 2 * b), (0, 0, 0, 0)); d = ImageDraw.Draw(z)
+d.rounded_rectangle((0, 0, pw + 2 * b - 1, ph + 2 * b - 1), 46, fill=(14, 16, 20, 255), outline=(70, 74, 82, 255), width=3)
+d.rounded_rectangle((pw // 2 + b - 46, b + 10, pw // 2 + b + 46, b + 34), 12, fill=(0, 0, 0, 255))
+z.save('${dir}/bezel.png')`]);
+  const a = Math.round(s.from * fps), k = Math.round(s.dur * fps), ba = Math.round((s.bgFrom || 0) * fps);
+  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-start_number', String(ba + 1), '-framerate', String(fps), '-i', `${FR}/${s.bg}/f%05d.jpg`,
+    '-start_number', String(a + 1), '-framerate', String(fps), '-i', `${FR}/${s.clip}/f%05d.jpg`, '-i', `${dir}/mask.png`, '-i', `${dir}/bezel.png`,
+    '-filter_complex', `[0:v]boxblur=18:2,eq=brightness=-0.18:saturation=0.8[b];[1:v]scale=${pw}:${PH},format=rgba[p0];[2:v]format=gray[m];[p0][m]alphamerge[p];` +
+      `[b][3:v]overlay=${x - 14}:${y - 14}[b2];[b2][p]overlay=${x}:${y}`, '-frames:v', String(k), '-q:v', '2', `${dir}/f%05d.jpg`]);
+  return { dir, files: fs.readdirSync(dir).filter((f) => /^f\d+\.jpg$/.test(f)).sort(), a: 0 };
+}
 let n = 0, t = 0;
 E.stamps = [];
-for (const s of E.shots) {
+for (const [si, s] of E.shots.entries()) {
+  if (s.phone) {
+    const P = phoneShot(s, si), k = Math.round(s.dur * fps);
+    for (let i = 0; i < k; i++) fs.symlinkSync(path.resolve(`${P.dir}/${P.files[i]}`), `${work}/seq/${String(++n).padStart(5, '0')}.jpg`);
+    if (s.stamp) E.stamps.push({ ...s.stamp, t0: t + 0.15, t1: t + s.dur - 0.1 });
+    t += s.dur;
+    continue;
+  }
   const files = fs.readdirSync(`${FR}/${s.clip}`).filter((f) => f.endsWith('.jpg')).sort();
   const a = Math.round(s.from * fps), k = Math.round(s.dur * fps);
   if (a + k > files.length) throw new Error(`${s.clip}: wants frames ${a}-${a + k}, has ${files.length}`);

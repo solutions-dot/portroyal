@@ -15,6 +15,8 @@
      seekCss  move CSS animations on the page's clock too
      pump   false: no frames are drawn while the page loads (a scene that starts at once waits for the first kept frame)
      storage  { key: value } put in localStorage before the page loads (a saved game to start from)
+     phone  a phone held upright (touch, twice the pixels): w and h are the phone's size in CSS pixels
+     keys   keys held down while recording (['KeyW'] walks forward)
      every  keep one frame in this many (a contact sheet to choose moments from) */
 import { createRequire } from 'node:module';
 const { chromium } = createRequire(import.meta.url)('playwright');
@@ -24,7 +26,7 @@ const fps = C.fps || 30, W = C.w || 1280, H = C.h || 720;
 fs.mkdirSync(C.out, { recursive: true });
 for (const f of fs.readdirSync(C.out)) if (f.endsWith('.jpg')) fs.unlinkSync(`${C.out}/${f}`);
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+const page = await browser.newPage(C.phone ? { viewport: { width: W, height: H }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 page.on('pageerror', (e) => console.log('pageerror', e.message));
 page.on('console', (m) => { if (m.type() === 'error') console.log('console', m.text().slice(0, 200)); });
 await page.addInitScript(() => {
@@ -57,6 +59,7 @@ await page.evaluate(() => window.__manual());
 if (C.seekCss) await page.evaluate(() => { window.__seekCss = true; });
 if (C.js) await page.evaluate(C.js);
 const dt = 1000 / fps;
+for (const k of C.keys || []) await page.keyboard.down(k);   /* held for the whole clip: a walk */
 for (let i = 0; i < (C.warm || 0) * fps; i++) await page.evaluate((d) => { window.__step(d); window.__sync(); }, dt);
 const t0 = Date.now(), every = C.every || 1, n = Math.round(((C.secs || 4) * fps) / every);
 for (let i = 0; i < n; i++) {
