@@ -313,3 +313,15 @@ The owner: "I will take your advice on the sheets. Let's push what we have to ma
 - The Shady Side and the Kanawha have more detail from their pictures (`docs/games/garvey.md`).
 - Nanny Town's walking check is still 3. A faster settle on slopes made no real difference, so it was put back; by eye the climbers' feet stay on the path. Not a launch blocker.
 
+## 18 November 2026, night: the buildings the photographs show were wrong
+
+The owner said "fix what is broken ... use all available sources", so the five buildings on the list were rebuilt from their sources (each game's doc has the details):
+
+- **Port Royal, St Peter's Church**: cream render scored as stone blocks, gable copings and crosses, a grey slate roof, no tower; the bells in a timber frame in the churchyard (JNHT; Victorian Web; photographs of 2024).
+- **Kendal, the 1845 Kingston terminus**: a plastered arcade of nine round arches between pilasters, a low roof (Illustrated London News engraving, 1846).
+- **Kendal, Kingston station 1957**: a long two-storey brick range with square-headed doors and sash windows, and a pale arcaded pavilion at the east end (JNHT; photograph of 2007).
+- **Bog Walk, the turbine house**: rendered and limewashed walls with a round-headed opening high in each gable; brick in the ruins of today (NLJ photograph D0006009).
+- **Garvey, Liberty Hall**: the main doorway under a shallow arch (Keystone photograph, 1924).
+
+Audits 0 in each place. Still not drawn: St Peter's side wing, the 1845 gate lodge, Kingston's iron train-shed roof.
+

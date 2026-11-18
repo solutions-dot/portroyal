@@ -54,17 +54,25 @@ export function buildStation45() {
   const kinds = ['first', 'third', 'third', 'first']; const cars = kinds.map((k, i) => { const c = carriage1845(k); c.position.x = i * 6; train.add(c); return c; });
   train.userData.wheels = [loco, ...cars].flatMap((v) => v.userData.wheels);
   walls.push([-13.5, -4.6, 21, -1.2]);   /* the train is a wall: you stand on the platform side */
-  const shedH = boardHouse(34, 6, 3.4, { wall: [196, 168, 118], roof: [130, 96, 80], porch: false, seed: 6, door: false }); shedH.position.set(10, 0, 15.2); shedH.rotation.y = PI; g.add(shedH); walls.push([-7.5, 12, 27.5, 18.4]);
-  { /* the way in: an open round-headed arch between plastered piers, no door in it. The Illustrated London News engraving of the opening ("Opening of the
-       Jamaica Railway, Kingston Terminus", 31 January 1846; NLJ Print Collection) shows the terminus as a row of open round arches between pilasters, the
-       carriages and flags seen through them, and the gate lodge with an open arch too. It was a pair of six-panel doors under a transom (docs/games/kendal.md, Doors). */
-    const aw = 1.4, ah = 2.4, r0 = aw / 2, sp = ah - r0, z = 3.0, pier = solid(0xe4dcc6, 0.9), dark = solid(0x1a1612, 1);
-    const sh = new THREE.Shape(); sh.moveTo(-r0, 0); sh.lineTo(-r0, sp); sh.absarc(0, sp, r0, PI, 0, true); sh.lineTo(r0, 0); sh.lineTo(-r0, 0);
-    mesh(new THREE.ShapeGeometry(sh, 16), dark, 0, 0, z + 0.006, shedH);   /* the dark inside, seen through the arch */
-    for (const s of [-1, 1]) { box(0.22, sp, 0.1, pier, s * (r0 + 0.11), sp / 2, z + 0.05, shedH); box(0.3, 0.1, 0.14, pier, s * (r0 + 0.11), sp + 0.02, z + 0.07, shedH); }   /* the piers, with a plain impost at the spring of the arch */
-    const ring = mesh(new THREE.TorusGeometry(r0 + 0.11, 0.11, 6, 20, PI), pier, 0, sp, z + 0.05, shedH); ring.scale.z = 0.45;   /* the arch */
-    box(0.16, 0.24, 0.14, pier, 0, ah + 0.1, z + 0.07, shedH); }   /* its keystone */
-  const sg = signBoard('JAMAICA RAILWAY', 6, 0.8, { bg: '#2a3a52', fg: '#f3e6b8', font: '700 62px Georgia, serif' }); sg.position.set(10, 3.6, 11.7); g.add(sg);
+  /* The terminus as the Illustrated London News engraving shows it on opening day ("Opening of the Jamaica Railway, Kingston Terminus", 31 January 1846; NLJ Print
+     Collection, https://nljdigital.nlj.gov.jm/items/show/436; a larger scan on the Historic Jamaica blog): a long single-storey shed of plastered masonry, its front an
+     arcade of round-headed arches between square pilasters under a plain band, a low roof with deep eaves, and the carriages and flags seen through the arches.
+     It was drawn as a board house with one arch (18 November 2026). The number of arches (nine) and the depth of the shed are read from the engraving, not measured. */
+  const shedH = grp(); shedH.position.set(10, 0, 15.2); shedH.rotation.y = PI; g.add(shedH); walls.push([-7.5, 12, 27.5, 18.4]);
+  { const L = 34, D = 6, H = 4.6, n = 9, bay = L / n, aw = 2.5, r0 = aw / 2, sp = 2.7, plaster = solid(0xe6dfca, 0.92), trim = solid(0xf1ebdb, 0.85), dark = solid(0x17130f, 1), roofM = solid(0x7c6a5a, 0.9);
+    const bayShape = () => { const sh = new THREE.Shape(); sh.moveTo(-bay / 2, 0); sh.lineTo(bay / 2, 0); sh.lineTo(bay / 2, H); sh.lineTo(-bay / 2, H); sh.lineTo(-bay / 2, 0);
+      const hole = new THREE.Path(); hole.moveTo(-r0, 0); hole.lineTo(-r0, sp); hole.absarc(0, sp, r0, PI, 0, true); hole.lineTo(r0, 0); hole.lineTo(-r0, 0); sh.holes.push(hole); return sh; };
+    const bayGeo = new THREE.ExtrudeGeometry(bayShape(), { depth: 0.45, bevelEnabled: false, curveSegments: 14 });
+    for (let i = 0; i < n; i++) { const x = -L / 2 + bay * (i + 0.5); mesh(bayGeo, plaster, x, 0, D / 2 - 0.45, shedH);   /* one bay of the arcade: wall with its round-headed arch */
+      const ring = mesh(new THREE.TorusGeometry(r0 + 0.08, 0.09, 5, 18, PI), trim, x, sp, D / 2 + 0.01, shedH); ring.scale.z = 0.5;   /* the moulded arch */
+      for (const sx of [-1, 1]) box(0.16, 0.12, 0.08, trim, x + sx * (r0 + 0.04), sp, D / 2 + 0.03, shedH);   /* imposts at the spring */ }
+    for (let i = 0; i <= n; i++) { const x = -L / 2 + bay * i; box(0.62, H - 0.1, 0.16, plaster, x, (H - 0.1) / 2, D / 2 + 0.07, shedH); box(0.78, 0.18, 0.24, trim, x, H - 0.55, D / 2 + 0.1, shedH); box(0.8, 0.22, 0.26, trim, x, 0.11, D / 2 + 0.1, shedH); }   /* square pilasters with a cap and a base */
+    box(L + 0.4, 0.34, 0.3, trim, 0, H - 0.08, D / 2 + 0.06, shedH);   /* the plain band along the top of the arcade */
+    box(L, H, 0.4, plaster, 0, H / 2, -D / 2 + 0.2, shedH); for (const sx of [-1, 1]) box(0.4, H, D, plaster, sx * (L / 2 - 0.2), H / 2, 0, shedH);   /* back and end walls */
+    box(L - 0.8, H - 0.2, 0.05, dark, 0, (H - 0.2) / 2, -D / 2 + 0.43, shedH); box(L - 0.8, 0.05, D - 1, dark, 0, 0.03, 0, shedH);   /* the dark shed inside, seen through the arches */
+    const pitch = 0.32, half = D / 2 + 0.8, sl = half / Math.cos(pitch); for (const sz of [-1, 1]) { const r = box(L + 1.4, 0.14, sl, roofM, 0, H + Math.tan(pitch) * half / 2 + 0.05, sz * half / 2, shedH); r.rotation.x = sz * pitch; }   /* a low roof with deep eaves */
+    for (const sx of [-1, 1]) { const tri = new THREE.Shape(); tri.moveTo(-D / 2, 0); tri.lineTo(D / 2, 0); tri.lineTo(0, Math.tan(pitch) * D / 2); tri.lineTo(-D / 2, 0); const t = mesh(new THREE.ShapeGeometry(tri), plaster, sx * (L / 2 - 0.02), H, 0, shedH); t.rotation.y = sx * PI / 2; t.material.side = THREE.DoubleSide; } }   /* the gable at each end */
+  const sg = signBoard('JAMAICA RAILWAY', 6, 0.8, { bg: '#2a3a52', fg: '#f3e6b8', font: '700 62px Georgia, serif' }); sg.position.set(10, 4.32, 11.6); g.add(sg);   /* on the band over the middle arch */
   /* bunting between poles along the platform edge, and flags */
   const bt = T.bunting().clone(); bt.needsUpdate = true; bt.repeat.set(3, 1);
   for (const x of [-14, -2, 10, 22, 34]) { const p = pole(5.4); p.position.set(x, 0, -0.8); g.add(p); }

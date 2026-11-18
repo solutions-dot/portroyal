@@ -22,15 +22,28 @@ export function buildKingston57() {
   const roof = box(96, 0.12, 12, std(zt, 0.8), 0, 4.1, 4.2, g); roof.rotation.x = -0.05;
   for (let x = -44; x <= 46; x += 8) { box(0.22, 4.1, 0.22, solid(0x34403a, 0.8), x, 2.05, 9.3, g); box(0.18, 0.18, 12, solid(0x34403a, 0.8), x, 3.95, 4.2, g); }
   walls.push(...[-44, -36, -28, -20, -12, -4, 4, 12, 20, 28, 36, 44].map((x) => [x - 0.3, 9.0, x + 0.3, 9.6]));
-  /* the station building: cream walls, a row of arched doorways, a sign and a clock */
-  const wall = std(T.plaster([228, 216, 186], [1, 1], 'rgb(120,110,86)').clone(), 1); wall.map.repeat.set(10, 1); wall.map.needsUpdate = true;
-  const hall = box(100, 7.5, 9, wall, 0, 3.75, 18.5, g); walls.push([-50, 14, 50, 23]);
+  /* the station building, as the Jamaica National Heritage Trust describes it ("constructed of brick with prominent arcades on both levels of the east entrance end",
+     sash windows on both floors, cast-iron brackets under the roof overhang on the trackside) and the photograph "Kingston Railway Station 2007" (Wikimedia Commons) shows
+     it: a long two-storey range of red brick with square-headed doors and windows, and at the east end a pale plastered pavilion with round arches on both floors.
+     It used to be cream plaster with arches all along (18 November 2026). The number of doors and the pavilion's size are read from the photograph, not measured. */
+  const wall = std(T.brick([146, 72, 52]).clone(), 0.95); wall.map.repeat.set(72, 6.2); wall.map.needsUpdate = true;
+  const hall = box(86, 7.5, 9, wall, -7, 3.75, 18.5, g); walls.push([-50, 14, 50, 23]);
+  { const pl = solid(0xe4ddc8, 0.9), tr = solid(0xf0eadb, 0.85), dk = new THREE.MeshBasicMaterial({ color: 0x1e1814 }), px = 43, pw = 14, pd = 10.4, ph = 8.4;
+    box(pw, ph, pd, pl, px, ph / 2, 18.3, g); box(pw + 0.4, 0.3, pd + 0.4, tr, px, 3.95, 18.3, g); box(pw + 0.6, 0.35, pd + 0.6, tr, px, ph + 0.05, 18.3, g);   /* the pavilion, with a band between the floors and a cornice */
+    const arcade = (cx, cz, ry, n, span) => { for (let i = 0; i < n; i++) { const off = -span / 2 + span * (i + 0.5) / n; for (const [y0, sp] of [[0, 2.6], [4.1, 6.3]]) { const r0 = 0.95, gx = cx + Math.cos(ry) * off, gz = cz - Math.sin(ry) * off;
+        const sh = new THREE.Shape(); sh.moveTo(-r0, 0); sh.lineTo(-r0, sp - y0); sh.absarc(0, sp - y0, r0, PI, 0, true); sh.lineTo(r0, 0); sh.lineTo(-r0, 0);
+        const a = mesh(new THREE.ShapeGeometry(sh, 14), dk, gx, y0 + 0.05, gz, g); a.rotation.y = ry;   /* the dark loggia behind the arch */
+        const ring = mesh(new THREE.TorusGeometry(r0 + 0.08, 0.09, 5, 16, PI), tr, gx, sp + 0.05, gz, g); ring.rotation.y = ry; ring.scale.z = 0.5; } } };
+    arcade(px, 18.3 - pd / 2 - 0.01, PI, 4, pw - 1.6);   /* four arches a floor on the trackside face */
+    arcade(px + pw / 2 + 0.01, 18.3, -PI / 2, 3, pd - 2);   /* and three on the east end, the entrance */
+    const rf = std(T.zinc([150, 70, 52], [6, 2]).clone(), 0.85); for (const s of [-1, 1]) { const r = box(pw + 1.2, 0.12, pd / 2 + 1.1, rf, px, ph + 0.9, 18.3 + s * (pd / 4 + 0.3), g); r.rotation.x = s * 0.36; } }   /* a hipped red roof */
   const arch = new THREE.MeshBasicMaterial({ color: 0x5a4a3a });
   const fan = new THREE.MeshBasicMaterial({ color: 0x24323a }), archF = solid(0xe8dcc0, 0.8);
-  for (let x = -42; x <= 42; x += 7) {   /* in each arch a pair of half-glazed timber doors (engine/door.js), a glass fanlight above and a moulded arch round it: they were flat dark boxes (owner, 17 November 2026) */
+  for (let x = -42; x <= 30; x += 7) {   /* in each square-headed doorway of the brick range a pair of half-glazed timber doors (engine/door.js) and a glass fanlight above, under a plain lintel; a sash window above on the upper floor */
     const dr = makeDoor({ w: 2.2, h: 3.0, kind: 'glazed', leaves: 2, color: 0x4a3626, frame: 0xe8dcc0, glass: 0x24323a }); dr.position.set(x, 0, 14.0); dr.rotation.y = PI; g.add(dr);
-    const a = mesh(new THREE.CircleGeometry(1.1, 18, 0, PI), fan, x, 3.1, 13.99, g); a.rotation.y = PI;
-    const ar = mesh(new THREE.TorusGeometry(1.15, 0.07, 6, 18, PI), archF, x, 3.1, 13.97, g); ar.rotation.y = PI; box(2.4, 0.18, 0.3, arch, x, 3.1, 13.95, g); box(1.6, 1.1, 0.12, new THREE.MeshBasicMaterial({ color: 0x24323a }), x + 3.5, 5.3, 14.0, g); }
+    box(2.2, 0.55, 0.06, fan, x, 3.3, 13.98, g); box(2.6, 0.22, 0.2, archF, x, 3.7, 13.93, g); box(0.12, 0.6, 0.1, archF, x, 3.3, 13.95, g);   /* the fanlight, its bar and the stone lintel */
+    for (const wx of [x, x + 3.5]) { if (Math.abs(wx) < 5 || Math.abs(wx - 14) < 1.5) continue;   /* none behind the name board or the clock */
+      box(1.1, 1.7, 0.08, fan, wx, 5.5, 13.98, g); box(1.3, 0.14, 0.18, archF, wx, 4.6, 13.93, g); box(1.3, 0.16, 0.18, archF, wx, 6.42, 13.93, g); box(1.1, 0.06, 0.06, archF, wx, 5.5, 13.95, g); }   /* sash windows on the upper floor, with sill, head and meeting rail */ }
   const sg = signBoard('KINGSTON', 9, 1.3, { bg: '#244a3a', fg: '#f4ecd0', font: '700 58px Georgia, serif' }); sg.position.set(0, 6.4, 13.9); g.add(sg);
   { const s2 = signBoard('KINGSTON', 5.2, 0.75, { bg: '#244a3a', fg: '#f4ecd0', font: '700 58px Georgia, serif' }); s2.position.set(0, 4.3, 13.9); g.add(s2); }   /* and a name board under the platform roof, where travellers can read it: the high one is hidden by the roof from most of the platform */
   const ck = mesh(new THREE.CircleGeometry(0.7, 24), new THREE.MeshBasicMaterial({ map: T.clock(), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 14, 5.8, 13.8, g);

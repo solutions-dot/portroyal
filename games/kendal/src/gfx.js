@@ -54,6 +54,11 @@ export const T = {
       for (let i = 0; i < 30; i++) { x.fillStyle = `rgba(${90 + Math.random() * 40 | 0},${74 + Math.random() * 30 | 0},50,${0.012 + Math.random() * 0.03})`; x.beginPath(); x.ellipse(Math.random() * w, Math.random() * h * 0.8, 20 + Math.random() * 80, 10 + Math.random() * 50, Math.random() * 3, 0, 7); x.fill(); }
       if (band) { x.fillStyle = band; x.fillRect(0, h * 0.78, w, h * 0.22); x.fillStyle = 'rgba(30,22,14,0.35)'; x.fillRect(0, h * 0.78, w, 3); } grain(x, w, h, 14); }, repeat));
   },
+  brick(rgb = [148, 74, 54], repeat = [1, 1]) {   /* red brick in English bond: 16 courses and 8 bricks across a tile (a tile is about 1.2 m by 1.2 m), pale mortar, each brick a little different */
+    return once('brick' + rgb + repeat, () => cv(256, 256, (x, w, h) => { x.fillStyle = 'rgb(176,162,140)'; x.fillRect(0, 0, w, h); const ch = h / 16;
+      for (let r = 0; r < 16; r++) { const header = r % 2 === 1, bw = header ? w / 16 : w / 8; for (let c = -1; c < (header ? 17 : 9); c++) { const k = (Math.random() - 0.5) * 40, off = header ? bw / 2 : 0; x.fillStyle = `rgb(${rgb[0] + k | 0},${rgb[1] + k * 0.5 | 0},${rgb[2] + k * 0.4 | 0})`; x.fillRect(c * bw + off + 1, r * ch + 1, bw - 2, ch - 2); } }
+      grain(x, w, h, 10); }, repeat));
+  },
   stone(rgb = [150, 150, 144], repeat = [2, 2]) {
     return once('stone' + rgb + repeat, () => cv(256, 256, (x, w, h) => { x.fillStyle = rgbs(rgb); x.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { x.fillStyle = `rgba(${60 + Math.random() * 60 | 0},${60 + Math.random() * 60 | 0},${58 + Math.random() * 50 | 0},0.12)`; x.beginPath(); x.ellipse(Math.random() * w, Math.random() * h, 10 + Math.random() * 40, 6 + Math.random() * 20, Math.random() * 3, 0, 7); x.fill(); } grain(x, w, h, 20); }, repeat));
   },

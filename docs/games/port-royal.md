@@ -217,8 +217,20 @@ The owner asked for the doors to be checked against photographs of the time. For
 | Door | Source | What it shows | What was done |
 |---|---|---|---|
 | St Peter's west door | Photographs of the church today, *Jamaica: Port Royal, St Peter's Anglican Church*, travel2unlimited.com, March 2024 (https://travel2unlimited.com/?p=320648), outside and inside | a round-headed doorway in a white moulded surround; the head of the arch is a glazed fanlight with white glazing bars radiating round a small half-round, over a transom; the doors open inward and are not seen face on | the boarded arch head became a glazed fanlight. The fanlight may be later than 1725 (not dated) |
-| St Peter's | Daily News photograph, September 1973, National Library of Jamaica (https://nljdigital.nlj.gov.jm/items/show/10524) | the church from the street; the door is not seen | nothing to change. Note: the church today is plastered and painted, and the same page says it has no tower (the game has a red brick church with a west tower; not part of this door work, worth checking) |
+| St Peter's | Daily News photograph, September 1973, National Library of Jamaica (https://nljdigital.nlj.gov.jm/items/show/10524) | the church from the street; the door is not seen | nothing to change. The church itself was rebuilt in the game on 18 November 2026: see "St Peter's Church" below. |
 | Fort Charles gate | Photograph *Fort Charles, Port Royal 1955*, National Library of Jamaica (https://nljdigital.nlj.gov.jm/items/show/8215); also https://nljdigital.nlj.gov.jm/items/show/8214 | a round brick arch; a pair of tall leaves of upright boards stands open, folded back in the arch | the leaves became upright boards and were moved flat against the passage sides. The 1955 gate is not proven to be the 1690s one; it is the best evidence found |
 | Powder magazine | *Gunpowder magazine*, Wikipedia (https://en.wikipedia.org/wiki/Gunpowder_magazine); no Port Royal source | magazines avoided iron fittings so nothing would strike a spark; copper and bronze were used | kept (copper fittings, no ring) |
 | Marshalsea, synagogue | Port Royal underwater excavations (Institute of Nautical Archaeology and Texas A&M, 1981 to 1990, https://nauticalarch.org/projects/port-royal-harbor-excavation/) | no published door or door hardware was found in what could be searched | kept as stand-ins of English joinery of the later 1600s (work to do: the excavation building reports) |
+
+## St Peter's Church (rebuilt in the game, 18 November 2026)
+
+The church in the last chapter was drawn as red brick with a squat west tower and a cupola. The sources show otherwise, so it was rebuilt:
+
+| What the game shows | Source |
+|---|---|
+| Walls in a pale cream render scored to look like stone blocks, over the brick | Jamaica National Heritage Trust, "St. Peter's Church" (jnht.com): "Its walls are now faced with cement marked to simulate stone blocks, thus hiding the original brick walls of the Church." Photographs of the outside, travel2unlimited.com, March 2024. |
+| No tower; the bells in a separate timber frame in the churchyard | Victorian Web, "Anglican churches in the West Indies": "It has no tower; the bells being rung from a separate frame in the churchyard." The 2024 photographs show no tower. |
+| A steep gable at each end with a white coping and a small cross at the top; a grey slate roof; round-headed windows with white glazing bars; the door under a round-headed fanlight in the west gable | The 2024 photographs. |
+
+Not from a source: the exact shape and place of the bell frame (no picture of it was found), and the lower side wing with a hipped roof seen in the photographs, which the game leaves out.
 
