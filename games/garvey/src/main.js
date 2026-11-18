@@ -1077,7 +1077,14 @@ function buildLiberty() {
   const wallP = (w, cx, cz, ry) => { const t = plasterT.clone(); t.needsUpdate = true; t.repeat.set(w / 3.4, 1); t.wrapT = THREE.ClampToEdgeWrapping; const p = mesh(new THREE.PlaneGeometry(w, H2), std(t, 1), cx, H2 / 2, cz, g); p.rotation.y = ry; };
   wallP(W2, 0, LIB.z0, 0); wallP(D2, LIB.x0, 0, Math.PI / 2); wallP(D2, LIB.x1, 0, -Math.PI / 2);
   const dw = 2.4, dh = 3.2, sw = (W2 - dw) / 2; wallP(sw, LIB.x0 + sw / 2, LIB.z1, Math.PI); wallP(sw, LIB.x1 - sw / 2, LIB.z1, Math.PI);
-  box(dw + 0.3, H2 - dh, 0.14, solid(0xdccfb0, 1), 0, (dh + H2) / 2, LIB.z1 - 0.07, g); for (const x of [-dw / 2 - 0.07, dw / 2 + 0.07]) box(0.16, dh, 0.2, beam, x, dh / 2, LIB.z1 - 0.1, g); box(dw + 0.36, 0.18, 0.2, beam, 0, dh + 0.09, LIB.z1 - 0.1, g);
+  box(dw + 0.3, H2 - dh, 0.14, solid(0xdccfb0, 1), 0, (dh + H2) / 2, LIB.z1 - 0.07, g); for (const x of [-dw / 2 - 0.07, dw / 2 + 0.07]) box(0.16, dh, 0.2, beam, x, dh / 2, LIB.z1 - 0.1, g);
+  { /* the head of the main doorway: a shallow (segmental) arch, as the Keystone photograph of the front shows ("Outside Liberty Hall, 138th Street", Current History
+       Magazine, September 1924; docs/games/garvey.md, Doors). It was a square timber head. The arch springs at the top of the doors and rises 0.32 m; a dark fanlight
+       fills it over the doors. */
+    const span = dw + 0.32, rise = 0.32, R = (span * span / 4 + rise * rise) / (2 * rise), cy = dh + rise - R, a0 = Math.asin(span / 2 / R), arch = new THREE.Shape();
+    arch.moveTo(-span / 2 - 0.12, dh); arch.lineTo(-span / 2, dh); arch.absarc(0, cy, R, Math.PI / 2 + a0, Math.PI / 2 - a0, true); arch.lineTo(span / 2 + 0.12, dh); arch.lineTo(span / 2 + 0.12, dh + rise + 0.3); arch.lineTo(-span / 2 - 0.12, dh + rise + 0.3); arch.lineTo(-span / 2 - 0.12, dh);
+    mesh(new THREE.ExtrudeGeometry(arch, { depth: 0.2, bevelEnabled: false, curveSegments: 16 }), beam, 0, 0, LIB.z1 - 0.2, g);   /* the arched head, in the same dark timber as the jambs */
+    const fan = new THREE.Shape(); fan.moveTo(-span / 2, dh); fan.absarc(0, cy, R, Math.PI / 2 + a0, Math.PI / 2 - a0, true); fan.lineTo(-span / 2, dh); mesh(new THREE.ShapeGeometry(fan, 16), solid(0x2a3236, 0.3), 0, 0, LIB.z1 - 0.12, g).rotation.y = Math.PI; }
   roomDoors(g, 0, LIB.z1 - 0.2, dw - 0.02, dh - 0.01, { kind: 'panel', color: 0x5a2a22, frame: 0xd8ccb0, metal: 0xb08a40, handle: 'lever' });   /* Liberty Hall, 1920: a plain pair of panelled doors, painted. A stand-in: no clear photograph of the doors themselves was found (docs/games/garvey.md) */
   for (let i = 0; i < 4; i++) mesh(new THREE.PlaneGeometry(4.5, 9), new THREE.MeshBasicMaterial({ map: facadeTex(i + 2) }), -6.75 + i * 4.5, 4.5, LIB.z1 + 3.4, g).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(18, 3.4), new THREE.MeshBasicMaterial({ color: 0xa9a291 }), 0, 0.01, LIB.z1 + 1.7, g).rotation.x = -Math.PI / 2;

@@ -284,7 +284,10 @@ function shopDoors(w, h, color, frame = 0xe8e0cc) {
 function turbineHouse(g, kind, P) {
   /* the brick house: 14 m by 10 m, walls 0.4 m thick and 6.5 m high, a door in the south wall. Inside: the turbine casing, the shaft, the spinning wheel,
      the generator and the switchboard. In the ruins, the walls are broken, there is no roof, and only the bases of the machines are left. */
-  const ruin = kind === 'ruin', H = ruin ? 0 : 6.5, x0 = -7, x1 = 7, z0 = -15.5, z1 = -5.5, th = 0.4, bt = TX.brick([4, 3], [150, 74, 52], ruin ? 1 : 0), bm = std(bt, 0.9);
+  /* 1904: the walls are rendered and limewashed, pale, with a round-headed opening high in each gable, as the one photograph of the power house shows ("Hydraulic
+     station, Bog Walk", NLJ Photograph Collection, D0006009, https://nljdigital.nlj.gov.jm/items/show/5295). They were bare red brick (18 November 2026). In the ruins
+     of today the render has gone and the brick under it shows, as the ruins do. */
+  const ruin = kind === 'ruin', H = ruin ? 0 : 6.5, x0 = -7, x1 = 7, z0 = -15.5, z1 = -5.5, th = 0.4, bt = ruin ? TX.brick([4, 3], [150, 74, 52], 1) : T.plaster([222, 212, 188], [1, 1]).clone(), bm = std(bt, 0.9);
   const bw = (w, h, d, x, y, z) => { const t = bt.clone(); t.needsUpdate = true; t.repeat.set(Math.max(w, d) / 3.2, h / 2.4); return box(w, h, d, std(t, 0.9), x, y, z, g); };
   const walls = P.walls;
   if (!ruin) {
@@ -295,6 +298,9 @@ function turbineHouse(g, kind, P) {
     const zt = T.zinc([150, 154, 150]).clone(); zt.needsUpdate = true; zt.repeat.set(6, 4); const rise = 2.2, half = (z1 - z0) / 2 + 0.6, Ls = Math.hypot(half, rise), a = Math.atan2(rise, half);
     for (const s of [-1, 1]) { const p = box(15.2, 0.1, Ls, std(zt, 0.7), 0, H + rise / 2 + 0.05, (z0 + z1) / 2 + s * half / 2, g); p.rotation.x = s * a; }
     for (const x of [x0, x1]) { const gab = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-(z1 - z0) / 2 - 0.2, 0), new THREE.Vector2((z1 - z0) / 2 + 0.2, 0), new THREE.Vector2(0, rise)])), bm, x, H, (z0 + z1) / 2, g); gab.rotation.y = PI / 2; gab.material = std(bt, 0.9, { side: THREE.DoubleSide }); }
+    for (const x of [x0 - th / 2 - 0.012, x1 + th / 2 + 0.012]) { const r0 = 0.55, sp = H + 0.9, sh = new THREE.Shape(); sh.moveTo(-r0, H + 0.25); sh.lineTo(r0, H + 0.25); sh.lineTo(r0, sp); sh.absarc(0, sp, r0, 0, PI, false); sh.lineTo(-r0, H + 0.25);
+      const op = mesh(new THREE.ShapeGeometry(sh, 12), solid(0x1c1814, 1), x, 0, (z0 + z1) / 2, g); op.rotation.y = x < 0 ? -PI / 2 : PI / 2;   /* the round-headed opening high in the gable */
+      const ring = mesh(new THREE.TorusGeometry(r0 + 0.07, 0.07, 5, 14, PI), solid(0xece4cf, 0.85), x + (x < 0 ? -0.02 : 0.02), sp, (z0 + z1) / 2, g); ring.rotation.y = PI / 2; }
     box(13.2, 0.05, 9.2, solid(0x2a2420, 0.95), 0, H - 0.03, (z0 + z1) / 2, g);   /* ceiling */
     for (const x of [-4.5, -1.5, 1.5, 4.5]) box(0.18, 0.3, 9.4, M.iron, x, H - 0.2, (z0 + z1) / 2, g);   /* iron roof trusses */
     const fl = mesh(new THREE.PlaneGeometry(13.2, 9.2), std(TX.tiles([11, 7.7]), 0.7), 0, 0.02, (z0 + z1) / 2, g); fl.rotation.x = -PI / 2;   /* a clean floor of quarry tiles */
