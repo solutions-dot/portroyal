@@ -58,9 +58,10 @@ for (const [si, s] of E.shots.entries()) {
   let a = Math.round(s.from * fps);
   const k = Math.round(s.dur * fps);
   if (a + k > files.length) throw new Error(`${s.clip}: wants frames ${a}-${a + k}, has ${files.length}`);
-  if (s.push || s.crop) {   /* push: a slow push in on a shot that hardly moves (the picture grows by `push`); crop: [x, y, zoom] frames a part of the shot, x and y its centre as fractions */
+  if (s.push || s.crop) {   /* push: a slow push in on a shot that hardly moves (the picture grows by `push`); crop: [x, y, zoom, y2] frames a part of the shot, x and y its centre as fractions, y2 a tilt to */
     const out = `${work}/push${si}`; fs.mkdirSync(out);
-    const [cx, cy, cz] = s.crop || [0.5, 0.5, 1], z = `${cz}*(1+${s.push || 0}*on/${k})`;
+    const [cx, cy0, cz, cy1 = cy0] = s.crop || [0.5, 0.5, 1], z = `${cz}*(1+${s.push || 0}*on/${k})`;   /* a fourth number tilts the frame from cy0 down to it, eased */
+    const cy = `(${cy0}+(${cy1}-${cy0})*(0.5-0.5*cos(PI*on/${k})))`;
     execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-start_number', String(a + 1), '-framerate', String(fps), '-i', `${dir}/f%05d.jpg`,
       '-vf', `scale=2560:1440,zoompan=z='${z}':x='max(0,min(iw-iw/zoom,${cx}*iw-iw/zoom/2))':y='max(0,min(ih-ih/zoom,${cy}*ih-ih/zoom/2))':d=1:s=1280x720:fps=${fps}`, '-frames:v', String(k), '-q:v', '2', `${out}/f%05d.jpg`]);
     dir = out; files = fs.readdirSync(out).sort(); a = 0;

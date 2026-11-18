@@ -749,10 +749,11 @@ function worldTick(dt, ft) {
   if ((frames & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
   if (P.tick) P.tick(dt, ft); smoke.tick(dt); holdTick(dt);
 }
+const LIVE_SHOT = __DEV__ && new URLSearchParams(location.search).has('live');   /* ?shot=...&live: a test view that walks and flickers like play */
 function tick(dt, clockDt = dt) {
-  time += dt; const ft = (__DEV__ && N.phase === 'shot') ? 3.3 : time;
+  time += dt; const ft = (__DEV__ && N.phase === 'shot' && !LIVE_SHOT) ? 3.3 : time;   /* a test view holds the flame still, unless &live (the trailer) */
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](clockDt)) TICKS.splice(i, 1);
-  const sp = (S.started && N.phase !== 'shot') ? moveTick(dt) : 0; walkPh += sp * dt * 3;
+  const sp = (S.started && (N.phase !== 'shot' || LIVE_SHOT)) ? moveTick(dt) : 0; walkPh += sp * dt * 3;
   if (MODE === 'tube') {
     if (S.started && N.phase !== 'shot' && N.phase !== 'world') nightTick(dt);
     if (N.phase === 'shot') T.water.set(N.wl);

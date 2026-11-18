@@ -24,34 +24,9 @@
    "dur": 6.0
   },
   {
-   "clip": "play_walk",
-   "from": 1.0,
-   "dur": 3.0,
-   "ui": true,
-   "stamp": {
-    "place": "The Emperor’s Arrival",
-    "year": "1966",
-    "colour": "#edc25f"
-   }
-  },
-  {
-   "clip": "play_phone",
-   "phone": true,
-   "bg": "nanny",
-   "bgFrom": 3.0,
-   "from": 0.5,
-   "dur": 3.0,
-   "stamp": {
-    "place": "The Fall of Nanny Town",
-    "year": "1734",
-    "colour": "#f0b860"
-   }
-  },
-  {
    "clip": "tube",
-   "from": 0.5,
+   "from": 0.3,
    "dur": 3.0,
-   "push": 0.12,
    "stamp": {
     "place": "Bog Walk Tube Flood",
     "year": "1904",
@@ -69,6 +44,16 @@
    }
   },
   {
+   "clip": "selassie_steps",
+   "from": 11.0,
+   "dur": 6.0,
+   "stamp": {
+    "place": "The Emperor’s Arrival",
+    "year": "1966",
+    "colour": "#edc25f"
+   }
+  },
+  {
    "clip": "nanny",
    "from": 1.5,
    "dur": 3.0,
@@ -82,23 +67,23 @@
    "clip": "nanny_march",
    "from": 0.5,
    "dur": 3.0,
-   "stamp": {
-    "place": "The Fall of Nanny Town",
-    "year": "1734",
-    "colour": "#f0b860"
-   },
    "crop": [
     0.56,
     0.42,
     2.0
    ],
-   "push": 0.06
+   "push": 0.06,
+   "stamp": {
+    "place": "The Fall of Nanny Town",
+    "year": "1734",
+    "colour": "#f0b860"
+   }
   },
   {
    "clip": "kendal",
-   "from": 4.0,
+   "from": 0.5,
    "dur": 3.0,
-   "push": 0.1,
+   "push": 0.08,
    "stamp": {
     "place": "Kendal Train Crash",
     "year": "1957",
@@ -109,21 +94,16 @@
    "clip": "eventide",
    "from": 0.5,
    "dur": 3.0,
-   "push": 0.08,
+   "crop": [
+    0.5,
+    0.36,
+    1.35,
+    0.64
+   ],
    "stamp": {
     "place": "Eventide Home Fire",
     "year": "1980",
     "colour": "#a9dcc2"
-   }
-  },
-  {
-   "clip": "selassie_land",
-   "from": 3.5,
-   "dur": 2.5,
-   "stamp": {
-    "place": "The Emperor’s Arrival",
-    "year": "1966",
-    "colour": "#edc25f"
    }
   },
   {
@@ -138,29 +118,23 @@
   },
   {
    "clip": "tivoli",
-   "from": 1.0,
-   "dur": 2.0,
-   "push": 0.08,
+   "from": 0.5,
+   "dur": 4.0,
    "stamp": {
-    "place": "Tivoli Gardens",
-    "year": "Today",
+    "place": "Tivoli Incursion",
+    "year": "2010",
     "colour": "#fed100"
    }
   },
   {
    "clip": "melissa",
-   "from": 0.7,
-   "dur": 4.5,
+   "from": 3.0,
+   "dur": 5.0,
    "stamp": {
     "place": "Hurricane Gilbert",
     "year": "1988",
     "colour": "#d6c8f5"
    }
-  },
-  {
-   "clip": "garvey",
-   "from": 3.5,
-   "dur": 1.5
   },
   {
    "clip": "portroyal",
@@ -171,6 +145,11 @@
     "year": "1692",
     "colour": "#FFB627"
    }
+  },
+  {
+   "clip": "garvey",
+   "from": 4.0,
+   "dur": 1.5
   },
   {
    "clip": "nanny",
@@ -197,12 +176,6 @@
    "cls": "word"
   },
   {
-   "t0": 12.2,
-   "t1": 14.9,
-   "text": "Tap people to talk.",
-   "cls": "small left"
-  },
-  {
    "t0": 21.15,
    "t1": 23.9,
    "text": "Learn.",
@@ -218,13 +191,13 @@
    "t0": 45.1,
    "t1": 47.95,
    "text": "You cannot change what happened.",
-   "cls": "small"
+   "cls": "small low"
   },
   {
    "t0": 48.05,
    "t1": 50.9,
    "text": "But you can be there.",
-   "cls": "small"
+   "cls": "small low"
   }
  ],
  "passport": {
