@@ -1584,7 +1584,7 @@ function devViews() {
   if (shot === 'offchat') inOff(62, 0.9, 0.2, 0.15, 0.05).then(() => startTalk(byId('amyj')));
   if (shot === 'soapbox1') inStreet(21, 0, 2.3, 0, -0.38);   /* Garvey on the soapbox, from the front, from the side and from behind (close, looking down at his feet) */
   if (shot === 'soapbox2') inStreet(21, 2.2, 0.5, Math.PI / 2, -0.38);
-  for (const k of [1, 2, 3]) if (shot === 'soapboxT' + k) inStreet(21, 0, 2.6, 0, -0.3).then(() => { const t = setInterval(() => { if (CL['Talk' + k]) { byId('garvey3').m.userData.anim.play('Talk' + k); clearInterval(t); } }, 100); });
+  for (const k of [1, 2, 3]) if (shot === 'soapboxT' + k) inStreet(21, 0, +(q.get('cz') || 2.6), 0, +(q.get('cp') || -0.3))   /* &cz= &cp= move the camera back and tilt it (the trailer) */.then(() => { const t = setInterval(() => { if (CL['Talk' + k]) { byId('garvey3').m.userData.anim.play('Talk' + k); clearInterval(t); } }, 100); });
   if (shot === 'soapbox3') inStreet(21, 0, -1.3, Math.PI, -0.38);
   if (shot === 'poster') setTimeout(() => { story.banner = true; story.helped = 'nurse'; inLib(53, 0.6, 3.7, 0.07, 0.1).then(() => { showBanner(); $('hud').hidden = true; setTimeout(() => { window.__SHOT = true; }, 4000); }); }, 0);   /* (after inLib is defined below) the menu card: the 1920 convention, Garvey speaking under the new banner, delegates in their seats */
   if (shot === 'poster2') inStreet(21, -3.7, 0.5, -Math.PI / 2, 0.0).then(() => {   /* looking down the street at Garvey on the soapbox, speaking, with his listeners seen from behind */

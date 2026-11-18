@@ -258,6 +258,6 @@ export function airportDetail(Q) {
       z: i < 4 ? -12.9 : i < 6 ? -26.2 : -24.8, // the front line stands clear of the wing's sweep (z -13.5)
       base: "sel_police66",
       police: true,
-      behaviour: { kind: "watch", at: [0, -9], every: [3, 5] },
+      behaviour: { kind: "watch", at: [0, -9], every: [3, 5], idles: ["Idle"] }, // on duty: they stand and watch, no looking round at the ground (owner, 18 Nov 2026)
     });
 }

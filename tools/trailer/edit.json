@@ -9,13 +9,13 @@
    "dur": 1.0
   },
   {
-   "clip": "selassie_land",
-   "from": 3.7,
+   "clip": "bogwalk",
+   "from": 3.0,
    "dur": 1.0
   },
   {
-   "clip": "windrush",
-   "from": 0.0,
+   "clip": "selassie_land",
+   "from": 3.7,
    "dur": 1.0
   },
   {
@@ -24,32 +24,8 @@
    "dur": 6.0
   },
   {
-   "clip": "play_walk",
-   "from": 1.0,
-   "dur": 3.0,
-   "stamp": {
-    "place": "The Emperor’s Arrival",
-    "year": "1966",
-    "colour": "#edc25f"
-   },
-   "ui": true
-  },
-  {
-   "clip": "play_phone",
-   "phone": true,
-   "bg": "nanny",
-   "bgFrom": 3.0,
-   "from": 0.5,
-   "dur": 3.0,
-   "stamp": {
-    "place": "The Fall of Nanny Town",
-    "year": "1734",
-    "colour": "#f0b860"
-   }
-  },
-  {
-   "clip": "bogwalk",
-   "from": 2.5,
+   "clip": "tube",
+   "from": 0.3,
    "dur": 3.0,
    "stamp": {
     "place": "Bog Walk Tube Flood",
@@ -59,14 +35,39 @@
   },
   {
    "clip": "garvey",
-   "from": 1.0,
+   "from": 1.5,
    "dur": 3.0,
    "stamp": {
     "place": "Marcus Garvey and the UNIA",
     "year": "1914",
     "colour": "#E8505B"
-   },
-   "push": 0.1
+   }
+  },
+  {
+   "clip": "selassie_steps",
+   "from": 7.5,
+   "dur": 3.5,
+   "stamp": {
+    "place": "The Emperor’s Arrival",
+    "year": "1966",
+    "colour": "#edc25f"
+   }
+  },
+  {
+   "clip": "selassie_steps",
+   "from": 13.6,
+   "dur": 2.5,
+   "crop": [
+    0.55,
+    0.47,
+    1.6
+   ],
+   "push": 0.06,
+   "stamp": {
+    "place": "The Emperor’s Arrival",
+    "year": "1966",
+    "colour": "#edc25f"
+   }
   },
   {
    "clip": "nanny",
@@ -79,47 +80,67 @@
    }
   },
   {
-   "clip": "learn_journal",
+   "clip": "nanny_march",
    "from": 0.5,
    "dur": 3.0,
-   "ui": true
+   "crop": [
+    0.56,
+    0.42,
+    2.0
+   ],
+   "push": 0.06,
+   "stamp": {
+    "place": "The Fall of Nanny Town",
+    "year": "1734",
+    "colour": "#f0b860"
+   }
   },
   {
-   "clip": "kendal",
-   "from": 4.0,
-   "dur": 3.0,
+   "clip": "kendal_crash",
+   "from": 0.0,
+   "dur": 2.4,
    "stamp": {
     "place": "Kendal Train Crash",
     "year": "1957",
     "colour": "#1FB5A3"
-   },
-   "push": 0.1
+   }
   },
   {
    "clip": "eventide",
-   "from": 1.0,
+   "from": 0.5,
    "dur": 3.0,
+   "crop": [
+    0.5,
+    0.42,
+    1.2,
+    0.56
+   ],
+   "stamp": {
+    "place": "Eventide Home Fire",
+    "year": "1980",
+    "colour": "#a9dcc2"
+   }
+  },
+  {
+   "clip": "evfire",
+   "from": 1.3,
+   "dur": 1.6,
    "stamp": {
     "place": "Eventide Home Fire",
     "year": "1980",
     "colour": "#a9dcc2"
    },
-   "push": 0.1
-  },
-  {
-   "clip": "selassie_land",
-   "from": 3.5,
-   "dur": 2.5,
-   "stamp": {
-    "place": "The Emperor’s Arrival",
-    "year": "1966",
-    "colour": "#edc25f"
-   }
+   "crop": [
+    0.62,
+    0.44,
+    1.8
+   ],
+   "push": 0.05
   },
   {
    "clip": "windrush",
    "from": 8.5,
-   "dur": 3.5,
+   "dur": 3.0,
    "stamp": {
     "place": "Windrush",
     "year": "1948",
@@ -129,28 +150,27 @@
   {
    "clip": "tivoli",
    "from": 1.0,
-   "dur": 3.0,
+   "dur": 5.0,
+   "crop": [
+    0.42,
+    0.6,
+    1.45
+   ],
    "stamp": {
-    "place": "Tivoli Gardens",
-    "year": "Today",
+    "place": "Tivoli Incursion",
+    "year": "2010",
     "colour": "#fed100"
-   },
-   "push": 0.1
-  },
-  {
-   "clip": "melissa",
-   "from": 3.0,
-   "dur": 3.0,
-   "stamp": {
-    "place": "Hurricane Gilbert",
-    "year": "1988",
-    "colour": "#d6c8f5"
    }
   },
   {
-   "clip": "selassie_crowd",
-   "from": 3.5,
-   "dur": 1.5
+   "clip": "melissa",
+   "from": 2.0,
+   "dur": 3.0,
+   "stamp": {
+    "place": "Hurricane Melissa",
+    "year": "2025",
+    "colour": "#d6c8f5"
+   }
   },
   {
    "clip": "portroyal",
@@ -163,13 +183,18 @@
    }
   },
   {
+   "clip": "selassie_steps",
+   "from": 3.0,
+   "dur": 1.5
+  },
+  {
    "clip": "nanny",
    "from": 5.5,
    "dur": 1.5
   },
   {
-   "clip": "windrush",
-   "from": 2.5,
+   "clip": "pr_rescue",
+   "from": 2.0,
    "dur": 1.5
   }
  ],
@@ -184,41 +209,19 @@
    "t0": 9.15,
    "t1": 11.9,
    "text": "Play.",
-   "sub": "Walk the streets. Explore every corner.",
    "cls": "word"
-  },
-  {
-   "t0": 12.2,
-   "t1": 14.9,
-   "text": "Tap people to talk.",
-   "sub": "On a phone or a computer",
-   "cls": "small left"
   },
   {
    "t0": 21.15,
    "t1": 23.9,
    "text": "Learn.",
-   "sub": "Real history for ages 6 and up",
    "cls": "word"
   },
   {
-   "t0": 33.15,
-   "t1": 35.9,
+   "t0": 34.15,
+   "t1": 36.9,
    "text": "Discover.",
-   "sub": "The moments that shaped Jamaica",
    "cls": "word"
-  },
-  {
-   "t0": 45.1,
-   "t1": 47.95,
-   "text": "You cannot change what happened.",
-   "cls": "small"
-  },
-  {
-   "t0": 48.05,
-   "t1": 50.9,
-   "text": "But you can be there.",
-   "cls": "small"
   }
  ],
  "passport": {
@@ -227,7 +230,7 @@
   "gap": 0.3,
   "emptyAt": 3.3,
   "empty": 5,
-  "say1": "Ten stories so far.",
+  "say1": "Created by Kellz 5.0",
   "say2": "Many more on the way.",
   "stamps": [
    {

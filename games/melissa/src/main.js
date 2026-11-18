@@ -545,17 +545,18 @@ async function stormRun(kind) {
   if (!(await step(3800, () => { say(L.b[2], 3800); lightK(0.2); setTimeout(() => lightK(1), 160); setTimeout(() => lightK(0), 420); SFX.zincBang(0.9); FX.shake = 0.25; torch(true); }))) return;
   if (!(await step(3800, () => { say(L.b[3], 4000); SB = SB_LIGHT; FX.shake = 0.4; SFX.gust(1, 3); ease2(envNow, ENV.roomStorm, 3); }))) return;
   /* hold on: press and hold to keep steady while the wind builds */
-  $('holdwrap').hidden = false; HOLD.v = 0; goalText = 'Hold on!'; showGoal();
+  const panic = (clip) => { for (const n of P.npcs) if (n.m.visible && n.ctl && !n.walking) n.ctl.play(clip); };   /* the family flinches as the wind builds, then ducks and covers when the roof goes */
+  $('holdwrap').hidden = false; HOLD.v = 0; goalText = 'Hold on!'; showGoal(); panic('Scared');
   const gust = tween(4.6, (k, dk) => { const held = HOLD.on ? 1 : 0; HOLD.v = clamp01(HOLD.v + (held ? 0.9 : -0.5) * dk * 4); $('holdbar').firstElementChild.style.width = (HOLD.v * 100) + '%'; FX.shake = 0.45 + k * 0.5 - HOLD.v * 0.25; FX.roll = Math.sin(k * 40) * 0.008; if (Math.random() < 0.04) SFX.zincBang(0.4); });
   if (!(await gust)) return; if (!live()) return; $('holdwrap').hidden = true; goalText = ''; $('goal').textContent = '';
   /* the roof lifts */
   SFX.treeCrack(1.2); FX.shake = 0.9; SB = SB_PEAK; flash(0.6, 40, '#ffffff'); setTimeout(() => flash(0, 260, '#ffffff'), 80);
-  tearRoof(P, kind === 'm25' ? 6 : 5); WIND.k = 1; skyDebris(kind); STORM.mask(P.group.position.x + 0, P.group.position.z + 0, kind === 'm25' ? 5 : 3); STORM.set({ rain: 0.9, wind: [1.2, 0.5], leaves: 0.9 }); say(L.b[4], 4200);
+  panic('Terrified'); tearRoof(P, kind === 'm25' ? 6 : 5); WIND.k = 1; skyDebris(kind); STORM.mask(P.group.position.x + 0, P.group.position.z + 0, kind === 'm25' ? 5 : 3); STORM.set({ rain: 0.9, wind: [1.2, 0.5], leaves: 0.9 }); say(L.b[4], 4200);
   const camA = [state.x, EYE, state.z]; cut(camA, camA, [state.x + 1, EYE + 0.3, state.z], [state.x + 0.4, EYE + 5, state.z - 0.4], 2.6).then(() => {});
   await wait(3600); if (!live()) return; endCut(); FX.shake = 0.5; say(L.b[5], 4200); 
   if (hall) { SB.hymn = 0.8; } await wait(4400); if (!live()) return; say(L.b[6], 4200); FX.shake = 0.3; await wait(4400); if (!live()) return;
   say(L.b[7], 3600); SB = { wind: 0.7, howl: 0.3, roar: 0.4, rain: 0.6, hymn: hall ? 0.6 : 0 }; FX.shake = 0.15; await wait(3800); if (!live()) return;
-  fadeBlack(true, 1800); await wait(2000); if (!live()) return;
+  panic(null); fadeBlack(true, 1800); await wait(2000); if (!live()) return;
   $('fadeT').textContent = L.title; $('fadeS').textContent = L.sub; $('fade').classList.add('txt'); unlock(L.page); unlock(L.page2); await wait(5400); if (!live()) return; $('fade').classList.remove('txt'); await wait(700); if (!live()) return;
   ST.on = false; stormAfter(kind, true);
 }

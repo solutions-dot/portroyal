@@ -170,12 +170,50 @@ const blocked = (Q, x, z, r = 0.24) =>
   Q.walls.some(
     (w) => x > w[0] - r && x < w[2] + r && z > w[1] - r && z < w[3] + r,
   );
+/* Haile Selassie's tunic sleeves flared wide at the wrist, which shows in the salute (owner, 18 Nov 2026). Until the body is rebuilt,
+   the sleeve's last part is drawn in toward the line from elbow to wrist, more toward the cuff. His bodies are joined (one painted mesh),
+   so the sleeve is told from the skin by colour: the palm gives his skin colour, and only points of another colour move. CUFF is how much
+   narrower the cuff ends. */
+const CUFF = 0.5;
+function narrowCuffs(root) {
+  const v = new THREE.Vector3(), E = new THREE.Vector3(), W = new THREE.Vector3(), m = new THREE.Matrix4(), axis = new THREE.Vector3(), foot = new THREE.Vector3(), c = new THREE.Color();
+  root.traverse((o) => {
+    if (!o.isSkinnedMesh || /Measure/.test(o.name)) return;
+    const g = o.geometry, P = g.attributes.position, SI = g.attributes.skinIndex, SW = g.attributes.skinWeight, C = g.attributes.color, bones = o.skeleton.bones;
+    if (!SI || !SW) return;
+    const named = /^(Jacket|Sleeve)/.test(o.material?.name || "");
+    if (!named && !C) return;
+    for (const side of ["Right", "Left"]) {
+      const fi = bones.findIndex((b) => b.name.endsWith(side + "ForeArm")), hi = bones.findIndex((b) => b.name.endsWith(side + "Hand"));
+      if (fi < 0 || hi < 0) continue;
+      const at = (i, out) => out.setFromMatrixPosition(m.copy(o.skeleton.boneInverses[i]).invert()).applyMatrix4(o.bindMatrixInverse);
+      at(fi, E); at(hi, W); axis.subVectors(W, E); const L2 = axis.lengthSq();
+      const armW = (i) => { let w = 0; for (let k = 0; k < 4; k++) { const b = SI.getComponent(i, k); if (b === fi || b === hi) w += SW.getComponent(i, k); } return w; };
+      const tOf = (i) => v.fromBufferAttribute(P, i).sub(E).dot(axis) / L2;
+      let skin = null;
+      if (C) {   /* the palm's colour: points well past the wrist */
+        let r = 0, gg = 0, bb = 0, n = 0;
+        for (let i = 0; i < P.count; i++) if (armW(i) > 0.5 && tOf(i) > 1.25) { c.fromBufferAttribute(C, i); r += c.r; gg += c.g; bb += c.b; n++; }
+        if (n) skin = new THREE.Color(r / n, gg / n, bb / n);
+      }
+      for (let i = 0; i < P.count; i++) {
+        if (armW(i) < 0.5) continue;
+        const t = tOf(i);
+        if (t < 0.45 || t > 1.12) continue;
+        if (!named && skin) { c.fromBufferAttribute(C, i); if (Math.abs(c.r - skin.r) + Math.abs(c.g - skin.g) + Math.abs(c.b - skin.b) < 0.12) continue; }
+        const k = Math.min(1, (t - 0.45) / 0.5), f = 1 - CUFF * k * k * (3 - 2 * k);
+        v.fromBufferAttribute(P, i); foot.copy(axis).multiplyScalar(t).add(E); v.sub(foot).multiplyScalar(f).add(foot); P.setXYZ(i, v.x, v.y, v.z);
+      }
+    }
+    P.needsUpdate = true; g.computeBoundingSphere();
+  });
+}
 function loadBase(id) {
   return bases[id]
     ? Promise.resolve(bases[id])
     : pending[id] ||
         (pending[id] = model(id)
-          .then((g) => (bases[id] = g))
+          .then((g) => (/^sel_emperor66/.test(id) && narrowCuffs(g.scene || g), (bases[id] = g)))
           .catch((error) => {
             delete pending[id];
             throw error;
@@ -1527,6 +1565,39 @@ async function start() {
   }
   canvas.focus();
 }
+/* The owner's salute clip, on his body, brings the hand to the cheek, not to the cap (owner, 18 Nov 2026). The upper arm and forearm
+   get an extra turn that grows with how far into the salute each moment is (0 at rest, 1 at the full salute), so the rest pose is not
+   changed and the hand meets the brim. SALUTE_FIX is [arm x, y, z, forearm x, y, z] in radians; ?sfix=... tries other values (dev). */
+const SALUTE_FIX = [0, 0, -0.8, -0.5, 0.75, 0];
+function raiseSalute(clip, rig) {
+  if (!clip) return;
+  /* a salute is given with the fingers straight and together (the reference photographs): the four fingers take the rig's rest pose, which is straight; the thumb is left as the clip has it */
+  /* the clip moves only the first joint of each finger; the other two keep whatever the last clip left (a curl), so all three are set here */
+  const prefix = (clip.tracks.find((t) => /RightHandIndex1\.quaternion$/.test(t.name)) || { name: "mixamorigRightHandIndex1.quaternion" }).name.replace(/RightHandIndex1\.quaternion$/, "");
+  for (const f of ["Index", "Middle", "Ring", "Pinky"])
+    for (const j of [1, 2, 3]) {
+      const bone = prefix + "RightHand" + f + j, b = rig && rig.getObjectByName(bone), q = b ? b.quaternion : new THREE.Quaternion();
+      const t = clip.tracks.find((t) => t.name === bone + ".quaternion");
+      if (t) for (let i = 0; i < t.values.length; i += 4) q.toArray(t.values, i);
+      else clip.tracks.push(new THREE.QuaternionKeyframeTrack(bone + ".quaternion", [0, clip.duration], [...q.toArray(), ...q.toArray()]));
+    }
+  let fix = SALUTE_FIX;
+  if (__DEV__) { const v = new URLSearchParams(location.search).get("sfix"); if (v) fix = v.split(",").map(Number); }
+  const parts = [["RightArm", fix.slice(0, 3)], ["RightForeArm", fix.slice(3, 6)]];
+  const tr = clip.tracks.find((t) => /RightArm\.quaternion$/.test(t.name));
+  if (!tr) return;
+  const q0 = new THREE.Quaternion().fromArray(tr.values, 0), qi = new THREE.Quaternion(), n = tr.values.length / 4;
+  const ang = []; let max = 1e-6;
+  for (let i = 0; i < n; i++) { qi.fromArray(tr.values, i * 4); const a = q0.angleTo(qi); ang.push(a); max = Math.max(max, a); }
+  const w = ang.map((a) => Math.min(1, a / (max * 0.85)));   /* how far into the salute each key of the upper arm is */
+  for (const [bone, e] of parts) {
+    const t = clip.tracks.find((t) => new RegExp(bone + "\\.quaternion$").test(t.name));
+    if (!t) continue;
+    const d = new THREE.Quaternion().setFromEuler(new THREE.Euler(e[0], e[1], e[2])), id = new THREE.Quaternion(), dq = new THREE.Quaternion();
+    const wAt = (time) => { let k = 0; while (k < n - 1 && tr.times[k + 1] <= time) k++; if (k >= n - 1) return w[n - 1]; const f = (time - tr.times[k]) / (tr.times[k + 1] - tr.times[k] || 1); return w[k] + (w[k + 1] - w[k]) * Math.max(0, Math.min(1, f)); };   /* the bones' keys need not line up */
+    for (let i = 0; i < t.times.length; i++) { qi.fromArray(t.values, i * 4); dq.slerpQuaternions(id, d, wAt(t.times[i])); qi.multiply(dq).toArray(t.values, i * 4); }
+  }
+}
 $("start").onclick = start;
 onLoadFail((name) => {
   $("loadnote").textContent =
@@ -1534,13 +1605,15 @@ onLoadFail((name) => {
 });
 (async () => {
   try {
-    loadClips(await model("anims"));
+    const animsGltf = await model("anims");
+    loadClips(animsGltf);
     // This game's own clips (the owner's salute and descending-stairs clips), packed apart from the shared library.
     loadClips(await model("anims_selassie"));
     // The salute's right hand stays as flat as it starts: as the arm came down, a curl of the fingers pinched the palm (cloth check).
     for (const t of CL.SaluteHS?.tracks || [])
       if (/RightHand(Index|Middle|Ring|Pinky|Thumb)\d\.quaternion$/.test(t.name))
         for (let i = 4; i < t.values.length; i++) t.values[i] = t.values[i % 4];
+    raiseSalute(CL.SaluteHS, animsGltf.scene);
     $("bar").style.width = "25%";
     // Behind the title: the arrival at Palisadoes, the DC-6 at the steps, Haile Selassie I at the top and the welcome around them
     // (owner's request, November 2026). The story itself begins in the yard when Start is pressed.
