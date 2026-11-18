@@ -306,3 +306,10 @@ The owner: "I will take your advice on the sheets. Let's push what we have to ma
 - Miss Cleo's hand rests on her basket (`steadyLoad` in `engine/grip.js`), and the held check now measures it (it found her hand 9 to 12 cm off before the fix).
 - The full round (audit, held, ambient, layout at four sizes, Port Royal life) is 0 in every game on the merged code.
 
+## 18 November 2026, night: launch sweep
+
+- **Every chapter of all ten games plays through with the autoplayer** (`?auto=N&one`), with no stalls and no script errors. Port Royal's and Bog Walk's autoplayers count chapters from 0, Garvey's `?auto=1` is the menu test and `?auto=9` its last chapter, and Windrush's chapter 7 needs about 8 minutes in software drawing.
+- Bog Walk's night autoplayer reported a fail: the resting-pot check took the curved rust patches on the pipe wall for pots on nothing. `auditRest` now leaves out part-cylinders (`engine/audit.js`). AUTO OK.
+- The Shady Side and the Kanawha have more detail from their pictures (`docs/games/garvey.md`).
+- Nanny Town's walking check is still 3. A faster settle on slopes made no real difference, so it was put back; by eye the climbers' feet stay on the path. Not a launch blocker.
+

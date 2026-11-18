@@ -198,6 +198,7 @@ export function auditRest(snap, groundAt = null) {
   const out = [], sz = snap.map((m) => m.b.getSize(new THREE.Vector3()));
   snap.forEach((m, i) => {
     const s = sz[i], w = Math.max(s.x, s.z), sh = shapeOf(m); if (!VESSEL.has(m.geo) || m.unlit || !sh) return;
+    { const pr = sh.geo.parameters || {}; if (pr.thetaLength !== undefined && pr.thetaLength < Math.PI * 1.9) return; }   /* a part of a cylinder (a curved patch of rust on the wall of Bog Walk's pipe) is a skin on something else, not a pot */
     const e = sh.mw.elements, bb = sh.geo.boundingBox, lx = (bb.max.x - bb.min.x) * Math.hypot(e[0], e[1], e[2]), ly = (bb.max.y - bb.min.y) * Math.hypot(e[4], e[5], e[6]), lz = (bb.max.z - bb.min.z) * Math.hypot(e[8], e[9], e[10]);
     if (Math.min(lx, lz) < 0.06 || Math.max(lx, lz) > 1.0 || ly < 0.03 || ly > 1.2) return;   /* its own size, not its box in the world: thin sticks and poles are not things that stand on a foot */
     if (m.geo === 'SphereGeometry' ? ly > 0.97 * Math.max(lx, lz) : Math.abs(e[5]) / Math.hypot(e[4], e[5], e[6]) < 0.9) return;   /* a pot stands upright; a ball (fruit, a knob) or a lying wheel or log is another matter: only squashed balls (pots, gourds) and upright cylinders are checked */

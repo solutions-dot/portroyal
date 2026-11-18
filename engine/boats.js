@@ -451,10 +451,32 @@ export function sideWheeler(o = {}) {
     for (let k = 1; k < 8; k++) { const a = Math.PI * k / 8; K.rod(V(px + Math.cos(a) * pr * 0.25, pc + Math.sin(a) * pr * 0.25, z + sd * 0.77 * sc), V(px + Math.cos(a) * pr * 0.92, pc + Math.sin(a) * pr * 0.92, z + sd * 0.77 * sc), 0.045 * sc, LINE, 3); }   /* the fan of slats on its face */
     const w = new THREE.CylinderGeometry(pr * 0.9, pr * 0.9, 1.1 * sc, 16, 1, false, 0, Math.PI); w.rotateY(Math.PI / 2); w.rotateX(-Math.PI / 2); w.translate(px, D + 0.6 * sc, z); K.add(w, WHEEL);   /* the lower half of the wheel, below the guard */ }
   /* the walking beam of her engine: an A-frame through the saloon roof and the diamond-shaped beam rocking on top of it */
-  { const wx = xOf(0.48), ay = 9.6 * sc; for (const sd of [1, -1]) for (const dx of [-2.3, 2.3]) K.rod(V(wx + dx * sc, T, sd * 0.9 * sc), V(wx, ay, sd * 0.35 * sc), 0.14 * sc, IRON, 5);
+  { const wx = xOf(0.48), ay = 9.6 * sc; for (const sd of [1, -1]) for (const dx of [-2.3, 2.3]) K.rod(V(wx + dx * sc, T, sd * 0.9 * sc), V(wx, ay, sd * 0.35 * sc), 0.16 * sc, 0xc89a5a, 5);   /* the gallows frame is timber in the painting, a pale tan; the beam on it is iron, painted green */
     const tip = (d, h) => V(wx + d * Math.cos(0.16) * sc - h * Math.sin(0.16) * sc, ay + d * Math.sin(0.16) * sc + h * sc, 0), E = [tip(-3.1, 0), tip(0, 0.85), tip(3.1, 0), tip(0, -0.85)];
     for (let k = 0; k < 4; k++) K.rod(E[k], E[(k + 1) % 4], 0.12 * sc, IRON, 5); K.rod(E[0], E[2], 0.1 * sc, IRON, 5); K.rod(E[1], E[3], 0.1 * sc, IRON, 5);
     K.rod(E[0], V(E[0].x, T, 0), 0.08 * sc, IRON, 4); K.rod(E[2], V(E[2].x, D + 1 * sc, 0), 0.08 * sc, IRON, 4); }
+  /* more of what Bard painted (18 November 2026, owner: "could be a bit more detailed"):
+     - a white rail with turned posts round the open fore deck, under the striped awning, and along the main deck aft of the paddle boxes;
+     - a second, smaller striped awning on the saloon deck forward of the pilot house;
+     - window frames picked out in red on the saloon deck, and a dark band under the main deck windows;
+     - gilt ball finials on the rail posts, a gilt eagle on the pilot house roof, a bell and the brass whistle on the escape pipe beside the funnel;
+     - a gilt sunburst in the middle of each paddle box with a blue ring round it, and the box's face drawn as a fan of slats (already there). */
+  const GILT = 0xd8b04a, RED = 0xa03a2c, BLUE = 0x3d5f9a;
+  for (const sd of [1, -1]) { for (let k = 0; k <= 22; k++) { const s0 = 0.7 + 0.28 * k / 22, z = sd * (guard(s0) - 0.12 * sc); K.box(0.06 * sc, 0.95 * sc, 0.06 * sc, xOf(s0), D + 0.48 * sc, z, WHITE); }
+    for (const y of [D + 0.95 * sc, D + 0.5 * sc]) for (let k = 0; k < 22; k++) { const s0 = 0.7 + 0.28 * k / 22, s1 = 0.7 + 0.28 * (k + 1) / 22; K.rod(V(xOf(s0), y, sd * (guard(s0) - 0.12 * sc)), V(xOf(s1), y, sd * (guard(s1) - 0.12 * sc)), 0.03 * sc, WHITE, 3); }
+    for (let k = 0; k <= 16; k++) { const s0 = 0.04 + 0.28 * k / 16; K.box(0.06 * sc, 0.95 * sc, 0.06 * sc, xOf(s0), D + 0.48 * sc, sd * (guard(s0) - 0.12 * sc), WHITE); }
+    for (const y of [D + 0.95 * sc]) for (let k = 0; k < 16; k++) { const s0 = 0.04 + 0.28 * k / 16, s1 = 0.04 + 0.28 * (k + 1) / 16; K.rod(V(xOf(s0), y, sd * (guard(s0) - 0.12 * sc)), V(xOf(s1), y, sd * (guard(s1) - 0.12 * sc)), 0.03 * sc, WHITE, 3); }
+    for (let k = 0; k < 26; k += 2) { const s0 = 0.02 + 0.775 * k / 26; K.cyl(0.07 * sc, 0.07 * sc, 0.14 * sc, xOf(s0), U + 1.1 * sc, sd * up(s0), GILT, 6); }   /* gilt ball finials on the saloon deck rail */
+    for (let k = 0; k < 22; k++) { const s0 = S0 + 0.02 + (S1 - S0 - 0.04) * k / 21; K.box(0.78 * sc, 1.02 * sc, 0.06 * sc, xOf(s0), U + 1.3 * sc, sd * (sal(s0) + 0.012 * sc), RED); }   /* the red frames round the saloon windows (the dark glass is drawn over them) */
+    K.box((M1 - M0) * L, 0.12 * sc, 0.05 * sc, xOf((M0 + M1) / 2), D + 0.95 * sc, sd * (cab((M0 + M1) / 2) + 0.01 * sc), LINE); }
+  for (const sd of [1, -1]) for (let k = 0; k < 22; k++) { const s0 = S0 + 0.02 + (S1 - S0 - 0.04) * k / 21; K.box(0.62 * sc, 0.85 * sc, 0.08 * sc, xOf(s0), U + 1.3 * sc, sd * (sal(s0) + 0.03 * sc), WIN); }
+  for (let k = 0; k < 6; k++) { const s0 = 0.745 + 0.045 * k / 6, s1 = 0.745 + 0.045 * (k + 1) / 6, sm = (s0 + s1) / 2; K.box((s1 - s0) * L, 0.05 * sc, sal(0.76) * 2 + 0.4 * sc, xOf(sm), T + 2.1 * sc, 0, k % 2 ? BLUE : WHITE); }   /* the small striped awning forward of the pilot house */
+  for (const sd of [1, -1]) for (const s0 of [0.748, 0.788]) K.box(0.06 * sc, 2.1 * sc, 0.06 * sc, xOf(s0), T + 1.05 * sc, sd * sal(0.76), WHITE);
+  { const x = xOf(0.715), ph = 2.5 * sc, top = T + ph - 0.76 * sc; K.cyl(0.05 * sc, 0.05 * sc, 0.5 * sc, x, top + 0.25 * sc, 0, GILT, 5); const e = new THREE.SphereGeometry(0.3 * sc, 8, 6); e.scale(1.6, 0.9, 0.7); e.translate(x, top + 0.62 * sc, 0); K.add(e, GILT); for (const sd of [1, -1]) K.box(0.6 * sc, 0.06 * sc, 0.45 * sc, x - 0.1 * sc, top + 0.72 * sc, sd * 0.35 * sc, GILT, 0, sd * 0.4); }   /* the gilt eagle on the pilot house, wings spread */
+  { const fx = xOf(0.645); K.cyl(0.09 * sc, 0.09 * sc, 4.4 * sc, fx - 1.1 * sc, T + 2.2 * sc, 0.7 * sc, 0x8a8c88, 6); K.cyl(0.13 * sc, 0.08 * sc, 0.5 * sc, fx - 1.1 * sc, T + 4.6 * sc, 0.7 * sc, GILT, 8);   /* the escape pipe and its brass whistle */
+    K.cyl(0.05 * sc, 0.05 * sc, 1.2 * sc, fx + 1.4 * sc, T + 0.6 * sc, 0, LINE, 5); const bell = new THREE.CylinderGeometry(0.16 * sc, 0.28 * sc, 0.36 * sc, 10, 1, true); bell.translate(fx + 1.4 * sc, T + 1.3 * sc, 0); K.add(bell, GILT); }   /* the bell on its post */
+  for (const sd of [1, -1]) { const z = sd * (guard(0.42) - 0.75 * sc + 0.77 * sc); const sun = new THREE.CircleGeometry(1.0 * sc, 16, 0, Math.PI); sun.translate(px, pc, 0); if (sd < 0) sun.rotateY(Math.PI); sun.translate(0, 0, z + sd * 0.02 * sc); K.add(sun, GILT);
+    const ring = new THREE.TorusGeometry(pr * 0.86, 0.12 * sc, 4, 20, Math.PI); ring.translate(px, pc, z + sd * 0.01 * sc); K.add(ring, BLUE); }
   /* flagstaffs at the bow and the stern (no flags: we have no source for the ones she flew in 1920) */
   K.cyl(0.07 * sc, 0.04 * sc, 11 * sc, xOf(0.985), D + 5.5 * sc, 0, SPAR, 5); K.cyl(0.07 * sc, 0.04 * sc, 10.5 * sc, xOf(0.03), U + 5.25 * sc, 0, SPAR, 5);
   const g = new THREE.Group(), m = K.mesh('sideWheeler'); g.add(m); g.userData.size = [L, 16.4 * sc - keel, guard(0.42) * 2]; return g;
@@ -484,7 +506,7 @@ export function steamYacht(o = {}) {
   { const dc = new THREE.Color(DECK); skin(b, NS, 2, (i, j) => { const s = i / NS; return [xD(s), sheer(s), (j - 1) * half(s) * 0.94, dc.r, dc.g, dc.b]; }, () => new THREE.Vector3(0, 1, 0));
     const wc = new THREE.Color(WHITE); for (const sd of [1, -1]) skin(b, NS, 1, (i, j) => { const s = i / NS; return [xAt(s, sheer(s) + (j ? 0 : 0.5 * sc)), sheer(s) + (j ? 0 : 0.5 * sc), sd * half(s) * 0.95, wc.r * 0.86, wc.g * 0.86, wc.b * 0.86]; }, (x, y, z) => new THREE.Vector3(0, 0, -z)); }
   K.add(geoOf(b));
-  for (const sd of [1, -1]) for (let k = 0; k < 16; k++) { const s = 0.2 + 0.62 * k / 15, y = sheer(s) - 1.25 * sc; K.cyl(0.13 * sc, 0.13 * sc, 0.06 * sc, xAt(s, y), y, sd * half(s) * 0.995, DARK, 6, Math.PI / 2); }   /* portholes */
+  for (const sd of [1, -1]) for (let k = 0; k < 28; k++) { const s = 0.17 + 0.68 * k / 27, y = sheer(s) - 1.25 * sc;   /* the photograph shows a long close row of them */ K.cyl(0.13 * sc, 0.13 * sc, 0.06 * sc, xAt(s, y), y, sd * half(s) * 0.995, DARK, 6, Math.PI / 2); }   /* portholes */
   /* the long low deckhouse, in three lengths that follow the sheer, with its windows; the skylight roofs */
   for (const [s0, s1] of [[0.16, 0.36], [0.37, 0.58], [0.59, 0.76]]) { const sm = (s0 + s1) / 2, len = xD(s1) - xD(s0), w = Math.min(half(s0), half(s1)) * 1.25, y = sheer(sm), hh = 1.9 * sc; K.box(len, hh, w, xD(sm), y + hh / 2, 0, HOUSE, 0, Math.atan2(sheer(s1) - sheer(s0), len)); K.box(len + 0.3 * sc, 0.1 * sc, w + 0.4 * sc, xD(sm), y + hh + 0.05 * sc, 0, AWN, 0, Math.atan2(sheer(s1) - sheer(s0), len));
     for (const sd of [1, -1]) for (let k = 0; k < 7; k++) K.box(0.75 * sc, 0.7 * sc, 0.06 * sc, xD(s0) + len * (k + 0.5) / 7, y + hh * 0.62, sd * w / 2, DARK); }
@@ -507,5 +529,21 @@ export function steamYacht(o = {}) {
   { const x = xD(0.73), y0 = sheer(0.73), yy = y0 + 7.6 * sc; K.rod(V(x - 1.05 * sc, yy - 0.3 * sc, -3.2 * sc), V(x - 1.05 * sc, yy + 0.3 * sc, 3.2 * sc), 0.08 * sc, SPAR, 5); }
   K.rod(tops[0], bs, 0.03 * sc, RIG, 3); K.rod(tops[0], stem, 0.03 * sc, RIG, 3); K.rod(tops[0], tops[1], 0.03 * sc, RIG, 3); K.rod(tops[1], tops[2], 0.03 * sc, RIG, 3); K.rod(tops[2], V(xD(0), sheer(0) + 0.5 * sc, 0), 0.03 * sc, RIG, 3);
   K.cyl(0.04 * sc, 0.03 * sc, 2.4 * sc, xD(0.005), sheer(0) + 1.6 * sc, 0, SPAR, 4);   /* the ensign staff at the stern, bare */
+  /* more of what the photograph shows (18 November 2026, owner: "could be a bit more detailed"):
+     - a white rail on stanchions all round the deck edge, and a thin gilt line along the sheer below it, as yachts of her day carried;
+     - gilt scrollwork (trailboards) either side of the clipper bow under the bowsprit;
+     - cowl ventilators either side of the funnel, and the steam pipe up its after side;
+     - a canvas dodger round the front of the bridge, and a small chart house on it;
+     - a gaff on the main and the mizzen mast, as in the photograph. */
+  const GILT2 = 0xd0a848;
+  for (const sd of [1, -1]) { for (let k = 0; k <= 40; k++) { const s = 0.01 + 0.97 * k / 40; K.box(0.05 * sc, 0.75 * sc, 0.05 * sc, xD(s), sheer(s) + 0.88 * sc, sd * half(s) * 0.93, WHITE); }
+    for (let k = 0; k < 40; k++) { const s0 = 0.01 + 0.97 * k / 40, s1 = 0.01 + 0.97 * (k + 1) / 40; K.rod(V(xD(s0), sheer(s0) + 1.25 * sc, sd * half(s0) * 0.93), V(xD(s1), sheer(s1) + 1.25 * sc, sd * half(s1) * 0.93), 0.035 * sc, WHITE, 3);
+      const y0 = sheer(s0) - 0.32 * sc, y1 = sheer(s1) - 0.32 * sc; K.rod(V(xAt(s0, y0), y0, sd * half(s0) * 1.002), V(xAt(s1, y1), y1, sd * half(s1) * 1.002), 0.035 * sc, GILT2, 3); }
+    const g = new THREE.TorusGeometry(1.1 * sc, 0.07 * sc, 4, 10, Math.PI * 0.8); g.rotateZ(-0.3); g.translate(xD(0.985), sheer(0.985) - 0.5 * sc, sd * half(0.985) * 1.05 + sd * 0.05 * sc); K.add(g, GILT2); }
+  { const fx = xD(0.46), fy = sheer(0.46) + 1.9 * sc; K.cyl(0.11 * sc, 0.11 * sc, 6.2 * sc, fx - 1.55 * sc, fy + 3.1 * sc, 0, 0x8a8c88, 6, 0, -0.08);
+    for (const sd of [1, -1]) for (const dx of [1.9, -2.4]) { const x = fx + dx * sc, z = sd * 1.6 * sc; K.cyl(0.18 * sc, 0.18 * sc, 1.6 * sc, x, fy + 0.8 * sc, z, WHITE, 8); const m2 = new THREE.CylinderGeometry(0.36 * sc, 0.22 * sc, 0.5 * sc, 10, 1, true); m2.rotateZ(Math.PI / 2 * (dx > 0 ? 1 : -1)); m2.translate(x + (dx > 0 ? 0.18 : -0.18) * sc, fy + 1.75 * sc, z); K.add(m2, WHITE); } }
+  { const s = 0.535, x = xD(s), y = sheer(s) + 1.95 * sc; K.box(0.08 * sc, 0.95 * sc, B * 0.8, x + 2.3 * sc, y + 0.5 * sc, 0, AWN); K.box(1.8 * sc, 1.5 * sc, 1.8 * sc, x - 1.2 * sc, y + 0.8 * sc, 0, HOUSE); K.box(1.9 * sc, 0.08 * sc, 1.9 * sc, x - 1.2 * sc, y + 1.58 * sc, 0, WHITE); for (const sd of [1, -1]) K.box(1.2 * sc, 0.5 * sc, 0.05 * sc, x - 1.2 * sc, y + 1.0 * sc, sd * 0.91 * sc, DARK); }
+  for (const [s, mh] of [[0.36, 23.4], [0.155, 17]]) { const x = xD(s), y0 = sheer(s), lean = 0.137, gy = y0 + 4.2 * sc, gx = x - lean * 4.2 * sc; K.rod(V(gx, gy, 0), V(gx - (s > 0.2 ? 7.5 : 5.5) * sc, gy + 2.6 * sc, 0), 0.08 * sc, SPAR, 5); }
+
   const g = new THREE.Group(), m = K.mesh('steamYacht'); g.add(m); g.userData.size = [L + 9 * sc, tops[0].y - keel, B]; return g;
 }
