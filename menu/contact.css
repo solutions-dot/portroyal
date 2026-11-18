@@ -14,5 +14,5 @@
   .contact-form textarea{resize:vertical;min-height:110px}
   .contact-send{justify-self:start;min-height:48px;padding:.7rem 1.3rem;border:0;border-radius:999px;background:var(--mango);color:var(--deep);font:inherit;font-weight:800;cursor:pointer}
   .contact-note{margin:0;color:rgba(255,247,232,.75);font-size:.85rem}
-  @media(max-width:480px){.contact-fields{grid-template-columns:1fr}#contactpanel{padding:1.1rem}.links .contact-pill{font-size:clamp(.72rem,3.5vw,.85rem);padding:0 .7rem;white-space:nowrap;min-height:40px}}
+  @media(max-width:480px){.contact-fields{grid-template-columns:1fr}#contactpanel{padding:1.1rem}.links .contact-pill{font-size:clamp(.72rem,3.5vw,.85rem);padding:0 .7rem;white-space:nowrap;min-height:44px}}
   @media(max-width:370px){.links .contact-pill{padding:0 .5rem;font-size:.72rem}.links .contact-pill span[aria-hidden]{display:none}}
