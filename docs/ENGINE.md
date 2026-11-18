@@ -8,7 +8,55 @@ import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, tone, nois
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
 ```
 
-The other modules, each covered below: `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `ambient.js` (background people who walk about, chat, work, sit, watch and play), `story.js` (who moves the story, the hint arrow, things the player carries), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies), `ui-audit.js` (text overlap) and `vehicles.js` (railway vehicles). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
+The other modules, each covered below: `perf.js`, `joinbody.js`, `batch.js` and `preload.js` (performance on phones), `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `ambient.js` (background people who walk about, chat, work, sit, watch and play), `story.js` (who moves the story, the hint arrow, things the player carries), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies), `ui-audit.js` (text overlap) and `vehicles.js` (railway vehicles). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
+
+## Performance on phones (18 November 2026)
+
+Four engine modules keep frames smooth on phones without changing the picture. Every game uses them. Measure with `?perf`, which works in public builds too, so it can be checked on a real phone on the live site: a small box shows frames a second, frame time, pixel ratio, draw calls, triangles, geometries and textures on the graphics chip, how many people were joined and how many meshes that saved, and the JavaScript heap where the browser reports it. Scripts can read `window.__perf`, `window.__join`, `window.__batch` and `window.__preload`.
+
+### engine/perf.js: pixels and frame rate
+
+`tunePixels(renderer, { phone, phoneMax = 1.5, max = 2, floor, slow = 28, quick = 19 })` replaces a game's own `renderer.setPixelRatio(...)`. Call it once, right after making the renderer.
+
+- **Cap.** A phone draws at most `phoneMax` pixels per screen point and a computer at most `max`. Most phones are 3, and on a phone screen 1.5 looks the same at a quarter of the work. Port Royal keeps its own caps (1.25 and 1.75); Windrush and Selassie use 1.4 on phones.
+- **Slow frames.** It measures frames with its own `requestAnimationFrame`, so no game loop changes. If the average frame stays over `slow` ms for a few seconds, it lowers the ratio by 0.15, down to `floor` (0.9 on phones, 1 on computers). After ten seconds of frames under `quick` ms it climbs back by 0.1. Single frames over 120 ms (loading) and the first five seconds are left out.
+- `isPhone()` is a coarse pointer or a screen under 600 points on its short side.
+- Port Royal's own slow-frame drop moved here.
+
+### engine/joinbody.js: one mesh per look, not per piece of clothing
+
+A body is a dozen or more skinned pieces (skin, shirt, trousers, hat, buttons), and each piece cost a draw call: a crowd of thirty cost over four hundred. `animate()` in `engine/anim.js` now registers every body, and after each mixer update `joinTick(m)` joins it once it has been dressed. Pieces are grouped by everything about their material except colour (roughness, metalness, emissive, side, transparency and so on), and each piece's colour is baked into the joined mesh's vertex colours. The picture is the same and a body costs two or three draw calls: skin (its own material, so the night fill still reaches it), clothes, and the eyes.
+
+- The pieces stay in the body, `visible`, with `layers.mask = 0`, so the camera skips them but every check (seats, feet, hands, cloth, faces, audits) still measures them as before. `isJoined(o)` is true for a joined mesh; a check that walks a body's meshes should skip it.
+- Left apart: a piece with a texture, morph targets, its own `onBeforeCompile`, or a different bind pose. A piece whose bones line up with the first piece's through a constant offset (packed files keep their quantisation in the inverse bind matrices) is moved onto it.
+- Watched. If the game shows or hides a piece (a hat taken off, the seated skirt swapped in by `skirtTick`), swaps a material, or changes a colour, the body is joined again in the same update. Values that fade every frame (the night fill, roughness, opacity) are followed, not re-joined. A body that changes more than six times in three seconds is left as pieces for good.
+- Cached. Joined points, normals and skin weights are built once per set of piece geometries and shared by every body made from them; colours are shared by bodies with the same colours.
+- `?nojoin` (any build) turns it off. `m.userData.noJoin = true` before `animate()` leaves one body alone; `setJoin(false)` turns it off for a game; `splitBody(m)` puts a body back as pieces.
+- `?test=join` checks every joined body twelve seconds in: posed, each joined point must land within 2 mm of its piece's point. The title reads `JOIN 0 issues in N bodies`.
+- Windrush and Selassie bodies are already packed as one or two meshes, so there is little left to join there. Kendal's own `joinBody` (phone crowds only, one material for skin and clothes) is retired.
+
+### engine/batch.js: still scenery
+
+`batchStatic(root, { bake = true })` moved here from seven games' own `gfx.js` (Bog Walk, Eventide, Kendal, Melissa, Nanny, Selassie, Windrush). Each game's `gfx.js` re-exports it, so imports did not change.
+
+- As before, every still mesh under `root` is merged into one mesh per material. Anything that moves, is switched on and off on its own, or is animated goes under a group marked `userData.noBatch = true`.
+- New: meshes whose materials differ only in colour are merged into one mesh too, with each colour baked into the points. Games make a new material for each wall, post and plank, so this is where most scenery draw calls went (Eventide's title: 190 batched meshes became 119).
+- Such a group is watched every frame. If the game changes one of its materials later (a window lit at night, a fade, a material made see-through), the group splits back on the spot into one mesh per material, each with the game's own material, so it follows every later change as before.
+- `?nobake` turns the colour step off.
+
+### engine/preload.js: the next chapter is ready, the last one lets go
+
+| Call | What it does |
+|---|---|
+| `setQuiet(fn)` | How the engine knows the player is reading, not moving: `fn()` is true while a conversation, a card, the chapter title or a panel is open. |
+| `ahead(names)` | Background download of the next chapter's model files (`prefetch` in `engine/loader.js`; skipped on slow or data-saving connections). Downloading costs no frame time. |
+| `work(fn, { wait = 6000 })` | Queue heavy work (unpacking a model through the game's cached loader, building a place). Jobs run one at a time while `fn()` from `setQuiet` is true, or after `wait` ms at an idle moment. |
+| `warm(renderer, object, camera, scene)` | Compile the shaders and upload the textures of a place that is built but hidden, so its first frame does not hitch. Run it from `work()`. |
+| `release(object, scene)` | Free the graphics memory (geometries, materials, textures) of a place the player has left, keeping anything still used elsewhere in `scene`. Nothing is lost: three.js sends a freed thing again if it is shown again. Phones, iPhones above all, reload the page when graphics memory runs out. |
+
+So yes, a conversation is the moment for the heavy part: the camera is still and the player is reading, so a short stutter there is not seen. The download starts earlier, as soon as the chapter starts. Each game's own doc says what it wires.
+
+`engine/loader.js` now unpacks base64 with the browser's own `Uint8Array.fromBase64` where it exists, which is several times quicker than the old loop on a phone.
 
 ## Posture: `POSTURE` in `engine/anim.js` (16 November 2026)
 
