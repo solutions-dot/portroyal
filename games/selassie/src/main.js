@@ -1531,8 +1531,18 @@ async function start() {
    get an extra turn that grows with how far into the salute each moment is (0 at rest, 1 at the full salute), so the rest pose is not
    changed and the hand meets the brim. SALUTE_FIX is [arm x, y, z, forearm x, y, z] in radians; ?sfix=... tries other values (dev). */
 const SALUTE_FIX = [0, 0, -0.8, -0.5, 0.75, 0];
-function raiseSalute(clip) {
+function raiseSalute(clip, rig) {
   if (!clip) return;
+  /* a salute is given with the fingers straight and together (the reference photographs): the four fingers take the rig's rest pose, which is straight; the thumb is left as the clip has it */
+  /* the clip moves only the first joint of each finger; the other two keep whatever the last clip left (a curl), so all three are set here */
+  const prefix = (clip.tracks.find((t) => /RightHandIndex1\.quaternion$/.test(t.name)) || { name: "mixamorigRightHandIndex1.quaternion" }).name.replace(/RightHandIndex1\.quaternion$/, "");
+  for (const f of ["Index", "Middle", "Ring", "Pinky"])
+    for (const j of [1, 2, 3]) {
+      const bone = prefix + "RightHand" + f + j, b = rig && rig.getObjectByName(bone), q = b ? b.quaternion : new THREE.Quaternion();
+      const t = clip.tracks.find((t) => t.name === bone + ".quaternion");
+      if (t) for (let i = 0; i < t.values.length; i += 4) q.toArray(t.values, i);
+      else clip.tracks.push(new THREE.QuaternionKeyframeTrack(bone + ".quaternion", [0, clip.duration], [...q.toArray(), ...q.toArray()]));
+    }
   let fix = SALUTE_FIX;
   if (__DEV__) { const v = new URLSearchParams(location.search).get("sfix"); if (v) fix = v.split(",").map(Number); }
   const parts = [["RightArm", fix.slice(0, 3)], ["RightForeArm", fix.slice(3, 6)]];
@@ -1557,14 +1567,15 @@ onLoadFail((name) => {
 });
 (async () => {
   try {
-    loadClips(await model("anims"));
+    const animsGltf = await model("anims");
+    loadClips(animsGltf);
     // This game's own clips (the owner's salute and descending-stairs clips), packed apart from the shared library.
     loadClips(await model("anims_selassie"));
     // The salute's right hand stays as flat as it starts: as the arm came down, a curl of the fingers pinched the palm (cloth check).
     for (const t of CL.SaluteHS?.tracks || [])
       if (/RightHand(Index|Middle|Ring|Pinky|Thumb)\d\.quaternion$/.test(t.name))
         for (let i = 4; i < t.values.length; i++) t.values[i] = t.values[i % 4];
-    raiseSalute(CL.SaluteHS);
+    raiseSalute(CL.SaluteHS, animsGltf.scene);
     $("bar").style.width = "25%";
     // Behind the title: the arrival at Palisadoes, the DC-6 at the steps, Haile Selassie I at the top and the welcome around them
     // (owner's request, November 2026). The story itself begins in the yard when Start is pressed.
