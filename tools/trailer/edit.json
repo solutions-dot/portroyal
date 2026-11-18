@@ -10,7 +10,7 @@
   },
   {
    "clip": "selassie_land",
-   "from": 1.5,
+   "from": 3.7,
    "dur": 1.0
   },
   {
@@ -98,8 +98,8 @@
   },
   {
    "clip": "selassie_land",
-   "from": 0.5,
-   "dur": 3.0,
+   "from": 3.5,
+   "dur": 2.5,
    "stamp": {
     "place": "The Emperor’s Arrival",
     "year": "1966",
@@ -109,7 +109,7 @@
   {
    "clip": "windrush",
    "from": 6.0,
-   "dur": 3.0,
+   "dur": 3.5,
    "stamp": {
     "place": "Windrush",
     "year": "1948",
