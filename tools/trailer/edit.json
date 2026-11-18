@@ -107,9 +107,9 @@
   },
   {
    "clip": "eventide",
-   "from": 1.0,
+   "from": 0.5,
    "dur": 3.0,
-   "push": 0.1,
+   "push": 0.08,
    "stamp": {
     "place": "Eventide Home Fire",
     "year": "1980",
