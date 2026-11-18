@@ -118,13 +118,18 @@
   },
   {
    "clip": "tivoli",
-   "from": 0.5,
+   "from": 1.0,
    "dur": 4.0,
    "stamp": {
     "place": "Tivoli Incursion",
     "year": "2010",
     "colour": "#fed100"
-   }
+   },
+   "crop": [
+    0.42,
+    0.6,
+    1.45
+   ]
   },
   {
    "clip": "melissa",
@@ -147,9 +152,14 @@
    }
   },
   {
-   "clip": "garvey",
-   "from": 4.0,
-   "dur": 1.5
+   "clip": "evfire",
+   "from": 2.5,
+   "dur": 1.5,
+   "stamp": {
+    "place": "Eventide Home Fire",
+    "year": "1980",
+    "colour": "#a9dcc2"
+   }
   },
   {
    "clip": "nanny",
