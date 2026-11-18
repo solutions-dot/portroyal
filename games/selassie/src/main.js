@@ -1527,6 +1527,29 @@ async function start() {
   }
   canvas.focus();
 }
+/* The owner's salute clip, on his body, brings the hand to the cheek, not to the cap (owner, 18 Nov 2026). The upper arm and forearm
+   get an extra turn that grows with how far into the salute each moment is (0 at rest, 1 at the full salute), so the rest pose is not
+   changed and the hand meets the brim. SALUTE_FIX is [arm x, y, z, forearm x, y, z] in radians; ?sfix=... tries other values (dev). */
+const SALUTE_FIX = [0, 0, -0.8, -0.5, 0.75, 0];
+function raiseSalute(clip) {
+  if (!clip) return;
+  let fix = SALUTE_FIX;
+  if (__DEV__) { const v = new URLSearchParams(location.search).get("sfix"); if (v) fix = v.split(",").map(Number); }
+  const parts = [["RightArm", fix.slice(0, 3)], ["RightForeArm", fix.slice(3, 6)]];
+  const tr = clip.tracks.find((t) => /RightArm\.quaternion$/.test(t.name));
+  if (!tr) return;
+  const q0 = new THREE.Quaternion().fromArray(tr.values, 0), qi = new THREE.Quaternion(), n = tr.values.length / 4;
+  const ang = []; let max = 1e-6;
+  for (let i = 0; i < n; i++) { qi.fromArray(tr.values, i * 4); const a = q0.angleTo(qi); ang.push(a); max = Math.max(max, a); }
+  const w = ang.map((a) => Math.min(1, a / (max * 0.85)));   /* how far into the salute each key of the upper arm is */
+  for (const [bone, e] of parts) {
+    const t = clip.tracks.find((t) => new RegExp(bone + "\\.quaternion$").test(t.name));
+    if (!t) continue;
+    const d = new THREE.Quaternion().setFromEuler(new THREE.Euler(e[0], e[1], e[2])), id = new THREE.Quaternion(), dq = new THREE.Quaternion();
+    const wAt = (time) => { let k = 0; while (k < n - 1 && tr.times[k + 1] <= time) k++; if (k >= n - 1) return w[n - 1]; const f = (time - tr.times[k]) / (tr.times[k + 1] - tr.times[k] || 1); return w[k] + (w[k + 1] - w[k]) * Math.max(0, Math.min(1, f)); };   /* the bones' keys need not line up */
+    for (let i = 0; i < t.times.length; i++) { qi.fromArray(t.values, i * 4); dq.slerpQuaternions(id, d, wAt(t.times[i])); qi.multiply(dq).toArray(t.values, i * 4); }
+  }
+}
 $("start").onclick = start;
 onLoadFail((name) => {
   $("loadnote").textContent =
@@ -1541,6 +1564,7 @@ onLoadFail((name) => {
     for (const t of CL.SaluteHS?.tracks || [])
       if (/RightHand(Index|Middle|Ring|Pinky|Thumb)\d\.quaternion$/.test(t.name))
         for (let i = 4; i < t.values.length; i++) t.values[i] = t.values[i % 4];
+    raiseSalute(CL.SaluteHS);
     $("bar").style.width = "25%";
     // Behind the title: the arrival at Palisadoes, the DC-6 at the steps, Haile Selassie I at the top and the welcome around them
     // (owner's request, November 2026). The story itself begins in the yard when Start is pressed.
