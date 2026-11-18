@@ -58,10 +58,11 @@ for (const [si, s] of E.shots.entries()) {
   let a = Math.round(s.from * fps);
   const k = Math.round(s.dur * fps);
   if (a + k > files.length) throw new Error(`${s.clip}: wants frames ${a}-${a + k}, has ${files.length}`);
-  if (s.push) {   /* a slow push in on a shot that hardly moves: the picture grows by `push` over the shot */
+  if (s.push || s.crop) {   /* push: a slow push in on a shot that hardly moves (the picture grows by `push`); crop: [x, y, zoom] frames a part of the shot, x and y its centre as fractions */
     const out = `${work}/push${si}`; fs.mkdirSync(out);
+    const [cx, cy, cz] = s.crop || [0.5, 0.5, 1], z = `${cz}*(1+${s.push || 0}*on/${k})`;
     execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-start_number', String(a + 1), '-framerate', String(fps), '-i', `${dir}/f%05d.jpg`,
-      '-vf', `scale=2560:1440,zoompan=z='1+${s.push}*on/${k}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1280x720:fps=${fps}`, '-frames:v', String(k), '-q:v', '2', `${out}/f%05d.jpg`]);
+      '-vf', `scale=2560:1440,zoompan=z='${z}':x='max(0,min(iw-iw/zoom,${cx}*iw-iw/zoom/2))':y='max(0,min(ih-ih/zoom,${cy}*ih-ih/zoom/2))':d=1:s=1280x720:fps=${fps}`, '-frames:v', String(k), '-q:v', '2', `${out}/f%05d.jpg`]);
     dir = out; files = fs.readdirSync(out).sort(); a = 0;
   }
   for (let i = 0; i < k; i++) fs.symlinkSync(path.resolve(`${dir}/${files[a + i]}`), `${work}/seq/${String(++n).padStart(5, '0')}.jpg`);

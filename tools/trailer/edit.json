@@ -80,13 +80,19 @@
   },
   {
    "clip": "nanny_march",
-   "from": 1.0,
+   "from": 0.5,
    "dur": 3.0,
    "stamp": {
     "place": "The Fall of Nanny Town",
     "year": "1734",
     "colour": "#f0b860"
-   }
+   },
+   "crop": [
+    0.56,
+    0.42,
+    2.0
+   ],
+   "push": 0.06
   },
   {
    "clip": "kendal",
