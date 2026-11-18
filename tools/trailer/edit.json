@@ -15,7 +15,7 @@
   },
   {
    "clip": "windrush",
-   "from": 4.0,
+   "from": 0.0,
    "dur": 1.0
   },
   {
@@ -108,7 +108,7 @@
   },
   {
    "clip": "windrush",
-   "from": 6.0,
+   "from": 8.5,
    "dur": 3.5,
    "stamp": {
     "place": "Windrush",
@@ -158,7 +158,7 @@
   },
   {
    "clip": "windrush",
-   "from": 9.5,
+   "from": 2.5,
    "dur": 1.5
   }
  ],
