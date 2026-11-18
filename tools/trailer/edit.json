@@ -1,51 +1,275 @@
 {
-  "fps": 30, "total": 60, "barsFrom": 9,
-  "shots": [
-    { "clip": "portroyal", "from": 1.0, "dur": 1.0 },
-    { "clip": "selassie_land", "from": 1.5, "dur": 1.0 },
-    { "clip": "windrush", "from": 4.0, "dur": 1.0 },
-    { "clip": "intro", "from": 0.1, "dur": 6.0 },
-    { "clip": "play_walk", "from": 1.0, "dur": 3.0, "stamp": { "place": "The Emperor’s Arrival", "year": "1966", "colour": "#edc25f" } },
-    { "clip": "play_phone", "phone": true, "bg": "kendal", "bgFrom": 1.0, "from": 1.0, "dur": 3.0 },
-    { "clip": "bogwalk", "from": 3.0, "dur": 3.0, "stamp": { "place": "Bog Walk Tube Flood", "year": "1904", "colour": "#e8873f" } },
-    { "clip": "garvey", "from": 1.0, "dur": 3.0, "stamp": { "place": "Marcus Garvey and the UNIA", "year": "1914", "colour": "#E8505B" } },
-    { "clip": "learn_journal", "from": 0.5, "dur": 3.0 },
-    { "clip": "nanny", "from": 2.0, "dur": 3.0, "stamp": { "place": "The Fall of Nanny Town", "year": "1734", "colour": "#f0b860" } },
-    { "clip": "kendal", "from": 4.0, "dur": 3.0, "stamp": { "place": "Kendal Train Crash", "year": "1957", "colour": "#1FB5A3" } },
-    { "clip": "eventide", "from": 2.0, "dur": 3.0, "stamp": { "place": "Eventide Home Fire", "year": "1980", "colour": "#a9dcc2" } },
-    { "clip": "selassie_land", "from": 0.5, "dur": 3.0, "stamp": { "place": "The Emperor’s Arrival", "year": "1966", "colour": "#edc25f" } },
-    { "clip": "windrush", "from": 6.0, "dur": 3.0, "stamp": { "place": "Windrush", "year": "1948", "colour": "#efbd60" } },
-    { "clip": "tivoli", "from": 1.0, "dur": 3.0, "stamp": { "place": "Tivoli Gardens", "year": "Today", "colour": "#fed100" } },
-    { "clip": "melissa", "from": 6.0, "dur": 3.0, "stamp": { "place": "Hurricane Gilbert", "year": "1988", "colour": "#d6c8f5" } },
-    { "clip": "selassie_crowd", "from": 1.0, "dur": 1.5 },
-    { "clip": "portroyal", "from": 4.0, "dur": 1.5, "stamp": { "place": "Port Royal Earthquake", "year": "1692", "colour": "#FFB627" } },
-    { "clip": "nanny", "from": 5.5, "dur": 1.5 },
-    { "clip": "windrush", "from": 9.5, "dur": 1.5 }
-  ],
-  "lines": [
-    { "t0": 0.1, "t1": 2.95, "text": "What if history was a place you could visit?", "cls": "small" },
-    { "t0": 9.15, "t1": 11.9, "text": "Play.", "sub": "Walk the streets. Explore every corner.", "cls": "word" },
-    { "t0": 12.2, "t1": 14.9, "text": "Tap people to talk.", "sub": "On a phone or a computer", "cls": "small left" },
-    { "t0": 21.15, "t1": 23.9, "text": "Learn.", "sub": "Real history for ages 6 and up", "cls": "word" },
-    { "t0": 33.15, "t1": 35.9, "text": "Discover.", "sub": "The moments that shaped Jamaica", "cls": "word" },
-    { "t0": 45.1, "t1": 47.95, "text": "You cannot change what happened.", "cls": "small" },
-    { "t0": 48.05, "t1": 50.9, "text": "But you can be there.", "cls": "small" }
-  ],
-  "passport": {
-    "at": 51, "first": 0.25, "gap": 0.3, "emptyAt": 3.3, "empty": 5,
-    "say1": "Ten stories so far.", "say2": "Many more on the way.",
-    "stamps": [
-      { "year": 1692, "name": "Port Royal", "colour": "#d9901a" },
-      { "year": 1734, "name": "Nanny Town", "colour": "#c98a2e" },
-      { "year": 1904, "name": "Bog Walk", "colour": "#d0702a" },
-      { "year": 1914, "name": "Marcus Garvey", "colour": "#E8505B" },
-      { "year": 1948, "name": "Windrush", "colour": "#2a6f97" },
-      { "year": 1957, "name": "Kendal", "colour": "#14907f" },
-      { "year": 1966, "name": "The Emperor’s Arrival", "colour": "#b8892a" },
-      { "year": 1980, "name": "Eventide", "colour": "#3f8f6b" },
-      { "year": 2010, "name": "Tivoli", "colour": "#0b5d36" },
-      { "year": 2025, "name": "Hurricane Melissa", "colour": "#7a5fc0" }
-    ]
+ "fps": 30,
+ "total": 60,
+ "barsFrom": 9,
+ "shots": [
+  {
+   "clip": "portroyal",
+   "from": 4.0,
+   "dur": 1.0
   },
-  "endAt": 56
+  {
+   "clip": "selassie_land",
+   "from": 1.5,
+   "dur": 1.0
+  },
+  {
+   "clip": "windrush",
+   "from": 4.0,
+   "dur": 1.0
+  },
+  {
+   "clip": "intro",
+   "from": 0.1,
+   "dur": 6.0
+  },
+  {
+   "clip": "play_walk",
+   "from": 1.0,
+   "dur": 3.0,
+   "stamp": {
+    "place": "The Emperor’s Arrival",
+    "year": "1966",
+    "colour": "#edc25f"
+   }
+  },
+  {
+   "clip": "play_phone",
+   "phone": true,
+   "bg": "kendal",
+   "bgFrom": 1.0,
+   "from": 1.0,
+   "dur": 3.0
+  },
+  {
+   "clip": "bogwalk",
+   "from": 3.0,
+   "dur": 3.0,
+   "stamp": {
+    "place": "Bog Walk Tube Flood",
+    "year": "1904",
+    "colour": "#e8873f"
+   }
+  },
+  {
+   "clip": "garvey",
+   "from": 1.0,
+   "dur": 3.0,
+   "stamp": {
+    "place": "Marcus Garvey and the UNIA",
+    "year": "1914",
+    "colour": "#E8505B"
+   }
+  },
+  {
+   "clip": "learn_journal",
+   "from": 0.5,
+   "dur": 3.0
+  },
+  {
+   "clip": "nanny",
+   "from": 2.0,
+   "dur": 3.0,
+   "stamp": {
+    "place": "The Fall of Nanny Town",
+    "year": "1734",
+    "colour": "#f0b860"
+   }
+  },
+  {
+   "clip": "kendal",
+   "from": 4.0,
+   "dur": 3.0,
+   "stamp": {
+    "place": "Kendal Train Crash",
+    "year": "1957",
+    "colour": "#1FB5A3"
+   }
+  },
+  {
+   "clip": "eventide",
+   "from": 2.0,
+   "dur": 3.0,
+   "stamp": {
+    "place": "Eventide Home Fire",
+    "year": "1980",
+    "colour": "#a9dcc2"
+   }
+  },
+  {
+   "clip": "selassie_land",
+   "from": 0.5,
+   "dur": 3.0,
+   "stamp": {
+    "place": "The Emperor’s Arrival",
+    "year": "1966",
+    "colour": "#edc25f"
+   }
+  },
+  {
+   "clip": "windrush",
+   "from": 6.0,
+   "dur": 3.0,
+   "stamp": {
+    "place": "Windrush",
+    "year": "1948",
+    "colour": "#efbd60"
+   }
+  },
+  {
+   "clip": "tivoli",
+   "from": 1.0,
+   "dur": 3.0,
+   "stamp": {
+    "place": "Tivoli Gardens",
+    "year": "Today",
+    "colour": "#fed100"
+   }
+  },
+  {
+   "clip": "melissa",
+   "from": 6.0,
+   "dur": 3.0,
+   "stamp": {
+    "place": "Hurricane Gilbert",
+    "year": "1988",
+    "colour": "#d6c8f5"
+   }
+  },
+  {
+   "clip": "selassie_crowd",
+   "from": 1.0,
+   "dur": 1.5
+  },
+  {
+   "clip": "portroyal",
+   "from": 5.0,
+   "dur": 1.5,
+   "stamp": {
+    "place": "Port Royal Earthquake",
+    "year": "1692",
+    "colour": "#FFB627"
+   }
+  },
+  {
+   "clip": "nanny",
+   "from": 5.5,
+   "dur": 1.5
+  },
+  {
+   "clip": "windrush",
+   "from": 9.5,
+   "dur": 1.5
+  }
+ ],
+ "lines": [
+  {
+   "t0": 0.1,
+   "t1": 2.95,
+   "text": "What if history was a place you could visit?",
+   "cls": "small"
+  },
+  {
+   "t0": 9.15,
+   "t1": 11.9,
+   "text": "Play.",
+   "sub": "Walk the streets. Explore every corner.",
+   "cls": "word"
+  },
+  {
+   "t0": 12.2,
+   "t1": 14.9,
+   "text": "Tap people to talk.",
+   "sub": "On a phone or a computer",
+   "cls": "small left"
+  },
+  {
+   "t0": 21.15,
+   "t1": 23.9,
+   "text": "Learn.",
+   "sub": "Real history for ages 6 and up",
+   "cls": "word"
+  },
+  {
+   "t0": 33.15,
+   "t1": 35.9,
+   "text": "Discover.",
+   "sub": "The moments that shaped Jamaica",
+   "cls": "word"
+  },
+  {
+   "t0": 45.1,
+   "t1": 47.95,
+   "text": "You cannot change what happened.",
+   "cls": "small"
+  },
+  {
+   "t0": 48.05,
+   "t1": 50.9,
+   "text": "But you can be there.",
+   "cls": "small"
+  }
+ ],
+ "passport": {
+  "at": 51,
+  "first": 0.25,
+  "gap": 0.3,
+  "emptyAt": 3.3,
+  "empty": 5,
+  "say1": "Ten stories so far.",
+  "say2": "Many more on the way.",
+  "stamps": [
+   {
+    "year": 1692,
+    "name": "Port Royal",
+    "colour": "#d9901a"
+   },
+   {
+    "year": 1734,
+    "name": "Nanny Town",
+    "colour": "#c98a2e"
+   },
+   {
+    "year": 1904,
+    "name": "Bog Walk",
+    "colour": "#d0702a"
+   },
+   {
+    "year": 1914,
+    "name": "Marcus Garvey",
+    "colour": "#E8505B"
+   },
+   {
+    "year": 1948,
+    "name": "Windrush",
+    "colour": "#2a6f97"
+   },
+   {
+    "year": 1957,
+    "name": "Kendal",
+    "colour": "#14907f"
+   },
+   {
+    "year": 1966,
+    "name": "The Emperor’s Arrival",
+    "colour": "#b8892a"
+   },
+   {
+    "year": 1980,
+    "name": "Eventide",
+    "colour": "#3f8f6b"
+   },
+   {
+    "year": 2010,
+    "name": "Tivoli",
+    "colour": "#0b5d36"
+   },
+   {
+    "year": 2025,
+    "name": "Hurricane Melissa",
+    "colour": "#7a5fc0"
+   }
+  ]
+ },
+ "endAt": 56
 }
