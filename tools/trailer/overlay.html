@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>PastPort trailer overlay</title>
+<!-- tools/trailer/overlay.html: the words and the end card drawn over the trailer's footage, one frame at a time (tools/trailer/make.mjs).
+     window.render(t) draws second t of the trailer; the page itself is see-through, so only the overlay is kept. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fraunces:ital,wght@1,600&display=swap" rel="stylesheet">
+<style>
+  :root{--deep:#041B2A;--harbour:#06283D;--mango:#FFB627;--paper:#FFF7E8;--bar:88px}
+  html,body{margin:0;width:1280px;height:720px;overflow:hidden;background:transparent;font-family:Inter,system-ui,sans-serif}
+  .bar{position:absolute;left:0;right:0;height:var(--bar);background:#000}
+  .bar.top{top:0}.bar.bot{bottom:0}
+  /* the passport stamp that names each place and year */
+  .stamp{position:absolute;left:56px;bottom:calc(var(--bar) + 30px);padding:12px 20px 12px;border:4px solid currentColor;border-radius:14px;
+    box-shadow:inset 0 0 0 3px rgba(0,0,0,0),inset 0 0 0 7px currentColor;color:var(--mango);background:rgba(4,27,42,.55);text-align:left;transform-origin:30% 60%}
+  .stamp .place{font-weight:800;font-size:19px;letter-spacing:.14em;text-transform:uppercase;color:var(--paper);padding:6px 6px 0;white-space:nowrap}
+  .stamp .year{font-family:Fraunces,serif;font-style:italic;font-weight:600;font-size:44px;line-height:1;padding:2px 6px 6px}
+  /* the big lines */
+  .line{position:absolute;left:0;right:0;top:50%;text-align:center;font-family:Fraunces,serif;font-style:italic;font-weight:600;font-size:58px;color:var(--paper);
+    text-shadow:0 2px 18px rgba(0,0,0,.75),0 0 2px rgba(0,0,0,.6);padding:0 80px}
+  .line.small{font-size:46px}
+  .line.top{top:calc(var(--bar) + 70px)}
+  /* the end card */
+  #end{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,#0b3a55 0%,var(--harbour) 45%,var(--deep) 100%);opacity:0}
+  #logo{position:absolute;left:50%;top:44%;width:620px;height:433px;margin:-216px 0 0 -310px}
+  #logo img,#logo .jam{position:absolute;inset:0;width:100%;height:100%}
+  #logo .jam{background:url(../../menu/pastport-logo.webp) center/100% 100% no-repeat;-webkit-mask:url(../../menu/pastport-jamaica.webp) center/100% 100% no-repeat;mask:url(../../menu/pastport-jamaica.webp) center/100% 100% no-repeat}
+  .ring{position:absolute;left:50%;top:44%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;border:3px solid rgba(255,182,39,.8);opacity:0}
+  #tag{position:absolute;left:0;right:0;top:79%;text-align:center;font-family:Fraunces,serif;font-style:italic;font-weight:600;font-size:34px;color:var(--paper)}
+  #sub{position:absolute;left:0;right:0;top:87%;text-align:center;font-size:19px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mango)}
+  #black{position:absolute;inset:0;background:#000;opacity:0}
+</style></head>
+<body>
+  <div class="bar top"></div><div class="bar bot"></div>
+  <div class="stamp" id="stamp"><div class="place"></div><div class="year"></div></div>
+  <div class="line" id="line"></div>
+  <div id="end">
+    <span class="ring" id="r1"></span><span class="ring" id="r2"></span>
+    <div id="logo"><img src="../../menu/pastport-logo.webp" alt=""><div class="jam"></div></div>
+    <div id="tag">Games that take you into Jamaica’s past.</div>
+    <div id="sub">Ten journeys · Play on phone or computer</div>
+  </div>
+  <div id="black"></div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const clamp = (x) => Math.max(0, Math.min(1, x));
+  const ease = (x) => { x = clamp(x); return x * x * (3 - 2 * x); };
+  const out = (x) => 1 - Math.pow(1 - clamp(x), 3);
+  /* fade in over a, hold, fade out over b, for a window [t0, t1] */
+  const win = (t, t0, t1, a = 0.45, b = 0.45) => Math.min(ease((t - t0) / a), ease((t1 - t) / b));
+  let EDIT = null;
+  window.setEdit = (e) => { EDIT = e; };
+  window.render = (t) => {
+    const E = EDIT, bars = t >= E.barsFrom && t < E.endAt;
+    for (const b of document.querySelectorAll('.bar')) b.style.opacity = bars ? 1 : 0;
+    // the stamp for the shot on screen
+    const st = $('stamp'); st.style.opacity = 0;
+    for (const s of E.stamps) {
+      if (t < s.t0 || t >= s.t1) continue;
+      const k = (t - s.t0) / 0.32, land = out(k);
+      st.style.color = s.colour;
+      st.querySelector('.place').textContent = s.place;
+      st.querySelector('.year').textContent = s.year;
+      st.style.opacity = Math.min(clamp(k * 1.6), ease((s.t1 - t) / 0.3));
+      st.style.transform = `rotate(${s.tilt || -4}deg) scale(${1.5 - 0.5 * land})`;
+    }
+    // the big lines
+    const ln = $('line'); ln.style.opacity = 0;
+    for (const l of E.lines) {
+      if (t < l.t0 || t >= l.t1) continue;
+      ln.textContent = l.text;
+      ln.className = 'line' + (l.cls ? ' ' + l.cls : '');
+      const o = win(t, l.t0, l.t1, 0.5, 0.5);
+      ln.style.opacity = o;
+      ln.style.transform = `translateY(${-50 + (1 - ease((t - l.t0) / 0.8)) * 14}%)`;
+      if (!l.cls || !l.cls.includes('top')) ln.style.transform = `translateY(calc(-50% + ${(1 - ease((t - l.t0) / 0.8)) * 10}px))`;
+      else ln.style.transform = `translateY(${(1 - ease((t - l.t0) / 0.8)) * 10}px)`;
+    }
+    // the end card: the logo lands (on the music's bell), "Jamaica" turns through its colours, then the words
+    const e0 = E.endAt, end = $('end');
+    end.style.opacity = ease((t - e0) / 0.35);
+    const k = (t - e0 - 0.15) / 0.45;
+    $('logo').style.opacity = clamp(k * 2);
+    $('logo').style.transform = `scale(${1.25 - 0.25 * out(k)})`;
+    const hue = Math.max(0, t - e0 - 1.2) * 120;
+    $('logo').querySelector('.jam').style.filter = `hue-rotate(${hue}deg)`;
+    $('logo').querySelector('.jam').style.opacity = clamp((t - e0 - 1.2) / 0.5);
+    for (const [id, d] of [['r1', 0.25], ['r2', 0.8]]) {
+      const r = (t - e0 - d) / 1.4, el = $(id);
+      el.style.opacity = r > 0 && r < 1 ? 0.8 * (1 - r) : 0;
+      el.style.transform = `scale(${0.6 + 2.6 * out(r)})`;
+    }
+    $('tag').style.opacity = ease((t - e0 - 1.4) / 0.6);
+    $('tag').style.transform = `translateY(${(1 - ease((t - e0 - 1.4) / 0.8)) * 10}px)`;
+    $('sub').style.opacity = ease((t - e0 - 2.6) / 0.6);
+    $('black').style.opacity = ease((t - (E.total - 0.8)) / 0.8);
+  };
+</script>
+</body></html>
