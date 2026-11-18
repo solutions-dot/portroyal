@@ -14,14 +14,9 @@
    "dur": 1.0
   },
   {
-   "clip": "tivoli",
-   "from": 4.5,
-   "dur": 1.0,
-   "crop": [
-    0.42,
-    0.6,
-    1.6
-   ]
+   "clip": "selassie_land",
+   "from": 3.7,
+   "dur": 1.0
   },
   {
    "clip": "intro",
