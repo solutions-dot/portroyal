@@ -32,7 +32,7 @@ import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on t
 import { lifeTest, lifeBodies } from './life.js';   // dev only: ?test=ambient
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
 import { clipInfo, sceneCheck } from './scenecheck.js';
-import { strideOf, WALKS as WALK_CLIPS } from './walk.js';   // dev only: the street scene checks (?test=scene, ?test=clipinfo)
+import { strideOf, pace as gamePace, WALKS as WALK_CLIPS } from './walk.js';   // dev only: the street scene checks (?test=scene, ?test=clipinfo)
 import { auditCloth, auditWalk, skinProbe, overlapSolids, sinkCheck, CLOTH_SKIP } from './checks.js';
 import { checkAll, CHECKS } from '../../../engine/checks.js';   // dev only: ?test=all
 import { CHECK_TABLES, makeAdapter } from './checktables.js';   // dev only: Tivoli's hooks for ?test=all
@@ -421,7 +421,7 @@ async function devViews() {
   if (test === 'walkers') {   /* ?test=walkers: each uniform body in the walks and runs the street scene gives it (RifleWalk walking in, RunLow to cover, and Walk), at game speed: feet must not slide, sink or float. RunLow is not in the engine's paced list, so it is tested at the speed its own stride gives at clip speed 1, which is how fight.js moves a runner (any pace slides the same per loop). */
     const out = []; let bad = 0;
     for (const base of BODIES) for (const [clip, v] of (q.get('walk') ? q.get('walk').split(',').map((s) => [s.split(':')[0], -s.split(':')[1]]) : [['Walk', 1.3], ['RifleWalk', 1.3], ['RunLow', 0]])) for (const l of ['', '_lo']) { const b = makeBody({ base, bodyId: base + l, ry: Math.PI / 2, anim: clip }); scene.add(b);
-      const own = v <= 0, sp = v < 0 ? -v : !v ? strideOf(b, b.userData.anim.cur.getClip()) / b.userData.anim.cur.getClip().duration : v; const r = auditWalk(base + l + ' ' + clip, b, sp, { paced: !own }); out.push(`${base}${l} ${clip} at ${sp.toFixed(2)} m/s: stride ${(r.stride * 100).toFixed(0)} cm, clip speed ${r.pace.toFixed(2)}, slide ${r.slide.toFixed(1)} cm a loop, shoes ${r.sink.toFixed(1)} to ${r.float.toFixed(1)} cm`); for (const x of r.lines) { out.push('  ' + x); bad++; } scene.remove(b); await waitTick(); }
+      const own = v <= 0, sp = v < 0 ? -v : !v ? strideOf(b, b.userData.anim.cur.getClip()) / b.userData.anim.cur.getClip().duration : v; const r = auditWalk(base + l + ' ' + clip, b, sp, { paced: !own, pace: gamePace, stride: strideOf });   /* paced as the street scene paces them (walk.js, used by fight.js), not by the engine's own estimate */ out.push(`${base}${l} ${clip} at ${sp.toFixed(2)} m/s: stride ${(r.stride * 100).toFixed(0)} cm, clip speed ${r.pace.toFixed(2)}, slide ${r.slide.toFixed(1)} cm a loop, shoes ${r.sink.toFixed(1)} to ${r.float.toFixed(1)} cm`); for (const x of r.lines) { out.push('  ' + x); bad++; } scene.remove(b); await waitTick(); }
     out.unshift('walkers: ' + bad + ' issues'); devLog(out, 'WALKERS ' + bad);
   }
 }

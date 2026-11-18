@@ -398,10 +398,10 @@ export function auditSeated(id, body, snap, ground = 0, stats) {
      sink / float  the lowest and highest that the lowest point of the shoes gets, against the ground (cm). The sole rests 1 cm into the ground on purpose; a heel may dip to 3 cm for a frame or two as it lands, because the body is eased up, not jerked.
      pop     the biggest jump of a foot in one step, as a multiple of a usual step: a loop that does not join, or a body that jerks up and down, shows here
    lines lists the faults in words; an empty list means the walk is clean. */
-export function auditWalk(id, body, v, { after = null, paced = true, loops = 2, ground = body.userData.ground || 0, heldItems = null } = {}) {
+export function auditWalk(id, body, v, { after = null, paced = true, loops = 2, ground = body.userData.ground || 0, heldItems = null, pace = null, stride = null } = {}) {   /* pace(body, ctl, v), stride(body, clip): a game that paces its walkers its own way passes them, so the check judges what the game really does */
   const ctl = body.userData.anim, out = { stride: 0, pace: 1, slide: 0, sink: 0, float: 0, pop: 0, lines: [] }; if (!ctl) return out;
   const act = ctl.cur, clip = act.getClip(), B = (n) => body.getObjectByName('mixamorig' + n), feet = [B('LeftFoot'), B('RightFoot')], P = new THREE.Vector3(); if (feet.some((f) => !f)) return out;
-  out.stride = strideOf(body, clip); act.timeScale = 1; out.pace = paced ? ctl.pace(v) : 1; act.time = 0; ctl.mx.update(0);
+  out.stride = stride ? stride(body, clip) : strideOf(body, clip); act.timeScale = 1; out.pace = paced ? (pace ? pace(body, ctl, v) : ctl.pace(v)) : 1; act.time = 0; ctl.mx.update(0);
   const N = 96, dt = clip.duration / out.pace / N, fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(body.quaternion), x0 = body.position.x, z0 = body.position.z, y0 = body.position.y;
   const shoes = []; body.traverse((o) => { if (o.isSkinnedMesh && o.visible && /Shoes|Sole/.test(o.material.name || '')) shoes.push(o); }); if (!shoes.length) body.traverse((o) => { if (o.isSkinnedMesh && o.visible && /Skin/.test(o.material.name || '')) shoes.push(o); });
   const read = () => { body.updateMatrixWorld(true); return feet.map((f) => { f.getWorldPosition(P); return [P.x * fwd.x + P.z * fwd.z, P.y, P.x * fwd.z - P.z * fwd.x]; }); };
