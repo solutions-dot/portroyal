@@ -294,7 +294,7 @@ Not part of the four checks, still open: Port Royal's own `?test=life` reports 9
 
 The owner: "I will take your advice on the sheets. Let's push what we have to main for now ... I need to ensure playability."
 
-- **Waistcoat over the shoulders: built.** `man_elder` and his two crowd variants, in Kendal, Tivoli, Eventide and Melissa. His collar and neck look the same as before in close-ups. The other waistcoat bodies are unchanged (the fix only applies under a flat collar).
+- **Waistcoat over the shoulders: built, then undone the same day** (owner saw his neck look deformed in the crowd copies; owner: "I don't want to mess up other work"). `man_elder` is back to the bodies that passed every check at `a988677`. The fix stays in the builder for later. Was: `man_elder` and his two crowd variants, in Kendal, Tivoli, Eventide and Melissa. His collar and neck look the same as before in close-ups. The other waistcoat bodies are unchanged (the fix only applies under a flat collar).
 - **Hands and ties: not built.** Packing every body again (the crowd copies' fingers) and the proposed tie (`"tie": "four"`, used by no recipe) wait until the owner points at things in the game.
 - **Port Royal `?test=life`: 0** (was 9). See ENGINE.md, idle variety.
 - **Camera scenes on an upright phone**: `engine/cine.js`, in the eight games that have camera scenes.
