@@ -13,7 +13,8 @@ import { createAmbient, ambientTest } from '../../../engine/ambient.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, tone, crackle } from '../../../engine/audio.js';
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, tone, crackle, noiseHit } from '../../../engine/audio.js';
+import { collapse } from '../../../engine/collapse.js';   /* the ward falls in pieces, as Port Royal's houses do (engine/collapse.js) */
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { slideWalls, walkRoute, segmentHitsWall } from '../../../engine/placement.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
@@ -400,7 +401,7 @@ async function beginChapter(i, st) {
 }
 function startScene(i, st, specs) {
   enterScene(i, specs); state.started = true; const P = SC.P;
-  if (P.id === 'slipe') { P.night.visible = i === 3; P.ruin.visible = false; P.bus2.visible = false; P.myers.group.visible = true; P.myers.group.scale.y = 1; P.fire.setLevel(0); P.lamps.forEach((l) => { l.visible = i === 2 || i === 3; }); }
+  if (P.id === 'slipe') { P.night.visible = i === 3; P.ruin.visible = false; P.bus2.visible = false; if (P.fall) P.fall.reset(); P.myers.group.visible = true; P.fire.setLevel(0); P.lamps.forEach((l) => { l.visible = i === 2 || i === 3; }); wardLights(P, true); }
   if (i === 1) { P.things.forEach((t, k) => { t.visible = true; t.position.set(-13.2 + k * 0.4, 0.81, 2.9); }); if (st >= 22) P.things.forEach((t, k) => placeThing(P, k)); }
   if (i === 3) nightSetup(P, st);
   if (i === 4) P.spray.visible = st >= 54 && story.part === 'flower';
@@ -466,10 +467,10 @@ ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 
 /* ---------- chapter 4: the night. Seen from behind the rope, with slow camera moves for the big moments. Nothing you do changes what happened. ---------- */
 let SIREN = 0;
 function nightSetup(P, st) {
-  const after = st >= 44, dawn = st >= 45; P.fire.setLevel(dawn ? 0.08 : after ? 0.4 : 1); P.myers.group.visible = !after; P.myers.group.scale.y = 1; P.ruin.visible = after; SIREN = dawn ? 0 : after ? 0.3 : 1;
+  const after = st >= 44, dawn = st >= 45; P.fire.setLevel(dawn ? 0.08 : after ? 0.4 : 1); if (P.fall) P.fall.reset(); P.myers.group.visible = !after; P.ruin.visible = after; SIREN = dawn ? 0 : after ? 0.3 : 1;
   for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = after && !dawn; if (after && id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
   [0, 1, 2].forEach((i) => { const n = byId('kid' + i); if (st >= 43) { kidTo(n, -5 - i * 1.25, -5.2); n.m.visible = !dawn; if (after) addBlanket(n, PILE_COLS[2 - i]); } });
-  P.lamps.forEach((l) => { l.visible = !dawn; }); pileShow(P, st); HELD_BLANKET.visible = false;
+  P.lamps.forEach((l) => { l.visible = !dawn; }); wardLights(P, !after); pileShow(P, st); HELD_BLANKET.visible = false;
   if (dawn) { for (const n of SC.extras) if (n.z > -4.6 && n.z < 4.6) n.m.visible = false;   /* morning: the neighbours have gone home or stepped back onto the pavement, out of the road */
     state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; setEnv(ENV.dawn); busPass(P); }
   else if (st === 40) (async () => { const ep = EP; frozen = true; bars(true); say('Sirens wake you. The sky over the Home is orange.', 6500);   /* an opening shot: from the dark road, up to the burning ward behind the wall */
@@ -488,12 +489,21 @@ async function holdGate(P) {
     n.ctl.play(null); n.walking = false; kidTo(n, end[0], end[1]); })()));
   if (ep !== EP) return; endCut(); state.x = -3.4; state.z = -5.6; state.yaw = 1.2; state.pitch = 0; frozen = false; setStage(43);
 }
+/* the Myers Ward falls: the roof caves in, then the walls break into panels and fall inward from the middle out, with burnt timbers and zinc
+   tumbling and smoke rising (engine/collapse.js). It is made once and put back by nightSetup when the chapter is played again. */
+/* the warm lights in the ward's front windows hang in the lamp group, so they go out by hand when the ward falls */
+function wardLights(P, on) { for (const l of P.lamps) l.traverse((w) => { if (w.userData.win) w.visible = on; }); }
+function wardFall(P) { const M = P.myers; wardLights(P, false);
+  return P.fall || (P.fall = collapse(M.group, { floorAt: (x, z) => (Math.abs(x) < M.L / 2 && z > M.Z1 && z < M.VZ) ? M.F1 : 0, from: 'centre', spread: 3.0, roofTime: 1.5,
+    onImpact: (k) => { FX.shake = Math.max(FX.shake, 0.45 * k); if (AU.ctx && AU.on && AU.ctx.state === 'running') noiseHit(110 + Math.random() * 60, 0.7, 1.1, 0.18 * k, (Math.random() - 0.5) * 0.6); } })); }
 async function roofFalls(P) {
   frozen = true; const ep = EP; bars(true); SIREN = 0.3; say('The old ward cannot stand. The roof falls in.', 6000);
   cut([-1.0, 1.4, -8.6], [-1.6, 1.5, -8.2], [8, 6, -34], [10, 3, -36], 8);   /* from the rope: one long look up the avenue */
-  await wait(1500); if (ep !== EP) return; FX.shake = 0.5;
-  await tween(3.6, (k) => { P.myers.group.scale.y = 1 - 0.9 * ease(k); P.fire.setLevel(1 - 0.6 * k); P.fire.burst(k); FX.shake = 0.5 * (1 - k); }); if (ep !== EP) return;
-  P.myers.group.visible = false; P.ruin.visible = true; FX.shake = 0; say('Sparks fly up. The crowd goes quiet.', 5000); await wait(3600); if (ep !== EP) return;
+  await wait(1500); if (ep !== EP) return; FX.shake = 0.3; const F = wardFall(P); F.start();
+  TICKS.push((dt) => { if (ep !== EP) return true; F.tick(dt / TS); FX.shake *= 0.95; return F.done; });
+  await tween(5.5, (k) => { P.fire.setLevel(1 - 0.6 * k); P.fire.burst(k); }); if (ep !== EP) return;
+  say('Sparks fly up. The crowd goes quiet.', 5000); await wait(3600); if (ep !== EP) return;
+  P.myers.group.visible = false; P.ruin.visible = true; FX.shake = 0;   /* the cut to the road hides the change to the ruin seen at dawn */
   for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = true; if (id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
   await cut([4, 1.4, -2.2], [5.5, 1.35, -3.0], [10, 1.1, -5.2], [10.4, 1.1, -5.2], 4.5); if (ep !== EP) return;   /* then down to the road: two of your friends, safe */
   endCut(); state.x = 4.5; state.z = -2.6; state.yaw = -1.15; state.pitch = 0; say('Some of the ladies got out. They wait by the road in blankets.', 5200); frozen = false; setStage(44);
@@ -641,7 +651,12 @@ function devViews() {
   if (shot === 'sort1') go(5, 61, 5, 5.2, 0.2, -0.3).then(() => sortCards(0));
   if (shot === 'time1') go(6, 71, 5.2, 8.2, 0).then(() => timeline(2));
   if (shot === 'title') { /* the title screen as it is */ }
-  if (shot === 'fall') go(3, 43, -1.6, -8.2, -0.5, 0.1).then((P) => { fixedCam = { p: [-1.3, 1.45, -8.4], t: [9, 5, -35] }; P.myers.group.scale.y = 0.45; P.fire.setLevel(0.75); P.fire.burst(0.5); for (let i = 0; i < 20; i++) update(0.1, 3000 + i * 100); document.title = 'view fall ready'; });
+  /* ?shot=fall&t=2.5[&again=1] : the ward t seconds into its fall, seen from the rope. &cam=x,y,z,tx,ty,tz for another camera */
+  if (shot === 'fall') go(3, 43, -1.6, -8.2, -0.5, 0.1).then((P) => { const c = (q.get('cam') || '-1.3,1.45,-8.4,9,5,-35').split(',').map(Number); fixedCam = { p: c.slice(0, 3), t: c.slice(3, 6) };
+    const F = wardFall(P), t = +(q.get('t') || 2.5); P.fire.setLevel(1); for (let i = 0; i < 10; i++) update(0.1, 2000 + i * 100); F.start();
+    const play = () => { for (let s = 0; s < t; s += 0.05) { F.tick(0.05); const k = Math.min(1, s / 5.5); P.fire.setLevel(1 - 0.6 * k); P.fire.burst(k); update(0.05, 3000 + s * 1000); } };
+    play(); if (q.get('again')) { F.reset(); F.start(); play(); }   /* &again=1: put it back and let it fall a second time, as a replayed chapter does */
+    document.title = 'view fall ready'; });
   /* ?shot=blanket1 : the pile of folded blankets, one child already wrapped, the next blanket in your arms. blanket2 : the same from close by. dawn2 : the bus at dawn, with you and Gran on the pavement (&old=1: Gran where she stood before) */
   if (shot === 'blanket1' || shot === 'blanket2') go(3, 43, ...(shot === 'blanket1' ? [0.2, -3.6, 1.0, -0.14] : [-4.2, -4.2, 1.35, -0.3])).then(() => { const A = SC.actions, take = A.find((a) => a.label === 'Take a blanket'); take.go(); A.find((a) => a.on() && /^Wrap/.test(a.label)).go(); take.go(); for (let i = 0; i < 8; i++) update(0.1, 2000 + i * 100); document.title = 'view ' + shot + ' ready'; });
   if (shot === 'dawn2') go(3, 45, -14, -5.4, -1.25, 0.0).then((P) => { if (q.get('old')) { const n = byId('gran4'); n.z = -3.4; n.m.position.set(n.x, 0, n.z); }   /* &old=1 puts Gran back where she stood before the fix, for a before picture */

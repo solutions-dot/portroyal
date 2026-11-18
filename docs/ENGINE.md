@@ -389,3 +389,13 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 `renderFramed(renderer, scene, camera, cine)` takes the place of `renderer.render(scene, camera)`. While a camera scene plays (`cine` true) on a screen taller than it is wide, it draws that frame with a taller field of view, so the picture keeps about 85 per cent of the width a square screen would show (at most 96 degrees). The game's own field of view is put back straight after, so walking, aiming and the first-person hand are unchanged; on a wide screen nothing changes. `cineFov(fov, aspect)` gives the number. Used by Kendal, Eventide, Melissa, Nanny Town and Bog Walk (the black bars, `body.cine`), Tivoli (the May 2010 scene, `FIGHT.on`), The Emperor's Arrival and Windrush (their directors, `DIR.on`). Port Royal and Marcus Garvey have no camera scenes (their cut scenes are cards).
 
+
+## engine/collapse.js: a building that falls down (18 November 2026)
+
+`collapse(group, opts)` makes a building fall in pieces instead of squashing flat. First used for the Myers Ward in Eventide's night chapter (the owner: make it look as good as the Port Royal buildings).
+
+- `fall.start()`, then `fall.tick(dt)` every frame (true once everything is at rest), `fall.done`, and `fall.reset()` to put the building back exactly as it was, for a replayed chapter.
+- What happens: the building trembles; the roof (`opts.roof`, or the highest piece) sags, then drops in and crumples; long box walls and floors are cut into panels about `opts.seg` (4.2) m wide, keeping their texture in place, and each panel tips over on its bottom edge, mostly inward, in a wave from the middle out (`opts.from`: `'centre'`, `'+x'`, `'-x'`). Windows, doors and rails fixed to a panel go with it. Timbers and zinc sheets tumble off and settle, smoke rises where pieces land, and the wood chars with a faint glow of embers (`opts.char`).
+- Anything lower than `opts.keepBelow` (1.6 m) stays: foundations, steps, low rails, beds of plants. `opts.floorAt(x, z)` gives the height things land on, in the group's own space. `opts.onImpact(k)` fires as each piece lands (a shake, a thud).
+- It changes only copies of the building's materials, so no other building chars.
+- Port Royal's 1692 houses still use their own sinking and brick code (`sinkTown`, `breakHouse` in `games/port-royal/src/main.js`). Move them onto this when that game is next worked on.
