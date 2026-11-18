@@ -152,13 +152,19 @@
   },
   {
    "clip": "evfire",
-   "from": 2.5,
+   "from": 1.3,
    "dur": 1.5,
    "stamp": {
     "place": "Eventide Home Fire",
     "year": "1980",
     "colour": "#a9dcc2"
-   }
+   },
+   "crop": [
+    0.62,
+    0.44,
+    1.8
+   ],
+   "push": 0.05
   },
   {
    "clip": "nanny",
