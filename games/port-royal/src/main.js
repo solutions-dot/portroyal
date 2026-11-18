@@ -19,6 +19,8 @@ import { wireChecks } from './checks.js';   /* dev only: ?test=audit, layout, wa
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
+import { batchStatic } from '../../../engine/batch.js';   /* still scenery drawn in a few pieces (see still() below) */
+import { setQuiet } from '../../../engine/preload.js';   /* tells the engine when the player is reading, not moving */
 soundPref('portroyal-sound');
 onLoadFail((n) => { $('loadnote').hidden = false; $('loadnote').textContent = 'Part of the game did not load (' + n + '). Reload the page to try again.'; });
 
@@ -272,6 +274,12 @@ const S = 5.2, X0 = -17.9, X1 = 17.9, SHORE = 23; const seaMat = new THREE.MeshS
 /* ---------- the ship you arrived on ---------- */
 const indoor = new THREE.Group(); indoor.visible = false; scene.add(indoor); let cur = scene;
 function mk(geo, mat, x, y, z, parent) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); (parent || cur).add(m); return m; }
+/* still(root, keep): the still scenery under root is merged into a few meshes (engine/batch.js batchStatic), so a phone draws it in far fewer calls; it looks the same.
+   keep lists things under root that move, light up or are shown and hidden on their own: they stay as they are (userData.noBatch). See-through meshes are kept too, so they are
+   still sorted one by one against each other, as before. Only a group is batched, never a mesh that stands on its own in the scene. The place audits (?test=audit, collision,
+   seating) and ?nobatch see the scenery unmerged: they read each piece's own shape, as other games' audits read a copy taken before batching. */
+const NOBATCH = __DEV__ && (/[?&]nobatch\b/.test(location.search) || ['audit', 'collision', 'seating'].includes(new URLSearchParams(location.search).get('test')));
+function still(root, keep = []) { if (NOBATCH || !root || root.isMesh) return; for (const o of keep) if (o) o.userData.noBatch = true; root.traverse((o) => { if (o.isMesh && ([].concat(o.material).some((m) => m.transparent))) o.userData.noBatch = true; }); batchStatic(root); }
 
 /* ---------- harbour: pier, moored ships, cargo, beached boat, nets ---------- */
 let seaN = null, waves = null, SEA = null; const streetProps = []; const shipsM = {}; const DEVBOATS = {};   /* the boats, for the dev screenshot script */
@@ -281,6 +289,7 @@ function buildHarbour() {
   const deckT = plankTex([138, 120, 96], 5, 21, 3), deckM = std(deckT), timber = std(plankTex([84, 66, 48], 3, 1, 2)), pileM = std(plankTex([70, 56, 42], 4, 1, 2)), ironM = new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.6, metalness: 0.7 });
   const ropeM = new THREE.MeshStandardMaterial({ map: noiseTex([168, 146, 104], 30, 4), roughness: 1 }), sackM = new THREE.MeshStandardMaterial({ map: noiseTex([156, 136, 100], 30, 3), roughness: 1 });
   const x0 = SHORE - 2.5, x1 = SHORE + 23, len = x1 - x0, cx = (x0 + x1) / 2;
+  const pier = new THREE.Group(); scene.add(pier); cur = pier;   /* the pier's planks, piles and ropes in one group, batched when the harbour is built */
   B(len, 0.1, 3.4, deckM, cx, 0.0, 0);                                                              // deck planks laid across
   for (const z of [-1.62, 1.62]) { B(len, 0.22, 0.2, timber, cx, -0.14, z); B(len, 0.12, 0.16, timber, cx, 0.1, z * 1.02); }
   for (let x = x0 + 1; x < x1; x += 2.6) { B(0.2, 0.22, 3.2, timber, x, -0.16, 0);
@@ -289,10 +298,11 @@ function buildHarbour() {
   for (const [x, z] of [[SHORE + 6, 1.72], [SHORE + 11.2, 1.72], [SHORE + 8.6, -1.72], [SHORE + 16.4, -1.72]]) { const r = mk(new THREE.TorusGeometry(0.24, 0.045, 6, 14), ropeM, x, 0.75, z); r.rotation.x = Math.PI / 2; mk(new THREE.TorusGeometry(0.25, 0.045, 6, 14), ropeM, x, 0.84, z).rotation.x = Math.PI / 2; }
   const coil = (x, z, r) => { for (let i = 0; i < 3; i++) mk(new THREE.TorusGeometry(r - i * 0.02, 0.04, 6, 16), ropeM, x, 0.09 + i * 0.07, z).rotation.x = Math.PI / 2; };
   coil(SHORE + 4, -1.2, 0.3); coil(SHORE + 19, 1.15, 0.34);
+  cur = scene;
   // ships: the merchantman you came on, and a Jamaica sloop across the pier
   const m = shipsM.merchant; m.position.set(SHORE + 17.5, -0.35, -5.9); scene.add(m);
   const sl = shipsM.sloop; sl.position.set(SHORE + 17.5, -0.35, 4.9); sl.rotation.y = Math.PI; scene.add(sl);
-  const gp = B(1.0, 0.07, 2.3, deckM, SHORE + 17.6, 0.66, -2.1); gp.rotation.x = -0.56; for (let i = 0; i < 5; i++) { const c = B(1.0, 0.03, 0.05, timber, SHORE + 17.6, 0.2 + i * 0.25, -1.4 - i * 0.4); c.rotation.x = -0.56; }
+  cur = pier; const gp = B(1.0, 0.07, 2.3, deckM, SHORE + 17.6, 0.66, -2.1); gp.rotation.x = -0.56; for (let i = 0; i < 5; i++) { const c = B(1.0, 0.03, 0.05, timber, SHORE + 17.6, 0.2 + i * 0.25, -1.4 - i * 0.4); c.rotation.x = -0.56; } cur = scene;
   const line = (a, b) => { const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a), new THREE.Vector3((a[0] + b[0]) / 2, Math.min(a[1], b[1]) - 0.25, (a[2] + b[2]) / 2), new THREE.Vector3(...b)]); scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0x8a744e }))); };
   line([SHORE + 8.6, 0.8, -1.72], [SHORE + 6, 3.2, -3.6]); line([SHORE + 16.4, 0.8, -1.72], [SHORE + 21.5, 2.2, -3.4]); line([SHORE + 11.2, 0.8, 1.72], [SHORE + 10.5, 1.5, 3.4]); line([SHORE + 19, 0.6, 1.72], [SHORE + 24.5, 1.9, 3.3]);
   // cargo: casks with hoops, slatted crates, sacks
@@ -322,6 +332,7 @@ function buildHarbour() {
   const foam = mk(new THREE.PlaneGeometry(1.6, 160), new THREE.MeshBasicMaterial({ map: foamT, transparent: true, depthWrite: false }), SHORE + 0.2, -0.33, 0); foam.rotation.x = -Math.PI / 2;
   const sandEdge = mk(new THREE.PlaneGeometry(1.2, 160), new THREE.MeshStandardMaterial({ map: noiseTex([176, 152, 112], 30, 30), roughness: 1 }), SHORE + 0.45, -0.19, 0); sandEdge.rotation.set(-Math.PI / 2 + 0.0, 0, 0); sandEdge.rotation.y = 0.33;
   SEA = createSea(scene, { kind: 'caribbean', y: -0.35, at: [SHORE + 60, 0], size: 300, material: seaMat, farDrop: 0.27 }); waves = SEA.near; seaN = true;   /* the engine's sea (engine/sea.js): it moves itself; the earthquake moves its level (SEA.setLevel). seaMat is shared with the flood and the lagoon. */
+  buildPropC(); for (const p of streetProps) if (p.isGroup) still(p); still(pier);   /* the props' walking boxes are taken first, from the unmerged pieces; then each cask and crate, and the pier, are drawn in a few pieces (none of them moves, the quake sinks only the houses) */
 }
 
 /* ---------- inside The Turtle ---------- */
@@ -467,6 +478,7 @@ function buildTavern() {
   for (const f of FINDS) { const r = new THREE.Mesh(new THREE.RingGeometry(0.27, 0.3, 32), new THREE.MeshBasicMaterial({ color: 0xd9a441, side: THREE.DoubleSide })); r.rotation.x = -Math.PI / 2; r.position.y = 0.004; g[f.id].add(r); finds[f.id] = r; }
   stew = new THREE.Group(); stew.position.set(-200.4, 1.02, -2.05); stew.visible = false; cur.add(stew);
   mk(new THREE.CylinderGeometry(0.11, 0.06, 0.07, 16), pewM, 0, 0.035, 0, stew); mk(new THREE.CylinderGeometry(0.1, 0.1, 0.01, 16), new THREE.MeshStandardMaterial({ color: 0x7a4a22, roughness: 0.6 }), 0, 0.066, 0, stew); B(0.012, 0.01, 0.16, pewM, 0.16, 0.006, 0.02, stew);
+  still(indoor, [fire, ...flames, ...FINDS.map((f) => g[f.id]), stew]);   /* the room in a few pieces. The fire and the candle flames flicker, the four finds and the stew are shown and hidden, and the window light and the lantern glass are see-through: they stay as they are. Ned and the buccaneers come in later and are never merged */
   cur = scene;
 }
 function setPlace(p) { exitsReset();
@@ -709,6 +721,7 @@ addEventListener('visibilitychange', () => { if (document.visibilityState === 'h
 /* ---------- chapters ---------- */
 const FADE_TITLES = { goArrive: ['1690', 'Port Royal, Jamaica'], leaveWare: ['1690', 'Back in the town'], beginWare: ['1691', 'Lewis Galdy\u2019s warehouse'], beginQuake: ['7 June 1692', 'A hot, still morning'], beginAfter: ['Three days later', 'The camp on the beach'], toYard: ['Many years later', 'St Peter\u2019s Church, Port Royal'], leaveQuake: ['1690', 'Before the earthquake'] };
 let fading = false;
+setQuiet(() => fading || !$('dialogue').hidden || !$('card').hidden || !$('journal').hidden || !$('chapters').hidden);   /* engine/preload.js: the player is reading (a talk, a card, the chapter title, the journal or the chapter list), so queued work may run now */
 function chapterFade(name, fn) { return function (...a) { if (fading) return; if (__DEV__ && (new URLSearchParams(location.search).has('shot') || window.__prNoFade)) return fn.apply(this, a);   /* dev checks skip the fade */
   fading = true; const f = $('fade'), [t, sub] = FADE_TITLES[name]; $('fadeT').textContent = t; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
   f.hidden = false; requestAnimationFrame(() => { f.classList.add('on'); }); setTimeout(() => { fn.apply(this, a); f.classList.add('txt'); }, 750);
@@ -1482,15 +1495,19 @@ function buildNewStreet() { if (NS.g) return; const g = new THREE.Group(); NS.g 
       const b = mk(new THREE.BoxGeometry(1.5, 0.36, 0.05), [woodM, woodM, woodM, woodM, new THREE.MeshStandardMaterial({ map: tex }), new THREE.MeshStandardMaterial({ map: tex })], -0.7, y, 0, post); b.rotation.y = flip; };
     board('Market', 2.25, 0.12); board('Jews Street', 1.85, -0.12);   /* both point west, into the new street */ }
   { /* the harbour-corner beach strip: tufts of grass along the wall foot and the water's edge, and a scatter of stones */
+    const beach = new THREE.Group(); g.add(beach);   /* the tufts and stones in one group, so they are batched together */
     const bt = cv(64, 128, (c) => { c.clearRect(0, 0, 64, 128); for (let k = 0; k < 14; k++) { const x = 6 + Math.random() * 52, lean = (Math.random() - 0.5) * 26, h = 50 + Math.random() * 70; c.strokeStyle = `rgb(${100 + Math.random() * 60},${118 + Math.random() * 40},${52 + Math.random() * 24})`; c.lineWidth = 2 + Math.random() * 2; c.beginPath(); c.moveTo(x, 128); c.quadraticCurveTo(x + lean * 0.3, 128 - h * 0.5, x + lean, 128 - h); c.stroke(); } }); bt.wrapS = bt.wrapT = THREE.ClampToEdgeWrapping;
-    const gm = new THREE.MeshStandardMaterial({ map: bt, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 1 }), tuft = (x, z, k) => { const t = new THREE.Group(); t.position.set(x, 0, z); t.rotation.y = Math.random() * 6; t.scale.set(k, k * (0.7 + Math.random() * 0.5), k); g.add(t); for (let j = 0; j < 3; j++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.6), gm); p.position.y = 0.3; p.rotation.y = j * Math.PI / 3; t.add(p); } };
+    const gm = new THREE.MeshStandardMaterial({ map: bt, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 1 }), tuft = (x, z, k) => { const t = new THREE.Group(); t.position.set(x, 0, z); t.rotation.y = Math.random() * 6; t.scale.set(k, k * (0.7 + Math.random() * 0.5), k); beach.add(t); for (let j = 0; j < 3; j++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.6), gm); p.position.y = 0.3; p.rotation.y = j * Math.PI / 3; t.add(p); } };
     const spots = []; for (let z = 6.9; z < 13.2; z += 0.55 + Math.random() * 0.7) { spots.push([18.25 + Math.random() * 0.5, z]); if (Math.random() < 0.7) spots.push([22.1 + Math.random() * 0.55, z + Math.random() * 0.4]); }
     for (let z = 14.8; z < 21.0; z += 0.8 + Math.random() * 0.9) spots.push([21.7 + Math.random() * 0.9, z]);   /* along the shore past the signpost */
     for (const [x, z] of spots) tuft(x, z, 0.45 + Math.random() * 0.5);
     const stoneM = new THREE.MeshStandardMaterial({ map: noiseTex([128, 120, 108], 30, 2), roughness: 0.95, flatShading: true }), stoneG = new THREE.DodecahedronGeometry(0.5, 0);
     const stones = [[18.6, 8.1], [18.4, 10.6], [22.5, 7.6], [22.3, 9.9], [22.6, 11.8], [18.5, 12.4], [21.9, 16.2], [22.4, 18.4], [22.0, 20.2], [19.9, 9.0]];
-    for (const [x, z] of stones) for (let k = 0; k < 1 + (Math.random() * 3 | 0); k++) { const r = mk(stoneG, stoneM, x + (Math.random() - 0.5) * 0.5, 0.02, z + (Math.random() - 0.5) * 0.5, g); const sc = 0.12 + Math.random() * 0.22; r.scale.set(sc * (1 + Math.random() * 0.5), sc * 0.55, sc); r.rotation.set(Math.random(), Math.random() * 6, Math.random()); } }
+    for (const [x, z] of stones) for (let k = 0; k < 1 + (Math.random() * 3 | 0); k++) { const r = mk(stoneG, stoneM, x + (Math.random() - 0.5) * 0.5, 0.02, z + (Math.random() - 0.5) * 0.5, beach); const sc = 0.12 + Math.random() * 0.22; r.scale.set(sc * (1 + Math.random() * 0.5), sc * 0.55, sc); r.rotation.set(Math.random(), Math.random() * 6, Math.random()); } }
   NS.crawl = crawl; cur = prev;
+  /* each stall, building, the stocks, the signpost, the crawl's stakes and the beach strip are drawn in a few pieces; the turtles swim and the bell swings, so they stay as they are.
+     The houses copied from the town's models are left whole (their pieces are shared with the other copies). The people are added after this, so they are never merged. */
+  for (const tu of NS.turtles) tu.userData.noBatch = true; bell.userData.noBatch = true; for (const c of [...g.children]) if (c.isGroup && !c.isScene) still(c);
   /* the four people */
   const PREP = (gl) => prep(gl.scene);
   for (const [id, file] of [['peter', 'turtler'], ['mendes', 'mendes'], ['hart', 'constable']]) model(file).then((gl) => { const m = PREP(gl); const n = NS_PEOPLE.find((p) => p.id === id); m.position.set(n.x, 0, n.z); m.rotation.y = n.ry; g.add(m); people[id] = m; animate(m); }).catch(() => {});
@@ -1922,6 +1939,7 @@ buildFort = function buildFort2() { if (FORT.ready) return; const g = new THREE.
     for (let k = 1; k <= 2; k++) { const t = k / 3, x = ax + (bx - ax) * t, z = az + (bz - az) * t, nx = (bz - az) / L, nz = -(bx - ax) / L; gun(x - nx * 1.3, z - nz * 1.3, Math.atan2(nx, nz), 0); } }
 
   dressSpit(g, stone, wood, dark);
+  still(g, [...FORT.guns, fl, DEVBOATS.canoe]);   /* the fort, the spit and Morgan's Line in a few pieces. The guns stay whole (the salute runs a barrel out and back), and so do the flag (it waves), the canoe (a dev picture finds it) and the sea foam (see-through, it breathes) */
   cur = prev; FORT.ready = true; };
 /* ---------- the spit: dunes, a trodden path, beach grass, sea grape, rocks, surf, a fishing boat and nets ---------- */
 const SPITC = [];

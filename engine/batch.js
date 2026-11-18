@@ -31,7 +31,7 @@ export function batchStatic(root, { bake = BAKE } = {}) {
     if (o.userData.noBatch || skip) skip = true;
     if (!skip && o.isMesh && !o.isSkinnedMesh && !o.isInstancedMesh && !Array.isArray(o.material) && o.visible && o.geometry.attributes.position && o.geometry.attributes.normal) {
       rel.multiplyMatrices(inv, o.matrixWorld); if (rel.determinant() > 0) {
-        const g = o.geometry.clone(); for (const k of Object.keys(g.attributes)) if (!keep.includes(k)) g.deleteAttribute(k); if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+        const g = o.geometry.clone(); for (const k of Object.keys(g.attributes)) if (!keep.includes(k)) g.deleteAttribute(k); else plain(g, k); if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
         g.applyMatrix4(rel); const ni = g.index ? g.toNonIndexed() : g; const key = o.material.uuid + (ni.attributes.color ? 'c' : ''); let b = buckets.get(key); if (!b) buckets.set(key, (b = { mat: o.material, geos: [] })); b.geos.push(ni); dead.push(o);
       }
     }
@@ -49,6 +49,9 @@ export function batchStatic(root, { bake = BAKE } = {}) {
   BATCH_STATS.meshes += dead.length; BATCH_STATS.merged += made;
   return { merged: made, removed: dead.length };
 }
+/* a packed model keeps its points as small whole numbers (quantized, often interleaved); moving them in place broke them (Port Royal: a house vanished). Plain numbers first, the same values. */
+function plain(g, k) { const a = g.attributes[k]; if (!a.isInterleavedBufferAttribute && a.array instanceof Float32Array && !a.normalized) return;
+  const n = a.count, s = a.itemSize, f = new Float32Array(n * s); for (let i = 0; i < n; i++) for (let c = 0; c < s; c++) f[i * s + c] = a.getComponent(i, c); g.setAttribute(k, new THREE.BufferAttribute(f, s)); }
 function addMesh(root, g, mat) { const m = new THREE.Mesh(g, mat); m.userData.batched = true; m.matrixAutoUpdate = false; root.add(m); return m; }
 /* several materials alike but for colour: one mesh, colours in its points, watched */
 function joinColours(root, group) {

@@ -29,6 +29,7 @@ import { foldedBlanket, drapeBlanket } from './blanket.js';
 import { buildSlipe, buildWard, buildPark80, buildGolden, buildMonument } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, LETTER, TIDY, RADIO, SORT, SORT_KINDS, TIMELINE, PLAQUE, CHOICE_NAMES } from './content.js';
 import { tunePixels } from '../../../engine/perf.js';
+import { setQuiet, work, warm, release } from '../../../engine/preload.js';   /* the next chapter made ready while you read, the last one let go (engine/preload.js) */
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -74,6 +75,7 @@ const isTouch = matchMedia('(pointer: coarse)').matches;
 const keys = new Set(); let busy = false, fading = false, frozen = false, talkWith = null, near = null;
 const PANELS = ['dialogue', 'journal', 'chapters', 'credits', 'card'];
 const panelsOpen = () => PANELS.some((id) => !$(id).hidden);
+setQuiet(() => fading || panelsOpen() || (modelsReady && !GO));   /* reading a talk, a card, the journal, the chapter title, or still on the title screen: a good time for the next chapter's heavy work */
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && state.started) e.preventDefault();
   keys.add(k); if (!state.started) return;
@@ -186,10 +188,17 @@ const PL = {}; let cur = null, SC = null, modelsReady = false;
 function buildPlace(id) {
   if (PL[id]) return PL[id]; const group = new THREE.Group(); group.visible = false; scene.add(group); const P = { id, group, ...BUILD[id](group) };
   if (__DEV__) { const off = []; group.traverse((o) => { if (o !== group && !o.visible) o.traverse((c) => { if (c.isMesh && c.visible) { c.visible = false; off.push(c); } }); }); P.snap = snapMeshes(group); for (const c of off) c.visible = true; }   /* the audit looks at what is there by day: things kept hidden for one chapter (the rope, the ruin) are left out */
+  if (P.myers) wardCopy(P);
   batchStatic(group);
   group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.alphaTest > 0) && o.material.type !== 'MeshBasicMaterial') o.castShadow = o.receiveShadow = true; });
   PL[id] = P; return P;
 }
+/* the Myers Ward is drawn as a merged copy while it stands (engine/batch.js: about 370 draw calls down to a few dozen), and the real one, in loose pieces,
+   is shown only for its fall, since engine/collapse.js breaks it apart. P.myers.group is a holder of both, so the game shows or hides the ward as before;
+   P.myers.real is the one that falls, P.myers.still the merged copy. wardStill(P) puts the copy back after a fall is reset. */
+function wardCopy(P) { const M = P.myers, real = M.group, box = new THREE.Group(); box.name = 'Myers Ward'; box.userData.noBatch = true; real.parent.add(box); box.add(real);
+  const still = real.clone(); still.userData.noBatch = false; box.add(still); batchStatic(still); still.userData.noBatch = true; M.real = real; M.still = still; M.group = box; wardStill(P); }
+function wardStill(P, on = true) { const M = P.myers; if (!M.still) return; M.real.visible = !on; M.still.visible = on; }
 const person = (id, who, look, at, o = {}) => ({ id, who, label: 'Talk to ' + who, ...LOOKS[look], x: at[0], z: at[1], ry: at[2] || 0, ground: at[3] || 0, ...o });
 const extra = (look, at, o = {}) => ({ ...LOOKS[look], x: at[0], z: at[1], ry: at[2] || 0, ground: at[3] || 0, ...o });
 const ver = (P, lx) => { const s = P.spots.ver(lx); return [s.x, s.z, s.ry, s.ground]; };
@@ -236,12 +245,27 @@ async function loadScene(i) {   /* build the place and load the bodies this chap
   for (const e of specs.extras) e.bodyId = light(e) ? e.base + (e.variant || '') + '_lo' : e.base; for (const e of specs.people) e.bodyId = e.base;   /* background figures get a light copy */
   await Promise.all([...new Set([...specs.people, ...specs.extras].map((s) => s.bodyId))].map(loadBase)); return specs;
 }
+/* a chapter's bodies, unpacked ahead of time (startup, or engine/preload.js work() while the chapter before it is played). Each set is used once:
+   enterScene fills it in, so a chapter played again builds a fresh set. */
+const READY = {};
+const sceneReady = (i) => READY[i] || (READY[i] = loadScene(i));
+function takeScene(i) { const p = sceneReady(i); delete READY[i]; return p; }
+/* when a chapter starts: build the next chapter's place, unpack its bodies and send its place to the graphics chip, each in a quiet moment */
+function readyNext(i) { const j = i + 1; if (j >= SCENES.length) return; const nx = SCENES[j].place, fresh = !PL[nx];
+  if (fresh) work(() => { buildPlace(nx); }); work(() => sceneReady(j)); if (fresh) work(() => warm(renderer, PL[nx].group, camera, scene)); }
+/* engine/preload.js warm() shows the place while it waits for the shaders; hidden again at once here, so it never flashes into the chapter being played.
+   The shaders were already asked for by then, so nothing is lost. (Better done inside warm() itself: reported.) */
+/* at a chapter change: free the graphics memory of the last chapter's people and of places this chapter and the next do not use (engine/preload.js release()).
+   Anything still drawn is kept, and a place shown again is simply sent again. */
+function letGo(i, gone) { for (const m of gone) release(m, scene);
+  const keep = new Set([SCENES[i].place, SCENES[i + 1] && SCENES[i + 1].place]); for (const k in PL) { const P = PL[k]; if (keep.has(k)) { P.released = false; continue; } if (!P.released) { release(P.group, scene); P.released = true; } } }
 let EYE_NOW = EYE;
 function enterScene(i, specs) {
-  clearScene(); for (const k in PL) PL[k].group.visible = false; const S = SCENES[i], P = PL[S.place]; cur = S.place; P.group.visible = true; setEnv(S.env);
+  const gone = SC ? SC.npcs.map((n) => n.m) : []; clearScene(); for (const k in PL) PL[k].group.visible = false; const S = SCENES[i], P = PL[S.place]; cur = S.place; P.group.visible = true; setEnv(S.env);
   const st = S.start || P.start, mk = (s, talk) => { if (!s.ground) s.ground = P.groundAt(s.x, s.z); const n = Object.assign(s, { talked: false, heard: 0, extra: !talk }); n.m = makeBody(s); n.m.visible = !s.hidden; P.group.add(n.m); n.ctl = n.m.userData.anim; n.m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(n.m); n.h = Math.max(0.9, Math.min(2.1, bb.max.y - (s.ground || 0))); return n; };
   SC = { i, P, walls: S.walls || null, people: specs.people.map((s) => mk(s, true)), extras: specs.extras.map((s) => mk(s, false)), actions: [] }; SC.npcs = SC.people.concat(SC.extras); SC.people.filter((n) => !n.kid).forEach(addMark);
   startLife(i, S, P); SC.actions = ACTIONS[i] ? ACTIONS[i](P) : []; state.x = st.x; state.z = st.z; state.yaw = st.yaw || 0; state.pitch = 0; EYE_NOW = S.adult ? EYE_ADULT : EYE;
+  letGo(i, gone); readyNext(i);
 }
 const byId = (id) => (SC ? SC.people.find((n) => n.id === id) : null);
 /* the audit: the children's way out on the night of the fire must not cross the rope, a wall or the fire engine (with a child's half width) */
@@ -395,14 +419,14 @@ function showPlace(text) { const el = $('place'); el.textContent = text || CHAPT
 function resetTransient() { EP++; frozen = false; HELD_BLANKET.visible = false; endCut(); FX.shake = 0; $('sub').classList.add('dim'); document.body.classList.remove('subbing'); TICKS.length = 0; SIREN = 0; }
 async function beginChapter(i, st) {
   if (fading) return; resetTransient(); st = st || CH_FIRST[i]; const C = CHAPTERS[i]; hideCard(); closeJournal(); closeChapters(); $('dialogue').hidden = true; busy = false; talkWith = null;
-  if (!modelsReady || !PL[SCENES[i].place]) toast('Loading', 4000); const specs = await loadScene(i);
+  if (!modelsReady || !PL[SCENES[i].place]) toast('Loading', 4000); const specs = await takeScene(i);
   const go = () => chapterFade(C.title, C.sub, () => startScene(i, st, specs));
   if (i === 3 && st === 40 && !QUICK) card('This chapter is sad', ['It tells about the night of the fire.', 'You watch from the road, far back. Nobody is shown hurt.', 'You can skip to the morning if you like.'], [{ t: 'Continue', go: () => { hideCard(); go(); } }, { t: 'Skip to the morning', go: () => { hideCard(); st = 45; go(); } }], { col: true });
   else go();
 }
 function startScene(i, st, specs) {
   enterScene(i, specs); state.started = true; const P = SC.P;
-  if (P.id === 'slipe') { P.night.visible = i === 3; P.ruin.visible = false; P.bus2.visible = false; if (P.fall) P.fall.reset(); P.myers.group.visible = true; P.fire.setLevel(0); P.lamps.forEach((l) => { l.visible = i === 2 || i === 3; }); wardLights(P, true); }
+  if (P.id === 'slipe') { P.night.visible = i === 3; P.ruin.visible = false; P.bus2.visible = false; if (P.fall) P.fall.reset(); wardStill(P); P.myers.group.visible = true; P.fire.setLevel(0); P.lamps.forEach((l) => { l.visible = i === 2 || i === 3; }); wardLights(P, true); }
   if (i === 1) { P.things.forEach((t, k) => { t.visible = true; t.position.set(-13.2 + k * 0.4, 0.81, 2.9); }); if (st >= 22) P.things.forEach((t, k) => placeThing(P, k)); }
   if (i === 3) nightSetup(P, st);
   if (i === 4) P.spray.visible = st >= 54 && story.part === 'flower';
@@ -468,7 +492,7 @@ ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 
 /* ---------- chapter 4: the night. Seen from behind the rope, with slow camera moves for the big moments. Nothing you do changes what happened. ---------- */
 let SIREN = 0;
 function nightSetup(P, st) {
-  const after = st >= 44, dawn = st >= 45; P.fire.setLevel(dawn ? 0.08 : after ? 0.4 : 1); if (P.fall) P.fall.reset(); P.myers.group.visible = !after; P.ruin.visible = after; SIREN = dawn ? 0 : after ? 0.3 : 1;
+  const after = st >= 44, dawn = st >= 45; P.fire.setLevel(dawn ? 0.08 : after ? 0.4 : 1); if (P.fall) P.fall.reset(); wardStill(P); P.myers.group.visible = !after; P.ruin.visible = after; SIREN = dawn ? 0 : after ? 0.3 : 1;
   for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = after && !dawn; if (after && id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
   [0, 1, 2].forEach((i) => { const n = byId('kid' + i); if (st >= 43) { kidTo(n, -5 - i * 1.25, -5.2); n.m.visible = !dawn; if (after) addBlanket(n, PILE_COLS[2 - i]); } });
   P.lamps.forEach((l) => { l.visible = !dawn; }); wardLights(P, !after); pileShow(P, st); HELD_BLANKET.visible = false;
@@ -494,8 +518,8 @@ async function holdGate(P) {
    tumbling and smoke rising (engine/collapse.js). It is made once and put back by nightSetup when the chapter is played again. */
 /* the warm lights in the ward's front windows hang in the lamp group, so they go out by hand when the ward falls */
 function wardLights(P, on) { for (const l of P.lamps) l.traverse((w) => { if (w.userData.win) w.visible = on; }); }
-function wardFall(P) { const M = P.myers; wardLights(P, false);
-  return P.fall || (P.fall = collapse(M.group, { floorAt: (x, z) => (Math.abs(x) < M.L / 2 && z > M.Z1 && z < M.VZ) ? M.F1 : 0, from: 'centre', spread: 3.0, roofTime: 1.5,
+function wardFall(P) { const M = P.myers; wardLights(P, false); wardStill(P, false);   /* the real ward, in its loose pieces, takes the merged copy's place for the fall */
+  return P.fall || (P.fall = collapse(M.real || M.group, { floorAt: (x, z) => (Math.abs(x) < M.L / 2 && z > M.Z1 && z < M.VZ) ? M.F1 : 0, from: 'centre', spread: 3.0, roofTime: 1.5,
     onImpact: (k) => { FX.shake = Math.max(FX.shake, 0.45 * k); if (AU.ctx && AU.on && AU.ctx.state === 'running') noiseHit(110 + Math.random() * 60, 0.7, 1.1, 0.18 * k, (Math.random() - 0.5) * 0.6); } })); }
 async function roofFalls(P) {
   frozen = true; const ep = EP; bars(true); SIREN = 0.3; say('The old ward cannot stand. The roof falls in.', 6000);
@@ -564,7 +588,7 @@ applySave(loadGame());
 { let done = 0; const tick = () => { done++; $('bar').style.width = (done / 3 * 100) + '%'; };
   const P = buildPlace('slipe'); P.group.visible = true; cur = 'slipe'; setEnv(ENV.day); tick();   /* the gate and the avenue, as a backdrop for the title card */
   const first = hasSave && stage >= 10 ? chapterOf(stage) : 0;
-  model('anims').then((an) => { loadClips(an); tick(); return loadScene(first); }).then(() => { modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick(); if (__DEV__) devViews(); }); }
+  model('anims').then((an) => { loadClips(an); tick(); return sceneReady(first); }).then(() => { modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick(); if (__DEV__) devViews(); }); }
 function startGame(quiet) {
   if (GO) return; GO = true; audioInit(); $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
   $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); if (!quiet) cue('begin');

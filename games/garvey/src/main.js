@@ -19,12 +19,14 @@ import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../e
 import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
 import { exitReady, exitsReset } from '../../../engine/story.js';
 import { createSea } from '../../../engine/sea.js';
-import { model, prefetch, onLoadFail } from '../../../engine/loader.js';
+import { model, onLoadFail } from '../../../engine/loader.js';
 import { auditCloth } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
+import { setQuiet, ahead, work, warm, release } from '../../../engine/preload.js';   /* the next chapter's place built while you read, the last one let go (engine/preload.js) */
+import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -208,6 +210,7 @@ const START = { x: -0.5, z: 2.9, yaw: 0 };
 const EYE = 1.55, isTouch = matchMedia('(pointer: coarse)').matches;
 const keys = new Set(); let busy = false, fading = false;   /* busy: a talk, the journal or another panel is open, so do not move */
 let talkWith = null, near = null, DEV_NOSTOP = false, curWalls = WALLS, curBounds = BOUNDS;   /* DEV_NOSTOP: test views only, so a walker keeps walking while the camera is close */
+setQuiet(() => busy || fading || panelsOpen() || (modelsReady && !state.started));   /* a talk, a card, a panel, the chapter title or the title screen is up: a good time for the next place's heavy work (engine/preload.js) */
 const panelsOpen = () => ['dialogue', 'typeset', 'pagebuild', 'inspect', 'decl', 'sortp', 'letp', 'timep', 'ansp', 'journal', 'chapters', 'credits', 'card'].some((id) => !$(id).hidden);   /* closing one panel must not unpause the world while another is open */
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
@@ -692,9 +695,15 @@ function nurseCap(m, top) {
    much faster for the same ground speed. */
 const PACE_K = { nb_elder: 1.09 };
 function fitPace(m, model, k) { const f = k ? +k : PACE_K[model] || PACE_K[model.replace(/_[bc]$/, '')];   /* a face variant (guide2020_b) walks as its body does */ const c = m.userData.anim; if (!f || !c || c._fit) return; const p0 = c.pace.bind(c); c.pace = (v, lo, hi) => p0(v * f, lo, hi); c._fit = true; }
+/* one unpacking per model file: several people share a body (five nb_youth, four woman1914...), and engine/loader.js model() unpacks the file
+   again on every call. The first unpacking is kept as it came and never shown; each person gets a copy of it with materials of their own (a tint or a
+   lighter skin on one never reaches another), sharing the shapes, so the graphics chip holds each body's shapes once. */
+const BODY = {};
+function bodyOf(name) { return (BODY[name] = BODY[name] || model(name)).then((gl) => { const m = skClone(gl.scene), own = new Map(), mine = (x) => { if (!own.has(x)) own.set(x, x.clone()); return own.get(x); };
+  m.traverse((o) => { if (o.material) o.material = Array.isArray(o.material) ? o.material.map(mine) : mine(o.material); }); return { ...gl, scene: m }; }); }
 function loadPerson(n) {
   if (n.loading) return n.loading;
-  n.loading = model(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K * ({ garvey1914: 1.65, garvey1916: 1.65, nurse1920: 1.18, hl_worker: 1.08 }[n.model] || 1)); if (n.noHat && /^Hat/.test(o.material.name)) o.visible = false; } });   /* noHat: indoors a man takes his hat off */ m.position.set(n.x, 0, n.z); m.rotation.y = n.ry;   /* Garvey's face sits deeper in shade (heavy brows and moustache), so his skin is drawn a little lighter (owner rule 9: judged in game) */ if (n.scale) m.scale.setScalar(n.scale);   /* a child's body is stored enlarged and shrunk here (see docs/PEOPLE.md, children) */ m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; fitPace(m, n.model); m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); if (n.model === 'nurse1920') nurseCap(m, bb.max.y); n.h = Math.max(1.1, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
+  n.loading = bodyOf(n.model).then((gl) => { const m = gl.scene; m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material.name === 'Skin') o.material.color.setScalar(SKIN_K * ({ garvey1914: 1.65, garvey1916: 1.65, nurse1920: 1.18, hl_worker: 1.08 }[n.model] || 1)); if (n.noHat && /^Hat/.test(o.material.name)) o.visible = false; } });   /* noHat: indoors a man takes his hat off */ m.position.set(n.x, 0, n.z); m.rotation.y = n.ry;   /* Garvey's face sits deeper in shade (heavy brows and moustache), so his skin is drawn a little lighter (owner rule 9: judged in game) */ if (n.scale) m.scale.setScalar(n.scale);   /* a child's body is stored enlarged and shrunk here (see docs/PEOPLE.md, children) */ m.userData.ground = n.ground || 0; m.visible = false; scene.add(m); animate(m, n.base); if (!/^Sit/.test(n.base || '')) { m.userData.anim.mx.update(0); spreadArms(m, /amy|woman|seller|nurse|guide/.test(n.model) ? 0.15 : /garvey|delegate|critic|steward/.test(n.model) ? 0.11 : 0.05); }   /* arms hang clear of skirts and jackets */ grounded.push(m); n.m = m; fitPace(m, n.model); m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m); if (n.model === 'nurse1920') nurseCap(m, bb.max.y); n.h = Math.max(1.1, Math.min(2.3, bb.max.y - bb.min.y)); addMark(n); });   /* n.h: how tall this person is, so the speech mark can sit just above the head or hat */
   return n.loading;
 }
 let shopLoading = null;
@@ -1449,11 +1458,25 @@ const LIFE_OPTS = { PLACES, phone: isTouch };
 function refreshLife() { const P = PLACES[place]; if (P) refreshLifeOf(P, stage, LIFE_OPTS); }
 let place = 'shop', placeT = 0, pfT = 0;
 const PLACE_ORDER = ['shop', 'hall', 'street', 'press', 'dock', 'liberty', 'office', 'park'];   /* the chapters in order */
-function prefetchNext(name) {   /* a few seconds after arriving, quietly fetch the people of the next chapter's place, so the move there is quick */
-  clearTimeout(pfT); const nx = PLACES[PLACE_ORDER[PLACE_ORDER.indexOf(name) + 1]]; if (!nx) return;
-  pfT = setTimeout(() => prefetch([...new Set([...nx.people, ...(nx.extras || [])].map((n) => n.model))]), 4000); }
+const ENSURE_AT = { shop: ensureShop, hall: ensureHall, street: ensureStreet, press: ensurePress, dock: ensureDock, liberty: ensureLiberty, office: ensureOffice, park: ensurePark };
+const chapterPlace = (name) => (name === 'deck' ? 'dock' : name);   /* the deck is part of the dock's chapter */
+const nextPlace = (name) => PLACE_ORDER[PLACE_ORDER.indexOf(chapterPlace(name)) + 1];
+/* engine/preload.js warm() shows the place while it waits for the shaders; hidden again at once here, so it never flashes into the place you are in.
+   The shaders were already asked for by then, so nothing is lost. (Better done inside warm() itself: reported.) */
+function prefetchNext(name) {   /* a few seconds after arriving, quietly fetch the people of the next chapter's place (engine/preload.js ahead), then build that place, unpack
+     its people and send it to the graphics chip, one piece at a time in quiet moments (work), so starting the next chapter does not wait. On the dock, the deck is built the same way. */
+  clearTimeout(pfT); const nk = nextPlace(name), nx = PLACES[nk]; if (!nx) return;
+  pfT = setTimeout(() => { ahead([...new Set([...nx.people, ...(nx.extras || [])].map((n) => n.model))]);
+    if (name === 'dock') { work(() => { buildDeck(); }); work(() => warm(renderer, deckG, camera, scene)); }
+    work(() => ENSURE_AT[nk]()); work(() => loadExtras(nk)); work(() => warm(renderer, nx.group, camera, scene)); }, 4000); }
+/* at a chapter change, free the graphics memory of the places (and their people, who stand at the scene's root) that this chapter and the next do not use
+   (engine/preload.js release). Anything still drawn is kept, and a place shown again is simply sent again. */
+let chapterAt = null;
+function letGo(name) { const ch = chapterPlace(name); if (ch === chapterAt) return; chapterAt = ch; const keep = new Set([ch, nextPlace(name)]); if (ch === 'dock') keep.add('deck');
+  for (const k of Object.keys(PLACES)) { const Q = PLACES[k]; if (keep.has(k)) { Q.released = false; continue; } if (Q.released || !(Q.group.children.length || Q.people.some((n) => n.m))) continue; Q.released = true;
+    release(Q.group, scene); for (const n of Q.people.concat(Q.extras || [])) if (n.m) release(n.m, scene); } }
 function enterPlace(name, keepPos) {
-  exitsReset(); place = name; const P = PLACES[name]; prefetchNext(name);
+  exitsReset(); place = name; const P = PLACES[name]; prefetchNext(name); letGo(name);
   for (const k of Object.keys(PLACES)) { const Q = PLACES[k]; Q.group.visible = k === name; Q.lamp.visible = k === name; for (const n of Q.people) { if (n.mark) n.mark.visible = false; if (n.m) n.m.visible = k === name && !n.hidden; } for (const n of Q.extras || []) if (n.m) n.m.visible = k === name; }
   if (name === 'hall' && stage >= 12) for (const n of HALL_PEOPLE.slice(2)) if (n.m && !n.delay && !n.fol) { n.hidden = false; n.x = n.seat[0]; n.z = n.seat[1]; n.ry = Math.PI; n.m.position.set(n.x, 0, n.z); n.m.rotation.y = Math.PI; n.m.visible = true; if (n.seat) sitDown(n); }
   if (name === 'press') arrangePress();

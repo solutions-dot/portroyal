@@ -377,3 +377,9 @@ The owner: "the doors should fit their purpose, not one shared one". Each buildi
 - **Amy Jacques Garvey's office, 1925 (chapter 7).** Oak doors with frosted (obscure) glass, as 1920s offices had. **Kept, unsourced.** A general picture, not a copy of the real office.
 
 The doorways of the rooms stay open: the leaves fold right back so you still look out through them.
+
+## Performance (18 November 2026)
+
+- **One unpacking per body file.** Several people share a body (five `nb_youth`, four `woman1914` and more), and `engine/loader.js` `model()` unpacks the file again on every call. `bodyOf` (main.js, before `loadPerson`) keeps the first unpacking, never shown, and gives each person a copy with materials of their own, so a tint or a lighter skin stays on one person. The shapes are shared.
+- **The next chapter's place is ready before you get there** (`engine/preload.js`). `setQuiet` is a talk, a panel, a card, the chapter title or the title screen. Four seconds after you arrive somewhere, `prefetchNext` downloads the next place's people (`ahead`), then builds that place, unpacks its people and background people and warms it, one piece at a time in quiet moments (`work`). On the dock the deck is built and warmed the same way. On the deck, the next place is now Liberty Hall (it used to fetch the print shop).
+- **Places left behind let go of graphics memory.** At a chapter change `letGo` frees the places (and their people, who stand at the scene root) that this chapter and the next do not use. A place shown again is simply sent to the graphics chip again.

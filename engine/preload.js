@@ -25,14 +25,15 @@ function pump() {
   if (!quietFn() && now < job.by) { timer = setTimeout(pump, 250); return; }
   busy = true; idle(async () => { Q.shift(); try { await job.fn(); } catch (e) { console.warn('preload', e); } PRELOAD.ran++; busy = false; setTimeout(pump, 30); });
 }
-/* compile and upload a place before it is first drawn. Its hidden parts (the place itself, people not yet in the scene) are shown only to the
-   compiler: if the game shows or hides one of them while the compile runs (the player arrives), the game's choice is what stays. */
+/* compile and upload a place before it is first drawn. Its hidden parts (the place itself, people not yet in the scene) are shown to the
+   compiler only: three.js picks what to compile at the start of compileAsync, so everything is hidden again before the first await, and no
+   frame can draw the place early (a flash on a phone that compiles in parallel). The await then only waits for the shaders to finish. */
 export async function warm(renderer, object, camera, scene) {
   if (!renderer || !object) return;
-  const hidden = []; object.traverse((o) => { if (!o.visible) hidden.push(o); });
-  const held = hidden.map((o) => { let v = false, set = false; Object.defineProperty(o, 'visible', { configurable: true, enumerable: true, get: () => (set ? v : true), set: (x) => { v = x; set = true; } }); return () => { const keep = set ? v : false; delete o.visible; o.visible = keep; }; });
-  try { if (renderer.compileAsync) await renderer.compileAsync(object, camera, scene); else renderer.compile(object, camera, scene); } catch (e) { /* a context that cannot compile in parallel: the first frame will */ }
-  finally { for (const put of held) put(); }
+  const hidden = []; object.traverse((o) => { if (!o.visible) hidden.push(o); }); for (const o of hidden) o.visible = true;
+  let done = null; try { done = renderer.compileAsync ? renderer.compileAsync(object, camera, scene) : (renderer.compile(object, camera, scene), null); } catch (e) { /* a context that cannot compile ahead: the first frame will */ }
+  for (const o of hidden) o.visible = false;
+  if (done) try { await done; } catch (e) { /* as above */ }
   const seen = new Set(); object.traverse((o) => { for (const m of mats(o)) for (const t of texs(m)) if (!seen.has(t)) { seen.add(t); try { renderer.initTexture(t); } catch (e) { /* a texture still loading */ } } });
   PRELOAD.warmed++;
 }

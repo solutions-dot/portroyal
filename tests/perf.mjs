@@ -52,3 +52,12 @@ test('batchStatic merges materials alike but for colour, and splits back when th
   const q = rafQ; rafQ = []; for (const f of q) f(0);
   assert.equal(root.children.length, 3); assert.ok(root.children.some((m) => m.material === b.material)); assert.ok(BATCH_STATS.splits >= 1); void a;
 });
+
+test('batchStatic keeps a packed (quantized) model where it was', () => {
+  const root = new THREE.Group(), box = new THREE.BoxGeometry(2, 2, 2), p = box.attributes.position, q = new Int16Array(p.count * 3);
+  for (let i = 0; i < p.count * 3; i++) q[i] = Math.round(p.array[i] / 1 * 32767);   /* points stored as whole numbers, as a packed file keeps them */
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(q, 3, true)); g.setAttribute('normal', box.attributes.normal.clone()); g.setIndex(box.index.clone());
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial()); m.position.set(5, 0, 0); root.add(m); root.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), m.material));
+  batchStatic(root); const out = root.children[0].geometry; out.computeBoundingBox();
+  assert.ok(Math.abs(out.boundingBox.max.x - 6) < 0.01, 'the packed box still reaches x = 6, got ' + out.boundingBox.max.x);
+});
