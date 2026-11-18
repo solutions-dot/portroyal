@@ -80,10 +80,9 @@
    }
   },
   {
-   "clip": "kendal",
-   "from": 0.5,
+   "clip": "kendal_crash",
+   "from": 5.5,
    "dur": 3.0,
-   "push": 0.08,
    "stamp": {
     "place": "Kendal Train Crash",
     "year": "1957",
@@ -133,7 +132,7 @@
   },
   {
    "clip": "melissa",
-   "from": 3.0,
+   "from": 0.2,
    "dur": 5.0,
    "stamp": {
     "place": "Hurricane Gilbert",
