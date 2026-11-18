@@ -37,10 +37,15 @@
   {
    "clip": "play_phone",
    "phone": true,
-   "bg": "kendal",
-   "bgFrom": 1.0,
-   "from": 1.0,
-   "dur": 3.0
+   "bg": "nanny",
+   "bgFrom": 0.5,
+   "from": 0.5,
+   "dur": 3.0,
+   "stamp": {
+    "place": "The Fall of Nanny Town",
+    "year": "1734",
+    "colour": "#f0b860"
+   }
   },
   {
    "clip": "bogwalk",
