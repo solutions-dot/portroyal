@@ -175,8 +175,8 @@ function gateArch(span, rise) {
     for (const rr of [R, R - 0.46]) { x.beginPath(); x.arc(ox, oy, rr * px, Math.PI + 0.42, Math.PI * 2 - 0.42); x.stroke(); }
     x.lineWidth = 5; for (let a = Math.PI + 0.5; a < Math.PI * 2 - 0.45; a += 0.11) { x.beginPath(); x.moveTo(ox + Math.cos(a) * (R - 0.46) * px, oy + Math.sin(a) * (R - 0.46) * px); x.lineTo(ox + Math.cos(a) * (R - 0.4) * px, oy + Math.sin(a) * (R - 0.4) * px); x.stroke(); }
     const put = (ch2, a) => { x.save(); x.translate(ox + Math.cos(a) * (R - 0.23) * px, oy + Math.sin(a) * (R - 0.23) * px); x.rotate(a + Math.PI / 2); x.font = '700 44px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 5; x.strokeStyle = '#25272a'; x.strokeText(ch2, 0, 0); x.fillStyle = '#f2efe6'; x.fillText(ch2, 0, 0); x.restore(); };
-    'EVENTIDE'.split('').forEach((c, i) => put(c, Math.PI * 1.215 + i * 0.066));
-    'HOME'.split('').forEach((c, i) => put(c, Math.PI * 1.6 + i * 0.07));
+    const words = 'EVENTIDE HOME', step = 0.078, a0 = Math.PI * 1.5 - (words.length - 1) * step / 2;   /* one line, centred on the top of the arch, as in the photograph */
+    words.split('').forEach((c, i) => { if (c !== ' ') put(c, a0 + i * step); });
   });
   void cy; const m = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.35, ...DS, roughness: 0.6 });
   return { mesh: new THREE.Mesh(new THREE.PlaneGeometry(W, H), m), W, H };
