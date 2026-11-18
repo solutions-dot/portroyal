@@ -45,8 +45,18 @@
   },
   {
    "clip": "selassie_steps",
-   "from": 11.0,
-   "dur": 6.0,
+   "from": 7.5,
+   "dur": 3.5,
+   "stamp": {
+    "place": "The Emperor’s Arrival",
+    "year": "1966",
+    "colour": "#edc25f"
+   }
+  },
+  {
+   "clip": "selassie_salute",
+   "from": 2.0,
+   "dur": 2.5,
    "stamp": {
     "place": "The Emperor’s Arrival",
     "year": "1966",
