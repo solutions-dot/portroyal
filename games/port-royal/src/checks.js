@@ -141,6 +141,15 @@ async function runLayout(A) {
   const reset = () => { A.hideCard(); if (!$('dialogue').hidden) A.leaveTalk(); for (const id of ['talk', 'toast', 'nudge']) $(id).hidden = true; $('hint').hidden = true; A.busy = false; };
   const settle = () => sleep(700), talkBtn = (label) => { const a = A.ACTIONS.find((x) => x.label === label) || { label }; A.setActionButton(a); $('talk').hidden = false; };
   const goal = (t) => { A.setGoalText(t); A.showGoal(true); };
+  const count = $('jcount'), previousCount = count.textContent, countWasHidden = count.hidden, viewWasHidden = $('view').hidden;
+  count.textContent = '13'; count.hidden = false; $('view').hidden = false;
+  for (const button of $('topr').querySelectorAll('button')) {
+    const bounds = button.getBoundingClientRect();
+    if (bounds.width && (bounds.left < 0 || bounds.right > W || button.scrollWidth > button.clientWidth + 1)) {
+      out.push(`${W}x${H} camera toolbar: ${button.id} is clipped`);
+    }
+  }
+  $('view').hidden = viewWasHidden; count.hidden = countWasHidden; count.textContent = previousCount;
   reset(); goal('Find 4 things in the tavern. Found: 2 of 4.'); talkBtn('Look at the little box'); A.showHint(); A.toast('Journal: Onion bottles'); await settle(); check('play: goal, action, hint, toast');
   reset(); goal('Walk to Fort Charles, along the beach past the houses.'); talkBtn('Talk to the dockworker'); await settle(); check('play: talk button');
   reset(); A.startConvo([{ who: 'Symon Benning', text: 'Look under a plate for our mark: a pineapple!' }]); await settle(); check('dialogue');
