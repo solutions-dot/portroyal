@@ -29,12 +29,12 @@ export function addExit({ url = '../../../menu/', save = null } = {}) {
   ask.innerHTML = '<div class="ex"><h2 id="exitq">Exit?</h2><p>Your progress is saved on this device.</p><div class="exb"><button class="stay" type="button">Keep playing</button><button class="go" type="button">Exit</button></div></div>';
   document.body.appendChild(ask);
   const close = () => { ask.hidden = true; btn.focus(); };
-  btn.addEventListener('click', (e) => { e.stopPropagation(); ask.hidden = false; ask.querySelector('.stay').focus(); });
+  btn.addEventListener('click', (e) => { e.stopPropagation(); dispatchEvent(new Event('blur')); ask.hidden = false; ask.querySelector('.stay').focus(); });   /* every game lets go of held keys and the joystick on blur, so a walk does not carry on behind the question (Codex review) */
   ask.querySelector('.stay').addEventListener('click', (e) => { e.stopPropagation(); close(); });
   ask.querySelector('.go').addEventListener('click', (e) => { e.stopPropagation(); try { if (save) save(); } catch (err) { /* leave anyway */ } location.href = url; });
   ask.addEventListener('click', (e) => { if (e.target === ask) close(); });
   ask.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') close(); });   /* the game's own keys stay quiet while the question is up */
-  for (const t of ['pointerdown', 'touchstart', 'keyup']) ask.addEventListener(t, (e) => e.stopPropagation(), { passive: true });
+  for (const t of ['pointerdown', 'touchstart']) ask.addEventListener(t, (e) => e.stopPropagation(), { passive: true });   /* key releases still reach the game, so nothing stays held */
   const follow = () => { const show = !jb.hidden && getComputedStyle(jb).display !== 'none' && getComputedStyle(jb).visibility !== 'hidden'; btn.style.display = show ? '' : 'none'; };
   new MutationObserver(follow).observe(jb, { attributes: true }); setInterval(follow, 500); follow();
   return btn;
