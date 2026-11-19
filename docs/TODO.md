@@ -36,6 +36,17 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
   - Nanny Town’s ridge cast changes stance sooner and Kendal’s Lloyd uses an available gesture. Nanny Town reported `ANIM 0`, and the check for Kendal’s road, station and crash steps reported `MOTION 0`.
   - The shared grip blends in the reach for the basket on Kendal’s road and applies one posture correction to the cup arm in The Emperor’s Arrival. The phone-sized frame trace found no arm snaps in those scenes.
 
+## Characters clipping through scenery
+
+- [x] **Check posed characters against nearby scenery in all ten games.** Ran the built-in place or seating audits and sampled posed hands, arms, legs and torsos in phone-sized Chromium during chapter replays and stepped animation checks. The pose pass measured solid boxes and cylinders, including tables, seats, posts and walls. Close checks on Exquemelin and two Garvey characters also compared the rendered skin and clothing vertices with the props. The sampled Bog Walk and Nanny Town poses showed no intersections in this pass.
+- [ ] **Port Royal.** In Ned’s flashback, Exquemelin’s hands cut into the barrel desk during `Write`. His left shin also cuts into the front corner of his seat. Port Royal’s seating audit reports zero for this scene. Ned’s seated talk in the tavern was clear in the close check. Review the drill and quartermaster’s barrel on the same wharf, where the sampled feet and shins also entered props.
+- [ ] **Marcus Garvey.** The typist’s right hand enters the Harlem office side table while bending in `PickUp` (stage 60). The compositor’s right hand enters the type case during `ReachOut` (stage 32). Marcus Garvey’s right shin and foot enter the front of the meeting-hall table (stages 12 and 13). Check the seated hands against the hall benches, too.
+- [ ] **Kendal.** The sitter at about x = -4.2, z = 4.52 by the crash-site fire puts his left shin through the log while idling. Coach passengers on the z = -0.9 row put a hand through the side panel during `SitTalk` (stages 50 and 51). Check the Kingston station crowd’s route around the sack at x = 36, z = 2.4.
+- [ ] **Hurricane Melissa.** In the 2025 church shelter, the sitter nearest the food table at about x = -0.8, z = -3.23 clips the tabletop with an upper arm. A nearby person’s torso and neck enter a metal pot on that table during the storm reaction (stage 43). Check Miss Hyacinth’s left hand against the same table in that reaction.
+- [ ] **Windrush.** The seated neighbour on the west side of the district shop’s domino table puts his right forearm through the top. Iris’s left shin and right foot enter the armchair base at home (stage 72). Her left shoulder and forearm also pass into the hallway wall near the doorway as she leads to the gate (stage 75).
+- [ ] **Tivoli.** In the incursion scene, characters’ left hands and forearms enter the low walls at x = -11, z = 2.6 and x = -2, z = -2.4 during crouching and standing clips. Review seated knees and shins at the bench near x = 20, z = -3.4 in the walking chapters.
+- [ ] **Eventide and The Emperor’s Arrival.** In Eventide’s Golden Age Home scene, three people’s feet enter the raised house bases. Recheck the right hand of the parade spectator at x = 13.3, z = 15.6 in The Emperor’s Arrival. The probe caught a brief overlap during a wave.
+
 ## Not done yet (ask the owner first)
 
 - [ ] **The main site menu** (`menu/index.html`) still uses its own fonts (Inter and Fraunces). The games now share one set of fonts. Ask the owner whether the menu should use them too.
