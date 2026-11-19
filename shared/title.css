@@ -33,6 +33,6 @@
    break inside it, the card grows to hold the row on a wide screen, and on a narrow phone whole buttons drop to the next line instead */
 #cbtns,#chcardb{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
 html body #cbtns>:is(.btn,button,a),html body #chcardb>:is(.btn,button,a){flex:0 0 auto;white-space:nowrap;max-width:100%}
-html body :has(>#cbtns),html body :has(>#chcardb){width:fit-content;min-width:min(34rem,100%);max-width:min(60rem,100%)}
-html body #cbody,html body #chcardl{width:0;min-width:100%}   /* the words wrap to the card; only the buttons and the title set how wide it grows */
+html body :has(>#cbtns){width:fit-content;min-width:min(34rem,100%);max-width:min(60rem,100%)}
+html body #cbody{width:0;min-width:100%}   /* the words wrap to the card; only the buttons and the title set how wide it grows */
 @media(max-width:600px){html body #cbtns>:is(.btn,button,a),html body #chcardb>:is(.btn,button,a){white-space:normal}}
