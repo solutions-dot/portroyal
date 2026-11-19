@@ -188,9 +188,6 @@ export function buildNewTown() {
   /* new houses round the clearing and across the valley floor */
   [35, 70, 105, 150, 205, 240, 300, 330].forEach((a, i) => { const t = a * PI / 180, x = Math.cos(t) * 16.6, z = Math.sin(t) * 16.6; putHut(g, G, 3.8 + (i % 2) * 0.4, 3.1, 2.05, i + 20, x, z, face(x, z, 0, 0), { solids }); });
   const far = farHuts(g, G, 46, [-70, -70, 20, 70], 27, (x, z, y) => { const d = Math.hypot(x, z); return d > 23 && d < 78 && G.trailness(x, z) < 0.01 && Math.abs(G.h(x + 2, z) - y) < 1.1 && Math.abs(G.h(x, z + 2) - y) < 1.1 && Math.hypot(x + 9, z + 37) > 11; });
-  /* a waterfall on the western hill (there are falls near Moore Town): white water down a dark rock face */
-  const fx = -72, fz = 6, fy = G.h(fx, fz), fall = grp(g, fx, fy, fz); fall.userData.noBatch = true; fall.rotation.y = PI / 2;
-  mesh(new THREE.PlaneGeometry(16, 30), flat(0x3c4038), 0, 12, -0.3, fall); const wt = T.water([1, 3]).clone(); wt.needsUpdate = true; const wm = mesh(new THREE.PlaneGeometry(4.2, 28), new THREE.MeshBasicMaterial({ map: wt, color: 0xf2fbff, transparent: true, opacity: 0.92 }), 0, 13, 0, fall);
   /* the meeting tree on its knoll, the paper on its stone, cook fire, gardens */
   const mt = cottonTree(21, 8); put(g, G, mt, -11.5, -39.5, 1.2, { solids, r: mt.userData.reach });   /* the meeting tree: its footprint is its whole root spread, so the people round Nanny stand clear of the roots */
   const stone = put(g, G, paperStone(), 3.6, -4.6, 0.3, { solids, r: 0.95 });
@@ -206,5 +203,5 @@ export function buildNewTown() {
   const extras = [extra('nanny', nx, nz, face(nx, nz, nx - 6, nz - 30), 'Idle', { id: 'nanny6', ground: G.h(nx, nz), far: true }), ...villagers(8, 31, [kx - 2.6, kz + 3.2, kx + 5.4, kz + 6.4], { face: [nx, nz], anims: ['Idle'] }).map((e) => ({ ...e, wild: true, far: true })),
     extra('phibbaGrown', 3.2, -1.6, face(3.2, -1.6, 3.6, -4.6), 'Idle'), ...villagers(12, 35, [-11, -11, 11, 11], { face: [3.6, -4.6] })];
   return { id: 'newtown', group: g, G, solids, start: { x: 0.5, z: 9.5, yaw: 0.1 }, env: ENV.morning, backdrop: { lift: -4, mist: -200 }, people, extras, waters: [water], smokers: [{ x: -5, y: 0.9, z: 5.4, rate: 1.1 }, { x: fx + 1.5, y: fy + 1.2, z: fz, rate: 2.2, mist: true }],
-    tick: (dt) => { wt.offset.y += dt * 0.55; }, spots: { paper: [3.6, -4.6], stone, hearth, river: [21, 6] } };
+    spots: { paper: [3.6, -4.6], stone, hearth, river: [21, 6] } };
 }

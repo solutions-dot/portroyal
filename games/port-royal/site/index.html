@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Port Royal 1690</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Alfa+Slab+One&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{
   /* One world, one theme: a harbour at midday seen through a merchant's ledger.
@@ -17,7 +17,7 @@
   --brass:#d9a441;        /* the only accent: things you can press */
   --brass-ink:#2a1f08;
   --rule:#c9bd9f;
-  --display:"IM Fell English SC","IM Fell English",Georgia,"Times New Roman",serif;
+  --display:"Alfa Slab One","Rockwell",Georgia,serif;--period:"IM Fell English SC","IM Fell English",Georgia,serif;
   --text:"Atkinson Hyperlegible",Verdana,"Segoe UI",sans-serif;
   color-scheme:dark;
 }
@@ -36,8 +36,8 @@ button{font:inherit;color:inherit}
 /* title card */
 #title{position:fixed;inset:0;display:flex;align-items:flex-end;padding:clamp(16px,4vw,48px);background:linear-gradient(180deg,rgba(16,34,43,0) 30%,rgba(16,34,43,.93) 72%)}
 #title .card{max-width:34rem;display:flex;flex-direction:column;gap:.7rem}
-#title .place{font-family:var(--display);letter-spacing:.14em;font-size:.95rem;color:var(--brass);margin:0}
-#title h1{font-family:var(--display);font-weight:400;font-size:clamp(2.6rem,9vw,5rem);line-height:.95;margin:0;text-wrap:balance}
+#title .place{font-family:var(--period);letter-spacing:.14em;font-size:.95rem;color:var(--brass);margin:0}
+#title h1{font-family:var(--period);font-weight:400;font-size:clamp(2.6rem,9vw,5rem);line-height:.95;margin:0;text-wrap:balance}
 #title h1 span{font-family:"IM Fell English",Georgia,serif;font-style:italic;font-size:.5em;display:block;margin-top:.25em;color:var(--paper)}
 #title p{margin:0;max-width:30rem}
 .dev{background:none;border:0;color:var(--paper);font-family:var(--text);font-size:.95rem;opacity:.85;cursor:pointer;padding:.4em .2em;min-height:44px;letter-spacing:.02em}.dev b{color:var(--brass);font-weight:700}.dev:hover{opacity:1;text-decoration:underline;text-underline-offset:4px}
@@ -87,7 +87,7 @@ button{font:inherit;color:inherit}
 #jpage summary{font-weight:700;cursor:pointer;line-height:1.72rem;margin-bottom:1.72rem}
 #jpage details p{font-size:.98rem}
 .book .book-focus:focus-visible,#jclose:focus-visible,#chclose:focus-visible,#crclose:focus-visible,.tab:focus-visible,#jpage summary:focus-visible{outline-color:var(--paper-ink)}
-#fade{position:fixed;inset:0;z-index:50;background:#120d09;opacity:0;transition:opacity .7s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f3e6cc;text-align:center;pointer-events:none}#fade.on{opacity:1;pointer-events:auto}#fade[hidden]{display:none}#fadeT{font-family:'IM Fell English SC',serif;font-size:clamp(34px,7vw,64px);opacity:0;transform:translateY(8px);transition:opacity .8s ease,transform .8s ease}#fadeS{font-family:'Atkinson Hyperlegible',sans-serif;font-size:clamp(15px,2.6vw,20px);margin-top:10px;opacity:0;color:#d9c39b;transition:opacity .8s ease .25s}#fade.txt #fadeT{opacity:1;transform:none}#fade.txt #fadeS{opacity:.9}
+#fade{position:fixed;inset:0;z-index:50;background:#120d09;opacity:0;transition:opacity .7s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f3e6cc;text-align:center;pointer-events:none}#fade.on{opacity:1;pointer-events:auto}#fade[hidden]{display:none}#fadeT{font-family:var(--display);font-size:clamp(34px,7vw,64px);opacity:0;transform:translateY(8px);transition:opacity .8s ease,transform .8s ease}#fadeS{font-family:'Atkinson Hyperlegible',sans-serif;font-size:clamp(15px,2.6vw,20px);margin-top:10px;opacity:0;color:#d9c39b;transition:opacity .8s ease .25s}#fade.txt #fadeT{opacity:1;transform:none}#fade.txt #fadeS{opacity:.9}
 body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) brightness(1.02)}body.flash::after{content:'';position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 140px 30px rgba(60,40,20,.55)}
 #vig{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 40%,#5a4a36 0%,#2a2118 70%)}
 #card{position:absolute;inset:0;background:rgba(16,34,43,.9);display:grid;place-items:center;padding:16px}

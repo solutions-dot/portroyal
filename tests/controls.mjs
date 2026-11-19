@@ -19,6 +19,11 @@ test('every game has the standard navigation and controls', () => {
     assert.doesNotMatch(html + js, /Main Menu/, at('the words "Main Menu" are not used; it is "Exit"'));
     assert.doesNotMatch(js, /card\('Reset'[\s\S]{0,700}?t: 'Exit'/, at('the Reset card has no Exit button'));
     assert.match(html, /title\.css/, at('the shared title screen styles (shared/title.css: steady buttons, no save line)'));
+    assert.doesNotMatch(html, /WASD|W A S D|arrow keys|left thumb|Left thumb/, at('no control instructions in the page itself: the controls tip in play says them (liveHint)'));
+    assert.match(html, /id="credits"[\s\S]*Created by[\s\S]*Where the history comes from/, at('Credits say who made the game and where the history comes from'));
+    { const cr = (html.match(/id="credits"[\s\S]*?(<\/section>|<\/dialog>|Back to Chapters)/) || [''])[0]; assert.doesNotMatch(cr, /\b(built with|made with|engine|three\.?js|MakeHuman|Mixamo|Blender|Vercel|GitHub|servers?|Claude|software)\b/i, at('Credits name only who made it and where the history comes from, never tools, engines or servers')); }
+    assert.match(html, /--display:\s*"Alfa Slab One"/, at('the interface font is Alfa Slab One (--display), the same in every game'));
+    assert.match(html, /--(text|body):\s*"Atkinson Hyperlegible"|font-family:\s*"Atkinson Hyperlegible"/, at('the reading font is Atkinson Hyperlegible'));
     assert.match(js, /liveHint\(/, at('the controls tip uses liveHint() from engine/device.js (touch or key words)'));
     assert.match(js, /touchFirst\(\)/, at('touch is detected with touchFirst() from engine/device.js'));
     assert.match(js, /tapPerson|pickPerson/, at('a tap on a person starts their talk (engine/tap.js pickPerson, or the game\'s own tapPerson)'));

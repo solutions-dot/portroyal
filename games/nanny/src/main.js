@@ -721,11 +721,12 @@ let GUIDE = null;
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
 let auNext = 0, onceAt = 6; const AMB = 0.42;
-const SOUNDSCAPE = { estate: { wind: 0.05, cricket: 0.2, once: () => (Math.random() < 0.5 ? SFX.frog(0.05, Math.random() - 0.5) : SFX.owl(0.08, Math.random() - 0.5)) }, town: { wind: 0.1, crowd: 0.06, once: chirp }, watch: { wind: 0.16, once: chirp }, newtown: { wind: 0.06, crowd: 0.07, stream: 0.1, once: chirp } };
+const SOUNDSCAPE = { estate: { wind: 0.03, cricket: 0.2, once: () => (Math.random() < 0.5 ? SFX.frog(0.05, Math.random() - 0.5) : SFX.owl(0.08, Math.random() - 0.5)) }, town: { wind: 0.035, crowd: 0.06, once: chirp }, watch: { wind: 0.05, once: chirp }, newtown: { wind: 0.03, crowd: 0.07, once: chirp } };
+/* soft wind and a quiet brook heard only beside the water (owner, 19 November 2026: a loud rush like a waterfall played in ordinary play) */
 function audioTick(t) {
   if (!AU.ctx || t < auNext) return; auNext = t + 0.1; const S = SOUNDSCAPE[cur] || {}, night = envNow.stars > 0.5, P = P_();
   for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], (k === 'crowd' && night ? 0.02 : S[k] || 0) * AMB);
-  let stream = S.stream || 0, fire = 0; if (cur === 'estate') stream = 0.3 * clamp01(1 - Math.abs(state.z + 13.5) / 16); if (cur === 'newtown') stream = 0.08 + 0.25 * clamp01(1 - Math.abs(state.x - 27) / 18);
+  let stream = S.stream || 0, fire = 0; if (cur === 'estate') stream = 0.16 * clamp01(1 - Math.abs(state.z + 13.5) / 9); if (cur === 'newtown') stream = 0.16 * clamp01(1 - Math.abs(state.x - 27) / 10);
   if (cur === 'town') fire = 0.2 * clamp01(1 - Math.hypot(state.x + 3, state.z - 3) / 9) + (GUNS.on ? 0.12 : 0); if (cur === 'newtown') fire = 0.2 * clamp01(1 - Math.hypot(state.x + 5, state.z - 5.4) / 9);
   SFX.setBeds({ stream: stream * 0.5, fire: fire * 0.6, cricket: (night ? (S.cricket || 0.14) : 0) * 0.45, rumble: GUNS.on ? 0.25 : FIGHT.firing > 0 ? 0.12 : 0 });
   if (fire > 0.05 && Math.random() < 0.25) crackle();

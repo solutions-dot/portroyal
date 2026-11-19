@@ -6,7 +6,7 @@ const live = () => AU.ctx && AU.on && AU.ctx.state === 'running';
 const B = {};   /* beds made after the first tap */
 export function initBeds() {
   if (!AU.ctx || B.ok) return; const c = AU.ctx; B.ok = true;
-  B.stream = chan('white', 'bandpass', 1500, 0.5); B.stream.gain.value = 0;
+  B.stream = chan('white', 'bandpass', 900, 1.2);   /* a brook, not a rush: a narrower, lower band */ B.stream.gain.value = 0;
   B.fire = chan('brown', 'bandpass', 520, 0.7); B.fire.gain.value = 0;
   B.rumble = chan('brown', 'lowpass', 150); B.rumble.gain.value = 0;
   /* night insects: a high tone chopped fast, with a slower chop on top */

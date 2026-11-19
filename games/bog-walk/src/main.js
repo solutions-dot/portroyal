@@ -32,7 +32,6 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
-liveHint(document.getElementById('howto'), 'Walk with your left thumb. Drag to look. Tap people to talk.', 'Walk with the arrow keys or W A S D. Drag to look. Tap people to talk.');   /* the title page tells each player only their own controls (engine/device.js) */
 
 const $ = (id) => document.getElementById(id);
 const q = new URLSearchParams(location.search);
