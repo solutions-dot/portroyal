@@ -14,6 +14,12 @@ The other modules, each covered below: `perf.js`, `joinbody.js`, `batch.js` and 
 
 `touchFirst()` is the best first guess at a touch device: a coarse main pointer, touch points on a phone or tablet, an iPad asking for the desktop site (it reports "Macintosh" but has touch points), or only coarse pointers. Every game uses it in place of `matchMedia('(pointer: coarse)')`, which missed iPads in desktop mode and some tablets, so they were told to use W A S D. `liveHint(el, touchText, keysText)` shows the controls tip in the right words and then follows what the player really uses: the first touch switches it to the touch words, the first key press to the key words.
 
+## engine/exit.js: the Exit button (19 November 2026)
+
+`addExit({ url, save })` puts an Exit button to the right of the Journal button (`#jbtn`) in every game, with the Journal button's look, shown and hidden with it. It asks first, in as few words as possible: "Exit? Your progress is saved on this device." with Keep playing and Exit; Exit runs `save()` and goes to the menu. The journal pages and the Reset card no longer have a Main Menu button, the title screen's link to the menu reads Exit, and the line "Your progress is saved on this device." under the title buttons is hidden (`shared/title.css`).
+
+The title buttons do not jump when loading ends (`shared/title.css`): Chapters keeps its place from the first frame and fades in, Start is wide enough for its loading and ready words, and the loading bar and note keep their lines.
+
 ## engine/tap.js: tap a person to talk (19 November 2026)
 
 `pickPerson(camera, people, cx, cy, { near, maxDist })` returns the person under a tap, by their on-screen band from feet to head (never thinner than a finger), the nearest to the camera when several overlap. No ray goes through the body. Port Royal, Windrush, Selassie and Tivoli use it; the other games had their own tap before.

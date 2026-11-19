@@ -7,11 +7,22 @@
 #title .title-actions .btn:hover:not(:disabled){background:var(--paper);border-color:var(--paper);color:var(--brass-ink);filter:none}
 #title .title-actions .btn:focus-visible{outline:3px solid var(--paper);outline-offset:3px}
 #title .title-actions .btn:disabled{opacity:.6;cursor:default}
-#title .title-actions .track{flex:1 1 9rem;min-width:6rem;max-width:14rem;height:6px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}
-#title:has(#start:not(:disabled)) .track{display:none}
+#title .title-actions .track{flex:1 1 100%;min-width:6rem;max-width:none;order:5;transition:opacity .4s ease;height:6px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}
+#title:has(#start:not(:disabled)) .track{opacity:0;visibility:hidden}
 #title #bar{height:100%;width:0;background:var(--brass);transition:width .2s}
-#title #loadnote{flex-basis:100%;font-size:.85rem;opacity:.8}
+#title #loadnote{flex-basis:100%;order:6;min-height:1.5em;line-height:1.5;font-size:.85rem;opacity:.8}
 #title #savenote{font-size:.9rem;opacity:.8}
 @media(max-width:520px){#title .title-actions{gap:.6rem}#title .title-actions .btn{padding:.65em 1em}}
 @media(max-height:600px){#title{align-items:flex-start;justify-content:flex-start}#title .card{margin-top:0}}
 @media(prefers-reduced-motion:reduce){#title #bar{transition:none}}
+
+/* the "saved on this device" line is gone: the Exit question in the game says it instead (owner, 19 November 2026) */
+#savenote{display:none!important}
+
+/* nothing jumps when loading ends (owner, 19 November 2026: the Chapters button came in last and jerked the row): Chapters keeps its place from the
+   start and fades in, Start is wide enough for "Loading" and "Continue", and the loading bar sits on its own line under the buttons and fades out */
+#title #tchap[hidden]{display:inline-flex!important;visibility:hidden;opacity:0}
+#title #tchap{transition:opacity .45s ease}
+#title #start{min-width:8.4em}
+#title #loadnote[hidden]{display:block!important;visibility:hidden}   /* a game that hides the note keeps its line, so the card does not shrink */
+@media(prefers-reduced-motion:reduce){#title #tchap,#title .title-actions .track{transition:none}}

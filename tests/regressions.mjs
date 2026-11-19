@@ -163,6 +163,7 @@ import './story.mjs';
 import './ambient.mjs';
 import './faces.mjs';
 import './perf.mjs';
+import './controls.mjs';
 import './checks.mjs';
 import './kendal.mjs';
 import './final-two-ui.mjs';

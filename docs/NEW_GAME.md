@@ -68,6 +68,8 @@ Suggested first slice: **Kingston, 1914**, the founding of the UNIA. It's a smal
 
 ## 5. Before shipping
 
+- Follow `docs/STANDARD.md`, "Navigation and controls": the title buttons (Start, Chapters, Exit), Exit beside the Journal button (`engine/exit.js`), no "Main Menu", the controls tip from `engine/device.js`, tap a person to talk. `npm test` (`tests/controls.mjs`) fails until the game does.
+
 Follow TESTING.md and PUBLISHING.md: screenshots, a scripted playthrough, the phone layout, a reading-level pass, and a facts check.
 
 **Wire the automatic checks before the first PR** (owner rule 8, TESTING.md section 5). The template does not wire any of them yet: it only carries a reminder at the top of `src/main.js`. Copy the blocks from `games/kendal/src/main.js` (search for `q.get('test')`) and import `engine/audit.js` and `engine/skinprobe.js`: the place audit (`?test=audit`), held items (`?test=held`), the layout test (`?test=layout`), and, once the game has people, `?test=cloth`, `?test=walkers` and `?test=skin` (`docs/PEOPLE.md`), plus `?test=resume` once it saves. Every place must report 0 issues. The full list is in `docs/STANDARD.md`.

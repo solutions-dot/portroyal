@@ -31,6 +31,7 @@ import { CHAPTERS, GOALS, TALK_TARGETS, TALK, LATER, SEEN, SEEN_GROUP, JOURNEY, 
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 import { touchFirst, liveHint } from '../../../engine/device.js';
+import { addExit } from '../../../engine/exit.js';
 liveHint(document.getElementById('howto'), 'Walk with your left thumb. Drag to look. Tap people to talk.', 'Walk with the arrow keys or W A S D. Drag to look. Tap people to talk.');   /* the title page tells each player only their own controls (engine/device.js) */
 
 const $ = (id) => document.getElementById(id);
@@ -568,7 +569,7 @@ function openCredits() { closeJournal(); closeChapters(); keys.clear(); $('credi
 function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; }
 $('chcred').onclick = openCredits; $('crclose').onclick = closeCredits;
 $('reset').onclick = () => { if (fading || !S.started) return; closeJournal(); leaveTalk(); closePuzzle(false); const i = chapterOf(stage);
-  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart "' + CHAPTERS[i].name + '"', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : []), { t: 'Cancel', go: hideCard }]); };
+  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart "' + CHAPTERS[i].name + '"', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }]); };
 $('exit').onclick = () => { if (locked()) return; card('Leave Zeke\'s story?', ['You can come back to it from the Chapters list.'], [{ t: 'Yes, go into the Tube', go: () => { hideCard(); beginChapter(2); } }, { t: 'No, stay here', go: hideCard }]); };
 
 function resetTransient() {   /* leave anything running: scripted scenes, a ride, the night's timers, the cinematic layer */
@@ -670,7 +671,7 @@ ON[55] = () => { card('Chapter 5 is finished', ['Next, the same place today.'], 
 function readBoard() {
   unlock('ruins'); card('The information board', ['The Gleaner, 28 June 1904:', '"Fearful Catastrophe At Bog Walk. Drowning Men Fight For Life. Sudden Rush of Water Causes Panic. 33 Able-Bodied Men Drowned In Water-Pipe. No Accurate Information as To Cause Of The Disaster."', 'In 1904, 33 men died here when water came into the pipe.'], [{ t: 'Close', go: () => { hideCard(); if (stage === 61) setStage(62); } }]);
 }
-ON[65] = () => { unlock('journey', true); unlock('why', true); cue('end'); run([[1.4, () => card('The end', ['In 1904, 33 men died in the Tube at Bog Walk. 28 got out.', 'Nobody could say for sure why the water came. We remember the men.', 'Thank you for playing. Your journey is in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true, credit: true })]]); };
+ON[65] = () => { unlock('journey', true); unlock('why', true); cue('end'); run([[1.4, () => card('The end', ['In 1904, 33 men died in the Tube at Bog Walk. 28 got out.', 'Nobody could say for sure why the water came. We remember the men.', 'Thank you for playing. Your journey is in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true, credit: true })]]); };
 
 /* ---------- movement: keys, touch (left half is a stick, right half looks) and mouse drag to look ---------- */
 const solids = T.solids;
@@ -815,3 +816,4 @@ const DEV = __DEV__ ? { THREE, q, $, S, N, T, PL, hand, keys, camera, scene, ren
   ensurePlace, enterPlace, enterTube, showNudgeAt, placeNudge, NUDGE, beginChapter, setStage, setEnv, showPerson, byId, startTalk, convo, leaveTalk, activate, look, openOrder, openSort, closePuzzle, card, hideCard, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeChapters2: closeChapters, closeCredits, unlock, saveGame, loadGame, applySave, panelsOpen, locked,
   auditPlace, auditHeld, auditSeated, snapMeshes, placeFaces, groundFeet, LANE, ZM, ZMIN, ZMAX, R, SAND, ENV, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), wantsTalk, get modelsReady() { return modelsReady; }, ON, noticeTex } : null;
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

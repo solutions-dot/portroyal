@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install",
+  "installCommand": "npm ci",
   "buildCommand": "npm run dist",
   "outputDirectory": "dist",
   "cleanUrls": true,
@@ -79,11 +79,12 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "review/consolidate-outstanding-branches-20261116": false,
-      "review/consolidated-game-updates-20261116": false,
       "main": true,
-      "fix/restore-main-deployments-20261116": false,
-      "fix/menu-and-opening-scenes-20261116": false
+      "claude/**": false,
+      "review/**": false,
+      "fix/**": false,
+      "feature/**": false
     }
-  }
+  },
+  "ignoreCommand": "bash tools/vercel-ignore.sh"
 }

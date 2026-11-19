@@ -32,6 +32,7 @@ import { makeBirds } from './detail.js';
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 import { touchFirst, liveHint } from '../../../engine/device.js';
+import { addExit } from '../../../engine/exit.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -394,7 +395,7 @@ function openCredits() { if (state.started) { closeJournal(); busy = true; keys.
 function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = panelsOpen(); }
 $('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;
 $('reset').onclick = () => { if (fading || ST.on) return; closeJournal(); const i = chapterOf(stage);
-  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + CHAPTERS[i].name + '”', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : [])]); };
+  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + CHAPTERS[i].name + '”', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }]); };
 
 /* ---------- waiting for things, and moving things over time ---------- */
 const waitFor = (fn) => new Promise((res) => { const ep = EP, iv = setInterval(() => { if (EP !== ep) { clearInterval(iv); res(false); } else if (fn()) { clearInterval(iv); res(true); } }, 100); });
@@ -614,7 +615,7 @@ function quiz(list, round, done) {   /* a few questions on cards: a wrong answer
 function kitQuiz(round) {
   quiz(KIT, round, () => { unlock('kit'); card('A good kit', ['You packed well: water, food that keeps, a torch, a radio, a charged phone, medicine and papers in a bag.', 'A kit is small, but it helps a lot.'], [{ t: 'Next', go: () => { hideCard(); quiz(STORMS, 0, () => { unlock('storms'); card('Jamaica\'s storms', ['Hurricanes are not new to Jamaica. They come, and people get ready and rebuild.', 'Read about the earlier storms in your Journal.'], [{ t: 'Done', go: () => { hideCard(); setStage(73); } }], { col: true }); }); } }], { col: true }); });
 }
-ON[74] = () => { unlock('journey'); setTimeout(() => card('The end', LINES.end, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); };
+ON[74] = () => { unlock('journey'); setTimeout(() => card('The end', LINES.end, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); };
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
@@ -898,3 +899,4 @@ function devViews() {
   }
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

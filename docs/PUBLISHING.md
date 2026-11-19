@@ -93,3 +93,12 @@ The owner played an old build on a phone after a new one was live. Three things 
 `vercel.json` serves `/version.json` with `no-store` and the pages with `max-age=0, must-revalidate`.
 
 To check what is live: `curl https://<site>/version.json` shows the build id; its first ten characters are the commit on `main`.
+
+## Build minutes on Vercel (19 November 2026)
+
+To save build minutes, Vercel builds only what reaches players:
+- `vercel.json` `git.deploymentEnabled` turns off builds for work branches (`claude/**`, `review/**`, `fix/**`, `feature/**`). Only `main` builds. Merge a pull request to publish.
+- `vercel.json` `ignoreCommand` runs `tools/vercel-ignore.sh`: on `main`, a push that changes nothing the site is built from (only docs, tests, or tools the site does not use) is skipped. When it cannot tell, it builds.
+- `installCommand` is `npm ci` (installs exactly the lockfile; Vercel caches the packages between builds).
+- In the Vercel dashboard (Settings, Build and Deployment): build machine Elastic or Standard (not Enhanced or Turbo, which bill more), On-Demand Concurrent Builds set to "Run up to one build per branch" (a burst of pushes builds only the latest), and keep "Use existing Build Cache" ticked when redeploying.
+- A whole build takes about 10 seconds on a computer (`npm run dist`); most of a Vercel build's time is the clone, the install and the upload.

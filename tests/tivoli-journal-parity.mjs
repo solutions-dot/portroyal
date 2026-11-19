@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 const html=readFileSync('games/tivoli/site/index.html','utf8');
 const story=readFileSync('games/tivoli/src/story.js','utf8');
 test('Tivoli journal uses the same book, tabs and footer navigation as other games',()=>{
-  for(const id of ['journal','jtitle','jclose','jlist','jpage','jhome','jchap']) assert.match(html,new RegExp('id="'+id+'"'));
+  for(const id of ['journal','jtitle','jclose','jlist','jpage','jchap']) assert.match(html,new RegExp('id="'+id+'"'));
   assert.match(html,/id="journal"[^>]*role="dialog"|id="journal" role="dialog"/);
   assert.match(html,/class="book"/);
   assert.match(html,/role="tablist"/);

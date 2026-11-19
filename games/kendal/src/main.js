@@ -45,6 +45,7 @@ import { tunePixels } from '../../../engine/perf.js';
 import { JOIN_STATS } from '../../../engine/joinbody.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 import { touchFirst, liveHint } from '../../../engine/device.js';
+import { addExit } from '../../../engine/exit.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -544,7 +545,7 @@ function openCredits() { if (state.started) { closeJournal(); busy = true; keys.
 function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = panelsOpen(); }
 $('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;
 $('reset').onclick = () => { if (fading || RIDE.on && stage === 53) return; closeJournal(); const i = chapterOf(stage);
-  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + CHAPTERS[i].name + '”', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : [])]); };
+  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + CHAPTERS[i].name + '”', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }]); };
 
 /* ---------- waiting for things, and moving things over time ---------- */
 const waitFor = (fn) => new Promise((res) => { const ep = EP, iv = setInterval(() => { if (EP !== ep) { clearInterval(iv); res(false); } else if (fn()) { clearInterval(iv); res(true); } }, 100); });
@@ -737,7 +738,7 @@ ON[70] = () => { setTimeout(() => SFX.churchBell(2), 1200 * TS); };
 async function leaveFlower() {
   const P = P_(), ep = EP; frozen = true; const f = flowers(7); f.position.set(P.spots.wall[0] + 1.0, 0, P.spots.wall[1] + 1.0); P.group.add(f); say('You leave a flower. For a moment, everything is quiet.', 4200); SFX.churchBell(2); await wait(4800); if (ep !== EP) return; frozen = false; STORY.done('flower');
 }
-ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => card('The end', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); };
+ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => card('The end', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); };
 
 /* ---------- the helper arrow (engine/story.js): 2.5 s after a new goal (5 s when you are looking about), even while you walk, it points at what the step still needs ---------- */
 const _nv = new THREE.Vector3();
@@ -1098,3 +1099,4 @@ function devViews() {
   }
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

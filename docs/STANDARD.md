@@ -106,6 +106,22 @@ How to use it:
 - Move one chapter's table at a time. Stages not in the table stay with the old code.
 - **Check:** `?test=flow` (`flowTest` in the dev build) must print `FLOW 0`, and `npm test` runs the module's own tests.
 
+## Navigation and controls: the same in every game (owner, 19 November 2026)
+
+Players move between games, so every game is driven the same way. `tests/controls.mjs` checks every game folder that does not start with "_", so a new game fails `npm test` until it follows this.
+
+**Title screen.** Three buttons in this order: Start (Continue when there is a save), Chapters, Exit. Exit is the link to the menu, `<a id="allgames" class="btn ghost" href="../../../menu/">Exit</a>`. The page loads `title.css` (copied from `shared/title.css` by the build). That file keeps the row steady while loading (Chapters keeps its place and fades in, Start is wide enough for "Loading" and "Continue", the loading bar and note keep their lines) and hides the old "saved on this device" line. Start reads "Loading" while it is disabled.
+
+**Top bar in play,** right to left: Exit, Journal, then the game's own buttons (sound, reset, view). The Journal button is `id="jbtn"`. Exit comes from `addExit({ url: '../../../menu/', save })` in `engine/exit.js` (one line in the game): it copies the Journal button's look, shows and hides with it, and asks "Exit? Your progress is saved on this device." with Keep playing and Exit. On a phone the goal sits under the buttons, never squeezed beside them.
+
+**No other way out.** The words "Main Menu" are not used anywhere. The journal footer has Chapters only, and the Reset card has no Exit (only the end-of-story card may offer one).
+
+**Controls tip.** Use `liveHint($('hint'), touchWords, keyWords)` and `touchFirst()` from `engine/device.js`, never `matchMedia('(pointer: coarse)')` on its own. The wording is the same everywhere: "Left thumb walks. Drag to look. Tap a person to talk." and "W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use."
+
+**Talking.** A tap on a person the game would let you talk to starts that talk, exactly as the talk button does (`pickPerson` in `engine/tap.js`; no ray through a body).
+
+**Also in every game:** `tunePixels(renderer)` from `engine/perf.js`, and the gold ground arrow from `createGuide()` in `engine/guide.js`.
+
 ## 4. Animations
 
 - **The shared library** is `shared/models/anims.js`: 126 clips on one skeleton (Mixamo and hand-made) (`docs/ENGINE.md` lists them). Every body has the same bones, so every clip plays on everyone.

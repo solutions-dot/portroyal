@@ -71,7 +71,8 @@ async function menuCheck(B, base) {
     const n0 = errors.length;
     try { await Promise.all([page.waitForURL((u) => u.pathname.includes(`/games/${name}/site`), { timeout: 30000 }), a.evaluate((el) => el.click())]); } catch (e) { out.push(`menu: clicking ${name} does not open its game (${e.message.split('\n')[0]})`); continue; }
     await page.waitForTimeout(SECS * 250);
-    for (const id of ['allgames', 'jhome']) {
+    if (!(await page.$('#exitbtn'))) out.push(`${name}: no Exit button beside the Journal button (engine/exit.js)`);
+    for (const id of ['allgames']) {
       const back = await page.$('#' + id);
       if (!back) { out.push(`${name}: no #${id} link back to the menu`); continue; }
       const u = new URL(await back.getAttribute('href'), page.url());
