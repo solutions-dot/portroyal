@@ -117,9 +117,9 @@ export function createAmbient(opts = {}) {
   function play(n, name, { once = false, speed } = {}) {
     const c = ctlOf(n), a = n.amb; if (!c) return false; const act = c.get(name); if (!act) return false;
     if (act === c.cur) { a.clip = name; return true; }
-    c.play(name, once); c.timer = 0;   /* the behaviour decides when a clip ends, not the controller's once-timer */
-    const d = act.getClip().duration; if (!once) act.time = a.rnd() * d;   /* never in step with anyone else */
-    act.timeScale = speed || (0.88 + a.rnd() * 0.24); a.clip = name; a.clipT = 0; a.changed = life.t; if (n.lo && n.lo.userData.anim) { const lc = n.lo.userData.anim, la = lc.get(name); if (la && la !== lc.cur) { lc.play(name, once); lc.timer = 0; la.time = act.time; la.timeScale = act.timeScale; } }
+    const restarting = c.play(name, once); c.timer = 0;   /* the behaviour decides when a clip ends, not the controller's once-timer */
+    if (!once) { const phase = a.rnd() * act.getClip().duration; if (restarting !== false) act.time = phase; }   /* never in step with anyone else */
+    act.timeScale = speed || (0.88 + a.rnd() * 0.24); a.clip = name; a.clipT = 0; a.changed = life.t; if (n.lo && n.lo.userData.anim) { const lc = n.lo.userData.anim, la = lc.get(name); if (la && la !== lc.cur) { const restartLite = lc.play(name, once); lc.timer = 0; if (restartLite !== false) la.time = act.time; la.timeScale = act.timeScale; } }
     return true;
   }
   const clipLen = (n, name) => { const c = ctlOf(n), act = c && c.get(name); return act ? act.getClip().duration / (act.timeScale || 1) : 2; };

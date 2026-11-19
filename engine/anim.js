@@ -125,18 +125,43 @@ export function lapHands(m, name) { const L = LAP.get(m); if (!L) return; m.upda
       const E = sd.fa.getWorldPosition(new THREE.Vector3()), from = T.clone().sub(E), to = T.clone().addScaledVector(off.normalize(), Rt - d).sub(E);
       _hq.setFromUnitVectors(from.normalize(), to.normalize()); sd.fa.getWorldQuaternion(_hq2); const pq = sd.fa.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
       sd.fa.quaternion.copy(pq.multiply(_hq.multiply(_hq2))); sd.fa.updateMatrixWorld(true); } } }
+// Read the fade at mixer time, including when two play calls land before the next mixer update.
+function fadeFraction(a, time) {
+  return a.isScheduled() && a.enabled ? (a._weightInterpolant?.evaluate(time)[0] ?? 1) : 0;
+}
 export function animate(m, name, mixerIn, baseAct) { if (name && NOT_IDLE.has(name)) name = 'Idle'; const clip = (name && clipFor(name)) || clipFor('Idle') || peopleClip; if (!clip && !baseAct) return;
   const mx = mixerIn || new THREE.AnimationMixer(m), base = baseAct || mx.clipAction(clip); if (!baseAct) { base.play(); base.time = Math.random() * clip.duration; base.timeScale = 0.92 + Math.random() * 0.16; }   /* each body at its own pace: two people on one clip never move in step */ if (!mixerIn) mixers.push(mx);
-  const acts = {}, ctl = { mx, base, cur: base, timer: 0,
+  const acts = {}, fading = new Set(), ctl = { mx, base, cur: base, timer: 0,
     get(n) { if (!acts[n]) { const c = clipFor(n); if (!c) return null; acts[n] = mx.clipAction(c); } return acts[n]; },
     cue(n, once, hold) { this.cued = n; try { this.play(n, once, hold); } finally { this.cued = null; } },   /* a clip from NOT_IDLE, played because the story asks for it */
     play(n, once, hold) { if (n && NOT_IDLE.has(n) && this.cued !== n) return;   /* never as filler (see NOT_IDLE) */
       if (n && HAND_TALK.test(n) && holdsInHand(m) && clipFor('Idle')) n = 'Idle';   /* a hand that holds a case or a basket does not wave it about */
-      const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); if (!n) { a.time = Math.random() * a.getClip().duration; a.timeScale = 0.9 + Math.random() * 0.2; } else if (!once) a.time = Math.random() * a.getClip().duration;   /* a looping clip (a walk, a talk) starts from its own moment: two people set walking together did so in step */   /* back to the resting clip at a random moment and pace, never from its start (two people put back together moved in step) */ a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
-    rest() { this.play(null); },
+      const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return;
+      const weight = fadeFraction(a, mx.time), restarting = weight === 0, duration = a.getClip().duration;
+      fading.delete(a);
+      fading.add(this.cur);
+      for (const out of fading) {
+        const from = fadeFraction(out, mx.time);
+        if (from > 0) out._scheduleFading(0.35, from, 0);
+        else { out.stop(); fading.delete(out); }
+      }
+      // Three's fadeIn/fadeOut start at 0/1. An interrupted blend must keep its current weights and pose.
+      if (restarting) {
+        a.reset();
+        if (!once) a.time = Math.random() * duration;
+        if (!n) a.timeScale = 0.9 + Math.random() * 0.2;
+      }
+      a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat);
+      a.clampWhenFinished = !!once;
+      a._scheduleFading(0.35, weight, 1).play();
+      this.cur = a;
+      this.timer = once ? Math.max(0.5, duration - a.time - 0.35) : (hold || 0);
+      return restarting;
+    },
+    rest() { return this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
     tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) { const h = this.home; this.home = null;
-        if (h) this.play(h); else this.rest(); if (this.fid) { this.fid = false; const a = this.cur, d = a.getClip().duration; a.time = Math.random() * d; a.timeScale = 0.9 + Math.random() * 0.2; } } }   /* back from a moment of variety: to the clip they were on, at a random moment, so two people never fall into step */
+        const restarting = h ? this.play(h) : this.rest(); if (this.fid) { this.fid = false; const a = this.cur; if (restarting) a.time = Math.random() * a.getClip().duration; a.timeScale = 0.9 + Math.random() * 0.2; } } }   /* back from a moment of variety: to the clip they were on, at a random moment, so two people never fall into step */
       else fidget(this, m, dt); } };
   lapSetup(m); if (LAP.get(m)) { (mx._laps || (mx._laps = [])).push(m); if (!mx._lapHook) { const up2 = mx.update.bind(mx); mx.update = (dt) => { const r = up2(dt); for (const s of mx._laps) { const a = s.userData.anim; let best = null, bw = 0; if (a) for (const x of mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } if (best) lapHands(s, best.getClip().name); } return r; }; mx._lapHook = true; } }
   if (seatSkirt(m)) { (mx._skirts || (mx._skirts = [])).push(m); if (!mx._skirtHook) { const up = mx.update.bind(mx); mx.update = (dt) => { const r = up(dt); for (const s of mx._skirts) skirtTick(s); return r; }; mx._skirtHook = true; } }
@@ -179,9 +204,9 @@ function fidget(c, m, dt) {
   const ownSit = own && (sit || m.userData.seatAnchor) ? own.filter((k) => /^Sit/.test(k)) : null;
   const list = (own ? (ownSit ? (ownSit.length ? ownSit : SITS) : own) : sit ? SITS : SAD.includes(bn) ? SAD : m.userData.elder ? ['OldIdle', 'HeadTurn'] : ['HeadTurn', 'Idle']).filter((k) => k !== bn && CL[k] && idleOK(k));
   if (!list.length) return; const k = list[(Math.random() * list.length) | 0];
-  c.fid = true; const loop = !own && (sit || SAD.includes(bn)); if (loop) c.play(k, false, 5 + Math.random() * 5); else c.play(k, true); if (on) c.home = bn;
+  c.fid = true; const loop = !own && (sit || SAD.includes(bn)); const restarting = loop ? c.play(k, false, 5 + Math.random() * 5) : c.play(k, true); if (on) c.home = bn;
   if (loop || (c.cur && c.cur.getClip().duration > 12)) c.timer = Math.min(c.timer || 99, 4 + Math.random() * 4);   /* a moment, not the whole clip: Mixamo's SitTalk runs 42 s. A short look round plays to its end: cut short, the head swung back faster than a person's can (Selassie's head check) */
-  const a = c.cur; if (a && a.getClip().name === k) { a.timeScale = loop ? 0.8 + Math.random() * 0.4 : 0.9 + Math.random() * 0.15; if (loop) a.time = Math.random() * a.getClip().duration; } }   /* a look round plays from its start and no faster than 1.05: sped up, a head turned faster than a person can (Selassie's head check) */   /* each at its own speed, and a looping one from its own moment: two people side by side never move in step (Port Royal's camp) */   /* a sad or seated variant is held a few seconds (it loops), then back to the base clip */
+  const a = c.cur; if (a && a.getClip().name === k) { a.timeScale = loop ? 0.8 + Math.random() * 0.4 : 0.9 + Math.random() * 0.15; if (loop && restarting) a.time = Math.random() * a.getClip().duration; } }   /* a look round plays from its start and no faster than 1.05: sped up, a head turned faster than a person can (Selassie's head check) */   /* each at its own speed, and a looping one from its own moment: two people side by side never move in step (Port Royal's camp) */   /* a sad or seated variant is held a few seconds (it loops), then back to the base clip */
 /* tickVisible(dt): one call a frame for a game that lets the engine run its people. It updates every mixer whose body is shown and ticks that body's controller
    (idle variety, seats, one-shot clips ending), so nobody is left out because the game's own list missed them (Port Royal's 1670 buccaneers were never ticked). */
 export function tickVisible(dt) { for (const mx of mixers) { const r = mx.getRoot(); let v = r.visible, o = r.parent; while (v && o) { v = o.visible; o = o.parent; } if (!v) continue; mx.update(dt); const c = r.userData && r.userData.anim; if (c && c.mx === mx && c.tick) c.tick(dt); } }
@@ -259,6 +284,4 @@ export function groundFeet(m) { if (m.userData.seatAnchor) { anchorSeat(m); retu
      lookBegin(bones)   before the turns: a bone found exactly as we left it is first put back to the clip's own pose
      lookEnd(bones)     after the turns: remember what we left
    bones is an array (null entries are skipped). One guard, in one place: do not copy it into a game. */
-const LOOKED = new WeakMap();
-export function lookBegin(bones) { for (const b of bones) { if (!b || !b.isObject3D) continue;   /* a real bone only: something stored in userData and copied with a body is a dead copy */ let t = LOOKED.get(b); if (!t) LOOKED.set(b, t = { base: new THREE.Quaternion(), after: new THREE.Quaternion(), on: false }); if (t.on && b.quaternion.equals(t.after)) b.quaternion.copy(t.base); t.base.copy(b.quaternion); } }
-export function lookEnd(bones) { for (const b of bones) { if (!b || !b.isObject3D) continue; const t = LOOKED.get(b); if (t) { t.after.copy(b.quaternion); t.on = true; } } }
+export { beginPoseCorrection as lookBegin, endPoseCorrection as lookEnd } from './bone-pose.js';

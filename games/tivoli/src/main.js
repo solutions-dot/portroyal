@@ -276,10 +276,10 @@ function headHooks(only) {
   const people = () => {
     const L = [];
     for (const n of Talk.npcs) L.push({ id: n.name, m: n.body, key: lookOf(n).base, make: (clip) => { const b = makeBody({ ...lookOf(n), x: 900, z: 900, anim: clip }); made.push(b); return b; } });
-    if (CH.life) for (const n of CH.life.people) L.push({ id: 'neighbour ' + n.id, m: n.m, key: n.look.base + (n.look.scale || ''), make: (clip) => { const b = makeBody({ ...n.look, x: 900, z: 900, anim: clip }); made.push(b); return b; } });
+    if (CH.life) for (const n of CH.life.people) L.push({ id: 'neighbour ' + n.id, m: n.m, footBody: n.lo?.visible ? n.lo : n.m, key: n.look.base + (n.look.scale || ''), make: (clip) => { const b = makeBody({ ...n.look, x: 900, z: 900, anim: clip }); made.push(b); return b; } });
     if (FIGHT.on) FIGHT.actors.forEach((a, i) => L.push({ id: a.side + ' ' + i, m: a.b, key: a.bodyId, make: null }));
     for (const p of L) { const c = p.m.userData.anim && p.m.userData.anim.cur; p.clip = c ? c.getClip().name : ''; p.blend = !!(c && c.getEffectiveWeight() < 0.98); }
-    return L.filter((p) => p.m.visible);
+    return L.filter((p) => (p.footBody || p.m).visible);
   };
   return {
     cases: () => [...WALK_IDS.filter((id) => !only || only.includes(String(id))).map((id) => ({ label: 'chapter ' + id, stops: {}, async enter() {
@@ -307,6 +307,12 @@ async function devViews() {
   if (test === 'all') {   /* ?test=all: the shared runner (engine/checks.js, docs/TESTING.md section 7) with Tivoli's hooks (checktables.js), plus the head check. &checks=journal,heads runs some. Expect ALL 0. */
     if (!CHECKS.some((c) => c.id === 'heads')) CHECKS.push({ id: 'heads', needs: [], async run() { const r = await headCheck(headHooks(null)); STEPPED.on = false; return { lines: r.lines, note: r.stats.length + ' scenes watched' }; } });
     checkAll(makeAdapter(checkHooks()), CHECK_TABLES); return;
+  }
+  if (test === 'feet') {
+    const r = await headCheck(headHooks(q.get('ch') ? q.get('ch').split(',') : null), { feetOnly: true });
+    STEPPED.on = false;
+    devLog([...r.lines, ...r.stats], 'FEET ' + r.lines.length);
+    return;
   }
   if (test === 'heads') {   /* ?test=heads (&ch=1,5): every person's head and body through every chapter (headcheck.js): no head past 80 degrees, none going round, no snap or spin. Expect HEADS 0. */
     const r = await headCheck(headHooks(q.get('ch') ? q.get('ch').split(',') : null)); STEPPED.on = false; devLog(['heads: ' + r.lines.length + ' issues', ...r.lines, '', ...r.stats], 'HEADS ' + r.lines.length); return;

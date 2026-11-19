@@ -11,6 +11,7 @@
    K: { cases() -> [{ label, enter: async () -> route [[x, z], ...], stops: { index: talk id } }], step(dt), people() -> [{ id, m, clip, blend, key, make(clip) }],
         move(x, z, yaw), player() -> { x, z }, talk(id) -> bool (a talk opened), next() -> bool (still talking), done() -> bool (the case has ended) } */
 import { headWatch, headAngles } from '../../../engine/audit.js';
+import { footWatch } from '../../../engine/foot-watch.js';
 import { mixers, WALKS } from '../../../engine/anim.js';
 
 export const LIMIT = { turn: 240, turnWalk: 600 };
@@ -25,10 +26,11 @@ function ownSpeed(p, clip) {
     const k = mixers.indexOf(c.mx); if (k >= 0) mixers.splice(k, 1); }
   OWN.set(key, top); return top;
 }
-export async function headCheck(K, { dt = 1 / 30, still = 2.5, speed = 1.6, max = 120, line = 1.4 } = {}) {
+export async function headCheck(K, { dt = 1 / 30, still = 2.5, speed = 1.6, max = 120, line = 1.4, feetOnly = false } = {}) {
   const lines = [], stats = [];
   for (const C of K.cases()) {
     const route = ((await C.enter()) || []).slice(), w = headWatch({ own: ownSpeed }), turns = new Map(), worst = new Map();
+    const feet = feetOnly ? footWatch() : null;
     const add = (key, val, text) => { const o = worst.get(key); if (!o || val > o.val) worst.set(key, { val, text }); };
     let ri = 1, wait = still, t = 0, talkT = 0, talking = false;
     if (route.length) K.move(route[0][0], route[0][1]);
@@ -39,16 +41,32 @@ export async function headCheck(K, { dt = 1 / 30, still = 2.5, speed = 1.6, max 
         if (d < 0.08) { ri++; wait = still; const who = C.stops && C.stops[ri - 1]; if (who && K.talk(who)) { talking = true; talkT = line; } }
         else { const k = Math.min(1, speed * dt / d); K.move(p.x + (to[0] - p.x) * k, p.z + (to[1] - p.z) * k, Math.atan2(-(to[0] - p.x), -(to[1] - p.z))); } }
       K.step(dt); t += dt;
-      const people = K.people(); w.sample(t, people);
-      for (const p of people) {   /* the whole body: never a spin on the spot */
+      const people = K.people();
+      if (feet) {
+        for (const p of people) {
+          const m = p.footBody || p.m;
+          const clip = m.userData.anim?.cur?.getClip().name || p.clip;
+          feet.sample(t, { id: p.id, m, clip });
+        }
+        continue;
+      }
+      const fullDetail = people.filter((p) => p.m.visible);
+      w.sample(t, fullDetail);
+      for (const p of fullDetail) {   /* the whole body: never a spin on the spot */
         const ry = p.m.rotation.y, s = turns.get(p.id); if (!s) { turns.set(p.id, { ry, t }); continue; }
         if (t - s.t < 0.1) continue; const rate = Math.abs(wrap(ry - s.ry)) / (t - s.t) / D2R, walk = WALKS.test(p.clip || '') || /^Run/.test(p.clip || '');   /* RunLow and the other runs count as moving */
         if (rate > (walk ? LIMIT.turnWalk : LIMIT.turn)) add('t' + p.id, rate, `turn: ${p.id} turns ${rate.toFixed(0)} degrees a second ${walk ? 'while walking' : 'on the spot'} on ${p.clip}`);
         s.ry = ry; s.t = t;
       }
     }
-    for (const l of w.lines()) lines.push(C.label + ': ' + l); for (const o of worst.values()) lines.push(C.label + ': ' + o.text);
-    const st = w.stats(); stats.push(`${C.label}: ${t.toFixed(0)} s, ${st.people} people, ${st.samples} head samples`);
+    if (feet) {
+      const st = feet.stats();
+      lines.push(...feet.lines().map((l) => C.label + ': ' + l));
+      stats.push(`${C.label}: ${t.toFixed(0)} s, ${st.people} bodies, ${st.samples} foot samples`);
+    } else {
+      for (const l of w.lines()) lines.push(C.label + ': ' + l); for (const o of worst.values()) lines.push(C.label + ': ' + o.text);
+      const st = w.stats(); stats.push(`${C.label}: ${t.toFixed(0)} s, ${st.people} people, ${st.samples} head samples`);
+    }
   }
   return { lines, stats };
 }

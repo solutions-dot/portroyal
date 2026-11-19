@@ -101,6 +101,8 @@ Models ship as `site/models/<name>.js`, each defining `window.__models[name] = "
 
 Every character uses the same Mixamo skeleton (`mixamorig*` bones, from `shared/rig/char.blend`), so one clip library animates everyone.
 
+When a clip changes again before a crossfade finishes, the controller fades each action from its current weight. If the requested clip is still visible in the blend, playback continues from its current time. `play()` returns `false` for that case so callers such as `engine/ambient.js` can keep the clip's time.
+
 | Name | Use |
 |---|---|
 | `CL` | Clip library, name to `AnimationClip`. Fill it with `loadClips(gltfOf('anims'))`. |
@@ -173,6 +175,8 @@ Show the results in a dev-only `?test=audit` view and expect 0 issues. Kendal's 
 | `routeIssues(id, path, walls, r, loop)` | Lines for every leg of a walker's route that crosses a wall rectangle. |
 | `furnitureRouteIssues(id, path, snap, ground, r, loop)` | The same against the real furniture boxes from `snapMeshes`, so a missing wall rectangle is still caught. |
 | `walkRoute(a, b, walls, r, bounds)` | A short route round nearby walls, for people who follow the player. |
+
+Seat placement bends the knees and keeps the feet at their clip angle. `engine/bone-pose.js` removes the previous correction if the mixer left it on the bone. The shared head turn uses the same guard through `lookBegin` and `lookEnd`.
 
 ## engine/follow.js: people who follow you, lead you, or are sent somewhere
 
