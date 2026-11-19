@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { CL, mixers, loadClips, animate } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, AU } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
+import { tunePixels } from '../../../engine/perf.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('template-sound');   // change the key for your game so each game remembers its own sound setting
@@ -21,7 +22,7 @@ onLoadFail((name) => { $('loadnote').textContent = 'Could not load ' + name + '.
 /* ---------- renderer, camera, light ---------- */
 const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+tunePixels(renderer);   /* pixel cap and slow-frame drop (engine/perf.js) */ renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0xbcd6e0); scene.fog = new THREE.Fog(0xbcd6e0, 30, 90);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 500);
 scene.add(new THREE.HemisphereLight(0xeaf4ff, 0x8a7a5a, 1.6));

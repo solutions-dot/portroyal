@@ -355,3 +355,7 @@ The owner: "the doors should fit their purpose, not one shared one". Each door i
 - **The superintendent's house**: a four-panel front door, painted green, with a brass knob. **Kept, unsourced.** The photograph "Men's quarters, Bog Walk" (NLJ Photograph Collection, https://nljdigital.nlj.gov.jm/items/show/8640) shows a two-storey board house with a veranda by the road in the gorge, but its door cannot be seen.
 
 Work to do: find a clearer photograph of the Bog Walk power house (the NLJ "Power Stations" folder) and of the Orange Street depot, and match their doors.
+
+## Performance (18 November 2026)
+
+`src/main.js` uses `engine/preload.js` (see `docs/ENGINE.md`). `setQuiet` is true on the title screen, while a panel, card or puzzle is open, during the chapter title fade and during the black intro cards. `backgroundLoad()` now builds one place at a time through `work()`, the next place first. At each chapter start (`chapterIn(i)`, also for the two Tube chapters) `readyNext(i)` builds, peoples and warms (compiles) the next place outside the Tube (`nextOf(i)`: from the Tube chapters that is the yard, since the night runs on from chapter 3 into chapter 4, the water, without a chapter start of its own), and `tidyPlaces(i)` releases the graphics memory of every other hidden place. The Tube is built at the start and never released. Nothing is removed; three.js sends a released place again if it is shown.

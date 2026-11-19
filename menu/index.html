@@ -342,6 +342,10 @@
 <script>
   /* On the live site this page is the home page. In the repo it sits in menu/, one folder down, so the game links need "../". */
   if (/\/menu\/?(index\.html)?$/.test(location.pathname)) for (const a of document.querySelectorAll('a[data-game]')) a.href = '../games/' + a.dataset.game + '/site/';
+  /* A finger on a card (or the mouse over it) starts fetching that game's page and code, a moment before the page changes. Only the game chosen, never the rest; not on a slow or data-saving connection. */
+  { const c = navigator.connection, slow = c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || '')), done = new Set();
+    const warm = (a) => { if (slow || done.has(a.href)) return; done.add(a.href); for (const u of [a.href, a.href + 'app.js']) { const l = document.createElement('link'); l.rel = 'prefetch'; l.href = u; document.head.appendChild(l); } };
+    for (const a of document.querySelectorAll('a[data-game]')) { a.addEventListener('pointerdown', () => warm(a), { passive: true }); a.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') warm(a); }, { passive: true }); } }
   if(new URLSearchParams(location.search).get('testing')==='1'||document.querySelector('meta[name="testing-build"]')){
     document.getElementById('testingnote').hidden=false;document.title='PastPort - Jamaica (testing)';
   }

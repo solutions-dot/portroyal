@@ -152,6 +152,14 @@ Rules of thumb the audit enforces:
 - A person between the buttress roots of a big tree looks as if they are inside it even when nothing cuts them (Nanny Town, November 2026): `auditBodies` now reports standing inside a shape's outline at shin height.
 - Footprints (the circles and rectangles a game uses to keep people out) must match the real shape: a hut's corner, a tree's roots, a rock's full width. The open-ground scan in Nanny's audit checks every walkable spot outside the footprints against the real shapes.
 
+## 5b. Performance (18 November 2026)
+
+- **`?perf`** (any build, also on the live site on a real phone): a box in the top corner with frames a second, frame time, pixel ratio, draw calls, triangles, geometries and textures, joined people and the heap. Scripts read `window.__perf` (and `__join`, `__batch`, `__preload`); with `?perf` the last scene drawn is `window.__scene`. See `docs/ENGINE.md`, "Performance on phones".
+- **`?test=join`** (any build): every joined body is posed and checked against its pieces; the title reads `JOIN 0 issues in N bodies`. It needs no wiring.
+- **`?nojoin`** and **`?nobake`** turn off body joining and the colour step of `batchStatic`, to compare draw calls and pictures.
+- **The autoplayer does not draw** in Kendal, Eventide, Melissa and Nanny (`NORENDER`), so draw calls read 0 there. Measure on the title screen or a `?shot=` view instead.
+- Body joining is checked by eye too: a person close up with and without `?nojoin` must look the same (poses differ, because each body starts its clip at a random moment).
+
 ## 6. Which game wires which check
 
 Read from each game's code (`q.get('test')` in `games/<game>/src/`), November 2026. "yes" means the dev build answers that `?test=` name; it does not mean it reports 0. `collision` and `seating` are other names for the place audit where a game has one. The template wires none.

@@ -234,3 +234,14 @@ The church in the last chapter was drawn as red brick with a squat west tower an
 
 Not from a source: the exact shape and place of the bell frame (no picture of it was found), and the lower side wing with a hipped roof seen in the photographs, which the game leaves out.
 
+
+## Performance (18 November 2026)
+
+Still scenery is now drawn in a few pieces (`still()` in `main.js`, which calls the engine's `batchStatic` from `engine/batch.js`). It looks the same; only the number of draw calls changes.
+
+- What is merged: the pier (planks, piles, braces, rope rings, the gangplank), each cask and crate on the quay and in the street, each market stall, building, the stocks, the signpost, the crawl's stakes and the beach strip of the new street, the whole of Fort Charles with the spit and Morgan's Line, and the tavern room.
+- What is not: anything that moves, flickers, or is shown and hidden on its own (the turtles, the market bell, the fort's guns, which run out for the salute, its flag, the canoe, the hearth fire, the candle flames, the four finds, the stew), every see-through mesh (sea foam, window light, lantern glass, path decals), every packed model's mesh (their points are quantized, and merging them broke a house), all people, the ships, and the town's houses, which the earthquake moves, tilts and sinks one by one.
+- The walking boxes of the casks and crates (`buildPropC`) are taken from the unmerged pieces, before they are merged.
+- The place audits (`?test=audit`, `collision`, `seating`) see the scenery unmerged, because they read each piece's own shape. `?nobatch` turns merging off in a dev build to compare.
+- Draw calls, before and after (headless, 390 x 800): title 486 to 256; `ns1` 628 to 191; `nsst1` 157 to 127; `ns7` 148 to 114; `tav` 92 to 49; `fort` 407 to 253; `spit` 596 to 349; `ships` 219 to 99; `kofistack` 181 to 88; `quake2` 32 to 32. Triangles drawn rise by up to 4% (a merged piece is drawn whole when any of it is in view).
+- `setQuiet` (`engine/preload.js`) is told when a talk, card, chapter title, the journal or the chapter list is open. Port Royal queues no work yet: the tavern, the second street and the late bodies are still built 0.3 s after the town, as before, because the tavern must be ready (`tavernReady`) as soon as a saved game or a chapter can need it.

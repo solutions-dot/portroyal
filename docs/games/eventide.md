@@ -308,3 +308,8 @@ The owner asked for doors that fit their buildings, not one shared door. They ar
 - The National Library of Jamaica digital collection (https://nljdigital.nlj.gov.jm/) has no Eventide Home photograph online.
 
 All five doors stay stand-ins. Work to do: the Gleaner's May 1980 photographs of the fire and of the Home before it (Gleaner archive or National Library of Jamaica reading room).
+
+## Performance (18 November 2026)
+
+- **The Myers Ward is drawn merged while it stands.** `engine/collapse.js` needs the ward in loose pieces, so it was kept out of `batchStatic` and cost about 370 draw calls in every scene on the avenue. Now `wardCopy` (main.js, after `buildPlace`) puts the real ward and a merged copy (`engine/batch.js`) under one holder, `P.myers.group`, which the game shows and hides as before. The copy is drawn while the ward stands; `wardFall` swaps in the real ward just before it falls, and `wardStill` swaps the copy back when the fall is reset (a replayed chapter, the chapters menu). The title screen went from 465 to 113 draw calls. Screenshots before, during and after the fall match the old build.
+- **The next chapter is ready before you get there** (`engine/preload.js`). `setQuiet` is a talk, a card, the journal, the chapter title or the title screen. When a chapter starts, `readyNext` builds the next chapter's place, unpacks its bodies (`sceneReady`, kept until `beginChapter` uses it once) and warms the place, each in a quiet moment. At a chapter change `letGo` frees the last chapter's people and the places this chapter and the next do not use.

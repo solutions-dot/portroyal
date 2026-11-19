@@ -29,6 +29,8 @@ import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { boy: 2, girl: 2, girl_small: 2, guide2020: 2, man_elder: 2, man_shirt: 2, man_work: 2, student2020: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditSeated, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
+import { tunePixels } from '../../../engine/perf.js';
+import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -40,7 +42,7 @@ const TS = QUICK ? 0.06 : 1;   /* time scale for scripted scenes in tests */
 /* ---------- renderer, camera, light, sky ---------- */
 const canvas = $('stage');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; G.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+tunePixels(renderer);   /* pixel cap and slow-frame drop (engine/perf.js) */ renderer.outputColorSpace = THREE.SRGBColorSpace; G.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(66, 1, 0.1, 800); scene.add(camera);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x887766, 2); scene.add(hemi); const sun = new THREE.DirectionalLight(0xfff0d0, 2); sun.position.set(10, 20, 10); scene.add(sun); scene.add(sun.target);
 const SHADOWS = !matchMedia('(pointer: coarse)').matches && !(__DEV__ && /[?&]noshadow/.test(location.search));   /* real shadows on computers; phones get soft blob shadows under people instead */
@@ -327,6 +329,13 @@ const lampMesh = (() => { const g = new THREE.Group(), b = new THREE.Mesh(new TH
 const CH_PLACE = ['yard51', 'yard88', 'yard25', 'hall', 'after', 'after', 'today'], CH_FIRST = [10, 20, 30, 40, 50, 60, 70], DONE = [16, 26, 36, 45, 55, 65, 74];
 const PRELOAD = { 0: ['room51'], 1: ['room88', 'kingston88'], 2: ['hall'], 3: ['after'], 4: [], 5: [] };
 const SAFE = { 42: 41, 63: 62 };   /* a saved game never resumes in the middle of a scripted scene */
+/* engine/preload.js: the player is not moving while a panel, a card or the chapter title is up, or on the title screen; heavy loading waits for those moments */
+setQuiet(() => !state.started || panelsOpen() || fading);
+const USE = [['yard51', 'room51'], ['yard88', 'room88', 'kingston88'], ['yard25'], ['hall'], ['after'], ['after'], ['today']];   /* every place a chapter goes to: the yard, the room you shelter in, the Kingston cutaway */
+const usedIn = (i) => USE[i] || [];
+const PLACES_KEEP = placeKeeper({ places: PL, ensure: ensurePlace, renderer, camera, scene, current: () => cur });   /* engine/preload.js: places readied in quiet moments, places left behind give back their graphics memory, the background load */
+function readyNext(i) { PLACES_KEEP.ready([...(PRELOAD[i] || []), ...usedIn(i), ...usedIn(i + 1)]); }   /* the places this chapter and the next go to, built, peopled and compiled before they are needed */
+function tidyPlaces(i) { PLACES_KEEP.tidy([...usedIn(i), ...usedIn(i + 1), ...(PRELOAD[i] || [])]); }   /* every other place frees its graphics memory; it stays built and comes back by itself if shown again */
 const chapterOf = (s) => Math.max(0, Math.min(6, Math.floor(s / 10) - 1));
 /* the two flashback chapters (Charlie 1951 and Gilbert 1988) have one shape: talk (base), three jobs (base+1), talk to the neighbour with the strong house (base+2),
    go inside (base+3), the storm night (base+4), the morning (base+5), done (base+6). */
@@ -361,7 +370,7 @@ function startScene(i, st) {
   if (JOBS_AT[id]) { const done = st >= JOBS_AT[id], ud = P.group.userData; for (const b of ud.boards) b.visible = done; if (ud.washing) ud.washing.visible = !done; if (ud.canoe) ud.canoe.position.z = done ? 11.6 : 13.4; }   /* a chapter started again, or resumed, shows its jobs as done or not done */
   if (id === 'after') { for (const n of P.people) if (n.stage5) n.hidden = i !== 5;   /* chapter 6's people are there from its first stage, even in a saved game resumed half way */
     P.group.userData.homeLamp.visible = false; const fallen = P.group.userData.fallen, logs = P.group.userData.logs; if (fallen) { fallen.visible = true; logs.visible = false; const tw = P.group.userData.treeWall; if (tw && !P.walls.includes(tw)) P.walls.push(tw); } if (i === 5 && st >= 62) clearTree(P, true); P.tarpHome.visible = i === 5 && st >= 62; }
-  enterPlace(id); state.started = true; setStage(st); showPlace();
+  enterPlace(id); state.started = true; setStage(st); showPlace(); tidyPlaces(i); readyNext(i);
   if (torn) setEnv(mixEnv(ENV.after, ENV.room, 0.5));
 }
 function chaptersOpen(i) { return i === 0 || best >= DONE[i - 1]; }
@@ -646,7 +655,8 @@ applySave(loadGame());
   const first = CH_PLACE[hasSave && stage >= 10 ? chapterOf(stage) : 0];
   model('anims').then((an) => { loadClips(an); tick(); return ensurePlace(first); }).then(() => { tick(); modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick();
     if (__DEV__) devViews(); else setTimeout(backgroundLoad, 2500); }); }
-async function backgroundLoad() { for (const id of ['yard25', 'hall', 'after', 'today', 'yard88', 'room88']) { await ensurePlace(id); await wait(400); } }
+/* every place in the background, one at a time through engine/preload.js work(): the next chapter's places first, then the rest in the old order, each in a quiet moment */
+function backgroundLoad() { PLACES_KEEP.background(() => { const i = state.started ? chapterOf(stage) : -1; return [...usedIn(i + 1), 'yard25', 'hall', 'after', 'today', 'yard88', 'room88']; }, 400); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
 function startGame(quiet) {
   if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
   $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); if (!quiet) cue('begin');

@@ -14,6 +14,8 @@ export function prefetch(names) { const c = navigator.connection; if (c && (c.sa
 export function script(n, plain) { return new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = plain ? 'models/' + n + '.js' : modelUrl(n); sc.onload = res;
   sc.onerror = () => { sc.remove(); if (!plain && MV[n]) script(n, true).then(res, rej); else { fail(n); rej(n); } };   /* a host that refuses "?v=..." still gets the plain file */
   document.head.appendChild(sc); }); }
-export function model(n) { return script(n).then(() => new Promise((res, rej) => { const b = atob(window.__models[n]); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); delete window.__models[n];
+/* base64 to bytes: the browser's own decoder where it has one (Chrome 140, Safari 18.2, Firefox 133), several times quicker than a loop on a phone */
+function unpack(s) { if (typeof Uint8Array.fromBase64 === 'function') return Uint8Array.fromBase64(s); const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+export function model(n) { return script(n).then(() => new Promise((res, rej) => { const u = unpack(window.__models[n]); delete window.__models[n];
   loader.parse(u.buffer, '', (g) => res(repairLegacyVertexColours(g)), () => { fail(n); rej(n); }); })); }
 export async function stage(names, onEach) { let done = 0; await Promise.all(names.map((n) => (n.startsWith('tex_') ? script(n) : model(n).then((g) => { window.__got = window.__got || {}; window.__got[n] = g; })).then(() => { done++; if (onEach) onEach(done / names.length); }))); }

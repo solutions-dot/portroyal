@@ -28,6 +28,8 @@ import { ENV, mixEnv, buildStation, buildYard, buildRuins, buildKingston, notice
 import { lantern, hold, bucket } from './props.js';
 import { makeSmoke } from './trains.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, TALK, LATER, SEEN, SEEN_GROUP, JOURNEY, REPORT, WHY, AFTER, CHOICE_NAMES, JOURNAL } from './content.js';
+import { tunePixels } from '../../../engine/perf.js';
+import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 
 const $ = (id) => document.getElementById(id);
 const q = new URLSearchParams(location.search);
@@ -42,7 +44,7 @@ onLoadFail((name) => { $('loadnote').textContent = 'Could not load ' + name + '.
 /* ---------- renderer, camera ---------- */
 const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+tunePixels(renderer, { phone: MOBILE || TOUCH });   /* pixel cap and slow-frame drop (engine/perf.js) */ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.3;
 setAniso(renderer.capabilities.getMaxAnisotropy()); WG.aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0806); scene.fog = new THREE.Fog(0x0a0806, 3, 36);
@@ -531,6 +533,14 @@ addEventListener('visibilitychange', () => { if (document.visibilityState === 'h
 const CH_PLACE = ['station', 'kingston', 'tube', 'tube', 'yard', 'ruins'], CH_FIRST = [10, 20, 30, 40, 50, 60], DONE = [16, 24, 31, 41, 55, 65];
 const SAFE = { 15: 14, 16: 14, 21: 21, 22: 22, 23: 22, 24: 22, 31: 40, 41: 40, 54: 53, 55: 53, 65: 64 };   /* a saved game resumes at a stage where the place can be set up again */
 const chapterOf = (s) => Math.max(0, Math.min(5, Math.floor(s / 10) - 1));
+/* engine/preload.js: the player is not moving while a panel, a card, the chapter title or the black intro cards are up, or on the title screen; heavy loading waits for those moments */
+setQuiet(() => !S.started || panelsOpen() || fading || N.intro);
+const usedIn = (i) => (CH_PLACE[i] && CH_PLACE[i] !== 'tube' ? [CH_PLACE[i]] : []);   /* each chapter stays in its one place; the Tube is built at the start and never let go */
+const nextOf = (i) => { for (let k = i + 1; k < CH_PLACE.length; k++) if (CH_PLACE[k] !== 'tube') return [CH_PLACE[k]]; return []; };   /* the next place outside the Tube: the night runs on from chapter 3 into chapter 4, the water, without a chapter start of its own */
+const PLACES_KEEP = placeKeeper({ places: PL, ensure: ensurePlace, renderer, camera, scene, current: () => cur });   /* engine/preload.js: places readied in quiet moments, places left behind give back their graphics memory, the background load */
+function readyNext(i) { PLACES_KEEP.ready(nextOf(i)); }   /* the places this chapter and the next go to, built, peopled and compiled before they are needed */
+function tidyPlaces(i) { PLACES_KEEP.tidy([...usedIn(i), ...nextOf(i)]); }   /* every other place frees its graphics memory; it stays built and comes back by itself if shown again */
+const chapterIn = (i) => { tidyPlaces(i); readyNext(i); };
 const ON = {};
 function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const P of Object.values(PL)) for (const n of P.people) n.talked = false;
@@ -566,8 +576,8 @@ function resetTransient() {   /* leave anything running: scripted scenes, a ride
 async function beginChapter(i, st) {
   if (fading) return; resetTransient(); st = st || CH_FIRST[i]; const C = CHAPTERS[i];
   if (CH_PLACE[i] !== 'tube') { if (!PL[CH_PLACE[i]] || !PL[CH_PLACE[i]].populated) toast('Loading', 4000); await ensurePlace(CH_PLACE[i]); }
-  if (i === 2) { resetNight(); enterTube(); setStage(30); N.phase = 'intro'; startIntro([['Inside the Tube', 'Monday 27 June 1904, about 1 a.m.'], ['The last tram has gone.', 'The water in the pipe is shut off.']], () => { startWork(true); showHint(); }); return; }
-  if (i === 3) { enterTube(); startCh3(false); return; }
+  if (i === 2) { resetNight(); enterTube(); chapterIn(2); setStage(30); N.phase = 'intro'; startIntro([['Inside the Tube', 'Monday 27 June 1904, about 1 a.m.'], ['The last tram has gone.', 'The water in the pipe is shut off.']], () => { startWork(true); showHint(); }); return; }
+  if (i === 3) { enterTube(); chapterIn(3); startCh3(false); return; }
   await chapterFade(C.title, C.sub, () => startScene(i, st));
 }
 function startScene(i, st) {
@@ -576,7 +586,7 @@ function startScene(i, st) {
   if (i === 1) { P.car.position.x = st >= 22 ? -20 : -46; enterPlace(id); $('exit').hidden = false; for (const n of P.extras) n.ctl.play(null); }
   if (i === 4) { P.train.position.z = P.spots.trainStart; showPerson(byId('ivy'), st >= 53); enterPlace(id, { env: st >= 52 ? ENV.morning : ENV.dawn }); }
   if (i === 5) enterPlace(id);
-  showHint(); setStage(st);
+  chapterIn(i); showHint(); setStage(st);
 }
 const ACTIONS_FOR = {
   station: (P) => [
@@ -736,7 +746,8 @@ applySave(loadGame());
 $('start').onclick = () => { startGame(); cue('begin'); const ch = hasSave ? chapterOf(stage) : 0, st = hasSave && stage >= 10 ? (SAFE[stage] || stage) : undefined; beginChapter(ch, ch === 2 || ch === 3 ? undefined : st); setTimeout(backgroundLoad, 5000); };
 model('anims').then((an) => { loadClips(an); $('bar').style.width = '50%'; return ensurePlace(hasSave ? (CH_PLACE[chapterOf(stage)] === 'tube' ? 'station' : CH_PLACE[chapterOf(stage)]) : 'station'); }).then(() => {
   $('bar').style.width = '100%'; modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; if (__DEV__) devViews(); });
-async function backgroundLoad() { for (const id of ['station', 'kingston', 'yard', 'ruins']) { await ensurePlace(id); await new Promise((r) => setTimeout(r, 400)); } }
+/* every place in the background, one at a time through engine/preload.js work(): the next chapter's place first, then the rest in story order, each in a quiet moment */
+function backgroundLoad() { PLACES_KEEP.background(() => [...nextOf(chapterOf(stage)), 'station', 'kingston', 'yard', 'ruins'], 400); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
 
 /* ---------- the frame loop ---------- */
 let last = performance.now(), manual = false, frames = 0, POSTER = false;

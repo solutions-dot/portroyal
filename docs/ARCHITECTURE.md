@@ -17,6 +17,10 @@ engine/                   shared runtime code, imported by every game
   locomotion.js           the player's visible walk (Port Royal)
   loft.js                 smooth animal bodies (Kendal, Melissa)
   ui-audit.js             painted-text overlap test (Bog Walk, tests/ui-audit.html)
+  perf.js                 pixel cap and slow-frame drop (tunePixels), the ?perf readout
+  joinbody.js             each person drawn as a few joined meshes, through animate() (same look, far fewer draw calls)
+  batch.js                batchStatic: still scenery merged per material look (moved from seven games' gfx.js)
+  preload.js              the next chapter loaded in quiet moments, the last one's graphics memory freed
 shared/
   models/anims.js         the shared animation library (126 clips on one skeleton), copied into each game at build
   anim-sources/*.fbx      the original Mixamo downloads the library is made from

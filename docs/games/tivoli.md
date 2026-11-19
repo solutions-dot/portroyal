@@ -486,3 +486,9 @@ The journal's tabs were one sideways-scrolling row with a fixed width, so long t
 - **The police vest** had one point thrown 1.5 m out when it was thickened; it looked like a sword in his hand. `tools/tivoli/kit.py` now stops it, and `tools/checks/stray-points.mjs` finds any such point in any body.
 - **The soldier's vest** has wider shoulder pieces and a darker olive, so it reads as worn over the shoulders on the camouflage.
 - The title page and the menu name the event **the Tivoli Incursion**.
+
+## Performance (18 November 2026)
+
+`src/main.js`, `src/ch1.js` and `src/fight.js` use `engine/preload.js` (see `docs/ENGINE.md`). `setQuiet` is true while a panel, a card, a conversation, the title or the loading card is on screen. When a chapter starts, `prepare(id + 1)` downloads (`ahead`) and unpacks (`work` with the cached `loadBase`) the bodies the next chapter is known to need: its background people's bodies (`LIFE` in `life.js`), the story people whose id names their look (all but Ivy and Gran Ivy), and for chapter 5 the street cast (`fight.js` `load`). The title does the same for the chapter Start opens. Places are still built when the chapter starts, as before. When a walking chapter ends (`leaveChapter`) its place and people are released (their graphics memory freed; they are built afresh next time anyway), and the street and its people likewise when the street scene ends (`finish`).
+
+Measured with `?auto=1` (headless, software WebGL), how long the loading card stayed up: chapter 4 went from 1.6 s to 0.09 s and chapter 3 from 3.7 s to 2.7 s; the others were about the same (most of what is left is building the place). Chapters replayed from the chapters list after a release draw as before.
