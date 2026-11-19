@@ -1441,7 +1441,7 @@ const HEAD_RATE = (140 * Math.PI) / 180,
 function steadyHeads(Q, dt) {
   if (!(dt > 0)) return;
   const step = HEAD_RATE * dt;
-  for (const n of Q.extras) {
+  for (const n of [...Q.people, ...Q.extras]) {
     if (!n.m.visible || !n.amb) continue;
     const b = n.m.userData.steady || (n.m.userData.steady = ["mixamorigNeck", "mixamorigHead"].map((k) => ({ bone: n.m.getObjectByName(k), last: null })));
     b.forEach((s, i) => {

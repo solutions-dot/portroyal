@@ -48,7 +48,8 @@ test('rotated bench checks reject empty AABB corners but retain real intersectio
 });
 
 import { Bone, Group, Skeleton, Quaternion } from 'three';
-import { grip, gripTick } from '../engine/grip.js';
+import { grip, gripTick, spreadArms } from '../engine/grip.js';
+import { jointTurnLimiter } from '../engine/bone-pose.js';
 test('a heavy case straightens a bent elbow without accumulating pose changes', () => {
   const model = new Group(), hips = new Bone(), arm = new Bone(), elbow = new Bone(), hand = new Bone();
   for (const [b, name] of [[hips,'Hips'],[arm,'RightArm'],[elbow,'RightForeArm'],[hand,'RightHand']]) b.name = 'mixamorig' + name;
@@ -60,6 +61,44 @@ test('a heavy case straightens a bent elbow without accumulating pose changes', 
   assert.ok(posed.angleTo(straight) < Math.PI / 4);
   gripTick(model); assert.ok(elbow.quaternion.angleTo(posed) < 0.000001);
   elbow.rotation.z = Math.PI / 2; gripTick(model); assert.ok(elbow.quaternion.angleTo(posed) < 0.000001);
+});
+
+test('an item takes over the arm spread and releasing it restores the standing pose', () => {
+  const model = new Group(), hips = new Bone(), arm = new Bone(), hand = new Bone();
+  hips.name = 'mixamorigHips'; arm.name = 'mixamorigRightArm'; hand.name = 'mixamorigRightHand';
+  model.add(hips); hips.add(arm); arm.add(hand);
+  arm.position.x = -0.15; hand.position.y = -0.45;
+  spreadArms(model, 0.08);
+  gripTick(model);
+  const resting = arm.quaternion.clone();
+  const cup = new Mesh(new BoxGeometry(0.1, 0.1, 0.1), new MeshBasicMaterial());
+  const wrap = grip(model, 'Right', cup, { lift: 0.55 });
+  const holding = arm.quaternion.clone();
+  assert.ok(resting.angleTo(holding) > 0.3);
+  for (let i = 0; i < 60; i++) {
+    gripTick(model);
+    assert.ok(arm.quaternion.angleTo(holding) < 1e-6);
+  }
+  wrap.removeFromParent();
+  model.userData.grips = model.userData.grips.filter(g => g.wrap !== wrap);
+  gripTick(model);
+  assert.ok(arm.quaternion.angleTo(resting) < 1e-6);
+});
+
+test('a joint turn limit follows the body and lets a corrected pose catch up', () => {
+  const body = new Group(), parent = new Bone(), foot = new Bone();
+  body.add(parent); parent.add(foot);
+  const limit = jointTurnLimiter(foot, body, 12), axis = new Vector3(1, 0, 0);
+  const pose = new Quaternion().setFromAxisAngle(axis, 1.4);
+  limit(1 / 30);
+  body.rotation.y = Math.PI / 2;
+  parent.rotation.x = 0.3;
+  foot.rotation.x = 1.1;
+  limit(1 / 30);
+  assert.ok(Math.abs(foot.rotation.x + parent.rotation.x - 0.4) < 1e-6);
+  for (let i = 0; i < 4; i++) { foot.rotation.x = 1.1; limit(1 / 30); }
+  const relative = body.getWorldQuaternion(new Quaternion()).invert().multiply(foot.getWorldQuaternion(new Quaternion()));
+  assert.ok(relative.angleTo(pose) < 1e-6);
 });
 
 import { updateWalk } from '../engine/locomotion.js';
@@ -86,7 +125,7 @@ test('loop seams normalize quantized rotations and meet the starting pose', () =
 });
 
 import { VectorKeyframeTrack } from 'three';
-import { CL, clipFor, HIPS_Y, WALKS, isSeated } from '../engine/anim.js';
+import { CL, animate, clipFor, groundFeet, HIPS_Y, WALKS, isSeated } from '../engine/anim.js';
 test('kneeling, crouching and seated clips keep their low hips; every walk is paced and seam-looped', () => {
   const pos = (name, y, x = 0) => new AnimationClip(name, 1, [new VectorKeyframeTrack('mixamorigHips.position', [0, 1], [x, y, 0, x, y, 0]), new QuaternionKeyframeTrack('mixamorigHips.quaternion', [0, 1], [0, 0, 0, 1, 0, 0, 0, 1])]);
   const saved = { ...CL }; CL.Idle = pos('Idle', 0.86, 0.02);
@@ -138,6 +177,152 @@ test('furniture route checks find a missing walking wall and respect rotated emp
 test('seat anchoring holds pelvis position through animation and movement of its parent',()=>{
   const train=new Group(),model=new Group(),hips=new Bone();hips.name='mixamorigHips';model.add(hips);train.add(model);model.userData.seatAnchor={x:1,z:2,top:.5,ry:Math.PI};
   for(const y of [.7,.5,.63]){hips.position.set(.1,y,.2);anchorSeat(model);const p=hips.getWorldPosition(new Vector3());train.worldToLocal(p);assert.ok(Math.abs(p.x-1)<1e-6);assert.ok(Math.abs(p.z-2)<1e-6);assert.ok(Math.abs(p.y-.62)<1e-6);train.position.x+=3;train.rotation.y+=.2;}
+});
+
+test('seat placement eases in from the standing pose using mixer time', () => {
+  const model = new Group(), hips = new Bone();
+  hips.name = 'mixamorigHips';
+  hips.position.y = 0.85;
+  model.add(hips);
+  const mx = { time: 10 };
+  model.userData.anim = { mx };
+  model.userData.seatAnchor = {
+    top: 0.5, lift: 0.12, x: 1, z: 0.6, ry: Math.PI,
+    settle: { from: model.position.clone(), yaw: 0, start: mx.time, duration: 0.5 },
+  };
+  anchorSeat(model);
+  assert.equal(model.position.z, 0);
+  mx.time += 0.25;
+  anchorSeat(model);
+  assert.equal(model.position.z, 0.3);
+  assert.equal(model.rotation.y, Math.PI / 2);
+  anchorSeat(model);
+  assert.equal(model.position.z, 0.3);
+  mx.time += 0.25;
+  anchorSeat(model);
+  assert.equal(model.position.z, 0.6);
+  assert.equal(model.rotation.y, Math.PI);
+});
+
+import { footWatch } from '../engine/foot-watch.js';
+test('interrupting a character crossfade preserves the visible pose and phase', () => {
+  const body = new Group(), foot = new Bone(), axis = new Vector3(1, 0, 0);
+  foot.name = 'mixamorigLeftFoot';
+  body.add(foot);
+  const names = ['FadeTestIdle', 'FadeTestWalk', 'FadeTestThird'];
+  for (const [i, name] of names.entries()) {
+    const from = new Quaternion().setFromAxisAngle(axis, i - 1);
+    const to = new Quaternion().setFromAxisAngle(axis, i - 0.5);
+    CL[name] = new AnimationClip(name, 2, [new QuaternionKeyframeTrack(foot.name + '.quaternion', [0, 2], [...from.toArray(), ...to.toArray()])]);
+  }
+  try {
+    const ctl = animate(body, names[0]);
+    const { mx, base } = ctl;
+    base.time = 1;
+    mx.update(0);
+    ctl.play(names[1]);
+    mx.update(0.05);
+    const walk = ctl.cur, pose = foot.quaternion.clone(), phase = base.time;
+    ctl.play(names[2]);
+    assert.equal(ctl.rest(), false);
+    mx.update(0);
+    assert.equal(base.time, phase);
+    assert.ok(foot.quaternion.clone().normalize().angleTo(pose.normalize()) < 1e-6);
+    assert.ok(Math.abs(base.getEffectiveWeight() + walk.getEffectiveWeight() - 1) < 1e-6);
+    mx.update(0.4);
+    assert.equal(base.getEffectiveWeight(), 1);
+    assert.equal(walk.getEffectiveWeight(), 0);
+  } finally {
+    for (const name of names) delete CL[name];
+  }
+});
+
+test('a seat correction does not keep turning an ankle whose animation track stays still', () => {
+  const model = new Group(), hips = new Bone(), knee = new Bone(), foot = new Bone();
+  hips.name = 'mixamorigHips';
+  knee.name = 'mixamorigLeftLeg';
+  foot.name = 'mixamorigLeftFoot';
+  knee.position.z = 0.4;
+  foot.position.y = -0.4;
+  model.add(hips);
+  hips.add(knee);
+  knee.add(foot);
+  model.userData.seatAnchor = { top: 0.3, lift: 0.12 };
+  model.userData.soleDrop = { Left: 0.12 };
+  const axis = new Vector3(1, 0, 0), clipKnee = new Quaternion(), actual = new Quaternion();
+  const watch = footWatch();
+  for (let i = 0; i < 60; i++) {
+    // The mixer changes the shin, but leaves its constant ankle track untouched.
+    clipKnee.setFromAxisAngle(axis, 0.15 + Math.sin(i * 0.1) * 0.03);
+    knee.quaternion.copy(clipKnee);
+    anchorSeat(model);
+    assert.ok(foot.getWorldQuaternion(actual).angleTo(clipKnee) < 1e-6);
+    assert.ok(foot.getWorldPosition(new Vector3()).y >= 0.125);
+    watch.sample(i / 30, { id: 'seated person', m: model, clip: 'SitIdle' });
+  }
+  assert.deepEqual(watch.lines(), []);
+  delete model.userData.seatAnchor;
+  anchorSeat(model);
+  assert.ok(foot.quaternion.angleTo(new Quaternion()) < 1e-6);
+  assert.ok(knee.quaternion.angleTo(clipKnee) < 1e-6);
+});
+
+test('slope grounding keeps the same pose when the mixer leaves the leg tracks still', () => {
+  const body = new Group(), bones = [], ankles = [], vertices = [], indices = [], weights = [];
+  const joint = (parent, side, name, x, y, z) => {
+    const bone = new Bone();
+    bone.name = 'mixamorig' + side + name;
+    bone.position.set(x, y, z);
+    parent.add(bone);
+    bones.push(bone);
+    return bone;
+  };
+  for (const [side, x] of [['Left', -0.12], ['Right', 0.12]]) {
+    const thigh = joint(body, side, 'UpLeg', x, 0.89, 0);
+    const shin = joint(thigh, side, 'Leg', 0, -0.43, 0.04);
+    const foot = joint(shin, side, 'Foot', 0, -0.43, -0.04);
+    joint(foot, side, 'ToeBase', 0, -0.02, 0.2);
+    ankles.push(foot);
+    vertices.push(x, 0, -0.04, x, 0, 0.2);
+    indices.push(bones.length - 2, 0, 0, 0, bones.length - 1, 0, 0, 0);
+    weights.push(1, 0, 0, 0, 1, 0, 0, 0);
+  }
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('skinIndex', new Float32BufferAttribute(indices, 4));
+  geometry.setAttribute('skinWeight', new Float32BufferAttribute(weights, 4));
+  const shoes = new MeshBasicMaterial({ name: 'Shoes' }), mesh = new SkinnedMesh(geometry, shoes);
+  body.add(mesh);
+  body.updateMatrixWorld(true);
+  mesh.bind(new Skeleton(bones));
+  body.userData.groundAt = (x, z) => 0.25 * x + 0.4 * z;
+  groundFeet(body);
+  const quats = ankles.map(foot => foot.getWorldQuaternion(new Quaternion()));
+  assert.ok(quats.some(q => q.angleTo(new Quaternion()) > 0.2));
+  for (let i = 0; i < 60; i++) groundFeet(body);
+  ankles.forEach((foot, i) => assert.ok(foot.getWorldQuaternion(new Quaternion()).angleTo(quats[i]) < 1e-6));
+  delete body.userData.groundAt;
+  groundFeet(body);
+  ankles.forEach(foot => assert.ok(foot.quaternion.angleTo(new Quaternion()) < 1e-6));
+});
+
+test('the foot audit catches a rapid spin and ignores a turn of the whole body', () => {
+  const model = new Group(), foot = new Bone();
+  foot.name = 'mixamorigLeftFoot';
+  model.add(foot);
+  const sample = { id: 'walker', m: model, clip: 'Walk' };
+  const watch = footWatch();
+  for (let i = 0; i < 12; i++) {
+    model.rotation.y += Math.PI / 2;
+    watch.sample(i / 30, sample);
+  }
+  assert.deepEqual(watch.lines(), []);
+  for (let i = 12; i < 22; i++) {
+    foot.rotation.y += Math.PI / 2;
+    watch.sample(i / 30, sample);
+  }
+  assert.ok(watch.lines().some(line => line.includes('snaps')));
+  assert.ok(watch.lines().some(line => line.includes('quarter second')));
 });
 
 /* Nanny Town 1734: land with heights (games/nanny/src/land.js). You may stand on trails and clearings only. */

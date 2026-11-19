@@ -325,10 +325,10 @@ function makeFire(parent, toMy, my) {
   const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const sparks = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffc070, size: 0.18, transparent: true, depthWrite: false, fog: false })); sparks.frustumCulled = false; g.add(sparks);
   let surge = 0;
   return { light, setLevel(v) { level = v; }, get level() { return level; }, burst(k) { surge = Math.sin(Math.min(1, k) * Math.PI); },
-    tick(dt, t) { light.intensity = level * (620 + Math.sin(t * 9) * 90 + Math.sin(t * 23) * 50);
-      for (const s of fl) { const u = s.userData, on = level > 0.7 ? 1 : (u.low && level > 0.2 ? level : 0), k = u.k * on * (0.8 + 0.3 * Math.sin(t * 7 + u.ph) + 0.15 * Math.sin(t * 17 + u.ph * 2)); s.visible = k > 0.05; s.scale.set(k * 0.9, k * 1.5, 1); s.position.y = (level > 0.7 ? u.y : 1.0) + k * 0.4; }
+    tick(dt, t, calm = false) { light.intensity = level * (calm ? 360 : 620 + Math.sin(t * 9) * 90 + Math.sin(t * 23) * 50);
+      for (const s of fl) { const u = s.userData, on = level > 0.7 ? 1 : (u.low && level > 0.2 ? level : 0), k = u.k * on * (calm ? 0.65 : 0.8 + 0.3 * Math.sin(t * 7 + u.ph) + 0.15 * Math.sin(t * 17 + u.ph * 2)); s.visible = k > 0.05; s.scale.set(k * 0.9, k * 1.5, 1); s.position.y = (level > 0.7 ? u.y : 1.0) + k * 0.4; }
       for (const s of sm) { const u = s.userData; u.t = (u.t + dt * u.sp) % 14; const k = u.t / 14; s.visible = level > 0.02; s.position.set(u.x + k * 6, (level > 0.7 ? 8 : 2) + u.t * 1.7, u.z + Math.sin(u.t) * 1.2); const sc = 4 + u.t * 1.1; s.scale.set(sc, sc, 1); s.material.opacity = (1 - k) * (level > 0.7 ? 0.55 : 0.4); }
-      sparks.visible = level > 0.3; sparks.material.size = 0.18 + surge * 0.22; for (let i = 0; i < N; i++) { const u = sd[i]; u.t = (u.t + dt) % 5; pos[i * 3] = u.x + u.dx * u.t; pos[i * 3 + 1] = (level > 0.7 ? 7 : 1.5) + u.t * u.sp * (1.6 + surge * 3); pos[i * 3 + 2] = u.z + Math.sin(u.t * 3 + i) * 0.6; } sg.attributes.position.needsUpdate = true; } };
+      sparks.visible = !calm && level > 0.3; sparks.material.size = 0.18 + surge * 0.22; for (let i = 0; i < N; i++) { const u = sd[i]; u.t = (u.t + dt) % 5; pos[i * 3] = u.x + u.dx * u.t; pos[i * 3 + 1] = (level > 0.7 ? 7 : 1.5) + u.t * u.sp * (1.6 + surge * 3); pos[i * 3 + 2] = u.z + Math.sin(u.t * 3 + i) * 0.6; } sg.attributes.position.needsUpdate = true; } };
 }
 
 /* ---------- inside the Myers Ward: one long wooden room with iron beds close together. No photograph was found: this is our best guess. ---------- */

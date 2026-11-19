@@ -10,6 +10,7 @@
    Head angles are measured as in games/selassie/src/headcheck.js: the head's forward against the chest's own frame, from the bind pose. */
 import * as THREE from 'three';
 import { WALKS, strideOf } from '../../../engine/anim.js';
+import { footWatch } from '../../../engine/foot-watch.js';
 
 export const LIMIT = { yaw: 80, pitch: 60, speed: 320 };
 const FROZEN = 12, NEAR = 30, IDLE = /^(Idle|IdleM|OldIdle|Sad1|Sad2|Kneel|CarryHeadIdle|CarryIdle)$/, D2R = Math.PI / 180;
@@ -27,14 +28,20 @@ export function headAngles(m) {
 function dominant(ctl) { let best = null, bw = 0; for (const x of ctl.mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } } return best || ctl.cur; }
 
 /* scenes: [{ name, setup: async () => {}, seconds, step(t, dt) (moves you, if you walk), people: () => [n...] }]; update(dt) is the game's frame; player() gives [x, z] */
-export async function animCheck({ scenes, update, player, people: everyone, dt = 1 / 30 }) {
+export async function animCheck({ scenes, update, player, people: everyone, dt = 1 / 30, feetOnly = false }) {
   const lines = [], stats = [];
   for (const sc of scenes) {
     await sc.setup(); const who = sc.people || everyone; const S = new Map(), seen = new Set(), add = (n, kind, text) => { const k = (n.id || n.base) + '|' + kind; if (seen.has(k)) return; seen.add(k); lines.push(`${sc.name}: ${n.id || n.base} ${text}`); };
+    const feet = feetOnly ? footWatch() : null;
     const steps = Math.round((sc.seconds || 30) / dt); let samples = 0, lastSync = new Set();
     for (let f = 0; f < steps; f++) {
       const t = f * dt; if (sc.step) sc.step(t, dt); update(dt); const [px, pz] = player(), syncs = new Map();
-      for (const n of who()) {
+      for (const [i, n] of who().entries()) {
+        if (feet) {
+          const m = n.lo?.visible ? n.lo : n.m, ac = m?.userData.anim;
+          if (m?.visible && ac) feet.sample(t, { id: n.id || `${n.base} #${i + 1}`, m, clip: ac.cur.getClip().name });
+          continue;
+        }
         const m = n.m; if (!m || !m.visible || !n.ctl) continue; m.updateMatrixWorld(true);
         const p = m.position, d = Math.hypot(p.x - px, p.z - pz), act = dominant(n.ctl), clip = act.getClip().name, ha = headAngles(m);
         let s = S.get(n); if (!s) { s = { x: p.x, z: p.z, ry: m.rotation.y, clip, yaw: ha ? ha.yaw : 0, still: 0, worst: 0, runT: 0, slideT: 0, paceT: 0 }; S.set(n, s); continue; }
@@ -59,7 +66,13 @@ export async function animCheck({ scenes, update, player, people: everyone, dt =
             if (lastSync.has(key) && !seen.has('sync|' + key)) { seen.add('sync|' + key); lines.push(`${sc.name}: three people play ${key.replace(':', ' in step:')}`); } } }
         lastSync = now; }
     }
-    let worst = 0; for (const s of S.values()) worst = Math.max(worst, s.worst); stats.push(`${sc.name}: ${S.size} people, ${samples} samples, longest still near you ${worst.toFixed(1)} s`);
+    if (feet) {
+      const { people, samples } = feet.stats();
+      lines.push(...feet.lines().map(line => `${sc.name}: ${line}`));
+      stats.push(`${sc.name}: ${people} bodies, ${samples} foot samples`);
+    } else {
+      let worst = 0; for (const s of S.values()) worst = Math.max(worst, s.worst); stats.push(`${sc.name}: ${S.size} people, ${samples} samples, longest still near you ${worst.toFixed(1)} s`);
+    }
   }
   return { lines, stats };
 }

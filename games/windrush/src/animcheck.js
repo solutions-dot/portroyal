@@ -12,6 +12,7 @@
    view (no person and no ship in the picture) for more than 2 seconds. */
 import * as THREE from "three";
 import { WALKS, SEATED } from "../../../engine/anim.js";
+import { footWatch } from "../../../engine/foot-watch.js";
 import { SHIP } from "./ship.js";
 import { closeAll } from "./ui.js";
 export const LIMIT = { yaw: 80, pitch: 60, speed: 320 },
@@ -104,7 +105,7 @@ function somethingInView(Q, camera) {
   return everyone(Q).some((n) => fr.containsPoint(n.m.getWorldPosition(_p).setY(_p.y + 1.1)) && _p.distanceTo(camera.position) < 40);
 }
 /* A: the dev object (window.__WIND). places: [[label, stage, { x, z } the person to circle]]. Returns { lines, stats }. */
-export async function animCheck(A, { seconds = 20, films = true, only = null } = {}) {
+export async function animCheck(A, { seconds = 20, films = true, only = null, feetOnly = false } = {}) {
   const lines = [],
     stats = [],
     dt = 1 / 30,
@@ -114,7 +115,7 @@ export async function animCheck(A, { seconds = 20, films = true, only = null } =
   window.requestAnimationFrame = () => 0;
   await new Promise((r) => setTimeout(r, 60));
   let clock = performance.now() + 1000;
-  const seen = new Map();
+  const seen = new Map(), feet = new Map();
   const state = (label, n) => {
     const id = label + " " + (n.id || n.base);
     let s = seen.get(id);
@@ -127,15 +128,22 @@ export async function animCheck(A, { seconds = 20, films = true, only = null } =
     lines.push(`${s.id}: ${text}`);
   };
   const sample = (label, t, Q) => {
+    if (!feet.has(label)) feet.set(label, footWatch());
+    const foot = feet.get(label);
     const fr = frustum(A.camera),
       groups = new Map();
-    for (const n of everyone(Q)) {
+    for (const n of [...Q.people, ...Q.extras, ...(Q.shipExtras || [])]) {
+      const body = n.lo?.visible ? n.lo : n.m;
+      if (body.visible) {
+        const clip = body.userData.anim?.cur?.getClip().name;
+        foot.sample(t, { id: n.id || n.base, m: body, clip });
+      }
+      if (feetOnly || !n.m.visible) continue;
       const s = state(label, n),
         ctl = n.ctl || n.m.userData.anim;
       if (!ctl) continue;
-      const act = dominant(ctl),
-        clip = act.getClip().name,
-        world = n.m.getWorldPosition(new THREE.Vector3()),
+      const act = dominant(ctl), clip = act.getClip().name;
+      const world = n.m.getWorldPosition(new THREE.Vector3()),
         wp = n.zone === "ship" ? n.m.position.clone() : world, // people standing on the ship are judged in the ship's frame: she moves, they do not slide
         ry = n.m.rotation.y,
         g = headAngles(n.m),
@@ -258,6 +266,7 @@ export async function animCheck(A, { seconds = 20, films = true, only = null } =
         step();
         t = A.DIR.time;
         sample("scene " + key, t, Q);
+        if (feetOnly) continue;
         const c = A.DIR.on && cameraIssue(Q, A.camera);
         if (c && !cams.has(c)) cams.set(c, t);
         if (A.DIR.on && !somethingInView(Q, A.camera)) empty += dt;
@@ -270,7 +279,12 @@ export async function animCheck(A, { seconds = 20, films = true, only = null } =
       if (A.DIR.on) A.DIR.stop();
       A.DIR.fast = quick;
     }
-  stats.push(`ANIM sampled ${[...seen.values()].filter((s) => s.id).length} people`);
+  for (const [label, foot] of feet) {
+    const {people, samples} = foot.stats();
+    stats.push(`${label}: ${people} bodies, ${samples} foot samples`);
+    lines.push(...foot.lines().map((l) => label + ": " + l));
+  }
+  if (!feetOnly) stats.push(`ANIM sampled ${[...seen.values()].filter((s) => s.id).length} people`);
   A.renderer.render = render;
   window.requestAnimationFrame = raf;
   raf(A.frame);

@@ -63,11 +63,11 @@
   .card input[type=checkbox]{width:44px;height:44px;margin:0;flex-shrink:0;accent-color:#d9a441}   /* a 44 px tap target, as every button */
   .card .row{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:.4rem}
   #windowframe{position:fixed;inset:0;pointer-events:none;border:3.2vmin solid #1d1814;border-bottom-width:9vmin;border-radius:1vmin;box-shadow:inset 0 0 8vmin rgba(0,0,0,.55);z-index:5}
-  #scenetitle{position:fixed;left:50%;top:max(22%,152px);transform:translateX(-50%);text-align:center;z-index:6;text-shadow:0 2px 8px #000;pointer-events:none;width:min(90vw,34rem)}
-  @media (max-width:560px){#scenetitle{top:11rem}}   /* on phones, below the top buttons and the goal */
+  :is(#scenetitle,#fighttitle){position:fixed;left:50%;top:max(22%,152px);transform:translateX(-50%);text-align:center;z-index:6;text-shadow:0 2px 8px #000;pointer-events:none;width:min(90vw,34rem)}
+  @media (max-width:560px){:is(#scenetitle,#fighttitle){top:11rem}}   /* on phones, below the top buttons and the goal */
   #chcardl p{margin:0 0 .6em;line-height:1.4}
   #savenote{font-size:.85rem;opacity:.8;margin:0}   /* the end card: one fact a line, with room between them */
-  #scenetitle b{display:block;font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(1.8rem,6vw,2.8rem)}
+  :is(#scenetitle,#fighttitle) b{display:block;font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(1.8rem,6vw,2.8rem)}
   .chrow{display:flex;gap:1rem;align-items:center;justify-content:space-between;padding:.7rem 0;border-bottom:1px solid rgba(242,232,208,.18);max-width:44rem}
   .chrow b{display:block;font-size:1.15rem}.chrow span{display:block;font-size:.95rem;opacity:.8}.chrow p{margin:.2rem 0 0;font-size:1rem}
   .jrow{display:block;width:100%;max-width:30rem;text-align:left;margin:.3rem 0}
@@ -130,7 +130,7 @@ body:has(.card:not([hidden])) :is(#goal,#topr,#hint,#talk,#stick,.tbub),body:has
     <p class="intro">Learn about the Tivoli Incursion of May 2010, what came after, and life today.</p>
     <div class="loading title-actions">
       <button id="start" class="btn" disabled>Loading</button>
-      <button id="chbtn" class="btn ghost">Chapters</button>
+      <button id="chbtn" class="btn ghost" disabled>Chapters</button>
       <a id="allgames" class="btn ghost" href="../../../menu/">Exit</a>
       <div class="track" aria-hidden="true"><div id="bar"></div></div>
       <p id="loadnote">Loading people.</p>
@@ -185,8 +185,8 @@ body:has(.card:not([hidden])) :is(#goal,#topr,#hint,#talk,#stick,.tbub),body:has
   <p>Next is a loud scene with gunfire.</p>
   <p>You watch from a window. No one is shown hurt.</p>
   <p>It may feel scary.</p>
-  <label><input type="checkbox" id="fcalm"> Calm mode: quieter, no bright flashes, no shaking</label>
-  <div class="row"><button id="fbegin" class="btn">Begin</button><button id="fread" class="btn ghost">Read what happened instead</button><button id="fcancel" class="btn ghost">Not now</button></div>
+  <div id="fightoptions"></div>
+  <div class="row"><button id="fbegin" class="btn">Watch scene</button><button id="fread" class="btn ghost">Read what happened instead</button></div>
 </div>
 <div id="readcard" class="card" hidden>
   <h2>What happened</h2>
@@ -212,7 +212,8 @@ body:has(.card:not([hidden])) :is(#goal,#topr,#hint,#talk,#stick,.tbub),body:has
 </div>
 <div id="fightload" class="card" hidden><p>Loading the street.</p></div>
 <div id="windowframe" hidden></div>
-<div id="scenetitle" hidden><b>Monday 24 May 2010</b><p>A street in West Kingston. It is made up. The day was real.</p></div>
+<div id="scenetitle" hidden></div>
+<div id="fighttitle" hidden><b>Monday 24 May 2010</b><p>A street in West Kingston. It is made up. The day was real.</p></div>
 <div id="fade" hidden></div>
 <script src="app.js"></script>
 </body>

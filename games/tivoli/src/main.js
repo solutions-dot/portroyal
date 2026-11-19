@@ -27,7 +27,7 @@ import { initStory, nextChapter, unlock as unlockPage, hasSave, saveProgress, op
 import { CHAPTERS, JOURNAL } from './content.js';
 import { headTop, markAt, NEAR_GAP } from '../../../engine/marks.js';
 import { walkRoute } from '../../../engine/placement.js';
-import { WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget, talkedNow, orderNow } from './ch1.js';
+import { hideIntro, WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget, talkedNow, orderNow } from './ch1.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { lifeTest, lifeBodies, LIFE } from './life.js';   // dev only: ?test=ambient (LIFE: whose bodies the next chapter needs)
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
@@ -169,7 +169,7 @@ function bubbleTick(now) {
 let modelsReady = false;
 Promise.all(['anims', 'anims_tivoli'].map((name) => model(name).then((asset) => { const bar = $('bar'); bar.dataset.done = +(bar.dataset.done || 0) + 1; bar.style.width = (+bar.dataset.done / 2 * 100) + '%'; return asset; }))).then(([anims, own]) => {
   loadClips(anims); loadClips(own); deriveClips();   // the shared library, then Tivoli's own clips (tools/tivoli/pack_clips.mjs)
-  modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave() ? 'Continue' : 'Start'; $('savenote').hidden = !hasSave(); $('loadnote').textContent = '';
+  modelsReady = true; $('start').disabled = false; $('chbtn').disabled = false; $('start').textContent = hasSave() ? 'Continue' : 'Start'; $('savenote').hidden = !hasSave(); $('loadnote').textContent = '';
   if (__DEV__) devViews();
 });
 
@@ -192,7 +192,7 @@ $('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
 const FOOT = { 1: 'sand' };   /* Back-o-Wall's lanes are earth; everywhere else is paving */
 const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n), onClose: () => flushToasts() };
 setupTalk(talkEnv);
-setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS, chapterEnd, onStart: () => { liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); } });
+setupCh1({ scene, state, WALLS, renderer, audioInit, focusGame: () => canvas.focus(), setBusy, setGoal, uiSound: uiS, chapterEnd, onStart: () => { liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); } });
 initStory({ startChapter, uiSound: uiS, setBusy });
 prepare(nextChapter());   /* the chapter Start opens: its bodies unpack behind the title */
 wireFight({ scene, camera, renderer, audioInit, next: () => startChapter(6) });
@@ -276,10 +276,10 @@ function headHooks(only) {
   const people = () => {
     const L = [];
     for (const n of Talk.npcs) L.push({ id: n.name, m: n.body, key: lookOf(n).base, make: (clip) => { const b = makeBody({ ...lookOf(n), x: 900, z: 900, anim: clip }); made.push(b); return b; } });
-    if (CH.life) for (const n of CH.life.people) L.push({ id: 'neighbour ' + n.id, m: n.m, key: n.look.base + (n.look.scale || ''), make: (clip) => { const b = makeBody({ ...n.look, x: 900, z: 900, anim: clip }); made.push(b); return b; } });
+    if (CH.life) for (const n of CH.life.people) L.push({ id: 'neighbour ' + n.id, m: n.m, footBody: n.lo?.visible ? n.lo : n.m, key: n.look.base + (n.look.scale || ''), make: (clip) => { const b = makeBody({ ...n.look, x: 900, z: 900, anim: clip }); made.push(b); return b; } });
     if (FIGHT.on) FIGHT.actors.forEach((a, i) => L.push({ id: a.side + ' ' + i, m: a.b, key: a.bodyId, make: null }));
     for (const p of L) { const c = p.m.userData.anim && p.m.userData.anim.cur; p.clip = c ? c.getClip().name : ''; p.blend = !!(c && c.getEffectiveWeight() < 0.98); }
-    return L.filter((p) => p.m.visible);
+    return L.filter((p) => (p.footBody || p.m).visible);
   };
   return {
     cases: () => [...WALK_IDS.filter((id) => !only || only.includes(String(id))).map((id) => ({ label: 'chapter ' + id, stops: {}, async enter() {
@@ -308,6 +308,12 @@ async function devViews() {
     if (!CHECKS.some((c) => c.id === 'heads')) CHECKS.push({ id: 'heads', needs: [], async run() { const r = await headCheck(headHooks(null)); STEPPED.on = false; return { lines: r.lines, note: r.stats.length + ' scenes watched' }; } });
     checkAll(makeAdapter(checkHooks()), CHECK_TABLES); return;
   }
+  if (test === 'feet') {
+    const r = await headCheck(headHooks(q.get('ch') ? q.get('ch').split(',') : null), { feetOnly: true });
+    STEPPED.on = false;
+    devLog([...r.lines, ...r.stats], 'FEET ' + r.lines.length);
+    return;
+  }
   if (test === 'heads') {   /* ?test=heads (&ch=1,5): every person's head and body through every chapter (headcheck.js): no head past 80 degrees, none going round, no snap or spin. Expect HEADS 0. */
     const r = await headCheck(headHooks(q.get('ch') ? q.get('ch').split(',') : null)); STEPPED.on = false; devLog(['heads: ' + r.lines.length + ' issues', ...r.lines, '', ...r.stats], 'HEADS ' + r.lines.length); return;
   }
@@ -324,11 +330,11 @@ async function devViews() {
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
   if (['1', '2', '3', '4', '6', '7', '8'].includes(q.get('chapter'))) {   /* ?chapter=N (&at=talked|end) (&cam=x,z,yaw,pitch,height: stand there for a picture) */
     await ch1Begin(+q.get('chapter')); if (q.get('at')) ch1Skip(q.get('at'));
-    if (q.get('cam')) { const [x, z, yaw, pitch, h] = q.get('cam').split(',').map(Number); Object.assign(state, { x, z, yaw, pitch: pitch || 0 }); if (h) state.camY = h; $('scenetitle').hidden = true; setTimeout(() => { document.title = 'CAM'; }, +(q.get('wait') || 6000)); }
+    if (q.get('cam')) { const [x, z, yaw, pitch, h] = q.get('cam').split(',').map(Number); Object.assign(state, { x, z, yaw, pitch: pitch || 0 }); if (h) state.camY = h; hideIntro(); setTimeout(() => { document.title = 'CAM'; }, +(q.get('wait') || 6000)); }
     return;
   }
   if (shot === 'poster') {   /* ?shot=poster&cx=&cy=&cz=&tx=&ty=&tz=: the quiet street with nobody in it, for the menu picture (menu/tivoli.jpg) */
-    await fightBegin(); FIGHT.freeze = true; $('hud').hidden = true; for (const id of ['fightcard', 'readcard', 'scenetitle', 'windowframe']) { const e = $(id); if (e) e.hidden = true; }
+    await fightBegin(); FIGHT.freeze = true; $('hud').hidden = true; for (const id of ['fightcard', 'readcard', 'fighttitle', 'windowframe']) { const e = $(id); if (e) e.hidden = true; }
     scene.traverse((o) => { if (o.isSkinnedMesh) { let p = o; while (p.parent && p.parent !== scene) p = p.parent; p.visible = false; } });
     const f = (k, d) => (q.has(k) ? +q.get(k) : d); FIGHT.on = false; for (const b of FIGHT.bodies) b.visible = false; const cx = f('cx', -9.5), cz = f('cz', 2.0); state.x = cx; state.z = cz; state.camY = f('cy', 1.7); state.yaw = Math.atan2(-(f('tx', 16) - cx), -(f('tz', -0.5) - cz)); state.pitch = f('pitch', 0.04); state.started = true; $('title').hidden = true; return;
   }
@@ -376,8 +382,8 @@ async function devViews() {
   }
   if (test === 'layout') {   /* ?test=layout: show each card and title state and check that no two bits of text overlap, nothing is off the sides of the screen, and every button is big enough to touch (44 px). Run at 390x800, 320x568, 667x375, 800x500, 1280x720. */
     const out = [], W = innerWidth, Hh = innerHeight, st2 = document.createElement('style'); st2.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st2);
-    const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'windowframe', 'hud', 'chcard', 'journal', 'chapters', 'toast'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['scenetitle', 'windowframe']], ['chapter title over the goal and buttons', ['scenetitle', 'hud']], ['chapter end card', ['chcard']], ['reset card', ['chcard']], ['play: goal, buttons, tip, toast', ['hud', 'toast']], ['play: talking', ['hud', 'dialogue']], ['journal', ['journal']], ['chapters', ['chapters']]]) {
+    const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'fighttitle', 'windowframe', 'hud', 'chcard', 'journal', 'chapters', 'toast'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['fighttitle', 'windowframe']], ['chapter title over the goal and buttons', ['scenetitle', 'hud']], ['chapter end card', ['chcard']], ['reset card', ['chcard']], ['play: goal, buttons, tip, toast', ['hud', 'toast']], ['play: talking', ['hud', 'dialogue']], ['journal', ['journal']], ['chapters', ['chapters']]]) {
       if (name === 'reset card') { $('chcardt').textContent = 'Reset'; $('chcardl').replaceChildren(Object.assign(document.createElement('p'), { textContent: 'Start this chapter again, or start the whole story again.' })); $('chcardb').replaceChildren(...['Restart “May 2010: before”', 'Start the whole story again', 'Cancel'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
       if (name.startsWith('play')) { $('scenetitle').hidden = true; $('goal').textContent = 'Talk to Pastor Grant by the clinic.'; $('hint').hidden = false; liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'); $('jcount').hidden = false; $('jcount').textContent = '2'; $('jbtn').classList.add('glow'); $('toast').textContent = 'New journal page: What people disagree about'; $('dialogue').hidden = true;
         if (show.includes('dialogue')) { document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Pastor Grant'; $('line').textContent = 'Finding the truth can take a long time.'; } else document.body.classList.remove('talking'); }
@@ -396,7 +402,7 @@ async function devViews() {
   }
   if (test === 'scene') {   /* ?test=scene (&seeds=1,2,3): the street scene run start to end; everyone's aim, facing and feet (scenecheck.js). Expect 0. */
     const r = await sceneCheck({ FIGHT, begin: fightBegin, tick: fightTick, strideOf, WALKS: WALK_CLIPS, CONTACT, seeds: q.get('seeds') ? q.get('seeds').split(',').map(Number) : undefined });
-    devLog(['scene: ' + r.lines.length + ' issues (' + r.stats.samples + ' person-frames, ' + r.stats.aims + ' aims checked)', ...r.lines], 'SCENE ' + r.lines.length); $('windowframe').hidden = true; $('fade').hidden = true;
+    devLog(['scene: ' + r.lines.length + ' issues (' + r.stats.samples + ' person-frames, ' + r.stats.aims + ' aims checked)', ...r.lines], 'SCENE ' + r.lines.length); for (const id of ['windowframe', 'fighttitle', 'fade']) $(id).hidden = true;
   }
   if (test === 'clipinfo') {   /* ?test=clipinfo (&clips=A,B &b=police2010 &kind=pistol): each clip's length, built-in aim turn, swing, foot travel and hip height */
     const names = q.get('clips') ? q.get('clips').split(',') : Object.keys(CL).filter((n) => !n.startsWith('_'));

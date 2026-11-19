@@ -2,12 +2,18 @@
    Call soundPref(key) once, audioInit() on the first tap, then use the helpers. See docs/ENGINE.md. */
 export const AU = { ctx: null, master: null, on: true, ch: {}, crack: null };
 export function soundPref(key) { AU.key = key; try { AU.on = localStorage.getItem(key) !== 'off'; } catch (e) { /* default on */ } }
-export function setSound(on) { AU.on = on; try { localStorage.setItem(AU.key || 'game-sound', on ? 'on' : 'off'); } catch (e) { /* ignore */ } audioInit(); if (AU.master) AU.master.gain.setTargetAtTime(on ? 0.8 : 0, AU.ctx.currentTime, 0.1); }
+let sceneAudioScale = 1;
+const masterLevel = () => AU.on ? 0.8 * sceneAudioScale : 0;
+export function setSceneAudioScale(scale) {
+  sceneAudioScale = scale;
+  if (AU.master) AU.master.gain.setTargetAtTime(masterLevel(), AU.ctx.currentTime, 0.1);
+}
+export function setSound(on) { AU.on = on; try { localStorage.setItem(AU.key || 'game-sound', on ? 'on' : 'off'); } catch (e) { /* ignore */ } audioInit(); if (AU.master) AU.master.gain.setTargetAtTime(masterLevel(), AU.ctx.currentTime, 0.1); }
 export function noiseSrc(kind) { const c = AU.ctx, len = c.sampleRate * 3, b = c.createBuffer(1, len, c.sampleRate), d = b.getChannelData(0); let l = 0;
   for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; if (kind === 'brown') { l = (l + 0.02 * w) / 1.02; d[i] = l * 3.5; } else d[i] = w * 0.5; }
   const src = c.createBufferSource(); src.buffer = b; src.loop = true; src.start(); return src; }
 export function chan(kind, type, f, q) { const c = AU.ctx, fl = c.createBiquadFilter(), g = c.createGain(); fl.type = type; fl.frequency.value = f; if (q) fl.Q.value = q; g.gain.value = 0; noiseSrc(kind).connect(fl); fl.connect(g); g.connect(AU.master); g.f = fl; return g; }
-export function audioInit() { try { if (!AU.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; AU.ctx = new AC(); AU.master = AU.ctx.createGain(); AU.master.gain.value = AU.on ? 0.8 : 0; AU.master.connect(AU.ctx.destination);
+export function audioInit() { try { if (!AU.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; AU.ctx = new AC(); AU.master = AU.ctx.createGain(); AU.master.gain.value = masterLevel(); AU.master.connect(AU.ctx.destination);
       AU.ch.sea = chan('brown', 'lowpass', 800); AU.ch.surf = chan('white', 'bandpass', 2200, 0.4); AU.ch.wind = chan('white', 'bandpass', 650, 0.6); AU.ch.crowd = chan('white', 'bandpass', 480, 2.2); AU.ch.room = chan('brown', 'lowpass', 160);
       const n = AU.ctx.sampleRate * 0.03, b = AU.ctx.createBuffer(1, n, AU.ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n); AU.crack = b;
       { const m = AU.ctx.sampleRate * 0.22 | 0, sb = AU.ctx.createBuffer(1, m, AU.ctx.sampleRate), e = sb.getChannelData(0); let grain = 0; for (let i = 0; i < m; i++) { if (Math.random() < 0.004) grain = 0.6 + Math.random() * 0.4; grain *= 0.992; const env = Math.min(1, i / (m * 0.15)) * Math.pow(1 - i / m, 1.6); e[i] = (Math.random() * 2 - 1) * (0.35 + grain) * env; } AU.step = sb; } }

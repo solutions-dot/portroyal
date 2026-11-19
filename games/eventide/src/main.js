@@ -1,3 +1,4 @@
+import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 /* games/eventide/src/main.js: Eventide 1980, The Home on Slipe Pen Road (the plan is docs/games/eventide.md).
    Seven chapters, from a visit to the Eventide Home in May 1980, through the night of the fire of 20 May, to the monument today.
@@ -5,7 +6,7 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
    Layout: setup, state and controls, people, places and scenes, interface, saving, talking, chapters and stages, things to do, the night, the helper arrow, sound, loading, the loop, tests.
    Rules that shape the code: the fire is only ever seen from behind the rope and nobody is shown in it or hurt (docs/games/eventide.md, "How the fire is told");
    nothing the player does changes what happened; skin is lightened so faces read in every light (owner rule 9). */
-import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { hudTidy } from '../../../engine/hud.js';
@@ -340,8 +341,7 @@ function card(title, paras, btns, { col = false, dismiss } = {}) {
 function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
 function chapterFade(title, sub, fn) {   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
-  f.hidden = false; requestAnimationFrame(() => f.classList.add('on')); setTimeout(() => { fn(); f.classList.add('txt'); }, 800);
-  setTimeout(() => f.classList.remove('txt'), 3200); setTimeout(() => f.classList.remove('on'), 3700); setTimeout(() => { f.hidden = true; fading = false; }, 4600);
+  playChapterFade(f, fn, () => { fading = false; }, [800, 3200, 3700, 4600]);
 }
 function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; if (on) { f.hidden = false; $('fadeT').textContent = ''; $('fadeS').textContent = ''; f.classList.remove('txt'); requestAnimationFrame(() => f.classList.add('on')); } else { f.classList.remove('on'); setTimeout(() => { f.hidden = true; f.style.transition = ''; }, QUICK ? 0 : ms + 50); } }
 const bars = (on) => document.body.classList.toggle('cine', on);   /* black bars top and bottom, for the scripted moments */
@@ -354,7 +354,15 @@ async function run(steps) { const ep = EP; for (const [ms, fn] of steps) { await
 /* the camera director: a slow move from one view to another, for the scripted moments. a, b: camera positions; la, lb: what it looks at. */
 const DIR = { on: false, t: 0, dur: 1, a: null, b: null, la: null, lb: null, resolve: null }, _v = new THREE.Vector3();
 function cut(a, b, la, lb, dur) { return new Promise((res) => { Object.assign(DIR, { on: true, t: 0, dur: Math.max(0.05, dur * TS), a: new THREE.Vector3(...a), b: new THREE.Vector3(...b), la: new THREE.Vector3(...la), lb: new THREE.Vector3(...lb), resolve: res }); }); }
-function endCut() { DIR.on = false; bars(false); }
+let hideSceneSkip;
+function endCut() { DIR.on = false; hideSceneSkip?.(); bars(false); }
+function skippableScene(finish) {
+  hideSceneSkip = showCinematicSkip(() => {
+    EP++;
+    const resolve = DIR.resolve; DIR.resolve = null; resolve?.(false);
+    say('', 0); finish();
+  });
+}
 
 /* ---------- goal, hint, sound button ---------- */
 let stage = 0, best = 0, goalText = '', goalTimer = 0, hintTimer = 0;
@@ -418,12 +426,17 @@ function nextCard(i, s, tries = 0) {
   const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished', ['Next is "' + nx.name + '" (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() { EP++; frozen = false; HELD_BLANKET.visible = false; endCut(); FX.shake = 0; $('sub').classList.add('dim'); document.body.classList.remove('subbing'); TICKS.length = 0; SIREN = 0; }
+function resetTransient() { endSceneWarning(); EP++; frozen = false; HELD_BLANKET.visible = false; endCut(); FX.shake = 0; $('sub').classList.add('dim'); document.body.classList.remove('subbing'); TICKS.length = 0; SIREN = 0; }
 async function beginChapter(i, st) {
   if (fading) return; resetTransient(); st = st || CH_FIRST[i]; const C = CHAPTERS[i]; hideCard(); closeJournal(); closeChapters(); $('dialogue').hidden = true; busy = false; talkWith = null;
   if (!modelsReady || !PL[SCENES[i].place]) toast('Loading', 4000); const specs = await takeScene(i);
   const go = () => chapterFade(C.title, C.sub, () => startScene(i, st, specs));
-  if (i === 3 && st === 40 && !QUICK) card('This chapter is sad', ['It tells about the night of the fire.', 'You watch from the road, far back. Nobody is shown hurt.', 'You can skip to the morning if you like.'], [{ t: 'Continue', go: () => { hideCard(); go(); } }, { t: 'Skip to the morning', go: () => { hideCard(); st = 45; go(); } }], { col: true });
+  if (i === 3 && st === 40) sceneWarning(card, {
+    title: 'The night of the fire',
+    lines: ['This chapter tells about the Eventide fire.', 'You watch from far back. Nobody is shown hurt.'],
+    watch: () => { hideCard(); go(); },
+    read: () => card('What happened', ['A fire broke out at the Eventide Home during the night.', 'Firefighters brought people out. The Myers Ward collapsed.'], [{ t: 'Go on', go: () => { hideCard(); st = 45; go(); } }], { col: true }),
+  });
   else go();
 }
 function startScene(i, st, specs) {
@@ -500,7 +513,7 @@ function nightSetup(P, st) {
   P.lamps.forEach((l) => { l.visible = !dawn; }); wardLights(P, !after); pileShow(P, st); HELD_BLANKET.visible = false;
   if (dawn) { for (const n of SC.extras) if (n.z > -4.6 && n.z < 4.6) n.m.visible = false;   /* morning: the neighbours have gone home or stepped back onto the pavement, out of the road */
     state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; setEnv(ENV.dawn); busPass(P); }
-  else if (st === 40) (async () => { const ep = EP; frozen = true; bars(true); say('Sirens wake you. The sky over the Home is orange.', 6500);   /* an opening shot: from the dark road, up to the burning ward behind the wall */
+  else if (st === 40) (async () => { const ep = EP; frozen = true; bars(true); skippableScene(() => { endCut(); frozen = false; }); say('Sirens wake you. The sky over the Home is orange.', 6500);   /* an opening shot: from the dark road, up to the burning ward behind the wall */
     await cut([-16, 1.5, 3.2], [-9, 1.4, -2.5], [-6, 3, -8], [6, 7, -34], 7); if (ep !== EP) return; endCut(); frozen = false; })();
 }
 function kidTo(n, x, z) { n.x = x; n.z = z; n.ground = SC.P.groundAt(x, z); n.m.position.set(x, n.ground, z); n.m.userData.ground = n.ground; n.m.rotation.y = 0; }   /* on the pavement, not sunk into it */
@@ -509,12 +522,17 @@ function kidTo(n, x, z) { n.x = x; n.z = z; n.ground = SC.P.groundAt(x, z); n.m.
 const KID_ROUTE = [[-3, -44], [1.4, -34], [1.4, -13], [-3.9, -10.4], [-3.8, -8.6], [-2.4, -7.9], [-2.0, -6.8]], KID_RUN = 2.6;   /* metres a second: children running */
 async function holdGate(P) {
   if (frozen) return; frozen = true; const ep = EP, kids = [0, 1, 2].map((i) => byId('kid' + i)), path = KID_ROUTE;
+  const finish = () => {
+    for (const [i, n] of kids.entries()) { n.m.visible = true; n.ctl.play(null); n.walking = false; kidTo(n, -5 - i * 1.25, -5.2); }
+    endCut(); state.x = -3.4; state.z = -5.6; state.yaw = 1.2; state.pitch = 0; frozen = false; setStage(43);
+  };
+  skippableScene(finish);
   bars(true); say('You hold the gate. Firefighters lead the children out, one by one.', 7000);
   cut([-2.3, 1.3, -7.2], [-3.4, 1.35, -5.4], [0, 1.2, -20], [-0.5, 1.0, -12], 9);   /* from the gate: the children come down the avenue, the fire behind them */
   await Promise.all(kids.map((n, i) => (async () => { await wait(i * 1100); if (ep !== EP) return; n.m.visible = true; n.walking = true; if (n.ctl.get('Run')) { n.ctl.play('Run'); n.ctl.pace(KID_RUN, 0.6, 1.6); } else walkOn(n, KID_RUN); const end = [-5 - i * 1.25, -5.2], pts = path.concat([end]);   /* they run (owner, 17 November 2026: "the children aren't running, they are walking") */
     for (let s = 0; s < pts.length - 1; s++) { const a = pts[s], b = pts[s + 1]; n.m.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]); await tween(Math.hypot(b[0] - a[0], b[1] - a[1]) / KID_RUN, (k) => { n.x = a[0] + (b[0] - a[0]) * k; n.z = a[1] + (b[1] - a[1]) * k; n.m.position.set(n.x, P.groundAt(n.x, n.z), n.z); }); if (ep !== EP) return; }
     n.ctl.play(null); n.walking = false; kidTo(n, end[0], end[1]); })()));
-  if (ep !== EP) return; endCut(); state.x = -3.4; state.z = -5.6; state.yaw = 1.2; state.pitch = 0; frozen = false; setStage(43);
+  if (ep === EP) finish();
 }
 /* the Myers Ward falls: the roof caves in, then the walls break into panels and fall inward from the middle out, with burnt timbers and zinc
    tumbling and smoke rising (engine/collapse.js). It is made once and put back by nightSetup when the chapter is played again. */
@@ -525,17 +543,26 @@ function wardFall(P) { const M = P.myers; wardLights(P, false); wardStill(P, fal
     onImpact: (k) => { FX.shake = Math.max(FX.shake, 0.45 * k); if (AU.ctx && AU.on && AU.ctx.state === 'running') noiseHit(110 + Math.random() * 60, 0.7, 1.1, 0.18 * k, (Math.random() - 0.5) * 0.6); } })); }
 async function roofFalls(P) {
   frozen = true; const ep = EP; bars(true); SIREN = 0.3; say('The old ward cannot stand. The roof falls in.', 6000);
+  const showAftermath = () => {
+    P.myers.group.visible = false; P.ruin.visible = true; FX.shake = 0;   /* the cut to the road hides the change to the ruin seen at dawn */
+    for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = true; if (id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
+  };
+  const finish = () => {
+    endCut(); state.x = 4.5; state.z = -2.6; state.yaw = -1.15; state.pitch = 0; say('Some of the ladies got out. They wait by the road in blankets.', 5200); frozen = false; setStage(44);
+  };
+  let aftermathShown = false;
+  const reveal = () => { if (!aftermathShown) { aftermathShown = true; wardLights(P, false); showAftermath(); } };
+  skippableScene(() => { reveal(); finish(); });
   cut([-1.0, 1.4, -8.6], [-1.6, 1.5, -8.2], [8, 6, -34], [10, 3, -36], 8);   /* from the rope: one long look up the avenue */
   await wait(1500); if (ep !== EP) return; FX.shake = 0.3; const F = wardFall(P); F.start();
   TICKS.push((dt) => { if (ep !== EP) return true; F.tick(dt / TS); FX.shake *= 0.95; return F.done; });
   await tween(5.5, (k) => { P.fire.setLevel(1 - 0.6 * k); P.fire.burst(k); }); if (ep !== EP) return;
   say('Sparks fly up. The crowd goes quiet.', 5000); await wait(3600); if (ep !== EP) return;
-  P.myers.group.visible = false; P.ruin.visible = true; FX.shake = 0;   /* the cut to the road hides the change to the ruin seen at dawn */
-  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = true; if (id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
+  reveal();
   await cut([4, 1.4, -2.2], [5.5, 1.35, -3.0], [10, 1.1, -5.2], [10.4, 1.1, -5.2], 4.5); if (ep !== EP) return;   /* then down to the road: two of your friends, safe */
-  endCut(); state.x = 4.5; state.z = -2.6; state.yaw = -1.15; state.pitch = 0; say('Some of the ladies got out. They wait by the road in blankets.', 5200); frozen = false; setStage(44);
+  finish();
 }
-ON[45] = () => { const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; fadeBlack(false, 1400); bars(true); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
+ON[45] = () => { endSceneWarning(); const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); skippableScene(() => { endCut(); frozen = false; }); state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; fadeBlack(false, 1400); bars(true); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
   await cut([-14, 1.6, 2.5], [-9, 1.4, -2.5], [20, 2, -1], [4, 3, -30], 7); if (ep !== EP) return; endCut(); frozen = false; })(); };   /* the bus goes by, as it did that morning (Gleaner, 2020) */
 const DAWN = { x: -9, z: -5.4, yaw: -1.1 };   /* where you stand at dawn: on the pavement, out of the road */
 /* the bus at dawn drives along its lane (P.vehicles) at about 28 km/h, and stops and waits while anyone, you included, is in the road just ahead of it or beside it */
@@ -544,7 +571,7 @@ function busPass(P) { const V = P.vehicles[0], b = V.obj, ep = EP; b.visible = t
   TICKS.push((dt) => { if (ep !== EP || !b.visible) return true; if (busWaits(V, b.position.x)) V.waited += dt; else b.position.x += 7.8 * dt / TS; if (b.position.x >= V.path[1][0]) { b.visible = false; return true; } return false; }); }
 /* while it moves, the bus is solid: you cannot walk into it */
 function busWall() { const P = SC && SC.P, V = P && P.vehicles && P.vehicles[0]; if (!V || !V.obj.visible) return null; const x = V.obj.position.x, z = V.path[0][1]; return [x - V.len, z - V.half, x + V.len, z + V.half]; }
-ON[54] = () => { if (QUICK || !SC || SC.i !== 4) return; (async () => { const ep = EP; frozen = true; bars(true); await cut([state.x, EYE, state.z], [0, 4.5, 9], [0, 0.6, -2], [0, 0.6, -2], 6); if (ep !== EP) return; await wait(1200); if (ep !== EP) return; endCut(); frozen = false; })(); };   /* a slow rise over the grave and the crowd */
+ON[54] = () => { if (QUICK || !SC || SC.i !== 4) return; (async () => { const ep = EP; frozen = true; bars(true); skippableScene(() => { endCut(); frozen = false; }); await cut([state.x, EYE, state.z], [0, 4.5, 9], [0, 0.6, -2], [0, 0.6, -2], 6); if (ep !== EP) return; await wait(1200); if (ep !== EP) return; endCut(); frozen = false; })(); };   /* a slow rise over the grave and the crowd */
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
@@ -618,7 +645,7 @@ function update(dt, now) {
   if (SC.life) SC.life.tick(dt, { px: state.x, pz: state.z, story: SC.people.filter((n) => n.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } });   /* the crowd: engine/ambient.js moves, animates and grounds the people it owns */
   for (const n of SC.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   const even = (frameN++ & 1) === 0; for (const n of SC.npcs) if (n.m.visible && !n.amb && (even || n.walker || n.walking)) groundFeet(n.m);   /* people on the move every frame, so their feet stay planted without a bob */
-  if (P.fire && P.night.visible) P.fire.tick(dt, (now || 0) / 1000);
+  if (P.fire && P.night.visible) P.fire.tick(dt, (now || 0) / 1000, sceneIsCalm());
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
   if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }
@@ -645,7 +672,7 @@ function frame(t) {
   else if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); }
   else if (!SC) { const s = t / 1000; camera.position.set(0.3 + Math.sin(s * 0.1) * 0.8, 1.7, 2.6); camera.rotation.set(0.16, Math.sin(s * 0.07) * 0.05, 0, 'YXZ'); }
   else { const P = PL[cur]; camera.position.set(state.x, (P ? P.groundAt(state.x, state.z) : 0) + EYE_NOW, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); }
-  if (FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.06; camera.position.y += (Math.random() - 0.5) * k * 0.06; camera.rotation.z += (Math.random() - 0.5) * k * 0.02; }
+  if (!sceneIsCalm() && FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.06; camera.position.y += (Math.random() - 0.5) * k * 0.06; camera.rotation.z += (Math.random() - 0.5) * k * 0.02; }
   sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110);
   sky.dome.position.copy(camera.position); sky.stars.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380);
   if (!NORENDER) renderFramed(renderer, scene, camera, document.body.classList.contains('cine'));
@@ -751,7 +778,7 @@ function devViews() {
     reset(); showGoal(true); say('You hold the gate. Firefighters lead the children out, one by one.', 1e6); $('talk').hidden = false; $('talk').textContent = LONG; showHint(); toast('Put back: 2 of 4'); await settle(); check('narration');
     reset(); bars(true); say('Some of the ladies got out. They wait by the road in blankets.', 1e6); await settle(); await settle(); check('narration inside the bars');
     reset(); showGoal(true); document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Nurse Bell'; $('line').textContent = 'Whose story will you sit and hear before you go?'; for (const t of ['Miss Iris, the dressmaker', 'Miss Hyacinth, from the market', 'Miss Maude, the teacher', 'Miss Dora, who sings']) { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = t; $('choices').appendChild(b); } $('next').hidden = true; await settle(); check('dialogue with four choices'); $('choices').replaceChildren(); $('next').hidden = false;
-    reset(); card('This chapter is sad', ['It tells about the night of the fire.', 'You watch from the road, far back. Nobody is shown hurt.', 'You can skip to the morning if you like.'], [{ t: 'Continue', go: () => {} }, { t: 'Skip to the morning', go: () => {} }], { col: true }); await settle(); check('sad card');
+    reset(); sceneWarning(card, { title: 'The night of the fire', lines: ['This chapter tells about the Eventide fire.', 'You watch from far back. Nobody is shown hurt.'], watch: () => {}, read: () => {} }); await settle(); check('sad card');
     reset(); sortCards(2); await settle(); check('sort card');
     reset(); timeline(3); await settle(); check('timeline card');
     reset(); card('A letter for Miss Iris', LETTER, [{ t: 'Finish reading', go: () => {} }]); await settle(); check('letter card');

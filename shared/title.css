@@ -10,7 +10,8 @@
 #title .title-actions .track{flex:1 1 100%;min-width:6rem;max-width:none;order:5;transition:opacity .4s ease;height:6px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}
 #title:has(#start:not(:disabled)) .track{opacity:0;visibility:hidden}
 #title #bar{height:100%;width:0;background:var(--brass);transition:width .2s}
-#title #loadnote{flex-basis:100%;order:6;min-height:1.5em;line-height:1.5;font-size:.85rem;opacity:.8}
+#title .title-actions #loadnote{flex-basis:100%;order:6}
+#title #loadnote{min-height:1.5em;line-height:1.5;font-size:.85rem;opacity:.8}
 #title #savenote{font-size:.9rem;opacity:.8}
 @media(max-width:520px){#title .title-actions{gap:.6rem}#title .title-actions .btn{padding:.65em 1em}}
 @media(max-height:600px){#title{align-items:flex-start;justify-content:flex-start}#title .card{margin-top:0}}

@@ -1,12 +1,51 @@
 import { Vector3, Quaternion } from 'three';
+import { beginPoseCorrection, endPoseCorrection, clearPoseCorrection } from './bone-pose.js';
 
 // A seated animation is anchored by its pelvis, rather than by its toes.
 // Coordinates belong to the model's parent, so a seat can travel with a train.
 const hip = new Vector3(), delta = new Vector3();
+const seatedLegs = new WeakMap();
+function clearSeatLegs(model) {
+  const legs = seatedLegs.get(model);
+  if (!legs) return;
+  clearPoseCorrection(legs.bones);
+  seatedLegs.delete(model);
+}
+function getSeatLegs(model) {
+  let legs = seatedLegs.get(model);
+  if (!legs) {
+    const pairs = ['Left', 'Right'].map(side => ({
+      side,
+      knee: model.getObjectByName('mixamorig' + side + 'Leg'),
+      foot: model.getObjectByName('mixamorig' + side + 'Foot'),
+    })).filter(({ knee, foot }) => knee && foot);
+    legs = { pairs, bones: pairs.flatMap(({knee, foot}) => [knee, foot]) };
+    seatedLegs.set(model, legs);
+  }
+  return legs;
+}
 export function anchorSeat(model) {
-  const seat=model.userData.seatAnchor, bone=model.getObjectByName('mixamorigHips');
-  if(!seat||!bone)return;
-  if(seat.ry!==undefined)model.rotation.y=seat.ry;
+  const seat=model.userData.seatAnchor;
+  if (!seat) { clearSeatLegs(model); return; }
+  const bone=model.getObjectByName('mixamorigHips');
+  if (!bone) return;
+  const legs = model.userData.noKneeBend ? null : getSeatLegs(model);
+  if (legs) beginPoseCorrection(legs.bones);
+  else clearSeatLegs(model);
+  const settle = seat.settle;
+  let progress = 1;
+  if (settle) {
+    const t = Math.max(0, Math.min(1, (model.userData.anim.mx.time - settle.start) / settle.duration));
+    progress = t * t * (3 - 2 * t);
+    if (t === 1) delete seat.settle;
+  }
+  if (seat.ry !== undefined) {
+    model.rotation.y = seat.ry;
+    if (settle && progress < 1) {
+      const turn = seat.ry - settle.yaw;
+      model.rotation.y -= (1 - progress) * Math.atan2(Math.sin(turn), Math.cos(turn));
+    }
+  }
   model.updateMatrixWorld(true);bone.getWorldPosition(hip);
   if(model.parent)model.parent.worldToLocal(hip);
   let lift=seat.lift;
@@ -21,15 +60,20 @@ export function anchorSeat(model) {
     const ac=model.userData.anim,cur=ac?.cur;if(cur?.time>.5&&!(cur.getEffectiveWeight&&cur.getEffectiveWeight()<.999)&&!ac.mx?._actions?.some(a=>a!==cur&&a.isRunning()&&a.getEffectiveWeight()>.001))seat.lift=lift;   /* kept only once the sit has fully taken over: measured in the middle of the blend from standing, it held people 30 cm up (17 November 2026) */
   }
   delta.set(seat.x===undefined?0:seat.x-hip.x,seat.top+lift-hip.y,seat.z===undefined?0:seat.z-hip.z);
-  model.position.add(delta);model.updateMatrixWorld(true);
-  bendKnees(model);
+  if (settle && progress < 1) model.position.lerpVectors(settle.from, delta.add(model.position), progress);
+  else model.position.add(delta);
+  model.updateMatrixWorld(true);
+  if (legs) {
+    bendKnees(model, legs.pairs);
+    endPoseCorrection(legs.bones);
+  }
 }
 
 /* A seated person whose clip hangs the feet below the floor bends each knee (feet drawn back under the seat) until the sole just reaches the floor.
-   The clip sets the knee again every frame, so this runs every frame after the seat anchor. The ankle-to-sole height is measured once per body. */
+   The ankle-to-sole height is measured once per body. The pose guard prevents the correction piling up on unchanged mixer tracks. */
 const kq=new Quaternion(),kA=new Vector3(),kK=new Vector3(),kAx=new Vector3(),kF=new Vector3(),kV=new Vector3();
-function bendKnees(model){
-  const U=model.userData;if(U.noKneeBend)return;
+function bendKnees(model, pairs){
+  const U=model.userData;
   /* how far each foot's lowest point (toe or heel) lies below its ankle, measured once the sit has fully taken over (the seat lift is kept then):
      a standing foot gave 8 cm, but a sitting foot with its toes pointed lies lower, and the shoes went 5 cm into a carriage floor (17 November 2026) */
   let drop=U.soleDrop;
@@ -41,8 +85,7 @@ function bendKnees(model){
   const fy=U.seatAnchor?.floor??(U.ground||0);   /* seat.floor: the height of a raised floor under the feet (a veranda slab), where it is not the ground */
   const floor=model.parent?model.parent.localToWorld(kV.set(0,fy,0)).y:fy;
   kF.set(0,0,1).transformDirection(model.matrixWorld);kF.y=0;kF.normalize();kAx.set(kF.z,0,-kF.x);   /* the axis across the body (to its left) */
-  for(const side of['Left','Right']){
-    const knee=model.getObjectByName('mixamorig'+side+'Leg'),foot=model.getObjectByName('mixamorig'+side+'Foot');if(!knee||!foot)continue;
+  for(const { side, knee, foot } of pairs){
     knee.getWorldPosition(kK);foot.getWorldPosition(kA);const want=floor+drop[side]+.005;if(kA.y>=want)continue;
     const v=kA.clone().sub(kK),len=v.length();if(kK.y-want>len-.01)continue;   /* the floor is out of reach even with the shin straight down */
     /* turn the shin about the axis across the body, the way that draws the foot back, by the angle that brings the ankle up to the floor */

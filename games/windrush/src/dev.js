@@ -209,7 +209,7 @@ export async function dev(A) {
       A.DIR.time = Number(q.get("at") || 0);
       for (let t = 0; t <= A.DIR.time; t += 0.25) A.DIR.apply(t);
       $("cineControls").hidden = !q.has("ui");
-      if (!q.has("ui")) document.body.classList.remove("cine");
+      if (!q.has("ui")) { A.DIR.hideSkip(); document.body.classList.remove("cine"); }
     }
     if (id === "people") {
       world().group.visible = false;
@@ -481,9 +481,9 @@ export async function dev(A) {
     closeAll();
     results.push("LAYOUT UI " + bad.length, ...bad);
   }
-  if (test === "anim") {
-    const r = await animCheck(A, { seconds: Number(q.get("s") || 20), only: q.has("p") ? q.get("p").split(",") : null, films: !q.has("nofilms") });
-    results.push("ANIM " + r.lines.length, ...r.lines, ...r.stats);
+  if (test === "anim" || test === "feet") {
+    const r = await animCheck(A, { seconds: Number(q.get("s") || 20), only: q.has("p") ? q.get("p").split(",") : null, films: !q.has("nofilms"), feetOnly: test === "feet" });
+    results.push((test === "feet" ? "FEET " : "ANIM ") + r.lines.length, ...r.lines, ...r.stats);
   }
   if (q.has("auto")) {
     const first = Math.max(1, Number(q.get("auto")) || 1),

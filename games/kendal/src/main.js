@@ -1,5 +1,6 @@
+import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
-import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { man_suit: 2, man_work: 2, man_shirt: 2, man_elder: 2, woman57: 2, woman_long: 2, woman_elder: 2, girl: 2, boy: 2, girl_small: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
@@ -130,7 +131,7 @@ const STRIDE_K = { 'man_work|Walk': 0.976, 'man_suit|Walk': 0.976, 'man_shirt|Wa
 const strideK = (base, scale, clip) => STRIDE_K[base + '|' + clip + '|' + (scale || 1).toFixed(2)] || STRIDE_K[base + '|' + clip] || STRIDE_K['*|' + clip] || 1;
 const kStride = (m, base, clip) => strideOf(m, clip) * strideK(base, m.scale.y, clip.name);
 let PACE_FORCE = 0;   /* dev: ?test=walkers&tune plays a walk at this clip speed */
-function kPace(m, s, ctl) { const base = s.base; const play0 = ctl.play.bind(ctl); ctl.play = (name, once, hold) => { const was = ctl.cur; play0(name, once, hold); const a = ctl.cur; if (!once && a !== was) { a.time = Math.random() * a.getClip().duration; } };   /* a loop never starts in step with anyone else's (?test=motion: sync) */ ctl.pace = (v, lo = 0.4, hi = 2.2) => { const a = ctl.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; if (PACE_FORCE) return (a.timeScale = PACE_FORCE); const st = kStride(m, base, c); if (st > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / st)); return a.timeScale; }; }
+function kPace(m, s, ctl) { const base = s.base; ctl.pace = (v, lo = 0.4, hi = 2.2) => { const a = ctl.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; if (PACE_FORCE) return (a.timeScale = PACE_FORCE); const st = kStride(m, base, c); if (st > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / st)); return a.timeScale; }; }
 const SKIN_LIGHT = 1.55;   /* owner rule 9: build Skin inside Marcus Garvey's range, then lighten it here so faces read in every light (docs/PIPELINE.md, "Skin"). Check with ?test=skin */
 /* Phones and computers: each body's pieces are drawn as a few joined meshes by the engine (engine/joinbody.js, through animate()), so this game no longer joins its own. */
 function makeBody(s) {
@@ -370,21 +371,20 @@ function card(title, paras, btns, { col = false, dismiss } = {}) {
 function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
 function chapterFade(title, sub, fn) {   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
-  f.hidden = false; requestAnimationFrame(() => f.classList.add('on')); setTimeout(() => { fn(); f.classList.add('txt'); }, 800);
-  setTimeout(() => f.classList.remove('txt'), 3200); setTimeout(() => f.classList.remove('on'), 3700); setTimeout(() => { f.hidden = true; fading = false; }, 4600);
+  playChapterFade(f, fn, () => { fading = false; }, [800, 3200, 3700, 4600]);
 }
 function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; if (on) { f.hidden = false; $('fadeT').textContent = ''; $('fadeS').textContent = ''; f.classList.remove('txt'); requestAnimationFrame(() => f.classList.add('on')); } else { f.classList.remove('on'); setTimeout(() => { f.hidden = true; f.style.transition = ''; }, QUICK ? 0 : ms + 50); } }
 const bars = (on) => document.body.classList.toggle('cine', on);
 let subTimer = 0;
 function say(text, ms = 3800) { const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
-function flash(op, ms = 0, color = '#fff') { const f = $('flash'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease-out'; f.style.opacity = op; }
+function flash(op, ms = 0, color = '#fff') { const f = $('flash'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease-out'; f.style.opacity = sceneIsCalm() && color !== '#000' ? 0 : op; }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms * TS));
 async function run(steps) { const ep = EP; for (const [ms, fn] of steps) { await wait(ms); if (ep !== EP) return false; fn(); } return true; }   /* timed steps: [wait in ms, then do this]. Stops if the chapter changes. */
 
 /* ---------- the camera director: a move from one view to another, for cutscenes ---------- */
 const DIR = { on: false, t: 0, dur: 1, a: null, b: null, la: null, lb: null, resolve: null }, _v = new THREE.Vector3();
 function cut(a, b, la, lb, dur, onEnd) { return new Promise((res) => { Object.assign(DIR, { on: true, t: 0, dur: Math.max(0.05, dur * TS), a: new THREE.Vector3(...a), b: new THREE.Vector3(...b), la: new THREE.Vector3(...la), lb: new THREE.Vector3(...lb), resolve: res }); }); }
-function endCut() { DIR.on = false; }
+function endCut() { DIR.on = false; const resolve = DIR.resolve; DIR.resolve = null; resolve?.(false); }
 let sitting = false;
 
 /* ---------- goal, hint, sound ---------- */
@@ -500,7 +500,7 @@ function nextCard(i, s, tries = 0) {
   const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() {   /* leave anything running: scripted scenes, a ride, the crash, the camera director */
+function resetTransient() { endSceneWarning(); hideCrashSkip?.(); hideStorySkip?.(); CR.on = false; HOLD.on = false;   /* leave anything running: scripted scenes, a ride, the crash, the camera director */
   for (const k of Object.keys(PL)) for (const n of PL[k].npcs || []) if (n.fol) stopFollow(n);   /* nobody keeps following you into another chapter */
   EP++; RIDE.on = false; RIDE.v = RIDE.target = 0; endCut(); frozen = false; moveLock = false; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; flash(0, 0); $('vig').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.tilt = 0; RING = 0; HUSH = false; CRBEDS = {};
   SFX.mento(false); SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); if (cur && PL[cur]) PL[cur].group.rotation.set(0, 0, 0); sitting = false; document.body.classList.remove('flashing');
@@ -632,16 +632,32 @@ function loadItem(P, item, n) {
 }
 function resetMule(P) { const mu = P.mule; for (const it of P.goods) { if (it.parent !== P.group) P.group.attach(it); it.position.copy(it.userData.home); it.scale.setScalar(1); } mu.userData.dip = 0; P.loading = false; }
 
+let hideStorySkip;
+function storyScene(finish) {
+  const done = () => { hideStorySkip?.(); endCut(); bars(false); finish(); };
+  hideStorySkip = showCinematicSkip(() => { EP++; say('', 0); done(); });
+  return done;
+}
+
 /* ---------- chapter 2: the first train ---------- */
 ON[23] = async () => {
-  const ep = EP; await ensurePlace('ride45'); if (!(await transition('ride45', { after: () => { RIDE.on = true; RIDE.v = RIDE.target = 0; RIDE.kind = 'steam'; bars(true); frozen = false; } }))) return;
+  await ensurePlace('ride45'); if (!(await transition('ride45', { after: () => { RIDE.on = true; RIDE.v = RIDE.target = 0; RIDE.kind = 'steam'; bars(true); frozen = false; } }))) return;
   const P = P_(); RIDE45.busy = false; if (HAND.holding()) HAND.drop(); rideBucket.visible = false;
-  const ok = await run([[200, () => { say('The Governor takes his seat. The whistle blows!', 3200); SFX.whistleSteam(1.0); SFX.hiss(1.4); }], [3200, () => { RIDE.target = 4; say('The train jerks forward. The crowd cheers!', 3400); }], [3600, () => { RIDE.target = 8; say('Slowly at first, past the houses.', 3200); }], [4200, () => { RIDE.target = 10; say('Out across wet, marshy land, on a raised bank.', 3600); }], [5500, () => { RIDE.target = 0; say('At the new bridge over the Rio Cobre, the engine stops for water.', 4200); SFX.hiss(2.0); }]]);
-  if (!ok) return; bars(false); RIDE45.busy = false; setStage(23.5);   /* the water stop is its own step (steps.js), so its goal and count never go stale */
-  if (!(await waitFor(() => stage === 23.6))) return; bars(true);
-  await run([[300, () => { say('Off again! Spanish Town is not far.', 3200); SFX.whistleSteam(0.7); RIDE.target = 9; }], [4200, () => { RIDE.target = 12; say('Cheers all along the line.', 3000); SFX.fanfare(); }], [5000, () => { RIDE.target = 0; say('Spanish Town, about an hour after leaving Kingston.', 4200); unlock('first-train'); }], [4600, () => { setStage(24); RIDE.target = 18; SFX.whistleSteam(0.6); say('The ride back is fast. About 30 miles an hour!', 4000); }], [4800, () => { RIDE.target = 20; say('Faster than any mule. Faster than any horse.', 3800); }], [4500, () => { RIDE.target = 0; say('Back in Kingston in about forty minutes.', 3600); }]]);
-  if (!(await transition('station45', { after: () => { RIDE.on = false; bars(false); state.x = 8; state.z = 5; state.yaw = 0.3; } }))) return; setStage(25);
+  const finish = storyScene(() => {
+    RIDE.v = RIDE.target = 0; RIDE45.busy = false; setStage(23.5); resumeFirstTrain();
+  });
+  if (await run([[200, () => { say('The Governor takes his seat. The whistle blows!', 3200); SFX.whistleSteam(1.0); SFX.hiss(1.4); }], [3200, () => { RIDE.target = 4; say('The train jerks forward. The crowd cheers!', 3400); }], [3600, () => { RIDE.target = 8; say('Slowly at first, past the houses.', 3200); }], [4200, () => { RIDE.target = 10; say('Out across wet, marshy land, on a raised bank.', 3600); }], [5500, () => { RIDE.target = 0; say('At the new bridge over the Rio Cobre, the engine stops for water.', 4200); SFX.hiss(2.0); }]])) finish();
 };
+async function resumeFirstTrain() {
+  if (!(await waitFor(() => stage === 23.6))) return;
+  bars(true);
+  const finish = storyScene(async () => {
+    unlock('first-train');
+    if (!(await transition('station45', { after: () => { RIDE.on = false; bars(false); state.x = 8; state.z = 5; state.yaw = 0.3; } }))) return;
+    setStage(25);
+  });
+  if (await run([[300, () => { say('Off again! Spanish Town is not far.', 3200); SFX.whistleSteam(0.7); RIDE.target = 9; }], [4200, () => { RIDE.target = 12; say('Cheers all along the line.', 3000); SFX.fanfare(); }], [5000, () => { RIDE.target = 0; say('Spanish Town, about an hour after leaving Kingston.', 4200); unlock('first-train'); }], [4600, () => { setStage(24); RIDE.target = 18; SFX.whistleSteam(0.6); say('The ride back is fast. About 30 miles an hour!', 4000); }], [4800, () => { RIDE.target = 20; say('Faster than any mule. Faster than any horse.', 3800); }], [4500, () => { RIDE.target = 0; say('Back in Kingston in about forty minutes.', 3600); }]])) finish();
+}
 ON[21] = () => { /* nothing: the engine card is an action */ };
 
 /* ---------- chapter 3: a train comes up the hill, and the brake check ---------- */
@@ -649,9 +665,11 @@ ON[31] = () => resetBunches(PL.hill);
 ON[34] = () => { const P = PL.hill; if (P) for (const L of P.levers) { L.userData.handle.rotation.z = 0.5; L.userData.tag.visible = false; } };
 ON[32] = async () => {
   const P = P_(); if (cur !== 'hill') return; frozen = true; busy = false; bars(true); say('Listen! A train is coming up the hill.', 3600); const tr = P.train; tr.visible = true; tr.position.x = 100;
+  const ep = EP;
+  const finish = storyScene(() => { tween.said = tween.s2 = false; tr.position.x = 0; frozen = false; setStage(33); });
   const cam = [3, 1.6, 6.5]; await cut(cam, cam, [60, 2.4, -3], [20, 2.4, -3], 3);
-  let px = tr.position.x; SFX.whistleSteam(1.2); const ok = await tween(18, (k, dk) => { const e = 1 - Math.pow(1 - k, 2.1); const nx = 100 * (1 - e) - 0.0; const dx = px - nx; px = nx; tr.position.x = Math.max(0, nx); spin(tr, dx); DIR.lb.set(lerp(20, -4, k), 2.4, -3); if (RIDE.on === false && k > 0.3 && !tween.said) { tween.said = true; say('The engine works hard on the steep slope.', 3600); } if (k > 0.8 && !tween.s2) { tween.s2 = true; SFX.hiss(2.6, 0.14); } });
-  tween.said = tween.s2 = false; if (!ok) return; tr.position.x = 0; await wait(900); say('The fireman waves. The train has arrived.', 3200); SFX.whistleSteam(0.7); await wait(2600); endCut(); frozen = false; bars(false); setStage(33);
+  if (ep !== EP) return; let px = tr.position.x; SFX.whistleSteam(1.2); const ok = await tween(18, (k, dk) => { const e = 1 - Math.pow(1 - k, 2.1); const nx = 100 * (1 - e) - 0.0; const dx = px - nx; px = nx; tr.position.x = Math.max(0, nx); spin(tr, dx); DIR.lb.set(lerp(20, -4, k), 2.4, -3); if (RIDE.on === false && k > 0.3 && !tween.said) { tween.said = true; say('The engine works hard on the steep slope.', 3600); } if (k > 0.8 && !tween.s2) { tween.s2 = true; SFX.hiss(2.6, 0.14); } });
+  tween.said = tween.s2 = false; if (!ok) return; tr.position.x = 0; await wait(900); if (ep !== EP) return; say('The fireman waves. The train has arrived.', 3200); SFX.whistleSteam(0.7); await wait(2600); if (ep === EP) finish();
 };
 
 /* ---------- chapter 4: the excursion day ---------- */
@@ -659,10 +677,14 @@ ON[41] = () => { const P = PL.kingston57; SFX.stationGong(); };
 ON[42] = async () => {
   const ep = EP; await ensurePlace('coach'); if (!(await transition('coach', { env: ENV.day, after: () => { const P = P_(); setRigTheme(P, 'plains'); RIDE.on = true; RIDE.v = RIDE.target = 0; RIDE.kind = 'diesel'; P.lamp.intensity = 0.8; } }))) return;
   const P = P_(); bars(true);
+  const finish = storyScene(async () => {
+    unlock('greenvale');
+    const transitionEpoch = EP; await ensurePlace('beach'); if (transitionEpoch !== EP || !(await transition('beach', { env: ENV.day, after: () => { RIDE.on = false; bars(false); } }))) return; story.beach = null; showPlace('Montego Bay, afternoon'); setStage(43);
+  });
   const ok = await run([[300, () => { say('The doors close. A whistle blows. Gran squeezes your hand.', 3600); SFX.hornDiesel(1.2); }], [3600, () => { RIDE.target = 8; say('Off we go! The platform slides away.', 3400); }], [3800, () => { RIDE.target = 15; say('Spanish Town, Old Harbour, May Pen. The towns roll by.', 3800); bars(false); }]]);
   if (!ok) return; goalText = 'Enjoy the ride with Gran and Lloyd.'; showGoal();
-  await run([[7000, () => { setRigTheme(P, 'hills'); say('Now the hills. The engines work hard.', 3600); RIDE.target = 9; }], [7000, () => { say('Greenvale, the highest station on the line.', 3600); unlock('greenvale'); }], [6500, () => { setRigTheme(P, 'coast'); RIDE.target = 14; say('Down toward the sea, in the bright afternoon.', 3600); }], [6500, () => { RIDE.target = 4; say('Montego Bay! The sea!', 3200); SFX.hornDiesel(1.0); }]]);
-  bars(true); await wait(1600); await ensurePlace('beach'); if (!(await transition('beach', { env: ENV.day, after: () => { RIDE.on = false; bars(false); } }))) return; story.beach = null; showPlace('Montego Bay, afternoon'); setStage(43);
+  if (!(await run([[7000, () => { setRigTheme(P, 'hills'); say('Now the hills. The engines work hard.', 3600); RIDE.target = 9; }], [7000, () => { say('Greenvale, the highest station on the line.', 3600); unlock('greenvale'); }], [6500, () => { setRigTheme(P, 'coast'); RIDE.target = 14; say('Down toward the sea, in the bright afternoon.', 3600); }], [6500, () => { RIDE.target = 4; say('Montego Bay! The sea!', 3200); SFX.hornDiesel(1.0); }]]))) return;
+  bars(true); await wait(1600); if (ep === EP) finish();
 };
 ON[43] = () => { const P = PL.beach; const resuming = savedFlow && savedFlow.stage === 43; if (P) { P.done = {}; P.castle.userData.mound.scale.setScalar(0.01); if (resuming) for (const id of story.beachDone || (story.beach ? [story.beach] : [])) if (['splash', 'castle', 'band'].includes(id)) P.done[id] = true; } if (!resuming) story.beachDone = []; };
 ON[44] = () => { if (cur !== 'beach') return; const a = envNow; tween(6, (k) => setEnv(mixEnv(a, ENV.gold, k))); say('The sun is going down over the sea.', 3600); };
@@ -675,9 +697,9 @@ ON[50] = () => { const C = PL.coach; if (C) for (const n of C.npcs) { if (n.amb)
 ON[51] = async () => { SFX.hornDiesel(1.2); say('The train pulls out of Montego Bay. Stars fill the windows.', 4200); RIDE.target = 12; };
 ON[52] = () => { if (cur !== 'coach') return; say('The train climbs into the hills, slowly and steadily.', 4200); RIDE.target = 9; };
 function crashIntro() {
-  if (CR.on) return; card('About half past eleven', ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], [{ t: 'Begin', go: () => { hideCard(); CR.choice = 'run'; STORY.done('seat'); } }, { t: 'Read what happened instead', go: () => { hideCard(); CR.choice = 'skip'; STORY.done('seat'); } }], { col: true });
+  if (CR.on) return; sceneWarning(card, { title: 'About half past eleven', lines: ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], watch: () => { hideCard(); CR.choice = 'run'; STORY.done('seat'); }, read: () => { hideCard(); CR.choice = 'skip'; STORY.done('seat'); } });
 }
-function crashSkip() {
+function crashSkip() { endSceneWarning();
   unlock('crash'); unlock('greenvale'); card('What happened', ['The train climbed to Greenvale, the highest station on the line. Then it ran downhill toward Kendal.', 'Three whistle blasts sounded. The train went faster, and left the rails on a curve.', 'Eight of the twelve coaches were wrecked. The last two coaches stayed on the track.'], [{ t: 'Go on', go: () => { hideCard(); setStage(53); arriveKendal(); } }], { col: true });
 }
 const HOLD = { on: false, v: 0 };
@@ -685,8 +707,14 @@ for (const ev of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) 
 addEventListener('keydown', (e) => { if ($('holdwrap').hidden) return; if (e.key === ' ' || e.key === 'Enter') HOLD.on = true; }); addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') HOLD.on = false; });
 function brace(P) {   /* the coach goes quiet and tense: nobody chats now; Lloyd and some passengers hold on to their seats (SitScared, a gentle seated clip) */
   if (P.life) P.life.mood('sad'); let k = 0; for (const n of P.npcs) { if (!isSeated(n.anim)) continue; const scared = n.id === 'lloyd5' || (n.extra && (k++ % 3 === 0)); if (n.amb) P.life.hold(n, true); if (scared && CL.SitScared) n.ctl.play('SitScared'); else if (n.ctl.cur !== n.ctl.base) n.ctl.play(null); } }
+let hideCrashSkip;
 async function crashRun() {
   const ep = EP, P = P_(); CR.on = true; CR.phase = 0; unlock('greenvale'); setStage(53); frozen = false; moveLock = false; busy = false; talkWith = null; state.x = 2.6; state.z = 0; state.yaw = PI / 2; state.pitch = 0; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
+  hideCrashSkip = showCinematicSkip(() => {
+    resetTransient(); talkWith = null;
+    $('fade').classList.remove('on', 'txt'); $('fade').hidden = true;
+    crashSkip();
+  });
   const live = () => ep === EP && CR.on, lamp = P.lamp;
   const step = async (ms, fn) => { await wait(ms); if (!live()) return false; fn(); return true; };
   SFX.mento(false); say('Greenvale. The highest station on the line.', 3600); RIDE.target = 8; await wait(3600);
@@ -696,17 +724,22 @@ async function crashRun() {
   if (!(await step(3500, () => { say('Three long whistle blasts.', 3600); SFX.threeBlasts(); FX.shake = 0.2; }))) return;
   if (!(await step(3100, () => { say('The brakes scream.', 3000); SFX.screech(3.4); FX.shake = 0.5; CR.phase = 3; flash(0.35, 60, '#ff9a40'); setTimeout(() => flash(0, 220, '#ff9a40'), 90); $('holdwrap').hidden = false; HOLD.v = 0; goalText = 'Hold on!'; showGoal(); }))) return;
   const t0 = performance.now(); let tilt = 0;
-  const lurch = tween(4.2, (k, dk) => { const held = HOLD.on ? 1 : 0; HOLD.v = clamp01(HOLD.v + (held ? 0.9 : -0.5) * dk * 4); $('holdbar').firstElementChild.style.width = (HOLD.v * 100) + '%'; FX.shake = 0.5 + k * 0.5 - HOLD.v * 0.25; tilt = ease(k) * 0.16; P.group.rotation.x = tilt; FX.roll = Math.sin(k * 44) * 0.01; lamp.intensity = Math.random() < k * 0.7 ? 0.5 : 9; if (Math.random() < 0.12) { flash(0.28, 40, '#ff8a30'); setTimeout(() => flash(0, 160, '#ff8a30'), 60); } RIDE.target = Math.max(0, 27 - k * 14); });
+  const lurch = tween(4.2, (k, dk) => { const held = HOLD.on ? 1 : 0; HOLD.v = clamp01(HOLD.v + (held ? 0.9 : -0.5) * dk * 4); $('holdbar').firstElementChild.style.width = (HOLD.v * 100) + '%'; FX.shake = 0.5 + k * 0.5 - HOLD.v * 0.25; tilt = ease(k) * 0.16; P.group.rotation.x = sceneIsCalm() ? 0 : tilt; FX.roll = Math.sin(k * 44) * 0.01; lamp.intensity = !sceneIsCalm() && Math.random() < k * 0.7 ? 0.5 : 9; if (Math.random() < 0.12) { flash(0.28, 40, '#ff8a30'); setTimeout(() => flash(0, 160, '#ff8a30'), 60); } RIDE.target = Math.max(0, 27 - k * 14); });
   if (!(await lurch)) return; if (!live()) return;
-  $('holdwrap').hidden = true; CR.phase = 4; SFX.crashBang(); flash(1, 0, '#fff'); lamp.intensity = 0; P.group.rotation.x = 0.3; FX.shake = 1.6; RIDE.target = 0; RIDE.v = 6; say('', 100);
+  $('holdwrap').hidden = true; CR.phase = 4; SFX.crashBang(); flash(1, 0, '#fff'); lamp.intensity = 0; P.group.rotation.x = sceneIsCalm() ? 0 : 0.3; FX.shake = 1.6; RIDE.target = 0; RIDE.v = 6; say('', 100);
   await wait(450); if (!live()) return; flash(1, 0, '#000'); fadeBlack(true, 0); $('flash').style.opacity = 0; FX.shake = 0; RIDE.on = false; CRBEDS = {}; RING = 0.05;
   await wait(2600); if (!live()) return; $('fadeT').textContent = 'Kendal, Manchester'; $('fadeS').textContent = 'Sunday night, 1 September 1957. About half past eleven.'; $('fade').classList.add('txt'); unlock('crash'); unlock('greenvale');
-  await wait(5200); if (!live()) return; $('fade').classList.remove('txt'); await wait(900); if (!live()) return; CR.on = false; bars(false); arriveKendal(true);
+  await wait(5200); if (!live()) return; $('fade').classList.remove('txt'); await wait(900); if (!live()) return; CR.on = false; hideCrashSkip?.(); bars(false); arriveKendal(true);
 }
 async function arriveKendal(fromCrash) {
   const ep = EP; resetTransient(); EP = ep + 1; const ep2 = EP; await ensurePlace('crash'); story.lamp = true; enterPlace('crash'); state.started = true; updateLamp(); setStage(60); showPlace('Kendal, Manchester. About half past eleven.');
-  HUSH = false; RING = 0.05; const lr = tween(6, (k) => { RING = 0.05 * (1 - k); }); fadeBlack(false, fromCrash ? 3500 : 900); bars(!QUICK); say('Slowly, the ringing fades. You hear voices in the dark.', 4200);
-  await wait(4600); if (ep2 !== EP) return; bars(false); showGoal(true);
+  HUSH = false; RING = 0.05; tween(6, (k) => { RING = 0.05 * (1 - k); });
+  fadeBlack(false, fromCrash ? 3500 : 900); bars(!QUICK); say('Slowly, the ringing fades. You hear voices in the dark.', 4200);
+  const finish = () => { bars(false); showGoal(true); };
+  const hideSkip = !QUICK ? showCinematicSkip(() => {
+    EP++; RING = 0; $('fade').hidden = true; say('', 0); finish();
+  }) : null;
+  await wait(4600); hideSkip?.(); if (ep2 === EP) finish();
 }
 
 /* ---------- chapter 6: the long night ---------- */
@@ -718,14 +751,19 @@ async function holdLamp() {
   say('Helpers carry people up the path, safe in your light.', 3800); await wait(3800); if (ep !== EP) return; l.intensity = base; lampMesh.position.y = -0.42; frozen = false; STORY.done('lamp');
 }
 ON[65] = async () => {
-  const P = P_(), ep = EP; if (cur !== 'crash') return; frozen = true; busy = false; bars(true); goalText = ''; say('The night is long. The helpers work and work.', 4200);
+  const P = P_(), ep = EP; if (cur !== 'crash') return; frozen = true; busy = false; bars(true); goalText = '';
+  const finish = storyScene(() => {
+    setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.3;
+    P.torches.forEach((t) => { t.visible = false; }); P.flame.visible = false;
+    frozen = false; handLamp.intensity = 0; lampMesh.visible = false; setStage(66);
+  }); say('The night is long. The helpers work and work.', 4200);
   await wait(4200); if (ep !== EP) return; say('Slowly, the sky turns from black to blue.', 3800); const a = envNow;
   const t1 = tween(14, (k) => { setEnv(mixEnv(a, ENV.dawn, ease(k))); const f = 1 - 0.7 * k; for (const L of P.lights) L.userData.k = f; handLamp.intensity = 3.6 * (1 - k * 0.8); });
   await wait(4500); if (ep !== EP) return; say('Birds start to sing. It is nearly morning.', 3600); chirp();
   if (!(await t1)) return; say('In the morning light, you see all of it.', 3800);
   const t2 = tween(12, (k) => { setEnv(mixEnv(ENV.dawn, ENV.morning, ease(k))); for (const L of P.lights) L.userData.k = 0.3 * (1 - k); const x0 = state.x, z0 = state.z; }); P.torches.forEach((t) => { t.visible = false; }); P.flame.visible = false;
   const camA = [state.x, EYE, state.z]; await cut(camA, [state.x - 6, 3.2, state.z - 2], [state.x - 8, 1.4, state.z - 10], [-12, 1.2, -9], 8); if (ep !== EP) return;
-  await t2; await wait(1200); if (ep !== EP) return; endCut(); frozen = false; bars(false); handLamp.intensity = 0; lampMesh.visible = false; setStage(66);
+  await t2; await wait(1200); if (ep === EP) finish();
 };
 function finishCh6() {
   unlock('cause'); unlock('helpers'); unlock('toll'); unlock('mourning');
@@ -805,7 +843,11 @@ function update(dt, now) {
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
   const SW = { px: state.x, pz: state.z, talking: talkWith };
   for (const n of P.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); if (!POSTER) storyLifeTick(n, dt, SW); }   /* storylife.js: a change of stance now and then, and a head that looks about */
-  if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround && !m.userData.amb) groundFeet(m);
+  const groundEveryone = (frameN++ & 1) === 0;
+  for (const n of P.npcs) {
+    const m = n.m;
+    if (m.visible && !m.userData.noGround && !m.userData.amb && (groundEveryone || n.fol)) groundFeet(m);
+  }
   turnLimit(P, dt);
   if (P.tick) P.tick(dt, (now || 0) / 1000); rideTick(dt, (now || 0) / 1000); smokeTick(dt);
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
@@ -818,8 +860,8 @@ function frame(t) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
   if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); }
   else if (!state.started && P_() && P_().titleView) { const tv = P_().titleView, s = t / 1000; camera.position.set(tv.x - Math.sin(s * 0.08) * 3, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(s * 0.05) * 0.04, 0, 'YXZ'); }
-  else { camera.position.set(state.x, EYE - (sitting ? 0.35 : 0) + FX.bob, state.z); camera.rotation.set(state.pitch, state.yaw, FX.roll + FX.tilt, 'YXZ'); }
-  if (FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.035; }
+  else { camera.position.set(state.x, EYE - (sitting ? 0.35 : 0) + (sceneIsCalm() ? 0 : FX.bob), state.z); camera.rotation.set(state.pitch, state.yaw, sceneIsCalm() ? 0 : FX.roll + FX.tilt, 'YXZ'); }
+  if (!sceneIsCalm() && FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.035; }
   sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110); birds.tick(t / 1000, !!(P_() && envNow.stars < 0.3 && !P_().ride && P_().id !== 'crash'), camera.position.x, camera.position.z);
   sky.dome.position.copy(camera.position); sky.stars.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380);
   if (__DEV__ && MV) { MV(); return; }
@@ -995,7 +1037,7 @@ function devViews() {
       reset(); bars(true); say('The train climbs into the hills, slowly and steadily, and the engines work very hard indeed.', 1e6); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; showHint(); await settle(); await new Promise((r) => setTimeout(r, 1100)); check('narration inside the bars');
       reset(); showGoal(true); document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Mass Dudley'; $('line').textContent = 'Some say a railway will help us. Some say it will take our work. What do you think about that, child?'; $('choices').innerHTML = '<button class="btn ghost">It will help people.</button><button class="btn ghost">It might take your work.</button><button class="btn ghost">I do not know yet.</button>'; $('next').hidden = true; await settle(); check('dialogue with three choices');
       reset(); bars(true); say('Hold on!', 1e6); $('holdwrap').hidden = false; $('talk').hidden = true; await settle(); await new Promise((r) => setTimeout(r, 1100)); check('hold on button in the bars');
-      reset(); card('About half past eleven', ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], [{ t: 'Begin', go: () => {} }, { t: 'Read what happened instead', go: () => {} }], { col: true }); await settle(); check('card');
+      reset(); sceneWarning(card, { title: 'About half past eleven', lines: ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], watch: () => {}, read: () => {} }); await settle(); check('card');
       reset(); $('nudge').hidden = false; $('nudge').style.left = (W * 0.75 | 0) + 'px'; $('nudge').style.top = (Hh * 0.45 | 0) + 'px'; showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Give the water to the nurse'; await settle(); check('helper arrow with talk button');
       reset(); showGoal(true); showPlace('Kendal, Manchester. About half past eleven.'); $('nudge').hidden = false; $('nudge').className = 'down'; $('nudge').style.left = (W / 2 | 0) + 'px'; $('nudge').style.top = Math.max(110, Hh * 0.3 | 0) + 'px'; await settle(); check('helper arrow with the place name');
       /* a journal page found while someone is talking: the Journal button glows with a count at once, but the toast waits until the dialogue box closes (it never covers it) */
@@ -1067,9 +1109,9 @@ function devViews() {
     if (!CHECKS.some((c) => c.id === 'motion')) CHECKS.push({ id: 'motion', needs: [], async run() { const r = await motionCheck(motionAdapter(null)); return { lines: r.lines, note: r.stats.length + ' steps watched' }; } });
     checkAll(makeAdapter(checkHooks()), CHECK_TABLES);
   }
-  if (q.get('test') === 'motion') {   /* ?test=motion (&st=40,61): everyone in view moves like a person in every step of the story (motioncheck.js): nobody frozen, nobody in step with the crowd, heads within a person's reach, no running in place or sliding. Expect MOTION 0. */
-    (async () => { startGame(true); await waitFor(() => modelsReady); const r = await motionCheck(motionAdapter(q.get('st') ? q.get('st').split(',') : null));
-      const el = $('autolog'); if (el) el.textContent = ['MOTION ' + r.lines.length, ...r.lines, '', ...r.stats].join('\n'); document.title = 'MOTION ' + r.lines.length; })();
+  if (['motion', 'feet'].includes(q.get('test'))) {   /* &st=40,61 selects story steps */
+    (async () => { startGame(true); await waitFor(() => modelsReady); const feetOnly = q.get('test') === 'feet'; const r = await motionCheck(motionAdapter(q.get('st') ? q.get('st').split(',') : null), { feetOnly });
+      const title = (feetOnly ? 'FEET ' : 'MOTION ') + r.lines.length; const el = $('autolog'); if (el) el.textContent = [title, ...r.lines, '', ...r.stats].join('\n'); document.title = title; })();
   }
   if (q.get('test') === 'follow') {   /* ?test=follow : you walk the real route with Dawn, with stops and a turn back into her, and her is watched (engine/follow.js, watch): too close (inside the
        personal space), inside a wall or a solid shape (engine/audit.js auditBodies), or left far behind. Expect 0. */

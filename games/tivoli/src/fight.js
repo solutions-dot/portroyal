@@ -1,3 +1,5 @@
+import { addSceneWarningOptions, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
+import { showCinematicSkip } from '../../../engine/cine.js';
 /* games/tivoli/src/fight.js: the May 2010 street scene (chapter 5, "the days"), a directed scene like the Kendal crash. CLAUDE.md rule 4 allows it for Tivoli only, with these limits,
    all kept here: it starts only from an opt-in card ("Read what happened instead" is the other choice); you watch from a window and never hold or fire a weapon; there is no blood;
    NOBODY IS HIT (dust only lands on walls and ground, never on a person); gunmen are shown only far away behind the barricade and unidentified; there are no numbers and no one is
@@ -72,26 +74,28 @@ export const PEOPLE = [...FORCES, ...GUNMEN];
 
 /* ---------- cards (the HTML is in index.html) ---------- */
 const $ = (id) => document.getElementById(id);
-let calmPref = false; try { calmPref = localStorage.getItem('tivoli-calm') === '1'; } catch (e) { /* default off */ }
-export function openCard() { $('fcalm').checked = calmPref; $('fightcard').hidden = false; $('title').hidden = true; }
+let titleTimer, endTimer, hideSkip;
+export function openCard() {
+  $('fightcard').hidden = false; $('title').hidden = true;
+  addSceneWarningOptions($('fightoptions'), $('fbegin'), $('fread'), begin, () => {
+    show('readcard'); finishChapter(5); $('freadnext').focus();
+  });
+}
 function show(id) { for (const c of ['fightcard', 'readcard', 'aftercard']) $(c).hidden = c !== id; }
 
 /* ---------- running it ---------- */
 async function load() { await Promise.all([...BODIES, 'civilian2010'].flatMap((b) => [loadBase(b), loadBase(b + '_lo')])); }
 export function wire(env) {
   FIGHT.env = env;
-  $('fbegin').onclick = () => { calmPref = $('fcalm').checked; try { localStorage.setItem('tivoli-calm', calmPref ? '1' : '0'); } catch (e) { /* ignore */ } begin(); };
-  $('fread').onclick = () => { show('readcard'); finishChapter(5); };   /* reading what happened counts as finishing the chapter: its journal pages open */
-  $('fback').onclick = () => show('fightcard');
-  $('fcancel').onclick = () => { $('fightcard').hidden = true; $('title').hidden = false; };
-  $('fdone').onclick = finish;
+  $('fback').onclick = () => { show('fightcard'); openCard(); };
+  $('fdone').onclick = () => finish();
   $('freadexit').onclick = () => { $('readcard').hidden = true; $('title').hidden = false; };
   $('fnext').onclick = () => { finish(); if (env.next) env.next(); };   /* Next chapter, as at the end of every other chapter */
   $('freadnext').onclick = () => { $('readcard').hidden = true; if (env.next) env.next(); };
 }
 export async function begin() {
-  const { scene, audioInit, renderer } = FIGHT.env; audioInit(); show('none'); $('title').hidden = true; $('fightcard').hidden = true; $('fightload').hidden = false; await load(); $('fightload').hidden = true;
-  FX.calm = calmPref; FX.shake = 0;
+  const { scene, audioInit, renderer, camera } = FIGHT.env; const previousFov = camera.fov; audioInit(); show('none'); $('title').hidden = true; $('fightcard').hidden = true; $('fightload').hidden = false; await load(); $('fightload').hidden = true;
+  FX.calm = sceneIsCalm(); FX.shake = 0;
   FIGHT.hidden = scene.children.filter((c) => c.visible && !c.isLight); FIGHT.hidden.forEach((c) => (c.visible = false));
   FIGHT.fog = scene.fog; FIGHT.bg = scene.background; scene.background = new THREE.Color(0xdbe6ea); scene.fog = new THREE.Fog(0xcfdde4, 70, 270);
   const shadows = !matchMedia('(pointer: coarse)').matches, st = buildStreet({ shadows }); FIGHT.street = st; scene.add(st.group, FX.group);
@@ -105,14 +109,28 @@ export async function begin() {
     b.visible = s.side !== 'gunmen';   /* the gunmen are not seen until the shooting starts; the soldiers and police walk in from behind the camera */
     FIGHT.actors.push({ s, b, bodyId, side: s.side, kind: s.kind, plan: s.plan, i: 0, t: 0, cur: null, cover: null, st: 'rest', stT: rnd(0.4, 2.2), shotT: rnd(0.15, 0.6), target: null, react: rnd(0.05, 0.7), speed: 0, wp: 0 });
   }
-  FIGHT.on = true; SFX.ambience(true, FX.calm); $('windowframe').hidden = false; $('fade').style.opacity = 1; $('fade').hidden = false; requestAnimationFrame(() => { $('fade').style.transition = 'opacity 1.5s'; $('fade').style.opacity = 0; });
-  $('scenetitle').hidden = false; $('hud').hidden = true;
-  setTimeout(() => { $('scenetitle').hidden = true; }, 4200);
-  FIGHT.cleanup = () => { scene.remove(st.group, FX.group); for (const b of FIGHT.bodies) { disarm(b); scene.remove(b); } FIGHT.hidden.forEach((c) => (c.visible = true)); FIGHT.lights.forEach(([l, v]) => (l.intensity = v)); renderer.shadowMap.enabled = FIGHT.shadowWas; scene.fog = FIGHT.fog; scene.background = FIGHT.bg; FX.items.length = 0; FX.group.clear(); };
+  FIGHT.on = true; SFX.ambience(true, FX.calm); $('windowframe').hidden = false;
+  const fade = $('fade'); fade.style.transition = 'none'; fade.style.opacity = 1; fade.hidden = false;
+  fade.getBoundingClientRect();
+  requestAnimationFrame(() => { if (FIGHT.on && !FIGHT.ended) { fade.style.transition = 'opacity 1.5s'; fade.style.opacity = 0; } });
+  $('fighttitle').hidden = false; hideSkip = showCinematicSkip(complete); $('hud').hidden = true;
+  clearTimeout(titleTimer); titleTimer = setTimeout(() => { $('fighttitle').hidden = true; }, 4200);
+  FIGHT.cleanup = () => { hideSkip?.(); scene.remove(st.group, FX.group); for (const b of FIGHT.bodies) { disarm(b); scene.remove(b); } FIGHT.hidden.forEach((c) => (c.visible = true)); FIGHT.lights.forEach(([l, v]) => (l.intensity = v)); renderer.shadowMap.enabled = FIGHT.shadowWas; scene.fog = FIGHT.fog; scene.background = FIGHT.bg; camera.fov = previousFov; camera.updateProjectionMatrix(); FX.items.length = 0; FX.group.clear(); };
 }
-function finish() {
+function finish(showTitle = true) {
+  clearTimeout(titleTimer); clearTimeout(endTimer);
+  SFX.ambience(false); endSceneWarning();
   const gone = FIGHT.cleanup ? [FIGHT.street.group, ...FIGHT.bodies] : [];
-  if (FIGHT.cleanup) FIGHT.cleanup(); FIGHT.cleanup = null; for (const o of gone) release(o, FIGHT.env.scene);   /* engine/preload.js: the street and its people are built afresh next time, so their graphics memory is let go */ FIGHT.on = false; $('aftercard').hidden = true; $('windowframe').hidden = true; $('fade').hidden = true; $('title').hidden = false;
+  if (FIGHT.cleanup) FIGHT.cleanup(); FIGHT.cleanup = null; for (const o of gone) release(o, FIGHT.env.scene);   /* engine/preload.js: the street and its people are built afresh next time, so their graphics memory is let go */ FIGHT.on = false;
+  for (const id of ['aftercard', 'windowframe', 'fighttitle', 'fade']) $(id).hidden = true;
+  $('title').hidden = !showTitle;
+}
+function complete() {
+  if (!FIGHT.on) return;
+  FIGHT.ended = true;
+  finish(false);
+  show('aftercard'); finishChapter(5);
+  $('fnext').focus();
 }
 
 /* ---------- each person ---------- */
@@ -185,7 +203,7 @@ function atCover(a, st, T, dt, camera) {
   if (err < 0.08 && a.fireT > 0.45 && endSoft > 0) { a.shotT -= dt; if (a.shotT <= 0) { fire(a, camera); a.shotT = rnd(0.25, 0.75) / Math.max(0.35, endSoft); } }
 }
 export function tick(dt) {
-  if (!FIGHT.on || FIGHT.freeze) return; const { camera } = FIGHT.env; FIGHT.T += dt; const T = FIGHT.T;
+  if (!FIGHT.on || FIGHT.freeze || FIGHT.ended) return; const { camera } = FIGHT.env; FIGHT.T += dt; const T = FIGHT.T;
   if (!FIGHT.contact) SFX.quietLife(dt, FX.calm);
   if (!FIGHT.contact && T >= CONTACT) { FIGHT.contact = true; SFX.ambience(false); }   /* both sides open fire together: no one is shown firing first; the street's ordinary sounds stop */
   for (const a of FIGHT.actors) {
@@ -201,7 +219,7 @@ export function tick(dt) {
   }
   updateFx(dt);
   if (T > 12 && T < 38 && Math.random() < dt * 0.35) SFX.rattle(rnd(-0.8, 0.8), FX.calm);   /* more fighting, further off */
-  if (T >= END - 2 && !FIGHT.ended) { FIGHT.ended = true; SFX.ambience(false); $('fade').style.transition = 'opacity 2s'; $('fade').hidden = false; $('fade').style.opacity = 1; SFX.ring(FX.calm); setTimeout(() => { $('windowframe').hidden = true; show('aftercard'); $('aftercard').hidden = false; finishChapter(5); }, 2600); }
+  if (T >= END - 2) { FIGHT.ended = true; SFX.ambience(false); $('fade').style.transition = 'opacity 2s'; $('fade').style.opacity = 1; SFX.ring(FX.calm); endTimer = setTimeout(complete, 2600); }
 }
 /* what runs after the mixers: feet on the ground, and the camera */
 const SHOTS = [   /* all from the child's window: the balcony of the second floor of the south flats (x 16.5, y 4.8, z 8.9), looking west along the street */
@@ -220,7 +238,7 @@ export function after(now) {
 }
 
 /* dev only (?scene=fight&at=22): jump the scene forward to a moment, playing it quickly, so a picture can be taken there */
-export function skip(to) { while (FIGHT.on && FIGHT.T < to) { tick(0.05); for (const b of FIGHT.bodies) b.userData.anim.mx.update(0.05); } }
+export function skip(to) { while (FIGHT.on && !FIGHT.freeze && !FIGHT.ended && FIGHT.T < to) { tick(0.05); for (const b of FIGHT.bodies) b.userData.anim.mx.update(0.05); } }
 
 /* for the place audit: every spot a person stands at (their start and the end of each walk or run, where they stop or take cover), and every walk and run as a route
    (auditPlace checks a body every 30 cm along each route, so nobody runs through a car or a wall) */

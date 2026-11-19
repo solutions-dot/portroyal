@@ -101,6 +101,8 @@ Models ship as `site/models/<name>.js`, each defining `window.__models[name] = "
 
 Every character uses the same Mixamo skeleton (`mixamorig*` bones, from `shared/rig/char.blend`), so one clip library animates everyone.
 
+When a clip changes again before a crossfade finishes, the controller fades each action from its current weight. If the requested clip is still visible in the blend, playback continues from its current time. `play()` returns `false` for that case so callers such as `engine/ambient.js` can keep the clip's time.
+
 | Name | Use |
 |---|---|
 | `CL` | Clip library, name to `AnimationClip`. Fill it with `loadClips(gltfOf('anims'))`. |
@@ -173,6 +175,12 @@ Show the results in a dev-only `?test=audit` view and expect 0 issues. Kendal's 
 | `routeIssues(id, path, walls, r, loop)` | Lines for every leg of a walker's route that crosses a wall rectangle. |
 | `furnitureRouteIssues(id, path, snap, ground, r, loop)` | The same against the real furniture boxes from `snapMeshes`, so a missing wall rectangle is still caught. |
 | `walkRoute(a, b, walls, r, bounds)` | A short route round nearby walls, for people who follow the player. |
+
+Seat placement bends the knees and keeps the feet at their clip angle. `engine/bone-pose.js` removes the previous correction if the mixer left it on the bone. The shared head turn uses the same guard through `lookBegin` and `lookEnd`.
+
+The slope adjustment in `groundFeet` uses the same guard for the thigh, knee and foot. It keeps the foot's clip angle when bending the leg to reach the ground, then tilts the shoe toward the slope as the mixer advances. The shared `jointTurnLimiter` slows sudden ankle turns relative to the body. Port Royal's crowd uses it relative to the chest to smooth the final head pose.
+
+For a person walking up to a seat, `seatAnchor.settle` eases the body to the anchor. Supply the model's previous parent-relative position and yaw as `from` and `yaw`, the mixer time as `start`, and the number of seconds as `duration`.
 
 ## engine/follow.js: people who follow you, lead you, or are sent somewhere
 
@@ -425,8 +433,8 @@ These systems are general but still live in `games/port-royal/src/main.js`, beca
 |---|---|
 | `grip(model, 'Right', item, { handleY, scale, yaw, lift })` | Closes that hand into a fist, hangs the item from the fist by its handle (upright whatever the hand does) and lifts the arm `lift` radians away from the body so the item clears the hip, thigh or skirt. Pose the mixer once first. |
 | `spreadArms(model, angle)` | Holds both empty arms a little further out, so hands do not sink into a wide skirt or a jacket. |
-| `gripTick(model)` | Call every frame after the mixer update for any model with `userData.grips`. |
-| `steadyLoad(model, item)` | A hand that steadies a load on the head (18 November 2026: Miss Cleo's hand waved beside her basket). On a CarryHead clip, a raised hand is bent and turned each frame (two bones, `reachTo`) so the palm rests on the load's rim on that side. Kendal, Melissa and Windrush call it where they put a load on a head. `auditHeld` reports a raised hand more than 5 cm from the load. |
+| `gripTick(model)` | Call every frame after the mixer update for any model with `userData.grips`. It restores the mixer's last pose before correcting each arm. The item's grip takes over from the standing arm spread while the hand is full. |
+| `steadyLoad(model, item)` | A hand that steadies a load on the head (18 November 2026: Miss Cleo's hand waved beside her basket). As the CarryHead clip fades in and the hand rises, the reach (`reachTo`) brings the palm onto the load's rim on that side. Kendal, Melissa and Windrush call it where they put a load on a head. `auditHeld` reports a raised hand more than 5 cm from the load. |
 
 **A hand that holds a hanging thing does not gesture** (17 November 2026, rule 10). `grip()` works out whether the item hangs below the hand (more of it below the handle than above: a case, a basket, a bucket, a lamp, a bag) or is held up (a flag, a palm frond, a cup); pass `hangs: true` or `false` to say so yourself. For a hanging item, `engine/anim.js` keeps the body off clips that wave the hands (`HAND_TALK`: Talk, Wave, Clap, Cheer, Point, Yell, Laugh, Greet, Angry, Thankful): `play()` gives the plain Idle instead, and `calmHands(m)`, which `grip()` calls, moves a body that stood on such a clip onto the Idle. Walking, carrying, sitting and weapon clips are not touched. It came from Eventide, where a crowd man on Talk2 swung his suitcase into his thigh; Eventide's own rule (no talking clip for someone who holds a thing) moved here.
 
@@ -460,6 +468,14 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 `renderFramed(renderer, scene, camera, cine)` takes the place of `renderer.render(scene, camera)`. While a camera scene plays (`cine` true) on a screen taller than it is wide, it draws that frame with a taller field of view, so the picture keeps about 85 per cent of the width a square screen would show (at most 96 degrees). The game's own field of view is put back straight after, so walking, aiming and the first-person hand are unchanged; on a wide screen nothing changes. `cineFov(fov, aspect)` gives the number. Used by Kendal, Eventide, Melissa, Nanny Town and Bog Walk (the black bars, `body.cine`), Tivoli (the May 2010 scene, `FIGHT.on`), The Emperor's Arrival and Windrush (their directors, `DIR.on`). Port Royal and Marcus Garvey have no camera scenes (their cut scenes are cards).
 
+
+### Skipping a cinematic
+
+`showCinematicSkip(onSkip)` shows the shared X. Call the function it returns when the scene ends or is interrupted. The game's callback moves directly to the recap or restores the same playable state as the end of the scene. Required puzzles and conversations stay in the story. `playChapterFade` uses the same control and performs chapter setup once, even if the player skips before the title appears.
+
+### Warnings before intense scenes
+
+`sceneWarning` uses a game's existing card with a Watch scene button, a Read what happened instead button, and a Calm mode checkbox. Calm mode starts with the device's reduced-motion preference and remembers any change on that browser. The watch path uses `sceneIsCalm()` to reduce camera motion and bright effects, and the audio engine lowers the scene volume. Call `endSceneWarning()` when the scene ends, is skipped, or is left through chapter navigation.
 
 ## engine/collapse.js: a building that falls down (18 November 2026)
 

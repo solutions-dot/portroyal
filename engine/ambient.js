@@ -117,9 +117,9 @@ export function createAmbient(opts = {}) {
   function play(n, name, { once = false, speed } = {}) {
     const c = ctlOf(n), a = n.amb; if (!c) return false; const act = c.get(name); if (!act) return false;
     if (act === c.cur) { a.clip = name; return true; }
-    c.play(name, once); c.timer = 0;   /* the behaviour decides when a clip ends, not the controller's once-timer */
-    const d = act.getClip().duration; if (!once) act.time = a.rnd() * d;   /* never in step with anyone else */
-    act.timeScale = speed || (0.88 + a.rnd() * 0.24); a.clip = name; a.clipT = 0; a.changed = life.t; if (n.lo && n.lo.userData.anim) { const lc = n.lo.userData.anim, la = lc.get(name); if (la && la !== lc.cur) { lc.play(name, once); lc.timer = 0; la.time = act.time; la.timeScale = act.timeScale; } }
+    const restarting = c.play(name, once); c.timer = 0;   /* the behaviour decides when a clip ends, not the controller's once-timer */
+    if (!once) { const phase = a.rnd() * act.getClip().duration; if (restarting !== false) act.time = phase; }   /* never in step with anyone else */
+    act.timeScale = speed || (0.88 + a.rnd() * 0.24); a.clip = name; a.clipT = 0; a.changed = life.t; if (n.lo && n.lo.userData.anim) { const lc = n.lo.userData.anim, la = lc.get(name); if (la && la !== lc.cur) { const restartLite = lc.play(name, once); lc.timer = 0; if (restartLite !== false) la.time = act.time; la.timeScale = act.timeScale; } }
     return true;
   }
   const clipLen = (n, name) => { const c = ctlOf(n), act = c && c.get(name); return act ? act.getClip().duration / (act.timeScale || 1) : 2; };
@@ -350,8 +350,8 @@ export function createAmbient(opts = {}) {
     const hips = head && (m.getObjectByName('mixamorigHips') || m.getObjectByName('mixamorig:Hips')); if (!hips) return 0;
     head.updateWorldMatrix(true, false); const h = yawOf(m, head), p = yawOf(m, hips); return h === null || p === null ? 0 : wrap(h - p);
   }
-  function headTick(n, dt) {
-    const a = n.amb, b = bonesOf(n.m); if (!b.neck && !b.head) return; a.pT = Math.hypot(W.px - n.x, W.pz - n.z) < O.look ? a.pT + dt : 0; let [yaw, pitch] = lookWant(n);
+  function headTick(n, dt, tracking) {
+    const a = n.amb, b = bonesOf(n.m); if (!b.neck && !b.head) return; a.pT = tracking && Math.hypot(W.px - n.x, W.pz - n.z) < O.look ? a.pT + dt : 0; let [yaw, pitch] = tracking ? lookWant(n) : [0, 0];
     if (!Number.isFinite(yaw)) yaw = 0; if (!Number.isFinite(pitch)) pitch = 0; if (!Number.isFinite(a.look)) a.look = 0; if (!Number.isFinite(a.lookP)) a.lookP = 0;   /* a look at a point that is not there (the player before the game sets them, a lone sitter with no mate) once gave NaN and the head vanished (Windrush) */
     if (Math.abs(yaw) > 1.9) yaw = 0; yaw = Math.max(-O.lookYaw, Math.min(O.lookYaw, yaw)); pitch = Math.max(-O.lookPitch, Math.min(O.lookPitch, pitch));
     const k = Math.min(1, dt * 3), lim = dt * 3.5; a.look += Math.max(-lim, Math.min(lim, (yaw - a.look) * k)); a.lookP += (pitch - a.lookP) * k;   /* at most 200 degrees a second: a look that swaps sides (the player passing behind) turned the head faster than a person does */
@@ -405,7 +405,8 @@ export function createAmbient(opts = {}) {
       const body = n.lo && n.lo.visible ? n.lo : n.m, c = body && body.userData.anim; if (!body) { a.acc = 0; continue; }
       if (O.mixers && c) { c.mx.update(a.acc); if (c.tick) c.tick(a.acc); }
       if (body.userData.grips) gripTick(body);
-      if (a.level === 0 && body === n.m) headTick(n, a.acc);
+      // The same body may stay visible when it leaves the nearest tier. Ease out its look as the mixer keeps playing.
+      if (body === n.m && (a.level === 0 || a.hq)) headTick(n, a.acc, a.level === 0);
       if (O.ground && !body.userData.noGround) groundFeet(body);
       a.acc = 0;
     }

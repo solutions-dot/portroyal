@@ -10,6 +10,7 @@
    Head angles are measured the way games/selassie/src/headcheck.js does: the head's forward against the chest's own forward, up and side. */
 import * as THREE from 'three';
 import { mixers } from '../../../engine/anim.js';
+import { footWatch } from '../../../engine/foot-watch.js';
 
 export const LIMIT = { yaw: 80, pitch: 60, speed: 320, turn: 240, turnWalk: 600, frozen: 12, frozenCalm: 20, sync: 0.02, near: 30, fov: 1.15 };
 const IDLE = /^(Idle|IdleM|OldIdle|BriefcaseIdle|CarryHeadIdle|TorchIdle|HurtIdle|Sad1|Sad2|SitIdle|SitPose[MF]|Kneel|ComfortChild|ComfortTake)$/;
@@ -44,16 +45,24 @@ function ownHeadSpeed(K, n, clip) {
 /* K: { cases() -> [{ label, enter: async () -> the route you walk, [[x, z], ...] }], step(dt), people() -> the place's people, player() -> { x, z, yaw },
    mood() -> 'lively' | 'calm' | 'sad', move(x, z, yaw), body(person, clip) -> a fresh body of the same kind on that clip (for the clip's own head speed) }.
    Each kind of fault is reported once per person and step, with the worst value seen. */
-export async function motionCheck(K, { dt = 1 / 30, still = 2.5, speed = 1.6, max = 50 } = {}) {
+export async function motionCheck(K, { dt = 1 / 30, still = 2.5, speed = 1.6, max = 50, feetOnly = false } = {}) {
   const lines = [], stats = [];
   for (const C of await K.cases()) {
     const route = ((await C.enter()) || []).slice(), S = new Map(), worst = new Map();
+    const feet = feetOnly ? footWatch() : null;
     const add = (key, val, text) => { const w = worst.get(key); if (!w || val > w.val) worst.set(key, { val, text }); };
     let ri = 1, wait = still, t = 0, frames = 0; const syncSeen = new Map();
     if (route.length) K.move(route[0][0], route[0][1]);
     while (t < max && (ri < route.length || wait > 0)) {
       if (wait > 0) wait -= dt; else { const p = K.player(), to = route[ri], d = Math.hypot(to[0] - p.x, to[1] - p.z); if (d < 0.08) { ri++; wait = still; } else { const k = Math.min(1, speed * dt / d); K.move(p.x + (to[0] - p.x) * k, p.z + (to[1] - p.z) * k, Math.atan2(-(to[0] - p.x), -(to[1] - p.z))); } }
       K.step(dt); t += dt; frames++;
+      if (feet) {
+        for (const [i, n] of K.people().entries()) {
+          const m = n.lo?.visible ? n.lo : n.m, ac = m?.userData.anim;
+          if (m?.visible && ac) feet.sample(t, { id: n.id || `${n.base} #${i + 1}`, m, clip: ac.cur.getClip().name });
+        }
+        continue;
+      }
       const P = K.player(), mood = K.mood(), frozenAt = mood === 'lively' ? LIMIT.frozen : LIMIT.frozenCalm, view = [];
       for (const n of K.people()) {
         const m = n.m; if (!m || !m.visible) continue; const id = n.id || n.base, dx = n.x - P.x, dz = n.z - P.z, dist = Math.hypot(dx, dz);
@@ -82,8 +91,14 @@ export async function motionCheck(K, { dt = 1 / 30, still = 2.5, speed = 1.6, ma
         for (const [clip, L] of by) { if (L.length < 3) continue; L.sort((a, b) => a[1] - b[1]); for (let i = 0; i + 2 < L.length; i++) { const tri = L.slice(i, i + 3); if (tri[2][1] - tri[0][1] >= LIMIT.sync || Math.max(...tri.map((x) => x[2])) - Math.min(...tri.map((x) => x[2])) > 0.01) continue; const ids = tri.map((x) => x[0].id || x[0].base), key = clip + ids.join(); now.add(key); syncSeen.set(key, (syncSeen.get(key) || 0) + 1); if (syncSeen.get(key) >= 4) add('sy' + key, 1, `sync: ${ids.join(', ')} play ${clip} in step with each other`); } }
         for (const k of [...syncSeen.keys()]) if (!now.has(k)) syncSeen.delete(k); }
     }
-    for (const w of worst.values()) lines.push(C.label + ': ' + w.text);
-    stats.push(`${C.label}: ${t.toFixed(0)} s, ${S.size} people seen`);
+    if (feet) {
+      const { people, samples } = feet.stats();
+      lines.push(...feet.lines().map(line => `${C.label}: ${line}`));
+      stats.push(`${C.label}: ${people} bodies, ${samples} foot samples`);
+    } else {
+      for (const w of worst.values()) lines.push(C.label + ': ' + w.text);
+      stats.push(`${C.label}: ${t.toFixed(0)} s, ${S.size} people seen`);
+    }
   }
   return { lines, stats };
 }

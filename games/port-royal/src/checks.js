@@ -13,6 +13,7 @@ import { snapMeshes, auditPlace, auditWalk, headWatch } from '../../../engine/au
 import { faceCheck, skinShape } from '../../../engine/faces.js';
 import { checkAll } from '../../../engine/checks.js';
 import { CL, isSeated, strideOf, WALKS } from '../../../engine/anim.js';
+import { footWatch } from '../../../engine/foot-watch.js';
 import { AU, setSound } from '../../../engine/audio.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -141,6 +142,15 @@ async function runLayout(A) {
   const reset = () => { A.hideCard(); if (!$('dialogue').hidden) A.leaveTalk(); for (const id of ['talk', 'toast', 'nudge']) $(id).hidden = true; $('hint').hidden = true; A.busy = false; };
   const settle = () => sleep(700), talkBtn = (label) => { const a = A.ACTIONS.find((x) => x.label === label) || { label }; A.setActionButton(a); $('talk').hidden = false; };
   const goal = (t) => { A.setGoalText(t); A.showGoal(true); };
+  const count = $('jcount'), previousCount = count.textContent, countWasHidden = count.hidden, viewWasHidden = $('view').hidden;
+  count.textContent = '13'; count.hidden = false; $('view').hidden = false;
+  for (const button of $('topr').querySelectorAll('button')) {
+    const bounds = button.getBoundingClientRect();
+    if (bounds.width && (bounds.left < 0 || bounds.right > W || button.scrollWidth > button.clientWidth + 1)) {
+      out.push(`${W}x${H} camera toolbar: ${button.id} is clipped`);
+    }
+  }
+  $('view').hidden = viewWasHidden; count.hidden = countWasHidden; count.textContent = previousCount;
   reset(); goal('Find 4 things in the tavern. Found: 2 of 4.'); talkBtn('Look at the little box'); A.showHint(); A.toast('Journal: Onion bottles'); await settle(); check('play: goal, action, hint, toast');
   reset(); goal('Walk to Fort Charles, along the beach past the houses.'); talkBtn('Talk to the dockworker'); await settle(); check('play: talk button');
   reset(); A.startConvo([{ who: 'Symon Benning', text: 'Look under a plate for our mark: a pineapple!' }]); await settle(); check('dialogue');
@@ -278,13 +288,19 @@ export const CHECK_TABLES = {
    running; every head is watched every frame (engine/audit.js headWatch): turned more than 80 degrees from the chest, gone right round, or turning faster than a person can.
    Written after the owner saw the pewterer's head on backwards (17 November 2026): a look added on top of a pose that was not set again each frame piled up. ---------- */
 async function runHeads(A, q) {
+  const feetOnly = q.get('test') === 'feet', title = feetOnly ? 'FEET' : 'HEADS';
   const out = [], ids = (q.get('p') || placeList(A).map((p) => p.id).join(',')).split(','); let count = 0, n = 0;
-  for (const id of ids) { await goPlace(A, id); const W = headWatch(), dt = 1 / 30; let tm = 0; const who = peopleHere(A);
+  for (const id of ids) { await goPlace(A, id); const W = feetOnly ? footWatch() : headWatch(), dt = 1 / 30; let tm = 0; const who = peopleHere(A);
     for (const m of who) { const p = m.getWorldPosition(new THREE.Vector3()), ry = m.rotation.y;
       for (const a of [0, 1.4, -1.4]) { A.state.x = p.x + Math.sin(ry + a) * 1.7; A.state.z = p.z + Math.cos(ry + a) * 1.7; A.busy = false;
-        for (let f = 0; f < 45; f++) { A.tick(dt); tm += dt; W.sample(tm, who.map((o) => ({ id: idOf(A, o), m: o, clip: clipOf(o) }))); n++; } } }
+        for (let f = 0; f < 45; f++) {
+          A.tick(dt); tm += dt; n++;
+          const people = who.filter(shown).map(o => ({ id: idOf(A, o), m: o, clip: clipOf(o) }));
+          if (feetOnly) for (const person of people) W.sample(tm, person);
+          else W.sample(tm, people);
+        } } }
     const l = W.lines(); count += l.length; out.push(`${id}: ${l.length} issues (${who.length} people)`); for (const x of l) out.push('  ' + x); log(out); }
-  out.unshift('heads: ' + count + ' issues (' + n + ' frames)'); log(out, 'HEADS ' + count);
+  out.unshift(title.toLowerCase() + ': ' + count + ' issues (' + n + ' frames)'); log(out, title + ' ' + count);
 }
 /* ---------- wiring ---------- */
 export function wireChecks(A) {
@@ -293,7 +309,7 @@ export function wireChecks(A) {
   const start = async () => { await makeAdapter(A).ready(); };
   const run = (fn) => (async () => { try { await start(); await fn(); } catch (e) { log(['ERROR ' + (e && e.stack || e)], 'ERROR ' + (e && e.message)); console.error(e); } })();
   if (t === 'audit') run(() => runAudit(A, q));
-  if (t === 'heads') run(() => runHeads(A, q));
+  if (t === 'heads' || t === 'feet') run(() => runHeads(A, q));
   if (t === 'layout') run(() => runLayout(A));
   if (t === 'walkers') run(() => runWalkers(A));
   if (t === 'life') run(() => runLife(A, q));
