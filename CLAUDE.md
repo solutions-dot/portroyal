@@ -20,6 +20,7 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 
 | If you are... | Read |
 |---|---|
+| Picking up open work | `docs/TODO.md` (checks still open) |
 | New to the repo | `docs/ARCHITECTURE.md` (layout, how a game runs, the build) |
 | Using shared code (animation, sound, loading) | `docs/ENGINE.md` |
 | Making or fixing people, clothes, places or animations in any game, or bringing one game up to the standard (checklist and each game's status) | `docs/STANDARD.md` |
