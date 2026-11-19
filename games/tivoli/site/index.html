@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Alfa+Slab+One&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
   /* The same look as Port Royal: dark teal panels, one brass accent for things you can press, big touch targets (48px). */
-  :root{--ink:#10222b;--paper:#f2e8d0;--brass:#d9a441;--brass-ink:#2a1f08;--display:"IM Fell English SC","IM Fell English",Georgia,serif;--hud:"Alfa Slab One","Rockwell",Georgia,serif;--paper-ink:#25211b;--blue:#4f8db3;--body:"Atkinson Hyperlegible",system-ui,sans-serif}
+  :root{--ink:#10222b;--paper:#f2e8d0;--brass:#d9a441;--brass-ink:#2a1f08;--display:"Alfa Slab One","Rockwell",Georgia,serif;--period:"IM Fell English SC","IM Fell English",Georgia,serif;--hud:"Alfa Slab One","Rockwell",Georgia,serif;--paper-ink:#25211b;--blue:#4f8db3;--body:"Atkinson Hyperlegible",system-ui,sans-serif}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--body);font-size:18px;touch-action:none;-webkit-user-select:none;user-select:none}
   #c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
@@ -55,8 +55,9 @@
   #dialogue.me #who{color:#2f6f8f}#dialogue.me #line,#dialogue.me #dclose{color:#1c2a30}
   /* the May 2010 scene: cards, the window the child watches from, and the fade */
   #fightbtn{margin-top:.2rem}
-  .card{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;gap:.8rem;padding:1.5rem max(1.2rem,8vw);background:rgba(16,34,43,.94);overflow:auto;z-index:20}
-  .card h2{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:clamp(2rem,6vw,3rem);margin:0}
+  #credits{justify-content:flex-start}#credits .crin{max-width:40rem;margin:auto 0;display:flex;flex-direction:column;gap:.7rem}#credits ul{margin:0;padding-left:1.2rem;line-height:1.45}#credits h3{margin:.4rem 0 0}#credits a{color:inherit}   /* Credits like the other games: who made it and where the history comes from (owner, 19 November 2026: it was empty) */
+.card{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;gap:.8rem;padding:1.5rem max(1.2rem,8vw);background:rgba(16,34,43,.94);overflow:auto;z-index:20}
+  .card h2{font-family:var(--display);font-weight:400;font-size:clamp(2rem,6vw,3rem);margin:0}
   .card p{margin:0;max-width:34rem;font-size:1.15rem}
   .card label{display:flex;gap:.6rem;align-items:center;max-width:34rem;font-size:1.05rem;min-height:48px}
   .card input[type=checkbox]{width:44px;height:44px;margin:0;flex-shrink:0;accent-color:#d9a441}   /* a 44 px tap target, as every button */
@@ -158,7 +159,19 @@ body:has(.card:not([hidden])) :is(#goal,#topr,#hint,#talk,#stick,.tbub),body:has
     <footer class="chfoot"><button id="chteacher" class="btn ghost">Unlock All</button><button id="chreset" class="btn ghost">Restart</button><button id="chcred" class="btn ghost">Credits</button></footer>
   </div>
 </section>
-<div id="credits" class="card" hidden><h2>Credits</h2><p>Tivoli Gardens · PastPort Jamaica</p><button id="creditsclose" class="btn ghost">Back to Chapters</button></div>
+<div id="credits" class="card" hidden><div class="crin"><h2>Credits</h2>
+  <p class="crbig">Created by <a href="https://www.instagram.com/kellzilla_5.0" target="_blank" rel="noopener noreferrer"><b>Kellz 5.0</b></a></p>
+  <h3>Where the history comes from</h3>
+  <ul>
+    <li>The Office of the Public Defender, interim report on the West Kingston operation (2013)</li>
+    <li>The West Kingston Commission of Enquiry, as reported by the Jamaica Information Service and The Jamaica Gleaner (2016)</li>
+    <li>The Jamaica Gleaner, on testimony to the Commission (2015 and 2016), on the costs that followed (2020), and a 2021 feature on the 1966 clearance of Back-o-Wall</li>
+    <li>The Jamaica Observer (2010), on the extradition and on how Tivoli Gardens got its name</li>
+    <li>The United States Attorney's Office, Southern District of New York (2012)</li>
+    <li>Stabroek News (2010)</li>
+  </ul>
+  <p>The families and neighbours you meet in this game are fictional. Back-o-Wall, Tivoli Gardens, the operation of May 2010 and the Commission of Enquiry are real.</p>
+  <button id="creditsclose" class="btn ghost">Back to Chapters</button></div></div>
 <section id="journal" role="dialog" aria-modal="true" aria-labelledby="jtitle" hidden><div class="book">
   <header><h2 id="jtitle">Journal</h2><button id="jclose">Close</button></header>
   <div id="jlist" role="tablist" aria-label="Journal pages"></div>

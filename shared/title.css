@@ -19,10 +19,20 @@
 /* the "saved on this device" line is gone: the Exit question in the game says it instead (owner, 19 November 2026) */
 #savenote{display:none!important}
 
-/* nothing jumps when loading ends (owner, 19 November 2026: the Chapters button came in last and jerked the row): Chapters keeps its place from the
-   start and fades in, Start is wide enough for "Loading" and "Continue", and the loading bar sits on its own line under the buttons and fades out */
-#title #tchap[hidden]{display:inline-flex!important;visibility:hidden;opacity:0}
-#title #tchap{transition:opacity .45s ease}
+/* nothing jumps when loading ends (owner, 19 November 2026: the Chapters button came in last and jerked the row): Chapters is there from the
+   start, Start is wide enough for "Loading" and "Continue", and the loading bar sits on its own line under the buttons and fades out */
+#title #tchap[hidden]{display:inline-flex!important}
+#title #tchap{transition:opacity .3s ease}
 #title #start{min-width:8.4em}
 #title #loadnote[hidden]{display:block!important;visibility:hidden}   /* a game that hides the note keeps its line, so the card does not shrink */
 @media(prefers-reduced-motion:reduce){#title #tchap,#title .title-actions .track{transition:none}}
+/* all three buttons show from the first moment (owner, 19 November 2026: no gap, no hiding): Chapters is drawn at once, dimmed and not yet
+   tappable while the game loads, like Start, and both wake together when Start is ready; Exit works throughout */
+#title:has(#start:disabled) #tchap{opacity:.6;pointer-events:none;cursor:default}
+/* card buttons sit on one line wherever the screen has room (owner, 19 November 2026: "we need one line where possible"): a button's words never
+   break inside it, the card grows to hold the row on a wide screen, and on a narrow phone whole buttons drop to the next line instead */
+#cbtns,#chcardb{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+html body #cbtns>:is(.btn,button,a),html body #chcardb>:is(.btn,button,a){flex:0 0 auto;white-space:nowrap;max-width:100%}
+html body :has(>#cbtns){width:fit-content;min-width:min(34rem,100%);max-width:min(60rem,100%)}
+html body #cbody{width:0;min-width:100%}   /* the words wrap to the card; only the buttons and the title set how wide it grows */
+@media(max-width:600px){html body #cbtns>:is(.btn,button,a),html body #chcardb>:is(.btn,button,a){white-space:normal}}
