@@ -1,3 +1,4 @@
+import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
@@ -263,7 +264,7 @@ function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'op
 const bars = (on) => document.body.classList.toggle('cine', on);
 let subTimer = 0;
 function say(text, ms = 3800) { const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
-function flash(op, ms = 0, color = '#fff') { const f = $('flash'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease-out'; f.style.opacity = op; }
+function flash(op, ms = 0, color = '#fff') { const f = $('flash'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease-out'; f.style.opacity = sceneIsCalm() && color !== '#000' ? 0 : op; }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms * TS));
 async function run(steps) { const ep = EP; for (const [ms, fn] of steps) { await wait(ms); if (ep !== EP) return false; fn(); } return true; }   /* timed steps: [wait in ms, then do this]. Stops if the chapter changes. */
 
@@ -353,7 +354,7 @@ function nextCard(i, s, tries = 0) {
   const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() { hideStormSkip?.(); hideStorySkip?.(); HOLD.on = false;   /* leave anything running: scripted scenes, the storm, the camera director */
+function resetTransient() { endSceneWarning(); hideStormSkip?.(); hideStorySkip?.(); HOLD.on = false;   /* leave anything running: scripted scenes, the storm, the camera director */
   for (const k of Object.keys(PL)) for (const n of PL[k].npcs || []) if (n.fol) stopFollow(n);   /* nobody keeps following you into another chapter */
   EP++; endCut(); frozen = false; moveLock = false; ST.on = false; SB = null; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; flash(0, 0); $('vig').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.tilt = 0;
   SFX.setBeds({}, 0.1); TICKS.length = 0; STORM.clear(); STORM.mask(0, 0, 1e5); WIND.k = 0.06; torch(false); if (cur && PL[cur]) PL[cur].group.rotation.set(0, 0, 0); sitting = false; document.body.classList.remove('flashing');
@@ -509,9 +510,9 @@ ON[45] = () => { unlock('melissa'); unlock('wind'); };
 /* ---------- the storm sequence (chapter 1's night and chapter 3's morning): an opt-in card, then a scripted scene ---------- */
 function stormIntro(kind) {
   if (ST.on) return; const L = LINES[kind];
-  card(L.cardTitle, ['The next part is loud, and it may be scary.', 'Nobody is hurt on the screen. Everyone in this story stays together.'], [{ t: 'Begin', go: () => { hideCard(); stormRun(kind); } }, { t: 'Read what happened instead', go: () => { hideCard(); stormSkip(kind); } }], { col: true });
+  sceneWarning(card, { title: L.cardTitle, lines: ['The next part is loud, and it may be scary.', 'Nobody is hurt on the screen. Everyone in this story stays together.'], watch: () => { hideCard(); stormRun(kind); }, read: () => { hideCard(); stormSkip(kind); } });
 }
-function stormSkip(kind) { const L = LINES[kind]; unlock(L.page); card('What happened', L.skip, [{ t: 'Go on', go: () => { hideCard(); stormAfter(kind); } }], { col: true }); }
+function stormSkip(kind) { endSceneWarning(); const L = LINES[kind]; unlock(L.page); card('What happened', L.skip, [{ t: 'Go on', go: () => { hideCard(); stormAfter(kind); } }], { col: true }); }
 const HOLD = { on: false, v: 0 };
 for (const ev of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) $('hold').addEventListener(ev, (e) => { HOLD.on = ev === 'pointerdown'; $('hold').classList.toggle('on', HOLD.on); e.preventDefault(); });
 addEventListener('keydown', (e) => { if ($('holdwrap').hidden) return; if (e.key === ' ' || e.key === 'Enter') HOLD.on = true; }); addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') HOLD.on = false; });
@@ -566,7 +567,7 @@ async function stormRun(kind) {
   SB = { wind: 0.5, howl: 0.2, roar: 0.15, rattle: 0.15 }; WIND.k = 0.6; FX.shake = 0.05;
   say(L.b[0], 4200); await wait(4400); if (!live()) return;
   if (!(await step(100, () => { say(L.b[1], 4000); SB = SB_GROAN; FX.shake = 0.12; SFX.roofGroan(); }))) return;
-  if (!(await step(3800, () => { say(L.b[2], 3800); lightK(0.2); setTimeout(() => lightK(1), 160); setTimeout(() => lightK(0), 420); SFX.zincBang(0.9); FX.shake = 0.25; torch(true); }))) return;
+  if (!(await step(3800, () => { say(L.b[2], 3800); lightK(0.2); if (!sceneIsCalm()) setTimeout(() => { if (live()) lightK(1); }, 160); setTimeout(() => { if (live()) lightK(0); }, 420); SFX.zincBang(0.9); FX.shake = 0.25; torch(true); }))) return;
   if (!(await step(3800, () => { say(L.b[3], 4000); SB = SB_LIGHT; FX.shake = 0.4; SFX.gust(1, 3); ease2(envNow, ENV.roomStorm, 3); }))) return;
   /* hold on: press and hold to keep steady while the wind builds */
   const panic = (clip) => { for (const n of P.npcs) if (n.m.visible && n.ctl && !n.walking) n.ctl.play(clip); };   /* the family flinches as the wind builds, then ducks and covers when the roof goes */
@@ -584,7 +585,7 @@ async function stormRun(kind) {
   $('fadeT').textContent = L.title; $('fadeS').textContent = L.sub; $('fade').classList.add('txt'); unlock(L.page); unlock(L.page2); await wait(5400); if (!live()) return; $('fade').classList.remove('txt'); await wait(700); if (!live()) return;
   ST.on = false; stormAfter(kind, true);
 }
-function stormAfter(kind, fromRun) { hideStormSkip?.();
+function stormAfter(kind, fromRun) { endSceneWarning(); hideStormSkip?.();
   const P = P_(), hall = kind === 'm25'; ST.on = false; moveLock = false; SB = null; endCut(); FX.shake = 0; FX.roll = 0; $('holdwrap').hidden = true; STORM.mask(0, 0, 1e5); STORM.clear(); weather(0.1, 0, null); setBedsFor('after'); torch(false);
   for (const l of hall ? P.lights : [P.lampLight]) l.userData.k = 0; restoreRoof(P, true); setEnv(mixEnv(ENV.after, ENV.room, 0.5));
   bars(false); fadeBlack(false, fromRun ? 3200 : 700); frozen = false; busy = false;
@@ -706,8 +707,8 @@ function frame(t) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
   if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); }
   else if (!state.started && P_() && P_().titleView) { const tv = P_().titleView, s = t / 1000; camera.position.set(tv.x - Math.sin(s * 0.08) * 3, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(s * 0.05) * 0.04, 0, 'YXZ'); }
-  else { camera.position.set(state.x, EYE - (sitting ? 0.35 : 0) + FX.bob, state.z); camera.rotation.set(state.pitch, state.yaw, FX.roll + FX.tilt, 'YXZ'); }
-  if (FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.035; }
+  else { camera.position.set(state.x, EYE - (sitting ? 0.35 : 0) + (sceneIsCalm() ? 0 : FX.bob), state.z); camera.rotation.set(state.pitch, state.yaw, sceneIsCalm() ? 0 : FX.roll + FX.tilt, 'YXZ'); }
+  if (!sceneIsCalm() && FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.035; }
   sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110); birds.tick(t / 1000, !!(P_() && envNow.stars < 0.3 && cur !== 'hall' && cur !== 'room88' && !ST.on && WIND.k < 0.3), camera.position.x, camera.position.z);
   sky.dome.position.copy(camera.position); sky.stars.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380);
   if (__DEV__ && MV) { MV(); return; }
@@ -809,7 +810,7 @@ function devViews() {
       reset(); bars(true); say('Night. The hall is full of sleeping people, and the wind grows louder and louder outside.', 1e6); $('talk').hidden = false; $('talk').textContent = 'Sit down with Mum and Gran'; showHint(); await settle(); await new Promise((r) => setTimeout(r, 1100)); check('narration inside the bars');
       reset(); showGoal(true); document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Mr. Raymond'; $('line').textContent = 'The roof is the first thing to go. Will you hand up the nails while I fix the sheets down?'; $('choices').innerHTML = '<button class="btn ghost">Yes, I can help.</button><button class="btn ghost">Is it safe up there?</button><button class="btn ghost">I do not know how.</button>'; $('next').hidden = true; await settle(); check('dialogue with three choices');
       reset(); bars(true); say('Hold on!', 1e6); $('holdwrap').hidden = false; $('talk').hidden = true; await settle(); await new Promise((r) => setTimeout(r, 1100)); check('hold on button in the bars');
-      reset(); card('Tuesday morning', ['The next part is loud, and it may be scary.', 'Nobody is hurt on the screen. Everyone in this story stays together.'], [{ t: 'Begin', go: () => {} }, { t: 'Read what happened instead', go: () => {} }], { col: true }); await settle(); check('card');
+      reset(); sceneWarning(card, { title: 'Tuesday morning', lines: ['The next part is loud, and it may be scary.', 'Nobody is hurt on the screen. Everyone in this story stays together.'], watch: () => {}, read: () => {} }); await settle(); check('card');
       reset(); $('nudge').hidden = false; $('nudge').style.left = (W * 0.75 | 0) + 'px'; $('nudge').style.top = (Hh * 0.45 | 0) + 'px'; showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Nail a board over the window'; await settle(); check('helper arrow with talk button');
       const covered = (name, panel, ids) => { for (const id of ids) { const e = $(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (!t || !$(panel).contains(t)) out.push(`${W}x${Hh} ${name}: ${id} is covered by ${t ? (t.id || t.className || t.tagName) : 'nothing'}`); } };
       reset(); showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Sit down with Mum and Gran'; await settle();

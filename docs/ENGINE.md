@@ -465,6 +465,10 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 `showCinematicSkip(onSkip)` shows the shared X. Call the function it returns when the scene ends or is interrupted. The game's callback moves directly to the recap or restores the same playable state as the end of the scene. Required puzzles and conversations stay in the story. `playChapterFade` uses the same control and performs chapter setup once, even if the player skips before the title appears.
 
+### Warnings before intense scenes
+
+`sceneWarning` uses a game's existing card with a Watch scene button, a Read what happened instead button, and a Calm mode checkbox. Calm mode starts with the device's reduced-motion preference and remembers any change on that browser. The watch path uses `sceneIsCalm()` to reduce camera motion and bright effects, and the audio engine lowers the scene volume. Call `endSceneWarning()` when the scene ends, is skipped, or is left through chapter navigation.
+
 ## engine/collapse.js: a building that falls down (18 November 2026)
 
 `collapse(group, opts)` makes a building fall in pieces instead of squashing flat. First used for the Myers Ward in Eventide's night chapter (the owner: make it look as good as the Port Royal buildings).

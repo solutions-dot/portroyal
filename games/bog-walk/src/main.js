@@ -1,3 +1,4 @@
+import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { grip, gripTick } from '../../../engine/grip.js';
@@ -98,7 +99,7 @@ function say(who, text, ms = 4200) {   /* a line shown as a subtitle; in the Tub
 }
 let toastTimer = 0;
 function toast(msg, ms = 2800) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, ms); }
-function fadeTo(color, op, ms) { const f = $('fade'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; f.style.opacity = op; }
+function fadeTo(color, op, ms) { const f = $('fade'); f.style.background = sceneIsCalm() && color === '#fff' ? '#000' : color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; f.style.opacity = op; }
 /* ---------- the cinematic layer: black bars (the words and buttons move inside them), captions on black, a held breath ---------- */
 function bars(on) { N.cine = on; document.body.classList.toggle('cine', on); if (on) calcLift(); }
 function calcLift() {   /* how far the hand must rise to keep the fist out from under the bottom bar (7% of the screen), at this screen size */
@@ -174,7 +175,12 @@ function afterBoots(v) {
 function finishCh2() { setStage(31); startCh3(true); }
 function startCh3(fromCh2) {   /* about 4 a.m.: a title on black, then the water */
   if (!fromCh2) { resetNight(); for (const p of T.patches) T.setPatchClean(p, 1); N.scraped = T.patches.length; S.z = ZM - 6; S.yaw = 0; }
-  setStage(40); N.wlT = 0.03; startIntro([['The water', 'About 4 a.m.']], startTrickle);
+  setStage(40); N.wlT = 0.03;
+  sceneWarning(card, {
+    title: 'The water', lines: ['The water rises in the dark. This scene may feel scary.'],
+    watch: () => { hideCard(); startIntro([['The water', 'About 4 a.m.']], startTrickle); },
+    read: () => { hideCard(); N.skipped = true; showEnd(); },
+  });
 }
 function startTrickle() {
   setPhase('trickle'); hideNightSkip = showCinematicSkip(skipNight); setClock('4 a.m.'); $('skip').hidden = false; setGoal('Look at the floor. Something is not right.'); N.glanceOn = true; N.glanceT = 0; N.duck = D(2.6);   /* a held breath: the sound drops away and your eyes drop to the water at your feet */
@@ -195,7 +201,7 @@ function startOut(skipped) {
   N.out = { x0: S.x, z0: S.z, e0: S.eye, p0: S.pitch, y0: S.yaw }; hideHud(true); if (!skipped) { hideNightSkip = showCinematicSkip(showEnd); bars(true); cue('end'); airSwell(2.6); }
   at(skipped ? [[0.2, () => fadeTo('#000', 1, 700)], [1.2, showEnd]] : [[2.3, () => fadeTo('#fff', 1, 1200)], [3.8, showEnd]]);
 }
-function showEnd() {
+function showEnd() { endSceneWarning();
   hideNightSkip?.(); N.q = [];
   setPhase('end'); setClock(''); bars(false); hideHud(true); captionOff(); unlock('water', true); setStage(41);
   card('You are out', [N.skipped ? 'You skipped the dark part. In the story, you get out of the Tube as the sky goes grey.' : 'The air is cool. The sky is going grey.', 'Many men are still in the pipe.'],
@@ -580,7 +586,7 @@ $('reset').onclick = () => { if (fading || !S.started) return; closeJournal(); l
   card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart "' + CHAPTERS[i].name + '"', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }]); };
 $('exit').onclick = () => { if (locked()) return; card('Leave Zeke\'s story?', ['You can come back to it from the Chapters list.'], [{ t: 'Yes, go into the Tube', go: () => { hideCard(); beginChapter(2); } }, { t: 'No, stay here', go: hideCard }]); };
 
-function resetTransient() { hideIntroSkip?.(); hideNightSkip?.(); hideStorySkip?.();   /* leave anything running: scripted scenes, a ride, the night's timers, the cinematic layer */
+function resetTransient() { endSceneWarning(); hideIntroSkip?.(); hideNightSkip?.(); hideStorySkip?.();   /* leave anything running: scripted scenes, a ride, the night's timers, the cinematic layer */
   EP++; TICKS.length = 0; frozen = false; RIDE.on = false; bars(false); hideHud(false); captionOff(); fadeTo('#000', 0, 0); $('sub').classList.add('dim'); $('holdbox').hidden = true; $('pick').hidden = true; $('nudge').hidden = true; NUDGE.on = false; $('exit').hidden = true; $('skip').hidden = true; $('way').hidden = true; $('act').hidden = true; $('vig').style.opacity = 0;
   N.q = []; N.intro = false; N.turn = null; $('skiphint').hidden = true; setClock(''); HOLD.v = 0; HOLD.on = false; setWorld({}, 0.1); setBeds({}, 0.1); smoke.clear(); leaveTalk(); closePuzzle(false); closeJournal(); closeChapters(); closeCredits(); hideCard();
 }
@@ -797,21 +803,21 @@ function tick(dt, clockDt = dt) {
     if (N.phase === 'shot') T.water.set(N.wl);
     T.update(dt, ft, S.z, 1); hand.update(ft, N.torch); T.hemi.intensity = 0.85 + 0.55 * (1 - N.torch);   /* once the torches are out your eyes get used to the dark a little */
   } else { worldTick(dt, ft); audioTick(time); }
-  const bob = Math.sin(walkPh * 2.4) * (MODE === 'tube' ? 0.012 : 0.02);
+  const bob = sceneIsCalm() ? 0 : Math.sin(walkPh * 2.4) * (MODE === 'tube' ? 0.012 : 0.02);
   /* the camera's own acting: a low rumble as the water comes, a slow glance at the floor at the first sign of water, a view that narrows as the dark closes in
      and widens as you reach the sky, and the hand rising a little when the black bars are in. None of it changes where you look: your own turning is added to it. */
   if (N.turn) { N.turn.t += dt; const k = ease(N.turn.t / N.turn.dur); S.yaw = N.turn.from + N.turn.d * k; if (N.turn.t >= N.turn.dur) N.turn = null; }
   if (MODE === 'tube') { if (!$('nudge').hidden) $('nudge').hidden = true; const w = $('way'), on = S.started && ['rise', 'dark'].includes(N.phase), rel = on ? bearingToLight() : 0, behind = Math.abs(rel) > 2.2, show = on && Math.abs(rel) > 0.6 && !N.turn;
     if (w.hidden === show) w.hidden = !show; if (show) { $('waytext').textContent = behind ? 'Turn around' : 'This way'; $('wayarrow').style.transform = behind ? 'rotate(-90deg) scaleX(-1)' : 'rotate(' + (rel > 0 ? 180 : 0) + 'deg)'; } }   /* the cue: a gold arrow and "This way", or "Turn around" when the light is behind you */
   else nudgeTick(time);
-  const ph = N.phase; let shake = 0; if (MODE === 'tube' && S.started && ph !== 'shot') shake = (ph === 'rise' ? 0.4 + 0.6 * ease(N.wl) : ph === 'dark' ? 1 : ph === 'out' ? Math.max(0, 1 - N.t / D(1.6)) : 0) * 0.0045;
+  const ph = N.phase; let shake = 0; if (!sceneIsCalm() && MODE === 'tube' && S.started && ph !== 'shot') shake = (ph === 'rise' ? 0.4 + 0.6 * ease(N.wl) : ph === 'dark' ? 1 : ph === 'out' ? Math.max(0, 1 - N.t / D(1.6)) : 0) * 0.0045;
   if (N.glanceOn) { N.glanceT += dt; N.glance = -0.34 * Math.sin(Math.min(1, N.glanceT / D(3.2)) * PI); if (N.glanceT > D(3.2)) { N.glanceOn = false; N.glance = 0; } }
   if (MODE === 'tube') { const fovT = ph === 'dark' ? 61 : ph === 'out' ? 72 : 68; if (Math.abs(camera.fov - fovT) > 0.01) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 1.1); camera.updateProjectionMatrix(); }
     const liftT = N.cine ? N.liftNeed : 0; if (Math.abs(N.lift - liftT) > 0.002) { N.lift += (liftT - N.lift) * Math.min(1, dt * 3); hand.setLift(N.lift); }
     { const csT = N.cine ? 1 : 0; if (Math.abs(hand.cs - csT) > 0.002) hand.setCine(hand.cs + (csT - hand.cs) * Math.min(1, dt * 3)); } }   /* the torch shrinks a little while the bars are in */
   else { const fov = camera.aspect < 0.8 ? 76 : 66; if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
   if (!S.started && !RIDE.on && P_() && P_().titleView) { const tv = P_().titleView; camera.position.set(tv.x - Math.sin(ft * 0.08) * 2, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(ft * 0.05) * 0.04, 0, 'YXZ'); }
-  else { camera.position.set(S.x + Math.sin(ft * 43) * shake, S.eye + bob + Math.sin(ft * 57 + 1) * shake * 0.7, S.z); camera.rotation.set(S.pitch + N.glance, S.yaw, Math.sin(ft * 31) * shake * 1.6, 'YXZ'); }
+  else { camera.position.set(S.x + Math.sin(ft * 43) * shake, S.eye + bob + Math.sin(ft * 57 + 1) * shake * 0.7, S.z); camera.rotation.set(S.pitch + (sceneIsCalm() ? 0 : N.glance), S.yaw, Math.sin(ft * 31) * shake * 1.6, 'YXZ'); }
   if (MODE === 'tube') { const nearP = !locked() && !!nearPatch(); if (N.phase !== 'shot') { if ($('act').hidden === nearP) $('act').hidden = !nearP; if (nearP && $('act').textContent !== 'Scrape') $('act').textContent = 'Scrape'; } }   /* test views and checks set the Scrape button themselves */
   else { sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110); for (const o of [sky.dome, sky.stars, sky.clouds]) o.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380); bubbleTick(time); }
 }

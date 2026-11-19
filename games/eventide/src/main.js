@@ -1,3 +1,4 @@
+import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 /* games/eventide/src/main.js: Eventide 1980, The Home on Slipe Pen Road (the plan is docs/games/eventide.md).
    Seven chapters, from a visit to the Eventide Home in May 1980, through the night of the fire of 20 May, to the monument today.
@@ -425,12 +426,17 @@ function nextCard(i, s, tries = 0) {
   const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished', ['Next is "' + nx.name + '" (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() { EP++; frozen = false; HELD_BLANKET.visible = false; endCut(); FX.shake = 0; $('sub').classList.add('dim'); document.body.classList.remove('subbing'); TICKS.length = 0; SIREN = 0; }
+function resetTransient() { endSceneWarning(); EP++; frozen = false; HELD_BLANKET.visible = false; endCut(); FX.shake = 0; $('sub').classList.add('dim'); document.body.classList.remove('subbing'); TICKS.length = 0; SIREN = 0; }
 async function beginChapter(i, st) {
   if (fading) return; resetTransient(); st = st || CH_FIRST[i]; const C = CHAPTERS[i]; hideCard(); closeJournal(); closeChapters(); $('dialogue').hidden = true; busy = false; talkWith = null;
   if (!modelsReady || !PL[SCENES[i].place]) toast('Loading', 4000); const specs = await takeScene(i);
   const go = () => chapterFade(C.title, C.sub, () => startScene(i, st, specs));
-  if (i === 3 && st === 40 && !QUICK) card('This chapter is sad', ['It tells about the night of the fire.', 'You watch from the road, far back. Nobody is shown hurt.', 'You can skip to the morning if you like.'], [{ t: 'Continue', go: () => { hideCard(); go(); } }, { t: 'Skip to the morning', go: () => { hideCard(); st = 45; go(); } }], { col: true });
+  if (i === 3 && st === 40) sceneWarning(card, {
+    title: 'The night of the fire',
+    lines: ['This chapter tells about the Eventide fire.', 'You watch from far back. Nobody is shown hurt.'],
+    watch: () => { hideCard(); go(); },
+    read: () => card('What happened', ['A fire broke out at the Eventide Home during the night.', 'Firefighters brought people out. The Myers Ward collapsed.'], [{ t: 'Go on', go: () => { hideCard(); st = 45; go(); } }], { col: true }),
+  });
   else go();
 }
 function startScene(i, st, specs) {
@@ -556,7 +562,7 @@ async function roofFalls(P) {
   await cut([4, 1.4, -2.2], [5.5, 1.35, -3.0], [10, 1.1, -5.2], [10.4, 1.1, -5.2], 4.5); if (ep !== EP) return;   /* then down to the road: two of your friends, safe */
   finish();
 }
-ON[45] = () => { const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); skippableScene(() => { endCut(); frozen = false; }); state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; fadeBlack(false, 1400); bars(true); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
+ON[45] = () => { endSceneWarning(); const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); skippableScene(() => { endCut(); frozen = false; }); state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; fadeBlack(false, 1400); bars(true); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
   await cut([-14, 1.6, 2.5], [-9, 1.4, -2.5], [20, 2, -1], [4, 3, -30], 7); if (ep !== EP) return; endCut(); frozen = false; })(); };   /* the bus goes by, as it did that morning (Gleaner, 2020) */
 const DAWN = { x: -9, z: -5.4, yaw: -1.1 };   /* where you stand at dawn: on the pavement, out of the road */
 /* the bus at dawn drives along its lane (P.vehicles) at about 28 km/h, and stops and waits while anyone, you included, is in the road just ahead of it or beside it */
@@ -639,7 +645,7 @@ function update(dt, now) {
   if (SC.life) SC.life.tick(dt, { px: state.x, pz: state.z, story: SC.people.filter((n) => n.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } });   /* the crowd: engine/ambient.js moves, animates and grounds the people it owns */
   for (const n of SC.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   const even = (frameN++ & 1) === 0; for (const n of SC.npcs) if (n.m.visible && !n.amb && (even || n.walker || n.walking)) groundFeet(n.m);   /* people on the move every frame, so their feet stay planted without a bob */
-  if (P.fire && P.night.visible) P.fire.tick(dt, (now || 0) / 1000);
+  if (P.fire && P.night.visible) P.fire.tick(dt, (now || 0) / 1000, sceneIsCalm());
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
   if (now !== undefined) { audioTick(now / 1000); bubbleTick(now / 1000); stickUI(); nudgeTick(now); }
 }
@@ -666,7 +672,7 @@ function frame(t) {
   else if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); }
   else if (!SC) { const s = t / 1000; camera.position.set(0.3 + Math.sin(s * 0.1) * 0.8, 1.7, 2.6); camera.rotation.set(0.16, Math.sin(s * 0.07) * 0.05, 0, 'YXZ'); }
   else { const P = PL[cur]; camera.position.set(state.x, (P ? P.groundAt(state.x, state.z) : 0) + EYE_NOW, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); }
-  if (FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.06; camera.position.y += (Math.random() - 0.5) * k * 0.06; camera.rotation.z += (Math.random() - 0.5) * k * 0.02; }
+  if (!sceneIsCalm() && FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.06; camera.position.y += (Math.random() - 0.5) * k * 0.06; camera.rotation.z += (Math.random() - 0.5) * k * 0.02; }
   sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110);
   sky.dome.position.copy(camera.position); sky.stars.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380);
   if (!NORENDER) renderFramed(renderer, scene, camera, document.body.classList.contains('cine'));
@@ -772,7 +778,7 @@ function devViews() {
     reset(); showGoal(true); say('You hold the gate. Firefighters lead the children out, one by one.', 1e6); $('talk').hidden = false; $('talk').textContent = LONG; showHint(); toast('Put back: 2 of 4'); await settle(); check('narration');
     reset(); bars(true); say('Some of the ladies got out. They wait by the road in blankets.', 1e6); await settle(); await settle(); check('narration inside the bars');
     reset(); showGoal(true); document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Nurse Bell'; $('line').textContent = 'Whose story will you sit and hear before you go?'; for (const t of ['Miss Iris, the dressmaker', 'Miss Hyacinth, from the market', 'Miss Maude, the teacher', 'Miss Dora, who sings']) { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = t; $('choices').appendChild(b); } $('next').hidden = true; await settle(); check('dialogue with four choices'); $('choices').replaceChildren(); $('next').hidden = false;
-    reset(); card('This chapter is sad', ['It tells about the night of the fire.', 'You watch from the road, far back. Nobody is shown hurt.', 'You can skip to the morning if you like.'], [{ t: 'Continue', go: () => {} }, { t: 'Skip to the morning', go: () => {} }], { col: true }); await settle(); check('sad card');
+    reset(); sceneWarning(card, { title: 'The night of the fire', lines: ['This chapter tells about the Eventide fire.', 'You watch from far back. Nobody is shown hurt.'], watch: () => {}, read: () => {} }); await settle(); check('sad card');
     reset(); sortCards(2); await settle(); check('sort card');
     reset(); timeline(3); await settle(); check('timeline card');
     reset(); card('A letter for Miss Iris', LETTER, [{ t: 'Finish reading', go: () => {} }]); await settle(); check('letter card');

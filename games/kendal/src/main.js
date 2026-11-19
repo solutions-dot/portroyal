@@ -1,3 +1,4 @@
+import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
@@ -376,7 +377,7 @@ function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'op
 const bars = (on) => document.body.classList.toggle('cine', on);
 let subTimer = 0;
 function say(text, ms = 3800) { const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
-function flash(op, ms = 0, color = '#fff') { const f = $('flash'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease-out'; f.style.opacity = op; }
+function flash(op, ms = 0, color = '#fff') { const f = $('flash'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease-out'; f.style.opacity = sceneIsCalm() && color !== '#000' ? 0 : op; }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms * TS));
 async function run(steps) { const ep = EP; for (const [ms, fn] of steps) { await wait(ms); if (ep !== EP) return false; fn(); } return true; }   /* timed steps: [wait in ms, then do this]. Stops if the chapter changes. */
 
@@ -499,7 +500,7 @@ function nextCard(i, s, tries = 0) {
   const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() { hideCrashSkip?.(); hideStorySkip?.(); CR.on = false; HOLD.on = false;   /* leave anything running: scripted scenes, a ride, the crash, the camera director */
+function resetTransient() { endSceneWarning(); hideCrashSkip?.(); hideStorySkip?.(); CR.on = false; HOLD.on = false;   /* leave anything running: scripted scenes, a ride, the crash, the camera director */
   for (const k of Object.keys(PL)) for (const n of PL[k].npcs || []) if (n.fol) stopFollow(n);   /* nobody keeps following you into another chapter */
   EP++; RIDE.on = false; RIDE.v = RIDE.target = 0; endCut(); frozen = false; moveLock = false; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; flash(0, 0); $('vig').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.tilt = 0; RING = 0; HUSH = false; CRBEDS = {};
   SFX.mento(false); SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); if (cur && PL[cur]) PL[cur].group.rotation.set(0, 0, 0); sitting = false; document.body.classList.remove('flashing');
@@ -696,9 +697,9 @@ ON[50] = () => { const C = PL.coach; if (C) for (const n of C.npcs) { if (n.amb)
 ON[51] = async () => { SFX.hornDiesel(1.2); say('The train pulls out of Montego Bay. Stars fill the windows.', 4200); RIDE.target = 12; };
 ON[52] = () => { if (cur !== 'coach') return; say('The train climbs into the hills, slowly and steadily.', 4200); RIDE.target = 9; };
 function crashIntro() {
-  if (CR.on) return; card('About half past eleven', ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], [{ t: 'Begin', go: () => { hideCard(); CR.choice = 'run'; STORY.done('seat'); } }, { t: 'Read what happened instead', go: () => { hideCard(); CR.choice = 'skip'; STORY.done('seat'); } }], { col: true });
+  if (CR.on) return; sceneWarning(card, { title: 'About half past eleven', lines: ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], watch: () => { hideCard(); CR.choice = 'run'; STORY.done('seat'); }, read: () => { hideCard(); CR.choice = 'skip'; STORY.done('seat'); } });
 }
-function crashSkip() {
+function crashSkip() { endSceneWarning();
   unlock('crash'); unlock('greenvale'); card('What happened', ['The train climbed to Greenvale, the highest station on the line. Then it ran downhill toward Kendal.', 'Three whistle blasts sounded. The train went faster, and left the rails on a curve.', 'Eight of the twelve coaches were wrecked. The last two coaches stayed on the track.'], [{ t: 'Go on', go: () => { hideCard(); setStage(53); arriveKendal(); } }], { col: true });
 }
 const HOLD = { on: false, v: 0 };
@@ -723,9 +724,9 @@ async function crashRun() {
   if (!(await step(3500, () => { say('Three long whistle blasts.', 3600); SFX.threeBlasts(); FX.shake = 0.2; }))) return;
   if (!(await step(3100, () => { say('The brakes scream.', 3000); SFX.screech(3.4); FX.shake = 0.5; CR.phase = 3; flash(0.35, 60, '#ff9a40'); setTimeout(() => flash(0, 220, '#ff9a40'), 90); $('holdwrap').hidden = false; HOLD.v = 0; goalText = 'Hold on!'; showGoal(); }))) return;
   const t0 = performance.now(); let tilt = 0;
-  const lurch = tween(4.2, (k, dk) => { const held = HOLD.on ? 1 : 0; HOLD.v = clamp01(HOLD.v + (held ? 0.9 : -0.5) * dk * 4); $('holdbar').firstElementChild.style.width = (HOLD.v * 100) + '%'; FX.shake = 0.5 + k * 0.5 - HOLD.v * 0.25; tilt = ease(k) * 0.16; P.group.rotation.x = tilt; FX.roll = Math.sin(k * 44) * 0.01; lamp.intensity = Math.random() < k * 0.7 ? 0.5 : 9; if (Math.random() < 0.12) { flash(0.28, 40, '#ff8a30'); setTimeout(() => flash(0, 160, '#ff8a30'), 60); } RIDE.target = Math.max(0, 27 - k * 14); });
+  const lurch = tween(4.2, (k, dk) => { const held = HOLD.on ? 1 : 0; HOLD.v = clamp01(HOLD.v + (held ? 0.9 : -0.5) * dk * 4); $('holdbar').firstElementChild.style.width = (HOLD.v * 100) + '%'; FX.shake = 0.5 + k * 0.5 - HOLD.v * 0.25; tilt = ease(k) * 0.16; P.group.rotation.x = sceneIsCalm() ? 0 : tilt; FX.roll = Math.sin(k * 44) * 0.01; lamp.intensity = !sceneIsCalm() && Math.random() < k * 0.7 ? 0.5 : 9; if (Math.random() < 0.12) { flash(0.28, 40, '#ff8a30'); setTimeout(() => flash(0, 160, '#ff8a30'), 60); } RIDE.target = Math.max(0, 27 - k * 14); });
   if (!(await lurch)) return; if (!live()) return;
-  $('holdwrap').hidden = true; CR.phase = 4; SFX.crashBang(); flash(1, 0, '#fff'); lamp.intensity = 0; P.group.rotation.x = 0.3; FX.shake = 1.6; RIDE.target = 0; RIDE.v = 6; say('', 100);
+  $('holdwrap').hidden = true; CR.phase = 4; SFX.crashBang(); flash(1, 0, '#fff'); lamp.intensity = 0; P.group.rotation.x = sceneIsCalm() ? 0 : 0.3; FX.shake = 1.6; RIDE.target = 0; RIDE.v = 6; say('', 100);
   await wait(450); if (!live()) return; flash(1, 0, '#000'); fadeBlack(true, 0); $('flash').style.opacity = 0; FX.shake = 0; RIDE.on = false; CRBEDS = {}; RING = 0.05;
   await wait(2600); if (!live()) return; $('fadeT').textContent = 'Kendal, Manchester'; $('fadeS').textContent = 'Sunday night, 1 September 1957. About half past eleven.'; $('fade').classList.add('txt'); unlock('crash'); unlock('greenvale');
   await wait(5200); if (!live()) return; $('fade').classList.remove('txt'); await wait(900); if (!live()) return; CR.on = false; hideCrashSkip?.(); bars(false); arriveKendal(true);
@@ -855,8 +856,8 @@ function frame(t) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
   if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); }
   else if (!state.started && P_() && P_().titleView) { const tv = P_().titleView, s = t / 1000; camera.position.set(tv.x - Math.sin(s * 0.08) * 3, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(s * 0.05) * 0.04, 0, 'YXZ'); }
-  else { camera.position.set(state.x, EYE - (sitting ? 0.35 : 0) + FX.bob, state.z); camera.rotation.set(state.pitch, state.yaw, FX.roll + FX.tilt, 'YXZ'); }
-  if (FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.035; }
+  else { camera.position.set(state.x, EYE - (sitting ? 0.35 : 0) + (sceneIsCalm() ? 0 : FX.bob), state.z); camera.rotation.set(state.pitch, state.yaw, sceneIsCalm() ? 0 : FX.roll + FX.tilt, 'YXZ'); }
+  if (!sceneIsCalm() && FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.035; }
   sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110); birds.tick(t / 1000, !!(P_() && envNow.stars < 0.3 && !P_().ride && P_().id !== 'crash'), camera.position.x, camera.position.z);
   sky.dome.position.copy(camera.position); sky.stars.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380);
   if (__DEV__ && MV) { MV(); return; }
@@ -1032,7 +1033,7 @@ function devViews() {
       reset(); bars(true); say('The train climbs into the hills, slowly and steadily, and the engines work very hard indeed.', 1e6); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; showHint(); await settle(); await new Promise((r) => setTimeout(r, 1100)); check('narration inside the bars');
       reset(); showGoal(true); document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Mass Dudley'; $('line').textContent = 'Some say a railway will help us. Some say it will take our work. What do you think about that, child?'; $('choices').innerHTML = '<button class="btn ghost">It will help people.</button><button class="btn ghost">It might take your work.</button><button class="btn ghost">I do not know yet.</button>'; $('next').hidden = true; await settle(); check('dialogue with three choices');
       reset(); bars(true); say('Hold on!', 1e6); $('holdwrap').hidden = false; $('talk').hidden = true; await settle(); await new Promise((r) => setTimeout(r, 1100)); check('hold on button in the bars');
-      reset(); card('About half past eleven', ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], [{ t: 'Begin', go: () => {} }, { t: 'Read what happened instead', go: () => {} }], { col: true }); await settle(); check('card');
+      reset(); sceneWarning(card, { title: 'About half past eleven', lines: ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], watch: () => {}, read: () => {} }); await settle(); check('card');
       reset(); $('nudge').hidden = false; $('nudge').style.left = (W * 0.75 | 0) + 'px'; $('nudge').style.top = (Hh * 0.45 | 0) + 'px'; showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Give the water to the nurse'; await settle(); check('helper arrow with talk button');
       reset(); showGoal(true); showPlace('Kendal, Manchester. About half past eleven.'); $('nudge').hidden = false; $('nudge').className = 'down'; $('nudge').style.left = (W / 2 | 0) + 'px'; $('nudge').style.top = Math.max(110, Hh * 0.3 | 0) + 'px'; await settle(); check('helper arrow with the place name');
       /* a journal page found while someone is talking: the Journal button glows with a count at once, but the toast waits until the dialogue box closes (it never covers it) */
