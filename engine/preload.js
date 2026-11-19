@@ -61,4 +61,25 @@ export function placeKeeper({ places, ensure, renderer, camera, scene, current =
     background(order, gap = 400) { if (bg) return; bg = true; const step = () => { const id = order().find((k) => !places[k] || !places[k].populated); if (id) work(async () => { await ensure(id); await new Promise((r) => setTimeout(r, gap)); step(); }); }; step(); },
   };
 }
+/* stepPlaces: the glue for a game driven by a STEPS table where each stage names its place and places are built on arrival (Windrush, Selassie).
+   steps = { stage: { place } }, chapters = [{ first, last }], worlds = { id: { group } } (built places), ensure(id) builds one (cached, the same
+   promise the game's go() awaits, so nothing is built twice), current() is the place shown now.
+   - nextPlace(stage): the next place, in stage order, that differs from this stage's.
+   - prepare(id): build it and warm it in quiet moments (again after a release), unless it is shown or already warm.
+   - releaseFar(stage): free the graphics memory of built places neither this chapter nor the next uses (they stay built).
+   - shown(id): call on arrival; the place is drawn, so it is warm again. */
+export function stepPlaces({ steps, chapters, chapterOf, worlds, ensure, current, renderer, camera, scene }) {
+  const ORDER = Object.keys(steps).map(Number).sort((a, b) => a - b), queued = new Set(), cold = new Set();
+  const nextPlace = (stage) => { const here = steps[stage] && steps[stage].place; for (const s of ORDER) if (s > stage && steps[s].place !== here) return steps[s].place; return null; };
+  const chapterPlaces = (i) => { const c = chapters[i]; return c ? ORDER.filter((s) => s >= c.first && s <= c.last).map((s) => steps[s].place) : []; };
+  function prepare(id) {
+    if (!id || id === current() || queued.has(id) || (worlds[id] && !cold.has(id))) return; queued.add(id);
+    if (!worlds[id]) work(() => ensure(id).catch(() => {}));   /* a failed build is tried again by the game's own arrival, which shows its "could not load" card */
+    work(async () => { const Q = worlds[id]; if (Q) { cold.delete(id); if (id !== current()) await warm(renderer, Q.group, camera, scene); } queued.delete(id); });
+  }
+  function releaseFar(stage) { const i = chapterOf(stage), keep = new Set([...chapterPlaces(i), ...chapterPlaces(i + 1)]);
+    for (const [id, Q] of Object.entries(worlds)) if (Q && Q.group && !keep.has(id) && !cold.has(id) && !queued.has(id) && id !== current()) { release(Q.group, scene); cold.add(id); } }
+  const shown = (id) => { cold.delete(id); };   /* the game drew it on arrival, so it is on the graphics chip again */
+  return { nextPlace, prepare, releaseFar, shown };
+}
 if (typeof window !== 'undefined') window.__preload = PRELOAD;

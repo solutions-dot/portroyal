@@ -23,6 +23,7 @@ import { arm, disarm } from './weapons.js';
 import { pose, POSES } from './clips.js';
 import { pace, strideOf } from './walk.js';
 import { buildStreet } from './street.js';
+import { release } from '../../../engine/preload.js';
 import { aimDir, faceFor, wrap } from './aim.js';
 import { FX, flash, puff, kick, updateFx, shakeOffset } from './fx.js';
 import * as SFX from './sfx.js';
@@ -110,7 +111,8 @@ export async function begin() {
   FIGHT.cleanup = () => { scene.remove(st.group, FX.group); for (const b of FIGHT.bodies) { disarm(b); scene.remove(b); } FIGHT.hidden.forEach((c) => (c.visible = true)); FIGHT.lights.forEach(([l, v]) => (l.intensity = v)); renderer.shadowMap.enabled = FIGHT.shadowWas; scene.fog = FIGHT.fog; scene.background = FIGHT.bg; FX.items.length = 0; FX.group.clear(); };
 }
 function finish() {
-  if (FIGHT.cleanup) FIGHT.cleanup(); FIGHT.cleanup = null; FIGHT.on = false; $('aftercard').hidden = true; $('windowframe').hidden = true; $('fade').hidden = true; $('title').hidden = false;
+  const gone = FIGHT.cleanup ? [FIGHT.street.group, ...FIGHT.bodies] : [];
+  if (FIGHT.cleanup) FIGHT.cleanup(); FIGHT.cleanup = null; for (const o of gone) release(o, FIGHT.env.scene);   /* engine/preload.js: the street and its people are built afresh next time, so their graphics memory is let go */ FIGHT.on = false; $('aftercard').hidden = true; $('windowframe').hidden = true; $('fade').hidden = true; $('title').hidden = false;
 }
 
 /* ---------- each person ---------- */

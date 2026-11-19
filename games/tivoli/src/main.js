@@ -29,7 +29,7 @@ import { headTop, markAt, NEAR_GAP } from '../../../engine/marks.js';
 import { walkRoute } from '../../../engine/placement.js';
 import { WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget, talkedNow, orderNow } from './ch1.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
-import { lifeTest, lifeBodies } from './life.js';   // dev only: ?test=ambient
+import { lifeTest, lifeBodies, LIFE } from './life.js';   // dev only: ?test=ambient (LIFE: whose bodies the next chapter needs)
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
 import { clipInfo, sceneCheck } from './scenecheck.js';
 import { strideOf, pace as gamePace, WALKS as WALK_CLIPS } from './walk.js';   // dev only: the street scene checks (?test=scene, ?test=clipinfo)
@@ -38,6 +38,7 @@ import { checkAll, CHECKS } from '../../../engine/checks.js';   // dev only: ?te
 import { CHECK_TABLES, makeAdapter } from './checktables.js';   // dev only: Tivoli's hooks for ?test=all
 import { headCheck } from './headcheck.js';   // dev only: ?test=heads   // dev only: the shared cloth, walk and skin checks (re-exported) and Tivoli's place checks
 import { tunePixels } from '../../../engine/perf.js';
+import { setQuiet, ahead, work } from '../../../engine/preload.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -172,13 +173,26 @@ Promise.all(['anims', 'anims_tivoli'].map((name) => model(name).then((asset) => 
 
 const uiS = (k) => uiSound(k);
 function startChapter(id, opts) { closeChapters(); closeJournal(); if ($('chcard').hidden === false) hideCard(); if (!FIGHT.on) for (const c of ['fightcard', 'readcard', 'aftercard']) $(c).hidden = true;   /* a walking chapter never opens under a card of the street scene */
+  prepare(id + 1);
   if ([1, 2, 3, 4, 6, 7, 8].includes(id)) return ch1Begin(id, opts); if (id === 5) { ch1Leave(); saveProgress(5, []); fightOpen(); } return Promise.resolve(); }
+/* engine/preload.js: as a chapter starts, the next chapter's bodies are downloaded (ahead) and unpacked while the player reads (work, with the cached loadBase),
+   so its loading card is shorter. What is known before its place is built: the background people's bodies (life.js LIFE; engine/faces.js may give some
+   a second face, loaded then as now), the story people whose id names their look (all but Ivy and Gran Ivy), and chapter 5's street cast (fight.js load). */
+function prepare(id) {
+  if (!CHAPTERS.some((c) => c.id === id && c.playable)) return;
+  const names = id === 5 ? [...BODIES, 'civilian2010'].flatMap((b) => [b, b + '_lo'])
+    : [...(LIFE[id] ? LIFE[id].people.map((d) => d.look.base) : []), ...(WALKS[id] ? WALKS[id].order.filter((k) => LOOKS[k]).map((k) => bodyOf(LOOKS[k])) : [])];
+  const todo = [...new Set(names)]; ahead(todo); for (const n of todo) work(() => loadBase(n).catch(() => {}));
+}
+/* the player is reading, not moving, while a panel, a card, a conversation, the title or a loading card is on screen */
+setQuiet(() => panelOpen() || ['chcard', 'dialogue', 'title', 'fightcard', 'readcard', 'aftercard', 'fightload'].some((id) => !$(id).hidden));
 $('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
 const FOOT = { 1: 'sand' };   /* Back-o-Wall's lanes are earth; everywhere else is paving */
 const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n), onClose: () => flushToasts() };
 setupTalk(talkEnv);
 setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS, chapterEnd, onStart: () => { $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'; showHint(); canvas.focus(); } });
 initStory({ startChapter, uiSound: uiS, setBusy });
+prepare(nextChapter());   /* the chapter Start opens: its bodies unpack behind the title */
 wireFight({ scene, camera, renderer, audioInit, next: () => startChapter(6) });
 const SEEN = { fightcard: false };   /* dev only: the autoplayer and ?test=all ask whether the opt-in card was answered before the street scene */
 $('fbegin').addEventListener('click', () => { SEEN.fightcard = true; });

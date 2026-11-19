@@ -73,6 +73,7 @@ import {
 import { createDirector } from "./director.js";
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
+import { setQuiet, stepPlaces } from '../../../engine/preload.js';
 const KEY = "windrush-save-v1",
   q = new URLSearchParams(location.search),
   QUICK = __DEV__ && (q.has("auto") || q.has("test"));
@@ -259,6 +260,11 @@ function ensure(id) {
           throw e;
         }));
 }
+/* engine/preload.js: the next place is built, and its shaders and textures sent, while the player reads (a conversation, a card, the title),
+   so arriving there no longer waits on a build. go() awaits the same cached ensure() promise, so nothing is built twice and a fast player
+   only waits as before. ahead() is not used: a place's people are known only once buildPlace has run, and the job downloads them itself. */
+const PLACES = stepPlaces({ steps: STEPS, chapters: CHAPTERS, chapterOf: (s) => chapterOf(s), worlds, ensure: (id) => ensure(id), current: () => current, renderer, camera, scene });
+const { nextPlace, prepare, releaseFar } = PLACES;   /* engine/preload.js: the next place built and warmed in quiet moments, far places let go */
 async function buildWorld(id) {
   const Q = buildPlace(id, { phone, reduced });
   Q.group.name = id;
@@ -529,8 +535,10 @@ async function go(stage, { restore = null, keep = false } = {}) {
     $("fade").hidden = false;
   }
   let Q;
+  const t0 = performance.now();
   try {
     Q = await ensure(row.place);
+    if (__DEV__ && change) (window.__arrive ||= []).push([row.place, Math.round(performance.now() - t0)]); /* dev: how long arriving waited on the place being built */
   } catch (e) {
     if (generation !== epoch) return;
     busy = false;
@@ -555,8 +563,12 @@ async function go(stage, { restore = null, keep = false } = {}) {
         p.familyLife.hold(n, false);
       }
   }
+  const newChapter = change || chapterOf(stage) !== chapterOf(S.stage);
   current = Q.id;
+  PLACES.shown(Q.id); /* drawn now, so sent again */
   S.stage = stage;
+  if (newChapter && $("title").hidden) releaseFar(stage);
+  prepare(nextPlace(stage));
   S.best = Math.max(S.best, chapterOf(stage));
   if (!keep || change)
     Object.assign(S, {
@@ -1331,6 +1343,9 @@ onLoadFail(() => {
     $("savenote").hidden = !saved;
     $("loadnote").hidden = true;
     requestAnimationFrame(frame);
+    /* engine/preload.js: the player is reading, not moving, while a panel (a conversation, a card, the journal), the chapter fade or the title is on screen */
+    setQuiet(() => openPanel() || !$("fade").hidden || !$("title").hidden);
+    prepare(STEPS[saved?.stage]?.place || STEPS[10].place); /* the place Start opens, built behind the title */
     if (__DEV__) {
       const { dev } = await import("./dev.js");
       await dev({

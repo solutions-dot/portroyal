@@ -11,6 +11,7 @@ import { CH1, CH2, CH3, CH4, CH6, CH7, CH8 } from './content.js';
 import { unlock, finishChapter, saveProgress, savedTalked } from './story.js';
 import { FX } from './fx.js';
 import { addLife } from './life.js';
+import { release } from '../../../engine/preload.js';
 
 export const CH = { on: false, talked: {}, ended: false, id: 1 };
 export const WALKS = {
@@ -80,7 +81,9 @@ function endChapter() {
 export function leaveChapter() {
   if (!CH.on) return;
   clearTimeout(titleTimer); titleTimer = null; $('scenetitle').hidden = true;
-  const { scene, state, WALLS, renderer } = E; $('chcard').hidden = true; clearNpcs(); if (CH.life) CH.life.clear(); CH.life = null; scene.remove(CH.place.group); CH.on = false; CH.place = null;
+  const { scene, state, WALLS, renderer } = E, gone = [CH.place.group, ...Talk.npcs.map((n) => n.body), ...(CH.life ? CH.life.people.map((n) => n.m) : [])];
+  $('chcard').hidden = true; clearNpcs(); if (CH.life) CH.life.clear(); CH.life = null; scene.remove(CH.place.group); CH.on = false; CH.place = null;
+  for (const o of gone) release(o, scene);   /* engine/preload.js: the place and its people are built afresh next time, so their graphics memory is let go now (phones reload the page when it runs out) */
   saved.hidden.forEach((c) => (c.visible = true)); saved.lights.forEach(([l, v]) => (l.intensity = v)); scene.fog = saved.fog; scene.background = saved.bg; renderer.shadowMap.enabled = saved.shadow; WALLS.length = 0; WALLS.push(...saved.wasWalls);
   state.started = false; state.camY = 0; E.setBusy(false); $('hud').hidden = true; $('title').hidden = false;
 }
