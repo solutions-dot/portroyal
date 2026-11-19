@@ -29,6 +29,7 @@ import { batchStill } from '../../../engine/batch.js';
 import { setQuiet, ahead, work, warm, release } from '../../../engine/preload.js';   /* the next chapter's place built while you read, the last one let go (engine/preload.js) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { touchFirst, liveHint } from '../../../engine/device.js';
+import { addExit } from '../../../engine/exit.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -513,7 +514,7 @@ $('reset').onclick = () => { if (fading) return; closeJournal();
   card('Reset', ['Start this chapter again, or start the whole story again.'], [
     { t: 'Restart “' + CHAPTERS[stage >= 70 ? 7 : stage >= 60 ? 6 : stage >= 50 ? 5 : stage >= 40 ? 4 : stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].name + '”', go: () => { hideCard(); CHAPTERS[stage >= 70 ? 7 : stage >= 60 ? 6 : stage >= 50 ? 5 : stage >= 40 ? 4 : stage >= 30 ? 3 : stage >= 20 ? 2 : stage >= 10 ? 1 : 0].go(); } },
     { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) },
-    { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : [])]); };
+    { t: 'Cancel', go: hideCard }]); };
 
 /* ---------- talking: one line at a time; "You" lines get their own colour; the x, Escape or a tap outside ends it ---------- */
 let step = 0, lines = [], talkN = 0, talkFull = false; const TALKS = ['Talk1', 'Talk2', 'Talk3'];
@@ -1805,3 +1806,4 @@ function devChecks(q) {
     card, hideCard, nextCard, fitPace, talkSpot, saveGame, loadGame, applySave, runAuto, AU, setSound, nudge: NUDGE, frame: (dt) => { update(dt); camera.position.set(state.x, EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); renderer.render(scene, camera); }, EYE });
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

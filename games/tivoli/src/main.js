@@ -40,6 +40,7 @@ import { headCheck } from './headcheck.js';   // dev only: ?test=heads   // dev 
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, ahead, work } from '../../../engine/preload.js';
 import { touchFirst, liveHint } from '../../../engine/device.js';
+import { addExit } from '../../../engine/exit.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -130,13 +131,13 @@ function hideCard() { $('chcard').hidden = true; CARD.dismiss = null; setBusy(fa
 function chapterEnd(id, end) {   /* the end of a walking chapter: what happened, then Next chapter (as in every game) */
   const nx = CHAPTERS.find((c) => c.id === id + 1 && c.playable);
   card(end.title, end.lines, nx ? [{ t: 'Next chapter', go: () => { hideCard(); startChapter(nx.id); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Stay here', go: hideCard }]
-    : [{ t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Main Menu', href: MENU_URL }, { t: 'Stay here', go: hideCard }], { dismiss: hideCard });
+    : [{ t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Exit', href: MENU_URL }, { t: 'Stay here', go: hideCard }], { dismiss: hideCard });
 }
 $('reset').onclick = () => {
   if (FIGHT.on || !CH.on) return; closeJournal(); const C = CHAPTERS.find((c) => c.id === CH.id);
   card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + C.name + '”', go: () => { hideCard(); startChapter(CH.id, { talked: [] }); } },
     { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }], { dismiss: hideCard }) },
-    { t: 'Cancel', go: hideCard }, { t: 'Main Menu', href: MENU_URL }], { dismiss: hideCard });
+    { t: 'Cancel', go: hideCard }], { dismiss: hideCard });
 };
 
 /* ---------- a glowing speech mark over each person you can talk to, and a talk bubble over the nearest (as in Kendal) ---------- */
@@ -377,7 +378,7 @@ async function devViews() {
     const out = [], W = innerWidth, Hh = innerHeight, st2 = document.createElement('style'); st2.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st2);
     const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'windowframe', 'hud', 'chcard', 'journal', 'chapters', 'toast'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['scenetitle', 'windowframe']], ['chapter title over the goal and buttons', ['scenetitle', 'hud']], ['chapter end card', ['chcard']], ['reset card', ['chcard']], ['play: goal, buttons, tip, toast', ['hud', 'toast']], ['play: talking', ['hud', 'dialogue']], ['journal', ['journal']], ['chapters', ['chapters']]]) {
-      if (name === 'reset card') { $('chcardt').textContent = 'Reset'; $('chcardl').replaceChildren(Object.assign(document.createElement('p'), { textContent: 'Start this chapter again, or start the whole story again.' })); $('chcardb').replaceChildren(...['Restart “May 2010: before”', 'Start the whole story again', 'Cancel', 'Main Menu'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
+      if (name === 'reset card') { $('chcardt').textContent = 'Reset'; $('chcardl').replaceChildren(Object.assign(document.createElement('p'), { textContent: 'Start this chapter again, or start the whole story again.' })); $('chcardb').replaceChildren(...['Restart “May 2010: before”', 'Start the whole story again', 'Cancel'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
       if (name.startsWith('play')) { $('scenetitle').hidden = true; $('goal').textContent = 'Talk to Pastor Grant by the clinic.'; $('hint').hidden = false; liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'); $('jcount').hidden = false; $('jcount').textContent = '2'; $('jbtn').classList.add('glow'); $('toast').textContent = 'New journal page: What people disagree about'; $('dialogue').hidden = true;
         if (show.includes('dialogue')) { document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Pastor Grant'; $('line').textContent = 'Finding the truth can take a long time.'; } else document.body.classList.remove('talking'); }
       if (show.includes('hud')) { const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = 'Sunday 23 May 2010.'; t.append(b); for (const l of ['You live in Tivoli Gardens with Gran Ivy.', 'The girl from Back-o-Wall is a grandmother now.']) { const p = document.createElement('p'); p.textContent = l; t.append(p); } $('goal').textContent = 'Talk to Mr Clarke by the community centre.'; }
@@ -491,3 +492,4 @@ requestAnimationFrame(frame);
 
 if (__DEV__) window.__T = { state, Talk, CH, talkStart, talkNext, camera, startChapter, settle: async () => { await checkHooks().settle(); STEPPED.on = false; } };   // dev only: the test scripts drive the chapter through this
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addExit({ url: '../../../menu/' });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

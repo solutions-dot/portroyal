@@ -75,6 +75,7 @@ import { createDirector } from "./director.js";
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
+import { addExit } from '../../../engine/exit.js';
 const KEY = "windrush-save-v1",
   q = new URLSearchParams(location.search),
   QUICK = __DEV__ && (q.has("auto") || q.has("test"));
@@ -963,13 +964,6 @@ function resetPrompt() {
           ),
       ],
       ["Cancel", () => {}],
-      [
-        "Main Menu",
-        () => {
-          save();
-          location.href = "../../../menu/";
-        },
-      ],
     ],
   );
 }
@@ -1385,3 +1379,4 @@ onLoadFail(() => {
   }
 })();
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addExit({ url: '../../../menu/', save: () => save() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

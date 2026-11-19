@@ -23,6 +23,7 @@ import { batchStill } from '../../../engine/batch.js';   /* still scenery drawn 
 import { setQuiet } from '../../../engine/preload.js';
 import { pickPerson } from '../../../engine/tap.js';   /* tap a person to talk to them */   /* tells the engine when the player is reading, not moving */
 import { touchFirst, liveHint } from '../../../engine/device.js';
+import { addExit } from '../../../engine/exit.js';
 soundPref('portroyal-sound');
 onLoadFail((n) => { $('loadnote').hidden = false; $('loadnote').textContent = 'Part of the game did not load (' + n + '). Reload the page to try again.'; });
 
@@ -1588,7 +1589,7 @@ $('view').onclick = toggleView; addEventListener('keydown', (e) => { if ((e.key 
 /* reset: this chapter again, or the whole story */
 function chapterNow() { if (FB.on) return 1; if (state.place === 'ware') return 2; if (Q.on && Q.phase === 'yard') return 5; if (Q.on && (Q.phase === 'after' || state.place === 'after')) return 4; if (Q.on) return 3; return 0; }
 $('reset').onclick = () => { if (fading) return; closeJournal(); const i = chapterNow(), c = CHAPTERS[i];
-  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart \u201c' + c.name + '\u201d', go: () => { hideCard(); if (i === 0) { state.x = 43; state.z = 0; } c.go(); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: () => { try { localStorage.removeItem(SAVE_KEY); sessionStorage.setItem('pr-fresh', '1'); } catch (e) { /* ignore */ } location.reload(); } }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'Main Menu', go: () => { saveGame(); location.href = MENU.url; } }] : [])]); };
+  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart \u201c' + c.name + '\u201d', go: () => { hideCard(); if (i === 0) { state.x = 43; state.z = 0; } c.go(); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: () => { try { localStorage.removeItem(SAVE_KEY); sessionStorage.setItem('pr-fresh', '1'); } catch (e) { /* ignore */ } location.reload(); } }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }]); };
 
 /* ================= Pirates, Henry Morgan, Fort Charles ================= */
 const FB = { on: false }, FORT = { ready: false };
@@ -2191,3 +2192,4 @@ if (__DEV__) wireChecks({
   autoRun, prep, model, animate, skClone, GULLS,
 });
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

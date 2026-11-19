@@ -38,6 +38,7 @@ import { makeAdapter, CHECK_TABLES } from './checktables.js';
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 import { touchFirst, liveHint } from '../../../engine/device.js';
+import { addExit } from '../../../engine/exit.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -455,7 +456,7 @@ function openCredits() { if (state.started) { closeJournal(); busy = true; keys.
 function closeCredits() { if ($('credits').hidden) return; $('credits').hidden = true; busy = panelsOpen(); }
 $('chcred').onclick = () => { closeChapters(); openCredits(); }; $('crclose').onclick = closeCredits;
 $('reset').onclick = () => { if (fading || FIGHT.on || HORN.on) return; closeJournal(); const i = chapterOf(stage);
-  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + CHAPTERS[i].name + '”', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : [])]); };
+  card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart “' + CHAPTERS[i].name + '”', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }]); };
 
 /* ---------- waiting for things, and moving things over time ---------- */
 const waitFor = (fn) => new Promise((res) => { const ep = EP, iv = setInterval(() => { if (EP !== ep) { clearInterval(iv); res(false); } else if (fn()) { clearInterval(iv); res(true); } }, 100); });
@@ -694,7 +695,7 @@ ON[63] = async () => {
   unlock('hero'); unlock('mooretown'); await infoCard(CARDS.today); if (ep !== EP) return;
   const c = CARDS.why; card(c.title, c.paras, c.choices.map(([k, t]) => ({ t, go: () => { story.why = k; saveGame(); hideCard(); frozen = false; setStage(64); } })), { col: true });
 };
-ON[64] = () => { unlock('hero'); unlock('mooretown'); unlock('journey'); const c = CARDS.end; setTimeout(() => card(c.title, c.paras, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Main Menu', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); cue('end'); };
+ON[64] = () => { unlock('hero'); unlock('mooretown'); unlock('journey'); const c = CARDS.end; setTimeout(() => card(c.title, c.paras, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); cue('end'); };
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
@@ -1119,3 +1120,4 @@ function devViews() {
   })();
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

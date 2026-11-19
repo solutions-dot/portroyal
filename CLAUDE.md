@@ -55,6 +55,8 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 
 10. **Fix it in the master engine, not game by game** (owner, 17 Nov 2026). When a fault can happen in more than one game (a head that spins, a way out offered too soon, a held item through a body, a check that is wrong), the fix goes in `engine/` and every game uses it. Do not copy a guard or a rule into a game's own file. If a game still carries its own copy of something the engine does, move it over when you touch it, and say so in `docs/ENGINE.md`.
 
+11. **Every game has the same navigation and controls** (owner, 19 Nov 2026), existing and new: the title buttons Start, Chapters, Exit; Exit to the right of the Journal button with an "are you sure" (`engine/exit.js`); no "Main Menu" anywhere; touch or key words in the controls tip (`engine/device.js`); tap a person to talk. Details in `docs/STANDARD.md`, "Navigation and controls"; `tests/controls.mjs` checks every game.
+
 ## Quick commands
 
 ```bash

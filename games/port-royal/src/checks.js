@@ -153,7 +153,7 @@ async function runLayout(A) {
   const covered = (name, panel, ids) => { for (const id of ids) { const e = $(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (!t || !$(panel).contains(t)) out.push(`${W}x${H} ${name}: ${id} is covered by ${t ? (t.id || t.className || t.tagName) : 'nothing'}`); else if (r.right > W + 1 || r.top < -1 || r.bottom > H + 1 || r.left < -1) out.push(`${W}x${H} ${name}: ${id} is off the screen`); } };
   reset(); goal('Find the woman in the white head wrap.'); talkBtn('Talk to Abba'); await settle();
   A.openChapters(); await settle(); covered('chapters panel in play', 'chapters', ['chtitle', 'chclose']); A.closeChapters();
-  A.openJournal(); await settle(); covered('journal panel in play', 'journal', ['jtitle', 'jclose', 'jhome']); A.closeJournal();
+  A.openJournal(); await settle(); covered('journal panel in play', 'journal', ['jtitle', 'jclose', 'jchap']); A.closeJournal();
   $('credits').hidden = false; await settle(); covered('credits panel in play', 'credits', ['crtitle', 'crclose']); $('credits').hidden = true;
   reset(); A.playChapter(A.CHAPTERS[0]);
   log(out.length ? out : [W + 'x' + H + ': no layout problems'], 'LAYOUT ' + out.length);
