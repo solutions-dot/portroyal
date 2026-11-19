@@ -20,7 +20,7 @@
   :focus-visible{outline:3px solid #fff;outline-offset:3px}
   #allgames{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;text-align:center}
   #title{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:.8rem;padding:clamp(16px,4vw,48px);background:linear-gradient(180deg,rgba(11,9,7,0) 22%,rgba(11,9,7,.94) 70%);z-index:5;overflow:auto}   /* like every other game: the story sits low, over the scene (owner, 19 November 2026) */
-  #title > :first-child{margin-top:auto}#title > :last-child{margin-bottom:auto}   /* centred when there is room; when there is not, it starts at the top and scrolls */
+  #title > :first-child{margin-top:auto}   /* keep the title low when there is room, and let it scroll on short screens */
   #title h1{font-family:var(--serif);font-weight:400;font-size:clamp(2.2rem,8vw,4rem);margin:0;line-height:1.05}
   #title h1 small{display:block;font-family:var(--display);font-size:.5em;color:var(--brass);letter-spacing:.04em;margin-top:.25em}
   #title p{max-width:30rem;margin:0}

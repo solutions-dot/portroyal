@@ -96,7 +96,7 @@ Metres. `yaw = 0` looks toward -z (north). In the mountain places +z is south an
 | `estate` | You start at (2, 40.6) by three huts. The trail runs north: cane on both sides, the cart road at z 8 (the watchman walks it from x -27 to 25), the stream at z -13.5 with stepping stones, then up the hill to the lookout at (6, -65.5), 19.8 m up. |
 | `town` | The clearing is a circle of radius 14.5 round (0, 0). The narrow path comes in from the south-east, starting at (36, 60), 24.5 m lower. The garden is at (-23, 5). The cotton tree is at (7.5, -6). The high rock is at (3, -24.5). The back trail leaves at (-9, -9.5) and climbs to the ridge at (-64, -61), 36.5 m up. The soldiers' knoll is at (22, 22). |
 | `watch` | The rock is a circle of radius 4.6 round (0, 0) at the top of a 15 m drop. You stand at (0.2, 4.0) for the fight. The top of the path (walkable, with the trenches) runs west and down to (-31, 27). The soldiers' path (not walkable) winds from there down the slope below the rock to (40, 100), where it goes into the mist at y -46. The far spur with the red line is at (50, 158). |
-| `newtown` | The clearing is a circle of radius 13 round (0, 0). The paper stone is at (3.6, -4.6). The river runs along x 27. The meeting tree and Nanny are on a knoll at (-9, -37), which you cannot reach. The waterfall is at (-72, 6). |
+| `newtown` | The clearing is a circle of radius 13 round (0, 0). The paper stone is at (3.6, -4.6). The river runs along x 27. The meeting tree and Nanny are on a knoll at (-9, -37), which you cannot reach. |
 
 ## Test it
 

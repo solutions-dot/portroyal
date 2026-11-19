@@ -3,8 +3,9 @@
    - The toast sits just above the action button, however tall the button is. With a two-line label ("Go back to the street") the button covered the toast on a
      phone (Port Royal, 17 November 2026).
    - The toast wraps its words. On one line with the end cut off, a long sentence could not be read on a narrow phone.
+   - On short screens, the place caption steps aside while a toast is visible.
    - The "This way" arrow (#nudge) is a brighter gold with a glow. */
-const HUD_CSS = '#nudge svg path{fill:#ffd65c;stroke:#fff6dc;stroke-width:2.5}#nudge svg{filter:drop-shadow(0 0 7px rgba(255,214,92,.95)) drop-shadow(0 0 2px rgba(255,255,255,.8))}#nudge span{color:#fff;background:rgba(16,34,43,.92)}';   /* the "This way" arrow: brighter, with a glow (owner, 17 November 2026), the same in every game */
+const HUD_CSS = '#nudge svg path{fill:#ffd65c;stroke:#fff6dc;stroke-width:2.5}#nudge svg{filter:drop-shadow(0 0 7px rgba(255,214,92,.95)) drop-shadow(0 0 2px rgba(255,255,255,.8))}#nudge span{color:#fff;background:rgba(16,34,43,.92)}@media(max-height:460px){#hud:has(#toast:not([hidden])) #place{visibility:hidden}}';   /* the "This way" arrow: brighter, with a glow (owner, 17 November 2026), the same in every game */
 export function hudTidy({ toast = 'toast', button = 'talk', gap = 10 } = {}) {
   if (!document.getElementById('hudTidyCss')) { const s = document.createElement('style'); s.id = 'hudTidyCss'; s.textContent = HUD_CSS; document.head.appendChild(s); }
   const t = document.getElementById(toast); if (!t || t.dataset.tidy) return; t.dataset.tidy = '1';

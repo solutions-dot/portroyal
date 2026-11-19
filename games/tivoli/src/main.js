@@ -169,7 +169,7 @@ function bubbleTick(now) {
 let modelsReady = false;
 Promise.all(['anims', 'anims_tivoli'].map((name) => model(name).then((asset) => { const bar = $('bar'); bar.dataset.done = +(bar.dataset.done || 0) + 1; bar.style.width = (+bar.dataset.done / 2 * 100) + '%'; return asset; }))).then(([anims, own]) => {
   loadClips(anims); loadClips(own); deriveClips();   // the shared library, then Tivoli's own clips (tools/tivoli/pack_clips.mjs)
-  modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave() ? 'Continue' : 'Start'; $('savenote').hidden = !hasSave(); $('loadnote').textContent = '';
+  modelsReady = true; $('start').disabled = false; $('chbtn').disabled = false; $('start').textContent = hasSave() ? 'Continue' : 'Start'; $('savenote').hidden = !hasSave(); $('loadnote').textContent = '';
   if (__DEV__) devViews();
 });
 

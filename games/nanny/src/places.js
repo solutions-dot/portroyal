@@ -202,6 +202,6 @@ export function buildNewTown() {
   const nx = kx + 2.1, nz = kz + 1.5;   /* Nanny stands under the meeting tree's crown, in front of its roots, where you can see her from the clearing */
   const extras = [extra('nanny', nx, nz, face(nx, nz, nx - 6, nz - 30), 'Idle', { id: 'nanny6', ground: G.h(nx, nz), far: true }), ...villagers(8, 31, [kx - 2.6, kz + 3.2, kx + 5.4, kz + 6.4], { face: [nx, nz], anims: ['Idle'] }).map((e) => ({ ...e, wild: true, far: true })),
     extra('phibbaGrown', 3.2, -1.6, face(3.2, -1.6, 3.6, -4.6), 'Idle'), ...villagers(12, 35, [-11, -11, 11, 11], { face: [3.6, -4.6] })];
-  return { id: 'newtown', group: g, G, solids, start: { x: 0.5, z: 9.5, yaw: 0.1 }, env: ENV.morning, backdrop: { lift: -4, mist: -200 }, people, extras, waters: [water], smokers: [{ x: -5, y: 0.9, z: 5.4, rate: 1.1 }, { x: fx + 1.5, y: fy + 1.2, z: fz, rate: 2.2, mist: true }],
+  return { id: 'newtown', group: g, G, solids, start: { x: 0.5, z: 9.5, yaw: 0.1 }, env: ENV.morning, backdrop: { lift: -4, mist: -200 }, people, extras, waters: [water], smokers: [{ x: -5, y: 0.9, z: 5.4, rate: 1.1 }],
     spots: { paper: [3.6, -4.6], stone, hearth, river: [21, 6] } };
 }
