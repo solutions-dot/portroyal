@@ -1,6 +1,6 @@
 import { anchorSeat } from './placement.js';
 import { joinTick } from './joinbody.js';
-import { beginPoseCorrection, endPoseCorrection, clearPoseCorrection } from './bone-pose.js';
+import { beginPoseCorrection, endPoseCorrection, clearPoseCorrection, jointTurnLimiter } from './bone-pose.js';
 /* engine/anim.js: one Mixamo clip library shared by every character (same skeleton).
    loadClips(gltf) fills CL; animate(model, clipName) gives each person a controller. See docs/ENGINE.md. */
 import * as THREE from 'three';
@@ -262,19 +262,43 @@ function legIK([up, kn, ft], d) { if (!up || !kn || !ft) return;
   ft.quaternion.copy(_iq2.multiply(_footAngle));   /* bending the leg moves the ankle; only the slope tilt below turns the foot */
 }
 const FOOT_SIDES = ['Left', 'Right'];
+function footTurns(model, feet) {
+  const limit = feet.map(foot => jointTurnLimiter(foot, model, 16));
+  let last, action, phase;
+  return ({ mx, cur }) => {
+    const dt = mx.time - last;
+    // Pose previews can seek to a new frame without advancing the mixer.
+    const seek = dt === 0 && (cur !== action || cur.time !== phase);
+    for (const apply of limit) apply(seek ? Infinity : dt);
+    last = mx.time;
+    action = cur;
+    phase = cur.time;
+  };
+}
 export function groundFeet(m) {
   let t = TOES.get(m);
-  const { seatAnchor, groundAt: gAt } = m.userData;
+  const { seatAnchor, groundAt: gAt, anim } = m.userData;
   if ((seatAnchor || !gAt) && t?.slope) { clearPoseCorrection(t.slope.bones); t.slope = null; }
+  if ((seatAnchor || gAt) && t?.flatTurns) { clearPoseCorrection(t.flatTurns.feet); t.flatTurns = null; }
   if (seatAnchor) { anchorSeat(m); return; }   /* a seated person stays on the seat (engine/placement.js) */
   if (!t) { t = { soles: solePoints(m), toes: FOOT_SIDES.map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean) }; TOES.set(m, t); }
   if (t.soles.length) {
     if (gAt) {
       if (!t.slope) {
         const legs = Object.fromEntries(FOOT_SIDES.map(side => [side, ['UpLeg', 'Leg', 'Foot', 'ToeBase'].map(joint => m.getObjectByName('mixamorig' + side + joint))]));
-        t.slope = { legs, bones: Object.values(legs).flatMap(leg => leg.slice(0, 3).filter(Boolean)), tilt: {} };
+        const feet = Object.values(legs).map((leg) => leg[2]).filter(Boolean);
+        t.slope = { legs, bones: Object.values(legs).flatMap(leg => leg.slice(0, 3).filter(Boolean)), tilt: {}, turn: footTurns(m, feet) };
       }
       beginPoseCorrection(t.slope.bones);
+    } else if (anim && (t.flatTurns || WALKS.test(anim.cur.getClip().name))) {
+      if (!t.flatTurns) {
+        const feet = FOOT_SIDES.map(side => m.getObjectByName('mixamorig' + side + 'Foot')).filter(Boolean);
+        t.flatTurns = { feet, turn: footTurns(m, feet) };
+      }
+      const { feet, turn } = t.flatTurns;
+      beginPoseCorrection(feet);
+      turn(anim);
+      endPoseCorrection(feet);
     }
     m.updateMatrixWorld(true); let low = 1e9; const fy = { Left: 1e9, Right: 1e9 };
     for (const s of t.soles) { _gp.copy(s.p).applyMatrix4(s.bone.matrixWorld); low = Math.min(low, _gp.y); if (gAt) { const k = /Left/.test(s.bone.name) ? 'Left' : 'Right'; if (_gp.y < fy[k]) fy[k] = _gp.y; } }
@@ -283,7 +307,7 @@ export function groundFeet(m) {
       that foot lifts, so the body climbs and settles smoothly through each step. The foot over higher ground bends its knee (legIK) to stand on it. Each foot on the
       ground also tips to the slope along its own length, so toe and heel both meet the hill. */
       const { legs, bones, tilt } = t.slope;
-      const time = m.userData.anim?.mx.time;
+      const time = anim?.mx.time;
       const step = Math.max(0, time - t.slope.time);
       const tiltChange = Number.isFinite(step) ? 5 * step : Infinity;
       t.slope.time = time;
@@ -304,6 +328,7 @@ export function groundFeet(m) {
         tilt[k] = angle;
         if (Math.abs(angle) > 0.01) worldRotate(foot, _iq.setFromAxisAngle(_ik[2].set(-dz / length, 0, dx / length), angle));
       }
+      if (anim) t.slope.turn(anim);
       endPoseCorrection(bones);
       return; }
     const e = (m.userData.ground || 0) - 0.008 - low;

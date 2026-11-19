@@ -32,7 +32,9 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
   - Garvey’s hall guests ease into their seats. Hurricane Melissa’s storm reaction and Port Royal’s camp and drill animations loop without the previous large jumps. Port Royal’s stepped check no longer sends its live clock backward.
   - Nanny Town’s foot corrections no longer pile up on slopes, and Phibba’s stride now matches her speed on the tested back trail. Kendal now leaves clip phase to the shared controller. The Emperor’s Arrival also applies its head-turn limit to the story cast, and its head check reported zero.
   - Eventide and Hurricane Melissa both reported `FOLLOW 0` on the walking routes with Gran and Mum. The position jumps from the scripted playthroughs did not recur on those routes.
-- [ ] **Review remaining motion findings.** In Chromium, `?test=feet` found 20 short snaps in Nanny Town, two on Dawn’s run in Kendal step 63, and one on Abba’s earthquake run. Port Royal’s `?test=heads&p=flashback` still reports fast turns in the crowd. Nanny Town’s animation check flags three people standing still on the ridge, and Kendal’s movement check flags Lloyd standing still at Kingston station. Review the arm changes on Kendal’s road and the boy’s Point to Clap transition in The Emperor’s Arrival.
+- [x] **Fix the remaining motion findings.** The shared engine smooths fast ankle turns on flat ground and slopes. At 390x800 in Chromium, the full foot checks for Nanny Town, Kendal and Port Royal reported `FEET 0`, including Dawn’s run and Abba’s earthquake run. Tivoli and Windrush also reported `FEET 0` on repeat. Port Royal’s flashback crowd uses the shared turn limit and reported `HEADS 0`.
+  - Nanny Town’s ridge cast changes stance sooner and Kendal’s Lloyd uses an available gesture. Nanny Town reported `ANIM 0`, and the check for Kendal’s road, station and crash steps reported `MOTION 0`.
+  - The shared grip blends in the reach for the basket on Kendal’s road and applies one posture correction to the cup arm in The Emperor’s Arrival. The phone-sized frame trace found no arm snaps in those scenes.
 
 ## Not done yet (ask the owner first)
 

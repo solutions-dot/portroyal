@@ -11,6 +11,7 @@ import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { mergeGeometries as mergeG } from 'three/addons/utils/BufferGeometryUtils.js';
 import { rowBoat, rowStroke, dugOut } from '../../../engine/boats.js';
 import { CL, mixers, grounded, HIPS_Y, setFallbackClip, loadClips, seamLoop, clipFor, animate, groundFeet, strideOf, lookBegin, lookEnd, tickVisible } from '../../../engine/anim.js';
+import { jointTurnLimiter } from '../../../engine/bone-pose.js';
 import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, chirp, cue, setG, tone, noiseHit, shipCreak, hammer, clink, uiSound } from '../../../engine/audio.js';
 import { exitReady, exitsReset } from '../../../engine/story.js';
 import { createSea } from '../../../engine/sea.js';
@@ -1169,6 +1170,7 @@ function frame(now, step) {
   audioTick(now / 1000); if (state.started && now - lastSave > 5000) { lastSave = now; saveGame(); }
   if (mixer) mixer.update(dt); tickVisible(dt);   /* every shown person's mixer and controller (engine/anim.js); the game's own loop, which missed the 1670 cast, moved there */ if (abba && abba.visible && abba.userData.anim) abba.userData.anim.tick(dt);   /* Abba runs on the game's own mixer, updated above */
   for (const m of grounded) if (m.visible && m.parent && m.parent.visible) groundFeet(m);
+  if (Q.abbaRun && abba.visible) { abba.userData.ground = groundY(abba.position.x, abba.position.z); groundFeet(abba); }
   if (galdy && galdy.visible && state.place !== 'sea') { galdy.userData.ground = groundY(state.x, state.z); groundFeet(galdy); }
   for (const f of TICKS) f(dt);
   if (built && people.kofi && people.kofi.visible && CL.Carry) kofiTick(dt);
@@ -2180,14 +2182,26 @@ const LOOK_BONES = new WeakMap();
 function turnBone(b, a) { if (!b || !b.parent) return; b.parent.getWorldQuaternion(_lq2); _lq.setFromAxisAngle(_ly, a); b.quaternion.premultiply(_lq2.clone().invert().multiply(_lq).multiply(_lq2)); }   /* always between lookBegin and lookEnd (engine/anim.js), or the turns pile up and the head spins */
 TICKS.push((dt) => { if (!built) return;
   const list = [...Object.entries(IDLES).map(([k]) => people[k]), ...Object.values(survivors), ...(afterG ? afterG.children.filter((c) => c.userData.idles) : []), people.heath, ...(FB.on ? FBG.cast.concat([FBG.qm]) : []), state.place === 'out' || state.place === 'in' || state.place === 'after' || state.place === 'sea' ? abba : null];
-  for (const m of list) { if (!m || !m.userData.anim) continue; let v = m.visible; for (let o = m.parent; v && o; o = o.parent) v = o.visible; if (!v) continue;
+  for (const m of new Set(list)) { if (!m || !m.userData.anim) continue; let v = m.visible; for (let o = m.parent; v && o; o = o.parent) v = o.visible; if (!v) continue;
     const ac = m.userData.anim, idles = m === abba ? (state.place === 'after' ? ['Sad1', 'LookAround'] : state.place === 'sea' ? ['SitTalk', 'SitIdle2'] : Q.on ? null : ['WaveSlow', 'LookAround', 'WipeSweat']) : m.userData.idles || IDLES[Object.keys(people).find((k) => people[k] === m)];
     m.userData.idles = idles || undefined; m.userData.still = speaker === m || (m === abba && (Q.abbaRun || Q.on && state.place !== 'after' && state.place !== 'sea'));   /* the engine plays them, each at its own speed and moment (engine/anim.js idle variety); this game's own copy of that loop moved there */
     if (m === abba || m === people.kofi) continue;   /* Abba has her own look (frame), Kofi watches his load */
     m.getWorldPosition(_lv); const dx = state.x - _lv.x, dz = state.z - _lv.z, near = Math.hypot(dx, dz) < 5 && state.started; let want = 0;
     if (near) { const ch = m.getObjectByName('mixamorigSpine2'); let f = m.rotation.y; if (ch) { const q = ch.getWorldQuaternion(_lq2), fw = new THREE.Vector3(0, 0, 1).applyQuaternion(q); f = Math.atan2(fw.x, fw.z); } let d = Math.atan2(dx, dz) - f; d = Math.atan2(Math.sin(d), Math.cos(d)); want = Math.abs(d) < 2.2 ? Math.max(-1.13, Math.min(1.13, d)) : 0; }
     m.userData.look = (m.userData.look || 0) + (want - (m.userData.look || 0)) * Math.min(1, dt * 3); const a = Math.abs(m.userData.look) < 0.005 ? 0 : m.userData.look;   /* a look of nothing is still applied, so a bone left turned is put back */
-    let lk = LOOK_BONES.get(m); if (!lk) LOOK_BONES.set(m, lk = [m.getObjectByName('mixamorigNeck'), m.getObjectByName('mixamorigHead')]);   /* kept beside the body, not in its userData: a body made as a copy of another gets a copy of userData, with dead copies of the bones in it */ lookBegin(lk); turnBone(lk[0], a * 0.3); turnBone(lk[1], a * 0.7); lookEnd(lk); } });
+    let look = LOOK_BONES.get(m);
+    if (!look) {
+      const neck = m.getObjectByName('mixamorigNeck'), head = m.getObjectByName('mixamorigHead'), chest = m.getObjectByName('mixamorigSpine2');
+      look = { bones: [neck, head], limit: head && chest ? jointTurnLimiter(head, chest, 3.5) : null };
+      LOOK_BONES.set(m, look);
+    }
+    lookBegin(look.bones);
+    turnBone(look.bones[0], a * 0.3);
+    turnBone(look.bones[1], a * 0.7);
+    look.limit?.(dt);
+    lookEnd(look.bones);
+  }
+});
 
 /* ---------- dev checks: ?test=audit, layout, walkers, life and all (games/port-royal/src/checks.js; never in a public build) ---------- */
 if (__DEV__) { window.__prBoats = DEVBOATS; DEVBOATS.buildLoad = () => loadBuild(); }

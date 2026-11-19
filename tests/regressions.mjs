@@ -48,7 +48,8 @@ test('rotated bench checks reject empty AABB corners but retain real intersectio
 });
 
 import { Bone, Group, Skeleton, Quaternion } from 'three';
-import { grip, gripTick } from '../engine/grip.js';
+import { grip, gripTick, spreadArms } from '../engine/grip.js';
+import { jointTurnLimiter } from '../engine/bone-pose.js';
 test('a heavy case straightens a bent elbow without accumulating pose changes', () => {
   const model = new Group(), hips = new Bone(), arm = new Bone(), elbow = new Bone(), hand = new Bone();
   for (const [b, name] of [[hips,'Hips'],[arm,'RightArm'],[elbow,'RightForeArm'],[hand,'RightHand']]) b.name = 'mixamorig' + name;
@@ -60,6 +61,44 @@ test('a heavy case straightens a bent elbow without accumulating pose changes', 
   assert.ok(posed.angleTo(straight) < Math.PI / 4);
   gripTick(model); assert.ok(elbow.quaternion.angleTo(posed) < 0.000001);
   elbow.rotation.z = Math.PI / 2; gripTick(model); assert.ok(elbow.quaternion.angleTo(posed) < 0.000001);
+});
+
+test('an item takes over the arm spread and releasing it restores the standing pose', () => {
+  const model = new Group(), hips = new Bone(), arm = new Bone(), hand = new Bone();
+  hips.name = 'mixamorigHips'; arm.name = 'mixamorigRightArm'; hand.name = 'mixamorigRightHand';
+  model.add(hips); hips.add(arm); arm.add(hand);
+  arm.position.x = -0.15; hand.position.y = -0.45;
+  spreadArms(model, 0.08);
+  gripTick(model);
+  const resting = arm.quaternion.clone();
+  const cup = new Mesh(new BoxGeometry(0.1, 0.1, 0.1), new MeshBasicMaterial());
+  const wrap = grip(model, 'Right', cup, { lift: 0.55 });
+  const holding = arm.quaternion.clone();
+  assert.ok(resting.angleTo(holding) > 0.3);
+  for (let i = 0; i < 60; i++) {
+    gripTick(model);
+    assert.ok(arm.quaternion.angleTo(holding) < 1e-6);
+  }
+  wrap.removeFromParent();
+  model.userData.grips = model.userData.grips.filter(g => g.wrap !== wrap);
+  gripTick(model);
+  assert.ok(arm.quaternion.angleTo(resting) < 1e-6);
+});
+
+test('a joint turn limit follows the body and lets a corrected pose catch up', () => {
+  const body = new Group(), parent = new Bone(), foot = new Bone();
+  body.add(parent); parent.add(foot);
+  const limit = jointTurnLimiter(foot, body, 12), axis = new Vector3(1, 0, 0);
+  const pose = new Quaternion().setFromAxisAngle(axis, 1.4);
+  limit(1 / 30);
+  body.rotation.y = Math.PI / 2;
+  parent.rotation.x = 0.3;
+  foot.rotation.x = 1.1;
+  limit(1 / 30);
+  assert.ok(Math.abs(foot.rotation.x + parent.rotation.x - 0.4) < 1e-6);
+  for (let i = 0; i < 4; i++) { foot.rotation.x = 1.1; limit(1 / 30); }
+  const relative = body.getWorldQuaternion(new Quaternion()).invert().multiply(foot.getWorldQuaternion(new Quaternion()));
+  assert.ok(relative.angleTo(pose) < 1e-6);
 });
 
 import { updateWalk } from '../engine/locomotion.js';

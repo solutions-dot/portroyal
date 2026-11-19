@@ -843,7 +843,11 @@ function update(dt, now) {
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
   const SW = { px: state.x, pz: state.z, talking: talkWith };
   for (const n of P.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); if (!POSTER) storyLifeTick(n, dt, SW); }   /* storylife.js: a change of stance now and then, and a head that looks about */
-  if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround && !m.userData.amb) groundFeet(m);
+  const groundEveryone = (frameN++ & 1) === 0;
+  for (const n of P.npcs) {
+    const m = n.m;
+    if (m.visible && !m.userData.noGround && !m.userData.amb && (groundEveryone || n.fol)) groundFeet(m);
+  }
   turnLimit(P, dt);
   if (P.tick) P.tick(dt, (now || 0) / 1000); rideTick(dt, (now || 0) / 1000); smokeTick(dt);
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);

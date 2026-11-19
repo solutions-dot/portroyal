@@ -38,3 +38,23 @@ export function clearPoseCorrection(bones) {
     corrected.delete(bone);
   }
 }
+
+// Limit the posed rotation in the body's or chest's frame. Moving the whole model
+// should carry its joints along immediately. Start a new pose after a long gap.
+export function jointTurnLimiter(bone, reference, radiansPerSecond) {
+  const last = new Quaternion(), frame = new Quaternion(), target = new Quaternion();
+  let ready = false;
+  return (dt) => {
+    reference.getWorldQuaternion(frame);
+    bone.getWorldQuaternion(target).premultiply(frame.invert()).normalize();
+    const step = radiansPerSecond * dt;
+    if (ready && dt >= 0 && dt < 0.25 && last.angleTo(target) > step) {
+      last.rotateTowards(target, step);
+      bone.parent.getWorldQuaternion(target).invert();
+      bone.quaternion.copy(target.multiply(frame.invert()).multiply(last)).normalize();
+    } else {
+      last.copy(target);
+      ready = true;
+    }
+  };
+}

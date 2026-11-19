@@ -178,7 +178,9 @@ Show the results in a dev-only `?test=audit` view and expect 0 issues. Kendal's 
 
 Seat placement bends the knees and keeps the feet at their clip angle. `engine/bone-pose.js` removes the previous correction if the mixer left it on the bone. The shared head turn uses the same guard through `lookBegin` and `lookEnd`.
 
-The slope adjustment in `groundFeet` uses the same guard for the thigh, knee and foot. It keeps the foot's clip angle when bending the leg to reach the ground, then tilts the shoe toward the slope as the mixer advances. For a person walking up to a seat, `seatAnchor.settle` eases the body to the anchor. Supply the model's previous parent-relative position and yaw as `from` and `yaw`, the mixer time as `start`, and the number of seconds as `duration`.
+The slope adjustment in `groundFeet` uses the same guard for the thigh, knee and foot. It keeps the foot's clip angle when bending the leg to reach the ground, then tilts the shoe toward the slope as the mixer advances. The shared `jointTurnLimiter` slows sudden ankle turns relative to the body. Port Royal's crowd uses it relative to the chest to smooth the final head pose.
+
+For a person walking up to a seat, `seatAnchor.settle` eases the body to the anchor. Supply the model's previous parent-relative position and yaw as `from` and `yaw`, the mixer time as `start`, and the number of seconds as `duration`.
 
 ## engine/follow.js: people who follow you, lead you, or are sent somewhere
 
@@ -431,8 +433,8 @@ These systems are general but still live in `games/port-royal/src/main.js`, beca
 |---|---|
 | `grip(model, 'Right', item, { handleY, scale, yaw, lift })` | Closes that hand into a fist, hangs the item from the fist by its handle (upright whatever the hand does) and lifts the arm `lift` radians away from the body so the item clears the hip, thigh or skirt. Pose the mixer once first. |
 | `spreadArms(model, angle)` | Holds both empty arms a little further out, so hands do not sink into a wide skirt or a jacket. |
-| `gripTick(model)` | Call every frame after the mixer update for any model with `userData.grips`. |
-| `steadyLoad(model, item)` | A hand that steadies a load on the head (18 November 2026: Miss Cleo's hand waved beside her basket). On a CarryHead clip, a raised hand is bent and turned each frame (two bones, `reachTo`) so the palm rests on the load's rim on that side. Kendal, Melissa and Windrush call it where they put a load on a head. `auditHeld` reports a raised hand more than 5 cm from the load. |
+| `gripTick(model)` | Call every frame after the mixer update for any model with `userData.grips`. It restores the mixer's last pose before correcting each arm. The item's grip takes over from the standing arm spread while the hand is full. |
+| `steadyLoad(model, item)` | A hand that steadies a load on the head (18 November 2026: Miss Cleo's hand waved beside her basket). As the CarryHead clip fades in and the hand rises, the reach (`reachTo`) brings the palm onto the load's rim on that side. Kendal, Melissa and Windrush call it where they put a load on a head. `auditHeld` reports a raised hand more than 5 cm from the load. |
 
 **A hand that holds a hanging thing does not gesture** (17 November 2026, rule 10). `grip()` works out whether the item hangs below the hand (more of it below the handle than above: a case, a basket, a bucket, a lamp, a bag) or is held up (a flag, a palm frond, a cup); pass `hangs: true` or `false` to say so yourself. For a hanging item, `engine/anim.js` keeps the body off clips that wave the hands (`HAND_TALK`: Talk, Wave, Clap, Cheer, Point, Yell, Laugh, Greet, Angry, Thankful): `play()` gives the plain Idle instead, and `calmHands(m)`, which `grip()` calls, moves a body that stood on such a clip onto the Idle. Walking, carrying, sitting and weapon clips are not touched. It came from Eventide, where a crowd man on Talk2 swung his suitcase into his thigh; Eventide's own rule (no talking clip for someone who holds a thing) moved here.
 

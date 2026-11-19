@@ -22,7 +22,7 @@ const clampTo = (v, a, b) => Math.max(a, Math.min(b, v));
 const box = (x, z, rx, rz, A) => [clampTo(x - rx, A[0], A[2] - 2), clampTo(z - rz, A[1], A[3] - 2), clampTo(x + rx, A[0] + 2, A[2]), clampTo(z + rz, A[1] + 2, A[3])];
 
 /* a story person between their talks: stands at their spot facing the way they were set, and looks at you when you come near */
-const storyWatch = (e, at, react = ['Nod']) => set(Object.assign(e, { story: true }), 'watch', { at, idles: idlesOf(e), react: holds(e) ? [] : react, every: [4, 7], sadIdles: ['Sad1', 'Sad2', 'Idle'] });
+const storyWatch = (e, at, react = ['Nod'], every = [4, 7]) => set(Object.assign(e, { story: true }), 'watch', { at, idles: idlesOf(e), react: holds(e) ? [] : react, every, sadIdles: ['Sad1', 'Sad2', 'Idle'] });
 
 /* a lively crowd: children play in pairs, some grown-ups carry a basket on the head between two spots, neighbours chat in twos and threes,
    the rest walk about or watch the thing the place is about. o: { seed, area, watch, chat, wander, carry: [[from, to], ...] } */
@@ -65,8 +65,9 @@ const PLACES = {
     const ph = people.find((e) => e.id === 'phibba'); if (ph) set(ph, 'watch', { at: [0, 0], idles: ['Sad1', 'Sad2'], sadIdles: ['Sad1', 'Sad2'], every: [5, 8], stay: true });   /* little Phibba is crying by the cotton tree until you find her */
     crowd(extras.filter((e) => e.flee), { id: 't5', seed: 51, area: A, watch: [22, 22], quiet: true, chat: 0.6 });
     /* dawn on the ridge (sad): everyone looks back at the town */
-    for (const e of people) if (e.when && e.when[0] === 55) storyWatch(e, [0, 0], []);
-    for (const e of extras) if (e.when && e.when[0] === 55 && !holds(e)) set(e, 'watch', { at: [0, 0], idles: ['Sad1', 'Sad2', 'Idle'], sadIdles: ['Sad1', 'Sad2', 'Idle'], every: [5, 9], stay: true });
+    const ridgeEvery = [2.5, 4.5];
+    for (const e of people) if (e.when && e.when[0] === 55) storyWatch(e, [0, 0], [], ridgeEvery);
+    for (const e of extras) if (e.when && e.when[0] === 55 && !holds(e)) set(e, 'watch', { at: [0, 0], idles: ['Sad1', 'Sad2', 'Idle'], sadIdles: ['Sad1', 'Sad2', 'Idle'], every: ridgeEvery, stay: true });
     /* the soldiers in the empty town, seen far off from the ridge: they stand and look about */
     for (const e of extras) if (e.when && e.when[0] === 55 && holds(e)) set(e, 'watch', { at: [e.x + Math.sin(e.ry || 0) * 4, e.z + Math.cos(e.ry || 0) * 4], idles: ['IdleM', 'Idle', 'LookAround'], react: [], every: [5, 9], stay: true, far: true });
     const nanny = extras.find((e) => e.id === 'nanny'); if (nanny) set(nanny, 'watch', { idles: ['Idle', 'OldIdle'], react: [], every: [6, 10], far: true });   /* Nanny on the high rock: far off, still and calm. She never speaks. */

@@ -6,7 +6,7 @@
    - Someone in a held pose (kneeling by a hurt man, a hand on Lloyd's shoulder, playing, carrying a basket on the head) keeps it and only glances.
    storyLifeTick(n, dt, W, { head }) runs after the person's mixer each frame; W: { px, pz, talking }; head: false leaves the head to engine/ambient.js. */
 import * as THREE from 'three';
-import { lookBegin, lookEnd } from '../../../engine/anim.js';
+import { idleOK, lookBegin, lookEnd } from '../../../engine/anim.js';
 
 const KEEP = /^(Kneel|Comfort|PlayPiano|PlayGuitar|Sad|Cry|Hurt|CarryHead|TorchIdle|BriefcaseIdle|SitScared|Talk|Yell)/;
 const SITS = /^Sit/;
@@ -22,7 +22,7 @@ function stancesOf(n) {
   const a = n.anim || 'Idle', kid = /^(boy|girl)/.test(n.base) && (n.scale || 1) < 0.9, elder = /_elder$/.test(n.base), man = /^man_|^student/.test(n.base);
   if (SITS.test(a)) return { idles: [a, man ? 'SitPoseM' : 'SitPoseF'], once: [], hold: [3, 5] };
   if (a === 'OldIdle' || elder) return { idles: ['OldIdle', 'Idle'], once: ['Nod'], hold: [6, 10] };
-  if (kid) return { idles: ['Idle'], once: ['LookAround'], hold: [4, 7] };
+  if (kid) return { idles: ['Idle'], once: ['Nod'], hold: [4, 7] };
   if (man) return { idles: ['IdleM', 'Idle'], once: ['Nod', 'LookAround'], hold: [6, 10] };
   return { idles: ['Idle'], once: ['LookAround', 'Nod'], hold: [5, 8] };
 }
@@ -36,9 +36,16 @@ export function storyLifeTick(n, dt, W, { head = true } = {}) {
     const S = s.st || (s.st = stancesOf(n));
     s.t -= dt;
     if (s.t <= 0 && c.cur === c.base) {
-      const r = Math.random(), have = (k) => !!c.get(k);
-      if (r < 0.45 && S.once.length) { const k = choice(S.once); if (have(k)) c.play(k, true); s.t = 5 + Math.random() * 6; }
-      else { const k = choice(S.idles.filter((x) => x !== c.base.getClip().name)); if (k && have(k)) { c.play(k, false, S.hold[0] + Math.random() * (S.hold[1] - S.hold[0])); c.get(k).timeScale = 0.9 + Math.random() * 0.2; } s.t = 7 + Math.random() * 6; }
+      const have = (k) => idleOK(k) && c.get(k);
+      const gestures = S.once.filter(have), idles = S.idles.filter(k => k !== c.base.getClip().name && have(k));
+      if (gestures.length && (!idles.length || Math.random() < 0.45)) {
+        c.play(choice(gestures), true);
+        s.t = 5 + Math.random() * 6;
+      } else {
+        const k = choice(idles);
+        if (k) { c.play(k, false, S.hold[0] + Math.random() * (S.hold[1] - S.hold[0])); c.get(k).timeScale = 0.9 + Math.random() * 0.2; }
+        s.t = 7 + Math.random() * 6;
+      }
     }
   }
   /* the head */
