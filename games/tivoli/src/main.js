@@ -192,7 +192,7 @@ $('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
 const FOOT = { 1: 'sand' };   /* Back-o-Wall's lanes are earth; everywhere else is paving */
 const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n), onClose: () => flushToasts() };
 setupTalk(talkEnv);
-setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS, chapterEnd, onStart: () => { liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); } });
+setupCh1({ scene, state, WALLS, renderer, audioInit, focusGame: () => canvas.focus(), setBusy, setGoal, uiSound: uiS, chapterEnd, onStart: () => { liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); } });
 initStory({ startChapter, uiSound: uiS, setBusy });
 prepare(nextChapter());   /* the chapter Start opens: its bodies unpack behind the title */
 wireFight({ scene, camera, renderer, audioInit, next: () => startChapter(6) });
@@ -324,11 +324,11 @@ async function devViews() {
   if (test === 'clips') { document.title = 'stand-ins: ' + (standIns().join(',') || 'none'); console.log('tivoli stand-in poses still in use:', standIns()); }
   if (['1', '2', '3', '4', '6', '7', '8'].includes(q.get('chapter'))) {   /* ?chapter=N (&at=talked|end) (&cam=x,z,yaw,pitch,height: stand there for a picture) */
     await ch1Begin(+q.get('chapter')); if (q.get('at')) ch1Skip(q.get('at'));
-    if (q.get('cam')) { const [x, z, yaw, pitch, h] = q.get('cam').split(',').map(Number); Object.assign(state, { x, z, yaw, pitch: pitch || 0 }); if (h) state.camY = h; $('scenetitle').hidden = true; setTimeout(() => { document.title = 'CAM'; }, +(q.get('wait') || 6000)); }
+    if (q.get('cam')) { const [x, z, yaw, pitch, h] = q.get('cam').split(',').map(Number); Object.assign(state, { x, z, yaw, pitch: pitch || 0 }); if (h) state.camY = h; $('scenetitle').hidden = true; $('titleskip').hidden = true; setTimeout(() => { document.title = 'CAM'; }, +(q.get('wait') || 6000)); }
     return;
   }
   if (shot === 'poster') {   /* ?shot=poster&cx=&cy=&cz=&tx=&ty=&tz=: the quiet street with nobody in it, for the menu picture (menu/tivoli.jpg) */
-    await fightBegin(); FIGHT.freeze = true; $('hud').hidden = true; for (const id of ['fightcard', 'readcard', 'scenetitle', 'windowframe']) { const e = $(id); if (e) e.hidden = true; }
+    await fightBegin(); FIGHT.freeze = true; $('hud').hidden = true; for (const id of ['fightcard', 'readcard', 'fighttitle', 'fightskip', 'windowframe']) { const e = $(id); if (e) e.hidden = true; }
     scene.traverse((o) => { if (o.isSkinnedMesh) { let p = o; while (p.parent && p.parent !== scene) p = p.parent; p.visible = false; } });
     const f = (k, d) => (q.has(k) ? +q.get(k) : d); FIGHT.on = false; for (const b of FIGHT.bodies) b.visible = false; const cx = f('cx', -9.5), cz = f('cz', 2.0); state.x = cx; state.z = cz; state.camY = f('cy', 1.7); state.yaw = Math.atan2(-(f('tx', 16) - cx), -(f('tz', -0.5) - cz)); state.pitch = f('pitch', 0.04); state.started = true; $('title').hidden = true; return;
   }
@@ -376,8 +376,8 @@ async function devViews() {
   }
   if (test === 'layout') {   /* ?test=layout: show each card and title state and check that no two bits of text overlap, nothing is off the sides of the screen, and every button is big enough to touch (44 px). Run at 390x800, 320x568, 667x375, 800x500, 1280x720. */
     const out = [], W = innerWidth, Hh = innerHeight, st2 = document.createElement('style'); st2.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st2);
-    const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'windowframe', 'hud', 'chcard', 'journal', 'chapters', 'toast'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['scenetitle', 'windowframe']], ['chapter title over the goal and buttons', ['scenetitle', 'hud']], ['chapter end card', ['chcard']], ['reset card', ['chcard']], ['play: goal, buttons, tip, toast', ['hud', 'toast']], ['play: talking', ['hud', 'dialogue']], ['journal', ['journal']], ['chapters', ['chapters']]]) {
+    const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'fighttitle', 'titleskip', 'fightskip', 'windowframe', 'hud', 'chcard', 'journal', 'chapters', 'toast'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['fighttitle', 'windowframe', 'fightskip']], ['chapter title over the goal and buttons', ['scenetitle', 'hud', 'titleskip']], ['chapter end card', ['chcard']], ['reset card', ['chcard']], ['play: goal, buttons, tip, toast', ['hud', 'toast']], ['play: talking', ['hud', 'dialogue']], ['journal', ['journal']], ['chapters', ['chapters']]]) {
       if (name === 'reset card') { $('chcardt').textContent = 'Reset'; $('chcardl').replaceChildren(Object.assign(document.createElement('p'), { textContent: 'Start this chapter again, or start the whole story again.' })); $('chcardb').replaceChildren(...['Restart “May 2010: before”', 'Start the whole story again', 'Cancel'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
       if (name.startsWith('play')) { $('scenetitle').hidden = true; $('goal').textContent = 'Talk to Pastor Grant by the clinic.'; $('hint').hidden = false; liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'); $('jcount').hidden = false; $('jcount').textContent = '2'; $('jbtn').classList.add('glow'); $('toast').textContent = 'New journal page: What people disagree about'; $('dialogue').hidden = true;
         if (show.includes('dialogue')) { document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Pastor Grant'; $('line').textContent = 'Finding the truth can take a long time.'; } else document.body.classList.remove('talking'); }
@@ -396,7 +396,7 @@ async function devViews() {
   }
   if (test === 'scene') {   /* ?test=scene (&seeds=1,2,3): the street scene run start to end; everyone's aim, facing and feet (scenecheck.js). Expect 0. */
     const r = await sceneCheck({ FIGHT, begin: fightBegin, tick: fightTick, strideOf, WALKS: WALK_CLIPS, CONTACT, seeds: q.get('seeds') ? q.get('seeds').split(',').map(Number) : undefined });
-    devLog(['scene: ' + r.lines.length + ' issues (' + r.stats.samples + ' person-frames, ' + r.stats.aims + ' aims checked)', ...r.lines], 'SCENE ' + r.lines.length); $('windowframe').hidden = true; $('fade').hidden = true;
+    devLog(['scene: ' + r.lines.length + ' issues (' + r.stats.samples + ' person-frames, ' + r.stats.aims + ' aims checked)', ...r.lines], 'SCENE ' + r.lines.length); for (const id of ['windowframe', 'fighttitle', 'fightskip', 'fade']) $(id).hidden = true;
   }
   if (test === 'clipinfo') {   /* ?test=clipinfo (&clips=A,B &b=police2010 &kind=pistol): each clip's length, built-in aim turn, swing, foot travel and hip height */
     const names = q.get('clips') ? q.get('clips').split(',') : Object.keys(CL).filter((n) => !n.startsWith('_'));

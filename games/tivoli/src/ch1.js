@@ -39,7 +39,10 @@ const $ = (id) => document.getElementById(id);
 let ORDER = WALKS[1].order, TXT = CH1;
 let E = null, saved = null, titleTimer = null;
 
-export function setupCh1(env) { E = env; }
+export function setupCh1(env) {
+  E = env;
+  $('titleskip').onclick = () => { hideIntro(); E.focusGame(); };
+}
 const goalNow = () => { const i = ORDER.findIndex((id) => !CH.talked[id]); return TXT.goals[i < 0 ? 3 : i]; };
 
 export async function begin(id = 1, opts = {}) {
@@ -60,7 +63,7 @@ export async function begin(id = 1, opts = {}) {
   state.x = pl.start.x; state.z = pl.start.z; state.yaw = pl.start.yaw; state.pitch = 0; state.camY = W.camY || 1.3; state.started = true; E.setBusy(false);
   $('hud').hidden = false; E.setGoal(goalNow());
   const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = TXT.start[0]; t.append(b); for (const l of TXT.start.slice(1)) { const p = document.createElement('p'); p.textContent = l; t.append(p); }
-  t.hidden = false; titleTimer = setTimeout(() => { t.hidden = true; }, 5200);
+  t.hidden = false; $('titleskip').hidden = false; titleTimer = setTimeout(hideIntro, 5200);
   CH.on = true; if (E.onStart) E.onStart(id);
 }
 export function guideTarget() {   /* where the helper arrow points: the next person to talk to, then the place where the walk ends */
@@ -78,9 +81,14 @@ function endChapter() {
   CH.ended = true; finishChapter(CH.id); E.uiSound('goal'); E.setGoal('');
   E.chapterEnd(CH.id, TXT.end);   /* the end card with Next chapter (main.js), as in every game */
 }
+function hideIntro() {
+  clearTimeout(titleTimer); titleTimer = null;
+  $('scenetitle').hidden = true; $('titleskip').hidden = true;
+}
+
 export function leaveChapter() {
   if (!CH.on) return;
-  clearTimeout(titleTimer); titleTimer = null; $('scenetitle').hidden = true;
+  hideIntro();
   const { scene, state, WALLS, renderer } = E, gone = [CH.place.group, ...Talk.npcs.map((n) => n.body), ...(CH.life ? CH.life.people.map((n) => n.m) : [])];
   $('chcard').hidden = true; clearNpcs(); if (CH.life) CH.life.clear(); CH.life = null; scene.remove(CH.place.group); CH.on = false; CH.place = null;
   for (const o of gone) release(o, scene);   /* engine/preload.js: the place and its people are built afresh next time, so their graphics memory is let go now (phones reload the page when it runs out) */
