@@ -10,19 +10,24 @@
    elsewhere in the scene. Nothing is lost: three.js sends a freed thing again if the place is shown again. Phones (iPhones above all) reload the page
    when graphics memory runs out, and players see that as a crash. See docs/ENGINE.md, "engine/preload.js". */
 import { prefetch } from './loader.js';
+import { VIEW } from './perf.js';
 
 let quietFn = () => false; const Q = []; let busy = false, timer = 0;
 export const PRELOAD = { queued: 0, ran: 0, warmed: 0, released: 0 };
 /* tell the engine how to see that the player is reading, not moving: a conversation or a card is open */
 export function setQuiet(fn) { quietFn = fn || (() => false); }
 export function ahead(names) { if (names && names.length) prefetch([...new Set(names)]); }
-/* queue fn (it may return a promise); it runs while the game is quiet, or after at most `wait` ms on an idle moment */
-export function work(fn, { wait = 6000 } = {}) { Q.push({ fn, by: performance.now() + wait }); PRELOAD.queued++; pump(); }
+/* queue fn (it may return a promise); it runs while the game is quiet (a conversation or card is open), or once the camera has been still for 1.2 s, never while the player walks */
+export function work(fn) { Q.push({ fn }); PRELOAD.queued++; pump(); }
 function idle(cb) { if (typeof requestIdleCallback === 'function') requestIdleCallback(cb, { timeout: 400 }); else setTimeout(cb, 60); }
+/* the camera has not moved or turned for 1.2 s (engine/perf.js keeps the camera each game draws with; no camera yet counts as still) */
+const _cm = new Float64Array(16); let stillSince = 0;
+function cameraStill(now) { const c = VIEW.camera; if (!c) return true; const e = c.matrixWorld.elements; let moved = false;
+  for (let i = 0; i < 16; i++) if (Math.abs(e[i] - _cm[i]) > 1e-3) { moved = true; _cm[i] = e[i]; } if (moved) stillSince = now; return now - stillSince > 1200; }
 function pump() {
   if (busy || !Q.length) return; clearTimeout(timer);
   const now = performance.now(), job = Q[0];
-  if (!quietFn() && now < job.by) { timer = setTimeout(pump, 250); return; }
+  if (!quietFn() && !cameraStill(now)) { timer = setTimeout(pump, 250); return; }   /* never while the player walks or turns: a job there made walking choppy (19 November 2026) */
   busy = true; idle(async () => { Q.shift(); try { await job.fn(); } catch (e) { console.warn('preload', e); } PRELOAD.ran++; busy = false; setTimeout(pump, 30); });
 }
 /* compile and upload a place before it is first drawn. Its hidden parts (the place itself, people not yet in the scene) are shown to the

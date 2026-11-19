@@ -10,13 +10,16 @@
    Port Royal's own slow-frame drop moved here (docs/ENGINE.md, "engine/perf.js"). */
 import { JOIN_STATS } from './joinbody.js';
 
+/* the camera each game draws with (engine/preload.js runs heavy work only while it is still) */
+export const VIEW = { camera: null };
 export const PERF = { pr: 1, ms: 16, fps: 60, calls: 0, tris: 0, drops: 0, rises: 0 };
 export const isPhone = () => (typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches) || Math.min(innerWidth, innerHeight) < 600;
 
 export function tunePixels(renderer, { phone = isPhone(), phoneMax = 1.5, max = 2, floor = phone ? 0.9 : 1, slow = 28, quick = 19 } = {}) {
   const dpr = devicePixelRatio || 1, top = Math.min(dpr, phone ? phoneMax : max), low = Math.min(top, floor);
-  let pr = top, avg = 16, last = 0, t0 = 0, since = 0, good = 0; renderer.setPixelRatio(pr); PERF.pr = pr;
+  let pr = top, avg = 16, last = 0, t0 = 0, since = 0, good = 0, dropAt = -1e9; renderer.setPixelRatio(pr); PERF.pr = pr;
   const set = (v) => { pr = Math.round(v * 100) / 100; renderer.setPixelRatio(pr); PERF.pr = pr; };
+  { const r0 = renderer.render.bind(renderer); renderer.render = (sc, c) => { r0(sc, c); if (sc && sc.isScene) VIEW.camera = c; }; }
   const hud = typeof location !== 'undefined' && /[?&]perf\b/.test(location.search) ? readout(renderer) : null;
   function step(now) {
     requestAnimationFrame(step);
@@ -25,8 +28,8 @@ export function tunePixels(renderer, { phone = isPhone(), phoneMax = 1.5, max = 
     avg += (d - avg) * 0.05; PERF.ms = avg; PERF.fps = 1000 / avg;
     if (now - t0 < 5000 || PERF.hold > now) return; since += d;
     if (since < 2500) return; since = 0;
-    if (avg > slow && pr > low) { set(Math.max(low, pr - 0.15)); PERF.drops++; good = 0; }
-    else if (avg < quick && pr < top) { if (++good >= 4) { set(Math.min(top, pr + 0.1)); PERF.rises++; good = 0; } }   /* ten seconds of quick frames before drawing more */
+    if (avg > slow && pr > low) { set(Math.max(low, pr - 0.15)); PERF.drops++; good = 0; dropAt = now; }
+    else if (avg < quick && pr < top && PERF.drops < 4 && now - dropAt > 30000) { if (++good >= 4) { set(Math.min(top, pr + 0.1)); PERF.rises++; good = 0; } }   /* ten seconds of quick frames, and none slow for thirty, before drawing more; after four drops it stays down. Each change resizes the canvas (a small hitch), so a phone on the edge must not swing up and down */
     else good = 0;
   }
   requestAnimationFrame(step);

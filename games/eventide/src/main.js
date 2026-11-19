@@ -30,6 +30,7 @@ import { buildSlipe, buildWard, buildPark80, buildGolden, buildMonument } from '
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, LETTER, TIDY, RADIO, SORT, SORT_KINDS, TIMELINE, PLAQUE, CHOICE_NAMES } from './content.js';
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, work, warm, release } from '../../../engine/preload.js';   /* the next chapter made ready while you read, the last one let go (engine/preload.js) */
+import { touchFirst, liveHint } from '../../../engine/device.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -71,7 +72,7 @@ function setEnv(e) {
 const state = { x: 0, z: 0, yaw: 0, pitch: 0, started: false };
 const EYE = 1.32, EYE_ADULT = 1.6;   /* a child's eye height; in the last chapter you are grown */
 const FX = { shake: 0 };
-const isTouch = matchMedia('(pointer: coarse)').matches;
+const isTouch = touchFirst();   /* engine/device.js: also an iPad in desktop mode and touch tablets */
 const keys = new Set(); let busy = false, fading = false, frozen = false, talkWith = null, near = null;
 const PANELS = ['dialogue', 'journal', 'chapters', 'credits', 'card'];
 const panelsOpen = () => PANELS.some((id) => !$(id).hidden);
@@ -591,7 +592,7 @@ applySave(loadGame());
   model('anims').then((an) => { loadClips(an); tick(); return sceneReady(first); }).then(() => { modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick(); if (__DEV__) devViews(); }); }
 function startGame(quiet) {
   if (GO) return; GO = true; audioInit(); $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
-  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); if (!quiet) cue('begin');
+  liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 let GO = false;
 $('start').onclick = () => { const res = hasSave && stage >= 10; startGame(); beginChapter(res ? chapterOf(stage) : 0, res ? (SAFE[stage] || stage) : 10); };

@@ -12,6 +12,11 @@ export const HIPS_Y = /^(Sit|Injured|StumbleBack|JogStumble|Terrified|Pray|Sad|S
 /* seated clips: the hips stay over the spot the game put the person, and face the way the game turned them. Most are named Sit*, but some seated clips are not. */
 export const SEATED = /^(Sit|TalkM3$|AskQuestion$|PlayPiano$|Pray4$)/;
 export const isSeated = (name) => SEATED.test(name || '');
+/* Clips never used to fill idle time (owner, 19 November 2026: a person standing about and looking around "looks silly"). Every idle, reaction and
+   background-life choice in the engine skips them (idleOK), a body never rests on one (animate), and the controller will not play one (play)
+   unless a scene asks for it on purpose with ctl.cue(name) (Nanny Town: the soldiers look up into the trees when they hear something). */
+export const NOT_IDLE = new Set(['LookAround']);
+export const idleOK = (k) => !NOT_IDLE.has(k);
 /* walking clips (played in place, paced to the ground speed by ctl.pace) and the looping clips whose ends are joined so they never snap */
 export const WALKS = /^(Walk|WalkM|WalkM2|Run|RunM2|Carry|SadWalk|CarryBagWalk|CarryHeadWalk2?|HoldWalk|HurtWalk|InjuredWalk|RifleWalk2?|RifleCrouchWalk)$/;
 const SEAM = /^(Walk|WalkM|WalkM2|Run|RunM2|Carry|Tread|SadWalk|CarryBagWalk|CarryHeadWalk2?|HoldWalk|HurtWalk|InjuredWalk|RifleWalk2?|RifleCrouchWalk)$/;
@@ -120,11 +125,13 @@ export function lapHands(m, name) { const L = LAP.get(m); if (!L) return; m.upda
       const E = sd.fa.getWorldPosition(new THREE.Vector3()), from = T.clone().sub(E), to = T.clone().addScaledVector(off.normalize(), Rt - d).sub(E);
       _hq.setFromUnitVectors(from.normalize(), to.normalize()); sd.fa.getWorldQuaternion(_hq2); const pq = sd.fa.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
       sd.fa.quaternion.copy(pq.multiply(_hq.multiply(_hq2))); sd.fa.updateMatrixWorld(true); } } }
-export function animate(m, name, mixerIn, baseAct) { const clip = (name && clipFor(name)) || clipFor('Idle') || peopleClip; if (!clip && !baseAct) return;
+export function animate(m, name, mixerIn, baseAct) { if (name && NOT_IDLE.has(name)) name = 'Idle'; const clip = (name && clipFor(name)) || clipFor('Idle') || peopleClip; if (!clip && !baseAct) return;
   const mx = mixerIn || new THREE.AnimationMixer(m), base = baseAct || mx.clipAction(clip); if (!baseAct) { base.play(); base.time = Math.random() * clip.duration; base.timeScale = 0.92 + Math.random() * 0.16; }   /* each body at its own pace: two people on one clip never move in step */ if (!mixerIn) mixers.push(mx);
   const acts = {}, ctl = { mx, base, cur: base, timer: 0,
     get(n) { if (!acts[n]) { const c = clipFor(n); if (!c) return null; acts[n] = mx.clipAction(c); } return acts[n]; },
-    play(n, once, hold) { if (n && HAND_TALK.test(n) && holdsInHand(m) && clipFor('Idle')) n = 'Idle';   /* a hand that holds a case or a basket does not wave it about */
+    cue(n, once, hold) { this.cued = n; try { this.play(n, once, hold); } finally { this.cued = null; } },   /* a clip from NOT_IDLE, played because the story asks for it */
+    play(n, once, hold) { if (n && NOT_IDLE.has(n) && this.cued !== n) return;   /* never as filler (see NOT_IDLE) */
+      if (n && HAND_TALK.test(n) && holdsInHand(m) && clipFor('Idle')) n = 'Idle';   /* a hand that holds a case or a basket does not wave it about */
       const a = n ? this.get(n) : this.base; if (!a || a === this.cur) return; a.reset(); if (!n) { a.time = Math.random() * a.getClip().duration; a.timeScale = 0.9 + Math.random() * 0.2; } else if (!once) a.time = Math.random() * a.getClip().duration;   /* a looping clip (a walk, a talk) starts from its own moment: two people set walking together did so in step */   /* back to the resting clip at a random moment and pace, never from its start (two people put back together moved in step) */ a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat); a.clampWhenFinished = !!once; a.fadeIn(0.35).play(); this.cur.fadeOut(0.35); this.cur = a; this.timer = once ? Math.max(0.5, a.getClip().duration - 0.35) : (hold || 0); },
     rest() { this.play(null); },
     pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
@@ -170,7 +177,7 @@ function fidget(c, m, dt) {
   const bn = (on || c.base).getClip().name; if (!own && !FIDGET_BASE.test(bn)) return;
   const sit = /^Sit(Idle|Disbelief)/.test(bn); if (m.userData.seatAnchor && !sit) return;   /* a seated person only ever gets another sitting clip, even from a game's own list (Abba in the boat was given a standing wave as the place changed) */   /* LookOverShoulder is left out: it turns the head about 85 degrees, past what the head check allows */   /* a seated person on another clip (a talk) is left alone */
   const ownSit = own && (sit || m.userData.seatAnchor) ? own.filter((k) => /^Sit/.test(k)) : null;
-  const list = (own ? (ownSit ? (ownSit.length ? ownSit : SITS) : own) : sit ? SITS : SAD.includes(bn) ? SAD : m.userData.elder ? ['OldIdle', 'LookAround'] : ['LookAround', 'HeadTurn']).filter((k) => k !== bn && CL[k]);
+  const list = (own ? (ownSit ? (ownSit.length ? ownSit : SITS) : own) : sit ? SITS : SAD.includes(bn) ? SAD : m.userData.elder ? ['OldIdle', 'HeadTurn'] : ['HeadTurn', 'Idle']).filter((k) => k !== bn && CL[k] && idleOK(k));
   if (!list.length) return; const k = list[(Math.random() * list.length) | 0];
   c.fid = true; const loop = !own && (sit || SAD.includes(bn)); if (loop) c.play(k, false, 5 + Math.random() * 5); else c.play(k, true); if (on) c.home = bn;
   if (loop || (c.cur && c.cur.getClip().duration > 12)) c.timer = Math.min(c.timer || 99, 4 + Math.random() * 4);   /* a moment, not the whole clip: Mixamo's SitTalk runs 42 s. A short look round plays to its end: cut short, the head swung back faster than a person's can (Selassie's head check) */

@@ -1,3 +1,4 @@
+import { liveHint } from '../../../engine/device.js';
 /* The interface, the same as Kendal 1957, Melissa, Garvey and Nanny Town: the goal box, the controls tip that shows
    for a few seconds at the start of play, toasts that wait while someone is talking, the Journal button that glows with a count of new
    pages, the gold talk mark over the step's story people and the talk button with the name of the nearest person, the dialogue box, cards,
@@ -6,6 +7,7 @@ import * as THREE from "three";
 import { uiSound } from "../../../engine/audio.js";
 import { headTop as realHeadTop, markAt, NEAR_GAP } from "../../../engine/marks.js"; /* the talk mark sits the same gap over the real head or hat in every game */
 import { CHAPTERS, JOURNAL, SOURCES } from "./content.js";
+import { pickPerson } from "../../../engine/tap.js"; /* tap a person to talk to them */
 export const $ = (id) => document.getElementById(id);
 const PANELS = ["dialogue", "journal", "chapters", "credits", "card"];
 const ME = ["You", "Ruth"]; /* lines the player says get their own colour */
@@ -133,9 +135,7 @@ export function showHint() {
    really play (no welcome card, no loading, no scene), so it is seen: the game calls hintTick(quiet) every frame */
 let hintWaits = false;
 export function startHint(touch) {
-  $("hint").textContent = touch
-    ? "Left thumb walks. Drag to look. Tap a person to talk."
-    : "W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.";
+  liveHint($("hint"), "Left thumb walks. Drag to look. Tap a person to talk.", "W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use."); /* touch or key words, following what the player uses (engine/device.js) */
   $("hint").hidden = true;
   hintWaits = true;
 }
@@ -180,9 +180,7 @@ const headTop = (n) => {
 };
 export function createMarks({ scene, camera, canvas, onTap }) {
   const all = [],
-    v = new THREE.Vector3(),
-    ray = new THREE.Raycaster(),
-    ndc = new THREE.Vector2();
+    v = new THREE.Vector3();
   const el = document.createElement("button");
   el.className = "tbub";
   el.hidden = true;
@@ -247,18 +245,15 @@ export function createMarks({ scene, camera, canvas, onTap }) {
         el.setAttribute("aria-label", "Talk to " + near.who);
       }
     },
-    /* the person under a tap, if they are near enough to talk to */
-    tap(cx, cy, people, px, pz) {
-      ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
-      ray.setFromCamera(ndc, camera);
-      for (const n of people)
-        if (
-          n.m.visible &&
-          Math.hypot(px - n.x, pz - n.z) < 6 &&
-          ray.intersectObject(n.m, true).length > 0
-        )
-          return n;
-      return null;
+    /* the person under a tap, if they are near enough to talk to (engine/tap.js: by the feet-to-head band on the screen, no ray through the body) */
+    tap(cx, cy, people, px, pz, maxDist) {
+      return pickPerson(
+        camera,
+        people.filter((n) => n.m.visible).map((n) => ({ obj: n.m, data: n, h: Math.max(1, headTop(n) - n.m.getWorldPosition(v).y) })),
+        cx,
+        cy,
+        { near: [px, pz], maxDist },
+      );
     },
   };
 }

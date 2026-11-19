@@ -37,6 +37,7 @@ import { checkAll, CHECKS } from '../../../engine/checks.js';   /* dev only: eve
 import { makeAdapter, CHECK_TABLES } from './checktables.js';
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
+import { touchFirst, liveHint } from '../../../engine/device.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -76,7 +77,7 @@ function setEnv(e) {   /* the time of day: sky, haze, sun, the far ridges and th
 const state = { x: 0, z: 0, yaw: 0, pitch: 0, started: false };
 let EYE = 1.32; const FX = { shake: 0, roll: 0, low: 0 };   /* EYE: a child's eye height; FX: camera shake, and how far you are crouched (0 to 1) */
 const titleMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const isTouch = matchMedia('(pointer: coarse)').matches;
+const isTouch = touchFirst();   /* engine/device.js: also an iPad in desktop mode and touch tablets */
 const keys = new Set(); let busy = false, fading = false, frozen = false, talkWith = null, near = null, moveLock = false;
 const PANELS = ['dialogue', 'journal', 'chapters', 'credits', 'card'];
 const panelsOpen = () => PANELS.some((id) => !$(id).hidden);
@@ -596,7 +597,7 @@ ON[35] = () => { leavesUI(); };
    Nobody is shown hurt and nobody falls. The soldiers turn and go back down. This fight is fictional (the journal says so): it shows the methods
    written down in 1739 for a Windward town (horns answering unseen, trenches with forked sticks, the bush cut away to show the hillside full of people). ---------- */
 const FIGHT = { on: false, hold: false, sHead: 104, mode: 'idle', t: 0, next: 0, firing: 0 }, HALT = 40, MARCH = 1.75, FLEE = 3.4, START = 104;   /* HALT: how far down the path (metres from its top) the first soldier stops, in plain view below the rock. MARCH and FLEE: metres a second (a steady march, and a run), each played at the pace of the body's own stride so the feet do not slide */
-const HALT_IDLES = ['IdleM', 'LookAround', 'Idle', 'IdleM'];   /* the soldiers stopped on the path: each shifts his weight and looks about in his own time */
+const HALT_IDLES = ['IdleM', 'Idle', 'IdleM', 'Idle'];   /* the soldiers stopped on the path: each shifts his weight in his own time (no looking about as filler: engine/anim.js NOT_IDLE) */
 const CARDSEEN = new Set();   /* the opt-in cards answered (the shared rule 4 check asks) */
 function fightIntro() { const c = CARDS.fight; card(c.title, c.paras, [{ t: c.go, go: () => { CARDSEEN.add('fight'); hideCard(); fightRun(); } }, { t: c.skip, go: () => { hideCard(); fightSkip(); } }], { col: true }); }
 async function fightSkip() { const c = CARDS.fightRead; unlock('trenches'); unlock('attacks'); await infoCard(c); fightAfter(); }
@@ -604,7 +605,7 @@ function columnPlace(P, sHead, up, clip, speed = 0, t = FIGHT.t) {   /* the sold
   const S = P.spots; for (const n of P.extras) { if (n.column === undefined) continue; const s = sHead + n.column * 2.3, vis = s < S.sClimb - 1; n.scripted = true; n.cue = !vis; n.m.visible = vis && cur === 'watch'; if (!vis) continue;
     const [x, z, a] = pathAt(S.climb.dense, s); n.x = x; n.z = z; stand(n, P.G); if (!n.m.userData.groundAt) n.m.userData.groundAt = (gx, gz) => P.G.h(gx, gz);   /* on the steep path each foot is grounded on the hill under it */ n.m.rotation.y = up ? a + PI : a;
     let want = clip; if (clip === 'Idle') { if (n.look && t < n.lookT) want = n.look; else { n.look = null; if (!(t < n.idleT) || !HALT_IDLES.includes(n.clip)) { n.idleI = ((n.idleI ?? n.column) + 1) % HALT_IDLES.length; n.idleT = t + 4 + ((n.column * 7) % 5); } want = HALT_IDLES[n.idleI]; } }
-    if (n.clip !== want) { n.clip = want; n.ctl.play(want === 'Idle' ? null : want); const act = n.ctl.cur; if (want !== 'Idle' && act) { act.time = ((n.column * 0.37) % 1) * act.getClip().duration; act.timeScale = 0.92 + (n.column % 5) * 0.04; } }   /* never in step with the man in front */
+    if (n.clip !== want) { n.clip = want; if (want === n.look) n.ctl.cue(want); else n.ctl.play(want === 'Idle' ? null : want);   /* the look up into the trees is the story, so it is cued (engine/anim.js NOT_IDLE) */ const act = n.ctl.cur; if (want !== 'Idle' && act) { act.time = ((n.column * 0.37) % 1) * act.getClip().duration; act.timeScale = 0.92 + (n.column % 5) * 0.04; } }   /* never in step with the man in front */
     if (speed > 0 && n.ctl.cur && n.ctl.cur.getClip().name === want) n.ctl.pace(speed, 0.5, 2.2); }
 }
 function fightTick(dt, t) {
@@ -752,7 +753,7 @@ function prepareTitleScene() {
 function backgroundLoad() { PLACES_KEEP.background(() => [...usedIn(chapterOf(stage) + 1), 'town', 'watch', 'newtown', 'estate'], 500); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
 function startGame(quiet) {
   if (state.started) return; FOV = 66; resize(); audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
-  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); if (!quiet) cue('begin');
+  liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] || stage) : 10; beginChapter(hasSave && stage >= 10 ? chapterOf(stage) : 0, hasSave && stage >= 10 ? st : 10); setTimeout(backgroundLoad, 5000); };
 

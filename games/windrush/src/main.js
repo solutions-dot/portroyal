@@ -1,3 +1,4 @@
+import { touchFirst } from '../../../engine/device.js';
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A family story built on the existing engine, with no shared-module changes. */
 import { renderFramed } from "../../../engine/cine.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
@@ -78,7 +79,7 @@ const KEY = "windrush-save-v1",
   q = new URLSearchParams(location.search),
   QUICK = __DEV__ && (q.has("auto") || q.has("test"));
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches,
-  phone = matchMedia("(pointer: coarse)").matches;
+  phone = touchFirst() /* engine/device.js: an iPad in desktop mode and touch tablets too */;
 soundPref("windrush-sound");
 const renderer = new THREE.WebGLRenderer({
   canvas: $("stage"),
@@ -1061,7 +1062,7 @@ function endPointer(e) {
       /* a tap on a person talks to them */
       const n =
         S.started && !busy && !openPanel() && !DIR.on
-          ? MARKS.tap(e.clientX, e.clientY, world().people, S.x, S.z)
+          ? MARKS.tap(e.clientX, e.clientY, world().people, S.x, S.z, TALK_R)
           : null;
       if (n) talk(n);
     }
@@ -1132,6 +1133,7 @@ function move(dt) {
       story.done(need.id);
   }
 }
+const TALK_R = 2.35; /* how near you must be to talk: the talk button and a tap on a person (engine/tap.js) use the same reach */
 function findNear() {
   near = null;
   if (!S.started || busy || openPanel() || DIR.on) return;
@@ -1164,7 +1166,7 @@ function findNear() {
   for (const c of candidates) c.dist = Math.hypot(S.x - c.x, S.z - c.z);
   near =
     candidates
-      .filter((c) => c.dist < 2.35)
+      .filter((c) => c.dist < TALK_R)
       .sort((a, b) => a.priority - b.priority || a.dist - b.dist)[0] || null;
 }
 let GUIDE = null;

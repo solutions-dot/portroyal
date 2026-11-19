@@ -1,3 +1,4 @@
+import { touchFirst } from '../../../engine/device.js';
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A self-contained game on the established shared engine APIs. */
 import { renderFramed } from "../../../engine/cine.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
@@ -75,7 +76,7 @@ const KEY = "selassie-save-v1",
   q = new URLSearchParams(location.search),
   QUICK = __DEV__ && (q.has("auto") || q.has("test"));
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches,
-  phone = matchMedia("(pointer: coarse)").matches;
+  phone = touchFirst() /* engine/device.js: an iPad in desktop mode and touch tablets too */;
 soundPref("selassie-sound");
 const renderer = new THREE.WebGLRenderer({
   canvas: $("stage"),
@@ -1279,7 +1280,7 @@ function endPointer(e) {
       /* a tap on a person talks to them */
       const n =
         S.started && !busy && !openPanel() && !DIR.on
-          ? MARKS.tap(e.clientX, e.clientY, world().people.filter((p) => !p.historical), S.x, S.z)
+          ? MARKS.tap(e.clientX, e.clientY, world().people.filter((p) => !p.historical), S.x, S.z, TALK_R)
           : null;
       if (n) talk(n);
     }
@@ -1338,10 +1339,11 @@ function move(dt) {
     }
   }
 }
+const TALK_R = 2.5; /* how near you must be to talk: the talk button and a tap on a person (engine/tap.js) use the same reach */
 function findNear() {
   near = null;
   if (!S.started || busy || openPanel() || DIR.on) return;
-  let best = 2.5;
+  let best = TALK_R;
   for (const n of world().people) {
     if (n.historical || !n.m.visible) continue;
     const d = Math.hypot(S.x - n.x, S.z - n.z);

@@ -10,6 +10,8 @@ All eight chapters are implemented as shared story data, with visible carry/plac
 
 **Interface (16 November 2026): the same as Kendal 1957.** The page's style is Kendal's shared rules with this game's colours and a few rules of its own at the end (44 px tabs, the cinematic's controls and narration box, source links). `src/ui.js` holds the behaviour: the controls tip ("Left thumb walks. Drag to look. Tap a person to talk." on touch) shows for 6 seconds the first time you can play, then goes, and hides while someone talks; the goal box stays open; a new journal page makes the Journal button glow with a count and shows a "New journal page" toast (one that comes while someone talks waits until the dialogue closes); the gold talk mark floats over each story person and the talk button with the person's name sits over the nearest person, both measured from the real top of the head or hat (`engine/marks.js`); tapping a person talks to them, and the Talk button is only for things to do; the dialogue box, cards, journal tabs, chapter list, the Reset card and the "Chapter N is finished!" card with Next chapter and Stay here are Kendal's. `tests/final-two-ui.mjs` checks that this page keeps every shared rule of Kendal's.
 
+**Tap to talk (19 November 2026).** A tap on a person within the talk reach (`TALK_R`, 2.35 m, the same as the talk button) starts `talk(n)`. `MARKS.tap` in `src/ui.js` uses `pickPerson` from `engine/tap.js` (no ray through the body).
+
 ## Family and chapters
 
 Every speaker is fictional. No real passenger or public figure has invented dialogue. The people, choices, addresses and documents do not reproduce a real immigration case.

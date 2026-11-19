@@ -61,3 +61,27 @@ test('batchStatic keeps a packed (quantized) model where it was', () => {
   batchStatic(root); const out = root.children[0].geometry; out.computeBoundingBox();
   assert.ok(Math.abs(out.boundingBox.max.x - 6) < 0.01, 'the packed box still reaches x = 6, got ' + out.boundingBox.max.x);
 });
+
+test('pickPerson finds the person under a tap, the nearer of two, and nobody in the gaps', async () => {
+  const { pickPerson } = await import('../engine/tap.js');
+  globalThis.innerWidth = 400; globalThis.innerHeight = 800;
+  const cam = new THREE.PerspectiveCamera(60, 0.5, 0.1, 100); cam.position.set(0, 1.6, 0); cam.lookAt(0, 1.6, -1); cam.updateMatrixWorld(true);
+  const a = new THREE.Group(); a.position.set(0, 0, -4); const b = new THREE.Group(); b.position.set(0, 0, -8); const c = new THREE.Group(); c.position.set(3, 0, -4);
+  for (const o of [a, b, c]) o.updateMatrixWorld(true);
+  const people = [{ obj: b, data: 'far' }, { obj: a, data: 'near' }, { obj: c, data: 'side' }];
+  assert.equal(pickPerson(cam, people, 200, 420), 'near');   /* both in line: the nearer one */
+  assert.equal(pickPerson(cam, people, 5, 420), null);       /* the gap at the edge */
+  assert.equal(pickPerson(cam, people, 200, 420, { near: [0, -9], maxDist: 2 }), 'far');   /* only people within reach */
+});
+
+test('guide meshHit: every grid cell the ray crosses, and a moving mesh needs no new grid', async () => {
+  const { meshHit } = await import('../engine/guide.js');
+  const big = (x, z) => { const g = new THREE.PlaneGeometry(0.1, 2, 1, 1200); g.rotateY(Math.PI / 4); g.translate(x, 1, z); return g; };   /* a thin wall, over 1,500 triangles */
+  const wall = new THREE.Mesh(big(2.05, 1.95), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); wall.updateMatrixWorld(true);
+  const rc = new THREE.Raycaster(new THREE.Vector3(1.8, 1, 1.7), new THREE.Vector3(1, 0, 1).normalize(), 0, 6.5);
+  const d = meshHit(wall, rc, 6.5); assert.ok(d < 1, 'the wall in the corner cell is found, got ' + d);
+  const sg = new THREE.PlaneGeometry(3, 2, 1, 1200); sg.rotateY(Math.PI / 2); sg.translate(0, 1, 0); const ship = new THREE.Mesh(sg, wall.material);   /* a 3 m wall across the ray */ ship.position.set(10, 0, 10); ship.updateMatrixWorld(true);
+  const r2 = new THREE.Raycaster(new THREE.Vector3(8, 1, 10), new THREE.Vector3(1, 0, 0), 0, 6.5);
+  const d1 = meshHit(ship, r2, 6.5); ship.position.z += 0.3; ship.rotation.y = 0.05; ship.updateMatrixWorld(true); const d2 = meshHit(ship, r2, 6.5);
+  assert.ok(Number.isFinite(d1) && Number.isFinite(d2) && Math.abs(d1 - 2) < 0.4 && Math.abs(d2 - 2) < 0.6, 'found before and after it moved: ' + d1 + ', ' + d2);
+});

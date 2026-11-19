@@ -18,6 +18,35 @@ function softTex(draw) {   /* a soft, glowing mark drawn on a small canvas: no h
 }
 function plane(size, map) { const g = new THREE.PlaneGeometry(size, size); g.rotateX(-Math.PI / 2); return new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map, transparent: true, opacity: 0, depthWrite: false, depthTest: true, fog: false, toneMapped: false })); }
 
+/* a big mesh (the ground, a merged street, a ship) is tested only where the ray passes: its triangles, in the mesh's own space, sorted once into a
+   2 m grid; the ray is brought into that space, so a mesh that moves (a ship on the swell) is never sorted again, and every cell the ray crosses
+   is visited (a 2D grid walk). A small mesh uses three.js's own raycast. */
+const GRID = new WeakMap(), CELL = 2, _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _h = new THREE.Vector3(), _hits = [], _inv = new THREE.Matrix4(), _lr = new THREE.Ray(), _e = new THREE.Vector3();
+const key = (cx, cz) => (cx * 73856093) ^ (cz * 19349663);
+function gridOf(o) {
+  let g = GRID.get(o); if (g && g.geo === o.geometry) return g;
+  const geo = o.geometry, p = geo.attributes.position, ix = geo.index, n = p ? ((ix ? ix.count : p.count) / 3) | 0 : 0; if (n < 1500) { GRID.set(o, (g = { geo, small: true })); return g; }
+  const tri = new Float32Array(n * 9), cells = new Map(), at = (k) => (ix ? ix.getX(k) : k);
+  for (let t = 0; t < n; t++) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+    for (let v = 0; v < 3; v++) { _a.fromBufferAttribute(p, at(t * 3 + v)); const q = t * 9 + v * 3; tri[q] = _a.x; tri[q + 1] = _a.y; tri[q + 2] = _a.z; x0 = Math.min(x0, _a.x); x1 = Math.max(x1, _a.x); z0 = Math.min(z0, _a.z); z1 = Math.max(z1, _a.z); }
+    for (let cx = Math.floor(x0 / CELL); cx <= Math.floor(x1 / CELL); cx++) for (let cz = Math.floor(z0 / CELL); cz <= Math.floor(z1 / CELL); cz++) { const k = key(cx, cz); let l = cells.get(k); if (!l) cells.set(k, (l = [])); l.push(t); } }
+  GRID.set(o, (g = { geo, tri, cells, seen: new Uint32Array(n), stamp: 0 })); return g;
+}
+export function meshHit(o, ray, far) {   /* how far along the raycaster's ray this mesh first stands, in metres, or Infinity */
+  const g = gridOf(o); if (g.small) { _hits.length = 0; o.raycast(ray, _hits); let d = Infinity; for (const h of _hits) if (h.distance < d) d = h.distance; return d; }
+  const wr = ray.ray; _inv.copy(o.matrixWorld).invert(); _lr.copy(wr).applyMatrix4(_inv);   /* the ray in the mesh's own space */
+  _e.copy(wr.direction).multiplyScalar(far).add(wr.origin).applyMatrix4(_inv);   /* the far end, in that space */
+  let d = Infinity; g.stamp++; const T = g.tri;
+  const test = (k) => { const l = g.cells.get(k); if (!l) return; for (const t of l) { if (g.seen[t] === g.stamp) continue; g.seen[t] = g.stamp; const q = t * 9;
+    _a.set(T[q], T[q + 1], T[q + 2]); _b.set(T[q + 3], T[q + 4], T[q + 5]); _c.set(T[q + 6], T[q + 7], T[q + 8]);
+    if (_lr.intersectTriangle(_a, _b, _c, false, _h)) { _h.applyMatrix4(o.matrixWorld); const e = _h.distanceTo(wr.origin); if (e < d && e <= far) d = e; } } };
+  /* 2D grid walk (Amanatides and Woo) over x and z from the start to the far end */
+  const ox = _lr.origin.x, oz = _lr.origin.z, dx = _e.x - ox, dz = _e.z - oz; let cx = Math.floor(ox / CELL), cz = Math.floor(oz / CELL); const ex = Math.floor(_e.x / CELL), ez = Math.floor(_e.z / CELL);
+  const sx = dx > 0 ? 1 : -1, sz = dz > 0 ? 1 : -1, tdx = dx ? Math.abs(CELL / dx) : Infinity, tdz = dz ? Math.abs(CELL / dz) : Infinity;
+  let tmx = dx ? ((sx > 0 ? (cx + 1) * CELL - ox : ox - cx * CELL) / Math.abs(dx)) : Infinity, tmz = dz ? ((sz > 0 ? (cz + 1) * CELL - oz : oz - cz * CELL) / Math.abs(dz)) : Infinity;
+  test(key(cx, cz)); for (let i = 0; i < 64 && (cx !== ex || cz !== ez); i++) { if (tmx < tmz) { cx += sx; tmx += tdx; } else { cz += sz; tmz += tdz; } test(key(cx, cz)); }
+  return d;
+}
 export function createGuide({ scene, camera, ground = null, eye = 1.6 } = {}) {
   /* two chevrons (pointing along +x) and a thin ring, warm gold and bright enough to see in daylight */
   const chev = softTex((x) => { x.lineWidth = 12; for (const o of [-22, 18]) { x.globalAlpha = o < 0 ? 0.8 : 1;   /* thicker and brighter (owner, 17 November 2026: the arrow needed to be a bit brighter) */ x.beginPath(); x.moveTo(44 + o, 30); x.lineTo(78 + o, 64); x.lineTo(44 + o, 98); x.stroke(); } });
@@ -31,11 +60,20 @@ export function createGuide({ scene, camera, ground = null, eye = 1.6 } = {}) {
   const _d = new THREE.Vector3(), ray = new THREE.Raycaster(), _o = new THREE.Vector3(), _r = new THREE.Vector3();
   let room = 6, roomAt = -1e9, roomDir = 0;
   const seen = (o) => { for (let q = o; q; q = q.parent) if (!q.visible || q === root || q === ring) return false; return true; };
-  function clear(px, pz, dir, gy, now) {   /* how far the floor is open that way, so the arrow never lies inside a wall or a counter (a few times a second) */
-    if (now - roomAt < 200 && Math.abs(Math.atan2(Math.sin(dir - roomDir), Math.cos(dir - roomDir))) < 0.15) return room;
+  /* what the arrow can be stopped by: still, solid scenery only, gathered once a second. People, forests and effects are never tested: a ray
+     against a skinned body poses every point of it in JavaScript, and walking with the arrow showing was sluggish in Port Royal and Nanny Town
+     (19 November 2026) while standing by a person, with the arrow hidden, was fine. */
+  let cand = [], candAt = -1e9;
+  function candidates(now) { if (now - candAt < 1000) return cand; candAt = now; cand = [];
+    scene.traverseVisible((o) => { if (o === root || o === ring || !o.isMesh || o.isSkinnedMesh || o.isInstancedMesh || !o.layers.mask) return; cand.push(o); }); return cand; }
+  /* a big still mesh (the ground, a merged street) is tested only where the ray passes: its triangles, in world space, sorted once into a 2 m grid.
+     A small mesh, or one that has moved since, uses three.js's own raycast. */
+  function clear(px, pz, dir, gy, now) {   /* how far the floor is open that way, so the arrow never lies inside a wall or a counter (a few times a second, at most every 80 ms while turning) */
+    const turned = Math.abs(Math.atan2(Math.sin(dir - roomDir), Math.cos(dir - roomDir))) >= 0.15;
+    if (now - roomAt < 80 || (now - roomAt < 200 && !turned)) return room;
     roomAt = now; roomDir = dir; room = 6;
     for (const h of [0.35, 0.9]) { _o.set(px, gy + h, pz); _r.set(Math.sin(dir), 0, Math.cos(dir)); ray.set(_o, _r); ray.far = 6.5; ray.camera = camera;
-      for (const hit of ray.intersectObjects(scene.children, true)) { if (hit.object.isSkinnedMesh || hit.object.isSprite || hit.object.isPoints || hit.object.isLine || !seen(hit.object)) continue; room = Math.min(room, hit.distance); break; } }
+      for (const o of candidates(now)) { if (!seen(o)) continue; const d = meshHit(o, ray, 6.5); if (d < room) room = d; } }
     return room;
   }
   let fade = 0, last = null, shown = false, info = { show: false };

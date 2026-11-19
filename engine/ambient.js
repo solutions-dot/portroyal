@@ -29,7 +29,7 @@
    person, sliding, standing still too long in a lively scene, or blocking a story path. */
 import * as THREE from 'three';
 import { walkRoute, segmentHitsWall } from './placement.js';
-import { groundFeet, strideOf, lookBegin, lookEnd } from './anim.js';
+import { groundFeet, strideOf, lookBegin, lookEnd, idleOK } from './anim.js';
 import { gripTick } from './grip.js';
 import { faceCheck } from './faces.js';
 import { snapMeshes, auditSeated } from './audit.js';   /* dev checks only (ambientCheck): the public builds never call it, so the bundler leaves it out */
@@ -113,7 +113,7 @@ export function createAmbient(opts = {}) {
   /* ---------- clips ---------- */
   const ctlOf = (n) => n.ctl || (n.m && n.m.userData.anim);
   const has = (n, name) => { const c = ctlOf(n); return !!(name && c && c.get(name)); };
-  const avail = (n, list) => (list || []).filter((c) => has(n, c));
+  const avail = (n, list) => (list || []).filter((c) => idleOK(c) && has(n, c));   /* never a clip the owner took out of idle time (engine/anim.js NOT_IDLE) */
   function play(n, name, { once = false, speed } = {}) {
     const c = ctlOf(n), a = n.amb; if (!c) return false; const act = c.get(name); if (!act) return false;
     if (act === c.cur) { a.clip = name; return true; }
