@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { uiSound } from "../../../engine/audio.js";
 import { headTop as realHeadTop, markAt, NEAR_GAP } from "../../../engine/marks.js"; /* the talk mark sits the same gap over the real head or hat in every game */
 import { CHAPTERS, JOURNAL, SOURCES } from "./content.js";
+import { pickPerson } from "../../../engine/tap.js"; /* tap a person to talk to them */
 export const $ = (id) => document.getElementById(id);
 const PANELS = ["dialogue", "journal", "chapters", "credits", "card"];
 const ME = ["You", "Ruth"]; /* lines the player says get their own colour */
@@ -180,9 +181,7 @@ const headTop = (n) => {
 };
 export function createMarks({ scene, camera, canvas, onTap }) {
   const all = [],
-    v = new THREE.Vector3(),
-    ray = new THREE.Raycaster(),
-    ndc = new THREE.Vector2();
+    v = new THREE.Vector3();
   const el = document.createElement("button");
   el.className = "tbub";
   el.hidden = true;
@@ -247,18 +246,15 @@ export function createMarks({ scene, camera, canvas, onTap }) {
         el.setAttribute("aria-label", "Talk to " + near.who);
       }
     },
-    /* the person under a tap, if they are near enough to talk to */
-    tap(cx, cy, people, px, pz) {
-      ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
-      ray.setFromCamera(ndc, camera);
-      for (const n of people)
-        if (
-          n.m.visible &&
-          Math.hypot(px - n.x, pz - n.z) < 6 &&
-          ray.intersectObject(n.m, true).length > 0
-        )
-          return n;
-      return null;
+    /* the person under a tap, if they are near enough to talk to (engine/tap.js: by the feet-to-head band on the screen, no ray through the body) */
+    tap(cx, cy, people, px, pz, maxDist) {
+      return pickPerson(
+        camera,
+        people.filter((n) => n.m.visible).map((n) => ({ obj: n.m, data: n, h: Math.max(1, headTop(n) - n.m.getWorldPosition(v).y) })),
+        cx,
+        cy,
+        { near: [px, pz], maxDist },
+      );
     },
   };
 }

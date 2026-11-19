@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { animate, lookBegin, lookEnd } from '../../../engine/anim.js';
 import { loadBase, makeBody, bodyOf, LOOKS } from './cast.js';
+import { pickPerson } from '../../../engine/tap.js';   /* tap a person to talk to them */
 
 export const Talk = { npcs: [], near: null, open: null };
 /* What the story people do while you are not talking to them, and how they talk (owner, 16 November 2026: no "zombies standing around").
@@ -22,7 +23,7 @@ const TALKS = { f: ['Talk1', 'Talk2', 'Talk3'], m: ['TalkM1', 'TalkM2', 'Talk2']
 const has = (n, c) => !!(n.body.userData.anim && n.body.userData.anim.get(c));
 function idleNext(n) { const l = n.idles.filter((c) => has(n, c)); if (!l.length) return; n.iv = (n.iv === undefined ? (Math.random() * l.length) | 0 : n.iv + 1) % l.length; n.body.userData.anim.play(l[n.iv]); n.idleT = 5 + Math.random() * 6; }
 let E = null, step = 0, lines = [];
-const $ = (id) => document.getElementById(id), ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const $ = (id) => document.getElementById(id);
 
 /* env: { scene, camera, uiSound, setBusy(bool), onUnlock(id), onTalked(npc) } */
 export function setupTalk(env) { E = env; $('next').onclick = next; $('dclose').onclick = leave; }
@@ -35,12 +36,12 @@ export async function addNpc(def) {   /* def: { id, name, look, x, z, ry, anim, 
 }
 export function clearNpcs() { for (const n of Talk.npcs) { E.scene.remove(n.body); if (n.mark) E.scene.remove(n.mark); } Talk.npcs.length = 0; Talk.near = null; Talk.open = null; $('dialogue').hidden = true; document.body.classList.remove('talking'); $('talk').hidden = true; E.setBusy(false); }
 
-export function tapNpc(cx, cy, player) {   /* a tap (not a drag) on someone close enough */
-  ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, E.camera);
-  for (const n of Talk.npcs) if (Math.hypot(player.x - n.x, player.z - n.z) < 5 && ray.intersectObject(n.body, true).length) return n; return null;
+export const TALK_R = 2.8;   /* how near you must be to talk: the talk button and a tap on a person use the same reach */
+export function tapNpc(cx, cy, player, headY) {   /* a tap (not a drag) on someone close enough (engine/tap.js: by the feet-to-head band on the screen, no ray through the body) */
+  return pickPerson(E.camera, Talk.npcs.map((n) => ({ obj: n.body, data: n, h: headY ? Math.max(1, headY(n) - n.body.position.y) : undefined })), cx, cy, { near: [player.x, player.z], maxDist: TALK_R });
 }
 export function updateTalk(dt, player, active) {   /* who is near; turn people to face you */
-  let best = null, bd = 2.8; for (const n of Talk.npcs) { const d = Math.hypot(player.x - n.x, player.z - n.z); if (d < bd) { bd = d; best = n; } }
+  let best = null, bd = TALK_R; for (const n of Talk.npcs) { const d = Math.hypot(player.x - n.x, player.z - n.z); if (d < bd) { bd = d; best = n; } }
   Talk.near = active && !Talk.open ? best : (Talk.open || null);
   for (const n of Talk.npcs) { const face = n === Talk.near || n === Talk.open; let want = face ? Math.atan2(player.x - n.x, player.z - n.z) : n.home, e = want - n.body.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e));
     const lim = TURN_RATE * dt; n.body.rotation.y = wrap(n.body.rotation.y + Math.max(-lim, Math.min(lim, e * Math.min(1, dt * 5)))); }   /* the short way round, never faster than a person turns, and the angle kept in -PI..PI */

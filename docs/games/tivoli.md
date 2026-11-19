@@ -213,6 +213,8 @@ Start it from the title screen: "May 2010 street scene (work in progress)". In t
 | `src/headcheck.js` | Dev only: `?test=heads` (heads and body turns of everyone, through every chapter and the street scene) |
 | `src/checks.js` | `overlapSolids` (solid boxes), `sinkCheck` (feet below a surface), and `CLOTH_SKIP` (the order the 2010 kit is worn in, for the shared `auditCloth`); re-exports the engine's `auditCloth`, `auditWalk` and `skinProbe` |
 
+**Tap to talk (19 November 2026).** In the walking chapters a tap on a person within the talk reach (`TALK_R`, 2.8 m in `src/talk.js`, the same as the talk button) starts the talk. `tapNpc` uses `pickPerson` from `engine/tap.js` (no ray through the body).
+
 ## Test it
 
 ```bash

@@ -1279,7 +1279,7 @@ function endPointer(e) {
       /* a tap on a person talks to them */
       const n =
         S.started && !busy && !openPanel() && !DIR.on
-          ? MARKS.tap(e.clientX, e.clientY, world().people.filter((p) => !p.historical), S.x, S.z)
+          ? MARKS.tap(e.clientX, e.clientY, world().people.filter((p) => !p.historical), S.x, S.z, TALK_R)
           : null;
       if (n) talk(n);
     }
@@ -1338,10 +1338,11 @@ function move(dt) {
     }
   }
 }
+const TALK_R = 2.5; /* how near you must be to talk: the talk button and a tap on a person (engine/tap.js) use the same reach */
 function findNear() {
   near = null;
   if (!S.started || busy || openPanel() || DIR.on) return;
-  let best = 2.5;
+  let best = TALK_R;
   for (const n of world().people) {
     if (n.historical || !n.m.visible) continue;
     const d = Math.hypot(S.x - n.x, S.z - n.z);

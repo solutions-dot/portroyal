@@ -102,7 +102,7 @@ canvas.addEventListener('pointermove', (e) => {
 });
 const endPointer = (e) => {
   if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; }
-  if (e.pointerId === look.id) { if (look.moved < 8 && CH.on && !busy) { const n = tapNpc(e.clientX, e.clientY, state); if (n) talkStart(n); } look.id = null; }   // a tap (not a drag) on a person starts a talk
+  if (e.pointerId === look.id) { if (look.moved < 8 && CH.on && !busy) { const n = state.started && !Talk.open ? tapNpc(e.clientX, e.clientY, state, topOf) : null; if (n) talkStart(n); } look.id = null; }   // a tap (not a drag) on a person starts a talk
 };
 canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
 function stickUI() {   /* the joystick ring: faint where your thumb rests, under your thumb while you walk */
@@ -488,5 +488,5 @@ function guideTick(now) {
 }
 requestAnimationFrame(frame);
 
-if (__DEV__) window.__T = { state, Talk, CH, talkStart, talkNext };   // dev only: the test scripts drive the chapter through this
+if (__DEV__) window.__T = { state, Talk, CH, talkStart, talkNext, camera, startChapter, settle: async () => { await checkHooks().settle(); STEPPED.on = false; } };   // dev only: the test scripts drive the chapter through this
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
