@@ -1,3 +1,4 @@
+import { touchFirst } from '../../../engine/device.js';
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A self-contained game on the established shared engine APIs. */
 import { renderFramed } from "../../../engine/cine.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
@@ -75,7 +76,7 @@ const KEY = "selassie-save-v1",
   q = new URLSearchParams(location.search),
   QUICK = __DEV__ && (q.has("auto") || q.has("test"));
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches,
-  phone = matchMedia("(pointer: coarse)").matches;
+  phone = touchFirst() /* engine/device.js: an iPad in desktop mode and touch tablets too */;
 soundPref("selassie-sound");
 const renderer = new THREE.WebGLRenderer({
   canvas: $("stage"),

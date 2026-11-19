@@ -37,6 +37,7 @@ import { checkAll, CHECKS } from '../../../engine/checks.js';   /* dev only: eve
 import { makeAdapter, CHECK_TABLES } from './checktables.js';
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
+import { touchFirst, liveHint } from '../../../engine/device.js';
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -76,7 +77,7 @@ function setEnv(e) {   /* the time of day: sky, haze, sun, the far ridges and th
 const state = { x: 0, z: 0, yaw: 0, pitch: 0, started: false };
 let EYE = 1.32; const FX = { shake: 0, roll: 0, low: 0 };   /* EYE: a child's eye height; FX: camera shake, and how far you are crouched (0 to 1) */
 const titleMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const isTouch = matchMedia('(pointer: coarse)').matches;
+const isTouch = touchFirst();   /* engine/device.js: also an iPad in desktop mode and touch tablets */
 const keys = new Set(); let busy = false, fading = false, frozen = false, talkWith = null, near = null, moveLock = false;
 const PANELS = ['dialogue', 'journal', 'chapters', 'credits', 'card'];
 const panelsOpen = () => PANELS.some((id) => !$(id).hidden);
@@ -752,7 +753,7 @@ function prepareTitleScene() {
 function backgroundLoad() { PLACES_KEEP.background(() => [...usedIn(chapterOf(stage) + 1), 'town', 'watch', 'newtown', 'estate'], 500); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
 function startGame(quiet) {
   if (state.started) return; FOV = 66; resize(); audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
-  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); if (!quiet) cue('begin');
+  liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] || stage) : 10; beginChapter(hasSave && stage >= 10 ? chapterOf(stage) : 0, hasSave && stage >= 10 ? st : 10); setTimeout(backgroundLoad, 5000); };
 

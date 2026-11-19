@@ -39,6 +39,7 @@ import { CHECK_TABLES, makeAdapter } from './checktables.js';   // dev only: Tiv
 import { headCheck } from './headcheck.js';   // dev only: ?test=heads   // dev only: the shared cloth, walk and skin checks (re-exported) and Tivoli's place checks
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, ahead, work } from '../../../engine/preload.js';
+import { touchFirst, liveHint } from '../../../engine/device.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -73,7 +74,7 @@ if (__DEV__) { building(-6, -8, 5, 4, 4, 0xb86a4a); building(1, -8, 5, 4, 5, 0xe
    Touch: the left half of the screen is a joystick (a faint ring shows where it is), the right half drags to look, a tap on a person talks.
    Mouse: drag to look, click a person to talk. (Until 17 November 2026 Tivoli had its own four-arrow pad instead of the joystick.) */
 const state = { x: 0, z: 4, yaw: 0, pitch: 0, started: false };   // yaw 0 looks toward -z
-const isTouch = matchMedia('(pointer: coarse)').matches;
+const isTouch = touchFirst();   /* engine/device.js: also an iPad in desktop mode and touch tablets */
 const keys = new Set(); let busy = false;   // busy: a talk, a card or a panel is open, so do not move
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase(); if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && state.started) e.preventDefault();
@@ -190,7 +191,7 @@ $('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
 const FOOT = { 1: 'sand' };   /* Back-o-Wall's lanes are earth; everywhere else is paving */
 const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n), onClose: () => flushToasts() };
 setupTalk(talkEnv);
-setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS, chapterEnd, onStart: () => { $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'; showHint(); canvas.focus(); } });
+setupCh1({ scene, state, WALLS, renderer, audioInit, setBusy, setGoal, uiSound: uiS, chapterEnd, onStart: () => { liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); } });
 initStory({ startChapter, uiSound: uiS, setBusy });
 prepare(nextChapter());   /* the chapter Start opens: its bodies unpack behind the title */
 wireFight({ scene, camera, renderer, audioInit, next: () => startChapter(6) });
@@ -377,7 +378,7 @@ async function devViews() {
     const ALL = ['title', 'fightcard', 'readcard', 'aftercard', 'fightload', 'scenetitle', 'windowframe', 'hud', 'chcard', 'journal', 'chapters', 'toast'], frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     for (const [name, show] of [['title', ['title']], ['opt-in card', ['fightcard']], ['read card', ['readcard']], ['after card', ['aftercard']], ['loading', ['fightload']], ['scene title over the window', ['scenetitle', 'windowframe']], ['chapter title over the goal and buttons', ['scenetitle', 'hud']], ['chapter end card', ['chcard']], ['reset card', ['chcard']], ['play: goal, buttons, tip, toast', ['hud', 'toast']], ['play: talking', ['hud', 'dialogue']], ['journal', ['journal']], ['chapters', ['chapters']]]) {
       if (name === 'reset card') { $('chcardt').textContent = 'Reset'; $('chcardl').replaceChildren(Object.assign(document.createElement('p'), { textContent: 'Start this chapter again, or start the whole story again.' })); $('chcardb').replaceChildren(...['Restart “May 2010: before”', 'Start the whole story again', 'Cancel', 'Main Menu'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
-      if (name.startsWith('play')) { $('scenetitle').hidden = true; $('goal').textContent = 'Talk to Pastor Grant by the clinic.'; $('hint').hidden = false; $('hint').textContent = innerWidth < 700 ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'; $('jcount').hidden = false; $('jcount').textContent = '2'; $('jbtn').classList.add('glow'); $('toast').textContent = 'New journal page: What people disagree about'; $('dialogue').hidden = true;
+      if (name.startsWith('play')) { $('scenetitle').hidden = true; $('goal').textContent = 'Talk to Pastor Grant by the clinic.'; $('hint').hidden = false; liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'); $('jcount').hidden = false; $('jcount').textContent = '2'; $('jbtn').classList.add('glow'); $('toast').textContent = 'New journal page: What people disagree about'; $('dialogue').hidden = true;
         if (show.includes('dialogue')) { document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Pastor Grant'; $('line').textContent = 'Finding the truth can take a long time.'; } else document.body.classList.remove('talking'); }
       if (show.includes('hud')) { const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = 'Sunday 23 May 2010.'; t.append(b); for (const l of ['You live in Tivoli Gardens with Gran Ivy.', 'The girl from Back-o-Wall is a grandmother now.']) { const p = document.createElement('p'); p.textContent = l; t.append(p); } $('goal').textContent = 'Talk to Mr Clarke by the community centre.'; }
       if (name === 'chapter end card') { $('chcardb').replaceChildren(...['Next chapter', 'Chapters', 'Stay here'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }

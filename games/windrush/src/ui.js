@@ -1,3 +1,4 @@
+import { liveHint } from '../../../engine/device.js';
 /* The interface, the same as Kendal 1957, Melissa, Garvey and Nanny Town: the goal box, the controls tip that shows
    for a few seconds at the start of play, toasts that wait while someone is talking, the Journal button that glows with a count of new
    pages, the gold talk mark over the step's story people and the talk button with the name of the nearest person, the dialogue box, cards,
@@ -134,9 +135,7 @@ export function showHint() {
    really play (no welcome card, no loading, no scene), so it is seen: the game calls hintTick(quiet) every frame */
 let hintWaits = false;
 export function startHint(touch) {
-  $("hint").textContent = touch
-    ? "Left thumb walks. Drag to look. Tap a person to talk."
-    : "W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.";
+  liveHint($("hint"), "Left thumb walks. Drag to look. Tap a person to talk.", "W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use."); /* touch or key words, following what the player uses (engine/device.js) */
   $("hint").hidden = true;
   hintWaits = true;
 }

@@ -22,6 +22,7 @@ import { tunePixels } from '../../../engine/perf.js';
 import { batchStill } from '../../../engine/batch.js';   /* still scenery drawn in a few pieces (see still() below) */
 import { setQuiet } from '../../../engine/preload.js';
 import { pickPerson } from '../../../engine/tap.js';   /* tap a person to talk to them */   /* tells the engine when the player is reading, not moving */
+import { touchFirst, liveHint } from '../../../engine/device.js';
 soundPref('portroyal-sound');
 onLoadFail((n) => { $('loadnote').hidden = false; $('loadnote').textContent = 'Part of the game did not load (' + n + '). Reload the page to try again.'; });
 
@@ -231,7 +232,7 @@ const FINDS = [
 const state = { started: false, x: 43, z: 0, yaw: Math.PI / 2, pitch: 0, unlocked: [], talked: false, step: 0, place: 'out', ate: false, done: false, ch: {} };
 const $ = (id) => document.getElementById(id);
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const isTouch = matchMedia('(pointer: coarse)').matches;
+const isTouch = touchFirst();   /* engine/device.js: also an iPad in desktop mode and touch tablets */
 
 /* ---------- renderer and scene ---------- */
 const canvas = $('stage');
@@ -703,7 +704,7 @@ function openJournal() { if (!$('dialogue').hidden) return; busy = true; keys.cl
 function closeJournal() { if ($('journal').hidden) return; $('journal').hidden = true; busy = false; }
 $('jbtn').onclick = openJournal; $('jclose').onclick = closeJournal;
 function startGame() { audioInit(); state.started = true; $('title').hidden = true; $('hud').hidden = false; if (state.unlocked.length) { $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; }
-  setGoal(); $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint(); canvas.focus(); }
+  setGoal(); liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); }
 $('start').onclick = () => { startGame(); cue('begin'); };
 
 const RESTORE = { pos: null };   /* a saved spot waits until its streets exist, or the walking rules would push you out of a street that has not loaded yet */

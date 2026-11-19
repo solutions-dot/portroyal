@@ -28,6 +28,7 @@ import { tunePixels } from '../../../engine/perf.js';
 import { batchStill } from '../../../engine/batch.js';
 import { setQuiet, ahead, work, warm, release } from '../../../engine/preload.js';   /* the next chapter's place built while you read, the last one let go (engine/preload.js) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
+import { touchFirst, liveHint } from '../../../engine/device.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -214,7 +215,7 @@ const BOUNDS = { x0: X0 + 0.4, x1: X1 - 0.4, z0: Z0 + 0.4, z1: Z1 - 0.45 };
 /* ---------- state, movement and controls (the same controls as Port Royal) ---------- */
 const state = { x: -0.5, z: 2.9, yaw: 0, pitch: 0, started: false };   /* yaw 0 looks toward -z, into the shop */
 const START = { x: -0.5, z: 2.9, yaw: 0 };
-const EYE = 1.55, isTouch = matchMedia('(pointer: coarse)').matches;
+const EYE = 1.55, isTouch = touchFirst();   /* engine/device.js */
 const keys = new Set(); let busy = false, fading = false;   /* busy: a talk, the journal or another panel is open, so do not move */
 let talkWith = null, near = null, DEV_NOSTOP = false, curWalls = WALLS, curBounds = BOUNDS;   /* DEV_NOSTOP: test views only, so a walker keeps walking while the camera is close */
 setQuiet(() => busy || fading || panelsOpen() || (modelsReady && !state.started));   /* a talk, a card, a panel, the chapter title or the title screen is up: a good time for the next place's heavy work (engine/preload.js) */
@@ -1523,7 +1524,7 @@ let modelsReady = false;
 function startGame() {
   if (!state.started && !QUICK) { const P = PLACES[place]; state.x = P.start.x; state.z = P.start.z; state.yaw = P.start.yaw; state.pitch = 0; }   /* the title's drifting view hands over to the place's start */
   audioInit(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); setGoal();
-  $('hint').textContent = isTouch ? 'Left thumb walks. Drag to look. Tap a person to talk.' : 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.'; showHint();
+  liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint();
   showPlace(); canvas.focus();
 }
 $('start').onclick = () => { startGame(); cue('begin'); };

@@ -30,12 +30,14 @@ import { makeSmoke } from './trains.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, TALK, LATER, SEEN, SEEN_GROUP, JOURNEY, REPORT, WHY, AFTER, CHOICE_NAMES, JOURNAL } from './content.js';
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
+import { touchFirst, liveHint } from '../../../engine/device.js';
+liveHint(document.getElementById('howto'), 'Walk with your left thumb. Drag to look. Tap people to talk.', 'Walk with the arrow keys or W A S D. Drag to look. Tap people to talk.');   /* the title page tells each player only their own controls (engine/device.js) */
 
 const $ = (id) => document.getElementById(id);
 const q = new URLSearchParams(location.search);
 const QUICK = __DEV__ && (q.has('quick') || /[?&](auto|test)=/.test(location.search)), TS = QUICK ? 0.15 : 1;   /* in a test every timed part runs at 15% of its length */
 const D = (s) => s * TS;
-const TOUCH = matchMedia('(pointer: coarse)').matches, MOBILE = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent);
+const TOUCH = touchFirst(), MOBILE = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent);
 const ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
 const PI = Math.PI;
 soundPref('bogwalk-sound');
@@ -478,7 +480,7 @@ $('pzx').onclick = () => closePuzzle(false); $('pzdone').onclick = () => closePu
 /* ---------- goals and the helper ---------- */
 let stage = 0, best = 0;
 function refreshGoal(quiet) { if (cur === 'tube') return; const g = GOALS[stage]; setGoal(g ? g(ctr) : '', quiet); }
-function showHint() { $('hint').textContent = TOUCH ? (MODE === 'tube' ? 'Left thumb to walk. Drag to look. Tap the rust.' : 'Left thumb to walk. Drag to look. Tap a person to talk.') : (MODE === 'tube' ? 'WASD to walk. Drag to look. E to scrape.' : 'WASD to walk. Drag to look. Space or Enter to talk or use.'); N.hintT = 0; }
+function showHint() { liveHint($('hint'), MODE === 'tube' ? 'Left thumb to walk. Drag to look. Tap the rust.' : 'Left thumb to walk. Drag to look. Tap a person to talk.', MODE === 'tube' ? 'WASD to walk. Drag to look. E to scrape.' : 'WASD to walk. Drag to look. Space or Enter to talk or use.');   /* engine/device.js */ N.hintT = 0; }
 /* the helper (the same rules as the other games): stand still for 15 s, or take 50 s over one goal, and the goal opens again and a gold arrow marks the next
    thing to do: a down arrow with "Here!" floating over the person or the place, or a side arrow ("This way", "Turn around") when it is off the screen.
    The arrow is moved up or down out of the way of every word and button (and the tap bubble); if there is no free spot it waits. In the Tube the night keeps its own cue (#way). */

@@ -10,6 +10,14 @@ import { loader, onLoadFail, script, model, stage } from '../../../engine/loader
 
 The other modules, each covered below: `perf.js`, `joinbody.js`, `batch.js` and `preload.js` (performance on phones), `audit.js` and `skinprobe.js` (dev checks), `grip.js` (held things), `placement.js` (seats and routes), `follow.js` (people who follow you, lead you or are sent somewhere), `ambient.js` (background people who walk about, chat, work, sit, watch and play), `story.js` (who moves the story, the hint arrow, things the player carries), `colours.js` (used by the loader), `input.js` (keys and focus), `locomotion.js` (the player's walk), `loft.js` (animal bodies), `ui-audit.js` (text overlap) and `vehicles.js` (railway vehicles). There is no shared people module yet (`engine/people.js` does not exist): see `docs/PEOPLE.md`.
 
+## engine/device.js: touch or keys (19 November 2026)
+
+`touchFirst()` is the best first guess at a touch device: a coarse main pointer, touch points on a phone or tablet, an iPad asking for the desktop site (it reports "Macintosh" but has touch points), or only coarse pointers. Every game uses it in place of `matchMedia('(pointer: coarse)')`, which missed iPads in desktop mode and some tablets, so they were told to use W A S D. `liveHint(el, touchText, keysText)` shows the controls tip in the right words and then follows what the player really uses: the first touch switches it to the touch words, the first key press to the key words.
+
+## engine/tap.js: tap a person to talk (19 November 2026)
+
+`pickPerson(camera, people, cx, cy, { near, maxDist })` returns the person under a tap, by their on-screen band from feet to head (never thinner than a finger), the nearest to the camera when several overlap. No ray goes through the body. Port Royal, Windrush, Selassie and Tivoli use it; the other games had their own tap before.
+
 ## Performance on phones (18 November 2026)
 
 Four engine modules keep frames smooth on phones without changing the picture. Every game uses them. Measure with `?perf`, which works in public builds too, so it can be checked on a real phone on the live site: a small box shows frames a second, frame time, pixel ratio, draw calls, triangles, geometries and textures on the graphics chip, how many people were joined and how many meshes that saved, and the JavaScript heap where the browser reports it. Scripts can read `window.__perf`, `window.__join`, `window.__batch` and `window.__preload`.

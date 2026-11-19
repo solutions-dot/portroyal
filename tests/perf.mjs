@@ -73,3 +73,15 @@ test('pickPerson finds the person under a tap, the nearer of two, and nobody in 
   assert.equal(pickPerson(cam, people, 5, 420), null);       /* the gap at the edge */
   assert.equal(pickPerson(cam, people, 200, 420, { near: [0, -9], maxDist: 2 }), 'far');   /* only people within reach */
 });
+
+test('guide meshHit: every grid cell the ray crosses, and a moving mesh needs no new grid', async () => {
+  const { meshHit } = await import('../engine/guide.js');
+  const big = (x, z) => { const g = new THREE.PlaneGeometry(0.1, 2, 1, 1200); g.rotateY(Math.PI / 4); g.translate(x, 1, z); return g; };   /* a thin wall, over 1,500 triangles */
+  const wall = new THREE.Mesh(big(2.05, 1.95), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); wall.updateMatrixWorld(true);
+  const rc = new THREE.Raycaster(new THREE.Vector3(1.8, 1, 1.7), new THREE.Vector3(1, 0, 1).normalize(), 0, 6.5);
+  const d = meshHit(wall, rc, 6.5); assert.ok(d < 1, 'the wall in the corner cell is found, got ' + d);
+  const sg = new THREE.PlaneGeometry(3, 2, 1, 1200); sg.rotateY(Math.PI / 2); sg.translate(0, 1, 0); const ship = new THREE.Mesh(sg, wall.material);   /* a 3 m wall across the ray */ ship.position.set(10, 0, 10); ship.updateMatrixWorld(true);
+  const r2 = new THREE.Raycaster(new THREE.Vector3(8, 1, 10), new THREE.Vector3(1, 0, 0), 0, 6.5);
+  const d1 = meshHit(ship, r2, 6.5); ship.position.z += 0.3; ship.rotation.y = 0.05; ship.updateMatrixWorld(true); const d2 = meshHit(ship, r2, 6.5);
+  assert.ok(Number.isFinite(d1) && Number.isFinite(d2) && Math.abs(d1 - 2) < 0.4 && Math.abs(d2 - 2) < 0.6, 'found before and after it moved: ' + d1 + ', ' + d2);
+});
