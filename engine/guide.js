@@ -31,11 +31,39 @@ export function createGuide({ scene, camera, ground = null, eye = 1.6 } = {}) {
   const _d = new THREE.Vector3(), ray = new THREE.Raycaster(), _o = new THREE.Vector3(), _r = new THREE.Vector3();
   let room = 6, roomAt = -1e9, roomDir = 0;
   const seen = (o) => { for (let q = o; q; q = q.parent) if (!q.visible || q === root || q === ring) return false; return true; };
-  function clear(px, pz, dir, gy, now) {   /* how far the floor is open that way, so the arrow never lies inside a wall or a counter (a few times a second) */
-    if (now - roomAt < 200 && Math.abs(Math.atan2(Math.sin(dir - roomDir), Math.cos(dir - roomDir))) < 0.15) return room;
+  /* what the arrow can be stopped by: still, solid scenery only, gathered once a second. People, forests and effects are never tested: a ray
+     against a skinned body poses every point of it in JavaScript, and walking with the arrow showing was sluggish in Port Royal and Nanny Town
+     (19 November 2026) while standing by a person, with the arrow hidden, was fine. */
+  let cand = [], candAt = -1e9;
+  function candidates(now) { if (now - candAt < 1000) return cand; candAt = now; cand = [];
+    scene.traverseVisible((o) => { if (o === root || o === ring || !o.isMesh || o.isSkinnedMesh || o.isInstancedMesh || !o.layers.mask) return; cand.push(o); }); return cand; }
+  /* a big still mesh (the ground, a merged street) is tested only where the ray passes: its triangles, in world space, sorted once into a 2 m grid.
+     A small mesh, or one that has moved since, uses three.js's own raycast. */
+  const GRID = new WeakMap(), CELL = 2, _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _h = new THREE.Vector3(), _hits = [];
+  const ck = (x, z) => Math.floor(x / CELL) * 73856093 ^ Math.floor(z / CELL) * 19349663;
+  function gridOf(o) {
+    let g = GRID.get(o); if (g && g.m.equals(o.matrixWorld)) return g;
+    const geo = o.geometry, p = geo.attributes.position, ix = geo.index, n = ((ix ? ix.count : p.count) / 3) | 0; if (!p || n < 1500) { GRID.set(o, (g = { m: o.matrixWorld.clone(), small: true })); return g; }
+    const tri = new Float32Array(n * 9), cells = new Map(); const at = (k) => (ix ? ix.getX(k) : k);
+    for (let t = 0; t < n; t++) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+      for (let v = 0; v < 3; v++) { _a.fromBufferAttribute(p, at(t * 3 + v)).applyMatrix4(o.matrixWorld); tri.set([_a.x, _a.y, _a.z], t * 9 + v * 3); x0 = Math.min(x0, _a.x); x1 = Math.max(x1, _a.x); z0 = Math.min(z0, _a.z); z1 = Math.max(z1, _a.z); }
+      for (let cx = Math.floor(x0 / CELL); cx <= Math.floor(x1 / CELL); cx++) for (let cz = Math.floor(z0 / CELL); cz <= Math.floor(z1 / CELL); cz++) { const k = (cx * 73856093) ^ (cz * 19349663); let l = cells.get(k); if (!l) cells.set(k, (l = [])); l.push(t); } }
+    GRID.set(o, (g = { m: o.matrixWorld.clone(), tri, cells, seen: new Uint32Array(n), stamp: 0 })); return g;
+  }
+  function hitDist(o, far) {   /* how far along the ray (ray, set by clear) this mesh first stands, or Infinity */
+    const g = gridOf(o); if (g.small) { _hits.length = 0; o.raycast(ray, _hits); let d = Infinity; for (const h of _hits) if (h.distance < d) d = h.distance; return d; }
+    const r = ray.ray; let d = Infinity; g.stamp++;
+    for (let s = 0; s <= far; s += CELL * 0.5) { const l = g.cells.get(ck(r.origin.x + r.direction.x * s, r.origin.z + r.direction.z * s)); if (!l) continue;
+      for (const t of l) { if (g.seen[t] === g.stamp) continue; g.seen[t] = g.stamp; const T = g.tri, q = t * 9; _a.set(T[q], T[q + 1], T[q + 2]); _b.set(T[q + 3], T[q + 4], T[q + 5]); _c.set(T[q + 6], T[q + 7], T[q + 8]);
+        if (r.intersectTriangle(_a, _b, _c, false, _h)) { const e = _h.distanceTo(r.origin); if (e < d && e <= far) d = e; } } }
+    return d;
+  }
+  function clear(px, pz, dir, gy, now) {   /* how far the floor is open that way, so the arrow never lies inside a wall or a counter (a few times a second, at most every 80 ms while turning) */
+    const turned = Math.abs(Math.atan2(Math.sin(dir - roomDir), Math.cos(dir - roomDir))) >= 0.15;
+    if (now - roomAt < 80 || (now - roomAt < 200 && !turned)) return room;
     roomAt = now; roomDir = dir; room = 6;
     for (const h of [0.35, 0.9]) { _o.set(px, gy + h, pz); _r.set(Math.sin(dir), 0, Math.cos(dir)); ray.set(_o, _r); ray.far = 6.5; ray.camera = camera;
-      for (const hit of ray.intersectObjects(scene.children, true)) { if (hit.object.isSkinnedMesh || hit.object.isSprite || hit.object.isPoints || hit.object.isLine || !seen(hit.object)) continue; room = Math.min(room, hit.distance); break; } }
+      for (const o of candidates(now)) { if (!seen(o)) continue; const d = hitDist(o, 6.5); if (d < room) room = d; } }
     return room;
   }
   let fade = 0, last = null, shown = false, info = { show: false };

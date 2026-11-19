@@ -61,3 +61,15 @@ test('batchStatic keeps a packed (quantized) model where it was', () => {
   batchStatic(root); const out = root.children[0].geometry; out.computeBoundingBox();
   assert.ok(Math.abs(out.boundingBox.max.x - 6) < 0.01, 'the packed box still reaches x = 6, got ' + out.boundingBox.max.x);
 });
+
+test('pickPerson finds the person under a tap, the nearer of two, and nobody in the gaps', async () => {
+  const { pickPerson } = await import('../engine/tap.js');
+  globalThis.innerWidth = 400; globalThis.innerHeight = 800;
+  const cam = new THREE.PerspectiveCamera(60, 0.5, 0.1, 100); cam.position.set(0, 1.6, 0); cam.lookAt(0, 1.6, -1); cam.updateMatrixWorld(true);
+  const a = new THREE.Group(); a.position.set(0, 0, -4); const b = new THREE.Group(); b.position.set(0, 0, -8); const c = new THREE.Group(); c.position.set(3, 0, -4);
+  for (const o of [a, b, c]) o.updateMatrixWorld(true);
+  const people = [{ obj: b, data: 'far' }, { obj: a, data: 'near' }, { obj: c, data: 'side' }];
+  assert.equal(pickPerson(cam, people, 200, 420), 'near');   /* both in line: the nearer one */
+  assert.equal(pickPerson(cam, people, 5, 420), null);       /* the gap at the edge */
+  assert.equal(pickPerson(cam, people, 200, 420, { near: [0, -9], maxDist: 2 }), 'far');   /* only people within reach */
+});

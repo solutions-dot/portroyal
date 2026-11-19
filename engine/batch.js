@@ -23,7 +23,12 @@ function look(m) {
   return s;
 }
 /* what a watched material is now: if any of it changes, its group splits */
-const state = (m) => m.color.r + '|' + m.color.g + '|' + m.color.b + '|' + look(m);
+/* what a watched material is now, as plain values compared in place every frame (no strings: building one per material per frame cost Windrush
+   70 ms in 6 s, and its garbage): colour, emissive, the numbers and switches look() reads, and the textures by reference. If any changes, its group splits. */
+const state = (m) => { const v = [m.color.r, m.color.g, m.color.b, m.emissive ? m.emissive.r : 0, m.emissive ? m.emissive.g : 0, m.emissive ? m.emissive.b : 0];
+  for (const k of NUM) v.push(m[k]); for (const k of BOOL) v.push(m[k]); for (const k of TEX) v.push(m[k]); return v; };
+function same(m, v) { if (m.color.r !== v[0] || m.color.g !== v[1] || m.color.b !== v[2]) return false; const e = m.emissive; if ((e ? e.r : 0) !== v[3] || (e ? e.g : 0) !== v[4] || (e ? e.b : 0) !== v[5]) return false;
+  let i = 6; for (const k of NUM) if (m[k] !== v[i++]) return false; for (const k of BOOL) if (m[k] !== v[i++]) return false; for (const k of TEX) if (m[k] !== v[i++]) return false; return true; }
 
 export function batchStatic(root, { bake = BAKE } = {}) {
   root.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), rel = new THREE.Matrix4(), buckets = new Map(), dead = [], keep = ['position', 'normal', 'uv', 'color'];
@@ -80,7 +85,7 @@ function partOf(g, p) {
 const WATCHED = []; let ticking = false;
 function tick() {
   requestAnimationFrame(tick);
-  for (let i = WATCHED.length - 1; i >= 0; i--) { const w = WATCHED[i]; if (!w.parts.some((p) => state(p.mat) !== p.snap)) continue;
+  for (let i = WATCHED.length - 1; i >= 0; i--) { const w = WATCHED[i]; let moved = false; for (const p of w.parts) if (!same(p.mat, p.snap)) { moved = true; break; } if (!moved) continue;
     WATCHED.splice(i, 1); BATCH_STATS.splits++;   /* the game changed a material: back to one mesh per material, each with the game's own */
     const at = w.mesh.parent || w.root; for (const p of w.parts) { const m = addMesh(at, partOf(w.mesh.geometry, p), p.mat); m.visible = w.mesh.visible; } at.remove(w.mesh); w.mesh.geometry.dispose(); w.mesh.material.dispose(); }
 }
