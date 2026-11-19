@@ -131,7 +131,7 @@ const STRIDE_K = { 'man_work|Walk': 0.976, 'man_suit|Walk': 0.976, 'man_shirt|Wa
 const strideK = (base, scale, clip) => STRIDE_K[base + '|' + clip + '|' + (scale || 1).toFixed(2)] || STRIDE_K[base + '|' + clip] || STRIDE_K['*|' + clip] || 1;
 const kStride = (m, base, clip) => strideOf(m, clip) * strideK(base, m.scale.y, clip.name);
 let PACE_FORCE = 0;   /* dev: ?test=walkers&tune plays a walk at this clip speed */
-function kPace(m, s, ctl) { const base = s.base; const play0 = ctl.play.bind(ctl); ctl.play = (name, once, hold) => { const was = ctl.cur; play0(name, once, hold); const a = ctl.cur; if (!once && a !== was) { a.time = Math.random() * a.getClip().duration; } };   /* a loop never starts in step with anyone else's (?test=motion: sync) */ ctl.pace = (v, lo = 0.4, hi = 2.2) => { const a = ctl.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; if (PACE_FORCE) return (a.timeScale = PACE_FORCE); const st = kStride(m, base, c); if (st > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / st)); return a.timeScale; }; }
+function kPace(m, s, ctl) { const base = s.base; ctl.pace = (v, lo = 0.4, hi = 2.2) => { const a = ctl.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; if (PACE_FORCE) return (a.timeScale = PACE_FORCE); const st = kStride(m, base, c); if (st > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / st)); return a.timeScale; }; }
 const SKIN_LIGHT = 1.55;   /* owner rule 9: build Skin inside Marcus Garvey's range, then lighten it here so faces read in every light (docs/PIPELINE.md, "Skin"). Check with ?test=skin */
 /* Phones and computers: each body's pieces are drawn as a few joined meshes by the engine (engine/joinbody.js, through animate()), so this game no longer joins its own. */
 function makeBody(s) {
@@ -1105,9 +1105,9 @@ function devViews() {
     if (!CHECKS.some((c) => c.id === 'motion')) CHECKS.push({ id: 'motion', needs: [], async run() { const r = await motionCheck(motionAdapter(null)); return { lines: r.lines, note: r.stats.length + ' steps watched' }; } });
     checkAll(makeAdapter(checkHooks()), CHECK_TABLES);
   }
-  if (q.get('test') === 'motion') {   /* ?test=motion (&st=40,61): everyone in view moves like a person in every step of the story (motioncheck.js): nobody frozen, nobody in step with the crowd, heads within a person's reach, no running in place or sliding. Expect MOTION 0. */
-    (async () => { startGame(true); await waitFor(() => modelsReady); const r = await motionCheck(motionAdapter(q.get('st') ? q.get('st').split(',') : null));
-      const el = $('autolog'); if (el) el.textContent = ['MOTION ' + r.lines.length, ...r.lines, '', ...r.stats].join('\n'); document.title = 'MOTION ' + r.lines.length; })();
+  if (['motion', 'feet'].includes(q.get('test'))) {   /* &st=40,61 selects story steps */
+    (async () => { startGame(true); await waitFor(() => modelsReady); const feetOnly = q.get('test') === 'feet'; const r = await motionCheck(motionAdapter(q.get('st') ? q.get('st').split(',') : null), { feetOnly });
+      const title = (feetOnly ? 'FEET ' : 'MOTION ') + r.lines.length; const el = $('autolog'); if (el) el.textContent = [title, ...r.lines, '', ...r.stats].join('\n'); document.title = title; })();
   }
   if (q.get('test') === 'follow') {   /* ?test=follow : you walk the real route with Dawn, with stops and a turn back into her, and her is watched (engine/follow.js, watch): too close (inside the
        personal space), inside a wall or a solid shape (engine/audit.js auditBodies), or left far behind. Expect 0. */

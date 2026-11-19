@@ -86,7 +86,7 @@ test('loop seams normalize quantized rotations and meet the starting pose', () =
 });
 
 import { VectorKeyframeTrack } from 'three';
-import { CL, animate, clipFor, HIPS_Y, WALKS, isSeated } from '../engine/anim.js';
+import { CL, animate, clipFor, groundFeet, HIPS_Y, WALKS, isSeated } from '../engine/anim.js';
 test('kneeling, crouching and seated clips keep their low hips; every walk is paced and seam-looped', () => {
   const pos = (name, y, x = 0) => new AnimationClip(name, 1, [new VectorKeyframeTrack('mixamorigHips.position', [0, 1], [x, y, 0, x, y, 0]), new QuaternionKeyframeTrack('mixamorigHips.quaternion', [0, 1], [0, 0, 0, 1, 0, 0, 0, 1])]);
   const saved = { ...CL }; CL.Idle = pos('Idle', 0.86, 0.02);
@@ -138,6 +138,31 @@ test('furniture route checks find a missing walking wall and respect rotated emp
 test('seat anchoring holds pelvis position through animation and movement of its parent',()=>{
   const train=new Group(),model=new Group(),hips=new Bone();hips.name='mixamorigHips';model.add(hips);train.add(model);model.userData.seatAnchor={x:1,z:2,top:.5,ry:Math.PI};
   for(const y of [.7,.5,.63]){hips.position.set(.1,y,.2);anchorSeat(model);const p=hips.getWorldPosition(new Vector3());train.worldToLocal(p);assert.ok(Math.abs(p.x-1)<1e-6);assert.ok(Math.abs(p.z-2)<1e-6);assert.ok(Math.abs(p.y-.62)<1e-6);train.position.x+=3;train.rotation.y+=.2;}
+});
+
+test('seat placement eases in from the standing pose using mixer time', () => {
+  const model = new Group(), hips = new Bone();
+  hips.name = 'mixamorigHips';
+  hips.position.y = 0.85;
+  model.add(hips);
+  const mx = { time: 10 };
+  model.userData.anim = { mx };
+  model.userData.seatAnchor = {
+    top: 0.5, lift: 0.12, x: 1, z: 0.6, ry: Math.PI,
+    settle: { from: model.position.clone(), yaw: 0, start: mx.time, duration: 0.5 },
+  };
+  anchorSeat(model);
+  assert.equal(model.position.z, 0);
+  mx.time += 0.25;
+  anchorSeat(model);
+  assert.equal(model.position.z, 0.3);
+  assert.equal(model.rotation.y, Math.PI / 2);
+  anchorSeat(model);
+  assert.equal(model.position.z, 0.3);
+  mx.time += 0.25;
+  anchorSeat(model);
+  assert.equal(model.position.z, 0.6);
+  assert.equal(model.rotation.y, Math.PI);
 });
 
 import { footWatch } from '../engine/foot-watch.js';
@@ -201,6 +226,45 @@ test('a seat correction does not keep turning an ankle whose animation track sta
   anchorSeat(model);
   assert.ok(foot.quaternion.angleTo(new Quaternion()) < 1e-6);
   assert.ok(knee.quaternion.angleTo(clipKnee) < 1e-6);
+});
+
+test('slope grounding keeps the same pose when the mixer leaves the leg tracks still', () => {
+  const body = new Group(), bones = [], ankles = [], vertices = [], indices = [], weights = [];
+  const joint = (parent, side, name, x, y, z) => {
+    const bone = new Bone();
+    bone.name = 'mixamorig' + side + name;
+    bone.position.set(x, y, z);
+    parent.add(bone);
+    bones.push(bone);
+    return bone;
+  };
+  for (const [side, x] of [['Left', -0.12], ['Right', 0.12]]) {
+    const thigh = joint(body, side, 'UpLeg', x, 0.89, 0);
+    const shin = joint(thigh, side, 'Leg', 0, -0.43, 0.04);
+    const foot = joint(shin, side, 'Foot', 0, -0.43, -0.04);
+    joint(foot, side, 'ToeBase', 0, -0.02, 0.2);
+    ankles.push(foot);
+    vertices.push(x, 0, -0.04, x, 0, 0.2);
+    indices.push(bones.length - 2, 0, 0, 0, bones.length - 1, 0, 0, 0);
+    weights.push(1, 0, 0, 0, 1, 0, 0, 0);
+  }
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('skinIndex', new Float32BufferAttribute(indices, 4));
+  geometry.setAttribute('skinWeight', new Float32BufferAttribute(weights, 4));
+  const shoes = new MeshBasicMaterial({ name: 'Shoes' }), mesh = new SkinnedMesh(geometry, shoes);
+  body.add(mesh);
+  body.updateMatrixWorld(true);
+  mesh.bind(new Skeleton(bones));
+  body.userData.groundAt = (x, z) => 0.25 * x + 0.4 * z;
+  groundFeet(body);
+  const quats = ankles.map(foot => foot.getWorldQuaternion(new Quaternion()));
+  assert.ok(quats.some(q => q.angleTo(new Quaternion()) > 0.2));
+  for (let i = 0; i < 60; i++) groundFeet(body);
+  ankles.forEach((foot, i) => assert.ok(foot.getWorldQuaternion(new Quaternion()).angleTo(quats[i]) < 1e-6));
+  delete body.userData.groundAt;
+  groundFeet(body);
+  ankles.forEach(foot => assert.ok(foot.quaternion.angleTo(new Quaternion()) < 1e-6));
 });
 
 test('the foot audit catches a rapid spin and ignores a turn of the whole body', () => {

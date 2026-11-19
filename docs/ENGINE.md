@@ -178,6 +178,8 @@ Show the results in a dev-only `?test=audit` view and expect 0 issues. Kendal's 
 
 Seat placement bends the knees and keeps the feet at their clip angle. `engine/bone-pose.js` removes the previous correction if the mixer left it on the bone. The shared head turn uses the same guard through `lookBegin` and `lookEnd`.
 
+The slope adjustment in `groundFeet` uses the same guard for the thigh, knee and foot. It keeps the foot's clip angle when bending the leg to reach the ground, then tilts the shoe toward the slope as the mixer advances. For a person walking up to a seat, `seatAnchor.settle` eases the body to the anchor. Supply the model's previous parent-relative position and yaw as `from` and `yaw`, the mixer time as `start`, and the number of seconds as `duration`.
+
 ## engine/follow.js: people who follow you, lead you, or are sent somewhere
 
 One system for every game (owner's request, November 2026). Each game used to have its own copy; Kendal (Dawn), Melissa (Mum), Eventide (Gran), Nanny Town (Quamin, Mama, Phibba, the neighbours) and Garvey (people walking to their seats in the hall) now all use this module. Set a person up with one call and run `tick` once a frame for each person whose `n.fol` is set. All tuning is in `opts`.

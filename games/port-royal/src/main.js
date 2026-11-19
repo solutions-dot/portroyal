@@ -517,8 +517,15 @@ const TICKS = [], EXTRA_IN = [];   /* Mixamo clips from anims.glb, shared by eve
 const TALKS = ['Talk1', 'Talk2', 'Talk3']; let talkN = 0, speaker = null;
 function speakerModel(who) { if (who === 'Abba') return abba; if (who === 'Kofi') return state.place === 'after' ? survivors.kofi : people.kofi; if (who === 'Emmanuel Heath') return people.heath;
   if (who === 'Sam') return state.place === 'after' ? survivors.sailor : people.sailor; if (who === 'Symon Benning') return state.place === 'after' ? survivors.benning : people.benning; return null; }
-function setSpeaker(who, gesture) { const m = speakerModel(who); if (gesture && m && m.userData.anim && CL[gesture]) { if (speaker && speaker !== m && speaker.userData.anim) speaker.userData.anim.rest(); speaker = m; m.userData.anim.play(gesture, true); return; } if (speaker && speaker !== m && speaker.userData.anim) speaker.userData.anim.rest(); speaker = m; if (m && m.userData.anim && CL.Talk1) m.userData.anim.play(m.userData.sits && CL.SitTalk ? 'SitTalk' : TALKS[talkN++ % 3]); }
-function endTalk(wave) { if (speaker && speaker.userData.anim) { if (wave && CL.Wave) speaker.userData.anim.play('Wave', true); else speaker.userData.anim.rest(); } speaker = null; }
+function setSpeaker(who, gesture) {
+  const m = speakerModel(who);
+  if (speaker && speaker !== m && speaker.userData.anim) speaker.userData.anim.rest();
+  speaker = m;
+  if (!m?.userData.anim || m === people.heath) return;   /* the minister speaks from his kneeling pose */
+  if (gesture && CL[gesture]) m.userData.anim.play(gesture, true);
+  else if (CL.Talk1) m.userData.anim.play(m.userData.sits && CL.SitTalk ? 'SitTalk' : TALKS[talkN++ % 3]);
+}
+function endTalk(wave) { if (speaker && speaker.userData.anim) { if (wave && CL.Wave && speaker !== people.heath) speaker.userData.anim.play('Wave', true); else speaker.userData.anim.rest(); } speaker = null; }
 const KP = { leg: 0, wait: 1.5, box: null };
 function kofiTick(dt) { const n = NPCS[0], m = people.kofi, ac = m.userData.anim; if (!ac) return; if (!KP.go) { KP.go = true; ac.play('CarryIdle'); } if (KP.i === undefined) { KP.i = 0; KP.dir = 1; } const to = n.route[KP.i];   /* straight legs: off the sand, then down the middle of the pier */
   if (!KP.box) { KP.box = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.32, 0.34), new THREE.MeshStandardMaterial({ map: plankTex([150, 118, 80], 3, 1, 2), roughness: 0.9 })); scene.add(KP.box); KP.hl = m.getObjectByName('mixamorigLeftHand'); KP.hr = m.getObjectByName('mixamorigRightHand'); }
@@ -995,7 +1002,7 @@ function buildAfter() { if (afterG) return; afterG = new THREE.Group(); scene.ad
     m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); m.position.set(x, 0, z); m.rotation.y = ry; m.visible = true; afterG.add(m); animate(m, clip); grounded.push(m); m.userData.idles = clip === 'Sad1' ? ['Sad2', 'LookAround'] : ['Sad1', 'LookAround']; }   /* sad and slow, but nobody freezes */
   for (const [x, z, ry, id] of SURV) { if (!people[id]) continue; const keep = people[id].userData.anim; delete people[id].userData.anim; const m = skClone(people[id]); people[id].userData.anim = keep; m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(0.78, 0.74, 0.68); } }); m.visible = true; m.position.set(x, 0, z); m.rotation.y = ry; afterG.add(m); animate(m, id === 'sailor' ? 'Sad2' : id === 'kofi' ? 'Sad1' : (CL.SitDisbelief ? 'SitDisbelief' : 'Sad2')); m.userData.idles = id === 'benning' ? ['SitIdle', 'SitTalk'] : id === 'kofi' ? ['Sad2', 'LookAround'] : ['Sad1', 'LookAround']; survivors[id] = m; grounded.push(m); if (id === 'benning' && CL.SitDisbelief) { m.userData.sits = true; m.userData.seatAnchor={x:x-Math.sin(ry)*.18,z:z-Math.cos(ry)*.18,top:.42,ry}; const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 0.45), new THREE.MeshStandardMaterial({ map: plankTex([132, 100, 70], 3, 1, 2), roughness: 0.9 })); seat.position.set(x - Math.sin(ry) * 0.18, 0.21, z - Math.cos(ry) * 0.18); seat.rotation.y = ry; afterG.add(seat); } }
   cur = scene; }
-function placeHeath() { const m = people.heath; if (!m || !afterG || m.parent) return; grounded.push(m); m.position.set(HEATH.x, 0, HEATH.z); m.rotation.y = HEATH.ry; afterG.add(m); animate(m, 'Pray'); m.userData.ground = 0; m.userData.idles = ['Talk2', 'Talk1', 'LookAround']; }   /* he prays, and between prayers speaks to the people in the tent */
+function placeHeath() { const m = people.heath; if (!m || !afterG || m.parent) return; grounded.push(m); m.position.set(HEATH.x, 0, HEATH.z); m.rotation.y = HEATH.ry; afterG.add(m); animate(m, 'Pray'); m.userData.ground = 0; }
 function afterDone() { return state.unlocked.includes('tentp') && state.unlocked.includes('kingston'); }
 function afterGoal() { goalText = !Q.aTalk ? 'Find Abba in the camp.' : afterDone() ? 'Go back to Abba.' : 'Look around: the big tent, and the edge of the water.'; showGoal(); }
 function beginAfter() { cue('sad'); hideCard(); buildAfter(); buildSeaProps(); if (state.place !== 'out') setPlace('out'); resetWorld(); Q.on = true; Q.phase = 'after'; Q.ruin = true; sinkTown(0, 1); afterG.visible = true;
@@ -1128,8 +1135,10 @@ function leaveWare() { hideCard(); setPlace('out'); state.x = 17; state.z = 0.4;
 /* ---------- loop ---------- */
 function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; if (canvas.width !== Math.floor(w * renderer.getPixelRatio()) || canvas.height !== Math.floor(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); } }
 let tavernReady = false; let last = performance.now(), bob = 0, built = false, headYaw = 0, faceAmt = 0, restQ = null, frameN = 0; const animQ = new Map(); const _q = new THREE.Quaternion(), _e = new THREE.Euler();
-function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000); last = now; resize();
+function frame(now, step) {
+  const dt = step ?? Math.max(0, Math.min(0.05, (now - last) / 1000));
+  if (step === undefined) last = now;
+  resize();
   let walkedX = 0, walkedZ = 0;
   if (state.started && !busy) {
     let f = 0, r = 0; if (keys.has('w') || keys.has('arrowup')) f += 1; if (keys.has('s') || keys.has('arrowdown')) f -= 1; if (keys.has('d')) r += 1; if (keys.has('a')) r -= 1;
@@ -1630,9 +1639,9 @@ function pirateReady(n) { buildFort(); const m = people[n]; if (!m) return;
 const TV = { t: 0, n: 0 };
 const BRAWL = [[0, 'Talk3', 'Laugh'], [4.5, 'Talk1', 'Laugh'], [8.1, 'Argue', 'Yell'], [9.6, 'Yell', 'Argue'], [11.1, 'Laugh', 'Laugh'], [15.5, 'Talk2', 'Talk3'], [20, null, null]];   /* a loud argument that ends in a laugh, never a fight (owner rule 4: no fighting in the foreground) */
 TICKS.push((dt) => { const a = people.buc1, b = people.buc2; if (!a || !b || state.place !== 'in' || !a.userData.anim) return; if (speaker === a || speaker === b) return;
-  { const A1 = a.userData.anim, B1 = b.userData.anim; if (A1.cur === A1.base && B1.cur === B1.base) { const d = B1.cur.getClip().duration, gap = Math.abs(A1.cur.time - B1.cur.time) % d; if (Math.min(gap, d - gap) < 0.1 * d) B1.cur.time = (A1.cur.time + 0.35 * d) % d; if (Math.abs(A1.cur.timeScale - B1.cur.timeScale) < 0.05) B1.cur.timeScale = A1.cur.timeScale + 0.08; } }   /* back on their idle together: never in step */
+  { const A1 = a.userData.anim, B1 = b.userData.anim; if (A1.cur === A1.base && B1.cur === B1.base && Math.abs(A1.cur.timeScale - B1.cur.timeScale) < 0.05) B1.cur.timeScale = A1.cur.timeScale + 0.08; }   /* the idles drift apart without changing the visible pose */
   const pt = TV.t; TV.t += dt; for (const [at, c1, c2] of BRAWL) if (pt < at && TV.t >= at) { const once = (c) => c && !/Talk|Laugh/.test(c);
-      if (c1) a.userData.anim.play(c1, once(c1), 3.5); else a.userData.anim.rest(); if (c2) b.userData.anim.play(c2, once(c2), 3.5); else b.userData.anim.rest(); { const ca = a.userData.anim.cur, cb = b.userData.anim.cur; if (ca && cb && ca.getClip().name === cb.getClip().name) cb.time = (cb.time + 0.45 + Math.random() * 0.5) % cb.getClip().duration; }   /* never both in step */
+      if (c1) a.userData.anim.play(c1, once(c1), 3.5); else a.userData.anim.rest(); if (c2) b.userData.anim.play(c2, once(c2), 3.5); else b.userData.anim.rest();
       if (c1 === 'Argue' && TV.n++ % 2 === 0 && Math.hypot(state.x + 199, state.z) < 6) setTimeout(() => toast('Abba: “Not in my tavern, boys! Take it outside!”'), 700); }
   if (TV.t > 26) TV.t = 0; });
 const BUCS = [
@@ -1722,7 +1731,7 @@ JOURNAL.push({ id: 'panama', title: 'The raid on Panama',
 function fbIntro() { if (!townReady || !tavernReady || !people.morgan) { toast('The town is still loading.'); return; } closeJournal(); card('1670', ['This is old Ned’s story, from 20 years ago.', 'In it, you are young Ned, a ship’s boy.'], [{ t: 'Begin', go: () => { hideCard(); fbStart(); } }, { t: 'Not now', go: hideCard }]); }
 function clone(id, tint) { const keep = people[id].userData.anim, sw = people[id].userData.sword; delete people[id].userData.anim; delete people[id].userData.sword; const m = skClone(people[id]); people[id].userData.anim = keep; if (sw) people[id].userData.sword = sw; if (tint) m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); return m; }
 function drillClip() {   /* the drill partner's clip: Sword2 cut before its last part, where the swordsman falls (owner rule 4: nobody falls down), joined into a loop */
-  if (!CL.Sword2Drill && CL.Sword2) { const c = CL.Sword2.clone(), d = c.duration * 0.58; c.trim(0, d); c.duration = d; c.name = 'Sword2Drill'; CL.Sword2Drill = seamLoop(c); } return CL.Sword2Drill ? 'Sword2Drill' : 'Sword1'; }
+  if (!CL.Sword2Drill && CL.Sword2) { const c = CL.Sword2.clone(); c.duration *= 0.58; c.trim(); c.name = 'Sword2Drill'; CL.Sword2Drill = seamLoop(c); } return CL.Sword2Drill ? 'Sword2Drill' : 'Sword1'; }
 function fbBuild() { if (FBG.group) return; const g = new THREE.Group(); g.visible = false; scene.add(g); FBG.group = g;
   const put = (m, [x, z, ry], clip) => { m.position.set(x, groundYAt(x, z), z); m.rotation.y = ry; m.visible = true; g.add(m); animate(m, clip); FBG.cast.push(m); m.userData.ground = groundYAt(x, z); grounded.push(m); return m; };
   const d1 = put(clone('buc1'), FBP.d1, 'Sword1'), d2 = put(clone('buc2'), FBP.d2, drillClip()); cutlass(d1); cutlass(d2); FBG.d = [d1, d2];
@@ -2182,6 +2191,7 @@ TICKS.push((dt) => { if (!built) return;
 
 /* ---------- dev checks: ?test=audit, layout, walkers, life and all (games/port-royal/src/checks.js; never in a public build) ---------- */
 if (__DEV__) { window.__prBoats = DEVBOATS; DEVBOATS.buildLoad = () => loadBuild(); }
+let checkTime = 0;
 if (__DEV__) wireChecks({
   renderer, scene, camera, canvas, state, Q, FB, NS, FORT, FBG, KP, SOLDIER, NPCS, NS_PEOPLE, STROLL, people, survivors, JOURNAL, CHAPTERS, ACTIONS, IN, X0, X1, S, SHORE, WX0, WX1, YX, YZ,
   CONVOS: [TALK, STEW, AFTER, COINS, WARE1, NPCS, SAM_AFTER, KOFI_AFTER, BENNING_AFTER, HEATH_TALK, AFTER1, AFTER2, NS_TALK, BUCS, NED, NED_AGAIN, GUNNER, FB_TALK, MORGAN_TOPICS, QM_TALK, EXQ_TALK, MUSTER],
@@ -2190,7 +2200,7 @@ if (__DEV__) wireChecks({
   clamp: (x, z) => clampPos(x, z), groundYAt: (x, z) => groundY(x, z), fz: (x, z, p) => fz(x, z, p), onSpit: (x, z) => onSpit(x, z),
   setPlace, playChapter, startGame, setGoalText: (t) => { goalText = t; }, showGoal, showHint, toast, startConvo, leaveTalk, endTalk, card, hideCard, openJournal, closeJournal, openChapters, closeChapters, setActionButton, saveGame, loadGame, applySave, chapterNow, fbReset, toSea: () => toSea(),
   raw: { fbStart: () => fbStart(), beginWare: () => beginWare(), beginQuake: () => beginQuake(), beginAfter: () => beginAfter(), toYard: () => toYard() },
-  tick(dt) { const raf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0; try { frame(last + dt * 1000); } finally { window.requestAnimationFrame = raf; } },
+  tick(dt) { const raf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0; try { checkTime = Math.max(checkTime, last) + dt * 1000; frame(checkTime, dt); } finally { window.requestAnimationFrame = raf; } },
   autoRun, prep, model, animate, skClone, GULLS,
 });
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */

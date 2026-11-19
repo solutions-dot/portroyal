@@ -18,6 +18,7 @@
    world: { px, pz (you), blocked(x, z, r) (true where a person may not stand), walls ([[x0, z0, x1, z1]] for routes round furniture), bounds,
             others ([people] to keep clear of), talking (the person you are talking to: they wait), view ({ x, z, yaw } of the camera), place(n) } */
 import { walkRoute, segmentHitsWall } from './placement.js';
+import { strideOf, MAX_WALK_RATE } from './anim.js';
 
 /* ---------- paths: a list of points [x, z, ...] (anything after z is ignored) ---------- */
 export function pathLen(path) { let s = 0; for (let i = 1; i < path.length; i++) s += Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]); return s; }
@@ -45,6 +46,11 @@ export const isLeading = (n) => !!(n && n.fol && n.fol.mode === 'lead');
 function gait(n, clip, v) { const c = n.ctl || (n.m && n.m.userData.anim); if (!c) return; if (!clip) { if (n.walking) { n.walking = false; n.running = false; n.clip = null; c.play(null); } return; }
   if (!n.walking || n.clip !== clip) { n.walking = true; n.clip = clip; n.running = clip === 'Run'; c.play(clip); } if (v) c.pace(v); }
 const hasRun = (n) => { const c = n.ctl || (n.m && n.m.userData.anim); return !!(c && c.get('Run')); };
+function gaitSpeed(n, name, want) {
+  const ctl = n.ctl || n.m?.userData.anim, clip = ctl?.get(name)?.getClip?.();
+  const stride = clip && strideOf(n.m, clip);
+  return stride > 0.05 ? Math.min(want, MAX_WALK_RATE * stride / clip.duration) : want;
+}
 function turn(n, want, dt, k = 5) { const m = n.m; if (!m) return; let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); }
 const facePlayer = (n, W, dt, k = 3) => turn(n, Math.atan2(W.px - n.x, W.pz - n.z), dt, k);
 function place(n, W) { if (W.place) W.place(n); else if (n.m) { n.m.position.x = n.x; n.m.position.z = n.z; } }
@@ -77,7 +83,7 @@ function followFree(n, f, dt, W) {
   if (d < f.space || (coming && d < f.space + 0.2 + pv * 0.45)) {   /* you walked (or are walking) into them: they step aside, across your way rather than in front of you, to a free spot */
     const hx = pv > 0.3 ? pvx / pv : (n.x - W.px) / (d || 1), hz = pv > 0.3 ? pvz / pv : (n.z - W.pz) / (d || 1), side = (hx * (n.z - W.pz) - hz * (n.x - W.px)) >= 0 ? 1 : -1, want = f.space + 0.35; let moved = false;
     const cands = []; for (const k of [side, -side]) cands.push([n.x - hz * k * want, n.z + hx * k * want], [W.px - hz * k * want, W.pz + hx * k * want]);   /* to the side of your way that they are already on, then the other side */ for (const a of [0, 0.7, -0.7, 1.4, -1.4]) { const c = Math.cos(a), s = Math.sin(a), ax = (n.x - W.px) / (d || 1), az = (n.z - W.pz) / (d || 1); cands.push([W.px + (ax * c - az * s) * want, W.pz + (ax * s + az * c) * want]); }
-    for (const [x, z] of cands) { if (!freeAt(W, x, z, f.r, n) || Math.hypot(x - W.px, z - W.pz) < f.space) continue; const v = Math.max(1.3, pv * 1.25); if (stepTo(n, x, z, v, dt, W, 0) > 0) { gait(n, v > 2.6 && hasRun(n) && f.run ? 'Run' : 'Walk', v); turn(n, Math.atan2(x - n.x, z - n.z), dt, 8); moved = true; break; } }
+    for (const [x, z] of cands) { if (!freeAt(W, x, z, f.r, n) || Math.hypot(x - W.px, z - W.pz) < f.space) continue; const want = Math.max(1.3, pv * 1.25), clip = want > 2.6 && f.run && hasRun(n) ? 'Run' : 'Walk', v = gaitSpeed(n, clip, want); if (stepTo(n, x, z, v, dt, W, 0) > 0) { gait(n, clip, v); turn(n, Math.atan2(x - n.x, z - n.z), dt, 8); moved = true; break; } }
     if (!moved) { gait(n, null); facePlayer(n, W, dt); } f.moving = moved; return; }
   /* the spot to walk to: in your footsteps `gap` metres back, and to one side if that side is free */
   let back = f.gap, i = C.length - 1, sx = W.px, sz = W.pz, hd = f.hdg ?? Math.atan2(W.px - n.x, W.pz - n.z);
@@ -93,8 +99,9 @@ function followFree(n, f, dt, W) {
   if (!go) { f.moving = false; f.stuckT = 0; gait(n, null); if (d < 9) facePlayer(n, W, dt); return; }
   /* the way there: straight if nothing is in the way, else along your footsteps (you walked there, so it is open) */
   let wx = tx, wz = tz; if (!clear(W, [n.x, n.z], [tx, tz], f.r, n)) { let bi = -1, bd = 1e9; for (let j = 0; j < C.length; j++) { const k = Math.hypot(C[j][0] - n.x, C[j][1] - n.z); if (k < bd) { bd = k; bi = j; } } for (let j = C.length - 1; j > bi; j--) if (Math.hypot(C[j][0] - n.x, C[j][1] - n.z) < bd + 0.6) { bi = j; break; }   /* where you walked the same ground twice, take your latest footsteps, not the old ones that lead back */ if (bi >= 0) { let j = bi; while (j < C.length - 1 && Math.hypot(C[j][0] - n.x, C[j][1] - n.z) < 0.35) j++; const c = freeNear(W, C[j][0], C[j][1], f.r, n) || C[j]; wx = c[0]; wz = c[1]; } }
-  const v = speedFor(n, f, lag), moved = stepTo(n, wx, wz, v, dt, W, f.space);
-  if (moved > 0) { f.moving = true; gait(n, clipFor(n, f, v), v); turn(n, Math.atan2(wx - n.x, wz - n.z) || n.m.rotation.y, dt, 7); } else { gait(n, null); facePlayer(n, W, dt); }
+  const want = speedFor(n, f, lag), clip = clipFor(n, f, want), v = gaitSpeed(n, clip, want);
+  const moved = stepTo(n, wx, wz, v, dt, W, f.space);
+  if (moved > 0) { f.moving = true; gait(n, clip, v); turn(n, Math.atan2(wx - n.x, wz - n.z) || n.m.rotation.y, dt, 7); } else { gait(n, null); facePlayer(n, W, dt); }
 }
 /* reappear at a free spot behind you, out of the camera's view if possible */
 function rescue(n, f, W) {

@@ -307,7 +307,19 @@ function tapPerson(cx, cy) {
 const faceTo = (m, want, dt, k = 5) => { let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * k); };
 const sitClip = (talking) => (talking && CL.SitTalk ? 'SitTalk' : CL.SitIdle ? 'SitIdle' : null);
 function arrive(n) { n.walking = false; n.ry = Math.PI; if (n.seat) sitDown(n); else n.m.userData.anim.play(null); }   /* at the end of a walk to a seat */
-function sitDown(n) { n.seated = true; n.walking = false; n.x=n.seat[0]; n.z=n.seat[1]; n.ry=Math.PI; n.m.rotation.y = n.ry; n.m.userData.seatAnchor={x:n.x,z:n.z,top:0.5,ry:n.ry}; n.m.userData.anim.play(sitClip(false)); refreshLife(); }
+function sitDown(n) {
+  const m = n.m, ctl = m.userData.anim;
+  n.seated = true;
+  n.walking = false;
+  [n.x, n.z] = n.seat;
+  n.ry = Math.PI;
+  m.userData.seatAnchor = {
+    x: n.x, z: n.z, top: 0.5, ry: n.ry,
+    settle: { from: m.position.clone(), yaw: m.rotation.y, start: ctl.mx.time, duration: 0.5 },
+  };
+  ctl.play(sitClip(false));
+  refreshLife();
+}
 function npcTick(n, dt) {
   const m = n.m; if (!m) return; if (m.userData.amb) return;   /* engine/ambient.js moves this person (life.js) */
   if (POSTER) { m.rotation.y = n.ry; return; }   /* the menu poster: everyone keeps the pose they were given */

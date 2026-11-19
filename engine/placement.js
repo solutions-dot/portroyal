@@ -32,7 +32,20 @@ export function anchorSeat(model) {
   const legs = model.userData.noKneeBend ? null : getSeatLegs(model);
   if (legs) beginPoseCorrection(legs.bones);
   else clearSeatLegs(model);
-  if(seat.ry!==undefined)model.rotation.y=seat.ry;
+  const settle = seat.settle;
+  let progress = 1;
+  if (settle) {
+    const t = Math.max(0, Math.min(1, (model.userData.anim.mx.time - settle.start) / settle.duration));
+    progress = t * t * (3 - 2 * t);
+    if (t === 1) delete seat.settle;
+  }
+  if (seat.ry !== undefined) {
+    model.rotation.y = seat.ry;
+    if (settle && progress < 1) {
+      const turn = seat.ry - settle.yaw;
+      model.rotation.y -= (1 - progress) * Math.atan2(Math.sin(turn), Math.cos(turn));
+    }
+  }
   model.updateMatrixWorld(true);bone.getWorldPosition(hip);
   if(model.parent)model.parent.worldToLocal(hip);
   let lift=seat.lift;
@@ -47,7 +60,9 @@ export function anchorSeat(model) {
     const ac=model.userData.anim,cur=ac?.cur;if(cur?.time>.5&&!(cur.getEffectiveWeight&&cur.getEffectiveWeight()<.999)&&!ac.mx?._actions?.some(a=>a!==cur&&a.isRunning()&&a.getEffectiveWeight()>.001))seat.lift=lift;   /* kept only once the sit has fully taken over: measured in the middle of the blend from standing, it held people 30 cm up (17 November 2026) */
   }
   delta.set(seat.x===undefined?0:seat.x-hip.x,seat.top+lift-hip.y,seat.z===undefined?0:seat.z-hip.z);
-  model.position.add(delta);model.updateMatrixWorld(true);
+  if (settle && progress < 1) model.position.lerpVectors(settle.from, delta.add(model.position), progress);
+  else model.position.add(delta);
+  model.updateMatrixWorld(true);
   if (legs) {
     bendKnees(model, legs.pairs);
     endPoseCorrection(legs.bones);

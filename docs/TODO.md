@@ -28,6 +28,11 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 
 - [x] **Seated feet spinning in Tivoli and Windrush.** The shared seat correction reused its previous ankle turn when an animation track stayed still. Both games' `?test=feet` runs found zero sustained spins after the fix.
 - [x] **Brief foot snaps on clip changes.** The animation controller now preserves the current pose and weights if a crossfade is interrupted. Chromium at 390x800 reported zero foot snaps and spins across all eight Tivoli chapters, 11 Windrush routes and two Windrush films.
+- [x] **Check movement in the other eight games.** At 390x800 in Chromium, the Bog Walk, Eventide and Hurricane Melissa autoplayers reached the end. Garvey, Kendal, Nanny Town, Port Royal and The Emperor’s Arrival ran their own animation checks. A frame-by-frame pose trace sampled feet, heads, torsos and root positions during these runs. No sustained foot spins remained in the scenes rerun after the fixes.
+  - Garvey’s hall guests ease into their seats. Hurricane Melissa’s storm reaction and Port Royal’s camp and drill animations loop without the previous large jumps. Port Royal’s stepped check no longer sends its live clock backward.
+  - Nanny Town’s foot corrections no longer pile up on slopes, and Phibba’s stride now matches her speed on the tested back trail. Kendal now leaves clip phase to the shared controller. The Emperor’s Arrival also applies its head-turn limit to the story cast, and its head check reported zero.
+  - Eventide and Hurricane Melissa both reported `FOLLOW 0` on the walking routes with Gran and Mum. The position jumps from the scripted playthroughs did not recur on those routes.
+- [ ] **Review remaining motion findings.** In Chromium, `?test=feet` found 20 short snaps in Nanny Town, two on Dawn’s run in Kendal step 63, and one on Abba’s earthquake run. Port Royal’s `?test=heads&p=flashback` still reports fast turns in the crowd. Nanny Town’s animation check flags three people standing still on the ridge, and Kendal’s movement check flags Lloyd standing still at Kingston station. Review the arm changes on Kendal’s road and the boy’s Point to Clap transition in The Emperor’s Arrival.
 
 ## Not done yet (ask the owner first)
 

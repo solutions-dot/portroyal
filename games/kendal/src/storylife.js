@@ -38,7 +38,7 @@ export function storyLifeTick(n, dt, W, { head = true } = {}) {
     if (s.t <= 0 && c.cur === c.base) {
       const r = Math.random(), have = (k) => !!c.get(k);
       if (r < 0.45 && S.once.length) { const k = choice(S.once); if (have(k)) c.play(k, true); s.t = 5 + Math.random() * 6; }
-      else { const k = choice(S.idles.filter((x) => x !== c.base.getClip().name)); if (k && have(k)) { c.play(k, false, S.hold[0] + Math.random() * (S.hold[1] - S.hold[0])); const a = c.get(k), d = a.getClip().duration; a.time = Math.random() * d; a.timeScale = 0.9 + Math.random() * 0.2; } s.t = 7 + Math.random() * 6; }
+      else { const k = choice(S.idles.filter((x) => x !== c.base.getClip().name)); if (k && have(k)) { c.play(k, false, S.hold[0] + Math.random() * (S.hold[1] - S.hold[0])); c.get(k).timeScale = 0.9 + Math.random() * 0.2; } s.t = 7 + Math.random() * 6; }
     }
   }
   /* the head */

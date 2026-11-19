@@ -1,5 +1,6 @@
 import { anchorSeat } from './placement.js';
 import { joinTick } from './joinbody.js';
+import { beginPoseCorrection, endPoseCorrection, clearPoseCorrection } from './bone-pose.js';
 /* engine/anim.js: one Mixamo clip library shared by every character (same skeleton).
    loadClips(gltf) fills CL; animate(model, clipName) gives each person a controller. See docs/ENGINE.md. */
 import * as THREE from 'three';
@@ -19,7 +20,8 @@ export const NOT_IDLE = new Set(['LookAround']);
 export const idleOK = (k) => !NOT_IDLE.has(k);
 /* walking clips (played in place, paced to the ground speed by ctl.pace) and the looping clips whose ends are joined so they never snap */
 export const WALKS = /^(Walk|WalkM|WalkM2|Run|RunM2|Carry|SadWalk|CarryBagWalk|CarryHeadWalk2?|HoldWalk|HurtWalk|InjuredWalk|RifleWalk2?|RifleCrouchWalk)$/;
-const SEAM = /^(Walk|WalkM|WalkM2|Run|RunM2|Carry|Tread|SadWalk|CarryBagWalk|CarryHeadWalk2?|HoldWalk|HurtWalk|InjuredWalk|RifleWalk2?|RifleCrouchWalk)$/;
+export const MAX_WALK_RATE = 1.9;
+const SEAM = /^(Walk|WalkM|WalkM2|Run|RunM2|Carry|Tread|SadWalk|CarryBagWalk|CarryHeadWalk2?|HoldWalk|HurtWalk|InjuredWalk|RifleWalk2?|RifleCrouchWalk|Terrified|Pray)$/;
 export function seamLoop(c) {   /* make a looping clip end exactly where it starts, spreading the gap over the cycle so it never snaps */
   const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), err = new THREE.Quaternion(), part = new THREE.Quaternion(), id = new THREE.Quaternion();
   for (const t of c.tracks) { const v = t.values, tm = t.times, n = tm.length; if (!n) continue; const T0 = tm[0], T = tm[n - 1] - T0 || 1;
@@ -159,7 +161,7 @@ export function animate(m, name, mixerIn, baseAct) { if (name && NOT_IDLE.has(na
       return restarting;
     },
     rest() { return this.play(null); },
-    pace(v, lo = 0.55, hi = 1.9) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
+    pace(v, lo = 0.55, hi = MAX_WALK_RATE) { const a = this.cur, c = a.getClip(); if (!WALKS.test(c.name)) return 1; const s = strideOf(m, c); if (s > 0.05) a.timeScale = Math.max(lo, Math.min(hi, v * c.duration / s)); return a.timeScale; },   /* play the walk at the pace that fits ground speed v (metres a second) on this body, so the feet do not slide */
     tick(dt) { anchorSeat(m); if (this.timer > 0) { this.timer -= dt; if (this.timer <= 0 && this.cur !== this.base) { const h = this.home; this.home = null;
         const restarting = h ? this.play(h) : this.rest(); if (this.fid) { this.fid = false; const a = this.cur; if (restarting) a.time = Math.random() * a.getClip().duration; a.timeScale = 0.9 + Math.random() * 0.2; } } }   /* back from a moment of variety: to the clip they were on, at a random moment, so two people never fall into step */
       else fidget(this, m, dt); } };
@@ -246,32 +248,63 @@ function solePoints(m) {
   for (const nm in best) { const b = best[nm], seen = new Set(); for (let a = -70; a <= 70; a += 14) { const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180); let top = null, d = -1e9; for (const c of b.list) { const k = -c[2] * ca + c[3] * sa; if (k > d) { d = k; top = c; } }
       if (top && !seen.has(top)) { seen.add(top); out.push({ bone: top[4].skeleton.bones[top[0]], p: new THREE.Vector3(top[1], top[2], top[3]).applyMatrix4(top[4].skeleton.boneInverses[top[0]]) }); } } }
   return out; }
-/* legIK(model, 'Left' | 'Right', d): raise that foot by d metres by bending the knee and turning the thigh (two-bone IK), keeping the knee in the plane it already bends in. */
-const _ik = [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector3()), _iq = new THREE.Quaternion(), _iq2 = new THREE.Quaternion();
+/* Raise the foot by d metres while keeping the knee in the plane it already bends in. */
+const _ik = [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector3()), _iq = new THREE.Quaternion(), _iq2 = new THREE.Quaternion(), _footAngle = new THREE.Quaternion();
 function worldRotate(b, q) { b.getWorldQuaternion(_iq2); const pq = b.parent.getWorldQuaternion(new THREE.Quaternion()).invert(); b.quaternion.copy(pq.multiply(q.clone().multiply(_iq2))); b.updateMatrixWorld(true); }
-function legIK(m, k, d) { const up = m.getObjectByName('mixamorig' + k + 'UpLeg'), kn = m.getObjectByName('mixamorig' + k + 'Leg'), ft = m.getObjectByName('mixamorig' + k + 'Foot'); if (!up || !kn || !ft) return;
+function legIK([up, kn, ft], d) { if (!up || !kn || !ft) return;
+  ft.getWorldQuaternion(_footAngle);
   const H = up.getWorldPosition(_ik[0]), K = kn.getWorldPosition(_ik[1]), A = ft.getWorldPosition(_ik[2]), T = _ik[3].copy(A).add(_ik[4].set(0, d, 0)), a = H.distanceTo(K), b = K.distanceTo(A), c0 = H.distanceTo(A), c1 = Math.min(a + b - 1e-4, H.distanceTo(T));
   const ang = (c) => Math.acos(Math.min(1, Math.max(-1, (a * a + b * b - c * c) / (2 * a * b)))), bend = ang(c1) - ang(c0);
   const axis = _ik[5].copy(K).sub(H).cross(_ik[4].copy(A).sub(K)); if (axis.lengthSq() < 1e-10) axis.set(1, 0, 0).applyQuaternion(up.getWorldQuaternion(_iq)); axis.normalize();
   worldRotate(kn, _iq.setFromAxisAngle(axis, -bend));   /* a straighter or more bent knee, so hip to ankle is as long as hip to target */
   const A2 = ft.getWorldPosition(_ik[2]); worldRotate(up, _iq.setFromUnitVectors(A2.sub(H).normalize(), _ik[4].copy(T).sub(H).normalize()));   /* then the thigh swings the ankle onto the target */
-  ft.getWorldQuaternion(_iq2); }
-export function groundFeet(m) { if (m.userData.seatAnchor) { anchorSeat(m); return; }   /* a seated person stays on the seat (engine/placement.js) */
-  let t = TOES.get(m); if (!t) { t = { soles: solePoints(m), toes: ['Left', 'Right'].map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean) }; TOES.set(m, t); }
-  if (t.soles.length) { m.updateMatrixWorld(true); const gAt = m.userData.groundAt; let low = 1e9; const fy = { Left: 1e9, Right: 1e9 };
+  ft.parent.getWorldQuaternion(_iq2).invert();
+  ft.quaternion.copy(_iq2.multiply(_footAngle));   /* bending the leg moves the ankle; only the slope tilt below turns the foot */
+}
+const FOOT_SIDES = ['Left', 'Right'];
+export function groundFeet(m) {
+  let t = TOES.get(m);
+  const { seatAnchor, groundAt: gAt } = m.userData;
+  if ((seatAnchor || !gAt) && t?.slope) { clearPoseCorrection(t.slope.bones); t.slope = null; }
+  if (seatAnchor) { anchorSeat(m); return; }   /* a seated person stays on the seat (engine/placement.js) */
+  if (!t) { t = { soles: solePoints(m), toes: FOOT_SIDES.map((s) => m.getObjectByName('mixamorig' + s + 'ToeBase')).filter(Boolean) }; TOES.set(m, t); }
+  if (t.soles.length) {
+    if (gAt) {
+      if (!t.slope) {
+        const legs = Object.fromEntries(FOOT_SIDES.map(side => [side, ['UpLeg', 'Leg', 'Foot', 'ToeBase'].map(joint => m.getObjectByName('mixamorig' + side + joint))]));
+        t.slope = { legs, bones: Object.values(legs).flatMap(leg => leg.slice(0, 3).filter(Boolean)), tilt: {} };
+      }
+      beginPoseCorrection(t.slope.bones);
+    }
+    m.updateMatrixWorld(true); let low = 1e9; const fy = { Left: 1e9, Right: 1e9 };
     for (const s of t.soles) { _gp.copy(s.p).applyMatrix4(s.bone.matrixWorld); low = Math.min(low, _gp.y); if (gAt) { const k = /Left/.test(s.bone.name) ? 'Left' : 'Right'; if (_gp.y < fy[k]) fy[k] = _gp.y; } }
     if (gAt) {   /* userData.groundAt(x, z): standing and walking on a slope (Nanny Town, 17 November 2026: soldiers, then Quamin and Mama, sank into the path).
       The clip was made on a flat floor. Here the floor is the lower of the two grounds under the feet while that foot is down, and it rises to the higher ground as
       that foot lifts, so the body climbs and settles smoothly through each step. The foot over higher ground bends its knee (legIK) to stand on it. Each foot on the
       ground also tips to the slope along its own length, so toe and heel both meet the hill. */
-      if (!t.ft) t.ft = { Left: m.getObjectByName('mixamorigLeftFoot'), Right: m.getObjectByName('mixamorigRightFoot'), LeftT: m.getObjectByName('mixamorigLeftToeBase'), RightT: m.getObjectByName('mixamorigRightToeBase') };
-      const g = {}, w = {}; for (const k of ['Left', 'Right']) { const a = t.ft[k] ? t.ft[k].getWorldPosition(_ik[0]) : m.position; w[k] = 1 - Math.min(1, Math.max(0, (fy[k] - low - 0.02) / 0.12)); g[k] = gAt(a.x, a.z); if (w[k] < 1 && t.ft[k + 'T']) { const b = t.ft[k + 'T'].getWorldPosition(_ik[1]); g[k] += Math.max(0, gAt(b.x, b.z) - g[k]) * (1 - w[k]); } }   /* g: the ground under each foot; w: 1 for a foot on the floor in the clip, 0 for one lifted 14 cm or more. A lifted foot also clears the ground under its toe, so it does not swing through a rising path. */
+      const { legs, bones, tilt } = t.slope;
+      const time = m.userData.anim?.mx.time;
+      const step = Math.max(0, time - t.slope.time);
+      const tiltChange = Number.isFinite(step) ? 5 * step : Infinity;
+      t.slope.time = time;
+      const g = {}, w = {}; for (const k of FOOT_SIDES) { const [, , foot, toe] = legs[k]; const a = foot ? foot.getWorldPosition(_ik[0]) : m.position; w[k] = 1 - Math.min(1, Math.max(0, (fy[k] - low - 0.02) / 0.12)); g[k] = gAt(a.x, a.z); if (w[k] < 1 && toe) { const b = toe.getWorldPosition(_ik[1]); g[k] += Math.max(0, gAt(b.x, b.z) - g[k]) * (1 - w[k]); } }   /* g: the ground under each foot; w: 1 for a foot on the floor in the clip, 0 for one lifted 14 cm or more. A lifted foot also clears the ground under its toe, so it does not swing through a rising path. */
       const L = g.Left <= g.Right ? 'Left' : 'Right', H = L === 'Left' ? 'Right' : 'Left', G = g[L] + (g[H] - g[L]) * (1 - w[L]);   /* the floor the clip stands on: the lower ground while the foot over it is down, rising to the higher ground as that foot lifts. On flat ground both are the same, so nothing changes there. */
       const e = G - 0.008 - low, st = t.set ? Math.max(-0.08, Math.min(0.06, e * 0.7)) : e; m.position.y += st; t.set = true; m.updateMatrixWorld(true);   /* the body rises at most 6 cm and settles at most 8 cm a frame, so it climbs and settles instead of jumping */
-      for (const k of ['Left', 'Right']) { const lift = Math.min(0.32, g[k] - G + (e - st)); if (lift > 0.004) legIK(m, k, lift); }   /* a foot over higher ground than the floor bends its knee to stand on it (a flat walk's foot cannot reach down, so the foot over lower ground stays in the air until the body comes down); what the body has not yet done, the knees do */
-      for (const k of ['Left', 'Right']) { if (w[k] <= 0.05) continue;
-        const F = t.ft[k], T = t.ft[k + 'T']; if (F && T) { const a = F.getWorldPosition(_ik[0]), b = T.getWorldPosition(_ik[1]), dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz);
-          if (L > 0.03) { const s = (gAt(b.x, b.z) - gAt(a.x, a.z)) / L, th = Math.max(-0.6, Math.min(0.6, Math.atan(s))) * w[k]; if (Math.abs(th) > 0.01) worldRotate(F, _iq.setFromAxisAngle(_ik[2].set(-dz / L, 0, dx / L), th)); } } }   /* axis = the foot's direction x up: a turn about it lifts the toe */
+      for (const k of FOOT_SIDES) { const lift = Math.min(0.32, g[k] - G + (e - st)); if (lift > 0.004) legIK(legs[k], lift); }   /* a foot over higher ground than the floor bends its knee to stand on it (a flat walk's foot cannot reach down, so the foot over lower ground stays in the air until the body comes down); what the body has not yet done, the knees do */
+      for (const k of FOOT_SIDES) {
+        const [, , foot, toe] = legs[k]; if (!foot || !toe) continue;
+        const a = foot.getWorldPosition(_ik[0]), b = toe.getWorldPosition(_ik[1]);
+        const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+        if (length <= 0.03) continue;
+        const grade = Math.atan((gAt(b.x, b.z) - gAt(a.x, a.z)) / length);
+        const desired = Math.max(-0.6, Math.min(0.6, grade)) * w[k];
+        const prev = tilt[k] ?? desired;
+        // Crossing a sharp ridge can swap the slope under a shoe in a single pose.
+        const angle = prev + Math.max(-tiltChange, Math.min(tiltChange, desired - prev));
+        tilt[k] = angle;
+        if (Math.abs(angle) > 0.01) worldRotate(foot, _iq.setFromAxisAngle(_ik[2].set(-dz / length, 0, dx / length), angle));
+      }
+      endPoseCorrection(bones);
       return; }
     const e = (m.userData.ground || 0) - 0.008 - low;
     m.position.y += (t.set && Math.abs(e) < 0.06) ? e * (e > 0 ? 0.7 : 0.4) : e; t.set = true; return; }   /* small corrections are eased in over a few frames, so the body never jerks when the other heel lands; a big one (a new place to stand) is made at once */
