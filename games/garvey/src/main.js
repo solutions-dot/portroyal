@@ -25,6 +25,7 @@ import { skinProbe } from '../../../engine/skinprobe.js';
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
+import { batchStill } from '../../../engine/batch.js';
 import { setQuiet, ahead, work, warm, release } from '../../../engine/preload.js';   /* the next chapter's place built while you read, the last one let go (engine/preload.js) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 
@@ -98,6 +99,11 @@ caseTex = memo(caseTex); stoneTex = memo(stoneTex); formeTex = memo(formeTex); s
 const std = (map, rough = 0.9, extra) => new THREE.MeshStandardMaterial({ map, roughness: rough, ...(extra || {}) });
 const solid = (color, rough = 0.85, metal = 0) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal });
 const room = new THREE.Group(); scene.add(room);
+/* still scenery is drawn merged, one mesh per look (engine/batch.js), as Port Royal does it: anything that moves, is shown or hidden, or changes later is passed in keep
+   (noBatch), and see-through meshes stay apart so they are still sorted one by one. Only a place's group is batched, never a lone mesh. The place audits
+   (?test=audit, seating, overlap, collision, ambient) and ?nobatch see the scenery unmerged, since they read each piece's own shape. */
+const NOBATCH = __DEV__ && (/[?&]nobatch\b/.test(location.search) || ['audit', 'seating', 'overlap', 'collision', 'ambient'].includes(new URLSearchParams(location.search).get('test')));
+function still(root, keep = []) { if (!NOBATCH) batchStill(root, keep); }   /* engine/batch.js; off for the checks that read each piece's own shape */
 function mesh(geo, m, x, y, z, parent) { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); (parent || room).add(o); return o; }
 const BOXGEO = new Map();
 function boxGeo(w, h, d, textured) {   /* a textured box gets its UVs scaled by its size, so grain, bricks and stone keep one size on every face instead of stretching across a bench or a wall */
@@ -202,6 +208,7 @@ for (const [x, z, n] of [[-4.1, -0.9, 2], [-4.1, 0.1, 3]]) { for (let i = 0; i <
   cyl(0.008, 0.008, 0.9, solid(0x222222), 0, H - 0.45 - 0.2, 0, g, 6); cyl(0.05, 0.16, 0.12, brass, 0, 2.95, 0, g); cyl(0.11, 0.11, 0.26, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.8, transparent: true, opacity: 0.75 }), 0, 2.76, 0, g); cyl(0.12, 0.05, 0.08, brass, 0, 2.6, 0, g); }
 /* a stool by the counter */
 { cyl(0.17, 0.17, 0.05, wood, 1.2, 0.62, 2.3, room, 14); for (const [dx, dz] of [[-0.1, -0.1], [0.1, -0.1], [-0.1, 0.1], [0.1, 0.1]]) cyl(0.015, 0.02, 0.6, woodDark, 1.2 + dx, 0.3, 2.3 + dz, room, 6); }
+still(room);   /* the print shop's still scenery drawn merged (engine/batch.js) */
 const BOUNDS = { x0: X0 + 0.4, x1: X1 - 0.4, z0: Z0 + 0.4, z1: Z1 - 0.45 };
 
 /* ---------- state, movement and controls (the same controls as Port Royal) ---------- */
@@ -650,6 +657,7 @@ function buildHall() {
   posterMesh = mesh(new THREE.PlaneGeometry(0.62, 0.82), new THREE.MeshStandardMaterial({ map: sheetTex('LEARN'), roughness: 1 }), HALL.x1 - 0.1, 1.9, -1.0, g); posterMesh.rotation.y = -Math.PI / 2; posterMesh.visible = false;
   box(1.8, 0.9, 0.9, woodDark, 3.7, 0.45, 1.7, g); box(1.9, 0.06, 1.0, wood, 3.7, 0.93, 1.7, g); box(0.5, 0.34, 0.4, iron, 4.0, 1.13, 1.7, g); cyl(0.025, 0.025, 0.5, iron, 4.2, 1.3, 1.7, g, 6).rotation.z = 0.7;
   mesh(new THREE.PlaneGeometry(0.7, 0.42), std(caseTex(), 0.6), 3.35, 0.97, 1.7, g).rotation.x = -Math.PI / 2; box(0.3, 0.05, 0.22, paper, 3.55, 0.97, 2.05, g); HALL_WALLS.push([2.75, 1.15, 4.65, 2.25]);
+  still(g, [posterMesh]);   /* the still scenery drawn merged (engine/batch.js): the poster is shown and changed later */
 }
 const HALL_ACTIONS = [{ id: 'press', label: 'Print the poster', x: 2.3, z: 1.7, r: 1.1, on: () => stage === 11, go: () => openType(story.poster || 'LEARN', () => { story.printed = true; showPoster(); setStage(12); uiSound('goal'); }) }];
 function showPoster() { if (!posterMesh) return; posterMesh.material.map = sheetTex(story.poster || 'LEARN'); posterMesh.material.needsUpdate = true; posterMesh.visible = !!story.printed; }
@@ -753,6 +761,7 @@ function buildStreet() {
   for (const [x, z] of [[-11.4, 5.7], [-5, -5.9]]) { box(0.7, 0.5, 0.7, wood, x, 0.4, z, g); }
   mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ map: cv(64, 128, (x, w, h) => { const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#9ec8e6'); gr.addColorStop(0.7, '#e9eee4'); gr.addColorStop(1, '#d9d3c0'); x.fillStyle = gr; x.fillRect(0, 0, w, h); }) }), 0, 20, -34, g);
   mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshBasicMaterial({ color: 0xc9d8de }), 0, 20, 34, g).rotation.y = Math.PI;
+  still(g);   /* the still scenery drawn merged (engine/batch.js) */
 }
 
 const STREET_SPOTS = { worker: [-2.3, 1.7], woman: [2.4, 2.0], critic: [0.6, 3.2], garvey3: [0, 0.4] };
@@ -834,6 +843,7 @@ function buildPress() {
   cyl(0.008, 0.008, 0.9, solid(0x222222), 0, H2 - 0.55, -0.5, g, 6); cyl(0.05, 0.16, 0.12, brass, 0, 3.15, -0.5, g); cyl(0.11, 0.11, 0.26, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.8, transparent: true, opacity: 0.75 }), 0, 2.96, -0.5, g);
   box(0.74, 0.94, 0.05, woodDark, -4.0, 1.9, PRESS.z0 + 0.03, g);   /* the finished front page is pinned up here */
   wallPage = mesh(new THREE.PlaneGeometry(0.62, 0.82), new THREE.MeshStandardMaterial({ map: frontPageTex(HEADLINES.pride), roughness: 1 }), -4.0, 1.9, PRESS.z0 + 0.065, g); wallPage.visible = false;
+  still(g, [wallPage, ...bundles]);   /* the still scenery drawn merged (engine/batch.js): the pinned page and the bundles are shown and hidden by stage */
 }
 function showWallPage() { if (!wallPage) return; wallPage.material.map = frontPageTex(HEADLINES[story.headline] || HEADLINES.pride); wallPage.material.needsUpdate = true; wallPage.visible = stage >= 32; }
 const PRESS_SPOTS = { pressman: [2.0, -0.4], garvey4: [-0.2, -2.8], sailor: [2.7, 2.3] }, SAILOR_BACK = [0.9, 2.2];
@@ -916,6 +926,7 @@ function buildDock() {
   for (const [bx, bz] of [[7.6, 0.4], [8.2, 1.2], [7.4, 1.4]]) { cyl(0.34, 0.34, 0.8, woodDark, bx, 0.4, bz, g, 14); cyl(0.35, 0.35, 0.06, iron, bx, 0.55, bz, g, 14); DOCK_WALLS.push([bx - 0.4, bz - 0.4, bx + 0.4, bz + 0.4]); }
   mesh(new THREE.TorusGeometry(0.4, 0.1, 8, 20), solid(0x8c7a52, 1), 0.8, 0.12, 3.5, g).rotation.x = Math.PI / 2;
   for (const lx of [-7, 0, 7]) { cyl(0.05, 0.07, 3.6, solid(0x202428, 0.6), lx, 1.8, -3.9, g, 8); cyl(0.22, 0.16, 0.34, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffd48a, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }), lx, 3.7, -3.9, g, 8); }
+  still(g);   /* the still scenery drawn merged (engine/batch.js) */
 }
 const DOCK_SPOTS = { garvey5: [1.4, -0.4], clerk: [-4.5, -1.8], engineer: [5.0, 2.0], friend: [-1.6, 1.4] };
 let inspected = 0;
@@ -1022,6 +1033,7 @@ function buildDeck() {
   /* an anchor windlass and bitts on the forecastle, a deck bucket */
   cyl(0.28, 0.28, 1.5, ironP, 23, 0.45, 0, g, 14).rotation.x = Math.PI / 2; box(0.5, 0.5, 1.9, ironP, 23, 0.25, 0, g); for (const z of [-1.2, 1.2]) cyl(0.11, 0.13, 0.5, ironD, 20, 0.25, z, g, 10);
   cyl(0.16, 0.13, 0.28, wood, -5.2, 0.14, 1.75, g, 12); W(-5.4, 1.55, -5.0, 1.95);
+  still(g, [DECK.wheel, DECK.bell, DECK.puff]);   /* the still scenery drawn merged (engine/batch.js): the wheel turns, the bell swings, the whistle puffs */
 }
 const DECK_VIEW = { hull: [8.2, 0.2, -8.6, Math.PI, -0.3], engine: [-6.2, 1.15, -0.62, Math.PI, -1.12], deck: [9.0, 0.75, 1.0, Math.PI, -0.5] };   /* where your eyes go for each close look: x, height, z, yaw, pitch */
 const deckGoal = () => { const n = Object.keys(INSPECT).filter((k) => inspectSeen[k]).length; return n < 3 ? 'Look at the hull, the engine and the deck. (' + n + ' of 3)' : 'You have seen the ship. Go back down to the dock.'; };
@@ -1115,6 +1127,7 @@ function buildLiberty() {
   /* a table for the Declaration, near the door */
   box(1.6, 0.74, 0.8, woodDark, 4.8, 0.37, 4.0, g); box(1.7, 0.06, 0.9, wood, 4.8, 0.77, 4.0, g); box(0.6, 0.02, 0.8, paper, 4.8, 0.81, 4.0, g); LIB_WALLS.push([3.95, 3.55, 5.65, 4.45]);
   for (const lx of [-3.5, 0, 3.5]) { cyl(0.008, 0.008, H2 - 4.2, solid(0x222222), lx, (H2 + 4.2) / 2, 0, g, 6);   /* the cord runs from the ceiling to the brass cap */ cyl(0.07, 0.2, 0.14, brass, lx, 4.15, 0, g); cyl(0.13, 0.13, 0.3, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.8, transparent: true, opacity: 0.75 }), lx, 3.95, 0, g); }
+  still(g, [bannerMesh]);   /* the still scenery drawn merged (engine/batch.js): the banner gets its colours */
 }
 function showBanner() { if (!bannerMesh) return; bannerMesh.material.map = bannerTex(!!story.banner); bannerMesh.material.needsUpdate = true; }
 /* the Declaration: read one real line, then colour the banner in the order the line gives */
@@ -1196,6 +1209,7 @@ function buildOffice() {
   box(1.1, 0.74, 0.7, woodDark, 3.2, 0.37, 0.8, g); box(1.2, 0.05, 0.8, wood, 3.2, 0.77, 0.8, g); for (const [dx, dz] of [[-0.25, 0], [0.1, 0.1], [0.3, -0.1]]) box(0.26, 0.015, 0.18, paper, 3.2 + dx, 0.81, 0.8 + dz, g); OFF_WALLS.push([2.55, 0.4, 3.85, 1.2]);
   box(0.06, 1.2, 1.6, woodDark, OFF.x1 - 0.05, 1.7, -1.4, g); for (const [dz, dy] of [[-0.45, 0.3], [0, 0.3], [0.45, 0.3], [-0.3, -0.25], [0.25, -0.25]]) mesh(new THREE.PlaneGeometry(0.34, 0.26), new THREE.MeshStandardMaterial({ map: sheetTex('NEWS'), roughness: 1 }), OFF.x1 - 0.09, 1.7 + dy, -1.4 + dz, g).rotation.y = -Math.PI / 2;
   cyl(0.008, 0.008, 0.7, solid(0x222222), 0, H2 - 0.5, 0, g, 6); cyl(0.05, 0.14, 0.12, brass, 0, 2.95, 0, g); cyl(0.1, 0.1, 0.24, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.8, transparent: true, opacity: 0.75 }), 0, 2.78, 0, g);
+  still(g);   /* the still scenery drawn merged (engine/batch.js) */
 }
 /* sort the news cards: fact or rumour */
 const CARDS = [['The Negro World comes out every week.', 'fact', 'Yes. You can check this: a new issue comes out every week.'], ['Someone says the paper will close tomorrow. They cannot say who told them.', 'rumour', 'Yes. Nobody can say who told them, so we cannot check it.'], ['In 1925 Marcus Garvey went to prison in Atlanta.', 'fact', 'Yes. This is in the records, so we can check it.'], ['Everybody knows there is no money left. Nobody has shown any numbers.', 'rumour', 'Yes. "Everybody knows" is not proof. We need the numbers.']];
@@ -1262,6 +1276,7 @@ function buildPark() {
   /* the timeline board */
   box(0.1, 1.6, 0.1, woodDark, -6.1, 0.8, 0.0, g); box(0.1, 1.6, 0.1, woodDark, -3.9, 0.8, 0.0, g); box(2.4, 1.2, 0.08, wood, -5.0, 1.6, 0.0, g);
   mesh(new THREE.PlaneGeometry(2.2, 1.0), new THREE.MeshBasicMaterial({ map: signTex([['TIMELINE', 40], ['1927 to 1969', 28]], 512, 220) }), -5.0, 1.6, 0.05, g); PARK_WALLS.push([-6.3, -0.3, -3.7, 0.3]);
+  still(g, [SH.bustAt]);   /* the still scenery drawn merged (engine/batch.js): the bust is set on later */
 }
 /* the timeline: tap the events in the order they happened */
 const EVENTS = [['Marcus Garvey comes home to Jamaica', '1927'], ['He starts a political party in Jamaica', '1929'], ['He moves to London', '1935'], ['He dies in London', '1940'], ['His remains come home to Jamaica', '1964'], ['He is named a National Hero', '1969']];

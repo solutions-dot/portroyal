@@ -43,6 +43,7 @@ A body is a dozen or more skinned pieces (skin, shirt, trousers, hat, buttons), 
 - New: meshes whose materials differ only in colour are merged into one mesh too, with each colour baked into the points. Games make a new material for each wall, post and plank, so this is where most scenery draw calls went (Eventide's title: 190 batched meshes became 119).
 - Such a group is watched every frame. If the game changes one of its materials later (a window lit at night, a fade, a material made see-through), the group splits back on the spot into one mesh per material, each with the game's own material, so it follows every later change as before.
 - A packed model's points (quantized whole numbers, often interleaved) are turned into plain numbers before they are moved, with the same values. Before this, merging a packed house made it vanish (Port Royal).
+- `batchStill(root, keep)` is the form Port Royal and Garvey use for each group of scenery: the things in `keep` (moved, shown, hidden or recoloured later) and everything see-through stay apart, and a lone mesh is never batched. A game turns it off for the checks that read each piece's own shape (`?test=audit` and the like). Port Royal: title 486 to 256 draw calls, street 628 to 191. Garvey: street 337 to 106, park 199 to 50.
 - `?nobake` turns the colour step off.
 
 ### engine/preload.js: the next chapter is ready, the last one lets go

@@ -19,7 +19,7 @@ import { wireChecks } from './checks.js';   /* dev only: ?test=audit, layout, wa
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
-import { batchStatic } from '../../../engine/batch.js';   /* still scenery drawn in a few pieces (see still() below) */
+import { batchStill } from '../../../engine/batch.js';   /* still scenery drawn in a few pieces (see still() below) */
 import { setQuiet } from '../../../engine/preload.js';   /* tells the engine when the player is reading, not moving */
 soundPref('portroyal-sound');
 onLoadFail((n) => { $('loadnote').hidden = false; $('loadnote').textContent = 'Part of the game did not load (' + n + '). Reload the page to try again.'; });
@@ -279,7 +279,7 @@ function mk(geo, mat, x, y, z, parent) { const m = new THREE.Mesh(geo, mat); m.p
    still sorted one by one against each other, as before. Only a group is batched, never a mesh that stands on its own in the scene. The place audits (?test=audit, collision,
    seating) and ?nobatch see the scenery unmerged: they read each piece's own shape, as other games' audits read a copy taken before batching. */
 const NOBATCH = __DEV__ && (/[?&]nobatch\b/.test(location.search) || ['audit', 'collision', 'seating'].includes(new URLSearchParams(location.search).get('test')));
-function still(root, keep = []) { if (NOBATCH || !root || root.isMesh) return; for (const o of keep) if (o) o.userData.noBatch = true; root.traverse((o) => { if (o.isMesh && ([].concat(o.material).some((m) => m.transparent))) o.userData.noBatch = true; }); batchStatic(root); }
+function still(root, keep = []) { if (!NOBATCH) batchStill(root, keep); }   /* engine/batch.js; off for the checks that read each piece's own shape */
 
 /* ---------- harbour: pier, moored ships, cargo, beached boat, nets ---------- */
 let seaN = null, waves = null, SEA = null; const streetProps = []; const shipsM = {}; const DEVBOATS = {};   /* the boats, for the dev screenshot script */

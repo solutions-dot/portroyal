@@ -52,6 +52,10 @@ export function batchStatic(root, { bake = BAKE } = {}) {
 /* a packed model keeps its points as small whole numbers (quantized, often interleaved); moving them in place broke them (Port Royal: a house vanished). Plain numbers first, the same values. */
 function plain(g, k) { const a = g.attributes[k]; if (!a.isInterleavedBufferAttribute && a.array instanceof Float32Array && !a.normalized) return;
   const n = a.count, s = a.itemSize, f = new Float32Array(n * s); for (let i = 0; i < n; i++) for (let c = 0; c < s; c++) f[i * s + c] = a.getComponent(i, c); g.setAttribute(k, new THREE.BufferAttribute(f, s)); }
+/* batchStill(root, keep): batchStatic for a group of scenery, the way Port Royal and Garvey use it. The things in keep (that the game moves,
+   shows, hides or recolours later) and everything see-through (still sorted one by one, as before) stay apart; a lone mesh is never batched. */
+export function batchStill(root, keep = []) { if (!root || root.isMesh) return null; for (const o of keep) if (o) o.userData.noBatch = true;
+  root.traverse((o) => { if (o.isMesh && [].concat(o.material).some((m) => m && m.transparent)) o.userData.noBatch = true; }); return batchStatic(root); }
 function addMesh(root, g, mat) { const m = new THREE.Mesh(g, mat); m.userData.batched = true; m.matrixAutoUpdate = false; root.add(m); return m; }
 /* several materials alike but for colour: one mesh, colours in its points, watched */
 function joinColours(root, group) {
