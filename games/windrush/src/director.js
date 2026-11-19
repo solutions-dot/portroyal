@@ -1,3 +1,4 @@
+import { showCinematicSkip } from "../../../engine/cine.js";
 /* Game-only camera scenes: the departure from Kingston and the arrival at Tilbury. The timing and compression are a reconstruction.
    The camera follows a smooth curve through each film's shots (a Catmull-Rom spline in time, eased at the start and end), looks at a second
    curve, and can change its lens. The ship can move along keyframes (she leaves her berth, or comes alongside), with her wake strengthening
@@ -54,11 +55,15 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     fired = new Set();
     build(FILMS[key]);
     $("cineControls").hidden = false;
+    hideSkip = showCinematicSkip(() => $("readCine").click(), { left: true });
     $("pauseCine").textContent = "Pause";
     document.body.classList.add("cine");
     D.apply(0);
   };
+  let hideSkip;
+  D.hideSkip = () => hideSkip?.();
   D.stop = () => {
+    D.hideSkip();
     const Q = world && world();
     if (D.on && Q) {
       // put the place back as play expects it: the ship at her berth, the gangway down, the lens back

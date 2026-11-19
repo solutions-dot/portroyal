@@ -1,3 +1,4 @@
+import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
@@ -727,8 +728,7 @@ let fading = false;
 setQuiet(() => fading || !$('dialogue').hidden || !$('card').hidden || !$('journal').hidden || !$('chapters').hidden);   /* engine/preload.js: the player is reading (a talk, a card, the chapter title, the journal or the chapter list), so queued work may run now */
 function chapterFade(name, fn) { return function (...a) { if (fading) return; if (__DEV__ && (new URLSearchParams(location.search).has('shot') || window.__prNoFade)) return fn.apply(this, a);   /* dev checks skip the fade */
   fading = true; const f = $('fade'), [t, sub] = FADE_TITLES[name]; $('fadeT').textContent = t; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
-  f.hidden = false; requestAnimationFrame(() => { f.classList.add('on'); }); setTimeout(() => { fn.apply(this, a); f.classList.add('txt'); }, 750);
-  setTimeout(() => { f.classList.remove('txt'); }, 2500); setTimeout(() => { f.classList.remove('on'); }, 2900); setTimeout(() => { f.hidden = true; fading = false; }, 3800); }; }
+  playChapterFade(f, () => fn.apply(this, a), () => { fading = false; }, [750, 2500, 2900, 3800]); }; }
 function goArrive() { hideCard(); if (Q.on) { resetWorld(); Q.on = false; } setPlace('out'); state.x = 43; state.z = 0; state.yaw = Math.PI / 2; state.pitch = 0; goalText = ''; setGoal(); cue('begin'); }
 const CHAPTERS = [
   { year: '1690', name: 'Arrival', go: () => goArrive(), done: () => state.ate },
@@ -920,9 +920,10 @@ function rumble() { audioInit(); if (!AU.ctx || Q.gain) return; const c = AU.ctx
 function setPhase(p) { Q.phase = p; Q.t = 0; }
 function quakeIntro() { cue('sad'); if (!townReady || !tavernReady) { toast('The town is still loading.'); return; } closeJournal(); $('card').hidden = true; $('dialogue').hidden = true; $('goal').hidden = false;
   card('7 June 1692', ['Two years later. Lewis is now a merchant.', 'Next comes the great earthquake. It is loud, and it may be scary.'], [{ t: 'Begin', go: beginQuake }, { t: 'Read what happened instead', go: () => finishQuake(true) }]); }
-function beginQuake() { hideCard(); rumble(); if (state.place !== 'out') setPlace('out'); resetWorld(); Q.on = true; setPhase('calm'); state.place = 'out'; state.x = 1; state.z = 0.6; state.yaw = -Math.PI / 2; state.pitch = 0; if (ring) ring.visible = false;
+let hideQuakeSkip;
+function beginQuake() { hideCard(); rumble(); if (state.place !== 'out') setPlace('out'); resetWorld(); hideQuakeSkip = showCinematicSkip(() => finishQuake(true)); Q.on = true; setPhase('calm'); state.place = 'out'; state.x = 1; state.z = 0.6; state.yaw = -Math.PI / 2; state.pitch = 0; if (ring) ring.visible = false;
   npcShow(false); goalText = 'On a hot morning, walk to the harbour.'; showGoal(); toast('7 June 1692, late morning'); }
-function resetWorld() { Q.abbaHit = Q.abbaTrip = false; if (abba) { delete abba.userData.seatAnchor; delete abba.userData.sits; } clearDebris(); if (abba && abba.userData.anim) { const st = abba.userData.anim.get('Scared'); if (st) st.stop(); } if (Q.abbaRun || (runA && runA.isRunning()) || (abba && abba.userData.anim && abba.userData.anim.cur !== idle)) { Q.abbaRun = false; if (runA) runA.stop(); const ac = abba.userData.anim; if (ac && ac.cur !== idle) { ac.cur.stop(); ac.cur = idle; ac.timer = 0; } idle.reset().setEffectiveWeight(1).play(); } Q.ruin = false; Q.shake = 0; Q.T = 0; sinkTown(0, 0); seaLevel = -0.35; moveSpeed = 2.7; eyeY = 1.62; scene.fog.color.copy(HAZE); scene.fog.near = 70; scene.fog.far = 900; sky.material.color.set(0xffffff); $('vig').style.opacity = 0;
+function resetWorld() { hideQuakeSkip?.(); Q.abbaHit = Q.abbaTrip = false; if (abba) { delete abba.userData.seatAnchor; delete abba.userData.sits; } clearDebris(); if (abba && abba.userData.anim) { const st = abba.userData.anim.get('Scared'); if (st) st.stop(); } if (Q.abbaRun || (runA && runA.isRunning()) || (abba && abba.userData.anim && abba.userData.anim.cur !== idle)) { Q.abbaRun = false; if (runA) runA.stop(); const ac = abba.userData.anim; if (ac && ac.cur !== idle) { ac.cur.stop(); ac.cur = idle; ac.timer = 0; } idle.reset().setEffectiveWeight(1).play(); } Q.ruin = false; Q.shake = 0; Q.T = 0; sinkTown(0, 0); seaLevel = -0.35; moveSpeed = 2.7; eyeY = 1.62; scene.fog.color.copy(HAZE); scene.fog.near = 70; scene.fog.far = 900; sky.material.color.set(0xffffff); $('vig').style.opacity = 0;
   const m = shipsM.merchant, sl = shipsM.sloop; m.position.set(SHORE + 17.5, -0.35, -5.9); m.rotation.set(0, 0, 0); sl.position.set(SHORE + 17.5, -0.35, 4.9); sl.rotation.set(0, Math.PI, 0);
   if (afterG) afterG.visible = false; if (yardG) yardG.visible = false; for (const p of streetProps) p.visible = true; npcShow(true); for (const o of townObjs) o.m.visible = true; shipsM.merchant.visible = shipsM.sloop.visible = true; Q.aTalk = false;
   if (Q.boat) Q.boat.visible = false; for (const d of Q.debris) d.visible = false; ABBA.x = -4.15; ABBA.z = -S + 1.45; abba.position.set(ABBA.x, 0.12, ABBA.z); abba.visible = true; if (Q.gain) Q.gain.gain.value = 0; }
@@ -940,7 +941,7 @@ function toSea() { hideCard(); buildSeaProps(); Q.ruin = true; sinkTown(0, 1); s
   state.place = 'sea'; state.x = SHORE + 12; state.z = 22; Q.boat.position.set(SHORE + 20, seaLevel, 32); Q.boat.rotation.y = 3.1;   /* three-quarters on to you at first, then the bow comes round */ Q.boat.visible = true; for (const d of Q.debris) d.visible = true;
   state.yaw = Math.atan2(-(Q.boat.position.x - state.x), -(Q.boat.position.z - state.z)); state.pitch = 0; ABBA.x = Q.boat.position.x; ABBA.z = Q.boat.position.z; abba.visible = true; Q.abbaRun = false; abbaIdle(); abba.rotation.y = Math.atan2(state.x - ABBA.x, state.z - ABBA.z); if (abba.userData.anim && CL.SitIdle) abba.userData.anim.play('SitIdle'); abba.userData.sits = true; setPhase('sea');   /* she sits in the boat (the checks read sits) */
   goalText = 'Swim to the boat with the gold marker!'; showGoal(); toast('A second shock throws you into the sea.'); }
-function finishQuake(skipped) { for (const id of ['quake', 'sand', 'watch', 'tomb']) unlock(id); Q.shake = 0; if (Q.gain) Q.gain.gain.value = 0; Q.phase = 'end';
+function finishQuake(skipped) { hideQuakeSkip?.(); $('vig').style.opacity = 0; for (const id of ['quake', 'sand', 'watch', 'tomb']) unlock(id); Q.shake = 0; if (Q.gain) Q.gain.gain.value = 0; Q.phase = 'end';
   card(skipped ? 'What happened' : 'Saved', skipped ? ['Just before noon, an earthquake shook Port Royal. The wet sand under the town turned to liquid, and most of the town sank into the sea.', 'Lewis Galdy was swallowed by the ground, thrown out into the sea by a second shock, and saved by a boat.', 'Four new pages are in your journal.']
     : ['Hands pull you over the side of the boat. You are alive.', 'Behind you, most of Port Royal is under the sea.', 'Four new pages are in your journal.'],
     [{ t: 'Go on: the days after', go: beginAfter }, { t: 'Play the earthquake again', go: beginQuake }, { t: 'Go back to 1690', go: leaveQuake }]); }

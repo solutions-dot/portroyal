@@ -18,3 +18,80 @@ export function renderFramed(renderer, scene, camera, cine) {
   if (f === f0) { renderer.render(scene, camera); return; }
   camera.fov = f; camera.updateProjectionMatrix(); renderer.render(scene, camera); camera.fov = f0; camera.updateProjectionMatrix();
 }
+
+let skipButton, dismissSkip;
+
+/* A scene owns its button until it finishes or a new scene replaces it. */
+export function showCinematicSkip(onSkip, { bottom = false, left = false } = {}) {
+  if (!skipButton) {
+    skipButton = document.createElement('button');
+    skipButton.type = 'button';
+    skipButton.className = 'cine-skip';
+    skipButton.setAttribute('aria-label', 'Skip cinematic');
+    skipButton.textContent = '×';
+    const style = document.createElement('style');
+    style.textContent = `
+      .cine-skip {
+        position: fixed;
+        top: max(12px, env(safe-area-inset-top));
+        right: max(12px, env(safe-area-inset-right));
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border: 2px solid #fff;
+        border-radius: 6px;
+        background: #10222b;
+        color: #fff;
+        font: 400 28px/1 system-ui;
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+      .cine-skip[hidden] { display: none; }
+      .cine-skip.bottom { top: auto; bottom: max(16px, env(safe-area-inset-bottom)); }
+      .cine-skip.left { right: auto; left: max(12px, env(safe-area-inset-left)); }
+      .cine-skip:focus-visible { outline: 3px solid #f9c656; outline-offset: 3px; }
+    `;
+    document.head.append(style);
+    document.body.append(skipButton);
+  }
+  dismissSkip?.();
+  const dismiss = () => {
+    if (dismissSkip !== dismiss) return;
+    dismissSkip = null;
+    skipButton.hidden = true;
+    skipButton.onclick = null;
+  };
+  dismissSkip = dismiss;
+  skipButton.classList.toggle('bottom', bottom);
+  skipButton.classList.toggle('left', left);
+  skipButton.hidden = false;
+  skipButton.onclick = () => { dismiss(); onSkip(); };
+  return dismiss;
+}
+
+/* The chapter setup runs once, even when the player skips before the title appears. */
+export function playChapterFade(fade, setup, onDone, [open, textOff, fadeOut, end]) {
+  let applied = false;
+  const apply = () => { if (!applied) { applied = true; setup(); } };
+  const finish = () => {
+    cancelAnimationFrame(frame);
+    for (const timer of timers) clearTimeout(timer);
+    hideSkip();
+    fade.classList.remove('on', 'txt');
+    fade.hidden = true;
+    apply();
+    onDone();
+  };
+  const hideSkip = showCinematicSkip(finish);
+  fade.hidden = false;
+  const frame = requestAnimationFrame(() => fade.classList.add('on'));
+  const timers = [
+    setTimeout(() => { apply(); fade.classList.add('txt'); }, open),
+    setTimeout(() => fade.classList.remove('txt'), textOff),
+    setTimeout(() => fade.classList.remove('on'), fadeOut),
+    setTimeout(finish, end),
+  ];
+}

@@ -1,3 +1,4 @@
+import { showCinematicSkip } from '../../../engine/cine.js';
 /* games/tivoli/src/fight.js: the May 2010 street scene (chapter 5, "the days"), a directed scene like the Kendal crash. CLAUDE.md rule 4 allows it for Tivoli only, with these limits,
    all kept here: it starts only from an opt-in card ("Read what happened instead" is the other choice); you watch from a window and never hold or fire a weapon; there is no blood;
    NOBODY IS HIT (dust only lands on walls and ground, never on a person); gunmen are shown only far away behind the barricade and unidentified; there are no numbers and no one is
@@ -72,7 +73,7 @@ export const PEOPLE = [...FORCES, ...GUNMEN];
 
 /* ---------- cards (the HTML is in index.html) ---------- */
 const $ = (id) => document.getElementById(id);
-let titleTimer, endTimer;
+let titleTimer, endTimer, hideSkip;
 let calmPref = false; try { calmPref = localStorage.getItem('tivoli-calm') === '1'; } catch (e) { /* default off */ }
 export function openCard() { $('fcalm').checked = calmPref; $('fightcard').hidden = false; $('title').hidden = true; }
 function show(id) { for (const c of ['fightcard', 'readcard', 'aftercard']) $(c).hidden = c !== id; }
@@ -85,7 +86,6 @@ export function wire(env) {
   $('fread').onclick = () => { show('readcard'); finishChapter(5); };   /* reading what happened counts as finishing the chapter: its journal pages open */
   $('fback').onclick = () => show('fightcard');
   $('fcancel').onclick = () => { $('fightcard').hidden = true; $('title').hidden = false; };
-  $('fightskip').onclick = complete;
   $('fdone').onclick = () => finish();
   $('freadexit').onclick = () => { $('readcard').hidden = true; $('title').hidden = false; };
   $('fnext').onclick = () => { finish(); if (env.next) env.next(); };   /* Next chapter, as at the end of every other chapter */
@@ -111,16 +111,16 @@ export async function begin() {
   const fade = $('fade'); fade.style.transition = 'none'; fade.style.opacity = 1; fade.hidden = false;
   fade.getBoundingClientRect();
   requestAnimationFrame(() => { if (FIGHT.on && !FIGHT.ended) { fade.style.transition = 'opacity 1.5s'; fade.style.opacity = 0; } });
-  $('fighttitle').hidden = false; $('fightskip').hidden = false; $('hud').hidden = true;
+  $('fighttitle').hidden = false; hideSkip = showCinematicSkip(complete); $('hud').hidden = true;
   clearTimeout(titleTimer); titleTimer = setTimeout(() => { $('fighttitle').hidden = true; }, 4200);
-  FIGHT.cleanup = () => { scene.remove(st.group, FX.group); for (const b of FIGHT.bodies) { disarm(b); scene.remove(b); } FIGHT.hidden.forEach((c) => (c.visible = true)); FIGHT.lights.forEach(([l, v]) => (l.intensity = v)); renderer.shadowMap.enabled = FIGHT.shadowWas; scene.fog = FIGHT.fog; scene.background = FIGHT.bg; camera.fov = previousFov; camera.updateProjectionMatrix(); FX.items.length = 0; FX.group.clear(); };
+  FIGHT.cleanup = () => { hideSkip?.(); scene.remove(st.group, FX.group); for (const b of FIGHT.bodies) { disarm(b); scene.remove(b); } FIGHT.hidden.forEach((c) => (c.visible = true)); FIGHT.lights.forEach(([l, v]) => (l.intensity = v)); renderer.shadowMap.enabled = FIGHT.shadowWas; scene.fog = FIGHT.fog; scene.background = FIGHT.bg; camera.fov = previousFov; camera.updateProjectionMatrix(); FX.items.length = 0; FX.group.clear(); };
 }
 function finish(showTitle = true) {
   clearTimeout(titleTimer); clearTimeout(endTimer);
   SFX.ambience(false);
   const gone = FIGHT.cleanup ? [FIGHT.street.group, ...FIGHT.bodies] : [];
   if (FIGHT.cleanup) FIGHT.cleanup(); FIGHT.cleanup = null; for (const o of gone) release(o, FIGHT.env.scene);   /* engine/preload.js: the street and its people are built afresh next time, so their graphics memory is let go */ FIGHT.on = false;
-  for (const id of ['aftercard', 'windowframe', 'fighttitle', 'fightskip', 'fade']) $(id).hidden = true;
+  for (const id of ['aftercard', 'windowframe', 'fighttitle', 'fade']) $(id).hidden = true;
   $('title').hidden = !showTitle;
 }
 function complete() {

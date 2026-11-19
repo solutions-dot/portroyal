@@ -1,3 +1,4 @@
+import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
@@ -466,9 +467,8 @@ function card(title, paras, btns) {
 function hideCard() { $('card').hidden = true; document.body.classList.remove('carding'); busy = panelsOpen(); }
 const QUICK = __DEV__ && /[?&](shot|auto|test)=/.test(location.search);   /* test views skip the fade */
 function chapterFade(title, sub, fn) {
-  if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
-  f.hidden = false; requestAnimationFrame(() => { f.classList.add('on'); }); setTimeout(() => { fn(); f.classList.add('txt'); }, 750);
-  setTimeout(() => { f.classList.remove('txt'); }, 2500); setTimeout(() => { f.classList.remove('on'); }, 2900); setTimeout(() => { f.hidden = true; fading = false; }, 3800);
+  if (QUICK) { fn(); return; } if (fading) return; stopIntro(); fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
+  playChapterFade(f, fn, () => { fading = false; }, [750, 2500, 2900, 3800]);
 }
 function resetChapter() {   /* the print shop again: people go home, the goal starts over, the journal is kept */
   talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); enterPlace('shop');
@@ -1559,18 +1559,20 @@ let last = performance.now(), stepT = 0;
 function frame(t) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
-  if (!state.started && modelsReady && !QUICK) titleCam(dt); else { camera.position.set(state.x, state.eyeY || EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); if (INTRO.t < INTRO.dur) introCam(dt); }   /* eyeY: dev face views only */
+  if (!state.started && modelsReady && !QUICK) titleCam(dt); else { camera.position.set(state.x, state.eyeY || EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); if (!fading && INTRO.t < INTRO.dur) introCam(dt); }   /* eyeY: dev face views only */
   renderer.render(scene, camera);
 }
 /* a chapter opens with a short establishing move: the view starts higher and further back, looking down over the place, and settles into your eyes.
    Walking or turning ends it at once. */
 const INTRO = { t: 9, dur: 2.6, x: 0, z: 0, yaw: 0 };
+let hideIntroSkip;
+function stopIntro() { INTRO.t = INTRO.dur; hideIntroSkip?.(); }
 function introCam(dt) {
-  if (INTRO.t === 0) { INTRO.x = state.x; INTRO.z = state.z; INTRO.yaw = state.yaw; const B = curBounds; INTRO.room = 0; for (let d = 0.1; d <= 2.2; d += 0.1) { const x = state.x + Math.sin(state.yaw) * d, z = state.z + Math.cos(state.yaw) * d; if (x < B.x0 || x > B.x1 || z < B.z0 || z > B.z1 || curWalls.some((w) => x > w[0] - 0.2 && x < w[2] + 0.2 && z > w[1] - 0.2 && z < w[3] + 0.2)) break; INTRO.room = d; } }   /* how far back the view can start without leaving the room or entering furniture */
-  if (Math.hypot(state.x - INTRO.x, state.z - INTRO.z) > 0.05 || Math.abs(state.yaw - INTRO.yaw) > 0.02) { INTRO.t = INTRO.dur; return; }
+  if (INTRO.t === 0) { hideIntroSkip = showCinematicSkip(stopIntro, { bottom: true }); INTRO.x = state.x; INTRO.z = state.z; INTRO.yaw = state.yaw; const B = curBounds; INTRO.room = 0; for (let d = 0.1; d <= 2.2; d += 0.1) { const x = state.x + Math.sin(state.yaw) * d, z = state.z + Math.cos(state.yaw) * d; if (x < B.x0 || x > B.x1 || z < B.z0 || z > B.z1 || curWalls.some((w) => x > w[0] - 0.2 && x < w[2] + 0.2 && z > w[1] - 0.2 && z < w[3] + 0.2)) break; INTRO.room = d; } }   /* how far back the view can start without leaving the room or entering furniture */
+  if (Math.hypot(state.x - INTRO.x, state.z - INTRO.z) > 0.05 || Math.abs(state.yaw - INTRO.yaw) > 0.02) { stopIntro(); return; }
   INTRO.t += dt; const k = Math.min(1, INTRO.t / INTRO.dur), e = 1 - (1 - k) * (1 - k) * (1 - k), back = (1 - e) * INTRO.room;
   camera.position.set(state.x + Math.sin(state.yaw) * back, EYE + (1 - e) * Math.min(1.3, PLACES[place].sky ? 1.3 : 0.9), state.z + Math.cos(state.yaw) * back);
-  camera.rotation.set(state.pitch - (1 - e) * 0.32, state.yaw, 0, 'YXZ');
+  camera.rotation.set(state.pitch - (1 - e) * 0.32, state.yaw, 0, 'YXZ'); if (k === 1) stopIntro();
 }
 /* behind the title the place is alive (people at work, life.js) and the view drifts slowly, like a held camera: a slow sway and a small dolly */
 const TITLE_VIEW = { shop: [2.7, 1.55, 2.5, -1.6, -1.9] }, CALM = matchMedia('(prefers-reduced-motion: reduce)').matches; let titleT = 0;

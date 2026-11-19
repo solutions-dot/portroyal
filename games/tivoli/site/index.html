@@ -74,8 +74,6 @@
   #jpdeeper p,#jpsimple p{max-width:36rem}details#jdig{max-width:36rem;margin:.4rem 0}details#jdig summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:.4em;font-weight:700;color:var(--brass)}details#jdig summary::before{content:'\25B8';display:inline-block;transition:transform .15s}details#jdig[open] summary::before{transform:rotate(90deg)}
   #toast{position:fixed;left:50%;bottom:128px;transform:translateX(-50%);background:var(--paper);color:var(--paper-ink);padding:.5em 1em;border-radius:6px;font-weight:700;font-size:.9rem;max-width:calc(100% - 32px);text-align:center;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:25}
   @media (max-height:460px){#toast{bottom:118px}}
-  .cine-skip{position:fixed;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:16;display:grid;place-items:center;width:48px;height:48px;padding:0;border:2px solid var(--paper);border-radius:6px;background:var(--ink);color:var(--paper);font:400 1.75rem/1 var(--body);cursor:pointer}
-  #titleskip{top:auto;bottom:max(16px,env(safe-area-inset-bottom))}
   #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:15}
 
 /* Tivoli: chapter and journal parity. */
@@ -215,8 +213,6 @@ body:has(.card:not([hidden])) :is(#goal,#topr,#hint,#talk,#stick,.tbub),body:has
 <div id="fightload" class="card" hidden><p>Loading the street.</p></div>
 <div id="windowframe" hidden></div>
 <div id="scenetitle" hidden></div>
-<button type="button" id="titleskip" class="cine-skip" aria-label="Skip chapter introduction" hidden>&times;</button>
-<button type="button" id="fightskip" class="cine-skip" aria-label="Skip cinematic" hidden>&times;</button>
 <div id="fighttitle" hidden><b>Monday 24 May 2010</b><p>A street in West Kingston. It is made up. The day was real.</p></div>
 <div id="fade" hidden></div>
 <script src="app.js"></script>

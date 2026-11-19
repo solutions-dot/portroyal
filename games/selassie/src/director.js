@@ -1,3 +1,4 @@
+import { showCinematicSkip } from "../../../engine/cine.js";
 /* The event stays historical; the camera and time compression are our reconstruction.
    The arrival, shot by shot (seconds of the cinematic; the aircraft's speeds are slowed so a child can follow it):
      0  the crowd by the terminal hears the aircraft and turns to the sky        (the DC-6 far off, coming down to the runway)
@@ -119,6 +120,7 @@ export function createDirector({ camera, place, finish, read, fast = false }) {
     D.paused = false;
     saluted = waved = false;
     $("cineControls").hidden = false;
+    hideSkip = showCinematicSkip(() => $("readCine").click(), { left: true });
     $("pauseCine").textContent = "Pause";
     document.body.classList.add("cine");
     $("sub").classList.remove("dim");
@@ -133,7 +135,9 @@ export function createDirector({ camera, place, finish, read, fast = false }) {
         n.ctl.rest();
       }
   }
+  let hideSkip;
   D.stop = () => {
+    hideSkip?.();
     D.on = false;
     settle(place());
     $("cineControls").hidden = true;

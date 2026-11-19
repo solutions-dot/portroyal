@@ -209,7 +209,7 @@ export async function dev(A) {
       A.DIR.time = Number(q.get("at") || 0);
       for (let t = 0; t <= A.DIR.time; t += 0.25) A.DIR.apply(t);
       $("cineControls").hidden = !q.has("ui");
-      if (!q.has("ui")) document.body.classList.remove("cine");
+      if (!q.has("ui")) { A.DIR.hideSkip(); document.body.classList.remove("cine"); }
     }
     if (id === "people") {
       world().group.visible = false;

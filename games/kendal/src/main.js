@@ -1,5 +1,5 @@
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
-import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { man_suit: 2, man_work: 2, man_shirt: 2, man_elder: 2, woman57: 2, woman_long: 2, woman_elder: 2, girl: 2, boy: 2, girl_small: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
@@ -370,8 +370,7 @@ function card(title, paras, btns, { col = false, dismiss } = {}) {
 function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
 function chapterFade(title, sub, fn) {   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
-  f.hidden = false; requestAnimationFrame(() => f.classList.add('on')); setTimeout(() => { fn(); f.classList.add('txt'); }, 800);
-  setTimeout(() => f.classList.remove('txt'), 3200); setTimeout(() => f.classList.remove('on'), 3700); setTimeout(() => { f.hidden = true; fading = false; }, 4600);
+  playChapterFade(f, fn, () => { fading = false; }, [800, 3200, 3700, 4600]);
 }
 function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; if (on) { f.hidden = false; $('fadeT').textContent = ''; $('fadeS').textContent = ''; f.classList.remove('txt'); requestAnimationFrame(() => f.classList.add('on')); } else { f.classList.remove('on'); setTimeout(() => { f.hidden = true; f.style.transition = ''; }, QUICK ? 0 : ms + 50); } }
 const bars = (on) => document.body.classList.toggle('cine', on);
@@ -384,7 +383,7 @@ async function run(steps) { const ep = EP; for (const [ms, fn] of steps) { await
 /* ---------- the camera director: a move from one view to another, for cutscenes ---------- */
 const DIR = { on: false, t: 0, dur: 1, a: null, b: null, la: null, lb: null, resolve: null }, _v = new THREE.Vector3();
 function cut(a, b, la, lb, dur, onEnd) { return new Promise((res) => { Object.assign(DIR, { on: true, t: 0, dur: Math.max(0.05, dur * TS), a: new THREE.Vector3(...a), b: new THREE.Vector3(...b), la: new THREE.Vector3(...la), lb: new THREE.Vector3(...lb), resolve: res }); }); }
-function endCut() { DIR.on = false; }
+function endCut() { DIR.on = false; const resolve = DIR.resolve; DIR.resolve = null; resolve?.(false); }
 let sitting = false;
 
 /* ---------- goal, hint, sound ---------- */
@@ -500,7 +499,7 @@ function nextCard(i, s, tries = 0) {
   const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() {   /* leave anything running: scripted scenes, a ride, the crash, the camera director */
+function resetTransient() { hideCrashSkip?.(); hideStorySkip?.(); CR.on = false; HOLD.on = false;   /* leave anything running: scripted scenes, a ride, the crash, the camera director */
   for (const k of Object.keys(PL)) for (const n of PL[k].npcs || []) if (n.fol) stopFollow(n);   /* nobody keeps following you into another chapter */
   EP++; RIDE.on = false; RIDE.v = RIDE.target = 0; endCut(); frozen = false; moveLock = false; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; flash(0, 0); $('vig').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.tilt = 0; RING = 0; HUSH = false; CRBEDS = {};
   SFX.mento(false); SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); if (cur && PL[cur]) PL[cur].group.rotation.set(0, 0, 0); sitting = false; document.body.classList.remove('flashing');
@@ -632,16 +631,32 @@ function loadItem(P, item, n) {
 }
 function resetMule(P) { const mu = P.mule; for (const it of P.goods) { if (it.parent !== P.group) P.group.attach(it); it.position.copy(it.userData.home); it.scale.setScalar(1); } mu.userData.dip = 0; P.loading = false; }
 
+let hideStorySkip;
+function storyScene(finish) {
+  const done = () => { hideStorySkip?.(); endCut(); bars(false); finish(); };
+  hideStorySkip = showCinematicSkip(() => { EP++; say('', 0); done(); });
+  return done;
+}
+
 /* ---------- chapter 2: the first train ---------- */
 ON[23] = async () => {
-  const ep = EP; await ensurePlace('ride45'); if (!(await transition('ride45', { after: () => { RIDE.on = true; RIDE.v = RIDE.target = 0; RIDE.kind = 'steam'; bars(true); frozen = false; } }))) return;
+  await ensurePlace('ride45'); if (!(await transition('ride45', { after: () => { RIDE.on = true; RIDE.v = RIDE.target = 0; RIDE.kind = 'steam'; bars(true); frozen = false; } }))) return;
   const P = P_(); RIDE45.busy = false; if (HAND.holding()) HAND.drop(); rideBucket.visible = false;
-  const ok = await run([[200, () => { say('The Governor takes his seat. The whistle blows!', 3200); SFX.whistleSteam(1.0); SFX.hiss(1.4); }], [3200, () => { RIDE.target = 4; say('The train jerks forward. The crowd cheers!', 3400); }], [3600, () => { RIDE.target = 8; say('Slowly at first, past the houses.', 3200); }], [4200, () => { RIDE.target = 10; say('Out across wet, marshy land, on a raised bank.', 3600); }], [5500, () => { RIDE.target = 0; say('At the new bridge over the Rio Cobre, the engine stops for water.', 4200); SFX.hiss(2.0); }]]);
-  if (!ok) return; bars(false); RIDE45.busy = false; setStage(23.5);   /* the water stop is its own step (steps.js), so its goal and count never go stale */
-  if (!(await waitFor(() => stage === 23.6))) return; bars(true);
-  await run([[300, () => { say('Off again! Spanish Town is not far.', 3200); SFX.whistleSteam(0.7); RIDE.target = 9; }], [4200, () => { RIDE.target = 12; say('Cheers all along the line.', 3000); SFX.fanfare(); }], [5000, () => { RIDE.target = 0; say('Spanish Town, about an hour after leaving Kingston.', 4200); unlock('first-train'); }], [4600, () => { setStage(24); RIDE.target = 18; SFX.whistleSteam(0.6); say('The ride back is fast. About 30 miles an hour!', 4000); }], [4800, () => { RIDE.target = 20; say('Faster than any mule. Faster than any horse.', 3800); }], [4500, () => { RIDE.target = 0; say('Back in Kingston in about forty minutes.', 3600); }]]);
-  if (!(await transition('station45', { after: () => { RIDE.on = false; bars(false); state.x = 8; state.z = 5; state.yaw = 0.3; } }))) return; setStage(25);
+  const finish = storyScene(() => {
+    RIDE.v = RIDE.target = 0; RIDE45.busy = false; setStage(23.5); resumeFirstTrain();
+  });
+  if (await run([[200, () => { say('The Governor takes his seat. The whistle blows!', 3200); SFX.whistleSteam(1.0); SFX.hiss(1.4); }], [3200, () => { RIDE.target = 4; say('The train jerks forward. The crowd cheers!', 3400); }], [3600, () => { RIDE.target = 8; say('Slowly at first, past the houses.', 3200); }], [4200, () => { RIDE.target = 10; say('Out across wet, marshy land, on a raised bank.', 3600); }], [5500, () => { RIDE.target = 0; say('At the new bridge over the Rio Cobre, the engine stops for water.', 4200); SFX.hiss(2.0); }]])) finish();
 };
+async function resumeFirstTrain() {
+  if (!(await waitFor(() => stage === 23.6))) return;
+  bars(true);
+  const finish = storyScene(async () => {
+    unlock('first-train');
+    if (!(await transition('station45', { after: () => { RIDE.on = false; bars(false); state.x = 8; state.z = 5; state.yaw = 0.3; } }))) return;
+    setStage(25);
+  });
+  if (await run([[300, () => { say('Off again! Spanish Town is not far.', 3200); SFX.whistleSteam(0.7); RIDE.target = 9; }], [4200, () => { RIDE.target = 12; say('Cheers all along the line.', 3000); SFX.fanfare(); }], [5000, () => { RIDE.target = 0; say('Spanish Town, about an hour after leaving Kingston.', 4200); unlock('first-train'); }], [4600, () => { setStage(24); RIDE.target = 18; SFX.whistleSteam(0.6); say('The ride back is fast. About 30 miles an hour!', 4000); }], [4800, () => { RIDE.target = 20; say('Faster than any mule. Faster than any horse.', 3800); }], [4500, () => { RIDE.target = 0; say('Back in Kingston in about forty minutes.', 3600); }]])) finish();
+}
 ON[21] = () => { /* nothing: the engine card is an action */ };
 
 /* ---------- chapter 3: a train comes up the hill, and the brake check ---------- */
@@ -649,9 +664,11 @@ ON[31] = () => resetBunches(PL.hill);
 ON[34] = () => { const P = PL.hill; if (P) for (const L of P.levers) { L.userData.handle.rotation.z = 0.5; L.userData.tag.visible = false; } };
 ON[32] = async () => {
   const P = P_(); if (cur !== 'hill') return; frozen = true; busy = false; bars(true); say('Listen! A train is coming up the hill.', 3600); const tr = P.train; tr.visible = true; tr.position.x = 100;
+  const ep = EP;
+  const finish = storyScene(() => { tween.said = tween.s2 = false; tr.position.x = 0; frozen = false; setStage(33); });
   const cam = [3, 1.6, 6.5]; await cut(cam, cam, [60, 2.4, -3], [20, 2.4, -3], 3);
-  let px = tr.position.x; SFX.whistleSteam(1.2); const ok = await tween(18, (k, dk) => { const e = 1 - Math.pow(1 - k, 2.1); const nx = 100 * (1 - e) - 0.0; const dx = px - nx; px = nx; tr.position.x = Math.max(0, nx); spin(tr, dx); DIR.lb.set(lerp(20, -4, k), 2.4, -3); if (RIDE.on === false && k > 0.3 && !tween.said) { tween.said = true; say('The engine works hard on the steep slope.', 3600); } if (k > 0.8 && !tween.s2) { tween.s2 = true; SFX.hiss(2.6, 0.14); } });
-  tween.said = tween.s2 = false; if (!ok) return; tr.position.x = 0; await wait(900); say('The fireman waves. The train has arrived.', 3200); SFX.whistleSteam(0.7); await wait(2600); endCut(); frozen = false; bars(false); setStage(33);
+  if (ep !== EP) return; let px = tr.position.x; SFX.whistleSteam(1.2); const ok = await tween(18, (k, dk) => { const e = 1 - Math.pow(1 - k, 2.1); const nx = 100 * (1 - e) - 0.0; const dx = px - nx; px = nx; tr.position.x = Math.max(0, nx); spin(tr, dx); DIR.lb.set(lerp(20, -4, k), 2.4, -3); if (RIDE.on === false && k > 0.3 && !tween.said) { tween.said = true; say('The engine works hard on the steep slope.', 3600); } if (k > 0.8 && !tween.s2) { tween.s2 = true; SFX.hiss(2.6, 0.14); } });
+  tween.said = tween.s2 = false; if (!ok) return; tr.position.x = 0; await wait(900); if (ep !== EP) return; say('The fireman waves. The train has arrived.', 3200); SFX.whistleSteam(0.7); await wait(2600); if (ep === EP) finish();
 };
 
 /* ---------- chapter 4: the excursion day ---------- */
@@ -659,10 +676,14 @@ ON[41] = () => { const P = PL.kingston57; SFX.stationGong(); };
 ON[42] = async () => {
   const ep = EP; await ensurePlace('coach'); if (!(await transition('coach', { env: ENV.day, after: () => { const P = P_(); setRigTheme(P, 'plains'); RIDE.on = true; RIDE.v = RIDE.target = 0; RIDE.kind = 'diesel'; P.lamp.intensity = 0.8; } }))) return;
   const P = P_(); bars(true);
+  const finish = storyScene(async () => {
+    unlock('greenvale');
+    const transitionEpoch = EP; await ensurePlace('beach'); if (transitionEpoch !== EP || !(await transition('beach', { env: ENV.day, after: () => { RIDE.on = false; bars(false); } }))) return; story.beach = null; showPlace('Montego Bay, afternoon'); setStage(43);
+  });
   const ok = await run([[300, () => { say('The doors close. A whistle blows. Gran squeezes your hand.', 3600); SFX.hornDiesel(1.2); }], [3600, () => { RIDE.target = 8; say('Off we go! The platform slides away.', 3400); }], [3800, () => { RIDE.target = 15; say('Spanish Town, Old Harbour, May Pen. The towns roll by.', 3800); bars(false); }]]);
   if (!ok) return; goalText = 'Enjoy the ride with Gran and Lloyd.'; showGoal();
-  await run([[7000, () => { setRigTheme(P, 'hills'); say('Now the hills. The engines work hard.', 3600); RIDE.target = 9; }], [7000, () => { say('Greenvale, the highest station on the line.', 3600); unlock('greenvale'); }], [6500, () => { setRigTheme(P, 'coast'); RIDE.target = 14; say('Down toward the sea, in the bright afternoon.', 3600); }], [6500, () => { RIDE.target = 4; say('Montego Bay! The sea!', 3200); SFX.hornDiesel(1.0); }]]);
-  bars(true); await wait(1600); await ensurePlace('beach'); if (!(await transition('beach', { env: ENV.day, after: () => { RIDE.on = false; bars(false); } }))) return; story.beach = null; showPlace('Montego Bay, afternoon'); setStage(43);
+  if (!(await run([[7000, () => { setRigTheme(P, 'hills'); say('Now the hills. The engines work hard.', 3600); RIDE.target = 9; }], [7000, () => { say('Greenvale, the highest station on the line.', 3600); unlock('greenvale'); }], [6500, () => { setRigTheme(P, 'coast'); RIDE.target = 14; say('Down toward the sea, in the bright afternoon.', 3600); }], [6500, () => { RIDE.target = 4; say('Montego Bay! The sea!', 3200); SFX.hornDiesel(1.0); }]]))) return;
+  bars(true); await wait(1600); if (ep === EP) finish();
 };
 ON[43] = () => { const P = PL.beach; const resuming = savedFlow && savedFlow.stage === 43; if (P) { P.done = {}; P.castle.userData.mound.scale.setScalar(0.01); if (resuming) for (const id of story.beachDone || (story.beach ? [story.beach] : [])) if (['splash', 'castle', 'band'].includes(id)) P.done[id] = true; } if (!resuming) story.beachDone = []; };
 ON[44] = () => { if (cur !== 'beach') return; const a = envNow; tween(6, (k) => setEnv(mixEnv(a, ENV.gold, k))); say('The sun is going down over the sea.', 3600); };
@@ -685,8 +706,14 @@ for (const ev of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) 
 addEventListener('keydown', (e) => { if ($('holdwrap').hidden) return; if (e.key === ' ' || e.key === 'Enter') HOLD.on = true; }); addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') HOLD.on = false; });
 function brace(P) {   /* the coach goes quiet and tense: nobody chats now; Lloyd and some passengers hold on to their seats (SitScared, a gentle seated clip) */
   if (P.life) P.life.mood('sad'); let k = 0; for (const n of P.npcs) { if (!isSeated(n.anim)) continue; const scared = n.id === 'lloyd5' || (n.extra && (k++ % 3 === 0)); if (n.amb) P.life.hold(n, true); if (scared && CL.SitScared) n.ctl.play('SitScared'); else if (n.ctl.cur !== n.ctl.base) n.ctl.play(null); } }
+let hideCrashSkip;
 async function crashRun() {
   const ep = EP, P = P_(); CR.on = true; CR.phase = 0; unlock('greenvale'); setStage(53); frozen = false; moveLock = false; busy = false; talkWith = null; state.x = 2.6; state.z = 0; state.yaw = PI / 2; state.pitch = 0; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
+  hideCrashSkip = showCinematicSkip(() => {
+    resetTransient(); talkWith = null;
+    $('fade').classList.remove('on', 'txt'); $('fade').hidden = true;
+    crashSkip();
+  });
   const live = () => ep === EP && CR.on, lamp = P.lamp;
   const step = async (ms, fn) => { await wait(ms); if (!live()) return false; fn(); return true; };
   SFX.mento(false); say('Greenvale. The highest station on the line.', 3600); RIDE.target = 8; await wait(3600);
@@ -701,12 +728,17 @@ async function crashRun() {
   $('holdwrap').hidden = true; CR.phase = 4; SFX.crashBang(); flash(1, 0, '#fff'); lamp.intensity = 0; P.group.rotation.x = 0.3; FX.shake = 1.6; RIDE.target = 0; RIDE.v = 6; say('', 100);
   await wait(450); if (!live()) return; flash(1, 0, '#000'); fadeBlack(true, 0); $('flash').style.opacity = 0; FX.shake = 0; RIDE.on = false; CRBEDS = {}; RING = 0.05;
   await wait(2600); if (!live()) return; $('fadeT').textContent = 'Kendal, Manchester'; $('fadeS').textContent = 'Sunday night, 1 September 1957. About half past eleven.'; $('fade').classList.add('txt'); unlock('crash'); unlock('greenvale');
-  await wait(5200); if (!live()) return; $('fade').classList.remove('txt'); await wait(900); if (!live()) return; CR.on = false; bars(false); arriveKendal(true);
+  await wait(5200); if (!live()) return; $('fade').classList.remove('txt'); await wait(900); if (!live()) return; CR.on = false; hideCrashSkip?.(); bars(false); arriveKendal(true);
 }
 async function arriveKendal(fromCrash) {
   const ep = EP; resetTransient(); EP = ep + 1; const ep2 = EP; await ensurePlace('crash'); story.lamp = true; enterPlace('crash'); state.started = true; updateLamp(); setStage(60); showPlace('Kendal, Manchester. About half past eleven.');
-  HUSH = false; RING = 0.05; const lr = tween(6, (k) => { RING = 0.05 * (1 - k); }); fadeBlack(false, fromCrash ? 3500 : 900); bars(!QUICK); say('Slowly, the ringing fades. You hear voices in the dark.', 4200);
-  await wait(4600); if (ep2 !== EP) return; bars(false); showGoal(true);
+  HUSH = false; RING = 0.05; tween(6, (k) => { RING = 0.05 * (1 - k); });
+  fadeBlack(false, fromCrash ? 3500 : 900); bars(!QUICK); say('Slowly, the ringing fades. You hear voices in the dark.', 4200);
+  const finish = () => { bars(false); showGoal(true); };
+  const hideSkip = !QUICK ? showCinematicSkip(() => {
+    EP++; RING = 0; $('fade').hidden = true; say('', 0); finish();
+  }) : null;
+  await wait(4600); hideSkip?.(); if (ep2 === EP) finish();
 }
 
 /* ---------- chapter 6: the long night ---------- */
@@ -718,14 +750,19 @@ async function holdLamp() {
   say('Helpers carry people up the path, safe in your light.', 3800); await wait(3800); if (ep !== EP) return; l.intensity = base; lampMesh.position.y = -0.42; frozen = false; STORY.done('lamp');
 }
 ON[65] = async () => {
-  const P = P_(), ep = EP; if (cur !== 'crash') return; frozen = true; busy = false; bars(true); goalText = ''; say('The night is long. The helpers work and work.', 4200);
+  const P = P_(), ep = EP; if (cur !== 'crash') return; frozen = true; busy = false; bars(true); goalText = '';
+  const finish = storyScene(() => {
+    setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.3;
+    P.torches.forEach((t) => { t.visible = false; }); P.flame.visible = false;
+    frozen = false; handLamp.intensity = 0; lampMesh.visible = false; setStage(66);
+  }); say('The night is long. The helpers work and work.', 4200);
   await wait(4200); if (ep !== EP) return; say('Slowly, the sky turns from black to blue.', 3800); const a = envNow;
   const t1 = tween(14, (k) => { setEnv(mixEnv(a, ENV.dawn, ease(k))); const f = 1 - 0.7 * k; for (const L of P.lights) L.userData.k = f; handLamp.intensity = 3.6 * (1 - k * 0.8); });
   await wait(4500); if (ep !== EP) return; say('Birds start to sing. It is nearly morning.', 3600); chirp();
   if (!(await t1)) return; say('In the morning light, you see all of it.', 3800);
   const t2 = tween(12, (k) => { setEnv(mixEnv(ENV.dawn, ENV.morning, ease(k))); for (const L of P.lights) L.userData.k = 0.3 * (1 - k); const x0 = state.x, z0 = state.z; }); P.torches.forEach((t) => { t.visible = false; }); P.flame.visible = false;
   const camA = [state.x, EYE, state.z]; await cut(camA, [state.x - 6, 3.2, state.z - 2], [state.x - 8, 1.4, state.z - 10], [-12, 1.2, -9], 8); if (ep !== EP) return;
-  await t2; await wait(1200); if (ep !== EP) return; endCut(); frozen = false; bars(false); handLamp.intensity = 0; lampMesh.visible = false; setStage(66);
+  await t2; await wait(1200); if (ep === EP) finish();
 };
 function finishCh6() {
   unlock('cause'); unlock('helpers'); unlock('toll'); unlock('mourning');

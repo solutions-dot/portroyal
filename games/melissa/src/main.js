@@ -1,5 +1,5 @@
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
-import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
@@ -257,8 +257,7 @@ function card(title, paras, btns, { col = false, dismiss } = {}) {
 function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
 function chapterFade(title, sub, fn) {   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
-  f.hidden = false; requestAnimationFrame(() => f.classList.add('on')); setTimeout(() => { fn(); f.classList.add('txt'); }, 800);
-  setTimeout(() => f.classList.remove('txt'), 3200); setTimeout(() => f.classList.remove('on'), 3700); setTimeout(() => { f.hidden = true; fading = false; }, 4600);
+  playChapterFade(f, fn, () => { fading = false; }, [800, 3200, 3700, 4600]);
 }
 function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; if (on) { f.hidden = false; $('fadeT').textContent = ''; $('fadeS').textContent = ''; f.classList.remove('txt'); requestAnimationFrame(() => f.classList.add('on')); } else { f.classList.remove('on'); setTimeout(() => { f.hidden = true; f.style.transition = ''; }, QUICK ? 0 : ms + 50); } }
 const bars = (on) => document.body.classList.toggle('cine', on);
@@ -271,7 +270,7 @@ async function run(steps) { const ep = EP; for (const [ms, fn] of steps) { await
 /* ---------- the camera director: a move from one view to another, for cutscenes ---------- */
 const DIR = { on: false, t: 0, dur: 1, a: null, b: null, la: null, lb: null, resolve: null }, _v = new THREE.Vector3();
 function cut(a, b, la, lb, dur, onEnd) { return new Promise((res) => { Object.assign(DIR, { on: true, t: 0, dur: Math.max(0.05, dur * TS), a: new THREE.Vector3(...a), b: new THREE.Vector3(...b), la: new THREE.Vector3(...la), lb: new THREE.Vector3(...lb), resolve: res }); }); }
-function endCut() { DIR.on = false; }
+function endCut() { DIR.on = false; const resolve = DIR.resolve; DIR.resolve = null; resolve?.(false); }
 let sitting = false;
 
 /* ---------- goal, hint, sound ---------- */
@@ -354,7 +353,7 @@ function nextCard(i, s, tries = 0) {
   const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() {   /* leave anything running: scripted scenes, the storm, the camera director */
+function resetTransient() { hideStormSkip?.(); hideStorySkip?.(); HOLD.on = false;   /* leave anything running: scripted scenes, the storm, the camera director */
   for (const k of Object.keys(PL)) for (const n of PL[k].npcs || []) if (n.fol) stopFollow(n);   /* nobody keeps following you into another chapter */
   EP++; endCut(); frozen = false; moveLock = false; ST.on = false; SB = null; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; flash(0, 0); $('vig').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.tilt = 0;
   SFX.setBeds({}, 0.1); TICKS.length = 0; STORM.clear(); STORM.mask(0, 0, 1e5); WIND.k = 0.06; torch(false); if (cur && PL[cur]) PL[cur].group.rotation.set(0, 0, 0); sitting = false; document.body.classList.remove('flashing');
@@ -491,11 +490,18 @@ function radioCard() {
 /* ---------- chapter 3: the storm ---------- */
 ON[40] = () => { weather(0, 0, ENV.room); setBedsFor('room'); const P = P_(); P.lights.forEach((l) => { l.userData.k = 1; }); };
 ON[41] = () => { };
+let hideStorySkip;
+function storyScene(finish) {
+  const done = () => { hideStorySkip?.(); bars(false); frozen = false; finish(); };
+  hideStorySkip = showCinematicSkip(() => { EP++; say('', 0); done(); });
+  return done;
+}
 ON[42] = async () => {
-  const P = P_(), ep = EP; frozen = true; busy = false; bars(true); goalText = ''; say('The evening goes by. People talk softly. The wind grows.', 4200); await wait(4400); if (ep !== EP) return;
+  const P = P_(), ep = EP; frozen = true; busy = false; bars(true); goalText = '';
+  const finish = storyScene(() => { $('fade').classList.remove('txt'); fadeBlack(false, 0); setStage(43); }); say('The evening goes by. People talk softly. The wind grows.', 4200); await wait(4400); if (ep !== EP) return;
   say('Night. The hall is full of sleeping people, and a baby cries.', 4200); BEDS_BY.room = { wind: 0.7, howl: 0.35, roar: 0.2, rain: 0.35, rattle: 0.2 }; await wait(4400); if (ep !== EP) return;
   fadeBlack(true, 1600); await wait(1800); if (ep !== EP) return; $('fadeT').textContent = 'Tuesday morning'; $('fadeS').textContent = '28 October 2025'; $('fade').classList.add('txt'); await wait(3000); if (ep !== EP) return;
-  $('fade').classList.remove('txt'); fadeBlack(false, 1600); await wait(1500); if (ep !== EP) return; bars(false); frozen = false; setStage(43);
+  $('fade').classList.remove('txt'); fadeBlack(false, 1600); await wait(1500); if (ep !== EP) return; finish();
 };
 ON[44] = () => { };
 ON[45] = () => { unlock('melissa'); unlock('wind'); };
@@ -544,12 +550,19 @@ async function kingstonCutaway() {
   endCut(); frozen = false; FX.shake = 0; STORM.clear(); d.position.copy(p0); d.rotation.copy(r0); d.visible = true;
   enterPlace(BYGONE.g88.room, { env: ENV.room }); WIND.k = 0.6; fadeBlack(false, 900); await wait(800); return live();
 }
+let hideStormSkip;
 async function stormRun(kind) {
   const ep = EP, P = P_(), L = LINES[kind], hall = kind === 'm25', live = () => ep === EP && ST.on, lights = hall ? P.lights : [P.lampLight];
+  hideStormSkip = showCinematicSkip(() => {
+    EP++; ST.on = false; moveLock = false; SB = null; endCut(); bars(false); say('', 0);
+    FX.shake = 0; FX.roll = 0; HOLD.on = false; $('holdwrap').hidden = true;
+    STORM.clear(); SFX.setBeds({}, 0.1); flash(0, 0); $('fade').classList.remove('on', 'txt'); $('fade').hidden = true;
+    stormSkip(kind);
+  });
   ST.on = true; moveLock = true; busy = false; frozen = false; talkWith = null; keys.clear(); stick.id = null; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
   const step = async (ms, fn) => { await wait(ms); if (!live()) return false; fn(); return true; };
   const lightK = (k) => { for (const l of lights) { l.userData.k = k; } };
-  if (kind === 'g88') { await ensurePlace('kingston88'); if (!(await kingstonCutaway())) return; }   /* the storm begins in Kingston */
+  if (kind === 'g88') { await ensurePlace('kingston88'); if (!live() || !(await kingstonCutaway()) || !live()) return; }   /* the storm begins in Kingston */
   SB = { wind: 0.5, howl: 0.2, roar: 0.15, rattle: 0.15 }; WIND.k = 0.6; FX.shake = 0.05;
   say(L.b[0], 4200); await wait(4400); if (!live()) return;
   if (!(await step(100, () => { say(L.b[1], 4000); SB = SB_GROAN; FX.shake = 0.12; SFX.roofGroan(); }))) return;
@@ -571,7 +584,7 @@ async function stormRun(kind) {
   $('fadeT').textContent = L.title; $('fadeS').textContent = L.sub; $('fade').classList.add('txt'); unlock(L.page); unlock(L.page2); await wait(5400); if (!live()) return; $('fade').classList.remove('txt'); await wait(700); if (!live()) return;
   ST.on = false; stormAfter(kind, true);
 }
-function stormAfter(kind, fromRun) {
+function stormAfter(kind, fromRun) { hideStormSkip?.();
   const P = P_(), hall = kind === 'm25'; ST.on = false; moveLock = false; SB = null; endCut(); FX.shake = 0; FX.roll = 0; $('holdwrap').hidden = true; STORM.mask(0, 0, 1e5); STORM.clear(); weather(0.1, 0, null); setBedsFor('after'); torch(false);
   for (const l of hall ? P.lights : [P.lampLight]) l.userData.k = 0; restoreRoof(P, true); setEnv(mixEnv(ENV.after, ENV.room, 0.5));
   bars(false); fadeBlack(false, fromRun ? 3200 : 700); frozen = false; busy = false;
@@ -598,8 +611,8 @@ ON[60] = () => { weather(0.05, 0, ENV.overcast); setBedsFor('after'); const P = 
 ON[61] = () => { setBedsFor('saw'); };
 ON[62] = () => { setBedsFor('after'); };
 ON[63] = async () => {
-  const ep = EP; frozen = true; busy = false; bars(true); say('A helicopter flies over, low and loud. It is carrying food and water.', 4200); setBedsFor('heli'); await wait(4400); if (ep !== EP) return; say('The soldiers and the volunteers come from many places.', 4000); await wait(4200); if (ep !== EP) return;
-  setBedsFor('after'); endCut(); frozen = false; bars(false); setStage(64);
+  const ep = EP; frozen = true; busy = false; bars(true); const finish = storyScene(() => { setBedsFor('after'); endCut(); setStage(64); }); say('A helicopter flies over, low and loud. It is carrying food and water.', 4200); setBedsFor('heli'); await wait(4400); if (ep !== EP) return; say('The soldiers and the volunteers come from many places.', 4000); await wait(4200); if (ep !== EP) return;
+  finish();
 };
 async function lightsBack() {
   const P = P_(), ep = EP; frozen = true; ctr.on = 1; SFX.chime(520); say('Click. The light comes on. Everyone cheers!', 3800); P.homeLamp.intensity = 7; P.homeLamp.visible = true; await wait(3800); if (ep !== EP) return; frozen = false; setStage(65);

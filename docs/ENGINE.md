@@ -461,6 +461,10 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 `renderFramed(renderer, scene, camera, cine)` takes the place of `renderer.render(scene, camera)`. While a camera scene plays (`cine` true) on a screen taller than it is wide, it draws that frame with a taller field of view, so the picture keeps about 85 per cent of the width a square screen would show (at most 96 degrees). The game's own field of view is put back straight after, so walking, aiming and the first-person hand are unchanged; on a wide screen nothing changes. `cineFov(fov, aspect)` gives the number. Used by Kendal, Eventide, Melissa, Nanny Town and Bog Walk (the black bars, `body.cine`), Tivoli (the May 2010 scene, `FIGHT.on`), The Emperor's Arrival and Windrush (their directors, `DIR.on`). Port Royal and Marcus Garvey have no camera scenes (their cut scenes are cards).
 
 
+### Skipping a cinematic
+
+`showCinematicSkip(onSkip)` shows the shared X. Call the function it returns when the scene ends or is interrupted. The game's callback moves directly to the recap or restores the same playable state as the end of the scene. Required puzzles and conversations stay in the story. `playChapterFade` uses the same control and performs chapter setup once, even if the player skips before the title appears.
+
 ## engine/collapse.js: a building that falls down (18 November 2026)
 
 `collapse(group, opts)` makes a building fall in pieces instead of squashing flat. First used for the Myers Ward in Eventide's night chapter (the owner: make it look as good as the Port Royal buildings).

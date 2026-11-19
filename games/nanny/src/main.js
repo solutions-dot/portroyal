@@ -1,5 +1,5 @@
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
-import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { maroon_man: 2, maroon_scout: 2, maroon_woman: 2, maroon_girl: 2, maroon_boy: 2, redcoat: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
@@ -324,8 +324,7 @@ function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panel
 const infoCard = (c, go) => new Promise((res) => card(c.title, c.paras, [{ t: c.go || 'Go on', go: () => { hideCard(); if (go) go(); res(true); } }], { col: true }));
 function chapterFade(title, sub, fn) {   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
-  f.hidden = false; requestAnimationFrame(() => f.classList.add('on')); setTimeout(() => { fn(); f.classList.add('txt'); }, 800);
-  setTimeout(() => f.classList.remove('txt'), 3200); setTimeout(() => f.classList.remove('on'), 3700); setTimeout(() => { f.hidden = true; fading = false; }, 4600);
+  playChapterFade(f, fn, () => { fading = false; }, [800, 3200, 3700, 4600]);
 }
 function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; if (on) { f.hidden = false; $('fadeT').textContent = ''; $('fadeS').textContent = ''; f.classList.remove('txt'); requestAnimationFrame(() => f.classList.add('on')); } else { f.classList.remove('on'); setTimeout(() => { f.hidden = true; f.style.transition = ''; }, QUICK ? 0 : ms + 50); } }
 const bars = (on) => document.body.classList.toggle('cine', on);
@@ -338,7 +337,7 @@ async function run(steps) { const ep = EP; for (const [ms, fn] of steps) { await
 /* ---------- the camera director: a move from one view to another, for cutscenes. zoom: field of view to ease to (66 is normal). ---------- */
 const DIR = { on: false, t: 0, dur: 1, a: null, b: null, la: null, lb: null, resolve: null, f0: 66, f1: 66 }, _v = new THREE.Vector3();
 function cut(a, b, la, lb, dur, zoom = 66) { return new Promise((res) => { Object.assign(DIR, { on: true, t: 0, dur: Math.max(0.05, dur * TS), a: new THREE.Vector3(...a), b: new THREE.Vector3(...b), la: new THREE.Vector3(...la), lb: new THREE.Vector3(...lb), resolve: res, f0: FOV, f1: zoom }); }); }
-function endCut() { DIR.on = false; if (FOV !== 66) { FOV = 66; resize(); } }
+function endCut() { DIR.on = false; const resolve = DIR.resolve; DIR.resolve = null; resolve?.(false); if (FOV !== 66) { FOV = 66; resize(); } }
 const eyeNow = () => [state.x, groundAt(state.x, state.z) + EYE, state.z];
 
 /* ---------- goal, hint, sound ---------- */
@@ -415,7 +414,7 @@ function nextCard(i, s, tries = 0) {
   const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() {   /* leave anything running: scripted scenes, the horn, the fight, the camera director */
+function resetTransient() { hideFightSkip?.(); hideStorySkip?.();   /* leave anything running: scripted scenes, the horn, the fight, the camera director */
   EP++; endCut(); frozen = false; moveLock = false; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; hornClose(); flash(0, 0); $('vig').style.opacity = 0; $('glow').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.low = 0; FIGHT.on = false; GUNS.on = false;
   SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); lifeClear(); for (const k of Object.keys(PL)) for (const n of PL[k].npcs) { n.fol = null; n.scripted = false; n.cue = !!n.hiddenNow; if (n.walking) { n.walking = false; n.ctl.play(null); } n.x = n.hx; n.z = n.hz; if (n.m) { n.m.rotation.y = n.ry0; if (!n.fixedGround) n.m.userData.ground = PL[k].G.h(n.x, n.z); n.m.position.set(n.x, n.m.userData.ground, n.z); } }
 }
@@ -546,13 +545,20 @@ function estateTick(dt) {
   }
   else if (stage === 13) { if (!ctr.s1 && state.z < -9.5) { ctr.s1 = 1; say(SAY.stream, 3400); } if (!ctr.s2 && state.z < -24) { ctr.s2 = 1; say(SAY.climb, 3800); SFX.whistle(); } if (sP >= S.top - 4.6) setStage(14); }
 }
+let hideStorySkip;
+function storyScene(finish) {
+  const done = () => { hideStorySkip?.(); endCut(); bars(false); finish(); };
+  hideStorySkip = showCinematicSkip(() => { EP++; say('', 0); done(); });
+  return done;
+}
 ON[14] = async () => {
   const ep = EP, P = PL.estate; if (cur !== 'estate') return; frozen = true; bars(true); const q = byId('quamin'), m = byId('mama'); if (q && q.fol) q.fol.max = P.spots.top - 1.0; if (m && m.fol) m.fol.gap = 1.9;
+  const finish = storyScene(() => { setEnv(ENV.dawn); frozen = false; state.yaw = 0.4; state.pitch = 0.08; showGoal(true); });
   say(SAY.dawn1, 4200); const e1 = envTo(ENV.predawn, 5); const a = eyeNow(), h = a[1];
   await cut(a, [a[0] - 0.4, h + 0.5, a[2] - 1.5], [a[0] - 30, h + 6, a[2] - 60], [a[0] - 60, h + 16, a[2] - 90], 6); if (ep !== EP) return; await e1;
   say(SAY.dawn2, 4600); const e2 = envTo(ENV.dawn, 7); await cut([a[0] - 0.4, h + 0.5, a[2] - 1.5], [a[0] + 2.5, h + 2.2, a[2] - 4], [a[0] - 60, h + 16, a[2] - 90], [a[0] + 70, h + 18, a[2] - 90], 8); if (ep !== EP) return; await e2;
   say(SAY.dawn3, 3600); SFX.hornCall('LL', { far: 0.8, pan: -0.4, pitch: 310 }); await wait(3400); if (ep !== EP) return;
-  endCut(); frozen = false; bars(false); state.yaw = 0.4; state.pitch = 0.08; showGoal(true);
+  finish();
 };
 
 /* ---------- chapter 2: the hill town ---------- */
@@ -571,20 +577,22 @@ async function hornLesson() {
 }
 async function nannyScene() {   /* Nanny is seen once, far off on the high rock, against the sky. She does not speak. */
   const ep = EP, P = PL.town, S = P.spots, n = byId('nanny'); stage = 24; best = Math.max(best, 24); refreshCast(); frozen = true; bars(true); goalText = ''; $('goal').textContent = '';
+  const finish = storyScene(() => { frozen = false; lifeHold(P, false); state.x = 0.5; state.z = 6.5; state.yaw = 0; state.pitch = 0.12; setStage(24); });
   lifeTick(P, 0); lifeHold(P, true); for (const e of P.extras) if (!e.hidden && !e.far && e.m) e.ry0 = Math.atan2(S.rock[0] - e.x, S.rock[2] - e.z); for (const e of P.npcs) if (e.m && !e.far) e.m.rotation.y = Math.atan2(S.rock[0] - e.x, S.rock[2] - e.z);   /* everyone stops and looks up at the rock */
   say(SAY.nanny1, 3600); const a = eyeNow(), rk = [S.rock[0], S.rock[1] + 1.2, S.rock[2]];
   await cut(a, [1, 1.5, 9], [0, 2, 0], rk, 3.5); if (ep !== EP) return; say(SAY.nanny2, 4200);
   await cut([1, 1.5, 9], [-1.5, 1.7, 6.5], rk, rk, 5, 40); if (ep !== EP) return; say(SAY.nanny3, 4600); await wait(4200); if (ep !== EP) return;
-  endCut(); frozen = false; bars(false); lifeHold(P, false); state.x = 0.5; state.z = 6.5; state.yaw = 0; state.pitch = 0.12; setStage(24);
+  finish();
 }
 
 /* ---------- chapter 3: the watchers ---------- */
 async function lookOut() {
   const ep = EP, P = P_(), S = P.spots; frozen = true; busy = false; bars(true); goalText = ''; $('goal').textContent = ''; S.redline.visible = true; say(SAY.look1, 4200);
+  const finish = storyScene(() => { state.yaw = PI - 0.3; state.pitch = -0.25; setStage(32); });
   const a = eyeNow(), h = a[1], fs = S.far; await cut(a, [0.2, h + 0.5, 4.3], [-70, h - 34, 90], [30, h - 30, 120], 6); if (ep !== EP) return;
   say(SAY.look2, 4400); await cut([0.2, h + 0.5, 4.3], [0.4, h + 0.6, 4.5], [30, h - 30, 120], [fs[0], fs[1] - 3, fs[2]], 5, 21); if (ep !== EP) return;
   say(SAY.look3, 4200); SFX.hornCall(CALLS.danger.notes, { far: 0.85, pan: 0.5, pitch: 300 }); await wait(4200); if (ep !== EP) return;
-  endCut(); bars(false); state.yaw = PI - 0.3; state.pitch = -0.25; setStage(32);
+  finish();
 }
 ON[32] = async () => {
   const ep = EP; if (cur !== 'watch') return; frozen = true; say(SAY.relay, 3200); await wait(2600); if (ep !== EP) return;
@@ -622,8 +630,14 @@ function fightTick(dt, t) {
   }
   F.hold = !$('holdwrap').hidden; if (F.hold) { FX.low += ((HOLD.on ? 1 : 0) - FX.low) * Math.min(1, dt * 6); $('holdbar').firstElementChild.style.width = (FX.low * 100) + '%'; leavesUI(); }
 }
+let hideFightSkip;
 async function fightRun() {
   const ep = EP, P = PL.watch, S = P.spots, F = FIGHT, live = () => ep === EP && F.on; setStage(42); F.on = true; F.sHead = START; F.mode = 'march'; F.firing = 0; F.t = 0; F.next = 0; frozen = false; moveLock = true; busy = false; talkWith = null; bars(true); goalText = ''; $('goal').textContent = ''; $('hint').hidden = true;
+  hideFightSkip = showCinematicSkip(() => {
+    EP++; F.on = false; F.firing = 0; F.mode = 'idle'; hornClose(); endCut();
+    HOLD.on = false; FX.low = 0; FX.shake = 0; leavesUI(); $('holdwrap').hidden = true;
+    bars(false); say('', 0); fightSkip();
+  });
   const VIEW = () => { state.yaw = PI - 0.3; state.pitch = -0.62; }; state.x = S.place[0]; state.z = S.place[1]; VIEW(); unlock('trenches');
   say(SAY.f1, 4200); const eye = eyeNow(), h = eye[1]; await wait(3600); if (!live()) return;
   /* shot 1: down the path, as the red coats come out of the mist in single file */
@@ -651,7 +665,7 @@ async function fightRun() {
   say(SAY.f10, 4800); F.mode = 'flee'; SFX.cheer(0.2); SFX.drumTap(0.1, 0.3); await cut([26, h + 2, 12], [8, h + 2, 7], [14, -27, 42], [6, -37, 66], 8, 44); if (!live()) return;
   await cut([8, h + 2, 7], eye, [6, -37, 66], [10, -30, 50], 3.5); if (!live()) return; endCut(); VIEW();
   say(SAY.f11, 4200); chirp(); await wait(2200); if (!live()) return; chirp(); for (const n of P.extras) if (n.fighter !== undefined) n.ctl.play(null);
-  await wait(2200); if (!live()) return; F.on = false; F.mode = 'idle'; moveLock = false; bars(false); for (const n of P.extras) if (n.column !== undefined) { n.cue = true; n.m.visible = false; }
+  await wait(2200); if (!live()) return; F.on = false; F.mode = 'idle'; hideFightSkip?.(); moveLock = false; bars(false); for (const n of P.extras) if (n.column !== undefined) { n.cue = true; n.m.visible = false; }
   await infoCard(CARDS.fightEnd); if (ep !== EP) return; fightAfter();
 }
 function fightAfter() { FIGHT.on = false; moveLock = false; frozen = false; bars(false); delete ctr.goal; unlock('attacks'); const P = PL.watch; for (const n of P.extras) if (n.column !== undefined) { n.cue = true; if (n.m) n.m.visible = false; } setStage(43); state.x = -0.6; state.z = 0.6; state.yaw = PI * 0.75; }
@@ -680,20 +694,28 @@ async function ridgeDawn(skipped) {   /* the top of the back trail: the sun come
   if (skipped) { fadeBlack(true, 500); await wait(700); if (ep !== EP) return; S.burn.forEach((b) => { b.visible = true; }); }
   GUNS.on = false; S.guns.forEach((g) => { g.visible = false; }); const p = byId('phibba'); if (p) stopFollow(p);
   stage = 55; best = Math.max(best, 55); refreshCast(); arriveRidge(false); if (skipped) fadeBlack(false, 900);
+  const finish = storyScene(async () => {
+    setEnv(ENV.dawn); S.fireLight.intensity = 0; const current = EP;
+    await infoCard(CARDS.real1734); if (current !== EP) return; frozen = false; setStage(55);
+  });
   say(SAY.n6, 4600); const e1 = envTo(ENV.dawn, 9), a = eyeNow(), h = a[1];
   await cut(a, [a[0] + 1.5, h + 1.2, a[2] + 1], [a[0] - 40, h + 20, a[2] - 40], [a[0] + 30, h - 6, a[2] + 20], 7); if (ep !== EP) return;
   say(SAY.n7, 5000); await cut([a[0] + 1.5, h + 1.2, a[2] + 1], [a[0] + 4, h + 2.4, a[2] + 3.5], [a[0] + 30, h - 6, a[2] + 20], [0, 2, 0], 7, 34); if (ep !== EP) return; await e1; await wait(1200); if (ep !== EP) return;
-  endCut(); bars(false); S.fireLight.intensity = 0; await infoCard(CARDS.real1734); if (ep !== EP) return; frozen = false; setStage(55);
+  finish();
 }
 function arriveRidge(quiet) { const P = PL.town, S = P.spots; state.x = S.ridge[0] + 1.6; state.z = S.ridge[2] + 1.4; state.yaw = -2.2; state.pitch = -0.12; S.burn.forEach((b) => { b.visible = true; }); S.hearth.intensity = 0; if (P.fire.userData.flame) P.fire.userData.flame.visible = false; if (quiet) { setEnv(ENV.dawn); S.fireLight.intensity = 0; } }
 
 /* ---------- chapter 6: the paper, and today ---------- */
 ON[60] = () => { if (cur === 'newtown') say(SAY.t1, 4200); };
 ON[63] = async () => {
-  const ep = EP; if (cur !== 'newtown') return; frozen = true; busy = false; bars(true); say(SAY.t2, 4600); const e1 = envTo(ENV.gold, 6), a = eyeNow(), h = a[1];
-  await cut(a, [4, h + 5, 14], [0, 1, 0], [-9, 6, -37], 7); if (ep !== EP) return; await e1; endCut(); bars(false);
-  unlock('hero'); unlock('mooretown'); await infoCard(CARDS.today); if (ep !== EP) return;
-  const c = CARDS.why; card(c.title, c.paras, c.choices.map(([k, t]) => ({ t, go: () => { story.why = k; saveGame(); hideCard(); frozen = false; setStage(64); } })), { col: true });
+  const ep = EP; if (cur !== 'newtown') return; frozen = true; busy = false; bars(true);
+  const finish = storyScene(async () => {
+    setEnv(ENV.gold); const current = EP;
+    unlock('hero'); unlock('mooretown'); await infoCard(CARDS.today); if (current !== EP) return;
+    const c = CARDS.why; card(c.title, c.paras, c.choices.map(([k, t]) => ({ t, go: () => { story.why = k; saveGame(); hideCard(); frozen = false; setStage(64); } })), { col: true });
+  });
+  say(SAY.t2, 4600); const e1 = envTo(ENV.gold, 6), a = eyeNow(), h = a[1];
+  await cut(a, [4, h + 5, 14], [0, 1, 0], [-9, 6, -37], 7); if (ep !== EP) return; await e1; if (ep === EP) finish();
 };
 ON[64] = () => { unlock('hero'); unlock('mooretown'); unlock('journey'); const c = CARDS.end; setTimeout(() => card(c.title, c.paras, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); cue('end'); };
 

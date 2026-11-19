@@ -1,5 +1,5 @@
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
-import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { renderFramed, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { grip, gripTick } from '../../../engine/grip.js';
 import { hudTidy } from '../../../engine/hud.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
@@ -149,11 +149,12 @@ function resetNight() {
   for (const t of T.torches) { t.on = 1; t.hissed = false; } if (camera.fov !== 68) { camera.fov = 68; camera.updateProjectionMatrix(); }
 }
 /* An opening on black: two title cards, then a slow fade up into the Tube. Any key or tap skips it. */
+let hideIntroSkip, hideNightSkip, hideStorySkip;
 function startIntro(cards, next) {
-  setPhase('intro'); N.intro = true; N.introNext = next; bars(true); hideHud(true); fadeTo('#000', 1, 0); setClock(''); setGoal('', true); $('skiphint').hidden = false;
+  setPhase('intro'); hideIntroSkip = showCinematicSkip(skipIntro); N.intro = true; N.introNext = next; bars(true); hideHud(true); fadeTo('#000', 1, 0); setClock(''); setGoal('', true); $('skiphint').hidden = false;
   const list = [[0.8, () => caption(...cards[0])], [3.8, captionOff]]; if (cards[1]) list.push([4.8, () => caption(...cards[1])], [7.8, captionOff], [8.8, endIntro]); else list.push([4.6, endIntro]); at(list);
 }
-function endIntro() { if (!N.intro) return; N.intro = false; captionOff(); $('skiphint').hidden = true; fadeTo('#000', 0, 2200); bars(false); hideHud(false); const f = N.introNext; N.introNext = null; if (f) f(); }
+function endIntro() { if (!N.intro) return; hideIntroSkip?.(); N.intro = false; captionOff(); $('skiphint').hidden = true; fadeTo('#000', 0, 2200); bars(false); hideHud(false); const f = N.introNext; N.introNext = null; if (f) f(); }
 function skipIntro() { if (N.intro) endIntro(); }
 function startWork(keep) {
   if (!keep) resetNight(); N.hintT = 0; setPhase('work'); setClock('1 a.m.'); setGoal(scrapeGoal(), true);
@@ -176,7 +177,7 @@ function startCh3(fromCh2) {   /* about 4 a.m.: a title on black, then the water
   setStage(40); N.wlT = 0.03; startIntro([['The water', 'About 4 a.m.']], startTrickle);
 }
 function startTrickle() {
-  setPhase('trickle'); setClock('4 a.m.'); $('skip').hidden = false; setGoal('Look at the floor. Something is not right.'); N.glanceOn = true; N.glanceT = 0; N.duck = D(2.6);   /* a held breath: the sound drops away and your eyes drop to the water at your feet */
+  setPhase('trickle'); hideNightSkip = showCinematicSkip(skipNight); setClock('4 a.m.'); $('skip').hidden = false; setGoal('Look at the floor. Something is not right.'); N.glanceOn = true; N.glanceT = 0; N.duck = D(2.6);   /* a held breath: the sound drops away and your eyes drop to the water at your feet */
   at([[1, () => say('Rudy', 'The water is getting deeper.')], [6.5, () => say('Old Zeke', 'It will pass. It always passes.')], [11.5, () => say('', 'Far off, a low roar.', 3600)]]);
 }
 function startRise() {
@@ -190,11 +191,12 @@ function startDark() {
   at([[7, () => say('Rudy', 'I can see the light! This way!')], [14, () => say('', 'Keep your hand on the wall.', 3800)]]);
 }
 function startOut(skipped) {
-  N.skipped = !!skipped; N.fast = !!skipped; setPhase('out'); $('skip').hidden = true; $('act').hidden = true; setGoal(skipped ? 'You are out.' : 'A hand reaches down. You are out.', true);
-  N.out = { x0: S.x, z0: S.z, e0: S.eye, p0: S.pitch, y0: S.yaw }; hideHud(true); if (!skipped) { bars(true); cue('end'); airSwell(2.6); }
+  hideNightSkip?.(); N.skipped = !!skipped; N.fast = !!skipped; setPhase('out'); $('skip').hidden = true; $('act').hidden = true; setGoal(skipped ? 'You are out.' : 'A hand reaches down. You are out.', true);
+  N.out = { x0: S.x, z0: S.z, e0: S.eye, p0: S.pitch, y0: S.yaw }; hideHud(true); if (!skipped) { hideNightSkip = showCinematicSkip(showEnd); bars(true); cue('end'); airSwell(2.6); }
   at(skipped ? [[0.2, () => fadeTo('#000', 1, 700)], [1.2, showEnd]] : [[2.3, () => fadeTo('#fff', 1, 1200)], [3.8, showEnd]]);
 }
 function showEnd() {
+  hideNightSkip?.(); N.q = [];
   setPhase('end'); setClock(''); bars(false); hideHud(true); captionOff(); unlock('water', true); setStage(41);
   card('You are out', [N.skipped ? 'You skipped the dark part. In the story, you get out of the Tube as the sky goes grey.' : 'The air is cool. The sky is going grey.', 'Many men are still in the pipe.'],
     [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(4); } }, { t: 'Play the water again', go: () => { hideCard(); beginChapter(3); } }]);
@@ -411,7 +413,14 @@ function card(title, paras, btns, { col = false, credit = false } = {}) {
 function hideCard() { $('card').hidden = true; }
 /* a fade to black with a chapter title, the scene changed while it is dark, then a fade back */
 async function chapterFade(title, sub, fn) {
-  fading = true; hideHud(true); fadeTo('#000', 1, 800); await wait(0.9); fn(); caption(title, sub); await wait(2.6); captionOff(); await wait(0.9); fadeTo('#000', 0, 1200); hideHud(false); fading = false;
+  let applied = false, skipped = false;
+  const apply = () => { if (!applied) { applied = true; fn(); } };
+  const finish = (ms) => { captionOff(); fadeTo('#000', 0, ms); hideHud(false); fading = false; };
+  const hideSkip = showCinematicSkip(() => { skipped = true; apply(); finish(0); });
+  fading = true; hideHud(true); fadeTo('#000', 1, 800);
+  await wait(0.9); if (skipped) return; apply(); caption(title, sub);
+  await wait(2.6); if (skipped) return; captionOff();
+  await wait(0.9); if (skipped) return; hideSkip(); finish(1200);
 }
 
 /* ---------- talking: one line at a time; "You" lines get their own colour; the x, Escape or a tap outside ends it ---------- */
@@ -571,7 +580,7 @@ $('reset').onclick = () => { if (fading || !S.started) return; closeJournal(); l
   card('Reset', ['Start this chapter again, or start the whole story again.'], [{ t: 'Restart "' + CHAPTERS[i].name + '"', go: () => { hideCard(); beginChapter(i); } }, { t: 'Start the whole story again', go: () => card('Start again?', ['This wipes everything, even your journal.'], [{ t: 'Yes, start again', go: eraseAll }, { t: 'No, keep playing', go: hideCard }]) }, { t: 'Cancel', go: hideCard }]); };
 $('exit').onclick = () => { if (locked()) return; card('Leave Zeke\'s story?', ['You can come back to it from the Chapters list.'], [{ t: 'Yes, go into the Tube', go: () => { hideCard(); beginChapter(2); } }, { t: 'No, stay here', go: hideCard }]); };
 
-function resetTransient() {   /* leave anything running: scripted scenes, a ride, the night's timers, the cinematic layer */
+function resetTransient() { hideIntroSkip?.(); hideNightSkip?.(); hideStorySkip?.();   /* leave anything running: scripted scenes, a ride, the night's timers, the cinematic layer */
   EP++; TICKS.length = 0; frozen = false; RIDE.on = false; bars(false); hideHud(false); captionOff(); fadeTo('#000', 0, 0); $('sub').classList.add('dim'); $('holdbox').hidden = true; $('pick').hidden = true; $('nudge').hidden = true; NUDGE.on = false; $('exit').hidden = true; $('skip').hidden = true; $('way').hidden = true; $('act').hidden = true; $('vig').style.opacity = 0;
   N.q = []; N.intro = false; N.turn = null; $('skiphint').hidden = true; setClock(''); HOLD.v = 0; HOLD.on = false; setWorld({}, 0.1); setBeds({}, 0.1); smoke.clear(); leaveTalk(); closePuzzle(false); closeJournal(); closeChapters(); closeCredits(); hideCard();
 }
@@ -612,11 +621,19 @@ function onTalked(n) {
 /* ---------- chapter 0: the station on Sunday evening ---------- */
 ON[10] = () => { unlock('who', true); };
 ON[12] = () => { say('', 'The turbine house hums. Its windows glow.', 3600); };
+function storyScene(finish) {
+  const done = () => { hideStorySkip?.(); bars(false); finish(); };
+  hideStorySkip = showCinematicSkip(() => {
+    EP++; N.turn = null; say('', '', 0); done();
+  });
+  return done;
+}
 ON[14] = async () => {   /* midnight: the sky goes dark, the last tram is done in Kingston, and Zeke goes to the valve */
-  const P = PL.station; if (cur !== 'station') return; frozen = true; bars(true); setClock('Midnight'); const a = envNow;
+  const P = PL.station; if (cur !== 'station') return; frozen = true; bars(true); setClock('Midnight'); const a = envNow, ep = EP;
+  const finish = storyScene(() => { setEnv(ENV.night); showPerson(byId('zeke'), false); showPerson(byId('zekeV'), true); frozen = false; refreshGoal(); });
   say('', 'Midnight. In Kingston, the last tram is done for the night.', 4600);
   const ok = await tween(5, (k) => setEnv(mixEnv(a, ENV.night, ease(k)))); if (!ok) return;
-  showPerson(byId('zeke'), false); showPerson(byId('zekeV'), true); await wait(0.6); bars(false); frozen = false; refreshGoal();
+  showPerson(byId('zeke'), false); showPerson(byId('zekeV'), true); await wait(0.6); if (ep === EP) finish();
 };
 ON[15] = () => { HOLD.v = 0; };
 ON[16] = () => { setClock('Midnight'); run([[1.0, () => card('Chapter 1 is finished', ['The water is shut off. The Tube is empty.', 'Before the gang goes in, Zeke has a story to tell.'], [{ t: 'Go into the Tube', go: () => { story.story = 'skip'; saveGame(); hideCard(); beginChapter(2); } }, { t: 'Hear Zeke\'s story', go: () => { story.story = 'heard'; saveGame(); hideCard(); beginChapter(1); } }])]]); };
@@ -635,20 +652,25 @@ function holdTick(dt) {   /* the valve wheel: hold the button and it turns; the 
 ON[20] = () => { setClock(''); say('Old Zeke', 'Let me tell you about the day the trams changed.', 4600); };
 const RIDE = { on: false, v: 0 };
 ON[21] = async () => {   /* the first electric car glides out of the depot, with a hum and a bell, and the crowd cheers */
-  const P = PL.kingston; if (cur !== 'kingston') return; frozen = true; bars(true); const car = P.car;
+  const P = PL.kingston; if (cur !== 'kingston') return; frozen = true; bars(true); const car = P.car, ep = EP;
+  const finish = storyScene(() => { ON[21].c = 0; car.position.x = -20; setWorld({ motor: 0 }); frozen = false; setStage(22); });
   if (Math.abs(S.z) < 1.8) S.z = S.z < 0 ? -2.6 : 2.6; turnTo(-30, 0, 1.6);
   say('', 'A hum. A bell. The doors open wide.', 3400); bell(2); setWorld({ motor: 0.05 });
-  await wait(1.4); let x0 = car.position.x; const ok = await tween(9, (k) => { car.position.x = -46 + 26 * (1 - Math.pow(1 - k, 2)); const v = (car.position.x - x0) / Math.max(1e-3, 1 / 30); x0 = car.position.x; for (const w of car.userData.wheels) w.rotation.z -= 0.08 * Math.sign(v + 1e-6); setMotor(Math.min(6, Math.abs(v))); if (k > 0.25 && !ON[21].c) { ON[21].c = 1; cheer(16); for (const n of P.extras) if (n.ctl && CL.Cheer) n.ctl.play(['Cheer', 'Clap', 'Wave'][(n.x * 10 | 0) % 3]); say('', 'The car rolls out by itself. No mules! The crowd cheers.', 4200); } if (!N.turn) S.yaw += (wrapA(Math.atan2(-(car.position.x - S.x), -(0 - S.z)) - S.yaw)) * 0.04; });
-  ON[21].c = 0; if (!ok) return; bell(1); setWorld({ motor: 0.0 }); await wait(1.2); bars(false); frozen = false; setStage(22);
+  await wait(1.4); if (ep !== EP) return; let x0 = car.position.x; const ok = await tween(9, (k) => { car.position.x = -46 + 26 * (1 - Math.pow(1 - k, 2)); const v = (car.position.x - x0) / Math.max(1e-3, 1 / 30); x0 = car.position.x; for (const w of car.userData.wheels) w.rotation.z -= 0.08 * Math.sign(v + 1e-6); setMotor(Math.min(6, Math.abs(v))); if (k > 0.25 && !ON[21].c) { ON[21].c = 1; cheer(16); for (const n of P.extras) if (n.ctl && CL.Cheer) n.ctl.play(['Cheer', 'Clap', 'Wave'][(n.x * 10 | 0) % 3]); say('', 'The car rolls out by itself. No mules! The crowd cheers.', 4200); } if (!N.turn) S.yaw += (wrapA(Math.atan2(-(car.position.x - S.x), -(0 - S.z)) - S.yaw)) * 0.04; });
+  ON[21].c = 0; if (!ok) return; bell(1); setWorld({ motor: 0.0 }); await wait(1.2); if (ep === EP) finish();
 };
 ON[23] = async () => {   /* the ride: on the front platform, down the street toward the foot of King Street */
-  const P = PL.kingston, car = P.car; if (cur !== 'kingston') return; RIDE.on = true; $('exit').hidden = true; bars(true); const fl = car.userData.floor;
+  const P = PL.kingston, car = P.car; if (cur !== 'kingston') return; RIDE.on = true; $('exit').hidden = true; bars(true); const fl = car.userData.floor, ep = EP;
+  const finish = storyScene(() => {
+    ON[23].a = ON[23].b = 0; car.position.x = 80; setWorld({}); RIDE.on = false; unlock('trams');
+    captionOff(); hideHud(false); fadeTo('#000', 0, 600); S.eye = P.eye; S.x = car.position.x - 5.5; S.z = 3; setStage(24);
+  });
   const put = () => { S.x = car.position.x + 3.0; S.z = 0.05; S.eye = fl + 1.5; };   /* on the front platform, beside the motorman's controller, looking down the street */ put(); S.yaw = -PI / 2; S.pitch = 0; bell(2); setWorld({ motor: 0.06 });
   say('', 'Ding, ding! Off we go.', 3000); let lastX = car.position.x;
   const ok = await tween(20, (k, dt) => { car.position.x = -20 + 100 * ease(k); const v = (car.position.x - lastX) / Math.max(1e-3, dt); lastX = car.position.x; for (const w of car.userData.wheels) w.rotation.z -= v * dt / 0.38; setMotor(Math.min(8, v)); put();
     if (k > 0.2 && !ON[23].a) { ON[23].a = 1; say('', 'The car glides down the street. People wave.', 3800); cheer(10); } if (k > 0.55 && !ON[23].b) { ON[23].b = 1; say('', 'On toward the foot of King Street.', 3800); } });
   ON[23].a = ON[23].b = 0; if (!ok) return; bell(1); setWorld({}); RIDE.on = false; unlock('trams');
-  fadeTo('#000', 1, 900); await wait(1.0); hideHud(true); caption('The power for these trams came from Bog Walk.', 'Kingston, 1899'); await wait(3.6); captionOff(); await wait(0.8); hideHud(false); fadeTo('#000', 0, 600); bars(false); S.eye = P.eye; S.x = car.position.x - 5.5; S.z = 3.0; setStage(24);
+  fadeTo('#000', 1, 900); await wait(1.0); if (ep !== EP) return; hideHud(true); caption('The power for these trams came from Bog Walk.', 'Kingston, 1899'); await wait(3.6); if (ep !== EP) return; captionOff(); await wait(0.8); if (ep === EP) finish();
 };
 ON[24] = () => { card('Chapter 2 is finished', ['That was the first electric tram. Its power came from the Tube at Bog Walk.', 'Now, back to Sunday night, 1904.'], [{ t: 'Into the Tube', go: () => { hideCard(); beginChapter(2); } }, { t: 'Stay here', go: hideCard }]); };
 
@@ -657,12 +679,15 @@ ON[50] = () => { unlock('morning', true); card('The morning after', ['Of about 6
 ON[52] = () => { const a = envNow; tween(8, (k) => setEnv(mixEnv(a, ENV.morning, ease(k)))); };
 ON[53] = () => { showPerson(byId('ivy'), true); };
 ON[54] = async () => {   /* a whistle: the special train comes in at ten to twelve with coffins for the men; the scene fades */
-  const P = PL.yard; if (cur !== 'yard') return; frozen = true; bars(true); whistle(1.4); turnTo(28, -6, 1.8); const tr = P.train, a = envNow;
-  await wait(1.0); say('', 'A train whistle.', 2600);
+  const P = PL.yard; if (cur !== 'yard') return; frozen = true; bars(true); whistle(1.4); turnTo(28, -6, 1.8); const tr = P.train, a = envNow, ep = EP;
+  const finish = storyScene(() => {
+    tr.position.z = P.spots.trainStop; setEnv(ENV.day); frozen = false; fadeTo('#000', 0, 0); unlock('paper', true); cue('sad');
+    card('The morning after', ['The company paid for the burials and helped families.', 'Many people still felt someone had made a mistake.'], [{ t: 'Go on', go: () => { hideCard(); setStage(55); } }]);
+  });
+  await wait(1.0); if (ep !== EP) return; say('', 'A train whistle.', 2600);
   const ok = await tween(10, (k, dt) => { tr.position.z = P.spots.trainStart + (P.spots.trainStop - P.spots.trainStart) * (1 - Math.pow(1 - k, 2)); setEnv(mixEnv(a, ENV.day, k)); if (Math.random() < dt * 4) { const c = new THREE.Vector3(); (tr.children[0].userData.chimney || tr).getWorldPosition(c); smoke.emit(c, new THREE.Vector3(0.3, 1.4, 0.2), { size: 0.8, grow: 3, life: 3, opacity: 0.45 }); } });
-  if (!ok) return; whistle(0.6); say('', 'A special train came at ten to twelve. It brought coffins for the men.', 6000); await wait(6.2);
-  fadeTo('#000', 1, 1600); await wait(1.8); frozen = false; bars(false); fadeTo('#000', 0, 0); unlock('paper', true); cue('sad');
-  card('The morning after', ['The company paid for the burials and helped families.', 'Many people still felt someone had made a mistake.'], [{ t: 'Go on', go: () => { hideCard(); setStage(55); } }]);
+  if (!ok) return; whistle(0.6); say('', 'A special train came at ten to twelve. It brought coffins for the men.', 6000); await wait(6.2); if (ep !== EP) return;
+  fadeTo('#000', 1, 1600); await wait(1.8); if (ep === EP) finish();
 };
 ON[55] = () => { card('Chapter 5 is finished', ['Next, the same place today.'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(5); } }, { t: 'Stay here', go: hideCard }]); };
 
