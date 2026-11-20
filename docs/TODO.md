@@ -61,6 +61,8 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 [In-game screenshots](games/windrush-scene-review.webp)
 
 - [x] Set the houses in both Jamaican yards on their foundations and fill the empty views beyond the yards, docks and Brixton streets.
+- [x] Move the yard trees clear of the houses in 1948 and 1962. The yard audit checks the full crown and the building exterior, including the roof and veranda.
+- [x] Keep the telephone and typewriter clear of the news cards in Garvey’s Harlem office. The gramophone also has clear space beside the letters on the side table. [Office desk screenshot](games/garvey-office-desk.webp)
 - [x] Fit railings around the Windrush passenger deck and keep the ship, passengers and furniture on the same floor. The deck check passed with both ordinary and reduced motion.
 - [x] Leave an empty chair between the two visitors at the advice centre. Preserve the eye and brow geometry when building Windrush's lighter character models.
 - [x] Square the legs of the community centre's exhibition table and the Tilbury registration table. Rest their papers on the tabletop.

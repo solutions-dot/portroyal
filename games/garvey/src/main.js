@@ -1227,7 +1227,7 @@ function buildOffice() {
   box(2.3, 0.06, 1.1, wood, -0.5, deskY - .03, -1.5, g);
   const typewriter = new THREE.Group();
   typewriter.name = 'Typewriter';
-  typewriter.position.set(-1.0, deskY, -1.45);
+  typewriter.position.set(-1.12, deskY, -1.45);
   g.add(typewriter);
   box(.34, .12, .32, iron, 0, .06, 0, typewriter);
   box(.30, .03, .12, solid(0x222222), 0, .13, .09, typewriter);
@@ -1239,12 +1239,24 @@ function buildOffice() {
   typewriter.add(sheet);
   box(.22, .24, .004, paper, 0, .12, 0, sheet);
   cyl(0.1, 0.12, 0.05, brass, 0.4, deskY + .025, -1.8, g, 12); cyl(0.02, 0.02, 0.4, brass, 0.4, deskY + .24, -1.8, g, 6); cyl(0.04, 0.16, 0.16, solid(0x2f6a4a, 0.5), 0.4, deskY + .44, -1.8, g, 14);
+  // The telephone sits on bare wood behind the news cards.
+  const telephone = new THREE.Group();
+  telephone.name = 'Telephone';
+  telephone.position.set(-.53, deskY, -1.86);
+  g.add(telephone);
+  cyl(.1, .12, .04, iron, 0, .02, 0, telephone, 12);
+  cyl(.012, .012, .22, iron, 0, .15, 0, telephone, 6);
+  cyl(.035, .035, .03, iron, 0, .275, 0, telephone, 8);
+  box(.1, .012, .018, iron, .05, .20, 0, telephone);
+  box(.05, .1, .05, iron, .1, .15, 0, telephone);
   for (const [x, z, ry] of [[-.69, -1.18, .2], [-.38, -1.36, -.1], [-.12, -1.66, .35], [.22, -1.19, 0]]) {
-    box(.2, .012, .28, paper, x, deskY + .006, z, g).rotation.y = ry;
+    const card = box(.2, .012, .28, paper, x, deskY + .006, z, g);
+    card.name = 'Loose paper';
+    card.rotation.y = ry;
   }
   box(0.5, 0.5, 0.5, woodDark, -0.5, 0.25, -2.3, g); OFF_WALLS.push([-1.7, -2.1, 0.7, -0.85]);
   /* a side table with the letters, and a notice board */
-  box(1.1, 0.745, 0.7, woodDark, 3.2, 0.3725, 0.8, g); box(1.2, 0.05, 0.8, wood, 3.2, 0.77, 0.8, g); for (const [dx, dz] of [[-0.25, 0], [0.1, 0.1], [0.3, -0.1]]) box(0.26, 0.015, 0.18, paper, 3.2 + dx, 0.8025, 0.8 + dz, g); OFF_WALLS.push([2.55, 0.4, 3.85, 1.2]);
+  box(1.1, 0.745, 0.7, woodDark, 3.2, 0.3725, 0.8, g); box(1.2, 0.05, 0.8, wood, 3.2, 0.77, 0.8, g); for (const [dx, dz] of [[-0.38, -0.21], [-0.31, 0.2], [-0.08, -0.03]]) box(0.26, 0.015, 0.18, paper, 3.2 + dx, 0.8025, 0.8 + dz, g).name = 'Loose paper'; OFF_WALLS.push([2.55, 0.4, 3.85, 1.2]);
   box(0.06, 1.2, 1.6, woodDark, OFF.x1 - 0.05, 1.7, -1.4, g); for (const [dz, dy] of [[-0.45, 0.3], [0, 0.3], [0.45, 0.3], [-0.3, -0.25], [0.25, -0.25]]) mesh(new THREE.PlaneGeometry(0.34, 0.26), new THREE.MeshStandardMaterial({ map: sheetTex('NEWS'), roughness: 1 }), OFF.x1 - 0.09, 1.7 + dy, -1.4 + dz, g).rotation.y = -Math.PI / 2;
   cyl(0.008, 0.008, 0.7, solid(0x222222), 0, H2 - 0.5, 0, g, 6); cyl(0.05, 0.14, 0.12, brass, 0, 2.95, 0, g); cyl(0.1, 0.1, 0.24, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.8, transparent: true, opacity: 0.75 }), 0, 2.78, 0, g);
   still(g);   /* the still scenery drawn merged (engine/batch.js) */
@@ -1475,9 +1487,8 @@ function dShip(g, x, z, len, ry = 0, kind = 'steamer') { const k = new THREE.Gro
     { const f = new THREE.Group(); f.position.set(3.5, 0, -2.8); g.add(f); box(0.6, 1.3, 0.55, solid(0x4a4f56, 0.6, 0.3), 0, 0.65, 0, f); for (const y of [0.25, 0.65, 1.05]) { box(0.5, 0.3, 0.02, solid(0x585e66, 0.6, 0.3), 0, y, 0.285, f); box(0.14, 0.03, 0.03, brass, 0, y, 0.31, f); } cyl(0.02, 0.02, 0.1, brass, 0, 1.37, 0, f, 6); mesh(new THREE.SphereGeometry(0.15, 16, 12), solid(0x4a6fa0, 0.5), 0, 1.55, 0, f); mesh(new THREE.TorusGeometry(0.17, 0.012, 6, 24), brass, 0, 1.55, 0, f).rotation.x = Math.PI / 2 - 0.4; OFF_WALLS.push([3.15, -3.15, 3.9, -2.5]); }   /* a filing cabinet with a globe on it */
     { const h = new THREE.Group(); h.position.set(-3.0, 0, 2.8); g.add(h); cyl(0.03, 0.03, 1.7, woodDark, 0, 0.85, 0, h, 8); cyl(0.2, 0.22, 0.05, woodDark, 0, 0.03, 0, h, 12); for (let i = 0; i < 4; i++) { const a = box(0.22, 0.03, 0.03, woodDark, Math.cos(i * 1.57) * 0.1, 1.68, Math.sin(i * 1.57) * 0.1, h); a.rotation.y = -i * 1.57; } h.children[0].userData.peg = true; { const b1 = cyl(0.11, 0.11, 0.012, solid(0x2c2a2a, 0.9), 0, 1.706, 0, h, 14), c1 = cyl(0.07, 0.08, 0.08, solid(0x2c2a2a, 0.9), 0, 1.752, 0, h, 12); b1.userData.hung = 'hat'; }   /* the hat sits on the top of the pole (it floated 4 cm above it) */ OFF_WALLS.push([-3.3, 2.5, -2.7, 3.1]); }   /* a hat stand */
     dClock(g, 0, 2.7, OFF.z0 + 0.03, 0); dPlant(g, -3.2, -2.9, 1.2); OFF_WALLS.push([-3.5, -3.2, -2.9, -2.6]);
-    cyl(0.1, 0.12, 0.04, iron, -0.15, 0.86, -1.65, g, 12); cyl(0.012, 0.012, 0.22, iron, -0.15, 0.97, -1.65, g, 6); cyl(0.035, 0.035, 0.03, iron, -0.15, 1.1, -1.65, g, 8); box(0.05, 0.1, 0.05, iron, -0.05, 0.99, -1.65, g);   /* a telephone */
     cyl(0.14, 0.11, 0.3, TIN, -1.7, 0.15, -2.3, g, 12); dWallLamp(g, OFF.x0 + 0.02, 2.4, 2.3, Math.PI / 2);
-    { const k = new THREE.Group(); k.position.set(3.5, 0.795, 1.0); k.rotation.y = -0.6; g.add(k); box(0.32, 0.13, 0.32, woodDark, 0, 0.065, 0, k); cyl(0.13, 0.13, 0.012, solid(0x1a1a1a, 0.4), 0, 0.136, 0, k, 20); cyl(0.012, 0.012, 0.22, brass, 0.12, 0.25, -0.12, k, 6);
+    { const k = new THREE.Group(); k.name = 'Gramophone'; k.position.set(3.54, 0.795, 0.84); k.rotation.y = -0.6; g.add(k); box(0.32, 0.13, 0.32, woodDark, 0, 0.065, 0, k); cyl(0.13, 0.13, 0.012, solid(0x1a1a1a, 0.4), 0, 0.136, 0, k, 20); cyl(0.012, 0.012, 0.22, brass, 0.12, 0.25, -0.12, k, 6);
       const horn = mesh(new THREE.ConeGeometry(0.16, 0.3, 16, 1, true), brass, 0.12, 0.42, -0.06, k); horn.rotation.x = -Math.PI / 2 + 0.5; }   /* the gramophone that plays his 1921 record (chapter 7) */
   }; }
 { const b = buildPark; buildPark = () => { const first = !parkBuilt; b(); if (!first) return; const g = parkG;
