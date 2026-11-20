@@ -57,7 +57,11 @@ export function buildKingston57() {
   walls.push([-140, -4.8, 41, -1.1]);
   /* vendors and baggage */
   const stall = grp(g, 16, 0, 9); box(2.6, 0.9, 0.9, TM.wood, 0, 0.45, 0, stall); const roofS = box(3.0, 0.08, 1.4, solid(0xd8a030, 0.9), 0, 2.2, 0, stall); roofS.rotation.x = 0.1; for (const x of [-1.4, 1.4]) box(0.08, 2.2, 0.08, TM.woodDark, x, 1.1, 0.5, stall); for (let i = 0; i < 4; i++) { const h = hamper(); h.position.set(-0.9 + i * 0.6, 0.9, 0); stall.add(h); } walls.push([14.6, 8.4, 17.4, 9.6]);
-  for (const [x, z, k] of [[-10, 3.2, 0], [-8.8, 3.6, 1], [6, 8, 2], [22, 2, 0], [27, 3, 1], [36, 2.4, 2]]) { const o = k === 0 ? hamper() : k === 1 ? suitcase() : sack(); o.position.set(x, 0, z); o.rotation.y = x; g.add(o); }
+  for (const [x, z, k] of [[-10, 3.2, 0], [-8.8, 3.6, 1], [6, 8, 2], [22, 2, 0], [27, 3, 1], [36, 2.4, 2]]) {
+    const o = k === 0 ? hamper() : k === 1 ? suitcase() : sack();
+    o.position.set(x, 0, z); o.rotation.y = x; g.add(o);
+    walls.push([x - .45, z - .45, x + .45, z + .45]);
+  }
   scatter(g, (i) => (i % 3 ? palm(7 + (i % 4), i) : tree(6, i)), 60, [-150, -70, 150, -8], [[-150, -9, 150, -1]], 22);   /* the town and fields beyond the track */
   g.add(hillRing(200, 14, 80, { seed: 31 }));
   people.push(person('gran', 'gran', 'Gran', -4, 5.6, 0.5, { h: 1.7, props: [['RightHand', 'hamper']] }));
@@ -86,14 +90,14 @@ export function buildCoach() {
   walls.push([-5.2, -1.3, 5.2, -0.3, 1.12], [-5.2, 0.3, 5.2, 1.3, 1.12]);   /* the benches; you walk in the aisle between them */
   for (const x of [-3.2, 0, 3.2]) { cyl(0.16, 0.16, 0.06, new THREE.MeshBasicMaterial({ color: 0xffe3a6 }), x, 2.62, 0, g, 12); }
   const lamp = new THREE.PointLight(0xffd9a0, 9, 14, 1.3); lamp.position.set(0, 2.3, 0); g.add(lamp);
-  for (const [x, z, k] of [[-4.6, 0.0, 0], [4.5, 0.05, 0], [-1.5, 0.1, 1]]) { const o = k === 0 ? hamper() : k === 1 ? suitcase() : sack(); o.position.set(x, 0, z); o.rotation.y = x; g.add(o); }
+  for (const [x, z, k] of [[-4.75, 0.15, 0], [4.5, 0.05, 0], [-1.5, 0.1, 1]]) { const o = k === 0 ? hamper() : k === 1 ? suitcase() : sack(); o.position.set(x, 0, z); o.rotation.y = x; g.add(o); }
   /* the passengers: Gran, Lloyd and the mother have their seats; the rest come from the crowd generator, sitting */
-  people.push(person('gran5', 'gran', 'Gran', rows[4], -0.96, -PI / 2, { anim: 'SitIdle', h: 1.35, seat: SEAT }));
+  people.push(person('gran5', 'gran', 'Gran', rows[4], -0.83, -PI / 2, { anim: 'SitIdle', h: 1.35, seat: SEAT, feetForward: true }));
   people.push(person('lloyd5', 'lloyd', 'Lloyd', rows[4], -0.42, -PI / 2, { anim: 'SitTalk', h: 1.05, seat: SEAT }));
   people.push(person('mother', 'mother', 'The mother', rows[2], 0.5, -PI / 2, { anim: 'SitIdle', h: 1.35, seat: SEAT }));
   const taken = (x, s, k) => (x === rows[4] && s < 0) || (x === rows[2] && s > 0 && k === 0) || ((x === rows[3] || x === rows[5]) && s > 0 && k === 1);
   const crowd = crowd57(30, 33, [0, 0, 1, 1], { anims: ['SitIdle'], kids: 0.18 }); let ci = 0;
-  for (const x of rows) for (const s of [-1, 1]) for (const k of [0, 1]) { if (taken(x, s, k) || (Math.round(x * 10) + k + (s > 0 ? 1 : 0)) % 4 === 0) continue; const e = crowd[ci++]; Object.assign(e, { x, z: s * (k ? 0.9 : 0.5), ry: -PI / 2, anim: ['SitIdle', 'SitTalk'][(ci * 7) % 2], seated: true, seat: SEAT, props: undefined }); extras.push(e); }
+  for (const x of rows) for (const s of [-1, 1]) for (const k of [0, 1]) { if (taken(x, s, k) || (Math.round(x * 10) + k + (s > 0 ? 1 : 0)) % 4 === 0) continue; const e = crowd[ci++]; Object.assign(e, { x, z: s * (k ? 0.9 : 0.5), ry: -PI / 2, anim: k ? 'SitIdle' : ['SitIdle', 'SitTalk'][ci % 2], seated: true, seat: SEAT, props: undefined }); extras.push(e); }
   return { id: 'coach', group: g, walls, bounds: { x0: -4.8, x1: 4.8, z0: -0.28, z1: 0.28 }, start: { x: 4.3, z: 0, yaw: PI / 2 }, people, extras, env: ENV.day, rig, lamp, ride: true, wheels: [],
     spots: { seat: [rows[4], -0.25], windows: [[-2.5, 0.2, 1], [2.9, -0.2, -1]] }, tick: () => {} };
 }
@@ -155,11 +159,11 @@ export function buildCrash() {
   const logM = solid(0x5a4030, 1), log = (x, z, len, ry) => { const lg = cyl(0.17, 0.17, len, logM, x, 0.17, z, g, 9); lg.rotation.z = PI / 2; lg.rotation.y = ry; walls.push([x - len / 2 * Math.abs(Math.cos(ry)) - 0.22, z - len / 2 * Math.abs(Math.sin(ry)) - 0.22, x + len / 2 * Math.abs(Math.cos(ry)) + 0.22, z + len / 2 * Math.abs(Math.sin(ry)) + 0.22]); };
   log(-4.3, 10.35, 1.3, 0); log(-4.7, 4.55, 1.9, 0);
   people.push(person('nurse', 'nurse', 'Nurse Gray', -4.3, 9.05, 0.05, { h: 1.2, anim: 'Kneel' }));   /* she kneels facing the man on the log */
-  extras.push({ ...crowd57(1, 47, [0, 0, 1, 1], { anims: ['SitIdle'] })[0], x: -4.3, z: 10.38, ry: PI, anim: 'SitIdle', seat: 0.34, seated: true, tended: true, props: undefined, hat: false });
+  extras.push({ ...crowd57(1, 47, [0, 0, 1, 1], { anims: ['SitIdle'] })[0], x: -4.3, z: 10.38, ry: PI, anim: 'SitIdle', seat: 0.34, feetForward: true, seated: true, tended: true, props: undefined, hat: false });
   people.push(person('dawn', 'dawn', 'Dawn', 9.5, 10, PI, { h: 1.05, anim: 'Sad1' }));
   people.push(person('louise', 'louise', 'Sister Louise', -6.6, 13.6, PI, { h: 1.7, props: [['LeftHand', 'lantern']], call: true }));   /* she calls out the names of the lost (Yell, now and then) */
   /* survivors rest by the fire: two sit on the log, two stand and watch the flames, one of them hurt */
-  for (const [i, x] of [-5.2, -4.2].entries()) extras.push({ ...crowd57(1, 50 + i, [0, 0, 1, 1], { anims: ['SitIdle'] })[0], x, z: 4.52, ry: i ? 0.55 : 0.85, anim: 'SitIdle', seat: 0.34, seated: true, fire: true, props: undefined });
+  for (const [i, x] of [-5.2, -4.2].entries()) extras.push({ ...crowd57(1, 50 + i, [0, 0, 1, 1], { anims: ['SitIdle'] })[0], x, z: 4.58, ry: i ? 0.38 : 0.58, anim: 'SitIdle', seat: 0.34, feetForward: true, seated: true, fire: true, props: undefined });
   for (const [i, [x, z]] of [[-5.9, 7.0], [-1.3, 4.9]].entries()) extras.push({ ...crowd57(1, 52 + i, [0, 0, 1, 1], { anims: ['Sad1'] })[0], x, z, ry: Math.atan2(-3 - x, 6 - z), anim: 'Sad1', fire: true, hurt: i === 1, props: undefined });
   extras.push(...villagers(16, 61, [-14, 2.8, 22, 13], { faceZ: PI }).filter(free(walls)));
   extras.push(...villagers(3, 73, [-11, 17, -8, 19.6]).map((e) => ({ ...e, call: 'callA', lamp: false })), ...villagers(3, 74, [-1, 17.4, 2, 20]).map((e) => ({ ...e, call: 'callB', lamp: false })));   /* two groups at the calling place talk quietly */

@@ -194,12 +194,13 @@ export function buildHall() {
   /* a platform with a lectern at the east end, a cross on the wall, a table with food and water at the side */
   box(2.2, 0.35, D - 1.2, WOOD, W / 2 - 1.4, 0.175, 0, g); walls.push([W / 2 - 2.5, -D / 2 + 0.6, W / 2, D / 2 - 0.6]);
   const lec = grp(g, W / 2 - 1.0, 0.35, 0); box(0.7, 1.0, 0.5, WOODD, 0, 0.5, 0, lec); const cross = grp(g, W / 2 - 0.12, 2.3, 0); box(0.1, 1.2, 0.5, WOODD, 0, 0, 0, cross); box(0.1, 0.5, 1.0, WOODD, 0, 0.2, 0, cross);
-  const tbl = grp(g, 0.5, 0, -D / 2 + 0.9); box(2.6, 0.07, 0.8, WOOD, 0, 0.78, 0, tbl); for (const x of [-1.2, 1.2]) for (const z of [-0.32, 0.32]) box(0.07, 0.76, 0.07, WOODD, x, 0.38, z, tbl); const brd = bread(); brd.position.set(-0.8, 0.815, 0); tbl.add(brd); for (let i = 0; i < 3; i++) { const j = jug(); j.position.set(0.1 + i * 0.3, 0.815, 0.05); tbl.add(j); } const kt = grp(tbl, 1.0, 0.815, 0); cyl(0.14, 0.17, 0.26, solid(0xc8c8c0, 0.4, 0.5), 0, 0.13, 0, kt, 10); walls.push([-0.9, -D / 2 + 0.4, 1.9, -D / 2 + 1.4]);
-  const dr = waterDrum(); dr.position.set(3.8, 0, -D / 2 + 0.7); g.add(dr); walls.push([3.45, -D / 2 + 0.35, 4.15, -D / 2 + 1.05]);
+  const tableX = 3.15, tableZ = -D / 2 + 0.85;
+  const tbl = grp(g, tableX, 0, tableZ); box(1.8, 0.07, 0.8, WOOD, 0, 0.78, 0, tbl); for (const x of [-0.8, 0.8]) for (const z of [-0.32, 0.32]) box(0.07, 0.76, 0.07, WOODD, x, 0.38, z, tbl); const brd = bread(); brd.position.set(-0.58, 0.815, 0); tbl.add(brd); for (let i = 0; i < 3; i++) { const j = jug(); j.position.set(-0.2 + i * 0.25, 0.815, 0.05); tbl.add(j); } const kt = grp(tbl, 0.63, 0.815, 0); cyl(0.14, 0.17, 0.26, solid(0xc8c8c0, 0.4, 0.5), 0, 0.13, 0, kt, 10); walls.push([tableX - .95, tableZ - .45, tableX + .95, tableZ + .45]);
+  const dr = waterDrum(); dr.position.set(3.87, 0, -1.75); g.add(dr); walls.push([3.52, -2.10, 4.22, -1.4]);
   /* the pews: rows of benches facing the platform. Each pew is a bench with a back; people sit on it at the heights the audit expects. */
   const pew = (x, z, n) => { const p = grp(g, x, 0, z); p.rotation.y = PI / 2; const L = n * 0.78 + 0.2; for (const zz of [-0.17, 0, 0.17]) box(L, 0.06, 0.16, WOOD, 0, seat - 0.03, zz, p); box(L, 0.4, 0.05, WOOD, 0, seat + 0.3, -0.25, p); for (const sx of [-L / 2 + 0.1, L / 2 - 0.1]) { box(0.07, seat, 0.5, WOODD, sx, seat / 2, 0, p); box(0.07, 0.62, 0.06, WOODD, sx, seat + 0.2, -0.26, p); } return { x, z, n }; };
   const rows = [[-3.2, -2.45], [-3.2, 2.45], [-0.8, -2.45], [-0.8, 2.45], [1.6, -2.45], [1.6, 2.45]], seats = [];
-  rows.forEach(([x, z]) => { const p = pew(x, z, 3); walls.push([x - 0.4, z - 1.3, x + 0.4, z + 1.3]); for (let k = 0; k < 3; k++) seats.push({ x, z: z - (k - 1) * 0.78, taken: false }); });
+  rows.forEach(([x, z]) => { pew(x, z, 3); walls.push([x - 0.4, z - 1.3, x + 0.4, z + 1.3]); for (let k = 0; k < 3; k++) seats.push({ x: x + .095, z: z - (k - 1) * 0.78, taken: false }); });
   /* mattresses, blankets and bags on the floor between the rows */
   for (const [x, z, c] of [[-5.9, -2.7, 0xd8c8a0], [-5.9, 2.7, 0xc8d8d0], [-5.9, 1.5, 0xd8c0b0]]) { const m = mattress(c); m.position.set(x, 0, z); m.rotation.y = PI / 2; g.add(m); }
   for (const [x, z] of [[-5.2, -1.8], [-1.6, 1.8], [2.8, -0.4], [3.4, 2.4], [-5.6, 2.6]]) { const b = goBag([0x3a5a8a, 0x8a3a3a, 0x3a6a4a, 0x6a5a3a, 0x4a4a6a][(Math.abs(x * 3 | 0)) % 5]); b.position.set(x, 0, z); b.rotation.y = x; g.add(b); }
@@ -215,7 +216,7 @@ export function buildHall() {
   for (let i = 0; i < seats.length && ci < crowd.length; i++) { if (seats[i].taken || i % 4 === 1) continue; const e = crowd[ci++]; Object.assign(e, { x: seats[i].x, z: seats[i].z, ry: PI / 2, anim: ['SitIdle', 'SitTalk'][i % 2], seated: true, seat, props: undefined }); extras.push(e); }
   const st = folk(6, 78, [-4.2, -0.9, 3.4, 0.9], { anims: ['Idle', 'Talk1', 'Talk2'], kids: 0.35 }); extras.push(...st);
   return { id: 'hall', group: g, walls, bounds: { x0: -W / 2 + 0.5, x1: W / 2 - 2.6, z0: -D / 2 + 0.5, z1: D / 2 - 0.5 }, start: { x: -6.2, z: 0.2, yaw: -PI / 2 }, people, extras, env: ENV.room, eye: 1.32, lights,
-    spots: { table: [0.5, -D / 2 + 1.7], blankets: [-4.6, 0.3], drum: [3.8, -D / 2 + 1.5], seat: [-0.8, 1.0], door: [-W / 2 + 1.0, 0], window: [4.6, D / 2 - 0.8] }, roofG: roof, titleView: null, tick: () => {} };
+    spots: { table: [tableX, tableZ + .85], blankets: [-4.6, 0.3], drum: [3.4, -1.0], seat: [-0.8, 1.0], door: [-W / 2 + 1.0, 0], window: [4.6, D / 2 - 0.8] }, roofG: roof, titleView: null, tick: () => {} };
 }
 
 /* ============ Kingston, about midday on 12 September 1988: uptown and downtown across one street ============

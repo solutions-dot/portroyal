@@ -570,7 +570,7 @@ async function stormRun(kind) {
   if (!(await step(3800, () => { say(L.b[2], 3800); lightK(0.2); if (!sceneIsCalm()) setTimeout(() => { if (live()) lightK(1); }, 160); setTimeout(() => { if (live()) lightK(0); }, 420); SFX.zincBang(0.9); FX.shake = 0.25; torch(true); }))) return;
   if (!(await step(3800, () => { say(L.b[3], 4000); SB = SB_LIGHT; FX.shake = 0.4; SFX.gust(1, 3); ease2(envNow, ENV.roomStorm, 3); }))) return;
   /* hold on: press and hold to keep steady while the wind builds */
-  const panic = (clip) => { for (const n of P.npcs) if (n.m.visible && n.ctl && !n.walking) n.ctl.play(clip); };   /* the family flinches as the wind builds, then ducks and covers when the roof goes */
+  const panic = (clip) => { for (const n of P.npcs) if (n.m.visible && n.ctl && !n.walking) n.ctl.play(clip && n.m.userData.seatAnchor ? 'SitScared' : clip); };   /* people on the pews react in a seated pose */
   $('holdwrap').hidden = false; HOLD.v = 0; goalText = 'Hold on!'; showGoal(); panic('Scared');
   const gust = tween(4.6, (k, dk) => { const held = HOLD.on ? 1 : 0; HOLD.v = clamp01(HOLD.v + (held ? 0.9 : -0.5) * dk * 4); $('holdbar').firstElementChild.style.width = (HOLD.v * 100) + '%'; FX.shake = 0.45 + k * 0.5 - HOLD.v * 0.25; FX.roll = Math.sin(k * 40) * 0.008; if (Math.random() < 0.04) SFX.zincBang(0.4); });
   if (!(await gust)) return; if (!live()) return; $('holdwrap').hidden = true; goalText = ''; $('goal').textContent = '';

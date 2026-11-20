@@ -27,7 +27,7 @@ const P = {
   man10: (Shirt, Breeches = 0x60708c) => ({ base: 'man2010', sex: 'm', tint: { Shirt, Breeches } }),
   woman: (Shirt, Skirt) => ({ base: 'guide2020', sex: 'f', tint: { Shirt, Skirt } }),
 };
-const BENCH = (x, z, side, ry) => ({ top: 0.45, x: x + side * 0.45, z, ry });   /* newtivoli.js benches: 1.8 m long, seat top 45 cm; two people sit 90 cm apart */
+const BENCH = (x, z, side, ry) => ({ top: 0.45, x: x + side * 0.45, z: z + (ry ? 0 : .08), ry, feetForward: true });   /* newtivoli.js benches: 1.8 m long, seat top 45 cm; two people sit 90 cm apart */
 const IDL_M = ['IdleM', 'Idle', 'LookAround'], IDL_F = ['Idle', 'HappyIdle', 'LookAround'], IDL_OLD = ['OldIdle', 'Idle', 'LookAround'], IDL_KID = ['HappyIdle', 'Idle'];
 
 /* who is in each chapter, and what they do. at: [x, z]; spec: the engine behaviour (docs/ENGINE.md, engine/ambient.js) */
@@ -128,7 +128,7 @@ export async function addLife(id, place, scene, opts = {}) {
     place: (n) => { n.m.position.x = n.x; n.m.position.z = n.z; n.m.userData.ground = place.groundAt ? place.groundAt(n.x, n.z) : 0; } });
   const people = [];
   for (const d of L.people) {
-    const g = place.groundAt ? place.groundAt(d.at[0], d.at[1]) : 0, m = makeBody({ ...d.look, bodyId: d.bodyId, x: d.at[0], z: d.at[1], ry: d.ry !== undefined ? d.ry : d.spec.seat ? d.spec.seat.ry : Math.random() * 6.28, ground: g, anim: 'Idle' });   /* a sitter starts facing the way the seat faces, or the seat swung them round in one frame */
+    const g = place.groundAt ? place.groundAt(d.at[0], d.at[1]) : 0, m = makeBody({ ...d.look, bodyId: d.bodyId, x: d.at[0], z: d.at[1], ry: d.ry !== undefined ? d.ry : d.spec.seat ? d.spec.seat.ry : Math.random() * 6.28, ground: g, anim: d.spec.seat ? d.spec.clips?.[0] || 'SitIdle' : 'Idle' });
     const k = mixers.indexOf(m.userData.anim.mx); if (k >= 0) mixers.splice(k, 1);   /* the engine updates this mixer, not the game's loop */
     m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); if (scene) scene.add(m);
     const n = { id: d.id, x: d.at[0], z: d.at[1], m, ctl: m.userData.anim, sex: d.look.sex, look: d.look }; life.add(n, d.spec); people.push(n);

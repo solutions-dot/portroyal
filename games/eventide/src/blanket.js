@@ -1,8 +1,7 @@
 /* games/eventide/src/blanket.js: blankets that read as blankets (chapter 4, the night, and the ward's beds).
    - foldedBlanket(color): a blanket folded into a soft square, its folded edges showing, for a pile on the pavement and the one you carry.
    - drapeBlanket(body, color): a blanket put round a person's shoulders. It is sized from the body itself (the shoulders, the arms and the hips in the pose they
-     stand in), so it sits just outside the clothes and never cuts through them, hangs to the hips in soft folds and is open at the front, held closed by the arms.
-     It rides on the upper back bone, so it moves with the body.
+     stand in). One cloth band sits behind the neck, with both ends hanging down in front. It moves with the upper back.
    The owner found the old ones "make no sense visually" (a grey tube round the chest, 15 November 2026). */
 import * as THREE from 'three';
 
@@ -35,34 +34,90 @@ export function foldedBlanket(color = 0xb8a890, { w = 0.4, h = 0.1, d = 0.3, lay
 }
 
 /* round the shoulders of a person who has already been posed once (its mixer updated). Returns the blanket mesh (already on the body). */
-export function drapeBlanket(body, color = 0xb8a890, { gap = 1.0 } = {}) {
+export function drapeBlanket(body, color = 0xb8a890) {
   body.updateMatrixWorld(true); const bone = (n) => body.getObjectByName('mixamorig' + n), local = (o) => body.worldToLocal(o.getWorldPosition(new THREE.Vector3()));
   const hips = bone('Hips'), neck = bone('Neck'), la = bone('LeftArm'), ra = bone('RightArm'), back = bone('Spine2') || bone('Spine1') || hips; if (!hips || !neck || !la || !ra) return null;
-  const H = local(hips), N = local(neck), sh = (local(la).y + local(ra).y) / 2, top = Math.max(sh, N.y - 0.02), hem = H.y - 0.24 * (top - H.y) / 0.45;   /* hips to shoulders, in the body's own size */
-  /* every point of the body's visible clothes and skin between the hem and the neck, in the body's own frame */
-  const pts = [], v = new THREE.Vector3(), inv = new THREE.Matrix4().copy(body.matrixWorld).invert();
-  body.traverse((o) => { if (!o.isSkinnedMesh || !o.visible || /low-poly|Eye|Teeth|Tongue|Lash|Brow/i.test(o.name + ' ' + (o.material.name || ''))) return; let vis = true; for (let q = o; q && q !== body; q = q.parent) if (!q.visible) vis = false; if (!vis) return;
-    o.skeleton.update(); const n = o.geometry.attributes.position.count, step = Math.max(1, Math.floor(n / 2500)); for (let i = 0; i < n; i += step) { o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld).applyMatrix4(inv); if (v.y > hem - 0.04 && v.y < top + 0.2) pts.push(v.clone()); } });
-  const cx = H.x, cz = (N.z + H.z) / 2;
-  /* the size of an ellipse that holds every point at each height: wide across the shoulders and arms, shallower front to back */
-  const rows = 7, need = []; for (let k = 0; k < rows; k++) need.push({ y: hem + (top - hem) * k / (rows - 1), x: 0.08, z: 0.06 });
-  const band = (top - hem) / (rows - 1);
-  for (const p of pts) { if (p.y > top + 0.02) continue; const k = Math.max(0, Math.min(rows - 1, Math.round((p.y - hem) / band))); for (const j of [k - 1, k, k + 1]) { if (j < 0 || j >= rows) continue; need[j].x = Math.max(need[j].x, Math.abs(p.x - cx)); need[j].z = Math.max(need[j].z, Math.abs(p.z - cz)); } }
-  for (const r of need) { r.x += 0.035; r.z += 0.035; }
-  for (let pass = 0; pass < 2; pass++) for (const p of pts) { if (p.y > top + 0.02) continue; const k = Math.max(0, Math.min(rows - 1, Math.round((p.y - hem) / band))), r = need[k], e = Math.hypot((p.x - cx) / r.x, (p.z - cz) / r.z); if (e > 0.97) { r.x *= e / 0.97; r.z *= e / 0.97; } }   /* the corners between the axes too */
-  for (let k = rows - 2; k >= 0; k--) { need[k].x = Math.max(need[k].x, need[k + 1].x * 0.98); need[k].z = Math.max(need[k].z, need[k + 1].z * 0.98); }   /* cloth falls: it never draws in below the shoulders */
-  /* over the top of the shoulders, toward the neck: what lies above the shoulder line sets how high the cloth must rise */
-  let neckR = 0.07; for (const p of pts) if (p.y > top - 0.02 && p.y < top + 0.12 && Math.abs(p.x - cx) < 0.12) neckR = Math.max(neckR, Math.min(0.11, Math.hypot(p.x - cx, (p.z - cz) * 1.2)));
-  const prof = need.map((r) => [r.x, r.z, r.y]); const S = need[rows - 1];
-  prof.push([S.x * 0.86, S.z * 0.95, top + 0.05], [S.x * 0.6, S.z * 0.85, top + 0.09], [neckR + 0.05, neckR + 0.04, top + 0.12]);
-  /* a ring for each height, open at the front by `gap` radians; small waves in the lower part are the folds */
-  const seg = 40, pos = [], uvs = [], idx = [], phi0 = gap / 2, span = Math.PI * 2 - gap;
-  prof.forEach(([rx, rz, y], i) => { const fall = Math.max(0, 1 - (y - hem) / (top - hem)); for (let s = 0; s <= seg; s++) { const a = phi0 + span * s / seg, wave = 1 + 0.07 * fall * Math.sin(a * 9 + 0.7) + 0.025 * fall * Math.sin(a * 17), flare = 0.07 * fall * fall, fr = Math.min(1, Math.abs(a - Math.PI) / 2.2);
-      const ry = y + (i === 0 ? -0.025 * Math.sin(a * 6) - 0.04 * (1 - fr) : 0);   /* the hem is uneven and hangs a little lower at the back */
-      pos.push(cx + (rx + flare) * wave * Math.sin(a), ry, cz + (rz + flare) * wave * Math.cos(a));   /* it flares out a little toward the hem, as heavy cloth does */ uvs.push(s / seg * 3, i / (prof.length - 1)); } });
-  for (let i = 0; i < prof.length - 1; i++) for (let s = 0; s < seg; s++) { const a = i * (seg + 1) + s, b = a + seg + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
-  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geo.setIndex(idx); geo.computeVertexNormals();
-  const m = new THREE.Mesh(geo, woolMaterial(color, THREE.DoubleSide)); m.name = 'Blanket'; m.castShadow = true; m.frustumCulled = false;
-  body.add(m); body.updateMatrixWorld(true); back.attach(m);   /* built in the body's frame, then carried by the upper back so it moves with the body */
-  return m;
+  const H = local(hips), N = local(neck), L = local(la), R = local(ra);
+  const shoulders = L.clone().lerp(R, .5), width = Math.abs(L.x - R.x), hem = H.y + width * .12;
+
+  // Fit the cloth to the visible body in its posed frame.
+  const pts = [], v = new THREE.Vector3(), inv = body.matrixWorld.clone().invert();
+  body.traverse(o => {
+    if (!o.isSkinnedMesh || /Eye|Teeth|Tongue|Lash|Brow/i.test(o.material.name || '')) return;
+    for (let child = o; child !== body; child = child.parent) if (!child.visible) return;
+    o.skeleton.update();
+    const count = o.geometry.attributes.position.count, step = Math.max(1, Math.floor(count / 2400));
+    for (let i = 0; i < count; i += step) {
+      o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+      if (v.y > hem - width * .17 && v.y < N.y + width * .35) pts.push(v.clone());
+    }
+  });
+  const neckline = pts.filter(p => Math.abs(p.y - N.y - width * .18) < width * .15 && Math.abs(p.x - N.x) < width * .32);
+  const rx = Math.max(width * .165, ...neckline.map(p => Math.abs(p.x - N.x))) + width * .025;
+  const rz = Math.max(width * .13, ...neckline.map(p => N.z - p.z)) + width * .026;
+  const section = a => {
+    const x = Math.sin(a), z = Math.cos(a);
+    const y = N.y + width * (.13 - .08 * z);
+    return [
+      [N.x + rx * x, y, N.z + rz * z],
+      [N.x + (rx + width * .23) * x, y - width * .27, N.z + (rz + width * .06) * z],
+    ];
+  };
+  const collarAngle = .94, collar = Array.from({ length: 21 }, (_, i) => section(collarAngle + (Math.PI * 2 - 2 * collarAngle) * i / 20));
+
+  function surfaceDepth(x, y, z, direction, margin) {
+    let depth = z * direction;
+    for (const p of pts) {
+      if (Math.abs(p.x - x) < width * .16 && Math.abs(p.y - y) < width * .17) {
+        depth = Math.max(depth, p.z * direction + width * margin);
+      }
+    }
+    return depth * direction;
+  }
+  const panel = sign => [
+    [shoulders.y - width * .15, .20, .46],
+    [shoulders.y - width * .39, .19, .52],
+    [shoulders.y - width * .65, .18, .57],
+    [hem + width * .26, .17, .58],
+    [hem + width * (sign > 0 ? 0 : .105), .18, .60],
+  ].map(([y, inside, outside]) => {
+    const t = (y - hem) / (shoulders.y - hem), cx = H.x + (shoulders.x - H.x) * t;
+    const v0 = y, v1 = y + width * .046, x0 = cx + sign * width * inside, x1 = cx + sign * width * outside;
+    return [[x0, v0, shoulders.z + width * .35], [x1, v1, shoulders.z + width * .35]];
+  });
+
+  const left = panel(1), right = panel(-1);
+  const ribbon = [...left.reverse(), ...collar, ...right];
+  const cols = 8, pos = [], uv = [], indices = [];
+  for (const [i, [[x0, y0, z0], [x1, y1, z1]]] of ribbon.entries()) {
+    const panelRow = i < left.length || i >= left.length + collar.length;
+    for (let k = 0; k <= cols; k++) {
+      const t = k / cols;
+      const fold = width * .024 * Math.sin(t * Math.PI * 3) * Math.sin(t * Math.PI);
+      const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
+      let z = z0 + (z1 - z0) * t + fold;
+      if (panelRow) z = surfaceDepth(x, y, z, 1, .18);
+      else if (z < N.z - width * .02) z = surfaceDepth(x, y, z, -1, .055);
+      else if (Math.abs(x - N.x) > rx * .66 && z > N.z + width * .08) z = surfaceDepth(x, y, z, 1, .09);
+      pos.push(x, y, z);
+      uv.push(t, i / (ribbon.length - 1));
+      if (i && k) {
+        const b = i * (cols + 1) + k, a = b - cols - 1;
+        indices.push(a - 1, a, b - 1, b - 1, a, b);
+      }
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  const towel = new THREE.Mesh(geo, woolMaterial(color, THREE.DoubleSide));
+  towel.name = 'Blanket';
+  towel.castShadow = true;
+  towel.frustumCulled = false;
+  body.add(towel);
+  body.updateMatrixWorld(true);
+  back.attach(towel);
+  return towel;
 }

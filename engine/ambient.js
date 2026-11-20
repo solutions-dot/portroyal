@@ -330,6 +330,8 @@ export function createAmbient(opts = {}) {
   function turnBone(bone, axis, ang) { if (!bone || !bone.parent || Math.abs(ang) < 1e-4) return; bone.parent.updateWorldMatrix(true, false); bone.parent.getWorldQuaternion(_pq); _r.setFromAxisAngle(axis, ang); bone.quaternion.premultiply(_pq.clone().invert().multiply(_r).multiply(_pq)); }
   function lookWant(n) {
     const a = n.amb, m = n.m; if (!m) return [0, 0]; const ry = m.rotation.y, rel = (x, z) => wrap(Math.atan2(x - n.x, z - n.z) - ry);
+    if (a.spec.carrying && /^CarryHead/.test(a.spec.idle || '')) return [0, 0];
+    if (W.watchTarget && a.kind === 'watch' && a.spec.at) return [rel(...a.spec.at), 0];
     const dp = Math.hypot(W.px - n.x, W.pz - n.z);
     if (W.talking === n) return [rel(W.px, W.pz), -0.05];
     if (dp < O.look && Math.abs(rel(W.px, W.pz)) < 1.9 && ((a.pT + a.pOff) % 9 < 3.5 || !a.g)) return [rel(W.px, W.pz), -0.05];   /* the player who comes near; in a group, a look now and then, then back to the talk */

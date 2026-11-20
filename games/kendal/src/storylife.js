@@ -32,8 +32,8 @@ export function storyLifeTick(n, dt, W, { head = true } = {}) {
   const s = n.sl || (n.sl = { t: 2 + Math.random() * 7, look: 0, lookP: 0, want: 0, wantP: 0, gl: 1 + Math.random() * 4, hq: null, st: null });
   const talking = W.talking === n, held = (m.userData.held || []).length > 0, keep = KEEP.test(n.anim || '') || held || n.fol;
   /* stance: only while the base clip plays (a talk gesture or a reaction owns the body otherwise) */
-  if (!talking && !keep && !n.path) {
-    const S = s.st || (s.st = stancesOf(n));
+  if (!talking && !n.path && (!keep || (held && !n.fol && !KEEP.test(n.anim || '')))) {
+    const S = held ? { idles: [], once: ['Nod'] } : s.st || (s.st = stancesOf(n));
     s.t -= dt;
     if (s.t <= 0 && c.cur === c.base) {
       const have = (k) => idleOK(k) && c.get(k);
@@ -44,7 +44,7 @@ export function storyLifeTick(n, dt, W, { head = true } = {}) {
       } else {
         const k = choice(idles);
         if (k) { c.play(k, false, S.hold[0] + Math.random() * (S.hold[1] - S.hold[0])); c.get(k).timeScale = 0.9 + Math.random() * 0.2; }
-        s.t = 7 + Math.random() * 6;
+        s.t = 6 + Math.random() * 3.5;
       }
     }
   }

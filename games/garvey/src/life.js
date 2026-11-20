@@ -18,7 +18,7 @@ export function actFor(n, stage) {
   const idles = idlesOf(n.model);
   if (n.hidden || n.delay > 0 || n.fol) return null;
   if (n.seat && !n.seated) return null;
-  if (n.seated) return stage === 13 ? { kind: 'sit', clips: ['SitIdle', 'SitIdle2'], every: [5, 9] } : { kind: 'sit', group: 'bench', clips: ['SitIdle', 'SitIdle2', 'SitIdle3'] };
+  if (n.seated) return { kind: 'sit', clips: ['SitIdle', 'SitIdle2'], every: [5, 9] };
   const A = {
     /* chapter 1: the print shop, Kingston, about 1908 */
     printer: { kind: 'work', clips: ['ReachOut', 'ReachOut', 'HeadTurn', 'LookAround'], work: [3, 6], rest: [1.5, 3], idles },   /* picks letters from the case at his stand */
@@ -31,8 +31,8 @@ export function actFor(n, stage) {
     garvey: stage === 13 ? { kind: 'work', clips: ['Speech', 'TalkM1', 'TalkM2', 'Speech'], work: [5, 9], rest: [0.6, 1.4], idles }
       : stage >= 14 ? { kind: 'watch', at: at(0, 1), react: ['Nod', 'WaveSlow'], idles }
       : { kind: 'work', clips: ['Nod', 'LookAround', 'HeadTurn'], work: [3, 5], rest: [2, 3.5], idles },   /* reads over his notes for the meeting */
-    early1: { kind: 'sit', group: 'front', clips: ['SitIdle', 'SitIdle2', 'SitIdle3'] },
-    early2: { kind: 'sit', group: 'front', clips: ['SitIdle', 'SitIdle3'] },
+    early1: { kind: 'sit', group: 'front', clips: ['SitIdle', 'SitIdle2'] },
+    early2: { kind: 'sit', group: 'front', clips: ['SitIdle', 'SitIdle2'] },
     /* chapter 3: a Harlem street corner, 1916 */
     garvey3: stage >= 22 ? { kind: 'work', clips: ['Speech', 'TalkM1', 'TalkM2', 'Speech'], work: [5, 9], rest: [0.5, 1.2], idles }
       : { kind: 'watch', at: at(0, 3), react: ['Nod', 'LookAround'], idles },
@@ -67,7 +67,7 @@ export function actFor(n, stage) {
     steward: { kind: 'work', clips: ['Point', 'Nod', 'LookAround'], work: [2.5, 5], rest: [2, 4], idles },
     /* chapter 7: Amy Jacques Garvey's office, Harlem, 1925 */
     amyj: { kind: 'work', clips: ['ReachOut', 'Nod', 'LookAround'], work: [3, 6], rest: [2, 4], idles },   /* reads the letters on her desk */
-    typist: { kind: 'work', clips: ['ReachOut', 'HeadTurn', 'PickUp'], work: [3, 6], rest: [2, 4], idles },
+    typist: { kind: 'work', clips: ['Nod', 'HeadTurn', 'LookAround'], work: [3, 6], rest: [2, 4], face: at(3.2, 0.8), idles },
     /* chapter 8: National Heroes Park, today */
     guide: { kind: 'watch', at: at(0, -6.8), react: ['Point', 'Nod'], idles },
     student: { kind: 'watch', at: at(0, -6.8), react: ['LookAround', 'HeadTurn'], idles },
@@ -112,7 +112,7 @@ export const EXTRAS = {
   street: [{ id: 'passer1', model: 'nb_seller', x: -8, z: -3.3, ry: Math.PI / 2, tint: { Shirt: [0.7, 0.8, 1.0], Skirt: [0.6, 0.55, 0.6] } },
     { id: 'passer2', model: 'clerk1919', x: 7.5, z: -3.3, ry: -Math.PI / 2, tint: { Jacket: [1.4, 1.3, 1.1], Breeches: [1.4, 1.3, 1.1], Hat: [1.3, 1.2, 1.0] } },
     { id: 'stoop', model: 'nb_elder', x: -4.6, z: 3.2, ry: 2.4, tint: { Jacket: [0.8, 0.9, 1.1] } }],
-  press: [{ id: 'compositor', model: 'nb_youth', x: -3.75, z: -1.3, ry: -Math.PI / 2, tint: { Shirt: [1.0, 0.92, 0.8], Breeches: [0.7, 0.7, 0.75] } }],
+  press: [{ id: 'compositor', model: 'nb_youth', x: -3.5, z: -1.3, ry: -Math.PI / 2, tint: { Shirt: [1.0, 0.92, 0.8], Breeches: [0.7, 0.7, 0.75] } }],
   dock: [{ id: 'docker1', model: 'hl_worker', x: -6.0, z: -2.25, ry: Math.PI, tint: { Shirt: [0.75, 0.85, 1.05] } },
     { id: 'docker2', model: 'seaman1919', x: -7.0, z: -1.2, ry: 0.4, tint: { Shirt: [1.1, 1.05, 0.95] } },
     { id: 'docker3', model: 'nb_youth', x: 6.6, z: 1.0, ry: 1.6, tint: { Shirt: [0.8, 0.8, 0.75], Breeches: [0.75, 0.75, 0.8] } },
@@ -121,6 +121,6 @@ export const EXTRAS = {
   deck: [{ id: 'deckhand', model: 'seaman1919', x: -5.2, z: 2.5, ry: Math.PI, tint: { Shirt: [0.9, 0.95, 1.05] } }],
   liberty: [{ id: 'del1', model: 'hl_critic', seat: [-2.8, -2.2] }, { id: 'del2', model: 'hl_woman', seat: [-1.9, -1.25], tint: { Shirt: [0.8, 0.9, 1.1], Skirt: [0.8, 0.8, 0.9] } },
     { id: 'del3', model: 'woman1914', seat: [2.8, -2.2], tint: { Shirt: [1.0, 0.85, 0.85] } }, { id: 'del4', model: 'nb_elder', seat: [3.7, -1.25] }, { id: 'del5', model: 'hl_worker', seat: [1.9, 0.65], tint: { Shirt: [0.9, 1.0, 1.1] } }],
-  office: [{ id: 'typist', model: 'hl_pressman', x: 3.2, z: 1.5, ry: Math.PI, tint: { Shirt: [1.05, 1.05, 1.1] } }],
+  office: [{ id: 'typist', model: 'hl_pressman', x: 3.2, z: 1.76, ry: Math.PI, tint: { Shirt: [1.05, 1.05, 1.1] } }],
   park: [{ id: 'visitor', model: 'guide2020_b', x: 6.5, z: 5.0, ry: -Math.PI / 2, tint: { Shirt: [0.6, 0.8, 1.1], Skirt: [0.5, 0.5, 0.6] } }],
 };

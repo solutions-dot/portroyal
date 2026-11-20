@@ -57,14 +57,14 @@ const AROUND_A = [[-1.0, 0.3], [-2.8, 0.3]];   /* round the south end of wall A,
    steps: { walk: [[x, z], ...] } | { ready: true } (stand until the shooting starts) | { react: true } (a moment's start at the first shots)
         | { burst: s } (fire from where they stand, at the first shots) | { run: [[x, z], ...], cover: kind } | { fight: untilT } (rest and fire at this cover until the scene clock reaches untilT) */
 const FORCES = [
-  { look: 'soldier', kind: 'rifle', from: [19, -3.6], plan: [{ walk: [[7.6, -3.6]] }, { ready: true }, { burst: 1.4 }, { run: [[-1.25, -3.7]], cover: 'wall' }, { fight: 21 }, { run: [...AROUND_A, [-14.0, -1.35]], cover: 'kneel' }, { fight: 99 }] },
-  { look: 'policeCamo', kind: 'rifle', from: [21.5, -3.0], plan: [{ walk: [[9.2, -3.0]] }, { ready: true }, { react: true }, { run: [[-1.25, -2.6]], cover: 'wall' }, { fight: 99 }] },
-  { look: 'soldier', kind: 'rifle', from: [24.5, -3.9], plan: [{ walk: [[11.0, -3.9]] }, { ready: true }, { react: true }, { run: [[-1.25, -1.5]], cover: 'wall' }, { fight: 25 }, { run: [...AROUND_A, [-13.6, -3.95]], cover: 'kneel' }, { fight: 99 }] },
-  { look: 'police', kind: 'rifle', from: [27.5, -2.4], plan: [{ walk: [[13.6, -2.4]] }, { ready: true }, { react: true }, { run: [[-1.25, -0.65]], cover: 'wall' }, { fight: 99 }] },
-  { look: 'soldier', kind: 'rifle', from: [19.5, 3.3], plan: [{ walk: [[8.0, 3.3]] }, { ready: true }, { burst: 1.2 }, { run: [[4.6, 3.2]], cover: 'kneel' }, { fight: 27 }, { run: [[-10.25, 3.7]], cover: 'wall' }, { fight: 99 }] },
-  { look: 'soldier', kind: 'rifle', from: [22.5, 2.3], plan: [{ walk: [[9.8, 2.3]] }, { ready: true }, { react: true }, { run: [[4.85, 1.9]], cover: 'wall' }, { fight: 99 }] },
+  { look: 'soldier', kind: 'rifle', from: [19, -3.6], plan: [{ walk: [[7.6, -3.6]] }, { ready: true }, { burst: 1.4 }, { run: [[-0.81, -3.7]], cover: 'wall' }, { fight: 21 }, { run: [...AROUND_A, [-14.0, -1.35]], cover: 'kneel' }, { fight: 99 }] },
+  { look: 'policeCamo', kind: 'rifle', from: [21.5, -3.0], plan: [{ walk: [[9.2, -3.0]] }, { ready: true }, { react: true }, { run: [[-0.81, -2.6]], cover: 'wall' }, { fight: 99 }] },
+  { look: 'soldier', kind: 'rifle', from: [24.5, -3.9], plan: [{ walk: [[11.0, -3.9]] }, { ready: true }, { react: true }, { run: [[-0.81, -1.5]], cover: 'wall' }, { fight: 25 }, { run: [...AROUND_A, [-13.6, -3.95]], cover: 'kneel' }, { fight: 99 }] },
+  { look: 'police', kind: 'rifle', from: [27.5, -2.4], plan: [{ walk: [[13.6, -2.4]] }, { ready: true }, { react: true }, { run: [[-0.81, -0.65]], cover: 'wall' }, { fight: 99 }] },
+  { look: 'soldier', kind: 'rifle', from: [19.5, 3.3], plan: [{ walk: [[8.0, 3.3]] }, { ready: true }, { burst: 1.2 }, { run: [[4.6, 3.2]], cover: 'kneel' }, { fight: 27 }, { run: [[-9.77, 3.7]], cover: 'wall' }, { fight: 99 }] },
+  { look: 'soldier', kind: 'rifle', from: [22.5, 2.3], plan: [{ walk: [[9.8, 2.3]] }, { ready: true }, { react: true }, { run: [[5.09, 1.9]], cover: 'wall' }, { fight: 99 }] },
   { look: 'police', kind: 'pistol', from: [20.8, 0.9], plan: [{ walk: [[8.8, 0.9]] }, { ready: true }, { react: true }, { run: [[4.55, 0.6]], cover: 'pistol' }, { fight: 99 }] },
-  { look: 'police', kind: 'pistol', from: [25.5, 1.2], plan: [{ walk: [[16.2, -1.6]] }, { ready: true }, { react: true }, { run: [[14.9, -3.9]], cover: 'pistol' }, { fight: 27.6 }, { run: [[-10.25, 2.5]], cover: 'pistol' }, { fight: 99 }] },
+  { look: 'police', kind: 'pistol', from: [25.5, 1.2], plan: [{ walk: [[16.2, -1.6]] }, { ready: true }, { react: true }, { run: [[14.65, -3.8]], cover: 'pistol' }, { fight: 27.6 }, { run: [[-9.77, 2.5]], cover: 'pistol' }, { fight: 99 }] },
   { look: 'policeCamo', kind: 'rifle', from: [29.5, 3.6], plan: [{ walk: [[15.2, 3.6]] }, { ready: true }, { react: true }, { run: [[14.3, -2.3]], cover: 'guard', face: W + 0.75 }, { fight: 99 }] },
 ].map((s) => ({ ...s, side: 'forces' }));
 const GUNMEN = [[-29.2, -3.0, true], [-29.6, -1.2, false], [-29.2, 0.8, true], [-29.8, 2.4, false], [-29.4, 3.8, true]].map(([x, z, rifle], i) => ({

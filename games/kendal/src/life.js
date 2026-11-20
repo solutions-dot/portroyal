@@ -72,7 +72,10 @@ const PLACES = {
     const lloyd = people.find((p) => p.id === 'lloyd'); if (lloyd) { lloyd.anim = 'Idle'; lloyd.life = { kind: 'play', area: [-7.5, 3.2, -0.5, 8.2], joy: ['Cheer', 'Clap', 'Laugh'], idles: ['Idle'] }; }   /* he plays near Gran, except in his own step */
   },
   coach(P, people, extras) {   /* the coach: neighbours on a bench talk in turn */
-    for (const e of extras) at(e, 'sit', { group: 'bench' + e.x.toFixed(1) + (e.z < 0 ? 'L' : 'R'), clips: isMan(e) && !isKid(e) ? ['SitIdle', 'SitPoseM'] : ['SitIdle', 'SitPoseF'] });
+    for (const e of extras) {
+      if (Math.abs(e.z) > .7) at(e, 'sit', { clips: ['SitIdle', 'SitIdle2'], every: [4, 8] });
+      else at(e, 'sit', { group: 'bench' + e.x.toFixed(1) + (e.z < 0 ? 'L' : 'R'), clips: isMan(e) && !isKid(e) ? ['SitIdle', 'SitPoseM'] : ['SitIdle', 'SitPoseF'] });
+    }
   },
   beach(P, people, extras) {   /* the beach: children play, people stroll and chat; a mento band plays and a few people sway to it */
     for (let i = extras.length - 1; i >= 0; i--) if (extras[i].band) extras.splice(i, 1);

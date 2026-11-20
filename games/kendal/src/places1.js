@@ -110,7 +110,7 @@ export function buildHill() {
   const g = grp(), walls = [], people = [], extras = [];
   stationBase(g, { x0: -34, x1: 44, zc: -3, zBack: 15, wood: true, ground: [66, 104, 48] });
   g.add(hillRing(160, 14, 85, { seed: 12, base: [0.18, 0.4, 0.2] }));
-  const hut = shed(9, 4.5, 2.9, [176, 140, 96]); hut.position.set(2, 0, 11.5); hut.rotation.y = PI; g.add(hut); walls.push([-2.6, 9, 6.6, 14]);
+  const hut = shed(9, 4.5, 2.9, [176, 140, 96]); hut.position.set(2, 0, 11.5); hut.rotation.y = PI; g.add(hut); walls.push([-2.6, 8.05, 6.6, 14], [1.23, 7.13, 2.77, 8.05]);
   const sg = signBoard('HILL STATION', 3.2, 0.55, { bg: '#2a3a52', fg: '#f3e6b8', font: '700 46px Georgia, serif' }); sg.position.set(2, 2.85, 7.6); g.add(sg);   /* on the front edge of the veranda roof: behind it, the roof hid the words */
   const wt = waterTower(); wt.position.set(34, TRACK_Y, 4); g.add(wt); wt.position.y = 0; walls.push([32, 2, 36, 6]);
   scatter(g, (i) => banana(i, i % 4 === 0), 40, [-34, 18, 44, 60], [[-6, 16, 10, 22]], 5); scatter(g, (i) => tree(5 + (i % 3), i), 16, [-30, 24, 40, 70], [], 8); scatter(g, (i) => bush(i, 1.4), 24, [-34, 15, 44, 40], [[-6, 15, 10, 22]], 3);

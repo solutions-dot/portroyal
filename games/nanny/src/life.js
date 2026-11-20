@@ -33,9 +33,9 @@ function crowd(list, o) {
     if (o.quiet) { set(k, 'watch', { at: o.watch, idles: ['Idle', 'LookAround'], sadIdles: ['Sad1', 'Idle'], every: [5, 9], stay: true }); return; }
     set(k, 'play', { area: box(k.x, k.z, 5, 4, o.area), joy: ['Cheer', 'Clap', 'Laugh'], idles: ['Idle', 'LookAround'] }); if (i % 2 === 1) k.life.chase = kids[i - 1];
   });
-  for (const [from, to] of o.carry || []) {   /* a basket of yams carried on the head from one spot to another and back (the load is shown only on the way there) */
+  for (const [from, to] of o.carry || []) {
     const e = grown.find((q) => !q.life && !holds(q)); if (!e) break; e.x = from[0]; e.z = from[1]; e.placed = true;
-    set(e, 'work', { between: [from, to], walk: 'CarryHeadWalk', idle: 'CarryHeadIdle', back: walkOf(e), pick: 'PickUp', load: 'basket', wait: [2, 5] });
+    set(e, 'work', { between: [from, to], walk: 'CarryHeadWalk', idle: 'CarryHeadIdle', carrying: true, drop: false, load: 'basket', wait: [1, 2.5] });
   }
   let gid = 0; const free = () => grown.filter((e) => !e.life && !holds(e));
   for (const e of free()) { if (e.life || r() > (o.chat ?? 0.55)) continue; const mates = free().filter((q) => q !== e && Math.hypot(q.x - e.x, q.z - e.z) < 3.2).slice(0, r() < 0.5 ? 1 : 2); if (!mates.length) continue;

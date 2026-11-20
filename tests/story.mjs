@@ -2,7 +2,7 @@
    Run with npm test (tests/regressions.mjs imports this file). */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Group, Bone, Mesh, SkinnedMesh, Skeleton, BoxGeometry, MeshBasicMaterial, PerspectiveCamera } from 'three';
+import { Group, Bone, Mesh, SkinnedMesh, Skeleton, BoxGeometry, MeshBasicMaterial, PerspectiveCamera, Vector3 } from 'three';
 import { createStory, createCarry, checkFlow, goalWithCount, arrowPose, REDIRECT } from '../engine/story.js';
 
 /* the fake game: a yard with five people, a pile of bunches, a wagon, a tree (optional) and a gate */
@@ -135,6 +135,33 @@ test('rule 3: carry shows the item in the hand (camera slot or grip), place leav
   assert.equal(model.userData.grips.length, 0, 'the hand lets go'); assert.equal(hand.children.length, 0);
   const lamp = new Mesh(new BoxGeometry(), new MeshBasicMaterial()); lamp.name = 'lamp'; C.view('first'); C.carry(lamp); lamp.visible = false;
   assert.match(C.issues()[0], /hidden/); assert.equal(C.drop(), lamp); assert.equal(lamp.parent, null);
+});
+
+test('an actual-size suitcase fits below the view in portrait and landscape', () => {
+  const camera = new PerspectiveCamera(66, 1280 / 720, .02, 100);
+  const item = new Group(), prop = new Mesh(new BoxGeometry(.68, .56, .24), new MeshBasicMaterial());
+  prop.position.y = .24;
+  item.add(prop);
+  const carry = createCarry({ camera, fit: true });
+  carry.carry(item, { yaw: .15 });
+  for (const [aspect, fov] of [[1280 / 720, 66], [390 / 800, 76], [667 / 375, 66]]) {
+    camera.aspect = aspect;
+    camera.fov = fov;
+    camera.updateProjectionMatrix();
+    carry.fitView();
+    camera.updateMatrixWorld(true);
+    for (const x of [-.34, .34]) for (const y of [-.28, .28]) for (const z of [-.12, .12]) {
+      const point = prop.localToWorld(new Vector3(x, y, z)).project(camera);
+      assert.ok(point.x > .155 && point.x < .945);
+      assert.ok(point.y > -.975 && point.y < -.475);
+      assert.ok(point.z > -1 && point.z < 1);
+    }
+  }
+  const table = new Group();
+  carry.place(item, { parent: table, at: [2, .8, -3] });
+  carry.fitView();
+  assert.deepEqual(item.position.toArray(), [2, .8, -3]);
+  assert.deepEqual(item.scale.toArray(), [1, 1, 1]);
 });
 
 test('?test=flow passes a good table and catches each kind of mistake', () => {

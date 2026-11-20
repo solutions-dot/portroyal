@@ -314,7 +314,7 @@ function sitDown(n) {
   [n.x, n.z] = n.seat;
   n.ry = Math.PI;
   m.userData.seatAnchor = {
-    x: n.x, z: n.z, top: 0.5, ry: n.ry,
+    x: n.x, z: n.z - .065, top: 0.5, ry: n.ry, feetForward: true,
     settle: { from: m.position.clone(), yaw: m.rotation.y, start: ctl.mx.time, duration: 0.5 },
   };
   ctl.play(sitClip(false));
@@ -684,7 +684,7 @@ const HALL_PEOPLE = [
   { id: 'amy', model: 'amy1914', real: true, who: 'Amy Ashwood', label: 'Talk to Amy Ashwood', x: -1.6, z: 2.3, ry: Math.PI, base: 'Idle',
     lines: () => [{ who: NAR, text: 'This is Amy Ashwood. She is one of the first members.', unlock: 'amy' }, { who: 'You', text: 'What is starting here?' }, { who: NAR, text: 'She is helping to start a new association.' }, { who: NAR, text: 'Its members will help each other.' }],
     later: () => ({ 10: ['Amy Ashwood is writing names in a book.'], 11: ['Amy Ashwood is sorting papers for the meeting.'], 12: ['Amy Ashwood watches the neighbours arrive.'], 13: ['Amy Ashwood waits for the meeting to begin.'], 14: ['Amy Ashwood smiles. The work has begun.'] })[stage] || ['Amy Ashwood is busy with the meeting.'] },
-  { id: 'garvey', model: 'garvey1914', real: true, who: 'Marcus Garvey', label: 'Talk to Marcus Garvey', x: 0, z: -2.62, ry: 0, base: 'Idle', ground: 0.25,
+  { id: 'garvey', model: 'garvey1914', real: true, who: 'Marcus Garvey', label: 'Talk to Marcus Garvey', x: 0, z: -2.32, ry: 0, base: 'Idle', ground: 0.25,
     lines: () => stage === 13 ? [{ who: NAR, text: 'Marcus Garvey stands up to speak to the room.' }, { who: NAR, text: 'He talks about helping people in need, and about pride.' }, { who: NAR, text: 'This is the Universal Negro Improvement Association.', unlock: 'unia' }, { who: NAR, text: 'Amy Ashwood welcomes everyone who wants to join.' }, { who: NAR, text: 'It begins here, in Kingston.' }]
       : [{ who: NAR, text: 'This is Marcus Garvey. He has just come home from London.', unlock: 'garvey-home' }, { who: 'You', text: 'What will happen here?' }, { who: NAR, text: 'He plans an association to help people in need.' }, { who: NAR, text: 'It will also build pride, and open a trade school.' },
         { who: NAR, text: 'The first poster needs one big word. Which word?', choices: [word('LEARN'), word('WORK'), word('UNITY')] }],
@@ -1214,13 +1214,29 @@ function buildOffice() {
   for (const y of [0.13, 0.83, 1.53, 2.23]) { let z = -2.3; for (let k = 0; k < 26 && z < 1.9; k++) { const th = 0.06 + Math.random() * 0.06, ht = 0.34 + Math.random() * 0.2; bm.compose(new THREE.Vector3(-3.78, y + ht / 2 + 0.025, z + th / 2), new THREE.Quaternion(), new THREE.Vector3(0.22, ht, th)); books.setMatrixAt(bi, bm); col.setHSL(Math.random(), 0.25 + Math.random() * 0.2, 0.25 + Math.random() * 0.15); books.setColorAt(bi, col); bi++; z += th + 0.01; } }
   books.count = bi; g.add(books); OFF_WALLS.push([-4.0, -2.4, -3.6, 2.2]);
   /* the desk, with a typewriter, a lamp and the news cards */
-  box(2.2, 0.8, 1.0, woodDark, -0.5, 0.4, -1.5, g); box(2.3, 0.06, 1.1, wood, -0.5, 0.83, -1.5, g);
-  box(0.34, 0.12, 0.32, iron, -1.0, 0.92, -1.45, g); box(0.3, 0.03, 0.12, solid(0x222222), -1.0, 0.99, -1.32, g); box(0.22, 0.01, 0.3, paper, -1.0, 1.08, -1.6, g).rotation.x = -0.4;
-  cyl(0.1, 0.12, 0.05, brass, 0.4, 0.88, -1.8, g, 12); cyl(0.02, 0.02, 0.4, brass, 0.4, 1.08, -1.8, g, 6); cyl(0.04, 0.16, 0.16, solid(0x2f6a4a, 0.5), 0.4, 1.3, -1.8, g, 14);
-  for (const [dx, dz, r] of [[-0.1, -1.2, 0.2], [0.15, -1.3, -0.1], [0.3, -1.15, 0.35], [-0.35, -1.15, 0.0]]) box(0.2, 0.012, 0.28, paper, -0.5 + dx, 0.87, -1.5 + dz + 0.3, g).rotation.y = r;
+  box(2.2, 0.8, 1.0, woodDark, -0.5, 0.4, -1.5, g);
+  const deskY = .86;
+  box(2.3, 0.06, 1.1, wood, -0.5, deskY - .03, -1.5, g);
+  const typewriter = new THREE.Group();
+  typewriter.name = 'Typewriter';
+  typewriter.position.set(-1.0, deskY, -1.45);
+  g.add(typewriter);
+  box(.34, .12, .32, iron, 0, .06, 0, typewriter);
+  box(.30, .03, .12, solid(0x222222), 0, .13, .09, typewriter);
+  const roller = cyl(.033, .033, .30, solid(0x2a2926), 0, .14, -.115, typewriter, 12);
+  roller.rotation.z = Math.PI / 2;
+  const sheet = new THREE.Group();
+  sheet.position.set(0, .145, -.12);
+  sheet.rotation.x = -.24;
+  typewriter.add(sheet);
+  box(.22, .24, .004, paper, 0, .12, 0, sheet);
+  cyl(0.1, 0.12, 0.05, brass, 0.4, deskY + .025, -1.8, g, 12); cyl(0.02, 0.02, 0.4, brass, 0.4, deskY + .24, -1.8, g, 6); cyl(0.04, 0.16, 0.16, solid(0x2f6a4a, 0.5), 0.4, deskY + .44, -1.8, g, 14);
+  for (const [x, z, ry] of [[-.69, -1.18, .2], [-.38, -1.36, -.1], [-.12, -1.66, .35], [.22, -1.19, 0]]) {
+    box(.2, .012, .28, paper, x, deskY + .006, z, g).rotation.y = ry;
+  }
   box(0.5, 0.5, 0.5, woodDark, -0.5, 0.25, -2.3, g); OFF_WALLS.push([-1.7, -2.1, 0.7, -0.85]);
   /* a side table with the letters, and a notice board */
-  box(1.1, 0.74, 0.7, woodDark, 3.2, 0.37, 0.8, g); box(1.2, 0.05, 0.8, wood, 3.2, 0.77, 0.8, g); for (const [dx, dz] of [[-0.25, 0], [0.1, 0.1], [0.3, -0.1]]) box(0.26, 0.015, 0.18, paper, 3.2 + dx, 0.81, 0.8 + dz, g); OFF_WALLS.push([2.55, 0.4, 3.85, 1.2]);
+  box(1.1, 0.745, 0.7, woodDark, 3.2, 0.3725, 0.8, g); box(1.2, 0.05, 0.8, wood, 3.2, 0.77, 0.8, g); for (const [dx, dz] of [[-0.25, 0], [0.1, 0.1], [0.3, -0.1]]) box(0.26, 0.015, 0.18, paper, 3.2 + dx, 0.8025, 0.8 + dz, g); OFF_WALLS.push([2.55, 0.4, 3.85, 1.2]);
   box(0.06, 1.2, 1.6, woodDark, OFF.x1 - 0.05, 1.7, -1.4, g); for (const [dz, dy] of [[-0.45, 0.3], [0, 0.3], [0.45, 0.3], [-0.3, -0.25], [0.25, -0.25]]) mesh(new THREE.PlaneGeometry(0.34, 0.26), new THREE.MeshStandardMaterial({ map: sheetTex('NEWS'), roughness: 1 }), OFF.x1 - 0.09, 1.7 + dy, -1.4 + dz, g).rotation.y = -Math.PI / 2;
   cyl(0.008, 0.008, 0.7, solid(0x222222), 0, H2 - 0.5, 0, g, 6); cyl(0.05, 0.14, 0.12, brass, 0, 2.95, 0, g); cyl(0.1, 0.1, 0.24, new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffc46a, emissiveIntensity: 0.8, transparent: true, opacity: 0.75 }), 0, 2.78, 0, g);
   still(g);   /* the still scenery drawn merged (engine/batch.js) */

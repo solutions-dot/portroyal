@@ -122,13 +122,26 @@ function leadTick(n, f, dt, W) {
   f.t += dt; const sp = pathS(f.path, W.px, W.pz), d = Math.hypot(W.px - n.x, W.pz - n.z), ahead = f.s - sp;
   if (!f.waiting && ahead > 0 && d > f.wait) { f.waiting = true; f.moving = false; gait(n, null); if (f.wave && f.t - f.waved > 8) { const c = n.ctl || n.m.userData.anim; if (c && c.get('Wave')) { c.play('Wave', true); f.waved = f.t; } } }
   if (f.waiting) { if (d < f.resume || ahead <= 0) f.waiting = false; else { facePlayer(n, W, dt, 4); return; } }
-  const want = Math.max(f.min || 0, Math.min(f.max ?? f.len, sp + f.ahead)), diff = want - f.s; pathMove(n, f, diff, Math.abs(diff), dt, W, sp);
+  if (f.keepAhead) {
+    f.playerStill = sp - (f.playerProgress ?? sp) > .005 ? 0 : (f.playerStill || 0) + dt;
+    f.playerProgress = sp;
+    f.waitingForPlayer = f.t > .9 && f.playerStill > .22;
+    if (f.waitingForPlayer) {
+      f.moving = false;
+      gait(n, null);
+      if (d < 9) facePlayer(n, W, dt);
+      return;
+    }
+  }
+  const want = Math.max(f.keepAhead ? f.s : f.min || 0, Math.min(f.max ?? f.len, sp + f.ahead)), diff = want - f.s;
+  pathMove(n, f, diff, Math.abs(diff), dt, W, sp);
 }
 function pathMove(n, f, diff, gap, dt, W, sp) {
   const go = f.moving ? gap > 0.1 : gap > 0.9; if (!go) { f.moving = false; gait(n, null); if (Math.hypot(W.px - n.x, W.pz - n.z) < 9) facePlayer(n, W, dt); return; }
-  const v = Math.min(gap > 6 ? 5.4 : 4.0, 0.9 + gap * 1.15) * Math.sqrt((n.m && n.m.scale.y) || 1), run = f.run && hasRun(n) && (v > 3.0 || (n.clip === 'Run' && n.walking && v > 2.5));
+  const v = Math.min(f.maxSpeed ?? (gap > 6 ? 5.4 : 4.0), 0.9 + gap * 1.15) * Math.sqrt((n.m && n.m.scale.y) || 1), run = f.run && hasRun(n) && (v > 3.0 || (n.clip === 'Run' && n.walking && v > 2.5));
   let s = f.s + Math.sign(diff) * Math.min(gap, v * dt); const [x, z, hd] = pathPoint(f.path, s, f.side);
   if (f.mode === 'follow' && Math.hypot(x - W.px, z - W.pz) < f.space && diff > 0) { f.moving = false; gait(n, null); facePlayer(n, W, dt); return; }   /* a follower never walks into you */
+  if (f.keepAhead && Math.hypot(x - W.px, z - W.pz) < f.space && Math.hypot(x - W.px, z - W.pz) < Math.hypot(n.x - W.px, n.z - W.pz)) { f.moving = false; gait(n, null); return; }
   if (!freeAt(W, x, z, 0, n) && freeAt(W, n.x, n.z, 0, n)) { gait(n, null); return; }   /* someone is in the way on the path: wait for them */
   f.s = s; n.x = x; n.z = z; f.moving = true; gait(n, run ? 'Run' : 'Walk', v); turn(n, diff > 0 ? hd : hd + Math.PI, dt, 6);
 }
@@ -151,9 +164,9 @@ export function watch({ space = 0.9, behind = 6 } = {}) {
   const S = new Map(), get = (n) => S.get(n) || S.set(n, { close: 1e9, inside: 0, insideAt: null, lag: 0, lagT: 0, lagWorst: 0, stuckT: 0, stuckWorst: 0, frames: 0, pts: [], lx: n.x, lz: n.z }).get(n);
   return {
     sample(n, px, pz, blocked, dt = 1 / 30) { if (!n.m || n.m.visible === false) return; const s = get(n), d = Math.hypot(px - n.x, pz - n.z); s.frames++; if (s.frames % 3 === 0) s.pts.push([n.x, n.z]); if (s.frames % 15 === 0) (s.log || (s.log = [])).push(`${s.frames}: you (${px.toFixed(1)},${pz.toFixed(1)}) them (${n.x.toFixed(1)},${n.z.toFixed(1)}) ${n.walking ? n.clip : 'still'}${n.fol && n.fol.stuckT > 0.5 ? ' stuck ' + n.fol.stuckT.toFixed(1) : ''}`);
-      const f = n.fol; if (f && f.mode === 'follow') { if (d < s.close) s.closeAt = `frame ${s.frames}, you at (${px.toFixed(1)},${pz.toFixed(1)}), they at (${n.x.toFixed(1)},${n.z.toFixed(1)})`; s.close = Math.min(s.close, d); if (d > behind) { s.lagT += dt; if (s.lagT > s.lagWorst) { s.lagWorst = s.lagT; s.lagAt = `frame ${s.frames}, you at (${px.toFixed(1)},${pz.toFixed(1)}), they at (${n.x.toFixed(1)},${n.z.toFixed(1)})`; } } else s.lagT = 0; s.lag = Math.max(s.lag, d); }
+      const f = n.fol; if (f && (f.mode === 'follow' || f.keepAhead)) { if (d < s.close) s.closeAt = `frame ${s.frames}, you at (${px.toFixed(1)},${pz.toFixed(1)}), they at (${n.x.toFixed(1)},${n.z.toFixed(1)})`; s.close = Math.min(s.close, d); if (f.mode === 'follow' && d > behind) { s.lagT += dt; if (s.lagT > s.lagWorst) { s.lagWorst = s.lagT; s.lagAt = `frame ${s.frames}, you at (${px.toFixed(1)},${pz.toFixed(1)}), they at (${n.x.toFixed(1)},${n.z.toFixed(1)})`; } } else s.lagT = 0; s.lag = Math.max(s.lag, d); }
       if (blocked && blocked(n.x, n.z)) { s.inside++; s.insideAt = s.insideAt || [n.x, n.z]; }
-      if (f && f.mode === 'lead') { const movedNow = Math.hypot(n.x - s.lx, n.z - s.lz) > 1e-3, ahead = (f.max ?? f.len) - f.s; if (!movedNow && d < f.resume && ahead > 1 && !f.waiting) { s.stuckT += dt; s.stuckWorst = Math.max(s.stuckWorst, s.stuckT); } else s.stuckT = 0; }
+      if (f && f.mode === 'lead') { const movedNow = Math.hypot(n.x - s.lx, n.z - s.lz) > 1e-3, ahead = (f.max ?? f.len) - f.s; if (!movedNow && d < f.resume && ahead > 1 && !f.waiting && !f.waitingForPlayer) { s.stuckT += dt; s.stuckWorst = Math.max(s.stuckWorst, s.stuckT); } else s.stuckT = 0; }
       s.lx = n.x; s.lz = n.z; },
     lines(n, id) { const s = S.get(n); if (!s) return [`${id}: never seen`]; const out = [];
       if (s.close < space - 0.05) out.push(`${id} came ${(s.close * 100).toFixed(0)} cm from you (personal space ${(space * 100).toFixed(0)} cm): ${s.closeAt}`);

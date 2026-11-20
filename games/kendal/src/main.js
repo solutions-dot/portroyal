@@ -149,7 +149,7 @@ function makeBody(s) {
   const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl; kPace(m, s, ctl);
   m.userData.held = []; ctl.mx.update(0);   /* pose the body once, so the grips below are measured on the real hand */
   if (seated) m.userData.noGround = true;   /* a seated body is placed on its seat, so the per-frame foot grounding must leave it alone */
-  if (s.seat !== undefined && seated) { m.userData.seatAnchor={top:s.seat}; m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
+  if (s.seat !== undefined && seated) { m.userData.seatAnchor={top:s.seat, feetForward:s.feetForward}; m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHips'); if (hb) { m.position.y += s.seat + SIT_HIPS * (s.scale || 1) - hb.getWorldPosition(new THREE.Vector3()).y;
       m.updateMatrixWorld(true); const soles = ['LeftToeBase', 'RightToeBase'].map((n) => m.getObjectByName('mixamorig' + n)).filter(Boolean).map((b) => b.getWorldPosition(new THREE.Vector3()).y - 0.04 * (s.scale || 1)), under = (s.ground || 0) - Math.min(...soles);
       if (soles.length && under > 0.005) m.position.y += Math.min(0.1, under); } }   /* sit on the seat (its top is s.seat): the hip joint rides 12 cm above it, whatever the body's size */
   const carry = (bone, o, G) => { if (/Hand$/.test(bone)) grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY || G.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.4, G.lift || 0), straighten: G.straighten ?? 0.8 }); else { hold(m, bone, o, G); if (bone === 'Head') steadyLoad(m, o); } };   /* a hand steadies a load on the head (engine/grip.js) */   /* in a hand: a real grip (engine/grip.js); on the head: balanced there */
@@ -228,7 +228,19 @@ function ensurePlace(id) {   /* the place with its people: loads the bodies it n
     spreadOut(P); lifeFor(P);   /* life.js: what each background person does (engine/ambient.js) */
     /* engine/faces.js: no two copies of one body with the same face come within 4 m of each other, measured over everywhere each one walks. A girl with too many
        girls about becomes a smaller girl (the same clothes, the smaller body); a wanderer with no face left stays and watches (life.js settle) */
-    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, { near: 4, fixed: P.specs.people, alts: (e) => (/^girl/.test(e.base) && !e.props ? ['girl', 'girl_small'] : null), rebase: (e, b, was) => { e.scale = (e.scale || KID[was]) * KID[b] / KID[was]; }, settle: (e) => settle(P, e) });
+    spreadBodies(P.specs.extras, (b) => FACE_VARIANTS[b] || 0, {
+      near: 4, fixed: P.specs.people,
+      alts: (e) => {
+        if (P.id === 'kingston57' && e.base === 'woman57') return ['woman_elder'];
+        if (!e.props && /^girl/.test(e.base)) return ['girl', 'girl_small'];
+        return null;
+      },
+      rebase: (e, b, was) => {
+        if (KID[b] && KID[was]) e.scale = (e.scale || KID[was]) * KID[b] / KID[was];
+        if (b === 'woman_elder' && e.hat === 'Cap') e.hat = 'Hat';
+      },
+      settle: (e) => settle(P, e),
+    });
     if (__DEV__ && /[?&]faces/.test(location.search)) console.log('FACES ' + P.id + ' ' + [...P.specs.people, ...P.specs.extras].filter((e) => new RegExp(new URLSearchParams(location.search).get('faces') || '.').test(e.base)).map((e) => `${e.id || e.name || ''}:${e.base}${e.variant || ''}${e.props ? '+props' : ''} ${e.life ? e.life.kind : ''}[${reachOf(e).map((v) => v.toFixed(0))}]`).join(' | '));   /* ?faces=woman57 : who got which face, and the box each one stays in */
     for (const e of P.specs.extras) e.bodyId = e.base + (e.variant || '') + '_lo'; for (const e of P.specs.people) e.bodyId = e.base;   /* people you talk to get the full body; background figures get a light copy */
     const bases = new Set([...P.specs.people, ...P.specs.extras].map((s) => s.bodyId)); await Promise.all([...bases].map(loadBase));
@@ -458,7 +470,9 @@ function storyWhere(id, P = P_()) {   /* where a story person or a thing to do i
   const a = (P.actions || []).filter((x) => x.need === id || x.id === id); if (!a.length) return null; const on = a.filter((x) => x.on()); const L = on.length ? on : a;
   let best = null, bd = Infinity; for (const x of L) { const d = Math.hypot(x.x - state.x, x.z - state.z); if (d < bd) { bd = d; best = [x.x, x.z]; } } return best;
 }
-const HAND = createCarry({ camera, slot: [-0.34, -0.56, -0.78] });   /* your left hand (the lamp, when you have it, is in your right) */
+const HAND = createCarry({ camera, slot: [-0.34, -0.56, -0.78], fit: true });   /* the lamp stays in your right hand */
+addEventListener('resize', HAND.fitView);
+const BUNCH_CARRY = { slot: [0.05, -0.62, -0.7], yaw: 0.4, roll: 0.25 };
 const rideBucket = bucket(); rideBucket.name = 'the water bucket'; rideBucket.scale.setScalar(0.8);
 const STORY = createStory({
   steps: STEPS, where: (id) => storyWhere(id), player: () => [state.x, state.z],
@@ -580,7 +594,7 @@ const ACTIONS_FOR = {   /* each thing has an id; `need` is the step need it coun
     { id: 'board', need: 'board', label: 'Climb aboard', x: P.spots.board[0], z: P.spots.board[1], r: 3.2, on: () => STORY.needs('board'), go: () => STORY.done('board') } ],
   ride45: (P) => [{ id: 'water', need: 'water', label: 'Pass the water bucket', x: P.spots.water[0], z: P.spots.water[1], r: 2.6, on: () => STORY.needs('water') && !RIDE45.busy, go: () => passBucket(P) }],
   hill: (P) => [
-    { id: 'pile', need: 'bunch', label: 'Pick up a bunch of bananas', x: P.spots.pile[0], z: P.spots.pile[1], r: 2.8, on: () => STORY.needs('bunch') && !HAND.holding(), go: () => { const b = P.bunches.find((q) => q.parent === P.pile); if (!b) return; HAND.carry(b, { slot: [0.05, -0.62, -0.7], yaw: 0.4 }); b.rotation.z = 0.25; stepSound('grass'); toast('You lift a heavy bunch. Now to the wagon.'); } },
+    { id: 'pile', need: 'bunch', label: 'Pick up a bunch of bananas', x: P.spots.pile[0], z: P.spots.pile[1], r: 2.8, on: () => STORY.needs('bunch') && !HAND.holding(), go: () => { const b = P.bunches.find((q) => q.parent === P.pile); if (!b) return; HAND.carry(b, BUNCH_CARRY); stepSound('grass'); toast('You lift a heavy bunch. Now to the wagon.'); } },
     { id: 'wagon', need: 'bunch', label: 'Put the bunch in the wagon', x: P.spots.wagon[0], z: P.spots.wagon[1], r: 2.8, on: () => STORY.needs('bunch') && !!HAND.holding(), go: () => { const n = STORY.got.bunch || 0, w = P.inWagon[n], b = HAND.holding(); HAND.place(b, { parent: P.group, at: [w.position.x, w.position.y, w.position.z], ry: w.rotation.y }); b.rotation.set(0, w.rotation.y, PI / 2); uiSound('goal'); STORY.done('bunch'); } },
     ...P.spots.brakes.map((b, i) => ({ id: 'b' + i, need: 'b' + i, label: 'Check the brake', x: b[0], z: b[1], r: 2.3, on: () => STORY.needs('b' + i), go: () => { uiSound('goal'); toast(['The tender brake is tight. Good.', 'The carriage brake handle holds. Good.', 'The wagon brake block is firm. Good.'][i]); STORY.done('b' + i); } })) ],
   kingston57: (P) => [{ id: 'board57', need: 'board57', label: 'Climb aboard the last coach', x: P.spots.board[0], z: P.spots.board[1], r: 3.2, on: () => STORY.needs('board57'), go: () => STORY.done('board57') }],
@@ -1016,7 +1030,7 @@ function devViews() {
     if (/^crash/.test(shot)) { story.lamp = true; updateLamp(); if (shot === 'crash2') { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; handLamp.intensity = 0; P.torches.forEach((t) => { t.visible = false; }); } }
     if (shot === 'crash3') { setEnv(ENV.dawn); }
     if (shot === 'bucket1') { STORY.enter(61); const b = P.buckets[0]; HAND.carry(b, { yaw: 0.3 }); }
-    if (shot === 'bunch3') { const b = P.bunches[0]; HAND.carry(b, { slot: [0.05, -0.62, -0.7], yaw: 0.4 }); b.rotation.z = 0.25; }
+    if (shot === 'bunch3') HAND.carry(P.bunches[0], BUNCH_CARRY);
     if (shot === 'jglow') { unlock('slowroad'); unlock('higglers'); }
     if (q.has('t')) for (let i = 0; i < +q.get('t') * 20; i++) update(0.05);   /* &t=seconds lets background life move before the picture */
     if (shot === 'crash5') { setEnv(ENV.morning); for (const L of P.lights) L.userData.k = 0.1; handLamp.intensity = 0; lampMesh.visible = false; P.torches.forEach((t) => { t.visible = false; }); }
