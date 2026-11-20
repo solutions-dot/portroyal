@@ -21,8 +21,7 @@
     "shorts": true,
     "socks": 0.3,
     "collar": "camp",
-    "pocket": true,
-    "legwidth": 1.3
+    "pocket": true
   },
   "colors": {
     "Shoes": [
