@@ -4,7 +4,7 @@ import "../../../engine/textfit.js";   // first: every sign's words fit their bo
 import { renderFramed } from "../../../engine/cine.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import * as THREE from "three";
 import { clone as cloneBody } from "three/addons/utils/SkeletonUtils.js";
-import { loadClips, animate, groundFeet, CL, lookEnd } from "../../../engine/anim.js";
+import { loadClips, animate, groundFeet, CL, idleOK, lookEnd } from "../../../engine/anim.js";
 import { hudTidy } from "../../../engine/hud.js";
 import { model, onLoadFail } from "../../../engine/loader.js";
 import { grip, gripTick, spreadArms } from "../../../engine/grip.js";
@@ -164,7 +164,8 @@ const worlds = {},
   keys = new Set(),
   stick = { id: null, dx: 0, dy: 0 },
   look = { id: null };
-const carry = createCarry({ camera, slot: [0.22, -0.29, -0.48] });
+const carry = createCarry({ camera, fit: true });
+addEventListener("resize", carry.fitView);
 const world = () => worlds[current];
 const blocked = (Q, x, z, r = 0.24) =>
   x < Q.bounds.x0 + r ||
@@ -571,7 +572,7 @@ async function buildWorld(id) {
   // Everyone starts on one of their own idles at once, at its own moment: a cross-fade out of the plain Idle in the first second
   // swung heads round faster than a person turns (the head check), and a watcher could stand in the plain Idle until its first change.
   for (const n of [...Q.extras, ...Q.people.filter((p) => !p.historical)]) {
-    const L = n.amb?.spec.idles?.filter((c) => n.ctl.get(c));
+    const L = n.amb?.spec.idles?.filter((c) => idleOK(c) && n.ctl.get(c));
     if (!L?.length || n.amb.kind === "work" || n.amb.kind === "sit") continue;
     let h = (n.id || "").split("").reduce((s, c) => Math.imul(s ^ c.charCodeAt(0), 2654435761) >>> 0, 2166136261);
     const r = () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0) % 10007) / 10007,
@@ -1481,6 +1482,7 @@ function frame(now) {
   Q.arrivalLife?.tick(frozen ? 0 : dt, {
     px: cx,
     pz: cz,
+    watchTarget: DIR.on,
     story: [],
     view: { x: camera.position.x, z: camera.position.z, yaw: S.yaw },
   });

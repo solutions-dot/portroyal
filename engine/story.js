@@ -58,6 +58,7 @@
      issues()               dev: lines for a held item that is hidden, not in the hand, or shrunk to nothing.
 
    checkFlow(story, opts) is the engine side of ?test=flow. See its comment. */
+import { Box3 } from 'three';
 import { grip as engineGrip } from './grip.js';
 
 const DEF = { delay: 2500, exploreDelay: 2500, near: 2.2 };
@@ -177,16 +178,49 @@ export function arrowPose({ dx, dz, yaw, ndc, W, H, final = true }) {
   const leftSide = a > 0; return { cls: leftSide ? 'left' : 'right', x: leftSide ? 58 : W - 58, y: H * 0.45, label: Math.abs(a) > 2.2 ? 'Turn around' : 'This way' };
 }
 
+/* Fit a first-person item into the lower corner at its real scale. The near and far
+   corners have different apparent sizes, so test both ends in camera space. */
+function fitCarry(camera, item, bounds, left) {
+  if (bounds.isEmpty()) return;
+  const projection = camera.projectionMatrix.elements;
+  const axis = (name, min, max, lens) => {
+    const low = min / lens, high = max / lens;
+    const start = Math.max(-low * bounds.min.z, -low * bounds.max.z) - bounds.min[name];
+    const end = Math.min(-high * bounds.min.z, -high * bounds.max.z) - bounds.max[name];
+    return { low, high, start, end, distance: (start - end) / (high - low) };
+  };
+  const x = axis('x', left ? -.94 : .16, left ? -.16 : .94, projection[0]);
+  const y = axis('y', -.97, -.48, projection[5]);
+  const distance = Math.max(.55, bounds.max.z + camera.near + .03, x.distance, y.distance);
+  const center = ({ low, high, start, end }) => ((low + high) * distance + start + end) / 2;
+  item.position.set(center(x), center(y), -distance);
+}
+
 /* ---------- the player's hand ---------- */
-export function createCarry({ camera = null, body = null, side = 'Right', slot = [0.32, -0.4, -0.6], grip = engineGrip, gripOpts = {}, view = 'first' } = {}) {
+export function createCarry({ camera = null, body = null, side = 'Right', slot = [0.32, -0.4, -0.6], grip = engineGrip, gripOpts = {}, view = 'first', fit = false } = {}) {
   const C = { held: null, mode: view, placed: [] };
+  const bounds = new Box3();
+  C.fitView = () => {
+    if (fit && C.held?.parent === camera && camera.isPerspectiveCamera) fitCarry(camera, C.held, bounds, (C.opts.slot || slot)[0] < 0);
+  };
   function release() {
     const it = C.held; if (!it) return; const w = it.parent;
     if (w && w.userData && w.userData.carryWrap) { const hand = w.parent; if (hand) hand.remove(w); if (body && body.userData.grips) body.userData.grips = body.userData.grips.filter((g) => g.wrap !== w); w.remove(it); }
     else if (it.parent) it.parent.remove(it);
   }
   function attach(it, o = {}) {
-    if (C.mode === 'first' || !body) { if (!camera) throw new Error('carry: no camera for first person'); const s = o.slot || slot; it.position.set(s[0], s[1], s[2]); it.rotation.set(0, o.yaw || 0, 0); camera.add(it); }
+    if (C.mode === 'first' || !body) {
+      if (!camera) throw new Error('carry: no camera for first person');
+      const s = o.slot || slot;
+      it.rotation.set(0, o.yaw || 0, o.roll || 0);
+      if (fit && camera.isPerspectiveCamera) {
+        it.position.set(0, 0, 0);
+        bounds.setFromObject(it, true);
+      }
+      it.position.set(s[0], s[1], s[2]);
+      camera.add(it);
+      C.fitView();
+    }
     else { const w = grip(body, side, it, { ...gripOpts, ...(o.grip || {}) }); if (!w) throw new Error('carry: the body has no ' + side + ' hand'); w.userData.carryWrap = true; }
     it.visible = true;
   }

@@ -69,7 +69,8 @@ export function anchorSeat(model) {
   }
 }
 
-/* A seated person whose clip hangs the feet below the floor bends each knee (feet drawn back under the seat) until the sole just reaches the floor.
+/* A seated person whose clip hangs the feet below the floor bends each knee until the sole just reaches the floor.
+   A seat with a solid base can request feetForward to put the shoes in the space ahead of it.
    The ankle-to-sole height is measured once per body. The pose guard prevents the correction piling up on unchanged mixer tracks. */
 const kq=new Quaternion(),kA=new Vector3(),kK=new Vector3(),kAx=new Vector3(),kF=new Vector3(),kV=new Vector3();
 function bendKnees(model, pairs){
@@ -88,8 +89,17 @@ function bendKnees(model, pairs){
   for(const { side, knee, foot } of pairs){
     knee.getWorldPosition(kK);foot.getWorldPosition(kA);const want=floor+drop[side]+.005;if(kA.y>=want)continue;
     const v=kA.clone().sub(kK),len=v.length();if(kK.y-want>len-.01)continue;   /* the floor is out of reach even with the shin straight down */
-    /* turn the shin about the axis across the body, the way that draws the foot back, by the angle that brings the ankle up to the floor */
-    let best=0;for(const sg of[1,-1]){kq.setFromAxisAngle(kAx,sg*.3);const t=v.clone().applyQuaternion(kq);if(t.dot(kF)<v.dot(kF)){let a=0,b=1.6;for(let i=0;i<18;i++){const m=(a+b)/2;kq.setFromAxisAngle(kAx,sg*m);if(kK.y+v.clone().applyQuaternion(kq).y<want)a=m;else b=m;}best=sg*b;break;}}
+    /* Turn the shin about the axis across the body until the ankle clears the floor. */
+    let best=0;const forward=!!U.seatAnchor.feetForward;
+    for(const sg of[1,-1]){
+      kq.setFromAxisAngle(kAx,sg*.3);
+      if((kV.copy(v).applyQuaternion(kq).dot(kF)>v.dot(kF))!==forward)continue;
+      kq.setFromAxisAngle(kAx,sg*1.6);
+      if(kK.y+kV.copy(v).applyQuaternion(kq).y<want)continue;
+      let a=0,b=1.6;
+      for(let i=0;i<18;i++){const m=(a+b)/2;kq.setFromAxisAngle(kAx,sg*m);if(kK.y+kV.copy(v).applyQuaternion(kq).y<want)a=m;else b=m;}
+      best=sg*b;break;
+    }
     if(!best)continue;
     const pq=knee.parent.getWorldQuaternion(new Quaternion());kq.setFromAxisAngle(kAx,best);knee.quaternion.premultiply(pq.clone().invert().multiply(kq).multiply(pq));knee.updateMatrixWorld(true);
     const fq=foot.parent.getWorldQuaternion(new Quaternion()),kqi=kq.clone().invert();foot.quaternion.premultiply(fq.clone().invert().multiply(kqi).multiply(fq));foot.updateMatrixWorld(true);   /* the foot keeps its angle to the floor: turned with the shin, its toes went 5 cm through a carriage floor */

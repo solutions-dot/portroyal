@@ -176,7 +176,8 @@ function yard(id) {
   wall(Q, 10.2, 8.5, 6.2, 4.2);
   for (const x of [7.3, 10.2, 13.1]) wall(Q, x, 12.95, 0.4, 0.4);
   solid1(Q, S.dominoTable(), 9.0, 11.6, 0.85, 0.85);
-  for (const x of [8.35, 9.65]) add(Q, S.stool(0.45), x, 11.6);
+  const dominoSeats = [8.13, 9.87];
+  for (const x of dominoSeats) add(Q, S.stool(0.45), x, 11.6, 0.15);
   for (const [x, z, s] of [[-2, 9.5, 1], [-1.2, 10.4, 2], [5.2, 9, 3], [6.2, 9.6, 4]]) {
     const h = S.hen(s);
     add(Q, h, x, z, 0, s * 1.3);
@@ -201,8 +202,10 @@ function yard(id) {
   // neighbours: a woman bringing a basket in on her head, an old woman resting under the breadfruit tree, dominoes on the piazza, children at play
   crowd(Q, "wr_kwoman48", 14.0, 14.0, Math.PI, { kind: "errand", from: [14.0, 14.0], to: [13.6, -3.2], walk: "CarryHeadWalk", idle: "CarryHeadIdle", wait: [5, 9] }, { held: "headload" });
   crowd(Q, "wr_kelder48", -11.5, 6.6, Math.PI / 2, { kind: "sit", seat: { top: 0.485, x: -11.5, z: 6.6, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] }, { raw: true });
-  crowd(Q, "wr_kman48", 8.35, 11.6, Math.PI / 2, { kind: "sit", seat: { top: 0.45, floor: 0.15, x: 8.35, z: 11.6, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitIdle"] });
-  crowd(Q, "wr_tman48b", 9.65, 11.6, -Math.PI / 2, { kind: "sit", seat: { top: 0.45, floor: 0.15, x: 9.65, z: 11.6, ry: -Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] });
+  dominoSeats.forEach((x, i) => {
+    const ry = i ? -Math.PI / 2 : Math.PI / 2;
+    crowd(Q, i ? "wr_tman48b" : "wr_kman48", x, 11.6, ry, { kind: "sit", seat: { top: 0.60, floor: 0.15, x, z: 11.6, ry, feetForward: true }, clips: ["SitIdle", "SitIdle2"] });
+  });
   crowd(Q, "wr_kboy48", -4, 11, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   crowd(Q, "wr_kgirl48", -2, 12, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   Q.ambient[Q.ambient.length - 1].behaviour.chase = Q.ambient[Q.ambient.length - 2].id;
@@ -532,7 +535,7 @@ function brixton48() {
   // Londoners going about their day
   crowd(Q, "wr_lwoman48", -10, 5.6, Math.PI / 2, { kind: "errand", from: [-11, 5.4], to: [12, 5.4], walk: "CarryBagWalk", idle: "Idle", wait: [4, 8] }, { held: "bag" });
   crowd(Q, "wr_lman48", 1, 6.5, -Math.PI / 2, { kind: "wander", pts: [[-11, 6.5], [1, 6.5], [11, 6.6]], pause: [3, 6] });
-  crowd(Q, "wr_tman48c", -13.5, 5.2, 0, { kind: "watch", at: [-14.2, 6], idles: ["IdleM"], react: ["LookAround", "HeadTurn"], every: [4, 8] });
+  crowd(Q, "wr_tman48c", -13.25, 4.8, 0, { kind: "watch", at: [-14.2, 6], idles: ["IdleM"], react: ["LookAround", "HeadTurn"], every: [4, 8] });
   Q.keepOff = [{ at: [7.05, -4.6], r: 1.2 }, { at: [-12.95, -4.8], r: 1.2 }, { at: [10.8, 3.6], r: 1 }];
   return Q;
 }
@@ -657,7 +660,7 @@ function home18() {
   // inside: the front room (west), the hall with the front door (east), the kitchen behind
   const fl = std(T.plank([150, 116, 80], 10, [4, 4]), 0.8);
   const rm = S.room({ x0: -5.6, z0: -6, x1: 1.4, z1: 2.0, h: 2.7, floor: fl, wall: solid(0xe6dcc4, 1), walls: [
-    { line: [-5.6, -6, 1.4, -6], gaps: [] }, { line: [1.4, -6, 1.4, 2.0], gaps: [{ at: 5.3, w: 1.0, kind: "door" }] },
+    { line: [-5.6, -6, 1.4, -6], gaps: [] }, { line: [1.4, -6, 1.4, 2.0], gaps: [{ at: 5.3, w: 1.18, kind: "door" }] },
     { line: [-5.6, 1.93, -5.6, -6] }, { line: [1.4, 1.93, -5.6, 1.93], gaps: [{ at: 4.8, w: 2.8, h: 1.7, sill: 0.75, kind: "window" }] }] });
   fabric(Q, rm);
   const hall = S.room({ x0: 1.4, z0: -6, x1: 3.8, z1: 2.0, h: 2.7, floor: fl, wall: solid(0xd8e0d4, 1), walls: [
@@ -668,7 +671,7 @@ function home18() {
   box(0.3, 2.7, 3.6, solid(0xe6dcc4, 1), -5.75, 1.35, -7.7, Q.group);
   // walking walls: the outside of the house, the front-room wall with its door, the hall's back wall with the kitchen door, the stairs
   Q.walls.push([-6.2, 1.85, -1.9, 2.3], [-1.9, 1.85, 2.0, 2.3], [3.0, 1.85, 6.2, 2.3]);
-  Q.walls.push([1.3, -6.1, 1.5, -1.2], [1.3, -0.2, 1.5, 2.1]);
+  Q.walls.push([1.3, -6.1, 1.5, -1.29], [1.3, -0.11, 1.5, 2.1]);
   Q.walls.push([-5.7, -6.1, 2.0, -5.9], [2.9, -6.1, 3.9, -5.9]);
   Q.walls.push([-5.8, -9.6, 4.0, -9.4], [-5.8, -9.6, -5.6, 2.2], [3.8, -9.6, 4.0, 2.2]);
   const stairs = grp();
@@ -719,10 +722,10 @@ function home18() {
   const mat = plane(1.0, 0.6, std(cv(128, 64, (x) => { x.fillStyle = "#8a6d4d"; x.fillRect(0, 0, 128, 64); x.fillStyle = "#3a2d22"; x.font = "bold 19px serif"; x.textAlign = "center"; x.fillText("WELCOME", 64, 39); })), 2.5, 0.016, 1.3, Q.group);
   mat.rotation.x = -Math.PI / 2;
   // people: Iris in her chair, Anita in the hall; outside, a neighbour going by
-  person(Q, "iris", "iris79", -4.55, -1.2, Math.PI / 2, { kind: "sit", seat: { top: 0.46, x: -4.55, z: -1.2, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] }, { raw: true, seatStill: true });
+  person(Q, "iris", "iris79", -4.44, -1.2, Math.PI / 2, { kind: "sit", seat: { top: 0.46, x: -4.44, z: -1.2, ry: Math.PI / 2, feetForward: true }, clips: ["SitIdle", "SitIdle2"] }, { raw: true, seatStill: true });
   person(Q, "anita", "anita18", 2.3, -4.9, Math.PI, { kind: "watch", at: [2.5, 0], idles: ["Idle", "HappyIdle"], react: ["Nod", "HeadTurn"], every: [5, 9] });
   crowd(Q, "wr_man18", -3, 8.9, Math.PI / 2, { kind: "errand", from: [-4.8, 8.9], to: [4.8, 8.9], walk: "Walk", idle: "IdleM", wait: [3, 6] });
-  Q.leadPath = [[-3.7, -0.4], [-1.5, -0.6], [0.6, -0.7], [2.3, -0.7], [2.5, 0.6], [2.5, 3.6], [2.5, 6.6]];
+  Q.leadPath = [[-3.7, -0.4], [-1.5, -0.7], [0.45, -0.7], [2.35, -0.7], [2.55, 0.6], [2.5, 3.6], [2.5, 6.6]];
   Q.routes = [{ id: "Iris walks to the gate", pts: Q.leadPath, r: 0.28, h: 1.7 }];
   point(Q, "frontGate", 2.5, 6.8, "Walk to the front gate");
   Q.keepOff = [{ pts: Q.leadPath, w: 1 }];

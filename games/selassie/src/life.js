@@ -78,16 +78,14 @@ function stall() {
   return g;
 }
 /* What each background person does (owner's note, November 2026: "ensure persons have varied actions and no standing zombies").
-   Nobody stands in the plain Idle: every standing clip below moves (weight shifts, a look round, a cheerful sway,
-   an old man's stoop; WipeSweat and HeadTurn turned heads faster than the head check allows, so only the police turn their heads), the shared ambient system starts each one at its own moment and speed, and the reactions fit the
-   day (waving, a slow wave, clapping, cheering, pointing at the aircraft). Listeners in a chat nod and agree. Elders move like elders,
-   children like children, and the ceremonial police stand at ease and only turn their heads. */
+   The shared ambient system starts each person at their own point in the clip. The crowd sways, shifts weight, waves and
+   points at the aircraft. The ceremonial police stand at ease. */
 export const IDLES = {
-  man: ["IdleM", "LookAround", "HappyIdle"],
-  woman: ["HappyIdle", "LookAround", "IdleM"],
+  man: ["IdleM", "HappyIdle"],
+  woman: ["HappyIdle", "Idle"],
   elder: ["OldIdle", "IdleM"],
-  kid: ["HappyIdle", "LookAround"],
-  police: ["IdleM", "HeadTurn"],
+  kid: ["HappyIdle", "Idle"],
+  police: ["IdleM"],
 };
 export const LISTEN = ["Agree", "Nod", "HappyIdle", "IdleM"];
 export const WELCOME = ["Wave", "WaveSlow", "Clap", "Cheer", "Point"];

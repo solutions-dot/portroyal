@@ -252,7 +252,7 @@ export function buildSlipe(g) {
   const bus2 = bus(-70, -2.3); bus2.userData.noBatch = true; bus2.visible = false;
   /* the night of the fire: a rope inside the gate, a fire engine, the fire itself, and what is left at dawn. All hidden until chapter 4. */
   const night = grp(g); night.userData.noBatch = true; night.visible = false;
-  for (const x of [-3, 0, 3]) cyl(0.04, 0.05, 1.0, solid(0xd8d2c0, 0.8), x, 0.5, -9.4, night); { const rp = cyl(0.02, 0.02, 6, solid(0xe8d8a0, 0.8), 0, 0.92, -9.4, night); rp.rotation.z = Math.PI / 2; }
+  for (const x of [-1.1, .95, 3]) cyl(0.04, 0.05, 1.0, solid(0xd8d2c0, 0.8), x, 0.5, -9.4, night); { const rp = cyl(0.02, 0.02, 4.1, solid(0xe8d8a0, 0.8), .95, 0.92, -9.4, night); rp.rotation.z = Math.PI / 2; }
   const eng = lorry({ body: 'fire', colour: 0xb8281e, bodyColour: 0xb8281e, L: 5.4, W: 2.1, axles: 1 }); eng.position.set(-0.6, 0, -17.6); eng.rotation.y = Math.PI / 2; night.add(eng); const engineBox = [-0.6 - 1.15, -17.6 - 2.8, -0.6 + 1.15, -17.6 + 2.8];   /* its footprint, for the audit of the children's way out */   /* a fire engine: lockers, a ladder, a hose reel, a red lamp. No crest or lettering (engine/roadcars.js) */
   { const hose = cyl(0.05, 0.05, 9, solid(0xc9c0a0, 0.9), 2.4, 0.05, -21, night); hose.rotation.x = Math.PI / 2; hose.rotation.z = 0.5; }
   const fire = makeFire(night, toMy, myers);

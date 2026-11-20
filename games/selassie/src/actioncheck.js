@@ -6,6 +6,7 @@
    - zombie: anyone in view who stays in the plain Idle clip with the head not turning (under STILL.deg degrees) for more than
      STILL.seconds. Story people the player is talking to and Haile Selassie I and Mortimo Planno (posed by the cinematic) are left out. */
 import * as THREE from "three";
+import { idleOK } from "../../../engine/anim.js";
 import { headAngles } from "./headcheck.js";
 import { closeAll } from "./ui.js";
 import { PLACE_STAGES } from "./steps.js";
@@ -63,6 +64,10 @@ export async function actionCheck(A, { seconds = 14 } = {}) {
       const id = label + " " + (n.id || n.base),
         g = headAngles(n.m),
         s = still.get(id);
+      if (Q.id === "airport" && Q.extras.includes(n) && !idleOK(name) && !reported.has(id)) {
+        reported.add(id);
+        lines.push(`${id}: plays ${name} in the airport crowd (at ${t.toFixed(1)} s)`);
+      }
       if (name !== "Idle" || !g) {
         still.delete(id);
         continue;

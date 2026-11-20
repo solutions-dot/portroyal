@@ -16,7 +16,7 @@ export const isSeated = (name) => SEATED.test(name || '');
 /* Clips never used to fill idle time (owner, 19 November 2026: a person standing about and looking around "looks silly"). Every idle, reaction and
    background-life choice in the engine skips them (idleOK), a body never rests on one (animate), and the controller will not play one (play)
    unless a scene asks for it on purpose with ctl.cue(name) (Nanny Town: the soldiers look up into the trees when they hear something). */
-export const NOT_IDLE = new Set(['LookAround']);
+export const NOT_IDLE = new Set(['LookAround', 'LookOverShoulder']);
 export const idleOK = (k) => !NOT_IDLE.has(k);
 /* walking clips (played in place, paced to the ground speed by ctl.pace) and the looping clips whose ends are joined so they never snap */
 export const WALKS = /^(Walk|WalkM|WalkM2|Run|RunM2|Carry|SadWalk|CarryBagWalk|CarryHeadWalk2?|HoldWalk|HurtWalk|InjuredWalk|RifleWalk2?|RifleCrouchWalk)$/;
@@ -51,11 +51,61 @@ const STANDING = /^(Angry|Thankful|Greet|LookOverShoulder|HappyIdle2|StandPoseM|
 function posture(c, name) { const q = new THREE.Quaternion(), r = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0), st = STANDING.test(name || '');
   for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const deg = m ? (POSTURE[m[1]] || (st ? STANCE[m[1]] : undefined)) : undefined; if (!deg) continue; r.setFromAxisAngle(X, deg * Math.PI / 180); const v = t.values;
     for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i).premultiply(r).toArray(v, i); } } }
+const QUIET_IDLE = /^(Idle|IdleM|HappyIdle2?|HeadTurn|StandPoseM)$/;
+const idlePoses = new WeakMap();
+function idlePosture(c, source) {
+  const idle = CL.Idle;
+  if (!idle) return;
+  const stored = idlePoses.get(source);
+  if (stored?.idle === idle) {
+    for (const track of c.tracks) if (stored.values.has(track.name)) track.values.set(stored.values.get(track.name));
+    return;
+  }
+  const values = new Map();
+  const bonesOf = clip => new Map(clip.tracks.flatMap(t => {
+    const match = t.name.match(/^mixamorig:?(\w+)\.quaternion$/);
+    return match ? [[match[1], t]] : [];
+  }));
+  const bones = bonesOf(c), rest = bonesOf(idle);
+  const x = new THREE.Vector3(1, 0, 0), q = new THREE.Quaternion(), turn = new THREE.Quaternion(), parent = new THREE.Quaternion(), sample = new THREE.Quaternion();
+  const change = (track, fn) => {
+    if (!track) return;
+    for (let i = 0; i < track.times.length; i++) fn(q.fromArray(track.values, i * 4), track.times[i]).normalize().toArray(track.values, i * 4);
+    values.set(track.name, track.values.slice());
+  };
+  if (c.name === 'IdleM') {
+    // This clip has a broad lean and swing. Keep a small weight shift around the standing idle.
+    for (const [name, track] of bones) {
+      const neutral = rest.get(name);
+      if (neutral) change(track, (q, t) => q.slerp(sampleQ(neutral, t % idle.duration, sample), .87));
+    }
+  }
+  // A small forward pitch stacks the shoulders above the pelvis on the plain idle.
+  turn.setFromAxisAngle(x, 0.09);
+  change(bones.get('Spine'), q => q.premultiply(turn));
+  for (const side of ['Left', 'Right']) {
+    if (source !== idle && c.name !== 'IdleM') for (const joint of ['Shoulder', 'Arm', 'ForeArm', 'Hand']) {
+      const neutral = rest.get(side + joint);
+      if (neutral) change(bones.get(side + joint), q => q.slerp(sample.fromArray(neutral.values), .8));
+    }
+    const chain = ['Hips', 'Spine', 'Spine1', 'Spine2', side + 'Shoulder'].map(name => bones.get(name));
+    if (chain.some(track => !track)) continue;
+    // Apply the forward arm turn in the body frame so both arms hang beside the hips.
+    turn.setFromAxisAngle(x, -.29);
+    change(bones.get(side + 'Arm'), (q, t) => {
+      parent.identity();
+      for (const track of chain) parent.multiply(sampleQ(track, t, sample));
+      return q.premultiply(sample.copy(parent).invert().multiply(turn).multiply(parent));
+    });
+  }
+  idlePoses.set(source, { idle, values });
+}
 export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() : CL[name]; if (!src) return null; if (name === 'SitDrink' && !CL._sd) { CL._sd = THREE.AnimationUtils.subclip(src, 'SitDrink', 140, 455, 30); } if (name === 'SitDrink') src = CL._sd; const c = src.clone(); keepHips = keepHips || HIPS_Y.test(name);
   c.tracks = c.tracks.filter((t) => { if (t.name.endsWith('.scale')) return false; if (!t.name.endsWith('.position')) return true; if (!keepHips || !/Hips/.test(t.name)) return false;
     const v = t.values; let x0 = v[0], z0 = v[2]; if (SEATED.test(name) && CL.Idle) { const it = CL.Idle.tracks.find((k) => k.name === t.name); if (it) { x0 = it.values[0]; z0 = it.values[2]; } }   /* seated clips: keep the hips over the spot we put him, not where the clip wandered to */
  for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } return true; });   /* running stays in place; the game moves her */
   if (!SEATED.test(name)) posture(c, name);
+  if (QUIET_IDLE.test(name)) idlePosture(c, src);
   if (STANDING.test(name) && name !== 'Idle' && !GRIPS.test(name)) relaxHands(c);
   if (!GRIPS.test(name) && !SEATED.test(name)) restFingers(c);   /* the knuckles gently bent and the fingers together (below) */   /* seated clips keep the pose they were tuned in: their hands rest on the lap, and moving the chest pushed the fingers into the thighs (the cloth check, Garvey, 16 November 2026) */
   if (SEAM.test(name)) seamLoop(c);

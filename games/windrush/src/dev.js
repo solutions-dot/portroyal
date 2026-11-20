@@ -160,6 +160,7 @@ export async function dev(A) {
           tilbury: 40,
           tilbury2: 40,
           london: 50,
+          suitcase: 54,
           room: 55,
           work: 60,
           jamaica: 64,
@@ -191,6 +192,14 @@ export async function dev(A) {
       advice: { pos: [0, 1.28, 6], look: [1.5, 0.9, -2] },
     };
     S.view = views[id] || views.yard;
+    if (id === "suitcase") {
+      A.action("roomCase");
+      S.view = { pos: [10.8, 1.45, 4.2], look: [1, 1.45, 4.2] };
+      if (q.has("place")) {
+        A.action("roomCase");
+        S.view = { pos: [-13.45, 1.45, -6.3], look: [-15.2, 0.6, -7.85] };
+      }
+    }
     if (q.has("c")) S.view = { pos: q.get("c").split(",").map(Number), look: (q.get("l") || "0,1,0").split(",").map(Number) }; /* &c=x,y,z&l=x,y,z: look from anywhere */
     if (q.has("t")) {
       const draw = A.renderer.render;

@@ -97,7 +97,9 @@ Models ship as `site/models/<name>.js`, each defining `window.__models[name] = "
 
 ## engine/anim.js: animation for every character
 
-**No looking around as filler** (owner, 19 November 2026: a person standing about and looking around "looks silly"). `NOT_IDLE` in `engine/anim.js` lists clips that never fill idle time (now `LookAround`). Every idle, reaction and background-life choice skips them (`idleOK`, used by the fidget and by `engine/ambient.js`), `animate()` rests a body on `Idle` instead, and the controller's `play()` ignores them. A scene that wants one on purpose calls `ctl.cue(name)` (Nanny Town: the soldiers look up into the trees when they hear something). Games' own idle lists may still name the clip; the engine skips it.
+**No looking around as filler.** `NOT_IDLE` in `engine/anim.js` lists clips that never fill idle time, including `LookAround` and `LookOverShoulder`. Use `idleOK` when a game chooses its own background start clip. Intentional scene actions use `ctl.cue(name)`.
+
+The quiet standing clips use the shared standing posture in `clipFor`. The shoulders sit over the hips and the upper arms bring the hands beside the body. `IdleM` keeps a gentle weight shift around the plain idle.
 
 Every character uses the same Mixamo skeleton (`mixamorig*` bones, from `shared/rig/char.blend`), so one clip library animates everyone.
 
@@ -178,6 +180,8 @@ Show the results in a dev-only `?test=audit` view and expect 0 issues. Kendal's 
 
 Seat placement bends the knees and keeps the feet at their clip angle. `engine/bone-pose.js` removes the previous correction if the mixer left it on the bone. The shared head turn uses the same guard through `lookBegin` and `lookEnd`.
 
+For a seat with a solid base, set `seatAnchor.feetForward` to bend the lower legs toward the space in front of it. Set `seatAnchor.floor` to the standing surface under the feet when the seat is on a raised floor.
+
 The slope adjustment in `groundFeet` uses the same guard for the thigh, knee and foot. It keeps the foot's clip angle when bending the leg to reach the ground, then tilts the shoe toward the slope as the mixer advances. The shared `jointTurnLimiter` slows sudden ankle turns relative to the body. Port Royal's crowd uses it relative to the chest to smooth the final head pose.
 
 For a person walking up to a seat, `seatAnchor.settle` eases the body to the anchor. Supply the model's previous parent-relative position and yaw as `from` and `yaw`, the mixer time as `start`, and the number of seconds as `duration`.
@@ -189,7 +193,7 @@ One system for every game (owner's request, November 2026). Each game used to ha
 | Name | Use |
 |---|---|
 | `follow(n, opts)` | Someone who comes with you. They walk in your footsteps `gap` metres behind (about 1.5; 1.3 for a small child) and `side` metres to one side when there is room, never closer than `space` (about 0.9; 0.8 for a small child). If you walk back into them they step aside, across your way. They stop a step after you and turn to face you, run only to catch up and only if the body has a Run clip, route round anything in the way, and if stuck or left far behind (`far`, 16 m) reappear at a free spot behind you, out of the camera's view when possible. `opts.path` keeps them on a path instead. |
-| `lead(n, path, opts)` | A guide who walks `ahead` metres in front of you along a path (a list of `[x, z]`), within `min` and `max`. If you are more than `wait` metres away they stop, turn and wait (with a wave if the body has one) until you are within `resume`. |
+| `lead(n, path, opts)` | A guide who walks `ahead` metres in front of you along a path (a list of `[x, z]`), within `min` and `max`. If you are more than `wait` metres away they stop until you are within `resume`. With `keepAhead`, the guide takes the first step, then waits when you pause or turn back. `maxSpeed` caps their walking pace. |
 | `goTo(n, x, z, opts)` | Someone sent to a spot: round `world.walls` (or along `opts.route`, waypoints the audit has checked), then they stop, turn to `opts.face` and call `opts.done(n)`. |
 | `stop(n)` | They stand where they are. Call it when the story says so, and when a chapter is left (`resetTransient`). |
 | `tick(n, dt, world)` | `world = { px, pz, blocked(x, z, r), walls, bounds, others, talking, view, place(n) }`: where you are, where a person may not stand (walls, footprints of trees, huts, rocks, luggage), routes round furniture, other people (kept 0.5 m apart), the person you are talking to (they wait), the camera (for reappearing out of view), and `place(n)` to set the body's height on hilly land. Without `place` the tick sets x and z and leaves y to `groundFeet`. |
@@ -298,7 +302,9 @@ const STEPS = {
 
 The arrow checks how far the floor is open ahead (so it never lies inside a wall) against still, solid scenery only: people, instanced forests and effects are never tested, and a big still mesh (the ground, a merged street) is tested through a 2 m grid of its triangles built once, so only the triangles under the ray are tried. At most about twelve checks a second while turning, five while not. Before this (19 November 2026) it tested every person on screen nearly every frame while you walked, which made walking sluggish in Port Royal and Nanny Town while standing by a person (arrow hidden) was fine.
 
-**`createCarry({ camera, body, side, slot, grip, gripOpts, view })`** is the player's hand. `carry(item)` takes the item from where it was (a pile goes down by one) and shows it on the camera at `slot` in first person, or in the grip of the player's body in third person (`engine/grip.js`). `place(item, spot)` leaves it where it goes (`spot` is an Object3D or `{ parent, at, ry, scale }`). `view('first' | 'third')` moves a held item to the other hand slot, `drop()` lets go, `holding()` says what is held, and `issues()` gives lines for a held item that is hidden, not in the hand or shrunk to nothing (add them to `?test=held`).
+**`createCarry({ camera, body, side, slot, grip, gripOpts, view, fit })`** is the player's hand. `carry(item)` takes the item from where it was (a pile goes down by one) and shows it on the camera at `slot` in first person, or in the grip of the player's body in third person (`engine/grip.js`). `place(item, spot)` leaves it where it goes (`spot` is an Object3D or `{ parent, at, ry, scale }`). `view('first' | 'third')` moves a held item to the other hand slot, `drop()` lets go, `holding()` says what is held, and `issues()` checks the item's visibility, attachment and scale.
+
+With `fit: true`, the first-person item keeps its world scale and fits in the bottom corner on the side of `slot`. Call `fitView()` after the camera projection changes on resize.
 
 **`checkFlow(story, opts)`** and **`flowTest(story, opts)`** are the engine side of `?test=flow`. For every step, in a dry copy that changes nothing in the scene, it fails: more than one thing to do and no count in the goal; an arrow with no target, or one that points at something not needed now (an optional action, a done one); an arrow that does not move to another unfinished need when one is done; a `do` need with no `shows`, or a `carry` item not in `options.items`; an arrow later than 3 s (5 s explore) while the child keeps walking; a story person not in the place; a step with needs and no `next`, or with no needs and not `wait` or `end`; and a flavour or meet line that uses "first", "come back", "go and", "go to", "talk to", "then" or "go back", names another person (`options.names`), or has an em dash. `opts.place(stage)` brings the step's place in so `where()` knows it, `opts.start(stage)` is where the player stands when the step begins, `opts.only` limits the stages. `flowTest` writes the lines and `FLOW <n>` into `#autolog`. Wire it inside `if (__DEV__)`; the public build leaves it out. Unit tests: `tests/story.mjs` (run by `npm test`).
 

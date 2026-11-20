@@ -175,7 +175,8 @@ const worlds = {},
   stick = { id: null, dx: 0, dy: 0 },
   look = { id: null };
 const world = () => worlds[current],
-  carry = createCarry({ camera, slot: [0.23, -0.29, -0.5] });
+  carry = createCarry({ camera, fit: true });
+addEventListener("resize", carry.fitView);
 export const blocked = (Q, x, z, r = 0.24) =>
   x < Q.bounds.x0 + r ||
   x > Q.bounds.x1 - r ||
@@ -210,7 +211,7 @@ function body(spec) {
   m.position.set(spec.x, spec.ground || 0, spec.z);
   m.rotation.y = spec.ry || 0;
   m.userData.ground = spec.ground || 0;
-  const ctl = animate(m, spec.idle || "Idle");
+  const ctl = animate(m, spec.life?.seat ? spec.life.clips?.[0] || "SitIdle" : spec.idle || "Idle");
   ctl.mx.update(0);
   spreadArms(m, spec.sex === "f" ? 0.16 : 0.08);
   groundFeet(m);
@@ -614,6 +615,7 @@ async function go(stage, { restore = null, keep = false } = {}) {
     n.ctl.play("OldIdle");
     lead(n, Q.leadPath, {
       walk: 0.85,
+      side: 0,
       run: false,
       wait: 5,
       resume: 3.5,

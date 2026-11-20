@@ -19,7 +19,7 @@ import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
-import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
+import { grip, gripTick, spreadArms, steadyLoad } from '../../../engine/grip.js';
 import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditCloth, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { walkRoute } from '../../../engine/placement.js';
 import { follow, lead, goTo, stop as stopFollow, tick as followTick, isFollowing, pathSpots, pathS as pathSE, watch as followWatch } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
@@ -129,12 +129,18 @@ function makeBody(s) {
   m.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
   m.scale.setScalar(s.scale || 1); m.position.set(s.x, s.ground || 0, s.z); m.rotation.y = s.ry || 0; m.userData.ground = s.ground || 0;
   const b = new THREE.Mesh(BLOB_GEO, BLOB_MAT); b.rotation.x = -PI / 2; b.position.y = 0.06; b.renderOrder = 1; m.add(b);
-  const ctl = animate(m, s.anim || 'Idle'); m.userData.anim = ctl; m.userData.held = []; ctl.mx.update(0);   /* pose the body once, so the grips below are measured on the real hand */
+  const ctl = animate(m, s.life?.idle === 'CarryHeadIdle' ? 'CarryHeadIdle' : s.anim || 'Idle'); m.userData.anim = ctl; m.userData.held = []; ctl.mx.update(0);   /* pose the body once, so the grips below are measured on the real hand */
   for (const [bone, prop] of s.props || []) { const o = PROPS[prop](s), G = GRIP[prop]; grip(m, bone.replace('Hand', ''), o, { handleY: o.userData.handleY, scale: G.scale, yaw: G.yaw || 0, lift: Math.max(0.3, G.lift || 0), straighten: G.straighten ?? 0.8 }); m.userData.held.push({ obj: o, bone, label: prop }); if (o.userData.flame) m.userData.flame = o.userData.flame; }
   if (s.lampLight) { const L = new THREE.PointLight(0xffc878, 5.5, 15, 1.6); L.position.set(0.35, 0.95, 0.35); m.add(L); m.userData.lamp = L; }
   if (s.cocked) cockedHat(m, (s.tint && s.tint.Hat) || 0x16141a, (s.tint && s.tint.Bands) || 0xd8d0b8);   /* the 1730s soldiers' three-cornered hat, in place of the builder's round felt hat (props.js) */
   if (s.cloak) leafCloak(m, (s.x * 7 + s.z * 3) | 0); if (s.beads) attach(m, 'Neck', beads(), [0, 0.0, 0.015]);
-  if (s.life && s.life.load === 'basket') { const o = basketOf('yam'); o.scale.set(1.15, 0.8, 1.15); attach(m, 'Head', o, [0, HEAD_LOAD[s.base] || 0.2, 0.01]); o.visible = false; s.load = o; s.life.show = (n, on) => { if (n.load) n.load.visible = on; }; }   /* a basket of yams carried on the head (engine/ambient.js shows it on the way there) */
+  if (s.life?.load === 'basket') {
+    const basket = basketOf('yam');
+    basket.scale.set(1.15, 0.8, 1.15);
+    attach(m, 'Head', basket, [0, HEAD_LOAD[s.base] || 0.2, 0.01]);
+    s.load = basket;
+    steadyLoad(m, basket);
+  }
   spreadArms(m, /^maroon_(woman|elder_woman|girl|child)/.test(s.base) ? 0.15 : 0.06);   /* arms hang clear of skirts (engine/grip.js) */
   return m;
 }

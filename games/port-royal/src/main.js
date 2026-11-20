@@ -319,10 +319,10 @@ function buildHarbour() {
   const crate = (x, y, z, s, r) => { const g = new THREE.Group(); g.position.set(x, y + s / 2, z); g.rotation.y = r; scene.add(g); B(s, s, s, crateM, 0, 0, 0, g); for (const a of [-1, 1]) for (const b of [-1, 1]) { B(0.07, s + 0.03, 0.07, timber, a * s / 2, 0, b * s / 2, g); B(s + 0.03, 0.07, 0.07, timber, 0, a * s / 2, b * s / 2, g); B(0.07, 0.07, s + 0.03, timber, a * s / 2, b * s / 2, 0, g); } };
   const sack = (x, y, z, s) => { const k = mk(new THREE.SphereGeometry(0.32, 10, 8), sackM, x, y + 0.2 * s, z); k.scale.set(s * 1.2, 0.7 * s, s * 0.85); k.rotation.y = x; };
   const nStreet = scene.children.length;   /* everything from here on is solid: the pier casks and crates, Kofi's barrels, the crate stacks and the street cargo */
-  cask(SHORE + 2.2, 0.05, 1.32); cask(SHORE + 2.95, 0.05, 1.32); cask(SHORE + 4.6, 0.05, 1.12, true); crate(SHORE + 14.6, 0.05, 1.1, 0.8, 0.2); crate(SHORE + 15.5, 0.05, 1.05, 0.6, 0.6); crate(SHORE + 14.7, 0.85, 1.1, 0.55, 0.5); sack(SHORE + 13.7, 0.05, 1.2, 1);
+  cask(SHORE + 2.2, 0.05, 1.32); cask(SHORE + 2.95, 0.05, 1.32); cask(SHORE + 4.6, 0.05, 1.12, true); crate(SHORE + 14.6, 0.05, 1.1, 0.8, 0.2); crate(SHORE + 15.5, 0.05, 1.05, 0.6, 0.6); crate(SHORE + 14.6, 0.85, 1.1, 0.55, 0.2); sack(SHORE + 13.7, 0.05, 1.2, 1);
   for (const [x, z, k] of [[20.6, 5.4, 0], [21.3, 5.7, 0], [20.9, 6.5, 2], [19.95, -3.2, 1], [20.95, -2.8, 0], [21.85, -3.3, 1], [20.65, -3.9, 3], [21.45, -4.1, 3], [21.05, -4.0, 4]]) { if (k === 0) cask(x, 0, z); else if (k === 2) cask(x, 0, z, true); else if (k === 1) crate(x, 0, z, 0.75, x); else if (k === 3) sack(x, 0, z, 1); else sack(x, 0.3, z, 0.9); }
   for (const [x, z, k] of [[-9.6, -4.4, 0], [3.4, 4.35, 0], [4.15, 4.4, 1], [-13.2, 4.4, 0], [11.6, -4.4, 1], [12.3, -4.45, 0]]) { if (k) crate(x, 0.12, z, 0.65, 0.1); else cask(x, 0.12, z); }
-  crate(19.0, 0, 3.05, 0.7, 0.1); crate(19.8, 0, 3.15, 0.7, -0.15); crate(19.4, 0.7, 3.1, 0.55, 0.3);   /* the stack Kofi carries crates from */
+  crate(19.0, 0, 3.85, 0.7, 0.1); crate(19.8, 0, 3.95, 0.7, -0.15); crate(19.4, 0.7, 3.9, 0.55, 0.3);   /* the stack Kofi carries crates from */
   for (const [x, z, k] of [[20.45, -6.0, 0], [21.2, -6.1, 0], [20.75, -6.95, 1], [20.85, -7.95, 2], [21.0, -5.25, 3]]) { if (k === 0) cask(x, 0, z); else if (k === 1) crate(x, 0, z, 0.72, x); else if (k === 2) cask(x, 0, z, true); else sack(x, 0, z, 1); }   /* cargo on the far side of the harbour corner, by the water, so the way along the houses to the sand spit and Fort Charles stays open (it was shut, found by ?test=audit) */
   for (const [x, z, k] of [[18.55, 21.15, 0], [19.45, 21.2, 1], [20.35, 21.1, 0], [18.6, 20.4, 3], [21.2, 21.05, 0], [19.45, 21.2, 4]]) { if (k === 0) cask(x, 0, z); else if (k === 1) crate(x, 0, z, 0.72, x); else if (k === 3) sack(x, 0, z, 1); else sack(x, 0.72, z, 0.8); }   /* barrels in front of the beached boat, closing the gap between the boat and the wall (the street mouth stays clear); none cut into the boat or each other (?test=audit) */
   streetProps.push(...scene.children.slice(nStreet));
@@ -540,11 +540,23 @@ function kofiTick(dt) { const n = NPCS[0], m = people.kofi, ac = m.userData.anim
   if (!n.walking) { n.walking = true; ac.play(KP.leg === 0 ? 'Carry' : 'Walk'); }
   const dx = to[0] - n.x, dz = to[1] - n.z, d = Math.hypot(dx, dz), sp = 1.25 * dt;
   const want = Math.atan2(dx, dz); let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * 5); n.ry = m.rotation.y;
-  if (d <= sp) { n.x = to[0]; n.z = to[1]; const last = n.route.length - 1; if ((KP.dir > 0 && KP.i === last) || (KP.dir < 0 && KP.i === 0)) { KP.leg = 1 - KP.leg; KP.dir = -KP.dir; n.walking = false; if (KP.leg === 1 && KP.box) { KP.stack = KP.stack || []; const c = KP.box.clone(); const i = (KP.dropN = (KP.dropN || 0) + 1) % 5; if (KP.stack[i]) scene.remove(KP.stack[i]); c.position.set(31.7 + (i % 2) * 0.5, 0.06 + 0.16 + Math.floor(i / 2) * 0.33 * (i < 4 ? 1 : 0), -0.75 + (i % 3) * 0.04); c.rotation.y = i * 0.2; c.visible = true; scene.add(c); KP.stack[i] = c; }
+  if (d <= sp) { n.x = to[0]; n.z = to[1]; const last = n.route.length - 1; if ((KP.dir > 0 && KP.i === last) || (KP.dir < 0 && KP.i === 0)) { KP.leg = 1 - KP.leg; KP.dir = -KP.dir; n.walking = false; if (KP.leg === 1 && KP.box) stackKofiCrate();
       if (KP.leg === 0 && CL.PickUp) { KP.wait = 3.2; KP.box.visible = false; KP.lift = 2.4; ac.play('PickUp', true); } else { KP.wait = 1.6; ac.play(KP.leg === 0 ? 'CarryIdle' : null); } } KP.i += KP.dir; }
   else { n.x += dx / d * sp; n.z += dz / d * sp; ac.pace(1.25); }   /* the walk or carry clip at the pace that fits his speed, so his feet do not slide */
   m.position.set(n.x, n.x > SHORE - 2.5 && Math.abs(n.z) < 1.75 ? 0.06 : 0, n.z); }
 function kofiBox(m) { const p1 = KP.hl.getWorldPosition(_dp), p2 = KP.hr.getWorldPosition(_ds); KP.box.position.copy(p1).add(p2).multiplyScalar(0.5); KP.box.position.y -= 0.02; KP.box.position.x += Math.sin(m.rotation.y) * 0.24; KP.box.position.z += Math.cos(m.rotation.y) * 0.24; KP.box.rotation.y = m.rotation.y;   /* held out in front, not inside him */ }
+function stackKofiCrate() {
+  const stack = KP.stack ||= [];
+  const i = KP.nextSlot || 0, column = i % 2, x = 31.7 + column * .5, z = -.75;
+  KP.nextSlot = (i + 1) % 4;
+  stack[i]?.removeFromParent();
+  const crate = KP.box.clone();
+  crate.position.set(x, groundYAt(x, z) + .16 + Math.floor(i / 2) * .32, z);
+  crate.rotation.y = column * .2;
+  crate.visible = true;
+  scene.add(crate);
+  stack[i] = crate;
+}
 function npcShow(v) { for (const n of NPCS) if (people[n.id]) people[n.id].visible = v; }
 
 
@@ -1113,7 +1125,7 @@ function buildWare() { if (wareG) return; wareG = new THREE.Group(); wareG.visib
   B(0.72, 0.05, 0.46, [oak, oak, new THREE.MeshStandardMaterial({ map: led, roughness: 0.9 }), oak, oak, oak], dx - 0.35, 0.96, dz - 0.05);
   mk(new THREE.CylinderGeometry(0.09, 0.11, 0.02, 12), brass, dx + 0.45, 0.945, dz - 0.15); mk(new THREE.CylinderGeometry(0.012, 0.012, 0.42, 6), brass, dx + 0.45, 1.15, dz - 0.15); const beam = mk(new THREE.CylinderGeometry(0.008, 0.008, 0.5, 6), brass, dx + 0.45, 1.35, dz - 0.15); beam.rotation.z = Math.PI / 2 + 0.08;
   for (const s of [-1, 1]) { mk(new THREE.CylinderGeometry(0.08, 0.06, 0.015, 12), brass, dx + 0.45 + s * 0.24, 1.14 - s * 0.02, dz - 0.15); mk(new THREE.CylinderGeometry(0.003, 0.003, 0.2, 4), brass, dx + 0.45 + s * 0.24, 1.25 - s * 0.02, dz - 0.15); }
-  for (const [ox, oz, k] of [[0.75, 0.1, 5], [0.84, 0.16, 3], [0.7, 0.22, 1], [0.21, -0.14, 1]]) mk(new THREE.CylinderGeometry(0.019, 0.019, 0.005 * k, 10), silver, dx + ox, 0.937 + 0.0025 * k + (ox < 0.3 ? 0.21 : 0), dz + oz);
+  for (const [ox, oz, k, top] of [[0.75, 0.1, 5, .935], [0.84, 0.16, 3, .935], [0.7, 0.22, 1, .935], [0.21, -0.14, 1, 1.1675]]) mk(new THREE.CylinderGeometry(0.019, 0.019, 0.005 * k, 10), silver, dx + ox, top + 0.0025 * k, dz + oz);
   mk(new THREE.CylinderGeometry(0.07, 0.055, 0.015, 12), brass, dx - 0.85, 0.943, dz + 0.3); mk(new THREE.CylinderGeometry(0.011, 0.011, 0.13, 6), paper, dx - 0.85, 1.02, dz + 0.3); const fl = mk(new THREE.SphereGeometry(0.016, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffc66a }), dx - 0.85, 1.1, dz + 0.3); fl.scale.y = 1.9;
   const lt = B(0.24, 0.004, 0.17, paper, dx + 0.1, 0.938, dz + 0.25); lt.rotation.y = 0.3; mk(new THREE.CylinderGeometry(0.018, 0.018, 0.006, 10), new THREE.MeshStandardMaterial({ color: 0x9c1f1f, roughness: 0.5 }), dx + 0.1, 0.943, dz + 0.25);
   const qp = mk(new THREE.ConeGeometry(0.012, 0.3, 5), paper, dx - 0.05, 1.02, dz - 0.2); qp.rotation.z = 0.5; mk(new THREE.CylinderGeometry(0.03, 0.035, 0.05, 8), iron, dx - 0.12, 0.96, dz - 0.25);
@@ -1725,7 +1737,7 @@ function fireSalute() { if (!FORT.guns) return; const guns = FORT.guns.slice(0, 
 TICKS.push(() => { if (FORT.g) FORT.g.visible = state.place === 'out' && !(Q.on && Q.phase === 'yard'); });
 
 /* ---------- Ned's story: Port Royal, August 1670 ---------- */
-const FBP = { morgan: [SHORE + 9.5, -0.55, -Math.PI / 2], d1: [SHORE - 4.4, 2.15, Math.PI / 2], d2: [SHORE - 2.8, 2.15, -Math.PI / 2], c1: [SHORE + 3, 0.7, Math.PI / 2], watch: [[SHORE - 3.4, 4.2, Math.PI, 'Laugh'], [SHORE - 5.6, 1.2, Math.PI * 0.7, 'Talk2'], [SHORE + 13.2, 0.55, -Math.PI / 2, 'Wave']] };
+const FBP = { morgan: [SHORE + 10, -0.85, -Math.PI / 2], d1: [SHORE - 4.4, 1.82, Math.PI / 2], d2: [SHORE - 2.8, 1.82, -Math.PI / 2], c1: [SHORE + 3, 0.7, Math.PI / 2], watch: [[SHORE - 4.85, 3.35, Math.PI * 0.78, 'Laugh'], [SHORE - 5.6, 1.2, Math.PI * 0.7, 'Talk2'], [SHORE + 13.2, 0.55, -Math.PI / 2, 'Wave']] };
 const FBG = { group: null, cast: [] };
 JOURNAL.push({ id: 'panama', title: 'The raid on Panama',
   simple: ['In 1670 Morgan gathered many ships and over a thousand men.', 'In 1671 they walked across the land to Panama and took the city. It burned.'],
@@ -1823,16 +1835,21 @@ const MUSTER = [
   { who: 'Henry Morgan', text: 'Men! The ships are loaded. We sail in the morning!', anim: 'Point' },
   { who: 'Henry Morgan', text: 'Every man gets his share. Every hurt man is paid first.' },
   { who: 'Henry Morgan', text: 'Stay together, and we will do great things!' }];
-FBP.exq = [SHORE - 6.6, 3.75, Math.PI]; FBP.qm = [SHORE - 3.4, -1.9, Math.PI / 2];   /* clear of the harbour's casks and crates (?test=audit) */
+FBP.exq = [SHORE - 6.6, 3.75, Math.PI]; FBP.qm = [SHORE - 3.65, -1.9, Math.PI / 2];   /* clear of the harbour's casks and crates (?test=audit) */
 const _fbBuild = fbBuild; fbBuild = () => { const first = !FBG.group; _fbBuild(); if (!first) return; const g = FBG.group, prev = cur; cur = g;
-  const seat = mk(new THREE.BoxGeometry(0.5, 0.42, 0.45), new THREE.MeshStandardMaterial({ map: plankTex([132, 100, 70], 3, 1, 2), roughness: 0.9 }), FBP.exq[0], groundYAt(FBP.exq[0], FBP.exq[1]) + 0.21, FBP.exq[1] + 0.2);
-  const desk = mk(new THREE.CylinderGeometry(0.3, 0.3, 0.72, 12), new THREE.MeshStandardMaterial({ map: plankTex([120, 88, 58], 6, 1, 2), roughness: 0.9 }), FBP.exq[0], groundYAt(FBP.exq[0], FBP.exq[1]) + 0.36, FBP.exq[1] - 0.45);
-  const book = mk(new THREE.BoxGeometry(0.26, 0.03, 0.2), new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.9 }), FBP.exq[0], desk.position.y + 0.38, FBP.exq[1] - 0.42);
-  const bar = mk(new THREE.CylinderGeometry(0.3, 0.3, 0.8, 12), new THREE.MeshStandardMaterial({ map: plankTex([120, 88, 58], 6, 1, 2), roughness: 0.9 }), FBP.qm[0] + 0.55, 0.4, FBP.qm[1]);
-  const paper = mk(new THREE.BoxGeometry(0.3, 0.01, 0.22), new THREE.MeshStandardMaterial({ color: 0xefe4c6, roughness: 0.9 }), FBP.qm[0] + 0.55, 0.81, FBP.qm[1]);
+  const [x, z, ry] = FBP.exq, floor = groundYAt(x, z), seatTop = floor + .42, deskTop = floor + .54;
+  const wood = new THREE.MeshStandardMaterial({ map: plankTex([132, 100, 70], 3, 1, 2), roughness: 0.9 });
+  mk(new THREE.BoxGeometry(.5, .06, .39), wood, x, seatTop - .03, z + .23);
+  for (const dx of [-.21, .21]) mk(new THREE.BoxGeometry(.05, .36, .28), wood, x + dx, floor + .18, z + .32);
+  mk(new THREE.BoxGeometry(.62, .04, .48), wood, x, deskTop - .02, z - .43);
+  for (const dx of [-.28, .28]) for (const dz of [-.62, -.25]) mk(new THREE.BoxGeometry(.045, .50, .045), wood, x + dx, floor + .25, z + dz);
+  mk(new THREE.BoxGeometry(.30, .008, .19), new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.9 }), x, deskTop + .004, z - .30);
+  const barrelX = FBP.qm[0] + .91, barrelTop = .8;
+  mk(new THREE.CylinderGeometry(0.3, 0.3, barrelTop, 12), new THREE.MeshStandardMaterial({ map: plankTex([120, 88, 58], 6, 1, 2), roughness: 0.9 }), barrelX, barrelTop / 2, FBP.qm[1]);
+  mk(new THREE.BoxGeometry(0.3, 0.01, 0.22), new THREE.MeshStandardMaterial({ color: 0xefe4c6, roughness: 0.9 }), barrelX, barrelTop + .005, FBP.qm[1]);
   cur = prev;
   const put = (m, [x, z, ry], clip) => { m.position.set(x, groundYAt(x, z), z); m.rotation.y = ry; m.visible = true; g.add(m); animate(m, clip); FBG.cast.push(m); m.userData.ground = groundYAt(x, z); grounded.push(m); return m; };
-  if (galdy) { FBG.exq = put(clone2(galdy, [0.8, 0.9, 1.05]), FBP.exq, CL.Write ? 'Write' : null); FBG.exq.userData.sits = true; FBG.exq.userData.seatAnchor={x:FBP.exq[0],z:FBP.exq[1]+.2,top:groundYAt(FBP.exq[0],FBP.exq[1])+.42,ry:FBP.exq[2]}; }
+  if (galdy) { FBG.exq = put(clone2(galdy, [0.8, 0.9, 1.05]), FBP.exq, CL.Write ? 'Write' : null); FBG.exq.userData.sits = true; FBG.exq.userData.seatAnchor = { x, z: z + .2, top: seatTop, ry, feetForward: true }; }
   if (people.gunner) { FBG.qm = put(clone('gunner', [0.75, 0.95, 0.8]), FBP.qm, 'Idle'); FBG.qm.userData.idles = ['LookAround', 'Point', 'WipeSweat']; } };   /* he waits at his barrel with the articles (talking to nobody looked odd) */
 function clone2(src, tint) { const keep = src.userData.anim; delete src.userData.anim; const m = skClone(src); src.userData.anim = keep; m.scale.copy(src.scale); m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); return m; }
 speakerModel = ((orig) => (who) => who === 'Quartermaster' ? FBG.qm : who === 'Exquemelin' ? FBG.exq : orig(who))(speakerModel);
