@@ -1,7 +1,6 @@
 /* games/eventide/src/blanket.js: blankets that read as blankets (chapter 4, the night, and the ward's beds).
    - foldedBlanket(color): a blanket folded into a soft square, its folded edges showing, for a pile on the pavement and the one you carry.
-   - drapeBlanket(body, color): a blanket put round a person's shoulders. It is sized from the body itself (the shoulders, the arms and the hips in the pose they
-     stand in). One cloth band sits behind the neck, with both ends hanging down in front. It moves with the upper back.
+   - drapeBlanket(body, color): a blanket put round a person's shoulders. One band rises to the nape, turns over both shoulders and hangs down the chest. It follows the same bones as the skin and clothes beneath it.
    The owner found the old ones "make no sense visually" (a grey tube round the chest, 15 November 2026). */
 import * as THREE from 'three';
 
@@ -33,91 +32,137 @@ export function foldedBlanket(color = 0xb8a890, { w = 0.4, h = 0.1, d = 0.3, lay
   const m = new THREE.Mesh(geo, woolMaterial(color)); m.castShadow = m.receiveShadow = true; m.name = 'folded blanket'; return m;   /* the origin is the middle of its underside */
 }
 
-/* round the shoulders of a person who has already been posed once (its mixer updated). Returns the blanket mesh (already on the body). */
-export function drapeBlanket(body, color = 0xb8a890) {
-  body.updateMatrixWorld(true); const bone = (n) => body.getObjectByName('mixamorig' + n), local = (o) => body.worldToLocal(o.getWorldPosition(new THREE.Vector3()));
-  const hips = bone('Hips'), neck = bone('Neck'), la = bone('LeftArm'), ra = bone('RightArm'), back = bone('Spine2') || bone('Spine1') || hips; if (!hips || !neck || !la || !ra) return null;
-  const H = local(hips), N = local(neck), L = local(la), R = local(ra);
-  const shoulders = L.clone().lerp(R, .5), width = Math.abs(L.x - R.x), hem = H.y + width * .12;
+// Fit in the model's neutral frame so receiving a towel mid-gesture cannot change its cut.
+const drapes = new WeakMap();
+function fitDrape(model) {
+  model.updateMatrixWorld(true);
+  const bone = name => model.getObjectByName('mixamorig' + name);
+  const joint = name => bone(name).getWorldPosition(new THREE.Vector3());
+  const neck = joint('Neck'), width = joint('LeftArm').distanceTo(joint('RightArm'));
+  const relative = point => point.sub(neck).divideScalar(width);
+  const nape = relative(joint('Head')).y * .83;
+  const hem = relative(joint('Hips')).y - .18;
+  const bones = [], triangles = [];
+  model.traverse(o => { if (o.isBone) bones.push(o); });
+  const inverses = bones.map(b => b.matrixWorld.clone().invert());
 
-  // Fit the cloth to the visible body in its posed frame.
-  const pts = [], v = new THREE.Vector3(), inv = body.matrixWorld.clone().invert();
-  body.traverse(o => {
-    if (!o.isSkinnedMesh || /Eye|Teeth|Tongue|Lash|Brow/i.test(o.material.name || '')) return;
-    for (let child = o; child !== body; child = child.parent) if (!child.visible) return;
-    o.skeleton.update();
-    const count = o.geometry.attributes.position.count, step = Math.max(1, Math.floor(count / 2400));
-    for (let i = 0; i < count; i += step) {
-      o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld).applyMatrix4(inv);
-      if (v.y > hem - width * .17 && v.y < N.y + width * .35) pts.push(v.clone());
+  // Ray-fit to actual triangles, including shirt collars. Each hit also supplies the skin weights.
+  model.traverse(o => {
+    if (!o.isSkinnedMesh || !['Skin', 'Shirt', 'Collar', 'Belt', 'Skirt', 'Breeches', 'Pocket'].includes(o.material.name)) return;
+    const g = o.geometry, attrs = g.attributes;
+    const verts = Array.from({ length: attrs.position.count }, (_, i) =>
+      relative(o.getVertexPosition(i, new THREE.Vector3()).applyMatrix4(o.matrixWorld)));
+    const joints = o.skeleton.bones.map(b => bones.indexOf(b));
+    const hangingSleeve = verts.map((p, i) => {
+      if (p.y > -.27) return false;
+      let arm = 0;
+      for (let k = 0; k < 4; k++) {
+        const b = o.skeleton.bones[attrs.skinIndex.getComponent(i, k)];
+        if (/Arm|Hand/.test(b.name)) arm += attrs.skinWeight.getComponent(i, k);
+      }
+      return arm > .35;
+    });
+    for (let i = 0; i < (g.index?.count ?? verts.length); i += 3) {
+      const ids = [i, i + 1, i + 2].map(k => g.index ? g.index.getX(k) : k);
+      if (ids.some(k => hangingSleeve[k])) continue;
+      const [a, b, c] = ids.map(k => verts[k]);
+      const minY = Math.min(a.y, b.y, c.y), maxY = Math.max(a.y, b.y, c.y);
+      if (minY > nape + .08 || maxY < hem - .12 || [a,b,c].every(v => v.x > .62) || [a,b,c].every(v => v.x < -.62)) continue;
+      triangles.push({a, b, c, minY, maxY, ids, attrs, joints});
     }
   });
-  const neckline = pts.filter(p => Math.abs(p.y - N.y - width * .18) < width * .15 && Math.abs(p.x - N.x) < width * .32);
-  const rx = Math.max(width * .165, ...neckline.map(p => Math.abs(p.x - N.x))) + width * .025;
-  const rz = Math.max(width * .13, ...neckline.map(p => N.z - p.z)) + width * .026;
-  const section = a => {
-    const x = Math.sin(a), z = Math.cos(a);
-    const y = N.y + width * (.13 - .08 * z);
-    return [
-      [N.x + rx * x, y, N.z + rz * z],
-      [N.x + (rx + width * .23) * x, y - width * .27, N.z + (rz + width * .06) * z],
-    ];
-  };
-  const collarAngle = .94, collar = Array.from({ length: 21 }, (_, i) => section(collarAngle + (Math.PI * 2 - 2 * collarAngle) * i / 20));
 
-  function surfaceDepth(x, y, z, direction, margin) {
-    let depth = z * direction;
-    for (const p of pts) {
-      if (Math.abs(p.x - x) < width * .16 && Math.abs(p.y - y) < width * .17) {
-        depth = Math.max(depth, p.z * direction + width * margin);
+  // Each station gives the inside edge, outside edge and outward direction, from the nape to one hem.
+  // Dimensions are fractions of shoulder width. The two sides only join at the back.
+  const stations = [
+    [[0,nape,-.13], [0,-.15,-.23], [0,0,-1]],
+    [[.13,nape*.92,-.10], [.27,-.075,-.20], [.55,.28,-.80]],
+    [[.195,nape*.72,.025], [.45,-.045,.015], [.72,.72,0]],
+    [[.21,nape*.28,.14], [.415,-.075,.18], [.40,.75,.52]],
+    [[.20,-.12,.23], [.415,-.18,.28], [.12,.36,.93]],
+    [[.175,-.42,.34], [.415,-.42,.34], [0,.05,1]],
+    [[.165,-.78,.38], [.41,-.78,.38], [0,0,1]],
+    [[.125,hem,.42], [.395,hem+.025,.42], [0,0,1]]
+  ];
+  const [inside, outside, normals] = [0,1,2].map(k =>
+    new THREE.CatmullRomCurve3(stations.map(s => new THREE.Vector3(...s[k]))));
+  const positions = [], weights = [], joints = [], uvs = [], indices = [];
+  const steps = 40, cols = 8, ring = 2 * cols;
+  const ray = new THREE.Ray(), hit = new THREE.Vector3(), bary = new THREE.Vector3();
+  for (let i = -steps; i <= steps; i++) {
+    const t = Math.abs(i) / steps, sign = i < 0 ? -1 : 1;
+    const inner = inside.getPoint(t), outer = outside.getPoint(t);
+    const normal = normals.getPoint(t).normalize(); normal.x *= sign;
+    for (let j = 0; j < ring; j++) {
+      // An oval cross-section gives the folded towel a soft edge even in profile.
+      const angle = j * 2 * Math.PI / ring;
+      const across = (1 - Math.cos(angle)) * .5, p = inner.clone().lerp(outer, across);
+      p.x *= sign;
+      if (i < 0) p.y += .15 * t ** 3;
+      ray.direction.copy(normal).negate();
+      ray.origin.copy(p).addScaledVector(normal, .65);
+      let nearest = Infinity, face = null;
+      for (const tri of triangles) {
+        if (tri.minY > ray.origin.y + .001 || tri.maxY < p.y - .22) continue;
+        if (!ray.intersectTriangle(tri.a, tri.b, tri.c, false, hit)) continue;
+        const distance = ray.origin.distanceTo(hit);
+        if (distance >= nearest || hit.y > nape + .045 || Math.abs(hit.x) > .62) continue;
+        nearest = distance; face = tri;
+      }
+      const influences = new Map();
+      if (face) {
+        ray.at(nearest, hit);
+        THREE.Triangle.getBarycoord(hit, face.a, face.b, face.c, bary);
+        for (let k = 0; k < 3; k++) for (let w = 0; w < 4; w++) {
+          const vertex = face.ids[k], index = face.joints[face.attrs.skinIndex.getComponent(vertex, w)];
+          const weight = bary.getComponent(k) * face.attrs.skinWeight.getComponent(vertex, w);
+          if (weight > 0) influences.set(index, (influences.get(index) || 0) + weight);
+        }
+        // The cloth skims hollows and seams between garments.
+        p.addScaledVector(normal, Math.max(-.02, .65 - nearest));
+      } else {
+        influences.set(bones.indexOf(bone(t < .32 ? 'Neck' : 'Spine2')), 1);
+      }
+      const fold = .018 * Math.sin(Math.PI * across * 3) ** 2;
+      const loft = .042 + .048 * Math.min(1, t * 1.6);
+      p.addScaledVector(normal, loft + .034 * Math.sin(angle) + fold).multiplyScalar(width).add(neck);
+      positions.push(p.x, p.y, p.z);
+      const strongest = [...influences].sort((a,b) => b[1] - a[1]).slice(0,4);
+      const sum = strongest.reduce((s, pair) => s + pair[1], 0);
+      for (let k = 0; k < 4; k++) {
+        joints.push(strongest[k]?.[0] ?? 0);
+        weights.push((strongest[k]?.[1] ?? 0) / sum);
+      }
+      uvs.push(across, (i + steps) / (2 * steps));
+      if (i > -steps) {
+        const b = (i + steps) * ring + j, next = (i + steps) * ring + (j + 1) % ring;
+        indices.push(b - ring, next - ring, b, b, next - ring, next);
       }
     }
-    return depth * direction;
   }
-  const panel = sign => [
-    [shoulders.y - width * .15, .20, .46],
-    [shoulders.y - width * .39, .19, .52],
-    [shoulders.y - width * .65, .18, .57],
-    [hem + width * .26, .17, .58],
-    [hem + width * (sign > 0 ? 0 : .105), .18, .60],
-  ].map(([y, inside, outside]) => {
-    const t = (y - hem) / (shoulders.y - hem), cx = H.x + (shoulders.x - H.x) * t;
-    const v0 = y, v1 = y + width * .046, x0 = cx + sign * width * inside, x1 = cx + sign * width * outside;
-    return [[x0, v0, shoulders.z + width * .35], [x1, v1, shoulders.z + width * .35]];
-  });
+  // Sew each hem shut along the fold.
+  for (let j = 1; j < ring - 1; j++) {
+    const end = 2 * steps * ring;
+    indices.push(0, j + 1, j, end, end + j, end + j + 1);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(joints, 4));
+  geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(weights, 4));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return { geometry, names: bones.map(b => b.name), inverses };
+}
 
-  const left = panel(1), right = panel(-1);
-  const ribbon = [...left.reverse(), ...collar, ...right];
-  const cols = 8, pos = [], uv = [], indices = [];
-  for (const [i, [[x0, y0, z0], [x1, y1, z1]]] of ribbon.entries()) {
-    const panelRow = i < left.length || i >= left.length + collar.length;
-    for (let k = 0; k <= cols; k++) {
-      const t = k / cols;
-      const fold = width * .024 * Math.sin(t * Math.PI * 3) * Math.sin(t * Math.PI);
-      const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
-      let z = z0 + (z1 - z0) * t + fold;
-      if (panelRow) z = surfaceDepth(x, y, z, 1, .18);
-      else if (z < N.z - width * .02) z = surfaceDepth(x, y, z, -1, .055);
-      else if (Math.abs(x - N.x) > rx * .66 && z > N.z + width * .08) z = surfaceDepth(x, y, z, 1, .09);
-      pos.push(x, y, z);
-      uv.push(t, i / (ribbon.length - 1));
-      if (i && k) {
-        const b = i * (cols + 1) + k, a = b - cols - 1;
-        indices.push(a - 1, a, b - 1, b - 1, a, b);
-      }
-    }
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  geo.setIndex(indices);
-  geo.computeVertexNormals();
-  const towel = new THREE.Mesh(geo, woolMaterial(color, THREE.DoubleSide));
+export function drapeBlanket(body, color, model) {
+  let fit = drapes.get(model);
+  if (!fit) { fit = fitDrape(model); drapes.set(model, fit); }
+  const towel = new THREE.SkinnedMesh(fit.geometry, woolMaterial(color, THREE.DoubleSide));
   towel.name = 'Blanket';
   towel.castShadow = true;
   towel.frustumCulled = false;
   body.add(towel);
-  body.updateMatrixWorld(true);
-  back.attach(towel);
+  towel.bind(new THREE.Skeleton(fit.names.map(name => body.getObjectByName(name)), fit.inverses), new THREE.Matrix4());
   return towel;
 }

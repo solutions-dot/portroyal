@@ -178,7 +178,7 @@ function makeBody(s) {
   return m;
 }
 /* a blanket round the shoulders (chapter 4): sized from the body, open at the front, in soft folds (games/eventide/src/blanket.js) */
-function addBlanket(n, color = 0xb8a890) { if (n.blanket) return; n.blanket = drapeBlanket(n.m, color) || true; }
+function addBlanket(n, color = 0xb8a890) { if (n.blanket) return; n.blanket = drapeBlanket(n.m, color, BASES[n.bodyId || n.base].scene); }
 /* the pile of folded blankets on the pavement by the gate, and the one you carry (held low in front of you, as in your arms) */
 const PILE = [-2.3, -5.4], PILE_COLS = [0x8e3b34, 0x4a6488, 0x6e7a4a];   /* red, blue and army green wool */
 const HELD_BLANKET = (() => { const g = new THREE.Group(), b = foldedBlanket(PILE_COLS[2]); b.rotation.set(0.55, Math.PI / 2 - 0.35, 0); b.scale.setScalar(0.8); g.add(b); g.position.set(0.16, -0.31, -0.7);   /* its folded edges toward you */ g.visible = false; camera.add(g); return g; })();
@@ -724,6 +724,16 @@ function devViews() {
     document.title = 'view fall ready'; });
   /* ?shot=blanket1 : the pile of folded blankets, one child already wrapped, the next blanket in your arms. blanket2 : the same from close by. dawn2 : the bus at dawn, with you and Gran on the pavement (&old=1: Gran where she stood before) */
   if (shot === 'blanket1' || shot === 'blanket2') go(3, 43, ...(shot === 'blanket1' ? [0.2, -3.6, 1.0, -0.14] : [-4.2, -4.2, 1.35, -0.3])).then(() => { const A = SC.actions, take = A.find((a) => a.label === 'Take a blanket'); take.go(); A.find((a) => a.on() && /^Wrap/.test(a.label)).go(); take.go(); for (let i = 0; i < 8; i++) update(0.1, 2000 + i * 100); document.title = 'view ' + shot + ' ready'; });
+  if (shot === 'towel') go(3, 44).then(() => {
+    const n = byId(q.get('who') || 'kid0'), a = Number(q.get('angle') || 0);
+    const neck = n.m.getObjectByName('mixamorigNeck').getWorldPosition(new THREE.Vector3());
+    const width = n.m.getObjectByName('mixamorigLeftArm').getWorldPosition(new THREE.Vector3())
+      .distanceTo(n.m.getObjectByName('mixamorigRightArm').getWorldPosition(new THREE.Vector3()));
+    const target = neck.clone(); target.y -= .25 * width;
+    const v = new THREE.Vector3(Math.sin(a), .18, Math.cos(a)).applyAxisAngle(new THREE.Vector3(0,1,0), n.m.rotation.y);
+    fixedCam = { p: target.clone().addScaledVector(v, width * 2.5).toArray(), t: target.toArray() };
+    document.title = 'view towel ready';
+  });
   if (shot === 'blanketgroup') go(3, 44).then(() => {
     fixedCam = { p: [-7.1, 1.48, -1.1], t: [-7.1, .92, -5.2] };
     document.title = 'view blanketgroup ready';
