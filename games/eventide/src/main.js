@@ -27,6 +27,7 @@ import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditT
 import { G, makeSky, ease, rng, batchStatic } from './gfx.js';
 import { hamper, bucket, suitcase } from './props.js';
 import { foldedBlanket, drapeBlanket } from './blanket.js';
+import { auditBlankets } from './blanketcheck.js';
 import { buildSlipe, buildWard, buildPark80, buildGolden, buildMonument } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, LETTER, TIDY, RADIO, SORT, SORT_KINDS, TIMELINE, PLAQUE, CHOICE_NAMES } from './content.js';
 import { tunePixels } from '../../../engine/perf.js';
@@ -508,8 +509,8 @@ ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 
 let SIREN = 0;
 function nightSetup(P, st) {
   const after = st >= 44, dawn = st >= 45; P.fire.setLevel(dawn ? 0.08 : after ? 0.4 : 1); if (P.fall) P.fall.reset(); wardStill(P); P.myers.group.visible = !after; P.ruin.visible = after; SIREN = dawn ? 0 : after ? 0.3 : 1;
-  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = after && !dawn; if (after && id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
-  [0, 1, 2].forEach((i) => { const n = byId('kid' + i); if (st >= 43) { kidTo(n, -5 - i * 1.25, -5.2); n.m.visible = !dawn; if (after) addBlanket(n, PILE_COLS[2 - i]); } });
+  for (const id of ['nurse4', 'hyacinth4', 'maude4']) { const n = byId(id); n.m.visible = after && !dawn; if (n.m.visible && id !== 'nurse4') addBlanket(n, id === 'hyacinth4' ? 0x7a3a5a : 0x3e5a7a); }
+  [0, 1, 2].forEach((i) => { const n = byId('kid' + i); if (st >= 43) { kidTo(n, -5 - i * 1.25, -5.2); n.m.visible = !dawn; if (after && !dawn) addBlanket(n, PILE_COLS[2 - i]); } });
   P.lamps.forEach((l) => { l.visible = !dawn; }); wardLights(P, !after); pileShow(P, st); HELD_BLANKET.visible = false;
   if (dawn) { for (const n of SC.extras) if (n.z > -4.6 && n.z < 4.6) n.m.visible = false;   /* morning: the neighbours have gone home or stepped back onto the pavement, out of the road */
     state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; setEnv(ENV.dawn); busPass(P); }
@@ -647,7 +648,12 @@ function update(dt, now) {
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of SC.people) { if (n.kid || !n.m.visible) continue; const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < b) { b = d; near = n; } } for (const a of SC.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
   if (SC.life) SC.life.tick(dt, { px: state.x, pz: state.z, story: SC.people.filter((n) => n.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } });   /* the crowd: engine/ambient.js moves, animates and grounds the people it owns */
-  for (const n of SC.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
+  for (const n of SC.npcs) if (n.m.visible && n.ctl && !n.amb) {
+    n.ctl.mx.update(dt);
+    n.ctl.tick(dt);
+    if (n.blanket) n.blanket.userData.fit();
+    else if (n.m.userData.grips) gripTick(n.m);
+  }
   const even = (frameN++ & 1) === 0; for (const n of SC.npcs) if (n.m.visible && !n.amb && (even || n.walker || n.walking)) groundFeet(n.m);   /* people on the move every frame, so their feet stay planted without a bob */
   if (P.fire && P.night.visible) P.fire.tick(dt, (now || 0) / 1000, sceneIsCalm());
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](dt)) TICKS.splice(i, 1);
@@ -771,6 +777,10 @@ function devViews() {
     const o = []; let n0 = 0; startGame(true);
     for (let i = 0; i < SCENES.length; i++) { await beginChapter(i); resetTransient(); for (const n of SC.npcs) if (n.m.userData.held && n.m.userData.held.length) { n0++; const found = auditHeldClip(n.id || n.base, n.m, n.m.userData.held, { after: gripTick }); for (const l of found) o.push('chapter ' + (i + 1) + ': ' + l); } }
     const c = o.length; o.unshift('held items: ' + c + ' issues, ' + n0 + ' people carry something'); out('HELD ' + c, o); })();
+  if (q.get('test') === 'blankets') go(3, 44).then(() => {
+    const { issues, lines } = auditBlankets(['kid0','kid1','kid2','hyacinth4','maude4'].map(byId));
+    out('BLANKETS ' + issues.length, [...lines, ...issues]);
+  });
   if (q.get('test') === 'follow') {
     (async () => { const out = []; let bad = 0; const dt = 1 / 30; startGame(true); await beginChapter(0, 11); 
       const P = SC.P, n = byId('gran1'), w = followWatch({ space: GRAN_LEAD.space, behind: 6 }), Wl = () => wallsNow(), blocked = (x, z) => inWallR(Wl(), x, z, 0), move = (x, z) => { const r = clampPos(x, z); state.x = r[0]; state.z = r[1]; return r; }, step = (t) => update(t);

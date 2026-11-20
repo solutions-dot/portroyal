@@ -53,7 +53,8 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 - [x] **Nanny Town basket carriers.** They walk back and forth and keep the basket on their heads when they pause. Sampled both carrying clips in New Nanny Town and the ridge without a hidden basket.
 - [x] **Airport crowd.** The Emperor’s Arrival starts its background crowd on approved idles and directs their attention toward the aircraft during the film. Explicit scene cues can still play `LookAround`.
 - [x] **Carried items.** Windrush’s suitcase stays low in the lower-right corner at phone and desktop sizes. Kendal and The Emperor’s Arrival use the same first-person framing.
-- [x] **Eventide.** Gran leads across the street and stops when the player pauses. The route check reported `FOLLOW 0`. The children go through the clear gap beside the rope. Gran stands clear of all three at the blanket pile. The children’s and adults’ towels sit behind their necks, with two ends down the front.
+- [x] **Eventide.** Gran leads across the street and stops when the player pauses. The route check reported `FOLLOW 0`. The children go through the clear gap beside the rope. Gran stands clear of all three at the blanket pile.
+- [x] **Eventide blankets.** Restored the broad, striped wrap. It rests on the shoulders of all three children and both women, covers their backs and arms, and stays open down the front. Their hands hang beside their thighs under the blanket. The idle and dialogue checks reported `BLANKETS 0` across 364 poses.
 
 ## Not done yet (ask the owner first)
 
