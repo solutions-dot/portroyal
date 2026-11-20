@@ -115,10 +115,14 @@ function boxGeo(w, h, d, textured) {   /* a textured box gets its UVs scaled by 
   if (textured) { const uv = g.attributes.uv, T = 1.2, dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]]; for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const i = f * 4 + v; uv.setXY(i, uv.getX(i) * dims[f][0] / T, uv.getY(i) * dims[f][1] / T); } }
   BOXGEO.set(key, g); return g; }
 const box = (w, h, d, m, x, y, z, parent) => mesh(boxGeo(w, h, d, !!m.map), m, x, y, z, parent);
-/* the pair of doors in the front of a room you stand in, folded right back against the inside of the front wall, so the doorway stays open and you look out
-   through it. zIn is the inner face of the door posts. Each room passes the kind of door its own building had (owner, 17 November 2026: "the doors should fit
-   their purpose, not one shared one"): jalousie shop doors in Kingston, a Georgian six-panel pair in the Kingston hall, a glazed shop door in Harlem, and so on. */
-function roomDoors(parent, x, zIn, w, h, o) { const d = makeDoor({ w, h, leaves: 2, open: -3.0 / 1.4, ...o }); d.position.set(x, 0, zIn); d.children.filter((c) => c.isMesh && c.material.name === 'DoorFrame').forEach((c) => d.remove(c)); (parent || room).add(d); return d; }   /* the door is set facing out of the room and the leaves swung in and right round, so their panels or louvres face you; the room's own timber posts are its frame, so the kit's frame and sill are left out */
+/* The room's timber posts frame the entrance. Face the hardware into the room. */
+function roomDoors(parent, x, zIn, w, h, options) {
+  const door = makeDoor({ w, h, leaves: 2, recess: 0.04, ...options });
+  door.position.set(x, 0, zIn);
+  door.rotation.y = Math.PI;
+  parent.add(door);
+  return door;
+}
 const cyl = (r0, r1, h, m, x, y, z, parent, seg = 18) => mesh(new THREE.CylinderGeometry(r0, r1, h, seg), m, x, y, z, parent);
 
 /* ---------- the room: 9 m wide, 7 m deep, high ceiling for the heat ---------- */
@@ -135,7 +139,7 @@ wall(dl - X0, (X0 + dl) / 2, Z1, Math.PI); wall(X1 - dr, (dr + X1) / 2, Z1, Math
 box(DOOR.w + 0.3, H - DOOR.h, 0.14, solid(0xdccfb0, 1), DOOR.x, (DOOR.h + H) / 2, Z1 - 0.07);
 for (const x of [dl - 0.06, dr + 0.06]) box(0.14, DOOR.h, 0.18, beam, x, DOOR.h / 2, Z1 - 0.09);
 box(DOOR.w + 0.34, 0.16, 0.18, beam, DOOR.x, DOOR.h + 0.08, Z1 - 0.09);
-roomDoors(room, DOOR.x, Z1 - 0.18, DOOR.w - 0.02, DOOR.h - 0.01, { kind: 'louvre', color: 0x3a6a46, frame: 0xe6dcc0, handle: 'latch', metal: 0x3a3a3a });   /* Kingston, 1908: a pair of tall jalousie (louvred) shop doors, painted green, folded back by day to let in the light and the breeze */
+roomDoors(room, DOOR.x, Z1 - 0.18, DOOR.w, DOOR.h, { kind: 'louvre', color: 0x3a6a46, frame: 0xe6dcc0, handle: 'latch', metal: 0x3a3a3a });   /* Kingston, 1908: a pair of tall jalousie (louvred) shop doors, painted green */
 for (let z = Z0 + 0.5; z < Z1; z += 0.95) box(0.14, 0.2, W, beam, 0, H - 0.1, z).rotation.y = Math.PI / 2;   /* ceiling joists */
 box(0.3, 0.34, D, beam, -2.2, H - 0.3, 0); box(0.3, 0.34, D, beam, 2.2, H - 0.3, 0);
 for (const [w, cx, cz, ry] of [[W, 0, Z0, 0], [D, X0, 0, Math.PI / 2], [D, X1, 0, -Math.PI / 2]]) { const c = Math.cos(ry), s = Math.sin(ry); box(w, 0.1, 0.05, beam, cx + s * 0.03, 0.05, cz + c * 0.03).rotation.y = ry; }   /* skirting boards */
@@ -641,6 +645,7 @@ const hallG = new THREE.Group(); hallG.visible = false; scene.add(hallG);
 const HALL = { x0: -5, x1: 5, z0: -4, z1: 4, h: 4.2 }, HALL_WALLS = [], HALL_BOUNDS = { x0: -4.5, x1: 4.5, z0: -3.5, z1: 3.55 };
 const hallLamp = new THREE.PointLight(0xffd29a, 9, 13, 2); hallLamp.position.set(0, 3.3, -0.5); hallLamp.visible = false; scene.add(hallLamp);
 let hallBuilt = false, posterMesh = null;
+let hallLeaves = [];
 function buildHall() {
   if (hallBuilt) return; hallBuilt = true; const g = hallG, W2 = HALL.x1 - HALL.x0, D2 = HALL.z1 - HALL.z0, H2 = HALL.h;
   mesh(new THREE.PlaneGeometry(W2, D2), std(plankTex([124, 92, 62], 7, [W2 / 1.05, D2 / 2]), 0.85), 0, 0, 0, g).rotation.x = -Math.PI / 2;
@@ -650,7 +655,10 @@ function buildHall() {
   const dw = 2.2, dh = 3.0, sw = (W2 - dw) / 2; wallP(sw, HALL.x0 + sw / 2, HALL.z1, Math.PI); wallP(sw, HALL.x1 - sw / 2, HALL.z1, Math.PI);
   box(dw + 0.3, H2 - dh, 0.14, solid(0xdccfb0, 1), 0, (dh + H2) / 2, HALL.z1 - 0.07, g);
   for (const x of [-dw / 2 - 0.07, dw / 2 + 0.07]) box(0.16, dh, 0.2, beam, x, dh / 2, HALL.z1 - 0.1, g); box(dw + 0.36, 0.18, 0.2, beam, 0, dh + 0.09, HALL.z1 - 0.1, g);
-  roomDoors(g, 0, HALL.z1 - 0.2, dw - 0.02, dh - 0.01, { kind: 'six', color: 0x5a3a22, frame: 0xe6dcc0, metal: 0xb08a40 });   /* Kingston, 1914: a Georgian pair of six-panel doors, varnished, as the town's older halls and lodges had */
+  const door = roomDoors(g, 0, HALL.z1 - 0.2, dw, dh, { recess: 0, kind: 'six', color: 0x5a3a22, frame: 0xe6dcc0, metal: 0xb08a40 });   /* Kingston, 1914: a Georgian pair of six-panel doors, varnished, as the town's older halls and lodges had */
+  hallLeaves = door.children.filter((child) => child.isGroup);
+  // A timber meeting strip covers the seam when the two leaves close.
+  box(0.035, dh - 0.035, 0.022, beam, dw / 2 - 0.01, (dh - 0.035) / 2, 0.015, hallLeaves[0]);
   mesh(new THREE.PlaneGeometry(16, 6), new THREE.MeshBasicMaterial({ map: streetTex() }), 0, 2.4, HALL.z1 + 3.6, g).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(16, 3.4), new THREE.MeshBasicMaterial({ color: 0xcdb98a }), 0, 0.01, HALL.z1 + 1.7, g).rotation.x = -Math.PI / 2;
   mesh(new THREE.PlaneGeometry(2.6, 3.2), patchM, 0, 0.013, HALL.z1 - 1.6, g).rotation.x = -Math.PI / 2;
@@ -671,7 +679,7 @@ function buildHall() {
   posterMesh = mesh(new THREE.PlaneGeometry(0.62, 0.82), new THREE.MeshStandardMaterial({ map: sheetTex('LEARN'), roughness: 1 }), HALL.x1 - 0.1, 1.9, -1.0, g); posterMesh.rotation.y = -Math.PI / 2; posterMesh.visible = false;
   box(1.8, 0.9, 0.9, woodDark, 3.7, 0.45, 1.7, g); box(1.9, 0.06, 1.0, wood, 3.7, 0.93, 1.7, g); box(0.5, 0.34, 0.4, iron, 4.0, 1.13, 1.7, g); cyl(0.025, 0.025, 0.5, iron, 4.2, 1.3, 1.7, g, 6).rotation.z = 0.7;
   mesh(new THREE.PlaneGeometry(0.7, 0.42), std(caseTex(), 0.6), 3.35, 0.97, 1.7, g).rotation.x = -Math.PI / 2; box(0.3, 0.05, 0.22, paper, 3.55, 0.97, 2.05, g); HALL_WALLS.push([2.75, 1.15, 4.65, 2.25]);
-  still(g, [posterMesh]);   /* the still scenery drawn merged (engine/batch.js): the poster is shown and changed later */
+  still(g, [posterMesh, ...hallLeaves]);   /* the still scenery drawn merged (engine/batch.js): the poster is shown and changed later */
 }
 const HALL_ACTIONS = [{ id: 'press', label: 'Print the poster', x: 2.3, z: 1.7, r: 1.1, on: () => stage === 11, go: () => openType(story.poster || 'LEARN', () => { story.printed = true; showPoster(); setStage(12); uiSound('goal'); }) }];
 function showPoster() { if (!posterMesh) return; posterMesh.material.map = sheetTex(story.poster || 'LEARN'); posterMesh.material.needsUpdate = true; posterMesh.visible = !!story.printed; }
@@ -831,7 +839,7 @@ function buildPress() {
   const dw = 2.2, dh = 3.0, sw = (W2 - dw) / 2; wallP(sw, PRESS.x0 + sw / 2, PRESS.z1, Math.PI); wallP(sw, PRESS.x1 - sw / 2, PRESS.z1, Math.PI);
   box(dw + 0.3, H2 - dh, 0.14, solid(0x6a4a3a, 1), 0, (dh + H2) / 2, PRESS.z1 - 0.07, g);
   for (const x of [-dw / 2 - 0.07, dw / 2 + 0.07]) box(0.16, dh, 0.2, beam, x, dh / 2, PRESS.z1 - 0.1, g); box(dw + 0.36, 0.18, 0.2, beam, 0, dh + 0.09, PRESS.z1 - 0.1, g);
-  roomDoors(g, 0, PRESS.z1 - 0.2, dw - 0.02, dh - 0.01, { kind: 'glazed', color: 0x2a2620, frame: 0x3a2a1d, glass: 0x3a4a52, metal: 0xb08a40 });   /* Harlem, 1918: a New York shop front's pair of glazed doors, dark painted, with brass push bars */
+  roomDoors(g, 0, PRESS.z1 - 0.2, dw, dh, { kind: 'glazed', color: 0x2a2620, frame: 0x3a2a1d, glass: 0x3a4a52, metal: 0xb08a40 });   /* Harlem, 1918: a New York shop front's pair of glazed doors, dark painted, with brass push bars */
   for (let i = 0; i < 4; i++) mesh(new THREE.PlaneGeometry(4.5, 9), new THREE.MeshBasicMaterial({ map: facadeTex(i + 1) }), -6.75 + i * 4.5, 4.5, PRESS.z1 + 3.4, g).rotation.y = Math.PI;   /* the houses across the street, seen through the door */
   mesh(new THREE.PlaneGeometry(18, 3.4), new THREE.MeshBasicMaterial({ color: 0xa9a291 }), 0, 0.01, PRESS.z1 + 1.7, g).rotation.x = -Math.PI / 2;
   mesh(new THREE.PlaneGeometry(2.6, 3.2), patchM, 0, 0.013, PRESS.z1 - 1.6, g).rotation.x = -Math.PI / 2;
@@ -1121,7 +1129,7 @@ function buildLiberty() {
     arch.moveTo(-span / 2 - 0.12, dh); arch.lineTo(-span / 2, dh); arch.absarc(0, cy, R, Math.PI / 2 + a0, Math.PI / 2 - a0, true); arch.lineTo(span / 2 + 0.12, dh); arch.lineTo(span / 2 + 0.12, dh + rise + 0.3); arch.lineTo(-span / 2 - 0.12, dh + rise + 0.3); arch.lineTo(-span / 2 - 0.12, dh);
     mesh(new THREE.ExtrudeGeometry(arch, { depth: 0.2, bevelEnabled: false, curveSegments: 16 }), beam, 0, 0, LIB.z1 - 0.2, g);   /* the arched head, in the same dark timber as the jambs */
     const fan = new THREE.Shape(); fan.moveTo(-span / 2, dh); fan.absarc(0, cy, R, Math.PI / 2 + a0, Math.PI / 2 - a0, true); fan.lineTo(-span / 2, dh); mesh(new THREE.ShapeGeometry(fan, 16), solid(0x2a3236, 0.3), 0, 0, LIB.z1 - 0.12, g).rotation.y = Math.PI; }
-  roomDoors(g, 0, LIB.z1 - 0.2, dw - 0.02, dh - 0.01, { kind: 'panel', color: 0x5a2a22, frame: 0xd8ccb0, metal: 0xb08a40, handle: 'lever' });   /* Liberty Hall, 1920: a plain pair of panelled doors, painted. A stand-in: no clear photograph of the doors themselves was found (docs/games/garvey.md) */
+  roomDoors(g, 0, LIB.z1 - 0.2, dw, dh, { kind: 'panel', color: 0x5a2a22, frame: 0xd8ccb0, metal: 0xb08a40, handle: 'lever' });   /* Liberty Hall, 1920: a plain pair of panelled doors, painted. A stand-in: no clear photograph of the doors themselves was found (docs/games/garvey.md) */
   for (let i = 0; i < 4; i++) mesh(new THREE.PlaneGeometry(4.5, 9), new THREE.MeshBasicMaterial({ map: facadeTex(i + 2) }), -6.75 + i * 4.5, 4.5, LIB.z1 + 3.4, g).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(18, 3.4), new THREE.MeshBasicMaterial({ color: 0xa9a291 }), 0, 0.01, LIB.z1 + 1.7, g).rotation.x = -Math.PI / 2;
   for (const z of [-4.5, -1.5, 1.5, 4.5]) box(W2, 0.3, 0.3, beam, 0, H2 - 0.15, z, g);
@@ -1201,7 +1209,7 @@ function buildOffice() {
   wallP(W2, 0, OFF.z0, 0); wallP(D2, OFF.x0, 0, Math.PI / 2); wallP(D2, OFF.x1, 0, -Math.PI / 2);
   const dw = 2.0, dh = 2.7, sw = (W2 - dw) / 2; wallP(sw, OFF.x0 + sw / 2, OFF.z1, Math.PI); wallP(sw, OFF.x1 - sw / 2, OFF.z1, Math.PI);
   box(dw + 0.3, H2 - dh, 0.14, solid(0xdccfb0, 1), 0, (dh + H2) / 2, OFF.z1 - 0.07, g); for (const x of [-dw / 2 - 0.07, dw / 2 + 0.07]) box(0.16, dh, 0.2, beam, x, dh / 2, OFF.z1 - 0.1, g); box(dw + 0.36, 0.18, 0.2, beam, 0, dh + 0.09, OFF.z1 - 0.1, g);
-  roomDoors(g, 0, OFF.z1 - 0.2, dw - 0.02, dh - 0.01, { kind: 'glazed', color: 0x7a5634, frame: 0x5a3e26, glass: 0xc9ccc2, metal: 0x9a8a5a, handle: 'knob' });   /* a Harlem office, 1925: oak doors with frosted (obscure) glass, as 1920s offices had */
+  roomDoors(g, 0, OFF.z1 - 0.2, dw, dh, { kind: 'glazed', color: 0x7a5634, frame: 0x5a3e26, glass: 0xc9ccc2, metal: 0x9a8a5a, handle: 'knob' });   /* a Harlem office, 1925: oak doors with frosted (obscure) glass, as 1920s offices had */
   for (let i = 0; i < 4; i++) mesh(new THREE.PlaneGeometry(4.5, 9), new THREE.MeshBasicMaterial({ map: facadeTex(i) }), -6.75 + i * 4.5, 4.5, OFF.z1 + 3.2, g).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(14, 3.0), new THREE.MeshBasicMaterial({ color: 0xa9a291 }), 0, 0.01, OFF.z1 + 1.5, g).rotation.x = -Math.PI / 2;
   for (const z of [-2, 0, 2]) box(W2, 0.2, 0.2, beam, 0, H2 - 0.1, z, g);
@@ -1570,6 +1578,13 @@ function update(dt, now) {
       stepT -= dt * sp; if (stepT <= 0) { stepT = 1.3; stepSound('wood'); } }
   }
   for (const n of PEOPLE) npcTick(n, dt);
+  if (place === 'hall') {
+    const arriving = HALL_PEOPLE.some(n => n.fol && n.m?.visible && n.z > HALL.z1 - 1.4);
+    for (const leaf of hallLeaves) {
+      const target = arriving ? leaf.userData.side * 1.55 : 0;
+      leaf.rotation.y += THREE.MathUtils.clamp(target - leaf.rotation.y, -3.8 * dt, 3.8 * dt);
+    }
+  }
   if (talkWith && talkWith.m && !POSTER) {   /* in a talk the view turns gently to the person, their face above the dialogue box */
     const n = talkWith, dx = n.x - state.x, dz = n.z - state.z, d = Math.max(0.6, Math.hypot(dx, dz)), hy = (n.m.userData.ground || 0) + (n.seated ? 1.12 : 1.5) * n.m.scale.y;
     let e = Math.atan2(-dx, -dz) - state.yaw; e = Math.atan2(Math.sin(e), Math.cos(e)); const k = Math.min(1, dt * 3.2);
@@ -1813,10 +1828,22 @@ function devViews() {
         $('start').click(); best = 3; stage = 3; CHAPTERS[1].go(); for (let i = 0; i < 200 && place !== 'hall'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '"');
         L('amy lines=' + await talkTo(byId('amy'))); L('garvey lines=' + await talkTo(byId('garvey')) + ' poster=' + story.poster + ' stage=' + stage);
         state.x = 2.3; state.z = 1.7; update(0.016); L('near=' + (near && near.label)); near.go(); typeIt(); L('printed: stage=' + stage + ' poster visible=' + posterMesh.visible);
-        const nb = HALL_PEOPLE.slice(2); L('before arrivals visible=' + nb.filter((n) => n.m.visible).length); for (let i = 0; i < 60 * 12; i++) update(1 / 60); L('after arrivals visible=' + nb.filter((n) => n.m.visible).length + ' seated=' + nb.filter((n) => !n.fol && n.m.visible).length);
+        const nb = HALL_PEOPLE.slice(2);
+        let openDuringArrival = true;
+        const crossed = new Set();
+        for (let i = 0; i < 60 * 12; i++) {
+          update(1 / 60);
+          for (const visitor of nb) if (visitor.m.visible && Math.abs(visitor.z - (HALL.z1 - 0.2)) < 0.22) {
+            crossed.add(visitor.id);
+            if (!hallLeaves.every(leaf => Math.abs(leaf.rotation.y) > 1.3)) openDuringArrival = false;
+          }
+        }
+        const doorsWorked = crossed.size === nb.length && openDuringArrival && hallLeaves.every(leaf => leaf.rotation.y === 0);
+        L('arrivals through open doors=' + crossed.size + ' doors closed again=' + doorsWorked);
+        L('after arrivals visible=' + nb.filter((n) => n.m.visible).length + ' seated=' + nb.filter((n) => !n.fol && n.m.visible).length);
         for (const n of nb) L(n.id + ' lines=' + await talkTo(n) + ' says: ' + (NB[n.id][story.poster]).slice(0, 24)); L('stage=' + stage + ' goal="' + $('goal').textContent + '"');
         L('speech lines=' + await talkTo(byId('garvey')) + ' stage=' + stage + ' goal="' + $('goal').textContent + '" pages=' + unlocked.join(','));
-        L(stage === 14 && ['amy', 'garvey-home', 'unia'].every((p) => unlocked.includes(p)) && place === 'hall' ? 'ALLDONE' : 'STALL'); L('DONE');
+        L(stage === 14 && doorsWorked && ['amy', 'garvey-home', 'unia'].every((p) => unlocked.includes(p)) && place === 'hall' ? 'ALLDONE' : 'STALL'); L('DONE');
       }
       return log.slice();
     };

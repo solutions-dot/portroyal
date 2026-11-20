@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { cv, std, solid, mesh, box, cyl, plane, grp } from "./gfx.js";
 import { shipLifeboat } from "../../../engine/boats.js";
 
-export const SHIP = { L: 152.5, B: 20, keel: -8, deck: 7 };
+export const SHIP = { L: 152.5, B: 20, keel: -8, deck: 7, get boatDeck() { return this.deck + 3 + 2.6 + 0.22; } };
 const C = {
   white: new THREE.Color(0xe9e7de),
   blue: new THREE.Color(0x2c4f7c),
@@ -245,7 +245,7 @@ export function windrush() {
   // the long midships superstructure: promenade deck, boat deck, then the bridge house forward
   superTier(g, X(0.24), X(0.72), SHIP.deck, 2.8, 16.8, "win", white);
   superTier(g, X(0.3), X(0.66), SHIP.deck + 3.0, 2.6, 14.6, "win", white);
-  superTier(g, X(0.56), X(0.68), SHIP.deck + 5.8, 2.6, 11.5, "win", white);
+  superTier(g, X(0.56), X(0.68), SHIP.boatDeck, 2.6, 11.5, "win", white);
   // the wheelhouse front, its windows, and the bridge wings out to the ship's side
   box(1.2, 1.1, 11.5, white, X(0.68) + 0.7, SHIP.deck + 8.45, 0, g);
   const wh = plane(10.5, 0.7, band("win", 10.5), X(0.68) + 1.31, SHIP.deck + 8.6, 0, g);

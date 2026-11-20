@@ -293,17 +293,17 @@ export function barrow(cases = 2) {
   g.add(K.mesh("barrow"));
   return g;
 }
-/* a long trestle table with a cloth, for papers on the landing stage or an advice centre */
-export function trestle(w = 2.2, d = 0.8, h = 0.76, c = 0x6f5136) {
-  const g = grp(),
-    m = solid(c, 0.9);
-  for (const x of [-w / 2 + 0.2, w / 2 - 0.2]) {
-    for (const s of [-1, 1]) {
-      const l = box(0.05, h, 0.05, m, x, h / 2, (s * d) / 3, g);
-      l.rotation.x = s * 0.12;
-    }
+/* A level exhibition table with two square end frames and a stretcher. */
+export function trestle(w = 2.2, d = 0.8, top = 0.78, c = 0x6f5136) {
+  const g = grp(), finish = solid(c, 0.9), frame = solid(new THREE.Color(c).multiplyScalar(0.68), 0.85);
+  const thickness = 0.04, legHeight = top - thickness, leg = 0.055;
+  const end = w / 2 - 0.15, side = d / 2 - 0.09, braceY = 0.26;
+  box(w, thickness, d, finish, 0, top - thickness / 2, 0, g);
+  for (const x of [-end, end]) {
+    for (const z of [-side, side]) box(leg, legHeight, leg, frame, x, legHeight / 2, z, g);
+    box(leg, leg, 2 * side - leg, frame, x, braceY, 0, g);
   }
-  box(w, 0.04, d, m, 0, h, 0, g);
+  box(2 * end - leg, leg, leg, frame, 0, braceY, 0, g);
   return g;
 }
 export function crateStack(seed = 1) {
@@ -871,7 +871,7 @@ export function stiltHouse(w = 7, d = 4.5, { wall = [196, 176, 140], trim = 0xe8
   for (let x = -w / 2 + 0.2; x <= w / 2 - 0.1; x += (w - 0.4) / 4)
     for (const z of [-d / 2 + 0.2, 0, d / 2 - 0.2, d / 2 + 1.45]) {
       box(0.16, lift, 0.16, M.woodDark, x, lift / 2, z, g);
-      box(0.34, 0.16, 0.34, solid(0x9a968a, 1), x, 0.08, z, g);
+      box(0.34, 0.16, 0.34, solid(0x9a968a, 1), x, 0.08, z, g).name = "house footing";
     }
   box(w, 0.12, d, M.woodDark, 0, lift + 0.06, 0, g);
   box(w, h, d, wm, 0, lift + 0.12 + h / 2, 0, g);
@@ -1026,21 +1026,24 @@ export function hillside(w = 70, depth = 50, rise = 18, seed = 6) {
     r = rng(seed),
     geo = new THREE.PlaneGeometry(w, depth, 28, 14);
   geo.rotateX(-Math.PI / 2);
+  const height = (x, z) => {
+    const k = Math.min(1, -z / depth);
+    const edge = THREE.MathUtils.smoothstep(w / 2 - Math.abs(x), 0, w * 0.18);
+    return edge * (Math.pow(k, 0.8) * rise + Math.sin(x * 0.21 + seed) * 1.2 * k + Math.sin(x * 0.07) * 2.5 * k);
+  };
   const p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i),
-      z = p.getZ(i) - depth / 2,
-      k = Math.min(1, -z / depth);
+      z = p.getZ(i) - depth / 2;
     p.setZ(i, z);
-    p.setY(i, Math.pow(k, 0.8) * rise + Math.sin(x * 0.21 + seed) * 1.2 * k + Math.sin(x * 0.07) * 2.5 * k);
+    p.setY(i, height(x, z));
   }
   geo.computeVertexNormals();
-  mesh(geo, std(T.grass([10, 8], [86, 118, 60]), 1), 0, -0.05, 0, g);
+  mesh(geo, std(T.grass([10, 8], [86, 118, 60]), 1), 0, -0.05, 0, g).name = "terrain";
   for (let i = 0; i < 40; i++) {
     const x = (r() - 0.5) * w,
       z = -2 - r() * (depth - 4),
-      k = -z / depth,
-      y = Math.pow(k, 0.8) * rise + Math.sin(x * 0.21 + seed) * 1.2 * k + Math.sin(x * 0.07) * 2.5 * k,
+      y = height(x, z),
       s = 0.8 + r() * 1.6;
     mesh(new THREE.IcosahedronGeometry(s, 0), flat([0x2f6a35, 0x3a7a3a, 0x285d30, 0x4a7a3a][i % 4]), x, y + s * 0.5, z, g);
   }

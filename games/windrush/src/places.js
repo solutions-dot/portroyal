@@ -8,6 +8,7 @@ import * as P from "./props.js";
 import * as S from "./scenery.js";
 import { windrush, gangway, SHIP } from "./ship.js";
 import { createSea, makeWake, gulls } from "./sea.js";
+import { makeDoor } from "../../../engine/door.js";
 import { TASKS } from "./steps.js";
 
 const eraOf = (id) => (id.endsWith("18") ? "2018" : id.endsWith("62") ? "1962" : "1948");
@@ -125,20 +126,28 @@ function yard(id) {
   const is48 = id === "yard48",
     Q = base(id, [-14.6, -10.2, 14.6, 15.0], [0, 11.6, 0]);
   Q.tod = is48 ? "morning" : "afternoon";
-  ground(Q, std(T.dirt([14, 14], is48 ? [164, 132, 92] : [156, 126, 88])));
+  ground(Q, std(T.dirt([25, 25], is48 ? [164, 132, 92] : [156, 126, 88])), 700).name = "terrain";
   // the hill behind and to the sides, the road and the valley below
   add(Q, S.hillside(80, 60, 22, 6), 0, -10.9);
   add(Q, S.hillside(50, 40, 14, 9), 15.6, 2, 0, -Math.PI / 2);
   add(Q, S.hillside(50, 40, 12, 3), -15.6, 2, 0, Math.PI / 2);
   add(Q, S.stoneBank(31, 0.75, 4), -15.5, -10.6);
-  const road = plane(80, 4.2, std(T.dirt([20, 2], [136, 112, 82])), 0, 0.012, 17.2, Q.group);
+  const road = plane(155, 4.2, std(T.dirt([38, 2], [136, 112, 82])), 0, 0.012, 17.2, Q.group);
   road.rotation.x = -Math.PI / 2;
   horizon(Q, { r: 320, h: 55, colour: is48 ? 0x84a39a : 0x9aa48a, gap: Math.PI / 2, width: 0.01, low: 0.5, seed: 4 });
+  // Settled land across the road. The house pads lie beyond the toes of both side slopes.
+  const grass = plane(200, 110, std(T.grass([28, 14], [103, 128, 71])), 0, -0.006, 74.4, Q.group);
+  grass.name = "terrain";
+  grass.rotation.x = -Math.PI / 2;
+  add(Q, S.hillside(185, 62, 19, 15), 0, 52, 0, Math.PI);
   for (let i = 0; i < 7; i++) {
     const h = S.stiltHouse(5, 3.6, { wall: [[190, 170, 140], [170, 190, 170], [200, 180, 150]][i % 3], seed: 300 + i });
-    add(Q, h, (i - 3) * 11 + (i % 2) * 3, 30 + (i % 3) * 5, -1.5 - (i % 3), Math.PI + (i % 2) * 0.3);
+    const x = (i - 3) * 11 + (i % 2) * 3, z = 33 + (i % 3) * 3;
+    add(Q, h, x, z, 0, Math.PI + (i % 2) * 0.12);
+    add(Q, tree(5 + i % 3, 130 + i), x + 4.3, z + 2.5);
+    add(Q, S.crotonHedge(4.4, i + 15), x + 1.4, z - 4.7);
   }
-  for (let i = 0; i < 10; i++) add(Q, tree(6 + (i % 3), i + 130), (i - 5) * 8 + 3, 20.5 + (i % 2) * 1.5, -1);
+  for (const [x, z] of [[-11, 22], [6, 23], [15, 29], [-31, 43], [27, 45]]) add(Q, tree(6.8, 180 + x), x, z);
   // the house on its posts, the outdoor kitchen, the drum of water
   const house = S.stiltHouse(7, 4.5, is48 ? { wall: [190, 172, 138], trim: 0xd8d0bc, shut: 0x3f6a4a, roof: [140, 132, 120] } : { wall: [226, 178, 164], trim: 0xf2eee4, shut: 0x2f5a7a, roof: [176, 180, 176] });
   add(Q, house, -7.5, -6.6);
@@ -210,7 +219,23 @@ function yard(id) {
   crowd(Q, "wr_kgirl48", -2, 12, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   Q.ambient[Q.ambient.length - 1].behaviour.chase = Q.ambient[Q.ambient.length - 2].id;
   Q.keepOff = [{ at: [-4, 5], r: 1.2 }, { at: [3, 4], r: 1 }, { at: [7, 5], r: 1 }, { at: [0, -3], r: 1 }, { at: [-6, -2], r: 1 }];
+  if (__DEV__) Q.foundationIssues = checkFootings(Q.group);
   return Q;
+}
+// Check each foundation stone against the finished landscape before its meshes are merged.
+function checkFootings(group) {
+  group.updateMatrixWorld(true);
+  const land = group.getObjectsByProperty("name", "terrain");
+  const issues = [], ray = new THREE.Raycaster(), p = new THREE.Vector3();
+  ray.ray.direction.set(0, -1, 0);
+  for (const stone of group.getObjectsByProperty("name", "house footing")) {
+    stone.geometry.computeBoundingBox();
+    stone.localToWorld(p.set(0, stone.geometry.boundingBox.min.y, 0));
+    ray.ray.origin.set(p.x, 40, p.z);
+    const ground = ray.intersectObjects(land, false)[0];
+    if (!ground || Math.abs(ground.point.y - p.y) > 0.03) issues.push("House footing off terrain at " + [p.x.toFixed(1), p.z.toFixed(1)]);
+  }
+  return issues;
 }
 function standpipe() {
   const g = grp();
@@ -226,6 +251,11 @@ const WATER_Y = -2.1,
 function quay(Q, x0, x1, z, tex, depth = 40) {
   // the paved apron, the quay wall's face going down into the water with its coping, timber fenders, bollards and ladders
   const ap = box(x1 - x0, 0.3, depth, std(tex, 0.95), (x0 + x1) / 2, -0.15, z + depth / 2, Q.group);
+  // Continue the quay wall and its ground past the last working berth.
+  for (const sign of [-1, 1]) {
+    const centre = (sign < 0 ? x0 : x1) + sign * 120;
+    box(240, 3, depth, solid(0x999789, 0.95), centre, -1.5, z + depth / 2, Q.group);
+  }
   // the land behind the quay, out to the horizon
   const land = plane(1400, 700, solid(0x8a8a78, 1), 0, -0.32, z + depth + 349, Q.group);
   land.rotation.x = -Math.PI / 2;
@@ -292,6 +322,15 @@ function harbour(id, { phone = false, reduced = false } = {}) {
   wall(Q, 10.8, 4.2, 2.2, 4.4);
   portalCrane(Q, -16, 7.7);
   portalCrane(Q, 30, 7.7);
+  // Working docks continue on either side of the passenger landing.
+  for (const x of [-61, -39, 46, 70]) {
+    add(Q, S.dockShed(18, 10, 5.4, k ? [164, 151, 123] : [144, 147, 142], 0x56605a), x, 35, 0, Math.PI);
+  }
+  for (const sign of [-1, 1]) {
+    add(Q, S.dockShed(20, 9, 5, [148, 144, 132]), sign * 85, 15, 0, -sign * Math.PI / 2);
+    add(Q, S.cargoStack(5, ["CARGO"]), sign * 44, 14);
+    add(Q, S.cargoStack(6, ["CARGO"]), sign * 48, 13);
+  }
   if (k) kingstonQuay(Q);
   else tilburyStage(Q);
   // luggage and cargo waiting on the quay
@@ -359,7 +398,7 @@ function tilburyStage(Q) {
   nm.position.set(0, 7.1, -5.06);
   nm.rotation.y = Math.PI;
   st.add(nm);
-  const clock = mesh(new THREE.CircleGeometry(0.9, 24), solid(0xf2eee0, 0.6), 0, 9.6, -4.9, st);
+  const clock = mesh(new THREE.CircleGeometry(0.9, 24), solid(0xf2eee0, 0.6), 0, 9.6, -5.061, st);
   clock.rotation.y = Math.PI;
   box(2.6, 2.6, 0.5, br, 0, 9.6, -4.8, st);
   add(Q, st, 0, 36);
@@ -392,13 +431,27 @@ function tilburyStage(Q) {
 }
 
 /* ---------- on board, mid-Atlantic: the boat deck ---------- */
+// The passenger promenade sits inboard of the suspended lifeboats.
+function deckRail(Q, x0, z0, x1, z1) {
+  const dx = x1 - x0, dz = z1 - z0;
+  const length = Math.hypot(dx, dz), spans = Math.ceil(length / 1.55);
+  const rail = grp(Q.group, (x0 + x1) / 2, 0, (z0 + z1) / 2);
+  rail.rotation.y = -Math.atan2(dz, dx);
+  for (let i = 0; i < spans; i++) {
+    box(0.055, 1.12, 0.055, S.SM.steel, length * (i / spans - 0.5), 0.56, 0, rail);
+  }
+  for (const y of [0.34, 0.71, 1.12]) {
+    box(length, 0.055, 0.065, y === 1.12 ? S.SM.woodDark : S.SM.steel, 0, y, 0, rail);
+  }
+  wall(Q, rail.position.x, rail.position.z, Math.abs(dx) + 0.065, Math.abs(dz) + 0.065);
+}
 function deck({ phone = false, reduced = false } = {}) {
   const Q = base("deck48", [-6.6, -18, 6.6, 20], [0, 18.4, 0], "sea");
   const ship = windrush();
   batchStatic(ship);
   ship.traverse((o) => (o.userData.noBatch = true));
   // the boat deck top is 12.82 m above the waterline in the ship's frame: put it at y = 0, bow ahead (-z)
-  const top = SHIP.deck + 3.0 + 2.6 + 0.22;
+  const top = SHIP.boatDeck;
   ship.position.set(0, -top, -10);
   ship.rotation.y = Math.PI / 2;
   Q.group.add(ship);
@@ -410,7 +463,7 @@ function deck({ phone = false, reduced = false } = {}) {
   Q.seaLevel = -top;
   // the ship's frame to this place: local (x, z) -> world (z, -x - 10)
   const W = (lx, lz) => [lz, -lx - 10];
-  for (const lx of [-11.0, 2.75]) {
+  for (const lx of [0.43, 0.52].map(f => (f - 0.5) * SHIP.L)) {
     const [x, z] = W(lx, 0);
     wall(Q, x, z, 5.6, 7.6);
   }
@@ -421,6 +474,11 @@ function deck({ phone = false, reduced = false } = {}) {
   // the boat deck's planking, laid fore and aft, over the plating
   const planks = plane(14.4, 40, std(T.plank([168, 140, 100], 14, [3, 10]), 0.95), 0, 0.012, 1, Q.group);
   planks.rotation.x = -Math.PI / 2;
+  const sideRail = 6.30, aftRail = 20, forwardRail = -18;
+  deckRail(Q, -sideRail, forwardRail, sideRail, forwardRail);
+  deckRail(Q, sideRail, forwardRail, sideRail, aftRail);
+  deckRail(Q, sideRail, aftRail, -sideRail, aftRail);
+  deckRail(Q, -sideRail, aftRail, -sideRail, forwardRail);
   // deck furniture: benches, ventilators,   (no deck chairs: she sailed as a troopship, and no source shows deck chairs on the 1948 voyage; the photographs show people standing along the rails. Owner, 17 November 2026)
   // life rings on the rail, coils of rope, the tables for water and the crossing map
   for (const [x, z, ry] of [[-4.6, 14, Math.PI / 2], [4.6, -6, -Math.PI / 2], [-4.6, -6.5, Math.PI / 2]]) solid1(Q, bench(1.8), x, z, 1.9, 0.7, ry);
@@ -432,7 +490,7 @@ function deck({ phone = false, reduced = false } = {}) {
   add(Q, map, 3.4, -10.6, 0.835);
   for (const z of [17.5, -2]) for (const s of [-1, 1]) {
     const lr = S.lifeRing();
-    lr.position.set(s * 6.95, 0.9, z);
+    lr.position.set(s * (sideRail - 0.09), 0.82, z);
     lr.rotation.y = Math.PI / 2;
     Q.group.add(lr);
   }
@@ -455,6 +513,25 @@ function deck({ phone = false, reduced = false } = {}) {
 }
 
 /* ---------- Brixton: one street, 1948 and 1962 ---------- */
+function distantTerrace(Q, x, z, ry, homes) {
+  const row = grp(), width = homes * 5, brick = S.brickMat("red", [homes * 2, 3]);
+  box(width, 6.2, 6, brick, 0, 3.1, -3, row);
+  for (const side of [-1, 1]) {
+    const roof = box(width + 0.18, 0.16, 3.48, S.SM.slate, 0, 6.95, -3 + side * 1.5, row);
+    roof.rotation.x = side * 0.46;
+  }
+  for (let i = 0; i < homes; i++) {
+    const cx = (i + 0.5) * 5 - width / 2;
+    box(0.8, 1.35, 0.65, brick, cx - 1.8, 7.6, -3, row);
+    box(0.95, 2.15, 0.09, S.SM.woodDark, cx + 1.3, 1.075, 0, row);
+    for (const [wx, wy] of [[-1, 1.5], [-1, 4.5], [1.3, 4.5]]) {
+      box(1.25, 1.6, 0.08, S.SM.brickTrim, cx + wx, wy, 0.02, row);
+      box(1.07, 1.42, 0.06, S.SM.glass, cx + wx, wy, 0.075, row);
+      box(1.09, 0.07, 0.04, S.SM.brickTrim, cx + wx, wy, 0.11, row);
+    }
+  }
+  add(Q, row, x, z, 0, ry);
+}
 function streetBase(Q, era) {
   // road and pavements; north terrace (front at z = -6), south terrace (front at z = 8, facing north)
   const road = box(120, 0.02, 8, std(T.concrete([40, 3], era === 1962 ? [92, 94, 92] : [104, 104, 100]), 0.95), 0, 0.0, 1, Q.group);
@@ -465,6 +542,11 @@ function streetBase(Q, era) {
   for (let x = -55; x < 56; x += 6) box(2.5, 0.025, 0.12, solid(0xd8d4c4, 0.9), x, 0.02, 1, Q.group);
   for (const x of [-42.15, 23.15]) add(Q, S.terraceRow([{}, {}, {}, {}]), x, -6.3);
   for (const x of [-18.15, 42.15]) add(Q, S.terraceRow([{}, {}, {}, {}]), x, 8.3, 0, Math.PI);
+  for (const sign of [-1, 1]) {
+    distantTerrace(Q, sign * 58, 1, -sign * Math.PI / 2, 8);
+    distantTerrace(Q, sign * 49, -6.3, 0, 2);
+    distantTerrace(Q, sign * 49, 8.3, Math.PI, 2);
+  }
   horizon(Q, { r: 260, h: 20, colour: 0x9aa4a4, gap: 0, width: 0, low: 1, seed: 9, y: 0 });
 }
 function brixton48() {
@@ -628,6 +710,11 @@ function home18() {
     add(Q, S.car(c, 2018), x, 12.6);
     wall(Q, x, 12.6, 4.4, 1.8);
   }
+  for (const sign of [-1, 1]) {
+    distantTerrace(Q, sign * 30.25, 21, Math.PI, 4);
+    distantTerrace(Q, sign * 23, 2, 0, 4);
+    distantTerrace(Q, sign * 43, 13, -sign * Math.PI / 2, 4);
+  }
   horizon(Q, { r: 240, h: 22, colour: 0x9aa4a4, gap: 0, width: 0, low: 1, seed: 12, y: 0 });
   // Iris's terrace house and her neighbours': front walls at z = 2, front gardens to the low wall at z = 7.6
   for (const x of [-10, 10]) {
@@ -688,7 +775,7 @@ function home18() {
   solid1(Q, S.sideboard(1.7), 0.9, -3.2, 1.8, 0.5, -Math.PI / 2);
   for (const [x, z, k] of [[0.88, -3.8, 0], [0.88, -2.7, 1]]) {
     const p = S.picture(0.22, 0.17, k);
-    p.position.set(x, 0.92, z);
+    p.position.set(x, 0.8 + (0.17 + 0.06) / 2, z);
     p.rotation.y = -Math.PI / 2 + 0.25;
     Q.group.add(p);
   }
@@ -738,7 +825,8 @@ function centre18() {
     { line: [-7.8, -6.8, 7.8, -6.8], gaps: [{ at: 3, w: 2, h: 1.4, kind: "window", sill: 1.0 }, { at: 8, w: 2, h: 1.4, kind: "window", sill: 1.0 }, { at: 13, w: 2, h: 1.4, kind: "window", sill: 1.0 }] },
     { line: [-7.8, 7.8, -7.8, -6.8] }, { line: [7.8, -6.8, 7.8, 7.8] }, { line: [7.8, 7.8, -7.8, 7.8], gaps: [{ at: 7.8, w: 1.8, kind: "door" }] }] });
   fabric(Q, rm);
-  Q.walls.push([-8, -7, 8, -6.7], [-8, -7, -7.7, 8], [7.7, -7, 8, 8], [-8, 7.7, -0.9, 8], [0.9, 7.7, 8, 8]);
+  add(Q, makeDoor({ w: 1.8, h: 2.1, leaves: 2, kind: "flush", handle: "pull", color: 0x486573, frame: 0xe9e4d4, recess: 0.045 }), 0, 7.72, 0, Math.PI);
+  Q.walls.push([-8, -7, 8, -6.7], [-8, -7, -7.7, 8], [7.7, -7, 8, 8], [-8, 7.7, 8, 8]);
   for (let x = -6; x <= 6; x += 6) {
     const l = box(1.2, 0.05, 0.3, solid(0xf4f2ea, 0.5), x, 3.15, 0, Q.group);
   }
@@ -789,21 +877,27 @@ function centre18() {
   add(Q, S.laptop(), 2.5, -2.6, 0.76);
   for (const [x, z, r] of [[2.2, -3.4, 0], [1.4, -1.6, Math.PI], [2.8, -1.6, Math.PI]]) add(Q, S.plasticChair(), x, z, 0, r);
   // the memory table: an exhibition the centre has made of local families' photographs
-  solid1(Q, S.trestle(2.2, 0.8, 0.76, 0x5a6a6a), -5, -4.5, 2.3, 0.9);
+  const floorY = 0.01, tableHeight = 0.78;
+  solid1(Q, S.trestle(2.2, 0.8, tableHeight, 0x5a6a6a), -5, -4.5, 2.3, 0.9, 0, floorY);
   const board = S.noticeBoard(2.2, 1.2, ["OUR STORIES", "1948", "FAMILIES", "PHOTOS"]);
   board.position.set(-5, 1.9, -6.7);
   Q.group.add(board);
-  add(Q, P.paper("A LIFE IS MORE THAN PAPERS"), -5.6, -4.5, 0.78);
+  add(Q, P.paper("A LIFE IS MORE THAN PAPERS"), -5.6, -4.5, floorY + tableHeight);
   // the waiting chairs along the west wall, and a table where the family's folder waits
-  for (let i = 0; i < 4; i++) add(Q, S.plasticChair(0x3a6a5a), -7.1, 3.8 - i * 0.6, 0, Math.PI / 2);
+  const waitingSeats = [3.8, 3.2, 2.6, 2.0];
+  for (const z of waitingSeats) add(Q, S.plasticChair(0x3a6a5a), -7.1, z, 0, Math.PI / 2);
   wall(Q, -7.1, 2.9, 0.6, 2.6);
   solid1(Q, P.table(1.2, 0.7, 0.76), -2.5, 5.8, 1.3, 0.8);
   // people
   person(Q, "asha", "asha18", 2.2, -3.4, 0, { kind: "sit", seat: { top: 0.455, x: 2.2, z: -3.4, ry: 0 }, clips: ["SitIdle2", "SitIdle"] }, { raw: true });
   person(Q, "iris", "iris79", 1.4, -1.6, Math.PI, { kind: "sit", seat: { top: 0.455, x: 1.4, z: -1.6, ry: Math.PI }, clips: ["SitIdle", "SitIdle2"] }, { raw: true });
   person(Q, "anita", "anita18", 3.3, -0.7, face(3.3, -0.7, 1.4, -1.6), { kind: "watch", at: [1.6, -2.4], idles: ["Idle"], react: ["Nod", "Agree"], every: [4, 8] });
-  crowd(Q, "wr_elder18", -7.1, 3.8, Math.PI / 2, { kind: "sit", seat: { top: 0.455, x: -7.1, z: 3.8, ry: Math.PI / 2 }, clips: ["SitIdle", "SitIdle2"] });
-  crowd(Q, "wr_man18", -7.1, 3.2, Math.PI / 2, { kind: "sit", seat: { top: 0.455, x: -7.1, z: 3.2, ry: Math.PI / 2 }, clips: ["SitIdle2", "SitIdle"] });
+  for (const [look, z, clips] of [
+    ["wr_elder18", waitingSeats[0], ["SitIdle", "SitIdle2"]],
+    ["wr_man18", waitingSeats[2], ["SitIdle2", "SitIdle"]],
+  ]) {
+    crowd(Q, look, -7.1, z, Math.PI / 2, { kind: "sit", seat: { top: 0.455, x: -7.1, z, ry: Math.PI / 2 }, clips });
+  }
   crowd(Q, "wr_woman18", -5.2, 6.45, Math.PI, { kind: "work", clips: ["Idle", "LookAround", "Nod"], work: [4, 8], face: [-5.2, 3] });
   crowd(Q, "wr_wman18", 4.8, 4.2, face(4.8, 4.2, 5.4, 5.6), { kind: "chat", group: "t1", at: [5.2, 3.8] });
   crowd(Q, "wr_girl18", 5.8, 3.6, 0, { kind: "chat", group: "t1" }, { kid: true });

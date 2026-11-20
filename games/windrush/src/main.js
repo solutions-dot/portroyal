@@ -211,7 +211,8 @@ function body(spec) {
   m.position.set(spec.x, spec.ground || 0, spec.z);
   m.rotation.y = spec.ry || 0;
   m.userData.ground = spec.ground || 0;
-  const ctl = animate(m, spec.life?.seat ? spec.life.clips?.[0] || "SitIdle" : spec.idle || "Idle");
+  const behaviour = spec.life || spec.behaviour;
+  const ctl = animate(m, behaviour?.seat ? behaviour.clips?.[0] || "SitIdle" : spec.idle || "Idle");
   ctl.mx.update(0);
   spreadArms(m, spec.sex === "f" ? 0.16 : 0.08);
   groundFeet(m);
@@ -338,7 +339,7 @@ async function buildWorld(id) {
     const n = { ...s, ...body(s) };
     if (s.zone === "ship") {
       Q.props.ship.add(n.m);
-      n.m.position.set(n.x, 0, n.z);
+      n.m.position.set(n.x, n.deckY, n.z);
       Q.shipExtras = Q.shipExtras || [];
       Q.shipExtras.push(n);
       Q.shipLife.add(n, { walk: "Walk", idles: [n.idle || "Idle"], ...s.behaviour });
@@ -1200,6 +1201,7 @@ function hint(now) {
       `translate(calc(-50% + ${stick.dx * 30}px), calc(-50% + ${stick.dy * 30}px))`;
   }
 }
+const railFoot = new THREE.Vector3();
 function tick(dt, now = performance.now()) {
   const Q = world();
   if (!Q) return;
@@ -1217,11 +1219,16 @@ function tick(dt, now = performance.now()) {
     for (const f of Q.tickers) f(t, dt);
     if (Q.sea) Q.sea.tick(t);
     const ship = Q.props.ship;
-    if (ship && !Q.deckShip && !(DIR.on && DIR.moves(Q))) rideShip(ship, Q.sea ? Q.sea.level : -2.1, reduced ? 0 : t);
+    if (ship && Q.props.shipHome && !(DIR.on && DIR.moves(Q))) rideShip(ship, Q.sea ? Q.sea.level : -2.1, reduced ? 0 : t);
     if (Q.props.wake && Q.id === "deck48") Q.props.wake.userData.tick(t, 1);
   }
   if (Q.shipLife) {
-    for (const n of Q.shipExtras) n.m.userData.ground = Q.props.ship.position.y + n.deckY;
+    const ship = Q.props.ship;
+    ship.updateWorldMatrix(true, false);
+    for (const n of Q.shipExtras) {
+      railFoot.set(n.x, n.deckY, n.z).applyMatrix4(ship.matrixWorld);
+      n.m.userData.ground = railFoot.y;
+    }
     Q.shipLife.tick(frozen ? 0 : dt, { px: 1e4, pz: 1e4, story: [], view: W.view });
   }
   Q.life.tick(frozen ? 0 : dt, W);

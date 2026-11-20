@@ -47,10 +47,10 @@ export function table(w = 2, d = 1, h = 0.8) {
 }
 export function paper(text = "A family letter", colour = "#e8ddc4") {
   const g = grp();
-  box(0.31, 0.009, 0.23, PAPER, 0, 0.008, 0, g);
+  box(0.31, 0.009, 0.23, PAPER, 0, 0.0045, 0, g);
   const p = label(text, 0.29, 0.21, colour);
   p.rotation.x = -Math.PI / 2;
-  p.position.y = 0.014;
+  p.position.y = 0.0095;
   g.add(p);
   return dynamic(g);
 }
