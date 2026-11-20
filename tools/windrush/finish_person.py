@@ -2,8 +2,7 @@ import bpy, os
 # Crowd copies are joined before packing, while every vertex still has its
 # original named weights. One painted material plus the original eyes is two
 # draw calls, instead of one call for each garment of every person.
-# This story has no seated actors. Keep the shared alternate skirt in the raw
-# inspection model, and leave it out of the joined standing render versions.
+# Seated wearers can use the full model with its alternate skirt.
 for o in list(bpy.context.scene.objects):
     if o.type=='MESH' and o.name.startswith('SkirtSeat'):bpy.data.objects.remove(o,do_unlink=True)
 mesh_objects=[o for o in bpy.context.scene.objects if o.type=='MESH']
@@ -28,7 +27,7 @@ bpy.ops.object.select_all(action='DESELECT')
 for o in mesh_objects:o.select_set(True)
 bpy.context.view_layer.objects.active=h
 bpy.ops.object.join();h.name='Crowd'
-kwargs=dict(export_extras=True,filepath=os.path.join(OUT,P['name']+'_crowd.glb'),export_image_format='JPEG',export_apply=False,export_skins=True,export_animations=False)
+kwargs=dict(export_extras=True,filepath=os.path.join(OUT,P['name']+'_crowd.glb'),export_image_format='JPEG',export_apply=False,export_skins=True,export_animations=False,export_attributes=True)
 props=bpy.ops.export_scene.gltf.get_rna_type().properties
 if 'export_vertex_color_name' in props:kwargs.update(export_vertex_color='NAME',export_vertex_color_name='Col')
 else:kwargs['export_vertex_color']='ACTIVE'

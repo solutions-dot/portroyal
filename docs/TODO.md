@@ -56,6 +56,16 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 - [x] **Eventide.** Gran leads across the street and stops when the player pauses. The route check reported `FOLLOW 0`. The children go through the clear gap beside the rope. Gran stands clear of all three at the blanket pile.
 - [x] **Eventide blankets.** Restored the broad, striped wrap. It rests on the shoulders of all three children and both women, covers their backs and arms, and stays open down the front. Their hands hang beside their thighs under the blanket. The idle and dialogue checks reported `BLANKETS 0` across 364 poses.
 
+## Windrush scenery and indoor doors
+
+[In-game screenshots](games/windrush-scene-review.webp)
+
+- [x] Set the houses in both Jamaican yards on their foundations and fill the empty views beyond the yards, docks and Brixton streets.
+- [x] Fit railings around the Windrush passenger deck and keep the ship, passengers and furniture on the same floor. The deck check passed with both ordinary and reduced motion.
+- [x] Leave an empty chair between the two visitors at the advice centre. Preserve the eye and brow geometry when building Windrush's lighter character models.
+- [x] Square the legs of the community centre's exhibition table and the Tilbury registration table. Rest their papers on the tabletop.
+- [x] Close the advice centre, the Melissa church hall and both domestic shelters. Garvey's indoor doors close too. The three visitors to the Kingston meeting hall pass through while its doors are open and the doors close behind them.
+
 ## Not done yet (ask the owner first)
 
 - [ ] **The main site menu** (`menu/index.html`) still uses its own fonts (Inter and Fraunces). The games now share one set of fonts. Ask the owner whether the menu should use them too.

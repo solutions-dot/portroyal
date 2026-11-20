@@ -7,6 +7,7 @@
    plus two rooms: room88 (Mass Clifford's block house, where the family shelters from Gilbert) and hall (the church hall used as a shelter in 2025).
    Each builder returns the group, walking bounds, walls, people, background figures and the spots the game's actions use. */
 import * as THREE from 'three';
+import { makeDoor } from '../../../engine/door.js';
 import { createSea } from '../../../engine/sea.js';
 import { T, std, solid, mesh, box, cyl, plane, grp, rng } from './gfx.js';
 import { palm, tree, banana, bush, hillRing, scatter, pole, lantern, bucket, crate, barrel, sack } from './props.js';
@@ -157,9 +158,11 @@ export function buildRoom88(year = 88) {
   const floor = box(W + 0.6, 0.1, D + 0.6, fl, 0, -0.05, 0, g);
   box(W, H, t, wm, 0, H / 2, -D / 2, g); box(t, H, D, wm, -W / 2, H / 2, 0, g); box(t, H, D, wm, W / 2, H / 2, 0, g);
   box(W / 2 - 0.55, H, t, wm, -(W / 4 + 0.275), H / 2, D / 2, g); box(W / 2 - 0.55, H, t, wm, (W / 4 + 0.275), H / 2, D / 2, g); box(1.1, H - 2.05, t, wm, 0, 2.05 + (H - 2.05) / 2, D / 2, g);   /* the doorway is in the middle of the front wall */
+  const door = makeDoor({ w: 1.1, h: 2.05, kind: year === 51 ? 'louvre' : 'six', leaves: year === 51 ? 2 : 1, color: year === 51 ? 0x536952 : 0x71513a, frame: 0x68513d, recess: 0.04 });
+  door.position.z = D / 2 - t / 2; door.rotation.y = PI; g.add(door);
   for (const s of [-1, 1]) { const gb = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-D / 2, 0), new THREE.Vector2(D / 2, 0), new THREE.Vector2(0, 1.1)])), wm.clone(), s * (W / 2), H, 0, g); gb.rotation.y = -s * PI / 2; gb.material.side = THREE.DoubleSide; }
   const roof = roofOf(W, D, H, { rise: 1.1, rgb: [150, 140, 128], over: 0.25 }); g.add(roof); g.userData.roof = roof; roof.userData.noBatch = true;
-  walls.push([-W / 2 - 0.1, -D / 2 - 0.2, W / 2 + 0.1, -D / 2 + 0.1], [-W / 2 - 0.1, -D / 2, -W / 2 + 0.1, D / 2], [W / 2 - 0.1, -D / 2, W / 2 + 0.1, D / 2], [-W / 2, D / 2 - 0.1, -0.55, D / 2 + 0.2], [0.55, D / 2 - 0.1, W / 2, D / 2 + 0.2]);
+  walls.push([-W / 2 - 0.1, -D / 2 - 0.2, W / 2 + 0.1, -D / 2 + 0.1], [-W / 2 - 0.1, -D / 2, -W / 2 + 0.1, D / 2], [W / 2 - 0.1, -D / 2, W / 2 + 0.1, D / 2], [-W / 2, D / 2 - 0.1, W / 2, D / 2 + 0.2]);
   /* a back window with its shutters closed and a plank across */
   box(0.9, 1.0, 0.04, dark, -1.2, 1.5, -D / 2 + t / 2 + 0.01, g); for (const s of [-0.22, 0.22]) box(0.44, 1.0, 0.05, solid(0x3a5a8a, 0.9), -1.2 + s, 1.5, -D / 2 + t / 2 + 0.05, g); box(1.1, 0.1, 0.05, WOOD, -1.2, 1.5, -D / 2 + t / 2 + 0.1, g);
   /* a table with a kerosene lamp and a radio, chairs, a bed with a mattress and a blanket, a cupboard */
@@ -185,8 +188,11 @@ export function buildHall() {
   box(W + 0.8, 0.1, D + 0.8, fl, 0, -0.05, 0, g);
   box(W, H, t, wm, 0, H / 2, -D / 2, g); box(W, H, t, wm, 0, H / 2, D / 2, g); box(t, H, D, wm, W / 2, H / 2, 0, g);
   box(t, H - 2.3, D, wm, -W / 2, 2.3 + (H - 2.3) / 2, 0, g);   /* the west wall: the double doors are in it */
-  box(t, 2.3, 2.2, wm, -W / 2, 1.15, -D / 2 + 1.1, g); box(t, 2.3, 2.2, wm, -W / 2, 1.15, D / 2 - 1.1, g);
-  walls.push([-W / 2 - 0.1, -D / 2 - 0.2, W / 2 + 0.2, -D / 2 + 0.1], [-W / 2 - 0.1, D / 2 - 0.1, W / 2 + 0.2, D / 2 + 0.2], [W / 2 - 0.1, -D / 2, W / 2 + 0.2, D / 2], [-W / 2 - 0.2, -D / 2, -W / 2 + 0.1, -D / 2 + 2.2], [-W / 2 - 0.2, D / 2 - 2.2, -W / 2 + 0.1, D / 2]);
+  const doorWidth = 2, flank = (D - doorWidth) / 2;
+  for (const side of [-1, 1]) box(t, 2.3, flank, wm, -W / 2, 1.15, side * (D - flank) / 2, g);
+  const door = makeDoor({ w: doorWidth, h: 2.3, leaves: 2, kind: 'panel', color: 0x704f34, frame: 0x695541, handle: 'lever', recess: 0.05 });
+  door.position.x = -W / 2 + t / 2; door.rotation.y = PI / 2; g.add(door);
+  walls.push([-W / 2 - 0.1, -D / 2 - 0.2, W / 2 + 0.2, -D / 2 + 0.1], [-W / 2 - 0.1, D / 2 - 0.1, W / 2 + 0.2, D / 2 + 0.2], [W / 2 - 0.1, -D / 2, W / 2 + 0.2, D / 2], [-W / 2 - 0.2, -D / 2, -W / 2 + 0.1, D / 2]);
   for (const s of [-1, 1]) { const gb = mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-D / 2, 0), new THREE.Vector2(D / 2, 0), new THREE.Vector2(0, 1.5)])), wm.clone(), s * (W / 2), H, 0, g); gb.rotation.y = -s * PI / 2; gb.material.side = THREE.DoubleSide; }
   const roof = roofOf(W, D, H, { rise: 1.5, rgb: [140, 146, 150], over: 0.3 }); g.add(roof); g.userData.roof = roof; roof.userData.noBatch = true;
   /* windows on the long walls, shutters closed with a bar across */

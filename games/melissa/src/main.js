@@ -743,6 +743,7 @@ function devViews() {
     tdy1: ['today', 70, -30, 0.4, -PI / 2, 0], tdy2: ['today', 71, 30, 1.8, -PI / 2 + 0.3, 0], tdy3: ['today', 70, -10, 3.6, PI / 2, 0.02],
     room1: ['room88', 24, 0, 1.4, 0, 0], room2: ['room88', 24, 1.8, 1.6, 0.9, 0], room3: ['room88', 24, -1.5, -1.0, 2.5, 0.35],
     aftA: ['after', 52, -8, 3.5, 0.95, 0.03], aftB: ['after', 51, 36, -1.4, PI / 2 + 0.12, 0.03], c51a: ['yard51', 10, -35, 0.4, -PI / 2, 0], c51b: ['yard51', 11, 8.5, 7.8, PI, 0.03], c51c: ['yard51', 12, 4, 1.4, -PI / 2 - 0.9, 0.02], r51: ['room51', 14, 0, 1.4, 0, 0], aftC: ['after', 54, -9.5, 2.0, -PI / 2, 0.05],
+    door51: ['room51', 14, 0, -0.65, PI, 0], door88: ['room88', 24, 0, -0.65, PI, 0], hallDoor: ['hall', 40, -3.4, 0, PI / 2, 0],
     hall1: ['hall', 40, -6.2, 0.2, -PI / 2, 0], hall2: ['hall', 40, 0, 0.0, PI / 2, 0.02], hall3: ['hall', 41, 0.5, -2.2, 0.3, 0.02], hall4: ['hall', 43, -6, 0, -PI / 2 + 0.5, 0.0],
   };
   /* ?shot=model&m=people&ids=pearl,winston&one : people lined up for a close look. m=house|shop|fallen|props|roof show code-built things from four sides. */

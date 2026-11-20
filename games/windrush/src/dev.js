@@ -1,4 +1,5 @@
 /* Development checks are stripped from public builds. */
+import { Raycaster, Vector3 } from "three";
 import { createStory, checkFlow, needList } from "../../../engine/story.js";
 import { checkAll, reachIssues, CHECKS } from "../../../engine/checks.js";
 import { animCheck } from "./animcheck.js";
@@ -21,6 +22,54 @@ import { PLACE_IDS } from "./places.js";
 import { makeAdapter, CHECK_TABLES } from "./checktables.js";
 import { $, closeAll } from "./ui.js";
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+// Probe the visible upper deck after gameplay has advanced the sea, including in reduced motion.
+function checkDeck(A) {
+  const Q = A.world(), issues = new Set(), ray = new Raycaster();
+  const down = new Vector3(0, -1, 0), origin = new Vector3();
+  const staticDeck = Q.group.children.filter(o => o.isMesh);
+  const passengers = [...Q.people, ...Q.extras].map(n => {
+    const meshes = [];
+    n.m.traverseVisible(o => { if (o.isSkinnedMesh) meshes.push(o); });
+    const shoes = meshes.filter(o => /Shoe|Sole|Boot/i.test(o.material.name));
+    return { id: n.id, feet: shoes.length ? shoes : meshes.filter(o => ["Skin", "Crowd"].includes(o.material.name)) };
+  });
+  const vertex = new Vector3();
+  for (let phase = 0; phase < 24; phase++) {
+    A.tick(1 / 15, phase * 860);
+    Q.group.updateMatrixWorld(true);
+    for (const { id, feet } of passengers) {
+      if (!feet.length) issues.add("Could not measure feet of " + id);
+      for (const mesh of feet) {
+        for (let i = 0; i < mesh.geometry.attributes.position.count; i++) {
+          mesh.getVertexPosition(i, vertex).applyMatrix4(mesh.matrixWorld);
+          if (vertex.y < -0.035) {
+            issues.add("Foot below deck on " + id);
+            break;
+          }
+        }
+      }
+    }
+    for (const [x, z] of [[0, 18.4], [2, 10], [-4, 3], [5.5, -14]]) {
+      ray.set(origin.set(x, 0.9, z), down);
+      // Measure the actual steel plating underneath the planks.
+      const surface = ray.intersectObject(Q.props.ship).find(hit => hit.face.normal.y > 0.9);
+      if (!surface || Math.abs(surface.point.y) > 0.015) issues.add("Ship and walking floor separate at " + [x, z]);
+    }
+  }
+  ray.far = 0.50;
+  function checkRail(x, z, dx, dz) {
+    for (const height of [0.34, 0.71, 1.12]) {
+      ray.set(origin.set(x, height, z), new Vector3(dx, 0, dz));
+      const hit = ray.intersectObjects(staticDeck, false)[0];
+      if (!hit || !A.blocked(Q, hit.point.x, hit.point.z, 0.12)) issues.add("Missing rail or walking barrier at " + [x, height, z]);
+    }
+  }
+  for (const sign of [-1, 1]) {
+    for (let z = -17.6; z < 20; z += 0.75) checkRail(sign * 5.95, z, sign, 0);
+    for (let x = -6.05; x <= 6.05; x += 0.5) checkRail(x, sign < 0 ? -17.65 : 19.65, 0, sign);
+  }
+  return [...issues];
+}
 export async function dev(A) {
   const { q, S, world, worlds, ensure, go, story } = A;
   window.__WIND = A;
@@ -136,6 +185,14 @@ export async function dev(A) {
         },
       });
     await checkAll(A.checkAdapter, CHECK_TABLES);
+    return;
+  }
+  if (q.get("test") === "deck") {
+    A.begin();
+    await go(30);
+    closeAll();
+    const errors = checkDeck(A);
+    emit(["DECK " + errors.length, ...errors]);
     return;
   }
   if (q.has("shot")) {
@@ -350,7 +407,7 @@ export async function dev(A) {
       const twins = faceCheck(
         [...Q.people, ...Q.extras].filter((n) => n.m).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, who: n.who, story: Q.people.includes(n) })),
       );
-      const errors = [...r.floating, ...r.inside, ...r.stuck];
+      const errors = [...r.floating, ...r.inside, ...r.stuck, ...(Q.foundationIssues || [])];
       results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));
     }
   if (test === "ambient")

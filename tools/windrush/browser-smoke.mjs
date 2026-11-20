@@ -75,7 +75,8 @@ try {
   // A real key opens dialogue, closing it early does not complete its story task.
   await step(page, 10);
   await page.evaluate(() => {
-    Object.assign(window.__WIND.S, { x: 4, z: 6.5 });
+    const [x, z] = window.__WIND.where("may", "talk");
+    Object.assign(window.__WIND.S, { x, z: z + 1.2 });
     window.__WIND.tick(0);
   });
   await page.locator("#stage").focus();
@@ -129,7 +130,7 @@ try {
   );
   // Posting carries the actual prepared sheets with the envelope.
   await step(page, 61);
-  for (const id of ["postalOrder", "homeLetter"]) {
+  for (const id of ["homeLetter", "postalOrder"]) {
     await task(page, id);
     await task(page, id);
   }
@@ -151,7 +152,8 @@ try {
   await step(page, 75);
   await page.evaluate(() => {
     const A = window.__WIND;
-    Object.assign(A.S, { x: -2, z: 3 });
+    const [x, z] = A.world().leadPath[0];
+    Object.assign(A.S, { x, z });
     for (let i = 0; i < 60; i++) A.tick(1 / 30);
     A.save();
   });
@@ -169,13 +171,9 @@ try {
     const A = window.__WIND;
     const draw = A.renderer.render;
     A.renderer.render = () => {};
-    for (const [x, z] of [
-      [-1, 2],
-      [0, -2],
-      [0, -6],
-    ]) {
+    for (const [x, z] of A.world().leadPath) {
       Object.assign(A.S, { x, z });
-      for (let i = 0; i < 240; i++) A.tick(1 / 30);
+      for (let i = 0; i < 90; i++) A.tick(1 / 30);
     }
     A.renderer.render = draw;
     A.tick(0);
@@ -280,10 +278,11 @@ try {
     mkdirSync(process.env.WINDRUSH_SHOTS, { recursive: true });
     await step(touch, 10);
     await touch.evaluate(() => {
-      Object.assign(window.__WIND.S, { x: 4, z: 6.5 });
+      const [x, z] = window.__WIND.where("may", "talk");
+      Object.assign(window.__WIND.S, { x, z: z + 1.2 });
       window.__WIND.tick(0);
     });
-    await touch.locator("#talk").click();
+    await touch.getByRole("button", { name: "Talk to May", exact: true }).click();
     await touch.screenshot({
       path: process.env.WINDRUSH_SHOTS + "/windrush-phone-dialogue.png",
     });
