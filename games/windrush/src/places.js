@@ -143,17 +143,20 @@ function yard(id) {
   for (let i = 0; i < 7; i++) {
     const h = S.stiltHouse(5, 3.6, { wall: [[190, 170, 140], [170, 190, 170], [200, 180, 150]][i % 3], seed: 300 + i });
     const x = (i - 3) * 11 + (i % 2) * 3, z = 33 + (i % 3) * 3;
-    add(Q, h, x, z, 0, Math.PI + (i % 2) * 0.12);
-    add(Q, tree(5 + i % 3, 130 + i), x + 4.3, z + 2.5);
+    add(Q, h, x, z, 0, Math.PI + (i % 2) * 0.12).name = "yard building";
     add(Q, S.crotonHedge(4.4, i + 15), x + 1.4, z - 4.7);
   }
-  for (const [x, z] of [[-11, 22], [6, 23], [15, 29], [-31, 43], [27, 45]]) add(Q, tree(6.8, 180 + x), x, z);
+  // Plant in the wider gaps and along the back of the plots, clear of neighbouring eaves.
+  for (const [x, z, height] of [
+    [-42, 33, 6.8], [-26, 35, 5.5], [-4, 42, 5.5], [18, 44, 5.7], [43, 34, 6.8],
+    [-34, 48, 6.4], [-17, 49, 6.8], [8, 48, 6.2], [30, 49, 6.6],
+  ]) add(Q, tree(height, 180 + x), x, z).name = "yard tree";
   // the house on its posts, the outdoor kitchen, the drum of water
   const house = S.stiltHouse(7, 4.5, is48 ? { wall: [190, 172, 138], trim: 0xd8d0bc, shut: 0x3f6a4a, roof: [140, 132, 120] } : { wall: [226, 178, 164], trim: 0xf2eee4, shut: 0x2f5a7a, roof: [176, 180, 176] });
-  add(Q, house, -7.5, -6.6);
+  add(Q, house, -7.5, -6.6).name = "yard building";
   wall(Q, -7.5, -5.85, 7.4, 6.3);
   wall(Q, -7.5, -2.3, 1.3, 0.9);
-  solid1(Q, S.kitchenShed(3, 2.2), 8.8, -6.5, 3.6, 2.8, -Math.PI / 2);
+  solid1(Q, S.kitchenShed(3, 2.2), 8.8, -6.5, 3.6, 2.8, -Math.PI / 2).name = "yard building";
   solid1(Q, S.oilDrum(is48 ? 0x5a6e7a : 0x4a6a5a), 10.9, -3.6, 0.7, 0.7);
   // the wash bench and the clothes line
   solid1(Q, S.washBench(), 3.6, 2, 1.5, 0.6);
@@ -169,10 +172,10 @@ function yard(id) {
   if (is48) add(Q, marketBasket(), 7.5, 3.5, 0.835);
   else add(Q, P.radio(), 7.5, 3.5, 0.835);
   // trees and plants: breadfruit, ackee, a coconut palm, bananas; a hedge of crotons along the road with a gap for the path
-  solid1(Q, S.breadfruit(is48 ? 8 : 9, 3), -12.3, 4.5, 1.0, 1.0);
-  solid1(Q, S.ackee(is48 ? 6 : 6.8, 5), 12.6, 1.2, 0.8, 0.8);
-  solid1(Q, palm(8.5, 33), 3.5, -9.3, 0.6, 0.6);
-  for (const [x, z, s] of [[12.8, -9.4, 1], [13.8, -8.4, 2], [-13.8, -9.5, 3]]) solid1(Q, banana(s, s === 2), x, z, 0.8, 0.8);
+  solid1(Q, S.breadfruit(is48 ? 8 : 9, 3), -12.3, 4.5, 1.0, 1.0).name = "yard tree";
+  solid1(Q, S.ackee(is48 ? 6 : 6.8, 5), 12.6, 1.2, 0.8, 0.8).name = "yard tree";
+  solid1(Q, palm(8.5, 33), 3.5, -9.3, 0.6, 0.6).name = "yard tree";
+  for (const [x, z, s] of [[0.8, -8.8, 1], [13.8, -8.4, 2], [-14.2, 1.5, 3]]) solid1(Q, banana(s, s === 2), x, z, 0.8, 0.8).name = "yard tree";
   add(Q, S.crotonHedge(13.4, 2), -15, 14.3);
   wall(Q, -8.3, 14.3, 13.4, 0.7);
   add(Q, S.crotonHedge(5.4, 7), 1.6, 14.3);
@@ -181,7 +184,7 @@ function yard(id) {
   wall(Q, -1.9, -2.3, 3.2, 0.6);
   solid1(Q, standpipe(), 2.6, 13.4, 0.7, 0.7);
   // the district shop and its piazza, where two men play dominoes
-  add(Q, S.districtShop("DISTRICT SHOP", is48 ? {} : { wall: [236, 214, 160], roof: [170, 172, 168] }), 10.2, 8.5);
+  add(Q, S.districtShop("DISTRICT SHOP", is48 ? {} : { wall: [236, 214, 160], roof: [170, 172, 168] }), 10.2, 8.5).name = "yard building";
   wall(Q, 10.2, 8.5, 6.2, 4.2);
   for (const x of [7.3, 10.2, 13.1]) wall(Q, x, 12.95, 0.4, 0.4);
   solid1(Q, S.dominoTable(), 9.0, 11.6, 0.85, 0.85);
@@ -219,11 +222,11 @@ function yard(id) {
   crowd(Q, "wr_kgirl48", -2, 12, 0, { kind: "play", area: [-7.5, 7.5, 0.5, 12.5], run: "Run", joy: ["Cheer", "Clap"] }, { kid: true });
   Q.ambient[Q.ambient.length - 1].behaviour.chase = Q.ambient[Q.ambient.length - 2].id;
   Q.keepOff = [{ at: [-4, 5], r: 1.2 }, { at: [3, 4], r: 1 }, { at: [7, 5], r: 1 }, { at: [0, -3], r: 1 }, { at: [-6, -2], r: 1 }];
-  if (__DEV__) Q.foundationIssues = checkFootings(Q.group);
+  if (__DEV__) Q.yardIssues = checkYard(Q.group);
   return Q;
 }
-// Check each foundation stone against the finished landscape before its meshes are merged.
-function checkFootings(group) {
+// Check the planted trees and the house foundations before static scenery is merged.
+function checkYard(group) {
   group.updateMatrixWorld(true);
   const land = group.getObjectsByProperty("name", "terrain");
   const issues = [], ray = new THREE.Raycaster(), p = new THREE.Vector3();
@@ -234,6 +237,18 @@ function checkFootings(group) {
     ray.ray.origin.set(p.x, 40, p.z);
     const ground = ray.intersectObjects(land, false)[0];
     if (!ground || Math.abs(ground.point.y - p.y) > 0.03) issues.push("House footing off terrain at " + [p.x.toFixed(1), p.z.toFixed(1)]);
+  }
+  const buildings = group.getObjectsByProperty("name", "yard building").map(building => ({
+    position: building.position,
+    bounds: new THREE.Box3().setFromObject(building, true).expandByScalar(0.2),
+  }));
+  for (const tree of group.getObjectsByProperty("name", "yard tree")) {
+    const bounds = new THREE.Box3().setFromObject(tree, true);
+    for (const building of buildings) {
+      if (bounds.intersectsBox(building.bounds)) issues.push(
+        `Tree at ${tree.position.x},${tree.position.z} too close to building at ${building.position.x},${building.position.z}`,
+      );
+    }
   }
   return issues;
 }

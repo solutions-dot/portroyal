@@ -176,6 +176,14 @@ export function devRun(A) {
            suits is one man (who) */
         const twins = faceCheck([...Q.people, ...(Q.extras || [])].filter((n) => n.m && n.m.visible).map((n) => ({ id: n.id, face: n.model, m: n.m, x: n.x, z: n.z, who: /^garvey/.test(n.id) ? 'garvey' : n.who2, life: n.amb && n.amb.spec, path: n.path, story: !n.bg })));
         const all = [...r.floating, ...r.inside, ...r.stuck, ...twins];
+        if (id === 'office') {
+          const papers = Q.group.getObjectsByProperty('name', 'Loose paper').map(p => new THREE.Box3().setFromObject(p, true));
+          for (const name of ['Telephone', 'Typewriter', 'Gramophone']) {
+            const prop = new THREE.Box3().setFromObject(Q.group.getObjectByName(name), true);
+            if (papers.some(p => p.max.x >= prop.min.x && p.min.x <= prop.max.x && p.max.z >= prop.min.z && p.min.z <= prop.max.z))
+              all.push(name + ' covers a loose paper');
+          }
+        }
         if (q.get('dbg')) { const [dx, dy, dz] = q.get('dbg').split(',').map(Number), pt = new THREE.Vector3(dx, dy, dz); Q.group.traverse((o) => { if (o.isMesh && new THREE.Box3().setFromObject(o).expandByScalar(0.02).containsPoint(pt)) { let t = o; while (t.parent && t.parent !== Q.group) t = t.parent; all.push('dbg: ' + o.geometry.type + ' ' + JSON.stringify(o.geometry.parameters || {}) + ' top ' + (t === o ? 'self' : t.type) + ' at ' + o.getWorldPosition(new THREE.Vector3()).toArray().map((v) => v.toFixed(2))); } }); } count += all.length; out.push(id + ': ' + all.length + ' issues'); for (const l of all) out.push('  ' + l); await wait(0); }
       out.unshift('AUDIT ' + count); emit(out, 'AUDIT ' + count); })();
   }

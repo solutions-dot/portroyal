@@ -407,7 +407,7 @@ export async function dev(A) {
       const twins = faceCheck(
         [...Q.people, ...Q.extras].filter((n) => n.m).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, who: n.who, story: Q.people.includes(n) })),
       );
-      const errors = [...r.floating, ...r.inside, ...r.stuck, ...(Q.foundationIssues || [])];
+      const errors = [...r.floating, ...r.inside, ...r.stuck, ...(Q.yardIssues || [])];
       results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));
     }
   if (test === "ambient")
