@@ -23,3 +23,13 @@ export function cloudTexture() {
   tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.generateMipmaps = true; tex.needsUpdate = true;
   return tex;
 }
+
+/* a soft round puff (smoke, steam, dust), made from numbers for the same reason: white, its alpha falling off smoothly from the middle */
+let puff = null;
+export function puffTexture() {
+  if (puff) return puff;
+  const n = 64, px = new Uint8Array(n * n * 4);
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const d = Math.hypot(x + 0.5 - n / 2, y + 0.5 - n / 2) / (n / 2), a = d >= 1 ? 0 : Math.pow(1 - d, 1.6) * 0.95, j = (y * n + x) * 4; px[j] = px[j + 1] = px[j + 2] = 255; px[j + 3] = Math.round(a * 255); }
+  puff = new THREE.DataTexture(px, n, n, THREE.RGBAFormat); puff.colorSpace = THREE.SRGBColorSpace; puff.magFilter = THREE.LinearFilter; puff.minFilter = THREE.LinearMipmapLinearFilter; puff.generateMipmaps = true; puff.needsUpdate = true;
+  return puff;
+}

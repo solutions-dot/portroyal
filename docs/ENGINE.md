@@ -506,3 +506,12 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 ## Returning people (`engine/return-talk.js`, 21 November 2026)
 
 `returningTalker(targets, stage, nameOf)` says when the story's next talk is with one person you already talked to in this chapter (by name, so the same person in a new spot counts). `callBack({ still, clear, talk })` waits for a clear screen, then `comeOver(n, { px, pz, goTo, talk })` walks them up to you with `engine/follow.js` `goTo` and starts the talk when they arrive; a game without `goTo` (Bog Walk, Eventide, Port Royal) starts it where they stand and turns your view to them. Test views (`QUICK`) skip it, so the autoplayers still walk.
+
+## Soft pictures without speckles (`engine/cloud-tex.js`, 21 November 2026)
+
+`cloudTexture()` (the sky's clouds) and `puffTexture()` (smoke, steam, dust) are made from numbers, not drawn on a canvas. Safari's anti-fingerprinting adds tiny random colours to canvas pictures, and in their see-through edges they showed as rainbow speckles (seen in Bog Walk's and Kendal's skies and an engine's smoke). Every game's `T.cloud()` and `T.puff()`, Tivoli's sky and `makeSmoke` in `engine/vehicles.js` use them. Other soft canvas sprites (glows, Garvey's funnel smoke) may still speckle in Safari; move them here when seen.
+
+## Wheels that overlap (`engine/audit.js`, 21 November 2026)
+
+`wheelset()` in `engine/vehicles.js` marks each wheel set with `userData.wheelR`. `auditPlace` reports two wheels on one vehicle that overlap ("wheels overlap by N cm"), so `?test=audit` catches it in every game. The late steam engine's driving wheels (1.72 m) were 1.5 m apart; they are now 1.9 m apart, and its small front wheels 1.0 m apart.
+

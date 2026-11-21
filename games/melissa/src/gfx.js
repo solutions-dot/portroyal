@@ -1,7 +1,7 @@
 /* games/kendal/src/gfx.js: textures drawn in code (no image files), materials, small builders and the sky.
    Everything here is plain three.js. Textures are cached by key, so a place can ask for the same one again cheaply. */
 import * as THREE from 'three';
-import { cloudTexture } from '../../../engine/cloud-tex.js';
+import { cloudTexture, puffTexture } from '../../../engine/cloud-tex.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const G = { aniso: 4 };
@@ -104,7 +104,7 @@ export const T = {
     return once('flame', () => cv(64, 64, (x) => { const g = x.createRadialGradient(32, 40, 2, 32, 36, 30); g.addColorStop(0, 'rgba(255,250,210,1)'); g.addColorStop(0.3, 'rgba(255,190,70,0.85)'); g.addColorStop(0.7, 'rgba(255,110,20,0.25)'); g.addColorStop(1, 'rgba(255,90,10,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); }, null, true));
   },
   puff() {
-    return once('puff', () => cv(64, 64, (x) => { const g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(255,255,255,0.9)'); g.addColorStop(0.5, 'rgba(255,255,255,0.4)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); }, null, true));
+    return puffTexture();   /* made from numbers, not a canvas: no Safari speckles in smoke and dust (engine/cloud-tex.js) */
   },
 };
 

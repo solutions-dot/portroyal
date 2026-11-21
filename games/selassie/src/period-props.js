@@ -854,8 +854,8 @@ export function waterTower() {
     [-1, 1],
     [1, 1],
   ]) {
-    const l = cyl(0.08, 0.1, 5, M.woodDark, x, 2.5, z, g, 6);
-    l.rotation.set(z * 0.04, 0, -x * 0.04);
+    cyl(0.08, 0.1, 4.9, M.woodDark, x, 2.55, z, g, 6); /* straight legs on stone footings: every foot flat on the ground (owner, 21 Nov 2026) */
+    box(0.36, 0.1, 0.36, solid(0x8a8478, 1), x, 0.05, z, g);
   }
   cyl(1.6, 1.6, 2.2, solid(0x7a5a3c, 0.9), 0, 5.4, 0, g, 18);
   cyl(0.0, 1.7, 0.7, solid(0x3d3d3a, 0.8), 0, 6.85, 0, g, 18);
