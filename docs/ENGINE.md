@@ -517,4 +517,4 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 ## The water tower (`engine/water-tower.js`, 21 November 2026)
 
-`buildWaterTower({ grp, cyl, box, solid, M })` builds the railway water tower with the game's own helpers and materials (`M.woodDark`, `M.iron`): four straight legs on stone footings, the tank, its roof, the standpipe and spout. It was copied in six games; each game's `waterTower()` now calls it, and `tests/shared-props.mjs` fails if a copy comes back.
+`buildWaterTower({ grp, cyl, box, solid, M })` builds the railway water tower with the game's own helpers and materials (`M.woodDark`, `M.iron`): four straight legs on stone footings, the tank, its roof, and a short outlet pipe, spout and canvas hose for filling a tender (a long hanging pipe that read as a fourth leg was replaced, 21 Nov 2026). It was copied in six games; each game's `waterTower()` now calls it, and `tests/shared-props.mjs` fails if a copy comes back.
