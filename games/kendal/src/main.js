@@ -161,7 +161,7 @@ function makeBody(s) {
   if (s.lamp) { const o = lantern(); carry('RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
   if (!seated && !s.noSpread) spreadArms(m, /^(woman|girl|guide)/.test(s.base) ? 0.15 : s.base === 'man_suit' ? 0.11 : 0.05);   /* arms hang clear of skirts and jackets (engine/grip.js) */
   const load = s.life && s.life.load; if (load) { const o = load === 'crate' ? crate(0.42, 0x8a6a42) : load === 'basket' ? hamper(0x9a7a48) : bananaBunch(0.9); o.userData.noBatch = true;   /* a load carried by a background worker (engine/ambient.js shows and hides it with spec.show) */
-    if (load === 'crate') between(m, o, 'CarryIdle', 0.17); else if (load === 'basket') { hold(m, 'Head', o, GRIP.basket); steadyLoad(m, o); } else { const w = new THREE.Group(); o.rotation.z = PI / 2; o.position.y = 0.06; w.add(o); hold(m, 'Head', w, { dy: 0.1, scale: 1 }); }
+    if (load === 'crate') between(m, o, 'CarryIdle', 0.17); else if (load === 'basket') { hold(m, 'Head', o, GRIP.basket); steadyLoad(m, o); } else { const w = new THREE.Group(); o.rotation.z = PI / 2; w.add(o); w.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(o), c = bb.getCenter(new THREE.Vector3()); o.position.set(-c.x, 0.04 - bb.min.y, -c.z);   /* the bunch lies centred on the head, not hung out to one side from its stalk end (owner, 21 Nov 2026) */ hold(m, 'Head', w, { dy: 0.1, scale: 1 }); steadyLoad(m, w); }
     s.load = o; o.visible = false; s.life.show = (n, on) => { if (n.load) n.load.visible = on; }; }
   return m;
 }
@@ -632,7 +632,7 @@ const ACTIONS_FOR = {   /* each thing has an id; `need` is the step need it coun
 const RIDE45 = { busy: false };
 /* the 1845 water stop: the water boy hands you the bucket, you pass it on to the next passenger along the carriage */
 function passBucket(P) {
-  const k = STORY.got.water || 0, spot = [[0.5, 0.5], [-1.2, -0.5], [0.5, -0.5]][k % 3]; RIDE45.busy = true; HAND.carry(rideBucket, { yaw: 0.2 }); stepSound('water');
+  const k = STORY.got.water || 0, spot = [[0.5, 0.12], [-1.2, -0.12], [1.5, 0.05]][k % 3];   /* in the aisle: the benches' fronts are at z = +-0.65 (owner, 21 Nov 2026: the bucket was in the bench) */ RIDE45.busy = true; HAND.carry(rideBucket, { yaw: 0.2 }); stepSound('water');
   setTimeout(() => { HAND.place(rideBucket, { parent: P.group, at: [spot[0], 0.17, spot[1]], ry: k }); uiSound('goal'); RIDE45.busy = false; STORY.done('water'); }, 900 * TS);
 }
 /* a splash in the sea: spray thrown up in front of you */

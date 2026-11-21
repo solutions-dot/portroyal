@@ -2,6 +2,7 @@
    A copy of games/kendal/src/gfx.js, kept separate while other work changes Kendal; move the shared parts into engine/ later.
    Everything here is plain three.js. Textures are cached by key, so a place can ask for the same one again cheaply. */
 import * as THREE from 'three';
+import { cloudTexture } from '../../../engine/cloud-tex.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const G = { aniso: 4 };
@@ -98,7 +99,7 @@ export const T = {
     return once('tuft', () => cv(128, 128, (x, w, h) => { x.clearRect(0, 0, w, h); for (let i = 0; i < 22; i++) { const bx = 10 + Math.random() * (w - 20), bh = 40 + Math.random() * 80, lean = (Math.random() - 0.5) * 36, g = 160 + Math.random() * 90; x.fillStyle = `rgb(${g * 0.62 | 0},${g | 0},${g * 0.38 | 0})`; x.beginPath(); x.moveTo(bx - 3, h); x.quadraticCurveTo(bx + lean * 0.3, h - bh * 0.6, bx + lean, h - bh); x.quadraticCurveTo(bx + lean * 0.3 + 3, h - bh * 0.5, bx + 3, h); x.fill(); } }, [1, 1], true));
   },
   cloud() {
-    return once('cloud', () => cv(256, 128, (x, w, h) => { x.clearRect(0, 0, w, h); for (let i = 0; i < 16; i++) { const cx = 40 + Math.random() * (w - 80), cy = h * 0.55 + (Math.random() - 0.5) * 20, r = 22 + Math.random() * 26, g = x.createRadialGradient(cx, cy, 2, cx, cy, r); g.addColorStop(0, 'rgba(255,255,255,0.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2); } }, [1, 1], true));
+    return cloudTexture();   /* made from numbers, not a canvas: no Safari speckles (engine/cloud-tex.js) */
   },
   flame() {
     return once('flame', () => cv(64, 64, (x) => { const g = x.createRadialGradient(32, 40, 2, 32, 36, 30); g.addColorStop(0, 'rgba(255,250,210,1)'); g.addColorStop(0.3, 'rgba(255,190,70,0.85)'); g.addColorStop(0.7, 'rgba(255,110,20,0.25)'); g.addColorStop(1, 'rgba(255,90,10,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); }, null, true));
