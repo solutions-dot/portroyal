@@ -96,8 +96,14 @@ export function makeHand(camera) {
   const cloth = new THREE.MeshStandardMaterial({ color: 0x776f60, roughness: 0.95, emissive: 0x14110b, vertexColors: true });
   for (const [name, g] of handParts(FISTY)) add(g, name === 'sleeve' || name === 'cuff' ? cloth : /nail$/.test(name) ? nailMat : skin, name);
   inner.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.renderOrder = 10; } });
+  /* The torch is held 0.55 m in front of your eye, but a wall of the pipe can be nearer than that (0.26 m at the side of the lane, and the roof when you look up).
+     So the hand, the torch and its flame are drawn in the nearest slice of the depth range: they are always in front of the pipe and are never cut off by it
+     (owner, 21 November 2026: "I can turn and cut through the pipe"). The parts of the hand still hide each other as before. */
+  const NEAR_SLICE = 0.02, gl = (r) => r.getContext();
+  inner.traverse((o) => { if (!o.isMesh && !o.isSprite) return; o.onBeforeRender = (r) => gl(r).depthRange(0, NEAR_SLICE); o.onAfterRender = (r) => gl(r).depthRange(0, 1); });
 
   const FIST = new THREE.Vector3(0, FISTY, 0.004);   /* the middle of the fist: the hand is turned and scaled about this point */
+  const LIGHT_HOME = light.position.clone(), lw = new THREE.Vector3();
   const H = { root, inner, stickA, stickB, flame, light, lift: 0, panelOpen: false, baseX: 0, halfW: 1, baseY: -0.25, tune: null, s: 1, cs: 0,
     setPanelOpen(on) { H.panelOpen = on; root.position.x = H.baseX - (on ? Math.min(0.22, Math.max(0, H.halfW - 0.2) * 0.8) : 0); },   /* a narrow screen moves it less, so it does not leave the side */
     setLift(u) { H.lift = u; root.position.y = H.baseY + u; },
@@ -112,6 +118,9 @@ export function makeHand(camera) {
       const tn = H.tune || {};
       root.position.set(wide ? Math.min(0.34, halfW * 0.7) : halfW * (tn.x ?? 0.31), H.baseY + H.lift, -depth); H.baseX = root.position.x; H.halfW = halfW; H.setPanelOpen(H.panelOpen); root.rotation.set(0, tn.ry ?? (wide ? 0.34 : 0.0), 0);   /* on a tall phone the hand turns a little less, so the forearm leaves through the bottom edge, not the side */
       inner.rotation.set(tn.rx ?? -0.2, 0, tn.rz ?? (wide ? -0.15 : -0.07)); H.s = s * (tn.sm ?? 1); H.setCine(H.cs); },
+    /* The flame's light must stay inside the pipe. Facing a wall from close by, it was outside the wall, so the wall you looked at went black and its rivets were lit
+       from behind. inside(p) moves a world point back inside; call this each frame after the camera is placed. */
+    keepLightInside(inside) { light.position.copy(LIGHT_HOME); camera.updateMatrixWorld(true); inner.localToWorld(lw.copy(LIGHT_HOME)); if (inside(lw)) light.position.copy(inner.worldToLocal(lw)); },
     update(time, k) {
       rag.emissiveIntensity = 0.1 + 0.9 * Math.min(1, k); skin.emissiveIntensity = 0.8 + 0.5 * Math.min(1, k); const f = k * (0.86 + 0.1 * Math.sin(time * 9.1) + 0.06 * Math.sin(time * 21)), f2 = k * (0.9 + 0.1 * Math.sin(time * 13.3 + 1));
       flame.material.opacity = Math.max(0, Math.min(1, f)); flame.visible = f > 0.02; flame.scale.set(0.17 * (0.92 + 0.14 * Math.sin(time * 11)), 0.26 * (0.9 + 0.18 * Math.sin(time * 14)), 1);

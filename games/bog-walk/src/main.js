@@ -86,6 +86,10 @@ function setMode(m) {   /* the Tube (torch light, the hand) or the world outside
 const S = { started: false, x: 0.12, z: ZM - 1.5, yaw: 0, pitch: 0, eye: SAND + 1.45 };   /* yaw 0 looks toward -z (down the pipe, or north outside) */
 const N = { phase: 'title', t: 0, q: [], wl: 0, torch: 1, vig: 0, sky: 0, scraped: 0, allDone: false, doneT: 0, dripT: 2, clankT: 7, voiceT: 5, crackT: 3, mixT: 0, hintT: 0, skipped: false, fast: false, out: null, intro: false, introNext: null, glance: 0, glanceT: 0, glanceOn: false, duck: 0, hbT: 0, lift: 0, cine: false, liftNeed: 0, order: null, handHissed: false, turn: null, deadT: 0, wlT: 0 };
 const LANE = 0.62;   /* how far from the middle of the pipe you can stand: the wall curves in, and your torch needs room */
+/* Nothing in the pipe may be cut by the front of the view. At the side of the lane your eye is 0.26 m from the wall and 0.14 m from the bolts of a flange. With the
+   front of the view at 0.08 m its corners reached 0.14 m on a 16:9 screen and 0.16 m on a wider one, so a bolt could be cut. At 0.05 m they reach 0.10 m at most. */
+const NEAR_WORLD = 0.08, NEAR_TUBE = 0.05, LIGHT_IN = R - 0.2;
+const lightInside = (p) => { const dx = p.x, dy = p.y - R, d = Math.hypot(dx, dy); if (d <= LIGHT_IN) return false; p.x = dx / d * LIGHT_IN; p.y = R + dy / d * LIGHT_IN; return true; };   /* the hand torch's light never leaves the pipe (hand.js) */
 const keys = new Set();
 const PANELS = ['dialogue', 'journal', 'chapters', 'credits', 'card', 'puzzle'];
 const panelsOpen = () => PANELS.some((id) => !$(id).hidden);
@@ -348,11 +352,11 @@ function enterPlace(id, { keepPos = false, env } = {}) {
   setEnv(env || P.env); near = null; smoke.clear();
   if (!keepPos) { S.x = P.start.x; S.z = P.start.z; S.yaw = P.start.yaw; S.pitch = 0; }
   S.eye = P.eye || 1.6; stick.id = null; stick.dx = stick.dy = 0; $('stick').hidden = true;
-  const fov = camera.aspect < 0.8 ? 76 : 66; if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); }
+  const fov = camera.aspect < 0.8 ? 76 : 66; if (camera.fov !== fov || camera.near !== NEAR_WORLD) { camera.fov = fov; camera.near = NEAR_WORLD; camera.updateProjectionMatrix(); }
 }
 function enterTube() {
   cur = 'tube'; for (const k of Object.keys(PL)) { PL[k].group.visible = false; for (const n of PL[k].npcs) if (n.mark) n.mark.visible = false; } setMode('tube'); near = null; TB.el && (TB.el.hidden = true);
-  if (camera.fov !== 68) { camera.fov = 68; camera.updateProjectionMatrix(); } hand.place(camera.aspect, camera.fov, innerHeight, innerWidth);
+  if (camera.fov !== 68 || camera.near !== NEAR_TUBE) { camera.fov = 68; camera.near = NEAR_TUBE; camera.updateProjectionMatrix(); } hand.place(camera.aspect, camera.fov, innerHeight, innerWidth);
 }
 const smoke = makeSmoke(scene, 30);
 function clampWorld(x, z) {
@@ -827,6 +831,7 @@ function tick(dt, clockDt = dt) {
   else { const fov = camera.aspect < 0.8 ? 76 : 66; if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
   if (!S.started && !RIDE.on && P_() && P_().titleView) { const tv = P_().titleView; camera.position.set(tv.x - Math.sin(ft * 0.08) * 2, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(ft * 0.05) * 0.04, 0, 'YXZ'); }
   else { camera.position.set(S.x + Math.sin(ft * 43) * shake, S.eye + bob + Math.sin(ft * 57 + 1) * shake * 0.7, S.z); camera.rotation.set(S.pitch + (sceneIsCalm() ? 0 : N.glance), S.yaw, Math.sin(ft * 31) * shake * 1.6, 'YXZ'); }
+  if (MODE === 'tube') hand.keepLightInside(lightInside);
   if (MODE === 'tube') { const nearP = !locked() && !!nearPatch(); if (N.phase !== 'shot') { if ($('act').hidden === nearP) $('act').hidden = !nearP; if (nearP && $('act').textContent !== 'Scrape') $('act').textContent = 'Scrape'; } }   /* test views and checks set the Scrape button themselves */
   else { sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110); for (const o of [sky.dome, sky.stars, sky.clouds]) o.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380); bubbleTick(time); }
 }
