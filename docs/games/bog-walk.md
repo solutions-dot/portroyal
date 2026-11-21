@@ -200,8 +200,8 @@ The owner said yes to all three next steps: a better torch hand, an in-game menu
 **5. The ruins today.** A fictional teacher ("Miss Grant") and a student ("Kemar").
 - Miss Grant: "This is where the Tube came down to the power station."
 - The information board shows the real 1904 Gleaner headline (older readers' version), and a gentle line under it: "In 1904, 33 men died here when water came into the pipe."
-- Kemar: "Why did the water come?" Sort cards: **We know**: 33 men died; it was a Sunday night shift; the pipe was 8 feet across. **People guessed**: a board at the dam was opened; sand made a dam that burst. **Nobody knows**: which guess is true.
-- Put later events in order: the trams run again within days; the trams stop (1948); the power station closes (1966).
+- Kemar: "Why did the water come?" The sorting card is headed **"Let's sort what we know"** (owner, 21 Nov 2026: the old heading read as if it were the question). Sort cards: **We know it**: 33 men died; the men worked on a Sunday night; the pipe was 8 feet wide. **A guess**: someone opened a gate at the dam; sand piled up, then broke, and let the water in. **Nobody knows**: why the water really came.
+- "What happened next?" Put events in order, first to last (plain words for a 6-year-old, 21 Nov 2026): electric trams start (1899); water fills the Tube (1904); the trams run again a few days later (1904); the trams stop for good (1948); the power station shuts (1966).
 - Kemar: "Who was to blame?" Choice: **"Nobody can say for sure."** or **"We should keep asking questions."** Miss Grant's reply changes slightly; both are right.
 - The end card. Every choice is listed on the "Your journey" journal page.
 

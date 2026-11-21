@@ -14,7 +14,7 @@ import * as THREE from 'three';
 import { flameTex, woodTex, ragTex } from './gfx.js';
 import { HANDMESH } from './handmesh.js';
 
-const SKIN_LIGHT = 1.55, SKIN = [148, 100, 72];   /* owner rule 9: inside [134, 90, 64] to [156, 108, 80], then lightened */
+const SKIN_LIGHT = 1.25, SKIN = [138, 92, 66];   /* owner rule 9: inside [134, 90, 64] to [156, 108, 80], then lightened. The hand sits right by the torch, so it takes less lightening than a face (owner, 21 Nov 2026: a little darker) */
 const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
 /* One step of Loop subdivision: every triangle becomes four and the surface is smoothed (the mesh ships coarse and is made smooth here, so it stays small).

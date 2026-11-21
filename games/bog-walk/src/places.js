@@ -578,7 +578,7 @@ export function buildRuins() {   /* chapter 5: today, bright day among trees */
   /* a low wall to sit on, a path sign, and some modern things: a bin, a bench */
   benchWithBack(g, -1.8, 13.4, PI, 2); P.walls.push([-3, 13.0, -0.6, 13.8]); const bin = cyl(0.25, 0.22, 0.8, solid(0x2a5a3a, 0.6), 1.2, 0.4, 14.2, g, 12); P.walls.push([0.9, 13.9, 1.5, 14.5]);
   P.people.push(person('grant', 'grant', 'Miss Grant', 0.6, 8.6, PI - 0.3, { h: 1.7 }));
-  P.people.push(person('kemar', 'kemar', 'Kemar', -2.6, -2.2, 0.6, { h: 1.55 }));
+  P.people.push(person('kemar', 'kemar', 'Kemar', 2.6, -0.9, 0.3, { h: 1.55 }));   /* beside the information board, where his questions come from (owner, 21 Nov 2026) */
   P.extras.push(...crowdNow(4, 7, [-5, 4, 5, 9], { face: PI }));
   P.bounds = { x0: -36, x1: 21, z0: -20.5, z1: 18 }; P.start = { x: 2, z: 15.5, yaw: 0 };
   P.tick = (dt, t) => { g.userData.river.offset.x = (t * 0.02) % 1; };

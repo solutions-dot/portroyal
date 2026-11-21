@@ -621,7 +621,7 @@ function onTalked(n) {
   if (stage === 52) openSort(REPORT, () => convo(TALK.reporterDone(), () => setStage(53), byId('reporter')));
   if (stage === 53) run([[1.2, () => setStage(54)]]);
   if (stage === 62) openSort(WHY, () => { unlock('why'); setStage(63); });
-  if (stage === 63) openOrder('What came after?', AFTER, 'Tap the events in the order they happened.', () => setStage(64), { years: true });
+  if (stage === 63) openOrder('What happened next?', AFTER, 'Tap them in order, first to last.', () => setStage(64), { years: true });
 }
 
 /* ---------- chapter 0: the station on Sunday evening ---------- */
@@ -703,7 +703,7 @@ ON[55] = () => endOffer(55, () => card('Chapter 5 is finished', ['Next, the same
 function readBoard() {
   unlock('ruins'); card('The information board', ['The Gleaner, 28 June 1904:', '"Fearful Catastrophe At Bog Walk. Drowning Men Fight For Life. Sudden Rush of Water Causes Panic. 33 Able-Bodied Men Drowned In Water-Pipe. No Accurate Information as To Cause Of The Disaster."', 'In 1904, 33 men died here when water came into the pipe.'], [{ t: 'Close', go: () => { hideCard(); if (stage === 61) setStage(62); } }]);
 }
-ON[65] = () => { unlock('journey', true); unlock('why', true); cue('end'); run([[1.4, () => card('The end', ['In 1904, 33 men died in the Tube at Bog Walk. 28 got out.', 'Nobody could say for sure why the water came. We remember the men.', 'Thank you for playing. Your journey is in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true, credit: true })]]); };
+ON[65] = () => { unlock('journey', true); unlock('why', true); cue('end'); run([[1.4, () => card('The end', ['In 1904, 33 men died in the Tube at Bog Walk. 28 got out.', 'Nobody could say for sure why the water came. We remember the men.', 'Thank you for playing. Your journey is in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true })]]); };   /* no credit line on The end (owner, 21 Nov 2026): it is on the Credits page */
 
 /* ---------- movement: keys, touch (left half is a stick, right half looks) and mouse drag to look ---------- */
 const solids = T.solids;
