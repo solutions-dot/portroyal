@@ -214,3 +214,5 @@ Measured in a dev build with a reading player (headless, software WebGL; `window
 ## The Emperor's tunic and belt (21 November 2026)
 
 The owner asked for the Emperor to be tuned. A change to the builder's sleeves that day had belled his tunic out at the wrists and beside the arms; the generated jacket (worn only by uniforms now) keeps its former sleeve (`sleeve_tube_old` in `tools/garvey/era.py`). His belt's lower edge came out in teeth: its outline is now evened round the waist (`tools/selassie/imperial_uniform.py`). Still to do: the beard, the gold cords, and a last wave in the belt (`docs/TODO.md`). To rebuild only him: `BPY_PYTHON=~/venv/bin/python3 node tools/selassie/build-people.mjs sel_emperor66`.
+
+The same day, after the owner's note (hunched shoulders, choppy clothes, the beard): his recipe now has `neck-scale-vert-incr` 0.5, `measure-shoulder-dist-incr` 0.5 and `torso-vshape-incr` 0.3 (his bare body was not hunched; a short neck and narrow, sloping shoulders under the tunic read that way), and a closer, darker beard (`beard`: thick 0.0028, len 0.008; colour in `tools/selassie/imperial_face.py`). His face targets are unchanged.

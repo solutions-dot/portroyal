@@ -121,7 +121,14 @@
     "nose-scale-vert-incr": 0.25,
     "lr-cheek-bones-incr": 0.3,
     "chin-height-incr": 0.15,
-    "eyebrows-trans-down": 0.2
+    "eyebrows-trans-down": 0.2,
+    "neck-scale-vert-incr": 0.5,
+    "measure-shoulder-dist-incr": 0.5,
+    "torso-vshape-incr": 0.3
   },
-  "kit": "emperor"
+  "kit": "emperor",
+  "beard": {
+    "thick": 0.0028,
+    "len": 0.008
+  }
 }

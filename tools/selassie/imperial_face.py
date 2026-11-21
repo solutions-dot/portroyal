@@ -16,7 +16,7 @@ lips=[v.co for v in h.data.vertices if any(g.group==lip_group and g.weight>0 for
 lower_lip=min(v.z for v in lips)
 lip_width=max(abs(v.x) for v in lips)
 BEARD=P.get('beard') or {}
-COL['Moustache']=srgb([54,51,48] if kind=='emperor' else P['colors']['Hair']);COL['Beard']=srgb([98,96,92] if kind=='emperor' else P['colors']['Hair'])      # the Emperor in April 1966 (the owner's photographs): a dark beard, greying at the chin, not a pale grey one
+COL['Moustache']=srgb([54,51,48] if kind=='emperor' else P['colors']['Hair']);COL['Beard']=srgb([66,62,58] if kind=='emperor' else P['colors']['Hair'])      # the Emperor in April 1966 (the owner's photographs): a dark beard, greying at the chin, not a pale grey one
 moustache=bpy.data.objects.get('Moustache')
 if moustache:
     moustache.data.materials[0]=colmat('Moustache')
