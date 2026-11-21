@@ -19,7 +19,8 @@
               between two points instead (spec.walk, e.g. 'Carry', and spec.pick, e.g. 'PickUp', at each end).
      sit      on a seat (spec.seat, or a seatAnchor the game set): SitIdle and its variants, and SitTalk in turn with a neighbour in the same group.
      watch    stand and look toward spec.at with small shifts of weight and stance, and an odd reaction (spec.react: ['Clap', 'Point']).
-     errand   walk from spec.from to spec.to carrying something (spec.walk, e.g. 'CarryBagWalk'), wait, and walk back.
+     errand   walk from spec.from to spec.to carrying something (spec.walk, e.g. 'CarryBagWalk'), wait, and walk back. With spec.drop they put it
+              down at spec.to and fetch another at spec.from; spec.put(n) lets the game leave what they put down on the ground.
      play     a child running, stopping for joy and chasing (spec.chase: another child) in spec.area, slower near the player.
    Every behaviour: random start time and speed on every clip (nobody moves in step), idle variants in turn, a head that turns toward
    the player or a nearby person (limited and eased), personal space (nobody walks into a person, the player or a solid; they yield to the
@@ -243,9 +244,9 @@ export function createAmbient(opts = {}) {
     if (a.st === 'turn') { if (turnStep(n, dt, 2.6)) startWalk(n); return; }
     if (a.st === 'arrive') {   /* at one end: put down or pick up (spec.drop), then wait */
       const pk = s.pick || 'PickUp'; if (s.drop && has(n, pk)) { play(n, pk, { once: true, speed: 1 }); a.st = 'pick'; a.t = clipLen(n, pk) * 0.95; a.half = a.t / 2; a.swapped = false; stand(n); a.clip = pk; return; }
-      if (s.drop) { a.carrying = !a.carrying; if (s.show) s.show(n, a.carrying); }
+      if (s.drop) { a.carrying = !a.carrying; if (s.show) s.show(n, a.carrying); if (!a.carrying && s.put) s.put(n); }
       pause(n, ...(s.wait || [3, 8])); return; }
-    if (a.st === 'pick' && a.t > 0) { if (a.t < a.half && !a.swapped) { a.swapped = true; a.carrying = !a.carrying; if (s.show) s.show(n, a.carrying); } return; }
+    if (a.st === 'pick' && a.t > 0) { if (a.t < a.half && !a.swapped) { a.swapped = true; a.carrying = !a.carrying; if (s.show) s.show(n, a.carrying); if (!a.carrying && s.put) s.put(n); } return; }   /* spec.put(n): the load stays where it was set down (the game leaves a copy there) */
     if (a.st === 'pick') { pause(n, ...(s.wait || [1, 3])); return; }
     if (a.st === 'pause' && a.t > 0) return;
     const g = a.leg === 1 ? s.to : s.from; if (!go(n, g.slice())) pause(n, 1.5, 3);

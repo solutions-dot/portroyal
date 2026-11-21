@@ -162,7 +162,11 @@ function makeBody(s) {
   if (!seated && !s.noSpread) spreadArms(m, /^(woman|girl|guide)/.test(s.base) ? 0.15 : s.base === 'man_suit' ? 0.11 : 0.05);   /* arms hang clear of skirts and jackets (engine/grip.js) */
   const load = s.life && s.life.load; if (load) { const o = load === 'crate' ? crate(0.42, 0x8a6a42) : load === 'basket' ? hamper(0x9a7a48) : bananaBunch(0.9); o.userData.noBatch = true;   /* a load carried by a background worker (engine/ambient.js shows and hides it with spec.show) */
     if (load === 'crate') between(m, o, 'CarryIdle', 0.17); else if (load === 'basket') { hold(m, 'Head', o, GRIP.basket); steadyLoad(m, o); } else { const w = new THREE.Group(); o.rotation.z = PI / 2; w.add(o); w.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(o), c = bb.getCenter(new THREE.Vector3()); o.position.set(-c.x, 0.04 - bb.min.y, -c.z);   /* the bunch lies centred on the head, not hung out to one side from its stalk end (owner, 21 Nov 2026) */ hold(m, 'Head', w, { dy: 0.1, scale: 1 }); steadyLoad(m, w); }
-    s.load = o; o.visible = false; s.life.show = (n, on) => { if (n.load) n.load.visible = on; }; }
+    s.load = o; o.visible = false; s.life.show = (n, on) => { if (n.load) n.load.visible = on; };
+    if (load === 'bunch') { const pile = []; s.life.put = (n) => {   /* the bunch stays on the ground where it was put down, a small pile by the wagon (owner, 21 Nov 2026); six at most, the oldest reused */
+      const host = n.m && n.m.parent; if (!host) return; let b = pile.length < 6 ? null : pile.shift(); if (!b) { b = bananaBunch(0.9); b.userData.noBatch = true; host.add(b); }
+      const k = pile.length, ry = n.m.rotation.y, fx = Math.sin(ry), fz = Math.cos(ry), side = ((k % 3) - 1) * 0.42, back = Math.floor(k / 3) * 0.45;
+      b.rotation.set(0, ry + PI / 2 + k * 0.4, PI / 2); b.position.set(n.x + fx * (0.75 + back) + fz * side, (n.m.userData.ground || 0) + 0.12, n.z + fz * (0.75 + back) - fx * side); b.visible = true; pile.push(b); }; } }
   return m;
 }
 /* an instrument held across the body: its body at the strumming (right) hand, the neck toward the left hand, the face to the front. Measured on the posed body. */

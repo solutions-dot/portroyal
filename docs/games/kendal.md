@@ -185,3 +185,7 @@ The owner: "the doors should fit their purpose, not one shared one". The flat bo
 ## Performance (18 November 2026)
 
 `src/main.js` uses `engine/preload.js` (see `docs/ENGINE.md`). `setQuiet` is true on the title screen, while a panel or card is open, and during the chapter title fade. `backgroundLoad()` now builds one place at a time through `work()`, the next chapter's places first, so the heavy part lands in quiet moments. At each chapter start `readyNext(i)` builds, peoples and warms (compiles) the places this chapter and the next one go to (`usedIn(i)` reads them from `placeOfStage`, so the 1845 ride, the coach and the beach count), and `tidyPlaces(i)` releases the graphics memory of every other hidden place (nothing is removed; three.js sends it again if the place is shown).
+
+## The ends of the hill station (21 November 2026)
+
+The owner: the far ends of the hill station looked rough, like the end of the world, and the track just stopped. Now each platform end has a wooden fence across it, bushes and trees stand beside the line, and the track runs on into a cutting between grassy banks topped with trees, out of sight (`hillStationEnds` in `src/places1.js`). A tunnel mouth was tried first and taken out: the hill station is made up and no source shows a tunnel beside it (rule 3). The edge of the raised ground behind every Kendal platform is a grassy bank, not a grey wall (`stationBase` in `src/common.js`).

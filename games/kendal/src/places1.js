@@ -105,6 +105,28 @@ export function buildRide45() {
     smokers: [{ obj: loco.userData.chimney, rate: 8, v: 0.5 }], spots: { water: [-1.8, 0] }, tick: () => {} };
 }
 
+/* the ends of a station: a wooden fence closes each end of the platform, bushes and trees stand beside the line, and a little way out
+   the track runs into a cutting between grassy, tree-topped banks, so it goes somewhere instead of stopping. x0, x1: the platform ends; zc: the track; zBack: the back of the platform. */
+function hillStationEnds(g, walls, x0, x1, zc, zBack) {
+  const r = rng(77), wood = solid(0x5a4030, 1), stone = solid(0x8c867a, 1), dark = solid(0x0c0b0a, 1), earth = solid(0x3f6a36, 1);
+  for (const [xe, dir] of [[x0, -1], [x1, 1]]) {
+    /* the fence: posts and two rails across the platform end */
+    const fx = xe - dir * 0.25, za = zc + 2.0, zb = zBack - 0.2;
+    for (let z = za; z <= zb + 0.01; z += (zb - za) / 6) cyl(0.06, 0.07, 1.1, wood, fx, 0.55, z, g, 6);
+    for (const y of [0.45, 0.9]) box(0.06, 0.08, zb - za, wood, fx, y, (za + zb) / 2, g);
+    walls.push(dir > 0 ? [fx - 0.2, za, fx + 0.6, zb] : [fx - 0.6, za, fx + 0.2, zb]);
+    /* a cutting: the line runs on between two grassy banks with trees along their tops and goes out of sight, instead of stopping.
+       No tunnel: this hill station is made up, and nothing shows a tunnel beside it (rule 3). */
+    const cx = xe + dir * 30;
+    for (const side of [-1, 1]) {
+      const bank = mesh(new THREE.SphereGeometry(1, 20, 10, 0, PI * 2, 0, PI / 2), earth, cx + dir * 8, TRACK_Y - 0.4, zc + side * 13.5, g); bank.scale.set(34, 9, 9);
+      for (let k = 0; k < 4; k++) { const t = tree(6 + (k % 3), 40 + k + side); t.position.set(xe + dir * (18 + k * 7 + r() * 3), TRACK_Y + 5.5 + r(), zc + side * (12.5 + r() * 2)); t.rotation.y = r() * 6.28; g.add(t); }
+    }
+    /* trees and bushes beside the line between the platform and the tunnel, on the low ground and on the bank behind */
+    for (let i = 0; i < 9; i++) { const x = xe + dir * (3 + r() * 14), z = r() < 0.5 ? zc - 3.5 - r() * 9 : zc + 3.2 + r() * 9, low = z < zBack, t = i % 3 ? bush(i, 1.6 + r()) : tree(5 + (i % 3), i); t.position.set(x, low ? TRACK_Y : 0, z); t.rotation.y = r() * 6.28; g.add(t); }
+  }
+}
+
 /* ============ chapter 3: a hill station, the 1890s ============ */
 export function buildHill() {
   const g = grp(), walls = [], people = [], extras = [];
@@ -113,6 +135,7 @@ export function buildHill() {
   const hut = shed(9, 4.5, 2.9, [176, 140, 96]); hut.position.set(2, 0, 11.5); hut.rotation.y = PI; g.add(hut); walls.push([-2.6, 8.05, 6.6, 14], [1.23, 7.13, 2.77, 8.05]);
   const sg = signBoard('HILL STATION', 3.2, 0.55, { bg: '#2a3a52', fg: '#f3e6b8', font: '700 46px Georgia, serif' }); sg.position.set(2, 2.85, 7.6); g.add(sg);   /* on the front edge of the veranda roof: behind it, the roof hid the words */
   const wt = waterTower(); wt.position.set(34, TRACK_Y, 4); g.add(wt); wt.position.y = 0; walls.push([32, 2, 36, 6]);
+  hillStationEnds(g, walls, -34, 44, -3, 15);   /* the ends of the world: a fence across each platform end, trees, and the line running on into a cutting (owner, 21 Nov 2026) */
   scatter(g, (i) => banana(i, i % 4 === 0), 40, [-34, 18, 44, 60], [[-6, 16, 10, 22]], 5); scatter(g, (i) => tree(5 + (i % 3), i), 16, [-30, 24, 40, 70], [], 8); scatter(g, (i) => bush(i, 1.4), 24, [-34, 15, 44, 40], [[-6, 15, 10, 22]], 3);
   /* two goods wagons waiting on the track, and the pile of banana bunches the farmer has cut */
   const w1 = wagon(), w2 = wagon(); w1.position.set(-20, 0, -3); w2.position.set(-12.8, 0, -3); g.add(w1, w2); walls.push([-24, -4.6, -9, -1.2]);
