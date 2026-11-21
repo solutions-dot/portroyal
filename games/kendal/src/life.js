@@ -73,7 +73,7 @@ const PLACES = {
   },
   coach(P, people, extras) {   /* the coach: neighbours on a bench talk in turn */
     for (const e of extras) {
-      if (Math.abs(e.z) > .7) at(e, 'sit', { clips: ['SitIdle', 'SitIdle2'], every: [4, 8] });
+      if (Math.abs(e.z) > .7) at(e, 'sit', { clips: ['SitIdle'], every: [4, 8] });   /* a window seat: hands in the lap. SitIdle2 holds both hands out wide, as on the arms of a chair (39 to 45 cm from the middle of a man), and the hand went through the coach wall 30 cm away (?test=ambient, 21 Nov 2026) */
       else at(e, 'sit', { group: 'bench' + e.x.toFixed(1) + (e.z < 0 ? 'L' : 'R'), clips: isMan(e) && !isKid(e) ? ['SitIdle', 'SitPoseM'] : ['SitIdle', 'SitPoseF'] });
     }
   },

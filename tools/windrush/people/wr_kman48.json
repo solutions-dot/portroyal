@@ -23,7 +23,7 @@
       ]
     ],
     "sleeve": 0.55,
-    "collar": "camp",
+    "collar": false,
     "legwidth": 1.05
   },
   "colors": {

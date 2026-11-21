@@ -17,7 +17,7 @@
   "garments": {
     "sleeve": 0.3,
     "shoes": true,
-    "collar": "round",
+    "collar": false,
     "hairvol": 0.25,
     "hat": [],
     "woman": true,
@@ -83,5 +83,10 @@
     "head-oval": 0.4,
     "lr-cheek-volume-incr": 0.2
   },
-  "face": "round", "variants": ["heart", "long", "wide"]
+  "face": "round",
+  "variants": [
+    "heart",
+    "long",
+    "wide"
+  ]
 }

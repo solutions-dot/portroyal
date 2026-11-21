@@ -18,7 +18,7 @@
     "hairvol": 0.25,
     "hat": [],
     "sleeve": 0.95,
-    "collar": "turn",
+    "collar": false,
     "legwidth": 0.95,
     "belt": true
   },

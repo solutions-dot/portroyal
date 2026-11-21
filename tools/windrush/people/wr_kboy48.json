@@ -20,7 +20,7 @@
     "sleeve": 0.42,
     "shorts": true,
     "socks": 0.3,
-    "collar": "camp",
+    "collar": false,
     "pocket": true
   },
   "colors": {

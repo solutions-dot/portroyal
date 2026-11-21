@@ -106,5 +106,8 @@
     "nose-flaring-incr": 0.2,
     "head-scale-horiz-decr": 0.15
   },
-  "crowd": true
+  "crowd": true,
+  "outfit": {
+    "garment": "toigo_male_suit_tie_and_jacket"
+  }
 }

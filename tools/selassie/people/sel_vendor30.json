@@ -15,7 +15,7 @@
   "garments": {
     "sleeve": 0.75,
     "shoes": true,
-    "collar": "camp",
+    "collar": false,
     "hairvol": 0.25,
     "hat": [
       [
@@ -23,8 +23,7 @@
         "Hat"
       ]
     ],
-    "trousers": true,
-    "leaf": 0.07
+    "trousers": true
   },
   "colors": {
     "Skin": [
@@ -92,5 +91,9 @@
     "head-square": 0.35,
     "nose-scale-horiz-incr": 0.2
   },
-  "face": "broad", "variants": ["lean", "round"]
+  "face": "broad",
+  "variants": [
+    "lean",
+    "round"
+  ]
 }

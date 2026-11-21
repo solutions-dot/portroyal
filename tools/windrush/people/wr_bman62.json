@@ -105,5 +105,8 @@
     "head-oval": 0.4,
     "nose-width2-incr": 0.3
   },
-  "crowd": true
+  "crowd": true,
+  "outfit": {
+    "garment": "toigo_male_suit_tie_and_jacket"
+  }
 }

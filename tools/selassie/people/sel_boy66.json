@@ -15,7 +15,7 @@
   "garments": {
     "sleeve": 0.25,
     "shoes": true,
-    "collar": "round",
+    "collar": false,
     "hairvol": 0.25,
     "hat": [],
     "trousers": true,
@@ -77,5 +77,9 @@
     "chin-width-decr": 0.2
   },
   "upscale": 1.26,
-  "face": "round", "variants": ["lean", "wide"]
+  "face": "round",
+  "variants": [
+    "lean",
+    "wide"
+  ]
 }

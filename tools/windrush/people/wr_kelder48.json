@@ -23,7 +23,7 @@
     "pleats": 9,
     "hairvol": 0.15,
     "bun": false,
-    "collar": "round",
+    "collar": false,
     "hat": [
       [
         "wrap",

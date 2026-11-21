@@ -100,6 +100,9 @@ The rules every character must meet are in `docs/PEOPLE.md`; the checklist is in
 - Blender previews make dark skin look darker than the game does. Judge skin with `?test=skin` and game screenshots (`docs/PIPELINE.md`, "Skin").
 - In the game: Port Royal's `?shot=sheet&who=<name>`, and Kendal's and Melissa's `?shot=model&m=people&ids=...` line people up for a close look.
 - `node tools/review/people-sheet.mjs <game> <id,id,...> [out.png] [views=front,side,back,face,face34,faceside]` draws the same sheet for any game's packed bodies, in the game's own stance and skin lightening (serve the repository root first). Add `_lo`, `_crowd` or `_phone` to an id to look at a light copy: check that it still has eyes, brows and lips. `torso`, `torso34`, `torsoside` and `torsoback` views look closer at the clothes.
+- `node tools/review/posture-probe.mjs <game> <id,id,...> anims=Idle,Talk1,Walk` measures the stance: how far each trunk bone is pitched against the body's own rest pose in each clip, and (with `--json`) its sideways tip and turn. A standing clip should stay within a few degrees of rest, with tip and turn near 0. If a body looks stooped or crooked, run this before touching its recipe or its clothes (`docs/ENGINE.md`, "Every body keeps its own shape").
+- `tools/wardrobe/tryon.py` and `tools/wardrobe/view.mjs` fit a garment to a bare body and draw it from four sides (`docs/PIPELINE.md`, "Fitted garments").
+- Look at clothes in a pale colour as well as the game's own: a dark suit hides soft lapels, stepped edges and cloth poking through.
 - Look for hair poking through hats, cloth gaps, shirts showing through, and floating feet.
 
 ## 5. Automatic checks (required for every game)

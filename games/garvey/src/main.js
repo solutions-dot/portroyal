@@ -733,7 +733,7 @@ function nurseCap(m, top) {
 /* the walk's pace on a body whose real step is longer or shorter than the engine's stride estimate (engine/anim.js strideOf): the older man's
    bent, short-legged walk covers about 9 % more ground than the estimate, so his feet slid 13.6 cm a loop (?test=walkers). The clip is played that
    much faster for the same ground speed. */
-const PACE_K = { nb_elder: 1.09 };
+const PACE_K = {};   /* (nb_elder had 1.09 here, to cover a stride that was measured short while his skeleton was bent by the clips; with fitRig() in engine/anim.js the stride is his own, and the extra made his feet slide 11 cm a loop) */
 function fitPace(m, model, k) { const f = k ? +k : PACE_K[model] || PACE_K[model.replace(/_[bc]$/, '')];   /* a face variant (guide2020_b) walks as its body does */ const c = m.userData.anim; if (!f || !c || c._fit) return; const p0 = c.pace.bind(c); c.pace = (v, lo, hi) => p0(v * f, lo, hi); c._fit = true; }
 /* one unpacking per model file: several people share a body (five nb_youth, four woman1914...), and engine/loader.js model() unpacks the file
    again on every call. The first unpacking is kept as it came and never shown; each person gets a copy of it with materials of their own (a tint or a

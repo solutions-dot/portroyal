@@ -15,11 +15,10 @@
   "garments": {
     "sleeve": 0.72,
     "shoes": true,
-    "collar": "camp",
+    "collar": false,
     "hairvol": 0.25,
     "hat": [],
-    "trousers": true,
-    "leaf": 0.07
+    "trousers": true
   },
   "colors": {
     "Skin": [
@@ -80,7 +79,11 @@
     "head-age-incr": 0.7
   },
   "kit": "locks",
-  "face": "elder", "variants": ["long", "broad"],
+  "face": "elder",
+  "variants": [
+    "long",
+    "broad"
+  ],
   "beard": {
     "len": 0.05,
     "thick": 0.006

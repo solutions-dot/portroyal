@@ -66,8 +66,8 @@ def nw_outline(zfun, clear, K=4):
 # --- the seam: where the collar is sewn to the shirt ---
 # At the nape it sits at the base of the neck; at the throat about 3 cm lower, at the top of the breastbone, as a shirt's neckband does.
 _nw_zb = NECK - 0.006 * s
-_nw_zf = NECK - (0.046 if _nw_open else 0.026 if _nw_round else 0.030 if CK in ('band', 'plain') else 0.034) * s
-def _nw_ring_z(a): return _nw_zb + (_nw_zf - _nw_zb) * _nw_front(a)
+_nw_zf = NECK - (0.046 if _nw_open else 0.026 if _nw_round else (G.get('neckdrop', 0.012 if G.get('highneck') else 0.042 if G.get('woman') else 0.032) if CK == 'plain' else 0.030) if CK in ('band', 'plain') else 0.034) * s      # a plain opening: "neckdrop" is how far below the base of the neck its front sits
+def _nw_ring_z(a): return _nw_zb + (_nw_zf - _nw_zb) * (_nw_front(a) ** 2 if CK == 'plain' else _nw_front(a))      # a plain opening dips only at the front: lower at the sides too, its ring ran out onto a narrow shoulder and left a wedge of skin there
 _NW_RING_R = nw_outline(_nw_ring_z, 0.006)
 _aj = 0.0
 if _nw_camp:
@@ -93,12 +93,33 @@ if _nw_camp:
         f = (a % (2 * math.pi)) / (2 * math.pi) * _NV; i = int(f) % _NV; u = f - int(f); return _tab[i] * (1 - u) + _tab[(i + 1) % _NV] * u
 else:
     SEAM_Z = _nw_ring_z; SEAM_R = _NW_RING_R
+if CK == 'plain':
+    # A plain opening sits close round the base of the neck. On a woman, a child or an old person the neck's joint is level with the slope of the shoulders, so the
+    # skin's outline at the seam's height is already the shoulders: the ring came out 9 to 12 cm in radius, a boat neck that ran out onto the shoulder points, tore
+    # there and let the shoulder's skin through. The ring is kept to the neck's own radius (measured 3 cm up the neck) plus 2 cm at the sides and back, and where
+    # that brings it in onto the slope the seam rises to lie on the shoulder there.
+    _rn = nw_outline(lambda a: NECK + 0.03 * s, 0.0, K=3); _NP = 144; _tr = []; _tz = []
+    for _i in range(_NP):
+        _a = 2 * math.pi * _i / _NP; _r0 = _NW_RING_R(_a); _r = min(_r0, _rn(_a) + 0.020 + 0.05 * _nw_front(_a)); _z = _nw_ring_z(_a)
+        if _r < _r0 - 1e-4:
+            _hit = SKIN.ray_cast(nw_pt(_a, NECK + 0.04 * s, _r), Vector((0, 0, -1)), 0.12)[0]
+            if _hit is not None: _z = max(_z, _hit.z + 0.005)
+        _tr.append(_r); _tz.append(_z)
+    for _ in range(4):
+        _tr = [(_tr[i - 2] + 2 * _tr[i - 1] + 3 * _tr[i] + 2 * _tr[(i + 1) % _NP] + _tr[(i + 2) % _NP]) / 9 for i in range(_NP)]
+        _tz = [(_tz[i - 2] + 2 * _tz[i - 1] + 3 * _tz[i] + 2 * _tz[(i + 1) % _NP] + _tz[(i + 2) % _NP]) / 9 for i in range(_NP)]
+    def _nw_tab(tab, a):
+        f = (a % (2 * math.pi)) / (2 * math.pi) * _NP; i = int(f) % _NP; u = f - int(f); return tab[i] * (1 - u) + tab[(i + 1) % _NP] * u
+    SEAM_R = lambda a: _nw_tab(_tr, a); SEAM_Z = lambda a: _nw_tab(_tz, a)
+    print('NECKWEAR plain ring radius mm: front %d side %d back %d (was side %d)' % (SEAM_R(0) * 1000, SEAM_R(math.pi / 2) * 1000, SEAM_R(math.pi) * 1000, _NW_RING_R(math.pi / 2) * 1000))
 def seam_pt(a): return nw_pt(a, SEAM_Z(a), SEAM_R(a))
 
 def _nw_above(c):      # is this point of the shirt above the seam, inside the neck opening? (only near the ring: a high shoulder slope outside it is not)
     a = nw_ang(c); return c.z > SEAM_Z(a) - 0.0015 and math.hypot(c.x, c.y - nw_cy(c.z)) < SEAM_R(a) + 0.012
 _nw_zlow = (VZ - 0.03 * s) if _nw_camp else NECK - 0.09 * s
-def _nw_zone(c): return c.z > _nw_zlow and abs(c.x) < 0.15 * s and (side_arm(c) is None or abs(c.x) < SX * 0.7)
+def _nw_zone(c):      # the cloth round the neck opening: within 4 cm of the seam, seen from above. (It used to leave out points that count as the arm's; on a child or a narrow-shouldered
+    # woman the top of the shoulder is the arm's, so the edge there was never moved onto the seam and a wedge of skin showed at each shoulder.)
+    return c.z > _nw_zlow and abs(c.x) < 0.15 * s and math.hypot(c.x, c.y - nw_cy(c.z)) < SEAM_R(nw_ang(c)) + 0.04
 
 # --- bone weights as dicts {group name: weight} ---
 def _nw_w(o, vi):

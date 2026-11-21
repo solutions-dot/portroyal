@@ -28,14 +28,27 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 - [x] **Card buttons on a phone.** On desktop, the Reset card's three buttons are on one line in all ten games (checked at 1280 wide). Check the Reset card and the "Start again?" card at 390x800 and 667x375: whole buttons may drop to the next line there, but no button's words should be cut off, and the card should fit on the screen. Run `?test=layout` in each game at 390x800, 667x375, 800x500 and 1280x720 (see `docs/TESTING.md`, section 5).
   Reset and Start again? button text fit in all ten games at both phone sizes in Chromium. The layout audit reported zero issues in all 40 game and viewport combinations. The layout audit also caught a toolbar clipping in Port Royal at 390x800 and a caption covering a toast in Garvey at 667x375. Both sizes passed after the fixes.
 
-## Collars, ties and suits (21 November 2026)
+## People: posture, necklines, suits and legs (21 November 2026)
 
-Collars and ties were rebuilt from scratch, sewn to the shirt (`tools/garvey/neckwear.py`; `docs/reviews/collars-20261121.md`). Left to do:
+The audit and what changed: `docs/reviews/people-20261121.md`. Left to do, in order of how much they show:
 
-- [ ] **A collar for suit jackets.** A jacket ends in a flat cut round the base of the neck. Give it a collar round the back of the neck that runs into the lapels (the neckwear module's turn-collar code is the place to start), so the shoulders read as tailored. Garvey's suit still looks soft without it.
-- [ ] **Camp collar facings on a child.** On Kendal's `boy` the facing down each side of the V creases a little (a narrow chest turns it almost sideways). Look at `node tools/review/people-sheet.mjs kendal boy views=neck,neck34`.
-- [ ] **A turn collar between waistcoat and jacket** creases a little beside the knot (`garvey1916`).
-- [ ] **Round collars on soft blouses** follow the blouse's lumps (`wr_iris79`, `wr_kelder48`).
+- [ ] **Model the everyday period garments once and fit them**, as suits are now (`docs/PIPELINE.md`, "Fitted garments"): a man's shirt, a blouse, a frock, a long skirt, a 1690 coat. Until then they are made by `tools/garvey/era.py` from the body's own surface. The free MakeHuman packs were checked on 21 November 2026 and have none of these.
+- [ ] **A period cut for Marcus Garvey's suit**: a three-button jacket that closes higher, and a stiff stand collar for 1914. The fitted suit is a modern two-button cut.
+- [ ] **A squarer shoulder on the fitted suit.** Its shoulder line follows the body's slope.
+- [ ] **A speck of trouser at the jacket's front hem in a stride** (the fitted suit; see `?test=cloth`).
+- [ ] **Eventide's own three bodies** (`tools/eventide/people.py`) still wear the old collars. Rebuild them with `era.py` recipes.
+- [ ] **A speck of skin at the shoulder seam of a round opening** on one small girl (`wr_kgirl48`, seen from the side). Look with `node tools/review/people-sheet.mjs windrush wr_kgirl48 views=neckside,neck34`.
+- [ ] **Walking checks not at 0 after the stance fix** (21 November 2026): Kendal 2 (Dawn's run 8.8 cm a loop, a slow survivor 7.8), Port Royal 3 (Kofi's carry 11 cm, Abba's run 33 cm). The walk itself measures right on every body; `Run` and `Carry` strides and very slow walks do not yet. Fix `strideOf` in `engine/anim.js` for those clips; do not add per-game factors.
+- [ ] **The girl bodies' stride.** `strideOf` in `engine/anim.js` measures every body's walking stride exactly (Kendal's `?test=walkers&tune` gives 1.000 for all of them) except `girl` and `girl_small`, whose real stride is about a quarter longer than the measure. Kendal corrects it in `STRIDE_K`; find the cause in the engine and take the correction out. Check the girls in Tivoli, Melissa and Eventide too.
+- [ ] **A man's apron when he sits** lies on the lap as a short flap instead of falling over the knees (`man_apron`, `SitIdle`). Standing and walking it hangs right.
+- [ ] **Two small specks on the fitted jacket's front in a stride** (the pocket flap's corners) and a sliver of trouser at its front hem.
+- [ ] **Abba's bodice** has a ragged lower edge above her apron string (`tools/people/abba.json`).
+- [ ] **The Emperor** (`sel_emperor66`, owner 21 November 2026: "needs some fine tuning"). Done that day: his tunic's sleeves and skirt (a builder change had belled them), a smooth belt, squarer shoulders and a longer neck (he read as hunched), a darker, closer beard. Still to do: the beard's edge on the cheek is still a hard line, the gold cords hang off his chest instead of lying on it, and the tunic is still the generated jacket (a modelled tunic, fitted as the suits are, is the real fix for choppy cloth). Check against `docs/games/selassie-face.jpg` and `selassie-salute.jpg`.
+- [ ] **An old woman's round opening** (`woman_elder`, `wr_kelder48`) is uneven at the front: her neck leans forward and the opening is worked out round an upright one.
+- [ ] **Waistcoats are still the generated kind** (owner, 21 November 2026: "ill shaped"). The torn V is fixed. The shape still follows the belly, a speck of shirt shows at the side of the hem on `man_elder`, and shirt sleeves beside it still show the upper arm's shape. A modelled waistcoat, fitted as the suits are, is the real fix.
+- [ ] **Shoulders still do not look natural** (owner, 21 November 2026, of the old man in a waistcoat and the boy and girls in short sleeves): the top of the sleeve bulges at the shoulder point and the shirt's shoulder line is lumpy. The sleeve tube is smooth now from the seam down; the shoulder cap itself (where sleeve, chest and neckline meet) is still the body's surface pushed out. Fix with a modelled shirt, fitted as the suits are.
+- [ ] **`woman_long` is badly built** (owner, same day): she leans back seen from the side, her blouse is in flat facets with hard creases across the chest and back, the back of her neckline is torn, and a dark patch sits on her forehead under the head wrap. Rebuild her recipe and check her stance with `tools/review/posture-probe.mjs`.
+- [ ] **A turn collar and tie worn without a jacket** (`man_shirt`, `clerk1919`, `printer1907`, `steward1920`, two Windrush men) is still the generated collar. Take the collar and tie from the fitted suit instead.
 
 ## Character movement
 

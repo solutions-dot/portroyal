@@ -23,7 +23,7 @@
     "pleats": 9,
     "hairvol": 0.3,
     "bun": false,
-    "collar": "round",
+    "collar": false,
     "hat": [],
     "sleeve": 0.9,
     "hair": "afro"

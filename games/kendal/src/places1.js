@@ -99,7 +99,7 @@ export function buildRide45() {
   const loco = steamLoco('early'); loco.position.set(-10.8, 0, 0); g.add(loco); loco.userData.hollow = true;
   const t2 = carriage1845('third', 6.4, 2.4, 'sides'); t2.position.set(7.2, 0, 0); g.add(t2);
   const wheels = [...loco.userData.wheels, ...car.userData.wheels, ...t2.userData.wheels];
-  people.push(person('boyRide', 'boy45', 'The boy', 1.6, 0.92, PI, { h: 1.2, anim: 'SitTalk', ground: 0.17, seat: 0.53 }));   /* a child's hips are slimmer than the adult 12 cm, so he sits 5 cm higher: on the bench, not in it (owner, 21 Nov 2026) */
+  people.push(person('boyRide', 'boy45', 'The boy', 1.6, 0.92, PI, { h: 1.2, anim: 'SitTalk', ground: 0.17, seat: 0.49 }));   /* a child's hips are slimmer than the adult 12 cm, so he sits a little higher: on the bench, not in it (owner, 21 Nov 2026; 0.53 until the same day's stance fix set his hips level, which left him 4 cm above the seat) */
   extras.push(extra('lady45', 0.5, 0.9, PI, 'SitIdle', { ground: 0.17, seat: 0.48 }), extra('worker45', -1.2, -0.9, 0, 'SitTalk', { ground: 0.17, seat: 0.48 }), extra('woman45', 0.5, -0.9, 0, 'SitIdle', { ground: 0.17, seat: 0.48 }));
   return { id: 'ride45', group: g, walls, bounds: { x0: -2.5, x1: 2.5, z0: -0.5, z1: 0.5 }, start: { x: 0.2, z: 0, yaw: PI / 2 }, people, extras, env: ENV.day, rig, wheels, loco, ride: true,
     smokers: [{ obj: loco.userData.chimney, rate: 8, v: 0.5 }], spots: { water: [-1.8, 0] }, tick: () => {} };

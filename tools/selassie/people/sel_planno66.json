@@ -15,11 +15,10 @@
   "garments": {
     "sleeve": 0.75,
     "shoes": true,
-    "collar": "camp",
+    "collar": false,
     "hairvol": 0.25,
     "hat": [],
-    "trousers": true,
-    "leaf": 0.07
+    "trousers": true
   },
   "colors": {
     "Skin": [
