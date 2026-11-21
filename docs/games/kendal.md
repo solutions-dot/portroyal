@@ -188,5 +188,4 @@ The owner: "the doors should fit their purpose, not one shared one". The flat bo
 
 ## The ends of the hill station (21 November 2026)
 
-The owner: the far ends of the hill station looked rough, like the end of the world, and the track just stopped. Now each platform end has a wooden fence across it, bushes and trees stand beside the line, and about 18 m out the track runs into a stone tunnel mouth in a grassy hill (`hillStationEnds` in `src/places1.js`). The edge of the raised ground behind every Kendal platform is a grassy bank, not a grey wall (`stationBase` in `src/common.js`). **Stand-in (work to do):** the portal is a plain stone wall with an arched mouth, not modelled on a photograph of a particular Jamaica Railway tunnel; match it to a source (rule 3).
-
+The owner: the far ends of the hill station looked rough, like the end of the world, and the track just stopped. Now each platform end has a wooden fence across it, bushes and trees stand beside the line, and the track runs on into a cutting between grassy banks topped with trees, out of sight (`hillStationEnds` in `src/places1.js`). A tunnel mouth was tried first and taken out: the hill station is made up and no source shows a tunnel beside it (rule 3). The edge of the raised ground behind every Kendal platform is a grassy bank, not a grey wall (`stationBase` in `src/common.js`).
