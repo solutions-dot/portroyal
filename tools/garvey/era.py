@@ -280,7 +280,7 @@ def puff_tube(end):      # a short puffed sleeve: full and round from the should
         c=v.co
         if abs(c.x)<SX*0.92: return
         q,t=arm_axis(c); d=c-q; r=d.length or 1e-6; u=min(1.0,t/max(0.05,end-0.035)); k=sstep(0.02,0.10,t)*(1-sstep(0.075,0.10,r/s))
-        R=(0.046+G.get('puff',1.0)*0.034*math.sin(math.pi*u**0.85)**0.7)*s if u<1 else 0
+        R=max(_arm_r(t,_ARM_RAW)+0.006,(0.034+0.010*(1-u))*s)+G.get('puff',1.0)*0.016*s*math.sin(math.pi*u**0.85)**0.7 if u<1 else 0      # a soft puff of about 1.5 cm over a sleeve that fits the arm (it was 3.4 cm over a fixed 4.6 cm tube: a ball on each shoulder. Owner, 21 November 2026: "dress a little too puffy")
         rn=max(r+0.003,R); v.co=q+d/r*(r+(rn-r)*k)
     return f
 # shirt
