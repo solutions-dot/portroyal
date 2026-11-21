@@ -397,6 +397,7 @@ import './chapter-guidance.mjs';
 import './vehicle-kit.mjs';
 
 import './tivoli-journal-parity.mjs';
+import './people-lod.mjs';
 
 test('menu: the first ten games carry no New or Early version badge (docs/PLATFORM.md)', async () => {
   const { readFileSync } = await import('node:fs');
