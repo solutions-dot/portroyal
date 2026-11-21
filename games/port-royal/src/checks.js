@@ -1,3 +1,4 @@
+import { sceneWarning } from '../../../engine/scene-warning.js';
 /* Port Royal's dev checks (dev builds only: main.js calls wireChecks under __DEV__, so none of this ships).
      ?test=audit   the place audit in every place (engine/audit.js auditPlace): floating things, people inside solids or each other, seats, spots that cannot be
                    reached, things standing on nothing, solid things cut into each other. &p=town,tavern picks places. Also answers collision and seating.
@@ -155,7 +156,7 @@ async function runLayout(A) {
   reset(); goal('Walk to Fort Charles, along the beach past the houses.'); talkBtn('Talk to the dockworker'); await settle(); check('play: talk button');
   reset(); A.startConvo([{ who: 'Symon Benning', text: 'Look under a plate for our mark: a pineapple!' }]); await settle(); check('dialogue');
   reset(); A.startConvo([{ who: 'Grace', text: 'A watermelon costs one real. Carrots cost one real too.', choices: [{ t: 'Two reales', ok: true }, { t: 'One real' }, { t: 'Three reales' }], hint: '' }]); await settle(); check('dialogue with three choices');
-  reset(); A.card('7 June 1692', ['Two years later. Lewis is now a merchant.', 'Next comes the great earthquake. It is loud, and it may be scary.'], [{ t: 'Begin', go: () => {} }, { t: 'Read what happened instead', go: () => {} }]); await settle(); check('card with two buttons');
+  reset(); sceneWarning(A.card, { title: '7 June 1692', what: ['Two years later. Lewis is now a merchant.', 'Next comes the great earthquake. It is loud.'], watch: () => {}, read: () => {} }); await settle(); check('card with two buttons');
   reset(); A.card('Saved', ['Hands pull you over the side of the boat. You are alive.', 'Behind you, most of Port Royal is under the sea.', 'Four new pages are in your journal.'], [{ t: 'Go on: the days after', go: () => {} }, { t: 'Play the earthquake again', go: () => {} }, { t: 'Go back to 1690', go: () => {} }]); await settle(); check('card with three buttons');
   reset(); goal('Talk to old Ned at the table. He has a story.'); $('nudge').hidden = false; $('nudge').style.left = (W * 0.75 | 0) + 'px'; $('nudge').style.top = (H * 0.45 | 0) + 'px'; talkBtn('Talk to old Ned'); await settle(); check('helper arrow with talk button');
   reset(); A.raw.fbStart(); await sleep(100); A.tick(1 / 30); goal('Watch the sword drill on the beach.'); talkBtn('Watch the sword drill'); A.toast('Port Royal, August 1670'); await settle(); check('Ned’s story: leave button, goal, action, toast'); A.fbReset();

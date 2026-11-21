@@ -1,4 +1,4 @@
-import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
+import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
@@ -712,10 +712,10 @@ ON[50] = () => { const C = PL.coach; if (C) for (const n of C.npcs) { if (n.amb)
 ON[51] = async () => { SFX.hornDiesel(1.2); say('The train pulls out of Montego Bay. Stars fill the windows.', 4200); RIDE.target = 12; };
 ON[52] = () => { if (cur !== 'coach') return; say('The train climbs into the hills, slowly and steadily.', 4200); RIDE.target = 9; };
 function crashIntro() {
-  if (CR.on) return; sceneWarning(card, { title: 'About half past eleven', lines: ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], watch: () => { hideCard(); CR.choice = 'run'; STORY.done('seat'); }, read: () => { hideCard(); CR.choice = 'skip'; STORY.done('seat'); } });
+  if (CR.on) return; sceneWarning(card, { title: 'About half past eleven', what: ['The next part is loud.', 'It shows the crash gently.'], watch: () => { hideCard(); CR.choice = 'run'; STORY.done('seat'); }, read: () => { hideCard(); CR.choice = 'skip'; STORY.done('seat'); } });
 }
 function crashSkip() { endSceneWarning();
-  unlock('crash'); unlock('greenvale'); card('What happened', ['The train climbed to Greenvale, the highest station on the line. Then it ran downhill toward Kendal.', 'Three whistle blasts sounded. The train went faster, and left the rails on a curve.', 'Eight of the twelve coaches were wrecked. The last two coaches stayed on the track.'], [{ t: 'Go on', go: () => { hideCard(); setStage(53); arriveKendal(); } }], { col: true });
+  unlock('crash'); unlock('greenvale'); readWhatHappened(card, { what: ['The train climbed to Greenvale, the highest station on the line. Then it ran downhill toward Kendal.', 'Three whistle blasts sounded. The train went faster, and left the rails on a curve.', 'Eight of the twelve coaches were wrecked. The last two coaches stayed on the track.'], go: () => { hideCard(); setStage(53); arriveKendal(); } });
 }
 const HOLD = { on: false, v: 0 };
 for (const ev of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) $('hold').addEventListener(ev, (e) => { HOLD.on = ev === 'pointerdown'; $('hold').classList.toggle('on', HOLD.on); e.preventDefault(); });
@@ -928,7 +928,7 @@ function checkHooks() {
     keyMove: async () => { await beginChapter(0, 10); await settle(); const x0 = state.x, z0 = state.z; keys.add('w'); for (let i = 0; i < 20; i++) update(1 / 30); keys.delete('w'); const moved = Math.hypot(state.x - x0, state.z - z0) > 0.3;
       const n = P_().people.find((p) => p.m.visible); let talk; if (n) { state.x = n.x + 1.0; state.z = n.z + 0.4; update(1 / 30); dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter' })); await new Promise((r) => setTimeout(r, 100)); talk = !$('dialogue').hidden; leaveTalk(); } return { moved, talk }; },
     openJournal, openChapters, openCredits,
-    card: () => card('About half past eleven', ['The next part is loud, and it may be scary.'], [{ t: 'Begin', go: hideCard }, { t: 'Read what happened instead', go: hideCard }], { col: true }),
+    card: () => sceneWarning(card, { title: 'About half past eleven', what: ['The next part is loud.', 'It shows the crash gently.'], watch: hideCard, read: hideCard }),
   };
 }
 /* ?test=motion (motioncheck.js): every step with something to do, its place brought by the real chapter start, then the frame loop stepped while you walk to each thing the step needs */
@@ -1052,7 +1052,7 @@ function devViews() {
       reset(); bars(true); say('The train climbs into the hills, slowly and steadily, and the engines work very hard indeed.', 1e6); $('talk').hidden = false; $('talk').textContent = 'Sit down with Gran'; showHint(); await settle(); await new Promise((r) => setTimeout(r, 1100)); check('narration inside the bars');
       reset(); showGoal(true); document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Mass Dudley'; $('line').textContent = 'Some say a railway will help us. Some say it will take our work. What do you think about that, child?'; $('choices').innerHTML = '<button class="btn ghost">It will help people.</button><button class="btn ghost">It might take your work.</button><button class="btn ghost">I do not know yet.</button>'; $('next').hidden = true; await settle(); check('dialogue with three choices');
       reset(); bars(true); say('Hold on!', 1e6); $('holdwrap').hidden = false; $('talk').hidden = true; await settle(); await new Promise((r) => setTimeout(r, 1100)); check('hold on button in the bars');
-      reset(); sceneWarning(card, { title: 'About half past eleven', lines: ['The next part is loud, and it may be scary.', 'It shows the crash gently. Nobody is hurt on the screen.'], watch: () => {}, read: () => {} }); await settle(); check('card');
+      reset(); sceneWarning(card, { title: 'About half past eleven', what: ['The next part is loud.', 'It shows the crash gently.'], watch: () => {}, read: () => {} }); await settle(); check('card');
       reset(); $('nudge').hidden = false; $('nudge').style.left = (W * 0.75 | 0) + 'px'; $('nudge').style.top = (Hh * 0.45 | 0) + 'px'; showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Give the water to the nurse'; await settle(); check('helper arrow with talk button');
       reset(); showGoal(true); showPlace('Kendal, Manchester. About half past eleven.'); $('nudge').hidden = false; $('nudge').className = 'down'; $('nudge').style.left = (W / 2 | 0) + 'px'; $('nudge').style.top = Math.max(110, Hh * 0.3 | 0) + 'px'; await settle(); check('helper arrow with the place name');
       /* a journal page found while someone is talking: the Journal button glows with a count at once, but the toast waits until the dialogue box closes (it never covers it) */

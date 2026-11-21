@@ -483,7 +483,7 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 ### Warnings before intense scenes
 
-`sceneWarning` uses a game's existing card with a Watch scene button, a Read what happened instead button, and a Calm mode checkbox. Calm mode starts with the device's reduced-motion preference and remembers any change on that browser. The watch path uses `sceneIsCalm()` to reduce camera motion and bright effects, and the audio engine lowers the scene volume. Call `endSceneWarning()` when the scene ends, is skipped, or is left through chapter navigation.
+`sceneWarning(card, { title, what, scary, watch, read, pairs })` is the one card before a cinematic, in every game (owner, 21 Nov 2026). It shows what happens (`what`), then, for a scene that may be scary, the two standard lines "It may be scary." and "Nobody is hurt on the screen.", and the buttons Watch scene and Read what happened instead. A scene that is loud or big but not scary (the Selassie arrival, the Windrush ship scenes) passes `scary: false`. `pairs: true` is for games whose `card()` takes `[label, fn]` buttons. Tivoli writes its card in the page and fills it with `warningLines` and `addSceneWarningOptions`. There is no calm mode: the player watches or reads, and the scene plays the same either way. `sceneIsCalm()` is always false and `endSceneWarning()` does nothing; both stay so older calls still work.
 
 ## engine/collapse.js: a building that falls down (18 November 2026)
 

@@ -1,4 +1,4 @@
-import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
+import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
@@ -329,6 +329,7 @@ function card(title, paras, btns, { col = false, dismiss } = {}) {
   CARD.dismiss = dismiss === undefined ? null : dismiss; $('card').hidden = false; busy = true; keys.clear(); $('talk').hidden = true; const f = bb.querySelector('button'); if (f) f.focus();
 }
 function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
+const readCard = (c) => new Promise((res) => readWhatHappened(card, { what: c.paras, go: () => { hideCard(); res(true); } }));   /* the standard What happened card (engine/scene-warning.js) */
 const infoCard = (c, go) => new Promise((res) => card(c.title, c.paras, [{ t: c.go || 'Go on', go: () => { hideCard(); if (go) go(); res(true); } }], { col: true }));
 function chapterFade(title, sub, fn) {   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
@@ -616,8 +617,8 @@ ON[35] = () => { leavesUI(); };
 const FIGHT = { on: false, hold: false, sHead: 104, mode: 'idle', t: 0, next: 0, firing: 0 }, HALT = 40, MARCH = 1.75, FLEE = 3.4, START = 104;   /* HALT: how far down the path (metres from its top) the first soldier stops, in plain view below the rock. MARCH and FLEE: metres a second (a steady march, and a run), each played at the pace of the body's own stride so the feet do not slide */
 const HALT_IDLES = ['IdleM', 'Idle', 'IdleM', 'Idle'];   /* the soldiers stopped on the path: each shifts his weight in his own time (no looking about as filler: engine/anim.js NOT_IDLE) */
 const CARDSEEN = new Set();   /* the opt-in cards answered (the shared rule 4 check asks) */
-function fightIntro() { const c = CARDS.fight; sceneWarning(card, { title: c.title, lines: c.paras, watch: () => { CARDSEEN.add('fight'); hideCard(); fightRun(); }, read: () => { hideCard(); fightSkip(); } }); }
-async function fightSkip() { endSceneWarning(); const c = CARDS.fightRead; unlock('trenches'); unlock('attacks'); await infoCard(c); fightAfter(); }
+function fightIntro() { const c = CARDS.fight; sceneWarning(card, { title: c.title, what: c.paras, watch: () => { CARDSEEN.add('fight'); hideCard(); fightRun(); }, read: () => { hideCard(); fightSkip(); } }); }
+async function fightSkip() { endSceneWarning(); unlock('trenches'); unlock('attacks'); await readCard(CARDS.fightRead); fightAfter(); }
 function columnPlace(P, sHead, up, clip, speed = 0, t = FIGHT.t) {   /* the soldiers stand in single file on the path: the first at sHead, the others behind, 2.3 m apart. clip 'Idle': stopped, each with his own idles in turn */
   const S = P.spots; for (const n of P.extras) { if (n.column === undefined) continue; const s = sHead + n.column * 2.3, vis = s < S.sClimb - 1; n.scripted = true; n.cue = !vis; n.m.visible = vis && cur === 'watch'; if (!vis) continue;
     const [x, z, a] = pathAt(S.climb.dense, s); n.x = x; n.z = z; stand(n, P.G); if (!n.m.userData.groundAt) n.m.userData.groundAt = (gx, gz) => P.G.h(gx, gz);   /* on the steep path each foot is grounded on the hill under it */ n.m.rotation.y = up ? a + PI : a;
@@ -682,7 +683,7 @@ function fightAfter() { FIGHT.on = false; moveLock = false; frozen = false; bars
 const GUNS = { on: false, t: 0, next: 0, n: 0 };
 ON[50] = () => { if (cur !== 'town') return; say(SAY.n1, 3600); SFX.hornCall('SSS', { far: 0.35, pan: -0.3, pitch: 330 }); setTimeout(() => SFX.hornCall('SSS', { far: 0.6, pan: 0.5, pitch: 300 }), 2200 * TS); };
 ON[54] = () => { const p = byId('phibba'); if (!p) return; p.ctl.base = p.ctl.get('Idle') || p.ctl.base; p.ctl.play(null); follow(p, FOLLOW.phibba); };   /* she stops crying and comes with you: a step behind and to one side, never pressed against you (engine/follow.js) */
-function gunsIntro() { const c = CARDS.guns; sceneWarning(card, { title: c.title, lines: c.paras, watch: () => { CARDSEEN.add('guns'); hideCard(); gunsRun(); }, read: () => { hideCard(); infoCard(CARDS.gunsRead).then(() => ridgeDawn(true)); } }); }
+function gunsIntro() { const c = CARDS.guns; sceneWarning(card, { title: c.title, what: c.paras, watch: () => { CARDSEEN.add('guns'); hideCard(); gunsRun(); }, read: () => { hideCard(); readCard(CARDS.gunsRead).then(() => ridgeDawn(true)); } }); }
 function gunsRun() {
   const P = PL.town, S = P.spots; GUNS.on = true; GUNS.t = 0; GUNS.next = 1.2; GUNS.n = 0; ctr.climb = 1; ctr.goal = 'Climb the back trail. Do not stop.'; refreshGoal(); unlock('fall'); S.guns.forEach((g) => { g.visible = true; }); say(SAY.n2, 3800);
   P.extras.filter((e) => e.flee && e.m).forEach((e, i) => { const [x, z] = pathAt(S.back.dense, 2 + i * 2.6); e.x = x; e.z = z; lead(e, S.back.dense, FOLLOW.flee(i)); });

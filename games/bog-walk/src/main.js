@@ -1,4 +1,4 @@
-import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
+import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { renderFramed, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
@@ -178,9 +178,9 @@ function startCh3(fromCh2) {   /* about 4 a.m.: a title on black, then the water
   if (!fromCh2) { resetNight(); for (const p of T.patches) T.setPatchClean(p, 1); N.scraped = T.patches.length; S.z = ZM - 6; S.yaw = 0; }
   setStage(40); N.wlT = 0.03;
   sceneWarning(card, {
-    title: 'The water', lines: ['The water rises in the dark. This scene may feel scary.'],
+    title: 'The water', what: 'The water rises in the dark.',
     watch: () => { hideCard(); startIntro([['The water', 'About 4 a.m.']], startTrickle); },
-    read: () => { hideCard(); N.skipped = true; showEnd(); },
+    read: () => { hideCard(); N.skipped = true; readWhatHappened(card, { what: ['About 4 a.m., water came into the Tube in the dark.', 'In the story, you get out as the sky goes grey. Many men are still in the pipe.'], go: () => { hideCard(); showEnd(); } }); },
   });
 }
 function startTrickle() {
@@ -205,7 +205,7 @@ function startOut(skipped) {
 function showEnd() { endSceneWarning();
   hideNightSkip?.(); N.q = [];
   setPhase('end'); setClock(''); bars(false); hideHud(true); captionOff(); unlock('water', true); setStage(41);
-  card('You are out', [N.skipped ? 'You skipped the dark part. In the story, you get out of the Tube as the sky goes grey.' : 'The air is cool. The sky is going grey.', 'Many men are still in the pipe.'],
+  card('You are out', ['The air is cool. The sky is going grey.', 'Many men are still in the pipe.'],
     [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(4); } }, { t: 'Play the water again', go: () => { hideCard(); beginChapter(3); } }]);
 }
 /* ---------- the way to the light: you start the night facing away from the manhole, so when the water comes the game turns you toward it, a cue tells you which way to turn, and the voices come from its direction ---------- */

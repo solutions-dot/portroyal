@@ -1,4 +1,4 @@
-import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
+import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
@@ -511,9 +511,9 @@ ON[45] = () => { unlock('melissa'); unlock('wind'); };
 /* ---------- the storm sequence (chapter 1's night and chapter 3's morning): an opt-in card, then a scripted scene ---------- */
 function stormIntro(kind) {
   if (ST.on) return; const L = LINES[kind];
-  sceneWarning(card, { title: L.cardTitle, lines: ['The next part is loud, and it may be scary.', 'Nobody is hurt on the screen. Everyone in this story stays together.'], watch: () => { hideCard(); stormRun(kind); }, read: () => { hideCard(); stormSkip(kind); } });
+  sceneWarning(card, { title: L.cardTitle, what: ['The next part is loud.', 'Everyone in this story stays together.'], watch: () => { hideCard(); stormRun(kind); }, read: () => { hideCard(); stormSkip(kind); } });
 }
-function stormSkip(kind) { endSceneWarning(); const L = LINES[kind]; unlock(L.page); card('What happened', L.skip, [{ t: 'Go on', go: () => { hideCard(); stormAfter(kind); } }], { col: true }); }
+function stormSkip(kind) { endSceneWarning(); const L = LINES[kind]; unlock(L.page); readWhatHappened(card, { what: L.skip, go: () => { hideCard(); stormAfter(kind); } }); }
 const HOLD = { on: false, v: 0 };
 for (const ev of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) $('hold').addEventListener(ev, (e) => { HOLD.on = ev === 'pointerdown'; $('hold').classList.toggle('on', HOLD.on); e.preventDefault(); });
 addEventListener('keydown', (e) => { if ($('holdwrap').hidden) return; if (e.key === ' ' || e.key === 'Enter') HOLD.on = true; }); addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') HOLD.on = false; });
@@ -812,7 +812,7 @@ function devViews() {
       reset(); bars(true); say('Night. The hall is full of sleeping people, and the wind grows louder and louder outside.', 1e6); $('talk').hidden = false; $('talk').textContent = 'Sit down with Mum and Gran'; showHint(); await settle(); await new Promise((r) => setTimeout(r, 1100)); check('narration inside the bars');
       reset(); showGoal(true); document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Mr. Raymond'; $('line').textContent = 'The roof is the first thing to go. Will you hand up the nails while I fix the sheets down?'; $('choices').innerHTML = '<button class="btn ghost">Yes, I can help.</button><button class="btn ghost">Is it safe up there?</button><button class="btn ghost">I do not know how.</button>'; $('next').hidden = true; await settle(); check('dialogue with three choices');
       reset(); bars(true); say('Hold on!', 1e6); $('holdwrap').hidden = false; $('talk').hidden = true; await settle(); await new Promise((r) => setTimeout(r, 1100)); check('hold on button in the bars');
-      reset(); sceneWarning(card, { title: 'Tuesday morning', lines: ['The next part is loud, and it may be scary.', 'Nobody is hurt on the screen. Everyone in this story stays together.'], watch: () => {}, read: () => {} }); await settle(); check('card');
+      reset(); sceneWarning(card, { title: 'Tuesday morning', what: ['The next part is loud.', 'Everyone in this story stays together.'], watch: () => {}, read: () => {} }); await settle(); check('card');
       reset(); $('nudge').hidden = false; $('nudge').style.left = (W * 0.75 | 0) + 'px'; $('nudge').style.top = (Hh * 0.45 | 0) + 'px'; showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Nail a board over the window'; await settle(); check('helper arrow with talk button');
       const covered = (name, panel, ids) => { for (const id of ids) { const e = $(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (!t || !$(panel).contains(t)) out.push(`${W}x${Hh} ${name}: ${id} is covered by ${t ? (t.id || t.className || t.tagName) : 'nothing'}`); } };
       reset(); showGoal(true); $('talk').hidden = false; $('talk').textContent = 'Sit down with Mum and Gran'; await settle();

@@ -22,7 +22,7 @@ engine/                   shared runtime code, imported by every game
   batch.js                batchStatic: still scenery merged per material look (moved from seven games' gfx.js)
   preload.js              the next chapter loaded in quiet moments, the last one's graphics memory freed
   cine.js                 cinematics: phone framing, the faded skip X (top buttons hide while it shows), chapter title fades with no X
-  scene-warning.js        the card before a scene that may be scary: Watch scene, Read what happened instead, calm mode
+  scene-warning.js        the one card before a cinematic: what happens, the standard scary lines, Watch scene, Read what happened instead
   chapter-end.js          the "Chapter N is finished" card after a short pause on a clear screen, no "Stay here"
   exit.js                 the Exit button beside Journal, with "are you sure"
   device.js               touch or key words for the controls tip

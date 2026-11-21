@@ -512,7 +512,7 @@ export const CARDS = {
     title: "The other shore",
     lines: [
       "The sea journey is ending. A new part of life is beginning.",
-      "Watch Tilbury come into view, or read the scene instead.",
+      "Tilbury comes into view.",
     ],
   },
   end: {

@@ -1,4 +1,4 @@
-import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
+import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
 import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
@@ -945,7 +945,7 @@ function rumble() { audioInit(); if (!AU.ctx || Q.gain) return; const c = AU.ctx
   const src = c.createBufferSource(); src.buffer = buf; src.loop = true; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 150; Q.gain = c.createGain(); Q.gain.gain.value = 0; src.connect(lp); lp.connect(Q.gain); Q.gain.connect(AU.master); src.start(); }
 function setPhase(p) { Q.phase = p; Q.t = 0; }
 function quakeIntro() { cue('sad'); if (!townReady || !tavernReady) { toast('The town is still loading.'); return; } closeJournal(); $('card').hidden = true; $('dialogue').hidden = true; $('goal').hidden = false;
-  sceneWarning(card, { title: '7 June 1692', lines: ['Two years later. Lewis is now a merchant.', 'Next comes the great earthquake. It is loud, and it may be scary.'], watch: beginQuake, read: () => finishQuake(true) }); }
+  sceneWarning(card, { title: '7 June 1692', what: ['Two years later. Lewis is now a merchant.', 'Next comes the great earthquake. It is loud.'], watch: beginQuake, read: () => finishQuake(true) }); }
 let hideQuakeSkip;
 function beginQuake() { hideCard(); rumble(); if (state.place !== 'out') setPlace('out'); resetWorld(true); hideQuakeSkip = showCinematicSkip(() => finishQuake(true)); Q.on = true; setPhase('calm'); state.place = 'out'; state.x = 1; state.z = 0.6; state.yaw = -Math.PI / 2; state.pitch = 0; if (ring) ring.visible = false;
   npcShow(false); goalText = 'On a hot morning, walk to the harbour.'; showGoal(); toast('7 June 1692, late morning'); }
@@ -968,8 +968,8 @@ function toSea() { hideCard(); buildSeaProps(); Q.ruin = true; sinkTown(0, 1); s
   state.yaw = Math.atan2(-(Q.boat.position.x - state.x), -(Q.boat.position.z - state.z)); state.pitch = 0; ABBA.x = Q.boat.position.x; ABBA.z = Q.boat.position.z; abba.visible = true; Q.abbaRun = false; abbaIdle(); abba.rotation.y = Math.atan2(state.x - ABBA.x, state.z - ABBA.z); if (abba.userData.anim && CL.SitIdle) abba.userData.anim.play('SitIdle'); abba.userData.sits = true; setPhase('sea');   /* she sits in the boat (the checks read sits) */
   goalText = 'Swim to the boat with the gold marker!'; showGoal(); toast('A second shock throws you into the sea.'); }
 function finishQuake(skipped) { endSceneWarning(); hideQuakeSkip?.(); $('vig').style.opacity = 0; for (const id of ['quake', 'sand', 'watch', 'tomb']) unlock(id); Q.shake = 0; if (Q.gain) Q.gain.gain.value = 0; Q.phase = 'end';
-  card(skipped ? 'What happened' : 'Saved', skipped ? ['Just before noon, an earthquake shook Port Royal. The wet sand under the town turned to liquid, and most of the town sank into the sea.', 'Lewis Galdy was swallowed by the ground, thrown out into the sea by a second shock, and saved by a boat.', 'Four new pages are in your journal.']
-    : ['Hands pull you over the side of the boat. You are alive.', 'Behind you, most of Port Royal is under the sea.', 'Four new pages are in your journal.'],
+  if (skipped) { readWhatHappened(card, { what: ['Just before noon, an earthquake shook Port Royal. The wet sand under the town turned to liquid, and most of the town sank into the sea.', 'Lewis Galdy was swallowed by the ground, thrown out into the sea by a second shock, and saved by a boat.', 'Four new pages are in your journal.'], go: beginAfter }); return; }   /* the standard What happened card (engine/scene-warning.js) */
+  card('Saved', ['Hands pull you over the side of the boat. You are alive.', 'Behind you, most of Port Royal is under the sea.', 'Four new pages are in your journal.'],
     [{ t: 'Go on: the days after', go: beginAfter }, { t: 'Play the earthquake again', go: beginQuake }, { t: 'Go back to 1690', go: leaveQuake }]); }
 function leaveQuake() { hideCard(); resetWorld(); Q.on = false; state.place = 'out'; state.x = 17; state.z = 0.4; state.yaw = Math.PI / 2; state.pitch = 0; setGoal(); goalText = ''; setGoal(); }
 function quakeTick(dt, time) { Q.t += dt; const t = Q.t;

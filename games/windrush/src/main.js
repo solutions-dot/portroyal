@@ -2,6 +2,7 @@ import { touchFirst } from '../../../engine/device.js';
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A family story built on the existing engine, with no shared-module changes. */
 import { renderFramed } from "../../../engine/cine.js";
+import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js";
 import { offerNextChapter } from "../../../engine/chapter-end.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import * as THREE from "three";
 import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";
@@ -674,15 +675,7 @@ function nextCard() {
 function filmRead(key) {
   DIR.stop();
   const F = FILMS[key];
-  card(F.title, F.read, [
-    [
-      "Continue",
-      () => {
-        unlock("passage");
-        go(F.next);
-      },
-    ],
-  ]);
+  readWhatHappened(card, { what: F.read, go: () => { unlock("passage"); go(F.next); }, pairs: true });   /* the standard What happened card (engine/scene-warning.js) */
 }
 const DIR = createDirector({
   camera,
@@ -700,29 +693,10 @@ async function waits(st) {
     kind = row.card;
   if (!kind) return;
   if (kind === "film") {
+    /* the ship scenes are moving, not scary: the standard card as a plain choice (engine/scene-warning.js), one card only */
     const data = CARDS[row.film];
-    card(
-      data.title,
-      data.lines,
-      reduced
-        ? [
-            ["Read instead", () => filmRead(row.film)],
-            ["Watch the scene", () => go(st + 1, { keep: true })],
-          ]
-        : [
-            ["Watch the scene", () => go(st + 1, { keep: true })],
-            ["Read instead", () => filmRead(row.film)],
-          ],
-    );
-  } else if (kind === "playing")
-    card(
-      "A short scene",
-      ["You can pause, change sound, or read instead."],
-      [
-        ["Watch", () => DIR.start(row.film)],
-        ["Read instead", () => filmRead(row.film)],
-      ],
-    );
+    sceneWarning(card, { title: data.title, what: data.lines, scary: false, watch: () => go(st + 1, { keep: true }), read: () => filmRead(row.film), pairs: true });
+  } else if (kind === "playing") DIR.start(row.film);
   else if (kind === "firstMemory")
     card(
       "A small memory of home",

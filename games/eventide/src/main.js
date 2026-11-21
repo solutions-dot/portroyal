@@ -1,4 +1,4 @@
-import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
+import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 /* games/eventide/src/main.js: Eventide 1980, The Home on Slipe Pen Road (the plan is docs/games/eventide.md).
    Seven chapters, from a visit to the Eventide Home in May 1980, through the night of the fire of 20 May, to the monument today.
@@ -435,9 +435,9 @@ async function beginChapter(i, st) {
   const go = () => chapterFade(C.title, C.sub, () => startScene(i, st, specs));
   if (i === 3 && st === 40) sceneWarning(card, {
     title: 'The night of the fire',
-    lines: ['This chapter tells about the Eventide fire.', 'You watch from far back. Nobody is shown hurt.'],
+    what: ['This chapter tells about the Eventide fire.', 'You watch from far back.'],
     watch: () => { hideCard(); go(); },
-    read: () => card('What happened', ['A fire broke out at the Eventide Home during the night.', 'Firefighters brought people out. The Myers Ward collapsed.'], [{ t: 'Go on', go: () => { hideCard(); st = 45; go(); } }], { col: true }),
+    read: () => readWhatHappened(card, { what: ['A fire broke out at the Eventide Home during the night.', 'Firefighters brought people out. The Myers Ward collapsed.'], go: () => { hideCard(); st = 45; go(); } }),
   });
   else go();
 }
@@ -833,7 +833,7 @@ function devViews() {
     reset(); showGoal(true); say('You hold the gate. Firefighters lead the children out, one by one.', 1e6); $('talk').hidden = false; $('talk').textContent = LONG; showHint(); toast('Put back: 2 of 4'); await settle(); check('narration');
     reset(); bars(true); say('Some of the ladies got out. They wait by the road in blankets.', 1e6); await settle(); await settle(); check('narration inside the bars');
     reset(); showGoal(true); document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Nurse Bell'; $('line').textContent = 'Whose story will you sit and hear before you go?'; for (const t of ['Miss Iris, the dressmaker', 'Miss Hyacinth, from the market', 'Miss Maude, the teacher', 'Miss Dora, who sings']) { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = t; $('choices').appendChild(b); } $('next').hidden = true; await settle(); check('dialogue with four choices'); $('choices').replaceChildren(); $('next').hidden = false;
-    reset(); sceneWarning(card, { title: 'The night of the fire', lines: ['This chapter tells about the Eventide fire.', 'You watch from far back. Nobody is shown hurt.'], watch: () => {}, read: () => {} }); await settle(); check('sad card');
+    reset(); sceneWarning(card, { title: 'The night of the fire', what: ['This chapter tells about the Eventide fire.', 'You watch from far back.'], watch: () => {}, read: () => {} }); await settle(); check('sad card');
     reset(); sortCards(2); await settle(); check('sort card');
     reset(); timeline(3); await settle(); check('timeline card');
     reset(); card('A letter for Miss Iris', LETTER, [{ t: 'Finish reading', go: () => {} }]); await settle(); check('letter card');

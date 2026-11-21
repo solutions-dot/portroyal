@@ -2,6 +2,7 @@ import { touchFirst } from '../../../engine/device.js';
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A self-contained game on the established shared engine APIs. */
 import { renderFramed } from "../../../engine/cine.js";
+import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js";
 import { offerNextChapter } from "../../../engine/chapter-end.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import * as THREE from "three";
 import { clone as cloneBody } from "three/addons/utils/SkeletonUtils.js";
@@ -872,18 +873,12 @@ async function waits(st, generation) {
     );
   }
   if (st === 50) {
-    cardData(CARDS.arrival, [
-      ["Watch the arrival", () => go(51)],
-      ["Read instead", readArrival],
-    ]);
+    arrivalCard(() => go(51));
   }
   if (st === 51) {
     if (restoreArrival) {
       restoreArrival = false;
-      cardData(CARDS.arrival, [
-        ["Watch the arrival", () => DIR.start()],
-        ["Read instead", readArrival],
-      ]);
+      arrivalCard(() => DIR.start());
       return;
     }
     DIR.start();
@@ -946,20 +941,16 @@ function memory(text) {
   save();
   go(57);
 }
+/* the arrival is loud and big, not scary: the standard card as a plain choice, Watch scene or Read what happened instead (engine/scene-warning.js) */
+function arrivalCard(watch) {
+  sceneWarning(card, { title: CARDS.arrival.title, what: CARDS.arrival.lines, scary: false, watch, read: readArrival, pairs: true });
+}
 function readArrival() {
   DIR.stop();
   S.x = -3;
   S.z = 19;
   S.yaw = 0.45;
-  cardData(CARDS.arrivalRead, [
-    [
-      "Continue",
-      () => {
-        unlock("planno");
-        go(55, { keep: true });
-      },
-    ],
-  ]);
+  readWhatHappened(card, { what: CARDS.arrivalRead.lines, go: () => { unlock("planno"); go(55, { keep: true }); }, pairs: true });   /* the standard What happened card (engine/scene-warning.js) */
 }
 const DIR = createDirector({
   camera,
