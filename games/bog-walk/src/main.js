@@ -419,14 +419,11 @@ function card(title, paras, btns, { col = false, credit = false } = {}) {
 function hideCard() { $('card').hidden = true; }
 /* a fade to black with a chapter title, the scene changed while it is dark, then a fade back */
 async function chapterFade(title, sub, fn) {
-  let applied = false, skipped = false;
-  const apply = () => { if (!applied) { applied = true; fn(); } };
-  const finish = (ms) => { captionOff(); fadeTo('#000', 0, ms); hideHud(false); fading = false; };
-  const hideSkip = showCinematicSkip(() => { skipped = true; apply(); finish(0); });
+  const finish = (ms) => { captionOff(); fadeTo('#000', 0, ms); hideHud(false); fading = false; };   /* no skip X on a chapter title card (engine/cine.js, playChapterFade) */
   fading = true; hideHud(true); fadeTo('#000', 1, 800);
-  await wait(0.9); if (skipped) return; apply(); caption(title, sub);
-  await wait(2.6); if (skipped) return; captionOff();
-  await wait(0.9); if (skipped) return; hideSkip(); finish(1200);
+  await wait(0.9); fn(); caption(title, sub);
+  await wait(2.6); captionOff();
+  await wait(0.9); finish(1200);
 }
 
 /* ---------- talking: one line at a time; "You" lines get their own colour; the x, Escape or a tap outside ends it ---------- */

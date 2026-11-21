@@ -477,7 +477,7 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 ### Skipping a cinematic
 
-`showCinematicSkip(onSkip)` shows the shared X. Call the function it returns when the scene ends or is interrupted. The game's callback moves directly to the recap or restores the same playable state as the end of the scene. Required puzzles and conversations stay in the story. `playChapterFade` uses the same control and performs chapter setup once, even if the player skips before the title appears.
+`showCinematicSkip(onSkip)` shows the shared X. Call the function it returns when the scene ends or is interrupted. The game's callback moves directly to the recap or restores the same playable state as the end of the scene. Required puzzles and conversations stay in the story. While the X is up, the body carries `cine-on` and the top buttons (Journal, Exit, sound, reset, view) are hidden, so a cinematic shows only the faded X (owner, 21 Nov 2026, every game). `playChapterFade` shows no X: a chapter title card is short and is never skipped (owner, 21 Nov 2026, every game). It runs the chapter setup once. Bog Walk keeps its own `chapterFade` (it fades with its own caption), and it has no X either.
 
 ### Warnings before intense scenes
 

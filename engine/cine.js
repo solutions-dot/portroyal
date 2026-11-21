@@ -21,6 +21,9 @@ export function renderFramed(renderer, scene, camera, cine) {
 
 let skipButton, dismissSkip;
 
+/* A cinematic shows only the skip X (owner, 21 November 2026, every game): the Journal, Exit, sound, reset and view buttons hide while it plays
+   (body.cine-on), and the X is faded so it does not pull the eye, brighter when touched or focused. Chapter title cards have no X at all. */
+
 /* A scene owns its button until it finishes or a new scene replaces it. */
 export function showCinematicSkip(onSkip, { bottom = false, left = false } = {}) {
   if (!skipButton) {
@@ -48,7 +51,12 @@ export function showCinematicSkip(onSkip, { bottom = false, left = false } = {})
         font: 400 28px/1 system-ui;
         cursor: pointer;
         touch-action: manipulation;
+        opacity: .45;
+        transition: opacity .2s ease;
       }
+      .cine-skip:hover, .cine-skip:focus-visible, .cine-skip:active { opacity: .9; }
+      body.cine-on #jbtn, body.cine-on #exitbtn, body.cine-on #jrow, body.cine-on #snd, body.cine-on #reset,
+      body.cine-on #view, body.cine-on #fbexit, body.cine-on #topr, body.cine-on #topright { visibility: hidden !important; }
       .cine-skip[hidden] { display: none; }
       .cine-skip.bottom { top: auto; bottom: max(16px, env(safe-area-inset-bottom)); }
       .cine-skip.left { right: auto; left: max(12px, env(safe-area-inset-left)); }
@@ -63,29 +71,30 @@ export function showCinematicSkip(onSkip, { bottom = false, left = false } = {})
     dismissSkip = null;
     skipButton.hidden = true;
     skipButton.onclick = null;
+    document.body.classList.remove('cine-on');
   };
   dismissSkip = dismiss;
   skipButton.classList.toggle('bottom', bottom);
   skipButton.classList.toggle('left', left);
   skipButton.hidden = false;
+  document.body.classList.add('cine-on');
   skipButton.onclick = () => { dismiss(); onSkip(); };
   return dismiss;
 }
 
-/* The chapter setup runs once, even when the player skips before the title appears. */
+/* A chapter title card is short and has no skip X (owner, 21 November 2026: the X to close should not be on the chapter text screens, in any game).
+   The chapter setup runs once. */
 export function playChapterFade(fade, setup, onDone, [open, textOff, fadeOut, end]) {
   let applied = false;
   const apply = () => { if (!applied) { applied = true; setup(); } };
   const finish = () => {
     cancelAnimationFrame(frame);
     for (const timer of timers) clearTimeout(timer);
-    hideSkip();
     fade.classList.remove('on', 'txt');
     fade.hidden = true;
     apply();
     onDone();
   };
-  const hideSkip = showCinematicSkip(finish);
   fade.hidden = false;
   const frame = requestAnimationFrame(() => fade.classList.add('on'));
   const timers = [
