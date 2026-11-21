@@ -45,6 +45,7 @@ The audit and what changed: `docs/reviews/people-20261121.md`. Left to do, in or
 - [ ] **Abba's bodice** has a ragged lower edge above her apron string (`tools/people/abba.json`).
 - [ ] **The Emperor** (`sel_emperor66`, owner 21 November 2026: "needs some fine tuning"). Done that day: his tunic's sleeves and skirt (a builder change had belled them), a smooth belt, squarer shoulders and a longer neck (he read as hunched), a darker, closer beard. Still to do: the beard's edge on the cheek is still a hard line, the gold cords hang off his chest instead of lying on it, and the tunic is still the generated jacket (a modelled tunic, fitted as the suits are, is the real fix for choppy cloth). Check against `docs/games/selassie-face.jpg` and `selassie-salute.jpg`.
 - [ ] **An old woman's round opening** (`woman_elder`, `wr_kelder48`) is uneven at the front: her neck leans forward and the opening is worked out round an upright one.
+- [ ] **Waistcoats are still the generated kind** (owner, 21 November 2026: "ill shaped"). The torn V is fixed. The shape still follows the belly, a speck of shirt shows at the side of the hem on `man_elder`, and shirt sleeves beside it still show the upper arm's shape. A modelled waistcoat, fitted as the suits are, is the real fix.
 - [ ] **A turn collar and tie worn without a jacket** (`man_shirt`, `clerk1919`, `printer1907`, `steward1920`, two Windrush men) is still the generated collar. Take the collar and tie from the fitted suit instead.
 
 ## Character movement

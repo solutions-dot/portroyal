@@ -726,6 +726,8 @@ if not OLD:
     def recut(o,planes,sel):
         # cut again on the finished shape: the ease, the clearance and the smoothing bend an edge that was cut early, so a V came out as a wavy U. A plane cut made now is straight
         bm=bmesh.new(); bm.from_mesh(o.data)
+        _mid=[f for f in bm.faces if sel(cz(f))]      # first a seam down the middle, so no face lies across it: a face that did was cut by one side's plane only and left a torn tab at the point of the V (owner, 21 November 2026)
+        if _mid: bmesh.ops.bisect_plane(bm,geom=list(dict.fromkeys(v for f in _mid for v in f.verts))+list(dict.fromkeys(e for f in _mid for e in f.edges))+_mid,plane_co=(0,0,0),plane_no=(1,0,0),dist=1e-5)
         for co,no,flt in planes:
             fs=[f for f in bm.faces if sel(cz(f)) and (flt is None or flt(cz(f)))]
             if not fs: continue
@@ -733,7 +735,9 @@ if not OLD:
         bmesh.ops.delete(bm,geom=[v for v in bm.verts if not v.link_faces],context='VERTS')
         bm.normal_update(); bm.to_mesh(o.data); bm.free()
     if 'waistcoat' in _P and G.get('vwaist'):
-        recut(_P['waistcoat'],[((0,0,WVZ),Vector((-WVK,0,1)).normalized(),lambda c:c.x>0),((0,0,WVZ),Vector((WVK,0,1)).normalized(),lambda c:c.x<0)],lambda c:c.y<0 and c.z>WVZ-0.03 and abs(c.x)<SX*0.9)
+        RECUT_V=lambda: recut(_P['waistcoat'],[((0.013,0,WVZ-0.008),Vector((-WVK,0,1)).normalized(),lambda c:c.x>0),((-0.013,0,WVZ-0.008),Vector((WVK,0,1)).normalized(),lambda c:c.x<0)],      # (6 mm wider and 8 mm deeper than the first cut: where the first cut's wavy edge lay inside this one, it stayed as a notch)
+              lambda c:c.y<0 and c.z>WVZ-0.09 and abs(c.x)<SX*0.9)      # (well below the point: a face whose middle lay under it but which reached above was left uncut, a notch in the V's edge)
+        RECUT_V()
 if OLD:
     for k,o in parts:
         if k in ('shirt','coat'): smooth_weights(o,(lambda c:c.z>HIP+0.12 and abs(c.x)>SX*0.85) if (k=='shirt' and EASE_OLD) else (lambda c:c.z>HIP+0.12),16)      # (a shirt with ease: the sleeves only; its torso is evened out by shirt_weights below)
@@ -932,6 +936,7 @@ elif CK:      # the 1690 neckband
     _cb.to_mesh(_co.data); _cb.free(); _co.data.update()
 if G.get('buttons',not G.get('woman') and not OLD) and not G.get('coat'):      # the shirt's front band and its buttons
     bm=bmesh.new(); z1=NW_PLACKET_TOP if NW_PLACKET_TOP is not None else ((VZ-0.004*s) if CK=='camp' else collar_base(0)-0.012*s); z0=WAIST+0.01
+    if G.get('waistcoat') and G.get('vwaist') and not OLD and 'WVZ' in globals(): z0=max(z0,WVZ+0.012)      # under a V waistcoat the band stops just above the point of the V: carried on down, it came through the waistcoat's edge beside the point as a notch (owner, 21 November 2026: "torn in the center")
     if G.get('skirt') and G.get('belt'): z0=max(z0,HIP+(0.118 if G.get('sash') else 0.092))      # the band stops where the belt or sash covers it, so it never lies on top of them
     n=10 if OLD else 24; rows=[]
     for t in range(n+1):
@@ -1737,6 +1742,7 @@ def tuck_under_skirt():
     print('TUCKED UNDER SKIRT',n)
 if G.get('tuckskin',1) and G.get('skirt'): tuck_under_skirt()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
+if 'RECUT_V' in globals() and PART.get('waistcoat') and not P.get('outfit'): RECUT_V()      # and once more at the very end: later steps (weights, tucks, clearances) moved the edge's points by a few millimetres and the V came out wavy on one side
 if P.get('outfit'):      # the fitted garment takes the place of the generated pieces it replaces
     OUTFIT_PHASE='finish'; exec(compile(open(_ofp).read(),_ofp,'exec'))
 # Colours. The layer below is a float layer, so the linear colours made by srgb() above are exported as they are, and the scene is marked
