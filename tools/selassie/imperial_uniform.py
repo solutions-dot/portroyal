@@ -126,6 +126,20 @@ _A=Vector((-.145,0,NECK-.055));_B=Vector((.125,0,HIP+.065));_dir=(_B-_A).normali
 for i in range(25):
     c=_A.lerp(_B,i/24);_ys.append(min(front(c.x+k*_perp.x,c.z+k*_perp.z,.012) for k in (-1,0,1)))
 for _ in range(10):_ys=[_ys[0]]+[min(_ys[i],(_ys[i-1]+_ys[i+1])/2) for i in range(1,24)]+[_ys[24]]
+# (owner, the same day: "the strap doesn't go over the shoulder". It now starts at the belt on his back, runs up the back, over the top of the right
+# shoulder and down the front, as a Sam Browne cross strap does.)
+def back(x,z,off=.012):
+    hit=jt.ray_cast(Vector((x,hy+.8,z)),Vector((0,-1,0)))[0];return (hit.y if hit else hy+.10)+off
+def over(x,y,off=.008):
+    hit=jt.ray_cast(Vector((x,y,NECK+.25)),Vector((0,0,-1)))[0];return (hit.z if hit else NECK)+off
+_A2=Vector((-.125,0,NECK-.075));_B2=Vector((.10,0,HIP+.065));_yb=[min(9,max(back(_A2.lerp(_B2,i/16).x+k*.012,_A2.lerp(_B2,i/16).z) for k in (-1,0,1))) for i in range(17)]
+for _ in range(8):_yb=[_yb[0]]+[max(_yb[i],(_yb[i-1]+_yb[i+1])/2) for i in range(1,16)]+[_yb[16]]
+if FITTED:
+    for i in range(16,-1,-1):      # up the back, from the belt
+        c=_A2.lerp(_B2,i/16);rows.append([bm.verts.new((c.x+k*.017,_yb[i],c.z+k*.006)) for k in (-1,1)])
+    for j in range(1,8):      # over the top of the shoulder
+        t=j/8;x=_A2.x+(_A.x-_A2.x)*t;y=_yb[0]+(_ys[0]-_yb[0])*t;zt=max(over(x-.017,y),over(x,y),over(x+.017,y));zz=max(zt,_A2.z+(_A.z-_A2.z)*t)
+        rows.append([bm.verts.new((x+k*.017,y,zz)) for k in (-1,1)])
 for i in range(25):
     c=_A.lerp(_B,i/24);rows.append([bm.verts.new((c.x+k*_perp.x,_ys[i],c.z+k*_perp.z)) for k in (-1,1)])
 quadstrip(bm,rows);o=soft('Shoulder strap',bm,'Belt',src=tunic)
