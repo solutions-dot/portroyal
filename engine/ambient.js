@@ -246,7 +246,7 @@ export function createAmbient(opts = {}) {
       const atTo = Math.hypot(s.to[0] - n.x, s.to[1] - n.z) < Math.hypot(s.from[0] - n.x, s.from[1] - n.z); a.leg = atTo ? 0 : 1;   /* where they really are decides, and where they go next */
       const want = !atTo;   /* at spec.from they pick up, at spec.to they put down, never by flipping (owner, 21 Nov 2026: they picked the bunch up again at the wagon) */
       if (s.drop && a.carrying === want) { pause(n, ...(s.wait || [1, 3])); return; }   /* nothing to pick up or put down here: no bend */
-      const pk = s.pick || 'PickUp'; if (s.drop && has(n, pk)) { play(n, pk, { once: true, speed: 1 }); a.st = 'pick'; a.t = clipLen(n, pk) * 0.95; a.half = a.t / 2; a.swapped = false; stand(n); a.clip = pk; return; }
+      const pk = s.pick || 'PickUp'; if (s.drop && has(n, pk)) { play(n, pk, { once: true, speed: 1 }); a.st = 'pick'; a.t = clipLen(n, pk) * 0.95; a.half = a.t * 0.4;   /* the load changes hands at the bottom of the bend, 60% of the way through, not on the way down (owner, 21 Nov 2026) */ a.swapped = false; stand(n); a.clip = pk; return; }
       if (s.drop) { a.carrying = a.leg === 1; if (s.show) s.show(n, a.carrying); if (!a.carrying && s.put) s.put(n); }
       pause(n, ...(s.wait || [3, 8])); return; }
     if (a.st === 'pick' && a.t > 0) { if (a.t < a.half && !a.swapped) { a.swapped = true; a.carrying = a.leg === 1;   /* a.leg was set from where they stand on arrival */ if (s.show) s.show(n, a.carrying); if (!a.carrying && s.put) s.put(n); } return; }   /* spec.put(n): the load stays where it was set down (the game leaves a copy there) */
