@@ -263,11 +263,12 @@ def sleeve_tube_old(r0,r1,cuff=None,blend=False):      # the 1690 coat keeps the
 def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005):
     # one straight taper from the shoulder to the wrist: the fixed tube, widened at the shoulder end just enough to clear the arm by `ease` at every station (a tube that
     # kept the upper arm's full size all the way to the elbow read as a sausage; one that followed the arm read as muscle)
-    n=len(_ARM_RAW)-1; R1=max(r1*s,_ARM_RAW[n]+ease); R0=max([r0*s]+[(_ARM_RAW[i]+ease-R1*(i/n))/(1-i/n) for i in range(int(0.22*n),int(0.9*n))])
+    n=len(_ARM_RAW)-1; _big=max(_ARM_RAW[int(0.22*n):int(0.5*n)]); r0=min(r0,(_big+0.008+ease)/s); r1=min(r1,(_ARM_RAW[n]+0.012+ease)/s)      # never more than about a centimetre of room on a thin arm: the fixed tube was sized for a grown man, and on a boy or a slim woman a short sleeve stood out as a wide bell (owner, 21 November 2026: "shoulders for boy are way too puffy")
+    R1=max(r1*s,_ARM_RAW[n]+ease); R0=max([r0*s]+[(_ARM_RAW[i]+ease-R1*(i/n))/(1-i/n) for i in range(int(0.22*n),int(0.9*n))])
     def f(v):
         c=v.co
         if abs(c.x)<SX*0.92: return
-        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; R=R0+(R1-R0)*t; k=sstep(0.0,0.10,t)*(1-sstep(0.092,0.118,r_b/s))      # the whole sleeve from just below the shoulder seam, and every point of a thick arm: starting at a fifth of the way down and reaching only 7.5 cm, it left the shoulder muscle and the outside of a strong upper arm as they were, in lumps (owner, 21 November 2026: "very lumpy")
+        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; R=max(R0+(R1-R0)*t,_arm_r(t,_ARM_RAW)+ease+0.004); k=sstep(0.0,0.10,t)*(1-sstep(0.092,0.118,r_b/s))      # the whole sleeve from just below the shoulder seam, and every point of a thick arm: starting at a fifth of the way down and reaching only 7.5 cm, it left the shoulder muscle and the outside of a strong upper arm as they were, in lumps (owner, 21 November 2026: "very lumpy")
         k*=sstep(SX*0.92,SX*1.02,abs(c.x))      # eased in from the armhole, so the chest beside the arm is not pulled out      # (a wider reach was tried and pulled the side of a jacket's skirt out beside the hanging arm, into a bell: the Emperor's tunic, 21 November 2026)
         if blend: k*=sstep(SX*0.92,SX*1.12,abs(c.x))      # eased in from the shoulder, so the cloth does not crease at the armpit
         if cuff and not OLD: R=R+(max(cuff[1]*s,_arm_r(t,_ARM_RAW)+0.004)-R)*sstep(cuff[0]-0.14,cuff[0],t)      # later eras: the sleeve narrows smoothly into its cuff (a step left it a wide bell round the wrist)
