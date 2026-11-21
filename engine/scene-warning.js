@@ -9,7 +9,7 @@
        what     a line or a list of lines: what happens, in plain words
      warningText(what, scary)                           the card's one paragraph (warningLines: the same as a list)
      addSceneWarningOptions(body, watchBtn, readBtn, watch, read)   wire a card the page already has
-     readWhatHappened(card, { what, go, pairs })        the card after "Read what happened instead": titled What happened, one paragraph, Go on */
+     readWhatHappened(card, { what, go, pairs })        the card after "Read what happened instead": titled What happened, a few short paragraphs, Go on */
 export const SCARY_LINES = ['It may be scary.', 'Nobody is hurt on the screen.'];
 export const WATCH = 'Watch scene';
 export const READ = 'Read what happened instead';
@@ -65,12 +65,11 @@ export function sceneWarning(card, { title, what, scary = true, watch, read, pai
   addSceneWarningOptions(null, watchButton, readButton, watch, read);
 }
 
-/* the card after "Read what happened instead", the same in every game (owner, 21 November 2026): the title What happened, the words as one
-   centred paragraph, and one button, Go on. go() does what the game needs next (it hides the card itself if the game's card does not). */
+/* the card after "Read what happened instead", the same in every game (owner, 21 November 2026): the title What happened, each entry of
+   `what` one paragraph of a few sentences that belong together (not one big block, not one line each), and one button, Go on. go() does what the game needs next (it hides the card itself if the game's card does not). */
 export const READ_TITLE = 'What happened';
 export const GO_ON = 'Go on';
 export function readWhatHappened(card, { what, go, pairs = false }) {
-  const text = [].concat(what || []).join(' ');
-  card(READ_TITLE, [text], pairs ? [[GO_ON, go]] : [{ t: GO_ON, go }], { col: true });
+  card(READ_TITLE, [].concat(what || []), pairs ? [[GO_ON, go]] : [{ t: GO_ON, go }], { col: true });
   centre(document.getElementById('cbtns')?.closest('#card,.card,[role=dialog]'));
 }

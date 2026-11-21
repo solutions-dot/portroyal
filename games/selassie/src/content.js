@@ -247,10 +247,8 @@ export const CARDS = {
   arrivalRead: {
     title: "The arrival, 21 April 1966",
     lines: [
-      "On 21 April 1966, Haile Selassie I arrived at Palisadoes Airport in Kingston.",
-      "A great crowd gathered around the aircraft.",
-      "Rastafari elder Mortimo Planno helped the arrival proceed.",
-      "For many Rastafari, the welcome held deep spiritual meaning.",
+      "On 21 April 1966, Haile Selassie I arrived at Palisadoes Airport in Kingston. A great crowd gathered around the aircraft.",
+      "Rastafari elder Mortimo Planno helped the arrival proceed. For many Rastafari, the welcome held deep spiritual meaning.",
     ],
   },
   end: {

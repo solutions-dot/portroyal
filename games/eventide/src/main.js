@@ -437,7 +437,7 @@ async function beginChapter(i, st) {
     title: 'The night of the fire',
     what: ['This chapter tells about the Eventide fire.', 'You watch from far back.'],
     watch: () => { hideCard(); go(); },
-    read: () => readWhatHappened(card, { what: ['A fire broke out at the Eventide Home during the night.', 'Firefighters brought people out. The Myers Ward collapsed.'], go: () => { hideCard(); st = 45; go(); } }),
+    read: () => readWhatHappened(card, { what: ['A fire broke out at the Eventide Home during the night. Firefighters brought people out. The Myers Ward collapsed.'], go: () => { hideCard(); st = 45; go(); } }),
   });
   else go();
 }

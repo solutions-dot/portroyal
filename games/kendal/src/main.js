@@ -715,7 +715,7 @@ function crashIntro() {
   if (CR.on) return; sceneWarning(card, { title: 'About half past eleven', what: ['The next part is loud.', 'It shows the crash gently.'], watch: () => { hideCard(); CR.choice = 'run'; STORY.done('seat'); }, read: () => { hideCard(); CR.choice = 'skip'; STORY.done('seat'); } });
 }
 function crashSkip() { endSceneWarning();
-  unlock('crash'); unlock('greenvale'); readWhatHappened(card, { what: ['The train climbed to Greenvale, the highest station on the line. Then it ran downhill toward Kendal.', 'Three whistle blasts sounded. The train went faster, and left the rails on a curve.', 'Eight of the twelve coaches were wrecked. The last two coaches stayed on the track.'], go: () => { hideCard(); setStage(53); arriveKendal(); } });
+  unlock('crash'); unlock('greenvale'); readWhatHappened(card, { what: ['The train climbed to Greenvale, the highest station on the line. Then it ran downhill toward Kendal.', 'Three whistle blasts sounded. The train went faster, and left the rails on a curve. Eight of the twelve coaches were wrecked. The last two coaches stayed on the track.'], go: () => { hideCard(); setStage(53); arriveKendal(); } });
 }
 const HOLD = { on: false, v: 0 };
 for (const ev of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) $('hold').addEventListener(ev, (e) => { HOLD.on = ev === 'pointerdown'; $('hold').classList.toggle('on', HOLD.on); e.preventDefault(); });

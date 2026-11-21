@@ -78,7 +78,7 @@ let titleTimer, endTimer, hideSkip;
 export function openCard() {
   $('fightcard').hidden = false; $('title').hidden = true;
   addSceneWarningOptions($('fightoptions'), $('fbegin'), $('fread'), begin, () => {
-    show('readcard'); centreCard($('readcard')); finishChapter(5); $('freadnext').focus();   /* the standard What happened card: one paragraph, Go on (engine/scene-warning.js) */
+    show('readcard'); centreCard($('readcard')); finishChapter(5); $('freadnext').focus();   /* the standard What happened card: short paragraphs, Go on (engine/scene-warning.js) */
   });
 }
 function show(id) { for (const c of ['fightcard', 'readcard', 'aftercard']) $(c).hidden = c !== id; }
