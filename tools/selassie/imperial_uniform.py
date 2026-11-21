@@ -15,6 +15,11 @@ tunic=PART['jacket'];st=tree_of(PART['shirt'])
 if FITTED and old_lapels:
     _jb=bmesh.new();_jb.from_mesh(tunic.data);_jb.from_mesh(old_lapels.data);_jb.normal_update();jt=BVHTree.FromBMesh(_jb);_jb.free()
 else:jt=tree_of(tunic)
+def near_src(p):      # the piece of the tunic a badge lies on: the fitted jacket's lapels and collar are their own piece, and a tab that took the jacket's
+    # weights while lying on the lapel drifted off it when he moved (the red collar tabs floated in front of his throat)
+    if not (FITTED and old_lapels):return tunic
+    d=lambda o:min(((v.co-p).length for v in o.data.vertices),default=9)
+    return old_lapels if d(old_lapels)<d(tunic) else tunic
 def front(x,z,off=.006):
     origin=Vector((x,hy-.8,z));direction=Vector((0,1,0))
     hits=[t.ray_cast(origin,direction)[0] for t in (jt,st,tree)]
@@ -30,7 +35,7 @@ def patch(name,x,z,w,h,material,off=.007,slant=0):
         rows.append(row)
     quadstrip(bm,rows);bm.normal_update()
     if sum(f.normal.y for f in bm.faces)>0:bmesh.ops.reverse_faces(bm,faces=bm.faces[:])
-    o=soft(name,bm,material,src=tunic);paint(o);return o
+    o=soft(name,bm,material,src=near_src(Vector((x,front(x,z,0),z))));paint(o);return o
 # The civilian suit template has a broad open V. This tunic has a much
 # narrower shirt opening, with khaki lapels reaching the neck on both sides.
 # Fit these inserts to the shirt surface before adding tabs or braid.
@@ -74,18 +79,21 @@ colours=[[172,42,39],[53,105,142],[222,188,79],[218,214,188],[50,113,79],[68,58,
 for i,c in enumerate(colours):COL['Ribbon'+str(i)]=srgb(c)
 # Four columns of narrow ribbon bars, each made from three colour stripes.
 # The reference has ribbons, not a grid of large square tiles.
-for row in range(9):
+# (21 November 2026, owner: "the medals on his jacket are off from where they should be". The rack sat half on the lapel. It is on the left breast
+# now, clear of the lapel and above the breast pocket, 7 rows by 4.)
+RX=.078 if FITTED else .047;RZ=NECK-(.152 if FITTED else .14)
+for row in range(7 if FITTED else 9):
     for col in range(4):
         for stripe in range(3):
-            x=.047+col*.018+stripe*.0053
-            patch('Ribbon',x,NECK-.14-row*.007,.0051,.0048,'Ribbon'+str((col+row*2+stripe)%6),.018)
+            x=RX+col*.018+stripe*.0053
+            patch('Ribbon',x,RZ-row*.007,.0051,.0048,'Ribbon'+str((col+row*2+stripe)%6),.012 if FITTED else .018)
 # Small flat service stars below the ribbon rack.
 for i in range(3):
-    x=.054+i*.022;z=NECK-.211;bm=bmesh.new();ring=[]
+    x=(RX+.012 if FITTED else .054)+i*.022;z=RZ-(.060 if FITTED else .071);bm=bmesh.new();ring=[]
     for k in range(10):
         a=k/10*math.pi*2;r=.007 if k%2==0 else .0032
         xx=x+math.sin(a)*r;zz=z+math.cos(a)*r
-        ring.append(bm.verts.new((xx,front(xx,zz,.016),zz)))
+        ring.append(bm.verts.new((xx,front(xx,zz,.010 if FITTED else .016),zz)))
     bm.faces.new(ring);o=soft('Service star',bm,'Insignia',src=tunic);paint(o)
 # Four pocket flaps and centre buttons give the long tunic its period outline.
 for sx in [-1,1]:
@@ -111,9 +119,15 @@ for z in [HIP+.035,HIP+.092]:
 quadstrip(bm,rows);o=soft('Sam Browne belt',bm,'Belt',src=tunic);paint(o)
 patch('Belt buckle',0,HIP+.064,.039,.043,'Insignia',.022)
 bm=bmesh.new();rows=[]
+# (21 November 2026, owner: "the strap is crooked". Each edge used to take its own depth from the cloth, so the strap twisted and kinked over the
+# lapel. It is now one straight band of even width from the right shoulder to the left hip: one depth for each row, the furthest forward of what
+# lies under its width, evened out along its length so it bridges the lapel instead of climbing it.)
+_A=Vector((-.145,0,NECK-.055));_B=Vector((.125,0,HIP+.065));_dir=(_B-_A).normalized();_perp=Vector((_dir.z,0,-_dir.x))*.017;_ys=[]
 for i in range(25):
-    t=i/24;x=-.145+.27*t;z=NECK-.055-(NECK-.055-HIP-.065)*t
-    rows.append([bm.verts.new((x+dx,front(x+dx,z,.014),z)) for dx in [-.017,.017]])
+    c=_A.lerp(_B,i/24);_ys.append(min(front(c.x+k*_perp.x,c.z+k*_perp.z,.012) for k in (-1,0,1)))
+for _ in range(10):_ys=[_ys[0]]+[min(_ys[i],(_ys[i-1]+_ys[i+1])/2) for i in range(1,24)]+[_ys[24]]
+for i in range(25):
+    c=_A.lerp(_B,i/24);rows.append([bm.verts.new((c.x+k*_perp.x,_ys[i],c.z+k*_perp.z)) for k in (-1,1)])
 quadstrip(bm,rows);o=soft('Shoulder strap',bm,'Belt',src=tunic)
 # Each row across the strap takes the mean weights of its neighbours along it (two rows each way), and both edges of a row share them:
 # where the strap crosses the shoulder, the cloth weights change fast and one edge point used to jut 5 to 7 mm in walking.
@@ -131,7 +145,7 @@ def smooth_rows(o,per=2,win=2):
             for gi in [g.group for g in v.groups]:o.vertex_groups[gi].remove([v.index])
             for g,w in acc.items():
                 if w/cnt>1e-4:o.vertex_groups[g].add([v.index],w/cnt,'REPLACE')
-smooth_rows(o);paint(o)
+smooth_rows(o,win=12 if FITTED else 2);paint(o)      # (fitted tunic: one set of weights from end to end, so the strap stays one straight band when he walks)
 # Loose, braided aiguillettes hang forward from the right shoulder.
 for strand in range(3):
     bm=bmesh.new();rows=[]

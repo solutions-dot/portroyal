@@ -73,6 +73,9 @@ elif OUTFIT_PHASE == 'finish':
         b = bmesh.new(); b.from_mesh(o.data); b.faces.ensure_lookup_table()
         bmesh.ops.delete(b, geom=[f for f in b.faces if tag[f.index] != name], context='FACES')
         bmesh.ops.delete(b, geom=[v for v in b.verts if not v.link_faces], context='VERTS')
+        if name == 'Breeches':      # the hems come down 1.8 cm to break over the shoe: stopping short, they showed the ragged top edge of the shoe (owner, 21 November 2026)
+            for v in b.verts:
+                v.co.z -= 0.018 * sstep(ANK + 0.16, ANK + 0.03, v.co.z)
         if name == 'Shirt':      # the shirt front below the jacket's top button is always hidden: left in, its tail came through the jacket's skirt in a stride
             _zc = HIP + 0.20 * s; bmesh.ops.delete(b, geom=[f for f in b.faces if f.calc_center_median().z < _zc], context='FACES'); bmesh.ops.delete(b, geom=[v for v in b.verts if not v.link_faces], context='VERTS')
         if name in ('Shirt', 'Tie'):      # the collar band and the knot ease 4.5 mm off the neck: fitted tight, the neck came through the band's top edge
