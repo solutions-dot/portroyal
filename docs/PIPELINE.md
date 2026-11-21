@@ -33,8 +33,8 @@ JSON fields:
   | `coatsleeves` | `false` gives a coat with no sleeves, worn over the whole shirt (Benning) |
   | `coathem` | skirt length above the knee, for example 0.02 to 0.12 (longer skirts clip the knees when walking) |
   | `coatopen` | `true` by default: the skirt is open at the front below the waist, as 1690 coats were, so the legs pass through when walking. Set `false` for a closed skirt. There is also a vent up the back. The front panels follow their own thigh and the back follows the hips, so walking does not push the legs through the cloth |
-  | `breeches` | `true`: cut full and gathered into a band below the knee. Under a coat's skirt the fullness is kept to the front, so the breeches cannot push out through the skirt |
-  | `breechkind` | `"slops"` for wide open sailor breeches |
+  | `breeches` | `true`: easy over the thigh and narrowing steadily to a band below the knee (until 21 November 2026 they were cut full all the way down and gathered by a third, and flared like a jockey's breeches). Under a coat's skirt the fullness is kept to the front, so the breeches cannot push out through the skirt |
+  | `breechkind` | `"slops"` for wide open sailor breeches; `"drawers"` for loose drawers to the knee, one straight taper, open at the hem (Nanny Town's Maroon men). Left out: knee breeches, easy over the thigh and narrowing steadily to the band below the knee |
   | `shoes`, `stockings`, `apron` | `true`. Shoes are one smooth shape with a thin joined sole. The apron rides on the thighs, so a knee lifts it |
   | `buckles` | `true`: a small metal buckle and a tongue on each shoe |
   | `hat` | `"felt"` (a low round crown and a broad brim, turned round the head's own outline) or `"cap"` (hair shows below it) |
@@ -247,6 +247,7 @@ What it makes (keys in `garments` unless noted):
 | `sleeve`, `jacket`, `jacketsleeve`, `jackethem`, `waistcoat`, `vwaist` | Sleeves hang loose with a cuff (`sleeve` 0 to 1, default 0.86). A jacket gets lapels, buttons and a skirt past the hips; `jacketsleeve` is how far down the arm its sleeve comes (default 0.9) and `jackethem` moves its hem down (bigger) or up (smaller; default -0.05 after 1800). `vwaist` gives a waistcoat a V opening at the front. |
 | `woman`, `highneck` | `woman` cuts the shirt as a blouse that follows the figure (and leaves off the button band). `highneck` brings the neckline up to the throat. |
 | `scarf` | A neck scarf with a knot at the throat (material `Scarf`). |
+| `collar`: `false` or left out (the usual choice); `neckdrop` | A clean round opening, cut on one smooth seam and finished with a narrow turned-in facing. This is the default for every shirt, blouse and frock (owner, 21 November 2026: "most just need a round opening for the garment"). `neckdrop` is how far below the base of the neck its front sits, in metres at a normal height (0.032 for a man, 0.042 for a woman, 0.012 with `highneck`). |
 | `collar`: `"turn"`, `"stand"`, `"open"`; `softcollar` | A collar sewn to the shirt (`tools/garvey/neckwear.py`, see "Collars and ties, rebuilt" below). `stand`: a tall stiff band, closed at the throat, its front corners rounded. `turn`: a band with a leaf folded down over it, ending in two points on the shirt front. `open`: a turn collar worn unbuttoned, its points spread on the chest. `true` picks by `era`: `stand` before 1925, `turn` from 1925 (and before 1925 when `softcollar` is set). Write the kind, not `true` (`docs/PEOPLE.md`). |
 | `collar`: `"camp"`, `"round"`, `leaf`, `vdepth`, `vslope` | The flat collars of 1950s shirts and blouses (not for 1900 to 1930 people): `camp` is a collar round the neck ending in two points, with the shirt's front turned back as a facing down each side of a V; `round` a flat round collar whose ends nearly meet at the throat. `leaf` is how wide the collar lies on the shirt, measured along the cloth. |
 | `collar` on a 1690 or 1730s shirt | Left out: a shirt worn without a sleeved coat gets a narrow neckband over a short slit, worn open (as shirts of the time were made). `false`: a plain rounded opening with no band (Nanny Town's Maroon men). |
@@ -333,6 +334,35 @@ The owner found most collars jagged, crumpled or not lying flat, in every game, 
 - **Jacket shoulders** (the same day): the jacket is fitted over what stays under it (the skin, the shirt's front and collar foot, the waistcoat's V), not over the whole shirt and waistcoat that are trimmed away afterwards; the shirt kept under a jacket is only a ring round the neck (across the whole width it ran out over the sleeve tops and stood out like padding); across the top of the shoulders a waistcoat and a jacket lie about 1 cm off the layer beneath (`shoulder_off`); a jacket sleeve has about 1.5 cm of ease. A jacket still has no collar of its own: see `docs/TODO.md`.
 
 Known faults, still to do (`docs/TODO.md`): a child's narrow chest creases a camp collar's facings a little (Kendal's `boy`); a turn collar pressed between a waistcoat and a jacket creases a little beside the knot (`garvey1916`); a round collar on a soft, rounded blouse follows the blouse's lumps.
+
+## Clothes, second pass (21 November 2026, later the same day)
+
+The owner looked at the rebuilt collars and at Marcus Garvey and was not satisfied: collars still crooked, the suit like padding, trouser legs too wide, flared knee breeches, and "I don't want to keep patching something that is bad ... be honest". The honest audit is `docs/reviews/people-20261121.md`. What it found and what changed:
+
+- **The stoop and the lean were not clothes at all.** They were the engine (`docs/ENGINE.md`, "Every body keeps its own shape"). Look at a body's stance before judging its clothes.
+- **Most garments get a plain round opening.** Camp, round and open collars are gone from every recipe, and so are turn and stand collars worn without a tie by men: the default is the clean opening that `neckwear.py` cuts (`CK == 'plain'`, now for later eras too). A collar is kept only where the period and the person need one: a man in a tie (`stand` before about 1925, `turn` after), a woman's high-necked blouse of 1908 to 1925 (`stand`), and uniforms. Write `"collar": false` in a new recipe unless one of those applies.
+- **Sleeves are tubes sized from the arm.** `_arm_profile` measures the arm on the skin alone at 29 stations (its middle, which is not the bone's line, and its greatest radius). A sleeve is one straight taper from the shoulder to the wrist, centred on the arm's middle, widened at the shoulder end just enough to clear the arm by the garment's ease (shirt 5 mm, jacket 14, coat 16). The old rule took the larger of a fixed tube and "the arm plus 4 mm" at every point, so on a strong arm the cloth followed the shoulder muscle and the biceps and read as padding.
+- **Trousers are fitted:** about 8 cm at the top of the thigh narrowing to under 6 at the hem (they were 9 to 7 and flared). `legwidth` still scales them.
+- **Knee breeches** narrow steadily to the band; **drawers** (`"breechkind": "drawers"`) are a straight open leg to the knee.
+- **A suit is a modelled garment, fitted** (next section). The generated jacket is no longer used by any recipe.
+
+## Fitted garments: `tools/people/outfit.py` and `shared/garments/`
+
+A garment modelled once as a clean mesh on MakeHuman's standard body, fitted to each character by MPFB (each of its points follows three points of the body), then split into the parts the games colour. A recipe asks for one with
+
+```json
+"outfit": {"garment": "toigo_male_suit_tie_and_jacket", "waistcoat": true, "tie": false}
+```
+
+and keeps its usual garment keys, because `era.py` still builds its own pieces first (its skin trimming and checks are built round them) and this step then replaces them. Every man in a jacket, in every game, wears this suit now: both Marcus Garveys, `delegate1920`, `hl_critic`, Kendal's `man_suit`, and eight Windrush men.
+
+- **The garment:** a man's suit by Margaret Toigo from the MakeHuman community pack `suits01`, licence CC0: jacket with collar and lapels, shirt collar and front, four-in-hand tie, slim trousers, buttons. Parts: `Jacket`, `Lapels` (the lapels and jacket collar, in the jacket's cloth), `Shirt`, `Tie`, `Breeches`, `JButtons` (material `Buttons`), and with `"waistcoat": true` a `Waistcoat` and `WaistcoatButtons`.
+- **`"waistcoat": true`** makes a waistcoat from the garment's own shirt front, cut with planes so its V and its top are straight lines, with five small buttons. `"tie": false` leaves the tie off (an open collar).
+- **The jacket hangs.** Fitted point by point, a garment follows every roll of a stout body. Its torso is moved out to the eased outline the generated clothes use (hollows bridged, falling straight from the fullest part). Every layer at one place moves by the same amount, worked out from the innermost layer there, so lapels, pocket flaps and collar keep their relief. `"drape": false` turns it off; `"ease"` is the clearance in metres (0.004).
+- **Lapels stay sharp.** They are their own piece, which the packer never simplifies (`WHOLE` in `tools/people/pack.mjs`), and both pieces keep the whole jacket's shading across the cut.
+- **Trying a garment on:** `python3 tools/wardrobe/tryon.py '{"out": "build/wardrobe/x.glb", "body": {...}, "garments": ["path/to/a.mhclo"], "hide": true}'` fits garments to a bare body, and `node tools/wardrobe/view.mjs out.png build/wardrobe/x.glb zoom=top` draws it from four sides. Use them to judge a garment before adding it to `shared/garments/`.
+- **Adding a garment:** take it from a CC0 MakeHuman pack (`static.makehumancommunity.org/assets/assetpacks/`; the download mirrors are `files.makehumancommunity.org` and `files2`), keep only the `.mhclo`, the `.obj`, the material and the colour texture, write a `README.md` with author, pack and licence, and tell `outfit.py` how to split it (`_REGIONS`: which part of the texture is which piece).
+- **What the free library has, honestly** (looked at on 21 November 2026): the CC0 packs cover men's and women's suits well, and a few modern tops and trousers. They have no period shirts, blouses, frocks, coats or breeches. So everyday clothes are still made by `era.py`. Where a period piece is needed often, model it once on the standard body and add it here, do not add another special case to `era.py`.
 
 ## Hands keep their fingers when packed (17 November 2026)
 

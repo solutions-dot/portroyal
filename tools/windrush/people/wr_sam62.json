@@ -15,7 +15,7 @@
   "garments": {
     "sleeve": 0.6,
     "shoes": true,
-    "collar": "camp",
+    "collar": false,
     "hairvol": 0.25,
     "hat": [],
     "trousers": true,

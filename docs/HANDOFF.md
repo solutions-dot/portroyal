@@ -1,5 +1,16 @@
 # Handoff: where the work stands (15 November 2026)
 
+## People: posture, necklines, suits and legs (21 November 2026)
+
+Read `docs/reviews/people-20261121.md` first: it is the honest audit the owner asked for, with pictures.
+
+- **The stoop and the crooked lean were the engine's, in every game**, not the clothes'. `fitRig` and `levelStance` in `engine/anim.js` fix them for every body with no rebuild (`docs/ENGINE.md`, "Every body keeps its own shape"). `POSTURE` is retired. Measure a stance with `node tools/review/posture-probe.mjs`.
+- **Necklines**: a clean round opening is the default; collars only for a man in a tie, a 1908 to 1925 blouse, and uniforms.
+- **Suits** are a modelled garment fitted to the body (`tools/people/outfit.py`, `shared/garments/`), worn by every man in a jacket. Marcus Garvey has a stout build and a three-piece suit.
+- **Sleeves, trousers and knee breeches** are cut from measurements, not from the muscles under them.
+- **Every body was rebuilt** with `tools/people/rebuild.mjs`. `tools/review/run-test.mjs <game|all> audit,held,...` runs a game's test views headless.
+- **Not done, and said so**: everyday clothes are still generated from the body's surface. The plan is to model period garments once and fit them, as suits are (`docs/TODO.md`).
+
 ## People pass: faces, chests, clothes and the crowd (16 November 2026, evening)
 
 The owner's open list was: faces in The Emperor's Arrival, the Rastafari men in its crowd, faces in Nanny Town, men's chests that read as a bust, and broken clothes. This pass started from main (not from the rejected draft #108) and found causes in shared code, so the fixes reach every game.

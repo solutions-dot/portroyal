@@ -17,7 +17,7 @@
   "garments": {
     "sleeve": 0.3,
     "shoes": true,
-    "collar": "round",
+    "collar": false,
     "hairvol": 0.15,
     "hat": [
       [

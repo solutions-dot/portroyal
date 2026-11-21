@@ -406,3 +406,5 @@ test('menu: the first ten games carry no New or Early version badge (docs/PLATFO
   assert.deepEqual(cards.map(([, id]) => id).filter(id => first.includes(id)).sort(), first.slice().sort());
   for (const [, id, body] of cards) if (first.includes(id)) assert.ok(!/class="tag"/.test(body) && !/Early version/i.test(body), id + ' still has a badge');
 });
+import './fit-rig.mjs';
+import './posture.mjs';

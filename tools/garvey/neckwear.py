@@ -66,7 +66,7 @@ def nw_outline(zfun, clear, K=4):
 # --- the seam: where the collar is sewn to the shirt ---
 # At the nape it sits at the base of the neck; at the throat about 3 cm lower, at the top of the breastbone, as a shirt's neckband does.
 _nw_zb = NECK - 0.006 * s
-_nw_zf = NECK - (0.046 if _nw_open else 0.026 if _nw_round else 0.030 if CK in ('band', 'plain') else 0.034) * s
+_nw_zf = NECK - (0.046 if _nw_open else 0.026 if _nw_round else (G.get('neckdrop', 0.012 if G.get('highneck') else 0.042 if G.get('woman') else 0.032) if CK == 'plain' else 0.030) if CK in ('band', 'plain') else 0.034) * s      # a plain opening: "neckdrop" is how far below the base of the neck its front sits
 def _nw_ring_z(a): return _nw_zb + (_nw_zf - _nw_zb) * _nw_front(a)
 _NW_RING_R = nw_outline(_nw_ring_z, 0.006)
 _aj = 0.0

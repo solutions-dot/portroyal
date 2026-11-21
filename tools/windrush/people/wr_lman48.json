@@ -23,7 +23,7 @@
       ]
     ],
     "sleeve": 0.95,
-    "collar": "turn",
+    "collar": false,
     "waistcoat": true
   },
   "colors": {

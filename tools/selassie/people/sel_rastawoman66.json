@@ -17,7 +17,7 @@
   "garments": {
     "sleeve": 0.65,
     "shoes": true,
-    "collar": "round",
+    "collar": false,
     "hairvol": 0.25,
     "hat": [
       [
@@ -93,5 +93,10 @@
     "head-oval": 0.45,
     "nose-width2-incr": 0.18
   },
-  "face": "lean", "variants": ["soft", "wide", "heart"]
+  "face": "lean",
+  "variants": [
+    "soft",
+    "wide",
+    "heart"
+  ]
 }

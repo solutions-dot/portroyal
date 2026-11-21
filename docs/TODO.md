@@ -28,14 +28,16 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 - [x] **Card buttons on a phone.** On desktop, the Reset card's three buttons are on one line in all ten games (checked at 1280 wide). Check the Reset card and the "Start again?" card at 390x800 and 667x375: whole buttons may drop to the next line there, but no button's words should be cut off, and the card should fit on the screen. Run `?test=layout` in each game at 390x800, 667x375, 800x500 and 1280x720 (see `docs/TESTING.md`, section 5).
   Reset and Start again? button text fit in all ten games at both phone sizes in Chromium. The layout audit reported zero issues in all 40 game and viewport combinations. The layout audit also caught a toolbar clipping in Port Royal at 390x800 and a caption covering a toast in Garvey at 667x375. Both sizes passed after the fixes.
 
-## Collars, ties and suits (21 November 2026)
+## People: posture, necklines, suits and legs (21 November 2026)
 
-Collars and ties were rebuilt from scratch, sewn to the shirt (`tools/garvey/neckwear.py`; `docs/reviews/collars-20261121.md`). Left to do:
+The audit and what changed: `docs/reviews/people-20261121.md`. Left to do, in order of how much they show:
 
-- [ ] **A collar for suit jackets.** A jacket ends in a flat cut round the base of the neck. Give it a collar round the back of the neck that runs into the lapels (the neckwear module's turn-collar code is the place to start), so the shoulders read as tailored. Garvey's suit still looks soft without it.
-- [ ] **Camp collar facings on a child.** On Kendal's `boy` the facing down each side of the V creases a little (a narrow chest turns it almost sideways). Look at `node tools/review/people-sheet.mjs kendal boy views=neck,neck34`.
-- [ ] **A turn collar between waistcoat and jacket** creases a little beside the knot (`garvey1916`).
-- [ ] **Round collars on soft blouses** follow the blouse's lumps (`wr_iris79`, `wr_kelder48`).
+- [ ] **Model the everyday period garments once and fit them**, as suits are now (`docs/PIPELINE.md`, "Fitted garments"): a man's shirt, a blouse, a frock, a long skirt, a 1690 coat. Until then they are made by `tools/garvey/era.py` from the body's own surface. The free MakeHuman packs were checked on 21 November 2026 and have none of these.
+- [ ] **A period cut for Marcus Garvey's suit**: a three-button jacket that closes higher, and a stiff stand collar for 1914. The fitted suit is a modern two-button cut.
+- [ ] **A squarer shoulder on the fitted suit.** Its shoulder line follows the body's slope.
+- [ ] **A speck of trouser at the jacket's front hem in a stride** (the fitted suit; see `?test=cloth`).
+- [ ] **Eventide's own three bodies** (`tools/eventide/people.py`) still wear the old collars. Rebuild them with `era.py` recipes.
+- [ ] **A turn collar and tie worn without a jacket** (`man_shirt`, `clerk1919`, `printer1907`, `steward1920`, two Windrush men) is still the generated collar. Take the collar and tie from the fitted suit instead.
 
 ## Character movement
 

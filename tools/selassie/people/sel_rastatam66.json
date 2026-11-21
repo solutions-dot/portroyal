@@ -15,7 +15,7 @@
   "garments": {
     "sleeve": 0.55,
     "shoes": true,
-    "collar": "camp",
+    "collar": false,
     "hairvol": 0.15,
     "hat": [
       [
@@ -23,8 +23,7 @@
         "Tam"
       ]
     ],
-    "trousers": true,
-    "leaf": 0.07
+    "trousers": true
   },
   "colors": {
     "Skin": [
@@ -91,7 +90,11 @@
   },
   "kit": "locks",
   "tam": true,
-  "face": "wide", "variants": ["round", "lean"],
+  "face": "wide",
+  "variants": [
+    "round",
+    "lean"
+  ],
   "beard": {
     "len": 0.015,
     "thick": 0.004
