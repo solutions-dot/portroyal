@@ -1139,6 +1139,7 @@ CRH=0.085*s   # from the brow up to the top of the head
 HATS=G.get('hat'); HATS=[] if not HATS else ([(HATS,'Hat')] if isinstance(HATS,str) else [tuple(x) for x in HATS])     # one hat, or several [kind, material name] so a game can show one and hide the others
 for _k,_m in HATS: COL.setdefault(_m,COL.get('Hat',srgb((60,56,52)))); COL.setdefault(_m+'Band',COL['Band'])
 def build_hat(HK,HM):
+    if HK=='felt' and not OLD: HK='trilby'      # a felt hat after 1800 is the fedora shape: a tapered crown pinched at the front and a brim snapped down (owner, 21 November 2026: the straight-sided crown it had "looks like pots on their head"). The 1690 felt hat keeps its own low round crown and broad brim.
     if HK=='felt' and OLD:
         # a 1690 felt hat: a low round crown and a broad brim that curls up a little, unevenly, turned round the head's own outline so it sits down on the brow
         fit=head_fit(); bm=bmesh.new(); BR=G.get('brim',1.0); Hc=CRH+0.036*s
