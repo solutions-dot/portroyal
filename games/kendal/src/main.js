@@ -1,6 +1,7 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { man_suit: 2, man_work: 2, man_shirt: 2, man_elder: 2, woman57: 2, woman_long: 2, woman_elder: 2, girl: 2, boy: 2, girl_small: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
@@ -507,11 +508,11 @@ let hasLoaded = false;
 function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const n of allPeople()) n.talked = false; syncing = true; STORY.enter(s); syncing = false; saveGame(); refreshGoal(); if (ON[s]) ON[s]();
   for (const P of Object.values(PL)) if (P.life) P.life.mood(MOOD(s));
-  if (!QUICK && s in CHAPTER_END) setTimeout(() => nextCard(CHAPTER_END[s], s), 900);
+  if (!QUICK && s in CHAPTER_END) nextCard(CHAPTER_END[s], s);
 }
-function nextCard(i, s, tries = 0) {
-  if (stage !== s) return; if ((panelsOpen() || fading) && tries < 10) { setTimeout(() => nextCard(i, s, tries + 1), 800); return; }
-  const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
+function nextCard(i, s) {   /* a finished chapter: offer the next one after a pause on a clear screen, with no "Stay here" (engine/chapter-end.js) */
+  const nx = CHAPTERS[i + 1]; if (!nx) return;
+  offerNextChapter({ still: () => stage === s, clear: () => !(panelsOpen() || fading) && $('card').hidden, show: () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }]); } });
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetTransient() { endSceneWarning(); hideCrashSkip?.(); hideStorySkip?.(); CR.on = false; HOLD.on = false;   /* leave anything running: scripted scenes, a ride, the crash, the camera director */
@@ -781,7 +782,7 @@ ON[65] = async () => {
 };
 function finishCh6() {
   unlock('cause'); unlock('helpers'); unlock('toll'); unlock('mourning');
-  card('The morning after', ['By morning, close to 200 people had died, and about 700 were hurt.', 'Hundreds of people from Kendal and nearby helped through the night.', 'Friday 8 September was a National Day of Mourning. The railway later replaced all its wooden coaches with metal ones.', 'Four new pages are in your journal.'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(6); } }, { t: 'Stay here', go: hideCard }], { col: true });
+  card('The morning after', ['By morning, close to 200 people had died, and about 700 were hurt.', 'Hundreds of people from Kendal and nearby helped through the night.', 'Friday 8 September was a National Day of Mourning. The railway later replaced all its wooden coaches with metal ones.', 'Four new pages are in your journal.'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(6); } }], { col: true });
 }
 ON[67] = finishCh6;
 
@@ -790,7 +791,7 @@ ON[70] = () => { setTimeout(() => SFX.churchBell(2), 1200 * TS); };
 async function leaveFlower() {
   const P = P_(), ep = EP; frozen = true; const f = flowers(7); f.position.set(P.spots.wall[0] + 1.0, 0, P.spots.wall[1] + 1.0); P.group.add(f); say('You leave a flower. For a moment, everything is quiet.', 4200); SFX.churchBell(2); await wait(4800); if (ep !== EP) return; frozen = false; STORY.done('flower');
 }
-ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => card('The end', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); };
+ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => card('The end', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); };
 
 /* ---------- the helper arrow (engine/story.js): 2.5 s after a new goal (5 s when you are looking about), even while you walk, it points at what the step still needs ---------- */
 const _nv = new THREE.Vector3();

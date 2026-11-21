@@ -121,6 +121,8 @@ Players move between games, so every game is driven the same way. `tests/control
 
 **Talking.** A tap on a person the game would let you talk to starts that talk, exactly as the talk button does (`pickPerson` in `engine/tap.js`; no ray through a body).
 
+**Cinematics and chapter cards** (owner, 21 November 2026). The skip X (`showCinematicSkip` in `engine/cine.js`) is only for cinematics, scenes the player watches (the Port Royal earthquake, the Eventide fire, the Kendal crash, the Selassie arrival). While it is up, the Journal, Exit and other top buttons hide and the X is faded. A chapter title card or a chapter's opening camera move has no X. When a chapter is finished, `offerNextChapter` in `engine/chapter-end.js` waits until the screen has been clear for 2.5 seconds, then shows the "Chapter N is finished" card. It has no "Stay here": staying left no way in play to reach the next scene.
+
 **Also in every game:** `tunePixels(renderer)` from `engine/perf.js`, and the gold ground arrow from `createGuide()` in `engine/guide.js`.
 
 ## 4. Animations

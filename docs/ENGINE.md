@@ -477,7 +477,9 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 ### Skipping a cinematic
 
-`showCinematicSkip(onSkip)` shows the shared X. Call the function it returns when the scene ends or is interrupted. The game's callback moves directly to the recap or restores the same playable state as the end of the scene. Required puzzles and conversations stay in the story. While the X is up, the body carries `cine-on` and the top buttons (Journal, Exit, sound, reset, view) are hidden, so a cinematic shows only the faded X (owner, 21 Nov 2026, every game). `playChapterFade` shows no X: a chapter title card is short and is never skipped (owner, 21 Nov 2026, every game). It runs the chapter setup once. Bog Walk keeps its own `chapterFade` (it fades with its own caption), and it has no X either.
+`offerNextChapter({ still, clear, show })` in `engine/chapter-end.js` shows the "Chapter N is finished" card in every game once the screen has been clear for `PAUSE_MS` (2.5 s), so the player sees what they just did first; the card has no "Stay here" (owner, 21 Nov 2026).
+
+`showCinematicSkip(onSkip)` shows the shared X. Call the function it returns when the scene ends or is interrupted. The game's callback moves directly to the recap or restores the same playable state as the end of the scene. Required puzzles and conversations stay in the story. While the X is up, the body carries `cine-on` and the top buttons (Journal, Exit, sound, reset, view) and the Pause / Sound / Read instead bar of Selassie and Windrush are hidden, so a cinematic shows only the faded X (owner, 21 Nov 2026, every game). `playChapterFade` shows no X: a chapter title card is short and is never skipped (owner, 21 Nov 2026, every game). It runs the chapter setup once. Bog Walk keeps its own `chapterFade` (it fades with its own caption), and it has no X either. The X is for cinematics only (a scene the player watches: the Port Royal earthquake, the Eventide fire, the Kendal crash, the Selassie arrival). A chapter opening is not one: Garvey's camera move at a chapter start and Tivoli's chapter title text have no X.
 
 ### Warnings before intense scenes
 

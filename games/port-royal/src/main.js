@@ -1,5 +1,6 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
 import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
+import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
@@ -913,12 +914,16 @@ const DUST = new THREE.Color(0xb9a888), ease = (x) => { x = Math.max(0, Math.min
 function card(title, paras, buttons) { busy = true; keys.clear(); $('goal').style.visibility = 'hidden'; $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const p of paras) { const e = document.createElement('p'); e.textContent = p; b.appendChild(e); }
   const bt = $('cbtns'); bt.replaceChildren(); buttons.forEach((o, i) => { const e = document.createElement('button'); e.className = 'btn' + (i ? ' ghost' : ''); e.textContent = o.t; e.onclick = o.go; bt.appendChild(e); }); $('card').hidden = false; $('talk').hidden = true; bt.firstChild.focus(); }
 function hideCard() { $('card').hidden = true; $('goal').style.visibility = ''; busy = false; canvas.focus(); }
-/* When a part of the story is finished, offer the next one on screen, so nobody has to dig through Chapters. Waits for anything open to be closed, and gives up rather than take over a panel the player is reading. */
-function nextChapterCard(i, tries = 0, gen = navGen) {
-  if (gen !== navGen || !state.started || Q.on || FB.on) return;   /* the player has already gone somewhere else, or to another chapter */
-  if (busy || fading || !$('card').hidden || !$('dialogue').hidden || !$('journal').hidden || !$('chapters').hidden) { if (tries < 10) setTimeout(() => nextChapterCard(i, tries + 1, gen), 800); return; }
-  const j = CHAPTERS.findIndex((c, k) => k > i && !c.done()); if (j < 0) return; const nx = CHAPTERS[j]; uiSound('goal');
-  card('\u201c' + CHAPTERS[i].name + '\u201d is finished!', ['Well done. Next is \u201c' + nx.name + '\u201d (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); playChapter(nx); } }, { t: 'Stay here', go: hideCard }]); }
+/* When a part of the story is finished, offer the next one on screen, so nobody has to dig through Chapters. It waits until nothing is open and the
+   screen has been clear for a moment, and has no "Stay here" (engine/chapter-end.js). */
+function nextChapterCard(i, _tries = 0, gen = navGen) {
+  const j = CHAPTERS.findIndex((c, k) => k > i && !c.done()); if (j < 0) return; const nx = CHAPTERS[j];
+  offerNextChapter({
+    still: () => gen === navGen && state.started && !Q.on && !FB.on,   /* the player has not gone somewhere else, or to another chapter */
+    clear: () => !(busy || fading || !$('card').hidden || !$('dialogue').hidden || !$('journal').hidden || !$('chapters').hidden),
+    show: () => { uiSound('goal'); card('\u201c' + CHAPTERS[i].name + '\u201d is finished!', ['Well done. Next is \u201c' + nx.name + '\u201d (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); playChapter(nx); } }]); },
+  });
+}
 /* falling bricks and dust as the houses break up */
 let deb = null; const debP = [], dustP = [], DEB_N = 520, _dm = new THREE.Matrix4(), _dq = new THREE.Quaternion(), _de = new THREE.Euler(), _ds = new THREE.Vector3(), _dp = new THREE.Vector3();
 let dustTex = null;

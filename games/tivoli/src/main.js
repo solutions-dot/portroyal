@@ -1,3 +1,4 @@
+import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
@@ -128,10 +129,10 @@ function card(title, paras, btns, { dismiss } = {}) {
   CARD.dismiss = dismiss || null; $('chcard').hidden = false; setBusy(true); const f = $('chcardb').querySelector('button,a'); if (f) f.focus();
 }
 function hideCard() { $('chcard').hidden = true; CARD.dismiss = null; setBusy(false); }
-function chapterEnd(id, end) {   /* the end of a walking chapter: what happened, then Next chapter (as in every game) */
+function chapterEnd(id, end) {   /* the end of a walking chapter: what happened, then Next chapter (as in every game), after a short pause on a clear screen and with no "Stay here" (engine/chapter-end.js) */
   const nx = CHAPTERS.find((c) => c.id === id + 1 && c.playable);
-  card(end.title, end.lines, nx ? [{ t: 'Next chapter', go: () => { hideCard(); startChapter(nx.id); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Stay here', go: hideCard }]
-    : [{ t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Exit', href: MENU_URL }, { t: 'Stay here', go: hideCard }], { dismiss: hideCard });
+  offerNextChapter({ clear: () => !panelOpen() && $('chcard').hidden && $('dialogue').hidden, show: () => card(end.title, end.lines, nx ? [{ t: 'Next chapter', go: () => { hideCard(); startChapter(nx.id); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }]
+    : [{ t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Exit', href: MENU_URL }]) });
 }
 $('reset').onclick = () => {
   if (FIGHT.on || !CH.on) return; closeJournal(); const C = CHAPTERS.find((c) => c.id === CH.id);
@@ -388,7 +389,7 @@ async function devViews() {
       if (name.startsWith('play')) { $('scenetitle').hidden = true; $('goal').textContent = 'Talk to Pastor Grant by the clinic.'; $('hint').hidden = false; liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'); $('jcount').hidden = false; $('jcount').textContent = '2'; $('jbtn').classList.add('glow'); $('toast').textContent = 'New journal page: What people disagree about'; $('dialogue').hidden = true;
         if (show.includes('dialogue')) { document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Pastor Grant'; $('line').textContent = 'Finding the truth can take a long time.'; } else document.body.classList.remove('talking'); }
       if (show.includes('hud')) { const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = 'Sunday 23 May 2010.'; t.append(b); for (const l of ['You live in Tivoli Gardens with Gran Ivy.', 'The girl from Back-o-Wall is a grandmother now.']) { const p = document.createElement('p'); p.textContent = l; t.append(p); } $('goal').textContent = 'Talk to Mr Clarke by the community centre.'; }
-      if (name === 'chapter end card') { $('chcardb').replaceChildren(...['Next chapter', 'Chapters', 'Stay here'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
+      if (name === 'chapter end card') { $('chcardb').replaceChildren(...['Next chapter', 'Chapters'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
       if (name === 'chapter end card') { $('chcardt').textContent = 'May 2010: before'; $('chcardl').replaceChildren(...['On 23 May 2010 the Government declared a state of emergency.', 'Barricades blocked the roads into Tivoli Gardens.', 'The next day, soldiers and police went in.', 'Gran Ivy, Miss Dawn and Mr Brown are made up.'].map((x) => { const p = document.createElement('p'); p.textContent = x; return p; })); }
       for (const id of ALL) $(id).hidden = !show.includes(id); await frames();
       const els = show.flatMap((id) => [$(id), ...$(id).querySelectorAll('h1,h2,p,label,button,a,b')]).filter((e) => e.matches('h1,h2,p,label,button,a,b') && !e.closest('[hidden]') && getComputedStyle(e).visibility !== 'hidden' && contentRects(e).length);

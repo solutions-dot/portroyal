@@ -7,6 +7,7 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
    Rules that shape the code: the fire is only ever seen from behind the rope and nobody is shown in it or hurt (docs/games/eventide.md, "How the fire is told");
    nothing the player does changes what happened; skin is lightened so faces read in every light (owner rule 9). */
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { offerNextChapter } from '../../../engine/chapter-end.js';
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { hudTidy } from '../../../engine/hud.js';
@@ -420,11 +421,11 @@ const chapterOf = (s) => Math.max(0, Math.min(6, Math.floor(s / 10) - 1));
 const ON = {};   /* ON[stage]: what happens when a stage begins */
 function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; if (SC) for (const n of SC.people) n.talked = false; saveGame(); refreshGoal(); if (ON[s]) ON[s]();
-  if (!QUICK && s in CHAPTER_END) setTimeout(() => nextCard(CHAPTER_END[s], s), 2600);
+  if (!QUICK && s in CHAPTER_END) nextCard(CHAPTER_END[s], s);
 }
-function nextCard(i, s, tries = 0) {
-  if (stage !== s) return; if ((panelsOpen() || fading || frozen || DIR.on) && tries < 20) { setTimeout(() => nextCard(i, s, tries + 1), 800); return; }
-  const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished', ['Next is "' + nx.name + '" (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
+function nextCard(i, s) {   /* a finished chapter: offer the next one after a pause on a clear screen, with no "Stay here" (engine/chapter-end.js) */
+  const nx = CHAPTERS[i + 1]; if (!nx) return;
+  offerNextChapter({ still: () => stage === s, clear: () => !(panelsOpen() || fading || frozen || DIR.on) && $('card').hidden, show: () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished', ['Next is "' + nx.name + '" (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }]); } });
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetTransient() { endSceneWarning(); EP++; frozen = false; HELD_BLANKET.visible = false; endCut(); FX.shake = 0; $('sub').classList.add('dim'); document.body.classList.remove('subbing'); TICKS.length = 0; SIREN = 0; }
@@ -503,7 +504,7 @@ const ACTIONS = {
     { label: 'Lay a flower', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 72, go: () => { const k = ctr.flower || 0; P.laid[k].visible = true; ctr.flower = k + 1; uiSound('goal'); say(k ? 'A flower for Miss Dora, who sang.' : 'A flower for Miss Iris, the dressmaker.'); refreshGoal(true); if (ctr.flower >= 2) setStage(73); } },
     { label: 'Read the words', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 73, go: () => card('The plaque says', [PLAQUE.slice(0, 4).join(' '), PLAQUE.slice(4).join(' ')], [{ t: 'Close', go: () => { hideCard(); setStage(74); } }]) }],
 };
-ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 75) { cue('end'); card('The end', ['For years the Eventide fire was a line at the bottom of the page.', 'You have read past it. The women of Eventide were people, each with a name and a life.', 'Your journal has a page about your journey.'], [{ t: 'Open my journal', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Stay here', go: hideCard }], { col: true }); } }, 1800); };
+ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 75) { cue('end'); card('The end', ['For years the Eventide fire was a line at the bottom of the page.', 'You have read past it. The women of Eventide were people, each with a name and a life.', 'Your journal has a page about your journey.'], [{ t: 'Open my journal', go: () => { hideCard(); openJournal('journey'); } }], { col: true }); } }, 1800); };
 
 /* ---------- chapter 4: the night. Seen from behind the rope, with slow camera moves for the big moments. Nothing you do changes what happened. ---------- */
 let SIREN = 0;

@@ -1,5 +1,6 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
+import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { renderFramed, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { grip, gripTick } from '../../../engine/grip.js';
 import { hudTidy } from '../../../engine/hud.js';
@@ -675,7 +676,9 @@ ON[23] = async () => {   /* the ride: on the front platform, down the street tow
   ON[23].a = ON[23].b = 0; if (!ok) return; bell(1); setWorld({}); RIDE.on = false; unlock('trams');
   fadeTo('#000', 1, 900); await wait(1.0); if (ep !== EP) return; hideHud(true); caption('The power for these trams came from Bog Walk.', 'Kingston, 1899'); await wait(3.6); if (ep !== EP) return; captionOff(); await wait(0.8); if (ep === EP) finish();
 };
-ON[24] = () => { card('Chapter 2 is finished', ['That was the first electric tram. Its power came from the Tube at Bog Walk.', 'Now, back to Sunday night, 1904.'], [{ t: 'Into the Tube', go: () => { hideCard(); beginChapter(2); } }, { t: 'Stay here', go: hideCard }]); };
+/* a finished chapter: the card waits for a clear screen and a short pause, and has no "Stay here" (engine/chapter-end.js) */
+const endOffer = (s, show) => offerNextChapter({ still: () => stage === s, clear: () => !fading && !frozen && PANELS.every((id) => $(id).hidden), show });
+ON[24] = () => endOffer(24, () => card('Chapter 2 is finished', ['That was the first electric tram. Its power came from the Tube at Bog Walk.', 'Now, back to Sunday night, 1904.'], [{ t: 'Into the Tube', go: () => { hideCard(); beginChapter(2); } }]));
 
 /* ---------- chapter 4: the morning after ---------- */
 ON[50] = () => { unlock('morning', true); card('The morning after', ['Of about 61 men in the Tube, 28 came out. 33 did not.', 'The words in this chapter are gentle. Nobody is shown hurt.'], [{ t: 'Go on', go: () => { hideCard(); refreshGoal(); } }]); };
@@ -692,13 +695,13 @@ ON[54] = async () => {   /* a whistle: the special train comes in at ten to twel
   if (!ok) return; whistle(0.6); say('', 'A special train came at ten to twelve. It brought coffins for the men.', 6000); await wait(6.2); if (ep !== EP) return;
   fadeTo('#000', 1, 1600); await wait(1.8); if (ep === EP) finish();
 };
-ON[55] = () => { card('Chapter 5 is finished', ['Next, the same place today.'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(5); } }, { t: 'Stay here', go: hideCard }]); };
+ON[55] = () => endOffer(55, () => card('Chapter 5 is finished', ['Next, the same place today.'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(5); } }]));
 
 /* ---------- chapter 5: the ruins today ---------- */
 function readBoard() {
   unlock('ruins'); card('The information board', ['The Gleaner, 28 June 1904:', '"Fearful Catastrophe At Bog Walk. Drowning Men Fight For Life. Sudden Rush of Water Causes Panic. 33 Able-Bodied Men Drowned In Water-Pipe. No Accurate Information as To Cause Of The Disaster."', 'In 1904, 33 men died here when water came into the pipe.'], [{ t: 'Close', go: () => { hideCard(); if (stage === 61) setStage(62); } }]);
 }
-ON[65] = () => { unlock('journey', true); unlock('why', true); cue('end'); run([[1.4, () => card('The end', ['In 1904, 33 men died in the Tube at Bog Walk. 28 got out.', 'Nobody could say for sure why the water came. We remember the men.', 'Thank you for playing. Your journey is in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true, credit: true })]]); };
+ON[65] = () => { unlock('journey', true); unlock('why', true); cue('end'); run([[1.4, () => card('The end', ['In 1904, 33 men died in the Tube at Bog Walk. 28 got out.', 'Nobody could say for sure why the water came. We remember the men.', 'Thank you for playing. Your journey is in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true, credit: true })]]); };
 
 /* ---------- movement: keys, touch (left half is a stick, right half looks) and mouse drag to look ---------- */
 const solids = T.solids;

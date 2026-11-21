@@ -21,8 +21,8 @@ export function renderFramed(renderer, scene, camera, cine) {
 
 let skipButton, dismissSkip;
 
-/* A cinematic shows only the skip X (owner, 21 November 2026, every game): the Journal, Exit, sound, reset and view buttons hide while it plays
-   (body.cine-on), and the X is faded so it does not pull the eye, brighter when touched or focused. Chapter title cards have no X at all. */
+/* A cinematic shows only the skip X (owner, 21 November 2026, every game): the Journal, Exit, sound, reset and view buttons and a scene's own
+   Pause / Read instead bar hide while it plays (body.cine-on), and the X is faded so it does not pull the eye, brighter when touched or focused. Chapter title cards have no X at all. */
 
 /* A scene owns its button until it finishes or a new scene replaces it. */
 export function showCinematicSkip(onSkip, { bottom = false, left = false } = {}) {
@@ -56,7 +56,7 @@ export function showCinematicSkip(onSkip, { bottom = false, left = false } = {})
       }
       .cine-skip:hover, .cine-skip:focus-visible, .cine-skip:active { opacity: .9; }
       body.cine-on #jbtn, body.cine-on #exitbtn, body.cine-on #jrow, body.cine-on #snd, body.cine-on #reset,
-      body.cine-on #view, body.cine-on #fbexit, body.cine-on #topr, body.cine-on #topright { visibility: hidden !important; }
+      body.cine-on #view, body.cine-on #fbexit, body.cine-on #topr, body.cine-on #topright, body.cine-on #cineControls { visibility: hidden !important; }
       .cine-skip[hidden] { display: none; }
       .cine-skip.bottom { top: auto; bottom: max(16px, env(safe-area-inset-bottom)); }
       .cine-skip.left { right: auto; left: max(12px, env(safe-area-inset-left)); }

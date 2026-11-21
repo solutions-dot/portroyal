@@ -1,7 +1,8 @@
 import { touchFirst } from '../../../engine/device.js';
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A self-contained game on the established shared engine APIs. */
-import { renderFramed } from "../../../engine/cine.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { renderFramed } from "../../../engine/cine.js";
+import { offerNextChapter } from "../../../engine/chapter-end.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import * as THREE from "three";
 import { clone as cloneBody } from "three/addons/utils/SkeletonUtils.js";
 import { loadClips, animate, groundFeet, CL, idleOK, lookEnd } from "../../../engine/anim.js";
@@ -877,13 +878,13 @@ async function advance(next) {
   }
   await go(next, { keep: true });
 }
-/* a finished chapter: offer the next one on screen, as every game does. "Stay here" lets you look round; tapping the goal brings the card back */
+/* a finished chapter: offer the next one on screen, as every game does, after a short pause on a clear screen and with no "Stay here" (engine/chapter-end.js) */
 let nextPending = null;
 function finishChapter(next) {
   S.best = Math.max(S.best, chapterOf(next));
   save();
   nextPending = next;
-  nextCard();
+  offerNextChapter({ still: () => nextPending === next, clear: () => !openPanel() && $("cineControls").hidden, show: nextCard });
 }
 function nextCard() {
   const next = nextPending,
@@ -901,7 +902,6 @@ function nextCard() {
           go(next);
         },
       ],
-      ["Stay here", () => setGoal("Well done! Tap here for the next chapter.")],
     ],
   );
 }

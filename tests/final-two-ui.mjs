@@ -30,7 +30,7 @@ for (const game of ['windrush', 'selassie']) {
     assert.doesNotMatch(main + ui, /fillText\("!"/, 'no yellow "!" speech bubble: the gold talk mark instead');
     assert.ok(ui.includes('from "../../../engine/marks.js"'), 'the talk mark sits over the real head or hat (engine/marks.js)');
     assert.ok(ui.includes('className = "tbub"'), 'the talk button with the name over the nearest person');
-    assert.ok(main.includes('"Chapter " + (i + 1) + " is finished!"') && main.includes('"Next chapter"') && main.includes('"Stay here"'), 'the Next chapter card');
+    assert.ok(main.includes('"Chapter " + (i + 1) + " is finished!"') && main.includes('"Next chapter"') && !main.includes('["Stay here"') && main.includes('offerNextChapter'), 'the Next chapter card: after a pause, no Stay here (engine/chapter-end.js)');
     for (const klass of ['yr', 'nm', 'st']) assert.ok(ui.includes('["' + klass + '"'), 'chapter card missing ' + klass);
     assert.ok(ui.includes('b.classList.toggle("on", selected)'), 'journal tab must show selection');
     assert.ok(ui.includes('b.setAttribute("aria-pressed", String(selected))'), 'journal tab must announce selection');
