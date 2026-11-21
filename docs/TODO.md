@@ -68,6 +68,12 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 - [x] Square the legs of the community centre's exhibition table and the Tilbury registration table. Rest their papers on the tabletop.
 - [x] Close the advice centre, the Melissa church hall and both domestic shelters. Garvey's indoor doors close too. The three visitors to the Kingston meeting hall pass through while its doors are open and the doors close behind them.
 
+## Faces on lightweight character models
+
+- [x] Keep the face marker through Tivoli’s uniform export and rebuild the soldier and police models used in crowds.
+- [x] Keep more detail around brows, eyes and mouths in the shared character packer. Protect the crown and hairline on joined crowd and phone models without adding a draw call.
+- [x] Rebuild the affected models in Bog Walk, Eventide, Kendal, Hurricane Melissa, Tivoli, The Emperor’s Arrival and Windrush. The model regression test checks facial geometry and textured eyes in representative lightweight and phone copies.
+
 ## Not done yet (ask the owner first)
 
 - [ ] **The main site menu** (`menu/index.html`) still uses its own fonts (Inter and Fraunces). The games now share one set of fonts. Ask the owner whether the menu should use them too.

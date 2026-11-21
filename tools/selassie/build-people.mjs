@@ -16,6 +16,7 @@ mkdirSync("games/selassie/site/models", { recursive: true });
 /* --repack (or REPACK=1): pack again from the bodies already built in build/selassie-people, with no Blender (after a change to tools/people/pack.mjs).
    BPY_PYTHON=~/venv/bin/python3 runs the builder through the bpy module instead of a Blender binary (BLENDER_BIN, default "blender"). */
 const REPACK = process.argv.includes("--repack") || process.env.REPACK === "1";
+const PHONE_TRIANGLES = "4000"; // Leave enough detail for the neck and collar after reserving the face and hairline.
 const wanted = process.argv.slice(2).filter((a) => !a.startsWith("--")),
   recipes = readdirSync("tools/selassie/people").filter(
     (n) =>
@@ -60,7 +61,7 @@ function buildVariants(recipe) {
     V.body.height = Math.max(0.3, Math.min(0.7, (V.body.height ?? 0.5) - 0.03 * sg + (vi === 2 ? 0.05 : 0)));
     if (V.garments.hairvol !== undefined) V.garments.hairvol = +(V.garments.hairvol * [1.5, 0.6, 1.2][vi]).toFixed(2);
     buildOne(V);
-    packCopy(V.name, "_phone", "3200");
+    packCopy(V.name, "_phone", PHONE_TRIANGLES);
     const c = spawnSync(process.execPath, ["tools/people/pack.mjs", "--src", out, "--out", "games/selassie/site/models", "--max", "6200", V.name + "_crowd"], { stdio: "inherit" });
     if (c.status !== 0) process.exit(c.status || 1);
     console.log("BUILT", V.name, "(" + face + ")");
@@ -121,7 +122,7 @@ for (const name of recipes) {
       "--out",
       "games/selassie/site/models",
       "--max",
-      "3200",
+      PHONE_TRIANGLES,
       recipe.name + "_phone",
     ],
     { stdio: "inherit" },
