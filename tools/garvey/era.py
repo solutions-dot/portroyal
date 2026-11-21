@@ -267,7 +267,8 @@ def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005):
     def f(v):
         c=v.co
         if abs(c.x)<SX*0.92: return
-        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; R=R0+(R1-R0)*t; k=sstep(0.06,0.2,t)*(1-sstep(0.075,0.10,r_b/s))      # (a wider reach was tried and pulled the side of a jacket's skirt out beside the hanging arm, into a bell: the Emperor's tunic, 21 November 2026)
+        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; R=R0+(R1-R0)*t; k=sstep(0.0,0.10,t)*(1-sstep(0.092,0.118,r_b/s))      # the whole sleeve from just below the shoulder seam, and every point of a thick arm: starting at a fifth of the way down and reaching only 7.5 cm, it left the shoulder muscle and the outside of a strong upper arm as they were, in lumps (owner, 21 November 2026: "very lumpy")
+        k*=sstep(SX*0.92,SX*1.02,abs(c.x))      # eased in from the armhole, so the chest beside the arm is not pulled out      # (a wider reach was tried and pulled the side of a jacket's skirt out beside the hanging arm, into a bell: the Emperor's tunic, 21 November 2026)
         if blend: k*=sstep(SX*0.92,SX*1.12,abs(c.x))      # eased in from the shoulder, so the cloth does not crease at the armpit
         if cuff and not OLD: R=R+(max(cuff[1]*s,_arm_r(t,_ARM_RAW)+0.004)-R)*sstep(cuff[0]-0.14,cuff[0],t)      # later eras: the sleeve narrows smoothly into its cuff (a step left it a wide bell round the wrist)
         elif cuff and t>cuff[0]: R=max(cuff[1]*s,_arm_r(t,_ARM_RAW)+0.004)
@@ -353,7 +354,7 @@ if G.get('waistcoat'):
     wcol=NECK-(0.075 if FLAT else 0.02)*s      # under a flat collar the waistcoat's neckline lies lower, so the collar's leaf lies over it   Only the front opening: cut straight across at this height, the waistcoat lost both shoulders and looked unfinished (owner, 17 November 2026, approved); its shoulders reach the neck as a real waistcoat's do.
     WVZ,WVK=(wcol-0.17*s,1.1) if OLD else (NECK-0.20*s,(wcol-NECK+0.20*s)/(0.085*s))      # the V's point and how steep its sides are: later eras meet at the top button, about a hand below the collarbone, in two straight edges that open to about a hand's width at the top
     parts.append(('waistcoat',piece('Waistcoat','helper-tights',lambda c:c.z>HIP+0.03 and abs(c.x)<SX*0.9,(lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022) if OLD else (lambda c:shoulder_off(c,0.03 if abs(c.x)>SX*0.8 else 0.022)),'Waistcoat',post=lambda bm:(drape_front(bm),smooth_edge(bm)),
-        cuts=[((0,0,NECK-0.02*s),(0,0,1),None)]+([((0,0,WVZ),Vector((-WVK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,WVZ),Vector((WVK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if G.get('vwaist') else [((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)])+[((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)])))
+        cuts=[((0,0,NECK-0.02*s),(0,0,1),None)]+([((0,0,WVZ),Vector((-WVK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,WVZ),Vector((WVK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if G.get('vwaist') else [((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)])+[((SX*0.78,0,0),(1,0,0),lambda c:c.z>SH.z-0.12*s),((-SX*0.78,0,0),(-1,0,0),lambda c:c.z>SH.z-0.12*s)])))      # the armholes, down to just under the armpit only: cut at every height, the side of the waistcoat was sliced open wherever a belly or hips came out past the cut, and the shirt showed there as a white flap (owner, 21 November 2026: "the side of the coat looks torn")
 def jacket_seen(c):      # what of the shirt can be seen under a jacket: the front in its V, the collar's foot round the neck, the cuffs (used to trim the shirt, and to fit the jacket over only that)
     if c.z>NECK-(0.06 if (c.y<0 or OLD) else 0.026)*s and (OLD or math.hypot(c.x,c.y-NJ.y)<0.13*s): return True      # later eras: only round the neck (across the whole width, the band ran out over the tops of the shirt's sleeves and stood out under the jacket's shoulders like padding: owner, 21 November 2026)
     if c.y<0 and abs(c.x)<0.13*s and c.z>NECK-0.30*s: return True
@@ -501,6 +502,11 @@ if not OLD or EASE_OLD:
         sm=[v for v in moved if not v.is_boundary]
         for _ in range(3): bmesh.ops.smooth_vert(bm,verts=sm,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
         bm.normal_update(); bm.to_mesh(o.data); bm.free()
+if not OLD and dict(parts).get('shirt'):      # the sleeves are evened out as cloth: the tube is worked out round a line that bends at the elbow, which left a pinched ring there
+    _o=dict(parts)['shirt']; _b=bmesh.new(); _b.from_mesh(_o.data)
+    _sv=[v for v in _b.verts if not v.is_boundary and abs(v.co.x)>SX*1.0 and side_arm(v.co) is not None]
+    for _ in range(8): bmesh.ops.smooth_vert(_b,verts=_sv,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    _b.to_mesh(_o.data); _b.free()
 clothes=[o for k,o in parts]
 for o in clothes:
     md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}
@@ -1742,6 +1748,19 @@ def tuck_under_skirt():
     print('TUCKED UNDER SKIRT',n)
 if G.get('tuckskin',1) and G.get('skirt'): tuck_under_skirt()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
+if not OLD and PART.get('waistcoat') and PART.get('shirt') and not P.get('outfit'):
+    # A waistcoat holds the shirt in. Where the shirt blouses out over the waistband it came through the waistcoat's side as a white flap (owner, 21 November 2026:
+    # "the side of the coat looks torn"). Every point of the shirt's body that lies outside the waistcoat, or less than 5 mm inside it, is set 6 mm inside it.
+    # (A longer reach for the waistcoat's own clearance was tried instead and pushed its side out into a shelf.)
+    _wb=bmesh.new(); _wb.from_mesh(PART['waistcoat'].data); _wb.normal_update(); _wt=BVHTree.FromBMesh(_wb); _wb.free(); _n=0
+    for v in PART['shirt'].data.vertices:
+        if side_arm(v.co) is not None and abs(v.co.x)>SX*0.95: continue
+        loc,nrm,_i,_d=_wt.find_nearest(v.co,0.06)
+        if loc is None: continue
+        sd=(v.co-loc).dot(nrm)
+        if (v.co-loc-nrm*sd).length>0.004 or sd<-0.005: continue
+        v.co=v.co-nrm*(sd+0.006); _n+=1
+    PART['shirt'].data.update(); print('SHIRT HELD IN under the waistcoat',_n)
 if 'RECUT_V' in globals() and PART.get('waistcoat') and not P.get('outfit'): RECUT_V()      # and once more at the very end: later steps (weights, tucks, clearances) moved the edge's points by a few millimetres and the V came out wavy on one side
 if P.get('outfit'):      # the fitted garment takes the place of the generated pieces it replaces
     OUTFIT_PHASE='finish'; exec(compile(open(_ofp).read(),_ofp,'exec'))
