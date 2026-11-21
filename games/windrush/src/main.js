@@ -647,7 +647,7 @@ async function advance(next) {
     S.best = Math.max(S.best, chapterOf(next));
     save();
     nextPending = next;
-    offerNextChapter({ still: () => nextPending === next, clear: () => !openPanel() && $("cineControls").hidden, show: nextCard });
+    offerNextChapter({ still: () => nextPending === next, clear: () => !openPanel() && $("cineControls").hidden, show: nextCard, pause: QUICK ? 0 : undefined });
   } else await go(next, { keep: true });
 }
 /* a finished chapter: offer the next one on screen, as every game does, after a short pause on a clear screen and with no "Stay here" (engine/chapter-end.js) */

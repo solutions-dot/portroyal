@@ -8,11 +8,12 @@
        still()  true while the offer still makes sense (the player has not moved on, restarted or changed chapter); when false, nothing shows
        clear()  true when nothing is on screen that the card would cover
        show()   builds and shows the card
-       pause    ms the screen must stay clear first (default PAUSE_MS) */
+       pause    ms the screen must stay clear first (default PAUSE_MS); 0 in a test run, so the autoplayer is not slowed */
 export const PAUSE_MS = 2500;
 const STEP = 200;
 
 export function offerNextChapter({ still = () => true, clear = () => true, show, pause = PAUSE_MS }) {
+  if (pause <= 0) { if (still() && clear()) { show(); return; } pause = 0; }   /* a test run (pause 0): at once, as the autoplayer expects */
   let quiet = 0;
   const tick = () => {
     if (!still()) return;

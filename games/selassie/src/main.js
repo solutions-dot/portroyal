@@ -834,7 +834,7 @@ function finishChapter(next) {
   S.best = Math.max(S.best, chapterOf(next));
   save();
   nextPending = next;
-  offerNextChapter({ still: () => nextPending === next, clear: () => !openPanel() && $("cineControls").hidden, show: nextCard });
+  offerNextChapter({ still: () => nextPending === next, clear: () => !openPanel() && $("cineControls").hidden, show: nextCard, pause: QUICK ? 0 : undefined });
 }
 function nextCard() {
   const next = nextPending,

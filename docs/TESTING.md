@@ -21,6 +21,7 @@
 The following checks are included in `npm test` on the integration branch:
 
 - `tests/chapter-footer.mjs`: all **ten** playable games must expose chapter actions in the order **Unlock All | Restart | Credits**, with the three-column layout rule.
+- `tests/chapter-end.mjs` (21 November 2026): the chapter-end card waits for a clear screen and a pause, and no game offers "Stay here".
 - `tests/final-two-ui.mjs`: Windrush and Selassie chapter cards, selected journal tab, notice treatment and mobile title controls.
 - `tests/kendal.mjs`: Kendal stage transitions, water tasks, beach activity guards and save/resume contracts.
 - `tests/regressions.mjs`: the menu includes exactly ten distinct playable games.

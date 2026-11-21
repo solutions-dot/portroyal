@@ -13,6 +13,9 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 
 ## Every game
 
+- [ ] **One standard "this scene may be scary" card** (owner, 21 November 2026). Audit done: seven games use `sceneWarning` (`engine/scene-warning.js`): Port Royal (the earthquake), Eventide (the fire), Kendal (the crash), Bog Walk (the water), Nanny (the fight, the guns), Melissa (each storm), and Tivoli (May 2010, its own card with the shared buttons). Selassie (the arrival) and Windrush (the goodbye, the other shore) make their own cards with "Read instead", no calm mode, and Windrush adds a second "A short scene" card. Garvey has no cinematic. The words differ from game to game. Waiting for the owner's choice of one screen for all.
+- [x] **Cinematics show only a faded X; chapter title cards have no X; the chapter-end card comes after a pause and has no "Stay here"** (owner, 21 November 2026; `engine/cine.js`, `engine/chapter-end.js`, `docs/STANDARD.md`).
+
 - [ ] **Title screens.** All three title buttons (Start, Chapters, Exit) should appear at the same moment, with Chapters dimmed until the game is ready, and nothing should move as the game loads (`shared/title.css`). Take screenshots of each game's title screen at 390x800 and 1280x720.
   Captured loading and ready screenshots for all ten games at both sizes. All three buttons appeared during loading, with Chapters dimmed. Button positions still moved by up to 5 px. A follow-up Chromium check held fonts constant and replayed Loading, Start and Continue. Button rectangles matched in all ten games at both sizes. Blocking web fonts reproduced the direction and size of the shift in Bog Walk, Nanny Town and Tivoli (about 1 to 5 px).
 - [x] **Bog Walk title.** The title should sit lower on the screen, with no control words under the buttons. Screenshot at 390x800 and 1280x720.

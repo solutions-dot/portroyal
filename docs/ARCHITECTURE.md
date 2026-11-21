@@ -21,6 +21,11 @@ engine/                   shared runtime code, imported by every game
   joinbody.js             each person drawn as a few joined meshes, through animate() (same look, far fewer draw calls)
   batch.js                batchStatic: still scenery merged per material look (moved from seven games' gfx.js)
   preload.js              the next chapter loaded in quiet moments, the last one's graphics memory freed
+  cine.js                 cinematics: phone framing, the faded skip X (top buttons hide while it shows), chapter title fades with no X
+  scene-warning.js        the card before a scene that may be scary: Watch scene, Read what happened instead, calm mode
+  chapter-end.js          the "Chapter N is finished" card after a short pause on a clear screen, no "Stay here"
+  exit.js                 the Exit button beside Journal, with "are you sure"
+  device.js               touch or key words for the controls tip
 shared/
   models/anims.js         the shared animation library (126 clips on one skeleton), copied into each game at build
   anim-sources/*.fbx      the original Mixamo downloads the library is made from
