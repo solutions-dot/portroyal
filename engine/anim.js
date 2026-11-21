@@ -4,6 +4,7 @@ import { beginPoseCorrection, endPoseCorrection, clearPoseCorrection, jointTurnL
 /* engine/anim.js: one Mixamo clip library shared by every character (same skeleton).
    loadClips(gltf) fills CL; animate(model, clipName) gives each person a controller. See docs/ENGINE.md. */
 import * as THREE from 'three';
+import { RIG_REST } from './rig-rest.js';
 export const CL = {};          /* clip name -> AnimationClip, from shared/anims */
 export const mixers = [];      /* every mixer made by animate(); the game updates the visible ones each frame */
 let peopleClip = null; export function setFallbackClip(c) { peopleClip = c; }   /* used when a named clip is missing */
@@ -38,19 +39,58 @@ export function walkM() {   /* a steadier man's walk from the shared clip: damp 
       q.setFromEuler(e); v[i] = q.x; v[i + 1] = q.y; v[i + 2] = q.z; v[i + 3] = q.w; } }
   CL._wm = c; return c; }
 export const BOW = { '^Kneel': { Neck: 0.35, Head: 0.8, Spine2: 0.7, LeftShoulder: 0.3, RightShoulder: 0.3 } };   /* Kneel: keep 35% of the neck's bow, 80% of the head's and 70% of the upper chest's (a flat collar lies on the upper back; bowed fully, the neck pulled away and the collar stood up like a wing) */
-/* Posture (16 November 2026). The clips were fitted to our bodies bone by bone, pointing each bone the way the source skeleton's bone points. The source spine is a straight
-   line; our bodies' spine is not (at rest the chest bone leans back about 25 degrees and the bone above it comes forward about 19, the natural curve of a back). So every clip
-   straightened the spine, which tipped each person's ribcage back by about 20 degrees: lower ribs and belly pushed out, upper chest sunk, the whole body leaning back. On a man in a
-   shirt that read as a bust, in every game. The three bones are turned back to the body's own curve here, once, for every clip: the chest bone's parent leans back 18 degrees more,
-   the chest comes forward again, and the neck and the two shoulders undo the rest so the head and the arms stay as the clip put them. POSTURE is degrees about the bone's parent's side-to-side axis. */
+/* Posture. From 16 to 21 November 2026 three trunk bones were turned by fixed amounts here for every clip (POSTURE), to undo a tipped ribcage. The real cause was that the
+   clips force every body's bones to one skeleton's rest angles; fitRig() below now puts that right for every bone of every body, so POSTURE is no longer applied. It is kept
+   only so a review can draw the old stance beside the new one: a dev page that sets globalThis.__noFit before the clips load gets the old behaviour (people-sheet g_noFit=1). */
 export const POSTURE = { Spine1: -18, Spine2: 38, Neck: -20 };
 /* Standing clips (idles, talking, gestures) were made with the hips back and the knees bent about 30 degrees, so everyone stood in a slump, like a zombie (owner, 17 November 2026).
    For those clips the thigh is turned back, the knee straightened and the foot set flat again. Walking, running, carrying, kneeling and seated clips are left as they are: they do not have the slump. */
+/* (21 November 2026: STANCE is no longer applied. It was set while every man's hips were held 13 to 15 degrees back by the skeleton fault that fitRig() now puts
+   right; with the hips where they belong, it pushed the knee behind the line from hip to ankle and the legs bowed backwards (owner: "this curve at the foot should
+   be fixed"), and at half strength some clips stood with bent knees and others did not. restLegs() below does the job clip by clip. STANCE is kept for the g_noFit review view.) */
 export const STANCE = { LeftUpLeg: 14, RightUpLeg: 14, LeftLeg: 28, RightLeg: 28, LeftFoot: -14, RightFoot: -14 };
 const STANDING = /^(Angry|Thankful|Greet|LookOverShoulder|HappyIdle2|StandPoseM|Agree|Argue|BriefcaseIdle|Cheer|Clap|Comfort\w*|Cry|Drink|HappyIdle|HeadTurn|HurtIdle|Idle|IdleM|Laugh|ListenMusic|LookAround|Nod|OldIdle|Point|ReachOut|Sad\d|Salute|Scared|Shrug|Speech|Talk\d|TalkM\d|Wave|WaveSlow|Write|Yell|TorchIdle|RifleIdle|CarryIdle|CarryHeadIdle)$/;   /* turning the shoulders back as well was tried: it helped four poses but made the full every-clip gate (tools/review/people-check.mjs) worse in Garvey and Nanny Town, so the arms are left as the clips have them */
 function posture(c, name) { const q = new THREE.Quaternion(), r = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0), st = STANDING.test(name || '');
-  for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const deg = m ? (POSTURE[m[1]] || (st ? STANCE[m[1]] : undefined)) : undefined; if (!deg) continue; r.setFromAxisAngle(X, deg * Math.PI / 180); const v = t.values;
+  for (const t of c.tracks) { const m = t.name.match(/mixamorig:?(\w+)\.quaternion$/); const deg = m ? ((globalThis.__noFit ? POSTURE[m[1]] : 0) || (st && globalThis.__noFit ? STANCE[m[1]] : undefined)) : undefined; if (!deg) continue; r.setFromAxisAngle(X, deg * Math.PI / 180); const v = t.values;
     for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i).premultiply(r).toArray(v, i); } } }
+/* Standing level (owner, 21 November 2026: "why does everyone still have this crooked lean?"). The standing clips rest the weight on one leg: the hips tip 4 to 10 degrees
+   to one side, the chest tips back the other way and the trunk turns a few degrees, sometimes for the whole clip (Speech: hips 10 degrees on average; Talk1: the whole trunk 5
+   to 7), sometimes for many seconds at a time (the plain Idle shifts from one leg to the other). On a body in a suit that reads as a crooked man, in every game. For every
+   standing clip the hips and the three spine bones lose their average sideways tip and average turn, and what is left of the tip and turn (the weight shifts, the sway) is
+   kept at LEVEL of its size, so people stand level and face the way they are set, and still move. Their average lean forward or back comes out too (the plain Idle held
+   the chest 6 to 7 degrees back, which from the side read as a belly pushed forward); every bend forward and back round that average is kept whole. The neck loses only its average
+   tip and keeps its own movement on top of the chest (a look to the side is meant); the head follows it. The legs keep the directions the clip gave them, so the feet stay
+   where they were.
+   tools/review/posture-probe.mjs prints the tip and turn of any body in any clip. */
+const TRUNK = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck'], LEGS = ['LeftUpLeg', 'RightUpLeg'], LEVEL = { tip: 0.35, turn: 0.5 };
+function levelStance(c) { if (globalThis.__noFit) return; const T = {}; for (const t of c.tracks) { const m = t.name.match(/^mixamorig:?(\w+)\.quaternion$/); if (m) T[m[1]] = t; } if (TRUNK.some((n) => !T[n])) return;
+  const rest = TRUNK.map((n) => new THREE.Quaternion().fromArray(RIG_REST[n])), inv = rest.map((r) => r.clone().invert()), q = new THREE.Quaternion(), e = new THREE.Euler(0, 0, 0, 'YXZ'), N = 48, mean = TRUNK.map(() => [0, 0, 0]);
+  const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+  const lean = (t) => { const w = new THREE.Quaternion(), out = []; for (let k = 0; k < TRUNK.length; k++) { w.multiply(sampleQ(T[TRUNK[k]], t, q)); e.setFromQuaternion(q.copy(w).multiply(inv[k])); out.push([e.x, e.y, e.z]); } return out; };   /* each trunk bone against its rest: pitch, turn, tip */
+  for (let i = 0; i < N; i++) { const L = lean(c.duration * (i + 0.5) / N); for (let k = 0; k < TRUNK.length; k++) { mean[k][0] += wrap(L[k][1] - L[0][1]) / N; mean[k][1] += L[k][2] / N; mean[k][2] += L[k][0] / N; } }
+  const NK = TRUNK.length - 1, turnOf = (L, k) => k ? L[0][1] + (wrap(L[k][1] - L[0][1]) - mean[k][0]) * LEVEL.turn : L[0][1];
+  const level = (t) => lean(t).map(([x, y, z], k, L) => new THREE.Quaternion().setFromEuler(k < NK ? e.set(x - mean[k][2], turnOf(L, k), (z - mean[k][1]) * LEVEL.tip) : e.set(x, turnOf(L, NK - 1) + wrap(y - L[NK - 1][1]), z - mean[k][1])).multiply(rest[k]));   /* the same bones, level, in the skeleton's space; the neck keeps its own turn and sway on the chest and loses only its average tip */
+  const a = new THREE.Quaternion(), vals = {};
+  for (let k = 0; k < TRUNK.length; k++) { const tr = T[TRUNK[k]], v = new Float32Array(tr.values.length); for (let i = 0; i < tr.times.length; i++) { const W = level(tr.times[i]); (k ? a.copy(W[k - 1]).invert().multiply(W[k]) : a.copy(W[0])).normalize().toArray(v, i * 4); } vals[TRUNK[k]] = v; }
+  for (const n of LEGS) { const tr = T[n]; if (!tr) continue; const v = new Float32Array(tr.values.length); for (let i = 0; i < tr.times.length; i++) { const t = tr.times[i]; a.copy(level(t)[0]).invert().multiply(sampleQ(T.Hips, t, q)).multiply(q.fromArray(tr.values, i * 4)).normalize().toArray(v, i * 4); } vals[n] = v; }
+  for (const n in vals) T[n].values.set(vals[n]); }
+/* Standing legs (21 November 2026). Each standing clip holds the legs its own way: the plain Idle with the knees bent about 25 degrees, a wave with them nearly straight.
+   One fixed correction (STANCE) could only be right for one of them. For every standing clip, each leg's thigh, shin and foot are turned, forward or back, by one fixed
+   amount for the whole clip, so that on average over the clip they point as the body's own legs do at rest: a person stands on straight legs with flat feet, as the body
+   was built, and the clip's own movement of the legs (a weight shift, a step) is kept whole. Clips that are meant to crouch are left alone (BENT). */
+const BENT = /^(HurtIdle|Scared|Cry|Sad\d|TorchIdle|RifleIdle|CarryIdle|CarryHeadIdle)$/, _X = new THREE.Vector3(1, 0, 0), _Y = new THREE.Vector3(0, 1, 0);
+function restLegs(c) { if (globalThis.__noFit || BENT.test(c.name)) return; const T = {}; for (const t of c.tracks) { const m = t.name.match(/^mixamorig:?(\w+)\.quaternion$/); if (m) T[m[1]] = t; } if (!T.Hips) return;
+  const q = new THREE.Quaternion(), w = new THREE.Quaternion(), d = new THREE.Vector3(), e = new THREE.Euler(0, 0, 0, 'YXZ'), N = 32;
+  const pitch = (W, yaw) => { d.copy(_Y).applyQuaternion(W).applyAxisAngle(_Y, -yaw); return Math.atan2(d.z, -d.y); };   /* how far forward of straight down a leg bone points, seen in the way the hips face */
+  for (const S of ['Left', 'Right']) { const names = [S + 'UpLeg', S + 'Leg', S + 'Foot']; if (names.some((n) => !T[n])) continue;
+    const rest = names.map((n) => pitch(q.fromArray(RIG_REST[n]), 0)), mean = [0, 0, 0];
+    const chain = (t) => { const out = [sampleQ(T.Hips, t, new THREE.Quaternion())]; for (const n of names) out.push(out[out.length - 1].clone().multiply(sampleQ(T[n], t, q))); return out; };   /* hips, thigh, shin, foot in the skeleton's space */
+    const yawOf = (W) => e.setFromQuaternion(w.copy(W).multiply(q.fromArray(RIG_REST.Hips).invert())).y;
+    for (let i = 0; i < N; i++) { const W = chain(c.duration * (i + 0.5) / N), yaw = yawOf(W[0]); for (let k = 0; k < 3; k++) mean[k] += pitch(W[k + 1], yaw) / N; }
+    const fixed = (t) => { const W = chain(t), yaw = yawOf(W[0]), ax = d.copy(_X).applyAxisAngle(_Y, yaw).clone(); return [W[0], ...[0, 1, 2].map((k) => new THREE.Quaternion().setFromAxisAngle(ax, -(rest[k] - mean[k])).multiply(W[k + 1]))]; };
+    const vals = names.map((n) => new Float32Array(T[n].values.length));
+    names.forEach((n, k) => { const tr = T[n]; for (let i = 0; i < tr.times.length; i++) { const F = fixed(tr.times[i]); q.copy(F[k]).invert().multiply(F[k + 1]).normalize().toArray(vals[k], i * 4); } });
+    names.forEach((n, k) => T[n].values.set(vals[k])); } }
 const QUIET_IDLE = /^(Idle|IdleM|HappyIdle2?|HeadTurn|StandPoseM)$/;
 const idlePoses = new WeakMap();
 function idlePosture(c, source) {
@@ -66,7 +106,8 @@ function idlePosture(c, source) {
     const match = t.name.match(/^mixamorig:?(\w+)\.quaternion$/);
     return match ? [[match[1], t]] : [];
   }));
-  const bones = bonesOf(c), rest = bonesOf(idle);
+  if (!idle._level) { idle._level = idle.clone(); levelStance(idle._level); }   /* the plain Idle, standing level: what the other quiet idles are eased toward */
+  const bones = bonesOf(c), rest = bonesOf(idle._level);
   const x = new THREE.Vector3(1, 0, 0), q = new THREE.Quaternion(), turn = new THREE.Quaternion(), parent = new THREE.Quaternion(), sample = new THREE.Quaternion();
   const change = (track, fn) => {
     if (!track) return;
@@ -80,9 +121,9 @@ function idlePosture(c, source) {
       if (neutral) change(track, (q, t) => q.slerp(sampleQ(neutral, t % idle.duration, sample), .87));
     }
   }
-  // A small forward pitch stacks the shoulders above the pelvis on the plain idle.
-  turn.setFromAxisAngle(x, 0.09);
-  change(bones.get('Spine'), q => q.premultiply(turn));
+  // (Until 21 November 2026 the spine was pitched forward 5 degrees here and the arms swung 17 degrees forward, to stack a stooped trunk over the pelvis. With fitRig()
+  // the trunk stands as the body was built, so the spine is left alone and the arms only settle a little back, beside the thighs.)
+  if (globalThis.__noFit) { turn.setFromAxisAngle(x, 0.09); change(bones.get('Spine'), q => q.premultiply(turn)); }
   for (const side of ['Left', 'Right']) {
     if (source !== idle && c.name !== 'IdleM') for (const joint of ['Shoulder', 'Arm', 'ForeArm', 'Hand']) {
       const neutral = rest.get(side + joint);
@@ -90,8 +131,8 @@ function idlePosture(c, source) {
     }
     const chain = ['Hips', 'Spine', 'Spine1', 'Spine2', side + 'Shoulder'].map(name => bones.get(name));
     if (chain.some(track => !track)) continue;
-    // Apply the forward arm turn in the body frame so both arms hang beside the hips.
-    turn.setFromAxisAngle(x, -.29);
+    // Turn the arms in the body frame so both hang beside the thighs.
+    turn.setFromAxisAngle(x, globalThis.__noFit ? -0.29 : 0.1);
     change(bones.get(side + 'Arm'), (q, t) => {
       parent.identity();
       for (const track of chain) parent.multiply(sampleQ(track, t, sample));
@@ -104,6 +145,7 @@ export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() :
   c.tracks = c.tracks.filter((t) => { if (t.name.endsWith('.scale')) return false; if (!t.name.endsWith('.position')) return true; if (!keepHips || !/Hips/.test(t.name)) return false;
     const v = t.values; let x0 = v[0], z0 = v[2]; if (SEATED.test(name) && CL.Idle) { const it = CL.Idle.tracks.find((k) => k.name === t.name); if (it) { x0 = it.values[0]; z0 = it.values[2]; } }   /* seated clips: keep the hips over the spot we put him, not where the clip wandered to */
  for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } return true; });   /* running stays in place; the game moves her */
+  if (STANDING.test(name)) { levelStance(c); restLegs(c); }
   if (!SEATED.test(name)) posture(c, name);
   if (QUIET_IDLE.test(name)) idlePosture(c, src);
   if (STANDING.test(name) && name !== 'Idle' && !GRIPS.test(name)) relaxHands(c);
@@ -121,6 +163,7 @@ export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() :
 const STRIDES = new WeakMap(), _q = [0, 1, 2, 3].map(() => new THREE.Quaternion()), _qb = new THREE.Quaternion(), _p = new THREE.Vector3(), _m3 = new THREE.Matrix3(), _fw = new THREE.Vector3(), _wq = new THREE.Quaternion();
 function sampleQ(track, t, out) { const tm = track.times, v = track.values; let i = 1; while (i < tm.length - 1 && tm[i] < t) i++; const a = (t - tm[i - 1]) / ((tm[i] - tm[i - 1]) || 1); out.fromArray(v, (i - 1) * 4); _qb.fromArray(v, i * 4); return out.slerp(_qb, Math.max(0, Math.min(1, a))); }
 export function strideOf(m, clip) {
+  fitRig(m);   /* the joint offsets below must be the fitted ones: measured on a body that had not been animated yet, the stride came out wrong (79 cm for a woman) and her feet slid */
   let per = STRIDES.get(m); if (!per) STRIDES.set(m, per = {}); const key = clip.name + '|' + m.scale.y.toFixed(3); if (per[key] !== undefined) return per[key];
   const B = (n) => m.getObjectByName('mixamorig' + n), T = (n) => clip.tracks.find((t) => t.name === 'mixamorig' + n + '.quaternion'), hips = B('Hips'), tH = T('Hips'); if (!hips || !tH) return (per[key] = 0);
   m.updateMatrixWorld(true); _m3.setFromMatrix4(hips.parent.matrixWorld); _fw.set(0, 0, 1).applyQuaternion(m.getWorldQuaternion(_wq)).normalize();
@@ -137,8 +180,9 @@ export const LOW_SKIRT = /^(Kneel|Crawl|Pray)/;
 const LAP = new WeakMap(), SEAT = new WeakMap();   /* kept outside userData: a game that clones a body copies userData as plain data, and bone references there became empty objects */
 export function seatSkirt(m) {
   if (SEAT.has(m)) return SEAT.get(m);
-  const seat = [], stand = []; m.traverse((o) => { if (!o.isMesh) return; if (/^SkirtSeat/.test(o.name)) seat.push(o); else if (/^Skirt(_|\d|$)/.test(o.name)) stand.push(o); });
+  const seat = [], stand = [], aprons = { seat: [], stand: [] }; m.traverse((o) => { if (!o.isMesh) return; if (/^SkirtSeat/.test(o.name)) seat.push(o); else if (/^Skirt(_|\d|$)/.test(o.name)) stand.push(o); else if (o.visible && /^ApronSeat/.test(o.name)) aprons.seat.push(o); else if (o.visible && /^Apron(_|\d|$)/.test(o.name)) aprons.stand.push(o); });
   if (!seat.length) return (SEAT.set(m, null), null);
+  if (aprons.seat.length) { seat.push(...aprons.seat); stand.push(...aprons.stand); }   /* an apron worn over a skirt has a seated piece too (ApronSeat, cut from the seated skirt): it changes with the skirt. One the game has hidden stays hidden. */
   for (const o of seat) o.visible = false;
   { const S0 = { seat, stand, on: false }; SEAT.set(m, S0); return S0; }
 }
@@ -178,10 +222,33 @@ export function lapHands(m, name) { const L = LAP.get(m); if (!L) return; m.upda
       _hq.setFromUnitVectors(from.normalize(), to.normalize()); sd.fa.getWorldQuaternion(_hq2); const pq = sd.fa.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
       sd.fa.quaternion.copy(pq.multiply(_hq.multiply(_hq2))); sd.fa.updateMatrixWorld(true); } } }
 // Read the fade at mixer time, including when two play calls land before the next mixer update.
+/* Every body keeps its own shape (21 November 2026). Each body has a skeleton fitted to its own build, so its bones rest at their own angles: a stout man's neck bone
+   leans one way, a slim woman's another. The clips were made on one skeleton (shared/rig/char.blend) and say where each bone points, not how far it has turned. Played as
+   they are, they forced every body's bones to that one skeleton's angles, and the body bent by the difference: Marcus Garvey's neck 23 degrees forward, his hips 13 back and
+   his shoulders 7 down before any clip had moved him (owner: "his posture is horrible", "a curve in his spine"). POSTURE, an earlier fix, turned two chest bones by one fixed
+   amount for everyone, which was right for no one. fitRig() gives every bone that a clip drives the reference skeleton's rest angle (engine/rig-rest.js) and folds the
+   difference into the body's bind matrices and joint offsets. Nothing moves when it runs, in any pose: it is only a change of each bone's own axes. After it, a clip turns
+   each bone from the body's own rest shape by exactly as much as it turned the reference skeleton's, so a body at rest in a clip is the body as it was built.
+   Finger joints 2 and 3, which no clip drives, keep their own axes (curlFingers bends them about those). Runs once per body, from animate(); a body it does not know
+   (no Hips, or a skeleton that rests far from ours) is left alone and listed in fitRig.unknown for the audit. */
+const FITTED = new WeakSet(), _fm = new THREE.Matrix4(), _fq = new THREE.Quaternion();
+const DRIVEN = (n) => RIG_REST[n] && !/Hand(Thumb|Index|Middle|Ring|Pinky)[234]$/.test(n);
+export function fitRig(m) { if (globalThis.__noFit) return false;
+  let hips = null; const skels = new Set(); m.traverse((o) => { if (o.isBone && !hips && /^mixamorig:?Hips$/.test(o.name)) hips = o; if (o.isSkinnedMesh && o.skeleton) skels.add(o.skeleton); });
+  if (!hips || !skels.size || FITTED.has(hips)) return false; FITTED.add(hips);
+  /* each bone's rest rotation, read from an inverse bind matrix: true in any pose, and whatever box a packed piece was squeezed into (its columns are scaled, never skewed) */
+  const rest = new Map(); for (const s of skels) s.bones.forEach((b, i) => { if (!b || rest.has(b) || !s.boneInverses[i]) return; const e = s.boneInverses[i].elements, c = [0, 4, 8].map((k) => new THREE.Vector3(e[k], e[k + 1], e[k + 2]).normalize());
+    rest.set(b, new THREE.Quaternion().setFromRotationMatrix(_fm.makeBasis(c[0], c[1], c[2])).invert()); });
+  const name = (b) => b.name.replace(/^mixamorig:?/, ''), hq = rest.get(hips); let known = 0; for (const b of rest.keys()) if (DRIVEN(name(b))) known++; if (known < 20) return false;   /* not one of our bodies (a test rig, a prop with a few bones): leave it as it is */
+  if (!hq || 2 * Math.acos(Math.min(1, Math.abs(hq.dot(_fq.fromArray(RIG_REST.Hips))))) > 0.7) { (fitRig.unknown || (fitRig.unknown = [])).push(m.name || '?'); return false; }
+  const K = new Map(); for (const [b, q] of rest) { const n = name(b); if (DRIVEN(n)) K.set(b, new THREE.Quaternion().fromArray(RIG_REST[n]).invert().multiply(q)); }   /* K: from the body's own rest axes to the reference's */
+  hips.traverse((b) => { if (!b.isBone) return; const kp = K.get(b.parent), k = K.get(b); if (kp) { b.position.applyQuaternion(kp); b.quaternion.premultiply(kp); } if (k) b.quaternion.multiply(_fq.copy(k).invert()); });
+  for (const s of skels) s.boneInverses = s.boneInverses.map((inv, i) => { const k = K.get(s.bones[i]); return k ? new THREE.Matrix4().makeRotationFromQuaternion(k).multiply(inv) : inv; });   /* a new list each: clones made earlier share the old one, and are fitted on their own */
+  m.updateMatrixWorld(true); return true; }
 function fadeFraction(a, time) {
   return a.isScheduled() && a.enabled ? (a._weightInterpolant?.evaluate(time)[0] ?? 1) : 0;
 }
-export function animate(m, name, mixerIn, baseAct) { if (name && NOT_IDLE.has(name)) name = 'Idle'; const clip = (name && clipFor(name)) || clipFor('Idle') || peopleClip; if (!clip && !baseAct) return;
+export function animate(m, name, mixerIn, baseAct) { fitRig(m); if (name && NOT_IDLE.has(name)) name = 'Idle'; const clip = (name && clipFor(name)) || clipFor('Idle') || peopleClip; if (!clip && !baseAct) return;
   const mx = mixerIn || new THREE.AnimationMixer(m), base = baseAct || mx.clipAction(clip); if (!baseAct) { base.play(); base.time = Math.random() * clip.duration; base.timeScale = 0.92 + Math.random() * 0.16; }   /* each body at its own pace: two people on one clip never move in step */ if (!mixerIn) mixers.push(mx);
   const acts = {}, fading = new Set(), ctl = { mx, base, cur: base, timer: 0,
     get(n) { if (!acts[n]) { const c = clipFor(n); if (!c) return null; acts[n] = mx.clipAction(c); } return acts[n]; },

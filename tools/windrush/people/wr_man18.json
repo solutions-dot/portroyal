@@ -18,7 +18,7 @@
     "hairvol": 0.2,
     "hat": [],
     "sleeve": 0.4,
-    "collar": "camp",
+    "collar": false,
     "legwidth": 1,
     "fade": 0.6
   },

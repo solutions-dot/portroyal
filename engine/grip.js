@@ -5,7 +5,7 @@
    The character must already be posed (its mixer updated once). The item's origin is its bottom centre; handleY is the height of its handle above that.
    engine/audit.js (auditHeld) checks the result: at the hand, upright, clear of the body. */
 import * as THREE from 'three';
-import { calmHands } from './anim.js';
+import { calmHands, fitRig } from './anim.js';
 import { beginPoseCorrection, clearPoseCorrection, endPoseCorrection, jointTurnLimiter } from './bone-pose.js';
 
 const wp = (b) => b.getWorldPosition(new THREE.Vector3()), wq = (o) => o.getWorldQuaternion(new THREE.Quaternion());
@@ -26,6 +26,7 @@ function bindQuaternion(model, bone) {
   return result;
 }
 export function grip(model, side, obj, { handleY = 0.4, scale = 1, yaw = 0, lift = 0.2, curl = 1, straighten = 0, hangs = null } = {}) {
+  fitRig(model);   /* the rest pose read from the bind matrices below must be the fitted one (engine/anim.js) */
   const B = (n) => model.getObjectByName('mixamorig' + side + n), hand = B('Hand'), arm = B('Arm'); if (!hand) return null;
   model.updateMatrixWorld(true);
   const idx = B('HandIndex1'), mid = B('HandMiddle1'), pky = B('HandPinky1'), th = B('HandThumb2') || B('HandThumb1'), g = { side, hand, arm, lift: 0, fingers: [], wrap: null };

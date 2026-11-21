@@ -106,5 +106,8 @@
     "lr-cheek-bones-incr": 0.25,
     "mouth-lowerlip-volume-incr": 0.2
   },
-  "crowd": true
+  "crowd": true,
+  "outfit": {
+    "garment": "toigo_male_suit_tie_and_jacket"
+  }
 }

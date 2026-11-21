@@ -11,7 +11,7 @@ Status, November 2026: the rules below hold now. There is no shared people modul
 - Every recipe must set:
   - `"era"`: the year it is dressed for (for example `1904`). Never leave it out: a missing era quietly builds as 1915. Any era before 1800 uses the 1690 tailoring.
   - `"hat"` as a list of `[kind, material]` pairs, even for one hat: `[["felt", "Hat"]]`. Several hats on one body are fine; the game shows one and hides the rest.
-  - `"collar"` as a kind (`"camp"`, `"round"`, `"turn"`, `"stand"`, `"open"`), not `true`. Every collar is sewn to its shirt by `tools/garvey/neckwear.py` (`docs/PIPELINE.md`, "Collars and ties, rebuilt"). On a 1690 or 1730s shirt leave it out for the period's narrow neckband, or write `false` for a plain rounded opening.
+  - `"collar": false` for a clean round opening, which is what most people wear (owner, 21 November 2026). Name a kind only where the period and the person need a collar: a man in a tie (`"stand"` before about 1925, `"turn"` after), a woman's high-necked blouse of 1908 to 1925 (`"stand"`), a uniform. Camp, round and open collars are no longer used. A man in a jacket wears the fitted suit: add `"outfit": {"garment": "toigo_male_suit_tie_and_jacket"}` (`docs/PIPELINE.md`, "Fitted garments").
   - `"colors"` for every garment it wears, in sRGB 0 to 255, keyed by material name.
 - Children are real child bodies, never shrunken adults. Build them at a child's shape with `"upscale"` (so the adult animations fit), then shrink them in the game by about 1 / upscale (upscale 1.26 means scale 0.8). Start from `tools/kendal/people/boy.json` and `girl.json` (not the older copies in `tools/people/kids/`).
 - Full list of recipe keys and what they do: `docs/PIPELINE.md`, section 5.
@@ -77,7 +77,7 @@ The owner asked for the character engine to be settled, so new people do not go 
 
 Things that are true of every body and must stay true:
 
-- **Stance** comes from `engine/anim.js` `POSTURE`. Do not fix a leaning or bulging body in its recipe.
+- **Stance** comes from the engine: `fitRig` lets each body keep the shape it was built in, and `levelStance` stands people level (`docs/ENGINE.md`, "Every body keeps its own shape"). Do not fix a stooped, leaning or crooked body in its recipe or its clothes. Measure it first: `node tools/review/posture-probe.mjs <game> <id>`.
 - **A man's chest** is eased by the builder (`garments.chest`). If it bulges, look from the side in the game's stance first.
 - **Faces**: brows are placed from the eyes; lids are relaxed (`eyes`); mouths have a slight smile (`smile`, more on a child). A grave person sets `smile: 0`.
 - **Light, crowd and phone copies** keep their faces because the builder marks the face and the packer protects it. Do not simplify a body any other way.

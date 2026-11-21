@@ -15,12 +15,13 @@
   "garments": {
     "sleeve": 0.96,
     "shoes": true,
-    "collar": "turn",
+    "collar": false,
     "hairvol": 0.25,
     "hat": [],
     "trousers": true,
     "waistcoat": true,
-    "recede": 0.4
+    "recede": 0.4,
+    "vwaist": true
   },
   "colors": {
     "Skin": [

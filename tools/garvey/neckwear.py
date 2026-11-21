@@ -66,8 +66,8 @@ def nw_outline(zfun, clear, K=4):
 # --- the seam: where the collar is sewn to the shirt ---
 # At the nape it sits at the base of the neck; at the throat about 3 cm lower, at the top of the breastbone, as a shirt's neckband does.
 _nw_zb = NECK - 0.006 * s
-_nw_zf = NECK - (0.046 if _nw_open else 0.026 if _nw_round else 0.030 if CK in ('band', 'plain') else 0.034) * s
-def _nw_ring_z(a): return _nw_zb + (_nw_zf - _nw_zb) * _nw_front(a)
+_nw_zf = NECK - (0.046 if _nw_open else 0.026 if _nw_round else (G.get('neckdrop', 0.012 if G.get('highneck') else 0.042 if G.get('woman') else 0.032) if CK == 'plain' else 0.030) if CK in ('band', 'plain') else 0.034) * s      # a plain opening: "neckdrop" is how far below the base of the neck its front sits
+def _nw_ring_z(a): return _nw_zb + (_nw_zf - _nw_zb) * (_nw_front(a) ** 2 if CK == 'plain' else _nw_front(a))      # a plain opening dips only at the front: lower at the sides too, its ring ran out onto a narrow shoulder and left a wedge of skin there
 _NW_RING_R = nw_outline(_nw_ring_z, 0.006)
 _aj = 0.0
 if _nw_camp:
@@ -98,7 +98,9 @@ def seam_pt(a): return nw_pt(a, SEAM_Z(a), SEAM_R(a))
 def _nw_above(c):      # is this point of the shirt above the seam, inside the neck opening? (only near the ring: a high shoulder slope outside it is not)
     a = nw_ang(c); return c.z > SEAM_Z(a) - 0.0015 and math.hypot(c.x, c.y - nw_cy(c.z)) < SEAM_R(a) + 0.012
 _nw_zlow = (VZ - 0.03 * s) if _nw_camp else NECK - 0.09 * s
-def _nw_zone(c): return c.z > _nw_zlow and abs(c.x) < 0.15 * s and (side_arm(c) is None or abs(c.x) < SX * 0.7)
+def _nw_zone(c):      # the cloth round the neck opening: within 4 cm of the seam, seen from above. (It used to leave out points that count as the arm's; on a child or a narrow-shouldered
+    # woman the top of the shoulder is the arm's, so the edge there was never moved onto the seam and a wedge of skin showed at each shoulder.)
+    return c.z > _nw_zlow and abs(c.x) < 0.15 * s and math.hypot(c.x, c.y - nw_cy(c.z)) < SEAM_R(nw_ang(c)) + 0.04
 
 # --- bone weights as dicts {group name: weight} ---
 def _nw_w(o, vi):

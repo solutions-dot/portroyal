@@ -204,21 +204,63 @@ CK=G.get('collar')
 if CK: CK='stand' if CK is True and P.get('era',1915)<1925 and not G.get('softcollar') else ('turn' if CK is True else CK)
 if OLD and not CK and 'collar' in G and not G.get('bands'): CK='plain'      # "collar": false on an old shirt: a plain rounded opening, no band (Nanny Town's Maroon men, 21 November 2026)
 if OLD and not CK and not G.get('bands') and not (G.get('coat') and G.get('coatsleeves',True)): CK='band'      # a 1690 shirt worn without a coat ends in a narrow neckband, open at the throat: it is built like the later collars, so its edge is clean and no skin shows under it
+if not OLD and not CK and not G.get('scarf'): CK='plain'      # later eras too: a shirt, blouse or frock with no collar ends in a clean round opening, cut and finished by neckwear.py (owner, 21 November 2026: "most just need a round opening for the garment")
 FLAT=CK in ('camp','round')      # the flat collars of the 1950s: 'camp' is an open pointed collar over a V neck (men's sports shirts, women's blouses), 'round' a flat round collar on a close neckline
 VD=G.get('vdepth',0.13 if G.get('woman') else 0.115)*s; VZ=NECK-VD; VK=G.get('vslope',2.1)      # the V of a camp collar: its lowest point, and how steep its sides are
 NCUT=NECK-(0.004 if G.get('highneck') else (0.014 if CK and CK not in ('open','camp') else 0.035))*s-(0.06*s if G.get('coat') and G.get('coatsleeves',True) else 0)
 def shoulder_off(c,base):      # later eras: across the top of the shoulders a waistcoat or a jacket lies close (about 1 cm), as cloth does there; the fixed offset meant for the body
     # below the chest stood the waistcoat 1.6 cm off the shirt there and the jacket on top of it, so the jacket's shoulders rose above the base of the neck like padding (owner, 21 November 2026)
     k=sstep(SH.z-0.03*s,SH.z+0.035*s,c.z)*(1-sstep(SX*1.05,SX*1.25,abs(c.x))); return base+(0.010-base)*k
-def sleeve_tube(r0,r1,cuff=None,blend=False):
+# A sleeve is a tube, sized from the arm's own measurements (21 November 2026). The old rule took the larger of a fixed tube and "the arm plus 4 mm" at every point, so on a
+# strong or heavy arm the cloth followed the shoulder muscle and the biceps and the sleeve read as padding (owner: "shaped funny at the top by his shoulders and looks like
+# padding"; the old man in Kendal seemed to have a bodybuilder's arms). _ARM_R is the arm's greatest radius at 29 stations from shoulder to wrist, made to narrow steadily
+# toward the wrist and smoothed: every point of a sleeve at one station sits at one radius, that measure plus the garment's ease, so the cloth hides the muscles under it.
+def _arm_profile():
+    N=28; L1=(EL-SH).length; L2=(HA-EL).length; tt=L1/(L1+L2); raw=[]; offs=[]; CAP=0.085*s
+    _b=bmesh.new(); _b.from_mesh(h.data); _d=_b.verts.layers.deform.verify(); bmesh.ops.delete(_b,geom=[f for f in _b.faces if not all(v[_d].get(GI['body'],0)>0 for v in f.verts)],context='FACES'); tree=BVHTree.FromBMesh(_b)      # the skin alone: the full mesh also holds helper shapes in and round the arm, which measured a centimetre too wide
+    def far(o,dr):      # how far the arm's outermost surface is from o along dr (the mesh also holds small helper shapes inside the arm), or None past the cap
+        p=o.copy(); f=None; go=0.0
+        for _ in range(6):
+            hit=tree.ray_cast(p,dr,CAP-go)[0]
+            if hit is None: break
+            go=(hit-o).length; f=go; p=hit+dr*0.0015
+        return f
+    for i in range(N+1):
+        t=i/N; a,b,u=(SH,EL,t/tt) if t<tt else (EL,HA,(t-tt)/(1-tt)); q=a.lerp(b,u); d=(b-a).normalized()
+        e1=d.cross(Vector((0,1,0))); e1=e1.normalized() if e1.length>1e-4 else Vector((0,0,1)); e1=-e1 if e1.z<0 else e1; e2=d.cross(e1).normalized()      # e1 points up and away from the body, e2 to the front or the back
+        # the bone does not run down the middle of the arm: find the middle first (front to back always; up and down only where both sides are the arm's own)
+        f2a,f2b=far(q,e2),far(q,-e2); off=e2*((f2a-f2b)/2) if f2a and f2b else Vector((0,0,0)); f1a,f1b=far(q,e1),far(q,-e1)
+        if f1a and f1b and t>0.3: off+=e1*((f1a-f1b)/2)
+        c=q+off; m=0.0
+        for k in range(16):
+            if math.cos(2*math.pi*k/16)<-0.3 and t<0.5: continue      # on the upper arm the side that faces the chest is left out: its rays meet the ribs
+            fr=far(c,e1*math.cos(2*math.pi*k/16)+e2*math.sin(2*math.pi*k/16))
+            if fr: m=max(m,fr)
+        raw.append(m); offs.append(off)
+    i0=int(0.22*N)      # above this the rays meet the chest and the shoulder: the sleeve head keeps the upper arm's size and the bone's own line
+    for i in range(i0): raw[i]=0.0; offs[i]=offs[i0]*(i/i0)
+    R=raw[:]
+    for i in range(N-1,-1,-1): R[i]=max(R[i],R[i+1])      # never wider further down the arm
+    for _ in range(3): R=[max(raw[i],(R[max(0,i-1)]+2*R[i]+R[min(N,i+1)])/4) for i in range(N+1)]
+    for _ in range(3): offs=[(offs[max(0,i-1)]+offs[i]*2+offs[min(N,i+1)])/4 for i in range(N+1)]
+    _b.free(); return R,raw,offs
+_ARM_R,_ARM_RAW,_ARM_OFF=_arm_profile(); print('ARM radius, shoulder to wrist (mm):',[round(x*1000) for x in _ARM_RAW[::4]])
+def _arm_r(t,tab=None):
+    tab=tab or _ARM_R; f=max(0.0,min(1.0,t))*(len(tab)-1); i=min(len(tab)-2,int(f)); return tab[i]+(tab[i+1]-tab[i])*(f-i)
+def _arm_mid(q,t,sx):      # the middle of the arm at station t, from the point q on the bone's line
+    f=max(0.0,min(1.0,t))*(len(_ARM_OFF)-1); i=min(len(_ARM_OFF)-2,int(f)); o=_ARM_OFF[i].lerp(_ARM_OFF[i+1],f-i); return q+Vector((o.x*sx,o.y,o.z))
+def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005):
+    # one straight taper from the shoulder to the wrist: the fixed tube, widened at the shoulder end just enough to clear the arm by `ease` at every station (a tube that
+    # kept the upper arm's full size all the way to the elbow read as a sausage; one that followed the arm read as muscle)
+    n=len(_ARM_RAW)-1; R1=max(r1*s,_ARM_RAW[n]+ease); R0=max([r0*s]+[(_ARM_RAW[i]+ease-R1*(i/n))/(1-i/n) for i in range(int(0.22*n),int(0.9*n))])
     def f(v):
         c=v.co
         if abs(c.x)<SX*0.92: return
-        q,t=arm_axis(c); d=c-q; r=d.length or 1e-6; k=sstep(0.06,0.2,t)*(1-sstep(0.075,0.10,r/s)); R=(r0+(r1-r0)*t)*s
+        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; k=sstep(0.06,0.2,t)*(1-sstep(0.075,0.10,r_b/s)); R=R0+(R1-R0)*t
         if blend: k*=sstep(SX*0.92,SX*1.12,abs(c.x))      # eased in from the shoulder, so the cloth does not crease at the armpit
-        if cuff and not OLD: R=R+(cuff[1]*s-R)*sstep(cuff[0]-0.14,cuff[0],t)      # later eras: the sleeve narrows smoothly into its cuff (a step left it a wide bell round the wrist)
-        elif cuff and t>cuff[0]: R=cuff[1]*s
-        rn=max(r+0.004,R); v.co=q+d/r*(r+(rn-r)*k)
+        if cuff and not OLD: R=R+(max(cuff[1]*s,_arm_r(t,_ARM_RAW)+0.004)-R)*sstep(cuff[0]-0.14,cuff[0],t)      # later eras: the sleeve narrows smoothly into its cuff (a step left it a wide bell round the wrist)
+        elif cuff and t>cuff[0]: R=max(cuff[1]*s,_arm_r(t,_ARM_RAW)+0.004)
+        v.co=q+d/r*(r+(R-r)*k)
     return f
 def puff_tube(end):      # a short puffed sleeve: full and round from the shoulder, gathered into a snug band just above its end
     def f(v):
@@ -240,7 +282,7 @@ parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if 
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
     sl=G.get('coatsleeves',True)
-    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Coat',shape=sleeve_tube(0.041,0.037,(cs-0.13,0.047),blend=True) if sl else None,post=lambda bm:(drape_front(bm),smooth_edge(bm,3 if sl else 10)),
+    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Coat',shape=sleeve_tube(0.041,0.037,(cs-0.13,0.047),blend=True,ease=0.016) if sl else None,post=lambda bm:(drape_front(bm),smooth_edge(bm,3 if sl else 10)),
        cuts=[((0,0,collar),(0,0,1),None),((0,-0.1,collar-0.045*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)]+(cuts_sleeve(cs) if sl else [((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)]))
     parts.append(('coat',coat))
     hem=G.get('coathem')
@@ -265,11 +307,20 @@ if G.get('breeches'):
         k=sstep(CROTCH+0.07,CROTCH-0.05,z); sx=1 if v.co.x>=0 else -1; ax=leg_axis(z,sx); t=max(0.0,min(1.0,(CROTCH-z)/(CROTCH-low)))
         d=Vector((v.co.x-ax.x,v.co.y-ax.y)); r=d.length or 1e-6; a=math.atan2(d.x*sx,-d.y)
         if bk=='slops': R=(0.096+0.024*t)*s+0.003*math.sin(a*5+z*40)*t
-        else: R=(0.094-0.006*t)*s*(1-0.30*sstep(0.78,0.97,t))+0.0025*math.sin(a*6)*math.sin(t*math.pi)
+        elif bk=='drawers': R=(0.084-0.016*t)*s      # loose drawers to the knee, open at the hem (Nanny Town's Maroon men): one straight taper, no gather
+        else: R=(0.087-0.019*t)*s*(1-0.10*sstep(0.80,0.97,t))+0.0012*math.sin(a*6)*math.sin(t*math.pi)      # knee breeches: easy over the thigh, narrowing steadily to the band below the knee (cut full all the way down and then gathered by a third, they flared like a jockey's breeches: owner, 21 November 2026)
         if G.get('coat') and G.get('coathem') and t<0.72: R=r+0.004+(R-r-0.004)*sstep(1.5,0.8,abs(a))      # under a coat's skirt the fullness is kept to the front, where the coat is open: at the sides and back the breeches lie close, so they cannot push out through the skirt
         rn=r+(max(r+0.006,R)-r)*k; v.co.x=ax.x+d.x/r*rn; v.co.y=ax.y+d.y/r*rn
         if v.co.x*sx<0.004: v.co.x=0.004*sx
     LEGW=G.get('legwidth',1.0)
+    def _thigh_r():      # the thigh's radius about the leg's own line a little below the fork: the average of the outside, the front and the back, on the skin (the inside faces the other leg)
+        z=CROTCH-0.04*s; o=leg_axis(z,1); rs=[]
+        for d in ((1,0,0),(0.7,-0.7,0),(0,-1,0),(0.7,0.7,0),(0,1,0)):
+            hit=SKIN_EARLY.ray_cast(o,Vector(d).normalized(),0.13*s)[0]
+            if hit is not None: rs.append((hit-o).length)
+        return (sum(rs)/len(rs) if rs else 0.07*s)+0.008
+    _sb0=bmesh.new(); _sb0.from_mesh(h.data); _sd0=_sb0.verts.layers.deform.verify(); bmesh.ops.delete(_sb0,geom=[f for f in _sb0.faces if not all(v[_sd0].get(GI['body'],0)>0 for v in f.verts)],context='FACES'); SKIN_EARLY=BVHTree.FromBMesh(_sb0)
+    _SHORT_R=_thigh_r() if G.get('shorts') else 0.0; _sb0.free(); print('SHORTS thigh radius mm',round(_SHORT_R*1000))
     SHORTS=G.get('shorts',False)
     def trouser_leg(v):
         # cloth does not cling: below the seat each leg becomes a tube that hangs from the thigh, a little narrower at the hem, with a soft crease and a break over the shoe
@@ -278,10 +329,11 @@ if G.get('breeches'):
         k=sstep(CROTCH+0.07,CROTCH-0.05,z); sx=1 if v.co.x>=0 else -1; ax=leg_axis(z,sx); t=max(0.0,min(1.0,(CROTCH-z)/(CROTCH-low)))
         ax.y-=0.012*s*math.sin(t*math.pi)   # the knee sits forward of the straight line from hip to ankle
         d=Vector((v.co.x-ax.x,v.co.y-ax.y)); r=d.length or 1e-6; a=math.atan2(d.x*sx,-d.y)
-        R=(0.090-0.018*t)*s*LEGW*(1+0.05*math.cos(a)*(0.3+t))+0.002*math.sin(z*60+a*2)*t   # egg shaped: the crease in front; small folds lower down
+        R=(0.083-0.026*t)*s*LEGW*(1+0.04*math.cos(a)*(0.3+t))+0.0012*math.sin(z*60+a*2)*t   # egg shaped: the crease in front; small folds lower down. Fitted: about 8 cm at the top of the thigh narrowing to under 6 at the hem (9 to 7 cm stood off the leg and flared: owner, 21 November 2026)
         if SHORTS:
-            # Follow the thigh with a little ease and a level hem. Long trouser radii made the short legs flare out from the waist.
-            R=(0.058-0.004*t)*s*LEGW
+            # One straight line from the top of the thigh to a level hem (owner, 21 November 2026: "these flared shorts should be smoothed out a little more"). They used to follow the
+            # thigh with a little ease, so they swelled at mid-thigh and came in again at the hem. _SHORT_R is the thigh's greatest radius just below the fork, plus ease.
+            R=_SHORT_R*(1-0.10*t)*LEGW
         rn=r+(max(r+0.007,R)-r)*k; v.co.x=ax.x+d.x/r*rn; v.co.y=ax.y+d.y/r*rn
         if v.co.x*sx<0.004: v.co.x=0.004*sx
         if not SHORTS and t>0.9: v.co.y-=0.012*s*(t-0.9)/0.1   # the hem breaks forward over the shoe
@@ -300,7 +352,7 @@ def jacket_waistcoat_seen(c):      # and of a waistcoat under a jacket, only the
 if G.get('jacket'):   # a plain suit jacket: waist-length hem, sleeves to the wrist, a V opening over the waistcoat
     jcol=NECK-0.012*s; jcs=G.get('jacketsleeve',0.9)
     vz=jcol-0.20*s   # the V opening: two angled cuts, one each side of the middle, so only a narrow wedge is removed and the shoulders stay covered
-    parts.append(('jacket',piece('Jacket','helper-tights',lambda c:c.z>HIP+0.03 and arm_ok(c,jcs),(lambda c:0.022 if abs(c.x)>SX*0.8 else 0.017) if OLD else (lambda c:shoulder_off(c,0.016 if abs(c.x)>SX*0.8 else 0.017)),'Jacket',shape=sleeve_tube(0.054,0.045) if OLD else sleeve_tube(0.046,0.039,(jcs-0.02,0.036)),      # later eras: a suit sleeve has about 1.5 cm of ease over the arm (2.2 cm on a 5 cm tube puffed the sleeve heads into domes)post=lambda bm:(drape_front(bm),smooth_edge(bm)),
+    parts.append(('jacket',piece('Jacket','helper-tights',lambda c:c.z>HIP+0.03 and arm_ok(c,jcs),(lambda c:0.022 if abs(c.x)>SX*0.8 else 0.017) if OLD else (lambda c:shoulder_off(c,0.016 if abs(c.x)>SX*0.8 else 0.017)),'Jacket',shape=sleeve_tube(0.054,0.045,ease=0.016) if OLD else sleeve_tube(0.046,0.039,(jcs-0.02,0.036),ease=0.014),      # later eras: a suit sleeve has about 1.5 cm of ease over the arm (2.2 cm on a 5 cm tube puffed the sleeve heads into domes)post=lambda bm:(drape_front(bm),smooth_edge(bm)),
         cuts=[((0,0,jcol),(0,0,1),None),((0,0,vz),Vector((-1.5,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,vz),Vector((1.5,0,1)).normalized(),lambda c:c.y<0 and c.x<0)]+cuts_sleeve(jcs))))
 SKB=ANK+0.07+G.get('hem',0)*(KNEE-ANK-0.07)      # the skirt's hem: hem 0 is the ankle, 1 the knee
 if G.get('jacket'):
@@ -1273,31 +1325,80 @@ if G.get('coat') and G.get('coatbuttons',OLD):      # a row of buttons down the 
         if hit: bmesh.ops.create_circle(bm,cap_ends=True,segments=6,radius=0.0075*s,matrix=Matrix.Translation((0.010*s,hit.y-0.004,z))@Matrix.Rotation(math.pi/2,4,'X'))
     COL.setdefault('CoatButtons',COL['Coat']*0.5); soft('CoatButtons',bm,'CoatButtons')
 if G.get('apron'):
-    BRT=tree_of(PART['breeches']) if 'breeches' in PART else None
-    bm=bmesh.new(); nu,nv=18,24; rows=[]; ZA,ZE=HIP+0.1,KNEE+0.02;      # finer rows, so it bends round the thighs when seated instead of folding into a stiff card
-    SRC=BRT if (not OLD and BRT) else tree; yprev=None
-    if 'skirt' in PART: SRC=tree_of(PART['skirt']); ZE=SKB+0.10      # over a skirt the apron lies on the skirt, not on the body under it, and hangs to near the hem
-    for jv in range(nv+1):      # the apron hangs as one sheet: each row lies across the fullest part of the front (never caught on a hand, never dipping between the legs), curves back a little at its sides, and never tucks in below a higher row
-        t=jv/nv; z=ZA-t*(ZA-ZE); hw=(0.15+0.03*t) if (OLD or 'skirt' in PART) else (0.125+0.035*t); ys=[]      # a man's work apron over trousers is narrower at the waist: at 30 cm its top corners stood out past his hips
-        for iu in range(nu+1):
-            x=-hw+2*hw*iu/nu
-            if abs(x)>0.13: continue
-            hit=SRC.ray_cast(Vector((x,-1.0,z)),Vector((0,1,0)))[0]
-            if hit: ys.append(hit.y)
-        yf=(min(ys) if ys else (yprev if yprev is not None else -0.12))-(0.035 if OLD else 0.02)
-        if yprev is not None: yf=min(yf,yprev+0.004)
-        yprev=yf; row=[]
-        for iu in range(nu+1):
-            x=-hw+2*hw*iu/nu; row.append(bm.verts.new((x,yf+(0.012+0.018*(1-t))*(x/hw)**2,z)))      # it curves round the hips at the top and hangs flatter below (flat all the way down, it stood off the body like a board)
-        rows.append(row)
-    for jv in range(nv):
-        for iu in range(nu): bm.faces.new((rows[jv][iu],rows[jv][iu+1],rows[jv+1][iu+1],rows[jv+1][iu]))
-    ap=rigid('Apron',bm,'Apron','Hips')
-    if True:      # the apron rides on the thighs like the front of a coat's skirt, so a knee lifts it instead of coming through it
-        B={n:ap.vertex_groups['mixamorig:'+n] for n in ('Hips','LeftUpLeg','RightUpLeg')}; B['Hips'].remove(list(range(len(ap.data.vertices))))
-        for v in ap.data.vertices:
-            t=max(0.0,min(1.0,(HIP+0.06-v.co.z)/0.5)); leg=0.95*sstep(-0.15,0.45,t); left=sstep(-1.0,1.0,v.co.x/0.15)
-            for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left),('RightUpLeg',leg*(1-left))):
+    # An apron, made again from scratch (owner, 21 November 2026: "check the placements of aprons ... not have the underlying textures show through ... show a string around the
+    # waist ... ensure it places against the body believably"). The old one was a flat card hung in front of the legs: it stood off the body like a board, the shirt showed in
+    # specks along its top edge, and nothing held it on. This one is cloth worked out round the body's own middle line:
+    #  - the panel wraps the front of the body from hip to hip. At each height and angle it lies on the outermost thing beneath it (trousers, skirt, shirt, waistcoat, coat),
+    #    7 mm clear, and below the fullest part of the hips and thighs it hangs: it never tucks in under a row above, so it falls straight past the fork and between the legs;
+    #  - a waistband goes right round the waist over the panel's top edge (so nothing shows above the panel), and is tied at the back in a small knot with two hanging ends;
+    #  - all of it is one piece, material Apron, so a game that hides or colours the apron takes the string with it. It rides on the thighs as before, so a knee lifts it.
+    _hy=J('Hips').y; _under=[(k,tree_of(PART[k])) for k in ('breeches','skirt','shirt','waistcoat','coat','coatskirt','jacket','jacketskirt') if PART.get(k)] or [('body',tree)]
+    def _out(a,z,cap=0.6):      # how far the outermost cloth is from the body's middle line at height z, in direction a (0 is the front), or 0 if nothing is there
+        d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,_hy,z)); best=0.0
+        for k_,t_ in _under:
+            if k_ in ('shirt','waistcoat','jacket') and z<HIP+0.03: continue      # below the hips only what hangs there counts (a sleeve or a hand beside the thigh is not the apron's to lie on)
+            hit=t_.ray_cast(o+d*cap,-d,cap)[0]
+            if hit is not None: best=max(best,(hit-o).length)
+        return best
+    wide='skirt' in PART or OLD; ZA=HIP+(0.132 if 'skirt' in PART else 0.124)      # the band sits on the top edge of the trousers or skirt, over the join with the shirt (and over a bodice's bottom edge)
+    ZE=(SKB+0.10) if 'skirt' in PART else KNEE+0.02; AH=1.30 if wide else 1.12      # the top, the hem, and how far round each side it reaches (radians from the front)
+    def apron_from(src,name):
+        # Over a skirt the apron is cut from the skirt itself: the skirt's own front, from the band to a hand above the hem and from hip to hip, lifted 12 mm off it, with
+        # the skirt's own bone weights. It moves exactly as the skirt moves, so the skirt can never come through it in a stride or on a seat. (Hung from the hips and
+        # thighs like a man's apron, it was left behind by a full skirt's swing and the skirt showed through it in patches.)
+        o=src.copy(); o.data=src.data.copy(); o.name=name; bpy.context.scene.collection.objects.link(o); b=bmesh.new(); b.from_mesh(o.data)
+        def cut(co,no):
+            bmesh.ops.bisect_plane(b,geom=b.verts[:]+b.edges[:]+b.faces[:],plane_co=Vector(co),plane_no=Vector(no).normalized(),clear_outer=True,dist=1e-5)
+        cut((0,_hy+0.01,0),(0,1,0)); cut((0,_hy,0),(math.cos(AH),math.sin(AH),0)); cut((0,_hy,0),(-math.cos(AH),math.sin(AH),0)); cut((0,0,ZA-0.004),(0,0,1)); cut((0,0,ZE),(0,0,-1))
+        b.normal_update()
+        for v in b.verts:
+            rad=Vector((v.co.x,v.co.y-_hy,0)); n=v.normal if v.normal.dot(rad)>=0 else -v.normal; v.co+=Vector((n.x,n.y,0)).normalized()*0.012 if Vector((n.x,n.y,0)).length>1e-6 else Vector((0,-0.012,0))
+        b.to_mesh(o.data); b.free(); o.data.materials.clear(); o.data.materials.append(colmat('Apron'))
+        if 'Col' in o.data.color_attributes: o.data.color_attributes.remove(o.data.color_attributes['Col'])
+        clothes.append(o); return o
+    bm=bmesh.new(); pt=lambda a,z,r:(math.sin(a)*r,_hy-math.cos(a)*r,z)
+    if 'skirt' in PART: ap=apron_from(PART['skirt'],'Apron'); APRON_SEAT=True
+    else:
+        nu,nv=24,28; A=[-AH+2*AH*i/nu for i in range(nu+1)]; Z=[ZA-(ZA-ZE)*j/nv for j in range(nv+1)]
+        _da=AH/nu/2.5; R=[[max(_out(a+q*_da,z) for q in (-2,-1,0,1,2)) for a in A] for z in Z]      # the fullest of what lies under each point and beside it (a skirt's folds are narrower than the apron's own points)
+        for j in range(1,nv+1):      # it hangs: never further in than the row above (less a slight taper), so it bridges the fork and the gap between the legs
+            for i in range(nu+1): R[j][i]=max(R[j][i],R[j-1][i]-0.06*(Z[j-1]-Z[j]))
+        for i in range(nu+1):
+            if R[0][i]<=0: R[0][i]=max(R[0]) or 0.14
+        raw=[row[:] for row in R]
+        for _ in range(3): R=[[max(raw[j][i],(R[j][max(0,i-1)]+2*R[j][i]+R[j][min(nu,i+1)]+R[max(0,j-1)][i]+R[min(nv,j+1)][i])/6) for i in range(nu+1)] for j in range(nv+1)]      # evened out, never inside what it lies on
+        rows=[[bm.verts.new(pt(A[i],Z[j],R[j][i]+0.007+(0.020 if 'skirt' in PART else 0.014)*min(1.0,j/9))) for i in range(nu+1)] for j in range(nv+1)]      # held close at the band, hanging 2 to 3 cm clear below it, so a thigh that swings forward in a stride stays behind it
+        for j in range(nv):
+            for i in range(nu): bm.faces.new((rows[j][i],rows[j][i+1],rows[j+1][i+1],rows[j+1][i]))
+    # the waistband and its ends
+    NB=56; AB=[2*math.pi*k/NB for k in range(NB)]; RB=[_out(a,ZA-0.004) or 0.14 for a in AB]
+    for _ in range(4): RB=[max(RB[k],(RB[k-1]+2*RB[k]+RB[(k+1)%NB])/4) for k in range(NB)]
+    hh=0.009; ring=[]
+    for k,a in enumerate(AB):
+        r=RB[k]+0.011      # over the panel's top edge
+        ring.append([bm.verts.new(pt(a,ZA-0.004+dz,r+dr)) for dz,dr in ((hh,0.0),(0.0,0.0025),(-hh,0.0),(-hh,-0.0045),(hh,-0.0045))])
+    for k in range(NB):
+        for m in range(5): bm.faces.new((ring[k][m],ring[(k+1)%NB][m],ring[(k+1)%NB][(m+1)%5],ring[k][(m+1)%5]))
+    rk=RB[NB//2]+0.011; kc=Vector(pt(math.pi,ZA-0.004,rk+0.006))      # the knot, in the middle of the back
+    bmesh.ops.create_uvsphere(bm,u_segments=8,v_segments=5,radius=1.0,matrix=Matrix.Translation(kc)@Matrix.Diagonal((0.013,0.007,0.010,1)))
+    for sx in (1,-1):      # two ends hang from it, a little apart, lying on the cloth
+        prev=None
+        for q in range(7):
+            f=q/6; a=math.pi+sx*(0.03+0.10*f); z=ZA-0.010-0.105*f; r=max(_out(a,z),_out(a,z+0.02)*0.0)+0.0075+0.004*(1-f); w=0.007
+            c=Vector(pt(a,z,r)); tng=Vector((math.cos(a),math.sin(a),0)); pair=(bm.verts.new(c-tng*w),bm.verts.new(c+tng*w))
+            if prev: bm.faces.new((prev[0],prev[1],pair[1],pair[0]))
+            prev=pair
+    if 'skirt' in PART:      # over a skirt the band is its own piece (ApronBand, material Apron), on the hips
+        _bd=rigid('ApronBand',bm,'Apron','Hips')
+        for p_ in _bd.data.polygons: p_.use_smooth=True
+    else:
+        ap=rigid('Apron',bm,'Apron','Hips')
+        for p_ in ap.data.polygons: p_.use_smooth=True
+        B={n:ap.vertex_groups['mixamorig:'+n] for n in ('Hips','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg')}; B['Hips'].remove(list(range(len(ap.data.vertices))))
+        for v in ap.data.vertices:      # it rides on the thighs like the front of a coat's skirt, so a knee lifts it instead of coming through it; the band stays on the hips
+            z=v.co.z; band=z>ZA-0.022 or v.co.y>_hy+0.02      # the band, its knot and ends stay on the hips
+            t=max(0.0,min(1.0,(HIP+0.06-z)/0.5)); leg=0.0 if band else sstep(HIP+0.03,HIP-0.09,z); left=sstep(-0.4,0.4,v.co.x/0.15); shin=sstep(KNEE+0.04,KNEE-0.08,z)      # from the band down to the hip joint it stays on the hips, so seated it lies against the belly and then turns over the lap; below that each side follows its own thigh (shared across the whole width, the forward thigh came through it in a stride); below the knee it follows the shin, so seated it falls from the knees
+            for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left*(1-shin)),('RightUpLeg',leg*(1-left)*(1-shin)),('LeftLeg',leg*left*shin),('RightLeg',leg*(1-left)*shin)):
                 if val>0.001: B[n].add([v.index],val,'REPLACE')
 bh.free()
 if G.get('skirt') and not OLD and G.get('seatskirt',True):      # a second skirt for sitting and kneeling (material Skirt, object SkirtSeat). One skirt cannot both flare when standing and lie over a lap:
@@ -1379,6 +1480,7 @@ if G.get('skirt') and not OLD and G.get('seatskirt',True):      # a second skirt
             mix={k:old.get(k,0)*(1-tb)+sw.get(k,0)/t*tb for k in set(old)|set(sw)}
             for k,w in mix.items():
                 if w>0.001: (ss.vertex_groups.get(k) or ss.vertex_groups.new(name=k)).add([v.index],w,'REPLACE')
+if globals().get('APRON_SEAT') and 'ss' in globals(): apron_from(ss,'ApronSeat')      # the apron for sitting and kneeling, cut from the seated skirt: the engine shows it with that skirt (engine/anim.js seatSkirt)
 if G.get('jacket'):      # under a jacket only the shirt's front, collar zone and cuffs can be seen: cut the rest away, so nothing can poke through the jacket and the body is lighter
     o=PART['shirt']; bm=bmesh.new(); bm.from_mesh(o.data)
     bmesh.ops.delete(bm,geom=[f for f in bm.faces if not jacket_seen(cz(f))],context='FACES'); bm.to_mesh(o.data); bm.free()

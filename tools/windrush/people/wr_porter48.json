@@ -26,7 +26,8 @@
     "waistcoat": true,
     "collar": "turn",
     "tie": true,
-    "moustache": true
+    "moustache": true,
+    "vwaist": true
   },
   "colors": {
     "Shoes": [

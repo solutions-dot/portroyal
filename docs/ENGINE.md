@@ -76,9 +76,27 @@ So yes, a conversation is the moment for the heavy part: the camera is still and
 
 `engine/loader.js` now unpacks base64 with the browser's own `Uint8Array.fromBase64` where it exists, which is several times quicker than the old loop on a phone.
 
-## Posture: `POSTURE` in `engine/anim.js` (16 November 2026)
+## Every body keeps its own shape: `fitRig` in `engine/anim.js` (21 November 2026)
 
-Every clip passes through `clipFor`, which now also turns three spine bones (`Spine1` -18, `Spine2` +38, `Neck` -20 degrees about the side-to-side axis). The clips were fitted bone by bone to a source skeleton whose spine is a straight line; our bodies' spine is curved at rest, so every clip tipped the ribcage back about 20 degrees (belly out, chest sunk, a lean back). The correction puts the ribcage back as the body was built and leaves the head where the clip put it. If a body is ever built on a different skeleton, measure its rest spine and change these numbers. After changing them, run every game's `?test=held` and `?test=cloth`: hands and cloth move with the chest.
+The owner: "his posture is horrible", "a curve in his spine", "everyone has this crooked lean". This was a fault in how clips reach bodies, in every game.
+
+**The cause.** The builder fits a skeleton to each body, so each body's bones rest at their own angles (a stout man's neck bone, a slim woman's chest bone). Every clip was made on one skeleton, `shared/rig/char.blend`, and a clip says where each bone points, not how far it has turned. Played as they were, the clips forced every body's bones to that one skeleton's rest angles, and the body bent by the difference before any clip had moved it: Marcus Garvey's neck 23 degrees forward, his hips 13 back, his chest 22 forward and his shoulders 7 down; a woman's back swayed the other way. `POSTURE`, the fix of 16 November, turned two chest bones by one fixed amount for everyone, which was right for no one and left the neck, hips and shoulders alone.
+
+**The fix.** `fitRig(model)` runs once per body, at the start of `animate()`. It gives every bone that a clip drives the reference skeleton's rest angle (`engine/rig-rest.js`, 52 bones) and folds the difference into the body's bind matrices and joint offsets. Nothing moves when it runs, in any pose: it only changes each bone's own axes. After it, a clip turns each bone from the body's own rest shape by exactly as much as it turned the reference skeleton's, so a body at rest in a clip is the body as it was built. Measured on three bodies after the fix, the plain Idle holds the trunk within 3.5 degrees of rest on all of them (before: up to 26).
+
+- Finger joints 2 and 3, which no clip drives, keep their own axes (`curlFingers` bends them about those).
+- Things a game parents to a bone (a held item, a hat) are not touched: in a clip the bone's axes are what they always were.
+- It makes a new list of bind matrices for each skeleton, because clones share the old list. A clone made before the fit is fitted on its own later.
+- A body it does not know (no Hips bone, or a skeleton that rests more than 40 degrees from ours) is left alone and named in `fitRig.unknown`.
+- `POSTURE` is no longer applied. The idle no longer pitches the spine forward, and its arm turn is 0.1 radians back (it was 0.29 forward, to suit the stoop).
+- `engine/rig-rest.js` is written by `node tools/anims/rig_rest.mjs` from the clip library. Run it again only if the library is retargeted onto a different skeleton; `npm test` fails if the two do not match.
+- To draw the old stance beside the new one in a review, pass `g_noFit=1` to `tools/review/people-sheet.mjs`.
+
+**Standing level: `levelStance`** (and straight legs: `restLegs`, see "Standing upright" below)**.** The standing clips rest the weight on one leg: the hips tip 4 to 10 degrees to one side and the chest tips back the other way, for the whole clip (Speech, Talk1) or for many seconds at a time (the plain Idle). On a person in a suit that reads as a crooked man. For every clip in `STANDING`, `clipFor` takes the average sideways tip and the average turn out of the hips and the three spine bones, keeps 35 per cent of the tip and half of the turn that is left (the sway and the weight shifts), and takes the neck's average tip out. Bending forward and back is not touched, the head still looks where the clip looks, and the legs keep the directions the clip gave them. The numbers are `LEVEL` in `engine/anim.js`.
+
+**How to measure.** `node tools/review/posture-probe.mjs <game> <id,id> anims=Idle,Talk1,Walk` prints, for each body and clip, how far each trunk bone is pitched against the body's own rest pose, the trunk's shape at rest and in the clip, and (with `--json`) the sideways tip and turn. A standing clip should leave the trunk within a few degrees of rest and its tip and turn near 0. Run it on any new body or clip that looks stooped or crooked before changing anything else.
+
+After any change here, run every game's `?test=held`, `?test=cloth` and `?test=audit`: hands and cloth move with the trunk.
 
 ## engine/loader.js: loading packed models
 
@@ -446,9 +464,9 @@ These systems are general but still live in `games/port-royal/src/main.js`, beca
 
 Imported by Kendal, Marcus Garvey (`spreadArms` and `gripTick` only), Bog Walk (`grip` and `gripTick`), Eventide, Hurricane Melissa and Nanny Town. Port Royal still uses the older way (items placed on or parented to the hand bone in `main.js`), which new code must not copy, and Tivoli's two-handed weapon hold is its own code in `games/tivoli/src/weapons.js` (same method, `engine/grip.js` left unchanged). Check the result with `?test=held`.
 
-## Standing upright (17 November 2026)
+## Standing upright (17 November 2026; changed 21 November 2026)
 
-`engine/anim.js`, `STANCE`: the standing clips (idles, talking, gestures; the list is `STANDING`) were made with the hips back and the knees bent about 30 degrees, so everyone stood in a slump. For those clips `clipFor` turns the thigh back 14 degrees, straightens the knee 28 degrees and sets the foot flat again. Walking, running, carrying, kneeling and seated clips are not changed. A new standing clip must be added to `STANDING`, then looked at from the side with `tools/review/people-sheet.mjs <game> <id> out.png views=side anim=<Clip>`.
+`engine/anim.js`, `restLegs`: each standing clip (idles, talking, gestures; the list is `STANDING`) holds the legs its own way: the plain Idle with the knees bent about 25 degrees, a wave with them nearly straight. From 17 to 21 November one fixed correction (`STANCE`: thigh 14 degrees, knee 28, foot 14) straightened them all. It was set while every man's hips were held 13 to 15 degrees back by the skeleton fault that `fitRig` now puts right; with the hips where they belong it pushed the knee behind the line from hip to ankle and the legs bowed backwards (owner: "this curve at the foot should be fixed"), and no single amount suited every clip. Now, for every standing clip, each leg's thigh, shin and foot are turned by one fixed amount for the whole clip, worked out from the clip itself, so that on average they point as the body's own legs do at rest. People stand on straight legs with flat feet, and the clip's own leg movement (a weight shift, a step) is kept whole. Clips that are meant to crouch are left alone (`BENT`: `HurtIdle`, `Scared`, `Cry`, `Sad1`, `Sad2` and the carrying and weapon idles). Walking, running, kneeling and seated clips are not changed. A new standing clip must be added to `STANDING`, then looked at from the side with `tools/review/people-sheet.mjs <game> <id> views=side anim=<Clip>`. `tests/posture.mjs` fails if a standing clip's legs rest more than 2 degrees off.
 
 ## One place for shared guards (17 November 2026)
 

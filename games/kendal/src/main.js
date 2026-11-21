@@ -130,8 +130,7 @@ let GRIP = { hamper: { handleY: 0.52, scale: 0.5, lift: 0.56 }, suitcase: { hand
    measure is off by a few per cent, which ?test=walkers shows as feet sliding (WalkM2 and CarryBagWalk by 8 to 13 per cent after the November 2026 clip rebuild).
    STRIDE_K corrects it per body and clip ('base|clip', or 'base|clip|scale' for a child), measured with ?test=walkers&tune (the clip speed at which the feet slide least).
    Every walker uses it: story people (ctl.pace), background life (createAmbient's stride) and the checks. */
-const STRIDE_K = { 'man_work|Walk': 0.976, 'man_suit|Walk': 0.976, 'man_shirt|Walk': 0.976, 'man_apron|Walk': 0.976, 'man_elder|Walk': 0.952, 'student2020|Walk': 0.952, 'boy|Walk': 0.952,
-  '*|WalkM2': 0.909, '*|CarryBagWalk': 0.816, '*|Run': 0.889, 'man_work|CarryHeadWalk': 0.976 };   /* measured 16 November 2026 */
+const STRIDE_K = { 'girl|Walk': 0.784, 'girl_small|Walk': 0.8, 'girl_small|Run': 0.741 };   /* measured 21 November 2026 with ?test=walkers&tune: every other body now tunes at exactly 1; the two girl bodies' real stride is a quarter longer than the engine's measure, for a reason not yet found (docs/TODO.md) */   /* (until 21 November 2026 this held factors of 0.82 to 0.98 for seven bodies and three clips. They covered strides measured on skeletons the clips had bent; with fitRig() in engine/anim.js each body's stride is its own, and the factors themselves made the feet slide 4 to 26 cm a loop.) */
 const strideK = (base, scale, clip) => STRIDE_K[base + '|' + clip + '|' + (scale || 1).toFixed(2)] || STRIDE_K[base + '|' + clip] || STRIDE_K['*|' + clip] || 1;
 const kStride = (m, base, clip) => strideOf(m, clip) * strideK(base, m.scale.y, clip.name);
 let PACE_FORCE = 0;   /* dev: ?test=walkers&tune plays a walk at this clip speed */

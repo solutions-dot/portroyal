@@ -223,3 +223,7 @@ Skin (owner rule 9): recipes sit inside Marcus Garvey's range; `SKIN_LIGHT = 1.5
 ## Performance (18 November 2026)
 
 `src/main.js` uses `engine/preload.js` (see `docs/ENGINE.md`). `setQuiet` is true while a panel or card is open and during the chapter title fade (not on the title screen, where the red coats march on a computer). `backgroundLoad()` now builds one place at a time through `work()`, the next chapter's place first. At each chapter start `readyNext(i)` builds, peoples and warms (compiles) the next chapter's place, and `tidyPlaces(i)` releases the graphics memory of every other hidden place (the watch rock behind the title, for one). Nothing is removed; three.js sends it again if the place is shown.
+
+## Maroon men's drawers (21 November 2026)
+
+The owner: the men's flared short breeches "look like horse jockey pants". They were cut full to the knee and gathered by a third into a band. The Maroon men (`maroon_man`, `maroon_elder`, `maroon_scout`, `maroon_boy`) now wear `"breechkind": "drawers"`: a straight open leg to the knee, which is also what the one description found says (a Leeward captain in 1738 in "loose drawers to the knee": "Research" above). The soldiers keep knee breeches, now narrowing steadily to the band.

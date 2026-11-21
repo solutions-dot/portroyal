@@ -104,5 +104,8 @@
   "targets": {
     "head-round": 0.4,
     "nose-width2-incr": 0.25
+  },
+  "outfit": {
+    "garment": "toigo_male_suit_tie_and_jacket"
   }
 }
