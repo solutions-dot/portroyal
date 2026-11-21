@@ -499,6 +499,22 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 `showTalkMark(needed, isNear)` and `showTalkBubble(needed)` decide who gets a talk sign in every game: only the person the story needs now (the game's `wantsTalk`, `STORY.marked`, Port Royal's goal-to-action map, Tivoli's `storyNeeds`). The mark gives way to the named talk bubble when you are near. Other people get no sign but still answer a tap.
 
-## Story actions on arrival (`engine/autoact.js`, 21 November 2026)
+## The action button (`engine/action-button.js`, 21 November 2026)
 
-`createAutoAct()` returns `tick(dt, action, x, z, run)`. Each frame a game passes the action in reach that may fire: one the story needs now, never an exit (`exit: true`) or one marked `manual: true`. It runs after `AUTO_DELAY` (0.35 s) standing in reach; then nothing more fires until the player has walked `AUTO_REARM` (0.6 m). It tracks actions by `id`, since some games build the nearby action afresh each frame. It also places `#talk.btn` (the button for doors and optional things) at 62% down the screen, centred. Wired in Port Royal (only the action the goal points to), Garvey, Kendal, Bog Walk, Nanny, Melissa, Eventide, Selassie and Windrush; Tivoli's walking chapters have no actions.
+`placeActionButton()` puts `#talk.btn` (the button for a thing to do) at 62% down the screen, centred. Every game calls it once. Actions still need the button: an auto-fire on arrival was tried the same day and taken out at the owner's request.
+
+## Returning people (`engine/return-talk.js`, 21 November 2026)
+
+`returningTalker(targets, stage, nameOf)` says when the story's next talk is with one person you already talked to in this chapter (by name, so the same person in a new spot counts). `callBack({ still, clear, talk })` waits for a clear screen, then `comeOver(n, { px, pz, goTo, talk })` walks them up to you with `engine/follow.js` `goTo` and starts the talk when they arrive; a game without `goTo` (Bog Walk, Eventide, Port Royal) starts it where they stand and turns your view to them. Test views (`QUICK`) skip it, so the autoplayers still walk.
+
+## Soft pictures without speckles (`engine/cloud-tex.js`, 21 November 2026)
+
+`cloudTexture()` (the sky's clouds) and `puffTexture()` (smoke, steam, dust) are made from numbers, not drawn on a canvas. Safari's anti-fingerprinting adds tiny random colours to canvas pictures, and in their see-through edges they showed as rainbow speckles (seen in Bog Walk's and Kendal's skies and an engine's smoke). Every game's `T.cloud()` and `T.puff()`, Tivoli's sky and `makeSmoke` in `engine/vehicles.js` use them. Other soft canvas sprites (glows, Garvey's funnel smoke) may still speckle in Safari; move them here when seen.
+
+## Wheels that overlap (`engine/audit.js`, 21 November 2026)
+
+`wheelset()` in `engine/vehicles.js` marks each wheel set with `userData.wheelR`. `auditPlace` reports two wheels on one vehicle that overlap ("wheels overlap by N cm"), so `?test=audit` catches it in every game. The late steam engine's driving wheels (1.72 m) were 1.5 m apart; they are now 1.9 m apart, and its small front wheels 1.0 m apart.
+
+## The water tower (`engine/water-tower.js`, 21 November 2026)
+
+`buildWaterTower({ grp, cyl, box, solid, M })` builds the railway water tower with the game's own helpers and materials (`M.woodDark`, `M.iron`): four straight legs on stone footings, the tank, its roof, the standpipe and spout. It was copied in six games; each game's `waterTower()` now calls it, and `tests/shared-props.mjs` fails if a copy comes back.

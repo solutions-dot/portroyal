@@ -13,6 +13,7 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 
 ## Every game
 
+- [x] **One water tower in the engine.** `engine/water-tower.js` `buildWaterTower()` (straight legs on stone footings); Kendal, Bog Walk, Eventide, Melissa, Selassie and Windrush call it with their own helpers. `tests/shared-props.mjs` keeps copies out (21 Nov 2026).
 - [x] **One standard card before every cinematic** (owner, 21 November 2026). `sceneWarning` in `engine/scene-warning.js` writes the words: what happens, then "It may be scary." and "Nobody is hurt on the screen.", with Watch scene and Read what happened instead. Port Royal, Eventide, Kendal, Bog Walk, Nanny, Melissa and Tivoli use it as a scary scene. Selassie (the arrival) and Windrush (the two ship scenes) use it as a plain choice (`scary: false`); Windrush's second "A short scene" card is gone. No calm mode. Garvey has no cinematic.
 - [x] **Cinematics show only a faded X; chapter title cards have no X; the chapter-end card comes after a pause and has no "Stay here"** (owner, 21 November 2026; `engine/cine.js`, `engine/chapter-end.js`, `docs/STANDARD.md`).
 

@@ -1,6 +1,7 @@
 /* games/bog-walk/src/wgfx.js (copied from games/kendal/src/gfx.js): textures drawn in code (no image files), materials, small builders and the sky.
    Everything here is plain three.js. Textures are cached by key, so a place can ask for the same one again cheaply. */
 import * as THREE from 'three';
+import { cloudTexture, puffTexture } from '../../../engine/cloud-tex.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const G = { aniso: 4 };
@@ -100,19 +101,13 @@ export const T = {
         x.fillStyle = grd; x.beginPath(); x.moveTo(bx - bw, h); x.bezierCurveTo(bx - bw * 0.8, h - bh * 0.5, bx + lean * 0.5, h - bh * 0.8, bx + lean, h - bh); x.bezierCurveTo(bx + lean * 0.5 + bw * 0.4, h - bh * 0.7, bx + bw * 0.9, h - bh * 0.4, bx + bw, h); x.closePath(); x.fill(); } }, [1, 1], true));
   },
   cloud() {
-    /* made from numbers, not drawn on a canvas: a browser that guards against fingerprinting (Safari) adds tiny random colours to canvas
-       pictures, and in a cloud's see-through edges they showed as rainbow speckles (owner, 21 Nov 2026) */
-    return once('cloud', () => { const w = 256, h = 128, a = new Float32Array(w * h), r0 = rng(7);
-      for (let i = 0; i < 16; i++) { const cx = 40 + r0() * (w - 80), cy = h * 0.55 + (r0() - 0.5) * 20, r = 22 + r0() * 26;
-        for (let y = Math.max(0, cy - r | 0); y < Math.min(h, cy + r + 1); y++) for (let x = Math.max(0, cx - r | 0); x < Math.min(w, cx + r + 1); x++) { const d = Math.hypot(x - cx, y - cy); if (d < r) { const k = 0.55 * (1 - Math.max(0, d - 2) / (r - 2)); const j = y * w + x; a[j] = a[j] + k * (1 - a[j]); } } }
-      const px = new Uint8Array(w * h * 4); for (let j = 0; j < w * h; j++) { px[j * 4] = px[j * 4 + 1] = px[j * 4 + 2] = 255; px[j * 4 + 3] = Math.round(Math.min(1, a[j]) * 255); }
-      const t = new THREE.DataTexture(px, w, h, THREE.RGBAFormat); t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.flipY = true; t.needsUpdate = true; return t; });
+    return cloudTexture();   /* made from numbers, not a canvas: no Safari speckles (engine/cloud-tex.js) */
   },
   flame() {
     return once('flame', () => cv(64, 64, (x) => { const g = x.createRadialGradient(32, 40, 2, 32, 36, 30); g.addColorStop(0, 'rgba(255,250,210,1)'); g.addColorStop(0.3, 'rgba(255,190,70,0.85)'); g.addColorStop(0.7, 'rgba(255,110,20,0.25)'); g.addColorStop(1, 'rgba(255,90,10,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); }, null, true));
   },
   puff() {
-    return once('puff', () => cv(64, 64, (x) => { const g = x.createRadialGradient(32, 32, 2, 32, 32, 31); g.addColorStop(0, 'rgba(255,255,255,0.9)'); g.addColorStop(0.5, 'rgba(255,255,255,0.4)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); }, null, true));
+    return puffTexture();   /* made from numbers, not a canvas: no Safari speckles in smoke and dust (engine/cloud-tex.js) */
   },
 };
 

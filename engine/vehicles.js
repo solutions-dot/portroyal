@@ -17,6 +17,7 @@
      steamLoco('late')   a 4-4-0 with a cab and a tender, the 1890s to about 1910s    wagon()  a slatted goods wagon (bananas), 1880s onward
      woodCoach(n)        a wooden bogie coach (Kendal's 1950s train)                  dieselLoco()  a 1950s diesel
      rails, railsCurve, platform, makeSmoke, spin  for any time */
+import { puffTexture } from './cloud-tex.js';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 export const RAIL_TOP = -1.1;      /* height of the top of the rails under a vehicle whose floor is at y = 0 */
@@ -71,7 +72,7 @@ export function makeVehicles({ T, cv, grain, std, solid, mesh, box, cyl, plane, 
   }
   function wheel(r, spokes = false) { const g = grp(); g.add(new THREE.Mesh(wheelGeo(r, spokes), WM)); return g; }   /* its axle runs along z; spin it by turning rotation.z */
   function wheelset(r, x, y, parent, wheels, spokes = false) {   /* a pair of wheels on an axle across the track, at x */
-    const w = new THREE.Mesh(wheelsetGeo(r, spokes), WM); w.userData.noBatch = true; w.position.set(x, y, 0); parent.add(w); if (wheels) wheels.push({ w, r }); return w;
+    const w = new THREE.Mesh(wheelsetGeo(r, spokes), WM); w.userData.noBatch = true; w.userData.wheelR = r; w.position.set(x, y, 0);   /* wheelR: the audit checks that no two wheels on a vehicle overlap */ parent.add(w); if (wheels) wheels.push({ w, r }); return w;
   }
   function spin(train, dx) { for (const o of train.userData.wheels || []) o.w.rotation.z -= dx / o.r; }   /* roll the wheels as the train moves dx metres toward -x */
 
@@ -297,12 +298,12 @@ export function makeVehicles({ T, cv, grain, std, solid, mesh, box, cyl, plane, 
     box(0.03, 0.4, 0.42, M.iron, 1.19, H(2.2), 0, g); box(0.02, 0.2, 0.3, fire, 1.21, H(2.2), 0, g);   /* the fire door, seen through the cab window */
     for (const z of [-0.4, 0.4]) { const gg = cyl(0.07, 0.07, 0.03, M.brass, 1.19, H(2.95), z, g, 10); gg.rotation.z = Math.PI / 2; }
     /* the wheels: a pair of small ones in front of the cylinders and two big driving pairs, linked by rods */
-    for (const dx of [-2.3, -1.4]) wheelset(0.45, dx, H(0.45), g, Wl, true); box(1.4, 0.12, 1.0, dark, -1.85, H(0.8), 0, g);
-    for (const dx of [0.4, 1.9]) wheelset(R, dx, H(R), g, Wl, true);
+    for (const dx of [-2.35, -1.35]) wheelset(0.45, dx, H(0.45), g, Wl, true); box(1.4, 0.12, 1.0, dark, -1.85, H(0.8), 0, g);   /* 1 m apart, so the 0.9 m wheels do not touch */
+    for (const dx of [0.25, 2.15]) wheelset(R, dx, H(R), g, Wl, true);   /* 1.9 m apart: the 1.72 m wheels clear each other (owner, 21 Nov 2026: they overlapped) */
     for (const s of [-1, 1]) {
       const zr = s * (Z + 0.17), zc = s * 0.95;
-      box(1.5, 0.08, 0.06, M.steel, 1.15, H(R), zr, g); for (const x of [0.4, 1.9]) { const bs = cyl(0.07, 0.07, 0.1, M.brass, x, H(R), zr, g, 10); bs.rotation.x = Math.PI / 2; }
-      const mr = box(1.05, 0.08, 0.06, M.steel, -0.08, H(1.03), zr, g); mr.rotation.z = -0.343;   /* the main rod, from the crosshead down to the first driving wheel */
+      box(1.9, 0.08, 0.06, M.steel, 1.2, H(R), zr, g); for (const x of [0.25, 2.15]) { const bs = cyl(0.07, 0.07, 0.1, M.brass, x, H(R), zr, g, 10); bs.rotation.x = Math.PI / 2; }
+      const mr = box(0.9, 0.08, 0.06, M.steel, -0.165, H(1.03), zr, g); mr.rotation.z = -0.389;   /* the main rod, from the crosshead down to the first driving wheel */
       const cyl1 = cyl(0.16, 0.16, 0.7, dark, -1.85, H(1.2), zc, g, 12); cyl1.rotation.z = Math.PI / 2; const cap = cyl(0.17, 0.17, 0.04, M.brass, -2.22, H(1.2), zc, g, 12); cap.rotation.z = Math.PI / 2;
       const pr = cyl(0.03, 0.03, 0.9, M.steel, -1.05, H(1.2), zc, g, 6); pr.rotation.z = Math.PI / 2; box(0.2, 0.14, 0.1, M.iron, -0.58, H(1.2), zc, g); box(0.6, 0.04, 0.08, M.steel, -0.8, H(1.2), zc, g);
       box(0.1, 0.12, 0.34, dark, -1.85, H(1.38), s * 0.82, g);   /* the pipe that carries steam out to the cylinder */
@@ -439,7 +440,7 @@ export function makeVehicles({ T, cv, grain, std, solid, mesh, box, cyl, plane, 
 
   /* ---------- a puff of steam or smoke: pooled sprites, grown and faded by tick() ---------- */
   function makeSmoke(scene, n = 36) {
-    const pool = [], tex = T.puff(); for (let i = 0; i < n; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0 })); s.visible = false; scene.add(s); pool.push({ s, age: 1, life: 1, v: new THREE.Vector3() }); }
+    const pool = [], tex = puffTexture();   /* made from numbers, not a canvas: no Safari speckles in the smoke (engine/cloud-tex.js) */ for (let i = 0; i < n; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0 })); s.visible = false; scene.add(s); pool.push({ s, age: 1, life: 1, v: new THREE.Vector3() }); }
     let i = 0;
     return {
       emit(pos, vel, { life = 3, size = 1.2, grow = 3.2, color = 0xe9e9e6, opacity = 0.55 } = {}) { const p = pool[i++ % n]; p.age = 0; p.life = life; p.size = size; p.grow = grow; p.op = opacity; p.s.position.copy(pos); p.v.copy(vel); p.s.material.color.set(color); p.s.visible = true; },

@@ -125,7 +125,9 @@ Players move between games, so every game is driven the same way. `tests/control
 
 **Talk signs** (owner, 21 November 2026). The game is a storybook, so there is one sign, on one person: the gold mark floats only over the person the story needs now (the one the helper arrow points to), and when you are near, the talk bubble with their name takes its place. Nobody else gets a mark or a bubble; tapping them still gives a short remark. Every game asks `showTalkMark(needed, isNear)` and `showTalkBubble(needed)` in `engine/marks.js`; `tests/talk-marks.mjs` checks it.
 
-**Story actions happen when you reach them** (owner, 21 November 2026). The thing the story needs now ("Read the notice board", "Pick up a bunch of bananas") runs by itself a moment after you arrive, with no button to press (`engine/autoact.js`). Doors, ways out and optional things keep their button, which sits up in the middle of the screen, just below where you look. After one fires, the next waits until you have walked a little, so a pick-up spot beside a put-down spot cannot chain.
+**Things to do** (owner, 21 November 2026). Actions such as "Read the notice board" keep their button: you press it, as before (actions that happened by themselves were tried and taken out). The button sits up in the middle of the screen, just below where you look (`engine/action-button.js`).
+
+**Returning people come to you** (owner, 21 November 2026). Nobody sends you back across a place to someone you already talked to in this chapter. When the story's next talk is with one such person, they walk up to you (`engine/follow.js` `goTo`, in games that walk people) or call you where you stand, and the talk starts (`engine/return-talk.js`). New people you still find yourself. A step where going there is the point (Nanny's Quamin "at the top", Garvey speaking to the hall) stays a walk.
 
 **Also in every game:** `tunePixels(renderer)` from `engine/perf.js`, and the gold ground arrow from `createGuide()` in `engine/guide.js`.
 

@@ -3,9 +3,9 @@ import "../../../engine/textfit.js";   // first: every sign's words fit their bo
 /* A family story built on the existing engine, with no shared-module changes. */
 import { renderFramed } from "../../../engine/cine.js";
 import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js";
-import { createAutoAct } from "../../../engine/autoact.js";
-const AUTO = createAutoAct();
-let AUTO_T = 0;
+import { placeActionButton } from "../../../engine/action-button.js";
+import { returningTalker, callBack, comeOver } from "../../../engine/return-talk.js";
+placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
 import { offerNextChapter } from "../../../engine/chapter-end.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import * as THREE from "three";
 import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";
@@ -18,6 +18,7 @@ import {
   lead,
   stop as stopFollow,
   tick as followTick,
+  goTo,
 } from "../../../engine/follow.js";
 import {
   createStory,
@@ -643,6 +644,25 @@ async function go(stage, { restore = null, keep = false } = {}) {
   if (stage === c.first && stage !== 10 && !restore && !skipIntro) {
     card(c.name, [c.intro], [["Begin", () => waits(stage)]]);
   } else await waits(stage);
+  callBackReturn(stage);
+}
+/* the story's next talk is with someone you already talked to in this chapter: they call you, no walking back (engine/return-talk.js) */
+const TALK_STEPS = Object.fromEntries(Object.entries(STEPS).filter(([, st]) => st.needs && st.needs.talk).map(([k, st]) => [k, st.needs.talk]));
+const personOf = (id) => world()?.people?.find((p) => p.id === id);
+const NAME_OF = (id) => personOf(id)?.who || id.replace(/\d+$/, "");
+function callBackReturn(st) {
+  if (QUICK) return;
+  const id = returningTalker(TALK_STEPS, st, NAME_OF);
+  if (!id) return;
+  callBack({
+    still: () => S.stage === st,
+    clear: () => !busy && !openPanel() && !DIR.on,
+    talk: () => {
+      const n = personOf(id);
+      if (!n || !n.m || !n.m.visible || !story.needs(id)) return;
+      comeOver(n, { px: S.x, pz: S.z, goTo, talk: () => { if (S.stage !== st || busy || openPanel() || DIR.on) return; stopFollow(n); S.yaw = Math.atan2(-(n.x - S.x), -(n.z - S.z)); talk(n); } });   /* they walk up to you, then talk */
+    },
+  });
 }
 async function advance(next) {
   unlock(STEPS[S.stage].journal);
@@ -1158,7 +1178,6 @@ function hint(now) {
   const act = quiet && near?.kind === "do";
   $("talk").hidden = !act;
   if (act) $("talk").textContent = near.label;
-  { const dt = AUTO_T ? Math.min(0.1, (now - AUTO_T) / 1000) : 0; AUTO_T = now; AUTO.tick(dt, act ? near : null, S.x, S.z, (a) => interact(a)); }   /* the story action happens when you reach it (engine/autoact.js) */
   MARKS.tick(now / 1000, {
     people: world().people,
     show: quiet,

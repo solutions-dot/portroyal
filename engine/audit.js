@@ -27,6 +27,7 @@ export function snapMeshes(group, { shown = false } = {}) {   /* shown: leave ou
   const hid = (o) => { for (let a = o.parent; a && a !== group; a = a.parent) if (!a.visible) return true; return false; };
   group.traverse((o) => { if (shown && hid(o)) return; if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg); e.card = isCard(o.material); e.name = o.name || (top !== o ? top.name : '') || ''; for (let a = o; a && a !== group; a = a.parent) { if (a.userData.hollow) e.hollow = true; if (a.userData.soft) e.soft = true; }   /* soft (on a mesh or the object it is part of): left out of the overlap check. Loose stuff that lies over things (a drift of sand), or a thing that takes another's place and is never seen with it (the cut logs that appear when the fallen tree is cleared) */   /* hollow: a vehicle or room people stand inside on purpose (a cab, a carriage): no outline test (auditBodies) */   /* top: the object it belongs to (the child of the place's group that holds it) */
     if (o.geometry.type === 'BoxGeometry') { o.geometry.computeBoundingBox(); e.lb = o.geometry.boundingBox.clone(); e.inv = o.matrixWorld.clone().invert(); e.sc = Math.cbrt(Math.abs(o.matrixWorld.determinant())) || 1; }   /* the exact box, for seats */
+    if (o.userData.wheelR) { e.wheel = o.userData.wheelR * (Math.cbrt(Math.abs(o.matrixWorld.determinant())) || 1); e.wc = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld); e.wv = o.parent; }
     out.push(e); }
     if (o.isInstancedMesh && o.visible && !o.isSkinnedMesh && (SOLID.has(o.geometry.type) || !isCard(o.material))) {   /* each drawn copy of an instanced shape (tree trunks, huts, whole trees, rocks) is kept aside, for the overlap check (solid shapes only) and the bodies check (auditBodies) */
       if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const m4 = new THREE.Matrix4(), mat = [].concat(o.material)[0];
@@ -72,7 +73,10 @@ export function auditPlace(place) {
   floating.push(...auditRest(L, place.groundAt));
   const cut = auditOverlap(L.concat(L.inst || []));
   inside.push(...auditBodies(L.concat(L.inst || []), bodySpots(place), { skip: place.bodySkip }));   /* people inside any solid shape, where they stand, along a walker's loop and along the routes a game gives (followers, leaders) */
-  return { id: place.id, floating, inside: inside.concat(overlap, cut), stuck };
+  /* wheels on one vehicle that overlap (owner, 21 Nov 2026: a locomotive's driving wheels ran into each other) */
+  const wheels = L.filter((m) => m.wheel), wcut = [];
+  for (let a = 0; a < wheels.length; a++) for (let b = a + 1; b < wheels.length; b++) { const A = wheels[a], B = wheels[b]; if (A.wv !== B.wv) continue; const d = A.wc.distanceTo(B.wc); if (d < A.wheel + B.wheel - 0.01) wcut.push(`wheels overlap by ${Math.round((A.wheel + B.wheel - d) * 100)} cm at (${A.wc.x.toFixed(1)},${A.wc.z.toFixed(1)})`); }
+  return { id: place.id, floating, inside: inside.concat(overlap, cut, wcut), stuck };
 }
 
 /* overlap: two separate solid things that cut into each other (a stool through a basket, a fence through a hut, a log through a rock, a pot sunk into a table).

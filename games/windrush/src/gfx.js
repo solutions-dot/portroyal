@@ -1,6 +1,7 @@
 /* games/kendal/src/gfx.js: textures drawn in code (no image files), materials, small builders and the sky.
    Everything here is plain three.js. Textures are cached by key, so a place can ask for the same one again cheaply. */
 import * as THREE from "three";
+import { cloudTexture, puffTexture } from "../../../engine/cloud-tex.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 export const G = { aniso: 4 };
@@ -624,27 +625,7 @@ export const T = {
     );
   },
   cloud() {
-    return once("cloud", () =>
-      cv(
-        256,
-        128,
-        (x, w, h) => {
-          x.clearRect(0, 0, w, h);
-          for (let i = 0; i < 16; i++) {
-            const cx = 40 + Math.random() * (w - 80),
-              cy = h * 0.55 + (Math.random() - 0.5) * 20,
-              r = 22 + Math.random() * 26,
-              g = x.createRadialGradient(cx, cy, 2, cx, cy, r);
-            g.addColorStop(0, "rgba(255,255,255,0.55)");
-            g.addColorStop(1, "rgba(255,255,255,0)");
-            x.fillStyle = g;
-            x.fillRect(cx - r, cy - r, r * 2, r * 2);
-          }
-        },
-        [1, 1],
-        true,
-      ),
-    );
+    return cloudTexture(); /* made from numbers, not a canvas: no Safari speckles (engine/cloud-tex.js) */
   },
   flame() {
     return once("flame", () =>
@@ -666,22 +647,7 @@ export const T = {
     );
   },
   puff() {
-    return once("puff", () =>
-      cv(
-        64,
-        64,
-        (x) => {
-          const g = x.createRadialGradient(32, 32, 2, 32, 32, 31);
-          g.addColorStop(0, "rgba(255,255,255,0.9)");
-          g.addColorStop(0.5, "rgba(255,255,255,0.4)");
-          g.addColorStop(1, "rgba(255,255,255,0)");
-          x.fillStyle = g;
-          x.fillRect(0, 0, 64, 64);
-        },
-        null,
-        true,
-      ),
-    );
+    return puffTexture();   /* made from numbers, not a canvas: no Safari speckles in smoke and dust (engine/cloud-tex.js) */
   },
 };
 
