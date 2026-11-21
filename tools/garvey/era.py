@@ -507,6 +507,10 @@ if not OLD and dict(parts).get('shirt'):      # the sleeves are evened out as cl
     _o=dict(parts)['shirt']; _b=bmesh.new(); _b.from_mesh(_o.data)
     _sv=[v for v in _b.verts if not v.is_boundary and abs(v.co.x)>SX*1.0 and side_arm(v.co) is not None]
     for _ in range(8): bmesh.ops.smooth_vert(_b,verts=_sv,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    # and the shoulder cap, where sleeve, chest and neckline meet: it kept the bump of the shoulder muscle and the collarbone's hollow (owner, 21 November 2026:
+    # "these shoulders don't look natural"). Evened out as one piece of cloth from the base of the neck across to the top of the sleeve, front and back.
+    _cv=[v for v in _b.verts if not v.is_boundary and SX*0.45<abs(v.co.x)<=SX*1.15 and v.co.z>SH.z-0.07*s]
+    for _ in range(10): bmesh.ops.smooth_vert(_b,verts=_cv,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
     _b.to_mesh(_o.data); _b.free()
 clothes=[o for k,o in parts]
 for o in clothes:
@@ -1139,6 +1143,7 @@ CRH=0.085*s   # from the brow up to the top of the head
 HATS=G.get('hat'); HATS=[] if not HATS else ([(HATS,'Hat')] if isinstance(HATS,str) else [tuple(x) for x in HATS])     # one hat, or several [kind, material name] so a game can show one and hide the others
 for _k,_m in HATS: COL.setdefault(_m,COL.get('Hat',srgb((60,56,52)))); COL.setdefault(_m+'Band',COL['Band'])
 def build_hat(HK,HM):
+    if HK in ('felt','trilby') and not OLD and 'hatdrop' not in G: G['hatdrop']=0.007      # a fedora sits down on the head, its band just above the brows and the tops of the ears: at the caps' height it perched on the crown of the head (owner, 21 November 2026: "ill fitting"), but never so low that the brim hides the eyebrows ("don't cover the eyebrows")
     if HK=='felt' and not OLD: HK='trilby'      # a felt hat after 1800 is the fedora shape: a tapered crown pinched at the front and a brim snapped down (owner, 21 November 2026: the straight-sided crown it had "looks like pots on their head"). The 1690 felt hat keeps its own low round crown and broad brim.
     if HK=='felt' and OLD:
         # a 1690 felt hat: a low round crown and a broad brim that curls up a little, unevenly, turned round the head's own outline so it sits down on the brow
@@ -1206,11 +1211,11 @@ def build_hat(HK,HM):
         if HK=='trilby':      # a felt hat with a pinched crown and a brim snapped down in front
             Hc=CRH+0.032*s
             def mod(a,i,d,z):
-                if i<=1: return d,z+0.012*s*(-math.cos(a))*(1.0 if i==0 else 0.3)+(0.006*s*abs(math.sin(a)) if i==0 else 0)
-                if i>=4: return d-0.010*s*max(0,math.cos(a))**2,z-(0.016*s*(1-abs(math.sin(a)))**2 if i==5 else 0)+0.008*s*math.cos(a)*-1*(i>=4)
+                if i<=1: return d,z+0.012*s*(-math.cos(a) if math.cos(a)<0 else -0.35*math.cos(a))*(1.0 if i==0 else 0.3)+(0.006*s*abs(math.sin(a)) if i==0 else 0)      # the brim turns up at the back and dips only a little at the front, so the eyebrows show under it
+                if i>=4: return d-0.010*s*max(0,math.cos(a))**2,z-(0.016*s*(1-abs(math.sin(a)))**2 if i==5 else 0)+0.008*s*math.cos(a)*-1*(i>=4)      # (the crown's top)
                 return d,z
-            lathe(bm,[(0.056*s*BR,0.0),(0.0,0.006*s),(0.0,0.03*s),(-0.008*s,Hc*0.7),(-0.020*s,Hc),(-0.05*s,Hc-0.004*s)],fit,mod=mod)
-            lathe(bb,[(0.003,0.008*s),(0.003,0.032*s)],fit,cap=False)
+            lathe(bm,[(0.060*s*BR,0.0),(0.003,0.006*s),(0.003,0.03*s),(-0.004*s,Hc*0.7),(-0.016*s,Hc),(-0.05*s,Hc-0.004*s)],fit,mod=mod)      # (the crown a little fuller than the head at its base and tapering less: narrower than the head, it looked a size too small)
+            lathe(bb,[(0.0055,0.008*s),(0.0055,0.030*s)],fit,cap=False)      # 2.5 mm proud of the crown
         if HK=='straw':       # a woven straw hat: a wide, slightly wavy brim and a low flat crown
             Hc=CRH+0.03*s
             lathe(bm,[(0.085*s*BR,-0.004*s),(0.0,0.008*s),(-0.004*s,Hc),(-0.03*s,Hc+0.004*s)],fit,mod=lambda a,i,d,z:(d,z+(0.008*s*math.sin(a*3+1) if i==0 else 0)))
