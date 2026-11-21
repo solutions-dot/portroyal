@@ -4,6 +4,7 @@ import { loftSkin as skin } from '../../../engine/loft.js';
 import * as THREE from 'three';
 import { makeDoor } from '../../../engine/door.js';
 import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv } from './gfx.js';
+import { buildWaterTower } from '../../../engine/water-tower.js';
 
 const M = {
   trunk: solid(0x6a4c33, 1), palmTrunk: solid(0x8a7156, 1), wood: solid(0x7a5a3c, 0.95), woodDark: solid(0x3d2d20, 0.95), iron: solid(0x2b2d31, 0.6, 0.3), steel: solid(0x8c8f93, 0.4, 0.6),
@@ -188,7 +189,7 @@ export function lampPost(h = 3.6, lit = true) { const g = grp(); cyl(0.06, 0.09,
 export function signBoard(text, w = 2.2, h = 0.6, opts = {}) { const g = grp(); const tx = T.sign(text, 512, Math.round(512 * h / w), opts.bg, opts.fg, opts.font); plane(w, h, std(tx, 0.8), 0, 0, 0.04, g); plane(w, h, std(tx, 0.8), 0, 0, -0.04, g).rotation.y = Math.PI; box(w + 0.1, h + 0.1, 0.06, M.woodDark, 0, 0, 0, g); return g; }
 export function milestone(text) { const g = grp(); const m = mesh(new THREE.CylinderGeometry(0.2, 0.28, 0.9, 3), solid(0xcfc9b6, 0.9), 0, 0.45, 0, g); m.rotation.y = 0.3; plane(0.5, 0.5, std(T.sign(text, 256, 256, '#cfc9b6', '#2a2a2a', '700 54px Georgia, serif', false), 0.9), 0, 0.5, 0.2, g); return g; }
 export function standpipe() { const g = grp(); cyl(0.1, 0.12, 1.1, M.iron, 0, 0.55, 0, g, 8); box(0.3, 0.1, 0.1, M.iron, 0.12, 1.0, 0, g); cyl(0.04, 0.04, 0.3, M.iron, 0.26, 0.9, 0, g, 6); box(0.7, 0.14, 0.7, solid(0x888274, 0.9), 0, 0.07, 0, g); return g; }
-export function waterTower() { const g = grp(); for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { cyl(0.08, 0.1, 4.9, M.woodDark, x, 2.55, z, g, 6); box(0.36, 0.1, 0.36, solid(0x8a8478, 1), x, 0.05, z, g); }   /* straight legs, each on a stone footing, so every foot sits flat on the ground (owner, 21 Nov 2026) */ cyl(1.6, 1.6, 2.2, solid(0x7a5a3c, 0.9), 0, 5.4, 0, g, 18); cyl(0.0, 1.7, 0.7, solid(0x3d3d3a, 0.8), 0, 6.85, 0, g, 18); box(0.18, 3.4, 0.18, M.iron, 1.4, 3.4, 0, g); const sp = box(0.2, 0.2, 2.2, M.iron, 1.4, 4.8, 1.1, g); return g; }
+export function waterTower() { return buildWaterTower({ grp, cyl, box, solid, M }); }   /* one water tower for every game (engine/water-tower.js) */
 export function barrel() { const g = grp(); cyl(0.3, 0.3, 0.8, solid(0x7a5a3c, 0.9), 0, 0.4, 0, g, 12); for (const y of [0.15, 0.65]) cyl(0.315, 0.315, 0.04, M.iron, 0, y, 0, g, 12); return g; }
 
 const PI2 = Math.PI / 2;

@@ -515,3 +515,6 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 `wheelset()` in `engine/vehicles.js` marks each wheel set with `userData.wheelR`. `auditPlace` reports two wheels on one vehicle that overlap ("wheels overlap by N cm"), so `?test=audit` catches it in every game. The late steam engine's driving wheels (1.72 m) were 1.5 m apart; they are now 1.9 m apart, and its small front wheels 1.0 m apart.
 
+## The water tower (`engine/water-tower.js`, 21 November 2026)
+
+`buildWaterTower({ grp, cyl, box, solid, M })` builds the railway water tower with the game's own helpers and materials (`M.woodDark`, `M.iron`): four straight legs on stone footings, the tank, its roof, the standpipe and spout. It was copied in six games; each game's `waterTower()` now calls it, and `tests/shared-props.mjs` fails if a copy comes back.

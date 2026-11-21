@@ -17,6 +17,7 @@ import {
   rng,
   cv,
 } from "./gfx.js";
+import { buildWaterTower } from "../../../engine/water-tower.js";
 
 const M = {
   trunk: solid(0x6a4c33, 1),
@@ -846,23 +847,7 @@ export function standpipe() {
   box(0.7, 0.14, 0.7, solid(0x888274, 0.9), 0, 0.07, 0, g);
   return g;
 }
-export function waterTower() {
-  const g = grp();
-  for (const [x, z] of [
-    [-1, -1],
-    [1, -1],
-    [-1, 1],
-    [1, 1],
-  ]) {
-    cyl(0.08, 0.1, 4.9, M.woodDark, x, 2.55, z, g, 6); /* straight legs on stone footings: every foot flat on the ground (owner, 21 Nov 2026) */
-    box(0.36, 0.1, 0.36, solid(0x8a8478, 1), x, 0.05, z, g);
-  }
-  cyl(1.6, 1.6, 2.2, solid(0x7a5a3c, 0.9), 0, 5.4, 0, g, 18);
-  cyl(0.0, 1.7, 0.7, solid(0x3d3d3a, 0.8), 0, 6.85, 0, g, 18);
-  box(0.18, 3.4, 0.18, M.iron, 1.4, 3.4, 0, g);
-  const sp = box(0.2, 0.2, 2.2, M.iron, 1.4, 4.8, 1.1, g);
-  return g;
-}
+export function waterTower() { return buildWaterTower({ grp, cyl, box, solid, M }); }   /* one water tower for every game (engine/water-tower.js) */
 export function barrel() {
   const g = grp();
   cyl(0.3, 0.3, 0.8, solid(0x7a5a3c, 0.9), 0, 0.4, 0, g, 12);
