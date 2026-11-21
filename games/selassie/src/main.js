@@ -224,73 +224,29 @@ function loadBase(id) {
             throw error;
           }));
 }
-/* A joined crowd body has one painted material, so its clothes cannot be tinted by material. Recolour its vertex colours instead.
-   The commonest colours of the chest (the shirt or dress), the thighs (trousers or skirt) and the face (skin) are found on the body
-   itself; every vertex below the neck whose colour is nearest the shirt's (or, below the hips, the trousers') takes the new colour,
-   keeping its own light and dark grain. Skin, hair, hats and shoes keep theirs. One copy of the geometry per body and colours. */
-const VARIANTS = new Map(),
-  _c = new THREE.Color();
+// The builder records each garment before joining the crowd mesh. Use that
+// boundary instead of guessing from the position or the original colour.
+const VARIANTS = new Map();
 function recolour(o, colors) {
+  const mask = o.geometry.getAttribute("_tint");
+  const painted = o.geometry.getAttribute("color");
+  if (!mask || !painted) return;
+
   const key = o.geometry.uuid + "|" + colors.shirt + "|" + colors.legs;
-  let g = VARIANTS.get(key);
-  if (!g) {
-    g = o.geometry.clone();
-    const C = g.attributes.color,
-      P = g.attributes.position;
-    if (!C) return;
-    g.computeBoundingBox();
-    const bb = g.boundingBox,
-      H = bb.max.y - bb.min.y,
-      cx = (bb.max.x + bb.min.x) / 2,
-      cz = (bb.max.z + bb.min.z) / 2,
-      half = (bb.max.x - bb.min.x) / 2;
-    // the commonest colour in a band of height, near the middle and on the front (locs hang down the back)
-    const mode = (y0, y1, wx, front = true, wx0 = 0) => {
-      const n = new Map();
-      for (let i = 0; i < P.count; i++) {
-        const y = (P.getY(i) - bb.min.y) / H,
-          ax = Math.abs(P.getX(i) - cx);
-        if (y < y0 || y > y1 || ax > half * wx || ax < half * wx0 || (front && P.getZ(i) < cz)) continue;
-        const k = [C.getX(i), C.getY(i), C.getZ(i)].map((v) => Math.round(v * 16)).join(",");
-        n.set(k, (n.get(k) || 0) + 1);
-      }
-      let best = null,
-        bn = 0;
-      for (const [k, c] of n) if (c > bn) ((bn = c), (best = k));
-      return best && best.split(",").map((v) => v / 16);
-    };
-    // the other colours that must stay: skin (the hands, as a beard can cover the face), hair or hat (the top of the head, the
-    // colour of any locs down the back) and shoes
-    const shirt = mode(0.6, 0.74, 0.16),
-      legs = mode(0.3, 0.42, 0.12),
-      keep = [mode(0.4, 0.5, 1, false, 0.72), mode(0.935, 0.955, 0.04), mode(0.96, 1, 0.3, false), mode(0, 0.035, 0.4, false)].filter(Boolean);
-    // warm brown with red above green above blue is skin (the joined body's skin is baked lighter): never cloth, whatever it is nearest
-    const skinish = (c) => c[0] > c[1] * 1.2 && c[1] > c[2] * 1.12;
-    const d2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
-    for (const [from, to, y0, y1] of [
-      [shirt, colors.shirt, 0.4, 0.8],
-      [legs, colors.legs, 0.02, 0.56],
-    ]) {
-      if (!from || to === undefined) continue;
-      const reps = [shirt, legs, ...keep].filter((r) => r && (r === from || d2(r, from) > 0.03)); // a shade of the same cloth is not a colour that stays
-      _c.setHex(to);
-      const tc = [_c.r, _c.g, _c.b],
-        lum = (c) => 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2] + 1e-3;
-      for (let i = 0; i < P.count; i++) {
-        const y = (P.getY(i) - bb.min.y) / H;
-        if (y < y0 || y > y1) continue;
-        const v = [C.getX(i), C.getY(i), C.getZ(i)];
-        // a print's other colours go with the cloth too, unless they are nearer a colour that stays
-        if (d2(v, from) > 0.12 || (skinish(v) && !skinish(from))) continue;
-        if (reps.some((r) => r !== from && d2(v, r) < d2(v, from))) continue;
-        const k = lum(v) / lum(from); // keep the grain as light and shade
-        C.setXYZ(i, ...tc.map((x) => Math.min(1, x * k)));
-      }
+  let geometry = VARIANTS.get(key);
+  if (!geometry) {
+    geometry = o.geometry.clone();
+    const shades = geometry.getAttribute("color");
+    const shirt = colors.shirt === undefined ? null : new THREE.Color(colors.shirt);
+    const legs = colors.legs === undefined ? null : new THREE.Color(colors.legs);
+    for (let i = 0; i < mask.count; i++) {
+      const region = mask.getX(i);
+      const color = region > 0.75 ? shirt : region > 0.25 ? legs : null;
+      if (color) shades.setXYZ(i, color.r, color.g, color.b);
     }
-    C.needsUpdate = true;
-    VARIANTS.set(key, g);
+    VARIANTS.set(key, geometry);
   }
-  o.geometry = g;
+  o.geometry = geometry;
 }
 function body(spec) {
   const m = cloneBody(bases[spec.bodyId || spec.base].scene);
@@ -298,13 +254,7 @@ function body(spec) {
     if (!o.isMesh) return;
     if (o.userData.measureOnly || /^SkirtSeat/.test(o.name)) o.visible = false;
     o.frustumCulled = true;
-    // the face is its own piece in a crowd body (tools/people/pack.mjs keeps its detail): it is only ~25 cm tall, and the clothing bands are measured
-    // from a piece's own height, so a face would be painted as shirt and trousers. Only a whole-body piece is recoloured.
-    if (spec.colors && o.material.name === "Crowd" && o.geometry.attributes.color) {
-      if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
-      const bb = o.geometry.boundingBox;
-      if (bb.max.y - bb.min.y > 0.8) recolour(o, spec.colors);
-    }
+    if (spec.colors && o.material.name === "Crowd") recolour(o, spec.colors);
     o.material = o.material.clone();
     o.material.forceSinglePass = true;
     const nm = o.material.name;

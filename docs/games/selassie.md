@@ -42,6 +42,8 @@ Only current story people receive gold markers. Goals count unordered tasks. The
 
 **Tap to talk (19 November 2026).** A tap on a person within the talk reach (`TALK_R`, 2.5 m, the same as the talk button) starts `talk(n)`; Haile Selassie I and Mortimo Planno (`historical`) are never offered. `MARKS.tap` in `src/ui.js` uses `pickPerson` from `engine/tap.js` (no ray through the body).
 
+“What We Carry Home” follows the family down the lane at dusk. The asphalt joins a cross street at each end, with gutters, planted yards and smaller louvred homes along the two streets. The bus ticket starts on a table in the front yard and goes beside the photograph on the veranda.
+
 ## Historical basis
 
 - **2 November 1930:** Haile Selassie I was crowned Emperor of Ethiopia. Rastafari emerged in Jamaica in the 1930s. The memory, newspaper and keepsake illustration are reconstructed, not reproduced archive objects. Source: Oxford University Press, *The emergence of Rastafari*: https://academic.oup.com/book/7074/chapter-abstract/151570898
@@ -91,6 +93,8 @@ His face and beard (owner's notes "his beard is off" and "we need Selassie to lo
 - **What still differs** (a low-poly game head cannot be identical to a photograph): his eyes in photographs are deeper under the brow and hooded, with lighter brown irises; the game's shared eye texture is darker and the eyes still look rounder. His nose is broader at the nostrils and his cheekbones wider than the game's. His beard has real texture and fullness, which the game shows only as grain in its colours. Under the cap the game's hair is short; his was full and bushy (it shows only below the cap). In close-ups the shared Idle tips his head forward a little more than he held it.
 
 Side-by-side comparison sheets are game renders beside the photographs; they are kept out of the repository because the Nationaal Archief picture needs attribution and the sheets are working images. Note: `docs/games/selassie-face.jpg` and `selassie-salute.jpg` are game renders for review, not archive photographs.
+
+The lightweight crowd bodies keep a garment mask when their meshes are joined. The same selected colour is applied across each shirt and across each skirt or pair of trousers. Skin, hair, shoes and accessories keep their painted colours. The scene audit checks both garment colours on the people the game loads.
 
 ## The arrival cinematic (review of 16 November 2026)
 
