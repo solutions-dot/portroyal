@@ -137,11 +137,22 @@ for _ in range(8):_yb=[_yb[0]]+[max(_yb[i],(_yb[i-1]+_yb[i+1])/2) for i in range
 if FITTED:
     for i in range(16,-1,-1):      # up the back, from the belt
         c=_A2.lerp(_B2,i/16);rows.append([bm.verts.new((c.x+k*.017,_yb[i],c.z+k*.006)) for k in (-1,1)])
-    for j in range(1,8):      # over the top of the shoulder
-        t=j/8;x=_A2.x+(_A.x-_A2.x)*t;y=_yb[0]+(_ys[0]-_yb[0])*t;zt=max(over(x-.017,y),over(x,y),over(x+.017,y));zz=max(zt,_A2.z+(_A.z-_A2.z)*t)
-        rows.append([bm.verts.new((x+k*.017,y,zz)) for k in (-1,1)])
+    for j in range(1,10):      # over the top of the shoulder
+        t=j/10;x=_A2.x+(_A.x-_A2.x)*t;y=_yb[0]+(_ys[0]-_yb[0])*t;zt=max(over(x-.017,y),over(x,y),over(x+.017,y));zz=max(zt,_A2.z+(_A.z-_A2.z)*t)
+        ox=.017+(abs(_perp.x)-.017)*t;oz=.006+(_perp.z*(-1 if _perp.x<0 else 1)-.006)*t      # the band's width turns smoothly from its line on the back to its line on the front
+        rows.append([bm.verts.new((x+k*ox,y,zz+k*oz)) for k in (-1,1)])
+_sg=-1 if _perp.x<0 else 1
 for i in range(25):
-    c=_A.lerp(_B,i/24);rows.append([bm.verts.new((c.x+k*_perp.x,_ys[i],c.z+k*_perp.z)) for k in (-1,1)])
+    c=_A.lerp(_B,i/24);rows.append([bm.verts.new((c.x+k*_sg*_perp.x,_ys[i],c.z+k*_sg*_perp.z)) for k in (-1,1)])
+if FITTED:      # the band's two edges are evened out along its length where it turns over the shoulder (it stepped and twisted there: owner, "the strap is broken at the shoulder")
+    for _ in range(6):
+        for k in (0,1):
+            P_=[r[k].co.copy() for r in rows]
+            for i in range(10,34): rows[i][k].co=(P_[i-1]+P_[i]*2+P_[i+1])/4
+    for r in rows[10:34]:      # and kept clear of the cloth
+        for v_ in r:
+            loc,nrm,_i,_d=jt.find_nearest(v_.co,.05)
+            if loc is not None and (v_.co-loc).dot(nrm)<.007: v_.co+=nrm*(.007-(v_.co-loc).dot(nrm))
 quadstrip(bm,rows);o=soft('Shoulder strap',bm,'Belt',src=tunic)
 # Each row across the strap takes the mean weights of its neighbours along it (two rows each way), and both edges of a row share them:
 # where the strap crosses the shoulder, the cloth weights change fast and one edge point used to jut 5 to 7 mm in walking.

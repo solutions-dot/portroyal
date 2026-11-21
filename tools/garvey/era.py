@@ -511,6 +511,30 @@ if not OLD and dict(parts).get('shirt'):      # the sleeves are evened out as cl
     # "these shoulders don't look natural"). Evened out as one piece of cloth from the base of the neck across to the top of the sleeve, front and back.
     _cv=[v for v in _b.verts if not v.is_boundary and SX*0.45<abs(v.co.x)<=SX*1.15 and v.co.z>SH.z-0.07*s]
     for _ in range(10): bmesh.ops.smooth_vert(_b,verts=_cv,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    # A tailored shoulder: seen from the front the top of each shoulder is one straight line from the base of the neck to the head of the sleeve. The body's own
+    # line dips between the neck muscle and the shoulder muscle, and cloth pushed out from it kept the dip (owner, 21 November 2026: "not a tailored shoulder").
+    # The top of the cloth is raised to that line (never lowered), fading out 5 cm below the top, front and back.
+    for _sx in (1,-1):
+        _NB=14; _x0,_x1=SX*0.42,SX*1.08; _top=[-9.0]*(_NB+1); _vs=[v for v in _b.verts if _x0<=v.co.x*_sx<=_x1 and v.co.z>SH.z-0.09*s]
+        for v in _vs:
+            k=int(round((v.co.x*_sx-_x0)/(_x1-_x0)*_NB)); _top[k]=max(_top[k],v.co.z)
+        if min(_top)<0: continue
+        _line=[_top[0]+(_top[_NB]-_top[0])*k/_NB for k in range(_NB+1)]; _up=[max(0.0,_line[k]-_top[k]) for k in range(_NB+1)]
+        for v in _vs:
+            f=(v.co.x*_sx-_x0)/(_x1-_x0)*_NB; k=min(_NB-1,int(f)); u=f-k; tz=_top[k]*(1-u)+_top[k+1]*u; d=_up[k]*(1-u)+_up[k+1]*u
+            v.co.z+=min(d,0.012)*sstep(0.05*s,0.0,tz-v.co.z)*sstep(0.0,0.15,(v.co.x*_sx-_x0)/(_x1-_x0))*sstep(1.0,0.8,(v.co.x*_sx-_x0)/(_x1-_x0))      # at most 12 mm, and nothing at the two ends (raised there, the shoulder tips stood up in peaks)
+    for _ in range(4): bmesh.ops.smooth_vert(_b,verts=_cv,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    # The head of the sleeve is rounded over. The top ran flat to the shoulder tip and dropped away at a corner there, which stood up as a peak on women and
+    # children most of all (owner, 21 November 2026: "these peak at the shoulder"). The cloth near the tip comes down toward the arm, never closer to it than 5 mm.
+    _rv=[]
+    for v in _b.verts:
+        ax=abs(v.co.x)/SX
+        if v.is_boundary or not 0.78<ax<1.45 or v.co.z<SH.z-0.05*s: continue
+        hit=tree.ray_cast(Vector((v.co.x,v.co.y,v.co.z+0.2)),Vector((0,0,-1)))[0]
+        if hit is None or hit.z>v.co.z: continue
+        w=sstep(0.78,1.05,ax)*sstep(1.45,1.2,ax); v.co.z-=min(0.016*s*w,max(0.0,v.co.z-hit.z-0.005)); _rv.append(v)
+    for _ in range(3): bmesh.ops.smooth_vert(_b,verts=_rv,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    print('SLEEVE HEAD rounded',len(_rv))
     _b.to_mesh(_o.data); _b.free()
 clothes=[o for k,o in parts]
 for o in clothes:
@@ -1772,6 +1796,30 @@ def tuck_under_skirt():
     print('TUCKED UNDER SKIRT',n)
 if G.get('tuckskin',1) and G.get('skirt'): tuck_under_skirt()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
+if not OLD and PART.get('waistcoat') and not P.get('outfit') and not G.get('woman') and 'YCz' in globals():
+    # A waistcoat's front is cut flat: it falls in one straight line from the fullest part of the chest to its hem, and holds a belly in. Pushed out from the body,
+    # it followed the belly and ended in a ridge at the hem (owner, 21 November 2026: "waistcoats still follow the belly"). For each direction across the front the
+    # cloth between the chest and the hem is brought in to the line between them (never pushed out); the shirt beneath is held in by the step below.
+    _w=PART['waistcoat']; _zc=NECK-0.17*s; _zh=min(v.co.z for v in _w.data.vertices)+0.012; _NA=48; _rc=[0.0]*_NA; _rh=[0.0]*_NA
+    def _pol(c): yc=YCz(c.z); dx,dy=c.x,c.y-yc; return math.hypot(dx,dy),math.atan2(dx,-dy),yc
+    for v in _w.data.vertices:
+        r,a_,yc=_pol(v.co); k=int((a_%(2*math.pi))/(2*math.pi)*_NA)%_NA
+        if abs(v.co.z-_zc)<0.02: _rc[k]=max(_rc[k],r)
+        if v.co.z<_zh+0.012: _rh[k]=max(_rh[k],r)
+    for T in (_rc,_rh):
+        g=[x for x in T if x>0] or [0.15]
+        for k in range(_NA):
+            if T[k]<=0: T[k]=max(T[(k-1)%_NA],T[(k+1)%_NA]) or sum(g)/len(g)
+        for _ in range(3): T[:]=[(T[k-1]+2*T[k]+T[(k+1)%_NA])/4 for k in range(_NA)]
+    _n=0
+    for v in _w.data.vertices:
+        if not (_zh<v.co.z<_zc): continue
+        r,a_,yc=_pol(v.co); fr=sstep(0.15,0.65,math.cos(a_))
+        if fr<=0: continue
+        f=(a_%(2*math.pi))/(2*math.pi)*_NA-0.5; k=int(math.floor(f))%_NA; u=f-math.floor(f); t=(v.co.z-_zh)/(_zc-_zh)
+        tgt=(_rh[k]*(1-u)+_rh[(k+1)%_NA]*u)*(1-t)+(_rc[k]*(1-u)+_rc[(k+1)%_NA]*u)*t
+        if r>tgt: rn=r+(tgt-r)*fr; v.co.x*=rn/r; v.co.y=yc+(v.co.y-yc)*rn/r; _n+=1
+    _w.data.update(); print('WAISTCOAT FRONT flattened',_n)
 if not OLD and PART.get('waistcoat') and PART.get('shirt') and not P.get('outfit'):
     # A waistcoat holds the shirt in. Where the shirt blouses out over the waistband it came through the waistcoat's side as a white flap (owner, 21 November 2026:
     # "the side of the coat looks torn"). Every point of the shirt's body that lies outside the waistcoat, or less than 5 mm inside it, is set 6 mm inside it.
