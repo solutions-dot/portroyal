@@ -3,6 +3,9 @@ import "../../../engine/textfit.js";   // first: every sign's words fit their bo
 /* A family story built on the existing engine, with no shared-module changes. */
 import { renderFramed } from "../../../engine/cine.js";
 import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js";
+import { createAutoAct } from "../../../engine/autoact.js";
+const AUTO = createAutoAct();
+let AUTO_T = 0;
 import { offerNextChapter } from "../../../engine/chapter-end.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import * as THREE from "three";
 import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";
@@ -1155,6 +1158,7 @@ function hint(now) {
   const act = quiet && near?.kind === "do";
   $("talk").hidden = !act;
   if (act) $("talk").textContent = near.label;
+  { const dt = AUTO_T ? Math.min(0.1, (now - AUTO_T) / 1000) : 0; AUTO_T = now; AUTO.tick(dt, act ? near : null, S.x, S.z, (a) => interact(a)); }   /* the story action happens when you reach it (engine/autoact.js) */
   MARKS.tick(now / 1000, {
     people: world().people,
     show: quiet,

@@ -12,6 +12,8 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    Layout of this file: setup, state and controls, people and places, interface, saving, chapters and stages, things to do, the storm, the loop, test views. */
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { createAutoAct } from '../../../engine/autoact.js';
+const AUTO = createAutoAct();
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -696,6 +698,7 @@ function update(dt, now) {
   for (const n of P.npcs) npcTick(n, dt);
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
+  AUTO.tick(dt, near && near.go ? near : null, state.x, state.z, (a) => { if (!busy && !frozen) activate(a); });   /* the story action happens when you reach it (engine/autoact.js) */
   for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
   if (P.tick) P.tick(dt, (now || 0) / 1000); lightTick(P, dt, (now || 0) / 1000); STORM.tick(dt, (now || 0) / 1000); if (P.sway) swayTick(P.sway, (now || 0) / 1000, WIND.k, WIND.dir);

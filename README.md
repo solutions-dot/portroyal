@@ -43,6 +43,8 @@ Players move between games, so they all play alike (`docs/STANDARD.md`):
 - **Title screen**: Start (or Continue), Chapters, Exit.
 - **In play**: Exit sits to the right of the Journal button and asks "are you sure". Touch joystick, drag to look, tap a person to talk.
 - **Cinematics** (scenes you watch, such as the earthquake, the fire, the crash or the arrival): only a faded X to skip shows. The Journal, Exit and other buttons hide until the scene ends. Before each one, a card says what happens (and, if it may be scary, "It may be scary. Nobody is hurt on the screen.") with "Watch scene" and "Read what happened instead" (`engine/scene-warning.js`).
+- **Talk signs**: one gold sign, only over the person the story needs now. Others still answer a tap.
+- **Story actions** happen by themselves when you reach them. Doors and optional things keep a button in the middle of the screen.
 - **Chapter title cards** have no X.
 - **End of a chapter**: after a short pause on a clear screen, a "Chapter N is finished" card offers the next chapter. There is no "Stay here" (`engine/chapter-end.js`).
 

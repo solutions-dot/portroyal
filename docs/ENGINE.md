@@ -498,3 +498,7 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 ## Talk signs (`engine/marks.js`, 21 November 2026)
 
 `showTalkMark(needed, isNear)` and `showTalkBubble(needed)` decide who gets a talk sign in every game: only the person the story needs now (the game's `wantsTalk`, `STORY.marked`, Port Royal's goal-to-action map, Tivoli's `storyNeeds`). The mark gives way to the named talk bubble when you are near. Other people get no sign but still answer a tap.
+
+## Story actions on arrival (`engine/autoact.js`, 21 November 2026)
+
+`createAutoAct()` returns `tick(dt, action, x, z, run)`. Each frame a game passes the action in reach that may fire: one the story needs now, never an exit (`exit: true`) or one marked `manual: true`. It runs after `AUTO_DELAY` (0.35 s) standing in reach; then nothing more fires until the player has walked `AUTO_REARM` (0.6 m). It tracks actions by `id`, since some games build the nearby action afresh each frame. It also places `#talk.btn` (the button for doors and optional things) at 62% down the screen, centred. Wired in Port Royal (only the action the goal points to), Garvey, Kendal, Bog Walk, Nanny, Melissa, Eventide, Selassie and Windrush; Tivoli's walking chapters have no actions.

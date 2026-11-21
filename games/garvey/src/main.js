@@ -25,6 +25,8 @@ import { model, onLoadFail } from '../../../engine/loader.js';
 import { auditCloth } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { createAutoAct } from '../../../engine/autoact.js';
+const AUTO = createAutoAct();
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
 import { batchStill } from '../../../engine/batch.js';
@@ -1603,6 +1605,7 @@ function update(dt, now) {
     state.yaw += e * k; state.pitch += (Math.atan2(hy - 0.22 - EYE, d) - state.pitch) * k; }
   near = null; if (state.started && !busy) { let best = 2.6; for (const n of PEOPLE) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < best) { best = d; near = n; } }
     for (const a of ACTIONS) { const ad = Math.hypot(state.x - a.x, state.z - a.z); if (a.exit && !exitReady(a.id, ad, a.r, performance.now() / 1000)) continue;   /* a way out waits until you have walked off its spot (engine/story.js) */ if (a.on() && ad < a.r) near = a; } }   /* standing at a thing to do beats a person nearby */
+  AUTO.tick(dt, near && near.go ? near : null, state.x, state.z, (a) => { if (!busy) activate(a); });   /* the story action happens when you reach it; exits keep their button (engine/autoact.js) */
   const talkBtn = $('talk'); talkBtn.hidden = !(near && near.go); if (near && near.go) talkBtn.textContent = near.label;   /* people get the bubble; things to do get this button */
   for (const mx of mixers) { const r = mx.getRoot(); if (r.visible && !r.userData.amb) mx.update(dt); } for (const n of PEOPLE) if (n.m && n.m.userData.anim && !n.m.userData.amb) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   for (const m of grounded) if (m.visible && !m.userData.amb) groundFeet(m);
