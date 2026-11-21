@@ -11,7 +11,7 @@ Status, November 2026: the rules below hold now. There is no shared people modul
 - Every recipe must set:
   - `"era"`: the year it is dressed for (for example `1904`). Never leave it out: a missing era quietly builds as 1915. Any era before 1800 uses the 1690 tailoring.
   - `"hat"` as a list of `[kind, material]` pairs, even for one hat: `[["felt", "Hat"]]`. Several hats on one body are fine; the game shows one and hides the rest.
-  - `"collar"` as a kind (`"camp"`, `"round"`, `"turn"`, `"stand"`), not `true`.
+  - `"collar"` as a kind (`"camp"`, `"round"`, `"turn"`, `"stand"`, `"open"`), not `true`. Every collar is sewn to its shirt by `tools/garvey/neckwear.py` (`docs/PIPELINE.md`, "Collars and ties, rebuilt"). On a 1690 or 1730s shirt leave it out for the period's narrow neckband, or write `false` for a plain rounded opening.
   - `"colors"` for every garment it wears, in sRGB 0 to 255, keyed by material name.
 - Children are real child bodies, never shrunken adults. Build them at a child's shape with `"upscale"` (so the adult animations fit), then shrink them in the game by about 1 / upscale (upscale 1.26 means scale 0.8). Start from `tools/kendal/people/boy.json` and `girl.json` (not the older copies in `tools/people/kids/`).
 - Full list of recipe keys and what they do: `docs/PIPELINE.md`, section 5.
