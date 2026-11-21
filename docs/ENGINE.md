@@ -494,3 +494,7 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 - Anything lower than `opts.keepBelow` (1.6 m) stays: foundations, steps, low rails, beds of plants. `opts.floorAt(x, z)` gives the height things land on, in the group's own space. `opts.onImpact(k)` fires as each piece lands (a shake, a thud).
 - It changes only copies of the building's materials, so no other building chars.
 - Port Royal's 1692 houses still use their own sinking and brick code (`sinkTown`, `breakHouse` in `games/port-royal/src/main.js`). Move them onto this when that game is next worked on.
+
+## Talk signs (`engine/marks.js`, 21 November 2026)
+
+`showTalkMark(needed, isNear)` and `showTalkBubble(needed)` decide who gets a talk sign in every game: only the person the story needs now (the game's `wantsTalk`, `STORY.marked`, Port Royal's goal-to-action map, Tivoli's `storyNeeds`). The mark gives way to the named talk bubble when you are near. Other people get no sign but still answer a tap.

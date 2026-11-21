@@ -20,7 +20,7 @@ import { loader, onLoadFail, script, model, stage } from '../../../engine/loader
 import { auditHeld, auditCloth } from '../../../engine/audit.js';   /* used only by the dev tests ?test=held and ?test=cloth */
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev only: ?test=skin */
 import { wireChecks } from './checks.js';   /* dev only: ?test=audit, layout, walkers, life, all */
-import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
 import { batchStill } from '../../../engine/batch.js';   /* still scenery drawn in a few pieces (see still() below) */
@@ -50,9 +50,9 @@ const JOURNAL = [
   { id: 'people', title: 'Who lived here?',
     simple: ['People came to Port Royal from England, France, Africa and many other places.',
              'Not everyone was free. Many African people here were enslaved: forced to work, unpaid, and not allowed to leave.',
-             'Abba is a free woman. That was rare.'],
+             'Abba is a free woman. That was rare.', 'Hannah works for Abba in The Turtle.'],
     deeper: ['About 2,500 of the people in the town were enslaved Africans. Part of Port Royal’s wealth came from buying and selling human beings. This game will not hide that.',
-             'Abba is a fictional character. She stands for the free Black and mixed-race people who really lived in Jamaica at this time. Church records list a free Black couple, Peter Moore and Black Betty, who married in 1677.'] },
+             'Abba is a fictional character. She stands for the free Black and mixed-race people who really lived in Jamaica at this time. Church records list a free Black couple, Peter Moore and Black Betty, who married in 1677.', 'Hannah, who serves the stew in The Turtle, is fictional too.'] },
   { id: 'harbour', title: 'The busy harbour',
     simple: ['Port Royal had one of the busiest harbours in the Americas. In the year 1688, 213 ships came here.',
              'Ships left Jamaica full of sugar, rum, cotton, ginger and wood.'],
@@ -217,14 +217,16 @@ const TALK = [
   { who: 'Abba', text: 'Come inside when you are hungry.' }, { who: 'Abba', text: 'My turtle stew is the best in town!', unlock: 'town' },
 ];
 
-const STEW = [
-  { who: 'Abba', text: 'Welcome to The Turtle! Stew costs two reales.' },
+const STEW = [   /* inside, Hannah serves: Abba is out at the door (owner, 21 Nov 2026: Abba cannot be at the door and inside at once) */
+  { who: 'Hannah', text: 'Welcome to The Turtle! I work here for Abba.' },
+  { who: 'Hannah', text: 'Stew costs two reales.' },
   { who: 'You', text: 'I only have this. One piece of eight.' },
-  { who: 'Abba', text: 'A piece of eight is eight reales. The stew is two.' }, { who: 'Abba', text: 'How much change do I give you?',
+  { who: 'Hannah', text: 'A piece of eight is eight reales. The stew is two.' }, { who: 'Hannah', text: 'How much change do I give you?',
     choices: [{ t: 'Four reales' }, { t: 'Six reales', ok: true }, { t: 'Eight reales' }], hint: 'Not quite. Start with eight and take away two.' },
-  { who: 'Abba', text: 'Six! Here is your change, and your stew.', unlock: 'change' },
-  { who: 'Abba', text: 'Look around while you eat. Most things here came on a ship.' },
+  { who: 'Hannah', text: 'Six! Here is your change, and your stew.', unlock: 'change' },
+  { who: 'Hannah', text: 'Look around while you eat. Most things here came on a ship.' },
 ];
+const HANNAH_AFTER = [{ who: 'Hannah', text: 'Take your time. Look around.' }];
 const AFTER = [{ who: 'Abba', text: 'Take your time. Look around.' }];
 const FINDS = [
   { id: 'bottle', label: 'Look at the bottle', x: -198.8, z: -2.15, y: 1.02 },
@@ -494,7 +496,7 @@ function setPlace(p) { exitsReset();
   home.add(abba); abba.visible = p !== 'ware'; if (galdy) home.add(galdy);
   hemi.intensity = inside ? 0.5 : 2.3; sun.intensity = inside ? 1.5 : 2.6; if (p === 'in') sun.position.set(0.3, 0.75, 1); else if (p === 'ware') sun.position.set(1, 0.7, 0.2); else sun.position.set(-0.35, 1, 0.75);
   fireLight.intensity = p === 'in' ? 16 : 0; lamp.intensity = p === 'in' ? 9 : 0; if (wLamp) wLamp.intensity = p === 'ware' ? 14 : 0;
-  if (p === 'in') { ABBA.x = -201; ABBA.z = -2.95; abba.position.set(ABBA.x, 0, ABBA.z); } else if (p === 'ware') { ABBA.x = 9999; ABBA.z = 0; } else { ABBA.x = -4.15; ABBA.z = -S + 1.45; abba.position.set(ABBA.x, 0.12, ABBA.z); }
+  if (p === 'in') { ABBA.x = 9999; ABBA.z = 0; abba.visible = false; }   /* Abba stays at the door outside; Hannah serves inside */ else if (p === 'ware') { ABBA.x = 9999; ABBA.z = 0; } else { ABBA.x = -4.15; ABBA.z = -S + 1.45; abba.position.set(ABBA.x, 0.12, ABBA.z); }
   abba.rotation.y = 0;
 }
 
@@ -502,7 +504,7 @@ function setPlace(p) { exitsReset();
 const WID = { h1: 6.0, h2: 5.0, h3: 7.2, h4: 6.6, h5: 5.4, h6: 5.6 };
 const NORTH = ['h2', 'h6', 'h1', 'h4', 'h5', 'h3'], SOUTH = ['h3', 'h1', 'h5', 'h2', 'h4', 'h6'];
 let townReady = false;
-const models = {}; let abba = null; const ABBA = { x: -4.15, z: -S + 1.45 }   /* beside the tavern door, not in it */;
+const models = {}; let abba = null, hannah = null;   /* hannah: Abba's worker at the counter inside The Turtle (fictional) */ const ABBA = { x: -4.15, z: -S + 1.45 }   /* beside the tavern door, not in it */;
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
 const TEXMAP = { Brick: ['brick', 'brick_n'], Shingle: ['shingle', 'shingle_n'], ClayTile: ['clay', 'clay_n'], Wood: ['wood', 'wood_n'], Stone: ['stone', 'stone_n'], Plaster: ['plaster', 'plaster_n'], LeadedGlass: ['glass', 'glass_n'],
   Hull: ['hull', 'hull_n'], Spar: ['hull', 'hull_n'], Tar: ['hull', 'hull_n'], Ochre: ['hull', 'hull_n'], Red: ['hull', 'hull_n'], Deck: ['deck', 'deck_n'], Sail: ['canvas'], Glass: ['glass'], Flag: ['ensign'] };
@@ -517,7 +519,7 @@ let mixer = null, idle = null, runA = null; const survivors = {}; let galdy = nu
 const MENU = { ok: true, url: '../../../menu/' };   /* Always available on the game collection, even if a menu fetch would fail. */
 const TICKS = [], EXTRA_IN = [];   /* Mixamo clips from anims.glb, shared by everyone (same skeleton) */
 const TALKS = ['Talk1', 'Talk2', 'Talk3']; let talkN = 0, speaker = null;
-function speakerModel(who) { if (who === 'Abba') return abba; if (who === 'Kofi') return state.place === 'after' ? survivors.kofi : people.kofi; if (who === 'Emmanuel Heath') return people.heath;
+function speakerModel(who) { if (who === 'Abba') return abba; if (who === 'Hannah') return hannah; if (who === 'Kofi') return state.place === 'after' ? survivors.kofi : people.kofi; if (who === 'Emmanuel Heath') return people.heath;
   if (who === 'Sam') return state.place === 'after' ? survivors.sailor : people.sailor; if (who === 'Symon Benning') return state.place === 'after' ? survivors.benning : people.benning; return null; }
 function setSpeaker(who, gesture) {
   const m = speakerModel(who);
@@ -634,7 +636,7 @@ function clampPos(nx, nz) {
     if (state.x > X1 + 0.3 && Math.abs(nz) >= S - 0.45 && !inNew(nz)) nx = X1 + 0.31;   /* step into a street only where it opens onto the harbour */
     else if (newSt && state.z > 11) { nx = Math.max(NS.x0 + 0.4, nx); nz = Math.max(NS.zmin, Math.min(NS.zmax, nz)); for (const [a, b, c, d] of NS.col) { const px = Math.max(a, Math.min(c, nx)), pz = Math.max(b, Math.min(d, nz)), dx = nx - px, dz = nz - pz, dd = Math.hypot(dx, dz); if (dd < 0.32) { if (dd > 1e-4) { nx = px + dx / dd * 0.32; nz = pz + dz / dd * 0.32; } else { nx = state.x; nz = state.z; } } } }
     else nz = Math.max(-(S - 0.45), Math.min(S - 0.45, nz)); }
-  for (const [cx, cz, r] of (__DEV__ && window.__prNoPeople) ? [] : [[ABBA.x, ABBA.z, 0.75], ...(townReady && !Q.on ? NPCS.map((n) => [n.x, n.z, n.id === 'kofi' ? (n.walking && KP.leg === 0 ? 0.75 : 0.5) : 0.8]) : []), ...(NS.ready && !Q.on && !FB.on ? NS_PEOPLE.map((n) => [n.x, n.z, 0.7]) : []), ...(typeof SOLDIER !== 'undefined' && SOLDIER.m && SOLDIER.m.visible ? [[SOLDIER.m.position.x, SOLDIER.m.position.z, 0.7]] : [])]) { const dx = nx - cx, dz = nz - cz, d = Math.hypot(dx, dz); if (d < r && d > 0) { nx = cx + dx / d * r; nz = cz + dz / d * r; } }
+  for (const [cx, cz, r] of (__DEV__ && window.__prNoPeople) ? [] : [[ABBA.x, ABBA.z, 0.75], ...(state.place === 'in' && hannah ? [[hannah.position.x, hannah.position.z, 0.75]] : []), ...(townReady && !Q.on ? NPCS.map((n) => [n.x, n.z, n.id === 'kofi' ? (n.walking && KP.leg === 0 ? 0.75 : 0.5) : 0.8]) : []), ...(NS.ready && !Q.on && !FB.on ? NS_PEOPLE.map((n) => [n.x, n.z, 0.7]) : []), ...(typeof SOLDIER !== 'undefined' && SOLDIER.m && SOLDIER.m.visible ? [[SOLDIER.m.position.x, SOLDIER.m.position.z, 0.7]] : [])]) { const dx = nx - cx, dz = nz - cz, d = Math.hypot(dx, dz); if (d < r && d > 0) { nx = cx + dx / d * r; nz = cz + dz / d * r; } }
   if (!Q.ruin) { if (!propC) buildPropC(); for (const [x0, z0, x1, z1, po] of propC) { if (po && !po.visible) continue; if (state.x > x0 - 0.05 && state.x < x1 + 0.05 && state.z > z0 - 0.05 && state.z < z1 + 0.05) continue;   /* already inside it (an old save): let you walk out */ const px = Math.max(x0, Math.min(x1, nx)), pz = Math.max(z0, Math.min(z1, nz)), dx = nx - px, dz = nz - pz, d = Math.hypot(dx, dz), r = 0.32; if (d < r) { if (d > 1e-4) { nx = px + dx / d * r; nz = pz + dz / d * r; } else { nx = state.x; nz = state.z; } } } }
   return [nx, nz];
 }
@@ -657,7 +659,7 @@ function setGoal() {
   if (!state.unlocked.includes('harbour')) g = 'Walk down the pier and into the town.';
   else if (!state.talked) g = 'Find the woman in the white head wrap.';
   else if (state.place === 'out' && !state.ate) g = 'Go into the tavern. The door is next to Abba.';
-  else if (!state.ate) g = 'Ask Abba for some stew.';
+  else if (!state.ate) g = 'Ask Hannah for some stew.';
   else if (foundCount() < FINDS.length) g = 'Find 4 things in the tavern. Found: ' + foundCount() + ' of ' + FINDS.length + '.';
   else if (!state.unlocked.includes('morgan')) g = 'Talk to old Ned at the table. He has a story.';
   else if (!state.unlocked.includes('forts')) g = 'Walk to Fort Charles, along the beach past the houses.';
@@ -708,7 +710,7 @@ const ACTIONS = [
   { label: 'Talk to Abba', r: 3.4, where: () => townReady && !Q.on && !FB.on && state.place === 'out' && [ABBA.x, ABBA.z], go: () => startConvo(state.talked ? AFTER : TALK, () => { state.talked = true; if (ring) ring.visible = false; }) },
   { label: 'Go into the tavern', exit: true, r: 2.0, where: () => tavernReady && !Q.on && state.place === 'out' && state.talked && [-6.18, -4.5], go: () => { setPlace('in'); state.x = -203; state.z = 2.3; state.yaw = 0; state.pitch = 0; setGoal(); } },
   { label: 'Go back to the street', r: 1.3, exit: true, where: () => state.place === 'in' && [-203, 3.3], go: () => { setPlace('out'); state.x = -6.18; state.z = -3.4; state.yaw = Math.PI; state.pitch = 0; setGoal(); } },
-  { label: 'Talk to Abba', r: 2.3, where: () => state.place === 'in' && [-201, -1.9], go: () => startConvo(state.ate ? AFTER : STEW, () => { if (!state.ate) { state.ate = true; stew.visible = true; } }) },
+  { label: 'Talk to Hannah', r: 2.3, where: () => state.place === 'in' && [-201, -1.9], go: () => startConvo(state.ate ? HANNAH_AFTER : STEW, () => { if (!state.ate) { state.ate = true; stew.visible = true; } }) },
   ...FINDS.map((f) => ({ label: f.label, r: 1.9, where: () => state.place === 'in' && !state.unlocked.includes(f.id) && [f.x, f.z], go: () => { unlock(f.id); finds[f.id].visible = false; setGoal(); } })),
 ];
 let current = null;
@@ -848,11 +850,13 @@ function pikeAt() { const S0 = SOLDIER, m = S0.m; S0.hand.getWorldPosition(_sh);
 /* ---------- the helper nudge: if the player stands still or the goal does not change for a while, the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE_MAP = [   /* goal words -> the action (or place) that moves the story on */
   [/pier and into the town/, [18, 0]], [/Walk to the harbour/, [21, 0]], [/Fort Charles/, [14.6, -23]],
-  [/woman in the white|Find Abba|Abba is at the door|Go back to Abba/, /Abba/], [/Go into the tavern/, /Go into the tavern/], [/stew/, /Abba/],
+  [/woman in the white|Find Abba|Abba is at the door|Go back to Abba/, /Abba/], [/Go into the tavern/, /Go into the tavern/], [/stew/, /Hannah/],
   [/Find 4 things|Look around|Check today/, /^Look at|^Look across/], [/Ned/, /old Ned/], [/tomb/, /tombstone/], [/desk/, /desk/], [/letter/, /letter/],
   [/Morgan/, /Morgan/], [/quartermaster/, /quartermaster/], [/sword drill/, /sword drill/], [/man with the crates/, /Help load/],
   [/Pick up a crate|Get another crate/, /Pick up a crate/], [/Carry it/, /Put the crate/], [/Swim/, /Reach for the boat/]];
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false, t: 0 };
+/* the talk the story needs now: the one the goal words point the helper arrow to (NUDGE_MAP). Only it gets a talk sign (engine/marks.js) */
+function storyWants(a) { const hit = NUDGE_MAP.find(([re]) => re.test(goalText)); return !!hit && !Array.isArray(hit[1]) && hit[1].test(a.label); }
 function nudgeTarget() {
   const hit = NUDGE_MAP.find(([re]) => re.test(goalText)); if (!hit) return null; const want = hit[1];
   if (Array.isArray(want)) return want;
@@ -1232,6 +1236,13 @@ async function loadAll() {
   if (window.__got.anims) loadClips(window.__got.anims);
   if (!mixer && CL.Idle) { mixer = new THREE.AnimationMixer(abba); idle = mixer.clipAction(clipFor('Idle')); idle.play(); idle.time = Math.random() * idle.getClip().duration; const pc = CL.Idle.clone(); pc.tracks = pc.tracks.filter((t) => t.name.endsWith('.quaternion')); setFallbackClip(pc); }   /* Abba is a builder body now (tools/people/abba.json) with no clip of her own: she keeps her own mixer, on the shared Idle */
   if (mixer && CL.Run) { runA = mixer.clipAction(clipFor('Run', true)); } if (mixer && idle) animate(abba, null, mixer, idle);
+  { const keep = abba.userData.anim; delete abba.userData.anim; const m = skClone(abba); abba.userData.anim = keep;   /* Hannah, who works for Abba at The Turtle's counter (fictional): Abba's body in her own colours and build, as Grace is. A stand-in until she has her own body (docs/games/port-royal.md) */
+    const solid = { Waistcoat: 0x34507a, Bodice: 0x34507a, Skirt: 0x8a6a3a, Wool: 0x8a6a3a }, tint = { Hat: [0.72, 0.86, 1.0], Linen: [0.72, 0.86, 1.0], Shirt: [1.0, 0.97, 0.9], Apron: [0.95, 0.92, 0.85] };   /* indigo bodice, ochre skirt, a pale blue head wrap */
+    m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); const nm = o.material.name; const sk = Object.keys(solid).find((t) => nm.startsWith(t)); if (sk) { o.material.vertexColors = false; o.material.color.setHex(solid[sk]); o.material.needsUpdate = true; }
+      const tk = Object.keys(tint).find((t) => nm.startsWith(t)); if (tk) o.material.color.setRGB(...tint[tk]); o.frustumCulled = false; } });
+    m.scale.multiply(new THREE.Vector3(0.94, 1.03, 0.94));   /* taller and slimmer than Abba */
+    m.position.set(-201, 0, -2.95); m.rotation.y = 0; indoor.add(m); hannah = m; animate(m);
+    TICKS.push((dt) => { if (state.place !== 'in' || !hannah) return; const want = Math.max(-1.1, Math.min(1.1, Math.atan2(state.x - hannah.position.x, state.z - hannah.position.z))); hannah.rotation.y += (want - hannah.rotation.y) * Math.min(1, (dt || 0.016) * 3); }); }   /* she turns to face you, as Abba does */
   for (const n of NPCS) { const m = prep(window.__got[n.id].scene); m.position.set(n.x, n.y || groundYAt(n.x, n.z), n.z); m.rotation.y = n.ry; scene.add(m); people[n.id] = m; animate(m); }
   buildTown(); if (ring) ring.visible = !state.talked; window.__got = null; townReady = true; built = true;
   // stage 3: the tavern is built in a spare moment, before you can reach its door
@@ -1785,7 +1796,7 @@ TICKS.push((dt) => { if (!FB.on || !FBG.carrier) return; const m = FBG.carrier, 
   const x = C.x, dir = C.d > 0 ? Math.PI / 2 : -Math.PI / 2; m.position.set(x, groundYAt(x, 0.45), 0.45); m.rotation.y += Math.atan2(Math.sin(dir - m.rotation.y), Math.cos(dir - m.rotation.y)) * Math.min(1, dt * 5); const hl = m.getObjectByName('mixamorigLeftHand'), hr = m.getObjectByName('mixamorigRightHand'); if (hl && hr) { FBG.box.position.copy(hl.getWorldPosition(_dp)).add(hr.getWorldPosition(_ds)).multiplyScalar(0.5); FBG.box.position.x += Math.sin(m.rotation.y) * 0.24; FBG.box.position.z += Math.cos(m.rotation.y) * 0.24; FBG.box.rotation.y = m.rotation.y; } });
 TICKS.push(() => { if (!FB.on) return; const m = people.morgan; if (!m) return; const dx = state.x - m.position.x, dz = state.z - m.position.z; if (Math.hypot(dx, dz) < 5) m.rotation.y += (Math.atan2(dx, dz) - m.rotation.y) * 0.08; });
 TICKS.push((dt) => {   /* whoever you can talk to turns toward you as you come near */
-  if (!current || busy || !current.where) return; const w = current.where(); if (!w) return; const cands = [abba, ...Object.values(people), ...Object.values(survivors), FBG.qm, FBG.exq, FBG.carrier, ...(FBG.d || [])];
+  if (!current || busy || !current.where) return; const w = current.where(); if (!w) return; const cands = [abba, hannah, ...Object.values(people), ...Object.values(survivors), FBG.qm, FBG.exq, FBG.carrier, ...(FBG.d || [])];
   let best = null, bd = 1.6; const p = new THREE.Vector3(); for (const m of cands) { if (!m || !m.parent || !m.visible || m.userData.sits || m === people.kofi) continue; m.getWorldPosition(p); const d = Math.hypot(p.x - w[0], p.z - w[1]); if (d < bd) { bd = d; best = m; } }
   if (!best) return; best.getWorldPosition(p); const want = Math.atan2(state.x - p.x, state.z - p.z); let e = want - best.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); best.rotation.y += e * Math.min(1, dt * 3); });
 TICKS.push((dt) => { const m = speaker; if (!m || !m.parent || m.userData.sits || ($('dialogue').hidden && $('card').hidden)) return; const p = new THREE.Vector3(); m.getWorldPosition(p); const want = Math.atan2(state.x - p.x, state.z - p.z); let e = want - m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); m.rotation.y += e * Math.min(1, dt * 4); });   /* whoever is talking to you turns to face you */
@@ -2066,7 +2077,7 @@ const isTalk = (a) => /^Talk to /.test(a.label);
 /* who a talk belongs to: the person standing nearest its spot (within 1.6 m), or null. The mark and the talk button float over that person,
    not over the spot: a talk spot can be where the player stands (Abba behind the tavern counter is a metre beyond hers, owner 19 Nov 2026) */
 const _spk = new THREE.Vector3();
-const speakerOf = (w) => { const cands = [abba, ...Object.values(people), ...Object.values(survivors), FBG.qm, FBG.exq, FBG.carrier, ...(FBG.d || [])]; let best = null, bd = 1.6;
+const speakerOf = (w) => { const cands = [abba, hannah, ...Object.values(people), ...Object.values(survivors), FBG.qm, FBG.exq, FBG.carrier, ...(FBG.d || [])]; let best = null, bd = 1.6;
   for (const m of cands) { if (!m || !m.parent || !m.visible) continue; m.getWorldPosition(_spk); const d = Math.hypot(_spk.x - w[0], _spk.z - w[1]); if (d < bd) { bd = d; best = m; } } return best; };
 const markY = (a, w) => {   /* how high above their feet the speech mark floats: just over the head or hat, measured from the person's own model */
   const fall = /old Ned|surgeon/.test(a.label) ? 1.5 : 1.85; if (!w) return fall;   /* the top of the head or hat above the feet; the mark floats markAt() over it */
@@ -2084,11 +2095,11 @@ TICKS.push(() => { markN = 0; TB.a = null; const now = performance.now() / 1000;
     if (sp.parent !== home && home) home.add(sp);
     { const who = speakerOf(w); if (who) { who.getWorldPosition(_spk); if (home && home !== scene) home.worldToLocal(_spk); w = [_spk.x, _spk.z]; } }   /* over the person, not the spot */
     const base = state.place === 'sea' ? seaLevel + 1.6 : (state.place === 'out' ? groundYAt(w[0], w[1]) : 0) + markY(a, w);
-    const k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + w[0]) * 0.1); sp.position.set(w[0], markAt(base, k) + Math.sin(now * 2.4 + w[0]) * 0.03, w[1]); sp.scale.set(k, k, k); sp.material.opacity = Math.max(0.6, 1 - d / 20); sp.visible = !near;
+    const k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + w[0]) * 0.1); sp.position.set(w[0], markAt(base, k) + Math.sin(now * 2.4 + w[0]) * 0.03, w[1]); sp.scale.set(k, k, k); sp.material.opacity = Math.max(0.6, 1 - d / 20); sp.visible = showTalkMark(storyWants(a), near);
     if (near) { TB.world.set(w[0], base + NEAR_GAP, w[1]); if (home !== scene) TB.world.applyMatrix4(home.matrixWorld); TB.a = a; } }
   for (let i = markN; i < MARKS.length; i++) MARKS[i].visible = false;
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (TB.a && !busy) TB.a.go(); }); }
-  const show = TB.a && TB.a === current && !busy; TB.el.hidden = !show; if (!show) return;
+  const show = TB.a && TB.a === current && !busy && showTalkBubble(storyWants(TB.a)); TB.el.hidden = !show; if (!show) return;
   const p = TB.world.clone().project(camera); if (p.z > 1) { TB.el.hidden = true; return; }
   const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (p.x + 1) / 2 * r.width) + 'px'; { let ty = r.top + (1 - p.y) / 2 * r.height; const gl = $('goal'), gr = gl && !gl.hidden ? gl.getBoundingClientRect() : null, hh = (TB.el.offsetHeight || 56) + 28; if (gr && gr.height > 1 && ty - hh < gr.bottom + 6) ty = gr.bottom + 6 + hh; TB.el.style.top = ty + 'px'; }   /* the name and the talk button stay below the goal: looking up at a tall person from close by put the name on top of the goal's words (owner's phone, 17 November 2026) */
   if (TB.el.dataset.label !== TB.a.label) { TB.el.dataset.label = TB.a.label; TB.el.innerHTML = TALK_SVG + '<span class="who">' + TB.a.label.replace(/^Talk to (the )?/, '').replace(/\b\w/g, (c) => c.toUpperCase()) + '</span>'; TB.el.setAttribute('aria-label', TB.a.label); } });
@@ -2230,7 +2241,7 @@ if (__DEV__) { window.__prBoats = DEVBOATS; DEVBOATS.buildLoad = () => loadBuild
 let checkTime = 0;
 if (__DEV__) wireChecks({
   renderer, scene, camera, canvas, state, Q, FB, NS, FORT, FBG, KP, SOLDIER, NPCS, NS_PEOPLE, STROLL, people, survivors, JOURNAL, CHAPTERS, ACTIONS, IN, X0, X1, S, SHORE, WX0, WX1, YX, YZ,
-  CONVOS: [TALK, STEW, AFTER, COINS, WARE1, NPCS, SAM_AFTER, KOFI_AFTER, BENNING_AFTER, HEATH_TALK, AFTER1, AFTER2, NS_TALK, BUCS, NED, NED_AGAIN, GUNNER, FB_TALK, MORGAN_TOPICS, QM_TALK, EXQ_TALK, MUSTER],
+  CONVOS: [TALK, STEW, AFTER, HANNAH_AFTER, COINS, WARE1, NPCS, SAM_AFTER, KOFI_AFTER, BENNING_AFTER, HEATH_TALK, AFTER1, AFTER2, NS_TALK, BUCS, NED, NED_AGAIN, GUNNER, FB_TALK, MORGAN_TOPICS, QM_TALK, EXQ_TALK, MUSTER],
   get abba() { return abba; }, get galdy() { return galdy; }, get busy() { return busy; }, set busy(v) { busy = v; }, get goalText() { return goalText; }, get townReady() { return townReady; }, get tavernReady() { return tavernReady; }, get built() { return built; },
   get afterG() { return afterG; }, get yardG() { return yardG; }, get wareG() { return wareG; }, get indoor() { return indoor; }, get speaker() { return speaker; }, get third() { return third; },
   clamp: (x, z) => clampPos(x, z), groundYAt: (x, z) => groundY(x, z), fz: (x, z, p) => fz(x, z, p), onSpit: (x, z) => onSpit(x, z),

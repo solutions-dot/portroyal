@@ -14,7 +14,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    hiding from a lantern, the horn game, and the fight as a set piece seen from the watch rock.
    Layout of this file: setup, state and controls, people and places, interface, saving, talking, chapters, the horn, each chapter's scenes, the loop, test views. */
 import * as THREE from 'three';
-import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -292,9 +292,9 @@ const POSTER = __DEV__ && /[?&]shot=poster/.test(location.search);   /* the menu
 function bubbleTick(now) {
   const show = state.started && !busy && !frozen && $('card').hidden && !POSTER && !DIR.on && !HORN.on;
   for (const n of P_() ? P_().people : []) { const m = n.mark; if (!m) continue; if (!show || !n.m || !n.m.visible) { m.visible = false; continue; } const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
+    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = showTalkMark(wantsTalk(n), near === n) && d < 40; }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !busy) activate(near); }); }
-  const on = show && near && !near.go; TB.el.hidden = !on; if (!on) return;
+  const on = show && near && !near.go && showTalkBubble(wantsTalk(near)); TB.el.hidden = !on; if (!on) return;
   TB.v.set(near.x, headTop(near) + NEAR_GAP, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
   if (TB.el.dataset.label !== near.who) { TB.el.dataset.label = near.who; TB.el.innerHTML = TALK_SVG + '<span class="who">' + near.who + '</span>'; TB.el.setAttribute('aria-label', near.label); }

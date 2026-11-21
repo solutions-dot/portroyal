@@ -9,7 +9,7 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import * as THREE from 'three';
-import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { hudTidy } from '../../../engine/hud.js';
 import { createAmbient, ambientTest } from '../../../engine/ambient.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
@@ -305,9 +305,9 @@ const headTop = (n) => { const y = n.m ? realHeadTop(n.m) : null; return y !== n
 function bubbleTick(now) {
   const show = state.started && !busy && !frozen && !DIR.on && $('card').hidden;
   for (const n of SC ? SC.people : []) { const m = n.mark; if (!m) continue; if (!show || !n.m.visible) { m.visible = false; continue; } const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
+    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = showTalkMark(wantsTalk(n), near === n) && d < 40; }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !busy) activate(near); }); }
-  const on = show && near && !near.go; TB.el.hidden = !on; if (!on) return;
+  const on = show && near && !near.go && showTalkBubble(wantsTalk(near)); TB.el.hidden = !on; if (!on) return;
   TB.v.set(near.x, headTop(near) + NEAR_GAP, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
   if (TB.el.dataset.label !== near.who) { TB.el.dataset.label = near.who; TB.el.innerHTML = TALK_SVG + '<span class="who"></span>'; TB.el.querySelector('.who').textContent = near.who; TB.el.setAttribute('aria-label', near.label); }

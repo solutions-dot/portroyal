@@ -46,7 +46,7 @@ Fictional characters say so on their journal page (owner rule 3).
 | Who | Real or fictional | Where | Model |
 |---|---|---|---|
 | Lewis Galdy (you) | real | everywhere | `galdy` (third-person view with V); walks with the shared `Walk` clip, paced to his speed |
-| Abba, tavern keeper | fictional (stands for the free Black people of Port Royal) | by the tavern door (-5.2, 0.9) | `abba` |
+| Abba, tavern keeper | fictional (stands for the free Black people of Port Royal) | by the tavern door (-5.2, 0.9); she stays outside | `abba` |
 | Old Ned, retired buccaneer | fictional | tavern table, sitting | `ned` |
 | Kofi, enslaved dockworker | fictional | carries crates from the stack at (19.4, 3.1) to the pier | `kofi` |
 | Symon Benning, pewterer | real family of pewterers | main street | `benning` |
@@ -285,3 +285,7 @@ Progress saves in the browser. Teachers can open all chapters from the Chapters 
 - Peter Dunn's reconstruction paintings and the UCLA Cultural Virtual Reality Lab model were used as visual reference only and are not included.
 - Animations come from Mixamo, and a few are made by hand (`tools/anims/handmade.py`, CC0). The source files are in `shared/anim-sources/` and are retargeted into one shared library (`shared/models/anims.js`); see `docs/PIPELINE.md`.
 - The script has not yet been reviewed by a historian. Please have it checked before classroom use.
+
+## Hannah, Abba's worker (21 November 2026)
+
+The owner: Abba cannot be at the tavern door and inside at the same time. Inside The Turtle, Hannah now serves the stew and asks the change question; Abba stays at the door. Hannah is fictional, and the journal's "Who lived here?" page says so. **Stand-in body (work to do):** she is Abba's body in her own colours (indigo bodice, ochre skirt, pale blue head wrap) and a taller, slimmer build, made in `main.js` the way Grace is. She needs her own body from the character tools (`tools/people/`, Blender) so her face differs from Abba's.

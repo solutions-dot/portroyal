@@ -12,7 +12,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    Layout of this file: setup; the Tube and its night (phases work, boots, intro, trickle, rise, dark, out, end); the world outside (places, people, talking);
    the interface (goal, journal, cards, puzzles, chapters, credits, reset); saving; the chapters and their scenes; the frame loop; dev test views and checks. */
 import * as THREE from 'three';
-import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -378,9 +378,9 @@ const markWanted = (n) => wantsTalk(n) || (n.see && stage === 51 && !ctr['seen_'
 function bubbleTick(now) {
   const P = P_(), show = MODE === 'world' && S.started && !locked() && !POSTER;
   for (const Q of Object.values(PL)) for (const n of Q.people) { const m = n.mark; if (!m) continue; if (!show || Q !== P || !n.m.visible || !markWanted(n)) { m.visible = false; continue; } const d = Math.hypot(S.x - n.x, S.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
+    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = showTalkMark(wantsTalk(n), near === n) && d < 40; }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.id = 'tbub'; TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !locked()) activate(near); }); }
-  const on = show && near && !near.go; if (!on) { TB.el.hidden = true; return; }
+  const on = show && near && !near.go && showTalkBubble(wantsTalk(near)); if (!on) { TB.el.hidden = true; return; }
   TB.v.set(near.x, headTop(near) + NEAR_GAP, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const x = (TB.v.x + 1) / 2 * innerWidth, y = (1 - TB.v.y) / 2 * innerHeight;
   if (now - TB.rectT > 0.25) { TB.rectT = now; TB.rects = ['goal', 'icons', 'clock', 'act', 'skip', 'exit', 'holdbox', 'toast', 'way', 'sub', 'pick', 'hint'].map($).filter((e) => e && !e.closest('[hidden]') && !(e.id === 'sub' && e.classList.contains('dim')) && e.textContent.trim() !== '' && getComputedStyle(e).visibility !== 'hidden').map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0); }

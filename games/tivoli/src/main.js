@@ -26,9 +26,9 @@ import { buildStreet, streetPlace } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, after as talkAfter, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage, hasSave, saveProgress, openChapters, closeChapters, openJournal, closeJournal, closeCredits, panelOpen, eraseAll, flushToasts, saveData, loadData, isUnlocked } from './story.js';
 import { CHAPTERS, JOURNAL } from './content.js';
-import { headTop, markAt, NEAR_GAP } from '../../../engine/marks.js';
+import { headTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';
 import { walkRoute } from '../../../engine/placement.js';
-import { hideIntro, WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget, talkedNow, orderNow } from './ch1.js';
+import { hideIntro, WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget, talkedNow, orderNow, storyNeeds } from './ch1.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { lifeTest, lifeBodies, LIFE } from './life.js';   // dev only: ?test=ambient (LIFE: whose bodies the next chapter needs)
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
@@ -157,10 +157,10 @@ function bubbleTick(now) {
     if (!n.mark) { n.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); n.mark.renderOrder = 5; n.mark.visible = false; scene.add(n.mark); }
     const m = n.mark; if (!show || !n.body.visible) { m.visible = false; continue; }
     const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, markAt(topOf(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = Talk.near !== n && d < 40;
+    m.position.set(n.x, markAt(topOf(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = showTalkMark(storyNeeds(n.id), Talk.near === n) && d < 40;
   }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (Talk.near && !busy) talkStart(Talk.near); }); }
-  const on = show && Talk.near && !Talk.open; TB.el.hidden = !on; if (!on) return;
+  const on = show && Talk.near && !Talk.open && showTalkBubble(storyNeeds(Talk.near.id)); TB.el.hidden = !on; if (!on) return;
   TB.v.set(Talk.near.x, topOf(Talk.near) + NEAR_GAP, Talk.near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
   if (TB.el.dataset.label !== Talk.near.name) { TB.el.dataset.label = Talk.near.name; TB.el.innerHTML = TALK_SVG + '<span class="who">' + Talk.near.name + '</span>'; TB.el.setAttribute('aria-label', 'Talk to ' + Talk.near.name); }

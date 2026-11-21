@@ -108,6 +108,8 @@ function turnLimit(people, dt) {
     if (Math.abs(e) > lim) m.rotation.y = n._ry + Math.sign(e) * lim; n._ry = m.rotation.y; }
 }
 /* who you have talked to in this chapter, and the order of the people (for the test hooks and the save) */
+/* the one person the story needs now: the next in ORDER not yet talked to. Only they get a talk sign (engine/marks.js) */
+export const storyNeeds = (id) => CH.on && !CH.ended && ORDER.find((k) => !CH.talked[k]) === id;
 export const talkedNow = () => ORDER.filter((k) => CH.talked[k]), orderNow = () => ORDER.slice();
 /* dev only (?chapter=1 or 2, &at=talked): start the chapter; &at=end jumps to the end card */
 export function devSkip(what) { if (what === 'talked') for (const id of ORDER) CH.talked[id] = true; if (what === 'end') { for (const id of ORDER) CH.talked[id] = true; endChapter(); } }
