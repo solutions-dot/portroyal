@@ -21,8 +21,9 @@ import { auditHeld, auditCloth } from '../../../engine/audit.js';   /* used only
 import { skinProbe } from '../../../engine/skinprobe.js';   /* dev only: ?test=skin */
 import { wireChecks } from './checks.js';   /* dev only: ?test=audit, layout, walkers, life, all */
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';
-import { createAutoAct } from '../../../engine/autoact.js';
-const AUTO = createAutoAct();   /* the talk mark sits the same gap over the real head or hat in every game */
+import { placeActionButton } from '../../../engine/action-button.js';
+import { callBack } from '../../../engine/return-talk.js';
+placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
 import { batchStill } from '../../../engine/batch.js';   /* still scenery drawn in a few pieces (see still() below) */
@@ -957,7 +958,7 @@ function beginQuake() { hideCard(); rumble(); if (state.place !== 'out') setPlac
   npcShow(false); goalText = 'On a hot morning, walk to the harbour.'; showGoal(); toast('7 June 1692, late morning'); }
 function resetWorld(keepCalm = false) { if (!keepCalm) endSceneWarning(); hideQuakeSkip?.(); Q.abbaHit = Q.abbaTrip = false; if (abba) { delete abba.userData.seatAnchor; delete abba.userData.sits; } clearDebris(); if (abba && abba.userData.anim) { const st = abba.userData.anim.get('Scared'); if (st) st.stop(); } if (Q.abbaRun || (runA && runA.isRunning()) || (abba && abba.userData.anim && abba.userData.anim.cur !== idle)) { Q.abbaRun = false; if (runA) runA.stop(); const ac = abba.userData.anim; if (ac && ac.cur !== idle) { ac.cur.stop(); ac.cur = idle; ac.timer = 0; } idle.reset().setEffectiveWeight(1).play(); } Q.ruin = false; Q.shake = 0; Q.T = 0; sinkTown(0, 0); seaLevel = -0.35; moveSpeed = 2.7; eyeY = 1.62; scene.fog.color.copy(HAZE); scene.fog.near = 70; scene.fog.far = 900; sky.material.color.set(0xffffff); $('vig').style.opacity = 0;
   const m = shipsM.merchant, sl = shipsM.sloop; m.position.set(SHORE + 17.5, -0.35, -5.9); m.rotation.set(0, 0, 0); sl.position.set(SHORE + 17.5, -0.35, 4.9); sl.rotation.set(0, Math.PI, 0);
-  if (afterG) afterG.visible = false; if (yardG) yardG.visible = false; for (const p of streetProps) p.visible = true; npcShow(true); for (const o of townObjs) o.m.visible = true; shipsM.merchant.visible = shipsM.sloop.visible = true; Q.aTalk = false;
+  if (afterG) afterG.visible = false; if (yardG) yardG.visible = false; for (const p of streetProps) p.visible = true; npcShow(true); for (const o of townObjs) o.m.visible = true; shipsM.merchant.visible = shipsM.sloop.visible = true; Q.aTalk = false; Q.aCalled = false;
   if (Q.boat) Q.boat.visible = false; for (const d of Q.debris) d.visible = false; ABBA.x = -4.15; ABBA.z = -S + 1.45; abba.position.set(ABBA.x, 0.12, ABBA.z); abba.visible = true; if (Q.gain) Q.gain.gain.value = 0; }
 const BOAT_SEAT = 0.52;   /* where Abba sits in the rescue boat, in metres toward the bow from the middle */
 function buildSeaProps() { if (Q.boat) return; const wood = new THREE.MeshStandardMaterial({ map: plankTex([132, 106, 78], 6, 1, 1), roughness: 0.9, side: THREE.DoubleSide }), tim = new THREE.MeshStandardMaterial({ map: plankTex([110, 86, 60], 3, 1, 1), roughness: 0.9 });
@@ -1028,7 +1029,9 @@ function buildAfter() { if (afterG) return; afterG = new THREE.Group(); scene.ad
   cur = scene; }
 function placeHeath() { const m = people.heath; if (!m || !afterG || m.parent) return; grounded.push(m); m.position.set(HEATH.x, 0, HEATH.z); m.rotation.y = HEATH.ry; afterG.add(m); animate(m, 'Pray'); m.userData.ground = 0; }
 function afterDone() { return state.unlocked.includes('tentp') && state.unlocked.includes('kingston'); }
-function afterGoal() { goalText = !Q.aTalk ? 'Find Abba in the camp.' : afterDone() ? 'Go back to Abba.' : 'Look around: the big tent, and the edge of the water.'; showGoal(); }
+function afterGoal() { goalText = !Q.aTalk ? 'Find Abba in the camp.' : afterDone() ? 'Go back to Abba.' : 'Look around: the big tent, and the edge of the water.'; showGoal();
+  if (Q.aTalk && afterDone() && !Q.aCalled && !(__DEV__ && /[?&](auto|test|shot)=/.test(location.search))) { Q.aCalled = true;   /* you have looked around: Abba calls you over, no walking back (engine/return-talk.js) */
+    callBack({ still: () => Q.on && Q.phase === 'after' && state.place === 'after', clear: () => !busy && $('card').hidden && $('dialogue').hidden, talk: () => { state.yaw = Math.atan2(-(ABBA.x - state.x), -(ABBA.z - state.z)); state.pitch = 0; startConvo(AFTER2, stayOrGo); } }); } }
 function beginAfter() { cue('sad'); hideCard(); buildAfter(); buildSeaProps(); if (state.place !== 'out') setPlace('out'); resetWorld(); Q.on = true; Q.phase = 'after'; Q.ruin = true; sinkTown(0, 1); afterG.visible = true;
   const m = shipsM.merchant, sl = shipsM.sloop; m.position.set(SHORE + 19, -1.2, -7); m.rotation.set(0.42, 0.15, 0.05); sl.position.set(SHORE - 6, 0.5, 13); sl.rotation.set(-0.5, 2.2, 0.08);
   scene.fog.color.copy(DUST); scene.fog.near = 35; scene.fog.far = 420; sky.material.color.set(0xe2d8c2);
@@ -1216,7 +1219,6 @@ function frame(now, step) {
     const want = state.place === 'sea' ? Math.atan2(dx, dz) : d < 9 ? Math.max(-1.1, Math.min(1.1, Math.atan2(dx, dz))) : (state.place === 'in' ? 0 : 0.25); if (!Q.abbaRun) { const ea = want - abba.rotation.y; abba.rotation.y += ea * Math.min(1, dt * 3); const ac = abba.userData.anim; if (ac && CL.TurnLW && Math.abs(ea) > 0.8 && ac.cur === ac.base && abba.visible && !Q.on) ac.play(ea > 0 ? 'TurnLW' : 'TurnRW', true); }
     if (ring && ring.visible) { const s = 1 + (reduceMotion ? 0 : Math.sin(now / 420) * 0.08); ring.scale.set(s, s, s); }
     if (state.started) { current = null; let best = 1e9; if (!busy) for (const a of ACTIONS) { if (!!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const dd = Math.hypot(state.x - w[0], state.z - w[1]); if (a.exit && !exitReady(a.label, dd, a.r, performance.now() / 1000)) continue;   /* a way out waits until you have walked off its spot (engine/story.js) */ if (dd < a.r && dd < best) { best = dd; current = a; } }
-      AUTO.tick(dt, current && !isTalk(current) && !current.exit && storyWants(current) ? current : null, state.x, state.z, (a) => { if (!busy) a.go(); });   /* the story action happens when you reach it; exits keep their button (engine/autoact.js) */
       $('talk').hidden = !current || isTalk(current); if (current && !isTalk(current) && $('talk').dataset.label !== current.label) setActionButton(current);
       if (!state.unlocked.includes('harbour') && state.x < SHORE - 2) { unlock('harbour'); setGoal(); } }
     if (state.place === 'in' && fire && !reduceMotion) { const f = 0.85 + Math.sin(now / 90) * 0.08 + Math.sin(now / 37) * 0.07; fireLight.intensity = 16 * f; for (let i = 0; i < fire.userData.tongues.length; i++) { const tn = fire.userData.tongues[i], [w, h] = tn.userData.wh, a = now / 1000 * (5 + i * 0.9) + i * 1.7, k2 = 0.82 + 0.16 * Math.sin(a) + 0.1 * Math.sin(a * 2.3 + i); tn.scale.set(w * (1.05 - (k2 - 0.82) * 0.5), h * k2, w * (1.05 - (k2 - 0.82) * 0.5)); tn.rotation.z = Math.sin(a * 0.7) * 0.07; tn.rotation.y = Math.sin(a * 0.31) * 0.4; } for (let i = 0; i < flames.length; i++) { const k = 1.75 + Math.sin(now / 70 + i * 2.1) * 0.25; flames[i].scale.y = flames[i].geometry.type === 'SphereGeometry' ? k : 0.9 + (k - 1.75); } }

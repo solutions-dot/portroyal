@@ -3,7 +3,7 @@ import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
-import { goTo, tick as followTick } from '../../../engine/follow.js';   /* people sent somewhere walk the same way in every game */
+import { goTo, tick as followTick, stop as stopFollow } from '../../../engine/follow.js';   /* people sent somewhere walk the same way in every game */
 import { auditSeated, snapMeshes, auditRest } from '../../../engine/audit.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { buildShrine, castBust } from './shrine.js';
@@ -25,8 +25,9 @@ import { model, onLoadFail } from '../../../engine/loader.js';
 import { auditCloth } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
-import { createAutoAct } from '../../../engine/autoact.js';
-const AUTO = createAutoAct();
+import { placeActionButton } from '../../../engine/action-button.js';
+import { returningTalker, callBack, comeOver } from '../../../engine/return-talk.js';
+placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
 import { batchStill } from '../../../engine/batch.js';
@@ -441,7 +442,13 @@ const GOALS = { 0: 'Talk to the printer and the customer.', 1: 'Set the type for
 const TALK_TARGETS = { 70: ['guide', 'student'], 72: ['student'], 60: ['amyj'], 62: ['amyj'], 50: ['nurse', 'delegate', 'messenger'], 51: ['steward'], 53: ['garvey6'], 40: ['garvey5', 'clerk', 'engineer'], 42: ['garvey5'], 43: ['friend'], 30: ['pressman', 'garvey4'], 32: ['sailor'], 33: ['sailor', 'pressman'], 20: ['worker', 'woman', 'critic'], 21: ['garvey3'], 22: ['critic'], 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
 const NEXT_AFTER_TALK = { 70: 71, 72: 73, 60: 61, 62: 63, 50: 51, 51: 52, 53: 54, 40: 41, 42: 43, 43: 44, 30: 31, 32: 33, 33: 34, 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
 const wantsTalk = (n) => !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
-function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); refreshLife(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); if (!QUICK && s in CHAPTER_END) nextCard(CHAPTER_END[s], s); }
+function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); refreshLife(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); if (!QUICK && s in CHAPTER_END) nextCard(CHAPTER_END[s], s); callBackReturn(s); }
+/* the story's next talk is with someone you already talked to in this chapter: they call you, no walking back (engine/return-talk.js) */
+function callBackReturn(s) {
+  if (QUICK || s === 13) return;   /* 13: Marcus Garvey speaks to the hall from where he stands, so you go to listen */
+  const id = returningTalker(TALK_TARGETS, s, (i) => byId(i)?.who); if (!id) return;
+  callBack({ still: () => stage === s, clear: () => !busy && !fading && !panelsOpen() && $('card').hidden, talk: () => { const n = byId(id); if (!n || !n.m || !n.m.visible || n.talked) return; comeOver(n, { px: state.x, pz: state.z, goTo, talk: () => { if (stage !== s || busy) return; stopFollow(n); state.yaw = Math.atan2(-(n.x - state.x), -(n.z - state.z)); state.pitch = 0; startTalk(n); } }); } });   /* they walk up to you, then talk */
+}
 function onTalked() { const t = TALK_TARGETS[stage]; if (!t) return; if (t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); else setGoal(); }
 let goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) {
@@ -1605,7 +1612,6 @@ function update(dt, now) {
     state.yaw += e * k; state.pitch += (Math.atan2(hy - 0.22 - EYE, d) - state.pitch) * k; }
   near = null; if (state.started && !busy) { let best = 2.6; for (const n of PEOPLE) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < best) { best = d; near = n; } }
     for (const a of ACTIONS) { const ad = Math.hypot(state.x - a.x, state.z - a.z); if (a.exit && !exitReady(a.id, ad, a.r, performance.now() / 1000)) continue;   /* a way out waits until you have walked off its spot (engine/story.js) */ if (a.on() && ad < a.r) near = a; } }   /* standing at a thing to do beats a person nearby */
-  AUTO.tick(dt, near && near.go ? near : null, state.x, state.z, (a) => { if (!busy) activate(a); });   /* the story action happens when you reach it; exits keep their button (engine/autoact.js) */
   const talkBtn = $('talk'); talkBtn.hidden = !(near && near.go); if (near && near.go) talkBtn.textContent = near.label;   /* people get the bubble; things to do get this button */
   for (const mx of mixers) { const r = mx.getRoot(); if (r.visible && !r.userData.amb) mx.update(dt); } for (const n of PEOPLE) if (n.m && n.m.userData.anim && !n.m.userData.amb) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   for (const m of grounded) if (m.visible && !m.userData.amb) groundFeet(m);

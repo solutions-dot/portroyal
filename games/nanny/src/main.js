@@ -15,8 +15,9 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    Layout of this file: setup, state and controls, people and places, interface, saving, talking, chapters, the horn, each chapter's scenes, the loop, test views. */
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
-import { createAutoAct } from '../../../engine/autoact.js';
-const AUTO = createAutoAct();
+import { placeActionButton } from '../../../engine/action-button.js';
+import { returningTalker, callBack, comeOver } from '../../../engine/return-talk.js';
+placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -419,6 +420,13 @@ const ON = {}, TICKS = [];   /* ON[stage]: what happens when a stage begins. TIC
 function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const n of allPeople()) n.talked = false; saveGame(); refreshCast(); refreshGoal(); if (ON[s]) ON[s]();
   if (!QUICK && s in CHAPTER_END) nextCard(CHAPTER_END[s], s);
+  callBackReturn(s);
+}
+/* the story's next talk is with someone you already talked to in this chapter: they call you, no walking back (engine/return-talk.js) */
+function callBackReturn(s) {
+  if (QUICK || s === 14 || s === 40) return;   /* "at the top", "behind the rock": going there is the point, so these stay a walk */
+  const id = returningTalker(TALK_TARGETS, s, (i) => byId(i)?.who); if (!id) return;
+  callBack({ still: () => stage === s, clear: () => !busy && !frozen && !fading && !panelsOpen() && $('card').hidden, talk: () => { const n = byId(id); if (!n || !n.m || !n.m.visible || n.talked) return; comeOver(n, { px: state.x, pz: state.z, goTo, talk: () => { if (stage !== s || busy) return; stopFollow(n); state.yaw = Math.atan2(-(n.x - state.x), -(n.z - state.z)); state.pitch = 0; startTalk(n); } }); } });   /* they walk up to you, then talk */
 }
 function nextCard(i, s) {   /* a finished chapter: offer the next one after a pause on a clear screen, with no "Stay here" (engine/chapter-end.js) */
   const nx = CHAPTERS[i + 1]; if (!nx) return;
@@ -810,7 +818,6 @@ function update(dt, now) {
   lifeTick(P, dt);
   near = null; if (state.started && !busy && !frozen && !DIR.on && !HORN.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
-  AUTO.tick(dt, near && near.go ? near : null, state.x, state.z, (a) => { if (!busy && !frozen) activate(a); });   /* the story action happens when you reach it (engine/autoact.js) */
   for (const n of P.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   frameN++; for (const m of P.bodies) if (m.visible && !m.userData.amb) groundFeet(m);
   for (const n of P.npcs) if (n.fol && n.m.visible) groundFeet(n.m);   /* walkers on a slope: half a second pass closes most of the eased gap when the other foot lands, without a jump (?test=walkers) */   /* every frame: on a slope, every other frame shows as a bounce */

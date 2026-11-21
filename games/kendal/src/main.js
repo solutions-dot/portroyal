@@ -6,7 +6,7 @@ import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { man_suit: 2, man_work: 2, man_shirt: 2, man_elder: 2, woman57: 2, woman_long: 2, woman_elder: 2, girl: 2, boy: 2, girl_small: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
-import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
+import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive, goTo } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/kendal/src/main.js: Kendal 1957, The Excursion Train.
    The story of the Jamaica Railway, from the slow road before it to the Kendal train crash of 1 September 1957 and how it is remembered.
@@ -18,8 +18,9 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CL, loadClips, animate, groundFeet, isSeated, strideOf, WALKS } from '../../../engine/anim.js';
 import { createStory, createCarry, flowTest } from '../../../engine/story.js';   /* who moves the story, the hint arrow, the things you carry (docs/STANDARD.md, "Story flow") */
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
-import { createAutoAct } from '../../../engine/autoact.js';
-const AUTO = createAutoAct();
+import { placeActionButton } from '../../../engine/action-button.js';
+import { returningTalker, callBack, comeOver } from '../../../engine/return-talk.js';
+placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { createAmbient, ambientTest, onKeepOff } from '../../../engine/ambient.js';   /* background people who walk, chat, work and play (docs/STANDARD.md, "Ambient life") */
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, gullCry, chirp } from '../../../engine/audio.js';
@@ -511,6 +512,13 @@ function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const n of allPeople()) n.talked = false; syncing = true; STORY.enter(s); syncing = false; saveGame(); refreshGoal(); if (ON[s]) ON[s]();
   for (const P of Object.values(PL)) if (P.life) P.life.mood(MOOD(s));
   if (!QUICK && s in CHAPTER_END) nextCard(CHAPTER_END[s], s);
+  callBackReturn(s);
+}
+const TALK_STEPS = Object.fromEntries(Object.entries(STEPS).filter(([, st]) => st.needs && st.needs.talk).map(([k, st]) => [k, st.needs.talk]));   /* who the story needs to talk to, step by step */
+/* the story's next talk is with someone you already talked to in this chapter: they call you, no walking back (engine/return-talk.js) */
+function callBackReturn(s) {
+  if (QUICK) return; const id = returningTalker(TALK_STEPS, s, (i) => byId(i)?.who); if (!id) return;
+  callBack({ still: () => stage === s, clear: () => !busy && !frozen && !fading && !panelsOpen() && $('card').hidden && !DIR.on, talk: () => { const n = byId(id); if (!n || !n.m || !n.m.visible || n.talked) return; comeOver(n, { px: state.x, pz: state.z, goTo, talk: () => { if (stage !== s || busy) return; stopFollow(n); state.yaw = Math.atan2(-(n.x - state.x), -(n.z - state.z)); state.pitch = 0; startTalk(n); } }); } });   /* they walk up to you, then talk */
 }
 function nextCard(i, s) {   /* a finished chapter: offer the next one after a pause on a clear screen, with no "Stay here" (engine/chapter-end.js) */
   const nx = CHAPTERS[i + 1]; if (!nx) return;
@@ -858,7 +866,6 @@ function update(dt, now) {
     for (const n of P.people) if (n.amb && n.amb.held && n.m.visible && talkWith !== n) storyLifeTick(n, dt, { px: state.x, pz: state.z, talking: talkWith }, { head: false }); }   /* a background person held still for their own step (Lloyd on the platform) changes stance now and then; the ambient system turns the head */
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
-  AUTO.tick(dt, near && near.go ? near : null, state.x, state.z, (a) => { if (!busy && !frozen) activate(a); });   /* the story action happens when you reach it (engine/autoact.js) */
   const SW = { px: state.x, pz: state.z, talking: talkWith };
   for (const n of P.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); if (!POSTER) storyLifeTick(n, dt, SW); }   /* storylife.js: a change of stance now and then, and a head that looks about */
   const groundEveryone = (frameN++ & 1) === 0;

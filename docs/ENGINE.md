@@ -499,6 +499,10 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 `showTalkMark(needed, isNear)` and `showTalkBubble(needed)` decide who gets a talk sign in every game: only the person the story needs now (the game's `wantsTalk`, `STORY.marked`, Port Royal's goal-to-action map, Tivoli's `storyNeeds`). The mark gives way to the named talk bubble when you are near. Other people get no sign but still answer a tap.
 
-## Story actions on arrival (`engine/autoact.js`, 21 November 2026)
+## The action button (`engine/action-button.js`, 21 November 2026)
 
-`createAutoAct()` returns `tick(dt, action, x, z, run)`. Each frame a game passes the action in reach that may fire: one the story needs now, never an exit (`exit: true`) or one marked `manual: true`. It runs after `AUTO_DELAY` (0.35 s) standing in reach; then nothing more fires until the player has walked `AUTO_REARM` (0.6 m). It tracks actions by `id`, since some games build the nearby action afresh each frame. It also places `#talk.btn` (the button for doors and optional things) at 62% down the screen, centred. Wired in Port Royal (only the action the goal points to), Garvey, Kendal, Bog Walk, Nanny, Melissa, Eventide, Selassie and Windrush; Tivoli's walking chapters have no actions.
+`placeActionButton()` puts `#talk.btn` (the button for a thing to do) at 62% down the screen, centred. Every game calls it once. Actions still need the button: an auto-fire on arrival was tried the same day and taken out at the owner's request.
+
+## Returning people (`engine/return-talk.js`, 21 November 2026)
+
+`returningTalker(targets, stage, nameOf)` says when the story's next talk is with one person you already talked to in this chapter (by name, so the same person in a new spot counts). `callBack({ still, clear, talk })` waits for a clear screen, then `comeOver(n, { px, pz, goTo, talk })` walks them up to you with `engine/follow.js` `goTo` and starts the talk when they arrive; a game without `goTo` (Bog Walk, Eventide, Port Royal) starts it where they stand and turns your view to them. Test views (`QUICK`) skip it, so the autoplayers still walk.

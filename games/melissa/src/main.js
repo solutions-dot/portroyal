@@ -4,7 +4,7 @@ import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engin
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
-import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
+import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive, goTo } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/melissa/src/main.js: Melissa 2025, The Wind and the Morning After.
    The story of Hurricane Melissa, which struck Jamaica on 28 October 2025, told through a made-up family in a made-up village, with Hurricane Gilbert (1988) as the flashback.
@@ -12,8 +12,9 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    Layout of this file: setup, state and controls, people and places, interface, saving, chapters and stages, things to do, the storm, the loop, test views. */
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
-import { createAutoAct } from '../../../engine/autoact.js';
-const AUTO = createAutoAct();
+import { placeActionButton } from '../../../engine/action-button.js';
+import { returningTalker, callBack, comeOver } from '../../../engine/return-talk.js';
+placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -351,6 +352,12 @@ let hasLoaded = false;
 function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const n of allPeople()) n.talked = false; saveGame(); refreshGoal(); if (ON[s]) ON[s]();
   if (!QUICK && s in CHAPTER_END) nextCard(CHAPTER_END[s], s);
+  callBackReturn(s);
+}
+/* the story's next talk is with someone you already talked to in this chapter: they call you, no walking back (engine/return-talk.js) */
+function callBackReturn(s) {
+  if (QUICK) return; const id = returningTalker(TALK_TARGETS, s, (i) => byId(i)?.who); if (!id) return;
+  callBack({ still: () => stage === s, clear: () => !busy && !frozen && !fading && !panelsOpen() && $('card').hidden, talk: () => { const n = byId(id); if (!n || !n.m || !n.m.visible || n.talked) return; comeOver(n, { px: state.x, pz: state.z, goTo, talk: () => { if (stage !== s || busy) return; stopFollow(n); state.yaw = Math.atan2(-(n.x - state.x), -(n.z - state.z)); state.pitch = 0; startTalk(n); } }); } });   /* they walk up to you, then talk */
 }
 function nextCard(i, s) {   /* a finished chapter: offer the next one after a pause on a clear screen, with no "Stay here" (engine/chapter-end.js) */
   const nx = CHAPTERS[i + 1]; if (!nx) return;
@@ -698,7 +705,6 @@ function update(dt, now) {
   for (const n of P.npcs) npcTick(n, dt);
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
-  AUTO.tick(dt, near && near.go ? near : null, state.x, state.z, (a) => { if (!busy && !frozen) activate(a); });   /* the story action happens when you reach it (engine/autoact.js) */
   for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   if ((frameN++ & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
   if (P.tick) P.tick(dt, (now || 0) / 1000); lightTick(P, dt, (now || 0) / 1000); STORM.tick(dt, (now || 0) / 1000); if (P.sway) swayTick(P.sway, (now || 0) / 1000, WIND.k, WIND.dir);

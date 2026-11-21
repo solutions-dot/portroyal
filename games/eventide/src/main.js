@@ -10,8 +10,9 @@ import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engin
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
-import { createAutoAct } from '../../../engine/autoact.js';
-const AUTO = createAutoAct();
+import { placeActionButton } from '../../../engine/action-button.js';
+import { returningTalker, callBack } from '../../../engine/return-talk.js';
+placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
 import { hudTidy } from '../../../engine/hud.js';
 import { createAmbient, ambientTest } from '../../../engine/ambient.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
@@ -424,6 +425,12 @@ const ON = {};   /* ON[stage]: what happens when a stage begins */
 function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; if (SC) for (const n of SC.people) n.talked = false; saveGame(); refreshGoal(); if (ON[s]) ON[s]();
   if (!QUICK && s in CHAPTER_END) nextCard(CHAPTER_END[s], s);
+  callBackReturn(s);
+}
+/* the story's next talk is with someone you already talked to in this chapter: they call you, no walking back (engine/return-talk.js) */
+function callBackReturn(s) {
+  if (QUICK) return; const id = returningTalker(TALK_TARGETS, s, (i) => byId(i)?.who); if (!id) return;
+  callBack({ still: () => stage === s, clear: () => !busy && !frozen && !fading && !panelsOpen() && $('card').hidden && !DIR.on, talk: () => { const n = byId(id); if (!n || !n.m || !n.m.visible || n.talked) return; state.yaw = Math.atan2(-(n.x - state.x), -(n.z - state.z)); state.pitch = 0; startTalk(n); } });
 }
 function nextCard(i, s) {   /* a finished chapter: offer the next one after a pause on a clear screen, with no "Stay here" (engine/chapter-end.js) */
   const nx = CHAPTERS[i + 1]; if (!nx) return;
@@ -650,7 +657,6 @@ function update(dt, now) {
   for (const n of SC.people) if (!n.kid && n.m.visible && !n.walking) { const d = Math.hypot(state.x - n.x, state.z - n.z); if ((d < 3.4 && !DIR.on) || talkWith === n) { const want = Math.atan2(state.x - n.x, state.z - n.z); let e = want - n.m.rotation.y; e = Math.atan2(Math.sin(e), Math.cos(e)); n.m.rotation.y += e * Math.min(1, dt * 4); } }
   near = null; if (state.started && !busy && !frozen && !DIR.on) { let b = 2.6; for (const n of SC.people) { if (n.kid || !n.m.visible) continue; const d = Math.hypot(state.x - n.x, state.z - n.z); if (d < b) { b = d; near = n; } } for (const a of SC.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
-  AUTO.tick(dt, near && near.go ? near : null, state.x, state.z, (a) => { if (!busy && !frozen) activate(a); });   /* the story action happens when you reach it (engine/autoact.js) */
   if (SC.life) SC.life.tick(dt, { px: state.x, pz: state.z, story: SC.people.filter((n) => n.m.visible), talking: talkWith, view: { x: state.x, z: state.z, yaw: state.yaw } });   /* the crowd: engine/ambient.js moves, animates and grounds the people it owns */
   for (const n of SC.npcs) if (n.m.visible && n.ctl && !n.amb) {
     n.ctl.mx.update(dt);

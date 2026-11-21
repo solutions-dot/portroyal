@@ -13,8 +13,9 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    the interface (goal, journal, cards, puzzles, chapters, credits, reset); saving; the chapters and their scenes; the frame loop; dev test views and checks. */
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
-import { createAutoAct } from '../../../engine/autoact.js';
-const AUTO = createAutoAct();
+import { placeActionButton } from '../../../engine/action-button.js';
+import { returningTalker, callBack } from '../../../engine/return-talk.js';
+placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -562,6 +563,12 @@ const ON = {};
 function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const P of Object.values(PL)) for (const n of P.people) n.talked = false;
   const di = DONE.indexOf(s); if (di >= 0) doneCh[di] = true; saveGame(); refreshGoal(); if (ON[s]) ON[s]();
+  callBackReturn(s);
+}
+/* the story's next talk is with someone you already talked to in this chapter: they call you, no walking back (engine/return-talk.js) */
+function callBackReturn(s) {
+  if (QUICK) return; const id = returningTalker(TALK_TARGETS, s, (i) => byId(i)?.who); if (!id) return;
+  callBack({ still: () => stage === s, clear: () => !locked() && !fading && !panelsOpen(), talk: () => { const n = byId(id); if (!n || !n.m || !n.m.visible || n.talked) return; S.yaw = Math.atan2(-(n.x - S.x), -(n.z - S.z)); S.pitch = 0; startTalk(n); } });
 }
 let teacherMode=false;try{teacherMode=localStorage.getItem('bogwalk-teacher')==='1';}catch{}
 function chapterOpen(i) { return teacherMode || i === 0 || ((i === 1 || i === 2) ? doneCh[0] : doneCh[i - 1]); }   /* Zeke's story (1) is a side path: both it and the Tube (2) open after the station (0) */
@@ -790,7 +797,6 @@ function worldTick(dt, ft) {
   const P = P_(); if (!P) return;
   for (const n of P.npcs) npcTick(n, dt);
   near = null; if (S.started && !locked() && !RIDE.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(S.x - n.x, S.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(S.x - a.x, S.z - a.z) < a.r) near = a; }
-  AUTO.tick(dt, near && near.go ? near : null, S.x, S.z, (a) => { if (!locked()) activate(a); });   /* the story action happens when you reach it (engine/autoact.js) */
   const showAct = !!(near && near.go); if ($('act').hidden === showAct) $('act').hidden = !showAct; if (showAct && $('act').textContent !== near.label) $('act').textContent = near.label;
   for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); gripTick(n.m); }
   if ((frames & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);
