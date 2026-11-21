@@ -21,12 +21,14 @@ function body(off = { Hips: 12, Spine: -8, Neck: -23, LeftArm: 6, LeftHandIndex1
   for (const n of names) { const b = new THREE.Bone(); b.name = 'mixamorig' + n; B[n] = b; W[n] = tilt(rq(n), off[n] || 0); (parent[n] ? B[parent[n]] : arm).add(b); }
   for (const n of names) { const p = parent[n], pq = p ? W[p].clone().invert() : new THREE.Quaternion(), pp = p ? new THREE.Vector3(...pos[p]) : new THREE.Vector3();
     B[n].quaternion.copy(pq.clone().multiply(W[n])); B[n].position.copy(new THREE.Vector3(...pos[n]).sub(pp).applyQuaternion(pq)); }
+  /* the rest of a body's bones, so fitRig knows it for one of ours (it leaves a rig of a few bones alone): children of the hips, resting as the reference does */
+  const more = Object.keys(RIG_REST).filter((n) => !names.includes(n) && !/Hand(Thumb|Index|Middle|Ring|Pinky)[234]$/.test(n)).slice(0, 18), extra = more.map((n) => { const b = new THREE.Bone(); b.name = 'mixamorig' + n; b.quaternion.copy(W.Hips.clone().invert().multiply(rq(n))); B.Hips.add(b); return b; });
   root.updateMatrixWorld(true);
   const g = new THREE.BoxGeometry(0.4, 0.8, 0.3, 2, 4, 2); g.translate(0, 1.3, 0); const n = g.attributes.position.count, si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
   for (let i = 0; i < n; i++) { si[i * 4] = i % names.length; si[i * 4 + 1] = (i + 1) % names.length; sw[i * 4] = 0.7; sw[i * 4 + 1] = 0.3; }
   g.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
   const Q = new THREE.Matrix4(); if (squeeze) { Q.makeScale(2, 0.5, 3).setPosition(0.1, -0.2, 0.3); g.applyMatrix4(Q.clone().invert()); }
-  const bones = names.map((x) => B[x]), mesh = new THREE.SkinnedMesh(g, new THREE.MeshBasicMaterial());
+  const bones = [...names.map((x) => B[x]), ...extra], mesh = new THREE.SkinnedMesh(g, new THREE.MeshBasicMaterial());
   mesh.bind(new THREE.Skeleton(bones, bones.map((b) => b.matrixWorld.clone().invert().multiply(Q))), new THREE.Matrix4()); mesh.name = 'Skin'; root.add(mesh);
   return { root, B, mesh, names };
 }

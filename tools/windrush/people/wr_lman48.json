@@ -24,7 +24,8 @@
     ],
     "sleeve": 0.95,
     "collar": false,
-    "waistcoat": true
+    "waistcoat": true,
+    "vwaist": true
   },
   "colors": {
     "Shoes": [

@@ -37,6 +37,8 @@ The audit and what changed: `docs/reviews/people-20261121.md`. Left to do, in or
 - [ ] **A squarer shoulder on the fitted suit.** Its shoulder line follows the body's slope.
 - [ ] **A speck of trouser at the jacket's front hem in a stride** (the fitted suit; see `?test=cloth`).
 - [ ] **Eventide's own three bodies** (`tools/eventide/people.py`) still wear the old collars. Rebuild them with `era.py` recipes.
+- [ ] **A speck of skin at the shoulder seam of a round opening** on one small girl (`wr_kgirl48`, seen from the side). Look with `node tools/review/people-sheet.mjs windrush wr_kgirl48 views=neckside,neck34`.
+- [ ] **The girl bodies' stride.** `strideOf` in `engine/anim.js` measures every body's walking stride exactly (Kendal's `?test=walkers&tune` gives 1.000 for all of them) except `girl` and `girl_small`, whose real stride is about a quarter longer than the measure. Kendal corrects it in `STRIDE_K`; find the cause in the engine and take the correction out. Check the girls in Tivoli, Melissa and Eventide too.
 - [ ] **A turn collar and tie worn without a jacket** (`man_shirt`, `clerk1919`, `printer1907`, `steward1920`, two Windrush men) is still the generated collar. Take the collar and tie from the fitted suit instead.
 
 ## Character movement

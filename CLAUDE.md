@@ -58,6 +58,8 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 
 11. **Every game has the same navigation and controls** (owner, 19 Nov 2026), existing and new: the title buttons Start, Chapters, Exit; Exit to the right of the Journal button with an "are you sure" (`engine/exit.js`); no "Main Menu" anywhere; touch or key words in the controls tip (`engine/device.js`); tap a person to talk. Details in `docs/STANDARD.md`, "Navigation and controls"; `tests/controls.mjs` checks every game.
 
+12. **People stand straight and wear plain necklines** (owner, 21 November 2026). A stooped, leaning or crooked person is an engine fault, never a clothes or recipe fault: measure it with `node tools/review/posture-probe.mjs` and fix it in `engine/anim.js` (`docs/ENGINE.md`, "Every body keeps its own shape"). "Most just need a round opening for the garment": write `"collar": false` unless the period and the person need a collar, and give a man in a jacket the fitted suit (`docs/PIPELINE.md`, "Fitted garments"). Look at clothes from the front, three-quarter, side and back, standing, walking and seated, and in a pale colour as well as their own. A builder change is not done until the bodies are rebuilt and looked at in the game's stance. The audit behind this rule: `docs/reviews/people-20261121.md`.
+
 ## Quick commands
 
 ```bash

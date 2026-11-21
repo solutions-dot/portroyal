@@ -1,7 +1,7 @@
 /* Standing level (engine/anim.js levelStance, 21 November 2026). Run with npm test (tests/regressions.mjs imports this file).
    What is tested, on the real clip library: after clipFor(), every standing clip holds the hips and the spine level and facing the way the hips face
    (the average sideways tip and the average turn of each are under 1.5 degrees; before, Speech held the hips 10 degrees over and Talk1 the trunk 5 to 7),
-   bending forward and back is unchanged, and a walking clip is not touched. A new standing clip that leans is caught here. */
+   it does not lean forward or back on average either, and a walking clip is not touched. A new standing clip that leans is caught here. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -35,8 +35,8 @@ test('posture: every standing clip holds the hips and the spine level and facing
     m.forEach(([, turn, tip], k) => { assert.ok(Math.abs(tip) < 1.5, `${n}: ${TR[k]} tips ${tip.toFixed(1)} degrees to one side on average`); assert.ok(Math.abs(turn) < 1.5, `${n}: ${TR[k]} is turned ${turn.toFixed(1)} degrees on average`); }); }
   assert.ok(seen >= 15, 'the clip library has lost its standing clips');
 });
-test('posture: levelling leaves bending forward and back alone, and does not touch a walk', async () => {
-  await library(); const raw = lean(CL.Talk1), out = lean(clipFor('Talk1')); raw.forEach(([p], k) => assert.ok(Math.abs(p - out[k][0]) < 2.5, `Talk1 ${TR[k]} pitch changed from ${p.toFixed(1)} to ${out[k][0].toFixed(1)}`));
+test('posture: a standing clip does not lean forward or back on average, and a walk is not touched', async () => {
+  await library(); const raw = lean(CL.Talk1), out = lean(clipFor('Talk1')); out.forEach(([p], k) => assert.ok(Math.abs(p) < 1.5, `Talk1 ${TR[k]} leans ${p.toFixed(1)} degrees forward or back on average`));
   assert.ok(Math.abs(raw[0][2]) > 2 || Math.abs(raw[2][2]) > 2, 'Talk1 no longer leans in the library: update this test');
   const w0 = lean(CL.Walk), w1 = lean(clipFor('Walk')); w0.forEach(([, t, z], k) => { assert.ok(Math.abs(z - w1[k][2]) < 0.05); assert.ok(Math.abs(t - w1[k][1]) < 0.05); });
 });

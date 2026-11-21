@@ -9,7 +9,7 @@ import fs from 'fs';
 await MeshoptEncoder.ready; await MeshoptDecoder.ready; await MeshoptSimplifier.ready;
 const io = () => new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder });
 const A = process.argv.slice(2), opt = (k, d) => { const i = A.indexOf(k); return i >= 0 ? A[i + 1] : d; };
-const OUT = opt('--out', 'games/kendal/site/models'), MAX = +opt('--max', 32000), SMALL = 1300, WHOLE = /Collar|Lapels|Tie|Belt|Hat|Cap|Band|Sole|Wrap|Bonnet|Moustache|Puffs|Ribbons|Bun|Knot/   /* pieces that are never simplified */, LO = A.includes('--lo'), SRC = opt('--src', 'build/people'), CLOTH = /^(Shirt|Waistcoat|Jacket|JacketSkirt|Breeches|Skirt|Apron|Coat|CoatSkirt)$/, CLOTH_KEEP = +opt('--cloth', 0.36);   /* in a light copy the clothes keep this share of their triangles */
+const OUT = opt('--out', 'games/kendal/site/models'), MAX = +opt('--max', 32000), SMALL = 1300, WHOLE = /Collar|Lapels|Apron|Tie|Belt|Hat|Cap|Band|Sole|Wrap|Bonnet|Moustache|Puffs|Ribbons|Bun|Knot/   /* pieces that are never simplified */, LO = A.includes('--lo'), SRC = opt('--src', 'build/people'), CLOTH = /^(Shirt|Waistcoat|Jacket|JacketSkirt|Breeches|Skirt|Apron|Coat|CoatSkirt)$/, CLOTH_KEEP = +opt('--cloth', 0.36);   /* in a light copy the clothes keep this share of their triangles */
 const names = A.filter((a, i) => !a.startsWith('--') && !['--out', '--max', '--src', '--cloth', '--lomax'].includes(A[i - 1]));
 const eye = fs.readFileSync('shared/rig/eye_small.jpg');
 const tris = (doc) => { let t = 0; for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) t += (p.getIndices() ? p.getIndices().getCount() : p.getAttribute('POSITION').getCount()) / 3; return t | 0; };

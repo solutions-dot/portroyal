@@ -57,18 +57,19 @@ function posture(c, name) { const q = new THREE.Quaternion(), r = new THREE.Quat
    to one side, the chest tips back the other way and the trunk turns a few degrees, sometimes for the whole clip (Speech: hips 10 degrees on average; Talk1: the whole trunk 5
    to 7), sometimes for many seconds at a time (the plain Idle shifts from one leg to the other). On a body in a suit that reads as a crooked man, in every game. For every
    standing clip the hips and the three spine bones lose their average sideways tip and average turn, and what is left of the tip and turn (the weight shifts, the sway) is
-   kept at LEVEL of its size, so people stand level and face the way they are set, and still move. Bending forward and back is not touched. The neck loses only its average
+   kept at LEVEL of its size, so people stand level and face the way they are set, and still move. Their average lean forward or back comes out too (the plain Idle held
+   the chest 6 to 7 degrees back, which from the side read as a belly pushed forward); every bend forward and back round that average is kept whole. The neck loses only its average
    tip and keeps its own movement on top of the chest (a look to the side is meant); the head follows it. The legs keep the directions the clip gave them, so the feet stay
    where they were.
    tools/review/posture-probe.mjs prints the tip and turn of any body in any clip. */
 const TRUNK = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck'], LEGS = ['LeftUpLeg', 'RightUpLeg'], LEVEL = { tip: 0.35, turn: 0.5 };
 function levelStance(c) { if (globalThis.__noFit) return; const T = {}; for (const t of c.tracks) { const m = t.name.match(/^mixamorig:?(\w+)\.quaternion$/); if (m) T[m[1]] = t; } if (TRUNK.some((n) => !T[n])) return;
-  const rest = TRUNK.map((n) => new THREE.Quaternion().fromArray(RIG_REST[n])), inv = rest.map((r) => r.clone().invert()), q = new THREE.Quaternion(), e = new THREE.Euler(0, 0, 0, 'YXZ'), N = 48, mean = TRUNK.map(() => [0, 0]);
+  const rest = TRUNK.map((n) => new THREE.Quaternion().fromArray(RIG_REST[n])), inv = rest.map((r) => r.clone().invert()), q = new THREE.Quaternion(), e = new THREE.Euler(0, 0, 0, 'YXZ'), N = 48, mean = TRUNK.map(() => [0, 0, 0]);
   const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const lean = (t) => { const w = new THREE.Quaternion(), out = []; for (let k = 0; k < TRUNK.length; k++) { w.multiply(sampleQ(T[TRUNK[k]], t, q)); e.setFromQuaternion(q.copy(w).multiply(inv[k])); out.push([e.x, e.y, e.z]); } return out; };   /* each trunk bone against its rest: pitch, turn, tip */
-  for (let i = 0; i < N; i++) { const L = lean(c.duration * (i + 0.5) / N); for (let k = 0; k < TRUNK.length; k++) { mean[k][0] += wrap(L[k][1] - L[0][1]) / N; mean[k][1] += L[k][2] / N; } }
+  for (let i = 0; i < N; i++) { const L = lean(c.duration * (i + 0.5) / N); for (let k = 0; k < TRUNK.length; k++) { mean[k][0] += wrap(L[k][1] - L[0][1]) / N; mean[k][1] += L[k][2] / N; mean[k][2] += L[k][0] / N; } }
   const NK = TRUNK.length - 1, turnOf = (L, k) => k ? L[0][1] + (wrap(L[k][1] - L[0][1]) - mean[k][0]) * LEVEL.turn : L[0][1];
-  const level = (t) => lean(t).map(([x, y, z], k, L) => new THREE.Quaternion().setFromEuler(k < NK ? e.set(x, turnOf(L, k), (z - mean[k][1]) * LEVEL.tip) : e.set(x, turnOf(L, NK - 1) + wrap(y - L[NK - 1][1]), z - mean[k][1])).multiply(rest[k]));   /* the same bones, level, in the skeleton's space; the neck keeps its own turn and sway on the chest and loses only its average tip */
+  const level = (t) => lean(t).map(([x, y, z], k, L) => new THREE.Quaternion().setFromEuler(k < NK ? e.set(x - mean[k][2], turnOf(L, k), (z - mean[k][1]) * LEVEL.tip) : e.set(x, turnOf(L, NK - 1) + wrap(y - L[NK - 1][1]), z - mean[k][1])).multiply(rest[k]));   /* the same bones, level, in the skeleton's space; the neck keeps its own turn and sway on the chest and loses only its average tip */
   const a = new THREE.Quaternion(), vals = {};
   for (let k = 0; k < TRUNK.length; k++) { const tr = T[TRUNK[k]], v = new Float32Array(tr.values.length); for (let i = 0; i < tr.times.length; i++) { const W = level(tr.times[i]); (k ? a.copy(W[k - 1]).invert().multiply(W[k]) : a.copy(W[0])).normalize().toArray(v, i * 4); } vals[TRUNK[k]] = v; }
   for (const n of LEGS) { const tr = T[n]; if (!tr) continue; const v = new Float32Array(tr.values.length); for (let i = 0; i < tr.times.length; i++) { const t = tr.times[i]; a.copy(level(t)[0]).invert().multiply(sampleQ(T.Hips, t, q)).multiply(q.fromArray(tr.values, i * 4)).normalize().toArray(v, i * 4); } vals[n] = v; }
@@ -162,6 +163,7 @@ export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() :
 const STRIDES = new WeakMap(), _q = [0, 1, 2, 3].map(() => new THREE.Quaternion()), _qb = new THREE.Quaternion(), _p = new THREE.Vector3(), _m3 = new THREE.Matrix3(), _fw = new THREE.Vector3(), _wq = new THREE.Quaternion();
 function sampleQ(track, t, out) { const tm = track.times, v = track.values; let i = 1; while (i < tm.length - 1 && tm[i] < t) i++; const a = (t - tm[i - 1]) / ((tm[i] - tm[i - 1]) || 1); out.fromArray(v, (i - 1) * 4); _qb.fromArray(v, i * 4); return out.slerp(_qb, Math.max(0, Math.min(1, a))); }
 export function strideOf(m, clip) {
+  fitRig(m);   /* the joint offsets below must be the fitted ones: measured on a body that had not been animated yet, the stride came out wrong (79 cm for a woman) and her feet slid */
   let per = STRIDES.get(m); if (!per) STRIDES.set(m, per = {}); const key = clip.name + '|' + m.scale.y.toFixed(3); if (per[key] !== undefined) return per[key];
   const B = (n) => m.getObjectByName('mixamorig' + n), T = (n) => clip.tracks.find((t) => t.name === 'mixamorig' + n + '.quaternion'), hips = B('Hips'), tH = T('Hips'); if (!hips || !tH) return (per[key] = 0);
   m.updateMatrixWorld(true); _m3.setFromMatrix4(hips.parent.matrixWorld); _fw.set(0, 0, 1).applyQuaternion(m.getWorldQuaternion(_wq)).normalize();
@@ -178,8 +180,9 @@ export const LOW_SKIRT = /^(Kneel|Crawl|Pray)/;
 const LAP = new WeakMap(), SEAT = new WeakMap();   /* kept outside userData: a game that clones a body copies userData as plain data, and bone references there became empty objects */
 export function seatSkirt(m) {
   if (SEAT.has(m)) return SEAT.get(m);
-  const seat = [], stand = []; m.traverse((o) => { if (!o.isMesh) return; if (/^SkirtSeat/.test(o.name)) seat.push(o); else if (/^Skirt(_|\d|$)/.test(o.name)) stand.push(o); });
+  const seat = [], stand = [], aprons = { seat: [], stand: [] }; m.traverse((o) => { if (!o.isMesh) return; if (/^SkirtSeat/.test(o.name)) seat.push(o); else if (/^Skirt(_|\d|$)/.test(o.name)) stand.push(o); else if (o.visible && /^ApronSeat/.test(o.name)) aprons.seat.push(o); else if (o.visible && /^Apron(_|\d|$)/.test(o.name)) aprons.stand.push(o); });
   if (!seat.length) return (SEAT.set(m, null), null);
+  if (aprons.seat.length) { seat.push(...aprons.seat); stand.push(...aprons.stand); }   /* an apron worn over a skirt has a seated piece too (ApronSeat, cut from the seated skirt): it changes with the skirt. One the game has hidden stays hidden. */
   for (const o of seat) o.visible = false;
   { const S0 = { seat, stand, on: false }; SEAT.set(m, S0); return S0; }
 }
@@ -236,7 +239,8 @@ export function fitRig(m) { if (globalThis.__noFit) return false;
   /* each bone's rest rotation, read from an inverse bind matrix: true in any pose, and whatever box a packed piece was squeezed into (its columns are scaled, never skewed) */
   const rest = new Map(); for (const s of skels) s.bones.forEach((b, i) => { if (!b || rest.has(b) || !s.boneInverses[i]) return; const e = s.boneInverses[i].elements, c = [0, 4, 8].map((k) => new THREE.Vector3(e[k], e[k + 1], e[k + 2]).normalize());
     rest.set(b, new THREE.Quaternion().setFromRotationMatrix(_fm.makeBasis(c[0], c[1], c[2])).invert()); });
-  const name = (b) => b.name.replace(/^mixamorig:?/, ''), hq = rest.get(hips); if (!hq || 2 * Math.acos(Math.min(1, Math.abs(hq.dot(_fq.fromArray(RIG_REST.Hips))))) > 0.7) { (fitRig.unknown || (fitRig.unknown = [])).push(m.name || '?'); return false; }
+  const name = (b) => b.name.replace(/^mixamorig:?/, ''), hq = rest.get(hips); let known = 0; for (const b of rest.keys()) if (DRIVEN(name(b))) known++; if (known < 20) return false;   /* not one of our bodies (a test rig, a prop with a few bones): leave it as it is */
+  if (!hq || 2 * Math.acos(Math.min(1, Math.abs(hq.dot(_fq.fromArray(RIG_REST.Hips))))) > 0.7) { (fitRig.unknown || (fitRig.unknown = [])).push(m.name || '?'); return false; }
   const K = new Map(); for (const [b, q] of rest) { const n = name(b); if (DRIVEN(n)) K.set(b, new THREE.Quaternion().fromArray(RIG_REST[n]).invert().multiply(q)); }   /* K: from the body's own rest axes to the reference's */
   hips.traverse((b) => { if (!b.isBone) return; const kp = K.get(b.parent), k = K.get(b); if (kp) { b.position.applyQuaternion(kp); b.quaternion.premultiply(kp); } if (k) b.quaternion.multiply(_fq.copy(k).invert()); });
   for (const s of skels) s.boneInverses = s.boneInverses.map((inv, i) => { const k = K.get(s.bones[i]); return k ? new THREE.Matrix4().makeRotationFromQuaternion(k).multiply(inv) : inv; });   /* a new list each: clones made earlier share the old one, and are fitted on their own */

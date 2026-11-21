@@ -20,7 +20,8 @@
     "hat": [],
     "trousers": true,
     "waistcoat": true,
-    "recede": 0.4
+    "recede": 0.4,
+    "vwaist": true
   },
   "colors": {
     "Skin": [
