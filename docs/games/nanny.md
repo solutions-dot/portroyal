@@ -175,7 +175,7 @@ Real people in the game: Nanny appears and never speaks. Quao, Cudjoe, Stoddart 
 ## Look and feel: what is a guess
 
 - **The huts.** No drawing or description of Nanny Town's houses survives. Ours have woven-stick walls and thatch.
-- **Clothes.** One line survives about a Leeward captain in 1738: loose drawers to the knee, a small round hat, no shirt. Nothing on Windward dress, women or children. Ours are plain cloth in earth colours and indigo. The soldiers wear red coats and round felt hats; cocked hats would be right for the 1730s.
+- **Clothes.** One line survives about a Leeward captain in 1738: loose drawers to the knee, a small round hat, no shirt. The Maroon men's shirts have a plain rounded opening with no band or collar (`"collar": false` in their recipes; owner, 21 November 2026): nothing describes Windward Maroon shirts, the one description has none, and a loose open neck suits the heat. A shirt of the period was usually gathered into a narrow neckband (Port Royal's working men wear one), so a band would not be wrong, only unrecorded here. The militia and redcoats keep their neck stocks. Nothing on Windward dress, women or children. Ours are plain cloth in earth colours and indigo. The soldiers wear red coats and round felt hats; cocked hats would be right for the 1730s.
 - **The layout of every place.** The town on a shoulder with one narrow path and a back trail, the watch rock, the knoll for the guns ("a small eminence, commanding the huts" in Edwards), the new town by a river.
 - **The horn calls.** All six are fictional. The real calls belong to the Maroons.
 - **The estate.** A general picture. It is not a real estate.

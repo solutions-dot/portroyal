@@ -200,10 +200,14 @@ sleeve=G.get('sleeve',0.86)
 cuts_sleeve=lambda t:[(armcut(t,1)[0],armcut(t,1)[1],lambda c:c.x>SX*0.8 and (OLD or side_arm(c) is not None)),(armcut(t,-1)[0],armcut(t,-1)[1],lambda c:c.x<-SX*0.8 and (OLD or side_arm(c) is not None))]
 CK=G.get('collar')
 if CK: CK='stand' if CK is True and P.get('era',1915)<1925 and not G.get('softcollar') else ('turn' if CK is True else CK)
+if OLD and not CK and 'collar' in G and not G.get('bands'): CK='plain'      # "collar": false on an old shirt: a plain rounded opening, no band (Nanny Town's Maroon men, 21 November 2026)
 if OLD and not CK and not G.get('bands') and not (G.get('coat') and G.get('coatsleeves',True)): CK='band'      # a 1690 shirt worn without a coat ends in a narrow neckband, open at the throat: it is built like the later collars, so its edge is clean and no skin shows under it
 FLAT=CK in ('camp','round')      # the flat collars of the 1950s: 'camp' is an open pointed collar over a V neck (men's sports shirts, women's blouses), 'round' a flat round collar on a close neckline
 VD=G.get('vdepth',0.13 if G.get('woman') else 0.115)*s; VZ=NECK-VD; VK=G.get('vslope',2.1)      # the V of a camp collar: its lowest point, and how steep its sides are
 NCUT=NECK-(0.004 if G.get('highneck') else (0.014 if CK and CK not in ('open','camp') else 0.035))*s-(0.06*s if G.get('coat') and G.get('coatsleeves',True) else 0)
+def shoulder_off(c,base):      # later eras: across the top of the shoulders a waistcoat or a jacket lies close (about 1 cm), as cloth does there; the fixed offset meant for the body
+    # below the chest stood the waistcoat 1.6 cm off the shirt there and the jacket on top of it, so the jacket's shoulders rose above the base of the neck like padding (owner, 21 November 2026)
+    k=sstep(SH.z-0.03*s,SH.z+0.035*s,c.z)*(1-sstep(SX*1.05,SX*1.25,abs(c.x))); return base+(0.010-base)*k
 def sleeve_tube(r0,r1,cuff=None,blend=False):
     def f(v):
         c=v.co
@@ -283,12 +287,18 @@ if G.get('breeches'):
 if G.get('waistcoat'):
     wcol=NECK-(0.075 if FLAT else 0.02)*s      # under a flat collar the waistcoat's neckline lies lower, so the collar's leaf lies over it   Only the front opening: cut straight across at this height, the waistcoat lost both shoulders and looked unfinished (owner, 17 November 2026, approved); its shoulders reach the neck as a real waistcoat's do.
     WVZ,WVK=(wcol-0.17*s,1.1) if OLD else (NECK-0.20*s,(wcol-NECK+0.20*s)/(0.085*s))      # the V's point and how steep its sides are: later eras meet at the top button, about a hand below the collarbone, in two straight edges that open to about a hand's width at the top
-    parts.append(('waistcoat',piece('Waistcoat','helper-tights',lambda c:c.z>HIP+0.03 and abs(c.x)<SX*0.9,lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Waistcoat',post=lambda bm:(drape_front(bm),smooth_edge(bm)),
+    parts.append(('waistcoat',piece('Waistcoat','helper-tights',lambda c:c.z>HIP+0.03 and abs(c.x)<SX*0.9,(lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022) if OLD else (lambda c:shoulder_off(c,0.03 if abs(c.x)>SX*0.8 else 0.022)),'Waistcoat',post=lambda bm:(drape_front(bm),smooth_edge(bm)),
         cuts=[((0,0,NECK-0.02*s),(0,0,1),None)]+([((0,0,WVZ),Vector((-WVK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,WVZ),Vector((WVK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if G.get('vwaist') else [((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)])+[((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)])))
+def jacket_seen(c):      # what of the shirt can be seen under a jacket: the front in its V, the collar's foot round the neck, the cuffs (used to trim the shirt, and to fit the jacket over only that)
+    if c.z>NECK-(0.06 if (c.y<0 or OLD) else 0.026)*s and (OLD or math.hypot(c.x,c.y-NJ.y)<0.13*s): return True      # later eras: only round the neck (across the whole width, the band ran out over the tops of the shirt's sleeves and stood out under the jacket's shoulders like padding: owner, 21 November 2026)
+    if c.y<0 and abs(c.x)<0.13*s and c.z>NECK-0.30*s: return True
+    t=side_arm(c); return t is not None and t>G.get('jacketsleeve',0.9)-0.14
+def jacket_waistcoat_seen(c):      # and of a waistcoat under a jacket, only the wedge in the jacket's V and a narrow margin round it
+    _vz=NECK-0.012*s-0.20*s; return not (c.y>0.0 or abs(c.x)>max(0.0,c.z-_vz)/1.5+0.015*s or c.z<_vz-0.05*s)
 if G.get('jacket'):   # a plain suit jacket: waist-length hem, sleeves to the wrist, a V opening over the waistcoat
     jcol=NECK-0.012*s; jcs=G.get('jacketsleeve',0.9)
     vz=jcol-0.20*s   # the V opening: two angled cuts, one each side of the middle, so only a narrow wedge is removed and the shoulders stay covered
-    parts.append(('jacket',piece('Jacket','helper-tights',lambda c:c.z>HIP+0.03 and arm_ok(c,jcs),lambda c:0.022 if abs(c.x)>SX*0.8 else 0.017,'Jacket',shape=sleeve_tube(0.054,0.045) if OLD else sleeve_tube(0.050,0.040,(jcs-0.02,0.036)),post=lambda bm:(drape_front(bm),smooth_edge(bm)),
+    parts.append(('jacket',piece('Jacket','helper-tights',lambda c:c.z>HIP+0.03 and arm_ok(c,jcs),(lambda c:0.022 if abs(c.x)>SX*0.8 else 0.017) if OLD else (lambda c:shoulder_off(c,0.016 if abs(c.x)>SX*0.8 else 0.017)),'Jacket',shape=sleeve_tube(0.054,0.045) if OLD else sleeve_tube(0.046,0.039,(jcs-0.02,0.036)),      # later eras: a suit sleeve has about 1.5 cm of ease over the arm (2.2 cm on a 5 cm tube puffed the sleeve heads into domes)post=lambda bm:(drape_front(bm),smooth_edge(bm)),
         cuts=[((0,0,jcol),(0,0,1),None),((0,0,vz),Vector((-1.5,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,vz),Vector((1.5,0,1)).normalized(),lambda c:c.y<0 and c.x<0)]+cuts_sleeve(jcs))))
 SKB=ANK+0.07+G.get('hem',0)*(KNEE-ANK-0.07)      # the skirt's hem: hem 0 is the ankle, 1 the knee
 if G.get('jacket'):
@@ -641,8 +651,13 @@ if not OLD:
     _lay=_sh+([_tr(_P['breeches'])] if 'breeches' in _P else [])
     if 'waistcoat' in _P: clear_layer(_P['waistcoat'],_skin+_lay,0.008)
     _lay2=_lay+([_tr(_P['waistcoat'])] if 'waistcoat' in _P else [])
+    def _tr_sel(o,sel):      # a tree of only the faces of o that sel keeps
+        b=bmesh.new(); b.from_mesh(o.data); bmesh.ops.delete(b,geom=[f for f in b.faces if not sel(f.calc_center_median())],context='FACES'); b.normal_update(); t_=BVHTree.FromBMesh(b); b.free(); return t_
+    if not OLD and 'jacket' in _P:      # the jacket is fitted over what stays under it: the shirt and the waistcoat are trimmed to what can be seen (below), so fitting it over their whole sleeves and backs only pushed it out
+        _lay3=([_tr_sel(_P['shirt'],jacket_seen)] if 'shirt' in _P else [])+([_tr(_P['breeches'])] if 'breeches' in _P else [])+([_tr_sel(_P['waistcoat'],jacket_waistcoat_seen)] if 'waistcoat' in _P else [])
+    else: _lay3=_lay2
     for _k in ('jacket','jacketskirt'):
-        if _k in _P: clear_layer(_P[_k],_skin+_lay2,0.005)
+        if _k in _P: clear_layer(_P[_k],_skin+(_lay3 if _k=='jacket' else _lay2),0.005)
     def recut(o,planes,sel):
         # cut again on the finished shape: the ease, the clearance and the smoothing bend an edge that was cut early, so a V came out as a wavy U. A plane cut made now is straight
         bm=bmesh.new(); bm.from_mesh(o.data)
@@ -807,56 +822,10 @@ def ring_weights(o,n,m,iters=8,flat=False):
             if w>0.002: (vg.get('mixamorig:'+k) or vg.new(name='mixamorig:'+k)).add([v.index],w,'REPLACE')
 def on_shirt(p,off):      # the nearest point of the shirt to p, lifted off the cloth by `off`
     loc,nrm,_i,_d=SHT.find_nearest(p); return loc+nrm*off
-if FLAT:
-    # A flat collar that lies on the shirt. Each row runs from the seam at the neckline out to the collar's edge. 'camp': the leaf carries on down each side of the V and ends in a long point
-    # that angles outward and down (a notch where it meets the front edge); it stands a little at the nape. 'round': a flat band with rounded ends that meet at the throat.
-    bm=bmesh.new(); rows=[]; LW=G.get('leaf',(0.066 if CK=='camp' else 0.062) if G.get('woman') else 0.088)*s; camp=CK=='camp'
-    # a round collar's two ends nearly meet at the throat (a0): with a wider gap the blouse's neckline showed between them as a notch
-    xw=(VD-0.012*s)/VK; a0=0.62 if camp else 0.05; nn=14 if OLD else 28; nv=6 if camp else 0      # a later round collar has twice the rows: with 14 a side its edge showed as steps
-    def neck_row(a,wk=1.0):
-        f=0.5+0.5*math.cos(a); back=(1-f)**1.2; S=collar_pt(a,NECK+0.004,NECK-0.030*s if camp else NECK-0.012*s,0.010); D=Vector((math.sin(a),-math.cos(a),0)); w=LW*((0.72+0.28*f) if camp else 1.0)*wk      # a round collar keeps its width all round: narrower at the back, it left the slope of the shoulders showing beside it
-        stand=(0.006*s*back if camp else 0.003*s)      # a camp collar lies nearly flat at the nape too: standing 14 mm with its edge lifted 15 mm, its back rose like a fin over the shoulders when the back curved (16 November 2026)
-        # the stand rises straight from the seam: set back from it, the two rows crossed at the nape and the cloth folded into teeth
-        base=on_shirt(S,0.004); top=base+Vector((0,0,max(stand,0.002)))+D*0.001; mid=on_shirt(S+D*w*0.5+Vector((0,0,-w*0.25)),0.007 if camp else 0.006); out=on_shirt(S+D*w*0.9+Vector((0,0,-w*0.55)),0.009 if camp else 0.007)      # the outer edge of the leaf lifts a little, so light and shadow draw the collar even when it is cut from the shirt's own cloth
-        return [base,top,mid,out]
-    def v_row(t,sx):      # down the edge of the V: t 0 at its top corner, 1 at the notch
-        x=sx*xw*(1-0.62*t); z=VZ+VK*abs(x)-0.002; S=Vector((x,shirt_front(z,x)-0.004,z)); D=Vector((sx*0.86,0,-0.5)); w=LW*(1.0+0.12*t)
-        base=on_shirt(S,0.004); mid=on_shirt(S+D*w*0.5,0.008); out=on_shirt(S+D*w,0.010)
-        return [base,base.lerp(mid,0.3)+Vector((0,-0.002,0)),mid,out]
-    side=[]
-    for k in range(nn+1): side.append(math.pi-(math.pi-a0)*k/nn)
-    R=[neck_row(a,1.0 if camp or k<nn-4 else (0.92 if k==nn-4 else 0.80 if k==nn-3 else 0.62 if k==nn-2 else (0.40 if k==nn-1 else 0.12))) for k,a in enumerate(side)]            # the wearer's one side, nape to front
-    Lr=[neck_row(-a,1.0 if camp or k<nn-4 else (0.92 if k==nn-4 else 0.80 if k==nn-3 else 0.62 if k==nn-2 else (0.40 if k==nn-1 else 0.12))) for k,a in enumerate(side)]
-    rows=[r for r in reversed([v_row((i+1)/nv,1) for i in range(nv)])]+[r for r in reversed(R)][:-1]+[Lr[0]]+Lr[1:]+[v_row((i+1)/nv,-1) for i in range(nv)] if camp else [r for r in reversed(R)][:-1]+Lr
-    if not OLD:      # laying each row on the nearest point of the shirt makes the leaf jump where the shirt's surface turns (the collarbone, the shoulder seam): the rows are smoothed along the collar, then lifted clear of the shirt again, so every edge runs clean
-        for _ in range(12):
-            for j in range(0,4):      # a round collar's seam row too: left on the nearest shirt point, it zigzagged at the throat
-                for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
-        for j,off in ((0,0.003),(1,0.0040),(2,0.0055 if camp else 0.0050),(3,0.0075 if camp else 0.0042)): ring_fix(rows,j,SHT,off,iters=3)      # a round collar's edge lies right on the blouse: 6 mm off it, the gap under the edge showed as a dark line and slivers on an older, rounder back (owner, 17 November 2026)      # a round collar lies close on the blouse: its edge lifted 1.5 cm stood up like a wing when the back curved      # the seam row too, on every flat collar: left on the nearest shirt point it showed as teeth at the nape
-        if not camp:
-            for j,off in ((2,0.006),(3,0.006)): ring_fix(rows,j,SKIN,off,iters=1)
-        if True:
-            for _ in range(3):      # a round collar lies on the blouse: its leaf is laid back onto the cloth after the smoothing, which left it standing off a sloping shoulder with a gap under it
-                for i in range(len(rows)):
-                    for j,off in (((1,0.0040),(2,0.0050),(3,0.0042)) if not camp else ((2,0.0045),(3,0.0035))): rows[i][j]=on_shirt(rows[i][j],off)      # 4 to 5 mm over the blouse: closer, the blouse came through the collar in patches; it moves with the blouse, so the gap never opens      # a camp collar too (its leaf curled off the back of the shoulder); its stand row keeps its little rise at the nape
-                for j in (2,3):
-                    for i in range(1,len(rows)-1): rows[i][j]=(rows[i-1][j]+rows[i][j]*2+rows[i+1][j])/4
-            for i in range(len(rows)):      # and the last word is the blouse's surface: smoothing a curve over a rounded shoulder pulled the collar's edge inside the blouse
-                for j,off in (((1,0.0040),(2,0.0050),(3,0.0042)) if not camp else ((2,0.0045),(3,0.0035))): rows[i][j]=on_shirt(rows[i][j],off)      # and clear of the skin: at the top of the shoulder the skin rose above the shirt and came up through the collar
-    if not camp and not OLD and G.get('yoke',0 if CK=='round' else 1):      # (not under a round collar: its yoke crumpled the collar's ends at the throat, 17 November 2026) a yoke under the seam, down onto the skin beneath the shirt, so no skin shows between the collar and the neck
-        for row in rows:
-            q=row[0]; loc,nrm,_i,_d=SKIN.find_nearest(q-Vector((0,0,0.018*s))); row.insert(0,(loc+nrm*0.002) if loc is not None else q-Vector((0,0,0.018*s)))
-        ring_fix(rows,0,SKIN,0.002,SHT,0.002)
-    if not OLD:      # the collar's outer edge turns under onto the cloth beneath, so its underside never shows as a dark sliver at the shoulder (owner, 17 November 2026)
-        for row in rows:
-            q=row[-1]; d=(q-row[-2]); d=d.normalized() if d.length>1e-6 else Vector((0,0,-1)); loc,nrm,_i,_dd=SHT.find_nearest(q+d*0.003)
-            if loc is not None: row.append(loc-nrm*0.0012)
-    quadstrip(bm,[[bm.verts.new(q) for q in row] for row in rows]); _co=soft('Collar',bm,'Collar',only=('Spine2','Neck','LeftShoulder','RightShoulder'),src=ON('shirt'))
-    if not OLD: ring_weights(_co,len(rows),len(rows[0]),flat=True)
-    if not OLD and G.get('collarshirt',1) and PART.get('shirt'):      # a round collar lies flat on the blouse: it takes the blouse's own weights under it (smoothed at the shoulder now), so in every pose it moves exactly as the cloth beneath and its edge cannot stand off the shoulder as dark slivers (17 November 2026)
-        _md=_co.modifiers.new('wtc','DATA_TRANSFER'); _md.object=PART['shirt']; _md.use_vert_data=True; _md.data_types_verts={'VGROUP_WEIGHTS'}; _md.vert_mapping='POLYINTERP_NEAREST'; _md.layers_vgroup_select_src='ALL'; _md.layers_vgroup_select_dst='NAME'
-        with ov(_co): bpy.ops.object.modifier_move_to_index(modifier='wtc',index=0); bpy.ops.object.modifier_apply(modifier='wtc')
-if CK and not FLAT:
+NW_SEAMLESS=False; NW_PLACKET_TOP=None
+if CK in ('stand','turn','open','camp','round','band','plain') and PART.get('shirt') and 'SKIN' in globals():      # later eras: collars and ties are built by neckwear.py, attached to the shirt (21 November 2026: the old code here had grown into a stack of patches and the collars came out jagged)
+    _nwp=os.path.join(os.path.dirname(os.path.abspath(__file__)),'neckwear.py'); exec(compile(open(_nwp).read(),_nwp,'exec'))
+elif CK:      # the 1690 neckband
     # a shirt collar built round the neck itself: a band that stands up from the shirt's neck opening and, for a turn-down collar, a leaf folded over it that ends in two points at the front
     bm=bmesh.new(); seg=32; gap={'stand':0.05,'turn':0.07,'open':0.42,'band':0.16}[CK]; rows=[]; hs=(0.046 if CK=='stand' else (0.014 if CK=='band' else 0.034))*s
     for k in range(seg+1):
@@ -896,57 +865,8 @@ if CK and not FLAT:
     _cb=bmesh.new(); _cb.from_mesh(_co.data); _cb.normal_update(); _fl=[f for f in _cb.faces if f.normal.dot(Vector((cz(f).x,cz(f).y-NJ.y,0)))<0]      # every face of the band and its folded leaf looks outward from the neck: the automatic normals of a strip that folds back on itself flipped some faces, which drew as grey blocks on the collar (owner, 17 November 2026)
     if _fl: bmesh.ops.reverse_faces(_cb,faces=_fl)
     _cb.to_mesh(_co.data); _cb.free(); _co.data.update()
-if G.get('tie')=='four':         # "tie": "four" in a recipe: a four-in-hand knot and a blade in one piece. No recipe asks for it yet, so every body builds as before; the owner sees sheets first (17 November 2026). The collar is not changed.
-    # (owner, 17 November 2026: the tie collars looked awful, then still ragged.) As the knot is worn: it fills the space between the collar points, its top
-    # at the top of the closed collar band, a little longer than wide and narrowing to the bottom, rounded across the front; under it the blade pinches into
-    # a dimple and then widens, rounded across, to about 7 cm (1910s to 1950s ties were 2 to 3 inches wide) and its point.
-    stand=CK=='stand'; hsz=(0.046 if stand else 0.034)*s
-    bandF=min(collar_pt(0,NECK-0.004,NECK-0.004-0.008*s,0.016).y,collar_pt(0,NECK-0.004+hsz,NECK-0.012*s+hsz,0.007).y)      # the front of the closed band
-    zt=(collar_base(0)+0.008*s) if stand else (NECK-0.012*s+hsz-0.008*s-0.012*s); KH=(0.036 if stand else 0.040)*s; zb=zt-KH      # (the turn collar's knot sits 12 mm lower than in the first try: its top stood above the fold of main's collar)
-    yback=(NJ.y-rad_out(zt,0.0)-0.002) if stand else bandF-0.0015
-    bm=bmesh.new(); NR=9; NA=13; rings=[]
-    for t in range(NR):
-        v=t/(NR-1); z=zt-KH*v; hw=((0.0160-0.0075*v**1.2) if stand else (0.0195-0.0100*v**1.2))*s      # under a tall stand collar a narrower knot (wider, it flared out like a cap)
-        dd=(0.011+0.005*math.sin(math.pi*min(1,v*1.1)))*(1-0.75*max(0,(v-0.7)/0.3))      # half width and depth: full at the top, narrowing down, deepest a third of the way down (this setting had been swallowed by the comment before it)
-        if t==0: hw*=0.94; dd*=0.8      # the top edge tucks in under the band
-        yb=min(yback,shirt_front(z)-0.003) if z<collar_base(0) else yback; ring=[]
-        for k in range(NA):
-            u=-1+2*k/(NA-1); bulge=math.cos(u*math.pi/2)**0.6      # rounded across the front
-            ring.append(bm.verts.new((u*hw+0.0012*s*(1-abs(u))*(1 if v>0.5 else 0),yb-dd*bulge-0.001,z)))
-        for k in range(NA-2,0,-1):      # its back, flat against the band
-            u=-1+2*k/(NA-1); ring.append(bm.verts.new((u*hw*0.92,yb,z)))
-        rings.append(ring)
-    m=len(rings[0])
-    for a,b in zip(rings,rings[1:]):
-        for k in range(m): bm.faces.new([a[k],a[(k+1)%m],b[(k+1)%m],b[k]])
-    bm.faces.new(list(reversed(rings[0]))); bm.faces.new(rings[-1])
-    # the blade: 7 points across, rounded; it starts inside the knot, pinches into the dimple just below it, then widens to its point
-    L=(0.30 if not (G.get('waistcoat') or G.get('jacket')) else 0.24)*s; n=22; z0=zb+0.010*s; ZS=[]; WS=[]; YS=[]; DS=[]; FLOOR=[]
-    for t in range(n+1):
-        f=t/n; z=z0-(L+0.010*s)*f
-        w=((0.010+0.007*min(1,f/0.10)) if f<0.10 else (0.017+0.020*(f-0.10)/0.80))*s if f<0.9 else 0.035*s*(1-f)/0.1+0.002      # narrow in the dimple, then wider to 7 cm
-        sf=min(shirt_front(z,-w),shirt_front(z),shirt_front(z,w))-0.006      # clear of the shirt across the blade's whole width
-        yk=yback-0.006; tz=max(0.0,min(1.0,(z-(zb-0.024*s))/(0.020*s)))      # inside the knot, then easing down onto the shirt over 2 cm
-        ZS.append(z); WS.append(w); FLOOR.append(sf); YS.append(sf+(min(sf,yk)-sf)*tz); DS.append(0.0018*math.sin(math.pi*min(1,f/0.10)) if f<0.10 else 0.0)
-    for _ in range(12):      # a tie is stiff cloth: it lies straight across a dip in the shirt instead of following it (following it bent the blade into a kink under the knot)
-        YS=[YS[0]]+[min(YS[k],(YS[k-1]+YS[k+1])/2) for k in range(1,n)]+[YS[n]]
-    rows=[]
-    for z,w,y,dimple in zip(ZS,WS,YS,DS):
-        rows.append([bm.verts.new(((-1+2*k/6)*w,y-0.0035*math.cos((-1+2*k/6)*math.pi/2)+dimple*(1-abs(-1+2*k/6))*1.4,z)) for k in range(7)])
-    quadstrip(bm,rows)
-    bmesh.ops.recalc_face_normals(bm,faces=bm.faces[:])
-    soft('Tie',bm,'Tie',only=('Spine2','Spine1','Spine','Neck'),src=ON('shirt'))
-elif G.get('tie'):         # a tie: a knot in the collar's opening and a blade that lies on the shirt, wider toward its tip
-    bm=bmesh.new(); zk=collar_base(0)+0.016*s; n=8; L=(0.30 if not (G.get('waistcoat') or G.get('jacket')) else 0.24)*s; rows=[]
-    for t in range(n+1):
-        f=t/n; z=zk-0.014*s-L*f; w=(0.013+0.022*f)*s if f<0.9 else 0.035*s*(1-f)/0.1+0.002; y=shirt_front(z)-0.007
-        rows.append([bm.verts.new((-w,y,z)),bm.verts.new((0,y-0.004,z)),bm.verts.new((w,y,z))])
-    quadstrip(bm,rows)
-    zq=zk-0.010*s; yk=min(shirt_front(zq-0.01*s),NJ.y-rad_out(zq,0.0)-0.008)-0.004; kv=[bm.verts.new((dx*s*0.72,yk+dy*0.7,zq+dz*s*0.72)) for dx,dy,dz in ((-0.019,0.004,0.012),(0.019,0.004,0.012),(0.012,0.004,-0.018),(-0.012,0.004,-0.018),(-0.012,-0.008,0.010),(0.012,-0.008,0.010),(0.008,-0.008,-0.014),(-0.008,-0.008,-0.014))]
-    for q in ((4,5,6,7),(0,4,7,3),(5,1,2,6),(7,6,2,3),(0,1,5,4),(3,2,1,0)): bm.faces.new([kv[i] for i in q])      # (its depth is taken from the front of the neck too: above the shirt's neckline the shirt ray missed the front and found the back, and the knot sat behind the neck, showing as a dark frame at the nape) a closed knot (open at the back, its inside drew as a dark frame seen through the back of the collar)
-    soft('Tie',bm,'Tie',only=('Spine2','Spine1','Spine','Neck'),src=ON('shirt'))
 if G.get('buttons',not G.get('woman') and not OLD) and not G.get('coat'):      # the shirt's front band and its buttons
-    bm=bmesh.new(); z1=(VZ-0.004*s) if CK=='camp' else collar_base(0)-0.012*s; z0=WAIST+0.01
+    bm=bmesh.new(); z1=NW_PLACKET_TOP if NW_PLACKET_TOP is not None else ((VZ-0.004*s) if CK=='camp' else collar_base(0)-0.012*s); z0=WAIST+0.01
     if G.get('skirt') and G.get('belt'): z0=max(z0,HIP+(0.118 if G.get('sash') else 0.092))      # the band stops where the belt or sash covers it, so it never lies on top of them
     n=10 if OLD else 24; rows=[]
     for t in range(n+1):
@@ -1459,13 +1379,9 @@ if G.get('skirt') and not OLD and G.get('seatskirt',True):      # a second skirt
                 if w>0.001: (ss.vertex_groups.get(k) or ss.vertex_groups.new(name=k)).add([v.index],w,'REPLACE')
 if G.get('jacket'):      # under a jacket only the shirt's front, collar zone and cuffs can be seen: cut the rest away, so nothing can poke through the jacket and the body is lighter
     o=PART['shirt']; bm=bmesh.new(); bm.from_mesh(o.data)
-    def seen(c):
-        if c.z>NECK-(0.06 if (c.y<0 or OLD) else 0.026)*s: return True      # later eras: round the back and sides of the neck only a narrow ring of shirt (the collar's foot) lies under the jacket
-        if c.y<0 and abs(c.x)<0.13*s and c.z>NECK-0.30*s: return True
-        t=side_arm(c); return t is not None and t>G.get('jacketsleeve',0.9)-0.14
-    bmesh.ops.delete(bm,geom=[f for f in bm.faces if not seen(cz(f))],context='FACES'); bm.to_mesh(o.data); bm.free()
+    bmesh.ops.delete(bm,geom=[f for f in bm.faces if not jacket_seen(cz(f))],context='FACES'); bm.to_mesh(o.data); bm.free()
     if PART.get('waistcoat'):      # and of the waistcoat only its front shows, through the jacket's opening: the sides and the back are cut away, so they cannot come through the jacket
-        o=PART['waistcoat']; bm=bmesh.new(); bm.from_mesh(o.data); _vz=NECK-0.012*s-0.20*s; bmesh.ops.delete(bm,geom=[f for f in bm.faces if cz(f).y>0.0 or abs(cz(f).x)>max(0.0,cz(f).z-_vz)/1.5+0.015*s or cz(f).z<_vz-0.05*s],context='FACES'); bm.to_mesh(o.data); bm.free()      # only the wedge in the jacket's V and a narrow margin round it: elsewhere a light copy's simplified jacket let it through
+        o=PART['waistcoat']; bm=bmesh.new(); bm.from_mesh(o.data); bmesh.ops.delete(bm,geom=[f for f in bm.faces if not jacket_waistcoat_seen(cz(f))],context='FACES'); bm.to_mesh(o.data); bm.free()      # only the wedge in the jacket's V and a narrow margin round it: elsewhere a light copy's simplified jacket let it through
 if G.get('coat') and OLD:      # under a coat only the shirt's cuffs can be seen (all of each sleeve, when the coat has none): cut the rest away
     o=PART['shirt']; bm=bmesh.new(); bm.from_mesh(o.data); _sl=G.get('coatsleeves',True); _cs=G.get('coatsleeve',0.82)
     def seen(c):
@@ -1494,7 +1410,8 @@ bm=bmesh.new(); bm.from_mesh(h.data); dl=bm.verts.layers.deform.verify(); gi=GI[
 cov_arm=max(sleeve, G.get('coatsleeve',0) if G.get('coat') and G.get('coatsleeves',True) else 0, G.get('jacketsleeve',0.9) if G.get('jacket') else 0)
 def hidden(c):
     if CK=='camp' and c.y<0 and c.z>VZ-0.03*s+VK*0.55*abs(c.x): return False      # the neck and a little chest show inside the V of a camp collar
-    if HIP+0.05<c.z<NECK-(0.008 if CK=='round' else 0.022 if (CK and CK not in ('open','camp')) or G.get('bands') else 0.07)*s and abs(c.x)<SX*0.8: return True   # with a collar, its yoke covers the skin right up to the collar's seam
+    if NW_SEAMLESS and HIP+0.05<c.z<SEAM_Z(nw_ang(c))-0.010 and abs(c.x)<SX*0.8: return True      # a collar sewn to the shirt (neckwear.py): the skin goes up to 1 cm under the seam, wherever the seam runs
+    if not NW_SEAMLESS and HIP+0.05<c.z<NECK-(0.008 if CK=='round' else 0.022 if (CK and CK not in ('open','camp')) or G.get('bands') else 0.07)*s and abs(c.x)<SX*0.8: return True   # with a collar, its yoke covers the skin right up to the collar's seam
     t=side_arm(c)
     if t is not None and 0.08<t<cov_arm-0.06 and abs(c.x)>SX*0.75: return True
     if OLD and G.get('breeches') and KNEE<c.z<HIP+0.05 and abs(c.x)<0.12: return True      # the cleft of the seat, between the two legs of the breeches: left bare, skin showed in flecks there
@@ -1552,7 +1469,7 @@ def covered(f):
         return True
     return False
 bmesh.ops.delete(bm,geom=[f for f in bm.faces if not all(v[dl].get(gi,0)>0 for v in f.verts) or hidden(cz(f)) or (_covs and covered(f))],context='FACES'); bm.to_mesh(h.data); bm.free()
-if ((FLAT and CK=='round') or not CK) and not OLD and PART.get('shirt'):      # (also a plain neckline with no collar, as Abba's shift) under a round collar the slope of the shoulders rose just above the shirt's neckline and showed in flecks beside the collar: pull that band of skin in a little (the neck itself is left alone)
+if not NW_SEAMLESS and ((FLAT and CK=='round') or not CK) and not OLD and PART.get('shirt'):      # (also a plain neckline with no collar, as Abba's shift) under a round collar the slope of the shoulders rose just above the shirt's neckline and showed in flecks beside the collar: pull that band of skin in a little (the neck itself is left alone)
     _nc,_nw,_nd=neck_ring(NECK+0.01); h.data.update()
     for v in h.data.vertices:
         x,y,z=v.co
@@ -1643,7 +1560,7 @@ def tuck_under_collar():
     # The same for a flat collar (round or camp): skin of the neck and shoulders lying under the collar's leaf, below its seam, is set 8 mm deeper and bound to the collar,
     # so it cannot come through at the nape when the head bows (it showed as a streak of skin across the back of the collar: owner, 17 November 2026).
     co=bpy.data.objects.get('Collar')
-    if co is None or not FLAT or not len(co.data.polygons): return
+    if co is None or not FLAT or NW_SEAMLESS or not len(co.data.polygons): return      # (not for a collar sewn to the shirt: neckwear.py)
     from mathutils.kdtree import KDTree
     b=bmesh.new(); b.from_mesh(co.data); b.normal_update(); bt=BVHTree.FromBMesh(b); top=[v.co.copy() for v in b.verts if v.is_boundary and v.co.z>NECK-0.02*s]; b.free()
     kt=KDTree(max(1,len(top)))
