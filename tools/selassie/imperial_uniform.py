@@ -5,9 +5,16 @@ braided gold cords. No photograph is embedded in the model.
 from mathutils import Matrix
 COL['Insignia']=srgb([180,151,81]);COL['Gorget']=srgb([157,41,36])
 # The uniform's fitted lapels replace the civilian suit's broad lapels.
+# (21 November 2026, owner: "this cannot be your finished model". With "outfit" in the recipe the tunic is the modelled jacket fitted to him
+# (tools/people/outfit.py): its own collar and lapels are kept, and the hand-made lapel inserts and centre buttons below are left out. Removing
+# the fitted lapels, as this script did for the generated jacket, tore the tunic open.)
+FITTED=bool(P.get('outfit'))
 old_lapels=bpy.data.objects.get('Lapels')
-if old_lapels:bpy.data.objects.remove(old_lapels,do_unlink=True)
-tunic=PART['jacket'];jt=tree_of(tunic);st=tree_of(PART['shirt'])
+if old_lapels and not FITTED:bpy.data.objects.remove(old_lapels,do_unlink=True)
+tunic=PART['jacket'];st=tree_of(PART['shirt'])
+if FITTED and old_lapels:
+    _jb=bmesh.new();_jb.from_mesh(tunic.data);_jb.from_mesh(old_lapels.data);_jb.normal_update();jt=BVHTree.FromBMesh(_jb);_jb.free()
+else:jt=tree_of(tunic)
 def front(x,z,off=.006):
     origin=Vector((x,hy-.8,z));direction=Vector((0,1,0))
     hits=[t.ray_cast(origin,direction)[0] for t in (jt,st,tree)]
@@ -27,7 +34,7 @@ def patch(name,x,z,w,h,material,off=.007,slant=0):
 # The civilian suit template has a broad open V. This tunic has a much
 # narrower shirt opening, with khaki lapels reaching the neck on both sides.
 # Fit these inserts to the shirt surface before adding tabs or braid.
-for sx in [-1,1]:
+for sx in ([] if FITTED else [-1,1]):
     bm=bmesh.new();rows=[]
     for j in range(25):
         t=j/24;z=NECK-.205+t*.185;rise=z-(NECK-.212)
@@ -84,7 +91,7 @@ for i in range(3):
 for sx in [-1,1]:
     patch('Breast pocket',sx*.095,NECK-.24,.077,.024,'Jacket',.006)
     patch('Hip pocket',sx*.12,HIP-.035,.092,.035,'Jacket',.006)
-for i in range(4):
+for i in ([] if FITTED else range(4)):
     z=NECK-.18-i*.082;sphere('Tunic button',(0,front(0,z,.010),z),(.006,.006,.006),'Insignia','Spine2',tunic)
 # Broad brown waist belt over the jacket and diagonal shoulder strap.
 bm=bmesh.new();rows=[]
@@ -128,11 +135,18 @@ smooth_rows(o);paint(o)
 # Loose, braided aiguillettes hang forward from the right shoulder.
 for strand in range(3):
     bm=bmesh.new();rows=[]
+    # (21 November 2026: the cords lie on the chest in three neat loops from the right shoulder to the top button. They used to hang 5 to 8 cm off the
+    # chest as hair-thin lines, a tangle beside the body. Each cord is 5 mm thick, 8 mm off the cloth, and its line is evened out along its length.)
+    pts=[]
     for i in range(29):
-        t=i/28;x=-.16+.16*t;z=NECK-.055-(.23+strand*.035)*math.sin(t*math.pi*.9)
-        y=front(x,z,.012+.05*math.sin(t*math.pi));row=[]
+        t=i/28;x=-.15+.135*t;z=NECK-.06-(.10+strand*.03)*math.sin(t*math.pi)-.05*t
+        pts.append([x,front(x,z,.008),z])
+    for _ in range(6):
+        for i in range(1,28):pts[i][1]=min(pts[i][1],(pts[i-1][1]+pts[i+1][1])/2)
+    for x,y,z in pts:
+        row=[]
         for k in range(6):
-            a=k/6*math.pi*2;row.append(bm.verts.new((x+math.cos(a)*.0016,y+math.sin(a)*.0016,z)))
+            a=k/6*math.pi*2;row.append(bm.verts.new((x+math.cos(a)*.0025,y+math.sin(a)*.0025,z)))
         rows.append(row)
     quadstrip(bm,rows,close=True);o=soft('Aiguillette',bm,'Insignia',src=tunic);paint(o)
 # Khaki shoulder boards sit on the tops of the shoulders. Narrow gold edges
@@ -159,8 +173,8 @@ for sx in [-1,1]:
 for o in list(bpy.context.scene.objects):
     if o.type!='MESH':continue
     if o.name.startswith('Aiguillette'):
-        for v in o.data.vertices:v.co.y-=.035
+        for v in o.data.vertices:v.co.y-=(.004 if FITTED else .035)
     if o.name.startswith('Service star'):
         for v in o.data.vertices:v.co.y-=.003
     if o.name=='Shoulder strap':
-        for v in o.data.vertices:v.co.y-=.020
+        for v in o.data.vertices:v.co.y-=(.006 if FITTED else .020)
