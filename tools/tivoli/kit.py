@@ -458,4 +458,4 @@ for o in list(OB.values()):
 print('KIT', NAME, [o.name for o in made], 'TRIS', sum(len(p.vertices) - 2 for o in bpy.data.objects if o.type == 'MESH' for p in o.data.polygons))
 bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath('build/people/' + NAME + '_kit.blend'))
 bpy.context.scene['vertexColorSpace'] = 'linear'
-bpy.ops.export_scene.gltf(export_extras=True, filepath=OUT + NAME + '.glb', export_image_format='JPEG', export_apply=False, export_vertex_color='NAME', export_vertex_color_name='Col', export_skins=True, export_animations=False, export_rest_position_armature=False)
+bpy.ops.export_scene.gltf(export_extras=True, filepath=OUT + NAME + '.glb', export_image_format='JPEG', export_apply=False, export_vertex_color='NAME', export_vertex_color_name='Col', export_skins=True, export_animations=False, export_rest_position_armature=False, export_attributes=True)

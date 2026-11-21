@@ -1,4 +1,5 @@
-import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
+import { playChapterFade } from '../../../engine/cine.js';
+import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
@@ -23,7 +24,9 @@ import { createSea } from '../../../engine/sea.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { auditCloth } from '../../../engine/audit.js';
 import { skinProbe } from '../../../engine/skinprobe.js';
-import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { createAutoAct } from '../../../engine/autoact.js';
+const AUTO = createAutoAct();
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
 import { batchStill } from '../../../engine/batch.js';
@@ -438,7 +441,7 @@ const GOALS = { 0: 'Talk to the printer and the customer.', 1: 'Set the type for
 const TALK_TARGETS = { 70: ['guide', 'student'], 72: ['student'], 60: ['amyj'], 62: ['amyj'], 50: ['nurse', 'delegate', 'messenger'], 51: ['steward'], 53: ['garvey6'], 40: ['garvey5', 'clerk', 'engineer'], 42: ['garvey5'], 43: ['friend'], 30: ['pressman', 'garvey4'], 32: ['sailor'], 33: ['sailor', 'pressman'], 20: ['worker', 'woman', 'critic'], 21: ['garvey3'], 22: ['critic'], 0: ['printer', 'customer'], 2: ['printer'], 10: ['amy', 'garvey'], 12: ['elder', 'seller', 'youth'], 13: ['garvey'] };   /* who you must talk to at each stage */
 const NEXT_AFTER_TALK = { 70: 71, 72: 73, 60: 61, 62: 63, 50: 51, 51: 52, 53: 54, 40: 41, 42: 43, 43: 44, 30: 31, 32: 33, 33: 34, 20: 21, 21: 22, 22: 23, 0: 1, 2: 3, 10: 11, 12: 13, 13: 14 };
 const wantsTalk = (n) => !n.talked && (TALK_TARGETS[stage] || []).includes(n.id);
-function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); refreshLife(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); if (!QUICK && s in CHAPTER_END) setTimeout(() => nextCard(CHAPTER_END[s], s), 900); }
+function setStage(s) { stage = s; best = Math.max(best, s); for (const n of allPeople()) n.talked = false; saveGame(); setGoal(); if (s === 12) startArrivals(); refreshLife(); if (s === 33) chapterFade('Some weeks later', 'The press room, Harlem', arrangePress); if (!QUICK && s in CHAPTER_END) nextCard(CHAPTER_END[s], s); }
 function onTalked() { const t = TALK_TARGETS[stage]; if (!t) return; if (t.every((id) => byId(id).talked)) setStage(NEXT_AFTER_TALK[stage]); else setGoal(); }
 let goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) {
@@ -494,11 +497,11 @@ function resetChapter() {   /* the print shop again: people go home, the goal st
 
 /* ---------- chapters (only the first is built so far) ---------- */
 const CHAPTER_END = { 3: 0, 14: 1, 23: 2, 34: 3, 44: 4, 54: 5, 64: 6 };   /* the last stage of each chapter but the final one, and which chapter it ends */
-function nextCard(i, s, tries = 0) {   /* when a chapter is finished, offer the next one on screen, so nobody has to dig through Chapters */
-  if (stage !== s) return;   /* the player has moved on or restarted */
-  if (panelsOpen() || fading) { if (tries < 10) setTimeout(() => nextCard(i, s, tries + 1), 800); return; }   /* never take over a panel the player is reading: if it stays open, drop the prompt (Chapters still works) */
-  const nx = CHAPTERS[i + 1]; if (!nx || !nx.ready) return; uiSound('goal');
-  card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); nx.go(); } }, { t: 'Stay here', go: hideCard }]);
+function nextCard(i, s, now = false) {   /* when a chapter is finished, offer the next one on screen after a pause (engine/chapter-end.js); now: a test view, at once */
+  const nx = CHAPTERS[i + 1]; if (!nx || !nx.ready) return;
+  const show = () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); nx.go(); } }]); };
+  if (now) { if (stage === s) show(); return; }
+  offerNextChapter({ still: () => stage === s, clear: () => !panelsOpen() && !fading && $('card').hidden, show });
 }
 const CHAPTERS = [
   { year: 'About 1908', name: 'The print shop', ready: true, go: () => { if (!SHOP_PEOPLE.every((n) => n.m)) toast('Loading the print shop'); ensureShop().then(() => chapterFade('About 1908', 'A print shop in Kingston', resetChapter)); }, done: () => best >= 3 },
@@ -592,9 +595,9 @@ const POSTER = __DEV__ && /[?&]shot=poster/.test(location.search);   /* the menu
 function bubbleTick(now) {
   const show = state.started && !busy && $('card').hidden && !POSTER;
   for (const n of PEOPLE) { const m = n.mark; if (!m) continue; if (!show || !n.m || !n.m.visible) { m.visible = false; continue; } const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n; }
+    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = showTalkMark(wantsTalk(n), near === n); }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !busy) activate(near); }); }
-  const on = show && near && !near.go; TB.el.hidden = !on; if (!on) return;
+  const on = show && near && !near.go && showTalkBubble(wantsTalk(near)); TB.el.hidden = !on; if (!on) return;
   TB.v.set(near.x, headTop(near) + NEAR_GAP, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = Math.max(r.top + (1 - TB.v.y) / 2 * r.height, r.top + 196) + 'px';   /* never up under the Goal tab and the buttons, even when the head is above the top of the screen */
   if (TB.el.dataset.label !== near.label) { TB.el.dataset.label = near.label; TB.el.innerHTML = TALK_SVG + '<span class="who">' + near.who + '</span>'; TB.el.setAttribute('aria-label', near.label); }
@@ -1602,6 +1605,7 @@ function update(dt, now) {
     state.yaw += e * k; state.pitch += (Math.atan2(hy - 0.22 - EYE, d) - state.pitch) * k; }
   near = null; if (state.started && !busy) { let best = 2.6; for (const n of PEOPLE) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < best) { best = d; near = n; } }
     for (const a of ACTIONS) { const ad = Math.hypot(state.x - a.x, state.z - a.z); if (a.exit && !exitReady(a.id, ad, a.r, performance.now() / 1000)) continue;   /* a way out waits until you have walked off its spot (engine/story.js) */ if (a.on() && ad < a.r) near = a; } }   /* standing at a thing to do beats a person nearby */
+  AUTO.tick(dt, near && near.go ? near : null, state.x, state.z, (a) => { if (!busy) activate(a); });   /* the story action happens when you reach it; exits keep their button (engine/autoact.js) */
   const talkBtn = $('talk'); talkBtn.hidden = !(near && near.go); if (near && near.go) talkBtn.textContent = near.label;   /* people get the bubble; things to do get this button */
   for (const mx of mixers) { const r = mx.getRoot(); if (r.visible && !r.userData.amb) mx.update(dt); } for (const n of PEOPLE) if (n.m && n.m.userData.anim && !n.m.userData.amb) { n.m.userData.anim.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   for (const m of grounded) if (m.visible && !m.userData.amb) groundFeet(m);
@@ -1619,10 +1623,9 @@ function frame(t) {
 /* a chapter opens with a short establishing move: the view starts higher and further back, looking down over the place, and settles into your eyes.
    Walking or turning ends it at once. */
 const INTRO = { t: 9, dur: 2.6, x: 0, z: 0, yaw: 0 };
-let hideIntroSkip;
-function stopIntro() { INTRO.t = INTRO.dur; hideIntroSkip?.(); }
+function stopIntro() { INTRO.t = INTRO.dur; }   /* the camera move at a chapter start is part of the chapter, not a cinematic: no skip X (owner, 21 Nov 2026); walking or turning ends it */
 function introCam(dt) {
-  if (INTRO.t === 0) { hideIntroSkip = showCinematicSkip(stopIntro, { bottom: true }); INTRO.x = state.x; INTRO.z = state.z; INTRO.yaw = state.yaw; const B = curBounds; INTRO.room = 0; for (let d = 0.1; d <= 2.2; d += 0.1) { const x = state.x + Math.sin(state.yaw) * d, z = state.z + Math.cos(state.yaw) * d; if (x < B.x0 || x > B.x1 || z < B.z0 || z > B.z1 || curWalls.some((w) => x > w[0] - 0.2 && x < w[2] + 0.2 && z > w[1] - 0.2 && z < w[3] + 0.2)) break; INTRO.room = d; } }   /* how far back the view can start without leaving the room or entering furniture */
+  if (INTRO.t === 0) { INTRO.x = state.x; INTRO.z = state.z; INTRO.yaw = state.yaw; const B = curBounds; INTRO.room = 0; for (let d = 0.1; d <= 2.2; d += 0.1) { const x = state.x + Math.sin(state.yaw) * d, z = state.z + Math.cos(state.yaw) * d; if (x < B.x0 || x > B.x1 || z < B.z0 || z > B.z1 || curWalls.some((w) => x > w[0] - 0.2 && x < w[2] + 0.2 && z > w[1] - 0.2 && z < w[3] + 0.2)) break; INTRO.room = d; } }   /* how far back the view can start without leaving the room or entering furniture */
   if (Math.hypot(state.x - INTRO.x, state.z - INTRO.z) > 0.05 || Math.abs(state.yaw - INTRO.yaw) > 0.02) { stopIntro(); return; }
   INTRO.t += dt; const k = Math.min(1, INTRO.t / INTRO.dur), e = 1 - (1 - k) * (1 - k) * (1 - k), back = (1 - e) * INTRO.room;
   camera.position.set(state.x + Math.sin(state.yaw) * back, EYE + (1 - e) * Math.min(1.3, PLACES[place].sky ? 1.3 : 0.9), state.z + Math.cos(state.yaw) * back);
@@ -1688,7 +1691,7 @@ function devViews() {
     const put = (id, x, z, tx, tz) => { const n = byId(id); n.x = x; n.z = z; n.ry = faceToward(x, z, tx, tz); n.m.position.set(x, 0, z); n.m.rotation.y = n.ry; n.m.visible = true; };
     put('garvey3', 0, 0.45, -3.7, 0.5); put('worker', -1.3, 1.5, 0, 0.5); put('woman', -1.1, -0.6, 0, 0.5); byId('critic').m.visible = false;
     const t = setInterval(() => { if (CL.Talk2) { byId('garvey3').m.userData.anim.play('Talk2'); clearInterval(t); } }, 200); });
-  if (shot === 'nextcard') inStreet(23, -1.2, 2.3, 0.4, 0.05).then(() => nextCard(2, 23));
+  if (shot === 'nextcard') inStreet(23, -1.2, 2.3, 0.4, 0.05).then(() => nextCard(2, 23, true));
   const inLib = (st, x, z, yaw, pitch) => ensureLiberty().then(() => { stage = st; best = Math.max(best, st); enterPlace('liberty'); go(x, z, yaw, pitch); });
   if (shot === 'lib1') inLib(50, 0, 4.5, 0, 0.04);
   if (shot === 'lib2') inLib(50, -1.0, 1.0, -2.6, 0.02);
@@ -1777,7 +1780,7 @@ function devViews() {
         L('title: allgames=' + (!$('allgames').hidden) + ' chapters=' + (!$('tchap').hidden)); $('start').click(); L('started=' + state.started + ' place=' + place + ' goal="' + $('goal').textContent + '"');
         L('printer lines=' + await talkTo(SHOP_PEOPLE[0])); L('customer lines=' + await talkTo(SHOP_PEOPLE[1])); L('stage=' + stage);
         state.x = -1.9; state.z = -1.7; update(0.016); L('near=' + (near && near.label)); near.go(); typeIt(); L('typed, stage=' + stage + ' goal="' + $('goal').textContent + '"');
-        L('strike lines=' + await talkTo(SHOP_PEOPLE[0]) + ' choice=' + story.strike + ' stage=' + stage + ' pages=' + unlocked.join(',')); nextCard(0, 3); L('next card="' + $('ctitle').textContent + '" text="' + $('cbody').textContent + '" buttons=' + [...$('cbtns').children].map((b) => b.textContent).join('/') + ' shown=' + !$('card').hidden); hideCard();
+        L('strike lines=' + await talkTo(SHOP_PEOPLE[0]) + ' choice=' + story.strike + ' stage=' + stage + ' pages=' + unlocked.join(',')); nextCard(0, 3, true); L('next card="' + $('ctitle').textContent + '" text="' + $('cbody').textContent + '" buttons=' + [...$('cbtns').children].map((b) => b.textContent).join('/') + ' shown=' + !$('card').hidden); hideCard();
         $('jbtn').click(); L('journal tabs=' + $('jtabs').children.length + ' count=' + $('jcount').textContent + ' exit=' + !!$('exitbtn')); $('jchap').click();
         L('chapters items=' + $('chlist').children.length + ' playable=' + $('chlist').querySelectorAll('button:not(:disabled)').length); $('chclose').click();
         $('reset').click(); L('reset card="' + $('ctitle').textContent + '" buttons=' + [...$('cbtns').children].map((b) => b.textContent).join('/')); $('cbtns').children[0].click(); await sleep(50);

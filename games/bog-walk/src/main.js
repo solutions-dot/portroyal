@@ -1,5 +1,6 @@
-import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
+import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
+import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { renderFramed, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { grip, gripTick } from '../../../engine/grip.js';
 import { hudTidy } from '../../../engine/hud.js';
@@ -11,7 +12,9 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    Layout of this file: setup; the Tube and its night (phases work, boots, intro, trickle, rise, dark, out, end); the world outside (places, people, talking);
    the interface (goal, journal, cards, puzzles, chapters, credits, reset); saving; the chapters and their scenes; the frame loop; dev test views and checks. */
 import * as THREE from 'three';
-import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { createAutoAct } from '../../../engine/autoact.js';
+const AUTO = createAutoAct();
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -177,9 +180,9 @@ function startCh3(fromCh2) {   /* about 4 a.m.: a title on black, then the water
   if (!fromCh2) { resetNight(); for (const p of T.patches) T.setPatchClean(p, 1); N.scraped = T.patches.length; S.z = ZM - 6; S.yaw = 0; }
   setStage(40); N.wlT = 0.03;
   sceneWarning(card, {
-    title: 'The water', lines: ['The water rises in the dark. This scene may feel scary.'],
+    title: 'The water', what: 'The water rises in the dark.',
     watch: () => { hideCard(); startIntro([['The water', 'About 4 a.m.']], startTrickle); },
-    read: () => { hideCard(); N.skipped = true; showEnd(); },
+    read: () => { hideCard(); N.skipped = true; readWhatHappened(card, { what: ['About 4 a.m., water came into the Tube in the dark.', 'In the story, you get out as the sky goes grey. Many men are still in the pipe.'], go: () => { hideCard(); showEnd(); } }); },
   });
 }
 function startTrickle() {
@@ -204,7 +207,7 @@ function startOut(skipped) {
 function showEnd() { endSceneWarning();
   hideNightSkip?.(); N.q = [];
   setPhase('end'); setClock(''); bars(false); hideHud(true); captionOff(); unlock('water', true); setStage(41);
-  card('You are out', [N.skipped ? 'You skipped the dark part. In the story, you get out of the Tube as the sky goes grey.' : 'The air is cool. The sky is going grey.', 'Many men are still in the pipe.'],
+  card('You are out', ['The air is cool. The sky is going grey.', 'Many men are still in the pipe.'],
     [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(4); } }, { t: 'Play the water again', go: () => { hideCard(); beginChapter(3); } }]);
 }
 /* ---------- the way to the light: you start the night facing away from the manhole, so when the water comes the game turns you toward it, a cue tells you which way to turn, and the voices come from its direction ---------- */
@@ -377,9 +380,9 @@ const markWanted = (n) => wantsTalk(n) || (n.see && stage === 51 && !ctr['seen_'
 function bubbleTick(now) {
   const P = P_(), show = MODE === 'world' && S.started && !locked() && !POSTER;
   for (const Q of Object.values(PL)) for (const n of Q.people) { const m = n.mark; if (!m) continue; if (!show || Q !== P || !n.m.visible || !markWanted(n)) { m.visible = false; continue; } const d = Math.hypot(S.x - n.x, S.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
+    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = showTalkMark(wantsTalk(n), near === n) && d < 40; }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.id = 'tbub'; TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !locked()) activate(near); }); }
-  const on = show && near && !near.go; if (!on) { TB.el.hidden = true; return; }
+  const on = show && near && !near.go && showTalkBubble(wantsTalk(near)); if (!on) { TB.el.hidden = true; return; }
   TB.v.set(near.x, headTop(near) + NEAR_GAP, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const x = (TB.v.x + 1) / 2 * innerWidth, y = (1 - TB.v.y) / 2 * innerHeight;
   if (now - TB.rectT > 0.25) { TB.rectT = now; TB.rects = ['goal', 'icons', 'clock', 'act', 'skip', 'exit', 'holdbox', 'toast', 'way', 'sub', 'pick', 'hint'].map($).filter((e) => e && !e.closest('[hidden]') && !(e.id === 'sub' && e.classList.contains('dim')) && e.textContent.trim() !== '' && getComputedStyle(e).visibility !== 'hidden').map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0); }
@@ -419,14 +422,11 @@ function card(title, paras, btns, { col = false, credit = false } = {}) {
 function hideCard() { $('card').hidden = true; }
 /* a fade to black with a chapter title, the scene changed while it is dark, then a fade back */
 async function chapterFade(title, sub, fn) {
-  let applied = false, skipped = false;
-  const apply = () => { if (!applied) { applied = true; fn(); } };
-  const finish = (ms) => { captionOff(); fadeTo('#000', 0, ms); hideHud(false); fading = false; };
-  const hideSkip = showCinematicSkip(() => { skipped = true; apply(); finish(0); });
+  const finish = (ms) => { captionOff(); fadeTo('#000', 0, ms); hideHud(false); fading = false; };   /* no skip X on a chapter title card (engine/cine.js, playChapterFade) */
   fading = true; hideHud(true); fadeTo('#000', 1, 800);
-  await wait(0.9); if (skipped) return; apply(); caption(title, sub);
-  await wait(2.6); if (skipped) return; captionOff();
-  await wait(0.9); if (skipped) return; hideSkip(); finish(1200);
+  await wait(0.9); fn(); caption(title, sub);
+  await wait(2.6); captionOff();
+  await wait(0.9); finish(1200);
 }
 
 /* ---------- talking: one line at a time; "You" lines get their own colour; the x, Escape or a tap outside ends it ---------- */
@@ -621,7 +621,7 @@ function onTalked(n) {
   if (stage === 52) openSort(REPORT, () => convo(TALK.reporterDone(), () => setStage(53), byId('reporter')));
   if (stage === 53) run([[1.2, () => setStage(54)]]);
   if (stage === 62) openSort(WHY, () => { unlock('why'); setStage(63); });
-  if (stage === 63) openOrder('What came after?', AFTER, 'Tap the events in the order they happened.', () => setStage(64), { years: true });
+  if (stage === 63) openOrder('What happened next?', AFTER, 'Tap them in order, first to last.', () => setStage(64), { years: true });
 }
 
 /* ---------- chapter 0: the station on Sunday evening ---------- */
@@ -678,7 +678,9 @@ ON[23] = async () => {   /* the ride: on the front platform, down the street tow
   ON[23].a = ON[23].b = 0; if (!ok) return; bell(1); setWorld({}); RIDE.on = false; unlock('trams');
   fadeTo('#000', 1, 900); await wait(1.0); if (ep !== EP) return; hideHud(true); caption('The power for these trams came from Bog Walk.', 'Kingston, 1899'); await wait(3.6); if (ep !== EP) return; captionOff(); await wait(0.8); if (ep === EP) finish();
 };
-ON[24] = () => { card('Chapter 2 is finished', ['That was the first electric tram. Its power came from the Tube at Bog Walk.', 'Now, back to Sunday night, 1904.'], [{ t: 'Into the Tube', go: () => { hideCard(); beginChapter(2); } }, { t: 'Stay here', go: hideCard }]); };
+/* a finished chapter: the card waits for a clear screen and a short pause, and has no "Stay here" (engine/chapter-end.js) */
+const endOffer = (s, show) => offerNextChapter({ still: () => stage === s, clear: () => !fading && !frozen && PANELS.every((id) => $(id).hidden), show });
+ON[24] = () => endOffer(24, () => card('Chapter 2 is finished', ['That was the first electric tram. Its power came from the Tube at Bog Walk.', 'Now, back to Sunday night, 1904.'], [{ t: 'Into the Tube', go: () => { hideCard(); beginChapter(2); } }]));
 
 /* ---------- chapter 4: the morning after ---------- */
 ON[50] = () => { unlock('morning', true); card('The morning after', ['Of about 61 men in the Tube, 28 came out. 33 did not.', 'The words in this chapter are gentle. Nobody is shown hurt.'], [{ t: 'Go on', go: () => { hideCard(); refreshGoal(); } }]); };
@@ -695,13 +697,13 @@ ON[54] = async () => {   /* a whistle: the special train comes in at ten to twel
   if (!ok) return; whistle(0.6); say('', 'A special train came at ten to twelve. It brought coffins for the men.', 6000); await wait(6.2); if (ep !== EP) return;
   fadeTo('#000', 1, 1600); await wait(1.8); if (ep === EP) finish();
 };
-ON[55] = () => { card('Chapter 5 is finished', ['Next, the same place today.'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(5); } }, { t: 'Stay here', go: hideCard }]); };
+ON[55] = () => endOffer(55, () => card('Chapter 5 is finished', ['Next, the same place today.'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(5); } }]));
 
 /* ---------- chapter 5: the ruins today ---------- */
 function readBoard() {
   unlock('ruins'); card('The information board', ['The Gleaner, 28 June 1904:', '"Fearful Catastrophe At Bog Walk. Drowning Men Fight For Life. Sudden Rush of Water Causes Panic. 33 Able-Bodied Men Drowned In Water-Pipe. No Accurate Information as To Cause Of The Disaster."', 'In 1904, 33 men died here when water came into the pipe.'], [{ t: 'Close', go: () => { hideCard(); if (stage === 61) setStage(62); } }]);
 }
-ON[65] = () => { unlock('journey', true); unlock('why', true); cue('end'); run([[1.4, () => card('The end', ['In 1904, 33 men died in the Tube at Bog Walk. 28 got out.', 'Nobody could say for sure why the water came. We remember the men.', 'Thank you for playing. Your journey is in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true, credit: true })]]); };
+ON[65] = () => { unlock('journey', true); unlock('why', true); cue('end'); run([[1.4, () => card('The end', ['In 1904, 33 men died in the Tube at Bog Walk. 28 got out.', 'Nobody could say for sure why the water came. We remember the men.', 'Thank you for playing. Your journey is in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true })]]); };   /* no credit line on The end (owner, 21 Nov 2026): it is on the Credits page */
 
 /* ---------- movement: keys, touch (left half is a stick, right half looks) and mouse drag to look ---------- */
 const solids = T.solids;
@@ -788,6 +790,7 @@ function worldTick(dt, ft) {
   const P = P_(); if (!P) return;
   for (const n of P.npcs) npcTick(n, dt);
   near = null; if (S.started && !locked() && !RIDE.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(S.x - n.x, S.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(S.x - a.x, S.z - a.z) < a.r) near = a; }
+  AUTO.tick(dt, near && near.go ? near : null, S.x, S.z, (a) => { if (!locked()) activate(a); });   /* the story action happens when you reach it (engine/autoact.js) */
   const showAct = !!(near && near.go); if ($('act').hidden === showAct) $('act').hidden = !showAct; if (showAct && $('act').textContent !== near.label) $('act').textContent = near.label;
   for (const n of P.npcs) if (n.m.visible && n.ctl) { n.ctl.mx.update(dt); n.ctl.tick(dt); gripTick(n.m); }
   if ((frames & 1) === 0) for (const m of P.bodies) if (m.visible && !m.userData.noGround) groundFeet(m);

@@ -212,7 +212,7 @@ export function dev(D) {
     reset(); D.openOrder('The journey of the water', D.JOURNEY, 'Tap the pictures in order, from the river to the tram.', () => {}); await settle(); panel('the notice board, at the start', '#puzzle');
     for (let i = 0; i < 3; i++) $('pztray').querySelector(`[data-i="${i}"]`).click(); await settle(); panel('the notice board, half done', '#puzzle');
     for (let i = 3; i < 6; i++) $('pztray').querySelector(`[data-i="${i}"]`).click(); await settle(); panel('the notice board, done', '#puzzle'); D.closePuzzle(false);
-    reset(); D.openOrder('What came after?', D.AFTER, 'Tap the events in the order they happened.', () => {}, { years: true }); for (let i = 0; i < 5; i++) $('pztray').querySelector(`[data-i="${i}"]`).click(); await settle(); panel('what came after, done', '#puzzle'); D.closePuzzle(false);
+    reset(); D.openOrder('What happened next?', D.AFTER, 'Tap them in order, first to last.', () => {}, { years: true }); for (let i = 0; i < 5; i++) $('pztray').querySelector(`[data-i="${i}"]`).click(); await settle(); panel('what came after, done', '#puzzle'); D.closePuzzle(false);
     reset(); D.openSort(D.WHY, () => {}); await settle(); panel('Kemar\'s cards', '#puzzle'); $('pztray').querySelector('[data-a="guess"]').click(); await settle(); panel('Kemar\'s cards, a wrong answer', '#puzzle'); $('pztray').querySelector('[data-a="know"]').click(); await settle(); panel('Kemar\'s cards, answered', '#puzzle'); D.closePuzzle(false);
     reset(); D.openSort(D.REPORT, () => {}); await settle(); panel('the reporter\'s cards', '#puzzle'); D.closePuzzle(false);
     /* panels opened in the middle of play must be on top: their title and Close button must be what you touch there */
@@ -221,7 +221,7 @@ export function dev(D) {
     D.openJournal('journey'); await settle(); covered('journal panel in play', 'journal', ['jtitle', 'jclose']); panel('the journal', '#journal'); document.querySelector('#jpage details').open = true; await settle(); panel('the journal, dig deeper', '#journal'); D.closeJournal();
     D.openChapters(); await settle(); covered('chapters panel in play', 'chapters', ['chtitle', 'chclose']); panel('the chapters', '#chapters'); D.closeChapters();
     D.openCredits(); await settle(); covered('credits panel in play', 'credits', ['crtitle', 'crclose']); panel('the credits', '#credits'); D.closeCredits();
-    reset(); D.ON[65](); for (let i = 0; i < 20; i++) D.tick(0.1); await settle(); panel('the end card', '#card'); { const a = $('ccredit').querySelector('a'); for (const l of panelCheck('end card', $('card'))) out.push(pre + l); const r = box(a), top = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2); if (r.top >= 0 && r.bottom <= Hh && (!top || !(top === a || a.contains(top)))) out.push(pre + 'end card: the credit link is covered'); } D.hideCard();
+    reset(); D.ON[65](); for (let i = 0; i < 20; i++) D.tick(0.1); await settle(); panel('the end card', '#card'); { for (const l of panelCheck('end card', $('card'))) out.push(pre + l); if (!$('ccredit').hidden) out.push(pre + 'end card: no credit line on The end'); } D.hideCard();
     /* the Tube */
     reset(); D.enterTube(); D.resetNight(); D.setPhase('shot'); await settle();
     const busy = () => { D.setGoal('Scrape the rust off the pipe: 3 of 6. This is a long goal to test the wrapping on a small screen.', true); D.setClock('4 a.m.'); D.say('Bass Henry', 'Out, all of you! Go to the manhole! This is a long line to test two rows.', 6e7); $('sub').classList.remove('dim'); };

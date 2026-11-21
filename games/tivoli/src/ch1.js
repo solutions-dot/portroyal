@@ -1,4 +1,3 @@
-import { showCinematicSkip } from '../../../engine/cine.js';
 /* games/tivoli/src/ch1.js: the walking chapters (1, Back-o-Wall; 2, the new Tivoli; 3, politics; 4, the day before; 6, after; 7, the report; 8, today). Each has a place, three people to talk to in any order, and a spot to walk to at the end.
    The WALKS table says which place and which words each chapter uses. Chapter 1, Back-o-Wall. You walk through the memory of Ivy, a girl in Back-o-Wall about 1963 (in 2010 she is the grandmother). You talk to Ivy in her yard,
    to her gran, and to a neighbour in the lane, then walk to the end of the lane. Everyone is fictional and the place is imagined (backowall.js); the journal says so.
@@ -38,7 +37,7 @@ export const WALKS = {
 };
 const $ = (id) => document.getElementById(id);
 let ORDER = WALKS[1].order, TXT = CH1;
-let E = null, saved = null, titleTimer = null, hideSkip;
+let E = null, saved = null, titleTimer = null;
 
 export function setupCh1(env) {
   E = env;
@@ -63,7 +62,7 @@ export async function begin(id = 1, opts = {}) {
   state.x = pl.start.x; state.z = pl.start.z; state.yaw = pl.start.yaw; state.pitch = 0; state.camY = W.camY || 1.3; state.started = true; E.setBusy(false);
   $('hud').hidden = false; E.setGoal(goalNow());
   const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = TXT.start[0]; t.append(b); for (const l of TXT.start.slice(1)) { const p = document.createElement('p'); p.textContent = l; t.append(p); }
-  t.hidden = false; hideSkip = showCinematicSkip(() => { hideIntro(); E.focusGame(); }, { bottom: true }); titleTimer = setTimeout(hideIntro, 5200);
+  t.hidden = false; titleTimer = setTimeout(hideIntro, 5200);
   CH.on = true; if (E.onStart) E.onStart(id);
 }
 export function guideTarget() {   /* where the helper arrow points: the next person to talk to, then the place where the walk ends */
@@ -83,7 +82,7 @@ function endChapter() {
 }
 export function hideIntro() {
   clearTimeout(titleTimer); titleTimer = null;
-  $('scenetitle').hidden = true; hideSkip?.();
+  $('scenetitle').hidden = true;
 }
 
 export function leaveChapter() {
@@ -109,6 +108,8 @@ function turnLimit(people, dt) {
     if (Math.abs(e) > lim) m.rotation.y = n._ry + Math.sign(e) * lim; n._ry = m.rotation.y; }
 }
 /* who you have talked to in this chapter, and the order of the people (for the test hooks and the save) */
+/* the one person the story needs now: the next in ORDER not yet talked to. Only they get a talk sign (engine/marks.js) */
+export const storyNeeds = (id) => CH.on && !CH.ended && ORDER.find((k) => !CH.talked[k]) === id;
 export const talkedNow = () => ORDER.filter((k) => CH.talked[k]), orderNow = () => ORDER.slice();
 /* dev only (?chapter=1 or 2, &at=talked): start the chapter; &at=end jumps to the end card */
 export function devSkip(what) { if (what === 'talked') for (const id of ORDER) CH.talked[id] = true; if (what === 'end') { for (const id of ORDER) CH.talked[id] = true; endChapter(); } }

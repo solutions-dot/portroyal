@@ -46,7 +46,7 @@ Fictional characters say so on their journal page (owner rule 3).
 | Who | Real or fictional | Where | Model |
 |---|---|---|---|
 | Lewis Galdy (you) | real | everywhere | `galdy` (third-person view with V); walks with the shared `Walk` clip, paced to his speed |
-| Abba, tavern keeper | fictional (stands for the free Black people of Port Royal) | by the tavern door (-5.2, 0.9) | `abba` |
+| Abba, tavern keeper | fictional (stands for the free Black people of Port Royal) | by the tavern door (-5.2, 0.9); she stays outside | `abba` |
 | Old Ned, retired buccaneer | fictional | tavern table, sitting | `ned` |
 | Kofi, enslaved dockworker | fictional | carries crates from the stack at (19.4, 3.1) to the pier | `kofi` |
 | Symon Benning, pewterer | real family of pewterers | main street | `benning` |
@@ -72,7 +72,7 @@ People who stroll use `STROLL` (paths per id); they stop and face you within 3.6
 - **Journal**: `JOURNAL` pages, each `{ id, title, simple: [...], deeper: [...] }`. Every id must be unique. `unlock(id)` adds a page.
 - **Goals**: `setGoal()` for chapter 0; chapters set `goalText` and call `showGoal()`.
 - **Helper arrow**: `NUDGE` and `NUDGE_MAP`. If you stand still 15 s, or a goal does not change for 50 s, the goal pops open and pulses, and a gold arrow shows the way: pointing down at the target with "Here!" when it is in front ("Look down" or "Look up" when it is off the top or bottom of the screen), or a big "This way" arrow at the left or right edge when you need to turn. Add a row to `NUDGE_MAP` for every new goal: `[goal regex, action-label regex or [x, z]]`.
-- **Next chapter card**: when a part of the story finishes, `nextChapterCard(i)` offers "Next chapter" or "Stay here" on screen (the same idea as Garvey). It is called a few seconds after the Arrival goals are done, and when the flashback ends. It waits while a panel, dialogue or card is open and gives up after about 8 s, so it never takes over something the player is reading. A card that is waiting is dropped if the player has since gone to a chapter (`navGen`, which `playChapter` bumps), so it never interrupts the warehouse or another chapter. The `?shot=nextcard` test view shows it; `?shot=navcard` jumps to the warehouse before the card is due and writes the card titles seen to the page title (add `&stay=1` for the control run, where the card should appear).
+- **Next chapter card**: when a part of the story finishes, `nextChapterCard(i)` offers "Next chapter" on screen after a short pause (no "Stay here"; `engine/chapter-end.js`) (the same idea as Garvey). It is called a few seconds after the Arrival goals are done, and when the flashback ends. It waits while a panel, dialogue or card is open and gives up after about 8 s, so it never takes over something the player is reading. A card that is waiting is dropped if the player has since gone to a chapter (`navGen`, which `playChapter` bumps), so it never interrupts the warehouse or another chapter. The `?shot=nextcard` test view shows it; `?shot=navcard` jumps to the warehouse before the card is due and writes the card titles seen to the page title (add `&stay=1` for the control run, where the card should appear).
 - **Controls**: `MV` (easing, wall sliding), Shift to hurry, `padRead` (gamepad), touch joystick (left), drag to look (right), tap-to-walk is mouse only.
 - **Tap to talk** (19 November 2026): a quick tap or click on a person you could talk to right now starts that talk, with the same `go()` as the talk button (`tapTalk` in `src/main.js`, using `pickPerson` from `engine/tap.js`). Only the "Talk to" actions on offer count, each within its own reach `r`; a tap that closes a talk never opens another. A mouse click that is not on such a person still walks there.
 - **Solid things**: everything added to the scene after `nStreet` in the harbour section becomes solid (`streetProps`, `buildPropC`). People are solid through the list near the end of `clampPos` (Abba, `NPCS`, `NS_PEOPLE`, the soldier).
@@ -246,3 +246,46 @@ Still scenery is now drawn in a few pieces (`still()` in `main.js`, which calls 
 - The place audits (`?test=audit`, `collision`, `seating`) see the scenery unmerged, because they read each piece's own shape. `?nobatch` turns merging off in a dev build to compare.
 - Draw calls, before and after (headless, 390 x 800): title 486 to 256; `ns1` 628 to 191; `nsst1` 157 to 127; `ns7` 148 to 114; `tav` 92 to 49; `fort` 407 to 253; `spit` 596 to 349; `ships` 219 to 99; `kofistack` 181 to 88; `quake2` 32 to 32. Triangles drawn rise by up to 4% (a merged piece is drawn whole when any of it is in view).
 - `setQuiet` (`engine/preload.js`) is told when a talk, card, chapter title, the journal or the chapter list is open. Port Royal queues no work yet: the tavern, the second street and the late bodies are still built 0.3 s after the town, as before, because the tavern must be ready (`tavernReady`) as soon as a saved game or a chapter can need it.
+
+## The story, the history and the sources (moved here from the README, 21 November 2026)
+
+### Chapters
+
+| Year | Chapter | What happens |
+|---|---|---|
+| 1690 | Arrival | Step off the ship, meet Abba, buy stew at The Turtle, find four objects, hear Ned's story, walk to the fort, explore the market street |
+| 1670 | Ned's story | A flashback: Henry Morgan, the buccaneers' articles, a sword drill, loading the ships |
+| 1691 | The warehouse | Check cargo, make change, weigh a clipped coin, read a letter from a slave ship's captain |
+| 7 June 1692 | The earthquake | The town sinks into the sand; swallowed, thrown into the sea, rescued |
+| 1692 | The days after | The survivors' camp; stay or leave for what becomes Kingston |
+| 1739 and today | The tombstone | St Peter's Church and Galdy's tomb |
+
+Progress saves in the browser. Teachers can open all chapters from the Chapters menu.
+
+### What is history and what is fictional
+
+**From the record:** Galdy's birth in Montpellier in 1659, his flight as a Huguenot, being swallowed and thrown into the sea in 1692, his rescue by boat, his trade in wine, cocoa and enslaved people as an agent of the Asiento, his seats in the Assembly, his work on St Peter's Church (1726), his death in 1739 and the tomb's move in 1953. Also the brick houses of up to four storeys, the brick floors, pewter, clay pipes and bottles found by archaeologists, the watch stopped at 11:43, liquefaction of the sand, and the minister preaching in a tent.
+
+**Fictional:** Abba and her tavern The Turtle, old Ned, Kofi, Sam, the gunner, the soldier, the market street's people (Grace, Peter, Daniel Mendes, Constable Hart), the customer and prices in the warehouse, the captain's letter, who was in the boat that saved Galdy, the camp layout, and all dialogue. The journal says so on each relevant page.
+
+### Sources
+
+- Galdy's tomb inscription, St Peter's Church, Port Royal
+- Frank Cundall, *Historic Jamaica* (1915)
+- Donny Hamilton and the Texas A&M Port Royal excavations
+- Rev. Emmanuel Heath, letters on the earthquake (1692)
+- John Taylor's description of Port Royal (1687 to 1688): markets, prices, turtles
+- The 1677 deed for a synagogue on New Street (Jew Street); histories of Jamaica's Jews (for example Arbell, 2000)
+- Alexandre Exquemelin, *The Buccaneers of America* (1678)
+- National Geographic, "How the 'wickedest city on Earth' was sunk by an earthquake"
+- Jamaica Gleaner, "Lewis Galdy cheated death twice" (2024)
+
+### Notes for contributors
+
+- Peter Dunn's reconstruction paintings and the UCLA Cultural Virtual Reality Lab model were used as visual reference only and are not included.
+- Animations come from Mixamo, and a few are made by hand (`tools/anims/handmade.py`, CC0). The source files are in `shared/anim-sources/` and are retargeted into one shared library (`shared/models/anims.js`); see `docs/PIPELINE.md`.
+- The script has not yet been reviewed by a historian. Please have it checked before classroom use.
+
+## Hannah, Abba's worker (21 November 2026)
+
+The owner: Abba cannot be at the tavern door and inside at the same time. Inside The Turtle, Hannah now serves the stew and asks the change question; Abba stays at the door. Hannah is fictional, and the journal's "Who lived here?" page says so. **Stand-in body (work to do):** she is Abba's body in her own colours (indigo bodice, ochre skirt, pale blue head wrap) and a taller, slimmer build, made in `main.js` the way Grace is. She needs her own body from the character tools (`tools/people/`, Blender) so her face differs from Abba's.

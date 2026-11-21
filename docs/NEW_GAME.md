@@ -36,6 +36,7 @@ Every character in a new game follows `docs/PEOPLE.md`: recipes in `tools/<game>
 | Animation library and controller (`engine/anim.js`) | The world: streets, buildings, props, sky, period details |
 | Sound engine (`engine/audio.js`) | Characters for the era: recipes in `tools/<game>/people/`, built by `tools/garvey/era.py` (`docs/PEOPLE.md`) |
 | Automatic audits (`engine/audit.js`): floating objects, people in solids, unreachable spots, held items, people overlapping, seats, walking, cloth; and `engine/skinprobe.js` for skin | The place data it reads (walls, bounds, start, actions, people) |
+| Cinematics and chapter flow, the same in every game (`docs/STANDARD.md`, "Cinematics and chapter cards"): `showCinematicSkip` and `playChapterFade` (`engine/cine.js`), `sceneWarning` (what happens; `scary: false` for a scene that is not scary) before a scene (`engine/scene-warning.js`), `offerNextChapter` when a chapter ends (`engine/chapter-end.js`) | When each chapter ends, and which scenes are cinematics |
 | Model loading and packing (`engine/loader.js`, tools) | The story: chapters, conversations, journal pages, goals |
 | The clothes builder `tools/garvey/era.py`, the packer `tools/people/pack.mjs`, clip retargeting (`tools/anims/`), the build (`tools/build.mjs`) | Places and their walking bounds |
 | Patterns from Port Royal to copy or move into `engine/`: conversations, actions, journal, chapters, saving, controls, strolling people, test views, the autoplayer (see ENGINE.md, "Still inside Port Royal") | |

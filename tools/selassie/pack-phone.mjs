@@ -14,7 +14,7 @@ for (const f of readdirSync(dir).filter((f) => f.endsWith("_crowd.glb"))) {
       "--out",
       "games/selassie/site/models",
       "--max",
-      "3200",
+      "4000",
       name + "_phone",
     ],
     { stdio: "inherit" },

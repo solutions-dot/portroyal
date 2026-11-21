@@ -1,3 +1,4 @@
+import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
@@ -25,9 +26,9 @@ import { buildStreet, streetPlace } from './street.js';
 import { Talk, setupTalk, tapNpc, updateTalk, after as talkAfter, start as talkStart, next as talkNext, leave as talkLeave } from './talk.js';
 import { initStory, nextChapter, unlock as unlockPage, hasSave, saveProgress, openChapters, closeChapters, openJournal, closeJournal, closeCredits, panelOpen, eraseAll, flushToasts, saveData, loadData, isUnlocked } from './story.js';
 import { CHAPTERS, JOURNAL } from './content.js';
-import { headTop, markAt, NEAR_GAP } from '../../../engine/marks.js';
+import { headTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';
 import { walkRoute } from '../../../engine/placement.js';
-import { hideIntro, WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget, talkedNow, orderNow } from './ch1.js';
+import { hideIntro, WALKS, CH, setupCh1, begin as ch1Begin, leaveChapter as ch1Leave, tick as ch1Tick, onTalked as ch1Talked, devSkip as ch1Skip, lifeTick, guideTarget, talkedNow, orderNow, storyNeeds } from './ch1.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { lifeTest, lifeBodies, LIFE } from './life.js';   // dev only: ?test=ambient (LIFE: whose bodies the next chapter needs)
 import { FIGHT, CONTACT, positions as fightPositions, routes as fightRoutes, wire as wireFight, openCard as fightOpen, tick as fightTick, after as fightAfter, skip as fightSkip, begin as fightBegin } from './fight.js';   // the May 2010 street scene
@@ -128,10 +129,10 @@ function card(title, paras, btns, { dismiss } = {}) {
   CARD.dismiss = dismiss || null; $('chcard').hidden = false; setBusy(true); const f = $('chcardb').querySelector('button,a'); if (f) f.focus();
 }
 function hideCard() { $('chcard').hidden = true; CARD.dismiss = null; setBusy(false); }
-function chapterEnd(id, end) {   /* the end of a walking chapter: what happened, then Next chapter (as in every game) */
+function chapterEnd(id, end) {   /* the end of a walking chapter: what happened, then Next chapter (as in every game), after a short pause on a clear screen and with no "Stay here" (engine/chapter-end.js) */
   const nx = CHAPTERS.find((c) => c.id === id + 1 && c.playable);
-  card(end.title, end.lines, nx ? [{ t: 'Next chapter', go: () => { hideCard(); startChapter(nx.id); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Stay here', go: hideCard }]
-    : [{ t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Exit', href: MENU_URL }, { t: 'Stay here', go: hideCard }], { dismiss: hideCard });
+  offerNextChapter({ clear: () => !panelOpen() && $('chcard').hidden && $('dialogue').hidden, show: () => card(end.title, end.lines, nx ? [{ t: 'Next chapter', go: () => { hideCard(); startChapter(nx.id); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }]
+    : [{ t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Exit', href: MENU_URL }]) });
 }
 $('reset').onclick = () => {
   if (FIGHT.on || !CH.on) return; closeJournal(); const C = CHAPTERS.find((c) => c.id === CH.id);
@@ -156,10 +157,10 @@ function bubbleTick(now) {
     if (!n.mark) { n.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: BUBBLE, transparent: true, depthWrite: false, depthTest: true, fog: false })); n.mark.renderOrder = 5; n.mark.visible = false; scene.add(n.mark); }
     const m = n.mark; if (!show || !n.body.visible) { m.visible = false; continue; }
     const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, markAt(topOf(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = Talk.near !== n && d < 40;
+    m.position.set(n.x, markAt(topOf(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = showTalkMark(storyNeeds(n.id), Talk.near === n) && d < 40;
   }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (Talk.near && !busy) talkStart(Talk.near); }); }
-  const on = show && Talk.near && !Talk.open; TB.el.hidden = !on; if (!on) return;
+  const on = show && Talk.near && !Talk.open && showTalkBubble(storyNeeds(Talk.near.id)); TB.el.hidden = !on; if (!on) return;
   TB.v.set(Talk.near.x, topOf(Talk.near) + NEAR_GAP, Talk.near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
   if (TB.el.dataset.label !== Talk.near.name) { TB.el.dataset.label = Talk.near.name; TB.el.innerHTML = TALK_SVG + '<span class="who">' + Talk.near.name + '</span>'; TB.el.setAttribute('aria-label', 'Talk to ' + Talk.near.name); }
@@ -388,7 +389,7 @@ async function devViews() {
       if (name.startsWith('play')) { $('scenetitle').hidden = true; $('goal').textContent = 'Talk to Pastor Grant by the clinic.'; $('hint').hidden = false; liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk.'); $('jcount').hidden = false; $('jcount').textContent = '2'; $('jbtn').classList.add('glow'); $('toast').textContent = 'New journal page: What people disagree about'; $('dialogue').hidden = true;
         if (show.includes('dialogue')) { document.body.classList.add('talking'); $('dialogue').hidden = false; $('who').textContent = 'Pastor Grant'; $('line').textContent = 'Finding the truth can take a long time.'; } else document.body.classList.remove('talking'); }
       if (show.includes('hud')) { const t = $('scenetitle'); t.replaceChildren(); const b = document.createElement('b'); b.textContent = 'Sunday 23 May 2010.'; t.append(b); for (const l of ['You live in Tivoli Gardens with Gran Ivy.', 'The girl from Back-o-Wall is a grandmother now.']) { const p = document.createElement('p'); p.textContent = l; t.append(p); } $('goal').textContent = 'Talk to Mr Clarke by the community centre.'; }
-      if (name === 'chapter end card') { $('chcardb').replaceChildren(...['Next chapter', 'Chapters', 'Stay here'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
+      if (name === 'chapter end card') { $('chcardb').replaceChildren(...['Next chapter', 'Chapters'].map((t, i) => Object.assign(document.createElement('button'), { className: 'btn' + (i ? ' ghost' : ''), textContent: t }))); }
       if (name === 'chapter end card') { $('chcardt').textContent = 'May 2010: before'; $('chcardl').replaceChildren(...['On 23 May 2010 the Government declared a state of emergency.', 'Barricades blocked the roads into Tivoli Gardens.', 'The next day, soldiers and police went in.', 'Gran Ivy, Miss Dawn and Mr Brown are made up.'].map((x) => { const p = document.createElement('p'); p.textContent = x; return p; })); }
       for (const id of ALL) $(id).hidden = !show.includes(id); await frames();
       const els = show.flatMap((id) => [$(id), ...$(id).querySelectorAll('h1,h2,p,label,button,a,b')]).filter((e) => e.matches('h1,h2,p,label,button,a,b') && !e.closest('[hidden]') && getComputedStyle(e).visibility !== 'hidden' && contentRects(e).length);

@@ -1,6 +1,7 @@
-import { sceneWarning, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
+import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
 const FACE_VARIANTS = { maroon_man: 2, maroon_scout: 2, maroon_woman: 2, maroon_girl: 2, maroon_boy: 2, redcoat: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
@@ -13,7 +14,9 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
    hiding from a lantern, the horn game, and the fight as a set piece seen from the watch rock.
    Layout of this file: setup, state and controls, people and places, interface, saving, talking, chapters, the horn, each chapter's scenes, the loop, test views. */
 import * as THREE from 'three';
-import { headTop as realHeadTop, markAt, NEAR_GAP } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
+import { createAutoAct } from '../../../engine/autoact.js';
+const AUTO = createAutoAct();
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
@@ -291,9 +294,9 @@ const POSTER = __DEV__ && /[?&]shot=poster/.test(location.search);   /* the menu
 function bubbleTick(now) {
   const show = state.started && !busy && !frozen && $('card').hidden && !POSTER && !DIR.on && !HORN.on;
   for (const n of P_() ? P_().people : []) { const m = n.mark; if (!m) continue; if (!show || !n.m || !n.m.visible) { m.visible = false; continue; } const d = Math.hypot(state.x - n.x, state.z - n.z), k = (0.4 + d * 0.035) * (1 + Math.sin(now * 2 + n.x) * 0.1);
-    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = near !== n && d < 40; }
+    m.position.set(n.x, markAt(headTop(n), k) + Math.sin(now * 2.4 + n.x) * 0.03, n.z); m.scale.set(k, k, k); m.material.opacity = Math.max(0.6, 1 - d / 20); m.visible = showTalkMark(wantsTalk(n), near === n) && d < 40; }
   if (!TB.el) { TB.el = document.createElement('button'); TB.el.className = 'tbub'; TB.el.hidden = true; document.body.appendChild(TB.el); TB.el.addEventListener('click', (e) => { e.stopPropagation(); if (near && !near.go && !busy) activate(near); }); }
-  const on = show && near && !near.go; TB.el.hidden = !on; if (!on) return;
+  const on = show && near && !near.go && showTalkBubble(wantsTalk(near)); TB.el.hidden = !on; if (!on) return;
   TB.v.set(near.x, headTop(near) + NEAR_GAP, near.z).project(camera); if (TB.v.z > 1) { TB.el.hidden = true; return; }
   const r = canvas.getBoundingClientRect(); TB.el.style.left = (r.left + (TB.v.x + 1) / 2 * r.width) + 'px'; TB.el.style.top = (r.top + (1 - TB.v.y) / 2 * r.height) + 'px';
   if (TB.el.dataset.label !== near.who) { TB.el.dataset.label = near.who; TB.el.innerHTML = TALK_SVG + '<span class="who">' + near.who + '</span>'; TB.el.setAttribute('aria-label', near.label); }
@@ -328,6 +331,7 @@ function card(title, paras, btns, { col = false, dismiss } = {}) {
   CARD.dismiss = dismiss === undefined ? null : dismiss; $('card').hidden = false; busy = true; keys.clear(); $('talk').hidden = true; const f = bb.querySelector('button'); if (f) f.focus();
 }
 function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
+const readCard = (c) => new Promise((res) => readWhatHappened(card, { what: c.paras, go: () => { hideCard(); res(true); } }));   /* the standard What happened card (engine/scene-warning.js) */
 const infoCard = (c, go) => new Promise((res) => card(c.title, c.paras, [{ t: c.go || 'Go on', go: () => { hideCard(); if (go) go(); res(true); } }], { col: true }));
 function chapterFade(title, sub, fn) {   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
@@ -414,11 +418,11 @@ function tidyPlaces(i) { PLACES_KEEP.tidy([...usedIn(i), ...usedIn(i + 1)]); }  
 const ON = {}, TICKS = [];   /* ON[stage]: what happens when a stage begins. TICKS: per-frame jobs from tween(). */
 function setStage(s) {
   stage = s; best = Math.max(best, s); for (const k of Object.keys(ctr)) delete ctr[k]; for (const n of allPeople()) n.talked = false; saveGame(); refreshCast(); refreshGoal(); if (ON[s]) ON[s]();
-  if (!QUICK && s in CHAPTER_END) setTimeout(() => nextCard(CHAPTER_END[s], s), 900);
+  if (!QUICK && s in CHAPTER_END) nextCard(CHAPTER_END[s], s);
 }
-function nextCard(i, s, tries = 0) {
-  if (stage !== s) return; if ((panelsOpen() || fading || DIR.on) && tries < 14) { setTimeout(() => nextCard(i, s, tries + 1), 800); return; }
-  const nx = CHAPTERS[i + 1]; if (!nx) return; uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }, { t: 'Stay here', go: hideCard }]);
+function nextCard(i, s) {   /* a finished chapter: offer the next one after a pause on a clear screen, with no "Stay here" (engine/chapter-end.js) */
+  const nx = CHAPTERS[i + 1]; if (!nx) return;
+  offerNextChapter({ still: () => stage === s, clear: () => !(panelsOpen() || fading || DIR.on) && $('card').hidden, show: () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }]); } });
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetTransient() { endSceneWarning(); hideFightSkip?.(); hideStorySkip?.();   /* leave anything running: scripted scenes, the horn, the fight, the camera director */
@@ -615,8 +619,8 @@ ON[35] = () => { leavesUI(); };
 const FIGHT = { on: false, hold: false, sHead: 104, mode: 'idle', t: 0, next: 0, firing: 0 }, HALT = 40, MARCH = 1.75, FLEE = 3.4, START = 104;   /* HALT: how far down the path (metres from its top) the first soldier stops, in plain view below the rock. MARCH and FLEE: metres a second (a steady march, and a run), each played at the pace of the body's own stride so the feet do not slide */
 const HALT_IDLES = ['IdleM', 'Idle', 'IdleM', 'Idle'];   /* the soldiers stopped on the path: each shifts his weight in his own time (no looking about as filler: engine/anim.js NOT_IDLE) */
 const CARDSEEN = new Set();   /* the opt-in cards answered (the shared rule 4 check asks) */
-function fightIntro() { const c = CARDS.fight; sceneWarning(card, { title: c.title, lines: c.paras, watch: () => { CARDSEEN.add('fight'); hideCard(); fightRun(); }, read: () => { hideCard(); fightSkip(); } }); }
-async function fightSkip() { endSceneWarning(); const c = CARDS.fightRead; unlock('trenches'); unlock('attacks'); await infoCard(c); fightAfter(); }
+function fightIntro() { const c = CARDS.fight; sceneWarning(card, { title: c.title, what: c.paras, watch: () => { CARDSEEN.add('fight'); hideCard(); fightRun(); }, read: () => { hideCard(); fightSkip(); } }); }
+async function fightSkip() { endSceneWarning(); unlock('trenches'); unlock('attacks'); await readCard(CARDS.fightRead); fightAfter(); }
 function columnPlace(P, sHead, up, clip, speed = 0, t = FIGHT.t) {   /* the soldiers stand in single file on the path: the first at sHead, the others behind, 2.3 m apart. clip 'Idle': stopped, each with his own idles in turn */
   const S = P.spots; for (const n of P.extras) { if (n.column === undefined) continue; const s = sHead + n.column * 2.3, vis = s < S.sClimb - 1; n.scripted = true; n.cue = !vis; n.m.visible = vis && cur === 'watch'; if (!vis) continue;
     const [x, z, a] = pathAt(S.climb.dense, s); n.x = x; n.z = z; stand(n, P.G); if (!n.m.userData.groundAt) n.m.userData.groundAt = (gx, gz) => P.G.h(gx, gz);   /* on the steep path each foot is grounded on the hill under it */ n.m.rotation.y = up ? a + PI : a;
@@ -681,7 +685,7 @@ function fightAfter() { FIGHT.on = false; moveLock = false; frozen = false; bars
 const GUNS = { on: false, t: 0, next: 0, n: 0 };
 ON[50] = () => { if (cur !== 'town') return; say(SAY.n1, 3600); SFX.hornCall('SSS', { far: 0.35, pan: -0.3, pitch: 330 }); setTimeout(() => SFX.hornCall('SSS', { far: 0.6, pan: 0.5, pitch: 300 }), 2200 * TS); };
 ON[54] = () => { const p = byId('phibba'); if (!p) return; p.ctl.base = p.ctl.get('Idle') || p.ctl.base; p.ctl.play(null); follow(p, FOLLOW.phibba); };   /* she stops crying and comes with you: a step behind and to one side, never pressed against you (engine/follow.js) */
-function gunsIntro() { const c = CARDS.guns; sceneWarning(card, { title: c.title, lines: c.paras, watch: () => { CARDSEEN.add('guns'); hideCard(); gunsRun(); }, read: () => { hideCard(); infoCard(CARDS.gunsRead).then(() => ridgeDawn(true)); } }); }
+function gunsIntro() { const c = CARDS.guns; sceneWarning(card, { title: c.title, what: c.paras, watch: () => { CARDSEEN.add('guns'); hideCard(); gunsRun(); }, read: () => { hideCard(); readCard(CARDS.gunsRead).then(() => ridgeDawn(true)); } }); }
 function gunsRun() {
   const P = PL.town, S = P.spots; GUNS.on = true; GUNS.t = 0; GUNS.next = 1.2; GUNS.n = 0; ctr.climb = 1; ctr.goal = 'Climb the back trail. Do not stop.'; refreshGoal(); unlock('fall'); S.guns.forEach((g) => { g.visible = true; }); say(SAY.n2, 3800);
   P.extras.filter((e) => e.flee && e.m).forEach((e, i) => { const [x, z] = pathAt(S.back.dense, 2 + i * 2.6); e.x = x; e.z = z; lead(e, S.back.dense, FOLLOW.flee(i)); });
@@ -724,7 +728,7 @@ ON[63] = async () => {
   say(SAY.t2, 4600); const e1 = envTo(ENV.gold, 6), a = eyeNow(), h = a[1];
   await cut(a, [4, h + 5, 14], [0, 1, 0], [-9, 6, -37], 7); if (ep !== EP) return; await e1; if (ep === EP) finish();
 };
-ON[64] = () => { unlock('hero'); unlock('mooretown'); unlock('journey'); const c = CARDS.end; setTimeout(() => card(c.title, c.paras, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : []), { t: 'Stay here', go: hideCard }], { col: true }), 1200 * TS); cue('end'); };
+ON[64] = () => { unlock('hero'); unlock('mooretown'); unlock('journey'); const c = CARDS.end; setTimeout(() => card(c.title, c.paras, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); cue('end'); };
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
@@ -806,6 +810,7 @@ function update(dt, now) {
   lifeTick(P, dt);
   near = null; if (state.started && !busy && !frozen && !DIR.on && !HORN.on) { let b = 2.6; for (const n of P.people) { const d = Math.hypot(state.x - n.x, state.z - n.z); if (n.m && n.m.visible && d < b) { b = d; near = n; } } for (const a of P.actions) if (a.on() && Math.hypot(state.x - a.x, state.z - a.z) < a.r) near = a; }
   const tb = $('talk'); tb.hidden = !(near && near.go); if (near && near.go) tb.textContent = near.label;
+  AUTO.tick(dt, near && near.go ? near : null, state.x, state.z, (a) => { if (!busy && !frozen) activate(a); });   /* the story action happens when you reach it (engine/autoact.js) */
   for (const n of P.npcs) if (n.m.visible && n.ctl && !n.amb) { n.ctl.mx.update(dt); n.ctl.tick(dt); if (n.m.userData.grips) gripTick(n.m); }
   frameN++; for (const m of P.bodies) if (m.visible && !m.userData.amb) groundFeet(m);
   for (const n of P.npcs) if (n.fol && n.m.visible) groundFeet(n.m);   /* walkers on a slope: half a second pass closes most of the eased gap when the other foot lands, without a jump (?test=walkers) */   /* every frame: on a slope, every other frame shows as a bounce */

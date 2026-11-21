@@ -13,6 +13,9 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 
 ## Every game
 
+- [x] **One standard card before every cinematic** (owner, 21 November 2026). `sceneWarning` in `engine/scene-warning.js` writes the words: what happens, then "It may be scary." and "Nobody is hurt on the screen.", with Watch scene and Read what happened instead. Port Royal, Eventide, Kendal, Bog Walk, Nanny, Melissa and Tivoli use it as a scary scene. Selassie (the arrival) and Windrush (the two ship scenes) use it as a plain choice (`scary: false`); Windrush's second "A short scene" card is gone. No calm mode. Garvey has no cinematic.
+- [x] **Cinematics show only a faded X; chapter title cards have no X; the chapter-end card comes after a pause and has no "Stay here"** (owner, 21 November 2026; `engine/cine.js`, `engine/chapter-end.js`, `docs/STANDARD.md`).
+
 - [ ] **Title screens.** All three title buttons (Start, Chapters, Exit) should appear at the same moment, with Chapters dimmed until the game is ready, and nothing should move as the game loads (`shared/title.css`). Take screenshots of each game's title screen at 390x800 and 1280x720.
   Captured loading and ready screenshots for all ten games at both sizes. All three buttons appeared during loading, with Chapters dimmed. Button positions still moved by up to 5 px. A follow-up Chromium check held fonts constant and replayed Loading, Start and Continue. Button rectangles matched in all ten games at both sizes. Blocking web fonts reproduced the direction and size of the shift in Bog Walk, Nanny Town and Tivoli (about 1 to 5 px).
 - [x] **Bog Walk title.** The title should sit lower on the screen, with no control words under the buttons. Screenshot at 390x800 and 1280x720.
@@ -67,6 +70,12 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 - [x] Leave an empty chair between the two visitors at the advice centre. Preserve the eye and brow geometry when building Windrush's lighter character models.
 - [x] Square the legs of the community centre's exhibition table and the Tilbury registration table. Rest their papers on the tabletop.
 - [x] Close the advice centre, the Melissa church hall and both domestic shelters. Garvey's indoor doors close too. The three visitors to the Kingston meeting hall pass through while its doors are open and the doors close behind them.
+
+## Faces on lightweight character models
+
+- [x] Keep the face marker through Tivoli’s uniform export and rebuild the soldier and police models used in crowds.
+- [x] Keep more detail around brows, eyes and mouths in the shared character packer. Protect the crown and hairline on joined crowd and phone models without adding a draw call.
+- [x] Rebuild the affected models in Bog Walk, Eventide, Kendal, Hurricane Melissa, Tivoli, The Emperor’s Arrival and Windrush. The model regression test checks facial geometry and textured eyes in representative lightweight and phone copies.
 
 ## Not done yet (ask the owner first)
 

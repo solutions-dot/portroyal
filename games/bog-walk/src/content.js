@@ -41,7 +41,7 @@ export const GOALS = {
   60: () => 'Talk to Miss Grant, the teacher.',
   61: () => 'Read the information board.',
   62: () => 'Kemar has a question. Talk to him.',
-  63: () => 'Talk to Miss Grant about what came after.',
+  63: () => 'Talk to Miss Grant about what happened next.',
   64: () => 'Kemar has one more question.',
   65: () => 'The end. Your journey is in the journal.',
 };
@@ -173,16 +173,16 @@ export const REPORT = { title: 'What did you see?', prompt: 'Did you see this yo
   ['"The water came from the dam"', 'heard', 'You heard this. Nobody knows that yet.'],
 ] };
 /* Kemar's question, chapter 5: what we know, what people guessed, what nobody knows */
-export const WHY = { title: 'Why did the water come?', prompt: 'Do we know this, did people guess it, or does nobody know?', bins: [['know', 'We know'], ['guess', 'People guessed'], ['none', 'Nobody knows']], cards: [
+export const WHY = { title: "Let's sort what we know", prompt: 'Do we know it, is it a guess, or does nobody know?', bins: [['know', 'We know it'], ['guess', 'A guess'], ['none', 'Nobody knows']], cards: [
   ['33 men died.', 'know', 'We know this. The newspaper counted them.'],
-  ['It was a Sunday night shift.', 'know', 'We know this. The water was shut off on Sunday nights.'],
-  ['A board at the dam was opened.', 'guess', 'People guessed this. Nobody proved it.'],
-  ['The pipe was 8 feet across.', 'know', 'We know this. Many sources say so.'],
-  ['Sand made a dam that burst.', 'guess', 'People guessed this too. Nobody proved it.'],
-  ['Which guess is true.', 'none', 'Nobody knows. Even the 1904 newspaper said so.'],
+  ['The men worked on a Sunday night.', 'know', 'We know this. The water was turned off on Sunday nights.'],
+  ['Someone opened a gate at the dam.', 'guess', 'This is a guess. Nobody proved it.'],
+  ['The pipe was 8 feet wide.', 'know', 'We know this. Many books say so.'],
+  ['Sand piled up, then broke, and let the water in.', 'guess', 'This is a guess too. Nobody proved it.'],
+  ['Why the water really came.', 'none', 'Nobody knows. Even the newspaper in 1904 said so.'],
 ] };
 /* Miss Grant, chapter 5: what came after, in order */
-export const AFTER = [['The first electric trams run in Kingston', '1899'], ['Water comes into the Tube', '1904'], ['The trams run again, within days', '1904'], ['The trams stop for good', '1948'], ['The power station closes', '1966']];
+export const AFTER = [['Electric trams start in Kingston', '1899'], ['Water fills the Tube', '1904'], ['The trams run again, a few days later', '1904'], ['The trams stop for good', '1948'], ['The power station shuts', '1966']];
 
 /* ---------- your choices, for the "Your journey" page ---------- */
 export const CHOICE_NAMES = {

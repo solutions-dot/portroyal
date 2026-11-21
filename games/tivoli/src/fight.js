@@ -1,4 +1,4 @@
-import { addSceneWarningOptions, sceneIsCalm, endSceneWarning } from '../../../engine/scene-warning.js';
+import { addSceneWarningOptions, sceneIsCalm, endSceneWarning, centreCard } from '../../../engine/scene-warning.js';
 import { showCinematicSkip } from '../../../engine/cine.js';
 /* games/tivoli/src/fight.js: the May 2010 street scene (chapter 5, "the days"), a directed scene like the Kendal crash. CLAUDE.md rule 4 allows it for Tivoli only, with these limits,
    all kept here: it starts only from an opt-in card ("Read what happened instead" is the other choice); you watch from a window and never hold or fire a weapon; there is no blood;
@@ -78,7 +78,7 @@ let titleTimer, endTimer, hideSkip;
 export function openCard() {
   $('fightcard').hidden = false; $('title').hidden = true;
   addSceneWarningOptions($('fightoptions'), $('fbegin'), $('fread'), begin, () => {
-    show('readcard'); finishChapter(5); $('freadnext').focus();
+    show('readcard'); centreCard($('readcard')); finishChapter(5); $('freadnext').focus();   /* the standard What happened card: short paragraphs, Go on (engine/scene-warning.js) */
   });
 }
 function show(id) { for (const c of ['fightcard', 'readcard', 'aftercard']) $(c).hidden = c !== id; }

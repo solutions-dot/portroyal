@@ -14,7 +14,7 @@
 import * as THREE from "three";
 import { createSea } from "../../../engine/sea.js";
 import { T, std, solid, flat, glow, box, cyl, plane, grp, mesh, rng } from "./gfx.js";
-import { tree, crate, bench, marketBasket, yamBasket, hamper, suitcase, flowers, bush, sack, cart as countryCart } from "./period-props.js";
+import { tree, hillRing, crate, bench, marketBasket, yamBasket, hamper, suitcase, flowers, bush, sack, cart as countryCart } from "./period-props.js";
 import * as P from "./props.js";
 import * as K6 from "./kingston-props.js";
 
@@ -558,10 +558,26 @@ export function lane(K) {
   const Q = K.base("lane", [-9.2, -15.5, 7.4, 17], [0.4, 14.6, 0]);
   Q.surface = "sand";
   Q.evening = true;
-  // the lane: packed earth with a worn strip of asphalt, a gutter each side
-  box(5.2, 0.02, 60, std(T.dirt([3, 30], [146, 128, 102])), 0, 0.0, 0, Q.group);
-  box(3.0, 0.012, 60, std(T.concrete([2, 30], [104, 102, 96])), 0.2, 0.015, 0, Q.group);
-  const yardG = box(7, 0.015, 12, std(T.dirt([4, 6], [166, 138, 98])), -5.7, 0.008, -3, Q.group);
+  // The lane meets cross streets in both directions. Keep the land visible
+  // behind the yards covered as the player turns or looks past a fence.
+  const land = plane(180, 180, std(T.grass([64, 64], [113, 120, 74])), 0, -0.003, 0, Q.group);
+  land.rotation.x = -Math.PI / 2;
+  const dirt = std(T.dirt([5, 7], [166, 138, 98]));
+  box(5.5, 0.02, 50, std(T.dirt([3, 25], [146, 128, 102])), 0, 0, 0, Q.group);
+  const asphalt = std(T.concrete([2, 24], [104, 102, 96]));
+  box(3.0, 0.012, 50, asphalt, 0.2, 0.015, 0, Q.group);
+  const gutter = std(T.concrete([1, 24], [140, 130, 108]));
+  for (const side of [-1, 1]) {
+    box(0.26, 0.025, 44, gutter, side * 2.1, 0.005, 0, Q.group);
+    box(0.14, 0.055, 44, gutter, side * 2.28, 0.02, 0, Q.group);
+  }
+  for (const z of [-24.5, 24.5]) {
+    box(70, 0.02, 5.1, std(T.dirt([35, 3], [146, 128, 102])), 0, -0.007, z, Q.group);
+    box(70, 0.012, 4.1, std(T.concrete([35, 2], [104, 102, 96])), 0, 0.012, z, Q.group);
+  }
+  box(7, 0.015, 12, dirt, -5.7, 0.008, -3, Q.group);
+  box(5.8, 0.012, 8.1, dirt, 5.5, 0, 12.4, Q.group);
+  box(5.5, 0.012, 7.6, dirt, -5.45, 0, 9.5, Q.group);
   // the family's house: its lit veranda faces the lane
   put(Q, K6.louvreHouse(8, 6, { colour: [214, 228, 214], trim: 0x3f6f62, veranda: 2.4, lit: true }), -11.4, -3, Math.PI / 2);
   Q.walls.push([-14.4, -7, -8.4, 1], [-6.25, -7.05, -5.95, -4.0], [-6.25, -2.0, -5.95, 1.05]);
@@ -576,9 +592,10 @@ export function lane(K) {
   put(Q, tin, -7.55, -5.95, Math.PI / 2, null, 0.83);
   P.dynamic(tin);
   const photo = P.card("photo");
-  put(Q, photo, -7.3, -5.45, Math.PI / 2, null, 0.835);
+  put(Q, photo, -7.3, -5.51, Math.PI / 2, null, 0.825);
   put(Q, K6.radio(), -7.7, -5.25, Math.PI / 2, null, 0.83);
-  K.item(Q, "ticket", P.card("ticket"), -6.1, -1.4, 0.89);
+  put(Q, P.table(0.6, 0.52), -5.75, -0.65, 0, rect(-5.75, -0.65, 0.62, 0.54));
+  K.item(Q, "ticket", P.card("ticket"), -5.75, -0.65, 0.825);
   // the front wall of the yard with its open gate, pots, flowers and a lime tree
   for (const [z0, z1] of [
     [-9, -4.6],
@@ -606,7 +623,7 @@ export function lane(K) {
   put(Q, K6.louvreHouse(7, 5, { colour: [236, 222, 196], trim: 0x6a3b2a, veranda: 2, lit: true }), -9.6, 9.5, Math.PI / 2);
   put(Q, K6.louvreHouse(7, 5, { colour: [206, 218, 230], trim: 0x2b4b6b, veranda: 2, lit: true }), 9.4, -8.5, -Math.PI / 2);
   put(Q, K6.louvreHouse(7, 5, { colour: [230, 214, 214], trim: 0x5a3b4a, veranda: 2, lit: false }), 9.4, 3.0, -Math.PI / 2);
-  put(Q, K6.louvreHouse(8, 5, { colour: [224, 224, 200], trim: 0x3f6f62, veranda: 2, lit: true }), 0, -24, 0);
+
   const shop = K6.piazzaBuilding(7, { colour: [232, 216, 168], trim: 0x7a3b2a, storeys: 1, sign: "GROCERY", P: 1.6, depth: 5, lit: true, seed: 50 });
   put(Q, shop, 6.0, 12.4, Math.PI);
   Q.walls.push([6.0, 8.9, 11, 15.9]);
@@ -616,7 +633,36 @@ export function lane(K) {
   put(Q, K6.streetLamp(4.2, true), 2.3, 1.0, Math.PI, rect(2.3, 1.0, 0.25, 0.25));
   put(Q, K6.streetLamp(4.2, true), -2.25, 12.0, 0, rect(-2.25, 12.0, 0.25, 0.25));
   put(Q, K6.bicycle(0x2a5a3a), 2.3, 6.0, Math.PI / 2, rect(2.3, 6.0, 0.4, 1.3));
-  skyline(Q, -30, 30, 26, 8, 7);
+  // The nearest backdrop is another row of homes with its fronts toward
+  // the street. Beyond it are trees and several more roofs.
+  const houseColours = [
+    { colour: [218, 208, 184], trim: 0x6a493c },
+    { colour: [195, 212, 195], trim: 0x506954 },
+    { colour: [207, 214, 222], trim: 0x425c71 },
+  ];
+  const neighbours = [
+    [-9.3, -17, Math.PI / 2], [9.6, -18.5, -Math.PI / 2],
+    [-9.6, 19.5, Math.PI / 2], [9.8, 19.8, -Math.PI / 2],
+    [-11.2, -32.5, 0], [6.3, -33.1, 0], [19, -31.5, 0],
+    [-18.2, 33.9, Math.PI], [-3.9, 31.8, Math.PI], [13.1, 33.2, Math.PI],
+  ];
+  neighbours.forEach(([x, z, yaw], i) => {
+    const house = K6.louvreHouse(6.8, 5, { ...houseColours[i % houseColours.length], veranda: 1.35, lit: i % 3 !== 0 });
+    put(Q, house, x, z, yaw);
+  });
+  const foothills = hillRing(190, 18, 32, { seed: 66, base: [0.20, 0.31, 0.25] });
+  for (const hill of [...foothills.children]) if (hill.position.z > -105) hill.removeFromParent();
+  Q.group.add(foothills);
+  for (const [x, z, height] of [
+    [-20, -19, 8], [17, -16, 7], [-22, 8, 6], [19, 3, 8],
+    [-20, 20, 8], [22, 20, 7], [-26, -37, 8], [0, -43, 9],
+    [28, -39, 8], [-25, 37, 8], [5, 44, 9], [26, 38, 7],
+    [-22, 50, 9], [-10, 57, 10], [3, 66, 8], [15, 51, 9], [26, 56, 8],
+  ]) put(Q, tree(height, 120 + x), x, z);
+  for (const [x, z, s] of [[-5.6, -12.6, .85], [-4.9, 4.5, .7], [3.65, -8, .8], [4.1, 1.6, .9], [4.4, 7.8, .75]]) {
+    put(Q, bush(19 + x, s), x, z);
+  }
+  for (const [x, z] of [[-2.3, -20.2], [2.3, 20.3]]) put(Q, K6.streetLamp(4.2, true), x, z);
 
   K.person(Q, "adina", -7.6, -1.3, 1.2);
   K.person(Q, "mum", -4.6, -2.4, 1.1);
@@ -633,14 +679,14 @@ export function lane(K) {
         api.notice("Put it beside the picture on the table.");
         return false;
       }
-      api.place([-7.3, 0.836, -5.15]);
+      api.place([-7.3, 0.825, -5.24]);
     },
   };
   Q.show = (api) => {
     if (api.S.stage > 61 && api.S.hand !== "ticket") {
       const o = Q.items.ticket;
       if (o.parent !== Q.group) Q.group.add(o);
-      o.position.set(-7.3, 0.836, -5.15);
+      o.position.set(-7.3, 0.825, -5.24);
       o.visible = true;
     }
   };

@@ -55,7 +55,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     fired = new Set();
     build(FILMS[key]);
     $("cineControls").hidden = false;
-    hideSkip = showCinematicSkip(() => $("readCine").click(), { left: true });
+    hideSkip = showCinematicSkip(() => $("readCine").click());
     $("pauseCine").textContent = "Pause";
     document.body.classList.add("cine");
     D.apply(0);

@@ -197,7 +197,16 @@ if _hair:
 # 3. The eyes keep their texture coordinates: joined under another layer name they lost them, and every eye was drawn in one flat colour.
 if h.data.uv_layers and eyes.data.uv_layers:eyes.data.uv_layers[0].name=h.data.uv_layers[0].name
 crowdmat=colmat('Crowd');COL['Crowd']=Vector((1,1,1))
+# Keep the original garment boundaries when merging draw calls. The game reads
+# this attribute on phone, crowd and focus meshes. Zero leaves a vertex as painted.
+tint_regions = {'Shirt': 1.0, 'Collar': 1.0, 'Pocket': 1.0, 'Placket': 1.0, 'Breeches': 0.5, 'Skirt': 0.5}
 for o in mesh_objects:
+    regions = [tint_regions.get(mat.name, 0) for mat in o.data.materials]
+    if any(regions):
+        tint = o.data.attributes.new('_TINT', 'FLOAT', 'POINT')
+        for face in o.data.polygons:
+            for index in face.vertices:
+                tint.data[index].value = regions[face.material_index]
     colours=o.data.color_attributes.get('Col')
     if colours:
         for face in o.data.polygons:

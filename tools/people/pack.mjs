@@ -55,25 +55,68 @@ function liftLayers(doc) {
     for (const s of Out) s.P.setArray(s.pos); }
   return moved;
 }
-/* The face keeps its own share of triangles. tools/garvey/era.py marks it on the skin (_FACE). Its triangles are moved to a primitive of their own and simplified on their
-   own, with the painted colours counted as well as the shape, so brows, lips and the eye sockets survive in a light, crowd or phone copy (owner, 16 November 2026: faces in
-   the crowd had lost their eyes). The rim of the face is locked on both sides, so no crack opens where it joins the rest of the skin. Returns the new primitives. */
-function splitFaces(doc, keep) {
+function simplifyHead(p, indices, count, error, colorWeight) {
+  const input = Uint32Array.from(indices);
+  if (count * 3 >= input.length) return input;
+  const positions = Float32Array.from(p.getAttribute('POSITION').getArray());
+  const color = p.getAttribute('COLOR_0'), normal = p.getAttribute('NORMAL'), attributes = new Float32Array(positions.length * 2);
+  for (let i = 0, c = [], n = []; i < positions.length / 3; i++) {
+    if (color) { color.getElement(i, c); attributes.set(c.slice(0, 3), i * 6); }
+    if (normal) { normal.getElement(i, n); attributes.set(n, i * 6 + 3); }
+  }
+  const weights = [colorWeight, colorWeight, colorWeight, 0.05, 0.05, 0.05];
+  return MeshoptSimplifier.simplifyWithAttributes(input, positions, 3, attributes, 6, weights, null, count * 3, error, ['LockBorder', 'ErrorAbsolute'])[0];
+}
+
+/* Keep the brow, lids and lips marked by era.py, and simplify the crown and hairline separately from the torso.
+   Joined crowd bodies still have Head weights on the crown. Keep short hair there without reserving the same detail
+   for locs that hang below the head. Locked borders keep the pieces joined to the surrounding skin. */
+function splitFaces(doc, goal) {
   const made = [];
-  for (const mesh of doc.getRoot().listMeshes()) for (const p of mesh.listPrimitives()) {
-    const F = p.getAttribute('_FACE'); if (!F) continue; const f = F.getArray(), idx = p.getIndices().getArray(), inF = [], rest = [];
-    for (let i = 0; i < idx.length; i += 3) (f[idx[i]] > 0.5 && f[idx[i + 1]] > 0.5 && f[idx[i + 2]] > 0.5 ? inF : rest).push(idx[i], idx[i + 1], idx[i + 2]);
-    p.setAttribute('_FACE', null); if (inF.length < 300 || !rest.length) continue;
-    let out = Uint32Array.from(inF); const target = Math.max(300, Math.floor(keep(inF.length / 3))) * 3;
-    if (target < out.length) { const pos = p.getAttribute('POSITION').getArray(), C = p.getAttribute('COLOR_0'), n = pos.length / 3, col = new Float32Array(n * 3);
-      if (C) for (let i = 0, el = [0, 0, 0, 0]; i < n; i++) { C.getElement(i, el); col[i * 3] = el[0]; col[i * 3 + 1] = el[1]; col[i * 3 + 2] = el[2]; }
-      out = MeshoptSimplifier.simplifyWithAttributes(out, pos instanceof Float32Array ? pos : Float32Array.from(pos), 3, col, 3, [2, 2, 2], null, target, 0.05, ['LockBorder'])[0]; }
-    const used = new Map(); for (const i of out) if (!used.has(i)) used.set(i, used.size);
-    const q = doc.createPrimitive().setMaterial(p.getMaterial()).setMode(p.getMode());
-    for (const sem of p.listSemantics()) { const A = p.getAttribute(sem), B = A.clone(), size = A.getElementSize(), src = A.getArray(), dst = new src.constructor(used.size * size);
-      for (const [i, k] of used) for (let c = 0; c < size; c++) dst[k * size + c] = src[i * size + c]; q.setAttribute(sem, B.setArray(dst)); }
-    q.setIndices(doc.createAccessor().setType('SCALAR').setArray(Uint32Array.from(out, (i) => used.get(i))).setBuffer(p.getIndices().getBuffer()));
-    p.setIndices(p.getIndices().clone().setArray(Uint32Array.from(rest))); mesh.addPrimitive(q); made.push(q);
+  const compact = goal < 10000;
+  for (const node of doc.getRoot().listNodes()) {
+    const mesh = node.getMesh(), skin = node.getSkin();
+    if (!mesh || !skin) continue;
+    const head = skin.listJoints().findIndex((bone) => /(?:^|:)Head$/.test(bone.getName()));
+    for (const p of mesh.listPrimitives()) {
+      const marks = p.getAttribute('_FACE');
+      if (!marks) continue;
+      const f = marks.getArray(), idx = p.getIndices().getArray(), inF = [], crown = [], rest = [];
+      let low = Infinity, high = -Infinity;
+      const positions = p.getAttribute('POSITION').getArray();
+      for (let i = 0; i < f.length; i++) if (f[i] > 0.5) {
+        low = Math.min(low, positions[3 * i + 1]);
+        high = Math.max(high, positions[3 * i + 1]);
+      }
+      p.setAttribute('_FACE', null);
+      if (!Number.isFinite(low)) continue;
+      const upperHead = new Uint8Array(f.length);
+      const joints = p.getAttribute('JOINTS_0'), weights = p.getAttribute('WEIGHTS_0');
+      const hairline = low + (high - low) * 0.45;
+      if (compact && p.getMaterial()?.getName() === 'Crowd' && head >= 0 && joints && weights) {
+        for (let i = 0, j = [], w = []; i < f.length; i++) {
+          if (positions[3 * i + 1] < hairline) continue;
+          joints.getElement(i, j); weights.getElement(i, w);
+          upperHead[i] = j.some((bone, k) => bone === head && w[k] > 0.75) ? 1 : 0;
+        }
+      }
+      for (let i = 0; i < idx.length; i += 3) {
+        const a = idx[i], b = idx[i + 1], c = idx[i + 2];
+        const target = f[a] > 0.5 && f[b] > 0.5 && f[c] > 0.5 ? inF :
+          upperHead[a] && upperHead[b] && upperHead[c] ? crown : rest;
+        target.push(a, b, c);
+      }
+      if (inF.length < 300 || !rest.length) continue;
+      const face = goal > 20000 ? inF : simplifyHead(p, inF, Math.max(1050, Math.floor(goal * 0.18)), 0.012, 1);
+      const top = simplifyHead(p, crown, 475, 0.004, 0.4);
+      const out = [...face, ...top];
+      const used = new Map(); for (const i of out) if (!used.has(i)) used.set(i, used.size);
+      const q = doc.createPrimitive().setMaterial(p.getMaterial()).setMode(p.getMode());
+      for (const sem of p.listSemantics()) { const A = p.getAttribute(sem), B = A.clone(), size = A.getElementSize(), src = A.getArray(), dst = new src.constructor(used.size * size);
+        for (const [i, k] of used) for (let c = 0; c < size; c++) dst[k * size + c] = src[i * size + c]; q.setAttribute(sem, B.setArray(dst)); }
+      q.setIndices(doc.createAccessor().setType('SCALAR').setArray(Uint32Array.from(out, (i) => used.get(i))).setBuffer(p.getIndices().getBuffer()));
+      p.setIndices(p.getIndices().clone().setArray(Uint32Array.from(rest))); mesh.addPrimitive(q); made.push(q);
+    }
   }
   return made;
 }
@@ -106,7 +149,7 @@ for (const n of names) {
     for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const mat = p.getMaterial(); if (!mat || !mat.getBaseColorTexture()) p.setAttribute('TEXCOORD_0', null); else for (const k of p.listSemantics()) if (/^COLOR_/.test(k)) p.setAttribute(k, null); }   /* the eyes are drawn from their picture alone: joined into a crowd body they were given black, clear vertex colours, and every eye in the crowd vanished */
     await doc.transform(weld(), prune({ keepAttributes: true, keepLeaves: true }));
     const t0 = tris(doc), ratio = ratioOf(t0), goal = t0 * ratio;
-    const faces = new Set(ratio < 0.98 ? [...splitFaces(doc, (nf) => goal > 20000 ? nf : Math.min(nf, Math.max(goal * 0.16, 720))), ...splitHands(doc, goal > 20000 ? 0.8 : 0.35)] : []);   /* the face and the hands keep their shape */   /* a full body keeps the whole face; a light copy gives it about a sixth of its triangles, and never fewer than 720 */
+    const faces = new Set(ratio < 0.98 ? [...splitFaces(doc, goal), ...splitHands(doc, goal > 20000 ? 0.8 : 0.35)] : []);
     for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) p.setAttribute('_FACE', null);
     await doc.transform(prune({ keepAttributes: false, keepLeaves: true }));
     if (ratio < 0.98) {   /* trim only the big pieces (skin, shirt, trousers, skirt): small ones such as a collar, a belt or a hat band fall apart if they are simplified, so they are kept whole */
@@ -114,6 +157,7 @@ for (const n of names) {
       const prims = []; for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) { const n = p.getIndices().getCount() / 3; prims.push({ p, n, kind: faces.has(p) || (p.getMaterial() && p.getMaterial().getBaseColorTexture()) || whole.has(m) || n < (light ? 260 : SMALL) ? 'keep' : (light && cloth.has(m)) ? 'cloth' : 'rest' }); }   /* the face (already trimmed above) and the eyes are kept as they are */
       const sum = (k) => prims.filter((x) => x.kind === k).reduce((a, x) => a + x.n, 0);
       const only = async (kind, r, error) => {   /* simplify the pieces of one kind and put every other piece back as it was; edges of cloth (hems, cuffs, necklines) are never moved, so they stay clean */
+        if (r >= 1) return;
         const save = prims.filter((x) => x.kind !== kind).map((x) => ({ p: x.p, idx: x.p.getIndices().clone(), at: x.p.listSemantics().map((k) => [k, x.p.getAttribute(k).clone()]) }));
         await doc.transform(simplify({ simplifier: MeshoptSimplifier, ratio: r, error, lockBorder: true })); for (const k of save) { k.p.setIndices(k.idx); for (const [nm, at] of k.at) k.p.setAttribute(nm, at); } };
       if (light) {   /* a light copy: the clothes keep more of their shape than the skin does (a shirt cut to a tenth crumples, and specks of it show through the waistcoat), and the body pays for it */

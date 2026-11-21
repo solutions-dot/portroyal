@@ -512,7 +512,7 @@ export const CARDS = {
     title: "The other shore",
     lines: [
       "The sea journey is ending. A new part of life is beginning.",
-      "Watch Tilbury come into view, or read the scene instead.",
+      "Tilbury comes into view.",
     ],
   },
   end: {
@@ -531,8 +531,7 @@ export const FILMS = {
     next: 30,
     title: "A goodbye across the water",
     read: [
-      "Iris’s family boards Empire Windrush. Pearl stays in Jamaica.",
-      "There are hopes in the suitcase, and people they will miss.",
+      "Iris’s family boards Empire Windrush. Pearl stays in Jamaica. There are hopes in the suitcase, and people they will miss.",
       "The journey shown here is a reconstruction, not archive footage.",
     ],
     captions: [
@@ -560,8 +559,7 @@ export const FILMS = {
     next: 40,
     title: "Tilbury, 22 June 1948",
     read: [
-      "After arrival on 21 June, passengers come ashore on 22 June.",
-      "Tilbury is in Essex. The family will travel on to London.",
+      "After arrival on 21 June, passengers come ashore on 22 June. Tilbury is in Essex. The family will travel on to London.",
       "Their new life will hold work, welcome, friendship and unfairness.",
     ],
     captions: [

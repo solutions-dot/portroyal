@@ -121,6 +121,12 @@ Players move between games, so every game is driven the same way. `tests/control
 
 **Talking.** A tap on a person the game would let you talk to starts that talk, exactly as the talk button does (`pickPerson` in `engine/tap.js`; no ray through a body).
 
+**Cinematics and chapter cards** (owner, 21 November 2026). The skip X (`showCinematicSkip` in `engine/cine.js`) is only for cinematics, scenes the player watches (the Port Royal earthquake, the Eventide fire, the Kendal crash, the Selassie arrival). While it is up, the Journal, Exit and other top buttons hide and the X is faded. A chapter title card or a chapter's opening camera move has no X. Before a cinematic, every game shows the one card from `sceneWarning` (`engine/scene-warning.js`): what happens, then, if it may be scary, "It may be scary." and "Nobody is hurt on the screen.", with Watch scene and Read what happened instead. The words run as one centred paragraph; the buttons are centred, one width, never wrapped. Reading instead shows the one read card from `readWhatHappened`: What happened, a few short centred paragraphs, Go on. No calm mode: the scene plays the same for everyone who watches. When a chapter is finished, `offerNextChapter` in `engine/chapter-end.js` waits until the screen has been clear for 2.5 seconds, then shows the "Chapter N is finished" card. It has no "Stay here": staying left no way in play to reach the next scene.
+
+**Talk signs** (owner, 21 November 2026). The game is a storybook, so there is one sign, on one person: the gold mark floats only over the person the story needs now (the one the helper arrow points to), and when you are near, the talk bubble with their name takes its place. Nobody else gets a mark or a bubble; tapping them still gives a short remark. Every game asks `showTalkMark(needed, isNear)` and `showTalkBubble(needed)` in `engine/marks.js`; `tests/talk-marks.mjs` checks it.
+
+**Story actions happen when you reach them** (owner, 21 November 2026). The thing the story needs now ("Read the notice board", "Pick up a bunch of bananas") runs by itself a moment after you arrive, with no button to press (`engine/autoact.js`). Doors, ways out and optional things keep their button, which sits up in the middle of the screen, just below where you look. After one fires, the next waits until you have walked a little, so a pick-up spot beside a put-down spot cannot chain.
+
 **Also in every game:** `tunePixels(renderer)` from `engine/perf.js`, and the gold ground arrow from `createGuide()` in `engine/guide.js`.
 
 ## 4. Animations

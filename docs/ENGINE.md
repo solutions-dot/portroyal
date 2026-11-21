@@ -477,11 +477,13 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 ### Skipping a cinematic
 
-`showCinematicSkip(onSkip)` shows the shared X. Call the function it returns when the scene ends or is interrupted. The game's callback moves directly to the recap or restores the same playable state as the end of the scene. Required puzzles and conversations stay in the story. `playChapterFade` uses the same control and performs chapter setup once, even if the player skips before the title appears.
+`offerNextChapter({ still, clear, show })` in `engine/chapter-end.js` shows the "Chapter N is finished" card in every game once the screen has been clear for `PAUSE_MS` (2.5 s), so the player sees what they just did first; the card has no "Stay here" (owner, 21 Nov 2026).
+
+`showCinematicSkip(onSkip)` shows the shared X. Call the function it returns when the scene ends or is interrupted. The game's callback moves directly to the recap or restores the same playable state as the end of the scene. Required puzzles and conversations stay in the story. While the X is up, the body carries `cine-on` and the top buttons (Journal, Exit, sound, reset, view) and the Pause / Sound / Read instead bar of Selassie and Windrush are hidden, so a cinematic shows only the faded X (owner, 21 Nov 2026, every game). `playChapterFade` shows no X: a chapter title card is short and is never skipped (owner, 21 Nov 2026, every game). It runs the chapter setup once. Bog Walk keeps its own `chapterFade` (it fades with its own caption), and it has no X either. The X is for cinematics only (a scene the player watches: the Port Royal earthquake, the Eventide fire, the Kendal crash, the Selassie arrival). A chapter opening is not one: Garvey's camera move at a chapter start and Tivoli's chapter title text have no X.
 
 ### Warnings before intense scenes
 
-`sceneWarning` uses a game's existing card with a Watch scene button, a Read what happened instead button, and a Calm mode checkbox. Calm mode starts with the device's reduced-motion preference and remembers any change on that browser. The watch path uses `sceneIsCalm()` to reduce camera motion and bright effects, and the audio engine lowers the scene volume. Call `endSceneWarning()` when the scene ends, is skipped, or is left through chapter navigation.
+`sceneWarning(card, { title, what, scary, watch, read, pairs })` is the one card before a cinematic, in every game (owner, 21 Nov 2026). It shows what happens (`what`), then, for a scene that may be scary, the two standard lines "It may be scary." and "Nobody is hurt on the screen.", and the buttons Watch scene and Read what happened instead. A scene that is loud or big but not scary (the Selassie arrival, the Windrush ship scenes) passes `scary: false`. `pairs: true` is for games whose `card()` takes `[label, fn]` buttons. Tivoli writes its card in the page and fills it with `warningLines` and `addSceneWarningOptions`. The words run as one centred paragraph and both buttons are one width, never wrapped, on a phone and a desktop. After Read what happened instead, `readWhatHappened(card, { what, go, pairs })` shows the one read card: the title What happened, each line of `what` a short centred paragraph, and one button, Go on. There is no calm mode: the player watches or reads, and the scene plays the same either way. `sceneIsCalm()` is always false and `endSceneWarning()` does nothing; both stay so older calls still work.
 
 ## engine/collapse.js: a building that falls down (18 November 2026)
 
@@ -492,3 +494,11 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 - Anything lower than `opts.keepBelow` (1.6 m) stays: foundations, steps, low rails, beds of plants. `opts.floorAt(x, z)` gives the height things land on, in the group's own space. `opts.onImpact(k)` fires as each piece lands (a shake, a thud).
 - It changes only copies of the building's materials, so no other building chars.
 - Port Royal's 1692 houses still use their own sinking and brick code (`sinkTown`, `breakHouse` in `games/port-royal/src/main.js`). Move them onto this when that game is next worked on.
+
+## Talk signs (`engine/marks.js`, 21 November 2026)
+
+`showTalkMark(needed, isNear)` and `showTalkBubble(needed)` decide who gets a talk sign in every game: only the person the story needs now (the game's `wantsTalk`, `STORY.marked`, Port Royal's goal-to-action map, Tivoli's `storyNeeds`). The mark gives way to the named talk bubble when you are near. Other people get no sign but still answer a tap.
+
+## Story actions on arrival (`engine/autoact.js`, 21 November 2026)
+
+`createAutoAct()` returns `tick(dt, action, x, z, run)`. Each frame a game passes the action in reach that may fire: one the story needs now, never an exit (`exit: true`) or one marked `manual: true`. It runs after `AUTO_DELAY` (0.35 s) standing in reach; then nothing more fires until the player has walked `AUTO_REARM` (0.6 m). It tracks actions by `id`, since some games build the nearby action afresh each frame. It also places `#talk.btn` (the button for doors and optional things) at 62% down the screen, centred. Wired in Port Royal (only the action the goal points to), Garvey, Kendal, Bog Walk, Nanny, Melissa, Eventide, Selassie and Windrush; Tivoli's walking chapters have no actions.

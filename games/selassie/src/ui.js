@@ -5,7 +5,7 @@ import { liveHint } from '../../../engine/device.js';
    the journal with its tabs, the chapter list and the credits. */
 import * as THREE from "three";
 import { uiSound } from "../../../engine/audio.js";
-import { headTop as realHeadTop, markAt, NEAR_GAP } from "../../../engine/marks.js"; /* the talk mark sits the same gap over the real head or hat in every game */
+import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from "../../../engine/marks.js"; /* the talk mark sits the same gap over the real head or hat in every game */
 import { CHAPTERS, JOURNAL, SOURCES } from "./content.js";
 import { pickPerson } from "../../../engine/tap.js"; /* tap a person to talk to them */
 export const $ = (id) => document.getElementById(id);
@@ -225,9 +225,9 @@ export function createMarks({ scene, camera, canvas, onTap }) {
         );
         m.scale.set(k, k, k);
         m.material.opacity = Math.max(0.6, 1 - d / 20);
-        m.visible = near !== n && d < 40;
+        m.visible = showTalkMark(true, near === n) && d < 40; /* only marked(n) people reach here (engine/marks.js) */
       }
-      const on = show && !!near;
+      const on = show && !!near && showTalkBubble(marked(near));
       el.hidden = !on;
       el.person = on ? near : null;
       if (!on) return;

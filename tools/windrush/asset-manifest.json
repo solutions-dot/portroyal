@@ -17,12 +17,12 @@
     },
     {
       "file": "wr_anita18_crowd.js",
-      "bytes": 90520,
-      "sha256": "4d3a923adb08577fc8b0f56151ac5005f5970055087fd6f21d142d6b658c7635",
-      "recipeSHA256": "a5446e02245a7df68aad1a270248803e68ed6ee7a31731bf48241309a24ab3f4",
-      "visibleTriangles": 5433,
-      "measurementTriangles": 764,
-      "visibleDraws": 2
+      "bytes": 92772,
+      "sha256": "0b340a09096d5e3cebb065fa5a07808b03b82f7b516ef1661129bae1a65dc5fc",
+      "recipeSHA256": "9f38885ef71f2017ae126200560b3d1bdf5920fff2f42d667c1565be01d358d3",
+      "visibleTriangles": 5423,
+      "measurementTriangles": 774,
+      "visibleDraws": 3
     },
     {
       "file": "wr_anita18_focus.js",
@@ -44,12 +44,12 @@
     },
     {
       "file": "wr_anita18_phone.js",
-      "bytes": 65484,
-      "sha256": "777eb78b8417725e61904d238e3441424fed0a646e40d668c2fd764c95bdd04c",
-      "recipeSHA256": "a5446e02245a7df68aad1a270248803e68ed6ee7a31731bf48241309a24ab3f4",
-      "visibleTriangles": 2815,
-      "measurementTriangles": 384,
-      "visibleDraws": 2
+      "bytes": 66604,
+      "sha256": "693b8aa2aeb99d205cc103618f353c4818a57107378552786dc951f31a6ffeb9",
+      "recipeSHA256": "9f38885ef71f2017ae126200560b3d1bdf5920fff2f42d667c1565be01d358d3",
+      "visibleTriangles": 3079,
+      "measurementTriangles": 246,
+      "visibleDraws": 3
     },
     {
       "file": "wr_asha18.js",
@@ -62,12 +62,12 @@
     },
     {
       "file": "wr_asha18_crowd.js",
-      "bytes": 90844,
-      "sha256": "3e85eb4f5a86897586333349b3a42c35f10d97fdff0cfef352ebc9b04d38b829",
-      "recipeSHA256": "27ee2c486ff62d57416cf5d664726c76d0e1b518491ec72d5c5a92871d0f1610",
-      "visibleTriangles": 5435,
-      "measurementTriangles": 762,
-      "visibleDraws": 2
+      "bytes": 93604,
+      "sha256": "b0fb5e302ce94d655c3743bc634ff6d7e699d0dae176716da14c193707225007",
+      "recipeSHA256": "9ce060e920aa7dcf97f1822cc5fa18271e9fcb90f256a5d789baf2de86a757cb",
+      "visibleTriangles": 5405,
+      "measurementTriangles": 792,
+      "visibleDraws": 3
     },
     {
       "file": "wr_asha18_focus.js",
@@ -89,12 +89,12 @@
     },
     {
       "file": "wr_asha18_phone.js",
-      "bytes": 65764,
-      "sha256": "c8cf013e7656371b1d18a35636b593f310702cced2f86e3475adced21f5bd8ad",
-      "recipeSHA256": "27ee2c486ff62d57416cf5d664726c76d0e1b518491ec72d5c5a92871d0f1610",
-      "visibleTriangles": 2815,
-      "measurementTriangles": 382,
-      "visibleDraws": 2
+      "bytes": 66740,
+      "sha256": "af0d661522cb3b3cdfb6e4a6818e2f622657bcae0fd096479bcf30fc98e8f011",
+      "recipeSHA256": "9ce060e920aa7dcf97f1822cc5fa18271e9fcb90f256a5d789baf2de86a757cb",
+      "visibleTriangles": 3007,
+      "measurementTriangles": 262,
+      "visibleDraws": 3
     },
     {
       "file": "wr_celia48.js",
@@ -107,12 +107,12 @@
     },
     {
       "file": "wr_celia48_crowd.js",
-      "bytes": 90948,
-      "sha256": "37efdea00142a040b5c2fd655d15fc7276e82b9fa858129717bc0a6fea8169b0",
-      "recipeSHA256": "e9019c6f845941f7e4507c63c01d0cca602a0fd44ee36f6fc1077c0309b24486",
-      "visibleTriangles": 5449,
-      "measurementTriangles": 750,
-      "visibleDraws": 2
+      "bytes": 93356,
+      "sha256": "b274dc06482754adf8c7b8df8c5176dd6aa70d95e2d50730f209a43356e51cf0",
+      "recipeSHA256": "edcfd8bb17181ef14741dd31e7c4e38f0304ea8fc1322af23fca0ca3d4a4027f",
+      "visibleTriangles": 5437,
+      "measurementTriangles": 760,
+      "visibleDraws": 3
     },
     {
       "file": "wr_celia48_focus.js",
@@ -134,12 +134,12 @@
     },
     {
       "file": "wr_celia48_phone.js",
-      "bytes": 65640,
-      "sha256": "d50c5f4563fd289c5dcbd8ee62c48e376a2a2f9f01c4387fb4e7191430f8830b",
-      "recipeSHA256": "e9019c6f845941f7e4507c63c01d0cca602a0fd44ee36f6fc1077c0309b24486",
-      "visibleTriangles": 2823,
-      "measurementTriangles": 376,
-      "visibleDraws": 2
+      "bytes": 67012,
+      "sha256": "efdbfa3c97d8e054a578518ee2e92142454bfd28ccdc67f1b84fefe336825d90",
+      "recipeSHA256": "edcfd8bb17181ef14741dd31e7c4e38f0304ea8fc1322af23fca0ca3d4a4027f",
+      "visibleTriangles": 3067,
+      "measurementTriangles": 244,
+      "visibleDraws": 3
     },
     {
       "file": "wr_gray48.js",
@@ -152,12 +152,12 @@
     },
     {
       "file": "wr_gray48_crowd.js",
-      "bytes": 90940,
-      "sha256": "2fc02622bd68daf68ac9dcd6cf22780322b7c29a819db668bd168dc77fde2d27",
-      "recipeSHA256": "cd805449320a17feedb233a4cb16b8664dd364b78bff3e5f7ec70b48a014690f",
-      "visibleTriangles": 5715,
-      "measurementTriangles": 483,
-      "visibleDraws": 2
+      "bytes": 95164,
+      "sha256": "86efe6c547ed7f59b6274b76fcbae2ec06d501265eb21d8b956cfde39c459b0f",
+      "recipeSHA256": "51e7744454365abdaebd32b98272a96e6ebe8238b2ffeea8df41930ca7342a60",
+      "visibleTriangles": 5681,
+      "measurementTriangles": 518,
+      "visibleDraws": 3
     },
     {
       "file": "wr_gray48_focus.js",
@@ -179,12 +179,12 @@
     },
     {
       "file": "wr_gray48_phone.js",
-      "bytes": 65576,
-      "sha256": "e0785a89d034e4272d80f6ab878e61f65d8a055a5ff2b5dd3a8a1e8ec7157a86",
-      "recipeSHA256": "cd805449320a17feedb233a4cb16b8664dd364b78bff3e5f7ec70b48a014690f",
-      "visibleTriangles": 2955,
-      "measurementTriangles": 247,
-      "visibleDraws": 2
+      "bytes": 70012,
+      "sha256": "23ff9f20f2cf911ce46eb3cd1657626adc270f856ad594eeb3d4fd4745858b4c",
+      "recipeSHA256": "51e7744454365abdaebd32b98272a96e6ebe8238b2ffeea8df41930ca7342a60",
+      "visibleTriangles": 3131,
+      "measurementTriangles": 320,
+      "visibleDraws": 3
     },
     {
       "file": "wr_iris23.js",
@@ -197,12 +197,12 @@
     },
     {
       "file": "wr_iris23_crowd.js",
-      "bytes": 91244,
-      "sha256": "c26b0cafa36c8a68b59a1ec7852b09510c8f9f2314478da784299ec7a66123c9",
-      "recipeSHA256": "b9d48caea76cdc4c47d3baa872a04a678b921cbd27fa72ae963912da597a143b",
-      "visibleTriangles": 5448,
-      "measurementTriangles": 750,
-      "visibleDraws": 2
+      "bytes": 93800,
+      "sha256": "582ae0b21841cc5c87d59d7fe8025c6ba4d56c7017530d8da601d34a253b2d40",
+      "recipeSHA256": "32efa2ed72206ec3e5ed5badb735a87d94af034b4c280c6c0b5bdb62b96a7a9a",
+      "visibleTriangles": 5432,
+      "measurementTriangles": 766,
+      "visibleDraws": 3
     },
     {
       "file": "wr_iris23_focus.js",
@@ -224,12 +224,12 @@
     },
     {
       "file": "wr_iris23_phone.js",
-      "bytes": 65808,
-      "sha256": "56f24d5390a61d81e952e9fe521678e412bcbeb723a23d32dbbbd0fcb94cab32",
-      "recipeSHA256": "b9d48caea76cdc4c47d3baa872a04a678b921cbd27fa72ae963912da597a143b",
-      "visibleTriangles": 2822,
-      "measurementTriangles": 376,
-      "visibleDraws": 2
+      "bytes": 67536,
+      "sha256": "e0ad79f3ade46c9b92f80c85f2581c79efeccfef8ebb91acd428313d0a9394c3",
+      "recipeSHA256": "32efa2ed72206ec3e5ed5badb735a87d94af034b4c280c6c0b5bdb62b96a7a9a",
+      "visibleTriangles": 3074,
+      "measurementTriangles": 244,
+      "visibleDraws": 3
     },
     {
       "file": "wr_iris79.js",
@@ -242,12 +242,12 @@
     },
     {
       "file": "wr_iris79_crowd.js",
-      "bytes": 90864,
-      "sha256": "8f81b0ad635b44de832a4a921adecfb9751a1f10ead5bd47da5d4b6fb0f34dea",
-      "recipeSHA256": "610d5b150435c65638fb0f8f32f44162593af873feb6da2fbcba9c93fc46bac9",
-      "visibleTriangles": 5428,
-      "measurementTriangles": 770,
-      "visibleDraws": 2
+      "bytes": 93436,
+      "sha256": "74f2b1033d47eef66a43ce0ede5bf11c49241e2caa46b28abf011968115f7212",
+      "recipeSHA256": "b392389530266cc0c554a15e3c3b674adb35c2c0aa807f6a090169f3205af225",
+      "visibleTriangles": 5410,
+      "measurementTriangles": 788,
+      "visibleDraws": 3
     },
     {
       "file": "wr_iris79_focus.js",
@@ -269,12 +269,12 @@
     },
     {
       "file": "wr_iris79_phone.js",
-      "bytes": 65520,
-      "sha256": "ea96d6e7d6e8f186da8b6842b44df7268dd71379328a9ffd623a661067141964",
-      "recipeSHA256": "610d5b150435c65638fb0f8f32f44162593af873feb6da2fbcba9c93fc46bac9",
-      "visibleTriangles": 2812,
-      "measurementTriangles": 386,
-      "visibleDraws": 2
+      "bytes": 66452,
+      "sha256": "620299b9e8fd9b20ae989a99ba5d8c168f8a7219ee321a867b91865a82464a99",
+      "recipeSHA256": "b392389530266cc0c554a15e3c3b674adb35c2c0aa807f6a090169f3205af225",
+      "visibleTriangles": 3026,
+      "measurementTriangles": 248,
+      "visibleDraws": 3
     },
     {
       "file": "wr_iris9.js",
@@ -332,12 +332,12 @@
     },
     {
       "file": "wr_lionel48_crowd.js",
-      "bytes": 90424,
-      "sha256": "1e14644fbce2e22811f57c03238d86f493cb5eba00d959aeab29c2a2256ea9dc",
-      "recipeSHA256": "71ed11cf25873bd9da6798ce33e2d72f3a88291fa3a8804cac1196faf3723090",
-      "visibleTriangles": 5709,
-      "measurementTriangles": 489,
-      "visibleDraws": 2
+      "bytes": 93140,
+      "sha256": "90020b0151d3c77a7c5d47bf49aabde220f40a2b9bda63a53de4e561d1eeae26",
+      "recipeSHA256": "2949239aa59c9fc67bf1bfd6ca9e94e2b7439525ccdb9a810e9e87a184005d79",
+      "visibleTriangles": 5663,
+      "measurementTriangles": 535,
+      "visibleDraws": 3
     },
     {
       "file": "wr_lionel48_focus.js",
@@ -359,12 +359,12 @@
     },
     {
       "file": "wr_lionel48_phone.js",
-      "bytes": 65144,
-      "sha256": "022e7a650dea2dbdca9b1ef5f8cae7d2e83873f52d4369a63b9cd6d1eab3e198",
-      "recipeSHA256": "71ed11cf25873bd9da6798ce33e2d72f3a88291fa3a8804cac1196faf3723090",
-      "visibleTriangles": 2953,
-      "measurementTriangles": 245,
-      "visibleDraws": 2
+      "bytes": 67908,
+      "sha256": "b432765ae5ff499aa7272d687f1fac29f7b88fc64f8f0c4a0938b4ec6583d19d",
+      "recipeSHA256": "2949239aa59c9fc67bf1bfd6ca9e94e2b7439525ccdb9a810e9e87a184005d79",
+      "visibleTriangles": 3113,
+      "measurementTriangles": 303,
+      "visibleDraws": 3
     },
     {
       "file": "wr_may48.js",
@@ -377,12 +377,12 @@
     },
     {
       "file": "wr_may48_crowd.js",
-      "bytes": 90736,
-      "sha256": "7387d585222e2461db5e432f5bf36ba25896b196e584300509f067555eec0d49",
+      "bytes": 93324,
+      "sha256": "35ffaf6a734ffdb6abdc98ecb9c61542711a2208fdc1e42ad8bea479d2053729",
       "recipeSHA256": "65d73a4829104971862f089a75ea820f944c18ea560990a6b967ebec4b8a9b3a",
-      "visibleTriangles": 5449,
-      "measurementTriangles": 748,
-      "visibleDraws": 2
+      "visibleTriangles": 5437,
+      "measurementTriangles": 762,
+      "visibleDraws": 3
     },
     {
       "file": "wr_may48_focus.js",
@@ -404,12 +404,12 @@
     },
     {
       "file": "wr_may48_phone.js",
-      "bytes": 65608,
-      "sha256": "80958daa4ec5686a3244083aa48d122e7a55465afa97290c31b657b120f89312",
+      "bytes": 66968,
+      "sha256": "fc56e003312791081cf4dc2e707c84afb073cff80b50715f4dbf77ba2458f6b2",
       "recipeSHA256": "65d73a4829104971862f089a75ea820f944c18ea560990a6b967ebec4b8a9b3a",
-      "visibleTriangles": 2823,
-      "measurementTriangles": 376,
-      "visibleDraws": 2
+      "visibleTriangles": 3057,
+      "measurementTriangles": 246,
+      "visibleDraws": 3
     },
     {
       "file": "wr_may62.js",
@@ -422,12 +422,12 @@
     },
     {
       "file": "wr_may62_crowd.js",
-      "bytes": 90260,
-      "sha256": "b6876a9a2ca864c6605abb968468026ef7b4bb203a36f3d4d4db3460c8fa5ac9",
+      "bytes": 92860,
+      "sha256": "a1722abc1b7208f844c1e5e4ae9bb2a1f740f746a614d91e91b01dd6a9a68fb8",
       "recipeSHA256": "e68ed362687e9b243a7771c5049194f8847650de4a12ee08e7dae29a5c81154b",
-      "visibleTriangles": 5448,
-      "measurementTriangles": 750,
-      "visibleDraws": 2
+      "visibleTriangles": 5446,
+      "measurementTriangles": 752,
+      "visibleDraws": 3
     },
     {
       "file": "wr_may62_focus.js",
@@ -449,12 +449,12 @@
     },
     {
       "file": "wr_may62_phone.js",
-      "bytes": 65172,
-      "sha256": "e05a1be2c750cec9c2e3659251e581ecf96e064af45078c992c2ad7a311b25ac",
+      "bytes": 67048,
+      "sha256": "8a8c0910433978c1497e11229d827e3f1dd12a3e98a558736034b5b7648f2fdd",
       "recipeSHA256": "e68ed362687e9b243a7771c5049194f8847650de4a12ee08e7dae29a5c81154b",
-      "visibleTriangles": 2822,
-      "measurementTriangles": 376,
-      "visibleDraws": 2
+      "visibleTriangles": 3120,
+      "measurementTriangles": 238,
+      "visibleDraws": 3
     },
     {
       "file": "wr_maya12.js",
@@ -512,12 +512,12 @@
     },
     {
       "file": "wr_pearl48_crowd.js",
-      "bytes": 90384,
-      "sha256": "2c89bd6f7031286c82cacd6acd62255552b758c246e4a0210855f0351681ef58",
-      "recipeSHA256": "f2163a64d61af660e95911043f098fa36ec07822f18889f791abeba715e91d2d",
-      "visibleTriangles": 5448,
-      "measurementTriangles": 750,
-      "visibleDraws": 2
+      "bytes": 94568,
+      "sha256": "a02f776563e6720e10c7a073f6dc94d81173d259840b173bc89a3c65a5e82239",
+      "recipeSHA256": "7b37da965ff75457d305187a1ea631cc0c2af9fad1325c1e95e09d5876d7e254",
+      "visibleTriangles": 5529,
+      "measurementTriangles": 668,
+      "visibleDraws": 3
     },
     {
       "file": "wr_pearl48_focus.js",
@@ -539,12 +539,12 @@
     },
     {
       "file": "wr_pearl48_phone.js",
-      "bytes": 65500,
-      "sha256": "d091ced6c449c23fc825a3beb8acba2a70c2fc741d95d136a919c3f57551435f",
-      "recipeSHA256": "f2163a64d61af660e95911043f098fa36ec07822f18889f791abeba715e91d2d",
-      "visibleTriangles": 2822,
-      "measurementTriangles": 376,
-      "visibleDraws": 2
+      "bytes": 72372,
+      "sha256": "1b9cb99e03161e5dfc60d9fb94f9bb67d99816afc8f0f0df162824e70c6106bb",
+      "recipeSHA256": "7b37da965ff75457d305187a1ea631cc0c2af9fad1325c1e95e09d5876d7e254",
+      "visibleTriangles": 3575,
+      "measurementTriangles": 222,
+      "visibleDraws": 3
     },
     {
       "file": "wr_pearl62.js",
@@ -557,12 +557,12 @@
     },
     {
       "file": "wr_pearl62_crowd.js",
-      "bytes": 90620,
-      "sha256": "98b23a6238f2b32d49d2be3b32e30a18d6fd90801d87a89562d7ea6f9b244eca",
-      "recipeSHA256": "5410052b11e39c855cf8fed21f90c46a5d0a7967a89022d4a2c8fbb96d6a71b7",
-      "visibleTriangles": 5448,
-      "measurementTriangles": 750,
-      "visibleDraws": 2
+      "bytes": 93928,
+      "sha256": "3923916e5470d1ad22b3d078fb9fb189b0975ab64b1368c7c178e66189cfd024",
+      "recipeSHA256": "0f1a3e3a22ca933fab7c8e23bb7c4dfba9bc8b63c36d4c7a46bcb2776cb2f6a2",
+      "visibleTriangles": 5523,
+      "measurementTriangles": 676,
+      "visibleDraws": 3
     },
     {
       "file": "wr_pearl62_focus.js",
@@ -584,12 +584,12 @@
     },
     {
       "file": "wr_pearl62_phone.js",
-      "bytes": 65100,
-      "sha256": "729825c890157918ff0519f853c28fd885488a25206d45a899203f05617776fd",
-      "recipeSHA256": "5410052b11e39c855cf8fed21f90c46a5d0a7967a89022d4a2c8fbb96d6a71b7",
-      "visibleTriangles": 2822,
-      "measurementTriangles": 376,
-      "visibleDraws": 2
+      "bytes": 71412,
+      "sha256": "307d52f91c51d34d2364ca7b5c53b9aa2ba59f2d0321669e0ba6c7d929b408ef",
+      "recipeSHA256": "0f1a3e3a22ca933fab7c8e23bb7c4dfba9bc8b63c36d4c7a46bcb2776cb2f6a2",
+      "visibleTriangles": 3495,
+      "measurementTriangles": 230,
+      "visibleDraws": 3
     },
     {
       "file": "wr_sam48.js",
@@ -602,12 +602,12 @@
     },
     {
       "file": "wr_sam48_crowd.js",
-      "bytes": 90692,
-      "sha256": "cf85bf72045f14f3c247209f04df21c135f8dcc83763ba63f44ac6c7f474cc93",
-      "recipeSHA256": "960de03674f270b9fc888b99eefcd578dbb7e6f18e7a05c262290ade42e1e295",
-      "visibleTriangles": 5722,
-      "measurementTriangles": 476,
-      "visibleDraws": 2
+      "bytes": 93188,
+      "sha256": "9df9b1268b33e44e27a9b8a38ae17c4f6ed9110a569a6f1fd106755bfc8b4c6c",
+      "recipeSHA256": "75c5e8c3b38d577dc69f1635cdebfdde9f491d29ac5c920a7240ac30d5b3aa23",
+      "visibleTriangles": 5678,
+      "measurementTriangles": 520,
+      "visibleDraws": 3
     },
     {
       "file": "wr_sam48_focus.js",
@@ -629,12 +629,12 @@
     },
     {
       "file": "wr_sam48_phone.js",
-      "bytes": 65436,
-      "sha256": "6a412250aa9e4e03a1cdffd0e57cbbfbbb33b7e37d5625b65a0ef5228d645060",
-      "recipeSHA256": "960de03674f270b9fc888b99eefcd578dbb7e6f18e7a05c262290ade42e1e295",
-      "visibleTriangles": 2958,
-      "measurementTriangles": 248,
-      "visibleDraws": 2
+      "bytes": 67632,
+      "sha256": "bba0960a2cd48cccad83f9868492676d14cacec26935fff515750668ea5b65e4",
+      "recipeSHA256": "75c5e8c3b38d577dc69f1635cdebfdde9f491d29ac5c920a7240ac30d5b3aa23",
+      "visibleTriangles": 3044,
+      "measurementTriangles": 320,
+      "visibleDraws": 3
     },
     {
       "file": "wr_sam62.js",
@@ -647,12 +647,12 @@
     },
     {
       "file": "wr_sam62_crowd.js",
-      "bytes": 90060,
-      "sha256": "c8f4b95b9613063fa295e03ae6bc5cde4f817e04e808bdbff6995febb9fae3ff",
-      "recipeSHA256": "5fb7716d8584c40bfd6cd45de6252f3dabab2d7e4b89bc724b088a3080a11a9c",
-      "visibleTriangles": 5718,
-      "measurementTriangles": 480,
-      "visibleDraws": 2
+      "bytes": 92308,
+      "sha256": "0a2153b484a67f9dd172d634a6039a8f6ed8d9de646d89e014705c0f984f5706",
+      "recipeSHA256": "4282be22ea24a0268c052a7923eb5ac9edb36bc01f2d4b61dfca0ddc339703c3",
+      "visibleTriangles": 5675,
+      "measurementTriangles": 524,
+      "visibleDraws": 3
     },
     {
       "file": "wr_sam62_focus.js",
@@ -674,12 +674,12 @@
     },
     {
       "file": "wr_sam62_phone.js",
-      "bytes": 64900,
-      "sha256": "7e6fe69bb6c5aea87641747729b0c0535f17bf2aae7fce83e4723d292a37021a",
-      "recipeSHA256": "5fb7716d8584c40bfd6cd45de6252f3dabab2d7e4b89bc724b088a3080a11a9c",
-      "visibleTriangles": 2958,
-      "measurementTriangles": 256,
-      "visibleDraws": 2
+      "bytes": 67112,
+      "sha256": "49ee0890d7c0685eda7d31e94b1cc9c28570809ffd5e1b5a8b7c5d90cc57d062",
+      "recipeSHA256": "4282be22ea24a0268c052a7923eb5ac9edb36bc01f2d4b61dfca0ddc339703c3",
+      "visibleTriangles": 3023,
+      "measurementTriangles": 320,
+      "visibleDraws": 3
     }
   ]
 }

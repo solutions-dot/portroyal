@@ -43,3 +43,10 @@ export function headTop(body) {
 }
 /* forget a body's measure (after its hat changes) */
 export function remeasure(body) { CACHE.delete(body); }
+
+/* Who gets a talk sign (owner, 21 November 2026: "only the person you need to speak to at that particular time should have the speech
+   indicator"). The game is a storybook: one sign, on one person. The gold mark floats only over a person the story needs now (the same
+   people the helper arrow points to) and goes once you are near, where the talk bubble with their name takes over. Nobody else gets a
+   sign; tapping them still gives a short remark that fits who they are. Every game asks these two, so the rule is the same everywhere. */
+export const showTalkMark = (needed, isNear) => !!needed && !isNear;
+export const showTalkBubble = (needed) => !!needed;

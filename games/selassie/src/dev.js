@@ -1,4 +1,5 @@
 /* Development-only checks use the real scene and gameplay handlers. */
+import { Color } from "three";
 import { checkAll, CHECKS } from "../../../engine/checks.js";
 import { headCheck } from "./headcheck.js";
 import { actionCheck } from "./actioncheck.js";
@@ -30,6 +31,32 @@ import {
   drive,
 } from "../../../engine/follow.js";
 import { closeAll, $ } from "./ui.js";
+function crowdClothingIssues(people) {
+  const issues = [];
+  for (const n of people) {
+    if (!n.colors) continue;
+    const expected = ["shirt", "legs"].map(key => n.colors[key] === undefined ? null : new Color(n.colors[key]));
+    const found = [false, false];
+    const bad = [false, false];
+    n.m.traverse(mesh => {
+      const tint = mesh.geometry?.getAttribute("_tint");
+      const color = mesh.geometry?.getAttribute("color");
+      if (mesh.material?.name !== "Crowd" || !tint || !color) return;
+      for (let i = 0; i < tint.count; i++) {
+        const region = tint.getX(i);
+        const part = region > 0.75 ? 0 : region > 0.25 ? 1 : -1;
+        const tone = expected[part];
+        if (!tone) continue;
+        found[part] = true;
+        if (Math.max(Math.abs(color.getX(i) - tone.r), Math.abs(color.getY(i) - tone.g), Math.abs(color.getZ(i) - tone.b)) > 0.008) bad[part] = true;
+      }
+    });
+    for (const [i, part] of ["shirt", "lower garment"].entries())
+      if (expected[i] && (!found[i] || bad[i])) issues.push(n.id + " " + part + " does not match its palette");
+  }
+  return issues;
+}
+
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 export async function dev(A) {
   const { q, S, ensure, world, worlds, go, story, where, blocked } = A;
@@ -341,7 +368,7 @@ export async function dev(A) {
       const twins = faceCheck(
         [...Q.people, ...Q.extras].filter((n) => n.m && !n.historical).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, story: Q.people.includes(n), uniform: /police/.test(n.base) && "police", ...(n.colors ? { cols: [n.colors.shirt, n.colors.legs] } : {}) })),
       );
-      const errors = [...r.floating, ...r.inside, ...r.stuck];
+      const errors = [...r.floating, ...r.inside, ...r.stuck, ...crowdClothingIssues(Q.extras)];
       results.push(`AUDIT ${Q.id} ${errors.length}`, ...errors, `FACES ${Q.id} ${twins.length}`, ...twins.slice(0, 40));
     }
   if (["held", "cloth", "walkers", "skin"].includes(q.get("test"))) {

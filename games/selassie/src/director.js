@@ -120,7 +120,7 @@ export function createDirector({ camera, place, finish, read, fast = false }) {
     D.paused = false;
     saluted = waved = false;
     $("cineControls").hidden = false;
-    hideSkip = showCinematicSkip(() => $("readCine").click(), { left: true });
+    hideSkip = showCinematicSkip(() => $("readCine").click());
     $("pauseCine").textContent = "Pause";
     document.body.classList.add("cine");
     $("sub").classList.remove("dim");
