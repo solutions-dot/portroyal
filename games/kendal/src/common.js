@@ -34,7 +34,7 @@ export function stationBase(g, { x0 = -60, x1 = 60, zc = -3, zEdge = 1.75, zBack
   const t = wood ? T.plank([128, 98, 66], 12, [L / 3, 1], true).clone() : T.concrete().clone(); t.needsUpdate = true; t.repeat.set(L / 3, W / 3);
   const slab = new THREE.Mesh(new THREE.BoxGeometry(L, depth, W), [solid(0x5a5a50, 1), solid(0x5a5a50, 1), std(t, 0.95), solid(0x3a3a34, 1), solid(0x6a6a5e, 1), solid(0x6a6a5e, 1)]); slab.position.set(cx, -depth / 2, cz); g.add(slab);
   const edge = box(L, 0.02, 0.35, solid(0xe2c34a, 0.8), cx, 0.015, zc + zEdge + 0.25, g);
-  const bp = mesh(new THREE.PlaneGeometry(900, 300), std(T.grass([200, 70], ground), 1), 0, 0, zBack + 150, g); bp.rotation.x = -Math.PI / 2; box(900, depth, 0.3, solid(0x5a5a50, 1), 0, -depth / 2, zBack, g);   /* level ground behind the platform */
+  const bp = mesh(new THREE.PlaneGeometry(900, 300), std(T.grass([200, 70], ground), 1), 0, 0, zBack + 150, g); bp.rotation.x = -Math.PI / 2; box(900, depth, 0.3, solid(0x4e6234, 1), 0, -depth / 2, zBack, g);   /* level ground behind the platform; its edge is a grassy bank, not a grey wall (owner, 21 Nov 2026) */
   return { top: 0, zc };
 }
 
