@@ -1023,9 +1023,26 @@ if G.get('skirt') and G.get('belt'):     # a narrow belt where the bodice meets 
             a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z)); hit=TT.ray_cast(o,d)[0]; h2=SHT.ray_cast(o,d)[0]; rr_.append(max((hit-o).length if hit else 0.0,(h2-o).length if h2 else 0.0) or 0.15)
         RR.append(rr_)
     if True:      # a belt or sash is one straight band lying snug on the join of bodice and skirt: at each angle it takes the widest of its rows over both blouse and skirt (so the folds of the skirt beneath cannot wave its edge and it never tilts out into a lip), then it is evened out round the body
-        raw=[max(r_[k] for r_ in RR) for k in range(seg)]; col=raw[:]
+        # (21 November 2026, owner: "the belt is not sitting flush". It used to take the widest of its rows over the skirt as well. A skirt flares from its very top, so the
+        # band came out as wide as the skirt at its lowest row and stood off the waist like a hoop. The band is now sized on the blouse at the waist, and the skirt is
+        # held in under it: it starts to flare just below the band, as a skirt gathered into a waistband does.)
+        _o0=Vector((0,J('Hips').y,0)); raw=[]
+        for k in range(seg):
+            a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); rs=[]
+            for z,e in zs:
+                h2=SHT.ray_cast(Vector((0,_o0.y,z)),d)[0]
+                if h2 is not None: rs.append((h2-Vector((0,_o0.y,z))).length)
+            raw.append(max(rs) if rs else 0.0)
+        _good=sorted(x for x in raw if x>0) or [0.15]; raw=[x if x>0 else _good[len(_good)//2] for x in raw]; col=raw[:]
         for _ in range(8): col=[max(raw[k],(col[(k-1)%seg]+col[k]*2+col[(k+1)%seg])/4) for k in range(seg)]
         RR=[col for _ in RR]
+        def _colat(a): f=(a%(2*math.pi))/(2*math.pi)*seg; i=int(f)%seg; u=f-int(f); return col[i]*(1-u)+col[(i+1)%seg]*u
+        _z0=zs[0][0]
+        for v in PART['skirt'].data.vertices:
+            if v.co.z<_z0-0.05: continue
+            dx,dy=v.co.x,v.co.y-_o0.y; r=math.hypot(dx,dy) or 1e-6; lim=_colat(math.atan2(dx,-dy))-0.0015+max(0.0,_z0-v.co.z)*0.8
+            if r>lim: v.co.x=dx*lim/r; v.co.y=_o0.y+dy*lim/r
+        PART['skirt'].data.update()
     for (z,e),rr_ in zip(zs,RR):
         ring=[]
         for k in range(seg):
