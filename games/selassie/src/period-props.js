@@ -847,7 +847,7 @@ export function standpipe() {
   box(0.7, 0.14, 0.7, solid(0x888274, 0.9), 0, 0.07, 0, g);
   return g;
 }
-export function waterTower() { return buildWaterTower({ grp, cyl, box, solid, M }); }   /* one water tower for every game (engine/water-tower.js) */
+export function waterTower(o) { return buildWaterTower({ grp, cyl, box, solid, M }, o); }   /* one water tower for every game (engine/water-tower.js) */
 export function barrel() {
   const g = grp();
   cyl(0.3, 0.3, 0.8, solid(0x7a5a3c, 0.9), 0, 0.4, 0, g, 12);

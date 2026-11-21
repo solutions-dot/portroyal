@@ -123,7 +123,7 @@ function hillStationEnds(g, walls, x0, x1, zc, zBack) {
       for (let k = 0; k < 4; k++) { const t = tree(6 + (k % 3), 40 + k + side); t.position.set(xe + dir * (18 + k * 7 + r() * 3), TRACK_Y + 5.5 + r(), zc + side * (12.5 + r() * 2)); t.rotation.y = r() * 6.28; g.add(t); }
     }
     /* trees and bushes beside the line between the platform and the tunnel, on the low ground and on the bank behind */
-    for (let i = 0; i < 9; i++) { const x = xe + dir * (3 + r() * 14), z = r() < 0.5 ? zc - 3.5 - r() * 9 : zc + 3.2 + r() * 9, low = z < zBack, t = i % 3 ? bush(i, 1.6 + r()) : tree(5 + (i % 3), i); t.position.set(x, low ? TRACK_Y : 0, z); t.rotation.y = r() * 6.28; g.add(t); }
+    for (let i = 0; i < 9; i++) { const x = xe + dir * (3 + r() * 14), z = r() < 0.5 ? zc - 3.5 - r() * 9 : zc + 3.2 + r() * 9, low = z < zBack; if (Math.hypot(x - 49, z + 6) < 3.6) continue; const t = i % 3 ? bush(i, 1.6 + r()) : tree(5 + (i % 3), i);   /* clear of the water tower */ t.position.set(x, low ? TRACK_Y : 0, z); t.rotation.y = r() * 6.28; g.add(t); }
   }
 }
 
@@ -134,13 +134,13 @@ export function buildHill() {
   g.add(hillRing(160, 14, 85, { seed: 12, base: [0.18, 0.4, 0.2] }));
   const hut = shed(9, 4.5, 2.9, [176, 140, 96]); hut.position.set(2, 0, 11.5); hut.rotation.y = PI; g.add(hut); walls.push([-2.6, 8.05, 6.6, 14], [1.23, 7.13, 2.77, 8.05]);
   const sg = signBoard('HILL STATION', 3.2, 0.55, { bg: '#2a3a52', fg: '#f3e6b8', font: '700 46px Georgia, serif' }); sg.position.set(2, 2.85, 7.6); g.add(sg);   /* on the front edge of the veranda roof: behind it, the roof hid the words */
-  const wt = waterTower(); wt.position.set(34, TRACK_Y, 4); g.add(wt); wt.position.y = 0; walls.push([32, 2, 36, 6]);
+  const wt = waterTower({ feed: 'rail' }); wt.position.set(49, TRACK_Y, -6.0); g.add(wt);   /* beside the line past the platform's east end, its spout and hose reaching over a tender's edge (owner, 21 Nov 2026: it stood on the passenger platform, far from the track) */
   hillStationEnds(g, walls, -34, 44, -3, 15);   /* the ends of the world: a fence across each platform end, trees, and the line running on into a cutting (owner, 21 Nov 2026) */
   scatter(g, (i) => banana(i, i % 4 === 0), 40, [-34, 18, 44, 60], [[-6, 16, 10, 22]], 5); scatter(g, (i) => tree(5 + (i % 3), i), 16, [-30, 24, 40, 70], [], 8); scatter(g, (i) => bush(i, 1.4), 24, [-34, 15, 44, 40], [[-6, 15, 10, 22]], 3);
   /* two goods wagons waiting on the track, and the pile of banana bunches the farmer has cut */
   const w1 = wagon(), w2 = wagon(); w1.position.set(-20, 0, -3); w2.position.set(-12.8, 0, -3); g.add(w1, w2); walls.push([-24, -4.6, -9, -1.2]);
-  const pile = grp(g, -14, 0, 5.6); pile.userData.noBatch = true; const mat = box(3.2, 0.06, 2.2, solid(0x8a7a3a, 1), 0, 0.03, 0, pile); const bunches = [];
-  for (let i = 0; i < 8; i++) { const b = bananaBunch(1.1); b.position.set(-1.2 + (i % 4) * 0.8, 0.3, -0.5 + Math.floor(i / 4) * 0.9); b.rotation.set(0, i * 1.3, PI / 2); b.name = 'a banana bunch'; b.userData.home = { p: b.position.clone(), r: b.rotation.clone() }; pile.add(b); bunches.push(b); }   /* you carry these one by one to the wagon (engine/story.js createCarry) */
+  const pile = grp(g, -14, 0, 5.6); pile.userData.noBatch = true; const mat = box(4.4, 0.06, 3.0, solid(0x8a7a3a, 1), 0, 0.03, 0, pile); const bunches = [];   /* a bigger mat, and the bunches laid neatly on it in two rows (owner, 21 Nov 2026) */
+  for (let i = 0; i < 8; i++) { const b = bananaBunch(1.1); b.rotation.set(0, PI / 2 + (i % 2) * PI, PI / 2); b.position.set(0, 0, 0); b.updateMatrixWorld(true); { const bb = new THREE.Box3().setFromObject(b), c = bb.getCenter(new THREE.Vector3()); b.position.set(-1.55 + (i % 4) * 1.03 - c.x, 0.06 - bb.min.y, -0.72 + Math.floor(i / 4) * 1.44 - c.z); }   /* stalks all one way, each bunch centred on its place on the mat */ b.name = 'a banana bunch'; b.userData.home = { p: b.position.clone(), r: b.rotation.clone() }; pile.add(b); bunches.push(b); }   /* you carry these one by one to the wagon (engine/story.js createCarry) */
   const inWagon = []; for (let i = 0; i < 4; i++) { const b = bananaBunch(1.1); b.position.set(-14.6 + (i % 2) * 0.8, 0.44, -3.3 + Math.floor(i / 2) * 0.7); b.rotation.set(0, i, PI / 2); b.visible = false; b.userData.noBatch = true; g.add(b); inWagon.push(b); }
   for (const [x, z] of [[-3, 6.8], [8, 9], [20, 7]]) { const c = crate(0.8); c.position.set(x, 0, z); g.add(c); } for (let i = 0; i < 3; i++) { const b = barrel(); b.position.set(14 + i * 0.7, 0, 8.4); g.add(b); }
   const bp = bench(2.2); bp.position.set(-1, 0, 8.7); bp.rotation.y = PI; g.add(bp);

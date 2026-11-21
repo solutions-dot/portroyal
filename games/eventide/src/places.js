@@ -265,7 +265,7 @@ export function buildSlipe(g) {
   put(g, oneStorey(16, 8), -13.5, -46, Math.PI / 2, out);
   /* the kitchen and laundry at the far end, with a water tank on a stand, a standpipe and the meal van (the Home had a meal van: JNHT) */
   put(g, oneStorey(9.4, 5, { overhang: 0, H: 3.0 }), 12.5, -61.0, -Math.PI / 2, out);   /* between the end of the Myers Ward and the back wall, touching neither */
-  const tw = waterTower(); tw.position.set(21, 0, -61); g.add(tw); wall(19.1, -62.9, 22.9, -59.1); out.clear.push([18.8, -63.2, 23.2, -58.8]);
+  const tw = waterTower({ feed: 'pipe' }); tw.position.set(21, 0, -61); tw.rotation.y = Math.PI; g.add(tw);   /* the Home's tank: a down pipe and tap on the kitchen's side, no railway spout */ wall(19.1, -62.9, 22.9, -59.1); out.clear.push([18.8, -63.2, 23.2, -58.8]);
   const sp = standpipe(); sp.position.set(8.8, 0, -57.6); g.add(sp); wall(8.4, -58, 9.2, -57.2);
   const van = panelVan({ colour: 0xe6e2d4, stripe: 0x2f6a3f, L: 3.4, W: 1.6 }); van.position.set(5.2, 0, -58.6); van.rotation.y = -Math.PI / 2; g.add(van);   /* the meal van: a small panel van, cream with a green stripe (the colours are a guess) */
   wall(4.1, -60.4, 6.3, -56.8); out.clear.push([3.8, -60.8, 6.6, -56.4]);
