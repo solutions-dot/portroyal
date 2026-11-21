@@ -145,7 +145,7 @@ export function clipFor(name, keepHips) { let src = name === 'WalkM' ? walkM() :
   c.tracks = c.tracks.filter((t) => { if (t.name.endsWith('.scale')) return false; if (!t.name.endsWith('.position')) return true; if (!keepHips || !/Hips/.test(t.name)) return false;
     const v = t.values; let x0 = v[0], z0 = v[2]; if (SEATED.test(name) && CL.Idle) { const it = CL.Idle.tracks.find((k) => k.name === t.name); if (it) { x0 = it.values[0]; z0 = it.values[2]; } }   /* seated clips: keep the hips over the spot we put him, not where the clip wandered to */
  for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } return true; });   /* running stays in place; the game moves her */
-  if (STANDING.test(name)) { levelStance(c); restLegs(c); }
+  if (STANDING.test(name) && !SEATED.test(name)) { levelStance(c); restLegs(c); }   /* (TalkM3 is a seated clip whose name also fits the standing list: its legs must stay bent on the seat) */
   if (!SEATED.test(name)) posture(c, name);
   if (QUIET_IDLE.test(name)) idlePosture(c, src);
   if (STANDING.test(name) && name !== 'Idle' && !GRIPS.test(name)) relaxHands(c);

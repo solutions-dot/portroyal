@@ -48,4 +48,8 @@ test('posture: in every standing clip each leg rests, on average, as the legs of
       for (let i = 0; i < N; i++) { const t = c.duration * (i + 0.5) / N, w = at(T.Hips, t); e.setFromQuaternion(w.clone().multiply(new THREE.Quaternion().fromArray(RIG_REST.Hips).invert())); const yaw = e.y; names.forEach((b, k) => { w.multiply(at(T[b], t)); mean[k] += pitch(w, yaw) / N; }); }
       names.forEach((b, k) => { const r = pitch(new THREE.Quaternion().fromArray(RIG_REST[b]), 0); assert.ok(Math.abs(mean[k] - r) < 2, `${n}: ${b} points ${(mean[k] - r).toFixed(1)} degrees off its rest on average`); }); } }
 });
+test('posture: a seated clip keeps its bent legs, even when its name also fits the standing list (TalkM3)', async () => {
+  await library(); if (!CL.TalkM3) return; const T = (c, n) => c.tracks.find((t) => t.name === 'mixamorig' + n + '.quaternion').values, a = T(CL.TalkM3, 'LeftLeg'), b = T(clipFor('TalkM3'), 'LeftLeg');
+  for (let i = 0; i < 8; i++) assert.ok(Math.abs(a[i] - b[i]) < 1e-5, 'the seated shin was turned');
+});
 

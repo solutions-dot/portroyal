@@ -38,7 +38,13 @@ The audit and what changed: `docs/reviews/people-20261121.md`. Left to do, in or
 - [ ] **A speck of trouser at the jacket's front hem in a stride** (the fitted suit; see `?test=cloth`).
 - [ ] **Eventide's own three bodies** (`tools/eventide/people.py`) still wear the old collars. Rebuild them with `era.py` recipes.
 - [ ] **A speck of skin at the shoulder seam of a round opening** on one small girl (`wr_kgirl48`, seen from the side). Look with `node tools/review/people-sheet.mjs windrush wr_kgirl48 views=neckside,neck34`.
+- [ ] **Walking checks not at 0 after the stance fix** (21 November 2026): Kendal 2 (Dawn's run 8.8 cm a loop, a slow survivor 7.8), Port Royal 3 (Kofi's carry 11 cm, Abba's run 33 cm). The walk itself measures right on every body; `Run` and `Carry` strides and very slow walks do not yet. Fix `strideOf` in `engine/anim.js` for those clips; do not add per-game factors.
 - [ ] **The girl bodies' stride.** `strideOf` in `engine/anim.js` measures every body's walking stride exactly (Kendal's `?test=walkers&tune` gives 1.000 for all of them) except `girl` and `girl_small`, whose real stride is about a quarter longer than the measure. Kendal corrects it in `STRIDE_K`; find the cause in the engine and take the correction out. Check the girls in Tivoli, Melissa and Eventide too.
+- [ ] **A man's apron when he sits** lies on the lap as a short flap instead of falling over the knees (`man_apron`, `SitIdle`). Standing and walking it hangs right.
+- [ ] **Two small specks on the fitted jacket's front in a stride** (the pocket flap's corners) and a sliver of trouser at its front hem.
+- [ ] **Abba's bodice** has a ragged lower edge above her apron string (`tools/people/abba.json`).
+- [ ] **The Emperor** (`sel_emperor66`, owner 21 November 2026: "needs some fine tuning"). Done that day: his tunic's sleeves and skirt (a builder change had belled them), a smooth belt. Still to do: his beard is a flat grey block, the gold cords hang off his chest instead of lying on it, and the belt's lower front edge still waves a little. Check against `docs/games/selassie-face.jpg` and `selassie-salute.jpg`.
+- [ ] **An old woman's round opening** (`woman_elder`, `wr_kelder48`) is uneven at the front: her neck leans forward and the opening is worked out round an upright one.
 - [ ] **A turn collar and tie worn without a jacket** (`man_shirt`, `clerk1919`, `printer1907`, `steward1920`, two Windrush men) is still the generated collar. Take the collar and tie from the fitted suit instead.
 
 ## Character movement

@@ -173,9 +173,9 @@ async function runLayout(A) {
 /* ---------- ?test=walkers ---------- */
 async function runWalkers(A) {
   const out = []; let bad = 0; window.requestAnimationFrame = () => 0;
-  const LIST = [['kofi', 'Carry', 1.25, 'Kofi with a crate'], ['kofi', 'Walk', 1.25, 'Kofi going back for the next crate'], ['soldier', 'Walk', 0.85, 'the soldier'], ['constable', 'Walk', 0.75, 'Constable Hart strolling'], ['mendes', 'Walk', 0.75, 'Daniel Mendes strolling'], ['turtler', 'Walk', 0.75, 'Peter strolling'], ['kofi', 'Carry', 1.0, 'the sailor carrying crates in 1670 (Kofi’s body)'], ['abba', 'Run', 4.6, 'Abba running in the earthquake'], ['galdy', 'Walk', 2.7, 'Lewis Galdy (third person)'], ['galdy', 'Walk', 1.75, 'Lewis Galdy (third person, slow)']];
+  const LIST = [['kofi', 'Carry', 1.25, 'Kofi with a crate'], ['kofi', 'Walk', 1.25, 'Kofi going back for the next crate'], ['soldier', 'Walk', 0.85, 'the soldier'], ['constable', 'Walk', A.STROLL_V, 'Constable Hart strolling'], ['mendes', 'Walk', A.STROLL_V, 'Daniel Mendes strolling'], ['turtler', 'Walk', A.STROLL_V, 'Peter strolling'], ['kofi', 'Carry', 1.0, 'the sailor carrying crates in 1670 (Kofi’s body)'], ['abba', 'Run', 4.6, 'Abba running in the earthquake'], ['galdy', 'Walk', 2.7, 'Lewis Galdy (third person)'], ['galdy', 'Walk', 1.75, 'Lewis Galdy (third person, slow)']];
   for (const [body, clip, v, name] of LIST) {
-    let G; try { G = body === 'abba' ? A.skClone(A.abba) : A.prep((await A.model(body)).scene); } catch (e) { out.push(name + ': ' + body + ' did not load'); bad++; continue; }
+    let G; try { if (body === 'abba') { const keep = A.abba.userData.anim; delete A.abba.userData.anim; try { G = A.skClone(A.abba); } finally { A.abba.userData.anim = keep; } }   /* her copy is made without her controller, as the game copies her for Hannah: with it the copy failed and this line read "did not load" */ else G = A.prep((await A.model(body)).scene); } catch (e) { out.push(name + ': ' + body + ' did not load (' + (e && e.message || e).toString().slice(0, 80) + ')'); bad++; continue; }
     if (body === 'galdy') G.scale.multiplyScalar(0.94); A.scene.add(G); G.visible = true; G.position.set(14, 0, 0.4); G.rotation.y = Math.PI / 2; A.animate(G, clip);
     const r = auditWalk(name, G, v, {});
     out.push(`${name} (${body}, ${clip}): stride ${(r.stride * 100).toFixed(0)} cm, ${v.toFixed(2)} m/s, clip speed ${r.pace.toFixed(2)}, slide ${r.slide.toFixed(1)} cm a loop, shoes ${r.sink.toFixed(1)} to ${r.float.toFixed(1)} cm, biggest jump ${r.pop.toFixed(1)}x`);
@@ -305,7 +305,7 @@ async function runHeads(A, q) {
 }
 /* ---------- wiring ---------- */
 export function wireChecks(A) {
-  window.__prA = A; window.__prDev = { makeMove, walkGrid, placeList, goPlace, placeAudit, peopleHere, idOf, clipOf, lifeIssues, makeAdapter };   /* for poking at the game from a test script */
+  window.__prA = A; window.__prDev = { makeMove, walkGrid, placeList, goPlace, placeAudit, peopleHere, idOf, clipOf, lifeIssues, makeAdapter, auditWalk, strideOf };   /* for poking at the game from a test script */
   const q = new URLSearchParams(location.search), t = q.get('test'); if (!t) return;
   const start = async () => { await makeAdapter(A).ready(); };
   const run = (fn) => (async () => { try { await start(); await fn(); } catch (e) { log(['ERROR ' + (e && e.stack || e)], 'ERROR ' + (e && e.message)); console.error(e); } })();

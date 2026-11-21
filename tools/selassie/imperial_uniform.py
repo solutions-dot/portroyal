@@ -89,10 +89,17 @@ for i in range(4):
 # Broad brown waist belt over the jacket and diagonal shoulder strap.
 bm=bmesh.new();rows=[]
 for z in [HIP+.035,HIP+.092]:
+    # the belt's outline: the tunic's radius at 48 points, with misses and odd hits (a gap where the tunic's skirt joins, a sleeve) replaced by the
+    # middle value of their neighbours and the whole ring evened out. Taken point by point, the lower edge came out in teeth (owner, 21 November 2026).
+    center=Vector((0,J('Hips').y,z));R=[]
+    for i in range(48):
+        a=i/48*2*math.pi;d=Vector((math.sin(a),-math.cos(a),0));hit=jt.ray_cast(center,d)[0];R.append((hit-center).length if hit else None)
+    good=sorted(x for x in R if x is not None) or [.17];R=[x if x is not None else good[len(good)//2] for x in R]
+    R=[sorted(R[(i+k)%48] for k in (-2,-1,0,1,2))[2] for i in range(48)]
+    for _ in range(3):R=[(R[i-1]+2*R[i]+R[(i+1)%48])/4 for i in range(48)]
     ring=[]
     for i in range(49):
-        a=i/48*2*math.pi;center=Vector((0,J('Hips').y,z));d=Vector((math.sin(a),-math.cos(a),0));hit=jt.ray_cast(center,d)[0]
-        r=(hit-center).length if hit else .17;ring.append(bm.verts.new(center+d*(r+.010)))
+        a=i/48*2*math.pi;d=Vector((math.sin(a),-math.cos(a),0));ring.append(bm.verts.new(center+d*(R[i%48]+.010)))
     rows.append(ring)
 quadstrip(bm,rows);o=soft('Sam Browne belt',bm,'Belt',src=tunic);paint(o)
 patch('Belt buckle',0,HIP+.064,.039,.043,'Insignia',.022)

@@ -3,7 +3,7 @@
      node tools/review/run-test.mjs all audit,held --secs 900
    Serve the repository root first (python3 -m http.server 8765) and build each game with test views (node tools/build.mjs <game> --dev).
    It opens games/<game>/site/?test=<test>, waits until the page title is "<WORD> <number>" (AUDIT 0, HELD 3, CLOTH 12 ...) or starts with ERROR, and prints
-   the title and the #autolog text (the issue list). Exit code 1 if any result is not 0. A game that does not wire a test never sets the title: it is
+   the title and the #autolog text (the issue list). The Emperor's Arrival and Windrush set window.__RESULT (a list of lines) instead of the title: the first line of the form "WORD number" is taken. Exit code 1 if any result is not 0. A game that does not wire a test never sets the title: it is
    reported as "no result" after --secs. See docs/TESTING.md, section 5. */
 import { readdirSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -19,7 +19,8 @@ for (const g of games) for (const t of tests.split(',')) {
   let title = 'no result', log = '';
   try {
     await p.goto(`${process.env.REVIEW_BASE || 'http://localhost:8765'}/games/${g}/site/?test=${t}${extra.length ? '&' + extra.join('&') : ''}`);
-    await p.waitForFunction(() => /^[A-Z]+ -?\d+|^ERROR/.test(document.title), null, { timeout: SECS * 1000 }); title = await p.title();
+    await p.waitForFunction(() => /^[A-Z]+ -?\d+|^ERROR/.test(document.title) || Array.isArray(window.__RESULT), null, { timeout: SECS * 1000 }); title = await p.title();
+    const res = await p.evaluate(() => Array.isArray(window.__RESULT) ? window.__RESULT.join('\n') : null); if (res !== null && !/^[A-Z]+ -?\d+/.test(title)) title = (res.split('\n').find((l) => /^[A-Z]+ -?\d+/.test(l)) || res.split('\n')[0] || 'no lines');   /* The Emperor's Arrival and Windrush publish window.__RESULT (lines) and leave the title alone */
     log = await p.evaluate(() => { const e = document.getElementById('autolog'); return e ? e.textContent : ''; });
   } catch (e) { title = 'no result after ' + SECS + ' s (' + (await p.title().catch(() => '?')) + ')'; }
   await p.close(); const n = (title.match(/^[A-Z]+ (-?\d+)/) || [])[1];

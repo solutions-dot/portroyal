@@ -249,6 +249,17 @@ def _arm_r(t,tab=None):
     tab=tab or _ARM_R; f=max(0.0,min(1.0,t))*(len(tab)-1); i=min(len(tab)-2,int(f)); return tab[i]+(tab[i+1]-tab[i])*(f-i)
 def _arm_mid(q,t,sx):      # the middle of the arm at station t, from the point q on the bone's line
     f=max(0.0,min(1.0,t))*(len(_ARM_OFF)-1); i=min(len(_ARM_OFF)-2,int(f)); o=_ARM_OFF[i].lerp(_ARM_OFF[i+1],f-i); return q+Vector((o.x*sx,o.y,o.z))
+def sleeve_tube_old(r0,r1,cuff=None,blend=False):      # the 1690 coat keeps the sleeve rule it was tailored with (a full sleeve into a wide cuff: the larger of a fixed tube and the cloth as it lies).
+    # The measured taper below was tried on it on 21 November 2026 and came out in rings, because the coat's cuff is narrower than its sleeve; main's coats were not at fault.
+    def f(v):
+        c=v.co
+        if abs(c.x)<SX*0.92: return
+        q,t=arm_axis(c); d=c-q; r=d.length or 1e-6; k=sstep(0.06,0.2,t)*(1-sstep(0.075,0.10,r/s)); R=(r0+(r1-r0)*t)*s
+        if blend: k*=sstep(SX*0.92,SX*1.12,abs(c.x))
+        if cuff and not OLD: R=R+(cuff[1]*s-R)*sstep(cuff[0]-0.14,cuff[0],t)
+        elif cuff and t>cuff[0]: R=cuff[1]*s
+        rn=max(r+0.004,R); v.co=q+d/r*(r+(rn-r)*k)
+    return f
 def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005):
     # one straight taper from the shoulder to the wrist: the fixed tube, widened at the shoulder end just enough to clear the arm by `ease` at every station (a tube that
     # kept the upper arm's full size all the way to the elbow read as a sausage; one that followed the arm read as muscle)
@@ -256,7 +267,7 @@ def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005):
     def f(v):
         c=v.co
         if abs(c.x)<SX*0.92: return
-        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; k=sstep(0.06,0.2,t)*(1-sstep(0.075,0.10,r_b/s)); R=R0+(R1-R0)*t
+        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; R=R0+(R1-R0)*t; k=sstep(0.06,0.2,t)*(1-sstep(0.075,0.10,r_b/s))      # (a wider reach was tried and pulled the side of a jacket's skirt out beside the hanging arm, into a bell: the Emperor's tunic, 21 November 2026)
         if blend: k*=sstep(SX*0.92,SX*1.12,abs(c.x))      # eased in from the shoulder, so the cloth does not crease at the armpit
         if cuff and not OLD: R=R+(max(cuff[1]*s,_arm_r(t,_ARM_RAW)+0.004)-R)*sstep(cuff[0]-0.14,cuff[0],t)      # later eras: the sleeve narrows smoothly into its cuff (a step left it a wide bell round the wrist)
         elif cuff and t>cuff[0]: R=max(cuff[1]*s,_arm_r(t,_ARM_RAW)+0.004)
@@ -282,7 +293,7 @@ parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if 
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
     sl=G.get('coatsleeves',True)
-    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Coat',shape=sleeve_tube(0.041,0.037,(cs-0.13,0.047),blend=True,ease=0.016) if sl else None,post=lambda bm:(drape_front(bm),smooth_edge(bm,3 if sl else 10)),
+    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Coat',shape=sleeve_tube_old(0.041,0.037,(cs-0.13,0.047),blend=True) if sl else None,post=lambda bm:(drape_front(bm),smooth_edge(bm,3 if sl else 10)),
        cuts=[((0,0,collar),(0,0,1),None),((0,-0.1,collar-0.045*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)]+(cuts_sleeve(cs) if sl else [((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)]))
     parts.append(('coat',coat))
     hem=G.get('coathem')
@@ -352,7 +363,7 @@ def jacket_waistcoat_seen(c):      # and of a waistcoat under a jacket, only the
 if G.get('jacket'):   # a plain suit jacket: waist-length hem, sleeves to the wrist, a V opening over the waistcoat
     jcol=NECK-0.012*s; jcs=G.get('jacketsleeve',0.9)
     vz=jcol-0.20*s   # the V opening: two angled cuts, one each side of the middle, so only a narrow wedge is removed and the shoulders stay covered
-    parts.append(('jacket',piece('Jacket','helper-tights',lambda c:c.z>HIP+0.03 and arm_ok(c,jcs),(lambda c:0.022 if abs(c.x)>SX*0.8 else 0.017) if OLD else (lambda c:shoulder_off(c,0.016 if abs(c.x)>SX*0.8 else 0.017)),'Jacket',shape=sleeve_tube(0.054,0.045,ease=0.016) if OLD else sleeve_tube(0.046,0.039,(jcs-0.02,0.036),ease=0.014),      # later eras: a suit sleeve has about 1.5 cm of ease over the arm (2.2 cm on a 5 cm tube puffed the sleeve heads into domes)post=lambda bm:(drape_front(bm),smooth_edge(bm)),
+    parts.append(('jacket',piece('Jacket','helper-tights',lambda c:c.z>HIP+0.03 and arm_ok(c,jcs),(lambda c:0.022 if abs(c.x)>SX*0.8 else 0.017) if OLD else (lambda c:shoulder_off(c,0.016 if abs(c.x)>SX*0.8 else 0.017)),'Jacket',shape=sleeve_tube(0.054,0.045,ease=0.016) if OLD else sleeve_tube_old(0.046,0.039,(jcs-0.02,0.036)),      # (the generated jacket is worn only by uniforms now, the Emperor's tunic among them: it keeps the sleeve it had. The measured taper belled it out at the wrist and pulled the skirt out beside the arm)      # later eras: a suit sleeve has about 1.5 cm of ease over the arm (2.2 cm on a 5 cm tube puffed the sleeve heads into domes)post=lambda bm:(drape_front(bm),smooth_edge(bm)),
         cuts=[((0,0,jcol),(0,0,1),None),((0,0,vz),Vector((-1.5,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,vz),Vector((1.5,0,1)).normalized(),lambda c:c.y<0 and c.x<0)]+cuts_sleeve(jcs))))
 SKB=ANK+0.07+G.get('hem',0)*(KNEE-ANK-0.07)      # the skirt's hem: hem 0 is the ankle, 1 the knee
 if G.get('jacket'):
@@ -1113,8 +1124,10 @@ def build_hat(HK,HM):
         def mod(a,i,d,z):
             if i in (3,4): return d,z+0.020*0.5*(0.5+0.5*math.sin(a*2+1.2))*max(0.0,(d-0.03*s)/(0.06*s))      # the brim turns up a little, unevenly
             return d,z
-        rr=lathe(bm,[(0.004,Hh-0.006),(0.016,Hh*0.55),(0.020,0.004),(0.085*s*BR,0.004),(0.085*s*BR,-0.004),(0.020,-0.004),(0.016,-0.004),(0.016,Hh*0.5),(0.008,Hh-0.012)],fit,seg=32,mod=mod,cap=False); quadstrip(bm,[rr[-1],rr[0]],close=True); bm.faces.new(rr[-1])      # a closed shell, from the crown's top down the outside, along the brim and back up the inside
-        lathe(bb,[(0.0235,0.028*s),(0.0235,0.006*s)],fit,seg=32,cap=False)
+        rr=lathe(bm,[(0.008,Hh-0.006),(0.0165,Hh*0.70),(0.019,0.004),(0.085*s*BR,0.004),(0.085*s*BR,-0.004),(0.020,-0.004),(0.016,-0.004),(0.016,Hh*0.5),(0.008,Hh-0.012)],fit,seg=32,mod=mod,cap=False); quadstrip(bm,[rr[-1],rr[0]],close=True); bm.faces.new(rr[-1])      # a closed shell, from the crown's top down the outside, along the brim and back up the inside
+        lathe(bm,[(0.008,Hh-0.006),(-0.004,Hh+0.004),(-0.030*s,Hh+0.008)],fit,seg=32)      # a rounded top to the crown (owner, 21 November 2026: "ensure the hats are correctly placed"). The crown used to end in a flat dish with
+        # a rim, its sides stepped out toward the brim and the band stood 5 mm proud of them, so the hat read as three stacked rings perched on the head.
+        lathe(bb,[(0.0205,0.026*s),(0.0205,0.006*s)],fit,seg=32,cap=False)      # the ribbon lies on the crown's base, 2 mm proud
         rigid(HM,bm,HM,'Head'); rigid(HM+'Band',bb,HM+'Band','Head')
     elif HK=='felt':
         # fit the crown to this head: measure the skull's outline at brow height so the hat sits down over it
@@ -1515,6 +1528,7 @@ cov_arm=max(sleeve, G.get('coatsleeve',0) if G.get('coat') and G.get('coatsleeve
 def hidden(c):
     if CK=='camp' and c.y<0 and c.z>VZ-0.03*s+VK*0.55*abs(c.x): return False      # the neck and a little chest show inside the V of a camp collar
     if NW_SEAMLESS and HIP+0.05<c.z<SEAM_Z(nw_ang(c))-0.010 and abs(c.x)<SX*0.8: return True      # a collar sewn to the shirt (neckwear.py): the skin goes up to 1 cm under the seam, wherever the seam runs
+    if NW_SEAMLESS and CK!='camp' and (abs(c.x)<SX*0.8 or (abs(c.x)<SX*1.05 and c.z>SH.z+0.01)) and HIP+0.05<c.z<SEAM_Z(nw_ang(c))+0.03 and math.hypot(c.x,c.y-nw_cy(c.z))>SEAM_R(nw_ang(c))+0.007: return True      # and the slope of the shoulder outside the seam, which on a woman or a child rises above the seam's own height: left in, it showed through the cloth as a patch on top of the shoulder (out to the shoulder joint: between 0.8 of the way there and the arm's own rule a strip was covered by neither)
     if not NW_SEAMLESS and HIP+0.05<c.z<NECK-(0.008 if CK=='round' else 0.022 if (CK and CK not in ('open','camp')) or G.get('bands') else 0.07)*s and abs(c.x)<SX*0.8: return True   # with a collar, its yoke covers the skin right up to the collar's seam
     t=side_arm(c)
     if t is not None and 0.08<t<cov_arm-0.06 and abs(c.x)>SX*0.75: return True
@@ -1572,7 +1586,12 @@ def covered(f):
         if nb and kd.find(loc)[2]<(0.10 if k=='skirt' else 0.045): continue
         return True
     return False
-bmesh.ops.delete(bm,geom=[f for f in bm.faces if not all(v[dl].get(gi,0)>0 for v in f.verts) or hidden(cz(f)) or (_covs and covered(f))],context='FACES'); bm.to_mesh(h.data); bm.free()
+bmesh.ops.delete(bm,geom=[f for f in bm.faces if not all(v[dl].get(gi,0)>0 for v in f.verts) or hidden(cz(f)) or (_covs and covered(f))],context='FACES')
+if os.environ.get('NECKDBG') and NW_SEAMLESS:
+    for f in bm.faces:
+        c=cz(f); r=math.hypot(c.x,c.y-nw_cy(c.z)); a_=nw_ang(c)
+        if NECK-0.10<c.z<NECK+0.02 and r>SEAM_R(a_)+0.004: print('NECKDBG x %.3f y %.3f z %.3f r %.3f seamR %.3f seamZ %.3f SX %.3f NECK %.3f hidden %s'%(c.x,c.y,c.z,r,SEAM_R(a_),SEAM_Z(a_),SX,NECK,hidden(c)))
+bm.to_mesh(h.data); bm.free()
 if not NW_SEAMLESS and ((FLAT and CK=='round') or not CK) and not OLD and PART.get('shirt'):      # (also a plain neckline with no collar, as Abba's shift) under a round collar the slope of the shoulders rose just above the shirt's neckline and showed in flecks beside the collar: pull that band of skin in a little (the neck itself is left alone)
     _nc,_nw,_nd=neck_ring(NECK+0.01); h.data.update()
     for v in h.data.vertices:

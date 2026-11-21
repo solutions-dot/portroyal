@@ -35,7 +35,7 @@ function crowd(list, o) {
   });
   for (const [from, to] of o.carry || []) {
     const e = grown.find((q) => !q.life && !holds(q)); if (!e) break; e.x = from[0]; e.z = from[1]; e.placed = true;
-    set(e, 'work', { between: [from, to], walk: 'CarryHeadWalk', idle: 'CarryHeadIdle', carrying: true, drop: false, load: 'basket', wait: [1, 2.5] });
+    set(e, 'work', { between: [from, to], walk: 'CarryHeadWalk', idle: 'CarryHeadIdle', carrying: true, drop: false, load: 'basket', prop: true, wait: [1, 2.5] });   /* prop: the basket is on the head all the time (makeBody in main.js fixes it there and steadies it with a hand), so the carry clips have their load */
   }
   let gid = 0; const free = () => grown.filter((e) => !e.life && !holds(e));
   for (const e of free()) { if (e.life || r() > (o.chat ?? 0.55)) continue; const mates = free().filter((q) => q !== e && Math.hypot(q.x - e.x, q.z - e.z) < 3.2).slice(0, r() < 0.5 ? 1 : 2); if (!mates.length) continue;

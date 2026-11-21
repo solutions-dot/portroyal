@@ -97,7 +97,7 @@ export function buildCoach() {
   people.push(person('mother', 'mother', 'The mother', rows[2], 0.5, -PI / 2, { anim: 'SitIdle', h: 1.35, seat: SEAT }));
   const taken = (x, s, k) => (x === rows[4] && s < 0) || (x === rows[2] && s > 0 && k === 0) || ((x === rows[3] || x === rows[5]) && s > 0 && k === 1);
   const crowd = crowd57(30, 33, [0, 0, 1, 1], { anims: ['SitIdle'], kids: 0.18 }); let ci = 0;
-  for (const x of rows) for (const s of [-1, 1]) for (const k of [0, 1]) { if (taken(x, s, k) || (Math.round(x * 10) + k + (s > 0 ? 1 : 0)) % 4 === 0) continue; const e = crowd[ci++]; Object.assign(e, { x, z: s * (k ? 0.9 : 0.5), ry: -PI / 2, anim: k ? 'SitIdle' : ['SitIdle', 'SitTalk'][ci % 2], seated: true, seat: SEAT, props: undefined }); extras.push(e); }
+  for (const x of rows) for (const s of [-1, 1]) for (const k of [0, 1]) { if (taken(x, s, k) || (Math.round(x * 10) + k + (s > 0 ? 1 : 0)) % 4 === 0) continue; const e = crowd[ci++]; Object.assign(e, { x, z: s * (k ? 0.9 : 0.5), ry: -PI / 2, anim: k ? 'SitIdle' : ['SitIdle', 'SitTalk'][ci % 2], seated: true, seat: SEAT, props: undefined }); extras.push(e); }   /* the wall's inner face is at 1.20 and a seated man's elbow reaches 33 to 34 cm to the side, so a window seat is 33 cm in from it (it was 30, and elbows went 4 cm into the wall). Not further in: two neighbours need 37 cm between them (?test=ambient, overlap), and the aisle seat cannot move nearer the aisle (story path) */
   return { id: 'coach', group: g, walls, bounds: { x0: -4.8, x1: 4.8, z0: -0.28, z1: 0.28 }, start: { x: 4.3, z: 0, yaw: PI / 2 }, people, extras, env: ENV.day, rig, lamp, ride: true, wheels: [],
     spots: { seat: [rows[4], -0.25], windows: [[-2.5, 0.2, 1], [2.9, -0.2, -1]] }, tick: () => {} };
 }
