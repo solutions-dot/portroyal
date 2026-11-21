@@ -39,6 +39,8 @@ if P.get('upscale'):       # a child is built at a child's shape, then enlarged 
     h.data.update()
 eyes=HumanService.add_mhclo_asset(os.path.join(os.environ.get('MAKEHUMAN','/tmp/mh/makehuman'),'data/eyes/low-poly/low-poly.mhclo'),h,asset_type='Eyes',subdiv_levels=0)
 rig=HumanService.add_builtin_rig(h,'mixamo')
+if P.get('outfit'):      # a fitted garment (tools/people/outfit.py): fitted now, while the body is still MakeHuman's own mesh
+    OUTFIT_PHASE='fit'; _ofp=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','people','outfit.py'); exec(compile(open(_ofp).read(),_ofp,'exec'))
 for m in list(h.modifiers):
     if m.type=='MASK': h.modifiers.remove(m)
 for m in list(eyes.modifiers): eyes.modifiers.remove(m)
@@ -1614,6 +1616,8 @@ def tuck_under_skirt():
     print('TUCKED UNDER SKIRT',n)
 if G.get('tuckskin',1) and G.get('skirt'): tuck_under_skirt()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
+if P.get('outfit'):      # the fitted garment takes the place of the generated pieces it replaces
+    OUTFIT_PHASE='finish'; exec(compile(open(_ofp).read(),_ofp,'exec'))
 # Colours. The layer below is a float layer, so the linear colours made by srgb() above are exported as they are, and the scene is marked
 # vertexColorSpace: linear (engine/colours.js repairs older bodies without the mark). So a recipe colour means the same colour in every game (docs/PIPELINE.md, "Skin").
 def paint(o):
@@ -1655,7 +1659,7 @@ for m in eyes.data.materials:
     for n in m.node_tree.nodes:
         if n.type=='TEX_IMAGE' and n.image: n.image.filepath=os.path.abspath('shared/rig/eye.png'); n.image.reload()
 # relaxed arms and curled fingers, the same pose Abba uses
-if 'breeches' in PART:      # the bottom of a jacket and the tucked part of a shirt move with the trousers under them: on the hips' weights alone, a seated thigh rose through the jacket's hem, and a tucked shirt slid out over the waistband
+if 'breeches' in PART and not P.get('outfit'):      # (a fitted garment keeps MakeHuman's own weights) the bottom of a jacket and the tucked part of a shirt move with the trousers under them: on the hips' weights alone, a seated thigh rose through the jacket's hem, and a tucked shirt slid out over the waistband
     from mathutils.kdtree import KDTree
     _br=PART['breeches']; _kd=KDTree(len(_br.data.vertices))
     for _v in _br.data.vertices: _kd.insert(_v.co,_v.index)
