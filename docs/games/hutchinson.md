@@ -50,3 +50,7 @@ Copied from Windrush's frame. `content.js` (words), `steps.js` (story table, `TA
 Later the same day: `?test=held` 0. `?test=ambient` 0 in all five places. `?test=layout` 0 at 390x800. `?test=walkers`: every body 0 lines but `hx_cudjoe`, who slides 9.4 cm a loop when the test walks him at an old man's pace (0.85 m/s); he never walks in the game, so it is not seen, but the pace needs fixing before he is given a walk.
 
 Not yet run: `?test=all`, cloth, skin, layout at 667x375, 800x500 and 1280x720, a phone play-through by hand, and a listen to the sound. Not yet timed against the 5 to 8 minutes a chapter.
+
+## Checks, 22 November 2026 (second pass)
+
+`?test=layout`: 0 at 390x800, 667x375, 800x500 and 1280x720. `?test=held`: 0. `?test=ambient`: 0 in every place. `?test=cloth` is **not at 0**: it lists small show-through points on the new bodies (a few millimetres at the coat neck, the hat band and the belt line; for example 31 lines on `hx_hutton`, worst 28.5 mm at the hat band). They come from the shared clothes builder, which is not changed in a game's own pull request (`docs/STANDARD.md`); they need a look in close screenshots and, if seen, a builder fix in its own PR. `?test=skin` and `?test=walkers` for this game are still to run and record.

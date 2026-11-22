@@ -208,7 +208,7 @@ function deck() {
   person(Q, "fitton", "fitton", 1.7, -0.6, face(1.7, -0.6, 0, 4), { kind: "watch", at: [-30, -6], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
   person(Q, "wylie", "wylie", 2.0, 3.4, face(2.0, 3.4, 0, 0), { kind: "watch", at: [-0.9, -2.4], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
   crowd(Q, "sp_seaman", -0.8, -6.6, face(-0.8, -6.6, -30, -6), { kind: "watch", at: [-30, -6], react: ["HeadTurn", "Point"], every: [5, 9] });
-  crowd(Q, "sp_seaman2", 1.9, -5.0, face(1.9, -5.0, 0, -3.6), { kind: "work", clips: ["IdleM", "PickUp", "WipeSweat"], work: [5, 9], face: [0, -3.6] });
+  crowd(Q, "sp_seaman2", 1.0, -4.9, face(1.0, -4.9, 0, -3.6), { kind: "work", clips: ["IdleM", "PickUp", "WipeSweat"], work: [5, 9], face: [0, -3.6] });
   Q.keepOff = [{ at: [-1.4, -4.6], r: 0.9 }, { at: [1.3, -1.6], r: 0.8 }, { at: [0, 2.4], r: 0.8 }, { at: [1.2, 4.2], r: 0.8 }];
   return Q;
 }

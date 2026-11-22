@@ -62,3 +62,7 @@ Could not confirm: the judge's name, the kind of shark, the Nancy's look and cre
 ## In the game
 
 The player is Jem, a fictional ship's boy of twelve on the Ferret. Fictional: Jem, Mr Cato the boatswain, Ben on the quay, the clerk. Real: Michael Fitton and Hugh Wylie, who say their reported words of that morning plus a few imagined everyday lines (their pages say so); Thomas Briggs, who does not speak.
+
+## Checks, 22 November 2026 (second pass)
+
+`?test=layout`: 0 at 390x800, 667x375, 800x500 and 1280x720. `?test=held`: 0. `?test=ambient`: 0 in every place. `?test=cloth` is **not at 0**: it lists small show-through points on the new bodies (a few millimetres at the coat neck, the hat band and the belt line; for example 27 lines on `sp_fitton`, worst 12.8 mm where breeches meet coat). They come from the shared clothes builder, which is not changed in a game's own pull request (`docs/STANDARD.md`); they need a look in close screenshots and, if seen, a builder fix in its own PR. `?test=skin` and `?test=walkers` for this game are still to run and record.
