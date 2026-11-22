@@ -191,7 +191,10 @@ export function boulder(s = 1, seed = 1, flatTop = false) { const m = mesh(rockG
 export function paperStone() {
   const g = grp(), st = boulder(0.75, 4, true); st.position.y = 0.2; g.add(st); const top = 0.5;
   const p = mesh(new THREE.PlaneGeometry(0.62, 0.46), std(TX.paper(), 0.9), 0, top + 0.012, 0, g); p.rotation.x = -PI / 2; p.rotation.z = 0.08; box(0.66, 0.012, 0.5, PM.cloth, 0, top + 0.002, 0, g).rotation.y = -0.08;
-  for (const [x, z] of [[-0.27, -0.18], [0.27, 0.19]]) mesh(rockGeo(7), PM.stoneDark, x, top + 0.04, z, g).scale.setScalar(0.045); g.userData.foot = 0.85; return g;
+  for (const [x, z] of [[-0.27, -0.18], [0.27, 0.19]]) mesh(rockGeo(7), PM.stoneDark, x, top + 0.04, z, g).scale.setScalar(0.045);
+  /* a fold of cloth laid over the paper to keep off the damp: the paper look (main.js) draws it back toward you and the paper shows (userData.cover, userData.top) */
+  const cover = grp(g, 0, top + 0.022, 0); cover.userData.noBatch = true; box(0.6, 0.014, 0.44, PM.cloth, 0, 0, 0, cover); cover.rotation.y = 0.08; g.userData.cover = cover; g.userData.top = top;
+  g.userData.foot = 0.85; return g;
 }
 /* the watchman's lantern: a candle in a tin and horn case, hung from a ring. userData.flame is the glow. */
 export function lantern() {

@@ -230,3 +230,11 @@ Skin (owner rule 9): recipes sit inside Marcus Garvey's range; `SKIN_LIGHT = 1.5
 ## Maroon men's drawers (21 November 2026)
 
 The owner: the men's flared short breeches "look like horse jockey pants". They were cut full to the knee and gathered by a third into a band. The Maroon men (`maroon_man`, `maroon_elder`, `maroon_scout`, `maroon_boy`) now wear `"breechkind": "drawers"`: a straight open leg to the knee, which is also what the one description found says (a Leeward captain in 1738 in "loose drawers to the knee": "Research" above). The soldiers keep knee breeches, now narrowing steadily to the band.
+
+## Close looks (22 November 2026)
+
+- **Look at the paper** (New Nanny Town) is a close-up moment now (owner rule 13, `engine/lookshot.js` through `engine/lookkit.js`): the cloth laid over the paper is drawn back into a fold and the old words show, with a rustle; "Letters patent, 5 August 1740" is a line, and the card keeps the real words.
+- `lookOut()` stays its own scene: it is two moving shots (over the valley, then down to the far path) with a horn call and the red line drawn, which one close framing would lose.
+- Sound: the beds sat under the shared range (wind about 0.013, voices 0.025 after `AMB`). The towns' voices are now 0.06 and the watch rock's wind 0.05, soft, never a rush; the crickets are the engine's bed (`AU.ch.cricket`, same level as before) and this game's copy in `sfx.js` is gone. `?test=beds`: BEDS 0.
+- Checks: `?test=audit` 0 (New Nanny Town), with `engine/audit-reveal.js` on the paper's cloth.
+Dev: `?look=<id>&at=<chapter>,<stage>&k=0.5` holds a look part way for a screenshot (docs/ENGINE.md, engine/lookkit.js).

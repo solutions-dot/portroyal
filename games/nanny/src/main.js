@@ -25,9 +25,10 @@ placeActionButton();   /* the button for a thing to do sits mid-screen (engine/a
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle } from '../../../engine/audio.js';
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle, mixBeds, bedTest } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, spreadArms, steadyLoad } from '../../../engine/grip.js';
+import { auditReveals } from '../../../engine/audit-reveal.js';
 import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditCloth, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { walkRoute } from '../../../engine/placement.js';
 import { follow, lead, goTo, stop as stopFollow, tick as followTick, isFollowing, pathSpots, pathS as pathSE, watch as followWatch } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
@@ -39,6 +40,7 @@ import { buildEstate, buildTown, buildWatch, buildNewTown } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, SAY, CARDS, CHOICE_NAMES, CALLS, QUIZ, YOU, RECAP } from './content.js';
 import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import * as SFX from './sfx.js';
+import { makeLooks } from '../../../engine/lookkit.js';   /* a close look at a thing (owner rule 13) */
 import { HATS, LOOKS, KID } from './cast.js';
 import { musket, lantern, horn, leafCloak, beads, attach, basketOf, cockedHat } from './props.js';
 import { lifeFor, lifeKey, MOOD } from './life.js';
@@ -164,7 +166,7 @@ function buildPlace(id) {   /* the geometry only: quick, and enough for a title 
   P.solidBoxes = P.solids.flatMap(([x, z, r]) => { const R = r + 0.05, a = 0.8 * R, b = 0.62 * R; return [[x - a, z - a, x + a, z + a], [x - R, z - b, x + R, z + b], [x - b, z - R, x + b, z + R]]; });   /* three boxes that together hold each round footprint whole and hug it closely: routes round them never cut into one (engine/follow.js goTo) */
   if (__DEV__) P.snap = snapMeshes(P.group); P.batch = batchStatic(P.group);
   P.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.alphaTest > 0) && o.name !== 'land' && !o.material.isMeshBasicMaterial) o.castShadow = o.receiveShadow = true; });
-  if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); return P;
+  if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); P.reveal = id === 'newtown' && P.spots.stone ? { paper: (k) => paperCover(P, +k) } : {}; return P;
 }
 /* background people placed at random are moved until nobody stands in anybody, in a fire, in a tree's roots or off the ground you can walk on (e.wild: they may stand on open hillside, at the height of the land there) */
 function settle(P) {
@@ -345,6 +347,20 @@ function chapterFade(title, sub, fn) {   /* fade to a black title card, change t
 }
 function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; if (on) { f.hidden = false; $('fadeT').textContent = ''; $('fadeS').textContent = ''; f.classList.remove('txt'); requestAnimationFrame(() => f.classList.add('on')); } else { f.classList.remove('on'); setTimeout(() => { f.hidden = true; f.style.transition = ''; }, QUICK ? 0 : ms + 50); } }
 const bars = (on) => document.body.classList.toggle('cine', on);
+/* ---------- a close look (owner rule 13, engine/lookshot.js through engine/lookkit.js). lookOut() stays a scene of its own: it is two moving shots
+   (over the valley, then down to the far path) with a horn call and a red line drawn, which one close framing would lose. ---------- */
+const LOOKDEV = __DEV__ && new URLSearchParams(location.search).get('look');
+const LOOK = makeLooks({ camera, bars, say: (t) => say(t, 2800), freeze: (on) => { frozen = on; }, quick: () => QUICK && !LOOKDEV, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+  fov: () => (innerWidth / innerHeight < 0.8 ? 76 : 66) * (FOV / 66), sounds: { cloth: () => { SFX.rustle(0.12, 0); setTimeout(() => SFX.rustle(0.08, 0.1), 700); } },
+  eye: () => { const e = eyeNow(); return { x: e[0], y: e[1] - FX.low * 0.55, z: e[2], yaw: state.yaw, pitch: state.pitch }; } });
+if (LOOKDEV) LOOK.pauseAt = +(new URLSearchParams(location.search).get('k') || 0.5);
+function paperCover(P, k) { const st = P.spots.stone, cv = st.userData.cover, f = Math.min(1, k * 1.4); cv.position.z = 0.3 * f; cv.scale.z = 1 - 0.72 * f; cv.position.y = st.userData.top + 0.022 + 0.03 * f; }   /* drawn back into a fold at the near edge, on the cloth under the paper */
+async function lookPaper(P) {   /* the cloth over the paper is drawn back, and the old words show */
+  const ep = EP, st = P.spots.stone, cv = st.userData.cover, at = st.localToWorld(new THREE.Vector3(0, st.userData.top, 0)); unlock('patent');
+  await LOOK.look({ id: 'paper', at: [at.x, at.y, at.z], dist: 1.25, lift: 0.75, fov: 44, act: 2.8, sound: 'cloth', lines: ['The cloth comes back. Under it, the paper.', 'Letters patent, 5 August 1740.'],
+    reveal: (k) => P.reveal.paper(k) }); if (ep !== EP) return;
+  const c = CARDS.paper; card(c.title, c.paras.slice(1), [{ t: c.go, go: async () => { hideCard(); await LOOK.back(); setStage(62); } }], { col: true });
+}
 let subTimer = 0;
 function say(text, ms = 3800) { const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
 function flash(op, ms = 0, color = '#fff') { const f = $('flash'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease-out'; f.style.opacity = sceneIsCalm() && color !== '#000' ? 0 : op; }
@@ -443,7 +459,7 @@ function nextCard(i, s) {   /* a finished chapter: offer the next one after a pa
   offerNextChapter({ still: () => stage === s, clear: () => !(panelsOpen() || fading || DIR.on) && $('card').hidden, show: () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }]); } });
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() { endSceneWarning(); hideFightSkip?.(); hideStorySkip?.();   /* leave anything running: scripted scenes, the horn, the fight, the camera director */
+function resetTransient() { LOOK.cancel(); endSceneWarning(); hideFightSkip?.(); hideStorySkip?.();   /* leave anything running: scripted scenes, the horn, the fight, the camera director */
   EP++; endCut(); frozen = false; moveLock = false; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; hornClose(); flash(0, 0); $('vig').style.opacity = 0; $('glow').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.low = 0; FIGHT.on = false; GUNS.on = false;
   SFX.setBeds({}, 0.1); TICKS.length = 0; smoke.clear(); lifeClear(); for (const k of Object.keys(PL)) for (const n of PL[k].npcs) { n.fol = null; n.scripted = false; n.cue = !!n.hiddenNow; if (n.walking) { n.walking = false; n.ctl.play(null); } n.x = n.hx; n.z = n.hz; if (n.m) { n.m.rotation.y = n.ry0; if (!n.fixedGround) n.m.userData.ground = PL[k].G.h(n.x, n.z); n.m.position.set(n.x, n.m.userData.ground, n.z); } }
 }
@@ -548,7 +564,7 @@ const ACTIONS_FOR = {
     { label: 'Take your place', st: 41, x: P.spots.place[0], z: P.spots.place[1], r: 2.0, on: () => stage === 41 && !FIGHT.on, go: () => fightIntro() },
   ],
   newtown: (P) => [
-    { label: 'Look at the paper', st: 61, x: P.spots.paper[0] - 0.9, z: P.spots.paper[1] + 1.1, r: 2.4, on: () => stage === 61, go: () => { unlock('patent'); const c = CARDS.paper; card(c.title, c.paras, [{ t: c.go, go: () => { hideCard(); setStage(62); } }], { col: true }); } },
+    { label: 'Look at the paper', st: 61, x: P.spots.paper[0] - 0.9, z: P.spots.paper[1] + 1.1, r: 2.4, on: () => stage === 61, look: 'paper', go: () => lookPaper(P) },
   ],
 };
 
@@ -773,14 +789,18 @@ let GUIDE = null;
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
 let auNext = 0, onceAt = 6; const AMB = 0.42;
-const SOUNDSCAPE = { estate: { wind: 0.03, cricket: 0.2, once: () => (Math.random() < 0.5 ? SFX.frog(0.05, Math.random() - 0.5) : SFX.owl(0.08, Math.random() - 0.5)) }, town: { wind: 0.035, crowd: 0.06, once: chirp }, watch: { wind: 0.05, once: chirp }, newtown: { wind: 0.03, crowd: 0.07, once: chirp } };
+/* 22 November 2026: the wind sat at 0.013 to 0.021 and the voices at 0.025 after AMB, under the shared range (engine/audio.js BED_RANGE). The voices
+   of the towns carry them now (a soft wind, never a rush: the owner heard a waterfall on 19 November); the watch rock has a little more wind.
+   The crickets are the engine's bed (this game's copy in sfx.js is gone); cricket here is the level at night before AMB. */
+const SOUNDSCAPE = { estate: { wind: 0.06, cricket: 0.214, once: () => (Math.random() < 0.5 ? SFX.frog(0.05, Math.random() - 0.5) : SFX.owl(0.08, Math.random() - 0.5)) }, town: { wind: 0.05, crowd: 0.14, once: chirp }, watch: { wind: 0.12, once: chirp }, newtown: { wind: 0.05, crowd: 0.14, once: chirp } };
+if (__DEV__ && new URLSearchParams(location.search).get('test') === 'beds') bedTest(SOUNDSCAPE, { scale: AMB });   /* ?test=beds (the estate is at night: its crickets count; the towns' crickets at night are 0.06) */
 /* soft wind and a quiet brook heard only beside the water (owner, 19 November 2026: a loud rush like a waterfall played in ordinary play) */
 function audioTick(t) {
   if (!AU.ctx || t < auNext) return; auNext = t + 0.1; const S = SOUNDSCAPE[cur] || {}, night = envNow.stars > 0.5, P = P_();
-  for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], (k === 'crowd' && night ? 0.02 : S[k] || 0) * AMB);
+  mixBeds({ ...S, crowd: night ? 0.02 : S.crowd || 0, cricket: night ? S.cricket || 0.15 : 0 }, { scale: AMB, duck: !!talkWith });
   let stream = S.stream || 0, fire = 0; if (cur === 'estate') stream = 0.16 * clamp01(1 - Math.abs(state.z + 13.5) / 9); if (cur === 'newtown') stream = 0.16 * clamp01(1 - Math.abs(state.x - 27) / 10);
   if (cur === 'town') fire = 0.2 * clamp01(1 - Math.hypot(state.x + 3, state.z - 3) / 9) + (GUNS.on ? 0.12 : 0); if (cur === 'newtown') fire = 0.2 * clamp01(1 - Math.hypot(state.x + 5, state.z - 5.4) / 9);
-  SFX.setBeds({ stream: stream * 0.5, fire: fire * 0.6, cricket: (night ? (S.cricket || 0.14) : 0) * 0.45, rumble: GUNS.on ? 0.25 : FIGHT.firing > 0 ? 0.12 : 0 });
+  SFX.setBeds({ stream: stream * 0.5, fire: fire * 0.6, rumble: GUNS.on ? 0.25 : FIGHT.firing > 0 ? 0.12 : 0 });
   if (fire > 0.05 && Math.random() < 0.25) crackle();
   if (t > onceAt) { onceAt = t + 6 + Math.random() * 6; if (AU.on && state.started && !FIGHT.on && !HORN.on) { if (night && cur === 'town') SFX.frog(0.04, Math.random() - 0.5); else if (S.once) S.once(); } }
 }
@@ -844,7 +864,8 @@ let last = performance.now();
 function frame(t) {
   requestAnimationFrame(frame); if (__DEV__ && STEPPED.on) { last = t; return; }   /* a dev check is stepping the clock itself */
   const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t); const P = P_(), s = t / 1000;
-  if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); const f = lerp(DIR.f0, DIR.f1, k); if (Math.abs(f - FOV) > 0.05) { FOV = f; resize(); } }
+  if (LOOK.tick(dt)) { /* a close look drives the camera */ }
+  else if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); const f = lerp(DIR.f0, DIR.f1, k); if (Math.abs(f - FOV) > 0.05) { FOV = f; resize(); } }
   else if (!state.started && P && P.titleView) { const tv = P.titleView, time = titleMotion.matches ? 0 : s; camera.position.set(tv.x - Math.sin(time * 0.08) * 1.6, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(time * 0.05) * 0.05, 0, 'YXZ'); }
   else { const gy = groundAt(state.x, state.z); camY += (gy - camY) * Math.min(1, dt * 14); if (Math.abs(gy - camY) > 1.5) camY = gy; camY = Math.max(camY, gy - EYE + FX.low * 0.55 + 0.2); camera.position.set(state.x, camY + EYE - FX.low * 0.55, state.z); camera.rotation.set(state.pitch, state.yaw, FX.roll, 'YXZ'); }
   if (!sceneIsCalm() && FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.03; }
@@ -901,6 +922,9 @@ function auditPlace(P) {
 
 /* ---------- test views and scripted playthroughs: dev builds only (node tools/build.mjs nanny --dev) ---------- */
 function devViews() {
+  { const q = new URLSearchParams(location.search); if (LOOKDEV) (async () => {   /* ?look=paper&at=5,61&k=0.5 : plays that look and holds it part way ("LOOK <id>" in the title) */
+    const [ch, st] = (q.get('at') || '0,10').split(',').map(Number); startGame(true); await beginChapter(ch, st); await waitFor(() => !fading); for (let i = 0; i < 15; i++) { if (!$('card').hidden) hideCard(); await new Promise((r) => setTimeout(r, 100)); }
+    const a = P_().actions.find((x) => x.look === LOOKDEV); if (!a) { document.title = 'LOOK none'; return; } state.x = a.x; state.z = a.z; LOOK.id = LOOKDEV; a.go(); })(); }
   const q = new URLSearchParams(location.search), shot = q.get('shot'), errs = [];
   addEventListener('error', (e) => { errs.push(e.message); document.title = 'ERROR ' + errs.join(' | '); });
   addEventListener('unhandledrejection', (e) => { errs.push(String((e.reason && e.reason.stack) || e.reason).slice(0, 300)); document.title = 'ERROR ' + errs.join(' | '); });
@@ -1005,7 +1029,7 @@ function devViews() {
       const count = out.length; out.unshift('held items: ' + count + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + count; })();
   }
   if (['audit', 'collision', 'seating'].includes(q.get('test'))) {   /* ?test=audit&p=town,watch : floating objects, people inside solids or off the ground, unreachable spots */
-    (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); count += r.floating.length + r.inside.length + r.stuck.length; out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + P.npcs.length + ' people, ' + P.walls.length + ' wall pieces)'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
+    (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P), rv = auditReveals(P, { groundAt: (x, z) => P.G.h(x, z) }); r.stuck.push(...rv); count += r.floating.length + r.inside.length + r.stuck.length;   /* rv: what the paper look moves, in both states (engine/audit-reveal.js) */ out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues (' + P.npcs.length + ' people, ' + P.walls.length + ' wall pieces)'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
       const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + count; })();
   }
   /* pairs the cloth check does not judge, as in Port Royal (the same 1690 tailoring): a Lining is the hidden body kept in the colour of the cloth over it (tools/garvey/era.py), so it is never
