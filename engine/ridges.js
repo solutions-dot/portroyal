@@ -2,7 +2,10 @@
    The owner: "the mountains in these games dont look as good as the other games". Nanny Town's far ridges are rings of jagged walls,
    each paler than the one before, that follow the camera like a painted backdrop. makeRidges() returns { group, tone }: add the group to
    the scene, keep it centred on the camera each frame (group.position.set(cam.x, 0, cam.z)), and call tone(green, haze, light) whenever
-   the time of day changes. layers: [{ r, base, amp, k }] rings from near to far (k: how far into the haze). vnoise and fbm are the value
+   the time of day changes. shape(x, z), optional, takes the unit direction of each point round the ring and gives 0 to 1: the ridge's height
+   is scaled by it, and at 0 it sinks out of sight (Rose Hall: no mountains across the sea to the north). arc: [from, to] in radians, optional
+   (22 November 2026, The Shark Papers): only that part of the ring is drawn (angle 0 is +x, PI/2 is +z), its ends sinking away over the last
+   12 per cent, for a coast seen across the water on one side only; a group with an arc is usually left in place, not centred on the camera. layers: [{ r, base, amp, k }] rings from near to far (k: how far into the haze). vnoise and fbm are the value
    noise it uses, shared too. */
 import * as THREE from 'three';
 
@@ -17,12 +20,12 @@ export function vnoise(x, z, seed = 1) {
 export function fbm(x, z, oct = 4, seed = 1) { let s = 0, a = 0.5, f = 1, n = 0; for (let i = 0; i < oct; i++) { s += a * vnoise(x * f, z * f, seed + i * 17); n += a; a *= 0.5; f *= 2.03; } return s / n; }
 
 /* ---------- far ridges: rings of mountains that fade to blue. Each ring is a wall with a jagged top; farther rings are paler. ---------- */
-export function makeRidges({ layers, seed = 5 } = {}) {
+export function makeRidges({ layers, seed = 5, shape = null, arc = null } = {}) {
   const L = layers || [{ r: 196, base: 0, amp: 30, k: 0.16 }, { r: 232, base: 12, amp: 44, k: 0.3 }, { r: 276, base: 26, amp: 56, k: 0.44 }, { r: 330, base: 40, amp: 70, k: 0.6 }, { r: 396, base: 56, amp: 86, k: 0.75 }, { r: 468, base: 74, amp: 104, k: 0.88 }];
   const group = new THREE.Group(); group.userData.noBatch = true; const N = 200, list = [];
   L.forEach((ly, li) => {
     const pos = new Float32Array((N + 1) * 6), col = new Float32Array((N + 1) * 6), idx = [], tk = new Float32Array((N + 1) * 2);
-    for (let i = 0; i <= N; i++) { const a = i / N * Math.PI * 2, cx = Math.cos(a), sz = Math.sin(a), n1 = fbm(cx * 2.1 + 9, sz * 2.1 + 9, 4, seed + li * 31), n2 = 1 - Math.abs(2 * vnoise(cx * 6.2 + 3, sz * 6.2 + 3, seed + li * 7) - 1), top = ly.base + ly.amp * (0.62 * n1 + 0.38 * n2 * n1 * 1.6);
+    for (let i = 0; i <= N; i++) { const a = arc ? arc[0] + (i / N) * (arc[1] - arc[0]) : i / N * Math.PI * 2, cx = Math.cos(a), sz = Math.sin(a), n1 = fbm(cx * 2.1 + 9, sz * 2.1 + 9, 4, seed + li * 31), n2 = 1 - Math.abs(2 * vnoise(cx * 6.2 + 3, sz * 6.2 + 3, seed + li * 7) - 1), top0 = ly.base + ly.amp * (0.62 * n1 + 0.38 * n2 * n1 * 1.6), ends = arc ? Math.min(1, Math.min(i, N - i) / (N * 0.12)) : 1, sh = (shape ? Math.max(0, Math.min(1, shape(cx, sz))) : 1) * (ends * ends * (3 - 2 * ends)), top = top0 * sh - 60 * (1 - sh);   /* shape(x, z) of the direction, 0 to 1: 0 sinks the ridge out of sight (a sea view with no mountains across it) */
       pos.set([cx * ly.r, -160, sz * ly.r, cx * ly.r, top, sz * ly.r], i * 6); tk[i * 2] = 0; tk[i * 2 + 1] = 1; if (i < N) { const q = i * 2; idx.push(q, q + 2, q + 1, q + 1, q + 2, q + 3); } }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.setIndex(idx);
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, side: THREE.DoubleSide, depthWrite: true })); m.frustumCulled = false; m.renderOrder = -1 + li * -0.01; group.add(m); list.push({ m, k: ly.k, col, pos, base: ly.base, amp: ly.amp });

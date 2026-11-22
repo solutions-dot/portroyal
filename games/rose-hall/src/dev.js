@@ -153,7 +153,7 @@ export async function dev(A) {
       A.DIR.time = Number(q.get("at") || 0);
       for (let t = 0; t <= A.DIR.time; t += 0.25) A.DIR.apply(t);
       $("cineControls").hidden = !q.has("ui");
-      if (!q.has("ui")) { A.DIR.hideSkip(); document.body.classList.remove("cine"); }
+      if (!q.has("ui")) { A.DIR.hideSkip(); document.body.classList.remove("cine"); $("sub").classList.add("dim"); }
     }
     if (id === "look") {
       /* ?shot=look&key=<look>&at=<seconds>: the look moment (engine/lookshot.js) held at that moment, from the player's spot for it */

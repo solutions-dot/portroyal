@@ -4,7 +4,7 @@
    Story people: person(). Background people: crowd(), each a body made for the year and the place (tools/rose-hall/people). */
 import * as THREE from "three";
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, batchStatic } from "./gfx.js";
-import { tree, mule, cart, barrel, hillRing, scatter, surveyPole } from "./period-props.js";
+import { tree, mule, cart, barrel, scatter, surveyPole } from "./period-props.js";
 import * as P from "./props.js";
 import * as W from "./world.js";
 import * as R from "./rosehall.js";
@@ -81,14 +81,6 @@ function fieldWall(Q, x0, z0, x1, z1, h = 1.2, seed = 3) {
     cz = (z0 + z1) / 2;
   add(Q, W.fieldWall(len, h, seed), cx, cz, 0, alongX ? 0 : Math.PI / 2);
   wall(Q, cx, cz, alongX ? len : 0.7, alongX ? 0.7 : len);
-}
-/* the dry limestone country of the middle of St Ann: pale hills near and far, scrub and rock */
-function hills(Q, seed = 3, near = true) {
-  const far = hillRing(300, 16, 50, { seed, base: [0.36, 0.42, 0.28] });
-  far.traverse((o) => (o.userData.far = true));
-  Q.group.add(far);
-  if (near)
-    for (const [x, z, r, h, s] of [[-95, -70, 46, 30, 1], [70, -110, 60, 38, 2], [120, 20, 50, 30, 3], [-130, 40, 55, 34, 4], [10, 140, 70, 36, 5], [-60, 110, 44, 26, 6]]) add(Q, W.cockpitHill(r, h, seed + s), x, z, -1);
 }
 const DUST = [186, 168, 132],
   DRY = [150, 144, 96];
@@ -839,13 +831,7 @@ function estate() {
   shore.rotation.x = -Math.PI / 2;
   shore.name = "terrain";
   createSea(G, { kind: "caribbean", y: -14.9, at: [0, 290], size: 320, swell: 0.6 });
-  const far = hillRing(330, 16, 56, { seed: 31, base: [0.24, 0.4, 0.3] });
-  far.traverse((o) => {
-    o.userData.far = true;
-    if (o.isMesh && o.position.z > 60) o.visible = false;   /* no hills out at sea */
-  });
-  G.add(far);
-  for (const [x, z, r, h, s] of [[-120, -150, 80, 46, 1], [90, -170, 90, 54, 2], [-10, -210, 110, 60, 3], [170, -70, 60, 34, 4], [-180, -50, 70, 38, 5]]) add(Q, W.cockpitHill(r, h, s, [0.26, 0.42, 0.3]), x, z, -1);
+  /* the far hills are the engine's ridges (engine/ridges.js, made in main.js): they go pale into the haze inland and leave the sea view clear */
   /* the great house on its hill, a stone terrace under it */
   const hillH = (x, z) => {
       const k = Math.max(0, Math.min(1, (Math.hypot(x, z + 88) - 27) / 40));
@@ -873,7 +859,7 @@ function estate() {
   hill.userData.far = true;
   const terrace = W.stoneBox(46, 3.6, 26, W.LIME, 0, 1.8, 0);
   terrace.userData.far = true;
-  add(Q, terrace, 0, -85, 8);
+  add(Q, terrace, 0, -85, 9.8);   /* its top at 11.6, under the house (add() sets the centre: at 8 the house stood 1.8 m over it) */
   const greatHouse = add(Q, R.greatHouse(), 0, -87, 11.6);
   for (const [x, z, h, s] of [[-30, -78, 9, 71], [31, -80, 10, 72], [-38, -66, 8, 73], [40, -64, 8, 74]]) add(Q, tree(h, s, 1), x, z, hillH(x, z) - 0.2);
   for (const [x, z, s] of [[-26, -70, 81], [27, -72, 82], [-20, -60, 83], [22, -58, 84]]) add(Q, palm(9, s), x, z, hillH(x, z) - 0.2);

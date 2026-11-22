@@ -147,3 +147,11 @@ What each look does: the LEGEND or RECORD card is set down beside the thing in e
 - **Estate:** Miss Bryan points (the board of names, the clothing card, the tomb, who built the house, freedom); at each of the six stones you lay a flower from the basket beside the card. The flowers stay: by the end of chapter 5 every name has one. The flowers are the player's own act today, not a record.
 
 Checks: `?auto=1` AUTO END 66, FLOW 0; `?test=audit` 0 in every place with the reveal check at both ends; `?test=held` CARRY 0.
+
+## Far hills, 22 November 2026
+
+The blotchy far hills on the estate (a ring of pale `hillRing` humps and five `cockpitHill` blobs) are gone. In their place are the engine's ridges (`engine/ridges.js`, as in Nanny Town), made once in `main.js`: five rings of green hills going pale into the haze inland, south behind the great house, sinking away as the ring turns north so that nothing stands across the sea view. They follow the camera, take the place's horizon colour as their haze, are dimmed for the night walk, and are not drawn indoors. The engine gained a small option for this, `shape(x, z)`. The one solid hill kept is the great house's own hill.
+
+Found on the way: the stone terrace under the great house had its centre set at 8 m, so its top was at 9.8 m and the house (at 11.6 m) stood in the air over it. The far cockpit hill's box had been touching the house, which hid this from the audit. The terrace now sits with its top at 11.6 m.
+
+Checks: `?test=audit` 0 in every place; `?auto=1` AUTO END 66, FLOW 0; `?test=budget` estate 61 draw calls, 145,762 triangles.

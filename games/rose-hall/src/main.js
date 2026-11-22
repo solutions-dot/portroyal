@@ -33,6 +33,7 @@ import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } from "./content.js";
 import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
+import { makeRidges } from "../../../engine/ridges.js";   /* far mountains that fade into the haze, as in Nanny Town */
 import { createLookShot, frameOf } from "../../../engine/lookshot.js";   /* looking at a thing is a close-up action (owner rule 13) */
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
@@ -57,6 +58,14 @@ const sky = makeSky();
 const iosWebGL = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 if (iosWebGL) sky.clouds.visible = false;   /* layered cloud sprites draw as coloured noise on some iPhones */
 sky.objects.forEach((o) => scene.add(o));
+/* the far hills of the north coast: ridge after ridge going pale into the haze inland (south, behind the great house), none out over the sea
+   (north). They follow the camera like a painted backdrop and take the light of the hour (light() below). Indoors they are not drawn. */
+const ridges = makeRidges({
+  seed: 11,
+  layers: [{ r: 230, base: 6, amp: 34, k: 0.1 }, { r: 280, base: 14, amp: 46, k: 0.24 }, { r: 340, base: 24, amp: 60, k: 0.4 }, { r: 420, base: 36, amp: 76, k: 0.56 }, { r: 520, base: 50, amp: 96, k: 0.72 }],
+  shape: (x, z) => Math.max(0, Math.min(1, (0.15 - z) / 0.55)),   /* full to the south, sinking away as the ring turns to the sea */
+});
+scene.add(ridges.group);
 const hemi = new THREE.HemisphereLight(0xfff1d4, 0x819183, 2.5),
   sun = new THREE.DirectionalLight(0xffe2b6, 2.1);
 sun.position.set(-20, 42, 20);
@@ -365,6 +374,8 @@ function light(Q) {
   hemi.intensity = L.hemi[2];
   nightFill.intensity = L.fill || 0;
   scene.environmentIntensity = L.stars || Q.indoor ? 0.08 : 0.25;
+  ridges.group.visible = !Q.indoor;
+  ridges.tone(L.ridge || 0x2f5a30, L.hor, L.stars ? 0.3 : 1);
 }
 /* which people a step shows: a row's `show` lists the story people who are there (everyone else in the place's story cast is hidden);
    without it everyone is shown */
@@ -949,6 +960,7 @@ function tick(dt, now = performance.now()) {
     camera.position.set(S.x, GAME.eye, S.z);
     camera.rotation.set(S.pitch, S.yaw, 0, "YXZ");
   }
+  ridges.group.position.set(camera.position.x, 0, camera.position.z);
   findNear();
   const quiet = hint(now);
   dangerTick(dt, quiet);
