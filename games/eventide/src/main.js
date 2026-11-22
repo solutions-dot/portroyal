@@ -1,4 +1,5 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
+import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 /* games/eventide/src/main.js: Eventide 1980, The Home on Slipe Pen Road (the plan is docs/games/eventide.md).
    Seven chapters, from a visit to the Eventide Home in May 1980, through the night of the fire of 20 May, to the monument today.
@@ -13,7 +14,11 @@ import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble 
 import { placeActionButton } from '../../../engine/action-button.js';
 import { returningTalker, callBack } from '../../../engine/return-talk.js';
 placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
-import { hudTidy } from '../../../engine/hud.js';
+import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
+import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';
+import { goalWithCount } from '../../../engine/story.js';
+import { runQuiz, quizOpen } from '../../../engine/quiz.js';   /* one quiz for every game: a wrong pick shows the right answer */   /* "Talk to A, B and C: 1 of 3." */   /* the view turns to the person talking */
+const TC = createTalkCam();
 import { createAmbient, ambientTest } from '../../../engine/ambient.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
@@ -101,7 +106,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stick.id) { stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x0) / 50)); stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y0) / 50)); }
-  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
+  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); if (look.moved > 8) TC.cancel(); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
 });
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function tapPerson(cx, cy) { const S = SC; if (!S) return null; ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); let best = null, bd = 1e9; for (const n of S.people) { if (n.kid || !n.m.visible || Math.hypot(state.x - n.x, state.z - n.z) > 6) continue; const h = ray.intersectObject(n.m, true)[0]; if (h && h.distance < bd) { bd = h.distance; best = n; } } return best; }
@@ -373,7 +378,7 @@ function skippableScene(finish) {
 let stage = 0, best = 0, goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); /* Keep the next task visible until the player completes it. */ if (withControls) showHint(); }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
-function refreshGoal(quiet) { const g = GOALS[stage]; goalText = g ? g(ctr) : ''; if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
+function refreshGoal(quiet) { const g = GOALS[stage], tt = TALK_TARGETS[stage] || []; goalText = goalWithCount(g ? g(ctr) : '', tt.filter((id) => byId(id)?.talked).length, tt.length, ctr); if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
 $('goal').onclick = () => showGoal(true);
 function showSound() { const b = $('snd'); b.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); b.setAttribute('aria-label', AU.on ? 'Sound on. Tap to turn off.' : 'Sound off. Tap to turn on.'); $('sndon').style.display = AU.on ? '' : 'none'; $('sndoff').style.display = AU.on ? 'none' : ''; }
 $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
@@ -398,7 +403,7 @@ function startTalk(n) {
   convoForced = false; openConvo(lines, null, n);
 }
 function convo(ls, onEnd, who) { if (busy && !$('card').hidden) hideCard(); talkFull = false; convoForced = true; openConvo([...ls], onEnd, who || null); }
-function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; showLine(); }
+function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; if (n) TC.begin(); lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; showLine(); }
 function showLine() {
   const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock);
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
@@ -409,13 +414,13 @@ function showLine() {
 function choose(c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
+  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
   const forced = convoForced; convoForced = false;
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); } if (cb && (finished || forced)) cb();
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
 $('next').onclick = nextLine; $('dclose').onclick = leaveTalk; $('talk').onclick = () => { if (near && !busy) activate(near); };
-function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => { const n = byId(id); return n && n.talked; })) setStage(NEXT_AFTER_TALK[stage]); }
+function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => { const n = byId(id); return n && n.talked; })) setStage(NEXT_AFTER_TALK[stage]); else refreshGoal(true); }   /* the count goes up */
 
 /* ---------- chapters, stages and the story machine ---------- */
 const CH_FIRST = [10, 20, 30, 40, 50, 60, 70], DONE = [14, 23, 33, 46, 54, 63, 75];
@@ -484,14 +489,17 @@ $('reset').onclick = () => { if (fading || frozen) return; closeJournal(); reset
 
 /* ---------- things to do. ACTIONS[chapter](P) makes that chapter's list. A thing shows as a button when you stand at it. ---------- */
 function placeThing(P, k) { const [x, z] = P.beds[TIDY[k].where]; P.things[k].position.set(x, 0.64, z); }
-function sortCards(k = 0) {   /* chapter 6: fact, opinion or rumour, one card at a time */
-  if (k >= SORT.length) { hideCard(); unlock('facts'); setStage(62); return; } const c = SORT[k];
-  card('Card ' + (k + 1) + ' of ' + SORT.length, [c.text, 'Is this a fact, an opinion or a rumour?'], SORT_KINDS.map((t, j) => ({ t, ok: j === c.kind, go: () => { if (j === c.kind) { uiSound('goal'); toast(c.why, 4200); sortCards(k + 1); } else { uiSound('tap'); toast('Not quite. Think again.'); } } })), { dismiss: hideCard });
+function sortCards(k = 0) {   /* chapter 6: fact, opinion or rumour (engine/quiz.js). Four cards: one of each kind first; the other two stay in the journal. */
+  const items = [0, 1, 5, 3].slice(k).map((i) => SORT[i]).map((c) => ({ q: c.text, note: 'Is this a fact, an opinion or a rumour?', opts: SORT_KINDS.map((t, j) => ({ t, ok: j === c.kind })), why: c.why }));
+  runQuiz({ title: 'Fact, opinion or rumour?', items, sound: uiSound, fast: QUICK }).then(() => { unlock('facts'); setStage(62); });
 }
-function timeline(k = 0) {   /* chapter 7: which came next? Three choices at a time. */
-  if (k >= TIMELINE.length) { hideCard(); setStage(72); return; }
-  const opts = [k, k + 1, k + 2].filter((j) => j < TIMELINE.length), order = k % 2 ? opts.slice().reverse() : opts.length > 2 ? [opts[1], opts[0], opts[2]] : opts;
-  card(k ? 'What came next?' : 'What came first?', k ? ['So far: ' + TIMELINE[k - 1].year + '. ' + TIMELINE[k - 1].text] : ['Tap the thing that happened first.'], order.map((j) => ({ t: TIMELINE[j].text, ok: j === k, go: () => { if (j === k) { uiSound('goal'); toast(TIMELINE[k].year, 2200); timeline(k + 1); } else { uiSound('tap'); toast('That came later. Try again.'); } } })), { col: true, dismiss: hideCard });
+function timeline(k = 0) {   /* chapter 7: which came next? Three choices at a time (engine/quiz.js); four steps, each answer gives its year */
+  const items = [];
+  for (let i = k; i < Math.min(TIMELINE.length - 2, k + 4); i++) {
+    const opts = [i, i + 1, i + 2].filter((j) => j < TIMELINE.length), order = i % 2 ? opts.slice().reverse() : opts.length > 2 ? [opts[1], opts[0], opts[2]] : opts;
+    items.push({ q: i ? 'What came next?' : 'What came first?', note: i ? 'So far: ' + TIMELINE[i - 1].year + '. ' + TIMELINE[i - 1].text : 'Tap the thing that happened first.', opts: order.map((j) => ({ t: TIMELINE[j].text, ok: j === i })), why: TIMELINE[i].year + ': ' + TIMELINE[i].text });
+  }
+  runQuiz({ title: 'The story in order', items, sound: uiSound, fast: QUICK }).then(() => setStage(72));
 }
 const ACTIONS = {
   0: (P) => [{ label: 'Read the letter to Miss Iris', x: P.spots.iris.x - 0.9, z: P.spots.iris.z, r: 2.4, on: () => stage === 13, go: () => card('A letter for Miss Iris', LETTER, [{ t: 'Finish reading', go: () => { hideCard(); convo([{ who: 'Miss Iris', text: 'Pauline! I made that dress in 1961.' }, { who: 'Miss Iris', text: 'Thank you, child. You read it beautifully.' }], () => setStage(14), byId('iris1')); } }]) }],
@@ -513,7 +521,7 @@ const ACTIONS = {
     { label: 'Lay a flower', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 72, go: () => { const k = ctr.flower || 0; P.laid[k].visible = true; ctr.flower = k + 1; uiSound('goal'); say(k ? 'A flower for Miss Dora, who sang.' : 'A flower for Miss Iris, the dressmaker.'); refreshGoal(true); if (ctr.flower >= 2) setStage(73); } },
     { label: 'Read the words', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 73, go: () => card('The plaque says', [PLAQUE.slice(0, 4).join(' '), PLAQUE.slice(4).join(' ')], [{ t: 'Close', go: () => { hideCard(); setStage(74); } }]) }],
 };
-ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 75) { cue('end'); card('The end', ['For years the Eventide fire was a line at the bottom of the page.', 'You have read past it. The women of Eventide were people, each with a name and a life.', 'Your journal has a page about your journey.'], [{ t: 'Open my journal', go: () => { hideCard(); openJournal('journey'); } }], { col: true }); } }, 1800); };
+ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 75) { cue('end'); card('The End', ['For years the Eventide fire was a line at the bottom of the page.', 'You have read past it. The women of Eventide were people, each with a name and a life.', 'Your journal has a page about your journey.'], [{ t: 'Open my journal', go: () => { hideCard(); openJournal('journey'); } }], { col: true }); } }, 1800); };
 
 /* ---------- chapter 4: the night. Seen from behind the rope, with slow camera moves for the big moments. Nothing you do changes what happened. ---------- */
 let SIREN = 0;
@@ -630,7 +638,7 @@ applySave(loadGame());
   const first = hasSave && stage >= 10 ? chapterOf(stage) : 0;
   model('anims').then((an) => { loadClips(an); tick(); return sceneReady(first); }).then(() => { modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick(); if (__DEV__) devViews(); }); }
 function startGame(quiet) {
-  if (GO) return; GO = true; audioInit(); $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
+  if (GO) return; GO = true; audioInit(); $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); onceWhenClear('eventide-you', () => card('Who you are', ["You are a child who lives near Slipe Pen Road, in Kingston.", "Gran visits her friend at the Eventide Home. You go with her.", "You and Gran are fictional. The Home and the fire are real."], [{ t: 'Begin', go: hideCard }]));   /* who you are, once per device (owner, 21 November 2026) */
   liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 let GO = false;
@@ -639,6 +647,7 @@ $('start').onclick = () => { const res = hasSave && stage >= 10; startGame(); be
 /* ---------- the frame loop ---------- */
 let stepT = 0, frameN = 0;
 function update(dt, now) {
+  if (talkWith && TC.on) TC.step(state, camera.position, speakerHead(talkWith), dt);   /* engine/talk-cam.js */
   if (DIR.on) { DIR.t += dt; if (DIR.t >= DIR.dur && DIR.resolve) { const r = DIR.resolve; DIR.resolve = null; r(true); } }
   if (!SC) return; const P = SC.P, gran = SC.i === 0 && byId('gran1');
   if (state.started && !busy && !frozen && !DIR.on) {
@@ -864,6 +873,7 @@ function devViews() {
         const key = stage + '|' + cur + '|' + unlocked.length + '|' + ($('card').hidden ? '' : $('ctitle').textContent) + '|' + JSON.stringify(ctr) + (DIR.on ? 'cut' : '');
         if (key !== lastKey) { lastKey = key; lastT = now; Lg('s' + stage + ' ' + cur + ' pages=' + unlocked.length + ($('card').hidden ? '' : ' card="' + $('ctitle').textContent + '"') + ' goal="' + goalText + '"'); }
         if (now - lastT > 25000) { Lg('STALL at stage ' + stage + ' in ' + cur + ' busy=' + busy + ' frozen=' + frozen + ' cut=' + DIR.on); break; }
+        if (quizOpen()) { const b = document.querySelector('#quizopts button:not(:disabled)') || document.querySelector('#quiznext:not([hidden])'); if (b) b.click(); continue; }   /* engine/quiz.js */
         if (!$('card').hidden) { const b = $('cbtns').querySelector('button[data-ok]') || $('cbtns').querySelector('button'); if (b) b.click(); continue; }
         if (!$('dialogue').hidden) { const c = $('choices').firstChild; if (c) c.click(); else $('next').click(); continue; }
         if (stage >= DONE[ch]) { Lg('chapter ' + (ch + 1) + ' DONE at stage ' + stage); if (one || ch >= 6) { Lg('ALLDONE errors=' + errs.length + ' pages=' + unlocked.length + '/' + JOURNAL.length + ' choices=' + JSON.stringify(story)); break; } ch++; Lg('next ch' + (ch + 1)); await beginChapter(ch); lastT = performance.now(); continue; }
@@ -875,4 +885,5 @@ function devViews() {
   }
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addRecap({ items: [{ icon: '\uD83C\uDFE0', label: 'The Eventide Home', page: 'home', img: 'recap/home.jpg' }, { icon: '\uD83E\uDD1D', label: 'The helpers', page: 'helpers', img: 'recap/helpers.jpg' }, { icon: '\uD83D\uDD6F\uFE0F', label: 'The monument', page: 'remember', img: 'recap/remember.jpg' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The End', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

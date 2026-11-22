@@ -45,7 +45,7 @@ Fictional characters say so on their journal page (owner rule 3).
 
 | Who | Real or fictional | Where | Model |
 |---|---|---|---|
-| Lewis Galdy (you) | real | everywhere | `galdy` (third-person view with V); walks with the shared `Walk` clip, paced to his speed |
+| Lewis Galdy (you) | real | everywhere | `galdy` (the third-person view, V key and button, is switched off for now: `VIEW_SWITCH` in `main.js`, owner 22 November 2026); walks with the shared `Walk` clip, paced to his speed |
 | Abba, tavern keeper | fictional (stands for the free Black people of Port Royal) | by the tavern door (-5.2, 0.9); she stays outside | `abba` |
 | Old Ned, retired buccaneer | fictional | tavern table, sitting | `ned` |
 | Kofi, enslaved dockworker | fictional | carries crates from the stack at (19.4, 3.1) to the pier | `kofi` |

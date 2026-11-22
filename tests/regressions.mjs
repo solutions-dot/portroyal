@@ -408,3 +408,4 @@ test('menu: the first ten games carry no New or Early version badge (docs/PLATFO
 });
 import './fit-rig.mjs';
 import './posture.mjs';
+import './story-first.mjs';

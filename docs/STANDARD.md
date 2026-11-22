@@ -107,6 +107,26 @@ How to use it:
 - Move one chapter's table at a time. Stages not in the table stay with the old code.
 - **Check:** `?test=flow` (`flowTest` in the dev build) must print `FLOW 0`, and `npm test` runs the module's own tests.
 
+## Story first: a story the child takes part in (owner, 21 November 2026)
+
+Each game is a story a child takes part in, and it must never feel tedious. Tasks are also how the games teach customs and skills that a line of dialogue cannot, so **a task that teaches stays**. What goes is dead weight. The full plan and its findings are in `docs/plans/story_first_plan.md`.
+
+1. **Something happens about every minute**: a scene, a choice, a surprise or a hands-on moment.
+2. **A task must teach something dialogue cannot.** If two lines of talk would teach the same, make it a line. If it teaches a custom, a skill or a feeling, keep it.
+3. **The result is visible** (rule 3 of "Story flow" above). A toast alone is not enough.
+4. **Someone reacts**: a short word or gesture from the person it matters to.
+5. **The first go does the teaching.** Repeat a task only when each go adds something.
+6. **No trips just to come back.** The goal on screen sends you somewhere, never a line of dialogue.
+7. **Each fact is said once**, by the best person for it. More goes in the journal.
+8. **Talk is short**: about 6 lines for a first conversation, three people at most in a step, with the count on screen.
+9. **Long walks have a reason** (someone walks with you, or something happens on the way), or they are made shorter.
+10. **A chapter takes about 5 to 8 minutes.** Time it before and after a change. Trim what does not teach first.
+11. **Nothing may make a game longer** without the owner. The end-of-game recap sits on the final card only.
+
+**Quizzes** use `engine/quiz.js`: 3 or 4 questions, a wrong pick shows the right answer with one short line why, a short pause, then the next. Never a fail screen.
+
+**Sources.** A fact added to a game must be in that game's facts doc (`docs/games/<game>.md`) with its source, or be marked fictional or general on its journal page. What could not be checked is listed in `docs/plans/story_first_plan.md`, section 5.
+
 ## Navigation and controls: the same in every game (owner, 19 November 2026)
 
 Players move between games, so every game is driven the same way. `tests/controls.mjs` checks every game folder that does not start with "_", so a new game fails `npm test` until it follows this.
@@ -170,7 +190,7 @@ Work on one game at a time, start to finish. Read `CLAUDE.md`, this file, `docs/
    How to run them headless is in `docs/TESTING.md`, section 5.
 7. **Fix until each check reports 0.** Where a check cannot reach 0 yet, write down why in the game's doc. When you find a new kind of mistake by eye, propose a new check for `engine/audit.js` in its own PR (rule 8).
 8. **Look yourself.** Take and look at: a close screenshot of every body, front and three-quarter, standing and mid-stride, full and light copy; every place close up and far off; a conversation, the journal and a card on the phone layout (390x800) and on a computer (1280x720); faces in daylight, indoors and at night. Look for jagged necklines and hems, floating collars, hands in bodies, hair through hats, and skin that is too dark or too pale.
-9. **Play it.** Run the autoplayer for every chapter (`?auto=N&one`) and read the log (`docs/TESTING.md`, section 3).
+9. **Play it.** Run the autoplayer for every chapter (`?auto=N&one`) and read the log (`docs/TESTING.md`, section 3). Then play each chapter yourself against "Story first" above: time it, and note any task that teaches nothing, any trip back, and any fact said twice.
 10. **Write it down in `docs/games/<game>.md`:** which bodies the game uses and where their recipes are, the skin factor, which checks are wired and the numbers each printed with the date, the sources for clothes and places, and what is left. Then update this file's table.
 11. **Pull request.** Commit as `CLAUDE.md` rule 7 says, push the branch, open a PR, and merge only when the owner asks.
 

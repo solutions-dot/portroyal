@@ -2,6 +2,8 @@
 
 This repository holds a family of educational 3D history games for the web, built on one shared engine.
 
+All ten games are **live** (owner, 21 November 2026), so every change reaches real players. Where a game below is called new, read it as: newer, still being polished.
+
 - **Port Royal 1690** (`games/port-royal/`) is finished and live. It follows Lewis Galdy through Port Royal, Jamaica, from 1690 to the 1692 earthquake.
 - **Marcus Garvey** (`games/garvey/`) has all eight chapters playable, from a Kingston print shop about 1908 to National Heroes Park today. It is new, so expect polish work. Read `docs/games/garvey.md` first.
 - **Kendal 1957** (`games/kendal/`) tells the story of Jamaica's railway and the Kendal train crash of 1957 in seven chapters. It is new, so expect polish work. Read `docs/games/kendal.md` first.

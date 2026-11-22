@@ -4,6 +4,10 @@ import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engin
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
+import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';
+import { goalWithCount } from '../../../engine/story.js';   /* "Talk to A, B and C: 1 of 3." */
+import { runQuiz, quizOpen } from '../../../engine/quiz.js';   /* one quiz for every game: a wrong pick shows the right answer */   /* the view turns to the person talking */
+const TC = createTalkCam();
 const FACE_VARIANTS = { maroon_man: 2, maroon_scout: 2, maroon_woman: 2, maroon_girl: 2, maroon_boy: 2, redcoat: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/nanny/src/main.js: Nanny Town 1734, The Narrow Path.
@@ -32,7 +36,8 @@ import { createAmbient, ambientTest, onKeepOff } from '../../../engine/ambient.j
 import { G as GFX, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
 import { ENV, mixEnv, makeRidges, makeMist, makeSun, makeFireflies, makeSmoke, pathLength, pathAt } from './land.js';
 import { buildEstate, buildTown, buildWatch, buildNewTown } from './places.js';
-import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, SAY, CARDS, CHOICE_NAMES, CALLS } from './content.js';
+import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, SAY, CARDS, CHOICE_NAMES, CALLS, QUIZ, YOU, RECAP } from './content.js';
+import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import * as SFX from './sfx.js';
 import { HATS, LOOKS, KID } from './cast.js';
 import { musket, lantern, horn, leafCloak, beads, attach, basketOf, cockedHat } from './props.js';
@@ -106,7 +111,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stick.id) { stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x0) / 50)); stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y0) / 50)); }
-  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
+  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); if (look.moved > 8) TC.cancel(); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
 });
 const endPointer = (e) => { if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; } if (e.pointerId === look.id) { if (look.moved < 8) { const p = tapPerson(e.clientX, e.clientY); if (p) startTalk(p); } look.id = null; } };
 canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
@@ -356,7 +361,7 @@ const eyeNow = () => [state.x, groundAt(state.x, state.z) + EYE, state.z];
 let stage = 0, best = 0, goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); /* Keep the next task visible until the player completes it. */ if (withControls) showHint(); }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
-function refreshGoal(quiet) { const g = GOALS[stage]; goalText = ctr.goal || (g ? g(ctr) : ''); if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
+function refreshGoal(quiet) { const g = GOALS[stage], tt = TALK_TARGETS[stage] || []; goalText = ctr.goal || goalWithCount(g ? g(ctr) : '', tt.filter((id) => byId(id)?.talked).length, tt.length, ctr); if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
 $('goal').onclick = () => showGoal(true);
 function showSound() { const b = $('snd'); b.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); b.setAttribute('aria-label', AU.on ? 'Sound on. Tap to turn off.' : 'Sound off. Tap to turn on.'); $('sndon').style.display = AU.on ? '' : 'none'; $('sndoff').style.display = AU.on ? 'none' : ''; }
 $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
@@ -383,8 +388,13 @@ function startTalk(n) {
   convoForced = false; openConvo(lines, null, n);
 }
 function convo(ls, onEnd, who) { if (busy && !$('card').hidden) hideCard(); talkFull = false; convoForced = true; openConvo([...ls], onEnd, who || null); }
-function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; showLine(); }
+function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; if (n) TC.begin(); lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; showLine(); }
 function showLine() {
+  if (lines[step].quiz) {   /* a quiz in the middle of a talk: the talk steps aside, the quiz runs, then the talk goes on */
+    const s = lines[step], Q = QUIZ[s.quiz], ep = EP; if (s.unlock) unlock(s.unlock); $('dialogue').hidden = true;
+    runQuiz({ title: Q.title, items: Q.items, sound: uiSound, fast: QUICK }).then(() => { if (ep !== EP) return; $('dialogue').hidden = false; nextLine(); });
+    return;
+  }
   const s = lines[step], me = s.who === 'You'; if (s.unlock) unlock(s.unlock); if (s.give === 'cloak') { story.cloak = true; saveGame(); toast(SAY.cloak, 3200); SFX.rustle(); }
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
@@ -397,13 +407,13 @@ function choose(s, c, btn) {
 }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
+  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
   const forced = convoForced; convoForced = false;
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); } if (cb && (finished || forced)) cb();
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
 $('next').onclick = nextLine; $('dclose').onclick = leaveTalk; $('talk').onclick = () => { if (near && !busy) activate(near); };
-function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => { const n = byId(id); return n && n.talked; })) setStage(NEXT_AFTER_TALK[stage]); }
+function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => { const n = byId(id); return n && n.talked; })) setStage(NEXT_AFTER_TALK[stage]); else refreshGoal(true); }   /* the count goes up */
 
 /* ---------- chapters, stages and the story machine ---------- */
 const CH_PLACE = ['estate', 'town', 'watch', 'watch', 'town', 'newtown'], CH_FIRST = [10, 20, 30, 40, 50, 60], DONE = [15, 25, 35, 44, 56, 64];
@@ -543,7 +553,8 @@ const ACTIONS_FOR = {
 };
 
 /* ---------- chapter 1: the night road. Quamin leads, Mama follows; a watchman with a lantern walks the cart road. ---------- */
-ON[10] = () => { if (cur === 'estate') { say(SAY.start, 4200); SFX.owl(); } };
+ON[10] = () => { if (cur !== 'estate') return; const go = () => { say(SAY.start, 4200); SFX.owl(); };
+  if (story.metYou || QUICK) { go(); return; } card(YOU.title, YOU.paras, [{ t: YOU.go, go: () => { hideCard(); story.metYou = true; saveGame(); go(); } }]); };   /* who you are, once, before the first step */
 /* how each person walks with you (engine/follow.js): a guide keeps `ahead` metres in front along the trail and waits if you fall behind; a follower keeps `gap` metres
    behind (on the trail, or in your footsteps), never closer than `space`. The scenes and the place audit both read these numbers. */
 const FOLLOW = { quamin: { ahead: 4.6, side: 0.45 }, mama: { gap: 2.4, side: 0.5 }, quaminT: { ahead: 4.4 }, mamaT: { gap: 2.2, side: 0.5 }, mama5: { ahead: 3.6, side: 0.3 }, flee: (i) => ({ ahead: 7 + i * 3.2, side: i % 2 ? 0.3 : -0.3, wait: Infinity, wave: false }), phibba: { gap: 1.4, side: 0.55, space: 0.8 } };
@@ -736,7 +747,7 @@ ON[63] = async () => {
   say(SAY.t2, 4600); const e1 = envTo(ENV.gold, 6), a = eyeNow(), h = a[1];
   await cut(a, [4, h + 5, 14], [0, 1, 0], [-9, 6, -37], 7); if (ep !== EP) return; await e1; if (ep === EP) finish();
 };
-ON[64] = () => { unlock('hero'); unlock('mooretown'); unlock('journey'); const c = CARDS.end; setTimeout(() => card(c.title, c.paras, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); cue('end'); };
+ON[64] = () => { unlock('hero'); unlock('mooretown'); unlock('journey'); const c = CARDS.end; setTimeout(() => { card(c.title, c.paras, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }); }, 1200 * TS); cue('end'); };
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
@@ -803,6 +814,7 @@ $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] 
 /* ---------- the frame loop ---------- */
 let stepT = 0, frameN = 0, camY = 0;
 function update(dt, now) {
+  if (talkWith && TC.on) TC.step(state, camera.position, speakerHead(talkWith), dt);   /* engine/talk-cam.js */
   if (!state.started && titleMotion.matches) dt = 0;
   const P = P_(); if (!P) return; const t = (now || 0) / 1000;
   if (DIR.on) { DIR.t += dt; if (DIR.t >= DIR.dur && DIR.resolve) { const r = DIR.resolve; DIR.resolve = null; r(true); } }
@@ -915,6 +927,7 @@ function devViews() {
   if (shot === 'talk2') go('newtown', 62, 0.6, -1.4, -0.4, 0).then(() => { startTalk(byId('beneba6')); nextLine(); });
   if (shot === 'card1') go('watch', 41, 0.2, 2.3, PI, -0.3).then(() => { fightIntro(); });
   if (shot === 'paper') go('newtown', 61, 2.6, -2.2, -0.35, -0.5).then((P) => { P.actions[0].go(); });
+  if (shot === 'quiz') go('newtown', 62, 2.6, 2.2, 0, 0).then(() => { runQuiz({ title: QUIZ.know.title, items: QUIZ.know.items, sound: uiSound }); });   /* ?shot=quiz : Beneba's game in the shared quiz (engine/quiz.js) */
   if (shot === 'journal1') go('town', 21, 5, 9.5, 0.6, 0).then(() => { for (const id of ['town', 'path', 'nanny', 'patent']) unlock(id, true); openJournal('patent'); });
   if (shot === 'chap1') go('town', 21, 5, 9.5, 0.6, 0).then(() => { best = 35; modelsReady = true; openChapters(); });
   if (shot === 'horn') go('town', 23, 8, 2.6, 1.2, 0).then(() => { hornLesson(); });
@@ -1103,6 +1116,7 @@ function devViews() {
         if (key !== lastKey) { lastKey = key; lastT = now; L('s' + stage + ' ' + cur + ' pages=' + unlocked.length + (HORN.on ? ' horn' : '') + (FIGHT.on ? ' fight:' + FIGHT.mode : '') + (GUNS.on ? ' guns' : '') + ($('card').hidden ? '' : ' card="' + $('ctitle').textContent + '"') + ' goal="' + $('goal').textContent + '"'); }
         if (now - lastT > 30000) { const why = 'STALL at stage ' + stage + ' in ' + cur + ' busy=' + busy + ' frozen=' + frozen + ' fading=' + fading + ' horn=' + HORN.on + ' fight=' + FIGHT.on; L(why); return { ok: false, why, stalls: [why] }; }
         if (!$('card').hidden) { const b = $('cbtns').querySelector('button'); if (b) b.click(); continue; }
+        if (quizOpen()) { const b = document.querySelector('#quizopts button:not(:disabled)') || document.querySelector('#quiznext:not([hidden])'); if (b) b.click(); continue; }   /* engine/quiz.js */
         if (!$('dialogue').hidden) { const c = [...$('choices').children].find((b) => !b.disabled); if (c) c.click(); else $('next').click(); continue; }
         if (HORN.on) { if (HORN.ready) hornTap(HORN.notes[HORN.pos]); continue; }
         if (!$('holdwrap').hidden) HOLD.on = true;
@@ -1162,4 +1176,5 @@ function devViews() {
   })();
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addRecap({ items: RECAP, open: (pg) => { hideCard(); openJournal(pg); }, title: CARDS.end.title, unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */
