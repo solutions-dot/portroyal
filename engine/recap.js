@@ -11,8 +11,11 @@ export function recapItems(items, unlocked = null) {
 }
 
 const CSS = `.recaprow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:.6em 0 .2em}
-.recaprow .rc{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:5.6rem;max-width:8rem;min-height:44px;padding:.5em .6em;border-radius:10px;font:inherit;font-size:.9rem;line-height:1.2;cursor:pointer;background:rgba(255,255,255,.08);border:2px solid currentColor;color:inherit}
+.recaprow .rc{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:5.6rem;max-width:8rem;min-height:44px;padding:.5em .6em;border-radius:10px;font:inherit;font-size:.9rem;line-height:1.2;cursor:pointer;background:rgba(255,255,255,.08);border:2px solid currentColor;color:inherit}
 .recaprow .rc .ri{font-size:1.7rem;line-height:1}
+.recaprow .rc .rimg{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:6px;background:rgba(0,0,0,.25)}
+.recaprow .rc{width:7.6rem}
+#card.recapcard,#chcard.recapcard{text-align:center}#card.recapcard #ctitle,#chcard.recapcard #chcardt{text-align:center}#card.recapcard #cbtns,#chcard.recapcard #chcardb{justify-content:center}
 .recaprow .rc:focus-visible{outline:3px solid #ffd65c;outline-offset:2px}
 .recaphead{margin:.6em 0 0;font-weight:700;text-align:center}`;
 let styled = false;
@@ -23,7 +26,8 @@ export function recapRow(items, open, { heading = 'Three things you learned. Tap
   const row = document.createElement('div'); row.className = 'recaprow'; wrap.appendChild(row);
   for (const it of list) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'rc'; b.setAttribute('aria-label', 'Read again: ' + it.label);
-    const i = document.createElement('span'); i.className = 'ri'; i.setAttribute('aria-hidden', 'true'); i.textContent = it.icon || '★';
+    let i; if (it.img) { i = document.createElement('img'); i.className = 'rimg'; i.src = it.img; i.alt = ''; i.loading = 'lazy'; i.onerror = () => { const f = document.createElement('span'); f.className = 'ri'; f.textContent = it.icon || '\u2605'; i.replaceWith(f); }; }   /* a picture from the game itself (owner, 22 November 2026) */
+    else { i = document.createElement('span'); i.className = 'ri'; i.textContent = it.icon || '\u2605'; } i.setAttribute('aria-hidden', 'true');
     const l = document.createElement('span'); l.textContent = it.label; b.append(i, l);
     b.addEventListener('click', (e) => { e.stopPropagation(); open(it.page); });
     row.appendChild(b);
@@ -43,11 +47,11 @@ export function addRecap({ items, open, title, unlocked = null, card = 'card', t
     if (tab) tab.click();
   };
   const check = () => {
-    if (c.hidden) return; const t = ((document.getElementById(titleEl) || {}).textContent || '').trim();
+    if (c.hidden) { c.classList.remove('recapcard'); return; } const t = ((document.getElementById(titleEl) || {}).textContent || '').trim();
     const ok = title instanceof RegExp ? title.test(t) : t === title; const b = document.getElementById(body);
-    if (!ok || !b || b.querySelector('.recapwrap')) return;
+    if (!ok) { c.classList.remove('recapcard'); return; } if (!b || b.querySelector('.recapwrap')) return;
     const w = recapRow(items, (pg) => { const it = items.find((x) => x.page === pg); open(pg); setTimeout(() => pick(it), 80); }, { unlocked: typeof unlocked === 'function' ? unlocked() : unlocked });
-    w.classList.add('recapwrap'); b.appendChild(w);
+    w.classList.add('recapwrap'); b.appendChild(w); c.classList.add('recapcard');   /* the final card is centred, like the Who you are card */
   };
   const mo = new MutationObserver(check); mo.observe(c, { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true, characterData: true });
   return mo;
