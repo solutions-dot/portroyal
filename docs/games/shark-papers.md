@@ -105,3 +105,14 @@ Fixed in this pass: the walking walls along the deck (the guns' walls were 1.5 m
 - **`?test=skin`**: sp_fitton 210,171,138; sp_wylie 223,187,152; sp_cato 141,98,70; sp_ben 163,113,80; sp_clerk 216,181,149; sp_briggs 214,172,135; sp_seaman 208,166,131; sp_seaman2 153,105,74. Cato and the second seaman read as warm brown.
 - **`?test=walkers`**: every body slides under 1 cm a loop (worst sp_seaman 0.9 cm); no lines.
 - After the rebuild: `?auto=1` AUTO END 46, FLOW 0; `?test=audit` 0 in deck, quay and court; `?test=ambient` 0; `?test=held` CARRY 0.
+
+## Stark's Jamaica Guide, 1898 (read at source, 22 November 2026)
+
+James H. Stark, *Stark's Jamaica Guide* (1898), pages 60 to 63, "The Shark Papers", "gathered from official documents still preserved in the Institute of Jamaica": https://archive.org/details/starksjamaicagui00star . It prints Fitton's sworn affidavit in full. What it confirms or adds:
+
+- Fitton's affidavit, sworn on 24 September 1799 before J. Fraser, Surrogate, says the tender was "on a cruise off Jacmel in the island of San Domingo, on the thirteenth day of August last" when it found "a dead bullock surrounded by sharks". That date, 13 August, comes before the Sparrow took the Nancy on 28 August, and later accounts give 30 August; the game says only "August 1799" and the journal explains the difference.
+- The affidavit: the seamen were ordered "to separate its jaws and clean them, as the said shark was larger than common", and in its maw found "a parcel of papers tied up with a string", with "a letter of a recent date from Curricoa"; Fitton "had them dried on deck".
+- The Nancy "was manned by Swedes and Danes, and owned by Germans, naturalized citizens of the United States". On the way to Curacao she "put into Aruba"; Briggs went to Curacao "in a droger, and returned with a German named Schultze, an agent of the owners".
+- Taken on "the 28th of August, 1799" by the cutter Sparrow, Hugh Wylie, "near the island of L. Vache, off the south coast of Hayti"; suit brought in the Court of Vice-Admiralty at Kingston on 9 September 1799; condemned on 25 November 1799.
+- More papers were found on the Nancy later, hidden in the captain's cabin and in a cask of salt pork.
+- In 1898, "In the United Service Museum, London, is the head of the shark which swallowed the papers".

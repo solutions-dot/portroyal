@@ -15,7 +15,7 @@ import { skinProbe } from "../../../engine/skinprobe.js";
 import { walkRoute, routeIssues } from "../../../engine/placement.js";
 import { CAST, BASES, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS } from "./steps.js";
-import { CHAPTERS, TALK } from "./content.js";
+import { CHAPTERS, TALK, FILMS, QUIZ } from "./content.js";
 import { PLACE_IDS } from "./places.js";
 import { makeAdapter, CHECK_TABLES } from "./checktables.js";
 import { $, closeAll } from "./ui.js";
@@ -50,6 +50,26 @@ export async function dev(A) {
           return;
         }
       }
+  };
+  /* for a play-through by touch from outside (tests/phone runs): what the step needs, where it is, a walking route there round the walls,
+     and where a person's head is on the screen, so a script can steer the joystick and tap like a child would. Reads only. */
+  A.phone = {
+    state: () => ({ stage: S.stage, x: S.x, z: S.z, yaw: S.yaw, place: STEPS[S.stage]?.place, dir: !!A.DIR.on }),
+    need: () => {
+      const n = needList(STEPS[S.stage] || {}).find((n) => story.needs(n.id));
+      return n ? { id: n.id, kind: n.kind, at: A.where(n.id, n.kind) } : null;
+    },
+    route: (a, b) => walkRoute(a, b, world().walls, 0.23, world().bounds),
+    data: { STEPS, TASKS, LOOKS, TALK, FILMS, QUIZ, CHAPTERS },
+    people: () => world().people.map((n) => ({ id: n.id, x: n.x, z: n.z, visible: n.m.visible })),
+    head: (id) => {
+      const n = world().people.find((x) => x.id === id);
+      if (!n) return null;
+      const v = n.m.getWorldPosition(new A.camera.position.constructor());
+      v.y += 1.35;
+      v.project(A.camera);
+      return v.z < 1 ? [((v.x + 1) / 2) * innerWidth, ((1 - v.y) / 2) * innerHeight] : null;
+    },
   };
   /* the scripted playthrough: cards, the quiz and dialogue clicked through, each need done where it is. Used by ?auto and the shared runner. */
   A.autoplay = async ({ first = 1, last = LAST, log = [] } = {}) => {

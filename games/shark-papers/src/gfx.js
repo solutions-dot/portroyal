@@ -315,6 +315,103 @@ export const T = {
       ),
     );
   },
+  /* dressed stone laid in courses, with mortar joints (owner: the quay looked like blotchy sand close up). kind "flags": paving flags,
+     four courses to a tile, each flag 0.6 to 1.1 tile-quarters long; "coping": one course of long coping blocks with a rounded arris
+     along the top edge of the canvas (the sea side of a strip laid with rotation.x = -PI / 2); "ashlar": a wall face of coursed blocks.
+     bump: true gives the matching grey bump map (joints low, faces high). The same seed lays out both. */
+  setts(rgb = [176, 168, 150], repeat = [1, 1], kind = "flags", bump = false, seed = 7) {
+    return once("setts" + rgb + repeat + kind + bump + seed, () => {
+      const W = 512,
+        H = kind === "coping" ? 128 : 512;
+      const rows = kind === "coping" ? 1 : kind === "ashlar" ? 6 : 4;
+      const [minL, maxL] = kind === "coping" ? [104, 150] : kind === "ashlar" ? [110, 200] : [128, 235];
+      return cv(
+        W,
+        H,
+        (x, w, h) => {
+          const r = rng(seed);
+          const rh = h / rows,
+            J = kind === "coping" ? 3 : 4;
+          x.fillStyle = bump ? "rgb(40,40,40)" : rgbs(rgb, -58);   /* the mortar */
+          x.fillRect(0, 0, w, h);
+          for (let row = 0; row < rows; row++) {
+            /* flags whose lengths add up to the tile width exactly, so the pattern repeats without a seam */
+            const lens = [];
+            let left = w;
+            while (left > 0) {
+              let L = minL + r() * (maxL - minL);
+              if (left - L < minL) L = left;
+              lens.push(Math.round(L));
+              left -= Math.round(L);
+            }
+            let cx = r() * w;
+            const y0 = row * rh;
+            for (const L of lens) {
+              const v = (r() - 0.5) * 26,
+                warm = (r() - 0.5) * 10;
+              for (const off of [0, -w]) {
+                const fx = cx + off + J / 2,
+                  fy = y0 + J / 2,
+                  fw = L - J,
+                  fh = rh - J;
+                if (bump) {
+                  x.fillStyle = `rgb(${(190 + v) | 0},${(190 + v) | 0},${(190 + v) | 0})`;
+                  x.fillRect(fx, fy, fw, fh);
+                  x.fillStyle = "rgba(0,0,0,0.35)";   /* worn, rounded edges */
+                  x.fillRect(fx, fy + fh - 3, fw, 3);
+                  x.fillRect(fx + fw - 3, fy, 3, fh);
+                  continue;
+                }
+                x.fillStyle = rgbs([rgb[0] + warm, rgb[1], rgb[2] - warm], v);
+                x.fillRect(fx, fy, fw, fh);
+                /* tooling: fine parallel strokes of the mason's chisel across the face */
+                x.strokeStyle = `rgba(255,255,255,${0.04 + r() * 0.04})`;
+                x.lineWidth = 1;
+                const slope = (r() - 0.5) * 0.4;
+                for (let k = 4; k < fw; k += 5 + r() * 3) {
+                  x.beginPath();
+                  x.moveTo(fx + k, fy + 2);
+                  x.lineTo(fx + k + fh * slope, fy + fh - 2);
+                  x.stroke();
+                }
+                /* wear: a darker hollow where feet go, a few stains and chips */
+                const gr = x.createRadialGradient(fx + fw / 2, fy + fh / 2, 2, fx + fw / 2, fy + fh / 2, Math.max(fw, fh) * 0.7);
+                gr.addColorStop(0, "rgba(0,0,0,0)");
+                gr.addColorStop(1, `rgba(40,34,26,${0.1 + r() * 0.08})`);
+                x.fillStyle = gr;
+                x.fillRect(fx, fy, fw, fh);
+                for (let s = 0; s < 3; s++) {
+                  x.fillStyle = `rgba(60,52,40,${0.06 + r() * 0.08})`;
+                  x.beginPath();
+                  x.ellipse(fx + r() * fw, fy + r() * fh, 3 + r() * 12, 2 + r() * 6, r() * 3, 0, 7);
+                  x.fill();
+                }
+                /* the arrises: light along the top and left, shade along the bottom and right */
+                x.fillStyle = "rgba(255,250,235,0.16)";
+                x.fillRect(fx, fy, fw, 2);
+                x.fillRect(fx, fy, 2, fh);
+                x.fillStyle = "rgba(20,16,10,0.22)";
+                x.fillRect(fx, fy + fh - 2, fw, 2);
+                x.fillRect(fx + fw - 2, fy, 2, fh);
+              }
+              cx += L;
+            }
+          }
+          if (kind === "coping" && !bump) {
+            /* the rounded front edge of the coping, polished by ropes and feet */
+            const g = x.createLinearGradient(0, 0, 0, 22);
+            g.addColorStop(0, "rgba(255,250,236,0.34)");
+            g.addColorStop(1, "rgba(255,250,236,0)");
+            x.fillStyle = g;
+            x.fillRect(0, 0, w, 22);
+          }
+          if (!bump) grain(x, w, h, 14);
+        },
+        repeat,
+        !bump,
+      );
+    });
+  },
   sand(repeat = [20, 20]) {
     return once("sand" + repeat, () =>
       cv(

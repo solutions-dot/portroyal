@@ -135,7 +135,7 @@ function ranges(Q, rows, dir, spread = 1.0, seed = 3) {
     }
 }
 
-/* ---------- 1. The deck of the schooner Ferret, off Jacmel, at dawn on 30 August 1799 ---------- */
+/* ---------- 1. The deck of the schooner Ferret, off Jacmel, at dawn, August 1799 ---------- */
 function deck() {
   /* her lines: about 61 feet on deck and 18 feet 8 inches in the beam, a size that fits "six 3-pounders and 45 men". No plan of her is known. */
   const F = S.lines({ L: 18.6, B: 5.7, fb: 1.5, bul: 0.85, stern: 0.72, bowAt: 0.56, bluff: 2.3 }),
@@ -534,9 +534,28 @@ function quay() {
   Q.view = { pos: [12, 2.6, 8.4], look: [-2, 3, -8] };
   /* the ground: a quay of cut stone, the trodden sand of the yard behind it */
   ground(Q, std(T.sand([60, 60])), 700, 0, 352.5);
-  strip(Q, 70, 9.5, std(T.stone([172, 164, 148], [24, 3]), 1), 0, 2.4, 0.012);
-  strip(Q, 70, 1.0, std(T.stone([142, 136, 124], [30, 1]), 1), 0, -1.9, 0.02);   /* the coping stones along the edge */
-  W.stoneBox(70, 2.4, 0.7, W.LIME_DARK, 0, -1.2, -2.35, Q.group);   /* the quay wall, down into the water */
+  /* dressed limestone flags in courses with mortar joints, flags about 0.6 to 1.1 m long and 0.6 m wide (a tile is 2.4 m square) */
+  const paved = (rgb, rep, kind, seed) =>
+    new THREE.MeshStandardMaterial({ map: T.setts(rgb, rep, kind, false, seed), bumpMap: T.setts(rgb, rep, kind, true, seed), bumpScale: 2.2, roughness: 0.92 });
+  strip(Q, 70, 9.5, paved([178, 170, 152], [70 / 2.4, 9.5 / 2.4], "flags", 7), 0, 2.4, 0.012);
+  /* the coping: long blocks, 1 m across, with a rounded arris at the water side, a lip standing proud of the wall face and a nosing */
+  strip(Q, 70, 1.0, paved([160, 154, 140], [70 / 4.8, 1], "coping", 11), 0, -1.9, 0.02);
+  const wallFace = paved([120, 116, 104], [70 / 2.6, 2.4 / 2.6], "ashlar", 5);
+  box(70, 2.4, 0.7, wallFace, 0, -1.2, -2.35, Q.group);   /* the quay wall of coursed ashlar, down into the water */
+  const copeFace = paved([150, 144, 130], [70 / 4.8, 1], "coping", 11);
+  for (const [x0, x1] of [[-35, -11.5], [-8.9, 35]]) {   /* broken at the landing steps */
+    const L = x1 - x0,
+      cx = (x0 + x1) / 2;
+    box(L, 0.3, 0.08, copeFace, cx, -0.16, -2.74, Q.group);
+    const nose = cyl(0.05, 0.05, L, copeFace, cx, -0.02, -2.73, Q.group, 8);
+    nose.rotation.z = Math.PI / 2;
+  }
+  /* iron mooring rings let into the wall under the coping, every few metres, each hanging from its staple */
+  for (const x of [-30, -22, -16, -4, 3.4 - 6, 9.5, 17, 24, 31]) {
+    box(0.1, 0.07, 0.08, S.SM.iron, x, -0.38, -2.82, Q.group);
+    const ring = mesh(new THREE.TorusGeometry(0.12, 0.022, 6, 18), S.SM.iron, x, -0.53, -2.84, Q.group);
+    ring.rotation.y = 0.25;
+  }
   const sea = createSea(Q.group, { kind: "caribbean", y: SEA, at: [0, -150], swell: 0.5 });
   Q.tickers.push((t) => sea.tick && sea.tick(t));
   Q.walls.push([-40, -4, 40, -1.85]);
