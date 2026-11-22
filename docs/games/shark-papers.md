@@ -4,6 +4,8 @@ An all-ages mystery (owner, 22 November 2026: it takes Tivoli's place in the Kid
 
 **Check at source before more is built on these.** The two best sources, Fitton's own account (United Service Journal, February 1835, p. 277) and Edgar K. Thompson, "Tale of the Nancy Brig" (Mariner's Mirror 56:1, 1970), were read only as quoted in a podcast transcript (https://poisonroom.com/transcripts/episode-6-the-shark-papers/). Frank Cundall's "Historic Jamaica" does not mention the story.
 
+**Status, 22 November 2026: a basic version is built and on the menu.** Four chapters in three places (the deck of the Ferret at sea, the quay at Port Royal, the court room in Kingston), eight bodies of its own (`tools/shark-papers/people`, `sp_`). `?auto=1` plays to the last step, `FLOW 0`, place audit 0 in all three places. Not yet done: cloth, walkers, skin, held and four-size layout checks, a hand play on a phone, timing, sound, a camera scene of the catch, and modelling the Ferret, the Sparrow and the court on sources (they are general pictures now: no cocked hats, no naval lace, a plain schooner deck).
+
 ## Timeline
 
 - 3 July 1799: the American brig Nancy, 125 tons, master Thomas Briggs, sails from Baltimore for Curacao.
@@ -32,7 +34,7 @@ An all-ages mystery (owner, 22 November 2026: it takes Tivoli's place in the Kid
 
 ## The papers
 
-Letters in French and German, receipts, bills and notary papers. One letter began: "My good friend Mr. Christopher Shultz, supercargo of the American brig Nancy, will hand you this". They showed the cargo belonged to Britain's enemies, not to neutral Americans. The papers Wylie had sealed were the false ones. They are now in the National Library of Jamaica, Kingston (MS 165, "Shark Papers"): https://nlj.gov.jm/exhibition/shark/
+Letters in French and German, receipts, bills and notary papers. One letter began: "My good friend Mr. Christopher Shultz, supercargo of the American brig Nancy, will hand you this". They showed the cargo belonged to Britain's enemies, not to neutral Americans. The papers Wylie had sealed were the false ones. They are now in the National Library of Jamaica, Kingston (MS 165, "Shark Papers"): https://nlj.gov.jm/exhibition/shark/ . They were in the court archives until 1890, were taken by a looter in the 1907 earthquake, and were returned (Gleaner).
 
 The jaws were sent in with the note "Lieut. Fitton recommends these jaws for a collar for neutrals to swear through". Where they are now could not be confirmed.
 

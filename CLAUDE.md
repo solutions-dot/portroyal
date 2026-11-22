@@ -13,6 +13,7 @@ All ten games are **live** (owner, 21 November 2026), so every change reaches re
 - **Hurricane Melissa** (`games/melissa/`) follows a made-up family through Hurricane Charlie (1951), Hurricane Gilbert (1988) and Hurricane Melissa (2025) in seven chapters. It is new and still uses stand-in bodies. Read `docs/games/melissa.md` first.
 - **The Emperor's Arrival, 1966** (`games/selassie/`) follows Ruth, a fictional Kingston girl, to Haile Selassie I's arrival at Palisadoes Airport on 21 April 1966, in six chapters. It is new and not yet reviewed. Read `docs/games/selassie.md` first: Haile Selassie I and Mortimo Planno have no invented words.
 - **The Mad Master of Edinburgh Castle, 1773** (`games/hutchinson/`) is a **Mature 13+** story: Lewis Hutchinson of St Ann, hanged at Spanish Town in 1773, told through a fictional enslaved boy, in six chapters. It is new and not yet reviewed. Read `docs/games/hutchinson.md` first: it keeps record and story apart, and Hutchinson has no words but his own couplet.
+- **The Shark Papers, 1799** (`games/shark-papers/`) is an all-ages mystery in a basic first version: the papers of the brig Nancy, found inside a shark and carried to the court in Kingston, seen by a fictional ship's boy. Read `docs/games/shark-papers.md` first: its two best sources were read second-hand and must be checked.
 - **The White Witch of Rose Hall** (`games/rose-hall/`) is a **Mature 13+** story in a basic first version: the ghost story of Annie Palmer told as a legend, then checked against the papers. Read `docs/games/rose-hall.md` first: the legend is never shown as fact, and real people appear only through quoted papers.
 - **Eventide Home** (`games/eventide/`) is an early game set at the Eventide Home in Kingston, 1980.
 - **Windrush: Two Places Called Home** (`games/windrush/`) follows a fictional family between Jamaica and England, 1948 to 2018, in eight chapters. Read `docs/games/windrush.md` first. It is new and awaits independent review.
@@ -44,6 +45,7 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 | Working on Windrush | `docs/games/windrush.md` |
 | Working on The Mad Master of Edinburgh Castle | `docs/games/hutchinson.md` |
 | Working on The White Witch of Rose Hall | `docs/games/rose-hall.md` |
+| Working on The Shark Papers | `docs/games/shark-papers.md` |
 | Working on the menu, the intro, or the platform name and idea | `docs/PLATFORM.md` |
 | Working on Hurricane Melissa | `docs/games/melissa.md` |
 | Working on Tivoli | `docs/games/tivoli.md` |

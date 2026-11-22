@@ -115,6 +115,18 @@ export function item(id) {
   if (id === "letter" || id === "warrant") return letter();
   if (id === "watch") return dynamic(watch(true));
   if (id === "lantern") return lantern();
+  if (id === "pork") {
+    const g = grp();
+    box(0.2, 0.12, 0.14, solid(0xb86a5a, 0.8), 0, 0.06, 0, g);
+    box(0.2, 0.03, 0.14, solid(0xe8d8c0, 0.8), 0, 0.135, 0, g);
+    return dynamic(g);
+  }
+  if (id === "bundle") {
+    const g = grp();
+    for (let i = 0; i < 4; i++) box(0.26 - i * 0.01, 0.012, 0.19, solid(0xd9cfae, 1), 0, 0.006 + i * 0.012, 0, g).rotation.y = i * 0.08;
+    box(0.012, 0.055, 0.2, solid(0x7a5a3c, 1), 0, 0.028, 0, g);
+    return dynamic(g);
+  }
   if (id === "stone") {
     const g = grp();
     mesh(new THREE.IcosahedronGeometry(0.11, 0), solid(0xa8a294, 1, 0, { flatShading: true }), 0, 0.08, 0, g).scale.y = 0.7;
