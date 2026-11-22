@@ -328,3 +328,7 @@ Every look is now a close-up moment (owner rule 13, `engine/lookshot.js` through
 - **Read the words**: the plaque's real words light line by line in the sun; the card is gone, the two lines say it.
 - Checks: `?test=audit` 0 in every chapter, with `engine/audit-reveal.js` on the radio's moving parts (in the full ward copy, which the look shows while it plays).
 Dev: `?look=<id>&at=<chapter>,<stage>&k=0.5` holds a look part way for a screenshot (docs/ENGINE.md, engine/lookkit.js).
+
+## Layout test 0 (22 November 2026)
+
+The six findings were the test: the quiz it opened for the timeline card stayed open and covered the journal and chapters panels opened after it. Its reset now closes the quiz (engine/quiz.js closeQuiz). `?test=layout`: 0 at 390x800 and 667x375.
