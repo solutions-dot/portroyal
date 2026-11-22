@@ -23,7 +23,8 @@
   "buckles": true,
   "bands": true,
   "hairvol": 0.4,
-  "hat": []
+  "hat": [],
+  "necktuck": true
  },
  "colors": {
   "Skin": [
