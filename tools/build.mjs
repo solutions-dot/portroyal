@@ -11,6 +11,8 @@ const game = process.argv[2], dev = process.argv.includes('--dev');
 if (!game || !existsSync(`games/${game}/src/main.js`)) { console.error('usage: node tools/build.mjs <game> [--dev]   (games: ' + readdirSync('games').join(', ') + ')'); process.exit(1); }
 const out = `games/${game}/site`; mkdirSync(`${out}/models`, { recursive: true });
 for (const f of readdirSync('shared/models')) cpSync(`shared/models/${f}`, `${out}/models/${f}`);
+/* shared textures a game asks for (games/<game>/shared-tex.json, e.g. ["tex_1700"]: Port Royal's building surfaces, engine/building-tex.js) */
+if (existsSync(`games/${game}/shared-tex.json`)) for (const n of JSON.parse(readFileSync(`games/${game}/shared-tex.json`, 'utf8'))) cpSync(`shared/textures/${n}.js`, `${out}/models/${n}.js`);
 if (existsSync(`games/${game}/anim-clips.json`)) {
   const { subsetAnims } = await import('./anim_subset.mjs'), r = await subsetAnims(`${out}/models/anims.js`, JSON.parse(readFileSync(`games/${game}/anim-clips.json`, 'utf8')));
   console.log(`anims.js for ${game}: ${r.kept} of ${r.of} clips, ${Math.round(r.before / 1024)} KB -> ${Math.round(r.after / 1024)} KB`);

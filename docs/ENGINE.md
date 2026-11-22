@@ -574,3 +574,14 @@ card(title, lines, [["Go on", async () => { await LS.back(); done(); }]]);
 - Pass `DIR.on || LS.on` to `renderFramed`, so a phone held upright gets the wider cinematic lens.
 
 **Used by:** The Mad Master of Edinburgh Castle (all eleven looks, 22 November 2026). **How to adopt it** (Windrush, Rose Hall and The Shark Papers still have the old `lookAt` copy, a reveal and a card after 900 ms): 1) make one `LS` with the adapter, call `LS.tick(dt)` before the camera code and skip that code when it returns true; 2) give each `LOOKS` entry a `view` (or use `frameOf`), a `sound` and one or two `say` lines, and take the words the picture now shows out of the card; 3) let each `Q.reveal[id]` take `k` and move the thing (a lid on its hinge, a cloth along its rail), not just show it; 4) in `lookAt`, `await LS.play(...)`, then the card, with `LS.back()` on its button; `LS.cancel()` in the step change. Check `?auto=1` still ends with `FLOW 0` and `?test=audit` (the reveal check) stays at 0.
+
+## Port Royal's building surfaces for any game (`engine/building-tex.js`, 22 November 2026)
+
+The owner asked that The Shark Papers' buildings match Port Royal's detail by borrowing its assets, not its town. `tools/subset_tex.py` copies the building surfaces out of Port Royal's town atlas (`games/port-royal/site/models/tex_town.js`: brick, plaster, cut stone, plank, clay tile and shingle, each with its normal map; brick made 512 pixels for phones) into `shared/textures/tex_1700.js`. A game that wants them lists `"tex_1700"` in `games/<game>/shared-tex.json`, and `tools/build.mjs` copies the file into that game's models (the copy is a built file, ignored by git).
+
+- `loadBuildingTex()` fetches the file; call it when a place is built. Safe to call more than once.
+- `buildingMat(kind, { tint, rough, side, repeat })` gives a material in that surface. It can be made before the file arrives; the pictures appear when it does.
+- `worldUV(geo, tile)` lays one repeat per `tile` metres on every face of a box, so long and short walls show bricks of one size (Port Royal uses 1.6 m for brick and 1.2 m for stone).
+- `roofUV(geo, tile)` lays tiles or shingles in level rows on a roof made in code (a hip roof from `hipRoof`).
+
+Port Royal still has its own `sharedTex`, `houseMat` and `worldUV` in `games/port-royal/src/main.js` (they read its glTF houses' materials); move it to this file the next time Port Royal's buildings are touched. Used by: The Shark Papers (the quay storehouses, the yard wall, the town houses behind it, the court room's walls and floor).

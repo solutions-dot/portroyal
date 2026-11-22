@@ -144,7 +144,6 @@ export function candle(lit = true) {
   f.position.y = 0.32;
   f.visible = lit;
   f.userData.noBatch = true;
-  f.userData.noAudit = true;
   g.add(f);
   g.userData.light = (on) => (f.visible = on);
   return g;
@@ -232,96 +231,5 @@ export function cockpitHill(r = 30, h = 26, seed = 1, base = [0.3, 0.4, 0.24]) {
   m.rotation.y = rr() * 3;
   m.name = "terrain";
   return m;
-}
-/* Edinburgh Castle as it stood: a small two-storey house of cut stone with a round, loopholed tower at two opposite corners.
-   The house is w by d, its long front facing +z; the towers stand at the front-left and back-right corners. userData:
-     walls      rectangles nobody walks through, in the castle's own coordinates
-     shutter    the upper window over the road (userData.swing(k) opens it)
-     watcher    a dark figure with a gun at that window (hidden until shown)
-     door       the front door group */
-export function castle({ w = 11, d = 7, h = 6.4, r = 2.05 } = {}) {
-  const g = grp(),
-    m = stoneMat(LIME, w / 1.4, h / 1.4);
-  /* the four walls, the front one with its door and windows */
-  wallRun(g, [-w / 2, d / 2, w / 2, d / 2], h, m, [{ at: w / 2, w: 1.15, h: 2.15 }, { at: w / 2 - 3, w: 0.8, h: 1.0, sill: 1.1 }, { at: w / 2 + 3, w: 0.8, h: 1.0, sill: 1.1 }, { at: w / 2 - 3, w: 0.8, h: 1.0, sill: 3.9 }, { at: w / 2 + 3, w: 0.8, h: 1.0, sill: 3.9 }], 0.6);
-  stoneBox(w, h, 0.6, LIME, 0, h / 2, -d / 2, g);
-  stoneBox(0.6, h, d, LIME, -w / 2, h / 2, 0, g);
-  stoneBox(0.6, h, d, LIME, w / 2, h / 2, 0, g);
-  box(w - 0.7, 0.2, d - 0.7, WM.dark, 0, 0.1, 0, g);   /* the dark inside, seen through the door and the windows */
-  box(w - 0.7, h - 0.3, 0.05, WM.dark, 0, h / 2, d / 2 - 0.34, g);
-  const roof = hipRoof(w, d, 2.0, 0.4);
-  roof.position.y = h;
-  g.add(roof);
-  /* the towers: front-left and back-right, a little taller than the eaves */
-  for (const [x, z, seed] of [[-w / 2, d / 2, 0.4], [w / 2, -d / 2, 1.3]]) {
-    const t = roundTower(r, h + 1.2, { seed });
-    t.position.set(x, 0, z);
-    g.add(t);
-  }
-  /* the front door: heavy boards, an iron ring, a stone step */
-  const door = makeDoor({ w: 1.15, h: 2.15, kind: "plank", color: 0x3b2a1e, frame: 0x5a5347, handle: "ring", recess: 0.3, step: 0.12 });
-  door.position.set(0, 0, d / 2 + 0.3);
-  g.add(door);
-  /* the windows: ground floor shut, the upper right one is where he watches the road */
-  const wins = [];
-  for (const [x, y] of [[-3, 1.6], [3, 1.6], [-3, 4.4], [3, 4.4]]) {
-    const sw = shutterWindow(0.8, 1.0, 0);
-    sw.position.set(x, y, d / 2 + 0.31);
-    sw.traverse((o) => (o.userData.noBatch = true));
-    g.add(sw);
-    wins.push(sw);
-  }
-  const watcher = grp(g, 3, 4.4, d / 2 + 0.1);
-  box(0.36, 0.5, 0.1, WM.dark, 0, -0.2, 0, watcher);   /* shoulders */
-  mesh(new THREE.SphereGeometry(0.13, 10, 8), WM.dark, 0, 0.18, 0, watcher);   /* head */
-  const barrel = cyl(0.014, 0.016, 0.9, WM.iron, 0.12, -0.05, 0.45, watcher, 6);
-  barrel.rotation.x = Math.PI / 2 - 0.12;
-  watcher.visible = false;
-  watcher.traverse((o) => {
-    o.userData.noBatch = true;
-    o.userData.noAudit = true;
-  });
-  g.userData = {
-    walls: [[-w / 2 - 0.3, -d / 2 - 0.3, w / 2 + 0.3, d / 2 + 0.3], [-w / 2 - r, d / 2 - r, -w / 2 + r, d / 2 + r], [w / 2 - r, -d / 2 - r, w / 2 + r, -d / 2 + r]],
-    shutter: wins[3],
-    watcher,
-    door,
-  };
-  return g;
-}
-/* a far, small copy of the castle for the horizon of another place: plain blocks, no detail */
-export function farCastle(s = 1) {
-  const g = grp(),
-    m = solid(0xb0a894, 1);
-  box(11 * s, 6.4 * s, 7 * s, m, 0, 3.2 * s, 0, g);
-  for (const [x, z] of [[-5.5, 3.5], [5.5, -3.5]]) {
-    cyl(2.05 * s, 2.1 * s, 7.6 * s, m, x * s, 3.8 * s, z * s, g, 12);
-    mesh(new THREE.ConeGeometry(2.3 * s, 1.7 * s, 12), solid(0x5d5347, 1), x * s, 8.45 * s, z * s, g);
-  }
-  const roof = hipRoof(11 * s, 7 * s, 2 * s, 0.4 * s);
-  roof.position.y = 6.4 * s;
-  g.add(roof);
-  return g;
-}
-/* a sinkhole: a rough ring of pale rock round a black shaft that goes down out of sight. R is the mouth's radius. */
-export function sinkhole(R = 5, seed = 2) {
-  const g = grp(),
-    r = rng(seed);
-  const shaft = mesh(new THREE.CylinderGeometry(R, R * 0.8, 40, 20, 1, true), new THREE.MeshBasicMaterial({ color: 0x0c0d0c, side: THREE.BackSide }), 0, -20, 0, g);
-  shaft.userData.noAudit = true;
-  const dark = mesh(new THREE.CircleGeometry(R * 0.86, 20), WM.dark, 0, -6, 0, g);
-  dark.rotation.x = -Math.PI / 2;
-  dark.userData.noAudit = true;
-  const lip = mesh(new THREE.RingGeometry(R, R + 1.6, 28), flat(0x8f897c), 0, 0.02, 0, g);
-  lip.rotation.x = -Math.PI / 2;
-  lip.name = "terrain";
-  for (let i = 0; i < 26; i++) {
-    const a = (i / 26) * Math.PI * 2 + r() * 0.1,
-      k = 0.5 + r() * 0.7,
-      o = mesh(new THREE.IcosahedronGeometry(k, 0), flat([0xa8a294, 0x8f897c, 0x77736a][(r() * 3) | 0]), Math.cos(a) * (R + 0.5 + r() * 0.5), k * 0.3, Math.sin(a) * (R + 0.5 + r() * 0.5), g);
-    o.scale.set(1.2, 0.6 + r() * 0.3, 1);
-    o.rotation.y = r() * 6;
-  }
-  return g;
 }
 export { makeDoor, cv, plane };

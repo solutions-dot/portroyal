@@ -13,26 +13,26 @@ export const GAME = {
   ],
 };
 export const CHAPTERS = [
-  { id: "jacmel", name: "Off Jacmel", year: "August 1799", first: 10, last: 18, place: "deck", caption: "The schooner Ferret · off Jacmel, August 1799", intro: "It is dawn on the schooner Ferret. There is no wind, and the sea is full of sharks." },
-  { id: "bundle", name: "What the shark held", year: "August 1799", first: 20, last: 26, place: "deck", caption: "The schooner Ferret · off Jacmel", intro: "The shark lies on the deck. Two of the men open it, to get the pork back." },
+  { id: "jacmel", name: "Off Jacmel", year: "August 1799", first: 8, last: 18, place: "deck", caption: "The schooner Ferret · off Jacmel, August 1799", intro: "It is dawn on the schooner Ferret. There is no wind, and the sea is full of sharks." },
+  { id: "bundle", name: "What the shark held", year: "August 1799", first: 20, last: 27, place: "deck", caption: "The schooner Ferret · off Jacmel", intro: "The shark lies on the deck. Two of the men open it, to get the pork back." },
   { id: "portroyal", name: "Port Royal", year: "September 1799", first: 30, last: 36, place: "quay", caption: "The dockyard, Port Royal, Jamaica · September 1799", intro: "The Ferret is home. The brig Nancy is here too, waiting for the court." },
-  { id: "court", name: "The court in Kingston", year: "Autumn 1799", first: 40, last: 46, place: "court", caption: "The Court of Vice-Admiralty · Kingston, 1799", intro: "Mr Fitton has carried the papers across the harbour to Kingston." },
+  { id: "court", name: "The court in Kingston", year: "Autumn 1799", first: 40, last: 48, place: "court", caption: "The Court of Vice-Admiralty · Kingston, 1799", intro: "Mr Fitton has carried the papers across the harbour to Kingston." },
 ];
 export const chapterOf = (stage) => Math.max(0, CHAPTERS.findIndex((c) => stage >= c.first && stage <= c.last));
 export const PEOPLE = { fitton: "Mr Fitton", wylie: "Mr Wylie", cato: "Mr Cato", ben: "Ben", clerk: "The clerk" };
 const L = (who, text) => ({ who, text });
 export const TALK = {
-  10: { cato: [L("Mr Cato", "Morning, Jem. Not a breath of wind today."), L("You", "Why are there so many sharks?"), L("Mr Cato", "A dead bullock is floating out there."), L("Mr Cato", "Sharks can smell a meal from far away."), L("Mr Cato", "Now, to work. A rope lies loose by the fore mast."), L("Mr Cato", "Coil it down. Then ring the bell.")] },
+  10: { cato: [L("Mr Cato", "Morning, Jem. Not a breath of wind today."), L("You", "Why are there so many sharks?"), L("Mr Cato", "A dead bullock is floating out there."), L("Mr Cato", "Sharks can smell a meal from far away."), L("Mr Cato", "Now, to work. Go and ring the ship's bell.")] },
   13: { fitton: [L("Mr Fitton", "Mr Wylie of the Sparrow is coming to breakfast."), L("Mr Fitton", "His boat has a long pull. So we shall fish."), L("You", "For a shark, sir?"), L("Mr Fitton", "For the biggest one. I tried beef. It would not bite."), L("Mr Fitton", "Take my glass first. Look at the Sparrow."), L("Mr Fitton", "Then fetch the salt pork, Jem. Sharks like pork.")] },
   20: { cato: [L("Mr Cato", "There he lies. The biggest shark I ever saw."), L("You", "Why did the men open him?"), L("Mr Cato", "To get the pork back. Good pork, that."), L("Mr Cato", "But they found something else in there."), L("Mr Cato", "Go and look, Jem.")] },
-  22: { fitton: [L("Mr Fitton", "A bundle of papers, tied round with string."), L("Mr Fitton", "Here is a letter from Curacao. It names a brig."), L("Mr Fitton", "The American brig Nancy."), L("You", "Who throws papers into the sea, sir?"), L("Mr Fitton", "Someone with something to hide."), L("Mr Fitton", "Lay them out to dry, Jem. One sheet at a time.")] },
-  25: { wylie: [L("Mr Wylie", "A long pull, Fitton! Is breakfast ready?"), L("Mr Fitton", "What luck have you had, Wylie?"), L("Mr Wylie", "I have stopped an American brig."), L("Mr Fitton", "Was she named Nancy?"), L("Mr Wylie", "She was! How do you know that?")] },
-  26: { fitton: [L("Mr Fitton", "“The shark you see lying there has brought me full information of your brig.”"), L("You", "Her papers are drying on the hatch, sir."), L("Mr Wylie", "“There’s a lie somewhere, Fitton, not far off, for I sealed all her papers up.”"), L("Mr Fitton", "You sealed up her false papers, Wylie."), L("Mr Fitton", "These are her true ones. The shark brought them."), L("Mr Wylie", "“Breakfast, ho!”"), L("You", "He does not believe us!"), L("Mr Fitton", "He will, Jem. The court will read them.")] },
+  22: { fitton: [L("Mr Fitton", "A bundle of papers, tied round with string."), L("Mr Fitton", "Here is a letter from Curacao. It names a brig."), L("Mr Fitton", "The American brig Nancy."), L("You", "Who throws papers into the sea, sir?"), L("Mr Fitton", "Someone with something to hide."), L("Mr Fitton", "The men are laying them out to dry."), L("Mr Fitton", "Take the letter to the hatch, Jem.")] },
+  26: { wylie: [L("Mr Wylie", "A long pull, Fitton! Is breakfast ready?"), L("Mr Fitton", "What luck have you had, Wylie?"), L("Mr Wylie", "I have stopped an American brig."), L("Mr Fitton", "Was she named Nancy?"), L("Mr Wylie", "She was! How do you know that?")] },
+  27: { fitton: [L("Mr Fitton", "“The shark you see lying there has brought me full information of your brig.”"), L("You", "Her papers are drying on the hatch, sir."), L("Mr Wylie", "“There’s a lie somewhere, Fitton, not far off, for I sealed all her papers up.”"), L("Mr Fitton", "You sealed up her false papers, Wylie."), L("Mr Fitton", "These are her true ones. The shark brought them."), L("Mr Wylie", "“Breakfast, ho!”"), L("You", "He does not believe us!"), L("Mr Fitton", "He will, Jem. The court will read them.")] },
   30: { ben: [L("Ben", "Mind the rope, young one. You off the Ferret?"), L("You", "Yes. I am Jem. Do you work on the ships?"), L("Ben", "I load them. A man says he owns me."), L("Ben", "He hires me out and keeps the pay."), L("Ben", "Most hands on this quay are Black. Free or not."), L("You", "What is that great ship out there?"), L("Ben", "The guard ship. Go to the edge and look.")] },
   34: { ben: [L("You", "Ben, what is a prize?"), L("Ben", "A ship taken in war. Britain is at war with France."), L("Ben", "With Spain and the Dutch too. Americans are not in it."), L("Ben", "So an American ship may pass. Unless she carries enemy goods."), L("You", "And who decides?"), L("Ben", "A court. In Kingston, across the harbour.")] },
   35: { fitton: [L("Mr Fitton", "There you are, Jem. You have seen the Nancy?"), L("You", "Yes, sir. Her hatch is sealed."), L("Mr Fitton", "Her master swears she is American. We know better."), L("Mr Fitton", "The shark's papers must go to the court."), L("Mr Fitton", "A boat waits at the steps. Carry my box down.")] },
   40: { clerk: [L("The clerk", "Quiet, boy. This is the Court of Vice-Admiralty."), L("You", "Is the captain on trial?"), L("The clerk", "No. The ship is. Is she a lawful prize, or not?"), L("The clerk", "Her master swore she is American and neutral."), L("The clerk", "Bring the shark's papers to the table."), L("The clerk", "Then read both sets.")] },
-  44: { fitton: [L("Mr Fitton", "The court has decided. She is a lawful prize."), L("You", "Because of our shark."), L("Mr Fitton", "Because someone lied, and the sea gave it back."), L("You", "What happens to the Nancy now, sir?"), L("Mr Fitton", "She and her cargo will be sold."), L("Mr Fitton", "Mr Wylie and the Sparrow's men share the money."), L("Mr Fitton", "Well done, Jem. You dried those papers well.")] },
+  46: { fitton: [L("Mr Fitton", "The court has decided. She is a lawful prize."), L("You", "Because of our shark."), L("Mr Fitton", "Because someone lied, and the sea gave it back."), L("You", "What happens to the Nancy now, sir?"), L("Mr Fitton", "She and her cargo will be sold."), L("Mr Fitton", "Mr Wylie and the Sparrow's men share the money."), L("Mr Fitton", "Well done, Jem. You dried those papers well.")] },
 };
 export const FLAVOUR = {
   cato: ["Keep one hand for the ship, Jem.", "A tidy deck is a safe deck."],
@@ -66,10 +66,25 @@ export const JOURNAL = [
   { id: "today", title: "The Shark Papers today", simple: ["You can still see the papers in Kingston.", "They were stolen in the 1907 earthquake, and given back."], deeper: ["They are in the National Library of Jamaica, numbered MS 165.", "Some retellings put the court in Spanish Town or Port Royal. It was in Kingston."], source: "nlj" },
 ];
 export const CARDS = {
+  dawn: { title: "Dawn off Jacmel", lines: ["The Ferret lies still on a flat sea, with no wind at all.", "Far off, sharks are feeding on a dead bullock."], scary: false },
   catch: { title: "The catch", lines: ["Mr Fitton hooks the biggest shark, and all hands haul it on board.", "Nobody is hurt."], scary: false },
+  alongside: { title: "A boat in the calm", lines: ["The papers dry on the hatch.", "Mr Wylie's boat rows across the flat sea to breakfast."], scary: false },
+  verdict: { title: "The court decides", lines: ["The court in Kingston decides about the brig Nancy.", "Mr Fitton's shark jaws stand by the wall."], scary: false },
   end: { title: "The Shark Papers", lines: ["A ship's master threw his papers into the sea.", "A shark swallowed them. A sailor caught the shark.", "The papers reached the court, and the truth came out.", "You can still see them in Kingston today."] },
 };
 export const FILMS = {
+  /* Fitton's own account (1835): off Jacmel at dawn, the Sparrow "about six miles in shore", asked to breakfast by signal; a dead bullock
+     "floating at some distance, which the sharks were tearing". */
+  dawn: {
+    place: "deck", next: 10, journal: "you", title: "Dawn off Jacmel",
+    read: ["At dawn the Ferret lay still off Jacmel, on the south side of Saint-Domingue. There was no wind at all.", "Far off, sharks were feeding on a dead bullock. The cutter Sparrow lay about six miles in shore, and Mr Fitton asked Mr Wylie to breakfast by signal."],
+    captions: [[0, "Dawn, off Jacmel, August 1799."], [6, "The schooner Ferret lies still. Her sails hang empty."], [12.5, "Far off, something floats on the sea."], [17, "A dead bullock. Sharks are feeding on it."], [23, "About six miles in shore lies the cutter Sparrow."], [29, "Mr Fitton signals to her: come to breakfast!"]],
+    shots: [{ t: 0, p: [-30, 2.0, -24], look: [0, 3.2, 0] }, { t: 7, p: [-24, 3.0, 13], look: [0, 4, 0] }, { t: 13, p: [-14, 2.6, 22], look: [-46, -1.0, 44] }, { t: 18, p: [-33, 1.0, 32.5], look: [-46, -1.4, 44] }, { t: 21.5, p: [-35, 0.9, 34], look: [-46, -1.4, 44] }, { t: 25, p: [7.5, 3.6, 12.5], look: [205, 1.5, -46] }, { t: 28.5, p: [7.0, 3.5, 12.0], look: [205, 1.5, -46] }, { t: 31, p: [2.0, 2.1, 6.0], look: [0.9, 1.45, 8.35] }, { t: 34, p: [1.8, 2.0, 6.3], look: [0.9, 1.45, 8.35] }],
+    fov: [[0, 44], [7, 46], [13, 36], [18, 40], [21.5, 38], [24, 22], [25, 16], [28.5, 16], [31, 50], [34, 48]],
+    acts: [[28.5, "fitton", "Point"], [31.5, "fitton", "IdleM"]],
+    sounds: [[0.3, "begin"], [3, "creak"], [9, "gull"], [16, "splash"], [21, "gull"], [27, "creak"]],
+    duration: 34,
+  },
   catch: {
     place: "deck", next: 20, journal: "shark", title: "The catch",
     read: ["The biggest shark took the pork. Mr Fitton let it run on sixty fathoms of line until it was tired.", "Then all hands hauled together, and the shark was hoisted over the side and on to the deck."],
@@ -79,6 +94,30 @@ export const FILMS = {
     acts: [],
     sounds: [[0.5, "begin"], [5, "drum"], [13.6, "drum"], [20.3, "drum"]],
     duration: 26,
+  },
+  /* Fitton (1835): the papers dried on deck; the masthead's call "There's nothing in sight, Sir, but the Sparrow cutter in shore, and her
+     boat pulling on board"; Wylie's "devil of a long pull" with "not a breath of air out of the heavens". */
+  alongside: {
+    place: "deck", next: 26, journal: "breakfast", title: "A boat in the calm",
+    read: ["The papers from the shark lay drying on the hatch. The man at the masthead saw the Sparrow's boat pulling across.", "There was no wind, so Mr Wylie's men rowed all the way, and at last the boat came alongside for breakfast."],
+    captions: [[0, "The papers lie drying on the hatch, one by one."], [5, "Not a breath of wind. The sea is flat."], [9.5, "The lookout at the masthead calls down."], [12.5, "“...the Sparrow cutter in shore, and her boat pulling on board.”"], [18, "Mr Wylie's men row on and on."], [24, "Breakfast waits below. The papers dry in the sun."], [29, "The boat is alongside. What a long pull!"]],
+    shots: [{ t: 0, p: [1.5, 1.85, 2.5], look: [0, 0.45, 1.1] }, { t: 4.5, p: [1.6, 1.9, 2.4], look: [0.1, 0.45, 1.1] }, { t: 9, p: [2.0, 2.3, 1.4], look: [12, 0.2, -1.4] }, { t: 14, p: [2.1, 2.5, 0.9], look: [33.5, -1.2, -3.1] }, { t: 20, p: [2.1, 2.6, 0.9], look: [19.1, -1.2, 0.15] }, { t: 25, p: [1.5, 1.9, 2.5], look: [0, 0.45, 1.1] }, { t: 29.5, p: [8, 2.8, 7.5], look: [3.0, -0.2, 2.0] }, { t: 34, p: [8.6, 2.6, 8.2], look: [3.2, -0.3, 2.2] }],
+    fov: [[0, 46], [4.5, 46], [9, 40], [14, 22], [20, 34], [25, 46], [29.5, 46], [34, 44]],
+    acts: [],
+    sounds: [[0.4, "begin"], [4, "creak"], [10, "gull"], [14, "oars"], [17, "oars"], [20, "oars"], [23, "oars"], [27, "creak"]],
+    duration: 34,
+  },
+  /* condemned on 25 November 1799 (Stark; one source says 28 November). No source names the judge: his chair stays empty. The note on the
+     jaws is Fitton's own words (1835). */
+  verdict: {
+    place: "court", next: 46, journal: "jaws", title: "The court decides",
+    read: ["The court read both sets of papers. The papers from the shark showed that the cargo belonged to Britain's enemies.", "In November 1799 the Nancy and her cargo were judged a lawful prize. Mr Fitton's shark jaws were kept in the court, with his note."],
+    captions: [[0, "The Court of Vice-Admiralty, Kingston. November 1799."], [5.5, "Both sets of papers lie on the green table."], [10.5, "The papers from the shark tell the truth."], [16, "The clerk reads out what the court has decided."], [21, "The Nancy and her cargo are a lawful prize."], [26, "Nobody wrote down the judge's name."], [30, "Mr Fitton's shark jaws stand by the wall."], [34, "“Lieut. Fitton recommends these jaws for a collar for neutrals to swear through.”"]],
+    shots: [{ t: 0, p: [0, 2.7, 4.0], look: [0, 1.9, -3.3] }, { t: 6, p: [0.3, 2.0, 2.3], look: [0, 0.9, 0] }, { t: 11, p: [1.0, 1.35, 1.25], look: [0.3, 0.83, 0.1] }, { t: 15.5, p: [-1.4, 1.7, 1.2], look: [-3.6, 1.45, -0.5] }, { t: 21, p: [-1.8, 1.65, 0.9], look: [-3.6, 1.45, -0.5] }, { t: 25, p: [0.25, 2.5, -0.4], look: [0, 2.2, -4.4] }, { t: 30.5, p: [-3.4, 1.65, 1.35], look: [-5.85, 1.3, 1.0] }, { t: 38, p: [-4.4, 1.5, 1.15], look: [-5.85, 1.25, 1.0] }],
+    fov: [[0, 46], [6, 44], [11, 38], [15.5, 42], [21, 40], [25, 46], [30.5, 40], [38, 36]],
+    acts: [[16.5, "clerk", "TalkM1"], [21.5, "fitton", "Nod"], [24, "clerk", "IdleM"]],
+    sounds: [[0.4, "bell"], [11, "page"], [21.5, "begin"], [30, "page"]],
+    duration: 40,
   },
 };
 export const QUIZ = {

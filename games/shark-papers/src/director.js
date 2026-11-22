@@ -5,7 +5,7 @@ import { showCinematicSkip } from "../../../engine/cine.js";
    the road, a shutter that opens, a lamp that goes out) and once with t = -1 when the film stops, to put the place back as play expects it.
    People can be given a clip at a time. Pause, sound and read instead stay available throughout. */
 import * as THREE from "three";
-import { AU, chan, setG, tone, cue, noiseHit, crackle } from "../../../engine/audio.js";
+import { AU, chan, setG, tone, cue, noiseHit, crackle, shipCreak, gullCry, uiSound } from "../../../engine/audio.js";
 import { $ } from "./ui.js";
 import { FILMS } from "./content.js";
 const ease = (k) => k * k * (3 - 2 * k);
@@ -133,7 +133,15 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
             tone(784, 780, 1.6, "sine", 0.02, 0);
           } else if (what === "drum") {
             noiseHit(90, 0.9, 0.5, 0.35, 0, 0);
-          } else if (what === "fire") crackle();
+          } else if (what === "creak") shipCreak();
+          else if (what === "gull") gullCry();
+          else if (what === "page") uiSound("page");
+          else if (what === "oars") {
+            /* a stroke: the blades bite, then the drip */
+            noiseHit(700, 1.2, 0.35, 0.12, 0.4, 0);
+            noiseHit(1800, 2, 0.2, 0.05, 0.4, 0.35);
+          } else if (what === "splash") noiseHit(900, 0.8, 0.6, 0.12, -0.5, 0);
+          else if (what === "fire") crackle();
           else cue(what);
         }
     } else if (rumble) setG(rumble, 0, 0.1);

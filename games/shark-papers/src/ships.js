@@ -923,7 +923,6 @@ export function fin(s = 1) {
   const o = new THREE.Mesh(new THREE.ShapeGeometry(sh, 5), solid(0x4c565e, 0.5, 0, DS));
   o.scale.setScalar(s);
   o.userData.noBatch = true;
-  o.userData.noAudit = true;
   o.userData.water = true;
   return o;
 }

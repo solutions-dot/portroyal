@@ -13,6 +13,7 @@ import { TASKS } from "./steps.js";
 import { createSea, gulls } from "../../../engine/sea.js";
 import { rowBoat, rowStroke } from "../../../engine/boats.js";
 import { AU, tone, noiseHit, shipCreak, gullCry } from "../../../engine/audio.js";
+import { loadBuildingTex, buildingMat, worldUV, roofUV } from "../../../engine/building-tex.js";
 
 const base = (id, bounds, start) => ({
   id,
@@ -80,6 +81,30 @@ const far = (o) => {
   return o;
 };
 const sounds = () => AU.ctx && AU.on && AU.ctx.state === "running";
+/* a camera scene's hold on some people: while it runs they leave their everyday life (stage(t, people) moves them); when it stops
+   (t = -1) each goes back where they stood, facing as they faced */
+function filmHold(Q, ids, stage = () => {}) {
+  let homes = null;
+  return (t) => {
+    const ns = ids.map((id) => Q.people.find((p) => p.id === id)).filter(Boolean);
+    if (t < 0) {
+      if (homes)
+        ns.forEach((n, i) => {
+          n.m.position.set(homes[i][0], 0, homes[i][1]);
+          n.m.rotation.set(0, homes[i][2], 0);
+          Q.storyLife.hold(n, false);
+          n.ctl.rest?.();
+        });
+      homes = null;
+      return;
+    }
+    if (!homes) {
+      homes = ns.map((n) => [n.m.position.x, n.m.position.z, n.m.rotation.y]);
+      ns.forEach((n) => Q.storyLife.hold(n, true));
+    }
+    stage(t, ns);
+  };
+}
 /* put a story person somewhere else for a step (Q.enter): where they stand, and what they look toward */
 function stand(Q, id, x, z, tx, tz) {
   const n = Q.people?.find((p) => p.id === id);
@@ -106,7 +131,6 @@ function stretch(o, a, b) {
 const unitRope = (r = 0.014, m = S.SM.hemp) => {
   const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 5, 1, true), m);
   o.userData.noBatch = true;
-  o.userData.noAudit = true;
   return o;
 };
 const PLANK = () => std(T.plank([156, 126, 90], 10, [1, 1]), 0.9);
@@ -311,17 +335,13 @@ function deck() {
   Q.group.add(sparrow);
   const gig = rowBoat({ L: 5.4, beam: 1.6, depth: 0.62, wood: BOATW(), timber: BOATT(), oars: "rowing", rudder: true, gear: false });
   dyn(gig);
-  gig.traverse((o) => (o.userData.noAudit = true));
   /* her crew, seen far off: four at the oars and Mr Wylie in the stern. Plain shapes; they are hidden when the boat is near. */
   const crew = grp(gig);
   for (const [x, c] of [[-1.5, 0x26345a], [-0.5, 0xb8a888], [0.3, 0x9a4a3c], [1.1, 0xb8a888], [1.7, 0x5a6a80]]) {
     box(0.4, 0.5, 0.28, solid(c, 1), x, 0.82, 0, crew);
     mesh(new THREE.SphereGeometry(0.11, 8, 6), solid(x < -1 ? 0x18181a : 0xa87856, 1), x, 1.2, 0, crew);
   }
-  crew.traverse((o) => {
-    o.userData.noBatch = true;
-    o.userData.noAudit = true;
-  });
+  crew.traverse((o) => (o.userData.noBatch = true));
   Q.group.add(gig);
   const GIG = { p: 0.12, max: 0.3, from: [196, -40], to: [half(2.2) + 1.25, 2.2] };
   const placeGig = (t) => {
@@ -336,6 +356,7 @@ function deck() {
     else rowStroke(gig, 0, false);
   };
   Q.tickers.push((t, dt) => {
+    if (GIG.film) return;   /* the camera scene "alongside" moves her itself */
     if (GIG.p < GIG.max) GIG.p = Math.min(GIG.max, GIG.p + dt * 0.004);
     placeGig(t);
   });
@@ -348,10 +369,7 @@ function deck() {
   const bull = S.bullock();
   bull.position.set(-46, SEA + 0.05, 44);
   bull.rotation.y = 0.6;
-  bull.traverse((o) => {
-    o.userData.noBatch = true;
-    o.userData.noAudit = true;
-  });
+  bull.traverse((o) => (o.userData.noBatch = true));
   Q.group.add(bull);
   const fins = [];
   for (let i = 0; i < 9; i++) {
@@ -425,7 +443,7 @@ function deck() {
     const pork = Q.items.pork;
     if (pork && pork.parent === Q.group && stage > 15) pork.visible = false;
     GIG.max = stage < 14 ? 0.3 : stage < 20 ? 0.5 : 0.86;
-    GIG.p = stage < 14 ? 0.14 : stage < 20 ? Math.max(0.3, Math.min(GIG.p, 0.5)) : stage < 25 ? Math.max(0.6, Math.min(GIG.p, 0.86)) : 1;
+    GIG.p = stage < 14 ? 0.14 : stage < 20 ? Math.max(0.3, Math.min(GIG.p, 0.5)) : stage < 24 ? Math.max(0.6, Math.min(GIG.p, 0.86)) : 1;
     /* where the people are in each part of the morning */
     if (stage < 20) {
       stand(Q, "fitton", 0.9, 8.35, 0.4, 4);
@@ -511,6 +529,31 @@ function deck() {
     if (film.rope2.visible) stretch(film.rope2, [-1.3, 1.02, 3.6], t < 13.5 ? CLEAT : rail);
   };
 
+  /* ---- dawn, as a camera scene: the ship becalmed, the sharks at the bullock, the Sparrow in shore; Mr Fitton points to her at the end ---- */
+  const toward = (n, x, z) => n && n.m.rotation.set(0, face(n.x, n.z, x, z), 0);
+  Q.films.dawn = filmHold(Q, ["fitton"], (t, [fitton]) => {
+    if (t >= 27.5) toward(fitton, 205, -46);
+  });
+  /* ---- the boat in the calm, as a camera scene: the Sparrow's boat pulls across and comes in under the starboard side ---- */
+  Q.films.alongside = (t) => {
+    if (t < 0) {
+      GIG.film = false;
+      GIG.p = 1;
+      placeGig(0);
+      return;
+    }
+    GIG.film = true;
+    const row = sm(t / 24),
+      k = 0.72 + 0.25 * row,
+      ax = GIG.from[0] + (GIG.to[0] + 6 - GIG.from[0]) * k,
+      az = GIG.from[1] + (GIG.to[1] - GIG.from[1]) * k,
+      heading = Math.atan2(-(GIG.to[1] - GIG.from[1]), GIG.to[0] - GIG.from[0]) + Math.PI,
+      last = sm((t - 24) / 5);   /* the last few strokes, while the camera is on the papers: she turns and lays herself along the side */
+    gig.position.set(ax + (GIG.to[0] - ax) * last, SEA - 0.16 + Math.sin(t * 1.1) * 0.03, az + (GIG.to[1] - az) * last);
+    gig.rotation.y = heading + (Math.PI / 2 - heading) * last;
+    crew.visible = t < 24;   /* the plain far-off rowers: seen only from afar */
+    rowStroke(gig, t * 2.4, t < 29);
+  };
   /* ---- people: each with something to do ---- */
   person(Q, "cato", "cato", -1.5, 1.6, face(-1.5, 1.6, 1.6, 3.6), { kind: "watch", at: [-40, 40], idles: ["IdleM"], react: ["HeadTurn", "Point", "LookAround"], every: [5, 9] });
   person(Q, "fitton", "fitton", 0.9, 8.35, face(0.9, 8.35, 0.4, 4), { kind: "watch", at: [-20, 30], idles: ["IdleM"], react: ["HeadTurn", "LookAround"], every: [6, 10] }, { hat: "cocked" });
@@ -619,8 +662,7 @@ function quay() {
   cyl(0.11, 0.11, 0.03, solid(0x9a1f1a, 0.5), 0, hy + 0.1, hz, sealG, 12);
   box(0.34, 0.012, 0.24, solid(0xe8ddc4, 1), 0, hy + 0.075, hz + 0.3, sealG);
   Q.group.add(sealG);
-  const cover = dyn(box(2.5, 0.05, 2.3, solid(0x8f8468, 1), 0, hy + 0.13, hz, Q.group));
-  cover.userData.noAudit = true;
+  const cover = dyn(box(2.5, 0.05, 2.3, solid(0x8f8468, 1), 0, hy + 0.072, hz, Q.group));   /* lying on the hatch battens */
   Q.reveal.hatch = (seen) => {
     cover.visible = !seen;
     sealG.visible = seen;
@@ -632,16 +674,18 @@ function quay() {
   ab.rotation.y = 1.15;
   Q.group.add(ab);
   /* she makes a signal when you look at her: a hoist of flags runs up (plain colours; no real signal is copied) */
-  const hoist = dyn(grp());
-  for (const [i, c] of [0xc8342c, 0xf0ead8, 0x2a4a8a, 0xe8c040].entries()) box(2.2, 1.5, 0.06, solid(c, 1, 0, { side: THREE.DoubleSide }), 0, -i * 1.7, 0, hoist);
-  hoist.traverse((o) => {
-    o.userData.noAudit = true;
-    o.userData.far = true;
-  });
-  hoist.position.set(-92, SEA + 6.2 + 33, -150);
-  hoist.rotation.y = 1.15;
+  /* the flags hang on a halyard from the starboard arm of her main topgallant yard (the yard's place as twoDecker builds it) */
+  const hoist = dyn(grp()),
+    AF = ab.userData.F,
+    mz = AF.z(0.46),
+    yardY = AF.sheer(AF.s(mz)) + 27.5,
+    yardZ = mz - 0.46 * 2.9 - 0.14;
+  for (const [i, c] of [0xc8342c, 0xf0ead8, 0x2a4a8a, 0xe8c040].entries()) box(0.06, 1.5, 2.2, solid(c, 1, 0, { side: THREE.DoubleSide }), 0, -0.9 - i * 1.6, 1.15, hoist);
+  cyl(0.04, 0.04, 6.6, S.SM.hemp, 0, -3.43, 0.02, hoist, 5);   /* the halyard, from just under the yard down the flags' edge */
+  hoist.traverse((o) => (o.userData.far = true));
+  hoist.position.set(8.2, yardY - 0.005, yardZ);
   hoist.visible = false;
-  Q.group.add(hoist);
+  ab.add(hoist);
   Q.reveal.abergavenny = (seen) => (hoist.visible = seen);
   /* a sheer hulk further up the harbour, and small craft: a wherry under way and a boat at the steps */
   const hulk = far(S.sheerHulk());
@@ -650,7 +694,6 @@ function quay() {
   Q.group.add(hulk);
   const wherry = rowBoat({ L: 5.6, beam: 1.6, depth: 0.6, wood: BOATW(), timber: BOATT(), oars: "rowing", gear: false });
   dyn(wherry);
-  wherry.traverse((o) => (o.userData.noAudit = true));
   Q.group.add(wherry);
   Q.tickers.push((t) => {
     const a = t * 0.02;
@@ -673,19 +716,52 @@ function quay() {
     Math.random() < 0.55 ? gullCry() : noiseHit(700 + Math.random() * 300, 5, 0.1, 0.05, Math.random() - 0.5);
   });
   /* ---- the dockyard behind the quay ---- */
-  const BRICK = std(T.stone([162, 96, 70], [9, 3]), 1),
-    BRICK2 = std(T.stone([172, 150, 118], [7, 3]), 1);
+  /* Brick and timber of the 1700s, in Port Royal's own surfaces (engine/building-tex.js: its brick, cut stone, plank and clay tile).
+     The town was rebuilt after 1692; the dockyard's buildings here are a general picture of brick storehouses of the time. */
+  loadBuildingTex();
+  const BRICK = buildingMat("brick"),
+    BRICK2 = buildingMat("brick", { tint: 0xe8d2bc }),   /* an older, weathered brick */
+    STONE = buildingMat("stone", { tint: 0xf2ece0 }),
+    PLANKS = buildingMat("wood", { tint: 0x8a6a4c }),
+    TILES = buildingMat("clay", { side: THREE.DoubleSide }),
+    SHINGLES = buildingMat("shingle", { side: THREE.DoubleSide }),
+    PLASTER = (tint) => buildingMat("plaster", { tint });
+  const dress = (geo, tile) => worldUV(geo, tile);
+  /* a hip roof in tiles or shingles: W.hipRoof's shape with the surface laid in rows */
+  const roof = (w, d, rise, over, mat) => {
+    const rf = W.hipRoof(w, d, rise, over);
+    rf.traverse((o) => {
+      if (!o.isMesh) return;
+      o.geometry = roofUV(o.geometry);
+      o.material = mat;
+    });
+    return rf;
+  };
   const store = (w, d, h, mat, doors) => {
     const g = grp();
-    box(w, h, d, mat, 0, h / 2, 0, g);
-    box(w + 0.3, 0.3, d + 0.3, solid(0xcfc6ac, 1), 0, 0.15, 0, g);
-    const rf = W.hipRoof(w, d, 2.3, 0.5);
+    mesh(dress(new THREE.BoxGeometry(w, h, d), 1.6), mat, 0, h / 2, 0, g);
+    mesh(dress(new THREE.BoxGeometry(w + 0.14, 0.45, d + 0.14), 1.2), STONE, 0, 0.225, 0, g);   /* a cut-stone plinth */
+    mesh(dress(new THREE.BoxGeometry(w + 0.22, 0.2, d + 0.22), 1.2), STONE, 0, h - 0.06, 0, g);   /* and a stone cornice under the eaves */
+    /* stone quoins at the corners, long and short in turn */
+    for (const sx of [-1, 1])
+      for (const sz of [-1, 1])
+        for (let y = 0.45, k = 0; y < h - 0.5; y += 0.42, k++) {
+          const lng = k % 2 ? 0.34 : 0.6;
+          mesh(dress(new THREE.BoxGeometry(lng, 0.38, 0.05), 1.2), STONE, sx * (w / 2 - lng / 2 + 0.02), y + 0.19, sz * (d / 2 + 0.02), g);
+          mesh(dress(new THREE.BoxGeometry(0.05, 0.38, k % 2 ? 0.6 : 0.34), 1.2), STONE, sx * (w / 2 + 0.02), y + 0.19, sz * (d / 2 - (k % 2 ? 0.3 : 0.17) + 0.02), g);
+        }
+    const rf = roof(w, d, 2.3, 0.5, TILES);
     rf.position.y = h;
     g.add(rf);
     for (const x of doors) {
-      box(2.0, 2.7, 0.08, S.SM.woodDark, x, 1.35, -d / 2 - 0.03, g);
-      mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.08, 14, 1, false, 0, Math.PI), S.SM.woodDark, x, 2.7, -d / 2 - 0.03, g).rotation.set(Math.PI / 2, 0, Math.PI / 2);
+      /* a pair of plank doors under a round brick arch, on a stone threshold, hung on iron straps */
+      mesh(dress(new THREE.BoxGeometry(2.0, 2.7, 0.08), 0.9), PLANKS, x, 1.35, -d / 2 - 0.03, g);
+      mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.08, 14, 1, false, 0, Math.PI), PLANKS, x, 2.7, -d / 2 - 0.03, g).rotation.set(Math.PI / 2, 0, Math.PI / 2);
+      const arch = mesh(new THREE.TorusGeometry(1.1, 0.12, 6, 16, Math.PI), STONE, x, 2.7, -d / 2 - 0.06, g);
+      arch.scale.z = 0.5;
+      box(2.4, 0.1, 0.4, STONE, x, 0.05, -d / 2 - 0.2, g);
       box(0.06, 2.7, 0.1, S.SM.iron, x, 1.35, -d / 2 - 0.05, g);
+      for (const y of [0.6, 2.0]) for (const s of [-1, 1]) box(0.7, 0.05, 0.02, S.SM.iron, x + s * 0.6, y, -d / 2 - 0.08, g);
     }
     for (let x = -w / 2 + 2; x < w / 2 - 1; x += 4) {
       if (doors.some((dx) => Math.abs(dx - x) < 1.6)) continue;
@@ -693,6 +769,8 @@ function quay() {
       sw.position.set(x, h - 1.5, -d / 2 - 0.02);
       sw.rotation.y = Math.PI;
       g.add(sw);
+      box(1.2, 0.08, 0.16, STONE, x, h - 2.14, -d / 2 - 0.08, g);   /* a stone sill */
+      box(1.2, 0.16, 0.06, STONE, x, h - 0.82, -d / 2 - 0.03, g);   /* and a flat lintel */
     }
     return g;
   };
@@ -700,12 +778,15 @@ function quay() {
   add(Q, store(12, 7, 4.6, BRICK2, [-2.5, 2.5]), 17.5, 15.6);
   add(Q, store(10, 7, 5.2, BRICK2, [0]), -22.5, 15.4);
   Q.walls.push([-40, 11.2, 40, 22]);
-  /* the yard wall beyond, a gate, palms and the roofs of the town behind it */
-  W.stoneBox(90, 2.6, 0.5, W.LIME, 0, 1.3, 23, Q.group);
+  /* the yard wall beyond, of brick on a stone footing with a stone coping, a gate, palms and the roofs of the town behind it */
+  mesh(dress(new THREE.BoxGeometry(90, 2.3, 0.5), 1.6), BRICK2, 0, 1.45, 23, Q.group);
+  mesh(dress(new THREE.BoxGeometry(90.2, 0.3, 0.62), 1.2), STONE, 0, 0.15, 23, Q.group);
+  mesh(dress(new THREE.BoxGeometry(90.2, 0.16, 0.66), 1.2), STONE, 0, 2.68, 23, Q.group);
+  for (let x = -44; x <= 44; x += 8) mesh(dress(new THREE.BoxGeometry(0.7, 2.6, 0.7), 1.6), BRICK2, x, 1.3, 23, Q.group);   /* piers along it */
   for (const [x, z, h, s] of [[-30, 20, 8, 3], [-13, 24.5, 9, 4], [9, 24.6, 7.5, 5], [27, 21, 8.5, 6], [36, 25, 9.5, 7], [-38, 26, 8.6, 8]]) add(Q, palm(h, s), x, z);
-  for (const [x, w, h, c] of [[-26, 9, 4, 0xe0d6ba], [-8, 12, 5, 0xd6c6a0], [14, 10, 4.4, 0xe6dcc4], [32, 12, 5.4, 0xcdb894]]) {
-    box(w, h, 7, solid(c, 1), x, h / 2, 30, Q.group);
-    const rf = W.hipRoof(w, 7, 1.8, 0.4);
+  for (const [x, w, h, c, sh] of [[-26, 9, 4, 0xf4ead4, true], [-8, 12, 5, 0xeadcbc, false], [14, 10, 4.4, 0xfaf0dc, true], [32, 12, 5.4, 0xe4d0aa, false]]) {
+    mesh(dress(new THREE.BoxGeometry(w, h, 7), 1.6), PLASTER(c), x, h / 2, 30, Q.group);   /* limewashed houses */
+    const rf = roof(w, 7, 1.8, 0.4, sh ? SHINGLES : TILES);
     rf.position.set(x, h, 30);
     Q.group.add(rf);
   }
@@ -929,8 +1010,10 @@ function court() {
   Q.beds = { room: 0.07, crowd: 0.04 };
   Q.light = { top: 0x8fb4c6, hor: 0xe6dcc0, fog: [0xd6d2c0, 40, 200], sun: [0xfff0d0, 1.3, 10, 30, 10], hemi: [0xfff8ea, 0x9a8f7a, 2.5], fill: 1.5 };
   Q.view = { pos: [4.6, 2.2, 3.6], look: [-1.2, 1.4, -3] };
-  const wallM = std(T.plaster([226, 218, 196], [3, 1]), 1);
-  Q.group.add(W.room({ x0: -X, z0: -Z, x1: X, z1: Z, h: H, floor: std(T.plank([128, 98, 68], 9, [4, 3]), 0.85), ceiling: solid(0xe8e2d0, 1), beams: false }));
+  /* limewashed plaster walls and a board floor, in Port Royal's own surfaces (engine/building-tex.js) */
+  loadBuildingTex();
+  const wallM = buildingMat("plaster", { tint: 0xfbf6ea, repeat: [3, 1.4] });
+  Q.group.add(W.room({ x0: -X, z0: -Z, x1: X, z1: Z, h: H, floor: buildingMat("wood", { tint: 0x9a7656, repeat: [6, 4.5] }), ceiling: solid(0xe8e2d0, 1), beams: false }));
   for (const [a, b, c, d] of [[-X, -Z, X, -Z], [X, Z, -X, Z], [-X, Z, -X, -Z], [X, -Z, X, Z]]) W.wallRun(Q.group, [a, b, c, d], H, wallM, [], 0.4);
   Q.walls.push([-X - 0.2, -Z - 0.2, X + 0.2, -Z + 0.2], [-X - 0.2, Z - 0.2, X + 0.2, Z + 0.2], [-X - 0.2, -Z - 0.2, -X + 0.2, Z + 0.2], [X - 0.2, -Z - 0.2, X + 0.2, Z + 0.2]);
   /* a panelled dado round the room, a moulded rail above it, a cornice under the ceiling, and beams across */
@@ -1099,6 +1182,8 @@ function court() {
   box(0.5, 0.05, 0.4, S.SM.woodDark, 0, 0.5, 0, stool);
   for (const x of [-0.2, 0.2]) for (const z of [-0.15, 0.15]) box(0.04, 0.5, 0.04, S.SM.woodDark, x, 0.25, z, stool);
   solid1(Q, stool, 4.3, 0.9, 0.55, 0.45);
+  /* the court decides, as a camera scene: the clerk reads out the decision; the judge's chair stays empty */
+  Q.films.verdict = filmHold(Q, ["clerk", "fitton"]);
   /* people */
   person(Q, "clerk", "clerk", -3.6, -0.5, face(-3.6, -0.5, 2, 2), { kind: "watch", at: [0, 0.1], idles: ["IdleM"], react: ["HeadTurn", "Nod"], every: [5, 9] }, { held: "ledger" });
   person(Q, "fitton", "fitton", 3.5, -0.6, face(3.5, -0.6, 0, 1), { kind: "watch", at: [0, 0.1], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
