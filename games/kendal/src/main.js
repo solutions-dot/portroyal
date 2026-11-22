@@ -1,4 +1,5 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
+import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
@@ -1172,4 +1173,5 @@ function devViews() {
   }
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addRecap({ items: [{ icon: '\uD83D\uDE82', label: '21 November 1845', page: 'first-train' }, { icon: '\uD83D\uDED1', label: 'Why brakes matter', page: 'brakes' }, { icon: '\uD83E\uDD1D', label: 'The helpers of Kendal', page: 'helpers' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The end', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

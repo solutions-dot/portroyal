@@ -1,4 +1,5 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
+import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { renderFramed, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
@@ -862,4 +863,5 @@ const DEV = __DEV__ ? { THREE, q, $, S, N, T, PL, hand, keys, camera, scene, ren
   ensurePlace, enterPlace, enterTube, showNudgeAt, placeNudge, NUDGE, beginChapter, setStage, setEnv, showPerson, byId, startTalk, convo, leaveTalk, activate, look, openOrder, openSort, closePuzzle, closeQuiz, card, hideCard, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeChapters2: closeChapters, closeCredits, unlock, saveGame, loadGame, applySave, panelsOpen, locked,
   auditPlace, auditHeld, auditSeated, snapMeshes, placeFaces, groundFeet, LANE, ZM, ZMIN, ZMAX, R, SAND, ENV, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), wantsTalk, get modelsReady() { return modelsReady; }, ON, noticeTex } : null;
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addRecap({ items: [{ icon: '\uD83D\uDE8B', label: 'The first electric trams', page: 'trams' }, { icon: '\uD83D\uDCA7', label: 'The Tube', page: 'tube' }, { icon: '\uD83D\uDCF0', label: 'What the newspaper said', page: 'paper' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The end', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

@@ -1,4 +1,5 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
+import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
@@ -2262,4 +2263,5 @@ if (__DEV__) wireChecks({
   autoRun, prep, model, animate, skClone, GULLS,
 });
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addRecap({ items: [{ icon: '\uD83E\uDE99', label: 'Pieces of eight', page: 'coins' }, { icon: '\uD83C\uDF0A', label: 'The earthquake', page: 'quake' }, { icon: '\uD83E\uDEA6', label: 'The tombstone', page: 'stone' }], open: () => { hideCard(); openJournal(); }, title: 'The end of the story', unlocked: () => state.unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

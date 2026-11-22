@@ -1,4 +1,5 @@
 import { playChapterFade } from '../../../engine/cine.js';
+import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
@@ -1888,4 +1889,5 @@ function devChecks(q) {
     card, hideCard, nextCard, fitPace, talkSpot, saveGame, loadGame, applySave, runAuto, AU, setSound, nudge: NUDGE, frame: (dt) => { update(dt); camera.position.set(state.x, EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); renderer.render(scene, camera); }, EYE });
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addRecap({ items: [{ icon: '\uD83D\uDCF0', label: 'The Negro World', page: 'negro-world' }, { icon: '\uD83D\uDEA2', label: 'The Black Star Line', page: 'bsl' }, { icon: '\uD83D\uDCDC', label: 'The Declaration of Rights', page: 'declaration' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The end', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

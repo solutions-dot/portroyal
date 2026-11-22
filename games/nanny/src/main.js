@@ -37,7 +37,7 @@ import { G as GFX, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './g
 import { ENV, mixEnv, makeRidges, makeMist, makeSun, makeFireflies, makeSmoke, pathLength, pathAt } from './land.js';
 import { buildEstate, buildTown, buildWatch, buildNewTown } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, SAY, CARDS, CHOICE_NAMES, CALLS, QUIZ, YOU, RECAP } from './content.js';
-import { recapRow } from '../../../engine/recap.js';   /* three things you learned, on the last card */
+import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import * as SFX from './sfx.js';
 import { HATS, LOOKS, KID } from './cast.js';
 import { musket, lantern, horn, leafCloak, beads, attach, basketOf, cockedHat } from './props.js';
@@ -747,7 +747,7 @@ ON[63] = async () => {
   say(SAY.t2, 4600); const e1 = envTo(ENV.gold, 6), a = eyeNow(), h = a[1];
   await cut(a, [4, h + 5, 14], [0, 1, 0], [-9, 6, -37], 7); if (ep !== EP) return; await e1; if (ep === EP) finish();
 };
-ON[64] = () => { unlock('hero'); unlock('mooretown'); unlock('journey'); const c = CARDS.end; setTimeout(() => { card(c.title, c.paras, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }); $('cbody').appendChild(recapRow(RECAP, (pg) => { hideCard(); openJournal(pg); }, { unlocked })); }, 1200 * TS); cue('end'); };
+ON[64] = () => { unlock('hero'); unlock('mooretown'); unlock('journey'); const c = CARDS.end; setTimeout(() => { card(c.title, c.paras, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }); }, 1200 * TS); cue('end'); };
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
@@ -1176,4 +1176,5 @@ function devViews() {
   })();
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addRecap({ items: RECAP, open: (pg) => { hideCard(); openJournal(pg); }, title: CARDS.end.title, unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */
