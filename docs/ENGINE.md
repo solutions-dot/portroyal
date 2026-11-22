@@ -551,3 +551,7 @@ Four pieces for the owner's story-first pass (`docs/STANDARD.md`, "Story first";
 
 
 An errand can take `via: [x, z]`, a point to walk round by on both legs, so the straight line between its ends does not cross something on the ground (Kendal's carriers walked through the pile of bananas). With `drop`, the load changes hands at the lowest point of the bend, read from the hips' height in the pick-up clip itself, not at a fixed share of the clip.
+
+## engine/mature.js: the Mature 13+ card (22 November 2026)
+
+`matureGate({ note, exit, skip })` covers a mature game's title screen until the traveller says they are 13 or older. If the menu's profile on the device is Kids (`pastport-profile`), it offers Exit only. It is a soft gate: it asks and cannot check. Tivoli and The Mad Master of Edinburgh Castle call it. `matureState(profile, said)` is the pure rule.

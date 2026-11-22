@@ -45,6 +45,7 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, ahead, work } from '../../../engine/preload.js';
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
+import { matureGate } from '../../../engine/mature.js';   /* Mature 13+ (owner, 22 November 2026): the card over the title screen */
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -504,4 +505,5 @@ requestAnimationFrame(frame);
 if (__DEV__) window.__T = { state, Talk, CH, talkStart, talkNext, camera, startChapter, settle: async () => { await checkHooks().settle(); STEPPED.on = false; } };   // dev only: the test scripts drive the chapter through this
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
 addRecap({ items: [{ icon: '\uD83C\uDFDA\uFE0F', label: 'Back-o-Wall', page: 'backowall', img: 'recap/backowall.jpg' }, { icon: '\uD83C\uDFD8\uFE0F', label: 'Tivoli Gardens is built', page: 'newtivoli', img: 'recap/newtivoli.jpg' }, { icon: '\uD83C\uDFA8', label: 'Tivoli Gardens today', page: 'today', img: 'recap/today.jpg' }], open: () => { hideCard(); openJournal(); }, title: 'Today', unlocked: null, card: 'chcard', titleEl: 'chcardt', body: 'chcardl' });   /* three tappable journal pages on the last card (engine/recap.js) */
-addExit({ url: '../../../menu/' });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */
+addExit({ url: '../../../menu/' });
+matureGate({ note: ['This story is about the 2010 security operation in Tivoli Gardens, when many people died.', 'It has gunfire and fear. No one is hit on the screen.'], skip: __DEV__ && /[?&](auto|test|shot)/.test(location.search) });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

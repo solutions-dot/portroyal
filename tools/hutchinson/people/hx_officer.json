@@ -1,0 +1,81 @@
+{
+ "name": "hx_officer",
+ "era": 1773,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.56,
+  "muscle": 0.55,
+  "weight": 0.56,
+  "height": 0.54
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "coat": true,
+  "coatsleeve": 0.84,
+  "coathem": 0.04,
+  "breeches": true,
+  "shoes": true,
+  "stockings": true,
+  "buckles": true,
+  "bands": true,
+  "hairvol": 0.4,
+  "hat": [
+   [
+    "felt",
+    "Hat"
+   ]
+  ]
+ },
+ "colors": {
+  "Skin": [
+   208,
+   160,
+   130
+  ],
+  "Shirt": [
+   226,
+   220,
+   204
+  ],
+  "Coat": [
+   118,
+   48,
+   40
+  ],
+  "Breeches": [
+   196,
+   184,
+   150
+  ],
+  "Stockings": [
+   206,
+   200,
+   186
+  ],
+  "Shoes": [
+   30,
+   24,
+   20
+  ],
+  "Hat": [
+   28,
+   26,
+   26
+  ],
+  "Hair": [
+   70,
+   52,
+   38
+  ],
+  "Bands": [
+   236,
+   232,
+   222
+  ]
+ },
+ "face": "strong"
+}

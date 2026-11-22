@@ -1,0 +1,81 @@
+{
+ "name": "hx_callendar",
+ "era": 1773,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.3,
+  "muscle": 0.6,
+  "weight": 0.46,
+  "height": 0.58
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "coat": true,
+  "coatsleeve": 0.84,
+  "coathem": 0.04,
+  "breeches": true,
+  "shoes": true,
+  "stockings": true,
+  "buckles": true,
+  "bands": true,
+  "hairvol": 0.4,
+  "hat": [
+   [
+    "felt",
+    "Hat"
+   ]
+  ]
+ },
+ "colors": {
+  "Skin": [
+   218,
+   172,
+   144
+  ],
+  "Shirt": [
+   232,
+   226,
+   210
+  ],
+  "Coat": [
+   52,
+   70,
+   104
+  ],
+  "Breeches": [
+   214,
+   204,
+   176
+  ],
+  "Stockings": [
+   226,
+   220,
+   204
+  ],
+  "Shoes": [
+   26,
+   22,
+   18
+  ],
+  "Hat": [
+   24,
+   22,
+   26
+  ],
+  "Hair": [
+   104,
+   72,
+   44
+  ],
+  "Bands": [
+   240,
+   238,
+   230
+  ]
+ },
+ "face": "narrow"
+}

@@ -1,0 +1,71 @@
+{
+ "name": "hx_clerk",
+ "era": 1773,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.44,
+  "muscle": 0.4,
+  "weight": 0.44,
+  "height": 0.5
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "coat": true,
+  "coatsleeve": 0.84,
+  "coathem": 0.04,
+  "breeches": true,
+  "shoes": true,
+  "stockings": true,
+  "buckles": true,
+  "bands": true,
+  "hairvol": 0.4,
+  "hat": []
+ },
+ "colors": {
+  "Skin": [
+   220,
+   176,
+   150
+  ],
+  "Shirt": [
+   232,
+   226,
+   212
+  ],
+  "Coat": [
+   36,
+   34,
+   36
+  ],
+  "Breeches": [
+   40,
+   38,
+   40
+  ],
+  "Stockings": [
+   60,
+   58,
+   60
+  ],
+  "Shoes": [
+   24,
+   20,
+   18
+  ],
+  "Hair": [
+   60,
+   46,
+   36
+  ],
+  "Bands": [
+   242,
+   240,
+   232
+  ]
+ },
+ "face": "lean"
+}

@@ -1,0 +1,69 @@
+{
+ "name": "hx_juba",
+ "era": 1900,
+ "body": {
+  "gender": 0.0,
+  "proportions": 0.6,
+  "cupsize": 0.45,
+  "firmness": 0.6,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "age": 0.4,
+  "muscle": 0.5,
+  "weight": 0.48,
+  "height": 0.5
+ },
+ "garments": {
+  "woman": true,
+  "skirt": true,
+  "shoes": false,
+  "collar": false,
+  "sleeve": 0.5,
+  "hem": 0.07,
+  "flare": 1.2,
+  "apron": true,
+  "hat": [
+   [
+    "wrap",
+    "Hat"
+   ]
+  ],
+  "hairvol": 0.0,
+  "wrapbrow": 1.0
+ },
+ "colors": {
+  "Skin": [
+   146,
+   98,
+   72
+  ],
+  "Shirt": [
+   206,
+   194,
+   164
+  ],
+  "Skirt": [
+   88,
+   96,
+   112
+  ],
+  "Apron": [
+   188,
+   176,
+   148
+  ],
+  "Hat": [
+   176,
+   60,
+   48
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "lean",
+ "smile": 0.1
+}
