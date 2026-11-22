@@ -1,0 +1,84 @@
+{
+ "name": "rh_archivist",
+ "era": 2018,
+ "body": {
+  "gender": 0,
+  "age": 0.37,
+  "muscle": 0.4,
+  "weight": 0.52,
+  "height": 0.49,
+  "proportions": 0.56,
+  "african": 0.5,
+  "caucasian": 0,
+  "asian": 0.5,
+  "cupsize": 0.4,
+  "firmness": 0.55
+ },
+ "garments": {
+  "sleeve": 0.9,
+  "shoes": true,
+  "collar": false,
+  "hairvol": 0.3,
+  "hat": [],
+  "woman": true,
+  "bun": false,
+  "skirt": true,
+  "hem": 0.66,
+  "flare": 1.85,
+  "pleats": 9,
+  "hair": "afro"
+ },
+ "colors": {
+  "Skin": [
+   150,
+   104,
+   76
+  ],
+  "Hair": [
+   25,
+   21,
+   18
+  ],
+  "Shirt": [
+   206,
+   198,
+   176
+  ],
+  "Collar": [
+   206,
+   198,
+   176
+  ],
+  "Shoes": [
+   42,
+   31,
+   24
+  ],
+  "Sole": [
+   28,
+   23,
+   20
+  ],
+  "Buttons": [
+   210,
+   203,
+   181
+  ],
+  "Belt": [
+   65,
+   47,
+   31
+  ],
+  "Buckle": [
+   133,
+   112,
+   63
+  ],
+  "Skirt": [
+   70,
+   56,
+   84
+  ]
+ },
+ "face": "soft"
+}

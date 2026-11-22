@@ -73,6 +73,9 @@
   .credit a:hover{color:var(--mango)}
   .credit a:focus-visible{outline:3px solid var(--mango);outline-offset:2px;border-radius:4px}
 
+  /* the three pills, below all the cards, with a little space above and below (owner, 22 November 2026) */
+  #footlinks{justify-content:center!important;flex-wrap:wrap!important;width:100%;margin:clamp(1.2rem,3vh,2rem) 0 clamp(1rem,3vh,2rem)}
+  main{grid-template-rows:none!important;grid-auto-rows:auto;align-content:start}   /* rows size themselves: header, library bar, picks, cards, pills */
   .games{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:clamp(.7rem,1.6vw,1.2rem);min-height:0}
 
   /* Port Royal: the poster. Full-bleed scene, the title set big across the bottom. */
@@ -136,6 +139,16 @@
   .game.hutchinson .year{color:#f2a58a}
   .game.hutchinson .play{background:#f2a58a;color:var(--deep)}
   .game.hutchinson:hover .play,.game.hutchinson:focus-visible .play{background:var(--paper)}
+  /* The White Witch of Rose Hall (Mature 13+): the great hall on the night tour, from the game; the year is in candle gold. */
+  .game.rosehall{background:#1a1420 url(rose-hall.jpg) center 35%/cover no-repeat}
+  .game.rosehall .year{color:#f0c878}
+  .game.rosehall .play{background:#f0c878;color:var(--deep)}
+  .game.rosehall:hover .play,.game.rosehall:focus-visible .play{background:var(--paper)}
+  /* The Shark Papers, 1799: the deck of the schooner Ferret, from the game; the year is in sea foam. */
+  .game.sharkpapers{background:#0c3348 url(shark-papers.jpg) center 45%/cover no-repeat}
+  .game.sharkpapers .year{color:#9fe0d6}
+  .game.sharkpapers .play{background:var(--sea);color:var(--deep)}
+  .game.sharkpapers:hover .play,.game.sharkpapers:focus-visible .play{background:var(--paper)}
   /* Eventide Home, Kingston 1980; the year is in soft green. */
   .game.eventide{background:#223a32 url(eventide.jpg) center 35%/cover no-repeat}
   .game.eventide .year{color:#a9dcc2}
@@ -216,11 +229,6 @@
     <h1 class="brand"><span class="brand-wrap"><img class="brand-logo" src="pastport-logo-sm.webp" width="420" height="293" alt="PastPort - Jamaica"><span class="brand-jam" aria-hidden="true"></span></span></h1>
     <div class="side">
       <p id="testingnote" hidden>Testing menu.</p>
-      <nav class="links" aria-label="More">
-        <a href="about.html" aria-label="About this platform">About</a>
-        <button type="button" id="subopen" class="get">Get updates</button>
-        <button type="button" class="credit contact-pill" id="contactopen" aria-haspopup="dialog" aria-controls="contactpanel">Created by <b>Kellz 5.0</b><span aria-hidden="true"> ↗</span></button>
-      </nav>
     </div>
   </header>
   <!-- The library (library.js fills it in and shows it; without JavaScript it stays hidden and the cards are plain links). -->
@@ -260,6 +268,26 @@
         <div>
           <h2>The Mad Master of Edinburgh Castle, 1773</h2>
           <p>Travellers went missing on a lonely road in St Ann. One man was hanged for it.</p>
+        </div>
+        <span class="play">Go there</span>
+      </div>
+    </a>
+    <a class="game sharkpapers" data-game="shark-papers" data-year="1799" data-genres="mystery" data-tags="sea ships court detective 1700s" data-age="6" href="games/shark-papers/site/">
+      <p class="tag">New</p>
+      <div class="text">
+        <div>
+          <h2>The Shark Papers, 1799</h2>
+          <p>A captain threw his ship's papers into the sea. A shark swallowed them, and a sailor caught the shark.</p>
+        </div>
+        <span class="play">Go there</span>
+      </div>
+    </a>
+    <a class="game rosehall" data-game="rose-hall" data-year="1831" data-genres="mystery" data-tags="legend ghost-story st-james 1800s hard-history" data-age="13" data-warn="This is a ghost story about murder, and then the truth behind it. It talks about killing and about slavery. Nothing is shown close up." href="games/rose-hall/site/">
+      <p class="tag">New</p>
+      <div class="text">
+        <div>
+          <h2>The White Witch of Rose Hall</h2>
+          <p>Everyone knows the ghost story of Annie Palmer. The old papers tell a different one.</p>
         </div>
         <span class="play">Go there</span>
       </div>
@@ -334,6 +362,12 @@
       </div>
     </a>
   </section>
+  <!-- About, Get updates and the credit sit below all the game cards (owner, 22 November 2026) -->
+  <nav class="links" id="footlinks" aria-label="More">
+    <a href="about.html" aria-label="About this platform">About</a>
+    <button type="button" id="subopen" class="get">Get updates</button>
+    <button type="button" class="credit contact-pill" id="contactopen" aria-haspopup="dialog" aria-controls="contactpanel">Created by <b>Kellz 5.0</b><span aria-hidden="true"> ↗</span></button>
+  </nav>
   <p class="lib-kidsnote" id="kidsnote" hidden>Some stories are for ages 13 and up. A grown-up can change who is travelling.</p>
 </main>
 <div id="subpanel" role="dialog" aria-modal="true" aria-labelledby="subtitle" hidden>

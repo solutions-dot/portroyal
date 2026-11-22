@@ -1,0 +1,84 @@
+{
+ "name": "rh_warden",
+ "era": 2018,
+ "body": {
+  "muscle": 0.4,
+  "proportions": 0.56,
+  "african": 1,
+  "caucasian": 0,
+  "asian": 0,
+  "gender": 0,
+  "cupsize": 0.4,
+  "firmness": 0.55,
+  "age": 0.3,
+  "weight": 0.5,
+  "height": 0.54
+ },
+ "garments": {
+  "shoes": true,
+  "woman": true,
+  "skirt": true,
+  "hem": 0.8,
+  "flare": 1.3,
+  "pleats": 9,
+  "hairvol": 0.3,
+  "bun": false,
+  "collar": false,
+  "hat": [],
+  "sleeve": 0.9,
+  "hair": "afro"
+ },
+ "colors": {
+  "Shoes": [
+   42,
+   31,
+   24
+  ],
+  "Sole": [
+   28,
+   23,
+   20
+  ],
+  "Buttons": [
+   210,
+   203,
+   181
+  ],
+  "Belt": [
+   65,
+   47,
+   31
+  ],
+  "Buckle": [
+   133,
+   112,
+   63
+  ],
+  "Hair": [
+   25,
+   21,
+   18
+  ],
+  "Skin": [
+   140,
+   94,
+   68
+  ],
+  "Shirt": [
+   224,
+   220,
+   206
+  ],
+  "Collar": [
+   224,
+   220,
+   206
+  ],
+  "Skirt": [
+   52,
+   64,
+   96
+  ]
+ },
+ "face": "round"
+}

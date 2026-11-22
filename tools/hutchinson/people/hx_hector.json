@@ -1,0 +1,46 @@
+{
+ "name": "hx_hector",
+ "era": 1773,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "age": 0.52,
+  "muscle": 0.7,
+  "weight": 0.5,
+  "height": 0.58
+ },
+ "garments": {
+  "sleeve": 0.5,
+  "breeches": true,
+  "breechkind": "drawers",
+  "collar": false,
+  "hairvol": 0.25,
+  "hat": []
+ },
+ "colors": {
+  "Skin": [
+   146,
+   100,
+   72
+  ],
+  "Shirt": [
+   186,
+   174,
+   144
+  ],
+  "Breeches": [
+   124,
+   112,
+   90
+  ],
+  "Hair": [
+   30,
+   26,
+   24
+  ]
+ },
+ "face": "broad"
+}

@@ -53,3 +53,15 @@ games/hutchinson/site/app.js
 games/hutchinson/site/models/anims.js
 games/hutchinson/site/title.css
 games/hutchinson/site/chapters.css
+
+# The White Witch of Rose Hall: built by tools/build.mjs
+games/rose-hall/site/app.js
+games/rose-hall/site/models/anims.js
+games/rose-hall/site/title.css
+games/rose-hall/site/chapters.css
+
+# The Shark Papers: built by tools/build.mjs
+games/shark-papers/site/app.js
+games/shark-papers/site/models/anims.js
+games/shark-papers/site/title.css
+games/shark-papers/site/chapters.css

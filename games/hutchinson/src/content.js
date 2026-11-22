@@ -1,10 +1,10 @@
-/* Every word the player reads. Lewis Hutchinson, Dr Jonathan Hutton and John Callendar were real. Everyone else is fictional and their
+/* Every word the player reads. Lewis Hutchinson, Dr Jonathan Hutton, John Callendar and Hector were real. Everyone else is fictional and their
    journal page says so. Hutchinson says nothing in this game but the lines he left for his own tombstone. Sources: docs/games/hutchinson.md. */
 export const TITLE = "The Mad Master of Edinburgh Castle";
 export const GAME = {
   id: "hutchinson",
   eye: 1.45,
-  title: { place: "castle", pos: [13, 1.9, 13.5], look: [0, 3.6, -9] },
+  title: { place: "castle", pos: [15, 1.9, 14.6], look: [0, 4.6, -12] },
   fiction: "You are Quaco, aged fourteen. You are fictional. The killer, the doctor and the young man who came for him were real.",
   mature: ["This story is about a man who killed travellers on a lonely road.", "It has fear, a gunshot and a hanging. Nothing is shown close up."],
   recap: [
@@ -14,32 +14,34 @@ export const GAME = {
   ],
 };
 export const CHAPTERS = [
-  { id: "road", name: "The dry road", year: "St Ann, 1772", first: 10, last: 13, place: "road", caption: "The road by Dr Hutton’s pen \u00b7 St Ann, 1772", intro: "You are Quaco, enslaved on Dr Hutton’s cattle pen. The ponds are dry." },
-  { id: "quarrel", name: "The doctor’s quarrel", year: "St Ann, 1772", first: 20, last: 22, place: "road", caption: "The boundary \u00b7 St Ann, 1772", intro: "Two men claim the same strip of land. One of them owns the castle." },
-  { id: "towers", name: "Under the towers", year: "Edinburgh Castle, 1772", first: 30, last: 33, place: "castle", caption: "Edinburgh Castle · dusk", intro: "In this story the castle well still gives water. Someone watches from the upper window. When the shutter opens, be behind something." },
-  { id: "warrant", name: "The neighbour", year: "Edinburgh Castle, 1772", first: 40, last: 42, place: "castle", caption: "Edinburgh Castle · morning", intro: "A neighbour has come up the road about a lost animal." },
-  { id: "house", name: "What the house held", year: "Edinburgh Castle, 1773", first: 50, last: 55, place: "hall", caption: "Inside the castle · 1773", intro: "He has run. For the first time, people walk into his house and look." },
-  { id: "town", name: "Spanish Town", year: "March 1773", first: 60, last: 66, place: "town", caption: "Spanish Town, the capital · March 1773", intro: "The trial is in the capital. Dr Hutton has brought you and Cubba with him." },
+  { id: "road", name: "The dry road", year: "St Ann, 1772", first: 10, last: 15, place: "road", caption: "The road by Dr Hutton’s pen \u00b7 St Ann, 1772", intro: "You are Quaco, enslaved on Dr Hutton’s cattle pen. The ponds are dry." },
+  { id: "quarrel", name: "The doctor’s quarrel", year: "St Ann, 1772", first: 20, last: 25, place: "road", caption: "The boundary \u00b7 St Ann, 1772", intro: "Two men claim the same strip of land. One of them owns the castle." },
+  { id: "towers", name: "Under the towers", year: "Edinburgh Castle, 1772", first: 30, last: 38, place: "castle", caption: "Edinburgh Castle · dusk", intro: "In this story the castle well still gives water. Someone watches from the upper window. When the shutter opens, be behind something." },
+  { id: "warrant", name: "The neighbour", year: "Edinburgh Castle, 1772", first: 40, last: 44, place: "castle", caption: "Edinburgh Castle · morning", intro: "A neighbour has come up the road about a lost animal." },
+  { id: "house", name: "What the house held", year: "Edinburgh Castle, 1773", first: 50, last: 58, place: "hall", caption: "Inside the castle · 1773", intro: "He has run. For the first time, people walk into his house and look." },
+  { id: "town", name: "Spanish Town", year: "March 1773", first: 60, last: 68, place: "town", caption: "Spanish Town, the capital · March 1773", intro: "The trial is in the capital. Dr Hutton has brought you and Cubba with him." },
 ];
 export const chapterOf = (stage) => Math.max(0, CHAPTERS.findIndex((c) => stage >= c.first && stage <= c.last));
-export const PEOPLE = { hutton: "Dr Hutton", callendar: "John Callendar", officer: "Captain Reid", clerk: "The clerk", cudjoe: "Cudjoe", carter: "Sampson", juba: "Juba", cubba: "Cubba" };
+export const PEOPLE = { hutton: "Dr Hutton", callendar: "John Callendar", officer: "Captain Reid", clerk: "The clerk", cudjoe: "Cudjoe", carter: "Sampson", juba: "Juba", cubba: "Cubba", hector: "Hector", sick: "A sick man" };
 const L = (who, text) => ({ who, text });
 export const TALK = {
-  10: { cubba: [L("Cubba", "Quaco. Look at this trough. Dust."), L("You", "The pond is dry too, Cubba."), L("Cubba", "Every pond for miles. The castle well still gives."), L("You", "The doctor will send me there."), L("Cubba", "He will. And people who stop there do not always come back.")] },
-  11: { carter: [L("Sampson", "You belong to the doctor's pen, boy?"), L("You", "Yes. He says a man owns me. I am Quaco."), L("Sampson", "I am Sampson. Free, with my own mule and cart."), L("Sampson", "I passed the castle at first light. I did not stop."), L("Sampson", "A pack mule followed me down. No rider. See it there.")] },
-  13: { hutton: [L("You", "Doctor. A mule came down alone. Its pack is full."), L("Dr Hutton", "From the castle road?"), L("You", "Sampson says so."), L("Dr Hutton", "Not the first. I have written to the magistrates."), L("Dr Hutton", "They want a witness. A dead man is no witness.")] },
-  21: { hutton: [L("Dr Hutton", "This pole marks my land. He says it is his."), L("Dr Hutton", "My cattle stray over. They do not stray back."), L("Dr Hutton", "He took my sword from my own servant's hands."), L("You", "People say he struck you with it."), L("Dr Hutton", "He did. He will answer for it. Go with Sampson now.")] },
-  31: { juba: [L("Juba", "Hush. Keep the well between you and the house."), L("You", "I came for water. Who are you?"), L("Juba", "Juba. He says he owns me. I draw his water."), L("Juba", "When the shutter opens, he has the long gun."), L("You", "Have you seen what he does?"), L("Juba", "I have seen. And carried. Take your pail and go.")] },
-  33: { carter: [L("Sampson", "You are shaking. Sit by the wheel."), L("You", "She said she has carried. Carried what?"), L("Sampson", "You know what. Everyone on this road knows."), L("Sampson", "Knowing is not proof. Not in their court.")] },
+  10: { cubba: [L("Cubba", "Quaco. Look at this trough. Dust."), L("You", "The pond is dry too, Cubba."), L("Cubba", "Go and try it. Then feed the cattle."), L("Cubba", "Every pond for miles is dry. The castle well still gives."), L("You", "The doctor will send me there."), L("Cubba", "He will. People who stop there do not always come back.")] },
+  13: { carter: [L("Sampson", "You belong to the doctor's pen, boy?"), L("You", "Yes. He says a man owns me. I am Quaco."), L("Sampson", "I am Sampson. Free, with my own mule and cart."), L("Sampson", "I passed the castle at first light. I did not stop."), L("Sampson", "A pack mule followed me down. No rider. See it there.")] },
+  15: { hutton: [L("You", "Doctor. A mule came down alone. Its pack is full."), L("Dr Hutton", "From the castle road?"), L("You", "Sampson says so."), L("Dr Hutton", "Not the first. I have written to the magistrates."), L("Dr Hutton", "They want a witness. A dead man is no witness.")] },
+  21: { hutton: [L("Dr Hutton", "This pole marks my land. He says it is his."), L("Dr Hutton", "My cattle stray over. They do not stray back."), L("Dr Hutton", "He took my sword from my own servant's hands."), L("You", "People say he struck you with it."), L("Dr Hutton", "He did. He will answer for it."), L("Dr Hutton", "Somebody has pulled up my peg again. Put it back.")] },
+  23: { carter: [L("Sampson", "The doctor wants water. I am to take you."), L("You", "To the castle well?"), L("Sampson", "It still gives. Nobody likes to fetch from it."), L("Sampson", "One more cask stands by the gate. Hand it up.")] },
+  30: { carter: [L("Sampson", "There. The well is past the big cotton tree."), L("Sampson", "See the upper window? The one with shutters."), L("Sampson", "Shut, you move. Open, you are behind something."), L("You", "And if I am slow?"), L("Sampson", "Do not be slow. I will hold the mule.")] },
+  35: { juba: [L("Juba", "Hush. Keep the well between you and the house."), L("You", "I came for water. Who are you?"), L("Juba", "Juba. He says he owns me. I draw his water."), L("Juba", "When the shutter opens, he has the long gun."), L("You", "Have you seen what he does?"), L("Juba", "I have seen. And carried. Help me with the rope.")] },
+  38: { carter: [L("Sampson", "You are shaking. Sit by the wheel."), L("You", "She said she has carried. Carried what?"), L("Sampson", "You know what. Everyone on this road knows."), L("Sampson", "Knowing is not proof. Not in their court.")] },
   40: { carter: [L("Sampson", "Stay behind this wall, Quaco."), L("Sampson", "That is Mr Callendar. His land joins the castle's."), L("Sampson", "His jackass strayed. He means to ask for it back."), L("You", "Alone? There is a gun at that window."), L("Sampson", "I told him so. He would not wait.")] },
-  50: { officer: [L("Captain Reid", "A sick man in this house slipped out and told."), L("Captain Reid", "A Navy officer, Mr Turnbull, took him. He is in gaol."), L("Captain Reid", "Now we search his house. Touch nothing. Look at everything."), L("You", "What are you looking for?"), L("Captain Reid", "What he kept. Start with that box.")] },
-  52: {
+  50: { officer: [L("Captain Reid", "A sick man lay on that cot. He slipped out and told."), L("Captain Reid", "A Navy officer, Mr Turnbull, took him. He is in gaol."), L("Captain Reid", "Now we search his house. Touch nothing. Look at everything."), L("You", "What are you looking for?"), L("Captain Reid", "What he kept. Start with that box.")] },
+  54: {
     juba: [L("Juba", "Those coats came off the road. So did the watches."), L("You", "Will you tell the judge?"), L("Juba", "I may not. We cannot swear against a white man."), L("Juba", "The law will not hear us. So I am telling you.")],
-    cudjoe: [L("Cudjoe", "He made us carry them. At night. To the hole."), L("You", "How many, Cudjoe?"), L("Cudjoe", "I stopped counting. Counting did not help them."), L("Cudjoe", "Come. You should see it once.")],
+    cudjoe: [L("Cudjoe", "He made us carry them. At night. To the hole."), L("You", "How many, Cudjoe?"), L("Cudjoe", "I stopped counting. Counting did not help them."), L("Cudjoe", "Hector is showing the captain. Come. See it once.")],
   },
-  55: { cudjoe: [L("You", "I did not hear it land."), L("Cudjoe", "No. Nobody has seen the bottom."), L("Cudjoe", "Some had people waiting for them. They never knew."), L("You", "Somebody should say their names."), L("Cudjoe", "We never learned their names. Remember that they had them.")] },
-  60: { clerk: [L("The clerk", "Stand back from the door. The court is sitting."), L("You", "Is he tried for the people on the road?"), L("The clerk", "For one man. John Callendar. A free man saw that."), L("You", "Juba and Cudjoe saw the rest."), L("The clerk", "Slaves cannot give evidence against a white man. That is the law.")] },
-  62: {
+  58: { cudjoe: [L("You", "I did not hear it land."), L("Cudjoe", "No. Nobody has seen the bottom."), L("Cudjoe", "Some had people waiting for them. They never knew."), L("You", "Somebody should say their names."), L("Cudjoe", "We never learned their names. Remember that they had them.")] },
+  61: { clerk: [L("The clerk", "Stand back from the door. The court is sitting."), L("You", "Is he tried for the people on the road?"), L("The clerk", "For one man. John Callendar. A free man saw that."), L("You", "Juba and Cudjoe saw the rest."), L("The clerk", "Slaves cannot give evidence against a white man. That is the law.")] },
+  64: {
     hutton: [L("Dr Hutton", "Guilty. He hangs on the sixteenth of March."), L("Dr Hutton", "He is not sorry. He has written his own epitaph."), L("Dr Hutton", "He left a hundred pounds to carve it in stone."), L("You", "Will they carve it?"), L("Dr Hutton", "I think not.")],
     cubba: [L("Cubba", "So. They will hang him for the neighbour."), L("You", "And for nobody else."), L("Cubba", "The paper will say one. We will say many."), L("Cubba", "Keep both in your head, Quaco. That is how to remember.")],
   },
@@ -53,27 +55,38 @@ export const FLAVOUR = {
   officer: ["Keep clear of my men.", "Stay where I can see you."],
   clerk: ["The court will rise soon.", "Mind the step."],
 };
+/* people who never speak in this game: tapping one gives your own thought, never a word of theirs */
+export const SILENT = {
+  callendar: ["He does not look at me. He looks at the house.", "He is counting the windows."],
+  hector: ["He says nothing. He only looks toward the hills.", "He nods to me, and says nothing."],
+  sick: ["He is too far off to hear me."],
+};
 export const SOURCES = {
   jnht: { name: "Jamaica National Heritage Trust: Edinburgh Castle", url: "https://jnht.com/site_edinburgh_castle.php" },
   letter: { name: "Letter from Kingston, 1 April 1773 (Annual Register; Essex Gazette)", url: "https://www.executedtoday.com/2015/03/16/1773-lewis-hutchinson-jamaica-serial-killer/" },
   cundall: { name: "Frank Cundall, Historic Jamaica (1915), pages 296 to 301", url: "https://www.gutenberg.org/ebooks/70109" },
   edwards: { name: "Bryan Edwards, History of the British Colonies in the West Indies (1794)", url: "https://archive.org/details/historycivilcomm02edwa" },
+  long: { name: "Edward Long, The History of Jamaica (1774), volume 2: the view of King’s House and the public offices", url: "https://nljdigital.nlj.gov.jm/items/show/5208" },
+  caves: { name: "Jamaican Caves Organisation: Hutchinson’s Hole", url: "https://www.jamaicancaves.org/" },
   gleaner: { name: "Jamaica Gleaner, Pieces of the Past: The Mad Master", url: "https://old.jamaica-gleaner.com/pages/history/story0036.htm" },
 };
 export const JOURNAL = [
   { id: "you", title: "Quaco", simple: ["You are Quaco, fourteen, on Dr Hutton's cattle pen in St Ann.", "You are enslaved: forced to work, unpaid, not free to leave.", "Cubba looks out for you."], deeper: ["Quaco in this game is fictional. Cubba in this game is fictional.", "Quaco and Cubba are Akan day names, common in Jamaica then. Quaco is a boy born on a Wednesday.", "A pen was a cattle farm. St Ann had many."] },
-  { id: "road", title: "The road", simple: ["The road crosses dry limestone hills, good for cattle.", "Travellers went missing near Edinburgh Castle.", "Sampson saw a mule come down with no rider."], deeper: ["Sampson in this game is fictional. So are the mule, the dry season and the well.", "A letter from Kingston in April 1773 says he kept his neighbours’ strayed cattle.", "That he shot travellers from his towers was first printed in 1828, by George Bridges."], source: "cundall" },
+  { id: "pen", title: "The pen", simple: ["A pen was a cattle farm.", "The cattle fed on Guinea grass.", "Pens sold oxen and mules to the sugar estates."], deeper: ["The family story names Dr Hutton’s pens: Hutton Bonvil and Lebanon, a few miles from the castle.", "No drawing of them was found. The house, the hut, the pond and the cattle here are a general picture of a St Ann pen."], source: "cundall" },
+  { id: "road", title: "The road", simple: ["The road crosses dry limestone hills, good for cattle.", "Travellers went missing near Edinburgh Castle.", "Sampson saw a mule come down with no rider."], deeper: ["Sampson in this game is fictional. So are the mule, the dry season, the boundary pegs and the well.", "A letter from Kingston in April 1773 says he kept his neighbours’ strayed cattle.", "That he shot travellers from his towers was first printed in 1828, by George Bridges."], source: "cundall" },
   { id: "hutton", title: "Dr Jonathan Hutton", simple: ["Dr Hutton was a doctor and a planter. He was real.", "His land lay next to Hutchinson’s."], deeper: ["The words Dr Hutton says in this game are imagined.", "He held people in slavery. This game does not make him a hero.", "A list of 1769 calls him a practitioner in physic and surgery."], source: "cundall" },
   { id: "quarrel", title: "The quarrel", simple: ["The two men quarrelled over a boundary.", "The story goes that Hutchinson took Hutton’s sword and later struck him with it."], deeper: ["This comes from Hutton’s family, written down in 1897. It says he was mended in England with a silver plate in his head.", "It is tradition, not a court record."], source: "cundall" },
-  { id: "castle", title: "Edinburgh Castle", simple: ["A small stone house with two round towers.", "The towers have loopholes to shoot through.", "Lewis Hutchinson, from Scotland, bought the land in 1768."], deeper: ["An old description: two storeys, with a round loopholed tower at two opposite corners. The game is built from that and from photographs of the ruin.", "The roofs, the well, the window and the cover you used are this game’s picture, not a survey.", "The ruin belongs to the Jamaica National Heritage Trust."], source: "jnht" },
+  { id: "castle", title: "Edinburgh Castle", simple: ["A small stone house with two round towers.", "The towers have loopholes to shoot through.", "Lewis Hutchinson, from Scotland, bought the land in 1768."], deeper: ["An old description: two storeys, a round loopholed tower at two opposite corners, a door beside the front tower and one on the east side.", "It says the ruins to the west were the quarters of the people he enslaved, and that the house stood on rising ground over the road.", "The roofs, the chimney, the well, the cattle yard, the shuttered window, the hat in the roots and the cover you used are this game’s picture.", "The ruin belongs to the Jamaica National Heritage Trust."], source: "jnht" },
   { id: "juba", title: "Juba", simple: ["Juba is enslaved at the castle. She draws the water.", "She warned you. That was brave."], deeper: ["Juba in this game is fictional. Cudjoe in this game is fictional.", "The accounts say Hutchinson forced the people he enslaved to carry the dead. Their names were not written down."] },
   { id: "watching", title: "Knowing and proving", simple: ["Everyone on the road knew.", "Knowing was not enough for the court."], deeper: ["A court needs evidence it will accept. Who it will listen to is decided by people in power."] },
-  { id: "callendar", title: "John Callendar", simple: ["John Callendar was real. His land joined Hutchinson’s.", "He came about a strayed jackass and was shot dead.", "This is the killing the court tried."], deeper: ["John Callendar does not speak in this game.", "A letter of April 1773 calls him a neighbour. Later books made him an estate manager, then a soldier sent to arrest Hutchinson.", "The letter says a sick man lying in the house slipped out and complained."], source: "letter" },
+  { id: "callendar", title: "John Callendar", simple: ["John Callendar was real. His land joined Hutchinson’s.", "He came about a strayed jackass and was shot dead.", "This is the killing the court tried."], deeper: ["John Callendar does not speak in this game.", "The man who slips out by the east door is the sick man of the letter. His name is not known.", "A letter of April 1773 calls him a neighbour. Later books made him an estate manager, then a soldier sent to arrest Hutchinson.", "The letter says a sick man lying in the house slipped out and complained."], source: "letter" },
   { id: "capture", title: "How he was taken", simple: ["A Navy officer, George Turnbull, took Hutchinson.", "Admiral Rodney had sent him to help."], deeper: ["Captain Reid in this game is fictional.", "In December 1773 the Assembly thanked Rodney and voted Turnbull a sword worth fifty pounds.", "A boat chase from Old Harbour is told in later books. The 1773 letter says only that he was caught."], source: "cundall" },
   { id: "watches", title: "Forty-three watches", simple: ["Later accounts say many watches were found in the house.", "One says forty-three. An older one says forty-seven."], deeper: ["The watches and the clothing are not in the letter of 1773. They first appear in 1828.", "The 1773 letter says searchers found about twenty skulls. That too was hearsay.", "Nobody knows how many people he killed."], source: "cundall" },
   { id: "silenced", title: "Who could speak", simple: ["Enslaved people could not give evidence against a white person.", "So the people who knew most were not heard in court."], deeper: ["A writer of the time, Bryan Edwards, put it plainly: “the evidence of the slave cannot be admitted against a White person”.", "The records name one man enslaved at the castle: Hector. He led the searchers to remains. He could show them. He could not swear to it in court.", "Twenty-four people were enslaved there in 1773. What became of them was not written down."], source: "edwards" },
-  { id: "hole", title: "The sinkhole", simple: ["A deep hole in the limestone, south of the castle.", "It is still called Hutchinson’s Hole."], deeper: ["Cavers have measured it: about 98 metres deep.", "In 1895 the Governor was lowered into it and saw no bones. Some doubt it was the hole used.", "This game shows only the edge."], source: "jnht" },
-  { id: "trial", title: "The trial", simple: ["He was tried in Spanish Town, then the capital.", "He said he was not guilty. He was found guilty of killing John Callendar."], deeper: ["The clerk in this game is fictional.", "The court sat upstairs in the public building facing King’s House. The building here is a general picture of it.", "The record is in the Jamaica Archives: The King against Lewis Hutchison."], source: "cundall" },
+  { id: "hector", title: "Hector", simple: ["Hector was real. He was enslaved at the castle.", "He led the searchers to remains.", "The court would not let him swear to what he showed."], deeper: ["Hector does not speak in this game. No words of his were written down.", "Where he led the searchers is not recorded. That it was the hole is this game’s picture."], source: "cundall" },
+  { id: "hole", title: "The sinkhole", simple: ["A deep hole in the limestone, south of the castle.", "It is still called Hutchinson’s Hole."], deeper: ["Cavers have measured it: about 98 metres deep.", "They found the mouth about 3 metres by 5, at the foot of a small valley, with rock walls some 10 metres high round it.", "In 1895 the Governor was lowered into it and saw no bones. Some doubt it was the hole used.", "The rope and the lantern are this game’s picture. This game shows only the edge."], source: "caves" },
+  { id: "town", title: "Spanish Town", simple: ["Spanish Town was the capital of Jamaica in 1773.", "King’s House, the Governor’s house, filled one side of the square.", "Facing it stood the public building, with the court upstairs."], deeper: ["The square here follows a print of 1774 in Edward Long’s history: King’s House, the public building and a railed green between them.", "What stood inside the railed green is not known to us, so it holds only grass.", "The houses on the other two sides are a general picture."], source: "long" },
+  { id: "trial", title: "The trial", simple: ["He was tried in Spanish Town, then the capital.", "He said he was not guilty. He was found guilty of killing John Callendar."], deeper: ["The clerk in this game is fictional.", "The court sat upstairs in the public building facing King’s House: brick arches below, a long gallery above.", "The record is in the Jamaica Archives: The King against Lewis Hutchison."], source: "cundall" },
   { id: "epitaph", title: "His own words", simple: ["Hutchinson was hanged on Tuesday 16 March 1773.", "He wrote two lines for his own tombstone.", "“Their sentence, pride, and malice I defy, Despise their power and like a Roman die.”"], deeper: ["These are the only words of his in this game. They were printed in 1773.", "He left a hundred pounds for the stone. It was never carved."], source: "letter" },
   { id: "legend", title: "Record and story", simple: ["Record: the trial, the hanging, the watches, the ruin.", "Story: how many died, and much of what is said he did.", "Both matter. They are not the same."], deeper: ["Most of what is told about him was first printed long after 1773.", "The people he killed, and the people he enslaved, left no words of their own in the record."] },
 ];
@@ -87,22 +100,46 @@ export const FILMS = {
   warrant: {
     place: "castle", next: 50, journal: "callendar", title: "The neighbour",
     read: ["John Callendar came to the house about a strayed jackass. Hutchinson shot him, and he died.", "A sick man lying in the house slipped out and told. Hutchinson was taken."],
-    captions: [[0, "Morning. John Callendar walks up the track."], [10, "He calls out. Nobody answers."], [19, "The upper shutter swings open."], [22.4, "One shot."], [25, "He does not get up. Somebody in the house has seen."]],
-    shots: [{ t: 0, p: [14, 1.8, 13.4], look: [0, 2.5, 4] }, { t: 9, p: [2, 1.6, 12.6], look: [-6.5, 1.2, 5] }, { t: 18, p: [-1, 1.5, 9.5], look: [3, 4.4, -5.5] }, { t: 22, p: [-1, 1.5, 9.5], look: [3, 4.6, -5.5] }, { t: 23.2, p: [-1, 1.7, 9.5], look: [60, 30, -60] }, { t: 29, p: [-1, 2, 9.5], look: [80, 40, -60] }],
-    fov: [[0, 46], [18, 34], [22, 30], [24, 50]],
+    captions: [[0, "Morning. The house stands on its rise over the road."], [4, "John Callendar walks up the track."], [12, "His jackass is in the castle yard. He calls out. Nobody answers."], [19.5, "The upper shutter swings open."], [22.5, "One shot. The birds go up from the cotton tree."], [28, "A hat lies on the track."], [32, "A sick man in the house has seen. He slips out by the east door to tell."]],
+    shots: [
+      { t: 0, p: [17, 2.4, 14.6], look: [0, 4.4, -12] },
+      { t: 5, p: [11, 1.7, 13.2], look: [3, 1.5, 9] },
+      { t: 11, p: [6.4, 1.5, 9.8], look: [3, 1.4, 7] },
+      { t: 14, p: [6.0, 1.4, 7.4], look: [3, 1.5, 4] },
+      { t: 16.5, p: [5.0, 1.2, 6.4], look: [2, 3.2, -4] },
+      { t: 19.5, p: [4.6, 1.3, 5.2], look: [-1.7, 5.8, -9.5] },
+      { t: 22.3, p: [4.5, 1.3, 5.2], look: [-1.7, 5.9, -9.5] },
+      { t: 23.3, p: [4.6, 1.6, 6.4], look: [-0.8, 12, 4.2] },
+      { t: 27.5, p: [5.2, 2.2, 8.4], look: [-3, 17, 2] },
+      { t: 28.4, p: [6.6, 1.5, 2.9], look: [3.2, 0.2, 1.7] },
+      { t: 31.5, p: [6.0, 1.1, 2.3], look: [3.2, 0.3, 1.6] },
+      { t: 32.6, p: [14.5, 2.0, 9.4], look: [8.5, 2.2, -11] },
+      { t: 37, p: [15.5, 2.0, 10.2], look: [11.5, 1.4, -2] },
+      { t: 42, p: [15.5, 2.0, 12], look: [14, 1.3, 9] },
+    ],
+    fov: [[0, 50], [5, 44], [11, 42], [16, 40], [19.5, 26], [22.3, 22], [23.4, 46], [28.4, 30], [31.5, 26], [32.7, 26], [37, 34], [42, 40]],
     acts: [],
-    sounds: [[1, "begin"], [22.3, "shot"], [25, "sad"]],
-    duration: 29,
+    sounds: [[1, "begin"], [22.5, "shot"], [28.4, "sad"]],
+    duration: 42,
   },
   morning: {
-    place: "town", next: 65, journal: "epitaph", title: "The sixteenth of March, 1773",
+    place: "town", next: 67, journal: "epitaph", title: "The sixteenth of March, 1773",
     read: ["Lewis Hutchinson was hanged in Spanish Town on the morning of 16 March 1773.", "He was not sorry. He left two lines for his tombstone. The stone was never made."],
-    captions: [[0, "Spanish Town. The sixteenth morning of March, 1773."], [7, "The square is full before the sun is up."], [14, "Across the square, a frame of timber."], [20, "“Their sentence, pride, and malice I defy.” His words. His stone was never made."]],
-    shots: [{ t: 0, p: [12, 2.2, 10], look: [-4, 3, -5] }, { t: 8, p: [2, 1.7, 8], look: [-6, 1.4, 3.6] }, { t: 15, p: [4, 1.8, 6], look: [26, 4, 22] }, { t: 26, p: [8, 2.2, 9], look: [26, 6, 22] }],
-    fov: [[0, 46], [15, 30], [26, 26]],
+    captions: [[0, "Spanish Town. The sixteenth morning of March, 1773."], [7, "King’s House is dark. The square is full before the sun is up."], [14, "Everyone looks one way, down the street."], [20, "At its end, a frame of timber."], [27, "“Their sentence, pride, and malice I defy, / Despise their power and like a Roman die.”"], [34, "His words. His stone was never made."], [38, "The court tried him for one killing. No other was ever tried."]],
+    shots: [
+      { t: 0, p: [-17.5, 1.8, -9], look: [-30, 6.5, 0] },
+      { t: 7, p: [-14.6, 2.4, -7.5], look: [-9, 1.6, 0] },
+      { t: 13, p: [-4, 2, -4], look: [-6, 1.6, 6] },
+      { t: 19, p: [-7.4, 1.9, 8.5], look: [-8.8, 2.6, 30] },
+      { t: 27, p: [-8.6, 2, 9], look: [-9, 3.4, 56] },
+      { t: 32, p: [-9.4, 2.4, 9.5], look: [-9, 4, 40] },
+      { t: 34, p: [-13, 6, 6], look: [5, 3, -6] },
+      { t: 40, p: [-18, 11, 3], look: [6, 2.5, -4] },
+    ],
+    fov: [[0, 46], [7, 44], [13, 46], [19, 30], [27, 24], [32, 30], [34, 44], [40, 50]],
     acts: [],
-    sounds: [[1, "drum"], [3, "drum"], [5, "drum"], [14, "bell"], [20, "sad"]],
-    duration: 26,
+    sounds: [[1, "drum"], [3, "drum"], [5, "drum"], [14, "drum"], [16, "drum"], [20, "bell"], [27, "sad"]],
+    duration: 43,
   },
 };
 export const QUIZ = {

@@ -30,7 +30,7 @@ import { makeSky, G, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
-import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } from "./content.js";
+import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ, SILENT } from "./content.js";
 import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
 import * as P from "./props.js";
@@ -519,13 +519,14 @@ async function waits(st) {
 function talk(n) {
   if (busy || openPanel() || DIR.on) return;
   const response = story.talk(n.id),
-    L = response?.kind === "story" ? TALK[S.stage]?.[n.id] : [response?.line || "I have no more to say."];
+    silent = SILENT[n.id],   /* someone who never speaks in this game: you get your own thought, not a word of theirs */
+    L = response?.kind === "story" ? TALK[S.stage]?.[n.id] : silent ? [{ who: "You", text: silent[(S.stage + Math.floor(S.x)) % silent.length | 0] || silent[0] }] : [response?.line || "I have no more to say."];
   if (!L?.length) return;
   talking = n;
   S.yaw = Math.atan2(S.x - n.x, S.z - n.z);
   S.pitch = Math.atan2(0.15, Math.hypot(S.x - n.x, S.z - n.z));
   world().storyLife.hold(n, true);
-  n.ctl.play(n.m.userData.seatAnchor ? "SitTalk" : n.sex === "m" ? ["TalkM2", "TalkM1"][S.stage % 2] : ["Talk1", "Talk3"][S.stage % 2]);
+  if (!silent) n.ctl.play(n.m.userData.seatAnchor ? "SitTalk" : n.sex === "m" ? ["TalkM2", "TalkM1"][S.stage % 2] : ["Talk1", "Talk3"][S.stage % 2]);
   dialogue(
     n.who,
     L,
@@ -855,7 +856,7 @@ function hint(now) {
   const quiet = S.started && !busy && !openPanel() && !DIR.on,
     h = story.tick(now, quiet);
   $("nudge").hidden = true;
-  if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: () => 0 });
+  if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: () => 0, eye: () => GAME.eye });   /* the arrow is laid out for this game's eye height */
   /* a gold arrow on the ground points the way, a gold ring marks the place */
   if (h.show && quiet) GUIDE.point(now, { x: h.x, z: h.z, tx: h.target[0], tz: h.target[1], final: h.final });
   else GUIDE.hide(now);

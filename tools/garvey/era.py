@@ -1210,6 +1210,31 @@ def build_hat(HK,HM):
             d=v.co-C0; r=math.hypot(d.x/(rx+0.085*s*BR),d.y/(ry+0.075*s*BR))
             if r>0.62 and abs(d.z)<0.01: v.co.z+=0.028*((r-0.62)/0.38)**2*(0.6+0.4*math.sin(math.atan2(d.y,d.x)*2+1.2))   # brim turned up a little, unevenly
         rigid(HM,bm,HM,'Head')
+    if HK=='cocked':
+        # a cocked hat (tricorne) of the later 1700s, for men of 1773 and 1799 (only a recipe that names "cocked" builds it, so no older body changes): a low round crown of black felt
+        # and a broad brim turned up on three sides, so it reads as a triangle from above with one point to the front. The brim is a felt sheet 3 mm thick that rises from the
+        # band and curls up toward its edge; the sides stand almost upright against the crown and the three corners stay low and point outward, so the brim never hides the brows.
+        fit=head_fit(0.008); cx,cy,rx,ry,BZ=fit; bm=bmesh.new(); seg=48; Hc=CRH+0.020*s; rin=min(rx,ry)-0.003
+        lathe(bm,[(0.002,0.002*s),(0.001,Hc*0.55)]+[(-0.022*s*(1-math.cos(t*math.pi/2)),Hc-0.022*s*(1-math.sin(t*math.pi/2))) for t in (0.0,0.3,0.55,0.8,1.0)]+[(-0.05*s,Hc+0.002*s),(-rin,Hc+0.003*s)],fit,seg=seg)
+        nu=8; A=[]; B=[]; TH=0.003*s; d0=0.004
+        for k in range(seg):
+            a=2*math.pi*k/seg; corner=((1+math.cos(3*a))/2)**3      # 1 at the three corners (front, back left, back right), 0 halfway along each side
+            th=math.radians(80)*(1-corner)+math.radians(8)*corner      # how far the brim is turned up here
+            W=0.084*s*(1+0.30*corner)*(1+0.10*max(0.0,-math.cos(a))*(1-corner))      # the corners reach further out; the back is turned up a little taller
+            ra=Vector((math.sin(a)*(ry+d0),-math.cos(a)*(rx+d0),0)); ra=(ra.normalized() if ra.length>1e-6 else Vector((0,-1,0)))      # outward from the head's outline
+            p=Vector((cx+math.sin(a)*(rx+d0),cy-math.cos(a)*(ry+d0),BZ)); ca=[]; cb=[]
+            for j in range(nu+1):
+                u=j/nu; t2=th*(0.72+0.28*u) if j else th*0.72      # the felt curls up toward its edge
+                if j: p=p+(ra*math.cos(t2)+Vector((0,0,math.sin(t2))))*(W/nu)
+                n=ra*math.sin(t2)-Vector((0,0,math.cos(t2)))      # the brim's outer (lower) face points this way
+                ca.append(bm.verts.new(p)); cb.append(bm.verts.new(p+n*TH))
+            A.append(ca); B.append(cb)
+        for k in range(seg):
+            k2=(k+1)%seg
+            for j in range(nu):
+                bm.faces.new((A[k][j],A[k2][j],A[k2][j+1],A[k][j+1])); bm.faces.new((B[k][j+1],B[k2][j+1],B[k2][j],B[k][j]))
+            bm.faces.new((A[k][nu],A[k2][nu],B[k2][nu],B[k][nu])); bm.faces.new((B[k][0],B[k2][0],A[k2][0],A[k][0]))      # the brim's outer edge and its edge at the band
+        rigid(HM,bm,HM,'Head')
     if HK=='flat':
         # a flat (newsboy) cap: a band at the brow, a low dome that puffs out past it, and a short stiff peak at the front
         BZ=TOP-0.085*s-G.get('hatdrop',0)*s; xs=[];ys=[]      # hatdrop (metres): the hat sits this much lower on the head. TOP is measured on a helper shape about 13 mm above the real skull, so a stiff cap rode high (owner, 16 November 2026: the Emperor's and the police caps)
@@ -1396,6 +1421,52 @@ if G.get('coat') and G.get('coatbuttons',OLD):      # a row of buttons down the 
         z=z1+(z0-z1)*i/nb; hit=CT.ray_cast(Vector((0.010*s,-1,z)),Vector((0,1,0)))[0]
         if hit: bmesh.ops.create_circle(bm,cap_ends=True,segments=6,radius=0.0075*s,matrix=Matrix.Translation((0.010*s,hit.y-0.004,z))@Matrix.Rotation(math.pi/2,4,'X'))
     COL.setdefault('CoatButtons',COL['Coat']*0.5); soft('CoatButtons',bm,'CoatButtons')
+if G.get('coat') and OLD and G.get('facings'):
+    # Facings (only a recipe that sets "facings": true builds them, so no older body changes): the lapels and cuffs of a coat of the 1790s in a second cloth, material Facings
+    # (a Royal Navy lieutenant's blue coat with white facings). The 1690 coat has no lapel of its own, so each lapel is a band of the facing cloth laid 3 mm over the coat
+    # along its front edge, from the neckline to the waist, widest at the top; each cuff is a band round the end of the coat's sleeve. Both take the coat's own bone weights.
+    COL.setdefault('Facings',srgb((236,234,226))); CT=tree_of(PART['coat']); LIFT=0.003; z0=HIP+0.07
+    def _on(o,d,out=False,lift=LIFT):      # where a ray meets the coat, lifted off its outer side (out: the ray starts inside the sleeve, so the outer side is the far one)
+        hit=CT.ray_cast(o,d)
+        if hit[0] is None: return None
+        n=hit[1] if (hit[1].dot(d)<0)!=out else -hit[1]
+        return hit[0]+n*lift
+    bm=bmesh.new()
+    for sx in (-1,1):
+        ztop=None; z=NECK
+        while z>z0+0.1:
+            hit=CT.ray_cast(Vector((0.004*s*sx,-1,z)),Vector((0,1,0)))[0]
+            if hit is not None and hit.y<NJ.y-0.03: ztop=z-0.005; break
+            z-=0.002
+        if ztop is None: continue
+        rows=[]; nz=26; nx=8
+        for i in range(nz+1):
+            f=i/nz; z=ztop+(z0-ztop)*f; w=(0.092-0.046*f**0.8)*s; row=[]      # each lapel about 9 cm wide under the collar, narrowing to under 5 cm at the waist
+            for j in range(nx+1):
+                x=sx*(0.003*s+w*j/nx); q=_on(Vector((x,-1,z)),Vector((0,1,0)))
+                if q is None or q.y>NJ.y-0.02: q=(rows[-1][j].co+Vector((0,0,z-rows[-1][j].co.z))) if rows else Vector((x,-0.1,z))
+                row.append(bm.verts.new(q))
+            rows.append(row if sx>0 else row[::-1])
+        quadstrip(bm,rows)
+    soft('FacingLapels',bm,'Facings',src=PART['coat'])
+    if G.get('coatsleeves',True):
+        cs=G.get('coatsleeve',0.82); bm=bmesh.new()
+        for sx in (-1,1):
+            rings=[]; nk=28
+            for i in range(7):
+                t=cs-0.105+0.093*i/6; pp,d=armcut(t,sx); d=d.normalized()      # each ring lies in the plane the sleeve's end is cut on, so the band runs parallel to that edge
+                e0=Vector((EL.x*sx,EL.y,EL.z)); e1=Vector((HA.x*sx,HA.y,HA.z)); fd=e1-e0; den=fd.dot(d)
+                if abs(den)<1e-6: continue
+                q=e0+fd*((pp-e0).dot(d)/den)      # its centre is where the forearm's own line crosses that plane (the arm is bent a little at the elbow, so the straight line from shoulder to hand misses the sleeve)
+                u=d.cross(Vector((0,1,0))).normalized(); v=d.cross(u).normalized(); ring=[]
+                for k in range(nk):
+                    ph=2*math.pi*k/nk; dr=u*math.cos(ph)+v*math.sin(ph); r=_on(q,dr,True,0.0045)      # (4.5 mm: the sleeve bends at the elbow end of the cuff)
+                    ok=r is not None and (r-q).length<0.12*s; last=r if ok else (q+dr*((ring[-1].co-q).length if ring else 0.05*s))
+                    ring.append(bm.verts.new(last))
+                rings.append(ring if sx>0 else ring[::-1])
+            if len(rings)>1: quadstrip(bm,rings,close=True)
+        if len(bm.faces): soft('FacingCuffs',bm,'Facings',src=PART['coat'])
+        else: bm.free()
 if G.get('apron'):
     # An apron, made again from scratch (owner, 21 November 2026: "check the placements of aprons ... not have the underlying textures show through ... show a string around the
     # waist ... ensure it places against the body believably"). The old one was a flat card hung in front of the legs: it stood off the body like a board, the shirt showed in

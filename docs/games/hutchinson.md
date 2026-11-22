@@ -22,6 +22,7 @@ The game keeps the two apart, on the journal pages and in the quiz. Source: a re
 | Enslaved people could not give evidence against a white person | Law of the time | Bryan Edwards (1794), vol. 2, p. 144; Acts of Assembly |
 | Hector, enslaved at the castle, led searchers to remains; 24 people enslaved there in 1773 | Record | Black; Cundall |
 | The sinkhole: 98 m deep; the Governor lowered in 1895 saw no bones | Record | Jamaican Caves Organisation; Cundall |
+| The sinkhole's mouth is about 3 m by 5 m, at the foot of a small valley ringed by rock walls about 10 m high | Record | Jamaican Caves Organisation register, http://www.jamaicancaves.org/Register_E_J.htm |
 | He bought the land in 1768; on the St Ann jury list 1768 or 1769 | Record | JNHT 2010 proposal; Cundall; Black |
 | House: two storeys, a round loopholed tower at two opposite corners | Description and photographs | Cundall; JNHT 2010 proposal |
 
@@ -31,13 +32,17 @@ Real people: Dr Hutton says imagined words (his page says so). John Callendar ne
 
 ## Places (rule 3: what is modelled on a source)
 
-- **Castle:** from Cundall's description and the JNHT photographs of the ruin. Stand-ins: the roofs (the ruin has none), the window, the well, the ground between road and house. No measured plan was found.
-- **Spanish Town:** a general picture of the public building facing King's House, where the court sat upstairs (Long, 1774). To do: model it on Long's 1774 plate (`nljdigital.nlj.gov.jm/items/show/5208`).
-- **Road, hall, sinkhole:** general pictures. The sinkhole's real mouth is about 3 by 5 m; the game's is wider.
+Scenery builders are in `src/scenery.js`; the places are put together in `src/places.js`.
+
+- **The road by Dr Hutton's pen (chapters 1 and 2):** a general picture of a St Ann cattle pen about 1772, since no drawing of Hutton Bonvil or Lebanon was found: Guinea grass pasture gone gold in the dry season, a rail fence and a feed rack, eleven cattle (stand, graze, lie), a dry pond of cracked mud, a dry stone trough, the pen-keeper's thatched hut with its cook fire, a grass stack, the pen house with its kitchen across the pasture, karst hills near and far, and the castle's towers far off on their rise. The boundary pole and pegs, the pack mule and Sampson's cart are the story's own.
+- **Edinburgh Castle, dusk and morning (chapters 3 and 4):** from Cundall's description and the JNHT photographs of the ruin: rubble limestone, two storeys, round loopholed towers at diagonally opposite corners, a door beside the front tower and one on the east side, small square plastered loopholes, the house on rising ground over the road, and the quarters of the enslaved people as ruins to the west. Stand-ins: the roofs and chimney (the ruin has none), the shuttered upper window, the well, the cotton tree, the cattle yard and every piece of cover between the road and the well. No measured plan was found.
+- **The hall (chapter 5):** a general picture inside those walls: plastered loopholes in deep splays, the foot of the spiral steps in the back tower (Cundall), a corner hearth, the two doors, and what later accounts say the searchers found (the watches, the coats). The cot is the sick man of the 1773 letter. The furniture is a general picture.
+- **The sinkhole (chapter 5):** after the Jamaican Caves Organisation register: a small valley ringed by rock walls about 10 m high, the mouth about 3 m by 5 m at its foot, and a shaft that goes dark out of sight. The rope, stake and lantern are the game's picture.
+- **Spanish Town, March 1773 (chapter 6):** the square after the 1774 plate in Edward Long's history (`nljdigital.nlj.gov.jm/items/show/5208`): King's House with its portico, the public building opposite with brick arches below and the long gallery where the court sat upstairs, and the railed octagonal green between them. In the real square King's House is on the west side and the public building on the east; the game turns the square so the court faces north. There is no Rodney Memorial and no 1819 court house. The houses on the other two sides and the market goods are a general picture. The gallows at dawn is a far shape at the end of a street.
 
 ## People
 
-13 own recipes in `tools/hutchinson/people/` (`hx_`), built by `tools/hutchinson/build-people.mjs` with the shared builder. Skin 1.55, Hair 1. Known gaps: men's hats are the builder's round felt, not the cocked hat of the 1770s; women's dress is the shift, petticoat and head wrap the builder can make. Clothes follow Long (1774) and the 1769 Acts (osnaburg frocks, jackets, drawers and petticoats).
+17 own recipes in `tools/hutchinson/people/` (`hx_`), among them Hector (real, silent), the sick man (seen only far off in the camera scene) and two pen workers for the background, built by `tools/hutchinson/build-people.mjs` with the shared builder. Skin 1.55, Hair 1. Known gaps: men's hats are the builder's round felt, not the cocked hat of the 1770s; women's dress is the shift, petticoat and head wrap the builder can make. Clothes follow Long (1774) and the 1769 Acts (osnaburg frocks, jackets, drawers and petticoats).
 
 ## How it is made
 
@@ -45,4 +50,37 @@ Copied from Windrush's frame. `content.js` (words), `steps.js` (story table, `TA
 
 ## Checks (22 November 2026)
 
-`?auto=1` plays all six chapters to step 66. `FLOW 0`. `?test=audit`: 0 in all five places. Layout and ambient setup 0 in all five. Not yet run: `?test=all`, cloth, walkers, skin, held, ambient, layout at the four screen sizes, a phone play-through by hand, and a listen to the sound. Not yet timed against the 5 to 8 minutes a chapter.
+`?auto=1` plays all six chapters to step 66. `FLOW 0`. `?test=audit`: 0 in all five places. Layout and ambient setup 0 in all five.
+
+Later the same day: `?test=held` 0. `?test=ambient` 0 in all five places. `?test=layout` 0 at 390x800. `?test=walkers`: every body 0 lines but `hx_cudjoe`, who slides 9.4 cm a loop when the test walks him at an old man's pace (0.85 m/s); he never walks in the game, so it is not seen, but the pace needs fixing before he is given a walk.
+
+Not yet run: `?test=all`, cloth, skin, layout at 667x375, 800x500 and 1280x720, a phone play-through by hand, and a listen to the sound. Not yet timed against the 5 to 8 minutes a chapter.
+
+## Checks, 22 November 2026 (second pass)
+
+`?test=layout`: 0 at 390x800, 667x375, 800x500 and 1280x720. `?test=held`: 0. `?test=ambient`: 0 in every place. `?test=cloth` is **not at 0**: it lists small show-through points on the new bodies (a few millimetres at the coat neck, the hat band and the belt line; for example 31 lines on `hx_hutton`, worst 28.5 mm at the hat band). They come from the shared clothes builder, which is not changed in a game's own pull request (`docs/STANDARD.md`); they need a look in close screenshots and, if seen, a builder fix in its own PR. `?test=skin` and `?test=walkers` for this game are still to run and record.
+
+## Checks, 22 November 2026 (enrichment pass)
+
+The story now has 44 steps: new moments are the dry pond, the cut grass, the boundary peg, the cask, the cotton tree and the hat, the tumbled wall, drawing the water, the strayed jackass, getting down behind the long wall, the cot, the loophole, the lantern on the rope and listening under the gallery. Both camera scenes were reshot.
+
+- `?auto=1`: plays to `AUTO END 68`, `FLOW 0`, no errors, no long dialogue lines.
+- `?test=audit`: `AUDIT 0` and `FACES 0` in all five places; layout and ambient setup 0.
+- `?test=ambient`: `AMBIENT 0` in all five places.
+- `?test=held`: `CARRY 0`.
+- `?test=layout`: `LAYOUT UI 0` at 390x800, 667x375, 800x500 and 1280x720.
+- `node tools/lint_content.mjs --ci`: 0 new for hutchinson.
+
+Still to do: `hx_cudjoe` slides in the walk check, so he is never given a walk; `?test=cloth` show-through points from the shared builder (above); a phone play-through by hand; timing each chapter against 5 to 8 minutes; outside review.
+
+### Clothes pass, 22 November 2026 (cocked hats, cloth, skin, walkers)
+
+- **Cocked hats.** The shared builder now makes a tricorne (`["cocked", "Hat"]`, `docs/PIPELINE.md` section 5): a low round crown and a black felt brim turned up on three sides, one point to the front. Hutton, Hutchinson, Callendar, Captain Reid (`hx_officer`) and the townsman (`hx_townman`) wear it instead of the round felt hat; seamen, the enslaved and free working men, and the bareheaded clerk do not. Looked at front, three-quarter, side and back, standing and walking: it sits on the hair with no gap, and the brim stays above the brows. No change in `src/` was needed: the hat is part of each body (material `Hat`), so the earlier gap "men wear the builder's round felt hat" is closed.
+- **`?test=cloth`** (raw bodies). The game's joined meshes are checked as if they were cloth, so a plain run doubles every line and adds false ones such as "Breeches_joined shows through ScarfEnds" (the joined mesh is the whole body): 364 lines in all. With `&nojoin` the real count is 83 lines over 17 bodies: hx_hutton 7, hx_hutchinson 3, hx_callendar 4, hx_officer 5, hx_clerk 6, hx_cudjoe 6, hx_carter 1, hx_juba 7, hx_cubba 1, hx_hector 1, hx_sick 1, hx_man 2, hx_woman 3, hx_townman 16, hx_townwoman 14, hx_penman 2, hx_penwoman 4. The old "Breeches_joined shows through HatBand" line is gone: the cocked hat has no band. What is left, and why it stays for now (none of it shows in close shots front, three-quarter, side and back, standing, walking and bending): skin 4 to 8 mm into the coat's neck facing at the side of the neck on every 1690-cut coat (it lies under the cravat and the hair; the fix would change every older coat in Port Royal and Nanny Town, so it waits for its own builder change); breeches 12 to 18 mm through the coat at the back vent on one to three points in a nod, a laugh or a step (`hx_townman`, `hx_clerk`); one shirt point at Callendar's elbow in TalkM1 (24.5 mm, one point, inside the cuff); points at a shirt's neckline or armpit (`hx_penman` 29 mm, `hx_sick` 20 mm, `hx_hector` 21 mm, all one to six points at the edge, clean on screen); the women's sash and apron when bending to pick up. Every woman's fingertips report "4 open edge points", a builder fault in every game. `hx_cudjoe`'s fingers reach 30 mm into his drawers in HeadTurn: that is his arm spread, set in the game's code, not his clothes.
+- **`?test=skin`** (mean face colour as drawn): hx_hutton 226,178,132; hx_hutchinson 214,162,119; hx_callendar 215,165,122; hx_officer 214,162,116; hx_clerk 231,187,141; hx_cudjoe 148,97,62; hx_carter 148,97,61; hx_juba 152,99,64; hx_cubba 136,87,55; hx_hector 111,74,48; hx_sick 223,175,129; hx_man 155,100,64; hx_woman 151,99,64; hx_townman 228,176,130; hx_townwoman 167,112,73; hx_penman 157,104,66; hx_penwoman 164,109,70. Hector's recipe skin (146,100,72) is inside the rule 9 range like the others; his lower reading comes from his dark hairline in the probe's frame, and his face reads as warm brown in close shots, so his recipe is unchanged.
+- **`?test=walkers`**: every body slides under 2 cm a loop except `hx_cudjoe`, 9.4 cm at the 0.85 m/s the check gives an OldIdle body. He never walks in the game (a `watch` behaviour in the hall and at the hole), so nothing slides on screen; if he is ever given a walk, give him `ctl.pace` to fit his 169 cm stride.
+- After the rebuild: `?auto=1` AUTO END 68, FLOW 0; `?test=audit` 0 in all five places; `?test=ambient` 0; `?test=held` CARRY 0.
+
+## Second pass, 22 November 2026
+
+Finished from the paused job: Spanish Town rebuilt as a square (a long arcaded brick public building with its gallery, a railed octagonal enclosure in the middle, houses round the other sides), meant to follow Edward Long's 1774 plate; the lead checked the result in a screenshot but did not compare it side by side with the plate, so that comparison is still open. The near hills are steep, rounded cockpit hills with pale limestone showing. The hills are marked as ground for the overlap check (`userData.soft`), since trees and rocks on their slopes stand into them as on a real hillside. Checks: `?auto=1` to step 68, `FLOW 0`, audit 0 in all five places, ambient 0, held 0, layout 0 at 390x800; content lint 0 new.

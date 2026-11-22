@@ -68,17 +68,21 @@ function goalBanner(goalId) {
   const st = document.createElement('style'); st.textContent = BANNER_CSS; document.head.appendChild(st);
   g.classList.add('goalicon');
   /* the flag sits on the same line as the top buttons (owner, 22 November 2026: "this must be properly aligned"), whatever each game's own CSS says */
+  let lined = false;
   const align = () => {
     const jb = document.getElementById('jbtn'), size = Math.round(Math.max(44, Math.min(52, jb && jb.offsetHeight ? jb.offsetHeight : 46)));   /* the same size as the top buttons, square */
     for (const k of ['width', 'height', 'min-width', 'max-width', 'min-height', 'max-height', 'flex-basis']) g.style.setProperty(k, size + 'px', 'important');
     const cs = getComputedStyle(g); if (cs.position !== 'absolute' && cs.position !== 'fixed') return;   /* in a flex row (Bog Walk) the row lines it up */
     const row = document.getElementById('jrow') || jb; if (!row) return;
-    const r = row.getBoundingClientRect(); if (!r.height) return;
+    const r = row.getBoundingClientRect(); if (!r.height) return;   /* not on screen yet (the title is up): tried again below */
+    lined = true;
     const par = cs.position === 'fixed' ? { top: 0 } : (g.offsetParent || document.body).getBoundingClientRect();
     g.style.top = Math.round(r.top - par.top + (r.height - size) / 2) + 'px'; g.style.bottom = 'auto';
   };
   addEventListener('resize', align); new MutationObserver(align).observe(g, { attributes: true, attributeFilter: ['hidden'] });
-  let n = 0; const early = setInterval(() => { align(); if (++n > 20) clearInterval(early); }, 250);   /* the Exit row is built after us */
+  /* the Exit row is built after us, and in games whose top bar is hidden behind the title the buttons have no size until play starts: keep trying
+     until the flag has really been lined up, then a little longer for the row to settle (owner, 22 November 2026: the flag sat too low and out of line) */
+  let n = 0; const early = setInterval(() => { align(); if (lined ? ++n > 12 : false) clearInterval(early); }, 250);
   const label = () => { const t = (g.textContent || '').trim(); g.setAttribute('aria-label', t ? 'Goal: ' + t : 'Goal'); g.title = t; };
   new MutationObserver(label).observe(g, { childList: true, characterData: true, subtree: true }); label();
   const q = new URLSearchParams(location.search); if ((q.has('test') || q.has('shot') || q.has('auto')) && !q.has('banner')) return;   /* test views and screenshots keep a still screen: no banner */
@@ -97,6 +101,9 @@ function goalBanner(goalId) {
     b.innerHTML = ''; const sm = document.createElement('small'); sm.textContent = 'Goal'; b.append(sm, document.createTextNode(text));
     b.style.transform = ''; b.hidden = false; b.classList.remove('off'); void b.offsetWidth; b.classList.add('on');
     if (stay) { const watch = () => { if (b.hidden) return; if (busy() || (g.textContent || '').trim() !== text) { hide(); return; } timer = setTimeout(watch, 400); }; timer = setTimeout(watch, 400); return; }   /* opened with the flag: stays until the flag is tapped again, a talk or card opens, or the goal changes */
+    /* a card, a talk or a chapter title that opens while the banner is up takes the screen: the banner goes at once, never on top of it
+       (owner, 22 November 2026: the goal showed over the card before a scene) */
+    const guard = setInterval(() => { if (b.hidden || !b.classList.contains('on')) { clearInterval(guard); return; } if (busy()) { clearInterval(guard); hide(); } }, 120);
     timer = setTimeout(() => {
       const gr = g.getBoundingClientRect(), br = b.getBoundingClientRect();   /* the banner shrinks into the goal box, then the box comes back */
       if (gr.width > 0) b.style.transform = `translate(calc(-50% + ${(gr.left + gr.width / 2) - (br.left + br.width / 2)}px), calc(-50% + ${(gr.top + gr.height / 2) - (br.top + br.height / 2)}px)) scale(.45)`;
