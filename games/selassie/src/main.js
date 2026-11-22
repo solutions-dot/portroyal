@@ -35,6 +35,16 @@ import {
   stepSound,
   uiSound,
   cue,
+  chirp,
+  gullCry,
+  mixBeds,
+  bedTest,
+  carFar,
+  hornFar,
+  dogFar,
+  radioFar,
+  planeFar,
+  frog,
 } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
 import { makeSky, G, batchStatic, cv } from "./gfx.js";
@@ -1400,6 +1410,33 @@ function steadyHeads(Q, dt) {
     lookEnd(b.map((s) => s.bone));   /* tell the engine's guard what the head was left as (engine/anim.js), so a look still cannot pile up */
   }
 }
+/* ---------- sound: each place has its own mix of the engine's beds, and now and then one small sound (22 November 2026: it had none) ----------
+   Kingston 1966 by day: far traffic, people, birds and a radio down the road; the Palisadoes road: the harbour, gulls and the walking crowd;
+   the airport: the waiting crowd, the wind off the sea and an aeroplane far off; the lane at dusk: crickets, frogs, a dog and the shop's radio. */
+const pick = (...f) => () => f[(Math.random() * f.length) | 0]();
+const SOUNDSCAPE = {
+  yard: { wind: 0.05, crowd: 0.05, traffic: 0.07, once: pick(chirp, chirp, dogFar, radioFar, carFar) },
+  memory: { wind: 0.07, crowd: 0.05, once: pick(chirp, chirp, dogFar) },
+  downtown: { crowd: 0.2, traffic: 0.13, wind: 0.03, once: pick(carFar, hornFar, radioFar, chirp) },
+  parade: { crowd: 0.22, traffic: 0.15, wind: 0.03, once: pick(carFar, hornFar, chirp) },
+  road: { sea: 0.16, surf: 0.06, wind: 0.1, crowd: 0.14, traffic: 0.05, once: pick(gullCry, gullCry, carFar) },
+  airport: { crowd: 0.24, wind: 0.1, sea: 0.04, once: pick(planeFar, gullCry, chirp) },
+  lane: { cricket: 0.08, crowd: 0.05, traffic: 0.03, wind: 0.03, once: pick(radioFar, frog, frog, dogFar) },
+};
+if (__DEV__ && q.get("test") === "beds") bedTest(SOUNDSCAPE); /* ?test=beds : each place's bed levels against the shared range (engine/audio.js) */
+let auNext = 0,
+  onceAt = 5;
+function audioTick(t) {
+  if (!AU.ctx || t < auNext) return;
+  auNext = t + 0.1;
+  const L = (S.started && SOUNDSCAPE[current]) || {},
+    hold = DIR.paused; /* the cinematic's Pause stops every sound */
+  mixBeds(hold ? {} : L, { duck: !!talking || DIR.on, tc: hold ? 0.15 : 0.6 });
+  if (t > onceAt) {
+    onceAt = t + 6 + Math.random() * 6;
+    if (L.once && AU.on && !hold && !DIR.on) L.once();
+  }
+}
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
@@ -1484,6 +1521,7 @@ function frame(now) {
   }
   findNear();
   hint(now);
+  audioTick(now / 1000);
   steadyHeads(Q, dt);
   renderFramed(renderer, scene, camera, DIR.on);
   if (S.started && (saveT += dt) > 3) {
@@ -1495,6 +1533,7 @@ async function start() {
   if (!ready || busy) return;
   audioInit();
   S.started = true;
+  if (!saved) cue("begin");
   $("title").hidden = true;
   $("hud").hidden = false;
   startHint(phone); /* the controls tip, for a few seconds at the start of play */
