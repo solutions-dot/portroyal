@@ -1447,3 +1447,86 @@ export function wallClock() {
   box(0.012, 0.08, 0.005, M.black, 0.03, -0.01, 0.033, g).rotation.z = -1.2;
   return g;
 }
+
+/* a fitted kitchen of the 1980s or 1990s along a wall (its back at z = 0, facing +z), len long: base units with doors and handles, a laminate
+   worktop at 0.92, a sink with a mixer tap, a band of tiles, wall cupboards above */
+export function fittedKitchen(len = 4) {
+  const g = grp(),
+    door = solid(0xe8e0cc, 0.5),
+    edge = solid(0xc8bca2, 0.6),
+    top = solid(0x8a7a66, 0.35),
+    steel = solid(0xb8bcc0, 0.25, 0.8);
+  box(len, 0.86, 0.6, edge, 0, 0.43, 0.3, g);
+  const n = Math.round(len / 0.6);
+  for (let i = 0; i < n; i++) {
+    const x = -len / 2 + (i + 0.5) * (len / n);
+    box(len / n - 0.02, 0.7, 0.02, door, x, 0.45, 0.61, g);
+    box(len / n - 0.02, 0.12, 0.02, door, x, 0.8, 0.61, g);
+    box(0.1, 0.012, 0.02, steel, x, 0.72, 0.63, g);
+    box(len / n - 0.02, 0.5, 0.02, door, x, 1.75, 0.36, g);
+    box(0.012, 0.08, 0.02, steel, x + (len / n) * 0.35, 1.6, 0.38, g);
+  }
+  box(len + 0.02, 0.04, 0.64, top, 0, 0.9, 0.32, g);
+  box(len, 0.62, 0.34, edge, 0, 1.75, 0.17, g);   /* the wall cupboards' carcass */
+  // tiles between the worktop and the cupboards: a small square pattern
+  const tt = cv(64, 64, (x) => {
+    x.fillStyle = "#ece8dc";
+    x.fillRect(0, 0, 64, 64);
+    x.strokeStyle = "#b8b2a2";
+    x.lineWidth = 2;
+    for (let i = 0; i <= 64; i += 16) {
+      x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 64); x.stroke();
+      x.beginPath(); x.moveTo(0, i); x.lineTo(64, i); x.stroke();
+    }
+  });
+  tt.wrapS = tt.wrapT = THREE.RepeatWrapping;
+  tt.repeat.set(len / 0.6, 0.54 / 0.6);
+  plane(len, 0.54, new THREE.MeshStandardMaterial({ map: tt, roughness: 0.3 }), 0, 1.19, 0.015, g);
+  // the sink and its tap
+  box(0.5, 0.012, 0.4, steel, -len / 2 + 0.9, 0.925, 0.32, g);
+  box(0.42, 0.01, 0.32, solid(0x6a6e72, 0.3, 0.6), -len / 2 + 0.9, 0.93, 0.32, g);
+  cyl(0.014, 0.014, 0.22, steel, -len / 2 + 0.9, 1.03, 0.1, g, 8);
+  box(0.02, 0.02, 0.14, steel, -len / 2 + 0.9, 1.14, 0.16, g);
+  return g;
+}
+/* a fridge-freezer: two doors with long handles */
+export function fridge() {
+  const g = grp(),
+    w = solid(0xf2f0ea, 0.35);
+  box(0.6, 1.75, 0.62, w, 0, 0.875, 0, g);
+  box(0.58, 0.01, 0.01, solid(0x9a9a9a, 0.4), 0, 1.1, 0.315, g);
+  for (const y of [0.55, 1.4]) box(0.025, 0.3, 0.03, solid(0x9a9a9a, 0.3, 0.6), -0.24, y, 0.33, g);
+  return g;
+}
+/* a curtain hanging in folds from a rod (its top at h, the folds facing +z); kind 0 or 1 picks the print */
+export function drape(w = 0.8, h = 2.2, kind = 0) {
+  const geo = new THREE.PlaneGeometry(w, h, 16, 1),
+    p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin((p.getX(i) / w) * Math.PI * 7) * 0.035);
+  geo.computeVertexNormals();
+  const m = wallpaper({ ground: kind ? [176, 132, 92] : [178, 128, 90], ink: [232, 214, 170], kind: "trellis", seed: 9 }).clone();
+  m.side = THREE.DoubleSide;
+  const g = grp();
+  mesh(geo, m, 0, h / 2, 0, g);
+  return g;
+}
+/* a crocheted throw over the back of a chair (in the chair's own frame: back at z = -0.34, its top at 1.0) */
+export function throwRug() {
+  const t = cv(64, 64, (x) => {
+    const c = ["#b83a2a", "#e8c040", "#2f6a4a", "#f2ead8"];
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) {
+      x.fillStyle = c[(i + j) % 4];
+      x.fillRect(i * 16, j * 16, 16, 16);
+      x.fillStyle = c[(i + j + 2) % 4];
+      x.fillRect(i * 16 + 5, j * 16 + 5, 6, 6);
+      x.strokeStyle = "#1c1a18";
+      x.strokeRect(i * 16 + 0.5, j * 16 + 0.5, 15, 15);
+    }
+  });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  const m = new THREE.MeshStandardMaterial({ map: t, roughness: 1 }),
+    g = grp();
+  box(0.62, 0.03, 0.24, m, 0, 1.015, -0.34, g);
+  box(0.62, 0.5, 0.03, m, 0, 0.77, -0.46, g);
+  return g;
+}

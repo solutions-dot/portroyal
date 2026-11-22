@@ -776,12 +776,14 @@ function home18() {
   box(15, 6.4, 0.3, br, 0, 3.2, -9.75, Q.group);
   for (const x of [-7.65, 7.65]) box(0.3, 6.4, 12, br, x, 3.2, -3.75, Q.group);
   // inside: the front room (west), the hall with the front door (east), the kitchen behind
-  const fl = std(T.plank([150, 116, 80], 10, [4, 4]), 0.8);
-  const rm = S.room({ x0: -5.6, z0: -6, x1: 1.4, z1: 2.0, h: 2.7, floor: fl, wall: solid(0xe6dcc4, 1), walls: [
+  /* the front room in warm painted plaster with a cornice, a stripe paper in the hall, a board floor (engine/building-tex.js surfaces) */
+  const fl = S.buildingMat("wood", { tint: 0xc09a74 }),
+    paint = S.wallpaper({ ground: [238, 226, 204], ink: [0, 0, 0], kind: "woodchip", seed: 6 });   /* painted woodchip paper, as many London front rooms had */
+  const rm = S.room({ x0: -5.6, z0: -6, x1: 1.4, z1: 2.0, h: 2.7, floor: fl, floorTile: 1.4, wall: paint, tile: 0.6, cornice: true, walls: [
     { line: [-5.6, -6, 1.4, -6], gaps: [] }, { line: [1.4, -6, 1.4, 2.0], gaps: [{ at: 5.3, w: 1.18, kind: "door" }] },
     { line: [-5.6, 1.93, -5.6, -6] }, { line: [1.4, 1.93, -5.6, 1.93], gaps: [{ at: 4.8, w: 2.8, h: 1.7, sill: 0.75, kind: "window" }] }] });
   fabric(Q, rm);
-  const hall = S.room({ x0: 1.4, z0: -6, x1: 3.8, z1: 2.0, h: 2.7, ceiling: false, floor: fl, wall: solid(0xd8e0d4, 1), walls: [
+  const hall = S.room({ x0: 1.4, z0: -6, x1: 3.8, z1: 2.0, h: 2.7, ceiling: false, floor: fl, floorTile: 1.4, wall: S.wallpaper({ ground: [214, 222, 208], ink: [90, 120, 110], kind: "stripe", seed: 5 }), tile: 0.5, rail: true, walls: [
     { line: [3.8, -6, 3.8, 2.0] }, { line: [1.4, -6, 3.8, -6], gaps: [{ at: 1.1, w: 0.9, kind: "door" }] }, { line: [3.8, 1.93, 1.4, 1.93], gaps: [{ at: 1.3, w: 1.0, kind: "door" }] }] });
   fabric(Q, hall);
   const kit = S.room({ x0: -5.6, z0: -9.4, x1: 3.8, z1: -6, h: 2.7, floor: solid(0xb8b2a2, 0.8), wall: solid(0xe8ecdf, 1), walls: [{ line: [-5.6, -9.4, 3.8, -9.4] }, { line: [3.8, -6, 3.8, -9.4] }] });
@@ -839,9 +841,34 @@ function home18() {
   add(Q, P.folder(), -2.95, -1.6, 0.45);
   // hall: a coat stand, a small table with a telephone, the mat inside the front door
   solid1(Q, P.table(0.5, 0.35, 0.8), 3.5, -4.6, 0.4, 0.6, Math.PI / 2);
-  // the kitchen beyond its door: cupboards, a kettle
-  solid1(Q, S.sideboard(3, 0xd8d0be), -1, -9.1, 3.1, 0.5);
-  add(Q, S.kettle(), -1.6, -9.1, 0.8);
+  // the kitchen beyond its door: fitted units with a worktop, a sink under the window, tiles, wall cupboards, a fridge, the kettle
+  const kitchen = S.fittedKitchen(4.2);
+  add(Q, kitchen, -1.2, -9.33);
+  wall(Q, -1.2, -9.1, 4.3, 0.65);
+  add(Q, S.kettle(), -2.4, -9.15, 0.92);
+  solid1(Q, S.fridge(), 1.6, -9.0, 0.65, 0.65);
+  const kcal = S.calendar(2018);
+  kcal.position.set(2.6, 1.55, -9.33);
+  Q.group.add(kcal);
+  add(Q, S.pendant(2.7, { shade: 0xf2f0ea, warm: 0xfff0d8, power: 1.6 }), -1, -7.7);
+  // the front room's light, curtains at the window, cushions and a throw, the Bible on the side table, a clock
+  add(Q, S.pendant(2.7, { shade: 0xd8c8a8, power: 2.2 }), -2.2, -2.2);
+  for (const x of [-5.15, -1.65]) {
+    const cu = S.drape(0.8, 2.2, x < -3 ? 0 : 1);
+    cu.position.set(x, 0.3, 1.82);
+    Q.group.add(cu);
+  }
+  box(3.9, 0.04, 0.04, S.SM.iron, -3.4, 2.52, 1.83, Q.group);
+  for (const [x, c] of [[-3.1, 0x8a3a3a], [-1.7, 0xd8a838]]) {
+    const cs = box(0.42, 0.38, 0.14, solid(c, 1), x, 0.68, -5.6, Q.group);
+    cs.rotation.x = -0.25;
+  }
+  add(Q, S.throwRug(), -4.62, -1.2, 0.0, Math.PI / 2);
+  box(0.16, 0.045, 0.23, solid(0x1a1612, 0.6), -2.5, 0.4725, -1.78, Q.group).rotation.y = 0.2;   /* her Bible on the low table */
+  const clk = S.wallClock();
+  clk.position.set(-5.5, 2.05, -2.7);
+  clk.rotation.y = Math.PI / 2;
+  Q.group.add(clk);
   // the front garden: a path, beds, the low wall and the gate onto the pavement
   box(1.2, 0.03, 5.6, solid(0xa8a294, 0.9), 2.5, 0.015, 4.8, Q.group);
   add(Q, S.bed(3.2, 4), -5, 2.3);
