@@ -23,7 +23,7 @@ import { createAmbient, ambientTest } from '../../../engine/ambient.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, tone, crackle, noiseHit } from '../../../engine/audio.js';
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, tone, crackle, noiseHit, mixBeds, bedTest, pickUp, putDown, carFar, dogFar, owl } from '../../../engine/audio.js';
 import { collapse } from '../../../engine/collapse.js';   /* the ward falls in pieces, as Port Royal's houses do (engine/collapse.js) */
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { slideWalls, walkRoute, segmentHitsWall } from '../../../engine/placement.js';
@@ -504,21 +504,21 @@ function timeline(k = 0) {   /* chapter 7: which came next? Three choices at a t
 const ACTIONS = {
   0: (P) => [{ label: 'Read the letter to Miss Iris', x: P.spots.iris.x - 0.9, z: P.spots.iris.z, r: 2.4, on: () => stage === 13, go: () => card('A letter for Miss Iris', LETTER, [{ t: 'Finish reading', go: () => { hideCard(); convo([{ who: 'Miss Iris', text: 'Pauline! I made that dress in 1961.' }, { who: 'Miss Iris', text: 'Thank you, child. You read it beautifully.' }], () => setStage(14), byId('iris1')); } }]) }],
   1: (P) => [
-    { label: 'Pick up the next thing', x: P.spots.table[0], z: P.spots.table[1], r: 1.9, on: () => stage === 21 && !ctr.holding, go: () => { const k = ctr.tidy || 0; ctr.holding = true; P.things[k].visible = false; uiSound('tap'); toast(TIDY[k].text, 4000); } },
-    ...TIDY.map((t, k) => ({ label: t.label, x: P.spots[t.where][0], z: P.spots[t.where][1], r: 1.9, on: () => stage === 21 && ctr.holding && (ctr.tidy || 0) === k, go: () => { ctr.holding = false; ctr.tidy = k + 1; P.things[k].visible = true; placeThing(P, k); uiSound('goal'); unlock(t.page); refreshGoal(true); if (ctr.tidy >= 4) setStage(22); else toast('Put back: ' + ctr.tidy + ' of 4'); } }))],
+    { label: 'Pick up the next thing', x: P.spots.table[0], z: P.spots.table[1], r: 1.9, on: () => stage === 21 && !ctr.holding, go: () => { const k = ctr.tidy || 0; ctr.holding = true; P.things[k].visible = false; pickUp(0.3); toast(TIDY[k].text, 4000); } },
+    ...TIDY.map((t, k) => ({ label: t.label, x: P.spots[t.where][0], z: P.spots[t.where][1], r: 1.9, on: () => stage === 21 && ctr.holding && (ctr.tidy || 0) === k, go: () => { ctr.holding = false; ctr.tidy = k + 1; P.things[k].visible = true; placeThing(P, k); putDown(0.3); uiSound('goal'); unlock(t.page); refreshGoal(true); if (ctr.tidy >= 4) setStage(22); else toast('Put back: ' + ctr.tidy + ' of 4'); } }))],
   2: (P) => [{ label: 'Listen to the radio', x: P.spots.radio[0], z: P.spots.radio[1], r: 2.0, on: () => stage === 30, go: () => convo(RADIO.map((text) => ({ who: 'The radio', text })).concat([{ who: 'Miss Iris', text: 'Trouble, trouble. Turn it down, child.' }]), () => setStage(31)) }],
   3: (P) => [
     { label: 'Hold the gate open', x: -1.9, z: -7.7, r: 2.3, on: () => stage === 42, go: () => holdGate(P) },
-    { label: 'Take a blanket', x: PILE[0], z: PILE[1], r: 1.5, on: () => stage === 43 && !ctr.carry && (ctr.blanket || 0) < 3, go: () => { ctr.carry = true; HELD_BLANKET.children[0].material = HELD_BLANKET.children[0].material.clone(); HELD_BLANKET.children[0].material.map = P.pile.children[2 - (ctr.blanket || 0)].material.map; HELD_BLANKET.visible = true; pileShow(P); uiSound('tap'); refreshGoal(true); } },
-    ...[0, 1, 2].map((i) => ({ label: 'Wrap the child in a blanket', get x() { return byId('kid' + i).x; }, get z() { return byId('kid' + i).z + 0.75; }, r: 1.5, on: () => stage === 43 && ctr.carry && !byId('kid' + i).blanket, go: () => { const k = ctr.blanket || 0; ctr.carry = false; HELD_BLANKET.visible = false; addBlanket(byId('kid' + i), PILE_COLS[2 - k]); ctr.blanket = k + 1; uiSound('goal'); refreshGoal(true); if (ctr.blanket >= 3) roofFalls(P); } }))],
+    { label: 'Take a blanket', x: PILE[0], z: PILE[1], r: 1.5, on: () => stage === 43 && !ctr.carry && (ctr.blanket || 0) < 3, go: () => { ctr.carry = true; HELD_BLANKET.children[0].material = HELD_BLANKET.children[0].material.clone(); HELD_BLANKET.children[0].material.map = P.pile.children[2 - (ctr.blanket || 0)].material.map; HELD_BLANKET.visible = true; pileShow(P); pickUp(0.1); refreshGoal(true); } },   /* a soft lift of cloth */
+    ...[0, 1, 2].map((i) => ({ label: 'Wrap the child in a blanket', get x() { return byId('kid' + i).x; }, get z() { return byId('kid' + i).z + 0.75; }, r: 1.5, on: () => stage === 43 && ctr.carry && !byId('kid' + i).blanket, go: () => { const k = ctr.blanket || 0; ctr.carry = false; HELD_BLANKET.visible = false; addBlanket(byId('kid' + i), PILE_COLS[2 - k]); ctr.blanket = k + 1; pickUp(0); uiSound('goal'); refreshGoal(true); if (ctr.blanket >= 3) roofFalls(P); } }))],
   4: (P) => [{ label: 'Stand at the rail', x: P.spots.rail[0], z: P.spots.rail[1], r: 2.6, on: () => stage === 53, go: () => card('At the grave', ['The grave is closed now, with concrete and steel.', 'How will you say goodbye?'], [
-    { t: 'Lay a flower', go: () => { story.part = 'flower'; P.spray.visible = true; hideCard(); say('You lay a flower by the rail, for Miss Iris and Miss Dora.'); setStage(54); } },
+    { t: 'Lay a flower', go: () => { story.part = 'flower'; P.spray.visible = true; putDown(0); hideCard(); say('You lay a flower by the rail, for Miss Iris and Miss Dora.'); setStage(54); } },
     { t: 'Sing with the crowd', go: () => { story.part = 'sing'; hideCard(); say('The crowd sings a hymn. You sing too, as Miss Dora taught you.'); setStage(54); } },
     { t: 'Stand quietly', go: () => { story.part = 'quiet'; hideCard(); say('You stand quietly and hold Gran\'s hand.'); setStage(54); } }], { col: true, dismiss: hideCard }) }],
   5: (P) => [{ label: 'Sort the news cards', x: P.spots.table[0], z: P.spots.table[1], r: 2.0, on: () => stage === 61, go: () => sortCards(0) }],
   6: (P) => [
     { label: 'Look at the story board', x: P.spots.board[0], z: P.spots.board[1], r: 2.2, on: () => stage === 71, go: () => timeline(0) },
-    { label: 'Lay a flower', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 72, go: () => { const k = ctr.flower || 0; P.laid[k].visible = true; ctr.flower = k + 1; uiSound('goal'); say(k ? 'A flower for Miss Dora, who sang.' : 'A flower for Miss Iris, the dressmaker.'); refreshGoal(true); if (ctr.flower >= 2) setStage(73); } },
+    { label: 'Lay a flower', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 72, go: () => { const k = ctr.flower || 0; P.laid[k].visible = true; ctr.flower = k + 1; putDown(0); uiSound('goal'); say(k ? 'A flower for Miss Dora, who sang.' : 'A flower for Miss Iris, the dressmaker.'); refreshGoal(true); if (ctr.flower >= 2) setStage(73); } },
     { label: 'Read the words', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 73, go: () => card('The plaque says', [PLAQUE.slice(0, 4).join(' '), PLAQUE.slice(4).join(' ')], [{ t: 'Close', go: () => { hideCard(); setStage(74); } }]) }],
 };
 ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 75) { cue('end'); card('The End', ['For years the Eventide fire was a line at the bottom of the page.', 'You have read past it. The women of Eventide were people, each with a name and a life.', 'Your journal has a page about your journey.'], [{ t: 'Open my journal', go: () => { hideCard(); openJournal('journey'); } }], { col: true }); } }, 1800); };
@@ -576,12 +576,12 @@ async function roofFalls(P) {
   await wait(1500); if (ep !== EP) return; FX.shake = 0.3; const F = wardFall(P); F.start();
   TICKS.push((dt) => { if (ep !== EP) return true; F.tick(dt / TS); FX.shake *= 0.95; return F.done; });
   await tween(5.5, (k) => { P.fire.setLevel(1 - 0.6 * k); P.fire.burst(k); }); if (ep !== EP) return;
-  say('Sparks fly up. The crowd goes quiet.', 5000); await wait(3600); if (ep !== EP) return;
+  say('Sparks fly up. The crowd goes quiet.', 5000); sadOnce(); await wait(3600); if (ep !== EP) return;
   reveal();
   await cut([4, 1.4, -2.2], [5.5, 1.35, -3.0], [10, 1.1, -5.2], [10.4, 1.1, -5.2], 4.5); if (ep !== EP) return;   /* then down to the road: two of your friends, safe */
   finish();
 }
-ON[45] = () => { endSceneWarning(); const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); skippableScene(() => { endCut(); frozen = false; }); state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; fadeBlack(false, 1400); bars(true); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
+ON[45] = () => { endSceneWarning(); const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); skippableScene(() => { endCut(); frozen = false; }); state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; fadeBlack(false, 1400); bars(true); sadOnce(); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
   await cut([-14, 1.6, 2.5], [-9, 1.4, -2.5], [20, 2, -1], [4, 3, -30], 7); if (ep !== EP) return; endCut(); frozen = false; })(); };   /* the bus goes by, as it did that morning (Gleaner, 2020) */
 const DAWN = { x: -9, z: -5.4, yaw: -1.1 };   /* where you stand at dawn: on the pavement, out of the road */
 /* the bus at dawn drives along its lane (P.vehicles) at about 28 km/h, and stops and waits while anyone, you included, is in the road just ahead of it or beside it */
@@ -619,13 +619,21 @@ let GUIDE = null;
 
 /* ---------- sound: each chapter has its own quiet mix. All sound is made in code (engine/audio.js). No cries are ever played. ---------- */
 let auNext = 0, onceAt = 6, sirenAt = 0;
-const SOUNDSCAPE = [{ wind: 0.05, crowd: 0.05, once: chirp }, { room: 0.1, crowd: 0.03 }, { wind: 0.05, crowd: 0.02, once: chirp }, { wind: 0.06, crowd: 0.07 }, { wind: 0.05, crowd: 0.1 }, { wind: 0.05, once: chirp }, { wind: 0.06, crowd: 0.04, once: chirp }];
+/* 22 November 2026: the levels were multiplied by 0.4 here, so every place sat at 0.01 to 0.04 and was almost silent. Now each place is in the
+   shared range (engine/audio.js BED_RANGE) with no extra scale: the avenue by day with far traffic; the ward; dusk with the first crickets;
+   the night of the fire with the crowd behind the rope, the fire's low roar (room, with the fire's level), crickets and a far siren; the burial;
+   the Golden Age Home; the monument today. Talk lowers every bed. */
+const pick = (...f) => () => f[(Math.random() * f.length) | 0]();
+const SOUNDSCAPE = [{ wind: 0.06, crowd: 0.08, traffic: 0.07, once: pick(chirp, chirp, carFar, dogFar) }, { room: 0.12, crowd: 0.04, once: chirp }, { wind: 0.06, crowd: 0.05, traffic: 0.04, cricket: 0.05, once: pick(chirp, dogFar) },
+  { wind: 0.07, crowd: 0.14, room: 0.12, cricket: 0.03, once: pick(owl, dogFar) }, { wind: 0.06, crowd: 0.12, once: chirp }, { wind: 0.06, crowd: 0.05, once: chirp }, { wind: 0.06, crowd: 0.05, traffic: 0.06, once: pick(chirp, chirp, carFar) }];
+if (__DEV__ && new URLSearchParams(location.search).get('test') === 'beds') bedTest(Object.fromEntries(SOUNDSCAPE.map((S, i) => ['chapter ' + (i + 1), S])));   /* ?test=beds : each chapter's bed levels against the shared range */
+let SAD_EP = -1; const sadOnce = () => { if (SAD_EP === EP) return; SAD_EP = EP; cue('sad'); };   /* the sad phrase once in the night chapter: at the quiet after the fall, or at dawn when the night was skipped */
 const FOOT = { slipe: 'stone', ward: 'wood', park80: 'grass', golden: 'grass', monument: 'stone' };
 function audioTick(t) {
   if (!AU.ctx || t < auNext || !SC) return; auNext = t + 0.1; const S = SOUNDSCAPE[SC.i] || {};
-  for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], (S[k] || 0) * 0.4);
-  if (!AU.on || !state.started || AU.ctx.state !== 'running') return;
   const fl = SC.i === 3 && SC.P.fire ? SC.P.fire.level : 0;
+  mixBeds(SC.i === 3 ? { ...S, room: (S.room || 0) * fl, crowd: S.crowd * (0.4 + 0.6 * fl) } : S, { duck: !!talkWith });   /* the fire's roar and the crowd follow the fire; quieter at dawn */
+  if (!AU.on || !state.started || AU.ctx.state !== 'running') return;
   if (fl > 0.2 && Math.random() < fl * 0.5 && AU.crack) { try { crackle(); } catch (e) { /* no crackle sound yet */ } }
   if (SC.i === 3 && SIREN > 0 && t > sirenAt) { sirenAt = t + 2.4; tone(620, 880, 1.1, 'sine', 0.035 * SIREN, -0.4); tone(880, 620, 1.1, 'sine', 0.035 * SIREN, -0.4, 1.15); }   /* a far-off siren */
   if (t > onceAt) { onceAt = t + 6 + Math.random() * 6; if (S.once) S.once(); }
