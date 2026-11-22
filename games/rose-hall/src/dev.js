@@ -133,8 +133,9 @@ export async function dev(A) {
       return;
     }
     A.begin();
-    const filmStep = +Object.keys(STEPS).find((k) => STEPS[k].card === "playing" && STEPS[k].film === q.get("key"));
-    await go(id === "film" ? filmStep : STEPS[id] ? +id : FIRST);
+    const filmStep = +Object.keys(STEPS).find((k) => STEPS[k].card === "playing" && STEPS[k].film === q.get("key")),
+      lookStep = +Object.keys(STEPS).find((k) => STEPS[k].needs?.do?.includes(q.get("key")));
+    await go(id === "film" ? filmStep : id === "look" ? lookStep : STEPS[id] ? +id : FIRST);
     closeAll();
     S.view = world().view || { pos: [world().start.x, 2.2, world().start.z], look: [0, 1.2, 0] };
     if (q.has("look")) A.action(q.get("look"));
@@ -153,6 +154,20 @@ export async function dev(A) {
       for (let t = 0; t <= A.DIR.time; t += 0.25) A.DIR.apply(t);
       $("cineControls").hidden = !q.has("ui");
       if (!q.has("ui")) { A.DIR.hideSkip(); document.body.classList.remove("cine"); }
+    }
+    if (id === "look") {
+      /* ?shot=look&key=<look>&at=<seconds>: the look moment (engine/lookshot.js) held at that moment, from the player's spot for it */
+      const lk = LOOKS[q.get("key")],
+        f = lk.view ? lk.view.look : lk.focus;
+      S.view = null;
+      Object.assign(S, { x: lk.at[0], z: lk.at[1], yaw: Math.atan2(lk.at[0] - f[0], lk.at[1] - f[2]), pitch: -0.2 });
+      S.lookShot = true;
+      A.lookAt(q.get("key"));
+      const draw = A.renderer.render;
+      A.renderer.render = () => {};
+      for (let t = 0, n = Number(q.get("at") || 2) * 30; t < n; t++) A.tick(1 / 30, performance.now() + t * 33);
+      A.renderer.render = draw;
+      A.LS.paused = true;
     }
     if (id === "people") {
       world().group.visible = false;

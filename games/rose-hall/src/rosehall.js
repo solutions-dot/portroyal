@@ -493,6 +493,10 @@ export function portrait(w = 1.15, h = 2.0, coat = "#2f3a4a", seed = 1) {
   const gloom = plane(w - 0.2, h - 0.2, new THREE.MeshBasicMaterial({ color: 0x050403, transparent: true, opacity: 0.72 }), 0, 0, 0.082, g);
   quiet(gloom);
   g.userData.show = (lit) => (gloom.visible = !lit);
+  g.userData.light = (k) => {   /* a candle raised to the painting: the dark lifts off it as k goes from 0 to 1 */
+    gloom.visible = k < 1;
+    gloom.material.opacity = 0.72 * (1 - k);
+  };
   return g;
 }
 /* a brass post with a card on it, as a tour puts beside a thing it wants you to look at (today's, not the house's) */

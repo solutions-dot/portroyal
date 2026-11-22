@@ -33,6 +33,7 @@ import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } from "./content.js";
 import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
+import { createLookShot, frameOf } from "../../../engine/lookshot.js";   /* looking at a thing is a close-up action (owner rule 13) */
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
@@ -376,6 +377,7 @@ function cast(Q, row) {
 }
 async function go(stage, { restore = null, keep = false } = {}) {
   const generation = ++epoch;
+  LS.cancel();
   busy = true;
   DIR.stop();
   dangerOff();
@@ -545,11 +547,52 @@ function talk(n) {
   );
 }
 /* a thing to look at: it changes where you can see it (a cloth pulled back, a lid lifted), then a card says what you found */
-function lookAt(id) {
+/* a thing to look at (owner rule 13, engine/lookshot.js): the bars come in and the camera eases to a close framing of it, the place moves it
+   while you watch (Q.reveal[id](k)), with its sound and a short line in the lower bar; then the card says what you found, and on its button
+   the camera eases back to you. The autoplayer and ?test runs skip the moment. */
+const LOOK_SFX = {
+  candle: () => [0, 0.7].forEach((d) => tone(330, 300, 0.9, "sine", 0.02, 0, d)),   /* a candle lifted: a soft warm note */
+  cup: () => {
+    noiseHit(900, 4, 0.08, 0.08, 0.2, 0.3);
+    tone(2100, 2100, 0.3, "sine", 0.03, 0.2, 1.8);   /* china set back on its saucer */
+  },
+  snuff: () => [0.2, 0.8, 1.4, 2.0].forEach((d) => noiseHit(1800, 0.6, 0.18, 0.08, 0, d)),   /* candles pinched out one by one */
+  paper: () => [0.3, 1.2].forEach((d) => noiseHit(3200, 0.5, 0.3, 0.12, 0, d)),   /* a sheet lifted and laid down */
+  tissue: () => noiseHit(2600, 0.4, 1.0, 0.1, -0.2, 0.2),   /* tissue drawn back over paper */
+  card: () => noiseHit(700, 4, 0.08, 0.12, 0, 1.6),   /* the little card set down */
+  lamp: () => tone(220, 220, 1.6, "sine", 0.02, 0, 0.4),
+  flower: () => {
+    noiseHit(1800, 0.6, 0.4, 0.06, 0, 0.3);
+    tone(523, 523, 1.2, "sine", 0.02, 0, 1.6);   /* a flower laid on the grass, and a quiet note */
+  },
+  point: () => [0.3, 0.8].forEach((d) => noiseHit(300, 1.4, 0.09, 0.12, 0, d)),   /* a step or two on the grass as the guide turns to point */
+};
+const _lq = new THREE.Quaternion(),
+  _le = new THREE.Euler();
+const LS = createLookShot({
+  camera,
+  fov: playFov,
+  setFov: (f) => {
+    if (Math.abs(camera.fov - f) < 0.01) return;
+    camera.fov = f;
+    camera.updateProjectionMatrix();
+  },
+  bars: (on) => document.body.classList.toggle("cine", on),
+  say: (text) => {
+    $("sub").textContent = text;
+    $("sub").classList.toggle("dim", !text);
+  },
+  freeze: (on) => (busy = on),
+  sound: (name) => AU.ctx && AU.on && AU.ctx.state === "running" && LOOK_SFX[name]?.(),
+  quick: () => QUICK && !S.lookShot,
+  reduced,
+  home: () => ({ pos: new THREE.Vector3(S.x, GAME.eye, S.z), quat: _lq.setFromEuler(_le.set(S.pitch, S.yaw, 0, "YXZ")) }),
+});
+const viewOf = (lk) => lk.view || frameOf(lk.at, lk.focus, { dist: lk.dist || 1.5, lift: lk.lift ?? 0.35, fov: lk.fov || 42 });
+async function lookAt(id) {
   const lk = LOOKS[id],
     Q = world();
   S.found[id] = true;
-  Q.reveal[id]?.(true);
   uiSound("tap");
   const st = S.stage,
     done = () => {
@@ -560,12 +603,13 @@ function lookAt(id) {
       uiSound("goal");
       save();
     };
-  busy = true;   /* a moment to see the change before the card covers it */
-  setTimeout(() => {
-    busy = false;
-    if (S.stage !== st || openPanel()) return done();
-    card(lk.title, lk.lines, [[lk.button || "Go on", done]]);
-  }, QUICK ? 0 : 900);
+  await LS.play({ view: viewOf(lk), act: lk.act, sound: lk.sound, lines: lk.say, reveal: (k) => Q.reveal[id]?.(k) });
+  if (S.stage !== st) return;
+  if (openPanel()) {
+    LS.cancel();
+    return done();
+  }
+  card(lk.title, lk.lines, [[lk.button || "Go on", async () => { await LS.back(); done(); }]]);
 }
 function action(id) {
   if (busy || openPanel() || DIR.on || !story.needs(id)) return;
@@ -891,7 +935,9 @@ function tick(dt, now = performance.now()) {
     if (n.fol) followTick(n, frozen ? 0 : dt, { px: S.x, pz: S.z, walls: Q.walls, bounds: Q.bounds, blocked: (x, z, r) => blocked(Q, x, z, r), others: Q.people, talking });
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
-  else if (__DEV__ && S.view) {
+  else if (LS.tick(dt)) {
+    /* a look moment holds the camera */
+  } else if (__DEV__ && S.view) {
     camera.position.set(...S.view.pos);
     camera.lookAt(...S.view.look);
   } else if (!S.started) {
@@ -908,7 +954,7 @@ function tick(dt, now = performance.now()) {
   dangerTick(dt, quiet);
   if (S.started) audioTick(Q, dt);
   if (__DEV__) camera.userData.checkPlace = Q;   // Match camera probes to the scene actually drawn, including chapter transitions.
-  renderFramed(renderer, scene, camera, DIR.on);
+  renderFramed(renderer, scene, camera, DIR.on || LS.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;
     save();
@@ -976,7 +1022,7 @@ onLoadFail(() => {
     prepare(STEPS[saved?.stage]?.place || STEPS[FIRST].place);   /* the place Start opens, built behind the title */
     if (__DEV__) {
       const { dev } = await import("./dev.js");
-      await dev({ q, S, story, worlds, ensure, world, go, start, action, talk, carry, where, blocked, save, DIR, DANGER, skip: () => (skipIntro = true), begin, renderer, camera, scene, body, loadBase, tick, frame, chapterState, resetSceneTasks, light });
+      await dev({ q, S, story, lookAt, LS, worlds, ensure, world, go, start, action, talk, carry, where, blocked, save, DIR, DANGER, skip: () => (skipIntro = true), begin, renderer, camera, scene, body, loadBase, tick, frame, chapterState, resetSceneTasks, light });
     }
   } catch (e) {
     console.error(e);

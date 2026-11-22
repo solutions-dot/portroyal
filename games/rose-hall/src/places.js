@@ -161,6 +161,45 @@ function tagAt(Q, kind, x, y, z, ry = 0, s = 1) {
   Q.group.add(t);
   return t;
 }
+/* Looks are close-up actions (owner rule 13, engine/lookshot.js): Q.reveal[id](k) takes k from 0 (as found) to 1 (changed) and is called
+   every frame while the camera watches; true and false still mean 1 and 0 (restoring a place, engine/audit-reveal.js). */
+const kOf = (v) => (v === true ? 1 : v === false || v == null ? 0 : Math.max(0, Math.min(1, +v || 0))),
+  smooth = (k) => k * k * (3 - 2 * k);
+/* the LEGEND or RECORD card is set down in its place */
+function drop(t, v) {
+  const k = kOf(v);
+  if (t.userData.y0 === undefined) t.userData.y0 = t.position.y;
+  t.visible = k > 0;
+  t.position.y = t.userData.y0 + (1 - smooth(k)) * 0.35;
+}
+/* a candle's light carried across something: it shows only while the thing is being looked at, gone at both ends */
+function sweep(g, v, a, b, peak = 0.6) {
+  const k = kOf(v);
+  g.visible = k > 0 && k < 1;
+  g.position.set(a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k);
+  g.material.opacity = peak * Math.sin(k * Math.PI);
+}
+function glowAt(Q, r, ry = 0, flatDown = false) {
+  const g = R.glowPool(r, 0);
+  if (flatDown) g.rotation.x = -Math.PI / 2;
+  else g.rotation.y = ry;
+  g.visible = false;
+  Q.group.add(g);
+  return g;
+}
+/* the guide points at the thing, once, while you look (not when a place is put back as found) */
+function guidePoints(Q, v, mem) {
+  const k = kOf(v);
+  if (k <= 0 || k >= 1) {
+    if (k <= 0) mem.done = false;
+    return;
+  }
+  if (mem.done) return;
+  mem.done = true;
+  const n = Q.people.find((p) => p.id === "guide" && p.m.visible);
+  if (n) n.ctl.play("Point", true);
+}
+
 /* a flat tiled floor drawn in code: two colours of square */
 const TILES = {};
 function tiles(a, b, repeat) {
@@ -295,8 +334,15 @@ function house({ phone } = {}) {
   solid1(Q, R.tourSign(["UPSTAIRS", "Annie's Bedroom"], 0.5, 0.3), 3.0, 0.75, 0.4, 0.4, Math.PI);
   const tStair = tagAt(Q, "RECORD", -0.8, 0.2, 0.74, Math.PI),
     tBed = tagAt(Q, "LEGEND", 3.0, 0.0, 0.3, Math.PI);   /* on the floor in front of the stand: a card on its top edge would float */
-  Q.reveal.stair = (seen) => (tStair.visible = seen);
-  Q.reveal.bedroom = (seen) => (tBed.visible = seen);
+  const gStair = glowAt(Q, 0.8, Math.PI);
+  Q.reveal.stair = (v) => {   /* a candle carried up the stair, its light climbing the wall at the landing */
+    sweep(gStair, v, [0, 1.0, 4.74], [0, 3.6, 4.74]);
+    drop(tStair, v);
+  };
+  Q.reveal.bedroom = (v) => {   /* the light goes on up the stair the card points to */
+    sweep(gStair, v, [1.2, 2.2, 4.74], [1.8, 3.9, 4.74], 0.5);
+    drop(tBed, v);
+  };
 
   /* --- the eating-room, on the left of the hall --- */
   add(Q, R.rug(6.6, 3.6, "#3a4a3a", "#c8b078"), 9.5, 0.4);
@@ -334,7 +380,12 @@ function house({ phone } = {}) {
   add(Q, cup, 7.55, 0.4, 0.762);
   solid1(Q, R.tourSign(["THE COFFEE CUP", "of the first husband"], 0.5, 0.3), 6.7, -0.75, 0.4, 0.4, -Math.PI / 2);
   const tCup = tagAt(Q, "LEGEND", 7.7, 0.762, 0.72, -Math.PI / 2);
-  Q.reveal.coffee = (seen) => (tCup.visible = seen);
+  Q.reveal.coffee = (v) => {   /* the cup is lifted a little, turned on its saucer and set down */
+    const k = kOf(v);
+    cup.position.y = 0.762 + Math.sin(k * Math.PI) * 0.06;
+    cup.rotation.y = smooth(k) * Math.PI * 0.8;
+    drop(tCup, v);
+  };
 
   /* --- the drawing-room, on the right of the hall --- */
   add(Q, R.rug(6.4, 4.2, "#3a4a5a", "#d8c9a0"), -9.5, -0.9);
@@ -386,28 +437,48 @@ function house({ phone } = {}) {
     relit = false,
     picsSeen = false,
     filming = false;
+  let picK = 0,
+    snuffK = 0;
+  const mix = (a, b, k) => a + (b - a) * k;
   const dress = () => {
-    const dark = (snuffed && !relit) || filming;
-    sets.d.userData.on(!dark);
-    sets.p.userData.on(picsSeen && !dark);
-    for (const p of picGlow) p.visible = picsSeen && !dark;
-    for (const p of pics) p.userData.show(picsSeen && !dark);
-    Object.assign(Q.light, dark ? DARK : LIT);
-    if (lamp) lamp.intensity = dark ? 9 : 0;
+    const dark = (snuffed && !relit) || filming,
+      dim = dark ? 1 : relit ? 0 : snuffK;   /* part way through putting the candles out */
+    sets.d.userData.on(dim < 0.6);
+    sets.p.userData.on(picsSeen && dim < 0.3);
+    for (const p of picGlow) {
+      p.visible = picsSeen && !dark;
+      p.material.opacity = 0.5 * picK;
+    }
+    for (const p of pics) {
+      p.userData.show(picsSeen && !dark);
+      p.userData.light?.(dark ? 0 : picK);
+    }
+    Object.assign(Q.light, dim >= 1 ? DARK : dim <= 0 ? LIT : { ...LIT, hemi: [LIT.hemi[0], LIT.hemi[1], mix(LIT.hemi[2], DARK.hemi[2], dim)], fill: mix(LIT.fill, DARK.fill, dim), sun: [LIT.sun[0], mix(LIT.sun[1], DARK.sun[1], dim), ...LIT.sun.slice(2)] });
+    if (lamp) lamp.intensity = 9 * dim;
     Q.relight?.();
   };
   /* the hall window (Hakewill's sea view) and the drawing-room mirror the modern tours talk about */
   const tWin = tagAt(Q, "RECORD", -2.0, 0.0, -4.5, 0, 1.2),
     tMirror = tagAt(Q, "LEGEND", -4.4, 0.0, -2.0, -Math.PI / 2, 1.2);
-  Q.reveal.window = (seen) => (tWin.visible = seen);
-  Q.reveal.mirror = (seen) => (tMirror.visible = seen);
-  Q.reveal.portraits = (seen) => {
-    picsSeen = seen;
-    tPic.visible = seen;
+  const gWin = glowAt(Q, 0.9, 0, true),
+    gMirror = glowAt(Q, 0.45, -Math.PI / 2);
+  Q.reveal.window = (v) => {   /* moonlight from the sea window slides across the floor as a cloud passes */
+    sweep(gWin, v, [-3.6, 0.02, -3.6], [-1.8, 0.02, -3.4], 0.35);
+    drop(tWin, v);
+  };
+  Q.reveal.mirror = (v) => {   /* your candle passes across the glass: only your own light looks back */
+    sweep(gMirror, v, [-4.2, 2.3, -3.4], [-4.2, 2.3, -2.4], 0.7);
+    drop(tMirror, v);
+  };
+  Q.reveal.portraits = (v) => {   /* the candle is held up and the three men come out of the dark */
+    picK = kOf(v);
+    picsSeen = picK > 0;
+    drop(tPic, v);
     dress();
   };
-  Q.reveal.snuff = (seen) => {
-    snuffed = seen;
+  Q.reveal.snuff = (v) => {   /* the candles go out one set after another and the room falls dark */
+    snuffK = kOf(v);
+    snuffed = snuffK >= 1;
     dress();
   };
   dress();
@@ -555,11 +626,18 @@ function church() {
   note.rotation.x = 0.45;
   const tMon = tagAt(Q, "RECORD", -2.75, 0.0, -10.5, 0, 1.6),
     tNote = tagAt(Q, "RECORD", -5.25, 0.0, -8.6, Math.PI / 2);
-  Q.reveal.monument = (seen) => {
-    tMon.visible = seen;
-    lampGlow.visible = seen;
+  Q.reveal.monument = (v) => {   /* the lamp over the monument is turned up, and its light comes onto the marble */
+    const k = kOf(v);
+    lampGlow.visible = k > 0;
+    lampGlow.material.opacity = 0.35 * smooth(k);
+    drop(tMon, v);
   };
-  Q.reveal.husbands = (seen) => (tNote.visible = seen);
+  Q.reveal.husbands = (v) => {   /* the note is lifted off the desk to read, then laid back */
+    const k = kOf(v);
+    note.position.y = 1.165 + Math.sin(k * Math.PI) * 0.12;
+    note.rotation.x = 0.45 - Math.sin(k * Math.PI) * 0.35;
+    drop(tNote, v);
+  };
   const tWin = tagAt(Q, "RECORD", 1.3, 0.0, -9.4, 0, 1.4);
   Q.reveal.eastwin = (seen) => (tWin.visible = seen);
   R.flameSets(G);
@@ -576,9 +654,11 @@ function church() {
   Q.films.aisle = (t) => {
     if (t < 0) {
       lampGlow.visible = tMon.visible;
+      lampGlow.material.opacity = 0.35;
       return;
     }
     lampGlow.visible = t > 18;
+    lampGlow.material.opacity = 0.35 * Math.min(1, Math.max(0, (t - 18) / 3));
   };
   Q.enter = staging(Q, {}, { cousin: [30, 39] });
   return Q;
@@ -649,9 +729,11 @@ function archive() {
     const tissue = box(0.5, 0.012, 0.36, solid(0xf8f6ee, 1), x, 0.9, -0.6, G);
     tissue.userData.noBatch = true;
     const t = tagAt(Q, kind, x, 0.765, -0.28, Math.PI);
-    Q.reveal[id] = (seen) => {
-      tissue.visible = !seen;
-      t.visible = seen;
+    Q.reveal[id] = (v) => {   /* the tissue is drawn back off the paper */
+      const k = kOf(v);
+      tissue.visible = k < 1;
+      tissue.position.set(x + smooth(k) * 0.42, 0.9 + Math.sin(k * Math.PI) * 0.05, -0.6 + smooth(k) * 0.1);
+      drop(t, v);
     };
   }
   for (const x of [-4.1, -2.8, -1.5, -0.2, 4.4, 5.6]) add(Q, R.officeChair(), x, -1.5, 0, 0);
@@ -712,7 +794,11 @@ function archive() {
   solid1(Q, R.displayCase(1.5, 0.7), 7.3, 1.6, 1.5, 0.75, Math.PI / 2);
   add(Q, P.sheet("SLAVE REGISTER", 0.5, 0.4), 7.3, 1.6, 0.91, Math.PI / 2);   /* the register in the case: Annie Palmer held four people in 1829 */
   const tReg = tagAt(Q, "RECORD", 6.85, 0.0, 2.3, Math.PI / 2, 1.2);
-  Q.reveal.register = (seen) => (tReg.visible = seen);
+  const gReg = glowAt(Q, 0.4, 0, true);
+  Q.reveal.register = (v) => {   /* the case light is switched on over the page, then off */
+    sweep(gReg, v, [7.3, 0.93, 1.3], [7.3, 0.93, 1.9], 0.5);
+    drop(tReg, v);
+  };
   solid1(Q, R.potPlant(3, 1.1), -7.2, 4.6, 0.6, 0.6);
   solid1(Q, R.potPlant(5, 1.0), 7.3, 4.6, 0.6, 0.6);
   solid1(Q, R.potPlant(8, 1.0), 7.3, -4.7, 0.6, 0.6);
@@ -829,7 +915,11 @@ function estate() {
   /* the board of names, by the drive */
   solid1(Q, R.nameBoard("ROSE HALL  1817 TO 1832", ["CELIA", "DORINDA", "CECELIA", "MARY JAMES", "GEORGE STENNET", "AARON", "ADONIS", "HERCULES", "DOSHY", "ARCHEY"], "and 198 more. 208 names in all."), -5.6, -5.6, 3.5, 0.5, 0.25);
   const tNames = tagAt(Q, "RECORD", -4.2, 0.0, -4.4, 0.25, 2);
-  Q.reveal.names = (seen) => (tNames.visible = seen);
+  const pointed = {};
+  Q.reveal.names = (v) => {
+    guidePoints(Q, v, (pointed.names ||= {}));
+    drop(tNames, v);
+  };
   /* six markers on the lawn, each with a name or two from the estate's book */
   const MARK = { celia: [-13.5, -6.4, "CELIA", 0.5], dorinda: [-16.5, 1.2, "DORINDA", 1.0], cecelia: [-12.6, 7.4, "CECELIA|MARY JAMES", 2.2], heads: [9.4, 8.2, "GEORGE STENNET|AARON|ADONIS", -2.3], runaways: [15.8, 3.0, "HERCULES|DOSHY", -1.3], archey: [9.6, -0.9, "ARCHEY", -0.5] };
   Q.markSpots = {};
@@ -839,24 +929,45 @@ function estate() {
     pad.rotation.x = -Math.PI / 2;
     pad.name = "terrain";
     const t = tagAt(Q, "RECORD", x + Math.sin(ry) * 0.5, 0.0, z + Math.cos(ry) * 0.5, ry, 1.6);
-    Q.reveal[id] = (seen) => (t.visible = seen);
+    /* you lay a flower from the basket at the foot of the stone */
+    const bloom = add(Q, flowers(id.length + 40), x + Math.sin(ry) * 0.6 + Math.cos(ry) * 0.38, z + Math.cos(ry) * 0.6 - Math.sin(ry) * 0.38);   /* beside the card, not on it */
+    bloom.scale.setScalar(0.7);
+    R.still(bloom);
+    Q.reveal[id] = (v) => {
+      const k = kOf(v);
+      bloom.visible = k > 0;
+      bloom.position.y = (1 - smooth(k)) * 0.35;
+      drop(t, v);
+    };
     Q.markSpots[id] = [+(x + Math.sin(ry) * 1.35).toFixed(2), +(z + Math.cos(ry) * 1.35).toFixed(2)];
   }
   /* what the tour shows as a tomb, a card about who built the house, a basket of flowers, seats */
   solid1(Q, R.boxTomb(), -19, 8.4, 2.6, 1.5, 0.3);
   solid1(Q, R.tourSign(["THE TOMB", "of Annie Palmer"], 0.5, 0.3), -17.0, 9.6, 0.4, 0.4, 1.1);
   const tTomb = tagAt(Q, "LEGEND", -16.6, 0.0, 9.8, 1.1);
-  Q.reveal.tomb = (seen) => (tTomb.visible = seen);
+  Q.reveal.tomb = (v) => {
+    guidePoints(Q, v, (pointed.tomb ||= {}));
+    drop(tTomb, v);
+  };
   solid1(Q, R.tourSign(["ROSE HALL", "Who built it?"], 0.5, 0.3), 3.2, -8.6, 0.4, 0.4, 0.2);
   const tBuilt = tagAt(Q, "RECORD", 3.29, 0.0, -8.16, 0.2);
-  Q.reveal.built = (seen) => (tBuilt.visible = seen);
+  Q.reveal.built = (v) => {
+    guidePoints(Q, v, (pointed.built ||= {}));
+    drop(tBuilt, v);
+  };
   /* two more cards on stands: the clothing lists of the estate book, by the board; rebellion and freedom, by the works */
   solid1(Q, R.tourSign(["CLOTHING", "from the estate book"], 0.5, 0.3), -8.2, -4.5, 0.4, 0.4, 0.2);
   const tCloth = tagAt(Q, "RECORD", -8.11, 0.0, -4.06, 0.2);
-  Q.reveal.clothes = (seen) => (tCloth.visible = seen);
+  Q.reveal.clothes = (v) => {
+    guidePoints(Q, v, (pointed.clothes ||= {}));
+    drop(tCloth, v);
+  };
   solid1(Q, R.tourSign(["FREEDOM", "1831 to 1838"], 0.5, 0.3), 5.9, -8.4, 0.4, 0.4, 0.0);
   const tFree = tagAt(Q, "RECORD", 5.9, 0.0, -7.95, 0.0);
-  Q.reveal.freedom = (seen) => (tFree.visible = seen);
+  Q.reveal.freedom = (v) => {
+    guidePoints(Q, v, (pointed.freedom ||= {}));
+    drop(tFree, v);
+  };
   solid1(Q, R.flowerBasket(), -2.9, 3.4, 0.7, 0.6, 0.3);
   solid1(Q, W.bench(2), 4.6, 4.4, 2.1, 0.5, -0.6);
   solid1(Q, W.bench(2), -8.4, -9.6, 2.1, 0.5, 0.2);
