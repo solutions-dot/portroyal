@@ -135,12 +135,12 @@ function steadyTick(model, g) {
   if (weight > 0) {
     model.updateMatrixWorld(true);
     _sb.setFromObject(g.steady);
-    if (!_sb.isEmpty()) steadyContact(model, g.limbs, Math.min(1, weight));
+    if (!_sb.isEmpty()) steadyContact(model, g.limbs, Math.min(1, weight), g.steady.userData.steadyAt);
   }
   for (const { turn } of g.limbs) turn?.(seek ? Infinity : dt);
 }
 
-function steadyContact(model, limbs, weight) {
+function steadyContact(model, limbs, weight, at) {   /* at { r, dy }: for a load that is not a tub (a bunch of bananas is a stalk with fruit round it, and its outer box reaches far past the fruit), the hand rests r from the load's middle, dy above or below it */
   const ctr = _sb.getCenter(new THREE.Vector3()), size = _sb.getSize(new THREE.Vector3());
   const head = model.getObjectByName('mixamorigHead'); if (!head) return;
   const headY = wp(head).y;
@@ -150,7 +150,7 @@ function steadyContact(model, limbs, weight) {
     const blend = weight * THREE.MathUtils.smoothstep(hp.y - headY, -0.10, -0.025);
     if (blend <= 0) continue;
     const d = new THREE.Vector3(hp.x - ctr.x, 0, hp.z - ctr.z); if (d.lengthSq() < 1e-6) continue; d.normalize();
-    const r = Math.max(size.x, size.z) / 2, P = ctr.clone().addScaledVector(d, r + 0.03); P.y = _sb.max.y - Math.min(0.05, size.y * 0.25);   /* where the palm goes: on the rim, just below the top */
+    const r = at ? at.r : Math.max(size.x, size.z) / 2, P = ctr.clone().addScaledVector(d, r + 0.03); P.y = at ? ctr.y + (at.dy || 0) : _sb.max.y - Math.min(0.05, size.y * 0.25);   /* where the palm goes: on the rim, just below the top */
     const k = model.getObjectByName('mixamorig' + side + 'HandMiddle1');
     const armBefore = arm.quaternion.clone(), elbowBefore = elbow.quaternion.clone();
     for (let it = 0; it < 2; it++) { const w = wp(h), pm = k ? w.clone().lerp(wp(k), 0.6) : w; reachTo(model, side, P.clone().sub(pm.sub(w))); }

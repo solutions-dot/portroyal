@@ -164,7 +164,7 @@ function makeBody(s) {
       /* and it rests on the head: its stalk 13 cm above the top of the head or the hat, so the head sits in among the hands of fruit. Set by the bunch's lowest finger tip it hung in the air (owner, 22 Nov 2026) */
       m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHead'), ht = m.getObjectByName('mixamorigHeadTop_End'), V3 = new THREE.Vector3(); let top = ht ? ht.getWorldPosition(V3).y : hb.getWorldPosition(V3).y + 0.19;
       if (s.hat) top += 0.05;   /* a straw hat's crown stands about 5 cm above the head */
-      hold(m, 'Head', w, { dy: top - hb.getWorldPosition(V3).y + 0.13, scale: 1 }); steadyLoad(m, w); }
+      hold(m, 'Head', w, { dy: top - hb.getWorldPosition(V3).y + 0.13, scale: 1 }); w.userData.steadyAt = { r: 0.15, dy: -0.02 };   /* the raised hand rests on the fruit beside the stalk, not out at the end of the bunch (engine/grip.js) */ steadyLoad(m, w); }
     s.load = o; o.visible = false; s.life.show = (n, on) => { if (n.load) n.load.visible = on; };
     if (load === 'bunch') { const pile = []; s.life.put = (n) => {   /* the bunch stays on the ground where it was put down, a small pile by the wagon (owner, 21 Nov 2026); six at most, the oldest reused */
       const host = n.m && n.m.parent; if (!host) return; let b = pile.length < 6 ? null : pile.shift(); if (!b) { b = bananaBunch(0.9); b.userData.noBatch = true; host.add(b); }
