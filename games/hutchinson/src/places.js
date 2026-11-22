@@ -4,7 +4,7 @@
    (Q.reveal, Q.enter), its part in a camera scene (Q.films) and, for the castle, where you can be seen and where you are in cover (Q.danger).
    Story people: person(). Background people: crowd(), each a body made for the year and the place (tools/hutchinson/people). */
 import * as THREE from "three";
-import { T, std, solid, flat, mesh, box, cyl, plane, grp, batchStatic } from "./gfx.js";
+import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng, batchStatic } from "./gfx.js";
 import { tree, palm, bush, mule, cart, barrel, hillRing, scatter, surveyPole, sack, crate, marketBasket } from "./period-props.js";
 import * as P from "./props.js";
 import * as W from "./world.js";
@@ -80,13 +80,25 @@ function fieldWall(Q, x0, z0, x1, z1, h = 1.2, seed = 3) {
   add(Q, W.fieldWall(len, h, seed), cx, cz, 0, alongX ? 0 : Math.PI / 2);
   wall(Q, cx, cz, alongX ? len : 0.7, alongX ? 0.7 : len);
 }
-/* the dry limestone country of the middle of St Ann: karst hills near and far, steep and wooded, with pale crags */
-function hills(Q, seed = 3, near = true) {
+/* the dry limestone country of the middle of St Ann, after Long (1774): "open, level savannahs, environed by rocky eminences, or with little
+   cock-pits". A far ring of hills, and near and middle rings of steep, round, tree-covered cockpit hills with pale limestone showing.
+   gaps: directions (radians, atan2(z, x)) kept open, such as the road running out of the place, or the castle seen far off. */
+function hills(Q, seed = 3, near = true, gaps = [0, Math.PI]) {
   const far = hillRing(300, 16, 50, { seed, base: [0.36, 0.42, 0.28] });
   far.traverse((o) => (o.userData.far = true));
   Q.group.add(far);
-  if (near)
-    for (const [x, z, r, h, s] of [[-95, -70, 46, 34, 1], [70, -110, 60, 42, 2], [120, 20, 50, 34, 3], [-130, 40, 55, 38, 4], [10, 140, 70, 40, 5], [-60, 110, 44, 30, 6], [150, -60, 40, 30, 7], [-20, -150, 66, 46, 8]]) add(Q, S.karstHill(r, h, seed + s), x, z, -1);
+  if (!near) return;
+  const r = rng(seed * 7 + 1),
+    open = (a) => gaps.some((g) => Math.abs(Math.atan2(Math.sin(a - g), Math.cos(a - g))) < 0.2);
+  for (const [R, n, r0, r1, h0, h1] of [[66, 15, 11, 17, 14, 22], [98, 19, 15, 22, 19, 28], [140, 21, 20, 30, 24, 34]])
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + (r() - 0.5) * 0.25 + R * 0.01;
+      if (open(a)) continue;
+      const d = R + (r() - 0.5) * R * 0.2,
+        rad = r0 + r() * (r1 - r0),
+        tone = [0.25 + r() * 0.05, 0.34 + r() * 0.05, 0.18 + r() * 0.03];
+      add(Q, S.cockpitHill(rad, h0 + r() * (h1 - h0), seed * 50 + i + R, { tone, bare: 0.24 + r() * 0.16 }), Math.cos(a) * d, Math.sin(a) * d, -0.6);
+    }
 }
 const DUST = [186, 168, 132],
   DRY = [150, 144, 96],
@@ -111,7 +123,7 @@ function road() {
   ground(Q, std(T.grass([60, 60], DRY)), 700);
   strip(Q, 4.2, 150, std(T.dirt([1, 40], DUST)), 0, 6).rotation.z = Math.PI / 2;   /* turned so the texture's wheel ruts run along the road */
   for (const z of [5.1, 6.9]) strip(Q, 150, 0.34, std(T.dirt([60, 1], [160, 142, 108])), 0, z, 0.016);   /* cart ruts */
-  hills(Q, 3);
+  hills(Q, 3, true, [0, Math.PI, Math.atan2(-60, -150)]);
   /* the castle, two miles off on its rise: you can see the towers from here */
   add(Q, S.karstHill(34, 14, 9, [0.4, 0.42, 0.28], 0.2), -150, -60, -1);
   const far = add(Q, S.farCastle(1.6), -150, -60, 12.6, 0.5);
@@ -160,8 +172,10 @@ function road() {
   add(Q, pg, -1, -12.4);
   wall(Q, -1, -12.4, 2.8, 0.3);
   solid1(Q, S.feedRack(2.6), 5, -11.5, 2.8, 0.9);
-  const herd = [[4.2, -13.6, 1.3, 0, "stand"], [6.4, -14.2, 2.2, 3, "stand"], [9.5, -16, 0.4, 1, "graze"], [14, -15, -2.4, 2, "graze"], [1.5, -18.5, 2.9, 4, "graze"], [11, -21, 1.0, 5, "lie"], [17, -22, -0.8, 0, "graze"], [-8, -17, 0.6, 2, "graze"], [-14, -21, 2.5, 3, "stand"], [-11, -26, -1.2, 1, "lie"], [20, -30, 2.0, 4, "graze"]];
+  const herd = [[4.2, -13.6, 1.3, 0, "stand"], [6.4, -14.2, 2.2, 3, "stand"], [9.5, -16, 0.4, 1, "graze"], [14, -15, -2.4, 2, "graze"], [1.5, -18.5, 2.9, 4, "graze"], [11, -21, 1.0, 5, "lie"], [17, -22, -0.8, 0, "graze"], [-8, -17, 0.6, 2, "graze"], [-14, -21, 2.5, 3, "stand"], [-11.6, -22.2, -1.2, 1, "lie"], [20, -30, 2.0, 4, "graze"]];
   herd.forEach(([x, z, ry, c, pose], i) => add(Q, S.cow(S.COATS[c], pose, i + 1), x, z, 0, ry));
+  /* the pound: a square of dry-laid limestone where the cattle are penned at night and for counting */
+  add(Q, S.stonePound(7, 6, 1.3, 6), -13, -20.5);
   add(Q, S.tufts(1500, [-70, -75, 70, -12.9], { seed: 4, h: 0.75, tint: GOLD, clear: [[-2.4, -34, 0.4, -12], [-14, -42, 20, -29]] }));
   add(Q, S.tufts(260, [-18, -12, 18, 1.6], { seed: 6, h: 0.42, tint: PALE, clear: [[-5.5, -7, 9.6, 1.8], [-14.6, -10.6, -5.4, -4.2], [8, -10.6, 17, -2], [-2.4, -12.4, 0.4, -6]] }));
   add(Q, S.tufts(520, [-70, 8.6, 70, 60], { seed: 8, h: 0.5, tint: PALE }));
@@ -649,7 +663,7 @@ function hole() {
       v.userData.noAudit = true;
     }
   }
-  for (const [x, z, r, h, s] of [[-40, -30, 26, 22, 1], [34, -36, 30, 26, 2], [0, -60, 40, 30, 3], [-50, 30, 30, 24, 4], [48, 20, 28, 22, 5], [10, 60, 36, 24, 6]]) add(Q, S.karstHill(r, h, 20 + s, [0.28, 0.38, 0.24]), x, z, -1);
+  for (const [x, z, r, h, s] of [[-40, -30, 26, 22, 1], [34, -36, 30, 26, 2], [0, -60, 40, 30, 3], [-50, 30, 30, 24, 4], [48, 20, 28, 22, 5], [10, 60, 36, 24, 6]]) add(Q, S.cockpitHill(r * 0.8, h, 20 + s, { tone: [0.26, 0.37, 0.21] }), x, z, -0.6);
   /* the walls nobody walks through: the foot of the rock all round, as short straight pieces */
   for (let i = 0; i < 28; i++) {
     const a = (i / 28) * Math.PI * 2;
@@ -721,8 +735,54 @@ function hole() {
 }
 
 /* ---------- 5. Spanish Town, the capital, March 1773: the square as Bonnor drew it for Edward Long (1774) ---------- */
+/* The square is laid out after Long (1774) and the plate in his history: King's House fills the west side, the public building with the
+   Assembly chamber and, upstairs, the court house and jury room fills the east side facing it, the railed octagon stands between them, the old
+   court-house with a tavern, a lodging-house and a barber's shop make the north side, and the chapel and the guard-house are on the south side
+   near King's House. It is built below in its own frame, with the court building along the top of the picture, and then turned a quarter so
+   that the court stands on the east (north is -z in this game): TURN() moves every spot, wall and walk into the place's frame. */
+const TURN = (x, z) => [-z, x];
+function turnPlace(Q) {
+  const P = (a) => (Array.isArray(a) && a.length === 2 && typeof a[0] === "number" ? TURN(a[0], a[1]) : a),
+    R = (ry) => (ry || 0) - Math.PI / 2,
+    keys = ["at", "face", "work"];
+  const life = (o) => {
+    if (!o) return o;
+    for (const k of keys) if (Array.isArray(o[k]) && typeof o[k][0] === "number" && o[k].length === 2 && k !== "work") o[k] = P(o[k]);
+    if (o.area) {
+      const [x0, z0, x1, z1] = o.area,
+        a0 = TURN(x0, z0),
+        a1 = TURN(x1, z1);
+      o.area = [Math.min(a0[0], a1[0]), Math.min(a0[1], a1[1]), Math.max(a0[0], a1[0]), Math.max(a0[1], a1[1])];
+    }
+    for (const k of ["pts", "between"]) if (o[k]) o[k] = o[k].map(P);
+    return o;
+  };
+  Q.walls = Q.walls.map(([x0, z0, x1, z1]) => [-z1, x0, -z0, x1]);
+  for (const sp of Q.specs) {
+    [sp.x, sp.z] = TURN(sp.x, sp.z);
+    sp.ry = R(sp.ry);
+    life(sp.life);
+  }
+  for (const am of Q.ambient) {
+    [am.x, am.z] = TURN(am.x, am.z);
+    am.ry = R(am.ry);
+    life(am.behaviour);
+    life(am);
+  }
+  for (const pt of Object.values(Q.points)) [pt.x, pt.z] = TURN(pt.x, pt.z);
+  Q.keepOff = Q.keepOff.map((k) => (k.at ? { ...k, at: P(k.at) } : { ...k, pts: k.pts.map(P) }));
+  const b = Q.bounds;
+  Q.bounds = { x0: -b.z1, z0: b.x0, x1: -b.z0, z1: b.x1 };
+  [Q.start.x, Q.start.z] = TURN(Q.start.x, Q.start.z);
+  Q.start.yaw = R(Q.start.yaw);
+  for (const v of [Q.view.pos, Q.view.look]) [v[0], v[2]] = TURN(v[0], v[2]);
+}
 function town() {
-  const Q = base("town", [-20, -7.6, 20, 23], [13, 19, 2.6]);
+  const Q = base("town", [-20, -7.6, 20, 23], [12, 21, 0.9]);
+  const outer = Q.group;
+  Q.group = grp();
+  Q.group.rotation.y = -Math.PI / 2;
+  outer.add(Q.group);
   Q.floor = "stone";
   Q.beds = { crowd: 0.08, wind: 0.02, bird: 0.06 };
   Q.light = { top: 0x7fb0c8, hor: 0xeadbb4, fog: [0xdcd6bd, 90, 480], sun: [0xfff0c8, 2.3, 30, 50, 30], hemi: [0xfff4dc, 0x9a8e6a, 2.5] };
@@ -731,7 +791,7 @@ function town() {
   const far = hillRing(320, 14, 34, { seed: 21, base: [0.36, 0.42, 0.3] });
   far.traverse((o) => (o.userData.far = true));
   Q.group.add(far);
-  /* the public building (in this game's square it stands to the north; in the town it is the east side, facing King's House) */
+  /* the public building on the east side (the top of this frame), facing King's House across the square */
   const PB = S.publicBuilding(42);
   add(Q, PB, 0, -5.4);
   wall(Q, 0, -12.6, 42.4, 9.2);
@@ -767,33 +827,43 @@ function town() {
       j.scale.x = seen ? 0.16 : 1;
       j.position.x = jx[i] + (seen ? 0.52 : 0);
     });
-  /* the railed green in the middle of the square */
-  add(Q, S.octagon(5.2), 0, 9);
-  Q.walls.push([-4.9, 6.9, 4.9, 11.1], [-2.1, 4.1, 2.1, 13.9], [-3.6, 5.4, 3.6, 12.6]);
-  /* King's House across the square, with palms before it */
-  add(Q, S.kingsHouse(46), 0, 33, 0, Math.PI);
-  wall(Q, 0, 31, 60, 12);
-  for (const x of [-17, -9, 9, 17]) add(Q, palm(8 + (Math.abs(x) % 2), x + 30), x, 25.4);
-  wall(Q, 0, 25.4, 40, 0.6);
-  /* the other two sides: town houses, garden walls, the streets running out between them */
-  const sides = [
-    [-27, -3, 12, { rgb: [206, 192, 160], piazza: true, seed: 1 }, Math.PI / 2],
-    [-27, 12, 13, { rgb: [170, 104, 82], seed: 2, brickWall: true }, Math.PI / 2],
-    [-27, 27, 11, { rgb: [214, 204, 178], seed: 3 }, Math.PI / 2],
-    [27, -4, 11, { rgb: [196, 176, 140], seed: 4 }, -Math.PI / 2],
-    [27, 20, 14, { rgb: [210, 196, 166], piazza: true, seed: 5 }, -Math.PI / 2],
-    [-44, 4, 12, { rgb: [200, 184, 150], seed: 6 }, Math.PI / 2],
-    [46, 30, 12, { rgb: [200, 184, 150], seed: 7 }, -Math.PI / 2],
+  /* the railed octagon in the middle of the square: on Long's plate a long rail on square white piers; the square itself has no trees */
+  add(Q, S.octagon(7), 0, 9.6);
+  Q.walls.push([-6.7, 9.6 - 2.8, 6.7, 9.6 + 2.8], [-2.8, 9.6 - 6.7, 2.8, 9.6 + 6.7], [-4.7, 9.6 - 4.7, 4.7, 9.6 + 4.7]);
+  /* King's House fills the west side (the bottom of this frame): a long brick front, its portico of twelve columns facing the court */
+  add(Q, S.kingsHouse(54), 0, 33, 0, Math.PI);
+  wall(Q, 0, 38, 54.6, 10.6);
+  wall(Q, 0, 30, 12, 6.2);
+  /* the north side (the left of this frame): Long's "small building, called the old court-house", then the range with the tavern (an old
+     Spanish building), the lodging-house and the barber's shop. The south side (the right): a town house, the street out of the square, the
+     guard-house and the chapel near King's House. Behind them, more town. */
+  const N = Math.PI / 2,
+    So = -Math.PI / 2;
+  add(Q, S.lowHouse(8.6, { h: 4.8, d: 8, rgb: [164, 96, 74], brickWall: true, door: 1, seed: 1 }), -27, -2.4, 0, N);
+  add(Q, S.lowHouse(8.4, { h: 4.0, d: 7.4, rgb: [226, 216, 190], door: 1, seed: 2, piazza: true }), -27, 6.1, 0, N);
+  add(Q, S.townHouse(9, { rgb: [210, 196, 166], piazza: true, seed: 3 }), -27, 14.8, 0, N);
+  add(Q, S.lowHouse(6.4, { h: 3.8, d: 6.6, rgb: [214, 200, 170], door: 1, seed: 4 }), -27, 22.5, 0, N);
+  for (const [z, text, w, y] of [[6.1, "TAVERN", 2.0, 3.0], [14.8, "LODGINGS", 2.2, 2.7], [22.5, "BARBER", 1.8, 3.0]]) {
+    /* the boards hang on the wall over the doors; their exact words are a general picture */
+    const sg = S.wallSign(text, w, 0.46);
+    add(Q, sg, -27 + 0.02, z, y, N);
+  }
+  add(Q, S.townHouse(11, { rgb: [196, 176, 140], seed: 5 }), 27, -4, 0, So);
+  add(Q, S.lowHouse(6, { h: 3.8, d: 6.4, rgb: [160, 98, 76], brickWall: true, door: 1, seed: 6 }), 27, 16.6, 0, So);
+  add(Q, S.chapel(12.6), 27, 26.2, 0, So);
+  for (const [x, z, w, o, ry] of [
+    [-44, 4, 12, { rgb: [200, 184, 150], seed: 6 }, N],
+    [-42, 22, 10, { rgb: [190, 172, 140], seed: 10 }, N],
+    [46, 30, 12, { rgb: [200, 184, 150], seed: 7 }, So],
+    [44, -6, 10, { rgb: [206, 190, 158], seed: 11 }, So],
     [-38, -22, 14, { rgb: [190, 170, 136], seed: 8 }, 0],
     [38, -24, 14, { rgb: [204, 190, 160], seed: 9 }, 0],
-  ];
-  for (const [x, z, w, o, ry] of sides) add(Q, S.townHouse(w, o), x, z, 0, ry);
-  for (const [x, z, len, ry] of [[-27.4, 4.3, 2.1, Math.PI / 2], [-27.4, 20, 2.7, Math.PI / 2], [27.4, 2.7, 2.2, Math.PI / 2]]) if (len > 1) add(Q, S.gardenWall(len), x, z, 0, ry);
+  ])
+    add(Q, S.townHouse(w, o), x, z, 0, ry);
   wall(Q, -27.5, 12, 3, 46);
   wall(Q, 27.5, -4, 3, 13);
-  wall(Q, 27.5, 20, 3, 15);
-  for (const [x, z, h, s] of [[-13, 3.4, 7, 41], [13.5, 2.6, 7.5, 42], [-14, 18.5, 8, 43], [14.5, 15.5, 7, 44]]) solid1(Q, tree(h, s, 1), x, z, 0.9, 0.9);
-  for (const [x, z, h, s] of [[-36, 16, 9, 45], [-34, -10, 8, 46], [36, 6, 9, 47], [40, -10, 8, 48], [-20, 44, 9, 49], [24, 46, 8, 50]]) add(Q, tree(h, s, 1), x, z);
+  wall(Q, 27.5, 23.1, 3, 19.4);
+  for (const [x, z, h, s] of [[-36, 16, 9, 45], [-34, -10, 8, 46], [37, -3, 9, 47], [40, -14, 8, 48], [-20, 44, 9, 49], [24, 46, 8, 50]]) add(Q, tree(h, s, 1), x, z);
   /* the life of the square: benches, a water cart, market women's goods on the ground */
   for (const [x, z, ry] of [[-11.2, 1.6, 0.3], [11.4, 0.6, -0.3], [-12.4, 16.6, 1.2]]) solid1(Q, W.bench(2), x, z, 2.1, 0.5, ry);
   const wc = cart(2.6, 1.4);
@@ -807,7 +877,7 @@ function town() {
   solid1(Q, mule(0x5a4a3c), -16.9, 12.6, 0.9, 2.0, 0.4);
   solid1(Q, barrel(), 16.6, 7.4, 0.7, 0.7);
   solid1(Q, barrel(), 16.9, 8.3, 0.7, 0.7);
-  solid1(Q, S.groundStall(1), 9.6, 18.4, 1.9, 1.3, -0.4);
+  solid1(Q, S.groundStall(1), 14.8, 15.4, 1.9, 1.3, -0.4);
   solid1(Q, S.groundStall(2), 6.6, 20.4, 1.9, 1.3, -0.1);
   solid1(Q, crate(0.6), 17.4, 6.2, 0.7, 0.7);
   /* the gallows, far down the street that leaves the square, seen only in the last scene and only as a shape against the dawn */
@@ -848,17 +918,19 @@ function town() {
   crowd(Q, "hx_townman", -9.5, 4.6, 0, { kind: "chat", group: "a", at: [-9.3, 5.3] });
   crowd(Q, "hx_townwoman", -8.6, 5.5, 0, { kind: "chat", group: "a" });
   crowd(Q, "hx_man", -10.0, 5.9, 0, { kind: "chat", group: "a" });
-  crowd(Q, "hx_woman", 8, 16, 0, { kind: "wander", area: [6, 13, 13, 17.4], pause: [3, 7] });
+  crowd(Q, "hx_woman", 8, 16, 0, { kind: "wander", area: [7.5, 13, 13, 18], pause: [3, 7] });
   crowd(Q, "hx_penman", 15, -1, 0, { kind: "wander", pts: [[15, -1], [8, -1.6], [-9, -1.2], [-15, 0.4]], pause: [2, 5] });
   crowd(Q, "hx_townwoman", -14.4, 7.6, face(-14.4, 7.6, -16, 9.6), { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-16, 9.6] });
   crowd(Q, "hx_man", 15.4, 6.9, face(15.4, 6.9, 16.7, 7.8), { kind: "work", clips: ["IdleM", "PickUp", "WipeSweat"], work: [5, 9], face: [16.7, 7.8] });
-  crowd(Q, "hx_penwoman", 9.9, 19.9, face(9.9, 19.9, 9.6, 18.4), { kind: "work", clips: ["Idle", "PickUp", "Idle"], work: [5, 9], face: [9.6, 18.4] });
+  crowd(Q, "hx_penwoman", 15.3, 16.9, face(15.3, 16.9, 14.8, 15.4), { kind: "work", clips: ["Idle", "PickUp", "Idle"], work: [5, 9], face: [14.8, 15.4] });
   crowd(Q, "hx_woman", 5.2, 21.2, face(5.2, 21.2, 6.6, 20.4), { kind: "watch", at: [0, 9], idles: ["Idle"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
   crowd(Q, "hx_penman", -8.6, 19.6, 0, { kind: "work", between: [[-8.6, 19.6], [-13.6, 21.2]], walk: "Walk", idle: "IdleM" });
   crowd(Q, "hx_townwoman", 11, 6, 0, { kind: "chat", group: "b", at: [11.4, 6.4] });
   crowd(Q, "hx_townman", 12, 7, 0, { kind: "chat", group: "b" });
-  point(Q, "green", 0, 15.6, "the railed green");
-  Q.keepOff = [{ at: [2.33, -3.4], r: 1.1 }, { at: [-4.67, -6.4], r: 1 }, { at: [-1.3, -2.2], r: 1 }, { at: [0, 15.6], r: 1.2 }, { pts: [[13, 19], [0, 15.6], [-7, 3], [-1.3, -2.4]], w: 1.2 }];
+  point(Q, "green", 0, 17.6, "the railed green");
+  Q.keepOff = [{ at: [2.33, -3.4], r: 1.1 }, { at: [-4.67, -6.4], r: 1 }, { at: [-1.3, -2.2], r: 1 }, { at: [0, 17.6], r: 1.2 }, { pts: [[12, 21], [0, 17.6], [-8, 9.6], [-1.3, -2.4]], w: 1.2 }];
+  Q.group = outer;
+  turnPlace(Q);
   return Q;
 }
 

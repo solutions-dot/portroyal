@@ -190,7 +190,73 @@ export function karstHill(r = 30, h = 26, seed = 1, base = [0.3, 0.4, 0.24], cra
   m.scale.set(r, h, r * (0.8 + rr() * 0.35));
   m.rotation.y = rr() * 3;
   m.name = "terrain";
+  m.userData.soft = true;   /* a hill is ground: the trees, scrub and rocks scattered on its slopes stand into it, as they would on a real hillside (engine/audit.js auditOverlap) */
   return m;
+}
+/* a cockpit hill of the Pedro district: Long (1774) speaks of "open, level savannahs, environed by rocky eminences, or with little cock-pits".
+   Steep round-shouldered sides on a narrow foot, a domed top, a lumpy cover of trees (each bump a crown, dark and light in turn), and pale
+   limestone showing in bare faces and ledges low on the steep sides. One coloured mesh. */
+export function cockpitHill(r = 18, h = 22, seed = 1, { bare = 0.32, tone = [0.27, 0.36, 0.19] } = {}) {
+  const rr = rng(seed),
+    geo = new THREE.SphereGeometry(1, 44, 18, 0, Math.PI * 2, 0, Math.PI / 2),
+    pos = geo.attributes.position,
+    col = new Float32Array(pos.count * 3),
+    p1 = rr() * 6,
+    p2 = rr() * 6,
+    p3 = rr() * 6;
+  for (let k = 0; k < pos.count; k++) {
+    const x = pos.getX(k),
+      z = pos.getZ(k),
+      a = Math.atan2(z, x),
+      rho = Math.min(1, Math.hypot(x, z)),
+      lobe = 1 + 0.12 * Math.sin(a * 2 + p1) + 0.07 * Math.sin(a * 5 + p2),
+      prof = Math.pow(Math.max(0, 1 - Math.pow(rho, 2.6)), 0.62),   /* steep sides, a rounded top */
+      crown = 0.035 * Math.sin(a * 31 + p3 + rho * 9) * Math.sin(rho * 23 + a * 7 + p1) + 0.02 * Math.sin(a * 57 + rho * 31),
+      steep = rho > 0.55 && rho < 0.97,
+      rock = steep && Math.sin(a * 7 + p2 * 3 + rho * 5) * Math.sin(a * 3 + p1 + rho * 11) > 1 - bare * 1.6,
+      y = Math.max(0, prof + (rock ? -0.015 : crown) * (rho < 0.99 ? 1 : 0)),
+      rad = rho * lobe * (rock ? 0.985 : 1);
+    pos.setXYZ(k, Math.cos(a) * rad, y, Math.sin(a) * rad);
+    const blotch = Math.sin(a * 13 + p1 + rho * 17) * Math.sin(a * 9 + rho * 13 + p3),
+      v = (0.72 + 0.4 * y) * (blotch > 0.25 ? 0.72 : blotch < -0.4 ? 1.18 : 1) * (0.92 + rr() * 0.16);
+    if (rock) {
+      const g = 0.7 + rr() * 0.1;
+      col[k * 3] = g;
+      col[k * 3 + 1] = g * 0.97;
+      col[k * 3 + 2] = g * 0.88;
+    } else {
+      col[k * 3] = tone[0] * v;
+      col[k * 3 + 1] = tone[1] * v;
+      col[k * 3 + 2] = tone[2] * v;
+    }
+  }
+  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, HILL);
+  m.scale.set(r, h, r * (0.85 + rr() * 0.3));
+  m.rotation.y = rr() * 3;
+  m.name = "terrain";
+  m.userData.soft = true;   /* a hill is ground: the trees, scrub and rocks scattered on its slopes stand into it, as they would on a real hillside (engine/audit.js auditOverlap) */
+  return m;
+}
+/* a cattle pound of dry-laid limestone: a square of rough wall, chest high, with one gap for a gate of rails. w along x, d along z. */
+export function stonePound(w = 7, d = 6, h = 1.3, seed = 2) {
+  const g = grp(),
+    gap = 1.8;
+  const side = (len, x, z, along) => {
+    const o = W.fieldWall(len, h, seed + x * 3 + z);
+    o.position.set(x, 0, z);
+    o.rotation.y = along ? 0 : Math.PI / 2;
+    g.add(o);
+  };
+  side(w, 0, -d / 2, true);
+  side(w, 0, d / 2, true);
+  side(d, -w / 2, 0, false);
+  side((d - gap) / 2, w / 2, -(d + gap) / 4, false);
+  side((d - gap) / 2, w / 2, (d + gap) / 4, false);
+  /* the gate: rails slid across the gap */
+  for (const y of [0.4, 0.8, 1.15]) box(0.06, 0.07, gap + 0.3, W.WM.wood, w / 2 + 0.05, y, 0, g);
+  return g;
 }
 /* grass in tufts: n clumps over an area as one mesh of crossed cards. tint multiplies the green (dry Guinea grass is gold). */
 const TUFT = () => keep("m-tuft", () => new THREE.MeshStandardMaterial({ map: T.tuft(), alphaTest: 0.4, side: THREE.DoubleSide, vertexColors: true, roughness: 1 }));
@@ -1033,6 +1099,7 @@ export function holedGround(size, rx, rz, mat, cx = 0, cz = 0) {
   m.rotation.x = -Math.PI / 2;
   m.position.y = -0.025;
   m.name = "terrain";
+  m.userData.soft = true;   /* a hill is ground: the trees, scrub and rocks scattered on its slopes stand into it, as they would on a real hillside (engine/audit.js auditOverlap) */
   return m;
 }
 /* a coil of rope and a stake driven into the ground */
@@ -1075,14 +1142,18 @@ export function publicBuilding(L = 42) {
     box(1.06, 0.16, 1.06, M.white, x, 3.0, 0, g);
     box(1.0, 0.3, 1.0, std(T.stone([170, 164, 150], [1, 1]), 1), x, 0.15, 0, g);
     if (i < bays) {
-      const R = bw / 2 - 0.45,
+      /* Long: sixteen round arches and one elliptical arch in the centre. Here eight round and the elliptical one over the court door. */
+      const mid = i === (bays - 1) / 2,
+        R = mid ? bw / 2 - 0.25 : bw / 2 - 0.45,
+        Ry = mid ? Math.min(R * 0.62, H1 - 3.05 - 0.25) : R,
         arch = mesh(new THREE.TorusGeometry(R + 0.2, 0.22, 4, 14, Math.PI), pier, x + bw / 2, 3.05, 0, g);
       arch.scale.z = 2;
+      arch.scale.y = (Ry + 0.2) / (R + 0.2);
       /* the wall over each arch: a brick spandrel cut to the curve */
       const sp = new THREE.Shape();
       sp.moveTo(-bw / 2, 0);
       sp.lineTo(-R, 0);
-      sp.absarc(0, 0, R, Math.PI, 0, true);
+      sp.absellipse(0, 0, R, Ry, Math.PI, 0, true);
       sp.lineTo(bw / 2, 0);
       sp.lineTo(bw / 2, H1 - 3.05);
       sp.lineTo(-bw / 2, H1 - 3.05);
@@ -1106,6 +1177,21 @@ export function publicBuilding(L = 42) {
   for (let x = -L / 2 + 0.25; x < L / 2; x += 0.42) box(0.05, 0.86, 0.05, M.white, x, H1 + 0.86, 0.3, g);
   for (let i = 0; i < bays; i++) sash(g, -L / 2 + (i + 0.5) * bw, H1 + 1.75, -2.58, 1.2, 2.3, i % 2 === 0);
   box(L + 0.8, 0.26, 3.6, M.white, 0, H1 + H2 - 0.1, -1.0, g);
+  /* Long: over the centre of the arcade, "a lofty pediment raised upon four Doric columns" */
+  const cx = [-1.5, -0.5, 0.5, 1.5].map((k) => k * bw);
+  for (const x of cx) {
+    cyl(0.26, 0.3, H2 - 0.55, M.white, x, H1 + 0.3 + (H2 - 0.55) / 2, 0.3, g, 12);
+    box(0.74, 0.18, 0.74, M.white, x, H1 + 0.39, 0.3, g);
+    box(0.7, 0.2, 0.7, M.white, x, H1 + H2 - 0.33, 0.3, g);
+  }
+  const pw2 = 3 * bw + 1.6;
+  box(pw2, 0.5, 1.2, M.white, 0, H1 + H2 + 0.12, 0.3, g);
+  const tp = new THREE.Shape();
+  tp.moveTo(-pw2 / 2, 0);
+  tp.lineTo(pw2 / 2, 0);
+  tp.lineTo(0, 2.4);
+  const tg = new THREE.ExtrudeGeometry(tp, { depth: 5.6, bevelEnabled: false });
+  mesh(tg, M.white, 0, H1 + H2 + 0.37, 0.9 - 5.6, g);
   const rf = roof(L + 0.4, D + 3.4, 2.6, 0.4);
   rf.position.set(0, H1 + H2 + 0.03, -D / 2 - 1.0);
   g.add(rf);
@@ -1140,14 +1226,17 @@ export function kingsHouse(L = 46) {
   /* the portico: a flight of steps, six columns, an entablature and a pediment */
   const P = grp(g, 0, 0, 0),
     pw = 9.4,
-    pd = 3.4;
+    pd = 4.4;
   for (let i = 0; i < 4; i++) box(pw + 1.6 - i * 0.4, 0.2, pd + 1.4 - i * 0.36, std(T.stone([206, 200, 186], [4, 1]), 1), 0, 0.1 + i * 0.2, pd / 2 + 0.1 - i * 0.04, P);
-  for (let i = 0; i < 6; i++) {
-    const x = -pw / 2 + 0.5 + (i * (pw - 1)) / 5;
-    cyl(0.32, 0.38, 6.6, M.white, x, 0.8 + 3.3, pd, P, 14);
-    box(0.9, 0.2, 0.9, M.white, x, 0.9, pd, P);
-    box(0.86, 0.26, 0.86, M.white, x, 7.5, pd, P);
-  }
+  /* Long: "supported by twelve columns of Portland-stone, of the Ionic order": here two rows of six */
+  for (const z of [pd, pd - 2.1])
+    for (let i = 0; i < 6; i++) {
+      const x = -pw / 2 + 0.5 + (i * (pw - 1)) / 5;
+      cyl(0.32, 0.38, 6.6, M.white, x, 0.8 + 3.3, z, P, 14);
+      box(0.9, 0.2, 0.9, M.white, x, 0.9, z, P);
+      box(0.86, 0.26, 0.86, M.white, x, 7.5, z, P);
+      for (const s of [-1, 1]) cyl(0.11, 0.11, 0.86, M.white, x, 7.36, z + s * 0.36, P, 8).rotation.x = Math.PI / 2;   /* the volutes of the Ionic capital */
+    }
   box(pw + 0.4, 0.8, pd + 0.6, M.white, 0, 8.0, pd / 2 + 0.1, P);
   const ped = new THREE.Shape();
   ped.moveTo(-pw / 2 - 0.4, 0);
@@ -1188,8 +1277,11 @@ export function octagon(R = 5.2) {
     box(len + 0.3, 0.36, 0.34, kerb, 0, 0.18, 0, seg);
     for (const y of [0.62, 1.22]) box(len, 0.045, 0.045, rail, 0, y, 0, seg);
     for (let k = 0; k <= 8; k++) box(0.03, 0.9, 0.03, rail, -len / 2 + (k * len) / 8, 0.8, 0, seg);
-    cyl(0.07, 0.07, 1.2, kerb, x0 - (x0 + x1) / 2, 0.9, 0, seg, 8).position.set(-len / 2, 0.9, 0);
-    mesh(new THREE.SphereGeometry(0.1, 8, 6), kerb, -len / 2, 1.56, 0, seg);
+    /* square white piers at the corners and halfway along, as on Long's plate */
+    for (const px of [-len / 2, 0]) {
+      box(0.42, 1.5, 0.42, M.white, px, 0.75, 0, seg);
+      box(0.54, 0.12, 0.54, M.white, px, 1.56, 0, seg);
+    }
   }
   return g;
 }
@@ -1261,6 +1353,105 @@ export function farCrowd(n = 26, w = 12, seed = 2) {
     if (r() < 0.5) mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 8), m, x, h + 0.02, z, g);
   }
   dynamic(noAudit(g));
+  return g;
+}
+/* a low house of one storey: thick plastered walls (the old Spanish houses Long mentions) or brick, small sash windows, a door, a hip roof.
+   For the north side of the square (the old court-house, the tavern, the barber's shop) and the guard-house. The front faces +z. */
+export function lowHouse(w = 8, { h = 4.2, d = 7, rgb = [222, 212, 188], brickWall = false, door = 0, doors = 1, seed = 1, piazza = false } = {}) {
+  const g = grp(),
+    r = rng(seed),
+    n = Math.max(2, Math.floor(w / 2.4));
+  box(w, h, d, brickWall ? brick(w / 3, 2, rgb) : std(T.plaster(rgb, [2, 1]), 1), 0, h / 2, -d / 2, g);
+  box(w + 0.2, 0.45, d + 0.2, std(T.stone([150, 144, 130], [4, 1]), 1), 0, 0.22, -d / 2, g);
+  box(w + 0.3, 0.22, d + 0.3, M.white, 0, h - 0.11, -d / 2, g);
+  const at = (i) => -w / 2 + (i + 0.5) * (w / n),
+    doorIs = new Set(Array.from({ length: doors }, (_, k) => Math.min(n - 1, door + k * 2)));
+  for (let i = 0; i < n; i++) {
+    if (doorIs.has(i)) {
+      const dr = makeDoor({ w: 1.15, h: 2.3, kind: "plank", leaves: 2, color: [0x4a3a2a, 0x2f3b33, 0x5a3e2a][seed % 3], frame: 0xe2d9c2 });
+      dr.position.set(at(i), 0.3, 0.01);
+      g.add(dr);
+      box(1.7, 0.3, 0.6, std(T.stone([170, 164, 150], [1, 1]), 1), at(i), 0.15, 0.3, g);
+    } else sash(g, at(i), 1.9, 0.02, 0.9, 1.5, r() < 0.4);
+  }
+  if (piazza) {
+    for (let i = 0; i <= n; i++) cyl(0.08, 0.09, h - 0.6, W.WM.wood, -w / 2 + 0.1 + (i * (w - 0.2)) / n, (h - 0.6) / 2, 2.0, g, 6);
+    const pr = mesh(new THREE.BoxGeometry(w + 0.4, 0.1, 2.5), M.shingle(), 0, h - 0.45, 1.0, g);
+    pr.rotation.x = 0.16;
+  }
+  const rf = roof(w, d, 1.7, 0.4);
+  rf.position.set(0, h, -d / 2);
+  g.add(rf);
+  return g;
+}
+/* a painted board fixed flat to a wall over a door: the words, on a framed board. The front faces +z; stand it on the wall face. */
+export function wallSign(text, w = 2.2, h = 0.5) {
+  const g = grp();
+  box(w + 0.12, h + 0.12, 0.05, W.WM.woodDark, 0, 0, 0.025, g);
+  const lb = plane(w, h, label(text, w, h, "#2f3b33", "#e8ddc4"), 0, 0, 0.056, g);
+  return g;
+}
+function label(text, w, h, bg, fg) {
+  const tex = cv(512, Math.max(64, Math.round((512 * h) / w)), (x, Wd, Ht) => {
+    x.fillStyle = bg;
+    x.fillRect(0, 0, Wd, Ht);
+    x.fillStyle = fg;
+    x.font = "bold " + Math.round(Ht * 0.52) + "px Georgia, serif";
+    x.textAlign = "center";
+    x.textBaseline = "middle";
+    x.fillText(text, Wd / 2, Ht / 2, Wd * 0.9);
+  });
+  return std(tex, 1);
+}
+/* the chapel on the south side of the square, near King's House. Long (1774): "built much in the style of the common-halls belonging to the
+   inns of court in London: the walls are crowned with battlements; and on the centre of the roof is a cupola and clock". By 1774 it held
+   arms. The windows and the door are a general picture. The front faces +z. */
+export function chapel(w = 13, { d = 8, h = 7 } = {}) {
+  const g = grp(),
+    wallM = std(T.plaster([214, 206, 186], [3, 1]), 1),
+    stone = std(T.stone([190, 184, 168], [2, 1]), 1);
+  box(w, h, d, wallM, 0, h / 2, -d / 2, g);
+  box(w + 0.24, 0.5, d + 0.24, stone, 0, 0.25, -d / 2, g);
+  /* tall windows and a central door with a stone surround */
+  const n = 5;
+  for (let i = 0; i < n; i++) {
+    const x = -w / 2 + (i + 0.5) * (w / n);
+    if (i === 2) {
+      const dr = makeDoor({ w: 1.5, h: 2.9, kind: "plank", leaves: 2, color: 0x3d2c22, frame: 0xd8d0bc });
+      dr.position.set(x, 0.5, 0.01);
+      g.add(dr);
+      box(2.2, 0.3, 0.8, stone, x, 0.15, 0.4, g);
+      sash(g, x, 5.2, 0.02, 1.1, 1.6, true);
+    } else sash(g, x, 3.6, 0.02, 1.1, 3.4, i % 2 === 0);
+  }
+  /* the battlements: a coping and merlons all round the top */
+  box(w + 0.3, 0.24, d + 0.3, stone, 0, h + 0.12, -d / 2, g);
+  for (const [len, z, rot] of [[w, 0.0, 0], [w, -d, 0], [d, -d / 2, 1]])
+    for (const sx of rot ? [-w / 2, w / 2] : [0]) {
+      const k = Math.floor(len / 0.9);
+      for (let i = 0; i <= k; i += 2) {
+        const t = -len / 2 + 0.2 + (i * (len - 0.4)) / k;
+        if (rot) box(0.34, 0.6, 0.5, stone, sx + (sx < 0 ? 0.02 : -0.02), h + 0.54, z + t, g);
+        else box(0.5, 0.6, 0.34, stone, t, h + 0.54, z + (z === 0 ? -0.02 : 0.02), g);
+      }
+    }
+  const rf = roof(w - 0.8, d - 0.8, 1.6, 0);
+  rf.position.set(0, h + 0.24, -d / 2);
+  g.add(rf);
+  /* the cupola and clock on the middle of the roof */
+  const cz = -d / 2;
+  box(1.8, 2.2, 1.8, wallM, 0, h + 1.9, cz, g);
+  box(2.0, 0.16, 2.0, M.white, 0, h + 3.05, cz, g);
+  const face = cyl(0.56, 0.56, 0.05, M.white, 0, h + 2.25, cz + 0.92, g, 20);
+  face.rotation.x = Math.PI / 2;
+  const ink = solid(0x1e1c1a, 0.8);
+  box(0.04, 0.4, 0.02, ink, 0, h + 2.4, cz + 0.955, g);
+  box(0.3, 0.04, 0.02, ink, 0.13, h + 2.25, cz + 0.955, g);
+  for (let i = 0; i < 8; i++) cyl(0.07, 0.07, 1.3, M.white, Math.cos((i * Math.PI) / 4) * 0.6, h + 3.78, cz + Math.sin((i * Math.PI) / 4) * 0.6, g, 6);
+  box(1.6, 0.14, 1.6, M.white, 0, h + 4.48, cz, g);
+  const dome = mesh(new THREE.SphereGeometry(0.78, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), solid(0x5a6a62, 0.6, 0.2), 0, h + 4.54, cz, g);
+  cyl(0.03, 0.03, 0.7, ink, 0, h + 5.55, cz, g, 5);
+  mesh(new THREE.SphereGeometry(0.1, 8, 6), solid(0xb08a3a, 0.4, 0.6), 0, h + 5.35, cz, g);
   return g;
 }
 export { M as SM };
