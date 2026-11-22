@@ -132,6 +132,24 @@ Owner rule, for every game: these checks are wired into the dev build, and **eve
 | Skin | `?test=skin` (Kendal, Garvey, Port Royal, Nanny Town; Tivoli with a local copy) | The colour each face is drawn in, in the game's own light, from four headings (`engine/skinprobe.js`). Compare with the target in `docs/PIPELINE.md`, "Skin". |
 | Resume | `?test=resume` (where the game saves) | Every saved stage reloads into the right place without breaking. |
 
+### Wiring room to pass and props close up into the older games (to do after their current work)
+
+Wired in Rose Hall, The Mad Master of Edinburgh Castle and The Shark Papers (22 November 2026). For each older game: import `propSnap` and `auditProps` from `engine/audit-props.js` and `auditPassage`, `passageSpots` from `engine/audit-passage.js`; take the props list where the audit snapshot is taken (before `batchStatic`), and add the two calls to the place audit's lines. `passageSpots(P, { LOOKS, TASKS })` reads `P.id`, `P.people` (`x`, `z`) and the steps tables; a game whose places keep their spots elsewhere passes its own `[{ label, x, z }]`. Use the game's own walking radius (most slide the player at 0.23 m).
+
+| Game | Where | The lines to add |
+|---|---|---|
+| Port Royal | `src/checks.js`, the place audit (`snapMeshes(home)`, `auditPlace({ ... walls: grid.walls ... })`) | `const props = auditProps(propSnap(home));` and `auditPassage({ walls: grid.walls, bounds: P.bounds, start: { x: P.start[0], z: P.start[1] }, spots: acts })`; add both to the issues it prints |
+| Marcus Garvey | `src/dev.js`, `auditPlace({ id, snap: snapMeshes(Q.group), ... })` | take `Q.propList = propSnap(Q.group)` in `main.js` before merging; then `...auditProps(Q.propList), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, spots: Q.actions })` |
+| Kendal 1957 | `src/main.js`, `ensurePlace` (`P.snap = snapMeshes(P.group)`) and the `?test=audit` loop | `P.propList = propSnap(P.group)` beside `P.snap`; in the loop add `...auditProps(P.propList), ...auditPassage({ walls: P.walls, bounds: P.bounds, start: P.start, spots: P.actions })` to `r.floating, r.inside, r.stuck, rv` |
+| Bog Walk 1904 | `src/dev.js`, the place audits (the tube and the places) | for the places: `...auditProps(propSnap(P.group)), ...auditPassage({ walls: P.walls, bounds: P.bounds, start: P.start, spots: P.actions || [] })`; the tube is a lane, so leave room to pass out there |
+| Nanny Town | `src/main.js`, `ensurePlace` (`P.snap`) and the `?test=audit` loop | `P.propList = propSnap(P.group)` beside `P.snap`; push `...auditProps(P.propList), ...auditPassage({ walls: P.walls, bounds: P.bounds, start: P.start, spots: P.actions || [] })` into `r.stuck` with `rv` |
+| Tivoli | `src/main.js`, the audits (`snapMeshes(pl.raw)`) | `...auditProps(propSnap(pl.raw)), ...auditPassage({ walls: pl.walls, bounds: bd, start: pl.start, spots: [{ label: 'end spot', ...pl.endSpot }] })`; the street (no walls) needs only the props check |
+| Hurricane Melissa | `src/main.js`, `ensurePlace` and the `?test=audit` loop | as Kendal |
+| The Emperor's Arrival | `src/main.js` (`Q.snap = snapMeshes(Q.group)`) and `src/dev.js` (`auditPlace({`) | `Q.propList = propSnap(Q.group)` beside `Q.snap`; in `dev.js` add `...auditProps(Q.propList), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, spots: passageSpots(Q, { LOOKS, TASKS }) })` as Rose Hall does |
+| Eventide Home | `src/main.js` (`P.snap = snapMeshes(group)`, with the hidden things turned off) and its audit | take `P.propList = propSnap(group)` inside the same block, while the hidden things are off; then add the two calls with `P.walls`, `P.bounds`, `P.start` |
+| Windrush | `src/main.js` (`Q.snap = snapMeshes(Q.group)`) and `src/dev.js` (`auditPlace({`) | as The Emperor's Arrival |
+
+
 ```bash
 node tools/build.mjs kendal --dev
 timeout 280 google-chrome --headless=new --no-sandbox --use-gl=swiftshader --enable-unsafe-swiftshader --window-size=320,240 \
