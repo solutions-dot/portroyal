@@ -74,7 +74,7 @@
   .credit a:focus-visible{outline:3px solid var(--mango);outline-offset:2px;border-radius:4px}
 
   /* the three pills, below all the cards, with a little space above and below (owner, 22 November 2026) */
-  .foot-links{justify-content:center!important;flex-wrap:wrap!important;width:100%;margin:clamp(1.2rem,3vh,2rem) 0 clamp(1rem,3vh,2rem)}
+  #footlinks{justify-content:center!important;flex-wrap:wrap!important;width:100%;margin:clamp(1.2rem,3vh,2rem) 0 clamp(1rem,3vh,2rem)}
   main{grid-template-rows:none!important;grid-auto-rows:auto;align-content:start}   /* rows size themselves: header, library bar, picks, cards, pills */
   .games{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:clamp(.7rem,1.6vw,1.2rem);min-height:0}
 
@@ -363,7 +363,7 @@
     </a>
   </section>
   <!-- About, Get updates and the credit sit below all the game cards (owner, 22 November 2026) -->
-  <nav class="links foot-links" aria-label="More">
+  <nav class="links" id="footlinks" aria-label="More">
     <a href="about.html" aria-label="About this platform">About</a>
     <button type="button" id="subopen" class="get">Get updates</button>
     <button type="button" class="credit contact-pill" id="contactopen" aria-haspopup="dialog" aria-controls="contactpanel">Created by <b>Kellz 5.0</b><span aria-hidden="true"> ↗</span></button>
