@@ -25,6 +25,7 @@ import { slideWalls, walkRoute } from "../../../engine/placement.js";
 import { releaseOnBlur, useInteractionKey } from "../../../engine/input.js";
 import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle, tone, noiseHit, shipCreak } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
+import { propSnap } from "../../../engine/audit-props.js";
 import { makeSky, G, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
@@ -204,7 +205,10 @@ async function buildWorld(id) {
   Q.group.name = id;
   Q.group.visible = false;
   scene.add(Q.group);
-  if (__DEV__) Q.snap = snapMeshes(Q.group);
+  if (__DEV__) {
+    Q.snap = snapMeshes(Q.group);
+    Q.props = propSnap(Q.group);   /* small props, before merging (engine/audit-props.js) */
+  }
   mergePlace(Q);
   Q.people = [];
   Q.extras = [];

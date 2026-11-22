@@ -203,7 +203,7 @@ function deck() {
   wall(Q, 0, FORE, 0.5, 0.5);
   wall(Q, 0, MAIN + 0.1, 0.5, 0.5);
   /* pin rails inside the bulwarks by the shrouds, with their coils; a fife rail round the foot of each mast */
-  for (const z of [FORE + 0.5, MAIN + 0.6])
+  for (const z of [FORE - 0.4, MAIN + 0.6])   /* the fore pin rails stand just forward of the shrouds, clear of the forward guns */
     for (const s of [-1, 1]) {
       const pr = S.pinRail(5, s > 0 ? [0, 2, 4] : [1, 2, 4]);
       pr.position.set(s * (half(z) - 0.2), 0.72, z);
@@ -211,7 +211,7 @@ function deck() {
       box(0.06, 0.72, 0.06, S.SM.woodDark, s * (half(z) - 0.2), 0.36, z - 0.4, Q.group);
       box(0.06, 0.72, 0.06, S.SM.woodDark, s * (half(z) - 0.2), 0.36, z + 0.4, Q.group);
     }
-  for (const z of [FORE, MAIN]) {
+  for (const z of [FORE]) {   /* a fife rail at the fore mast; at the main the boat on the hatch leaves no room for one, so its lines go to the pin rails */
     for (const x of [-0.42, 0.42]) box(0.08, 0.7, 0.08, S.SM.woodDark, x, 0.35, z - 0.5, Q.group);
     const fr = S.pinRail(4, [0, 3]);
     fr.rotation.y = Math.PI / 2;
@@ -233,12 +233,15 @@ function deck() {
     S.rope([s * 0.5, 0.62, -7.8], [s * (half(-8.4) - 0.05), 0.5, -8.6], 0.035, S.SM.hemp, Q.group, 6);   /* the cable leading to the hawse hole */
   }
   /* ---- the six 3-pounders, three a side, run out at their ports ---- */
-  for (const z of [-3.2, -0.9, 4.25])
+  /* two pairs forward of the boat and one aft of the main mast, each with clear deck inboard of it: you can walk round every gun */
+  for (const z of [-4.1, -2.85, 4.25])
     for (const s of [-1, 1]) {
       const x = s * (half(z) - 0.98);
       add(Q, S.gunAtPort(s), x, z);
       wall(Q, s * (half(z) - 0.8), z, 1.2, 0.66);   /* the carriage and the breech: the muzzle stands out through the port */
-      box(0.05, 0.4, 0.52, new THREE.MeshBasicMaterial({ color: 0x0c0a09 }), s * (half(z) - 0.125), 0.48, z, Q.group);   /* the port */
+      box(0.05, 0.4, 0.52, new THREE.MeshBasicMaterial({ color: 0x0c0a09 }), s * (half(z) - 0.125), 0.48, z, Q.group);   /* the port: the opening, dark */
+      for (const dy of [-0.23, 0.23]) box(0.07, 0.06, 0.62, S.SM.woodDark, s * (half(z) - 0.14), 0.48 + dy, z, Q.group);   /* its sill and lintel, so it reads as a hole in the side */
+      for (const dz of [-0.29, 0.29]) box(0.07, 0.52, 0.05, S.SM.woodDark, s * (half(z) - 0.14), 0.48, z + dz, Q.group);
       const rack = S.shotRack(5, 0.036);
       rack.position.set(s * (half(z + 0.7) - 0.28), 0, z + 0.72);
       rack.rotation.y = Math.PI / 2;
@@ -246,22 +249,23 @@ function deck() {
       S.spar([s * (half(z - 0.6) - 0.2), 0.05, z - 1.25], [s * (half(z - 0.6) - 0.22), 0.07, z - 0.45], 0.02, 0.02, S.SM.wood, Q.group);   /* the rammer, laid by */
       cyl(0.045, 0.045, 0.12, S.SM.white, s * (half(z - 0.6) - 0.2), 0.05, z - 1.3, Q.group, 8).rotation.x = Math.PI / 2;
     }
-  /* ---- amidships: the boat on her chocks, the harness cask, the main hatch, the pumps, the scuttle butt ---- */
-  const boat = rowBoat({ L: 4.3, beam: 1.36, depth: 0.6, wood: BOATW(), timber: BOATT(), oars: "shipped", rudder: false, gear: false });
+  /* ---- amidships: the boat stowed on chocks over the main hatch (as small ships stowed their boats), the harness cask, the pumps, the
+     scuttle butt. The deck keeps a clear gangway down each side and a clear way across forward and aft of the boat. ---- */
+  const mainHatch = S.hatch(1.2, 1.2, 0.42);
+  solid1(Q, mainHatch, 0, -0.1, 1.3, 1.3);
+  const boat = rowBoat({ L: 3.2, beam: 1.15, depth: 0.55, wood: BOATW(), timber: BOATT(), oars: "shipped", rudder: false, gear: false });
   boat.rotation.y = Math.PI / 2;
-  boat.position.set(0, 0.2, -2.35);
+  boat.position.set(0, 0.5, -0.1);
   Q.group.add(boat);
-  for (const z of [-3.5, -1.2]) {
-    box(1.2, 0.22, 0.14, S.SM.woodDark, 0, 0.11, z, Q.group);
-    for (const s of [-1, 1]) S.rope([s * 0.66, 0.03, z + 0.1], [s * 0.55, 0.78, z + 0.1], 0.014, S.SM.hemp, Q.group, 4);   /* her gripes */
-    S.rope([-0.55, 0.78, z + 0.1], [0.55, 0.78, z + 0.1], 0.014, S.SM.hemp, Q.group, 4);
+  for (const z of [-1.25, 1.05]) {
+    box(1.05, 0.5, 0.14, S.SM.woodDark, 0, 0.25, z, Q.group);   /* the chocks, tall enough to carry her clear of the hatch coaming */
+    for (const s of [-1, 1]) S.rope([s * 0.58, 0.03, z + 0.1], [s * 0.5, 0.98, z + 0.1], 0.014, S.SM.hemp, Q.group, 4);   /* her gripes */
+    S.rope([-0.5, 0.98, z + 0.1], [0.5, 0.98, z + 0.1], 0.014, S.SM.hemp, Q.group, 4);
   }
-  wall(Q, 0, -2.35, 1.4, 4.4);
+  wall(Q, 0, -0.1, 1.25, 3.25);
   const harness = cask(0.86, 0.3, S.SM.brass, 0x86643f);   /* the harness cask: the salt meat for the day, with brass hoops and a lid */
-  solid1(Q, harness, 1.75, -4.5, 0.7, 0.7);
-  cyl(0.25, 0.25, 0.03, S.SM.woodDark, 1.75, 0.875, -4.5, Q.group, 12);
-  const mainHatch = S.hatch(1.3, 1.3, 0.42);
-  solid1(Q, mainHatch, 0, 1.1, 1.4, 1.4);
+  solid1(Q, harness, 2.12, -1.0, 0.7, 0.7);
+  cyl(0.25, 0.25, 0.03, S.SM.woodDark, 2.12, 0.875, -1.0, Q.group, 12);
   for (const s of [-1, 1]) {
     /* the pumps: an elm tube with an iron brake */
     cyl(0.09, 0.1, 0.8, S.SM.wood, s * 0.5, 0.4, MAIN + 0.75, Q.group, 8);
@@ -276,7 +280,7 @@ function deck() {
   add(Q, dipper, -1.55, 2.9);
   wall(Q, -1.55, 2.9, 0.3, 0.3);
   /* buckets and a swab by the starboard rail, coils flaked down along the deck */
-  for (const [x, z] of [[2.25, -1.9], [2.3, -2.3]]) {
+  for (const [x, z] of [[2.3, -1.65], [2.3, -2.0]]) {
     const b = bucket(0x8a6a48);
     b.scale.setScalar(0.8);
     add(Q, b, x, z);
@@ -289,9 +293,9 @@ function deck() {
   Q.group.add(swab);
   for (const [x, z, r] of [[2.2, 5.6, 0.26], [-2.1, -1.9, 0.24], [1.9, -6.2, 0.26], [-1.6, 7.9, 0.22], [2.1, 0.3, 0.22]]) add(Q, S.coil(r, 4), x, z);
   /* ---- aft: the companion to the cabin, the binnacle, the tiller, the taffrail ---- */
-  solid1(Q, S.companion(1.0, 1.3, 0.95), 0.95, 5.15, 1.1, 1.4);
-  wall(Q, 0.95, 6.1, 1.0, 0.5);   /* its doors stand open */
-  solid1(Q, S.binnacle(), 0.3, 7.55, 1.0, 0.5);
+  solid1(Q, S.companion(1.0, 1.3, 0.95), 0.55, 6.15, 1.1, 1.4);   /* a little to starboard: a gangway each side, and room for the shark to port */
+  wall(Q, 0.55, 7.1, 1.0, 0.5);   /* its doors stand open */
+  solid1(Q, S.binnacle(), 0.3, 7.72, 1.0, 0.5);
   const tiller = grp();
   S.spar([0, 0.5, 9.05], [0, 0.98, 9.0], 0.1, 0.09, S.SM.woodDark, tiller);   /* the rudder head */
   S.spar([0, 0.95, 9.0], [0.12, 0.9, 8.05], 0.05, 0.03, S.SM.wood, tiller);
@@ -300,7 +304,7 @@ function deck() {
   wall(Q, 0.06, 8.6, 0.4, 1.0);
   /* a spyglass on the companion top */
   const glass = S.spyglass();
-  add(Q, glass, 1.1, 5.0, 1.0, 0.5);
+  add(Q, glass, 0.7, 6.0, 1.0, 0.5);
 
   /* ---- what the story changes ---- */
   /* a rope left in a heap by the fore mast */

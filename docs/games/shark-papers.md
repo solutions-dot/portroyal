@@ -182,3 +182,11 @@ The owner: "the mountains in these games dont look as good as the other games". 
 - **Through the court windows**: the painted view in the sash panes now shows the Blue Mountains as three hazy ridges over the tiled roofs of the town, drawn with the same noise (`fbm`); the green blobs are gone. The plaster walls inside are smoother (their normal map at 0.35), so they read as limewash, not rough render.
 
 Pictures before and after: the dawn scene at 3 s and 27 s, the quay toward Kingston, and the court's windows.
+
+## Room on the Ferret's deck, 22 November 2026
+
+The owner: "the ship deck is a bit crowded here and cant allow me to pass over to the other side". Seen from the main mast looking forward, the boat on its chocks, the guns run out beside it, the main hatch and the fife rail left no way through: the gangways beside the boat were under half a metre, and the ways across the deck forward and aft of the hatch were 0.2 and 0.55 m.
+
+Now: the boat (3.2 m, a little smaller) is stowed on tall chocks over the main hatch, as small ships stowed their boats, so the two make one block amidships; the guns are two pairs forward of it (z -4.1 and -2.85) and one pair aft of the main mast (4.25), each with clear deck inboard, so every gun can be walked round; the fore pin rails stand just forward of the shrouds; the main mast has no fife rail (its lines go to the pin rails by the shrouds); the harness cask stands against the starboard bulwark abreast the boat; the companion stands a little to starboard of the centre with a gangway each side, the binnacle just aft of it. There is a clear gangway down both sides and a clear way across forward and aft of the boat and hatch, all at least 0.9 m. Each gun port now has a sill, lintel and sides, so it reads as a hole in the bulwark rather than a black square. Still six 3-pounders on a 61-foot schooner. Where the boat was stowed on the Ferret is not known: this is a general picture.
+
+A new check, `engine/audit-passage.js` ("Room to pass" in docs/TESTING.md), found the pinches and now reports 0 on the deck, the quay and in the court.
