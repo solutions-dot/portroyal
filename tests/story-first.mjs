@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readTime, judge, trimQuiz, scoreLine, QUIZ_MAX } from '../engine/quiz.js';
-import { yawTo, angleDiff, easeAngle, talkAim, createTalkCam } from '../engine/talk-cam.js';
+import { yawTo, angleDiff, easeAngle, talkAim, createTalkCam, speakerHead } from '../engine/talk-cam.js';
 import { recapItems, RECAP_MAX } from '../engine/recap.js';
 import { bannerWanted, BANNER_MS, BUSY_IDS } from '../engine/hud.js';
 
@@ -51,4 +51,10 @@ test('goal banner: new words only, never empty, waits for every modal the games 
   assert.equal(bannerWanted('Plant three yams.', ''), true); assert.equal(bannerWanted('Plant three yams.', 'Plant three yams.'), false);
   assert.equal(bannerWanted('   ', ''), false); assert.ok(BANNER_MS >= 2500 && BANNER_MS <= 4000);
   for (const id of ['title', 'card', 'dialogue', 'journal', 'chapters', 'quizpanel']) assert.ok(BUSY_IDS.includes(id), id);
+});
+
+test('talk camera: a head from a person, and nothing from a voice with no body', () => {
+  const h = speakerHead({ m: { position: { x: 1, y: 0.2, z: -2 }, scale: { y: 1 } }, h: 1.5 }); assert.deepEqual([h.x, +h.y.toFixed(3), h.z], [1, +(0.2 + 1.5 * 0.93).toFixed(3), -2]);
+  assert.equal(speakerHead({ who: 'The radio' }), null); assert.equal(speakerHead(null), null);
+  const T = createTalkCam(), s = { yaw: 0.5, pitch: 0 }; T.begin(); T.step(s, { x: 0, y: 1.3, z: 0 }, speakerHead({ who: 'radio' }), 0.1); assert.equal(s.yaw, 0.5);
 });

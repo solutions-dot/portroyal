@@ -21,7 +21,7 @@ export function addExit({ url = '../../../menu/', save = null } = {}) {
   if (cs.position === 'absolute' || cs.position === 'fixed') {   /* the Journal button is pinned on its own: pin a row in its place and put both in it */
     const row = document.createElement('div'); row.id = 'jrow';
     row.style.cssText = `position:${cs.position};top:${cs.top};right:${cs.right};left:${cs.left === 'auto' ? 'auto' : cs.left};bottom:${cs.bottom === 'auto' ? 'auto' : cs.bottom};z-index:${cs.zIndex};display:flex;gap:8px;align-items:center`;
-    jb.parentNode.insertBefore(row, jb); row.appendChild(jb); jb.style.position = 'static'; row.appendChild(btn);
+    jb.parentNode.insertBefore(row, jb); row.appendChild(jb); jb.style.position = 'relative'; jb.style.top = jb.style.right = jb.style.bottom = jb.style.left = 'auto'; row.appendChild(btn);   /* relative, not static: the new-pages badge sits on its corner (engine/hud.js) */
   } else jb.insertAdjacentElement('afterend', btn);
   for (const k of COPY) btn.style[k] = cs[k]; btn.style.borderRightWidth = btn.style.borderBottomWidth = btn.style.borderLeftWidth = cs.borderTopWidth; btn.style.borderStyle = cs.borderTopStyle; btn.style.borderColor = cs.borderTopColor;
   btn.style.cursor = 'pointer'; btn.style.whiteSpace = 'nowrap';

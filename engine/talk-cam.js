@@ -21,6 +21,14 @@ export function talkAim(eye, head, { lift = 0.1, maxPitch = 0.45 } = {}) {
   return { yaw, pitch, d };
 }
 
+/* where a person's head is: their model's position plus their height (n.h if the game set one, else an adult's, scaled) */
+export function speakerHead(n, { height = 1.62 } = {}) {
+  if (!n) return null; const m = n.m || n.body || n.mesh || n.model || null, p = m && m.position ? m.position : n;
+  const h = n.h || n.height || height * (n.scale || (m && m.scale && m.scale.y) || 1);
+  if (!Number.isFinite(p.x) || !Number.isFinite(p.z)) return null;   /* a voice with no body (a radio, a letter): leave the view alone */
+  return { x: p.x, y: (p.y || 0) + h * 0.93, z: p.z };
+}
+
 export function createTalkCam({ rate = 4.5, lift = 0.1, minDist = 0.35 } = {}) {
   const T = { on: false, held: false };
   T.begin = () => { T.on = true; T.held = false; };

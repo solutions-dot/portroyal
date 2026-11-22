@@ -69,7 +69,7 @@ export function runQuiz({ title = 'Quiz', items, max = QUIZ_MAX, sound = null, d
     };
     const next = () => { clearTimeout(timer); k++; if (k >= list.length) end(); else show(); };
     const show = () => {
-      const it = list[k]; $('quizprog').textContent = `${title}: ${k + 1} of ${list.length}`; $('quizq').textContent = it.q; $('quiznote').textContent = it.note || ''; $('quiznote').hidden = !it.note; $('quizline').textContent = '';
+      const it = list[k]; $("quizprog").textContent = `Question ${k + 1} of ${list.length}`; $('quizq').textContent = it.q; $('quiznote').textContent = it.note || ''; $('quiznote').hidden = !it.note; $('quizline').textContent = '';
       const nb = $('quiznext'); nb.hidden = true; nb.textContent = 'Next'; nb.onclick = next;
       const box = $('quizopts'); box.replaceChildren();
       it.opts.forEach((o, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = o.t; b.onclick = () => pick(i); box.appendChild(b); });
