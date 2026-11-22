@@ -4,6 +4,8 @@ Work from PR #129 (merged to `main`) that was not checked before the merge. Each
 
 Build a game with test views first: `node tools/build.mjs <game> --dev`, then serve the repo root (`python3 -m http.server 8765`). Never commit a dev build of `games/port-royal/site/app.js`: run `node tools/build.mjs port-royal` (public) before any commit.
 
+**Story-first pass for all ten games (21 November 2026):** the full to-do list is in `docs/plans/story_first_plan.md`. Work from it, one phase at a time.
+
 ## Nanny Town (games/nanny)
 
 - [x] **Audit after the waterfall came out.** The waterfall on the western hill of New Nanny Town (`buildNewTown` in `src/places.js`) was removed, and the place's `tick` that moved its water went with it. Run `?test=audit&p=newtown` and `?test=layout`. Expect 0 issues.
