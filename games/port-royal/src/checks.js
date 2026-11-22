@@ -16,6 +16,7 @@ import { checkAll } from '../../../engine/checks.js';
 import { CL, isSeated, strideOf, WALKS } from '../../../engine/anim.js';
 import { footWatch } from '../../../engine/foot-watch.js';
 import { AU, setSound } from '../../../engine/audio.js';
+import { buttonCutOff } from '../../../engine/ui-audit.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const $ = (id) => document.getElementById(id);
@@ -147,7 +148,7 @@ async function runLayout(A) {
   count.textContent = '13'; count.hidden = false; $('view').hidden = false;
   for (const button of $('topr').querySelectorAll('button')) {
     const bounds = button.getBoundingClientRect();
-    if (bounds.width && (bounds.left < 0 || bounds.right > W || button.scrollWidth > button.clientWidth + 1)) {
+    if (bounds.width && (bounds.left < 0 || bounds.right > W || buttonCutOff(button, 1))) {   /* the shared measure: a corner badge is not cut-off text (engine/ui-audit.js) */
       out.push(`${W}x${H} camera toolbar: ${button.id} is clipped`);
     }
   }

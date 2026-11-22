@@ -900,7 +900,7 @@ TICKS.push((dt) => {
   if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
   if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; /* Nearby interaction takes over; do not restart the hint delay. */ }   /* there: the talk button takes over */
   el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: () => eyeY });
-  if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
+  if (!NUDGE.on || !tgt || RESCUE.on) { GUIDE.hide(now); return; }   /* no arrow or ring during the rescue shot */
   const st = nudgeStep(tgt);   /* point at the next step on the way, which is the goal itself when there is a clear way to it */
   GUIDE.point(now, { x: st[0], z: st[1], tx: tgt[0], tz: tgt[1], final: st[2] });   /* a gold arrow on the ground points the way, a gold ring marks the place */
 });
@@ -956,6 +956,32 @@ function sinkTown(T, final) { for (const o of townObjs) { const q = final === un
 function rumble() { audioInit(); if (!AU.ctx || Q.gain) return; const c = AU.ctx, len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0); let l = 0; for (let i = 0; i < len; i++) { l = (l + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = l * 3.5; }
   const src = c.createBufferSource(); src.buffer = buf; src.loop = true; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 150; Q.gain = c.createGain(); Q.gain.gain.value = 0; src.connect(lp); lp.connect(Q.gain); Q.gain.connect(AU.master); src.start(); }
 function setPhase(p) { Q.phase = p; Q.t = 0; }
+/* The rescue boat, shown first (owner, 22 November 2026: "the view of the rescue boat is a bit too low, we cant see who is in the boat ... give us a
+   nicer camera view or pan"). When you come up in the sea, the bars come in and the camera rises from the water, glides out over the boat to a
+   three-quarter view of Abba in the boat, holds while a line shows, and comes back down to your eye. The boat waits until it ends. Skipped for the
+   autoplayer and the test views; with reduced motion it cuts. */
+const RESCUE = { len: 7.2 }, rescueLen = () => (__DEV__ && /[?&](auto|test)=/.test(location.search)) ? 0 : RESCUE.len;
+const _rp = new THREE.Vector3(), _rl = new THREE.Vector3(), _ra = new THREE.Vector3(), _rb = new THREE.Vector3();
+function rescueCam(t) {
+  const L = rescueLen(); if (!Q.boat || t >= L) { if (RESCUE.on) { RESCUE.on = false; document.body.classList.remove('cine'); $('cinesub').textContent = ''; } return false; }
+  if (!RESCUE.on) { RESCUE.on = true; document.body.classList.add('cine'); }
+  const b = Q.boat, c = Math.cos(b.rotation.y), sn = Math.sin(b.rotation.y), bow = [c, -sn], side = [sn, c];   /* the boat's bow and its side, flat */
+  const head = [b.position.x + BOAT_SEAT * c, b.position.y + 1.05, b.position.z - BOAT_SEAT * sn];          /* Abba's head, on her thwart */
+  const eye = [state.x, seaLevel + 0.6, state.z], sm = (k) => k * k * (3 - 2 * k);
+  const keys = [   /* [time, camera, look] */
+    [0, [eye[0], eye[1] + 0.2, eye[2]], [b.position.x, b.position.y + 0.6, b.position.z]],
+    [2.6, [head[0] + bow[0] * 3.6 + side[0] * 2.6, head[1] + 1.5, head[2] + bow[1] * 3.6 + side[1] * 2.6], head],
+    [5.0, [head[0] + bow[0] * 3.0 + side[0] * 1.6, head[1] + 0.9, head[2] + bow[1] * 3.0 + side[1] * 1.6], head],
+    [L, [eye[0], eye[1], eye[2]], [b.position.x, b.position.y + 0.8, b.position.z]],
+  ];
+  let i = 0; while (i < keys.length - 2 && t > keys[i + 1][0]) i++;
+  const [t0, p0, l0] = keys[i], [t1, p1, l1] = keys[i + 1], k = reduceMotion ? (t - t0 < (t1 - t0) / 2 ? 0 : 1) : sm(Math.min(1, (t - t0) / (t1 - t0)));
+  _rp.set(...p0).lerp(_ra.set(...p1), k); _rl.set(...l0).lerp(_rb.set(...l1), k);
+  camera.position.copy(_rp); camera.lookAt(_rl);
+  const line = t < 2.2 ? '' : t < 5.4 ? 'A boat! It is Abba. She calls your name.' : 'Swim to her!';
+  if ($('cinesub').textContent !== line) $('cinesub').textContent = line;
+  return true;
+}
 function quakeIntro() { cue('sad'); if (!townReady || !tavernReady) { toast('The town is still loading.'); return; } closeJournal(); $('card').hidden = true; $('dialogue').hidden = true; $('goal').hidden = false;
   sceneWarning(card, { title: '7 June 1692', what: ['Two years later. Lewis is now a merchant.', 'Next comes the great earthquake. It is loud.'], watch: beginQuake, read: () => finishQuake(true) }); }
 let hideQuakeSkip;
@@ -970,7 +996,7 @@ function buildSeaProps() { if (Q.boat) return; const wood = new THREE.MeshStanda
   /* the boat that takes Galdy up: a plain clinker-built harbour boat of the time (engine/boats.js), with ribs, thwarts, thole pins, oars, a rudder, rope and a bailer.
      The tombstone says only "a Boat", so nothing on it is named. Its keel is 0.3 under the group, as the old hull was; the mask keeps the sea out of the inside */
   const b = new THREE.Group(); b.userData.hollow = true; scene.add(b);   /* hollow: Abba sits inside it (engine/audit.js) */
-  const rb = rowBoat({ L: 5.2, beam: 1.7, depth: 0.7, seatTop: 0.52, wood, timber: new THREE.MeshStandardMaterial({ map: plankTex([104, 80, 56], 1, 1, 1), roughness: 0.9 }), oars: 'rowing', rowAt: BOAT_SEAT, rowFace: 1, mask: true }); rb.position.y = -0.3; b.add(rb); b.userData.row = rb; waves.renderOrder = 2;
+  const rb = rowBoat({ L: 5.2, beam: 1.7, depth: 0.7, seatTop: 0.52, wood, timber: new THREE.MeshStandardMaterial({ map: plankTex([104, 80, 56], 1, 1, 1), roughness: 0.9 }), oars: 'rowing', rowAt: BOAT_SEAT, rowFace: 1, mask: true }); rowStroke(rb, 0, false); rb.position.y = -0.3;   /* the oars out in their thole pins, resting with the blades clear of the water: she does not row (owner, 22 November 2026) */ b.add(rb); b.userData.row = rb; waves.renderOrder = 2;
   const mark = mk(new THREE.OctahedronGeometry(0.28), new THREE.MeshBasicMaterial({ color: 0xd9a441 }), 0, 3.3, 0, b); b.userData.mark = mark; Q.boat = b;
   for (let i = 0; i < 12; i++) { const k = i % 3, d = mk(k === 0 ? new THREE.CylinderGeometry(0.3, 0.3, 0.9, 10) : k === 1 ? new THREE.BoxGeometry(0.7, 0.6, 0.7) : new THREE.BoxGeometry(2.6, 0.12, 0.3), tim, SHORE + 8 + ((i * 37) % 50), 0, 12 + ((i * 53) % 55)); if (k === 0) d.rotation.z = Math.PI / 2; d.rotation.y = i * 1.3; d.userData.ph = i * 1.7; Q.debris.push(d); } }
 function abbaIdle() { if (!abba || !idle) return; if (runA) runA.stop(); const ac = abba.userData.anim; if (ac) { for (const n of ['Scared', 'Terrified']) { const a = ac.get(n); if (a) a.stop(); } if (ac.cur !== idle) ac.cur.stop(); ac.cur = idle; ac.timer = 0; } idle.reset().setEffectiveWeight(1).fadeIn(0.2).play(); }
@@ -992,12 +1018,12 @@ function quakeTick(dt, time) { Q.t += dt; const t = Q.t;
     if (Q.abbaRun) { abba.rotation.y = Math.PI / 2 - 0.08; abba.position.x += 4.6 * dt; abba.position.z += 0.35 * dt; if (abba.position.x > SHORE + 4) { abba.visible = false; Q.abbaRun = false; } } if (t > 8.5) { setPhase('swallow'); goalText = 'The sand is pulling you down!'; showGoal(); } }
   else if (Q.phase === 'swallow') { Q.shake = 1; Q.T += dt; sinkTown(Q.T); const k = ease(t / 3.6); eyeY = 1.62 - 1.25 * k; moveSpeed = 2.7 * (1 - 0.9 * k); $('vig').style.opacity = k;
     if (t > 4 && $('card').hidden) { Q.shake = 0.3; card('Swallowed', ['The wet sand has gone soft, like mud. You sink up to your neck.', 'You cannot move. Then the ground shakes again!'], [{ t: 'Next', go: toSea }]); } }
-  else if (Q.phase === 'sea') { Q.shake = t < 1.5 ? 0.6 * (1 - t / 1.5) : (Math.sin(time * 0.5) > 0.96 ? 0.25 : 0); eyeY = seaLevel + 0.32 + Math.sin(time * 1.6) * 0.07;
-    const b = Q.boat; b.position.y = seaLevel + 0.12 + Math.sin(time * 1.2) * 0.06; b.rotation.z = Math.sin(time * 0.9) * 0.05; b.userData.mark.rotation.y = time * 1.5; { const c = Math.cos(b.rotation.y), sn = Math.sin(b.rotation.y), ax = b.position.x + BOAT_SEAT * c, az = b.position.z - BOAT_SEAT * sn; abba.userData.seatAnchor = { x: ax, z: az, top: b.position.y + 0.22, ry: b.rotation.y + Math.PI / 2 }; }   /* Abba sits on a thwart facing the bow and you, and pushes the oars to row over (rowing facing forward) */
+  else if (Q.phase === 'sea') { const ts = t - rescueLen(); Q.shake = ts < 0 ? 0 : ts < 1.5 ? 0.6 * (1 - ts / 1.5) : (Math.sin(time * 0.5) > 0.96 ? 0.25 : 0); eyeY = seaLevel + 0.6 + Math.sin(time * 1.6) * 0.07;   /* the eye a little higher (owner: the view was too low to see who was in the boat) */
+    const b = Q.boat; b.position.y = seaLevel + 0.12 + Math.sin(time * 1.2) * 0.06; b.rotation.z = Math.sin(time * 0.9) * 0.05; b.userData.mark.rotation.y = time * 1.5; b.userData.mark.visible = !RESCUE.on; { const c = Math.cos(b.rotation.y), sn = Math.sin(b.rotation.y), ax = b.position.x + BOAT_SEAT * c, az = b.position.z - BOAT_SEAT * sn; abba.userData.seatAnchor = { x: ax, z: az, top: b.position.y + 0.22, ry: b.rotation.y + Math.PI / 2 }; }   /* Abba sits on a thwart facing the bow and you; the oars rest in their pins */
     for (const d of Q.debris) { d.position.y = seaLevel + Math.sin(time * 1.1 + d.userData.ph) * 0.07; d.rotation.x = Math.sin(time * 0.7 + d.userData.ph) * 0.12; }
-    { const dx = state.x - b.position.x, dz = state.z - b.position.z, d = Math.hypot(dx, dz); const go = d > 2.6 && t > 1.5; if (go) { const v = Math.min(1.1, 0.25 + t * 0.05) * dt; b.position.x += dx / d * v; b.position.z += dz / d * v; }
-      if (t > 1.5) { let da = Math.atan2(dx, dz) - Math.PI / 2 - b.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); b.rotation.y += Math.max(-1, Math.min(1, da / (0.6 * dt + 1e-6))) * 0.6 * dt; }   /* the bow swings round to you (no sudden turn) */
-      if (go) Q.rowT = (Q.rowT || 0) + dt * 2.6; rowStroke(b.userData.row, Q.rowT || 0, go); }   /* Abba rows toward you, bow first, so you always get there */
+    { const dx = state.x - b.position.x, dz = state.z - b.position.z, d = Math.hypot(dx, dz); const go = d > 2.6 && t > rescueLen() + 0.5; if (go) { const v = Math.min(0.6, 0.2 + (t - rescueLen()) * 0.04) * dt; b.position.x += dx / d * v; b.position.z += dz / d * v; }
+      if (t > rescueLen() + 0.5) { let da = Math.atan2(dx, dz) - Math.PI / 2 - b.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); b.rotation.y += Math.max(-1, Math.min(1, da / (0.6 * dt + 1e-6))) * 0.6 * dt; }   /* the bow swings round to you (no sudden turn) */
+    }   /* the boat drifts toward you, bow first, so you always get there. Abba does not row: her hands cannot hold the oars yet, so the oars rest in their thole pins (owner, 22 November 2026: "if the rowing doesnt look correct, dont show her rowing") */
     if (Math.hypot(state.x - b.position.x, state.z - b.position.z) < 2.8 && $('card').hidden) finishQuake(false); }
   if (Q.gain) Q.gain.gain.value = Math.min(1, Q.shake) * 0.9;
 }
@@ -1194,6 +1220,7 @@ function frame(now, step) {
       if (ac && state.place === 'sea') { galdy.rotation.y = state.yaw + Math.PI; if (CL.Tread && ac.cur !== ac.get('Tread')) ac.play('Tread'); }
       else if (CL.Walk) updateWalk(galdy, walkedX, walkedZ, dt); } }
   camera.position.set(state.x + Math.sin(tt * 31) * 0.06 * sh, eyeY + camLift + (reduceMotion ? 0 : Math.sin(bob) * 0.035) + Math.sin(tt * 37) * 0.05 * sh, state.z + Math.sin(tt * 27) * 0.05 * sh); camera.rotation.set(state.pitch + Math.sin(tt * 29) * 0.015 * sh, state.yaw, Math.sin(tt * 23) * 0.03 * sh); if (galdy && galdy.visible) { const back = state.place === 'out' ? 2.6 : 1.9, wx = camera.position.x + Math.sin(state.yaw) * back, wz = camera.position.z + Math.cos(state.yaw) * back, sx = state.x, sz = state.z; const [cx2, cz2] = camBounds(wx, wz); camera.position.x = cx2; camera.position.z = cz2; state.x = sx; state.z = sz; camera.position.y += 0.35; camera.rotation.x -= 0.12; }
+  if (Q.on && Q.phase === 'sea') rescueCam(Q.t); else if (RESCUE.on) rescueCam(1e9);
   if (__DEV__ && window.__free) { const f = window.__free; camera.position.set(...f.pos); camera.lookAt(...f.look); }   /* dev only: a free camera for close looks (?shot=free&c=x,y,z&t=x,y,z) */
   for (const [b, q] of animQ) b.quaternion.copy(q);            // put back the animation's own pose before adding ours
   if (seaN && state.place !== 'in' && state.place !== 'ware') { const t = now / 1000;
