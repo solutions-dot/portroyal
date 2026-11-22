@@ -70,6 +70,8 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 
 13. **Looking at something is a close-up action** (owner, 22 November 2026: "If we are sent to look at something in games, then it needs to be a close up action for camera etc"). When a goal sends the player to look at, open, read, test or watch a thing, the camera eases in to a close shot of it, the thing visibly does something (a lid lifts, a cloth slides back, a lantern goes down), with sound, and only then do the words show; then the camera eases back. It must feel like a cinematic story book (owner: "It must feel like a cinematic story / story book"): black bars in, the camera glides, short story lines one at a time, as Nanny Town's "Look out over the valley" does (`lookOut()` in `games/nanny/src/main.js`). A button press and a text card alone is not enough. The shared part lives in the engine (`engine/lookshot.js`, `docs/ENGINE.md`), every game uses it, and the autoplayer skips the animation.
 
+14. **Immersive and playable, never busy work** (owner, 22 November 2026: "The games must feel immersive and playable, we have to balance education and fun without giving the user more busy work. But we must ensure the tasks we give them to look at and do are engaging and accurate."). Every task and every look must earn its place: something real to see or do, true to the sources, that moves the story on. Cut or merge a step that is only a button press. Check by eye that what the player is sent to see is really there and looks right (the floating hat in the Mad Master game passed every check), and add an audit for each new kind of fault (rule 8).
+
 ## Quick commands
 
 ```bash
