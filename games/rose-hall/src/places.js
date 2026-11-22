@@ -337,7 +337,7 @@ function house({ phone } = {}) {
   /* the staircase: foot at z = 0.6, the landing against the south wall */
   const stair = R.grandStair({ W: 2.2, rise: 0.17, tread: 0.28, steps: 10, H });
   add(Q, stair, 0, 0.6);
-  for (const [x, sd] of [[-1.75, 4], [1.75, 6]]) solid1(Q, R.hallPalm(sd, 1.2), x, 1.35, 0.6, 0.6);   /* a potted palm each side of the steps, under the upper flights (owner) */
+  for (const [x, sd] of [[-2.0, 4], [2.0, 6]]) solid1(Q, R.hallPalm(sd, 0.85), x, 2.3, 0.45, 0.45);   /* a potted palm each side of the steps, under the upper flights (owner) */
   Q.walls.push([-2.5, 0.5, 2.5, 5]);
   /* the ceiling, with an opening over each upper flight, and the stairwell above it: plastered walls going up to the floor above, a gallery
      rail round the opening and the upper ceiling, dimly lit by the candles below (it was a solid ceiling with two black patches) */
