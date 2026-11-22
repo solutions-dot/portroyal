@@ -300,34 +300,11 @@ function deck() {
   add(Q, glass, 1.1, 5.0, 1.0, 0.5);
 
   /* ---- what the story changes ---- */
-  /* a rope left in a heap by the fore mast, for Jem to coil down */
-  const heap = dyn(S.tangle()),
-    neat = dyn(S.coil(0.3, 4));
-  add(Q, heap, -1.55, -5.5, 0, 0.4);
-  add(Q, neat, -1.55, -5.5);
+  /* a rope left in a heap by the fore mast */
+  add(Q, S.tangle(), -1.55, -5.5, 0, 0.4);
   wall(Q, -1.55, -5.5, 0.5, 0.5);
-  Q.reveal.coil = (seen) => {
-    heap.visible = !seen;
-    neat.visible = seen;
-  };
-  /* the bell: it swings and sounds when you ring it */
-  let bellT = 0,
-    bellWas;
-  Q.reveal.bell = (seen) => {
-    if (seen && bellWas === false) {
-      bellT = 2.4;
-      if (sounds()) for (const d of [0, 0.42]) {
-        tone(1320, 1310, 1.6, "sine", 0.05, 0, d);
-        tone(2630, 2620, 0.8, "sine", 0.018, 0, d);
-      }
-    }
-    bellWas = seen;
-  };
-  Q.tickers.push((t, dt) => {
-    if (bellT <= 0) return;
-    bellT -= dt;
-    belfry.userData.bell.rotation.x = bellT > 0 ? Math.sin(bellT * 9) * 0.5 * (bellT / 2.4) : 0;
-  });
+  /* the bell: rung as you look (engine/lookshot.js, k from 0 to 1), two swings dying away; it hangs still at both ends */
+  Q.reveal.bell = (k) => (belfry.userData.bell.rotation.x = Math.sin(Math.min(1, +k) * Math.PI * 4) * 0.5 * (1 - Math.min(1, +k)));
   /* HM cutter Sparrow, in shore, and her boat pulling across. Fitton puts her about six miles off at dawn; she is drawn nearer so that she can be seen. */
   const sparrow = far(S.cutter("set"));
   sparrow.position.set(205, SEA + 1.5, -46);
@@ -361,10 +338,13 @@ function deck() {
     placeGig(t);
   });
   placeGig(0);
-  Q.reveal.sparrow = (seen) => (glass.visible = !seen);   /* you take the glass from the companion top */
-  Q.reveal.boat = (seen) => {
-    if (seen) GIG.p = 1;
+  /* you take the glass from the companion top: it lifts off, and the camera looks along it at the Sparrow */
+  Q.reveal.sparrow = (k) => {
+    k = +k;
+    glass.visible = k < 0.35;
+    glass.position.y = 1.0 + Math.min(1, k / 0.35) * 0.25;
   };
+  Q.lookViews = { sparrow: { p: [2.25, 1.55, 2.25], look: [205, SEA + 4, -46], fov: 9 } };
   /* the sharks: fins cutting the water round a dead bullock far off the port quarter, and two or three under the stern */
   const bull = S.bullock();
   bull.position.set(-46, SEA + 0.05, 44);
@@ -396,21 +376,36 @@ function deck() {
   });
   /* the fishing line, made fast at the taffrail on the port quarter: slack until the shark has the hook, then bar tight */
   const CLEAT = [-1.25, 0.9, 9.12],
-    line = unitRope(0.012);
+    line = unitRope(0.02);
   Q.group.add(line);
   box(0.26, 0.07, 0.09, S.SM.iron, CLEAT[0], 0.9, 9.1, Q.group);
   const hook = dyn(grp());
   mesh(new THREE.TorusGeometry(0.05, 0.009, 5, 10, Math.PI * 1.3), S.SM.iron, 0, 0, 0, hook);
   add(Q, hook, CLEAT[0], 9.1, 0.84);
-  let taut = false,
-    lineOn = false;
-  Q.reveal.haul = (seen) => (taut = seen);
-  Q.tickers.push((t) => {
-    line.visible = lineOn && !film.on;
+  let taut = 0,
+    lineOn = false,
+    lineT = 0;
+  /* the line is made fast to the cleat and led over the top of the taffrail, so it hangs clear of her stern */
+  const LEAD = [CLEAT[0], 1.0, 9.42],
+    lead = unitRope(0.02);
+  Q.group.add(lead);
+  stretch(lead, CLEAT, LEAD);
+  const pullLine = () => {
+    line.visible = lead.visible = lineOn && !film.on;
     if (!line.visible) return;
-    const f = fins[0].position;
-    if (taut) stretch(line, CLEAT, [f.x, SEA - 0.1, f.z]);
-    else stretch(line, CLEAT, [CLEAT[0] - 0.9, SEA, CLEAT[2] + 2.6 + Math.sin(t * 0.8) * 0.15]);
+    const f = fins[0].position,
+      slack = [CLEAT[0] - 0.9, SEA, CLEAT[2] + 2.6 + Math.sin(lineT * 0.8) * 0.15],
+      k = taut * taut * (3 - 2 * taut);
+    stretch(line, LEAD, [slack[0] + (f.x - slack[0]) * k, slack[1] + (SEA - 0.1 - slack[1]) * k, slack[2] + (f.z - slack[2]) * k]);
+  };
+  /* the shark takes the bait: the line runs from slack to bar tight as you look */
+  Q.reveal.haul = (k) => {
+    taut = Math.min(1, +k);
+    pullLine();
+  };
+  Q.tickers.push((t) => {
+    lineT = t;
+    pullLine();
   });
   /* the shark on the deck, on the port quarter, and the wall round it while it lies there */
   const shark = S.shark(3.4),
@@ -431,7 +426,14 @@ function deck() {
   const bundle = dyn(P.item("bundle"));
   bundle.visible = false;
   add(Q, bundle, -0.2, 6.2, 0.02, 0.3);
-  Q.reveal.bundle = (seen) => (bundle.visible = seen && shark.visible);
+  /* the men hand the bundle out and lay it on the deck by the shark (the shark itself stays shut to the camera) */
+  Q.reveal.bundle = (k) => {
+    k = Math.min(1, +k);
+    bundle.visible = k > 0 && shark.visible;
+    const e = k * k * (3 - 2 * k);
+    bundle.position.set(-0.75 + 0.55 * e, 0.02 + Math.sin(e * Math.PI) * 0.45, 6.35 - 0.15 * e);
+    bundle.rotation.y = 0.3 + (1 - e) * 0.8;
+  };
   Q.enter = (stage) => {
     showShark(stage >= 20);
     lineOn = stage >= 13 && stage < 20;
@@ -663,11 +665,16 @@ function quay() {
   box(0.34, 0.012, 0.24, solid(0xe8ddc4, 1), 0, hy + 0.075, hz + 0.3, sealG);
   Q.group.add(sealG);
   const cover = dyn(box(2.5, 0.05, 2.3, solid(0x8f8468, 1), 0, hy + 0.072, hz, Q.group));   /* lying on the hatch battens */
-  Q.reveal.hatch = (seen) => {
-    cover.visible = !seen;
-    sealG.visible = seen;
+  /* the canvas cover is drawn back across the hatch (k from 0 to 1) and the rope and the red seal show under it; at the end it is folded away */
+  Q.reveal.hatch = (k) => {
+    k = Math.min(1, +k);
+    const e = k * k * (3 - 2 * k);
+    cover.visible = k < 1;
+    cover.position.x = -e * 2.2;
+    cover.position.y = hy + 0.072 + Math.min(1, k * 6) * 0.09;   /* lifted clear of the rope and the seal as it is drawn back */
+    cover.scale.x = 1 - e * 0.55;   /* gathering up as it goes */
+    sealG.visible = k > 0;
   };
-  Q.reveal.nancy = () => {};
   /* HMS Abergavenny, the guard ship and flagship, at her moorings out in the harbour */
   const ab = far(S.twoDecker());
   ab.position.set(-92, SEA + 6.2, -150);
@@ -686,7 +693,18 @@ function quay() {
   hoist.position.set(8.2, yardY - 0.005, yardZ);
   hoist.visible = false;
   ab.add(hoist);
-  Q.reveal.abergavenny = (seen) => (hoist.visible = seen);
+  /* the hoist runs up her halyard to the yard as you watch (k from 0 to 1) */
+  Q.reveal.abergavenny = (k) => {
+    k = Math.min(1, +k);
+    hoist.visible = k > 0;
+    hoist.position.y = yardY - 0.005 - (1 - k * k * (3 - 2 * k)) * 14;
+  };
+  ab.updateMatrixWorld(true);
+  const flagsAt = ab.localToWorld(new THREE.Vector3(8.2, yardY - 3.5, yardZ + 1.1));
+  Q.lookViews = {
+    abergavenny: { p: [-11.4, 1.7, -1.3], look: [flagsAt.x, flagsAt.y - 4, flagsAt.z], fov: 11 },
+    hatch: { p: [1.0, 2.15, -3.4], look: [0, hy + 0.05, hz], fov: 42 },
+  };
   /* a sheer hulk further up the harbour, and small craft: a wherry under way and a boat at the steps */
   const hulk = far(S.sheerHulk());
   hulk.position.set(120, SEA + 4.2, -130);
@@ -1095,13 +1113,23 @@ function court() {
   open1.rotation.y = -0.1;
   open1.visible = false;
   Q.group.add(open1);
-  Q.reveal.false = (seen) => (open1.visible = seen);
+  /* a sheet is taken from its pile, lifted, and laid open on the cloth (k from 0 to 1) */
+  const unfold = (o, fromX, toX, ry) => (k) => {
+    k = Math.min(1, +k);
+    const e = k * k * (3 - 2 * k);
+    o.visible = k > 0;
+    o.position.set(fromX + (toX - fromX) * e, 0.83 + Math.sin(e * Math.PI) * 0.14, 0.12);
+    o.rotation.set(0, ry + (1 - e) * 0.6, 0);
+    o.scale.setScalar(0.45 + 0.55 * e);
+  };
+  Q.reveal.false = unfold(open1, -1.25, -0.75, -0.1);
   const open2 = P.sheet("Mr. Christopher Schultz", 0.34, 0.24);
   open2.position.set(0.75, 0.83, 0.12);
   open2.rotation.y = 0.12;
   open2.visible = false;
   Q.group.add(open2);
-  Q.reveal.real = (seen) => (open2.visible = seen);
+  Q.reveal.real = unfold(open2, 1.25, 0.75, 0.12);
+  Q.lookViews = { false: { p: [-0.95, 1.55, 1.05], look: [-0.85, 0.83, 0.1], fov: 40 }, real: { p: [0.95, 1.55, 1.05], look: [0.85, 0.83, 0.1], fov: 40 } };
   /* an inkstand and a candle on the table, a chair at each end */
   add(Q, W.candle(true), 0, -0.2, 0.83);
   for (const s of [-1, 1]) {
@@ -1135,7 +1163,6 @@ function court() {
   lab2.position.set(0, 0.84, 0.252);
   jaws.add(lab2);
   solid1(Q, jaws, -X + 0.62, 1.0, 0.6, 0.8, Math.PI / 2);
-  Q.reveal.jaws = () => {};
   /* ---- the bar: a rail of turned balusters across the room with a gate in the middle; benches for the public behind it ---- */
   for (const s of [-1, 1]) {
     const len = X - 0.4 - 0.7,

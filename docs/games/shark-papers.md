@@ -154,3 +154,21 @@ Pictures looked at (1280x720 and 390x800, with captions shown): dawn at 3, 10, 1
 ## Port Royal's surfaces (22 November 2026)
 
 The owner: the buildings' textures did not match Port Royal's. The quay storehouses, the yard wall, the houses behind it and the court room now use Port Royal's own building surfaces (its brick, cut stone, plank, plaster, clay tile and shingle with their normal maps), through `engine/building-tex.js` and `shared/textures/tex_1700.js` (see `docs/ENGINE.md`). The 1799 quay keeps its own buildings, not Port Royal's 1690 town: brick storehouses on a stone plinth with stone quoins, a cornice, round-arched plank doors on strap hinges, stone sills and lintels, tiled hip roofs; a brick yard wall with piers, footing and coping; limewashed houses with tile or shingle roofs. The court room has limewashed plaster walls and a board floor. Still a general picture: no plan or view of the dockyard's buildings of 1799 has been found. Before and after pictures were compared side by side.
+
+## Every look is a close-up (owner's rule 13, 22 November 2026)
+
+`lookAt` in `src/main.js` now uses `engine/lookshot.js`, as Hutchinson does: input is held, the bars come in, the camera eases to a close framing, the thing moves (the place's `Q.reveal[id](k)`, k from 0 to 1) with its own gentle sound (`LOOK_SFX`) and one short line, then the card, then the camera eases back. The autoplayer and `?test` runs skip the motion. `?shot=look&key=<id>&at=<s>` holds a look at a moment (`src/dev.js`). A framing that depends on how the place was built comes from `Q.lookViews[id]` (the Sparrow far in shore, the Abergavenny's flags, the Nancy's hatch, the two sets of papers).
+
+| Look | What moves | Sound |
+|---|---|---|
+| `bell` | the bell swings twice and comes to rest | two pairs of strokes |
+| `sparrow` | the glass lifts off the companion; the camera looks along it at the cutter (a very long lens) | the brass tubes drawn out |
+| `haul` | the line runs from slack to bar tight; it is now led over the taffrail from its cleat, so it hangs clear of her stern (it used to pass through the transom) | the line running out, then jerking tight |
+| `bundle` | the men hand the bundle out and lay it on the deck by the shark (the shark stays shut) | paper |
+| `abergavenny` | the hoist of flags runs up her halyard to the yard arm | a halyard block, the flags shaking out |
+| `hatch` | the canvas cover is drawn back, lifted clear of the rope and seal, and folded away | canvas and a creak |
+| `false`, `real` | a sheet is taken from its pile, lifted and laid open on the green cloth | paper |
+
+The words the picture now shows were taken out of the cards. The `LOOKS` entries cut in the busy work pass (coil, boat, nancy, jaws) are gone, with their reveals; the rope by the fore mast is now just a heap. The fishing line is a little thicker (2 cm), so it can be seen. Checks: `?auto=1` AUTO END 48, FLOW 0; `?test=audit` 0 in every place (the reveal check runs each look at both ends); `?test=ambient` 0; `?test=held` CARRY 0; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375.
+
+**Captions.** `#sub` starts dimmed (`class="dim"`) in `site/index.html`, and the director never turned it on, so no camera scene caption was ever shown in play (the earlier pictures had forced it on). `src/director.js` now takes the dim off when a scene starts and puts it back when it stops, as Rose Hall's does; the look moments set it with their line. Checked in a picture taken without forcing anything.
