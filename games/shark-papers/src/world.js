@@ -212,24 +212,4 @@ export function scrub(seed = 1, s = 1) {
   }
   return g;
 }
-/* a rounded limestone hill, wooded: the "cockpit" hills of the middle of the island, seen across a valley */
-export function cockpitHill(r = 30, h = 26, seed = 1, base = [0.3, 0.4, 0.24]) {
-  const rr = rng(seed),
-    geo = new THREE.SphereGeometry(1, 16, 9, 0, Math.PI * 2, 0, Math.PI / 2),
-    pos = geo.attributes.position,
-    col = new Float32Array(pos.count * 3);
-  for (let k = 0; k < pos.count; k++) {
-    const y = pos.getY(k),
-      v = 0.78 + 0.4 * y + (rr() - 0.5) * 0.14;
-    col[k * 3] = base[0] * v;
-    col[k * 3 + 1] = base[1] * v;
-    col[k * 3 + 2] = base[2] * v;
-  }
-  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
-  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }));
-  m.scale.set(r, h, r * (0.8 + rr() * 0.35));
-  m.rotation.y = rr() * 3;
-  m.name = "terrain";
-  return m;
-}
 export { makeDoor, cv, plane };

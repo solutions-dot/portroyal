@@ -172,3 +172,13 @@ The owner: the buildings' textures did not match Port Royal's. The quay storehou
 The words the picture now shows were taken out of the cards. The `LOOKS` entries cut in the busy work pass (coil, boat, nancy, jaws) are gone, with their reveals; the rope by the fore mast is now just a heap. The fishing line is a little thicker (2 cm), so it can be seen. Checks: `?auto=1` AUTO END 48, FLOW 0; `?test=audit` 0 in every place (the reveal check runs each look at both ends); `?test=ambient` 0; `?test=held` CARRY 0; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375.
 
 **Captions.** `#sub` starts dimmed (`class="dim"`) in `site/index.html`, and the director never turned it on, so no camera scene caption was ever shown in play (the earlier pictures had forced it on). `src/director.js` now takes the dim off when a scene starts and puts it back when it stops, as Rose Hall's does; the look moments set it with their line. Checked in a picture taken without forcing anything.
+
+## Mountains (22 November 2026)
+
+The owner: "the mountains in these games dont look as good as the other games". The coast of Saint-Domingue from the deck and the Blue Mountains from the quay were smooth green domes (`cockpitHill`, now deleted). Both are now Nanny Town's far ridges (`engine/ridges.js`): five jagged walls, each higher and paler than the one before, lost in the haze. They are drawn only over an arc on their own side (the new `arc` option of `makeRidges`, backward compatible), standing on the sea and left in place rather than following the camera.
+
+- **Saint-Domingue, from the deck**: to starboard, an arc of about 130 degrees, 390 to 770 m out, rising to about 290 m on screen. The Massif de la Selle behind Jacmel rises to over 2,600 m; the hills are drawn nearer and lower than life, like the Sparrow.
+- **The Blue Mountains, from the quay**: across the harbour behind Kingston, an arc of about 120 degrees, 600 to 870 m out (the camera sees to 900 m), bluer as they go back.
+- **Through the court windows**: the painted view in the sash panes now shows the Blue Mountains as three hazy ridges over the tiled roofs of the town, drawn with the same noise (`fbm`); the green blobs are gone. The plaster walls inside are smoother (their normal map at 0.35), so they read as limewash, not rough render.
+
+Pictures before and after: the dawn scene at 3 s and 27 s, the quay toward Kingston, and the court's windows.

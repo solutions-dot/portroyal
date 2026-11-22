@@ -14,6 +14,7 @@ import { createSea, gulls } from "../../../engine/sea.js";
 import { rowBoat, rowStroke } from "../../../engine/boats.js";
 import { AU, tone, noiseHit, shipCreak, gullCry } from "../../../engine/audio.js";
 import { loadBuildingTex, buildingMat, worldUV, roofUV } from "../../../engine/building-tex.js";
+import { makeRidges, fbm } from "../../../engine/ridges.js";
 
 const base = (id, bounds, start) => ({
   id,
@@ -146,17 +147,15 @@ function cask(h = 0.9, r = 0.3, hoops = S.SM.iron, wood = 0x7a5a3c) {
   return g;
 }
 /* far hills in soft layers: each row paler and bluer than the one in front of it. rows: [[distance, height, radius, count, [r, g, b]]] toward `dir` (radians) */
-function ranges(Q, rows, dir, spread = 1.0, seed = 3) {
-  let k = seed;
-  for (const [dist, h, r, n, col] of rows)
-    for (let i = 0; i < n; i++) {
-      const a = dir + ((i + 0.5) / n - 0.5) * spread + Math.sin(k * 12.9898) * 0.04,
-        hh = h * (0.7 + 0.5 * Math.abs(Math.sin(k++ * 78.233))),
-        m = W.cockpitHill(r * (0.8 + 0.4 * Math.abs(Math.sin(k * 3.1))), hh, k, col);
-      m.position.set(Math.sin(a) * dist, -3, Math.cos(a) * dist);
-      m.userData.far = true;
-      Q.group.add(m);
-    }
+/* far mountains seen across the water on one side (engine/ridges.js, Nanny Town's ridges): rings of jagged walls, each paler than the last,
+   drawn only over an arc (centre: the direction they lie in, 0 is +x, PI/2 is +z), standing on the sea */
+function ranges(Q, { centre, spread, layers, y, green, haze, seed }) {
+  const R = makeRidges({ layers, seed, arc: [centre - spread / 2, centre + spread / 2] });
+  R.tone(green, haze, 1);
+  R.group.position.y = y;
+  R.group.traverse((o) => (o.userData.far = true));
+  Q.group.add(R.group);
+  return R;
 }
 
 /* ---------- 1. The deck of the schooner Ferret, off Jacmel, at dawn, August 1799 ---------- */
@@ -181,7 +180,11 @@ function deck() {
   const sea = createSea(Q.group, { kind: "caribbean", y: SEA, at: [0, 0], swell: 0.5 });
   Q.tickers.push((t) => sea.tick && sea.tick(t));
   /* the south coast of Saint-Domingue to starboard: a low green shore, hills behind, and the high blue ridges inland */
-  ranges(Q, [[420, 34, 70, 9, [0.3, 0.46, 0.3]], [560, 70, 110, 8, [0.36, 0.5, 0.42]], [720, 130, 150, 7, [0.5, 0.62, 0.66]]], Math.PI / 2, 2.2, 5);
+  /* the Massif de la Selle rises behind Jacmel to over 2,600 m: high, steep ridges, the far ones lost in the morning haze */
+  ranges(Q, {
+    centre: 0, spread: 2.3, y: SEA, seed: 11, green: 0x4a7444, haze: 0xd9d6c8,
+    layers: [{ r: 392, base: 2, amp: 34, k: 0.14 }, { r: 450, base: 14, amp: 62, k: 0.3 }, { r: 530, base: 36, amp: 96, k: 0.48 }, { r: 640, base: 70, amp: 140, k: 0.66 }, { r: 770, base: 110, amp: 180, k: 0.82 }],
+  });
   const shore = box(18, 2.2, 900, solid(0xe6dcc0, 1), 372, SEA + 0.2, 0, Q.group);
   shore.userData.far = true;
   const flyGulls = gulls(Q.group, 5, [-34, 38], 9, 14, 2);
@@ -605,7 +608,11 @@ function quay() {
   Q.tickers.push((t) => sea.tick && sea.tick(t));
   Q.walls.push([-40, -4, 40, -1.85]);
   /* far across the harbour: the low shore of Kingston, its roofs along the water, and the Blue Mountains behind */
-  ranges(Q, [[700, 60, 150, 9, [0.34, 0.46, 0.36]], [800, 150, 190, 8, [0.42, 0.54, 0.56]], [860, 250, 230, 6, [0.56, 0.66, 0.74]]], Math.PI, 1.9, 9);
+  /* the Blue Mountains behind Kingston, across the harbour: ridge behind ridge, bluer as they go back */
+  ranges(Q, {
+    centre: -Math.PI / 2, spread: 2.1, y: SEA, seed: 23, green: 0x46703f, haze: 0xc9d8e0,
+    layers: [{ r: 600, base: 8, amp: 46, k: 0.2 }, { r: 670, base: 30, amp: 90, k: 0.38 }, { r: 740, base: 70, amp: 140, k: 0.56 }, { r: 810, base: 120, amp: 190, k: 0.74 }, { r: 870, base: 170, amp: 230, k: 0.88 }],
+  });
   const town = far(grp());
   box(520, 1.6, 30, solid(0xd8cfae, 1), 0, 0.2, 0, town);
   let k = 3;
@@ -968,11 +975,17 @@ function sash(w = 1.3, h = 2.4) {
       g.addColorStop(1, "#b7ab86");
       x.fillStyle = g;
       x.fillRect(0, 0, W, H);
-      x.fillStyle = "rgba(120,150,110,.55)";
-      x.beginPath();
-      x.arc(30, 150, 40, 0, 7);
-      x.arc(100, 160, 34, 0, 7);
-      x.fill();
+      /* the Blue Mountains over the roofs of Kingston, ridge behind ridge, in the same noise as the far ridges (engine/ridges.js) */
+      for (const [base, amp, col, seed] of [[96, 46, "#b4c4cc", 3], [118, 40, "#94aeb0", 7], [138, 30, "#6f8f78", 11]]) {
+        x.fillStyle = col;
+        x.beginPath();
+        x.moveTo(0, 160);
+        for (let i = 0; i <= W; i += 2) x.lineTo(i, base + 30 - amp * fbm(i / 34, seed, 4, seed));
+        x.lineTo(W, 160);   /* down to the roofs, not over the ground below */
+        x.fill();
+      }
+      x.fillStyle = "#a9805e";   /* tiled roofs of the town below */
+      for (let i = 0; i < W; i += 18) x.fillRect(i, 150 + ((i * 7) % 9), 16, 12);
       x.fillStyle = "#efe8d4";
       for (let i = 0; i <= 3; i++) x.fillRect(i * 41.5, 0, 4, H);
       for (let j = 0; j <= 6; j++) x.fillRect(0, j * 42, W, j === 3 ? 7 : 4);
@@ -1031,6 +1044,7 @@ function court() {
   /* limewashed plaster walls and a board floor, in Port Royal's own surfaces (engine/building-tex.js) */
   loadBuildingTex();
   const wallM = buildingMat("plaster", { tint: 0xfbf6ea, repeat: [3, 1.4] });
+  wallM.normalScale.set(0.35, 0.35);   /* smooth limewash indoors, not rough render */
   Q.group.add(W.room({ x0: -X, z0: -Z, x1: X, z1: Z, h: H, floor: buildingMat("wood", { tint: 0x9a7656, repeat: [6, 4.5] }), ceiling: solid(0xe8e2d0, 1), beams: false }));
   for (const [a, b, c, d] of [[-X, -Z, X, -Z], [X, Z, -X, Z], [-X, Z, -X, -Z], [X, -Z, X, Z]]) W.wallRun(Q.group, [a, b, c, d], H, wallM, [], 0.4);
   Q.walls.push([-X - 0.2, -Z - 0.2, X + 0.2, -Z + 0.2], [-X - 0.2, Z - 0.2, X + 0.2, Z + 0.2], [-X - 0.2, -Z - 0.2, -X + 0.2, Z + 0.2], [X - 0.2, -Z - 0.2, X + 0.2, Z + 0.2]);
