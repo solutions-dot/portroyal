@@ -519,7 +519,7 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 ## The action button (`engine/action-button.js`, 21 November 2026)
 
-`placeActionButton()` puts `#talk.btn` (the button for a thing to do) at 62% down the screen, centred. Every game calls it once. Actions still need the button: an auto-fire on arrival was tried the same day and taken out at the owner's request.
+`placeActionButton()` puts `#talk.btn` (the button for a thing to do) at 62% down the screen, centred. It places `#act.btn` the same way (Bog Walk's Scrape button), and on an upright phone lifts `#act.btn` to 38% down so it clears the held torch. Every game calls it once. Actions still need the button: an auto-fire on arrival was tried the same day and taken out at the owner's request.
 
 ## Returning people (`engine/return-talk.js`, 21 November 2026)
 

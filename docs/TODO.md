@@ -4,6 +4,8 @@ Work from PR #129 (merged to `main`) that was not checked before the merge. Each
 
 Build a game with test views first: `node tools/build.mjs <game> --dev`, then serve the repo root (`python3 -m http.server 8765`). Never commit a dev build of `games/port-royal/site/app.js`: run `node tools/build.mjs port-royal` (public) before any commit.
 
+**Story-first pass for all ten games (21 November 2026):** the full to-do list is in `docs/plans/story_first_plan.md`. Work from it, one phase at a time.
+
 ## Nanny Town (games/nanny)
 
 - [x] **Audit after the waterfall came out.** The waterfall on the western hill of New Nanny Town (`buildNewTown` in `src/places.js`) was removed, and the place's `tick` that moved its water went with it. Run `?test=audit&p=newtown` and `?test=layout`. Expect 0 issues.
@@ -43,11 +45,11 @@ The audit and what changed: `docs/reviews/people-20261121.md`. Left to do, in or
 - [ ] **A man's apron when he sits** lies on the lap as a short flap instead of falling over the knees (`man_apron`, `SitIdle`). Standing and walking it hangs right.
 - [ ] **Two small specks on the fitted jacket's front in a stride** (the pocket flap's corners) and a sliver of trouser at its front hem.
 - [ ] **Abba's bodice** has a ragged lower edge above her apron string (`tools/people/abba.json`).
-- [ ] **The Emperor** (`sel_emperor66`, owner 21 November 2026: "needs some fine tuning"). Done that day: his tunic's sleeves and skirt (a builder change had belled them), a smooth belt, squarer shoulders and a longer neck (he read as hunched), a darker, closer beard. Still to do: the beard's edge on the cheek is still a hard line, the gold cords hang off his chest instead of lying on it, and the tunic is still the generated jacket (a modelled tunic, fitted as the suits are, is the real fix for choppy cloth). Check against `docs/games/selassie-face.jpg` and `selassie-salute.jpg`.
+- [x] **The Emperor's tunic** is the fitted jacket now (21 November 2026): real collar and lapels, smooth shoulders, a clean belt, cords lying on the chest. The same day: the strap is one straight band, the ribbons are on his left breast clear of the lapel, the collar tabs stay on the collar, the beard fades into the cheek, and the fitted trousers break over the shoe (every suited man). The strap now runs from the belt on his back over the right shoulder and down the front. Still to do: the strap wavers a little on the chest when he walks and its turn over the shoulder stands a little proud; his shoulder boards are plain rectangles; the back of the shoe's top edge shows a little under the hem.
 - [ ] **An old woman's round opening** (`woman_elder`, `wr_kelder48`) is uneven at the front: her neck leans forward and the opening is worked out round an upright one.
 - [ ] **Waistcoats are still the generated kind** (owner, 21 November 2026: "ill shaped"). The torn V is fixed. The shape still follows the belly, a speck of shirt shows at the side of the hem on `man_elder`, and shirt sleeves beside it still show the upper arm's shape. A modelled waistcoat, fitted as the suits are, is the real fix.
 - [ ] **Shoulders still do not look natural** (owner, 21 November 2026, of the old man in a waistcoat and the boy and girls in short sleeves): the top of the sleeve bulges at the shoulder point and the shirt's shoulder line is lumpy. The sleeve tube is smooth now from the seam down; the shoulder cap itself (where sleeve, chest and neckline meet) is still the body's surface pushed out. Fix with a modelled shirt, fitted as the suits are.
-- [ ] **`woman_long` is badly built** (owner, same day): she leans back seen from the side, her blouse is in flat facets with hard creases across the chest and back, the back of her neckline is torn, and a dark patch sits on her forehead under the head wrap. Rebuild her recipe and check her stance with `tools/review/posture-probe.mjs`.
+- [x] **`woman_long` and `woman_elder` looked badly built**: it was the packer crushing them, fixed 21 November 2026 (`docs/PIPELINE.md`).
 - [ ] **A turn collar and tie worn without a jacket** (`man_shirt`, `clerk1919`, `printer1907`, `steward1920`, two Windrush men) is still the generated collar. Take the collar and tie from the fitted suit instead.
 
 ## Character movement

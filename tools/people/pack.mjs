@@ -164,7 +164,7 @@ for (const n of names) {
         const cl = sum('cloth'); if (cl) await only('cloth', Math.min(CLOTH_KEEP, 1900 / cl), 0.004);   /* at most about 1,900 triangles of cloth, so the face keeps its share and a body with a long full skirt stays light */
         const clNow = prims.filter((x) => x.kind === 'cloth').reduce((a, x) => a + x.p.getIndices().getCount() / 3, 0);
         await only('rest', Math.max(0.05, (t0 * ratio - sum('keep') - clNow) / sum('rest')), +opt('--lomax', 5900) < 5900 ? 0.03 : 0.012);
-      } else await only('rest', Math.max(0.05, (t0 * ratio - sum('keep')) / sum('rest')), 0.02);
+      } else await only('rest', Math.max(0.45, (t0 * ratio - sum('keep')) / sum('rest')), 0.02);   /* a full body's skin and clothes never lose more than about half their triangles. The floor was a twentieth: on a body with many pieces that are kept whole (two hats, a head wrap, a bun, a belt, a second skirt for sitting) the whole budget went to those, and her blouse and neck were crushed to a few flat facets (owner, 21 November 2026: "this model doesn't look right"). Such a body now comes out a little over the budget instead. */
       await doc.transform(prune({ keepAttributes: false, keepLeaves: true }));
       if (light) liftLayers(doc);
     }

@@ -280,7 +280,7 @@ def puff_tube(end):      # a short puffed sleeve: full and round from the should
         c=v.co
         if abs(c.x)<SX*0.92: return
         q,t=arm_axis(c); d=c-q; r=d.length or 1e-6; u=min(1.0,t/max(0.05,end-0.035)); k=sstep(0.02,0.10,t)*(1-sstep(0.075,0.10,r/s))
-        R=(0.046+G.get('puff',1.0)*0.034*math.sin(math.pi*u**0.85)**0.7)*s if u<1 else 0
+        R=max(_arm_r(t,_ARM_RAW)+0.006,(0.034+0.010*(1-u))*s)+G.get('puff',1.0)*0.016*s*math.sin(math.pi*u**0.85)**0.7 if u<1 else 0      # a soft puff of about 1.5 cm over a sleeve that fits the arm (it was 3.4 cm over a fixed 4.6 cm tube: a ball on each shoulder. Owner, 21 November 2026: "dress a little too puffy")
         rn=max(r+0.003,R); v.co=q+d/r*(r+(rn-r)*k)
     return f
 # shirt
@@ -507,6 +507,34 @@ if not OLD and dict(parts).get('shirt'):      # the sleeves are evened out as cl
     _o=dict(parts)['shirt']; _b=bmesh.new(); _b.from_mesh(_o.data)
     _sv=[v for v in _b.verts if not v.is_boundary and abs(v.co.x)>SX*1.0 and side_arm(v.co) is not None]
     for _ in range(8): bmesh.ops.smooth_vert(_b,verts=_sv,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    # and the shoulder cap, where sleeve, chest and neckline meet: it kept the bump of the shoulder muscle and the collarbone's hollow (owner, 21 November 2026:
+    # "these shoulders don't look natural"). Evened out as one piece of cloth from the base of the neck across to the top of the sleeve, front and back.
+    _cv=[v for v in _b.verts if not v.is_boundary and SX*0.45<abs(v.co.x)<=SX*1.15 and v.co.z>SH.z-0.07*s]
+    for _ in range(10): bmesh.ops.smooth_vert(_b,verts=_cv,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    # A tailored shoulder: seen from the front the top of each shoulder is one straight line from the base of the neck to the head of the sleeve. The body's own
+    # line dips between the neck muscle and the shoulder muscle, and cloth pushed out from it kept the dip (owner, 21 November 2026: "not a tailored shoulder").
+    # The top of the cloth is raised to that line (never lowered), fading out 5 cm below the top, front and back.
+    for _sx in (1,-1):
+        _NB=14; _x0,_x1=SX*0.42,SX*1.08; _top=[-9.0]*(_NB+1); _vs=[v for v in _b.verts if _x0<=v.co.x*_sx<=_x1 and v.co.z>SH.z-0.09*s]
+        for v in _vs:
+            k=int(round((v.co.x*_sx-_x0)/(_x1-_x0)*_NB)); _top[k]=max(_top[k],v.co.z)
+        if min(_top)<0: continue
+        _line=[_top[0]+(_top[_NB]-_top[0])*k/_NB for k in range(_NB+1)]; _up=[max(0.0,_line[k]-_top[k]) for k in range(_NB+1)]
+        for v in _vs:
+            f=(v.co.x*_sx-_x0)/(_x1-_x0)*_NB; k=min(_NB-1,int(f)); u=f-k; tz=_top[k]*(1-u)+_top[k+1]*u; d=_up[k]*(1-u)+_up[k+1]*u
+            v.co.z+=min(d,0.012)*sstep(0.05*s,0.0,tz-v.co.z)*sstep(0.0,0.15,(v.co.x*_sx-_x0)/(_x1-_x0))*sstep(1.0,0.8,(v.co.x*_sx-_x0)/(_x1-_x0))      # at most 12 mm, and nothing at the two ends (raised there, the shoulder tips stood up in peaks)
+    for _ in range(4): bmesh.ops.smooth_vert(_b,verts=_cv,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    # The head of the sleeve is rounded over. The top ran flat to the shoulder tip and dropped away at a corner there, which stood up as a peak on women and
+    # children most of all (owner, 21 November 2026: "these peak at the shoulder"). The cloth near the tip comes down toward the arm, never closer to it than 5 mm.
+    _rv=[]
+    for v in _b.verts:
+        ax=abs(v.co.x)/SX
+        if v.is_boundary or not 0.78<ax<1.45 or v.co.z<SH.z-0.05*s: continue
+        hit=tree.ray_cast(Vector((v.co.x,v.co.y,v.co.z+0.2)),Vector((0,0,-1)))[0]
+        if hit is None or hit.z>v.co.z: continue
+        w=sstep(0.78,1.05,ax)*sstep(1.45,1.2,ax); v.co.z-=min(0.016*s*w,max(0.0,v.co.z-hit.z-0.005)); _rv.append(v)
+    for _ in range(3): bmesh.ops.smooth_vert(_b,verts=_rv,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    print('SLEEVE HEAD rounded',len(_rv))
     _b.to_mesh(_o.data); _b.free()
 clothes=[o for k,o in parts]
 for o in clothes:
@@ -1023,9 +1051,26 @@ if G.get('skirt') and G.get('belt'):     # a narrow belt where the bodice meets 
             a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); o=Vector((0,J('Hips').y,z)); hit=TT.ray_cast(o,d)[0]; h2=SHT.ray_cast(o,d)[0]; rr_.append(max((hit-o).length if hit else 0.0,(h2-o).length if h2 else 0.0) or 0.15)
         RR.append(rr_)
     if True:      # a belt or sash is one straight band lying snug on the join of bodice and skirt: at each angle it takes the widest of its rows over both blouse and skirt (so the folds of the skirt beneath cannot wave its edge and it never tilts out into a lip), then it is evened out round the body
-        raw=[max(r_[k] for r_ in RR) for k in range(seg)]; col=raw[:]
+        # (21 November 2026, owner: "the belt is not sitting flush". It used to take the widest of its rows over the skirt as well. A skirt flares from its very top, so the
+        # band came out as wide as the skirt at its lowest row and stood off the waist like a hoop. The band is now sized on the blouse at the waist, and the skirt is
+        # held in under it: it starts to flare just below the band, as a skirt gathered into a waistband does.)
+        _o0=Vector((0,J('Hips').y,0)); raw=[]
+        for k in range(seg):
+            a=2*math.pi*k/seg; d=Vector((math.sin(a),-math.cos(a),0)); rs=[]
+            for z,e in zs:
+                h2=SHT.ray_cast(Vector((0,_o0.y,z)),d)[0]
+                if h2 is not None: rs.append((h2-Vector((0,_o0.y,z))).length)
+            raw.append(max(rs) if rs else 0.0)
+        _good=sorted(x for x in raw if x>0) or [0.15]; raw=[x if x>0 else _good[len(_good)//2] for x in raw]; col=raw[:]
         for _ in range(8): col=[max(raw[k],(col[(k-1)%seg]+col[k]*2+col[(k+1)%seg])/4) for k in range(seg)]
         RR=[col for _ in RR]
+        def _colat(a): f=(a%(2*math.pi))/(2*math.pi)*seg; i=int(f)%seg; u=f-int(f); return col[i]*(1-u)+col[(i+1)%seg]*u
+        _z0=zs[0][0]
+        for v in PART['skirt'].data.vertices:
+            if v.co.z<_z0-0.05: continue
+            dx,dy=v.co.x,v.co.y-_o0.y; r=math.hypot(dx,dy) or 1e-6; lim=_colat(math.atan2(dx,-dy))-0.0015+max(0.0,_z0-v.co.z)*0.8
+            if r>lim: v.co.x=dx*lim/r; v.co.y=_o0.y+dy*lim/r
+        PART['skirt'].data.update()
     for (z,e),rr_ in zip(zs,RR):
         ring=[]
         for k in range(seg):
@@ -1122,6 +1167,8 @@ CRH=0.085*s   # from the brow up to the top of the head
 HATS=G.get('hat'); HATS=[] if not HATS else ([(HATS,'Hat')] if isinstance(HATS,str) else [tuple(x) for x in HATS])     # one hat, or several [kind, material name] so a game can show one and hide the others
 for _k,_m in HATS: COL.setdefault(_m,COL.get('Hat',srgb((60,56,52)))); COL.setdefault(_m+'Band',COL['Band'])
 def build_hat(HK,HM):
+    if HK in ('felt','trilby') and not OLD and 'hatdrop' not in G: G['hatdrop']=0.007      # a fedora sits down on the head, its band just above the brows and the tops of the ears: at the caps' height it perched on the crown of the head (owner, 21 November 2026: "ill fitting"), but never so low that the brim hides the eyebrows ("don't cover the eyebrows")
+    if HK=='felt' and not OLD: HK='trilby'      # a felt hat after 1800 is the fedora shape: a tapered crown pinched at the front and a brim snapped down (owner, 21 November 2026: the straight-sided crown it had "looks like pots on their head"). The 1690 felt hat keeps its own low round crown and broad brim.
     if HK=='felt' and OLD:
         # a 1690 felt hat: a low round crown and a broad brim that curls up a little, unevenly, turned round the head's own outline so it sits down on the brow
         fit=head_fit(); bm=bmesh.new(); BR=G.get('brim',1.0); Hc=CRH+0.036*s
@@ -1188,11 +1235,11 @@ def build_hat(HK,HM):
         if HK=='trilby':      # a felt hat with a pinched crown and a brim snapped down in front
             Hc=CRH+0.032*s
             def mod(a,i,d,z):
-                if i<=1: return d,z+0.012*s*(-math.cos(a))*(1.0 if i==0 else 0.3)+(0.006*s*abs(math.sin(a)) if i==0 else 0)
-                if i>=4: return d-0.010*s*max(0,math.cos(a))**2,z-(0.016*s*(1-abs(math.sin(a)))**2 if i==5 else 0)+0.008*s*math.cos(a)*-1*(i>=4)
+                if i<=1: return d,z+0.012*s*(-math.cos(a) if math.cos(a)<0 else -0.35*math.cos(a))*(1.0 if i==0 else 0.3)+(0.006*s*abs(math.sin(a)) if i==0 else 0)      # the brim turns up at the back and dips only a little at the front, so the eyebrows show under it
+                if i>=4: return d-0.010*s*max(0,math.cos(a))**2,z-(0.016*s*(1-abs(math.sin(a)))**2 if i==5 else 0)+0.008*s*math.cos(a)*-1*(i>=4)      # (the crown's top)
                 return d,z
-            lathe(bm,[(0.056*s*BR,0.0),(0.0,0.006*s),(0.0,0.03*s),(-0.008*s,Hc*0.7),(-0.020*s,Hc),(-0.05*s,Hc-0.004*s)],fit,mod=mod)
-            lathe(bb,[(0.003,0.008*s),(0.003,0.032*s)],fit,cap=False)
+            lathe(bm,[(0.060*s*BR,0.0),(0.003,0.006*s),(0.003,0.03*s),(-0.004*s,Hc*0.7),(-0.016*s,Hc),(-0.05*s,Hc-0.004*s)],fit,mod=mod)      # (the crown a little fuller than the head at its base and tapering less: narrower than the head, it looked a size too small)
+            lathe(bb,[(0.0055,0.008*s),(0.0055,0.030*s)],fit,cap=False)      # 2.5 mm proud of the crown
         if HK=='straw':       # a woven straw hat: a wide, slightly wavy brim and a low flat crown
             Hc=CRH+0.03*s
             lathe(bm,[(0.085*s*BR,-0.004*s),(0.0,0.008*s),(-0.004*s,Hc),(-0.03*s,Hc+0.004*s)],fit,mod=lambda a,i,d,z:(d,z+(0.008*s*math.sin(a*3+1) if i==0 else 0)))
@@ -1749,6 +1796,30 @@ def tuck_under_skirt():
     print('TUCKED UNDER SKIRT',n)
 if G.get('tuckskin',1) and G.get('skirt'): tuck_under_skirt()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
+if not OLD and PART.get('waistcoat') and not P.get('outfit') and not G.get('woman') and 'YCz' in globals():
+    # A waistcoat's front is cut flat: it falls in one straight line from the fullest part of the chest to its hem, and holds a belly in. Pushed out from the body,
+    # it followed the belly and ended in a ridge at the hem (owner, 21 November 2026: "waistcoats still follow the belly"). For each direction across the front the
+    # cloth between the chest and the hem is brought in to the line between them (never pushed out); the shirt beneath is held in by the step below.
+    _w=PART['waistcoat']; _zc=NECK-0.17*s; _zh=min(v.co.z for v in _w.data.vertices)+0.012; _NA=48; _rc=[0.0]*_NA; _rh=[0.0]*_NA
+    def _pol(c): yc=YCz(c.z); dx,dy=c.x,c.y-yc; return math.hypot(dx,dy),math.atan2(dx,-dy),yc
+    for v in _w.data.vertices:
+        r,a_,yc=_pol(v.co); k=int((a_%(2*math.pi))/(2*math.pi)*_NA)%_NA
+        if abs(v.co.z-_zc)<0.02: _rc[k]=max(_rc[k],r)
+        if v.co.z<_zh+0.012: _rh[k]=max(_rh[k],r)
+    for T in (_rc,_rh):
+        g=[x for x in T if x>0] or [0.15]
+        for k in range(_NA):
+            if T[k]<=0: T[k]=max(T[(k-1)%_NA],T[(k+1)%_NA]) or sum(g)/len(g)
+        for _ in range(3): T[:]=[(T[k-1]+2*T[k]+T[(k+1)%_NA])/4 for k in range(_NA)]
+    _n=0
+    for v in _w.data.vertices:
+        if not (_zh<v.co.z<_zc): continue
+        r,a_,yc=_pol(v.co); fr=sstep(0.15,0.65,math.cos(a_))
+        if fr<=0: continue
+        f=(a_%(2*math.pi))/(2*math.pi)*_NA-0.5; k=int(math.floor(f))%_NA; u=f-math.floor(f); t=(v.co.z-_zh)/(_zc-_zh)
+        tgt=(_rh[k]*(1-u)+_rh[(k+1)%_NA]*u)*(1-t)+(_rc[k]*(1-u)+_rc[(k+1)%_NA]*u)*t
+        if r>tgt: rn=r+(tgt-r)*fr; v.co.x*=rn/r; v.co.y=yc+(v.co.y-yc)*rn/r; _n+=1
+    _w.data.update(); print('WAISTCOAT FRONT flattened',_n)
 if not OLD and PART.get('waistcoat') and PART.get('shirt') and not P.get('outfit'):
     # A waistcoat holds the shirt in. Where the shirt blouses out over the waistband it came through the waistcoat's side as a white flap (owner, 21 November 2026:
     # "the side of the coat looks torn"). Every point of the shirt's body that lies outside the waistcoat, or less than 5 mm inside it, is set 6 mm inside it.

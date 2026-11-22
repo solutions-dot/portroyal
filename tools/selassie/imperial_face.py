@@ -55,10 +55,11 @@ bmesh.ops.delete(bm,geom=[v for v in bm.verts if not v.link_faces],context='VERT
 bm.normal_update()
 smooth_edge(bm,iters=24)      # a clean outline: cut face by face, the edge ran in steps
 _r1={v for v in bm.verts if not v.is_boundary and any(e.other_vert(v).is_boundary for e in v.link_edges)};_r2={v for v in bm.verts if not v.is_boundary and v not in _r1 and any(e.other_vert(v) in _r1 for e in v.link_edges)}
-EDGE={v.index:(0. if v.is_boundary else .4 if v in _r1 else .75 if v in _r2 else 1.) for v in bm.verts}      # 0 on the outline, 1 well inside: the colour feathers into the skin over three rows
+_r3={v for v in bm.verts if not v.is_boundary and v not in _r1 and v not in _r2 and any(e.other_vert(v) in _r2 for e in v.link_edges)}
+EDGE={v.index:(0. if v.is_boundary else .3 if v in _r1 else .6 if v in _r2 else .85 if v in _r3 else 1.) for v in bm.verts}      # 0 on the outline, 1 well inside: the colour feathers into the skin over three rows
 for v in bm.verts:
     # a short full beard: a little thicker over the chin than on the cheeks
-    if kind=='emperor':v.co+=v.normal*(.0036+.0034*sstep(lip_width*1.3,lip_width*.2,abs(v.co.x)))*(.45+.55*EDGE[v.index])
+    if kind=='emperor':v.co+=v.normal*(.0036+.0034*sstep(lip_width*1.3,lip_width*.2,abs(v.co.x)))*(.12+.88*EDGE[v.index])      # the outline lies almost on the skin (it stood 1.6 mm proud, a hard step on the cheek)
     else:
         chin=sstep(lip_width*1.7,lip_width*.3,abs(v.co.x))*sstep(lower_lip-.012,lower_lip-.045,v.co.z)      # 1 on the chin, 0 on the cheeks
         v.co+=v.normal*(BEARD.get('thick',.004)*(.45+.55*EDGE[v.index])*(1+.8*chin))+Vector((0,-.12,-1))*BEARD.get('len',.012)*chin*EDGE[v.index]      # fuller and longer at the chin (recipe key "beard": len, thick, under, in metres)
@@ -79,6 +80,6 @@ for f in beard.data.polygons:
         grain=.92+.12*noise.noise(v*260)
         c=COL['Beard']*grain
         if kind=='emperor':c=c*(1-.5*sstep(lip_width*.7,lip_width*1.5,abs(v.x)))   # darker at the sides, greyest at the chin
-        c=(COL['Skin']*1.55).lerp(c,.25+.75*EDGE.get(beard.data.loops[li].vertex_index,1.))   # the outline feathers into the skin (drawn 1.55 times lighter in the game)
+        c=(COL['Skin']*1.55).lerp(c,(.04+.96*EDGE.get(beard.data.loops[li].vertex_index,1.)) if kind=='emperor' else (.25+.75*EDGE.get(beard.data.loops[li].vertex_index,1.)))      # the Emperor's outline fades right out into the skin over four rows (owner, 21 November 2026: a hard line on the cheek)   # the outline feathers into the skin (drawn 1.55 times lighter in the game)
         colours.data[li].color=(*c,1)
 print('FITTED FACIAL HAIR',round(lower_lip,4),round(lip_width,4),'beard below mouth, moustache separate')

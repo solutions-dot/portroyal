@@ -66,9 +66,9 @@
       20
     ],
     "Buttons": [
-      191,
-      153,
-      64
+      180,
+      151,
+      81
     ],
     "Belt": [
       65,
@@ -130,5 +130,8 @@
   "beard": {
     "thick": 0.0028,
     "len": 0.008
+  },
+  "outfit": {
+    "garment": "toigo_male_suit_tie_and_jacket"
   }
 }
