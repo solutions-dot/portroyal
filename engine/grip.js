@@ -6,6 +6,7 @@
    engine/audit.js (auditHeld) checks the result: at the hand, upright, clear of the body. */
 import * as THREE from 'three';
 import { calmHands, fitRig } from './anim.js';
+import { pickUp } from './audio.js';
 import { beginPoseCorrection, clearPoseCorrection, endPoseCorrection, jointTurnLimiter } from './bone-pose.js';
 
 const wp = (b) => b.getWorldPosition(new THREE.Vector3()), wq = (o) => o.getWorldQuaternion(new THREE.Quaternion());
@@ -25,7 +26,8 @@ function bindQuaternion(model, bone) {
   });
   return result;
 }
-export function grip(model, side, obj, { handleY = 0.4, scale = 1, yaw = 0, lift = 0.2, curl = 1, straighten = 0, hangs = null } = {}) {
+export function grip(model, side, obj, { handleY = 0.4, scale = 1, yaw = 0, lift = 0.2, curl = 1, straighten = 0, hangs = null, sound = false } = {}) {
+  if (sound) pickUp(typeof sound === 'number' ? sound : 0.4);   /* opt in: only for the player's own pick-up (background holds are made silently at build time; engine/story.js createCarry plays its own) */
   fitRig(model);   /* the rest pose read from the bind matrices below must be the fitted one (engine/anim.js) */
   const B = (n) => model.getObjectByName('mixamorig' + side + n), hand = B('Hand'), arm = B('Arm'); if (!hand) return null;
   model.updateMatrixWorld(true);

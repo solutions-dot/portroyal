@@ -55,11 +55,14 @@
                             (engine/grip.js). It leaves the spot it came from (so a pile goes down by one).
      place(item, spot)      puts it where it goes and keeps it there: spot is an Object3D, or { parent, at: [x, y, z], ry, scale }.
      drop(), holding(), view(mode)   let go (hides it), the item in the hand, switch first / third person (the item moves with you).
+                            carry() makes a soft pick-up sound and place() a put-down (engine/audio.js pickUp, putDown; 22 November 2026, every game);
+                            o.sound false (carry) or spot.sound false (place) keeps it quiet, createCarry({ sound: false }) for the whole hand, o.weight 0 to 1 for a heavier sound.
      issues()               dev: lines for a held item that is hidden, not in the hand, or shrunk to nothing.
 
    checkFlow(story, opts) is the engine side of ?test=flow. See its comment. */
 import { Box3 } from 'three';
 import { grip as engineGrip } from './grip.js';
+import { pickUp, putDown } from './audio.js';
 
 const DEF = { delay: 2500, exploreDelay: 2500, near: 2.2 };
 export const ARROW_LIMIT = 2500, ARROW_LIMIT_EXPLORE = 2500;
@@ -197,7 +200,7 @@ function fitCarry(camera, item, bounds, left) {
 }
 
 /* ---------- the player's hand ---------- */
-export function createCarry({ camera = null, body = null, side = 'Right', slot = [0.32, -0.4, -0.6], grip = engineGrip, gripOpts = {}, view = 'first', fit = false } = {}) {
+export function createCarry({ camera = null, body = null, side = 'Right', slot = [0.32, -0.4, -0.6], grip = engineGrip, gripOpts = {}, view = 'first', fit = false, sound = true } = {}) {
   const C = { held: null, mode: view, placed: [] };
   const bounds = new Box3();
   C.fitView = () => {
@@ -224,14 +227,14 @@ export function createCarry({ camera = null, body = null, side = 'Right', slot =
     else { const w = grip(body, side, it, { ...gripOpts, ...(o.grip || {}) }); if (!w) throw new Error('carry: the body has no ' + side + ' hand'); w.userData.carryWrap = true; }
     it.visible = true;
   }
-  C.carry = (it, o = {}) => { if (C.held) release(); if (it.parent) it.parent.remove(it); C.held = it; C.opts = o; attach(it, o); return it; };
+  C.carry = (it, o = {}) => { if (C.held) release(); if (it.parent) it.parent.remove(it); C.held = it; C.opts = o; attach(it, o); if (sound && o.sound !== false) pickUp(o.weight ?? it.userData?.weight ?? 0.4); return it; };
   C.holding = () => C.held;
   C.place = (it, spot) => {
     it = it || C.held; if (!it) return null; if (it === C.held) { release(); C.held = null; } else if (it.parent) it.parent.remove(it);
     const parent = spot && spot.isObject3D ? spot : spot.parent; parent.add(it);
     if (spot && !spot.isObject3D) { const a = spot.at || [0, 0, 0]; it.position.set(a[0], a[1], a[2]); it.rotation.set(0, spot.ry || 0, 0); if (spot.scale) it.scale.setScalar(spot.scale); }
     else it.position.set(0, 0, 0);
-    it.visible = true; C.placed.push(it); return it;
+    it.visible = true; C.placed.push(it); if (sound && spot?.sound !== false) putDown(spot?.weight ?? it.userData?.weight ?? 0.4); return it;
   };
   C.drop = () => { const it = C.held; if (!it) return null; release(); C.held = null; it.visible = false; return it; };
   C.view = (mode) => { if (mode === C.mode) return C; const it = C.held; if (it) release(); C.mode = mode; if (it) attach(it, C.opts); return C; };
