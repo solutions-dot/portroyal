@@ -7,6 +7,8 @@
 <meta name="description" content="PastPort - Jamaica: 3D story games that take you into Jamaica's past, for ages 6 and up.">
 <meta name="theme-color" content="#06283D">
 <script>
+  /* ?embed=1: this page is the "i" pop-up over a game's title screen (engine/rate.js). Mark it before anything is drawn, so the menu never flashes behind the pop-up. */
+  try { if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.classList.add('lib-embed'); } catch (e) { /* not embedded */ }
   /* The intro (intro.js) starts by itself and plays once for each browser tab. ?intro=1 plays it again, ?intro=0 skips it. */
   try { var q = new URLSearchParams(location.search).get('intro'); if (q === '1' || (q !== '0' && !sessionStorage.getItem('intro-seen'))) { document.documentElement.classList.add('intro-on'); ['pastport-logo.webp', 'pastport-jamaica.webp'].forEach(function (f) { var l = document.createElement('link'); l.rel = 'preload'; l.as = 'image'; l.href = f; document.head.appendChild(l); }); } } catch (e) { /* no intro */ }
 </script>

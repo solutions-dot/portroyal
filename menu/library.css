@@ -152,7 +152,9 @@ html:not(.lib-teen) .game[data-age="13"]{display:none}
 
 /* ---------- the sheet inside a game's title screen (?embed=1, engine/rate.js) ---------- */
 html.lib-embed,html.lib-embed body{background:transparent!important;overflow:hidden!important}
-html.lib-embed main,html.lib-embed #intro,html.lib-embed #subpanel{display:none!important}
+html.lib-embed main,html.lib-embed #intro,html.lib-embed #subpanel,html.lib-embed #footlinks{display:none!important}
+html.lib-embed{color-scheme:normal}
+html.lib-embed .lib-dialog::backdrop{background:rgba(4,27,42,.35)}   /* light: the game's title screen shows through behind the pop-up (owner, 22 November 2026) */
 html.lib-embed #gamesheet.lib-here :is(.lib-banner,#sheetgenre,#sheetage,#sheetwarn,#sheettext,#sheetgo){display:none!important}
 html.lib-embed #gamesheet.lib-here #sheettitle{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}   /* kept for screen readers as the pop-up's name */
 html.lib-embed #gamesheet.lib-here .lib-rate{margin-top:0;padding-top:0;border-top:0}

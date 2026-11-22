@@ -11,7 +11,7 @@
   if (!m || m[1].charAt(0) === '_') return;
   var id = m[1];
   var CSS = '#infobtn{display:inline-grid;place-items:center;width:48px;min-width:48px;height:auto;min-height:44px;padding:0;cursor:pointer;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:1.35rem;line-height:1}'
-    + '#infoframe{position:fixed;inset:0;z-index:9400;width:100%;height:100%;border:0;background:transparent}';
+    + '#infoframe{position:fixed;inset:0;z-index:9400;width:100%;height:100%;border:0;background:transparent;color-scheme:normal;opacity:0;transition:opacity .18s ease}#infoframe.on{opacity:1}';
   function start() {
     var exit = document.getElementById('allgames');
     if (!exit || document.getElementById('infobtn')) return;
@@ -27,9 +27,11 @@
       frame.setAttribute('allowtransparency', 'true');
       frame.src = '../../../menu/?intro=0&embed=1&rate=' + encodeURIComponent(id);
       document.body.appendChild(frame);
+      setTimeout(function () { if (frame) frame.classList.add('on'); }, 3000);   /* in case the pop-up never says it is up */
       frame.addEventListener('load', function () { try { frame.contentWindow.focus(); } catch (err) { /* focus stays */ } });
     });
-    addEventListener('message', function (e) { if (e.origin === location.origin && e.data && e.data.pastport === 'close-sheet') close(); });
+    /* the frame stays invisible while the menu page loads, and fades in when the pop-up is up (no flash of the menu: owner, 22 November 2026) */
+    addEventListener('message', function (e) { if (e.origin !== location.origin || !e.data) return; if (e.data.pastport === 'sheet-open' && frame) frame.classList.add('on'); if (e.data.pastport === 'close-sheet') close(); });
     addEventListener('keydown', function (e) { if (frame && e.key === 'Escape') close(); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

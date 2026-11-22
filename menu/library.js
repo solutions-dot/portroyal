@@ -315,7 +315,7 @@ if (typeof document !== 'undefined') (() => {
     addEventListener('pageshow', (e) => { if (e.persisted) { sync(); drawAll(); } });
     addEventListener('storage', (e) => { if ([PROFILE_KEY, RATINGS_KEY, VISITS_KEY].includes(e.key) && !profilePanel.open && !sheet.open && !ageCard.open) { sync(); drawAll(); } });
     whenMenuShows(openFromUrl);
-    if (EMBED && !sheet.open) toGame('close-sheet');   /* nothing this profile may see: the game takes the overlay away */
+    if (EMBED) toGame(sheet.open ? 'sheet-open' : 'close-sheet');   /* the game shows the frame only once the pop-up is up, or takes it away */   /* nothing this profile may see: the game takes the overlay away */
   }
   /* Start when the whole page is read: by then site.js has put the cards in order and the script at the foot of index.html has set their links. */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
