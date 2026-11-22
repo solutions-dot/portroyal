@@ -597,7 +597,23 @@ card(title, lines, [["Go on", async () => { await LS.back(); done(); }]]);
 - The place's reveal takes a number: `Q.reveal[id](k)`, 0 as found, 1 changed, called every frame while the thing acts (`true` and `false` still work, as 1 and 0, for restoring a place and for `engine/audit-reveal.js`).
 - Pass `DIR.on || LS.on` to `renderFramed`, so a phone held upright gets the wider cinematic lens.
 
-**Used by:** The Mad Master of Edinburgh Castle (all eleven looks, 22 November 2026); The Shark Papers (all eight looks, 22 November 2026; a framing that depends on how a place was built, such as a ship out in the harbour, comes from the place's `Q.lookViews[id]`). **How to adopt it** (Windrush still has the old `lookAt` copy, a reveal and a card after 900 ms): 1) make one `LS` with the adapter, call `LS.tick(dt)` before the camera code and skip that code when it returns true; 2) give each `LOOKS` entry a `view` (or use `frameOf`), a `sound` and one or two `say` lines, and take the words the picture now shows out of the card; 3) let each `Q.reveal[id]` take `k` and move the thing (a lid on its hinge, a cloth along its rail), not just show it; 4) in `lookAt`, `await LS.play(...)`, then the card, with `LS.back()` on its button; `LS.cancel()` in the step change. Check `?auto=1` still ends with `FLOW 0` and `?test=audit` (the reveal check) stays at 0.
+**Used by:** Kendal 1957, Hurricane Melissa, Eventide Home, Nanny Town and Bog Walk through `engine/lookkit.js` (below, 22 November 2026); The Mad Master of Edinburgh Castle (all eleven looks, 22 November 2026); The Shark Papers (all eight looks, 22 November 2026; a framing that depends on how a place was built, such as a ship out in the harbour, comes from the place's `Q.lookViews[id]`). **How to adopt it** (Windrush still has the old `lookAt` copy, a reveal and a card after 900 ms): 1) make one `LS` with the adapter, call `LS.tick(dt)` before the camera code and skip that code when it returns true; 2) give each `LOOKS` entry a `view` (or use `frameOf`), a `sound` and one or two `say` lines, and take the words the picture now shows out of the card; 3) let each `Q.reveal[id]` take `k` and move the thing (a lid on its hinge, a cloth along its rail), not just show it; 4) in `lookAt`, `await LS.play(...)`, then the card, with `LS.back()` on its button; `LS.cancel()` in the step change. Check `?auto=1` still ends with `FLOW 0` and `?test=audit` (the reveal check) stays at 0.
+
+### engine/lookkit.js: the look adapter for the Kendal-pattern games (22 November 2026)
+
+Kendal, Melissa, Eventide, Nanny Town and Bog Walk share one frame of code (their `bars`, `say`, `frozen`, `DIR` and resize), so they share one adapter instead of five copies (rule 10):
+
+```js
+const LOOK = makeLooks({ camera, bars, say, freeze: (on) => { frozen = on; }, sounds: LOOK_SFX, quick: () => QUICK && !LOOKDEV, reduced, eye: () => ({ x, y, z, yaw, pitch }) });
+await LOOK.look({ id: 'engine', view: { p, look, fov } /* or at: [x, y, z], dist, lift, fov */, reveal: (k) => P.reveal.engine(k), sound: 'steam', lines: ['...'], act: 3 });
+card(title, lines, [{ t: 'Go on', go: async () => { hideCard(); await LOOK.back(); done(); } }]);
+```
+
+- In the frame loop: `if (LOOK.tick(dt)) {} else if (DIR.on) ...`; `LOOK.cancel()` in `resetTransient`.
+- While a look plays, the top buttons, the goal and the stick hide (`body.look-on`), as in a cinematic.
+- A framing is set for a wide screen; on a phone held upright the lens is widened (up to 90 degrees) so the same width still fits (a board, a plaque).
+- Each game keeps what a look moves in `P.reveal[id](k)` (0 as found, 1 changed) and runs `engine/audit-reveal.js` on it in `?test=audit`, so a moved thing that floats is found.
+- Dev: `?look=<id>&at=<chapter>,<stage>&k=0.5` plays that look in a dev build and holds it part way (`LOOK.pauseAt`); the title becomes `LOOK <id>`, for screenshots at 390x800 and 667x375.
 
 ## Port Royal's building surfaces for any game (`engine/building-tex.js`, 22 November 2026)
 
