@@ -205,3 +205,7 @@ Every look is now a close-up moment (owner rule 13, `engine/lookshot.js` through
 - **Read the monument**: you brush the dry leaves off the step at the plaque's foot (they land on the paving), and a church bell rings once; the card keeps the 177 names and that the words are our own.
 - Checks: `?test=audit` 0 in every place, now with `engine/audit-reveal.js` on every look's moving parts (the brake handles with the train at the platform). Screenshots of each look half way, at 390x800 and 667x375.
 Dev: `?look=<id>&at=<chapter>,<stage>&k=0.5` holds a look part way for a screenshot (docs/ENGINE.md, engine/lookkit.js).
+
+## Layout test 0 (22 November 2026)
+
+The one finding (the journal count badge during a dialogue) was the test: it wanted the badge inside the Journal button, but the shared badge (engine/hud.js) sits on the button's top right corner by design. The check now wants its middle on the button and all of it on the screen. `?test=layout`: 0 at 390x800 and 667x375.
