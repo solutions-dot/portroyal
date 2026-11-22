@@ -27,7 +27,7 @@ const FLAG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
 const BANNER_CSS = '#goalbanner{position:fixed;left:50%;top:30%;transform:translate(-50%,-50%);z-index:60;max-width:min(30rem,calc(100% - 32px));width:max-content;'
   + 'background:rgba(16,34,43,.94);color:#fff6dc;border:2px solid #ffd65c;border-radius:12px;padding:.7em 1.1em;font-size:clamp(1.05rem,3.6vw,1.45rem);font-weight:700;'
   + 'line-height:1.3;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.45);pointer-events:none;opacity:0;transition:opacity .45s ease,transform .5s ease}'
-  + '#goalbanner.on{opacity:1}#goalbanner.off{opacity:0}#goalbanner[hidden]{display:none}'
+  + '#goalbanner.on{opacity:1}#goalbanner.off{opacity:0}#goalbanner[hidden]{display:none}body.cine #goalbanner,body.cine-on #goalbanner{visibility:hidden}'   /* a camera scene or a look moment (engine/lookshot.js) keeps the picture clear */
   + '#goalbanner small{display:block;font-size:.62em;font-weight:600;opacity:.8;letter-spacing:.04em;margin-bottom:.15em}'
   + '@media (prefers-reduced-motion: reduce){#goalbanner,#goalbanner.off{transition:opacity .2s}#goal.goalicon.fresh{animation:none!important;box-shadow:0 0 0 4px rgba(255,214,92,.7)!important}}'
   /* the goal box becomes a round flag icon (owner, 22 November 2026: "an icon they can click on at any time to see the goal, that flashes when there

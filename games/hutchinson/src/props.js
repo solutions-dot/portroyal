@@ -145,3 +145,18 @@ export function shadowTexture() {
     }))
   );
 }
+/* a round felt riding hat of the 1770s, as plain travellers wore it uncocked: a wide brim turned up a little at the edge, a low round crown
+   that is hollow and open underneath (one lathe, both faces drawn, so it reads right from below and when it hangs on a peg), and a dark
+   band. Its brim lies on y = 0 and the crown rises along +y. */
+export function feltHat(color = 0x6e5a46, band = 0x2e241e) {
+  const g = grp(),
+    felt = new THREE.MeshStandardMaterial({ color, roughness: 1, side: THREE.DoubleSide }),
+    V = (r, y) => new THREE.Vector2(r, y);
+  /* the profile, outside first (crown top, crown side, brim top, the turned edge), then back along the inside (brim under, crown inside) */
+  const pts = [V(0.001, 0.116), V(0.06, 0.114), V(0.084, 0.108), V(0.092, 0.095), V(0.094, 0.012), V(0.12, 0.007), V(0.17, 0.006), V(0.19, 0.014), V(0.198, 0.022), V(0.2, 0.016), V(0.186, 0.004), V(0.16, -0.003), V(0.12, -0.003), V(0.086, 0.0), V(0.083, 0.09), V(0.076, 0.101), V(0.055, 0.106), V(0.001, 0.108)];
+  mesh(new THREE.LatheGeometry(pts, 28), felt, 0, 0, 0, g);
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.0955, 0.0958, 0.018, 28, 1, true), new THREE.MeshStandardMaterial({ color: band, roughness: 0.9, side: THREE.DoubleSide }));
+  b.position.y = 0.024;
+  g.add(b);
+  return g;
+}

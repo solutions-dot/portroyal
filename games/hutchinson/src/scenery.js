@@ -298,7 +298,7 @@ export function tufts(n, area, { seed = 1, clear = [], h = 0.6, tint = [1.25, 0.
   g.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
   g.setAttribute("normal", new THREE.Float32BufferAttribute(N, 3));
   const m = new THREE.Mesh(g, TUFT());
-  m.userData.noAudit = true;
+  m.userData.noAudit = true;   /* grass tufts: ground cover that stands into everything, as real grass does */
   m.name = "grass";
   return m;
 }
@@ -480,7 +480,7 @@ export function cookFire(lit = false) {
   if (lit) {
     const e = mesh(new THREE.CircleGeometry(0.22, 10), new THREE.MeshBasicMaterial({ color: 0xff7a2a }), 0, 0.07, 0, g);
     e.rotation.x = -Math.PI / 2;
-    e.userData.noAudit = true;
+    e.userData.noAudit = true;   /* the glow of embers */
   }
   return g;
 }
@@ -784,7 +784,7 @@ export function castle({ w = 11, d = 7, h = 6.6, r = 2.05 } = {}) {
   const barrel = cyl(0.014, 0.016, 0.9, W.WM.iron, 0.12, -0.05, 0.45, watcher, 6);
   barrel.rotation.x = Math.PI / 2 - 0.12;
   watcher.visible = false;
-  dynamic(noAudit(watcher));
+  dynamic(watcher);
   g.userData = {
     walls: [[-w / 2 - 0.35, -d / 2 - 0.35, w / 2 + 0.35, d / 2 + 0.35], [w / 2 - r, d / 2 - r, w / 2 + r, d / 2 + r], [-w / 2 - r, -d / 2 - r, -w / 2 + r, -d / 2 + r]],
     shutter: sw,
@@ -821,7 +821,7 @@ export function smoke(n = 6, { rise = 3.4, spread = 0.7, size = 1.2, tint = 0xb8
     g.add(s);
     puffs.push(s);
   }
-  dynamic(noAudit(g));
+  dynamic(noAudit(g));   /* smoke puffs, see-through */
   g.userData.tick = (t) => {
     for (let i = 0; i < n; i++) {
       const k = (t * 0.12 + i / n) % 1,
@@ -849,7 +849,7 @@ export function birds(n = 16, seed = 4) {
     g.add(b);
     list.push(b);
   }
-  dynamic(noAudit(g));
+  dynamic(noAudit(g));   /* birds in flight: in the air on purpose */
   g.visible = false;
   g.userData.burst = (k) => {
     g.visible = k > 0 && k < 1;
@@ -906,7 +906,7 @@ export function cornerHearth(h = 3) {
     l.rotation.set(0, s * 0.3, Math.PI / 2);
   }
   const ember = box(0.7, 0.05, 0.3, new THREE.MeshBasicMaterial({ color: 0xff6a22 }), 0, 0.24, 0.32, g);
-  ember.userData.noAudit = true;
+  ember.userData.noAudit = true;   /* the glow of embers */
   const pot = mesh(new THREE.SphereGeometry(0.17, 10, 7, 0, 7, 0, 2.1), W.WM.iron, 0.1, 0.72, 0.3, g);
   pot.rotation.x = Math.PI;
   cyl(0.012, 0.012, 0.42, W.WM.iron, 0.1, 1.0, 0.3, g, 5);
@@ -1065,14 +1065,13 @@ export function shaft(rx = 2.5, rz = 1.5, seed = 2) {
   geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
   geo.computeVertexNormals();
   const m = new THREE.Mesh(geo, BAND.map((color) => new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, fog: false })));
-  m.userData.noAudit = true;
   m.userData.noBatch = true;
   g.add(m);
   /* the dark at the bottom: the shaft is closed far down, so no daylight shows through it */
   const cap = mesh(new THREE.CircleGeometry(1, 20), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false }), 0, -40, 0, g);
   cap.rotation.x = -Math.PI / 2;
   cap.scale.set(rx * 3.3, rz * 3.3, 1);
-  cap.userData.noAudit = true;
+  cap.userData.noAudit = true;   /* the dark far down the shaft: a backdrop, not a thing */
   cap.userData.noBatch = true;
   /* the lip: jagged outcrops round the mouth, lower on the side you come to */
   for (let i = 0; i < 18; i++) {
@@ -1353,7 +1352,7 @@ export function farCrowd(n = 26, w = 12, seed = 2) {
     mesh(new THREE.SphereGeometry(0.12, 6, 5), m, x, h - 0.1, z, g);
     if (r() < 0.5) mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 8), m, x, h + 0.02, z, g);
   }
-  dynamic(noAudit(g));
+  dynamic(g);
   return g;
 }
 /* a low house of one storey: thick plastered walls (the old Spanish houses Long mentions) or brick, small sash windows, a door, a hip roof.

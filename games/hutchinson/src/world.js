@@ -122,11 +122,18 @@ export function well() {
   water.rotation.x = -Math.PI / 2;
   for (const s of [-1, 1]) box(0.14, 2.1, 0.14, WM.woodDark, s * 1.0, 1.05, 0, g);
   box(2.3, 0.14, 0.14, WM.woodDark, 0, 2.1, 0, g);
-  const roller = cyl(0.09, 0.09, 1.9, WM.wood, 0, 1.55, 0, g, 10);
+  const roller = cyl(0.09, 0.09, 1.9, WM.wood, 0, 1.55, 0, g, 8);
   roller.rotation.z = Math.PI / 2;
   cyl(0.012, 0.012, 0.75, WM.rope, 0.2, 1.17, 0, g, 5);
-  box(0.05, 0.36, 0.05, WM.iron, 1.12, 1.55, 0.0, g);
-  box(0.05, 0.05, 0.3, WM.iron, 1.12, 1.71, 0.15, g);
+  /* the crank turns on the roller's axis: userData.turn(a) winds it (a in radians) */
+  const crank = grp(g, 1.12, 1.55, 0);
+  box(0.05, 0.36, 0.05, WM.iron, 0, 0, 0.0, crank);
+  box(0.05, 0.05, 0.3, WM.iron, 0, 0.16, 0.15, crank);
+  for (const o of [roller, crank]) o.traverse((m) => (m.userData.noBatch = true));
+  g.userData.turn = (a) => {
+    crank.rotation.x = a;
+    roller.rotation.x = a;
+  };
   return g;
 }
 /* a sea chest or strongbox with a lid that lifts (userData.open(k)) */
@@ -167,7 +174,7 @@ export function candle(lit = true) {
   f.position.y = 0.32;
   f.visible = lit;
   f.userData.noBatch = true;
-  f.userData.noAudit = true;
+  f.userData.noAudit = true;   /* a candle flame sprite */
   g.add(f);
   g.userData.light = (on) => (f.visible = on);
   return g;

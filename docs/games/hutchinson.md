@@ -98,3 +98,29 @@ The game's square was put beside the plate (NLJ item 5208, "A view of the King's
 - **Changed: the green in the middle.** It was a small railed octagon. The plate shows one long straight rail on about ten square white piers, running most of the way between the buildings, and no source found says it was an octagon. It is now a railed rectangle 9.2 by 13.6 m (`railedGreen()` in `src/scenery.js`), inside the octagon's old outline, so no walk or story spot moved. Checks after the change: `?test=audit` 0 in all five places, `?test=ambient` 0, `?test=held` `CARRY 0`, `?auto=1` `AUTO END 68` with `FLOW 0`, `?test=layout` `LAYOUT UI 0` at 390x800.
 - **Still a general picture:** the houses on the north and south sides, the chapel and guard-house, and how the green's rail was made (iron or timber): the only copy found is 470 pixels wide.
 
+
+## Looking is a close-up action, 22 November 2026 (owner rules 13 and 14)
+
+The owner: "there is nothing to actually see... no action of actually looking besides a button press and confirmation", and "It must feel like a cinematic story / story book". Every look now uses `engine/lookshot.js`: the bars come in, the camera eases to a close shot (`view` on each entry of `LOOKS` in `src/steps.js`), the thing moves over two to five seconds with a sound made in code (`LOOK_SFX` in `src/main.js`) and a short line in the lower bar, then the card, then the camera eases back. Each place's `Q.reveal[id](k)` now moves the thing with `k` from 0 to 1:
+
+| Look | What you see happen |
+|---|---|
+| The dry pond | the stick goes into the cracked mud a hand deep; a puff of dust |
+| The pack mule | the flap lifts; a tin cup and a folded shirt come into view by the bedroll |
+| The hat in the roots | the hat is lifted from the roots and hung by its crown on a broken branch stub on the trunk (the stub is new; the hat floated before) |
+| Drawing the water | the windlass crank and roller turn and the bucket comes up out of the well; then Juba's pail is full |
+| The strayed jackass | it turns and walks over to the yard wall, nodding as it comes |
+| The strongbox | the lid swings up; the watches glint one after another in the candle light |
+| The coats | the cloth is drawn along its rail and the coats come into view |
+| The loophole | the board comes off and is leaned below; daylight falls in |
+| The cot | the tin cup is picked up from the floor and set on the cot |
+| The lantern | the lantern goes down the shaft until it is a small point of light |
+| Under the court | the gallery's jalousies fold back one by one; voices you cannot make out |
+
+**Cut (rule 14):** "Read the notice by the court door" (was step 62). The clerk had just said the same thing (tried for one killing, John Callendar, a free man saw it), so it was a second button for the same fact, and its red seal was the game's own invention. The one new fact on it, that he pleaded not guilty, is now on the "Under the court" card. A save made in step 62 carries on from step 63. The notice board stays on the pier as part of the square.
+
+**The hat** is now a real felt riding hat (`feltHat()` in `src/props.js`): a wide brim turned up at the edge, a hollow crown open underneath (one lathe, both faces drawn) and a band; the fallen hat in the camera scene uses it too. Checked close up from the front, the side and below, found and before.
+
+**noAudit marks** (rule 8): 23 before, 12 after (places.js 5, scenery.js 6, world.js 1), each with a comment saying why: smoke and dust puffs, lamp and ember glows, a shaft of light, flame sprites and glints, the grass tufts, birds in flight and the black far down the hole. Taken off and now checked: the well bucket, both hats, the stick, the loophole's daylight square, the cup, the hall lantern, the trees and vines round the hole, the searchers' rope and lantern, the gallows, the watcher at the window, the far crowd and the walls of the shaft. The loophole board and the jalousies are marked `fixed`: one is nailed across the hole, the others hang on the gallery front.
+
+Checks: `?auto=1` AUTO END 68, FLOW 0; `?test=audit` AUDIT 0 in all five places, with `engine/audit-reveal.js` running every reveal both ways; `?test=held` CARRY 0; `?test=ambient` 0 in all five; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375; `npm test` 279 pass, LINT 0 new. The look moments were screenshot mid-action at 1280x720 and 390x800 (the touch stick and the action button are held and hidden, the line sits in the lower bar). `#sub` lost its leftover `dim` class, which had kept every camera scene's captions invisible.

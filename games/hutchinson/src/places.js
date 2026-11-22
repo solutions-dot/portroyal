@@ -105,6 +105,14 @@ const DUST = [186, 168, 132],
   GOLD = [1.3, 1.02, 0.6],   /* Guinea grass in a dry month */
   PALE = [1.12, 1.0, 0.7];
 const moveTo = (o, x, y, z) => o.position.set(x, y, z);
+/* Q.reveal[id](k): a thing to look at, from 0 (as you find it) to 1 (changed). The look moment (engine/lookshot.js) calls it every frame with
+   k rising over two or three seconds, so the thing moves while you watch; on arrival it is called with true or false (1 or 0). */
+const K = (seen) => Math.max(0, Math.min(1, +seen)),
+  span = (k, a, b) => {
+    const u = Math.max(0, Math.min(1, (k - a) / (b - a)));
+    return u * u * (3 - 2 * u);
+  },
+  mix = (a, b, u) => a + (b - a) * u;
 /* a peg with a red rag: one of the marks along a boundary */
 function peg(c = 0xb03a2a) {
   const g = grp();
@@ -161,8 +169,18 @@ function road() {
   const stick = cyl(0.014, 0.018, 1.05, W.WM.wood, -8.2, 0.42, -6.6, Q.group, 5);
   stick.rotation.z = 0.2;
   stick.userData.noBatch = true;
-  stick.userData.noAudit = true;
-  Q.reveal.pond = (seen) => (stick.visible = seen);
+  /* a hand comes down with the stick and pushes it into the cracked mud: it goes in a hand deep, then a puff of dry dust */
+  const dust = add(Q, S.smoke(3, { rise: 0.5, spread: 0.3, size: 0.35, tint: 0xb9ab8a }), -8.2, -6.6, 0.02);
+  dust.visible = false;
+  dust.traverse((o) => (o.userData.noAudit = true));   /* smoke puffs: a see-through glow, nothing to rest */
+  Q.tickers.push((t) => dust.visible && dust.userData.tick(t));
+  Q.reveal.pond = (seen) => {
+    const k = K(seen);
+    stick.visible = k > 0;
+    stick.position.y = 0.42 + 0.55 * (1 - span(k, 0, 0.55)) - 0.06 * span(k, 0.6, 0.95);
+    stick.rotation.z = 0.2 + 0.08 * (1 - span(k, 0, 0.55));
+    dust.visible = k > 0.5 && k < 1;
+  };
   /* the pasture: Guinea grass gone gold, a rail fence, the cattle beyond it and a rack to feed them at */
   for (const [x0, x1] of [[-18.5, -2.4], [0.4, 18.5]]) {
     add(Q, S.postRail(x1 - x0, 1.2), (x0 + x1) / 2, -12.4);
@@ -216,12 +234,20 @@ function road() {
   roll.rotation.z = Math.PI / 2;
   const flap = box(0.37, 0.05, 0.6, solid(0x7a5a3c, 1), 0.3, 0.18, 0, pack);   /* the bag's flap: lifted when you look inside */
   flap.userData.noBatch = true;
+  /* what is in the bag: a tin cup and a shirt folded small, seen as the flap comes up */
+  const inside = grp(pack, 0.3, 0.12, 0);
+  cyl(0.04, 0.035, 0.08, solid(0x9a9a94, 0.4, 0.6), 0, 0.04, 0.14, inside, 8);
+  box(0.2, 0.04, 0.16, solid(0xd8d0bc, 1), 0, 0.02, -0.08, inside);
+  inside.visible = false;
   stray.traverse((o) => (o.userData.noBatch = true));
   solid1(Q, stray, -7, 3.6, 2.0, 0.9, Math.PI / 2);
   Q.reveal.packmule = (seen) => {
-    flap.rotation.z = seen ? 1.1 : 0;
-    flap.position.y = seen ? 0.36 : 0.18;
-    flap.position.x = seen ? 0.52 : 0.3;
+    const u = span(K(seen), 0.05, 0.6);
+    flap.rotation.z = 1.1 * u;
+    flap.position.y = mix(0.18, 0.36, u);
+    flap.position.x = mix(0.3, 0.52, u);
+    inside.visible = u > 0.3;
+    inside.position.y = mix(0.06, 0.16, span(K(seen), 0.4, 0.9));
   };
   for (const [x, z, s] of [[-16.8, 10.9, 1.2], [3, 11.1, 1], [15.5, 10.6, 1.3], [-4, 10.9, 0.9], [-9, 11.2, 1.1]]) solid1(Q, W.scrub(x * 7 + 3, s), x, z, 0.5, 0.5);
   scatter(Q.group, (i) => W.scrub(i + 30, 0.8 + (i % 3) * 0.3), 36, [-60, 14, 60, 60], [], 7);
@@ -281,17 +307,17 @@ function castle() {
   Q.tickers.push((t) => sm.userData.tick(t));
   const glowWin = box(0.24, 0.24, 0.04, new THREE.MeshBasicMaterial({ color: 0xffb65a }), 0.4, MOUND.h + 1.5, -13 + 3.5 + 0.38, Q.group);
   glowWin.userData.noBatch = true;
-  glowWin.userData.noAudit = true;
+  glowWin.userData.noAudit = true;   /* a lamp glow behind a loophole: light, not a thing */
   glowWin.visible = false;
   /* the well, in open ground west of the track (the well is this story's own: see the journal) */
   const well = W.well();
   solid1(Q, well, -13.5, 0.4, 2.4, 2.2);
+  Q.props.well = well;
   const wb = grp(Q.group, -13.3, -1.2, 0.4);   /* the well's own bucket on its rope: down, or wound up dripping */
   cyl(0.012, 0.012, 1.0, W.WM.rope, 0, 1.05, 0, wb, 5);
   cyl(0.16, 0.13, 0.26, W.WM.wood, 0, 0.45, 0, wb, 10);
   wb.traverse((o) => {
     o.userData.noBatch = true;
-    o.userData.noAudit = true;
   });
   /* cover between the road and the well: each thing is tall enough to hide a boy, and its road side is counted as cover */
   const cover = [];
@@ -325,23 +351,38 @@ function castle() {
   jack.scale.setScalar(0.74);
   jack.traverse((o) => (o.userData.noBatch = true));
   add(Q, jack, 15.6, 2.0, 0, -0.6);
+  /* it hears you, turns, and walks over to the wall, nodding as it comes */
   Q.reveal.jackass = (seen) => {
-    jack.position.set(seen ? 17.2 : 15.6, 0, seen ? 5.0 : 2.0);
-    jack.rotation.y = seen ? Math.PI : -0.6;
+    const k = K(seen),
+      turn = span(k, 0, 0.35),
+      walk = span(k, 0.25, 1);
+    jack.position.set(mix(15.6, 17.2, walk), Math.abs(Math.sin(walk * Math.PI * 5)) * 0.025 * (k < 1 ? 1 : 0), mix(2.0, 5.0, walk));
+    jack.rotation.y = mix(-0.6, Math.PI, turn);
+    jack.rotation.x = Math.sin(walk * Math.PI * 5) * 0.03 * (k < 1 ? 1 : 0);
   };
   /* a riding hat between the roots of the cotton tree: you find it, and hang it where it can be seen */
-  const hat = grp(Q.group, 0.1, 0.06, 5.5);
-  cyl(0.19, 0.19, 0.012, solid(0x8a7a66, 1), 0, 0, 0, hat, 12);
-  cyl(0.085, 0.095, 0.1, solid(0x8a7a66, 1), 0, 0.055, 0, hat, 10);
-  cyl(0.097, 0.097, 0.02, solid(0x3a2f28, 1), 0, 0.02, 0, hat, 10);
+  const hat = add(Q, P.feltHat(), 0.1, 5.5, 0.025);
   hat.rotation.z = 0.14;
   hat.traverse((o) => {
     o.userData.noBatch = true;
-    o.userData.noAudit = true;
   });
+  /* a broken branch stub on the trunk, at head height, on the side that faces the road: where you hang the hat. The trunk is about 0.9 m
+     across here (scenery.js cottonTree); the stub runs out of the bark into the hat's crown, as a hat hangs on a peg. */
+  const TX = -0.8,
+    TZ = 4.2,
+    hd = new THREE.Vector3(0.447, 0, 0.894),
+    stub = cyl(0.03, 0.045, 0.46, solid(0x7c7466, 1), TX + hd.x * 1.03, 1.5, TZ + hd.z * 1.03, Q.group, 6);
+  stub.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), hd);
+  const hatUp = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), hd),
+    hatDown = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0.14)),
+    hatFrom = new THREE.Vector3(0.1, 0.025, 5.5),
+    hatTo = new THREE.Vector3(TX + hd.x * 1.17, 1.45, TZ + hd.z * 1.17);   /* the crown's inside rests on the stub */
+  /* lifted out of the roots, turned over in the hand, and hung on the stub, its crown over the end */
   Q.reveal.hat = (seen) => {
-    hat.position.set(seen ? 0.56 : 0.1, seen ? 1.34 : 0.06, seen ? 5.36 : 5.5);
-    hat.rotation.z = seen ? 0.5 : 0.14;
+    const u = span(K(seen), 0.05, 0.85);
+    hat.position.lerpVectors(hatFrom, hatTo, u);
+    hat.position.y += Math.sin(u * Math.PI) * 0.3;
+    hat.quaternion.slerpQuaternions(hatDown, hatUp, u);
   };
   /* the quarters of the people he enslaved, to the west (Cundall), with a cooking fire at dusk */
   const quarters = add(Q, S.quarters(true), -44, -4, 0, 0.5);
@@ -388,13 +429,10 @@ function castle() {
   /* birds in the cotton tree: they go up at the shot (the camera scene) */
   const flock = add(Q, S.birds(18, 4), -0.8, 4.2, 9);
   /* a hat on the track: all that the camera shows afterwards */
-  const fallen = grp(Q.group, 3.2, 0.05, 1.7);
-  cyl(0.2, 0.2, 0.012, W.WM.dark, 0, 0, 0, fallen, 12);
-  cyl(0.09, 0.1, 0.1, W.WM.dark, 0, 0.055, 0, fallen, 10);
+  const fallen = add(Q, P.feltHat(0x2c2622, 0x161210), 3.2, 1.7, 0.03);
   fallen.rotation.z = 0.2;
   fallen.traverse((o) => {
     o.userData.noBatch = true;
-    o.userData.noAudit = true;
   });
   fallen.visible = false;
   /* people. Juba draws water at dusk; in the morning John Callendar stands at the long wall with Sampson. */
@@ -414,10 +452,14 @@ function castle() {
     fallen.visible = false;
     C.userData.eastDoor.userData.swing(0);
   };
+  /* the windlass creaks round and the bucket comes up out of the dark, heavy and dripping */
   Q.reveal.draw = (seen) => {
-    wb.position.y = seen ? 0.62 : -1.2;
+    const k = K(seen),
+      u = span(k, 0.05, 0.85);
+    wb.position.y = mix(-1.2, 0.62, u);
+    well.userData.turn?.(u * Math.PI * 6);
     const pail = Q.items.pail;
-    if (pail && pail.parent === Q.group && Math.abs(pail.position.x + 13.5) < 0.1) pail.visible = seen;
+    if (pail && pail.parent === Q.group && Math.abs(pail.position.x + 13.5) < 0.1) pail.visible = k >= 0.9;   /* Juba fills your pail once the bucket is up */
   };
   /* the morning of the neighbour, as a camera scene: Callendar walks up the track and calls; the window opens; at the shot the camera
      turns to the birds going up; then a hat on the track, and a sick man slipping out by the east door to tell */
@@ -515,7 +557,7 @@ function hall() {
     const g = grp(Q.group, x, y, z);
     g.rotation.y = ry;
     box(0.7, 0.7, 0.04, S.SM.plaster, 0, 0, 0, g);
-    box(0.3, 0.3, 0.05, sky, 0, 0, 0.005, g).userData.noAudit = true;
+    box(0.3, 0.3, 0.05, sky, 0, 0, 0.005, g);
     return g;
   };
   loop(-2.6, 1.6, -3.43, 0);
@@ -525,15 +567,22 @@ function hall() {
   /* the loophole over the road has a board across it until you take the board down */
   loop(-1.2, 1.6, 3.43, Math.PI);
   const board = box(0.5, 0.5, 0.04, W.WM.wood, -1.2, 1.6, 3.39, Q.group);
+  board.userData.fixed = true;   /* nailed across the loophole, then leaned on the wall below it */
   board.userData.noBatch = true;
   const beam = mesh(new THREE.PlaneGeometry(0.34, 3.2), new THREE.MeshBasicMaterial({ color: 0xfff2cc, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }), -1.2, 0.84, 2.2, Q.group);
   beam.rotation.x = -1.0;
   beam.userData.noBatch = true;
-  beam.userData.noAudit = true;
+  beam.userData.noAudit = true;   /* a shaft of light, not a thing */
+  /* the board comes away from the hole and is leaned on the wall below; the daylight falls in through the loophole */
+  beam.material.opacity = 0;
   Q.reveal.loophole = (seen) => {
-    board.position.set(seen ? -0.5 : -1.2, seen ? 0.26 : 1.6, seen ? 3.36 : 3.39);
-    board.rotation.z = seen ? 0.3 : 0;
-    beam.visible = seen;
+    const k = K(seen),
+      off = span(k, 0.05, 0.35),
+      down = span(k, 0.3, 0.75);
+    board.position.set(mix(-1.2, -0.5, down), mix(1.6, 0.26, down), mix(3.39, 3.36, down) - off * 0.14 * (1 - down));
+    board.rotation.z = 0.3 * down;
+    beam.visible = k > 0.3;
+    beam.material.opacity = 0.16 * span(k, 0.3, 0.8);
   };
   /* the two doors, shut: the front one beside the front tower, the east one to the yard (Cundall) */
   add(Q, W.makeDoor({ w: 1.1, h: 2.1, kind: "plank", color: 0x3b2a1e, frame: 0x5a5347, handle: "ring" }), 2.6, 3.44, 0, Math.PI);
@@ -545,7 +594,7 @@ function hall() {
   fl.scale.set(0.5, 0.5, 1);
   fl.position.set(3.75, 0.5, 1.95);
   fl.userData.noBatch = true;
-  fl.userData.noAudit = true;
+  fl.userData.noAudit = true;   /* a flame sprite */
   Q.group.add(fl);
   Q.tickers.push((t) => fl.scale.set(0.46 + Math.sin(t * 9) * 0.05, 0.5 + Math.sin(t * 13) * 0.08, 1));
   /* the foot of the spiral steps in the back tower, across the north-west corner */
@@ -569,9 +618,21 @@ function hall() {
   watches.traverse((o) => (o.userData.noBatch = true));
   watches.visible = false;
   Q.group.add(watches);
+  /* the lid swings up; the watches catch the candle light one after another */
+  const glints = [];
+  for (const [x, z] of [[-0.18, -0.06], [0.05, 0.08], [0.2, -0.1], [-0.05, 0.12], [0.14, 0.02]]) {
+    const g = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xfff0c0, opacity: 0 }));
+    g.scale.setScalar(0.07);
+    g.position.set(x, 0.05, z);
+    g.userData.noAudit = true;   /* a glint of light */
+    watches.add(g);
+    glints.push(g);
+  }
   Q.reveal.watches = (seen) => {
-    box1.userData.open(seen ? 1 : 0);
-    watches.visible = seen;
+    const k = K(seen);
+    box1.userData.open(span(k, 0.05, 0.5));
+    watches.visible = k > 0.15;
+    glints.forEach((g, i) => (g.material.opacity = k < 1 ? Math.max(0, Math.sin((k - 0.45 - i * 0.09) * Math.PI * 4)) * 0.9 : 0));
   };
   for (const [x, z, ry] of [[-1.4, -2.45, 0], [0.2, -2.45, 0.2]]) add(Q, W.chair(), x, z, 0, ry);
   wall(Q, -0.6, -2.45, 2.4, 0.5);
@@ -581,9 +642,11 @@ function hall() {
   const sheet = box(0.06, 1.7, 4.6, W.WM.linen, -5.08, 1.05, 1.0, Q.group);
   sheet.userData.noBatch = true;
   box(0.05, 0.05, 4.8, W.WM.woodDark, -5.1, 1.93, 1.0, Q.group);
+  /* the cloth is drawn along its rail, and the coats come into view one by one */
   Q.reveal.coats = (seen) => {
-    sheet.scale.z = seen ? 0.1 : 1;
-    sheet.position.z = seen ? 3.05 : 1.0;
+    const u = span(K(seen), 0.05, 0.9);
+    sheet.scale.z = mix(1, 0.1, u);
+    sheet.position.z = mix(1.0, 3.05, u);
   };
   /* the east wall: a rack of long guns. The north wall: the cot where a sick man lay, a shelf. */
   const rack = grp();
@@ -600,10 +663,11 @@ function hall() {
   const cup = cyl(0.04, 0.035, 0.08, solid(0x9a9a94, 0.4, 0.6), 4.3, 0.04, -2.7, Q.group, 8);
   cup.rotation.z = Math.PI / 2;
   cup.userData.noBatch = true;
-  cup.userData.noAudit = true;
+  /* the tin cup is picked up off the floor and set back on the cot, where a sick man could reach it */
   Q.reveal.cot = (seen) => {
-    cup.position.set(seen ? 3.5 : 4.3, seen ? 0.57 : 0.04, seen ? -2.75 : -2.7);
-    cup.rotation.z = seen ? 0 : Math.PI / 2;
+    const u = span(K(seen), 0.1, 0.85);
+    cup.position.set(mix(4.3, 3.5, u), mix(0.04, 0.57, u) + Math.sin(u * Math.PI) * 0.3, mix(-2.7, -2.75, u));
+    cup.rotation.z = mix(Math.PI / 2, 0, span(u, 0, 0.5));
   };
   add(Q, S.shelf(1.7), -1.0, -3.44, 1.75);
   /* by the south wall: a trunk of folded clothes, a barrel, sacks */
@@ -615,8 +679,6 @@ function hall() {
   /* a lantern hung from a beam */
   const lan = P.lantern();
   lan.position.set(1.0, 2.2, 0.4);
-  lan.userData.noAudit = true;
-  lan.traverse((o) => (o.userData.noAudit = true));
   Q.group.add(lan);
   cyl(0.006, 0.006, 0.34, W.WM.iron, 1.0, 2.72, 0.4, Q.group, 4);
   /* people: the captain at the table, his men at work; Juba and Cudjoe wait by the door; Hector stands apart */
@@ -654,13 +716,11 @@ function hole() {
     const top = ring.userData.top(a),
       tr = tree(5 + (i % 4), 80 + i, i % 2);
     tr.position.set(Math.cos(a) * 22.5, top[1] - 0.6, 2 + Math.sin(a) * 22.5);
-    tr.traverse((o) => (o.userData.noAudit = true));
     Q.group.add(tr);
     if (i % 2) {
       /* vines and roots hanging down the rock */
       const v = box(0.1, 3 + (i % 3), 0.06, flat(0x3e5a34), Math.cos(a) * 18.2, top[1] - 2.6, 2 + Math.sin(a) * 18.2, Q.group);
       v.rotation.y = -a;
-      v.userData.noAudit = true;
     }
   }
   for (const [x, z, r, h, s] of [[-40, -30, 26, 22, 1], [34, -36, 30, 26, 2], [0, -60, 40, 30, 3], [-50, 30, 30, 24, 4], [48, 20, 28, 22, 5], [10, 60, 36, 24, 6]]) add(Q, S.cockpitHill(r * 0.8, h, 20 + s, { tone: [0.26, 0.37, 0.21] }), x, z, -0.6);
@@ -687,7 +747,6 @@ function hole() {
   line.rotation.set(0, 0, 0);
   line.lookAt(1.5, 0.25, -4.7);
   line.rotateX(Math.PI / 2);
-  line.userData.noAudit = true;
   const drop = grp(Q.group, 1.4, 0, -5.0);
   const dl = P.lantern();
   dl.position.y = -0.4;
@@ -698,10 +757,7 @@ function hole() {
   const rope2 = cyl(0.012, 0.012, 1, W.WM.rope, 0, 0, 0, drop, 5);
   drop.traverse((o) => {
     o.userData.noBatch = true;
-    o.userData.noAudit = true;
   });
-  let lower = 0,
-    lowering = false;
   const setDrop = (k) => {
     const y = -0.2 - k * 34;
     dl.position.y = y - 0.3;
@@ -712,16 +768,11 @@ function hole() {
     rope2.position.y = y / 2;
   };
   setDrop(0);
+  /* the lantern goes down the shaft on its rope, hand over hand, until it is a small point of light; then the rope runs out */
   Q.reveal.rope = (seen) => {
-    if (seen && !lowering) lower = 0;
-    lowering = seen;
-    if (!seen) setDrop(0);
+    const k = K(seen);
+    setDrop(k * k * (3 - 2 * k));
   };
-  Q.tickers.push((t, dt) => {
-    if (!lowering || lower >= 1) return;
-    lower = Math.min(1, lower + dt / 9);
-    setDrop(lower * lower * (3 - 2 * lower));
-  });
   /* loose stones by the path: one to drop */
   solid1(Q, W.rocks(0.5, 31, 4), 5.2, 8.6, 0.9, 0.8);
   point(Q, "edge", 0, -3.0, "the edge");
@@ -809,23 +860,21 @@ function town() {
   for (let i = 0; i < 6; i++) box(0.6 - (i % 3) * 0.08, 0.012, 0.002, solid(0x4a4034, 1), -0.04 * (i % 3), 0.02 - i * 0.08, 0.034, board);
   board.traverse((o) => (o.userData.noBatch = true));
   add(Q, board, 2.333, -4.92, 1.6);
-  const seal = cyl(0.05, 0.05, 0.012, solid(0x9a1f1a, 0.5), 2.333 + 0.24, 1.14, -4.88, Q.group, 10);
-  seal.rotation.x = Math.PI / 2;
-  seal.userData.noBatch = true;
-  seal.visible = false;
-  Q.reveal.notice = (seen) => (seal.visible = seen);   /* the clerk's seal goes on once it has been read out */
   /* the long gallery over the arcade: its jalousies stand shut until you listen under them */
   const jal = [],
     jx = [-4.667, 0, 4.667];
   for (const x of jx) {
     const j = box(1.2, 2.3, 0.05, S.SM.green, x, 6.35, -5.4 - 2.5, Q.group);
     j.userData.noBatch = true;
+    j.userData.fixed = true;   /* hung on the gallery front */
     jal.push(j);
   }
+  /* the jalousies fold back one after another along the gallery, and the voices come down */
   Q.reveal.gallery = (seen) =>
     jal.forEach((j, i) => {
-      j.scale.x = seen ? 0.16 : 1;
-      j.position.x = jx[i] + (seen ? 0.52 : 0);
+      const u = span(K(seen), 0.1 + i * 0.22, 0.45 + i * 0.22);
+      j.scale.x = mix(1, 0.16, u);
+      j.position.x = jx[i] + 0.52 * u;
     });
   /* the railed green in the middle of the square: on Long's plate one long straight rail on square white piers between the two buildings, so
      a rectangle (it was drawn as an octagon until 22 November 2026, which no source supports). It sits inside the octagon's old outline, so
@@ -892,7 +941,6 @@ function town() {
   cyl(0.015, 0.015, 0.9, W.WM.dark, 0.5, 4.7, 0, gal, 5);
   gal.traverse((o) => {
     o.userData.noBatch = true;
-    o.userData.noAudit = true;
   });
   gal.visible = false;
   add(Q, gal, 56, 9, 0, -1.3);
