@@ -644,7 +644,7 @@ function quiz(list, round, done, title = 'Quiz') {   /* engine/quiz.js: a wrong 
 function kitQuiz(round) {
   quiz(KIT, round, () => { unlock('kit'); card('A good kit', ['You packed well: water, food that keeps, a torch, a radio, a charged phone, medicine and papers in a bag.', 'A kit is small, but it helps a lot.'], [{ t: 'Next', go: () => { hideCard(); quiz(STORMS, 0, () => { unlock('storms'); card('Jamaica\'s storms', ['Hurricanes are not new to Jamaica. They come, and people get ready and rebuild.', 'Read about the earlier storms in your Journal.'], [{ t: 'Done', go: () => { hideCard(); setStage(73); } }], { col: true }); }); } }], { col: true }); });
 }
-ON[74] = () => { unlock('journey'); setTimeout(() => card('The end', LINES.end, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); };
+ON[74] = () => { unlock('journey'); setTimeout(() => card('The End', LINES.end, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); };
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
@@ -931,5 +931,5 @@ function devViews() {
   }
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
-addRecap({ items: [{ icon: '\uD83C\uDF00', label: 'What is a hurricane?', page: 'hurricanes' }, { icon: '\uD83C\uDF92', label: 'Getting ready', page: 'ready' }, { icon: '\uD83E\uDD1D', label: 'Neighbours', page: 'neighbours' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The end', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
+addRecap({ items: [{ icon: '\uD83C\uDF00', label: 'What is a hurricane?', page: 'hurricanes', img: 'recap/hurricanes.jpg' }, { icon: '\uD83C\uDF92', label: 'Getting ready', page: 'ready', img: 'recap/ready.jpg' }, { icon: '\uD83E\uDD1D', label: 'Neighbours', page: 'neighbours', img: 'recap/neighbours.jpg' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The End', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

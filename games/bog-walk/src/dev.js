@@ -279,7 +279,7 @@ export function dev(D) {
       if (one && D.doneCh[first] && first !== 2) { log('chapter ' + first + ' done'); break; }
       if (!$('card').hidden) {   /* cards: at the end of a chapter, follow the plan; otherwise the first button */
         const t = $('ctitle').textContent, btns = [...$('cbtns').querySelectorAll('button')];
-        if (t === 'The end' || (t === 'You are out' && stopAt === 3)) { log('the last card: "' + t + '"'); break; }
+        if (t === 'The End' || (t === 'You are out' && stopAt === 3)) { log('the last card: "' + t + '"'); break; }
         if (t === 'Chapter 1 is finished') { btns[plan.includes(1) ? 1 : 0].click(); continue; }
         btns[0].click(); continue;
       }

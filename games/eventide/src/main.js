@@ -521,7 +521,7 @@ const ACTIONS = {
     { label: 'Lay a flower', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 72, go: () => { const k = ctr.flower || 0; P.laid[k].visible = true; ctr.flower = k + 1; uiSound('goal'); say(k ? 'A flower for Miss Dora, who sang.' : 'A flower for Miss Iris, the dressmaker.'); refreshGoal(true); if (ctr.flower >= 2) setStage(73); } },
     { label: 'Read the words', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 73, go: () => card('The plaque says', [PLAQUE.slice(0, 4).join(' '), PLAQUE.slice(4).join(' ')], [{ t: 'Close', go: () => { hideCard(); setStage(74); } }]) }],
 };
-ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 75) { cue('end'); card('The end', ['For years the Eventide fire was a line at the bottom of the page.', 'You have read past it. The women of Eventide were people, each with a name and a life.', 'Your journal has a page about your journey.'], [{ t: 'Open my journal', go: () => { hideCard(); openJournal('journey'); } }], { col: true }); } }, 1800); };
+ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 75) { cue('end'); card('The End', ['For years the Eventide fire was a line at the bottom of the page.', 'You have read past it. The women of Eventide were people, each with a name and a life.', 'Your journal has a page about your journey.'], [{ t: 'Open my journal', go: () => { hideCard(); openJournal('journey'); } }], { col: true }); } }, 1800); };
 
 /* ---------- chapter 4: the night. Seen from behind the rope, with slow camera moves for the big moments. Nothing you do changes what happened. ---------- */
 let SIREN = 0;
@@ -885,5 +885,5 @@ function devViews() {
   }
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
-addRecap({ items: [{ icon: '\uD83C\uDFE0', label: 'The Eventide Home', page: 'home' }, { icon: '\uD83E\uDD1D', label: 'The helpers', page: 'helpers' }, { icon: '\uD83D\uDD6F\uFE0F', label: 'The monument', page: 'remember' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The end', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
+addRecap({ items: [{ icon: '\uD83C\uDFE0', label: 'The Eventide Home', page: 'home', img: 'recap/home.jpg' }, { icon: '\uD83E\uDD1D', label: 'The helpers', page: 'helpers', img: 'recap/helpers.jpg' }, { icon: '\uD83D\uDD6F\uFE0F', label: 'The monument', page: 'remember', img: 'recap/remember.jpg' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The End', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */
