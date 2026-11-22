@@ -855,7 +855,7 @@ function hint(now) {
   const quiet = S.started && !busy && !openPanel() && !DIR.on,
     h = story.tick(now, quiet);
   $("nudge").hidden = true;
-  if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: () => 0 });
+  if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: () => 0, eye: () => GAME.eye });   /* the arrow is laid out for this game's eye height */
   /* a gold arrow on the ground points the way, a gold ring marks the place */
   if (h.show && quiet) GUIDE.point(now, { x: h.x, z: h.z, tx: h.target[0], tz: h.target[1], final: h.final });
   else GUIDE.hide(now);
