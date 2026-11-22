@@ -193,3 +193,15 @@ The owner: the far ends of the hill station looked rough, like the end of the wo
 ## Sound (22 November 2026)
 
 The ambient scale was 0.4, so the road, the ride and the memorial sat at 0.02 to 0.03. It is 0.6 now (`AMB` in `src/main.js`), with a little more wind on the road, the ride and at the memorial; Kingston 1957 has far traffic. Peaks (`?test=beds`, BEDS 0): road 0.05, Bog Walk station 0.10, the ride 0.05 (plus the wheels' rumble), the hill 0.07, Kingston 0.12, the coach 0.06, the beach 0.14, the crash site 0.07 (crickets), the memorial 0.05. Every bed is lower while someone talks. The crickets are the engine's bed now (its copy in `sfx.js` is gone). `cue('sad')` plays over the black after the crash, with the caption "Sunday night, 1 September 1957"; `cue('end')` on The End card. Picking up a banana bunch makes the engine's heavy pick-up sound (it was a footstep). The shared level is in `docs/ENGINE.md`, "One ambient level".
+
+## Close looks (22 November 2026)
+
+Every look is now a close-up moment (owner rule 13, `engine/lookshot.js` through `engine/lookkit.js`): input held, bars in, the camera eases to the thing, it moves with its own sound, one or two short lines, then the card if one is still needed, and the camera eases back.
+- **Look at the engine** (Bog Walk station, 1845): the driver opens the steam: the chimney puffs hard (the smoke rate goes up five times), with a hiss, chuffs and the whistle. The card keeps how steam works and the speed; "built in Manchester in 1844" is now a line.
+- **Check the brake** (three, the hill station): each handle is pulled down over its ratchet quadrant and a white tag hung on it, with a clank of the ratchet; one line each, no card. Kept as three: they are along the train, and checking each before the descent is the job. The handles on the tender and the carriage had been built 84 m down the line (a stale parent matrix when the train starts out at x = 90): fixed in `places1.js`; the handles now hang on a toothed quadrant, so the audit sees what holds them.
+- **Look out of the window** (two, the coach): you let the glazed sash down into the wall (new sashes in `places2.js`) and look out as the line runs by; a station bell and a dog for the first, the wheels for the second.
+- **Listen to the band** (the beach): the camera frames the mento band playing (guitar, banjo, rumba box), with a plucked phrase; you sit down on the sand after.
+- **Read the storyboard** (the memorial): each line of the board darkens in turn under a gold glow as you read it; the card keeps only "Close to 200 people died."
+- **Read the monument**: you brush the dry leaves off the step at the plaque's foot (they land on the paving), and a church bell rings once; the card keeps the 177 names and that the words are our own.
+- Checks: `?test=audit` 0 in every place, now with `engine/audit-reveal.js` on every look's moving parts (the brake handles with the train at the platform). Screenshots of each look half way, at 390x800 and 667x375.
+Dev: `?look=<id>&at=<chapter>,<stage>&k=0.5` holds a look part way for a screenshot (docs/ENGINE.md, engine/lookkit.js).
