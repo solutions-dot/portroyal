@@ -222,3 +222,17 @@ Later the same day the owner rejected that ("this cannot be your finished model"
 ## Sound (22 November 2026)
 
 The game had no ambient sound in play (only footsteps, the interface and the arrival's own engine and crowd). Each place now has a bed and small sounds (`SOUNDSCAPE` in `src/main.js`, on the engine's `mixBeds`): the yard (wind, people, far traffic; birds, a dog, a radio down the road, a car) 0.07; the 1930 memory (wind, people; birds, a dog) 0.07; downtown (crowd 0.20, traffic 0.13; cars, horns, a radio from the record shop) 0.20; the Parade bus park (crowd 0.22, traffic 0.15) 0.22; the Palisadoes road (the harbour 0.16, surf, wind, the walking crowd; gulls, a car) 0.16; the airport (the waiting crowd 0.24, the wind off the sea; an aeroplane far off, gulls) 0.24; the lane at dusk (crickets 0.08, neighbours, a frog, a dog, the shop's radio) 0.08. The radios play a few muffled notes, never words. Every bed is lower while someone talks and during the arrival cinematic (which keeps its own engine and crowd sound); the cinematic's Pause stops them all. `cue('begin')` plays when a new story starts. Picking up and putting down make the engine's soft sounds (`createCarry`). `?test=beds`: BEDS 0. The shared level is in `docs/ENGINE.md`, "One ambient level".
+
+## Looks are close-ups, and less busy work (22 November 2026, owner rules 13 and 14)
+
+Every look is now a close-up through `engine/lookshot.js` (`LOOKSHOTS` in `src/main.js`, sounds from `engine/look-sounds.js`): the bars come in, the camera eases to the thing, it moves with a sound and a short line, and the camera eases back.
+
+| Step | What you see happen |
+|---|---|
+| 12, Open the tin | the lid lifts on its hinge to stand upright; inside, Grandma's small picture lies on the floor of the tin (the tin is now hollow: thin walls, a rim, a hinge) |
+| 35, Look out over the harbour | the camera looks across the harbour to Kingston under the mountains while a fishing canoe under a small sail crosses (the canoe is the game's picture) |
+| 45, Look toward the runway | a windsock on its mast west of the taxiway, limp after the rain, lifts in the breeze ("it rained about an hour before the descent", the Gleaner's 1966 report, above). The windsock is a general airport fitting, not from a photograph of Palisadoes |
+
+Steps 35 and 45 were "walk to a spot" goals that finished with nothing to see; they are now looks. **Cut (rule 14):** step 32, "Give the tickets to Mum": Mum takes them as you buy them (step 31), so the hand-over walk is gone. A save made at step 32 carries on from 33.
+
+`engine/audit-reveal.js` is now part of `?test=audit`. Checks: `?auto=1` AUTO END 64, FLOW 0, no page errors; `?test=audit` 0 in all seven places (with the reveal check); `?test=layout` LAYOUT UI 0 at 390x800 and 667x375; the three looks screenshot mid-action at 1280x720 and 390x800.

@@ -1,6 +1,7 @@
 /* Development-only checks use the real scene and gameplay handlers. */
 import { Color } from "three";
 import { checkAll, CHECKS } from "../../../engine/checks.js";
+import { auditReveals } from "../../../engine/audit-reveal.js";
 import { headCheck } from "./headcheck.js";
 import { actionCheck } from "./actioncheck.js";
 import { checkFlow, needList } from "../../../engine/story.js";
@@ -110,6 +111,18 @@ export async function dev(A) {
             : 20,
     );
     closeAll();
+    if (shot === "look") {
+      /* ?shot=look&st=<step>&key=<look>&at=<seconds>: a look moment (engine/lookshot.js) held at that moment; &hud keeps the bars and the line */
+      const key = q.get("key");
+      S.view = null;
+      S.lookShot = true;
+      A.lookMoment(key);
+      for (let i = 0, n = Number(q.get("at") || 2) * 30; i < n; i++) A.LS.tick(1 / 30);
+      A.LS.paused = true;
+      if (!q.has("hud")) $("hud").hidden = true;
+      window.__SHOT = true;
+      return;
+    }
     if (shot === "at") {
       // a place as the player sees it: ?shot=at&st=20&x=0&z=10&yaw=0&pitch=0 (&hud keeps the interface; &t= seconds of life first)
       const n = (k, d) => (q.has(k) ? Number(q.get(k)) : d);
@@ -368,7 +381,7 @@ export async function dev(A) {
       const twins = faceCheck(
         [...Q.people, ...Q.extras].filter((n) => n.m && !n.historical).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, story: Q.people.includes(n), uniform: /police/.test(n.base) && "police", ...(n.colors ? { cols: [n.colors.shirt, n.colors.legs] } : {}) })),
       );
-      const errors = [...r.floating, ...r.inside, ...r.stuck, ...crowdClothingIssues(Q.extras)];
+      const errors = [...r.floating, ...r.inside, ...r.stuck, ...crowdClothingIssues(Q.extras), ...auditReveals(Q, { groundAt: Q.groundAt })];   /* what a look moves, in both states (engine/audit-reveal.js) */
       results.push(`AUDIT ${Q.id} ${errors.length}`, ...errors, `FACES ${Q.id} ${twins.length}`, ...twins.slice(0, 40));
     }
   if (["held", "cloth", "walkers", "skin"].includes(q.get("test"))) {

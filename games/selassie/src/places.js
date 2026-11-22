@@ -43,6 +43,7 @@ function base(id, bounds, start) {
     props: {},
     routes: [],
     ground: () => 0,
+    reveal: {},   /* a look moment's change, k from 0 to 1 (engine/lookshot.js) */
     light: palette[id],
     ready: false,
   };
@@ -141,6 +142,12 @@ function yard() {
   person(Q, "boy", -8, 9, 0.3);
   action(Q, "tin", -6, 0, "Pick up the tin", "tin");
   action(Q, "openTin", -5, 0, "Open the tin");
+  /* the lid lifts slowly on its hinge, and the picture inside comes into the light */
+  Q.reveal.openTin = (k) => {
+    const t = Q.items.tin,
+      u = Math.max(0, Math.min(1, (+k - 0.05) / 0.6));
+    if (t) t.userData.lid.rotation.x = -1.6 * u * u * (3 - 2 * u);   /* just past upright, resting on its hinge */
+  };
   for (let i = 0; i < 8; i++) {
     const x = i % 2 ? -7 : 12,
       z = 2 + i * 1.8;
@@ -327,6 +334,29 @@ function airport() {
   action(Q, "airportWater", -2, 20.3, "Pick up the water", "bottle");
   action(Q, "share", 2, 17.5, "Share some water");
   action(Q, "horizon", -3, 8, "Look toward the runway");
+  /* a windsock on its mast beyond the apron, toward the runway: limp after the rain, then lifting as the breeze comes */
+  const sockMast = grp(Q.group, 5, 0, -60);   /* west of the taxiway, clear of the aircraft's wing as it comes in */
+  sockMast.scale.setScalar(1.5);
+  cyl(0.07, 0.1, 6.5, solid(0xe8e4d8, 0.6), 0, 3.25, 0, sockMast, 8);
+  const sockPivot = grp(sockMast, 0, 6.2, 0);
+  const sockMat = new THREE.MeshStandardMaterial({ color: 0xe8742a, roughness: 0.8, side: THREE.DoubleSide }),
+    whiteMat = new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: 0.8, side: THREE.DoubleSide });
+  mesh(new THREE.TorusGeometry(0.32, 0.03, 5, 14), solid(0x7a7a72, 0.5, 0.5), 0, 0, 0.4, sockPivot).rotation.y = Math.PI / 2;
+  box(0.05, 0.05, 0.4, solid(0x7a7a72, 0.5, 0.5), 0, 0, 0.2, sockPivot);   /* the swivel arm from the mast to the ring */
+  for (let i = 0; i < 4; i++) {
+    const r0 = 0.32 - i * 0.05,
+      seg = mesh(new THREE.CylinderGeometry(r0 - 0.05, r0, 0.62, 12, 1, true), i % 2 ? whiteMat : sockMat, 0, 0, 0.71 + i * 0.62, sockPivot);
+    seg.rotation.x = Math.PI / 2;
+  }
+  sockPivot.traverse((o) => {
+    o.userData.noBatch = true;
+    o.userData.fixed = true;   /* held on its mast */
+  });
+  sockMast.rotation.y = -Math.PI / 2;   /* the breeze off the sea blows it west, side on to the crowd */
+  Q.reveal.horizon = (k) => {
+    const u = Math.max(0, Math.min(1, +k / 0.8));
+    sockPivot.rotation.x = 1.25 * (1 - u * u * (3 - 2 * u)) + (k > 0 && k < 1 ? Math.sin(+k * 30) * 0.04 : 0);
+  };
   let i = 0;
   for (let row = 0; row < 7; row++)
     for (let col = 0; col < 16; col++) {

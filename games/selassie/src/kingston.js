@@ -352,18 +352,13 @@ export function parade(K) {
   K.person(Q, "levi", 0.6, 4.1, -0.5);
   K.action(Q, "busStop", 5.4, 5.6, "The bus bay");
   K.action(Q, "buyTicket", 8.6, 4.7, "Buy the tickets", "ticket");
-  K.action(Q, "giveTicket", 6.0, 5.3, "Give Mum the tickets");
   K.action(Q, "bus", 8.1, 6.7, "Climb on the bus");
   Q.lead = { stage: 30, path: [[0.4, 16.6], [-2.0, 14.0], [-2.0, 6.0], [5.4, 5.5]] };
   Q.leadPath = Q.lead.path;
-  Q.carryTo = ["giveTicket"];
-  Q.where = (id, S) => (id === "giveTicket" ? [6.0, 5.3] : null);
   Q.act = {
+    /* the tickets go straight to Mum, who keeps them on the hamper ("Give the tickets to Mum" was cut as busy work, owner rule 14) */
     buyTicket(api) {
       api.hold("ticket");
-      api.notice("Give the tickets to Mum.");
-    },
-    giveTicket(api) {
       api.place([6.5, 0.36, 4.35]);
       api.notice("Mum puts the tickets on the hamper.");
     },
@@ -374,7 +369,7 @@ export function parade(K) {
   Q.show = (api) => {
     const { S } = api,
       o = Q.items.ticket;
-    if (S.stage > 32 && S.hand !== "ticket") {
+    if (S.stage > 31 && S.hand !== "ticket") {
       if (o.parent !== Q.group) Q.group.add(o);
       o.position.set(6.5, 0.36, 4.35);
       o.visible = true;
@@ -489,6 +484,24 @@ export function road(K) {
   K.person(Q, "levi", -3.9, -8.5, 0.6);
   K.action(Q, "roadWater", -4.6, 13.9, "Pick up the water", "bottle");
   K.action(Q, "lookout", -4.7, -14.5, "Look over the harbour");
+  /* a fishing canoe under a small sail, crossing the harbour while you look (the harbour had its fishing canoes; this one is the game's) */
+  const canoe = grp(Q.group, -26, 0, -12);
+  const hull = mesh(new THREE.CapsuleGeometry(0.42, 4.2, 4, 10), solid(0x6a4a32, 0.9), 0, -0.05, 0, canoe);
+  hull.rotation.x = Math.PI / 2;
+  hull.scale.set(1, 0.55, 1);
+  cyl(0.04, 0.05, 3.6, solid(0x8a6a4a, 0.9), 0, 1.7, -0.6, canoe, 6);
+  const sail = new THREE.BufferGeometry();
+  sail.setAttribute("position", new THREE.Float32BufferAttribute([0, 0.4, -0.6, 0, 3.4, -0.6, 0, 0.4, 1.6], 3));
+  sail.computeVertexNormals();
+  canoe.add(new THREE.Mesh(sail, new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.9, side: THREE.DoubleSide })));
+  canoe.traverse((o) => (o.userData.noBatch = true));
+  canoe.rotation.y = -2.3;
+  Q.reveal = Q.reveal || {};
+  Q.reveal.lookout = (k) => {
+    const u = Math.max(0, Math.min(1, +k));
+    canoe.position.set(-26 - 16 * u, -0.05 + Math.sin(u * 20) * 0.03, -12 - 14 * u);
+    canoe.rotation.z = Math.sin(u * 14) * 0.04;
+  };
   K.action(Q, "roadEnd", -0.6, -38, "On to the airport");
   Q.carryTo = ["roadWater"];
   Q.where = (id, S) => (id === "roadWater" && S.hand === "bottle" ? [-4.0, 3.6] : null);
