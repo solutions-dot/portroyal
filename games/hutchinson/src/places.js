@@ -736,7 +736,7 @@ function hole() {
 
 /* ---------- 5. Spanish Town, the capital, March 1773: the square as Bonnor drew it for Edward Long (1774) ---------- */
 /* The square is laid out after Long (1774) and the plate in his history: King's House fills the west side, the public building with the
-   Assembly chamber and, upstairs, the court house and jury room fills the east side facing it, the railed octagon stands between them, the old
+   Assembly chamber and, upstairs, the court house and jury room fills the east side facing it, the railed green stands between them, the old
    court-house with a tavern, a lodging-house and a barber's shop make the north side, and the chapel and the guard-house are on the south side
    near King's House. It is built below in its own frame, with the court building along the top of the picture, and then turned a quarter so
    that the court stands on the east (north is -z in this game): TURN() moves every spot, wall and walk into the place's frame. */
@@ -827,9 +827,11 @@ function town() {
       j.scale.x = seen ? 0.16 : 1;
       j.position.x = jx[i] + (seen ? 0.52 : 0);
     });
-  /* the railed octagon in the middle of the square: on Long's plate a long rail on square white piers; the square itself has no trees */
-  add(Q, S.octagon(7), 0, 9.6);
-  Q.walls.push([-6.7, 9.6 - 2.8, 6.7, 9.6 + 2.8], [-2.8, 9.6 - 6.7, 2.8, 9.6 + 6.7], [-4.7, 9.6 - 4.7, 4.7, 9.6 + 4.7]);
+  /* the railed green in the middle of the square: on Long's plate one long straight rail on square white piers between the two buildings, so
+     a rectangle (it was drawn as an octagon until 22 November 2026, which no source supports). It sits inside the octagon's old outline, so
+     no walk or spot moved. The square itself has no trees */
+  add(Q, S.railedGreen(9.2, 13.6), 0, 9.6);
+  Q.walls.push([-4.8, 9.6 - 7, 4.8, 9.6 + 7]);
   /* King's House fills the west side (the bottom of this frame): a long brick front, its portico of twelve columns facing the court */
   add(Q, S.kingsHouse(54), 0, 33, 0, Math.PI);
   wall(Q, 0, 38, 54.6, 10.6);

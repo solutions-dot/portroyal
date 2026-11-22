@@ -1256,33 +1256,34 @@ export function kingsHouse(L = 46) {
 }
 /* the railed enclosure in the middle of the square: eight sides, a low stone kerb, a rail on posts. What stood inside it in 1773 is not
    known to us, so it holds only grass. R: the distance from the centre to a corner. */
-export function octagon(R = 5.2) {
+/* the railed green in the middle of the square, after the 1774 plate in Long's history (T. Bonnor, sculp.): one long straight side
+   with about ten square white piers, a low kerb and a rail between them, running the length of the gap between King's House and the
+   public building. No source found says it was an octagon, so it is a rectangle, W wide and L long (L along z, between the buildings). */
+export function railedGreen(W = 9.2, L = 13.6) {
   const g = grp(),
     kerb = std(T.stone([190, 184, 168], [3, 1]), 1),
     rail = solid(0x2c2e30, 0.6, 0.3);
-  const gr = mesh(new THREE.CircleGeometry(R * 0.99, 8), std(T.grass([4, 4], [112, 128, 76])), 0, 0.03, 0, g);
+  const gr = mesh(new THREE.PlaneGeometry(W - 0.3, L - 0.3), std(T.grass([4, 6], [112, 128, 76])), 0, 0.03, 0, g);
   gr.rotation.x = -Math.PI / 2;
-  gr.rotation.z = Math.PI / 8;
   gr.name = "terrain";
-  for (let i = 0; i < 8; i++) {
-    const a0 = (i / 8) * Math.PI * 2 + Math.PI / 8,
-      a1 = ((i + 1) / 8) * Math.PI * 2 + Math.PI / 8,
-      x0 = Math.cos(a0) * R,
-      z0 = Math.sin(a0) * R,
-      x1 = Math.cos(a1) * R,
-      z1 = Math.sin(a1) * R,
-      len = Math.hypot(x1 - x0, z1 - z0),
-      seg = grp(g, (x0 + x1) / 2, 0, (z0 + z1) / 2);
-    seg.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
-    box(len + 0.3, 0.36, 0.34, kerb, 0, 0.18, 0, seg);
+  const side = (len, x, z, ry) => {
+    const seg = grp(g, x, 0, z);
+    seg.rotation.y = ry;
+    box(len + 0.34, 0.36, 0.34, kerb, 0, 0.18, 0, seg);
     for (const y of [0.62, 1.22]) box(len, 0.045, 0.045, rail, 0, y, 0, seg);
-    for (let k = 0; k <= 8; k++) box(0.03, 0.9, 0.03, rail, -len / 2 + (k * len) / 8, 0.8, 0, seg);
-    /* square white piers at the corners and halfway along, as on Long's plate */
-    for (const px of [-len / 2, 0]) {
+    const bays = Math.max(2, Math.round(len / 1.55));
+    for (let k = 0; k < bays; k++) for (let j = 1; j < 6; j++) box(0.03, 0.9, 0.03, rail, -len / 2 + ((k + j / 6) * len) / bays, 0.8, 0, seg);
+    /* square white piers, evenly spaced: about ten along each long side, as on the plate */
+    for (let k = 0; k <= bays; k++) {
+      const px = -len / 2 + (k * len) / bays;
       box(0.42, 1.5, 0.42, M.white, px, 0.75, 0, seg);
       box(0.54, 0.12, 0.54, M.white, px, 1.56, 0, seg);
     }
-  }
+  };
+  side(L, -W / 2, 0, Math.PI / 2);
+  side(L, W / 2, 0, Math.PI / 2);
+  side(W, 0, -L / 2, 0);
+  side(W, 0, L / 2, 0);
   return g;
 }
 /* a town house of the 1770s: two storeys, plastered or brick, sash windows with jalousies, a shingled hip roof, sometimes a timber piazza
