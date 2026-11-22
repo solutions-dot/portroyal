@@ -62,6 +62,8 @@ You are fictional. Every person you talk to is fictional, and each journal page 
 
 The thread is a fictional elder. In chapters 1 and 2 she is a girl in Back-o-Wall and then in the new Tivoli. In chapter 3 she grows up and raises a family. In chapters 4 to 6 she is the grandmother of the child you play. In chapters 7 and 8 she looks back with you.
 
+- **Today looks cared for** (owner, 22 November 2026: "in modern tivoli today, dont make the buildings look so weathered, the residents may find that offensive"). Chapters 7 (2016) and 8 (today) use clean, well-kept paint on every block, with grown trees (and the murals today); no stains, damp or cracks (owner: "fix 2016 as well"; `old` in `src/newtivoli.js` is now 1980 to 2015 only). The 1980 and 2010 chapters keep their lived-in paint. Any later change to today's Tivoli must show it as a place people live in and look after.
+
 ## The dispute (what the game must tell, with attribution)
 
 Read this before writing any 2010 scene. Almost every part of the operation has more than one account. (Sources and caveats are in the Research table below.)

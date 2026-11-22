@@ -14,7 +14,8 @@ const M = (c, r = 0.9, m = 0) => new THREE.MeshStandardMaterial({ color: c, roug
 const W = (map, tile, r = 0.95, bright = 1.15) => { const m = new THREE.MeshStandardMaterial({ map, roughness: r }); m.color.setScalar(bright); m.userData.tile = tile; return m; };
 
 export function buildNewTivoli(opts = {}) {
-  const year = opts.year || 1965, old = year >= 1980;   /* the same courtyard in later chapters: about 1980 (chapter 3), 2010 (6), 2016 (7) and today (8): older paint, grown trees, murals today */
+  const year = opts.year || 1965, old = year >= 1980 && year < 2016;   /* the same courtyard in later chapters: about 1980 (chapter 3) and 2010 (6) with older paint; 2016 (7) and today (8) are cared-for paint, grown trees and murals today.
+     The walls of 2016 and today are never shown stained or cracked (owner, 22 November 2026: "in modern tivoli today, dont make the buildings look so weathered, the residents may find that offensive"; "fix 2016 as well") */
   const rnd = rngOf(19650101), g = new THREE.Group(), walls = [];
   const solids = [], SO = (kind, name, x0, x1, z0, z1, y0, y1) => solids.push({ kind, name, x0: Math.min(x0, x1), x1: Math.max(x0, x1), z0: Math.min(z0, z1), z1: Math.max(z0, z1), y0, y1 });
   const X = {
