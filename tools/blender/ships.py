@@ -143,7 +143,9 @@ def build(kind):
         for i in range(NS-1):
             t0,t1=i/(NS-1),(i+1)/(NS-1); a=Vector((X(t0),side*hb(t0)*g(1,t0),sheer(t0))); b=Vector((X(t1),side*hb(t1)*g(1,t1),sheer(t1)))
             if (b-a).length<1.6: spar('Rail',a,b,0.07,0.07,DARK,4)
-    box('Rudder',0.9,0.14,Dr+1.2,(-L/2-0.42,0,(-Dr+1.2)/2),HULL); spar('Stem',(X(0.9),0,keel(0.9)-0.05),(L/2+0.12,0,sheer(1)+0.55),0.16,0.12,DARK,4)
+    box('Rudder',0.9,0.14,Dr+1.2,(-L/2-0.42,0,(-Dr+1.2)/2),HULL); # the stem follows the hull's curved forefoot, then stands up the bow (one straight spar stood out below the hull as a loose blade)
+    sp=[Vector((X(t),0,keel(t)-0.06)) for t in (0.86,0.9,0.93,0.96,0.98,1.0)]+[Vector((L/2+0.06,0,keel(1)+0.5)),Vector((L/2+0.12,0,sheer(1)+0.55))]
+    for a,b in zip(sp,sp[1:]): spar('Stem',a,b,0.15,0.15,DARK,6)
     box('Keel',L*0.86,0.2,0.3,(-L*0.07,0,-Dr-0.1),HULL)
     def step(t,h):                                                 # bulkhead at a break in the deck
         box('Bulkhead',0.12,2*deckw(t),h,(X(t),0,deckz(t+0.03 if h<0 else t-0.03)+abs(h)/2),HULL,uvs=1.6)
@@ -179,9 +181,13 @@ def build(kind):
         y=side*(deckw(t)-0.75); z=deckz(t); box('Carriage',1.0,0.5,0.28,(X(t),y,z+0.22),RED,(0,0,math.radians(90)))
         spar('Gun',(X(t),y-side*0.55,z+0.45),(X(t),y+side*0.85,z+0.45),0.13,0.09,IRON,8)
     def anchor(t,side):
-        p=Vector((X(t),side*(hb(t)*g(1,t)+0.18),sheer(t)-0.7)); spar('AnchorShank',p,p+Vector((-1.9,0,-0.5)),0.05,0.05,IRON,5); box('AnchorStock',0.12,1.5,0.12,p+Vector((0,0,0.02)),SPAR)
-        e=p+Vector((-1.9,0,-0.5))
-        for s2 in (1,-1): spar('AnchorArm',e,e+Vector((0.45,0,s2*0.6)),0.05,0.03,IRON,5)
+        # hung from a cathead (a short beam out over the bow), shank down, the stock fore and aft at the top and the arms across at the crown,
+        # clear of the side. It was a 1.5 m stock straight across the ship, half of it through the hull.
+        y0=hb(t)*g(1,t); z0=sheer(t)+0.05
+        box('Cathead',0.22,1.15,0.22,(X(t),side*(y0+0.5),z0),SPAR)
+        p=Vector((X(t),side*(y0+0.95),z0-0.05)); e=p+Vector((0,0,-1.5))   # the crown hangs clear of the water; spar('AnchorShank',p,e,0.05,0.05,IRON,5)
+        rope(Vector((X(t),side*(y0+1.0),z0)),p,0.02); box('AnchorStock',1.5,0.12,0.12,p+Vector((0,0,-0.15)),SPAR)
+        for s2 in (1,-1): spar('AnchorArm',e,e+Vector((0,s2*0.6,0.45)),0.05,0.03,IRON,5)
     def flag(p,h=1.0,w=1.7,lean=0.0):
         bm=bmesh.new(); uv=bm.loops.layers.uv.verify(); cl=bm.loops.layers.color.new('Col'); n=8; vs=[]
         for i in range(n+1):
