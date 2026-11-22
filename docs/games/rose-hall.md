@@ -1,8 +1,8 @@
-# The White Witch of Rose Hall (`games/_rose-hall/`, not on the menu yet)
+# The White Witch of Rose Hall (`games/rose-hall/`)
 
-A Mature 13+ story (owner, 22 November 2026). Design: **the legend, then the record**. The player hears the ghost story as it is told, then follows the papers to what really happened. The folder starts with `_` until the game is ready; rename it to `games/rose-hall/` and add the menu card then (`data-year="1831"`, genres `mystery`, age 13, New).
+A Mature 13+ story (owner, 22 November 2026). Design: **the legend, then the record**. The player hears the ghost story as it is told, then follows the papers to what really happened. 
 
-Status, 22 November 2026: the frame is copied from `games/hutchinson/` and still holds Hutchinson's words and places. Nothing of Rose Hall is built yet. The facts below are from a research pass on 22 November 2026 (pages fetched that day).
+Status, 22 November 2026: a **basic version** is built and on the menu: four chapters in four places (the great hall at night, the church, the archives, the estate by day), six bodies of its own (`tools/rose-hall/people`, `rh_`), one camera scene (the legend as three shadows on the wall, every caption starting LEGEND). `?auto=1` plays to the last step, `FLOW 0`, place audit 0 in all four places, layout and ambient setup 0. Not yet done: the six chapters planned below (it has four), cloth, walkers, skin, held and four-size layout checks, a hand play on a phone, timing, sound, and modelling the great hall, the monument and the house on their sources (they are general pictures now; Hakewill's plate and the monument photograph are listed under Sources). The facts are from a research pass on 22 November 2026.
 
 ## The rule for this game
 
@@ -12,7 +12,7 @@ A real woman, Annie Palmer, is accused by the legend of murders the records do n
 
 | The legend says | First in print | The record says |
 |---|---|---|
-| A lady owner was strangled in her bed and kept iron collars for slaves | Hope Waddell, 1863, p. 53. It is about **Palmyra**, the next estate, and names nobody | Geoffrey Yates (about 1965) found no inquest and no newspaper report |
+| A lady owner was strangled in her bed and kept iron collars for slaves | Hope Waddell, 1863, p. 53. It is about **Palmyra**, the next estate, and names nobody | Geoffrey Yates (in the 1960s, about 1965) found no inquest and no newspaper report |
 | "Mrs Ann Palmer" of Rose Hall killed three husbands, tortured slaves and was killed by them | James Castello's pamphlet, Falmouth Post, 1868. No Haiti, voodoo, Takoo or "White Witch" in it | The church monument it points to is Rosa Palmer's |
 | Haiti, a voodoo nurse, Irish parents, "the White Witch", Robert Rutherford, Millicent, Takoo, death in the 1831 rebellion | Herbert de Lisser's novel, 1929 | Born 1802 into Hanover planter families. No Takoo or Millicent among the 208 people recorded at Rose Hall, 1817 to 1832 |
 | Three husbands | 1868 | One: John Rose Palmer |

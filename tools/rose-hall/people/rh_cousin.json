@@ -1,0 +1,91 @@
+{
+ "name": "rh_cousin",
+ "era": 2018,
+ "body": {
+  "muscle": 0.4,
+  "proportions": 0.56,
+  "african": 1,
+  "caucasian": 0,
+  "asian": 0,
+  "gender": 0,
+  "cupsize": 0.4,
+  "firmness": 0.55,
+  "age": 0.2,
+  "weight": 0.42,
+  "height": 0.49
+ },
+ "garments": {
+  "shoes": true,
+  "woman": true,
+  "skirt": true,
+  "hem": 0.95,
+  "flare": 1.6,
+  "pleats": 9,
+  "hairvol": 0.22,
+  "bun": false,
+  "collar": false,
+  "hat": [],
+  "sleeve": 0.3,
+  "hair": "puffs",
+  "puff": 0.45
+ },
+ "colors": {
+  "Shoes": [
+   42,
+   31,
+   24
+  ],
+  "Sole": [
+   28,
+   23,
+   20
+  ],
+  "Buttons": [
+   210,
+   203,
+   181
+  ],
+  "Belt": [
+   65,
+   47,
+   31
+  ],
+  "Buckle": [
+   133,
+   112,
+   63
+  ],
+  "Hair": [
+   25,
+   21,
+   18
+  ],
+  "Skin": [
+   152,
+   104,
+   76
+  ],
+  "Shirt": [
+   242,
+   200,
+   60
+  ],
+  "Collar": [
+   242,
+   200,
+   60
+  ],
+  "Skirt": [
+   70,
+   80,
+   120
+  ],
+  "Ribbon": [
+   200,
+   60,
+   90
+  ]
+ },
+ "upscale": 1.26,
+ "face": "heart"
+}
