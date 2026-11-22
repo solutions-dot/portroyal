@@ -1,9 +1,9 @@
 /* games/kendal/src/sfx.js: the railway's sounds, made in code on top of engine/audio.js (no audio files).
-   Steam and diesel horns, wheel clatter, brakes, the crash, a ringing in the ears, bells, crickets and a little mento band. */
+   Steam and diesel horns, wheel clatter, brakes, the crash, a ringing in the ears, bells and a little mento band (the crickets are the engine's). */
 import { AU, out, tone, noiseHit, chan, noiseSrc, setG } from '../../../engine/audio.js';
 
 const live = () => AU.ctx && AU.on && AU.ctx.state === 'running';
-const B = {};   /* beds made after the first tap: wheel rumble, engine idle, crickets, the ringing */
+const B = {};   /* beds made after the first tap: wheel rumble, engine idle, the ringing */
 
 export function initBeds() {
   if (!AU.ctx || B.ok) return; const c = AU.ctx; B.ok = true;
@@ -12,15 +12,13 @@ export function initBeds() {
   /* a diesel engine ticking over: a low saw with a slow wobble in its loudness, over brown noise */
   const o = c.createOscillator(), og = c.createGain(), lf = c.createOscillator(), lg = c.createGain(), lp = c.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = 44; lf.frequency.value = 11; lg.gain.value = 0.35; lf.connect(lg); lg.connect(og.gain); og.gain.value = 0.5; lp.type = 'lowpass'; lp.frequency.value = 180; o.connect(og); og.connect(lp);
   B.idle = c.createGain(); B.idle.gain.value = 0; lp.connect(B.idle); B.idle.connect(AU.master); o.start(); lf.start();
-  /* crickets: a high tone chopped fast, and a slower chop on top */
-  const co = c.createOscillator(), cg = c.createGain(), ch = c.createOscillator(), chg = c.createGain(), ch2 = c.createOscillator(), ch2g = c.createGain(); co.frequency.value = 4300; ch.type = 'square'; ch.frequency.value = 24; chg.gain.value = 0.5; ch2.type = 'square'; ch2.frequency.value = 3.1; ch2g.gain.value = 0.5;
-  cg.gain.value = 0.5; ch.connect(chg); chg.connect(cg.gain); ch2.connect(ch2g); ch2g.connect(cg.gain); const cl = c.createGain(); cl.gain.value = 0; co.connect(cg); cg.connect(cl); cl.connect(AU.master); B.cricket = cl; co.start(); ch.start(); ch2.start();
+  /* crickets: the engine's bed now (engine/audio.js AU.ch.cricket, set by mixBeds in main.js) */
   /* a thin ringing, as after a very loud sound */
   const ro = c.createOscillator(), rg = c.createGain(); ro.frequency.value = 4100; rg.gain.value = 0; ro.connect(rg); rg.connect(AU.master); ro.start(); B.ring = rg;
-  B.levels = { rumble: 0, rush: 0, idle: 0, cricket: 0, ring: 0 };
+  B.levels = { rumble: 0, rush: 0, idle: 0, ring: 0 };
 }
-export function setBeds(l, tc = 0.4) { if (!AU.ctx || !B.ok) return; for (const k of ['rumble', 'rush', 'idle', 'cricket', 'ring']) { const v = l[k] || 0; if (B.levels[k] !== v) { B.levels[k] = v; setG(B[k], v, tc); } } }
-export function hush(tc = 0.15) { setBeds({}, tc); for (const k of ['sea', 'surf', 'wind', 'crowd', 'room']) if (AU.ch[k]) setG(AU.ch[k], 0, tc); }
+export function setBeds(l, tc = 0.4) { if (!AU.ctx || !B.ok) return; for (const k of ['rumble', 'rush', 'idle', 'ring']) { const v = l[k] || 0; if (B.levels[k] !== v) { B.levels[k] = v; setG(B[k], v, tc); } } }
+export function hush(tc = 0.15) { setBeds({}, tc); for (const k of ['sea', 'surf', 'wind', 'crowd', 'room', 'traffic', 'cricket']) if (AU.ch[k]) setG(AU.ch[k], 0, tc); }
 
 /* ---------- one-shots ---------- */
 export function whistleSteam(len = 0.9, vol = 0.22) {   /* a steam whistle: two notes together, a breath of air on top */

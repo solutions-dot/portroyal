@@ -26,7 +26,7 @@ import { returningTalker, callBack, comeOver } from '../../../engine/return-talk
 placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { createAmbient, ambientTest, onKeepOff } from '../../../engine/ambient.js';   /* background people who walk, chat, work and play (docs/STANDARD.md, "Ambient life") */
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, gullCry, chirp } from '../../../engine/audio.js';
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, gullCry, chirp, mixBeds, bedTest } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, steadyLoad, spreadArms } from '../../../engine/grip.js';
 import { G, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
@@ -615,7 +615,7 @@ const ACTIONS_FOR = {   /* each thing has an id; `need` is the step need it coun
     { id: 'board', need: 'board', label: 'Climb aboard', x: P.spots.board[0], z: P.spots.board[1], r: 3.2, on: () => STORY.needs('board'), go: () => STORY.done('board') } ],
   ride45: (P) => [{ id: 'water', need: 'water', label: 'Pass the water bucket', x: P.spots.water[0], z: P.spots.water[1], r: 2.6, on: () => STORY.needs('water') && !RIDE45.busy, go: () => passBucket(P) }],
   hill: (P) => [
-    { id: 'pile', need: 'bunch', label: 'Pick up a bunch of bananas', x: P.spots.pile[0], z: P.spots.pile[1], r: 2.8, on: () => STORY.needs('bunch') && !HAND.holding(), go: () => { const b = P.bunches.find((q) => q.parent === P.pile); if (!b) return; HAND.carry(b, BUNCH_CARRY); stepSound('grass'); toast('You lift a heavy bunch. Now to the wagon.'); } },
+    { id: 'pile', need: 'bunch', label: 'Pick up a bunch of bananas', x: P.spots.pile[0], z: P.spots.pile[1], r: 2.8, on: () => STORY.needs('bunch') && !HAND.holding(), go: () => { const b = P.bunches.find((q) => q.parent === P.pile); if (!b) return; HAND.carry(b, { ...BUNCH_CARRY, weight: 0.8 });   /* the engine's pick-up sound, heavy (engine/story.js createCarry) */ toast('You lift a heavy bunch. Now to the wagon.'); } },
     { id: 'wagon', need: 'bunch', label: 'Put the bunch in the wagon', x: P.spots.wagon[0], z: P.spots.wagon[1], r: 2.8, on: () => STORY.needs('bunch') && !!HAND.holding(), go: () => { const n = STORY.got.bunch || 0, w = P.inWagon[n], b = HAND.holding(); HAND.place(b, { parent: P.group, at: [w.position.x, w.position.y, w.position.z], ry: w.rotation.y }); b.rotation.set(0, w.rotation.y, PI / 2); uiSound('goal'); STORY.done('bunch'); } },
     ...P.spots.brakes.map((b, i) => ({ id: 'b' + i, need: 'b' + i, label: 'Check the brake', x: b[0], z: b[1], r: 2.3, on: () => STORY.needs('b' + i), go: () => { uiSound('goal'); toast(['The tender brake is tight. Good.', 'The carriage brake handle holds. Good.', 'The wagon brake block is firm. Good.'][i]); STORY.done('b' + i); } })) ],
   kingston57: (P) => [{ id: 'board57', need: 'board57', label: 'Climb aboard the last coach', x: P.spots.board[0], z: P.spots.board[1], r: 3.2, on: () => STORY.needs('board57'), go: () => STORY.done('board57') }],
@@ -763,7 +763,7 @@ async function crashRun() {
   if (!(await lurch)) return; if (!live()) return;
   $('holdwrap').hidden = true; CR.phase = 4; SFX.crashBang(); flash(1, 0, '#fff'); lamp.intensity = 0; P.group.rotation.x = sceneIsCalm() ? 0 : 0.3; FX.shake = 1.6; RIDE.target = 0; RIDE.v = 6; say('', 100);
   await wait(450); if (!live()) return; flash(1, 0, '#000'); fadeBlack(true, 0); $('flash').style.opacity = 0; FX.shake = 0; RIDE.on = false; CRBEDS = {}; RING = 0.05;
-  await wait(2600); if (!live()) return; $('fadeT').textContent = 'Kendal, Manchester'; $('fadeS').textContent = 'Sunday night, 1 September 1957. About half past eleven.'; $('fade').classList.add('txt'); unlock('crash'); unlock('greenvale');
+  await wait(2600); if (!live()) return; $('fadeT').textContent = 'Kendal, Manchester'; $('fadeS').textContent = 'Sunday night, 1 September 1957. About half past eleven.'; $('fade').classList.add('txt'); cue('sad');   /* after the ringing, over the black: a soft, sad phrase */ unlock('crash'); unlock('greenvale');
   await wait(5200); if (!live()) return; $('fade').classList.remove('txt'); await wait(900); if (!live()) return; CR.on = false; hideCrashSkip?.(); bars(false); arriveKendal(true);
 }
 async function arriveKendal(fromCrash) {
@@ -811,7 +811,7 @@ ON[70] = () => { setTimeout(() => SFX.churchBell(2), 1200 * TS); };
 async function leaveFlower() {
   const P = P_(), ep = EP; frozen = true; const f = flowers(7); f.position.set(P.spots.wall[0] + 1.0, 0, P.spots.wall[1] + 1.0); P.group.add(f); say('You leave a flower. For a moment, everything is quiet.', 4200); SFX.churchBell(2); await wait(4800); if (ep !== EP) return; frozen = false; STORY.done('flower');
 }
-ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => card('The End', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); };
+ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => { cue('end'); card('The End', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }); }, 1200 * TS); };
 
 /* ---------- the helper arrow (engine/story.js): 2.5 s after a new goal (5 s when you are looking about), even while you walk, it points at what the step still needs ---------- */
 const _nv = new THREE.Vector3();
@@ -824,15 +824,16 @@ function nudgeTick(now) {
 let GUIDE = null;
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
-let auNext = 0, onceAt = 6; const AMB = 0.4;   /* the ambient beds are kept low so voices, whistles and the story stay clear */
-const SOUNDSCAPE = { road: { wind: 0.07, crowd: 0.01, once: chirp }, station45: { crowd: 0.16, wind: 0.04, once: () => SFX.hiss(1.4, 0.06) }, ride45: { wind: 0.05 }, hill: { wind: 0.12, crowd: 0.02, once: chirp }, kingston57: { crowd: 0.2, wind: 0.03, idle: 0.1, once: () => SFX.stationGong() }, coach: { room: 0.1, crowd: 0.05 }, beach: { sea: 0.24, surf: 0.1, wind: 0.05, crowd: 0.05, once: gullCry }, crash: { cricket: 0.14, crowd: 0.05, wind: 0.03 }, memorial: { wind: 0.06, once: chirp } };
+let auNext = 0, onceAt = 6; const AMB = 0.6;   /* the ambient beds are kept under the whistles and the story (22 November 2026: 0.4 put the road, the ride and the memorial at 0.02 to 0.03, almost silent; now every place is in the shared range, engine/audio.js BED_RANGE) */
+const SOUNDSCAPE = { road: { wind: 0.09, crowd: 0.02, once: chirp }, station45: { crowd: 0.16, wind: 0.04, once: () => SFX.hiss(1.4, 0.06) }, ride45: { wind: 0.09 }, hill: { wind: 0.12, crowd: 0.02, once: chirp }, kingston57: { crowd: 0.2, wind: 0.03, traffic: 0.05, idle: 0.1, once: () => SFX.stationGong() }, coach: { room: 0.1, crowd: 0.05 }, beach: { sea: 0.24, surf: 0.1, wind: 0.05, crowd: 0.05, once: gullCry }, crash: { cricket: 0.12, crowd: 0.06, wind: 0.04 }, memorial: { wind: 0.09, once: chirp } };
+if (__DEV__ && new URLSearchParams(location.search).get('test') === 'beds') bedTest(SOUNDSCAPE, { scale: AMB, extra: (k, S) => ({ idle: (S.idle || 0) * 0.6 }) });   /* ?test=beds : each place's bed levels against the shared range (rides add the wheels' rumble, up to 0.3) */
 const FOOT = { road: 'grass', station45: 'wood', ride45: 'wood', hill: 'wood', kingston57: 'stone', coach: 'wood', beach: 'sand', crash: 'grass', memorial: 'grass' };
 function audioTick(t, now) {
   if (!AU.ctx) return; SFX.mentoTick(t); if (t < auNext) return; auNext = t + 0.1; const S = SOUNDSCAPE[cur] || {};
   SFX.mento(cur === 'beach' && Math.hypot(state.x - 14, state.z - 4) < 24 && stage >= 43 && stage <= 44);
-  if (HUSH) { for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], 0, 0.2); SFX.setBeds({ ...CRBEDS, ring: RING }, 0.3); return; }
-  for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], (S[k] || 0) * AMB);
-  const v = RIDE.on ? RIDE.v : 0; SFX.setBeds({ rumble: Math.min(0.5, v / 28) * 0.6, rush: Math.min(0.2, v / 70) * 0.5, idle: ((S.idle || 0) + (RIDE.on && RIDE.kind === 'diesel' ? 0.06 : 0)) * 0.6, cricket: (S.cricket || 0) * 0.5, ring: RING });
+  if (HUSH) { mixBeds({}, { tc: 0.2 }); SFX.setBeds({ ...CRBEDS, ring: RING }, 0.3); return; }
+  mixBeds(S, { scale: AMB, duck: !!talkWith });   /* the crickets are the engine's bed now (engine/audio.js), no longer a copy in sfx.js */
+  const v = RIDE.on ? RIDE.v : 0; SFX.setBeds({ rumble: Math.min(0.5, v / 28) * 0.6, rush: Math.min(0.2, v / 70) * 0.5, idle: ((S.idle || 0) + (RIDE.on && RIDE.kind === 'diesel' ? 0.06 : 0)) * 0.6, ring: RING });
   if (t > onceAt) { onceAt = t + 6 + Math.random() * 6; if (S.once && AU.on && state.started) S.once(); }
 }
 
