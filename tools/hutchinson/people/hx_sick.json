@@ -1,0 +1,58 @@
+{
+ "name": "hx_sick",
+ "era": 1773,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.45,
+  "muscle": 0.35,
+  "weight": 0.4,
+  "height": 0.5
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "breeches": true,
+  "shoes": true,
+  "stockings": true,
+  "buckles": true,
+  "hairvol": 0.4,
+  "hat": [],
+  "collar": false
+ },
+ "colors": {
+  "Skin": [
+   212,
+   166,
+   138
+  ],
+  "Shirt": [
+   226,
+   220,
+   204
+  ],
+  "Breeches": [
+   96,
+   88,
+   76
+  ],
+  "Stockings": [
+   196,
+   190,
+   176
+  ],
+  "Shoes": [
+   32,
+   26,
+   22
+  ],
+  "Hair": [
+   110,
+   88,
+   64
+  ]
+ },
+ "face": "strong"
+}

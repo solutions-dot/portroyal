@@ -1,0 +1,72 @@
+{
+ "name": "sp_merchant",
+ "era": 1799,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.6,
+  "muscle": 0.5,
+  "weight": 0.64,
+  "height": 0.5
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "coat": true,
+  "coatsleeve": 0.84,
+  "coathem": 0.04,
+  "breeches": true,
+  "shoes": true,
+  "stockings": true,
+  "buckles": true,
+  "bands": true,
+  "hairvol": 0.4,
+  "hat": []
+ },
+ "colors": {
+  "Skin": [
+   210,
+   164,
+   134
+  ],
+  "Shirt": [
+   226,
+   220,
+   204
+  ],
+  "Coat": [
+   54,
+   80,
+   62
+  ],
+  "Breeches": [
+   60,
+   56,
+   50
+  ],
+  "Stockings": [
+   196,
+   190,
+   176
+  ],
+  "Shoes": [
+   32,
+   26,
+   22
+  ],
+  "Hair": [
+   190,
+   186,
+   178
+  ],
+  "Bands": [
+   234,
+   230,
+   220
+  ]
+ },
+ "face": "strong",
+ "crowd": true
+}
