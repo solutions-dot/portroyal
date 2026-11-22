@@ -2,8 +2,9 @@ import { playChapterFade } from '../../../engine/cine.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
-import { hudTidy } from '../../../engine/hud.js';
-import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';   /* the view turns to the person talking */
+import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
+import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';
+import { showRight, showingRight } from '../../../engine/quiz.js';   /* a wrong pick shows the right one, then carries on */   /* the view turns to the person talking */
 const TC = createTalkCam();
 import { goTo, tick as followTick, stop as stopFollow } from '../../../engine/follow.js';   /* people sent somewhere walk the same way in every game */
 import { auditSeated, snapMeshes, auditRest } from '../../../engine/audit.js';
@@ -584,10 +585,10 @@ function openType(word, done) {
   $('tmsg').textContent = 'Tap the letters in order. They are backwards, like real type.';
 }
 function tapTile(b, L) {
-  if (typed.length >= typeWord.length || b.disabled) return;
+  if (typed.length >= typeWord.length || b.disabled || showingRight()) return;
   if (L === typeWord[typed.length]) { b.disabled = true; $('tstick').children[typed.length].innerHTML = '<span class="mir">' + L + '</span>'; typed += L; uiSound('tap');
     if (typed.length === typeWord.length) { $('tmsg').textContent = 'The type is set. Now press!'; $('tpress').hidden = false; $('tpress').focus(); } else $('tmsg').textContent = 'Good. Next letter: ' + typeWord[typed.length] + '.'; }
-  else { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('tmsg').textContent = 'Not that one. Look at the word again.'; }
+  else { const want = typeWord[typed.length], right = [...$('tcase').children].find((x) => !x.disabled && x.dataset.l === want); showRight({ picked: b, right, msg: $('tmsg'), text: 'Not that one. The next letter is ' + want + '.', then: (r) => r.click(), fast: QUICK }); }
 }
 $('tpress').onclick = () => { pressThump(); $('tprint').textContent = typeWord; $('tprint').hidden = false; $('tcase').hidden = true; $('tpress').hidden = true; $('tdone').hidden = false; $('tmsg').textContent = 'Printed! The words come out the right way round.'; };
 function closeType(done) { closePage(false); closeInspect(false); closeDecl(false); closeSort(false); closeLetter(false); closeTime(false); closeAnswer(false); if ($('typeset').hidden) return; $('typeset').hidden = true; busy = panelsOpen(); if (done && typeDone) { const f = typeDone; typeDone = null; f(); } }
@@ -898,9 +899,9 @@ function openPage(done) {
 }
 function pickPiece(b) { if (b.disabled) return; uiSound('tap'); pageSel = b; for (const x of $('pgtray').children) x.classList.toggle('sel', x === b); for (const x of $('pgpage').children) x.classList.toggle('hot', !x.disabled); }
 function dropPiece(box) {
-  if (box.disabled) return; if (!pageSel) { $('pgmsg').textContent = 'Pick a piece first.'; return; }
+  if (box.disabled || showingRight()) return; if (!pageSel) { $('pgmsg').textContent = 'Pick a piece first.'; return; }
   const k = pageSel.dataset.k;
-  if (k !== box.dataset.k) { box.classList.add('no'); setTimeout(() => box.classList.remove('no'), 400); $('pgmsg').textContent = 'That piece does not go there. Read it again.'; return; }
+  if (k !== box.dataset.k) { const right = [...$('pgpage').children].find((x) => !x.disabled && x.dataset.k === k); showRight({ picked: box, right, msg: $('pgmsg'), text: 'Not there. This piece goes here.', then: (r) => dropPiece(r), fast: QUICK }); return; }
   uiSound('tap'); box.className = 'bx ok'; box.disabled = true; box.textContent = pageSel.textContent; box.style.fontSize = { title: '1.5rem', head: '1.2rem', pic: '.9rem', price: '1.1rem' }[k];
   if (k === 'pic') { box.style.background = '#8a8272'; box.style.color = '#efe7d2'; } pageSel.disabled = true; pageSel.classList.remove('sel'); pageSel = null; for (const x of $('pgpage').children) x.classList.remove('hot'); pageLeft--;
   $('pgmsg').textContent = PAGE_FACTS[k] + (pageLeft ? '' : ' The page is ready. Press!'); if (!pageLeft) { $('pgtray').style.display = 'none'; $('pgpress').hidden = false; $('pgpress').focus({ preventScroll: true }); }
@@ -1171,7 +1172,7 @@ function openDecl(done) {
   for (const sp of $('dcbanner').children) { sp.style.background = ''; sp.style.opacity = ''; } for (const b of $('dccolors').children) { b.disabled = false; b.classList.remove('sel'); }
 }
 function pickColour(b) {
-  const c = b.dataset.c; if (c !== RBG_ORDER[declStep]) { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('dcmsg').textContent = 'Read the line again. It gives the colours in an order.'; return; }
+  if (showingRight()) return; const c = b.dataset.c; if (c !== RBG_ORDER[declStep]) { const want = RBG_ORDER[declStep], right = [...$('dccolors').children].find((x) => x.dataset.c === want); showRight({ picked: b, right, msg: $('dcmsg'), text: 'Not that one. The line says ' + want + ' next.', then: (r) => pickColour(r), fast: QUICK }); return; }
   uiSound('tap'); const sp = $('dcbanner').children[declStep]; sp.style.background = RBG[c]; sp.style.opacity = 1; b.disabled = true; declStep++;
   if (declStep === 3) { $('dcmsg').textContent = 'The banner is ready. These became the colours of the movement.'; $('dcdone').hidden = false; $('dcdone').focus({ preventScroll: true }); } else $('dcmsg').textContent = 'Good. What comes next in the line?';
 }
@@ -1279,7 +1280,7 @@ let sortDone = null, cardI = 0;
 function openSort(done) { if (busy) return; busy = true; keys.clear(); sortDone = done; cardI = 0; unlock('rumour'); $('sortp').hidden = false; showCard(); }
 function showCard() { const c = CARDS[cardI]; $('soprog').textContent = 'Card ' + (cardI + 1) + ' of ' + CARDS.length; $('socard').textContent = c[0]; $('somsg').textContent = 'Is this a fact, or a rumour?'; $('sonext').hidden = true; $('sodone').hidden = true; $('sobtns').style.display = ''; }
 function answerCard(b) {
-  const c = CARDS[cardI]; if (b.dataset.a !== c[1]) { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('somsg').textContent = 'Not quite. Ask: do we know who said it, and can we check it?'; return; }
+  if (showingRight()) return; const c = CARDS[cardI]; if (b.dataset.a !== c[1]) { const right = [...$('sobtns').children].find((x) => x.dataset.a === c[1]); showRight({ picked: b, right, msg: $('somsg'), text: 'Not quite. This one is a ' + c[1] + '. ' + c[2].replace(/^Yes\.\s*/, ''), then: (r) => answerCard(r), delay: 3600, fast: QUICK }); return; }
   uiSound('tap'); $('somsg').textContent = c[2]; $('sobtns').style.display = 'none'; if (cardI + 1 >= CARDS.length) { $('sodone').hidden = false; $('sodone').focus({ preventScroll: true }); } else { $('sonext').hidden = false; $('sonext').focus({ preventScroll: true }); }
 }
 for (const b of $('sobtns').children) b.onclick = () => answerCard(b);
@@ -1348,7 +1349,7 @@ function openTime(done) {
   const tray = $('tmtray'); tray.replaceChildren(); EVENTS.map((e, i) => [e, i]).sort(() => Math.random() - 0.5).forEach(([e, i]) => { const b = document.createElement('button'); b.className = 'pc'; b.dataset.i = i; b.textContent = e[0]; b.onclick = () => pickEvent(b); tray.appendChild(b); });
 }
 function pickEvent(b) {
-  if (+b.dataset.i !== timeI) { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('tmmsg').textContent = 'Not that one yet. What did the guide say came first?'; return; }
+  if (showingRight()) return; if (+b.dataset.i !== timeI) { const right = [...$('tmtray').children].find((x) => +x.dataset.i === timeI); showRight({ picked: b, right, msg: $('tmmsg'), text: 'Not that one. Next came: ' + EVENTS[timeI][0] + ' (' + EVENTS[timeI][1] + ').', then: (r) => pickEvent(r), fast: QUICK }); return; }
   uiSound('tap'); const li = document.createElement('li'); li.textContent = EVENTS[timeI][1] + ': ' + EVENTS[timeI][0]; $('tmlist').appendChild(li); b.disabled = true; b.style.display = 'none'; timeI++;
   if (timeI >= EVENTS.length) { $('tmmsg').textContent = 'The timeline is in order.'; $('tmdone').hidden = false; $('tmdone').focus({ preventScroll: true }); } else $('tmmsg').textContent = 'Good. What came next?';
 }
@@ -1586,6 +1587,7 @@ function startGame() {
   audioInit(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); setGoal();
   liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint();
   showPlace(); canvas.focus();
+  onceWhenClear('garvey-you', () => card('Who you are', ["You are a young helper in a print shop in Kingston, Jamaica.", "You are fictional. The printer and the customer are fictional too.", "Marcus Garvey and the events are real."], [{ t: 'Begin', go: hideCard }]));   /* who you are, once per device (owner, 21 November 2026) */
 }
 $('start').onclick = () => { startGame(); cue('begin'); };
 

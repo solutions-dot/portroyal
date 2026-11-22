@@ -3,7 +3,7 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
-import { hudTidy } from '../../../engine/hud.js';
+import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
 import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';   /* the view turns to the person talking */
 const TC = createTalkCam();
 const FACE_VARIANTS = { man_suit: 2, man_work: 2, man_shirt: 2, man_elder: 2, woman57: 2, woman_long: 2, woman_elder: 2, girl: 2, boy: 2, girl_small: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
@@ -841,7 +841,7 @@ registerShows(); applySave(loadGame());
 /* every place in the background, one at a time through engine/preload.js work(): the next chapter's places first, then the rest in story order, each in a quiet moment */
 function backgroundLoad() { PLACES_KEEP.background(() => { const i = state.started ? chapterOf(stage) : -1; return [...usedIn(i + 1), 'station45', 'hill', 'kingston57', 'ride45', 'coach', 'beach', 'crash', 'memorial']; }, 400); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
 function startGame(quiet) {
-  if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
+  if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); onceWhenClear('kendal-you', () => card('Who you are', ["You are a child in Jamaica.", "You are fictional. Gran, Lloyd, Mass Ezra and the other people you meet are fictional too.", "The railway, the Kendal crash and the helpers of Kendal are real."], [{ t: 'Begin', go: hideCard }]));   /* who you are, once per device (owner, 21 November 2026) */
   liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] || stage) : 10; beginChapter(hasSave && stage >= 10 ? chapterOf(stage) : 0, hasSave && stage >= 10 ? st : 10); setTimeout(backgroundLoad, 4000); };

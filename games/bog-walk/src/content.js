@@ -164,7 +164,7 @@ export const SEEN_GROUP = { hammond: 'hammond', minister1: 'ministers', minister
 /* the notice board, chapter 0: the journey of the water, in order */
 export const JOURNEY = [['The river', 'The Rio Cobre runs down from the hills.', 'river'], ['The dam', 'A dam holds the river water back.', 'dam'], ['The Tube', 'The water runs down the huge pipe.', 'tube'], ['The wheel', 'The water turns the wheel. The wheel makes the power.', 'wheel'], ['The wires', 'The power runs along wires to Kingston.', 'wires'], ['The tram', 'The power makes the trams go.', 'tram']];
 /* the reporter, chapter 4: I saw it, or I heard it */
-export const REPORT = { title: 'What did you see?', prompt: 'Did you see this yourself, or did you hear it?', bins: [['saw', 'I saw it'], ['heard', 'I heard it']], cards: [
+export const REPORT = { pick: [0, 1, 2, 3], title: 'What did you see?', prompt: 'Did you see this yourself, or did you hear it?', bins: [['saw', 'I saw it'], ['heard', 'I heard it']], cards: [
   ['Water at my boots', 'saw', 'Yes. You saw this yourself.'],
   ['"80 men are dead"', 'heard', 'You heard this. The first reports were wrong.'],
   ['The torches going out', 'saw', 'Yes. You saw this yourself.'],
@@ -173,7 +173,7 @@ export const REPORT = { title: 'What did you see?', prompt: 'Did you see this yo
   ['"The water came from the dam"', 'heard', 'You heard this. Nobody knows that yet.'],
 ] };
 /* Kemar's question, chapter 5: what we know, what people guessed, what nobody knows */
-export const WHY = { title: "Let's sort what we know", prompt: 'Do we know it, is it a guess, or does nobody know?', bins: [['know', 'We know it'], ['guess', 'A guess'], ['none', 'Nobody knows']], cards: [
+export const WHY = { pick: [0, 2, 5, 4], title: "Let's sort what we know", prompt: 'Do we know it, is it a guess, or does nobody know?', bins: [['know', 'We know it'], ['guess', 'A guess'], ['none', 'Nobody knows']], cards: [
   ['33 men died.', 'know', 'We know this. The newspaper counted them.'],
   ['The men worked on a Sunday night.', 'know', 'We know this. The water was turned off on Sunday nights.'],
   ['Someone opened a gate at the dam.', 'guess', 'This is a guess. Nobody proved it.'],

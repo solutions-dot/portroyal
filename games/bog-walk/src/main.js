@@ -3,8 +3,9 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { renderFramed, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { grip, gripTick } from '../../../engine/grip.js';
-import { hudTidy } from '../../../engine/hud.js';
-import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';   /* the view turns to the person talking */
+import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
+import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';
+import { runQuiz, quizOpen, closeQuiz } from '../../../engine/quiz.js';   /* one quiz for every game: a wrong pick shows the right answer */   /* the view turns to the person talking */
 const TC = createTalkCam();
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/bog-walk/src/main.js: Bog Walk 1904: The Tube. The script is docs/games/bog-walk.md, "The build script (agreed with the owner, 13 Nov 2026)".
@@ -481,21 +482,19 @@ function openOrder(title, items, prompt, done, { years = false } = {}) {   /* it
   $('pzdone').hidden = true; $('pznext').hidden = true; $('puzzle').hidden = false; tray.firstChild.focus({ preventScroll: true });
 }
 function pickOrder(b) {
-  if (+b.dataset.i !== PZ.i) { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('pzmsg').textContent = 'Not yet. Try again.'; return; }
+  if (PZ.wait) return;
+  if (+b.dataset.i !== PZ.i) {   /* a wrong pick shows the right one in green, says what it is, then puts it in place (owner, 21 November 2026) */
+    b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); const right = $('pztray').querySelector('[data-i="' + PZ.i + '"]'), it = PZ.items[PZ.i];
+    if (!right) return; right.classList.add('yes'); $('pzmsg').textContent = 'Not that one. Next is: ' + (PZ.years ? it[0] + ' (' + it[1] + ').' : it[0] + '.');
+    PZ.wait = true; setTimeout(() => { PZ.wait = false; if ($('puzzle').hidden || !right.isConnected) return; right.classList.remove('yes'); pickOrder(right); }, QUICK ? 30 : 2600); return;
+  }
   uiSound('tap'); const it = PZ.items[PZ.i], li = document.createElement('li'); li.textContent = PZ.years ? it[1] + ': ' + it[0] : it[0]; $('pzlist').appendChild(li); b.remove(); PZ.i++;
   if (PZ.i >= PZ.items.length) { $('pzmsg').textContent = PZ.years ? 'Yes! That is the order it happened.' : 'Yes! That is the journey of the water.'; $('pzdone').hidden = false; $('pzdone').focus({ preventScroll: true }); } else $('pzmsg').textContent = PZ.years ? 'Good. What came next?' : 'Good. ' + it[1] + ' What comes next?';
 }
-function openSort(set, done) {   /* set: { title, prompt, bins: [[key, label]], cards: [[text, key, reply]] } */
-  $('pzreference').hidden=true;$('pzguide').hidden=true;keys.clear(); Object.assign(PZ, { done, kind: 'sort', i: 0, items: set }); $('pztitle').textContent = set.title; $('pzlist').hidden = true; $('pzcard').hidden = false;
-  const tray = $('pztray'); tray.replaceChildren(); for (const [k, label] of set.bins) { const b = document.createElement('button'); b.className = 'pc'; b.dataset.a = k; b.textContent = label; b.onclick = () => answerSort(b); tray.appendChild(b); }
-  $('pzdone').hidden = true; $('puzzle').hidden = false; showSortCard();
+function openSort(set, done) {   /* set: { title, prompt, bins: [[key, label]], cards: [[text, key, reply]], pick } in the shared quiz (engine/quiz.js): four cards, a wrong pick shows the right one */
+  keys.clear(); const items = (set.pick || [0, 1, 2, 3]).map((i) => set.cards[i]).filter(Boolean).map(([text, key, reply]) => ({ q: text, note: set.prompt, opts: set.bins.map(([k, label]) => ({ t: label, ok: k === key })), why: reply }));
+  runQuiz({ title: set.title, items, sound: uiSound, fast: QUICK }).then(() => { if (done) done(); });
 }
-function showSortCard() { const set = PZ.items, c = set.cards[PZ.i]; $('pzprog').textContent = 'Card ' + (PZ.i + 1) + ' of ' + set.cards.length; $('pzcard').textContent = c[0]; $('pzmsg').textContent = set.prompt; $('pznext').hidden = true; $('pztray').hidden = false; $('pztray').firstChild.focus({ preventScroll: true }); }
-function answerSort(b) {
-  const set = PZ.items, c = set.cards[PZ.i]; if (b.dataset.a !== c[1]) { b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); $('pzmsg').textContent = 'Not yet. Try again.'; return; }
-  uiSound('tap'); $('pzmsg').textContent = c[2]; $('pztray').hidden = true; if (PZ.i + 1 >= set.cards.length) { $('pzdone').hidden = false; $('pzdone').focus({ preventScroll: true }); } else { $('pznext').hidden = false; $('pznext').focus({ preventScroll: true }); }
-}
-$('pznext').onclick = () => { PZ.i++; showSortCard(); };
 function closePuzzle(done) { if ($('puzzle').hidden) return; $('puzzle').hidden = true; $('pztray').hidden = false; if (done && PZ.done) { const f = PZ.done; PZ.done = null; f(); } }
 $('pzx').onclick = () => closePuzzle(false); $('pzdone').onclick = () => closePuzzle(true);
 
@@ -784,7 +783,7 @@ function audioTick(t) {
 
 /* ---------- starting ---------- */
 function startGame() {
-  if (S.started) return; audioInit(); initTubeSound(); initWorldSound(); $('title').hidden = true; $('hud').hidden = false; S.started = true; unlock('who', true); showCount(); canvas.focus();
+  if (S.started) return; audioInit(); initTubeSound(); initWorldSound(); $('title').hidden = true; $('hud').hidden = false; S.started = true; unlock('who', true); showCount(); onceWhenClear('bog-walk-you', () => card('Who you are', ["You are made up. You stand for the young men who worked in the Tube.", "Some people in this game are real. Some are made up for the story."], [{ t: 'Begin', go: hideCard }]));   /* who you are, once per device (owner, 21 November 2026) */ canvas.focus();
 }
 function begin(skipIntroCards) {   /* the night only (dev views and the night's own checks): start the game straight into the Tube */
   startGame(); enterTube(); resetNight(); stage = 30; showHint(); if (skipIntroCards) startWork(); else startIntro([['Inside the Tube', 'Monday 27 June 1904, about 1 a.m.'], ['The last tram has gone.', 'The water in the pipe is shut off.']], () => startWork(true));
@@ -860,7 +859,7 @@ function devViews() { if (__DEV__) import('./dev.js').then((m) => m.dev(DEV)); }
 const DEV = __DEV__ ? { THREE, q, $, S, N, T, PL, hand, keys, camera, scene, renderer, CL, story, ctr, unlocked, doneCh, JOURNAL, CHAPTERS, REPORT, WHY, AFTER, JOURNEY, TALK_TARGETS, BUILD, DONE, SAFE, CH_PLACE,
   get cur() { return cur; }, get stage() { return stage; }, set stage(v) { stage = v; }, get MODE() { return MODE; }, get near() { return near; }, get frozen() { return frozen; }, get fading() { return fading; }, get envNow() { return envNow; }, set manual(v) { manual = v; }, set poster(v) { POSTER = v; }, RIDE, HOLD, TB,
   tick, render, begin, startGame, startWork, startIntro, skipIntro, startRise, startDark, startTrickle, startBoots, skipNight, setPhase, resetNight, setGoal, setClock, say, toast, bars, hideHud, caption, captionOff, fadeTo, calcLift, nearPatch, act, showEnd, showPick,
-  ensurePlace, enterPlace, enterTube, showNudgeAt, placeNudge, NUDGE, beginChapter, setStage, setEnv, showPerson, byId, startTalk, convo, leaveTalk, activate, look, openOrder, openSort, closePuzzle, card, hideCard, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeChapters2: closeChapters, closeCredits, unlock, saveGame, loadGame, applySave, panelsOpen, locked,
+  ensurePlace, enterPlace, enterTube, showNudgeAt, placeNudge, NUDGE, beginChapter, setStage, setEnv, showPerson, byId, startTalk, convo, leaveTalk, activate, look, openOrder, openSort, closePuzzle, closeQuiz, card, hideCard, openJournal, closeJournal, openChapters, closeChapters, openCredits, closeChapters2: closeChapters, closeCredits, unlock, saveGame, loadGame, applySave, panelsOpen, locked,
   auditPlace, auditHeld, auditSeated, snapMeshes, placeFaces, groundFeet, LANE, ZM, ZMIN, ZMAX, R, SAND, ENV, audioState: () => (AU.ctx ? AU.ctx.state : 'none'), wantsTalk, get modelsReady() { return modelsReady; }, ON, noticeTex } : null;
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

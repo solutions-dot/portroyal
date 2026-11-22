@@ -3,9 +3,10 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
-import { hudTidy } from '../../../engine/hud.js';
+import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
 import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';
-import { goalWithCount } from '../../../engine/story.js';   /* "Talk to A, B and C: 1 of 3." */   /* the view turns to the person talking */
+import { goalWithCount } from '../../../engine/story.js';
+import { runQuiz, quizOpen } from '../../../engine/quiz.js';   /* one quiz for every game: a wrong pick shows the right answer */   /* "Talk to A, B and C: 1 of 3." */   /* the view turns to the person talking */
 const TC = createTalkCam();
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive, goTo } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
@@ -635,9 +636,9 @@ ON[65] = () => { unlock('recovery'); unlock('help'); unlock('compare'); };
 
 /* ---------- chapter 6: today ---------- */
 ON[70] = () => { weather(0.05, 0, ENV.day); setBedsFor('after'); };
-function quiz(list, round, done) {   /* a few questions on cards: a wrong answer says why and lets you try again; the right one moves on */
-  const R = list[round]; if (!R) { done(); return; }
-  card(R.q, [R.note], R.opts.map((o) => ({ t: o.t, go: () => { if (o.ok) { uiSound('goal'); toast(o.say, 3000); quiz(list, round + 1, done); } else { toast(o.say, 3000); } } })), { col: true });
+function quiz(list, round, done, title = 'Quiz') {   /* engine/quiz.js: a wrong pick shows the right answer and why, a pause, then the next question */
+  const items = list.slice(round).map((R) => ({ q: R.q, note: R.note, opts: R.opts, why: (R.opts.find((o) => o.ok) || {}).say }));
+  runQuiz({ title, items, sound: uiSound, fast: QUICK }).then(() => done());
 }
 function kitQuiz(round) {
   quiz(KIT, round, () => { unlock('kit'); card('A good kit', ['You packed well: water, food that keeps, a torch, a radio, a charged phone, medicine and papers in a bag.', 'A kit is small, but it helps a lot.'], [{ t: 'Next', go: () => { hideCard(); quiz(STORMS, 0, () => { unlock('storms'); card('Jamaica\'s storms', ['Hurricanes are not new to Jamaica. They come, and people get ready and rebuild.', 'Read about the earlier storms in your Journal.'], [{ t: 'Done', go: () => { hideCard(); setStage(73); } }], { col: true }); }); } }], { col: true }); });
@@ -687,7 +688,7 @@ applySave(loadGame());
 /* every place in the background, one at a time through engine/preload.js work(): the next chapter's places first, then the rest in the old order, each in a quiet moment */
 function backgroundLoad() { PLACES_KEEP.background(() => { const i = state.started ? chapterOf(stage) : -1; return [...usedIn(i + 1), 'yard25', 'hall', 'after', 'today', 'yard88', 'room88']; }, 400); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
 function startGame(quiet) {
-  if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
+  if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); onceWhenClear('melissa-you', () => card('Who you are', ["In this story you are a made-up child. The family is made up too.", "In 1951 you are Hattie, aged ten. In 1988 you are Pearl, aged twelve. In 2025 you are Pearl's child.", "The storms are real. The family is not."], [{ t: 'Begin', go: hideCard }]));   /* who you are, once per device (owner, 21 November 2026) */
   liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] || stage) : 10; beginChapter(hasSave && stage >= 10 ? chapterOf(stage) : 0, hasSave && stage >= 10 ? st : 10); setTimeout(backgroundLoad, 4000); };
@@ -914,6 +915,7 @@ function devViews() {
         const key = stage + '|' + cur + '|' + unlocked.length + '|' + ($('card').hidden ? '' : $('ctitle').textContent) + '|' + (DIR.on ? 'cut' : '') + (ST.on ? 'storm' : '');
         if (key !== lastKey) { lastKey = key; lastT = now; L('s' + stage + ' ' + cur + ' pages=' + unlocked.length + ($('card').hidden ? '' : ' card="' + $('ctitle').textContent + '"') + ' goal="' + $('goal').textContent + '"'); }
         if (now - lastT > 30000) { L('STALL at stage ' + stage + ' in ' + cur + ' busy=' + busy + ' frozen=' + frozen + ' fading=' + fading); break; }
+        if (quizOpen()) { const b = document.querySelector('#quizopts button:not(:disabled)') || document.querySelector('#quiznext:not([hidden])'); if (b) b.click(); continue; }   /* engine/quiz.js */
         if (!$('card').hidden) { const bs = $('cbtns').querySelectorAll('button'); if (bs.length) bs[(qi++) % bs.length].click(); continue; }
         if (!$('dialogue').hidden) { const c = $('choices').firstChild; if (c) c.click(); else $('next').click(); continue; }
         if (!$('holdwrap').hidden) { HOLD.on = true; continue; }

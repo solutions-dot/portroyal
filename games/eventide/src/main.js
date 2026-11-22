@@ -13,9 +13,10 @@ import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble 
 import { placeActionButton } from '../../../engine/action-button.js';
 import { returningTalker, callBack } from '../../../engine/return-talk.js';
 placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
-import { hudTidy } from '../../../engine/hud.js';
+import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
 import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';
-import { goalWithCount } from '../../../engine/story.js';   /* "Talk to A, B and C: 1 of 3." */   /* the view turns to the person talking */
+import { goalWithCount } from '../../../engine/story.js';
+import { runQuiz, quizOpen } from '../../../engine/quiz.js';   /* one quiz for every game: a wrong pick shows the right answer */   /* "Talk to A, B and C: 1 of 3." */   /* the view turns to the person talking */
 const TC = createTalkCam();
 import { createAmbient, ambientTest } from '../../../engine/ambient.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
@@ -487,14 +488,17 @@ $('reset').onclick = () => { if (fading || frozen) return; closeJournal(); reset
 
 /* ---------- things to do. ACTIONS[chapter](P) makes that chapter's list. A thing shows as a button when you stand at it. ---------- */
 function placeThing(P, k) { const [x, z] = P.beds[TIDY[k].where]; P.things[k].position.set(x, 0.64, z); }
-function sortCards(k = 0) {   /* chapter 6: fact, opinion or rumour, one card at a time */
-  if (k >= SORT.length) { hideCard(); unlock('facts'); setStage(62); return; } const c = SORT[k];
-  card('Card ' + (k + 1) + ' of ' + SORT.length, [c.text, 'Is this a fact, an opinion or a rumour?'], SORT_KINDS.map((t, j) => ({ t, ok: j === c.kind, go: () => { if (j === c.kind) { uiSound('goal'); toast(c.why, 4200); sortCards(k + 1); } else { uiSound('tap'); toast('Not quite. Think again.'); } } })), { dismiss: hideCard });
+function sortCards(k = 0) {   /* chapter 6: fact, opinion or rumour (engine/quiz.js). Four cards: one of each kind first; the other two stay in the journal. */
+  const items = [0, 1, 5, 3].slice(k).map((i) => SORT[i]).map((c) => ({ q: c.text, note: 'Is this a fact, an opinion or a rumour?', opts: SORT_KINDS.map((t, j) => ({ t, ok: j === c.kind })), why: c.why }));
+  runQuiz({ title: 'Fact, opinion or rumour?', items, sound: uiSound, fast: QUICK }).then(() => { unlock('facts'); setStage(62); });
 }
-function timeline(k = 0) {   /* chapter 7: which came next? Three choices at a time. */
-  if (k >= TIMELINE.length) { hideCard(); setStage(72); return; }
-  const opts = [k, k + 1, k + 2].filter((j) => j < TIMELINE.length), order = k % 2 ? opts.slice().reverse() : opts.length > 2 ? [opts[1], opts[0], opts[2]] : opts;
-  card(k ? 'What came next?' : 'What came first?', k ? ['So far: ' + TIMELINE[k - 1].year + '. ' + TIMELINE[k - 1].text] : ['Tap the thing that happened first.'], order.map((j) => ({ t: TIMELINE[j].text, ok: j === k, go: () => { if (j === k) { uiSound('goal'); toast(TIMELINE[k].year, 2200); timeline(k + 1); } else { uiSound('tap'); toast('That came later. Try again.'); } } })), { col: true, dismiss: hideCard });
+function timeline(k = 0) {   /* chapter 7: which came next? Three choices at a time (engine/quiz.js); four steps, each answer gives its year */
+  const items = [];
+  for (let i = k; i < Math.min(TIMELINE.length - 2, k + 4); i++) {
+    const opts = [i, i + 1, i + 2].filter((j) => j < TIMELINE.length), order = i % 2 ? opts.slice().reverse() : opts.length > 2 ? [opts[1], opts[0], opts[2]] : opts;
+    items.push({ q: i ? 'What came next?' : 'What came first?', note: i ? 'So far: ' + TIMELINE[i - 1].year + '. ' + TIMELINE[i - 1].text : 'Tap the thing that happened first.', opts: order.map((j) => ({ t: TIMELINE[j].text, ok: j === i })), why: TIMELINE[i].year + ': ' + TIMELINE[i].text });
+  }
+  runQuiz({ title: 'The story in order', items, sound: uiSound, fast: QUICK }).then(() => setStage(72));
 }
 const ACTIONS = {
   0: (P) => [{ label: 'Read the letter to Miss Iris', x: P.spots.iris.x - 0.9, z: P.spots.iris.z, r: 2.4, on: () => stage === 13, go: () => card('A letter for Miss Iris', LETTER, [{ t: 'Finish reading', go: () => { hideCard(); convo([{ who: 'Miss Iris', text: 'Pauline! I made that dress in 1961.' }, { who: 'Miss Iris', text: 'Thank you, child. You read it beautifully.' }], () => setStage(14), byId('iris1')); } }]) }],
@@ -633,7 +637,7 @@ applySave(loadGame());
   const first = hasSave && stage >= 10 ? chapterOf(stage) : 0;
   model('anims').then((an) => { loadClips(an); tick(); return sceneReady(first); }).then(() => { modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick(); if (__DEV__) devViews(); }); }
 function startGame(quiet) {
-  if (GO) return; GO = true; audioInit(); $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
+  if (GO) return; GO = true; audioInit(); $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); onceWhenClear('eventide-you', () => card('Who you are', ["You are a child who lives near Slipe Pen Road, in Kingston.", "Gran visits her friend at the Eventide Home. You go with her.", "You and Gran are fictional. The Home and the fire are real."], [{ t: 'Begin', go: hideCard }]));   /* who you are, once per device (owner, 21 November 2026) */
   liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 let GO = false;
@@ -868,6 +872,7 @@ function devViews() {
         const key = stage + '|' + cur + '|' + unlocked.length + '|' + ($('card').hidden ? '' : $('ctitle').textContent) + '|' + JSON.stringify(ctr) + (DIR.on ? 'cut' : '');
         if (key !== lastKey) { lastKey = key; lastT = now; Lg('s' + stage + ' ' + cur + ' pages=' + unlocked.length + ($('card').hidden ? '' : ' card="' + $('ctitle').textContent + '"') + ' goal="' + goalText + '"'); }
         if (now - lastT > 25000) { Lg('STALL at stage ' + stage + ' in ' + cur + ' busy=' + busy + ' frozen=' + frozen + ' cut=' + DIR.on); break; }
+        if (quizOpen()) { const b = document.querySelector('#quizopts button:not(:disabled)') || document.querySelector('#quiznext:not([hidden])'); if (b) b.click(); continue; }   /* engine/quiz.js */
         if (!$('card').hidden) { const b = $('cbtns').querySelector('button[data-ok]') || $('cbtns').querySelector('button'); if (b) b.click(); continue; }
         if (!$('dialogue').hidden) { const c = $('choices').firstChild; if (c) c.click(); else $('next').click(); continue; }
         if (stage >= DONE[ch]) { Lg('chapter ' + (ch + 1) + ' DONE at stage ' + stage); if (one || ch >= 6) { Lg('ALLDONE errors=' + errs.length + ' pages=' + unlocked.length + '/' + JOURNAL.length + ' choices=' + JSON.stringify(story)); break; } ch++; Lg('next ch' + (ch + 1)); await beginChapter(ch); lastT = performance.now(); continue; }
