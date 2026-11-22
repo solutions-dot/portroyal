@@ -1,0 +1,81 @@
+{
+ "name": "sp_fitton",
+ "era": 1799,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.42,
+  "muscle": 0.6,
+  "weight": 0.5,
+  "height": 0.56
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "coat": true,
+  "coatsleeve": 0.84,
+  "coathem": 0.04,
+  "breeches": true,
+  "shoes": true,
+  "stockings": true,
+  "buckles": true,
+  "bands": true,
+  "hairvol": 0.4,
+  "hat": [
+   [
+    "felt",
+    "Hat"
+   ]
+  ]
+ },
+ "colors": {
+  "Shirt": [
+   232,
+   226,
+   210
+  ],
+  "Coat": [
+   30,
+   40,
+   78
+  ],
+  "Breeches": [
+   226,
+   220,
+   204
+  ],
+  "Stockings": [
+   226,
+   220,
+   204
+  ],
+  "Shoes": [
+   26,
+   22,
+   18
+  ],
+  "Hat": [
+   20,
+   20,
+   24
+  ],
+  "Bands": [
+   240,
+   238,
+   230
+  ],
+  "Skin": [
+   214,
+   166,
+   138
+  ],
+  "Hair": [
+   96,
+   66,
+   42
+  ]
+ },
+ "face": "strong"
+}

@@ -1,0 +1,82 @@
+{
+ "name": "sp_briggs",
+ "era": 1799,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.5,
+  "muscle": 0.5,
+  "weight": 0.58,
+  "height": 0.52
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "coat": true,
+  "coatsleeve": 0.84,
+  "coathem": 0.04,
+  "breeches": true,
+  "shoes": true,
+  "stockings": true,
+  "buckles": true,
+  "bands": true,
+  "hairvol": 0.4,
+  "hat": [
+   [
+    "felt",
+    "Hat"
+   ]
+  ]
+ },
+ "colors": {
+  "Skin": [
+   210,
+   164,
+   134
+  ],
+  "Shirt": [
+   226,
+   220,
+   204
+  ],
+  "Coat": [
+   110,
+   78,
+   50
+  ],
+  "Breeches": [
+   84,
+   70,
+   56
+  ],
+  "Stockings": [
+   196,
+   190,
+   176
+  ],
+  "Shoes": [
+   32,
+   26,
+   22
+  ],
+  "Hat": [
+   34,
+   30,
+   28
+  ],
+  "Hair": [
+   110,
+   88,
+   64
+  ],
+  "Bands": [
+   234,
+   230,
+   220
+  ]
+ },
+ "face": "long",
+ "crowd": true
+}

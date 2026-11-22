@@ -1,0 +1,47 @@
+{
+ "name": "sp_seaman2",
+ "era": 1799,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "age": 0.3,
+  "muscle": 0.66,
+  "weight": 0.46,
+  "height": 0.54
+ },
+ "garments": {
+  "sleeve": 0.6,
+  "breeches": true,
+  "breechkind": "slops",
+  "collar": false,
+  "hairvol": 0.3,
+  "hat": []
+ },
+ "colors": {
+  "Skin": [
+   142,
+   96,
+   70
+  ],
+  "Shirt": [
+   200,
+   70,
+   60
+  ],
+  "Breeches": [
+   214,
+   204,
+   176
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "strong",
+ "crowd": true
+}
