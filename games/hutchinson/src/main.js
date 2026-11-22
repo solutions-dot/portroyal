@@ -33,7 +33,8 @@ import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ, SILENT } from "./content.js";
 import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
-import { createLookShot } from "../../../engine/lookshot.js";   /* looking at a thing is a close-up action (owner rule 13) */
+import { createLookShot } from "../../../engine/lookshot.js";
+import { makeRidges } from "../../../engine/ridges.js";   /* far hills that fade into the haze, as in Nanny Town */   /* looking at a thing is a close-up action (owner rule 13) */
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
@@ -57,6 +58,15 @@ const sky = makeSky();
 const iosWebGL = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 if (iosWebGL) sky.clouds.visible = false;   /* layered cloud sprites draw as coloured noise on some iPhones */
 sky.objects.forEach((o) => scene.add(o));
+/* the far hills (engine/ridges.js): they follow the camera like a painted backdrop and take the light of the hour (light() below).
+   St Ann: the middle of the island is limestone hill country all round, ridge after ridge of low wooded hills going blue into the haze,
+   lower than Nanny Town's Blue Mountains. Spanish Town: the plain lies open to the south, with the hills of St Catherine to the north
+   (north is -z in this game). Indoors none is drawn. */
+const RIDGES = {
+  stann: makeRidges({ seed: 7, layers: [{ r: 190, base: 0, amp: 22, k: 0.14 }, { r: 230, base: 6, amp: 30, k: 0.28 }, { r: 280, base: 12, amp: 38, k: 0.42 }, { r: 340, base: 20, amp: 50, k: 0.58 }, { r: 420, base: 30, amp: 66, k: 0.74 }] }),
+  town: makeRidges({ seed: 19, layers: [{ r: 240, base: 0, amp: 26, k: 0.2 }, { r: 300, base: 8, amp: 38, k: 0.38 }, { r: 380, base: 18, amp: 52, k: 0.62 }, { r: 470, base: 30, amp: 74, k: 0.78 }], shape: (x, z) => Math.max(0, Math.min(1, (0.25 - z) / 0.6)) }),
+};
+for (const r of Object.values(RIDGES)) scene.add(r.group);
 const hemi = new THREE.HemisphereLight(0xfff1d4, 0x819183, 2.5),
   sun = new THREE.DirectionalLight(0xffe2b6, 2.1);
 sun.position.set(-20, 42, 20);
@@ -356,6 +366,8 @@ function chapterState(first) {
 const DAY = { top: 0x71a7bf, hor: 0xe4d1a7, stars: 0, moon: 0, fog: [0xc7d7d1, 100, 550], sun: [0xffe2b6, 2.1, -20, 42, 20], hemi: [0xfff1d4, 0x819183, 2.5], fill: 0 };
 function light(Q) {
   const L = { ...DAY, ...(Q.light || {}) };
+  for (const [k, r] of Object.entries(RIDGES)) r.group.visible = !Q.indoor && (Q.ridges || "stann") === k;
+  RIDGES[Q.ridges || "stann"]?.tone(L.ridge || 0x3c6634, L.haze || L.fog[0], L.glow ?? (L.stars ? 0.45 : 1));   /* green going into the haze of the hour */
   sky.setSky(L.top, L.hor, L.stars, L.moon, L.stars ? 0.35 : 1);
   sky.clouds.visible = !iosWebGL && !L.stars && !Q.indoor;
   scene.fog = new THREE.Fog(L.fog[0], L.fog[1], L.fog[2]);
@@ -968,6 +980,7 @@ function tick(dt, now = performance.now()) {
   dangerTick(dt, quiet);
   if (S.started) audioTick(Q, dt);
   if (__DEV__) camera.userData.checkPlace = Q;   // Match camera probes to the scene actually drawn, including chapter transitions.
+  for (const r of Object.values(RIDGES)) r.group.position.set(camera.position.x, 0, camera.position.z);
   renderFramed(renderer, scene, camera, DIR.on || LS.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;

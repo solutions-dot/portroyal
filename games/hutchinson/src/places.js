@@ -5,7 +5,7 @@
    Story people: person(). Background people: crowd(), each a body made for the year and the place (tools/hutchinson/people). */
 import * as THREE from "three";
 import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng, batchStatic } from "./gfx.js";
-import { tree, palm, bush, mule, cart, barrel, hillRing, scatter, surveyPole, sack, crate, marketBasket } from "./period-props.js";
+import { tree, palm, bush, mule, cart, barrel, scatter, surveyPole, sack, crate, marketBasket } from "./period-props.js";
 import * as P from "./props.js";
 import * as W from "./world.js";
 import * as S from "./scenery.js";
@@ -84,9 +84,7 @@ function fieldWall(Q, x0, z0, x1, z1, h = 1.2, seed = 3) {
    cock-pits". A far ring of hills, and near and middle rings of steep, round, tree-covered cockpit hills with pale limestone showing.
    gaps: directions (radians, atan2(z, x)) kept open, such as the road running out of the place, or the castle seen far off. */
 function hills(Q, seed = 3, near = true, gaps = [0, Math.PI]) {
-  const far = hillRing(300, 16, 50, { seed, base: [0.36, 0.42, 0.28] });
-  far.traverse((o) => (o.userData.far = true));
-  Q.group.add(far);
+  /* the far hills are the engine's ridges (engine/ridges.js, made in main.js), going blue into the haze */
   if (!near) return;
   const r = rng(seed * 7 + 1),
     open = (a) => gaps.some((g) => Math.abs(Math.atan2(Math.sin(a - g), Math.cos(a - g))) < 0.2);
@@ -303,8 +301,8 @@ function castle() {
   const Q = base("castle", [-24, -1.2, 24, 15], [15, 11.4, Math.PI / 2]);
   Q.floor = "sand";
   Q.beds = { wind: 0.07, owl: 0.5 };
-  const DUSK = { top: 0x2c3a5c, hor: 0xd9895a, stars: 0.25, moon: 0, fog: [0x8a6f6a, 40, 300], sun: [0xff9a5a, 1.15, -60, 14, 30], hemi: [0xc9b6c8, 0x5a4a40, 1.75], fill: 2.4 },
-    LATE = { top: 0x1c2644, hor: 0xa85e4a, stars: 0.6, moon: 0, fog: [0x5c4c58, 34, 260], sun: [0xe07a4a, 0.7, -70, 8, 30], hemi: [0xa9a0c0, 0x4a3e3c, 1.55], fill: 2.8 },
+  const DUSK = { top: 0x2c3a5c, hor: 0xd9895a, stars: 0.25, moon: 0, fog: [0x8a6f6a, 40, 300], sun: [0xff9a5a, 1.15, -60, 14, 30], hemi: [0xc9b6c8, 0x5a4a40, 1.75], fill: 2.4, haze: 0x9a7a78, glow: 0.62 },
+    LATE = { top: 0x1c2644, hor: 0xa85e4a, stars: 0.6, moon: 0, fog: [0x5c4c58, 34, 260], sun: [0xe07a4a, 0.7, -70, 8, 30], hemi: [0xa9a0c0, 0x4a3e3c, 1.55], fill: 2.8, haze: 0x5e5068, glow: 0.4 },
     DAYL = { top: 0x8fb4c6, hor: 0xe6dcc0, fog: [0xd6d2c0, 80, 480], sun: [0xfff0d0, 2.2, 30, 50, 30], hemi: [0xfff4dc, 0x9a8e6a, 2.4] };
   Q.light = DUSK;
   Q.view = { pos: [15, 2.2, 14], look: [0, 3.6, -9] };
@@ -955,9 +953,7 @@ function town() {
   Q.light = { top: 0x7fb0c8, hor: 0xeadbb4, fog: [0xdcd6bd, 90, 480], sun: [0xfff0c8, 2.3, 30, 50, 30], hemi: [0xfff4dc, 0x9a8e6a, 2.5] };
   Q.view = { pos: [15, 2.6, 21], look: [-3, 3.4, -5] };
   ground(Q, std(T.dirt([40, 40], [188, 172, 140])), 500);
-  const far = hillRing(320, 14, 34, { seed: 21, base: [0.36, 0.42, 0.3] });
-  far.traverse((o) => (o.userData.far = true));
-  Q.group.add(far);
+  Q.ridges = "town";   /* the hills of St Catherine to the north, from the engine (main.js) */
   /* the public building on the east side (the top of this frame), facing King's House across the square */
   const PB = S.publicBuilding(42);
   add(Q, PB, 0, -5.4);
@@ -1066,7 +1062,7 @@ function town() {
   const fc2 = add(Q, S.farCrowd(30, 8, 6), 37, 9, 0, Math.PI / 2);
   const fc3 = add(Q, S.farCrowd(24, 7, 7), 42, 9, 0, Math.PI / 2);
   fc2.visible = fc3.visible = false;
-  const DAWN = { top: 0x39486a, hor: 0xe7a36a, stars: 0.12, fog: [0xb89a86, 50, 420], sun: [0xffb070, 1.3, 60, 12, 40], hemi: [0xd9c4c8, 0x6a5a4c, 1.9], fill: 1.6 };
+  const DAWN = { top: 0x39486a, hor: 0xe7a36a, stars: 0.12, fog: [0xb89a86, 50, 420], sun: [0xffb070, 1.3, 60, 12, 40], hemi: [0xd9c4c8, 0x6a5a4c, 1.9], fill: 1.6, haze: 0xa89090, glow: 0.55 };
   const DAYL = Q.light;
   Q.props.gallows = gal;
   let dawn = false;

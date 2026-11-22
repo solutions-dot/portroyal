@@ -144,3 +144,15 @@ Why these: the suggested "dry road at dusk" became an afternoon, because chapter
 **Flow.** Chapter 1 now opens at step 8, chapter 3 at step 28 (the water card leads there), and "The neighbour" goes on to step 45, so chapter 4 ends at 46. The first chapter's card now comes from `go()` like every other chapter's, with the "You are Quaco" line, and then the scene card. The autoplayer keeps a chapter's opening scene card instead of closing it. Old saves at any step still load.
 
 **Checks.** `?auto=1`: AUTO END 68, FLOW 0, through steps 8, 9, 28, 29, 45 and 46. `?test=audit` AUDIT 0 and FACES 0 in all five places; `?test=ambient` 0; `?test=held` CARRY 0; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375; `npm test` 279 pass, LINT 0 new. Each scene was screenshot with `?shot=film&key=<film>&at=<s>&ui` at six to eight moments at 1280x720 and at two or three at 390x800 and looked at: no shot passes through a wall (the search scene's move from the track to the east door goes up over the rock as a crane), nobody stands in a wall, captions sit in the lower bar, the skip button is the only control on a phone.
+
+## Hills and far ridges, 22 November 2026
+
+The owner: "the mountains in these games dont look as good as the other games". The near hills were flat-shaded with hard white patches and speckled colour, and the far ones a ring of grey-green domes.
+
+- **Far ridges** are now the engine's (`engine/ridges.js`, made in `src/main.js` as `RIDGES`), as in Nanny Town: rings of jagged ridges that follow the camera and go blue into the haze. St Ann has a full ring, lower than Nanny's mountains (limestone hill country all round). Spanish Town has them only to the north (`shape`; north is -z), the hills of St Catherine above the plain. `light()` tones them for each hour: a place light may give `haze` and `glow` (dusk 0.62, late dusk 0.4, dawn in Spanish Town 0.55, day 1); the hall, indoors, draws none. The old `hillRing` backdrops are gone from `hills()` and the town.
+- **Near hills** (`cockpitHill`, `karstHill` in `src/scenery.js`) are smooth-shaded and coloured by soft noise through one `forest()` helper: a canopy of darker and lighter greens, shaded by height, with a few small warm grey limestone patches on the steep sides among the trees. No white, no speckle.
+- **The sinkhole's rock walls** are warm grey limestone with moss and ferns gathering toward the wooded top.
+
+**Search scene on a phone.** The crane and the last shot are reframed so the captain and Hector stay in frame at 390x800: the crane looks down at the two men on the track, the east door is seen square on from the east (it was hidden behind the tower in a tall frame), and the last shot looks up the track from behind them to the house.
+
+Checks: `?auto=1` AUTO END 68, FLOW 0; `?test=audit` AUDIT 0 and FACES 0 in all five places; `?test=ambient` 0; `?test=held` CARRY 0; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375; `npm test` 279 pass, LINT 0 new. Before and after screenshots from the road, the castle at dusk and late dusk, the hole, the town and the dawn scene were compared by eye.

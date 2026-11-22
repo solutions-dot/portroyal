@@ -4,6 +4,7 @@
 import * as THREE from "three";
 import { T, cv, grain, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 import { loftSkin } from "../../../engine/loft.js";
+import { vnoise, fbm } from "../../../engine/ridges.js";
 import * as W from "./world.js";
 import { makeDoor } from "../../../engine/door.js";
 
@@ -161,7 +162,23 @@ const M = {
 
 /* ---------- the land ---------- */
 /* a karst hill: steep-sided and round-topped, wooded, with pale crags where the limestone shows. One coloured mesh. */
-const HILL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
+/* hills are smooth-shaded (as Nanny Town's land), coloured by soft noise: a forest canopy of darker and lighter greens, and here and there a
+   small patch of warm grey limestone among the trees, as in the photographs of the country round the castle. No speckle, no white. */
+const HILL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 });
+const CANOPY_DARK = [0.19, 0.3, 0.14],
+  CANOPY_LIGHT = [0.34, 0.44, 0.21],
+  LIMESTONE = [0.5, 0.47, 0.39];
+/* the colour of a wooded limestone hillside at a point: u, v are smooth coordinates on the hill, y its height (0 to 1), rock 0 to 1 */
+function forest(col, k, u, v, y, rock, seed, tone = null) {
+  const n = fbm(u, v, 3, seed),
+    fine = vnoise(u * 4.1, v * 4.1, seed + 5),
+    shade = (0.78 + 0.34 * y) * (0.9 + 0.2 * fine),
+    t = tone ? [tone[0] / 0.27, tone[1] / 0.36, tone[2] / 0.19] : [1, 1, 1];
+  for (let j = 0; j < 3; j++) {
+    const g = (CANOPY_DARK[j] + (CANOPY_LIGHT[j] - CANOPY_DARK[j]) * n) * t[j] * shade;
+    col[k * 3 + j] = g + (LIMESTONE[j] * (0.85 + 0.25 * fine) - g) * rock;
+  }
+}
 export function karstHill(r = 30, h = 26, seed = 1, base = [0.3, 0.4, 0.24], crag = 0.3) {
   const rr = rng(seed),
     geo = new THREE.SphereGeometry(1, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2),
@@ -177,12 +194,10 @@ export function karstHill(r = 30, h = 26, seed = 1, base = [0.3, 0.4, 0.24], cra
       bump = 1 + 0.1 * Math.sin(a * 3 + p1) + 0.06 * Math.sin(a * 7 + p2) + 0.05 * Math.sin(a * 5 + y * 6 + p1),
       yy = Math.pow(Math.max(0, y), 0.72) * (1 + 0.07 * Math.sin(a * 4 + p2));
     pos.setXYZ(k, x * bump, yy, z * bump);
-    const wood = Math.sin(a * 9 + p1 + y * 11) * Math.sin(a * 4 + y * 5 + p2),
-      rock = y > 0.1 && y < 0.72 && Math.sin(a * 6 + p2 * 2 + y * 4) > 1 - crag,
-      v = (0.76 + 0.42 * y) * (wood > 0.2 ? 0.74 : 1) * (0.94 + rr() * 0.12);
-    col[k * 3] = rock ? 0.62 + rr() * 0.08 : base[0] * v;
-    col[k * 3 + 1] = rock ? 0.6 + rr() * 0.08 : base[1] * v;
-    col[k * 3 + 2] = rock ? 0.54 + rr() * 0.06 : base[2] * v;
+    const cx = Math.cos(a) * 3 + p1 + y * 2,
+      cz = Math.sin(a) * 3 + p2,
+      stone = y > 0.1 && y < 0.72 ? Math.max(0, (vnoise(cx * 2, cz * 2, seed + 3) - (1 - crag * 0.5)) / (crag * 0.5)) : 0;
+    forest(col, k, cx, cz, y, Math.min(0.6, stone * 1.2), seed);
   }
   geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
   geo.computeVertexNormals();
@@ -217,18 +232,11 @@ export function cockpitHill(r = 18, h = 22, seed = 1, { bare = 0.32, tone = [0.2
       y = Math.max(0, prof + (rock ? -0.015 : crown) * (rho < 0.99 ? 1 : 0)),
       rad = rho * lobe * (rock ? 0.985 : 1);
     pos.setXYZ(k, Math.cos(a) * rad, y, Math.sin(a) * rad);
-    const blotch = Math.sin(a * 13 + p1 + rho * 17) * Math.sin(a * 9 + rho * 13 + p3),
-      v = (0.72 + 0.4 * y) * (blotch > 0.25 ? 0.72 : blotch < -0.4 ? 1.18 : 1) * (0.92 + rr() * 0.16);
-    if (rock) {
-      const g = 0.7 + rr() * 0.1;
-      col[k * 3] = g;
-      col[k * 3 + 1] = g * 0.97;
-      col[k * 3 + 2] = g * 0.88;
-    } else {
-      col[k * 3] = tone[0] * v;
-      col[k * 3 + 1] = tone[1] * v;
-      col[k * 3 + 2] = tone[2] * v;
-    }
+    /* small patches of bare stone only on the steep sides, half hidden by the trees */
+    const cx = Math.cos(a) * rho * 3 + p1,
+      cz = Math.sin(a) * rho * 3 + p2,
+      stone = steep ? Math.max(0, (vnoise(cx * 2.2, cz * 2.2, seed + 3) - (1 - bare * 0.55)) / (bare * 0.55)) : 0;
+    forest(col, k, cx, cz, y, Math.min(0.7, stone * 1.4), seed, tone);
   }
   geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
   geo.computeVertexNormals();
@@ -1011,9 +1019,12 @@ export function cliffRing(R = 15, H = 10, { seed = 3, gap = [0.9, 1.6], seg = 44
       for (const [p, u] of [[a, [i / 3, k / rows]], [d, [i / 3, (k + 1) / rows]], [b, [(i + 1) / 3, k / rows]], [b, [(i + 1) / 3, k / rows]], [d, [i / 3, (k + 1) / rows]], [c, [(i + 1) / 3, (k + 1) / rows]]]) {
         P.push(p[0], p[1], p[2]);
         U.push(u[0], u[1]);
-        const v = p[3];
+        /* warm grey limestone, with ferns and moss gathering toward the wooded top and in streaks down the face */
+        const v = p[3],
+          up = (k + (p === c || p === d ? 1 : 0)) / rows,
+          moss = Math.min(0.8, Math.max(0, (up - 0.55) / 0.45) * 0.6 + Math.max(0, vnoise(i * 0.45, up * 3, 4) - 0.55) * 1.4);
         if (top) C.push(0.36 * v, 0.46 * v, 0.28 * v);
-        else C.push(v, v, v * 0.97);
+        else C.push((0.84 + (0.42 - 0.84) * moss) * v, (0.79 + (0.5 - 0.79) * moss) * v, (0.68 + (0.3 - 0.68) * moss) * v);
       }
     }
   const geo = new THREE.BufferGeometry();
