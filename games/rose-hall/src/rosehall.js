@@ -833,61 +833,195 @@ export function tablet(w = 0.8, h = 1.0, seed = 1) {
   }
   return g;
 }
-/* The monument to Rosa Palmer, by John Bacon, 1794: white marble on a dark ground. A general picture in the manner of Bacon's wall
-   monuments (a mourning woman who leans on an urn, above the words): it was not modelled from a photograph, and the doc says so.
-   The words on the tablet are the monument's own first lines. Flat on a wall, facing +z; origin at the middle of the tablet's foot. */
-export function rosaMonument() {
-  const g = grp();
-  /* the dark ground: a tall pointed slab */
-  const slab = new THREE.Shape();
-  slab.moveTo(-1.05, 0.1);
-  slab.lineTo(1.05, 0.1);
-  slab.lineTo(1.05, 1.5);
-  slab.lineTo(0, 4.1);
-  slab.lineTo(-1.05, 1.5);
-  g.add(new THREE.Mesh(new THREE.ExtrudeGeometry(slab, { depth: 0.06, bevelEnabled: false }), SLATE));
-  /* the tablet and its mouldings */
-  box(1.7, 1.05, 0.1, MARBLE, 0, 0.72, 0.1, g);
-  box(1.9, 0.09, 0.2, MARBLE, 0, 1.29, 0.12, g);
-  box(1.84, 0.05, 0.16, MARBLE, 0, 1.36, 0.11, g);
-  box(1.9, 0.1, 0.2, MARBLE, 0, 0.15, 0.12, g);
-  const apron = mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.08, 16, 1, false, Math.PI / 2, Math.PI), MARBLE, 0, 0.1, 0.1, g);
-  apron.rotation.x = Math.PI / 2;
-  for (const s of [-1, 1]) box(0.12, 0.26, 0.14, MARBLE, s * 0.84, -0.03, 0.1, g);
-  const tex = cv(768, 474, (x, W, H) => {
-    x.fillStyle = "#f2f0ea";
+/* The monument to Rosa Palmer, by John Bacon the elder, 1794, in St James Parish Church, Montego Bay. Modelled on Tim Willasey-Wilsey's
+   photograph (Victorian Web, sculpture/baconsenior/4.html) and Frank Cundall's note quoted there (docs/games/rose-hall.md, "The monument").
+   From the floor up: a plinth; the inscription panel of warm veined marble between two plain pilasters; a moulded shelf; a low slab with
+   a rounded front on which the figures stand. Behind them a tall pointed ground of dark blue-grey marble, and on it a tapering panel of
+   white veined marble with a covered classical lamp on its flat top. The figures: a draped mourning woman, her head bowed, leans to her
+   left over a tall vase on a square pedestal and lays a garland on it; on the vase a round medallion with a head (Cundall: "in all
+   probability the head on the vase represents the features of Rosa Palmer"); a small ewer at her right, a little basket at her left.
+   The words on the panel are the monument's own first lines. Origin on the floor at the middle of its foot, against a wall, facing +z. */
+const veins = (base, line, seed, n) =>
+  cv(512, 512, (x, W, H) => {
+    const r = rng(seed);
+    x.fillStyle = base;
     x.fillRect(0, 0, W, H);
+    x.strokeStyle = line;
+    for (let i = 0; i < n; i++) {
+      let px = r() * W,
+        py = r() * H;
+      const a = r() * 6.28;
+      x.lineWidth = 0.6 + r() * 1.6;
+      x.globalAlpha = 0.25 + r() * 0.45;
+      for (const [ox, oy] of [[0, 0], [W, 0], [-W, 0], [0, H], [0, -H]]) {
+        let qx = px + ox,
+          qy = py + oy,
+          b = a;
+        const rr = rng(seed * 100 + i);
+        x.beginPath();
+        x.moveTo(qx, qy);
+        for (let k = 0; k < 9; k++) {
+          b += (rr() - 0.5) * 0.9;
+          qx += Math.cos(b) * 26;
+          qy += Math.sin(b) * 26;
+          x.lineTo(qx, qy);
+        }
+        x.stroke();
+      }
+    }
+    x.globalAlpha = 1;
+  });
+export function rosaMonument() {
+  const g = grp(),
+    PALE = std(veins("#f1efe9", "#7d8288", 21, 46), 0.45),
+    WARM = solid(0xe6dccb, 0.5),
+    GROUND = solid(0x2c3446, 0.35);
+  PALE.map.repeat.set(0.62, 0.62);
+  /* the plinth, the panel between its pilasters, the shelf and the slab the figures stand on */
+  box(1.36, 0.22, 0.5, MARBLE, 0, 0.11, 0.25, g);
+  box(1.42, 0.05, 0.54, MARBLE, 0, 0.245, 0.27, g);
+  box(1.3, 0.08, 0.48, MARBLE, 0, 0.31, 0.24, g);
+  box(1.2, 0.8, 0.38, WARM, 0, 0.75, 0.19, g);
+  for (const s of [-1, 1]) {
+    box(0.13, 0.82, 0.44, MARBLE, s * 0.665, 0.76, 0.22, g);
+    box(0.17, 0.05, 0.47, MARBLE, s * 0.665, 1.15, 0.235, g);
+  }
+  box(1.52, 0.06, 0.5, MARBLE, 0, 1.2, 0.25, g);
+  box(1.46, 0.05, 0.46, MARBLE, 0, 1.15, 0.23, g);
+  box(1.24, 0.1, 0.3, MARBLE, 0, 1.28, 0.15, g);
+  const lip = mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.1, 24, 1, false, -Math.PI / 2, Math.PI), MARBLE, 0, 1.28, 0.3, g);
+  lip.scale.z = 0.26;
+  const tex = cv(768, 512, (x, W, H) => {
+    x.fillStyle = "#efe6d6";
+    x.fillRect(0, 0, W, H);
+    const r = rng(5);
+    x.strokeStyle = "#b9a184";
+    for (let i = 0; i < 22; i++) {
+      x.globalAlpha = 0.18 + r() * 0.2;
+      x.lineWidth = 1 + r() * 2;
+      x.beginPath();
+      let px = r() * W,
+        py = r() * H;
+      x.moveTo(px, py);
+      for (let k = 0; k < 6; k++) x.lineTo((px += (r() - 0.3) * 120), (py += (r() - 0.5) * 60));
+      x.stroke();
+    }
+    x.globalAlpha = 1;
     x.fillStyle = "#2b2620";
     x.textAlign = "center";
     x.textBaseline = "middle";
     const rows = ["Near this place", "are deposited the Remains of", "Mrs ROSA PALMER,", "who died on the first day of May 1790.", "Her manners were open,", "cheerful and agreeable"];
     rows.forEach((t, i) => {
-      x.font = (i === 2 ? "bold 50px" : "italic 36px") + " Georgia, serif";
-      x.fillText(t, W / 2, 56 + i * 72, W * 0.92);
+      x.font = (i === 2 ? "bold 52px" : "italic 40px") + " Georgia, serif";
+      x.fillText(t, W / 2, 60 + i * 78, W * 0.92);
     });
   });
-  plane(1.56, 0.96, std(tex, 0.6), 0, 0.72, 0.152, g);
-  /* the pedestal, the urn and the mourning woman, in the round but shallow */
-  const fig = grp(g, 0, 1.38, 0.12);
-  box(0.5, 0.62, 0.3, MARBLE, 0.3, 0.31, 0.06, fig);
-  box(0.58, 0.05, 0.36, MARBLE, 0.3, 0.645, 0.06, fig);
-  const urn = lathe([[0.05, 0], [0.09, 0.03], [0.04, 0.07], [0.05, 0.1], [0.19, 0.24], [0.21, 0.36], [0.14, 0.45], [0.09, 0.47], [0.12, 0.5], [0.06, 0.56], [0.03, 0.6], [0.045, 0.63], [0.001, 0.66]], MARBLE, 16);
-  urn.position.set(0.3, 0.67, 0.06);
-  urn.scale.z = 0.7;
-  fig.add(urn);
-  const robe = lathe([[0.27, 0], [0.25, 0.3], [0.2, 0.75], [0.17, 1.0], [0.19, 1.2], [0.15, 1.34], [0.07, 1.4]], MARBLE, 14);
-  robe.position.set(-0.3, 0, 0.06);
-  robe.scale.z = 0.62;
-  robe.rotation.z = -0.07;
-  fig.add(robe);
-  const head = mesh(new THREE.SphereGeometry(0.105, 12, 10), MARBLE, -0.2, 1.47, 0.08, fig);
-  head.scale.set(0.9, 1.1, 0.9);
-  const veil = mesh(new THREE.SphereGeometry(0.13, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.6), MARBLE, -0.21, 1.48, 0.06, fig);
-  veil.rotation.z = -0.4;
-  const arm = cyl(0.045, 0.04, 0.52, MARBLE, -0.02, 1.2, 0.1, fig, 8);
-  arm.rotation.z = -1.15;   /* the arm that rests on the urn */
-  const drape = box(0.34, 0.5, 0.1, MARBLE, 0.12, 0.93, 0.1, fig);
-  drape.rotation.z = 0.2;
+  plane(1.12, 0.74, std(tex, 0.6), 0, 0.75, 0.382, g);
+  /* the pointed dark ground (sides straight to 2.5 m, then two arcs to a point) and the tapering white panel on it */
+  const a = 0.83,
+    y0 = 2.5,
+    h = 1.83,
+    d = (h * h - a * a) / (2 * a),
+    r = a + d,
+    th = Math.acos(d / r);
+  const arch = new THREE.Shape();
+  arch.moveTo(-a, 1.2);
+  arch.lineTo(a, 1.2);
+  arch.lineTo(a, y0);
+  arch.absarc(-d, y0, r, 0, th, false);
+  arch.absarc(d, y0, r, Math.PI - th, Math.PI, false);
+  arch.lineTo(-a, 1.2);
+  g.add(new THREE.Mesh(new THREE.ExtrudeGeometry(arch, { depth: 0.05, bevelEnabled: false, curveSegments: 16 }), GROUND));
+  const pan = new THREE.Shape();
+  pan.moveTo(-0.76, 1.3);
+  pan.lineTo(0.76, 1.3);
+  pan.lineTo(0.33, 3.92);
+  pan.lineTo(-0.33, 3.92);
+  pan.lineTo(-0.76, 1.3);
+  const pm = new THREE.Mesh(new THREE.ExtrudeGeometry(pan, { depth: 0.04, bevelEnabled: false }), PALE);
+  pm.position.z = 0.05;
+  g.add(pm);
+  /* the covered lamp on the panel's flat top */
+  const lamp = grp(g, 0, 3.92, 0.12);
+  box(0.7, 0.04, 0.14, MARBLE, 0, 0.0, -0.02, g).position.set(0, 3.94, 0.1);
+  lamp.position.y = 3.96;
+  lamp.add(lathe([[0.05, 0], [0.06, 0.02], [0.025, 0.04], [0.03, 0.06], [0.14, 0.1], [0.16, 0.13], [0.12, 0.16], [0.05, 0.17], [0.03, 0.2], [0.035, 0.23], [0.001, 0.25]], MARBLE, 14));
+  const spout = cyl(0.025, 0.04, 0.2, MARBLE, 0.2, 0.135, 0, lamp, 8);
+  spout.rotation.z = Math.PI / 2 - 0.25;
+  const handle = mesh(new THREE.TorusGeometry(0.045, 0.012, 5, 10, Math.PI * 1.3), MARBLE, -0.17, 0.14, 0, lamp);
+  handle.rotation.z = Math.PI * 0.35;
+  lamp.scale.z = 0.6;
+  /* the pedestal and the tall vase with its medallion head and garland */
+  const F = grp(g, 0, 1.33, 0.26);
+  box(0.42, 0.42, 0.34, MARBLE, 0.2, 0.21, 0, F);
+  box(0.46, 0.04, 0.38, MARBLE, 0.2, 0.44, 0, F);
+  box(0.3, 0.26, 0.01, solid(0xe6e3dc, 0.55), 0.2, 0.21, 0.172, F);
+  const vase = lathe([[0.001, 0], [0.09, 0], [0.09, 0.03], [0.05, 0.06], [0.035, 0.12], [0.06, 0.16], [0.13, 0.24], [0.19, 0.36], [0.2, 0.46], [0.16, 0.6], [0.1, 0.68], [0.09, 0.72], [0.13, 0.76], [0.13, 0.79], [0.001, 0.8]], MARBLE, 18);
+  vase.position.set(0.2, 0.46, 0);
+  vase.scale.z = 0.8;
+  F.add(vase);
+  const medal = mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.03, 18), solid(0xf6f4ef, 0.5), 0.2, 0.88, 0.172, F);
+  medal.rotation.x = Math.PI / 2;
+  const face = mesh(new THREE.SphereGeometry(0.055, 10, 8), MARBLE, 0.2, 0.89, 0.185, F);
+  face.scale.set(0.85, 1.1, 0.45);
+  for (const s of [-1, 1]) {
+    const fest = mesh(new THREE.TorusGeometry(0.11, 0.022, 5, 10, Math.PI), solid(0xeceae2, 0.6), 0.2 + s * 0.12, 1.0, 0.13, F);
+    fest.rotation.z = Math.PI;
+    fest.rotation.y = s * 0.5;
+  }
+  /* the mourning woman: she stands at the left, leans to her left over the vase, head bowed, a mantle falling behind her */
+  const W2 = grp(F, -0.24, 0, 0.02);
+  const skirt = lathe([[0.001, 0], [0.24, 0], [0.25, 0.04], [0.21, 0.3], [0.17, 0.6], [0.15, 0.86], [0.001, 0.92]], MARBLE, 16);
+  skirt.scale.z = 0.7;
+  skirt.rotation.z = -0.05;
+  W2.add(skirt);
+  const foot = mesh(new THREE.SphereGeometry(0.05, 8, 6), MARBLE, 0.04, 0.03, 0.18, W2);
+  foot.scale.set(1, 0.6, 1.6);
+  const torso = grp(W2, 0.02, 0.84, 0);
+  torso.rotation.z = -0.5;
+  torso.rotation.x = 0.15;
+  const chest = lathe([[0.15, 0], [0.13, 0.12], [0.13, 0.3], [0.15, 0.42], [0.08, 0.5], [0.001, 0.52]], MARBLE, 14);
+  chest.scale.z = 0.72;
+  torso.add(chest);
+  cyl(0.04, 0.045, 0.1, MARBLE, 0, 0.55, 0.01, torso, 8);
+  const headG = grp(torso, 0.03, 0.64, 0.04);
+  headG.rotation.z = -0.55;
+  headG.rotation.x = 0.45;
+  const head = mesh(new THREE.SphereGeometry(0.09, 12, 10), MARBLE, 0, 0, 0, headG);
+  head.scale.set(0.9, 1.12, 0.95);
+  const hair = mesh(new THREE.SphereGeometry(0.1, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), solid(0xe6e2d8, 0.6), 0, 0.02, -0.015, headG);
+  hair.rotation.x = -0.3;
+  const veil = mesh(new THREE.SphereGeometry(0.11, 10, 8, Math.PI * 0.5, Math.PI, 0, Math.PI * 0.6), MARBLE, 0, 0.01, -0.02, headG);
+  veil.scale.set(1, 1.15, 1);
+  /* arms, in the frame of the pedestal: both reach to the vase's lip and hold the garland */
+  const limb = (p, q, r0, r1) => {
+    const a = new THREE.Vector3(...p),
+      v = new THREE.Vector3(...q).sub(a),
+      c = cyl(r1, r0, v.length(), MARBLE, a.x + v.x / 2, a.y + v.y / 2, a.z + v.z / 2, F, 8);
+    c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.normalize());
+    mesh(new THREE.SphereGeometry(r1, 8, 6), MARBLE, q[0], q[1], q[2], F);
+  };
+  limb([-0.16, 1.22, 0.06], [-0.04, 1.02, 0.2], 0.045, 0.036);
+  limb([-0.04, 1.02, 0.2], [0.11, 1.18, 0.17], 0.036, 0.03);
+  limb([0.0, 1.3, 0.1], [0.17, 1.12, 0.2], 0.042, 0.034);
+  limb([0.17, 1.12, 0.2], [0.27, 1.22, 0.15], 0.034, 0.03);
+  /* the mantle: a fold from the shoulders down her back and her left side to the ground */
+  const mantle = lathe([[0.001, 0], [0.19, 0.02], [0.26, 0.42], [0.21, 0.78], [0.11, 1.06], [0.001, 1.12]], solid(0xe9e6de, 0.55), 14);
+  mantle.position.set(-0.14, 0.01, -0.05);
+  mantle.rotation.z = -0.14;
+  mantle.scale.z = 0.55;
+  W2.add(mantle);
+  /* the small ewer at her right and the little basket of flowers at her left */
+  const ewer = lathe([[0.001, 0], [0.05, 0], [0.06, 0.05], [0.045, 0.12], [0.03, 0.16], [0.05, 0.2], [0.001, 0.2]], MARBLE, 10);
+  ewer.position.set(0.52, 0, 0.06);
+  ewer.rotation.z = 0.25;
+  F.add(ewer);
+  mesh(new THREE.TorusGeometry(0.04, 0.01, 4, 8, Math.PI), MARBLE, 0.47, 0.13, 0.06, F).rotation.z = 1.9;
+  const basket = lathe([[0.001, 0], [0.06, 0], [0.09, 0.06], [0.1, 0.09], [0.001, 0.09]], MARBLE, 10);
+  basket.position.set(-0.6, 0, 0.04);
+  F.add(basket);
+  const rb = rng(9);
+  for (let i = 0; i < 6; i++) mesh(new THREE.IcosahedronGeometry(0.03, 0), MARBLE, -0.6 + (rb() - 0.5) * 0.15, 0.1 + rb() * 0.04, 0.04 + (rb() - 0.5) * 0.1, F);
   return g;
 }
 /* a pulpit: an eight-sided tub on a stem, a short stair, a sounding board is left off */

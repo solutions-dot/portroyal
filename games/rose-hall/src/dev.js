@@ -15,7 +15,7 @@ import { skinProbe } from "../../../engine/skinprobe.js";
 import { walkRoute, routeIssues } from "../../../engine/placement.js";
 import { CAST, BASES, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS } from "./steps.js";
-import { CHAPTERS, TALK } from "./content.js";
+import { CHAPTERS, TALK, FILMS, QUIZ } from "./content.js";
 import { PLACE_IDS } from "./places.js";
 import { makeAdapter, CHECK_TABLES } from "./checktables.js";
 import { $, closeAll } from "./ui.js";
@@ -344,6 +344,58 @@ export async function dev(A) {
       await wait(0);
     }
     results.push("CARRY " + A.carry.issues().length, ...A.carry.issues());
+  }
+  /* how long each chapter takes a child: walking at 2.6 m/s around walls, 3 s per dialogue line or line of a look panel, 6 s per card
+     (the chapter's opening card, each note, each quiz question), and the camera scene's length (docs/games/rose-hall.md, "Timing") */
+  if (test === "timing") {
+    const out = [];
+    let pos = null,
+      place = null,
+      tot = 0;
+    for (const ch of CHAPTERS) {
+      let walk = 0,
+        lines = 0,
+        cards = 1,
+        film = 0;
+      for (let st = ch.first; st !== null && st >= ch.first && st <= ch.last; st = STEPS[st].film ? FILMS[STEPS[st].film].next : STEPS[st].next) {
+        const R = STEPS[st],
+          Q = worlds[R.place];
+        if (R.place !== place || st === ch.first) {
+          place = R.place;
+          pos = [Q.start.x, Q.start.z];
+        }
+        Q.enter?.(st);
+        const targets = [];
+        for (const id of R.needs?.talk || []) {
+          const n = Q.people.find((n) => n.id === id);
+          targets.push(n ? [n.x, n.z] : pos);
+          lines += (TALK[st]?.[id] || []).length;
+        }
+        for (const id of R.needs?.do || []) {
+          targets.push(LOOKS[id].at);
+          lines += LOOKS[id].lines.length;
+        }
+        for (const t of targets) {
+          let d = 0,
+            a = pos;
+          for (const p of walkRoute(a, t, Q.walls, 0.23, Q.bounds) || [t]) {
+            d += Math.hypot(p[0] - a[0], p[1] - a[1]);
+            a = p;
+          }
+          walk += Math.max(0, d - 1.3);
+          pos = t;
+        }
+        if (R.wait) {
+          if (R.film) film = FILMS[R.film].duration;
+          cards += R.card === "quiz" ? (QUIZ.questions || QUIZ.items || []).length || 8 : 1;
+        }
+      }
+      const sec = walk / 2.6 + lines * 3 + cards * 6 + film;
+      tot += sec;
+      out.push("TIMING " + ch.id + " walk " + walk.toFixed(0) + " m, " + lines + " lines, " + cards + " cards, film " + film + " s: " + (sec / 60).toFixed(1) + " min");
+    }
+    out.push("TIMING total " + (tot / 60).toFixed(1) + " min");
+    results.push(...out);
   }
   if (test === "resume") {
     for (const st of Object.keys(STEPS).map(Number)) {

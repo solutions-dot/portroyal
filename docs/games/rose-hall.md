@@ -102,3 +102,7 @@ No rose-hall body was rebuilt in this pass (the new builder keys are not used he
 
 - Bring the monument closer to its photograph, and check the Jamaica Archives building date.
 - Cloth, skin and walkers checks; a hand play on a phone; timing of each chapter; sound for the shadow show.
+
+## Second pass, 22 November 2026
+
+Finished from the paused job saved in `docs/wip/`: Rosa Palmer's monument rebuilt in a dark arched niche by the altar, with a mourning figure by an urn over the inscribed tablet (a closer picture of John Bacon's work, still not a copy of the photograph), more for the cousin to say between chapters, and a journal page, "What the book says of them", that gives each named person only the words the Rose Hall Journal gives. Tia was moved off the player's start in the archives. Checks: `?auto=1` to step 66, `FLOW 0`, audit 0 in all four places, ambient 0, held 0, layout 0 at 390x800 and 667x375; content lint 0 new.

@@ -399,6 +399,11 @@ function house({ phone } = {}) {
     if (lamp) lamp.intensity = dark ? 9 : 0;
     Q.relight?.();
   };
+  /* the hall window (Hakewill's sea view) and the drawing-room mirror the modern tours talk about */
+  const tWin = tagAt(Q, "RECORD", -2.0, 0.0, -4.5, 0, 1.2),
+    tMirror = tagAt(Q, "LEGEND", -4.4, 0.0, -2.0, -Math.PI / 2, 1.2);
+  Q.reveal.window = (seen) => (tWin.visible = seen);
+  Q.reveal.mirror = (seen) => (tMirror.visible = seen);
   Q.reveal.portraits = (seen) => {
     picsSeen = seen;
     tPic.visible = seen;
@@ -443,11 +448,11 @@ function house({ phone } = {}) {
   /* the people of the tour. Miss Bryan leads from room to room; Tia comes with you. */
   person(Q, "guide", "guide", -1.9, -1.2, face(-1.9, -1.2, 0, -3.3), { kind: "watch", at: [0, -3.3], idles: ["Idle"], react: ["HeadTurn", "Point"], every: [5, 9] }, { held: "lantern" });
   person(Q, "cousin", "cousin", 1.3, -2.6, face(1.3, -2.6, 0, 1), { kind: "watch", at: [0, 2], idles: ["Idle"], react: ["HeadTurn"], every: [4, 7] });
-  crowd(Q, "rh_man", -2.6, -2.9, face(-2.6, -2.9, -3.5, -2.9), { kind: "watch", at: [-3.5, -2.9], react: ["HeadTurn", "Nod"], every: [5, 9] });
+  crowd(Q, "rh_man", 2.0, -3.5, face(2.0, -3.5, 2.7, -4.8), { kind: "watch", at: [2.7, -4.8], react: ["HeadTurn", "Nod"], every: [5, 9] });
   crowd(Q, "rh_elder", 8.4, 3.2, face(8.4, 3.2, 9.75, 4.4), { kind: "watch", at: [9.75, 4.4], react: ["HeadTurn", "Nod"], every: [5, 9] });
   crowd(Q, "rh_woman", -12.3, -1.9, 0, { kind: "chat", group: "a", at: [-12.0, -1.6] });
   crowd(Q, "rh_youth", -11.5, -1.2, 0, { kind: "chat", group: "a" });
-  Q.keepOff = [{ at: [0, -0.5], r: 1 }, { at: [3.0, -0.3], r: 0.9 }, { at: [6.6, 0.4], r: 0.9 }, { at: [-13.2, 0], r: 1 }, { at: [-9.5, 1.9], r: 1 }, { at: [-9.5, -1.4], r: 1 }];
+  Q.keepOff = [{ at: [0, -0.5], r: 1 }, { at: [3.0, -0.3], r: 0.9 }, { at: [6.6, 0.4], r: 0.9 }, { at: [-13.2, 0], r: 1 }, { at: [-9.5, 1.9], r: 1 }, { at: [-9.5, -1.4], r: 1 }, { at: [-2.7, -3.7], r: 0.8 }, { at: [-5.3, -2.9], r: 0.8 }];
   const stage = staging(
     Q,
     {
@@ -544,7 +549,7 @@ function church() {
   for (const z of [-2.2, 4.6]) fans.push(add(Q, R.ceilingFan(0.5), 0, z, H - 0.1));
   Q.tickers.push((t) => fans.forEach((f) => f.userData.spin(t)));
   /* the monument, on the east wall to the left of the altar, and the church's own note about it on a small desk */
-  add(Q, R.rosaMonument(), -4.0, -10.78, 1.15);
+  add(Q, R.rosaMonument(), -4.0, -10.78, 0);
   wall(Q, -4.0, -10.4, 2.2, 0.5);
   const lampGlow = add(Q, R.glowPool(1.3, 0.35), -4.0, -10.77, 2.2);
   solid1(Q, R.lectern(solid(0x6e5238, 0.7)), -5.7, -8.6, 0.6, 0.6, Math.PI / 2);
@@ -558,14 +563,16 @@ function church() {
     lampGlow.visible = seen;
   };
   Q.reveal.husbands = (seen) => (tNote.visible = seen);
+  const tWin = tagAt(Q, "RECORD", 1.3, 0.0, -9.4, 0, 1.4);
+  Q.reveal.eastwin = (seen) => (tWin.visible = seen);
   R.flameSets(G);
   person(Q, "warden", "warden", -1.5, -8.5, face(-1.5, -8.5, 0, 0), { kind: "watch", at: [-4.0, -10.8], idles: ["Idle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
   person(Q, "cousin", "cousin", 1.4, 7.0, face(1.4, 7.0, 0, 0), { kind: "watch", at: [0, -10], idles: ["Idle"], react: ["HeadTurn"], every: [4, 7] });
   crowd(Q, "rh_elder", 5.4, 3.0, face(5.4, 3, 6.3, 4.9), { kind: "wander", pts: [[5.4, 3.0], [5.5, 4.9], [5.4, 0.7], [5.5, -3.5]], pause: [4, 8] });
-  crowd(Q, "rh_woman", 1.6, -8.6, face(1.6, -8.6, 2.2, -9.9), { kind: "work", clips: ["Idle", "PickUp", "HeadTurn"], work: [5, 9], face: [2.2, -9.9] });
+  crowd(Q, "rh_woman", 2.6, -8.9, face(2.6, -8.9, 2.2, -9.9), { kind: "work", clips: ["Idle", "PickUp", "HeadTurn"], work: [5, 9], face: [2.2, -9.9] });
   crowd(Q, "rh_man", -5.3, 5.6, face(-5.3, 5.6, -6.3, 4.9), { kind: "watch", at: [-6.3, 4.9], react: ["HeadTurn", "Nod"], every: [5, 9] });
   Q.walls.push([-6.2, -7.8, -0.8, -7.4], [0.8, -7.8, 6.2, -7.4]);
-  Q.keepOff = [{ at: [-4.0, -9.5], r: 1.0 }, { at: [-4.9, -8.6], r: 0.8 }, { at: [0, -7.6], r: 0.9 }];
+  Q.keepOff = [{ at: [-4.0, -9.5], r: 1.0 }, { at: [-4.9, -8.6], r: 0.8 }, { at: [0, -7.6], r: 0.9 }, { at: [0.9, -8.7], r: 0.8 }];
   R.ashlarFit(G);
   Q.enter = staging(Q, {}, { cousin: [30, 39] });
   return Q;
@@ -666,16 +673,18 @@ function archive() {
   solid1(Q, R.catalogue(6, 7), 7.52, -2.9, 1.3, 0.6, -Math.PI / 2);
   solid1(Q, R.catalogue(6, 7), 7.52, -1.5, 1.3, 0.6, -Math.PI / 2);
   solid1(Q, R.displayCase(1.5, 0.7), 7.3, 1.6, 1.5, 0.75, Math.PI / 2);
-  add(Q, P.sheet("", 0.5, 0.4), 7.3, 1.6, 0.91);
+  add(Q, P.sheet("SLAVE REGISTER", 0.5, 0.4), 7.3, 1.6, 0.91, Math.PI / 2);   /* the register in the case: Annie Palmer held four people in 1829 */
+  const tReg = tagAt(Q, "RECORD", 6.85, 0.0, 2.3, Math.PI / 2, 1.2);
+  Q.reveal.register = (seen) => (tReg.visible = seen);
   solid1(Q, R.potPlant(3, 1.1), -7.2, 4.6, 0.6, 0.6);
   solid1(Q, R.potPlant(5, 1.0), 7.3, 4.6, 0.6, 0.6);
   solid1(Q, R.potPlant(8, 1.0), 7.3, -4.7, 0.6, 0.6);
   person(Q, "archivist", "archivist", -5.2, 1.6, face(-5.2, 1.6, 2, 3), { kind: "watch", at: [-1.7, -0.6], idles: ["Idle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
-  person(Q, "cousin", "cousin", 6.2, 2.3, face(6.2, 2.3, 7.3, 1.6), { kind: "watch", at: [7.3, 1.6], idles: ["Idle"], react: ["HeadTurn"], every: [4, 7] });
+  person(Q, "cousin", "cousin", 6.3, 2.3, face(6.3, 2.3, 7.3, 1.6), { kind: "watch", at: [7.3, 1.6], idles: ["Idle"], react: ["HeadTurn"], every: [4, 7] });
   crowd(Q, "rh_man", 6.7, -2.2, face(6.7, -2.2, 7.5, -2.2), { kind: "work", clips: ["IdleM", "PickUp", "HeadTurn", "Nod"], work: [5, 9], face: [7.5, -2.2] });
   crowd(Q, "rh_elder", 2.6, 3.6, face(2.6, 3.6, 2.5, 5.1), { kind: "wander", pts: [[2.6, 3.6], [-0.6, 3.9], [-2.4, 3.8], [3.6, 3.4]], pause: [5, 9] });
   crowd(Q, "rh_woman", -3.4, -3.6, face(-3.4, -3.6, -2, -5.4), { kind: "watch", at: [-2, -5.4], react: ["HeadTurn", "Nod"], every: [5, 9] });
-  Q.keepOff = [-4.1, -2.8, -1.5, -0.2, 0.85, 4.4, 5.6].map((x) => ({ at: [x, 0.5], r: 0.7 })).concat([{ at: [-4.4, 3.5], r: 0.9 }]);
+  Q.keepOff = [-4.1, -2.8, -1.5, -0.2, 0.85, 4.4, 5.6].map((x) => ({ at: [x, 0.5], r: 0.7 })).concat([{ at: [-4.4, 3.5], r: 0.9 }, { at: [6.5, 1.6], r: 0.7 }]);
   return Q;
 }
 
@@ -804,6 +813,13 @@ function estate() {
   solid1(Q, R.tourSign(["ROSE HALL", "Who built it?"], 0.5, 0.3), 3.2, -8.6, 0.4, 0.4, 0.2);
   const tBuilt = tagAt(Q, "RECORD", 3.2, 1.42, -8.6, 0.2);
   Q.reveal.built = (seen) => (tBuilt.visible = seen);
+  /* two more cards on stands: the clothing lists of the estate book, by the board; rebellion and freedom, by the works */
+  solid1(Q, R.tourSign(["CLOTHING", "from the estate book"], 0.5, 0.3), -8.2, -4.5, 0.4, 0.4, 0.2);
+  const tCloth = tagAt(Q, "RECORD", -8.2, 1.42, -4.5, 0.2);
+  Q.reveal.clothes = (seen) => (tCloth.visible = seen);
+  solid1(Q, R.tourSign(["FREEDOM", "1831 to 1838"], 0.5, 0.3), 5.9, -8.4, 0.4, 0.4, 0.0);
+  const tFree = tagAt(Q, "RECORD", 5.9, 1.42, -8.4, 0.0);
+  Q.reveal.freedom = (seen) => (tFree.visible = seen);
   solid1(Q, R.flowerBasket(), -2.9, 3.4, 0.7, 0.6, 0.3);
   solid1(Q, W.bench(2), 4.6, 4.4, 2.1, 0.5, -0.6);
   solid1(Q, W.bench(2), -8.4, -9.6, 2.1, 0.5, 0.2);
@@ -814,7 +830,7 @@ function estate() {
   crowd(Q, "rh_woman", -6.6, 11.2, 0, { kind: "chat", group: "g", at: [-6.2, 11.4] });
   crowd(Q, "rh_youth", -5.6, 11.9, 0, { kind: "chat", group: "g" });
   crowd(Q, "rh_youth", 18.4, -1.6, 0, { kind: "wander", pts: [[18.4, -1.6], [13.2, -2.6], [12.6, 5.6], [18.6, 5.2]], pause: [3, 6] });
-  Q.keepOff = [{ at: [-5.1, -3.6], r: 1.2 }, { at: [-15.8, 10.1], r: 1 }, { at: [3.5, -7.2], r: 1 }, { at: [-2.6, 4.6], r: 1 }, ...Object.values(Q.markSpots).map((at) => ({ at, r: 1 }))];
+  Q.keepOff = [{ at: [-5.1, -3.6], r: 1.2 }, { at: [-15.8, 10.1], r: 1 }, { at: [3.5, -7.2], r: 1 }, { at: [-2.6, 4.6], r: 1 }, { at: [-8.0, -3.3], r: 1 }, { at: [5.8, -7.1], r: 1 }, ...Object.values(Q.markSpots).map((at) => ({ at, r: 1 }))];
   Q.enter = staging(Q, { guide: { 50: [-3.4, -3.2, -5.6, -5.6], 60: [-15.0, 6.2, -19, 8.4], 62: [1.6, -6.0, 3.2, -8.6] } }, { cousin: [50, 69] });
   return Q;
 }
