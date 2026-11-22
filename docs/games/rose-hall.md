@@ -176,3 +176,7 @@ Close looks at every small thing a look or a camera scene frames, against the ow
 - **Written papers** (the church's note, the register in the case, the sheets) are old paper with the heading in an ink hand and lines of writing too small to read (`engine/page.js`): the heading is the only words, so no text is invented. The register now reads the right way up from where you stand.
 
 A new check found the pencil pot: `engine/audit-props.js` (docs/TESTING.md, "Props close up"). Checks: `?test=audit` 0 in every place (props included); `?auto=1` AUTO END 66, FLOW 0; `?test=held` CARRY 0.
+
+## Room to pass and props checks wired, 22 November 2026
+
+`?test=audit` now also runs `engine/audit-passage.js` (room to pass) and `engine/audit-props.js` (props close up). They found one corner of the drawing-room, behind the armchair and the small round table, that you could see but not reach; the table and its candelabrum moved 40 cm along the wall to open it. Audit 0 in every place, `?auto=1` AUTO END 66, FLOW 0.

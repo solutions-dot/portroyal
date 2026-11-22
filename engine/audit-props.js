@@ -1,7 +1,7 @@
 /* engine/audit-props.js: small props that do not read as the real thing close up (22 November 2026). The owner asked for the graphics to
    be polished "like the hat has no opening": a cup or pot made as a solid cylinder, a cover made as a sheet of card. Two gentle reports:
 
-   - solid pot: a small closed cylinder (radius 2.5 to 10 cm, up to 30 cm tall) with something thin standing in its top (pencils, a quill,
+   - solid pot: a small closed cylinder (radius 2.5 to 10 cm, 4 to 30 cm tall) with something thin standing in its top (pencils, a quill,
      a brush, stems; a candle as wide as its socket is held, so it is not reported), so the thing seems stuck into a solid lid. Give the pot an opening (engine/vessel.js).
    - card cover: a flat box under 1.2 cm thick and over 60 cm both ways (not glass), lying level more than 30 cm off the ground with nothing as big under it: a cover, cloth or
      tarpaulin drawn as a thin slab. Drape it, give it thickness or folds.
@@ -29,12 +29,12 @@ export function propSnap(group) {
 const f = (v) => v.toFixed(2);
 export function auditProps(list) {
   const out = [];
-  const pots = list.filter((m) => m.type === 'CylinderGeometry' && !m.p.openEnded && m.up && m.size.y <= 0.3 && m.size.y >= 0.02 && Math.max(m.size.x, m.size.z) / 2 >= 0.025 && Math.max(m.size.x, m.size.z) / 2 <= 0.1);   /* a lamp housing or a fan's motor is bigger */
-  const thin = list.filter((m) => m.size.y > 0.04 && Math.max(m.size.x, m.size.z) < Math.max(0.03, m.size.y * 0.6));   /* upright sticks, and leaning ones (a quill) */
+  const pots = list.filter((m) => m.type === 'CylinderGeometry' && !m.p.openEnded && m.up && m.size.y <= 0.3 && m.size.y >= 0.04 &&   /* a flat foot under a stem is not a pot */ Math.max(m.size.x, m.size.z) / 2 >= 0.025 && Math.max(m.size.x, m.size.z) / 2 <= 0.1);   /* a lamp housing or a fan's motor is bigger */
+  const thin = list.filter((m) => m.size.y > 0.04 && (Math.max(m.size.x, m.size.z) < 0.03 || (!m.up && Math.max(m.size.x, m.size.z) < m.size.y * 0.6)));   /* upright sticks, and leaning ones (a quill); not an animal's leg in its hoof */
   for (const pot of pots) {
     const top = pot.b.max.y, c = pot.b.getCenter(new THREE.Vector3()), r = Math.min(pot.size.x, pot.size.z) / 2;
     const stuck = thin.find((t) => t !== pot && (Math.max(t.size.x, t.size.z) >= 0.03 || Math.max(t.size.x, t.size.z) < 0.5 * r) &&   /* a straight candle that fills its socket is held, not stuck */
-      t.b.min.y >= top - 0.06 && t.b.min.y <= top + 0.005 && t.b.max.y > top + 0.03 && Math.hypot((t.b.min.x + t.b.max.x) / 2 - c.x, (t.b.min.z + t.b.max.z) / 2 - c.z) < r - 0.004);
+      t.b.min.y >= top - 0.06 && t.b.min.y <= top + 0.005 && t.b.max.y > top + 0.03 && Math.hypot((t.b.min.x + t.b.max.x) / 2 - c.x, (t.b.min.z + t.b.max.z) / 2 - c.z) < r * 0.6);   /* standing in the middle of the top, not a tube at the rim */
     if (stuck) out.push(`prop solid pot at (${f(c.x)}, ${f(top)}, ${f(c.z)}): something stands in a closed cylinder ${Math.round(r * 200)} cm across; give it an opening (engine/vessel.js)`);
   }
   for (const m of list) {

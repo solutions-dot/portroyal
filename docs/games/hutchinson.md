@@ -173,3 +173,7 @@ The owner: "polish the graphics like the hat has no opening". Every small thing 
 Looked at and left as they are: the watches, the stick, the ledger, the musket, the notice board, the loophole board (4 cm, a real board), the cart and the windlass.
 
 Checks: `?auto=1` AUTO END 68, FLOW 0; `?test=audit` AUDIT 0 in all five places (it first found the coats' rail ending inside the spiral steps' wall, and one root where the rock is low by the way in; both fixed); `?test=ambient` 0; `?test=held` CARRY 0; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375; `npm test` 279 pass, LINT 0 new.
+
+## Room to pass and props checks wired, 22 November 2026
+
+`?test=audit` now also runs `engine/audit-passage.js` (room to pass: no cut-off ground, no way under 0.9 m between open parts, every spot reachable) and `engine/audit-props.js` (props close up). They found the inkpot by the searchers' list in the hall: a solid cylinder with the quill stuck in its top. It is now an open pot with ink in it (`engine/vessel.js`), and the two sheets beside it show lines of writing too small to read (`engine/page.js`). Audit 0 in every place, `?auto=1` AUTO END 68, FLOW 0. The place's own `Q.props` (the candle, the lantern) is untouched: the check keeps its list in `Q.propList`.

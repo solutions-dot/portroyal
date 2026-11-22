@@ -76,3 +76,12 @@ export function auditPassage({ walls = [], bounds, start, r = 0.23, wide = 0.9, 
 }
 /* is any cell of part id in the full flood also in the start's flood */
 function reachIn(reachLab, everyLab, id) { for (let k = 0; k < everyLab.length; k++) if (everyLab[k] === id && reachLab[k] === 0) return true; return false; }
+/* the spots a place must let you reach: each look and task spot of this place (steps.js LOOKS, TASKS) and each story person.
+   One line in a game's ?test=audit: ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, spots: passageSpots(Q, { LOOKS, TASKS }) }) */
+export function passageSpots(Q, { LOOKS = {}, TASKS = {} } = {}) {
+  return [
+    ...Object.entries(LOOKS).filter(([, l]) => l.place === Q.id && l.at).map(([id, l]) => ({ label: id + ' look', x: l.at[0], z: l.at[1] })),
+    ...Object.entries(TASKS).filter(([, t]) => t.place === Q.id).flatMap(([id, t]) => [t.from && { label: id + ' pick', x: t.from[0], z: t.from[1] }, t.to && { label: id + ' place', x: t.to[0], z: t.to[1] }]).filter(Boolean),
+    ...(Q.people || []).filter((n) => n.m?.visible !== false).map((n) => ({ label: n.id, x: n.x, z: n.z })),
+  ];
+}

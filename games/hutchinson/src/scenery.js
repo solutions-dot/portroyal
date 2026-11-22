@@ -2,6 +2,8 @@
    Spanish Town. Each builder returns a THREE.Group standing on y = 0 at its own origin. What each is modelled on, and what is still a general
    picture, is in docs/games/hutchinson.md ("Places"). Everything here is still scenery: it is merged into a few meshes when the place is built. */
 import * as THREE from "three";
+import { vessel } from "../../../engine/vessel.js";
+import { writtenPage } from "../../../engine/page.js";
 import { T, cv, grain, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 import { loftSkin } from "../../../engine/loft.js";
 import { vnoise, fbm } from "../../../engine/ridges.js";
@@ -975,9 +977,18 @@ export function shelf(len = 1.6) {
 /* papers, an inkwell and a quill: the searchers' list */
 export function writing() {
   const g = grp();
-  box(0.32, 0.008, 0.22, solid(0xe7dcc2, 1), 0, 0.004, 0, g).rotation.y = 0.2;
-  box(0.3, 0.008, 0.2, solid(0xded2b6, 1), 0.12, 0.01, 0.06, g).rotation.y = -0.3;
-  cyl(0.03, 0.035, 0.05, solid(0x1a1a22, 0.3), -0.26, 0.025, -0.05, g, 8);
+  /* two written sheets (old paper, lines of ink too small to read: engine/page.js), an open inkpot with ink in it and the quill standing in it */
+  for (const [w, d, x, y, z, ry, seed] of [[0.32, 0.22, 0, 0.004, 0, 0.2, 3], [0.3, 0.2, 0.12, 0.01, 0.06, -0.3, 4]]) {
+    const sh = box(w, 0.008, d, solid(0xe7dcc2, 1), x, y, z, g);
+    sh.rotation.y = ry;
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.98, d * 0.98), new THREE.MeshStandardMaterial({ map: writtenPage("", { w, d, seed }), roughness: 0.95 }));
+    face.rotation.x = -Math.PI / 2;
+    face.position.y = 0.0045;
+    sh.add(face);
+  }
+  const pot = vessel([[0.001, 0], [0.035, 0], [0.035, 0.008], [0.03, 0.04], [0.02, 0.05]], { mat: solid(0x1a1a22, 0.3), fill: { y: 0.04, mat: solid(0x050508, 0.15) }, wall: 0.004 });
+  pot.position.set(-0.26, 0, -0.05);
+  g.add(pot);
   const q = cyl(0.004, 0.012, 0.26, solid(0xe8e4d8, 1), -0.24, 0.14, -0.05, g, 4);
   q.rotation.z = -0.45;
   return g;

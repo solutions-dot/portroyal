@@ -207,7 +207,7 @@ async function buildWorld(id) {
   scene.add(Q.group);
   if (__DEV__) {
     Q.snap = snapMeshes(Q.group);
-    Q.props = propSnap(Q.group);   /* small props, before merging (engine/audit-props.js) */
+    Q.propList = propSnap(Q.group);   /* small props, before merging (engine/audit-props.js); Q.props is the place's own */
   }
   mergePlace(Q);
   Q.people = [];

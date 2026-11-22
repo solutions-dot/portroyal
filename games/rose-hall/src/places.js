@@ -396,8 +396,8 @@ function house({ phone } = {}) {
   add(Q, R.candlestick("d"), -4.6, 3.55, 0.85);
   add(Q, R.giltMirror(1.2, 1.9), -4.22, -2.9, 2.3, -Math.PI / 2);
   for (const z of [-4.0, -1.8]) add(Q, R.sconce("d"), -4.23, z, 2.1, -Math.PI / 2);
-  solid1(Q, R.roundTable(0.36, 0.7), -13.9, -3.0, 0.8, 0.8);
-  add(Q, R.candelabrum("d", 3), -13.9, -3.0, 0.7);
+  solid1(Q, R.roundTable(0.36, 0.7), -14.2, -2.6, 0.8, 0.8);   /* clear of the armchair: the corner behind them can be reached */
+  add(Q, R.candelabrum("d", 3), -14.2, -2.6, 0.7);
   /* the west wall: three tall paintings of men. Hope Waddell saw "three or four full-size pictures" in the empty house in 1830. */
   const pics = [];
   [[-2.7, "#2f3a4a", 1], [0, "#4a2a24", 2], [2.7, "#3a3a2a", 3]].forEach(([z, coat, seed]) => pics.push(add(Q, R.portrait(1.2, 2.1, coat, seed), -14.78, z, 2.2, Math.PI / 2)));
