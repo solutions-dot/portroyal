@@ -22,6 +22,7 @@ The game keeps the two apart, on the journal pages and in the quiz. Source: a re
 | Enslaved people could not give evidence against a white person | Law of the time | Bryan Edwards (1794), vol. 2, p. 144; Acts of Assembly |
 | Hector, enslaved at the castle, led searchers to remains; 24 people enslaved there in 1773 | Record | Black; Cundall |
 | The sinkhole: 98 m deep; the Governor lowered in 1895 saw no bones | Record | Jamaican Caves Organisation; Cundall |
+| The sinkhole's mouth is about 3 m by 5 m, at the foot of a small valley ringed by rock walls about 10 m high | Record | Jamaican Caves Organisation register, http://www.jamaicancaves.org/Register_E_J.htm |
 | He bought the land in 1768; on the St Ann jury list 1768 or 1769 | Record | JNHT 2010 proposal; Cundall; Black |
 | House: two storeys, a round loopholed tower at two opposite corners | Description and photographs | Cundall; JNHT 2010 proposal |
 
