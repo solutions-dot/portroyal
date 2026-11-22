@@ -3,7 +3,8 @@ import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
-import { hudTidy } from '../../../engine/hud.js';
+import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
+import { showRight, showingRight } from '../../../engine/quiz.js';   /* a wrong answer shows the right one, then the talk goes on */
 import { snapMeshes, auditSeated, auditRest } from '../../../engine/audit.js';
 import { updateWalk } from '../../../engine/locomotion.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
@@ -518,7 +519,7 @@ function sharedTex(key, color) { if (!texCache[key] && imgs[key]) { const t = ne
 function prep(root) { root.traverse((o) => { if (o.isMesh && TEXMAP[o.material.name]) { const n = o.material.name; if (!matCache[n]) { const m = o.material, [c, nm] = TEXMAP[n]; m.map = sharedTex(c, true); m.color.set(0xffffff); if (nm) m.normalMap = sharedTex(nm, false); m.needsUpdate = true; matCache[n] = m; } o.material = matCache[n]; } }); return prep0(root); }
 const SKIN_K = 1.0;   /* the skin factor for this game's light (docs/PIPELINE.md, "Skin"): this game's sun, sky and tone mapping are brighter than Kendal's, so Skin is drawn as built. Measured with ?test=skin */
 function prep0(root) { root.traverse((o) => { if (o.isMesh) { const m = o.material; if (m.name === 'Skin' && o.isSkinnedMesh) m.color.setScalar(SKIN_K); if (m.map) m.map.anisotropy = maxAniso; if (m.name === 'LeadedGlass') { m.emissive = new THREE.Color(0x4a6470); m.emissiveMap = m.map; m.roughness = 0.2; } if (o.isSkinnedMesh) o.frustumCulled = false; } }); return root; }
-let mixer = null, idle = null, runA = null; const survivors = {}; let galdy = null, third = false, gWalk = false; const people = {};
+let mixer = null, idle = null, runA = null; const survivors = {}; let galdy = null, third = false, gWalk = false; const VIEW_SWITCH = false;   /* the first or third person button (see toggleView) */ const people = {};
 const MENU = { ok: true, url: '../../../menu/' };   /* Always available on the game collection, even if a menu fetch would fail. */
 const TICKS = [], EXTRA_IN = [];   /* Mixamo clips from anims.glb, shared by everyone (same skeleton) */
 const TALKS = ['Talk1', 'Talk2', 'Talk3']; let talkN = 0, speaker = null;
@@ -674,7 +675,9 @@ let convo = TALK, convoEnd = null;
 function showStep() {
   const s = convo[state.step], me = s.who === 'You' || s.who === 'Lewis'; if (!me) setSpeaker(s.who, s.anim); $('who').textContent = me ? 'You' : s.who; $('dialogue').classList.toggle('me', me);   /* your own lines look different from theirs */ $('line').textContent = s.text; const ch = $('choices'); ch.replaceChildren();
   if (s.choices) { $('next').hidden = true; for (const c of s.choices) { const o = typeof c === 'string' ? { t: c, ok: true } : c; const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = o.t;
-      b.onclick = () => { if (o.ok) advance(); else { $('line').textContent = s.hint + ' ' + s.text.split('. ').pop(); b.disabled = true; } }; ch.appendChild(b); } ch.firstChild.focus(); }
+      b.onclick = () => { if (showingRight()) return; if (o.ok) { advance(); return; }
+        const opts = s.choices.map((c) => (typeof c === 'string' ? { t: c, ok: true } : c)), ri = opts.findIndex((c) => c.ok), right = ch.children[ri];
+        showRight({ picked: b, right, msg: $('line'), text: s.hint + ' The answer is ' + opts[ri].t + '.', then: () => advance(), delay: 3800 }); }; ch.appendChild(b); } ch.firstChild.focus(); }
   else { $('next').hidden = false; $('next').textContent = state.step === convo.length - 1 ? (convo === TALK ? 'Goodbye for now' : 'Thank you') : 'Next'; $('next').focus(); }
   if (s.unlock) unlock(s.unlock);
 }
@@ -732,7 +735,7 @@ function renderJournal(sel) {
 function openJournal() { if (!$('dialogue').hidden) return; busy = true; keys.clear(); renderJournal(); $('journal').hidden = false; $('jclose').focus(); }
 function closeJournal() { if ($('journal').hidden) return; $('journal').hidden = true; busy = false; }
 $('jbtn').onclick = openJournal; $('jclose').onclick = closeJournal;
-function startGame() { audioInit(); state.started = true; $('title').hidden = true; $('hud').hidden = false; if (state.unlocked.length) { $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; }
+function startGame() { audioInit(); state.started = true; $('title').hidden = true; $('hud').hidden = false; onceWhenClear('port-royal-you', () => card('Who you are', ["You are Lewis Galdy. He was a real person, born in France in 1659.", "His family were Huguenots, French Protestants. France punished them for their faith, so Lewis sailed to Jamaica."], [{ t: 'Begin', go: hideCard }]));   /* who you are, once per device (owner, 21 November 2026) */ if (state.unlocked.length) { $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; }
   setGoal(); liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); }
 $('start').onclick = () => { startGame(); cue('begin'); };
 
@@ -1252,7 +1255,7 @@ async function loadAll() {
   buildTown(); if (ring) ring.visible = !state.talked; window.__got = null; townReady = true; built = true;
   // stage 3: the tavern is built in a spare moment, before you can reach its door
   setTimeout(() => { buildTavern(); try { loadSoldier(); } catch (e) {} try { buildNewStreet(); } catch (e) { NS.err = String(e && e.stack || e); document.body.dataset.nserr = NS.err.slice(0, 300); }   /* never let the extra street stop the tavern */ for (const f of FINDS) if (state.unlocked.includes(f.id)) finds[f.id].visible = false; if (state.ate) stew.visible = true; tavernReady = true; $('tchap').hidden = false; model('heath').then((g) => { people.heath = prep(g.scene); placeHeath(); }).catch(() => {}); for (const n of ['ned', 'buc1', 'buc2', 'morgan', 'gunner']) model(n).then((g) => { people[n] = prep(g.scene); pirateReady(n); }).catch(() => {});
-    model('galdy').then((g) => { galdy = prep(g.scene); galdy.scale.multiplyScalar(0.94); galdy.visible = false; scene.add(galdy); animate(galdy, 'Idle'); $('view').hidden = false; if (__DEV__ && new URLSearchParams(location.search).get('test') === 'walk') runGaldyWalkTest(); }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
+    model('galdy').then((g) => { galdy = prep(g.scene); galdy.scale.multiplyScalar(0.94); galdy.visible = false; scene.add(galdy); animate(galdy, 'Idle'); $('view').hidden = !VIEW_SWITCH; if (__DEV__ && new URLSearchParams(location.search).get('test') === 'walk') runGaldyWalkTest(); }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
   if (__DEV__ && q.has('seed')) { const [sx, sz] = q.get('seed').split(',').map(Number); applySave({ unlocked: ['galdy'], talked: true, ate: false, done: false, ch: {}, pos: [sx, sz, 0] }); setTimeout(() => { document.title = 'RESTORE x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2) + ' ns=' + NS.ready; }, 12000); }
   if (__DEV__ && q.get('test') === 'skin') (async () => {   /* ?test=skin : how dark each face really looks in this game's daylight (engine/skinprobe.js) */
     const out = []; for (const name of (q.get('b') || 'abba,grace,galdy,kofi,sailor,benning,heath,ned,buc1,buc2,morgan,gunner,soldier,turtler,mendes,constable').split(',')) { let G = name === 'abba' ? abba : name === 'grace' ? people.grace : null, own = false;
@@ -1630,8 +1633,9 @@ goArrive = chapterFade('goArrive', goArrive); leaveWare = chapterFade('leaveWare
 /* credits */
 $('crclose').onclick = () => { $('credits').hidden = true; }; $('chcred').onclick = () => { $('credits').hidden = false; };
 
-/* first person or third person (see Lewis Galdy) */
-function toggleView() { if (!galdy || FB.on) return;   /* in Ned’s story you are young Ned, so no Galdy view */ third = !third; if (third) galdy.rotation.y = state.yaw + Math.PI; $('view').setAttribute('aria-pressed', String(third)); toast(third ? 'You can see Lewis Galdy. Press V to look through his eyes again.' : 'You see through Galdy\u2019s eyes.'); }
+/* first person or third person (see Lewis Galdy). Switched off for now (owner, 22 November 2026): the button is hidden and V does nothing.
+   Set VIEW_SWITCH to true to bring it back (docs/games/port-royal.md). */
+function toggleView() { if (!VIEW_SWITCH || !galdy || FB.on) return;   /* in Ned’s story you are young Ned, so no Galdy view */ third = !third; if (third) galdy.rotation.y = state.yaw + Math.PI; $('view').setAttribute('aria-pressed', String(third)); toast(third ? 'You can see Lewis Galdy. Press V to look through his eyes again.' : 'You see through Galdy\u2019s eyes.'); }
 $('view').onclick = toggleView; addEventListener('keydown', (e) => { if ((e.key === 'v' || e.key === 'V') && !e.repeat && document.activeElement?.tagName !== 'INPUT') toggleView(); });
 
 /* reset: this chapter again, or the whole story */
@@ -1792,7 +1796,7 @@ function fbEnd() { card('What happened next', ['The ships sailed. Morgan’s men
 function fbLeave(early) { hideCard(); FB.on = false; document.body.classList.remove('flash'); FBG.group.visible = false; people.morgan.visible = false; npcShow(true); third = !!FB.wasThird; if (early !== true) { unlock('panama'); state.ch.ned = true; if (state.done) { const g = navGen; setTimeout(() => nextChapterCard(1, 0, g), 5200); } }   /* heard again after finishing the first part: offer the next chapter */ state.talked = true; if (!state.unlocked.includes('harbour')) state.unlocked.push('harbour'); saveGame();   /* you come back inside the tavern, so the arrival goals are behind you */
   setPlace('in'); state.x = -200.4; state.z = 2.4; state.yaw = Math.PI - 0.4; state.pitch = 0; setGoal(); toast(early === true ? 'Ned: “Another time, then.”' : 'Ned: “And that is how it was. Now, who is buying?”'); }
 $('fbexit').onclick = () => { if (!FB.on || busy) return; card('Leave Ned’s story?', ['You can hear it again from the Chapters menu.'], [{ t: 'Leave the story', go: () => fbLeave(true) }, { t: 'Stay', go: hideCard }]); };
-TICKS.push(() => { const h = !FB.on; if ($('fbexit').hidden !== h) $('fbexit').hidden = h; if (FB.on && third) third = false; if (galdy) { const vh = FB.on; if ($('view').hidden !== vh) $('view').hidden = vh; } });
+TICKS.push(() => { const h = !FB.on; if ($('fbexit').hidden !== h) $('fbexit').hidden = h; if (FB.on && third) third = false; if (galdy) { const vh = FB.on || !VIEW_SWITCH; if ($('view').hidden !== vh) $('view').hidden = vh; } });
 ACTIONS.push(
   { fb: true, label: 'Talk to Admiral Morgan', r: 2.6, where: () => FB.on && [FBP.morgan[0], FBP.morgan[1]], go: () => startConvo(FB.step ? [{ who: 'Henry Morgan', text: 'Still here? Go and watch the sword drill!' }] : FB_TALK, () => { FB.step = Math.max(FB.step, 1); goalText = 'Watch the sword drill on the beach.'; showGoal(); }) },
   { fb: true, label: 'Watch the sword drill', r: 3.4, where: () => FB.on && FB.step >= 1 && [(FBP.d1[0] + FBP.d2[0]) / 2, FBP.d1[1]], go: () => { const [a, b] = FBG.d; startConvo([{ who: 'Tom', text: 'Watch, boy! Feet apart, sword up. Block high, then low!' }, { who: 'Dick', text: 'If you lose, you say so. Do you give up?' }, { who: 'Tom', text: 'I give up! Ha! Again tomorrow.' }], () => { a.userData.anim.play(CL.Sheathe ? 'Sheathe' : 'Laugh', true); b.userData.anim.play('Laugh', true, 3); setTimeout(() => { a.userData.anim.play('Sword1'); b.userData.anim.play(drillClip()); }, 7000); FB.step = Math.max(FB.step, 2); goalText = 'Help the man with the crates load the ships.'; showGoal(); }); } },
