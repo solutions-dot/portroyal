@@ -193,17 +193,17 @@ for strand in range(3):
 # (Owner, 22 November 2026: "the Emperor's shoulder boards are simple". Before, each was a flat patch three points wide whose gold edge was
 # coloured point by point, so it smeared across the cloth.)
 for sx in [-1,1]:
-    bm=bmesh.new();N=10;X0,X1=.092,.184;top=[];E=.0035
+    bm=bmesh.new();N=10;X0,X1=.090,.154;top=[];E=.0035      # it ends at the sleeve seam: carried on over the sleeve head, its end stood up like a wing when the arm hung down
     def _z(x,y):
         hit=jt.ray_cast(Vector((x,y,NECK+.2)),Vector((0,0,-1)))[0];return hit.z if hit else NECK-.055
     for i in range(N+1):
         t=i/N;x=sx*(X0+(X1-X0)*t);w=.017+.007*t
         if i==0:w=.009      # the rounded end by the collar
         elif i==1:w=.0155
-        zc=max(_z(x,hy-w),_z(x,hy),_z(x,hy+w))+.0065      # flat across its width, lying on the highest cloth under it
+        zc=max(_z(x,hy-w),_z(x,hy),_z(x,hy+w))+.0045      # flat across its width, lying on the highest cloth under it
         top.append([bm.verts.new((x,hy+o_,zc)) for o_ in (-w,-w+E,0,w-E,w)])
     zs=[r[2].co.z for r in top]
-    for _ in range(3):zs=[zs[0]]+[max(zs[k],(zs[k-1]+2*zs[k]+zs[k+1])/4) for k in range(1,N)]+[zs[N]]      # one even line along the shoulder
+    for _ in range(2):zs=[zs[0]]+[(zs[k-1]+2*zs[k]+zs[k+1])/4 for k in range(1,N)]+[zs[N]]      # one even line along the shoulder, following its slope down to the sleeve (held up to the highest point, the outer ends stood up like wings)
     for r,z in zip(top,zs):
         for v in r:v.co.z=z
     quadstrip(bm,top)
@@ -213,11 +213,11 @@ for sx in [-1,1]:
         a,b=rim[k],rim[(k+1)%len(rim)];c,d=low[(k+1)%len(rim)],low[k]
         try:bm.faces.new((a,b,c,d))
         except ValueError:pass
-    o=soft('Shoulder board',bm,'Jacket',src=tunic);paint(o)
+    o=soft('Shoulder board',bm,'Jacket',only=TORSO+('LeftArm','RightArm'),src=tunic);paint(o)      # the outer end goes down with the sleeve head when the arm hangs: on the trunk's bones alone it stayed up where the arms were built and stood off the shoulder like a wing
     ca=o.data.color_attributes.get('Col');xe=X0+(X1-X0)/N
     for f in o.data.polygons:      # gold by whole faces, so the edge is a clean line
         c=f.center;w=.017+.007*((abs(c.x)-X0)/(X1-X0));gold=abs(c.y-hy)>w-E-.0005 or abs(c.x)>X1-.004 or abs(c.x)<xe-.004 and abs(c.y-hy)>.006
-        if gold:
+        if gold and abs(f.normal.z)>.5:      # the top only: with the side walls gold too, the strap read from the front as a gold wing tip
             for li in f.loop_indices:ca.data[li].color=(*COL['Insignia'],1)
     sphere('Shoulder button',(sx*(X0+.012),hy,zs[1]+.002),(.0045,.0045,.003),'Insignia','Spine2',tunic)
 

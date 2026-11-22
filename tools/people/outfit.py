@@ -215,6 +215,25 @@ elif OUTFIT_PHASE == 'finish':
             for v in _new['JButtons'].data.vertices:
                 co, i, d = kd.find(v.co); v.co += jk.data.vertices[i].co - was[i]
         print('OUTFIT jacket draped')
+    # The jacket's two sides are made alike. One modelled suit came with one shoulder squarer and higher than the other, which read as a lopsided man on a level
+    # stance (owner, 22 November 2026: "why are you still showing me these lopsided shoulders"). Away from the front, where the fronts lap and are meant to
+    # differ, each point and its partner across the body move to the mean of the two. A point with no partner within 3 cm is left alone.
+    if 'Jacket' in _new and _OF.get('even', True):
+        from mathutils.kdtree import KDTree as _KD2
+        _jv = _new['Jacket'].data.vertices; _kd = _KD2(len(_jv))
+        for v in _jv: _kd.insert(v.co, v.index)
+        _kd.balance(); _ym2 = J('Spine2').y; _new_co = {}; _ne = 0
+        for v in _jv:
+            c = v.co
+            if c.x <= 0.002: continue
+            w = max(sstep(0.07 * s, 0.11 * s, c.x), sstep(_ym2 - 0.02, _ym2 + 0.02, c.y))      # not the lapped fronts
+            if w <= 0: continue
+            mc, mi, md = _kd.find(Vector((-c.x, c.y, c.z)))
+            if mi is None or md > 0.03: continue
+            m = _jv[mi].co; avg = Vector(((c.x - m.x) / 2, (c.y + m.y) / 2, (c.z + m.z) / 2))
+            _new_co[v.index] = c.lerp(avg, w); _new_co.setdefault(mi, m.lerp(Vector((-avg.x, avg.y, avg.z)), w)); _ne += 1
+        for i_, co_ in _new_co.items(): _jv[i_].co = co_
+        _new['Jacket'].data.update(); print('OUTFIT jacket sides made alike', _ne)
     # round the neck the jacket lies outside the shirt, 4 mm clear: where the two crossed, the shirt's collar showed through the jacket's in teeth
     if 'Jacket' in _new and 'Shirt' in _new:
         from mathutils.bvhtree import BVHTree as _BVH0
