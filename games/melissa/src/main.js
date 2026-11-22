@@ -23,7 +23,7 @@ placeActionButton();   /* the button for a thing to do sits mid-screen (engine/a
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, gullCry } from '../../../engine/audio.js';
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, gullCry, mixBeds, bedTest, dogFar } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { grip, gripTick, steadyLoad, spreadArms } from '../../../engine/grip.js';
 import { G, T, makeSky, ease, clamp01, lerp, rng, batchStatic } from './gfx.js';
@@ -644,7 +644,7 @@ function quiz(list, round, done, title = 'Quiz') {   /* engine/quiz.js: a wrong 
 function kitQuiz(round) {
   quiz(KIT, round, () => { unlock('kit'); card('A good kit', ['You packed well: water, food that keeps, a torch, a radio, a charged phone, medicine and papers in a bag.', 'A kit is small, but it helps a lot.'], [{ t: 'Next', go: () => { hideCard(); quiz(STORMS, 0, () => { unlock('storms'); card('Jamaica\'s storms', ['Hurricanes are not new to Jamaica. They come, and people get ready and rebuild.', 'Read about the earlier storms in your Journal.'], [{ t: 'Done', go: () => { hideCard(); setStage(73); } }], { col: true }); }); } }], { col: true }); });
 }
-ON[74] = () => { unlock('journey'); setTimeout(() => card('The End', LINES.end, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); };
+ON[74] = () => { unlock('journey'); setTimeout(() => { cue('end'); card('The End', LINES.end, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }); }, 1200 * TS); };
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
@@ -668,14 +668,16 @@ function nudgeTick(now) {
 let GUIDE = null;
 
 /* ---------- sound: each place has its own mix, and now and then one small sound ---------- */
-let auNext = 0, onceAt = 6; const AMB = 0.4;
-const SOUNDSCAPE = { yard51: { sea: 0.12, surf: 0.05, once: () => (Math.random() < 0.5 ? gullCry() : chirp()) }, room51: { room: 0.1, sea: 0.03 }, kingston88: {}, yard88: { once: chirp }, yard25: { once: chirp }, hall: { crowd: 0.2 }, room88: { room: 0.1 }, after: {}, today: { once: chirp } };
+let auNext = 0, onceAt = 6; const AMB = 0.6;   /* 22 November 2026: 0.4 left the rooms and the sea at 0.04 to 0.05; every place is now in the shared range (engine/audio.js BED_RANGE) */
+/* kingston88 is seen only in the storm's Kingston cutaway, under the storm beds (SB): no street crowd or traffic in a hurricane */
+const SOUNDSCAPE = { yard51: { sea: 0.12, surf: 0.05, once: () => (Math.random() < 0.5 ? gullCry() : chirp()) }, room51: { room: 0.1, sea: 0.03 }, kingston88: {}, yard88: { crowd: 0.04, once: chirp }, yard25: { crowd: 0.04, once: chirp }, hall: { crowd: 0.2 }, room88: { room: 0.1 }, after: { crowd: 0.09, once: () => (Math.random() < 0.5 ? dogFar() : chirp()) }, today: { crowd: 0.1, traffic: 0.04, once: chirp } };
+if (__DEV__ && new URLSearchParams(location.search).get('test') === 'beds') bedTest(SOUNDSCAPE, { scale: AMB, extra: (k) => (k === 'kingston88' ? { storm: 0.7 * 0.5 } : { wind: (BEDS_BY[k === 'after' || k === 'today' ? 'after' : 'calm'].wind || 0) * 0.5 * (k === 'hall' || k === 'room88' || k === 'room51' ? 0 : 1) }) });   /* ?test=beds (the weather's wind from sfx.js at its scale; storms are measured by ?test=sound) */
 const FOOT = { yard51: 'sand', room51: 'wood', kingston88: 'stone', yard88: 'grass', yard25: 'grass', after: 'grass', today: 'grass', room88: 'wood', hall: 'stone' };
 function audioTick(t, now) {
   if (!AU.ctx) return; SFX.hymnTick(t); if (t < auNext) return; auNext = t + 0.1; const S = SOUNDSCAPE[cur] || {};
-  for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], SB ? 0 : (S[k] || 0) * AMB, 0.4);
+  mixBeds(SB ? {} : S, { scale: AMB, duck: !!talkWith, tc: 0.4 });
   const B = SB || BEDS_BY[bedsKey] || {}, indoor = cur === 'hall' || cur === 'room88' || cur === 'room51', wk = SB ? 1 : indoor ? 0.6 : 1;
-  SFX.setBeds({ wind: (B.wind || 0) * wk, howl: B.howl, roar: B.roar, rain: B.rain, rattle: B.rattle, hymn: B.hymn, saw: B.saw, heli: B.heli, gen: B.gen, cricket: B.cricket }, 0.4);
+  SFX.setBeds({ wind: (B.wind || 0) * wk, howl: B.howl, roar: B.roar, rain: B.rain, rattle: B.rattle, hymn: B.hymn, saw: B.saw, heli: B.heli, gen: B.gen }, 0.4);
   if (t > onceAt) { onceAt = t + 6 + Math.random() * 6; if (S.once && AU.on && state.started && !SB && WIND.k < 0.25) S.once(); }
 }
 
@@ -874,7 +876,7 @@ function devViews() {
       const SR = 22050, Q = 128, rq = (t) => Math.round(t * SR / Q) * Q / SR, segs = [], out = [], DB = (x) => (x > 1e-9 ? 20 * Math.log10(x) : -99), BEDS = {};
       const bed = (name, where, key, sb) => { BEDS[name] = { where, key, sb }; segs.push({ name, len: 4, bed: true, ...BEDS[name] }); };
       const shot = (name, fn, over, len = 4, min = 6) => segs.push({ name, len, shot: true, over, fn, min, ...BEDS[over] });   /* min: how many dB the sound must rise above its bed (bangs and cracks 5; a groan or a gust is a swell inside the storm, 3) */
-      bed('silence', 'after', 'quiet'); bed('yard51 calm (sea)', 'yard51', 'calm'); bed('room51 night', 'room51', 'room'); bed('yard88 calm', 'yard88', 'calm'); bed('yard88 rising', 'yard88', 'rising'); bed('yard88 gale', 'yard88', 'gale'); bed('room88 night', 'room88', 'room');
+      bed('silence', 'kingston88', 'quiet'); bed('yard51 calm (sea)', 'yard51', 'calm'); bed('room51 night', 'room51', 'room'); bed('yard88 calm', 'yard88', 'calm'); bed('yard88 rising', 'yard88', 'rising'); bed('yard88 gale', 'yard88', 'gale'); bed('room88 night', 'room88', 'room');
       bed('storm: kingston', 'kingston88', 'quiet', { wind: 0.7, howl: 0.35, roar: 0.25, rain: 0.4, rattle: 0.2 }); bed('storm: first gusts', 'yard88', 'quiet', { wind: 0.5, howl: 0.2, roar: 0.15, rattle: 0.15 });
       bed('storm: roof groans', 'yard88', 'quiet', SB_GROAN); bed('storm: the light goes', 'yard88', 'quiet', SB_LIGHT); bed('storm: the peak', 'yard88', 'quiet', SB_PEAK); bed('storm: the hall hymn', 'hall', 'quiet', { wind: 0.7, howl: 0.3, roar: 0.4, rain: 0.6, hymn: 0.6 });
       bed('after the storm', 'after', 'after'); bed('chainsaw', 'after', 'saw'); bed('helicopter', 'after', 'heli'); bed('today', 'today', 'after');
