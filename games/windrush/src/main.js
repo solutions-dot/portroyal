@@ -41,6 +41,8 @@ import {
   gullCry,
   chirp,
   shipCreak,
+  mixBeds,
+  bedTest,
 } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
 import { makeSky, G, cv } from "./gfx.js";
@@ -1277,13 +1279,14 @@ const BEDS = {
   harbour48: { sea: 0.1, surf: 0.05, crowd: 0.09, wind: 0.03, gull: 0.25 },
   tilbury48: { sea: 0.08, surf: 0.04, crowd: 0.08, wind: 0.05, gull: 0.15 },
   deck48: { sea: 0.16, wind: 0.1, creak: 0.12 },
-  yard48: { wind: 0.025, crowd: 0.03, bird: 0.2 },
-  yard62: { wind: 0.025, crowd: 0.03, bird: 0.2 },
-  brixton48: { crowd: 0.06, wind: 0.04 },
-  brixton62: { crowd: 0.08, wind: 0.03 },
-  home18: { room: 0.05, crowd: 0.015 },
-  centre18: { room: 0.06, crowd: 0.04 },
-};
+  yard48: { wind: 0.05, crowd: 0.04, bird: 0.2 },
+  yard62: { wind: 0.05, crowd: 0.04, traffic: 0.02, bird: 0.2 },
+  brixton48: { crowd: 0.08, wind: 0.04, traffic: 0.05 },
+  brixton62: { crowd: 0.09, wind: 0.03, traffic: 0.07 },
+  home18: { room: 0.07, crowd: 0.02, traffic: 0.02 },
+  centre18: { room: 0.07, crowd: 0.05 },
+}; /* 22 November 2026: the yards and the 2018 rooms sat at 0.025 to 0.06, under the shared range (engine/audio.js BED_RANGE); Brixton has its far traffic. No place here is at night. */
+if (__DEV__ && new URLSearchParams(location.search).get("test") === "beds") bedTest(Object.fromEntries(Object.entries(BEDS).map(([k, B]) => [k, { ...B, once: B.gull || B.bird || B.creak }]))); /* ?test=beds */
 let bedT = 0;
 function audioTick(Q, dt) {
   if (!AU.ctx || !AU.on || AU.ctx.state !== "running" || (bedT += dt) < 0.1) return;
@@ -1291,7 +1294,7 @@ function audioTick(Q, dt) {
     k = talking ? 0.6 : 1,
     t = bedT;
   bedT = 0;
-  for (const ch of ["sea", "surf", "wind", "crowd", "room"]) if (AU.ch[ch]) setG(AU.ch[ch], (B[ch] || 0) * k, 0.8);
+  mixBeds(B, { duck: k < 1, tc: 0.8 });
   if (B.gull && Math.random() < B.gull * t * 0.5) gullCry();
   if (B.bird && Math.random() < B.bird * t * 0.6) chirp();
   if (B.creak && Math.random() < B.creak * t * 0.4) shipCreak();
@@ -1306,6 +1309,7 @@ async function start() {
   if (!ready) return;
   audioInit();
   begin();
+  if (!saved) cue("begin");
   if (saved) {
     const d = saved;
     saved = null;
