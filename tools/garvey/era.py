@@ -1454,7 +1454,7 @@ if G.get('coat') and OLD and G.get('facings'):
         for sx in (-1,1):
             rings=[]; nk=28
             for i in range(7):
-                t=cs-0.105+0.101*i/6; pp,d=armcut(t,sx); d=d.normalized()      # each ring lies in the plane the sleeve's end is cut on, so the band runs parallel to that edge
+                t=cs-0.105+0.093*i/6; pp,d=armcut(t,sx); d=d.normalized()      # each ring lies in the plane the sleeve's end is cut on, so the band runs parallel to that edge
                 e0=Vector((EL.x*sx,EL.y,EL.z)); e1=Vector((HA.x*sx,HA.y,HA.z)); fd=e1-e0; den=fd.dot(d)
                 if abs(den)<1e-6: continue
                 q=e0+fd*((pp-e0).dot(d)/den)      # its centre is where the forearm's own line crosses that plane (the arm is bent a little at the elbow, so the straight line from shoulder to hand misses the sleeve)
