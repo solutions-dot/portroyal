@@ -57,7 +57,7 @@ export async function dev(A) {
     A.begin();
     A.chapterState(CHAPTERS[first - 1].first);
     await go(CHAPTERS[first - 1].first);
-    closeAll();
+    if (!STEPS[CHAPTERS[first - 1].first].card) closeAll();   /* a chapter that opens with a camera scene keeps its scene card, which is clicked below */
     let lastStage = -1,
       same = 0;
     for (let guard = 0; guard < 400 && S.stage <= last; guard++) {

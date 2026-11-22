@@ -10,12 +10,15 @@ const w = (place, goal, card, next, extra = {}) => ({ place, goal, wait: true, c
 const ROAD = ["cubba", "carter", "hutton"],
   DUSK = ["juba", "carter"],
   MORNING = ["callendar", "carter"],
+  SEARCH = ["carter", "officer", "hector"],
   HALL = ["officer", "juba", "cudjoe", "hector"],
   HOLE = ["officer", "cudjoe", "hector"],
   COURT = ["clerk", "cubba"],
   VERDICT = ["clerk", "cubba", "hutton"];
 export const STEPS = {
   /* 1. The dry road */
+  8: w("road", "The dry road.", "film", 10, { film: "opening", show: ROAD }),
+  9: w("road", "Watch the road.", "playing", 10, { film: "opening", show: ROAD }),
   10: t("road", "Talk to Cubba by the dry trough.", ["cubba"], 11, { show: ROAD, journal: "you" }),
   11: l("road", "Test the mud of the dry pond.", ["pond"], 12, { show: ROAD }),
   12: d("road", "Carry cut grass to the cattle at the rail.", ["fodder"], 13, { show: ROAD }),
@@ -28,8 +31,10 @@ export const STEPS = {
   22: d("road", "Set the pulled-up peg back on the line.", ["peg"], 23, { show: ROAD }),
   23: t("road", "Talk to Sampson at his cart.", ["carter"], 24, { show: ROAD }),
   24: d("road", "Carry the empty cask from the gate to the cart.", ["cask"], 25, { show: ROAD }),
-  25: w("road", "The pen needs water.", "note", 30, { note: "water", show: ROAD }),
+  25: w("road", "The pen needs water.", "note", 28, { note: "water", show: ROAD }),
   /* 3. Under the towers */
+  28: w("castle", "Edinburgh Castle at dusk.", "film", 30, { film: "towers", show: DUSK }),
+  29: w("castle", "Watch from the cart.", "playing", 30, { film: "towers", show: DUSK }),
   30: t("castle", "Talk to Sampson behind the long wall.", ["carter"], 31, { show: DUSK, journal: "castle" }),
   31: g("castle", "Reach the big cotton tree unseen.", "cotton", 32, { show: DUSK, danger: "tower" }),
   32: l("castle", "Look at what lies between the roots.", ["hat"], 33, { show: DUSK, danger: "tower" }),
@@ -43,8 +48,10 @@ export const STEPS = {
   40: t("castle", "Talk to Sampson at the long wall.", ["carter"], 41, { show: MORNING, journal: "callendar" }),
   41: l("castle", "Look over the wall of the cattle yard.", ["jackass"], 42, { show: MORNING }),
   42: g("castle", "Get down behind the long wall with Sampson.", "wall", 43, { show: MORNING }),
-  43: w("castle", "John Callendar walks up to the house.", "film", 50, { film: "warrant", show: MORNING }),
-  44: w("castle", "Watch from behind the wall.", "playing", 50, { film: "warrant", show: MORNING }),
+  43: w("castle", "John Callendar walks up to the house.", "film", 45, { film: "warrant", show: MORNING }),
+  44: w("castle", "Watch from behind the wall.", "playing", 45, { film: "warrant", show: MORNING }),
+  45: w("castle", "Afterwards.", "film", 50, { film: "search", show: SEARCH }),
+  46: w("castle", "Watch from the road.", "playing", 50, { film: "search", show: SEARCH }),
   /* 5. What the house held */
   50: t("hall", "Talk to Captain Reid.", ["officer"], 51, { show: HALL, journal: "capture" }),
   51: l("hall", "Look in the strongbox and behind the cloth.", ["watches", "coats"], 52, { show: HALL }),

@@ -50,7 +50,7 @@ Scenery builders are in `src/scenery.js`; the places are put together in `src/pl
 
 ## How it is made
 
-Copied from Windrush's frame. `content.js` (words), `steps.js` (story table, `TASKS` to carry, `LOOKS` to look at), `places.js` (five places), `world.js` (stonework), `cast.js`, `director.js` (two camera scenes). New in this frame: `LOOKS` (a thing changes where you can see it, then a card), and a watched stretch (`danger` on a step, `Q.danger` in the place; `main.js` "a watched stretch").
+Copied from Windrush's frame. `content.js` (words), `steps.js` (story table, `TASKS` to carry, `LOOKS` to look at), `places.js` (five places), `world.js` (stonework), `cast.js`, `director.js` (five camera scenes). New in this frame: `LOOKS` (a thing changes where you can see it, then a card), and a watched stretch (`danger` on a step, `Q.danger` in the place; `main.js` "a watched stretch").
 
 ## Checks (22 November 2026)
 
@@ -124,3 +124,23 @@ The owner: "there is nothing to actually see... no action of actually looking be
 **noAudit marks** (rule 8): 23 before, 12 after (places.js 5, scenery.js 6, world.js 1), each with a comment saying why: smoke and dust puffs, lamp and ember glows, a shaft of light, flame sprites and glints, the grass tufts, birds in flight and the black far down the hole. Taken off and now checked: the well bucket, both hats, the stick, the loophole's daylight square, the cup, the hall lantern, the trees and vines round the hole, the searchers' rope and lantern, the gallows, the watcher at the window, the far crowd and the walls of the shaft. The loophole board and the jalousies are marked `fixed`: one is nailed across the hole, the others hang on the gallery front.
 
 Checks: `?auto=1` AUTO END 68, FLOW 0; `?test=audit` AUDIT 0 in all five places, with `engine/audit-reveal.js` running every reveal both ways; `?test=held` CARRY 0; `?test=ambient` 0 in all five; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375; `npm test` 279 pass, LINT 0 new. The look moments were screenshot mid-action at 1280x720 and 390x800 (the touch stick and the action button are held and hidden, the line sits in the lower bar). `#sub` lost its leftover `dim` class, which had kept every camera scene's captions invisible.
+
+## Five camera scenes, 22 November 2026
+
+The owner noticed the game had two staged moments where older games have five or six. Three were added in the same system (`FILMS` and `CARDS` in `src/content.js`, `Q.films` in `src/places.js`, played by `src/director.js`), each behind the standard scene card with "Read what happened instead", each with short captions and sounds made in code (new in the director: `hoof`, `steps`, `wind`, `creak`).
+
+| Scene | Chapter, steps | What it shows | Length |
+|---|---|---|---|
+| The dry road (`opening`) | 1, steps 8 and 9, before Cubba | The pen yard and cattle at the rail, the dry pond, the road west over the hills, a slow zoom to the castle two miles off on its rise, and the pack mule coming down that road alone to stop by the wall | 38 s |
+| Under the towers (`towers`) | 3, steps 28 and 29, before the walk to the well | From Sampson's cart coming up the road at dusk: the house on its rise, the round tower, the loopholes, the shuttered upper window (shut), Juba at the well, and the cart stopping behind the long wall | 41 s |
+| Afterwards (`search`) | 4, steps 45 and 46, after "The neighbour" | Sampson's cart takes John Callendar home, a covered shape under a sheet with one small stain, seen from the road and then far off; days later Captain Reid comes up the road, Hector goes down to meet him, the east door stands open, the house is empty | 45 s |
+
+Why these: the suggested "dry road at dusk" became an afternoon, because chapter 1 is a dry afternoon in this place and dusk belongs to chapter 3. The suggested "men coming to take Hutchinson" was changed: no source puts his capture at the house (the 1773 letter says only that he was taken; later books tell of a boat chase from Old Harbour), so the scene shows what follows from the record instead, Callendar carried away and searchers at an empty house, with Hector, who the record says led searchers.
+
+**Record and story.** Record: Callendar was shot at the house; a sick man slipped out and told; Hutchinson was taken by George Turnbull, a Navy officer; Hector, enslaved at the castle, led searchers; the house of two storeys with loopholed round towers on rising ground over the road (Cundall; JNHT). Story, and the journal says so: the dry season, the riderless mule, Sampson's cart and the sheet, Captain Reid, and the open east door. The `callendar` and `capture` journal pages now each have a line saying their scene is the game's picture.
+
+**The Mature 13+ line.** Nothing is shown of a killing. Callendar is seen only as a still, covered shape on a cart, never close, with one small stain on the cloth; then the cart is far off. No wound, no face, no body handled. Hutchinson is never seen. The two calm scenes have `scary: false` on their cards.
+
+**Flow.** Chapter 1 now opens at step 8, chapter 3 at step 28 (the water card leads there), and "The neighbour" goes on to step 45, so chapter 4 ends at 46. The first chapter's card now comes from `go()` like every other chapter's, with the "You are Quaco" line, and then the scene card. The autoplayer keeps a chapter's opening scene card instead of closing it. Old saves at any step still load.
+
+**Checks.** `?auto=1`: AUTO END 68, FLOW 0, through steps 8, 9, 28, 29, 45 and 46. `?test=audit` AUDIT 0 and FACES 0 in all five places; `?test=ambient` 0; `?test=held` CARRY 0; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375; `npm test` 279 pass, LINT 0 new. Each scene was screenshot with `?shot=film&key=<film>&at=<s>&ui` at six to eight moments at 1280x720 and at two or three at 390x800 and looked at: no shot passes through a wall (the search scene's move from the track to the east door goes up over the rock as a crane), nobody stands in a wall, captions sit in the lower bar, the skip button is the only control on a phone.

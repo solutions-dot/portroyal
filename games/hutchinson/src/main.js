@@ -445,8 +445,9 @@ async function go(stage, { restore = null, keep = false } = {}) {
   busy = false;
   save();
   const c = CHAPTERS[chapterOf(stage)];
-  if (stage === c.first && stage !== FIRST && !restore && !skipIntro) {
-    card(c.name, [c.intro], [["Begin", () => waits(stage)]]);
+  if (stage === c.first && !restore && !skipIntro) {
+    /* a chapter opens with its card (the first also says who you are), then its step: often a camera scene */
+    card(c.name, stage === FIRST ? [c.intro, GAME.fiction] : [c.intro], [["Begin", () => waits(stage)]]);
   } else await waits(stage);
   /* a save made after a chapter's last step was done, before Next chapter was pressed: offer the next chapter again */
   if (restore && needList(row).length && needList(row).every((n) => !story.needs(n.id))) advance(row.next);
@@ -1006,8 +1007,7 @@ async function start() {
     await go(d.stage, { restore: d });
     return;
   }
-  await go(FIRST);
-  if (!skipIntro) card(CHAPTERS[0].name, [CHAPTERS[0].intro, GAME.fiction], [["Begin", () => {}]]);
+  await go(FIRST);   /* the first chapter's card, then its opening scene (go) */
 }
 $("start").onclick = start;
 onLoadFail(() => {

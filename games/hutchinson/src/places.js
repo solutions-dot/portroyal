@@ -104,6 +104,19 @@ const DUST = [186, 168, 132],
   DRY = [150, 144, 96],
   GOLD = [1.3, 1.02, 0.6],   /* Guinea grass in a dry month */
   PALE = [1.12, 1.0, 0.7];
+/* a point along a path of [x, z] at k from 0 to 1, with the heading there: [x, z, ry] (a body that faces +z) */
+const along = (path, k) => {
+  let total = 0;
+  const L = [];
+  for (let i = 0; i < path.length - 1; i++) total += L[i] = Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]);
+  let d = Math.min(1, Math.max(0, k)) * total,
+    i = 0;
+  while (i < L.length - 1 && d > L[i]) d -= L[i++];
+  const u = L[i] ? d / L[i] : 0,
+    a = path[i],
+    b = path[i + 1];
+  return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, Math.atan2(b[0] - a[0], b[1] - a[1])];
+};
 const moveTo = (o, x, y, z) => o.position.set(x, y, z);
 /* Q.reveal[id](k): a thing to look at, from 0 (as you find it) to 1 (changed). The look moment (engine/lookshot.js) calls it every frame with
    k rising over two or three seconds, so the thing moves while you watch; on arrival it is called with true or false (1 or 0). */
@@ -248,6 +261,17 @@ function road() {
     flap.position.x = mix(0.3, 0.52, u);
     inside.visible = u > 0.3;
     inside.position.y = mix(0.06, 0.16, span(K(seen), 0.4, 0.9));
+  };
+  /* the opening camera scene: the pack mule comes down the road from the castle alone, and stops by the wall where Sampson will tie it */
+  const MULEWAY = [[-46, 5.8], [-11, 5.8], [-8.6, 3.7], [-7, 3.6]];
+  Q.films.opening = (t) => {
+    const k = t < 0 ? 1 : (t - 14) / 18,
+      p = along(MULEWAY, k),
+      step = k > 0 && k < 1 ? Math.sin(t * 9) : 0;
+    stray.position.set(p[0], Math.abs(step) * 0.02, p[1]);
+    stray.rotation.y = k >= 1 ? Math.PI / 2 : p[2];
+    stray.rotation.x = step * 0.015;
+    stray.visible = k >= 0;   /* round the far bend, out of sight, until it comes */
   };
   for (const [x, z, s] of [[-16.8, 10.9, 1.2], [3, 11.1, 1], [15.5, 10.6, 1.3], [-4, 10.9, 0.9], [-9, 11.2, 1.1]]) solid1(Q, W.scrub(x * 7 + 3, s), x, z, 0.5, 0.5);
   scatter(Q.group, (i) => W.scrub(i + 30, 0.8 + (i % 3) * 0.3), 36, [-60, 14, 60, 60], [], 7);
@@ -402,14 +426,30 @@ function castle() {
   scatter(Q.group, (i) => tree(5 + (i % 4), i + 40, i % 2), 16, [-70, -60, 70, -26], [[-16, -30, 16, -24]], 19);
   for (const [x, z, h, s] of [[-22, -20, 8, 71], [20, -22, 9, 72], [30, -8, 7, 73]]) add(Q, tree(h, s, 1), x, z);
   /* Sampson's cart waits on the road, behind the long wall, out of sight of the house */
-  const c = cart(2.6, 1.4);
+  const c = cart(2.6, 1.4),
+    casks = [];
   for (const [x, z] of [[-0.6, -0.3], [-0.6, 0.35], [0.2, 0.3]]) {
     const b = S.cask();
     b.position.set(x, 0.76, z);
     c.add(b);
+    casks.push(b);
   }
+  /* the search scene: John Callendar carried home on the cart, a long shape under a sheet, seen only from the road (the game's picture) */
+  const covered = grp(c, 0, 0.72, 0);
+  const sheetShape = cyl(0.23, 0.2, 1.5, W.WM.linen, 0.05, 0.11, 0, covered, 10);
+  sheetShape.rotation.z = Math.PI / 2;
+  sheetShape.scale.set(0.5, 1, 1);
+  mesh(new THREE.SphereGeometry(0.15, 10, 8), W.WM.linen, -0.78, 0.12, 0, covered).scale.set(1, 0.7, 1);   /* the head end */
+  for (const z of [-0.09, 0.09]) mesh(new THREE.SphereGeometry(0.07, 8, 6), W.WM.linen, 0.84, 0.13, z, covered);   /* the feet */
+  box(1.95, 0.02, 0.62, W.WM.linen, 0, 0.012, 0, covered);   /* the sheet's edge, lying on the cart bed */
+  const stain = mesh(new THREE.CircleGeometry(0.06, 9), solid(0x5e3a2c, 1), -0.35, 0.235, 0.04, covered);
+  stain.rotation.x = -Math.PI / 2;   /* one small stain on the cloth, as the Mature 13+ line allows */
+  covered.visible = false;
+  c.traverse((o) => (o.userData.noBatch = true));
+  const cartMule = mule(0x6a5644);
+  cartMule.traverse((o) => (o.userData.noBatch = true));
   solid1(Q, c, 12.4, 13.6, 3.0, 1.9);
-  solid1(Q, mule(0x6a5644), 17.1, 13.6, 2.0, 0.8, Math.PI / 2);
+  solid1(Q, cartMule, 17.1, 13.6, 2.0, 0.8, Math.PI / 2);
   /* where you are in cover (on the road side of each solid thing), and the open ground the upper window looks over */
   const show = (k) => {
     C.userData.shutter.userData.swing(k);
@@ -440,6 +480,9 @@ function castle() {
   person(Q, "carter", "carter", 13.2, 12.4, face(13.2, 12.4, 15, 11.4), { kind: "watch", at: [0, -9], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
   person(Q, "callendar", "callendar", 9.8, 11.6, face(9.8, 11.6, 0, -5), { kind: "watch", at: [0, -9], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 8] });
   person(Q, "sick", "sick", 7.2, 11.4, 0, { kind: "watch", at: [0, 12], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
+  /* the search scene (chapter 4's end): the captain who comes up the road, and Hector, who goes down to meet him */
+  person(Q, "officer", "officer", 20.6, 12.4, face(20.6, 12.4, 0, -9), { kind: "watch", at: [0, -9], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
+  person(Q, "hector", "hector", 1.0, 8.6, face(1.0, 8.6, 20, 12), { kind: "watch", at: [20, 12], idles: ["IdleM"], react: ["HeadTurn"], every: [7, 11] });
   /* the step decides the hour: dusk for the walk to the well, later dusk for the way back, morning for the neighbour */
   Q.enter = (stage) => {
     const day = stage >= 40,
@@ -451,6 +494,9 @@ function castle() {
     flock.userData.burst(0);
     fallen.visible = false;
     C.userData.eastDoor.userData.swing(0);
+    cartBack();
+    covered.visible = false;
+    for (const b of casks) b.visible = true;
   };
   /* the windlass creaks round and the bucket comes up out of the dark, heavy and dripping */
   Q.reveal.draw = (seen) => {
@@ -463,18 +509,6 @@ function castle() {
   };
   /* the morning of the neighbour, as a camera scene: Callendar walks up the track and calls; the window opens; at the shot the camera
      turns to the birds going up; then a hat on the track, and a sick man slipping out by the east door to tell */
-  const along = (path, k) => {
-    let total = 0;
-    const L = [];
-    for (let i = 0; i < path.length - 1; i++) total += L[i] = Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]);
-    let d = Math.min(1, Math.max(0, k)) * total,
-      i = 0;
-    while (i < L.length - 1 && d > L[i]) d -= L[i++];
-    const u = L[i] ? d / L[i] : 0,
-      a = path[i],
-      b = path[i + 1];
-    return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, Math.atan2(b[0] - a[0], b[1] - a[1])];
-  };
   const CAL = [[9.8, 11.6], [3, 11.6], [3, 2.4]],
     SICK = [[6.9, -12.4], [9.5, -9.5], [12.2, -3.4], [11.4, 3], [10.6, 9.4], [20, 12.4]];
   let home = null;
@@ -529,6 +563,88 @@ function castle() {
     sick.m.rotation.y = q[2];
     sick.m.visible = t >= 32.6;
     walkOn(sick, s > 0 && s < 1);
+  };
+  /* the first sight of the house, as a camera scene: from Sampson's cart coming up the road at dusk. The place does nothing of its own:
+     Juba works at the well, the chimney smokes and the lamp shows behind a loophole, as at any dusk; the shutter stays shut. */
+  Q.films.towers = (t) => {
+    if (t < 0) show(0);
+  };
+  /* the morning after, as a camera scene: Sampson's cart takes John Callendar home under a sheet and goes away east; then, days later, the
+     captain comes up the road, Hector goes down to meet him, and the east door stands open on an empty house */
+  const CART0 = [12.4, 13.6],
+    MULE0 = [17.1, 13.6];
+  function cartBack(dx = 0, on = true, hitched = false) {
+    c.position.set(CART0[0] + dx, 0, CART0[1]);
+    cartMule.position.set((hitched ? CART0[0] + 2.7 : MULE0[0]) + dx, 0, MULE0[1]);   /* in the shafts while it pulls */
+    c.visible = cartMule.visible = on;
+  }
+  let searchHome = null;
+  const OFF = [[15, 12.8], [10, 12.4], [3.5, 11.9], [3.4, -0.6]],
+    HEC = [[1.0, 8.6], [2.4, 10.8]],
+    HEC2 = [[2.4, 10.8], [2.3, -0.4]],
+    SAM = [[13.2, 12.4], [16.4, 12.8]];
+  Q.films.search = (t, Q) => {
+    const by = (id) => Q.people.find((n) => n.id === id),
+      sam = by("carter"),
+      off = by("officer"),
+      hec = by("hector");
+    if (!sam || !off || !hec) return;
+    const list = [sam, off, hec];
+    if (t < 0) {
+      if (searchHome)
+        list.forEach((n, i) => {
+          const h = searchHome[i];
+          n.x = h[0];
+          n.z = h[1];
+          n.m.position.set(n.x, 0, n.z);
+          n.m.rotation.y = h[2];
+          n.m.visible = h[3];
+          n.walking = undefined;
+          n.ctl.rest();
+        });
+      searchHome = null;
+      covered.visible = false;
+      for (const b of casks) b.visible = true;
+      cartBack();
+      C.userData.eastDoor.userData.swing(0);
+      return;
+    }
+    if (!searchHome) searchHome = list.map((n) => [n.x, n.z, n.m.rotation.y, n.m.visible]);
+    const put = (n, p, y = 0) => {
+      n.x = p[0];
+      n.z = p[1];
+      n.m.position.set(p[0], y, p[1]);
+      n.m.rotation.y = p[2];
+    };
+    /* part one: the cart. Sampson goes to the mule's head at 8 s and leads it away east at a walk (1.3 m/s) from 11 s */
+    for (const b of casks) b.visible = false;
+    covered.visible = true;
+    const roll = Math.max(0, t - 11) * 1.3;
+    cartBack(roll, t < 22.4, true);
+    if (t < 11) {
+      const k = (t - 8) / 3,
+        p = along(SAM, k);
+      put(sam, k >= 1 ? [p[0], p[1], Math.PI / 2] : p);
+      walkOn(sam, k > 0 && k < 1);
+    } else {
+      put(sam, [SAM[1][0] + roll, SAM[1][1], Math.PI / 2]);
+      walkOn(sam, true);
+    }
+    sam.m.visible = t < 22.4;
+    /* part two, days later: the captain up the road and the track; Hector down to meet him, then up beside him */
+    const ko = (t - 22.6) / 15,   /* about 1.6 m/s, a steady walk */
+      po = along(OFF, ko);
+    put(off, ko >= 1 ? [po[0], po[1], Math.PI] : po, moundY(po[0], po[1]));
+    off.m.visible = t >= 22.4;
+    walkOn(off, ko > 0 && ko < 1);
+    /* Hector: down to the foot of the track to meet him (26.5 to 30 s), then up beside him to the steps (30 to 37.6 s) */
+    const kh = (t - 26.5) / 3.5,
+      kh2 = (t - 30) / 7.6,
+      ph = kh2 > 0 ? along(HEC2, kh2) : along(HEC, kh);
+    put(hec, kh2 >= 1 ? [ph[0], ph[1], Math.PI] : kh <= 0 ? [ph[0], ph[1], face(1.0, 8.6, 20, 12)] : kh >= 1 && kh2 <= 0 ? [ph[0], ph[1], face(2.4, 10.8, 10, 12.4)] : ph, moundY(ph[0], ph[1]));
+    hec.m.visible = t >= 22.4;
+    walkOn(hec, (kh > 0 && kh < 1) || (kh2 > 0 && kh2 < 1));
+    C.userData.eastDoor.userData.swing(t >= 31 ? 1 : 0);   /* found standing open */
   };
   Q.keepOff = [{ pts: [[15, 11.4], [3, 11.6], [3, 2]], w: 1.4 }, { at: [-13.5, 2.3], r: 1.2 }, { at: [-0.8, 6.5], r: 1.2 }, { at: [16.5, 8.4], r: 1.2 }];
   return Q;
