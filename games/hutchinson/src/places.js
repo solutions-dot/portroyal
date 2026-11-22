@@ -241,14 +241,21 @@ function road() {
   box(0.36, 0.3, 0.62, solid(0x6b4a30, 1), 0.3, 0, 0, pack);
   box(0.36, 0.3, 0.62, solid(0x6b4a30, 1), -0.3, 0, 0, pack);
   box(0.7, 0.07, 0.5, solid(0x3d2d20, 1), 0, 0.17, 0, pack);
-  const roll = cyl(0.11, 0.11, 0.6, solid(0x8a8068, 1), 0, 0.3, 0, pack, 8);
+  /* a blanket rolled tight and strapped across the saddle */
+  const roll = cyl(0.1, 0.1, 0.62, solid(0x7a6a52, 1), 0, 0.28, 0, pack, 16);
   roll.rotation.z = Math.PI / 2;
+  for (const x of [-0.2, 0.2]) {
+    const st = mesh(new THREE.TorusGeometry(0.104, 0.008, 4, 16), solid(0x3a2a1c, 0.8), x, 0.28, 0, pack);
+    st.rotation.y = Math.PI / 2;
+  }
   const flap = box(0.37, 0.05, 0.6, solid(0x7a5a3c, 1), 0.3, 0.18, 0, pack);   /* the bag's flap: lifted when you look inside */
   flap.userData.noBatch = true;
   /* what is in the bag: a tin cup and a shirt folded small, seen as the flap comes up */
   const inside = grp(pack, 0.3, 0.12, 0);
-  cyl(0.04, 0.035, 0.08, solid(0x9a9a94, 0.4, 0.6), 0, 0.04, 0.14, inside, 8);
-  box(0.2, 0.04, 0.16, solid(0xd8d0bc, 1), 0, 0.02, -0.08, inside);
+  add({ group: inside }, P.tinCup(), 0, 0.14, 0);
+  const shirt = box(0.2, 0.05, 0.16, solid(0xd8d0bc, 1), 0, 0.025, -0.08, inside);   /* a linen shirt folded small, its collar on top */
+  box(0.12, 0.012, 0.03, solid(0xc8c0ac, 1), 0, 0.055, -0.13, inside);
+  shirt.userData.noBatch = true;
   inside.visible = false;
   stray.traverse((o) => (o.userData.noBatch = true));
   solid1(Q, stray, -7, 3.6, 2.0, 0.9, Math.PI / 2);
@@ -336,8 +343,8 @@ function castle() {
   solid1(Q, well, -13.5, 0.4, 2.4, 2.2);
   Q.props.well = well;
   const wb = grp(Q.group, -13.3, -1.2, 0.4);   /* the well's own bucket on its rope: down, or wound up dripping */
-  cyl(0.012, 0.012, 1.0, W.WM.rope, 0, 1.05, 0, wb, 5);
-  cyl(0.16, 0.13, 0.26, W.WM.wood, 0, 0.45, 0, wb, 10);
+  cyl(0.012, 0.012, 0.85, W.WM.rope, 0, 1.15, 0, wb, 5);
+  add({ group: wb }, P.woodBucket(), 0, 0, 0.32);   /* staves, hoops, a bail, water inside */
   wb.traverse((o) => {
     o.userData.noBatch = true;
   });
@@ -718,7 +725,7 @@ function hall() {
   solid1(Q, P.table(2.6, 1.0, 0.78), -0.6, -1.5, 2.7, 1.1);
   const cd = add(Q, W.candle(true), 0.4, -1.7, 0.81);
   add(Q, S.writing(), -0.2, -1.3, 0.81, 0.2);
-  const box1 = W.chest(0.7, 0.4, 0.36);
+  const box1 = W.chest(0.7, 0.4, 0.36, 0.88);   /* packed: the watches lie on a dark cloth */
   add(Q, box1, -1.2, -1.5, 0.81);
   /* the watches in the box: forty-three were found in the house */
   const watches = grp();
@@ -753,14 +760,15 @@ function hall() {
   /* the west wall: coats on pegs, far too many for one man; a cloth hangs over them until you draw it back */
   const coats = [0x5a3a2a, 0x2f3a4a, 0x6a5a3a, 0x3a2a2a, 0x4a5a3a, 0x7a2f2a];
   coats.forEach((c, i) => add(Q, W.hungCoat(c), -5.22, -0.9 + i * 0.8, 0, Math.PI / 2));
-  const sheet = box(0.06, 1.7, 4.6, W.WM.linen, -5.08, 1.05, 1.0, Q.group);
+  const sheet = box(0.05, 1.7, 4.4, W.WM.linen, -4.96, 1.05, 1.1, Q.group);   /* clear of the coats' fronts */
   sheet.userData.noBatch = true;
-  box(0.05, 0.05, 4.8, W.WM.woodDark, -5.1, 1.93, 1.0, Q.group);
+  box(0.05, 0.05, 4.5, W.WM.woodDark, -4.96, 1.93, 1.15, Q.group);   /* stops short of the spiral steps' wall */
+  for (const z of [-1.05, 3.35]) box(0.22, 0.05, 0.05, W.WM.woodDark, -5.11, 1.93, z, Q.group);   /* the rail's brackets into the wall */
   /* the cloth is drawn along its rail, and the coats come into view one by one */
   Q.reveal.coats = (seen) => {
     const u = span(K(seen), 0.05, 0.9);
     sheet.scale.z = mix(1, 0.1, u);
-    sheet.position.z = mix(1.0, 3.05, u);
+    sheet.position.z = mix(1.1, 3.1, u);
   };
   /* the east wall: a rack of long guns. The north wall: the cot where a sick man lay, a shelf. */
   const rack = grp();
@@ -774,13 +782,13 @@ function hall() {
   add(Q, rack, 5.2, -2.3);
   solid1(Q, S.cot(), 3.0, -2.9, 2.0, 0.9);
   /* a tin cup knocked to the floor by the cot: you set it back where a sick man could reach it */
-  const cup = cyl(0.04, 0.035, 0.08, solid(0x9a9a94, 0.4, 0.6), 4.3, 0.04, -2.7, Q.group, 8);
+  const cup = add(Q, P.tinCup(), 4.3, -2.7, 0.04);   /* lying on its side, its open mouth toward the room */
   cup.rotation.z = Math.PI / 2;
-  cup.userData.noBatch = true;
+  cup.traverse((o) => (o.userData.noBatch = true));
   /* the tin cup is picked up off the floor and set back on the cot, where a sick man could reach it */
   Q.reveal.cot = (seen) => {
     const u = span(K(seen), 0.1, 0.85);
-    cup.position.set(mix(4.3, 3.5, u), mix(0.04, 0.57, u) + Math.sin(u * Math.PI) * 0.3, mix(-2.7, -2.75, u));
+    cup.position.set(mix(4.3, 3.5, u), mix(0.04, 0.535, u) + Math.sin(u * Math.PI) * 0.3, mix(-2.7, -2.75, u));
     cup.rotation.z = mix(Math.PI / 2, 0, span(u, 0, 0.5));
   };
   add(Q, S.shelf(1.7), -1.0, -3.44, 1.75);
@@ -835,6 +843,38 @@ function hole() {
       /* vines and roots hanging down the rock */
       const v = box(0.1, 3 + (i % 3), 0.06, flat(0x3e5a34), Math.cos(a) * 18.2, top[1] - 2.6, 2 + Math.sin(a) * 18.2, Q.group);
       v.rotation.y = -a;
+    }
+  }
+  /* the rock is not bare: ferns and moss on its ledges and along its foot, and roots hanging down the face from the trees on top */
+  {
+    const fr = rng(41),
+      onFace = (a, t, out = 0.12) => {
+        const p = ring.userData.face(a, t),
+          d = Math.hypot(p[0], p[2]) || 1;
+        return [p[0] * (1 + out / d), p[1], p[2] * (1 + out / d) + 2];
+      };
+    for (let i = 0; i < 150; i++) {
+      const a = fr() * Math.PI * 2;
+      if (a > 0.3 && a < 1.6) continue;   /* not where the rock is low by the way in */
+      const foot = i < 45,
+        t = foot ? 0.02 : 0.1 + fr() * 0.8,
+        p = onFace(a, t, foot ? -0.5 : 0.3),
+        kind = i % 4,
+        o = kind === 3 ? S.moss(0.7 + fr() * 0.8, i) : S.fern(1.5 + fr() * 1.1, i);
+      add(Q, o, p[0], p[2], p[1] - (kind === 3 ? 0.08 : 0.05), fr() * 6);
+      if (kind === 1) add(Q, S.fern(0.9 + fr() * 0.5, i + 500), p[0] + (fr() - 0.5) * 0.9, p[2] + (fr() - 0.5) * 0.9, p[1] - 0.1, fr() * 6);   /* ferns grow in clumps */
+    }
+    for (let i = 0; i < 24; i++) {
+      const a = fr() * Math.PI * 2;
+      if (a > 0.3 && a < 1.6) continue;
+      /* a root down the face: a thin strand from near the rim to partway down, lying on the rock */
+      const t0 = 0.97,
+        t1 = 0.45 + fr() * 0.35,
+        A = new THREE.Vector3(...onFace(a, t0, 0.04)),
+        B = new THREE.Vector3(...onFace(a + (fr() - 0.5) * 0.02, t1, 0.04)),
+        len = A.distanceTo(B),
+        root = cyl(0.025, 0.055, len, solid(0x5a4632, 1), (A.x + B.x) / 2, (A.y + B.y) / 2, (A.z + B.z) / 2, Q.group, 5);
+      root.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize().negate());
     }
   }
   for (const [x, z, r, h, s] of [[-40, -30, 26, 22, 1], [34, -36, 30, 26, 2], [0, -60, 40, 30, 3], [-50, 30, 30, 24, 4], [48, 20, 28, 22, 5], [10, 60, 36, 24, 6]]) add(Q, S.cockpitHill(r * 0.8, h, 20 + s, { tone: [0.26, 0.37, 0.21] }), x, z, -0.6);

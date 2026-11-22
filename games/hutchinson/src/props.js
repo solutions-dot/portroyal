@@ -2,7 +2,6 @@
    Every one is a reconstruction of a common kind of object; none copies a museum piece. */
 import * as THREE from "three";
 import { cv, std, solid, mesh, box, cyl, plane, grp } from "./gfx.js";
-import { bucket as tinBucket, lantern as stormLantern } from "./period-props.js";
 import { fodder, cask } from "./scenery.js";
 export const WOOD = solid(0x826247),
   WOOD_DARK = solid(0x4a3626, 0.9),
@@ -54,11 +53,7 @@ export function sheet(text = "", w = 0.3, d = 0.22) {
 }
 /* a wooden pail with iron hoops and a rope handle, water near the top */
 export function pail() {
-  const g = tinBucket(0x8a6a48);
-  g.traverse((o) => {
-    if (o.isMesh && o.material.metalness > 0.3 && o.material.color.getHex() === 0x8a6a48) o.material = solid(0x8a6a48, 0.9);
-  });
-  return dynamic(g);
+  return dynamic(woodBucket(true));   /* staves and iron hoops, as the well's own bucket */
 }
 /* a pocket watch: a round silver or gold case, a pale face, a short chain */
 export function watch(gold = false) {
@@ -92,9 +87,57 @@ export function ledger() {
   box(0.27, 0.04, 0.2, PAPER, 0.012, 0.025, 0, g);
   return dynamic(g);
 }
-/* a horn lantern with a candle: a tin frame, a warm glow */
+/* a horn lantern of the 1770s, as carried in a house or by searchers at night (not the glass hurricane lantern of a century later): a round
+   tin base, four tin posts, panes of thin horn that glow amber round a tallow candle, a cone of pierced tin over them with a little chimney,
+   and a ring to carry or hang it by. Its origin is the bottom centre; userData.handleY is the top of the ring. */
+const TIN = new THREE.MeshStandardMaterial({ color: 0x8d8a82, roughness: 0.55, metalness: 0.6 }),
+  HORN = new THREE.MeshStandardMaterial({ color: 0xe0b46a, emissive: 0xb86a1c, emissiveIntensity: 0.9, roughness: 0.6, transparent: true, opacity: 0.82, side: THREE.DoubleSide });
 export function lantern() {
-  return dynamic(stormLantern());
+  const g = grp();
+  cyl(0.075, 0.08, 0.025, TIN, 0, 0.0125, 0, g, 16);
+  mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.19, 16, 1, true), HORN, 0, 0.12, 0, g);
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    box(0.012, 0.2, 0.012, TIN, Math.cos(a) * 0.07, 0.12, Math.sin(a) * 0.07, g);
+  }
+  for (const y of [0.03, 0.215]) mesh(new THREE.TorusGeometry(0.07, 0.005, 5, 18), TIN, 0, y, 0, g).rotation.x = Math.PI / 2;
+  cyl(0.012, 0.012, 0.07, solid(0xeee4c8, 0.8), 0, 0.06, 0, g, 8);   /* the candle */
+  const cone = mesh(new THREE.CylinderGeometry(0.018, 0.074, 0.075, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x8d8a82, roughness: 0.55, metalness: 0.6, side: THREE.DoubleSide }), 0, 0.255, 0, g);
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    box(0.008, 0.008, 0.002, solid(0xffc070, 0.4), Math.cos(a) * 0.05, 0.25, Math.sin(a) * 0.05, g).rotation.y = -a + Math.PI / 2;   /* light through the piercings */
+  }
+  cyl(0.02, 0.02, 0.025, TIN, 0, 0.305, 0, g, 10);
+  const ring = mesh(new THREE.TorusGeometry(0.022, 0.004, 5, 14), TIN, 0, 0.34, 0, g);
+  cone.userData.noBatch = ring.userData.noBatch = true;
+  g.userData.handleY = 0.36;
+  return dynamic(g);
+}
+/* a tin cup with a handle, open at the top: one lathe for the wall and floor, both faces drawn. Origin: the bottom centre. */
+export function tinCup() {
+  const g = grp(),
+    m = new THREE.MeshStandardMaterial({ color: 0x9a9a94, roughness: 0.45, metalness: 0.6, side: THREE.DoubleSide }),
+    V = (r, y) => new THREE.Vector2(r, y);
+  mesh(new THREE.LatheGeometry([V(0.001, 0), V(0.034, 0), V(0.036, 0.004), V(0.04, 0.078), V(0.042, 0.082), V(0.037, 0.08), V(0.034, 0.008), V(0.001, 0.006)], 18), m, 0, 0, 0, g);
+  const h = mesh(new THREE.TorusGeometry(0.022, 0.004, 5, 10, Math.PI), m, 0.04, 0.045, 0, g);
+  h.rotation.z = -Math.PI / 2;
+  return g;
+}
+/* a well bucket of wooden staves with two iron hoops and an iron bail, open at the top with water inside. Origin: the bottom centre. */
+export function woodBucket(water = true) {
+  const g = grp(),
+    staves = new THREE.MeshStandardMaterial({ color: 0x7a5a3a, roughness: 0.95, side: THREE.DoubleSide }),
+    V = (r, y) => new THREE.Vector2(r, y);
+  mesh(new THREE.LatheGeometry([V(0.001, 0.02), V(0.13, 0.02), V(0.13, 0), V(0.135, 0), V(0.162, 0.27), V(0.15, 0.27), V(0.124, 0.03), V(0.001, 0.03)], 20), staves, 0, 0, 0, g);
+  for (const [y, r] of [[0.05, 0.139], [0.22, 0.157]]) mesh(new THREE.TorusGeometry(r, 0.006, 5, 22), IRON, 0, y, 0, g).rotation.x = Math.PI / 2;
+  const bail = mesh(new THREE.TorusGeometry(0.16, 0.006, 5, 16, Math.PI), IRON, 0, 0.25, 0, g);
+  if (water) {
+    const w = mesh(new THREE.CircleGeometry(0.148, 20), new THREE.MeshStandardMaterial({ color: 0x3a5a66, roughness: 0.15, metalness: 0.1 }), 0, 0.22, 0, g);
+    w.rotation.x = -Math.PI / 2;
+  }
+  bail.userData.noBatch = true;
+  g.userData.handleY = 0.41;
+  return g;
 }
 /* what a person holds in the right hand (main.js holdThing): the thing, where its handle is, and how the arm carries it */
 export function held(kind) {

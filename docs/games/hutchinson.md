@@ -156,3 +156,20 @@ The owner: "the mountains in these games dont look as good as the other games". 
 **Search scene on a phone.** The crane and the last shot are reframed so the captain and Hector stay in frame at 390x800: the crane looks down at the two men on the track, the east door is seen square on from the east (it was hidden behind the tower in a tall frame), and the last shot looks up the track from behind them to the house.
 
 Checks: `?auto=1` AUTO END 68, FLOW 0; `?test=audit` AUDIT 0 and FACES 0 in all five places; `?test=ambient` 0; `?test=held` CARRY 0; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375; `npm test` 279 pass, LINT 0 new. Before and after screenshots from the road, the castle at dusk and late dusk, the hole, the town and the dawn scene were compared by eye.
+
+## Close-up props, 22 November 2026
+
+The owner: "polish the graphics like the hat has no opening". Every small thing a look or a camera scene frames was checked close up and rebuilt where it read as a solid puck or a slab:
+
+- **Cups** (`tinCup()` in `src/props.js`): an open tin cup with a floor and a handle, both faces drawn. In the pack and by the cot (it now lies on its side, mouth to the room, and is set upright on the cot).
+- **Buckets** (`woodBucket()`): staves open at the top, two iron hoops, an iron bail and water inside. The well's own bucket and Juba's pail (which was a copper-coloured tin bucket).
+- **Lantern** (`lantern()`): the glass hurricane lantern of the 1800s is replaced by a horn lantern of the 1770s: a tin base, four posts, amber horn panes round a candle, a pierced tin cone with a chimney and a ring. In the hall and on the searchers' rope.
+- **The strongbox** (`chest()` in `src/world.js`): a real box of 2.5 cm boards, open under the lid, with iron straps on the outside only (they had run through the middle); packed with a dark cloth that the watches lie on.
+- **Coats** (`hungCoat()`): a body with depth that widens to full skirts, a yoke, a turned-down collar, hanging sleeves with cuffs and a row of brass buttons, in place of three flat slabs. The cloth over them hangs clear of the coats on a shorter rail with brackets into the wall.
+- **The cot** (`cot()` in `src/scenery.js`): a soft bolster and the blanket thrown back in two rolls, in place of slabs.
+- **The pack**: the bedroll is round with two leather straps; the shirt is folded with its collar on top.
+- **The sinkhole**: the rock is warm limestone going green toward the wooded top, with ferns in clumps along the foot and on the ledges (`fern()`, `moss()`), and roots down the face from the rim. It still reads as a rock wall, as the cavers describe it, but not a bare grey one.
+
+Looked at and left as they are: the watches, the stick, the ledger, the musket, the notice board, the loophole board (4 cm, a real board), the cart and the windlass.
+
+Checks: `?auto=1` AUTO END 68, FLOW 0; `?test=audit` AUDIT 0 in all five places (it first found the coats' rail ending inside the spiral steps' wall, and one root where the rock is low by the way in; both fixed); `?test=ambient` 0; `?test=held` CARRY 0; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375; `npm test` 279 pass, LINT 0 new.
