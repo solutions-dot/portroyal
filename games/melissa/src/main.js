@@ -1,5 +1,6 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
-import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
+import { addRecap } from '../../../engine/recap.js';
+import { makeHelicopter } from '../../../engine/helicopter.js';   /* the shared helicopter (engine/helicopter.js) */   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
@@ -669,21 +670,9 @@ ON[60] = () => { weather(0.05, 0, ENV.overcast); setBedsFor('after'); const P = 
 ON[61] = () => { setBedsFor('saw'); };
 ON[62] = () => { setBedsFor('after'); };
 /* a Jamaica Defence Force helicopter on a relief flight (the JDF flew food drops from Up Park Camp after Melissa: journal "Help from far away").
-   A general shape of the Air Wing's twin-engine helicopters (they fly Bell 412s and AW139s), olive with a pale band: not modelled on one aircraft
-   (docs/games/melissa.md, stand-ins). About 15 m long with its 14 m rotor. */
-function helicopter() {
-  const g = new THREE.Group(), body = new THREE.MeshStandardMaterial({ color: 0x4d5638, roughness: 0.6 }), dark = new THREE.MeshStandardMaterial({ color: 0x1c2024, roughness: 0.3, metalness: 0.4 }), pale = new THREE.MeshStandardMaterial({ color: 0xc9c2a2, roughness: 0.7 });
-  const M = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); g.add(o); return o; };
-  M(new THREE.SphereGeometry(1, 16, 10), body, 0, 0, 0).scale.set(3.0, 1.15, 1.2); M(new THREE.SphereGeometry(1, 12, 8), dark, -2.2, 0.25, 0).scale.set(1.0, 0.7, 1.0);   /* the cabin and its windscreen (nose toward -x) */
-  M(new THREE.BoxGeometry(2.4, 0.18, 2.42), pale, 0.4, -0.1, 0);
-  const boom = M(new THREE.CylinderGeometry(0.22, 0.42, 6.2, 8), body, 5.6, 0.35, 0); boom.rotation.z = PI / 2;
-  M(new THREE.BoxGeometry(0.9, 1.6, 0.12), body, 8.5, 1.0, 0).rotation.z = -0.35; M(new THREE.BoxGeometry(1.6, 0.08, 0.5), body, 8.0, 0.4, 0);
-  M(new THREE.BoxGeometry(1.4, 0.5, 1.0), body, 0.4, 1.25, 0); M(new THREE.CylinderGeometry(0.08, 0.08, 0.6, 6), dark, 0.4, 1.7, 0);
-  for (const s of [-1, 1]) { M(new THREE.BoxGeometry(3.6, 0.08, 0.08), dark, 0, -1.45, s * 1.0); for (const x of [-0.9, 0.9]) M(new THREE.BoxGeometry(0.06, 0.4, 0.06), dark, x, -1.25, s * 1.0); }
-  const rotor = new THREE.Group(); rotor.position.set(0.4, 2.0, 0); g.add(rotor); for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(6.9, 0.05, 0.42), dark); b.position.x = 3.45; const a = new THREE.Group(); a.rotation.y = i * PI / 2; a.add(b); rotor.add(a); }
-  const tail = new THREE.Group(); tail.position.set(8.6, 1.2, 0.2); g.add(tail); for (let i = 0; i < 2; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.6, 0.05), dark); b.rotation.x = i * PI / 2; tail.add(b); }
-  g.userData = { rotor, tail }; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.userData.noBatch = true; } }); g.visible = false; return g;
-}
+   The shared model (engine/helicopter.js, also used by Tivoli): a general shape of the Air Wing's twin-engine helicopters (they fly Bell 412s and
+   AW139s), olive with a pale band, not modelled on one aircraft (docs/games/melissa.md, stand-ins). */
+const helicopter = () => makeHelicopter();
 ON[63] = async () => {   /* "Listen. Something is coming.": you look up as the helicopter comes in low over the hills and passes over the lane */
   const ep = EP, P = P_(); frozen = true; busy = false; bars(true); const H = P.heli || (P.heli = helicopter()); if (!H.parent) scene.add(H);
   const finish = storyScene(() => { H.visible = false; setBedsFor('after'); endCut(); setStage(64); });

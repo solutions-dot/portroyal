@@ -437,6 +437,10 @@ The shapes and colours are general pictures, not copies of a photographed engine
 - `paintKit()` is the small helper they use (boxes, cylinders, rods, tubes, merged into one mesh with vertex colours). It is exported for other small code-built things: Windrush's porter's barrow uses it.
 - Used by Port Royal (the fishing canoe on the spit), Hurricane Melissa and Bog Walk (`dugOut` in `detail.js`), Windrush (the ten lifeboats on the ship, and `lifeboat` in `scenery.js`) and Marcus Garvey (the ships out in the harbour in chapter 5). To look at them alone: `node build/vehicles/viewer2/shoot.mjs <outdir> 'B.dugOut|front34,top'` (any `B.` builder from `engine/boats.js` or `R.` builder from `engine/roadcars.js`, with options as JSON after a second `|`).
 
+## engine/helicopter.js: one helicopter (22 November 2026)
+
+`makeHelicopter()` (a general twin-engine utility shape, olive with a pale band, no weapons, nose toward -x; a stand-in, not one aircraft), `spinRotors(H, dt)`, `flyAlong(H, A, B, k)` and `rotorSound()` (a low rotor thump; `level(v, tc)`, `stop()`). Used by Hurricane Melissa (the relief flight; its model moved here from `games/melissa/src/main.js`) and Tivoli (over the May 2010 street scene). Melissa's rotor sound is still its own bed in `games/melissa/src/sfx.js`, because its sound check measures that bed: move it to `rotorSound()` when that file is next touched.
+
 ## engine/roadcars.js: cars, a bus, a van and lorries (17 November 2026)
 
 Road vehicles with a detailed look at a low cost. Each is drawn from its side outline (the wheel arches cut out of it), pushed out to its width with rounded edges, and leaned in above the waist. Then come wheels with a tyre, a rim and a hub cap, glass, bumpers, a grille, lamps, door lines, handles, mirrors and wipers.

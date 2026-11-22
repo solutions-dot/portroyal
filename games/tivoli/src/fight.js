@@ -31,6 +31,7 @@ import { FX, flash, puff, kick, updateFx, shakeOffset } from './fx.js';
 import * as SFX from './sfx.js';
 import { cue } from '../../../engine/audio.js';
 import { finishChapter } from './story.js';
+import { makeHelicopter, spinRotors, flyAlong, rotorSound } from '../../../engine/helicopter.js';
 
 export const FIGHT = { on: false, T: 0, contact: false, bodies: [], actors: [], hidden: [], env: null, street: null, cleanup: null };
 const END = 46, W = -Math.PI / 2, E = Math.PI / 2;   /* the clock runs from -4 (the quiet start) to 46 s; a body faces +z, so facing west (-x) is -pi/2 */
@@ -99,7 +100,7 @@ export async function begin() {
   FX.calm = sceneIsCalm(); FX.shake = 0;
   FIGHT.hidden = scene.children.filter((c) => c.visible && !c.isLight); FIGHT.hidden.forEach((c) => (c.visible = false));
   FIGHT.fog = scene.fog; FIGHT.bg = scene.background; scene.background = new THREE.Color(0xdbe6ea); scene.fog = new THREE.Fog(0xcfdde4, 70, 270);
-  const shadows = !matchMedia('(pointer: coarse)').matches, st = buildStreet({ shadows }); FIGHT.street = st; scene.add(st.group, FX.group);
+  const shadows = !matchMedia('(pointer: coarse)').matches, st = buildStreet({ shadows }); FIGHT.street = st; scene.add(st.group, FX.group); const H = FIGHT.heli || (FIGHT.heli = makeHelicopter()); H.visible = false; scene.add(H); FIGHT.rotor = rotorSound();   /* a helicopter overhead (heli() below) */
   FIGHT.lights = scene.children.filter((c) => c.isLight && c !== st.sun).map((l) => [l, l.intensity]); FIGHT.lights.forEach(([l]) => (l.intensity = l.isDirectionalLight ? 0 : 1.9));   /* the street has its own sun */
   FIGHT.shadowWas = renderer.shadowMap.enabled; if (shadows) { renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; }
   FIGHT.actors = []; FIGHT.bodies = []; FIGHT.contact = false; FIGHT.T = -4; FIGHT.shot = -1; FIGHT.ended = false;
@@ -121,6 +122,7 @@ export async function begin() {
 function finish(showTitle = true) {
   clearTimeout(titleTimer); clearTimeout(endTimer);
   SFX.ambience(false); endSceneWarning();
+  if (FIGHT.heli) { FIGHT.heli.visible = false; FIGHT.heli.removeFromParent(); } if (FIGHT.rotor) { FIGHT.rotor.stop(); FIGHT.rotor = null; }
   const gone = FIGHT.cleanup ? [FIGHT.street.group, ...FIGHT.bodies] : [];
   if (FIGHT.cleanup) FIGHT.cleanup(); FIGHT.cleanup = null; for (const o of gone) release(o, FIGHT.env.scene);   /* engine/preload.js: the street and its people are built afresh next time, so their graphics memory is let go */ FIGHT.on = false;
   for (const id of ['aftercard', 'windowframe', 'fighttitle', 'fade']) $(id).hidden = true;
@@ -219,8 +221,24 @@ export function tick(dt) {
     if (st.fight !== undefined) atCover(a, st, T, dt, camera);
   }
   updateFx(dt);
+  heli(dt, T);
   if (T > 12 && T < 38 && Math.random() < dt * 0.35) SFX.rattle(rnd(-0.8, 0.8), FX.calm);   /* more fighting, further off */
   if (T >= END - 2) { FIGHT.ended = true; SFX.ambience(false); $('fade').style.transition = 'opacity 2s'; $('fade').style.opacity = 1; SFX.ring(FX.calm); endTimer = setTimeout(complete, 2600); }
+}
+/* A helicopter overhead (22 November 2026, owner's request). The Security Minister said the troops that took the area were "backed by helicopters"
+   (Voice of America, 25 May 2010; docs/games/tivoli.md). No source says how many, of what kind, or what they did, so the scene shows only one,
+   high up, passing over: it never fires and nothing comes from it. The model is the shared stand-in shape (engine/helicopter.js). It crosses the
+   sky as the soldiers walk in, and again far off at the end, where the wide shots can see it. Its sound grows as it comes nearer. */
+const HELI = [
+  { t0: -3, t1: 10, A: new THREE.Vector3(90, 34, -46), B: new THREE.Vector3(-170, 30, -22) },
+  { t0: 36, t1: 47, A: new THREE.Vector3(-190, 30, 60), B: new THREE.Vector3(-80, 26, -70) },
+];
+const EAR = new THREE.Vector3(16.5, 4.8, 8.9);
+function heli(dt, T) {
+  const H = FIGHT.heli; if (!H) return; const p = HELI.find((h) => T >= h.t0 && T <= h.t1);
+  H.visible = !!p; let near = 0;
+  if (p) { flyAlong(H, p.A, p.B, (T - p.t0) / (p.t1 - p.t0)); spinRotors(H, dt); near = Math.max(0, 1 - H.position.distanceTo(EAR) / 220); }
+  if (FIGHT.rotor) FIGHT.rotor.level(near * near * (FX.calm ? 0.35 : 1), 0.4);
 }
 /* what runs after the mixers: feet on the ground, and the camera */
 const SHOTS = [   /* all from the child's window: the balcony of the second floor of the south flats (x 16.5, y 4.8, z 8.9), looking west along the street */
