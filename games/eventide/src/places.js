@@ -87,14 +87,17 @@ function myersWard() {
     box(x1 - x0, 0.08, 1.0, solid(0x4a3426, 1), (x0 + x1) / 2, 0.04, -17.05, g); wall(x0, -17.6, x1, -16.5);
     for (let x = x0 + 0.7, i = 0; x < x1 - 0.3; x += 1.5, i++) { const p = (i % 2 ? hibiscus : croton)(i + (x0 < 0 ? 0 : 50)); p.position.set(x, 0.08, -17.05); g.add(p); }
   }
-  box(0.5, 0.7, 0.4, solid(0x6a4c33, 0.9), -10, F1 + 0.35, -20.05, g); box(0.3, 0.2, 0.12, solid(0x2a2a2e, 0.5), -10, F1 + 0.8, -20.05, g); box(0.012, 0.3, 0.012, solid(0xb0b4b8, 0.4, 0.6), -9.88, F1 + 1.05, -20.05, g);   /* a little table with Miss Iris's radio */
+  box(0.5, 0.7, 0.4, solid(0x6a4c33, 0.9), -10, F1 + 0.35, -20.05, g); box(0.3, 0.2, 0.12, solid(0x2a2a2e, 0.5), -10, F1 + 0.8, -20.05, g);   /* a little table with Miss Iris's radio */
+  const radio = { dial: new THREE.MeshStandardMaterial({ color: 0x3a3428, emissive: 0xffb050, emissiveIntensity: 0, roughness: 0.4 }) };   /* its dial lights, its knob turns and its aerial pulls up when you listen (main.js) */
+  box(0.12, 0.03, 0.01, radio.dial, -10, F1 + 0.86, -20.05 + 0.065, g); radio.knob = cyl(0.03, 0.03, 0.02, solid(0xc8c0a8, 0.6), -9.9, F1 + 0.78, -20.05 + 0.07, g, 10); radio.knob.rotation.x = Math.PI / 2; box(0.005, 0.022, 0.005, solid(0x2a2a2e, 0.5), 0, 0.012, 0.01, radio.knob);
+  radio.aerial = grp(g, -9.88, F1 + 0.9, -20.05); box(0.012, 0.3, 0.012, solid(0xb0b4b8, 0.4, 0.6), 0, 0.15, 0, radio.aerial); radio.aerial.scale.y = 0.45;
   wall(-10.35, -20.3, -9.65, -19.8);
   const groundAt = (x, z) => {
     if (Math.abs(x) < L / 2 && z < VZ && z > Z0) return F1;   /* on the veranda */
     if (Math.abs(x) < 1.5 && z <= VZ + 1.2 && z >= VZ) return F1 * (1 - (z - VZ) / 1.2);   /* the steps */
     return 0;
   };
-  return { group: g, walls, groundAt, foot: [-L / 2 - 0.6, Z1 - 0.6, L / 2 + 0.6, VZ + 1.5], iris: [-4.5, -19.2], F1, L, Z0, Z1, VZ, EAVE };
+  return { group: g, walls, groundAt, foot: [-L / 2 - 0.6, Z1 - 0.6, L / 2 + 0.6, VZ + 1.5], iris: [-4.5, -19.2], F1, L, Z0, Z1, VZ, EAVE, radio };
 }
 
 /* ---------- the men's ward, after the owner's photograph of a two-storey building: a plastered lower storey with arches, a row of upper windows,
@@ -418,9 +421,11 @@ export function buildMonument(g) {
   const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.computeVertexNormals();
   const tri = new THREE.Mesh(tg, std(T.concrete([2, 2], [242, 240, 234]), 0.95, DS)); tri.position.y = BH; g.add(tri);
   /* the plaque: a black triangle with the real words (read from the photograph), lying on the front face just in front of it */
-  const words = cv(512, 600, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = '#16191c'; x.beginPath(); x.moveTo(w / 2, 6); x.lineTo(w - 6, h - 6); x.lineTo(6, h - 6); x.closePath(); x.fill();
-    x.fillStyle = '#e9e4d6'; x.textAlign = 'center'; const lines = [['DEDICATED', 270, 24], ['TO THE VICTIMS', 312, 24], ['OF', 352, 24], ['THE EVENTIDE HOME FIRE', 394, 24], ['MAY THEIR SOULS', 470, 26], ['REST IN PEACE', 512, 26]];
-    for (const [t, y, s] of lines) { x.font = `700 ${s}px Georgia, serif`; x.fillText(t, w / 2, y); } });
+  const drawWords = (x, w, h, lit) => { x.clearRect(0, 0, w, h); x.fillStyle = '#16191c'; x.beginPath(); x.moveTo(w / 2, 6); x.lineTo(w - 6, h - 6); x.lineTo(6, h - 6); x.closePath(); x.fill();
+    x.textAlign = 'center'; const lines = [['DEDICATED', 270, 24], ['TO THE VICTIMS', 312, 24], ['OF', 352, 24], ['THE EVENTIDE HOME FIRE', 394, 24], ['MAY THEIR SOULS', 470, 26], ['REST IN PEACE', 512, 26]];
+    lines.forEach(([t, y, s], i) => { const a = Math.max(0, Math.min(1, lit - i)); x.font = `700 ${s}px Georgia, serif`; x.fillStyle = lit >= 9 ? '#e9e4d6' : `rgba(${Math.round(160 + 93 * a)},${Math.round(150 + 78 * a)},${Math.round(130 + 84 * a)},${0.45 + 0.55 * a})`; x.fillText(t, w / 2, y); }); };
+  const words = cv(512, 600, (x, w, h) => drawWords(x, w, h, 9));
+  const wordsLit = (k) => { const c = words.image; drawWords(c.getContext('2d'), c.width, c.height, k >= 1 ? 9 : k * 6.4); words.needsUpdate = true; };   /* reading the plaque (main.js): the sun finds each line in turn */
   const bot = new THREE.Vector3(0, BH, D / 2), apex = new THREE.Vector3(0, BH + H, D / 2 - LEAN), up = apex.clone().sub(bot), len = up.length(); up.normalize();
   const n = new THREE.Vector3(1, 0, 0).cross(up).normalize(), right = up.clone().cross(n).normalize();
   const t0 = 0.40, t1 = 0.82, qw = 1.25, c0 = bot.clone().addScaledVector(up, len * t0).addScaledVector(n, 0.012), c1 = bot.clone().addScaledVector(up, len * t1).addScaledVector(n, 0.012);
@@ -435,9 +440,15 @@ export function buildMonument(g) {
   /* low white stepped slabs stand behind the monument in the photograph (what they mark is not known yet) */
   for (let i = 0; i < 3; i++) box(5 - i * 1.2, 0.3, 3 - i * 0.8, std(T.concrete([2, 1], [240, 238, 232])), 6.5, 0.15 + i * 0.3, -9, g); walls.push([3.8, -10.7, 9.2, -7.3]);
   /* a story board on two posts, and trees */
-  for (const x of [4.1, 6.3]) cyl(0.05, 0.05, 1.9, solid(0x5a5e5c, 0.5, 0.5), x, 0.95, 5.2, g); const sb = signBoard('OUR STORY', 2.4, 1.0, { bg: '#f3ecd8', fg: '#2a3a2e' }); sb.position.set(5.2, 1.5, 5.2); g.add(sb); walls.push([3.9, 4.9, 6.5, 5.5]);
+  for (const x of [4.1, 6.3]) cyl(0.05, 0.05, 1.9, solid(0x5a5e5c, 0.5, 0.5), x, 0.95, 5.2, g); const sb = signBoard('OUR STORY', 2.4, 1.0, { bg: '#f3ecd8', fg: '#2a3a2e' }); sb.position.set(5.2, 1.5, 5.2); g.add(sb);
+  /* the board's face: the story as a line of six dates (TIMELINE in content.js); each lights in turn when you look at it (main.js) */
+  const YEARS = ['1870', '1980', '1980', '1981', '1985', '2026'], bc = document.createElement('canvas'); bc.width = 512; bc.height = 214;
+  const drawBoard = (lit) => { const x = bc.getContext('2d'); x.fillStyle = '#f3ecd8'; x.fillRect(0, 0, 512, 214); x.fillStyle = '#2a3a2e'; x.textAlign = 'center'; x.font = '700 46px Georgia, serif'; x.fillText('OUR STORY', 256, 62); x.fillRect(40, 128, 432, 5);
+    YEARS.forEach((yr, i) => { const a = Math.max(0, Math.min(1, lit - i)), cx = 56 + i * 80; x.fillStyle = lit >= 9 || a >= 1 ? '#b0402a' : a > 0 ? `rgba(240,180,60,${0.5 + 0.5 * a})` : '#8a8a80'; x.beginPath(); x.arc(cx, 130, 13, 0, Math.PI * 2); x.fill(); x.fillStyle = lit >= 9 || a > 0 ? '#2a3a2e' : '#9a9a90'; x.font = '600 24px Georgia, serif'; x.fillText(yr, cx, 180); }); };
+  drawBoard(9); const btx = new THREE.CanvasTexture(bc); btx.colorSpace = THREE.SRGBColorSpace; const face = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.0), new THREE.MeshStandardMaterial({ map: btx, roughness: 0.8 })); face.position.set(5.2, 1.5, 5.2 + 0.045); g.add(face);
+  const boardLit = (k) => { drawBoard(k >= 1 ? 9 : k * 6.4); btx.needsUpdate = true; }; walls.push([3.9, 4.9, 6.5, 5.5]);
   for (let i = 0; i < 20; i++) { const a = r() * 6.28, d = 30 + r() * 30, t = i % 4 === 0 ? palm(8, i) : tree(8 + r() * 3, i + 5); t.position.set(Math.cos(a) * d, 0, Math.sin(a) * d - 4); g.add(t); }
   g.add(hillRing(190, 18, 80, { seed: 8, base: [0.24, 0.42, 0.24] }));
   const laid = [-0.95, 0.95].map((x) => { const o = grp(g, x, BH, D / 2 + 0.42); o.userData.noBatch = true; o.visible = false; const f = flowers(x > 0 ? 3 : 8); f.scale.setScalar(1.4); o.add(f); return o; });
-  return { walls, bounds: { x0: -30, x1: 30, z0: -30, z1: 28 }, start: { x: 0, z: 19, yaw: 0 }, groundAt: () => 0, laid, spots: { plaque: [0, 2.0], board: [5.2, 6.6], guard: [[-2.3, 4, 12], [2.3, 4, 12]] } };
+  return { walls, bounds: { x0: -30, x1: 30, z0: -30, z1: 28 }, start: { x: 0, z: 19, yaw: 0 }, groundAt: () => 0, laid, boardLit, wordsLit, spots: { plaque: [0, 2.0], board: [5.2, 6.6], guard: [[-2.3, 4, 12], [2.3, 4, 12]] } };
 }
