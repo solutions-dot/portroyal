@@ -181,13 +181,13 @@ def build(kind):
         y=side*(deckw(t)-0.75); z=deckz(t); box('Carriage',1.0,0.5,0.28,(X(t),y,z+0.22),RED,(0,0,math.radians(90)))
         spar('Gun',(X(t),y-side*0.55,z+0.45),(X(t),y+side*0.85,z+0.45),0.13,0.09,IRON,8)
     def anchor(t,side):
-        # hung from a cathead (a short beam out over the bow), shank down, the stock fore and aft at the top and the arms across at the crown,
-        # clear of the side. It was a 1.5 m stock straight across the ship, half of it through the hull.
-        y0=hb(t)*g(1,t); z0=sheer(t)+0.05
-        box('Cathead',0.22,1.15,0.22,(X(t),side*(y0+0.5),z0),SPAR)
-        p=Vector((X(t),side*(y0+0.95),z0-0.05)); e=p+Vector((0,0,-1.5))   # the crown hangs clear of the water; spar('AnchorShank',p,e,0.05,0.05,IRON,5)
-        rope(Vector((X(t),side*(y0+1.0),z0)),p,0.02); box('AnchorStock',1.5,0.12,0.12,p+Vector((0,0,-0.15)),SPAR)
-        for s2 in (1,-1): spar('AnchorArm',e,e+Vector((0,s2*0.6,0.45)),0.05,0.03,IRON,5)
+        # stowed: in harbour the anchor lies on the deck at the bow, behind the bulwark, with a cathead beside it to hoist it out
+        # (owner, 22 November 2026: an anchor hanging over the side at the wharf looked wrong; before that its stock ran through the hull).
+        y0=hb(t)*g(1,t); dz=deckz(t)
+        box('Cathead',0.22,0.7,0.22,(X(t),side*(y0+0.25),sheer(t)+0.05),SPAR)
+        yy=side*max(0.3,deckw(t)-0.55); p=Vector((X(t)+0.9,yy,dz+0.08)); e=p+Vector((-1.4,0,0))
+        spar('AnchorShank',p,e,0.05,0.05,IRON,5); box('AnchorStock',0.12,min(1.3,2*deckw(t)-0.4),0.12,(p.x,0.0 if deckw(t)<0.9 else yy,dz+0.1),SPAR)
+        for s2 in (1,-1): spar('AnchorArm',e,e+Vector((0.42,s2*0.45,0.0)),0.05,0.03,IRON,5)
     def flag(p,h=1.0,w=1.7,lean=0.0):
         bm=bmesh.new(); uv=bm.loops.layers.uv.verify(); cl=bm.loops.layers.color.new('Col'); n=8; vs=[]
         for i in range(n+1):
