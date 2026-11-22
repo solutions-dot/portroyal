@@ -208,7 +208,8 @@ function deck() {
   for (const z of [-3.2, -0.9, 4.25])
     for (const s of [-1, 1]) {
       const x = s * (half(z) - 0.98);
-      solid1(Q, S.gunAtPort(s), x, z, 1.5, 0.66);
+      add(Q, S.gunAtPort(s), x, z);
+      wall(Q, s * (half(z) - 0.82), z, 1.1, 0.66);   /* the carriage and the breech: the muzzle stands out through the port */
       box(0.05, 0.4, 0.52, new THREE.MeshBasicMaterial({ color: 0x0c0a09 }), s * (half(z) - 0.125), 0.48, z, Q.group);   /* the port */
       const rack = S.shotRack(5, 0.036);
       rack.position.set(s * (half(z + 0.7) - 0.28), 0, z + 0.72);
@@ -218,16 +219,16 @@ function deck() {
       cyl(0.045, 0.045, 0.12, S.SM.white, s * (half(z - 0.6) - 0.2), 0.05, z - 1.3, Q.group, 8).rotation.x = Math.PI / 2;
     }
   /* ---- amidships: the boat on her chocks, the harness cask, the main hatch, the pumps, the scuttle butt ---- */
-  const boat = rowBoat({ L: 4.4, beam: 1.5, depth: 0.6, wood: BOATW(), timber: BOATT(), oars: "shipped", rudder: false, gear: false });
+  const boat = rowBoat({ L: 4.3, beam: 1.36, depth: 0.6, wood: BOATW(), timber: BOATT(), oars: "shipped", rudder: false, gear: false });
   boat.rotation.y = Math.PI / 2;
   boat.position.set(0, 0.2, -2.35);
   Q.group.add(boat);
   for (const z of [-3.5, -1.2]) {
-    box(1.3, 0.22, 0.14, S.SM.woodDark, 0, 0.11, z, Q.group);
-    for (const s of [-1, 1]) S.rope([s * 0.72, 0.03, z + 0.1], [s * 0.6, 0.82, z + 0.1], 0.014, S.SM.hemp, Q.group, 4);   /* her gripes */
-    S.rope([-0.6, 0.82, z + 0.1], [0.6, 0.82, z + 0.1], 0.014, S.SM.hemp, Q.group, 4);
+    box(1.2, 0.22, 0.14, S.SM.woodDark, 0, 0.11, z, Q.group);
+    for (const s of [-1, 1]) S.rope([s * 0.66, 0.03, z + 0.1], [s * 0.55, 0.78, z + 0.1], 0.014, S.SM.hemp, Q.group, 4);   /* her gripes */
+    S.rope([-0.55, 0.78, z + 0.1], [0.55, 0.78, z + 0.1], 0.014, S.SM.hemp, Q.group, 4);
   }
-  wall(Q, 0, -2.35, 1.6, 4.5);
+  wall(Q, 0, -2.35, 1.4, 4.4);
   const harness = cask(0.86, 0.3, S.SM.brass, 0x86643f);   /* the harness cask: the salt meat for the day, with brass hoops and a lid */
   solid1(Q, harness, 1.75, -4.5, 0.7, 0.7);
   cyl(0.25, 0.25, 0.03, S.SM.woodDark, 1.75, 0.875, -4.5, Q.group, 12);
@@ -509,10 +510,10 @@ function deck() {
   person(Q, "wylie", "wylie", 1.95, 3.1, face(1.95, 3.1, 0, 5), { kind: "watch", at: [-1.2, 6.5], idles: ["IdleM"], react: ["HeadTurn", "Shrug"], every: [6, 10] }, { hat: "cocked" });
   crowd(Q, "sp_seaman", -0.75, -8.1, face(-0.75, -8.1, 0, -30), { kind: "watch", at: [10, -60], react: ["HeadTurn", "LookAround", "WipeSweat"], every: [5, 9] });
   crowd(Q, "sp_seaman2", -1.9, -3.9, face(-1.9, -3.9, -3, -4.6), { kind: "work", clips: ["PickUp", "IdleM", "WipeSweat"], work: [5, 9], face: [-3, -4.6] });
-  crowd(Q, "sp_seaman3", 1.9, 0.2, 0, { kind: "work", between: [[1.95, 0.4], [1.9, -5.6]], walk: "Walk", idle: "IdleM" });
-  crowd(Q, "sp_seaman4", -1.0, -6.9, face(-1.0, -6.9, 0.6, -6.9), { kind: "chat", group: "fo", at: [0.3, -6.95] });
+  crowd(Q, "sp_seaman3", -1.05, 0.3, Math.PI, { kind: "work", between: [[-1.05, 0.3], [-1.05, -3.9]], walk: "Walk", idle: "IdleM" });
+  crowd(Q, "sp_seaman4", -1.0, -6.9, face(-1.0, -6.9, 0.6, -6.9), { kind: "chat", group: "fo", at: [-1.2, -6.9], ring: 0.45, turn: Math.PI / 2 });
   crowd(Q, "sp_docker", 0.75, -6.95, face(0.75, -6.95, -1, -6.9), { kind: "chat", group: "fo" });
-  Q.keepOff = [{ at: [-1.2, 8.2], r: 0.9 }, { at: [0.35, 6.2], r: 0.8 }, { at: [1.25, 1.1], r: 0.8 }, { at: [1.3, -3.9], r: 0.8 }, { at: [-1.0, -4.9], r: 0.8 }, { at: [0.95, -6.0], r: 0.7 }, { at: [2.35, 2.2], r: 0.8 }, { pts: [[1.6, 3.6], [2.0, -3.6]], w: 0.5 }];
+  Q.keepOff = [{ at: [-1.2, 8.2], r: 0.9 }, { at: [0.35, 6.2], r: 0.8 }, { at: [1.25, 1.1], r: 0.8 }, { at: [1.3, -3.9], r: 0.8 }, { at: [-1.0, -4.9], r: 0.8 }, { at: [0.95, -6.0], r: 0.7 }, { at: [2.35, 2.2], r: 0.8 }, { pts: [[1.6, 3.6], [1.0, 2.4], [1.0, -3.6]], w: 0.5 }];
   return Q;
 }
 
@@ -896,7 +897,7 @@ function court() {
   const X = 6.5,
     Z = 4.5,
     H = 4.2;
-  const Q = base("court", [-X + 0.4, -Z + 0.4, X - 0.4, Z - 0.4], [2.6, 3.4, 0.35]);
+  const Q = base("court", [-X + 0.4, -Z + 0.4, X - 0.4, Z - 0.4], [0.6, 3.7, 0.15]);   /* in the aisle between the public benches */
   Q.floor = "wood";
   Q.indoor = true;
   Q.beds = { room: 0.07, crowd: 0.04 };
@@ -1079,8 +1080,8 @@ function court() {
   sit("sp_merchant2", 0, -0.2);
   sit("sp_seaman4", 3, -0.6);
   crowd(Q, "sp_seaman", 5.2, -1.9, face(5.2, -1.9, 0, 0.1), { kind: "watch", at: [0, 0.1], react: ["HeadTurn", "LookAround"], every: [6, 10] });
-  crowd(Q, "sp_seaman3", -5.0, 2.6, face(-5.0, 2.6, -5.9, 1.0), { kind: "watch", at: [-5.9, 1.0], react: ["HeadTurn", "Point", "Shrug"], every: [6, 10] });
-  Q.keepOff = [{ at: [-1.2, 0.95], r: 0.8 }, { at: [1.2, 0.95], r: 0.8 }, { at: [-5.0, 1.0], r: 0.8 }, { at: [3.8, 1.2], r: 0.7 }, { pts: [[2.6, 3.4], [0, 1.75], [-3.0, 0.4]], w: 0.8 }];
+  crowd(Q, "sp_seaman3", -5.65, 2.25, face(-5.65, 2.25, -5.9, 1.0), { kind: "watch", at: [-5.9, 1.0], react: ["HeadTurn", "Point", "Shrug"], every: [6, 10] });
+  Q.keepOff = [{ at: [-1.2, 0.95], r: 0.8 }, { at: [1.2, 0.95], r: 0.8 }, { at: [-5.0, 1.0], r: 0.8 }, { at: [3.8, 1.2], r: 0.7 }, { pts: [[0.6, 3.7], [0, 1.75], [-3.0, 0.4]], w: 0.8 }];
   return Q;
 }
 
