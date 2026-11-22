@@ -22,6 +22,7 @@ _GDIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'sh
 # cloth, split into trousers (pieces that reach below the knee) and jacket.
 _REGIONS = {
     'toigo_male_suit_tie_and_jacket': [('Shirt', 0.745, 1.0, 0.78, 1.0), ('Tie', 0.745, 1.0, 0.44, 0.78), ('JButtons', 0.80, 1.0, 0.30, 0.44)],
+    'toigo_male_suit_3': [('Tie', 0.83, 0.95, 0.73, 0.98), ('JButtons', 0.58, 0.76, 0.88, 0.98), ('Shirt', 0.555, 0.79, 0.59, 0.83), ('Drop', 0.82, 0.91, 0.52, 0.58), ('Shirt', 0.66, 0.91, 0.48, 0.62)],      # a three-button jacket with a higher, shorter lapel: closer to the cut of 1908 to 1925
 }
 # the generated pieces a full suit replaces
 _REPLACES = ('Shirt', 'Collar', 'Tie', 'Placket', 'Buttons', 'Pocket', 'Jacket', 'JacketSkirt', 'Lapels', 'JButtons', 'Breeches', 'Belt', 'Buckle',
@@ -68,6 +69,7 @@ elif OUTFIT_PHASE == 'finish':
         if tag[i] == 'Cloth': tag[i] = 'Breeches' if i in legs else 'Jacket'
     bm.free()
     for name in sorted(set(tag.values())):
+        if name == 'Drop': continue      # a part the games do not wear (a pocket handkerchief, which came out as a pale slab on the chest)
         if name == 'Tie' and _OF.get('tie') is False: continue      # "tie": false: the suit worn with an open collar
         o = g.copy(); o.data = g.data.copy(); o.name = name; bpy.context.scene.collection.objects.link(o)
         b = bmesh.new(); b.from_mesh(o.data); b.faces.ensure_lookup_table()
@@ -170,6 +172,12 @@ elif OUTFIT_PHASE == 'finish':
             key = (int((a % (2 * math.pi)) / (2 * math.pi) * NA) % NA, int(z / DZ)); rin[key] = min(rin.get(key, 9), r); tg.setdefault(key, []).append(raw + (hg - raw) * w + c)
             info.append((yc, dx, dy, r, a, wx))
         D = {k: max(0.0, sum(t) / len(t) - rin[k]) for k, t in tg.items()}
+        _ih = int((HIP + 0.06) / DZ)      # below the hips the jacket's skirt hangs straight: it moves out as far as the cloth at the hips did. (Left to follow the thighs, a longer jacket's hem was gathered in under the fuller cloth above it, like a blouson.)
+        for (k, i) in list(D):
+            if i < _ih:
+                _dr = D.get((k, _ih))
+                if _dr is None: _dr = D.get((k, _ih + 1), 0.0)
+                D[(k, i)] = max(D[(k, i)], _dr)
         for _ in range(3): D = {(k, i): (2 * d + sum(D.get(n, d) for n in (((k - 1) % NA, i), ((k + 1) % NA, i), (k, i - 1), (k, i + 1)))) / 6 for (k, i), d in D.items()}      # one smooth field: neighbours move together
         def _dat(a, z):
             fk = (a % (2 * math.pi)) / (2 * math.pi) * NA - 0.5; fi = z / DZ - 0.5; k0 = math.floor(fk); i0 = math.floor(fi); u = fk - k0; t = fi - i0; tot = 0.0; wt = 0.0
@@ -181,6 +189,25 @@ elif OUTFIT_PHASE == 'finish':
         for v, q in zip(jk.data.vertices, info):
             if q is None: continue
             yc, dx, dy, r, a, wx = q; rn = r + _dat(a, v.co.z) * wx; v.co.x = dx * rn / r; v.co.y = yc + dy * rn / r
+        # the skirt hangs straight from the hips: no point below them lies further in than the cloth at the hips in the same direction. (A longer jacket's hem was
+        # gathered in under the fuller cloth above it, like a blouson: owner's review, 22 November 2026.)
+        _zr = HIP + 0.05; _ref = [0.0] * NA
+        for v, q in zip(jk.data.vertices, info):
+            if q is None or abs(v.co.z - _zr) > 0.03: continue
+            yc, dx, dy, r, a, wx = q; k_ = int((a % (2 * math.pi)) / (2 * math.pi) * NA) % NA; _ref[k_] = max(_ref[k_], math.hypot(v.co.x, v.co.y - yc))
+        for _ in range(4): _ref = [max(_ref[k], (_ref[k - 1] + 2 * _ref[k] + _ref[(k + 1) % NA]) / 4) if _ref[k] > 0 else (_ref[k - 1] + _ref[(k + 1) % NA]) / 2 for k in range(NA)]
+        _nh = 0; _rin2 = {}; _cell = lambda a, z: (int((a % (2 * math.pi)) / (2 * math.pi) * NA) % NA, int(z / DZ))
+        for v, q in zip(jk.data.vertices, info):      # every layer at one place moves out by the same amount (worked out from the innermost), so the fronts stay lapped and the hem keeps its turn
+            if q is None or v.co.z > _zr: continue
+            c_ = _cell(q[4], v.co.z); _rin2[c_] = min(_rin2.get(c_, 9), math.hypot(v.co.x, v.co.y - q[0]))
+        D2 = {c_: max(0.0, _ref[c_[0]] - 0.004 - r_) if _ref[c_[0]] > 0 else 0.0 for c_, r_ in _rin2.items()}
+        for _ in range(2): D2 = {(k, i): (2 * d + sum(D2.get(n, d) for n in (((k - 1) % NA, i), ((k + 1) % NA, i), (k, i - 1), (k, i + 1)))) / 6 for (k, i), d in D2.items()}
+        for v, q in zip(jk.data.vertices, info):
+            if q is None or v.co.z > _zr: continue
+            yc, dx, dy, r, a, wx = q; d_ = D2.get(_cell(a, v.co.z), 0.0) * wx * sstep(_zr, _zr - 0.03, v.co.z)
+            if d_ <= 1e-5: continue
+            r1 = math.hypot(v.co.x, v.co.y - yc); rn = r1 + d_; v.co.x *= rn / r1; v.co.y = yc + (v.co.y - yc) * rn / r1; _nh += 1
+        print('OUTFIT skirt hangs straight', _nh)
         jk.data.update(); kd = _KD(len(was))
         for i, cc in enumerate(was): kd.insert(cc, i)
         kd.balance()
@@ -188,6 +215,37 @@ elif OUTFIT_PHASE == 'finish':
             for v in _new['JButtons'].data.vertices:
                 co, i, d = kd.find(v.co); v.co += jk.data.vertices[i].co - was[i]
         print('OUTFIT jacket draped')
+    # The jacket's two sides are made alike. One modelled suit came with one shoulder squarer and higher than the other, which read as a lopsided man on a level
+    # stance (owner, 22 November 2026: "why are you still showing me these lopsided shoulders"). Away from the front, where the fronts lap and are meant to
+    # differ, each point and its partner across the body move to the mean of the two. A point with no partner within 3 cm is left alone.
+    if 'Jacket' in _new and _OF.get('even', True):
+        from mathutils.kdtree import KDTree as _KD2
+        _jv = _new['Jacket'].data.vertices; _kd = _KD2(len(_jv))
+        for v in _jv: _kd.insert(v.co, v.index)
+        _kd.balance(); _ym2 = J('Spine2').y; _new_co = {}; _ne = 0
+        for v in _jv:
+            c = v.co
+            if c.x <= 0.002: continue
+            w = max(sstep(0.07 * s, 0.11 * s, c.x), sstep(_ym2 - 0.02, _ym2 + 0.02, c.y))      # not the lapped fronts
+            if w <= 0: continue
+            mc, mi, md = _kd.find(Vector((-c.x, c.y, c.z)))
+            if mi is None or md > 0.03: continue
+            m = _jv[mi].co; avg = Vector(((c.x - m.x) / 2, (c.y + m.y) / 2, (c.z + m.z) / 2))
+            _new_co[v.index] = c.lerp(avg, w); _new_co.setdefault(mi, m.lerp(Vector((-avg.x, avg.y, avg.z)), w)); _ne += 1
+        for i_, co_ in _new_co.items(): _jv[i_].co = co_
+        _new['Jacket'].data.update(); print('OUTFIT jacket sides made alike', _ne)
+    # round the neck the jacket lies outside the shirt, 4 mm clear: where the two crossed, the shirt's collar showed through the jacket's in teeth
+    if 'Jacket' in _new and 'Shirt' in _new:
+        from mathutils.bvhtree import BVHTree as _BVH0
+        _sb = bmesh.new(); _sb.from_mesh(_new['Shirt'].data); _sb.normal_update(); _st = _BVH0.FromBMesh(_sb); _n = 0
+        for v in _new['Jacket'].data.vertices:
+            if v.co.z < NZ - 0.10 * s: continue
+            loc, nrm, _i, _d = _st.find_nearest(v.co, 0.02)
+            if loc is None: continue
+            if nrm.dot(Vector((loc.x, loc.y - NJ.y, 0))) < 0: nrm = -nrm      # outward from the neck
+            sd = (v.co - loc).dot(nrm)
+            if sd < 0.004: v.co += nrm * (0.004 - sd); _n += 1
+        _sb.free(); _new['Jacket'].data.update(); print('OUTFIT jacket clear of the shirt collar', _n)
     # the lapels and the jacket's collar are their own piece (Lapels, in the jacket's cloth), which the packer never simplifies (tools/people/pack.mjs WHOLE): cut
     # down with the rest of the jacket, their edges and the notch went soft. Both pieces keep the whole jacket's shading across the cut, so no line shows there.
     if 'Jacket' in _new and _OF.get('lapels', True):

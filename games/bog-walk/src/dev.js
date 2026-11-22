@@ -158,7 +158,7 @@ export function dev(D) {
     for (const p of D.JOURNAL) D.unlock(p.id, true); D.story.boots = 'tell'; D.story.ivy = 'saw'; D.story.blame = 'ask'; D.story.story = 'heard'; for (let i = 0; i < 6; i++) D.doneCh[i] = i < 4;
     if (shot === 'journal') D.openJournal(q.get('page') || 'journey'); if (shot === 'chapters') D.openChapters(); if (shot === 'credits') D.openCredits(); if (shot === 'reset') $('reset').click();
     if (shot === 'order') D.openOrder('The journey of the water', D.JOURNEY, 'Tap the pictures in order, from the river to the tram.', () => {});
-    if (shot === 'sort') { D.openSort(D.REPORT, () => {}); if (q.has('a')) $('pztray').querySelector('[data-a="saw"]').click(); }
+    if (shot === 'sort') { D.openSort(D.REPORT, () => {}); if (q.has('a')) setTimeout(() => document.querySelector('#quizopts button').click(), 300); }
     if (shot === 'final') D.ON[65]();
     for (let i = 0; i < 4; i++) D.tick(0.05); });
 
@@ -213,8 +213,8 @@ export function dev(D) {
     for (let i = 0; i < 3; i++) $('pztray').querySelector(`[data-i="${i}"]`).click(); await settle(); panel('the notice board, half done', '#puzzle');
     for (let i = 3; i < 6; i++) $('pztray').querySelector(`[data-i="${i}"]`).click(); await settle(); panel('the notice board, done', '#puzzle'); D.closePuzzle(false);
     reset(); D.openOrder('What happened next?', D.AFTER, 'Tap them in order, first to last.', () => {}, { years: true }); for (let i = 0; i < 5; i++) $('pztray').querySelector(`[data-i="${i}"]`).click(); await settle(); panel('what came after, done', '#puzzle'); D.closePuzzle(false);
-    reset(); D.openSort(D.WHY, () => {}); await settle(); panel('Kemar\'s cards', '#puzzle'); $('pztray').querySelector('[data-a="guess"]').click(); await settle(); panel('Kemar\'s cards, a wrong answer', '#puzzle'); $('pztray').querySelector('[data-a="know"]').click(); await settle(); panel('Kemar\'s cards, answered', '#puzzle'); D.closePuzzle(false);
-    reset(); D.openSort(D.REPORT, () => {}); await settle(); panel('the reporter\'s cards', '#puzzle'); D.closePuzzle(false);
+    reset(); D.openSort(D.WHY, () => {}); await settle(); panel('Kemar\'s cards', '#quizpanel'); document.querySelector('#quizopts button:nth-child(2)').click(); await settle(); panel('Kemar\'s cards, a wrong answer shows the right one', '#quizpanel'); D.closeQuiz();
+    reset(); D.openSort(D.REPORT, () => {}); await settle(); panel('the reporter\'s cards', '#quizpanel'); D.closeQuiz();
     /* panels opened in the middle of play must be on top: their title and Close button must be what you touch there */
     for (const p of D.JOURNAL) D.unlock(p.id, true); D.story.boots = 'tell'; D.story.ivy = 'brave'; D.story.blame = 'unsure'; D.story.story = 'heard';
     reset(); D.setGoal(longGoal, true); $('act').hidden = false; await settle();
@@ -266,7 +266,7 @@ export function dev(D) {
     D.manual = true; await waitFor(() => D.modelsReady); D.startGame(); if (night || mode === 'all') { for (let i = 0; i < 6; i++) D.doneCh[i] = false; }
     const plan = mode === 'all' ? [0, 1, 2, 3, 4, 5] : night ? [2, 3] : one ? [first] : [0, 1, 2, 3, 4, 5].filter((i) => i >= first);
     const usedActions = new Set(); let lastProgress = '', progressAt = 0;
-    let lastKey = '', lastT = 0, skipped = false; const stopAt = one ? first : night ? 3 : 5;
+    let lastKey = '', lastT = 0, skipped = false, quizWrongLogged = false; const stopAt = one ? first : night ? 3 : 5;
     log('plan: chapters ' + plan.join(', ')); D.beginChapter(plan[0]);   /* not awaited: the chapter's fade runs on the game's own clock, which this loop drives */
     for (let it = 0; it < 80000; it++) {
       if (it % 6 === 0) await sleep(0); step(6);
@@ -279,9 +279,14 @@ export function dev(D) {
       if (one && D.doneCh[first] && first !== 2) { log('chapter ' + first + ' done'); break; }
       if (!$('card').hidden) {   /* cards: at the end of a chapter, follow the plan; otherwise the first button */
         const t = $('ctitle').textContent, btns = [...$('cbtns').querySelectorAll('button')];
-        if (t === 'The end' || (t === 'You are out' && stopAt === 3)) { log('the last card: "' + t + '"'); break; }
+        if (t === 'The End' || (t === 'You are out' && stopAt === 3)) { log('the last card: "' + t + '"'); break; }
         if (t === 'Chapter 1 is finished') { btns[plan.includes(1) ? 1 : 0].click(); continue; }
         btns[0].click(); continue;
+      }
+      if (document.getElementById('quizpanel') && !document.getElementById('quizpanel').hidden) {   /* the shared quiz (engine/quiz.js): one wrong pick first, to log what it says */
+        const opts = [...document.querySelectorAll('#quizopts button:not(:disabled)')], nx = document.querySelector('#quiznext:not([hidden])');
+        if (opts.length) { const first = !quizWrongLogged; opts[first ? opts.length - 1 : 0].click(); if (first) { quizWrongLogged = true; log('quiz pick gives: "' + document.getElementById('quizline').textContent + '"'); } } else if (nx) nx.click();
+        continue;
       }
       if (!$('puzzle').hidden) {
         if (!$('pzdone').hidden) { $('pzdone').click(); continue; } if (!$('pznext').hidden) { $('pznext').click(); continue; }

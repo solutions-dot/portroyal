@@ -1,9 +1,14 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
+import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
-import { hudTidy } from '../../../engine/hud.js';
+import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
+import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';
+import { goalWithCount } from '../../../engine/story.js';
+import { runQuiz, quizOpen } from '../../../engine/quiz.js';   /* one quiz for every game: a wrong pick shows the right answer */   /* "Talk to A, B and C: 1 of 3." */   /* the view turns to the person talking */
+const TC = createTalkCam();
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive, goTo } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/melissa/src/main.js: Melissa 2025, The Wind and the Morning After.
@@ -92,7 +97,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stick.id) { stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x0) / 50)); stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y0) / 50)); }
-  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
+  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); if (look.moved > 8) TC.cancel(); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
 });
 const endPointer = (e) => { if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; } if (e.pointerId === look.id) { if (look.moved < 8) { const p = tapPerson(e.clientX, e.clientY); if (p) startTalk(p); } look.id = null; } };
 canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
@@ -282,7 +287,7 @@ let sitting = false;
 let stage = 0, best = 0, goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); /* Keep the next task visible until the player completes it. */ if (withControls) showHint(); }
 function showHint() { $('hint').hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { $('hint').hidden = true; }, 6000); }
-function refreshGoal(quiet) { const g = GOALS[stage]; goalText = g ? g(ctr) : ''; if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
+function refreshGoal(quiet) { const g = GOALS[stage], tt = TALK_TARGETS[stage] || []; goalText = goalWithCount(g ? g(ctr) : '', tt.filter((id) => byId(id)?.talked).length, tt.length, ctr); if (quiet) { $('goal').textContent = goalText; return; } showGoal(true); }
 $('goal').onclick = () => showGoal(true);
 function showSound() { const b = $('snd'); b.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); b.setAttribute('aria-label', AU.on ? 'Sound on. Tap to turn off.' : 'Sound off. Tap to turn on.'); $('sndon').style.display = AU.on ? '' : 'none'; $('sndoff').style.display = AU.on ? 'none' : ''; }
 $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
@@ -311,7 +316,7 @@ function startTalk(n) {
   convoForced = false; openConvo(lines, null, n);
 }
 function convo(ls, onEnd, who) { if (busy && !$('card').hidden) hideCard(); talkFull = false; convoForced = true; openConvo([...ls], onEnd, who || null); }
-function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; showLine(); }
+function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; if (n) TC.begin(); lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; showLine(); }
 function showLine() {
   const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock); if (s.give === 'torch') { story.torch = true; saveGame(); toast('Mum gives you a torch.'); }
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
@@ -322,13 +327,13 @@ function showLine() {
 function choose(s, c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl && !/^Sit/.test(n.anim || '')) n.ctl.play(null);
+  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl && !/^Sit/.test(n.anim || '')) n.ctl.play(null);
   const forced = convoForced; convoForced = false;
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); } if (cb && (finished || forced)) cb();
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
 $('next').onclick = nextLine; $('dclose').onclick = leaveTalk; $('talk').onclick = () => { if (near && !busy) activate(near); };
-function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => { const n = byId(id); return n && n.talked; })) setStage(NEXT_AFTER_TALK[stage]); }
+function onTalked() { const t = TALK_TARGETS[stage]; if (t && t.every((id) => { const n = byId(id); return n && n.talked; })) setStage(NEXT_AFTER_TALK[stage]); else refreshGoal(true); }   /* the count goes up */
 const lampMesh = (() => { const g = new THREE.Group(), b = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.26, 10), new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.5 })), l = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.035, 0.05, 10), new THREE.MeshBasicMaterial({ color: 0xfff0c0 })); b.rotation.x = l.rotation.x = Math.PI / 2; l.position.z = -0.15; g.add(b, l); g.position.set(0.3, -0.3, -0.55); g.visible = false; camera.add(g); return g; })();
 
 /* ---------- chapters, stages and the story machine ---------- */
@@ -632,14 +637,14 @@ ON[65] = () => { unlock('recovery'); unlock('help'); unlock('compare'); };
 
 /* ---------- chapter 6: today ---------- */
 ON[70] = () => { weather(0.05, 0, ENV.day); setBedsFor('after'); };
-function quiz(list, round, done) {   /* a few questions on cards: a wrong answer says why and lets you try again; the right one moves on */
-  const R = list[round]; if (!R) { done(); return; }
-  card(R.q, [R.note], R.opts.map((o) => ({ t: o.t, go: () => { if (o.ok) { uiSound('goal'); toast(o.say, 3000); quiz(list, round + 1, done); } else { toast(o.say, 3000); } } })), { col: true });
+function quiz(list, round, done, title = 'Quiz') {   /* engine/quiz.js: a wrong pick shows the right answer and why, a pause, then the next question */
+  const items = list.slice(round).map((R) => ({ q: R.q, note: R.note, opts: R.opts, why: (R.opts.find((o) => o.ok) || {}).say }));
+  runQuiz({ title, items, sound: uiSound, fast: QUICK }).then(() => done());
 }
 function kitQuiz(round) {
   quiz(KIT, round, () => { unlock('kit'); card('A good kit', ['You packed well: water, food that keeps, a torch, a radio, a charged phone, medicine and papers in a bag.', 'A kit is small, but it helps a lot.'], [{ t: 'Next', go: () => { hideCard(); quiz(STORMS, 0, () => { unlock('storms'); card('Jamaica\'s storms', ['Hurricanes are not new to Jamaica. They come, and people get ready and rebuild.', 'Read about the earlier storms in your Journal.'], [{ t: 'Done', go: () => { hideCard(); setStage(73); } }], { col: true }); }); } }], { col: true }); });
 }
-ON[74] = () => { unlock('journey'); setTimeout(() => card('The end', LINES.end, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); };
+ON[74] = () => { unlock('journey'); setTimeout(() => card('The End', LINES.end, [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); };
 
 /* ---------- the helper arrow: stand still or stall for a while and the goal pops open and a gold arrow shows the way ---------- */
 const NUDGE = { goal: '', since: 0, still: 0, lx: 0, lz: 0, on: false }, _nv = new THREE.Vector3();
@@ -684,7 +689,7 @@ applySave(loadGame());
 /* every place in the background, one at a time through engine/preload.js work(): the next chapter's places first, then the rest in the old order, each in a quiet moment */
 function backgroundLoad() { PLACES_KEEP.background(() => { const i = state.started ? chapterOf(stage) : -1; return [...usedIn(i + 1), 'yard25', 'hall', 'after', 'today', 'yard88', 'room88']; }, 400); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
 function startGame(quiet) {
-  if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
+  if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); onceWhenClear('melissa-you', () => card('Who you are', ["In this story you are a made-up child. The family is made up too.", "In 1951 you are Hattie, aged ten. In 1988 you are Pearl, aged twelve. In 2025 you are Pearl's child.", "The storms are real. The family is not."], [{ t: 'Begin', go: hideCard }]));   /* who you are, once per device (owner, 21 November 2026) */
   liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] || stage) : 10; beginChapter(hasSave && stage >= 10 ? chapterOf(stage) : 0, hasSave && stage >= 10 ? st : 10); setTimeout(backgroundLoad, 4000); };
@@ -692,6 +697,7 @@ $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] 
 /* ---------- the frame loop ---------- */
 let stepT = 0, frameN = 0;
 function update(dt, now) {
+  if (talkWith && TC.on) TC.step(state, camera.position, speakerHead(talkWith), dt);   /* engine/talk-cam.js */
   const P = P_(); if (!P) return;
   if (DIR.on) { DIR.t += dt; if (DIR.t >= DIR.dur && DIR.resolve) { const r = DIR.resolve; DIR.resolve = null; r(true); } }
   if (state.started && !busy && !frozen && !DIR.on) {
@@ -910,6 +916,7 @@ function devViews() {
         const key = stage + '|' + cur + '|' + unlocked.length + '|' + ($('card').hidden ? '' : $('ctitle').textContent) + '|' + (DIR.on ? 'cut' : '') + (ST.on ? 'storm' : '');
         if (key !== lastKey) { lastKey = key; lastT = now; L('s' + stage + ' ' + cur + ' pages=' + unlocked.length + ($('card').hidden ? '' : ' card="' + $('ctitle').textContent + '"') + ' goal="' + $('goal').textContent + '"'); }
         if (now - lastT > 30000) { L('STALL at stage ' + stage + ' in ' + cur + ' busy=' + busy + ' frozen=' + frozen + ' fading=' + fading); break; }
+        if (quizOpen()) { const b = document.querySelector('#quizopts button:not(:disabled)') || document.querySelector('#quiznext:not([hidden])'); if (b) b.click(); continue; }   /* engine/quiz.js */
         if (!$('card').hidden) { const bs = $('cbtns').querySelectorAll('button'); if (bs.length) bs[(qi++) % bs.length].click(); continue; }
         if (!$('dialogue').hidden) { const c = $('choices').firstChild; if (c) c.click(); else $('next').click(); continue; }
         if (!$('holdwrap').hidden) { HOLD.on = true; continue; }
@@ -924,4 +931,5 @@ function devViews() {
   }
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addRecap({ items: [{ icon: '\uD83C\uDF00', label: 'What is a hurricane?', page: 'hurricanes', img: 'recap/hurricanes.jpg' }, { icon: '\uD83C\uDF92', label: 'Getting ready', page: 'ready', img: 'recap/ready.jpg' }, { icon: '\uD83E\uDD1D', label: 'Neighbours', page: 'neighbours', img: 'recap/neighbours.jpg' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The End', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

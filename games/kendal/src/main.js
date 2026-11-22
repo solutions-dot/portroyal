@@ -1,9 +1,12 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
+import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
-import { hudTidy } from '../../../engine/hud.js';
+import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
+import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';   /* the view turns to the person talking */
+const TC = createTalkCam();
 const FACE_VARIANTS = { man_suit: 2, man_work: 2, man_shirt: 2, man_elder: 2, woman57: 2, woman_long: 2, woman_elder: 2, girl: 2, boy: 2, girl_small: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive, goTo } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
@@ -109,7 +112,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stick.id) { stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x0) / 50)); stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y0) / 50)); }
-  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
+  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); if (look.moved > 8) TC.cancel(); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
 });
 const endPointer = (e) => { if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; } if (e.pointerId === look.id) { if (look.moved < 8) { const p = tapPerson(e.clientX, e.clientY); if (p) startTalk(p); } look.id = null; } };
 canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
@@ -160,7 +163,11 @@ function makeBody(s) {
   if (s.lamp) { const o = lantern(); carry('RightHand', o, GRIP.lantern); m.userData.held.push({ obj: o, bone: 'RightHand', label: 'lamp' }); s._flame = o.userData.flame; }
   if (!seated && !s.noSpread) spreadArms(m, /^(woman|girl|guide)/.test(s.base) ? 0.15 : s.base === 'man_suit' ? 0.11 : 0.05);   /* arms hang clear of skirts and jackets (engine/grip.js) */
   const load = s.life && s.life.load; if (load) { const o = load === 'crate' ? crate(0.42, 0x8a6a42) : load === 'basket' ? hamper(0x9a7a48) : bananaBunch(0.9); o.userData.noBatch = true;   /* a load carried by a background worker (engine/ambient.js shows and hides it with spec.show) */
-    if (load === 'crate') between(m, o, 'CarryIdle', 0.17); else if (load === 'basket') { hold(m, 'Head', o, GRIP.basket); steadyLoad(m, o); } else { const w = new THREE.Group(); o.rotation.z = PI / 2; w.add(o); w.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(o), c = bb.getCenter(new THREE.Vector3()); o.position.set(-c.x, 0.04 - bb.min.y, -c.z);   /* the bunch lies centred on the head, not hung out to one side from its stalk end (owner, 21 Nov 2026) */ hold(m, 'Head', w, { dy: 0.1, scale: 1 }); steadyLoad(m, w); }
+    if (load === 'crate') between(m, o, 'CarryIdle', 0.17); else if (load === 'basket') { hold(m, 'Head', o, GRIP.basket); steadyLoad(m, o); } else { const w = new THREE.Group(); o.rotation.z = PI / 2; w.add(o); w.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(o), c = bb.getCenter(new THREE.Vector3()); o.position.set(-c.x, -c.y, -c.z);   /* the bunch lies centred on the head, not hung out to one side from its stalk end (owner, 21 Nov 2026) */
+      /* and it rests on the head: its stalk 13 cm above the top of the head or the hat, so the head sits in among the hands of fruit. Set by the bunch's lowest finger tip it hung in the air (owner, 22 Nov 2026) */
+      m.updateMatrixWorld(true); const hb = m.getObjectByName('mixamorigHead'), ht = m.getObjectByName('mixamorigHeadTop_End'), V3 = new THREE.Vector3(); let top = ht ? ht.getWorldPosition(V3).y : hb.getWorldPosition(V3).y + 0.19;
+      if (s.hat) top += 0.05;   /* a straw hat's crown stands about 5 cm above the head */
+      hold(m, 'Head', w, { dy: top - hb.getWorldPosition(V3).y + 0.13, scale: 1 }); w.userData.steadyAt = { r: 0.15, dy: -0.02 };   /* the raised hand rests on the fruit beside the stalk, not out at the end of the bunch (engine/grip.js) */ steadyLoad(m, w); }
     s.load = o; o.visible = false; s.life.show = (n, on) => { if (n.load) n.load.visible = on; };
     if (load === 'bunch') { const pile = []; s.life.put = (n) => {   /* the bunch stays on the ground where it was put down, a small pile by the wagon (owner, 21 Nov 2026); six at most, the oldest reused */
       const host = n.m && n.m.parent; if (!host) return; let b = pile.length < 6 ? null : pile.shift(); if (!b) { b = bananaBunch(0.9); b.userData.noBatch = true; host.add(b); }
@@ -438,7 +445,7 @@ function startTalk(n) {
   convoForced = false; if (n.amb) P_().life.hold(n, true); openConvo(lines, null, n);
 }
 function convo(ls, onEnd, who) { if (busy && !$('card').hidden) hideCard(); talkFull = false; convoForced = true; openConvo([...ls], onEnd, who || null); }
-function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; $('toast').hidden = true; showLine(); }
+function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; if (n) TC.begin(); lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; $('toast').hidden = true; showLine(); }
 /* the speaker's gestures: men and women their own talk clips, seated men TalkM3 and others SitTalk; anyone holding something, kneeling, sitting on the ground or held in a pair keeps their pose */
 const KEEP_POSE = /^(Kneel|Comfort|PlayPiano|PlayGuitar|Sad|Cry|Hurt|CarryHead)/;
 function gestureFor(n) { const a = n.anim || 'Idle', held = (n.m.userData.held || []).length;
@@ -454,7 +461,7 @@ function showLine() {
 function choose(s, c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
+  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
   if (n && n.amb && P_() && P_().life) P_().life.hold(n, false);
   const forced = convoForced; convoForced = false;
   if (finished && n && talkFull) { n.talked = true; saveGame(); STORY.done(n.id); } if (cb && (finished || forced)) cb();
@@ -804,7 +811,7 @@ ON[70] = () => { setTimeout(() => SFX.churchBell(2), 1200 * TS); };
 async function leaveFlower() {
   const P = P_(), ep = EP; frozen = true; const f = flowers(7); f.position.set(P.spots.wall[0] + 1.0, 0, P.spots.wall[1] + 1.0); P.group.add(f); say('You leave a flower. For a moment, everything is quiet.', 4200); SFX.churchBell(2); await wait(4800); if (ep !== EP) return; frozen = false; STORY.done('flower');
 }
-ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => card('The end', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); };
+ON[74] = () => { unlock('remember'); unlock('railend'); unlock('journey'); setTimeout(() => card('The End', ['The Kendal train crash was a very sad day for Jamaica.', 'It was also a day when many people helped.', 'Thank you for remembering. You can read your journey in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true }), 1200 * TS); };
 
 /* ---------- the helper arrow (engine/story.js): 2.5 s after a new goal (5 s when you are looking about), even while you walk, it points at what the step still needs ---------- */
 const _nv = new THREE.Vector3();
@@ -839,7 +846,7 @@ registerShows(); applySave(loadGame());
 /* every place in the background, one at a time through engine/preload.js work(): the next chapter's places first, then the rest in story order, each in a quiet moment */
 function backgroundLoad() { PLACES_KEEP.background(() => { const i = state.started ? chapterOf(stage) : -1; return [...usedIn(i + 1), 'station45', 'hill', 'kingston57', 'ride45', 'coach', 'beach', 'crash', 'memorial']; }, 400); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
 function startGame(quiet) {
-  if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount();
+  if (state.started) return; audioInit(); SFX.initBeds(); state.started = true; $('title').hidden = true; $('hud').hidden = false; unlock('you', true); showCount(); onceWhenClear('kendal-you', () => card('Who you are', ["You are a child in Jamaica.", "You are fictional. Gran, Lloyd, Mass Ezra and the other people you meet are fictional too.", "The railway, the Kendal crash and the helpers of Kendal are real."], [{ t: 'Begin', go: hideCard }]));   /* who you are, once per device (owner, 21 November 2026) */
   liveHint($('hint'), 'Left thumb walks. Drag to look. Tap a person to talk.', 'W A S D to walk, Shift to hurry. Drag to look. Space or Enter to talk or use.');   /* touch or key words, following what the player uses (engine/device.js) */ showHint(); canvas.focus(); if (!quiet) cue('begin');
 }
 $('start').onclick = () => { startGame(); const st = stage >= 10 ? (SAFE[stage] || stage) : 10; beginChapter(hasSave && stage >= 10 ? chapterOf(stage) : 0, hasSave && stage >= 10 ? st : 10); setTimeout(backgroundLoad, 4000); };
@@ -853,6 +860,7 @@ function turnLimit(P, dt) {
     if (Math.abs(e) > lim) { m.rotation.y = n._ry + Math.sign(e) * lim; if (n.lo) n.lo.rotation.y = m.rotation.y; } n._ry = m.rotation.y; }
 }
 function update(dt, now) {
+  if (talkWith && TC.on) TC.step(state, camera.position, speakerHead(talkWith), dt);   /* engine/talk-cam.js */
   const P = P_(); if (!P) return;
   if (DIR.on) { DIR.t += dt; if (DIR.t >= DIR.dur && DIR.resolve) { const r = DIR.resolve; DIR.resolve = null; r(true); } }
   if (state.started && !busy && !frozen && !DIR.on) {
@@ -992,7 +1000,7 @@ function devViews() {
   const V = {
     mule1: ['road', 11, -29.5, 6.4, -0.35, -0.05], mule2: ['road', 11, -25.4, 6.6, 0.15, -0.02], road1: ['road', 10, -33, 0.6, -1.35, 0], road2: ['road', 12, 22, 0.8, -1.5, 0.02], road3: ['road', 10, -22, 2.2, -0.1, 0],
     st1: ['station45', 20, -2, 6.5, 0.15, 0], st2: ['station45', 20, -7, 4.2, 0.9, 0.02], st3: ['station45', 20, 14, 5, 0.25, 0.05],
-    hill1: ['hill', 30, -24, 5.5, -1.5, 0], hill2: ['hill', 30, -10, 4, -0.3, 0.05], loco1: ['hill', 30, -9, 2.2, -1.0, 0.02], seat1: ['coach', 52, 2.45, 0.1, 0.92, -0.3], seat2: ['coach', 52, 1.9, 0.25, 0.25, -0.38], seat3: ['coach', 52, 1.0, 0.25, -0.35, -0.38], sit1: ['crash', 61, 1.0, 7.2, 1.99, -0.15], bunch1: ['hill', 30, -11.2, 8.2, 0.75, -0.32], bunch2: ['hill', 30, -12.6, 6.6, 0.6, -0.75], loco2: ['hill', 30, 0.5, 2.6, 0, 0.0], loco3: ['hill', 30, 6.5, 2.2, 1.0, 0.0], loco4: ['hill', 30, -12, 1.0, -1.35, 0.0], eloco1: ['station45', 20, -16.5, 3.2, -1.05, 0.0], eloco2: ['station45', 20, -10.5, 3.0, 0, 0.0],
+    hill1: ['hill', 30, -24, 5.5, -1.5, 0], hill3: ['hill', 30, -23.2, 4.6, -0.7, -0.05], hill2: ['hill', 30, -10, 4, -0.3, 0.05], loco1: ['hill', 30, -9, 2.2, -1.0, 0.02], seat1: ['coach', 52, 2.45, 0.1, 0.92, -0.3], seat2: ['coach', 52, 1.9, 0.25, 0.25, -0.38], seat3: ['coach', 52, 1.0, 0.25, -0.35, -0.38], sit1: ['crash', 61, 1.0, 7.2, 1.99, -0.15], bunch1: ['hill', 30, -11.2, 8.2, 0.75, -0.32], bunch2: ['hill', 30, -12.6, 6.6, 0.6, -0.75], loco2: ['hill', 30, 0.5, 2.6, 0, 0.0], loco3: ['hill', 30, 6.5, 2.2, 1.0, 0.0], loco4: ['hill', 30, -12, 1.0, -1.35, 0.0], eloco1: ['station45', 20, -16.5, 3.2, -1.05, 0.0], eloco2: ['station45', 20, -10.5, 3.0, 0, 0.0],
     k1: ['kingston57', 40, -22, 5, PI / 2 - 0.2, 0], k2: ['kingston57', 40, -22, 5, -PI / 2 + 0.4, 0], k3: ['kingston57', 40, -9, 6.2, 0.35, 0], k4: ['kingston57', 41, 28, 4, -PI / 2, 0],
     ride1: ['ride45', 23, 0.2, 0, PI / 2 + 0.25, 0], ride2: ['ride45', 23, 0.2, 0, 0.3, 0.05], poster: ['kingston57', 40, 47, -9.0, PI / 2 + 0.5, 0.03, ENV.gold], lurch: ['coach', 53, 1.5, 0, PI / 2 + 0.5, 0], coach1: ['coach', 51, 4.3, 0, PI / 2, 0], coach2: ['coach', 51, 0, 0, 1.2, 0], coach3: ['coach', 51, 3.2, 0.2, PI / 2 - 0.5, 0],
     beach1: ['beach', 43, 0, 9, 0.1, 0], beach2: ['beach', 43, 8, 3, -1.2, 0], band1: ['beach', 43, 10.4, 6.6, -0.9, 0.02], nurse1: ['crash', 61, -1.6, 9.9, 1.35, -0.12], bucket1: ['crash', 61, 22.5, 9.2, -1.5, -0.1], gran1: ['crash', 60, 13.1, 2.9, -2.62, -0.12], bunch3: ['hill', 31, -14.2, 3.0, 0.1, -0.15], k5: ['kingston57', 41, -14, 6.5, -1.9, 0.02], road4: ['road', 12, 27, 1.2, -2.0, 0.0], jglow: ['road', 10, -27, 4.2, 0, 0],
@@ -1169,4 +1177,5 @@ function devViews() {
   }
 }
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addRecap({ items: [{ icon: '\uD83D\uDE82', label: '21 November 1845', page: 'first-train', img: 'recap/first-train.jpg' }, { icon: '\uD83D\uDED1', label: 'Why brakes matter', page: 'brakes', img: 'recap/brakes.jpg' }, { icon: '\uD83E\uDD1D', label: 'The helpers of Kendal', page: 'helpers', img: 'recap/helpers.jpg' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The End', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

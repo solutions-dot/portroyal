@@ -220,17 +220,21 @@ export const TALK = {
   ],
   sort: () => [
     { who: BE, text: 'Let us play a game. How do we know things?', unlock: 'sources' },
-    { who: BE, text: 'A paper gave Nanny 500 acres. How do we know?', choices: KNOW('paper') },
-    { who: BE, text: 'The path was too narrow for two people. How do we know?', choices: KNOW('paper') },
-    { who: BE, text: 'Nanny caught bullets and sent them back. How do we know?', choices: KNOW('told') },
-    { who: BE, text: 'Pumpkin seeds fed the town in a week. How do we know?', choices: KNOW('told'), unlock: 'stories' },
-    { who: BE, text: 'You led Phibba up the back trail. How do we know?', choices: KNOW('game') },
-    { who: BE, text: 'Cubbenah taught you the horn. How do we know?', choices: KNOW('game') },
+    { quiz: 'know', unlock: 'stories' },
     { who: BE, text: 'Good! Now you know how to ask.' },
   ],
 };
-/* the three answers of Beneba's game; `ok` marks the right one. A wrong pick goes grey and you try again. */
-function KNOW(right) { return [{ t: 'It was written down.', ok: right === 'paper' }, { t: 'Maroon families tell it.', ok: right === 'told' }, { t: 'It is fictional, for this game.', ok: right === 'game' }]; }
+/* Beneba's game (engine/quiz.js): four questions, the best first. A wrong pick shows the right answer and why, then the next question.
+   Each "why" says where the fact comes from (docs/games/nanny.md, rule 5). */
+const KNOW = (right) => [{ t: 'It was written down.', ok: right === 'paper' }, { t: 'Maroon families tell it.', ok: right === 'told' }, { t: 'It is fictional, for this game.', ok: right === 'game' }];
+export const QUIZ = {
+  know: { title: 'How do we know?', items: [
+    { q: 'A paper gave Nanny 500 acres. How do we know?', opts: KNOW('paper'), why: 'A paper from 1740 says so. It was written down.' },
+    { q: 'Nanny caught bullets and sent them back. How do we know?', opts: KNOW('told'), why: 'Maroon families tell this story. It is not in the old papers.' },
+    { q: 'You led Phibba up the back trail. How do we know?', opts: KNOW('game'), why: 'You and Phibba were made up for this game.' },
+    { q: 'The path was too narrow for two people. How do we know?', opts: KNOW('paper'), why: 'A planter wrote it in a book in 1793.' },
+  ] },
+};
 
 export const LATER = {
   mama: () => ['Stay close to me.', 'Quiet now, child.'],
@@ -315,8 +319,12 @@ export const CARDS = {
   paper: { title: 'The paper', paras: ['Letters patent dated 5 August 1740', '"granted unto Nanny a free Negroe and the people under command her & their heirs & Assigns for ever a parcell of land containing 500 acres in the parish of Portland."', 'These are the real words, from a clerk’s short copy. The spelling is his.'], go: 'Close' },
   today: { title: 'Today', paras: ['Nanny is a National Hero of Jamaica. She is the only woman among the seven.', 'Her people’s town is now called Moore Town. Maroons still live there.', 'Nobody knows what she looked like. But her name is not forgotten.'], go: 'Go on' },
   why: { title: 'Why do we remember Nanny?', paras: ['There is no wrong answer. Choose the one you feel most.'], choices: [['lead', 'She led her people.'], ['free', 'She helped keep them free.'], ['story', 'Her people kept her story.']] },
-  end: { title: 'The end', paras: ['Nanny and her people kept a free town in the mountains.', 'Much of their story was never written down. Maroon families kept it.', 'Thank you for playing. You can read your journey in the Journal.'] },
+  end: { title: 'The End', paras: ['Nanny and her people kept a free town in the mountains.', 'Much of their story was never written down. Maroon families kept it.', 'Thank you for playing. You can read your journey in the Journal.'] },
 };
+/* who you are, at the very start (owner, 21 November 2026): words from the journal page "You in this game" */
+export const YOU = { title: 'Who you are', paras: ['You are a child on a sugar estate in Jamaica, about 1730.', 'You and your Mama are enslaved. Tonight you walk to freedom.', 'You, Mama and the people you meet are fictional.'], go: 'Begin' };
+/* the end-of-game recap (engine/recap.js): three things you learned, each opens its journal page */
+export const RECAP = [{ icon: '\u26F0\uFE0F', label: 'The Maroons', page: 'maroons', img: 'recap/maroons.jpg' }, { icon: '\uD83D\uDCEF', label: 'The horn', page: 'horn', img: 'recap/horn.jpg' }, { icon: '\uD83D\uDCDC', label: 'The paper with her name', page: 'patent', img: 'recap/patent.jpg' }];
 export const CHOICE_NAMES = {
   job: { watch: 'In Nanny Town you chose to watch from the high rock.', garden: 'In Nanny Town you chose to help in the gardens.', run: 'In Nanny Town you chose to carry messages.' },
   why: { lead: 'You said we remember Nanny because she led her people.', free: 'You said we remember Nanny because she helped keep them free.', story: 'You said we remember Nanny because her people kept her story.' },

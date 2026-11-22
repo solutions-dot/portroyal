@@ -188,24 +188,38 @@ for strand in range(3):
             a=k/6*math.pi*2;row.append(bm.verts.new((x+math.cos(a)*.0025,y+math.sin(a)*.0025,z)))
         rows.append(row)
     quadstrip(bm,rows,close=True);o=soft('Aiguillette',bm,'Insignia',src=tunic);paint(o)
-# Khaki shoulder boards sit on the tops of the shoulders. Narrow gold edges
-# replace the previous yellow rectangles on the front of the sleeves.
+# Khaki shoulder straps on the tops of the shoulders, as on a khaki service tunic: a stiff strap of the tunic's cloth with a thickness of its own,
+# wider at the sleeve and narrowing to a rounded end by the collar, where a small gold button holds it, with a narrow gold edge all round.
+# (Owner, 22 November 2026: "the Emperor's shoulder boards are simple". Before, each was a flat patch three points wide whose gold edge was
+# coloured point by point, so it smeared across the cloth.)
 for sx in [-1,1]:
-    bm=bmesh.new();rows=[]
-    for j in range(3):
-        y=hy-.025+j*.025;row=[]
-        for i in range(5):
-            x=sx*(.105+i*.019)
-            hit=jt.ray_cast(Vector((x,y,NECK+.2)),Vector((0,0,-1)))[0]
-            z=(hit.z if hit else NECK-.055)+.005
-            row.append(bm.verts.new((x,y,z)))
-        rows.append(row)
-    quadstrip(bm,rows);o=soft('Shoulder board',bm,'Jacket',src=tunic);paint(o)
-    ca=o.data.color_attributes.get('Col')
-    for f in o.data.polygons:
-        for li in f.loop_indices:
-            v=o.data.vertices[o.data.loops[li].vertex_index].co
-            if abs(v.y-hy)>.020:ca.data[li].color=(*COL['Insignia'],1)
+    bm=bmesh.new();N=10;X0,X1=.090,.154;top=[];E=.0035      # it ends at the sleeve seam: carried on over the sleeve head, its end stood up like a wing when the arm hung down
+    def _z(x,y):
+        hit=jt.ray_cast(Vector((x,y,NECK+.2)),Vector((0,0,-1)))[0];return hit.z if hit else NECK-.055
+    for i in range(N+1):
+        t=i/N;x=sx*(X0+(X1-X0)*t);w=.017+.007*t
+        if i==0:w=.009      # the rounded end by the collar
+        elif i==1:w=.0155
+        zc=max(_z(x,hy-w),_z(x,hy),_z(x,hy+w))+.0045      # flat across its width, lying on the highest cloth under it
+        top.append([bm.verts.new((x,hy+o_,zc)) for o_ in (-w,-w+E,0,w-E,w)])
+    zs=[r[2].co.z for r in top]
+    for _ in range(2):zs=[zs[0]]+[(zs[k-1]+2*zs[k]+zs[k+1])/4 for k in range(1,N)]+[zs[N]]      # one even line along the shoulder, following its slope down to the sleeve (held up to the highest point, the outer ends stood up like wings)
+    for r,z in zip(top,zs):
+        for v in r:v.co.z=z
+    quadstrip(bm,top)
+    rim=[r[0] for r in top]+[v for v in top[N][1:]]+[r[4] for r in reversed(top[:N])]+[v for v in reversed(top[0][1:4])]      # the edge all round, then a wall down to the cloth
+    low=[bm.verts.new((v.co.x,v.co.y,v.co.z-.0055)) for v in rim]
+    for k in range(len(rim)):
+        a,b=rim[k],rim[(k+1)%len(rim)];c,d=low[(k+1)%len(rim)],low[k]
+        try:bm.faces.new((a,b,c,d))
+        except ValueError:pass
+    o=soft('Shoulder board',bm,'Jacket',only=TORSO+('LeftArm','RightArm'),src=tunic);paint(o)      # the outer end goes down with the sleeve head when the arm hangs: on the trunk's bones alone it stayed up where the arms were built and stood off the shoulder like a wing
+    ca=o.data.color_attributes.get('Col');xe=X0+(X1-X0)/N
+    for f in o.data.polygons:      # gold by whole faces, so the edge is a clean line
+        c=f.center;w=.017+.007*((abs(c.x)-X0)/(X1-X0));gold=abs(c.y-hy)>w-E-.0005 or abs(c.x)>X1-.004 or abs(c.x)<xe-.004 and abs(c.y-hy)>.006
+        if gold and abs(f.normal.z)>.5:      # the top only: with the side walls gold too, the strap read from the front as a gold wing tip
+            for li in f.loop_indices:ca.data[li].color=(*COL['Insignia'],1)
+    sphere('Shoulder button',(sx*(X0+.012),hy,zs[1]+.002),(.0045,.0045,.003),'Insignia','Spine2',tunic)
 
 # The aiguillettes and medal drops hang in front of the tunic's eased cloth.
 # Keep their complete length clear when the shoulders rise for the salute.

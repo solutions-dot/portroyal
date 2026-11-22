@@ -22,6 +22,7 @@ These sit on top of the owner's rules in `CLAUDE.md`. They exist because Nanny i
 5. **Every journal page says where its facts come from**: written records, Maroon tradition, or fiction made for this game. The last chapter turns this into a game ("How do we know?").
 6. **The fight is fictional and says so.** It shows methods that were written down, mostly for another Windward town in 1739. Nobody is shown hurt and nobody falls. A card after it says that people were hurt and killed in this war, on both sides.
 7. **Review before release.** We found no written guidance from the Moore Town Maroon Council or the Jamaica National Heritage Trust on how to tell this story. Send them the journal pages and the two set pieces and ask. The credits already say the game has not been reviewed yet.
+8. **Nanny's decisions may be passed on, never quoted** (owner, 21 November 2026). People may say what Nanny has decided or asked for, in plain words ("Nanny wants the watchers at the rock."), so the child feels she leads the town. Never a quoted command, never words in her mouth, never anything sacred. Every page that carries such a line says "These orders are imagined for this game."
 
 ## The story
 
@@ -145,6 +146,8 @@ A research pass read the sources below. The full report was a working file and i
 | "An acre of under wood" cut away and the hillside "covered with" Maroons | Used as the turning point of the fight | Thicknesse, on Quao's town |
 | Fighters dressed in leaves and branches and stood still like trees | Used, labelled as tradition | Not in any contemporary account we found. Tradition. |
 | Yams and plantains grown; wild hog "jerked" | Used | Thicknesse and Dallas |
+| Yams planted in hills (mounds), each from a piece of the yam's head | Used for the planting scene, as the general Jamaican way. Not recorded for Nanny Town itself. | The traditional Jamaican method: MDPI *Sustainability* 1(1):81 (2009) and the Jamaica Observer, 30 September 2026. Yams came from West Africa and were first grown on provision grounds. Checked 21 November 2026. |
+| Watering yams | Not used (no source; the Blue Mountains are wet) | None found |
 | Akan day names in Jamaica (Cudjoe Monday, Cubbenah Tuesday, Quaco Wednesday, Quao Thursday, Cuffee Friday, Quamin Saturday, Quashee Sunday; Juba, Beneba, Cuba, Abba, Phibba, Mimba, Quasheba for girls) | Used for the fictional people | Edward Long (1774) for the boys' names; later tables for the girls' names |
 | Cudjoe's treaty, 1 March 1739 (printed as 1 March 1738 in the old calendar): freedom, 1,500 acres, a duty to return runaways | Used | Dallas prints it. Record. |
 | Quao's treaty for the Windward Maroons, 1739: land, a duty to return runaways | Used with the year only | Disputed date: 23 June or 23 December 1739. National Library of Jamaica copy. |

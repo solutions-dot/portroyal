@@ -1,4 +1,5 @@
 import { touchFirst } from '../../../engine/device.js';
+import { addRecap } from "../../../engine/recap.js";   /* three things you learned, on the last card */
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A family story built on the existing engine, with no shared-module changes. */
 import { renderFramed } from "../../../engine/cine.js";
@@ -1385,4 +1386,5 @@ onLoadFail(() => {
   }
 })();
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
+addRecap({ items: [{ icon: '\uD83D\uDEA2', label: 'The voyage', page: 'passage', img: 'recap/passage.jpg' }, { icon: '\uD83D\uDEE0\uFE0F', label: 'Building a life', page: 'work', img: 'recap/work.jpg' }, { icon: '\u2696\uFE0F', label: 'The Windrush scandal', page: 'scandal', img: 'recap/scandal.jpg' }], open: () => { closeAll(); showJournal(); }, title: 'A life is more than papers', unlocked: null });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => save() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

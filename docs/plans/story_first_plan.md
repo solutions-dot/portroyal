@@ -237,3 +237,15 @@ Follow `docs/TESTING.md`. For each game you touch:
 7. Update the game's guide and `docs/STANDARD.md`'s status table. No em dashes.
 
 Note from earlier runs: the Nanny Town full check suite (`?test=all`) did not finish in 14 minutes inside the cloud container (software rendering). Run the single checks, or run the full suite on a real machine.
+
+## Progress and next steps (22 November 2026, PR #147)
+
+Done in PR #147: Phase 0; from Phase 1 the goal flag and banner, the smaller Journal button, the shared quiz and `showRight`, the talk camera, talk counts (Nanny, Melissa, Eventide), the "Who you are" card (all but The Emperor's Arrival and Tivoli; Windrush already had one), "The End" and the three-picture recap on every game's last card, and Port Royal's view switch turned off.
+
+Next, in this order:
+
+- [x] **Windrush stairs (owner, 22 November 2026).** Done: an opening in the hall ceiling, a stairwell, a newel post, spindles and a handrail; picture retaken. Audit not yet confirmed. In the 2018 house (`home18`, the "scandal" recap picture) the stairs run into the ceiling. Cut an opening in the ceiling above them so they lead up, and add a handrail and banister. Then retake `games/windrush/site/recap/scandal.jpg`.
+- [ ] **Recap pictures to improve.** Tivoli `today.jpg` should show the murals (three angles from the chapter start missed them); The Emperor's Arrival `airport.jpg` is an almost empty apron. The capture script started each chapter from the Chapters book (Unlock All), hid the HUD and took a 640x400 JPEG at quality 72.
+- [ ] **Autoplayers still to confirm** after the quiz changes: Melissa (`?auto=1`; its runner clicked Exit on the last card), Bog Walk (`?auto=all`), Port Royal (needs a dev build; restore the public `app.js` afterwards). Confirmed `ALLDONE`: Nanny Town, Eventide, Garvey, Kendal, Tivoli.
+- [ ] **"Who you are"** for The Emperor's Arrival and Tivoli (Tivoli has no "you" page yet; read `docs/games/tivoli.md` first).
+- [ ] Phase 1 left: carried items in the hand (Nanny yams, sticks, horn; Melissa; Eventide) and the new audit checks. Then Phase 2 (Nanny Town) onwards.

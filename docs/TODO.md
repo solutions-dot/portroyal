@@ -4,6 +4,14 @@ Work from PR #129 (merged to `main`) that was not checked before the merge. Each
 
 Build a game with test views first: `node tools/build.mjs <game> --dev`, then serve the repo root (`python3 -m http.server 8765`). Never commit a dev build of `games/port-royal/site/app.js`: run `node tools/build.mjs port-royal` (public) before any commit.
 
+**Next LLM, start here (22 November 2026, branch `claude/serene-hamilton-9eq8ag`, draft PR #147):**
+- [ ] Confirm Windrush `?test=audit` is 0 after the new stairwell and banister (`games/windrush/src/places.js`, the 2018 hall).
+- [ ] Retake two recap pictures: Tivoli `games/tivoli/site/recap/today.jpg` must show the murals; The Emperor's Arrival `games/selassie/site/recap/airport.jpg` is an almost empty apron.
+- [ ] Run the autoplayer to the end after the quiz changes: Melissa (`?auto=1`), Bog Walk (`?auto=all`), Port Royal (dev build, then restore the public `app.js`).
+- [ ] A "Who you are" card for The Emperor's Arrival and Tivoli (`onceWhenClear` in `engine/hud.js`; Tivoli has no "you" page yet, read `docs/games/tivoli.md`).
+- [ ] Carried items shown in the hand (Nanny yams, sticks, horn; Melissa; Eventide), the new audit checks, then Phase 2 (Nanny Town). Details in `docs/plans/story_first_plan.md`.
+- Do not touch bodies, clothes or the people builders (another chat works on them).
+
 **Story-first pass for all ten games (21 November 2026):** the full to-do list is in `docs/plans/story_first_plan.md`. Work from it, one phase at a time.
 
 ## Nanny Town (games/nanny)
