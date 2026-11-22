@@ -6,7 +6,9 @@ const t = (place, goal, ids, next, extra) => row(place, goal, { talk: ids }, nex
 const l = (place, goal, ids, next, extra) => row(place, goal, { do: ids }, next, extra);
 const w = (place, goal, card, next, extra = {}) => ({ place, goal, wait: true, card, next, ...extra });
 export const STEPS = {
-  /* 1. The night tour */
+  /* 1. The night tour: first the walk up to the house at night (a camera scene on the estate, relit for the night) */
+  8: w("estate", "Rose Hall at night.", "film", 10, { film: "arrive", show: [] }),
+  9: w("estate", "Walk up to the house.", "playing", 10, { film: "arrive", show: [] }),
   10: t("house", "Talk to Miss Bryan, the guide.", ["guide"], 11, { journal: "you" }),
   11: l("house", "Look at the great stair and the sea window.", ["stair", "window"], 12),
   12: l("house", "Read the card that points upstairs.", ["bedroom"], 13),
@@ -25,13 +27,15 @@ export const STEPS = {
   26: l("house", "Look at the mirror the tours talk about.", ["mirror"], 27),
   27: t("house", "Talk to Tia.", ["cousin"], 28),
   28: w("house", "Now check the story.", "note", 30, { note: "told" }),
-  /* 3. The white monument */
-  30: t("church", "Talk to Sister Reid in the church.", ["warden"], 31, { journal: "rosa" }),
-  31: l("church", "Read the white monument.", ["monument"], 32),
-  32: l("church", "Read the note on the desk, then see the east window.", ["husbands", "eastwin"], 33),
-  33: t("church", "Talk to Tia.", ["cousin"], 34),
-  34: t("church", "Talk to Sister Reid again.", ["warden"], 35),
-  35: w("church", "Two women, one story.", "note", 40, { note: "mixed" }),
+  /* 3. The white monument: first the walk up the church to it (a camera scene) */
+  30: w("church", "The white monument.", "film", 32, { film: "aisle" }),
+  31: w("church", "Walk up to the altar.", "playing", 32, { film: "aisle" }),
+  32: t("church", "Talk to Sister Reid in the church.", ["warden"], 33, { journal: "rosa" }),
+  33: l("church", "Read the white monument.", ["monument"], 34),
+  34: l("church", "Read the note on the desk by the monument.", ["husbands"], 35),
+  35: t("church", "Talk to Tia.", ["cousin"], 36),
+  36: t("church", "Talk to Sister Reid again.", ["warden"], 37),
+  37: w("church", "Two women, one story.", "note", 40, { note: "mixed" }),
   /* 4. The papers */
   40: t("archive", "Talk to Mrs Lindo at the counter.", ["archivist"], 41, { journal: "annie" }),
   41: l("archive", "Read the marriage book and the obituary.", ["marriage", "obituary"], 42, { journal: "john" }),
@@ -39,9 +43,10 @@ export const STEPS = {
   43: t("archive", "Talk to Tia.", ["cousin"], 44),
   44: l("archive", "Read the pamphlet and the novel.", ["pamphlet", "novel"], 45),
   45: t("archive", "Ask Mrs Lindo who is missing.", ["archivist"], 46, { journal: "how" }),
-  46: l("archive", "Open the estate's own book.", ["journal"], 47),
-  47: t("archive", "Talk to Mrs Lindo.", ["archivist"], 48),
-  48: w("archive", "The book with the names.", "note", 50, { note: "book" }),
+  46: w("archive", "Open the estate's own book.", "film", 48, { film: "pages" }),
+  47: w("archive", "Turn the pages of the book.", "playing", 48, { film: "pages" }),
+  48: t("archive", "Talk to Mrs Lindo.", ["archivist"], 49),
+  49: w("archive", "The book with the names.", "note", 50, { note: "book" }),
   /* 5. The names */
   50: t("estate", "Talk to Miss Bryan by the board.", ["guide"], 51, { journal: "journal" }),
   51: l("estate", "Read the board of names and the clothing card.", ["names", "clothes"], 52),
@@ -63,7 +68,7 @@ export const STEPS = {
 export const TASKS = {};
 const Q = (s) => "“" + s + "”";
 export const LOOKS = {
-  stair: { place: "house", at: [0, -0.5], label: "Look at the stair", title: "The great stair", lines: ["A visitor about 1820 wrote of a mahogany staircase here.", "The house was empty by 1830 and in ruins by 1915.", "It was restored and finished in 1971. Much of what you see is new."], page: "house" },
+  stair: { place: "house", at: [0, -0.5], label: "Look at the stair", title: "The great stair", lines: ["A visitor about 1820 wrote of a mahogany staircase here.", "This stair is new. The house was a ruin until it was restored."], page: "house" },
   bedroom: { place: "house", at: [3.0, -0.3], label: "Read the card", title: "“Annie's Bedroom”", lines: ["The tour shows a room upstairs as Annie's bedroom.", "No paper from her time says which room was hers.", "Like the “dungeon”, it belongs to the tour, not the record."], page: "house" },
   coffee: { place: "house", at: [6.6, 0.4], label: "Look at the cup", title: "The coffee cup", lines: ["The card says a husband was poisoned with this cup.", "Poison, arsenic and boiling oil are told only on modern tours.", "No record says any husband was poisoned."], page: "telling" },
   portraits: { place: "house", at: [-13.2, 0], label: "Hold the candle up", title: "The husbands", lines: ["Three tall paintings of men. The guide says: her three husbands.", "A visitor in 1830 did see paintings here, in the empty house.", "He wrote that they were the husbands of the last lady of the house. Keep that in mind."], page: "legend" },
@@ -72,7 +77,6 @@ export const LOOKS = {
   snuff: { place: "house", at: [-9.5, -1.4], label: "Put out the candles", title: "One small flame", lines: ["You pinch out the candles one by one.", "Only the candle by the bare wall still burns.", "Now the guide can make shadows."], page: "telling" },
   monument: { place: "church", at: [-4.0, -9.5], label: "Read the monument", title: "Mrs Rosa Palmer, 1790", lines: [Q("Near this place are deposited the Remains of Mrs Rosa Palmer, who died on the first day of May 1790."), Q("Her manners were open, cheerful and agreeable."), "Rosa Palmer was the first lady of Rose Hall. Her stone praises her.", "On the vase is a small carved head. A historian thought it was probably her face."], page: "rosa" },
   husbands: { place: "church", at: [-4.9, -8.6], label: "Read the note", title: "Four husbands", lines: ["Rosa Palmer married four times.", "Henry Fanning, George Ash, Norwood Witter, John Palmer.", "The monument was made by John Bacon in 1794."], page: "rosa" },
-  eastwin: { place: "church", at: [0.9, -8.7], label: "Look at the window", title: "St James Parish Church", lines: ["This church was begun in 1774.", "It is built of white limestone, cut in neat blocks.", "Over the altar is a Venetian window: a tall arch between two lower lights."], page: "rosa" },
   marriage: { place: "archive", at: [-4.1, 0.5], label: "Read the marriage book", title: "Married 28 March 1820", lines: ["Annie Mary Paterson married John Rose Palmer.", "At Mount Pleasant, St James, on 28 March 1820.", "She never married again. They had no children."], page: "annie" },
   obituary: { place: "archive", at: [-2.8, 0.5], label: "Read the obituary", title: "Died, November 1827", lines: ["John Rose Palmer died at Rose Hall, aged 42, deep in debt.", "The cause of his death is not known.", Q("His intrinsic worth, kind heart, and generous disposition obtained him the esteem of all his acquaintance.")], page: "john" },
   deed: { place: "archive", at: [-1.5, 0.5], label: "Read the deed", title: "Sold, 1830", lines: ["In 1830 Annie sold " + Q("whatever rights she may have had") + " in Rose Hall.", "She was paid 200 pounds.", "She sold a year before the great rebellion began."], page: "annie" },
@@ -80,7 +84,6 @@ export const LOOKS = {
   register: { place: "archive", at: [6.5, 1.6], label: "Look in the glass case", title: "A slave register", lines: ["The registers list the people each owner held in slavery.", "Annie Palmer held four people in 1829, and eight in 1833.", "She was no witch. But she did own people."], page: "annie" },
   pamphlet: { place: "archive", at: [4.4, 0.5], label: "Read the pamphlet", title: "A pamphlet of 1868", lines: ["Here the tale is first printed: a Mrs Palmer, three husbands, murder.", "It was printed twenty-two years after Annie died.", "It has no Haiti, no voodoo, no Takoo and no White Witch."], page: "how" },
   novel: { place: "archive", at: [5.6, 0.5], label: "Open the novel", title: "A novel of 1929", lines: ["“The White Witch of Rosehall”, by Herbert de Lisser.", "The Haiti childhood, the voodoo nurse, Takoo and Millicent begin here.", "It is a made-up story. The tour tells it as history."], page: "how" },
-  journal: { place: "archive", at: [0.6, 0.5], label: "Open the book", title: "The Rose Hall Journal", lines: ["The estate's own book, 1817 to 1832.", "It names 208 people held in slavery at Rose Hall. Over 90 died.", "There is no Takoo in it, and no Millicent."], page: "journal" },
   names: { place: "estate", at: [-5.1, -3.6], label: "Read the names", title: "Two hundred and eight people", lines: ["Celia, Dorinda, Cecelia, Mary James, George Stennet.", "Aaron, Adonis, Hercules, Doshy, Archey. And 198 more.", "The estate book names 208 people held here from 1817 to 1832."], page: "journal" },
   clothes: { place: "estate", at: [-8.0, -3.3], label: "Read the card", title: "The clothing lists", lines: ["The estate book lists the clothes given out.", "Osnaburg and peniston: rough, cheap cloth.", "No shoes are listed."], page: "journal" },
   celia: { place: "estate", at: [-12.85, -5.22], label: "Read the stone", title: "Celia", lines: ["Celia, also written as Catherine Lewis. Born about 1772.", "Her work in the book: " + Q("Grasscutter") + ". The book says " + Q("weakly") + ".", "She was a great-grandmother."], page: "lives" },

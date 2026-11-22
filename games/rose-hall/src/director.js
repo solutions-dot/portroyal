@@ -58,6 +58,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     hideSkip = showCinematicSkip(() => $("readCine").click());
     $("pauseCine").textContent = "Pause";
     document.body.classList.add("cine");
+    $("sub").classList.remove("dim");   /* the captions: #sub starts dimmed in index.html, so without this no caption ever showed */
     D.apply(0);
   };
   let hideSkip;
@@ -71,6 +72,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     $("cineControls").hidden = true;
     document.body.classList.remove("cine");
     $("sub").textContent = "";
+    $("sub").classList.add("dim");
     camera.fov = playFov();
     camera.updateProjectionMatrix();
     if (rumble) setG(rumble, 0, 0.2);
@@ -133,6 +135,21 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
             tone(784, 780, 1.6, "sine", 0.02, 0);
           } else if (what === "drum") {
             noiseHit(90, 0.9, 0.5, 0.35, 0, 0);
+          } else if (what === "owl") {
+            /* an owl in the trees, far off: two soft hoots */
+            tone(410, 380, 0.45, "sine", 0.03, -0.5, 0);
+            tone(400, 360, 0.7, "sine", 0.03, -0.5, 0.6);
+          } else if (what === "steps") {
+            /* footsteps: a few soft treads */
+            for (let i = 0; i < 4; i++) noiseHit(260 + (i % 2) * 60, 1.4, 0.09, 0.16, 0, i * 0.55);
+          } else if (what === "door") {
+            /* a heavy door: a low creak, then the latch */
+            tone(150, 110, 0.9, "sawtooth", 0.012, 0, 0);
+            noiseHit(1400, 3, 0.08, 0.2, 0, 0.9);
+          } else if (what === "leaf") {
+            /* a page of old paper turned over */
+            noiseHit(3400, 0.5, 0.35, 0.14, 0, 0);
+            noiseHit(1600, 0.8, 0.25, 0.1, 0, 0.18);
           } else if (what === "fire") crackle();
           else cue(what);
         }

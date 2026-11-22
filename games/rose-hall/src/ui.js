@@ -203,7 +203,6 @@ export function createMarks({ scene, camera, canvas, onTap }) {
       );
       n.mark.renderOrder = 5;
       n.mark.visible = false;
-      n.mark.userData.noAudit = true;
       scene.add(n.mark);
       all.push(n);
     },

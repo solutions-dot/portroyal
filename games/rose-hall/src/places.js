@@ -257,7 +257,6 @@ function house({ phone } = {}) {
   /* --- the entrance hall --- */
   add(Q, W.makeDoor({ w: 1.9, h: 2.9, kind: "six", leaves: 2, color: 0x4a2418, frame: 0xe8e2d0, handle: "knob" }), 0, -4.79, 0, 0);
   const fan = mesh(new THREE.CircleGeometry(0.95, 14, 0, Math.PI), R.nightPane(true), 0, 3.0, -4.77, G);
-  fan.userData.noAudit = true;
   for (let i = 0; i <= 4; i++) {
     const a = (i / 4) * Math.PI,
       bar = box(0.03, 0.95, 0.03, R.WHITE, Math.cos(a) * 0.47, 3.0 + Math.sin(a) * 0.47, -4.76, G);
@@ -271,11 +270,9 @@ function house({ phone } = {}) {
   for (const s of [-1, 1]) {
     const hole = plane(1.24, 3.2, flat(0x1c1612), s * 1.8, H - 0.004, 2.0, G);   /* where the upper flights go up out of sight */
     hole.rotation.x = Math.PI / 2;
-    hole.userData.noAudit = true;
   }
   const lw = plane(1.3, 1.9, R.nightPane(false), 0, 3.15, 4.79, G);
   lw.rotation.y = Math.PI;
-  lw.userData.noAudit = true;
   for (const s of [-1, 1]) box(0.07, 2.0, 0.06, R.WHITE, s * 0.68, 3.15, 4.77, G);
   box(1.5, 0.07, 0.06, R.WHITE, 0, 4.16, 4.77, G);
   box(1.56, 0.08, 0.12, R.WHITE, 0, 2.16, 4.75, G);
@@ -297,7 +294,7 @@ function house({ phone } = {}) {
   wall(Q, 0, 0.3, 2.9, 0.34);
   solid1(Q, R.tourSign(["UPSTAIRS", "Annie's Bedroom"], 0.5, 0.3), 3.0, 0.75, 0.4, 0.4, Math.PI);
   const tStair = tagAt(Q, "RECORD", -0.8, 0.2, 0.74, Math.PI),
-    tBed = tagAt(Q, "LEGEND", 3.0, 1.42, 0.72, Math.PI);
+    tBed = tagAt(Q, "LEGEND", 3.0, 0.0, 0.3, Math.PI);   /* on the floor in front of the stand: a card on its top edge would float */
   Q.reveal.stair = (seen) => (tStair.visible = seen);
   Q.reveal.bedroom = (seen) => (tBed.visible = seen);
 
@@ -557,7 +554,7 @@ function church() {
   note.rotation.order = "YXZ";
   note.rotation.x = 0.45;
   const tMon = tagAt(Q, "RECORD", -2.75, 0.0, -10.5, 0, 1.6),
-    tNote = tagAt(Q, "RECORD", -5.7, 1.3, -8.24, Math.PI / 2);
+    tNote = tagAt(Q, "RECORD", -5.25, 0.0, -8.6, Math.PI / 2);
   Q.reveal.monument = (seen) => {
     tMon.visible = seen;
     lampGlow.visible = seen;
@@ -574,6 +571,15 @@ function church() {
   Q.walls.push([-6.2, -7.8, -0.8, -7.4], [0.8, -7.8, 6.2, -7.4]);
   Q.keepOff = [{ at: [-4.0, -9.5], r: 1.0 }, { at: [-4.9, -8.6], r: 0.8 }, { at: [0, -7.6], r: 0.9 }, { at: [0.9, -8.7], r: 0.8 }];
   R.ashlarFit(G);
+  /* the walk up the church to the monument (FILMS.aisle): the camera goes up the aisle between the pews and over the open middle of the
+     rail; the monument's lamp glow comes up as you reach it, and goes back to what you have read when the scene ends */
+  Q.films.aisle = (t) => {
+    if (t < 0) {
+      lampGlow.visible = tMon.visible;
+      return;
+    }
+    lampGlow.visible = t > 18;
+  };
   Q.enter = staging(Q, {}, { cousin: [30, 39] });
   return Q;
 }
@@ -642,7 +648,6 @@ function archive() {
     add(Q, R.bookRest(cover, title), x, -0.6, 0.765, Math.PI);
     const tissue = box(0.5, 0.012, 0.36, solid(0xf8f6ee, 1), x, 0.9, -0.6, G);
     tissue.userData.noBatch = true;
-    tissue.userData.noAudit = true;
     const t = tagAt(Q, kind, x, 0.765, -0.28, Math.PI);
     Q.reveal[id] = (seen) => {
       tissue.visible = !seen;
@@ -668,6 +673,38 @@ function archive() {
   Q.reveal.journal = (seen) => {
     jr.visible = seen;
     tJr.visible = seen;
+  };
+  /* the book opened, page by page (FILMS.pages). Each page gives only what the Rose Hall Journal gives (Naylor 2022; docs/games/rose-hall.md):
+     a name and the words the book puts beside it. null is a row of writing too small to read: the other names. */
+  const ledger = add(
+    Q,
+    R.openLedger([
+      [[null, null, null, null, null, null, null, null, null, null, null, null, null, null], [["Celia", "Grasscutter"], "weakly", null, ["Cecelia", "Attending Young Children"], null, ["Mary James", "G.H. Attendant"], null, null, null, null, null]],
+      [[["Dorinda", "Hospital Attendant and Midwife"], null, ["George Stennet", "Head Driver"], ["Aaron", "Head Penkeeper"], ["Adonis", "Head Cooper"], null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null]],
+      [["21 April 1830", "Dorrinda the midwife being", "orderd to the field for general", "neglect in the performance of", "her duty thot proper to abscond.", null, null, null, null, null, null, null], [["1823", "Archey"], "sent to Falmouth Workhouse", "for punishment", null, ["1826", "Archey"], "transported", null, null, null, null, null]],
+      [[["Hercules"], null, null, ["Doshy"], null, null, ["Hercules"], null, null, null, ["Doshy"], null, null, null], [["Osnaburg"], null, null, ["Peniston"], null, null, null, null, null, null, null, null, null, null]],
+      [[null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null]],
+    ]),
+    0.5,
+    -0.72,
+    0.766,
+  );
+  ledger.visible = false;
+  const TURNS = [14.5, 24.5, 35, 44];
+  let jrWas = null;
+  Q.films.pages = (t) => {
+    if (t < 0) {
+      ledger.visible = false;
+      if (jrWas !== null) jr.visible = tJr.visible = jrWas;
+      jrWas = null;
+      return;
+    }
+    if (jrWas === null) jrWas = jr.visible;
+    ledger.visible = true;
+    jr.visible = tJr.visible = false;
+    let k = 0;
+    for (const at of TURNS) k += Math.max(0, Math.min(1, (t - at) / 1.4));
+    ledger.userData.turn(k);
   };
   /* the card catalogue, a case of maps, plants */
   solid1(Q, R.catalogue(6, 7), 7.52, -2.9, 1.3, 0.6, -Math.PI / 2);
@@ -751,7 +788,7 @@ function estate() {
   const terrace = W.stoneBox(46, 3.6, 26, W.LIME, 0, 1.8, 0);
   terrace.userData.far = true;
   add(Q, terrace, 0, -85, 8);
-  add(Q, R.greatHouse(), 0, -87, 11.6);
+  const greatHouse = add(Q, R.greatHouse(), 0, -87, 11.6);
   for (const [x, z, h, s] of [[-30, -78, 9, 71], [31, -80, 10, 72], [-38, -66, 8, 73], [40, -64, 8, 74]]) add(Q, tree(h, s, 1), x, z, hillH(x, z) - 0.2);
   for (const [x, z, s] of [[-26, -70, 81], [27, -72, 82], [-20, -60, 83], [22, -58, 84]]) add(Q, palm(9, s), x, z, hillH(x, z) - 0.2);
   /* the drive: pale marl from the gate up toward the house */
@@ -788,7 +825,7 @@ function estate() {
   add(Q, R.caneField(30, 16, 7), -40, 4);
   for (const [x, z, h, s] of [[-19.5, -3.5, 8.5, 51], [20.2, 7.6, 8, 52], [-10.5, 9.6, 7, 53], [7.6, -10.4, 7.5, 54]]) solid1(Q, tree(h, s, 1), x, z, 1.0, 1.0);
   for (const o of scatter(G, (i) => tree(6 + (i % 4), i + 60, 1), 22, [-110, -60, 110, -16], [[-27, -100, 27, -14], [-74, -46, -30, 2], [30, -50, 78, -10]], 31)) o.position.y = hillH(o.position.x, o.position.z) - 0.2;
-  scatter(G, (i) => bush(i + 20, 0.9 + (i % 3) * 0.2), 16, [-23, -14, 23, 13], [[-21, -11, 21, 12]], 5);
+  scatter(G, (i) => bush(i + 20, 0.9 + (i % 3) * 0.2), 16, [-23, -14, 23, 13], [[-21, -11, 21, 12], [-2.6, -27, 2.6, 20]], 5);   /* none on the drive */
   /* the board of names, by the drive */
   solid1(Q, R.nameBoard("ROSE HALL  1817 TO 1832", ["CELIA", "DORINDA", "CECELIA", "MARY JAMES", "GEORGE STENNET", "AARON", "ADONIS", "HERCULES", "DOSHY", "ARCHEY"], "and 198 more. 208 names in all."), -5.6, -5.6, 3.5, 0.5, 0.25);
   const tNames = tagAt(Q, "RECORD", -4.2, 0.0, -4.4, 0.25, 2);
@@ -808,17 +845,17 @@ function estate() {
   /* what the tour shows as a tomb, a card about who built the house, a basket of flowers, seats */
   solid1(Q, R.boxTomb(), -19, 8.4, 2.6, 1.5, 0.3);
   solid1(Q, R.tourSign(["THE TOMB", "of Annie Palmer"], 0.5, 0.3), -17.0, 9.6, 0.4, 0.4, 1.1);
-  const tTomb = tagAt(Q, "LEGEND", -17.0, 1.42, 9.6, 1.1);
+  const tTomb = tagAt(Q, "LEGEND", -16.6, 0.0, 9.8, 1.1);
   Q.reveal.tomb = (seen) => (tTomb.visible = seen);
   solid1(Q, R.tourSign(["ROSE HALL", "Who built it?"], 0.5, 0.3), 3.2, -8.6, 0.4, 0.4, 0.2);
-  const tBuilt = tagAt(Q, "RECORD", 3.2, 1.42, -8.6, 0.2);
+  const tBuilt = tagAt(Q, "RECORD", 3.29, 0.0, -8.16, 0.2);
   Q.reveal.built = (seen) => (tBuilt.visible = seen);
   /* two more cards on stands: the clothing lists of the estate book, by the board; rebellion and freedom, by the works */
   solid1(Q, R.tourSign(["CLOTHING", "from the estate book"], 0.5, 0.3), -8.2, -4.5, 0.4, 0.4, 0.2);
-  const tCloth = tagAt(Q, "RECORD", -8.2, 1.42, -4.5, 0.2);
+  const tCloth = tagAt(Q, "RECORD", -8.11, 0.0, -4.06, 0.2);
   Q.reveal.clothes = (seen) => (tCloth.visible = seen);
   solid1(Q, R.tourSign(["FREEDOM", "1831 to 1838"], 0.5, 0.3), 5.9, -8.4, 0.4, 0.4, 0.0);
-  const tFree = tagAt(Q, "RECORD", 5.9, 1.42, -8.4, 0.0);
+  const tFree = tagAt(Q, "RECORD", 5.9, 0.0, -7.95, 0.0);
   Q.reveal.freedom = (seen) => (tFree.visible = seen);
   solid1(Q, R.flowerBasket(), -2.9, 3.4, 0.7, 0.6, 0.3);
   solid1(Q, W.bench(2), 4.6, 4.4, 2.1, 0.5, -0.6);
@@ -832,6 +869,28 @@ function estate() {
   crowd(Q, "rh_youth", 18.4, -1.6, 0, { kind: "wander", pts: [[18.4, -1.6], [13.2, -2.6], [12.6, 5.6], [18.6, 5.2]], pause: [3, 6] });
   Q.keepOff = [{ at: [-5.1, -3.6], r: 1.2 }, { at: [-15.8, 10.1], r: 1 }, { at: [3.5, -7.2], r: 1 }, { at: [-2.6, 4.6], r: 1 }, { at: [-8.0, -3.3], r: 1 }, { at: [5.8, -7.1], r: 1 }, ...Object.values(Q.markSpots).map((at) => ({ at, r: 1 }))];
   Q.enter = staging(Q, { guide: { 50: [-3.4, -3.2, -5.6, -5.6], 60: [-15.0, 6.2, -19, 8.4], 62: [1.6, -6.0, 3.2, -8.6] } }, { cousin: [50, 69] });
+  /* the night tour's walk up the drive (FILMS.arrive): the same estate under the moon, the house lit from inside, nobody about; the
+     day comes back when the scene ends */
+  const DAYLIGHT = { ...Q.light },
+    NIGHT = { top: 0x0a0f1e, hor: 0x262b3e, stars: 0.6, moon: 1, fog: [0x0b0e18, 60, 520], sun: [0xa8bce0, 0.5, -40, 70, 50], hemi: [0x8090c4, 0x1a1e18, 0.7], fill: 0.7 };
+  let night = false;
+  Q.films.arrive = (t) => {
+    if (t < 0) {
+      if (!night) return;
+      night = false;
+      Q.light = { ...DAYLIGHT };
+      greatHouse.userData.night(false);
+      for (const n of Q.extras) n.m.visible = true;
+      Q.relight?.();
+      return;
+    }
+    if (night) return;
+    night = true;
+    Q.light = { ...NIGHT };
+    greatHouse.userData.night(true);
+    for (const n of Q.extras) n.m.visible = false;
+    Q.relight?.();
+  };
   return Q;
 }
 

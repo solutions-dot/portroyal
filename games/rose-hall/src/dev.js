@@ -1,4 +1,5 @@
 /* Development checks are stripped from public builds. */
+import { auditReveals } from "../../../engine/audit-reveal.js";
 import { createStory, checkFlow, needList } from "../../../engine/story.js";
 import { checkAll, reachIssues, CHECKS } from "../../../engine/checks.js";
 import ANIM_CLIPS from "../anim-clips.json";
@@ -56,7 +57,7 @@ export async function dev(A) {
     A.begin();
     A.chapterState(CHAPTERS[first - 1].first);
     await go(CHAPTERS[first - 1].first);
-    closeAll();
+    if (!STEPS[CHAPTERS[first - 1].first].wait) closeAll();   /* a chapter that opens on a scene card keeps it: the loop below presses it */
     let lastStage = -1,
       same = 0;
     for (let guard = 0; guard < 400 && S.stage <= last; guard++) {
@@ -286,7 +287,7 @@ export async function dev(A) {
       const twins = faceCheck(
         [...Q.people, ...Q.extras].filter((n) => n.m).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, who: n.who, story: Q.people.includes(n) })),
       );
-      const errors = [...r.floating, ...r.inside, ...r.stuck];
+      const errors = [...r.floating, ...r.inside, ...r.stuck, ...auditReveals(Q, { groundAt: Q.groundAt })];   /* what a look moves, in both states (engine/audit-reveal.js) */
       results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));
     }
   if (test === "ambient")

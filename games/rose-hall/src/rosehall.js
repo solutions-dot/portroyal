@@ -30,7 +30,6 @@ const still = (o) => {
 const quiet = (o) => {
   o.traverse((n) => {
     n.userData.noBatch = true;
-    n.userData.noAudit = true;
   });
   return o;
 };
@@ -81,7 +80,6 @@ const glowMap = () =>
 export function glowPool(r = 1.2, strength = 0.55) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * r, 2 * r), new THREE.MeshBasicMaterial({ map: glowMap(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: strength }));
   m.userData.noBatch = true;
-  m.userData.noAudit = true;
   return m;
 }
 /* a single candle in a brass stick */
@@ -239,7 +237,6 @@ export function longCaseClock() {
   box(0.22, 0.7, 0.01, MAHOG_DARK, 0, 1.05, 0.122, g);
   box(0.52, 0.52, 0.3, MAHOG, 0, 1.8, 0, g);
   const face = plane(0.36, 0.36, std(T.clock(), 0.6), 0, 1.8, 0.152, g);
-  face.userData.noAudit = true;
   box(0.56, 0.05, 0.34, MAHOG_DARK, 0, 2.08, 0, g);
   for (const s of [-1, 1]) mesh(new THREE.SphereGeometry(0.035, 8, 6), BRASS, s * 0.22, 2.14, 0, g);
   mesh(new THREE.SphereGeometry(0.04, 8, 6), BRASS, 0, 2.2, 0, g).scale.y = 1.6;
@@ -359,7 +356,7 @@ export function rug(w = 3, d = 2, field = "#6a2a26", border = "#c8b078") {
    folded shutters and a pair of curtains under a pelmet. pane: the material behind the bars (night sea, night sky, bright day). */
 export function sashWindow(w = 1.3, h = 2.6, pane, { curtain = 0x7a2f2a, drapes = true } = {}) {
   const g = grp();
-  plane(w, h, pane, 0, h / 2, -0.2, g).userData.noAudit = true;
+  plane(w, h, pane, 0, h / 2, -0.2, g);
   for (const s of [-1, 1]) {
     box(0.07, h - 0.002, 0.3, WHITE, s * (w / 2 - 0.036), h / 2, -0.06, g);
     box(0.02, h - 0.16, 0.24, solid(0xd2cab4, 0.9), s * (w / 2 - 0.085), h / 2, -0.07, g);   /* shutters folded into the reveal */
@@ -492,7 +489,7 @@ export function portrait(w = 1.15, h = 2.0, coat = "#2f3a4a", seed = 1) {
     }
     x.putImageData(dd, 0, 0);
   });
-  plane(w - 0.2, h - 0.2, new THREE.MeshBasicMaterial({ map: tex, color: 0xb0a898 }), 0, 0, 0.078, g).userData.noAudit = true;
+  plane(w - 0.2, h - 0.2, new THREE.MeshBasicMaterial({ map: tex, color: 0xb0a898 }), 0, 0, 0.078, g);
   const gloom = plane(w - 0.2, h - 0.2, new THREE.MeshBasicMaterial({ color: 0x050403, transparent: true, opacity: 0.72 }), 0, 0, 0.082, g);
   quiet(gloom);
   g.userData.show = (lit) => (gloom.visible = !lit);
@@ -810,7 +807,7 @@ export function archWindow(w = 1.5, h = 3.4) {
       x.restore();
     }),
   });
-  plane(w, h, archTex, 0, h / 2, -0.12, g).userData.noAudit = true;
+  plane(w, h, archTex, 0, h / 2, -0.12, g);
   box(w + 0.3, 0.08, 0.16, solid(0xd8d0bc, 1), 0, -0.04, 0.08, g);
   return g;
 }
@@ -1253,7 +1250,7 @@ export function louvreWindow(w = 1.6, h = 1.4) {
       }
     }),
   });
-  plane(w, h, louvreM, 0, h / 2, -0.1, g).userData.noAudit = true;
+  plane(w, h, louvreM, 0, h / 2, -0.1, g);
   const fm = solid(0x9aa09a, 0.5, 0.4);
   box(w - 0.11, 0.05, 0.12, fm, 0, h - 0.026, -0.06, g);
   box(w + 0.1, 0.05, 0.14, fm, 0, -0.025, 0.071, g);
@@ -1349,7 +1346,6 @@ export function wallClock() {
   const g = grp();
   cyl(0.2, 0.2, 0.05, solid(0x2b2d31, 0.6), 0, 0, 0.025, g, 20).rotation.x = Math.PI / 2;
   const f = mesh(new THREE.CircleGeometry(0.18, 20), std(T.clock(), 0.6), 0, 0, 0.052, g);
-  f.userData.noAudit = true;
   return g;
 }
 
@@ -1364,7 +1360,9 @@ export function greatHouse() {
     stone = std(T.stone([196, 186, 160], [10, 2]), 1),
     stoneUp = std(T.stone([208, 198, 172], [10, 3]), 1),
     dark = new THREE.MeshBasicMaterial({ color: 0x1c2228 }),
+    win = new THREE.MeshBasicMaterial({ color: 0x1c2228 }),   /* the sash panes: lit from inside for the night tour (userData.night) */
     trim = solid(0xe8e2d0, 0.9);
+  g.userData.night = (on) => win.color.set(on ? 0xe8a65a : 0x1c2228);
   box(W, 4.2, D, stone, 0, 2.1, 0, g);
   box(W + 0.3, 0.3, D + 0.3, trim, 0, 4.3, 0, g);
   box(W, 8.2, D, stoneUp, 0, 8.5, 0, g);
@@ -1388,11 +1386,10 @@ export function greatHouse() {
     if (!mid) {
       box(1.5, 2.2, 0.1, dark, x, 1.5, D / 2 + 0.01, g);
       const a = mesh(new THREE.CircleGeometry(0.75, 12, 0, Math.PI), dark, x, 2.6, D / 2 + 0.06, g);
-      a.userData.noAudit = true;
     }
     for (const [y, h] of [[6.6, 2.6], [10.6, 2.2]]) {
       if (mid && y < 8) continue;
-      box(1.3, h, 0.1, dark, x, y, D / 2 + 0.01, g);
+      box(1.3, h, 0.1, win, x, y, D / 2 + 0.01, g);
       box(1.5, 0.12, 0.2, trim, x, y - h / 2 - 0.06, D / 2 + 0.06, g);
       box(0.05, h, 0.12, trim, x, y, D / 2 + 0.03, g);
       box(1.3, 0.05, 0.12, trim, x, y, D / 2 + 0.03, g);
@@ -1406,7 +1403,6 @@ export function greatHouse() {
   for (const x of [-3, 0, 3]) {
     box(1.6, 2.4, 0.1, dark, x, 1.5, P0 + 3.21, g);
     const a = mesh(new THREE.CircleGeometry(0.8, 12, 0, Math.PI), dark, x, 2.7, P0 + 3.26, g);
-    a.userData.noAudit = true;
   }
   box(10.3, 0.2, 3.5, trim, 0, 4.4, P0 + 1.6, g);
   for (const x of [-4.7, -1.6, 1.6, 4.7]) box(0.5, 3.6, 0.5, stoneUp, x, 6.3, P0 + 2.9, g);
@@ -1414,8 +1410,7 @@ export function greatHouse() {
   box(10.6, 0.2, 3.8, trim, 0, 8.7, P0 + 1.6, g);
   for (const x of [-3.15, 0, 3.15]) {
     const a = mesh(new THREE.RingGeometry(1.1, 1.35, 12, 1, 0, Math.PI), trim, x, 7.0, P0 + 3.16, g);
-    a.userData.noAudit = true;
-    box(1.6, 3.0, 0.1, dark, x, 6.0, P0 + 0.06, g);
+    box(1.6, 3.0, 0.1, win, x, 6.0, P0 + 0.06, g);
   }
   for (let i = 0; i < 24; i++) cyl(0.07, 0.07, 0.8, trim, -4.4 + i * 0.383, 4.9, P0 + 3.1, g, 6);
   box(9.2, 0.12, 0.2, trim, 0, 5.34, P0 + 3.1, g);
@@ -1668,6 +1663,99 @@ export function fingerPost(arms = ["GREAT HOUSE"]) {
       if (s < 0) p.rotation.y = Math.PI;
     }
   });
+  return g;
+}
+/* The Rose Hall Journal opened on the reading table for the camera scene: two pages either side of the spine and one leaf that turns.
+   spreads: [[left, right], ...], each page a list of rows: a string, or [name, words] for a name and the words the book gives it, or
+   null for a row of faint writing nobody can read from here. The layout of the real book is not known: the pages are the game's picture,
+   the words on them are only the book's own (docs/games/rose-hall.md). userData.turn(k): k = 1.5 is halfway from the second spread to the third. */
+export function openLedger(spreads, w = 0.31, d = 0.42) {
+  const g = still(grp()),
+    page = (rows, seed) =>
+      cv(512, 694, (x, W, H) => {
+        x.fillStyle = "#e9ddc0";
+        x.fillRect(0, 0, W, H);
+        const r = rng(seed);
+        for (let i = 0; i < 9; i++) {
+          x.fillStyle = "rgba(150,110,60," + (0.03 + r() * 0.05) + ")";
+          x.beginPath();
+          x.arc(r() * W, r() * H, 30 + r() * 90, 0, Math.PI * 2);
+          x.fill();
+        }
+        x.strokeStyle = "rgba(120,96,70,0.35)";
+        x.lineWidth = 1;
+        for (let y = 70; y < H - 20; y += 44) {
+          x.beginPath();
+          x.moveTo(24, y + 10);
+          x.lineTo(W - 24, y + 10);
+          x.stroke();
+        }
+        x.fillStyle = "#3a2a1c";
+        x.strokeStyle = "rgba(58,42,28,0.5)";
+        x.textBaseline = "alphabetic";
+        let y = 70;
+        for (const row of rows) {
+          if (row === null) {
+            x.lineWidth = 2;
+            x.beginPath();
+            x.moveTo(34, y);
+            for (let k = 34; k < W - 40 - r() * 120; k += 6) x.lineTo(k, y - 4 - r() * 8);
+            x.stroke();
+            y += 44;
+          } else if (Array.isArray(row)) {
+            x.font = "bold italic 34px Georgia, serif";
+            x.fillText(row[0], 34, y, W - 60);
+            y += 44;
+            if (row[1]) {
+              x.font = "italic 30px Georgia, serif";
+              x.fillText(row[1], 70, y, W - 96);
+              y += 44;
+            }
+          } else {
+            x.font = "italic 30px Georgia, serif";
+            x.fillText(row, 34, y, W - 60);
+            y += 44;
+          }
+        }
+      }),
+    tex = spreads.map(([a, b], i) => [page(a, i * 2 + 3), page(b, i * 2 + 4)]),
+    mat = (map) => new THREE.MeshStandardMaterial({ map, roughness: 0.95 }),
+    leafPlane = (m, x, y) => {
+      const geo = new THREE.PlaneGeometry(w, d);
+      geo.rotateX(-Math.PI / 2);
+      return mesh(geo, m, x, y, 0);
+    };
+  /* the boards, the block of pages under each side, the spine */
+  box(w * 2 + 0.05, 0.012, d + 0.03, solid(0x5a3a24, 0.8), 0, 0.006, 0, g);
+  for (const s of [-1, 1]) box(w - 0.01, 0.022, d - 0.01, solid(0xd8cbaa, 0.95), s * (w / 2 + 0.002), 0.023, 0, g);
+  const left = mat(tex[0][0]),
+    right = mat(tex[0][1]),
+    L = leafPlane(left, -w / 2 - 0.002, 0.0345),
+    Rt = leafPlane(right, w / 2 + 0.002, 0.0345);
+  g.add(L, Rt);
+  const pivot = grp(g, 0, 0.036, 0),
+    front = mat(tex[0][1]),
+    back = mat(tex[0][0]),
+    F = leafPlane(front, w / 2, 0.0006),
+    B = leafPlane(back, w / 2, -0.0006);
+  B.rotation.z = Math.PI;
+  pivot.add(F, B);
+  g.userData.turn = (k) => {
+    const n = tex.length - 1,
+      i = Math.max(0, Math.min(n, Math.floor(k))),
+      f = i >= n ? 0 : Math.max(0, Math.min(1, k - i));
+    left.map = tex[i][0];
+    right.map = tex[f > 0 ? i + 1 : i][1];
+    pivot.visible = f > 0;
+    if (f > 0) {
+      front.map = tex[i][1];
+      back.map = tex[i + 1][0];
+      const e = f * f * (3 - 2 * f);
+      pivot.rotation.z = e * Math.PI;
+      pivot.position.y = 0.036 + Math.sin(e * Math.PI) * 0.004;
+    }
+  };
+  g.userData.turn(0);
   return g;
 }
 export { lathe, still, quiet, at };

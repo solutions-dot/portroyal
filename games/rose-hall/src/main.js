@@ -948,7 +948,7 @@ async function start() {
     return;
   }
   await go(FIRST);
-  if (!skipIntro) card(CHAPTERS[0].name, [CHAPTERS[0].intro, GAME.fiction], [["Begin", () => {}]]);
+  if (!skipIntro) card(CHAPTERS[0].name, [CHAPTERS[0].intro, GAME.fiction], [["Begin", () => waits(FIRST)]]);   /* the first step is a scene card: show it after the opening card */
 }
 $("start").onclick = start;
 onLoadFail(() => {
