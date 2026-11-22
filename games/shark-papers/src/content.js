@@ -7,9 +7,9 @@ export const GAME = {
   title: { place: "deck", pos: [2.5, 2.6, 10.2], look: [-0.6, 2.4, -3] },
   fiction: "You are Jem, the ship's boy, aged twelve. You are fictional. The shark, the papers and the two officers were real.",
   recap: [
-    { icon: "🦈", label: "The shark", page: "shark" },
-    { icon: "📜", label: "The papers", page: "papers" },
-    { icon: "⚖️", label: "The court", page: "court" },
+    { icon: "🦈", label: "The shark", page: "shark", img: "recap/shark.jpg" },
+    { icon: "📜", label: "The papers", page: "papers", img: "recap/papers.jpg" },
+    { icon: "⚖️", label: "The court", page: "court", img: "recap/court.jpg" },
   ],
 };
 export const CHAPTERS = [
