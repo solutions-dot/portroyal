@@ -54,6 +54,25 @@ export function paper(text = "A family letter", colour = "#e8ddc4") {
   g.add(p);
   return dynamic(g);
 }
+/* a letter folded once: the lower half lies flat, the upper half on its fold (userData.open(k): 0 folded over, 1 opened out flat) */
+export function foldedLetter(text = "Dear Naomi", colour = "#e8ddc4", lines = "") {
+  const g = grp(),
+    hinge = grp(g, 0, 0.006, 0);
+  box(0.31, 0.004, 0.115, PAPER, 0, 0.002, 0.0575, g);
+  const low = label(lines || "...", 0.29, 0.1, colour);
+  low.rotation.x = -Math.PI / 2;
+  low.position.set(0, 0.0045, 0.0575);
+  g.add(low);
+  box(0.31, 0.004, 0.115, PAPER, 0, 0, -0.0575, hinge);
+  const top = label(text, 0.29, 0.1, colour);
+  top.rotation.x = -Math.PI / 2;
+  top.position.set(0, 0.0025, -0.0575);
+  hinge.add(top);
+  hinge.traverse((o) => (o.userData.noBatch = true));
+  g.userData.open = (k) => (hinge.rotation.x = -Math.PI * (1 - k) * 0.98);
+  g.userData.open(0);
+  return dynamic(g);
+}
 export function photo() {
   const tex = cv(256, 192, (x, W, H) => {
     x.fillStyle = "#dad0b5";
@@ -173,6 +192,7 @@ export function item(id) {
     workRecord: "Work record · Iris",
     oldLetter: "A letter from 1948",
   };
+  if (id === "brownLetter") return foldedLetter("Please contact us", "#e8ddc4", "We need proof of your right to be here.");
   return paper(
     names[id] || "Family papers",
     id === "brownLetter" ? "#b89b74" : "#e8ddc4",

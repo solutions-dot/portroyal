@@ -45,6 +45,8 @@ import {
   bedTest,
 } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
+import { createLookShot } from "../../../engine/lookshot.js";   /* looking at a thing is a close-up action (owner rule 13) */
+import { lookSound } from "../../../engine/look-sounds.js";
 import { makeSky, G, cv } from "./gfx.js";
 import { buildPlace, mergePlace, PLACE_IDS } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
@@ -143,6 +145,7 @@ resize();
 let saved = null;
 try {
   saved = JSON.parse(localStorage.getItem(KEY));
+  if (saved && { 12: 13, 14: 15, 31: 32, 65: 66 }[saved.stage]) saved.stage = { 12: 13, 14: 15, 31: 32, 65: 66 }[saved.stage];   /* steps cut as busy work (owner rule 14): a save made there carries on from the next */
   if (saved?.version !== 1 || !STEPS[saved.stage]) saved = null;
 } catch {}
 const S = {
@@ -535,6 +538,7 @@ function light(Q) {
 }
 async function go(stage, { restore = null, keep = false } = {}) {
   const generation = ++epoch;
+  LS.cancel();
   busy = true;
   DIR.stop();
   closeAll();
@@ -703,6 +707,40 @@ function filmRead(key) {
   const F = FILMS[key];
   readWhatHappened(card, { what: F.read, go: () => { unlock("passage"); go(F.next); }, pairs: true });   /* the standard What happened card (engine/scene-warning.js) */
 }
+/* close-ups before a talk (owner rule 13, engine/lookshot.js): a step with closeup: id first eases the camera to the thing, the place moves it
+   (Q.reveal[id](k)) with a sound and a short line, eases back, and then the talk begins */
+const LOOKSHOTS = {
+  letter62: { view: { p: [9.25, 1.15, 4.75], look: [9.0, 0.44, 4.3], fov: 40 }, act: 2.6, sound: "paper", say: ["A letter from London, and something folded inside."] },
+  letter18: { view: { p: [-2.25, 1.15, -1.05], look: [-2.55, 0.46, -1.45], fov: 40 }, act: 2.2, sound: "paper", say: ["The letter asks Iris to prove her right to be here."] },
+};
+const _lq = new THREE.Quaternion(),
+  _le = new THREE.Euler();
+const LS = createLookShot({
+  camera,
+  fov: () => (innerWidth / innerHeight < 0.8 ? 76 : 66),
+  setFov: (f) => {
+    if (Math.abs(camera.fov - f) < 0.01) return;
+    camera.fov = f;
+    camera.updateProjectionMatrix();
+  },
+  bars: (on) => document.body.classList.toggle("cine", on),
+  say: (text) => ($("sub").textContent = text),
+  freeze: (on) => (busy = on),
+  sound: lookSound,
+  quick: () => QUICK && !S.lookShot,
+  reduced,
+  home: () => ({ pos: new THREE.Vector3(S.x, camera.position.y, S.z), quat: _lq.setFromEuler(_le.set(S.pitch, S.yaw, 0, "YXZ")) }),
+});
+async function closeup(id) {
+  const L = LOOKSHOTS[id],
+    Q = world(),
+    st = S.stage;
+  uiSound("tap");
+  await LS.play({ view: L.view, act: L.act, sound: L.sound, lines: L.say, reveal: (k) => Q.reveal?.[id]?.(k) });
+  if (S.stage !== st) return false;
+  await LS.back();
+  return S.stage === st;
+}
 const DIR = createDirector({
   camera,
   world: () => world(),
@@ -828,6 +866,12 @@ async function waits(st) {
 }
 function talk(n) {
   if (busy || openPanel() || DIR.on) return;
+  const row = STEPS[S.stage];
+  if (row.closeup && story.needs(n.id) && !(S.closeSeen ||= {})[S.stage]) {
+    S.closeSeen[S.stage] = true;
+    closeup(row.closeup).then((ok) => ok && talk(n));
+    return;
+  }
   const response = story.talk(n.id),
     L =
       response?.kind === "story"
@@ -1247,7 +1291,9 @@ function tick(dt, now = performance.now()) {
   }
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
-  else if (__DEV__ && S.view) {
+  else if (LS.tick(dt)) {
+    /* a close-up holds the camera */
+  } else if (__DEV__ && S.view) {
     camera.position.set(...S.view.pos);
     camera.lookAt(...S.view.look);
   } else if (!S.started) {
@@ -1268,7 +1314,7 @@ function tick(dt, now = performance.now()) {
   hint(now);
   if (S.started) audioTick(Q, dt);
   if (__DEV__) camera.userData.checkPlace = Q; // Match camera probes to the scene actually drawn, including chapter transitions.
-  renderFramed(renderer, scene, camera, DIR.on);
+  renderFramed(renderer, scene, camera, DIR.on || LS.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;
     save();
@@ -1382,6 +1428,8 @@ onLoadFail(() => {
         frame,
         chapterState,
         resetSceneTasks,
+        LS,
+        closeup,
       });
     }
   } catch (e) {

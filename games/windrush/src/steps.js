@@ -29,16 +29,15 @@ const w = (place, goal, card, next, extra = {}) => ({
 });
 export const STEPS = {
   10: t("yard48", "Talk to May.", ["may"], 11, "family"),
-  11: d("yard48", "Bring water to the washing stand.", ["washWater"], 12),
-  12: d("yard48", "Peg the clean cloth on the line.", ["cleanCloth"], 13),
+  11: d("yard48", "Bring water to the washing stand.", ["washWater"], 13),   /* "Peg the clean cloth on the line" was cut (owner rule 14): a second chore with nothing new in it */
   13: t(
     "yard48",
     "Hear from Samuel and Pearl.",
     ["sam", "pearl"],
-    14,
+    15,
     "jamaica",
   ),
-  14: d("yard48", "Fit the wooden slat to the crate.", ["crateSlat"], 15),
+  /* 14 "Fit the wooden slat to the crate" was cut (owner rule 14): the packing is step 21 */
   15: w("yard48", "Keep one small memory.", "firstMemory", 20),
   20: t(
     "yard48",
@@ -65,10 +64,10 @@ export const STEPS = {
     "deck48",
     "Hear two stories on the deck.",
     ["lionel", "may"],
-    31,
+    32,
     "passage",
   ),
-  31: d("deck48", "Bring a cup of water to the family.", ["shipWater"], 32),
+  /* 31 "Bring a cup of water to the family" was cut (owner rule 14): the route card (32) shows the crossing */
   32: d("deck48", "Lay the route card by the map.", ["route"], 33),
   33: t("deck48", "Talk to Samuel by the rail.", ["sam"], 34),
   34: w("tilbury48", "The other shore is ahead.", "film", 40, {
@@ -125,8 +124,7 @@ export const STEPS = {
     "twohomes",
   ),
   63: w("brixton62", "Follow the letter to Jamaica.", "jamaicaCut", 64),
-  64: t("yard62", "Read the letter with Pearl.", ["pearl"], 65, "twohomes"),
-  65: d("yard62", "Bring the repair board to the crate.", ["roofBoard"], 66),
+  64: { ...t("yard62", "Read the letter with Pearl.", ["pearl"], 66, "twohomes"), closeup: "letter62" },   /* 65 "Bring the repair board" was cut (owner rule 14): the school book (66) shows the same care */
   66: d("yard62", "Put the new book in the school bag.", ["schoolBook"], 67),
   67: t("yard62", "Tell Pearl what you will write.", ["pearl"], 68),
   68: w("yard62", "Years pass. The family keeps its letters.", "years", 70),
@@ -138,7 +136,7 @@ export const STEPS = {
     72,
     "scandal",
   ),
-  72: t("home18", "Read the letter with Iris.", ["iris"], 73),
+  72: { ...t("home18", "Read the letter with Iris.", ["iris"], 73), closeup: "letter18" },
   73: d(
     "home18",
     "Help Iris gather three records.",

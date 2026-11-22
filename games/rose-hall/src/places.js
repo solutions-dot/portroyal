@@ -4,6 +4,7 @@
    Story people: person(). Background people: crowd(), each a body made for the year and the place (tools/rose-hall/people). */
 import * as THREE from "three";
 import { vessel } from "../../../engine/vessel.js";   /* small open things with a real opening */
+import { motes } from "../../../engine/life.js";   /* dust turning in the candle light */
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, batchStatic } from "./gfx.js";
 import { tree, mule, cart, barrel, scatter, surveyPole } from "./period-props.js";
 import * as P from "./props.js";
@@ -285,6 +286,44 @@ function house({ phone } = {}) {
   box(10.6, 0.18, 0.05, R.WHITE, -9.5, 0.09, 4.775, G);
   lining(G, -4.8, 4.8, -4.2, "x", -1, H, [[-1.24, 1.24]]);
   lining(G, -4.8, 4.8, -14.8, "x", 1, H);
+
+  /* moonlight from the sea: a pale shaft through each north window, falling across the floor, and dust turning in the candle light under
+     each chandelier. Light only: see-through, drawn once each. */
+  const soft = cv(64, 64, (x, W, H) => {   /* soft at the sides and fading toward the far end */
+      const g = x.createLinearGradient(0, 0, W, 0);
+      g.addColorStop(0, "rgba(255,255,255,0)");
+      g.addColorStop(0.2, "rgba(255,255,255,1)");
+      g.addColorStop(0.8, "rgba(255,255,255,1)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      x.fillStyle = g;
+      x.fillRect(0, 0, W, H);
+      const f = x.createLinearGradient(0, 0, 0, H);
+      f.addColorStop(0, "rgba(0,0,0,0)");
+      f.addColorStop(1, "rgba(0,0,0,1)");
+      x.globalCompositeOperation = "destination-out";
+      x.fillStyle = f;
+      x.fillRect(0, 0, W, H);
+    }),
+    beamMat = new THREE.MeshBasicMaterial({ color: 0x9fb8e8, map: soft, transparent: true, opacity: 0.15, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }),
+    poolMat = new THREE.MeshBasicMaterial({ color: 0xa8c0ee, map: soft, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending });
+  for (const [x, w] of [[-12.5, 1.3], [-9.5, 1.3], [-6.5, 1.3], [-2.7, 0.9], [2.7, 0.9], [6.5, 1.3], [9.5, 1.3], [12.5, 1.3]]) {
+    const top = 0.95 + 2.6,
+      bot = 0.95,
+      reach = 2.4,
+      geo = new THREE.BufferGeometry();
+    /* a slanted sheet from the window down to the floor, and the patch it lights */
+    geo.setAttribute("position", new THREE.Float32BufferAttribute([-w / 2, top, 0, w / 2, top, 0, w / 2, 0.01, reach + 1.1, -w / 2, 0.01, reach + 1.1, -w / 2, bot, 0, w / 2, bot, 0, w / 2, 0.01, reach * 0.35, -w / 2, 0.01, reach * 0.35], 3));
+    geo.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
+    geo.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0.6, 0, 0.6], 2));
+    const beam = mesh(geo, beamMat, x, 0, -4.75, G);
+    beam.userData.noBatch = true;
+    const pool = plane(w * 0.95, reach + 0.75, poolMat, x, 0.012, -4.75 + (reach * 0.35 + reach + 1.1) / 2, G);
+    pool.rotation.x = -Math.PI / 2;
+    pool.rotation.z = Math.PI;   /* bright by the window, fading into the room */
+    pool.userData.noBatch = true;
+  }
+  const dust = [motes(G, { n: 50, box: [-1.4, 1.2, -3.0, 1.4, 3.2, -0.8], seed: 2 }), motes(G, { n: 50, box: [8.1, 1.2, -0.8, 10.9, 3.2, 1.6], seed: 3 }), motes(G, { n: 50, box: [-10.9, 0.9, -2.2, -8.1, 3.2, 3.6], seed: 4 })];
+  Q.tickers.push((t) => dust.forEach((d) => d(t)));
 
   /* --- the entrance hall --- */
   add(Q, W.makeDoor({ w: 1.9, h: 2.9, kind: "six", leaves: 2, color: 0x4a2418, frame: 0xe8e2d0, handle: "knob" }), 0, -4.79, 0, 0);

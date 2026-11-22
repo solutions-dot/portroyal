@@ -28,6 +28,7 @@ const base = (id, bounds, start, weather = "jamaica") => ({
   routes: [],
   tickers: [],
   keepOff: [],
+  reveal: {},   /* a look moment's change, k from 0 to 1 (engine/lookshot.js) */
   ground: () => 0,
 });
 function add(Q, o, x = 0, z = 0, y = 0, ry = 0) {
@@ -211,6 +212,21 @@ function yard(id) {
     person(Q, "pearl", "pearl48", 8.2, 5.2, face(8.2, 5.2, 7.5, 3.5), { kind: "watch", at: [7.5, 3.5], idles: ["Idle", "HappyIdle"], react: ["Laugh", "Nod"], every: [5, 9] });
   } else {
     person(Q, "pearl", "pearl62", 7.9, 5.4, face(7.9, 5.4, 7.5, 3.5), { kind: "watch", at: [5, 7], idles: ["HappyIdle", "Idle", "ListenMusic"], react: ["Laugh", "Nod"], every: [5, 9] });
+    /* the letter from London on an upturned crate by Pearl: it opens out, and the postal order slides from inside (the look before the talk) */
+    solid1(Q, crate(0.55), 9.0, 4.3, 0.6, 0.6, 0.3);
+    const letter = P.foldedLetter("Dear Pearl and Naomi", "#e8ddc4", "London is home now. We miss you.");
+    add(Q, letter, 8.98, 4.3, 0.442, 0.2);
+    const order = P.paper("Postal order", "#d9c9a0");
+    order.scale.set(0.55, 1, 0.55);
+    add(Q, order, 8.98, 4.3, 0.452, 0.2);
+    order.visible = false;
+    Q.reveal.letter62 = (k) => {
+      const u = Math.max(0, Math.min(1, (+k - 0.05) / 0.55)),
+        v = Math.max(0, Math.min(1, (+k - 0.55) / 0.35));
+      letter.userData.open(u * u * (3 - 2 * u));
+      order.visible = +k > 0.5;
+      order.position.set(8.98 + 0.2 * v, 0.452, 4.3 + 0.17 * v);
+    };
   }
   // neighbours: a woman bringing a basket in on her head, an old woman resting under the breadfruit tree, dominoes on the piazza, children at play
   crowd(Q, "wr_kwoman48", 14.0, 14.0, Math.PI, { kind: "errand", from: [14.0, 14.0], to: [13.6, -3.2], walk: "CarryHeadWalk", idle: "CarryHeadIdle", wait: [5, 9] }, { held: "headload" });
@@ -732,6 +748,11 @@ function garage(Q, cx) {
 /* ---------- London, 2018: Iris's house, and the advice centre ---------- */
 function home18() {
   const Q = base("home18", [-5.4, -8.6, 5.4, 9.4], [2.3, 0.6, 0], "england");
+  /* the letter Maya laid beside Iris opens out on the low table (the look before the talk) */
+  Q.reveal.letter18 = (k) => {
+    const u = Math.max(0, Math.min(1, (+k - 0.05) / 0.6));
+    Q.items.brownLetter?.userData.open?.(u * u * (3 - 2 * u));
+  };
   ground(Q, std(T.concrete([20, 20], [126, 126, 120])), 200);
   // the street and the houses opposite
   const road = box(80, 0.02, 7, std(T.concrete([30, 3], [70, 72, 74]), 0.95), 0, 0.0, 14.5, Q.group);

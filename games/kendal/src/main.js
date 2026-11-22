@@ -663,7 +663,7 @@ const ACTIONS_FOR = {   /* each thing has an id; `need` is the step need it coun
 };
 /* what each look moves, from 0 (as found) to 1 (changed): P.reveal[id](k), so ?test=audit can check both states (engine/audit-reveal.js) */
 const REVEALS = {
-  hill: (P) => Object.fromEntries(P.levers.map((L, i) => { L.userData.fixed = true; return ['b' + i, (k) => { k = +k; L.userData.handle.rotation.z = 0.5 - 1.4 * Math.min(1, k * 1.4); L.userData.tag.visible = k > 0.75; }]; })),   /* the handle on its pivot, held from the side */
+  hill: (P) => Object.fromEntries(P.levers.map((L, i) => { L.userData.fixed = true; return ['b' + i, (k) => { k = +k; const u = L.userData, f = Math.min(1, k * 1.5); u.handle.rotation.z = u.up + (u.down - u.up) * f * f; u.pin.visible = k > 0.7; u.tag.visible = k > 0.8; }]; })),   /* the lever on its pivot, held from the side against its guard */
   coach: (P) => Object.fromEntries(P.sashes.map((sh, i) => { sh.userData.fixed = true; return ['w' + i, (k) => { sh.position.y = -0.86 * Math.min(1, +k * 1.6); }]; })),   /* the sash slides down in its frame, into the wall */
   memorial: (P) => ({ mn: (k) => P.leaves.forEach((l, j) => { const t = Math.max(0, Math.min(1, +k * 1.8 - j * 0.25)), h = l.userData.home; l.position.set(h.x + t * 0.25 * (j % 2 ? 1 : -1), h.y + (0.062 - h.y) * t + Math.sin(t * PI) * 0.12, h.z + t * 0.9); l.rotation.z = j + t * 3; }) }),   /* the leaves brushed off the step land on the paving (its top is at 6 cm) */
 };
@@ -677,7 +677,8 @@ async function lookEngine(P) {
 }
 async function lookBrake(P, i) {   /* the handle is pulled down over its ratchet and a white tag hung on it */
   const ep = EP, L = P.levers[i], at = L.getWorldPosition(new THREE.Vector3()); P.lever = L;
-  await LOOK.look({ id: 'b' + i, at: [at.x, at.y + 0.2, at.z], dist: 1.7, lift: 0.5, fov: 46, act: 1.8, line: 1.8, sound: 'brake', lines: [['The tender brake is tight. Good.', 'The carriage brake handle holds. Good.', 'The wagon brake block is firm. Good.'][i]],
+  const dir = L.scale.x < 0 ? -1 : 1;   /* the lever points along the side toward the middle: frame its whole sweep, from a little above and out */
+  await LOOK.look({ id: 'b' + i, view: { p: [at.x + dir * 0.45, at.y + 0.75, at.z + 1.55], look: [at.x + dir * 0.42, at.y + 0.12, at.z], fov: 44 }, fill: 2.2, act: 2.2, line: 2.2, sound: 'brake', lines: [['The tender brake is tight. Good.', 'The carriage brake handle holds. Good.', 'The wagon brake block is firm. Good.'][i]],
     reveal: (k) => P.reveal['b' + i](k) }); if (ep !== EP) return;
   await LOOK.back(); uiSound('goal'); STORY.done('b' + i);
 }
@@ -717,7 +718,7 @@ function registerShows() {
   for (const id of ['engine', 'board', 'board57', 'w0', 'w1', 'sb', 'mn', 'calling', 'lamp', 'flower', 'seat']) STORY.shows(id, () => {});   /* each of these changes the scene itself: a card, a ride, the view turning, Dawn going to Sister Louise, the lamp held high, the flower */
   STORY.shows('water', (n, of, restoring) => { if (!restoring || cur !== 'crash') return; const P = PL.crash; for (let i = 0; i < n; i++) { const b = P.buckets[i]; b.userData.given = true; P.group.add(b); b.position.set(-3.75 + i * 0.42, 0, 9.55 + i * 0.1); } });
   STORY.shows('bunch', (n, of, restoring) => { if (!restoring) return; const P = PL.hill; resetBunches(P); for (let i = 0; i < n; i++) { const b = P.bunches[i], w = P.inWagon[i]; P.group.add(b); b.position.copy(w.position); b.rotation.set(0, w.rotation.y, PI / 2); } });
-  for (let i = 0; i < 3; i++) STORY.shows('b' + i, (n, of, restoring) => { const L = PL.hill && PL.hill.levers && PL.hill.levers[i]; if (L) { L.userData.handle.rotation.z = n ? -0.9 : 0.5; L.userData.tag.visible = !!n; } });   /* the brake handle is pulled down and a white tag hung on it */
+  for (let i = 0; i < 3; i++) STORY.shows('b' + i, (n, of, restoring) => { const L = PL.hill && PL.hill.levers && PL.hill.levers[i]; if (L) { L.userData.handle.rotation.z = n ? L.userData.down : L.userData.up; L.userData.tag.visible = !!n; L.userData.pin.visible = !!n; } });   /* the brake handle is pulled down and a white tag hung on it */
   STORY.shows('fun', () => {});   /* each beach thing shows itself: the splash, the sandcastle, you sitting by the band */
 }
 function resetBunches(P) { if (!P) return; for (const b of P.bunches) { const h = b.userData.home; if (b === HAND.holding()) HAND.drop(); P.pile.add(b); b.position.copy(h.p); b.rotation.copy(h.r); b.visible = true; } P.inWagon.forEach((b) => { b.visible = false; }); }
@@ -761,7 +762,7 @@ ON[21] = () => { /* nothing: the engine card is an action */ };
 
 /* ---------- chapter 3: a train comes up the hill, and the brake check ---------- */
 ON[31] = () => resetBunches(PL.hill);
-ON[34] = () => { const P = PL.hill; if (P) for (const L of P.levers) { L.userData.handle.rotation.z = 0.5; L.userData.tag.visible = false; } };
+ON[34] = () => { const P = PL.hill; if (P) for (const L of P.levers) { L.userData.handle.rotation.z = L.userData.up; L.userData.tag.visible = false; L.userData.pin.visible = false; } };
 ON[32] = async () => {
   const P = P_(); if (cur !== 'hill') return; frozen = true; busy = false; bars(true); say('Listen! A train is coming up the hill.', 3600); const tr = P.train; tr.visible = true; tr.position.x = 100;
   const ep = EP;

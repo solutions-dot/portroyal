@@ -201,7 +201,49 @@ function deck() {
   /* ---- masts, sails and rigging: a two-masted schooner, her sails set and hanging in the calm ---- */
   const FORE = -5.2,
     MAIN = 2.6;
+  const rigFrom = Q.group.children.length;
   S.schoonerRig(Q.group, F, { foreZ: FORE, mainZ: MAIN, set: "set" });
+  /* the sails breathe: in the calm they fill and slacken a little with the swell (each sail its own mesh, kept out of the merge) */
+  const sails = [];
+  for (const c of Q.group.children.slice(rigFrom)) c.traverse((o) => o.userData.breathe && sails.push(o));
+  for (const o of sails) o.userData.noBatch = true;
+  Q.tickers.push((t) => sails.forEach((o, i) => o.userData.breathe(t, 0.18, i * 1.3)));
+  /* the sea lapping at her sides: a band of broken white along the waterline that comes and goes */
+  const foamTex = cv(256, 32, (x, W, H) => {
+    for (let i = 0; i < 90; i++) {
+      x.fillStyle = `rgba(255,255,255,${0.25 + Math.random() * 0.5})`;
+      x.beginPath();
+      x.ellipse(Math.random() * W, H * (0.3 + Math.random() * 0.5), 4 + Math.random() * 14, 1.5 + Math.random() * 3, 0, 0, 7);
+      x.fill();
+    }
+  });
+  foamTex.wrapS = THREE.RepeatWrapping;
+  foamTex.repeat.set(6, 1);
+  const foamMat = new THREE.MeshBasicMaterial({ map: foamTex, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide });
+  for (const sd of [-1, 1]) {
+    const pts = [],
+      uvs = [],
+      idx = [],
+      N = 40;
+    for (let i = 0; i <= N; i++) {
+      const z = -9.2 + (18.4 * i) / N,
+        w = half(z);
+      pts.push(sd * (w + 0.02), SEA + 0.16, z, sd * (w + 0.7), SEA + 0.1, z);
+      uvs.push(i / N, 0, i / N, 1);
+      if (i < N) idx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
+    }
+    const fg = new THREE.BufferGeometry();
+    fg.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+    fg.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    fg.setIndex(idx);
+    const foam = mesh(fg, foamMat, 0, 0, 0, Q.group);
+    foam.userData.noBatch = true;
+    foam.userData.far = true;
+  }
+  Q.tickers.push((t) => {
+    foamTex.offset.x = t * 0.02;
+    foamMat.opacity = 0.4 + Math.sin(t * 0.9) * 0.15;
+  });
   wall(Q, 0, FORE, 0.5, 0.5);
   wall(Q, 0, MAIN + 0.1, 0.5, 0.5);
   /* pin rails inside the bulwarks by the shrouds, with their coils; a fife rail round the foot of each mast */

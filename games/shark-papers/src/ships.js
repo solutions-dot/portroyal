@@ -77,6 +77,7 @@ export const spar = (a, b, r0, r1, m = SM.spar, parent) => rope(a, b, r0, m, par
 /* a sail between four corners (tack, clew, peak, throat, going round), hanging with a little belly toward +x * belly */
 export function sail(c, belly = 0.25, parent, n = 6) {
   const P = c.map(V),
+    wgt = [],
     pos = [],
     uv = [],
     idx = [];
@@ -89,6 +90,7 @@ export function sail(c, belly = 0.25, parent, n = 6) {
         p = a.lerp(b, v);
       p.x += Math.sin(u * Math.PI) * Math.sin(v * Math.PI) * belly;
       pos.push(p.x, p.y, p.z);
+      wgt.push(Math.sin(u * Math.PI) * Math.sin(v * Math.PI));
       uv.push(u * Math.max(1, P[0].distanceTo(P[1]) / 2.4), v);
     }
   for (let i = 0; i < n; i++)
@@ -103,6 +105,13 @@ export function sail(c, belly = 0.25, parent, n = 6) {
   g.setIndex(idx);
   g.computeVertexNormals();
   const o = new THREE.Mesh(g, sailMat());
+  /* userData.breathe(t, amount): the cloth fills and slackens a little, as a sail does in a near calm (the place calls it; it stays still otherwise) */
+  const base = Float32Array.from(pos);
+  o.userData.breathe = (t, amount = 0.12, phase = 0) => {
+    const p = g.attributes.position;
+    for (let i = 0; i < wgt.length; i++) p.setX(i, base[i * 3] + wgt[i] * belly * amount * (Math.sin(t * 0.55 + phase) + 0.35 * Math.sin(t * 1.7 + phase * 2 + base[i * 3 + 1] * 0.4)));
+    p.needsUpdate = true;
+  };
   if (parent) parent.add(o);
   return o;
 }

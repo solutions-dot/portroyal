@@ -10,6 +10,7 @@ import * as P from "./props.js";
 import * as W from "./world.js";
 import * as S from "./scenery.js";
 import { TASKS } from "./steps.js";
+import { flock as roostFlock, fireflies } from "../../../engine/life.js";   /* birds going to roost, fireflies over the grass at dusk */
 
 const base = (id, bounds, start) => ({
   id,
@@ -334,6 +335,22 @@ function castle() {
   /* smoke from the chimney of the front tower; a lamp behind one lower loophole at dusk */
   const sm = add(Q, S.smoke(6, { rise: 4.2, spread: 0.9, size: 1.5, tint: 0x9a8f8c }), C.userData.smoke[0], C.userData.smoke[2] - 13, MOUND.h + C.userData.smoke[1]);
   Q.tickers.push((t) => sm.userData.tick(t));
+  /* small life at dusk: crows wheel over the house before they roost, and fireflies come up out of the grass along the road (by day they
+     do not show) */
+  const birds = roostFlock(Q.group, { n: 9, at: [0, -16], h: 16, r: 15, color: 0x15110e, size: 0.45, seed: 4 });
+  const flies = fireflies(Q.group, { n: 70, area: [-22, 2, 22, 15], y: [0.25, 1.4], size: 0.22, seed: 9, on: () => !!Q.light.stars });
+  /* the lamp behind the loophole throws a warm haze on the wall round it, flickering */
+  const haze = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), color: 0xffa050, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 }));
+  haze.scale.set(1.6, 1.6, 1);
+  haze.position.set(0.4, MOUND.h + 1.5, -13 + 3.5 + 0.5);   /* at the lit loophole (glowWin, below) */
+  haze.userData.noBatch = true;
+  Q.group.add(haze);
+  Q.tickers.push((t) => {
+    birds(t);
+    flies(t);
+    haze.visible = glowWin.visible;
+    haze.material.opacity = 0.42 + Math.sin(t * 7.3) * 0.06 + Math.sin(t * 13.1) * 0.04;
+  });
   const glowWin = box(0.24, 0.24, 0.04, new THREE.MeshBasicMaterial({ color: 0xffb65a }), 0.4, MOUND.h + 1.5, -13 + 3.5 + 0.38, Q.group);
   glowWin.userData.noBatch = true;
   glowWin.userData.noAudit = true;   /* a lamp glow behind a loophole: light, not a thing */

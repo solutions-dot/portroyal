@@ -1,3 +1,63 @@
+# Handoff: where the work stopped (22 November 2026, evening)
+
+The owner ran out of usage and asked for everything to be saved on the branch with instructions for the next session. Read `CLAUDE.md` first (rules 1 to 14 all apply; 13 and 14 are new today), then this page.
+
+## Where things are
+
+- **Branch:** `claude/stoic-cori-2ejdtn`. **Pull request:** https://github.com/solutions-dot/portroyal/pull/151, open, NOT merged. Merge to `main` only when the owner asks.
+- Everything finished today is committed and pushed. The last commit, "WIP: unfinished helper work, saved for handoff", holds work that was stopped part way and is **not checked**: verify it before building on it (section 3).
+- `npm test`: 274 pass (it was 279; the 5 missing are per-stage tests of Selassie and Windrush steps cut as busy work, which is expected). LINT 0 new.
+- Check tools: `node tools/build.mjs <game> --dev`, serve the repo root with `python3 -m http.server 8765`, then `?auto=1` (or the game's own autoplayer: Nanny and Port Royal report in the page title, `?auto=N&one`), `?test=audit`, `?test=layout`, `?test=held`, `?test=ambient`, `?test=beds`. Port Royal's `site/app.js` is tracked in git: rebuild it with the public build (no `--dev`) before committing it, from committed files only.
+
+## 1. Done today (pushed)
+
+- Menu "i" pop-up on each game's title screen: opens cleanly over the game; on phones and tablets it sits top right (`engine/rate.js`).
+- Owner decisions written into `CLAUDE.md`: Mature 13+ line "Bodies, no wounds" (Mad Master, Rose Hall; Tivoli keeps its own rules); rule 13 (every look is a close-up, story-book moment, `engine/lookshot.js`); rule 14 (immersive and playable, never busy work).
+- New engine pieces: `lookshot.js` and `lookkit.js` (close-up looks), `audit-reveal.js` (a looked-at thing must rest on something), `audit-props.js` (solid pots, card-thin covers), `audit-passage.js` (room to pass, 0.9 m), `ridges.js` (Nanny's far mountains, with `arc` and `shape` options), `vessel.js` and `page.js` (hollow cups and pots, written pages with no invented text), `house-detail.js` (boards, zinc, wallpaper, fretwork, glass), `building-tex.js` (Port Royal's surfaces, shared). `audio.js`: sound wakes after a phone call; shared bed level (0.05 to 0.35, ducked to 0.6 in talk); pick-up, put-down, door and far one-shot sounds. `hud.js`: one message on screen at a time (goal banner waits for the journal notice; hint hides). `audit.js`: cloth check skips the joined body mesh; finger-hole false report fixed.
+- The three new games (Mad Master, Rose Hall, Shark Papers): five, four and four camera scenes; every look is a close-up; busy work cut; Nanny-style mountains; props rebuilt (hollow hat on a real branch, tin cup, wooden bucket, horn lantern, strongbox, coats; Rose Hall cups, lantern, oil portraits, lawn hill; Shark tarpaulin and wax seal); Ferret's deck opened up (0.9 m gangways); Shark buildings in Port Royal's textures; recap pictures on each final card; clothes check down from 152 to 58 lines (the rest is the shared 1690 coat's back vent and neck: change that coat cut with Port Royal and Nanny in view).
+- Hutchinson Spanish Town green made a rectangle after Long's 1774 plate; Shark Papers lieutenant's white lapels checked (Royal Museums Greenwich).
+- Older games: close-up looks in Kendal, Nanny, Melissa, Eventide, Bog Walk (Kendal brake handles had been built 84 m down the line: fixed; Melissa plan board faced backwards: fixed; relief helicopter added as a stand-in); sound pass in eight games (Selassie and Tivoli no longer silent, Eventide audible, end cues); Garvey's `?auto=9` test fixed; Windrush houses detailed (house on posts with an open furnished room, Celia's 1948 room, Iris's 2018 home); Tivoli 2016 and today use clean, cared-for paint (owner: weathered walls could offend residents).
+- Late commits not yet described in a doc summary: Bog Walk, Kendal and Eventide layout faults to 0 (09bc55e, 618d6f7, a2a27bc), Selassie close-up looks (8e033bb).
+
+## 2. Open tasks, in the owner's order of importance
+
+1. **Finish the stopped work** (section 3), check it, push it.
+2. **Rule 13 and 14 in Port Royal, Garvey, Windrush and Tivoli** (Selassie is done, 8e033bb). Survey of looks: Port Royal: casks, sacks, red wood, bottle, plates, pipes, little box, big tent, across the water, the letter, the tombstone (real inscription only), the sword drill; Garvey: three deck looks (`lookPart`, instant jumps: move to lookshot with easing and bars), Declaration, letter, timeline board (keep the puzzles); Windrush: move off its old `lookAt` copy to lookshot (steps in `docs/ENGINE.md`), letter scenes. **Tivoli:** owner asked twice: "ensure tivoli scenes dont have alot of busy work and back and forth": count every trip per chapter, put people near each other or the path, merge fetch-and-return chains, keep every rule in `docs/games/tivoli.md` (opt-in card, read instead, nobody hit, no weapon in the player's hands, attribution).
+3. **Wire `audit-passage.js` and `audit-props.js` into every game's `?test=audit`** (done in Shark Papers; Rose Hall props only). Fix what they find.
+4. **Kendal brake close-up** reads as a dark box with a red bar: model a real handle and quadrant and light it. **Nanny paper look**: cloth should draw back toward the player; weight stones poke through it when closed.
+5. **The shared sea** (`engine/sea.js`, owner: "more realistic without too much performance sacrifice"): see section 3.
+6. **"Wow" graphics in every game** (owner: details matter, no performance loss; use `engine/preload.js` partial loading or a phone detail level if a place gets heavy). Done: Windrush houses. Next: each game's two most-seen places (Kendal 1957 station and crash night; Nanny town and watch rock; Melissa yard and church hall; Eventide verandah and fire night; Bog Walk Tube and station; Hutchinson castle at dusk; Rose Hall great house at night; Shark deck; then Port Royal, Garvey, Selassie, Tivoli). Measure `?test=budget` and frame time before and after.
+7. **Last, with the owner:** thin crowded scenes and frame tighter, film-like shots. The owner wants to do this together; present before changing. Candidates (people now, suggested cut, shot idea):
+   1. Melissa church hall, about 24 in 14 x 8 m: cut the 6 standing aisle extras (`games/melissa/src/places.js` folk(6) about line 229; the aisle is the only way through); low two-shot of Mum holding the player, then the roof tearing.
+   2. Selassie airport, about 210 on desktop: arrival crowd 132 to about 70, drop the two back grid rows; look down from the plane's door.
+   3. Eventide park funeral, about 49: crowd(40) to 24 (back strip); over Gran's shoulder.
+   4. Kendal Kingston 1957, about 42: to 22; low along the platform.
+   5. Kendal crash night, about 32: villagers 16 to 10, far gully group; firelight close.
+   6. Kendal 1845 station, 26: to 16; the governor through the train window.
+   7. Eventide fire, about 30: 18 to 11; firefighter's face, pull back.
+   8. Kendal beach, 24: inland walkers 10 to 5; wide from the sea, close on the band.
+   9. Bog Walk Kingston street, 28: to 18; tram-height tracking.
+   10. Eventide slipe, about 29: 4 walkers; Miss Iris on the verandah.
+   11. Windrush deck, 11: the 2 watchers at the rail; Lionel in profile.
+   12. Nanny town and new town: villager groups to 8; low angle on Nanny on the slab.
+   Also Hutchinson town: move the wanderer whose route crosses the square.
+8. Smaller items: Rose Hall archive building date (1962 claimed, unconfirmed: the Archives' site was down); Garvey, Kendal crowds as above; nobody has listened to the new sound by ear; hand play on a real phone.
+
+## 3. The stopped work in the last commit (check before use)
+
+- **`engine/sea.js` (water helper):** being changed to move the swell to the GPU (vertex shader via onBeforeCompile, analytic normals), two blended normal layers against tiling, a Fresnel colour (deep looking down, paler toward the horizon) and a tighter sun glint, with `S.height()` matching the shader. It was mid-test ("rebuild with the reflection change, reshoot"). Check every game with water (Port Royal harbour and the earthquake flood, which passes its own `material`; Shark Papers sea and quay; Windrush ship; Selassie; Kendal; Melissa; Rose Hall; Garvey): no seams, no crests through quays, boats sit on the water, not slower than before (measure CPU time of `sea.tick` and frame time). Its benchmark builds were moved out of the repo to the old session's scratchpad (gone now); rebuild them if you need a before/after (check out the commit before this one for "before").
+- **`engine/life.js` (new) and the edits in `games/hutchinson/src/places.js`, `games/rose-hall/src/places.js`, `games/shark-papers/src/places.js`, `ships.js`:** the start of the graphics pass on the three new games' most-seen places (small life: birds, smoke, cloth; light), part done. Read the diff, finish or trim, and check audit 0, autoplayer, budget.
+- **`games/kendal/src/main.js`, `places1.js`, `engine/lookkit.js`:** the Kendal brake close-up rework and lookkit tweaks, part done.
+- **`games/windrush/src/{main,steps,places,props,dev}.js`, `site/index.html`:** Windrush moving to lookshot and busy-work cuts, part done (`letter62`, `letter18` looks). Its autoplayer must reach AUTO END with FLOW 0 again before this is pushed further.
+
+## 4. How the work was run
+
+One person (the owner) gives short instructions; they want results checked by eye (screenshots), audits at 0, and short plain reports. Several helpers worked in parallel, each on its own game files, committing only its own files by path. Commit as `Claude <noreply@anthropic.com>` with the session's attribution trailer; never `git add -A` while others work. Reply to the owner in plain words, no em dashes.
+
+---
+
+# Earlier handoffs (kept for history)
+
 # Handoff: where the work stands (15 November 2026)
 
 ## People: posture, necklines, suits and legs (21 November 2026)
