@@ -360,3 +360,12 @@ Work to do: find a clearer photograph of the Bog Walk power house (the NLJ "Powe
 ## Performance (18 November 2026)
 
 `src/main.js` uses `engine/preload.js` (see `docs/ENGINE.md`). `setQuiet` is true on the title screen, while a panel, card or puzzle is open, during the chapter title fade and during the black intro cards. `backgroundLoad()` now builds one place at a time through `work()`, the next place first. At each chapter start (`chapterIn(i)`, also for the two Tube chapters) `readyNext(i)` builds, peoples and warms (compiles) the next place outside the Tube (`nextOf(i)`: from the Tube chapters that is the yard, since the night runs on from chapter 3 into chapter 4, the water, without a chapter start of its own), and `tidyPlaces(i)` releases the graphics memory of every other hidden place. The Tube is built at the start and never released. Nothing is removed; three.js sends a released place again if it is shown.
+
+## Close looks (22 November 2026)
+
+- **Read the notice board** (the station): the breeze lifts the notice on its pin and it settles back as the camera finds it; then the water's journey puzzle, and when the pictures are in order the board changes while the camera still holds it ("From the river to the tram.").
+- **The two glances at the water** (the night, "Look down" and "Look at the floor") are close looks now: bars in, the camera eases down to the floor at your boots as the water creeps in, drips sound, the night's own words go on, and the camera eases back. They were a dip of the view.
+- **Read the information board** (the ruins today): the Gleaner's headlines of 28 June 1904 light one by one; the card keeps the rest of the headlines and the number.
+- Sound: the station's wind was 0.025 and the yard's and the ruins' 0.025 to 0.03; now 0.05 each, and the ruins have a little far traffic from the gorge road. `?test=beds`: BEDS 0.
+- Checks: `?test=audit` 0 (station, ruins, Tube), with `engine/audit-reveal.js` on the notice.
+Dev: `?look=<id>&at=<chapter>,<stage>&k=0.5` holds a look part way for a screenshot (docs/ENGINE.md, engine/lookkit.js).

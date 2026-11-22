@@ -4,6 +4,7 @@ import { contentsOverlap } from '../../../engine/ui-audit.js';
    only when __DEV__ is true, so the public build leaves it out (node tools/build.mjs bog-walk --dev to include it). See docs/TESTING.md and docs/games/bog-walk.md.
    Every check writes its lines to #autolog and its count of problems to the page title (AUDIT n, HELD n, LAYOUT n, RESUME n); every one must report 0.
    The playthrough (?auto=all, ?auto=ch0 ... ch5, add &one to stop after one chapter; ?auto=1, 2, 3 for the night alone) ends with "AUTO OK" or "AUTO FAIL". */
+import { auditReveals } from '../../../engine/audit-reveal.js';
 export function dev(D) {
   const { THREE, q, $, S, N, T, PL, hand, camera } = D;
   const errs = []; addEventListener('error', (e) => { errs.push(e.message + ' @' + e.lineno); document.body.dataset.err = errs.join(' | '); });
@@ -165,7 +166,7 @@ export function dev(D) {
   /* ---------- ?test=audit: every place, and the Tube ---------- */
   if (['audit','collision','seating'].includes(q.get('test'))) (async () => {
     const out = [], ids = (q.get('p') || Object.keys(D.BUILD).join(',')).split(','); let n = 0; D.startGame();
-    for (const id of ids) { const P = await D.ensurePlace(id); const r = auditWorld(P), l = [...r.floating, ...r.inside, ...r.stuck]; n += l.length; out.push(id + ': ' + l.length + ' issues', ...l.map((x) => '  ' + x)); }
+    for (const id of ids) { const P = await D.ensurePlace(id); const r = auditWorld(P), l = [...r.floating, ...r.inside, ...r.stuck, ...auditReveals(P)]; n += l.length;   /* auditReveals: what a close look moves, in both states */ out.push(id + ': ' + l.length + ' issues', ...l.map((x) => '  ' + x)); }
     D.enterTube(); const t = tubeAudit(); n += t.length; out.push('tube: ' + t.length + ' issues', ...t.map((x) => '  ' + x));
     report('AUDIT', out, n);
   })();

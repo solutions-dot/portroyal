@@ -129,8 +129,11 @@ export function noticeTex(solved) {
     grain(x, w, h, 10); }, null);
 }
 /* the information board today: the real 1904 headline, and one gentle line under it */
-function infoTex() {
-  return cv(1024, 720, (x, w, h) => {
+function infoTex(lit = 9) {   /* lit: reading the headlines (main.js), each line glows gold in turn; 9 is the board at rest */
+  return cv(1024, 720, (x, w, h) => drawInfo(x, w, h, lit), null);
+}
+function drawInfo(x, w, h, lit) {
+  {
     x.fillStyle = '#1f4a3a'; x.fillRect(0, 0, w, h); x.fillStyle = '#f2ecd8'; x.fillRect(24, 24, w - 48, h - 48);
     x.fillStyle = '#1f4a3a'; x.fillRect(24, 24, w - 48, 110); x.fillStyle = '#f2ecd8'; x.textAlign = 'left'; x.font = '700 56px Georgia, serif'; x.fillText('The Bog Walk Tube', 60, 98); x.font = '26px Georgia, serif'; x.textAlign = 'right'; x.fillText('Rio Cobre, St Catherine', w - 60, 96);
     x.textAlign = 'left'; x.fillStyle = '#1e1a14'; x.font = '24px Georgia, serif';
@@ -138,11 +141,11 @@ function infoTex() {
     x.fillStyle = '#ece2c4'; x.fillRect(60, 300, 560, 360); x.strokeStyle = '#2a2014'; x.lineWidth = 3; x.strokeRect(60, 300, 560, 360);
     x.fillStyle = '#1e1a14'; x.textAlign = 'center'; x.font = '700 18px Georgia, serif'; x.fillText('THE GLEANER, 28 JUNE 1904', 340, 330); x.beginPath(); x.moveTo(80, 342); x.lineTo(600, 342); x.stroke();
     const H = [['FEARFUL CATASTROPHE AT BOG WALK', '700 30px Georgia, serif'], ['Drowning Men Fight For Life', '700 24px Georgia, serif'], ['Sudden Rush of Water Causes Panic', '22px Georgia, serif'], ['33 Able-Bodied Men Drowned', '700 24px Georgia, serif'], ['In Water-Pipe', '700 24px Georgia, serif'], ['No Accurate Information as To', '22px Georgia, serif'], ['Cause Of The Disaster', '22px Georgia, serif']];
-    H.forEach(([t, f], i) => { x.font = f; x.fillText(t, 340, 384 + i * 40); });
+    H.forEach(([t, f], i) => { const a = Math.max(0, Math.min(1, lit - i)); if (a > 0 && a < 1) { x.fillStyle = 'rgba(240,190,70,' + (0.5 * (1 - Math.abs(a - 0.5) * 2)) + ')'; x.fillRect(74, 358 + i * 40, 532, 36); x.fillStyle = '#1e1a14'; } x.font = f; x.fillText(t, 340, 384 + i * 40); });
     x.fillStyle = '#d8ccb0'; x.fillRect(650, 300, 314, 230); x.strokeRect(650, 300, 314, 230); x.save(); x.translate(807, 415); ICONS.tube(x, 100); x.restore(); x.strokeRect(650, 300, 314, 230);   /* a little picture of the pipe */
     x.fillStyle = '#1e1a14'; x.font = 'italic 20px Georgia, serif'; x.fillText('The Tube was 8 feet across.', 807, 556);
     x.fillStyle = '#1f4a3a'; x.fillRect(650, 580, 314, 80); x.fillStyle = '#f2ecd8'; x.font = '700 20px Georgia, serif'; x.fillText('In 1904, 33 men died here', 807, 612); x.fillText('when water came into the pipe.', 807, 640);
-    grain(x, w, h, 6); }, null);
+    grain(x, w, h, 6); }
 }
 function signTex(lines, w = 512, h = 128, bg = '#efe6cc', fg = '#1e1810') { return once('sign' + JSON.stringify([lines, w, h, bg, fg]), () => signTex0(lines, w, h, bg, fg)); }   /* the same sign twice shares one texture */
 function signTex0(lines, w, h, bg, fg) { return cv(w, h, (x) => { x.fillStyle = bg; x.fillRect(0, 0, w, h); x.strokeStyle = fg; x.lineWidth = 5; x.strokeRect(7, 7, w - 14, h - 14); x.fillStyle = fg; x.textAlign = 'center'; x.textBaseline = 'middle'; lines.forEach(([t, f], i) => { x.font = f; x.fillText(t, w / 2, h * (i + 1) / (lines.length + 1)); }); }, null); }
@@ -571,7 +574,7 @@ export function buildRuins() {   /* chapter 5: today, bright day among trees */
   P.walls.push([-121, PZ - 1.0, -14, PZ + 1.0], [-35.3, PZ + 2.2, -26.7, PZ + 5.0], [-44.0, PZ - 1.4, -40.0, PZ + 1.8], [-13.6, -2.7, -2.8, 0.7]);
   /* the information board: two posts, a sloping panel under a little roof */
   { const x = 4.2, z = -2.2, b = grp(g, x, 0, z); for (const s of [-1, 1]) cyl(0.06, 0.06, 2.1, solid(0x2a3a34, 0.5, 0.4), s * 0.86, 1.05, 0, b, 10); box(1.9, 1.3, 0.06, solid(0x1f4a3a, 0.6), 0, 1.35, -0.02, b);
-    const face = mesh(new THREE.PlaneGeometry(1.8, 1.26), new THREE.MeshStandardMaterial({ map: infoTex(), roughness: 0.6 }), 0, 1.35, 0.015, b); const roof = box(2.1, 0.05, 0.34, solid(0x2a3a34, 0.6), 0, 2.08, 0.05, b); roof.rotation.x = -0.15;
+    const face = mesh(new THREE.PlaneGeometry(1.8, 1.26), new THREE.MeshStandardMaterial({ map: infoTex(), roughness: 0.6 }), 0, 1.35, 0.015, b); face.userData.noBatch = true; P.infoLit = (k) => { const c = face.material.map.image; drawInfo(c.getContext('2d'), c.width, c.height, k >= 1 ? 9 : 0.4 + k * 7.4); face.material.map.needsUpdate = true; }; const roof = box(2.1, 0.05, 0.34, solid(0x2a3a34, 0.6), 0, 2.08, 0.05, b); roof.rotation.x = -0.15;
     box(1.82, 0.04, 0.04, solid(0x2a3a34, 0.5, 0.4), 0, 0.7, 0, b); P.walls.push([x - 1.0, z - 0.25, x + 1.0, z + 0.2]); P.spots.board = [x, z + 1.3]; }
   /* where the superintendent's house stood: its stone piers in the grass */
   for (const [x, z] of [[13.5, 1], [13.5, 4.5], [13.5, 8], [18.5, 1], [18.5, 4.5], [18.5, 8]]) { cyl(0.16, 0.2, 0.32, solid(0x9a968a, 1), x, 0.16, z, g, 8); }
