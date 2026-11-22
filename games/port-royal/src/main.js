@@ -916,7 +916,7 @@ TICKS.push((dt) => { if (state.place !== 'in') { if (MOTES) MOTES.visible = fals
 function showSound() { const b = $('snd'); b.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); b.setAttribute('aria-label', AU.on ? 'Sound on. Tap to turn off.' : 'Sound off. Tap to turn on.'); $('sndon').style.display = AU.on ? '' : 'none'; $('sndoff').style.display = AU.on ? 'none' : ''; }
 $('snd').onclick = () => { setSound(!AU.on); showSound(); };
 showSound();
-addEventListener('pointerdown', () => { if (AU.ctx && AU.ctx.state !== 'running') AU.ctx.resume(); });
+/* sound paused by the phone comes back on the next touch: engine/audio.js audioInit() does it for every game now */
 
 /* ---------- 7 June 1692 ---------- */
 let moveSpeed = 2.7, eyeY = 1.62, seaLevel = -0.35;
