@@ -2,9 +2,13 @@
 
 A Mature 13+ story (owner, 22 November 2026). It plays like every other game, for an older audience. First built 22 November 2026; not yet reviewed by anyone outside.
 
-## The Mature 13+ line (proposed by Claude, for the owner to confirm or move)
+## The Mature 13+ line (set by the owner, 22 November 2026)
 
-Shown: dread, threat, a gun at a window, a gunshot heard, a hanging as the far shape of a gallows at dawn, aftermath, and plain words about slavery. Not shown: wounds, bodies, anyone being hit, the hanged man. The player never harms anyone. Both camera scenes sit behind the standard scene card with "Read what happened instead". The title screen shows the Mature 13+ card (`engine/mature.js`), and the menu hides the game in the Kids profile.
+The owner chose "Bodies, no wounds" for The Mad Master of Edinburgh Castle and The White Witch of Rose Hall ("the 13 plus can be a little more graphic"). Tivoli keeps its own rules (`docs/games/tivoli.md`).
+
+- **May be shown:** dread, threat, a gun at a window, a gunshot heard, a violent act up to the moment it happens and then a cut away, aftermath, and plain words about slavery. A dead or wounded person may be seen still, covered or at a distance (a shape under a sheet, a body carried off). Some blood may show: a stain, a cloth.
+- **Never shown:** open wounds, gore, a close look at a body, the moment of a killing itself, the hanged man. The player never harms anyone.
+- Every camera scene sits behind the standard scene card with "Read what happened instead". The menu hides the game in the Kids profile, and a device set to Kids is stopped (`engine/mature.js`).
 
 ## Record and story
 

@@ -1,6 +1,6 @@
 # The White Witch of Rose Hall (`games/rose-hall/`)
 
-A Mature 13+ story (owner, 22 November 2026). Design: **the legend, then the record**. The player hears the ghost story as it is told, then follows the papers to what really happened. 
+A Mature 13+ story (owner, 22 November 2026). Design: **the legend, then the record**. The player hears the ghost story as it is told, then follows the papers to what really happened.  What it may show follows the Mature 13+ line set by the owner on 22 November 2026, "Bodies, no wounds" (`docs/games/hutchinson.md`); the legend is still never shown as fact.
 
 Status, 22 November 2026 (enrichment pass): **six chapters** in four places (the great house at night for the tour and the shadow show, the church, the archives, the estate by day for the names and for the last stop), eight bodies of its own (`tools/rose-hall/people`, `rh_`), one camera scene (the legend as shadow theatre on the drawing-room wall, every caption starting LEGEND). Checks are listed at the end. Still to do: cloth, walkers and skin checks, a hand play on a phone, timing, sound.
 
