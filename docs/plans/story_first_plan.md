@@ -244,7 +244,7 @@ Done in PR #147: Phase 0; from Phase 1 the goal flag and banner, the smaller Jou
 
 Next, in this order:
 
-- [ ] **Windrush stairs (owner, 22 November 2026).** In the 2018 house (`home18`, the "scandal" recap picture) the stairs run into the ceiling. Cut an opening in the ceiling above them so they lead up, and add a handrail and banister. Then retake `games/windrush/site/recap/scandal.jpg`.
+- [x] **Windrush stairs (owner, 22 November 2026).** Done: an opening in the hall ceiling, a stairwell, a newel post, spindles and a handrail; picture retaken. Audit not yet confirmed. In the 2018 house (`home18`, the "scandal" recap picture) the stairs run into the ceiling. Cut an opening in the ceiling above them so they lead up, and add a handrail and banister. Then retake `games/windrush/site/recap/scandal.jpg`.
 - [ ] **Recap pictures to improve.** Tivoli `today.jpg` should show the murals (three angles from the chapter start missed them); The Emperor's Arrival `airport.jpg` is an almost empty apron. The capture script started each chapter from the Chapters book (Unlock All), hid the HUD and took a 640x400 JPEG at quality 72.
 - [ ] **Autoplayers still to confirm** after the quiz changes: Melissa (`?auto=1`; its runner clicked Exit on the last card), Bog Walk (`?auto=all`), Port Royal (needs a dev build; restore the public `app.js` afterwards). Confirmed `ALLDONE`: Nanny Town, Eventide, Garvey, Kendal, Tivoli.
 - [ ] **"Who you are"** for The Emperor's Arrival and Tivoli (Tivoli has no "you" page yet; read `docs/games/tivoli.md` first).

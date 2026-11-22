@@ -765,7 +765,7 @@ function home18() {
     { line: [-5.6, -6, 1.4, -6], gaps: [] }, { line: [1.4, -6, 1.4, 2.0], gaps: [{ at: 5.3, w: 1.18, kind: "door" }] },
     { line: [-5.6, 1.93, -5.6, -6] }, { line: [1.4, 1.93, -5.6, 1.93], gaps: [{ at: 4.8, w: 2.8, h: 1.7, sill: 0.75, kind: "window" }] }] });
   fabric(Q, rm);
-  const hall = S.room({ x0: 1.4, z0: -6, x1: 3.8, z1: 2.0, h: 2.7, floor: fl, wall: solid(0xd8e0d4, 1), walls: [
+  const hall = S.room({ x0: 1.4, z0: -6, x1: 3.8, z1: 2.0, h: 2.7, ceiling: false, floor: fl, wall: solid(0xd8e0d4, 1), walls: [
     { line: [3.8, -6, 3.8, 2.0] }, { line: [1.4, -6, 3.8, -6], gaps: [{ at: 1.1, w: 0.9, kind: "door" }] }, { line: [3.8, 1.93, 1.4, 1.93], gaps: [{ at: 1.3, w: 1.0, kind: "door" }] }] });
   fabric(Q, hall);
   const kit = S.room({ x0: -5.6, z0: -9.4, x1: 3.8, z1: -6, h: 2.7, floor: solid(0xb8b2a2, 0.8), wall: solid(0xe8ecdf, 1), walls: [{ line: [-5.6, -9.4, 3.8, -9.4] }, { line: [3.8, -6, 3.8, -9.4] }] });
@@ -778,7 +778,21 @@ function home18() {
   Q.walls.push([-5.8, -9.6, 4.0, -9.4], [-5.8, -9.6, -5.6, 2.2], [3.8, -9.6, 4.0, 2.2]);
   const stairs = grp();
   for (let i = 0; i < 12; i++) box(0.9, 0.22 * (i + 1), 0.25, solid(0x7a5a3e, 0.8), 0, (0.22 * (i + 1)) / 2, -i * 0.25, stairs);
+  /* the banister (owner, 22 November 2026: "rails for the steps"): a newel post, spindles and a handrail along the open side, rising with the steps */
+  const wood = solid(0x5a3e2a, 0.7), rise = 0.22 * 11, run = 0.25 * 11, railLen = Math.hypot(rise, run);
+  box(0.09, 1.05, 0.09, wood, -0.45, 0.22 + 0.52, 0.06, stairs);
+  for (let i = 0; i < 12; i += 2) box(0.035, 0.86, 0.035, wood, -0.45, 0.22 * (i + 1) + 0.43, -i * 0.25, stairs);
+  const rail = box(0.07, 0.06, railLen + 0.2, wood, -0.45, 0.22 + 0.88 + rise / 2, -run / 2, stairs); rail.rotation.x = Math.atan2(rise, run);
   add(Q, stairs, 3.3, -1.4);
+  /* the stairs lead up through an opening in the hall ceiling (owner, 22 November 2026), into a short stairwell to the floor above */
+  const ceil = solid(0xeeeae0, 1), well = solid(0xd8e0d4, 1), hx0 = 2.8, hx1 = 3.73, hz0 = -4.45, hz1 = -2.05;
+  box(hx0 - 1.47, 0.1, 7.86, ceil, (1.47 + hx0) / 2, 2.75, -2.0, Q.group);   /* the hall ceiling, west of the opening */
+  box(hx1 - hx0, 0.1, hz0 + 5.93, ceil, (hx0 + hx1) / 2, 2.75, (-5.93 + hz0) / 2, Q.group);   /* north of it */
+  box(hx1 - hx0, 0.1, 1.93 - hz1, ceil, (hx0 + hx1) / 2, 2.75, (hz1 + 1.93) / 2, Q.group);   /* south of it */
+  box(0.08, 2.6, hz1 - hz0, well, hx0 - 0.04, 4.0, (hz0 + hz1) / 2, Q.group); box(0.08, 2.6, hz1 - hz0, well, hx1 + 0.04, 4.0, (hz0 + hz1) / 2, Q.group);   /* the stairwell's sides */
+  box(hx1 - hx0, 2.6, 0.08, well, (hx0 + hx1) / 2, 4.0, hz1 + 0.04, Q.group); box(hx1 - hx0, 2.6, 0.08, well, (hx0 + hx1) / 2, 4.0, hz0 - 0.04, Q.group);
+  box(hx1 - hx0, 0.08, hz1 - hz0, ceil, (hx0 + hx1) / 2, 5.3, (hz0 + hz1) / 2, Q.group);   /* the upstairs ceiling */
+  box(hx1 - hx0, 0.05, 0.6, fl, (hx0 + hx1) / 2, 2.7, hz0 + 0.3, Q.group);   /* the landing at the top step */
   wall(Q, 3.3, -2.8, 1.0, 3.2);
   // the front room's things
   const rugM = S.rug(2.6, 1.8, "#7a3a3a", "#d8c08a");
