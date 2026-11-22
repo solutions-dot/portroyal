@@ -32,11 +32,14 @@ import { lantern, hamper, bucket, attach, hold, PM } from './props.js';
 import { buildYard51, buildYard88, buildYard25, buildAfter, buildToday, buildRoom51, buildRoom88, buildHall, buildKingston88 } from './places.js';
 import { CHAPTERS, GOALS, TALK_TARGETS, NEXT_AFTER_TALK, CHAPTER_END, TALK, LATER, JOURNAL, CHOICE_NAMES, LINES, KIT, STORMS } from './content.js';
 import * as SFX from './sfx.js';
+import { makeLooks } from '../../../engine/lookkit.js';   /* a close look at a thing (owner rule 13) */
+import { noiseHit, tone, shipCreak } from '../../../engine/audio.js';
 import { HATS, LOOKS } from './cast.js';
 import { makeStorm, collectSway, swayTick } from './storm.js';
 import * as PRP from './props.js'; import * as HSE from './houses.js';   /* whole modules, for the dev model viewer only */
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { boy: 2, girl: 2, girl_small: 2, guide2020: 2, man_elder: 2, man_shirt: 2, man_work: 2, student2020: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
+import { auditReveals } from '../../../engine/audit-reveal.js';
 import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditSeated, auditBodies, hiddenWith } from '../../../engine/audit.js';
 import { makeBirds } from './detail.js';
 import { tunePixels } from '../../../engine/perf.js';
@@ -148,7 +151,7 @@ function buildPlace(id) {   /* the geometry only: quick, and enough for a title 
   P.sway = collectSway(P.group); const roof = P.group.userData.roof; if (roof) for (const s of roof.userData.sheets) { s.m.userData.p0 = s.m.position.clone(); s.m.userData.r0 = s.m.rotation.clone(); }   /* each roof sheet remembers its place, so a storm can tear it off and a chapter can be played again */
   if (__DEV__) P.snap = snapMeshes(P.group); if (!P.group.userData.noBatch) P.batch = batchStatic(P.group);
   P.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.alphaTest > 0)) { o.castShadow = o.receiveShadow = true; } else if (o.isMesh && Array.isArray(o.material)) { o.castShadow = o.receiveShadow = true; } });
-  if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); return P;
+  if (ACTIONS_FOR[id]) P.actions = ACTIONS_FOR[id](P); P.reveal = REVEALS[id] ? REVEALS[id](P) : {}; return P;
 }
 /* spreadOut: nobody stands inside anybody. Background figures that are too close to someone are moved to a free spot nearby (a walker's whole loop moves with them);
    a figure that cannot be placed, or a walk that would pass through someone standing still, is dropped. The audit (?test=audit) then checks the result. */
@@ -283,6 +286,29 @@ function cut(a, b, la, lb, dur, onEnd) { return new Promise((res) => { Object.as
 function endCut() { DIR.on = false; const resolve = DIR.resolve; DIR.resolve = null; resolve?.(false); }
 let sitting = false;
 
+/* ---------- a close look (owner rule 13, engine/lookshot.js through engine/lookkit.js): input held, bars in, the camera eases to the thing,
+   it does something with its own sound, a short line or two, then the card and the camera eases back. The autoplayer skips the moment. ---------- */
+const LOOKDEV = __DEV__ && new URLSearchParams(location.search).get('look');
+const LOOK_SFX = {
+  radio: () => { SFX.radioTune(); setTimeout(() => SFX.radioTune(), 1300); },
+  tree: () => { shipCreak(); setTimeout(shipCreak, 700); [1.2, 1.5, 1.75, 2.1].forEach((d) => noiseHit(240, 1.2, 0.12, 0.09, -0.2, d)); },   /* the trunk groans as it settles; clods of earth thud down */
+  house: () => { [0.2, 1.0, 1.8].forEach((d) => { noiseHit(1900, 2, 0.25, 0.05, 0.2, d); tone(320, 300, 0.4, 'triangle', 0.015, 0.2, d); }); },   /* the loose zinc knocks against the wall plate */
+  plan: () => [0.6, 1.4, 2.2, 3.0, 3.8].forEach((d) => tone(660, 660, 0.25, 'sine', 0.02, 0, d)),
+};
+const _lq = new THREE.Quaternion(), _le = new THREE.Euler();
+const LOOK = makeLooks({ camera, bars, say: (t) => say(t, 2600), freeze: (on) => { frozen = on; }, sounds: LOOK_SFX, quick: () => QUICK && !LOOKDEV, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+  eye: () => ({ x: state.x, y: EYE - (sitting ? 0.35 : 0), z: state.z, yaw: state.yaw, pitch: state.pitch }) });
+if (LOOKDEV) LOOK.pauseAt = +(new URLSearchParams(location.search).get('k') || 0.5);
+const bump = (k) => Math.sin(Math.min(1, Math.max(0, k)) * PI);
+/* what each look moves, from 0 (as found) to 1 (changed): P.reveal[id](k), so ?test=audit checks both states (engine/audit-reveal.js) */
+const REVEALS = {
+  yard25: (P) => { const rd = P.group.userData.radio; if (!rd) return {}; rd.userData.knob.userData.fixed = true; return { radio: (k) => { k = +k; const u = rd.userData; u.aerial.scale.y = 0.35 + 0.65 * Math.min(1, k * 2.5); u.knob.rotation.y = k * 2.6; u.dial.emissiveIntensity = Math.min(1, k * 3) * 0.9; } }; },
+  after: (P) => { const t = P.group.userData.fallen, hang = P.group.userData.hang, R = {}; if (t) { for (const c of t.userData.clods || []) c.userData.fixed = true;   /* clinging to the root plate from the side, then on the ground */
+      R.tree = (k) => { k = +k; t.rotation.z = 0.012 * Math.sin(Math.min(1, k * 2) * PI); for (const [i, c] of (t.userData.clods || []).entries()) { const f = Math.max(0, Math.min(1, (k - 0.3 - i * 0.12) * 3)); c.position.y = c.userData.top - (c.userData.top - c.userData.bottom) * f * f; c.position.x = -4.72 - f * 0.25; } }; }
+    if (hang) { hang.userData.fixed = true; R.house = (k) => { k = +k; hang.rotation.x = 0.12 + 0.5 * Math.sin(k * 14) * (1 - k); }; }   /* nailed to the eave */
+    return R; },
+};
+
 /* ---------- goal, hint, sound ---------- */
 let stage = 0, best = 0, goalText = '', goalTimer = 0, hintTimer = 0;
 function showGoal(withControls) { const el = $('goal'); if (el.textContent !== goalText && state.started) uiSound('goal'); el.textContent = goalText; el.classList.remove('folded'); el.setAttribute('aria-expanded', 'true'); clearTimeout(goalTimer); /* Keep the next task visible until the player completes it. */ if (withControls) showHint(); }
@@ -369,7 +395,7 @@ function nextCard(i, s) {   /* a finished chapter: offer the next one after a pa
   offerNextChapter({ still: () => stage === s, clear: () => !(panelsOpen() || fading) && $('card').hidden, show: () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }]); } });
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() { endSceneWarning(); hideStormSkip?.(); hideStorySkip?.(); HOLD.on = false;   /* leave anything running: scripted scenes, the storm, the camera director */
+function resetTransient() { LOOK.cancel(); endSceneWarning(); hideStormSkip?.(); hideStorySkip?.(); HOLD.on = false;   /* leave anything running: scripted scenes, the storm, the camera director */
   for (const k of Object.keys(PL)) for (const n of PL[k].npcs || []) if (n.fol) stopFollow(n);   /* nobody keeps following you into another chapter */
   EP++; endCut(); frozen = false; moveLock = false; ST.on = false; SB = null; bars(false); $('sub').classList.add('dim'); document.body.classList.remove('subbing'); $('holdwrap').hidden = true; flash(0, 0); $('vig').style.opacity = 0; FX.shake = 0; FX.roll = 0; FX.tilt = 0;
   SFX.setBeds({}, 0.1); TICKS.length = 0; STORM.clear(); STORM.mask(0, 0, 1e5); WIND.k = 0.06; torch(false); if (cur && PL[cur]) PL[cur].group.rotation.set(0, 0, 0); sitting = false; document.body.classList.remove('flashing');
@@ -435,16 +461,16 @@ const ACTIONS_FOR = {
     { label: 'Board up the window', x: P.spots.boards[0], z: P.spots.boards[1], r: 3.0, on: () => stage === 31 && !ctr.boardDone, go: () => { SFX.hammerTap(3); const b = P.group.userData.boards[ctr.board || 0]; if (b) b.visible = true; tapJob('board', 2, ['One window is covered.', 'Both windows are covered. Glass can break in the wind.']); jobsDone(4, 32); } },
     { label: 'Pack the go-bag', x: P.spots.bag[0], z: P.spots.bag[1], r: 2.4, on: () => stage === 31 && !ctr.bagDone, go: () => { SFX.bag(); tapJob('bag', 3, ['Papers go in a plastic bag, to keep them dry.', 'A torch and spare batteries.', 'The phone and its charger. The radio too.']); jobsDone(4, 32); } },
     { label: 'Hand up the nails', x: P.spots.ladder[0], z: P.spots.ladder[1], r: 2.8, on: () => stage === 33 && !ctr.nailDone, go: () => { SFX.hammerTap(3); tapJob('nail', 3, ['Mr. Raymond nails a sheet down. Tap, tap, tap.', 'Another sheet is fixed to its rafter.', 'The last sheet is tight.']); if (ctr.nailDone) setStage(34); } },
-    { label: 'Listen to the radio', x: P.spots.home[0], z: P.spots.home[1], r: 3.0, on: () => stage === 34, go: () => radioCard() },
+    { label: 'Listen to the radio', look: 'radio', x: P.spots.home[0], z: P.spots.home[1], r: 3.0, on: () => stage === 34, go: () => radioCard() },
     { label: 'Walk to the church hall', x: P.spots.church[0], z: P.spots.church[1], r: 3.2, on: () => stage === 35, go: () => setStage(36) } ],
   hall: (P) => [
     { label: 'Hand out a blanket', x: P.spots.blankets[0], z: P.spots.blankets[1], r: 2.6, on: () => stage === 41 && !ctr.blkDone, go: () => { SFX.bag(); tapJob('blk', 2, ['A blanket for a little girl.', 'A blanket for Miss Hyacinth.']); jobsDone(2, 42); } },
     { label: 'Pour water for people', x: P.spots.table[0], z: P.spots.table[1], r: 2.4, on: () => stage === 41 && !ctr.watDone, go: () => { SFX.pourWater(); tapJob('wat', 2, ['A cup for Gran.', 'A cup for the nurse.']); jobsDone(2, 42); } },
     { label: 'Sit down with Mum and Gran', x: P.spots.seat[0], z: P.spots.seat[1], r: 3.2, on: () => stage === 43 && !ST.on, go: () => stormIntro('m25') } ],
   after: (P) => [
-    { label: 'Look at the fallen tree', x: P.spots.tree[0], z: P.spots.tree[1], r: 3.0, on: () => (stage === 51 || stage === 53) && !unlocked.includes('trees'), go: () => { ctr.tree = 1; unlock('trees'); card('A fallen tree', ['A big mango tree fell across the lane. Its roots came up out of the soil.', 'After lots of rain, the ground is soft. Strong wind can push a tree right over.'], [{ t: 'Go on', go: hideCard }]); } },
+    { label: 'Look at the fallen tree', look: 'tree', x: P.spots.tree[0], z: P.spots.tree[1], r: 3.0, on: () => (stage === 51 || stage === 53) && !unlocked.includes('trees'), go: () => treeLook(P) },
     { label: 'Keep away from the wire', x: P.spots.wire[0], z: P.spots.wire[1], r: 3.4, on: () => (stage === 51 || stage === 53 || stage === 54) && !unlocked.includes('wires'), go: () => { ctr.wire = 1; unlock('wires'); card('Fallen wires', ['A pole fell, and its wires are on the ground.', 'Never touch a fallen wire. It might still carry power, even if the lights are out.', 'Keep away. Tell a grown-up, and call the light company.'], [{ t: 'I will keep away', go: hideCard }]); } },
-    { label: 'Look at the house', x: P.spots.home[0], z: P.spots.home[1], r: 3.2, on: () => stage === 52, go: () => houseLook() },
+    { label: 'Look at the house', look: 'house', x: P.spots.home[0], z: P.spots.home[1], r: 3.2, on: () => stage === 52, go: () => houseLook() },
     { label: 'Help move the logs', x: P.spots.tree[0], z: P.spots.tree[1], r: 3.0, on: () => stage === 61 && !ctr.logDone, go: () => { SFX.thump(0.2); tapJob('log', 3, ['Mr. Raymond cuts the trunk. You roll a log.', 'Another log rolls to the side.', 'The lane is open again.']); if (ctr.logDone) clearTree(P); refreshGoal(true); jobsDone(4, 62); } },
     { label: 'Fill a bucket at the truck', x: P.spots.truck[0], z: P.spots.truck[1], r: 3.0, on: () => stage === 61 && !ctr.truckDone, go: () => { SFX.pourWater(); tapJob('truck', 2, ['A full bucket for home.', 'A full bucket for Miss Hyacinth.']); jobsDone(4, 62); } },
     { label: 'Hold the tarp rope', x: P.spots.tarp[0], z: P.spots.tarp[1], r: 3.0, on: () => stage === 61 && !ctr.tarpDone, go: () => { SFX.bag(); tapJob('tarp', 3, ['You hold the rope. Mum pulls.', 'The blue tarp goes over the bare roof.', 'Tied down. Rain cannot get in now.']); if (ctr.tarpDone) P.tarpHome.visible = true; jobsDone(4, 62); } },
@@ -452,7 +478,7 @@ const ACTIONS_FOR = {
     { label: 'Give food to Miss Hyacinth', x: P.spots.hyacinth[0], z: P.spots.hyacinth[1], r: 3.0, on: () => stage === 61 && ctr.plate && !ctr.foodDone, go: () => { SFX.clink(); ctr.foodDone = true; ctr.jobs = (ctr.jobs || 0) + 1; toast('Miss Hyacinth smiles. "Bless you, child."'); refreshGoal(true); jobsDone(4, 62); } },
     { label: 'Switch on the light', x: P.spots.home[0], z: P.spots.home[1], r: 3.2, on: () => stage === 64, go: () => lightsBack() } ],
   today: (P) => [
-    { label: 'Read the Ready Plan', x: P.spots.plan[0], z: P.spots.plan[1], r: 2.8, on: () => stage === 71 && !ctr.plan, go: () => { ctr.plan = 1; unlock('plan'); card('Breadnut Corner Ready Plan', ['1. Know your risk. Is your home safe in a hurricane? Is it near water?', '2. Make a family plan. Where will we go? Who will we call?', '3. Keep a kit. Water, food, a torch, a radio, medicine and papers.', '4. Fix the roof early. Strong straps and nails help it stay on.', '5. Listen to the official warnings, and leave early if you are told to.'], [{ t: 'Good!', go: () => { hideCard(); setStage(72); } }], { col: true }); } },
+    { label: 'Read the Ready Plan', look: 'plan', x: P.spots.plan[0], z: P.spots.plan[1], r: 2.8, on: () => stage === 71 && !ctr.plan, go: () => planLook(P) },
     { label: 'Pack the family kit', x: P.spots.plan[0] - 5, z: P.spots.plan[1], r: 2.8, on: () => stage === 72, go: () => kitQuiz(0) } ],
 };
 
@@ -498,9 +524,23 @@ ON[33] = () => { weather(0.3, 0.1, null); ease2(envNow, ENV.overcast, 10); setBe
 ON[34] = () => { weather(0.4, 0.2, null); ease2(envNow, ENV.gale, 10); setBedsFor('gale'); showPlace('Breadnut Corner, Monday 27 October 2025'); };
 ON[35] = () => { };
 ON[36] = () => { unlock('shelter'); };
-function radioCard() {
-  SFX.radioTune(); unlock('warnings');
-  card('The radio', ['It is Monday morning. A radio voice reads the news.', 'Melissa is now a Category 5 hurricane, the strongest kind. It is still moving very slowly.', 'Listen for the warnings. Go to a shelter early if your home is not strong.', 'Mum looks at Grandpa. "We will go to the church hall," she says.'], [{ t: 'Go on', go: () => { hideCard(); setStage(35); } }], { col: true });
+async function radioCard() {   /* the aerial goes up, the dial lights and the knob turns through the hiss to the news */
+  const ep = EP, rd = P_().group.userData.radio; unlock('warnings');
+  const at = rd ? rd.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(state.x, 0.4, state.z - 1);
+  await LOOK.look({ id: 'radio', at: [at.x, at.y + 0.18, at.z], dist: 0.9, lift: 0.22, fov: 40, act: 3.4, sound: 'radio', lines: ['Monday morning. A radio voice reads the news.', 'Melissa is now a Category 5 hurricane, the strongest kind.'],
+    reveal: (k) => P_().reveal.radio?.(k) }); if (ep !== EP) return;
+  card('The radio', ['It is still moving very slowly. Listen for the warnings, and go to a shelter early if your home is not strong.', 'Mum looks at Grandpa. "We will go to the church hall," she says.'], [{ t: 'Go on', go: async () => { hideCard(); await LOOK.back(); setStage(35); } }], { col: true });
+}
+async function treeLook(P) {   /* the root plate of the mango tree, standing up out of the lane: the trunk settles and the last clods of earth drop off */
+  const ep = EP, t = P.group.userData.fallen; ctr.tree = 1; unlock('trees'); const root = t ? t.localToWorld(new THREE.Vector3(-4.75, 1.4, 0)) : new THREE.Vector3(state.x, 1.4, state.z);
+  await LOOK.look({ id: 'tree', view: { p: [root.x + 3.6, 1.8, root.z + 2.6], look: [root.x - 0.2, 1.1, root.z - 0.8], fov: 50 }, act: 3.0, sound: 'tree', lines: ['A big mango tree fell across the lane.', 'Its roots came right up out of the soil.'],
+    reveal: (k) => P.reveal.tree?.(k) }); if (ep !== EP) return;
+  card('A fallen tree', ['After lots of rain, the ground is soft. Strong wind can push a tree right over.'], [{ t: 'Go on', go: async () => { hideCard(); await LOOK.back(); } }]);
+}
+async function planLook(P) {   /* the five lines of the plan light one by one */
+  const ep = EP; ctr.plan = 1; unlock('plan'); const [bx, bz] = P.group.userData.planBoard;
+  await LOOK.look({ id: 'plan', view: { p: [bx, 1.45, bz - 2.6], look: [bx, 1.35, bz - 0.08], fov: 40 }, push: 0.06, act: 5.0, line: 2.5, sound: 'plan', lines: ['The Breadnut Corner Ready Plan.', 'Five things a family can do before a storm.'], reveal: (k) => P.group.userData.planLit?.(k) }); if (ep !== EP) return;
+  card('Breadnut Corner Ready Plan', ['1. Know your risk. Is your home safe in a hurricane? Is it near water?', '2. Make a family plan. Where will we go? Who will we call?', '3. Keep a kit. Water, food, a torch, a radio, medicine and papers.', '4. Fix the roof early. Strong straps and nails help it stay on.', '5. Listen to the official warnings, and leave early if you are told to.'], [{ t: 'Good!', go: async () => { hideCard(); await LOOK.back(); setStage(72); } }], { col: true });
 }
 
 /* ---------- chapter 3: the storm ---------- */
@@ -614,9 +654,11 @@ ON[50] = () => { weather(0.04, 0, ENV.after); setBedsFor('after'); const P = P_(
 const FOLLOW = { pearlA: { gap: 1.6, side: 0.6, space: 0.9 } };   /* Mum walks home with you, a step behind and to one side (engine/follow.js) */
 ON[51] = () => { const m = byId('pearlA'); if (m) { m.ctl.play(null); follow(m, FOLLOW.pearlA); } };
 ON[52] = () => { };
-function houseLook() {
-  const P = P_(); unlock('afterhouse'); ctr.look = 1;
-  card('Home', ['Half the roof is gone. The sky shows where the zinc used to be.', 'The window boards held, and the walls are standing.', 'Mum holds your hand. "Things can be mended," she says. "We are together."'], [{ t: 'Go on', go: () => { hideCard(); const m = byId('pearlA'); if (m) stopFollow(m); setStage(53); } }], { col: true });
+async function houseLook() {   /* the camera rises over the front of the house to the open roof; a torn sheet of zinc swings from its last nail */
+  const P = P_(), ep = EP, hang = P.group.userData.hang; unlock('afterhouse'); ctr.look = 1;
+  await LOOK.look({ id: 'house', view: { p: [-24.2, 1.5, -1.6], look: [-26, 2.6, -8.5], fov: 52 }, act: 4.2, sound: 'house', lines: ['Half the roof is gone. The sky shows where the zinc used to be.', 'The window boards held, and the walls are standing.'],
+    reveal: (k) => P.reveal.house?.(k) }); if (ep !== EP) return;
+  card('Home', ['Mum holds your hand. "Things can be mended," she says. "We are together."'], [{ t: 'Go on', go: async () => { hideCard(); await LOOK.back(); const m = byId('pearlA'); if (m) stopFollow(m); setStage(53); } }], { col: true });
 }
 ON[53] = () => { };
 ON[55] = () => { unlock('neighbours'); unlock('afterhouse'); };
@@ -626,8 +668,32 @@ function clearTree(P, quiet) { const tw = P.group.userData.treeWall; if (tw) { c
 ON[60] = () => { weather(0.05, 0, ENV.overcast); setBedsFor('after'); const P = P_(); P.tarpHome.visible = false; for (const n of P.people) { if (n.stage5) n.hidden = false; n.m.visible = !n.hidden && cur === 'after'; } };
 ON[61] = () => { setBedsFor('saw'); };
 ON[62] = () => { setBedsFor('after'); };
-ON[63] = async () => {
-  const ep = EP; frozen = true; busy = false; bars(true); const finish = storyScene(() => { setBedsFor('after'); endCut(); setStage(64); }); say('A helicopter flies over, low and loud. It is carrying food and water.', 4200); setBedsFor('heli'); await wait(4400); if (ep !== EP) return; say('The soldiers and the volunteers come from many places.', 4000); await wait(4200); if (ep !== EP) return;
+/* a Jamaica Defence Force helicopter on a relief flight (the JDF flew food drops from Up Park Camp after Melissa: journal "Help from far away").
+   A general shape of the Air Wing's twin-engine helicopters (they fly Bell 412s and AW139s), olive with a pale band: not modelled on one aircraft
+   (docs/games/melissa.md, stand-ins). About 15 m long with its 14 m rotor. */
+function helicopter() {
+  const g = new THREE.Group(), body = new THREE.MeshStandardMaterial({ color: 0x4d5638, roughness: 0.6 }), dark = new THREE.MeshStandardMaterial({ color: 0x1c2024, roughness: 0.3, metalness: 0.4 }), pale = new THREE.MeshStandardMaterial({ color: 0xc9c2a2, roughness: 0.7 });
+  const M = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); g.add(o); return o; };
+  M(new THREE.SphereGeometry(1, 16, 10), body, 0, 0, 0).scale.set(3.0, 1.15, 1.2); M(new THREE.SphereGeometry(1, 12, 8), dark, -2.2, 0.25, 0).scale.set(1.0, 0.7, 1.0);   /* the cabin and its windscreen (nose toward -x) */
+  M(new THREE.BoxGeometry(2.4, 0.18, 2.42), pale, 0.4, -0.1, 0);
+  const boom = M(new THREE.CylinderGeometry(0.22, 0.42, 6.2, 8), body, 5.6, 0.35, 0); boom.rotation.z = PI / 2;
+  M(new THREE.BoxGeometry(0.9, 1.6, 0.12), body, 8.5, 1.0, 0).rotation.z = -0.35; M(new THREE.BoxGeometry(1.6, 0.08, 0.5), body, 8.0, 0.4, 0);
+  M(new THREE.BoxGeometry(1.4, 0.5, 1.0), body, 0.4, 1.25, 0); M(new THREE.CylinderGeometry(0.08, 0.08, 0.6, 6), dark, 0.4, 1.7, 0);
+  for (const s of [-1, 1]) { M(new THREE.BoxGeometry(3.6, 0.08, 0.08), dark, 0, -1.45, s * 1.0); for (const x of [-0.9, 0.9]) M(new THREE.BoxGeometry(0.06, 0.4, 0.06), dark, x, -1.25, s * 1.0); }
+  const rotor = new THREE.Group(); rotor.position.set(0.4, 2.0, 0); g.add(rotor); for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(6.9, 0.05, 0.42), dark); b.position.x = 3.45; const a = new THREE.Group(); a.rotation.y = i * PI / 2; a.add(b); rotor.add(a); }
+  const tail = new THREE.Group(); tail.position.set(8.6, 1.2, 0.2); g.add(tail); for (let i = 0; i < 2; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.6, 0.05), dark); b.rotation.x = i * PI / 2; tail.add(b); }
+  g.userData = { rotor, tail }; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.userData.noBatch = true; } }); g.visible = false; return g;
+}
+ON[63] = async () => {   /* "Listen. Something is coming.": you look up as the helicopter comes in low over the hills and passes over the lane */
+  const ep = EP, P = P_(); frozen = true; busy = false; bars(true); const H = P.heli || (P.heli = helicopter()); if (!H.parent) scene.add(H);
+  const finish = storyScene(() => { H.visible = false; setBedsFor('after'); endCut(); setStage(64); });
+  const E = [state.x, EYE, state.z], A = new THREE.Vector3(state.x + 120, 55, state.z - 70), B = new THREE.Vector3(state.x - 140, 38, state.z + 30); H.visible = true; H.position.copy(A); H.lookAt(B); H.rotateY(PI / 2); H.rotateZ(0.12);   /* nose toward B, a little nose-down */
+  setBedsFor('heli'); say('A helicopter flies over, low and loud.', 4200);
+  const fly = tween(9.5, (k) => { H.position.lerpVectors(A, B, k); H.userData.rotor.rotation.y += 0.9; H.userData.tail.rotation.z += 1.3; });
+  const at = (k) => [A.x + (B.x - A.x) * k, A.y + (B.y - A.y) * k, A.z + (B.z - A.z) * k];
+  await cut(E, [E[0], E[1], E[2]], at(0.05), at(0.42), 4.5); if (ep !== EP) return; say('It is carrying food and water.', 3800);
+  await cut(E, [E[0], E[1], E[2]], at(0.42), at(0.85), 4.5); if (ep !== EP) return; await fly; if (ep !== EP) return;
+  say('The soldiers and the volunteers come from many places.', 4000); H.visible = false; await cut(E, E, at(0.85), [state.x - 6, EYE, state.z + 2], 3.5); if (ep !== EP) return;
   finish();
 };
 async function lightsBack() {
@@ -723,7 +789,8 @@ function update(dt, now) {
 let last = performance.now();
 function frame(t) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
-  if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); }
+  if (LOOK.tick(dt)) { /* a close look drives the camera */ }
+  else if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); }
   else if (!state.started && P_() && P_().titleView) { const tv = P_().titleView, s = t / 1000; camera.position.set(tv.x - Math.sin(s * 0.08) * 3, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(s * 0.05) * 0.04, 0, 'YXZ'); }
   else { camera.position.set(state.x, EYE - (sitting ? 0.35 : 0) + (sceneIsCalm() ? 0 : FX.bob), state.z); camera.rotation.set(state.pitch, state.yaw, sceneIsCalm() ? 0 : FX.roll + FX.tilt, 'YXZ'); }
   if (!sceneIsCalm() && FX.shake > 0) { const k = FX.shake; camera.position.x += (Math.random() - 0.5) * k * 0.07; camera.position.y += (Math.random() - 0.5) * k * 0.07; camera.position.z += (Math.random() - 0.5) * k * 0.07; camera.rotation.z += (Math.random() - 0.5) * k * 0.035; }
@@ -749,6 +816,10 @@ const auditPlaceBase = (P) => auditPlaceE({ id: P.id, snap: P.snap, npcs: P.npcs
 
 /* ---------- test views and scripted playthroughs: dev builds only (node tools/build.mjs melissa --dev) ---------- */
 function devViews() {
+  { const q = new URLSearchParams(location.search); if (LOOKDEV) (async () => {   /* ?look=<radio|tree|house|plan>&at=<chapter>,<stage>&k=0.5 : plays that look and holds it part way, for a screenshot ("LOOK <id>" in the title) */
+    const [ch, st] = (q.get('at') || '0,10').split(',').map(Number); startGame(true); await beginChapter(ch, st); await waitFor(() => !fading); for (let i = 0; i < 15; i++) { if (!$('card').hidden) hideCard(); await new Promise((r) => setTimeout(r, 100)); }
+    if (LOOKDEV === 'heli') { setStage(63); setTimeout(() => { document.title = 'LOOK heli'; }, (+(q.get('k') || 0.5)) * 9000); return; }   /* the helicopter scene, k of the way through its flight */
+    const a = P_().actions.find((x) => x.look === LOOKDEV); if (!a) { document.title = 'LOOK none'; return; } state.x = a.x; state.z = a.z; LOOK.id = LOOKDEV; a.go(); })(); }
   const q = new URLSearchParams(location.search), shot = q.get('shot'), errs = [];
   addEventListener('error', (e) => { errs.push(e.message + ' @ ' + String((e.error && e.error.stack) || '').split('\n').slice(1, 3).join(' <- ').replace(/https?:[^ )]*\//g, '')); document.title = 'ERROR ' + errs.join(' | '); const el = $('autolog'); if (el) el.textContent += '\n' + errs[errs.length - 1]; });
   addEventListener('unhandledrejection', (e) => { errs.push(String((e.reason && e.reason.stack) || e.reason).slice(0, 300)); document.title = 'ERROR ' + errs.join(' | '); });
@@ -843,7 +914,7 @@ function devViews() {
       const count = out.length; out.unshift('held items: ' + count + ' issues'); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'HELD ' + count; })();
   }
   if (['audit', 'collision', 'seating'].includes(q.get('test'))) {   /* ?test=audit&p=hall,after : floating objects, people inside solids, unreachable spots, seated people */
-    (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P); count += r.floating.length + r.inside.length + r.stuck.length; out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length) + ' issues'); for (const l of [...r.floating, ...r.inside, ...r.stuck]) out.push('  ' + l); }
+    (async () => { const ids = (q.get('p') || Object.keys(BUILD).join(',')).split(','), out = []; let count = 0; startGame(true); for (const id of ids) { const P = await ensurePlace(id); const r = auditPlace(P), rv = auditReveals(P); count += r.floating.length + r.inside.length + r.stuck.length + rv.length; out.push(id + ': ' + (r.floating.length + r.inside.length + r.stuck.length + rv.length) + ' issues'); for (const l of [...r.floating, ...r.inside, ...r.stuck, ...rv]) out.push('  ' + l); }   /* rv: what each look moves, in both states (engine/audit-reveal.js) */
       if (q.get('seats')) out.push(...SEATLOG); const el = $('autolog'); if (el) el.textContent = out.join('\n'); document.title = 'AUDIT ' + count; })();
   }
   if (q.get('test') === 'follow') {   /* ?test=follow : you walk the real route with Mum, with stops and a turn back into her, and her is watched (engine/follow.js, watch): too close (inside the

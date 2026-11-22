@@ -97,7 +97,7 @@ function village({ id, year, phase }) {
     if (!old) {
     const ladder = grp(g, SPOT.raymond[0] - 1.3, 0, SPOT.raymond[1] + 2.3); for (const s of [-0.22, 0.22]) { const rl = box(0.05, 3.4, 0.05, WOOD, s, 1.55, 0.7, ladder); rl.rotation.x = -0.28; } for (let k = 0; k < 7; k++) box(0.44, 0.04, 0.04, WOOD, 0, 0.35 + k * 0.42, 0.7 - (0.35 + k * 0.42) * 0.28 + 0.06, ladder);
     wall(SPOT.raymond[0] - 1.6, SPOT.raymond[1] + 2.4, SPOT.raymond[0] - 1.0, SPOT.raymond[1] + 3.1);
-    const bag = goBag(); bag.userData.noBatch = true; put(bag, -22.7, -4.35); g.userData.bag = bag; { const rd = radio(); rd.position.set(-25.2, 0.28, -5.4); rd.rotation.y = 0.3; g.add(rd); }
+    const bag = goBag(); bag.userData.noBatch = true; put(bag, -22.7, -4.35); g.userData.bag = bag; { const rd = radio(); rd.position.set(-25.2, 0.28, -5.4); rd.rotation.y = 0.3; g.add(rd); g.userData.radio = rd; }
     }
     if (y51) { const cn = dugOut(); cn.userData.noBatch = true; put(cn, 10, 13.4, 0); g.userData.canoe = cn; }   /* a canoe on the sand, to be hauled up the beach */
     if (y88) { const cl = grp(g, -20, 0, -9); for (const x of [-1.6, 1.6]) box(0.08, 2.0, 0.08, WOOD, x, 1.0, 0, cl); box(3.2, 0.02, 0.02, solid(0xd8d0b8, 1), 0, 1.9, 0, cl); const rag = grp(cl); rag.userData.noBatch = true; for (let k = 0; k < 4; k++) box(0.5, 0.6, 0.03, solid([0xe8505b, 0x3ba0a0, 0xf0c040, 0xf0ece0][k], 1), -1.2 + k * 0.8, 1.55, 0, rag); g.userData.washing = rag; wall(-21.8, -9.3, -18.2, -8.7); }
@@ -112,10 +112,16 @@ function village({ id, year, phase }) {
     { const lp = leaningPole({ lean: 0.38, seed: 3 }); put(lp, -2, -3.6, 0); lp.rotation.y = 0; wall(-9.4, -4.0, 0.4, -3.0); }   /* the wire's side of the lane edge: it lies along the north verge */
     put(tarpOnGround(), 24.5, -6.7, 0.3);
     { const tm = tarpMesh(6.4, 4.4, 2.7, 1.25); tm.position.set(SPOT.home[0], 0, SPOT.home[1]); tm.visible = false; tm.userData.noBatch = true; g.add(tm); g.userData.tarpHome = tm; }
+    { const hang = grp(g, SPOT.home[0] + 1.6, 2.74, SPOT.home[1] + 2.42); hang.userData.noBatch = true; const zs = zincSheet({ len: 1.1, curl: 0.12, seed: 7 }); zs.rotation.x = PI / 2; zs.position.set(0, -0.62, 0.02); hang.add(zs); hang.rotation.x = 0.12; g.userData.hang = hang; }   /* a sheet of zinc torn loose, hanging from the front eave by its last nail: it swings when you look at the house */
     { const hl = new THREE.PointLight(0xffd08a, 0, 9, 1.7); hl.position.set(SPOT.home[0], 2.0, SPOT.home[1] + 3.6); hl.visible = false; g.add(hl); g.userData.homeLamp = hl; }
     { const tk = waterTruck(); tk.position.set(26, 0, 1.1); g.add(tk); wall(22.5, -0.1, 29.5, 2.3); }
   }
-  if (today) { const bd = grp(g, 36, 0, 3.4); box(0.12, 1.6, 0.12, WOODD, -0.9, 0.8, 0, bd); box(0.12, 1.6, 0.12, WOODD, 0.9, 0.8, 0, bd); const s = plane(1.9, 1.0, std(T.sign('BREADNUT CORNER\nREADY PLAN', 512, 270, '#f3ecd8', '#1c2a40', '700 52px Georgia, serif', true), 0.9), 0, 1.35, 0.08, bd); s.material = s.material.clone(); s.material.side = THREE.DoubleSide; wall(34.9, 3.0, 37.1, 3.9); g.userData.planBoard = [36, 3.4]; for (const [x, z] of [[-31, -1.5], [30, -1]]) { const lg = cutLogs({ seed: x }); put(lg, x, z, 0.3); } }
+  if (today) { const bd = grp(g, 36, 0, 3.4); box(0.12, 1.6, 0.12, WOODD, -0.9, 0.8, 0, bd); box(0.12, 1.6, 0.12, WOODD, 0.9, 0.8, 0, bd); const PLAN = ['1  Know your risk', '2  Make a family plan', '3  Keep a kit', '4  Fix the roof early', '5  Listen, and leave early'], pc = document.createElement('canvas'); pc.width = 512; pc.height = 270;
+    const drawPlan = (lit) => { const x = pc.getContext('2d'); x.fillStyle = '#f3ecd8'; x.fillRect(0, 0, 512, 270); x.strokeStyle = '#1c2a40'; x.lineWidth = 6; x.strokeRect(5, 5, 502, 260); x.fillStyle = '#1c2a40'; x.textAlign = 'center'; x.font = '700 34px Georgia, serif'; x.fillText('BREADNUT CORNER READY PLAN', 256, 48); x.textAlign = 'left'; x.font = '600 30px Georgia, serif';
+      PLAN.forEach((t, i) => { const a = Math.max(0, Math.min(1, lit - i)); if (a > 0 && a < 1) { x.fillStyle = 'rgba(240,190,70,' + (0.5 * (1 - Math.abs(a - 0.5) * 2)) + ')'; x.fillRect(30, 70 + i * 38, 452, 34); } x.fillStyle = 'rgba(28,42,64,' + (lit >= 9 ? 1 : 0.3 + 0.7 * a) + ')'; x.fillText(t, 48, 97 + i * 38); }); };
+    drawPlan(9); const ptx = new THREE.CanvasTexture(pc); ptx.colorSpace = THREE.SRGBColorSpace;
+    const s = plane(1.9, 1.0, std(ptx, 0.9), 0, 1.35, -0.08, bd); s.rotation.y = PI; s.material = s.material.clone(); s.material.side = THREE.DoubleSide;   /* it faces the lane (-z), where you read it: it faced away, so the words read backwards (22 November 2026) */
+    g.userData.planLit = (k) => { drawPlan(k >= 1 ? 9 : k * 5.4); ptx.needsUpdate = true; };   /* the plan look (main.js): each line lights as you read it */ wall(34.9, 3.0, 37.1, 3.9); g.userData.planBoard = [36, 3.4]; for (const [x, z] of [[-31, -1.5], [30, -1]]) { const lg = cutLogs({ seed: x }); put(lg, x, z, 0.3); } }
 
   /* ---- people ---- */
   const A = { people, extras };

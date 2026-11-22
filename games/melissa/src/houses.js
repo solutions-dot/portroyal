@@ -109,7 +109,12 @@ export function standpipeTap() { const g = grp(); cyl(0.06, 0.07, 0.95, solid(0x
 /* ---------- ready-to-go things ---------- */
 export function plywood(w = 1.2, h = 2.4) { return box(w, h, 0.02, RAW, 0, h / 2, 0); }
 export function goBag(c = 0x3a5a8a) { const g = grp(); box(0.3, 0.38, 0.16, solid(c, 0.8), 0, 0.19, 0, g); box(0.26, 0.12, 0.04, solid(0x2a2e3a, 0.8), 0, 0.28, 0.1, g); box(0.04, 0.2, 0.02, solid(0xd8d0b8, 0.8), 0, 0.14, 0.09, g); return g; }
-export function radio() { const g = grp(); box(0.34, 0.2, 0.1, solid(0x2a2a2e, 0.6), 0, 0.1, 0, g); const gr = box(0.18, 0.12, 0.02, solid(0x8a8a82, 0.8), -0.05, 0.1, 0.055, g); cyl(0.045, 0.045, 0.02, solid(0xc8c0a8, 0.7), 0.11, 0.1, 0.06, g, 10).rotation.x = PI / 2; cyl(0.008, 0.008, 0.38, solid(0xb8b8b8, 0.4, 0.6), 0.14, 0.38, 0, g, 4); return g; }
+export function radio() {   /* a small battery radio: grille, tuning knob with its dial window, and an aerial that pulls up (userData.knob, dial, aerial: the radio look in main.js uses them) */
+  const g = grp(); box(0.34, 0.2, 0.1, solid(0x2a2a2e, 0.6), 0, 0.1, 0, g); box(0.18, 0.12, 0.02, solid(0x8a8a82, 0.8), -0.05, 0.1, 0.055, g);
+  const knob = cyl(0.045, 0.045, 0.02, solid(0xc8c0a8, 0.7), 0.11, 0.1, 0.06, g, 10); knob.rotation.x = PI / 2; box(0.006, 0.03, 0.004, solid(0x2a2a2e, 0.6), 0, 0.012, 0.012, knob);
+  const dial = new THREE.MeshStandardMaterial({ color: 0x3a3428, emissive: 0xffb050, emissiveIntensity: 0, roughness: 0.4 }); box(0.07, 0.025, 0.006, dial, 0.11, 0.17, 0.052, g);
+  const aerial = grp(g, 0.14, 0.2, 0); cyl(0.008, 0.008, 0.38, solid(0xb8b8b8, 0.4, 0.6), 0, 0.19, 0, aerial, 4); aerial.scale.y = 0.35; aerial.userData.noBatch = true;
+  g.userData = { knob, dial, aerial }; g.userData.noBatch = true; return g; }
 export function tins(n = 6, seed = 3) { const g = grp(), r = rng(seed), cols = [0xc84a3a, 0x3a7a4a, 0xd8b030, 0x4a6aa8]; for (let i = 0; i < n; i++) cyl(0.045, 0.045, 0.1, solid(cols[i % 4], 0.5, 0.3), (i % 3) * 0.1 - 0.1, 0.05 + Math.floor(i / 3) * 0.1, (r() - 0.5) * 0.04, g, 8); return g; }
 export function bread() { const g = grp(); for (let i = 0; i < 3; i++) box(0.26, 0.14, 0.14, solid(0xd0a060, 0.95), 0, 0.07 + i * 0.145, 0, g).rotation.y = i * 0.2; return g; }
 export function candle() { const g = grp(); cyl(0.02, 0.02, 0.14, solid(0xf0e8d0, 0.9), 0, 0.07, 0, g, 6); mesh(new THREE.SphereGeometry(0.018, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffc060 }), 0, 0.16, 0, g); return g; }
@@ -153,6 +158,8 @@ export function fallenTree({ len = 7.5, seed = 1 } = {}) {   /* a big tree on it
   for (let i = 0; i < 9; i++) { const a = r() * PI * 2, rr = cyl(0.06, 0.12, 1.3, solid(0x5a3c28, 1), -len / 2 - 0.5, 1.5 + Math.cos(a) * 1.0, Math.sin(a) * 1.0, g, 5); rr.rotation.set(Math.sin(a) * 1.2, 0, PI / 2 + Math.cos(a) * 0.6); }
   for (let i = 0; i < 4; i++) { const b = cyl(0.08, 0.16, 2.8, M, len * (0.1 + i * 0.1), 1.1, (i % 2 ? 1 : -1) * 0.5, g, 6); b.rotation.set(((i % 2) ? 1 : -1) * 0.7, 0, 0.5); }
   for (let i = 0; i < 6; i++) mesh(new THREE.IcosahedronGeometry(0.6 + r() * 0.4, 0), flat(i % 2 ? 0x6a7a3a : 0x5a6a30), len * (0.2 + r() * 0.3), 0.7 + r() * 0.8, (r() - 0.5) * 2.6, g).scale.y = 0.6;
+  /* clods of wet earth still clinging to the root plate: the tree look shakes them loose and they drop to the ground (userData.clods; each has its .top and .bottom height) */
+  const soil = solid(0x4a3422, 1); g.userData.clods = [[-0.35, 0.5], [0.2, -0.6], [-0.1, 0.9], [0.4, 0.2]].map(([dy, dz]) => { const c = mesh(new THREE.IcosahedronGeometry(0.11, 0), soil, -len / 2 - 0.47, 1.45 + dy, dz, g); c.userData.top = c.position.y; c.userData.bottom = 0.08; return c; });
   return g;
 }
 export function cutLogs({ seed = 1 } = {}) { const r = rng(seed), g = grp(), M = solid(0x6a4c33, 1), E = solid(0xc8a070, 1); for (let i = 0; i < 6; i++) { const L = 0.7 + r() * 0.5, c = cyl(0.5 - i * 0.03, 0.52 - i * 0.03, L, M, (r() - 0.5) * 2, 0.45, i * 0.8 - 2, g, 10); c.rotation.z = PI / 2; c.rotation.y = r() * 0.6; mesh(new THREE.CircleGeometry(0.48, 10), E, c.position.x + L / 2 + 0.01, 0.45, c.position.z, g).rotation.y = PI / 2; } return g; }
