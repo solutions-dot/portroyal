@@ -190,3 +190,12 @@ The owner: "the ship deck is a bit crowded here and cant allow me to pass over t
 Now: the boat (3.2 m, a little smaller) is stowed on tall chocks over the main hatch, as small ships stowed their boats, so the two make one block amidships; the guns are two pairs forward of it (z -4.1 and -2.85) and one pair aft of the main mast (4.25), each with clear deck inboard, so every gun can be walked round; the fore pin rails stand just forward of the shrouds; the main mast has no fife rail (its lines go to the pin rails by the shrouds); the harness cask stands against the starboard bulwark abreast the boat; the companion stands a little to starboard of the centre with a gangway each side, the binnacle just aft of it. There is a clear gangway down both sides and a clear way across forward and aft of the boat and hatch, all at least 0.9 m. Each gun port now has a sill, lintel and sides, so it reads as a hole in the bulwark rather than a black square. Still six 3-pounders on a 61-foot schooner. Where the boat was stowed on the Ferret is not known: this is a general picture.
 
 A new check, `engine/audit-passage.js` ("Room to pass" in docs/TESTING.md), found the pinches and now reports 0 on the deck, the quay and in the court.
+
+## Graphics polish, 22 November 2026
+
+- **The Nancy's sealed hatch** (the "hatch" look): the cover is a tarred canvas tarpaulin laid over the battens, slack between them and hanging down over the coamings, with its seams showing. As you look it is rolled back across the hatch and the roll grows; only then do the rope and the seal show: the rope crossed over the battens, and at the crossing a thick blob of red wax that ran a little as it was poured, pressed with a stamp, with a written slip beside it. Before, the cover was a flat slab and the seal a small red disc that showed through it.
+- **The clerk's inkpot** in the court is an open lead pot with ink in it and the quill standing in the ink (it was a solid cylinder, found by the new props check).
+- **Written papers** (the sheets on the court table, the slip by the seal) are old paper with the heading in an ink hand and lines of writing too small to read (`engine/page.js`); the heading is the only words, so no text is invented.
+- **The guns' breeching ropes** hang in a slight curve from the bulwark to the gun instead of running straight like poles.
+
+Checks: `?test=audit` 0 on the deck, the quay and in the court (props and room to pass included); `?auto=1` AUTO END 48, FLOW 0; `?test=held` CARRY 0.

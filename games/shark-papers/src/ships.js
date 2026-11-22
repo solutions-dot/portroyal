@@ -473,7 +473,10 @@ export function gunAtPort(side, len = 1.35) {
   q.position.x = side * 0.3;   /* run out: the muzzle stands in the port */
   g.add(q);
   for (const dz of [-0.42, 0.42]) {
-    rope([side * 0.78, 0.36, dz], [side * -0.44, 0.34, dz * 0.42], 0.022, SM.hemp, g, 5);
+    /* the breeching: from its ring bolt in the bulwark to the back of the gun, hanging in a slight curve, not a straight pole */
+    const mid = [side * 0.17, 0.27, dz * 0.71];
+    rope([side * 0.78, 0.36, dz], mid, 0.022, SM.hemp, g, 5);
+    rope(mid, [side * -0.44, 0.34, dz * 0.42], 0.022, SM.hemp, g, 5);
     cyl(0.035, 0.035, 0.03, SM.iron, side * 0.78, 0.36, dz, g, 6).rotation.z = Math.PI / 2;
   }
   rope([side * -0.44, 0.34, -0.18], [side * -0.44, 0.34, 0.18], 0.022, SM.hemp, g, 5);

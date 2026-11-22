@@ -4,6 +4,8 @@
    (Q.reveal, Q.enter) and its part in a camera scene (Q.films). The ships, their gear and the shark are built in ships.js.
    Story people: person(). Background people: crowd(), each a body made for the year and the place (tools/shark-papers/people). */
 import * as THREE from "three";
+import { vessel } from "../../../engine/vessel.js";   /* small open things with a real opening */
+import { writtenPage } from "../../../engine/page.js";
 import { T, cv, std, solid, mesh, box, cyl, plane, grp, batchStatic } from "./gfx.js";
 import { palm, cart, crate, sack, bucket } from "./period-props.js";
 import * as P from "./props.js";
@@ -669,22 +671,95 @@ function quay() {
   /* the seal on her main hatch: a canvas cover drawn back, a rope across the battens and the red wax of the prize master's seal */
   const hz = -6.35,
     hy = SEA + 1.4 + 0.5;
+  /* under the cover: a rope crossed over the battens, its ends made fast to the coaming, and at the crossing the prize master's seal, a
+     thick blob of red wax pressed with a stamp, with a written slip beside it */
   const sealG = dyn(grp());
-  S.rope([-1.25, hy + 0.09, hz - 0.9], [1.25, hy + 0.09, hz + 0.9], 0.02, S.SM.hemp, sealG, 5);
-  S.rope([-1.25, hy + 0.09, hz + 0.9], [1.25, hy + 0.09, hz - 0.9], 0.02, S.SM.hemp, sealG, 5);
-  cyl(0.11, 0.11, 0.03, solid(0x9a1f1a, 0.5), 0, hy + 0.1, hz, sealG, 12);
-  box(0.34, 0.012, 0.24, solid(0xe8ddc4, 1), 0, hy + 0.075, hz + 0.3, sealG);
+  S.rope([-1.25, hy + 0.075, hz - 0.95], [1.25, hy + 0.075, hz + 0.95], 0.022, S.SM.hemp, sealG, 6);
+  S.rope([-1.25, hy + 0.075, hz + 0.95], [1.25, hy + 0.075, hz - 0.95], 0.022, S.SM.hemp, sealG, 6);
+  const wax = solid(0xa8201a, 0.35),
+    blob = mesh(new THREE.SphereGeometry(0.085, 18, 12), wax, 0, hy + 0.085, hz, sealG);
+  blob.scale.set(1, 0.42, 1);
+  for (let i = 0; i < 7; i++) {   /* the wax ran a little as it was poured */
+    const a = (i / 7) * Math.PI * 2 + 0.3,
+      d = mesh(new THREE.SphereGeometry(0.03, 8, 6), wax, Math.cos(a) * 0.08, hy + 0.068, hz + Math.sin(a) * 0.08, sealG);
+    d.scale.set(1.2, 0.45, 1);
+  }
+  const stamp = mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.006, 20), solid(0x7a1410, 0.5), 0, hy + 0.122, hz, sealG);
+  mesh(new THREE.TorusGeometry(0.042, 0.006, 6, 20), solid(0xc23a2a, 0.4), 0, hy + 0.126, hz, sealG).rotation.x = Math.PI / 2;
+  stamp.userData.noBatch = true;
+  const slip = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.24), new THREE.MeshStandardMaterial({ map: writtenPage("", { w: 0.34, d: 0.24, seed: 7 }), roughness: 0.95 }));
+  slip.rotation.x = -Math.PI / 2;
+  slip.position.set(0.05, hy + 0.051, hz + 0.33);
+  sealG.add(slip);
   Q.group.add(sealG);
-  const cover = dyn(box(2.5, 0.05, 2.3, solid(0x8f8468, 1), 0, hy + 0.072, hz, Q.group));   /* lying on the hatch battens */
-  /* the canvas cover is drawn back across the hatch (k from 0 to 1) and the rope and the red seal show under it; at the end it is folded away */
+  /* the cover: a tarred canvas tarpaulin laid over the battens, sagging a little between them and hanging down over the coamings */
+  const tarTex = cv(256, 256, (x, W, H) => {
+    x.fillStyle = "#4a4436";
+    x.fillRect(0, 0, W, H);
+    for (let i = 0; i < H; i += 2) {
+      x.fillStyle = `rgba(${i % 4 ? "20,18,12" : "120,110,84"},0.18)`;
+      x.fillRect(0, i, W, 1);
+      x.fillRect(i, 0, 1, H);
+    }
+    x.fillStyle = "rgba(15,12,8,0.5)";
+    for (const y of [84, 170]) x.fillRect(0, y, W, 3);   /* the seams between the cloths */
+    for (let i = 0; i < 40; i++) {
+      x.fillStyle = `rgba(10,8,5,${0.05 + Math.random() * 0.1})`;
+      x.beginPath();
+      x.arc(Math.random() * W, Math.random() * H, 6 + Math.random() * 24, 0, 7);
+      x.fill();
+    }
+  });
+  const TW = 2.9,
+    TD = 2.7,
+    NX = 28,
+    NZ = 26,
+    tarpGeo = new THREE.PlaneGeometry(TW, TD, NX, NZ);
+  tarpGeo.rotateX(-Math.PI / 2);
+  const base0 = Float32Array.from(tarpGeo.attributes.position.array);
+  const cover = dyn(mesh(tarpGeo, new THREE.MeshStandardMaterial({ map: tarTex, roughness: 0.85, side: THREE.DoubleSide }), 0, 0, hz, Q.group));
+  const roll = dyn(mesh(new THREE.CylinderGeometry(1, 1, TD - 0.2, 14), new THREE.MeshStandardMaterial({ map: tarTex, roughness: 0.85 }), 0, 0, hz, Q.group));
+  roll.rotation.x = Math.PI / 2;
+  /* the shape of the cover with its edge drawn back to x = fold: over the hatch it lies on the battens, past the coaming it hangs down;
+     what is drawn back is gathered into a roll at the fold */
+  const HX = 1.2,
+    HZ = 1.1,
+    TOP = hy + 0.072,
+    shape = (fold) => {
+      const pos = tarpGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        let x = base0[i * 3],
+          z = base0[i * 3 + 2];
+        if (x > fold) x = fold;
+        const over = Math.max(0, Math.abs(x) - HX, Math.abs(z) - HZ),
+          sag = Math.abs(x) < HX && Math.abs(z) < HZ ? 0.014 * Math.pow(Math.sin((z / 0.66) * Math.PI), 2) : 0;   /* lying on the battens (every 0.66 m), a little slack between */
+        let y = TOP - sag - Math.min(0.32, over * 2.2),
+          px = x,
+          pz = z;
+        if (over > 0) {   /* hang just outside the coaming */
+          if (Math.abs(x) > HX) px = Math.sign(x) * (HX + 0.03 + Math.min(0.03, over));
+          if (Math.abs(z) > HZ) pz = Math.sign(z) * (HZ + 0.03 + Math.min(0.03, over));
+        }
+        pos.setXYZ(i, px, y, pz);
+      }
+      pos.needsUpdate = true;
+      tarpGeo.computeVertexNormals();
+    };
+  shape(TW);
+  roll.visible = false;
+  /* the cover is rolled back across the hatch (k from 0 to 1): the roll grows as it goes; at the end it lies along the far coaming and
+     the rope and the red seal show */
   Q.reveal.hatch = (k) => {
     k = Math.min(1, +k);
-    const e = k * k * (3 - 2 * k);
+    const e = k * k * (3 - 2 * k),
+      fold = TW / 2 - e * (TW / 2 + HX - 0.05);
     cover.visible = k < 1;
-    cover.position.x = -e * 2.2;
-    cover.position.y = hy + 0.072 + Math.min(1, k * 6) * 0.09;   /* lifted clear of the rope and the seal as it is drawn back */
-    cover.scale.x = 1 - e * 0.55;   /* gathering up as it goes */
-    sealG.visible = k > 0;
+    shape(fold);
+    const r = 0.025 + 0.075 * e;
+    roll.visible = k > 0;
+    roll.scale.set(r, 1, r);
+    roll.position.set(Math.max(-HX + 0.05, fold), TOP + r, hz);
+    sealG.visible = fold < -HX + 0.3;   /* shown once the cover is drawn nearly off: rope and seal were under it */
   };
   /* HMS Abergavenny, the guard ship and flagship, at her moorings out in the harbour */
   const ab = far(S.twoDecker());
@@ -1109,7 +1184,7 @@ function court() {
     l.traverse((o) => (o.userData.noBatch = false));
     add(Q, l, x, z, 0.81, ry);
   }
-  cyl(0.05, 0.06, 0.07, S.SM.lead, -2.1, 0.845, -1.5, Q.group, 8);
+  add(Q, vessel([[0.001, 0], [0.06, 0], [0.06, 0.012], [0.045, 0.05], [0.03, 0.06], [0.026, 0.07]], { mat: S.SM.lead, inner: solid(0x0c0a0a, 0.3), fill: { y: 0.05, mat: solid(0x050508, 0.15) }, wall: 0.005 }), -2.1, -1.5, 0.81);   /* a lead inkpot, open, the ink in it */
   S.spar([-2.1, 0.86, -1.5], [-2.0, 1.1, -1.6], 0.006, 0.02, S.SM.white, Q.group);
   add(Q, W.candle(true), -1.85, -1.2, 0.81);
   add(Q, W.chair(), -2.6, -2.15, 0, 0);
