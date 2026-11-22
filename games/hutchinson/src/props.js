@@ -3,6 +3,7 @@
 import * as THREE from "three";
 import { cv, std, solid, mesh, box, cyl, plane, grp } from "./gfx.js";
 import { bucket as tinBucket, lantern as stormLantern } from "./period-props.js";
+import { fodder, cask } from "./scenery.js";
 export const WOOD = solid(0x826247),
   WOOD_DARK = solid(0x4a3626, 0.9),
   PAPER = solid(0xe7dcc2),
@@ -115,6 +116,15 @@ export function item(id) {
   if (id === "letter" || id === "warrant") return letter();
   if (id === "watch") return dynamic(watch(true));
   if (id === "lantern") return lantern();
+  if (id === "fodder") return dynamic(fodder());
+  if (id === "cask") return dynamic(cask());
+  if (id === "peg") {
+    /* a boundary peg with a red rag */
+    const g = grp();
+    cyl(0.03, 0.02, 0.9, WOOD, 0, 0.45, 0, g, 6);
+    box(0.22, 0.12, 0.012, solid(0xb03a2a, 1), 0.12, 0.8, 0, g);
+    return dynamic(g);
+  }
   if (id === "stone") {
     const g = grp();
     mesh(new THREE.IcosahedronGeometry(0.11, 0), solid(0xa8a294, 1, 0, { flatShading: true }), 0, 0.08, 0, g).scale.y = 0.7;

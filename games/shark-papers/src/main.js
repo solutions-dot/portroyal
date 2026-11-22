@@ -32,6 +32,7 @@ import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } 
 import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
 import * as P from "./props.js";
+import { cockedHat } from "./ships.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
 import { addExit } from '../../../engine/exit.js';
@@ -149,6 +150,7 @@ function body(spec) {
   spreadArms(m, spec.sex === "f" ? 0.1 : 0.08);
   groundFeet(m);
   if (spec.held) holdThing(m, spec.held);
+  if (spec.hat) wearHat(m, spec.hat);
   const hips = m.getObjectByName("mixamorigHips");
   if (hips) {
     m.updateMatrixWorld(true);
@@ -169,6 +171,18 @@ function holdThing(m, kind) {
   if (!h) return;
   grip(m, "Right", h.obj, { handleY: h.handleY, scale: h.scale || 1, lift: h.lift || 0.3, straighten: h.straighten || 0.8 });
   m.userData.held = [{ obj: h.obj, bone: "RightHand", label: h.label }];
+}
+/* a hat modelled in the game's own code (an officer's cocked hat, ships.js), set on the head bone so that it turns with the head */
+function wearHat(m, kind) {
+  const head = m.getObjectByName("mixamorigHead"),
+    top = m.getObjectByName("mixamorigHeadTop_End");
+  if (!head || kind !== "cocked") return;
+  m.updateMatrixWorld(true);
+  const hat = cockedHat(),
+    s = head.getWorldScale(new THREE.Vector3()).x || 1;
+  hat.scale.setScalar(1 / s);
+  hat.position.set(0, (top ? top.position.y : 0.18 / s) * 0.8, (0.012 / s));
+  head.add(hat);
 }
 function ensure(id) {
   return worlds[id]

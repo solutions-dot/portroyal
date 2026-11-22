@@ -1,0 +1,1254 @@
+/* The larger scenery of the five places: the limestone country, the cattle pen, Edinburgh Castle, the hall, the sinkhole and the square at
+   Spanish Town. Each builder returns a THREE.Group standing on y = 0 at its own origin. What each is modelled on, and what is still a general
+   picture, is in docs/games/hutchinson.md ("Places"). Everything here is still scenery: it is merged into a few meshes when the place is built. */
+import * as THREE from "three";
+import { T, cv, grain, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
+import { loftSkin } from "../../../engine/loft.js";
+import * as W from "./world.js";
+import { makeDoor } from "../../../engine/door.js";
+
+const once = new Map();
+const keep = (k, make) => (once.has(k) ? once.get(k) : (once.set(k, make()), once.get(k)));
+const noAudit = (o) => (o.traverse((n) => (n.userData.noAudit = true)), o);
+const dynamic = (o) => (o.traverse((n) => (n.userData.noBatch = true)), o);
+
+/* ---------- textures drawn in code ---------- */
+/* thatch: dry Guinea grass or palm laid in courses */
+export const thatchTex = (repeat = [3, 2]) =>
+  keep("thatch" + repeat, () =>
+    cv(
+      128,
+      128,
+      (x, w, h) => {
+        x.fillStyle = "#a08a58";
+        x.fillRect(0, 0, w, h);
+        for (let i = 0; i < 700; i++) {
+          const g = 110 + Math.random() * 90;
+          x.strokeStyle = `rgba(${g | 0},${(g * 0.86) | 0},${(g * 0.52) | 0},0.7)`;
+          const px = Math.random() * w,
+            py = Math.random() * h;
+          x.beginPath();
+          x.moveTo(px, py);
+          x.lineTo(px + (Math.random() - 0.5) * 5, py + 8 + Math.random() * 14);
+          x.stroke();
+        }
+        for (let y = 0; y < h; y += 32) {
+          x.fillStyle = "rgba(50,38,20,0.35)";
+          x.fillRect(0, y, w, 3);
+        }
+      },
+      repeat,
+    ),
+  );
+/* wattle and daub: clay over woven sticks, cracked and patched */
+export const daubTex = (repeat = [2, 1]) =>
+  keep("daub" + repeat, () =>
+    cv(
+      128,
+      128,
+      (x, w, h) => {
+        x.fillStyle = "#b39a72";
+        x.fillRect(0, 0, w, h);
+        for (let i = 0; i < 26; i++) {
+          x.fillStyle = `rgba(${(120 + Math.random() * 70) | 0},${(100 + Math.random() * 50) | 0},${(70 + Math.random() * 40) | 0},0.25)`;
+          x.beginPath();
+          x.ellipse(Math.random() * w, Math.random() * h, 8 + Math.random() * 22, 5 + Math.random() * 12, Math.random() * 3, 0, 7);
+          x.fill();
+        }
+        x.strokeStyle = "rgba(70,52,34,0.5)";
+        for (let i = 0; i < 9; i++) {
+          let px = Math.random() * w,
+            py = Math.random() * h;
+          x.beginPath();
+          x.moveTo(px, py);
+          for (let k = 0; k < 4; k++) x.lineTo((px += (Math.random() - 0.5) * 16), (py += 4 + Math.random() * 10));
+          x.stroke();
+        }
+        grain(x, w, h, 14);
+      },
+      repeat,
+    ),
+  );
+/* brick in lime mortar, for the public buildings of Spanish Town */
+export const brickTex = (rgb = [156, 84, 62], repeat = [4, 4]) =>
+  keep("brick" + rgb + repeat, () =>
+    cv(
+      256,
+      256,
+      (x, w, h) => {
+        x.fillStyle = "#cdbfa6";
+        x.fillRect(0, 0, w, h);
+        const bh = 16,
+          bw = 42;
+        for (let row = 0; row * bh < h; row++)
+          for (let i = -1; i * bw < w; i++) {
+            const k = 0.84 + Math.random() * 0.3;
+            x.fillStyle = `rgb(${(rgb[0] * k) | 0},${(rgb[1] * k) | 0},${(rgb[2] * k) | 0})`;
+            x.fillRect(i * bw + (row % 2 ? bw / 2 : 0) + 1, row * bh + 1, bw - 2, bh - 2);
+          }
+        grain(x, w, h, 12);
+      },
+      repeat,
+    ),
+  );
+/* wooden shingles in courses */
+export const shingleTex = (repeat = [6, 4]) =>
+  keep("shingle" + repeat, () =>
+    cv(
+      128,
+      128,
+      (x, w, h) => {
+        x.fillStyle = "#5d5347";
+        x.fillRect(0, 0, w, h);
+        for (let row = 0; row < 8; row++)
+          for (let i = -1; i < 9; i++) {
+            const k = 0.8 + Math.random() * 0.35;
+            x.fillStyle = `rgb(${(96 * k) | 0},${(86 * k) | 0},${(72 * k) | 0})`;
+            x.fillRect(i * 16 + (row % 2 ? 8 : 0) + 0.5, row * 16 + 2, 15, 14);
+          }
+        for (let row = 0; row < 8; row++) {
+          x.fillStyle = "rgba(20,16,12,0.45)";
+          x.fillRect(0, row * 16, w, 2);
+        }
+      },
+      repeat,
+    ),
+  );
+/* weathered rock face: grey limestone, streaked dark where the rain runs */
+export const cragTex = (repeat = [3, 1]) =>
+  keep("crag" + repeat, () =>
+    cv(
+      256,
+      256,
+      (x, w, h) => {
+        x.fillStyle = "#9c978a";
+        x.fillRect(0, 0, w, h);
+        for (let i = 0; i < 60; i++) {
+          const px = Math.random() * w,
+            g = 60 + Math.random() * 60;
+          x.fillStyle = `rgba(${g | 0},${g | 0},${(g * 0.92) | 0},${0.1 + Math.random() * 0.22})`;
+          x.fillRect(px, Math.random() * h * 0.5, 3 + Math.random() * 12, h * (0.3 + Math.random() * 0.7));
+        }
+        for (let i = 0; i < 40; i++) {
+          x.fillStyle = `rgba(214,210,198,${0.1 + Math.random() * 0.25})`;
+          x.beginPath();
+          x.ellipse(Math.random() * w, Math.random() * h, 6 + Math.random() * 24, 4 + Math.random() * 10, Math.random() * 3, 0, 7);
+          x.fill();
+        }
+        x.strokeStyle = "rgba(40,40,36,0.5)";
+        for (let i = 0; i < 16; i++) {
+          let px = Math.random() * w,
+            py = Math.random() * h;
+          x.beginPath();
+          x.moveTo(px, py);
+          for (let k = 0; k < 5; k++) x.lineTo((px += (Math.random() - 0.5) * 22), (py += 6 + Math.random() * 20));
+          x.stroke();
+        }
+        grain(x, w, h, 18);
+      },
+      repeat,
+    ),
+  );
+const M = {
+  thatch: () => keep("m-thatch", () => std(thatchTex(), 1)),
+  daub: () => keep("m-daub", () => std(daubTex(), 1)),
+  shingle: () => keep("m-shingle", () => std(shingleTex(), 1, { side: THREE.DoubleSide })),
+  plaster: solid(0xe4dcc6, 1),
+  white: solid(0xece6d6, 0.9),
+  green: solid(0x2f4a38, 0.8),
+  mud: solid(0x8a765a, 1),
+};
+
+/* ---------- the land ---------- */
+/* a karst hill: steep-sided and round-topped, wooded, with pale crags where the limestone shows. One coloured mesh. */
+const HILL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
+export function karstHill(r = 30, h = 26, seed = 1, base = [0.3, 0.4, 0.24], crag = 0.3) {
+  const rr = rng(seed),
+    geo = new THREE.SphereGeometry(1, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+    pos = geo.attributes.position,
+    col = new Float32Array(pos.count * 3),
+    p1 = rr() * 6,
+    p2 = rr() * 6;
+  for (let k = 0; k < pos.count; k++) {
+    const x = pos.getX(k),
+      y = pos.getY(k),
+      z = pos.getZ(k),
+      a = Math.atan2(z, x),
+      bump = 1 + 0.1 * Math.sin(a * 3 + p1) + 0.06 * Math.sin(a * 7 + p2) + 0.05 * Math.sin(a * 5 + y * 6 + p1),
+      yy = Math.pow(Math.max(0, y), 0.72) * (1 + 0.07 * Math.sin(a * 4 + p2));
+    pos.setXYZ(k, x * bump, yy, z * bump);
+    const wood = Math.sin(a * 9 + p1 + y * 11) * Math.sin(a * 4 + y * 5 + p2),
+      rock = y > 0.1 && y < 0.72 && Math.sin(a * 6 + p2 * 2 + y * 4) > 1 - crag,
+      v = (0.76 + 0.42 * y) * (wood > 0.2 ? 0.74 : 1) * (0.94 + rr() * 0.12);
+    col[k * 3] = rock ? 0.62 + rr() * 0.08 : base[0] * v;
+    col[k * 3 + 1] = rock ? 0.6 + rr() * 0.08 : base[1] * v;
+    col[k * 3 + 2] = rock ? 0.54 + rr() * 0.06 : base[2] * v;
+  }
+  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, HILL);
+  m.scale.set(r, h, r * (0.8 + rr() * 0.35));
+  m.rotation.y = rr() * 3;
+  m.name = "terrain";
+  return m;
+}
+/* grass in tufts: n clumps over an area as one mesh of crossed cards. tint multiplies the green (dry Guinea grass is gold). */
+const TUFT = () => keep("m-tuft", () => new THREE.MeshStandardMaterial({ map: T.tuft(), alphaTest: 0.4, side: THREE.DoubleSide, vertexColors: true, roughness: 1 }));
+export function tufts(n, area, { seed = 1, clear = [], h = 0.6, tint = [1.25, 0.98, 0.6], round = null } = {}) {
+  const r = rng(seed),
+    P = [],
+    U = [],
+    C = [],
+    N = [];
+  let placed = 0,
+    tries = 0;
+  while (placed < n && tries++ < n * 20) {
+    const x = area[0] + r() * (area[2] - area[0]),
+      z = area[1] + r() * (area[3] - area[1]);
+    if (clear.some((c) => x > c[0] && x < c[2] && z > c[1] && z < c[3])) continue;
+    if (round && Math.hypot(x - round[0], z - round[1]) > round[2]) continue;
+    placed++;
+    const s = h * (0.7 + r() * 0.7),
+      w = s * (0.8 + r() * 0.5),
+      a = r() * Math.PI,
+      k = 0.8 + r() * 0.4,
+      c = [tint[0] * k, tint[1] * k, tint[2] * (0.85 + r() * 0.3)];
+    for (const b of [a, a + Math.PI / 2]) {
+      const dx = (Math.cos(b) * w) / 2,
+        dz = (Math.sin(b) * w) / 2,
+        q = [x - dx, 0, z - dz, x + dx, 0, z + dz, x + dx, s, z + dz, x - dx, s, z - dz],
+        uv = [0, 0, 1, 0, 1, 1, 0, 1];
+      for (const i of [0, 1, 2, 0, 2, 3]) {
+        P.push(q[i * 3], q[i * 3 + 1], q[i * 3 + 2]);
+        U.push(uv[i * 2], uv[i * 2 + 1]);
+        C.push(c[0], c[1], c[2]);
+        N.push(0, 1, 0);
+      }
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(U, 2));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(N, 3));
+  const m = new THREE.Mesh(g, TUFT());
+  m.userData.noAudit = true;
+  m.name = "grass";
+  return m;
+}
+/* a patch of ground that is not the rest: a dry pond's cracked mud, a worn yard. A flat disc with a ragged edge, just over the terrain. */
+export function patch(rx, rz, mat, seed = 1, y = 0.014) {
+  const r = rng(seed),
+    sh = new THREE.Shape(),
+    n = 22;
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * Math.PI * 2,
+      k = i === n ? 1 : 0.86 + r() * 0.2,
+      first = i === 0 || i === n;
+    const px = Math.cos(a) * rx * (first ? 0.95 : k),
+      pz = Math.sin(a) * rz * (first ? 0.95 : k);
+    if (i === 0) sh.moveTo(px, pz);
+    else sh.lineTo(px, pz);
+  }
+  const m = new THREE.Mesh(new THREE.ShapeGeometry(sh), mat);
+  m.rotation.x = Math.PI / 2;
+  m.scale.z = -1;
+  m.position.y = y;
+  m.name = "terrain";
+  const g = grp();
+  g.add(m);
+  return g;
+}
+export const mudTex = (repeat = [3, 3]) =>
+  keep("mud" + repeat, () =>
+    cv(
+      256,
+      256,
+      (x, w, h) => {
+        x.fillStyle = "#a8956f";
+        x.fillRect(0, 0, w, h);
+        grain(x, w, h, 16);
+        x.strokeStyle = "rgba(66,52,36,0.75)";
+        x.lineWidth = 1.6;
+        const r = rng(5);
+        for (let i = 0; i < 46; i++) {
+          let px = r() * w,
+            py = r() * h;
+          x.beginPath();
+          x.moveTo(px, py);
+          for (let k = 0; k < 4; k++) x.lineTo((px += (r() - 0.5) * 44), (py += (r() - 0.5) * 44));
+          x.stroke();
+        }
+      },
+      repeat,
+    ),
+  );
+
+/* ---------- cattle ---------- */
+/* a cow of the small mixed island breed: a loft body (engine/loft.js), plain legs, short horns. pose: "graze" (head down), "stand", "lie".
+   coat: [top colour, belly colour, a second colour for a pied one or null]. Faces +x. About 1.25 m at the shoulder. */
+const HIDE = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
+export const COATS = [
+  [0x7a4a30, 0x9a7050, null],
+  [0x2e2622, 0x3a322c, null],
+  [0xa8845a, 0xc8ac84, null],
+  [0x6a3c28, 0xd8ccb4, 0xd8ccb4],
+  [0x8a6a4a, 0xb89a74, null],
+  [0x3a2c26, 0xcfc4ae, 0xcfc4ae],
+];
+export function cow(coat = COATS[0], pose = "graze", seed = 1) {
+  const g = grp(),
+    r = rng(seed),
+    [c, belly, pied] = coat,
+    p = (i) => (pied && i % 2 ? pied : c),
+    dark = solid(new THREE.Color(c).multiplyScalar(0.55).getHex(), 1),
+    hoof = solid(0x1c1714, 0.8),
+    horn = solid(0xd8ceb0, 0.6),
+    lie = pose === "lie",
+    y0 = lie ? -0.52 : 0;
+  const part = (rings, sides = 12) => {
+    const m = new THREE.Mesh(loftSkin(rings, sides), HIDE);
+    g.add(m);
+    return m;
+  };
+  part([
+    [-0.8, 1.02 + y0, 0, 0.05, 0.08, c],
+    [-0.7, 0.98 + y0, 0, 0.23, 0.27, p(1), belly],
+    [-0.42, 0.93 + y0, 0, 0.3, 0.34, p(2), belly],
+    [-0.05, 0.88 + y0, 0, 0.34, 0.38, p(3), belly],
+    [0.3, 0.92 + y0, 0, 0.32, 0.36, p(4), belly],
+    [0.52, 1.0 + y0, 0, 0.25, 0.31, p(5), belly],
+    [0.68, 1.06 + y0, 0, 0.14, 0.2, c],
+  ]);
+  const head =
+    pose === "graze"
+      ? [
+          [0.56, 1.05, 0, 0.15, 0.2, c],
+          [0.8, 0.86, 0, 0.12, 0.16, c],
+          [0.98, 0.56, 0, 0.1, 0.13, c],
+          [1.08, 0.34, 0, 0.1, 0.115, pied || c],
+          [1.15, 0.2, 0, 0.085, 0.09, pied || c],
+          [1.2, 0.09, 0, 0.065, 0.065, 0x3a2c26],
+        ]
+      : [
+          [0.56, 1.05 + y0, 0, 0.15, 0.2, c],
+          [0.78, 1.16 + y0, 0, 0.12, 0.16, c],
+          [0.96, 1.24 + y0, 0, 0.1, 0.13, c],
+          [1.1, 1.24 + y0, 0, 0.1, 0.12, pied || c],
+          [1.26, 1.16 + y0, 0, 0.085, 0.095, pied || c],
+          [1.38, 1.08 + y0, 0, 0.065, 0.07, 0x3a2c26],
+        ];
+  part(head, 12);
+  const hp = head[3],
+    up = pose === "graze" ? [0.1, 0.06] : [-0.04, 0.12];
+  for (const s of [-1, 1]) {
+    const e = mesh(new THREE.SphereGeometry(0.06, 6, 5), dark, hp[0] + up[0] - 0.03, hp[1] + up[1] - 0.02, s * 0.13, g);
+    e.scale.set(0.5, 0.9, 1.5);
+    const hn = mesh(new THREE.ConeGeometry(0.024, 0.2, 5), horn, hp[0] + up[0], hp[1] + up[1] + 0.04, s * 0.1, g);
+    hn.rotation.x = s * 1.1;
+    hn.rotation.z = pose === "graze" ? -0.9 : 0.2;
+  }
+  if (lie) {
+    /* lying: the legs folded under, only the knees and hooves showing */
+    for (const [x, z] of [[0.45, 0.2], [0.45, -0.2], [-0.5, 0.26], [-0.5, -0.26]]) {
+      const k = cyl(0.06, 0.05, 0.42, dark, x, 0.07, z, g, 6);
+      k.rotation.z = Math.PI / 2;
+    }
+  } else
+    for (const [x, z] of [[0.44, 0.16], [0.44, -0.16], [-0.52, 0.17], [-0.52, -0.17]]) {
+      const lean = (r() - 0.5) * 0.12;
+      const u = cyl(0.075, 0.05, 0.5, HIDE_SOLID(c), x, 0.6, z, g, 6);
+      u.rotation.z = lean;
+      cyl(0.042, 0.036, 0.36, dark, x - lean * 0.4, 0.2, z, g, 6);
+      cyl(0.05, 0.055, 0.07, hoof, x - lean * 0.4, 0.035, z, g, 6);
+    }
+  const tail = cyl(0.016, 0.012, 0.75, dark, -0.83, 0.66 + y0, 0, g, 5);
+  tail.rotation.z = -0.1;
+  mesh(new THREE.SphereGeometry(0.045, 5, 4), dark, -0.87, 0.26 + y0, 0, g).scale.y = 1.8;
+  if (lie) g.position.y = 0;
+  return g;
+}
+const HIDE_SOLID = (c) => keep("hide" + c, () => solid(c, 0.95));
+
+/* ---------- the pen ---------- */
+/* a post-and-rail fence of split logwood, len along x */
+export function postRail(len, h = 1.15, rails = 3) {
+  const g = grp(),
+    n = Math.max(1, Math.round(len / 2.2));
+  for (let i = 0; i <= n; i++) cyl(0.06, 0.07, h + 0.1, W.WM.woodDark, -len / 2 + (i * len) / n, (h + 0.1) / 2, 0, g, 6);
+  for (let k = 0; k < rails; k++) box(len, 0.07, 0.04, W.WM.wood, 0, h - 0.1 - k * (h / (rails + 0.4)), 0, g);
+  return g;
+}
+/* a thatched hut of wattle and daub: the pen-keeper's house, or one of a row of quarters. w along x, the door in the +z wall. */
+export function thatchHut(w = 4.2, d = 3.2, { h = 1.9, door = true, seed = 1 } = {}) {
+  const g = grp(),
+    r = rng(seed);
+  box(w, h, d, M.daub(), 0, h / 2, 0, g);
+  for (const x of [-w / 2, w / 2]) for (const z of [-d / 2, d / 2]) cyl(0.08, 0.09, h + 0.1, W.WM.woodDark, x, h / 2 + 0.05, z, g, 6);
+  const roof = mesh(new THREE.ConeGeometry(1, 1, 4, 1), M.thatch(), 0, h + 0.75, 0, g);
+  roof.rotation.y = Math.PI / 4;
+  roof.scale.set((w / 2 + 0.55) * 1.414, 1.5, (d / 2 + 0.55) * 1.414);
+  if (door) {
+    box(0.8, 1.6, 0.06, W.WM.dark, w * 0.16, 0.8, d / 2 + 0.01, g);
+    const leaf = box(0.78, 1.56, 0.04, W.WM.wood, w * 0.16 + 0.62, 0.8, d / 2 + 0.3, g);
+    leaf.rotation.y = 1.15;
+    box(0.36, 0.36, 0.06, W.WM.dark, -w * 0.26, 1.2, d / 2 + 0.01, g);
+    box(0.4, 0.4, 0.04, W.WM.wood, -w * 0.26, 1.2, d / 2 + 0.035, g).scale.x = 0.14 + r() * 0.1;
+  }
+  return g;
+}
+/* a cooking place: three stones, charred wood, an iron pot. lit: embers that glow. */
+export function cookFire(lit = false) {
+  const g = grp();
+  for (let i = 0; i < 3; i++) mesh(new THREE.IcosahedronGeometry(0.16, 0), flat(0x77736a), Math.cos(i * 2.1) * 0.3, 0.09, Math.sin(i * 2.1) * 0.3, g).scale.y = 0.7;
+  for (let i = 0; i < 3; i++) cyl(0.03, 0.035, 0.5, solid(0x1c1512, 1), 0, 0.05, 0, g, 5).rotation.set(Math.PI / 2, 0, i * 1.1);
+  const pot = mesh(new THREE.SphereGeometry(0.19, 10, 7, 0, 7, 0, 2.1), W.WM.iron, 0, 0.36, 0, g);
+  pot.rotation.x = Math.PI;
+  cyl(0.17, 0.17, 0.02, solid(0x1a1a1c, 0.5), 0, 0.44, 0, g, 10);
+  if (lit) {
+    const e = mesh(new THREE.CircleGeometry(0.22, 10), new THREE.MeshBasicMaterial({ color: 0xff7a2a }), 0, 0.07, 0, g);
+    e.rotation.x = -Math.PI / 2;
+    e.userData.noAudit = true;
+  }
+  return g;
+}
+/* a stack of cut Guinea grass on a low frame of poles: fodder for a dry month */
+export function grassStack(s = 1) {
+  const g = grp();
+  for (const [x, z] of [[-0.6, -0.4], [0.6, -0.4], [-0.6, 0.4], [0.6, 0.4]]) cyl(0.05, 0.05, 0.3, W.WM.woodDark, x * s, 0.15, z * s, g, 5);
+  box(1.5 * s, 0.06, 1.1 * s, W.WM.wood, 0, 0.32, 0, g);
+  const hay = mesh(new THREE.SphereGeometry(1, 9, 6, 0, 7, 0, Math.PI / 2), M.thatch(), 0, 0.34, 0, g);
+  hay.scale.set(0.95 * s, 1.5 * s, 0.75 * s);
+  return g;
+}
+/* a bundle of cut grass, tied: what a boy carries to the cattle */
+export function fodder() {
+  const g = grp(),
+    b = cyl(0.17, 0.2, 0.62, M.thatch(), 0, 0.2, 0, g, 8);
+  b.rotation.z = Math.PI / 2;
+  const tie = cyl(0.19, 0.19, 0.04, solid(0x6b4a30, 1), 0, 0.2, 0, g, 8);
+  tie.rotation.z = Math.PI / 2;
+  for (const s of [-1, 1]) mesh(new THREE.ConeGeometry(0.2, 0.22, 7), solid(0xb7a25e, 1), s * 0.4, 0.2, 0, g).rotation.z = (s * Math.PI) / 2;
+  return g;
+}
+/* a feeding rack: two rails on posts with a board trough under */
+export function feedRack(len = 2.6) {
+  const g = grp();
+  for (const x of [-len / 2, len / 2]) for (const z of [-0.3, 0.3]) cyl(0.05, 0.05, 0.9, W.WM.woodDark, x, 0.45, z, g, 5);
+  box(len, 0.06, 0.7, W.WM.wood, 0, 0.42, 0, g);
+  for (const z of [-0.34, 0.34]) box(len, 0.22, 0.04, W.WM.wood, 0, 0.55, z, g);
+  return g;
+}
+/* a water cask on its side in a cradle, or standing empty */
+export function cask(up = true) {
+  const g = grp(),
+    st = solid(0x7a5a3c, 0.9),
+    b = mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.56, 12), st, 0, 0.28, 0, g);
+  const pos = b.geometry.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i) / 0.28,
+      k = Math.abs(y) < 0.5 ? 1.16 : 1;
+    pos.setX(i, pos.getX(i) * k);
+    pos.setZ(i, pos.getZ(i) * k);
+  }
+  for (const y of [0.08, 0.48]) cyl(0.215, 0.215, 0.03, W.WM.iron, 0, y, 0, g, 12);
+  if (!up) g.rotation.z = Math.PI / 2;
+  return g;
+}
+/* Dr Hutton's house, seen across the pasture: a planter's house of the time, stone below and timber above, shingled, with a front stair.
+   A general picture of a pen house (no drawing of Hutton Bonvil was found). The front faces +z. */
+export function penHouse() {
+  const g = grp(),
+    w = 14,
+    d = 8;
+  W.stoneBox(w, 1.6, d, W.LIME_DARK, 0, 0.8, 0, g);
+  for (const x of [-4.5, -1.5, 1.5, 4.5]) {
+    box(1.2, 1.0, 0.08, W.WM.dark, x, 0.75, d / 2 + 0.01, g);
+    mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.08, 10, 1, false, 0, Math.PI), W.WM.dark, x, 1.25, d / 2 + 0.01, g).rotation.set(Math.PI / 2, Math.PI / 2, 0);
+  }
+  box(w, 3.0, d, std(T.plank([206, 196, 168], 9, [4, 1], true), 0.95), 0, 3.1, 0, g);
+  box(w + 0.3, 0.14, d + 0.3, M.white, 0, 1.65, 0, g);
+  for (let i = 0; i < 6; i++) {
+    const x = -5.6 + i * 2.24 + (i > 2 ? 0 : 0);
+    if (i === 2 || i === 3) continue;
+    box(0.9, 1.5, 0.06, W.WM.dark, x, 3.2, d / 2 + 0.01, g);
+    box(1.06, 0.08, 0.1, M.white, x, 4.0, d / 2 + 0.03, g);
+    for (const s of [-1, 1]) box(0.44, 1.5, 0.05, M.green, x + s * 0.7, 3.2, d / 2 + 0.04, g);
+  }
+  for (const s of [-1, 1])
+    for (const z of [-2, 2]) {
+      box(0.06, 1.5, 0.9, W.WM.dark, (s * w) / 2 + s * 0.01, 3.2, z, g);
+      for (const k of [-1, 1]) box(0.05, 1.5, 0.44, M.green, (s * w) / 2 + s * 0.04, 3.2, z + k * 0.7, g);
+    }
+  /* the front door at the head of a double stair, under a small shingled porch */
+  const dr = makeDoor({ w: 1.2, h: 2.2, kind: "six", leaves: 2, color: 0x3d4a3c, frame: 0xe2d9c2, handle: "knob" });
+  dr.position.set(0, 1.72, d / 2 + 0.01);
+  g.add(dr);
+  box(3.4, 0.14, 1.8, W.WM.wood, 0, 1.65, d / 2 + 0.9, g);
+  for (const s of [-1, 1]) {
+    for (let i = 0; i < 6; i++) box(1.1, 0.27, 0.36, W.rubbleMat(W.LIME, 1, 1), s * (2.2 + i * 0.34), 1.44 - i * 0.27, d / 2 + 0.9, g);
+    cyl(0.07, 0.07, 2.4, M.white, s * 1.55, 2.9, d / 2 + 1.7, g, 8);
+    box(0.06, 0.06, 1.7, M.white, s * 1.62, 2.6, d / 2 + 0.9, g);
+  }
+  box(3.4, 0.06, 0.06, M.white, 0, 2.6, d / 2 + 1.74, g);
+  const pr = mesh(new THREE.BoxGeometry(3.8, 0.12, 2.1), M.shingle(), 0, 4.2, d / 2 + 0.9, g);
+  pr.rotation.x = 0.16;
+  const rf = roof(w, d, 2.6, 0.5);
+  rf.position.y = 4.6;
+  g.add(rf);
+  /* the kitchen, apart from the house as kitchens were, with its chimney */
+  const k = grp(g, w / 2 + 5, 0, -1);
+  W.stoneBox(4.4, 2.4, 3.6, W.LIME_DARK, 0, 1.2, 0, k);
+  const kr = roof(4.4, 3.6, 1.4, 0.3);
+  kr.position.y = 2.4;
+  k.add(kr);
+  W.stoneBox(0.9, 4.4, 0.9, W.LIME_DARK, 1.6, 2.2, -1.2, k);
+  box(0.8, 1.7, 0.06, W.WM.dark, -0.6, 0.85, 1.81, k);
+  return g;
+}
+/* a hipped, shingled roof with real shingle courses (uv along each slope) */
+export function roof(w, d, rise = 1.9, over = 0.35) {
+  const g = grp(),
+    X = w / 2 + over,
+    Z = d / 2 + over,
+    ridge = Math.max(0.3, X - Z),
+    A = [-X, 0, -Z],
+    B = [X, 0, -Z],
+    C = [X, 0, Z],
+    D = [-X, 0, Z],
+    E = [-ridge, rise, 0],
+    F = [ridge, rise, 0],
+    P = [],
+    U = [];
+  const tri = (a, b, c, ua, ub, uc) => {
+    P.push(...a, ...b, ...c);
+    U.push(...ua, ...ub, ...uc);
+  };
+  const k = 0.5;
+  /* front and back slopes (trapezia), the two hip ends (triangles) */
+  tri(D, C, F, [-X * k, 0], [X * k, 0], [ridge * k, 1.4]);
+  tri(D, F, E, [-X * k, 0], [ridge * k, 1.4], [-ridge * k, 1.4]);
+  tri(B, A, E, [-X * k, 0], [X * k, 0], [ridge * k, 1.4]);
+  tri(B, E, F, [-X * k, 0], [ridge * k, 1.4], [-ridge * k, 1.4]);
+  tri(A, D, E, [-Z * k, 0], [Z * k, 0], [0, 1.4]);
+  tri(C, B, F, [-Z * k, 0], [Z * k, 0], [0, 1.4]);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+  geo.setAttribute("uv", new THREE.Float32BufferAttribute(U, 2));
+  geo.computeVertexNormals();
+  g.add(new THREE.Mesh(geo, M.shingle()));
+  box(2 * X, 0.1, 2 * Z, W.WM.woodDark, 0, -0.05, 0, g);
+  return g;
+}
+/* a silk cotton tree: a great grey trunk on buttress roots, wide limbs, a high crown. The biggest thing between the road and the house. */
+export function cottonTree(h = 13, seed = 3) {
+  const g = grp(),
+    r = rng(seed),
+    bark = 0x8f8778;
+  const trunk = new THREE.Mesh(
+    loftSkin(
+      [
+        [0, -0.1, 0, 1.25, 1.25, 0x7c7466],
+        [0, 0.9, 0, 0.95, 0.95, bark],
+        [0, 2.4, 0, 0.78, 0.78, bark],
+        [0.05, h * 0.42, 0, 0.7, 0.7, bark],
+        [0.12, h * 0.6, 0.05, 0.55, 0.55, 0x9a9282],
+      ],
+      12,
+      [1, 0, 0],
+    ),
+    HIDE,
+  );
+  g.add(trunk);
+  const fin = new THREE.Shape();
+  fin.moveTo(0, 0);
+  fin.lineTo(2.1, 0);
+  fin.quadraticCurveTo(0.7, 0.5, 0.25, 2.6);
+  fin.lineTo(0, 2.6);
+  const fg = new THREE.ExtrudeGeometry(fin, { depth: 0.16, bevelEnabled: false });
+  fg.translate(0.55, 0, -0.08);
+  for (let i = 0; i < 6; i++) {
+    const f = mesh(fg, solid(i % 2 ? 0x857d6d : 0x8f8778, 1), 0, 0, 0, g);
+    f.rotation.y = (i / 6) * Math.PI * 2 + 0.3;
+    f.scale.set(0.8 + r() * 0.3, 0.8 + r() * 0.35, 1);
+  }
+  const leaves = [0x3f5a30, 0x4a6a36, 0x36502c, 0x567a3c];
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + r(),
+      L = h * (0.32 + r() * 0.12),
+      limb = cyl(0.12, 0.26, L, solid(bark, 1), Math.cos(a) * L * 0.36, h * 0.58 + L * 0.3, Math.sin(a) * L * 0.36, g, 6);
+    limb.rotation.set(Math.sin(a) * 0.95, 0, -Math.cos(a) * 0.95);
+    for (let k = 0; k < 2; k++) {
+      const s = h * (0.16 + r() * 0.07),
+        b = mesh(new THREE.IcosahedronGeometry(s, 1), flat(leaves[(r() * 4) | 0]), Math.cos(a) * L * (0.62 + k * 0.2) + (r() - 0.5), h * 0.58 + L * 0.62 + r() * 1.2, Math.sin(a) * L * (0.62 + k * 0.2) + (r() - 0.5), g);
+      b.scale.y = 0.55;
+    }
+  }
+  mesh(new THREE.IcosahedronGeometry(h * 0.2, 1), flat(leaves[1]), 0.2, h * 0.92, 0, g).scale.y = 0.6;
+  return g;
+}
+/* a stack of cut logwood, cord high */
+export function woodpile(len = 2.4, h = 1.25) {
+  const g = grp(),
+    r = rng(len * 10);
+  for (let row = 0; row < Math.round(h / 0.2); row++)
+    for (let i = 0; i < 4; i++) {
+      const l = cyl(0.09 + r() * 0.03, 0.1, len * (0.9 + r() * 0.1), solid([0x6a4e36, 0x7a5a3c, 0x5a4230][(r() * 3) | 0], 1), 0, 0.1 + row * 0.2, -0.33 + i * 0.22 + (row % 2) * 0.08, g, 6);
+      l.rotation.z = Math.PI / 2;
+    }
+  for (const x of [-len / 2 - 0.08, len / 2 + 0.08]) for (const z of [-0.5, 0.5]) cyl(0.05, 0.05, h + 0.25, W.WM.woodDark, x, (h + 0.25) / 2, z, g, 5);
+  return g;
+}
+/* a karst outcrop big enough to hide behind: weathered limestone, taller than a boy */
+export function outcrop(s = 2.4, h = 2.0, seed = 1) {
+  const g = grp(),
+    r = rng(seed),
+    cols = [0xa8a294, 0x9a9486, 0xb5b0a2, 0x8a8478];
+  for (let i = 0; i < 5; i++) {
+    const k = s * (0.34 + r() * 0.2),
+      o = mesh(new THREE.DodecahedronGeometry(k, 0), flat(cols[(r() * 4) | 0]), (r() - 0.5) * s * 0.75, (h * (0.3 + r() * 0.2)) / 1, (r() - 0.5) * s * 0.4, g);
+    o.scale.set(1.1, (h / k) * (0.5 + r() * 0.16), 0.8);
+    o.rotation.y = r() * 6;
+  }
+  return g;
+}
+
+/* ---------- Edinburgh Castle ---------- */
+/* a square loophole as the ruin has: a small dark opening in a plastered surround, on a wall facing +z */
+function loophole(parent, x, y, z, ry = 0) {
+  const g = grp(parent, x, y, z);
+  g.rotation.y = ry;
+  box(0.56, 0.56, 0.05, M.plaster, 0, 0, 0.0, g);
+  box(0.26, 0.26, 0.07, W.WM.dark, 0, 0, 0.0, g);
+  return g;
+}
+/* a round tower with two rows of square loopholes and a shingled cone (the cone is a stand-in: the ruin has no roof) */
+export function roundTower(r = 2.05, h = 7.8, { slits = 7, rows = [1.5, 4.5], seed = 1, chimney = false } = {}) {
+  const g = grp();
+  const body = mesh(new THREE.CylinderGeometry(r, r * 1.05, h, 24, 1, false), W.rubbleMat(W.LIME, (2 * Math.PI * r) / 1.5, h / 1.5), 0, h / 2, 0, g);
+  body.name = "tower";
+  mesh(new THREE.CylinderGeometry(r * 1.09, r * 1.12, 0.5, 24), W.rubbleMat(W.LIME_DARK, 8, 1), 0, 0.25, 0, g);
+  for (const y of rows)
+    for (let i = 0; i < slits; i++) {
+      const a = (i / slits) * Math.PI * 2 + seed;
+      loophole(g, Math.sin(a) * (r + 0.01 + (y < 2 ? 0.03 : 0)), y, Math.cos(a) * (r + 0.01 + (y < 2 ? 0.03 : 0)), a);
+    }
+  mesh(new THREE.CylinderGeometry(r + 0.14, r + 0.14, 0.18, 24), W.rubbleMat(W.LIME_DARK, 6, 1), 0, h + 0.09, 0, g);
+  const cone = mesh(new THREE.ConeGeometry(r + 0.34, 1.9, 24), M.shingle(), 0, h + 0.18 + 0.95, 0, g);
+  cone.material = keep("m-cone", () => std(shingleTex([10, 3]), 1));
+  if (chimney) {
+    W.stoneBox(0.7, h + 2.6, 0.7, W.LIME_DARK, -r * 0.62, (h + 2.6) / 2, -r * 0.62, g);
+    box(0.84, 0.14, 0.84, W.rubbleMat(W.LIME_DARK, 1, 1), -r * 0.62, h + 2.6, -r * 0.62, g);
+  }
+  return g;
+}
+/* Edinburgh Castle, from Cundall's description of the ruin (Historic Jamaica, 1915, p. 301): "a small two-storeyed rectangular building with
+   two loopholed towers, circular in plan, at diagonally opposite corners. A doorway was at one side of the front angle, and another at the
+   side to the east near the front tower", a fireplace on each storey of the front tower, spiral steps in the back tower.
+   The front faces +z and the road; east is +x. So the front tower stands at the front east corner and the back tower at the back west one.
+   Stand-ins, said in the game's doc: the roofs (the ruin has none), the chimney, the one shuttered upper window he watches from.
+   userData: walls (nobody walks through), shutter (the watched window: swing(k)), watcher (a dark shape with a gun, hidden until shown),
+   eastDoor (swing(k) opens it), smoke (where the chimney's smoke starts). */
+export function castle({ w = 11, d = 7, h = 6.6, r = 2.05 } = {}) {
+  const g = grp(),
+    m = W.rubbleMat(W.LIME, w / 1.5, h / 1.5),
+    dx = w / 2 - r - 0.85,   /* the front door, beside the front tower */
+    wx = -1.7,   /* the watched window */
+    dz = d / 2 - r - 0.85;   /* the east door */
+  W.wallRun(g, [-w / 2, d / 2, w / 2, d / 2], h, m, [{ at: w / 2 + dx, w: 1.1, h: 2.1 }, { at: w / 2 + wx, w: 0.8, h: 1.0, sill: 4.0 }], 0.65);
+  W.stoneBox(w, h, 0.65, W.LIME, 0, h / 2, -d / 2, g);
+  W.stoneBox(0.65, h, d, W.LIME, -w / 2, h / 2, 0, g);
+  W.wallRun(g, [w / 2, d / 2, w / 2, -d / 2], h, m, [{ at: d / 2 - dz, w: 1.0, h: 2.0 }], 0.65);
+  W.stoneBox(w + 0.3, 0.45, d + 0.3, W.LIME_DARK, 0, 0.225, 0, g);
+  box(w - 0.7, 0.2, d - 0.7, W.WM.dark, 0, 0.5, 0, g);
+  box(w - 0.75, h - 0.3, 0.05, W.WM.dark, 0, h / 2, d / 2 - 0.36, g);
+  box(0.05, h - 0.3, d - 0.75, W.WM.dark, w / 2 - 0.36, h / 2, 0, g);
+  box(w + 0.5, 0.2, d + 0.5, W.rubbleMat(W.LIME_DARK, 8, 1), 0, h + 0.1, 0, g);
+  const rf = roof(w, d, 2.2, 0.45);
+  rf.position.y = h + 0.2;
+  g.add(rf);
+  /* loopholes: two rows on every wall */
+  for (const y of [1.5, 4.5]) {
+    for (const x of [-4.2, -2.9, 0.4]) if (!(y > 4 && Math.abs(x - wx) < 1.3)) loophole(g, x, y, d / 2 + 0.33, 0);
+    for (const x of [-3.6, -0.6, 2.4]) loophole(g, x, y, -d / 2 - 0.33, Math.PI);
+    for (const z of [-2.2, -0.4]) loophole(g, w / 2 + 0.33, y, z, Math.PI / 2);
+    for (const z of [-1.2, 1.4]) loophole(g, -w / 2 - 0.33, y, z, -Math.PI / 2);
+  }
+  loophole(g, -4.2, 4.5, d / 2 + 0.33, 0);
+  loophole(g, dx, 4.5, d / 2 + 0.33, 0);
+  /* the two towers */
+  const front = roundTower(r, h + 1.3, { seed: 0.4, chimney: true });
+  front.position.set(w / 2, 0, d / 2);
+  g.add(front);
+  const back = roundTower(r, h + 1.3, { seed: 1.3 });
+  back.position.set(-w / 2, 0, -d / 2);
+  g.add(back);
+  /* the front door: heavy boards and an iron ring, plastered jambs, a timber lintel, two stone steps */
+  const door = makeDoor({ w: 1.1, h: 2.1, kind: "plank", color: 0x3b2a1e, frame: 0x5a5347, handle: "ring", recess: 0.3, step: 0.14 });
+  door.position.set(dx, 0, d / 2 + 0.33);
+  g.add(door);
+  for (const s of [-1, 1]) box(0.16, 2.2, 0.06, M.plaster, dx + s * 0.66, 1.1, d / 2 + 0.34, g);
+  box(1.6, 0.2, 0.1, W.WM.woodDark, dx, 2.22, d / 2 + 0.36, g);
+  W.stoneBox(1.9, 0.14, 0.7, W.LIME_DARK, dx, 0.07, d / 2 + 0.75, g);
+  /* the east door: narrower, the way out to the yard. It can open (the camera scene). */
+  const east = grp(g, w / 2 + 0.3, 0, dz);
+  box(0.06, 2.0, 1.0, W.WM.dark, -0.2, 1.0, 0, east);
+  const hinge = grp(east, 0.04, 0, -0.5);
+  box(0.06, 1.96, 0.98, W.WM.woodDark, 0, 1.0, 0.5, hinge);
+  for (const y of [0.45, 1.55]) box(0.075, 0.08, 0.98, W.WM.iron, 0.005, y, 0.5, hinge);
+  dynamic(hinge);
+  for (const s of [-1, 1]) box(0.06, 2.1, 0.16, M.plaster, 0.04, 1.05, s * 0.6, east);
+  box(0.1, 0.2, 1.5, W.WM.woodDark, 0.06, 2.1, 0, east);
+  W.stoneBox(0.7, 0.14, 1.6, W.LIME_DARK, w / 2 + 0.7, 0.07, dz, g);
+  east.userData.swing = (k) => (hinge.rotation.y = -k * 1.2);
+  /* the watched window: the one upper window with shutters */
+  const sw = W.shutterWindow(0.8, 1.0, 0);
+  sw.position.set(wx, 4.5, d / 2 + 0.34);
+  dynamic(sw);
+  g.add(sw);
+  const watcher = grp(g, wx, 4.5, d / 2 + 0.1);
+  box(0.36, 0.5, 0.1, W.WM.dark, 0, -0.2, 0, watcher);
+  mesh(new THREE.SphereGeometry(0.13, 10, 8), W.WM.dark, 0, 0.18, 0, watcher);
+  const barrel = cyl(0.014, 0.016, 0.9, W.WM.iron, 0.12, -0.05, 0.45, watcher, 6);
+  barrel.rotation.x = Math.PI / 2 - 0.12;
+  watcher.visible = false;
+  dynamic(noAudit(watcher));
+  g.userData = {
+    walls: [[-w / 2 - 0.35, -d / 2 - 0.35, w / 2 + 0.35, d / 2 + 0.35], [w / 2 - r, d / 2 - r, w / 2 + r, d / 2 + r], [-w / 2 - r, -d / 2 - r, -w / 2 + r, -d / 2 + r]],
+    shutter: sw,
+    watcher,
+    door,
+    doorX: dx,
+    windowX: wx,
+    eastDoor: east,
+    eastZ: dz,
+    smoke: [w / 2 - r * 0.62, h + 1.3 + 2.7, d / 2 - r * 0.62],
+  };
+  return g;
+}
+/* a far, small copy of the castle for another place's horizon: plain blocks, no detail */
+export function farCastle(s = 1) {
+  const g = grp(),
+    m = solid(0xb0a894, 1);
+  box(11 * s, 6.6 * s, 7 * s, m, 0, 3.3 * s, 0, g);
+  for (const [x, z] of [[5.5, 3.5], [-5.5, -3.5]]) {
+    cyl(2.05 * s, 2.1 * s, 7.9 * s, m, x * s, 3.95 * s, z * s, g, 12);
+    mesh(new THREE.ConeGeometry(2.4 * s, 1.9 * s, 12), solid(0x5d5347, 1), x * s, 8.85 * s, z * s, g);
+  }
+  const rf = W.hipRoof(11 * s, 7 * s, 2.2 * s, 0.45 * s);
+  rf.position.y = 6.6 * s;
+  g.add(rf);
+  return g;
+}
+/* smoke from a chimney or a cook fire: a few soft puffs that rise and thin. tick(t) moves them; nothing is made per frame. */
+export function smoke(n = 6, { rise = 3.4, spread = 0.7, size = 1.2, tint = 0xb8b0a8 } = {}) {
+  const g = grp(),
+    puffs = [];
+  for (let i = 0; i < n; i++) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.puff(), transparent: true, depthWrite: false, color: tint, opacity: 0 }));
+    g.add(s);
+    puffs.push(s);
+  }
+  dynamic(noAudit(g));
+  g.userData.tick = (t) => {
+    for (let i = 0; i < n; i++) {
+      const k = (t * 0.12 + i / n) % 1,
+        s = puffs[i];
+      s.position.set(Math.sin(i * 2.3 + k * 2) * spread * k + k * spread * 1.4, k * rise, Math.cos(i * 1.7) * spread * k * 0.6);
+      s.scale.setScalar(size * (0.5 + k * 1.3));
+      s.material.opacity = 0.34 * Math.sin(k * Math.PI);
+    }
+  };
+  g.userData.tick(0);
+  return g;
+}
+/* a flock of small birds that bursts up out of a tree (the camera scene, after the shot). burst(k): 0 hidden, 0..1 rising and scattering. */
+export function birds(n = 16, seed = 4) {
+  const g = grp(),
+    r = rng(seed),
+    geo = new THREE.BufferGeometry(),
+    list = [];
+  geo.setAttribute("position", new THREE.Float32BufferAttribute([-0.22, 0.06, 0, 0, 0, 0.05, 0, 0, -0.05, 0.22, 0.06, 0, 0, 0, -0.05, 0, 0, 0.05], 3));
+  geo.computeVertexNormals();
+  const m = new THREE.MeshBasicMaterial({ color: 0x18181a, side: THREE.DoubleSide });
+  for (let i = 0; i < n; i++) {
+    const b = new THREE.Mesh(geo, m);
+    b.userData.d = [r() * 6.28, 0.5 + r() * 0.8, 3 + r() * 5, r() * 6.28];
+    g.add(b);
+    list.push(b);
+  }
+  dynamic(noAudit(g));
+  g.visible = false;
+  g.userData.burst = (k) => {
+    g.visible = k > 0 && k < 1;
+    if (!g.visible) return;
+    for (const b of list) {
+      const [a, up, out, ph] = b.userData.d,
+        e = 1 - (1 - k) * (1 - k);
+      b.position.set(Math.cos(a + k) * out * e * 2.4, up * 9 * e + Math.sin(k * 20 + ph) * 0.2, Math.sin(a + k) * out * e * 2.4);
+      b.rotation.y = -a - k;
+      b.scale.set(1, 1 + Math.sin(k * 60 + ph) * 2.5, 1);
+    }
+  };
+  return g;
+}
+/* the quarters of the people he enslaved, west of the house (Cundall: "the adjacent ruins to the west are said to mark the site of the slave
+   quarters"). A row of small thatched houses with a yard and a cooking place: their form is a general picture of such houses in 1772. */
+export function quarters(lit = false) {
+  const g = grp();
+  for (const [x, z, ry, s] of [[0, 0, 0.1, 1], [5.4, -0.8, -0.12, 2], [10.6, 0.4, 0.2, 3], [3, -7, 0.05, 4], [8.6, -7.6, -0.2, 5]]) {
+    const hut = thatchHut(3.8, 3, { seed: s });
+    hut.position.set(x, 0, z);
+    hut.rotation.y = ry;
+    g.add(hut);
+  }
+  const f = cookFire(lit);
+  f.position.set(4.6, 0, 3.4);
+  g.add(f);
+  const b = W.bench(1.6);
+  b.position.set(6.6, 0, 3.8);
+  b.rotation.y = -0.5;
+  g.add(b);
+  for (const [x, z] of [[1.6, 3], [9, 3.4]]) {
+    const p = postRail(3.2, 0.9, 2);
+    p.position.set(x, 0, z + 2.4);
+    g.add(p);
+  }
+  return g;
+}
+
+/* ---------- the hall ---------- */
+/* a hearth across a corner, in the wall of the front tower (Cundall: "evidences of there having been a fireplace on each story of the front
+   tower"). The opening faces the room along the diagonal. glow: embers. */
+export function cornerHearth(h = 3) {
+  const g = grp();
+  W.stoneBox(2.5, h, 0.7, W.LIME, 0, h / 2, 0, g);
+  box(1.3, 1.15, 0.5, W.WM.dark, 0, 0.6, 0.14, g);
+  const arch = mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.5, 12, 1, false, 0, Math.PI), W.WM.dark, 0, 1.17, 0.14, g);
+  arch.rotation.set(Math.PI / 2, Math.PI / 2, 0);
+  box(2.0, 0.12, 0.3, W.WM.woodDark, 0, 2.0, 0.44, g);
+  W.stoneBox(1.9, 0.1, 0.7, W.LIME_DARK, 0, 0.05, 0.62, g);
+  for (const s of [-1, 1]) {
+    box(0.05, 0.3, 0.45, W.WM.iron, s * 0.3, 0.2, 0.3, g);
+    const l = cyl(0.05, 0.06, 0.8, solid(0x2a1c14, 1), 0, 0.3 + (s + 1) * 0.04, 0.3, g, 6);
+    l.rotation.set(0, s * 0.3, Math.PI / 2);
+  }
+  const ember = box(0.7, 0.05, 0.3, new THREE.MeshBasicMaterial({ color: 0xff6a22 }), 0, 0.24, 0.32, g);
+  ember.userData.noAudit = true;
+  const pot = mesh(new THREE.SphereGeometry(0.17, 10, 7, 0, 7, 0, 2.1), W.WM.iron, 0.1, 0.72, 0.3, g);
+  pot.rotation.x = Math.PI;
+  cyl(0.012, 0.012, 0.42, W.WM.iron, 0.1, 1.0, 0.3, g, 5);
+  box(0.9, 0.04, 0.04, W.WM.iron, 0, 1.2, 0.3, g);
+  /* on the mantel: a pewter plate, a jug */
+  cyl(0.13, 0.1, 0.02, solid(0x9a9a94, 0.4, 0.6), -0.6, 2.07, 0.44, g, 12);
+  cyl(0.07, 0.09, 0.2, solid(0x7a5a3c, 0.7), 0.55, 2.16, 0.44, g, 10);
+  return g;
+}
+/* the foot of the spiral steps in the back tower, seen through an arched doorway across the corner (Cundall: "a series of spiral steps in
+   the back tower") */
+export function spiralFoot(h = 3) {
+  const g = grp();
+  W.stoneBox(0.7, h, 0.7, W.LIME, -0.95, h / 2, 0, g);
+  W.stoneBox(0.7, h, 0.7, W.LIME, 0.95, h / 2, 0, g);
+  W.stoneBox(2.6, h - 2.3, 0.7, W.LIME, 0, 2.3 + (h - 2.3) / 2, 0, g);
+  box(1.3, 2.3, 0.1, W.WM.dark, 0, 1.15, -0.5, g);
+  box(0.06, 2.3, 0.6, W.WM.dark, -0.62, 1.15, -0.25, g);
+  box(0.06, 2.3, 0.6, W.WM.dark, 0.62, 1.15, -0.25, g);
+  for (let i = 0; i < 5; i++) {
+    const s = W.stoneBox(1.0 - i * 0.12, 0.2, 0.34, W.LIME_DARK, -0.1 + i * 0.1, 0.1 + i * 0.2, 0.1 - i * 0.12, g);
+    s.rotation.y = -i * 0.22;
+  }
+  return g;
+}
+/* a plain cot with a thin mattress and a blanket thrown back: where a sick man lay */
+export function cot() {
+  const g = grp();
+  for (const x of [-0.9, 0.9]) for (const z of [-0.36, 0.36]) box(0.06, 0.42, 0.06, W.WM.woodDark, x, 0.21, z, g);
+  box(1.9, 0.07, 0.8, W.WM.wood, 0, 0.4, 0, g);
+  box(1.84, 0.1, 0.74, solid(0xbcb29a, 1), 0, 0.48, 0, g);
+  box(0.4, 0.09, 0.5, solid(0xd6ceb8, 1), -0.68, 0.57, 0, g);
+  const bl = box(0.9, 0.06, 0.78, solid(0x6a5a4a, 1), 0.52, 0.55, 0.04, g);
+  bl.rotation.z = 0.08;
+  box(0.5, 0.1, 0.5, solid(0x6a5a4a, 1), 0.2, 0.58, -0.2, g).rotation.y = 0.5;
+  return g;
+}
+/* a wall shelf with bottles, a pewter mug and a small keg */
+export function shelf(len = 1.6) {
+  const g = grp();
+  box(len, 0.04, 0.26, W.WM.woodDark, 0, 0, 0.13, g);
+  for (const x of [-len / 2 + 0.1, len / 2 - 0.1]) box(0.04, 0.22, 0.22, W.WM.woodDark, x, -0.12, 0.11, g);
+  const r = rng(len * 7);
+  for (let i = 0; i < 5; i++) {
+    const x = -len / 2 + 0.25 + i * ((len - 0.5) / 4);
+    if (i % 2) cyl(0.04, 0.045, 0.2, solid([0x2f4030, 0x3a2a1a][i % 3 ? 0 : 1], 0.3), x, 0.12, 0.13, g, 8);
+    else cyl(0.045, 0.04, 0.1 + r() * 0.04, solid(0x9a9a94, 0.4, 0.6), x, 0.07, 0.13, g, 8);
+  }
+  return g;
+}
+/* papers, an inkwell and a quill: the searchers' list */
+export function writing() {
+  const g = grp();
+  box(0.32, 0.008, 0.22, solid(0xe7dcc2, 1), 0, 0.004, 0, g).rotation.y = 0.2;
+  box(0.3, 0.008, 0.2, solid(0xded2b6, 1), 0.12, 0.01, 0.06, g).rotation.y = -0.3;
+  cyl(0.03, 0.035, 0.05, solid(0x1a1a22, 0.3), -0.26, 0.025, -0.05, g, 8);
+  const q = cyl(0.004, 0.012, 0.26, solid(0xe8e4d8, 1), -0.24, 0.14, -0.05, g, 4);
+  q.rotation.z = -0.45;
+  return g;
+}
+/* clothes folded in an open trunk */
+export function clothesTrunk() {
+  const g = W.chest(1.1, 0.55, 0.55);
+  g.userData.open(1);
+  const cols = [0x5a3a2a, 0x2f3a4a, 0x8a8068, 0x3a2a2a, 0x6a5a3a];
+  cols.forEach((c, i) => box(0.44, 0.07, 0.4, solid(c, 1), -0.26 + (i % 2) * 0.5, 0.34 + Math.floor(i / 2) * 0.07, 0, g));
+  return g;
+}
+
+/* ---------- the sinkhole ---------- */
+/* the ring of inclined rock about ten metres high that stands round the hole's mouth (the cavers' account), with a way in on one side.
+   R: the ring's inner radius at the foot; gap: [from, to] angles left open. One mesh; trees and scrub along the top are added by the place. */
+export function cliffRing(R = 15, H = 10, { seed = 3, gap = [0.9, 1.6], seg = 44 } = {}) {
+  const r = rng(seed),
+    P = [],
+    U = [],
+    C = [],
+    rows = 5,
+    ring = [];
+  for (let i = 0; i <= seg; i++) {
+    const a = (i / seg) * Math.PI * 2,
+      inGap = a > gap[0] && a < gap[1],
+      edge = Math.min(Math.abs(a - gap[0]), Math.abs(a - gap[1])),
+      hh = inGap ? 0 : H * (0.72 + r() * 0.4) * Math.min(1, 0.25 + edge * 1.6),
+      col = [];
+    for (let k = 0; k <= rows; k++) {
+      const t = k / rows,
+        lean = R + t * 3.6 + (k ? (r() - 0.5) * 1.5 : (r() - 0.5) * 0.5) + (k === rows ? 3.4 : 0),
+        y = k === rows ? hh * 0.94 : hh * t;
+      col.push([Math.cos(a) * lean, y, Math.sin(a) * lean, 0.74 + r() * 0.3]);
+    }
+    ring.push(col);
+  }
+  ring[seg] = ring[0];
+  for (let i = 0; i < seg; i++)
+    for (let k = 0; k < rows; k++) {
+      const a = ring[i][k],
+        b = ring[i + 1][k],
+        c = ring[i + 1][k + 1],
+        d = ring[i][k + 1],
+        top = k === rows - 1;
+      for (const [p, u] of [[a, [i / 3, k / rows]], [d, [i / 3, (k + 1) / rows]], [b, [(i + 1) / 3, k / rows]], [b, [(i + 1) / 3, k / rows]], [d, [i / 3, (k + 1) / rows]], [c, [(i + 1) / 3, (k + 1) / rows]]]) {
+        P.push(p[0], p[1], p[2]);
+        U.push(u[0], u[1]);
+        const v = p[3];
+        if (top) C.push(0.36 * v, 0.46 * v, 0.28 * v);
+        else C.push(v, v, v * 0.97);
+      }
+    }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+  geo.setAttribute("uv", new THREE.Float32BufferAttribute(U, 2));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
+  geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, keep("m-crag", () => new THREE.MeshStandardMaterial({ map: cragTex(), vertexColors: true, roughness: 1, flatShading: true, side: THREE.DoubleSide })));
+  m.name = "terrain";
+  const g = grp();
+  g.add(m);
+  g.userData.top = (a) => {
+    const col = ring[Math.round((((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / ((Math.PI * 2) / seg)) % seg][rows];
+    return col;
+  };
+  return g;
+}
+/* the mouth of the hole and the shaft under it. The mouth is about 3 by 5 metres with jagged rock at its lip; the shaft keeps that size for
+   some 15 metres and then widens (the cavers' survey). rx, rz: the mouth's half sizes. */
+export function shaft(rx = 2.5, rz = 1.5, seed = 2) {
+  const g = grp(),
+    r = rng(seed),
+    P = [],
+    C = [],
+    seg = 20,
+    levels = [[0.05, 1, 0.62], [-1.2, 1.04, 0.5], [-4, 0.98, 0.3], [-9, 1.05, 0.14], [-15, 1.1, 0.05], [-24, 1.9, 0.01], [-40, 3.2, 0]],
+    rings = levels.map(([y, k, v]) => {
+      const out = [];
+      for (let i = 0; i < seg; i++) {
+        const a = (i / seg) * Math.PI * 2,
+          j = y > 0 ? 1 : 0.9 + r() * 0.2;
+        out.push([Math.cos(a) * rx * k * j, y, Math.sin(a) * rz * k * j, v * (0.8 + r() * 0.4)]);
+      }
+      return out;
+    });
+  for (let l = 0; l < rings.length - 1; l++)
+    for (let i = 0; i < seg; i++) {
+      const a = rings[l][i],
+        b = rings[l][(i + 1) % seg],
+        c = rings[l + 1][(i + 1) % seg],
+        d = rings[l + 1][i];
+      for (const p of [a, b, d, b, c, d]) {
+        P.push(p[0], p[1], p[2]);
+        C.push(p[3], p[3], p[3] * 0.96);
+      }
+    }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
+  geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false }));
+  m.userData.noAudit = true;
+  m.userData.noBatch = true;
+  g.add(m);
+  /* the lip: jagged outcrops round the mouth, lower on the side you come to */
+  for (let i = 0; i < 18; i++) {
+    const a = (i / 18) * Math.PI * 2 + r() * 0.2,
+      near = Math.sin(a) > 0.5,
+      k = (near ? 0.3 : 0.55) + r() * (near ? 0.25 : 0.7),
+      o = mesh(new THREE.DodecahedronGeometry(k, 0), flat([0xa8a294, 0x8f897c, 0x77736a, 0x9a9486][(r() * 4) | 0]), Math.cos(a) * (rx + 0.25 + k * 0.6), k * 0.25, Math.sin(a) * (rz + 0.25 + k * 0.6), g);
+    o.scale.set(1.1, near ? 0.6 : 0.9 + r() * 0.8, 1);
+    o.rotation.y = r() * 6;
+  }
+  return g;
+}
+/* the ground of the hole's valley: one sheet with the mouth cut out of it, so you look down a real shaft */
+export function holedGround(size, rx, rz, mat, cx = 0, cz = 0) {
+  const sh = new THREE.Shape();
+  sh.moveTo(-size / 2, -size / 2);
+  sh.lineTo(size / 2, -size / 2);
+  sh.lineTo(size / 2, size / 2);
+  sh.lineTo(-size / 2, size / 2);
+  const hole = new THREE.Path();
+  hole.absellipse(cx, -cz, rx, rz, 0, Math.PI * 2, true);
+  sh.holes.push(hole);
+  const m = new THREE.Mesh(new THREE.ShapeGeometry(sh, 20), mat);
+  m.rotation.x = -Math.PI / 2;
+  m.position.y = -0.025;
+  m.name = "terrain";
+  return m;
+}
+/* a coil of rope and a stake driven into the ground */
+export function ropeStake() {
+  const g = grp();
+  cyl(0.05, 0.03, 0.7, W.WM.woodDark, 0, 0.3, 0, g, 6).rotation.z = 0.2;
+  for (let i = 0; i < 4; i++) mesh(new THREE.TorusGeometry(0.26 - i * 0.02, 0.03, 5, 14), W.WM.rope, 0.6, 0.04 + i * 0.05, 0.2, g).rotation.x = Math.PI / 2;
+  return g;
+}
+
+/* ---------- Spanish Town, 1773 ---------- */
+const brick = (rx, ry, rgb = [156, 84, 62]) => std(brickTex(rgb, [Math.max(1, Math.round(rx)), Math.max(1, Math.round(ry))]), 1);
+/* a sash window with a white surround, on a wall facing +z; shut: jalousie shutters closed across it */
+function sash(parent, x, y, z, w = 1.1, h = 1.9, shut = false) {
+  box(w + 0.24, h + 0.24, 0.06, M.white, x, y, z, parent);
+  box(w, h, 0.07, shut ? M.green : W.WM.glass, x, y, z + 0.01, parent);
+  if (!shut) {
+    box(w, 0.05, 0.08, M.white, x, y, z + 0.012, parent);
+    box(0.05, h, 0.08, M.white, x, y, z + 0.012, parent);
+  }
+  box(w + 0.4, 0.08, 0.16, M.white, x, y - h / 2 - 0.14, z + 0.04, parent);
+}
+/* the public building on the east side of the square (the House of Assembly, where Long says the court sat upstairs): red brick, an arcade
+   of round brick arches below, a long timber gallery above, a hipped shingled roof. Length L along x, the front to +z. userData.doorX: the
+   court door under the arcade. */
+export function publicBuilding(L = 42) {
+  const g = grp(),
+    H1 = 4.6,
+    H2 = 4.0,
+    D = 9,
+    bays = 9,
+    bw = L / bays,
+    bm = brick(L / 3, 3),
+    pier = brick(1, 3, [164, 92, 68]);
+  box(L, H1 + H2, D, bm, 0, (H1 + H2) / 2, -D / 2 - 2.6, g);   /* the body, set back behind the arcade walk */
+  box(L, 0.12, 2.9, std(T.stone([170, 164, 150], [14, 1]), 1), 0, 0.06, -1.35, g).name = "terrain";
+  for (let i = 0; i <= bays; i++) {
+    const x = -L / 2 + i * bw;
+    box(0.9, 3.0, 0.9, pier, x, 1.5, 0, g);
+    box(1.06, 0.16, 1.06, M.white, x, 3.0, 0, g);
+    box(1.0, 0.3, 1.0, std(T.stone([170, 164, 150], [1, 1]), 1), x, 0.15, 0, g);
+    if (i < bays) {
+      const R = bw / 2 - 0.45,
+        arch = mesh(new THREE.TorusGeometry(R + 0.2, 0.22, 4, 14, Math.PI), pier, x + bw / 2, 3.05, 0, g);
+      arch.scale.z = 2;
+      /* the wall over each arch: a brick spandrel cut to the curve */
+      const sp = new THREE.Shape();
+      sp.moveTo(-bw / 2, 0);
+      sp.lineTo(-R, 0);
+      sp.absarc(0, 0, R, Math.PI, 0, true);
+      sp.lineTo(bw / 2, 0);
+      sp.lineTo(bw / 2, H1 - 3.05);
+      sp.lineTo(-bw / 2, H1 - 3.05);
+      const sg = new THREE.ExtrudeGeometry(sp, { depth: 0.8, bevelEnabled: false, curveSegments: 8 });
+      sg.translate(0, 0, -0.4);
+      const uv = sg.attributes.uv;
+      for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * 0.3, uv.getY(k) * 0.3);
+      mesh(sg, keep("m-spandrel", () => std(brickTex([156, 84, 62], [1, 1]), 1)), x + bw / 2, 3.05, 0, g);
+      /* inside the arcade: the wall of the ground floor with its doors and windows */
+      if (i !== 4) sash(g, x + bw / 2, 1.9, -2.58, 1.2, 2.0, i % 3 === 1);
+    }
+  }
+  box(L + 0.6, 0.3, 3.4, M.white, 0, H1 + 0.15, -1.1, g);   /* the gallery floor and its cornice */
+  /* the upper gallery: turned posts, a rail with balusters, the wall behind with its doors */
+  for (let i = 0; i <= bays * 2; i++) {
+    const x = -L / 2 + (i * bw) / 2;
+    cyl(0.09, 0.11, H2 - 0.5, M.white, x, H1 + 0.3 + (H2 - 0.5) / 2, 0.3, g, 8);
+  }
+  box(L, 0.08, 0.1, M.white, 0, H1 + 1.3, 0.3, g);
+  box(L, 0.06, 0.08, M.white, 0, H1 + 0.42, 0.3, g);
+  for (let x = -L / 2 + 0.25; x < L / 2; x += 0.42) box(0.05, 0.86, 0.05, M.white, x, H1 + 0.86, 0.3, g);
+  for (let i = 0; i < bays; i++) sash(g, -L / 2 + (i + 0.5) * bw, H1 + 1.75, -2.58, 1.2, 2.3, i % 2 === 0);
+  box(L + 0.8, 0.26, 3.6, M.white, 0, H1 + H2 - 0.1, -1.0, g);
+  const rf = roof(L + 0.4, D + 3.4, 2.6, 0.4);
+  rf.position.set(0, H1 + H2 + 0.03, -D / 2 - 1.0);
+  g.add(rf);
+  const dr = makeDoor({ w: 1.6, h: 2.6, kind: "six", leaves: 2, color: 0x2f3b33, frame: 0xe2d9c2, handle: "knob" });
+  dr.position.set(0, 0.12, -2.59);
+  g.add(dr);
+  g.userData.doorX = 0;
+  return g;
+}
+/* King's House on the west side of the square: a long two-storey front of brick with a white portico of columns and a pediment in the
+   middle, and a parapet with a balustrade (the building of 1762 that Long describes and Bonnor's plate of 1774 shows). The front faces +z. */
+export function kingsHouse(L = 46) {
+  const g = grp(),
+    H = 9.4,
+    D = 10,
+    bm = brick(L / 3, 3, [150, 88, 70]);
+  box(L, H, D, bm, 0, H / 2, -D / 2, g);
+  box(L + 0.3, 0.7, D + 0.3, std(T.stone([196, 190, 174], [16, 1]), 1), 0, 0.35, -D / 2, g);
+  box(L + 0.4, 0.22, 0.3, M.white, 0, 4.9, 0.05, g);
+  box(L + 0.6, 0.4, D + 0.6, M.white, 0, H + 0.2, -D / 2, g);
+  /* the parapet: a balustrade between plain blocks */
+  for (let i = 0; i <= 12; i++) box(0.5, 0.9, 0.4, M.white, -L / 2 + 0.25 + (i * (L - 0.5)) / 12, H + 0.85, -0.1, g);
+  box(L, 0.1, 0.3, M.white, 0, H + 1.3, -0.1, g);
+  for (let x = -L / 2 + 0.6; x < L / 2; x += 0.5) box(0.1, 0.8, 0.1, M.white, x, H + 0.8, -0.1, g);
+  for (let i = 0; i < 13; i++) {
+    const x = -L / 2 + 2.3 + i * ((L - 4.6) / 12);
+    if (Math.abs(x) < 4.6) continue;
+    sash(g, x, 2.8, 0.02, 1.2, 2.3);
+    sash(g, x, 7.0, 0.02, 1.2, 2.1);
+  }
+  for (const s of [-1, 1]) for (let k = 0; k < 9; k++) box(0.6, 0.5, 0.12, M.white, s * (L / 2 - 0.3), 1.0 + k * 1.0, 0.03, g).scale.x = k % 2 ? 1 : 0.7;
+  /* the portico: a flight of steps, six columns, an entablature and a pediment */
+  const P = grp(g, 0, 0, 0),
+    pw = 9.4,
+    pd = 3.4;
+  for (let i = 0; i < 4; i++) box(pw + 1.6 - i * 0.4, 0.2, pd + 1.4 - i * 0.36, std(T.stone([206, 200, 186], [4, 1]), 1), 0, 0.1 + i * 0.2, pd / 2 + 0.1 - i * 0.04, P);
+  for (let i = 0; i < 6; i++) {
+    const x = -pw / 2 + 0.5 + (i * (pw - 1)) / 5;
+    cyl(0.32, 0.38, 6.6, M.white, x, 0.8 + 3.3, pd, P, 14);
+    box(0.9, 0.2, 0.9, M.white, x, 0.9, pd, P);
+    box(0.86, 0.26, 0.86, M.white, x, 7.5, pd, P);
+  }
+  box(pw + 0.4, 0.8, pd + 0.6, M.white, 0, 8.0, pd / 2 + 0.1, P);
+  const ped = new THREE.Shape();
+  ped.moveTo(-pw / 2 - 0.4, 0);
+  ped.lineTo(pw / 2 + 0.4, 0);
+  ped.lineTo(0, 2.0);
+  const pg = new THREE.ExtrudeGeometry(ped, { depth: pd + 0.6, bevelEnabled: false });
+  mesh(pg, M.white, 0, 8.4, -0.2, P);
+  const dr = makeDoor({ w: 1.8, h: 3.0, kind: "six", leaves: 2, color: 0x2c3a30, frame: 0xe2d9c2, handle: "knob" });
+  dr.position.set(0, 0.8, 0.02);
+  g.add(dr);
+  for (const s of [-1, 1]) sash(g, s * 3.1, 3.0, 0.02, 1.1, 2.2);
+  for (const x of [-3.1, 0, 3.1]) sash(g, x, 7.0, 0.02, 1.1, 2.0);
+  const rf = roof(L - 2, D - 2, 1.6, 0);
+  rf.position.set(0, H + 0.4, -D / 2);
+  g.add(rf);
+  return g;
+}
+/* the railed enclosure in the middle of the square: eight sides, a low stone kerb, a rail on posts. What stood inside it in 1773 is not
+   known to us, so it holds only grass. R: the distance from the centre to a corner. */
+export function octagon(R = 5.2) {
+  const g = grp(),
+    kerb = std(T.stone([190, 184, 168], [3, 1]), 1),
+    rail = solid(0x2c2e30, 0.6, 0.3);
+  const gr = mesh(new THREE.CircleGeometry(R * 0.99, 8), std(T.grass([4, 4], [112, 128, 76])), 0, 0.03, 0, g);
+  gr.rotation.x = -Math.PI / 2;
+  gr.rotation.z = Math.PI / 8;
+  gr.name = "terrain";
+  for (let i = 0; i < 8; i++) {
+    const a0 = (i / 8) * Math.PI * 2 + Math.PI / 8,
+      a1 = ((i + 1) / 8) * Math.PI * 2 + Math.PI / 8,
+      x0 = Math.cos(a0) * R,
+      z0 = Math.sin(a0) * R,
+      x1 = Math.cos(a1) * R,
+      z1 = Math.sin(a1) * R,
+      len = Math.hypot(x1 - x0, z1 - z0),
+      seg = grp(g, (x0 + x1) / 2, 0, (z0 + z1) / 2);
+    seg.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
+    box(len + 0.3, 0.36, 0.34, kerb, 0, 0.18, 0, seg);
+    for (const y of [0.62, 1.22]) box(len, 0.045, 0.045, rail, 0, y, 0, seg);
+    for (let k = 0; k <= 8; k++) box(0.03, 0.9, 0.03, rail, -len / 2 + (k * len) / 8, 0.8, 0, seg);
+    cyl(0.07, 0.07, 1.2, kerb, x0 - (x0 + x1) / 2, 0.9, 0, seg, 8).position.set(-len / 2, 0.9, 0);
+    mesh(new THREE.SphereGeometry(0.1, 8, 6), kerb, -len / 2, 1.56, 0, seg);
+  }
+  return g;
+}
+/* a town house of the 1770s: two storeys, plastered or brick, sash windows with jalousies, a shingled hip roof, sometimes a timber piazza
+   over the footway. A general picture of Spanish Town's houses. The front faces +z. */
+export function townHouse(w = 12, { h = 6.6, d = 8, rgb = [206, 192, 160], piazza = false, seed = 1, brickWall = false } = {}) {
+  const g = grp(),
+    r = rng(seed),
+    n = Math.max(2, Math.floor(w / 2.8)),
+    doorAt = (r() * n) | 0;
+  box(w, h, d, brickWall ? brick(w / 3, 2, rgb) : std(T.plaster(rgb, [2, 1]), 1), 0, h / 2, -d / 2, g);
+  box(w + 0.2, 0.5, d + 0.2, std(T.stone([150, 144, 130], [4, 1]), 1), 0, 0.25, -d / 2, g);
+  for (let i = 0; i < n; i++) {
+    const x = -w / 2 + (i + 0.5) * (w / n);
+    if (i === doorAt) {
+      const dr = makeDoor({ w: 1.1, h: 2.3, kind: "six", color: [0x3d2c22, 0x2f3b33, 0x4a3a2a][seed % 3], frame: 0xe2d9c2, handle: "knob" });
+      dr.position.set(x, 0.3, 0.01);
+      g.add(dr);
+      box(1.7, 0.3, 0.6, std(T.stone([170, 164, 150], [1, 1]), 1), x, 0.15, 0.3, g);
+    } else sash(g, x, 1.9, 0.02, 1.0, 1.7, r() < 0.4);
+    sash(g, x, 4.8, 0.02, 1.0, 1.6, r() < 0.5);
+  }
+  if (piazza) {
+    box(w, 0.14, 2.2, W.WM.wood, 0, 3.3, 1.1, g);
+    for (let i = 0; i <= n; i++) cyl(0.08, 0.09, 3.2, M.white, -w / 2 + 0.1 + (i * (w - 0.2)) / n, 1.6, 2.1, g, 6);
+    for (let i = 0; i <= n; i++) cyl(0.06, 0.07, 2.5, M.white, -w / 2 + 0.1 + (i * (w - 0.2)) / n, 4.6, 2.1, g, 6);
+    box(w, 0.06, 0.06, M.white, 0, 4.3, 2.1, g);
+    const pr = mesh(new THREE.BoxGeometry(w + 0.4, 0.1, 2.6), M.shingle(), 0, 5.95, 1.1, g);
+    pr.rotation.x = 0.14;
+  }
+  const rf = roof(w, d, 2.0, 0.35);
+  rf.position.set(0, h, -d / 2);
+  g.add(rf);
+  return g;
+}
+/* a garden wall of brick with a coping, len along x */
+export function gardenWall(len, h = 2.1) {
+  const g = grp();
+  box(len, h, 0.4, brick(len / 3, 1, [164, 110, 86]), 0, h / 2, 0, g);
+  box(len + 0.1, 0.12, 0.54, M.white, 0, h + 0.06, 0, g);
+  return g;
+}
+/* a market woman's ground: a mat with heaps of yams, plantains and a basket */
+export function groundStall(seed = 1) {
+  const g = grp(),
+    r = rng(seed);
+  box(1.8, 0.02, 1.2, solid(0xb39a62, 1), 0, 0.01, 0, g);
+  for (let i = 0; i < 7; i++) mesh(new THREE.IcosahedronGeometry(0.09 + r() * 0.04, 0), flat([0x7a5a3a, 0x8a6a40, 0x6a4a30][(r() * 3) | 0]), -0.5 + r() * 0.5, 0.08, -0.3 + r() * 0.5, g).scale.set(1.6, 0.8, 0.9);
+  for (let i = 0; i < 6; i++) {
+    const p = cyl(0.035, 0.03, 0.26, flat(0x7a8a3a), 0.4 + r() * 0.3, 0.05, -0.2 + i * 0.07, g, 5);
+    p.rotation.z = Math.PI / 2;
+    p.rotation.y = r() * 0.4;
+  }
+  const b = cyl(0.26, 0.2, 0.26, std(T.weave([2, 1]), 1), 0.1, 0.15, 0.36, g, 10);
+  for (let i = 0; i < 5; i++) mesh(new THREE.SphereGeometry(0.07, 6, 5), flat([0xd08a2a, 0xc86a22, 0xd8a43a][(r() * 3) | 0]), 0.1 + (r() - 0.5) * 0.26, 0.3, 0.36 + (r() - 0.5) * 0.26, g);
+  return g;
+}
+/* a far crowd, as dark shapes only: people standing with their backs to us, for the dawn scene. No faces, no detail. */
+export function farCrowd(n = 26, w = 12, seed = 2) {
+  const g = grp(),
+    r = rng(seed),
+    m = new THREE.MeshBasicMaterial({ color: 0x1c1a1c });
+  for (let i = 0; i < n; i++) {
+    const x = (r() - 0.5) * w,
+      z = (r() - 0.5) * 3,
+      h = 1.5 + r() * 0.25;
+    mesh(new THREE.CylinderGeometry(0.17, 0.24, h - 0.25, 6), m, x, (h - 0.25) / 2, z, g);
+    mesh(new THREE.SphereGeometry(0.12, 6, 5), m, x, h - 0.1, z, g);
+    if (r() < 0.5) mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 8), m, x, h + 0.02, z, g);
+  }
+  dynamic(noAudit(g));
+  return g;
+}
+export { M as SM };

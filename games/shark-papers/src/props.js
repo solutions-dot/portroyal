@@ -1,4 +1,4 @@
-/* Small things of the 1770s: what the player carries, what people hold, and the things the story looks at.
+/* Small things of the 1790s: what the player carries, what people hold, and the things the story looks at.
    Every one is a reconstruction of a common kind of object; none copies a museum piece. */
 import * as THREE from "three";
 import { cv, std, solid, mesh, box, cyl, plane, grp } from "./gfx.js";
@@ -119,6 +119,29 @@ export function item(id) {
     const g = grp();
     box(0.2, 0.12, 0.14, solid(0xb86a5a, 0.8), 0, 0.06, 0, g);
     box(0.2, 0.03, 0.14, solid(0xe8d8c0, 0.8), 0, 0.135, 0, g);
+    return dynamic(g);
+  }
+  if (/^sheet/.test(id)) {
+    /* one leaf of the shark's papers: damp, with lines of faded ink */
+    const g = grp(),
+      n = Number(id.slice(5)) || 1;
+    box(0.3, 0.006, 0.22, solid(0xd9cfae, 1), 0, 0.003, 0, g);
+    for (let i = 0; i < 6; i++) box(0.2 + ((i * n * 7) % 5) * 0.012, 0.001, 0.006, solid(0x5a4a3a, 1), -0.02 + ((i + n) % 3) * 0.008, 0.0068, -0.075 + i * 0.03, g);
+    return dynamic(g);
+  }
+  if (id === "box") {
+    /* an officer's small deal box with rope handles, for carrying papers */
+    const g = grp();
+    box(0.5, 0.26, 0.32, WOOD_DARK, 0, 0.13, 0, g);
+    box(0.52, 0.04, 0.34, WOOD, 0, 0.28, 0, g);
+    for (const x of [-0.17, 0.17]) box(0.03, 0.27, 0.33, IRON, x, 0.135, 0, g);
+    box(0.05, 0.06, 0.01, BRASS, 0, 0.2, 0.165, g);
+    return dynamic(g);
+  }
+  if (id === "stack") {
+    /* the shark's papers, dried and gathered: a small stack of stained sheets */
+    const g = grp();
+    for (let i = 0; i < 4; i++) box(0.27, 0.012, 0.2, solid(0xcabf96, 1), 0, 0.006 + i * 0.012, 0, g).rotation.y = i * 0.1;
     return dynamic(g);
   }
   if (id === "bundle") {
