@@ -58,6 +58,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     hideSkip = showCinematicSkip(() => $("readCine").click());
     $("pauseCine").textContent = "Pause";
     document.body.classList.add("cine");
+    $("sub").classList.remove("dim");   /* the captions: #sub starts dimmed in index.html, so without this no caption ever showed */
     D.apply(0);
   };
   let hideSkip;
@@ -71,6 +72,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     $("cineControls").hidden = true;
     document.body.classList.remove("cine");
     $("sub").textContent = "";
+    $("sub").classList.add("dim");
     camera.fov = playFov();
     camera.updateProjectionMatrix();
     if (rumble) setG(rumble, 0, 0.2);
