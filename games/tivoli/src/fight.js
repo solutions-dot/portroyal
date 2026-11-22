@@ -29,6 +29,7 @@ import { release } from '../../../engine/preload.js';
 import { aimDir, faceFor, wrap } from './aim.js';
 import { FX, flash, puff, kick, updateFx, shakeOffset } from './fx.js';
 import * as SFX from './sfx.js';
+import { cue } from '../../../engine/audio.js';
 import { finishChapter } from './story.js';
 
 export const FIGHT = { on: false, T: 0, contact: false, bodies: [], actors: [], hidden: [], env: null, street: null, cleanup: null };
@@ -129,7 +130,7 @@ function complete() {
   if (!FIGHT.on) return;
   FIGHT.ended = true;
   finish(false);
-  show('aftercard'); finishChapter(5);
+  show('aftercard'); finishChapter(5); cue('sad');   /* a soft, sad phrase under the after card (about 70 civilians and one soldier died) */
   $('fnext').focus();
 }
 
