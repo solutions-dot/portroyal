@@ -763,24 +763,54 @@ export function grandStair({ W = 2.2, rise = 0.17, tread = 0.3, steps = 12, H = 
     ld = 1.3;
   box(lw, top, ld, MAHOG_DARK, 0, top / 2, run + ld / 2, g);
   box(lw + 0.04, 0.04, ld + 0.02, MAHOG, 0, top + 0.01, run + ld / 2, g);
-  /* the two upper flights, back toward the front of the hall along the side, rising out of sight through the ceiling */
-  const up = Math.ceil((H - top) / rise);
-  for (const s of [-1, 1])
-    for (let i = 0; i < up; i++) {
-      const y = top + rise * (i + 1),
-        z = run - tread * (i + 0.5);
-      if (z < -0.2) break;
-      box(1.2, 0.06, tread + 0.02, MAHOG, s * (W / 2 + 0.7), y, z, g);
-      box(1.2, rise, 0.03, MAHOG_DARK, s * (W / 2 + 0.7), y - rise / 2, z + tread / 2, g);
-      box(0.06, y, 0.08, MAHOG_DARK, s * (W / 2 + 1.27), y / 2, z, g);   /* the string against the wall carries each tread */
+  /* the landing is closed in underneath with raised mahogany panels (it was one flat dark face) */
+  for (const sd of [-1, 1]) {
+    const x0 = W / 2, x1 = lw / 2, pw = x1 - x0;
+    for (const [py, ph] of [[0.25, 0.55], [0.95, 0.6]]) {
+      box(pw - 0.16, ph, 0.03, MAHOG, sd * (x0 + pw / 2), py + ph / 2, run - 0.015, g);   /* facing you, beside the foot of the upper flight */
+      box(0.03, ph, ld - 0.2, MAHOG, sd * (x1 + 0.015), py + ph / 2, run + ld / 2, g);   /* on the outer side */
     }
-  /* balusters and rails on the middle flight and the landing */
+    box(pw, 0.1, 0.04, MAHOG, sd * (x0 + pw / 2), 0.05, run - 0.02, g);   /* a skirting */
+  }
+  /* the two upper flights return toward the front of the hall on either side of the lower one and go on up through the stairwell to the floor
+     above (22 November 2026, owner: "these stair case is all wrong": each tread had a post down to the floor, which read as a dark slab, and the
+     flights ran into black patches on the ceiling). Each is a real flight now: treads and risers between two closed strings, boarded underneath,
+     with balusters and a handrail on both sides. g.userData.wells gives the openings the ceiling must leave over them. */
   const rail = (x0, y0, z0, x1, y1, z1) => {
     const L = Math.hypot(x1 - x0, y1 - y0, z1 - z0),
       b = box(0.07, 0.06, L, MAHOG, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, g);
     b.lookAt(g.localToWorld(new THREE.Vector3(x1, y1, z1)));
     return b;
   };
+  const up = Math.ceil((H - top) / rise), fw = 1.2, zEnd = run - tread * up;
+  const slab = (w, h, x, y0, z0, y1, z1, mat) => {   /* a board along the slope from (y0, z0) to (y1, z1) */
+    const L = Math.hypot(y1 - y0, z1 - z0), b = box(w, h, L, mat, x, (y0 + y1) / 2, (z0 + z1) / 2, g);
+    b.lookAt(g.localToWorld(new THREE.Vector3(x, y1, z1))); return b;
+  };
+  g.userData.wells = [];
+  for (const s of [-1, 1]) {
+    const xc = s * (W / 2 + 0.1 + fw / 2);
+    for (let i = 0; i < up; i++) {
+      const y = top + rise * (i + 1), z = run - tread * (i + 0.5);
+      box(fw, 0.05, tread + 0.03, MAHOG, xc, y - 0.025, z - 0.01, g);
+      box(fw, rise, 0.03, MAHOG_DARK, xc, y - rise / 2, z + tread / 2, g);
+      box(W * 0.42 * 0.8, 0.012, tread + 0.031, solid(0x7a2226, 1), xc, y + 0.006, z - 0.01, g);   /* the runner goes on up */
+    }
+    for (const e of [-1, 1]) {   /* the closed strings, deep enough to hide the step ends */
+      const xs = xc + e * (fw / 2 + 0.03);
+      slab(0.06, 0.42, xs, top - 0.02, run + 0.05, top + rise * up - 0.02, zEnd + 0.05, MAHOG_DARK);
+      for (let i = 0; i < up; i += 1) {
+        const b = lathe([[0.014, 0], [0.022, 0.12], [0.011, 0.3], [0.019, 0.6], [0.012, 0.82]], MAHOG, 6);
+        b.position.set(xs, top + rise * (i + 1) + 0.18, run - tread * (i + 0.5)); g.add(b);
+      }
+      rail(xs, top + 0.18 + rise + 0.82, run - tread * 0.5, xs, top + 0.18 + rise * up + 0.82, zEnd + tread * 0.5);
+    }
+    slab(fw + 0.12, 0.03, xc, top + rise - 0.26, run - tread, top + rise * up - 0.3, zEnd, MAHOG_DARK);   /* boarded underneath, from the first step up (below that the landing is solid) */
+    /* where the flight passes through the ceiling, it needs about 2 m of head room: the well runs from there to its top */
+    const zIn = run - tread * Math.max(0, Math.ceil((H - 2.0 - top) / rise));
+    g.userData.wells.push({ x0: xc - fw / 2 - 0.1, x1: xc + fw / 2 + 0.1, z0: zEnd - 0.05, z1: zIn });
+  }
+  /* balusters and rails on the middle flight and the landing */
   for (const s of [-1, 1]) {
     const x = s * (W / 2 - 0.05);
     for (let i = 0; i < steps; i++) {
@@ -1517,6 +1547,35 @@ export function potPlant(seed = 1, s = 1) {
     l.rotation.x = Math.sin(a) * 0.5;
     l.scale.z = 0.3;
   }
+  g.scale.setScalar(s);
+  return g;
+}
+/* a potted palm in a glazed jardiniere, for the stair hall (owner, 22 November 2026: a plant each side of the steps). A tall glazed pot on a
+   short foot, dark soil, and about ten arching fronds, each a curved stalk with paired leaflets that droop toward the tip. All the leaves are
+   one merged mesh. About 1.5 m tall at s = 1. */
+export function hallPalm(seed = 1, s = 1) {
+  const g = grp(), r = rng(seed);
+  g.add(lathe([[0.15, 0], [0.17, 0.05], [0.13, 0.08], [0.2, 0.2], [0.25, 0.4], [0.24, 0.5], [0.27, 0.53], [0.25, 0.55]], solid(0x2f4a5a, 0.35, 0.05), 16));   /* the glazed pot */
+  cyl(0.235, 0.235, 0.02, solid(0x2a1c14, 1), 0, 0.52, 0, g, 14);   /* the soil */
+  const leaves = [], stalks = [], v = new THREE.Vector3();
+  const N = 10;
+  for (let i = 0; i < N; i++) {
+    const a = (i / N) * Math.PI * 2 + r() * 0.5, up = 0.95 + r() * 0.45, L = 0.85 + r() * 0.4, ca = Math.cos(a), sa = Math.sin(a);
+    const at = (t) => { const reach = L * t, h = 0.54 + Math.sin(up) * L * t - 0.6 * L * t * t * t; return new THREE.Vector3(ca * reach * Math.cos(up * 0.4), h, sa * reach * Math.cos(up * 0.4)); };
+    const pts = []; for (let k = 0; k <= 6; k++) pts.push(at(k / 6));
+    stalks.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 8, 0.008, 4));
+    for (let k = 1; k <= 9; k++) {
+      const t = 0.15 + (k / 9) * 0.8, p0 = at(t), p1 = at(t + 0.03), dir = v.copy(p1).sub(p0).normalize(), side = new THREE.Vector3(-sa, 0, ca), ll = 0.2 * (1 - t * 0.5);
+      for (const sd of [-1, 1]) {
+        const tip = p0.clone().addScaledVector(side, sd * ll).add(new THREE.Vector3(0, -ll * 0.45, 0)).addScaledVector(dir, ll * 0.4);
+        const gq = new THREE.BufferGeometry(), w = 0.022;
+        gq.setAttribute("position", new THREE.Float32BufferAttribute([...p0.toArray(), ...tip.toArray(), ...p0.clone().addScaledVector(dir, w * 2).toArray(), ...tip.clone().addScaledVector(dir, w * 0.5).toArray()], 3));
+        gq.setIndex([0, 1, 2, 2, 1, 3]); gq.computeVertexNormals(); leaves.push(gq);
+      }
+    }
+  }
+  const lm = new THREE.MeshStandardMaterial({ color: 0x3f7a3c, roughness: 0.7, side: THREE.DoubleSide });
+  g.add(new THREE.Mesh(mergeGeometries(leaves), lm), new THREE.Mesh(mergeGeometries(stalks), solid(0x5a6a34, 0.8)));
   g.scale.setScalar(s);
   return g;
 }

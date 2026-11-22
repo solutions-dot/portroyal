@@ -245,7 +245,7 @@ function house({ phone } = {}) {
     mD = solid(0xc2cdc6, 1),
     floor = std(T.plank([104, 58, 38], 10, [10, 4]), 0.55);
   box(30.6, 0.06, 10.6, floor, 0, -0.03, 0, G).name = "terrain";
-  box(30.6, 0.1, 10.6, solid(0xe6dfcc, 1), 0, H + 0.05, 0, G);
+  const ceilM = solid(0xe6dfcc, 1);   /* the ceiling is laid after the stair, round its two wells */
   const WIN = { w: 1.3, h: 2.6, sill: 0.95 };
   /* the outer walls, each room in its own colour */
   W.wallRun(G, [-15.2, -5, -4, -5], H, mD, [2.7, 5.7, 8.7].map((at) => ({ at, ...WIN })), 0.4);
@@ -337,10 +337,26 @@ function house({ phone } = {}) {
   /* the staircase: foot at z = 0.6, the landing against the south wall */
   const stair = R.grandStair({ W: 2.2, rise: 0.17, tread: 0.28, steps: 10, H });
   add(Q, stair, 0, 0.6);
+  for (const [x, sd] of [[-1.75, 4], [1.75, 6]]) solid1(Q, R.hallPalm(sd, 1.2), x, 1.35, 0.6, 0.6);   /* a potted palm each side of the steps, under the upper flights (owner) */
   Q.walls.push([-2.5, 0.5, 2.5, 5]);
-  for (const s of [-1, 1]) {
-    const hole = plane(1.24, 3.2, flat(0x1c1612), s * 1.8, H - 0.004, 2.0, G);   /* where the upper flights go up out of sight */
-    hole.rotation.x = Math.PI / 2;
+  /* the ceiling, with an opening over each upper flight, and the stairwell above it: plastered walls going up to the floor above, a gallery
+     rail round the opening and the upper ceiling, dimly lit by the candles below (it was a solid ceiling with two black patches) */
+  const wells = stair.userData.wells.map((w) => ({ ...w, z0: w.z0 + 0.6, z1: w.z1 + 0.6 })), xs = [-15.3, 15.3], zs = [-5.3, 5.3];
+  for (const w of wells) xs.push(w.x0, w.x1), zs.push(w.z0, w.z1);
+  xs.sort((p, q) => p - q); zs.sort((p, q) => p - q);
+  for (let i = 0; i < xs.length - 1; i++) for (let j = 0; j < zs.length - 1; j++) {   /* the ceiling in rectangles, leaving the wells open */
+    const cx = (xs[i] + xs[i + 1]) / 2, cz = (zs[j] + zs[j + 1]) / 2, w = xs[i + 1] - xs[i], d = zs[j + 1] - zs[j];
+    if (w < 0.01 || d < 0.01 || wells.some((k) => cx > k.x0 && cx < k.x1 && cz > k.z0 && cz < k.z1)) continue;
+    box(w, 0.1, d, ceilM, cx, H + 0.05, cz, G);
+  }
+  const wellM = solid(0xd9cfb2, 1), UP = 3.4;
+  for (const k of wells) {
+    const cx = (k.x0 + k.x1) / 2, cz = (k.z0 + k.z1) / 2, w = k.x1 - k.x0, d = k.z1 - k.z0;
+    for (const [bx, bz, bw, bd] of [[k.x0 - 0.05, cz, 0.1, d], [k.x1 + 0.05, cz, 0.1, d], [cx, k.z1 + 0.05, w + 0.2, 0.1]]) box(bw, UP, bd, wellM, bx, H + UP / 2, bz, G);   /* the well's sides; the stair goes on out at its front end */
+    box(w + 0.2, 0.1, d + 0.2, ceilM, cx, H + UP + 0.05, cz, G);   /* the ceiling of the floor above */
+    for (const [x0, z0, x1, z1] of [[k.x0, k.z0, k.x0, k.z1], [k.x1, k.z0, k.x1, k.z1]]) box(0.12, 0.06, z1 - z0, R.WHITE, x0, H + 0.03, (z0 + z1) / 2, G);   /* a plain white edge round the opening */
+    box(w, 0.06, 0.12, R.WHITE, cx, H + 0.03, k.z1, G); box(w, 0.06, 0.12, R.WHITE, cx, H + 0.03, k.z0, G);
+    box(w, 0.06, 0.06, R.MAHOG, cx, H + 0.95, k.z1 - 0.05, G);   /* the gallery rail across the back of the opening, upstairs */
   }
   const lw = plane(1.3, 1.9, R.nightPane(false), 0, 3.15, 4.79, G);
   lw.rotation.y = Math.PI;
