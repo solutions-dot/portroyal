@@ -1836,6 +1836,41 @@ def tuck_under_collar():
         v.co=c-v.normal*(0.0015+0.0065*feather); n+=1
     print('TUCKED UNDER COLLAR',n)
 if G.get('tuckskin',1): tuck_under_collar()
+def tuck_under_piece(name,z0=None,z1=None,ztop=None):
+    # (a new key, "necktuck": true, 22 November 2026; recipes without it build as before) the same for the neck of a coat of 1773 or 1799: skin lying under the coat's neck facing
+    # (CoatNeck) and under the cravat (Collar, from "bands") is set deeper and bound to that piece. Both are evened round the neck and follow the collarbones, the skin there
+    # follows the chest, so when the shoulders moved (talking, turning the head, laughing) the skin came 3 to 8 mm through the facing ('Body shows through CoatNeck' on every
+    # coat of 1773 and 1799) and showed as pink patches through the back of the cravat.
+    # z0, z1: the band of skin looked at, ztop: open edges above this height are the piece's top edge (for the shoes, "shoetuck": the ankle bone came 1 mm through the top of the shoe)
+    if z0 is None: z0,z1,ztop=NECK-0.10*s,NECK+0.04*s,NECK-0.02*s
+    co=bpy.data.objects.get(name)
+    if co is None or not len(co.data.polygons): return
+    from mathutils.kdtree import KDTree
+    b=bmesh.new(); b.from_mesh(co.data); b.normal_update(); bt=BVHTree.FromBMesh(b); top=[v.co.copy() for v in b.verts if v.is_boundary and v.co.z>ztop]; b.free()
+    kt=KDTree(max(1,len(top)))
+    for i,c in enumerate(top): kt.insert(c,i)
+    kt.balance(); kv=KDTree(len(co.data.vertices))
+    for v in co.data.vertices: kv.insert(v.co,v.index)
+    kv.balance(); on={g.index:g.name for g in co.vertex_groups}; n=0
+    tg=h      # the body
+    for v in tg.data.vertices:
+        c=v.co
+        if not z0<c.z<z1: continue
+        hit=bt.ray_cast(c+v.normal*0.0005,v.normal,0.03)[0]
+        if hit is None: hit=bt.ray_cast(c-v.normal*0.0005,-v.normal,0.01)[0]
+        if hit is None: continue
+        dtop=kt.find(c)[2] if top else 1.0; feather=min(1.0,max(0.0,(dtop-0.002)/0.016))      # sunk less near the piece's edge, where the eye sees in: one smooth line there
+        near=co.data.vertices[kv.find(hit)[1]]; bw={on[g.group]:g.weight for g in near.groups if on[g.group].startswith('mixamorig:') and g.weight>0}
+        if not bw: continue
+        for g in list(v.groups):
+            if tg.vertex_groups[g.group].name.startswith('mixamorig:'): tg.vertex_groups[g.group].remove([v.index])
+        for nm,w in bw.items(): (tg.vertex_groups.get(nm) or tg.vertex_groups.new(name=nm)).add([v.index],w,'REPLACE')
+        v.co=c-v.normal*(0.0015+0.0065*feather); n+=1
+    print('TUCKED UNDER',name,tg.name,n)
+if G.get('necktuck') and OLD:
+    tuck_under_piece('CoatNeck')
+    if G.get('bands'): tuck_under_piece('Collar')
+if G.get('shoetuck') and OLD and G.get('shoes'): tuck_under_piece('Shoes',ANK-0.02,ANK+0.12,ANK+0.03)      # (a new key, 22 November 2026) the skin of the ankle under the top of a 1773 or 1799 shoe, the same way
 def tuck_under_skirt():
     # Skin at the waist under the top of a skirt (the band the belt covers and a hand's width below it) came through the skirt just under the belt when the body bent
     # forward to talk or walk (owner, 17 November 2026: "the belt also is exposing something underneath"). Each such point of skin is set 8 mm deeper and takes the bone
@@ -1866,6 +1901,32 @@ def tuck_under_skirt():
         b=bmesh.new(); b.from_mesh(h.data); b.verts.ensure_lookup_table(); bmesh.ops.delete(b,geom=[b.verts[k] for k in dead],context='VERTS'); b.to_mesh(h.data); b.free(); h.data.update(); n=len(dead)
     print('TUCKED UNDER SKIRT',n)
 if G.get('tuckskin',1) and G.get('skirt'): tuck_under_skirt()
+def skirt_to_belt():
+    # (a new key, "beltfit": true, 22 November 2026; recipes without it build as before) the top of the skirt, where the belt lies on it, takes the belt's bone weights
+    # (the blouse's), fading back to its own over 6 cm below the belt. The skirt followed the hips and thighs and the belt the blouse, so when the body bent forward
+    # (picking up, wiping the brow, walking) the top of the skirt rose over the belt and hid it ('Skirt shows through Belt', up to 2 cm).
+    be=bpy.data.objects.get('Belt'); sk=PART.get('skirt')
+    if be is None or sk is None or not len(be.data.vertices): return
+    from mathutils.kdtree import KDTree
+    zl=min(v.co.z for v in be.data.vertices); zh=max(v.co.z for v in be.data.vertices); kv=KDTree(len(be.data.vertices))
+    for v in be.data.vertices: kv.insert(v.co,v.index)
+    kv.balance(); bn={g.index:g.name for g in be.vertex_groups}; sn={g.index:g.name for g in sk.vertex_groups}; n=0
+    for v in sk.data.vertices:
+        z=v.co.z
+        if z>zh+0.02 or z<zl-0.06: continue
+        f=1.0 if z>=zl else 1.0-(zl-z)/0.06; f=f*f*(3-2*f)
+        near=be.data.vertices[kv.find(v.co)[1]]; bw={bn[g.group]:g.weight for g in near.groups if bn[g.group].startswith('mixamorig:') and g.weight>0}
+        ow={sn[g.group]:g.weight for g in v.groups if sn[g.group].startswith('mixamorig:') and g.weight>0}
+        tb=sum(bw.values()); to=sum(ow.values())
+        if tb<1e-6 or to<1e-6: continue
+        for g in list(v.groups):
+            if sn[g.group].startswith('mixamorig:'): sk.vertex_groups[g.group].remove([v.index])
+        for nm in set(bw)|set(ow):
+            w=ow.get(nm,0)/to*(1-f)+bw.get(nm,0)/tb*f
+            if w>0.002: (sk.vertex_groups.get(nm) or sk.vertex_groups.new(name=nm)).add([v.index],w,'REPLACE')
+        n+=1
+    print('SKIRT TO BELT',n)
+if G.get('beltfit') and G.get('skirt'): skirt_to_belt()
 LIPZ=HEAD+0.025*s; BROWZ=HEAD+0.10*s
 if not OLD and PART.get('waistcoat') and not P.get('outfit') and not G.get('woman') and 'YCz' in globals():
     # A waistcoat's front is cut flat: it falls in one straight line from the fullest part of the chest to its hem, and holds a belly in. Pushed out from the body,
