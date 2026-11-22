@@ -2,7 +2,9 @@
    and it opens the pop up from there, and not have the 'i' on the main screen"). tools/dist.mjs puts this script into every published game
    page, as it does engine/freshen.js, so no game's own files change.
 
-   The button sits to the right of the title's Exit link (#allgames), in the same style. It opens the menu's own pop-up for this game (the kind
+   The button sits at the top right of the title screen, with padding (owner, 22 November 2026: "put it at the top right (with padding)"),
+   in the style of the title's Exit link (#allgames). It stays in the Exit link's row in the page, so it keeps that style and hides with the
+   title, but it is placed on the screen's corner. It opens the menu's own pop-up for this game (the kind
    of story, the age, the stars and More like this) over the title screen: the menu page with ?embed=1&rate=<game id>, in a see-through
    frame (menu/library.js, "embed"). Closing the pop-up, Escape, or a press outside it closes the frame. Stars given here are the same stars
    the menu shows. Plain script, no imports: it runs apart from the game's own code. */
@@ -10,7 +12,8 @@
   var m = location.pathname.match(/\/games\/([a-z0-9-]+)\//);
   if (!m || m[1].charAt(0) === '_') return;
   var id = m[1];
-  var CSS = '#infobtn{display:inline-grid;place-items:center;width:48px;min-width:48px;height:auto;min-height:44px;padding:0;cursor:pointer;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:1.35rem;line-height:1}'
+  /* the doubled id outranks each game's own "#title .title-actions .btn" rules, so the corner place and size hold */
+  var CSS = '#infobtn#infobtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 16px);right:calc(env(safe-area-inset-right,0px) + 16px);z-index:20;margin:0;background:rgba(16,22,30,.5);display:inline-grid;place-items:center;width:48px;min-width:48px;max-width:48px;height:48px;min-height:48px;padding:0;cursor:pointer;font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:1.35rem;line-height:1}'
     + '#infoframe{position:fixed;inset:0;z-index:9400;width:100%;height:100%;border:0;background:transparent;color-scheme:normal;opacity:0;transition:opacity .18s ease}#infoframe.on{opacity:1}';
   function start() {
     var exit = document.getElementById('allgames');
