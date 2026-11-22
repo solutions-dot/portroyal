@@ -399,3 +399,7 @@ The doors are closed when the player stays inside. In the 1914 Kingston hall the
 ## Sound (22 November 2026)
 
 Footsteps follow the ground of each place (wood in the shop, hall, press, dock, deck, Liberty Hall and office; stone in the Harlem street; grass in National Heroes Park); they were always wood. The Harlem street has far traffic (`traffic` 0.08) and now and then a car, a horn or a dog; the park a little far traffic. Every bed is lower while someone talks (`mixBeds`, duck 0.6). The hall's doors swing with the engine's `swingDoor` (a latch and a creak as they open, a soft thud as they shut). `cue('end')` plays on The End card. No place is shown at night, so there is no night layer. Bed peaks (`?test=beds`, BEDS 0): shop 0.28, hall 0.22, street 0.12 (was 0.10), press 0.26, dock 0.20, deck 0.22, Liberty Hall 0.22, office 0.18, park 0.06 (was 0.05). Known, not from this change: `?auto=9` stops with a page error in its timeline-board step (it reads the text of an empty list); it does the same on the commit before. The shared level is in `docs/ENGINE.md`, "One ambient level".
+
+## Autoplayer fix (22 November 2026)
+
+`?auto=9` stopped with a page error in its timeline-board step. It was the test, not the game: after its deliberate wrong tap the board shows the right answer and picks it for you, and taps are ignored meanwhile; the run tapped on at once, so every tap was ignored and the list stayed empty. It now waits until the answer is picked. `?auto=9`: ALLDONE.
