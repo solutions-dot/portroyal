@@ -49,7 +49,7 @@ Tone for hard history:
 
 ## The credit
 
-"Created by Kellz 5.0" is the final **menu** header pill, after About this platform and Get updates. It opens the contact form. The About page keeps its creator credit. No creator credit appears on the intro screen.
+The three pills (About, Get updates, Created by Kellz 5.0, in that order) sit **below all the game cards**, centred, with a little space above them (owner, 22 November 2026); they were in the header before. "Created by Kellz 5.0" is the last of them. It opens the contact form. The About page keeps its creator credit. No creator credit appears on the intro screen.
 
 ## Game opening screens
 

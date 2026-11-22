@@ -73,6 +73,9 @@
   .credit a:hover{color:var(--mango)}
   .credit a:focus-visible{outline:3px solid var(--mango);outline-offset:2px;border-radius:4px}
 
+  /* the three pills, below all the cards, with a little space above and below (owner, 22 November 2026) */
+  .foot-links{justify-content:center!important;flex-wrap:wrap!important;width:100%;margin:clamp(1.2rem,3vh,2rem) 0 clamp(1rem,3vh,2rem)}
+  main{grid-template-rows:none!important;grid-auto-rows:auto;align-content:start}   /* rows size themselves: header, library bar, picks, cards, pills */
   .games{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:clamp(.7rem,1.6vw,1.2rem);min-height:0}
 
   /* Port Royal: the poster. Full-bleed scene, the title set big across the bottom. */
@@ -226,11 +229,6 @@
     <h1 class="brand"><span class="brand-wrap"><img class="brand-logo" src="pastport-logo-sm.webp" width="420" height="293" alt="PastPort - Jamaica"><span class="brand-jam" aria-hidden="true"></span></span></h1>
     <div class="side">
       <p id="testingnote" hidden>Testing menu.</p>
-      <nav class="links" aria-label="More">
-        <a href="about.html" aria-label="About this platform">About</a>
-        <button type="button" id="subopen" class="get">Get updates</button>
-        <button type="button" class="credit contact-pill" id="contactopen" aria-haspopup="dialog" aria-controls="contactpanel">Created by <b>Kellz 5.0</b><span aria-hidden="true"> ↗</span></button>
-      </nav>
     </div>
   </header>
   <!-- The library (library.js fills it in and shows it; without JavaScript it stays hidden and the cards are plain links). -->
@@ -364,6 +362,12 @@
       </div>
     </a>
   </section>
+  <!-- About, Get updates and the credit sit below all the game cards (owner, 22 November 2026) -->
+  <nav class="links foot-links" aria-label="More">
+    <a href="about.html" aria-label="About this platform">About</a>
+    <button type="button" id="subopen" class="get">Get updates</button>
+    <button type="button" class="credit contact-pill" id="contactopen" aria-haspopup="dialog" aria-controls="contactpanel">Created by <b>Kellz 5.0</b><span aria-hidden="true"> ↗</span></button>
+  </nav>
   <p class="lib-kidsnote" id="kidsnote" hidden>Some stories are for ages 13 and up. A grown-up can change who is travelling.</p>
 </main>
 <div id="subpanel" role="dialog" aria-modal="true" aria-labelledby="subtitle" hidden>
