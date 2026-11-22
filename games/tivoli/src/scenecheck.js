@@ -38,7 +38,7 @@ function dominant(ctl) { let best = null, bw = 0; for (const x of ctl.mx._action
 function seeded(s) { return () => { s |= 0; s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 /* ?test=scene: the directed street scene, run from start to end several times (each with its own random timings), with every armed person checked:
-   - aim: from the first shots on, every quarter second, a raised weapon (FireStand, FireKneel, a pistol aim) must point within AIM_OK of someone on the other
+   - aim: from the first shots on, every quarter second, once any blend between clips has finished, a raised weapon (FireStand, FireKneel, a pistol aim) must point within AIM_OK of someone on the other
      side, and never within FRIEND of anyone on their own side who stands in front of them; a person who is not moving and not aiming must face within FACE_OK
      of the middle of the other side (the guard at the back watches a side street and is allowed 60 degrees more).
    - feet: a walking or running clip while standing still (running in place) for over 0.3 s; moving over 0.2 m/s in a still clip (sliding) for over 0.2 s;
@@ -64,7 +64,8 @@ export async function sceneCheck({ FIGHT, begin, tick, strideOf, WALKS, CONTACT,
         }
         if (FIGHT.T >= nextAim) { nextAim += 0.25;
           for (const a of FIGHT.actors) {
-            const b = a.b; if (!b.visible) continue; const d = aimDir(b), p = b.position, clip = dominant(b.userData.anim).getClip().name;
+            const b = a.b; if (!b.visible) continue; const ctl = b.userData.anim, dom = dominant(ctl); if (dom.getEffectiveWeight() < 0.9 || dom !== ctl.cur) continue;   /* a blend under way, up or down: a rifle on its way up is not aimed yet (no shot is fired then), and one being lowered because a friend ran in front is already stopping */
+            const d = aimDir(b), p = b.position, clip = dom.getClip().name;
             const own = FIGHT.actors.filter((o) => o !== a && o.side === a.side && o.b.visible), opp = FIGHT.actors.filter((o) => o.side !== a.side && (o.b.visible || o.side === 'gunmen'));
             const ang = (o) => Math.abs(wrap(Math.atan2(o.b.position.x - p.x, o.b.position.z - p.z) - Math.atan2(d.x, d.z)));
             if (d.by === 'weapon') { stats.aims++;
