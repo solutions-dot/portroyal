@@ -45,4 +45,8 @@ Copied from Windrush's frame. `content.js` (words), `steps.js` (story table, `TA
 
 ## Checks (22 November 2026)
 
-`?auto=1` plays all six chapters to step 66. `FLOW 0`. `?test=audit`: 0 in all five places. Layout and ambient setup 0 in all five. Not yet run: `?test=all`, cloth, walkers, skin, held, ambient, layout at the four screen sizes, a phone play-through by hand, and a listen to the sound. Not yet timed against the 5 to 8 minutes a chapter.
+`?auto=1` plays all six chapters to step 66. `FLOW 0`. `?test=audit`: 0 in all five places. Layout and ambient setup 0 in all five.
+
+Later the same day: `?test=held` 0. `?test=ambient` 0 in all five places. `?test=layout` 0 at 390x800. `?test=walkers`: every body 0 lines but `hx_cudjoe`, who slides 9.4 cm a loop when the test walks him at an old man's pace (0.85 m/s); he never walks in the game, so it is not seen, but the pace needs fixing before he is given a walk.
+
+Not yet run: `?test=all`, cloth, skin, layout at 667x375, 800x500 and 1280x720, a phone play-through by hand, and a listen to the sound. Not yet timed against the 5 to 8 minutes a chapter.
