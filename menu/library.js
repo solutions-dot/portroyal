@@ -181,8 +181,11 @@ if (typeof document !== 'undefined') (() => {
       box.appendChild(el('b', '', g.title)); if (g.age >= 13) box.appendChild(el('span', 'lib-agetag', MATURE)); box.appendChild(el('span', 'lib-why' + (lineClass ? ' ' + lineClass : ''), line));
       a.append(thumb(g), box); return a;
     };
+    /* "For you" is switched off for now (owner, 22 November 2026: "Remove the for you recommendations feature for now"). The scoring, its tests and
+       the visit record stay, so setting FOR_YOU to true brings the strip back as it was. "More like this" in each game's sheet is not part of it. */
+    const FOR_YOU = false;
     function drawForYou() {   /* the picks are for the whole library, so they step aside while one kind of story is chosen */
-      const picks = genre === 'all' ? L.recommend(catalog, profile, ratings, visits, 3) : [];
+      const picks = FOR_YOU && genre === 'all' ? L.recommend(catalog, profile, ratings, visits, 3) : [];
       tilesEl.textContent = ''; forYou.hidden = !picks.length;
       for (const p of picks) { const a = tile(p.game, p.reason, p.why === 'new' ? 'lib-new' : ''); for (const press of ['click', 'auxclick']) a.addEventListener(press, (e) => leaveFor(p.game, e)); tilesEl.appendChild(a); }
     }
