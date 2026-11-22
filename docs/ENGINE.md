@@ -533,10 +533,6 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 
 `wheelset()` in `engine/vehicles.js` marks each wheel set with `userData.wheelR`. `auditPlace` reports two wheels on one vehicle that overlap ("wheels overlap by N cm"), so `?test=audit` catches it in every game. The late steam engine's driving wheels (1.72 m) were 1.5 m apart; they are now 1.9 m apart, and its small front wheels 1.0 m apart.
 
-## The water tower (`engine/water-tower.js`, 21 November 2026)
-
-`buildWaterTower({ grp, cyl, box, solid, M })` builds the railway water tower with the game's own helpers and materials (`M.woodDark`, `M.iron`): four straight legs on stone footings, the tank, its roof, and a short outlet pipe, spout and canvas hose for filling a tender (a long hanging pipe that read as a fourth leg was replaced, 21 Nov 2026). It was copied in six games; each game's `waterTower()` now calls it, and `tests/shared-props.mjs` fails if a copy comes back.
-
 ## Story first: the goal banner, the quiz, the talk camera and the recap (22 November 2026)
 
 Four pieces for the owner's story-first pass (`docs/STANDARD.md`, "Story first"; `docs/plans/story_first_plan.md`, Phase 1). Tested in node by `tests/story-first.mjs`.
@@ -548,3 +544,7 @@ Four pieces for the owner's story-first pass (`docs/STANDARD.md`, "Story first";
 - **Who you are** (`onceWhenClear(key, fn)` in `engine/hud.js`): runs `fn` once per device (the key is kept in local storage), when no card, talk, title or chapter fade is in front. Every game but The Emperor's Arrival, Windrush and Tivoli uses it at the start for a "Who you are" card in words from its own "You in this game" journal page (Windrush already opens each chapter with one; The Emperor's Arrival and Tivoli wait for their own pass). The goal banner waits while such a card is still due, so the card comes first. `screenBusy()` says whether anything is in front of the game.
 - **A wrong answer in a game's own puzzle** (`showRight` in `engine/quiz.js`): the wrong pick shakes, the right one gets a green ring, the message says what is right, and after a pause the game carries on with the right one. Used by Garvey (type, page, colours, fact or rumour, timeline) and Port Royal's money sums; Bog Walk's order game does the same in its own code.
 - **The recap** (`engine/recap.js`): `recapRow(items, openJournal, { unlocked })` makes a row of three buttons (an icon and a few words each) that open journal pages. It goes on the game's **final card only**, so it adds no step. Each game lists its three in its own content.
+
+## The water tower (`engine/water-tower.js`, 21 November 2026)
+
+`buildWaterTower({ grp, cyl, box, solid, M })` builds the railway water tower with the game's own helpers and materials (`M.woodDark`, `M.iron`): four straight legs on stone footings, the tank, its roof, and a short outlet pipe, spout and canvas hose for filling a tender (a long hanging pipe that read as a fourth leg was replaced, 21 Nov 2026). It was copied in six games; each game's `waterTower()` now calls it, and `tests/shared-props.mjs` fails if a copy comes back.
