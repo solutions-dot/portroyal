@@ -46,12 +46,20 @@ export function screenBusy() {
   return BUSY_IDS.some((id) => shown(document.getElementById(id))) || document.body.classList.contains('talking') || document.body.classList.contains('talk') || (shown(fade) && parseFloat(getComputedStyle(fade).opacity) > 0.05);
 }
 /* once per device, when the screen is clear: the "Who you are" card at the start of each game (owner, 21 November 2026). Not in test views. */
+/* the "Who you are" card is centred (owner, 22 November 2026: "these must be centred"): title, words and button, in every game's own card */
+const CENTRE_CSS = '#card.youcard{text-align:center}#card.youcard #ctitle,#card.youcard #cbody,#card.youcard #cbody p{text-align:center;margin-left:auto;margin-right:auto}'
+  + '#card.youcard #cbtns{justify-content:center;align-items:center;margin-left:auto;margin-right:auto}#card.youcard #cbtns button{margin-left:auto;margin-right:auto}';
+function centreCard() {
+  const c = document.getElementById('card'); if (!c) return;
+  if (!document.getElementById('youCardCss')) { const st = document.createElement('style'); st.id = 'youCardCss'; st.textContent = CENTRE_CSS; document.head.appendChild(st); }
+  c.classList.add('youcard'); const mo = new MutationObserver(() => { if (c.hidden) { c.classList.remove('youcard'); mo.disconnect(); } }); mo.observe(c, { attributes: true, attributeFilter: ['hidden'] });
+}
 let pending = 0;   /* a "who you are" card still to come: the goal banner waits for it, so the card comes first */
 export function onceWhenClear(key, fn) {
   try { if (localStorage.getItem(key)) return; } catch { /* storage blocked: show it */ }
   const q = new URLSearchParams(location.search); if (q.has('test') || q.has('shot') || q.has('auto')) return;
   pending++;
-  const tick = () => { if (screenBusy()) { setTimeout(tick, 300); return; } try { localStorage.setItem(key, '1'); } catch { /* ignore */ } pending--; fn(); };
+  const tick = () => { if (screenBusy()) { setTimeout(tick, 300); return; } try { localStorage.setItem(key, '1'); } catch { /* ignore */ } pending--; fn(); centreCard(); };
   setTimeout(tick, 400);
 }
 
