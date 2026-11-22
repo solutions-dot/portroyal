@@ -156,3 +156,7 @@ All ten games use the same cream book with dark borders, a Close button, a scrol
 `shared/chapters.css` owns this appearance and `tools/build.mjs` copies it into each game's site. Chapter dates, names, completion, access rules and save keys remain game-specific. Tivoli keeps its existing all-chapters access and journal unlock behavior.
 
 Windrush uses `menu/windrush-kingston-quay.jpg`, captured from its actual Kingston quay scene. Its opening camera frames the cargo, passengers, gangway and ship, with gentle movement. Tivoli's opening uses its quiet-street artwork with background-only movement. Both respect reduced motion. `menu/selassie-arrival.jpg` shows the current corrected aircraft without importing the separate people work.
+
+## The "i" pop-up lives in each game (owner, 22 November 2026)
+
+The round "i" button is not on the menu cards. It sits on each game's own title screen, after Exit (`engine/rate.js`, put into every published game page by `tools/dist.mjs`, as `engine/freshen.js` is). It opens the menu's own pop-up in a see-through frame (`menu/?intro=0&embed=1&rate=<game id>`, "embed" in `menu/library.js`), showing only **Rate this story** and **More like this**: the game's picture, name, story and Go there are left out, because the title screen already has them. A game picked under More like this shows its full pop-up, and its Go there opens that game in the whole tab. Stars given here are the same stars the menu card shows. The button only appears on the published site (`npm run dist`), not in a game's own dev build.

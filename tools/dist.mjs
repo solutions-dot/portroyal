@@ -16,8 +16,8 @@ if(testing)for(const file of [`${out}/index.html`,`${out}/menu/index.html`])writ
 /* Every published page carries the build's id, asks for app.js by that id (so no cache can hand back an old copy) and keeps itself up to date (engine/freshen.js).
    One place for every game and the menu: nothing to remember in a game's own files. */
 { let sha=process.env.VERCEL_GIT_COMMIT_SHA||'';if(!sha)try{sha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();}catch(e){sha='local';}
-  const id=sha.slice(0,10)+'-'+Date.now().toString(36),fresh=readFileSync('engine/freshen.js','utf8'),head=`<script>window.__BUILD=${JSON.stringify(id)};</script><script>${fresh}</script>`;
+  const id=sha.slice(0,10)+'-'+Date.now().toString(36),fresh=readFileSync('engine/freshen.js','utf8'),rate=readFileSync('engine/rate.js','utf8'),head=`<script>window.__BUILD=${JSON.stringify(id)};</script><script>${fresh}</script>`;
   const pages=[`${out}/index.html`,`${out}/menu/index.html`,...readdirSync(`${out}/games`).map((g)=>`${out}/games/${g}/site/index.html`)];let n=0;
-  for(const file of pages){if(!existsSync(file))continue;let h=readFileSync(file,'utf8');h=h.replace('</head>',head+'</head>').replace(/<script src="app\.js"><\/script>/,`<script src="app.js?v=${id}"></script>`);writeFileSync(file,h);n++;}
+  for(const file of pages){if(!existsSync(file))continue;let h=readFileSync(file,'utf8');h=h.replace('</head>',head+(file.includes('/games/')?`<script>${rate}</script>`:'')+'</head>')   /* every game page also gets "Rate this story" on its title screen (engine/rate.js) */.replace(/<script src="app\.js"><\/script>/,`<script src="app.js?v=${id}"></script>`);writeFileSync(file,h);n++;}
   writeFileSync(`${out}/version.json`,JSON.stringify({id})+'\n');console.log('build id '+id+' in '+n+' pages');}
 console.log(out+'/ ready: '+readdirSync(`${out}/games`).join(', '));

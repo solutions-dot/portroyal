@@ -92,6 +92,11 @@ if (typeof module !== 'undefined' && module.exports) module.exports = PastPortLi
 /* ---------- the page ---------- */
 if (typeof document !== 'undefined') (() => {
   const L = PastPortLibrary, root = document.documentElement;
+  /* ?embed=1: the page is the "i" pop-up inside a game's title screen (engine/rate.js puts it in an overlay). Only the sheet shows; closing it tells the game. */
+  let EMBED = false, EMBED_ID = '';
+  try { const q = new URLSearchParams(location.search); EMBED = q.get('embed') === '1'; EMBED_ID = q.get('rate') || ''; } catch (e) { /* not embedded */ }
+  if (EMBED) root.classList.add('lib-embed');
+  const toGame = (msg) => { try { if (EMBED && parent !== window) parent.postMessage({ pastport: msg }, location.origin); } catch (e) { /* no game around us */ } };
   const PROFILE_KEY = 'pastport-profile', RATINGS_KEY = 'pastport-ratings', VISITS_KEY = 'pastport-visits';
   const NAMES = { kids: 'Kids', teen: 'Teens and adults' }, MATURE = 'Mature 13+';
   const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.6L14.47 9.2 21.51 9.51 15.99 13.9 17.88 20.69 12 16.8 6.12 20.69 8.01 13.9 2.49 9.51 9.53 9.2z"/></svg>';
@@ -128,7 +133,8 @@ if (typeof document !== 'undefined') (() => {
       const slot = g.slot = el('div', 'slot'); slot.style.setProperty('--i', Math.min(i, 5));   /* --i: the same order the cards rise in after the intro (intro.js) */
       list.insertBefore(slot, card); slot.appendChild(card);
       const info = g.info = el('button', 'lib-info'); info.type = 'button'; info.setAttribute('aria-label', 'About ' + g.title); info.setAttribute('aria-haspopup', 'dialog'); info.appendChild(el('span', '', 'i')).setAttribute('aria-hidden', 'true');
-      slot.appendChild(info); info.addEventListener('click', () => openSheet(g, false, info));
+      info.addEventListener('click', () => openSheet(g, false, info));
+      /* the "i" button is not on the menu cards (owner, 22 November 2026): it is on each game's own title screen (engine/rate.js) and opens this same sheet. */
       if (h && g.genres[0]) h.parentNode.insertBefore(el('span', 'year lib-genre', L.genreName(g.genres[0])), h);   /* the main kind of story, in the card's own colour */
       g.meta = el('span', 'lib-meta'); (p || h || card).parentNode.appendChild(g.meta);
       if (g.age >= 13) card.appendChild(el('span', 'lib-age', MATURE));
@@ -257,7 +263,8 @@ if (typeof document !== 'undefined') (() => {
       sheetGame = g;
       S.banner.style.backgroundImage = picture(g) || 'none'; S.genre.textContent = L.genreName(g.genres[0]); S.title.textContent = g.title; S.text.textContent = g.text;
       S.age.textContent = g.age >= 13 ? MATURE + '. For ages 13 and up.' : 'For ages 6 and up'; S.age.classList.toggle('lib-mature', g.age >= 13); S.warn.textContent = g.age >= 13 ? g.warn : ''; S.warn.hidden = !S.warn.textContent;
-      S.go.href = g.card.href;
+      sheet.classList.toggle('lib-here', EMBED && g.id === EMBED_ID);   /* the game you are in: its own title screen already shows its picture, name, story and buttons (owner, 22 November 2026) */
+      S.go.href = g.card.href; S.go.hidden = EMBED && g.id === EMBED_ID; if (EMBED) S.go.target = '_top';   /* inside a game: no Go there for the game you are in; another game opens in the whole tab */
       drawRating();
       const others = L.similar(g, catalog, profile, 3); S.more.hidden = !others.length; S.moreList.textContent = '';
       for (const o of others) { const li = el('li'), a = tile(o, L.genreName(o.genres[0]), '', '#' + o.id); a.addEventListener('click', (e) => { e.preventDefault(); openSheet(o, false); }); li.appendChild(a); S.moreList.appendChild(li); }
@@ -266,14 +273,14 @@ if (typeof document !== 'undefined') (() => {
     }
     for (const press of ['click', 'auxclick']) S.go.addEventListener(press, (e) => { if (sheetGame) leaveFor(sheetGame, e); });
     wire(sheet, () => {
-      sheetGame = null; if (!fromUrl) return; fromUrl = false;
+      sheetGame = null; if (EMBED) { toGame('close-sheet'); return; } if (!fromUrl) return; fromUrl = false;
       try { const u = new URL(location.href); u.searchParams.delete('rate'); history.replaceState(null, '', u.pathname + u.search); } catch (e) { /* the address stays as it was */ }   /* so loading the page again does not open the sheet again */
     });
 
     /* ----- the Mature 13+ warning card ----- */
     const W = { game: $('agegame'), note: $('agenote'), go: $('agego'), not: $('agenot') };
     let warnGame = null;
-    function openWarn(g, opener) { warnGame = g; W.game.textContent = g.title; W.note.textContent = g.warn; W.note.hidden = !g.warn; W.go.href = g.card.href; ageCard.opener = opener || null; show(ageCard); W.not.focus(); }
+    function openWarn(g, opener) { warnGame = g; W.game.textContent = g.title; W.note.textContent = g.warn; W.note.hidden = !g.warn; W.go.href = g.card.href; if (EMBED) W.go.target = '_top'; ageCard.opener = opener || null; show(ageCard); W.not.focus(); }
     for (const press of ['click', 'auxclick']) W.go.addEventListener(press, () => { if (warnGame) visit(warnGame); });
     wire(ageCard, () => { warnGame = null; });
 
@@ -308,6 +315,7 @@ if (typeof document !== 'undefined') (() => {
     addEventListener('pageshow', (e) => { if (e.persisted) { sync(); drawAll(); } });
     addEventListener('storage', (e) => { if ([PROFILE_KEY, RATINGS_KEY, VISITS_KEY].includes(e.key) && !profilePanel.open && !sheet.open && !ageCard.open) { sync(); drawAll(); } });
     whenMenuShows(openFromUrl);
+    if (EMBED && !sheet.open) toGame('close-sheet');   /* nothing this profile may see: the game takes the overlay away */
   }
   /* Start when the whole page is read: by then site.js has put the cards in order and the script at the foot of index.html has set their links. */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
