@@ -582,7 +582,8 @@ function brixton48() {
     add(Q, h, cx, -6);
     if (s.interior) {
       // Celia's front room, inside the house: walls, floor, a window (the bay), and her things
-      const rm = S.room({ x0: cx - 2.4, z0: -11.6, x1: cx + 2.4, z1: -6.3, h: 2.8, floor: std(T.plank([120, 92, 64], 8, [3, 3]), 0.9), wall: solid(0xd9cfaa, 1), walls: [
+      /* papered walls with a picture rail, bare boards, a fireplace with a wireless on its mantel, a light on a flex: a let room of 1948 */
+      const rm = S.room({ x0: cx - 2.4, z0: -11.6, x1: cx + 2.4, z1: -6.3, h: 2.8, floor: S.buildingMat("wood", { tint: 0xa88a68 }), floorTile: 1.2, wall: S.wallpaper({ ground: [214, 204, 172], ink: [168, 92, 84], kind: "stripe", seed: 2 }), tile: 0.5, rail: true, cornice: true, walls: [
         { line: [cx - 2.4, -11.6, cx + 2.4, -11.6] }, { line: [cx - 2.4, -6.3, cx - 2.4, -11.6] }, { line: [cx + 2.4, -11.6, cx + 2.4, -6.3] }] });
       fabric(Q, rm);
       for (const w of [[cx - 2.5, -11.7, cx + 2.5, -11.5], [cx - 2.55, -11.7, cx - 2.35, -6.2], [cx + 2.35, -11.7, cx + 2.55, -6.2]]) Q.walls.push(w);
@@ -597,8 +598,22 @@ function brixton48() {
       solid1(Q, P.table(0.9, 0.5, 0.75), cx - 1.95, -7.3, 0.6, 1.0, Math.PI / 2);
       add(Q, S.gasRing(), cx - 1.95, -7.3, 0.785);
       const pic = S.picture(0.5, 0.36, 2);
-      pic.position.set(cx - 0.3, 1.7, -11.53);
+      pic.position.set(cx - 0.25, 1.85, -11.53);
       Q.group.add(pic);
+      const fp = S.fireplace(0x6a7a5a);
+      fp.position.set(cx - 0.25, 0, -11.54);
+      Q.group.add(fp);
+      wall(Q, cx - 0.25, -11.2, 1.5, 0.7);
+      const wl = S.wireless(true);
+      wl.position.set(cx - 0.55, 1.195, -11.46);
+      Q.group.add(wl);
+      cyl(0.04, 0.05, 0.16, solid(0x3a6a8a, 0.3), cx + 0.2, 1.275, -11.45, Q.group, 10);   /* a vase on the mantel */
+      add(Q, S.rug(1.8, 1.3, "#5a3a3a", "#c8b080"), cx - 0.6, -9, 0.005);
+      const cal = S.calendar(1948);
+      cal.position.set(cx - 2.33, 1.5, -8.2);
+      cal.rotation.y = Math.PI / 2;
+      Q.group.add(cal);
+      add(Q, S.pendant(2.8, { power: 2.4 }), cx - 0.3, -9);
       Q.props.celiaTable = [cx - 0.6, -9];
       point(Q, "celiaDoor", cx + 1.55, -5.2, "Find Celia");
       person(Q, "celia", "celia48", cx + 0.9, -7.5, face(cx + 0.9, -7.5, cx + 1.5, -6.3), { kind: "watch", at: [cx + 1.5, -6], idles: ["HappyIdle", "Idle"], react: ["Nod"], every: [5, 9] });

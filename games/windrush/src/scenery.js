@@ -12,6 +12,7 @@ import { touchFirst } from "../../../engine/device.js";
 /* phones keep the rooms' warm glow in the lamp shades but skip the extra point lights (each one costs every lit surface in the place) */
 const ROOM_LIGHTS = !touchFirst();
 import { paintedBoards, weatherZinc, fretMat, jalousie, glassMat, lace, wallpaper, sway } from "../../../engine/house-detail.js";
+export { buildingMat, wallpaper };
 
 const M = {
   zinc: () => std(T.zinc([150, 152, 146], [1, 1]), 0.6),
@@ -399,7 +400,7 @@ export function terraceHouse(opts = {}) {
     const dr = opts.upvc ? DR.upvcDoor() : DR.terraceDoor({ color: opts.door || 0x2f4f46 });
     dr.position.set(dx, 0.12, 0);
     g.add(dr);
-  } else plane(0.9, 0.18, M.glass, dx, 2.1, 0.02, g);
+  } else plane(0.9, 0.18, glassMat(), dx, 2.1, 0.02, g);
   box(1.3, 0.12, 0.5, trim, dx, 0.06, 0.25, g);
   box(1.2, 0.12, 0.08, trim, dx, 2.3, 0.04, g);
   // upstairs sash windows
@@ -421,25 +422,32 @@ export function terraceHouse(opts = {}) {
   } else {
     // a bay window: three faces on a low wall, with a lead roof
     box(2.3, 0.7, 0.75, br, -1.0, 0.35, 0.37, g);
-    box(2.1, 1.5, 0.06, M.glass, -1.0, 1.5, 0.72, g);
+    box(2.1, 1.5, 0.02, M.black, -1.0, 1.5, 0.64, g);   /* the dark room behind the glass */
+    plane(2.1, 1.5, glassMat(), -1.0, 1.5, 0.735, g);
     for (const s of [-1, 1]) {
-      const p = box(0.06, 1.5, 0.66, M.glass, -1.0 + s * 1.12, 1.5, 0.38, g);
-      p.rotation.y = s * 0.0;
+      const p = plane(0.66, 1.5, glassMat(), -1.0 + s * 1.12, 1.5, 0.38, g);
+      p.rotation.y = s * Math.PI / 2;
     }
+    box(2.1, 0.05, 0.06, M.brickTrim, -1.0, 1.9, 0.735, g);   /* the transom bar */
     for (const x of [-2.12, -1.35, -0.65, 0.12]) box(0.08, 1.6, 0.08, trim, x, 1.5, 0.73, g);
     box(2.4, 0.12, 0.85, trim, -1.0, 0.72, 0.38, g);
     box(2.4, 0.14, 0.85, M.slate, -1.0, 2.32, 0.38, g);
-    // net curtains
-    plane(1.95, 1.2, solid(0xe8e4d6, 1), -1.0, 1.55, 0.68, g);
+    // net curtains, half drawn
+    plane(1.95, 1.1, lace(), -1.0, 1.4, 0.69, g);
   }
   return g;
 }
+/* a sash window: two sashes (the meeting rail across the middle, a glazing bar down each), real glass over a dark room and a net curtain,
+   a stone sill and a flat lintel */
 function sash(g, x, y) {
   box(1.1, 1.6, 0.08, M.brickTrim, x, y, 0.0, g);
-  plane(0.92, 1.4, M.glass, x, y, 0.05, g);
+  box(0.92, 1.4, 0.01, M.black, x, y, 0.035, g);
+  plane(0.84, 0.6, lace(), x, y + 0.3, 0.042, g);
+  plane(0.92, 1.4, glassMat(), x, y, 0.05, g);
   box(0.94, 0.05, 0.05, M.brickTrim, x, y, 0.07, g);
+  box(0.035, 1.4, 0.03, M.brickTrim, x, y, 0.065, g);
   box(1.25, 0.1, 0.18, M.brickTrim, x, y - 0.83, 0.07, g);
-  plane(0.88, 0.62, solid(0xe8e4d6, 1), x, y + 0.32, 0.03, g);
+  box(1.3, 0.16, 0.06, M.brickTrim, x, y + 0.88, 0.04, g);
 }
 /* a row of terrace houses along x, starting at x = 0 (each house 5 m); specs[i] are the opts for house i, null for a bomb-site gap */
 export function terraceRow(specs) {
@@ -546,10 +554,13 @@ export function gate(w = 0.9, open = 1.2) {
 /* ---------- inside ---------- */
 /* a room: floor, walls with door gaps and windows, a ceiling. Walls are listed as [x0, z0, x1, z1] lines along the room's edge, with gaps
    { at: along metres, w, h, kind: 'door' | 'window' }. Returns the group; the caller adds walking walls for each wall run. */
-export function room({ x0, z0, x1, z1, h = 2.7, floor, wall, ceiling = true, walls }) {
+/* opts tile and floorTile: lay the wall and floor pictures in metres (worldUV), so a wallpaper or boards keep one size on every wall;
+   rail: a picture rail at 2.1 m; cornice: a moulding under the ceiling */
+export function room({ x0, z0, x1, z1, h = 2.7, floor, wall, ceiling = true, walls, tile = 0, floorTile = 0, rail = false, cornice = false }) {
   const g = grp(),
     t = 0.12;
-  const fl = box(x1 - x0 - 0.14, 0.04, z1 - z0 - 0.14, floor, (x0 + x1) / 2, -0.01, (z0 + z1) / 2, g);
+  if (floorTile) tiled(g, floor, x1 - x0 - 0.14, 0.04, z1 - z0 - 0.14, (x0 + x1) / 2, -0.01, (z0 + z1) / 2, floorTile);
+  else box(x1 - x0 - 0.14, 0.04, z1 - z0 - 0.14, floor, (x0 + x1) / 2, -0.01, (z0 + z1) / 2, g);
   if (ceiling) box(x1 - x0 - 0.14, 0.1, z1 - z0 - 0.14, solid(0xeeeae0, 1), (x0 + x1) / 2, h + 0.05, (z0 + z1) / 2, g);
   for (const w of walls) {
     const [ax, az, bx, bz] = w.line,
@@ -559,7 +570,7 @@ export function room({ x0, z0, x1, z1, h = 2.7, floor, wall, ceiling = true, wal
     seg.rotation.y = -Math.atan2(dir[1], dir[0]);
     const gaps = (w.gaps || []).slice().sort((a, b) => a.at - b.at);
     let s = 0;
-    const piece = (a, b, y0, y1) => b - a > 0.01 && y1 - y0 > 0.01 && box(b - a, y1 - y0, t, wall, (a + b) / 2, (y0 + y1) / 2, 0, seg);
+    const piece = (a, b, y0, y1) => b - a > 0.01 && y1 - y0 > 0.01 && (tile ? tiled(seg, wall, b - a, y1 - y0, t, (a + b) / 2, (y0 + y1) / 2, 0, tile) : box(b - a, y1 - y0, t, wall, (a + b) / 2, (y0 + y1) / 2, 0, seg));
     for (const gp of gaps) {
       const a = gp.at - gp.w / 2,
         b = gp.at + gp.w / 2;
@@ -567,7 +578,7 @@ export function room({ x0, z0, x1, z1, h = 2.7, floor, wall, ceiling = true, wal
       if (gp.kind === "window") {
         piece(a, b, 0, gp.sill || 0.9);
         piece(a, b, (gp.sill || 0.9) + gp.h, h);
-        plane(gp.w, gp.h, M.glass, (a + b) / 2, (gp.sill || 0.9) + gp.h / 2, 0, seg);
+        plane(gp.w, gp.h, tile ? glassMat() : M.glass, (a + b) / 2, (gp.sill || 0.9) + gp.h / 2, 0, seg);
         box(gp.w + 0.1, 0.06, 0.2, M.white, (a + b) / 2, gp.sill || 0.9, 0.04, seg);
         box(0.05, gp.h, 0.06, M.white, (a + b) / 2, (gp.sill || 0.9) + gp.h / 2, 0.0, seg);
       } else {
@@ -578,6 +589,45 @@ export function room({ x0, z0, x1, z1, h = 2.7, floor, wall, ceiling = true, wal
     }
     piece(s, len, 0, h);
     box(len, 0.1, t + 0.03, M.white, len / 2, 0.05, 0, seg);
+    if (rail) box(len, 0.04, t + 0.04, M.white, len / 2, 2.1, 0, seg);
+    if (cornice) box(len, 0.09, t + 0.09, M.white, len / 2, h - 0.045, 0, seg);
+  }
+  return g;
+}
+/* a Victorian cast-iron fireplace in a front room: a painted wooden surround and mantel shelf, a tiled slip, the black grate (fireplace for a
+   room's side wall, facing +z). Front rooms of London terraces were built with one. */
+export function fireplace(tileCol = 0x5a7a6a) {
+  const g = grp(),
+    wood = solid(0xe8e2d2, 0.6),
+    iron = solid(0x1c1c1e, 0.5, 0.4);
+  box(1.3, 1.15, 0.12, wood, 0, 0.575, 0.06, g);
+  box(1.45, 0.05, 0.24, wood, 0, 1.17, 0.1, g);
+  box(0.8, 0.85, 0.02, solid(tileCol, 0.25, 0.1), 0, 0.5, 0.13, g);
+  box(0.56, 0.62, 0.04, iron, 0, 0.36, 0.14, g);
+  box(0.4, 0.4, 0.02, solid(0x0a0908, 1), 0, 0.3, 0.16, g);
+  for (let i = 0; i < 4; i++) box(0.4, 0.015, 0.02, iron, 0, 0.18 + i * 0.07, 0.175, g);
+  box(1.4, 0.04, 0.4, solid(0x6a5a4a, 0.6), 0, 0.02, 0.32, g);   /* the hearth */
+  return g;
+}
+/* a 1940s or 1950s wireless set in a wooden cabinet: a cloth-covered speaker, a glowing dial, two knobs */
+export function wireless(glow = true) {
+  const g = grp();
+  box(0.42, 0.3, 0.2, solid(0x5a3a22, 0.45), 0, 0.15, 0, g);
+  box(0.2, 0.2, 0.01, solid(0xb8a27a, 1), -0.07, 0.16, 0.101, g);
+  box(0.12, 0.06, 0.01, new THREE.MeshStandardMaterial({ color: 0xf0d8a0, emissive: glow ? 0xffb050 : 0x000000, emissiveIntensity: 0.6, roughness: 0.3 }), 0.11, 0.2, 0.101, g);
+  for (const x of [0.08, 0.15]) cyl(0.018, 0.018, 0.02, solid(0x1c1a18, 0.4), x, 0.08, 0.105, g, 10).rotation.x = Math.PI / 2;
+  return g;
+}
+/* a light hanging from the ceiling: a cloth or glass shade on a flex, with a warm light under it (one point light, no shadow) */
+export function pendant(h = 2.7, { shade = 0xe8d8b0, warm = 0xffcf9a, power = 2.2, reach = 6 } = {}) {
+  const g = grp();
+  cyl(0.004, 0.004, 0.55, M.black, 0, h - 0.275, 0, g, 4);
+  const sm = new THREE.MeshStandardMaterial({ color: shade, emissive: warm, emissiveIntensity: 0.35, roughness: 0.9, side: THREE.DoubleSide });
+  mesh(new THREE.CylinderGeometry(0.1, 0.2, 0.18, 14, 1, true), sm, 0, h - 0.62, 0, g);
+  if (ROOM_LIGHTS) {
+    const L = new THREE.PointLight(warm, power, reach, 2);
+    L.position.y = h - 0.75;
+    g.add(L);
   }
   return g;
 }
@@ -906,7 +956,7 @@ function hipGeo(w, d, rise, over) {
   return roofUV(ni, 0.8);
 }
 /* a calendar on a nail: a print above, the year, a grid of days */
-function calendar(year) {
+export function calendar(year) {
   const t = cv(96, 140, (x, W, H) => {
     x.fillStyle = "#f2ecdc";
     x.fillRect(0, 0, W, H);
