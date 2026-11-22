@@ -8,9 +8,9 @@ export const GAME = {
   fiction: "You are Kayla, aged fifteen. You, your cousin and everyone you talk to are fictional. The papers you read are real.",
   mature: ["This is a ghost story about murder, and then the truth behind it.", "It talks about killing and about slavery. Nothing is shown close up."],
   recap: [
-    { icon: "🕯️", label: "The legend", page: "legend" },
-    { icon: "📜", label: "The real Annie Palmer", page: "annie" },
-    { icon: "📖", label: "The names in the book", page: "journal" },
+    { icon: "🕯️", label: "The legend", page: "legend", img: "recap/legend.jpg" },
+    { icon: "📜", label: "The real Annie Palmer", page: "annie", img: "recap/annie.jpg" },
+    { icon: "📖", label: "The names in the book", page: "journal", img: "recap/journal.jpg" },
   ],
 };
 export const CHAPTERS = [
