@@ -123,6 +123,9 @@ export function createAmbient(opts = {}) {
     act.timeScale = speed || (0.88 + a.rnd() * 0.24); a.clip = name; a.clipT = 0; a.changed = life.t; if (n.lo && n.lo.userData.anim) { const lc = n.lo.userData.anim, la = lc.get(name); if (la && la !== lc.cur) { const restartLite = lc.play(name, once); lc.timer = 0; if (restartLite !== false) la.time = act.time; la.timeScale = act.timeScale; } }
     return true;
   }
+  /* how far through a bend-down clip the body is lowest (0 to 1), read from the hips' height in the clip; 0.5 when the clip has no such track */
+  const _bend = new WeakMap(), bendAt = (n, name) => { const c = ctlOf(n), act = c && c.get(name), clip = act && act.getClip(); if (!clip) return 0.5; if (_bend.has(clip)) return _bend.get(clip);
+    const tr = (clip.tracks || []).find((t) => /Hips\.position$/.test(t.name)); let f = 0.5; if (tr) { let lo = Infinity, at = 0; for (let i = 0; i < tr.times.length; i++) { const y = tr.values[i * 3 + 1]; if (y < lo) { lo = y; at = tr.times[i]; } } f = Math.min(0.9, Math.max(0.1, at / clip.duration)); } _bend.set(clip, f); return f; };
   const clipLen = (n, name) => { const c = ctlOf(n), act = c && c.get(name); return act ? act.getClip().duration / (act.timeScale || 1) : 2; };
   function strideFor(n, name) { if (O.stride) return O.stride(n, name); const c = ctlOf(n), act = c && c.get(name); return act ? strideOf(n.m, act.getClip()) : 0; }
   /* play a walk at the pace that fits ground speed v on this body, for any walking clip (Carry, CarryBagWalk, CarryHeadWalk, Run...) */
@@ -240,19 +243,21 @@ export function createAmbient(opts = {}) {
   B.errand = (n, dt) => {
     const a = n.amb, s = a.spec;
     if (a.leg === undefined) { a.leg = Math.hypot(s.to[0] - n.x, s.to[1] - n.z) < Math.hypot(s.from[0] - n.x, s.from[1] - n.z) ? 0 : 1; if (s.drop) { a.carrying = a.leg === 1; if (s.show) s.show(n, a.carrying); } }   /* leg: where they go next (1 = spec.to); with spec.drop they carry only on the way to spec.to */
-    if (a.st === 'walk') { if (walkStep(n, dt)) { a.leg ^= 1; a.st = 'arrive'; a.t = 0; } return; }
+    if (a.st === 'walk') { if (walkStep(n, dt)) { if (a.mid) { a.mid = false; const g2 = a.leg === 1 ? s.to : s.from; if (go(n, g2.slice())) return; }   /* at spec.via: on to the real end without stopping */ a.leg ^= 1; a.st = 'arrive'; a.t = 0; } return; }
     if (a.st === 'turn') { if (turnStep(n, dt, 2.6)) startWalk(n); return; }
     if (a.st === 'arrive') {   /* at one end: put down or pick up (spec.drop), then wait */
       const atTo = Math.hypot(s.to[0] - n.x, s.to[1] - n.z) < Math.hypot(s.from[0] - n.x, s.from[1] - n.z); a.leg = atTo ? 0 : 1;   /* where they really are decides, and where they go next */
       const want = !atTo;   /* at spec.from they pick up, at spec.to they put down, never by flipping (owner, 21 Nov 2026: they picked the bunch up again at the wagon) */
       if (s.drop && a.carrying === want) { pause(n, ...(s.wait || [1, 3])); return; }   /* nothing to pick up or put down here: no bend */
-      const pk = s.pick || 'PickUp'; if (s.drop && has(n, pk)) { play(n, pk, { once: true, speed: 1 }); a.st = 'pick'; a.t = clipLen(n, pk) * 0.95; a.half = a.t * 0.4;   /* the load changes hands at the bottom of the bend, 60% of the way through, not on the way down (owner, 21 Nov 2026) */ a.swapped = false; stand(n); a.clip = pk; return; }
+      const pk = s.pick || 'PickUp'; if (s.drop && has(n, pk)) { play(n, pk, { once: true, speed: 1 }); a.st = 'pick'; a.t = clipLen(n, pk) * 0.95; a.half = a.t - clipLen(n, pk) * bendAt(n, pk);   /* the load changes hands at the bottom of the bend, read from the clip itself (owner, 22 Nov 2026: the bunch reached the ground when they were already standing up again) */ a.swapped = false; stand(n); a.clip = pk; return; }
       if (s.drop) { a.carrying = a.leg === 1; if (s.show) s.show(n, a.carrying); if (!a.carrying && s.put) s.put(n); }
       pause(n, ...(s.wait || [3, 8])); return; }
     if (a.st === 'pick' && a.t > 0) { if (a.t < a.half && !a.swapped) { a.swapped = true; a.carrying = a.leg === 1;   /* a.leg was set from where they stand on arrival */ if (s.show) s.show(n, a.carrying); if (!a.carrying && s.put) s.put(n); } return; }   /* spec.put(n): the load stays where it was set down (the game leaves a copy there) */
     if (a.st === 'pick') { pause(n, ...(s.wait || [1, 3])); return; }
     if (a.st === 'pause' && a.t > 0) return;
-    const g = a.leg === 1 ? s.to : s.from; if (!go(n, g.slice())) pause(n, 1.5, 3);
+    const g = a.leg === 1 ? s.to : s.from;
+    if (s.via) { a.mid = true; if (go(n, s.via.slice())) return; a.mid = false; }   /* spec.via [x, z]: a point to walk round by, both ways, so the straight line does not cross something on the ground (owner, 22 Nov 2026: the carriers walked through the pile of bananas) */
+    if (!go(n, g.slice())) pause(n, 1.5, 3);
   };
   B.work = (n, dt) => {
     const a = n.amb, s = a.spec;

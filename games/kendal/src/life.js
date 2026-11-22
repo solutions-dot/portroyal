@@ -64,8 +64,8 @@ const PLACES = {
     for (const e of extras) { const row = e.z < 0 ? 'back' : 'front'; at(e, 'sit', { group: row === 'back' ? 'bench1' : undefined, clips: e.base === 'man_work' ? ['SitIdle', 'SitPoseM'] : ['SitIdle', 'SitPoseF'] }); }
   },
   hill(P, people, extras) {   /* the banana harvest: two carriers walk bunches on their heads from the field gate to the far wagon */
-    const c = [[{ ...LOOKS.worker45, skin: 1.08 }, [-4.2, 12.6], [-21.6, 0.9]], [{ ...LOOKS.woman45, skin: 0.96 }, [8.6, 12.4], [-18.8, 0.8]], [{ ...LOOKS.worker45, skin: 0.92, hat: false }, [-5.0, 11.2], [-20.2, 0.7]]];
-    for (const [look, from, to] of c) extras.push(at({ ...look, x: from[0], z: from[1], ry: PI, anim: 'Idle' }, 'errand', { from, to, walk: 'CarryHeadWalk', back: look.base === 'man_work' ? 'WalkM2' : 'Walk', idle: 'CarryHeadIdle', drop: true, pick: 'PickUp', load: 'bunch', wait: [2, 5] }));
+    const c = [[{ ...LOOKS.worker45, skin: 1.08 }, [-4.2, 12.6], [-21.6, 0.9], [-17.9, 7.9]], [{ ...LOOKS.woman45, skin: 0.96 }, [8.6, 12.4], [-18.8, 0.8], [-17.3, 8.5]], [{ ...LOOKS.worker45, skin: 0.92, hat: false }, [-10.5, 12.2], [-20.2, 0.7], [-18.5, 7.3]]];   /* the last pair is a point they walk round by, clear of the mat of bunches */
+    for (const [look, from, to, via] of c) extras.push(at({ ...look, x: from[0], z: from[1], ry: PI, anim: 'Idle' }, 'errand', { from, to, via, walk: 'CarryHeadWalk', back: look.base === 'man_work' ? 'WalkM2' : 'Walk', idle: 'CarryHeadIdle', drop: true, pick: 'PickUp', load: 'bunch', wait: [2, 5] }));
   },
   kingston57(P, people, extras) {   /* the platform: families chat, children play, people with cases walk along the train, others watch it */
     crowd(extras, { id: 'k57', seed: 57, area: [-50, 1.4, 42, 8.6], playArea: [-48, 1.6, 40, 8.4], watch: (e) => [e.x + 2, -3], react: ['Nod', 'Point', 'WaveSlow'], chat: 0.6, wander: 0.45, errand: (e, r) => [clampTo(e.x + (r() < 0.5 ? -10 : 10), -48, 40), clampTo(e.z + (r() - 0.5) * 2, 1.8, 8)] });

@@ -536,3 +536,6 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 ## The water tower (`engine/water-tower.js`, 21 November 2026)
 
 `buildWaterTower({ grp, cyl, box, solid, M })` builds the railway water tower with the game's own helpers and materials (`M.woodDark`, `M.iron`): four straight legs on stone footings, the tank, its roof, and a short outlet pipe, spout and canvas hose for filling a tender (a long hanging pipe that read as a fourth leg was replaced, 21 Nov 2026). It was copied in six games; each game's `waterTower()` now calls it, and `tests/shared-props.mjs` fails if a copy comes back.
+
+
+An errand can take `via: [x, z]`, a point to walk round by on both legs, so the straight line between its ends does not cross something on the ground (Kendal's carriers walked through the pile of bananas). With `drop`, the load changes hands at the lowest point of the bend, read from the hips' height in the pick-up clip itself, not at a fixed share of the clip.
