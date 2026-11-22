@@ -1,27 +1,27 @@
 /* engine/mature.js: the Mature 13+ card on the title screen of a mature game (owner, 22 November 2026: the murder mysteries sit "behind the
    mature label", with a warning first).
 
-   The menu hides Mature 13+ games in the Kids profile and shows its own warning card. This card is for someone who comes straight to the
-   game's address: it covers the title screen until an older traveller says they are 13 or older. If the menu's profile on this device is
-   Kids, there is no way past it here: it says a grown-up can change who is travelling, and offers Exit only.
+   The menu hides Mature 13+ games in the Kids profile and shows its own warning card, which is the one age prompt. This file only stops a
+   device whose menu profile is Kids from opening the game by its address: it says a grown-up can change who is travelling, and offers
+   Exit only. Everyone else goes straight to the title screen.
 
-   It is a soft gate, like the menu's: it asks, it cannot check. It keeps nothing but "this tab said yes" (sessionStorage), so a visit in a
-   new tab asks again.
+   It is a soft stop, like the menu's profile: it reads the profile kept on the device and cannot check anyone's age.
 
      matureGate({ note, exit, skip })  ->  Promise that resolves when the traveller may go on (never, if they may not)
-       note   one or two short lines: what the story has ("It is about a man who killed people. ...")
+       note   kept so the games' calls still work; the menu's card now says what the story has
        exit   the menu (default '../../../menu/')
        skip   true in test runs (the autoplayer and the checks)
-     matureState(profile, said)        pure: 'open' | 'ask' | 'kids' (tested in node by tests/mature.mjs) */
+     matureState(profile)              pure: 'open' | 'kids' */
 export const MATURE_LABEL = 'Mature 13+';
 export const MATURE_AGE = 'For ages 13 and up.';
-export const MATURE_YES = 'I am 13 or older';
 export const MATURE_KIDS = 'This story is for ages 13 and up. A grown-up can change who is travelling on the menu.';
-const PROFILE_KEY = 'pastport-profile', OK_KEY = 'pastport-mature-ok';
+const PROFILE_KEY = 'pastport-profile';
 
-export function matureState(profile, said) {
-  if (profile === 'kids') return 'kids';
-  return said ? 'open' : 'ask';
+/* The owner, 22 November 2026: "Playing one of these games has 3 age prompts. Remove the cream coloured one and leave the dark one only."
+   So this card no longer asks anyone their age: the menu's dark Mature 13+ card is the one prompt. The only thing left here is the stop
+   for a device whose menu profile is Kids, which offers Exit and never asks. */
+export function matureState(profile) {
+  return profile === 'kids' ? 'kids' : 'open';
 }
 
 const CSS = `#maturegate{position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;background:rgba(8,10,14,.93);padding:16px}
@@ -35,12 +35,12 @@ const CSS = `#maturegate{position:fixed;inset:0;z-index:9500;display:flex;align-
 #maturegate .go{background:var(--paper-ink,#2a2418);color:var(--paper,#f1e7d3)}
 #maturegate .out{background:transparent;color:var(--paper-ink,#2a2418)}`;
 
-/* asking for the store can itself throw when a browser blocks storage: then nothing is known, and the card asks */
+/* asking for the store can itself throw when a browser blocks storage: then no profile is known, and the game opens */
 const read = (store, key) => { try { return window[store].getItem(key); } catch (e) { return null; } };
 
 export function matureGate({ note = [], exit = '../../../menu/', skip = false } = {}) {
   if (skip || typeof document === 'undefined') return Promise.resolve();
-  const state = matureState(read('localStorage', PROFILE_KEY), read('sessionStorage', OK_KEY) === '1');
+  const state = matureState(read('localStorage', PROFILE_KEY));
   if (state === 'open') return Promise.resolve();
   return new Promise((resolve) => {
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
@@ -48,16 +48,10 @@ export function matureGate({ note = [], exit = '../../../menu/', skip = false } 
     const box = document.createElement('div'); box.className = 'mg';
     const add = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = text; box.appendChild(e); return e; };
     add('p', 'mgl', MATURE_LABEL);
-    add('h2', '', state === 'kids' ? 'Not for now' : MATURE_AGE).id = 'mgtitle';
-    if (state === 'kids') add('p', '', MATURE_KIDS);
-    else for (const line of [].concat(note)) add('p', '', line);
+    add('h2', '', 'Not for now').id = 'mgtitle';
+    add('p', '', MATURE_KIDS);
     const row = document.createElement('div'); row.className = 'mgb'; box.appendChild(row);
     const out = document.createElement('a'); out.className = 'out'; out.href = exit; out.textContent = 'Exit';
-    if (state === 'ask') {
-      const go = document.createElement('button'); go.type = 'button'; go.className = 'go'; go.textContent = MATURE_YES;
-      go.addEventListener('click', () => { try { sessionStorage.setItem(OK_KEY, '1'); } catch (e) { /* asked again next time */ } el.remove(); resolve(); });
-      row.appendChild(go);
-    }
     row.appendChild(out); el.appendChild(box); document.body.appendChild(el);
     /* the game's own keys and taps stay quiet while the card is up; Tab stays inside it */
     el.addEventListener('keydown', (e) => {
@@ -67,6 +61,6 @@ export function matureGate({ note = [], exit = '../../../menu/', skip = false } 
       e.preventDefault(); f[(i + (e.shiftKey ? f.length - 1 : 1)) % f.length].focus();
     });
     for (const t of ['pointerdown', 'touchstart', 'click']) el.addEventListener(t, (e) => e.stopPropagation(), { passive: true });
-    (row.querySelector('button') || out).focus({ preventScroll: true });
+    out.focus({ preventScroll: true });
   });
 }

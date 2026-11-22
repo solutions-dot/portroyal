@@ -554,4 +554,4 @@ An errand can take `via: [x, z]`, a point to walk round by on both legs, so the 
 
 ## engine/mature.js: the Mature 13+ card (22 November 2026)
 
-`matureGate({ note, exit, skip })` covers a mature game's title screen until the traveller says they are 13 or older. If the menu's profile on the device is Kids (`pastport-profile`), it offers Exit only. It is a soft gate: it asks and cannot check. Tivoli and The Mad Master of Edinburgh Castle call it. `matureState(profile, said)` is the pure rule.
+`matureGate({ note, exit, skip })` no longer asks anyone their age (owner, 22 November 2026: one age prompt only, the menu's dark card). It only stops a device whose menu profile is Kids (`pastport-profile`) from opening a mature game by its address, with an Exit button. Everyone else goes straight to the title. Tivoli and The Mad Master of Edinburgh Castle call it. `matureState(profile, said)` is the pure rule.
