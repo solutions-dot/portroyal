@@ -90,6 +90,14 @@ Every speaker is fictional and the journal page "Kayla and Tia" says so: Kayla, 
 
 `?auto=1`: AUTO END 66, FLOW 0, no errors. `?test=audit`: AUDIT 0 and FACES 0 in house, church, archive and estate. `?test=ambient`: AMBIENT 0 and AMBIENT SETUP 0 in every place. `?test=held`: CARRY 0. `?test=layout`: LAYOUT UI 0 at 390x800, 667x375, 800x500 and 1280x720. Content lint: 0. `?test=cloth` was not at 0 at the second pass (small show-through on the new bodies from the shared clothes builder, worst 17.8 mm at the belt line of `rh_guide`); not rerun. `?test=skin` and `?test=walkers` are still to run and record.
 
+### Clothes checks, 22 November 2026
+
+No rose-hall body was rebuilt in this pass (the new builder keys are not used here, and a body that does not use them builds exactly as before).
+
+- **`?test=cloth`**: a plain run counts the joined meshes as cloth (125 lines). With `&nojoin`: rh_guide 2, rh_archivist 2, rh_warden 1, rh_cousin 2, rh_man 3, rh_elder 15, rh_woman 11, rh_youth 3 (39 lines). Each woman's fingertips report "4 open edge points", a builder fault in every game. `rh_guide`'s line (17.8 mm) is three points under the arm at the side of the blouse in Idle, not seen in close shots front, three-quarter and side. `rh_elder` (a background body) reports skin through the shirt at the throat (up to 17.8 mm) because his OldIdle stance drops the chin into the turned collar, and 1 to 5 mm of shirt at the lapels' edge; at the distance he is seen this does not show. `rh_woman`'s sash shows skirt 21 mm when she bends to pick up. Left as they are, with the reasons above.
+- **`?test=skin`**: rh_guide 100,58,34; rh_archivist 97,59,34; rh_warden 92,53,30; rh_cousin 98,59,34; rh_man 86,50,28; rh_elder 84,47,27; rh_woman 93,55,32; rh_youth 91,55,32. Every recipe's `Skin` is inside the rule 9 range and the game lightens skin by 1.55, but the probe draws faces in the game's own light, which is the great house at night, so all read darker than in the other games. This needs a look in the game's lighting (a face light at night), not a recipe change.
+- **`?test=walkers`**: rh_cousin slides 22.3 cm a loop and rh_warden 3.4 cm; the rest under 2.1 cm. Tia (`rh_cousin`) is shown at scale 0.8 and only ever stands and watches (`watch` in all four places), so nothing slides on screen; if she is ever given a walk, give her a pace for her scaled stride.
+
 ## Still to do
 
 - Bring the monument closer to its photograph, and check the Jamaica Archives building date.

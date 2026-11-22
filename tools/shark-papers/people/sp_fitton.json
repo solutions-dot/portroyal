@@ -23,12 +23,7 @@
   "buckles": true,
   "bands": true,
   "hairvol": 0.4,
-  "hat": [
-   [
-    "cocked",
-    "Hat"
-   ]
-  ],
+  "hat": [],
   "facings": true
  },
  "colors": {

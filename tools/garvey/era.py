@@ -1426,11 +1426,11 @@ if G.get('coat') and OLD and G.get('facings'):
     # (a Royal Navy lieutenant's blue coat with white facings). The 1690 coat has no lapel of its own, so each lapel is a band of the facing cloth laid 3 mm over the coat
     # along its front edge, from the neckline to the waist, widest at the top; each cuff is a band round the end of the coat's sleeve. Both take the coat's own bone weights.
     COL.setdefault('Facings',srgb((236,234,226))); CT=tree_of(PART['coat']); LIFT=0.003; z0=HIP+0.07
-    def _on(o,d,out=False):      # where a ray meets the coat, lifted off its outer side (out: the ray starts inside the sleeve, so the outer side is the far one)
+    def _on(o,d,out=False,lift=LIFT):      # where a ray meets the coat, lifted off its outer side (out: the ray starts inside the sleeve, so the outer side is the far one)
         hit=CT.ray_cast(o,d)
         if hit[0] is None: return None
         n=hit[1] if (hit[1].dot(d)<0)!=out else -hit[1]
-        return hit[0]+n*LIFT
+        return hit[0]+n*lift
     bm=bmesh.new()
     for sx in (-1,1):
         ztop=None; z=NECK
@@ -1460,7 +1460,7 @@ if G.get('coat') and OLD and G.get('facings'):
                 q=e0+fd*((pp-e0).dot(d)/den)      # its centre is where the forearm's own line crosses that plane (the arm is bent a little at the elbow, so the straight line from shoulder to hand misses the sleeve)
                 u=d.cross(Vector((0,1,0))).normalized(); v=d.cross(u).normalized(); ring=[]
                 for k in range(nk):
-                    ph=2*math.pi*k/nk; dr=u*math.cos(ph)+v*math.sin(ph); r=_on(q,dr,True)
+                    ph=2*math.pi*k/nk; dr=u*math.cos(ph)+v*math.sin(ph); r=_on(q,dr,True,0.0045)      # (4.5 mm: the sleeve bends at the elbow end of the cuff)
                     ok=r is not None and (r-q).length<0.12*s; last=r if ok else (q+dr*((ring[-1].co-q).length if ring else 0.05*s))
                     ring.append(bm.verts.new(last))
                 rings.append(ring if sx>0 else ring[::-1])
