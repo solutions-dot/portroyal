@@ -102,3 +102,9 @@ export function focusOrderIssues(root = document) {
   }
   return out;
 }
+/* is a button's own text cut off? scrollWidth alone also counts a badge hung over its corner (engine/hud.js puts #jcount at -9 px), which is meant to
+   stick out: absolutely positioned children are left out of the measure (22 November 2026; Bog Walk's layout test reported the Journal button 19 times). */
+export function buttonCutOff(b, slack = 2) {
+  const abs = [...b.querySelectorAll('*')].filter((e) => getComputedStyle(e).position === 'absolute' || getComputedStyle(e).position === 'fixed'), keep = abs.map((e) => e.style.display);
+  abs.forEach((e) => { e.style.display = 'none'; }); const cut = b.scrollWidth > b.clientWidth + slack; abs.forEach((e, i) => { e.style.display = keep[i]; }); return cut;
+}

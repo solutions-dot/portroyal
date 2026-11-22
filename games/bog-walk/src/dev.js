@@ -1,5 +1,5 @@
 import { gripTick } from '../../../engine/grip.js';
-import { contentsOverlap } from '../../../engine/ui-audit.js';
+import { contentsOverlap, buttonCutOff } from '../../../engine/ui-audit.js';
 /* games/bog-walk/src/dev.js: test views, the automatic checks and the scripted playthrough. Dev builds only: main.js loads this file from code that runs
    only when __DEV__ is true, so the public build leaves it out (node tools/build.mjs bog-walk --dev to include it). See docs/TESTING.md and docs/games/bog-walk.md.
    Every check writes its lines to #autolog and its count of problems to the page title (AUDIT n, HELD n, LAYOUT n, RESUME n); every one must report 0.
@@ -49,7 +49,7 @@ export function dev(D) {
     const scrolls = (e) => { for (let p = e.parentElement; p; p = p.parentElement) { const cs = getComputedStyle(p); if (/(auto|scroll)/.test(cs.overflowY) && p.scrollHeight > p.clientHeight + 1) return true; } return false; };
     for (const e of els) { const r = box(e), nm = e.id || e.tagName.toLowerCase() + ' "' + e.textContent.trim().slice(0, 24) + '"';
       if (r.left < -1 || r.right > W + 1) out.push(`${name}: ${nm} runs off the side`); if ((r.top < -1 || r.bottom > H + 1) && !scrolls(e)) out.push(`${name}: ${nm} is off the screen`);
-      if (e.tagName === 'BUTTON' && e.scrollWidth > e.clientWidth + 2) out.push(`${name}: ${nm} is cut off`); }
+      if (e.tagName === 'BUTTON' && buttonCutOff(e)) out.push(`${name}: ${nm} is cut off`); }
     for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) { const a = els[i], b = els[j]; if (a.contains(b) || b.contains(a)) continue; if (contentsOverlap(a, b)) out.push(`${name}: "${a.textContent.trim().slice(0, 20)}" overlaps "${b.textContent.trim().slice(0, 20)}"`); }
     const first = root.querySelector('button:not([hidden])'); if (first && vis(first)) { const r = box(first); if (r.top >= 0 && r.bottom <= H) { const top = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2); if (!top || !(top === first || first.contains(top))) out.push(`${name}: its first button is covered by ${top ? (top.id || top.className || top.tagName) : 'nothing'}`); } }
     return out;
@@ -183,7 +183,7 @@ export function dev(D) {
     const st = document.createElement('style'); st.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st);
     const inside = (name, id, e) => { const r = box(e); if (r.left < -1 || r.top < -1 || r.right > W + 1 || r.bottom > Hh + 1) out.push(`${pre}${name}: ${id} is off the screen (${r.left | 0},${r.top | 0},${r.right | 0},${r.bottom | 0})`); };
     const check = (name) => { for (const l of hudOverlaps()) out.push(pre + name + ': ' + l);
-      for (const id of HUD_IDS) { const e = $(id); if (!vis(e) || !e.textContent.trim() || id === 'dialogue' || id === 'barT' || id === 'barB') continue; if (e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflowX !== 'visible') out.push(`${pre}${name}: ${id} is clipped`); for (const b of e.querySelectorAll('button')) if (vis(b) && b.scrollWidth > b.clientWidth + 2) out.push(`${pre}${name}: a button in ${id} is cut off`); } };
+      for (const id of HUD_IDS) { const e = $(id); if (!vis(e) || !e.textContent.trim() || id === 'dialogue' || id === 'barT' || id === 'barB') continue; if (e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflowX !== 'visible') out.push(`${pre}${name}: ${id} is clipped`); for (const b of e.querySelectorAll('button')) if (vis(b) && buttonCutOff(b)) out.push(`${pre}${name}: a button in ${id} is cut off`); } };
     const panel = (name, sel) => { for (const l of panelCheck(name, document.querySelector(sel))) out.push(pre + l); };
     const covered = (name, panelId, ids) => { for (const id of ids) { const e = $(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (!t || !$(panelId).contains(t)) out.push(`${pre}${name}: ${id} is covered by ${t ? (t.id || t.className || t.tagName) : 'nothing'}`); } };
     const reset = () => { for (const id of ['skip', 'act', 'pick', 'holdbox', 'exit', 'toast', 'way', 'nudge', 'dialogue', 'card', 'puzzle', 'journal', 'chapters', 'credits']) $(id).hidden = true; $('hint').textContent = ''; $('sub').classList.add('dim'); D.bars(false); D.hideHud(false); D.captionOff(); $('skiphint').hidden = true; D.setClock(''); document.body.classList.remove('talk'); N.lift = 0; hand.setLift(0); hand.setCine(0); if (D.TB.el) D.TB.el.hidden = true; };

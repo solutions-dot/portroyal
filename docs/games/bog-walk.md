@@ -369,3 +369,7 @@ Work to do: find a clearer photograph of the Bog Walk power house (the NLJ "Powe
 - Sound: the station's wind was 0.025 and the yard's and the ruins' 0.025 to 0.03; now 0.05 each, and the ruins have a little far traffic from the gorge road. `?test=beds`: BEDS 0.
 - Checks: `?test=audit` 0 (station, ruins, Tube), with `engine/audit-reveal.js` on the notice.
 Dev: `?look=<id>&at=<chapter>,<stage>&k=0.5` holds a look part way for a screenshot (docs/ENGINE.md, engine/lookkit.js).
+
+## Layout test 0 (22 November 2026)
+
+The nineteen findings were one thing: the Journal button's count badge hangs over its corner by design (engine/hud.js), and the cut-off check counted it as text running out of the button. The check now uses `buttonCutOff` in engine/ui-audit.js, which leaves absolutely placed children out. `?test=layout`: 0 at 390x800 and 667x375.
