@@ -39,6 +39,22 @@ const BANNER_CSS = '#goalbanner{position:fixed;left:50%;top:30%;transform:transl
   + '#goal.goalicon *{font-size:0!important}#goal.goalicon:empty{display:none!important}'
   + '#goal.goalicon.fresh{animation:goalpulse 1.1s ease-in-out 5}'
   + '@keyframes goalpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,214,92,0),0 2px 8px rgba(0,0,0,.35)}50%{box-shadow:0 0 0 8px rgba(255,214,92,.6),0 2px 8px rgba(0,0,0,.35)}}';
+/* is anything in front of the game? a card, a talk, the journal, the title, or the chapter fade (#fade) still dark */
+const shown = (e) => !!e && !e.hidden && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden';
+export function screenBusy() {
+  const fade = document.getElementById('fade');
+  return BUSY_IDS.some((id) => shown(document.getElementById(id))) || document.body.classList.contains('talking') || document.body.classList.contains('talk') || (shown(fade) && parseFloat(getComputedStyle(fade).opacity) > 0.05);
+}
+/* once per device, when the screen is clear: the "Who you are" card at the start of each game (owner, 21 November 2026). Not in test views. */
+let pending = 0;   /* a "who you are" card still to come: the goal banner waits for it, so the card comes first */
+export function onceWhenClear(key, fn) {
+  try { if (localStorage.getItem(key)) return; } catch { /* storage blocked: show it */ }
+  const q = new URLSearchParams(location.search); if (q.has('test') || q.has('shot') || q.has('auto')) return;
+  pending++;
+  const tick = () => { if (screenBusy()) { setTimeout(tick, 300); return; } try { localStorage.setItem(key, '1'); } catch { /* ignore */ } pending--; fn(); };
+  setTimeout(tick, 400);
+}
+
 function goalBanner(goalId) {
   const g = document.getElementById(goalId); if (!g || g.dataset.banner) return; g.dataset.banner = '1';
   const st = document.createElement('style'); st.textContent = BANNER_CSS; document.head.appendChild(st);
@@ -61,9 +77,7 @@ function goalBanner(goalId) {
   const b = document.createElement('div'); b.id = 'goalbanner'; b.hidden = true; b.setAttribute('aria-hidden', 'true');   /* the goal box itself is what a screen reader reads */
   document.body.appendChild(b);
   let last = '', timer = 0, wait = 0;
-  const up = (e) => !!e && !e.hidden && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden';
-  const fade = document.getElementById('fade');   /* every game's chapter title and fade to black: wait until it has cleared */
-  const busy = () => BUSY_IDS.some((id) => up(document.getElementById(id))) || document.body.classList.contains('talking') || (up(fade) && parseFloat(getComputedStyle(fade).opacity) > 0.05);
+  const busy = () => screenBusy() || pending > 0;
   let fresh = false;
   g.addEventListener('animationend', () => g.classList.remove('fresh'));
   let stay = false;

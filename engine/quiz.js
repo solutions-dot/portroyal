@@ -53,6 +53,9 @@ function ensure() {
   return panel;
 }
 export const quizOpen = () => !!panel && !panel.hidden;
+let stopNow = null;
+/* close the quiz at once without finishing it (test views and a chapter change); its promise does not resolve */
+export function closeQuiz() { if (stopNow) stopNow(); if (panel) panel.hidden = true; }
 
 /* runQuiz: returns a promise of { right, of }; done (if given) is called with the same */
 export function runQuiz({ title = 'Quiz', items, max = QUIZ_MAX, sound = null, done = null, fast = false } = {}) {
@@ -61,7 +64,7 @@ export function runQuiz({ title = 'Quiz', items, max = QUIZ_MAX, sound = null, d
   dispatchEvent(new Event('blur'));   /* let go of held keys and the joystick, as engine/exit.js does */
   P.hidden = false;
   return new Promise((resolve) => {
-    let k = 0, right = 0, timer = 0;
+    let k = 0, right = 0, timer = 0; stopNow = () => { clearTimeout(timer); stopNow = null; };
     const finish = () => { clearTimeout(timer); P.hidden = true; const r = { right, of: list.length }; if (done) done(r); resolve(r); };
     const end = () => {
       $('quizprog').textContent = title; $('quizq').textContent = scoreLine(right, list.length); $('quiznote').textContent = ''; $('quizopts').replaceChildren(); $('quizline').textContent = '';
@@ -86,3 +89,18 @@ export function runQuiz({ title = 'Quiz', items, max = QUIZ_MAX, sound = null, d
     show();
   });
 }
+
+/* showRight: the same rule for a game's own puzzles (Garvey's colours, the timeline board, a page to lay out, type to set; Bog Walk's order game).
+   A wrong pick shakes (its 'no' class), the right one gets a green ring, the message says what is right, and after a pause the game carries on
+   with the right one as if it had been picked: then(right). While it waits, more taps do nothing (returns false). */
+const MARK_CSS = '.qyes{outline:4px solid #2f7d3a!important;outline-offset:2px!important;box-shadow:0 0 0 8px rgba(47,125,58,.32)!important}';
+let marked = false, waiting = false;
+export function showRight({ picked = null, right, msg = null, text = '', then = null, delay = 2600, fast = false }) {
+  if (waiting || !right) return false;
+  if (!marked && typeof document !== 'undefined') { const st = document.createElement('style'); st.textContent = MARK_CSS; document.head.appendChild(st); marked = true; }
+  if (picked) { picked.classList.add('no'); setTimeout(() => picked.classList.remove('no'), 400); }
+  right.classList.add('qyes'); if (msg) msg.textContent = text; waiting = true;
+  setTimeout(() => { waiting = false; right.classList.remove('qyes'); if (then && right.isConnected) then(right); }, fast ? 30 : delay);
+  return true;
+}
+export const showingRight = () => waiting;
