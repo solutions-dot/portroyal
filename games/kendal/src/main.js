@@ -4,6 +4,8 @@ import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engin
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
+import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';   /* the view turns to the person talking */
+const TC = createTalkCam();
 const FACE_VARIANTS = { man_suit: 2, man_work: 2, man_shirt: 2, man_elder: 2, woman57: 2, woman_long: 2, woman_elder: 2, girl: 2, boy: 2, girl_small: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { follow, stop as stopFollow, tick as followTick, isFollowing, watch as followWatch, drive, goTo } from '../../../engine/follow.js';   /* people who walk with you: one system for every game */
@@ -109,7 +111,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stick.id) { stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x0) / 50)); stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y0) / 50)); }
-  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
+  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); if (look.moved > 8) TC.cancel(); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
 });
 const endPointer = (e) => { if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; } if (e.pointerId === look.id) { if (look.moved < 8) { const p = tapPerson(e.clientX, e.clientY); if (p) startTalk(p); } look.id = null; } };
 canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
@@ -438,7 +440,7 @@ function startTalk(n) {
   convoForced = false; if (n.amb) P_().life.hold(n, true); openConvo(lines, null, n);
 }
 function convo(ls, onEnd, who) { if (busy && !$('card').hidden) hideCard(); talkFull = false; convoForced = true; openConvo([...ls], onEnd, who || null); }
-function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; $('toast').hidden = true; showLine(); }
+function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy = true; talkWith = n || null; if (n) TC.begin(); lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; $('talk').hidden = true; $('hint').hidden = true; $('toast').hidden = true; showLine(); }
 /* the speaker's gestures: men and women their own talk clips, seated men TalkM3 and others SitTalk; anyone holding something, kneeling, sitting on the ground or held in a pair keeps their pose */
 const KEEP_POSE = /^(Kneel|Comfort|PlayPiano|PlayGuitar|Sad|Cry|Hurt|CarryHead)/;
 function gestureFor(n) { const a = n.anim || 'Idle', held = (n.m.userData.held || []).length;
@@ -454,7 +456,7 @@ function showLine() {
 function choose(s, c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
+  document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
   if (n && n.amb && P_() && P_().life) P_().life.hold(n, false);
   const forced = convoForced; convoForced = false;
   if (finished && n && talkFull) { n.talked = true; saveGame(); STORY.done(n.id); } if (cb && (finished || forced)) cb();
@@ -853,6 +855,7 @@ function turnLimit(P, dt) {
     if (Math.abs(e) > lim) { m.rotation.y = n._ry + Math.sign(e) * lim; if (n.lo) n.lo.rotation.y = m.rotation.y; } n._ry = m.rotation.y; }
 }
 function update(dt, now) {
+  if (talkWith && TC.on) TC.step(state, camera.position, speakerHead(talkWith), dt);   /* engine/talk-cam.js */
   const P = P_(); if (!P) return;
   if (DIR.on) { DIR.t += dt; if (DIR.t >= DIR.dur && DIR.resolve) { const r = DIR.resolve; DIR.resolve = null; r(true); } }
   if (state.started && !busy && !frozen && !DIR.on) {

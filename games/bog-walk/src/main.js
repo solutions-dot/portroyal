@@ -4,6 +4,8 @@ import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { renderFramed, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { grip, gripTick } from '../../../engine/grip.js';
 import { hudTidy } from '../../../engine/hud.js';
+import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';   /* the view turns to the person talking */
+const TC = createTalkCam();
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 /* games/bog-walk/src/main.js: Bog Walk 1904: The Tube. The script is docs/games/bog-walk.md, "The build script (agreed with the owner, 13 Nov 2026)".
    Six chapters: the station on Sunday evening (0), Zeke's story of the first electric tram in 1899 (1), inside the Tube (2), the water (3),
@@ -445,7 +447,7 @@ function startTalk(n) {
   convoForced = false; openConvo(lines, null, n);
 }
 function convo(ls, onEnd, who) { talkFull = false; convoForced = true; openConvo([...ls], onEnd, who || null); }
-function openConvo(ls, onEnd, n) { document.body.classList.add('talk'); talkWith = n || null; lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; showLine(); }
+function openConvo(ls, onEnd, n) { document.body.classList.add('talk'); talkWith = n || null; if (n) TC.begin(); lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; showLine(); }
 function showLine() {
   const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock);
   $('who').textContent = s.who; $('who').hidden = !s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me); $('dialogue').classList.toggle('narr', !s.who);
@@ -456,7 +458,7 @@ function showLine() {
 function choose(s, c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  document.body.classList.remove('talk'); const n = talkWith, cb = convoEnd; talkWith = null; convoEnd = null; $('dialogue').hidden = true; if (n && n.ctl && !/^Sit/.test(n.anim || '')) n.ctl.play(null);
+  document.body.classList.remove('talk'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; if (n && n.ctl && !/^Sit/.test(n.anim || '')) n.ctl.play(null);
   const forced = convoForced; convoForced = false;
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(n); } if (cb && (finished || forced)) cb();
 }
@@ -746,7 +748,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stick.id) { stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x0) / 50)); stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y0) / 50)); $('stick').firstElementChild.style.transform = `translate(${stick.dx * 26}px,${stick.dy * 26}px)`; }
-  else if (e.pointerId === look2.id) { const dx = e.clientX - look2.x, dy = e.clientY - look2.y; look2.x = e.clientX; look2.y = e.clientY; look2.moved += Math.abs(dx) + Math.abs(dy); S.yaw -= dx * 0.005; S.pitch = Math.max(-1.2, Math.min(1.3, S.pitch - dy * 0.004)); }
+  else if (e.pointerId === look2.id) { const dx = e.clientX - look2.x, dy = e.clientY - look2.y; look2.x = e.clientX; look2.y = e.clientY; look2.moved += Math.abs(dx) + Math.abs(dy); if (look2.moved > 8) TC.cancel(); S.yaw -= dx * 0.005; S.pitch = Math.max(-1.2, Math.min(1.3, S.pitch - dy * 0.004)); }
 });
 const endPointer = (e) => { if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; $('stick').hidden = true; } if (e.pointerId === look2.id) { if (look2.moved < 8) { if (MODE === 'tube') tapPatch(e.clientX, e.clientY); else { const p = tapPerson(e.clientX, e.clientY); if (p) activate(p); } } look2.id = null; } };
 canvas.addEventListener('pointerup', endPointer); canvas.addEventListener('pointercancel', endPointer);
@@ -808,6 +810,7 @@ function worldTick(dt, ft) {
 }
 const LIVE_SHOT = __DEV__ && new URLSearchParams(location.search).has('live');   /* ?shot=...&live: a test view that walks and flickers like play */
 function tick(dt, clockDt = dt) {
+  if (talkWith && TC.on) TC.step(S, camera.position, speakerHead(talkWith), dt);   /* engine/talk-cam.js */
   time += dt; const ft = (__DEV__ && N.phase === 'shot' && !LIVE_SHOT) ? 3.3 : time;   /* a test view holds the flame still, unless &live (the trailer) */
   for (let i = TICKS.length - 1; i >= 0; i--) if (TICKS[i](clockDt)) TICKS.splice(i, 1);
   const sp = (S.started && (N.phase !== 'shot' || LIVE_SHOT)) ? moveTick(dt) : 0; walkPh += sp * dt * 3;

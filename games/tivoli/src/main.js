@@ -3,6 +3,8 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
 import { renderFramed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { hudTidy } from '../../../engine/hud.js';
+import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';   /* the view turns to the person talking */
+const TC = createTalkCam();
 /* games/tivoli/src/main.js: Tivoli (West Kingston, from the 1960s to today, with May 2010 at the centre). Read docs/games/tivoli.md first.
    Started from games/_template/. It is on the menu (the owner's choice, 14 November 2026) while it is still being made.
    Story: seven walking chapters and chapter 5 (the May 2010 street scene) are playable; see content.js, story.js, ch1.js, fight.js. The controls, the HUD, the talk marks
@@ -101,7 +103,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stick.id) { stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x0) / 50)); stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y0) / 50)); }
-  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
+  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); if (look.moved > 8) TC.cancel(); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
 });
 const endPointer = (e) => {
   if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; }
@@ -453,6 +455,7 @@ async function devViews() {
 /* ---------- the frame loop: update(dt, now) moves everything; frame() also places the camera and draws. The tests step update() with their own clock. ---------- */
 let last = performance.now(), stepT = 0;
 function update(dt, now) {
+  if (Talk.open) { if (!TC.on) TC.begin(); TC.step(state, camera.position, speakerHead(Talk.open), dt); } else if (TC.on) TC.end();   /* engine/talk-cam.js */
   if (FIGHT.on) fightTick(dt);   // the street scene moves its own people and takes over the camera
   if (state.started && !busy && !FIGHT.on) {
     if (keys.has('arrowleft')) state.yaw += 1.8 * dt; if (keys.has('arrowright')) state.yaw -= 1.8 * dt;

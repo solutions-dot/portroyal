@@ -3,6 +3,8 @@ import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues, slideWalls } from '../../../engine/placement.js';
 import { hudTidy } from '../../../engine/hud.js';
+import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';   /* the view turns to the person talking */
+const TC = createTalkCam();
 import { goTo, tick as followTick, stop as stopFollow } from '../../../engine/follow.js';   /* people sent somewhere walk the same way in every game */
 import { auditSeated, snapMeshes, auditRest } from '../../../engine/audit.js';
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
@@ -255,7 +257,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stick.id) { stick.dx = Math.max(-1, Math.min(1, (e.clientX - stick.x0) / 50)); stick.dy = Math.max(-1, Math.min(1, (e.clientY - stick.y0) / 50)); }
-  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
+  else if (e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy); if (look.moved > 8) TC.cancel(); state.yaw -= dx * 0.005; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch - dy * 0.004)); }
 });
 const endPointer = (e) => {
   if (e.pointerId === stick.id) { stick.id = null; stick.dx = stick.dy = 0; }
@@ -547,7 +549,7 @@ let step = 0, lines = [], talkN = 0, talkFull = false; const TALKS = ['Talk1', '
 function activate(t) { if (t.go) t.go(); else startTalk(t); }
 function startTalk(n) {
   if (n.amb && n.m && n.m.userData.amb) lifeFor(PLACES[place], LIFE_OPTS).hold(n, true);   /* the game takes them while you talk */
-  busy = true; talkWith = n; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; document.body.classList.add('talking'); $('talk').hidden = true; $('hint').hidden = true;
+  busy = true; talkWith = n; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; TC.begin(); document.body.classList.add('talking'); $('talk').hidden = true; $('hint').hidden = true;
   talkFull = wantsTalk(n);
   if (talkFull) lines = [...(typeof n.lines === 'function' ? n.lines() : n.lines)]; else { const later = typeof n.later === 'function' ? n.later() : n.later; lines = [{ who: n.real ? NAR : n.who, text: later[n.heard++ % later.length] }]; }
   showLine();
@@ -564,7 +566,7 @@ function choose(s, c) {   /* a choice: remember it, add the lines that answer it
 }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  const n = talkWith; talkWith = null; $('dialogue').hidden = true; document.body.classList.remove('talking'); busy = panelsOpen(); if (laterToast) { toast(laterToast); laterToast = null; } if (n && n.m) n.m.userData.anim.play(n.seated ? sitClip(false) : null); if (n && n.amb && n.m && n.m.userData.amb) lifeFor(PLACES[place], LIFE_OPTS).hold(n, false);
+  const n = talkWith; talkWith = null; TC.end(); $('dialogue').hidden = true; document.body.classList.remove('talking'); busy = panelsOpen(); if (laterToast) { toast(laterToast); laterToast = null; } if (n && n.m) n.m.userData.anim.play(n.seated ? sitClip(false) : null); if (n && n.amb && n.m && n.m.userData.amb) lifeFor(PLACES[place], LIFE_OPTS).hold(n, false);
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); }
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
@@ -1589,6 +1591,7 @@ $('start').onclick = () => { startGame(); cue('begin'); };
 
 /* ---------- the frame loop ---------- */
 function update(dt, now) {
+  if (talkWith && TC.on) TC.step(state, camera.position, speakerHead(talkWith), dt); else if (TC.on && !talkWith) TC.end();   /* engine/talk-cam.js */
   if (state.started && !busy) {
     if (keys.has('arrowleft')) state.yaw += 1.8 * dt; if (keys.has('arrowright')) state.yaw -= 1.8 * dt;
     let f = stick.id !== null ? -stick.dy : 0, r = stick.id !== null ? stick.dx : 0;
