@@ -15,7 +15,7 @@ import { mergeGeometries as mergeG } from 'three/addons/utils/BufferGeometryUtil
 import { rowBoat, rowStroke, dugOut } from '../../../engine/boats.js';
 import { CL, mixers, grounded, HIPS_Y, setFallbackClip, loadClips, seamLoop, clipFor, animate, groundFeet, strideOf, lookBegin, lookEnd, tickVisible } from '../../../engine/anim.js';
 import { jointTurnLimiter } from '../../../engine/bone-pose.js';
-import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, chirp, cue, setG, tone, noiseHit, shipCreak, hammer, clink, uiSound } from '../../../engine/audio.js';
+import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, chirp, cue, setG, tone, noiseHit, shipCreak, hammer, clink, uiSound, BED_RANGE, bedTest } from '../../../engine/audio.js';
 import { exitReady, exitsReset } from '../../../engine/story.js';
 import { createSea } from '../../../engine/sea.js';
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
@@ -794,13 +794,14 @@ let auNext = 0, gullAt = 2, crackAt = 0, chirpAt = 0, murm = 0.6;
 function audioTick(t) { if (!AU.ctx || !state.started || t < auNext) return; auNext = t + 0.1;
   const p = state.place, shaking = Q.on && ['tremor', 'main', 'swallow'].includes(Q.phase), swell = 0.72 + 0.28 * Math.sin(t * 0.55) + 0.1 * Math.sin(t * 1.7);
   let sea = 0, surf = 0, wind = 0, crowd = 0, room = 0, gulls = false, fire = false, birds = false;
-  if (p === 'out') { const k = Math.max(0, Math.min(1, (state.x + 5) / (SHORE + 10))); sea = (0.15 + 0.55 * k) * swell; surf = 0.04 * k * swell; wind = Q.ruin ? 0.1 : 0.05; gulls = !Q.ruin && state.x > -2; if (NS.ready && !Q.on && state.z > 11) crowd = 0.2 * Math.max(0, Math.min(1, (state.x - 2) / 8)); }
+  if (p === 'out') { const k = Math.max(0, Math.min(1, (state.x + 5) / (SHORE + 10))); sea = (0.1 + 0.2 * k) * swell; surf = 0.04 * k * swell; wind = Q.ruin ? 0.1 : 0.05; gulls = !Q.ruin && state.x > -2; if (NS.ready && !Q.on && state.z > 11) crowd = 0.2 * Math.max(0, Math.min(1, (state.x - 2) / 8)); }
   else if (p === 'in') { crowd = 0.3; fire = true; sea = 0.03; }
   else if (p === 'ware') { room = 0.14; sea = 0.16 * swell; gulls = true; }
-  else if (p === 'sea') { sea = 0.8 * swell; surf = 0.08 * swell; wind = 0.12; }
+  else if (p === 'sea') { sea = 0.3 * swell; surf = 0.08 * swell; wind = 0.12; }   /* 22 November 2026: the sea was 0.8 here and 0.7 at the shore, about twice the shared range (engine/audio.js BED_RANGE); now 0.3 at most (0.33 at the top of the swell), still the loudest bed in the game */
   else if (p === 'after') { sea = 0.22 * swell; wind = 0.14; }
   else if (p === 'yard') { wind = 0.07; sea = 0.08 * swell; birds = true; }
   if (shaking) { sea *= 0.4; surf = 0; crowd = 0; gulls = birds = false; }
+  if (!$('dialogue').hidden) { const d = BED_RANGE.duck; sea *= d; surf *= d; wind *= d; room *= d; crowd *= d; }   /* every bed a little lower while someone talks */
   setG(AU.ch.sea, sea); setG(AU.ch.surf, surf); setG(AU.ch.wind, wind); setG(AU.ch.room, room);
   murm = Math.max(0.3, Math.min(1, murm + (Math.random() - 0.5) * 0.3)); setG(AU.ch.crowd, crowd * murm, 0.12); AU.ch.crowd.f.frequency.setTargetAtTime(380 + murm * 260, AU.ctx.currentTime, 0.2);
   if (gulls && t > gullAt) { gullAt = t + 6 + Math.random() * 10; gullCry(); }
@@ -1258,6 +1259,8 @@ async function loadAll() {
   setTimeout(() => { buildTavern(); try { loadSoldier(); } catch (e) {} try { buildNewStreet(); } catch (e) { NS.err = String(e && e.stack || e); document.body.dataset.nserr = NS.err.slice(0, 300); }   /* never let the extra street stop the tavern */ for (const f of FINDS) if (state.unlocked.includes(f.id)) finds[f.id].visible = false; if (state.ate) stew.visible = true; tavernReady = true; $('tchap').hidden = false; model('heath').then((g) => { people.heath = prep(g.scene); placeHeath(); }).catch(() => {}); for (const n of ['ned', 'buc1', 'buc2', 'morgan', 'gunner']) model(n).then((g) => { people[n] = prep(g.scene); pirateReady(n); }).catch(() => {});
     model('galdy').then((g) => { galdy = prep(g.scene); galdy.scale.multiplyScalar(0.94); galdy.visible = false; scene.add(galdy); animate(galdy, 'Idle'); $('view').hidden = !VIEW_SWITCH; if (__DEV__ && new URLSearchParams(location.search).get('test') === 'walk') runGaldyWalkTest(); }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
   if (__DEV__ && q.has('seed')) { const [sx, sz] = q.get('seed').split(',').map(Number); applySave({ unlocked: ['galdy'], talked: true, ate: false, done: false, ch: {}, pos: [sx, sz, 0] }); setTimeout(() => { document.title = 'RESTORE x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2) + ' ns=' + NS.ready; }, 12000); }
+  if (__DEV__ && q.get('test') === 'beds') { const sw = 1.1;   /* ?test=beds : each place's loudest moment (the swell at its top) against the shared range (engine/audio.js); audioTick works the levels out as you move */
+    bedTest({ 'out: the town': { sea: 0.1 * sw, wind: 0.05, crowd: 0.2, once: 1 }, 'out: the shore': { sea: 0.3 * sw, surf: 0.04 * sw, wind: 0.05, once: 1 }, 'out: the ruins': { sea: 0.3 * sw, wind: 0.1 }, in: { crowd: 0.3, sea: 0.03, once: 1 }, ware: { room: 0.14, sea: 0.16 * sw, once: 1 }, sea: { sea: 0.3 * sw, surf: 0.08 * sw, wind: 0.12 }, after: { sea: 0.22 * sw, wind: 0.14 }, yard: { wind: 0.07, sea: 0.08 * sw, once: 1 } }); }
   if (__DEV__ && q.get('test') === 'skin') (async () => {   /* ?test=skin : how dark each face really looks in this game's daylight (engine/skinprobe.js) */
     const out = []; for (const name of (q.get('b') || 'abba,grace,galdy,kofi,sailor,benning,heath,ned,buc1,buc2,morgan,gunner,soldier,turtler,mendes,constable').split(',')) { let G = name === 'abba' ? abba : name === 'grace' ? people.grace : null, own = false;
       if (!G) { try { G = prep((await model(name)).scene); animate(G); own = true; } catch (e) { out.push(name + ': not loaded'); continue; } }

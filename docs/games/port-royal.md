@@ -291,3 +291,7 @@ Progress saves in the browser. Teachers can open all chapters from the Chapters 
 ## Hannah, Abba's worker (21 November 2026)
 
 The owner: Abba cannot be at the tavern door and inside at the same time. Inside The Turtle, Hannah now serves the stew and asks the change question; Abba stays at the door. Hannah is fictional, and the journal's "Who lived here?" page says so. **Stand-in body (work to do):** she is Abba's body in her own colours (indigo bodice, ochre skirt, pale blue head wrap) and a taller, slimmer build, made in `main.js` the way Grace is. She needs her own body from the character tools (`tools/people/`, Blender) so her face differs from Abba's.
+
+## Sound (22 November 2026)
+
+The sea was far over the shared range: up to 0.77 at the shore and 0.88 in the water (about 7 dB over what the other games use). It now rises to 0.33 at the shore and in the water, and is still the loudest bed in the game. Every bed is lower while someone talks. No place is shown at night, so there is no night layer. Peaks (`?test=beds`, BEDS 0): the town 0.20, the shore 0.33 (was 0.77), the ruins 0.33, the tavern 0.30, the warehouse 0.18, the sea 0.33 (was 0.88), after 0.24, the yard 0.09. The shared level is in `docs/ENGINE.md`, "One ambient level".
