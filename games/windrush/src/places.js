@@ -152,8 +152,9 @@ function yard(id) {
     [-34, 48, 6.4], [-17, 49, 6.8], [8, 48, 6.2], [30, 49, 6.6],
   ]) add(Q, tree(height, 180 + x), x, z).name = "yard tree";
   // the house on its posts, the outdoor kitchen, the drum of water
-  const house = S.stiltHouse(7, 4.5, is48 ? { wall: [190, 172, 138], trim: 0xd8d0bc, shut: 0x3f6a4a, roof: [140, 132, 120] } : { wall: [226, 178, 164], trim: 0xf2eee4, shut: 0x2f5a7a, roof: [176, 180, 176] });
+  const house = S.stiltHouse(7, 4.5, is48 ? { wall: [190, 172, 138], trim: 0xd8d0bc, shut: 0x3f6a4a, roof: [140, 132, 120], interior: true, year: 1948 } : { wall: [226, 178, 164], trim: 0xf2eee4, shut: 0x2f5a7a, roof: [176, 180, 176], interior: true, year: 1962 });
   add(Q, house, -7.5, -6.6).name = "yard building";
+  Q.tickers.push(house.userData.tick);   /* the curtains in the breeze */
   wall(Q, -7.5, -5.85, 7.4, 6.3);
   wall(Q, -7.5, -2.3, 1.3, 0.9);
   solid1(Q, S.kitchenShed(3, 2.2), 8.8, -6.5, 3.6, 2.8, -Math.PI / 2).name = "yard building";

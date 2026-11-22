@@ -625,3 +625,17 @@ The owner asked that The Shark Papers' buildings match Port Royal's detail by bo
 - `roofUV(geo, tile)` lays tiles or shingles in level rows on a roof made in code (a hip roof from `hipRoof`).
 
 Port Royal still has its own `sharedTex`, `houseMat` and `worldUV` in `games/port-royal/src/main.js` (they read its glTF houses' materials); move it to this file the next time Port Royal's buildings are touched. Used by: The Shark Papers (the quay storehouses, the yard wall, the town houses behind it, the court room's walls and floor).
+
+## Close-up surfaces for houses built in code (`engine/house-detail.js`, 22 November 2026)
+
+The owner asked for houses that "wow" up close "without sacrificing performance". Each picture is drawn once on a small canvas (256 or 512 pixels) and cached, so a place with ten houses pays for one; lay them with `worldUV` and `roofUV` from `engine/building-tex.js`.
+
+- `paintedBoards({ paint, boards, wear, seed })`: weathered painted boards, upright, with grain, thin worn streaks, dark gaps and a bump map, nail heads and rain stains. One picture is `boards` boards across.
+- `weatherZinc({ tint, rust, seed })`: corrugated zinc with ridges (bump map), nail rows with rust running down, rust blooms and a rusty foot. One picture is one sheet, about 0.8 m.
+- `wallpaper({ ground, ink, kind, seed })`: "sprig", "stripe", "trellis" or "woodchip", slightly faded; about 0.5 m a picture.
+- `fretMat({ color, kind })`: alpha-cut fretwork ("scallop" valance, "cross" vent) for a plane.
+- `jalousie(w, h, { color, open })`: a louvred window, the slats one merged mesh.
+- `glassMat()`: glass that reads as glass (dark, glossy, a little see-through); `lace()`: a net curtain.
+- `sway(mesh, { amp, speed, seed })`: a tick that moves a curtain's lower edge in a breeze (give its plane some segments).
+
+`engine/building-tex.js` also got `roofUV(geo, tile, slope)` reworked so tiles and corrugations run level on every face of a hip roof. Used by Windrush (the house on posts, Celia's room, the terraces' windows, Iris's 2018 home). Port Royal, Tivoli and Melissa still draw their own zinc and boards: move them over when their houses are next touched.

@@ -43,14 +43,20 @@ function casing(g, w, h, col, fw = 0.08, out = 0.04) {
   B(g, m, w + 2 * fw + 0.04, fw, out + 0.01, 0, h + fw / 2, (out + 0.01) / 2);
 }
 
-export function fretDoor({ w = 0.95, h = 2.0, color = 0x5a3a26, trim = 0xe8e0cc } = {}) {
+export function fretDoor({ w = 0.95, h = 2.0, color = 0x5a3a26, trim = 0xe8e0cc, open = 0 } = {}) {
+  /* open: how far the door leaf stands open into the house, in radians (0 shut), hinged on its left as seen from outside */
   const g = new THREE.Group(),
+    leaf = new THREE.Group(),
     y0 = 0.03,
     dh = h - 0.34;
   g.name = "Door";
   casing(g, w, h, trim);
   B(g, mat("DoorFrame", tone(trim, 0.8), 0.9), w + 0.06, 0.03, 0.1, 0, 0.015, 0.02);
-  boards(g, -w / 2, w / 2, y0, dh, 0.03, color, 6);
+  leaf.position.set(-w / 2, 0, open ? -0.03 : 0);
+  leaf.rotation.y = open;
+  g.add(leaf);
+  const L = { add: (o) => (o.position.x += w / 2, leaf.add(o)) };   /* the leaf's parts, placed as if the door were shut */
+  boards(L, -w / 2, w / 2, y0, dh, 0.03, color, 6);
   // the fretwork vent over the door: a painted board cut through with a row of crosses and holes, dark behind
   const fm = mat("DoorFrame", trim, 0.85);
   B(g, DARK(), w, h - dh - 0.04, 0.01, 0, (dh + h) / 2, 0.005);
@@ -67,12 +73,12 @@ export function fretDoor({ w = 0.95, h = 2.0, color = 0x5a3a26, trim = 0xe8e0cc 
     const b = B(g, fm, 0.025, 0.22, 0.02, cx, cy, 0.022);
     b.rotation.z = -0.75;
   }
-  B(g, mat("Door", tone(color, 0.8)), w - 0.04, 0.05, 0.02, 0, dh - 0.03, 0.04);
-  for (const y of [y0 + 0.25, dh - 0.25]) B(g, IRON(), 0.03, 0.1, 0.008, -w / 2 + 0.012, y, 0.034);
+  B(L, mat("Door", tone(color, 0.8)), w - 0.04, 0.05, 0.02, 0, dh - 0.03, 0.04);
+  for (const y of [y0 + 0.25, dh - 0.25]) B(L, IRON(), 0.03, 0.1, 0.008, -w / 2 + 0.012, y, 0.034);
   // a thumb latch: a bar on a keeper and a handle below
-  B(g, IRON(), 0.18, 0.025, 0.012, w / 2 - 0.12, y0 + 1.0, 0.038);
+  B(L, IRON(), 0.18, 0.025, 0.012, w / 2 - 0.12, y0 + 1.0, 0.038);
   B(g, IRON(), 0.03, 0.05, 0.03, w / 2 - 0.04, y0 + 1.0, 0.04);
-  B(g, IRON(), 0.025, 0.16, 0.025, w / 2 - 0.16, y0 + 0.9, 0.05);
+  B(L, IRON(), 0.025, 0.16, 0.025, w / 2 - 0.16, y0 + 0.9, 0.05);
   return g;
 }
 

@@ -1,11 +1,17 @@
 /* Lived-in scenery for Windrush, built in code (no image files). Each builder returns a group standing on y = 0 at its own origin,
    facing +z unless it says otherwise. Shapes are reconstructions from period photographs and descriptions (docs/games/windrush.md). */
 import * as THREE from "three";
+import { mergeGeometries as mergeGeo } from "three/addons/utils/BufferGeometryUtils.js";
 import * as DR from "./doors.js";
 export { DR };
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 import { saloonCar } from "../../../engine/roadcars.js";
 import { shipLifeboat, paintKit } from "../../../engine/boats.js";
+import { buildingMat, loadBuildingTex, worldUV, roofUV } from "../../../engine/building-tex.js";
+import { touchFirst } from "../../../engine/device.js";
+/* phones keep the rooms' warm glow in the lamp shades but skip the extra point lights (each one costs every lit surface in the place) */
+const ROOM_LIGHTS = !touchFirst();
+import { paintedBoards, weatherZinc, fretMat, jalousie, glassMat, lace, wallpaper, sway } from "../../../engine/house-detail.js";
 
 const M = {
   zinc: () => std(T.zinc([150, 152, 146], [1, 1]), 0.6),
@@ -854,67 +860,255 @@ export function headBasket() {
 
 /* ---------- a Jamaican country district (Windrush's own home place, not shared with any other game) ---------- */
 /* a board house raised on posts and stones, as country houses were (air under the floor, off the wet ground), with a veranda along its
-   front, a rail, steps down to the yard, shutters, and a zinc roof. Its front faces +z; it stands from z = -d/2 to the foot of its steps at
-   z = d/2 + 2.45. wall and trim are colours [r, g, b]. */
+   front, a rail, steps down to the yard, jalousie windows and board shutters, and a hipped zinc roof. Its front faces +z; it stands from
+   z = -d/2 to the foot of its steps at z = d/2 + 2.45. wall is the paint [r, g, b]. Modelled on the National Library of Jamaica's photograph
+   of a rural housing scheme (small board houses raised on posts) and the board houses of the district (docs/games/windrush.md, "Doors").
+   interior: the family's own house is hollow, its door standing open on one room of the period and their means (a dresser of plates, a table
+   with a cloth, the Bible, a lamp, a calendar of `year`, a bed behind a curtain), lit warm; a house seen from afar stays a shell.
+   userData.tick(t) moves the curtains in the breeze. Surfaces: engine/house-detail.js and engine/building-tex.js. */
 const darker = (hex) => new THREE.Color(hex).multiplyScalar(0.85).getHex();
-export function stiltHouse(w = 7, d = 4.5, { wall = [196, 176, 140], trim = 0xe8e0cc, shut = 0x2f6a3f, roof = [150, 154, 150], seed = 1 } = {}) {
+/* a box laid in metres for a tiled picture (worldUV), placed at x, y, z */
+function tiled(g, m, w, h, d, x, y, z, tile) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  geo.translate(x, y, z);
+  const o = new THREE.Mesh(worldUV(geo, tile), m);
+  g.add(o);
+  return o;
+}
+/* a wall of boards along x from -len/2 to len/2, its foot at y0, with holes [{ u, w, y0, y1 }] (u: the hole's middle along the wall) */
+function boardWall(m, len, h, holes, t = 0.06, tile = 0.9) {
+  const g = grp(),
+    xs = [-len / 2, ...holes.flatMap((o) => [o.u - o.w / 2, o.u + o.w / 2]).sort((a, b) => a - b), len / 2];
+  for (let i = 0; i < xs.length - 1; i++) {
+    const a = xs[i], b = xs[i + 1];
+    if (b - a < 0.005) continue;
+    const hole = holes.find((o) => Math.abs(o.u - (a + b) / 2) < o.w / 2 + 0.001);
+    if (!hole) tiled(g, m, b - a, h, t, (a + b) / 2, h / 2, 0, tile);
+    else {
+      if (hole.y0 > 0.005) tiled(g, m, b - a, hole.y0, t, (a + b) / 2, hole.y0 / 2, 0, tile);
+      if (hole.y1 < h - 0.005) tiled(g, m, b - a, h - hole.y1, t, (a + b) / 2, (hole.y1 + h) / 2, 0, tile);
+    }
+  }
+  return g;
+}
+/* a hip roof's surface (no thickness), eaves at y = 0, for roofUV */
+function hipGeo(w, d, rise, over) {
+  const W = w / 2 + over,
+    D = d / 2 + over,
+    r = Math.max(0.3, W - D),
+    v = [-W, 0, -D, W, 0, -D, W, 0, D, -W, 0, D, -r, rise, 0, r, rise, 0],
+    idx = [0, 4, 5, 0, 5, 1, 2, 5, 4, 2, 4, 3, 3, 4, 0, 1, 5, 2];
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(v, 3));
+  geo.setIndex(idx);
+  const ni = geo.toNonIndexed();
+  ni.computeVertexNormals();
+  return roofUV(ni, 0.8);
+}
+/* a calendar on a nail: a print above, the year, a grid of days */
+function calendar(year) {
+  const t = cv(96, 140, (x, W, H) => {
+    x.fillStyle = "#f2ecdc";
+    x.fillRect(0, 0, W, H);
+    const g = x.createLinearGradient(0, 6, 0, 62);
+    g.addColorStop(0, "#9cc0d0");
+    g.addColorStop(1, "#cfe0c0");
+    x.fillStyle = g;
+    x.fillRect(6, 6, W - 12, 56);
+    x.fillStyle = "#4f7a44";
+    x.beginPath();
+    x.moveTo(6, 62);
+    x.quadraticCurveTo(40, 30, 90, 62);
+    x.fill();
+    x.fillStyle = "#8a2a24";
+    x.font = "bold 18px serif";
+    x.textAlign = "center";
+    x.fillText(String(year), W / 2, 84);
+    x.fillStyle = "#3a3a3a";
+    for (let j = 0; j < 5; j++) for (let i = 0; i < 7; i++) x.fillRect(10 + i * 11.5, 94 + j * 9, 7, 5);
+  });
+  const g = grp();
+  plane(0.24, 0.35, flat(0xffffff, { map: t }), 0, 0, 0, g);
+  return g;
+}
+export function stiltHouse(w = 7, d = 4.5, { wall = [196, 176, 140], trim = 0xe8e0cc, shut = 0x2f6a3f, roof = [150, 154, 150], seed = 1, interior = false, year = 1948 } = {}) {
+  loadBuildingTex();
   const g = grp(),
     lift = 0.85,
     h = 2.6,
-    wt = T.plank(wall, 9, [w / 2, 1]).clone();
-  wt.needsUpdate = true;
-  wt.repeat.set(w / 2, 1);
-  const wm = std(wt, 0.9),
+    y0 = lift + 0.12,
+    t = 0.06,
+    wm = paintedBoards({ paint: wall, boards: 6, wear: interior ? 0.45 : 0.3, seed: seed % 4 }),
     tm = solid(trim, 0.8),
-    sm = solid(shut, 0.85);
+    sm = solid(shut, 0.85),
+    planks = buildingMat("wood", { tint: 0xb89a78 }),
+    zm = weatherZinc({ tint: roof, rust: interior ? 0.55 : 0.4, seed: seed % 3 }),
+    ticks = [];
   // posts on stones under the floor and the veranda
+  const stone = buildingMat("stone", { tint: 0xd8d2c4 });
   for (let x = -w / 2 + 0.2; x <= w / 2 - 0.1; x += (w - 0.4) / 4)
     for (const z of [-d / 2 + 0.2, 0, d / 2 - 0.2, d / 2 + 1.45]) {
       box(0.16, lift, 0.16, M.woodDark, x, lift / 2, z, g);
-      box(0.34, 0.16, 0.34, solid(0x9a968a, 1), x, 0.08, z, g).name = "house footing";
+      tiled(g, stone, 0.34, 0.16, 0.34, x, 0.08, z, 0.5).name = "house footing";
     }
   box(w, 0.12, d, M.woodDark, 0, lift + 0.06, 0, g);
-  box(w, h, d, wm, 0, lift + 0.12 + h / 2, 0, g);
-  // the veranda floor, its rail and posts, and the steps down
-  box(w + 0.1, 0.1, 1.6, std(T.plank([120, 92, 64], 8, [3, 1]), 0.95), 0, lift + 0.05, d / 2 + 0.8, g);
-  for (let x = -w / 2; x <= w / 2 + 0.01; x += w / 3) box(0.11, h + 0.1, 0.11, tm, x, lift + (h + 0.1) / 2, d / 2 + 1.55, g);
-  for (const [a, b] of [[-w / 2, -0.6], [0.6, w / 2]]) {
-    box(b - a, 0.06, 0.06, tm, (a + b) / 2, lift + 0.9, d / 2 + 1.55, g);
-    for (let x = a + 0.1; x < b; x += 0.16) box(0.035, 0.85, 0.035, tm, x, lift + 0.45, d / 2 + 1.55, g);
+  // the walls: boards, with the door and the windows cut through; the front and back along x, the ends along z
+  const win = (u) => ({ u, w: 0.95, y0: 1.0, y1: 2.0 });
+  const front = boardWall(wm, w, h, interior ? [{ u: 0, w: 0.95, y0: 0, y1: 2.0 }, win(-w * 0.3), win(w * 0.3)] : [win(-w * 0.3), win(w * 0.3)], t);
+  front.position.set(0, y0, d / 2 - t / 2);
+  g.add(front);
+  const back = boardWall(wm, w, h, [], t);
+  back.position.set(0, y0, -d / 2 + t / 2);
+  g.add(back);
+  for (const s of [-1, 1]) {
+    const end = boardWall(wm, d - 2 * t, h, interior ? [win(s * -0.3)] : [], t);
+    end.position.set(s * (w / 2 - t / 2), y0, 0);
+    end.rotation.y = Math.PI / 2;
+    g.add(end);
+    if (interior) {
+      const j = jalousie(0.9, 0.95, { color: trim, open: 0.75 });
+      j.position.set(s * (w / 2 - t / 2), y0 + 1.5, s * 0.3);
+      j.rotation.y = Math.PI / 2;
+      g.add(j);
+    }
+    for (const z of [-1, 1]) box(0.1, h, 0.1, tm, s * (w / 2 - 0.02), y0 + h / 2, z * (d / 2 - 0.02), g);   /* corner boards */
   }
-  for (let i = 0; i < 4; i++) box(1.1, 0.06, 0.3, M.wood, 0, lift - 0.21 * (i + 1) + 0.03, d / 2 + 1.75 + i * 0.25, g);
+  if (!interior) box(w - 0.1, h - 0.1, d - 0.1, M.black, 0, y0 + h / 2, 0, g);   /* a shell seen from afar: dark inside its windows */
+  // the veranda floor, its rail and posts with brackets, the steps down
+  tiled(g, planks, w + 0.1, 0.1, 1.6, 0, lift + 0.05, d / 2 + 0.8, 1.2);
+  for (let x = -w / 2; x <= w / 2 + 0.01; x += w / 3) {
+    box(0.11, h + 0.1, 0.11, tm, x, lift + (h + 0.1) / 2, d / 2 + 1.55, g);
+    for (const s of [-1, 1]) {
+      if ((x <= -w / 2 + 0.01 && s < 0) || (x >= w / 2 - 0.01 && s > 0)) continue;
+      const br = box(0.05, 0.36, 0.05, tm, x + s * 0.14, lift + h - 0.12, d / 2 + 1.55, g);
+      br.rotation.z = -s * 0.75;
+    }
+  }
+  for (const [a, b] of [[-w / 2, -0.6], [0.6, w / 2]]) {
+    box(b - a, 0.06, 0.08, tm, (a + b) / 2, lift + 0.9, d / 2 + 1.55, g);
+    box(b - a, 0.04, 0.06, tm, (a + b) / 2, lift + 0.16, d / 2 + 1.55, g);
+    for (let x = a + 0.1; x < b; x += 0.16) box(0.035, 0.72, 0.035, tm, x, lift + 0.52, d / 2 + 1.55, g);
+  }
+  for (let i = 0; i < 4; i++) tiled(g, planks, 1.1, 0.06, 0.3, 0, lift - 0.21 * (i + 1) + 0.03, d / 2 + 1.75 + i * 0.25, 1.2);
   for (const s of [-1, 1]) {
     const st = box(0.06, 0.06, 1.15, M.woodDark, s * 0.55, lift / 2, d / 2 + 2.05, g);
     st.rotation.x = Math.atan2(lift, 1.1);
   }
-  // the front: a door and two windows with board shutters swung open
-  const dr = DR.fretDoor({ color: shut === 0x2f6a3f ? 0x5a3a26 : darker(shut), trim });
+  // the front door, standing open on the family's house, under its fretwork vent
+  const dr = DR.fretDoor({ color: shut === 0x2f6a3f ? 0x5a3a26 : darker(shut), trim, open: interior ? 1.25 : 0 });
   dr.position.set(0, lift + 0.1, d / 2);
   g.add(dr);
+  // the windows: jalousies in their openings, board shutters swung back against the wall, a sill and a head
   for (const x of [-w * 0.3, w * 0.3]) {
-    box(0.95, 1.0, 0.05, M.black, x, lift + 1.5, d / 2 + 0.02, g);
-    for (const s of [-1, 1]) box(0.45, 1.0, 0.05, sm, x + s * 0.72, lift + 1.5, d / 2 + 0.05, g);
-    box(1.1, 0.07, 0.08, tm, x, lift + 2.05, d / 2 + 0.06, g);
-    box(1.1, 0.07, 0.14, tm, x, lift + 0.97, d / 2 + 0.08, g);
+    if (interior) {
+      const j = jalousie(0.9, 0.95, { color: trim, open: 0.7 });
+      j.position.set(x, y0 + 1.5, d / 2 - t / 2);
+      g.add(j);
+    } else box(0.95, 1.0, 0.05, M.black, x, y0 + 1.5, d / 2 + 0.02, g);
+    for (const s of [-1, 1]) {
+      const sh = boardWall(sm, 0.45, 1.0, [], 0.04, 0.45);
+      sh.position.set(x + s * 0.72, y0 + 1.0, d / 2 + 0.05);
+      g.add(sh);
+    }
+    box(1.1, 0.07, 0.08, tm, x, y0 + 2.08, d / 2 + 0.06, g);
+    box(1.1, 0.07, 0.14, tm, x, y0 + 0.97, d / 2 + 0.08, g);
   }
-  // a hipped zinc roof, and the veranda's own lean-to roof
-  const zt = T.zinc(roof).clone();
-  zt.needsUpdate = true;
-  zt.repeat.set(2, 2);
-  const zm = std(zt, 0.7),
-    top = lift + 0.12 + h;
-  for (const s of [-1, 1]) {
-    const p = box(w + 0.6, 0.06, d / 2 + 0.6, zm, 0, top + 0.55, s * (d / 4 + 0.12), g);
-    p.rotation.x = s * 0.48;
-  }
-  for (const s of [-1, 1]) {
-    const p = mesh(new THREE.ConeGeometry(d / 2 + 0.45, 1.2, 4, 1, true), zm, s * (w / 2 - 0.2), top + 0.6, 0, g);
-    p.rotation.y = Math.PI / 4;
-    p.scale.set(0.5, 1, 1.0);
-  }
-  const vr = box(w + 0.4, 0.05, 1.9, zm, 0, top - 0.15, d / 2 + 0.95, g);
-  vr.rotation.x = 0.16;
+  // the hipped zinc roof, the fascia and the veranda's own lean-to roof, with a fretwork valance along its eave
+  const top = y0 + h;
+  const rf = new THREE.Mesh(hipGeo(w, d, 1.25, 0.45), zm);
+  rf.position.y = top + 0.02;
+  g.add(rf);
+  box(w + 0.92, 0.16, 0.05, tm, 0, top - 0.04, d / 2 + 0.46, g);
+  box(w + 0.92, 0.16, 0.05, tm, 0, top - 0.04, -d / 2 - 0.46, g);
+  const vg = new THREE.PlaneGeometry(w + 0.4, 1.95, 1, 1);
+  vg.rotateX(-Math.PI / 2 + 0.16);
+  const vr = new THREE.Mesh(roofUV(vg.toNonIndexed(), 0.8), zm);
+  vr.position.set(0, top - 0.17, d / 2 + 0.98);
+  g.add(vr);
   box(w + 0.2, 0.18, 0.08, tm, 0, top - 0.05, d / 2 + 0.03, g);
+  const fv = new THREE.PlaneGeometry(w + 0.3, 0.22);
+  const uv = fv.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * ((w + 0.3) / 0.6));
+  mesh(fv, fretMat({ color: "#" + new THREE.Color(trim).getHexString(), kind: "scallop" }), 0, top - 0.42, d / 2 + 1.62, g);
+  // on the veranda: plants in old kerosene tins, as country houses had, and a chair
+  for (const [x, c] of [[-w / 2 + 0.35, 0xb83a2a], [w / 2 - 0.35, 0xd8a030], [-0.85, 0x5a8a3a]]) {
+    cyl(0.12, 0.12, 0.3, M.steel, x, lift + 0.25, d / 2 + 1.35, g, 8);
+    for (let k = 0; k < 5; k++) {
+      const lf = box(0.08, 0.32, 0.02, solid(k % 2 ? c : 0x3f6a2a, 0.8), x + Math.sin(k * 1.3) * 0.06, lift + 0.55, d / 2 + 1.35 + Math.cos(k * 1.3) * 0.06, g);
+      lf.rotation.set(Math.cos(k * 2) * 0.35, k, Math.sin(k * 1.3) * 0.35);
+    }
+  }
+  if (interior) {
+    const vc = chair(0x6a4a32);
+    vc.position.set(w * 0.3 + 0.9, lift + 0.1, d / 2 + 0.75);
+    vc.rotation.y = -0.6;
+    g.add(vc);
+  }
+  if (interior) {
+    /* inside: one room of the period and the family's means, seen through the open door and the jalousies */
+    tiled(g, planks, w - 0.12, 0.03, d - 0.12, 0, y0 + 0.015, 0, 1.2);
+    const dk = solid(0x5a3e2a, 0.7), cloth = solid(0xf2ede0, 1);
+    // the dresser: a cupboard below, shelves of plates above
+    const dx = w * 0.18, dz = -d / 2 + 0.3;
+    box(1.3, 0.85, 0.45, dk, dx, y0 + 0.43, dz, g);
+    box(1.3, 1.05, 0.04, dk, dx, y0 + 1.38, dz - 0.18, g);
+    for (const y of [1.15, 1.5, 1.85]) box(1.3, 0.03, 0.22, dk, dx, y0 + y, dz - 0.08, g);
+    for (const s of [-1, 1]) box(0.04, 1.05, 0.24, dk, dx + s * 0.63, y0 + 1.38, dz - 0.08, g);
+    const plates = [];
+    for (const y of [1.15, 1.5]) for (let i = 0; i < 5; i++) { const p0 = new THREE.CylinderGeometry(0.1, 0.1, 0.015, 14); p0.rotateX(Math.PI / 2 - 0.2); p0.translate(dx - 0.5 + i * 0.25, y0 + y + 0.11, dz - 0.14); plates.push(p0); }
+    for (let i = 0; i < 4; i++) { const c0 = new THREE.CylinderGeometry(0.04, 0.032, 0.07, 10); c0.translate(dx - 0.4 + i * 0.27, y0 + 1.885 + 0.035, dz - 0.06); plates.push(c0); }
+    mesh(mergeGeo(plates), solid(0xf4f0e6, 0.35), 0, 0, 0, g);
+    const rims = [];
+    for (const y of [1.15, 1.5]) for (let i = 0; i < 5; i++) { const r0 = new THREE.TorusGeometry(0.095, 0.006, 4, 16); r0.rotateX(-0.2); r0.translate(dx - 0.5 + i * 0.25, y0 + y + 0.11, dz - 0.128); rims.push(r0); }
+    mesh(mergeGeo(rims), solid(0x2f5a8a, 0.4), 0, 0, 0, g);
+    // the table with its cloth, the Bible and the lamp; two chairs
+    const tx = -0.3, tz = -0.35;
+    for (const [a, b] of [[-0.42, -0.28], [0.42, -0.28], [-0.42, 0.28], [0.42, 0.28]]) box(0.05, 0.74, 0.05, dk, tx + a, y0 + 0.37, tz + b, g);
+    box(1.0, 0.03, 0.7, dk, tx, y0 + 0.755, tz, g);
+    box(1.12, 0.01, 0.82, cloth, tx, y0 + 0.775, tz, g);
+    for (const s of [-1, 1]) { box(1.12, 0.16, 0.006, cloth, tx, y0 + 0.7, tz + s * 0.41, g); box(0.006, 0.16, 0.82, cloth, tx + s * 0.56, y0 + 0.7, tz, g); }
+    box(0.17, 0.045, 0.23, solid(0x1a1612, 0.6), tx + 0.25, y0 + 0.803, tz + 0.05, g).rotation.y = 0.3;   /* the Bible */
+    box(0.172, 0.006, 0.232, solid(0xc9a43c, 0.4), tx + 0.25, y0 + 0.803, tz + 0.05, g).rotation.y = 0.3;
+    cyl(0.06, 0.07, 0.1, solid(0x4a7a5a, 0.2), tx - 0.2, y0 + 0.83, tz, g, 10);   /* the oil lamp: a glass bowl, a chimney, a small flame */
+    cyl(0.03, 0.04, 0.17, new THREE.MeshStandardMaterial({ color: 0xfff2d8, emissive: 0xffc070, emissiveIntensity: 0.6, transparent: true, opacity: 0.55, roughness: 0.1 }), tx - 0.2, y0 + 0.97, tz, g, 10);
+    mesh(new THREE.SphereGeometry(0.014, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffd080 }), tx - 0.2, y0 + 0.95, tz, g).scale.y = 1.8;
+    for (const [x, z, ry] of [[tx - 0.75, tz, Math.PI / 2], [tx + 0.75, tz, -Math.PI / 2]]) {
+      const c = chair(0x6a4a32);
+      c.position.set(x, y0, z);
+      c.rotation.y = ry;
+      g.add(c);
+    }
+    // on the walls: the calendar, a framed picture, a shelf with a clock; a bed behind a curtain on a rod
+    const cal = calendar(year);
+    cal.position.set(-w * 0.12, y0 + 1.55, -d / 2 + t + 0.005);
+    g.add(cal);
+    const pic = picture(0.36, 0.28, 2);
+    pic.position.set(w * 0.18, y0 + 2.2, -d / 2 + t + 0.02);
+    g.add(pic);
+    const bd = bed1948();
+    bd.position.set(-w / 2 + 0.65, y0, -d / 2 + 1.15);
+    g.add(bd);
+    box(0.02, 0.02, d * 0.55, M.iron, -w / 2 + 1.35, y0 + 2.05, -d / 2 + d * 0.275, g);
+    const cg = new THREE.PlaneGeometry(d * 0.55, 1.95, 10, 8);
+    const curtain = mesh(cg, wallpaper({ ground: [214, 120, 96], ink: [244, 226, 180], kind: "stripe", seed: 4 }), -w / 2 + 1.35, y0 + 1.06, -d / 2 + d * 0.275, g);
+    curtain.material = curtain.material.clone();
+    curtain.material.side = THREE.DoubleSide;
+    curtain.rotation.y = Math.PI / 2;
+    ticks.push(sway(curtain, { amp: 0.06, speed: 1.1, seed }));
+    // lace at the front windows, inside
+    for (const x of [-w * 0.3, w * 0.3]) {
+      const lg = new THREE.PlaneGeometry(0.9, 0.85, 6, 6);
+      const lc = mesh(lg, lace(), x, y0 + 1.55, d / 2 - t - 0.03, g);
+      ticks.push(sway(lc, { amp: 0.035, speed: 1.6, seed: seed + x }));
+    }
+    // warm light inside: a little fill, as the lamp and the light through the jalousies give
+    if (ROOM_LIGHTS) {
+      const lamp = new THREE.PointLight(0xffc890, 1.6, 5.5, 2);
+      lamp.position.set(tx - 0.2, y0 + 1.6, tz);
+      g.add(lamp);
+    }
+  }
+  g.userData.tick = (time) => ticks.forEach((f) => f(time));
   return g;
 }
 /* a breadfruit tree: a tall trunk, big glossy dark crowns and green fruit hanging under them */
