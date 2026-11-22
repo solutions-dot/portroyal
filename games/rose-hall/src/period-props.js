@@ -694,15 +694,19 @@ export function lantern() {
   cyl(0.075, 0.085, 0.05, M.tin, 0, 0.025, 0, g, 10);
   cyl(0.04, 0.07, 0.03, M.tin, 0, 0.065, 0, g, 10);
   cyl(0.045, 0.045, 0.02, M.iron, 0, 0.09, 0, g, 8);
+  /* the globe is glass you can see into: the burner and a small flame inside it, a warm haze on the glass */
   const gl = mesh(
-    new THREE.SphereGeometry(0.058, 10, 8),
-    M.lanternGlass,
+    new THREE.SphereGeometry(0.058, 14, 10),
+    new THREE.MeshStandardMaterial({ color: 0xfff2d8, emissive: 0xffb050, emissiveIntensity: 0.35, transparent: true, opacity: 0.32, roughness: 0.1, depthWrite: false }),
     0,
     0.16,
     0,
     g,
   );
   gl.scale.y = 1.25;
+  cyl(0.004, 0.004, 0.03, M.iron, 0, 0.11, 0, g, 5);   /* the wick holder */
+  const wick = mesh(new THREE.SphereGeometry(0.009, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe0a0 }), 0, 0.14, 0, g);
+  wick.scale.y = 1.8;
   cyl(0.03, 0.05, 0.03, M.tin, 0, 0.235, 0, g, 8);
   cyl(0.022, 0.03, 0.04, M.tin, 0, 0.27, 0, g, 8);
   cyl(0.04, 0.04, 0.008, M.tin, 0, 0.292, 0, g, 8);
@@ -731,8 +735,8 @@ export function lantern() {
       blending: THREE.AdditiveBlending,
     }),
   );
-  flame.scale.set(0.5, 0.5, 1);
-  flame.position.y = 0.14;
+  flame.scale.set(0.34, 0.34, 1);
+  flame.position.y = 0.13;
   o.add(flame);
   o.userData.flame = flame;
   return o;

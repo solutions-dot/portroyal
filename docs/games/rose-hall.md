@@ -161,3 +161,18 @@ Checks: `?test=audit` 0 in every place; `?auto=1` AUTO END 66, FLOW 0; `?test=bu
 `?test=all` listed six faces too dark in the night house (the guide, Tia and four visitors; brightness 43 to 62 against 55 and 75). No recipe changed. The fix is the house's own light: the candlelight's bounce off the warm floor and rugs is now stronger (`LIT` in the house: hemisphere 1.0 to 2.6, its ground colour from a dark brown to a warm tan, the moon-and-candle key 0.22 to 0.8, the fill that goes with the camera 2.2 to 1.5), so faces read from every side. The rooms still read as candlelit in a game screenshot. The shadow show's dark light is unchanged. After: faces 0 in every place, on two runs.
 
 Checks: `?test=all` every check 0 (ALL 0); `?auto=1` AUTO END 66, FLOW 0; `?test=audit` 0 and FACES 0 everywhere; `?test=ambient` 0; `?test=held` CARRY 0; `?test=layout` LAYOUT UI 0 at 390x800 and 667x375; `npm test` 279 pass, LINT 0 new.
+
+## Graphics polish, 22 November 2026
+
+Close looks at every small thing a look or a camera scene frames, against the owner's "polish the graphics like the hat has no opening":
+
+- **The three portraits** are now dark varnished oils of about 1770 to 1800: an unnamed gentleman in a skirted coat with deep cuffs, waistcoat, breeches, white stockings and buckled shoes, powdered hair, a curtain and a column behind, a low landscape, old yellowed varnish with fine cracks; each holds something different (a cocked hat, a cane, a letter). Nobody real is copied, and the game still does not say whose they are (Waddell 1830 only says "three or four full-size pictures"). The frame has an outer moulding, a dark step and a gilt lip.
+- **The house's hill** is lawn like the ground below it (the same grass picture, uneven in tone, lighter on the crown), and the drive goes on up the hill to the terrace as a strip of marl laid on the slope.
+- **The coffee cup** has a hollow with coffee standing in it, a handle and a saucer with a well (`engine/vessel.js`).
+- **The pencil pot** on the archive counter is open at the top with the pencils standing in it (it was a solid cylinder).
+- **The guide's lantern** has a glass globe you can see into, with the burner and a small flame inside.
+- **The flower basket** is woven split cane with a rim and a bent handle, on a crate of boards.
+- **The sideboard's dish cover** is a whole silver dome with a knob on its platter (only part of it was drawn).
+- **Written papers** (the church's note, the register in the case, the sheets) are old paper with the heading in an ink hand and lines of writing too small to read (`engine/page.js`): the heading is the only words, so no text is invented. The register now reads the right way up from where you stand.
+
+A new check found the pencil pot: `engine/audit-props.js` (docs/TESTING.md, "Props close up"). Checks: `?test=audit` 0 in every place (props included); `?auto=1` AUTO END 66, FLOW 0; `?test=held` CARRY 0.

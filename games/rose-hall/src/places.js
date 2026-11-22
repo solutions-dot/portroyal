@@ -3,6 +3,7 @@
    (Q.reveal, Q.enter) and its part in a camera scene (Q.films).
    Story people: person(). Background people: crowd(), each a body made for the year and the place (tools/rose-hall/people). */
 import * as THREE from "three";
+import { vessel } from "../../../engine/vessel.js";   /* small open things with a real opening */
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, batchStatic } from "./gfx.js";
 import { tree, mule, cart, barrel, scatter, surveyPole } from "./period-props.js";
 import * as P from "./props.js";
@@ -366,9 +367,13 @@ function house({ phone } = {}) {
   solid1(Q, R.diningChair(), 5.0, 4.3, 0.5, 0.5, Math.PI);
   /* the cup the tour points at: a coffee cup and saucer at the head of the table, and the tour's card beside it */
   const cup = grp();
-  cyl(0.07, 0.05, 0.012, solid(0xf0ece0, 0.4), 0, 0.006, 0, cup, 12);
-  cup.add(R.at(R.lathe([[0.02, 0], [0.035, 0.01], [0.042, 0.055], [0.045, 0.06]], solid(0xf0ece0, 0.4), 10), 0, 0.012, 0));
-  cyl(0.036, 0.036, 0.004, solid(0x2a1a10, 0.3), 0, 0.062, 0, cup, 10);
+  const china = solid(0xf0ece0, 0.3);
+  cup.add(vessel([[0.001, 0], [0.05, 0], [0.068, 0.008], [0.07, 0.012]], { mat: china, wall: 0.003, segments: 20 }));   /* the saucer, a shallow dish */
+  const cupBody = vessel([[0.001, 0], [0.02, 0], [0.024, 0.004], [0.036, 0.016], [0.042, 0.05], [0.045, 0.062]], { mat: china, wall: 0.003, fill: { y: 0.05, mat: solid(0x2a1a10, 0.25) }, segments: 20 });
+  cupBody.position.y = 0.006;
+  cup.add(cupBody);
+  const handle = mesh(new THREE.TorusGeometry(0.014, 0.0035, 6, 12, Math.PI * 1.3), china, 0.047, 0.04, 0, cup);
+  handle.rotation.z = -Math.PI * 0.65;
   add(Q, cup, 7.55, 0.4, 0.762);
   solid1(Q, R.tourSign(["THE COFFEE CUP", "of the first husband"], 0.5, 0.3), 6.7, -0.75, 0.4, 0.4, -Math.PI / 2);
   const tCup = tagAt(Q, "LEGEND", 7.7, 0.762, 0.72, -Math.PI / 2);
@@ -702,7 +707,7 @@ function archive() {
   add(Q, R.wallClock(), -7.84, 3.4, 2.5, Math.PI / 2);
   add(Q, P.ledger(), -6.3, 0.6, 1.07, 0.3);
   add(Q, R.archiveBox(""), -6.3, -2.6, 1.07, Math.PI / 2);
-  cyl(0.05, 0.06, 0.1, solid(0x486573, 0.6), -6.3, 1.12, -0.6, G, 10);
+  add(Q, vessel([[0.001, 0], [0.05, 0], [0.052, 0.004], [0.06, 0.1]], { mat: solid(0x486573, 0.6), inner: solid(0x23323a, 0.8), wall: 0.004 }), -6.3, -0.6, 1.07);   /* a pencil pot, open at the top */
   for (let i = 0; i < 4; i++) cyl(0.006, 0.006, 0.17, solid([0xd9a03a, 0x8a1f24][i % 2], 0.6), -6.3 + (i - 1.5) * 0.015, 1.2, -0.6 + (i % 2) * 0.015, G, 5);
   for (let i = 0; i < 3; i++) solid1(Q, R.shelfBay(1.8, 2.5, i + 7), -5.0 + i * 1.9, 5.12, 1.9, 0.5, Math.PI);
   /* table A: Annie Palmer's four papers, each on its rest under a sheet of tissue until you read it */
@@ -784,7 +789,7 @@ function archive() {
   solid1(Q, R.catalogue(6, 7), 7.52, -2.9, 1.3, 0.6, -Math.PI / 2);
   solid1(Q, R.catalogue(6, 7), 7.52, -1.5, 1.3, 0.6, -Math.PI / 2);
   solid1(Q, R.displayCase(1.5, 0.7), 7.3, 1.6, 1.5, 0.75, Math.PI / 2);
-  add(Q, P.sheet("SLAVE REGISTER", 0.5, 0.4), 7.3, 1.6, 0.91, Math.PI / 2);   /* the register in the case: Annie Palmer held four people in 1829 */
+  add(Q, P.sheet("SLAVE REGISTER", 0.5, 0.4), 7.3, 1.6, 0.91, -Math.PI / 2);   /* the register in the case: Annie Palmer held four people in 1829 */
   const tReg = tagAt(Q, "RECORD", 6.85, 0.0, 2.3, Math.PI / 2, 1.2);
   const gReg = glowAt(Q, 0.4, 0, true);
   Q.reveal.register = (v) => {   /* the case light is switched on over the page, then off */
@@ -837,25 +842,55 @@ function estate() {
       const k = Math.max(0, Math.min(1, (Math.hypot(x, z + 88) - 27) / 40));
       return 11 * (1 - k * k * (3 - 2 * k));
     },
-    hg = new THREE.PlaneGeometry(140, 140, 28, 28);
+    hg = new THREE.PlaneGeometry(140, 140, 56, 56);
   hg.rotateX(-Math.PI / 2);
   hg.translate(0, 0, -88);
   {
+    /* the hill is lawn like the ground below it: the same grass picture, a little uneven in tone, lighter on the crown and darker in its folds */
     const pos = hg.attributes.position,
       col = new Float32Array(pos.count * 3);
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i),
         z = pos.getZ(i),
-        road = Math.abs(x) < 2.6 && z > -74,
-        v = 0.9 + ((i * 7919) % 13) / 60;
-      pos.setY(i, hillH(x, z) - 0.03);
-      col.set(road ? [0.82 * v, 0.78 * v, 0.66 * v] : [0.36 * v, 0.52 * v, 0.27 * v], i * 3);
+        y = hillH(x, z),
+        v = 0.82 + 0.16 * Math.sin(x * 0.21 + Math.cos(z * 0.17) * 2) * Math.cos(z * 0.13 - x * 0.05) + (y / 11) * 0.1;
+      pos.setY(i, y - 0.03);
+      col.set([v, v, v * 0.96], i * 3);
     }
     hg.setAttribute("color", new THREE.BufferAttribute(col, 3));
     hg.computeVertexNormals();
+    const uv = hg.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 14, uv.getY(i) * 14);
   }
-  const hill = mesh(hg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }), 0, 0, 0, G);
+  const hillGrass = std(T.grass([1, 1], [98, 134, 70]));
+  const hill = mesh(hg, new THREE.MeshStandardMaterial({ map: hillGrass.map, vertexColors: true, roughness: 1 }), 0, 0, 0, G);
   hill.name = "terrain";
+  /* the drive goes on up the hill to the terrace: a strip of the same marl laid on the slope */
+  {
+    const n = 40,
+      z0 = -18,
+      z1 = -72,
+      wd = 3.2,
+      v = [],
+      t = [],
+      idx = [];
+    for (let i = 0; i <= n; i++) {
+      const z = z0 + ((z1 - z0) * i) / n;
+      for (const s of [-1, 1]) {
+        v.push((s * wd) / 2, hillH((s * wd) / 2, z) + 0.06, z);
+        t.push(s < 0 ? 0 : 1, (i / n) * 12);
+      }
+      if (i < n) idx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);   /* facing up */
+    }
+    const dg = new THREE.BufferGeometry();
+    dg.setAttribute("position", new THREE.Float32BufferAttribute(v, 3));
+    dg.setAttribute("uv", new THREE.Float32BufferAttribute(t, 2));
+    dg.setIndex(idx);
+    dg.computeVertexNormals();
+    const drive = mesh(dg, new THREE.MeshStandardMaterial({ map: std(T.dirt([1, 1], [214, 204, 176])).map, roughness: 1, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), 0, 0, 0, G);   /* drawn over the hill's own faces where they bulge */
+    drive.name = "terrain";
+    drive.userData.far = true;
+  }
   hill.userData.far = true;
   const terrace = W.stoneBox(46, 3.6, 26, W.LIME, 0, 1.8, 0);
   terrace.userData.far = true;
