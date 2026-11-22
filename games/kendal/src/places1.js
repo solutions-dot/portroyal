@@ -156,7 +156,7 @@ export function buildHill() {
     const L = grp(v, x, 0.42, bb.max.z - o.z + 0.04); L.userData.noBatch = true; if (x > 0) L.scale.x = -1;
     const iron = solid(0x4a4e54, 0.55, 0.5), bar = solid(0x7a7f86, 0.4, 0.6), paint = solid(0xf2efe6, 0.6), dark = solid(0x1c1d20, 0.8);
     box(0.08, 0.22, 0.08, iron, 0, 0, 0, L); cyl(0.035, 0.035, 0.06, bar, 0, 0, 0.07, L, 12).rotation.x = PI / 2;   /* the pivot bracket and its bolt */
-    const guard = mesh(new THREE.RingGeometry(0.36, 0.86, 18, 1, -0.32, 0.86), solid(0x3e4248, 0.7, 0.3, { side: THREE.DoubleSide }), 0, 0, 0.05, L);   /* the curved guard behind the lever */
+    const guard = mesh(new THREE.RingGeometry(0.74, 0.88, 18, 1, -0.32, 0.86), solid(0x3e4248, 0.7, 0.3, { side: THREE.DoubleSide }), 0, 0, 0.05, L);   /* the curved iron guard the lever moves over: a narrow bar, not a plate */
     const rim = mesh(new THREE.TorusGeometry(0.84, 0.02, 4, 18, 0.86), iron, 0, 0, 0.06, L); rim.rotation.z = -0.32; for (let a = -0.26; a <= 0.5; a += 0.095) cyl(0.012, 0.012, 0.02, dark, Math.cos(a) * 0.84, Math.sin(a) * 0.84, 0.075, L, 6).rotation.x = PI / 2;   /* its outer bar and the pin holes */
     for (const a of [-0.3, 0.5]) box(0.04, 0.04, 0.06, iron, Math.cos(a) * 0.84, Math.sin(a) * 0.84, 0.02, L);   /* stays to the side */
     const h = grp(L, 0, 0, 0.1); box(0.92, 0.05, 0.03, bar, 0.46, 0, 0, h); box(0.16, 0.06, 0.04, paint, 0.86, 0, 0, h); h.rotation.z = 0.36;   /* the lever, its end painted white */

@@ -1062,7 +1062,7 @@ async function autoPlay(N, one, L = () => {}) {
 function devViews() {
   const q = new URLSearchParams(location.search), shot = q.get('shot'), errs = [];
   if (LOOKDEV) (async () => {   /* ?look=<action id>&at=<chapter>,<stage>&k=0.5 : plays that look and holds it part way, for a screenshot (the title says "LOOK <id>") */
-    const [ch, st] = (q.get('at') || '0,10').split(',').map(Number); startGame(true); await beginChapter(ch, st); await waitFor(() => !fading); for (let i = 0; i < 15; i++) { if (!$('card').hidden) hideCard(); await new Promise((r) => setTimeout(r, 100)); }
+    const [ch, st] = (q.get('at') || '0,10').split(',').map(Number); startGame(true); await beginChapter(ch, st); await Promise.race([waitFor(() => !fading), new Promise((r) => setTimeout(r, 6000))]);   /* the chapter fade can wait on a card here: go on after 6 s */ for (let i = 0; i < 15; i++) { if (!$('card').hidden) hideCard(); await new Promise((r) => setTimeout(r, 100)); }
     const a = P_().actions.find((x) => x.id === LOOKDEV || x.need === LOOKDEV); if (!a) { document.title = 'LOOK none'; return; } if (P_().id === 'hill') { P_().train.visible = true; P_().train.position.x = 0; } state.x = a.x; state.z = a.z; LOOK.id = LOOKDEV; a.go(); })();
   addEventListener('error', (e) => { errs.push(e.message); document.title = 'ERROR ' + errs.join(' | '); });
   addEventListener('unhandledrejection', (e) => { errs.push(String((e.reason && e.reason.stack) || e.reason).slice(0, 300)); document.title = 'ERROR ' + errs.join(' | '); });

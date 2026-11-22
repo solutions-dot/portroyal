@@ -209,3 +209,8 @@ Dev: `?look=<id>&at=<chapter>,<stage>&k=0.5` holds a look part way for a screens
 ## Layout test 0 (22 November 2026)
 
 The one finding (the journal count badge during a dialogue) was the test: it wanted the badge inside the Journal button, but the shared badge (engine/hud.js) sits on the button's top right corner by design. The check now wants its middle on the button and all of it on the screen. `?test=layout`: 0 at 390x800 and 667x375.
+
+
+## The brake close-up (22 November 2026)
+
+The hill station's "Check the brakes" look read as a dark box with a red bar. Each brake is now a long iron lever on a pivot bracket, moving down over a narrow curved guard with pin holes; checking it pulls the lever down, drops the pin in and hangs a white tag on it (a general 19th-century wagon type, not a drawing of the Jamaica Railway's own). A soft fill light from the camera (`fill` in `engine/lookkit.js`) lights it close up. Dev view: `?look=b1&at=2,34&k=0.5` (it now goes on after 6 s if the chapter fade waits on a card). Audit, layout and held 0; `?auto=3&one` done.
