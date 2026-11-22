@@ -1,0 +1,237 @@
+diff --git a/games/shark-papers/src/content.js b/games/shark-papers/src/content.js
+index cf17557..20f51d0 100644
+--- a/games/shark-papers/src/content.js
++++ b/games/shark-papers/src/content.js
+@@ -13,8 +13,8 @@ export const GAME = {
+   ],
+ };
+ export const CHAPTERS = [
+-  { id: "jacmel", name: "Off Jacmel", year: "30 August 1799", first: 10, last: 18, place: "deck", caption: "The schooner Ferret · off Jacmel, 30 August 1799", intro: "You are Jem, ship's boy on the Ferret. It is dawn. There is no wind, and the sea is full of sharks." },
+-  { id: "bundle", name: "What the shark held", year: "30 August 1799", first: 20, last: 26, place: "deck", caption: "The schooner Ferret · off Jacmel", intro: "The shark lies on the deck. Two of the men open it, to get the pork back." },
++  { id: "jacmel", name: "Off Jacmel", year: "August 1799", first: 10, last: 18, place: "deck", caption: "The schooner Ferret · off Jacmel, August 1799", intro: "It is dawn on the schooner Ferret. There is no wind, and the sea is full of sharks." },
++  { id: "bundle", name: "What the shark held", year: "August 1799", first: 20, last: 26, place: "deck", caption: "The schooner Ferret · off Jacmel", intro: "The shark lies on the deck. Two of the men open it, to get the pork back." },
+   { id: "portroyal", name: "Port Royal", year: "September 1799", first: 30, last: 36, place: "quay", caption: "The dockyard, Port Royal, Jamaica · September 1799", intro: "The Ferret is home. The brig Nancy is here too, waiting for the court." },
+   { id: "court", name: "The court in Kingston", year: "Autumn 1799", first: 40, last: 46, place: "court", caption: "The Court of Vice-Admiralty · Kingston, 1799", intro: "Mr Fitton has carried the papers across the harbour to Kingston." },
+ ];
+@@ -45,6 +45,7 @@ export const SOURCES = {
+   usj: { name: "Michael Fitton's own account, United Service Journal, February 1835, pages 276 to 278", url: "https://archive.org/details/in.ernet.dli.2015.21617" },
+   gleaner: { name: "Jamaica Gleaner, Pieces of the Past: The Shark Papers", url: "https://old.jamaica-gleaner.com/pages/history/story0042.htm" },
+   nlj: { name: "National Library of Jamaica: the Shark Papers", url: "https://nlj.gov.jm/exhibition/shark/" },
++  stark: { name: "Stark's Jamaica Guide, 1898, pages 60 to 63: the Shark Papers, from the documents then at the Institute of Jamaica", url: "https://archive.org/details/starksjamaicagui00star" },
+   dnb: { name: "Dictionary of National Biography: Michael Fitton", url: "https://en.wikisource.org/wiki/Dictionary_of_National_Biography,_1885-1900/Fitton,_Michael" },
+   sparrow: { name: "HMS Sparrow (1796)", url: "https://en.wikipedia.org/wiki/HMS_Sparrow_(1796)" },
+   burnard: { name: "Trevor Burnard, Slaves and Slavery in Kingston, 1770 to 1815", url: "https://www.cambridge.org/core/journals/international-review-of-social-history/article/slaves-and-slavery-in-kingston-17701815/A7E958558A63A7DC296C3892960B09ED" },
+@@ -53,15 +54,15 @@ export const JOURNAL = [
+   { id: "you", title: "Jem and the Ferret", simple: ["You are Jem, twelve, ship's boy on the schooner Ferret.", "The Ferret is a small Navy ship with two masts and six guns.", "She sails from Port Royal, Jamaica."], deeper: ["Jem in this game is fictional. Mr Cato in this game is fictional.", "A record of the time gives her 6 three-pounder guns and 45 men.", "No drawing of the Ferret is known. The ship in the game is a general picture of a small Navy schooner.", "In Fitton's own account, Mr Wylie grumbles that there was “not a breath of air” that morning."], source: "dnb" },
+   { id: "fitton", title: "Michael Fitton", simple: ["Michael Fitton was real. He commanded the Ferret.", "He was about 33, from Cheshire in England."], deeper: ["The words Mr Fitton says in this game are imagined, except the line about the shark, which he wrote down himself years later.", "His own account was printed in the United Service Journal in February 1835.", "In 1799 he was an acting lieutenant. He was made a full lieutenant in 1804."], source: "usj" },
+   { id: "sparrow", title: "The cutter Sparrow", simple: ["The Sparrow was a Navy cutter. A cutter has one mast.", "She was 123 tons and about 66 feet long.", "Hugh Wylie commanded her."], deeper: ["She had 40 men. One record gives her 10 short guns called carronades and 2 six-pounders. Fitton remembered ten six-pounders.", "Fitton wrote that at dawn she was about six miles in shore. The game draws her nearer, so you can see her.", "He asked Mr Wylie to breakfast by signal."], source: "sparrow" },
+-  { id: "shark", title: "The shark", simple: ["On 30 August 1799, off Jacmel, sharks were feeding on a dead bullock.", "Fitton caught the biggest on a hook and line.", "It would not take beef. It took pork."], deeper: ["Jacmel is in Haiti, which was then the French colony of Saint-Domingue.", "Fitton wrote that he let the shark run on about 60 fathoms of line, then had it hoisted in. A fathom is six feet.", "Nobody wrote down what kind of shark it was. The shark in the game is a plain large shark."], source: "usj" },
++  { id: "shark", title: "The shark", simple: ["In August 1799, off Jacmel, sharks were feeding on a dead bullock.", "Fitton caught the biggest on a hook and line.", "It would not take beef. It took pork."], deeper: ["Jacmel is in Haiti, which was then the French colony of Saint-Domingue.", "Fitton wrote that he let the shark run on about 60 fathoms of line, then had it hoisted in. A fathom is six feet.", "Nobody wrote down what kind of shark it was. The shark in the game is a plain large shark.", "Fitton's sworn paper of 24 September 1799 gives the day as 13 August. Later accounts say 30 August. Nobody is sure which is right."], source: "usj" },
+   { id: "papers", title: "The papers", simple: ["Inside the shark was a bundle of papers tied round with a string.", "The crew spread them out on the deck to dry.", "They were letters, bills and receipts from the brig Nancy."], deeper: ["Fitton wrote that the papers were whole, except the outside wrapper.", "The sailor who handed them over joked that he hoped there was a letter from his sweetheart.", "One letter was dated at the island of Curacao.", "The letters were in French and German. They showed who really owned the cargo.", "The papers are kept today in the National Library of Jamaica, in Kingston."], source: "nlj" },
+-  { id: "breakfast", title: "Breakfast with Mr Wylie", simple: ["Hugh Wylie was real. He came across by boat for breakfast.", "He had stopped the Nancy two days before.", "He had sealed up her papers. They were the false ones."], deeper: ["The words Mr Wylie says in this game are imagined, except his line about a lie and “Breakfast, ho!”, which Fitton wrote down years later.", "Fitton spelt his name Whylie.", "Fitton wrote that Wylie stared at him, at the shark and at the papers, then went down to breakfast."], source: "usj" },
++  { id: "breakfast", title: "Breakfast with Mr Wylie", simple: ["Hugh Wylie was real. He came across by boat for breakfast.", "He told Fitton he had stopped an American brig.", "He had sealed up her papers. They were the false ones."], deeper: ["The words Mr Wylie says in this game are imagined, except his line about a lie and “Breakfast, ho!”, which Fitton wrote down years later.", "Fitton spelt his name Whylie.", "Fitton wrote that Wylie stared at him, at the shark and at the papers, then went down to breakfast."], source: "usj" },
+   { id: "portroyal", title: "Port Royal", simple: ["Port Royal was the Navy's base in Jamaica.", "Much of the work on the ships and quays was done by Black people.", "Many were enslaved: forced to work, unpaid, not free to leave."], deeper: ["Ben in this game is fictional.", "Enslaved men were often hired out by the people who claimed to own them, as sailors and dock workers.", "In 1788 Kingston had 16,659 enslaved people among 26,478.", "The dockyard in the game is a general picture of a Navy yard of the time."], source: "burnard" },
+   { id: "abergavenny", title: "HMS Abergavenny", simple: ["HMS Abergavenny was the guard ship at Port Royal.", "She was the flagship there from 1796 to 1807.", "The Ferret was her tender: a small ship that worked for a big one."], deeper: ["Michael Fitton was acting lieutenant of the Abergavenny from 11 January 1799.", "The ship in the game is a general picture of a ship with two decks of guns."], source: "dnb" },
+-  { id: "nancy", title: "The brig Nancy", simple: ["The Nancy was an American brig of 125 tons.", "She left Baltimore on 3 July 1799. Her master was Thomas Briggs.", "The Sparrow took her on 28 August, near Haiti."], deeper: ["Thomas Briggs does not speak in this game.", "No picture of the Nancy is known. The brig in the game is a general picture of a brig of her time.", "A brig has two masts with square sails.", "A ship held for the court was kept shut and sealed until the court decided."], source: "gleaner" },
++  { id: "nancy", title: "The brig Nancy", simple: ["The Nancy was an American brig of 125 tons.", "She left Baltimore on 3 July 1799. Her master was Thomas Briggs.", "The Sparrow took her on 28 August, near Haiti."], deeper: ["Thomas Briggs does not speak in this game.", "Her owners were Germans who had become American citizens. Her crew were Swedes and Danes.", "On the way she called at the island of Aruba. Briggs went to Curacao and came back with Mr Schultz, the owners' agent.", "No picture of the Nancy is known. The brig in the game is a general picture of a brig of her time.", "A brig has two masts with square sails.", "A ship held for the court was kept shut and sealed until the court decided."], source: "stark" },
+   { id: "prize", title: "What is a prize?", simple: ["In war, a navy ship could take a ship carrying an enemy's goods.", "A court then decided if that was lawful.", "If it was, the ship was sold and the crew shared the money."], deeper: ["In 1799 Britain was at war with France, Spain and the Netherlands.", "America was neutral. Its ships could trade, but not hide an enemy's goods."], source: "gleaner" },
+-  { id: "court", title: "The court", simple: ["The Court of Vice-Admiralty sat in Kingston.", "The Nancy's master swore she was American and neutral.", "Then Fitton brought the papers from the shark."], deeper: ["The clerk in this game is fictional. The room is a general picture of a court room of the time.", "No source names the judge, so the judge's chair in the game is empty.", "The court stood at the corner of Harbour Street and Hanover Street.", "On 25 November 1799 the Nancy and her cargo were judged a lawful prize. One source says 28 November."], source: "gleaner" },
+-  { id: "jaws", title: "The jaws", simple: ["Fitton sent the shark's jaws to the court.", "His note said: “Lieut. Fitton recommends these jaws for a collar for neutrals to swear through.”"], deeper: ["He meant: a warning to ship masters who swear to lies.", "In 1835 a magazine wrote that the jaws were still kept in the court in Jamaica.", "Nobody is sure where the jaws are today."], source: "usj" },
++  { id: "court", title: "The court", simple: ["The Court of Vice-Admiralty sat in Kingston.", "The Nancy's master swore she was American and neutral.", "Then Fitton brought the papers from the shark."], deeper: ["The clerk in this game is fictional. The room is a general picture of a court room of the time.", "No source names the judge, so the judge's chair in the game is empty.", "The court stood at the corner of Harbour Street and Hanover Street.", "Fitton swore to the shark's papers on 24 September 1799.", "More papers were found hidden on the Nancy: in the captain's cabin, and in a cask of salt pork.", "On 25 November 1799 the Nancy and her cargo were judged a lawful prize. One source says 28 November."], source: "gleaner" },
++  { id: "jaws", title: "The jaws", simple: ["Fitton sent the shark's jaws to the court.", "His note said: “Lieut. Fitton recommends these jaws for a collar for neutrals to swear through.”"], deeper: ["He meant: a warning to ship masters who swear to lies.", "In 1835 a magazine wrote that the jaws were still kept in the court in Jamaica.", "In 1898 a guide book said the shark's head was in a museum in London.", "Nobody is sure where the jaws are today."], source: "usj" },
+   { id: "today", title: "The Shark Papers today", simple: ["You can still see the papers in Kingston.", "They were stolen in the 1907 earthquake, and given back."], deeper: ["They are in the National Library of Jamaica, numbered MS 165.", "Some retellings put the court in Spanish Town or Port Royal. It was in Kingston."], source: "nlj" },
+ ];
+ export const CARDS = {
+diff --git a/games/shark-papers/src/dev.js b/games/shark-papers/src/dev.js
+index f1b03f0..e8e91f2 100644
+--- a/games/shark-papers/src/dev.js
++++ b/games/shark-papers/src/dev.js
+@@ -15,7 +15,7 @@ import { skinProbe } from "../../../engine/skinprobe.js";
+ import { walkRoute, routeIssues } from "../../../engine/placement.js";
+ import { CAST, BASES, CROWD } from "./cast.js";
+ import { STEPS, TASKS, LOOKS } from "./steps.js";
+-import { CHAPTERS, TALK } from "./content.js";
++import { CHAPTERS, TALK, FILMS, QUIZ } from "./content.js";
+ import { PLACE_IDS } from "./places.js";
+ import { makeAdapter, CHECK_TABLES } from "./checktables.js";
+ import { $, closeAll } from "./ui.js";
+@@ -51,6 +51,26 @@ export async function dev(A) {
+         }
+       }
+   };
++  /* for a play-through by touch from outside (tests/phone runs): what the step needs, where it is, a walking route there round the walls,
++     and where a person's head is on the screen, so a script can steer the joystick and tap like a child would. Reads only. */
++  A.phone = {
++    state: () => ({ stage: S.stage, x: S.x, z: S.z, yaw: S.yaw, place: STEPS[S.stage]?.place, dir: !!A.DIR.on }),
++    need: () => {
++      const n = needList(STEPS[S.stage] || {}).find((n) => story.needs(n.id));
++      return n ? { id: n.id, kind: n.kind, at: A.where(n.id, n.kind) } : null;
++    },
++    route: (a, b) => walkRoute(a, b, world().walls, 0.23, world().bounds),
++    data: { STEPS, TASKS, LOOKS, TALK, FILMS, QUIZ, CHAPTERS },
++    people: () => world().people.map((n) => ({ id: n.id, x: n.x, z: n.z, visible: n.m.visible })),
++    head: (id) => {
++      const n = world().people.find((x) => x.id === id);
++      if (!n) return null;
++      const v = n.m.getWorldPosition(new A.camera.position.constructor());
++      v.y += 1.35;
++      v.project(A.camera);
++      return v.z < 1 ? [((v.x + 1) / 2) * innerWidth, ((1 - v.y) / 2) * innerHeight] : null;
++    },
++  };
+   /* the scripted playthrough: cards, the quiz and dialogue clicked through, each need done where it is. Used by ?auto and the shared runner. */
+   A.autoplay = async ({ first = 1, last = LAST, log = [] } = {}) => {
+     A.begin();
+diff --git a/games/shark-papers/src/gfx.js b/games/shark-papers/src/gfx.js
+index 5a0a91d..73e939b 100644
+--- a/games/shark-papers/src/gfx.js
++++ b/games/shark-papers/src/gfx.js
+@@ -315,6 +315,103 @@ export const T = {
+       ),
+     );
+   },
++  /* dressed stone laid in courses, with mortar joints (owner: the quay looked like blotchy sand close up). kind "flags": paving flags,
++     four courses to a tile, each flag 0.6 to 1.1 tile-quarters long; "coping": one course of long coping blocks with a rounded arris
++     along the top edge of the canvas (the sea side of a strip laid with rotation.x = -PI / 2); "ashlar": a wall face of coursed blocks.
++     bump: true gives the matching grey bump map (joints low, faces high). The same seed lays out both. */
++  setts(rgb = [176, 168, 150], repeat = [1, 1], kind = "flags", bump = false, seed = 7) {
++    return once("setts" + rgb + repeat + kind + bump + seed, () => {
++      const W = 512,
++        H = kind === "coping" ? 128 : 512;
++      const rows = kind === "coping" ? 1 : kind === "ashlar" ? 6 : 4;
++      const [minL, maxL] = kind === "coping" ? [104, 150] : kind === "ashlar" ? [110, 200] : [128, 235];
++      return cv(
++        W,
++        H,
++        (x, w, h) => {
++          const r = rng(seed);
++          const rh = h / rows,
++            J = kind === "coping" ? 3 : 4;
++          x.fillStyle = bump ? "rgb(40,40,40)" : rgbs(rgb, -58);   /* the mortar */
++          x.fillRect(0, 0, w, h);
++          for (let row = 0; row < rows; row++) {
++            /* flags whose lengths add up to the tile width exactly, so the pattern repeats without a seam */
++            const lens = [];
++            let left = w;
++            while (left > 0) {
++              let L = minL + r() * (maxL - minL);
++              if (left - L < minL) L = left;
++              lens.push(Math.round(L));
++              left -= Math.round(L);
++            }
++            let cx = r() * w;
++            const y0 = row * rh;
++            for (const L of lens) {
++              const v = (r() - 0.5) * 26,
++                warm = (r() - 0.5) * 10;
++              for (const off of [0, -w]) {
++                const fx = cx + off + J / 2,
++                  fy = y0 + J / 2,
++                  fw = L - J,
++                  fh = rh - J;
++                if (bump) {
++                  x.fillStyle = `rgb(${(190 + v) | 0},${(190 + v) | 0},${(190 + v) | 0})`;
++                  x.fillRect(fx, fy, fw, fh);
++                  x.fillStyle = "rgba(0,0,0,0.35)";   /* worn, rounded edges */
++                  x.fillRect(fx, fy + fh - 3, fw, 3);
++                  x.fillRect(fx + fw - 3, fy, 3, fh);
++                  continue;
++                }
++                x.fillStyle = rgbs([rgb[0] + warm, rgb[1], rgb[2] - warm], v);
++                x.fillRect(fx, fy, fw, fh);
++                /* tooling: fine parallel strokes of the mason's chisel across the face */
++                x.strokeStyle = `rgba(255,255,255,${0.04 + r() * 0.04})`;
++                x.lineWidth = 1;
++                const slope = (r() - 0.5) * 0.4;
++                for (let k = 4; k < fw; k += 5 + r() * 3) {
++                  x.beginPath();
++                  x.moveTo(fx + k, fy + 2);
++                  x.lineTo(fx + k + fh * slope, fy + fh - 2);
++                  x.stroke();
++                }
++                /* wear: a darker hollow where feet go, a few stains and chips */
++                const gr = x.createRadialGradient(fx + fw / 2, fy + fh / 2, 2, fx + fw / 2, fy + fh / 2, Math.max(fw, fh) * 0.7);
++                gr.addColorStop(0, "rgba(0,0,0,0)");
++                gr.addColorStop(1, `rgba(40,34,26,${0.1 + r() * 0.08})`);
++                x.fillStyle = gr;
++                x.fillRect(fx, fy, fw, fh);
++                for (let s = 0; s < 3; s++) {
++                  x.fillStyle = `rgba(60,52,40,${0.06 + r() * 0.08})`;
++                  x.beginPath();
++                  x.ellipse(fx + r() * fw, fy + r() * fh, 3 + r() * 12, 2 + r() * 6, r() * 3, 0, 7);
++                  x.fill();
++                }
++                /* the arrises: light along the top and left, shade along the bottom and right */
++                x.fillStyle = "rgba(255,250,235,0.16)";
++                x.fillRect(fx, fy, fw, 2);
++                x.fillRect(fx, fy, 2, fh);
++                x.fillStyle = "rgba(20,16,10,0.22)";
++                x.fillRect(fx, fy + fh - 2, fw, 2);
++                x.fillRect(fx + fw - 2, fy, 2, fh);
++              }
++              cx += L;
++            }
++          }
++          if (kind === "coping" && !bump) {
++            /* the rounded front edge of the coping, polished by ropes and feet */
++            const g = x.createLinearGradient(0, 0, 0, 22);
++            g.addColorStop(0, "rgba(255,250,236,0.34)");
++            g.addColorStop(1, "rgba(255,250,236,0)");
++            x.fillStyle = g;
++            x.fillRect(0, 0, w, 22);
++          }
++          if (!bump) grain(x, w, h, 14);
++        },
++        repeat,
++        !bump,
++      );
++    });
++  },
+   sand(repeat = [20, 20]) {
+     return once("sand" + repeat, () =>
+       cv(
+diff --git a/games/shark-papers/src/places.js b/games/shark-papers/src/places.js
+index 47e4d53..340eac1 100644
+--- a/games/shark-papers/src/places.js
++++ b/games/shark-papers/src/places.js
+@@ -135,7 +135,7 @@ function ranges(Q, rows, dir, spread = 1.0, seed = 3) {
+     }
+ }
+ 
+-/* ---------- 1. The deck of the schooner Ferret, off Jacmel, at dawn on 30 August 1799 ---------- */
++/* ---------- 1. The deck of the schooner Ferret, off Jacmel, at dawn, August 1799 ---------- */
+ function deck() {
+   /* her lines: about 61 feet on deck and 18 feet 8 inches in the beam, a size that fits "six 3-pounders and 45 men". No plan of her is known. */
+   const F = S.lines({ L: 18.6, B: 5.7, fb: 1.5, bul: 0.85, stern: 0.72, bowAt: 0.56, bluff: 2.3 }),
+@@ -534,9 +534,28 @@ function quay() {
+   Q.view = { pos: [12, 2.6, 8.4], look: [-2, 3, -8] };
+   /* the ground: a quay of cut stone, the trodden sand of the yard behind it */
+   ground(Q, std(T.sand([60, 60])), 700, 0, 352.5);
+-  strip(Q, 70, 9.5, std(T.stone([172, 164, 148], [24, 3]), 1), 0, 2.4, 0.012);
+-  strip(Q, 70, 1.0, std(T.stone([142, 136, 124], [30, 1]), 1), 0, -1.9, 0.02);   /* the coping stones along the edge */
+-  W.stoneBox(70, 2.4, 0.7, W.LIME_DARK, 0, -1.2, -2.35, Q.group);   /* the quay wall, down into the water */
++  /* dressed limestone flags in courses with mortar joints, flags about 0.6 to 1.1 m long and 0.6 m wide (a tile is 2.4 m square) */
++  const paved = (rgb, rep, kind, seed) =>
++    new THREE.MeshStandardMaterial({ map: T.setts(rgb, rep, kind, false, seed), bumpMap: T.setts(rgb, rep, kind, true, seed), bumpScale: 2.2, roughness: 0.92 });
++  strip(Q, 70, 9.5, paved([178, 170, 152], [70 / 2.4, 9.5 / 2.4], "flags", 7), 0, 2.4, 0.012);
++  /* the coping: long blocks, 1 m across, with a rounded arris at the water side, a lip standing proud of the wall face and a nosing */
++  strip(Q, 70, 1.0, paved([160, 154, 140], [70 / 4.8, 1], "coping", 11), 0, -1.9, 0.02);
++  const wallFace = paved([120, 116, 104], [70 / 2.6, 2.4 / 2.6], "ashlar", 5);
++  box(70, 2.4, 0.7, wallFace, 0, -1.2, -2.35, Q.group);   /* the quay wall of coursed ashlar, down into the water */
++  const copeFace = paved([150, 144, 130], [70 / 4.8, 1], "coping", 11);
++  for (const [x0, x1] of [[-35, -11.5], [-8.9, 35]]) {   /* broken at the landing steps */
++    const L = x1 - x0,
++      cx = (x0 + x1) / 2;
++    box(L, 0.3, 0.08, copeFace, cx, -0.16, -2.74, Q.group);
++    const nose = cyl(0.05, 0.05, L, copeFace, cx, -0.02, -2.73, Q.group, 8);
++    nose.rotation.z = Math.PI / 2;
++  }
++  /* iron mooring rings let into the wall under the coping, every few metres, each hanging from its staple */
++  for (const x of [-30, -22, -16, -4, 3.4 - 6, 9.5, 17, 24, 31]) {
++    box(0.1, 0.07, 0.08, S.SM.iron, x, -0.38, -2.82, Q.group);
++    const ring = mesh(new THREE.TorusGeometry(0.12, 0.022, 6, 18), S.SM.iron, x, -0.53, -2.84, Q.group);
++    ring.rotation.y = 0.25;
++  }
+   const sea = createSea(Q.group, { kind: "caribbean", y: SEA, at: [0, -150], swell: 0.5 });
+   Q.tickers.push((t) => sea.tick && sea.tick(t));
+   Q.walls.push([-40, -4, 40, -1.85]);
