@@ -470,12 +470,13 @@ export function gunAtPort(side, len = 1.35) {
   const g = grp(),
     q = gun(len);
   q.rotation.y = (side * Math.PI) / 2;
+  q.position.x = side * 0.3;   /* run out: the muzzle stands in the port */
   g.add(q);
   for (const dz of [-0.42, 0.42]) {
-    rope([side * 0.78, 0.36, dz], [side * -0.2, 0.34, dz * 0.42], 0.022, SM.hemp, g, 5);
+    rope([side * 0.78, 0.36, dz], [side * -0.44, 0.34, dz * 0.42], 0.022, SM.hemp, g, 5);
     cyl(0.035, 0.035, 0.03, SM.iron, side * 0.78, 0.36, dz, g, 6).rotation.z = Math.PI / 2;
   }
-  rope([side * -0.2, 0.34, -0.18], [side * -0.2, 0.34, 0.18], 0.022, SM.hemp, g, 5);
+  rope([side * -0.44, 0.34, -0.18], [side * -0.44, 0.34, 0.18], 0.022, SM.hemp, g, 5);
   return g;
 }
 /* a rope coiled down flat on the deck, or (hang) hung from a pin */
@@ -728,7 +729,7 @@ export function schoonerRig(g, F, { foreZ, mainZ, set = "set", foreH = 10.5, mai
   for (const s of [-1, 1]) {
     rope([0, fHead[1] - 0.5, fHead[2]], [s * (at(foreZ + 2.6) + 0.06), y0 + 0.05, foreZ + 2.6], 0.01, SM.tar, g);
     rope([0, mHead[1] - 0.5, mHead[2]], [s * (at(mainZ + 2.8) + 0.06), y0 + 0.05, mainZ + 2.8], 0.01, SM.tar, g);
-    rope(sp.userData.cap, [s * (at(F.z(1) + 1.6) + 0.02), -0.3, F.z(1) + 1.6], 0.012, SM.tar, g);   /* bowsprit shrouds */
+    rope([s * 0.1, sp.userData.cap[1], sp.userData.cap[2] + 0.15], [s * (at(F.z(1) + 1.6) + 0.02), -0.3, F.z(1) + 1.6], 0.012, SM.tar, g);   /* bowsprit shrouds, from just inboard of the cap */
   }
   rope(sp.userData.cap, [0, -F.fb + 0.3, F.z(1) + 0.3], 0.018, SM.tar, g);   /* the bobstay */
   /* head sails: set and hanging in the calm, or furled along the bowsprit */

@@ -109,7 +109,7 @@ function road() {
   Q.light = { top: 0x7fb0c8, hor: 0xeadbb4, fog: [0xdcd6bd, 90, 520], sun: [0xfff0c8, 2.5, -30, 60, 24], hemi: [0xfff4dc, 0x9a8e6a, 2.5] };
   Q.view = { pos: [15, 2.4, 11], look: [-2, 1.2, 1] };
   ground(Q, std(T.grass([60, 60], DRY)), 700);
-  strip(Q, 150, 4.2, std(T.dirt([40, 2], DUST)), 0, 6);
+  strip(Q, 4.2, 150, std(T.dirt([1, 40], DUST)), 0, 6).rotation.z = Math.PI / 2;   /* turned so the texture's wheel ruts run along the road */
   for (const z of [5.1, 6.9]) strip(Q, 150, 0.34, std(T.dirt([60, 1], [160, 142, 108])), 0, z, 0.016);   /* cart ruts */
   hills(Q, 3);
   /* the castle, two miles off on its rise: you can see the towers from here */
@@ -246,7 +246,7 @@ function castle() {
   Q.view = { pos: [15, 2.2, 14], look: [0, 3.6, -9] };
   const grass = std(T.grass([60, 60], [136, 128, 88]));
   ground(Q, grass, 700);
-  strip(Q, 150, 3.8, std(T.dirt([40, 2], DUST)), 0, 12.4);
+  strip(Q, 3.8, 150, std(T.dirt([1, 40], DUST)), 0, 12.4).rotation.z = Math.PI / 2;
   strip(Q, 2.4, 12, std(T.dirt([2, 6], DUST)), 3, 4.6, 0.01);   /* the track from the road up to the door */
   hills(Q, 8);
   /* the rise the house stands on, "a rising piece of ground near the main road, which it commands" (Cundall) */
@@ -272,7 +272,7 @@ function castle() {
   /* the well, in open ground west of the track (the well is this story's own: see the journal) */
   const well = W.well();
   solid1(Q, well, -13.5, 0.4, 2.4, 2.2);
-  const wb = grp(Q.group, -13.3, 0, 0.4);   /* the well's own bucket on its rope: down, or wound up dripping */
+  const wb = grp(Q.group, -13.3, -1.2, 0.4);   /* the well's own bucket on its rope: down, or wound up dripping */
   cyl(0.012, 0.012, 1.0, W.WM.rope, 0, 1.05, 0, wb, 5);
   cyl(0.16, 0.13, 0.26, W.WM.wood, 0, 0.45, 0, wb, 10);
   wb.traverse((o) => {
@@ -370,6 +370,7 @@ function castle() {
   point(Q, "well", -13.5, 2.3, "the well");
   point(Q, "cotton", -0.8, 6.5, "the cotton tree");
   point(Q, "wall", 13, 11.4, "the long wall by the road");
+  point(Q, "tumbled", -5.8, 3.4, "the tumbled wall");
   /* birds in the cotton tree: they go up at the shot (the camera scene) */
   const flock = add(Q, S.birds(18, 4), -0.8, 4.2, 9);
   /* a hat on the track: all that the camera shows afterwards */
@@ -390,7 +391,7 @@ function castle() {
   /* the step decides the hour: dusk for the walk to the well, later dusk for the way back, morning for the neighbour */
   Q.enter = (stage) => {
     const day = stage >= 40,
-      late = !day && stage >= 36;
+      late = !day && stage >= 37;
     Q.light = day ? DAYL : late ? LATE : DUSK;
     Q.beds = day ? { wind: 0.05, bird: 0.12 } : { wind: 0.07, owl: late ? 0.8 : 0.5 };
     glowWin.visible = !day;
@@ -524,17 +525,17 @@ function hall() {
   add(Q, W.makeDoor({ w: 1.1, h: 2.1, kind: "plank", color: 0x3b2a1e, frame: 0x5a5347, handle: "ring" }), 2.6, 3.44, 0, Math.PI);
   add(Q, W.makeDoor({ w: 1.0, h: 2.0, kind: "plank", color: 0x3b2a1e, frame: 0x5a5347, handle: "latch" }), 5.24, 0.4, 0, -Math.PI / 2);
   /* the hearth in the wall of the front tower, across the south-east corner, with a low fire the searchers lit */
-  add(Q, S.cornerHearth(3), 4.55, 2.75, 0, (-3 * Math.PI) / 4);
-  wall(Q, 4.5, 2.7, 2.1, 2.1);
+  add(Q, S.cornerHearth(2.78), 4.1, 2.3, 0, (-3 * Math.PI) / 4);
+  wall(Q, 4.4, 2.6, 2.4, 2.4);
   const fl = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   fl.scale.set(0.5, 0.5, 1);
-  fl.position.set(4.2, 0.5, 2.4);
+  fl.position.set(3.75, 0.5, 1.95);
   fl.userData.noBatch = true;
   fl.userData.noAudit = true;
   Q.group.add(fl);
   Q.tickers.push((t) => fl.scale.set(0.46 + Math.sin(t * 9) * 0.05, 0.5 + Math.sin(t * 13) * 0.08, 1));
   /* the foot of the spiral steps in the back tower, across the north-west corner */
-  add(Q, S.spiralFoot(3), -4.5, -2.7, 0, Math.PI / 4);
+  add(Q, S.spiralFoot(2.78), -4.04, -2.24, 0, Math.PI / 4);
   wall(Q, -4.6, -2.8, 2.0, 2.0);
   /* the long table, with a candle, the searchers' list and the strongbox */
   solid1(Q, P.table(2.6, 1.0, 0.78), -0.6, -1.5, 2.7, 1.1);
@@ -563,12 +564,12 @@ function hall() {
   /* the west wall: coats on pegs, far too many for one man; a cloth hangs over them until you draw it back */
   const coats = [0x5a3a2a, 0x2f3a4a, 0x6a5a3a, 0x3a2a2a, 0x4a5a3a, 0x7a2f2a];
   coats.forEach((c, i) => add(Q, W.hungCoat(c), -5.22, -0.9 + i * 0.8, 0, Math.PI / 2));
-  const sheet = box(0.06, 1.7, 4.8, W.WM.linen, -5.08, 1.05, 1.1, Q.group);
+  const sheet = box(0.06, 1.7, 4.6, W.WM.linen, -5.08, 1.05, 1.0, Q.group);
   sheet.userData.noBatch = true;
-  box(0.05, 0.05, 5.0, W.WM.woodDark, -5.1, 1.93, 1.1, Q.group);
+  box(0.05, 0.05, 4.8, W.WM.woodDark, -5.1, 1.93, 1.0, Q.group);
   Q.reveal.coats = (seen) => {
     sheet.scale.z = seen ? 0.1 : 1;
-    sheet.position.z = seen ? 3.2 : 1.1;
+    sheet.position.z = seen ? 3.05 : 1.0;
   };
   /* the east wall: a rack of long guns. The north wall: the cot where a sick man lay, a shelf. */
   const rack = grp();
@@ -581,7 +582,15 @@ function hall() {
   }
   add(Q, rack, 5.2, -2.3);
   solid1(Q, S.cot(), 3.0, -2.9, 2.0, 0.9);
+  /* a tin cup knocked to the floor by the cot: you set it back where a sick man could reach it */
   const cup = cyl(0.04, 0.035, 0.08, solid(0x9a9a94, 0.4, 0.6), 4.3, 0.04, -2.7, Q.group, 8);
+  cup.rotation.z = Math.PI / 2;
+  cup.userData.noBatch = true;
+  cup.userData.noAudit = true;
+  Q.reveal.cot = (seen) => {
+    cup.position.set(seen ? 3.5 : 4.3, seen ? 0.57 : 0.04, seen ? -2.75 : -2.7);
+    cup.rotation.z = seen ? 0 : Math.PI / 2;
+  };
   add(Q, S.shelf(1.7), -1.0, -3.44, 1.75);
   /* by the south wall: a trunk of folded clothes, a barrel, sacks */
   solid1(Q, S.clothesTrunk(), -3.4, 3.0, 1.2, 0.7, Math.PI);
@@ -600,17 +609,17 @@ function hall() {
   person(Q, "officer", "officer", 0.9, -0.4, face(0.9, -0.4, -1.2, -1.5), { kind: "watch", at: [-1.2, -1.5], idles: ["IdleM"], react: ["HeadTurn", "Nod"], every: [5, 9] });
   person(Q, "juba", "juba", 0.6, 2.2, face(0.6, 2.2, 0, 0), { kind: "watch", at: [0, 0], idles: ["Idle"], react: ["HeadTurn"], every: [6, 10] });
   person(Q, "cudjoe", "cudjoe", 1.8, 1.9, face(1.8, 1.9, 0, 0), { kind: "watch", at: [0, 0], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [6, 10] });
-  person(Q, "hector", "hector", -3.3, -0.9, face(-3.3, -0.9, 0, 0), { kind: "watch", at: [-1.2, -1.5], idles: ["IdleM"], react: ["HeadTurn"], every: [7, 11] });
-  crowd(Q, "hx_townman", -2.6, -1.6, face(-2.6, -1.6, -1.2, -1.5), { kind: "work", clips: ["IdleM", "Nod", "HeadTurn"], work: [4, 8], face: [-1.2, -1.5] });
-  crowd(Q, "hx_townman", 4.0, -1.5, face(4.0, -1.5, 5.2, -2.3), { kind: "work", clips: ["IdleM", "HeadTurn", "PickUp"], work: [5, 9], face: [5.2, -2.3] });
+  person(Q, "hector", "hector", -3.8, -0.6, face(-3.8, -0.6, -1.2, -1.5), { kind: "watch", at: [-1.2, -1.5], idles: ["IdleM"], react: ["HeadTurn"], every: [7, 11] });
+  crowd(Q, "hx_townman", -2.8, -2.0, face(-2.8, -2.0, -1.2, -1.5), { kind: "work", clips: ["IdleM", "Nod", "HeadTurn"], work: [4, 8], face: [-1.2, -1.5] });
+  crowd(Q, "hx_townman", 4.6, -1.0, face(4.6, -1.0, 5.2, -2.3), { kind: "work", clips: ["IdleM", "HeadTurn", "PickUp"], work: [5, 9], face: [5.2, -2.3] });
   Q.props.candle = cd;
-  Q.keepOff = [{ at: [-1.2, -0.4], r: 0.9 }, { at: [-4.2, 1.0], r: 0.9 }, { at: [-1.2, 2.6], r: 0.9 }, { at: [2.9, 0.2], r: 0.8 }];
+  Q.keepOff = [{ at: [-1.2, -0.4], r: 0.9 }, { at: [-4.2, 1.0], r: 0.9 }, { at: [-1.2, 2.6], r: 0.9 }, { at: [2.9, 0.2], r: 0.8 }, { at: [3.0, -1.9], r: 0.8 }];
   return Q;
 }
 
 /* ---------- 4. The sinkhole: a small valley ringed by rock, the mouth at its foot ---------- */
 function hole() {
-  const Q = base("hole", [-11, -3.2, 11, 13], [7.5, 11, Math.PI / 5]);
+  const Q = base("hole", [-11, -3.8, 11, 13], [7.5, 11, Math.PI / 5]);
   Q.floor = "grass";
   Q.mood = "sad";
   Q.beds = { wind: 0.09, bird: 0.03 };
@@ -651,7 +660,7 @@ function hole() {
   add(Q, S.shaft(RX, RZ, 4), MX, MZ);
   wall(Q, MX, MZ, 2 * RX + 2.6, 2 * RZ + 2.2);
   /* the ground falls toward the mouth: bare rock and scree round it */
-  add(Q, S.patch(6.4, 4.6, std(S.cragTex([2, 2]), 1), 9, 0.012), MX, MZ + 0.4);
+  add(Q, S.patch(6.4, 4.6, std(S.cragTex([2, 2]), 1), 9, 0.012, [RX * 1.02, RZ * 1.02, 0, -0.4]), MX, MZ + 0.4);
   for (const [x, z, s] of [[-7, 3.2, 1.2], [6.8, 5.6, 1.0], [-3.6, 9.5, 0.9], [9.6, 1.5, 1.1], [-9.4, -2.2, 1.3], [7.4, -2.6, 1.0]]) solid1(Q, W.rocks(s, x * 5 + 9, 3), x, z, s * 1.5, s * 1.3);
   solid1(Q, S.outcrop(2.4, 2.4, 3), -8.6, 8.4, 2.6, 1.5);
   for (const [x, z, s] of [[-10, 4.6, 1.1], [2, 7.4, 0.8], [-6.4, 12, 1], [10, 9.4, 1.2], [5, 12.4, 0.9]]) solid1(Q, bush(x * 3 + 11, s), x, z, 0.6, 0.6);
@@ -706,7 +715,7 @@ function hole() {
   person(Q, "officer", "officer", 5.6, -0.6, face(5.6, -0.6, MX, MZ), { kind: "watch", at: [MX, MZ], idles: ["IdleM"], react: ["HeadTurn"], every: [7, 11], stay: true });
   person(Q, "hector", "hector", -1.5, -3.0, face(-1.5, -3.0, MX, MZ), { kind: "work", clips: ["Point", "IdleM", "IdleM"], work: [5, 8], face: [MX, MZ], stay: true });
   crowd(Q, "hx_townman", 2.6, -2.2, face(2.6, -2.2, 1.6, -4.4), { kind: "work", clips: ["IdleM", "PickUp", "HeadTurn"], work: [5, 9], face: [1.6, -4.6], stay: true });
-  crowd(Q, "hx_townman", 4.6, -3.0, face(4.6, -3.0, 3.6, -2.4), { kind: "watch", at: [MX, MZ], idles: ["IdleM"], react: ["HeadTurn", "WipeSweat"], every: [5, 9], stay: true });
+  crowd(Q, "hx_penman", 4.6, -3.0, face(4.6, -3.0, 3.6, -2.4), { kind: "watch", at: [MX, MZ], idles: ["IdleM"], react: ["HeadTurn", "WipeSweat"], every: [5, 9], stay: true });
   Q.keepOff = [{ at: [0, -3.0], r: 1.1 }, { at: [5.2, 7.4], r: 1 }, { at: [1.2, -2.8], r: 0.9 }, { pts: [[7.5, 11], [0, -3]], w: 1.2 }];
   return Q;
 }
@@ -779,7 +788,7 @@ function town() {
     [38, -24, 14, { rgb: [204, 190, 160], seed: 9 }, 0],
   ];
   for (const [x, z, w, o, ry] of sides) add(Q, S.townHouse(w, o), x, z, 0, ry);
-  for (const [x, z, len, ry] of [[-27.4, 4.6, 3.4, Math.PI / 2], [-27.4, 20.2, 3.6, Math.PI / 2], [27.4, 2.6, 2.4, Math.PI / 2], [27.4, 4.2, 0.1, 0]]) if (len > 1) add(Q, S.gardenWall(len), x, z, 0, ry);
+  for (const [x, z, len, ry] of [[-27.4, 4.3, 2.1, Math.PI / 2], [-27.4, 20, 2.7, Math.PI / 2], [27.4, 2.7, 2.2, Math.PI / 2]]) if (len > 1) add(Q, S.gardenWall(len), x, z, 0, ry);
   wall(Q, -27.5, 12, 3, 46);
   wall(Q, 27.5, -4, 3, 13);
   wall(Q, 27.5, 20, 3, 15);
@@ -817,6 +826,10 @@ function town() {
   add(Q, gal, 56, 9, 0, -1.3);
   const fc = add(Q, S.farCrowd(34, 9, 3), 48, 9, 0, Math.PI / 2);
   fc.visible = false;
+  /* at dawn the street out of the square is full too: people far off, against the light */
+  const fc2 = add(Q, S.farCrowd(30, 8, 6), 37, 9, 0, Math.PI / 2);
+  const fc3 = add(Q, S.farCrowd(24, 7, 7), 42, 9, 0, Math.PI / 2);
+  fc2.visible = fc3.visible = false;
   const DAWN = { top: 0x39486a, hor: 0xe7a36a, stars: 0.12, fog: [0xb89a86, 50, 420], sun: [0xffb070, 1.3, 60, 12, 40], hemi: [0xd9c4c8, 0x6a5a4c, 1.9], fill: 1.6 };
   const DAYL = Q.light;
   Q.props.gallows = gal;
@@ -824,7 +837,7 @@ function town() {
   Q.films.morning = (t) => {
     if (t >= 0 === dawn) return;
     dawn = t >= 0;
-    gal.visible = fc.visible = dawn;
+    gal.visible = fc.visible = fc2.visible = fc3.visible = dawn;
     Q.light = dawn ? DAWN : DAYL;
     Q.relight?.();
   };
@@ -832,16 +845,16 @@ function town() {
   person(Q, "clerk", "clerk", -1.3, -3.6, face(-1.3, -3.6, 2, 2), { kind: "watch", at: [2.3, -5], idles: ["IdleM"], react: ["HeadTurn", "Nod"], every: [5, 9] }, { held: "ledger" });
   person(Q, "hutton", "hutton", 0.9, -6.5, face(0.9, -6.5, 0, 0), { kind: "watch", at: [0, 0], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
   person(Q, "cubba", "cubba", 4.6, 1.6, face(4.6, 1.6, 0, -5), { kind: "watch", at: [0, -8], idles: ["OldIdle"], react: ["HeadTurn"], every: [6, 10] });
-  crowd(Q, "hx_townman", -7.4, 1.2, 0, { kind: "chat", group: "a", at: [-7, 1.6] });
-  crowd(Q, "hx_townwoman", -6.4, 2.2, 0, { kind: "chat", group: "a" });
-  crowd(Q, "hx_man", -7.9, 2.4, 0, { kind: "chat", group: "a" });
+  crowd(Q, "hx_townman", -9.5, 4.6, 0, { kind: "chat", group: "a", at: [-9.3, 5.3] });
+  crowd(Q, "hx_townwoman", -8.6, 5.5, 0, { kind: "chat", group: "a" });
+  crowd(Q, "hx_man", -10.0, 5.9, 0, { kind: "chat", group: "a" });
   crowd(Q, "hx_woman", 8, 16, 0, { kind: "wander", area: [6, 13, 13, 17.4], pause: [3, 7] });
-  crowd(Q, "hx_townman", 15, -1, 0, { kind: "wander", pts: [[15, -1], [8, -1.6], [-9, -1.2], [-15, 0.4]], pause: [2, 5] });
+  crowd(Q, "hx_penman", 15, -1, 0, { kind: "wander", pts: [[15, -1], [8, -1.6], [-9, -1.2], [-15, 0.4]], pause: [2, 5] });
   crowd(Q, "hx_townwoman", -14.4, 7.6, face(-14.4, 7.6, -16, 9.6), { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-16, 9.6] });
   crowd(Q, "hx_man", 15.4, 6.9, face(15.4, 6.9, 16.7, 7.8), { kind: "work", clips: ["IdleM", "PickUp", "WipeSweat"], work: [5, 9], face: [16.7, 7.8] });
   crowd(Q, "hx_penwoman", 9.9, 19.9, face(9.9, 19.9, 9.6, 18.4), { kind: "work", clips: ["Idle", "PickUp", "Idle"], work: [5, 9], face: [9.6, 18.4] });
   crowd(Q, "hx_woman", 5.2, 21.2, face(5.2, 21.2, 6.6, 20.4), { kind: "watch", at: [0, 9], idles: ["Idle"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
-  crowd(Q, "hx_penman", -9, 19, 0, { kind: "work", between: [[-9, 19], [-15, 14.4]], walk: "Walk", idle: "IdleM" });
+  crowd(Q, "hx_penman", -8.6, 19.6, 0, { kind: "work", between: [[-8.6, 19.6], [-13.6, 21.2]], walk: "Walk", idle: "IdleM" });
   crowd(Q, "hx_townwoman", 11, 6, 0, { kind: "chat", group: "b", at: [11.4, 6.4] });
   crowd(Q, "hx_townman", 12, 7, 0, { kind: "chat", group: "b" });
   point(Q, "green", 0, 15.6, "the railed green");

@@ -32,13 +32,17 @@ Real people: Dr Hutton says imagined words (his page says so). John Callendar ne
 
 ## Places (rule 3: what is modelled on a source)
 
-- **Castle:** from Cundall's description and the JNHT photographs of the ruin. Stand-ins: the roofs (the ruin has none), the window, the well, the ground between road and house. No measured plan was found.
-- **Spanish Town:** a general picture of the public building facing King's House, where the court sat upstairs (Long, 1774). To do: model it on Long's 1774 plate (`nljdigital.nlj.gov.jm/items/show/5208`).
-- **Road, hall, sinkhole:** general pictures. The sinkhole's real mouth is about 3 by 5 m; the game's is wider.
+Scenery builders are in `src/scenery.js`; the places are put together in `src/places.js`.
+
+- **The road by Dr Hutton's pen (chapters 1 and 2):** a general picture of a St Ann cattle pen about 1772, since no drawing of Hutton Bonvil or Lebanon was found: Guinea grass pasture gone gold in the dry season, a rail fence and a feed rack, eleven cattle (stand, graze, lie), a dry pond of cracked mud, a dry stone trough, the pen-keeper's thatched hut with its cook fire, a grass stack, the pen house with its kitchen across the pasture, karst hills near and far, and the castle's towers far off on their rise. The boundary pole and pegs, the pack mule and Sampson's cart are the story's own.
+- **Edinburgh Castle, dusk and morning (chapters 3 and 4):** from Cundall's description and the JNHT photographs of the ruin: rubble limestone, two storeys, round loopholed towers at diagonally opposite corners, a door beside the front tower and one on the east side, small square plastered loopholes, the house on rising ground over the road, and the quarters of the enslaved people as ruins to the west. Stand-ins: the roofs and chimney (the ruin has none), the shuttered upper window, the well, the cotton tree, the cattle yard and every piece of cover between the road and the well. No measured plan was found.
+- **The hall (chapter 5):** a general picture inside those walls: plastered loopholes in deep splays, the foot of the spiral steps in the back tower (Cundall), a corner hearth, the two doors, and what later accounts say the searchers found (the watches, the coats). The cot is the sick man of the 1773 letter. The furniture is a general picture.
+- **The sinkhole (chapter 5):** after the Jamaican Caves Organisation register: a small valley ringed by rock walls about 10 m high, the mouth about 3 m by 5 m at its foot, and a shaft that goes dark out of sight. The rope, stake and lantern are the game's picture.
+- **Spanish Town, March 1773 (chapter 6):** the square after the 1774 plate in Edward Long's history (`nljdigital.nlj.gov.jm/items/show/5208`): King's House with its portico, the public building opposite with brick arches below and the long gallery where the court sat upstairs, and the railed octagonal green between them. In the real square King's House is on the west side and the public building on the east; the game turns the square so the court faces north. There is no Rodney Memorial and no 1819 court house. The houses on the other two sides and the market goods are a general picture. The gallows at dawn is a far shape at the end of a street.
 
 ## People
 
-13 own recipes in `tools/hutchinson/people/` (`hx_`), built by `tools/hutchinson/build-people.mjs` with the shared builder. Skin 1.55, Hair 1. Known gaps: men's hats are the builder's round felt, not the cocked hat of the 1770s; women's dress is the shift, petticoat and head wrap the builder can make. Clothes follow Long (1774) and the 1769 Acts (osnaburg frocks, jackets, drawers and petticoats).
+17 own recipes in `tools/hutchinson/people/` (`hx_`), among them Hector (real, silent), the sick man (seen only far off in the camera scene) and two pen workers for the background,, built by `tools/hutchinson/build-people.mjs` with the shared builder. Skin 1.55, Hair 1. Known gaps: men's hats are the builder's round felt, not the cocked hat of the 1770s; women's dress is the shift, petticoat and head wrap the builder can make. Clothes follow Long (1774) and the 1769 Acts (osnaburg frocks, jackets, drawers and petticoats).
 
 ## How it is made
 
@@ -55,3 +59,16 @@ Not yet run: `?test=all`, cloth, skin, layout at 667x375, 800x500 and 1280x720, 
 ## Checks, 22 November 2026 (second pass)
 
 `?test=layout`: 0 at 390x800, 667x375, 800x500 and 1280x720. `?test=held`: 0. `?test=ambient`: 0 in every place. `?test=cloth` is **not at 0**: it lists small show-through points on the new bodies (a few millimetres at the coat neck, the hat band and the belt line; for example 31 lines on `hx_hutton`, worst 28.5 mm at the hat band). They come from the shared clothes builder, which is not changed in a game's own pull request (`docs/STANDARD.md`); they need a look in close screenshots and, if seen, a builder fix in its own PR. `?test=skin` and `?test=walkers` for this game are still to run and record.
+
+## Checks, 22 November 2026 (enrichment pass)
+
+The story now has 44 steps: new moments are the dry pond, the cut grass, the boundary peg, the cask, the cotton tree and the hat, the tumbled wall, drawing the water, the strayed jackass, getting down behind the long wall, the cot, the loophole, the lantern on the rope and listening under the gallery. Both camera scenes were reshot.
+
+- `?auto=1`: plays to `AUTO END 68`, `FLOW 0`, no errors, no long dialogue lines.
+- `?test=audit`: `AUDIT 0` and `FACES 0` in all five places; layout and ambient setup 0.
+- `?test=ambient`: `AMBIENT 0` in all five places.
+- `?test=held`: `CARRY 0`.
+- `?test=layout`: `LAYOUT UI 0` at 390x800, 667x375, 800x500 and 1280x720.
+- `node tools/lint_content.mjs --ci`: 0 new for hutchinson.
+
+Still to do: men wear the builder's round felt hat where a cocked hat belongs (a cocked hat needs the shared clothes builder or a hat swap the game cannot make cleanly yet); `hx_cudjoe` slides in the walk check, so he is never given a walk; `?test=cloth` show-through points from the shared builder (above); a phone play-through by hand; timing each chapter against 5 to 8 minutes; outside review.

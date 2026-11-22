@@ -143,11 +143,12 @@ function deck() {
     SEA = -F.fb;
   const Q = base("deck", [-2.8, -8.7, 2.8, 9.0], [1.6, 3.6, 0.15]);
   Q.floor = "wood";
-  Q.beds = { sea: 0.12, wind: 0.015 };   /* "not a breath of air out of the heavens" (Fitton) */
+  Q.beds = { sea: 0.12, wind: 0.015 };   /* "not a breath of air out of the heavens" (Wylie, in Fitton's account) */
   Q.light = { top: 0x5a9ccc, hor: 0xf4dfc4, fog: [0xe9dfd0, 160, 880], sun: [0xffe8c4, 2.4, 70, 30, -20], hemi: [0xfff6ea, 0x6f9aa8, 2.5] };
   Q.view = { pos: [2.2, 2.6, 8.6], look: [-0.6, 1.2, -3] };
   const ship = S.hull(F, { deck: PLANK(), stripe: 0.32, inner: 0x7a3a2c });
   Q.group.add(ship);
+  ship.userData.hollow = true;   /* people stand on her deck, inside her outline, on purpose */
   for (let z = -9.3; z < 9.3; z += 0.5) {
     const h = Math.min(half(z), half(z + 0.5)) - 0.17;
     Q.walls.push([h, z, 3.6, z + 0.5], [-3.6, z, -h, z + 0.5]);
@@ -202,14 +203,14 @@ function deck() {
     Q.group.add(a);
     const cat = box(0.16, 0.16, 1.1, S.SM.woodDark, s * (half(-8.3) + 0.25), 0.95, -8.3, Q.group);
     cat.rotation.y = s * 0.9;
-    S.rope([s * 0.5, 0.5, -7.6], [s * (half(-8.4) - 0.05), 0.5, -8.6], 0.035, S.SM.hemp, Q.group, 6);   /* the cable leading to the hawse hole */
+    S.rope([s * 0.5, 0.62, -7.8], [s * (half(-8.4) - 0.05), 0.5, -8.6], 0.035, S.SM.hemp, Q.group, 6);   /* the cable leading to the hawse hole */
   }
   /* ---- the six 3-pounders, three a side, run out at their ports ---- */
   for (const z of [-3.2, -0.9, 4.25])
     for (const s of [-1, 1]) {
       const x = s * (half(z) - 0.98);
       add(Q, S.gunAtPort(s), x, z);
-      wall(Q, s * (half(z) - 0.82), z, 1.1, 0.66);   /* the carriage and the breech: the muzzle stands out through the port */
+      wall(Q, s * (half(z) - 0.8), z, 1.2, 0.66);   /* the carriage and the breech: the muzzle stands out through the port */
       box(0.05, 0.4, 0.52, new THREE.MeshBasicMaterial({ color: 0x0c0a09 }), s * (half(z) - 0.125), 0.48, z, Q.group);   /* the port */
       const rack = S.shotRack(5, 0.036);
       rack.position.set(s * (half(z + 0.7) - 0.28), 0, z + 0.72);
@@ -439,7 +440,9 @@ function deck() {
   const film = { on: false, homes: null, rope: unitRope(0.016), rope2: unitRope(0.016) };
   film.rope.visible = film.rope2.visible = false;
   Q.group.add(film.rope, film.rope2);
-  const ROW = [[-1.25, 8.2], [-1.3, 7.1], [-1.35, 6.0], [-1.4, 4.9], [-1.45, 3.8]];
+  const ROW = [[-1.25, 8.2], [-1.3, 7.1], [-1.35, 6.0], [-1.4, 4.9], [-1.45, 3.8]],
+    ROUND = [[-0.7, 4.1], [-0.1, 5.0], [-0.15, 6.6], [-0.55, 8.65], [-1.3, 3.62]],   /* where the hands stand round the shark once it is on deck */
+    _nose = new THREE.Vector3();
   const sm = (k) => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
   Q.films.catch = (t) => {
     const hands = [Q.people.find((n) => n.id === "fitton"), Q.people.find((n) => n.id === "cato"), ...Q.extras.slice(0, 3)].filter(Boolean);
@@ -470,12 +473,12 @@ function deck() {
     const hauling = t >= 5.5 && t < 20.5,
       clip = t < 5.5 ? "IdleM" : t < 20.5 ? "CarryIdle" : "Cheer";
     hands.forEach((n, i) => {
-      const at = i === 0 || t >= 5.5 ? ROW[i] : film.homes[i];
+      const at = t >= 20.5 ? ROUND[i] : i === 0 || t >= 5.5 ? ROW[i] : film.homes[i];
       n.x = at[0];
       n.z = at[1];
       const heave = hauling ? Math.max(0, Math.sin(t * 2.6 - i * 0.25)) : 0;
       n.m.position.set(at[0], 0, at[1] - heave * 0.16);
-      if (i === 0 || t >= 5.5) n.m.rotation.set(t < 20.5 ? -(heave * 0.2 + (hauling ? 0.06 : 0)) : 0, t < 20.5 ? 0 : face(at[0], at[1], REST[0] + 0.6, REST[2] + 3), 0);
+      if (i === 0 || t >= 5.5) n.m.rotation.set(t < 20.5 ? -(heave * 0.2 + (hauling ? 0.06 : 0)) : 0, t < 20.5 ? 0 : face(at[0], at[1], REST[0], REST[2]), 0);
     });
     if (film.clip !== clip) {
       film.clip = clip;
@@ -497,7 +500,11 @@ function deck() {
       shark.rotation.set((1 - up) * -0.9 + Math.sin(over * Math.PI) * 0.1, REST[3] + (1 - over) * 0.5, 0.12 + (1 - over) * 0.7 * Math.sin(up * Math.PI * 0.5));
     }
     /* the line: from the hands over the taffrail to the fish; a second part from the main boom end lifts it in */
-    const nose = out ? [shark.position.x, shark.position.y + 0.3, shark.position.z - 1.5] : [f.x, SEA - 0.1, f.z];
+    if (out) {
+      shark.updateMatrixWorld();
+      shark.localToWorld(_nose.set(0, 0.2, -1.6));   /* the hook is in its mouth */
+    }
+    const nose = out ? [_nose.x, _nose.y, _nose.z] : [f.x, SEA - 0.1, f.z];
     film.rope.visible = t < 19.5;
     film.rope2.visible = t >= 5.5 && t < 20.5;
     if (film.rope.visible) stretch(film.rope, t < 13.5 ? CLEAT : rail, nose);
@@ -507,11 +514,11 @@ function deck() {
   /* ---- people: each with something to do ---- */
   person(Q, "cato", "cato", -1.5, 1.6, face(-1.5, 1.6, 1.6, 3.6), { kind: "watch", at: [-40, 40], idles: ["IdleM"], react: ["HeadTurn", "Point", "LookAround"], every: [5, 9] });
   person(Q, "fitton", "fitton", 0.9, 8.35, face(0.9, 8.35, 0.4, 4), { kind: "watch", at: [-20, 30], idles: ["IdleM"], react: ["HeadTurn", "LookAround"], every: [6, 10] }, { hat: "cocked" });
-  person(Q, "wylie", "wylie", 1.95, 3.1, face(1.95, 3.1, 0, 5), { kind: "watch", at: [-1.2, 6.5], idles: ["IdleM"], react: ["HeadTurn", "Shrug"], every: [6, 10] }, { hat: "cocked" });
-  crowd(Q, "sp_seaman", -0.75, -8.1, face(-0.75, -8.1, 0, -30), { kind: "watch", at: [10, -60], react: ["HeadTurn", "LookAround", "WipeSweat"], every: [5, 9] });
-  crowd(Q, "sp_seaman2", -1.9, -3.9, face(-1.9, -3.9, -3, -4.6), { kind: "work", clips: ["PickUp", "IdleM", "WipeSweat"], work: [5, 9], face: [-3, -4.6] });
-  crowd(Q, "sp_seaman3", -1.05, 0.3, Math.PI, { kind: "work", between: [[-1.05, 0.3], [-1.05, -3.9]], walk: "Walk", idle: "IdleM" });
-  crowd(Q, "sp_seaman4", -1.0, -6.9, face(-1.0, -6.9, 0.6, -6.9), { kind: "chat", group: "fo", at: [-1.2, -6.9], ring: 0.45, turn: Math.PI / 2 });
+  person(Q, "wylie", "wylie", 1.6, 6.9, face(1.6, 6.9, -1.0, 6.4), { kind: "watch", at: [-1.2, 6.5], idles: ["IdleM"], react: ["HeadTurn", "Shrug"], every: [6, 10] }, { hat: "cocked" });
+  crowd(Q, "sp_seaman", 1.3, -7.0, face(1.3, -7.0, 8, -30), { kind: "watch", at: [10, -60], react: ["HeadTurn", "LookAround", "WipeSweat"], every: [5, 9] });
+  crowd(Q, "sp_seaman2", -1.75, -1.65, face(-1.75, -1.65, -2.6, -1.9), { kind: "work", clips: ["PickUp", "IdleM", "WipeSweat"], work: [5, 9], face: [-2.6, -1.9] });
+  crowd(Q, "sp_seaman3", -1.05, 0.5, Math.PI, { kind: "work", between: [[-1.05, 0.5], [-1.05, -2.35]], walk: "Walk", idle: "IdleM" });
+  crowd(Q, "sp_seaman4", -1.0, -6.9, face(-1.0, -6.9, 0.6, -6.9), { kind: "chat", group: "fo", at: [-0.95, -6.85], ring: 0.4, turn: Math.PI / 2 });
   crowd(Q, "sp_docker", 0.75, -6.95, face(0.75, -6.95, -1, -6.9), { kind: "chat", group: "fo" });
   Q.keepOff = [{ at: [-1.2, 8.2], r: 0.9 }, { at: [0.35, 6.2], r: 0.8 }, { at: [1.25, 1.1], r: 0.8 }, { at: [1.3, -3.9], r: 0.8 }, { at: [-1.0, -4.9], r: 0.8 }, { at: [0.95, -6.0], r: 0.7 }, { at: [2.35, 2.2], r: 0.8 }, { pts: [[1.6, 3.6], [1.0, 2.4], [1.0, -3.6]], w: 0.5 }];
   return Q;
@@ -572,8 +579,8 @@ function quay() {
     cyl(0.24, 0.24, 0.08, S.SM.iron, 0, 0.72, 0, b, 10);
     solid1(Q, b, x, -1.45, 0.5, 0.5);
   }
-  for (const [bx, sx] of [[-13, -11.2], [13, 11]]) S.rope([bx, 0.5, -1.45], [sx, 1.0, -4.3], 0.04, S.SM.hemp, Q.group, 6);
-  for (const [bx, sx] of [[-6.5, -8.6], [6.5, 8.4]]) S.rope([bx, 0.5, -1.45], [sx, 0.95, -3.1], 0.04, S.SM.hemp, Q.group, 6);
+  for (const [bx, sx] of [[-13, -11.2], [13, 11]]) S.rope([bx, 0.6, -1.665], [sx, 1.0, -4.3], 0.04, S.SM.hemp, Q.group, 6);
+  for (const [bx, sx] of [[-6.5, -8.6], [6.5, 8.4]]) S.rope([bx, 0.6, -1.665], [sx, 0.95, -3.1], 0.04, S.SM.hemp, Q.group, 6);
   for (const x of [-5, 1, 6]) cyl(0.2, 0.2, 0.7, S.SM.hemp, x, -0.2, -2.78, Q.group, 8);   /* rope fenders on the quay wall */
   const plank = grp();
   box(0.9, 0.07, 2.6, S.SM.wood, 0, 0, 0, plank);
@@ -698,7 +705,7 @@ function quay() {
   for (const [i, x] of [12.4, 13.3, 14.2].entries()) {
     const gb = S.gun(1.9, 1.35);
     gb.children.slice(2).forEach((c) => (c.visible = false));   /* the barrel only, on wooden skids */
-    gb.position.set(x, -0.38, 8.8 + i * 0.05);
+    gb.position.set(x, -0.3, 8.8 + i * 0.05);
     Q.group.add(gb);
   }
   for (const z of [8.1, 9.6]) box(2.9, 0.14, 0.16, S.SM.woodDark, 13.3, 0.07, z, Q.group);
@@ -721,14 +728,14 @@ function quay() {
   solid1(Q, crane, -16.2, 0.2, 1.7, 1.7);
   /* cargo and stores: casks on their ends and on their sides, crates, sacks, a cart, the coils of a cable */
   for (const [x, z] of [[5.2, 8.8], [6.0, 9.3], [5.5, 9.8], [6.5, 8.6], [-11.0, 2.6], [-10.2, 3.1]]) solid1(Q, cask(0.95, 0.34), x, z, 0.75, 0.75);
-  for (const [x, z] of [[7.6, 9.4], [8.5, 9.4]]) {
+  for (const [x, z] of [[7.5, 9.4], [8.6, 9.4]]) {
     const c = cask(1.0, 0.36);
     c.rotation.z = Math.PI / 2;
     c.position.set(x + 0.5, 0.36, z);
     Q.group.add(c);
     for (const s of [-1, 1]) box(0.12, 0.1, 0.16, S.SM.woodDark, x + s * 0.25, 0.05, z - 0.3, Q.group);
   }
-  wall(Q, 8.0, 9.4, 2.2, 0.8);
+  wall(Q, 8.55, 9.4, 2.3, 0.8);
   for (const [x, z, s, ry] of [[1.6, 9.5, 0.7, 0.2], [2.4, 9.7, 0.6, -0.1], [1.9, 9.55, 0.5, 0.5]]) {
     const c = crate(s);
     add(Q, c, x, z, x === 1.9 ? 0.56 : 0, ry);
@@ -743,7 +750,7 @@ function quay() {
   /* people */
   person(Q, "ben", "ben", 3.2, 2.4, face(3.2, 2.4, 9, 6), { kind: "watch", at: [0, -6], idles: ["IdleM"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
   person(Q, "fitton", "fitton", 5.6, 5.3, face(5.6, 5.3, 2, 2), { kind: "watch", at: [-60, -120], idles: ["IdleM"], react: ["HeadTurn", "LookAround"], every: [6, 10] }, { hat: "cocked" });
-  crowd(Q, "sp_docker", -8.8, 3.6, 0, { kind: "work", between: [[-9.4, 3.4], [-3.2, 7.6]], walk: "Walk", idle: "IdleM" });
+  crowd(Q, "sp_docker", -9.4, 6.9, Math.PI / 2, { kind: "work", between: [[-9.4, 6.9], [-3.2, 7.6]], walk: "Walk", idle: "IdleM" });
   crowd(Q, "sp_docker2", 10.9, 3.0, face(10.9, 3.0, 9.2, 2.2), { kind: "work", clips: ["PickUp", "WipeSweat", "IdleM"], work: [5, 9], face: [9.2, 2.2] });
   crowd(Q, "sp_seaman2", 7.9, 3.4, face(7.9, 3.4, 9.2, 2.2), { kind: "work", clips: ["IdleM", "PickUp", "LookAround"], work: [6, 10], face: [9.2, 2.2] });
   crowd(Q, "sp_briggs", -3.6, 2.9, face(-3.6, 2.9, -2, -6), { kind: "chat", group: "claim", at: [-3.1, 2.4] });
@@ -1051,7 +1058,8 @@ function court() {
     box(1.56, 0.44, 0.02, new THREE.MeshBasicMaterial({ color: 0x1a1410 }), 0, 0.45 + r * 0.52, 0.165, shelf);
     for (let i = 0; i < 12; i++) box(0.1, 0.34 + ((i * 7 + r) % 3) * 0.03, 0.2, solid([0x5a3324, 0x3a2a22, 0x6a4a2e, 0x2f3b33, 0x4a2f24][(i + r * 2) % 5], 0.8), -0.68 + i * 0.124, 0.42 + r * 0.52, 0.09, shelf);
   }
-  solid1(Q, shelf, X - 0.6, -0.8, 0.5, 1.8, -Math.PI / 2);
+  shelf.scale.x = 0.66;   /* it fits between the two window frames */
+  solid1(Q, shelf, X - 0.6, -0.8, 0.5, 1.2, -Math.PI / 2);
   const clock = grp();
   box(0.5, 0.5, 0.12, S.SM.woodDark, 0, 0, 0, clock);
   plane(0.4, 0.4, new THREE.MeshBasicMaterial({ map: T.clock() }), 0, 0, 0.065, clock);

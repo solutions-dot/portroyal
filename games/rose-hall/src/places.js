@@ -1,6 +1,6 @@
 /* The four places of the story (six chapters). What follows a source, and what is a general picture, is in docs/games/rose-hall.md ("Places").
    Every place lists its people with something to do (engine/ambient.js behaviours), its walking walls, what the story changes in it
-   (Q.reveal, Q.enter), its part in a camera scene (Q.films) and, for the castle, where you can be seen and where you are in cover (Q.danger).
+   (Q.reveal, Q.enter) and its part in a camera scene (Q.films).
    Story people: person(). Background people: crowd(), each a body made for the year and the place (tools/rose-hall/people). */
 import * as THREE from "three";
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, batchStatic } from "./gfx.js";
@@ -269,7 +269,7 @@ function house({ phone } = {}) {
   add(Q, stair, 0, 0.6);
   Q.walls.push([-2.5, 0.5, 2.5, 5]);
   for (const s of [-1, 1]) {
-    const hole = plane(1.24, 3.2, R.BLACK, s * 1.8, H - 0.004, 2.0, G);   /* where the upper flights go up out of sight */
+    const hole = plane(1.24, 3.2, flat(0x1c1612), s * 1.8, H - 0.004, 2.0, G);   /* where the upper flights go up out of sight */
     hole.rotation.x = Math.PI / 2;
     hole.userData.noAudit = true;
   }
@@ -386,10 +386,11 @@ function house({ phone } = {}) {
     G.add(lamp);
   }
   let snuffed = false,
+    relit = false,
     picsSeen = false,
     filming = false;
   const dress = () => {
-    const dark = snuffed || filming;
+    const dark = (snuffed && !relit) || filming;
     sets.d.userData.on(!dark);
     sets.p.userData.on(picsSeen && !dark);
     for (const p of picGlow) p.visible = picsSeen && !dark;
@@ -447,7 +448,7 @@ function house({ phone } = {}) {
   crowd(Q, "rh_woman", -12.3, -1.9, 0, { kind: "chat", group: "a", at: [-12.0, -1.6] });
   crowd(Q, "rh_youth", -11.5, -1.2, 0, { kind: "chat", group: "a" });
   Q.keepOff = [{ at: [0, -0.5], r: 1 }, { at: [3.0, -0.3], r: 0.9 }, { at: [6.6, 0.4], r: 0.9 }, { at: [-13.2, 0], r: 1 }, { at: [-9.5, 1.9], r: 1 }, { at: [-9.5, -1.4], r: 1 }];
-  Q.enter = staging(
+  const stage = staging(
     Q,
     {
       guide: { 10: [-1.9, -1.2, 0, -3.3], 13: [5.6, 2.1, 7, 0.4], 15: [-12.4, 1.9, -9, 0], 20: [-6.9, 2.3, -9.5, -1] },
@@ -455,12 +456,19 @@ function house({ phone } = {}) {
     },
     { cousin: [10, 16] },
   );
+  /* after the shadow show the guide lights the room again */
+  Q.enter = (st) => {
+    stage(st);
+    relit = st >= 25;
+    dress();
+  };
   return Q;
 }
 
 /* ---------- 3. St James Parish Church, Montego Bay: the white monument ----------
-   A general picture of a Georgian parish church of pale limestone: a long nave, round-headed windows, dark pews, wall tablets. The
-   monument to Rosa Palmer is on the wall of the west aisle. Nothing here was modelled from a photograph of the real church. */
+   Begun in 1774 and built of dressed white limestone (ashlar); its chancel has a Venetian window, a tall round-headed light between two
+   lower square-headed ones. Rosa Palmer's monument by John Bacon (1794) stands to the left of the altar. The nave, the roof, the pews
+   and the other tablets are a general picture of a Georgian parish church (docs/games/rose-hall.md, "Places"). */
 function church() {
   const Q = base("church", [-6.1, -10.6, 6.1, 8.6], [0, 7.2, 0]);
   Q.floor = "stone";
@@ -470,22 +478,26 @@ function church() {
   Q.view = { pos: [3.6, 2.0, 6.6], look: [-3.5, 2.4, -5] };
   const G = Q.group,
     H = 6.4,
-    stone = std(T.stone([214, 206, 186], [7, 3]), 1),
+    stone = R.ashlar(),
     WINS = [-5.6, -1.4, 2.8, 7.0].map((z) => ({ at: z + 11.2, w: 1.5, h: 3.4, sill: 1.7 }));
   box(13.4, 0.06, 20.6, tiles("#d8d2c0", "#8f8f8a", [9, 14]), 0, -0.03, -1, G).name = "terrain";
-  W.wallRun(G, [-6.7, -11, 6.7, -11], H, stone, [{ at: 6.7, w: 2.4, h: 4.2, sill: 1.6 }], 0.4);
+  W.wallRun(G, [-6.7, -11, 6.7, -11], H, stone, [{ at: 6.7, w: 1.8, h: 4.2, sill: 1.6 }, { at: 5.15, w: 0.9, h: 2.9, sill: 1.6 }, { at: 8.25, w: 0.9, h: 2.9, sill: 1.6 }], 0.4);
   W.wallRun(G, [-6.7, 9, 6.7, 9], H, stone, [], 0.4);
-  W.wallRun(G, [-6.5, -11.2, -6.5, 9.2], H, stone, WINS.filter((w) => Math.abs(w.at - 9.8) > 0.01), 0.4);   /* the monument's bay has no window */
+  W.wallRun(G, [-6.5, -11.2, -6.5, 9.2], H, stone, WINS, 0.4);
   W.wallRun(G, [6.5, -11.2, 6.5, 9.2], H, stone, WINS, 0.4);
   for (const w of WINS) {
     const z = w.at - 11.2;
     add(Q, R.archWindow(1.5, 3.4), 6.3, z, 1.7, -Math.PI / 2);
-    if (Math.abs(z + 1.4) > 0.01) add(Q, R.archWindow(1.5, 3.4), -6.3, z, 1.7, Math.PI / 2);
+    add(Q, R.archWindow(1.5, 3.4), -6.3, z, 1.7, Math.PI / 2);
   }
-  const east = add(Q, R.archWindow(2.4, 4.2), 0, -10.8, 1.6);
-  east.scale.x = 1;
+  /* the Venetian window over the altar: a round-headed light between two square-headed ones, a cornice over the side lights */
+  add(Q, R.archWindow(1.8, 4.2), 0, -10.8, 1.6);
+  for (const s of [-1, 1]) {
+    add(Q, R.sashWindow(0.9, 2.9, R.dayPane(), { drapes: false }), s * 1.55, -10.8, 1.6);
+    box(1.2, 0.14, 0.16, solid(0xd8d0bc, 1), s * 1.55, 4.57, -10.72, G);
+  }
   /* the roof: tie beams and trusses of dark timber, boards above */
-  for (let z = -9; z <= 8; z += 3.4) add(Q, R.truss(13, 2.6), 0, z, H);
+  for (let z = -9; z <= 8; z += 3.4) add(Q, R.truss(12.56, 2.6), 0, z, H);
   for (const s of [-1, 1]) {
     const b = box(7.2, 0.08, 20.6, solid(0x6a4a34, 1), s * 3.3, H + 1.3, -1, G);
     b.rotation.z = -s * Math.atan2(2.6, 6.5);
@@ -509,8 +521,9 @@ function church() {
     for (const x of [-2.75, 2.75]) solid1(Q, R.pew(3.2), x, z, 3.3, 0.62, Math.PI);
   }
   /* the chancel: a rail, the holy table under the east window, flowers, the pulpit and the reading desk */
-  box(12.4, 0.07, 0.1, R.MAHOG, 0, 0.86, -7.6, G);
+  for (const s of [-1, 1]) box(5.4, 0.07, 0.1, R.MAHOG, s * 3.5, 0.86, -7.6, G);   /* the rail, open in the middle */
   for (let i = 0; i < 31; i++) {
+    if (Math.abs(-6 + i * 0.4) < 0.8) continue;
     const b = R.lathe([[0.03, 0], [0.04, 0.2], [0.02, 0.45], [0.035, 0.7], [0.03, 0.83]], R.MAHOG, 6);
     b.position.set(-6 + i * 0.4, 0, -7.6);
     G.add(b);
@@ -526,32 +539,34 @@ function church() {
   add(Q, R.hymnBoard(), 4.4, -10.78, 3.0);
   solid1(Q, R.font(), -4.6, 7.4, 1.0, 1.0);
   for (const [z, seed] of [[0.7, 1], [4.9, 2], [-3.5, 3]]) add(Q, R.tablet(0.8, 1.0, seed), 6.28, z, 2.6, -Math.PI / 2);
-  for (const [z, seed] of [[0.7, 4], [4.9, 5]]) add(Q, R.tablet(0.7, 0.9, seed), -6.28, z, 2.6, Math.PI / 2);
+  for (const [z, seed] of [[0.7, 4], [4.9, 5], [-3.5, 6]]) add(Q, R.tablet(0.7, 0.9, seed), -6.28, z, 2.6, Math.PI / 2);
   const fans = [];
   for (const z of [-2.2, 4.6]) fans.push(add(Q, R.ceilingFan(0.5), 0, z, H - 0.1));
   Q.tickers.push((t) => fans.forEach((f) => f.userData.spin(t)));
-  /* the monument, in the bay without a window, and the church's own note about it on a small desk */
-  add(Q, R.rosaMonument(), -6.28, -1.4, 1.15, Math.PI / 2);
-  const lampGlow = add(Q, R.glowPool(1.2, 0.35), -6.2, -1.4, 2.0, Math.PI / 2);
-  solid1(Q, R.lectern(solid(0x6e5238, 0.7)), -5.75, 1.0, 0.6, 0.6, Math.PI / 2);
-  const note = add(Q, P.sheet("ROSA PALMER", 0.34, 0.26), -5.74, 1.0, 1.165, Math.PI / 2);
+  /* the monument, on the east wall to the left of the altar, and the church's own note about it on a small desk */
+  add(Q, R.rosaMonument(), -4.0, -10.78, 1.15);
+  wall(Q, -4.0, -10.4, 2.2, 0.5);
+  const lampGlow = add(Q, R.glowPool(1.3, 0.35), -4.0, -10.77, 2.2);
+  solid1(Q, R.lectern(solid(0x6e5238, 0.7)), -5.7, -8.6, 0.6, 0.6, Math.PI / 2);
+  const note = add(Q, P.sheet("ROSA PALMER", 0.34, 0.26), -5.69, -8.6, 1.165, Math.PI / 2);
   note.rotation.order = "YXZ";
   note.rotation.x = 0.45;
-  const tMon = tagAt(Q, "RECORD", -6.0, 0.0, -2.6, Math.PI / 2, 1.6),
-    tNote = tagAt(Q, "RECORD", -5.75, 1.3, 1.36, Math.PI / 2);
+  const tMon = tagAt(Q, "RECORD", -2.75, 0.0, -10.5, 0, 1.6),
+    tNote = tagAt(Q, "RECORD", -5.7, 1.3, -8.24, Math.PI / 2);
   Q.reveal.monument = (seen) => {
     tMon.visible = seen;
     lampGlow.visible = seen;
   };
   Q.reveal.husbands = (seen) => (tNote.visible = seen);
   R.flameSets(G);
-  person(Q, "warden", "warden", -5.2, -3.7, face(-5.2, -3.7, -4, 2), { kind: "watch", at: [-6.3, -1.4], idles: ["Idle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
+  person(Q, "warden", "warden", -1.5, -8.5, face(-1.5, -8.5, 0, 0), { kind: "watch", at: [-4.0, -10.8], idles: ["Idle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
   person(Q, "cousin", "cousin", 1.4, 7.0, face(1.4, 7.0, 0, 0), { kind: "watch", at: [0, -10], idles: ["Idle"], react: ["HeadTurn"], every: [4, 7] });
-  crowd(Q, "rh_elder", 5.4, 3.0, face(5.4, 3, 6.3, 4.9), { kind: "wander", area: [4.7, -4, 5.8, 8], pause: [4, 8] });
+  crowd(Q, "rh_elder", 5.4, 3.0, face(5.4, 3, 6.3, 4.9), { kind: "wander", pts: [[5.4, 3.0], [5.5, 4.9], [5.4, 0.7], [5.5, -3.5]], pause: [4, 8] });
   crowd(Q, "rh_woman", 1.6, -8.6, face(1.6, -8.6, 2.2, -9.9), { kind: "work", clips: ["Idle", "PickUp", "HeadTurn"], work: [5, 9], face: [2.2, -9.9] });
   crowd(Q, "rh_man", -5.3, 5.6, face(-5.3, 5.6, -6.3, 4.9), { kind: "watch", at: [-6.3, 4.9], react: ["HeadTurn", "Nod"], every: [5, 9] });
-  Q.walls.push([-6.2, -7.8, 6.2, -7.4]);
-  Q.keepOff = [{ at: [-4.95, -1.4], r: 1.0 }, { at: [-4.85, 1.0], r: 0.8 }];
+  Q.walls.push([-6.2, -7.8, -0.8, -7.4], [0.8, -7.8, 6.2, -7.4]);
+  Q.keepOff = [{ at: [-4.0, -9.5], r: 1.0 }, { at: [-4.9, -8.6], r: 0.8 }, { at: [0, -7.6], r: 0.9 }];
+  R.ashlarFit(G);
   Q.enter = staging(Q, {}, { cousin: [30, 39] });
   return Q;
 }
@@ -628,6 +643,13 @@ function archive() {
     };
   }
   for (const x of [-4.1, -2.8, -1.5, -0.2, 4.4, 5.6]) add(Q, R.officeChair(), x, -1.5, 0, 0);
+  /* a pad and a pencil at each place: pencils only, near the records */
+  for (const x of [-4.1, -2.8, -1.5, -0.2, 4.4, 5.6]) {
+    add(Q, P.sheet("", 0.15, 0.21), x + 0.38, -0.2, 0.762, 0.12);
+    const pen = cyl(0.004, 0.004, 0.17, solid(0xd9a03a, 0.6), x + 0.5, 0.768, -0.22, G, 6);
+    pen.rotation.x = Math.PI / 2;
+    pen.rotation.z = 0.4;
+  }
   wall(Q, -2.15, -1.5, 4.5, 0.5);
   wall(Q, 5.0, -1.5, 1.8, 0.5);
   /* the box from the stacks: it waits on a trolley by the counter; on table A it is opened, and the estate's own book lies beside it */
@@ -729,12 +751,11 @@ function estate() {
   /* the gateway, after Hakewill's plate */
   for (const x of [-2.3, 2.3]) solid1(Q, R.gatePier(3.3, 0.85), x, 17.3, 1.0, 1.0);
   for (const s of [-1, 1]) {
-    const w1 = R.railWall(5.6, 1.0);
-    add(Q, w1, s * 5.3, 16.5, 0, s * 0.28);
+    add(Q, R.railWall(5.13, 1.0), s * 5.27, 16.52, 0, s * 0.257);
     solid1(Q, R.gatePier(2.5, 0.7), s * 8.2, 15.75, 0.9, 0.9);
-    add(Q, R.railWall(15.5, 1.0), s * 16.2, 15.75);
+    add(Q, R.railWall(15.25, 1.0), s * 16.375, 15.75);
     /* an iron gate leaf, standing open */
-    const leaf = grp(G, s * 1.85, 0, 17.3);
+    const leaf = grp(G, s * 1.74, 0, 17.3);
     leaf.rotation.y = s * 1.25;
     for (let i = 0; i < 8; i++) cyl(0.016, 0.016, 2.3, R.IRON, s * -(0.1 + i * 0.22), 1.2, 0, leaf, 5);
     box(1.75, 0.05, 0.04, R.IRON, s * -0.9, 0.2, 0, leaf);
@@ -748,7 +769,7 @@ function estate() {
   wall(Q, 3.8, 12.8, 0.3, 0.3);
   /* the old works: broken walls of cut stone, an arch, a great iron pan */
   solid1(Q, R.ruinWall(11, 3.6, 4, 1.5), 15, -8.5, 11.2, 1.0);
-  solid1(Q, R.ruinWall(6, 3.0, 9), 20.6, -5.2, 6.2, 1.0, Math.PI / 2);
+  solid1(Q, R.ruinWall(6, 3.0, 9), 20.6, -5.0, 6.2, 1.0, Math.PI / 2);
   solid1(Q, R.ruinWall(5, 1.6, 12), 11, -4.6, 5.2, 1.0, 0.0);
   solid1(Q, R.copper(), 16.4, -4.4, 2.1, 2.1);
   solid1(Q, W.rocks(1.1, 7, 4), 8.6, -9.4, 1.8, 1.4);
@@ -794,7 +815,7 @@ function estate() {
   crowd(Q, "rh_youth", -5.6, 11.9, 0, { kind: "chat", group: "g" });
   crowd(Q, "rh_youth", 18.4, -1.6, 0, { kind: "wander", pts: [[18.4, -1.6], [13.2, -2.6], [12.6, 5.6], [18.6, 5.2]], pause: [3, 6] });
   Q.keepOff = [{ at: [-5.1, -3.6], r: 1.2 }, { at: [-15.8, 10.1], r: 1 }, { at: [3.5, -7.2], r: 1 }, { at: [-2.6, 4.6], r: 1 }, ...Object.values(Q.markSpots).map((at) => ({ at, r: 1 }))];
-  Q.enter = staging(Q, {}, { cousin: [50, 69] });
+  Q.enter = staging(Q, { guide: { 50: [-3.4, -3.2, -5.6, -5.6], 60: [-15.0, 6.2, -19, 8.4], 62: [1.6, -6.0, 3.2, -8.6] } }, { cousin: [50, 69] });
   return Q;
 }
 

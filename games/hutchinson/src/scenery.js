@@ -212,7 +212,7 @@ export function tufts(n, area, { seed = 1, clear = [], h = 0.6, tint = [1.25, 0.
       w = s * (0.8 + r() * 0.5),
       a = r() * Math.PI,
       k = 0.8 + r() * 0.4,
-      c = [tint[0] * k, tint[1] * k, tint[2] * (0.85 + r() * 0.3)];
+      c = [tint[0] * k * 1.1, tint[1] * k * 0.72, tint[2] * (0.85 + r() * 0.3) * 1.2];   /* the card is a bright green: this takes it toward the dull olive and straw of St Ann grass */
     for (const b of [a, a + Math.PI / 2]) {
       const dx = (Math.cos(b) * w) / 2,
         dz = (Math.sin(b) * w) / 2,
@@ -237,7 +237,7 @@ export function tufts(n, area, { seed = 1, clear = [], h = 0.6, tint = [1.25, 0.
   return m;
 }
 /* a patch of ground that is not the rest: a dry pond's cracked mud, a worn yard. A flat disc with a ragged edge, just over the terrain. */
-export function patch(rx, rz, mat, seed = 1, y = 0.014) {
+export function patch(rx, rz, mat, seed = 1, y = 0.014, hole = null) {
   const r = rng(seed),
     sh = new THREE.Shape(),
     n = 22;
@@ -250,7 +250,13 @@ export function patch(rx, rz, mat, seed = 1, y = 0.014) {
     if (i === 0) sh.moveTo(px, pz);
     else sh.lineTo(px, pz);
   }
-  const m = new THREE.Mesh(new THREE.ShapeGeometry(sh), mat);
+  if (hole) {
+    /* hole: [rx, rz, x, z], an opening left in the patch (the sinkhole's mouth) */
+    const h = new THREE.Path();
+    h.absellipse(hole[2], hole[3], hole[0], hole[1], 0, Math.PI * 2, true);
+    sh.holes.push(h);
+  }
+  const m = new THREE.Mesh(new THREE.ShapeGeometry(sh, 16), mat);
   m.rotation.x = Math.PI / 2;
   m.scale.z = -1;
   m.position.y = y;
@@ -965,9 +971,8 @@ export function shaft(rx = 2.5, rz = 1.5, seed = 2) {
   const g = grp(),
     r = rng(seed),
     P = [],
-    C = [],
     seg = 20,
-    levels = [[0.05, 1, 0.62], [-1.2, 1.04, 0.5], [-4, 0.98, 0.3], [-9, 1.05, 0.14], [-15, 1.1, 0.05], [-24, 1.9, 0.01], [-40, 3.2, 0]],
+    levels = [[0.05, 1, 0.34], [-1.2, 1.04, 0.2], [-4, 0.98, 0.08], [-9, 1.05, 0.025], [-15, 1.1, 0.006], [-24, 1.9, 0], [-40, 3.2, 0]],
     rings = levels.map(([y, k, v]) => {
       const out = [];
       for (let i = 0; i < seg; i++) {
@@ -977,7 +982,10 @@ export function shaft(rx = 2.5, rz = 1.5, seed = 2) {
       }
       return out;
     });
-  for (let l = 0; l < rings.length - 1; l++)
+  const geo = new THREE.BufferGeometry(),
+    BAND = [0x5a554b, 0x2c2a25, 0x121110, 0x060605, 0x000000, 0x000000];   /* each band of the shaft darker than the one above */
+  for (let l = 0; l < rings.length - 1; l++) {
+    geo.addGroup(l * seg * 6, seg * 6, l);
     for (let i = 0; i < seg; i++) {
       const a = rings[l][i],
         b = rings[l][(i + 1) % seg],
@@ -985,17 +993,21 @@ export function shaft(rx = 2.5, rz = 1.5, seed = 2) {
         d = rings[l + 1][i];
       for (const p of [a, b, d, b, c, d]) {
         P.push(p[0], p[1], p[2]);
-        C.push(p[3], p[3], p[3] * 0.96);
       }
     }
-  const geo = new THREE.BufferGeometry();
+  }
   geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
-  geo.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
   geo.computeVertexNormals();
-  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false }));
+  const m = new THREE.Mesh(geo, BAND.map((color) => new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, fog: false })));
   m.userData.noAudit = true;
   m.userData.noBatch = true;
   g.add(m);
+  /* the dark at the bottom: the shaft is closed far down, so no daylight shows through it */
+  const cap = mesh(new THREE.CircleGeometry(1, 20), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false }), 0, -40, 0, g);
+  cap.rotation.x = -Math.PI / 2;
+  cap.scale.set(rx * 3.3, rz * 3.3, 1);
+  cap.userData.noAudit = true;
+  cap.userData.noBatch = true;
   /* the lip: jagged outcrops round the mouth, lower on the side you come to */
   for (let i = 0; i < 18; i++) {
     const a = (i / 18) * Math.PI * 2 + r() * 0.2,

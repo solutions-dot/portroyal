@@ -361,11 +361,11 @@ export function sashWindow(w = 1.3, h = 2.6, pane, { curtain = 0x7a2f2a, drapes 
   const g = grp();
   plane(w, h, pane, 0, h / 2, -0.2, g).userData.noAudit = true;
   for (const s of [-1, 1]) {
-    box(0.07, h, 0.3, WHITE, s * (w / 2 + 0.035), h / 2, -0.06, g);
-    box(0.02, h - 0.1, 0.24, solid(0xd2cab4, 0.9), s * (w / 2 - 0.012), h / 2, -0.07, g);   /* shutters folded into the reveal */
+    box(0.07, h - 0.002, 0.3, WHITE, s * (w / 2 - 0.036), h / 2, -0.06, g);
+    box(0.02, h - 0.16, 0.24, solid(0xd2cab4, 0.9), s * (w / 2 - 0.085), h / 2, -0.07, g);   /* shutters folded into the reveal */
   }
-  box(w + 0.14, 0.07, 0.3, WHITE, 0, h + 0.035, -0.06, g);
-  box(w + 0.24, 0.06, 0.36, WHITE, 0, -0.03, -0.04, g);
+  box(w - 0.15, 0.07, 0.3, WHITE, 0, h - 0.036, -0.06, g);
+  box(w + 0.24, 0.06, 0.16, WHITE, 0, -0.03, 0.081, g);
   for (const s of [-1, 1]) box(0.03, h, 0.03, WHITE, s * (w / 6), h / 2, -0.18, g);
   for (let i = 1; i < 4; i++) box(w, i === 2 ? 0.06 : 0.03, 0.03, WHITE, 0, (h * i) / 4, -0.18, g);
   if (drapes) {
@@ -724,6 +724,8 @@ export function shadowShape(kind, h = 2.6, aspect = 0.6) {
     x.filter = "blur(2px)";
     SHAPES[kind](x, W, H);
   });
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;   /* no thin line from the far edge along the top */
+  tex.needsUpdate = true;
   const geo = new THREE.PlaneGeometry(h * aspect, h);
   geo.translate(0, h / 2, 0);
   const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0, color: 0x0a0806 }));
@@ -809,7 +811,7 @@ export function archWindow(w = 1.5, h = 3.4) {
     }),
   });
   plane(w, h, archTex, 0, h / 2, -0.12, g).userData.noAudit = true;
-  box(w + 0.3, 0.1, 0.36, solid(0xd8d0bc, 1), 0, -0.05, -0.02, g);
+  box(w + 0.3, 0.08, 0.16, solid(0xd8d0bc, 1), 0, -0.04, 0.08, g);
   return g;
 }
 /* a plain wall tablet of white marble on a dark ground, as line the walls of every old parish church (no words: a general picture) */
@@ -1119,9 +1121,9 @@ export function louvreWindow(w = 1.6, h = 1.4) {
   });
   plane(w, h, louvreM, 0, h / 2, -0.1, g).userData.noAudit = true;
   const fm = solid(0x9aa09a, 0.5, 0.4);
-  box(w + 0.1, 0.05, 0.12, fm, 0, h + 0.025, -0.06, g);
-  box(w + 0.1, 0.05, 0.16, fm, 0, -0.025, -0.05, g);
-  for (const x of [-w / 2, 0, w / 2]) box(0.05, h, 0.12, fm, x, h / 2, -0.06, g);
+  box(w - 0.11, 0.05, 0.12, fm, 0, h - 0.026, -0.06, g);
+  box(w + 0.1, 0.05, 0.14, fm, 0, -0.025, 0.071, g);
+  for (const x of [-w / 2 + 0.026, 0, w / 2 - 0.026]) box(0.05, h - 0.002, 0.12, fm, x, h / 2, -0.06, g);
   return g;
 }
 /* a printed notice in a frame on a wall, facing +z */
@@ -1448,31 +1450,68 @@ export function copper() {
 /* a field of sugar cane: rows of tall leaning blades, as one merged shape. w by d, rows along x. */
 let caneM;
 export function caneField(w = 30, d = 20, seed = 1) {
+  /* cane in rows: each stool is a few pale stalks with long blades that arch out and droop, one merged mesh for the whole field */
   const r = rng(seed),
-    geos = [];
-  caneM ||= new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide, flatShading: true });
-  for (let z = -d / 2; z <= d / 2; z += 1.5)
-    for (let x = -w / 2; x <= w / 2; x += 0.9 + r() * 0.5) {
-      const h = 2.2 + r() * 1.1,
-        geo = new THREE.ConeGeometry(0.45 + r() * 0.2, h, 4, 1, true),
-        c = new THREE.Color().setHSL(0.24 + r() * 0.05, 0.45, 0.3 + r() * 0.14),
-        col = new Float32Array(geo.attributes.position.count * 3);
-      for (let i = 0; i < col.length; i += 3) {
-        const top = geo.attributes.position.getY(i / 3) > 0 ? 1.25 : 0.8;
-        col[i] = c.r * top;
-        col[i + 1] = c.g * top;
-        col[i + 2] = c.b * top;
+    pos = [],
+    col = [],
+    put = (p, c) => {
+      pos.push(p[0], p[1], p[2]);
+      col.push(c.r, c.g, c.b);
+    },
+    tri = (a, b, c, k) => {
+      put(a, k[0]);
+      put(b, k[1]);
+      put(c, k[2]);
+    };
+  caneM ||= new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide });
+  for (let z = -d / 2; z <= d / 2; z += 1.2)
+    for (let x = -w / 2; x <= w / 2; x += 0.75 + r() * 0.4) {
+      const cx = x + (r() - 0.5) * 0.3,
+        cz = z + (r() - 0.5) * 0.3,
+        H = 2.0 + r() * 0.9,
+        g = new THREE.Color().setHSL(0.22 + r() * 0.06, 0.5, 0.3 + r() * 0.1),
+        dark = g.clone().multiplyScalar(0.55),
+        tip = g.clone().offsetHSL(0.01, 0, 0.1),
+        stalk = new THREE.Color(0.62, 0.6, 0.4);
+      /* two stalks: thin upright blades of pale yellow-green */
+      for (let k = 0; k < 2; k++) {
+        const sx = cx + (k - 0.5) * 0.12,
+          a = r() * 6;
+        const dx = Math.cos(a) * 0.04,
+          dz = Math.sin(a) * 0.04;
+        tri([sx - dx, 0, cz - dz], [sx + dx, 0, cz + dz], [sx, H * 0.8, cz], [stalk, stalk, stalk]);
       }
-      geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
-      geo.rotateX(Math.PI);   /* point down: a spray of blades opening upward */
-      geo.rotateZ((r() - 0.5) * 0.3);
-      geo.translate(x + (r() - 0.5) * 0.4, h / 2, z + (r() - 0.5) * 0.5);
-      geos.push(geo);
+      /* five blades from near the top: up, out, then down */
+      for (let k = 0; k < 6; k++) {
+        const a = (k / 6) * Math.PI * 2 + r() * 1.2,
+          ux = Math.cos(a),
+          uz = Math.sin(a),
+          L = 1.1 + r() * 0.6,
+          y0 = H * (0.45 + r() * 0.4),
+          wx = -uz * 0.09,
+          wz = ux * 0.09,
+          p0 = [cx, y0, cz],
+          p1 = [cx + ux * L * 0.5, y0 + 0.45, cz + uz * L * 0.5],
+          p2 = [cx + ux * L, y0 - 0.15 - r() * 0.3, cz + uz * L];
+        tri([p0[0] - wx, p0[1], p0[2] - wz], [p0[0] + wx, p0[1], p0[2] + wz], [p1[0] + wx, p1[1], p1[2] + wz], [dark, dark, g]);
+        tri([p0[0] - wx, p0[1], p0[2] - wz], [p1[0] + wx, p1[1], p1[2] + wz], [p1[0] - wx, p1[1], p1[2] - wz], [dark, g, g]);
+        tri([p1[0] - wx, p1[1], p1[2] - wz], [p1[0] + wx, p1[1], p1[2] + wz], p2, [g, g, tip]);
+      }
     }
-  const m = new THREE.Mesh(mergeGeometries(geos), caneM);
+  /* the shade inside the rows, so no bare ground shows between the stools */
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, caneM);
+  const under = new THREE.Mesh(new THREE.BoxGeometry(w - 1.0, 0.8, d - 1.0), solid(0x7a9a44, 1));
+  under.position.y = 0.4;
+  m.add(under);
   m.userData.far = true;
-  m.userData.noBatch = true;
-  m.name = "terrain";
+  m.traverse((o) => {
+    o.userData.noBatch = true;
+    o.name = "terrain";
+  });
   return m;
 }
 /* a wooden finger post with one or two arms */
@@ -1498,3 +1537,54 @@ export function fingerPost(arms = ["GREAT HOUSE"]) {
   return g;
 }
 export { lathe, still, quiet, at };
+/* Dressed white limestone (ashlar), as St James Parish Church is built: pale blocks in level courses with fine joints. One tile is
+   3 blocks wide and 4 courses high; ashlarFit() maps it by real size onto every box that uses it, so courses run level across a wall. */
+let ashlarM = null;
+export function ashlar() {
+  ashlarM ||= std(
+    cv(256, 256, (x, W, H) => {
+      x.fillStyle = "#e6dfcd";
+      x.fillRect(0, 0, W, H);
+      const r = rng(7),
+        ch = H / 4;
+      for (let row = 0; row < 4; row++) {
+        const off = row % 2 ? W / 6 : 0;
+        for (let i = -1; i < 4; i++) {
+          const x0 = off + (i * W) / 3,
+            t = 0.93 + r() * 0.1;
+          x.fillStyle = `rgb(${(228 * t) | 0},${(221 * t) | 0},${(204 * t) | 0})`;
+          x.fillRect(x0 + 2, row * ch + 2, W / 3 - 4, ch - 4);
+          for (let k = 0; k < 6; k++) {
+            x.fillStyle = `rgba(150,140,118,${0.05 + r() * 0.06})`;
+            x.beginPath();
+            x.ellipse(x0 + r() * (W / 3), row * ch + r() * ch, 4 + r() * 14, 2 + r() * 6, r() * 3, 0, 7);
+            x.fill();
+          }
+        }
+      }
+      x.fillStyle = "rgba(120,110,92,0.55)";
+      for (let row = 0; row <= 4; row++) x.fillRect(0, row * ch - 1, W, 2);
+      for (let row = 0; row < 4; row++) for (let i = 0; i <= 3; i++) x.fillRect((row % 2 ? W / 6 : 0) + (i * W) / 3 - 1, row * ch, 2, ch);
+    }),
+    0.9,
+  );
+  return ashlarM;
+}
+export function ashlarFit(root, tile = [1.8, 1.2]) {
+  root.traverse((o) => {
+    if (!o.isMesh || o.material !== ashlarM || !o.geometry.parameters?.width || o.userData.fitted) return;
+    o.userData.fitted = true;
+    const { width: w, height: h, depth: d } = o.geometry.parameters,
+      uv = o.geometry.attributes.uv,
+      x0 = o.position.x - w / 2,
+      y0 = o.position.y - h / 2;
+    for (let f = 0; f < 6; f++) {
+      const [su, sv, ou, ov] = f < 2 ? [d, h, 0, y0] : f < 4 ? [w, d, x0, 0] : [w, h, x0, y0];
+      for (let k = 0; k < 4; k++) {
+        const i = f * 4 + k;
+        uv.setXY(i, (uv.getX(i) * su + ou) / tile[0], (uv.getY(i) * sv + ov) / tile[1]);
+      }
+    }
+    uv.needsUpdate = true;
+  });
+}

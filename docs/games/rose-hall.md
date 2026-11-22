@@ -2,7 +2,7 @@
 
 A Mature 13+ story (owner, 22 November 2026). Design: **the legend, then the record**. The player hears the ghost story as it is told, then follows the papers to what really happened. 
 
-Status, 22 November 2026: a **basic version** is built and on the menu: four chapters in four places (the great hall at night, the church, the archives, the estate by day), six bodies of its own (`tools/rose-hall/people`, `rh_`), one camera scene (the legend as three shadows on the wall, every caption starting LEGEND). `?auto=1` plays to the last step, `FLOW 0`, place audit 0 in all four places, layout and ambient setup 0. Not yet done: the six chapters planned below (it has four), cloth, walkers, skin, held and four-size layout checks, a hand play on a phone, timing, sound, and modelling the great hall, the monument and the house on their sources (they are general pictures now; Hakewill's plate and the monument photograph are listed under Sources). The facts are from a research pass on 22 November 2026.
+Status, 22 November 2026 (enrichment pass): **six chapters** in four places (the great house at night for the tour and the shadow show, the church, the archives, the estate by day for the names and for the last stop), eight bodies of its own (`tools/rose-hall/people`, `rh_`), one camera scene (the legend as shadow theatre on the drawing-room wall, every caption starting LEGEND). Checks are listed at the end. Still to do: cloth, walkers and skin checks, a hand play on a phone, timing, sound.
 
 ## The rule for this game
 
@@ -60,15 +60,37 @@ A real woman, Annie Palmer, is accused by the legend of murders the records do n
 
 Could not confirm: what happened at the house in the rebellion; when the "tomb" was built; Annie's exact birthplace; the layout of the works and the village.
 
-## Planned shape (six chapters)
+## The six chapters (built)
 
-1. The night tour, today: a fictional student hears the legend from a fictional guide.
-2. The legend plays as shadow scenes, marked LEGEND.
-3. Montego Bay church: Rosa Palmer's monument, four husbands, praised.
-4. The archives: the real Annie, one husband, died 1846; the 1868 pamphlet and the 1929 novel on the desk.
-5. The names in the journal: Celia, Dorinda, Hercules, Archey. The real cruelty of the place was slavery.
-6. Legend or record: the quiz, and the last card.
+1. **The night tour** (steps 10 to 17, the great house): Miss Bryan, the stair, the "Annie's Bedroom" card (the game says it has no period source), the coffee cup in the eating-room (poison and arsenic: modern tour retellings only), the portraits in the drawing-room (Waddell's "three or four full-size pictures"), Tia.
+2. **The shadow show** (20 to 27): the candles are put out, and the legend plays as shadow theatre on the bare wall: a bride, a man with a cup, a bed, a man in a hat, then the tall lady who moves along the wall. Shapes rise and sink away; nobody is hurt on screen. Every caption begins "LEGEND." Afterwards the guide says what is only modern retelling.
+3. **The white monument** (30 to 35): Rosa Palmer's monument and the church's note of her four husbands; Tia and Sister Reid; the card "Two women, one story".
+4. **The papers** (40 to 48): the marriage (28 March 1820), John Rose Palmer's obituary, the deed of 1830, the burial (9 July 1846), the 1868 pamphlet, the 1929 novel, then the Rose Hall Journal.
+5. **The names** (50 to 57): the board of names and six stones on the lawn, each giving only what the journal says, as listed above (Celia; Dorinda with the 21 April 1830 entry; Cecelia and Mary James; George Stennet, Aaron and Adonis; Hercules and Doshy; Archey). Nothing of their lives is acted out.
+6. **Legend or record** (60 to 66): the tour's "tomb" (no source, date unknown), the card on who built the house (the sources disagree), the guide, Tia, the eight-question quiz, the last card.
 
-## Checks, 22 November 2026 (second pass)
+## St James Parish Church (for the church place)
 
-`?test=layout`: 0 at 390x800, 667x375, 800x500 and 1280x720. `?test=held`: 0. `?test=ambient`: 0 in every place. `?test=cloth` is **not at 0**: it lists small show-through points on the new bodies (a few millimetres at the coat neck, the hat band and the belt line; for example 18 lines on `rh_guide`, worst 17.8 mm at the belt line). They come from the shared clothes builder, which is not changed in a game's own pull request (`docs/STANDARD.md`); they need a look in close screenshots and, if seen, a builder fix in its own PR. `?test=skin` and `?test=walkers` for this game are still to run and record.
+- Begun in 1774, built of ashlar, white limestone from a local source; the chancel has a Venetian window (Wikipedia, "St James Parish Church, Jamaica": https://en.wikipedia.org/wiki/St_James_Parish_Church,_Jamaica).
+- The Rosa Palmer monument, marble, John Bacon the elder, 1794, commissioned by her husband John Palmer, "stands to the left of the altar" (Victorian Web: https://victorianweb.org/sculpture/baconsenior/jamaica.html and https://victorianweb.org/sculpture/baconsenior/4.html). Cundall, quoted there, called it the best of the church's monuments.
+- Not found: a description of the monument's figures. The game's mourning woman by an urn on a pointed dark ground is a general picture of a Bacon wall monument, not a copy. The photograph page (Victorian Web, above) should be checked by eye and the model brought closer.
+
+## Places: what each is modelled on (22 November 2026)
+
+- **The great house at night** (`house` in `places.js`, furniture in `rosehall.js`): Hakewill's plan: you come in from the portico, the eating-room on the left, the drawing-room on the right, a mahogany double stair in the hall, sash windows looking to the sea and the moon. Three rooms to walk, candlelit (chandeliers, sconces, candelabra, one set of flame points per room). The furniture (dining table and chairs, sideboard, long-case clock, pianoforte, sofa, armchairs, gilt mirrors, rugs, portraits) is a general picture of a planter's house of about 1820. Today's tour shows in a rope at the stair foot and cards on stands. "Annie's bedroom" is only a card pointing upstairs, and the game says it has no source.
+- **The church**: dressed white limestone in level courses, the Venetian window over the altar, the monument on the east wall to the left of the altar, a chancel rail open in the middle. The nave length, the roof trusses, the pews, the pulpit and the other wall tablets (left blank) are a general picture.
+- **The archives**: the reading room of the Jamaica Archives in Spanish Town. The building date (1962, given in the brief for this pass) is not yet checked against a source and is not shown in the game. The room is a general picture of a public reading room of the 1960s: louvre windows, strip lights, ceiling fans, a counter with the stacks behind, a card catalogue, long tables with book rests, pads and pencils ("Pencils only").
+- **The estate by day**: the gateway follows Hakewill's plate (white piers with balls, low walls with iron rails, palms), the house on its hill with the double flight of steps and portico, the sea behind you, cane country (merged rows of stalks and arching blades), hills beyond. The ruined works wall, the copper, the board of names, the stones and the "tomb" are a general picture: the layout of the works and the village could not be confirmed.
+
+## People
+
+Every speaker is fictional and the journal page "Kayla and Tia" says so: Kayla, Tia, Miss Bryan (guide), Sister Reid (church), Mrs Lindo (archives). Background visitors (`rh_man`, `rh_elder`, `rh_woman`, `rh_youth`) are fictional, each with an ambient behaviour. Annie Palmer, John Rose Palmer, Rosa Palmer and the people of the journal are never shown as bodies and have no words but quoted papers.
+
+## Checks, 22 November 2026 (enrichment pass)
+
+`?auto=1`: AUTO END 66, FLOW 0, no errors. `?test=audit`: AUDIT 0 and FACES 0 in house, church, archive and estate. `?test=ambient`: AMBIENT 0 and AMBIENT SETUP 0 in every place. `?test=held`: CARRY 0. `?test=layout`: LAYOUT UI 0 at 390x800, 667x375, 800x500 and 1280x720. Content lint: 0. `?test=cloth` was not at 0 at the second pass (small show-through on the new bodies from the shared clothes builder, worst 17.8 mm at the belt line of `rh_guide`); not rerun. `?test=skin` and `?test=walkers` are still to run and record.
+
+## Still to do
+
+- Bring the monument closer to its photograph, and check the Jamaica Archives building date.
+- Cloth, skin and walkers checks; a hand play on a phone; timing of each chapter; sound for the shadow show.

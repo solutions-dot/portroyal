@@ -6,5 +6,5 @@ export const CAST = {
   warden: { base: "rh_warden", sex: "f", who: "Sister Reid" },
   cousin: { base: "rh_cousin", sex: "f", who: "Tia", scale: 0.8 },
 };
-export const CROWD = { rh_man: { sex: "m", idle: "IdleM" }, rh_elder: { sex: "m", idle: "OldIdle" } };
+export const CROWD = { rh_man: { sex: "m", idle: "IdleM" }, rh_elder: { sex: "m", idle: "OldIdle" }, rh_woman: { sex: "f", idle: "Idle" }, rh_youth: { sex: "m", idle: "IdleM" } };
 export const BASES = [...new Set([...Object.values(CAST).map((x) => x.base), ...Object.keys(CROWD)])];
