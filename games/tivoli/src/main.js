@@ -203,7 +203,7 @@ const SOUNDSCAPE = {
   1: { crowd: 0.1, wind: 0.06, once: pick(chirp, chirp, dogFar) },   /* Back-o-Wall, before the 1960s */
   2: { crowd: 0.12, wind: 0.05, traffic: 0.04, once: pick(chirp, chirp, dogFar, radioFar) },   /* the new Tivoli, 1960s */
   3: { crowd: 0.13, wind: 0.04, traffic: 0.07, once: pick(chirp, radioFar, carFar, dogFar) },   /* 1970s to 2009 */
-  4: { wind: 0.07, crowd: 0.04, traffic: 0.02, once: pick(chirp, dogFar) },   /* Sunday 23 May 2010: the barricade is up, the street waits */
+  4: { wind: 0.07, crowd: 0.04, traffic: 0.02, once: pick(chirp, dogFar) },   /* Sunday 23 May 2010: barricades at the entrances, the street waits; a few cars still pass (street.js addTraffic) */
   6: { wind: 0.06, crowd: 0.03, once: chirp },   /* after: quiet */
   7: { crowd: 0.08, wind: 0.04, traffic: 0.06, once: pick(chirp, carFar) },   /* 2016 to 2017 */
   8: { crowd: 0.14, wind: 0.04, traffic: 0.08, once: pick(chirp, radioFar, carFar, dogFar) },   /* today */

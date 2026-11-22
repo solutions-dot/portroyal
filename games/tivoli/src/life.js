@@ -62,7 +62,7 @@ export const LIFE = {
     { id: 'chat2', look: P.man(0xe8e4d8, 0x4a3a2a), at: [10.8, -4.6], spec: { kind: 'chat', group: 'c1', idles: IDL_M } },
     { id: 'walker', look: P.woman(0xc84a6a, 0x3a3a3a), at: [24, -0.8], spec: { kind: 'wander', pts: [[24, -0.8], [8, -0.9], [-14, -0.9], [-30, -0.8]], pause: [3, 7], idles: IDL_F } },
   ] },
-  4: { mood: 'calm', people: [   /* the street, Sunday 23 May 2010, the day before: few people out, talking low, looking down the street toward the barricade (west) */
+  4: { mood: 'calm', people: [   /* the street, Sunday 23 May 2010, the day before: few people out, talking low, looking down the street (west, toward the entrances, where the barricades were) */
     { id: 'look1', look: P.youth(0x4a5a7a, 0x2e2e34), at: [-4, -6.2], spec: { kind: 'watch', at: [-27, 0], every: [5, 9], idles: ['IdleM', 'LookAround', 'Idle'] } },
     { id: 'look2', look: P.woman(0x8a6a4a, 0x3a3a4a), at: [-2.6, -6.6], spec: { kind: 'watch', at: [-27, 0], every: [5, 9], idles: ['Idle', 'LookAround', 'HeadTurn'] } },
     { id: 'chat1', look: P.woman(0xd8c8a8, 0x5a3a3a), at: [6.4, 6.9], spec: { kind: 'chat', group: 'c1', at: [5.8, 6.9], idles: ['Idle', 'LookAround'], talks: ['Talk3', 'Talk2'] } },

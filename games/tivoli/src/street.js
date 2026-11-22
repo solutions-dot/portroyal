@@ -30,6 +30,7 @@ function materials() {
 }
 
 export function buildStreet(opts = {}) {
+  const inc = opts.incursion !== false;   /* the barricade and the two vehicles left across the lanes belong to 24 May 2010 only (owner, 22 November 2026); chapter 4 has a clear road with traffic */
   const rnd = rngOf(20100524), g = new THREE.Group(), spots = {}, lines = [], X = materials();
   const solids = [], SO = (kind, x0, x1, z0, z1, y0, y1, name = kind) => solids.push({ kind, name, x0: Math.min(x0, x1), x1: Math.max(x0, x1), z0: Math.min(z0, z1), z1: Math.max(z0, z1), y0, y1 });   /* the solid things, as boxes, for the overlap check (?test=audit) */
   const box = (mat, w, h, d, x, y, z, ry = 0, rz = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y + h / 2, z); m.rotation.set(0, ry, rz); g.add(m); return m; };
@@ -96,17 +97,21 @@ export function buildStreet(opts = {}) {
   for (const [x, z, sc] of [[-8.6, 9.2, 0.5], [-3.0, 9.2, 0.5], [16.8, 9.2, 0.5], [22.6, 9.2, 0.5], [4, 12, 1.1], [13, 12, 0.9]]) bush(x, z, sc);
 
   /* ---- cover and vehicles ---- */
-  SO('cover', -2.2, -1.8, -4.5, -0.3, 0, 1.15, 'wallA'); SO('cover', -11.2, -10.8, 0.8, 4.4, 0, 1.15, 'wallB');
-  box(X.wallw, 0.35, 1.15, 4.2, -2, 0, -2.4); spots.wallA = [[-0.7, -3.4], [-0.7, -2.2], [-0.7, -1.2]];
-  box(X.wallw, 0.35, 1.15, 3.6, -11, 0, 2.6); spots.wallB = [[-9.7, 3.4], [-9.7, 2.2]];
-  const car = sedan(0x4c6a5c); car.position.set(2, 0, 1.9); car.rotation.y = 0.04; g.add(car); spots.car = [[4.7, 2.9], [5.9, 1.7], [4.6, 0.5]];
-  const van = minibus(0xb9d0de, 0xb9d0de); van.position.set(-17, 0, -2.6); van.rotation.y = 0.1; g.add(van); spots.van = [[-14.3, -2.6], [-14.4, -3.8]];
+  if (inc) { SO('cover', -2.2, -1.8, -4.5, -0.3, 0, 1.15, 'wallA'); SO('cover', -11.2, -10.8, 0.8, 4.4, 0, 1.15, 'wallB'); }
+  if (inc) {   /* the two low concrete walls in the road: cover for the operation scene only (owner, 22 November 2026) */
+    box(X.wallw, 0.35, 1.15, 4.2, -2, 0, -2.4); spots.wallA = [[-0.7, -3.4], [-0.7, -2.2], [-0.7, -1.2]];
+    box(X.wallw, 0.35, 1.15, 3.6, -11, 0, 2.6); spots.wallB = [[-9.7, 3.4], [-9.7, 2.2]];
+  }
+  let car = null, van = null;
+  if (inc) { car = sedan(0x4c6a5c); car.position.set(2, 0, 1.9); car.rotation.y = 0.04; g.add(car); spots.car = [[4.7, 2.9], [5.9, 1.7], [4.6, 0.5]];
+    van = minibus(0xb9d0de, 0xb9d0de); van.position.set(-17, 0, -2.6); van.rotation.y = 0.1; g.add(van); spots.van = [[-14.3, -2.6], [-14.4, -3.8]]; }
   const parked = sedan(0xb1b6ba); parked.position.set(-6, 0, 5.2); parked.rotation.y = Math.PI; g.add(parked);                       /* parked at the south kerb */
   const parked2 = minibus(0xe2cf7a, 0xe2cf7a); parked2.position.set(17.6, 0, -5.4); parked2.rotation.y = Math.PI; g.add(parked2);         /* a second minibus at the north kerb */
   const parked3 = sedan(0x8a2d2a); parked3.position.set(-34, 0, 5.4); parked3.rotation.y = Math.PI + 0.05; g.add(parked3);
   SO('shelter', -26, -22, 2.3, 4.2, 0, 2.7, 'busstop');
   box(X.zinc, 3.6, 0.1, 1.6, -24, 2.4, 3.2); for (const dx of [-1.7, 1.7]) box(X.pole, 0.1, 2.4, 0.1, -24 + dx, 0, 3.2); box(X.pole, 0.08, 2.7, 0.08, -24 + 2.2, 0, 3.2); box(X.frame, 0.06, 0.6, 0.5, -24 + 2.2, 2.1, 3.2);   /* bus shelter and a bus stop sign on its post */
 
+  if (inc) {
   /* ---- the barricade at x = -27: an overturned minibus and a car pushed across the road, tyres, pallets, planks and rubble ---- */
   const bx = -27, ov = overturned(minibus(0xe4e8e4, 0xe4e8e4), 1, 1.7); ov.position.set(bx, 0, -1.4); ov.rotation.y = 1.32; g.add(ov);
   const pushed = sedan(0x707880); pushed.position.set(bx + 0.3, 0.1, 3.5); pushed.rotation.set(0.05, 1.45, 0.06); g.add(pushed);
@@ -116,6 +121,7 @@ export function buildStreet(opts = {}) {
   for (let i = 0; i < 6; i++) box(X.plank, 0.12, 2.6, 0.2, bx + 3.9, 0, -4 + i * 1.6, 0.3, 0.5);
   for (let i = 0; i < 30; i++) box(i % 3 ? X.rust : X.junk, 0.25 + (i % 5) * 0.12, 0.2 + (i % 3) * 0.16, 0.3 + (i % 4) * 0.08, bx + 2.5 + ((i * 37) % 13) / 10, 0, -3.2 + ((i * 53) % 64) / 10, i);
   spots.barricade = [[bx - 2.2, -3], [bx - 2.4, -1.2], [bx - 2.2, 0.8], [bx - 2.5, 2.4], [bx - 2.3, 3.8]];
+  }
 
   /* ---- poles, wires, street lamps, trees, hills ---- */
   const poles = [30, 14, -2, -18, -34, -50].map((x) => [x, -5.5]);
@@ -142,20 +148,20 @@ export function buildStreet(opts = {}) {
 
   const sun = addSky(out, rnd, { shadows: opts.shadows });
   /* vehicles: boxes from their real bounds, found after they are placed */
-  for (const [nm, v] of [['car', car], ['van', van], ['parked', parked], ['parked2', parked2], ['parked3', parked3]]) { v.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(v); solids.push({ kind: 'vehicle', name: nm, x0: b.min.x, x1: b.max.x, z0: b.min.z, z1: b.max.z, y0: b.min.y, y1: b.max.y }); }
+  for (const [nm, v] of [['car', car], ['van', van], ['parked', parked], ['parked2', parked2], ['parked3', parked3]].filter(([, v]) => v)) { v.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(v); solids.push({ kind: 'vehicle', name: nm, x0: b.min.x, x1: b.max.x, z0: b.min.z, z1: b.max.z, y0: b.min.y, y1: b.max.y }); }
   return { group: out, spots, sun, raw: g, solids };   /* raw: the unmerged parts, for the place audit (?test=audit) */
 }
 
-/* Chapter 4 walks this same street on Sunday 23 May 2010, the day before the operation: no soldiers yet, three neighbours, the barricade already across the road.
+/* Chapter 4 walks this same street on Sunday 23 May 2010, the day before the operation: no soldiers yet, three neighbours, and ordinary traffic on a clear road.
+   The barricades that day were at the entrances to Tivoli (content.js); this street's barricade is built for the operation scene only (owner, 22 November 2026).
    The walls are made from the solid boxes (buildings, fences, vehicles, cover, posts, tree trunks), so the overlap check and the walking agree. */
 export function streetPlace(opts = {}) {
-  const st = buildStreet(opts), walls = [];
+  const st = buildStreet({ ...opts, incursion: false }), walls = [];
   for (const s of st.solids) {
     if (s.y0 > 1) continue;                                            /* canopies, balconies, crossarms, walkway roofs: overhead, not in the way */
     if (s.kind === 'tree') { if (/^palm/.test(s.name)) { const cx = (s.x0 + s.x1) / 2, cz = (s.z0 + s.z1) / 2; walls.push([cx - 0.35, cz - 0.35, cx + 0.35, cz + 0.35]); } else if (/^trunk/.test(s.name)) walls.push([s.x0, s.z0, s.x1, s.z1]); continue; }
     walls.push([s.x0 - 0.2, s.z0 - 0.2, s.x1 + 0.2, s.z1 + 0.2]);
   }
-  walls.push([-31.5, -4.6, -24.2, 4.8]);                               /* the barricade itself: you cannot climb it */
   const npcs = [
     { id: 'gran', name: 'Gran Ivy', look: 'ivyGran', x: 18.4, z: 7.2, ry: -Math.PI / 2, anim: 'Idle' },
     { id: 'dawn', name: 'Miss Dawn', look: 'dawn', x: -12.4, z: 5.4, ry: 0.2, anim: 'Idle' },
@@ -165,5 +171,34 @@ export function streetPlace(opts = {}) {
   const start = { x: 8, z: 6.4, yaw: Math.atan2(-(18.4 - 8), -(7.2 - 6.4)) };   /* facing Gran Ivy */
   st.solids.push({ kind: 'person', name: 'start', x0: start.x - 0.3, x1: start.x + 0.3, z0: start.z - 0.3, z1: start.z + 0.3, y0: 0, y1: 1.7 });
   const groundAt = (x, z) => (Math.abs(z) > 4.64 && Math.abs(z) <= 8.1 ? 0.16 : Math.abs(z) >= 4.36 && Math.abs(z) <= 4.64 ? 0.2 : 0);   /* pavements 16 cm, kerbs 20 cm, road and grass 0 */
-  return { ...st, groundAt, walls, npcs, start, endSpot: { x: 19.8, z: 7.9, r: 0.9 }, bounds: { x0: -44, x1: 40, z0: -8.2, z1: 8.3 } };
+  const traffic = addTraffic(st.group);
+  return { ...st, groundAt, walls, npcs, start, traffic, endSpot: { x: 19.8, z: 7.9, r: 0.9 }, bounds: { x0: -44, x1: 40, z0: -8.2, z1: 8.3 } };
+}
+
+/* Traffic for chapter 4 (owner, 22 November 2026: "the cars driving (without obstructing persons etc)"). A few saloons and route-taxi minibuses drive both ways,
+   on the left as in Jamaica (eastbound, +x, in the lane at z -2.2; westbound at z +2.2), at a slow street speed. They turn round far out in the fog, beyond
+   x +-170. Each one brakes and waits for anyone in its lane ahead (you, the story people, the neighbours) and keeps its distance from the car in front, so
+   nobody is driven through. tick(dt, people) takes a list of { x, z }. */
+export function addTraffic(group) {
+  const LANE = 2.2, END = 170, V = 7, cars = [];
+  const kinds = [[sedan, 0x2f4f7a], [minibus, 0xe8e2d0, 0x2c5aa0], [sedan, 0xb4b8bc], [sedan, 0x6a2a2a], [minibus, 0xd9d3a4, 0xa02c2c], [sedan, 0x2e3a30]];
+  kinds.forEach(([make, c1, c2], i) => {
+    const m = make === minibus ? minibus(c1, c2) : sedan(c1), dir = i % 2 ? -1 : 1, z = dir > 0 ? -LANE : LANE;
+    m.rotation.y = dir > 0 ? 0 : Math.PI; m.position.set([-38, 30, 6, -14, 70, -75][i], 0, z);   /* spread along the street, two in view at the start */ m.userData.noBatch = true; group.add(m);
+    cars.push({ m, dir, z, v: V * 0.7, len: make === minibus ? 4.86 : 4.5 });
+  });
+  const solids = () => cars.map((c) => { const p = c.m.position; return { kind: 'vehicle', name: 'traffic', x0: p.x - c.len / 2, x1: p.x + c.len / 2, z0: p.z - 1, z1: p.z + 1, y0: 0, y1: 2 }; });
+  function tick(dt, people = []) {
+    if (!(dt > 0)) return; dt = Math.min(dt, 0.1);
+    for (const c of cars) {
+      const p = c.m.position; let room = 1e9;
+      for (const q of people) { if (Math.abs(q.z - c.z) > 1.9) continue; const ahead = (q.x - p.x) * c.dir - c.len / 2; if (ahead > -(c.len + 0.6) && ahead < room) room = Math.max(0, ahead); }   /* a person in the lane ahead, or alongside: wait */
+      for (const o of cars) { if (o === c || o.dir !== c.dir) continue; const ahead = (o.m.position.x - p.x) * c.dir - (c.len + o.len) / 2; if (ahead > 0 && ahead < room) room = ahead; }
+      const want = room < 2.5 ? 0 : room < 9 ? V * (room - 2.5) / 6.5 : V;   /* stop 2.5 m short, slow over the 6.5 m before that */
+      c.v += Math.max(-9 * dt, Math.min(2.2 * dt, want - c.v)); if (c.v < 0) c.v = 0;
+      p.x += c.v * c.dir * dt;
+      if (p.x * c.dir > END) { p.x = -END * c.dir; }   /* round again, out in the fog */
+    }
+  }
+  return { cars, tick, solids };
 }

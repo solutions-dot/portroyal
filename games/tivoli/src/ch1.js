@@ -98,6 +98,10 @@ export function leaveChapter() {
 export function lifeTick(dt) {
   if (!CH.on || !CH.life) return; const { state } = E;
   CH.life.life.tick(dt, { px: state.x, pz: state.z, story: CH.story, talking: null, view: { x: state.x, z: state.z, yaw: state.yaw } });
+  const T = CH.place.traffic; if (__DEV__) window.__traffic = T; if (T) {   /* chapter 4's cars (street.js addTraffic): they wait for anyone in their lane, and you cannot walk through one */
+    const who = [{ x: state.x, z: state.z }, ...Talk.npcs.map((n) => n.body.position), ...CH.life.people.map((n) => n.m.position)]; T.tick(dt, who);
+    const { WALLS } = E; WALLS.length = CH.place.walls.length; for (const b of T.solids()) WALLS.push([b.x0 - 0.2, b.z0 - 0.2, b.x1 + 0.2, b.z1 + 0.2]);
+  }
   turnLimit(CH.life.people, dt);
 }
 /* nobody spins: a body turns at most 200 degrees a second standing and 315 walking, whatever turned it (Kendal's turnLimit, games/kendal/src/main.js); a seated person keeps the seat's facing */
