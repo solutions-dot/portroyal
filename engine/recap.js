@@ -30,3 +30,25 @@ export function recapRow(items, open, { heading = 'Three things you learned. Tap
   }
   return wrap;
 }
+
+/* addRecap: put the recap row on a game's final card, whichever way the game builds it (owner, 22 November 2026: every game has it).
+   title is the final card's title (a string or a RegExp); open(page) opens the game's journal; the page's tab is then picked for you (by its
+   data-page, or by the page title, which is each item's label). card, titleEl and body are the ids of the game's card parts. */
+export function addRecap({ items, open, title, unlocked = null, card = 'card', titleEl = 'ctitle', body = 'cbody' }) {
+  const c = typeof document !== 'undefined' && document.getElementById(card); if (!c) return null;
+  const pick = (it) => {
+    const J = document.getElementById('journal'); if (!J) return;
+    const all = [...J.querySelectorAll('button, a, [role="tab"], li')];
+    const tab = all.find((e) => e.dataset && (e.dataset.page === it.page || e.dataset.id === it.page)) || all.find((e) => (e.textContent || '').trim() === it.label);
+    if (tab) tab.click();
+  };
+  const check = () => {
+    if (c.hidden) return; const t = ((document.getElementById(titleEl) || {}).textContent || '').trim();
+    const ok = title instanceof RegExp ? title.test(t) : t === title; const b = document.getElementById(body);
+    if (!ok || !b || b.querySelector('.recapwrap')) return;
+    const w = recapRow(items, (pg) => { const it = items.find((x) => x.page === pg); open(pg); setTimeout(() => pick(it), 80); }, { unlocked: typeof unlocked === 'function' ? unlocked() : unlocked });
+    w.classList.add('recapwrap'); b.appendChild(w);
+  };
+  const mo = new MutationObserver(check); mo.observe(c, { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true, characterData: true });
+  return mo;
+}
