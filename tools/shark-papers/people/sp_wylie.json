@@ -23,7 +23,13 @@
   "buckles": true,
   "bands": true,
   "hairvol": 0.4,
-  "hat": []
+  "hat": [
+   [
+    "cocked",
+    "Hat"
+   ]
+  ],
+  "facings": true
  },
  "colors": {
   "Shirt": [
@@ -70,6 +76,11 @@
    60,
    46,
    36
+  ],
+  "Facings": [
+   238,
+   236,
+   228
   ]
  },
  "face": "round"
