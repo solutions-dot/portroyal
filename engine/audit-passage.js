@@ -42,7 +42,9 @@ export function auditPassage({ walls = [], bounds, start, r = 0.23, wide = 0.9, 
   const reach = flood(r, [s0]), every = flood(r, all);
   for (const p of every.parts) if (p.area >= minArea && reach.lab[at(p.x, p.z)] !== 0 && !reachIn(reach.lab, every.lab, p.id)) out.push(`pass cut off: ${p.area.toFixed(1)} m² of open ground around (${p.x.toFixed(1)}, ${p.z.toFixed(1)}) cannot be reached from the start`);
   /* room to pass: flood again needing a gap `wide` across; big parts that only join through narrower ground are pinched */
-  const roomy = flood(wide / 2, all), big = roomy.parts.filter((p) => p.area >= 1.5 && reach.lab[at(p.x, p.z)] === 0);
+  /* half a cell of slack: on a 10 cm grid a doorway exactly `wide` across seldom has a cell centre on its middle line, so it read as too
+     narrow (Windrush's 0.90 m doors, 22 November 2026). A gap more than half a cell under `wide` is still found. */
+  const roomy = flood(wide / 2 - cell / 2, all), big = roomy.parts.filter((p) => p.area >= 1.5 && reach.lab[at(p.x, p.z)] === 0);
   if (big.length > 1) {
     big.sort((a, b) => b.area - a.area);
     const main = big[0].id;
@@ -76,12 +78,13 @@ export function auditPassage({ walls = [], bounds, start, r = 0.23, wide = 0.9, 
 }
 /* is any cell of part id in the full flood also in the start's flood */
 function reachIn(reachLab, everyLab, id) { for (let k = 0; k < everyLab.length; k++) if (everyLab[k] === id && reachLab[k] === 0) return true; return false; }
-/* the spots a place must let you reach: each look and task spot of this place (steps.js LOOKS, TASKS) and each story person.
+/* the spots a place must let you reach: each look and task spot of this place (steps.js LOOKS, TASKS) and each story person you can talk to
+   (not a historical figure seen at a distance, such as Haile Selassie I and Mortimo Planno, who have no invented words).
    One line in a game's ?test=audit: ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, spots: passageSpots(Q, { LOOKS, TASKS }) }) */
 export function passageSpots(Q, { LOOKS = {}, TASKS = {} } = {}) {
   return [
     ...Object.entries(LOOKS).filter(([, l]) => l.place === Q.id && l.at).map(([id, l]) => ({ label: id + ' look', x: l.at[0], z: l.at[1] })),
     ...Object.entries(TASKS).filter(([, t]) => t.place === Q.id).flatMap(([id, t]) => [t.from && { label: id + ' pick', x: t.from[0], z: t.from[1] }, t.to && { label: id + ' place', x: t.to[0], z: t.to[1] }]).filter(Boolean),
-    ...(Q.people || []).filter((n) => n.m?.visible !== false).map((n) => ({ label: n.id, x: n.x, z: n.z })),
+    ...(Q.people || []).filter((n) => n.m?.visible !== false && !n.historical && !n.noTalk).map((n) => ({ label: n.id, x: n.x, z: n.z })),
   ];
 }

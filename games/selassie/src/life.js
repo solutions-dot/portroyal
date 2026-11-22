@@ -150,9 +150,10 @@ export function enrichMemory(Q) {
   // the 1930 street: half the passers-by keep the period recipe, the rest vary
   for (const s of Q.ambient) if (Number(s.id.replace("memory", "")) % 2) delete s.base;
   put(Q, cart(2.2, 1.2), -2.6, 19.4, Math.PI, 3.4, 1.4);
-  put(Q, marketBasket(), -5.55, 1.3, 0, 0.5, 0.5);
-  put(Q, yamBasket(), -5.55, 2.1, 0.4, 0.55, 0.55);
-  put(Q, marketBasket(0x9a7a40), -5.5, 2.9, 0.7, 0.5, 0.5);
+  /* the baskets stand against the house front, not across the gap between two houses (they left a way 0.64 m wide: engine/audit-passage.js) */
+  put(Q, marketBasket(), -6.05, -0.9, 0, 0.5, 0.5);
+  put(Q, yamBasket(), -6.05, -1.7, 0.4, 0.55, 0.55);
+  put(Q, marketBasket(0x9a7a40), -6.05, -2.5, 0.7, 0.5, 0.5);
   put(Q, sack(), -2.0, 17.9, 0.2, 0.55, 0.55);
   put(Q, sack(0xa08a5a), -2.7, 17.8, -0.4, 0.55, 0.55);
   put(Q, crate(0.55), -3.5, 17.9, 0.1, 0.6, 0.6);
@@ -161,8 +162,8 @@ export function enrichMemory(Q) {
   bunch.position.y = 0.83;
   put(Q, grp(), 3.6, -7.6).add(bunch);
   Q.ambient.push(
-    chat("memA0", "memA", -5.6, 6.0, 41),
-    chat("memA1", "memA", -4.8, 6.6, 42),
+    chat("memA0", "memA", -2.0, 6.0, 41),   /* talking in the open street, clear of the strollers on both sides and of the story path */
+    chat("memA1", "memA", -2.7, 6.5, 42),
     chat("memB0", "memB", 5.1, -12.2, 43),
     chat("memB1", "memB", 5.8, -11.5, 44),
     watcher("memB2", 5.0, -10.9, 45, [0, 0]),

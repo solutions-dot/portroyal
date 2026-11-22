@@ -134,7 +134,7 @@ Owner rule, for every game: these checks are wired into the dev build, and **eve
 
 ### Wiring room to pass and props close up into the older games (to do after their current work)
 
-Wired in Rose Hall, The Mad Master of Edinburgh Castle and The Shark Papers (22 November 2026). For each older game: import `propSnap` and `auditProps` from `engine/audit-props.js` and `auditPassage`, `passageSpots` from `engine/audit-passage.js`; take the props list where the audit snapshot is taken (before `batchStatic`), and add the two calls to the place audit's lines. `passageSpots(P, { LOOKS, TASKS })` reads `P.id`, `P.people` (`x`, `z`) and the steps tables; a game whose places keep their spots elsewhere passes its own `[{ label, x, z }]`. Use the game's own walking radius (most slide the player at 0.23 m).
+Wired in Rose Hall, The Mad Master of Edinburgh Castle, The Shark Papers, Windrush and The Emperor's Arrival (22 November 2026). A doorway exactly 0.9 m wide passes (half a grid cell of slack), and a historical figure seen at a distance (`historical` or `noTalk`) is not a spot to reach. For each older game: import `propSnap` and `auditProps` from `engine/audit-props.js` and `auditPassage`, `passageSpots` from `engine/audit-passage.js`; take the props list where the audit snapshot is taken (before `batchStatic`), and add the two calls to the place audit's lines. `passageSpots(P, { LOOKS, TASKS })` reads `P.id`, `P.people` (`x`, `z`) and the steps tables; a game whose places keep their spots elsewhere passes its own `[{ label, x, z }]`. Use the game's own walking radius (most slide the player at 0.23 m).
 
 | Game | Where | The lines to add |
 |---|---|---|

@@ -815,6 +815,7 @@ function home18() {
   Q.walls.push([1.3, -6.1, 1.5, -1.29], [1.3, -0.11, 1.5, 2.1]);
   Q.walls.push([-5.7, -6.1, 2.0, -5.9], [2.9, -6.1, 3.9, -5.9]);
   Q.walls.push([-5.8, -9.6, 4.0, -9.4], [-5.8, -9.6, -5.6, 2.2], [3.8, -9.6, 4.0, 2.2]);
+  Q.walls.push([4.0, -9.6, 5.6, 1.85]);   /* beyond the hall's east wall is the neighbour's house, not open ground (the passage audit found it) */
   const stairs = grp();
   for (let i = 0; i < 12; i++) box(0.9, 0.22 * (i + 1), 0.25, solid(0x7a5a3e, 0.8), 0, (0.22 * (i + 1)) / 2, -i * 0.25, stairs);
   /* the banister (owner, 22 November 2026: "rails for the steps"): a newel post, spindles and a handrail along the open side, rising with the steps */

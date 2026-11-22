@@ -1,4 +1,5 @@
 import { touchFirst } from '../../../engine/device.js';
+import { propSnap } from "../../../engine/audit-props.js";
 import { addRecap } from "../../../engine/recap.js";   /* three things you learned, on the last card */
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A family story built on the existing engine, with no shared-module changes. */
@@ -286,7 +287,7 @@ async function buildWorld(id) {
   Q.group.name = id;
   Q.group.visible = false;
   scene.add(Q.group);
-  if (__DEV__) Q.snap = snapMeshes(Q.group);
+  if (__DEV__) { Q.snap = snapMeshes(Q.group); Q.propList = propSnap(Q.group); }   /* small props, before merging (engine/audit-props.js) */
   mergePlace(Q);
   Q.people = [];
   Q.extras = [];

@@ -1,4 +1,5 @@
 import { touchFirst } from '../../../engine/device.js';
+import { propSnap } from "../../../engine/audit-props.js";
 import { addRecap } from "../../../engine/recap.js";   /* three things you learned, on the last card */
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A self-contained game on the established shared engine APIs. */
@@ -338,7 +339,7 @@ async function buildWorld(id) {
       o.material.forceSinglePass = true;
   });
   scene.add(Q.group);
-  if (__DEV__) Q.snap = snapMeshes(Q.group);
+  if (__DEV__) { Q.snap = snapMeshes(Q.group); Q.propList = propSnap(Q.group); }   /* small props, before merging (engine/audit-props.js) */
   if (Q.props.plane) {
     Q.props.plane.userData.noBatch = false;
     batchStatic(Q.props.plane);

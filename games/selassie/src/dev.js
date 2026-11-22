@@ -2,6 +2,8 @@
 import { Color } from "three";
 import { checkAll, CHECKS } from "../../../engine/checks.js";
 import { auditReveals } from "../../../engine/audit-reveal.js";
+import { auditProps } from "../../../engine/audit-props.js";
+import { auditPassage, passageSpots } from "../../../engine/audit-passage.js";
 import { headCheck } from "./headcheck.js";
 import { actionCheck } from "./actioncheck.js";
 import { checkFlow, needList } from "../../../engine/story.js";
@@ -381,7 +383,7 @@ export async function dev(A) {
       const twins = faceCheck(
         [...Q.people, ...Q.extras].filter((n) => n.m && !n.historical).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, story: Q.people.includes(n), uniform: /police/.test(n.base) && "police", ...(n.colors ? { cols: [n.colors.shirt, n.colors.legs] } : {}) })),
       );
-      const errors = [...r.floating, ...r.inside, ...r.stuck, ...crowdClothingIssues(Q.extras), ...auditReveals(Q, { groundAt: Q.groundAt })];   /* what a look moves, in both states (engine/audit-reveal.js) */
+      const errors = [...r.floating, ...r.inside, ...r.stuck, ...crowdClothingIssues(Q.extras), ...auditReveals(Q, { groundAt: Q.groundAt }), ...auditProps(Q.propList || []), ...(Q.walls && Q.bounds && Q.start ? auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, {}) }) : [])];   /* room to pass and props that read right (engine/audit-passage.js, engine/audit-props.js) */   /* what a look moves, in both states (engine/audit-reveal.js) */
       results.push(`AUDIT ${Q.id} ${errors.length}`, ...errors, `FACES ${Q.id} ${twins.length}`, ...twins.slice(0, 40));
     }
   if (["held", "cloth", "walkers", "skin"].includes(q.get("test"))) {
