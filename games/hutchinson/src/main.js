@@ -444,6 +444,8 @@ async function go(stage, { restore = null, keep = false } = {}) {
   if (stage === c.first && stage !== FIRST && !restore && !skipIntro) {
     card(c.name, [c.intro], [["Begin", () => waits(stage)]]);
   } else await waits(stage);
+  /* a save made after a chapter's last step was done, before Next chapter was pressed: offer the next chapter again */
+  if (restore && needList(row).length && needList(row).every((n) => !story.needs(n.id))) advance(row.next);
   callBackReturn(stage);
 }
 /* the story's next talk is with someone you already talked to in this chapter: they come to you, no walking back (engine/return-talk.js) */

@@ -35,11 +35,12 @@ const CSS = `#maturegate{position:fixed;inset:0;z-index:9500;display:flex;align-
 #maturegate .go{background:var(--paper-ink,#2a2418);color:var(--paper,#f1e7d3)}
 #maturegate .out{background:transparent;color:var(--paper-ink,#2a2418)}`;
 
-const read = (store, key) => { try { return store.getItem(key); } catch (e) { return null; } };
+/* asking for the store can itself throw when a browser blocks storage: then nothing is known, and the card asks */
+const read = (store, key) => { try { return window[store].getItem(key); } catch (e) { return null; } };
 
 export function matureGate({ note = [], exit = '../../../menu/', skip = false } = {}) {
   if (skip || typeof document === 'undefined') return Promise.resolve();
-  const state = matureState(read(localStorage, PROFILE_KEY), read(sessionStorage, OK_KEY) === '1');
+  const state = matureState(read('localStorage', PROFILE_KEY), read('sessionStorage', OK_KEY) === '1');
   if (state === 'open') return Promise.resolve();
   return new Promise((resolve) => {
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);

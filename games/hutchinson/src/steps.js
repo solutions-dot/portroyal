@@ -42,7 +42,7 @@ export const STEPS = {
   62: t("town", "Talk to Dr Hutton and Cubba.", ["hutton", "cubba"], 63, { journal: "epitaph" }),
   63: w("town", "The sixteenth morning of March.", "film", 65, { film: "morning" }),
   64: w("town", "Watch from the square.", "playing", 65, { film: "morning" }),
-  65: w("town", "What do we really know?", "quiz", 66),
+  65: w("town", "What do we really know?", "quiz", 66, { journal: "legend" }),
   66: w("town", "The story is told.", "end", null, { end: true }),
 };
 /* Things the player carries. start: where the thing lies at first [x, y, z]; from: where you stand to pick it up; to: where you stand to
