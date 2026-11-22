@@ -1,0 +1,83 @@
+{
+ "name": "hx_hutchinson",
+ "era": 1773,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.52,
+  "muscle": 0.62,
+  "weight": 0.5,
+  "height": 0.62
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "coat": true,
+  "coatsleeve": 0.84,
+  "coathem": 0.08,
+  "breeches": true,
+  "shoes": true,
+  "stockings": true,
+  "buckles": true,
+  "bands": true,
+  "hairvol": 0.4,
+  "hat": [
+   [
+    "felt",
+    "Hat"
+   ]
+  ]
+ },
+ "colors": {
+  "Skin": [
+   210,
+   162,
+   134
+  ],
+  "Shirt": [
+   216,
+   208,
+   190
+  ],
+  "Coat": [
+   52,
+   44,
+   42
+  ],
+  "Breeches": [
+   64,
+   56,
+   50
+  ],
+  "Stockings": [
+   150,
+   146,
+   138
+  ],
+  "Shoes": [
+   28,
+   22,
+   20
+  ],
+  "Hat": [
+   24,
+   22,
+   22
+  ],
+  "Hair": [
+   92,
+   58,
+   38
+  ],
+  "Bands": [
+   226,
+   220,
+   206
+  ]
+ },
+ "face": "long",
+ "smile": 0,
+ "eyes": 0.45
+}

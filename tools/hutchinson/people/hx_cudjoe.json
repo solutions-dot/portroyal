@@ -1,0 +1,48 @@
+{
+ "name": "hx_cudjoe",
+ "era": 1773,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "age": 0.76,
+  "muscle": 0.6,
+  "weight": 0.46,
+  "height": 0.5
+ },
+ "garments": {
+  "sleeve": 0.42,
+  "breeches": true,
+  "breechkind": "drawers",
+  "collar": false,
+  "hairvol": 0.25,
+  "hat": [],
+  "recede": 0.4
+ },
+ "colors": {
+  "Skin": [
+   140,
+   94,
+   68
+  ],
+  "Shirt": [
+   190,
+   178,
+   150
+  ],
+  "Breeches": [
+   160,
+   148,
+   120
+  ],
+  "Hair": [
+   150,
+   148,
+   142
+  ]
+ },
+ "face": "elder",
+ "smile": 0.1
+}

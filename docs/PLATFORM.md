@@ -63,6 +63,47 @@ The standard order is Start (or Continue when a saved game is available), Chapte
 
 The first ten games (Port Royal, Nanny Town, Bog Walk, Marcus Garvey, Kendal, Eventide, Tivoli, The Emperor's Arrival, Windrush and Hurricane Melissa) carry no badge: no "New" and no "Early version" (owner, 16 Nov 2026). Only a game added after them gets `<p class="tag">New</p>` on its menu card, and only for its first season. The test "menu: the first ten games carry no New or Early version badge" in `tests/regressions.mjs` keeps it that way.
 
+## The library: profiles, kinds of story, stars and "For you"
+
+The owner asked for streaming-library features on the menu on 22 November 2026: two profiles, a genre for each game, recommendations, star ratings from both profiles, and a "Mature 13+" tier with a warning. Never write "PG-13": it is a film-industry mark. The words are "Mature 13+" and "For ages 13 and up".
+
+Files: `menu/library.js`, `menu/library.css`, and in `menu/index.html` the `data-` attributes on the cards, `#library`, `#kidsnote` and the three dialogs. `tests/menu-library.mjs` checks it. It touches no game. The site is static, so everything is kept in the browser (`localStorage`), every read and write is in a try/catch, and without JavaScript none of it shows and the cards are plain links.
+
+**What a card says about itself** (add these to every new card):
+
+| Attribute | What it is |
+|---|---|
+| `data-genres` | Kinds of story, with spaces between. The first is the main one, shown above the title. The ids are `mystery` Mystery, `disasters` Disasters, `freedom` Freedom and rights, `leaders` Leaders, `family` Family stories, `battles` Battles (the list is `GENRES` in `library.js`). |
+| `data-tags` | Plain words used only to match games for "For you" and "More like this". |
+| `data-age` | `6`, or `13` for a Mature 13+ game. |
+| `data-warn` | For a 13 card only, and it must have one: the content note in plain words, shown on the warning card and on the sheet. |
+
+**How it works**
+
+- **The bar** sits between the header and the cards, inside `<main>` so the intro covers it. Kinds of story are chips: "All" and one for each kind that a card you can see has. One is pressed at a time (`aria-pressed`), the others' cards hide, and the timeline order stays. The choice is not saved. On phones the chips are one row that slides sideways and the profile button sits at the top right beside the logo. The header keeps its three pills.
+- **Profiles.** "Kids" (ages 6 and up) is the start, with no extra step. "Teens and adults" (13 and up) adds Mature 13+ games. Going from Kids to Teens and adults asks for the year you were born. The age is this year minus that year, and under 13 stays in Kids with the line "This part is for ages 13 and up." Going back to Kids asks nothing. Only the choice is saved (`pastport-profile`: `kids` or `teen`). The year is used once and never stored. **This is a soft gate, not real age verification.** A determined child can type another year, and a child who turns 13 later in the year passes. It is there to make a young child stop and ask, and no more is claimed for it anywhere.
+- **Mature 13+ games.** In Kids they are gone from view everywhere: the cards, the chips (no Mystery chip while its only games are hidden), "For you" (as a pick and as a reason), "More like this", and the links `?rate=` and `#id`. `library.css` hides a `data-age="13"` card unless the page has the class `lib-teen`, so this holds before the script runs and with JavaScript off. When any card is hidden, a quiet line under the cards says "Some stories are for ages 13 and up. A grown-up can change who is travelling." In Teens and adults the card wears a "Mature 13+" badge, and anything that would open the game (the card, a "For you" tile, Go there on the sheet) first shows a card headed "Mature 13+" with "For ages 13 and up", the `data-warn` note, and "Go there" and "Not now". The intro's stamps are left as they are.
+- **The sheet.** `library.js` wraps each card in a `.slot` and puts a round "i" button beside the link (a button may not sit inside a link). The slot takes the card's place in the grid, so card sizes do not change. The button opens a `<dialog>`: picture, main kind, title, age line, the card's sentence, Go there, the stars, and "More like this" (up to three other games you can see, most shared kinds first, then most shared tags). `?rate=<game id>` on the menu opens that sheet with focus on the stars, for the games to link to from their last card. `#<game id>` opens it too. With the intro playing, it waits until the intro has gone.
+- **Stars.** Five big stars, a radio group, in both profiles (the owner: children can rate too). Your rating is saved on the device (`pastport-ratings`, game id to 1 to 5) and shown on the sheet and as a small line on the card. The same star again, or Clear, takes it back.
+- **"For you."** A slim strip of up to three tiles between the bar and the cards. Pressing Go there records a visit (`pastport-visits`, game id to a count and the last time). A game you know (visited or rated) is never a pick. Every other game you can see is scored against each game you know: +3 for each shared kind with a game you gave 4 or 5 stars, +2 for each shared kind with a game you visited and did not rate 1 or 2, +1 for each shared tag with either, and -3 for each shared kind with a game you rated 1 or 2. A New badge adds 1. Only a score above 0 is shown, with the reason "Because you liked ...", "Because you went to ..." or "New". With no visits and no ratings that leaves the New games, or no strip at all. A pick is never made up. The strip steps aside while one kind of story is chosen.
+
+The scoring, the profile filter and the average are pure functions at the top of `library.js` (`PastPortLibrary`), which Node can load, so `tests/menu-library.mjs` tests them without a browser.
+
+### Ratings backend (not switched on)
+
+Sharing ratings "for other viewers" needs a small backend the owner has not chosen. `const RATINGS_URL = '';` at the top of `menu/library.js` is the switch, like `SUBSCRIBE_URL` in `site.js`. While it is empty nothing is sent anywhere, no average is shown, and the sheet says "Your stars are saved on this device only." Never show a made-up average or count. `npm test` fails if the committed file has it set by mistake, so change the test in the same commit as the switch.
+
+When it is set:
+
+- On load: `GET RATINGS_URL` answers `{ "<game id>": { "sum": 123, "n": 30 }, ... }`. The card and the sheet show "4.1 of 5, from 30 ratings", and nothing under 3 ratings.
+- On a rating: `POST RATINGS_URL` with JSON `{ "game": "<game id>", "stars": 4, "was": 3 }`. `was` is this device's last rating, or 0, so the server can change the sum and the count without storing who voted. Clearing a rating sends `"stars": 0`.
+- Nothing else is sent: no name, no device id, no cookie, no referrer. Children use this. The server must allow the site's origin (CORS, with the preflight that a JSON post needs).
+- A failed request is silent and never blocks the page.
+
+It trusts the browser, so it can be gamed: anyone can post any number, as often as they like. That is the price of collecting nothing about children. A backend can soften it (limit the rate by address without keeping the address, refuse stars outside 0 to 5), and the average should be read as a friendly guide, not a measure.
+
+**Checking it** (done for this version, repeat after changes): screenshots at 1280 by 720, 800 by 500, 414 by 706, 360 by 640 and 320 by 568 of the menu, a kind chosen, both steps of the profile dialog, a sheet with a rating, the strip after a visit and a rating, and (with two 13 cards added to the served page for the test only) the badge and the warning card. Also the keyboard alone, `?intro=1`, storage that throws, JavaScript off, and a fake ratings server.
+
 ## The intro
 
 Files: `menu/intro.js`, `menu/intro.css`, the `#intro` markup and a few lines in the head of `menu/index.html`.
@@ -103,7 +144,10 @@ Checking it (done for this version, repeat after changes):
 - **An arrival card** at the start of each game ("You are arriving in Port Royal, Jamaica. 1692.") and "Back in 2026" when you leave, so the traveller idea runs through the games and not just the menu.
 - **Continue your trip.** Each game already saves progress. The menu can show "Continue: chapter 3" on that game's card.
 - **More traveller wording.** The cards say "Go there" (the owner chose it). Chapters could become "stops" inside the games if the owner wants.
-- **Rows.** With about twelve games or more, group the menu into rows ("Storms and floods", "Freedom and leaders", "Everyday life"), or by era.
+- **Rows.** The kinds of story are built (see "The library"): chips that filter the cards. With about twelve games or more, the menu could also show a row for each kind, or for each era.
+- **Switch on shared ratings.** Choose a small backend and set `RATINGS_URL` (see "Ratings backend").
+- **Rate from inside a game.** Each game's last card can link to the menu with `?rate=<game id>`. The menu side is built.
+- **Content notes for Mature 13+ games.** Each 13 card needs its own `data-warn` note, written with the game.
 
 ## Shared Chapters book (16 November 2026)
 

@@ -1,5 +1,7 @@
 # Tivoli: West Kingston, 1960s to today (the game guide)
 
+**Mature 13+ (owner, 22 November 2026).** Tivoli now sits behind the Mature 13+ label: hidden in the menu's Kids profile, a warning card on the menu, and the Mature 13+ card on its title screen (`engine/mature.js`). This replaces the earlier note below that the game keeps the same audience as the others.
+
 Read `CLAUDE.md` and `docs/NEW_GAME.md` first. This file is the plan, the rules for this game, the placeholders and the research.
 
 - Code: `games/tivoli/` (started from `games/_template/`; see "Code map").

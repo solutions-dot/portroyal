@@ -1,0 +1,151 @@
+/* The library on the menu: the bar (kinds of story, who is travelling), the "For you" strip, the round "i" button and the small
+   lines library.js adds to each card, and its three dialogs. The behaviour is in library.js, the markup is in index.html
+   (#library, #profilepanel, #gamesheet, #agecard). The colours and the font are the variables at the top of index.html.
+   Without JavaScript none of this shows and the cards are plain links. See docs/PLATFORM.md, "The library". */
+
+/* A Mature 13+ card is out of sight unless the profile is Teens and adults (library.js sets .lib-teen). This holds before the script runs and without JavaScript. */
+html:not(.lib-teen) .game[data-age="13"]{display:none}
+
+.lib-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+.lib-top[hidden],.lib-top [hidden],.lib-dialog [hidden],.lib-kidsnote[hidden],.slot[hidden]{display:none!important}
+
+/* the page: header, the library, the cards (and the quiet line for Kids under them) */
+.lib-on main{position:relative;grid-template-rows:auto auto 1fr}
+.lib-top{display:grid;gap:clamp(.7rem,1.8vh,1.1rem);min-width:0}
+
+/* ---------- the bar ---------- */
+.lib-bar{display:flex;align-items:center;gap:.8rem;min-width:0}
+.lib-chips{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;gap:.5rem}
+.lib-chip{flex:none;min-height:44px;padding:0 1.05rem;border:0;border-radius:999px;background:rgba(255,247,232,.1);color:var(--paper);font:inherit;font-weight:600;font-size:.95rem;white-space:nowrap;cursor:pointer}
+.lib-chip:hover{background:rgba(255,247,232,.22)}
+.lib-chip[aria-pressed="true"]{background:var(--sea);color:var(--deep);font-weight:800}
+.lib-chip:focus-visible,.lib-profile:focus-visible,.lib-tile:focus-visible,.lib-info:focus-visible{outline:3px solid var(--mango);outline-offset:2px}
+.lib-profile{flex:none;display:inline-flex;align-items:center;gap:.55rem;min-height:48px;padding:.3rem 1.1rem .3rem .4rem;border:2px solid rgba(255,247,232,.3);border-radius:999px;background:rgba(255,247,232,.06);color:var(--paper);font:inherit;text-align:left;cursor:pointer}
+.lib-profile:hover{border-color:var(--paper);background:rgba(255,247,232,.14)}
+.lib-facebox{display:grid;flex:none}
+.lib-face{display:block;width:36px;height:36px}
+.lib-as{display:block;font-size:.72rem;font-weight:600;line-height:1.15;color:rgba(255,247,232,.72)}
+.lib-name{display:block;font-size:.95rem;font-weight:800;line-height:1.2;white-space:nowrap}
+
+/* ---------- "For you" ---------- */
+.lib-foryou{min-width:0}
+.lib-foryou h2{margin:0 0 .45rem;font-size:.8rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,247,232,.72)}
+.lib-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem}
+.lib-tile{display:flex;align-items:center;gap:.8rem;min-width:0;min-height:76px;padding:.4rem .9rem .4rem .4rem;border-radius:18px;background:rgba(255,247,232,.08);color:var(--paper);text-decoration:none}
+.lib-tile:hover{background:rgba(255,247,232,.16)}
+.lib-thumb{flex:none;width:68px;height:68px;border-radius:13px;background:#0c3348 center/cover no-repeat}
+.lib-tiletext{display:block;min-width:0}
+.lib-tile b{display:block;font-size:.98rem;font-weight:800;line-height:1.2;letter-spacing:-.01em}
+.lib-why{display:block;margin-top:.15rem;font-size:.84rem;line-height:1.3;color:rgba(255,247,232,.8)}
+.lib-why.lib-new{font-size:.76rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mango)}
+.lib-agetag{display:inline-block;margin:.25rem 0 0;padding:.1rem .45rem;border-radius:6px;background:var(--paper);color:var(--deep);font-size:.72rem;font-weight:800;white-space:nowrap}
+
+/* ---------- on the cards ---------- */
+/* library.js wraps each card in a slot, so the round button sits beside the link, not inside it. The slot takes the card's place in the grid and the card fills it. */
+.slot{position:relative;display:grid;min-width:0;min-height:0}
+.lib-info{position:absolute;top:clamp(.8rem,1.6vw,1.2rem);right:clamp(.8rem,1.6vw,1.2rem);z-index:2;display:grid;place-items:center;width:44px;height:44px;padding:0;border:2px solid rgba(255,247,232,.75);border-radius:50%;background:rgba(4,27,42,.62);color:var(--paper);font:italic 700 1.35rem/1 Georgia,"Times New Roman",serif;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.lib-info:hover,.lib-info:focus-visible{background:var(--paper);border-color:var(--paper);color:var(--deep)}
+.game .year.lib-genre{margin-bottom:.4rem;font-size:.8rem;letter-spacing:.09em;text-transform:uppercase;text-shadow:0 1px 2px rgba(4,27,42,.9),0 0 12px rgba(4,27,42,.75)}   /* the kind of story, above the title, in the card's own colour (the .year colours in index.html) */
+.game .lib-meta{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .9rem;margin-top:.55rem;font-size:.85rem;font-weight:600;line-height:1.3;color:rgba(255,247,232,.88)}
+.game .lib-meta:empty{display:none}
+.lib-you{display:inline-flex;align-items:center;gap:.4rem}
+.lib-ministars{display:inline-flex;gap:1px}
+.lib-ministars svg{width:15px;height:15px;fill:rgba(255,247,232,.25)}
+.lib-ministars svg.on{fill:var(--mango)}
+.game .lib-age{position:absolute;top:calc(clamp(.8rem,1.6vw,1.2rem) + 7px);right:calc(clamp(.8rem,1.6vw,1.2rem) + 44px + .5rem);display:inline-flex;align-items:center;height:30px;padding:0 .6rem;border-radius:8px;background:var(--paper);color:var(--deep);font-size:.8rem;font-weight:800;white-space:nowrap}
+.lib-kidsnote{margin:0;padding:.2rem 0 .8rem;font-size:.9rem;line-height:1.4;text-align:center;color:rgba(255,247,232,.72)}
+
+/* ---------- the dialogs ---------- */
+.lib-dialog{width:min(34rem,calc(100% - 1.5rem));max-height:calc(100vh - 1.5rem);max-height:calc(100dvh - 1.5rem);padding:1.4rem;border:1px solid rgba(31,181,163,.6);border-radius:24px;background:var(--harbour);color:var(--paper);overflow:auto;overscroll-behavior:contain}
+.lib-dialog::backdrop{background:rgba(4,27,42,.85)}
+.lib-dialog h2{margin:0 2.6rem .6rem 0;font-size:1.6rem;font-weight:800;line-height:1.1;letter-spacing:-.02em;color:var(--sea)}
+.lib-dialog h2:focus{outline:none}
+.lib-dialog p{margin:.5rem 0;line-height:1.5}
+.lib-dialog :focus-visible{outline:3px solid var(--mango);outline-offset:3px}
+.lib-close{position:absolute;top:.5rem;right:.5rem;z-index:2;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(4,27,42,.55);color:var(--paper);font-size:1.8rem;line-height:1;cursor:pointer}
+.lib-close:hover{background:var(--paper);color:var(--deep)}
+.lib-row{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:1.1rem}
+.lib-main{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 1.7rem;border:0;border-radius:999px;background:var(--mango);color:var(--deep);font:inherit;font-size:1.05rem;font-weight:800;text-decoration:none;white-space:nowrap;cursor:pointer}
+.lib-main:hover{background:var(--paper)}
+.lib-quiet{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 1.5rem;border:2px solid rgba(255,247,232,.45);border-radius:999px;background:transparent;color:var(--paper);font:inherit;font-weight:600;cursor:pointer}
+.lib-quiet:hover{background:var(--paper);border-color:var(--paper);color:var(--deep)}
+.lib-small{font-size:.88rem;color:rgba(255,247,232,.75)}
+.lib-kicker{margin:0 2.6rem .3rem 0!important;font-size:.8rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--mango)}
+.lib-ageline{font-weight:600;color:rgba(255,247,232,.85)}
+.lib-ageline.lib-mature{font-weight:800;color:var(--paper)}
+
+/* who is travelling */
+.lib-who{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:1rem}
+.lib-choice{display:flex;align-items:center;gap:.9rem;min-height:92px;padding:.9rem 1rem;border:2px solid rgba(255,247,232,.3);border-radius:20px;background:rgba(255,247,232,.06);color:var(--paper);font:inherit;text-align:left;cursor:pointer}
+.lib-choice:hover{border-color:var(--paper)}
+.lib-choice[aria-pressed="true"]{border-color:var(--sea);background:rgba(31,181,163,.16)}
+.lib-choice .lib-face{width:52px;height:52px}
+.lib-choice [data-face]{display:grid;flex:none}
+.lib-choice b{display:block;font-size:1.15rem;font-weight:800;line-height:1.2}
+.lib-ages{display:block;margin-top:.2rem;font-size:.9rem;line-height:1.35;color:rgba(255,247,232,.82)}
+.lib-year{display:block;width:9rem;min-height:56px;margin-top:.8rem;padding:0 1rem;border:2px solid rgba(255,247,232,.4);border-radius:14px;background:var(--paper);color:var(--deep);font:inherit;font-size:1.4rem;font-weight:800;-moz-appearance:textfield;appearance:textfield}
+.lib-year::-webkit-outer-spin-button,.lib-year::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.lib-msg{min-height:1.5em;font-weight:600;color:var(--mango)}
+
+/* a game's sheet */
+.lib-banner{height:9.5rem;margin:-1.4rem -1.4rem 1rem;border-radius:23px 23px 0 0;background:#0c3348 center 35%/cover no-repeat;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.lib-sheet .lib-main{margin-top:.6rem}
+.lib-rate{min-width:0;margin:1.3rem 0 0;padding:1rem 0 0;border:0;border-top:1px solid rgba(255,247,232,.18)}
+.lib-rate legend{float:left;width:100%;margin:0;padding:0;font-size:1.05rem;font-weight:800;color:var(--paper)}   /* floated so it sits inside the fieldset like a heading */
+.lib-more h3{margin:0;font-size:1.05rem;font-weight:800}
+.lib-starrow{clear:both;display:flex;gap:2px;margin:0 0 0 -6px;padding-top:.4rem}
+.lib-star{position:relative;flex:0 1 56px;min-width:44px;height:56px;display:grid;place-items:center;border-radius:12px;cursor:pointer}
+.lib-star input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}   /* the real radio button covers its star, unseen: a finger, a mouse and the arrow keys all work */
+.lib-star svg{width:42px;height:42px;fill:transparent;stroke:rgba(255,247,232,.75);stroke-width:1.5;stroke-linejoin:round;pointer-events:none;transition:transform .15s ease}
+.lib-star.on svg{fill:var(--mango);stroke:var(--mango)}
+.lib-star:hover svg{transform:scale(1.12)}
+.lib-star input:focus-visible + svg{outline:3px solid var(--mango);outline-offset:4px;border-radius:8px}
+.lib-yours{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .8rem;margin:.1rem 0!important;font-weight:600}
+.lib-clear{min-height:44px;padding:0 .9rem;border:0;border-radius:999px;background:rgba(255,247,232,.1);color:var(--paper);font:inherit;font-weight:600;font-size:.9rem;cursor:pointer}
+.lib-clear:hover{background:var(--paper);color:var(--deep)}
+.lib-avg{font-weight:600;color:var(--sea)}
+.lib-rate .lib-small{margin:.1rem 0 0}
+.lib-more{margin-top:1.3rem;padding-top:1rem;border-top:1px solid rgba(255,247,232,.18)}
+.lib-morelist{display:grid;gap:.5rem;margin:0;padding:.6rem 0 0;list-style:none}
+.lib-morelist .lib-tile{min-height:64px}
+.lib-morelist .lib-thumb{width:56px;height:56px}
+.lib-warnnote,#agenote{padding:.1rem 0 .1rem .9rem;border-left:4px solid var(--mango)}
+
+/* the Mature 13+ warning card */
+.lib-warn{width:min(28rem,calc(100% - 1.5rem))}
+.lib-warn h2{margin-right:0;color:var(--mango)}
+.lib-warn .lib-kicker{margin-right:0!important;font-size:1.05rem;letter-spacing:0;text-transform:none;color:var(--paper)}
+
+/* after the intro the menu rises in (intro.css): the library fades in with it, and each "i" button rises with its card */
+.menu-in .lib-top,.menu-in .lib-kidsnote{animation:libIn .7s ease .1s backwards}
+.menu-in .lib-info{animation:cardIn .7s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(.1s + var(--i,0) * 80ms)}
+@keyframes libIn{from{opacity:0}to{opacity:1}}
+
+/* ---------- phones ---------- */
+@media (max-width:760px){
+  /* who is travelling goes to the top right, beside the logo, like the profile corner of a streaming app */
+  .lib-profile{position:absolute;top:calc(max(1rem,env(safe-area-inset-top)) + .8rem);right:clamp(1rem,3vw,2.2rem);padding-right:.9rem}
+  .lib-name{font-size:.9rem}
+  /* the kinds of story are one row that slides sideways; the page itself never does. The row fades out at the right edge to show there is more. */
+  .lib-chips{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin:-4px -4px -4px -4px;padding:4px 2rem 4px 4px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 2rem),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 2rem),transparent)}
+  .lib-chips::-webkit-scrollbar{display:none}
+  /* "For you" slides sideways too */
+  .lib-tiles{display:flex;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;margin:-4px;padding:4px}
+  .lib-tiles::-webkit-scrollbar{display:none}
+  .lib-tiles .lib-tile{flex:0 0 min(84%,19rem);scroll-snap-align:start}
+  .lib-tiles .lib-tile:only-child{flex-basis:100%}
+  .lib-on .game{min-height:348px}   /* room for the kind of story above the title */
+  .lib-on .game.windrush{min-height:428px}
+  .lib-dialog{padding:1.1rem}
+  .lib-banner{height:7.5rem;margin:-1.1rem -1.1rem .9rem}
+  .lib-dialog h2{font-size:1.4rem}
+}
+@media (max-width:520px){.lib-who{grid-template-columns:1fr}.lib-choice{min-height:80px}}
+@media (max-width:370px){.lib-profile{gap:.4rem;padding:.25rem .7rem .25rem .3rem}.lib-face{width:30px;height:30px}.lib-choice .lib-face{width:46px;height:46px}.lib-name{font-size:.82rem}.lib-as{font-size:.68rem}}
+@media (max-height:560px){.lib-banner{display:none}}   /* a phone held sideways: no picture, so the words and the stars fit */
+
+@media (prefers-reduced-motion:reduce){
+  .menu-in .lib-top,.menu-in .lib-kidsnote,.menu-in .lib-info{animation:none}
+  .lib-star svg{transition:none}
+  .lib-star:hover svg{transform:none}
+}

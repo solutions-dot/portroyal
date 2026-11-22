@@ -47,3 +47,9 @@ games/*/site/title.css
 
 # Shared chapter panels are copied into every game by the build.
 games/*/site/chapters.css
+
+# The Mad Master of Edinburgh Castle: built by tools/build.mjs
+games/hutchinson/site/app.js
+games/hutchinson/site/models/anims.js
+games/hutchinson/site/title.css
+games/hutchinson/site/chapters.css

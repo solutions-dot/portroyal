@@ -1,0 +1,47 @@
+{
+ "name": "hx_man",
+ "era": 1773,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "age": 0.4,
+  "muscle": 0.66,
+  "weight": 0.46,
+  "height": 0.54
+ },
+ "garments": {
+  "sleeve": 0.42,
+  "breeches": true,
+  "breechkind": "drawers",
+  "collar": false,
+  "hairvol": 0.25,
+  "hat": []
+ },
+ "colors": {
+  "Skin": [
+   152,
+   104,
+   76
+  ],
+  "Shirt": [
+   196,
+   184,
+   154
+  ],
+  "Breeches": [
+   150,
+   138,
+   110
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "strong",
+ "crowd": true
+}

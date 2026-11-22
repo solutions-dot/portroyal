@@ -1,0 +1,81 @@
+{
+ "name": "hx_hutton",
+ "era": 1773,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.74,
+  "muscle": 0.4,
+  "weight": 0.58,
+  "height": 0.5
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "coat": true,
+  "coatsleeve": 0.84,
+  "coathem": 0.04,
+  "breeches": true,
+  "shoes": true,
+  "stockings": true,
+  "buckles": true,
+  "bands": true,
+  "hairvol": 0.4,
+  "hat": [
+   [
+    "felt",
+    "Hat"
+   ]
+  ]
+ },
+ "colors": {
+  "Skin": [
+   214,
+   168,
+   140
+  ],
+  "Shirt": [
+   228,
+   222,
+   206
+  ],
+  "Coat": [
+   62,
+   84,
+   68
+  ],
+  "Breeches": [
+   168,
+   150,
+   112
+  ],
+  "Stockings": [
+   208,
+   202,
+   188
+  ],
+  "Shoes": [
+   34,
+   26,
+   22
+  ],
+  "Hat": [
+   30,
+   28,
+   28
+  ],
+  "Hair": [
+   168,
+   164,
+   156
+  ],
+  "Bands": [
+   238,
+   234,
+   224
+  ]
+ },
+ "face": "elder"
+}
