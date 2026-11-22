@@ -8,9 +8,9 @@ export const GAME = {
   fiction: "You are Quaco, aged fourteen. You are fictional. The killer, the doctor and the young man who came for him were real.",
   mature: ["This story is about a man who killed travellers on a lonely road.", "It has fear, a gunshot and a hanging. Nothing is shown close up."],
   recap: [
-    { icon: "⌚", label: "Forty-three watches", page: "watches" },
-    { icon: "⚖️", label: "Who could speak in court", page: "silenced" },
-    { icon: "📜", label: "Record and story", page: "legend" },
+    { icon: "⌚", label: "Forty-three watches", page: "watches", img: "recap/watches.jpg" },
+    { icon: "⚖️", label: "Who could speak in court", page: "silenced", img: "recap/silenced.jpg" },
+    { icon: "📜", label: "Record and story", page: "legend", img: "recap/legend.jpg" },
   ],
 };
 export const CHAPTERS = [
