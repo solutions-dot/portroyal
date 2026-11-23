@@ -527,7 +527,7 @@ function gut() {
     /* while the family hides (chapter 5) Sammy keeps by Gran: left wandering, he walked off to the front yard through the house and
        out of the cave (owner, 23 November 2026: "Sammy walks through walls and people in chapter 5"). Otherwise he plays about the yard. */
     const sammy = Q.people?.find((p) => p.id === "brother");
-    if (sammy?.amb) Q.storyLife?.respec(sammy, stage >= 50 ? { kind: "watch", idles: ["Idle", "LookAround", "HeadTurn"], react: ["HeadTurn"], every: [5, 9] } : { kind: "wander" });
+    if (sammy?.amb) Q.storyLife?.respec(sammy, stage >= 50 ? { kind: "watch", idles: ["Idle", "HeadTurn"], react: ["HeadTurn"], every: [5, 9] } : { kind: "wander" });
   };
   /* people. Story people (person) by the house, the chapel and the yard; the village (crowd) by the step that brings them. */
   person(Q, "gran", "gran", -4.2, 2.6, face(-4.2, 2.6, -3.8, 6.6), { kind: "watch", at: [-3.8, 6.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
@@ -538,7 +538,7 @@ function gut() {
   person(Q, "bogle", "bogle", 13.2, -2.4, face(13.2, -2.4, 9, -2), { kind: "watch", at: [9, -2], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
   person(Q, "constable", "constable", 4.4, 3.0, face(4.4, 3.0, 12, -2), { kind: "watch", at: [12, -2], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 9] });
   /* the village: neighbours at their work, children */
-  crowd(Q, "mb_woman", -9.4, -2.9, 0, { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-11, -1], when: [8, 49] });
+  crowd(Q, "mb_woman", -19.7, -4.0, 0, { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-15, -3.4], when: [8, 49] });   /* at the far side of the yam hills, working toward you (owner, 23 November 2026: move her further back, behind the yam hills) */
   crowd(Q, "mb_man", 5.6, 4.6, 0, { kind: "work", between: [[5.6, 4.6], [2.4, 3.2]], walk: "Walk", idle: "IdleM", when: [8, 29] });
   crowd(Q, "mb_oldman", 11.4, 7.0, face(11.4, 7, 9, 8.6), { kind: "watch", at: [9, 8.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9], when: [8, 49] });
   crowd(Q, "mb_woman", -2.0, -7.0, 0, { kind: "chat", group: "c", at: [-1.6, -7.4], when: [8, 29] });
@@ -672,6 +672,9 @@ function bay() {
   const volley = add(Q, S.smoke(8, { rise: 1.2, spread: 3.2, size: 1.6, tint: 0xd8d4cc }), 0.3, -5.2, 1.4);   /* the white smoke of the volley along the steps */
   volley.visible = false;
   volley.traverse((o) => (o.userData.noAudit = true));
+  /* who falls at the volley: two at the front of the crowd, nearest the steps, about 12 m from Hannah with nobody between, never close
+     (docs/games/morant-bay.md: people fall at a distance, behind the opt-in card, and the camera cuts away before anyone lies still) */
+  const falls = (i, row, col) => col === 4 && (row === 0 || row === 1);
   Q.films.riot = (t, Q) => {
     const crowdN = (Q.extras || []).filter((n) => n.riot),
       vol = (Q.extras || []).filter((n) => n.vol);
@@ -696,7 +699,7 @@ function bay() {
     crowdN.forEach((n, i) => {
       const row = i % 4,
         col = Math.floor(i / 4),
-        home = [-2 + col * 2.2 + (row % 2) * 0.9, -1.4 + row * 1.5],
+        home = falls(i, row, col) ? [1.2 + row * 1.4, -3.0 - row * 0.3] : [-2 + col * 2.2 + (row % 2) * 0.9, -1.4 + row * 1.5],   /* the two who fall stand out in front, nearest the steps */
         start = [30 + col * 1.6, -0.4 + row * 1.1];
       let p, clip;
       if (t < 18) {
@@ -707,6 +710,7 @@ function bay() {
       } else if (t < 31) {
         p = home;
         clip = t > 27.2 && t < 30 ? "Duck2" : i % 2 ? "Yell" : "Angry";
+        if (falls(i, row, col) && t > 27.6) clip = "FallBack";   /* the owner's fall (anims_mb): far off, in the smoke; the camera cuts away at 29.9 s, before they reach the ground */
         n.m.rotation.y = Math.PI;
       } else {
         const k = Math.min(1, (t - 31) / 5),
@@ -718,10 +722,11 @@ function bay() {
       n.x = p[0];
       n.z = p[1];
       n.m.position.set(p[0], 0, p[1]);
-      n.m.visible = t > 2;
+      n.m.visible = t > 2 && !(falls(i, row, col) && t >= 29.9);   /* after the cut nobody is left lying on the Parade (the line for this game: never a body) */
       if (n.clipNow !== clip) {
         n.clipNow = clip;
-        n.ctl.play(clip);
+        if (clip === "FallBack") n.ctl.cue(clip, true);   /* asked for by the film on purpose (engine/anim.js NOT_IDLE) */
+        else n.ctl.play(clip);
       }
     });
     vol.forEach((n, i) => {

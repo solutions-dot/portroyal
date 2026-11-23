@@ -214,7 +214,7 @@ export const FILMS = {
   riot: {
     place: "bay", next: 48, journal: "eleventh", title: "The eleventh of October",
     read: ["Between three and four o'clock a crowd came to the court-house with sticks, cutlasses and guns, blowing shells and beating drums.", "The Custos called \"Peace, peace\" and was answered \"War\". Stones were thrown, the Volunteers fired, and people fell. The school-house was set alight and the fire spread to the court-house. It grew dark."],
-    captions: [[0, "Behind the stall. Between three and four o'clock."], [4, "Shells and drums, from the east road."], [10, "Hundreds of people come onto the Parade."], [17, "The Custos calls out: \"Peace, peace.\""], [20, "The crowd answers: \"War.\""], [23, "He begins to read the Riot Act. Stones fly."], [27.5, "The Volunteers fire."], [30, "People fall. People run."], [34, "The crowd rushes the steps."], [39, "Someone sets the school-house alight."], [45, "The fire spreads to the court-house. It grows dark."]],
+    captions: [[0, "Behind the stall. Between three and four o'clock."], [4, "Shells and drums, from the east road."], [10, "Hundreds of people come onto the Parade."], [17, "The Custos calls out: \"Peace, peace.\""], [20, "The crowd answers: \"War.\""], [23, "He begins to read the Riot Act. Stones fly."], [27.5, "The Volunteers fire."], [28.4, "People fall."], [29.9, "You hide your eyes. People run."], [34, "The crowd rushes the steps."], [39, "Someone sets the school-house alight."], [45, "The fire spreads to the court-house. It grows dark."]],
     shots: [
       { t: 0, p: [-9.0, 0.78, 4.4], look: [6, 1.0, 1] },
       { t: 4, p: [-9.0, 0.78, 4.4], look: [24, 1.3, 0] },
@@ -222,13 +222,15 @@ export const FILMS = {
       { t: 17, p: [-8.9, 0.8, 4.3], look: [0, 1.7, -6] },
       { t: 23, p: [-8.8, 0.82, 4.2], look: [2, 1.3, -3] },
       { t: 27.3, p: [-8.8, 0.82, 4.2], look: [0, 1.5, -5.6] },
-      { t: 30, p: [-8.9, 0.78, 4.3], look: [3, 0.8, -1] },
+      { t: 28.4, p: [-8.8, 0.82, 4.2], look: [2.2, 1.0, -3.0] },   /* to the front of the crowd by the steps: two fall, far off in the smoke */
+      { t: 29.9, cut: true, p: [-9.1, 0.66, 4.5], look: [-10.7, 0.45, 3.3] },   /* a cut, 2.1 s into the fall (down at 2.2 s, still from 2.6 s): she turns her face into the dark under the stall before anyone lies still */
+      { t: 31.5, p: [-8.9, 0.78, 4.3], look: [3, 0.8, -1] },
       { t: 34, p: [-8.9, 0.78, 4.3], look: [0, 1.4, -6] },
       { t: 39, p: [-8.0, 0.9, 4.0], look: [-16.5, 4.4, -9.5] },   /* past the end of the stall, and looking up to the school-house fire rising over the second shed (?test=lens) */
       { t: 45, p: [-9.0, 0.82, 4.5], look: [-1, 4, -11] },
       { t: 52, p: [-9.0, 0.84, 4.6], look: [-6, 3, -10] },
     ],
-    fov: [[0, 52], [4, 34], [10, 50], [17, 30], [23, 40], [27.3, 34], [30, 48], [34, 44], [39, 40], [45, 46], [52, 52]],
+    fov: [[0, 52], [4, 34], [10, 50], [17, 30], [23, 40], [27.3, 34], [28.4, 30], [29.89, 30], [29.9, 50], [31.5, 48], [34, 44], [39, 40], [45, 46], [52, 52]],
     acts: [],
     sounds: [[1, "shell"], [3, "drum"], [4, "drum"], [5, "shell"], [8, "crowd"], [12, "crowd"], [20, "crowd"], [24, "crowd"], [27.5, "volley"], [30, "crowd"], [34, "crowd"], [39, "fire"], [45, "fire"], [48, "sad"]],
     duration: 55,

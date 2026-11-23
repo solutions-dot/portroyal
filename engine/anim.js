@@ -10,14 +10,14 @@ export const mixers = [];      /* every mixer made by animate(); the game update
 let peopleClip = null; export function setFallbackClip(c) { peopleClip = c; }   /* used when a named clip is missing */
 export function loadClips(gltf) { for (const a of gltf.animations) CL[a.name] = a; }
 const _gp = new THREE.Vector3();
-export const HIPS_Y = /^(Sit|Injured|StumbleBack|JogStumble|Terrified|Pray|Sad|Sword|Slash|Block|Punch|Laugh|Sheathe|Draw|Write|Kneel|Crawl|Scared|Duck|Hurt|PlayGuitar|PlayPiano|TalkM3$|AskQuestion$)/;   /* clips whose hips go low (sitting, kneeling, crouching, a sore stoop): keep their hips height, or a kneeling body would stand at full height on bent legs */
+export const HIPS_Y = /^(Sit|Injured|StumbleBack|FallBack|JogStumble|Terrified|Pray|Sad|Sword|Slash|Block|Punch|Laugh|Sheathe|Draw|Write|Kneel|Crawl|Scared|Duck|Hurt|PlayGuitar|PlayPiano|TalkM3$|AskQuestion$)/;   /* clips whose hips go low (sitting, kneeling, crouching, a sore stoop): keep their hips height, or a kneeling body would stand at full height on bent legs */
 /* seated clips: the hips stay over the spot the game put the person, and face the way the game turned them. Most are named Sit*, but some seated clips are not. */
 export const SEATED = /^(Sit|TalkM3$|AskQuestion$|PlayPiano$|Pray4$)/;
 export const isSeated = (name) => SEATED.test(name || '');
 /* Clips never used to fill idle time (owner, 19 November 2026: a person standing about and looking around "looks silly"). Every idle, reaction and
    background-life choice in the engine skips them (idleOK), a body never rests on one (animate), and the controller will not play one (play)
    unless a scene asks for it on purpose with ctl.cue(name) (Nanny Town: the soldiers look up into the trees when they hear something). */
-export const NOT_IDLE = new Set(['LookAround', 'LookOverShoulder']);
+export const NOT_IDLE = new Set(['LookAround', 'LookOverShoulder', 'FallBack']);   /* FallBack: Morant Bay's fall at the volley, only ever cued by its film */
 export const idleOK = (k) => !NOT_IDLE.has(k);
 /* walking clips (played in place, paced to the ground speed by ctl.pace) and the looping clips whose ends are joined so they never snap */
 export const WALKS = /^(Walk|WalkM|WalkM2|Run|RunM2|Carry|SadWalk|CarryBagWalk|CarryHeadWalk2?|HoldWalk|HurtWalk|InjuredWalk|RifleWalk2?|RifleCrouchWalk)$/;

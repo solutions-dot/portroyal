@@ -410,3 +410,18 @@ import './fit-rig.mjs';
 import './posture.mjs';
 import './story-first.mjs';
 import './menu-library.mjs';
+
+test('sun shadows: the phone stub answers every call the desktop version has (23 Nov 2026: a missing relight() stopped four games loading on phones)', async () => {
+  const { sunShadow } = await import('../engine/sunshadow.js');
+  const { DirectionalLight } = await import('three');
+  const renderer = { shadowMap: {} }, desk = sunShadow(renderer, new DirectionalLight(), { phone: false }), phone = sunShadow(renderer, new DirectionalLight(), { phone: true });
+  for (const [k, v] of Object.entries(desk)) if (typeof v === 'function') assert.equal(typeof phone[k], 'function', 'phone stub lacks ' + k + '()');
+});
+
+test('shot paths: a cut jumps, a run glides (engine/shotpath.js)', async () => {
+  const { shotPath } = await import('../engine/shotpath.js');
+  const P = shotPath([{ t: 0, p: [0, 0, 0], look: [0, 0, -1] }, { t: 4, p: [4, 0, 0], look: [4, 0, -1] }, { t: 4.5, cut: true, p: [100, 0, 0], look: [100, 0, -1] }, { t: 8, p: [104, 0, 0], look: [104, 0, -1] }]);
+  assert.ok(P.at(4.4).p.x <= 4.001, 'held at the end of the first run until the cut');
+  assert.ok(P.at(4.5).p.x >= 99.999, 'jumps at the cut');
+  assert.ok(P.at(2).p.x > 0.5 && P.at(2).p.x < 3.5, 'glides within a run');
+});

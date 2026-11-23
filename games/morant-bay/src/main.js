@@ -1049,6 +1049,7 @@ onLoadFail(() => {
 (async () => {
   try {
     loadClips(await model("anims"));
+    loadClips(await model("anims_mb"));   /* this game's own clip: the fall at the volley (tools/morant-bay/pack_clips.mjs) */
     $("bar").style.width = "25%";
     const Q = await ensure(GAME.title.place);
     current = GAME.title.place;

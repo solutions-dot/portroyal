@@ -60,6 +60,7 @@
      issues()               dev: lines for a held item that is hidden, not in the hand, or shrunk to nothing.
 
    checkFlow(story, opts) is the engine side of ?test=flow. See its comment. */
+import { drawOnTop } from './ontop.js';
 import { Box3 } from 'three';
 import { grip as engineGrip } from './grip.js';
 import { pickUp, putDown } from './audio.js';
@@ -208,14 +209,16 @@ function fitCarry(camera, item, bounds, left) {
 }
 
 /* ---------- the player's hand ---------- */
-export function createCarry({ camera = null, body = null, side = 'Right', slot = [0.32, -0.4, -0.6], grip = engineGrip, gripOpts = {}, view = 'first', fit = false, sound = true } = {}) {
+/* onTop (default on): a thing held in front of the eye is drawn over the world (engine/ontop.js), so it never sinks into a wall, a post or a
+   counter you walk up to (Morant Bay, 23 November 2026: the basket passed through the market stalls) */
+export function createCarry({ camera = null, body = null, side = 'Right', slot = [0.32, -0.4, -0.6], grip = engineGrip, gripOpts = {}, view = 'first', fit = false, sound = true, onTop = true } = {}) {
   const C = { held: null, mode: view, placed: [] };
   const bounds = new Box3();
   C.fitView = () => {
     if (fit && C.held?.parent === camera && camera.isPerspectiveCamera) fitCarry(camera, C.held, bounds, (C.opts.slot || slot)[0] < 0);
   };
   function release() {
-    const it = C.held; if (!it) return; const w = it.parent;
+    const it = C.held; if (!it) return; const w = it.parent; drawOnTop(it, false);
     if (w && w.userData && w.userData.carryWrap) { const hand = w.parent; if (hand) hand.remove(w); if (body && body.userData.grips) body.userData.grips = body.userData.grips.filter((g) => g.wrap !== w); w.remove(it); }
     else if (it.parent) it.parent.remove(it);
   }
@@ -230,6 +233,7 @@ export function createCarry({ camera = null, body = null, side = 'Right', slot =
       }
       it.position.set(s[0], s[1], s[2]);
       camera.add(it);
+      if (onTop) drawOnTop(it);
       C.fitView();
     }
     else { const w = grip(body, side, it, { ...gripOpts, ...(o.grip || {}) }); if (!w) throw new Error('carry: the body has no ' + side + ' hand'); w.userData.carryWrap = true; }
