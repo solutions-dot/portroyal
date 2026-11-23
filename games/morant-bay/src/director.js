@@ -147,7 +147,11 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
             tone(180, 150, 0.6, "sawtooth", 0.008, 0.3, 0.5);
           } else if (what === "fire") crackle();
           else if (what === "shell") {
-            tone(174, 168, 1.6, "sawtooth", 0.016, 0.5, 0);   /* a conch shell blown far off, the call of the crowd */
+            /* a conch shell blown on the hill, the call that brought the men out (owner: "dont hear the shell blown"): two long, loud blasts */
+            for (const d of [0, 2.1]) {
+              tone(174, 166, 1.7, "sawtooth", 0.07, 0.25, d);
+              tone(348, 332, 1.7, "triangle", 0.03, 0.25, d);
+            }
           } else if (what === "volley") {
             /* a ragged volley of muskets, close: cracks one after another, then the boom off the hills */
             for (let i = 0; i < 6; i++) noiseHit(2200, 0.7, 0.06, 0.32, -0.2 + i * 0.08, i * 0.07);

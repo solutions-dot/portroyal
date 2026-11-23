@@ -62,7 +62,7 @@ function person(Q, id, cast, x, z, ry = 0, life = null, opts = {}) {
 function crowd(Q, look, x, z, ry, life, opts = {}) {
   /* the story's own marks (when they are on stage, a part in a camera scene, a thing in the hand) belong to the person, not the behaviour */
   const own = {};
-  for (const k of ["when", "watcher", "riot", "vol", "held", "uniform", "march", "lead"]) if (life && k in life) {
+  for (const k of ["when", "watcher", "riot", "vol", "held", "uniform", "march", "lead", "police", "rise"]) if (life && k in life) {
     own[k] = life[k];
     delete life[k];
   }
@@ -220,9 +220,14 @@ function gut() {
     add(Q, S.postRail(x1 - x0, 1.15), (x0 + x1) / 2, z0);
     wall(Q, (x0 + x1) / 2, z0, x1 - x0, 0.3);
   }
-  add(Q, S.postRail(3.6, 1.15), 8.6, -5.6).rotation.y = Math.PI / 2;
-  wall(Q, 8.6, -5.6, 0.3, 3.6);
-  point(Q, "yard", 7.2, -1.2, "the gap in Bogle's fence");
+  /* the west side of the yard: a fence with one narrow gap between two posts (owner, 23 November 2026: the watching place was out in the open,
+     in a wide gateway), and bushes either side of it to hide behind */
+  for (const [z0, z1] of [[-7.4, -2.3], [-1.3, 1.4]]) {
+    add(Q, S.postRail(z1 - z0, 1.15), 8.6, (z0 + z1) / 2).rotation.y = Math.PI / 2;
+    wall(Q, 8.6, (z0 + z1) / 2, 0.3, z1 - z0);
+  }
+  for (const [x, z, sz] of [[7.6, -3.1, 1.25], [7.5, -0.3, 1.15]]) solid1(Q, bush(x * 13 | 0, sz), x, z, 1.0, 1.0);
+  point(Q, "yard", 7.5, -1.8, "the gap in Bogle's fence");
   /* the chapel: a long thatched house, its door to the south */
   const ch = add(Q, dyn(bushChapel(5.4, 10)), CHAPEL.x, CHAPEL.z);
   for (const [x, z, w, d] of [[CHAPEL.x, CHAPEL.z - 5, 5.6, 0.4], [CHAPEL.x - 2.7, CHAPEL.z, 0.4, 10], [CHAPEL.x + 2.7, CHAPEL.z, 0.4, 10], [CHAPEL.x - 2.0, CHAPEL.z + 5, 1.6, 0.4], [CHAPEL.x + 2.0, CHAPEL.z + 5, 1.6, 0.4]]) wall(Q, x, z, w, d);
@@ -325,7 +330,7 @@ function gut() {
   point(Q, "table", CHAPEL.x + 0.2, CHAPEL.z - 2.8, "the table");
   /* the drill in Bogle's yard (chapter 3): men in lines, sticks on their shoulders. Watched from the gap in the fence. */
   Q.reveal.drill = () => {};
-  point(Q, "drill", 7.6, -1.0, "the fence");
+  point(Q, "drill", 7.5, -1.8, "the fence");
   /* the cave in the limestone, north-west */
   wall(Q, CAVE.x, CAVE.z - 2.6, 6.4, 1.6);
   /* the limestone the cave runs into: a low face of grey rock behind the mouth, and woods on the slope beyond (a smooth hill stood here and read
@@ -427,6 +432,28 @@ function gut() {
       walkTo(n, x, z, Math.PI, k > 0 && k < 1);
     }
   };
+  /* the warrant (10 October): a party of police comes up the track to Bogle's gate; at the shell and the drum the men come out of the chapel
+     and stand round them (owner, 23 November 2026: "dont see the police marching"). The report says police went with a warrant and were
+     held by some hundreds of men; here a few stand for them. */
+  for (let i = 0; i < 3; i++) crowd(Q, "mb_constable", 2.2 + (i % 2) * 0.9, 11.0 + i * 0.8, Math.PI, { kind: "watch", at: [8, 0], idles: ["IdleM"], react: [], every: [8, 12], when: [35, 36], police: i, uniform: "police" });   /* only for the scene: after it the police are let go down the hill */
+  Q.films.warrant = (t) => {
+    const all = Q.extras || [];
+    for (const n of all.filter((n) => n.police !== undefined)) {
+      if (t < 0) { n.amb.held = false; continue; }
+      const i = n.police, k = Math.max(0, Math.min(1, (t - 4) / 9)),
+        x0 = -0.6 + (i % 2) * 1.1, z0 = 13.4 + i * 0.5, x1 = 5.4 + i * 0.9, z1 = 2.4 + (i % 2) * 1.0;
+      walkTo(n, x0 + (x1 - x0) * k, z0 + (z1 - z0) * k, k < 1 ? Math.atan2(x1 - x0, z1 - z0) : face(x1, z1, 10, -3), k > 0 && k < 1);
+    }
+    const con = Q.people?.find((p) => p.id === "constable");
+    if (con && t >= 0) { const k = Math.max(0, Math.min(1, (t - 3) / 9)); con.x = 1.2 + 3.2 * k; con.z = 13 - 10 * k; con.m.position.set(con.x, 0, con.z); con.m.rotation.y = k < 1 ? Math.atan2(3.2, -10) : face(con.x, con.z, 12, -2); if (con.walkNow !== (k > 0 && k < 1)) { con.walkNow = k > 0 && k < 1; con.ctl.play(con.walkNow ? "Walk" : "IdleM"); } }
+    for (const n of all.filter((n) => n.rise !== undefined)) {
+      if (t < 0) { n.amb.held = false; n.m.visible = true; continue; }
+      if (n.home === undefined) n.home = [n.x, n.z];
+      const k = Math.max(0, Math.min(1, (t - 21 - n.rise * 0.5) / 5)), x0 = CHAPEL.x + (n.rise % 3) * 0.8 - 0.8, z0 = CHAPEL.z + 5.4;
+      n.m.visible = t >= 21 + n.rise * 0.5;
+      walkTo(n, x0 + (n.home[0] - x0) * k, z0 + (n.home[1] - z0) * k, k < 1 ? Math.atan2(n.home[0] - x0, n.home[1] - z0) : -Math.PI / 2, k > 0 && k < 1);
+    }
+  };
   /* the hour and what stands or has burned, by step */
   Q.enter = (stage) => {
     const night = (stage >= 30 && stage <= 34) || stage === 59,
@@ -467,7 +494,7 @@ function gut() {
       at("deacon", CHAPEL.x + 0.9, CHAPEL.z - 3.4, CHAPEL.x, CHAPEL.z - 4);
       at("father", CHAPEL.x - 1.2, CHAPEL.z - 0.6, CHAPEL.x, CHAPEL.z - 4.5);   /* on a bench inside, with the other men */
     } else if (stage >= 35 && stage < 40) {
-      at("father", 10.2, -0.4, 13, -4);
+      at("father", 13.4, -6.4, 14, -9);   /* in the yard, in the line of men (clear of the gap in the fence the player looks through) */
       at("mother", H.x + 4.4, H.z + 0.6, 4, 2);   /* out from the wall, clear of the cook fire at (-3.8, 6.6), and a step from Sammy */
       at("brother", H.x + 5.6, H.z + 2.2, 4, 2);
       at("gran", H.x + 3.4, H.z - 1.5, 4, 2);   /* clear of the door leaf as it swings out (owner: she stood in the door) */
@@ -500,7 +527,7 @@ function gut() {
   crowd(Q, "mb_woman", -2.0, -7.0, 0, { kind: "chat", group: "c", at: [-1.6, -7.4], when: [8, 29] });
   crowd(Q, "mb_man", -1.2, -7.8, 0, { kind: "chat", group: "c", when: [8, 29] });
   /* the men drilled in Bogle's yard (chapter 3, morning): lines of men with sticks */
-  for (let i = 0; i < 6; i++) crowd(Q, ["mb_man", "mb_man2", "mb_oldman", "mb_townman", "mb_man", "mb_man2"][i], 10 + (i % 3) * 1.8, -5.6 + Math.floor(i / 3) * 2.6, -Math.PI / 2, { kind: "watch", at: [9, -2], idles: ["IdleM"], react: ["Nod"], every: [6, 10], when: [35, 39] });
+  for (let i = 0; i < 6; i++) crowd(Q, ["mb_man", "mb_man2", "mb_oldman", "mb_oldman", "mb_townman", "mb_man"][i], 11.2 + (i % 3) * 1.5, -6.2 + Math.floor(i / 3) * 2.2, -Math.PI / 2, { kind: "watch", at: [14, -9], idles: ["IdleM"], react: ["Nod"], every: [6, 10], when: [35, 39], rise: i });   /* drilling toward Bogle's house, side-on to the fence */
   /* chapter 5: soldiers in the yard; one is the watcher */
   crowd(Q, "mb_soldier", 4.2, 0.6, -Math.PI / 2, { kind: "watch", at: [-10, 0], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 8], when: [51, 55], watcher: true, uniform: "soldiers" });
   crowd(Q, "mb_soldier", 5.6, -1.8, Math.PI, { kind: "watch", at: [5.6, -6], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 8], when: [51, 55], uniform: "soldiers" });
@@ -768,7 +795,7 @@ function bay() {
   const KINDS = ["mb_man", "mb_woman", "mb_oldman", "mb_man2", "mb_woman2", "mb_townman"];
   for (let i = 0; i < 20; i++) crowd(Q, KINDS[((i % 4) + 2 * Math.floor(i / 4)) % 6], 15.5 + Math.floor(i / 4) * 1.5, 6.4 + (i % 4) * 1.3, -Math.PI / 2, { kind: "watch", at: [0, 0], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [46, 47], riot: true });
   /* the volunteers on the court-house steps */
-  for (let i = 0; i < 4; i++) crowd(Q, i === 0 ? "mb_vestryman" : "mb_constable", -3 + i * 2.2, -5.6, 0, { kind: "watch", at: [0, 4], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [42, 47], vol: true, uniform: "volunteers", ...(i ? { held: "musket" } : {}) });
+  for (let i = 0; i < 4; i++) crowd(Q, i % 2 === 0 ? "mb_vestryman" : "mb_townman", -3 + i * 2.2, -5.6, 0, { kind: "watch", at: [0, 4], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [42, 47], vol: true, uniform: "volunteers", ...(i ? { held: "musket" } : {}) });
   /* chapter 6: soldiers at the temporary court-house, prisoners on its benches */
   crowd(Q, "mb_soldier", 6.2, 6.2, face(6.2, 6.2, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
   crowd(Q, "mb_soldier", 16.2, 6.4, face(16.2, 6.4, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
