@@ -190,6 +190,8 @@ def trim_seat(bm):
         if v.co.y>cap: v.co.y=cap+(v.co.y-cap)*0.3
     bm.normal_update()
 G=P['garments']; parts=[]; OLD=P.get('era',1915)<1800
+LATE=OLD and P.get('era',1690)>=1770      # coats of 1773 and 1799 (Hutchinson, Shark Papers; owner 23 November 2026, "collars and sleeves look awful on these"): a slim sleeve to the wrist with a close cuff, and a neckcloth that sits close round the throat, not the 1690 wide sleeve and broad cravat
+if LATE and G.get('coat') and G.get('coatsleeves',True): G['coatsleeve']=max(G.get('coatsleeve',0.82),0.92)
 if G.get('skirt') and not OLD and not G.get('belt') and G.get('waistband',True):      # a later skirt without a belt gets its own waistband, in the skirt's cloth: it covers the join of blouse and skirt, which otherwise flickered and showed ragged when seated
     G['belt']=True
     if 'Belt' not in P['colors'] and 'Skirt' in COL: COL['Belt']=COL['Skirt']*0.88      # the skirt's own cloth, a shade deeper at the seam
@@ -260,7 +262,7 @@ def sleeve_tube_old(r0,r1,cuff=None,blend=False):      # the 1690 coat keeps the
         elif cuff and t>cuff[0]: R=cuff[1]*s
         rn=max(r+0.004,R); v.co=q+d/r*(r+(rn-r)*k)
     return f
-def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005):
+def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005,fit=False):      # fit: a close sleeve of the 1770s and 1790s, the arm's own smoothed size (never wider further down) plus a little room, not a straight taper (which a muscular arm forced to a balloon at the shoulder)
     # one straight taper from the shoulder to the wrist: the fixed tube, widened at the shoulder end just enough to clear the arm by `ease` at every station (a tube that
     # kept the upper arm's full size all the way to the elbow read as a sausage; one that followed the arm read as muscle)
     n=len(_ARM_RAW)-1; _big=max(_ARM_RAW[int(0.22*n):int(0.5*n)]); r0=min(r0,(_big+0.008+ease)/s); r1=min(r1,(_ARM_RAW[n]+0.012+ease)/s)      # never more than about a centimetre of room on a thin arm: the fixed tube was sized for a grown man, and on a boy or a slim woman a short sleeve stood out as a wide bell (owner, 21 November 2026: "shoulders for boy are way too puffy")
@@ -268,7 +270,7 @@ def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005):
     def f(v):
         c=v.co
         if abs(c.x)<SX*0.92: return
-        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; R=max(R0+(R1-R0)*t,_arm_r(t,_ARM_RAW)+ease+0.004); k=sstep(0.0,0.10,t)*(1-sstep(0.092,0.118,r_b/s))      # the whole sleeve from just below the shoulder seam, and every point of a thick arm: starting at a fifth of the way down and reaching only 7.5 cm, it left the shoulder muscle and the outside of a strong upper arm as they were, in lumps (owner, 21 November 2026: "very lumpy")
+        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; R=(_arm_r(t)+ease+0.006 if fit else max(R0+(R1-R0)*t,_arm_r(t,_ARM_RAW)+ease+0.004)); k=sstep(0.0,0.10,t)*(1-sstep(0.092,0.118,r_b/s))      # the whole sleeve from just below the shoulder seam, and every point of a thick arm: starting at a fifth of the way down and reaching only 7.5 cm, it left the shoulder muscle and the outside of a strong upper arm as they were, in lumps (owner, 21 November 2026: "very lumpy")
         k*=sstep(SX*0.92,SX*1.02,abs(c.x))      # eased in from the armhole, so the chest beside the arm is not pulled out      # (a wider reach was tried and pulled the side of a jacket's skirt out beside the hanging arm, into a bell: the Emperor's tunic, 21 November 2026)
         if blend: k*=sstep(SX*0.92,SX*1.12,abs(c.x))      # eased in from the shoulder, so the cloth does not crease at the armpit
         if cuff and not OLD: R=R+(max(cuff[1]*s,_arm_r(t,_ARM_RAW)+0.004)-R)*sstep(cuff[0]-0.14,cuff[0],t)      # later eras: the sleeve narrows smoothly into its cuff (a step left it a wide bell round the wrist)
@@ -292,10 +294,14 @@ def under_coat(c):   # the shirt sleeve between shoulder and cuff is hidden by t
 # untucked (2010 and later): a T-shirt hangs loose over the waistband to the top of the thigh
 parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if OLD else (HIP+0.090 if P.get('era',1915)<1940 else HIP+0.100)) if G.get('breeches') and not G.get('untucked') else HIP-(0.075 if G.get('untucked') else 0.02)) and arm_ok(c,sleeve) and not under_coat(c),lambda c:0.003 if OLD and G.get('breeches') and c.z<HIP+0.13 else (0.012 if abs(c.x)>SX*0.8 else 0.008),'Shirt',shape=sleeve_tube(0.053,0.042,(sleeve-0.07,0.036 if OLD else 0.031) if sleeve>0.8 else None) if not G.get('woman') else (puff_tube(sleeve) if G.get('puff') else sleeve_tube(0.050,0.038,(sleeve-0.06,0.032 if OLD else 0.029) if sleeve>0.8 else None)),post=((lambda bm:smooth_edge(bm,ok=lambda c:not (c.y<0 and c.z>VZ-0.012 and abs(c.x)<0.075*s))) if G.get('woman') and CK=='camp' else smooth_edge if G.get('woman') else ((smooth_edge if OLD else None) if G.get('coat') else ((lambda bm:(drape_front(bm),smooth_edge(bm))) if G.get('smooth') else (drape_front if OLD else neck_edge)))),
    cuts=[((0,0,NECK+0.005-(0.062*s if G.get('coat') and G.get('coatsleeves',True) else 0)),(0,0,1),None),((0,-0.1,NCUT),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+([((0,0,VZ),Vector((-VK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,VZ),Vector((VK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if CK=='camp' else [])+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar; a camp collar opens the front in a narrow V
+def smooth_shoulders(bm):      # the later coat: where the thin sleeve meets the thicker body cloth, a few points over the shoulder stood up as small fins; even them out
+    vs=[v for v in bm.verts if SX*0.75<abs(v.co.x)<SX*1.15 and v.co.z>NECK-0.16*s]
+    for _ in range(4): bmesh.ops.smooth_vert(bm,verts=vs,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    bm.normal_update()
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
     sl=G.get('coatsleeves',True)
-    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Coat',shape=sleeve_tube_old(0.041,0.037,(cs-0.13,0.047),blend=True) if sl else None,post=lambda bm:(drape_front(bm),smooth_edge(bm,3 if sl else 10)),
+    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),(lambda c:0.022+(0.004-0.022)*(sstep(0.02,0.12,arm_axis(c)[1]) if abs(c.x)>SX*0.92 else 0)) if LATE else (lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022),'Coat',shape=(sleeve_tube(0.030,0.022,(cs-0.09,0.030),blend=True,ease=0.005,fit=True) if LATE else sleeve_tube_old(0.041,0.037,(cs-0.13,0.047),blend=True)) if sl else None,post=lambda bm:(drape_front(bm),smooth_edge(bm,3 if sl else 10),LATE and smooth_shoulders(bm)),
        cuts=[((0,0,collar),(0,0,1),None),((0,-0.1,collar-0.045*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)]+(cuts_sleeve(cs) if sl else [((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)]))
     parts.append(('coat',coat))
     hem=G.get('coathem')
@@ -1383,24 +1389,24 @@ if G.get('bands'):
     CT=tree_of(PART['coat']) if G.get('coat') else SHT
     def cfront(z,x=0.0):
         hit=CT.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]; return hit.y if hit else shirt_front(z,x)
-    bm=bmesh.new(); seg=28; hs=0.036*s; cols=[]
+    bm=bmesh.new(); seg=28; hs=(0.027 if LATE else 0.036)*s; cols=[]; _o=(0.009,0.007,0.004,0.001) if LATE else (0.013,0.010,0.006,0.0015)      # (a later neckcloth is lower and lies close)
     for k in range(seg):
-        a=2*math.pi*k/seg; f=0.5+0.5*math.cos(a); b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.013); col=[]
+        a=2*math.pi*k/seg; f=0.5+0.5*math.cos(a); b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,_o[0]); col=[]
         for dz in (0.085,0.045):
             zz=b0.z-dz*s*(0.25+0.75*f)*sstep(0.80,0.55,abs(math.atan2(math.sin(a),math.cos(a)))); rr=rad_out(zz,a)+0.004;      # the yoke fills the coat's low front only: round the sides and back the coat's own neck facing covers the join
             col.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
-        col+=[b0,collar_pt(a,NECK-0.004+hs*0.5,NECK-0.012*s+hs*0.5,0.010+0.0012*math.sin(a*3+0.5)),collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,0.006),collar_pt(a,NECK-0.004+hs-0.005,NECK-0.012*s+hs-0.005,0.0015)]      # (3 to 4 mm closer to the neck: further out it touched the coat's neck when walking)
+        col+=[b0,collar_pt(a,NECK-0.004+hs*0.5,NECK-0.012*s+hs*0.5,_o[1]+0.0012*math.sin(a*3+0.5)),collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,_o[2]),collar_pt(a,NECK-0.004+hs-0.005,NECK-0.012*s+hs-0.005,_o[3])]      # (3 to 4 mm closer to the neck: further out it touched the coat's neck when walking)
         cols.append([bm.verts.new(q) for q in col])
     rings=[list(r) for r in zip(*cols)]; quadstrip(bm,rings[2:],close=True); by=bmesh.new(); quadstrip(by,[[by.verts.new(v.co) for v in r] for r in rings[:3]],close=True)
     for v in rings[0]+rings[1]: bm.verts.remove(v)
     _cb=soft('Collar',bm,'Bands',only=('Spine2','Neck','LeftShoulder','RightShoulder')); ring_weights(_cb,seg,len(rings)-2); soft('CollarYoke',by,'Bands',only=TORSO+('LeftArm','RightArm'))      # (the band's weights evened round the neck, as later collars: point by point it tore into teeth when he walked)      # the yoke lies on the skin under the coat, so it moves as the skin does (shoulders and upper arms too) and stays under the coat when the shoulders lift
     bm=bmesh.new(); yb=collar_pt(0,NECK-0.004,NECK-0.004-0.008*s,0.016); zk=yb.z-0.006*s; yk=min(yb.y,cfront(zk))-0.007        # the knot, then the two hanging ends: they lie on the coat, a little splayed, widening to the hem
-    knot=bmesh.ops.create_uvsphere(bm,u_segments=10,v_segments=6,radius=0.015*s,matrix=Matrix.Translation((0,yk,zk)))
+    knot=bmesh.ops.create_uvsphere(bm,u_segments=10,v_segments=6,radius=(0.011 if LATE else 0.015)*s,matrix=Matrix.Translation((0,yk,zk)))
     for v in knot['verts']: v.co.x=v.co.x*1.6; v.co.y=yk+(v.co.y-yk)*0.7; v.co.z=zk+(v.co.z-zk)*0.9
     for sx in (-1,1):
-        n=8; L=0.15*s; rows=[]
+        n=8; L=(0.075 if LATE else 0.15)*s; rows=[]      # (later: two short ends below a small knot, not the long falling bands of 1690)
         for t in range(n+1):
-            f=t/n; z=zk-0.004-L*f; w=(0.022+0.020*f)*s; cx=sx*(0.007+0.013*f)*s
+            f=t/n; z=zk-0.004-L*f; w=((0.016+0.008*f) if LATE else (0.022+0.020*f))*s; cx=sx*(0.007+0.013*f)*s
             y=min(cfront(z,cx-w*0.5),cfront(z,cx),cfront(z,cx+w*0.5))-0.005-0.004*math.sin(f*3.1)
             if f<0.3: y=min(y,yk+0.002)
             rows.append([bm.verts.new((cx-w*0.5,y,z)),bm.verts.new((cx,y-0.003,z)),bm.verts.new((cx+w*0.5,y,z))])
@@ -1411,7 +1417,7 @@ if G.get('coat') and OLD and G.get('coatsleeves',True):      # the coat's neck e
     bm=bmesh.new(); seg=24; cols=[]; a0=0.62
     for k in range(seg+1):
         a=a0+(2*math.pi-2*a0)*k/seg; e=min(1.0,min(k,seg-k)/2.0); b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.016); col=[collar_pt(a,NECK-0.004+0.011*s*e,NECK-0.004-0.008*s+0.011*s*e,0.0205),collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.0235)]
-        for dz in (0.028,0.062):
+        for dz in ((0.022,0.042) if LATE else (0.028,0.062)):      # (the later coat is thinner at the shoulder: a deeper facing stood out there as fins)
             zz=b0.z-dz*s*(0.4+0.6*e); rr=rad_out(zz,a)+0.0265; col.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
         cols.append([bm.verts.new(q) for q in col])
     quadstrip(bm,[list(r) for r in zip(*cols)]); _cn=soft('CoatNeck',bm,'Coat',only=TORSO+('LeftArm','RightArm')); ring_weights(_cn,seg+1,len(cols[0]))      # evened round the neck too (dark flaps stood up from it when walking)
