@@ -144,7 +144,7 @@ test('the check finds what is wrong: inside a solid, on a story path, sliding, a
   N = 0; const life = createAmbient({ bounds: PLACE.bounds, walls: PLACE.walls, blocked, keepOff: KEEP, stride: () => STRIDE });
   life.add(person(9, 5, { id: 'intable' }), { kind: 'watch', at: [0, 0] });
   life.add(person(12, 8, { id: 'onpath' }), { kind: 'watch', at: [12, 0] });
-  life.add(person(20, 13, { id: 'statue' }), { kind: 'watch', at: [20, 0], every: [40, 40] });
+  life.add(person(20, 13, { id: 'statue' }), { kind: 'watch', at: [20, 0], every: [40, 40], idles: ['Idle'] }   /* kept to the plain Idle on purpose (as police on duty): the engine leaves it so, and the check must still see the statue */);
   life.add(person(3, 13, { id: 'nosuch' }), { kind: 'work', clip: 'Sweep' });
   life.add(person(22, 2, { id: 'emptyhand' }), { kind: 'work', clip: 'CarryIdle' });
   life.add(person(14, 14, { id: 'alone' }), { kind: 'chat', group: 'solo' });

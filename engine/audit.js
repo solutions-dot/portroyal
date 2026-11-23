@@ -83,7 +83,7 @@ export function auditPlace(place) {
   if (place.props !== false) stuck.push(...auditProps(L.map((m) => m.prop).filter(Boolean)));
   if (place.passage !== false && place.walls && place.bounds && place.start && Number.isFinite(place.start.x)) {
     const spots = [...(place.actions || []).map((a) => ({ ...a, r: (a.r || 1.45) * 0.9 })), ...(place.people || []).filter((p) => !isSeated(p.anim)).map((p) => ({ ...p, r: 2.3 }))].filter((s) => s && Number.isFinite(s.x) && Number.isFinite(s.z)).map((s) => ({ label: s.label || s.id || 'spot', x: s.x, z: s.z, r: s.r }));   /* the same reach as the check above: a thing within its own reach, a person within 2.3 m */
-    stuck.push(...auditPassage({ walls: place.walls, bounds: place.bounds, start: place.start, r: 0.23, spots, ...(place.passWide ? { wide: place.passWide } : {}) }));   /* passWide: a place narrow by nature (inside a pipe) sets its own */
+    stuck.push(...auditPassage({ walls: place.walls, bounds: place.bounds, start: place.start, r: place.passR ?? 0.23, spots, ...(place.passWide ? { wide: place.passWide } : {}) }));   /* passR: walls already drawn round where the player's centre can go (Port Royal's walk grid) */   /* passWide: a place narrow by nature (inside a pipe) sets its own */
   }
   return { id: place.id, floating, inside: inside.concat(overlap, cut, wcut), stuck };
 }

@@ -44,7 +44,7 @@ function village({ id, year, phase }) {
   put(home, SPOT.home[0], SPOT.home[1]); wall(-29.8, -10.8, -22.2, -4.55); g.userData.home = home;
   /* ---- Miss Hyacinth's old board house ---- */
   const hy = house({ w: 5.2, d: 4, style: 'board', wall: [198, 176, 130], roofRgb: after ? [140, 140, 136] : [144, 120, 104], roof: after ? 'off' : 'on', shutters: after ? 'closed' : 'open', seed: 12, shutCol: 0x3a6a8a, damaged: after ? 1 : 0, door: ['pairBoard', { color: 0x4e7a8a, w: 1.0 }] });   /* Miss Hyacinth's old house: a pair of narrow board doors with jalousie tops, painted to match her shutters */
-  put(hy, SPOT.hyacinth[0], SPOT.hyacinth[1], PI); wall(-6.8, 4.75, -1.2, 10.7);
+  put(hy, SPOT.hyacinth[0], SPOT.hyacinth[1], PI); wall(-6.8, 4.75, -1.2, 10.7); wall(-7.4, 10.7, -0.9, 12.6);   /* the strip behind her house, against the edge of the place: closed (you could only squeeze in through a 0.5 m gap; engine/audit-passage.js) */
   /* ---- the block house of the neighbour (Mass Clifford in 1988, his son Raymond in 2025) ---- */
   const bl = house({ w: 6, d: 4.4, style: 'block', wall: old ? [236, 224, 196] : tone[2], roofRgb: after ? [150, 154, 150] : [150, 154, 150], roof: after ? 'half' : 'on', shutters: after ? 'boarded' : 'open', seed: 13, tank: !old, tarp: after, shutCol: 0x2a5a8a, door: y51 ? ['jalousiePair51', { color: 0x3f6e4a }] : y88 ? ['panelGrille88', { color: 0x5a3220 }] : ['panelGrille88', { color: 0x4a2a1c, grilleCol: 0x2a2c2e }] });   /* Miss Ivy's 1951 block house: a pair of jalousie doors; Mass Clifford's and Raymond's: a hardwood door behind burglar bars */
   put(bl, SPOT.raymond[0], SPOT.raymond[1]); wall(12.8, -11.1, 19.2, -4.55); if (!old) wall(20.6, -9.9, 22.3, -8.4);   /* the tank stand */

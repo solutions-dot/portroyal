@@ -294,7 +294,7 @@ const indoor = new THREE.Group(); indoor.visible = false; scene.add(indoor); let
 /* a cloth sack (engine/sack.js), standing, or lying on its side (lying: it rests with its tied neck toward -x of its own turn ry) */
 function sackAt(x, y, z, s, { lying = false, ry = 0, seed = 1, parent, mat } = {}) {
   const g = makeSack({ material: mat, seed, h: 0.66, r: 0.25 }); g.scale.setScalar(s); g.rotation.set(0, 0, 0);
-  if (lying) { const o = new THREE.Group(); g.rotation.z = Math.PI / 2; g.position.set(0.33 * s, 0.25 * 0.88 * s, 0); o.add(g); o.position.set(x, y, z); o.rotation.y = ry; (parent || cur).add(o); return o; }
+  if (lying) { const o = new THREE.Group(); g.rotation.z = Math.PI / 2; g.position.set(0.33 * s, 0.29 * s, 0);   /* its bulge rests on the ground */ o.add(g); o.position.set(x, y, z); o.rotation.y = ry; (parent || cur).add(o); return o; }
   g.position.set(x, y, z); g.rotation.y = ry + seed * 1.7; (parent || cur).add(g); return g;
 }
 function mk(geo, mat, x, y, z, parent) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); (parent || cur).add(m); return m; }
@@ -335,10 +335,10 @@ function buildHarbour() {
   const cask = (x, y, z, lying) => { const g = new THREE.Group(); g.position.set(x, y + (lying ? 0.36 : 0.45), z); if (lying) { g.rotation.z = Math.PI / 2; g.rotation.y = x * 2.3; } scene.add(g); mk(caskG, caskM, 0, 0, 0, g); for (const [hy, hg] of hoopG) mk(hg, ironM, 0, hy, 0, g); };
   const crateM = std(plankTex([150, 118, 78], 4, 1, 1));
   const crate = (x, y, z, s, r) => { const g = new THREE.Group(); g.position.set(x, y + s / 2, z); g.rotation.y = r; scene.add(g); B(s, s, s, crateM, 0, 0, 0, g); for (const a of [-1, 1]) for (const b of [-1, 1]) { B(0.07, s + 0.03, 0.07, timber, a * s / 2, 0, b * s / 2, g); B(s + 0.03, 0.07, 0.07, timber, 0, a * s / 2, b * s / 2, g); B(0.07, 0.07, s + 0.03, timber, a * s / 2, b * s / 2, 0, g); } };
-  const sack = (x, y, z, s) => sackAt(x, y, z, s, { lying: true, ry: x, seed: Math.round(x * 7), mat: sackM });   /* sacks lying in a heap (they were squashed balls) */
+  const sack = (x, y, z, s, ry = x) => sackAt(x, y, z, s, { lying: true, ry, seed: Math.round(x * 7), mat: sackM });   /* sacks lying in a heap (they were squashed balls) */
   const nStreet = scene.children.length;   /* everything from here on is solid: the pier casks and crates, Kofi's barrels, the crate stacks and the street cargo */
   cask(SHORE + 2.2, 0.05, 1.32); cask(SHORE + 2.95, 0.05, 1.32); cask(SHORE + 4.6, 0.05, 1.12, true); crate(SHORE + 14.6, 0.05, 1.1, 0.8, 0.2); crate(SHORE + 15.5, 0.05, 1.05, 0.6, 0.6); crate(SHORE + 14.6, 0.85, 1.1, 0.55, 0.2); sack(SHORE + 13.7, 0.05, 1.2, 1);
-  for (const [x, z, k] of [[20.6, 5.4, 0], [21.3, 5.7, 0], [20.9, 6.5, 2], [19.95, -3.2, 1], [20.95, -2.8, 0], [21.85, -3.3, 1], [20.65, -3.9, 3], [21.45, -4.1, 3], [21.05, -4.0, 4]]) { if (k === 0) cask(x, 0, z); else if (k === 2) cask(x, 0, z, true); else if (k === 1) crate(x, 0, z, 0.75, x); else if (k === 3) sack(x, 0, z, 1); else sack(x, 0.3, z, 0.9); }
+  for (const [x, z, k] of [[20.6, 5.4, 0], [21.3, 5.7, 0], [20.9, 6.5, 2], [19.95, -3.2, 1], [20.95, -2.8, 0], [21.85, -3.3, 1], [20.75, -4.0, 3], [21.32, -4.0, 3], [21.03, -4.0, 4]]) { if (k === 0) cask(x, 0, z); else if (k === 2) cask(x, 0, z, true); else if (k === 1) crate(x, 0, z, 0.75, x); else if (k === 3) sack(x, 0, z, 1, Math.PI / 2); else sack(x, 0.46, z, 0.9, Math.PI / 2); }   /* two sacks side by side, a third on top */
   for (const [x, z, k] of [[-9.6, -4.4, 0], [3.4, 4.35, 0], [4.15, 4.4, 1], [-13.2, 4.4, 0], [11.6, -4.4, 1], [12.3, -4.45, 0]]) { if (k) crate(x, 0.12, z, 0.65, 0.1); else cask(x, 0.12, z); }
   crate(19.0, 0, 3.85, 0.7, 0.1); crate(19.8, 0, 3.95, 0.7, -0.15); crate(19.4, 0.7, 3.9, 0.55, 0.3);   /* the stack Kofi carries crates from */
   for (const [x, z, k] of [[20.45, -6.0, 0], [21.2, -6.1, 0], [20.75, -6.95, 1], [20.85, -7.95, 2], [21.0, -5.25, 3]]) { if (k === 0) cask(x, 0, z); else if (k === 1) crate(x, 0, z, 0.72, x); else if (k === 2) cask(x, 0, z, true); else sack(x, 0, z, 1); }   /* cargo on the far side of the harbour corner, by the water, so the way along the houses to the sand spit and Fort Charles stays open (it was shut, found by ?test=audit) */

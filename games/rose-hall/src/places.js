@@ -561,7 +561,7 @@ function house({ phone } = {}) {
   };
   Q.tickers.push((t) => {
     const k = 0.3 + Math.sin(t * 11) * 0.012 + Math.sin(t * 5.3) * 0.01;
-    for (const s of Object.values(sets)) s.material.size = k;
+    void k;   /* the candle sets (engine/flame.js) flicker by themselves; they were points whose size was set here */
     if (lamp && lamp.intensity && !filming) lamp.intensity = 9 + Math.sin(t * 9.1) * 0.8 + Math.sin(t * 4.7) * 0.6;
   });
 

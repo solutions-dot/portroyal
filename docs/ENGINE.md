@@ -647,3 +647,12 @@ The owner asked for houses that "wow" up close "without sacrificing performance"
 - `sway(mesh, { amp, speed, seed })`: a tick that moves a curtain's lower edge in a breeze (give its plane some segments).
 
 `engine/building-tex.js` also got `roofUV(geo, tile, slope)` reworked so tiles and corrugations run level on every face of a hip roof. Used by Windrush (the house on posts, Celia's room, the terraces' windows, Iris's 2018 home). Port Royal, Tivoli and Melissa still draw their own zinc and boards: move them over when their houses are next touched.
+
+
+## engine/sack.js, engine/flame.js; the two new checks in auditPlace (23 November 2026)
+
+- `makeSack({ material, h, r, seed })`: one cloth sack, slumped, folded, tied at the neck. Every game's `sack()` uses it; Port Royal's `sackAt` lays it standing or lying. They were balls (Port Royal) or a cylinder with a cap.
+- `candleFlame({ s, seed })`: a real candle flame (pale core, orange outer flame, blue root, wick, glow) that flickers by itself while drawn. `candleSet(positions)` draws a room of candles as instanced copies (Rose Hall's chandeliers). Used in Port Royal, Rose Hall, Melissa, Hutchinson's horn lantern.
+- `hearthFire({ s, bed })`: Port Royal's tavern fire (the owner's choice for every fireplace): flame tongues, embers, charred logs, ash; it moves by itself and crackles while the camera is within 7 m. Used in Port Royal's tavern, Hutchinson's cooking fire and corner hearth, Nanny Town's cooking fires. Windrush's 1948 fireplace is not lit.
+- `auditPlace` now runs `auditPassage` (room to pass, 0.9 m; each spot within its own reach) and `auditProps` for every game, from the snapshot it already takes (`snapMeshes` keeps each mesh's prop notes). A game that runs them itself with richer spots passes `passage: false, props: false` (Hutchinson, Rose Hall, Shark Papers, Windrush, Selassie). `passWide` lets a place narrow by nature set its own width (Bog Walk's Tube, 0.75); Port Royal passes `passage: false` (its 0.5 m walk grid already says where you can get). Fixed in the checks themselves: a lamp's cord or a fixture's own finial is not "something stuck in a pot"; props are noted before scenery is merged.
+- Background life (`engine/ambient.js`): a watcher or a pause in the plain Idle always changes or glances within a few seconds; the head leads a turn on the spot, which never takes over 2.5 s; a glance is drawn at middle distance too.

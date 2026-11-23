@@ -27,7 +27,8 @@ export function propsOf(meshes) {
     const size = b.getSize(new THREE.Vector3());
     const p = o.geometry.parameters || {};
     o.matrixWorld.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
-    out.push({ type: o.geometry.type, p, b, size, scale: s.clone(), clear: [].concat(o.material).some((m) => m && m.transparent && m.opacity < 0.9), up: Math.abs(new THREE.Vector3(0, 1, 0).applyQuaternion(o.getWorldQuaternion(new THREE.Quaternion())).y) > 0.97 });
+    const mat = [].concat(o.material)[0], who = (o.name || (o.parent && o.parent.name) || '') + (mat && mat.color ? ' #' + mat.color.getHexString() : '');
+    out.push({ who, type: o.geometry.type, p, b, size, scale: s.clone(), clear: [].concat(o.material).some((m) => m && m.transparent && m.opacity < 0.9), up: Math.abs(new THREE.Vector3(0, 1, 0).applyQuaternion(o.getWorldQuaternion(new THREE.Quaternion())).y) > 0.97 });
   }
   return out;
 }
@@ -40,8 +41,8 @@ export function auditProps(list) {
   for (const pot of pots) {
     const top = pot.b.max.y, c = pot.b.getCenter(new THREE.Vector3()), r = Math.min(pot.size.x, pot.size.z) / 2;
     const stuck = thin.find((t) => t !== pot && (Math.max(t.size.x, t.size.z) >= 0.03 || Math.max(t.size.x, t.size.z) < 0.5 * r) &&   /* a straight candle that fills its socket is held, not stuck */
-      t.b.min.y >= top - 0.06 && t.b.min.y <= top + 0.005 && t.b.max.y > top + 0.03 && t.size.y < 0.5 &&   /* not a lamp's cord rising to the ceiling */ Math.hypot((t.b.min.x + t.b.max.x) / 2 - c.x, (t.b.min.z + t.b.max.z) / 2 - c.z) < r * 0.6);   /* standing in the middle of the top, not a tube at the rim */
-    if (stuck) out.push(`prop solid pot at (${f(c.x)}, ${f(top)}, ${f(c.z)}): something stands in a closed cylinder ${Math.round(r * 200)} cm across; give it an opening (engine/vessel.js)`);
+      t.b.min.y >= top - 0.06 && t.b.min.y <= top + 0.005 && t.b.max.y > top + 0.03 && t.size.y < 0.5 && t.who !== pot.who &&   /* not a lamp's cord rising to the ceiling, nor the same fixture's own finial (one iron part on another) */ Math.hypot((t.b.min.x + t.b.max.x) / 2 - c.x, (t.b.min.z + t.b.max.z) / 2 - c.z) < r * 0.6);   /* standing in the middle of the top, not a tube at the rim */
+    if (stuck) out.push(`prop solid pot at (${f(c.x)}, ${f(top)}, ${f(c.z)}): something stands in a closed cylinder ${Math.round(r * 200)} cm across (${pot.who}; in it ${stuck.who}, ${Math.round(stuck.size.y * 100)} cm tall); give it an opening (engine/vessel.js)`);
   }
   for (const m of list) {
     if (m.type !== 'BoxGeometry' || !m.up || m.clear) continue;   /* a glass top is meant to be thin */
