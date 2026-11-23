@@ -97,7 +97,7 @@ export const CH2 = {
    a state of emergency was declared on 23 May 2010; barricades blocked the entrances before the operation. Who built the barricades is not stated: our sources do not say. ---------- */
 export const CH4 = {
   start: ['Sunday 23 May 2010.', 'You live in Tivoli Gardens with Gran Ivy.', 'The girl from Back-o-Wall is a grandmother now.'],
-  goals: ['Talk to Gran Ivy by the gate.', 'Talk to Miss Dawn at the shop.', 'Talk to Mr Brown near the bus stop.', 'Go home through the gate.'],
+  goals: ['Talk to Mr Brown near the bus stop.', 'Talk to Miss Dawn at the shop.', 'Talk to Gran Ivy by the gate.', 'Go home through the gate.'],
   talk: {
     gran: [
       { who: 'Gran Ivy', text: 'There you are! Stay close to me today.' },

@@ -107,7 +107,7 @@ export function buildNewTivoli(opts = {}) {
 
   const npcs = opts.cast || [
     { id: 'ivy', name: 'Ivy', look: 'ivyGirl', x: -4.5, z: -2.6, ry: 0.4, anim: 'Idle' },
-    { id: 'pearl', name: 'Miss Pearl', look: 'pearl', x: -24, z: -7.2, ry: 0, anim: 'Idle' },
+    { id: 'pearl', name: 'Miss Pearl', look: 'pearl', x: 12, z: 7.6, ry: Math.PI, anim: 'Idle' },
     { id: 'clarke', name: 'Mr Clarke', look: 'clarke', x: 29.2, z: 3.8, ry: -Math.PI / 2, anim: 'Idle' },
   ];
   for (const n of npcs) SO('person', n.id, n.x - 0.3, n.x + 0.3, n.z - 0.3, n.z + 0.3, 0, 1.7);

@@ -146,7 +146,7 @@ resize();
 let saved = null;
 try {
   saved = JSON.parse(localStorage.getItem(KEY));
-  if (saved && { 12: 13, 14: 15, 31: 32, 65: 66 }[saved.stage]) saved.stage = { 12: 13, 14: 15, 31: 32, 65: 66 }[saved.stage];   /* steps cut as busy work (owner rule 14): a save made there carries on from the next */
+  if (saved && { 12: 13, 14: 15, 22: 23, 31: 32, 54: 55, 61: 62, 65: 66 }[saved.stage]) saved.stage = { 12: 13, 14: 15, 22: 23, 31: 32, 54: 55, 61: 62, 65: 66 }[saved.stage];   /* steps cut as busy work (owner rule 14): a save made there carries on from the next */
   if (saved?.version !== 1 || !STEPS[saved.stage]) saved = null;
 } catch {}
 const S = {

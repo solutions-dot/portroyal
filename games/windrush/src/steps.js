@@ -50,9 +50,9 @@ export const STEPS = {
     "yard48",
     "Pack the book, photo and folded cloth.",
     ["packBook", "packPhoto", "packCloth"],
-    22,
+    23,
   ),
-  22: d("yard48", "Leave the family’s address with Pearl.", ["address"], 23),
+  /* 22 "Leave the family’s address with Pearl" was cut (owner rule 14): a carry just before saying goodbye to her, who has it in the talk */
   23: t("yard48", "Say goodbye to Pearl.", ["pearl"], 24),
   24: w("harbour48", "A goodbye at the harbour.", "film", 30, {
     film: "departure",
@@ -94,31 +94,20 @@ export const STEPS = {
   50: t("brixton48", "Talk to May about finding a room.", ["may"], 51),
   51: t("brixton48", "Ask about the advertised room.", ["gray"], 52),
   52: t("brixton48", "Talk with Samuel.", ["sam"], 53, "welcome"),
-  53: g("brixton48", "Find Celia by the green door.", "celiaDoor", 54),
-  54: d(
-    "brixton48",
-    "Bring the suitcase to Celia’s table.",
-    ["roomCase"],
-    55,
-  ),
+  53: g("brixton48", "Find Celia by the green door.", "celiaDoor", 55),   /* 54 "Bring the suitcase to Celia’s table" was cut (owner rule 14): the second suitcase carry in a row */
   55: t("brixton48", "Talk to Celia at the table.", ["celia"], 56),
   56: w("brixton48", "The first evening in a new home.", "firstNight", 60),
   60: t(
     "brixton62",
     "Hear about May and Samuel’s work.",
     ["may", "sam"],
-    61,
+    62,
     "work",
   ),
-  61: d(
-    "brixton62",
-    "Prepare a letter and a postal order.",
-    ["homeLetter", "postalOrder"],
-    62,
-  ),
+  /* 61 "Prepare a letter and a postal order" was cut (owner rule 14): three pickups to an envelope beside them; the envelope is posted ready */
   62: d(
     "brixton62",
-    "Take the envelope to the postbox.",
+    "Post the letter and postal order to Jamaica.",
     ["post"],
     63,
     "twohomes",
