@@ -328,11 +328,19 @@ function gut() {
   Q.reveal.drill = () => {};
   point(Q, "drill", 7.6, -1.0, "the fence");
   /* the cave in the limestone, north-west */
-  add(Q, caveMouth(4), CAVE.x, CAVE.z - 1.2);
   wall(Q, CAVE.x, CAVE.z - 2.6, 6.4, 1.6);
   /* the limestone the cave runs into: a low face of grey rock behind the mouth, and woods on the slope beyond (a smooth hill stood here and read
      as a green blob behind the village, owner 23 November 2026) */
-  for (const [dx, dz, sz, h, sd] of [[-3.6, -5.6, 4.2, 3.4, 41], [0.4, -6.4, 4.8, 4.2, 42], [4.2, -5.4, 3.6, 2.8, 43]]) add(Q, S.outcrop(sz, h, sd), CAVE.x + dx, CAVE.z + dz);
+  const rockFace = grp();   /* one formation: the cave mouth and the rock round it (its stones lie into each other, as rock does) */
+  const cm = caveMouth(4);
+  cm.position.set(0, 0, -1.2);
+  rockFace.add(cm);
+  for (const [dx, dz, sz, h, sd] of [[-3.6, -5.6, 4.2, 3.4, 41], [0.4, -6.4, 4.8, 4.2, 42], [4.2, -5.4, 3.6, 2.8, 43]]) {
+    const o = S.outcrop(sz, h, sd);
+    o.position.set(dx, 0, dz);
+    rockFace.add(o);
+  }
+  add(Q, rockFace, CAVE.x, CAVE.z);
   wall(Q, CAVE.x + 0.3, CAVE.z - 5.8, 11, 2.6);
   for (const [dx, dz, h, sd] of [[-6, -9, 8, 51], [-1, -10.5, 9, 52], [4, -9.4, 7.5, 53], [8, -11, 8.5, 54], [-9, -12.5, 9, 55]]) add(Q, tree(h, sd, 1), CAVE.x + dx, CAVE.z + dz);
   point(Q, "cave", CAVE.x + 0.2, CAVE.z + 0.6, "the cave");
