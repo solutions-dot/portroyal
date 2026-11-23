@@ -1502,6 +1502,7 @@ if G.get('apron'):
         def cut(co,no):
             bmesh.ops.bisect_plane(b,geom=b.verts[:]+b.edges[:]+b.faces[:],plane_co=Vector(co),plane_no=Vector(no).normalized(),clear_outer=True,dist=1e-5)
         cut((0,_hy+0.01,0),(0,1,0)); cut((0,_hy,0),(math.cos(AH),math.sin(AH),0)); cut((0,_hy,0),(-math.cos(AH),math.sin(AH),0)); cut((0,0,ZA-0.004+(0.010 if BELTR else 0)),(0,0,1)); cut((0,0,ZE),(0,0,-1))
+        bmesh.ops.remove_doubles(b,verts=b.verts[:],dist=0.0004)      # the skirt's seams joined first: lifted along each side's own normal, a seam down the front opened into a slit the skirt showed through (owner, 23 November 2026: "the aprons had tears")
         b.normal_update()
         for v in b.verts:
             rad=Vector((v.co.x,v.co.y-_hy,0)); n=v.normal if v.normal.dot(rad)>=0 else -v.normal; v.co+=Vector((n.x,n.y,0)).normalized()*(0.012+0.008*sstep(HIP,KNEE,v.co.z)) if Vector((n.x,n.y,0)).length>1e-6 else Vector((0,-0.012,0))
@@ -2157,6 +2158,16 @@ if P.get('outfit'):      # the fitted suit (23 November 2026): the cloth check f
     if _O['Breeches'] and _O['Jacket']:
         _hz = J('Hips').z; _hy = J('Hips').y
         print('SYNC Jacket to the trousers over the seat', sync_weights(_O['Jacket'], _O['Breeches'], lambda c: _hz - 0.30 * s < c.z < _hz + 0.04 * s and c.y > _hy, 0.04))
+if globals().get('APRON_SEAT') and PART.get('skirt') and bpy.data.objects.get('Apron') is not None:
+    # The skirt under an apron is cut away where the apron always covers it (owner, 23 November 2026: "the aprons had tears"). The apron is cut from the skirt and moves
+    # with it, but the packer thins the skirt for the phone, crowd and light copies and the thinned folds came through the apron. What no one can see cannot show through,
+    # and the copies are lighter for it. A margin is kept inside the apron's sides, top and hem, so no gap opens at its edges; the seated skirt (SkirtSeat) is untouched.
+    _o=PART['skirt']; _b=bmesh.new(); _b.from_mesh(_o.data); _gone=[]
+    for f in _b.faces:
+        c=f.calc_center_median(); a=math.atan2(c.x,-(c.y-_hy))
+        if abs(a)<AH-0.22 and ZE+0.05<c.z<ZA-0.03 and all(abs(math.atan2(v.co.x,-(v.co.y-_hy)))<AH-0.18 and ZE+0.035<v.co.z<ZA-0.02 for v in f.verts): _gone.append(f)
+    bmesh.ops.delete(_b,geom=_gone,context='FACES_ONLY'); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS')
+    _b.to_mesh(_o.data); _b.free(); _o.data.update(); print('SKIRT UNDER APRON CUT',len(_gone))
 # The face is marked on the skin (1 on every point from the brow to the chin, cheek to cheek), and carried into the .glb as the attribute _FACE. tools/people/pack.mjs gives the
 # marked part its own share of triangles when it makes a light, crowd or phone copy, so eyes, brows and lips survive (simplified with the rest of the skin, a face in a crowd lost them).
 _fa=h.data.attributes.new('_FACE','FLOAT','POINT')
