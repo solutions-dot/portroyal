@@ -818,9 +818,10 @@ for k,o in parts:            # coat skirts follow both legs as one cloth, like A
         if k=='coatskirt' and G.get('coatopen',True): left=sstep(-0.004,0.004,v.co.x)      # an open coat's panels (two in front, two either side of the back vent) are separate cloths: each follows its own leg only      # an open coat's two front panels are separate cloths: each follows its own leg only (blended across the middle, the striding thigh came through the other panel's edge)   # the front panels ride on their own thigh (the knee carries them forward), the back hangs from the hips and opens at the vent
         shin=0.0
         if k=='skirt' and not OLD:      # below the knee a later skirt passes in part to the shins, all round: seated, it falls over the knees and down instead of standing out from the thighs like a tray
-            shin=0.7*sstep(KNEE+0.07,KNEE-0.08,v.co.z)
+            shin=0.7*sstep(KNEE+0.07,KNEE-0.08,v.co.z)*(1-0.35*sstep(J('Hips').y-0.02,J('Hips').y+0.08,v.co.y))      # a little less at the back (owner, 23 November 2026: running, the back leg kicks up and the hem tied to the shin was flung up and torn); seated and kneeling she wears the seated skirt
         for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left*(1-shin)),('RightUpLeg',leg*(1-left)*(1-shin)),('LeftLeg',leg*left*shin),('RightLeg',leg*(1-left)*shin)):
             if val>0.001: B[n].add([v.index],val,'REPLACE')
+    if k=='skirt' and not OLD: _smooth_bones(o,lambda c:c.z<KNEE+0.10,10)      # evened out along the lower skirt, so no two neighbouring points follow different legs (the hem broke into a sawtooth when running)
 # extra pieces bound to one bone: hat, cap, bands, apron
 def rigid(name,bm,mat,bone):
     me=bpy.data.meshes.new(name); bmesh.ops.recalc_face_normals(bm,faces=bm.faces[:]); bm.to_mesh(me); bm.free()

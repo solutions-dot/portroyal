@@ -186,7 +186,24 @@ export function seatSkirt(m) {
   for (const o of seat) o.visible = false;
   { const S0 = { seat, stand, on: false }; SEAT.set(m, S0); return S0; }
 }
+/* A long skirt and a high heel kick (owner, 23 November 2026, Abba running in Port Royal): the shared Run clip bends the back knee so far that the heel comes up to
+   the seat. Tied to the shin, the skirt's hem was flung up and torn; tied to the thigh, the shin came out through the back of the skirt. A woman in a long skirt
+   cannot kick that high, so while she wears the standing skirt each knee bends at most KNEE_MAX (the back of the skirt follows the shins in part, tools/garvey/era.py, so it lifts with the leg). */
+export const KNEE_MAX = 60 * Math.PI / 180, STRIDE = /Run|Jog|Walk|Sprint/;
+const _k1 = new THREE.Vector3(), _k2 = new THREE.Vector3(), _k3 = new THREE.Vector3(), _kax = new THREE.Vector3(), _kq = new THREE.Quaternion(), _kp = new THREE.Quaternion(), _kw = new THREE.Quaternion();
+function kneeHold(m, S) {
+  if (S.legs === undefined) { const bone = (n) => { let b = null; m.traverse((o) => { if (!b && o.isBone && o.name.replace(/[^A-Za-z0-9]/g, '').endsWith(n)) b = o; }); return b; };
+    S.legs = ['Left', 'Right'].map((sd) => ({ up: bone(sd + 'UpLeg'), kn: bone(sd + 'Leg'), ft: bone(sd + 'Foot') })).filter((l) => l.up && l.kn && l.ft && l.kn.parent === l.up); }
+  if (!S.legs.length) return; S.legs[0].up.parent.updateMatrixWorld(true);
+  for (const L of S.legs) {
+    L.up.getWorldPosition(_k1); L.kn.getWorldPosition(_k2); L.ft.getWorldPosition(_k3);
+    const th = _k2.clone().sub(_k1), sh = _k3.clone().sub(_k2), bend = th.angleTo(sh); if (bend <= KNEE_MAX || th.lengthSq() < 1e-8 || sh.lengthSq() < 1e-8) continue;
+    _kax.crossVectors(sh, th).normalize(); _kq.setFromAxisAngle(_kax, bend - KNEE_MAX);   /* the turn, in world space, that brings the shin back toward the thigh's line */
+    L.up.getWorldQuaternion(_kp); _kw.copy(_kp).multiply(L.kn.quaternion); _kw.premultiply(_kq); L.kn.quaternion.copy(_kp.invert().multiply(_kw)); L.kn.updateMatrixWorld(true);
+  }
+}
 export function skirtTick(m) { const S = SEAT.get(m), a = m.userData.anim; if (!S || !a) return;
+  if (!S.on) { let bx = null, bw0 = 0; for (const x of a.mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw0) { bw0 = w; bx = x; } } if (bx && STRIDE.test(bx.getClip().name)) kneeHold(m, S); }   /* only in a stride: a crouch or a pick-up keeps its own knees, or the feet would leave the ground */
   let best = null, bw = 0; for (const x of a.mx._actions) { const w = x.isRunning() ? x.getEffectiveWeight() : 0; if (w > bw) { bw = w; best = x; } }   /* the clip with the most weight now (a.cur lags while a clip fades in, and a tool may play one directly) */
   const c = (best || a.cur) && (best || a.cur).getClip(), n = c ? c.name : '', on = isSeated(n) || LOW_SKIRT.test(n);
   if (on === S.on) return; S.on = on; for (const o of S.seat) o.visible = on; for (const o of S.stand) o.visible = !on; }
