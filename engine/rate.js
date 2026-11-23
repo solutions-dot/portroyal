@@ -1,4 +1,4 @@
-/* engine/rate.js: the round "i" button on every game's own title screen (owner, 22 November 2026: "i wanted the 'i' moved to the other screen
+/* engine/rate.js: the round star button (it was an "i") on every game's own title screen (owner, 22 November 2026: "i wanted the 'i' moved to the other screen
    and it opens the pop up from there, and not have the 'i' on the main screen"). tools/dist.mjs puts this script into every published game
    page, as it does engine/freshen.js, so no game's own files change.
 
@@ -21,7 +21,8 @@
     var exit = document.getElementById('allgames');
     if (!exit || document.getElementById('infobtn')) return;
     var st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
-    var btn = document.createElement('button'); btn.id = 'infobtn'; btn.type = 'button'; btn.className = exit.className; btn.textContent = 'i';
+    var btn = document.createElement('button'); btn.id = 'infobtn'; btn.type = 'button'; btn.className = exit.className;
+    btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="display:block;margin:auto"><path fill="currentColor" d="M12 2.6l2.8 6.1 6.6.7-4.9 4.5 1.4 6.5L12 17.1l-5.9 3.3 1.4-6.5-4.9-4.5 6.6-.7z"/></svg>';   /* a star (owner, 23 November 2026: it was the letter i) */
     btn.setAttribute('aria-label', 'About this story, and rate it'); btn.setAttribute('aria-haspopup', 'dialog'); btn.title = 'About this story';
     exit.insertAdjacentElement('afterend', btn);
     var frame = null;
