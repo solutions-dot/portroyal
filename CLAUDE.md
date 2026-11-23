@@ -74,6 +74,8 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 
 14. **Immersive and playable, never busy work** (owner, 22 November 2026: "The games must feel immersive and playable, we have to balance education and fun without giving the user more busy work. But we must ensure the tasks we give them to look at and do are engaging and accurate."). Every task and every look must earn its place: something real to see or do, true to the sources, that moves the story on. Cut or merge a step that is only a button press. Check by eye that what the player is sent to see is really there and looks right (the floating hat in the Mad Master game passed every check), and add an audit for each new kind of fault (rule 8).
 
+15. **Check every character fully before calling it done** (owner, 23 November 2026: "make a rule to ensure you check every character thoroughly and dont give me half checked work. I am depending on you to do as you say"). After any change to a person's body or clothes, run `node tools/review/full-check.mjs <game> <id,...> anims=<the clips that person really plays>` for **every** person the change touches, in every game, and look at every cell of every sheet: each pose from the front, three-quarter, side and back, the clothes and the neck close up, and the phone and crowd copies. A passing cloth check is not enough on its own. In the report, say which people and poses were looked at, and name every fault still visible. Never say "fixed" or "no tears" about a person or pose that was not looked at.
+
 ## Quick commands
 
 ```bash

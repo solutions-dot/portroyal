@@ -32,7 +32,8 @@
   ],
   "hairvol": 0.0,
   "wrapbrow": 1.0,
-  "wrapoff": 0.5
+  "wrapoff": 0.5,
+  "beltfit": true
  },
  "colors": {
   "Skin": [
