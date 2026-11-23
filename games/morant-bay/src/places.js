@@ -313,22 +313,37 @@ function gut() {
   const sheet = plane(0.3, 0.4, solid(0xe8e0c8, 1, 0, { side: THREE.DoubleSide }), CHAPEL.x - 0.2, 0.96, CHAPEL.z - 4.0, Q.group);
   sheet.rotation.x = -Math.PI / 2;
   sheet.userData.noBatch = true;
-  const names = [];
+  const names = [], X0 = CHAPEL.x - 0.32;   /* X0: the margin each name starts from */
   for (let i = 0; i < 10; i++) {   /* a name in ink, line under line, each starting at the same margin */
     const len = 0.1 + ((i * 37) % 7) * 0.012,
-      n = box(len, 0.0015, 0.0045, solid(0x1e1a16, 1), CHAPEL.x - 0.32 + len / 2, 0.962, CHAPEL.z - 4.16 + i * 0.03, Q.group);
+      n = box(len, 0.0015, 0.0045, solid(0x1e1a16, 1), X0 + len / 2, 0.962, CHAPEL.z - 4.16 + i * 0.03, Q.group);
     n.userData.noBatch = true;
+    n.userData.len = len;
     n.visible = false;
     names.push(n);
   }
-  const pen = cyl(0.004, 0.003, 0.16, solid(0x2a2420, 1), CHAPEL.x - 0.05, 0.97, CHAPEL.z - 3.92, Q.group, 5);
-  pen.rotation.set(Math.PI / 2, 0, 0.6);
-  pen.userData.noBatch = true;
+  /* a dip pen held as you write (owner, 23 November 2026: it lay flat on the paper): a wooden holder with a steel nib, the nib on the paper and the
+     holder leaning back toward Hannah and a little to her right, about 50 degrees up from the table. The group's origin is the nib's point. */
+  const pen = new THREE.Group(), penTilt = new THREE.Group();
+  pen.add(penTilt);
+  penTilt.rotation.set(0.62, 0, -0.42);   /* the holder's top back toward the writer (+z) and to her right (+x) */
+  cyl(0.0045, 0.0035, 0.15, solid(0x5a3a22, 0.8), 0, 0.087, 0, penTilt, 6);   /* the holder */
+  cyl(0.0035, 0.0012, 0.014, solid(0x8a8a90, 0.4, 0.8), 0, 0.007, 0, penTilt, 6);   /* the steel nib */
+  pen.position.set(X0, 0.963, CHAPEL.z - 4.16);
+  Q.group.add(pen);
+  pen.traverse((o) => (o.userData.noBatch = true));
   Q.reveal.names = (seen) => {
     const k = K(seen);
-    names.forEach((n, i) => (n.visible = k > 0.1 + i * 0.08));
-    pen.position.z = CHAPEL.z - 4.16 + Math.min(9, Math.floor(k * 11)) * 0.033;
-    pen.position.x = CHAPEL.x - 0.12 + 0.06 * Math.sin(k * 60);
+    let at = null;
+    names.forEach((n, i) => {
+      const f = Math.max(0, Math.min(1, (k - 0.1 - i * 0.08) / 0.08)), L = n.userData.len;   /* each name is written out from the margin, the nib at its end */
+      n.visible = f > 0;
+      n.scale.x = Math.max(0.001, f);
+      n.position.x = X0 + (L * f) / 2;
+      if (f > 0) at = [X0 + L * f, n.position.z, f];
+    });
+    if (at) pen.position.set(at[0], 0.963 + (at[2] >= 1 ? 0.012 : 0.004 * Math.abs(Math.sin(k * 90))), at[1]);   /* the nib moves along the stroke, lifted off between names */
+    else pen.position.set(X0, 0.975, CHAPEL.z - 4.16);
   };
   point(Q, "table", CHAPEL.x + 0.2, CHAPEL.z - 2.8, "the table");
   /* the drill in Bogle's yard (chapter 3): men in lines, sticks on their shoulders. Watched from the gap in the fence. */
