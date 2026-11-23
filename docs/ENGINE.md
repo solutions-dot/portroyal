@@ -177,6 +177,7 @@ Owner: "Ensure our music, sound effects, ambient are on point for all games". A 
 
 - **The loudest bed of a place sits between 0.05 and 0.35** (the gain the bed really gets, after the game's own scale). Quiet places (a memorial, a room) sit near 0.05 to 0.07; busy streets, crowds and the shore 0.15 to 0.33.
 - **Every bed goes to 0.6 of its level while someone talks** (`mixBeds(..., { duck: true })`), so no bed is over the `sound` check's 0.3 during dialogue.
+- **All beds share one bus at 0.45** (`BED_BUS`, owner 23 November 2026: "all of the games have what sounds like the sea that drowns everything else out"). Noise sounds much louder than a voice line or a footstep at the same gain, and a place plays several beds at once, so every bed made with `chan()` or `cricketBed()` goes through `AU.bedBus` before the master. The levels above are the levels the mix sets; what reaches the ear is 0.45 of that. A game's scene sounds (a storm, a quake, a helicopter) do not use the bus.
 - **No place is silent**: every place has a bed, and most have a `once`, a small sound every 6 to 14 seconds (a bird, a dog, a car, a gull, a radio far off).
 - **Night has its own layer**: crickets (`AU.ch.cricket`, 0.03 to 0.12), and now and then an owl or a frog, where a place is shown at night or at dusk (Selassie's lane, Eventide's dusk and the night of the fire, Kendal's crash site; Nanny and Bog Walk have their own). Port Royal, Garvey and Windrush show no night.
 - **Music cues**: `cue('begin')` when play starts, `cue('sad')` once at a game's saddest moment (the Port Royal earthquake, the Kendal crash, the Eventide fire, the after card of Tivoli's street scene, Bog Walk), `cue('end')` on the last card.
@@ -656,3 +657,20 @@ The owner asked for houses that "wow" up close "without sacrificing performance"
 - `hearthFire({ s, bed })`: Port Royal's tavern fire (the owner's choice for every fireplace): flame tongues, embers, charred logs, ash; it moves by itself and crackles while the camera is within 7 m. Used in Port Royal's tavern, Hutchinson's cooking fire and corner hearth, Nanny Town's cooking fires. Windrush's 1948 fireplace is not lit.
 - `auditPlace` now runs `auditPassage` (room to pass, 0.9 m; each spot within its own reach) and `auditProps` for every game, from the snapshot it already takes (`snapMeshes` keeps each mesh's prop notes). A game that runs them itself with richer spots passes `passage: false, props: false` (Hutchinson, Rose Hall, Shark Papers, Windrush, Selassie). `passWide` lets a place narrow by nature set its own width (Bog Walk's Tube, 0.75); Port Royal passes `passage: false` (its 0.5 m walk grid already says where you can get). Fixed in the checks themselves: a lamp's cord or a fixture's own finial is not "something stuck in a pot"; props are noted before scenery is merged.
 - Background life (`engine/ambient.js`): a watcher or a pause in the plain Idle always changes or glances within a few seconds; the head leads a turn on the spot, which never takes over 2.5 s; a glance is drawn at middle distance too.
+
+## A building on fire: `engine/blaze.js` (23 November 2026)
+
+`blaze({ w, d, eave, ridge, seed })` returns a group: flames along the eaves and up through the roof, smoke drifting with the wind, sparks, and an orange light. `B.userData.setLevel(v)` (1 burning hard, about 0.4 the roof fallen in, about 0.1 smoke only, 0 out). It runs itself while drawn and crackles while the camera is near, as `engine/flame.js` does. It began as Eventide's fire night (`makeFire` in `games/eventide/src/places.js`), which still keeps its own copy: move Eventide over when you next touch that file. Used by Morant Bay (the school-house, the court-house, the chapel and the houses at Stony Gut).
+
+## People a chapter keeps off stage: `life.hide(n, off)` (engine/ambient.js, 23 November 2026)
+
+A crowd that belongs to one chapter (the market crowd, soldiers who come later) is hidden with `life.hide(n, true)` and brought back with `life.hide(n, false)`. Setting `amb.gone` by hand did not hold: the mood's own coming and going (`moodShow`) brought wanderers and chatters back. A hidden person is marked `amb.off`, and the mood leaves them alone.
+
+## Small animals: `engine/animals.js` (23 November 2026)
+
+`hen(seed)` returns a hen about 0.35 m to its comb that pecks now and then (`h.userData.tick(t)` each frame from the game's own ticker list). It began in Windrush (`games/windrush/src/scenery.js`, which now re-exports it from here) and is shared with Morant Bay.
+
+## Real sun shadows: `engine/sunshadow.js` (23 November 2026, the graphics pass)
+
+`const SH = sunShadow(renderer, sun, { phone })`; `SH.prepare(group)` once a place is built (and again once its people are in), `SH.relight()` right after the game sets its sun for an hour, `SH.enable(!Q.indoor)`, and `SH.follow(camera)` before each render. Desktop only: a phone pays nothing and keeps the blob shadows under people. A soft shadow map, 2048 texels over a 46 m box that follows the camera, snapped to whole texels so its edges do not crawl. People cast shadows but never receive them, so no face goes dark (rule 9); glows, water and see-through things neither cast nor receive. With shadows on, the sun is 15% stronger and the sky light 12% weaker outdoors, so the shadows read. In use: Morant Bay, The Mad Master, Rose Hall, The Shark Papers (the shared story kit). The other games set their lights their own way: wire it in when you touch them.
+

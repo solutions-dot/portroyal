@@ -190,6 +190,8 @@ def trim_seat(bm):
         if v.co.y>cap: v.co.y=cap+(v.co.y-cap)*0.3
     bm.normal_update()
 G=P['garments']; parts=[]; OLD=P.get('era',1915)<1800
+LATE=OLD and P.get('era',1690)>=1770      # coats of 1773 and 1799 (Hutchinson, Shark Papers; owner 23 November 2026, "collars and sleeves look awful on these"): a slim sleeve to the wrist with a close cuff, and a neckcloth that sits close round the throat, not the 1690 wide sleeve and broad cravat
+if LATE and G.get('coat') and G.get('coatsleeves',True): G['coatsleeve']=max(G.get('coatsleeve',0.82),0.92)
 if G.get('skirt') and not OLD and not G.get('belt') and G.get('waistband',True):      # a later skirt without a belt gets its own waistband, in the skirt's cloth: it covers the join of blouse and skirt, which otherwise flickered and showed ragged when seated
     G['belt']=True
     if 'Belt' not in P['colors'] and 'Skirt' in COL: COL['Belt']=COL['Skirt']*0.88      # the skirt's own cloth, a shade deeper at the seam
@@ -260,7 +262,7 @@ def sleeve_tube_old(r0,r1,cuff=None,blend=False):      # the 1690 coat keeps the
         elif cuff and t>cuff[0]: R=cuff[1]*s
         rn=max(r+0.004,R); v.co=q+d/r*(r+(rn-r)*k)
     return f
-def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005):
+def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005,fit=False):      # fit: a close sleeve of the 1770s and 1790s, the arm's own smoothed size (never wider further down) plus a little room, not a straight taper (which a muscular arm forced to a balloon at the shoulder)
     # one straight taper from the shoulder to the wrist: the fixed tube, widened at the shoulder end just enough to clear the arm by `ease` at every station (a tube that
     # kept the upper arm's full size all the way to the elbow read as a sausage; one that followed the arm read as muscle)
     n=len(_ARM_RAW)-1; _big=max(_ARM_RAW[int(0.22*n):int(0.5*n)]); r0=min(r0,(_big+0.008+ease)/s); r1=min(r1,(_ARM_RAW[n]+0.012+ease)/s)      # never more than about a centimetre of room on a thin arm: the fixed tube was sized for a grown man, and on a boy or a slim woman a short sleeve stood out as a wide bell (owner, 21 November 2026: "shoulders for boy are way too puffy")
@@ -268,7 +270,7 @@ def sleeve_tube(r0,r1,cuff=None,blend=False,ease=0.005):
     def f(v):
         c=v.co
         if abs(c.x)<SX*0.92: return
-        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; R=max(R0+(R1-R0)*t,_arm_r(t,_ARM_RAW)+ease+0.004); k=sstep(0.0,0.10,t)*(1-sstep(0.092,0.118,r_b/s))      # the whole sleeve from just below the shoulder seam, and every point of a thick arm: starting at a fifth of the way down and reaching only 7.5 cm, it left the shoulder muscle and the outside of a strong upper arm as they were, in lumps (owner, 21 November 2026: "very lumpy")
+        q,t=arm_axis(c); r_b=(c-q).length; q=_arm_mid(q,t,1 if c.x>=0 else -1); d=c-q; r=d.length or 1e-6; R=(_arm_r(t)+ease+0.006 if fit else max(R0+(R1-R0)*t,_arm_r(t,_ARM_RAW)+ease+0.004)); k=sstep(0.0,0.10,t)*(1-sstep(0.092,0.118,r_b/s))      # the whole sleeve from just below the shoulder seam, and every point of a thick arm: starting at a fifth of the way down and reaching only 7.5 cm, it left the shoulder muscle and the outside of a strong upper arm as they were, in lumps (owner, 21 November 2026: "very lumpy")
         k*=sstep(SX*0.92,SX*1.02,abs(c.x))      # eased in from the armhole, so the chest beside the arm is not pulled out      # (a wider reach was tried and pulled the side of a jacket's skirt out beside the hanging arm, into a bell: the Emperor's tunic, 21 November 2026)
         if blend: k*=sstep(SX*0.92,SX*1.12,abs(c.x))      # eased in from the shoulder, so the cloth does not crease at the armpit
         if cuff and not OLD: R=R+(max(cuff[1]*s,_arm_r(t,_ARM_RAW)+0.004)-R)*sstep(cuff[0]-0.14,cuff[0],t)      # later eras: the sleeve narrows smoothly into its cuff (a step left it a wide bell round the wrist)
@@ -292,10 +294,14 @@ def under_coat(c):   # the shirt sleeve between shoulder and cuff is hidden by t
 # untucked (2010 and later): a T-shirt hangs loose over the waistband to the top of the thigh
 parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if OLD else (HIP+0.090 if P.get('era',1915)<1940 else HIP+0.100)) if G.get('breeches') and not G.get('untucked') else HIP-(0.075 if G.get('untucked') else 0.02)) and arm_ok(c,sleeve) and not under_coat(c),lambda c:0.003 if OLD and G.get('breeches') and c.z<HIP+0.13 else (0.012 if abs(c.x)>SX*0.8 else 0.008),'Shirt',shape=sleeve_tube(0.053,0.042,(sleeve-0.07,0.036 if OLD else 0.031) if sleeve>0.8 else None) if not G.get('woman') else (puff_tube(sleeve) if G.get('puff') else sleeve_tube(0.050,0.038,(sleeve-0.06,0.032 if OLD else 0.029) if sleeve>0.8 else None)),post=((lambda bm:smooth_edge(bm,ok=lambda c:not (c.y<0 and c.z>VZ-0.012 and abs(c.x)<0.075*s))) if G.get('woman') and CK=='camp' else smooth_edge if G.get('woman') else ((smooth_edge if OLD else None) if G.get('coat') else ((lambda bm:(drape_front(bm),smooth_edge(bm))) if G.get('smooth') else (drape_front if OLD else neck_edge)))),
    cuts=[((0,0,NECK+0.005-(0.062*s if G.get('coat') and G.get('coatsleeves',True) else 0)),(0,0,1),None),((0,-0.1,NCUT),Vector((0,-0.5,0.87)),lambda c:c.y<0)]+([((0,0,VZ),Vector((-VK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,VZ),Vector((VK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if CK=='camp' else [])+cuts_sleeve(sleeve))))   # under a coat the shirt stays below the coat's collar; a camp collar opens the front in a narrow V
+def smooth_shoulders(bm):      # the later coat: where the thin sleeve meets the thicker body cloth, a few points over the shoulder stood up as small fins; even them out
+    vs=[v for v in bm.verts if SX*0.75<abs(v.co.x)<SX*1.15 and v.co.z>NECK-0.16*s]
+    for _ in range(4): bmesh.ops.smooth_vert(bm,verts=vs,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    bm.normal_update()
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
     sl=G.get('coatsleeves',True)
-    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022,'Coat',shape=sleeve_tube_old(0.041,0.037,(cs-0.13,0.047),blend=True) if sl else None,post=lambda bm:(drape_front(bm),smooth_edge(bm,3 if sl else 10)),
+    coat=piece('Coat','helper-tights',(lambda c:c.z>HIP-0.02 and arm_ok(c,cs)) if sl else (lambda c:c.z>HIP-0.02 and abs(c.x)<SX*0.9),(lambda c:0.022+(0.004-0.022)*(sstep(0.02,0.12,arm_axis(c)[1]) if abs(c.x)>SX*0.92 else 0)) if LATE else (lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022),'Coat',shape=(sleeve_tube(0.030,0.022,(cs-0.09,0.030),blend=True,ease=0.005,fit=True) if LATE else sleeve_tube_old(0.041,0.037,(cs-0.13,0.047),blend=True)) if sl else None,post=lambda bm:(drape_front(bm),smooth_edge(bm,3 if sl else 10),LATE and smooth_shoulders(bm)),
        cuts=[((0,0,collar),(0,0,1),None),((0,-0.1,collar-0.045*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)]+(cuts_sleeve(cs) if sl else [((SX*0.78,0,0),(1,0,0),None),((-SX*0.78,0,0),(-1,0,0),None)]))
     parts.append(('coat',coat))
     hem=G.get('coathem')
@@ -353,9 +359,10 @@ if G.get('breeches'):
     parts.append(('breeches',piece('Breeches','helper-tights',lambda c:low-0.03<c.z<HIP+0.13 and side_arm(c) is None,wide,'Breeches',post=((lambda bm:(trim_seat(bm),smooth_edge(bm,8,lambda c:c.z>HIP+0.08))) if OLD else trim_seat),shape=trouser_leg if bk=='trousers' else breech_leg,cuts=[((0,0,low),(0,0,-1),None),((0,0,HIP+0.12),(0,0,1),None)])))
 if G.get('waistcoat'):
     wcol=NECK-(0.075 if FLAT else 0.02)*s      # under a flat collar the waistcoat's neckline lies lower, so the collar's leaf lies over it   Only the front opening: cut straight across at this height, the waistcoat lost both shoulders and looked unfinished (owner, 17 November 2026, approved); its shoulders reach the neck as a real waistcoat's do.
+    WCUT=((0,-0.1,NECK-0.10*s),Vector((0,-0.35,1)).normalized()) if G.get('woman') else ((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)))      # the front opening (and a woman's bodice's top follows the slope of her shoulders, above: cut flat at the neck, it stood up beside the blouse over each shoulder in a square block). A woman's bodice covers the bust and opens in a low scoop, the shift showing above it, as bodices of the 1690s to the 1860s did; cut at the bust, the blouse bulged out over its edge (owner, 23 November 2026)
     WVZ,WVK=(wcol-0.17*s,1.1) if OLD else (NECK-0.20*s,(wcol-NECK+0.20*s)/(0.085*s))      # the V's point and how steep its sides are: later eras meet at the top button, about a hand below the collarbone, in two straight edges that open to about a hand's width at the top
     parts.append(('waistcoat',piece('Waistcoat','helper-tights',lambda c:c.z>HIP+0.03 and abs(c.x)<SX*0.9,(lambda c:0.03 if abs(c.x)>SX*0.8 else 0.022) if OLD else (lambda c:shoulder_off(c,0.03 if abs(c.x)>SX*0.8 else 0.022)),'Waistcoat',post=lambda bm:(drape_front(bm),smooth_edge(bm)),
-        cuts=[((0,0,NECK-0.02*s),(0,0,1),None)]+([((0,0,WVZ),Vector((-WVK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,WVZ),Vector((WVK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if G.get('vwaist') else [((0,-0.1,wcol-0.13*s),Vector((0,-0.6,0.8)),lambda c:c.y<0)])+[((SX*0.78,0,0),(1,0,0),lambda c:c.z>SH.z-0.12*s),((-SX*0.78,0,0),(-1,0,0),lambda c:c.z>SH.z-0.12*s)])))      # the armholes, down to just under the armpit only: cut at every height, the side of the waistcoat was sliced open wherever a belly or hips came out past the cut, and the shirt showed there as a white flap (owner, 21 November 2026: "the side of the coat looks torn")
+        cuts=[((0,0,NECK-0.02*s),(0,0,1),None)]+([((0.06*s,0,NECK-0.03*s),Vector((0.6,0,1)).normalized(),lambda c:c.x>0),((-0.06*s,0,NECK-0.03*s),Vector((-0.6,0,1)).normalized(),lambda c:c.x<0)] if G.get('woman') else [])+([((0,0,WVZ),Vector((-WVK,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,WVZ),Vector((WVK,0,1)).normalized(),lambda c:c.y<0 and c.x<0)] if G.get('vwaist') else [(WCUT[0],WCUT[1],lambda c:c.y<0)])+[((SX*0.78,0,0),(1,0,0),lambda c:c.z>SH.z-0.12*s),((-SX*0.78,0,0),(-1,0,0),lambda c:c.z>SH.z-0.12*s)])))      # the armholes, down to just under the armpit only: cut at every height, the side of the waistcoat was sliced open wherever a belly or hips came out past the cut, and the shirt showed there as a white flap (owner, 21 November 2026: "the side of the coat looks torn")
 def jacket_seen(c):      # what of the shirt can be seen under a jacket: the front in its V, the collar's foot round the neck, the cuffs (used to trim the shirt, and to fit the jacket over only that)
     if c.z>NECK-(0.06 if (c.y<0 or OLD) else 0.026)*s and (OLD or math.hypot(c.x,c.y-NJ.y)<0.13*s): return True      # later eras: only round the neck (across the whole width, the band ran out over the tops of the shirt's sleeves and stood out under the jacket's shoulders like padding: owner, 21 November 2026)
     if c.y<0 and abs(c.x)<0.13*s and c.z>NECK-0.30*s: return True
@@ -811,9 +818,10 @@ for k,o in parts:            # coat skirts follow both legs as one cloth, like A
         if k=='coatskirt' and G.get('coatopen',True): left=sstep(-0.004,0.004,v.co.x)      # an open coat's panels (two in front, two either side of the back vent) are separate cloths: each follows its own leg only      # an open coat's two front panels are separate cloths: each follows its own leg only (blended across the middle, the striding thigh came through the other panel's edge)   # the front panels ride on their own thigh (the knee carries them forward), the back hangs from the hips and opens at the vent
         shin=0.0
         if k=='skirt' and not OLD:      # below the knee a later skirt passes in part to the shins, all round: seated, it falls over the knees and down instead of standing out from the thighs like a tray
-            shin=0.7*sstep(KNEE+0.07,KNEE-0.08,v.co.z)
+            shin=0.7*sstep(KNEE+0.07,KNEE-0.08,v.co.z)*(1-0.35*sstep(J('Hips').y-0.02,J('Hips').y+0.08,v.co.y))      # a little less at the back (owner, 23 November 2026: running, the back leg kicks up and the hem tied to the shin was flung up and torn); seated and kneeling she wears the seated skirt
         for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left*(1-shin)),('RightUpLeg',leg*(1-left)*(1-shin)),('LeftLeg',leg*left*shin),('RightLeg',leg*(1-left)*shin)):
             if val>0.001: B[n].add([v.index],val,'REPLACE')
+    if k=='skirt' and not OLD: _smooth_bones(o,lambda c:c.z<KNEE+0.10,10)      # evened out along the lower skirt, so no two neighbouring points follow different legs (the hem broke into a sawtooth when running)
 # extra pieces bound to one bone: hat, cap, bands, apron
 def rigid(name,bm,mat,bone):
     me=bpy.data.meshes.new(name); bmesh.ops.recalc_face_normals(bm,faces=bm.faces[:]); bm.to_mesh(me); bm.free()
@@ -1265,8 +1273,8 @@ def build_hat(HK,HM):
                 return d,z
             lathe(bm,[(0.060*s*BR,0.0),(0.003,0.006*s),(0.003,0.03*s),(-0.004*s,Hc*0.7),(-0.016*s,Hc),(-0.05*s,Hc-0.004*s)],fit,mod=mod)      # (the crown a little fuller than the head at its base and tapering less: narrower than the head, it looked a size too small)
             lathe(bb,[(0.0055,0.008*s),(0.0055,0.030*s)],fit,cap=False)      # 2.5 mm proud of the crown
-        if HK=='straw':       # a woven straw hat: a wide, slightly wavy brim and a low flat crown
-            Hc=CRH+0.03*s
+        if HK=='straw':       # a woven straw hat: a wide, slightly wavy brim and a low flat crown ("crown": a recipe's share of the usual crown height; the country hats of the 1865 album photographs sit low, 23 November 2026)
+            Hc=(CRH+0.03*s)*G.get('crown',1.0)
             lathe(bm,[(0.085*s*BR,-0.004*s),(0.0,0.008*s),(-0.004*s,Hc),(-0.03*s,Hc+0.004*s)],fit,mod=lambda a,i,d,z:(d,z+(0.008*s*math.sin(a*3+1) if i==0 else 0)))
             lathe(bb,[(0.003,0.010*s),(0.002,0.032*s)],fit,cap=False)
         if HK=='bowler':
@@ -1298,7 +1306,7 @@ def build_hat(HK,HM):
                 for v in vs: v.co-=v.normal*k
             smooth_edge(bm,10)
         Jy=J('Head').y
-        o=piece(HM+'Wrap','body',lambda c:c.z>HEAD+(0.06-0.035*G.get('wrapbrow',0)*sstep(Jy+0.02,Jy+0.07,c.y)-(0.075 if G.get('bun') else 0.0)*sstep(Jy+0.03,Jy+0.09,c.y))*s,lambda c:0.016+0.006*math.sin(c.z*90+c.x*40),HM,cuts=[((0,Jy-0.05*G.get('wrapbrow',0),HEAD+(0.118-0.05*G.get('wrapbrow',0))*s),Vector((0,-0.25,-0.2)).normalized(),None)],sub=True,post=wrap_edge)      # (with a bun, the wrap comes down the back of the head over it, to the nape) wrapbrow (0 to 1): how far the front edge comes down toward the brow (1690 wraps covered the hair to the hairline; a 1950s head tie showed the front hair)
+        o=piece(HM+'Wrap','body',lambda c:c.z>HEAD+(0.06-0.035*G.get('wrapbrow',0)*sstep(Jy+0.02,Jy+0.07,c.y)-(0.075 if G.get('bun') else 0.0)*sstep(Jy+0.03,Jy+0.09,c.y))*s,lambda c:(0.016+0.006*math.sin(c.z*90+c.x*40))*G.get('wrapoff',1.0),HM,cuts=[((0,Jy-0.05*G.get('wrapbrow',0),HEAD+(0.118-0.05*G.get('wrapbrow',0))*s),Vector((0,-0.25,-0.2)).normalized(),None)],sub=True,post=wrap_edge)      # (with a bun, the wrap comes down the back of the head over it, to the nape) wrapbrow (0 to 1): how far the front edge comes down toward the brow (1690 wraps covered the hair to the hairline; a 1950s head tie showed the front hair)
         md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}; md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
         with ov(o): bpy.ops.object.modifier_apply(modifier='wt')
         clothes.append(o); bm=bmesh.new()
@@ -1383,24 +1391,24 @@ if G.get('bands'):
     CT=tree_of(PART['coat']) if G.get('coat') else SHT
     def cfront(z,x=0.0):
         hit=CT.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]; return hit.y if hit else shirt_front(z,x)
-    bm=bmesh.new(); seg=28; hs=0.036*s; cols=[]
+    bm=bmesh.new(); seg=28; hs=(0.027 if LATE else 0.036)*s; cols=[]; _o=(0.009,0.007,0.004,0.001) if LATE else (0.013,0.010,0.006,0.0015)      # (a later neckcloth is lower and lies close)
     for k in range(seg):
-        a=2*math.pi*k/seg; f=0.5+0.5*math.cos(a); b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.013); col=[]
+        a=2*math.pi*k/seg; f=0.5+0.5*math.cos(a); b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,_o[0]); col=[]
         for dz in (0.085,0.045):
             zz=b0.z-dz*s*(0.25+0.75*f)*sstep(0.80,0.55,abs(math.atan2(math.sin(a),math.cos(a)))); rr=rad_out(zz,a)+0.004;      # the yoke fills the coat's low front only: round the sides and back the coat's own neck facing covers the join
             col.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
-        col+=[b0,collar_pt(a,NECK-0.004+hs*0.5,NECK-0.012*s+hs*0.5,0.010+0.0012*math.sin(a*3+0.5)),collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,0.006),collar_pt(a,NECK-0.004+hs-0.005,NECK-0.012*s+hs-0.005,0.0015)]      # (3 to 4 mm closer to the neck: further out it touched the coat's neck when walking)
+        col+=[b0,collar_pt(a,NECK-0.004+hs*0.5,NECK-0.012*s+hs*0.5,_o[1]+0.0012*math.sin(a*3+0.5)),collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,_o[2]),collar_pt(a,NECK-0.004+hs-0.005,NECK-0.012*s+hs-0.005,_o[3])]      # (3 to 4 mm closer to the neck: further out it touched the coat's neck when walking)
         cols.append([bm.verts.new(q) for q in col])
     rings=[list(r) for r in zip(*cols)]; quadstrip(bm,rings[2:],close=True); by=bmesh.new(); quadstrip(by,[[by.verts.new(v.co) for v in r] for r in rings[:3]],close=True)
     for v in rings[0]+rings[1]: bm.verts.remove(v)
     _cb=soft('Collar',bm,'Bands',only=('Spine2','Neck','LeftShoulder','RightShoulder')); ring_weights(_cb,seg,len(rings)-2); soft('CollarYoke',by,'Bands',only=TORSO+('LeftArm','RightArm'))      # (the band's weights evened round the neck, as later collars: point by point it tore into teeth when he walked)      # the yoke lies on the skin under the coat, so it moves as the skin does (shoulders and upper arms too) and stays under the coat when the shoulders lift
     bm=bmesh.new(); yb=collar_pt(0,NECK-0.004,NECK-0.004-0.008*s,0.016); zk=yb.z-0.006*s; yk=min(yb.y,cfront(zk))-0.007        # the knot, then the two hanging ends: they lie on the coat, a little splayed, widening to the hem
-    knot=bmesh.ops.create_uvsphere(bm,u_segments=10,v_segments=6,radius=0.015*s,matrix=Matrix.Translation((0,yk,zk)))
+    knot=bmesh.ops.create_uvsphere(bm,u_segments=10,v_segments=6,radius=(0.011 if LATE else 0.015)*s,matrix=Matrix.Translation((0,yk,zk)))
     for v in knot['verts']: v.co.x=v.co.x*1.6; v.co.y=yk+(v.co.y-yk)*0.7; v.co.z=zk+(v.co.z-zk)*0.9
     for sx in (-1,1):
-        n=8; L=0.15*s; rows=[]
+        n=8; L=(0.075 if LATE else 0.15)*s; rows=[]      # (later: two short ends below a small knot, not the long falling bands of 1690)
         for t in range(n+1):
-            f=t/n; z=zk-0.004-L*f; w=(0.022+0.020*f)*s; cx=sx*(0.007+0.013*f)*s
+            f=t/n; z=zk-0.004-L*f; w=((0.016+0.008*f) if LATE else (0.022+0.020*f))*s; cx=sx*(0.007+0.013*f)*s
             y=min(cfront(z,cx-w*0.5),cfront(z,cx),cfront(z,cx+w*0.5))-0.005-0.004*math.sin(f*3.1)
             if f<0.3: y=min(y,yk+0.002)
             rows.append([bm.verts.new((cx-w*0.5,y,z)),bm.verts.new((cx,y-0.003,z)),bm.verts.new((cx+w*0.5,y,z))])
@@ -1411,7 +1419,7 @@ if G.get('coat') and OLD and G.get('coatsleeves',True):      # the coat's neck e
     bm=bmesh.new(); seg=24; cols=[]; a0=0.62
     for k in range(seg+1):
         a=a0+(2*math.pi-2*a0)*k/seg; e=min(1.0,min(k,seg-k)/2.0); b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.016); col=[collar_pt(a,NECK-0.004+0.011*s*e,NECK-0.004-0.008*s+0.011*s*e,0.0205),collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.0235)]
-        for dz in (0.028,0.062):
+        for dz in ((0.022,0.042) if LATE else (0.028,0.062)):      # (the later coat is thinner at the shoulder: a deeper facing stood out there as fins)
             zz=b0.z-dz*s*(0.4+0.6*e); rr=rad_out(zz,a)+0.0265; col.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
         cols.append([bm.verts.new(q) for q in col])
     quadstrip(bm,[list(r) for r in zip(*cols)]); _cn=soft('CoatNeck',bm,'Coat',only=TORSO+('LeftArm','RightArm')); ring_weights(_cn,seg+1,len(cols[0]))      # evened round the neck too (dark flaps stood up from it when walking)
@@ -1484,6 +1492,15 @@ if G.get('apron'):
             if hit is not None: best=max(best,(hit-o).length)
         return best
     wide='skirt' in PART or OLD; ZA=HIP+(0.132 if 'skirt' in PART else 0.124)      # the band sits on the top edge of the trousers or skirt, over the join with the shirt (and over a bodice's bottom edge)
+    _bo=bpy.data.objects.get('Belt'); BELTR=0.0
+    if 'skirt' in PART and _bo is not None and len(_bo.data.vertices):      # (owner, 23 November 2026: "the band for the apron is higher than the apron itself") over a skirt with a belt the band is tied over the belt, not 3 cm above it on the blouse
+        _bz=[v.co.z for v in _bo.data.vertices]; ZA=(min(_bz)+max(_bz))/2+0.004; BELTR=0.005; BELTH=(max(_bz)-min(_bz))/2+0.0035      # half the belt's height and a little more, so the band covers it top to bottom even when she bends
+    if 'skirt' in PART and PART.get('waistcoat') and G.get('woman'):      # a bodice over a skirt: its hem is cut straight at the waist and the band is tied over that edge, so no ragged hem shows below the band (Abba, 23 November 2026)
+        ZW=(max(_bz)-0.004) if BELTR and '_bz' in globals() else HIP+0.10; _o=PART['waistcoat']; _b=bmesh.new(); _b.from_mesh(_o.data)      # over a belt the hem stops just inside the belt's top, so one band covers hem, belt and skirt top together
+        bmesh.ops.bisect_plane(_b,geom=_b.verts[:]+_b.edges[:]+_b.faces[:],plane_co=(0,0,ZW),plane_no=(0,0,1),clear_inner=True); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS')
+        _b.to_mesh(_o.data); _b.free(); _o.data.update()
+        if not BELTR: ZA=ZW+0.004; BELTR=0.002
+        print('BODICE HEM CUT, BAND OVER IT',round(ZW-HIP,3),round(ZA-HIP,3))
     ZE=(SKB+0.10) if 'skirt' in PART else KNEE+0.02; AH=1.30 if wide else 1.12      # the top, the hem, and how far round each side it reaches (radians from the front)
     def apron_from(src,name):
         # Over a skirt the apron is cut from the skirt itself: the skirt's own front, from the band to a hand above the hem and from hip to hip, lifted 12 mm off it, with
@@ -1492,10 +1509,11 @@ if G.get('apron'):
         o=src.copy(); o.data=src.data.copy(); o.name=name; bpy.context.scene.collection.objects.link(o); b=bmesh.new(); b.from_mesh(o.data)
         def cut(co,no):
             bmesh.ops.bisect_plane(b,geom=b.verts[:]+b.edges[:]+b.faces[:],plane_co=Vector(co),plane_no=Vector(no).normalized(),clear_outer=True,dist=1e-5)
-        cut((0,_hy+0.01,0),(0,1,0)); cut((0,_hy,0),(math.cos(AH),math.sin(AH),0)); cut((0,_hy,0),(-math.cos(AH),math.sin(AH),0)); cut((0,0,ZA-0.004),(0,0,1)); cut((0,0,ZE),(0,0,-1))
+        cut((0,_hy+0.01,0),(0,1,0)); cut((0,_hy,0),(math.cos(AH),math.sin(AH),0)); cut((0,_hy,0),(-math.cos(AH),math.sin(AH),0)); cut((0,0,ZA-0.004+(0.010 if BELTR else 0)),(0,0,1)); cut((0,0,ZE),(0,0,-1))
+        bmesh.ops.remove_doubles(b,verts=b.verts[:],dist=0.0004)      # the skirt's seams joined first: lifted along each side's own normal, a seam down the front opened into a slit the skirt showed through (owner, 23 November 2026: "the aprons had tears")
         b.normal_update()
         for v in b.verts:
-            rad=Vector((v.co.x,v.co.y-_hy,0)); n=v.normal if v.normal.dot(rad)>=0 else -v.normal; v.co+=Vector((n.x,n.y,0)).normalized()*0.012 if Vector((n.x,n.y,0)).length>1e-6 else Vector((0,-0.012,0))
+            rad=Vector((v.co.x,v.co.y-_hy,0)); n=v.normal if v.normal.dot(rad)>=0 else -v.normal; v.co+=Vector((n.x,n.y,0)).normalized()*(0.012+0.008*sstep(HIP,KNEE,v.co.z)) if Vector((n.x,n.y,0)).length>1e-6 else Vector((0,-0.012,0))
         b.to_mesh(o.data); b.free(); o.data.materials.clear(); o.data.materials.append(colmat('Apron'))
         if 'Col' in o.data.color_attributes: o.data.color_attributes.remove(o.data.color_attributes['Col'])
         clothes.append(o); return o
@@ -1516,13 +1534,13 @@ if G.get('apron'):
     # the waistband and its ends
     NB=56; AB=[2*math.pi*k/NB for k in range(NB)]; RB=[_out(a,ZA-0.004) or 0.14 for a in AB]
     for _ in range(4): RB=[max(RB[k],(RB[k-1]+2*RB[k]+RB[(k+1)%NB])/4) for k in range(NB)]
-    hh=0.009; ring=[]
+    hh=max(0.013,globals().get('BELTH',0)) if BELTR else 0.009; ring=[]      # over a belt the band covers it top to bottom
     for k,a in enumerate(AB):
-        r=RB[k]+0.011      # over the panel's top edge
+        r=RB[k]+0.011+BELTR      # over the panel's top edge (and over the belt, when there is one)
         ring.append([bm.verts.new(pt(a,ZA-0.004+dz,r+dr)) for dz,dr in ((hh,0.0),(0.0,0.0025),(-hh,0.0),(-hh,-0.0045),(hh,-0.0045))])
     for k in range(NB):
         for m in range(5): bm.faces.new((ring[k][m],ring[(k+1)%NB][m],ring[(k+1)%NB][(m+1)%5],ring[k][(m+1)%5]))
-    rk=RB[NB//2]+0.011; kc=Vector(pt(math.pi,ZA-0.004,rk+0.006))      # the knot, in the middle of the back
+    rk=RB[NB//2]+0.011+BELTR; kc=Vector(pt(math.pi,ZA-0.004,rk+0.006))      # the knot, in the middle of the back
     bmesh.ops.create_uvsphere(bm,u_segments=8,v_segments=5,radius=1.0,matrix=Matrix.Translation(kc)@Matrix.Diagonal((0.013,0.007,0.010,1)))
     for sx in (1,-1):      # two ends hang from it, a little apart, lying on the cloth
         prev=None
@@ -1532,7 +1550,7 @@ if G.get('apron'):
             if prev: bm.faces.new((prev[0],prev[1],pair[1],pair[0]))
             prev=pair
     if 'skirt' in PART:      # over a skirt the band is its own piece (ApronBand, material Apron), on the hips
-        _bd=rigid('ApronBand',bm,'Apron','Hips')
+        _bd=soft('ApronBand',bm,'Apron',src=_bo) if BELTR else rigid('ApronBand',bm,'Apron','Hips')      # tied over a belt it takes the belt's own weights, so the two bend as one (on the hips alone the belt came through it when she bent)
         for p_ in _bd.data.polygons: p_.use_smooth=True
     else:
         ap=rigid('Apron',bm,'Apron','Hips')
@@ -1905,8 +1923,10 @@ def skirt_to_belt():
     # (a new key, "beltfit": true, 22 November 2026; recipes without it build as before) the top of the skirt, where the belt lies on it, takes the belt's bone weights
     # (the blouse's), fading back to its own over 6 cm below the belt. The skirt followed the hips and thighs and the belt the blouse, so when the body bent forward
     # (picking up, wiping the brow, walking) the top of the skirt rose over the belt and hid it ('Skirt shows through Belt', up to 2 cm).
-    be=bpy.data.objects.get('Belt'); sk=PART.get('skirt')
-    if be is None or sk is None or not len(be.data.vertices): return
+    be=bpy.data.objects.get('Belt')
+    for sk in (PART.get('skirt'),bpy.data.objects.get('Apron')):      # the skirt's top, and an apron cut from it, both take the belt's weights
+        if sk is not None and be is not None and len(be.data.vertices) and len(sk.data.vertices): _skirt_to_belt(be,sk)
+def _skirt_to_belt(be,sk):
     from mathutils.kdtree import KDTree
     zl=min(v.co.z for v in be.data.vertices); zh=max(v.co.z for v in be.data.vertices); kv=KDTree(len(be.data.vertices))
     for v in be.data.vertices: kv.insert(v.co,v.index)
@@ -2116,6 +2136,80 @@ def face_out():
         if fl: bmesh.ops.reverse_faces(b,faces=fl); print('TURNED OUT',k,len(fl))
         b.to_mesh(o.data); b.free(); o.data.update()
 face_out()
+def sync_weights(dst, src, pick, maxd=0.03):
+    # A layer that lies over another moves with it: each point of dst that pick() chooses takes the bone weights of the nearest point of src
+    # within maxd. Every piece takes its weights from the nearest point of the body, and a piece standing 1 to 3 cm off the body reaches
+    # different bones than the layer under it, so the two parted as the body moved.
+    from mathutils.kdtree import KDTree
+    sv = src.data.vertices; kd = KDTree(len(sv))
+    for v in sv: kd.insert(src.matrix_world @ v.co, v.index)
+    kd.balance(); names = {g.index: g.name for g in src.vertex_groups}; n = 0
+    for v in dst.data.vertices:
+        co = dst.matrix_world @ v.co
+        if not pick(co): continue
+        hit = kd.find(co)
+        if hit[2] is None or hit[2] > maxd: continue
+        w = [(names[g.group], g.weight) for g in sv[hit[1]].groups if g.weight > 1e-4]
+        if not w: continue
+        for g in list(v.groups):
+            dst.vertex_groups[g.group].remove([v.index])
+        for nm, wt in w:
+            vg = dst.vertex_groups.get(nm) or dst.vertex_groups.new(name=nm)
+            vg.add([v.index], wt, 'REPLACE')
+        n += 1
+    return n
+if P.get('outfit'):      # the fitted suit (23 November 2026): the cloth check found the shirt through the lapels and the trousers through the jacket's seat on every suited body, in every game
+    _O = {k: bpy.data.objects.get(k) for k in ('Jacket', 'Lapels', 'Shirt', 'Breeches')}
+    if _O['Shirt']:
+        for k in ('Lapels', 'Jacket'):
+            if _O[k]: print('SYNC', k, 'to the shirt at the neck and chest', sync_weights(_O[k], _O['Shirt'], lambda c: c.z > NZ - 0.20 * s, 0.035))
+    if _O['Breeches'] and _O['Jacket']:
+        _hz = J('Hips').z; _hy = J('Hips').y
+        print('SYNC Jacket to the trousers over the seat', sync_weights(_O['Jacket'], _O['Breeches'], lambda c: _hz - 0.30 * s < c.z < _hz + 0.04 * s and c.y > _hy, 0.04))
+if G.get('woman') and PART.get('waistcoat') and PART.get('shirt'):
+    # A woman's bodice lies over her blouse everywhere (owner, 23 November 2026: "the top of the blouse"). Over the bust the blouse stood out past the bodice, and the line
+    # where the two crossed showed as a jagged edge. Each point of the bodice with blouse at or outside it is pushed out to lie 5 mm over the blouse.
+    _o=PART['waistcoat']; _st=tree_of(PART['shirt']); _b=bmesh.new(); _b.from_mesh(_o.data); _b.normal_update(); _mv={}
+    if not G.get('vwaist'):      # the front opening is cut again, last, on the same line: the shaping steps after the first cut had moved its points into a zig-zag
+        _ff=[f for f in _b.faces if f.calc_center_median().y<J('Hips').y-0.02]; _g=list({v for f in _ff for v in f.verts})+list({e for f in _ff for e in f.edges})+_ff
+        bmesh.ops.bisect_plane(_b,geom=_g,plane_co=WCUT[0],plane_no=Vector(WCUT[1]).normalized(),clear_outer=True)
+        bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS'); _b.normal_update()
+        _edge=[v for v in _b.verts if v.co.y<J('Hips').y-0.01 and v.co.z>HIP+0.25 and any(e.is_boundary for e in v.link_edges)]      # then the edge itself is evened out along its own line, so it reads as one clean neckline
+        for _ in range(6):
+            _new={}
+            for v in _edge:
+                nb=[e.other_vert(v) for e in v.link_edges if e.is_boundary]
+                if len(nb)==2: _new[v]=v.co*0.5+(nb[0].co+nb[1].co)*0.25
+            for v,c in _new.items(): v.co=c
+        _b.normal_update()
+    _yc=J('Hips').y; _nh=0
+    for v in _b.verts:
+        _l,n,_i,_d=(globals().get('SKIN') or tree).find_nearest(v.co)      # outward as the skin beneath faces (level from the middle line was wrong on top of the shoulder)
+        if n is None or n.length<1e-4: continue
+        n=n.normalized(); loc,_n2,_i,_d=_st.ray_cast(v.co+n*0.04,-n,0.08)
+        if loc is None: continue
+        _nh+=1; out=(loc-v.co).dot(n)      # how far the blouse stands out past this point
+        if out>-0.005: _mv[v.index]=n*(out+0.005)
+    _b.verts.ensure_lookup_table()
+    for k,d in _mv.items(): _b.verts[k].co+=d
+    _b.to_mesh(_o.data); _b.free(); _o.data.update(); print('BODICE OVER BLOUSE',len(_mv),'of',_nh,'over the blouse')
+    print('SYNC bodice to the blouse',sync_weights(_o,PART['shirt'],lambda c:True,0.05))      # and it bends with the blouse's own weights: with its own, the blouse came out over it at the bust as soon as she moved
+if globals().get('APRON_SEAT') and PART.get('skirt') and bpy.data.objects.get('Apron') is not None:
+    # The skirt under an apron is cut away where the apron always covers it (owner, 23 November 2026: "the aprons had tears"). The apron is cut from the skirt and moves
+    # with it, but the packer thins the skirt for the phone, crowd and light copies and the thinned folds came through the apron. What no one can see cannot show through,
+    # and the copies are lighter for it. A margin is kept inside the apron's sides, top and hem, so no gap opens at its edges; the seated skirt (SkirtSeat) is untouched.
+    for _o in (PART['skirt'],bpy.data.objects.get('SkirtSeat') if bpy.data.objects.get('ApronSeat') is not None else None):      # and the seated skirt under the seated apron the same way (it came through it across the lap)
+        if _o is None: continue
+        _b=bmesh.new(); _b.from_mesh(_o.data); _gone=[]
+        for f in _b.faces:
+            c=f.calc_center_median(); a=math.atan2(c.x,-(c.y-_hy))
+            if abs(a)<AH-0.12 and ZE+0.05<c.z<ZA-0.03 and all(abs(math.atan2(v.co.x,-(v.co.y-_hy)))<AH-0.09 and ZE+0.035<v.co.z<ZA-0.02 for v in f.verts): _gone.append(f)
+        bmesh.ops.delete(_b,geom=_gone,context='FACES_ONLY'); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS')
+        if _o is PART['skirt']:      # and its top ends at the middle of the band, which always covers it: higher, its edge rose out over the band when she bent
+            bmesh.ops.bisect_plane(_b,geom=_b.verts[:]+_b.edges[:]+_b.faces[:],plane_co=(0,0,ZA-0.004),plane_no=(0,0,1),clear_outer=True); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS')
+        _b.to_mesh(_o.data); _b.free(); _o.data.update(); print('SKIRT UNDER APRON CUT',_o.name,len(_gone))
+    if globals().get('BELTR') and bpy.data.objects.get('Belt') is not None and bpy.data.objects.get('ApronBand') is not None:      # a belt under an apron's band is never seen, and its edge rose out over the band when she bent: it goes
+        bpy.data.objects.remove(bpy.data.objects['Belt'],do_unlink=True); print('BELT UNDER APRON BAND REMOVED')
 # The face is marked on the skin (1 on every point from the brow to the chin, cheek to cheek), and carried into the .glb as the attribute _FACE. tools/people/pack.mjs gives the
 # marked part its own share of triangles when it makes a light, crowd or phone copy, so eyes, brows and lips survive (simplified with the rest of the skin, a face in a crowd lost them).
 _fa=h.data.attributes.new('_FACE','FLOAT','POINT')

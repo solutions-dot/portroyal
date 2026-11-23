@@ -12,7 +12,10 @@ export function setSound(on) { AU.on = on; try { localStorage.setItem(AU.key || 
 export function noiseSrc(kind) { const c = AU.ctx, len = c.sampleRate * 3, b = c.createBuffer(1, len, c.sampleRate), d = b.getChannelData(0); let l = 0;
   for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; if (kind === 'brown') { l = (l + 0.02 * w) / 1.02; d[i] = l * 3.5; } else d[i] = w * 0.5; }
   const src = c.createBufferSource(); src.buffer = b; src.loop = true; src.start(); return src; }
-export function chan(kind, type, f, q) { const c = AU.ctx, fl = c.createBiquadFilter(), g = c.createGain(); fl.type = type; fl.frequency.value = f; if (q) fl.Q.value = q; g.gain.value = 0; noiseSrc(kind).connect(fl); fl.connect(g); g.connect(AU.master); g.f = fl; return g; }
+export function chan(kind, type, f, q) { const c = AU.ctx, fl = c.createBiquadFilter(), g = c.createGain(); fl.type = type; fl.frequency.value = f; if (q) fl.Q.value = q; g.gain.value = 0; noiseSrc(kind).connect(fl); fl.connect(g); g.connect(bedBus()); g.f = fl; return g; }
+/* every background bed (sea, surf, wind, crowd, room, traffic) goes through one bus, well under the voices and one-shots (23 November 2026, owner: "all of the games have what sounds like the sea that drowns everything else out"). A bed's own level keeps its 0.05 to 0.35 range for the mix; noise at a given gain sounds far louder than a tone or a footstep at the same gain, and several beds play at once, so the bus brings them all down together. */
+export const BED_BUS = 0.45;
+function bedBus() { if (!AU.bedBus) { AU.bedBus = AU.ctx.createGain(); AU.bedBus.gain.value = BED_BUS; AU.bedBus.connect(AU.master); } return AU.bedBus; }
 export function audioInit() { try { if (!AU.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; AU.ctx = new AC(); AU.master = AU.ctx.createGain(); AU.master.gain.value = masterLevel(); AU.master.connect(AU.ctx.destination);
       AU.ch.sea = chan('brown', 'lowpass', 800); AU.ch.surf = chan('white', 'bandpass', 2200, 0.4); AU.ch.wind = chan('white', 'bandpass', 650, 0.6); AU.ch.crowd = chan('white', 'bandpass', 480, 2.2); AU.ch.room = chan('brown', 'lowpass', 160);
       AU.ch.traffic = chan('brown', 'lowpass', 340, 0.8); lfoGain(AU.ch.traffic, 0.07, 0.35);   /* a town's far traffic: a low rolling hum that comes and goes (22 November 2026) */
@@ -64,7 +67,7 @@ function lfoGain(g, rate, depth) { const c = AU.ctx, l = c.createOscillator(), l
 /* night insects: a high tone chopped fast, with a slower chop on top; returns its gain (0 until a game turns it up) */
 export function cricketBed(f = 4300, chop = 24, slow = 3.1) { const c = AU.ctx, co = c.createOscillator(), cg = c.createGain(), ch = c.createOscillator(), chg = c.createGain(), ch2 = c.createOscillator(), ch2g = c.createGain(), cl = c.createGain();
   co.frequency.value = f; ch.type = 'square'; ch.frequency.value = chop; chg.gain.value = 0.5; ch2.type = 'square'; ch2.frequency.value = slow; ch2g.gain.value = 0.5; cg.gain.value = 0.5;
-  ch.connect(chg); chg.connect(cg.gain); ch2.connect(ch2g); ch2g.connect(cg.gain); cl.gain.value = 0; co.connect(cg); cg.connect(cl); cl.connect(AU.master); co.start(); ch.start(); ch2.start(); return cl; }
+  ch.connect(chg); chg.connect(cg.gain); ch2.connect(ch2g); ch2g.connect(cg.gain); cl.gain.value = 0; co.connect(cg); cg.connect(cl); cl.connect(bedBus()); co.start(); ch.start(); ch2.start(); return cl; }
 
 /* The looping beds and the level they live at. A game's SOUNDSCAPE gives each place a level per bed; mixBeds() sets them.
    Target (docs/ENGINE.md, "One ambient level"): the loudest bed of a place between BED_RANGE.lo and BED_RANGE.hi, after the game's own scale,

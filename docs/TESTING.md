@@ -311,3 +311,12 @@ Every body of a game, in every clip the game ships, is drawn from six sides (fro
 - `--update` records the numbers in `tools/checks/people-seen.json`. Without it the tool fails when a body shows more than is recorded.
 
 Use this as the work list for clothes. `people-check` measures surfaces, so it also reports points nobody can see (an armpit, a point under a fold); use it to find where a seen fault comes from, with `--where`. A patch is 3 to 150 pixels at 6 mm a pixel, so a speck under about 1 cm across is not counted.
+
+## In the player's face at the start (engine/audit.js, 23 November 2026)
+
+`auditPlace` reports a thin tall thing (a post, a torch, a lamp standard: over 0.8 m tall and under 30 cm across) that stands free (touching nothing 1.2 m or taller) within 1.3 m of a place's start, in front of the player (within 60 degrees of the start's yaw). Found by eye in Kendal: a burning torch a metre in front of chapter 6's start looked held in the player's other hand. Places narrower than 3 m (a carriage aisle) are skipped.
+
+
+## The full look at a character (owner rule 15)
+
+`node tools/review/full-check.mjs <game> <id,id,...> [anims=Idle:0.4,Walk:0.2,Walk:0.6,PickUp:0.4,SitIdle:0.4]` writes one sheet per person, `build/review/full-<game>-<id>.png`: every pose in `anims` from the front, three-quarter, side and back; the clothes close up standing and mid-stride; the neck from all four sides; and the phone, light and crowd copies the game has. Points the cloth check reports are marked red and printed. Set `anims` to the clips that person really plays (Abba: `Idle:0.4,Run:0.3,Scared:0.4,Terrified:0.4,SitIdle:0.4,Talk1:0.4`). Look at every cell before calling the person done, and name in the report what is still wrong.

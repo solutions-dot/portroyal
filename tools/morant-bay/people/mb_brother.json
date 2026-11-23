@@ -1,0 +1,50 @@
+{
+ "name": "mb_brother",
+ "era": 1950,
+ "upscale": 1.45,
+ "body": {
+  "gender": 1.0,
+  "age": 0.12,
+  "muscle": 0.4,
+  "weight": 0.45,
+  "height": 0.5,
+  "proportions": 0.5,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0
+ },
+ "garments": {
+  "sleeve": 0.42,
+  "trousers": true,
+  "shorts": true,
+  "shoes": false,
+  "collar": false,
+  "hairvol": 0.3
+ },
+ "colors": {
+  "Skin": [
+   152,
+   104,
+   76
+  ],
+  "Shirt": [
+   226,
+   218,
+   196
+  ],
+  "Breeches": [
+   110,
+   96,
+   74
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "round",
+ "targets": {
+  "lr-cheek-volume-incr": 0.2
+ }
+}

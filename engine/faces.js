@@ -59,6 +59,7 @@ export function spreadBodies(specs, count, { near = 4, fixed = [], alts = null, 
      scale, cols   without m: the body's size and its clothes' colours (numbers), e.g. from the look table
      hidden true to count a person whose body is not shown just now (a place that is built but not entered)
      uniform  a squad's name ('soldiers'): two people of one squad, in one uniform and helmet, are not reported
+     when   [first, last] story step the person is on stage: two whose steps never overlap are not compared
      who    the person, when one person is in the list twice (the same named person at two ages or in two outfits): never reported
      life / path / pts   where a mover goes (reachOf); pass still: true to measure only where the person stands now
    Reports "lookalike:" (same face and nearly the same clothes) and "twins:" (same face) for any two within opts.near metres (2.5). opts.dist(a, b) may give the
@@ -74,6 +75,7 @@ export function faceCheck(people, { near = 2.5, dist = null } = {}) {
     if (!F[i] || F[i] !== F[j]) continue; if (ps[i].who && ps[i].who === ps[j].who) continue;
     if (Math.max(H[i], H[j]) / Math.min(H[i], H[j]) > 1.12) continue;   /* a grown-up and a child */
     if (ps[i].uniform && ps[i].uniform === ps[j].uniform) continue;   /* a squad in one uniform and helmet is meant to look alike */
+    { const wi = ps[i].when, wj = ps[j].when; if (wi && wj && (wi[1] < wj[0] || wj[1] < wi[0])) continue; }   /* when: [first, last] step a person is on stage (Morant Bay); two who are never on stage together cannot be taken for one person */
     const d = dist ? dist(ps[i], ps[j]) : gap(B[i], B[j]); if (!(d <= near)) continue;
     const both = ps[i].story && ps[j].story ? ' (two story people on one body)' : '';
     lines.push(C[i].length && alike(C[i], C[j]) ? `lookalike: ${name(ps[i])} and ${name(ps[j])} look like the same person, ${d.toFixed(1)} m apart (same face and nearly the same clothes)${both}`

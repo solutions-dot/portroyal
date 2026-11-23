@@ -1,0 +1,71 @@
+{
+ "name": "mb_mother",
+ "era": 1900,
+ "body": {
+  "gender": 0.0,
+  "proportions": 0.6,
+  "cupsize": 0.45,
+  "firmness": 0.6,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "age": 0.45,
+  "muscle": 0.55,
+  "weight": 0.5,
+  "height": 0.52
+ },
+ "garments": {
+  "woman": true,
+  "skirt": true,
+  "shoes": false,
+  "collar": false,
+  "sleeve": 0.55,
+  "hem": 0.07,
+  "flare": 1.05,
+  "apron": true,
+  "hat": [
+   [
+    "wrap",
+    "Hat"
+   ]
+  ],
+  "hairvol": 0.0,
+  "wrapbrow": 1.0,
+  "beltfit": true,
+  "wrapoff": 0.5
+ },
+ "colors": {
+  "Skin": [
+   144,
+   96,
+   70
+  ],
+  "Shirt": [
+   214,
+   202,
+   172
+  ],
+  "Skirt": [
+   120,
+   70,
+   56
+  ],
+  "Apron": [
+   128,
+   142,
+   160
+  ],
+  "Hat": [
+   70,
+   92,
+   130
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "lean",
+ "smile": 0.05
+}

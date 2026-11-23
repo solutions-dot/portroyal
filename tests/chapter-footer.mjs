@@ -5,7 +5,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 
 test('all ten games expose the same three chapter footer actions in order', () => {
   const games = readdirSync('games').filter(g => !g.startsWith('_') && existsSync('games/' + g + '/site/index.html')).sort();
-  assert.equal(games.length, 13, 'expected thirteen playable games');
+  assert.equal(games.length, 14, 'expected fourteen playable games');
   const expected = [['chteacher', 'Unlock All'], ['chreset', 'Restart'], ['chcred', 'Credits']];
   for (const game of games) {
     const html = readFileSync('games/' + game + '/site/index.html', 'utf8');

@@ -85,6 +85,18 @@ export function auditPlace(place) {
     const spots = [...(place.actions || []).map((a) => ({ ...a, r: (a.r || 1.45) * 0.9 })), ...(place.people || []).filter((p) => !isSeated(p.anim)).map((p) => ({ ...p, r: 2.3 }))].filter((s) => s && Number.isFinite(s.x) && Number.isFinite(s.z)).map((s) => ({ label: s.label || s.id || 'spot', x: s.x, z: s.z, r: s.r }));   /* the same reach as the check above: a thing within its own reach, a person within 2.3 m */
     stuck.push(...auditPassage({ walls: place.walls, bounds: place.bounds, start: place.start, r: place.passR ?? 0.23, spots, ...(place.passWide ? { wide: place.passWide } : {}) }));   /* passR: walls already drawn round where the player's centre can go (Port Royal's walk grid) */   /* passWide: a place narrow by nature (inside a pipe) sets its own */
   }
+  /* in the player's face at the start (Kendal, 23 November 2026: a burning torch stood a metre in front of chapter 6's start, and from the
+     first view it looked held in the player's other hand): a thin tall thing, a post, a torch, a lamp standard, within 1.3 m of where the
+     player stands when the place begins */
+  const aisle = place.bounds && (place.bounds.x1 - place.bounds.x0 < 3 || place.bounds.z1 - place.bounds.z0 < 3);   /* a carriage aisle or a corridor: posts at the side are meant to be close */
+  if (place.start && Number.isFinite(place.start.x) && !aisle) for (let i = 0; i < n; i++) { const b = L[i].b, sz = size[i]; if (big.includes(i) || sz.y < 0.8 || b.max.y < 1.0 || Math.max(sz.x, sz.z) > 0.3) continue;   /* thin both ways: a post, a torch; not a seat back or a wall */
+    if (L.some((m, j) => j !== i && !big.includes(j) && m.top !== L[i].top && size[j].y >= 1.2 && ex[i].intersectsBox(m.b))) continue;   /* it touches something else (a door's frame in a wall, a post under a roof): not standing free in the way */
+    const dx = Math.max(b.min.x - place.start.x, 0, place.start.x - b.max.x), dz = Math.max(b.min.z - place.start.z, 0, place.start.z - b.max.z), d = Math.hypot(dx, dz);
+    if (Number.isFinite(place.start.yaw)) {   /* only what is in front of the player at the first view (the camera looks along -sin(yaw), -cos(yaw)) */
+      const cx = (b.min.x + b.max.x) / 2 - place.start.x, cz = (b.min.z + b.max.z) / 2 - place.start.z, L2 = Math.hypot(cx, cz) || 1;
+      if ((cx * -Math.sin(place.start.yaw) + cz * -Math.cos(place.start.yaw)) / L2 < 0.5) continue;
+    }
+    if (d < 1.3) stuck.push(`a ${L[i].geo || 'thing'} ${sz.y.toFixed(1)} m tall stands ${d.toFixed(1)} m from the start (${place.start.x.toFixed(1)}, ${place.start.z.toFixed(1)}): in the player's face at the first view`); }
   return { id: place.id, floating, inside: inside.concat(overlap, cut, wcut), stuck };
 }
 
@@ -524,7 +536,7 @@ function clRelation(A, B) {   /* which sample points of piece A are meant to lie
   if (/^(Placket|Pocket)/.test(A.name) && /^(Buttons|Tie|Collar)/.test(B.name)) { m.set(B.g, null); return null; }   /* buttons are sewn onto the front band: the band behind them is how it is made, not a fault ('Placket shows through Buttons' in every clip, 17 November 2026) */
   if (/^(Belt|Buckle)$/.test(A.name) && /^(Vest|Waistcoat)$/.test(B.name)) { m.set(B.g, null); return null; }   /* a body-armour vest or waistcoat ending above the belt meets it edge to edge; the belt is never under it */   /* a tie, a front band, a pocket or a collar lies on the shirt, never on bare skin */   /* a shirt seen through its own collar, front band or pocket is the same cloth */
   edge = clEdge(B);
-  const neck = /^(Shirt|Collar)$/.test(A.name) && /^(Jacket|Waistcoat|JacketSkirt)$/.test(B.name) ? clNeck(A) : null;
+  const neck = /^(Shirt|Collar)$/.test(A.name) && /^(Jacket|Lapels|Waistcoat|JacketSkirt)$/.test(B.name) ? clNeck(A) : null;   /* Lapels: the fitted suit's lapels and collar are their own piece */
   for (let i = 0; i < A.samples.length / 3; i++) { if ((hand && hand[A.samples[i * 3]]) || (neck && neck[A.samples[i * 3]])) continue; clPoint(A.rest, A.samples, i, p);
     if (edge) { const lim = arm ? (arm[A.samples[i * 3]] ? 0.0009 : 0) : /^(Body|Sock)$/.test(A.name) && /^SkirtSeat$/.test(B.name) ? 0.0049 : /^(Body|Sock)$/.test(A.name) && /^Skirt$/.test(B.name) ? 0.0016 :   /* the seated skirt's last rows lie on a bent knee: skin within 7 cm of its hem is the knee coming out (checked by eye seated and kneeling, 15 November 2026) */ (/^(Shirt|Collar)$/.test(A.name) && /^(Jacket)$/.test(B.name) ? 0.0004 : 0.000144); if (lim && edge.some((e) => (e[0] - p[0]) ** 2 + (e[1] - p[1]) ** 2 + (e[2] - p[2]) ** 2 < lim)) continue; }   /* a point within 12 mm of a cover's open edge (a neckline, a lapel, a hem) is at the opening, where the eye sees the layer beneath anyway */ const h = clNear(p, B.rest, B.idx, G); if (!h || h.side > 0.004 || Math.abs(h.along) > 0.03) continue; near.push(i); if (h.along < 0.003) thin.push(i);   /* a point that already pokes out up to 3 mm in the rest shape is held to the cover too: a speck through the cloth is a fault from the start */ if (h.along < 0) { below++; if (h.along < -0.001) under.push(i); } }
   const ra = clRank(A.name), rb = clRank(B.name), known = ra >= 0 && rb >= 0; if (known && (ra >= rb || (ra === 0 && rb === 1))) { m.set(B.g, null); return null; }   /* skin under hair is not tested: the hair is painted to fade into the skin at its edge */

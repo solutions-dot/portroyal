@@ -1,0 +1,89 @@
+{
+ "name": "mb_constable",
+ "era": 1900,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "age": 0.45,
+  "muscle": 0.55,
+  "weight": 0.5,
+  "height": 0.55
+ },
+ "garments": {
+  "sleeve": 0.95,
+  "trousers": true,
+  "jacket": true,
+  "jacketsleeve": 0.92,
+  "shoes": true,
+  "collar": "turn",
+  "hairvol": 0.3,
+  "hat": [
+   [
+    "peaked",
+    "Hat"
+   ]
+  ],
+  "tie": true,
+  "waistcoat": false
+ },
+ "colors": {
+  "Skin": [
+   142,
+   96,
+   70
+  ],
+  "Shirt": [
+   220,
+   214,
+   200
+  ],
+  "Jacket": [
+   36,
+   40,
+   64
+  ],
+  "Breeches": [
+   36,
+   40,
+   58
+  ],
+  "Shoes": [
+   24,
+   20,
+   18
+  ],
+  "Hat": [
+   34,
+   38,
+   60
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ],
+  "Buttons": [
+   190,
+   170,
+   110
+  ],
+  "Collar": [
+   232,
+   226,
+   210
+  ],
+  "Tie": [
+   40,
+   36,
+   36
+  ]
+ },
+ "face": "strong",
+ "outfit": {
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "waistcoat": false
+ }
+}

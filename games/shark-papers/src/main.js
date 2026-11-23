@@ -36,6 +36,7 @@ import { createDirector } from "./director.js";
 import * as P from "./props.js";
 import { cockedHat } from "./ships.js";
 import { tunePixels } from '../../../engine/perf.js';
+import { sunShadow } from '../../../engine/sunshadow.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
 import { addExit } from '../../../engine/exit.js';
 
@@ -60,6 +61,7 @@ sky.objects.forEach((o) => scene.add(o));
 const hemi = new THREE.HemisphereLight(0xfff1d4, 0x819183, 2.5),
   sun = new THREE.DirectionalLight(0xffe2b6, 2.1);
 sun.position.set(-20, 42, 20);
+const SH = sunShadow(renderer, sun, { phone });   /* real sun shadows on desktop (engine/sunshadow.js) */
 scene.add(hemi, sun);
 /* at night and indoors a soft light goes with you, as if your eyes had got used to the dark: faces near you can be read (owner rule 9) */
 const nightFill = new THREE.PointLight(0xffe2b8, 0, 16, 1.3);
@@ -210,6 +212,7 @@ async function buildWorld(id) {
     Q.propList = propSnap(Q.group);   /* small props, before merging (engine/audit-props.js); Q.props is the place's own */
   }
   mergePlace(Q);
+  SH.prepare(Q.group);
   Q.people = [];
   Q.extras = [];
   const specs = Q.specs.map((s) => ({ ...CAST[s.cast], ...s, bodyId: CAST[s.cast].base + (s.raw ? "" : "_focus") }));
@@ -237,6 +240,7 @@ async function buildWorld(id) {
   for (const n of Q.extras) if (typeof n.amb?.spec?.chase === "string") n.amb.spec.chase = Q.extras.find((o) => o.id === n.amb.spec.chase);
   Q.life.ready();
   Q.storyLife.ready();
+  SH.prepare(Q.group);   /* again, now the people are in */
   Q.relight = () => light(Q);   /* a camera scene may change the hour */
   worlds[id] = Q;
   addShadows(Q);
@@ -374,11 +378,13 @@ function light(Q) {
   sky.clouds.visible = !iosWebGL && !L.stars && !Q.indoor;
   scene.fog = new THREE.Fog(L.fog[0], L.fog[1], L.fog[2]);
   sun.color.set(L.sun[0]);
-  sun.intensity = L.sun[1];
+  sun.intensity = L.sun[1] * (SH.on && !Q.indoor ? 1.15 : 1);   /* with real shadows (desktop) the sun leads a little more and the sky less */
   sun.position.set(L.sun[2], L.sun[3], L.sun[4]);
+  SH.relight();
+  SH.enable(!Q.indoor);   /* indoors the lamps light the room: no sun shadows */
   hemi.color.set(L.hemi[0]);
   hemi.groundColor.set(L.hemi[1]);
-  hemi.intensity = L.hemi[2];
+  hemi.intensity = L.hemi[2] * (SH.on && !Q.indoor ? 0.88 : 1);
   nightFill.intensity = L.fill || 0;
   scene.environmentIntensity = L.stars || Q.indoor ? 0.08 : 0.25;
 }
@@ -959,6 +965,7 @@ function tick(dt, now = performance.now()) {
   dangerTick(dt, quiet);
   if (S.started) audioTick(Q, dt);
   if (__DEV__) camera.userData.checkPlace = Q;   // Match camera probes to the scene actually drawn, including chapter transitions.
+  SH.follow(camera);
   renderFramed(renderer, scene, camera, DIR.on || LS.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;
