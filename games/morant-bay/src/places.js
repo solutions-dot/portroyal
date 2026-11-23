@@ -260,19 +260,18 @@ function gut() {
   const lid = box(0.3, 0.02, 0.22, solid(0x7a7a76, 0.5, 0.4), 0, 0.11, 0, tin);
   lid.geometry.translate(0, 0, 0.11);
   lid.position.z = -0.11;
-  const paper = plane(0.26, 0.3, solid(0xe6dcc0, 1, 0, { side: THREE.DoubleSide }), 0, 0.12, 0, tin);
+  const paper = plane(0.22, 0.16, solid(0xe6dcc0, 1, 0, { side: THREE.DoubleSide }), 0, 0.105, 0, tin);   /* folded small: it lies inside the box (it was wider than the box and stuck out through the lid) */
   paper.rotation.x = -Math.PI / 2;
-  for (let i = 0; i < 8; i++) {
-    const ln = box(0.16 - (i % 2) * 0.03, 0.002, 0.008, solid(0x2e2822, 1), -0.02, 0.122, -0.11 + i * 0.03, tin);
-    ln.userData.noBatch = true;
-  }
+  const lines = grp(); paper.add(lines); lines.rotation.x = Math.PI / 2;   /* the writing moves with the paper */
+  for (let i = 0; i < 5; i++) box(0.14 - (i % 2) * 0.03, 0.002, 0.008, solid(0x2e2822, 1), -0.02, 0.002, -0.06 + i * 0.03, lines);
   tin.traverse((o) => (o.userData.noBatch = true));
   add(Q, tin, -4.4, 8.4, 0.46, 0.2);
-  Q.reveal.list = (seen) => {
+  Q.reveal.list = (seen, stage) => {
     const k = K(seen),
       u = span(k, 0.05, 0.5);
     lid.rotation.x = -1.9 * u;
-    paper.position.y = mix(0.12, 0.2, span(k, 0.5, 0.9));
+    paper.position.y = mix(0.105, 0.2, span(k, 0.5, 0.9));
+    if (stage !== undefined) tin.visible = stage < 20;   /* put away indoors after chapter 1: it is not on the bench in later chapters */
   };
   point(Q, "bench", -4.4, 9.4, "the bench");
   /* the yam hill you dig in (chapter 1): the fork goes in and turns up dry earth and a yam no bigger than a fist */

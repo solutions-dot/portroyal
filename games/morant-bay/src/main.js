@@ -336,7 +336,7 @@ function visuals() {
   const Q = world();
   if (!Q) return;
   for (const id of Object.keys(S.placed)) if (TASKS[id]?.place === Q.id) applyPlaced(Q, id);
-  for (const [id, lk] of Object.entries(LOOKS)) if (lk.place === Q.id) Q.reveal[id]?.(!!S.found[id]);
+  for (const [id, lk] of Object.entries(LOOKS)) if (lk.place === Q.id) Q.reveal[id]?.(lk.shut ? 0 : !!S.found[id], S.stage);   /* shut: put back as it was once read (a box closed again); the stage lets a thing be put away after its chapter */
   if (S.hand && carry.holding()) carry.holding().visible = true;
 }
 function resetSceneTasks() {
