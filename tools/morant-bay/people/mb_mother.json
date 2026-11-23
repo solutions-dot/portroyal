@@ -11,7 +11,7 @@
   "asian": 0.0,
   "age": 0.45,
   "muscle": 0.55,
-  "weight": 0.55,
+  "weight": 0.5,
   "height": 0.52
  },
  "garments": {
@@ -21,7 +21,7 @@
   "collar": false,
   "sleeve": 0.55,
   "hem": 0.07,
-  "flare": 1.12,
+  "flare": 1.05,
   "apron": true,
   "hat": [
    [
@@ -51,9 +51,9 @@
    56
   ],
   "Apron": [
-   196,
-   184,
-   156
+   128,
+   142,
+   160
   ],
   "Hat": [
    70,

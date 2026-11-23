@@ -1490,6 +1490,9 @@ if G.get('apron'):
             if hit is not None: best=max(best,(hit-o).length)
         return best
     wide='skirt' in PART or OLD; ZA=HIP+(0.132 if 'skirt' in PART else 0.124)      # the band sits on the top edge of the trousers or skirt, over the join with the shirt (and over a bodice's bottom edge)
+    _bo=bpy.data.objects.get('Belt'); BELTR=0.0
+    if 'skirt' in PART and _bo is not None and len(_bo.data.vertices):      # (owner, 23 November 2026: "the band for the apron is higher than the apron itself") over a skirt with a belt the band is tied over the belt, not 3 cm above it on the blouse
+        _bz=[v.co.z for v in _bo.data.vertices]; ZA=(min(_bz)+max(_bz))/2+0.004; BELTR=0.005
     ZE=(SKB+0.10) if 'skirt' in PART else KNEE+0.02; AH=1.30 if wide else 1.12      # the top, the hem, and how far round each side it reaches (radians from the front)
     def apron_from(src,name):
         # Over a skirt the apron is cut from the skirt itself: the skirt's own front, from the band to a hand above the hem and from hip to hip, lifted 12 mm off it, with
@@ -1498,10 +1501,10 @@ if G.get('apron'):
         o=src.copy(); o.data=src.data.copy(); o.name=name; bpy.context.scene.collection.objects.link(o); b=bmesh.new(); b.from_mesh(o.data)
         def cut(co,no):
             bmesh.ops.bisect_plane(b,geom=b.verts[:]+b.edges[:]+b.faces[:],plane_co=Vector(co),plane_no=Vector(no).normalized(),clear_outer=True,dist=1e-5)
-        cut((0,_hy+0.01,0),(0,1,0)); cut((0,_hy,0),(math.cos(AH),math.sin(AH),0)); cut((0,_hy,0),(-math.cos(AH),math.sin(AH),0)); cut((0,0,ZA-0.004),(0,0,1)); cut((0,0,ZE),(0,0,-1))
+        cut((0,_hy+0.01,0),(0,1,0)); cut((0,_hy,0),(math.cos(AH),math.sin(AH),0)); cut((0,_hy,0),(-math.cos(AH),math.sin(AH),0)); cut((0,0,ZA-0.004+(0.010 if BELTR else 0)),(0,0,1)); cut((0,0,ZE),(0,0,-1))
         b.normal_update()
         for v in b.verts:
-            rad=Vector((v.co.x,v.co.y-_hy,0)); n=v.normal if v.normal.dot(rad)>=0 else -v.normal; v.co+=Vector((n.x,n.y,0)).normalized()*0.012 if Vector((n.x,n.y,0)).length>1e-6 else Vector((0,-0.012,0))
+            rad=Vector((v.co.x,v.co.y-_hy,0)); n=v.normal if v.normal.dot(rad)>=0 else -v.normal; v.co+=Vector((n.x,n.y,0)).normalized()*(0.012+0.008*sstep(HIP,KNEE,v.co.z)) if Vector((n.x,n.y,0)).length>1e-6 else Vector((0,-0.012,0))
         b.to_mesh(o.data); b.free(); o.data.materials.clear(); o.data.materials.append(colmat('Apron'))
         if 'Col' in o.data.color_attributes: o.data.color_attributes.remove(o.data.color_attributes['Col'])
         clothes.append(o); return o
@@ -1522,13 +1525,13 @@ if G.get('apron'):
     # the waistband and its ends
     NB=56; AB=[2*math.pi*k/NB for k in range(NB)]; RB=[_out(a,ZA-0.004) or 0.14 for a in AB]
     for _ in range(4): RB=[max(RB[k],(RB[k-1]+2*RB[k]+RB[(k+1)%NB])/4) for k in range(NB)]
-    hh=0.009; ring=[]
+    hh=0.013 if BELTR else 0.009; ring=[]      # over a belt the band covers it top to bottom
     for k,a in enumerate(AB):
-        r=RB[k]+0.011      # over the panel's top edge
+        r=RB[k]+0.011+BELTR      # over the panel's top edge (and over the belt, when there is one)
         ring.append([bm.verts.new(pt(a,ZA-0.004+dz,r+dr)) for dz,dr in ((hh,0.0),(0.0,0.0025),(-hh,0.0),(-hh,-0.0045),(hh,-0.0045))])
     for k in range(NB):
         for m in range(5): bm.faces.new((ring[k][m],ring[(k+1)%NB][m],ring[(k+1)%NB][(m+1)%5],ring[k][(m+1)%5]))
-    rk=RB[NB//2]+0.011; kc=Vector(pt(math.pi,ZA-0.004,rk+0.006))      # the knot, in the middle of the back
+    rk=RB[NB//2]+0.011+BELTR; kc=Vector(pt(math.pi,ZA-0.004,rk+0.006))      # the knot, in the middle of the back
     bmesh.ops.create_uvsphere(bm,u_segments=8,v_segments=5,radius=1.0,matrix=Matrix.Translation(kc)@Matrix.Diagonal((0.013,0.007,0.010,1)))
     for sx in (1,-1):      # two ends hang from it, a little apart, lying on the cloth
         prev=None
@@ -1538,7 +1541,7 @@ if G.get('apron'):
             if prev: bm.faces.new((prev[0],prev[1],pair[1],pair[0]))
             prev=pair
     if 'skirt' in PART:      # over a skirt the band is its own piece (ApronBand, material Apron), on the hips
-        _bd=rigid('ApronBand',bm,'Apron','Hips')
+        _bd=soft('ApronBand',bm,'Apron',src=_bo) if BELTR else rigid('ApronBand',bm,'Apron','Hips')      # tied over a belt it takes the belt's own weights, so the two bend as one (on the hips alone the belt came through it when she bent)
         for p_ in _bd.data.polygons: p_.use_smooth=True
     else:
         ap=rigid('Apron',bm,'Apron','Hips')
@@ -1911,8 +1914,10 @@ def skirt_to_belt():
     # (a new key, "beltfit": true, 22 November 2026; recipes without it build as before) the top of the skirt, where the belt lies on it, takes the belt's bone weights
     # (the blouse's), fading back to its own over 6 cm below the belt. The skirt followed the hips and thighs and the belt the blouse, so when the body bent forward
     # (picking up, wiping the brow, walking) the top of the skirt rose over the belt and hid it ('Skirt shows through Belt', up to 2 cm).
-    be=bpy.data.objects.get('Belt'); sk=PART.get('skirt')
-    if be is None or sk is None or not len(be.data.vertices): return
+    be=bpy.data.objects.get('Belt')
+    for sk in (PART.get('skirt'),bpy.data.objects.get('Apron')):      # the skirt's top, and an apron cut from it, both take the belt's weights
+        if sk is not None and be is not None and len(be.data.vertices) and len(sk.data.vertices): _skirt_to_belt(be,sk)
+def _skirt_to_belt(be,sk):
     from mathutils.kdtree import KDTree
     zl=min(v.co.z for v in be.data.vertices); zh=max(v.co.z for v in be.data.vertices); kv=KDTree(len(be.data.vertices))
     for v in be.data.vertices: kv.insert(v.co,v.index)
