@@ -350,7 +350,13 @@ function gut() {
   point(Q, "cave", CAVE.x + 0.2, CAVE.z + 0.6, "the cave");
   point(Q, "cane", -12.6, 7.4, "the cane");
   /* chapter 5: soldiers in the yard, one of them looking out over the open ground to the west. While he looks, be in cover. */
-  const cover = [CANE.slice(), [H.x - 2.8, H.z - 2.4, H.x - 1.8, H.z + 2.4], [-14.4, -11, -12.0, -8.6], [CAVE.x - 3.6, CAVE.z - 1, CAVE.x + 3.6, CAVE.z + 2.0], [-20.5, -6.6, -18.3, -5.4], [-12, -9.8, -10.4, -8.6]];
+  /* two clumps of bush between the cane and the rocks below the cave: from the cane to the next cover was about 15 m of open ground, more than a
+     walk can cross while the soldier looks away (owner, 23 November 2026: "not sure it can be completed") */
+  for (const [x, z] of [[-13.4, 1.6], [-12.8, -3.8]]) {
+    for (const [dx, dz, sz] of [[-0.6, 0, 1.3], [0.5, 0.2, 1.15], [0, -0.4, 1.0]]) add(Q, bush((x * 7 + dx * 13) | 0, sz), x + dx, z + dz);
+    wall(Q, x, z, 1.8, 1.0);
+  }
+  const cover = [[-14.6, 0.6, -12.2, 2.6], [-14.0, -4.8, -11.6, -2.8], CANE.slice(), [H.x - 2.8, H.z - 2.4, H.x - 1.8, H.z + 2.4], [-14.4, -11, -12.0, -8.6], [CAVE.x - 3.6, CAVE.z - 1, CAVE.x + 3.6, CAVE.z + 2.0], [-20.5, -6.6, -18.3, -5.4], [-12, -9.8, -10.4, -8.6]];
   const cycle = (len, still, look) => (t) => {
     const u = t % len;
     return u < still ? 0 : u < still + 0.8 ? (u - still) * 1.2 : u < still + 0.8 + look ? 1 : Math.max(0, 1 - (u - still - 0.8 - look) / 0.8) * 0.99;
@@ -360,7 +366,7 @@ function gut() {
     if (!w) return;
     w.m.rotation.y = mix(Math.PI / 2 + 0.4, -Math.PI / 2, span(k, 0, 1));   /* he turns from the yard to look west over the provision ground */
   };
-  Q.danger.yard = { start: [H.x - 2.3, H.z, -Math.PI / 2], zone: [-21, -14, -2, 15], cover, grace: 2.2, look: cycle(9, 4.6, 2.6), show, shout: true, line: "A soldier shouts. You drop down and crawl back to cover." };
+  Q.danger.yard = { start: [H.x - 2.3, H.z, -Math.PI / 2], zone: [-21, -14, -2, 15], cover, grace: 2.2, look: cycle(9, 5.2, 2.2), show, shout: true, line: ["A soldier shouts. You drop down and crawl back to cover.", "He turns your way. You freeze, then slip back.", "Too soon! Wait until he looks away.", "Watch him. Move when his back is turned."] };
   /* the burning (chapter 5): the chapel and the houses catch one after another */
   /* each building burns hard for a while, then its roof gives way: the building slumps and leans over two seconds (with a burst of sparks), then
      only the burnt shell stands, still smoking, as the ward does in Eventide Home (owner, 23 November 2026: "look at the fire from eventide home

@@ -895,7 +895,7 @@ function dangerTick(dt, quiet) {
     }
     [S.x, S.z, S.yaw] = DANGER.safe;
     S.pitch = 0;
-    notice(D.line || "A shot! The dust jumps beside you. You run back to cover.");
+    { const L = Array.isArray(D.line) ? D.line : [D.line || "A shot! The dust jumps beside you. You run back to cover."]; D.said = ((D.said ?? -1) + 1) % L.length; notice(L[D.said]); }   /* a different line each time, so being seen does not read the same again and again */
   }
 }
 /* a soldier's shout across the open ground: a rough rising voice, then a second */
