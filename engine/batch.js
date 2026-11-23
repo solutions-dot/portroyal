@@ -7,6 +7,7 @@
    later changes one of its materials (a window lit at night, a fade, a material made see-through), that group splits back into one mesh per
    material on the spot, and those keep the game's own materials, so they follow every later change as before. Turn the colour step off with
    batchStatic(root, { bake: false }) or ?nobake (dev). */
+import { settleFights } from './depthfight.js';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -31,6 +32,7 @@ function same(m, v) { if (m.color.r !== v[0] || m.color.g !== v[1] || m.color.b 
   let i = 6; for (const k of NUM) if (m[k] !== v[i++]) return false; for (const k of BOOL) if (m[k] !== v[i++]) return false; for (const k of TEX) if (m[k] !== v[i++]) return false; return true; }
 
 export function batchStatic(root, { bake = BAKE } = {}) {
+  settleFights(root);   /* surfaces in one plane are settled first, so nothing flickers (engine/depthfight.js) */
   root.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), rel = new THREE.Matrix4(), buckets = new Map(), dead = [], keep = ['position', 'normal', 'uv', 'color'];
   (function walk(o, skip) {
     if (o.userData.noBatch || skip) skip = true;

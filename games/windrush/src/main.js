@@ -1291,6 +1291,7 @@ function tick(dt, now = performance.now()) {
         blocked: (x, z, r) => blocked(Q, x, z, r),
         others: Q.people,
         talking,
+        view: { x: camera.position.x, z: camera.position.z, yaw: S.yaw },   /* a follower keeps out of the middle of your view (engine/follow.js) */
       });
   }
   shadows(Q);

@@ -943,7 +943,7 @@ function tick(dt, now = performance.now()) {
   Q.life.tick(frozen ? 0 : dt, W);
   Q.storyLife.tick(frozen ? 0 : dt, { ...W, story: [] });
   for (const n of Q.people)
-    if (n.fol) followTick(n, frozen ? 0 : dt, { px: S.x, pz: S.z, walls: Q.walls, bounds: Q.bounds, blocked: (x, z, r) => blocked(Q, x, z, r), others: Q.people, talking });
+    if (n.fol) followTick(n, frozen ? 0 : dt, { px: S.x, pz: S.z, walls: Q.walls, bounds: Q.bounds, blocked: (x, z, r) => blocked(Q, x, z, r), others: Q.people, talking, view: { x: camera.position.x, z: camera.position.z, yaw: S.yaw } });   /* view: a follower keeps out of the middle of your view (engine/follow.js) */
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
   else if (LS.tick(dt)) {

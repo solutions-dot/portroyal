@@ -263,8 +263,10 @@ function house({ phone } = {}) {
   W.wallRun(G, [3.9, -5, 3.9, 5], H, mH, DOOR, 0.2);
   W.wallRun(G, [4.1, -5, 4.1, 5], H, mE, DOOR, 0.2);
   for (const x of [-4, 4]) {
-    for (const s of [-1, 1]) box(0.5, 3.0, 0.14, R.MAHOG, x, 1.5, s * 1.17, G);
-    box(0.5, 0.16, 2.48, R.MAHOG, x, 3.08, 0, G);
+    /* the jambs and the head stand 1 cm proud of the opening's own faces: flush with them (z 1.10, y 3.0) the two surfaces fought and the
+       door frames flickered in a jagged pattern as the camera moved (owner, 23 November 2026) */
+    for (const s of [-1, 1]) box(0.5, 3.0, 0.14, R.MAHOG, x, 1.5, s * 1.16, G);
+    box(0.5, 0.16, 2.48, R.MAHOG, x, 3.07, 0, G);
     box(0.56, 0.06, 2.6, R.MAHOG_DARK, x, 3.19, 0, G);
     Q.walls.push([x - 0.3, -5, x + 0.3, -1.1], [x - 0.3, 1.1, x + 0.3, 5]);
   }

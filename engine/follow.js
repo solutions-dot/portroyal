@@ -17,7 +17,8 @@
    n is the game's person: { x, z, m (the body), ctl (its engine/anim.js controller) }. The tick sets n.x, n.z, n.walking, n.clip and the body's turn; the
    body's height belongs to the game: give world.place(n) (land with hills), or the tick sets m.position.x and z and leaves y to groundFeet.
    world: { px, pz (you), blocked(x, z, r) (true where a person may not stand), walls ([[x0, z0, x1, z1]] for routes round furniture), bounds,
-            others ([people] to keep clear of), talking (the person you are talking to: they wait), view ({ x, z, yaw } of the camera), place(n) } */
+            others ([people] to keep clear of), talking (the person you are talking to: they wait), view ({ x, z, yaw } of the camera: give it, and a
+            follower never stands close in the middle of your view), place(n) } */
 import { walkRoute, segmentHitsWall } from './placement.js';
 import { strideOf, MAX_WALK_RATE } from './anim.js';
 
@@ -93,10 +94,22 @@ function followFree(n, f, dt, W) {
   { const c = freeNear(W, sx, sz, f.r, n); if (c) { sx = c[0]; sz = c[1]; } }
   let tx = sx, tz = sz; const ox = Math.cos(hd) * f.side, oz = -Math.sin(hd) * f.side;
   for (const k of [1, -1]) { const x = sx + ox * k, z = sz + oz * k; if (freeAt(W, x, z, f.r, n) && clear(W, [sx, sz], [x, z], f.r, n)) { tx = x; tz = z; break; } }
+  /* never close in the middle of your view (Rose Hall, 23 November 2026: "this girl is obstructing my walking path wherever i go"): when the
+     spot to go to, or where they stand, is within 2.4 m and near the middle of the camera's view (world.view), they go to your side or behind you */
+  const inView = (x, z) => { if (!W.view) return false; const fx = -Math.sin(W.view.yaw), fz = -Math.cos(W.view.yaw), dx = x - W.px, dz = z - W.pz, L = Math.hypot(dx, dz); return L < 2.4 && (dx * fx + dz * fz) / (L || 1) > 0.55; };
+  let clearView = false;
+  if (inView(tx, tz) || inView(n.x, n.z)) {
+    const fx = -Math.sin(W.view.yaw), fz = -Math.cos(W.view.yaw);
+    const sideFirst = (fx * (n.z - W.pz) - fz * (n.x - W.px)) >= 0 ? 1 : -1;   /* to the side they are already on */
+    find: for (const r of [Math.max(f.gap, f.space + 0.35), f.space + 0.2]) for (const a of [1.9, -1.9, 1.35, -1.35, 2.5, -2.5, Math.PI].map((v) => v * sideFirst)) {   /* nearer in, and at more angles, in a corner (Rose Hall: a metre from a wall) */
+      const c = Math.cos(a), sn = Math.sin(a), x = W.px + (fx * c - fz * sn) * r, z = W.pz + (fx * sn + fz * c) * r;
+      if (freeAt(W, x, z, f.r, n) && clear(W, [W.px, W.pz], [x, z], f.r, n)) { tx = x; tz = z; clearView = true; break find; }
+    }
+  }
   const togo = Math.hypot(tx - n.x, tz - n.z), lag = d - f.gap;
   f.pt = (f.pt || 0) + dt; if (f.pt >= 1) { const prog = Math.hypot(n.x - (f.p0x ?? n.x), n.z - (f.p0z ?? n.z)); f.stuckT = prog < 0.3 && lag > 1.5 ? f.stuckT + f.pt : 0; f.p0x = n.x; f.p0z = n.z; f.pt = 0; }   /* stuck: under 30 cm of real progress a second while you are getting away */
   if (d > f.far || (f.stuckT >= 2.5 && lag > 1.5)) { if (rescue(n, f, W)) { f.stuckT = 0; gait(n, null); return; } }
-  const go = f.moving ? togo > 0.2 && d > f.space + 0.15 : togo > 0.75 || lag > 0.8;   /* once walking they keep on until they arrive: no stop-start shuffle */
+  const go = f.moving ? togo > 0.2 && d > f.space + 0.15 : togo > 0.75 || lag > 0.8 || (clearView && inView(n.x, n.z) && togo > 0.3);   /* once walking they keep on until they arrive: no stop-start shuffle */
   if (!go) { f.moving = false; f.stuckT = 0; gait(n, null); if (d < 9) facePlayer(n, W, dt); return; }
   /* the way there: straight if nothing is in the way, else along your footsteps (you walked there, so it is open) */
   let wx = tx, wz = tz; if (!clear(W, [n.x, n.z], [tx, tz], f.r, n)) { let bi = -1, bd = 1e9; for (let j = 0; j < C.length; j++) { const k = Math.hypot(C[j][0] - n.x, C[j][1] - n.z); if (k < bd) { bd = k; bi = j; } } for (let j = C.length - 1; j > bi; j--) if (Math.hypot(C[j][0] - n.x, C[j][1] - n.z) < bd + 0.6) { bi = j; break; }   /* where you walked the same ground twice, take your latest footsteps, not the old ones that lead back */ if (bi >= 0) { let j = bi; while (j < C.length - 1 && Math.hypot(C[j][0] - n.x, C[j][1] - n.z) < 0.35) j++; const c = freeNear(W, C[j][0], C[j][1], f.r, n) || C[j]; wx = c[0]; wz = c[1]; } }
