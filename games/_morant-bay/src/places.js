@@ -6,15 +6,16 @@
 import * as THREE from "three";
 import { makeDoor } from "../../../engine/door.js";
 import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng, batchStatic } from "./gfx.js";
-import { tree, palm, bush, mule, cart, barrel, scatter, surveyPole, sack, crate, marketBasket } from "./period-props.js";
+import { tree, palm, bush, mule, cart, barrel, scatter, surveyPole, sack, crate, marketBasket, banana } from "./period-props.js";
 import * as P from "./props.js";
 import * as W from "./world.js";
 import * as S from "./scenery.js";
 import { TASKS } from "./steps.js";
 import { flock as roostFlock, fireflies } from "../../../engine/life.js";   /* birds going to roost, fireflies over the grass at dusk */
-import { blaze } from "../../../engine/blaze.js";   /* a building on fire (engine/blaze.js) */
+import { blaze } from "../../../engine/blaze.js";
+import { hen } from "../../../engine/animals.js";   /* a building on fire (engine/blaze.js) */
 import { createSea } from "../../../engine/sea.js";
-import { wattleHouse, bushChapel, caneField, yamHills, plantain, guinep, courthouse, schoolhouse, marketShed, louvreHouse, courtShed, boardwalk, flagpole, farGallows, caveMouth, rodneyMemorial, canoe } from "./mbscenery.js";
+import { wattleHouse, bushChapel, caneField, yamHills, plantain, guinep, courthouse, schoolhouse, marketShed, louvreHouse, courtShed, boardwalk, flagpole, farGallows, caveMouth, rodneyMemorial, canoe, beachBoat, sandTex } from "./mbscenery.js";
 
 const base = (id, bounds, start) => ({
   id,
@@ -190,6 +191,15 @@ function gut() {
   add(Q, S.patch(3.1, 2.2, solid(0x9a8a6c, 1), 5, 0.012), -16.5, 12.2);
   for (const [x, z, s] of [[-18.4, 11.4, 0.6], [-15, 13.2, 0.5], [-17.6, 13.6, 0.7]]) solid1(Q, W.rocks(s, x * 3, 2), x, z, s * 1.2, s * 1.2);
   point(Q, "spring", -15.4, 11.2, "the spring");
+  /* the yards: hens pecking, banana clumps and coconut palms by the houses, bushes along the edges of the village */
+  for (const [x, z, sd] of [[-3.0, 4.2, 1], [-2.2, 9.6, 2], [-5.6, 9.8, 3], [10.6, 5.2, 4], [12.8, -0.6, 5], [3.4, 6.4, 6]]) {
+    const h = add(Q, hen(sd), x, z, 0, sd * 1.7);
+    Q.tickers.push((t) => h.userData.tick(t));
+  }
+  for (const [x, z, sd] of [[-10.6, 8.2, 11], [-2.6, 10.8, 12], [7.4, 10.6, 13], [18.6, 7.4, 14], [-13.4, -10.6, 15], [19.6, -8.6, 16]]) solid1(Q, banana(sd, sd % 2 === 0), x, z, 0.6, 0.6);
+  for (const [x, z, sd] of [[-11.6, 12.4, 21], [11.4, 12.0, 22], [2.6, -13.6, 23], [19.4, 1.8, 24], [-19.6, 4.0, 25], [9.8, -14.6, 26]]) solid1(Q, palm(8 + (sd % 3), sd), x, z, 0.5, 0.5);
+  scatter(Q.group, (i) => bush(i + 40, 0.9 + (i % 3) * 0.3), 26, [-24, -18, 24, 18], [[-21.5, -16.5, 21.5, 15.5]], 31);
+  scatter(Q.group, (i) => tree(6 + (i % 3), i + 70, i % 2), 14, [-40, -40, 40, 40], [[-24, -18, 24, 18]], 37);
   /* the cane, south-west of the house: tall enough to hide in */
   const CANE = [-21, 5.6, -11.5, 10.4];
   add(Q, caneField(CANE, { seed: 7, clear: [[-17.6, 9.6, -15.6, 11], [-14.2, 8.2, -11.8, 10.6]] }));
@@ -493,11 +503,18 @@ function bay() {
     NOW = { top: 0x7cb4e0, hor: 0xe4e8e0, fog: [0xdce4e4, 90, 560], sun: [0xfff4dc, 2.6, 30, 60, 30], hemi: [0xf8f8f0, 0x8a9070, 2.6], ridge: 0x2f6a36 };
   Q.light = DAY;
   Q.view = { pos: [-14, 2.6, 10], look: [0, 2.6, -8] };
-  ground(Q, std(T.dirt([50, 50], [176, 160, 126])), 600);
+  /* the land stops at the shore: the ground runs north from the beach (it covered the sea until 23 November 2026), and the beach slopes down into the water */
+  const land = plane(600, 316, std(T.dirt([50, 26], [176, 160, 126])), 0, -0.025, -142, Q.group);
+  land.rotation.x = -Math.PI / 2;
+  land.name = "terrain";
   strip(Q, 48, 16, std(T.dirt([12, 4], [186, 170, 136])), 0, 1, 0.008);   /* the Parade */
-  strip(Q, 60, 6, std(T.dirt([20, 2], [214, 200, 164])), 0, 13, 0.009);   /* the beach */
-  createSea(Q.group, { y: -0.35, at: [0, 60], size: 120, edges: [[-60, 15.6, 60, 15.6]] });
-  for (const [x, z, ry] of [[-8, 13.6, 0.3], [6, 14, -0.4], [14, 13.4, 0.1]]) solid1(Q, canoe(4.2, x | 0), x, z, 4.2, 0.9, ry);
+  strip(Q, 300, 6, std(sandTex([90, 2])), 0, 13, 0.009);   /* the beach */
+  const shore = plane(300, 9, std(sandTex([90, 3], [190, 176, 140])), 0, -0.3, 20.2, Q.group);   /* wet sand, going down under the water */
+  shore.rotation.x = -Math.PI / 2 + 0.075;
+  shore.name = "terrain";
+  createSea(Q.group, { y: -0.35, at: [0, 70], size: 120, edges: [[-60, 17.4, 60, 17.4]] });
+  for (const [x, z, ry] of [[-8, 13.6, 0.3], [14, 13.4, 0.1]]) solid1(Q, canoe(4.2, x | 0), x, z, 4.2, 0.9, ry);
+  solid1(Q, beachBoat(3), 5, 14.2, 4.8, 1.6, -0.4);
   Q.ridges = "bay";
   for (const [x, z, r, h, s] of [[-40, -45, 30, 22, 1], [0, -52, 36, 28, 2], [40, -46, 30, 24, 3], [-70, -40, 26, 18, 4], [70, -42, 28, 20, 5]]) add(Q, S.karstHill(r, h, s, [0.22, 0.36, 0.2], 0.08), x, z, -1);
   for (let i = 0; i < 18; i++) add(Q, palm(7 + (i % 4), 40 + i), -36 + i * 4.2 + (i % 3), -26 - (i % 5) * 3);

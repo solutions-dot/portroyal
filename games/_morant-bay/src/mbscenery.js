@@ -7,7 +7,8 @@
    - The temporary court-house where courts-martial sat: after the second engraving: an open shed on posts under a shingle roof.
    - Market sheds, a two-storey house with a louvred upper floor (the engraving), a school-house of boards. */
 import * as THREE from "three";
-import { T, std, solid, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
+import { T, std, solid, mesh, box, cyl, plane, grp, rng, cv } from "./gfx.js";
+import { dugOut, rowBoat } from "../../../engine/boats.js";
 import * as W from "./world.js";
 import { M, roof as hipRoofS } from "./scenery.js";
 
@@ -405,8 +406,50 @@ export function rodneyMemorial() {
   }
   return g;
 }
-/* a small fishing canoe hauled up on the beach, dug out of one log */
+/* a fishing canoe hauled up on the beach: the engine's dug-out (engine/boats.js), tilted a little on the sand */
 export function canoe(L = 4.2, seed = 1) {
+  const g = grp(),
+    c = dugOut({ L, beam: 0.78, depth: 0.42 });
+  c.rotation.z = 0.04 * ((seed % 3) - 1);
+  g.add(c);
+  g.traverse((o) => (o.userData.noBatch = true));
+  return g;
+}
+/* a rowing boat drawn up on the beach (engine/boats.js), oars shipped */
+export function beachBoat(seed = 2) {
+  const g = grp(),
+    b = rowBoat({ L: 4.6, beam: 1.5, depth: 0.6, wood: std(T.plank([118, 96, 72], 6, [1, 1])), timber: std(T.plank([92, 72, 52], 1, [1, 1])), oars: "shipped", rudder: false });
+  b.rotation.z = 0.06;
+  g.add(b);
+  g.traverse((o) => (o.userData.noBatch = true));
+  return g;
+}
+/* beach sand: pale, fine, with a few shells and darker grains, no ruts (the dirt texture's wheel ruts read as tracks on a beach) */
+const sandTexes = {};
+export function sandTex(repeat = [20, 4], rgb = [214, 200, 164]) {
+  const k = repeat + "" + rgb;
+  if (sandTexes[k]) return sandTexes[k];
+  const t = cv(256, 256, (x, w, h) => {
+    x.fillStyle = `rgb(${rgb})`;
+    x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 2600; i++) {
+      const d = (Math.random() - 0.5) * 34;
+      x.fillStyle = `rgb(${rgb.map((c) => Math.max(0, Math.min(255, c + d))).join(",")})`;
+      x.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 1 + Math.random() * 2);
+    }
+    x.strokeStyle = "rgba(150,130,100,0.12)";
+    for (let i = 0; i < 9; i++) {   /* faint ripples left by the wind */
+      x.beginPath();
+      const y0 = Math.random() * h;
+      for (let px = 0; px <= w; px += 8) x.lineTo(px, y0 + Math.sin(px * 0.05 + i) * 4);
+      x.stroke();
+    }
+  });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(...repeat);
+  return (sandTexes[k] = t);
+}
+export function oldCanoe(L = 4.2, seed = 1) {
   const g = grp(),
     r = rng(seed),
     wood = solid(0x6a5038, 0.95);

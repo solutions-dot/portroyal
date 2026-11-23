@@ -134,29 +134,8 @@ export function washBench() {
   sb.rotation.x = -0.35;
   return g;
 }
-/* a hen: a round body, a head with a red comb, a tail; pecks now and then (Q.tickers) */
-export function hen(seed = 1) {
-  const g = grp(),
-    r = rng(seed),
-    c = [0x8a5a34, 0xe8e0cc, 0x2e2a26][(r() * 3) | 0];
-  const b = mesh(new THREE.SphereGeometry(0.11, 8, 6), flat(c), 0, 0.17, 0, g);
-  b.scale.set(0.85, 0.85, 1.2);
-  const head = grp(g, 0, 0.3, 0.12);
-  mesh(new THREE.SphereGeometry(0.055, 6, 5), flat(c), 0, 0, 0, head);
-  box(0.018, 0.04, 0.05, flat(0xc0302a), 0, 0.05, 0, head);
-  mesh(new THREE.ConeGeometry(0.02, 0.05, 4), flat(0xd9a030), 0, -0.005, 0.06, head).rotation.x = Math.PI / 2;
-  const tail = mesh(new THREE.ConeGeometry(0.07, 0.16, 5), flat(c), 0, 0.27, -0.14, g);
-  tail.rotation.x = -0.9;
-  for (const s of [-1, 1]) box(0.012, 0.11, 0.012, flat(0xd9a030), s * 0.04, 0.055, 0, g);
-  g.scale.setScalar(0.88); // about 0.35 m to the top of the comb
-  g.userData.noBatch = true;
-  g.userData.tick = (t) => {
-    const k = Math.max(0, Math.sin(t * 1.3 + seed * 2.1)) ** 6;
-    head.position.set(0, 0.3 - k * 0.2, 0.12 + k * 0.08);
-    g.rotation.y += Math.sin(t * 0.21 + seed) * 0.002;
-  };
-  return g;
-}
+/* a hen: one for every game (engine/animals.js); it began here */
+export { hen } from "../../../engine/animals.js";
 /* a stone-edged bed of plants by a wall */
 export function bed(len = 2, seed = 4, flowersOn = true) {
   const g = grp(),

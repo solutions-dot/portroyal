@@ -666,3 +666,7 @@ The owner asked for houses that "wow" up close "without sacrificing performance"
 
 A crowd that belongs to one chapter (the market crowd, soldiers who come later) is hidden with `life.hide(n, true)` and brought back with `life.hide(n, false)`. Setting `amb.gone` by hand did not hold: the mood's own coming and going (`moodShow`) brought wanderers and chatters back. A hidden person is marked `amb.off`, and the mood leaves them alone.
 
+## Small animals: `engine/animals.js` (23 November 2026)
+
+`hen(seed)` returns a hen about 0.35 m to its comb that pecks now and then (`h.userData.tick(t)` each frame from the game's own ticker list). It began in Windrush (`games/windrush/src/scenery.js`, which now re-exports it from here) and is shared with Morant Bay.
+
