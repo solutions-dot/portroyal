@@ -9,6 +9,15 @@ The owner ran out of usage and asked for everything to be saved on the branch wi
 - `npm test`: 274 pass (it was 279; the 5 missing are per-stage tests of Selassie and Windrush steps cut as busy work, which is expected). LINT 0 new.
 - Check tools: `node tools/build.mjs <game> --dev`, serve the repo root with `python3 -m http.server 8765`, then `?auto=1` (or the game's own autoplayer: Nanny and Port Royal report in the page title, `?auto=N&one`), `?test=audit`, `?test=layout`, `?test=held`, `?test=ambient`, `?test=beds`. Port Royal's `site/app.js` is tracked in git: rebuild it with the public build (no `--dev`) before committing it, from committed files only.
 
+## 0. Next, in this order (23 November 2026, end of session)
+
+1. **Shark Papers coats: collars and sleeves** (owner: "collars and sleeves look awful on these"). The navy coats (Fitton, the merchants, the clerk) have a tall white stand collar, sleeves that balloon out, and turned-back cuffs that stand off the arm. `tools/people/sleeve-blend.mjs` only eased the elbow; the real fix is in the builder (`era.py`): a plain round neckline or a low turned-down collar (rule 12), a fitted sleeve that follows the arm, and a cuff that hugs the wrist. Rebuild the bodies, then look at them front, three-quarter, side and back, standing, walking and seated.
+2. **Morant Bay, 1865**: start building from the handoff in PR 153 (`docs/games/morant-bay.md`). Start from `games/_template/`; wire the audits before the first PR.
+3. Re-run Tivoli autoplayers 2, 3, 4, 6 and the Tivoli and Windrush checks (the batch was stopped before it reached them).
+4. The graphics pass (section 2).
+
+Done this session, last: every game's background beds go through one bed bus at 0.45 (`BED_BUS`, engine/audio.js), so the sea no longer drowns the voices; Garvey chapters 5 to 8 finish in the autoplayer again.
+
 ## 1. Done today (pushed)
 
 - Menu "i" pop-up on each game's title screen: opens cleanly over the game; on phones and tablets it sits top right (`engine/rate.js`).
