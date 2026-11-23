@@ -558,7 +558,7 @@ export function road(K) {
     chat("rB0", "rB", 2.8, -26.5, 313),
     chat("rB1", "rB", 3.6, -27.0, 314),
     watch("rB2", 3.2, -27.9, 315, [3.2, -26.7], { react: ["Laugh", "Point"] }),
-    watch("rC0", 4.6, 6.0, 316, [0, -40], { react: ["Point", "Wave", "Cheer"] }),
+    watch("rC0", -4.6, 6.0, 316, [0, -40], { react: ["Point", "Wave", "Cheer"] }),   // on the west side: at x 4.6 the walkers on x 3.6 brushed past her
     watch("rC1", 4.7, -30.5, 317, [0, -40], { react: ["Point", "Wave", "Cheer"] }),
     child("rK0", 4.0, 3.0, 318, [3.0, 1.0, 5.0, 4.5], true),
     watch("rD0", -1.0, 9.6, 319, [-2.6, 5.8], { react: ["Wave"] }),

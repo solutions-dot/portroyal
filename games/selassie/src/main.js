@@ -1705,6 +1705,7 @@ onLoadFail((name) => {
         LS,
         lookMoment,
         LOOKSHOTS,
+        frozenWhy: () => [busy && "busy", openPanel() && $("dialogue").hidden && "panel " + openPanel(), DIR.paused && "director paused"].filter(Boolean).join(", "),   /* the game's clock is held (background life does not move) */
       });
     }
   } catch (e) {

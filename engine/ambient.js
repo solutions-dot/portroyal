@@ -178,7 +178,11 @@ export function createAmbient(opts = {}) {
   }
   function talkFor(n) { const s = n.amb.spec, l = avail(n, s.talks || (n.sex === 'm' ? TALKS_M : n.sex === 'f' ? TALKS_F : TALKS)); return l.length ? l[(n.amb.rnd() * l.length) | 0] : null; }
   function walkClip(n) { const a = n.amb, s = a.spec; if (a.running) return avail(n, [s.run || 'Run'])[0] || null; return avail(n, [a.carrying === false ? (s.back || 'Walk') : (s.walk || (n.sex === 'm' ? 'WalkM' : 'Walk')), 'Walk'])[0] || null; }
-  function pause(n, lo, hi) { const a = n.amb; a.st = 'pause'; a.t = span(a.rnd, [lo, hi]) * M().pause; a.turnTo = undefined; stand(n, idleFor(n)); if (a.rnd() < 0.6) glance(n, a.rnd() < 0.4 ? [W.px, W.pz] : null); }
+  function pause(n, lo, hi) { const a = n.amb, s = a.spec, again = a.st === 'pause' && /^Idle(M)?$/.test(a.clip || ''); a.st = 'pause'; a.t = span(a.rnd, [lo, hi]) * M().pause; a.turnTo = undefined;
+    let c = idleFor(n);   /* a pause over 4 s in the plain Idle, or a second pause straight after one (a walker in a narrow strip that finds no new goal), could pass with nothing moving: it takes a look round or a turn of the head instead (not for those a game keeps to the plain Idle) */
+    if ((a.t > 4 || again) && /^Idle(M)?$/.test(c || '') && !(s.idles && s.idles.length === 1 && /^Idle/.test(s.idles[0]))) { const alt = avail(n, ['LookAround', 'HeadTurn', 'LookOverShoulder']); if (alt.length) c = alt[(a.rnd() * alt.length) | 0]; }
+    if (/^Idle(M)?$/.test(c || '')) a.t = Math.min(a.t, 3.5);   /* still the plain Idle (no other clip): the pause ends, and they look round again, within 3.5 s */
+    stand(n, c); if (a.rnd() < 0.6 || /^Idle(M)?$/.test(c || '')) glance(n, a.rnd() < 0.4 ? [W.px, W.pz] : null); }
   function glance(n, at) { const a = n.amb; if (at && Math.hypot(at[0] - n.x, at[1] - n.z) < 12) { a.glance = { yaw: Math.atan2(at[0] - n.x, at[1] - n.z), t: 1.6 + a.rnd() * 1.6 }; return; } a.glance = { yaw: (n.m ? n.m.rotation.y : 0) + (a.rnd() - 0.5) * 1.6, t: 1.2 + a.rnd() * 1.5 }; }
   function shift(n, toward) {   /* a small change of stance: turn a little, then settle */
     const a = n.amb, base = toward !== undefined ? toward : (a.face !== undefined ? a.face : a.ry0); a.turnTo = base + (a.rnd() - 0.5) * 0.7; a.changed = life.t;
@@ -193,7 +197,7 @@ export function createAmbient(opts = {}) {
   }
   function go(n, g, route, { run = false } = {}) {
     const a = n.amb; a.goal = g; a.route = route || routeTo(n, g); if (!a.route) { a.goal = null; return false; } a.running = run; a.st = 'walk'; a.blockedT = 0;
-    const want = Math.atan2(a.route[0][0] - n.x, a.route[0][1] - n.z); if (n.m && Math.abs(wrap(want - n.m.rotation.y)) > 2.0 && !onKeepOff(keepOff(), n.x, n.z, a.r)) { a.st = 'turn'; a.turnTo = want; stand(n); return true; }   /* turn round on the spot first: no backwards walk */
+    const want = Math.atan2(a.route[0][0] - n.x, a.route[0][1] - n.z); if (n.m && Math.abs(wrap(want - n.m.rotation.y)) > 2.0 && !onKeepOff(keepOff(), n.x, n.z, a.r)) { const r0 = a.route, g0 = a.goal; stand(n); a.route = r0; a.goal = g0; a.st = 'turn'; a.turnTo = want; a.turnT = 0; a.glance = { yaw: want, t: 1.4 };   /* stand() clears the route, so it is kept across it (the walk after the turn had nowhere to go); the head leads the turn */ return true; }   /* turn round on the spot first: no backwards walk */
     a.turnTo = undefined; a.walking = true; play(n, walkClip(n)); return true;
   }
   /* one frame of walking along the route: slow on sharp turns, yield to the right, wait, then find another way */
@@ -229,6 +233,8 @@ export function createAmbient(opts = {}) {
     return false;
   }
   function startWalk(n) { const a = n.amb; a.st = 'walk'; a.turnTo = undefined; a.walking = true; play(n, walkClip(n)); }
+  /* a turn on the spot before setting off: done when facing the way, and never longer than 2.5 s (then it finishes at once) */
+  function turnGo(n, dt, k) { const a = n.amb; a.turnT = (a.turnT || 0) + dt; if (turnStep(n, dt, k)) return true; if (a.turnT < 2.5) return false; if (n.m && a.turnTo !== undefined) n.m.rotation.y = a.turnTo; return true; }
   function turnStep(n, dt, k = 2.2) { const m = n.m, a = n.amb; if (!m || a.turnTo === undefined) return true; const e = wrap(a.turnTo - m.rotation.y); m.rotation.y += Math.sign(e) * Math.min(Math.abs(e), dt * k); return Math.abs(e) < 0.08; }
 
   /* ---------- behaviours: each returns nothing; it sets a.st, a.t and plays clips ---------- */
@@ -236,7 +242,7 @@ export function createAmbient(opts = {}) {
   B.wander = (n, dt) => {
     const a = n.amb;
     if (a.st === 'walk') { if (walkStep(n, dt)) { if (onKeepOff(keepOff(), n.x, n.z, a.r)) { a.st = 'start'; return; } pause(n, ...(a.spec.pause || [2, 6])); } return; }
-    if (a.st === 'turn') { if (turnStep(n, dt, 2.6)) startWalk(n); return; }
+    if (a.st === 'turn') { if (turnGo(n, dt, 2.6)) startWalk(n); return; }
     if (a.st === 'pause' && a.t > 0) return;
     const p = pickGoal(n); if (p) go(n, p.g, p.r); else pause(n, 1.5, 3);
   };
@@ -244,7 +250,7 @@ export function createAmbient(opts = {}) {
     const a = n.amb, s = a.spec;
     if (a.leg === undefined) { a.leg = Math.hypot(s.to[0] - n.x, s.to[1] - n.z) < Math.hypot(s.from[0] - n.x, s.from[1] - n.z) ? 0 : 1; if (s.drop) { a.carrying = a.leg === 1; if (s.show) s.show(n, a.carrying); } }   /* leg: where they go next (1 = spec.to); with spec.drop they carry only on the way to spec.to */
     if (a.st === 'walk') { if (walkStep(n, dt)) { if (a.mid) { a.mid = false; const g2 = a.leg === 1 ? s.to : s.from; if (go(n, g2.slice())) return; }   /* at spec.via: on to the real end without stopping */ a.leg ^= 1; a.st = 'arrive'; a.t = 0; } return; }
-    if (a.st === 'turn') { if (turnStep(n, dt, 2.6)) startWalk(n); return; }
+    if (a.st === 'turn') { if (turnGo(n, dt, 2.6)) startWalk(n); return; }
     if (a.st === 'arrive') {   /* at one end: put down or pick up (spec.drop), then wait */
       const atTo = Math.hypot(s.to[0] - n.x, s.to[1] - n.z) < Math.hypot(s.from[0] - n.x, s.from[1] - n.z); a.leg = atTo ? 0 : 1;   /* where they really are decides, and where they go next */
       const want = !atTo;   /* at spec.from they pick up, at spec.to they put down, never by flipping (owner, 21 Nov 2026: they picked the bunch up again at the wagon) */
@@ -274,9 +280,15 @@ export function createAmbient(opts = {}) {
     const a = n.amb, s = a.spec, poi = s.at, face = poi ? Math.atan2(poi[0] - n.x, poi[1] - n.z) : a.ry0; if (a.face === undefined) { a.face = face; a.turnTo = face + (a.rnd() - 0.5) * 0.4; }
     if (a.t > 0) return;
     const roll = a.rnd(), react = M().react ? avail(n, s.react || []) : [];
-    if (react.length && roll < 0.22) { const c = react[(a.rnd() * react.length) | 0], once = /^(Point|WaveSlow|Salute)$/.test(c); play(n, c, { once }); a.t = once ? clipLen(n, c) * 0.95 : 2.5 + a.rnd() * 2.5; return; }
-    if (roll < 0.6) shift(n, face); else { const c = idleFor(n); if (c && c !== a.clip) play(n, c); else shift(n, face); glance(n); }   /* a step of weight or another idle, and a look round: always something */
-    a.t = span(a.rnd, s.every || [4, 8]) * M().pause;
+    if (react.length && roll < (W.watchTarget ? 0.5 : 0.22)) {   /* while everyone watches an event (W.watchTarget), a watcher reacts more often */ const c = react[(a.rnd() * react.length) | 0], once = /^(Point|WaveSlow|Salute)$/.test(c); play(n, c, { once }); a.t = once ? clipLen(n, c) * 0.95 : 2.5 + a.rnd() * 2.5; return; }
+    /* in the plain Idle a shift of the body alone leaves the head still (and while an event is watched the head is held on it), so a watcher
+       there changes to another idle instead: a look round or a turn of the head (22 November 2026, Selassie's welcome crowd). Not those a game
+       keeps to the plain Idle, as police on duty. */
+    const plain = /^Idle(M)?$/.test(a.clip || 'Idle') && !(s.idles && s.idles.length === 1 && /^Idle/.test(s.idles[0]));
+    const notPlain = (l) => avail(n, l).filter((x) => !/^Idle(M)?$/.test(x)), alt = plain ? (s.idles && notPlain(s.idles).length ? notPlain(s.idles) : notPlain(['LookAround', 'HeadTurn', 'LookOverShoulder'])) : [];   /* the game's own idles first, else a look round */
+    if (roll < 0.6 && !alt.length) { shift(n, face); if (plain) glance(n); }   /* a body with no other idle (a light crowd copy) at least turns its head */
+    else { const c = alt.length ? alt[(a.rnd() * alt.length) | 0] : idleFor(n); if (c && c !== a.clip) play(n, c); else shift(n, face); glance(n); }   /* a step of weight or another idle, and a look round: always something */   /* a step of weight or another idle, and a look round: always something */
+    a.t = span(a.rnd, s.every || [4, 8]) * M().pause; if (plain && !alt.length) a.t = Math.min(a.t, 3.5);   /* nothing else to play: glance again within 3.5 s */
   };
   B.chat = (n, dt) => {
     const a = n.amb, g = a.g; if (!g) { B.watch(n); return; } if (!g.ready) arrange(g);
@@ -319,7 +331,7 @@ export function createAmbient(opts = {}) {
         if ((a.aimT = (a.aimT || 0) - dt) <= 0) { a.aimT = 0.5; const ry = t.m ? t.m.rotation.y : 0, g = [t.x - Math.sin(ry) * 0.9, t.z - Math.cos(ry) * 0.9], r = solidFree(g[0], g[1], a.r) ? routeTo(n, g) : null; if (!r) { a.chasing = false; joy(n); return; } a.route = r; }
       }
       if (walkStep(n, dt)) { a.chasing = false; joy(n); } return; }
-    if (a.st === 'turn') { if (turnStep(n, dt, 3.5)) startWalk(n); return; }
+    if (a.st === 'turn') { if (turnGo(n, dt, 3.5)) startWalk(n); return; }
     if (a.t > 0) return;
     const run = dp > 6 && has(n, s.run || 'Run') && a.rnd() < 0.75;
     if (t && visible(t) && Math.hypot(t.x - n.x, t.z - n.z) > 1.6 && a.rnd() < 0.5) { const r = routeTo(n, [t.x, t.z]); if (r) { a.chasing = true; a.aimT = 0; go(n, [t.x, t.z], r, { run }); a.goal = null; return; } }
@@ -417,7 +429,7 @@ export function createAmbient(opts = {}) {
       if (O.mixers && c) { c.mx.update(a.acc); if (c.tick) c.tick(a.acc); }
       if (body.userData.grips) gripTick(body);
       // The same body may stay visible when it leaves the nearest tier. Ease out its look as the mixer keeps playing.
-      if (body === n.m && (a.level === 0 || a.hq)) headTick(n, a.acc, a.level === 0);
+      if (body === n.m && (a.level === 0 || a.hq || (a.level === 1 && a.glance))) headTick(n, a.acc, a.level === 0);   /* at middle distance the head turns for a glance too (it was decided but never drawn, so a watcher there stood with a still head) */
       if (O.ground && !body.userData.noGround) groundFeet(body);
       a.acc = 0;
     }
