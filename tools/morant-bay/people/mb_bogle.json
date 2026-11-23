@@ -92,5 +92,9 @@
   "mouth-upperlip-volume-incr": 0.4,
   "neck-scale-horiz-decr": 0.2,
   "eyebrows-trans-up": 0.2
+ },
+ "outfit": {
+  "garment": "toigo_male_suit_3",
+  "waistcoat": true
  }
 }

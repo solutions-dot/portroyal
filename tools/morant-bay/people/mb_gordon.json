@@ -22,11 +22,12 @@
   "shoes": true,
   "collar": "stand",
   "tie": true,
-  "hairvol": 0.7,
-  "recede": 0.15,
+  "hairvol": 0.9,
+  "recede": 0.0,
   "hat": [],
-  "glasses": true,
-  "whiskers": true
+  "temples": false,
+  "fade": 0.1,
+  "bays": 0.0
  },
  "colors": {
   "Skin": [
@@ -88,5 +89,9 @@
   "nose-scale-vert-incr": 0.3,
   "nose-width1-incr": 0.2,
   "mouth-scale-horiz-decr": 0.2
+ },
+ "outfit": {
+  "garment": "toigo_male_suit_3",
+  "waistcoat": true
  }
 }

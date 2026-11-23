@@ -27,7 +27,8 @@
     "felt",
     "Hat"
    ]
-  ]
+  ],
+  "waistcoat": false
  },
  "colors": {
   "Skin": [
@@ -81,5 +82,9 @@
    34
   ]
  },
- "face": "strong"
+ "face": "strong",
+ "outfit": {
+  "garment": "toigo_male_suit_3",
+  "waistcoat": false
+ }
 }

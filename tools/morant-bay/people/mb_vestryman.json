@@ -88,5 +88,9 @@
    34
   ]
  },
- "face": "strong"
+ "face": "strong",
+ "outfit": {
+  "garment": "toigo_male_suit_3",
+  "waistcoat": true
+ }
 }

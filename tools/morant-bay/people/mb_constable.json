@@ -18,14 +18,16 @@
   "jacket": true,
   "jacketsleeve": 0.92,
   "shoes": true,
-  "collar": false,
+  "collar": "stand",
   "hairvol": 0.3,
   "hat": [
    [
-    "cap",
+    "peaked",
     "Hat"
    ]
-  ]
+  ],
+  "tie": true,
+  "waistcoat": false
  },
  "colors": {
   "Skin": [
@@ -67,7 +69,21 @@
    190,
    170,
    110
+  ],
+  "Collar": [
+   232,
+   226,
+   210
+  ],
+  "Tie": [
+   40,
+   36,
+   36
   ]
  },
- "face": "strong"
+ "face": "strong",
+ "outfit": {
+  "garment": "toigo_male_suit_3",
+  "waistcoat": false
+ }
 }

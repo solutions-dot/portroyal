@@ -754,8 +754,8 @@ function bay() {
   crowd(Q, "mb_soldier", 16.2, 6.4, face(16.2, 6.4, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
   crowd(Q, "mb_soldier", 13.6, 0.0, Math.PI, { kind: "watch", at: [13, 8], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
   crowd(Q, "mb_vestryman", 11, 0.4, 0, { kind: "watch", at: [11, 6], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
-  crowd(Q, "mb_woman", 2.6, 8.8, face(2.6, 8.8, 11, 3), { kind: "watch", at: [11, 3], idles: ["Sad1", "Idle"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
-  crowd(Q, "mb_woman2", 1.4, 9.4, face(1.4, 9.4, 11, 3), { kind: "watch", at: [11, 3], idles: ["Sad2", "Idle"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
+  crowd(Q, "mb_woman", 13.6, 9.2, face(13.6, 9.2, 11, 3), { kind: "watch", at: [11, 3], idles: ["Sad1", "Idle"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
+  crowd(Q, "mb_woman2", 14.9, 9.8, face(14.9, 9.8, 11, 3), { kind: "watch", at: [11, 3], idles: ["Sad2", "Idle"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
   crowd(Q, "mb_man", -1, 9.0, face(-1, 9, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
   Q.keepOff = [{ at: [-11.6, 6.0], r: 1.1 }, { at: [16.6, 0.4], r: 1 }, { at: [19, 4.6], r: 1.2 }, { pts: [[-15.2, 9.2], [-11.6, 6.4]], w: 1.2 }];
   return Q;
