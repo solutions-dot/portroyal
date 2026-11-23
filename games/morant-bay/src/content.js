@@ -1,7 +1,7 @@
 /* Every word the player reads. Paul Bogle and George William Gordon were real; neither speaks in this game (their words come only from
    real documents, shown as documents). Hannah, her family, Miss Ada, Deacon Clarke and the clerk at King's House are fictional and their
    journal pages say so. Sources: docs/games/morant-bay.md; the Royal Commission's report of 1866 is cited by its printed page. */
-export const TITLE = "Morant Bay, 1865";
+export const TITLE = "The Morant Bay Rebellion, 1865";
 export const GAME = {
   id: "morant-bay",
   eye: 1.4,
