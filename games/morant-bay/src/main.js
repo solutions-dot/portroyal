@@ -453,7 +453,7 @@ async function go(stage, { restore = null, keep = false } = {}) {
   if (restore) {
     story.restore(restore.story);
     Object.assign(S, { x: restore.x, z: restore.z, yaw: restore.yaw, pitch: restore.pitch || 0 });
-  } else { story.sync(stage); if (placed || afterFilm) { const fy = story.faceYaw(); if (fy !== null) S.yaw = fy; } }   /* set down in a place: face the action (engine/story.js faceYaw) */
+  } else story.sync(stage);
   if (S.hand && !carry.holding()) {
     const o = Q.items[S.hand];
     if (o) carry.carry(o);
@@ -461,6 +461,10 @@ async function go(stage, { restore = null, keep = false } = {}) {
   }
   cast(Q, row);
   Q.enter?.(stage, S);   /* the place's own change for this step (a door open, a fire lit, a rider gone) */
+  if (!restore) {   /* face the action (engine/story.js faceYaw), once the step's people stand where it puts them: when set down in a place, after a camera scene, and when the next person is close by */
+    const t = story.pick(), fy = story.faceYaw();
+    if (fy !== null && (placed || afterFilm || (t && t.d < 6))) S.yaw = fy;
+  }
   visuals();
   light(Q);
   $("place").textContent = CHAPTERS[chapterOf(stage)].caption;

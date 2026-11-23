@@ -1301,10 +1301,10 @@ export function kingsHouse(L = 46) {
     pw = 9.4,
     pd = 4.4;
   for (let i = 0; i < 4; i++) box(pw + 1.6 - i * 0.4, 0.2, pd + 1.4 - i * 0.36, std(T.stone([206, 200, 186], [4, 1]), 1), 0, 0.1 + i * 0.2, pd / 2 + 0.1 - i * 0.04, P);
-  /* Long: "supported by twelve columns of Portland-stone, of the Ionic order": here two rows of six */
+  /* Long: "supported by twelve columns of Portland-stone, of the Ionic order": here two rows of six. The middle opening is the widest, as on
+     a Georgian portico, so the great door stands clear between the columns (owner, 23 November 2026: "too many columns blocking the door") */
   for (const z of [pd, pd - 2.1])
-    for (let i = 0; i < 6; i++) {
-      const x = -pw / 2 + 0.5 + (i * (pw - 1)) / 5;
+    for (const x of [-4.3, -3.0, -1.7, 1.7, 3.0, 4.3]) {
       cyl(0.32, 0.38, 6.6, M.white, x, 0.8 + 3.3, z, P, 14);
       box(0.9, 0.2, 0.9, M.white, x, 0.9, z, P);
       box(0.86, 0.26, 0.86, M.white, x, 7.5, z, P);

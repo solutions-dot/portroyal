@@ -121,6 +121,29 @@ export async function dev(A) {
     closeAll();
     return r;
   };
+  if (q.get("test") === "face") {
+    /* ?test=face: at the start of every step that sends the player somewhere, how far the player's view is turned from the way to the goal
+       (owner, 23 November 2026: "many chapters the player is facing away from the objectives"). A turn over 35 degrees is reported. */
+    A.begin();
+    for (const id of PLACE_IDS) await ensure(id);
+    const keys = Object.keys(STEPS).map(Number).sort((a, b) => a - b), out = [];
+    for (let i = 0; i < keys.length; i++) {
+      const st = keys[i], row = STEPS[st];
+      if (row.wait) continue;
+      const prev = STEPS[keys[i - 1]];
+      A.chapterState(st);
+      if (prev && prev.wait && prev.place === row.place) { await go(keys[i - 1]); closeAll(); await go(st, { keep: true }); }
+      else await go(st);
+      closeAll();
+      const t = story.pick();
+      if (!t) { out.push(st + " no target"); continue; }
+      const want = Math.atan2(-(t.x - S.x), -(t.z - S.z));
+      let d = Math.abs(((want - S.yaw) % (2 * Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI) * 57.3;
+      out.push((d > 35 ? "AWAY " : "ok ") + st + " " + t.id + " " + d.toFixed(0) + "deg dist " + Math.hypot(t.x - S.x, t.z - S.z).toFixed(1));
+    }
+    window.__RESULT = [...out, "FACE " + out.filter((l) => l.startsWith("AWAY")).length, "AUTO END"];
+    return;
+  }
   if (q.get("test") === "all") {
     await checkAll(A.checkAdapter, CHECK_TABLES);
     return;

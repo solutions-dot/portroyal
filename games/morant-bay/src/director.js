@@ -1,3 +1,5 @@
+/* the camera scenes run a little quicker than they were written (owner, 23 November 2026: "some of the cinematic scenes feel a little too long ... some is just camera zooming") */
+const PACE = 1.15;
 import { showCinematicSkip } from "../../../engine/cine.js";
 /* Camera scenes. Each is a reconstruction, and says so on its card.
    The camera follows a smooth curve through each film's shots (a Catmull-Rom spline in time, eased at the start and end), looks at a second
@@ -115,7 +117,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     if (!D.on || D.paused) return;
     const F = FILMS[D.key],
       before = D.time;
-    D.time += dt * (D.fast ? 30 : 1);
+    D.time += dt * (D.fast ? 30 : PACE);
     const t = D.time;
     D.apply(Math.min(t, F.duration));
     if (AU.ctx && AU.on && AU.ctx.state === "running") {
