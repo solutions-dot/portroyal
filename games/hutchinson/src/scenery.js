@@ -9,6 +9,7 @@ import { loftSkin } from "../../../engine/loft.js";
 import { vnoise, fbm } from "../../../engine/ridges.js";
 import * as W from "./world.js";
 import { makeDoor } from "../../../engine/door.js";
+import { hearthFire } from "../../../engine/flame.js";   /* the shared fire (Port Royal's tavern hearth) */
 
 const once = new Map();
 const keep = (k, make) => (once.has(k) ? once.get(k) : (once.set(k, make()), once.get(k)));
@@ -491,6 +492,7 @@ export function cookFire(lit = false) {
     const e = mesh(new THREE.CircleGeometry(0.22, 10), new THREE.MeshBasicMaterial({ color: 0xff7a2a }), 0, 0.07, 0, g);
     e.rotation.x = -Math.PI / 2;
     e.userData.noAudit = true;   /* the glow of embers */
+    const f = hearthFire({ s: 0.55, bed: false }); f.position.y = 0.05; g.add(f);   /* flames under the pot (engine/flame.js) */
   }
   return g;
 }
@@ -917,6 +919,7 @@ export function cornerHearth(h = 3) {
   }
   const ember = box(0.7, 0.05, 0.3, new THREE.MeshBasicMaterial({ color: 0xff6a22 }), 0, 0.24, 0.32, g);
   ember.userData.noAudit = true;   /* the glow of embers */
+  { const f = hearthFire({ s: 0.48, bed: false }); f.position.set(0, 0.25, 0.32); g.add(f); }   /* the low fire the searchers lit (engine/flame.js) */
   const pot = mesh(new THREE.SphereGeometry(0.17, 10, 7, 0, 7, 0, 2.1), W.WM.iron, 0.1, 0.72, 0.3, g);
   pot.rotation.x = Math.PI;
   cyl(0.012, 0.012, 0.42, W.WM.iron, 0.1, 1.0, 0.3, g, 5);

@@ -3,6 +3,7 @@
    Roofs are made of separate zinc sheets on rafters, so the storm can lift them one by one and the "after" places can leave some missing. */
 import * as THREE from 'three';
 import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng } from './gfx.js';
+import { candleFlame } from '../../../engine/flame.js';
 import { PM, pole } from './props.js';
 import { saloonCar, lorry } from '../../../engine/roadcars.js';
 import * as DOORS from './doors.js';
@@ -117,7 +118,7 @@ export function radio() {   /* a small battery radio: grille, tuning knob with i
   g.userData = { knob, dial, aerial }; g.userData.noBatch = true; return g; }
 export function tins(n = 6, seed = 3) { const g = grp(), r = rng(seed), cols = [0xc84a3a, 0x3a7a4a, 0xd8b030, 0x4a6aa8]; for (let i = 0; i < n; i++) cyl(0.045, 0.045, 0.1, solid(cols[i % 4], 0.5, 0.3), (i % 3) * 0.1 - 0.1, 0.05 + Math.floor(i / 3) * 0.1, (r() - 0.5) * 0.04, g, 8); return g; }
 export function bread() { const g = grp(); for (let i = 0; i < 3; i++) box(0.26, 0.14, 0.14, solid(0xd0a060, 0.95), 0, 0.07 + i * 0.145, 0, g).rotation.y = i * 0.2; return g; }
-export function candle() { const g = grp(); cyl(0.02, 0.02, 0.14, solid(0xf0e8d0, 0.9), 0, 0.07, 0, g, 6); mesh(new THREE.SphereGeometry(0.018, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffc060 }), 0, 0.16, 0, g); return g; }
+export function candle() { const g = grp(); cyl(0.02, 0.02, 0.14, solid(0xf0e8d0, 0.9), 0, 0.07, 0, g, 6); const f = candleFlame({ seed: 3 }); f.position.y = 0.14; g.add(f); return g; }   /* a real flame (engine/flame.js); it was a yellow ball */
 
 /* ---------- the shop: a small block building with a counter hatch, goods and a sign ---------- */
 export function shop({ name = "BEV'S SHOP", roof = 'on', seed = 5 } = {}) {

@@ -12,17 +12,23 @@ import * as THREE from 'three';
 
 export function propSnap(group) {
   group.updateMatrixWorld(true);
+  const list = [];
+  group.traverse((o) => { if (o.isMesh && !o.isSkinnedMesh && !o.isInstancedMesh) list.push(o); });
+  return propsOf(list);
+}
+/* the same notes from meshes already found (engine/audit.js snapMeshes keeps each one as e.o), so auditPlace can run this check in every game */
+export function propsOf(meshes) {
   const out = [], s = new THREE.Vector3();
-  group.traverse((o) => {
-    if (!o.isMesh || o.isSkinnedMesh || o.isInstancedMesh) return;
-    for (let a = o; a; a = a.parent) if (a.userData && a.userData.guide) return;
+  for (const o of meshes) {
+    if (!o || !o.isMesh || o.isSkinnedMesh || o.isInstancedMesh) continue;
+    let guide = false; for (let a = o; a; a = a.parent) if (a.userData && a.userData.guide) { guide = true; break; } if (guide) continue;
     const b = new THREE.Box3().setFromObject(o);
-    if (!isFinite(b.min.x)) return;
+    if (!isFinite(b.min.x)) continue;
     const size = b.getSize(new THREE.Vector3());
     const p = o.geometry.parameters || {};
     o.matrixWorld.decompose(new THREE.Vector3(), new THREE.Quaternion(), s);
     out.push({ type: o.geometry.type, p, b, size, scale: s.clone(), clear: [].concat(o.material).some((m) => m && m.transparent && m.opacity < 0.9), up: Math.abs(new THREE.Vector3(0, 1, 0).applyQuaternion(o.getWorldQuaternion(new THREE.Quaternion())).y) > 0.97 });
-  });
+  }
   return out;
 }
 
@@ -34,7 +40,7 @@ export function auditProps(list) {
   for (const pot of pots) {
     const top = pot.b.max.y, c = pot.b.getCenter(new THREE.Vector3()), r = Math.min(pot.size.x, pot.size.z) / 2;
     const stuck = thin.find((t) => t !== pot && (Math.max(t.size.x, t.size.z) >= 0.03 || Math.max(t.size.x, t.size.z) < 0.5 * r) &&   /* a straight candle that fills its socket is held, not stuck */
-      t.b.min.y >= top - 0.06 && t.b.min.y <= top + 0.005 && t.b.max.y > top + 0.03 && Math.hypot((t.b.min.x + t.b.max.x) / 2 - c.x, (t.b.min.z + t.b.max.z) / 2 - c.z) < r * 0.6);   /* standing in the middle of the top, not a tube at the rim */
+      t.b.min.y >= top - 0.06 && t.b.min.y <= top + 0.005 && t.b.max.y > top + 0.03 && t.size.y < 0.5 &&   /* not a lamp's cord rising to the ceiling */ Math.hypot((t.b.min.x + t.b.max.x) / 2 - c.x, (t.b.min.z + t.b.max.z) / 2 - c.z) < r * 0.6);   /* standing in the middle of the top, not a tube at the rim */
     if (stuck) out.push(`prop solid pot at (${f(c.x)}, ${f(top)}, ${f(c.z)}): something stands in a closed cylinder ${Math.round(r * 200)} cm across; give it an opening (engine/vessel.js)`);
   }
   for (const m of list) {

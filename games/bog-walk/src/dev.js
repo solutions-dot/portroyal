@@ -61,7 +61,7 @@ export function dev(D) {
     return out;
   }
   function tubeAuditRaw() { const walls = T.solids.filter((s) => s.r > 0).map((s) => [s.x - s.r - 0.3, s.z - s.r - 0.3, s.x + s.r + 0.3, s.z + s.r + 0.3]);
-    return D.auditPlace({ id: 'tube', snap: D.snapMeshes(T.group), npcs: [], walls, bounds: { x0: -D.LANE, x1: D.LANE, z0: D.ZMIN + 3, z1: D.ZMAX - 1.6 }, start: { x: 0.12, z: D.ZM - 1.5 }, actions: T.patches.map((p) => ({ label: 'scrape patch ' + p.i, x: p.pos.x, z: p.pos.z, r: 2.3 })), people: [] }); }
+    return D.auditPlace({ id: 'tube', passWide: 0.75, snap: D.snapMeshes(T.group), npcs: [], walls,   /* inside the pipe the walking lane is 1.24 m across and the solids here are padded 0.3 m: 0.75 m between pads is about 1.05 m of real room */ bounds: { x0: -D.LANE, x1: D.LANE, z0: D.ZMIN + 3, z1: D.ZMAX - 1.6 }, start: { x: 0.12, z: D.ZM - 1.5 }, actions: T.patches.map((p) => ({ label: 'scrape patch ' + p.i, x: p.pos.x, z: p.pos.z, r: 2.3 })), people: [] }); }
   function tubeAudit() {   /* the engine's place audit, tools that overlap, and anything hung inside the pipe that is really outside its wall */
     const r = tubeAuditRaw(), issues = [...r.floating, ...r.inside, ...r.stuck, ...propOverlaps()], v = new THREE.Vector3(), sz = new THREE.Vector3(), R = D.R;
     for (const s of D.snapMeshes(T.group)) { s.b.getSize(sz); if (sz.z > 40 || Math.abs((s.b.min.z + s.b.max.z) / 2 - D.ZM) < 0.9) continue; if (s.geo === 'CircleGeometry' && Math.max(sz.x, sz.y) <= 2 * R + 0.06) continue;

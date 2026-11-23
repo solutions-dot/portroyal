@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { cv, grain, rng, T, std, solid, flat, mesh, box, cyl, grp } from './gfx.js';
 import { rockGeo } from './flora.js';
+import { hearthFire } from '../../../engine/flame.js';   /* the shared fire (Port Royal's tavern hearth) */
 
 const PI = Math.PI;
 const memo = {}, once = (k, fn) => memo[k] || (memo[k] = fn());
@@ -94,7 +95,7 @@ export function cookFire(lit = true) {
   const g = grp(); for (let i = 0; i < 7; i++) { const a = i / 7 * PI * 2, s = mesh(rockGeo(i + 3), PM.stone, Math.cos(a) * 0.42, 0.07, Math.sin(a) * 0.42, g); s.scale.setScalar(0.15); }
   for (let i = 0; i < 3; i++) { const l = cyl(0.05, 0.06, 0.74, PM.woodDark, 0, 0.1, 0, g, 6); l.rotation.set(PI / 2 - 0.12, 0, i * 2.1); l.rotation.order = 'ZXY'; }
   cyl(0.3, 0.34, 0.05, PM.ash, 0, 0.03, 0, g, 10);
-  if (lit) { mesh(new THREE.SphereGeometry(0.13, 8, 6), PM.ember, 0, 0.1, 0, g).scale.y = 0.5; const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); f.scale.set(0.95, 1.15, 1); f.position.y = 0.5; g.add(f); g.userData.flame = f; }
+  if (lit) { mesh(new THREE.SphereGeometry(0.13, 8, 6), PM.ember, 0, 0.1, 0, g).scale.y = 0.5; const f = hearthFire({ s: 0.75, bed: false }); f.position.y = 0.06; g.add(f); }   /* the engine's fire (engine/flame.js); it was one flame sprite */
   g.userData.top = 0.9; g.userData.foot = 0.75; g.userData.noBatch = true; return g;
 }
 /* a low frame of green sticks over the coals, with meat on it: Dallas (1803) wrote of "jerked hog broiling" at a Maroon camp */

@@ -369,6 +369,7 @@ export async function dev(A) {
         ground: n.ground || 0,
       }));
       const r = auditPlace({
+        passage: false, props: false,   /* run below with this game's own look and task spots */
         id: Q.id,
         snap: Q.snap,
         npcs,

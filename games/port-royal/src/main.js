@@ -26,7 +26,11 @@ import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble 
 import { placeActionButton } from '../../../engine/action-button.js';
 import { callBack } from '../../../engine/return-talk.js';
 placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
-import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
+import { createGuide } from '../../../engine/guide.js';
+import { makeSack } from '../../../engine/sack.js';
+import { candleFlame, flickerAll, hearthFire } from '../../../engine/flame.js';   /* a real candle flame */   /* one cloth sack for every game */
+import { createLookShot, frameOf } from '../../../engine/lookshot.js';   /* looking at a thing is a close-up action (owner rule 13) */
+import { lookSound } from '../../../engine/look-sounds.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
 import { batchStill } from '../../../engine/batch.js';   /* still scenery drawn in a few pieces (see still() below) */
 import { setQuiet } from '../../../engine/preload.js';
@@ -287,6 +291,12 @@ const S = 5.2, X0 = -17.9, X1 = 17.9, SHORE = 23; const seaMat = new THREE.MeshS
 
 /* ---------- the ship you arrived on ---------- */
 const indoor = new THREE.Group(); indoor.visible = false; scene.add(indoor); let cur = scene;
+/* a cloth sack (engine/sack.js), standing, or lying on its side (lying: it rests with its tied neck toward -x of its own turn ry) */
+function sackAt(x, y, z, s, { lying = false, ry = 0, seed = 1, parent, mat } = {}) {
+  const g = makeSack({ material: mat, seed, h: 0.66, r: 0.25 }); g.scale.setScalar(s); g.rotation.set(0, 0, 0);
+  if (lying) { const o = new THREE.Group(); g.rotation.z = Math.PI / 2; g.position.set(0.33 * s, 0.25 * 0.88 * s, 0); o.add(g); o.position.set(x, y, z); o.rotation.y = ry; (parent || cur).add(o); return o; }
+  g.position.set(x, y, z); g.rotation.y = ry + seed * 1.7; (parent || cur).add(g); return g;
+}
 function mk(geo, mat, x, y, z, parent) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); (parent || cur).add(m); return m; }
 /* still(root, keep): the still scenery under root is merged into a few meshes (engine/batch.js batchStatic), so a phone draws it in far fewer calls; it looks the same.
    keep lists things under root that move, light up or are shown and hidden on their own: they stay as they are (userData.noBatch). See-through meshes are kept too, so they are
@@ -325,7 +335,7 @@ function buildHarbour() {
   const cask = (x, y, z, lying) => { const g = new THREE.Group(); g.position.set(x, y + (lying ? 0.36 : 0.45), z); if (lying) { g.rotation.z = Math.PI / 2; g.rotation.y = x * 2.3; } scene.add(g); mk(caskG, caskM, 0, 0, 0, g); for (const [hy, hg] of hoopG) mk(hg, ironM, 0, hy, 0, g); };
   const crateM = std(plankTex([150, 118, 78], 4, 1, 1));
   const crate = (x, y, z, s, r) => { const g = new THREE.Group(); g.position.set(x, y + s / 2, z); g.rotation.y = r; scene.add(g); B(s, s, s, crateM, 0, 0, 0, g); for (const a of [-1, 1]) for (const b of [-1, 1]) { B(0.07, s + 0.03, 0.07, timber, a * s / 2, 0, b * s / 2, g); B(s + 0.03, 0.07, 0.07, timber, 0, a * s / 2, b * s / 2, g); B(0.07, 0.07, s + 0.03, timber, a * s / 2, b * s / 2, 0, g); } };
-  const sack = (x, y, z, s) => { const k = mk(new THREE.SphereGeometry(0.32, 10, 8), sackM, x, y + 0.2 * s, z); k.scale.set(s * 1.2, 0.7 * s, s * 0.85); k.rotation.y = x; };
+  const sack = (x, y, z, s) => sackAt(x, y, z, s, { lying: true, ry: x, seed: Math.round(x * 7), mat: sackM });   /* sacks lying in a heap (they were squashed balls) */
   const nStreet = scene.children.length;   /* everything from here on is solid: the pier casks and crates, Kofi's barrels, the crate stacks and the street cargo */
   cask(SHORE + 2.2, 0.05, 1.32); cask(SHORE + 2.95, 0.05, 1.32); cask(SHORE + 4.6, 0.05, 1.12, true); crate(SHORE + 14.6, 0.05, 1.1, 0.8, 0.2); crate(SHORE + 15.5, 0.05, 1.05, 0.6, 0.6); crate(SHORE + 14.6, 0.85, 1.1, 0.55, 0.2); sack(SHORE + 13.7, 0.05, 1.2, 1);
   for (const [x, z, k] of [[20.6, 5.4, 0], [21.3, 5.7, 0], [20.9, 6.5, 2], [19.95, -3.2, 1], [20.95, -2.8, 0], [21.85, -3.3, 1], [20.65, -3.9, 3], [21.45, -4.1, 3], [21.05, -4.0, 4]]) { if (k === 0) cask(x, 0, z); else if (k === 2) cask(x, 0, z, true); else if (k === 1) crate(x, 0, z, 0.75, x); else if (k === 3) sack(x, 0, z, 1); else sack(x, 0.3, z, 0.9); }
@@ -438,7 +448,7 @@ function buildTavern() {
   // trestle tables, benches, stools and a high-backed settle
   const table = (x, z, w, d) => { B(w, 0.05, d, board, x, 0.745, z); for (const sx of [-1, 1]) { const tx = x + sx * (w / 2 - 0.28); for (const sz of [-1, 1]) { const l = B(0.07, 0.76, 0.07, oakDark, tx, 0.36, z + sz * 0.17); l.rotation.x = -sz * 0.3; } B(0.07, 0.07, d * 0.7, oakDark, tx, 0.69, z); } B(w - 0.5, 0.06, 0.05, oakDark, x, 0.3, z); };
   const bench = (x, z, w) => { B(w, 0.05, 0.28, board, x, 0.45, z); for (const sx of [-1, 1]) { B(0.05, 0.45, 0.26, oakDark, x + sx * (w / 2 - 0.16), 0.225, z); } B(w - 0.3, 0.07, 0.04, oakDark, x, 0.3, z); };
-  const stool = (x, z, r) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = r; cur.add(g); B(0.34, 0.04, 0.26, board, 0, 0.47, 0, g); for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const l = B(0.04, 0.47, 0.04, oakDark, sx * 0.13, 0.235, sz * 0.09, g); l.rotation.z = -sx * 0.1; } B(0.26, 0.05, 0.03, oakDark, 0, 0.36, 0.09, g); B(0.26, 0.05, 0.03, oakDark, 0, 0.36, -0.09, g); };
+  const stool = (x, z, r) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = r; cur.add(g); B(0.34, 0.04, 0.26, board, 0, 0.47, 0, g); for (const sx of [-1, 1]) for (const sz of [-1, 1]) B(0.04, 0.47, 0.04, oakDark, sx * 0.13, 0.235, sz * 0.09, g); B(0.26, 0.05, 0.03, oakDark, 0, 0.36, 0.09, g); B(0.26, 0.05, 0.03, oakDark, 0, 0.36, -0.09, g); B(0.03, 0.04, 0.18, oakDark, 0.13, 0.12, 0, g); B(0.03, 0.04, 0.18, oakDark, -0.13, 0.12, 0, g); };   /* straight legs joined by rails, as a joint stool is made (the legs were tilted one way only and looked crooked: owner) */
   table(-198.2, 1.3, 1.9, 0.8); bench(-198.2, 0.58, 1.7); bench(-198.2, 2.02, 1.7);
   table(-201.6, 1.0, 1.9, 0.8); bench(-201.6, 0.28, 1.7); bench(-201.6, 1.72, 1.7);
   B(0.7, 0.04, 0.7, board, -195.9, 0.75, 2.3); for (const sx of [-1, 1]) for (const sz of [-1, 1]) B(0.05, 0.74, 0.05, oakDark, -195.9 + sx * 0.28, 0.37, 2.3 + sz * 0.28);
@@ -453,21 +463,14 @@ function buildTavern() {
   const pot = mk(new THREE.SphereGeometry(0.22, 14, 10), ironM, IN.x1 - 0.2, 0.72, -0.6); pot.scale.y = 0.8;
   /* the hearth fire: tongues of flame painted as soft teardrops (pale yellow at the heart, orange, then red at the edge), each two crossed sheets that glow over what is behind them, on a bed of
      red embers and charred logs. Each tongue flickers on its own (update). Two plain cones did not look like fire (owner, 17 November 2026). */
-  { const fx = IN.x1 - 0.27, fz = -0.6, ft = cv(64, 128, (c) => { c.clearRect(0, 0, 64, 128); const g1 = c.createRadialGradient(32, 96, 2, 32, 84, 44); g1.addColorStop(0, 'rgba(255,250,210,1)'); g1.addColorStop(0.25, 'rgba(255,214,90,0.95)'); g1.addColorStop(0.55, 'rgba(255,130,30,0.75)'); g1.addColorStop(0.85, 'rgba(200,40,10,0.25)'); g1.addColorStop(1, 'rgba(160,20,0,0)'); c.fillStyle = g1; c.beginPath(); c.moveTo(32, 2); c.bezierCurveTo(40, 40, 62, 70, 58, 100); c.bezierCurveTo(56, 122, 8, 122, 6, 100); c.bezierCurveTo(2, 70, 24, 40, 32, 2); c.fill(); });
-    const tm = new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false }), tg = new THREE.PlaneGeometry(1, 1); tg.translate(0, 0.5, 0);
-    fire = new THREE.Group(); fire.position.set(fx, 0.1, fz); cur.add(fire); fire.userData.tongues = [];
-    for (const [dx, dz, w, h] of [[0, 0, 0.36, 0.66], [0.02, -0.16, 0.26, 0.48], [-0.02, 0.17, 0.28, 0.54], [0.05, 0.07, 0.2, 0.38], [-0.04, -0.07, 0.2, 0.42], [0, 0.28, 0.16, 0.28], [0, -0.28, 0.15, 0.26]]) { const tn = new THREE.Group(); tn.position.set(dx, 0, dz); tn.userData.wh = [w, h]; tn.scale.set(w, h, w); for (const ry of [0.3, 0.3 + Math.PI / 2]) { const s1 = new THREE.Mesh(tg, tm); s1.rotation.y = ry; tn.add(s1); } fire.add(tn); fire.userData.tongues.push(tn); }
-    const emberM = new THREE.MeshBasicMaterial({ color: 0xff5a1a }), emberD = new THREE.MeshBasicMaterial({ color: 0xa82a0c }), char = new THREE.MeshStandardMaterial({ color: 0x1c1512, roughness: 1 });
-    for (let i = 0; i < 16; i++) { const e = mk(new THREE.DodecahedronGeometry(0.025 + (i % 3) * 0.008, 0), i % 3 ? emberM : emberD, fx + ((i * 37) % 11 - 5) * 0.012, 0.075 + (i % 2) * 0.012, fz + ((i * 53) % 17 - 8) * 0.03); e.rotation.set(i, i * 2, i * 3); }
-    for (const [dz, r, y] of [[-0.2, 0.3, 0.09], [0.15, -0.4, 0.09], [0, 1.2, 0.09], [0.02, 0.9, 0.17], [-0.05, -0.8, 0.16]]) { const lg = mk(new THREE.CylinderGeometry(0.045, 0.05, 0.5, 7), char, fx, y, fz + dz); lg.rotation.set(Math.PI / 2, 0, r); }
-    const ash = mk(new THREE.CircleGeometry(0.42, 14), new THREE.MeshStandardMaterial({ color: 0x4a443e, roughness: 1 }), fx - 0.02, 0.062, fz); ash.rotation.x = -Math.PI / 2; ash.scale.set(0.6, 1.1, 1); }
+  fire = hearthFire(); fire.position.set(IN.x1 - 0.27, 0, -0.6); cur.add(fire);   /* the engine's fire (engine/flame.js): this hearth is the one every game uses now */
   for (let i = 0; i < 7; i++) { const lg = mk(new THREE.CylinderGeometry(0.055, 0.055, 0.55, 7), oak, IN.x1 - 0.45, 0.06 + (i > 3 ? 0.11 : 0), 0.95 + (i % 4) * 0.12 + (i > 3 ? 0.06 : 0)); lg.rotation.z = Math.PI / 2; }
   for (let i = 0; i < 3; i++) { const p = mk(plateG, pewM, IN.x1 - 0.5, 1.77, -1.2 + i * 0.32); p.rotation.set(0, 0, Math.PI / 2 - 0.22); } mk(jarG, celadon, IN.x1 - 0.42, 1.645, 0.1);
   fireLight = new THREE.PointLight(0xff9d4a, 0, 8, 1.7); fireLight.position.set(IN.x1 - 0.9, 0.8, -0.6); cur.add(fireLight);
 
   // candles and a hanging lantern
   const candle = (x, y, z) => { mk(new THREE.CylinderGeometry(0.075, 0.06, 0.015, 14), brassM, x, y + 0.008, z); mk(new THREE.CylinderGeometry(0.02, 0.024, 0.05, 8), brassM, x, y + 0.04, z); B(0.1, 0.008, 0.025, brassM, x + 0.1, y + 0.012, z);
-    mk(new THREE.CylinderGeometry(0.011, 0.011, 0.12, 6), waxM, x, y + 0.12, z); const f = mk(new THREE.SphereGeometry(0.016, 6, 6), flameM, x, y + 0.2, z); f.scale.y = 1.9; flames.push(f); };
+    mk(new THREE.CylinderGeometry(0.011, 0.011, 0.12, 6), waxM, x, y + 0.12, z); const f = candleFlame({ seed: flames.length + 1 }); f.position.set(x, y + 0.18, z); cur.add(f); flames.push(f); };   /* engine/flame.js: it was a small yellow ball */
   candle(-198.75, 0.77, 1.3); candle(-201.0, 0.77, 1.05); candle(-202.9, 1.02, -2.2); candle(IN.x1 - 0.4, 1.645, -1.5);
   { const lx = -200.2, lz = 0.4, ly = H - 0.95; B(0.012, 0.5, 0.012, ironM, lx, ly + 0.42, lz); B(0.18, 0.02, 0.18, ironM, lx, ly + 0.17, lz); B(0.18, 0.02, 0.18, ironM, lx, ly - 0.13, lz); for (const sx of [-1, 1]) for (const sz of [-1, 1]) B(0.015, 0.3, 0.015, ironM, lx + sx * 0.08, ly + 0.02, lz + sz * 0.08);
     B(0.14, 0.26, 0.14, new THREE.MeshBasicMaterial({ color: 0xffd58a, transparent: true, opacity: 0.55 }), lx, ly + 0.02, lz); lamp = new THREE.PointLight(0xffd9a0, 0, 9, 1.6); lamp.position.set(lx, ly, lz); cur.add(lamp); }
@@ -476,12 +479,12 @@ function buildTavern() {
   tankard(-198.7, 0.77, 1.08, 1); tankard(-197.75, 0.77, 1.5, 3); tankard(-202.15, 0.77, 0.85, 2); tankard(-201.3, 0.77, 1.2, 4.5); tankard(-201.9, 1.02, -2.3, 0.6);
   mk(jugG, stoneware, -202.3, 1.02, -2.05); mk(jugG, stoneware, -197.6, 0.77, 1.12);
   for (const [dx, dz] of [[0, 0], [0.05, 0.03], [-0.03, 0.05], [0.09, -0.02]]) mk(new THREE.CylinderGeometry(0.018, 0.018, 0.004, 10), pewM, -200.0 + dx, 1.022, -2.0 + dz);
-  for (const [x, z, s] of [[-195.6, -2.9, 1], [-196.1, -3.0, 0.85], [-195.7, -2.4, 0.9]]) { const sk = mk(new THREE.SphereGeometry(0.3, 10, 8), sackM, x, 0.24 * s, z); sk.scale.set(s, 0.85 * s, s * 0.9); }
+  for (const [x, z, s, i] of [[-195.6, -2.9, 1, 1], [-196.15, -3.0, 0.88, 2], [-195.7, -2.35, 0.92, 3]]) sackAt(x, 0, z, s, { seed: i, mat: sackM });   /* sacks of flour and beans against the wall, standing and tied (owner: they were balls) */
   const rope = mk(new THREE.TorusGeometry(0.2, 0.04, 6, 16), sackM, -204.4, 0.05, -0.7); rope.rotation.x = Math.PI / 2;
   const br = B(0.03, 1.4, 0.03, oak, -204.8, 0.72, 0.6); br.rotation.z = -0.12; B(0.1, 0.25, 0.18, sackM, -204.7, 0.13, 0.6);
 
   // the four things to find
-  const g = {}; for (const f of FINDS) { g[f.id] = new THREE.Group(); g[f.id].position.set(f.x, f.y, f.z); cur.add(g[f.id]); }
+  const g = {}; for (const f of FINDS) { g[f.id] = new THREE.Group(); g[f.id].position.set(f.x, f.y, f.z); cur.add(g[f.id]); } FINDG = g;
   mk(bottleG, glassM, 0, 0, 0, g.bottle).scale.setScalar(1.25); mk(bottleG, glassM, 0.26, 0, 0.05, g.bottle);
   for (let i = 0; i < 6; i++) mk(plateG, pewM, 0, 0.009 + i * 0.016, 0, g.pewter);
   for (const [dz, r] of [[-0.06, 0.2], [0.05, -0.15], [0.14, 0.05]]) { const pg = new THREE.Group(); pg.position.set(0, 0.012, dz); pg.rotation.y = r; g.pipes.add(pg);
@@ -597,6 +600,20 @@ function buildTown() {
 let holdToast = false; const keys = new Set(); const stick = { id: null, ox: 0, oy: 0, x: 0, y: 0 }; const look = { id: null, lx: 0, ly: 0 };
 releaseOnBlur(keys, [stick, look]);
 let busy = false;                     // true while a panel is open
+/* close-ups (owner rule 13, engine/lookshot.js): the bars come in, the camera eases to the thing, it does something with a sound, a short line from
+   its journal page shows in the lower bar, the camera eases back, and then the page or card opens. The autoplayer and test views skip the camera. */
+const QUICK_LOOK = __DEV__ && /[?&](auto|test)=/.test(location.search), _lsq = new THREE.Quaternion(), _lse = new THREE.Euler();
+const LS = createLookShot({ camera, fov: () => 68, setFov: (f) => { if (Math.abs(camera.fov - f) > 0.01) { camera.fov = f; camera.updateProjectionMatrix(); } },
+  bars: (on) => document.body.classList.toggle('cine', on), say: (t) => { $('cinesub').textContent = t; }, freeze: (on) => { busy = on; }, sound: lookSound, quick: () => QUICK_LOOK, reduced: reduceMotion,
+  home: () => ({ pos: new THREE.Vector3(state.x, eyeY, state.z), quat: _lsq.setFromEuler(_lse.set(state.pitch, state.yaw, 0, 'YXZ')) }) });
+let FINDG = {};
+if (__DEV__) { window.__LS = LS; window.__cam = camera; }
+if (__DEV__) window.__look = (label, at = 1.6) => { const a = ACTIONS.find((x) => x.label === label); if (!a) return 'no action'; a.go(); setTimeout(() => { LS.paused = true; document.title = 'LOOK ' + label; }, at * 1000); return 'ok'; };   /* dev: play a look and hold it `at` seconds in */
+async function closeLook(id, focus, { lines, reveal, sound = 'wood', dist = 1.3, lift = 0.45, fov = 40, view } = {}) {
+  const page = JOURNAL.find((p) => p.id === id), L = lines || (page ? page.simple[0].split(/(?<=[.!?])\s+/) : []);   /* one sentence at a time */
+  await LS.play({ view: view || frameOf([state.x, state.z], focus, { dist, lift, fov }), lines: L, reveal, sound, act: 2.2 });
+  await LS.back();
+}
 let navGen = 0;                       // counts chapter changes: a "next chapter" card that was waiting is dropped if the player has gone to a chapter since
 addEventListener('keydown', (e) => { const k = e.key.toLowerCase();
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && state.started) e.preventDefault();
@@ -699,15 +716,15 @@ function startConvo(c, end) { uiSound('tap'); convo = c; convoEnd = end; busy = 
 $('next').onclick = advance;
 /* things you can walk up to and use */
 const ACTIONS = [
-  ...['sugar', 'cocoa', 'logwood'].map((id, i) => ({ label: ['Look at the casks', 'Look at the sacks', 'Look at the red wood'][i], r: 2.6, where: () => state.place === 'ware' && !state.unlocked.includes(id) && WGOODS[id], go: () => { unlock(id); wareMark[id].visible = false; wareGoal(); } })),
+  ...['sugar', 'cocoa', 'logwood'].map((id, i) => ({ label: ['Look at the casks', 'Look at the sacks', 'Look at the red wood'][i], r: 2.6, where: () => state.place === 'ware' && !state.unlocked.includes(id) && WGOODS[id], go: () => { wareMark[id].visible = false; closeLook(id, [WGOODS[id][0], 0.75, WGOODS[id][1]], { sound: 'wood', dist: 1.6 }).then(() => { unlock(id); wareGoal(); }); } })),
   { label: 'Sit at the desk', r: 2.4, where: () => state.place === 'ware' && wareSeen() && !W.coins && [-258.6, 2.9], go: () => startConvo(COINS, () => { W.coins = true; abba.visible = true; ABBA.x = -250.2; ABBA.z = 0.4; abba.position.set(ABBA.x, 0, ABBA.z); toast('Abba has come in.'); wareGoal(); }) },
   { label: 'Talk to Abba', r: 3.0, where: () => state.place === 'ware' && W.coins && !W.talked && [ABBA.x, ABBA.z], go: () => startConvo(WARE1, () => { W.talked = true; const ac = abba.userData.anim; if (ac && CL.WaveSlow) ac.play('WaveSlow', true); setTimeout(() => { if (state.place === 'ware') { abba.visible = false; ABBA.x = 9999; toast('Abba goes out to the wharf.'); } }, 2600); wareGoal(); }) },
   { label: 'Go out to the wharf', r: 1.8, exit: true, where: () => state.place === 'ware' && [WX1 - 0.7, 0.8], go: () => card('Leave the warehouse?', ['You can come back any time from the Chapters menu.'], [{ t: 'Back to the town', go: leaveWare }, { t: 'Stay', go: hideCard }]) },
-  { label: 'Read the letter', r: 2.4, where: () => state.place === 'ware' && W.talked && [-258.6, 2.9], go: readLetter },
+  { label: 'Read the letter', r: 2.4, where: () => state.place === 'ware' && W.talked && [-258.6, 2.9], go: () => closeLook('letter', [-258.6, 0.85, 2.9], { lines: ['A letter lies open on the desk.'], sound: 'paper', dist: 0.9, lift: 0.55 }).then(readLetter) },
   { label: 'Talk to Abba', r: 3.2, where: () => state.place === 'after' && [ABBA.x, ABBA.z], go: () => { if (afterDone() && Q.aTalk) startConvo(AFTER2, stayOrGo); else startConvo(AFTER1, () => { Q.aTalk = true; afterGoal(); }); } },
-  { label: 'Look at the big tent', r: 3.6, where: () => state.place === 'after' && !state.unlocked.includes('tentp') && [-12.5, 0.8], go: () => { unlock('tentp'); afterGoal(); } },
-  { label: 'Look across the water', r: 2.6, where: () => state.place === 'after' && !state.unlocked.includes('kingston') && [0.2, 0], go: () => { unlock('kingston'); afterGoal(); } },
-  { label: 'Read the tombstone', r: 3.2, where: () => state.place === 'yard' && [YX + 6, YZ - 2], go: readStone },
+  { label: 'Look at the big tent', r: 3.6, where: () => state.place === 'after' && !state.unlocked.includes('tentp') && [-12.5, 0.8], go: () => closeLook('tentp', [-12.5, 1.3, 0.8], { sound: 'cloth', dist: 3.2, lift: 0.4, fov: 50 }).then(() => { unlock('tentp'); afterGoal(); }) },
+  { label: 'Look across the water', r: 2.6, where: () => state.place === 'after' && !state.unlocked.includes('kingston') && [0.2, 0], go: () => closeLook('kingston', null, { sound: 'water', view: { p: [state.x, eyeY + 0.25, state.z], look: [state.x + Math.sin(state.yaw + Math.PI) * 60, 1.5, state.z + Math.cos(state.yaw + Math.PI) * 60], fov: 30 } }).then(() => { unlock('kingston'); afterGoal(); }) },   /* the lens closes in on the far shore the way you face */
+  { label: 'Read the tombstone', r: 3.2, where: () => state.place === 'yard' && [YX + 6, YZ - 2], go: () => closeLook('stone', [YX + 6, 0.35, YZ - 2], { lines: ['An old stone, its letters worn by the sea air.'], sound: 'stone', dist: 1.3, lift: 0.9 }).then(readStone) },
   ...NPCS.map((n) => ({ label: n.label, r: 2.6, where: () => townReady && !Q.on && state.place === 'out' && people[n.id] && [n.x, n.z], go: () => npcTalk(n) })),
   { label: 'Talk to Sam', r: 2.4, where: () => state.place === 'after' && survivors.sailor && [SURV[0][0], SURV[0][1]], go: () => startConvo(state.unlocked.includes('swan') ? [{ who: 'Sam', text: 'I keep looking at the water. I can\u2019t stop.' }] : SAM_AFTER) },
   { label: 'Talk to Kofi', r: 2.4, where: () => state.place === 'after' && survivors.kofi && [SURV[2][0], SURV[2][1]], go: () => startConvo(KOFI_AFTER) },
@@ -718,7 +735,8 @@ const ACTIONS = [
   { label: 'Go into the tavern', exit: true, r: 2.0, where: () => tavernReady && !Q.on && state.place === 'out' && state.talked && [-6.18, -4.5], go: () => { setPlace('in'); state.x = -203; state.z = 2.3; state.yaw = 0; state.pitch = 0; setGoal(); } },
   { label: 'Go back to the street', r: 1.3, exit: true, where: () => state.place === 'in' && [-203, 3.3], go: () => { setPlace('out'); state.x = -6.18; state.z = -3.4; state.yaw = Math.PI; state.pitch = 0; setGoal(); } },
   { label: 'Talk to Hannah', r: 2.3, where: () => state.place === 'in' && [-201, -1.9], go: () => startConvo(state.ate ? HANNAH_AFTER : STEW, () => { if (!state.ate) { state.ate = true; stew.visible = true; } }) },
-  ...FINDS.map((f) => ({ label: f.label, r: 1.9, where: () => state.place === 'in' && !state.unlocked.includes(f.id) && [f.x, f.z], go: () => { unlock(f.id); finds[f.id].visible = false; setGoal(); } })),
+  ...FINDS.map((f) => ({ label: f.label, r: 1.9, where: () => state.place === 'in' && !state.unlocked.includes(f.id) && [f.x, f.z], go: () => { finds[f.id].visible = false; closeLook(f.id, [f.x, f.y + 0.12, f.z], { sound: f.id === 'bottle' ? 'clink' : f.id === 'turtle' ? 'lid' : 'wood', dist: 1.1,   /* it is picked up a little and turned in the hand */
+    reveal: (k) => { const o = FINDG[f.id]; if (o) { o.position.y = f.y + Math.sin(k * Math.PI) * 0.07; o.rotation.y = k * 0.6; } } }).then(() => { unlock(f.id); setGoal(); }); } })),
 ];
 let current = null;
 $('talk').onclick = () => { if (current) current.go(); };
@@ -1044,7 +1062,7 @@ function buildAfter() { if (afterG) return; afterG = new THREE.Group(); scene.ad
   for (const t of CAMP_TENTS) tent(t[0], t[1], t[2], t[3], t[4], t[5]);
   for (const [dx, dz, r] of [[-0.2, 0, 0.3], [0.15, 0.1, -0.5], [0, -0.15, 1.3]]) { const l = mk(new THREE.CylinderGeometry(0.06, 0.06, 0.7, 7), tim, FX + dx, 0.08, FZ + dz); l.rotation.set(Math.PI / 2, 0, r); }
   mk(new THREE.ConeGeometry(0.2, 0.5, 7), new THREE.MeshBasicMaterial({ color: 0xff9a2e }), FX, 0.33, FZ); for (const s of [-1, 1]) { const p = mk(new THREE.CylinderGeometry(0.02, 0.02, 1.3, 5), iron, FX + s * 0.3, 0.6, FZ); p.rotation.z = s * 0.45; } const pot = mk(new THREE.SphereGeometry(0.16, 10, 8), iron, FX, 0.7, FZ); pot.scale.y = 0.8; mk(new THREE.CylinderGeometry(0.008, 0.008, 0.38, 5), iron, FX + 0.01, 1.0, FZ);   /* the chain the pot hangs from, down from where the two poles cross (it hung in the air before) */
-  for (const [x, z, s] of [[-11.4, -2.4, 1], [-12.3, -2.6, 0.85], [-6.4, -0.1, 0.85], [-3.2, 2.5, 1], [-13.6, -2.5, 1]]) { const k = mk(new THREE.SphereGeometry(0.3, 10, 8), sackM, x, 0.2 * s, z); k.scale.set(1.2 * s, 0.7 * s, 0.9 * s); }
+  for (const [x, z, s, i] of [[-11.4, -2.4, 1, 1], [-12.3, -2.6, 0.85, 2], [-6.4, -0.1, 0.85, 3], [-3.2, 2.5, 1, 4], [-13.6, -2.5, 1, 5]]) sackAt(x, 0, z, s, { lying: i % 2 === 1, ry: i * 1.3, seed: i, mat: sackM });   /* what was saved, in sacks, some lying, some standing */
   const bm = brickM(1.5, 0.5); for (const [x, z, w, h, r, d] of [[-2.0, -2.4, 2.2, 0.7, 0.15, 1.2], [-1.0, 2.4, 2.0, 0.9, -0.2, 1.2], [-15.9, 2.5, 1.8, 0.5, 0.1, 1.0]]) { const b = mk(new THREE.BoxGeometry(w, h, d), bm, x, h / 2 - 0.1, z); b.rotation.set(0.12, r, 0.1); }
   for (const [x, z, l, ry, rz] of [[-4.3, -2.9, 3.0, 0.15, 0.18], [-3.6, 0.2, 2.6, -1.25, 0.12], [-9.6, 2.8, 3.0, 0.05, 0.3], [-10.8, -2.9, 2.4, -0.05, 0.1]]) { const b = mk(new THREE.BoxGeometry(l, 0.2, 0.2), tim, x, 0.35, z); b.rotation.set(0, ry, rz); }
   const fl = mk(new THREE.PlaneGeometry(160, 160), seaMat, 81.2, 0.07, 0); fl.rotation.x = -Math.PI / 2; const wet = mk(new THREE.PlaneGeometry(3, 14), new THREE.MeshBasicMaterial({ color: 0x5f4e38, transparent: true, opacity: 0.4 }), -0.2, 0.012, 0); wet.rotation.x = -Math.PI / 2;
@@ -1171,7 +1189,7 @@ function buildWare() { if (wareG) return; wareG = new THREE.Group(); wareG.visib
   mk(new THREE.CylinderGeometry(0.09, 0.11, 0.02, 12), brass, dx + 0.45, 0.945, dz - 0.15); mk(new THREE.CylinderGeometry(0.012, 0.012, 0.42, 6), brass, dx + 0.45, 1.15, dz - 0.15); const beam = mk(new THREE.CylinderGeometry(0.008, 0.008, 0.5, 6), brass, dx + 0.45, 1.35, dz - 0.15); beam.rotation.z = Math.PI / 2 + 0.08;
   for (const s of [-1, 1]) { mk(new THREE.CylinderGeometry(0.08, 0.06, 0.015, 12), brass, dx + 0.45 + s * 0.24, 1.14 - s * 0.02, dz - 0.15); mk(new THREE.CylinderGeometry(0.003, 0.003, 0.2, 4), brass, dx + 0.45 + s * 0.24, 1.25 - s * 0.02, dz - 0.15); }
   for (const [ox, oz, k, top] of [[0.75, 0.1, 5, .935], [0.84, 0.16, 3, .935], [0.7, 0.22, 1, .935], [0.21, -0.14, 1, 1.1675]]) mk(new THREE.CylinderGeometry(0.019, 0.019, 0.005 * k, 10), silver, dx + ox, top + 0.0025 * k, dz + oz);
-  mk(new THREE.CylinderGeometry(0.07, 0.055, 0.015, 12), brass, dx - 0.85, 0.943, dz + 0.3); mk(new THREE.CylinderGeometry(0.011, 0.011, 0.13, 6), paper, dx - 0.85, 1.02, dz + 0.3); const fl = mk(new THREE.SphereGeometry(0.016, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffc66a }), dx - 0.85, 1.1, dz + 0.3); fl.scale.y = 1.9;
+  mk(new THREE.CylinderGeometry(0.07, 0.055, 0.015, 12), brass, dx - 0.85, 0.943, dz + 0.3); mk(new THREE.CylinderGeometry(0.011, 0.011, 0.13, 6), paper, dx - 0.85, 1.02, dz + 0.3); const fl = candleFlame({ seed: 9 }); fl.position.set(dx - 0.85, 1.085, dz + 0.3); cur.add(fl); flames.push(fl);
   const lt = B(0.24, 0.004, 0.17, paper, dx + 0.1, 0.938, dz + 0.25); lt.rotation.y = 0.3; mk(new THREE.CylinderGeometry(0.018, 0.018, 0.006, 10), new THREE.MeshStandardMaterial({ color: 0x9c1f1f, roughness: 0.5 }), dx + 0.1, 0.943, dz + 0.25);
   const qp = mk(new THREE.ConeGeometry(0.012, 0.3, 5), paper, dx - 0.05, 1.02, dz - 0.2); qp.rotation.z = 0.5; mk(new THREE.CylinderGeometry(0.03, 0.035, 0.05, 8), iron, dx - 0.12, 0.96, dz - 0.25);
   B(0.4, 0.04, 0.3, board, dx, 0.5, dz + 1.0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) B(0.04, 0.5, 0.04, oak, dx + sx * 0.16, 0.25, dz + 1.0 + sz * 0.11);
@@ -1221,6 +1239,8 @@ function frame(now, step) {
       else if (CL.Walk) updateWalk(galdy, walkedX, walkedZ, dt); } }
   camera.position.set(state.x + Math.sin(tt * 31) * 0.06 * sh, eyeY + camLift + (reduceMotion ? 0 : Math.sin(bob) * 0.035) + Math.sin(tt * 37) * 0.05 * sh, state.z + Math.sin(tt * 27) * 0.05 * sh); camera.rotation.set(state.pitch + Math.sin(tt * 29) * 0.015 * sh, state.yaw, Math.sin(tt * 23) * 0.03 * sh); if (galdy && galdy.visible) { const back = state.place === 'out' ? 2.6 : 1.9, wx = camera.position.x + Math.sin(state.yaw) * back, wz = camera.position.z + Math.cos(state.yaw) * back, sx = state.x, sz = state.z; const [cx2, cz2] = camBounds(wx, wz); camera.position.x = cx2; camera.position.z = cz2; state.x = sx; state.z = sz; camera.position.y += 0.35; camera.rotation.x -= 0.12; }
   if (Q.on && Q.phase === 'sea') rescueCam(Q.t); else if (RESCUE.on) rescueCam(1e9);
+  LS.tick(dt);   /* a close-up holds the camera (engine/lookshot.js) */
+  if (!reduceMotion) flickerAll(flames, now / 1000);   /* every candle flame (engine/flame.js) */
   if (__DEV__ && window.__free) { const f = window.__free; camera.position.set(...f.pos); camera.lookAt(...f.look); }   /* dev only: a free camera for close looks (?shot=free&c=x,y,z&t=x,y,z) */
   for (const [b, q] of animQ) b.quaternion.copy(q);            // put back the animation's own pose before adding ours
   if (seaN && state.place !== 'in' && state.place !== 'ware') { const t = now / 1000;
@@ -1254,7 +1274,7 @@ function frame(now, step) {
     if (state.started) { current = null; let best = 1e9; if (!busy) for (const a of ACTIONS) { if (!!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const dd = Math.hypot(state.x - w[0], state.z - w[1]); if (a.exit && !exitReady(a.label, dd, a.r, performance.now() / 1000)) continue;   /* a way out waits until you have walked off its spot (engine/story.js) */ if (dd < a.r && dd < best) { best = dd; current = a; } }
       $('talk').hidden = !current || isTalk(current); if (current && !isTalk(current) && $('talk').dataset.label !== current.label) setActionButton(current);
       if (!state.unlocked.includes('harbour') && state.x < SHORE - 2) { unlock('harbour'); setGoal(); } }
-    if (state.place === 'in' && fire && !reduceMotion) { const f = 0.85 + Math.sin(now / 90) * 0.08 + Math.sin(now / 37) * 0.07; fireLight.intensity = 16 * f; for (let i = 0; i < fire.userData.tongues.length; i++) { const tn = fire.userData.tongues[i], [w, h] = tn.userData.wh, a = now / 1000 * (5 + i * 0.9) + i * 1.7, k2 = 0.82 + 0.16 * Math.sin(a) + 0.1 * Math.sin(a * 2.3 + i); tn.scale.set(w * (1.05 - (k2 - 0.82) * 0.5), h * k2, w * (1.05 - (k2 - 0.82) * 0.5)); tn.rotation.z = Math.sin(a * 0.7) * 0.07; tn.rotation.y = Math.sin(a * 0.31) * 0.4; } for (let i = 0; i < flames.length; i++) { const k = 1.75 + Math.sin(now / 70 + i * 2.1) * 0.25; flames[i].scale.y = flames[i].geometry.type === 'SphereGeometry' ? k : 0.9 + (k - 1.75); } }
+    if (state.place === 'in' && fire && !reduceMotion) { fireLight.intensity = 16 * fire.userData.tick(now / 1000);  }
   }
   renderer.render(scene, camera); requestAnimationFrame(frame);
 }

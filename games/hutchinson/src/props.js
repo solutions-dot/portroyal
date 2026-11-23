@@ -2,6 +2,7 @@
    Every one is a reconstruction of a common kind of object; none copies a museum piece. */
 import * as THREE from "three";
 import { cv, std, solid, mesh, box, cyl, plane, grp } from "./gfx.js";
+import { candleFlame } from "../../../engine/flame.js";
 import { fodder, cask } from "./scenery.js";
 export const WOOD = solid(0x826247),
   WOOD_DARK = solid(0x4a3626, 0.9),
@@ -102,6 +103,7 @@ export function lantern() {
   }
   for (const y of [0.03, 0.215]) mesh(new THREE.TorusGeometry(0.07, 0.005, 5, 18), TIN, 0, y, 0, g).rotation.x = Math.PI / 2;
   cyl(0.012, 0.012, 0.07, solid(0xeee4c8, 0.8), 0, 0.06, 0, g, 8);   /* the candle */
+  { const f = candleFlame({ seed: 5, s: 0.9, glowSize: 0.1 }); f.position.y = 0.095; g.add(f); }   /* its flame, seen through the horn (engine/flame.js) */
   const cone = mesh(new THREE.CylinderGeometry(0.018, 0.074, 0.075, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x8d8a82, roughness: 0.55, metalness: 0.6, side: THREE.DoubleSide }), 0, 0.255, 0, g);
   for (let i = 0; i < 10; i++) {
     const a = (i / 10) * Math.PI * 2;

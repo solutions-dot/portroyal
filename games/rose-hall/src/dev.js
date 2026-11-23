@@ -286,6 +286,7 @@ export async function dev(A) {
     for (const Q of Object.values(worlds)) {
       const pp = (n) => ({ id: n.id, x: n.x, z: n.z, m: n.m, anim: n.m.userData.seatAnchor ? "SitIdle" : "Idle", h: 1.75 * (n.scale || 1), r: (n.scale || 1) < 0.9 ? 0.2 : 0.25, path: n.amb?.spec?.pts || (n.amb?.spec?.from ? [n.amb.spec.from, n.amb.spec.to] : null) });
       const r = auditPlace({
+        passage: false, props: false,   /* run below with this game's own look and task spots */
         id: Q.id,
         snap: Q.snap,
         npcs: [...Q.people, ...Q.extras].map(pp),

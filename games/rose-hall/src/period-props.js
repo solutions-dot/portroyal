@@ -1,5 +1,6 @@
 import { loftSkin as skin } from "../../../engine/loft.js";
 import { bonnetLorry } from "../../../engine/roadcars.js";
+import { makeSack } from "../../../engine/sack.js";
 /* games/kendal/src/props.js: plants, hills, houses, animals and the many small things that fill a scene.
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from "three";
@@ -568,29 +569,7 @@ export function crate(s = 0.6, c = 0x8a6a42) {
   box(s, 0.02, s, m, 0, h, 0, g);
   return g;
 }
-export function sack(c = 0xb09a6a) {
-  const g = grp(),
-    m = solid(c, 1);
-  cyl(0.2, 0.25, 0.46, m, 0, 0.23, 0, g, 10);
-  mesh(
-    new THREE.SphereGeometry(0.2, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2),
-    m,
-    0,
-    0.46,
-    0,
-    g,
-  ).scale.y = 0.7;
-  cyl(0.04, 0.12, 0.14, solid(0x8a7648, 1), 0, 0.66, 0, g, 8);
-  mesh(
-    new THREE.TorusGeometry(0.06, 0.012, 5, 10),
-    solid(0x5a4228, 1),
-    0,
-    0.6,
-    0,
-    g,
-  ).rotation.x = Math.PI / 2;
-  return g;
-} /* a sack: a body, a rounded top, a tied neck */
+export function sack(c = 0xb09a6a) { return makeSack({ material: solid(c, 1), seed: (c >> 4) & 7 }); }   /* the engine's cloth sack (engine/sack.js): it was a cylinder with a cap */
 /* a picnic hamper: a woven basket wider than it is deep, a flat woven lid with a strap, and a bail handle over the top. Its handle is 0.52 above the ground. */
 export function hamper(c = 0xa8803c) {
   const g = grp(),

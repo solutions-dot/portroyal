@@ -71,8 +71,9 @@ export function auditPassage({ walls = [], bounds, start, r = 0.23, wide = 0.9, 
     for (let j = 0; j < nz; j += 2) { let row = ''; for (let i = 0; i < nx; i += 2) { const k = j * nx + i; row += clear[k] < r ? '#' : reach.lab[k] !== 0 ? 'x' : clear[k] >= wide / 2 ? '.' : ':'; } out.push('pass map ' + cz(j).toFixed(1).padStart(5) + ' ' + row); }
   for (const s of spots) {
     let ok = false;
-    for (let dj = -13; dj <= 13 && !ok; dj++) for (let di = -13; di <= 13 && !ok; di++) { if (Math.hypot(di, dj) * cell > 1.3) continue; const k = at(s.x + di * cell, s.z + dj * cell); if (k >= 0 && reach.lab[k] === 0) ok = true; }
-    if (!ok) out.push(`pass spot: ${s.label} at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) has no reachable ground within 1.3 m`);
+    const R = s.r || 1.3, M = Math.ceil(R / cell);   /* a spot may say how near it must be reached (a person on a stage is talked to from the floor) */
+    for (let dj = -M; dj <= M && !ok; dj++) for (let di = -M; di <= M && !ok; di++) { if (Math.hypot(di, dj) * cell > R) continue; const k = at(s.x + di * cell, s.z + dj * cell); if (k >= 0 && reach.lab[k] === 0) ok = true; }
+    if (!ok) out.push(`pass spot: ${s.label} at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) has no reachable ground within ${(s.r || 1.3).toFixed(1)} m`);
   }
   return out;
 }

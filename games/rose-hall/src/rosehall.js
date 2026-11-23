@@ -4,6 +4,7 @@
    room full of candles is one draw call that can be put out and lit again. */
 import * as THREE from "three";
 import { vessel } from "../../../engine/vessel.js";
+import { candleSet } from "../../../engine/flame.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 
@@ -55,14 +56,9 @@ export function flameSets(root) {
   });
   const out = {};
   for (const [name, pos] of Object.entries(by)) {
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-    const pts = new THREE.Points(geo, new THREE.PointsMaterial({ map: T.flame(), size: 0.3, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    pts.frustumCulled = false;
-    pts.userData.noBatch = true;
-    pts.userData.on = (lit) => (pts.visible = lit);
-    root.add(pts);
-    out[name] = pts;
+    const set = candleSet(pos);   /* a real candle flame on each (engine/flame.js), still a few draw calls for the room; it was a glowing dot */
+    root.add(set);
+    out[name] = set;
   }
   return out;
 }

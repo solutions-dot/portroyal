@@ -18,6 +18,8 @@ import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
      head    a head turned further from the chest than a person can, or turning faster than a person turns it: a spin (headWatch, sampled over time)
    Nothing here runs in a public build unless a game imports it into code that is only reached when __DEV__ is true. */
 import * as THREE from 'three';
+import { auditPassage } from './audit-passage.js';
+import { auditProps, propsOf } from './audit-props.js';
 import { groundFeet, strideOf, isSeated } from './anim.js';
 
 /* a list of the world-space box of every visible mesh under a group (instanced meshes are skipped). The mesh's own shape and place are kept aside (SHAPE) for checks that need real contact. */
@@ -28,7 +30,7 @@ export function snapMeshes(group, { shown = false } = {}) {   /* shown: leave ou
   group.traverse((o) => { if (shown && hid(o)) return; if (o.isMesh && !o.isInstancedMesh && o.visible) { const b = new THREE.Box3().setFromObject(o); if (!isFinite(b.min.x)) return; const e = { b, mat: Array.isArray(o.material) ? 'multi' : (o.material.name || o.material.type), geo: o.geometry.type, unlit: [].concat(o.material).every((m) => m.isMeshBasicMaterial), flame: [].concat(o.material).every((m) => m.isMeshBasicMaterial && (o.geometry.type === 'ConeGeometry' || m.transparent || m.blending === THREE.AdditiveBlending)), col: [].concat(o.material)[0].color ? '#' + [].concat(o.material)[0].color.getHexString() : '' }; SHAPE.set(e, { geo: o.geometry, mw: o.matrixWorld.clone() }); let top = o; while (top.parent && top.parent !== group) top = top.parent; e.top = top.uuid; e.loose = o.parent === group; e.skinned = !!o.isSkinnedMesh; e.veg = !!(o.userData.veg || top.userData.veg); e.card = isCard(o.material); e.name = o.name || (top !== o ? top.name : '') || ''; for (let a = o; a && a !== group; a = a.parent) { if (a.userData.hollow) e.hollow = true; if (a.userData.soft) e.soft = true; }   /* soft (on a mesh or the object it is part of): left out of the overlap check. Loose stuff that lies over things (a drift of sand), or a thing that takes another's place and is never seen with it (the cut logs that appear when the fallen tree is cleared) */   /* hollow: a vehicle or room people stand inside on purpose (a cab, a carriage): no outline test (auditBodies) */   /* top: the object it belongs to (the child of the place's group that holds it) */
     if (o.geometry.type === 'BoxGeometry') { o.geometry.computeBoundingBox(); e.lb = o.geometry.boundingBox.clone(); e.inv = o.matrixWorld.clone().invert(); e.sc = Math.cbrt(Math.abs(o.matrixWorld.determinant())) || 1; }   /* the exact box, for seats */
     if (o.userData.wheelR) { e.wheel = o.userData.wheelR * (Math.cbrt(Math.abs(o.matrixWorld.determinant())) || 1); e.wc = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld); e.wv = o.parent; }
-    out.push(e); }
+    e.prop = propsOf([o])[0]; out.push(e); }   /* the props check's notes, taken now: a mesh merged into a batch later is detached and would read as standing at the origin */
     if (o.isInstancedMesh && o.visible && !o.isSkinnedMesh && (SOLID.has(o.geometry.type) || !isCard(o.material))) {   /* each drawn copy of an instanced shape (tree trunks, huts, whole trees, rocks) is kept aside, for the overlap check (solid shapes only) and the bodies check (auditBodies) */
       if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const m4 = new THREE.Matrix4(), mat = [].concat(o.material)[0];
       for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, m4); const mw = o.matrixWorld.clone().multiply(m4), b = o.geometry.boundingBox.clone().applyMatrix4(mw); if (!isFinite(b.min.x)) continue;
@@ -76,6 +78,13 @@ export function auditPlace(place) {
   /* wheels on one vehicle that overlap (owner, 21 Nov 2026: a locomotive's driving wheels ran into each other) */
   const wheels = L.filter((m) => m.wheel), wcut = [];
   for (let a = 0; a < wheels.length; a++) for (let b = a + 1; b < wheels.length; b++) { const A = wheels[a], B = wheels[b]; if (A.wv !== B.wv) continue; const d = A.wc.distanceTo(B.wc); if (d < A.wheel + B.wheel - 0.01) wcut.push(`wheels overlap by ${Math.round((A.wheel + B.wheel - d) * 100)} cm at (${A.wc.x.toFixed(1)},${A.wc.z.toFixed(1)})`); }
+  /* room to pass and props that read right (22 to 23 November 2026), for every game through this one call; a game that runs them itself with
+     richer spots passes passage: false, props: false */
+  if (place.props !== false) stuck.push(...auditProps(L.map((m) => m.prop).filter(Boolean)));
+  if (place.passage !== false && place.walls && place.bounds && place.start && Number.isFinite(place.start.x)) {
+    const spots = [...(place.actions || []).map((a) => ({ ...a, r: (a.r || 1.45) * 0.9 })), ...(place.people || []).filter((p) => !isSeated(p.anim)).map((p) => ({ ...p, r: 2.3 }))].filter((s) => s && Number.isFinite(s.x) && Number.isFinite(s.z)).map((s) => ({ label: s.label || s.id || 'spot', x: s.x, z: s.z, r: s.r }));   /* the same reach as the check above: a thing within its own reach, a person within 2.3 m */
+    stuck.push(...auditPassage({ walls: place.walls, bounds: place.bounds, start: place.start, r: 0.23, spots, ...(place.passWide ? { wide: place.passWide } : {}) }));   /* passWide: a place narrow by nature (inside a pipe) sets its own */
+  }
   return { id: place.id, floating, inside: inside.concat(overlap, cut, wcut), stuck };
 }
 
