@@ -670,3 +670,7 @@ A crowd that belongs to one chapter (the market crowd, soldiers who come later) 
 
 `hen(seed)` returns a hen about 0.35 m to its comb that pecks now and then (`h.userData.tick(t)` each frame from the game's own ticker list). It began in Windrush (`games/windrush/src/scenery.js`, which now re-exports it from here) and is shared with Morant Bay.
 
+## Real sun shadows: `engine/sunshadow.js` (23 November 2026, the graphics pass)
+
+`const SH = sunShadow(renderer, sun, { phone })`; `SH.prepare(group)` once a place is built (and again once its people are in), `SH.relight()` right after the game sets its sun for an hour, `SH.enable(!Q.indoor)`, and `SH.follow(camera)` before each render. Desktop only: a phone pays nothing and keeps the blob shadows under people. A soft shadow map, 2048 texels over a 46 m box that follows the camera, snapped to whole texels so its edges do not crawl. People cast shadows but never receive them, so no face goes dark (rule 9); glows, water and see-through things neither cast nor receive. With shadows on, the sun is 15% stronger and the sky light 12% weaker outdoors, so the shadows read. In use: Morant Bay, The Mad Master, Rose Hall, The Shark Papers (the shared story kit). The other games set their lights their own way: wire it in when you touch them.
+

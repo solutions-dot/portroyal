@@ -507,7 +507,7 @@ function bay() {
   const land = plane(600, 316, std(T.dirt([50, 26], [176, 160, 126])), 0, -0.025, -142, Q.group);
   land.rotation.x = -Math.PI / 2;
   land.name = "terrain";
-  strip(Q, 48, 16, std(T.dirt([12, 4], [186, 170, 136])), 0, 1, 0.008);   /* the Parade */
+  strip(Q, 48, 16, std(sandTex([12, 4], [184, 166, 130])), 0, 1, 0.008);   /* the Parade: beaten earth, no wheel ruts on an open square */
   strip(Q, 300, 6, std(sandTex([90, 2])), 0, 13, 0.009);   /* the beach */
   const shore = plane(300, 9, std(sandTex([90, 3], [190, 176, 140])), 0, -0.3, 20.2, Q.group);   /* wet sand, going down under the water */
   shore.rotation.x = -Math.PI / 2 + 0.075;
