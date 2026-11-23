@@ -11,7 +11,7 @@ import * as THREE from 'three';
 
 export function sunShadow(renderer, sun, { phone = false, size = 46, map = 2048, far = 160, bias = -0.0006, normalBias = 0.03 } = {}) {
   const on = !phone;
-  const S = { on, prepare() {}, follow() {}, enable() {} };
+  const S = { on, prepare() {}, follow() {}, enable() {}, relight() {} };   /* a phone gets the same calls doing nothing: without relight() every game that calls it failed to load on phones (23 November 2026) */
   if (!on) return S;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
