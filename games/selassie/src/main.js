@@ -90,7 +90,7 @@ import {
 import { createDirector } from "./director.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
-import { addExit } from '../../../engine/exit.js';
+import { addExit, askExit } from '../../../engine/exit.js';
 const KEY = "selassie-save-v1",
   q = new URLSearchParams(location.search),
   QUICK = __DEV__ && (q.has("auto") || q.has("test"));
@@ -948,6 +948,7 @@ async function waits(st, generation) {
     cardData(CARDS.end, [
       ["Read the journal", showJournal],
       ["Chapters", showChapters],
+      ["Exit", () => askExit()],
     ]);
     cue("end");
   }
