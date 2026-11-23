@@ -297,8 +297,9 @@ function gut() {
   sheet.rotation.x = -Math.PI / 2;
   sheet.userData.noBatch = true;
   const names = [];
-  for (let i = 0; i < 10; i++) {
-    const n = box(0.18 - (i % 3) * 0.03, 0.002, 0.009, solid(0x1e1a16, 1), CHAPEL.x - 0.22, 0.962, CHAPEL.z - 4.16 + i * 0.033, Q.group);
+  for (let i = 0; i < 10; i++) {   /* a name in ink, line under line, each starting at the same margin */
+    const len = 0.1 + ((i * 37) % 7) * 0.012,
+      n = box(len, 0.0015, 0.0045, solid(0x1e1a16, 1), CHAPEL.x - 0.32 + len / 2, 0.962, CHAPEL.z - 4.16 + i * 0.03, Q.group);
     n.userData.noBatch = true;
     n.visible = false;
     names.push(n);
