@@ -97,10 +97,26 @@ export function buildStreet(opts = {}) {
   for (const [x, z, sc] of [[-8.6, 9.2, 0.5], [-3.0, 9.2, 0.5], [16.8, 9.2, 0.5], [22.6, 9.2, 0.5], [4, 12, 1.1], [13, 12, 0.9]]) bush(x, z, sc);
 
   /* ---- cover and vehicles ---- */
-  if (inc) { SO('cover', -2.2, -1.8, -4.5, -0.3, 0, 1.15, 'wallA'); SO('cover', -11.2, -10.8, 0.8, 4.4, 0, 1.15, 'wallB'); }
-  if (inc) {   /* the two low concrete walls in the road: cover for the operation scene only (owner, 22 November 2026) */
-    box(X.wallw, 0.35, 1.15, 4.2, -2, 0, -2.4); spots.wallA = [[-0.7, -3.4], [-0.7, -2.2], [-0.7, -1.2]];
-    box(X.wallw, 0.35, 1.15, 3.6, -11, 0, 2.6); spots.wallB = [[-9.7, 3.4], [-9.7, 2.2]];
+  if (inc) { SO('cover', -2.65, -1.55, -4.5, -0.3, 0, 1.18, 'wallA'); SO('cover', -11.65, -10.55, 0.8, 4.4, 0, 1.2, 'wallB'); }
+  if (inc) {   /* cover for the operation scene only: street junk dragged into the road, not concrete walls (owner, 23 November 2026: "concrete walls in the
+     road dont make sense ... like an overturned table, or a fridge"). Reports of the barricades in West Kingston in May 2010 name old vehicles, appliances and
+     debris. Each heap stands about 1.15 m, so a soldier crouches behind it and fires over it, as at the walls it replaces. */
+    const enamel = new THREE.MeshStandardMaterial({ color: 0xe8e6de, roughness: 0.45, metalness: 0.1 }), chrome = new THREE.MeshStandardMaterial({ color: 0x9a9ea2, roughness: 0.3, metalness: 0.8 });
+    const table = (x, z0, len) => {   /* a big wooden table turned onto its long edge: the top stands up as a screen, the legs stick out behind (west) */
+      box(X.wood, 0.05, 1.15, len, x + 0.15, 0, z0 + len / 2); box(X.plank, 0.06, 0.06, len, x + 0.15, 1.12, z0 + len / 2);
+      for (const dz of [0.12, len - 0.12]) for (const y of [0.12, 1.0]) box(X.wood, 0.7, 0.07, 0.07, x - 0.2, y, z0 + dz);   /* the four legs, level with the ground now */
+      box(X.wood, 0.05, 0.1, len - 0.3, x + 0.1, 0.5, z0 + len / 2);   /* the rail under the top */
+    };
+    /* east heap (x -2): an overturned table, and an old fridge on its side with a door leaned on it */
+    table(-2.05, -4.45, 2.0);
+    box(enamel, 0.66, 0.68, 1.6, -2.0, 0, -1.45); box(chrome, 0.04, 0.05, 0.35, -1.66, 0.45, -1.8); box(X.junk, 0.02, 0.02, 1.55, -1.665, 0.34, -1.45);   /* the fridge, its handle and door seam */
+    box(X.plank, 0.05, 1.18, 0.8, -1.72, 0, -0.75, 0, 0.12); box(X.wood, 0.02, 0.9, 0.04, -1.7, 0.1, -0.75, 0, 0.12);   /* a door leaned against it */
+    spots.wallA = [[-0.7, -3.4], [-0.7, -2.2], [-0.7, -1.2]];
+    /* west heap (x -11): two oil drums with a sheet of zinc propped across them, and a second table on its edge */
+    for (const z of [1.25, 2.0]) cyl(X.rust, 0.29, 0.88, -11.05, 0, z, 14);
+    box(X.zinc, 0.03, 1.2, 1.8, -10.66, 0, 1.6, 0, 0.1);   /* its top rests on the drums */
+    table(-11.05, 2.5, 1.9);
+    spots.wallB = [[-9.7, 3.4], [-9.7, 2.2]];
   }
   let car = null, van = null;
   if (inc) { car = sedan(0x4c6a5c); car.position.set(2, 0, 1.9); car.rotation.y = 0.04; g.add(car); spots.car = [[4.7, 2.9], [5.9, 1.7], [4.6, 0.5]];
