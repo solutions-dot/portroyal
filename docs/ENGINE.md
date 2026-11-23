@@ -657,3 +657,12 @@ The owner asked for houses that "wow" up close "without sacrificing performance"
 - `hearthFire({ s, bed })`: Port Royal's tavern fire (the owner's choice for every fireplace): flame tongues, embers, charred logs, ash; it moves by itself and crackles while the camera is within 7 m. Used in Port Royal's tavern, Hutchinson's cooking fire and corner hearth, Nanny Town's cooking fires. Windrush's 1948 fireplace is not lit.
 - `auditPlace` now runs `auditPassage` (room to pass, 0.9 m; each spot within its own reach) and `auditProps` for every game, from the snapshot it already takes (`snapMeshes` keeps each mesh's prop notes). A game that runs them itself with richer spots passes `passage: false, props: false` (Hutchinson, Rose Hall, Shark Papers, Windrush, Selassie). `passWide` lets a place narrow by nature set its own width (Bog Walk's Tube, 0.75); Port Royal passes `passage: false` (its 0.5 m walk grid already says where you can get). Fixed in the checks themselves: a lamp's cord or a fixture's own finial is not "something stuck in a pot"; props are noted before scenery is merged.
 - Background life (`engine/ambient.js`): a watcher or a pause in the plain Idle always changes or glances within a few seconds; the head leads a turn on the spot, which never takes over 2.5 s; a glance is drawn at middle distance too.
+
+## A building on fire: `engine/blaze.js` (23 November 2026)
+
+`blaze({ w, d, eave, ridge, seed })` returns a group: flames along the eaves and up through the roof, smoke drifting with the wind, sparks, and an orange light. `B.userData.setLevel(v)` (1 burning hard, about 0.4 the roof fallen in, about 0.1 smoke only, 0 out). It runs itself while drawn and crackles while the camera is near, as `engine/flame.js` does. It began as Eventide's fire night (`makeFire` in `games/eventide/src/places.js`), which still keeps its own copy: move Eventide over when you next touch that file. Used by Morant Bay (the school-house, the court-house, the chapel and the houses at Stony Gut).
+
+## People a chapter keeps off stage: `life.hide(n, off)` (engine/ambient.js, 23 November 2026)
+
+A crowd that belongs to one chapter (the market crowd, soldiers who come later) is hidden with `life.hide(n, true)` and brought back with `life.hide(n, false)`. Setting `amb.gone` by hand did not hold: the mood's own coming and going (`moodShow`) brought wanderers and chatters back. A hidden person is marked `amb.off`, and the mood leaves them alone.
+

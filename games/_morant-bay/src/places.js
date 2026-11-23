@@ -4,6 +4,7 @@
    (Q.reveal, Q.enter), its part in a camera scene (Q.films) and, at Stony Gut in chapter 5, where you can be seen and where you are in cover (Q.danger).
    Story people: person(). Background people: crowd(), each a body made for the year and the place (tools/morant-bay/people). */
 import * as THREE from "three";
+import { makeDoor } from "../../../engine/door.js";
 import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng, batchStatic } from "./gfx.js";
 import { tree, palm, bush, mule, cart, barrel, scatter, surveyPole, sack, crate, marketBasket } from "./period-props.js";
 import * as P from "./props.js";
@@ -703,7 +704,7 @@ function bay() {
     Q.relight?.();
   };
   /* listening for the shells (chapter 4): the camera looks east up the road, a far line of people appears in the dust */
-  const far = add(Q, S.farCrowd(30, 10, 4), 60, -1, 0, Math.PI / 2);
+  const far = add(Q, S.farCrowd(30, 10, 4), 60, 6.4, 0, Math.PI / 2);
   far.visible = false;
   Q.reveal.shells = (seen) => {
     const k = K(seen);
@@ -870,21 +871,23 @@ function town() {
   solid1(Q, S.groundStall(1), 14.8, 15.4, 1.9, 1.3, -0.4);
   solid1(Q, S.groundStall(2), 6.6, 20.4, 1.9, 1.3, -0.1);
   solid1(Q, crate(0.6), 17.4, 6.2, 0.7, 0.7);
-  /* the great door of King's House: it stands open, and shuts on the people from St Thomas (chapter 2) */
+  /* the great door of King's House: a six-panelled double door like the house's own, standing open into a dark hall, and shutting on the
+     people from St Thomas (chapter 2). It sits just in front of the model's own door, with the dark of the open doorway behind it. */
   const door = grp();
-  const leaf = box(2.2, 3.6, 0.12, W.WM.woodDark, 1.1, 1.8, 0, door);
-  leaf.geometry.translate(0, 0, 0);
-  door.userData.noBatch = true;
-  door.traverse((o) => (o.userData.noBatch = true));
-  door.traverse((o) => (o.userData.fixed = true));   /* hung on its hinges in the doorway */
-  add(Q, door, -1.1, 26.95, 0);
-  door.rotation.y = -1.3;   /* open: the leaf swings in, into the house */
-  Q.reveal.door = (seen) => {
-    door.rotation.y = -1.3 * (1 - span(K(seen), 0.15, 0.7));
-  };
-  Q.enter = () => {
-    door.rotation.y = -1.3;
-  };
+  plane(1.8, 3.0, W.WM.dark, 0, 2.3, 0.14, door);   /* the hall beyond the open door (in front of the model's own shut door and its knobs) */
+  const dleaves = makeDoor({ w: 1.8, h: 3.0, kind: "six", leaves: 2, color: 0x2c3a30, frame: 0xe2d9c2, handle: "knob" });
+  dleaves.position.set(0, 0.8, 0.16);
+  door.add(dleaves);
+  const leaves = dleaves.children.filter((c) => c.isGroup);
+  door.traverse((o) => {
+    o.userData.noBatch = true;
+    o.userData.fixed = true;   /* hung in the doorway */
+  });
+  add(Q, door, 0, 32.9, 0, Math.PI);   /* the house faces the square (toward -z here) */
+  const setDoor = (k) => leaves.forEach((L, i) => (L.rotation.y = (i === 0 ? 1 : -1) * 1.45 * (1 - k)));   /* open (k 0) the leaves stand swung back into the hall; shut (k 1) */
+  setDoor(0);
+  Q.reveal.door = (seen) => setDoor(span(K(seen), 0.15, 0.75));
+  Q.enter = () => setDoor(0);
   /* people */
   person(Q, "father", "father", 3.2, 21.4, face(3.2, 21.4, 0, 27), { kind: "watch", at: [0, 27], idles: ["IdleM"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
   person(Q, "secretary", "secretary", -2.4, 25.6, face(-2.4, 25.6, 3, 21), { kind: "watch", at: [3, 21], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });

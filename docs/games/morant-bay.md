@@ -1,8 +1,30 @@
-# Morant Bay, 1865 (working title) (`games/_morant-bay/`, not started)
+# Morant Bay, 1865 (working title) (`games/_morant-bay/`, first playable build)
 
 The next game (owner, 23 November 2026). It tells the Morant Bay rebellion and what followed, from Stony Gut in St Thomas-in-the-East, through a fictional girl. It is a **Mature 13+** game. Build it in a folder that starts with `_` so `tools/dist.mjs` does not publish it, and drop the `_` only when the owner says.
 
-**Status:** research and design are done; nothing is built. Everything marked "to check" is unconfirmed.
+**Status (23 November 2026):** a first playable build of all six chapters is in `games/_morant-bay/` (not published: the folder starts with `_`). It plays from start to end in the autoplayer (`?auto=1`, AUTO END 71), and the audit, faces, layout and held checks report 0 in all three places (`node tools/review/run-test.mjs _morant-bay audit,layout,held`). Everything marked "to check" is unconfirmed. See "What is built" below.
+
+## What is built (23 November 2026)
+
+- **The kit:** the Mad Master's story kit (story table, places, director, journal, quiz) in `games/_morant-bay/src/`: `steps.js` (the story table), `content.js` (every word), `places.js` (Stony Gut, Morant Bay, Spanish Town), `mbscenery.js` (the 1865 buildings), `cast.js`.
+- **People:** 19 bodies in `tools/morant-bay/people/`, built by `tools/garvey/era.py` (`BPY_PYTHON=~/venv/bin/python3 node tools/morant-bay/build-people.mjs`). Country clothes after the 1865 album photographs: head ties, white cotton, rolled trousers, bare feet, low straw hats (the new recipe keys `crown` and `wrapoff`, docs/PIPELINE.md). Hannah's family, Miss Ada and Deacon Clarke are fictional.
+- **Bogle** (`mb_bogle`): first pass at the 1959 photograph: long narrow face, short hair, dark three-piece suit with a light neckcloth. To refine against the photograph. He never speaks; tapping him gives Hannah's own thought.
+- **Gordon** (`mb_gordon`): built, but not yet shown in a scene. The recipe asks for spectacles and side-whiskers that `era.py` does not make yet: **work to do** before he appears.
+- **Places:** Stony Gut (a general picture: no 1865 picture of it is known), Morant Bay after the Illustrated London News engravings (the arcaded court-house, a two-storey house with a louvred upper floor, wooded hills, a beach with canoes, the open shed where courts-martial sat), and the square at Spanish Town with King's House and the Rodney Memorial (built 1783 to 1789, so there in 1865).
+- **The Mature 13+ line** is kept: crowds with sticks and cutlasses, stones, a volley with people ducking and running, far off and in smoke; fire; a flogging begun and cut away (sound only, the camera on Mama's face); a gallows as a far frame at dawn with nobody on it. No blood anywhere. Every such scene has the opt-in card with "Read what happened instead".
+
+### Stand-ins (rule 3: work to do)
+
+- The 1865 **rural constables** and the **Volunteers** (no source for their dress found yet): constables in dark blue with caps, Volunteers as town men in frock coats with long guns.
+- The **soldiers** are the 1st West India Regiment in a first pass at its Zouave dress (white turban, scarlet jacket, dark blue trousers), without the white waistcoat. The 6th Foot, marines and sailors are not in the game yet.
+- The **rifle-musket** is a general picture of the 1853 Enfield pattern; the **lantern** is the Mad Master's horn lantern of the 1770s (an 1865 lantern is to make).
+- The **statue of Paul Bogle** in the 2026 scene is a standing figure in bronze, a general picture: Edna Manley's statue (1965) is to model from a photograph.
+- The **later court-house** (rebuilt after 1865, burned 2007) is a general picture of two storeys of stone with arched windows.
+- The **chapel** at Stony Gut, the **school-house** and the **police station** at Morant Bay: general pictures.
+
+### Not yet confirmed (unchanged)
+
+The girl's name and family, the father's fate and the name lists follow the recommendation in `notes/the-girl-and-her-family.md`. The game never says what became of Papa. The exact wording of the Queen's Advice was not checked at source, so the game shows only its heading (journal page "The Queen's Advice"). Each "Voices" quotation in the journal still needs checking on the page image.
 
 ## Start here (for whoever builds it)
 

@@ -1041,6 +1041,7 @@ onLoadFail(() => {
     current = GAME.title.place;
     Q.group.visible = true;
     cast(Q, STEPS[FIRST].place === Q.id ? STEPS[FIRST] : {});
+    Q.enter?.(FIRST, S);   /* the place as the first step has it: no soldiers or later crowds behind the title */
     light(Q);
     $("bar").style.width = "100%";
     ready = true;

@@ -365,6 +365,10 @@ The owner looked at the rebuilt collars and at Marcus Garvey and was not satisfi
 - **A plain opening dips only at the front.** Its seam stays at the base of the neck round the sides and back; lower at the sides, the ring ran out onto a narrow shoulder (a girl, a slim woman) and left a wedge of skin there. `_nw_zone` in `neckwear.py` is now "within 4 cm of the seam", not "not the arm's".
 - **A suit is a modelled garment, fitted** (next section). The generated jacket is no longer used by any recipe.
 
+## Country clothes of 1865: `crown` and `wrapoff` (23 November 2026)
+
+Two recipe keys for the Morant Bay people, after the 1865 album photographs of villagers: `"crown"` (a share of the usual crown height of a `straw` hat; 0.62 gives the low country hat) with `"brim"` 1.3, and `"wrapoff"` (a share of the head tie's usual 16 to 22 mm of cloth; 0.5 lies closer). Recipes without them build as before.
+
 ## Coats of 1773 and 1799 (23 November 2026)
 
 Owner, on The Shark Papers: "collars and sleeves look awful on these". `era.py` built every coat before 1800 with the 1690 rule: a wide sleeve ending mid-forearm in a big cuff, 3 cm of cloth over the arm, and a broad cravat with long falling ends. A recipe with `"era"` 1770 or later (`LATE` in `era.py`) now gets the later cut: a close sleeve that follows the arm's own smoothed size (`sleeve_tube(..., fit=True)`) and reaches the wrist (`coatsleeve` at least 0.92), cloth only 4 mm thick down the sleeve (blended in from just below the shoulder), a lower neck facing, and a lower neckcloth with a small knot and two short ends. The 1690 and 1734 coats build as before. Rebuilt: every coat in The Shark Papers and The Mad Master of Edinburgh Castle. After rebuilding a Shark Papers body, run `node tools/people/sleeve-blend.mjs shark-papers <ids>` again.
