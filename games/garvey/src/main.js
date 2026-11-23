@@ -39,6 +39,8 @@ import { setQuiet, ahead, work, warm, release } from '../../../engine/preload.js
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
+import { createLookShot, frameOf, cineLayer, lookFrom } from '../../../engine/lookshot.js';   /* looking at a thing is a close-up action (owner rule 13) */
+import { lookSound } from '../../../engine/look-sounds.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -967,7 +969,7 @@ function buildDock() {
 }
 const DOCK_SPOTS = { garvey5: [1.4, -0.4], clerk: [-4.5, -1.8], engineer: [5.0, 2.0], friend: [-1.6, 1.4] };
 let inspected = 0;
-const INSPECT = { hull: ['Hull', 'The paint looks fresh. Under it, the plates are rusty.'], engine: ['Engine', 'The engineer says it runs, but it is very old and will need many repairs.'], deck: ['Deck', 'The planks are worn, and some of the rails are loose.'] };
+const INSPECT = { hull: ['Hull', 'The paint looks fresh. Under it, the plates are rusty.'], engine: ['Engine', 'The engineer says it runs. But it is very old and needs many repairs.'], deck: ['Deck', 'The planks are worn, and some of the rails are loose.'] };
 let inspectDone = null, inspectSeen = {};
 function closeInspect(done) { if ($('inspect').hidden) return; $('inspect').hidden = true; busy = panelsOpen(); if (inspectDone) { const f = inspectDone; inspectDone = null; f(done); } }
 $('inclose').onclick = () => closeInspect(false); $('indone').onclick = () => closeInspect(true);
@@ -1074,11 +1076,26 @@ function buildDeck() {
 }
 const DECK_VIEW = { hull: [8.2, 0.2, -8.6, Math.PI, -0.3], engine: [-6.2, 1.15, -0.62, Math.PI, -1.12], deck: [9.0, 0.75, 1.0, Math.PI, -0.5] };   /* where your eyes go for each close look: x, height, z, yaw, pitch */
 const deckGoal = () => { const n = Object.keys(INSPECT).filter((k) => inspectSeen[k]).length; return n < 3 ? 'Look at the hull, the engine and the deck. (' + n + ' of 3)' : 'You have seen the ship. Go back down to the dock.'; };
-function lookPart(k) {   /* a close look: your eyes go to the thing itself (over the rail, down the hatch, down to the planks) while the words are on the screen */
-  if (busy) return; busy = true; keys.clear(); uiSound('tap'); const keep = [state.x, state.z, state.yaw, state.pitch], v = DECK_VIEW[k]; state.x = v[0]; state.eyeY = v[1]; state.z = v[2]; state.yaw = v[3]; state.pitch = v[4];
-  $('intitle').textContent = INSPECT[k][0]; $('inrow').replaceChildren(); $('inmsg').textContent = INSPECT[k][1]; $('indone').hidden = false; $('inspect').hidden = false; $('indone').focus({ preventScroll: true });
-  inspectDone = () => { [state.x, state.z, state.yaw, state.pitch] = keep; delete state.eyeY; const first = !inspectSeen[k]; inspectSeen[k] = true; setGoal(); if (first && Object.keys(INSPECT).every((x) => inspectSeen[x])) { uiSound('goal'); toast('You have looked at everything. The ship is old.'); } };
+/* close-ups (owner rule 13, engine/lookshot.js): the bars come in, the eye glides to the thing, it does something with a sound, the words show in the
+   lower bar one sentence at a time, and the eye glides back. The deck looks were an instant jump and a panel. */
+const _lsq = new THREE.Quaternion(), _lse = new THREE.Euler();
+let LS = null, SEE_LOOK = false;   /* SEE_LOOK: a dev view that wants to see the close-up although the test speed-up is on */
+function lookShot() {
+  if (LS) return LS; const C = cineLayer();
+  LS = createLookShot({ camera, fov: () => camera.fov, setFov: (f) => { if (Math.abs(camera.fov - f) > 0.01) { camera.fov = f; camera.updateProjectionMatrix(); } }, bars: C.bars, say: C.say, freeze: (on) => { busy = on; if (on) keys.clear(); },
+    sound: lookSound, quick: () => QUICK && !SEE_LOOK, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, home: () => ({ pos: new THREE.Vector3(state.x, EYE, state.z), quat: _lsq.setFromEuler(_lse.set(state.pitch, state.yaw, 0, 'YXZ')) }) });
+  return LS;
 }
+if (__DEV__) window.__gv = { st: () => ({ busy, fading, ls: !!LS, on: !!(LS && LS.on) }), board: () => boardShip(), look: (k, at = 1.6) => { SEE_LOOK = true; lookPart(k); setTimeout(() => { if (LS) LS.paused = true; document.title = 'LOOK ' + k; }, at * 1000); } };   /* dev: board the Yarmouth, play a deck look and hold it */
+const sentences = (t) => t.split(/(?<=[.!?])\s+/);
+async function closeUp(view, { lines = [], sound = 'wood', reveal, act = 2.2 } = {}) { const L = lookShot(); await L.play({ view, lines, sound, reveal, act }); await L.back(); }
+const DECK_LOOK = { hull: { sound: 'water' }, engine: { sound: 'creak', reveal: (k) => { if (k > 0.2 && DECK.steam <= 0.01) DECK.steam = 1.8; } }, deck: { sound: 'wood' } };   /* the hull creaks in the swell, steam puffs from the engine room, the old planks */
+async function lookPart(k) {
+  if (busy) return; uiSound('tap'); const v = DECK_VIEW[k], p = [v[0], v[1], v[2]], D = DECK_LOOK[k];
+  await closeUp({ p, look: lookFrom(p, v[3], v[4], 3), fov: 46 }, { lines: sentences(INSPECT[k][1]), sound: D.sound, reveal: D.reveal });
+  const first = !inspectSeen[k]; inspectSeen[k] = true; setGoal(); if (first && Object.keys(INSPECT).every((x) => inspectSeen[x])) { uiSound('goal'); toast('You have looked at everything. The ship is old.'); }
+}
+
 function boardShip() { chapterFade('On board', 'The deck of the Yarmouth', () => { buildDeck(); enterPlace('deck'); const s = PLACES.deck.start; state.x = s.x; state.z = s.z; state.yaw = s.yaw; state.pitch = 0; setGoal(); showPlace(); }); }
 function leaveShip() { const done = Object.keys(INSPECT).every((x) => inspectSeen[x]); chapterFade('Back on the dock', 'New York, 1919', () => { enterPlace('dock'); state.x = 0; state.z = 2.0; state.yaw = 0; state.pitch = 0; if (done && stage === 41) { unlock('shares'); setStage(42); uiSound('goal'); } else setGoal(); showPlace(); }); }
 function deckTick(dt) {
@@ -1181,7 +1198,7 @@ function pickColour(b) {
 for (const b of $('dccolors').children) b.onclick = () => pickColour(b);
 function closeDecl(done) { if ($('decl').hidden) return; $('decl').hidden = true; busy = panelsOpen(); if (done && declDone) { const f = declDone; declDone = null; f(); } }
 $('dcx').onclick = () => closeDecl(false); $('dcdone').onclick = () => closeDecl(true);
-const LIB_ACTIONS = [{ id: 'declaration', label: 'Read the Declaration', x: 4.8, z: 3.0, r: 1.3, on: () => stage === 52, go: () => openDecl(() => { story.banner = true; showBanner(); setStage(53); uiSound('goal'); }) }];
+const LIB_ACTIONS = [{ id: 'declaration', label: 'Read the Declaration', x: 4.8, z: 3.0, r: 1.3, on: () => stage === 52, go: () => closeUp(frameOf([state.x, state.z], [4.8, 0.95, 3.0], { dist: 1.0, lift: 0.6, fov: 40 }), { lines: ['The Declaration of Rights of the Negro Peoples of the World.', 'It was agreed here in August 1920.'], sound: 'paper' }).then(() => openDecl(() => { story.banner = true; showBanner(); setStage(53); uiSound('goal'); })) }];
 const help = (id, t, reply) => ({ t, set: { helped: id }, then: [{ who: 'Steward', text: reply }, { who: 'Steward', text: 'I will go to the others right after. Thank you.' }] });
 const thanks = (id, other) => () => stage >= 52 ? [story.helped === id ? 'Thank you for helping me first!' : other] : null;
 const LIB_PEOPLE = [
@@ -1300,7 +1317,7 @@ function openLetter(done) {
 function closeLetter(done) { if ($('letp').hidden) return; $('letp').hidden = true; busy = panelsOpen(); if (done && letDone) { const f = letDone; letDone = null; f(); } }
 $('lex').onclick = () => closeLetter(false); $('ledone').onclick = () => closeLetter(true);
 const OFF_ACTIONS = [{ id: 'sort', label: 'Sort the news cards', x: -0.5, z: -0.5, r: 1.3, on: () => stage === 61, go: () => openSort(() => { setStage(62); uiSound('goal'); }) },
-  { id: 'letter', label: 'Read the letter', x: 3.2, z: 0.0, r: 1.3, on: () => stage === 63, go: () => openLetter(() => { setStage(64); uiSound('goal'); }) }];
+  { id: 'letter', label: 'Read the letter', x: 3.2, z: 0.0, r: 1.3, on: () => stage === 63, go: () => closeUp(frameOf([state.x, state.z], [3.2, 0.85, 0.0], { dist: 0.9, lift: 0.55, fov: 40 }), { lines: ['A letter from your friend lies open.'], sound: 'paper' }).then(() => openLetter(() => { setStage(64); uiSound('goal'); })) }];
 const fair = (id, t, reply) => ({ t, set: { question: id }, then: [{ who: NAR, text: reply }, { who: NAR, text: 'A letter has come for you, from a friend.' }, { who: NAR, text: 'It is on the table by the door.' }] });
 const OFF_PEOPLE = [
   { id: 'amyj', model: 'amyj1925', real: true, who: 'Amy Jacques Garvey', label: 'Talk to Amy Jacques Garvey', x: 1.5, z: -1.5, ry: faceToward(1.5, -1.5, 0, 1.5), base: 'Idle',
@@ -1385,7 +1402,7 @@ function refreshJourney() {
   if (story.final) L2.push('Asked if the dream has come true, you said: "' + story.final + '"');
   pg.simple = L2.length ? L2 : ['You finished the story.'];
 }
-const PARK_ACTIONS = [{ id: 'timeline', label: 'Read the timeline board', x: -5.0, z: 1.4, r: 1.4, on: () => stage === 71, go: () => openTime(() => { setStage(72); uiSound('goal'); }) },
+const PARK_ACTIONS = [{ id: 'timeline', label: 'Read the timeline board', x: -5.0, z: 1.4, r: 1.4, on: () => stage === 71, go: () => closeUp(frameOf([state.x, state.z], [-5.0, 1.5, 1.4], { dist: 1.8, lift: 0.1, fov: 44 }), { lines: ['A board tells the story of his life.'], sound: 'wood' }).then(() => openTime(() => { setStage(72); uiSound('goal'); })) },
   { id: 'answer', label: 'Answer at the shrine', x: 0, z: -0.3, r: 1.7, on: () => stage === 73, go: () => openAnswer(() => { story.final = ansText(); unlock('shrine'); unlock('pardon'); refreshJourney(); unlock('journey'); setStage(74); uiSound('goal'); endCard(); }) }];
 function endCard() { cue('end'); card('The End', ['Thank you for walking through this story. Your journey, with all your choices, is in the Journal.', 'Marcus Garvey, Amy Ashwood and Amy Jacques Garvey were real people. Their words here are fictional. Check the facts in the Journal against books and archives, and ask your own questions.'], [{ t: 'Read my journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Keep exploring', go: hideCard }]); }
 const PARK_PEOPLE = [
@@ -1627,7 +1644,7 @@ let last = performance.now(), stepT = 0;
 function frame(t) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
-  if (!state.started && modelsReady && !QUICK) titleCam(dt); else { camera.position.set(state.x, state.eyeY || EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); if (!fading && INTRO.t < INTRO.dur) introCam(dt); }   /* eyeY: dev face views only */
+  if (!state.started && modelsReady && !QUICK) titleCam(dt); else { camera.position.set(state.x, state.eyeY || EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); if (!fading && INTRO.t < INTRO.dur) introCam(dt); } if (LS) LS.tick(dt);   /* a close-up holds the camera */   /* eyeY: dev face views only */
   renderer.render(scene, camera);
 }
 /* a chapter opens with a short establishing move: the view starts higher and further back, looking down over the place, and settles into your eyes.

@@ -140,3 +140,19 @@ export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () 
   };
   return L;
 }
+
+/* cineLayer(): the letterbox bars and the line in the lower bar, for a game that has none of its own (Garvey, Tivoli, 23 November 2026). Made
+   once; returns { bars(on), say(text) } for createLookShot. The bars slide in from top and bottom; the goal, hint and toast step aside. */
+let CL = null;
+export function cineLayer() {
+  if (CL) return CL;
+  const st = document.createElement('style');
+  st.textContent = '#ls-bars{position:fixed;inset:0;pointer-events:none;z-index:60}#ls-bars::before,#ls-bars::after{content:"";position:absolute;left:0;right:0;height:0;background:#000;transition:height .8s ease}#ls-bars::before{top:0}#ls-bars::after{bottom:0}body.ls-cine #ls-bars::before,body.ls-cine #ls-bars::after{height:13vh}#ls-sub{position:fixed;left:0;right:0;bottom:0;height:13vh;margin:0;display:flex;align-items:center;justify-content:center;z-index:61;color:#f3e6cc;font-family:Georgia,serif;font-style:italic;font-size:clamp(1rem,2.6vw,1.5rem);pointer-events:none;text-align:center;padding:0 16px;opacity:0;transition:opacity .4s}body.ls-cine #ls-sub{opacity:1}body.ls-cine #goal,body.ls-cine #hint,body.ls-cine #toast,body.ls-cine #nudge{opacity:0!important;pointer-events:none}';
+  document.head.appendChild(st);
+  const bars = document.createElement('div'); bars.id = 'ls-bars'; bars.setAttribute('aria-hidden', 'true'); document.body.appendChild(bars);
+  const sub = document.createElement('p'); sub.id = 'ls-sub'; sub.setAttribute('aria-live', 'polite'); document.body.appendChild(sub);
+  CL = { bars: (on) => document.body.classList.toggle('ls-cine', on), say: (t) => { sub.textContent = t || ''; } };
+  return CL;
+}
+/* where a camera at (p) with yaw and pitch (YXZ, as most games turn their eye) is looking, d metres ahead */
+export function lookFrom(p, yaw, pitch, d = 3) { return [p[0] - Math.sin(yaw) * Math.cos(pitch) * d, p[1] + Math.sin(pitch) * d, p[2] - Math.cos(yaw) * Math.cos(pitch) * d]; }
