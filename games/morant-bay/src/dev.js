@@ -127,7 +127,7 @@ export async function dev(A) {
        (engine/lens-check.js). LENS n at the end. */
     A.begin();
     for (const id of PLACE_IDS) await ensure(id);
-    const out = [], { FILMS } = await import("./content.js");
+    const out = [], see = [], { FILMS } = await import("./content.js");   /* out: faults (LENS n); see: shots to look at by eye (often the subject's own front wall) */
     for (const key of Object.keys(FILMS)) {
       const st = +Object.keys(STEPS).find((k) => STEPS[k].card === "playing" && STEPS[k].film === key);
       if (!st) continue;
@@ -138,6 +138,13 @@ export async function dev(A) {
         const b = lensBlocked(A.camera, world().group, { near: 1.4 });
         if (b.share >= 0.34 && t - lastBad > 2) { out.push("LENS film " + key + " at " + t.toFixed(1) + "s: " + Math.round(b.share * 100) + "% of the view blocked within 1.4 m by " + b.what); lastBad = t; }
       }
+      /* each shot's held moment (a second after it is reached): is what the camera looks at behind a wall, a roof or leaves? */
+      for (const sh of FILMS[key].shots) {
+        const t = Math.min(sh.t + 1, FILMS[key].duration);
+        A.DIR.apply(t); A.camera.updateMatrixWorld(true);
+        const h = targetHidden(A.camera.position.toArray(), A.DIR.lookAt(t).toArray(), world().group);
+        if (h) see.push("SEE film " + key + " shot at " + sh.t + "s: something stands between the camera and what it looks at: " + h);
+      }
       A.DIR.stop?.();
     }
     for (const [id, lk] of Object.entries(LOOKS)) {
@@ -147,7 +154,7 @@ export async function dev(A) {
       const h = targetHidden(lk.view.p, lk.view.look, world().group);
       if (h) out.push("LENS look " + id + ": the view of it is blocked by " + h);
     }
-    window.__RESULT = [...out, "LENS " + out.length, "AUTO END"];
+    window.__RESULT = [...out, ...see, "LENS " + out.length, "AUTO END"];
     return;
   }
   if (q.get("test") === "face") {

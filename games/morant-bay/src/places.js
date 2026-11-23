@@ -196,7 +196,10 @@ function gut() {
     const h = add(Q, hen(sd), x, z, 0, sd * 1.7);
     Q.tickers.push((t) => h.userData.tick(t));
   }
-  for (const [x, z, sd] of [[-10.6, 8.2, 11], [-2.6, 10.8, 12], [5.8, 12.8, 13], [19.8, 6.0, 14], [-13.4, -10.6, 15], [19.6, -8.6, 16]]) solid1(Q, banana(sd, sd % 2 === 0), x, z, 0.6, 0.6);
+  for (const [x, z, sd] of [[-10.6, 8.2, 11], [-2.6, 10.8, 12], [5.8, 12.8, 13], [19.8, 6.0, 14], [19.6, -8.6, 16]]) solid1(Q, banana(sd, sd % 2 === 0), x, z, 0.6, 0.6);
+  /* the clump below the cave is cover on the way up (chapter 5); the cave-mouth camera looks out past it, so the film leaves it out of the frame */
+  const caveBanana = dyn(banana(15, false));
+  solid1(Q, caveBanana, -13.4, -10.6, 0.6, 0.6);
   for (const [x, z, sd] of [[-11.6, 12.4, 21], [11.4, 12.0, 22], [2.6, -13.6, 23], [19.4, 1.8, 24], [-19.6, 4.0, 25], [9.8, -14.6, 26]]) solid1(Q, palm(8 + (sd % 3), sd), x, z, 0.5, 0.5);
   scatter(Q.group, (i) => bush(i + 40, 0.9 + (i % 3) * 0.3), 26, [-24, -18, 24, 18], [[-21.5, -16.5, 21.5, 15.5]], 31);
   scatter(Q.group, (i) => tree(6 + (i % 3), i + 70, i % 2), 14, [-40, -40, 40, 40], [[-24, -18, 24, 18]], 37);
@@ -371,10 +374,11 @@ function gut() {
   /* each building burns hard for a while, then its roof gives way: the building slumps and leans over two seconds (with a burst of sparks), then
      only the burnt shell stands, still smoking, as the ward does in Eventide Home (owner, 23 November 2026: "look at the fire from eventide home
      and the collapse of the building.. that is what we need to see in Morant Bay") */
-  const falls = [[ch, chB, fires[0], 5], [home, homeBurnt, fires[1], 13], [bh, bhB, fires[2], 9]];
+  const falls = [[ch, chB, fires[0], 1], [home, homeBurnt, fires[1], 11], [bh, bhB, fires[2], 7]];   /* the chapel is alight as the scene opens */
   for (const [w] of falls) w.userData.baseY = w.position.y;
   Q.films.burning = (t) => {
     const on = t >= 0;
+    caveBanana.visible = !on;   /* out of the cave-mouth frame (?test=lens: its leaves filled the view) */
     for (const [w, b, f, a] of falls) {
       if (!on) { w.scale.y = 1; w.rotation.z = 0; continue; }
       const lit = Math.max(0, Math.min(1, (t - a) / 3)), u = Math.max(0, Math.min(1, (t - a - 7) / 2)), fell = t >= a + 9;
@@ -384,7 +388,7 @@ function gut() {
       w.rotation.z = 0.08 * u * u;
     }
     /* night comes; lanterns on the track; soldiers lead men away south, toward the Bay */
-    const want = on && t >= 19 ? NIGHT : SMOKE;
+    const want = on && t >= 22.5 ? NIGHT : SMOKE;   /* night falls at the cut to the path */
     if (Q.light !== want) {
       Q.light = want;
       Q.relight?.();
@@ -395,13 +399,13 @@ function gut() {
         n.amb.held = false;
         continue;
       }
-      const k = Math.max(0, Math.min(1, (t - 20) / 11)),
+      const k = Math.max(0, Math.min(1, (t - 23) / 9)),
         x = n.lead % 2 ? -11.4 : -10.0,   /* down the path past the provision ground, below the cave */
         z = -11 + Math.floor(n.lead / 2) * 1.5 + k * 18;
       walkTo(n, x, z, 0, k > 0 && k < 1);
-      n.m.visible = t >= 19.5;
+      n.m.visible = t >= 22.5;
     }
-    nightLamp.intensity = on && t >= 19.5 ? 5 : 0;
+    nightLamp.intensity = on && t >= 22.5 ? 5 : 0;
     const l0 = lead.find((n) => n.lead === 0);
     if (l0) nightLamp.position.set(l0.x + 0.3, 1.2, l0.z);
   };
@@ -504,6 +508,9 @@ function gut() {
       at("mother", H.x + 4.4, H.z + 0.6, 4, 2);   /* out from the wall, clear of the cook fire at (-3.8, 6.6), and a step from Sammy */
       at("brother", H.x + 5.6, H.z + 2.2, 4, 2);
       at("gran", H.x + 3.4, H.z - 1.5, 4, 2);   /* clear of the door leaf as it swings out (owner: she stood in the door) */
+    }
+    if (meeting || (stage >= 35 && stage < 40)) {
+      /* placed above */
     } else if (stage >= 50 && stage < 55) {
       at("gran", H.x - 3.4, H.z + 0.6, -12, 8);
       at("brother", H.x - 3.2, H.z - 0.6, -12, 8);
@@ -517,6 +524,10 @@ function gut() {
       at("gran", -4.2, 2.6, -3.8, 6.6);
       at("brother", -2.4, 5.0, -3.6, 7);
     }
+    /* while the family hides (chapter 5) Sammy keeps by Gran: left wandering, he walked off to the front yard through the house and
+       out of the cave (owner, 23 November 2026: "Sammy walks through walls and people in chapter 5"). Otherwise he plays about the yard. */
+    const sammy = Q.people?.find((p) => p.id === "brother");
+    if (sammy?.amb) Q.storyLife?.respec(sammy, stage >= 50 ? { kind: "watch", idles: ["Idle", "LookAround", "HeadTurn"], react: ["HeadTurn"], every: [5, 9] } : { kind: "wander" });
   };
   /* people. Story people (person) by the house, the chapel and the yard; the village (crowd) by the step that brings them. */
   person(Q, "gran", "gran", -4.2, 2.6, face(-4.2, 2.6, -3.8, 6.6), { kind: "watch", at: [-3.8, 6.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
@@ -730,8 +741,8 @@ function bay() {
     volley.visible = t > 27.4 && t < 34;
     if (volley.visible) volley.userData.tick(t * 0.6);
     volley.position.y = 1.4 + Math.max(0, t - 27.4) * 0.15;
-    fireS.userData.setLevel(t > 38 ? Math.min(0.9, (t - 38) / 3) : 0);
-    fireC.userData.setLevel(t > 45 ? Math.min(1, (t - 45) / 4) : 0);
+    fireS.userData.setLevel(t > 37 ? Math.min(0.9, (t - 37) / 3) : 0);
+    fireC.userData.setLevel(t > 43.5 ? Math.min(1, (t - 43.5) / 4) : 0);   /* already catching as its caption comes */
     const want = t > 40 ? DUSK : LATE;
     if (Q.light !== want) {
       Q.light = want;

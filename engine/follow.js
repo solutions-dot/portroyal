@@ -5,6 +5,7 @@
      lead(n, path, opts)      a guide who walks ahead of you along a path. If you fall behind they stop, turn and wait for you (with a small wave if the body has one),
                               and walk on when you catch up.
      goTo(n, x, z, opts)      someone sent to a spot: they walk there round walls and solid things (engine/placement.js walkRoute, or opts.route), then stop and call opts.done(n).
+                              On a route of its own (no opts.route) each step keeps out of world.blocked and other people, stepping round them; held up 2.5 s, they stop and count as arrived.
      stop(n)                  the story says they stop: they stand where they are.
      tick(n, dt, world)       call once a frame for each person whose n.fol is set. world says where you are and what is solid (see below).
    The rules every game gets:
@@ -37,7 +38,7 @@ export function pathSpots(path, s0 = 0, s1 = Infinity, side = 0, step = 0.3) { c
 const DEF = { gap: 1.5, side: 0.55, space: 0.9, walk: 1.15, run: true, far: 16, wait: 7, resume: 4.5, ahead: 4, wave: true, r: 0.25 };
 export function follow(n, opts = {}) { n.fol = { mode: 'follow', ...DEF, ...opts, crumbs: [], hdg: null, still: 0, stuckT: 0, lastX: n.x, lastZ: n.z, moving: false }; if (opts.path) { n.fol.len = pathLen(opts.path); n.fol.s = pathS(opts.path, n.x, n.z); } return n.fol; }
 export function lead(n, path, opts = {}) { n.fol = { mode: 'lead', ...DEF, ...opts, path, len: pathLen(path), s: pathS(path, n.x, n.z), waiting: false, waved: -99, t: 0, moving: false }; return n.fol; }
-export function goTo(n, x, z, opts = {}) { n.fol = { mode: 'go', ...DEF, speed: 1.3, ...opts, to: [x, z], route: opts.route ? opts.route.map((p) => p.slice()) : null, moving: false }; return n.fol; }   /* opts.route: waypoints already checked by the place audit (the last is the spot); otherwise a route round world.walls */
+export function goTo(n, x, z, opts = {}) { n.fol = { mode: 'go', ...DEF, speed: 1.3, ...opts, to: [x, z], route: opts.route ? opts.route.map((p) => p.slice()) : null, audited: !!opts.route, moving: false }; return n.fol; }   /* opts.route: waypoints already checked by the place audit (the last is the spot); otherwise a route round world.walls */
 export function stop(n) { if (!n.fol) return; n.fol = null; gait(n, null); }
 export const isFollowing = (n) => !!(n && n.fol && n.fol.mode === 'follow');
 export const isLeading = (n) => !!(n && n.fol && n.fol.mode === 'lead');
@@ -150,7 +151,14 @@ function goTick(n, f, dt, W) {
   if (!f.route) { f.route = (W.walls && W.walls.length ? walkRoute([n.x, n.z], f.to, W.walls, f.r - 0.03, W.bounds) : []); if (!f.route.length) f.route = [f.to.slice()]; }
   const to = f.route[0], dx = to[0] - n.x, dz = to[1] - n.z, d = Math.hypot(dx, dz), sp = f.speed * dt;
   if (d <= sp) { n.x = to[0]; n.z = to[1]; f.route.shift(); if (!f.route.length) { gait(n, null); if (f.face !== undefined && n.m) n.m.rotation.y = f.face; const done = f.done; n.fol = null; if (done) done(n); return; } }
-  else { n.x += dx / d * sp; n.z += dz / d * sp; gait(n, f.gait || 'Walk', f.speed); turn(n, Math.atan2(dx, dz), dt, 7); }
+  else {
+    /* a step that never goes into a solid thing or another person: round them to one side (Morant Bay, 23 November 2026: Sammy walked through
+       Gran on his way over); held up for 2.5 s, they stop where they are and it counts as arrived, so a talk still starts */
+    const careful = !f.audited && d > 0.6 && (W.blocked || W.others);   /* an audited route (opts.route) and the last 0.6 m to the chosen spot go straight */
+    const moved = careful ? stepTo(n, to[0], to[1], f.speed, dt, W, 0) : (n.x += dx / d * sp, n.z += dz / d * sp, sp);
+    if (moved > 0) { f.held = 0; gait(n, f.gait || 'Walk', f.speed); turn(n, Math.atan2(to[0] - n.x, to[1] - n.z), dt, 7); }
+    else { gait(n, null); f.held = (f.held || 0) + dt; if (f.held > 2.5) { f.route = [[n.x, n.z]]; } }
+  }
 }
 
 /* ---------- the check (?test=follow): drive the player along a real route and watch each follower and guide ----------

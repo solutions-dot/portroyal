@@ -120,7 +120,8 @@ export const FILMS = {
     shots: [
       { t: 0, p: [18, 9, 18], look: [0, 1, -4] },
       { t: 6, p: [9, 4.5, 14], look: [-2, 1.4, 0] },
-      { t: 12, p: [-10, 1.6, 1.6], look: [-14, 0.4, -4] },
+      { t: 9, p: [-3, 3.4, 0.6], look: [-10, 0.8, -3] },   /* round the south end of the house, not through it (?test=lens) */
+      { t: 12, p: [-9.6, 1.6, -0.6], look: [-14, 0.4, -4] },
       { t: 18, p: [6, 2.0, 2.8], look: [14, 1.4, -3] },
       { t: 24, p: [2.4, 1.8, 2], look: [6, 2.2, -8] },
       { t: 30, p: [-1, 1.8, 9.6], look: [-6, 1.4, 4] },
@@ -223,7 +224,7 @@ export const FILMS = {
       { t: 27.3, p: [-8.8, 0.82, 4.2], look: [0, 1.5, -5.6] },
       { t: 30, p: [-8.9, 0.78, 4.3], look: [3, 0.8, -1] },
       { t: 34, p: [-8.9, 0.78, 4.3], look: [0, 1.4, -6] },
-      { t: 39, p: [-9.0, 0.8, 4.4], look: [-18, 3, -9] },
+      { t: 39, p: [-8.0, 0.9, 4.0], look: [-16.5, 4.4, -9.5] },   /* past the end of the stall, and looking up to the school-house fire rising over the second shed (?test=lens) */
       { t: 45, p: [-9.0, 0.82, 4.5], look: [-1, 4, -11] },
       { t: 52, p: [-9.0, 0.84, 4.6], look: [-6, 3, -10] },
     ],
@@ -250,22 +251,24 @@ export const FILMS = {
   burning: {
     place: "gut", next: 58, journal: "firestick", title: "From the cave mouth",
     read: ["On 19 October the soldiers burned the chapel at Stony Gut and about eight houses.", "Men were taken away. Many families never knew what happened to them."],
-    captions: [[0, "Thursday 19 October. From the cave mouth."], [6, "Smoke over the chapel."], [12, "The chapel roof falls in."], [15, "Then Mr Bogle's house. Then yours."], [23, "Night. Lanterns on the path."], [27, "Soldiers lead men away. One wears a hat like Papa's."]],
+    captions: [[0, "Thursday 19 October. From the cave mouth."], [3.5, "Smoke over the chapel."], [8, "The chapel roof falls in."], [11.5, "Then Mr Bogle's house. Then yours."], [23, "Night. Lanterns on the path."], [27, "Soldiers lead men away. One wears a hat like Papa's."]],
+    /* the chapel is already alight as the scene opens (owner: the cave view showed nothing happening); real cuts to your house and to the
+       night path, not a swoop through the roofs (engine/shotpath.js) */
     shots: [
-      { t: 0, p: [-16.8, 3.2, -11.6], look: [0, 2, -6] },
-      { t: 5, p: [-15, 7.5, -4.5], look: [6, 2.4, -9] },
-      { t: 11, p: [-15, 7.5, -4.5], look: [6, 2.0, -9] },
-      { t: 14, p: [-15, 10.5, -4.5], look: [16.6, 1.8, -3] },
-      { t: 18.2, p: [-15, 10.5, -4.5], look: [16.6, 1.6, -3] },
-      { t: 19, p: [-0.5, 6.5, 6.5], look: [-7, 1.6, 4] },
-      { t: 22.4, p: [-0.5, 6.5, 6.5], look: [-7, 1.4, 4] },
-      { t: 23, p: [-16.8, 4.6, -11.6], look: [-10.6, 1, -6] },
-      { t: 27, p: [-16.8, 4.2, -11.4], look: [-10.6, 1.1, -1] },
-      { t: 31, p: [-16.8, 4.0, -11.4], look: [-10.6, 1.2, 4] },
+      { t: 0, p: [-16.2, 4.2, -10.8], look: [2, 2.4, -7.5] },
+      { t: 3, p: [-15, 7.5, -4.5], look: [6, 2.6, -9] },
+      { t: 10, p: [-15, 7.5, -4.5], look: [6, 2.0, -9] },
+      { t: 12, p: [-15, 9.5, -4.5], look: [16.6, 1.8, -3] },
+      { t: 16, p: [-15, 9.5, -4.5], look: [16.6, 1.6, -3] },
+      { t: 16.5, cut: true, p: [3.5, 3.0, 12.5], look: [-7, 1.9, 4] },
+      { t: 22, p: [2.8, 2.8, 11.6], look: [-7, 1.6, 4] },
+      { t: 22.5, cut: true, p: [-16.8, 5.2, -11.8], look: [-10.6, 1, -6] },
+      { t: 27, p: [-16.8, 4.8, -11.6], look: [-10.6, 1.1, -1] },
+      { t: 31, p: [-16.8, 4.6, -11.6], look: [-10.6, 1.2, 4] },
     ],
-    fov: [[0, 44], [5, 26], [11, 24], [14, 22], [18.2, 22], [19, 30], [22.4, 30], [23, 32], [27, 32], [31, 34]],
+    fov: [[0, 46], [3, 26], [10, 24], [12, 22], [16.49, 22], [16.5, 34], [22, 32], [22.49, 32], [22.5, 34], [27, 32], [31, 34]],
     acts: [],
-    sounds: [[1, "sad"], [6, "fire"], [12, "fire"], [20, "steps"], [24, "steps"]],
+    sounds: [[1, "sad"], [2, "fire"], [8, "fire"], [14, "fire"], [23, "steps"], [26, "steps"]],
     duration: 32,
   },
   courts: {

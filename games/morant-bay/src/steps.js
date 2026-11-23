@@ -56,7 +56,7 @@ export const STEPS = {
   45: g("bay", "Hide behind Miss Ada's stall.", "stall", 46, { show: MARKET }),
   46: w("bay", "The Parade, between three and four.", "film", 48, { film: "riot", show: [] }),
   47: w("bay", "Watch from under the stall.", "playing", 48, { film: "riot", show: [] }),
-  48: t("bay", "Talk to Miss Ada in the dark.", ["ada"], 49, { show: ["ada"], journal: "eleventh" }),
+  48: t("bay", "Talk to Miss Ada in the dark.", ["ada"], 49, { show: ["ada"], journal: "eleventh", start: { x: -11.9, z: 7.2, yaw: 0 } }),   /* still behind her stall after the scene, where you hid: not set down across the Parade for her to walk over to you */
   49: t("bay", "Talk to Mama.", ["mother"], 50, { show: MARKET, journal: "courthouse" }),
   /* 5. Martial law (Stony Gut, 18 and 19 October) */
   50: w("gut", "The eighteenth of October.", "film", 52, { film: "soldiers", show: HIDE }),
@@ -67,7 +67,7 @@ export const STEPS = {
   55: t("gut", "Keep Sammy quiet.", ["brother"], 56, { show: HIDE, journal: "hiding" }),
   56: w("gut", "From the cave mouth.", "film", 58, { film: "burning", show: HIDE }),
   57: w("gut", "Watch from the cave.", "playing", 58, { film: "burning", show: HIDE }),
-  58: t("gut", "Talk to Gran.", ["gran"], 59, { show: HIDE, journal: "firestick" }),
+  58: t("gut", "Talk to Gran.", ["gran"], 59, { show: HIDE, journal: "firestick", start: { x: -17.6, z: -11.4, yaw: 0 } }),   /* back in the cave after the scene, not at the village gate: from there Gran and Sammy walked over to you across the whole village (owner, 23 November 2026) */
   59: t("gut", "Talk to Sammy in the dark.", ["brother"], 60, { show: HIDE, journal: "taken" }),
   /* 6. After (Morant Bay, late October 1865, and 2026) */
   60: w("bay", "Morant Bay, under martial law.", "film", 62, { film: "courts", show: AFTER }),
