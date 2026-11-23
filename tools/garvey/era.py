@@ -1493,6 +1493,9 @@ if G.get('apron'):
     _bo=bpy.data.objects.get('Belt'); BELTR=0.0
     if 'skirt' in PART and _bo is not None and len(_bo.data.vertices):      # (owner, 23 November 2026: "the band for the apron is higher than the apron itself") over a skirt with a belt the band is tied over the belt, not 3 cm above it on the blouse
         _bz=[v.co.z for v in _bo.data.vertices]; ZA=(min(_bz)+max(_bz))/2+0.004; BELTR=0.005
+    if 'skirt' in PART and PART.get('waistcoat') and G.get('woman'):      # a bodice over a skirt, with no belt: the band goes over the bodice's hem, so its edge never shows below the band (Abba, 23 November 2026)
+        _wv=[v.co for v in PART['waistcoat'].data.vertices]      # its lowest point all round (the hem dips at the back and sides)
+        if _wv: ZA=min(ZA,min(c.z for c in _wv)+0.007); print('APRON BAND OVER BODICE HEM',round(ZA-HIP,3))
     ZE=(SKB+0.10) if 'skirt' in PART else KNEE+0.02; AH=1.30 if wide else 1.12      # the top, the hem, and how far round each side it reaches (radians from the front)
     def apron_from(src,name):
         # Over a skirt the apron is cut from the skirt itself: the skirt's own front, from the band to a hand above the hem and from hip to hip, lifted 12 mm off it, with
