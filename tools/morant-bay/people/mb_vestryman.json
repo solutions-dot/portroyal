@@ -1,0 +1,92 @@
+{
+ "name": "mb_vestryman",
+ "era": 1914,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.2,
+  "caucasian": 0.8,
+  "asian": 0.0,
+  "age": 0.6,
+  "muscle": 0.4,
+  "weight": 0.6,
+  "height": 0.5
+ },
+ "garments": {
+  "sleeve": 0.95,
+  "trousers": true,
+  "jacket": true,
+  "jacketsleeve": 0.92,
+  "waistcoat": true,
+  "vwaist": true,
+  "shoes": true,
+  "collar": "stand",
+  "tie": true,
+  "hairvol": 0.4,
+  "recede": 0.4,
+  "hat": [
+   [
+    "top",
+    "Hat"
+   ]
+  ]
+ },
+ "colors": {
+  "Skin": [
+   156,
+   108,
+   80
+  ],
+  "Shirt": [
+   236,
+   232,
+   220
+  ],
+  "Collar": [
+   236,
+   232,
+   220
+  ],
+  "Tie": [
+   30,
+   28,
+   30
+  ],
+  "Waistcoat": [
+   60,
+   56,
+   50
+  ],
+  "Jacket": [
+   30,
+   30,
+   34
+  ],
+  "Breeches": [
+   70,
+   66,
+   64
+  ],
+  "Shoes": [
+   24,
+   20,
+   18
+  ],
+  "Hat": [
+   24,
+   22,
+   24
+  ],
+  "Hair": [
+   120,
+   104,
+   90
+  ],
+  "Buttons": [
+   30,
+   30,
+   34
+  ]
+ },
+ "face": "strong"
+}

@@ -1,0 +1,75 @@
+{
+ "name": "mb_soldier",
+ "era": 1900,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "age": 0.4,
+  "muscle": 0.62,
+  "weight": 0.46,
+  "height": 0.6
+ },
+ "garments": {
+  "sleeve": 0.95,
+  "trousers": true,
+  "jacket": true,
+  "jacketsleeve": 0.9,
+  "shoes": true,
+  "collar": false,
+  "hairvol": 0.2,
+  "hat": [
+   [
+    "wrap",
+    "Hat"
+   ]
+  ],
+  "wrapbrow": 0.6,
+  "wrapoff": 0.5
+ },
+ "colors": {
+  "Skin": [
+   146,
+   98,
+   72
+  ],
+  "Shirt": [
+   236,
+   232,
+   222
+  ],
+  "Jacket": [
+   170,
+   36,
+   34
+  ],
+  "Breeches": [
+   38,
+   44,
+   78
+  ],
+  "Shoes": [
+   24,
+   20,
+   18
+  ],
+  "Hat": [
+   240,
+   238,
+   230
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ],
+  "Buttons": [
+   200,
+   180,
+   110
+  ]
+ },
+ "face": "lean"
+}

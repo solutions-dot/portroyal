@@ -1271,8 +1271,8 @@ def build_hat(HK,HM):
                 return d,z
             lathe(bm,[(0.060*s*BR,0.0),(0.003,0.006*s),(0.003,0.03*s),(-0.004*s,Hc*0.7),(-0.016*s,Hc),(-0.05*s,Hc-0.004*s)],fit,mod=mod)      # (the crown a little fuller than the head at its base and tapering less: narrower than the head, it looked a size too small)
             lathe(bb,[(0.0055,0.008*s),(0.0055,0.030*s)],fit,cap=False)      # 2.5 mm proud of the crown
-        if HK=='straw':       # a woven straw hat: a wide, slightly wavy brim and a low flat crown
-            Hc=CRH+0.03*s
+        if HK=='straw':       # a woven straw hat: a wide, slightly wavy brim and a low flat crown ("crown": a recipe's share of the usual crown height; the country hats of the 1865 album photographs sit low, 23 November 2026)
+            Hc=(CRH+0.03*s)*G.get('crown',1.0)
             lathe(bm,[(0.085*s*BR,-0.004*s),(0.0,0.008*s),(-0.004*s,Hc),(-0.03*s,Hc+0.004*s)],fit,mod=lambda a,i,d,z:(d,z+(0.008*s*math.sin(a*3+1) if i==0 else 0)))
             lathe(bb,[(0.003,0.010*s),(0.002,0.032*s)],fit,cap=False)
         if HK=='bowler':
@@ -1304,7 +1304,7 @@ def build_hat(HK,HM):
                 for v in vs: v.co-=v.normal*k
             smooth_edge(bm,10)
         Jy=J('Head').y
-        o=piece(HM+'Wrap','body',lambda c:c.z>HEAD+(0.06-0.035*G.get('wrapbrow',0)*sstep(Jy+0.02,Jy+0.07,c.y)-(0.075 if G.get('bun') else 0.0)*sstep(Jy+0.03,Jy+0.09,c.y))*s,lambda c:0.016+0.006*math.sin(c.z*90+c.x*40),HM,cuts=[((0,Jy-0.05*G.get('wrapbrow',0),HEAD+(0.118-0.05*G.get('wrapbrow',0))*s),Vector((0,-0.25,-0.2)).normalized(),None)],sub=True,post=wrap_edge)      # (with a bun, the wrap comes down the back of the head over it, to the nape) wrapbrow (0 to 1): how far the front edge comes down toward the brow (1690 wraps covered the hair to the hairline; a 1950s head tie showed the front hair)
+        o=piece(HM+'Wrap','body',lambda c:c.z>HEAD+(0.06-0.035*G.get('wrapbrow',0)*sstep(Jy+0.02,Jy+0.07,c.y)-(0.075 if G.get('bun') else 0.0)*sstep(Jy+0.03,Jy+0.09,c.y))*s,lambda c:(0.016+0.006*math.sin(c.z*90+c.x*40))*G.get('wrapoff',1.0),HM,cuts=[((0,Jy-0.05*G.get('wrapbrow',0),HEAD+(0.118-0.05*G.get('wrapbrow',0))*s),Vector((0,-0.25,-0.2)).normalized(),None)],sub=True,post=wrap_edge)      # (with a bun, the wrap comes down the back of the head over it, to the nape) wrapbrow (0 to 1): how far the front edge comes down toward the brow (1690 wraps covered the hair to the hairline; a 1950s head tie showed the front hair)
         md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}; md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
         with ov(o): bpy.ops.object.modifier_apply(modifier='wt')
         clothes.append(o); bm=bmesh.new()

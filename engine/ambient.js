@@ -403,9 +403,12 @@ export function createAmbient(opts = {}) {
   }
   /* in a sad scene, some lively people go away, only while nobody can see them go */
   function seen(n) { const v = W.view; if (!v) return Math.hypot(W.px - n.x, W.pz - n.z) < 30; const dx = n.x - v.x, dz = n.z - v.z, L = Math.hypot(dx, dz) || 1; return L < 40 && (dx * -Math.sin(v.yaw) + dz * -Math.cos(v.yaw)) / L > 0.2; }
-  function moodShow(n) { const a = n.amb, lively = a.kind === 'play' || a.kind === 'wander' || a.kind === 'chat', out = lively && a.hide < M().hide && !a.spec.stay; if (out === !!a.gone || seen(n)) return; a.gone = out; a.ownVis = true; if (n.m) n.m.visible = !out; }
+  function moodShow(n) { if (n.amb.off) return; const a = n.amb, lively = a.kind === 'play' || a.kind === 'wander' || a.kind === 'chat', out = lively && a.hide < M().hide && !a.spec.stay; if (out === !!a.gone || seen(n)) return; a.gone = out; a.ownVis = true; if (n.m) n.m.visible = !out; }
 
   life.ready = () => { for (const g of groups.values()) if (!g.ready) arrange(g); };
+  /* a game takes someone off the stage, or brings them back (a crowd that belongs to one chapter, soldiers who come later): life.hide(n, true).
+     The mood's own coming and going (moodShow) leaves such a person alone. */
+  life.hide = (n, off) => { const a = n.amb; if (!a) return; a.off = !!off; a.gone = !!off; a.ownVis = true; if (n.m) n.m.visible = !off; if (n.lo) n.lo.visible = false; };
   /* someone standing in the player's way steps aside (wanderers, errands and children; groups and workers keep their place and the game's collision stops the player) */
   function makeWay(n, dt) {
     const a = n.amb; if (!/^(wander|errand|play)$/.test(a.kind) && !a.spec.between) return false; if (a.walking || a.st === 'aside' || a.st === 'pick') return false;

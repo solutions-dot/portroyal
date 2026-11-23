@@ -1,0 +1,47 @@
+{
+ "name": "mb_man2",
+ "era": 1900,
+ "crowd": true,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "age": 0.3,
+  "muscle": 0.55,
+  "weight": 0.42,
+  "height": 0.58
+ },
+ "garments": {
+  "sleeve": 0.55,
+  "trousers": true,
+  "shoes": false,
+  "collar": false,
+  "hat": [],
+  "hairvol": 0.35
+ },
+ "colors": {
+  "Skin": [
+   154,
+   106,
+   78
+  ],
+  "Shirt": [
+   176,
+   150,
+   112
+  ],
+  "Breeches": [
+   96,
+   90,
+   80
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "broad"
+}

@@ -1,0 +1,92 @@
+{
+ "name": "mb_gordon",
+ "era": 1914,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.6,
+  "african": 0.55,
+  "caucasian": 0.45,
+  "asian": 0.0,
+  "age": 0.52,
+  "muscle": 0.45,
+  "weight": 0.55,
+  "height": 0.55
+ },
+ "garments": {
+  "sleeve": 0.95,
+  "trousers": true,
+  "jacket": true,
+  "jacketsleeve": 0.92,
+  "waistcoat": true,
+  "vwaist": true,
+  "shoes": true,
+  "collar": "stand",
+  "tie": true,
+  "hairvol": 0.7,
+  "recede": 0.15,
+  "hat": [],
+  "glasses": true,
+  "whiskers": true
+ },
+ "colors": {
+  "Skin": [
+   156,
+   108,
+   80
+  ],
+  "Shirt": [
+   236,
+   232,
+   220
+  ],
+  "Collar": [
+   236,
+   232,
+   220
+  ],
+  "Tie": [
+   232,
+   228,
+   214
+  ],
+  "Waistcoat": [
+   36,
+   34,
+   40
+  ],
+  "Jacket": [
+   30,
+   30,
+   36
+  ],
+  "Breeches": [
+   40,
+   40,
+   44
+  ],
+  "Shoes": [
+   24,
+   20,
+   18
+  ],
+  "Hair": [
+   30,
+   24,
+   20
+  ],
+  "Buttons": [
+   30,
+   30,
+   34
+  ]
+ },
+ "targets": {
+  "head-oval": 0.6,
+  "forehead-scale-vert-incr": 0.6,
+  "lr-cheek-volume-incr": 0.2,
+  "chin-width-incr": 0.3,
+  "nose-scale-vert-incr": 0.3,
+  "nose-width1-incr": 0.2,
+  "mouth-scale-horiz-decr": 0.2
+ }
+}
