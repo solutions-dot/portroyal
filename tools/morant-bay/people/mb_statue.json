@@ -1,0 +1,47 @@
+{
+ "name": "mb_statue",
+ "era": 1900,
+ "crowd": true,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.6,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "age": 0.45,
+  "muscle": 0.9,
+  "weight": 0.45,
+  "height": 0.62
+ },
+ "garments": {
+  "sleeve": 0.0,
+  "trousers": true,
+  "shoes": false,
+  "collar": false,
+  "hat": [],
+  "hairvol": 0.1
+ },
+ "colors": {
+  "Skin": [
+   74,
+   60,
+   42
+  ],
+  "Shirt": [
+   74,
+   60,
+   42
+  ],
+  "Breeches": [
+   74,
+   60,
+   42
+  ],
+  "Hair": [
+   74,
+   60,
+   42
+  ]
+ },
+ "face": "strong"
+}

@@ -7,7 +7,7 @@ const d = (place, goal, ids, next, extra) => row(place, goal, { do: ids.map((id)
 const l = (place, goal, ids, next, extra) => row(place, goal, { do: ids }, next, extra);
 const g = (place, goal, id, next, extra) => row(place, goal, { go: [id] }, next, extra);
 const w = (place, goal, card, next, extra = {}) => ({ place, goal, wait: true, card, next, ...extra });
-const HOME = ["gran", "mother", "father", "brother", "deacon"],
+const HOME = ["gran", "mother", "father", "brother", "deacon", "bogle"],
   WALK = ["father", "secretary"],
   WARRANT = ["mother", "gran", "brother", "father", "bogle", "constable"],
   NIGHT = ["father", "deacon"],
@@ -41,7 +41,7 @@ export const STEPS = {
   31: w("gut", "Watch the chapel.", "playing", 32, { film: "meeting", show: NIGHT }),
   32: t("gut", "Go to Deacon Clarke in the chapel.", ["deacon"], 33, { show: NIGHT, journal: "bogle" }),
   33: l("gut", "Write the names by the lantern.", ["names"], 34, { show: NIGHT, journal: "names" }),
-  34: t("gut", "Talk to Papa outside.", ["father"], 35, { show: NIGHT, journal: "oath" }),
+  34: t("gut", "Talk to Papa on the bench.", ["father"], 35, { show: NIGHT, journal: "oath" }),
   35: w("gut", "Tuesday, the tenth of October.", "film", 37, { film: "warrant", show: WARRANT }),
   36: w("gut", "Watch from the house.", "playing", 37, { film: "warrant", show: WARRANT }),
   37: t("gut", "Talk to Mama and Gran at the door.", ["mother", "gran"], 38, { show: WARRANT, journal: "warrant" }),
@@ -53,7 +53,7 @@ export const STEPS = {
   42: t("bay", "Talk to Miss Ada at her stall.", ["ada"], 43, { show: MARKET, journal: "bay" }),
   43: d("bay", "Carry Mama's basket to Miss Ada's stall.", ["basket"], 44, { show: MARKET }),
   44: l("bay", "Listen to the east road.", ["shells"], 45, { show: MARKET, journal: "vestry" }),
-  45: g("bay", "Hide under Miss Ada's stall.", "stall", 46, { show: MARKET }),
+  45: g("bay", "Hide behind Miss Ada's stall.", "stall", 46, { show: MARKET }),
   46: w("bay", "The Parade, between three and four.", "film", 48, { film: "riot", show: [] }),
   47: w("bay", "Watch from under the stall.", "playing", 48, { film: "riot", show: [] }),
   48: t("bay", "Dark. Talk to Miss Ada.", ["ada"], 49, { show: ["ada"], journal: "eleventh" }),
@@ -87,7 +87,7 @@ export const STEPS = {
    put it down; at: where it is left [x, y, z]. */
 export const TASKS = {
   jar: { place: "gut", item: "jar", start: [-15.6, 0.02, 11.6], from: [-15.4, 11.0], to: [-4.6, 7.6], at: [-3.4, 0, 7.4], label: "Fill the water jar", put: "Set the jar by Gran" },
-  basket: { place: "bay", item: "basket", start: [-12.4, 0, 6.6], from: [-12.4, 7.3], to: [-15.6, 5.6], at: [-15.6, 0.94, 3.2], label: "Lift Mama's basket", put: "Set it on Miss Ada's stall" },
+  basket: { place: "bay", item: "basket", start: [-14.4, 0, 7.4], from: [-14.4, 8.1], to: [-11.4, 5.4], at: [-11.4, 0.94, 3.2], label: "Lift Mama's basket", put: "Set it on Miss Ada's stall" },
 };
 /* Things the player looks at (owner rule 13: a close-up action). at: where you stand. view: the close framing the camera eases to
    (engine/lookshot.js); the place moves the thing while you watch (Q.reveal[id](k), k from 0 to 1, over act seconds) and plays sound; say: a

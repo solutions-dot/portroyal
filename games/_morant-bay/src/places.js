@@ -60,7 +60,7 @@ function person(Q, id, cast, x, z, ry = 0, life = null, opts = {}) {
 function crowd(Q, look, x, z, ry, life, opts = {}) {
   /* the story's own marks (when they are on stage, a part in a camera scene, a thing in the hand) belong to the person, not the behaviour */
   const own = {};
-  for (const k of ["when", "watcher", "riot", "vol", "held", "uniform"]) if (life && k in life) {
+  for (const k of ["when", "watcher", "riot", "vol", "held", "uniform", "march", "lead", "statue"]) if (life && k in life) {
     own[k] = life[k];
     delete life[k];
   }
@@ -182,7 +182,7 @@ function gut() {
   solid1(Q, barrel(), -9.4, 1.4, 0.7, 0.7);   /* the water barrel, near empty in the dry year */
   /* the provision ground behind the house: yam hills gone dry, a few plantains, a breadfruit */
   add(Q, yamHills(28, [-19, -8, -11, 1], { seed: 3, dry: true }));
-  for (const [x, z, s] of [[-19.5, 2.6, 1], [-11, 2.8, 2], [-15, -9.6, 3], [-19, -6, 4], [-12.2, -9.2, 5]]) solid1(Q, plantain(3.0 + (s % 2) * 0.4, s, true), x, z, 0.5, 0.5);
+  for (const [x, z, s] of [[-19.5, 2.6, 1], [-11, 2.8, 2], [-20.4, -2, 4]]) solid1(Q, plantain(3.0 + (s % 2) * 0.4, s, true), x, z, 0.5, 0.5);
   solid1(Q, tree(7.5, 8, 1), -13, 9.4, 0.9, 0.9);
   /* the spring below the cane, low in the drought: a pool in the rocks */
   add(Q, S.patch(2.4, 1.6, solid(0x55606a, 0.3), 4, 0.015), -16.5, 12.2);
@@ -340,6 +340,60 @@ function gut() {
     fires[0].userData.setLevel(lv(5));
     fires[1].userData.setLevel(lv(13));
     fires[2].userData.setLevel(lv(9));
+    /* night comes; lanterns on the track; soldiers lead men away south, toward the Bay */
+    const want = on && t >= 19 ? NIGHT : SMOKE;
+    if (Q.light !== want) {
+      Q.light = want;
+      Q.relight?.();
+    }
+    const lead = (Q.extras || []).filter((n) => n.lead !== undefined);
+    for (const n of lead) {
+      if (!on) {
+        n.amb.held = false;
+        continue;
+      }
+      const k = Math.max(0, Math.min(1, (t - 20) / 11)),
+        x = n.lead % 2 ? -11.4 : -10.0,   /* down the path past the provision ground, below the cave */
+        z = -11 + Math.floor(n.lead / 2) * 1.5 + k * 18;
+      walkTo(n, x, z, 0, k > 0 && k < 1);
+      n.m.visible = t >= 19.5;
+    }
+    nightLamp.intensity = on && t >= 19.5 ? 5 : 0;
+    const l0 = lead.find((n) => n.lead === 0);
+    if (l0) nightLamp.position.set(l0.x + 0.3, 1.2, l0.z);
+  };
+  /* the soldiers come up the track (the scene of 18 October), and at night lead men away down it with a lantern (19 October) */
+  for (let i = 0; i < 4; i++) crowd(Q, "mb_soldier", 4.0 + (i % 2) * 1.2, 11.8 + Math.floor(i / 2) * 1.6, Math.PI, { kind: "watch", at: [0, 0], idles: ["IdleM"], react: [], every: [8, 12], when: [51, 51], march: true, uniform: "soldiers" });
+  crowd(Q, "mb_soldier", -10.0, -11.0, 0, { kind: "watch", at: [0, 0], idles: ["IdleM"], react: [], every: [8, 12], when: [57, 57], lead: 0, uniform: "soldiers" });
+  crowd(Q, "mb_man", -11.4, -11.0, 0, { kind: "watch", at: [0, 0], idles: ["IdleM"], react: [], every: [8, 12], when: [57, 57], lead: 1 });
+  crowd(Q, "mb_man2", -10.0, -9.5, 0, { kind: "watch", at: [0, 0], idles: ["IdleM"], react: [], every: [8, 12], when: [57, 57], lead: 2 });
+  crowd(Q, "mb_soldier", -11.4, -9.5, 0, { kind: "watch", at: [0, 0], idles: ["IdleM"], react: [], every: [8, 12], when: [57, 57], lead: 3, uniform: "soldiers" });
+  const nightLamp = new THREE.PointLight(0xffc070, 0, 10, 1.6);
+  Q.group.add(nightLamp);
+  const walkTo = (n, x, z, ry, on) => {
+    n.amb.held = true;
+    n.x = x;
+    n.z = z;
+    n.m.position.set(x, 0, z);
+    n.m.rotation.y = ry;
+    const clip = on ? "Walk" : "IdleM";
+    if (n.clipNow !== clip) {
+      n.clipNow = clip;
+      n.ctl.play(clip);
+    }
+  };
+  Q.films.soldiers = (t) => {
+    for (const n of (Q.extras || []).filter((n) => n.march)) {
+      if (t < 0) {
+        n.amb.held = false;
+        continue;
+      }
+      const i = Q.extras.filter((m) => m.march).indexOf(n),
+        k = Math.max(0, Math.min(1, (t - 2) / 12)),
+        x = -0.6 + (i % 2) * 1.2,
+        z = 14.6 + Math.floor(i / 2) * 1.6 - k * 13;
+      walkTo(n, x, z, Math.PI, k > 0 && k < 1);
+    }
   };
   /* the hour and what stands or has burned, by step */
   Q.enter = (stage) => {
@@ -379,12 +433,12 @@ function gut() {
     const meeting = stage >= 30 && stage <= 34;
     if (meeting) {
       at("deacon", CHAPEL.x + 0.9, CHAPEL.z - 3.4, CHAPEL.x, CHAPEL.z - 4);
-      at("father", CHAPEL.x - 1.6, CHAPEL.z + 6.4, CHAPEL.x, CHAPEL.z);
+      at("father", CHAPEL.x - 1.2, CHAPEL.z - 0.6, CHAPEL.x, CHAPEL.z - 4.5);   /* on a bench inside, with the other men */
     } else if (stage >= 35 && stage < 40) {
       at("father", 10.2, -0.4, 13, -4);
       at("mother", H.x + 2.2, H.z + 1.4, 4, 2);
       at("gran", H.x + 2.4, H.z - 0.6, 4, 2);
-    } else if (stage >= 52 && stage < 55) {
+    } else if (stage >= 50 && stage < 55) {
       at("gran", H.x - 3.4, H.z + 0.6, -12, 8);
       at("brother", H.x - 3.2, H.z - 0.6, -12, 8);
     } else if (stage >= 55) {
@@ -410,13 +464,13 @@ function gut() {
   crowd(Q, "mb_woman", -9.4, -2.9, 0, { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-11, -1], when: [8, 49] });
   crowd(Q, "mb_man", 5.6, 4.6, 0, { kind: "work", between: [[5.6, 4.6], [2.4, 3.2]], walk: "Walk", idle: "IdleM", when: [8, 29] });
   crowd(Q, "mb_oldman", 11.4, 7.0, face(11.4, 7, 9, 8.6), { kind: "watch", at: [9, 8.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9], when: [8, 49] });
-  crowd(Q, "mb_woman", 3.4, -6.2, 0, { kind: "chat", group: "c", at: [3.4, -5.4], when: [8, 29] });
-  crowd(Q, "mb_man", 2.6, -5.2, 0, { kind: "chat", group: "c", when: [8, 29] });
+  crowd(Q, "mb_woman", -2.0, -7.0, 0, { kind: "chat", group: "c", at: [-1.6, -7.4], when: [8, 29] });
+  crowd(Q, "mb_man", -1.2, -7.8, 0, { kind: "chat", group: "c", when: [8, 29] });
   /* the men drilled in Bogle's yard (chapter 3, morning): lines of men with sticks */
   for (let i = 0; i < 6; i++) crowd(Q, ["mb_man", "mb_man2", "mb_oldman", "mb_townman", "mb_man", "mb_man2"][i], 10 + (i % 3) * 1.8, -5.6 + Math.floor(i / 3) * 2.6, -Math.PI / 2, { kind: "watch", at: [9, -2], idles: ["IdleM"], react: ["Nod"], every: [6, 10], when: [35, 39] });
   /* chapter 5: soldiers in the yard; one is the watcher */
-  crowd(Q, "mb_soldier", 4.2, 0.6, -Math.PI / 2, { kind: "watch", at: [-10, 0], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 8], when: [52, 55], watcher: true, uniform: "soldiers" });
-  crowd(Q, "mb_soldier", 5.6, -1.8, Math.PI, { kind: "watch", at: [5.6, -6], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 8], when: [52, 55], uniform: "soldiers" });
+  crowd(Q, "mb_soldier", 4.2, 0.6, -Math.PI / 2, { kind: "watch", at: [-10, 0], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 8], when: [51, 55], watcher: true, uniform: "soldiers" });
+  crowd(Q, "mb_soldier", 5.6, -1.8, Math.PI, { kind: "watch", at: [5.6, -6], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 8], when: [51, 55], uniform: "soldiers" });
   Q.keepOff = [{ at: [2.4, -1.4], r: 1 }, { at: [-4.4, 9.4], r: 1 }, { at: [-12.4, -1.4], r: 1 }, { at: [-15.4, 11.2], r: 1 }, { at: [7.4, -1.1], r: 1 }, { at: [CAVE.x + 0.2, CAVE.z + 0.6], r: 1.2 }, { pts: [[0.6, 13.2], [0.4, -4]], w: 1.2 }];
   return Q;
 }
@@ -479,40 +533,30 @@ function bay() {
   add(Q, marketShed(8, 4, { stalls: 3 }), -16, -2.4);
   for (let i = 0; i <= 3; i++) for (const s of [-1, 1]) wall(Q, -20 + i * 2.667, -2.4 + s * 2, 0.3, 0.3);
   for (let i = 0; i < 3; i++) wall(Q, -18.67 + i * 2.667, -2.8, 2.1, 1.4);
-  point(Q, "stall", -15.2, 6.0, "the stall");
+  point(Q, "stall", -11.6, 6.0, "the stall");
   /* the temporary court-house of the engraving (chapter 6), on the east of the Parade, with its flagpole and boardwalk */
   const tc = add(Q, dyn(courtShed()), 11, 3.4),
     fp = add(Q, dyn(flagpole(12)), 17, -1),
     bw = add(Q, dyn(boardwalk(8)), 12, 7.6);
   tc.visible = fp.visible = bw.visible = false;   /* chapter 6 only (Q.enter) */
-  const gal = add(Q, farGallows(), 46, -10, 0, 0.4);
+  const gal = add(Q, farGallows(), 44, 14, 0, 0.4);   /* far along the shore */
   gal.visible = false;
   /* 2026: the court-house rebuilt after 1865 in limestone and brick, burned in 2007, its walls standing; the statue of Paul Bogle before it */
   const now = grp();
   const shell = grp(now);
   box(20, 7.2, 0.5, std(T.stone([196, 186, 160], [6, 2]), 1), 0, 3.6, 4, shell);
-  for (let i = 0; i < 7; i++) {
-    box(1.4, 2.2, 0.06, W.WM.dark, -8.4 + i * 2.8, 5.2, 4.28, shell);
-    box(1.4, 2.2, 0.06, W.WM.dark, -8.4 + i * 2.8, 1.9, 4.28, shell);
-  }
-  for (const s of [-1, 1]) {
-    box(0.5, 7.2, 8, std(T.stone([196, 186, 160], [3, 2]), 1), s * 10, 3.6, 0, shell);
-    const st = box(5, 0.3, 1.4, std(T.stone([170, 160, 140], [2, 1]), 1), s * 3.2, 1.6, 5.6, shell);
-    st.rotation.z = s * 0.55;
-  }
-  box(1.6, 0.18, 0.6, solid(0x8a3a2a, 1), 0, 7.3, 4, shell);
-  const plinth = box(1.6, 2.2, 1.6, std(T.stone([206, 200, 186], [1, 1]), 1), 0, 1.1, 11, now);
+  const sky = solid(0x2a2a2c, 1);   /* the burnt-out rooms behind the window openings */
+  for (let i = 0; i < 7; i++)
+    for (const y of [1.9, 5.2]) {
+      box(1.3, 1.9, 0.06, sky, -8.4 + i * 2.8, y - 0.15, 4.28, shell);
+      const top = mesh(new THREE.CircleGeometry(0.65, 12, 0, Math.PI), sky, -8.4 + i * 2.8, y + 0.8, 4.29, shell);
+      top.userData.flat = true;
+      box(1.6, 0.12, 0.2, std(T.stone([226, 218, 200], [1, 1]), 1), -8.4 + i * 2.8, y - 1.15, 4.35, shell);   /* a stone sill */
+    }
+  for (const s of [-1, 1]) box(0.5, 7.2, 8, std(T.stone([196, 186, 160], [3, 2]), 1), s * 10, 3.6, 0, shell);
+  box(20.6, 0.3, 0.7, std(T.stone([214, 206, 188], [6, 1]), 1), 0, 7.35, 4, shell);   /* the cornice along the top of the walls, the roof gone */
+  const plinth = box(1.8, 1.6, 1.8, std(T.stone([206, 200, 186], [1, 1]), 1), 0, 0.8, 11, now);   /* the statue (a bronze body, below) stands on it */
   plinth.userData.statueBase = true;
-  const bronze = solid(0x2a2620, 0.5, 0.6),
-    statue = grp(now, 0, 2.2, 11);
-  cyl(0.24, 0.3, 1.2, bronze, 0, 1.25, 0, statue, 8);
-  cyl(0.16, 0.18, 0.95, bronze, -0.12, 0.47, 0, statue, 6);
-  cyl(0.16, 0.18, 0.95, bronze, 0.14, 0.47, 0.06, statue, 6);
-  mesh(new THREE.SphereGeometry(0.16, 10, 8), bronze, 0, 2.02, 0.02, statue);
-  const arm = cyl(0.07, 0.08, 0.8, bronze, 0.32, 1.6, 0, statue, 6);
-  arm.rotation.z = -0.5;
-  const blade = box(0.06, 0.6, 0.02, bronze, 0.54, 2.1, 0, statue);
-  blade.rotation.z = -0.15;
   now.traverse((o) => (o.userData.noBatch = true));
   add(Q, now, CH.x, CH.z - 2);
   now.visible = false;
@@ -537,6 +581,17 @@ function bay() {
     police.visible = !today;
     gal.visible = false;
     for (const n of Q.extras || []) Q.life?.hide(n, !(!n.when || (stage >= n.when[0] && stage <= n.when[1])));
+    for (const n of (Q.extras || []).filter((n) => n.statue)) {
+      n.amb.held = true;
+      n.m.position.y = 1.6;   /* on the plinth */
+      n.m.userData.noGround = true;
+      if (!n.bronze) {
+        n.bronze = new THREE.MeshStandardMaterial({ color: 0x4e3e2c, roughness: 0.42, metalness: 0.65 });   /* dark bronze, not skin: the game's skin lightening must not touch it */
+        n.m.traverse((o) => {
+          if (o.isMesh && !/Eye/.test(o.material?.name || "")) o.material = n.bronze;
+        });
+      }
+    }
   };
   /* the eleventh of October, as a camera scene: the crowd comes in from the east road with shells and drums, fills the Parade, the volunteers
      line the court-house steps, stones, the volley, the rush, the school-house set alight and the fire spreading to the court-house as it gets dark */
@@ -569,11 +624,11 @@ function bay() {
     crowdN.forEach((n, i) => {
       const row = i % 4,
         col = Math.floor(i / 4),
-        home = [6 + col * 1.4 - row * 0.4, -1.6 + row * 1.3],
-        start = [34 + col * 1.6, -0.4 + row * 1.1];
+        home = [-2 + col * 2.2 + (row % 2) * 0.9, -1.4 + row * 1.5],
+        start = [30 + col * 1.6, -0.4 + row * 1.1];
       let p, clip;
       if (t < 18) {
-        const k = Math.max(0, Math.min(1, (t - 3 - i * 0.25) / 12));
+        const k = Math.max(0, Math.min(1, (t - 3 - i * 0.2) / 11));
         p = along2(start, home, k);
         clip = k > 0 && k < 1 ? "Walk" : i % 3 === 0 ? "Yell" : "Argue";
         n.m.rotation.y = k < 1 ? -Math.PI / 2 : Math.PI;
@@ -583,7 +638,7 @@ function bay() {
         n.m.rotation.y = Math.PI;
       } else {
         const k = Math.min(1, (t - 31) / 5),
-          tgt = [-2 + col * 1.6 - row * 0.8, -5 - row * 0.3];
+          tgt = [-4 + col * 2 + (row % 2) * 0.6, -4.6 - row * 0.25];
         p = along2(home, tgt, k);
         clip = k < 1 ? "Run" : "Yell";
         n.m.rotation.y = Math.PI;
@@ -634,6 +689,11 @@ function bay() {
   Q.films.today = (t) => {
     const on = t >= 0;
     now.visible = on;
+    for (const n of (Q.extras || []).filter((n) => n.statue)) {
+      Q.life?.hide(n, !on);
+      n.amb.held = true;
+      n.m.position.y = 1.6;
+    }
     court.visible = false;
     courtB.visible = !on;
     tc.visible = fp.visible = bw.visible = !on;
@@ -671,21 +731,23 @@ function bay() {
   };
   point(Q, "notice", 16.6, 0.4, "the notice");
   /* people */
-  person(Q, "mother", "mother", -12.6, 5.6, face(-12.6, 5.6, -13, 3.2), { kind: "work", clips: ["Idle", "PickUp", "Idle"], work: [5, 9], face: [-13, 3.2] });
-  person(Q, "ada", "ada", -16.0, 6.5, face(-16.0, 6.5, -16, 3.2), { kind: "watch", at: [-16, 3.2], idles: ["Idle"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
+  person(Q, "mother", "mother", -14.4, 6.2, face(-14.4, 6.2, -15.6, 3.2), { kind: "work", clips: ["Idle", "PickUp", "Idle"], work: [5, 9], face: [-13, 3.2] });
+  person(Q, "ada", "ada", -10.2, 6.2, face(-10.2, 6.2, -10.6, 3.2), { kind: "watch", at: [-16, 3.2], idles: ["Idle"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
   person(Q, "gran", "gran", 8.4, 8.4, face(8.4, 8.4, 11, 3.4), { kind: "watch", at: [11, 3.4], idles: ["OldIdle"], react: ["HeadTurn"], every: [6, 10] });
   person(Q, "deacon", "deacon", 5, 7.6, face(5, 7.6, 11, 3.4), { kind: "watch", at: [11, 3.4], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [6, 10] });
   /* the market day (chapter 4 before the crowd): sellers and buyers */
-  crowd(Q, "mb_woman", -10.2, 4.8, face(-10.2, 4.8, -10.6, 3.2), { kind: "work", clips: ["Idle", "PickUp", "Idle"], work: [5, 9], face: [-10.6, 3.2], when: [40, 45] });
+  crowd(Q, "mb_woman", -17.2, 6.0, face(-17.2, 6.0, -18.2, 3.2), { kind: "work", clips: ["Idle", "PickUp", "Idle"], work: [5, 9], face: [-18.2, 3.2], when: [40, 45] });
   crowd(Q, "mb_woman2", -6, 6, 0, { kind: "wander", area: [-9, 4.6, 4, 9], pause: [3, 7], when: [40, 45] });
   crowd(Q, "mb_townman", 2, 2, 0, { kind: "wander", pts: [[2, 2], [-4, 6], [8, 4.2], [14, 1]], pause: [2, 5], when: [40, 45] });
   crowd(Q, "mb_oldman", -8.8, -1.4, face(-8.8, -1.4, -5.6, -1.6), { kind: "watch", at: [-5.6, -1.6], idles: ["OldIdle"], react: ["HeadTurn"], every: [5, 9], when: [40, 45] });
   crowd(Q, "mb_man", 4, 9.2, 0, { kind: "work", between: [[4, 9.2], [12, 9.6]], walk: "Walk", idle: "IdleM", when: [40, 45] });
   /* the crowd of the eleventh (held at the east end until the camera scene brings them) */
   const KINDS = ["mb_man", "mb_woman", "mb_oldman", "mb_man2", "mb_woman2", "mb_townman"];
-  for (let i = 0; i < 12; i++) crowd(Q, KINDS[((i % 4) + 2 * Math.floor(i / 4)) % 6], 19.4 + Math.floor(i / 4) * 1.5, 6.4 + (i % 4) * 1.3, -Math.PI / 2, { kind: "watch", at: [0, 0], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [46, 47], riot: true });
+  for (let i = 0; i < 20; i++) crowd(Q, KINDS[((i % 4) + 2 * Math.floor(i / 4)) % 6], 15.5 + Math.floor(i / 4) * 1.5, 6.4 + (i % 4) * 1.3, -Math.PI / 2, { kind: "watch", at: [0, 0], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [46, 47], riot: true });
   /* the volunteers on the court-house steps */
   for (let i = 0; i < 4; i++) crowd(Q, i === 0 ? "mb_vestryman" : "mb_constable", -3 + i * 2.2, -5.6, 0, { kind: "watch", at: [0, 4], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [42, 47], vol: true, uniform: "volunteers", ...(i ? { held: "musket" } : {}) });
+  /* 2026: Edna Manley's statue of Paul Bogle (1965) before the court-house: here a standing figure in bronze on its plinth, a general picture */
+  crowd(Q, "mb_statue", CH.x, CH.z + 9, 0, { kind: "watch", at: [0, 20], idles: ["StandPoseM"], react: [], every: [60, 90], when: [68, 71], statue: true });
   /* chapter 6: soldiers at the temporary court-house, prisoners on its benches */
   crowd(Q, "mb_soldier", 6.2, 6.2, face(6.2, 6.2, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
   crowd(Q, "mb_soldier", 16.2, 6.4, face(16.2, 6.4, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
@@ -694,7 +756,7 @@ function bay() {
   crowd(Q, "mb_woman", 2.6, 8.8, face(2.6, 8.8, 11, 3), { kind: "watch", at: [11, 3], idles: ["Sad1", "Idle"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
   crowd(Q, "mb_woman2", 1.4, 9.4, face(1.4, 9.4, 11, 3), { kind: "watch", at: [11, 3], idles: ["Sad2", "Idle"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
   crowd(Q, "mb_man", -1, 9.0, face(-1, 9, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
-  Q.keepOff = [{ at: [-15.2, 6.0], r: 1.1 }, { at: [16.6, 0.4], r: 1 }, { at: [19, 4.6], r: 1.2 }, { pts: [[-15.2, 9.2], [-15.2, 6.4]], w: 1.2 }];
+  Q.keepOff = [{ at: [-11.6, 6.0], r: 1.1 }, { at: [16.6, 0.4], r: 1 }, { at: [19, 4.6], r: 1.2 }, { pts: [[-15.2, 9.2], [-11.6, 6.4]], w: 1.2 }];
   return Q;
 }
 
