@@ -1,5 +1,6 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
-import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
+import { addRecap } from '../../../engine/recap.js';
+import { produceBasket } from '../../../engine/produce.js';   /* market baskets heaped with produce (moved to the engine, 23 November 2026) */   /* three things you learned, on the last card */
 import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
@@ -1535,7 +1536,6 @@ function buildNewStreet() { if (NS.g) return; const g = new THREE.Group(); NS.g 
   /* north side: market stalls against the backs of the main street's houses */
   const clothCols = [0xb04a36, 0xd8c08a, 0x4c7a5a, 0x8a5a3a]; const woodM = new THREE.MeshStandardMaterial({ map: plankTex([120, 88, 56], 4, 1, 1), roughness: 0.95 });
   makeTurtle(1);   /* makes the shared shell texture */
-  const basketM = new THREE.MeshStandardMaterial({ map: cv(64, 32, (c) => { c.fillStyle = '#a8844c'; c.fillRect(0, 0, 64, 32); for (let y = 0; y < 32; y += 4) for (let x = 0; x < 64; x += 8) { c.fillStyle = ((x + y) / 4) % 2 ? '#8a6a38' : '#c09a5a'; c.fillRect(x + ((y / 4) % 2) * 4, y, 7, 3); } }), roughness: 0.95 });
     NS.pineTex = cv(128, 128, (c) => { c.fillStyle = '#7a5a1e'; c.fillRect(0, 0, 128, 128); for (let y = -8; y < 136; y += 8) for (let x = -8; x < 136; x += 16) { const ox = x + ((y / 8) % 2 ? 8 : 0), gr = c.createRadialGradient(ox + 8, y + 8, 1, ox + 8, y + 8, 9); gr.addColorStop(0, '#e0b040'); gr.addColorStop(0.7, '#b98a2c'); gr.addColorStop(1, '#6a5a22'); c.fillStyle = gr; c.beginPath(); c.moveTo(ox + 8, y); c.lineTo(ox + 15.5, y + 8); c.lineTo(ox + 8, y + 16); c.lineTo(ox + 0.5, y + 8); c.fill(); c.fillStyle = '#4a3a14'; c.fillRect(ox + 7, y + 7, 2, 2); } }); NS.pineTex.wrapS = NS.pineTex.wrapT = THREE.RepeatWrapping; NS.pineTex.repeat.set(2, 1.5);   /* diamond eyes in rows, each paler in the middle with a dark point */
   NS.fishTex = cv(64, 32, (c) => { const g2 = c.createLinearGradient(0, 0, 0, 32); g2.addColorStop(0, '#4a6470'); g2.addColorStop(0.5, '#b8c6c8'); g2.addColorStop(1, '#e8ece6'); c.fillStyle = g2; c.fillRect(0, 0, 64, 32); for (let i = 0; i < 40; i++) { c.fillStyle = 'rgba(40,60,70,0.25)'; c.fillRect(Math.random() * 64, Math.random() * 14, 2, 2); } });
   NS.melonTex = cv(128, 32, (c) => { c.fillStyle = '#4f8a3a'; c.fillRect(0, 0, 128, 32); c.fillStyle = '#2a5a24'; for (let x = 0; x < 128; x += 16) { c.beginPath(); c.moveTo(x, 0); for (let y = 0; y <= 32; y += 4) c.lineTo(x + 3 + Math.sin(y * 0.7 + x) * 2, y); c.lineTo(x + 8, 32); for (let y = 32; y >= 0; y -= 4) c.lineTo(x + 8 + Math.sin(y * 0.6 + x) * 2, y); c.fill(); } });
@@ -1545,14 +1545,12 @@ function buildNewStreet() { if (NS.g) return; const g = new THREE.Group(); NS.g 
     const awn = mk(new THREE.PlaneGeometry(2.9, 1.4, 6, 2), new THREE.MeshStandardMaterial({ color: clothCols[ci], side: THREE.DoubleSide, roughness: 1 }), 0, 2.05, 0.05, s); awn.rotation.x = -Math.PI / 2 + 0.28;
     const cloth = mk(new THREE.BoxGeometry(2.5, 0.015, 0.9), new THREE.MeshStandardMaterial({ map: noiseTex([200, 186, 150], 18, 2), roughness: 1 }), 0, 0.855, 0, s);   /* a linen cloth over the table */
     const M = (c, r = 0.7) => new THREE.MeshStandardMaterial({ color: c, roughness: r }), rnd = (a) => (Math.random() - 0.5) * a;
-    const basket = (bx, bz, r) => { const b = mk(new THREE.CylinderGeometry(r, r * 0.8, 0.14, 16, 1, true), basketM, bx, 0.93, bz, s); b.material.side = THREE.DoubleSide; mk(new THREE.CircleGeometry(r * 0.8, 16), basketM, bx, 0.865, bz, s).rotation.x = -Math.PI / 2; mk(new THREE.TorusGeometry(r, 0.014, 5, 20), M(0x7a5a30, 0.9), bx, 1.0, bz, s).rotation.x = Math.PI / 2; };
-    /* a heap in a basket: a real pile that rests on the basket's floor (y 0.865) and on itself, ring by ring and layer by layer. Scattered at random heights the fruit floated over the floor (owner, 17 November 2026). */
-    const heap = (bx, bz, r, geo, mat, n) => { if (!geo.boundingSphere) geo.computeBoundingSphere(); const sz = Math.min(0.06, geo.boundingSphere.radius * 0.85); let left = Math.max(n, 6) * 2.4;
-      for (let L = 0; L < 3 && left > 0; L++) { const R = r * 0.8 - sz * 0.9 - L * sz * 1.5, y = 0.865 + sz * 0.95 + L * sz * 1.45; if (R < 0) { if (L) mk(geo, mat, bx, y - sz * 0.3, bz, s).rotation.set(rnd(1), Math.random() * 6, rnd(1)); break; }
-        for (let d = L % 2 ? sz : 0; d <= R + 1e-6 && left > 0; d += sz * 1.9) { const k = d < 1e-6 ? 1 : Math.max(3, Math.floor(2 * Math.PI * d / (sz * 1.95))), a0 = Math.random() * 6; for (let q = 0; q < k && left > 0; q++, left--) { const a = a0 + q / k * Math.PI * 2, m = mk(geo, mat, bx + Math.cos(a) * d + rnd(sz * 0.2), y + rnd(sz * 0.15), bz + Math.sin(a) * d + rnd(sz * 0.2), s); m.rotation.set(rnd(1), Math.random() * 6, rnd(1)); } } } };
+    /* a basket heaped with produce (engine/produce.js: the pile rests on the basket's floor and on itself, ring by ring and layer by layer; scattered at
+       random heights the fruit floated over the floor, owner, 17 November 2026). Its floor sits on the linen cloth. */
+    const basketHeap = (bx, bz, r, geo, mat, n) => { const b = produceBasket({ r, h: 0.14, piece: { geo, mat }, count: n, seed: Math.round((x + bx) * 100 + bz * 10) }); b.position.set(bx, 0.86, bz); s.add(b); };
     if (kind === 'fruit') {   /* plantains, pineapples, oranges and limes in baskets */
-      basket(-0.8, 0, 0.3); basket(0, 0.05, 0.28); basket(0.8, 0, 0.3);
-      heap(-0.8, 0, 0.3, new THREE.SphereGeometry(0.06, 10, 8), M(0xd98a2a, 0.55), 12); heap(0.8, 0, 0.3, new THREE.SphereGeometry(0.05, 10, 8), M(0x6f9a32, 0.5), 14);
+      basketHeap(-0.8, 0, 0.3, new THREE.SphereGeometry(0.06, 10, 8), M(0xd98a2a, 0.55), 12); basketHeap(0.8, 0, 0.3, new THREE.SphereGeometry(0.05, 10, 8), M(0x6f9a32, 0.5), 14);
+      { const b = produceBasket({ r: 0.28, h: 0.14, fill: [] }); b.position.set(0, 0.853, 0.05); s.add(b); }   /* the middle basket holds the pineapples */
       /* pineapples: a barrel-shaped fruit covered in diamond eyes, with a crown of many long narrow leaves that arch outward (a ball with seven thin spikes did not read as one: owner, 17 November 2026) */
       const pineG = new THREE.LatheGeometry([[0.001, -0.105], [0.042, -0.1], [0.066, -0.065], [0.076, -0.01], [0.072, 0.045], [0.052, 0.088], [0.022, 0.104], [0.001, 0.106]].map(([x, y]) => new THREE.Vector2(x, y)), 14), pineM = new THREE.MeshStandardMaterial({ map: NS.pineTex, roughness: 0.85 }), leafG = new THREE.ConeGeometry(0.014, 1, 4); leafG.translate(0, 0.5, 0); leafG.scale(1, 1, 0.35); const leafM = [M(0x4f7a3c, 0.8), M(0x3e6a30, 0.8), M(0x6a8a4a, 0.8)];
       for (let k = 0; k < 2; k++) { const pa = new THREE.Group(); pa.position.set(-0.08 + k * 0.17, 0.972, 0.05 + rnd(0.1)); pa.rotation.set(rnd(0.12), Math.random() * 6, rnd(0.12)); s.add(pa); mk(pineG, pineM, 0, 0, 0, pa);
@@ -1568,8 +1566,8 @@ function buildNewStreet() { if (NS.g) return; const g = new THREE.Group(); NS.g 
     else if (kind === 'herbs') {   /* tied bunches of herbs, peppers and roots */
       const herbM = M(0x4f7a34, 0.85), stemM = M(0x8a7a4a, 0.9), tieM = M(0xb8a070, 0.9);
       for (let k = 0; k < 7; k++) { const bn = new THREE.Group(); bn.position.set(-1.0 + k * 0.3, 0.9, -0.15 + rnd(0.15)); bn.rotation.set(Math.PI / 2 - 0.15, rnd(0.6), 0); s.add(bn); for (let l = 0; l < 6; l++) { const lf = mk(new THREE.SphereGeometry(0.045, 6, 5), herbM, rnd(0.07), 0.13 + rnd(0.05), rnd(0.05), bn); lf.scale.set(1, 1.6, 0.7); } mk(new THREE.CylinderGeometry(0.018, 0.022, 0.18, 6), stemM, 0, 0, 0, bn); mk(new THREE.TorusGeometry(0.023, 0.007, 4, 10), tieM, 0, 0.03, 0, bn).rotation.x = Math.PI / 2; }
-      basket(0.55, 0.22, 0.2); heap(0.55, 0.22, 0.2, new THREE.ConeGeometry(0.018, 0.08, 6), M(0xc0301e, 0.5), 18);   /* red peppers */
-      basket(-0.5, 0.25, 0.2); heap(-0.5, 0.25, 0.2, new THREE.SphereGeometry(0.05, 8, 6), M(0x8a6a44, 0.95), 9);   /* yams and roots */
+      basketHeap(0.55, 0.22, 0.2, new THREE.ConeGeometry(0.018, 0.08, 6), M(0xc0301e, 0.5), 18);   /* red peppers */
+      basketHeap(-0.5, 0.25, 0.2, new THREE.SphereGeometry(0.05, 8, 6), M(0x8a6a44, 0.95), 9);   /* yams and roots */
       for (let k = 0; k < 2; k++) { const cb = new THREE.Group(); cb.position.set(-0.05 + k * 0.28, 0.9, 0.28); cb.rotation.y = k * 0.6; s.add(cb); for (let c2 = 0; c2 < 6; c2++) { const cr = mk(new THREE.ConeGeometry(0.022, 0.2, 7), M(0xe07a22, 0.6), rnd(0.06), 0.012, rnd(0.05), cb); cr.rotation.z = Math.PI / 2; const top = mk(new THREE.ConeGeometry(0.03, 0.12, 5), M(0x4f8a34, 0.85), rnd(0.06) - 0.15, 0.03, rnd(0.05), cb); top.rotation.z = -Math.PI / 2; } }   /* carrots */
       for (let k = 0; k < 4; k++) { const hb = new THREE.Group(); hb.position.set(-0.9 + k * 0.6, 1.8, 0.2); s.add(hb); for (let l = 0; l < 6; l++) { const lf = mk(new THREE.SphereGeometry(0.04, 6, 5), M(0x6a7a3a, 0.9), rnd(0.07), -0.12 + rnd(0.06), rnd(0.07), hb); lf.scale.set(1, 1.8, 0.7); } mk(new THREE.CylinderGeometry(0.006, 0.006, 0.16, 4), stemM, 0, 0, 0, hb); }   /* bunches drying upside down */
       mk(new THREE.CylinderGeometry(0.012, 0.012, 2.5, 5), woodM, 0, 1.9, 0.2, s).rotation.z = Math.PI / 2; }
@@ -1582,7 +1580,7 @@ function buildNewStreet() { if (NS.g) return; const g = new THREE.Group(); NS.g 
       mk(new THREE.CylinderGeometry(0.014, 0.014, 2.5, 5), woodM, 0, 1.85, 0.2, s).rotation.z = Math.PI / 2;
       for (let k = 0; k < 5; k++) { const cut = new THREE.Group(); cut.position.set(-1.0 + k * 0.5, 1.6, 0.2); s.add(cut); mk(new THREE.CylinderGeometry(0.004, 0.004, 0.2, 3), M(0x8a7a5a), 0, 0.15, 0, cut); const m = mk(new THREE.SphereGeometry(0.1, 12, 9), new THREE.MeshStandardMaterial({ map: NS.meatTex, roughness: 0.65 }), 0, -0.05, 0, cut); m.scale.set(0.8, 1.35, 0.55); }
       if (NS.shellTex) { const cg = new THREE.SphereGeometry(1, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2); const sh = mk(cg, new THREE.MeshStandardMaterial({ map: NS.shellTex, roughness: 0.45 }), 0.55, 0.87, 0.05, s); sh.scale.set(0.3, 0.12, 0.38); sh.rotation.y = 0.5; }
-      basket(-0.55, 0.05, 0.26); heap(-0.55, 0.05, 0.26, new THREE.BoxGeometry(0.1, 0.05, 0.08), new THREE.MeshStandardMaterial({ map: NS.meatTex, roughness: 0.7 }), 8); }
+      basketHeap(-0.55, 0.05, 0.26, new THREE.BoxGeometry(0.1, 0.05, 0.08), new THREE.MeshStandardMaterial({ map: NS.meatTex, roughness: 0.7 }), 8); }
     NS.col.push([x - 1.4, 14.55, x + 1.4, 15.75]); return s; };
   stall(5.6, 'herbs', 1); stall(9.6, 'fruit', 0); stall(13.4, 'meat', 2); stall(16.6, 'fish', 3);
   /* the market bell on its post, and the stocks */
