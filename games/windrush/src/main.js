@@ -4,6 +4,7 @@ import { addRecap } from "../../../engine/recap.js";   /* three things you learn
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A family story built on the existing engine, with no shared-module changes. */
 import { renderFramed } from "../../../engine/cine.js";
+import { sunShadow } from "../../../engine/sunshadow.js";
 import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js";
 import { placeActionButton } from "../../../engine/action-button.js";
 import { returningTalker, callBack, comeOver } from "../../../engine/return-talk.js";
@@ -116,6 +117,7 @@ sky.objects.forEach((o) => scene.add(o));
 const hemi = new THREE.HemisphereLight(0xfff1d4, 0x819183, 2.5),
   sun = new THREE.DirectionalLight(0xffe2b6, 2.1);
 sun.position.set(-20, 42, 20);
+const SH = sunShadow(renderer, sun, { phone });   /* real sun shadows on desktop (engine/sunshadow.js, automatic: SH.tick before drawing) */
 scene.add(hemi, sun);
 /* the gold talk marks over the step's story people, and the talk button with a name over the nearest person (ui.js) */
 const MARKS = createMarks({
@@ -531,10 +533,10 @@ function light(Q) {
     late = Q.tod === "afternoon";
   sky.setSky(english ? 0x8dabb9 : late ? 0x7a9fb8 : 0x71a7bf, english ? 0xd8d9cd : late ? 0xf0c890 : 0xe4d1a7);
   scene.fog = new THREE.Fog(english ? 0xc7cfc9 : late ? 0xe0d2b4 : 0xc7d7d1, 100, english ? 360 : 550);
-  sun.intensity = english ? 1.5 : late ? 1.9 : 2.1;
+  sun.intensity = (english ? 1.5 : late ? 1.9 : 2.1) * (SH.on ? 1.15 : 1);   /* with real shadows (desktop) the sun leads a little more and the sky less, so the shadows read */
   sun.color.set(late ? 0xffc890 : 0xffe2b6);
   sun.position.set(late ? -40 : -20, late ? 18 : 42, late ? 8 : 20);
-  hemi.intensity = english ? 2.95 : late ? 2.3 : 2.5;
+  hemi.intensity = (english ? 2.95 : late ? 2.3 : 2.5) * (SH.on ? 0.85 : 1);
   hemi.color.set(late ? 0xffe2c0 : 0xfff1d4);
 }
 async function go(stage, { restore = null, keep = false } = {}) {
@@ -1316,6 +1318,7 @@ function tick(dt, now = performance.now()) {
   hint(now);
   if (S.started) audioTick(Q, dt);
   if (__DEV__) camera.userData.checkPlace = Q; // Match camera probes to the scene actually drawn, including chapter transitions.
+  SH.tick(scene, camera);
   renderFramed(renderer, scene, camera, DIR.on || LS.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;
