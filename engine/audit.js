@@ -85,6 +85,18 @@ export function auditPlace(place) {
     const spots = [...(place.actions || []).map((a) => ({ ...a, r: (a.r || 1.45) * 0.9 })), ...(place.people || []).filter((p) => !isSeated(p.anim)).map((p) => ({ ...p, r: 2.3 }))].filter((s) => s && Number.isFinite(s.x) && Number.isFinite(s.z)).map((s) => ({ label: s.label || s.id || 'spot', x: s.x, z: s.z, r: s.r }));   /* the same reach as the check above: a thing within its own reach, a person within 2.3 m */
     stuck.push(...auditPassage({ walls: place.walls, bounds: place.bounds, start: place.start, r: place.passR ?? 0.23, spots, ...(place.passWide ? { wide: place.passWide } : {}) }));   /* passR: walls already drawn round where the player's centre can go (Port Royal's walk grid) */   /* passWide: a place narrow by nature (inside a pipe) sets its own */
   }
+  /* in the player's face at the start (Kendal, 23 November 2026: a burning torch stood a metre in front of chapter 6's start, and from the
+     first view it looked held in the player's other hand): a thin tall thing, a post, a torch, a lamp standard, within 1.3 m of where the
+     player stands when the place begins */
+  const aisle = place.bounds && (place.bounds.x1 - place.bounds.x0 < 3 || place.bounds.z1 - place.bounds.z0 < 3);   /* a carriage aisle or a corridor: posts at the side are meant to be close */
+  if (place.start && Number.isFinite(place.start.x) && !aisle) for (let i = 0; i < n; i++) { const b = L[i].b, sz = size[i]; if (big.includes(i) || sz.y < 0.8 || b.max.y < 1.0 || Math.max(sz.x, sz.z) > 0.3) continue;   /* thin both ways: a post, a torch; not a seat back or a wall */
+    if (L.some((m, j) => j !== i && !big.includes(j) && m.top !== L[i].top && size[j].y >= 1.2 && ex[i].intersectsBox(m.b))) continue;   /* it touches something else (a door's frame in a wall, a post under a roof): not standing free in the way */
+    const dx = Math.max(b.min.x - place.start.x, 0, place.start.x - b.max.x), dz = Math.max(b.min.z - place.start.z, 0, place.start.z - b.max.z), d = Math.hypot(dx, dz);
+    if (Number.isFinite(place.start.yaw)) {   /* only what is in front of the player at the first view (the camera looks along -sin(yaw), -cos(yaw)) */
+      const cx = (b.min.x + b.max.x) / 2 - place.start.x, cz = (b.min.z + b.max.z) / 2 - place.start.z, L2 = Math.hypot(cx, cz) || 1;
+      if ((cx * -Math.sin(place.start.yaw) + cz * -Math.cos(place.start.yaw)) / L2 < 0.5) continue;
+    }
+    if (d < 1.3) stuck.push(`a ${L[i].geo || 'thing'} ${sz.y.toFixed(1)} m tall stands ${d.toFixed(1)} m from the start (${place.start.x.toFixed(1)}, ${place.start.z.toFixed(1)}): in the player's face at the first view`); }
   return { id: place.id, floating, inside: inside.concat(overlap, cut, wcut), stuck };
 }
 

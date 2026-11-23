@@ -9,6 +9,7 @@
 import * as THREE from "three";
 import { T, std, solid, mesh, box, cyl, plane, grp, rng, cv } from "./gfx.js";
 import { dugOut, rowBoat } from "../../../engine/boats.js";
+import { candleFlame } from "../../../engine/flame.js";
 import * as W from "./world.js";
 import { M, roof as hipRoofS } from "./scenery.js";
 
@@ -167,10 +168,17 @@ export function yamHills(n, area, { seed = 9, dry = true } = {}) {
     if (z > area[3]) break;
     const hill = mesh(new THREE.SphereGeometry(0.45, 9, 6, 0, Math.PI * 2, 0, Math.PI / 2), earth, x, 0, z, g);
     hill.scale.set(1, 0.7, 1);
-    const st = cyl(0.015, 0.02, 1.8, DARKW, x + 0.05, 0.9, z, g, 4);
-    st.rotation.z = (r() - 0.5) * 0.15;
-    const v = mesh(new THREE.ConeGeometry(0.22, 1.2, 6, 1, true), vine, x + 0.05, 1.0, z, g);
-    v.scale.set(0.7, 1, 0.7);
+    const lean = (r() - 0.5) * 0.15,
+      st = cyl(0.015, 0.02, 1.8, DARKW, x + 0.05, 0.9, z, g, 4);
+    st.rotation.z = lean;
+    /* the vine twines up the stake: small clumps of leaves at intervals, fewer and smaller toward the top (withered in the dry year) */
+    for (let k = 0; k < 5; k++) {
+      const y = 0.35 + k * 0.28,
+        a = k * 2.1 + r() * 0.6,
+        rr = 0.07 - k * 0.008,
+        lf = mesh(new THREE.IcosahedronGeometry(0.09 - k * 0.01, 0), vine, x + 0.05 - Math.sin(lean) * y + Math.cos(a) * rr, y, z + Math.sin(a) * rr, g);
+      lf.scale.set(1.2, 0.7, 1.0);
+    }
   }
   return g;
 }
@@ -460,5 +468,30 @@ export function oldCanoe(L = 4.2, seed = 1) {
   box(0.06, 0.04, 0.5, wood, L * 0.2, 0.36, 0, g);
   const pad = box(1.3, 0.03, 0.12, wood, -0.3, 0.3, 0.1 + r() * 0.05, g);
   pad.rotation.y = 0.2;
+  return g;
+}
+/* a tin lantern of the 1860s: a round tin base and a pierced tin cap with a ring, wire guards, and a glass chimney round a burning candle
+   (the horn lantern of the 1770s, which this game first borrowed, is a century too early). Origin: the bottom centre; userData.handleY: the ring. */
+export function tinLantern() {
+  const g = grp(),
+    tin = new THREE.MeshStandardMaterial({ color: 0x8e8b84, roughness: 0.5, metalness: 0.6 }),
+    glass = new THREE.MeshStandardMaterial({ color: 0xfff1d0, roughness: 0.1, transparent: true, opacity: 0.32, emissive: 0xffb050, emissiveIntensity: 0.35 });
+  cyl(0.075, 0.08, 0.04, tin, 0, 0.02, 0, g, 16);
+  const chim = cyl(0.06, 0.065, 0.17, glass, 0, 0.125, 0, g, 16);
+  chim.userData.noAudit = true;
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + 0.4;
+    cyl(0.004, 0.004, 0.17, tin, Math.cos(a) * 0.072, 0.125, Math.sin(a) * 0.072, g, 4);   /* the wire guards */
+  }
+  cyl(0.012, 0.012, 0.05, solid(0xeee4cc, 0.9), 0, 0.065, 0, g, 8);   /* the candle */
+  const fl = candleFlame({ s: 0.5, seed: 3, glowSize: 0.12 });
+  fl.position.set(0, 0.092, 0);
+  g.add(fl);
+  mesh(new THREE.ConeGeometry(0.085, 0.07, 16), tin, 0, 0.245, 0, g);
+  cyl(0.015, 0.02, 0.025, tin, 0, 0.29, 0, g, 8);
+  const ring = mesh(new THREE.TorusGeometry(0.035, 0.005, 5, 16), tin, 0, 0.33, 0, g);
+  ring.rotation.y = Math.PI / 2;
+  g.userData.handleY = 0.36;
+  g.traverse((o) => (o.userData.noBatch = true));
   return g;
 }

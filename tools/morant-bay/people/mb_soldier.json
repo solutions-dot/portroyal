@@ -15,9 +15,13 @@
  "garments": {
   "sleeve": 0.95,
   "trousers": true,
-  "jacket": true,
-  "jacketsleeve": 0.9,
+  "legwidth": 1.3,
+  "jacket": false,
+  "waistcoat": true,
+  "vwaist": true,
+  "buttons": true,
   "shoes": true,
+  "socks": 0.42,
   "collar": false,
   "hairvol": 0.2,
   "hat": [
@@ -36,24 +40,29 @@
    72
   ],
   "Shirt": [
-   236,
-   232,
-   222
+   238,
+   234,
+   224
   ],
-  "Jacket": [
-   170,
-   36,
-   34
+  "Waistcoat": [
+   176,
+   34,
+   32
   ],
   "Breeches": [
-   38,
-   44,
-   78
+   34,
+   40,
+   74
   ],
   "Shoes": [
    24,
    20,
    18
+  ],
+  "Socks": [
+   236,
+   234,
+   226
   ],
   "Hat": [
    240,
@@ -66,9 +75,9 @@
    16
   ],
   "Buttons": [
-   200,
+   214,
    180,
-   110
+   90
   ]
  },
  "face": "lean"

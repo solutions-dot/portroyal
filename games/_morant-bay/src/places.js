@@ -15,7 +15,7 @@ import { flock as roostFlock, fireflies } from "../../../engine/life.js";   /* b
 import { blaze } from "../../../engine/blaze.js";
 import { hen } from "../../../engine/animals.js";   /* a building on fire (engine/blaze.js) */
 import { createSea } from "../../../engine/sea.js";
-import { wattleHouse, bushChapel, caneField, yamHills, plantain, guinep, courthouse, schoolhouse, marketShed, louvreHouse, courtShed, boardwalk, flagpole, farGallows, caveMouth, rodneyMemorial, canoe, beachBoat, sandTex } from "./mbscenery.js";
+import { wattleHouse, bushChapel, caneField, yamHills, plantain, guinep, courthouse, schoolhouse, marketShed, louvreHouse, courtShed, boardwalk, flagpole, farGallows, caveMouth, rodneyMemorial, canoe, beachBoat, sandTex, tinLantern } from "./mbscenery.js";
 
 const base = (id, bounds, start) => ({
   id,
@@ -62,7 +62,7 @@ function person(Q, id, cast, x, z, ry = 0, life = null, opts = {}) {
 function crowd(Q, look, x, z, ry, life, opts = {}) {
   /* the story's own marks (when they are on stage, a part in a camera scene, a thing in the hand) belong to the person, not the behaviour */
   const own = {};
-  for (const k of ["when", "watcher", "riot", "vol", "held", "uniform", "march", "lead", "statue"]) if (life && k in life) {
+  for (const k of ["when", "watcher", "riot", "vol", "held", "uniform", "march", "lead"]) if (life && k in life) {
     own[k] = life[k];
     delete life[k];
   }
@@ -298,7 +298,7 @@ function gut() {
     dust.visible = k > 0.4 && k < 1;
   };
   /* the night meeting (chapter 3): a lantern on the leader's table in the chapel, a sheet of paper and a pen */
-  const lamp = add(Q, P.lantern(), CHAPEL.x + 0.3, CHAPEL.z - 4.1, 0.95);
+  const lamp = add(Q, tinLantern(), CHAPEL.x + 0.3, CHAPEL.z - 4.1, 0.95);
   lamp.traverse((o) => (o.userData.noBatch = true));
   const lampLight = new THREE.PointLight(0xffc070, 0, 9, 1.6);
   lampLight.position.set(CHAPEL.x + 0.3, 1.5, CHAPEL.z - 4.1);
@@ -330,7 +330,11 @@ function gut() {
   /* the cave in the limestone, north-west */
   add(Q, caveMouth(4), CAVE.x, CAVE.z - 1.2);
   wall(Q, CAVE.x, CAVE.z - 2.6, 6.4, 1.6);
-  add(Q, S.karstHill(14, 12, 6, [0.24, 0.36, 0.2], 0.4), CAVE.x - 2, CAVE.z - 12, -0.5);   /* the wooded limestone hill the cave runs into */
+  /* the limestone the cave runs into: a low face of grey rock behind the mouth, and woods on the slope beyond (a smooth hill stood here and read
+     as a green blob behind the village, owner 23 November 2026) */
+  for (const [dx, dz, sz, h, sd] of [[-3.6, -5.6, 4.2, 3.4, 41], [0.4, -6.4, 4.8, 4.2, 42], [4.2, -5.4, 3.6, 2.8, 43]]) add(Q, S.outcrop(sz, h, sd), CAVE.x + dx, CAVE.z + dz);
+  wall(Q, CAVE.x + 0.3, CAVE.z - 5.8, 11, 2.6);
+  for (const [dx, dz, h, sd] of [[-6, -9, 8, 51], [-1, -10.5, 9, 52], [4, -9.4, 7.5, 53], [8, -11, 8.5, 54], [-9, -12.5, 9, 55]]) add(Q, tree(h, sd, 1), CAVE.x + dx, CAVE.z + dz);
   point(Q, "cave", CAVE.x + 0.2, CAVE.z + 0.6, "the cave");
   point(Q, "cane", -12.6, 7.4, "the cane");
   /* chapter 5: soldiers in the yard, one of them looking out over the open ground to the west. While he looks, be in cover. */
@@ -560,7 +564,7 @@ function bay() {
   tc.visible = fp.visible = bw.visible = false;   /* chapter 6 only (Q.enter) */
   const gal = add(Q, farGallows(), 44, 14, 0, 0.4);   /* far along the shore */
   gal.visible = false;
-  /* 2026: the court-house rebuilt after 1865 in limestone and brick, burned in 2007, its walls standing; the statue of Paul Bogle before it */
+  /* 2026: the court-house rebuilt after 1865 in limestone and brick, burned in 2007, its walls standing */
   const now = grp();
   const shell = grp(now);
   box(20, 7.2, 0.5, std(T.stone([196, 186, 160], [6, 2]), 1), 0, 3.6, 4, shell);
@@ -574,8 +578,7 @@ function bay() {
     }
   for (const s of [-1, 1]) box(0.5, 7.2, 8, std(T.stone([196, 186, 160], [3, 2]), 1), s * 10, 3.6, 0, shell);
   box(20.6, 0.3, 0.7, std(T.stone([214, 206, 188], [6, 1]), 1), 0, 7.35, 4, shell);   /* the cornice along the top of the walls, the roof gone */
-  const plinth = box(1.8, 1.6, 1.8, std(T.stone([206, 200, 186], [1, 1]), 1), 0, 0.8, 11, now);   /* the statue (a bronze body, below) stands on it */
-  plinth.userData.statueBase = true;
+  /* no statue: Edna Manley's Paul Bogle (1965) was taken off its base for repair after the 2007 fire, and no report was found of it going back (docs/games/morant-bay.md) */
   now.traverse((o) => (o.userData.noBatch = true));
   add(Q, now, CH.x, CH.z - 2);
   now.visible = false;
@@ -600,17 +603,6 @@ function bay() {
     police.visible = !today;
     gal.visible = false;
     for (const n of Q.extras || []) Q.life?.hide(n, !(!n.when || (stage >= n.when[0] && stage <= n.when[1])));
-    for (const n of (Q.extras || []).filter((n) => n.statue)) {
-      n.amb.held = true;
-      n.m.position.y = 1.6;   /* on the plinth */
-      n.m.userData.noGround = true;
-      if (!n.bronze) {
-        n.bronze = new THREE.MeshStandardMaterial({ color: 0x4e3e2c, roughness: 0.42, metalness: 0.65 });   /* dark bronze, not skin: the game's skin lightening must not touch it */
-        n.m.traverse((o) => {
-          if (o.isMesh && !/Eye/.test(o.material?.name || "")) o.material = n.bronze;
-        });
-      }
-    }
   };
   /* the eleventh of October, as a camera scene: the crowd comes in from the east road with shells and drums, fills the Parade, the volunteers
      line the court-house steps, stones, the volley, the rush, the school-house set alight and the fire spreading to the court-house as it gets dark */
@@ -708,11 +700,6 @@ function bay() {
   Q.films.today = (t) => {
     const on = t >= 0;
     now.visible = on;
-    for (const n of (Q.extras || []).filter((n) => n.statue)) {
-      Q.life?.hide(n, !on);
-      n.amb.held = true;
-      n.m.position.y = 1.6;
-    }
     court.visible = false;
     courtB.visible = !on;
     tc.visible = fp.visible = bw.visible = !on;
@@ -765,8 +752,6 @@ function bay() {
   for (let i = 0; i < 20; i++) crowd(Q, KINDS[((i % 4) + 2 * Math.floor(i / 4)) % 6], 15.5 + Math.floor(i / 4) * 1.5, 6.4 + (i % 4) * 1.3, -Math.PI / 2, { kind: "watch", at: [0, 0], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [46, 47], riot: true });
   /* the volunteers on the court-house steps */
   for (let i = 0; i < 4; i++) crowd(Q, i === 0 ? "mb_vestryman" : "mb_constable", -3 + i * 2.2, -5.6, 0, { kind: "watch", at: [0, 4], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [42, 47], vol: true, uniform: "volunteers", ...(i ? { held: "musket" } : {}) });
-  /* 2026: Edna Manley's statue of Paul Bogle (1965) before the court-house: here a standing figure in bronze on its plinth, a general picture */
-  crowd(Q, "mb_statue", CH.x, CH.z + 9, 0, { kind: "watch", at: [0, 20], idles: ["StandPoseM"], react: [], every: [60, 90], when: [68, 71], statue: true });
   /* chapter 6: soldiers at the temporary court-house, prisoners on its benches */
   crowd(Q, "mb_soldier", 6.2, 6.2, face(6.2, 6.2, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
   crowd(Q, "mb_soldier", 16.2, 6.4, face(16.2, 6.4, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });

@@ -152,7 +152,7 @@ export function buildCrash() {
   const sp = standpipe(); sp.position.set(26, 0, 8); g.add(sp); walls.push([25.4, 7.4, 26.6, 8.6]); const buckets = [[25.25, 8.85, 0.3], [24.85, 8.45, 1.9]].map(([x, z, r]) => { const b = bucket(); b.position.set(x, 0, z); b.rotation.y = r; b.userData.noBatch = true; b.userData.home = [x, z, r]; g.add(b); return b; });   /* two buckets by the pipe: you fill one and carry it to the nurse (engine/story.js createCarry) */
   const fire = grp(g, -3, 0, 6); fire.userData.noBatch = true; for (let i = 0; i < 5; i++) { const lg = cyl(0.06, 0.06, 0.8, TM.woodDark, Math.cos(i * 1.26) * 0.25, 0.18, Math.sin(i * 1.26) * 0.25, fire, 5); lg.rotation.z = Math.cos(i * 1.26) * 0.8; lg.rotation.x = Math.sin(i * 1.26) * 0.8; }
   const flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.flame(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); flame.scale.set(1.5, 2.0, 1); flame.position.y = 0.9; fire.add(flame);
-  const torches = []; for (const [x, z] of [[-10, 3], [0, 3.6], [16, 6], [-2, 12], [-14, 10], [8, 16]]) { const t = torch(); t.position.set(x, 0, z); t.userData.noBatch = true; g.add(t); torches.push(t); }
+  const torches = []; for (const [x, z] of [[-10, 3], [0, 3.6], [12.5, 9.5], [-2, 12], [-14, 10], [8, 16]]) { const t = torch(); t.position.set(x, 0, z); t.userData.noBatch = true; g.add(t); torches.push(t); }
   const l1 = new THREE.PointLight(0xffb060, 9, 24, 1.8); l1.position.set(-3, 2.2, 6); l1.userData.k = 1; g.add(l1); const l2 = new THREE.PointLight(0xffc880, 7, 22, 1.8); l2.position.set(-6, 3.4, 14); l2.userData.k = 1; g.add(l2);
   /* people */
   /* Gran's hand rests on Lloyd's shoulder (ComfortChild on her, ComfortTake on him): he stands 0.25 m to her right and 0.25 m in front */

@@ -2122,6 +2122,36 @@ def face_out():
         if fl: bmesh.ops.reverse_faces(b,faces=fl); print('TURNED OUT',k,len(fl))
         b.to_mesh(o.data); b.free(); o.data.update()
 face_out()
+def sync_weights(dst, src, pick, maxd=0.03):
+    # A layer that lies over another moves with it: each point of dst that pick() chooses takes the bone weights of the nearest point of src
+    # within maxd. Every piece takes its weights from the nearest point of the body, and a piece standing 1 to 3 cm off the body reaches
+    # different bones than the layer under it, so the two parted as the body moved.
+    from mathutils.kdtree import KDTree
+    sv = src.data.vertices; kd = KDTree(len(sv))
+    for v in sv: kd.insert(src.matrix_world @ v.co, v.index)
+    kd.balance(); names = {g.index: g.name for g in src.vertex_groups}; n = 0
+    for v in dst.data.vertices:
+        co = dst.matrix_world @ v.co
+        if not pick(co): continue
+        hit = kd.find(co)
+        if hit[2] is None or hit[2] > maxd: continue
+        w = [(names[g.group], g.weight) for g in sv[hit[1]].groups if g.weight > 1e-4]
+        if not w: continue
+        for g in list(v.groups):
+            dst.vertex_groups[g.group].remove([v.index])
+        for nm, wt in w:
+            vg = dst.vertex_groups.get(nm) or dst.vertex_groups.new(name=nm)
+            vg.add([v.index], wt, 'REPLACE')
+        n += 1
+    return n
+if P.get('outfit'):      # the fitted suit (23 November 2026): the cloth check found the shirt through the lapels and the trousers through the jacket's seat on every suited body, in every game
+    _O = {k: bpy.data.objects.get(k) for k in ('Jacket', 'Lapels', 'Shirt', 'Breeches')}
+    if _O['Shirt']:
+        for k in ('Lapels', 'Jacket'):
+            if _O[k]: print('SYNC', k, 'to the shirt at the neck and chest', sync_weights(_O[k], _O['Shirt'], lambda c: c.z > NZ - 0.20 * s, 0.035))
+    if _O['Breeches'] and _O['Jacket']:
+        _hz = J('Hips').z; _hy = J('Hips').y
+        print('SYNC Jacket to the trousers over the seat', sync_weights(_O['Jacket'], _O['Breeches'], lambda c: _hz - 0.30 * s < c.z < _hz + 0.04 * s and c.y > _hy, 0.04))
 # The face is marked on the skin (1 on every point from the brow to the chin, cheek to cheek), and carried into the .glb as the attribute _FACE. tools/people/pack.mjs gives the
 # marked part its own share of triangles when it makes a light, crowd or phone copy, so eyes, brows and lips survive (simplified with the rest of the skin, a face in a crowd lost them).
 _fa=h.data.attributes.new('_FACE','FLOAT','POINT')

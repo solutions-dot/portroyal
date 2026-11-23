@@ -18,7 +18,7 @@
   "jacket": true,
   "jacketsleeve": 0.92,
   "shoes": false,
-  "collar": "stand",
+  "collar": "turn",
   "hairvol": 0.2,
   "recede": 0.4,
   "hat": [],
@@ -64,7 +64,7 @@
  },
  "face": "elder",
  "outfit": {
-  "garment": "toigo_male_suit_3",
+  "garment": "toigo_male_suit_tie_and_jacket",
   "waistcoat": false
  }
 }

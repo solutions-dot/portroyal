@@ -20,7 +20,7 @@
   "waistcoat": true,
   "vwaist": true,
   "shoes": true,
-  "collar": "stand",
+  "collar": "turn",
   "tie": true,
   "hairvol": 0.9,
   "recede": 0.0,
@@ -91,7 +91,7 @@
   "mouth-scale-horiz-decr": 0.2
  },
  "outfit": {
-  "garment": "toigo_male_suit_3",
+  "garment": "toigo_male_suit_tie_and_jacket",
   "waistcoat": true
  }
 }

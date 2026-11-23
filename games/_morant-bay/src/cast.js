@@ -22,6 +22,5 @@ export const CROWD = {
   mb_soldier: { sex: "m", idle: "IdleM", held: "musket" },
   mb_constable: { sex: "m", idle: "IdleM" },
   mb_vestryman: { sex: "m", idle: "IdleM" },
-  mb_statue: { sex: "m", idle: "StandPoseM" },
 };
 export const BASES = [...new Set([...Object.values(CAST).map((x) => x.base), ...Object.keys(CROWD)])];

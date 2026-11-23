@@ -264,7 +264,7 @@ elif OUTFIT_PHASE == 'finish':
         _bb.free(); _new['Jacket'].data.update(); print('OUTFIT jacket clear of the trousers', _n)
     # the back vent closes: the two edges of the slit at the back of the jacket are drawn together to overlap by a few millimetres, as a real vent's
     # underlap does, so the trousers no longer show through it (the cloth check found them there by up to 24 mm in every pose, in every game with this suit)
-    if 'Jacket' in _new:
+    if 'Jacket' in _new and _OF.get('closevent', True):
         _vb = bmesh.new(); _vb.from_mesh(_new['Jacket'].data); _hy, _hz = J('Hips').y, J('Hips').z; _n = 0
         _edge = [v for v in _vb.verts if v.is_boundary and v.co.y > _hy + 0.02 * s and abs(v.co.x) < 0.06 * s and _hz - 0.35 * s < v.co.z < _hz + 0.06 * s]
         _ring = {e.other_vert(v) for v in _edge for e in v.link_edges} - set(_edge)

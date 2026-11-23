@@ -13,18 +13,21 @@ The next game (owner, 23 November 2026). It tells the Morant Bay rebellion and w
 - **Places:** Stony Gut (a general picture: no 1865 picture of it is known), Morant Bay after the Illustrated London News engravings (the arcaded court-house, a two-storey house with a louvred upper floor, wooded hills, a beach with canoes, the open shed where courts-martial sat), and the square at Spanish Town with King's House and the Rodney Memorial (built 1783 to 1789, so there in 1865).
 - **The Mature 13+ line** is kept: crowds with sticks and cutlasses, stones, a volley with people ducking and running, far off and in smoke; fire; a flogging begun and cut away (sound only, the camera on Mama's face); a gallows as a far frame at dawn with nobody on it. No blood anywhere. Every such scene has the opt-in card with "Read what happened instead".
 
-### Stand-ins (rule 3: work to do)
+### Looks and their sources (23 November 2026)
 
-- The 1865 **rural constables** and the **Volunteers** (no source for their dress found yet): constables in dark blue with caps, Volunteers as town men in frock coats with long guns.
-- The **soldiers** are the 1st West India Regiment in a first pass at its Zouave dress (white turban, scarlet jacket, dark blue trousers), without the white waistcoat. The 6th Foot, marines and sailors are not in the game yet.
-- The **rifle-musket** is a general picture of the 1853 Enfield pattern; the **lantern** is the Mad Master's horn lantern of the 1770s (an 1865 lantern is to make).
-- The **statue of Paul Bogle** in the 2026 scene is a standing figure in bronze, a general picture: Edna Manley's statue (1965) is to model from a photograph.
-- The **later court-house** (rebuilt after 1865, burned 2007) is a general picture of two storeys of stone with arched windows.
-- The **chapel** at Stony Gut, the **school-house** and the **police station** at Morant Bay: general pictures.
+- **The soldiers:** the 1st West India Regiment in the Zouave dress it wore from 1858: a white turban, a long-sleeved white waistcoat with a short scarlet sleeveless jacket over it, loose dark blue trousers, white gaiters (Royal Collection Trust, "New uniforms of the 1st West India Regiment"; National Army Museum). The fez under the turban and the jacket's braid are not modelled.
+- **The lantern:** a tin lantern of the 1860s with a glass chimney round a candle.
+- **The 2026 scene shows no statue.** Edna Manley's statue of Paul Bogle (1965, ciment fondu: Bogle with his feet wide and his hands on the hilt of a machete, facing the court-house) was taken off its base for repair after the 2007 fire (Jamaica Information Service, 2009); no report was found of it going back. The journal says so.
+- **Still general pictures (no source found):** the rural constables of 1865 (shown in dark blue with peaked caps and muskets) and the Volunteers (shown as men of the town in dark coats with rifles: the Commission records "Volunteers' rifles" and "police muskets", not their dress). The chapel at Stony Gut, the school-house and the police station are general pictures too. To check: Heuman, *The Killing Time*; the Princeton and Yale albums.
 
-### Not yet confirmed (unchanged)
+### Decided (owner, 23 November 2026)
 
-The girl's name and family, the father's fate and the name lists follow the recommendation in `notes/the-girl-and-her-family.md`. The game never says what became of Papa. The exact wording of the Queen's Advice was not checked at source, so the game shows only its heading (journal page "The Queen's Advice"). Each "Voices" quotation in the journal still needs checking on the page image.
+- The girl is **Hannah** (a common name among Jamaica's Baptist families of the time; the owner left the name to Claude). Her family is as recommended in `notes/the-girl-and-her-family.md`.
+- **Papa's fate is unknown**, and the game never says what became of him.
+
+### Not yet confirmed
+
+The three name lists follow the recommendation in `notes/the-girl-and-her-family.md`. The exact wording of the Queen's Advice was not checked at source, so the game shows only its heading (journal page "The Queen's Advice"). Each "Voices" quotation in the journal still needs checking on the page image.
 
 ## Start here (for whoever builds it)
 
