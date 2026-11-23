@@ -40,7 +40,7 @@ import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { sunShadow } from '../../../engine/sunshadow.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
-import { addExit } from '../../../engine/exit.js';
+import { addExit, askExit } from '../../../engine/exit.js';
 
 const KEY = GAME.id + "-save-v1",
   q = new URLSearchParams(location.search),
@@ -539,7 +539,7 @@ async function waits(st) {
   } else if (kind === "quiz") {
     runQuiz({ title: QUIZ.title, items: QUIZ.items, sound: uiSound, fast: QUICK, done: () => advance(row.next) });
   } else if (kind === "end") {
-    card(CARDS.end.title, CARDS.end.lines, [["Read the journal", showJournal], ["Chapters", showChapters]]);
+    card(CARDS.end.title, CARDS.end.lines, [["Read the journal", showJournal], ["Chapters", showChapters], ["Exit", () => askExit()]]);
     cue("end");
   }
 }

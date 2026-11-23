@@ -39,3 +39,9 @@ export function addExit({ url = '../../../menu/', save = null } = {}) {
   new MutationObserver(follow).observe(jb, { attributes: true }); setInterval(follow, 500); follow();
   return btn;
 }
+/* the same "are you sure" from anywhere, such as a game's last card (owner, 23 November 2026: "there is no way to exit the game completely and go back
+   to the main menu" from the end screen). Every game's end card offers Exit beside Read the journal and Chapters. */
+export function askExit(url = '../../../menu/') {
+  const ask = document.getElementById('exitask'); if (!ask) { location.href = url; return; }
+  dispatchEvent(new Event('blur')); ask.hidden = false; ask.querySelector('.stay').focus();
+}
